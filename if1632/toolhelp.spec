@@ -17,9 +17,9 @@ type	win16
 63 pascal16 TaskFirst(ptr) TaskFirst
 64 pascal16 TaskNext(ptr) TaskNext
 65 pascal16 TaskFindHandle(ptr word) TaskFindHandle
-66 stub STACKTRACEFIRST
-67 stub STACKTRACECSIPFIRST
-68 stub STACKTRACENEXT
+66 pascal16 StackTraceFirst(ptr word) StackTraceFirst
+67 pascal16 StackTraceCSIPFirst(ptr word word word word) StackTraceCSIPFirst
+68 pascal16 StackTraceNext(ptr) StackTraceNext
 69 pascal16 ClassFirst(ptr) ClassFirst
 70 pascal16 ClassNext(ptr) ClassNext
 71 pascal16 SystemHeapInfo(ptr) SystemHeapInfo

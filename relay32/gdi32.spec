@@ -2,7 +2,7 @@ name	gdi32
 type	win32
 
   0 stub AbortDoc
-  1 stub AbortPath
+  1 stdcall AbortPath(long) AbortPath32
   2 stdcall AddFontResourceA(str) AddFontResource32A
   3 stub AddFontResourceTracking
   4 stdcall AddFontResourceW(wstr) AddFontResource32W
@@ -10,14 +10,14 @@ type	win32
   6 stdcall AnimatePalette(long long long ptr) AnimatePalette32
   7 stdcall Arc(long long long long long long long long long) Arc32
   8 stub ArcTo
-  9 stub BeginPath
+  9 stdcall BeginPath(long) BeginPath32
  10 stdcall BitBlt(long long long long long long long long long) BitBlt32
  11 stub CancelDC
  12 stub CheckColorsInGamut
  13 stub ChoosePixelFormat
  14 stdcall Chord(long long long long long long long long long) Chord32
  15 stub CloseEnhMetaFile
- 16 stub CloseFigure
+ 16 stdcall CloseFigure(long) CloseFigure32
  17 stub CloseMetaFile
  18 stub ColorMatchToTarget
  19 stdcall CombineRgn(long long long long) CombineRgn32
@@ -50,7 +50,7 @@ type	win32
  45 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
  46 stdcall CreateFontW(long long long long long long long long
                         long long long long long wstr) CreateFont32W
- 47 stub CreateHalftonePalette
+ 47 stdcall CreateHalftonePalette(long) CreateHalftonePalette
  48 stdcall CreateHatchBrush(long long) CreateHatchBrush32
  49 stdcall CreateICA(str str str ptr) CreateIC32A
  50 stdcall CreateICW(wstr wstr wstr ptr) CreateIC32W
@@ -82,7 +82,7 @@ type	win32
  75 stdcall Ellipse(long long long long long) Ellipse32
  76 stub EndDoc
  77 stub EndPage
- 78 stub EndPath
+ 78 stdcall EndPath(long) EndPath32
  79 stub EnumEnhMetaFile
  80 stdcall EnumFontFamiliesA(long str ptr long) EnumFontFamilies32A
  81 stdcall EnumFontFamiliesExA(long str ptr long long) EnumFontFamiliesEx32A
@@ -97,16 +97,16 @@ type	win32
  90 stdcall EqualRgn(long long) EqualRgn32
  91 stdcall Escape(long long long ptr ptr) Escape32
  92 stdcall ExcludeClipRect(long long long long long) ExcludeClipRect32
- 93 stub ExtCreatePen
+ 93 stdcall ExtCreatePen(long long ptr long ptr) ExtCreatePen32
  94 stub ExtCreateRegion
  95 stdcall ExtEscape(long long long ptr long ptr) ExtEscape32
  96 stdcall ExtFloodFill(long long long long long) ExtFloodFill32
  97 stub ExtSelectClipRgn
  98 stdcall ExtTextOutA(long long long long ptr str long ptr) ExtTextOut32A
  99 stdcall ExtTextOutW(long long long long ptr wstr long ptr) ExtTextOut32W
-100 stub FillPath
+100 stdcall FillPath(long) FillPath32
 101 stdcall FillRgn(long long long) FillRgn32
-102 stub FixBrushOrgEx
+102 stdcall FixBrushOrgEx(long long long ptr) FixBrushOrgEx
 103 stub FlattenPath
 104 stdcall FloodFill(long long long long) FloodFill32
 105 stdcall FrameRgn(long long long long long) FrameRgn32
@@ -170,7 +170,7 @@ type	win32
 163 stdcall GetClipRgn(long long) GetClipRgn32
 164 stub GetColorAdjustment
 165 stub GetColorSpace
-166 stub GetCurrentObject
+166 stdcall GetCurrentObject(long long) GetCurrentObject
 167 stdcall GetCurrentPositionEx(long ptr) GetCurrentPositionEx32
 168 stdcall GetDCOrgEx(long ptr) GetDCOrgEx
 169 stdcall GetDIBColorTable(long long long ptr) GetDIBColorTable32
@@ -214,7 +214,7 @@ type	win32
 207 stub GetOutlineTextMetricsA
 208 stub GetOutlineTextMetricsW
 209 stdcall GetPaletteEntries(long long long ptr) GetPaletteEntries32
-210 stub GetPath
+210 stdcall GetPath(long ptr ptr long) GetPath32
 211 stdcall GetPixel(long long long) GetPixel32
 212 stub GetPixelFormat
 213 stdcall GetPolyFillMode(long) GetPolyFillMode32
@@ -265,7 +265,7 @@ type	win32
 258 stdcall OffsetWindowOrgEx(long long long ptr) OffsetWindowOrgEx32
 259 stdcall PaintRgn(long long) PaintRgn32
 260 stdcall PatBlt(long long long long long long) PatBlt32
-261 stub PathToRegion
+261 stdcall PathToRegion(long) PathToRegion32
 262 stdcall Pie(long long long long long long long long long) Pie32
 263 stub PlayEnhMetaFile
 264 stub PlayEnhMetaFileRecord
@@ -300,7 +300,7 @@ type	win32
 293 stdcall ScaleViewportExtEx(long long long long long ptr) ScaleViewportExtEx32
 294 stdcall ScaleWindowExtEx(long long long long long ptr) ScaleWindowExtEx32
 295 stub SelectBrushLocal
-296 stub SelectClipPath
+296 stdcall SelectClipPath(long long) SelectClipPath32
 297 stdcall SelectClipRgn(long long) SelectClipRgn32
 298 stub SelectFontLocal
 299 stdcall SelectObject(long long) SelectObject32

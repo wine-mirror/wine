@@ -526,7 +526,7 @@ static HMODULE32 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
 
     if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
       fprintf(stderr, "Sorry, this is an OS/2 linear executable (LX) file !\n");
-      return (HMODULE32)11;
+      return (HMODULE32)12;
     }
     /* We now have a valid NE header */
 
@@ -1508,9 +1508,9 @@ HINSTANCE16 WINAPI LoadLibrary16( LPCSTR libname )
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
-HMODULE32 WINAPI PrivateLoadLibrary(LPCSTR libname)
+HINSTANCE32 WINAPI PrivateLoadLibrary(LPCSTR libname)
 {
-        return LoadLibrary16(libname);
+        return (HINSTANCE32)LoadLibrary16(libname);
 }
 
 
@@ -1529,9 +1529,9 @@ void WINAPI FreeLibrary16( HINSTANCE16 handle )
  *
  * FIXME: rough guesswork, don't know what "Private" means
  */
-void WINAPI PrivateFreeLibrary(HMODULE32 handle)
+void WINAPI PrivateFreeLibrary(HINSTANCE32 handle)
 {
-	FreeLibrary16(handle);
+	FreeLibrary16((HINSTANCE16)handle);
 }
 
 

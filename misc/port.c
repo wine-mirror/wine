@@ -49,3 +49,11 @@ void *memmove( void *dest, const void *src, unsigned int len )
     return dest;
 }
 #endif  /* HAVE_MEMMOVE */
+
+#ifndef HAVE_STRERROR
+const char *strerror( int err )
+{
+    /* Let's hope we have sys_errlist then */
+    return sys_errlist[err];
+}
+#endif  /* HAVE_STRERROR */

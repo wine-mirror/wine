@@ -1,4 +1,8 @@
-SUBDIRS = progman winhelp winver
+SUBDIRS = \
+	notepad \
+	progman \
+	winhelp \
+	winver
 
 all: $(SUBDIRS)
 

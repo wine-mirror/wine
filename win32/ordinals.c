@@ -16,9 +16,6 @@
 #include "debug.h"
 #include "stddebug.h"
 
-extern THDB	*pCurrentThread;
-extern PDB32	*pCurrentProcess;
-
 static CRITICAL_SECTION Win16Mutex;
 
 /***********************************************

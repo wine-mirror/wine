@@ -7,8 +7,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include "callback.h"
+#include "task.h"
 
-extern void TASK_Reschedule(void);  /* loader/task.c */
 
 /**********************************************************************
  *	     CALLBACK_CallWndProc
@@ -24,10 +24,11 @@ static LRESULT WINAPI CALLBACK_CallWndProc( WNDPROC16 proc, HWND16 hwnd,
 /**********************************************************************
  *	     CALLBACK_CallRegisterProc
  */
-static VOID WINAPI CALLBACK_CallRegisterProc( CONTEXT *context, INT32 offset)
+static LONG WINAPI CALLBACK_CallRegisterProc( CONTEXT *context, INT32 offset)
 {
     fprintf( stderr, "Cannot call a register proc in Winelib\n" );
     assert( FALSE );
+    return 0;
 }
 
 
@@ -123,6 +124,15 @@ static LRESULT WINAPI CALLBACK_CallASPIPostProc( FARPROC16 proc, SEGPTR ptr )
     return proc( ptr );
 }
 
+
+/**********************************************************************
+ *	     CALLBACK_CallWOWCallbackProc
+ */
+static DWORD WINAPI CALLBACK_CallWOWCallbackProc( FARPROC16 proc, DWORD dw )
+{
+    return proc( dw );
+}
+
 /**********************************************************************
  *	     CALLBACK_WinelibTable
  *
@@ -130,7 +140,8 @@ static LRESULT WINAPI CALLBACK_CallASPIPostProc( FARPROC16 proc, SEGPTR ptr )
  */
 static const CALLBACKS_TABLE CALLBACK_WinelibTable =
 {
-    CALLBACK_CallRegisterProc,     /* CallRegisterProc */
+    CALLBACK_CallRegisterProc,     /* CallRegisterShortProc */
+    CALLBACK_CallRegisterProc,     /* CallRegisterLongProc */
     TASK_Reschedule,               /* CallTaskRescheduleProc */
     NULL,                          /* CallFrom16WndProc */
     CALLBACK_CallWndProc,          /* CallWndProc */
@@ -142,6 +153,7 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
     CALLBACK_CallBootAppProc,      /* CallBootAppProc */
     CALLBACK_CallLoadAppSegProc,   /* CallLoadAppSegProc */
     CALLBACK_CallSystemTimerProc,  /* CallSystemTimerProc */
+    CALLBACK_CallWOWCallbackProc,  /* CallWOWCallbackProc */
     CALLBACK_CallASPIPostProc,     /* CallASPIPostProc */
     /* The graphics driver callbacks are never used in Winelib */
     NULL,                          /* CallDrvControlProc */

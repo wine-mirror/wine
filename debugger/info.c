@@ -141,7 +141,7 @@ void DEBUG_Help(void)
 "  delete display <disnum>\n",
 
 "Wine-specific commands:",
-"  mode [16,32]                           walk [wnd,class,queue] <handle>",
+"  mode [16,32]                           walk [wnd,class,queue,module]",
 "  info (see 'help info' for options)\n",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
@@ -176,13 +176,13 @@ void DEBUG_HelpInfo(void)
 "  info display         Shows auto-display expressions in use",
 "  info locals          Displays values of all local vars for current frame",
 "  info maps            Dumps all virtual memory mappings",
-"  info module          Displays information about all modules",
-"  info queue <handle>  Dumps queue information",
+"  info module <handle> Displays internal module state",
+"  info queue <handle>  Displays internal queue state",
 "  info reg             Displays values in all registers at top of stack",
 "  info segments        Dumps information about all known segments",
 "  info share           Dumps information about shared libraries",
 "  info stack           Dumps information about top of stack",
-"  info wnd <handle>    Dumps information about all windows",
+"  info wnd <handle>    Displays internal window state",
 "",
 NULL
 };

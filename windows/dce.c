@@ -12,8 +12,9 @@
  *
  * DCX_DCEEMPTY    - dce is uninitialized
  * DCX_DCEBUSY     - dce is in use
- * DCX_KEEPCLIPRGN - ReleaseDC should preserve the clipping region
- * DCX_WINDOWPAINT - BeginPaint specific flag
+ * DCX_DCEDIRTY    - ReleaseDC() should wipe instead of caching
+ * DCX_KEEPCLIPRGN - ReleaseDC() should not delete the clipping region
+ * DCX_WINDOWPAINT - BeginPaint() is in effect
  */
 
 #include "options.h"
@@ -192,7 +193,17 @@ static INT32 DCE_ReleaseDC( DCE* dce )
     if (dce->DCXflags & DCX_CACHE)
     {
         SetDCState( dce->hDC, defaultDCstate );
-        dce->DCXflags &= ~DCX_DCEBUSY;	/* but without DCX_DCEEMPTY */
+        dce->DCXflags &= ~DCX_DCEBUSY;
+	if (dce->DCXflags & DCX_DCEDIRTY)
+	{
+	    /* don't keep around invalidated entries 
+	     * because SetDCState() disables hVisRgn updates
+	     * by removing dirty bit. */
+
+	    dce->hwndCurrent = 0;
+	    dce->DCXflags &= DCX_CACHE;
+	    dce->DCXflags |= DCX_DCEEMPTY;
+	}
     }
     return 1;
 }
@@ -261,11 +272,12 @@ BOOL32 DCE_InvalidateDCE(WND* wndScope, const RECT32* pRectUpdate)
 				}
 				else
 				{
-				    /* Set dirty bit in the hDC */
+				    /* Set dirty bits in the hDC and DCE structs */
 
 				    dprintf_dc(stddeb,"\tfixed up %08x dce [%04x]\n", 
 						(unsigned)dce, wndCurrent->hwndSelf);
 
+				    dce->DCXflags |= DCX_DCEDIRTY;
 				    SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
 				    bRet = TRUE;
 				}
@@ -769,6 +781,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
                     wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
 	}
 	dc->w.flags &= ~DC_DIRTY;
+	dce->DCXflags &= ~DCX_DCEDIRTY;
 	SelectVisRgn( hdc, hrgnVisible );
     }
     else
@@ -908,7 +921,8 @@ BOOL16 WINAPI DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
                     else
                          CombineRgn32(hVisRgn, hVisRgn, dce->hClipRgn, 
                                       (dce->DCXflags & DCX_EXCLUDERGN)? RGN_DIFF:RGN_AND);
-	       }  
+	       }
+	       dce->DCXflags &= ~DCX_DCEDIRTY;
 	       SelectVisRgn(hDC, hVisRgn);
 	       DeleteObject32( hVisRgn );
 	   }

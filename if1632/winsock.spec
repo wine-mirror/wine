@@ -16,7 +16,7 @@ type	win16
 8   pascal   htonl(long) WINSOCK_htonl
 9   pascal16 htons(word) WINSOCK_htons
 10  pascal   inet_addr(ptr) WINSOCK_inet_addr
-11  pascal   inet_ntoa(long) WINSOCK_inet_ntoa
+11  pascal   inet_ntoa(long) WINSOCK_inet_ntoa16
 12  pascal16 ioctlsocket(word long ptr) WINSOCK_ioctlsocket16
 13  pascal16 listen(word word) WINSOCK_listen16
 14  pascal   ntohl(long) WINSOCK_ntohl
@@ -36,20 +36,20 @@ type	win16
 55  pascal   getservbyname(ptr ptr) WINSOCK_getservbyname16
 56  pascal   getservbyport(word ptr) WINSOCK_getservbyport16
 57  pascal   gethostname(ptr word) WINSOCK_gethostname16
-101 pascal16 WSAAsyncSelect(word word word long) WSAAsyncSelect
+101 pascal16 WSAAsyncSelect(word word word long) WSAAsyncSelect16
 102 pascal16 WSAAsyncGetHostByAddr(word word ptr word word segptr word)
-             WSAAsyncGetHostByAddr
+             WSAAsyncGetHostByAddr16
 103 pascal16 WSAAsyncGetHostByName(word word ptr segptr word)
-             WSAAsyncGetHostByName
+             WSAAsyncGetHostByName16
 104 pascal16 WSAAsyncGetProtoByNumber(word word word segptr word)
-             WSAAsyncGetProtoByNumber
+             WSAAsyncGetProtoByNumber16
 105 pascal16 WSAAsyncGetProtoByName(word word ptr segptr word)
-             WSAAsyncGetProtoByName
+             WSAAsyncGetProtoByName16
 106 pascal16 WSAAsyncGetServByPort(word word word ptr segptr word)
-             WSAAsyncGetServByPort
+             WSAAsyncGetServByPort16
 107 pascal16 WSAAsyncGetServByName(word word ptr ptr segptr word)
-             WSAAsyncGetServByName
-108 pascal16 WSACancelAsyncRequest(word) WSACancelAsyncRequest
+             WSAAsyncGetServByName16
+108 pascal16 WSACancelAsyncRequest(word) WSACancelAsyncRequest16
 109 pascal16 WSASetBlockingHook(segptr) WSASetBlockingHook16
 110 pascal16 WSAUnhookBlockingHook() WSAUnhookBlockingHook16
 111 pascal16 WSAGetLastError() WSAGetLastError

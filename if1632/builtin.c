@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "windows.h"
+#include "builtin32.h"
 #include "gdi.h"
 #include "global.h"
 #include "heap.h"
@@ -34,158 +35,89 @@ typedef struct
 
 typedef struct
 {
-    const char         *name;       /* DLL name */
-    int                 base;       /* Ordinal base */
-    int                 nb_funcs;   /* Number of functions */
-    int                 nb_names;   /* Number of function names */
-    const void        **functions;  /* Pointer to function table */
-    const char * const *names;      /* Pointer to names table */
-    const WORD         *ordinals;   /* Pointer to ordinals table */
-    const BYTE         *args;       /* Pointer to argument lengths */
-    const DWORD        *argtypes;   /* Pointer to argument types bitmask */
-} WIN32_DESCRIPTOR;
-
-typedef union
-{
-    const char *name;               /* DLL name */
-    WIN16_DESCRIPTOR win16;         /* Descriptor for Win16 DLL */
-    WIN32_DESCRIPTOR win32;         /* Descriptor for Win32 DLL */
-} DLL_DESCRIPTOR;
-
-typedef struct
-{
-    BYTE  call;                    /* 0xe8 call callfrom32 (relative) */
-    DWORD callfrom32 WINE_PACKED;  /* RELAY_CallFrom32 relative addr */
-    BYTE  ret;                     /* 0xc2 ret $n  or  0xc3 ret */
-    WORD  args;                    /* nb of args to remove from the stack */
-} DEBUG_ENTRY_POINT;
-
-typedef struct
-{
-    const DLL_DESCRIPTOR *descr;     /* DLL descriptor */
-    DEBUG_ENTRY_POINT    *dbg_funcs; /* Relay debugging functions table */
-    int                   flags;     /* flags (see below) */
-} BUILTIN_DLL;
+    const WIN16_DESCRIPTOR *descr;     /* DLL descriptor */
+    int                     flags;     /* flags (see below) */
+} BUILTIN16_DLL;
 
 /* DLL flags */
 #define DLL_FLAG_NOT_USED    0x01  /* Use original Windows DLL if possible */
 #define DLL_FLAG_ALWAYS_USED 0x02  /* Always use built-in DLL */
-#define DLL_FLAG_WIN32       0x04  /* DLL is a Win32 DLL */
 
 /* 16-bit DLLs */
 
-extern const DLL_DESCRIPTOR KERNEL_Descriptor;
-extern const DLL_DESCRIPTOR USER_Descriptor;
-extern const DLL_DESCRIPTOR GDI_Descriptor;
-extern const DLL_DESCRIPTOR WIN87EM_Descriptor;
-extern const DLL_DESCRIPTOR MMSYSTEM_Descriptor;
-extern const DLL_DESCRIPTOR SHELL_Descriptor;
-extern const DLL_DESCRIPTOR SOUND_Descriptor;
-extern const DLL_DESCRIPTOR KEYBOARD_Descriptor;
-extern const DLL_DESCRIPTOR WINSOCK_Descriptor;
-extern const DLL_DESCRIPTOR STRESS_Descriptor;
-extern const DLL_DESCRIPTOR SYSTEM_Descriptor;
-extern const DLL_DESCRIPTOR TOOLHELP_Descriptor;
-extern const DLL_DESCRIPTOR MOUSE_Descriptor;
-extern const DLL_DESCRIPTOR COMMDLG_Descriptor;
-extern const DLL_DESCRIPTOR OLE2_Descriptor;
-extern const DLL_DESCRIPTOR OLE2CONV_Descriptor;
-extern const DLL_DESCRIPTOR OLE2DISP_Descriptor;
-extern const DLL_DESCRIPTOR OLE2NLS_Descriptor;
-extern const DLL_DESCRIPTOR OLE2PROX_Descriptor;
-extern const DLL_DESCRIPTOR OLECLI_Descriptor;
-extern const DLL_DESCRIPTOR OLESVR_Descriptor;
-extern const DLL_DESCRIPTOR COMPOBJ_Descriptor;
-extern const DLL_DESCRIPTOR STORAGE_Descriptor;
-extern const DLL_DESCRIPTOR WPROCS_Descriptor;
-extern const DLL_DESCRIPTOR DDEML_Descriptor;
-extern const DLL_DESCRIPTOR LZEXPAND_Descriptor;
-extern const DLL_DESCRIPTOR VER_Descriptor;
-extern const DLL_DESCRIPTOR W32SYS_Descriptor;
-extern const DLL_DESCRIPTOR WIN32S16_Descriptor;
-extern const DLL_DESCRIPTOR WING_Descriptor;
-extern const DLL_DESCRIPTOR WINASPI_Descriptor;
-
-/* 32-bit DLLs */
-
-extern const DLL_DESCRIPTOR ADVAPI32_Descriptor;
-extern const DLL_DESCRIPTOR COMCTL32_Descriptor;
-extern const DLL_DESCRIPTOR COMDLG32_Descriptor;
-extern const DLL_DESCRIPTOR CRTDLL_Descriptor;
-extern const DLL_DESCRIPTOR GDI32_Descriptor;
-extern const DLL_DESCRIPTOR KERNEL32_Descriptor;
-extern const DLL_DESCRIPTOR LZ32_Descriptor;
-extern const DLL_DESCRIPTOR MPR_Descriptor;
-extern const DLL_DESCRIPTOR NTDLL_Descriptor;
-extern const DLL_DESCRIPTOR OLE32_Descriptor;
-extern const DLL_DESCRIPTOR OLECLI32_Descriptor;
-extern const DLL_DESCRIPTOR OLESVR32_Descriptor;
-extern const DLL_DESCRIPTOR SHELL32_Descriptor;
-extern const DLL_DESCRIPTOR USER32_Descriptor;
-extern const DLL_DESCRIPTOR VERSION_Descriptor;
-extern const DLL_DESCRIPTOR W32SKRNL_Descriptor;
-extern const DLL_DESCRIPTOR WINMM_Descriptor;
-extern const DLL_DESCRIPTOR WINSPOOL_Descriptor;
-extern const DLL_DESCRIPTOR WSOCK32_Descriptor;
+extern const WIN16_DESCRIPTOR COMMDLG_Descriptor;
+extern const WIN16_DESCRIPTOR COMPOBJ_Descriptor;
+extern const WIN16_DESCRIPTOR DDEML_Descriptor;
+extern const WIN16_DESCRIPTOR GDI_Descriptor;
+extern const WIN16_DESCRIPTOR KERNEL_Descriptor;
+extern const WIN16_DESCRIPTOR KEYBOARD_Descriptor;
+extern const WIN16_DESCRIPTOR LZEXPAND_Descriptor;
+extern const WIN16_DESCRIPTOR MMSYSTEM_Descriptor;
+extern const WIN16_DESCRIPTOR MOUSE_Descriptor;
+extern const WIN16_DESCRIPTOR OLE2CONV_Descriptor;
+extern const WIN16_DESCRIPTOR OLE2DISP_Descriptor;
+extern const WIN16_DESCRIPTOR OLE2NLS_Descriptor;
+extern const WIN16_DESCRIPTOR OLE2PROX_Descriptor;
+extern const WIN16_DESCRIPTOR OLE2THK_Descriptor;
+extern const WIN16_DESCRIPTOR OLE2_Descriptor;
+extern const WIN16_DESCRIPTOR OLECLI_Descriptor;
+extern const WIN16_DESCRIPTOR OLESVR_Descriptor;
+extern const WIN16_DESCRIPTOR SHELL_Descriptor;
+extern const WIN16_DESCRIPTOR SOUND_Descriptor;
+extern const WIN16_DESCRIPTOR STORAGE_Descriptor;
+extern const WIN16_DESCRIPTOR STRESS_Descriptor;
+extern const WIN16_DESCRIPTOR SYSTEM_Descriptor;
+extern const WIN16_DESCRIPTOR TOOLHELP_Descriptor;
+extern const WIN16_DESCRIPTOR USER_Descriptor;
+extern const WIN16_DESCRIPTOR VER_Descriptor;
+extern const WIN16_DESCRIPTOR W32SYS_Descriptor;
+extern const WIN16_DESCRIPTOR WIN32S16_Descriptor;
+extern const WIN16_DESCRIPTOR WIN87EM_Descriptor;
+extern const WIN16_DESCRIPTOR WINASPI_Descriptor;
+extern const WIN16_DESCRIPTOR WINDEBUG_Descriptor;
+extern const WIN16_DESCRIPTOR WING_Descriptor;
+extern const WIN16_DESCRIPTOR WINSOCK_Descriptor;
+extern const WIN16_DESCRIPTOR WPROCS_Descriptor;
 
 /* Table of all built-in DLLs */
 
-static BUILTIN_DLL BuiltinDLLs[] =
+static BUILTIN16_DLL BuiltinDLLs[] =
 {
-    /* Win16 DLLs */
-    { &KERNEL_Descriptor,   NULL, DLL_FLAG_ALWAYS_USED },
-    { &USER_Descriptor,     NULL, DLL_FLAG_ALWAYS_USED },
-    { &GDI_Descriptor,      NULL, DLL_FLAG_ALWAYS_USED },
-    { &SYSTEM_Descriptor,   NULL, DLL_FLAG_ALWAYS_USED },
-    { &WIN87EM_Descriptor,  NULL, DLL_FLAG_NOT_USED },
-    { &SHELL_Descriptor,    NULL, 0 },
-    { &SOUND_Descriptor,    NULL, 0 },
-    { &KEYBOARD_Descriptor, NULL, 0 },
-    { &WINSOCK_Descriptor,  NULL, 0 },
-    { &STRESS_Descriptor,   NULL, 0 },
-    { &MMSYSTEM_Descriptor, NULL, 0 },
-    { &TOOLHELP_Descriptor, NULL, 0 },
-    { &MOUSE_Descriptor,    NULL, 0 },
-    { &COMMDLG_Descriptor,  NULL, DLL_FLAG_NOT_USED },
-    { &OLE2_Descriptor,     NULL, DLL_FLAG_NOT_USED },
-    { &OLE2CONV_Descriptor, NULL, DLL_FLAG_NOT_USED },
-    { &OLE2DISP_Descriptor, NULL, DLL_FLAG_NOT_USED },
-    { &OLE2NLS_Descriptor,  NULL, DLL_FLAG_NOT_USED },
-    { &OLE2PROX_Descriptor, NULL, DLL_FLAG_NOT_USED },
-    { &OLECLI_Descriptor,   NULL, DLL_FLAG_NOT_USED },
-    { &OLESVR_Descriptor,   NULL, DLL_FLAG_NOT_USED },
-    { &COMPOBJ_Descriptor,  NULL, DLL_FLAG_NOT_USED },
-    { &STORAGE_Descriptor,  NULL, DLL_FLAG_NOT_USED },
-    { &WPROCS_Descriptor,   NULL, DLL_FLAG_ALWAYS_USED },
-    { &DDEML_Descriptor,    NULL, DLL_FLAG_NOT_USED },
-    { &LZEXPAND_Descriptor, NULL, 0 },
-    { &VER_Descriptor,      NULL, 0 },
-    { &W32SYS_Descriptor,   NULL, 0 },
-    { &WIN32S16_Descriptor, NULL, 0 },
-    { &WING_Descriptor,     NULL, 0 },
-    { &WINASPI_Descriptor,  NULL, 0 },
-    /* Win32 DLLs */
-    { &ADVAPI32_Descriptor, NULL, DLL_FLAG_WIN32 },
-    { &COMCTL32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
-    { &COMDLG32_Descriptor, NULL, DLL_FLAG_WIN32 },
-    { &CRTDLL_Descriptor,   NULL, DLL_FLAG_WIN32 },
-    { &GDI32_Descriptor,    NULL, DLL_FLAG_WIN32 },
-    { &KERNEL32_Descriptor, NULL, DLL_FLAG_WIN32 },
-    { &LZ32_Descriptor,     NULL, DLL_FLAG_WIN32 },
-    { &MPR_Descriptor,      NULL, DLL_FLAG_WIN32 },
-    { &NTDLL_Descriptor,    NULL, DLL_FLAG_WIN32 },
-    { &OLE32_Descriptor,    NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
-    { &OLECLI32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
-    { &OLESVR32_Descriptor, NULL, DLL_FLAG_WIN32 | DLL_FLAG_NOT_USED },
-    { &SHELL32_Descriptor,  NULL, DLL_FLAG_WIN32 },
-    { &USER32_Descriptor,   NULL, DLL_FLAG_WIN32 },
-    { &VERSION_Descriptor,  NULL, DLL_FLAG_WIN32 },
-    { &W32SKRNL_Descriptor, NULL, DLL_FLAG_WIN32 },
-    { &WINMM_Descriptor,    NULL, DLL_FLAG_WIN32 },
-    { &WINSPOOL_Descriptor, NULL, DLL_FLAG_WIN32 },
-    { &WSOCK32_Descriptor,  NULL, DLL_FLAG_WIN32 },
+    { &KERNEL_Descriptor,   DLL_FLAG_ALWAYS_USED },
+    { &USER_Descriptor,     DLL_FLAG_ALWAYS_USED },
+    { &GDI_Descriptor,      DLL_FLAG_ALWAYS_USED },
+    { &SYSTEM_Descriptor,   DLL_FLAG_ALWAYS_USED },
+    { &WPROCS_Descriptor,   DLL_FLAG_ALWAYS_USED },
+    { &WINDEBUG_Descriptor, DLL_FLAG_ALWAYS_USED },
+    { &COMMDLG_Descriptor,  DLL_FLAG_NOT_USED },
+    { &COMPOBJ_Descriptor,  DLL_FLAG_NOT_USED },
+    { &DDEML_Descriptor,    DLL_FLAG_NOT_USED },
+    { &KEYBOARD_Descriptor, 0 },
+    { &LZEXPAND_Descriptor, 0 },
+    { &MMSYSTEM_Descriptor, 0 },
+    { &MOUSE_Descriptor,    0 },
+    { &OLE2CONV_Descriptor, DLL_FLAG_NOT_USED },
+    { &OLE2DISP_Descriptor, DLL_FLAG_NOT_USED },
+    { &OLE2NLS_Descriptor,  DLL_FLAG_NOT_USED },
+    { &OLE2PROX_Descriptor, DLL_FLAG_NOT_USED },
+    { &OLE2THK_Descriptor,  DLL_FLAG_NOT_USED },
+    { &OLE2_Descriptor,     DLL_FLAG_NOT_USED },
+    { &OLECLI_Descriptor,   DLL_FLAG_NOT_USED },
+    { &OLESVR_Descriptor,   DLL_FLAG_NOT_USED },
+    { &SHELL_Descriptor,    0 },
+    { &SOUND_Descriptor,    0 },
+    { &STORAGE_Descriptor,  DLL_FLAG_NOT_USED },
+    { &STRESS_Descriptor,   0 },
+    { &TOOLHELP_Descriptor, 0 },
+    { &VER_Descriptor,      0 },
+    { &W32SYS_Descriptor,   0 },
+    { &WIN32S16_Descriptor, 0 },
+    { &WIN87EM_Descriptor,  DLL_FLAG_NOT_USED },
+    { &WINASPI_Descriptor,  0 },
+    { &WING_Descriptor,     0 },
+    { &WINSOCK_Descriptor,  0 },
     /* Last entry */
-    { NULL, NULL, 0 }
+    { NULL, 0 }
 };
 
   /* Ordinal number for interrupt 0 handler in WPROCS.DLL */
@@ -243,210 +175,21 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
 
 
 /***********************************************************************
- *           BUILTIN_DoLoadModule32
- *
- * Load a built-in Win32 module. Helper function for BUILTIN_LoadModule
- * and BUILTIN_Init.
- */
-static HMODULE32 BUILTIN_DoLoadModule32( BUILTIN_DLL *dll )
-{
-    extern void RELAY_CallFrom32();
-
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-    OFSTRUCT ofs;
-    IMAGE_DATA_DIRECTORY *dir;
-    IMAGE_DOS_HEADER *dos;
-    IMAGE_NT_HEADERS *nt;
-    IMAGE_SECTION_HEADER *sec;
-    IMAGE_EXPORT_DIRECTORY *exp;
-    LPVOID *funcs;
-    LPSTR *names;
-    DEBUG_ENTRY_POINT *entry;
-    PE_MODREF *pem;
-    INT32 i, size;
-    BYTE *addr;
-
-    /* Allocate the module */
-
-    size = (sizeof(IMAGE_DOS_HEADER)
-            + sizeof(IMAGE_NT_HEADERS)
-            + 2 * sizeof(IMAGE_SECTION_HEADER)
-            + sizeof(IMAGE_EXPORT_DIRECTORY)
-            + dll->descr->win32.nb_funcs * sizeof(LPVOID)
-            + dll->descr->win32.nb_names * sizeof(LPSTR));
-    if (debugging_relay)
-        size += dll->descr->win32.nb_funcs * sizeof(DEBUG_ENTRY_POINT);
-    addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
-    if (!addr) return 0;
-    dos   = (IMAGE_DOS_HEADER *)addr;
-    nt    = (IMAGE_NT_HEADERS *)(dos + 1);
-    sec   = (IMAGE_SECTION_HEADER *)(nt + 1);
-    exp   = (IMAGE_EXPORT_DIRECTORY *)(sec + 2);
-    funcs = (LPVOID *)(exp + 1);
-    names = (LPSTR *)(funcs + dll->descr->win32.nb_funcs);
-    entry = (DEBUG_ENTRY_POINT *)(names + dll->descr->win32.nb_names);
-
-    /* Build the DOS and NT headers */
-
-    dos->e_magic  = IMAGE_DOS_SIGNATURE;
-    dos->e_lfanew = sizeof(*dos);
-
-    nt->Signature                       = IMAGE_NT_SIGNATURE;
-    nt->FileHeader.Machine              = IMAGE_FILE_MACHINE_I386;
-    nt->FileHeader.NumberOfSections     = 2;  /* exports + code */
-    nt->FileHeader.SizeOfOptionalHeader = sizeof(nt->OptionalHeader);
-    nt->FileHeader.Characteristics      = IMAGE_FILE_DLL;
-
-    nt->OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
-    nt->OptionalHeader.SizeOfCode                  = 0x1000;
-    nt->OptionalHeader.SizeOfInitializedData       = 0;
-    nt->OptionalHeader.SizeOfUninitializedData     = 0;
-    nt->OptionalHeader.ImageBase                   = (DWORD)addr;
-    nt->OptionalHeader.SectionAlignment            = 0x1000;
-    nt->OptionalHeader.FileAlignment               = 0x1000;
-    nt->OptionalHeader.MajorOperatingSystemVersion = 1;
-    nt->OptionalHeader.MinorOperatingSystemVersion = 0;
-    nt->OptionalHeader.MajorSubsystemVersion       = 4;
-    nt->OptionalHeader.MinorSubsystemVersion       = 0;
-    nt->OptionalHeader.SizeOfImage                 = size;
-    nt->OptionalHeader.SizeOfHeaders               = (BYTE *)exp - addr;
-    nt->OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
-
-    /* Build the export directory */
-
-    dir = &nt->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
-    dir->VirtualAddress = (BYTE *)exp - addr;
-    dir->Size = sizeof(*exp)
-                + dll->descr->win32.nb_funcs * sizeof(LPVOID)
-                + dll->descr->win32.nb_names * sizeof(LPSTR);
-
-    /* Build the exports section */
-
-    strcpy( sec->Name, ".edata" );
-    sec->Misc.VirtualSize = dir->Size;
-    sec->VirtualAddress   = (BYTE *)exp - addr;
-    sec->SizeOfRawData    = dir->Size;
-    sec->PointerToRawData = (BYTE *)exp - addr;
-    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ |
-                             IMAGE_SCN_MEM_WRITE);
-
-    /* Build the code section */
-
-    sec++;
-    strcpy( sec->Name, ".code" );
-    if (debugging_relay)
-        sec->SizeOfRawData = dll->descr->win32.nb_funcs * sizeof(DEBUG_ENTRY_POINT);
-    else
-        sec->SizeOfRawData = 1;
-    sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = (BYTE *)entry - addr;
-    sec->PointerToRawData = (BYTE *)entry - addr;
-    sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
-                             IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
-
-    /* Build the exports section data */
-
-    exp->Name                  = (BYTE *)dll->descr->name - addr;  /*??*/
-    exp->Base                  = dll->descr->win32.base;
-    exp->NumberOfFunctions     = dll->descr->win32.nb_funcs;
-    exp->NumberOfNames         = dll->descr->win32.nb_names;
-    exp->AddressOfFunctions    = (LPDWORD *)((BYTE *)funcs - addr);
-    exp->AddressOfNames        = (LPDWORD *)((BYTE *)names - addr);
-    exp->AddressOfNameOrdinals = (LPWORD *)((BYTE *)dll->descr->win32.ordinals - addr);
-
-    /* Build the funcs table */
-
-    if (debugging_relay)
-    {
-        dll->dbg_funcs = entry;
-        for (i = 0; i < dll->descr->win32.nb_funcs; i++, funcs++, entry++)
-        {
-            BYTE args = dll->descr->win32.args[i];
-            entry->call = 0xe8;  /* call */
-            switch(args)
-            {
-            case 0xfe:  /* register func */
-                entry->callfrom32 = (DWORD)dll->descr->win32.functions[i] -
-                                    (DWORD)&entry->ret;
-                entry->ret        = 0x90;  /* nop */
-                entry->args       = 0;
-                *funcs = (LPVOID)((BYTE *)entry - addr);
-                break;
-            case 0xff:  /* stub or extern */
-                if (dll->descr->win32.functions[i])
-                    *funcs = (LPVOID)((BYTE *)dll->descr->win32.functions[i]
-                                              - addr);
-                break;
-            default:  /* normal function (stdcall or cdecl) */
-                entry->callfrom32 = (DWORD)RELAY_CallFrom32 -
-                                    (DWORD)&entry->ret;
-                entry->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
-                entry->args       = (args & 0x7f) * sizeof(int);
-                *funcs = (LPVOID)((BYTE *)entry - addr);
-                break;
-            }
-        }
-    }
-    else
-    {
-        for (i = 0; i < dll->descr->win32.nb_funcs; i++, funcs++)
-            if (dll->descr->win32.functions[i])
-                *funcs = (LPVOID)((BYTE *)dll->descr->win32.functions[i]
-                                           - addr);
-    }
-
-    /* Build the names table */
-
-    for (i = 0; i < exp->NumberOfNames; i++, names++)
-        if (dll->descr->win32.names[i])
-            *names = (LPSTR)((BYTE *)dll->descr->win32.names[i] - addr);
-
-    /* Create a modref */
-
-    pem = (PE_MODREF *)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                  sizeof(*pem) );
-    pem->module = (HMODULE32)addr;
-    pem->pe_export = exp;
-    pem->next = pCurrentProcess->modref_list;
-    pCurrentProcess->modref_list = pem;
-
-    /* Create a Win16 dummy module */
-
-    sprintf( ofs.szPathName, "%s.DLL", dll->descr->name );
-    hModule = MODULE_CreateDummyModule( &ofs );
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
-    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN |
-                     NE_FFLAGS_LIBMODULE | NE_FFLAGS_WIN32;
-    pModule->module32 = (HMODULE32)addr;
-    return pModule->module32;
-}
-
-
-/***********************************************************************
  *           BUILTIN_Init
  *
  * Load all built-in modules marked as 'always used'.
  */
 BOOL32 BUILTIN_Init(void)
 {
-    BUILTIN_DLL *dll;
+    BUILTIN16_DLL *dll;
     NE_MODULE *pModule;
     WORD vector;
     HMODULE16 hModule;
 
     for (dll = BuiltinDLLs; dll->descr; dll++)
     {
-        if (!(dll->flags & DLL_FLAG_ALWAYS_USED)) continue;
-        if (dll->flags & DLL_FLAG_WIN32)
-        {
-            if (!BUILTIN_DoLoadModule32( dll )) return FALSE;
-        }
-        else
-        {
-            if (!BUILTIN_DoLoadModule16( &dll->descr->win16 )) return FALSE;
-        }
+        if (dll->flags & DLL_FLAG_ALWAYS_USED)
+            if (!BUILTIN_DoLoadModule16( dll->descr )) return FALSE;
     }
 
     /* Set the USER and GDI heap selectors */
@@ -488,7 +231,7 @@ BOOL32 BUILTIN_Init(void)
  */
 HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
 {
-    BUILTIN_DLL *table;
+    BUILTIN16_DLL *table;
     char dllname[16], *p;
 
     /* Fix the name in case we have a full path and extension */
@@ -499,13 +242,10 @@ HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force )
 
     for (table = BuiltinDLLs; table->descr; table++)
         if (!lstrcmpi32A( table->descr->name, dllname )) break;
-    if (!table->descr) return 0;
+    if (!table->descr) return BUILTIN32_LoadModule( name, force );
     if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
 
-    if (table->flags & DLL_FLAG_WIN32)
-        return BUILTIN_DoLoadModule32( table );
-    else
-        return BUILTIN_DoLoadModule16( &table->descr->win16 );
+    return BUILTIN_DoLoadModule16( table->descr );
 }
 
 
@@ -584,45 +324,6 @@ LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd )
 }
 
 
-/***********************************************************************
- *           BUILTIN_GetEntryPoint32
- *
- * Return the name of the DLL entry point corresponding
- * to a relay entry point address. This is used only by relay debugging.
- *
- * This function _must_ return the real entry point to call
- * after the debug info is printed.
- */
-FARPROC32 BUILTIN_GetEntryPoint32( char *buffer, void *relay, DWORD *typemask )
-{
-    BUILTIN_DLL *dll;
-    int ordinal, i;
-    const WIN32_DESCRIPTOR *descr;
-
-    /* First find the module */
-
-    for (dll = BuiltinDLLs; dll->descr; dll++)
-        if ((dll->flags & DLL_FLAG_WIN32) &&
-            ((void *)dll->dbg_funcs <= relay) &&
-            ((void *)(dll->dbg_funcs + dll->descr->win32.nb_funcs) > relay))
-            break;
-    assert(dll->descr);
-    descr = &dll->descr->win32;
-
-    /* Now find the function */
-
-    ordinal = ((DWORD)relay-(DWORD)dll->dbg_funcs) / sizeof(DEBUG_ENTRY_POINT);
-    for (i = 0; i < descr->nb_names; i++)
-        if (descr->ordinals[i] == ordinal) break;
-    assert( i < descr->nb_names );
-
-    sprintf( buffer, "%s.%d: %s", descr->name, ordinal + descr->base,
-             descr->names[i] );
-    *typemask = descr->argtypes[ordinal];
-    return (FARPROC32)descr->functions[ordinal];
-}
-
-
 /**********************************************************************
  *	    BUILTIN_DefaultIntHandler
  *
@@ -644,7 +345,7 @@ void BUILTIN_DefaultIntHandler( CONTEXT *context )
  */
 BOOL32 BUILTIN_ParseDLLOptions( const char *str )
 {
-    BUILTIN_DLL *dll;
+    BUILTIN16_DLL *dll;
     const char *p;
 
     while (*str)
@@ -685,7 +386,7 @@ BOOL32 BUILTIN_ParseDLLOptions( const char *str )
 void BUILTIN_PrintDLLs(void)
 {
     int i;
-    BUILTIN_DLL *dll;
+    BUILTIN16_DLL *dll;
 
     fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
     fprintf(stderr,"Available DLLs:\n");

@@ -24,14 +24,15 @@ static MMTIME16 mmSysTimeMS;
 static MMTIME16 mmSysTimeSMPTE;
 
 typedef struct tagTIMERENTRY {
-    WORD wDelay;
-    WORD wResol;
+    UINT32	wDelay;
+    UINT32	wResol;
     FARPROC16 lpFunc;
-    HINSTANCE16 hInstance;
-    DWORD dwUser;
-    WORD wFlags;
-    WORD wTimerID;
-    WORD wCurTime;
+    HINSTANCE32	hInstance;
+    DWORD	dwUser;
+    UINT32	wFlags;
+    UINT32	wTimerID;
+    UINT32	wCurTime;
+    UINT32	iswin32;
     struct tagTIMERENTRY *Next;
 } TIMERENTRY, *LPTIMERENTRY;
 
@@ -58,6 +59,7 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
 	lpTimer->wCurTime--;
 	if (lpTimer->wCurTime == 0) {
 	    lpTimer->wCurTime = lpTimer->wDelay;
+
 	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // before CallBack16 !\n");
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
@@ -77,15 +79,19 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
  *	    PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
  *          guess current implementation via SetTimer has to be improved upon.		
  */
-
-		Callbacks->CallTimeFuncProc(lpTimer->lpFunc, lpTimer->wTimerID,
-                                            0, lpTimer->dwUser, 0, 0 );
+ 		if (lpTimer->iswin32)
+			lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
+		else
+			Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
+						    lpTimer->wTimerID,0,
+						    lpTimer->dwUser,0,0
+			);
 
 		dprintf_mmtime(stddeb, "MMSysTimeCallback // after CallBack16 !\n");
 		fflush(stdout);
 	    }
 	    if (lpTimer->wFlags & TIME_ONESHOT)
-		timeKillEvent(lpTimer->wTimerID);
+		timeKillEvent32(lpTimer->wTimerID);
 	}
 	lpTimer = lpTimer->Next;
     }
@@ -112,11 +118,24 @@ static void StartMMTime()
 }
 
 /**************************************************************************
+ * 				timeGetSystemTime	[WINMM.140]
+ */
+MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32 lpTime, UINT32 wSize)
+{
+    dprintf_mmsys(stddeb, "timeGetSystemTime32(%p, %u);\n", lpTime, wSize);
+    if (!mmTimeStarted)
+	StartMMTime();
+    lpTime->wType = TIME_MS;
+    lpTime->u.ms = mmSysTimeMS.u.ms;
+    return 0;
+}
+
+/**************************************************************************
  * 				timeGetSystemTime	[MMSYSTEM.601]
  */
-WORD WINAPI timeGetSystemTime(LPMMTIME16 lpTime, WORD wSize)
+MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 {
-    dprintf_mmsys(stddeb, "timeGetSystemTime(%p, %u);\n", lpTime, wSize);
+    dprintf_mmsys(stddeb, "timeGetSystemTime16(%p, %u);\n", lpTime, wSize);
     if (!mmTimeStarted)
 	StartMMTime();
     lpTime->wType = TIME_MS;
@@ -127,8 +146,49 @@ WORD WINAPI timeGetSystemTime(LPMMTIME16 lpTime, WORD wSize)
 /**************************************************************************
  * 				timeSetEvent		[MMSYSTEM.602]
  */
-WORD WINAPI timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
-                         DWORD dwUser, WORD wFlags)
+MMRESULT32 WINAPI timeSetEvent32(UINT32 wDelay,UINT32 wResol,
+				 LPTIMECALLBACK32 lpFunc,DWORD dwUser,
+				 UINT32 wFlags)
+{
+    WORD wNewID = 0;
+    LPTIMERENTRY lpNewTimer;
+    LPTIMERENTRY lpTimer = lpTimerList;
+
+    dprintf_mmtime(stddeb, "timeSetEvent32(%u, %u, %p, %08lX, %04X);\n",
+		  wDelay, wResol, lpFunc, dwUser, wFlags);
+    if (!mmTimeStarted)
+	StartMMTime();
+    lpNewTimer = (LPTIMERENTRY)xmalloc(sizeof(TIMERENTRY));
+    if (lpNewTimer == NULL)
+	return 0;
+    while (lpTimer != NULL) {
+	wNewID = MAX(wNewID, lpTimer->wTimerID);
+	lpTimer = lpTimer->Next;
+    }
+
+    lpNewTimer->Next = lpTimerList;
+    lpTimerList = lpNewTimer;
+    lpNewTimer->wTimerID = wNewID + 1;
+    lpNewTimer->wCurTime = wDelay;
+    lpNewTimer->wDelay = wDelay;
+    lpNewTimer->wResol = wResol;
+    lpNewTimer->lpFunc = (FARPROC16) lpFunc;
+    lpNewTimer->iswin32 = 1;
+    lpNewTimer->hInstance = GetTaskDS();
+	dprintf_mmtime(stddeb, "timeSetEvent // hInstance=%04X !\n", lpNewTimer->hInstance);
+	dprintf_mmtime(stddeb, "timeSetEvent // lpFunc=%p !\n", 
+				lpFunc);
+    lpNewTimer->dwUser = dwUser;
+    lpNewTimer->wFlags = wFlags;
+    return lpNewTimer->wTimerID;
+}
+
+/**************************************************************************
+ * 				timeSetEvent		[MMSYSTEM.602]
+ */
+MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
+				 LPTIMECALLBACK16 lpFunc,DWORD dwUser,
+				 UINT16 wFlags)
 {
     WORD wNewID = 0;
     LPTIMERENTRY lpNewTimer;
@@ -152,6 +212,7 @@ WORD WINAPI timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
     lpNewTimer->wDelay = wDelay;
     lpNewTimer->wResol = wResol;
     lpNewTimer->lpFunc = (FARPROC16) lpFunc;
+    lpNewTimer->iswin32 = 0;
     lpNewTimer->hInstance = GetTaskDS();
 	dprintf_mmtime(stddeb, "timeSetEvent // hInstance=%04X !\n", lpNewTimer->hInstance);
 	dprintf_mmtime(stddeb, "timeSetEvent // PTR_SEG_TO_LIN(lpFunc)=%p !\n", 
@@ -162,9 +223,9 @@ WORD WINAPI timeSetEvent(WORD wDelay, WORD wResol, LPTIMECALLBACK lpFunc,
 }
 
 /**************************************************************************
- * 				timeKillEvent		[MMSYSTEM.603]
+ * 				timeKillEvent		[WINMM.142]
  */
-WORD WINAPI timeKillEvent(WORD wID)
+MMRESULT32 WINAPI timeKillEvent32(UINT32 wID)
 {
     LPTIMERENTRY xlptimer,*lpTimer = &lpTimerList;
     while (*lpTimer) {
@@ -180,9 +241,17 @@ WORD WINAPI timeKillEvent(WORD wID)
 }
 
 /**************************************************************************
- * 				timeGetDevCaps		[MMSYSTEM.604]
+ * 				timeKillEvent		[MMSYSTEM.603]
  */
-WORD WINAPI timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
+MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
+{
+    return timeKillEvent32(wID);
+}
+
+/**************************************************************************
+ * 				timeGetDevCaps		[WINMM.139]
+ */
+MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32 lpCaps,UINT32 wSize)
 {
     dprintf_mmtime(stddeb, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
     if (!mmTimeStarted)
@@ -193,9 +262,34 @@ WORD WINAPI timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
 }
 
 /**************************************************************************
+ * 				timeGetDevCaps		[MMSYSTEM.604]
+ */
+MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
+{
+    dprintf_mmtime(stddeb, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
+    if (!mmTimeStarted)
+	StartMMTime();
+    lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
+    lpCaps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
+    return 0;
+}
+
+/**************************************************************************
+ * 				timeBeginPeriod		[WINMM.137]
+ */
+MMRESULT32 WINAPI timeBeginPeriod32(UINT32 wPeriod)
+{
+    dprintf_mmtime(stddeb, "timeBeginPeriod32(%u) !\n", wPeriod);
+    if (!mmTimeStarted)
+	StartMMTime();
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+        return TIMERR_NOCANDO;
+    return 0;
+}
+/**************************************************************************
  * 				timeBeginPeriod		[MMSYSTEM.605]
  */
-WORD WINAPI timeBeginPeriod(WORD wPeriod)
+MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 {
     dprintf_mmtime(stddeb, "timeBeginPeriod(%u) !\n", wPeriod);
     if (!mmTimeStarted)
@@ -206,9 +300,9 @@ WORD WINAPI timeBeginPeriod(WORD wPeriod)
 }
 
 /**************************************************************************
- * 				timeEndPeriod		[MMSYSTEM.606]
+ * 				timeEndPeriod		[WINMM.138]
  */
-WORD WINAPI timeEndPeriod(WORD wPeriod)
+MMRESULT32 WINAPI timeEndPeriod32(UINT32 wPeriod)
 {
     dprintf_mmtime(stddeb, "timeEndPeriod(%u) !\n", wPeriod);
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
@@ -217,13 +311,30 @@ WORD WINAPI timeEndPeriod(WORD wPeriod)
 }
 
 /**************************************************************************
- * 				timeGetTime    		[MMSYSTEM.607]
+ * 				timeEndPeriod		[MMSYSTEM.606]
+ */
+MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
+{
+    dprintf_mmtime(stddeb, "timeEndPeriod(%u) !\n", wPeriod);
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+        return TIMERR_NOCANDO;
+    return 0;
+}
+
+/**************************************************************************
+ * 				timeGetTime    [MMSYSTEM.607][WINMM.141]
  */
 DWORD WINAPI timeGetTime()
 {
+    static DWORD lasttick=0;
+    DWORD	newtick;
+
     dprintf_mmtime(stddeb, "timeGetTime(); !\n");
     if (!mmTimeStarted)
 	StartMMTime();
+    newtick = GetTickCount();
+    mmSysTimeMS.u.ms+=newtick-lasttick; /* FIXME: faked timer */
+    lasttick = newtick;
     dprintf_mmtime(stddeb, "timeGetTime() // Time = %ld\n",mmSysTimeMS.u.ms);
     return mmSysTimeMS.u.ms;
 }

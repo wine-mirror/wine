@@ -11,7 +11,7 @@
 #include "sysmetrics.h"
 #include "user.h"
 #include "heap.h"
-#include "shell.h"
+#include "cursoricon.h"
 #include "dialog.h"
 #include "syscolor.h"
 #include "menu.h"
@@ -66,8 +66,6 @@ static HBITMAP16 hbitmapRestoreD = 0;
  (((hit) == HTTOP) || ((hit) == HTTOPLEFT) || ((hit) == HTTOPRIGHT))
 #define ON_BOTTOM_BORDER(hit) \
  (((hit) == HTBOTTOM) || ((hit) == HTBOTTOMLEFT) || ((hit) == HTBOTTOMRIGHT))
-
-extern HCURSOR16 CURSORICON_IconToCursor( HICON16, BOOL32 );
 
 /***********************************************************************
  *           NC_AdjustRect

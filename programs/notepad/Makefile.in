@@ -1,0 +1,47 @@
+DEFS      = -DWINELIB
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = notepad
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+RCFLAGS   = -w32 -h
+
+LANGUAGES   = En De
+LICENSELANG = En
+
+MOSTSRCS = \
+	license.c \
+	notepad.c
+
+# Some strings need addresses >= 0x10000
+STRINGSRCS = \
+	$(LICENSELANG:%=License_%.c)
+
+RC_SRCS = \
+	notepad.rc \
+	$(LANGUAGES:%=%.rc)
+
+C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
+
+MOSTOBJS = $(MOSTSRCS:.c=.o)
+STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
+
+all: check_winerc $(PROGRAMS)
+
+depend:: $(RC_SRCS:.rc=.h)
+
+@MAKE_RULES@
+
+notepad: $(MOSTOBJS) $(STRINGOBJS)
+	$(CC) -o notepad $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
+
+install: dummy
+	$(INSTALL_PROGRAM) notepad $(bindir)/notepad
+
+$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
+
+dummy:
+
+### Dependencies:

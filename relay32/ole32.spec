@@ -3,12 +3,12 @@ type	win32
 
   1 stub BindMoniker
   2 stub CLSIDFromProgID
-  3 stub CLSIDFromString
-  4 stub CoBuildVersion
+  3 stdcall CLSIDFromString(str ptr) CLSIDFromString
+  4 stdcall CoBuildVersion() CoBuildVersion
   5 stub CoCreateFreeThreadedMarshaler
   6 stub CoCreateGuid
   7 stub CoCreateInstance
-  8 stub CoDisconnectObject
+  8 stdcall CoDisconnectObject(ptr long) CoDisconnectObject
   9 stub CoDosDateTimeToFileTime
  10 stub CoFileTimeNow
  11 stub CoFileTimeToDosDateTime
@@ -20,13 +20,13 @@ type	win32
  17 stub CoGetCurrentLogicalThreadId
  18 stub CoGetCurrentProcess
  19 stub CoGetInterfaceAndReleaseStream
- 20 stub CoGetMalloc
+ 20 stdcall CoGetMalloc(long ptr) CoGetMalloc
  21 stub CoGetMarshalSizeMax
  22 stub CoGetPSClsid
  23 stub CoGetStandardMarshal
  24 stub CoGetState
  25 stub CoGetTreatAsClass
- 26 stub CoInitialize
+ 26 stdcall CoInitialize(long) CoInitialize
  27 stub CoInitializeWOW
  28 stub CoIsHandlerConnected
  29 stub CoIsOle1Class
@@ -47,7 +47,7 @@ type	win32
  44 stub CoTaskMemFree
  45 stub CoTaskMemRealloc
  46 stub CoTreatAsClass
- 47 stub CoUninitialize
+ 47 stdcall CoUninitialize() CoUnitialize
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult
  50 stub CoUnmarshalInterface
@@ -151,7 +151,7 @@ type	win32
 148 stub StgOpenStorage
 149 stub StgOpenStorageOnILockBytes
 150 stub StgSetTimes
-151 stub StringFromCLSID
+151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID
 152 stub StringFromGUID2
 153 stub StringFromIID
 154 stub UtConvertDvtd16toDvtd32

@@ -427,7 +427,7 @@ type	win32
 423 cdecl localtime(ptr) localtime
 424 cdecl log(double) log
 425 cdecl log10(double) log10
-426 stub longjmp
+426 cdecl longjmp(ptr long) CRTDLL_longjmp
 427 cdecl malloc(ptr) CRTDLL_malloc
 428 cdecl mblen(ptr long) CRTDLL_mblen
 429 cdecl mbstowcs(ptr ptr long) CRTDLL_mbstowcs

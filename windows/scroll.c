@@ -387,7 +387,7 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
         else if( bUpdate ) hrgnUpdate = CreateRectRgn32( 0, 0, 0, 0 );
 
 	hDC = GetDCEx32( hwnd, hrgnClip, DCX_CACHE | DCX_USESTYLE | 
-		        (flags & SW_SCROLLCHILDREN) ? DCX_NOCLIPCHILDREN : 0 );
+		       ((flags & SW_SCROLLCHILDREN) ? DCX_NOCLIPCHILDREN : 0) );
 	if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
 	{
 	    POINT32 dst, src;

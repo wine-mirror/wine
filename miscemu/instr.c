@@ -22,20 +22,23 @@
  *           INSTR_ReplaceSelector
  *
  * Try to replace an invalid selector by a valid one.
- * For now, only selector 0x40 is handled here.
+ * The only selector where it is allowed to do "mov ax,40;mov es,ax"
+ * is the so called 'bimodal' selector 0x40, which points to the BIOS
+ * data segment. Used by (at least) Borland products (and programs compiled 
+ * using Borland products).
+ *
+ * See Undocumented Windows, Chapter 5, __0040.
  */
 static WORD INSTR_ReplaceSelector( SIGCONTEXT *context, WORD sel)
 {
     if (sel == 0x40)
     {
         static WORD sys_timer = 0;
-        fprintf( stderr, "Direct access to segment 0x40 (cs:ip=%04x:%04lx).\n",
-                 CS_sig(context), EIP_sig(context) );
         if (!sys_timer)
             sys_timer = CreateSystemTimer( 55, (FARPROC16)DOSMEM_Tick );
         return DOSMEM_BiosSeg;
     }
-    return 0;  /* Can't replace selector */
+    return 0;  /* Can't replace selector, crashdump */
 }
 
 

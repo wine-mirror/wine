@@ -89,6 +89,14 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
     return 1;
 }
 
+BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
+			     LPPRINTER_DEFAULTS32A pDefault)
+{
+    fprintf(stderr,"OpenPrinter32A(%s,%p,%p), stub\n",
+	    lpPrinterName, phPrinter, pDefault);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,

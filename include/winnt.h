@@ -24,6 +24,12 @@
 #define HEAP_WINE_SEGPTR                0x01000000  /* Not a Win32 flag */
 #define HEAP_WINE_CODESEG               0x02000000  /* Not a Win32 flag */
 
+/* Processor feature flags.  */
+#define PF_FLOATING_POINT_PRECISION_ERRATA    0
+#define PF_FLOATING_POINT_EMULATED            1
+#define PF_COMPARE_EXCHANGE_DOUBLE            2
+#define PF_MMX_INSTRUCTIONS_AVAILABLE         3
+
 /* The Win32 register context */
 
 #define CONTEXT_i386      0x00010000

@@ -10,8 +10,8 @@ type	win32
 007 stdcall getsockopt(long long long ptr ptr) WINSOCK_getsockopt32
 008 stdcall htonl(long) WINSOCK_htonl
 009 stdcall htons(long) WINSOCK_htons
-010 stdcall inet_addr(ptr) inet_addr
-011 stdcall inet_ntoa(ptr) inet_ntoa
+010 stdcall inet_addr(ptr) WINSOCK_inet_addr
+011 stdcall inet_ntoa(ptr) WINSOCK_inet_ntoa32
 012 stdcall ioctlsocket(long long ptr) WINSOCK_ioctlsocket32
 013 stdcall listen(long long) WINSOCK_listen32
 014 stdcall ntohl(long) WINSOCK_ntohl
@@ -31,14 +31,14 @@ type	win32
 055 stdcall getservbyname(str str) WINSOCK_getservbyname32
 056 stdcall getservbyport(long str) WINSOCK_getservbyport32
 057 stdcall gethostname(ptr long) WINSOCK_gethostname32
-101 stdcall WSAAsyncSelect(long long long long) WSAAsyncSelect
-102 stub WSAAsyncGetHostByAddr
+101 stdcall WSAAsyncSelect(long long long long) WSAAsyncSelect32
+102 stdcall WSAAsyncGetHostByAddr(long long ptr long long ptr long) WSAAsyncGetHostByAddr32
 103 stdcall WSAAsyncGetHostByName(long long ptr ptr long) WSAAsyncGetHostByName32
-104 stub WSAAsyncGetProtoByNumber
-105 stub WSAAsyncGetProtoByName
-106 stub WSAAsyncGetServByPort
-107 stub WSAAsyncGetServByName
-108 stub WSACancelAsyncRequest
+104 stdcall WSAAsyncGetProtoByNumber(long long long ptr long) WSAAsyncGetProtoByNumber32
+105 stdcall WSAAsyncGetProtoByName(long long ptr ptr long) WSAAsyncGetProtoByName32
+106 stdcall WSAAsyncGetServByPort(long long long ptr ptr long) WSAAsyncGetServByPort32
+107 stdcall WSAAsyncGetServByName(long long ptr ptr ptr long) WSAAsyncGetServByName32
+108 stdcall WSACancelAsyncRequest(long) WSACancelAsyncRequest32
 109 stdcall WSASetBlockingHook(ptr) WSASetBlockingHook32
 110 stdcall WSAUnhookBlockingHook() WSAUnhookBlockingHook32
 111 stdcall WSAGetLastError() WSAGetLastError
@@ -52,7 +52,7 @@ type	win32
 # applications *should* 'degrade gracefully if these are not present
 # ... as it is, they don't
 #1000 stub WSApSetPostRoutine
-1001 stdcall WsControl(long long long long long long) WsControl
+1001 stdcall WsControl(long long ptr ptr ptr ptr) WsControl
 1100 stdcall inet_network(ptr) inet_network
 1101 stdcall getnetbyname(ptr) getnetbyname
 #1102 stub rcmd
@@ -61,7 +61,7 @@ type	win32
 #1105 stub sethostname
 #1106 stub dn_expand
 1107 stub WSARecvEx
-1108 stub s_perror
+1108 stdcall s_perror(ptr) WS_s_perror
 1109 stub GetAddressByNameA
 1110 stub GetAddressByNameW
 #1111 stub EnumProtocolsA

@@ -653,6 +653,57 @@ BOOL32 WINAPI GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
 
 
 /***********************************************************************
+ *           GetDiskFreeSpaceEx32A   (KERNEL32.871)
+ */
+BOOL32 WINAPI GetDiskFreeSpaceEx32A( LPCSTR root,
+				     LPULARGE_INTEGER avail,
+				     LPULARGE_INTEGER total,
+				     LPULARGE_INTEGER totalfree)
+{
+    int	drive;
+    DWORD size,available;
+
+    if (!root) drive = DRIVE_GetCurrentDrive();
+    else
+    {
+        if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
+        {
+            fprintf( stderr, "GetDiskFreeSpaceExA: invalid root '%s'\n",
+		     root );
+            return FALSE;
+        }
+        drive = toupper(root[0]) - 'A';
+    }
+    if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
+    /*FIXME: Do we have the number of bytes available to the user? */
+    avail->HighPart = total->HighPart = 0;
+    avail->LowPart = available;
+    total->LowPart = size;
+    if(totalfree)
+      {
+	totalfree->HighPart =0;
+	totalfree->LowPart=  available;
+      }
+    return TRUE;
+}
+
+/***********************************************************************
+ *           GetDiskFreeSpaceEx32W   (KERNEL32.873)
+ */
+BOOL32 WINAPI GetDiskFreeSpaceEx32W( LPCWSTR root, LPULARGE_INTEGER avail,
+				     LPULARGE_INTEGER total,
+				     LPULARGE_INTEGER  totalfree)
+{
+    LPSTR xroot;
+    BOOL32 ret;
+
+    xroot = HEAP_strdupWtoA( GetProcessHeap(), 0, root);
+    ret = GetDiskFreeSpaceEx32A( xroot, avail, total, totalfree);
+    HeapFree( GetProcessHeap(), 0, xroot );
+    return ret;
+}
+
+/***********************************************************************
  *           GetDriveType16   (KERNEL.136)
  */
 UINT16 WINAPI GetDriveType16( UINT16 drive )

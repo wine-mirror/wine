@@ -1,5 +1,5 @@
 /*
- * Joystick functions
+ * joystick functions
  *
  * Copyright 1997 Andreas Mohr
  */
@@ -21,10 +21,10 @@
 static int count_use[4] = {0, 0, 0, 0};
 static int dev_stat;
 static int joy_nr_open = 0;
-static BOOL16 JoyCaptured = FALSE;
+static BOOL16 joyCaptured = FALSE;
 static HWND16 CaptureWnd[2] = {0, 0};
 static int joy_dev[2] = {-1, -1};
-static JOYINFO JoyCapData[2];
+static JOYINFO16 joyCapData[2];
 static unsigned int joy_threshold[2] = {0, 0};
 
 struct js_status
@@ -36,9 +36,9 @@ struct js_status
 
 
 /**************************************************************************
- *                              JoyOpenDriver           [internal]
+ *                              joyOpenDriver           [internal]
  */
-BOOL16 JoyOpenDriver(WORD wID)
+BOOL16 joyOpenDriver(WORD wID)
 {
 	char dev_name[] = "/dev/jsx";
 
@@ -52,9 +52,9 @@ BOOL16 JoyOpenDriver(WORD wID)
 }
 
 /**************************************************************************
- *                              JoyCloseDriver           [internal]
+ *                              joyCloseDriver           [internal]
  */
-void JoyCloseDriver(WORD wID)
+void joyCloseDriver(WORD wID)
 {
 	if (joy_dev[wID] >= 0) {
 		close(joy_dev[wID]);
@@ -64,9 +64,9 @@ void JoyCloseDriver(WORD wID)
 }
 
 /**************************************************************************
- *                              JoySendMessages           [internal]
+ *                              joySendMessages           [internal]
  */
-void JoySendMessages(void)
+void joySendMessages(void)
 {
 	int joy;
         struct js_status js;
@@ -75,67 +75,146 @@ void JoySendMessages(void)
 	for (joy=0; joy < 4; joy++) 
 	if (joy_dev[joy] >= 0) {
 		if (count_use[joy] > 250) {
-			JoyCloseDriver(joy);
+			joyCloseDriver(joy);
 			count_use[joy] = 0;
 		}
 		count_use[joy]++;
 	}
 	else return;
-        if (JoyCaptured == FALSE) return;
+        if (joyCaptured == FALSE) return;
 	dprintf_mmsys(stddeb, "JoySendMessages()\n");
         for (joy=0; joy < 4; joy++) {
-		if (JoyOpenDriver(joy) == FALSE) continue;
+		if (joyOpenDriver(joy) == FALSE) continue;
                 dev_stat = read(joy_dev[joy], &js, sizeof(js));
                 if (dev_stat == sizeof(js)) {
                         js.x = js.x*37;
                         js.y = js.y*37;
-                        if ((JoyCapData[joy].wXpos != js.x) || (JoyCapData[joy].wYpos != js.y)) {
+                        if ((joyCapData[joy].wXpos != js.x) || (joyCapData[joy].wYpos != js.y)) {
                                 SendMessage32A(CaptureWnd[joy], MM_JOY1MOVE + joy, js.buttons, MAKELONG(js.x, js.y));
-                                JoyCapData[joy].wXpos = js.x;
-                                JoyCapData[joy].wYpos = js.y;
+                                joyCapData[joy].wXpos = js.x;
+                                joyCapData[joy].wYpos = js.y;
                         }
-                        if (JoyCapData[joy].wButtons != js.buttons) {
-				unsigned int ButtonChanged = (WORD)(JoyCapData[joy].wButtons ^ js.buttons)<<8;
-                                if (JoyCapData[joy].wButtons < js.buttons)
+                        if (joyCapData[joy].wButtons != js.buttons) {
+				unsigned int ButtonChanged = (WORD)(joyCapData[joy].wButtons ^ js.buttons)<<8;
+                                if (joyCapData[joy].wButtons < js.buttons)
                                 SendMessage32A(CaptureWnd[joy], MM_JOY1BUTTONDOWN + joy, ButtonChanged, MAKELONG(js.x, js.y));
 				else
-                                if (JoyCapData[joy].wButtons > js.buttons)
+                                if (joyCapData[joy].wButtons > js.buttons)
                                 SendMessage32A(CaptureWnd[joy], MM_JOY1BUTTONUP
 + joy, ButtonChanged, MAKELONG(js.x, js.y));
-                                JoyCapData[joy].wButtons = js.buttons;
+                                joyCapData[joy].wButtons = js.buttons;
                         }
                 }
         }
 }
 
+
 /**************************************************************************
  * 				JoyGetNumDevs		[MMSYSTEM.101]
  */
-WORD WINAPI JoyGetNumDevs(void)
+UINT32 WINAPI joyGetNumDevs32(void)
 {
-int joy;
-WORD joy_cnt = 0;
+	return joyGetNumDevs16();
+}
+
+/**************************************************************************
+ * 				JoyGetNumDevs		[MMSYSTEM.101]
+ */
+UINT16 WINAPI joyGetNumDevs16(void)
+{
+    int joy;
+    UINT16 joy_cnt = 0;
 
     dprintf_mmsys(stddeb, "JoyGetNumDevs: ");
     for (joy=0; joy<4; joy++)
-	if (JoyOpenDriver(joy) == TRUE) {		
-		JoyCloseDriver(joy);
+	if (joyOpenDriver(joy) == TRUE) {		
+		joyCloseDriver(joy);
 		joy_cnt++;
-	}
+    }
     dprintf_mmsys(stddeb, "returning %d\n", joy_cnt);
     if (!joy_cnt) fprintf(stderr, "No joystick found - perhaps get joystick-0.8.0.tar.gz and load it as module or use Linux >= 2.1.45 to be able to use joysticks.\n");
     return joy_cnt;
 }
 
 /**************************************************************************
+ * 				JoyGetDevCaps		[WINMM.27]
+ */
+MMRESULT32 WINAPI joyGetDevCaps32A(UINT32 wID, LPJOYCAPS32A lpCaps,UINT32 wSize)
+{
+	JOYCAPS16	jc16;
+	MMRESULT16	ret = joyGetDevCaps16(wID,&jc16,sizeof(jc16));
+
+	lpCaps->wMid = jc16.wMid;
+	lpCaps->wPid = jc16.wPid;
+	lstrcpy32A(lpCaps->szPname,jc16.szPname);
+        lpCaps->wXmin = jc16.wXmin;
+        lpCaps->wXmax = jc16.wXmax;
+        lpCaps->wYmin = jc16.wYmin;
+        lpCaps->wYmax = jc16.wYmax;
+        lpCaps->wZmin = jc16.wZmin;
+        lpCaps->wZmax = jc16.wZmax;
+        lpCaps->wNumButtons = jc16.wNumButtons;
+        lpCaps->wPeriodMin = jc16.wPeriodMin;
+        lpCaps->wPeriodMax = jc16.wPeriodMax;
+
+        lpCaps->wRmin = jc16.wRmin;
+        lpCaps->wRmax = jc16.wRmax;
+        lpCaps->wUmin = jc16.wUmin;
+        lpCaps->wUmax = jc16.wUmax;
+        lpCaps->wVmin = jc16.wVmin;
+        lpCaps->wVmax = jc16.wVmax;
+        lpCaps->wCaps = jc16.wCaps;
+        lpCaps->wMaxAxes = jc16.wMaxAxes;
+        lpCaps->wNumAxes = jc16.wNumAxes;
+        lpCaps->wMaxButtons = jc16.wMaxButtons;
+        lstrcpy32A(lpCaps->szRegKey,jc16.szRegKey);
+        lstrcpy32A(lpCaps->szOEMVxD,jc16.szOEMVxD);
+	return ret;
+}
+
+/**************************************************************************
+ * 				JoyGetDevCaps		[WINMM.28]
+ */
+MMRESULT32 WINAPI joyGetDevCaps32W(UINT32 wID, LPJOYCAPS32W lpCaps,UINT32 wSize)
+{
+	JOYCAPS16	jc16;
+	MMRESULT16	ret = joyGetDevCaps16(wID,&jc16,sizeof(jc16));
+
+	lpCaps->wMid = jc16.wMid;
+	lpCaps->wPid = jc16.wPid;
+	lstrcpyAtoW(lpCaps->szPname,jc16.szPname);
+        lpCaps->wXmin = jc16.wXmin;
+        lpCaps->wXmax = jc16.wXmax;
+        lpCaps->wYmin = jc16.wYmin;
+        lpCaps->wYmax = jc16.wYmax;
+        lpCaps->wZmin = jc16.wZmin;
+        lpCaps->wZmax = jc16.wZmax;
+        lpCaps->wNumButtons = jc16.wNumButtons;
+        lpCaps->wPeriodMin = jc16.wPeriodMin;
+        lpCaps->wPeriodMax = jc16.wPeriodMax;
+
+        lpCaps->wRmin = jc16.wRmin;
+        lpCaps->wRmax = jc16.wRmax;
+        lpCaps->wUmin = jc16.wUmin;
+        lpCaps->wUmax = jc16.wUmax;
+        lpCaps->wVmin = jc16.wVmin;
+        lpCaps->wVmax = jc16.wVmax;
+        lpCaps->wCaps = jc16.wCaps;
+        lpCaps->wMaxAxes = jc16.wMaxAxes;
+        lpCaps->wNumAxes = jc16.wNumAxes;
+        lpCaps->wMaxButtons = jc16.wMaxButtons;
+        lstrcpyAtoW(lpCaps->szRegKey,jc16.szRegKey);
+        lstrcpyAtoW(lpCaps->szOEMVxD,jc16.szOEMVxD);
+	return ret;
+}
+/**************************************************************************
  * 				JoyGetDevCaps		[MMSYSTEM.102]
  */
-WORD WINAPI JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
+MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
 {
     dprintf_mmsys(stderr, "JoyGetDevCaps(%04X, %p, %d);\n",
             wID, lpCaps, wSize);
-    if (wSize != sizeof(*lpCaps)) return JOYERR_PARMS; /* FIXME: should we really return this error value ? */
-    if (JoyOpenDriver(wID) == TRUE) {
+    if (joyOpenDriver(wID) == TRUE) {
         lpCaps->wMid = MM_MICROSOFT;
         lpCaps->wPid = MM_PC_JOYSTICK;
         strcpy(lpCaps->szPname, "WineJoy"); /* joystick product name */
@@ -148,8 +227,22 @@ WORD WINAPI JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
         lpCaps->wNumButtons = 2;
         lpCaps->wPeriodMin = 0;
         lpCaps->wPeriodMax = 50; /* FIXME end */
-
-	JoyCloseDriver(wID);
+	if (wSize == sizeof(JOYCAPS16)) {
+		/* complete 95 structure */
+		lpCaps->wRmin = 0;
+		lpCaps->wRmax = 0xffff;
+		lpCaps->wUmin = 0;
+		lpCaps->wUmax = 0xffff;
+		lpCaps->wVmin = 0;
+		lpCaps->wVmax = 0xffff;
+		lpCaps->wCaps = 0;
+		lpCaps->wMaxAxes = 6;
+		lpCaps->wNumAxes = 2;
+		lpCaps->wMaxButtons = 3;
+		strcpy(lpCaps->szRegKey,"");
+		strcpy(lpCaps->szOEMVxD,"");
+	}
+	joyCloseDriver(wID);
         return JOYERR_NOERROR;
     }
     else
@@ -157,17 +250,32 @@ WORD WINAPI JoyGetDevCaps(WORD wID, LPJOYCAPS lpCaps, WORD wSize)
 }
 
 /**************************************************************************
+ * 				JoyGetPos	       	[WINMM.30]
+ */
+MMRESULT32 WINAPI joyGetPos32(UINT32 wID, LPJOYINFO32 lpInfo)
+{
+	JOYINFO16	ji;
+	MMRESULT16	ret = joyGetPos16(wID,&ji);
+
+	lpInfo->wXpos = ji.wXpos;
+	lpInfo->wYpos = ji.wYpos;
+	lpInfo->wZpos = ji.wZpos;
+	lpInfo->wButtons = ji.wButtons;
+	return ret;
+}
+
+/**************************************************************************
  * 				JoyGetPos	       	[MMSYSTEM.103]
  */
-WORD WINAPI JoyGetPos(WORD wID, LPJOYINFO lpInfo)
+MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
 {
         struct js_status js;
 
         dprintf_mmsys(stderr, "JoyGetPos(%04X, %p):", wID, lpInfo);
-        if (JoyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
+        if (joyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
 	dev_stat = read(joy_dev[wID], &js, sizeof(js));
 	if (dev_stat != sizeof(js)) {
-		JoyCloseDriver(wID);
+		joyCloseDriver(wID);
 		return JOYERR_UNPLUGGED; /* FIXME: perhaps wrong, but what should I return else ? */
 	}
 	count_use[wID] = 0;
@@ -182,9 +290,21 @@ WORD WINAPI JoyGetPos(WORD wID, LPJOYINFO lpInfo)
 }
 
 /**************************************************************************
+ * 				JoyGetThreshold		[WINMM.32]
+ */
+MMRESULT32 WINAPI joyGetThreshold32(UINT32 wID, LPUINT32 lpThreshold)
+{
+	UINT16		thresh;
+	MMRESULT16	ret = joyGetThreshold16(wID,&thresh);
+
+	*lpThreshold = thresh;
+	return ret;
+}
+
+/**************************************************************************
  * 				JoyGetThreshold		[MMSYSTEM.104]
  */
-WORD WINAPI JoyGetThreshold(WORD wID, LPWORD lpThreshold)
+MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 {
     dprintf_mmsys(stderr, "JoyGetThreshold(%04X, %p);\n", wID, lpThreshold);
     if (wID > 3) return JOYERR_PARMS;
@@ -193,13 +313,21 @@ WORD WINAPI JoyGetThreshold(WORD wID, LPWORD lpThreshold)
 }
 
 /**************************************************************************
+ * 				JoyReleaseCapture	[WINMM.33]
+ */
+MMRESULT32 WINAPI joyReleaseCapture32(UINT32 wID)
+{
+	return joyReleaseCapture16(wID);
+}
+
+/**************************************************************************
  * 				JoyReleaseCapture	[MMSYSTEM.105]
  */
-WORD WINAPI JoyReleaseCapture(WORD wID)
+MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
 {
     dprintf_mmsys(stderr, "JoyReleaseCapture(%04X);\n", wID);
-    JoyCaptured = FALSE;
-    JoyCloseDriver(wID);
+    joyCaptured = FALSE;
+    joyCloseDriver(wID);
     joy_dev[wID] = -1;
     CaptureWnd[wID] = 0;
     return JOYERR_NOERROR;
@@ -208,15 +336,23 @@ WORD WINAPI JoyReleaseCapture(WORD wID)
 /**************************************************************************
  * 				JoySetCapture		[MMSYSTEM.106]
  */
-WORD WINAPI JoySetCapture(HWND16 hWnd, WORD wID, WORD wPeriod, BOOL16 bChanged)
+MMRESULT32 WINAPI joySetCapture32(HWND32 hWnd,UINT32 wID,UINT32 wPeriod,BOOL32 bChanged)
+{
+	return joySetCapture16(hWnd,wID,wPeriod,bChanged);
+}
+
+/**************************************************************************
+ * 				JoySetCapture		[MMSYSTEM.106]
+ */
+MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd,UINT16 wID,UINT16 wPeriod,BOOL16 bChanged)
 {
 
     dprintf_mmsys(stderr, "JoySetCapture(%04X, %04X, %d, %d);\n",
 	    hWnd, wID, wPeriod, bChanged);
 
     if (!CaptureWnd[wID]) {
-	if (JoyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
-	JoyCaptured = TRUE;
+	if (joyOpenDriver(wID) == FALSE) return MMSYSERR_NODRIVER;
+	joyCaptured = TRUE;
 	CaptureWnd[wID] = hWnd;
 	return JOYERR_NOERROR;
     }
@@ -225,9 +361,16 @@ WORD WINAPI JoySetCapture(HWND16 hWnd, WORD wID, WORD wPeriod, BOOL16 bChanged)
 }
 
 /**************************************************************************
+ * 				JoySetThreshold		[WINMM.35]
+ */
+MMRESULT32 WINAPI joySetThreshold32(UINT32 wID, UINT32 wThreshold)
+{
+	return joySetThreshold16(wID,wThreshold);
+}
+/**************************************************************************
  * 				JoySetThreshold		[MMSYSTEM.107]
  */
-WORD WINAPI JoySetThreshold(WORD wID, WORD wThreshold)
+MMRESULT16 WINAPI joySetThreshold16(UINT16 wID, UINT16 wThreshold)
 {
     dprintf_mmsys(stderr, "JoySetThreshold(%04X, %d);\n", wID, wThreshold);
 
@@ -239,8 +382,8 @@ WORD WINAPI JoySetThreshold(WORD wID, WORD wThreshold)
 /**************************************************************************
  * 				JoySetCalibration	[MMSYSTEM.109]
  */
-WORD WINAPI JoySetCalibration(WORD wID)
+MMRESULT16 WINAPI joySetCalibration16(UINT16 wID)
 {
-    fprintf(stderr, "EMPTY STUB !!! JoySetCalibration(%04X);\n", wID);
+    fprintf(stderr, "EMPTY STUB !!! joySetCalibration(%04X);\n", wID);
     return JOYERR_NOCANDO;
 }

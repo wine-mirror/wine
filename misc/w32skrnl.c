@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-LPSTR WINAPI GetWin32sDirectory()
+LPSTR WINAPI GetWin32sDirectory(void)
 {
     static char *sysdir;
     LPSTR text;
@@ -24,7 +24,7 @@ LPSTR WINAPI GetWin32sDirectory()
 }
 
 /* FIXME */
-SEGPTR WINAPI _GetThunkBuff()
+SEGPTR WINAPI _GetThunkBuff(void)
 {
 	return (SEGPTR)NULL;
 }

@@ -236,6 +236,15 @@ BOOL32 WINAPI SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
     return TRUE;
 }
 
+/***********************************************************************
+ *           FixBrushOrgEx    (GDI32.102)
+ * SDK says discontinued, but in Win95 GDI32 this is the same as SetBrushOrgEx
+ */
+BOOL32 WINAPI FixBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
+{
+    return SetBrushOrgEx(hdc,x,y,oldorg);
+}
+
 
 /***********************************************************************
  *           GetSysColorBrush16    (USER.281)

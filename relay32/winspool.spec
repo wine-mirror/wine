@@ -96,7 +96,7 @@ type	win32
 193 stub GetPrinterDriverW
 194 stub GetPrinterW
 195 stub InitializeDll
-196 stub OpenPrinterA
+196 stdcall OpenPrinterA(str ptr ptr) OpenPrinter32A
 197 stub OpenPrinterW
 198 stub PlayGdiScriptOnPrinterIC
 199 stub PrinterMessageBoxA

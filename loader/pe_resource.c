@@ -53,7 +53,8 @@ HMODULE32toPE_MODREF(HMODULE32 hmod) {
  *
  */
 LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
-					   LPCWSTR name,DWORD root)
+					   LPCWSTR name,DWORD root,
+					   BOOL32 allowdefault)
 {
     int entrynum;
     LPIMAGE_RESOURCE_DIRECTORY_ENTRY entryTable;
@@ -64,7 +65,7 @@ LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
 		char	buf[10];
 
 		lstrcpynWtoA(buf,name+1,10);
-		return GetResDirEntryW(resdirptr,(LPCWSTR)atoi(buf),root);
+		return GetResDirEntryW(resdirptr,(LPCWSTR)atoi(buf),root,allowdefault);
 	}
 	entryTable = (LPIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
@@ -94,7 +95,7 @@ LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
 			root +
 			entryTable[entrynum].u2.s.OffsetToDirectory);
 	/* just use first entry if no default can be found */
-	if (!name && resdirptr->NumberOfIdEntries)
+	if (allowdefault && !name && resdirptr->NumberOfIdEntries)
 		return (LPIMAGE_RESOURCE_DIRECTORY) (
 			root +
 			entryTable[0].u2.s.OffsetToDirectory);
@@ -118,14 +119,14 @@ HANDLE32 PE_FindResourceEx32W(
 
     resdirptr = pem->pe_resource;
     root = (DWORD) resdirptr;
-    if ((resdirptr = GetResDirEntryW(resdirptr, type, root)) == NULL)
+    if ((resdirptr = GetResDirEntryW(resdirptr, type, root, FALSE)) == NULL)
 	return 0;
-    if ((resdirptr = GetResDirEntryW(resdirptr, name, root)) == NULL)
+    if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
 	return 0;
-    result = (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT32)lang, root);
+    result = (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT32)lang, root, FALSE);
 	/* Try LANG_NEUTRAL, too */
     if(!result)
-        return (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)0, root);
+        return (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
     return result;
 }
 
@@ -243,7 +244,7 @@ PE_EnumResourceNames32A(
 	typeW = HEAP_strdupAtoW(heap,0,type);
     else
 	typeW = (LPWSTR)type;
-    resdir = GetResDirEntryW(resdir,typeW,(DWORD)pem->pe_resource);
+    resdir = GetResDirEntryW(resdir,typeW,(DWORD)pem->pe_resource,FALSE);
     if (HIWORD(typeW))
     	HeapFree(heap,0,typeW);
     if (!resdir)
@@ -282,7 +283,7 @@ PE_EnumResourceNames32W(
     	return FALSE;
 
     resdir = (LPIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
-    resdir = GetResDirEntryW(resdir,type,(DWORD)pem->pe_resource);
+    resdir = GetResDirEntryW(resdir,type,(DWORD)pem->pe_resource,FALSE);
     if (!resdir)
     	return FALSE;
     et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
@@ -324,7 +325,7 @@ PE_EnumResourceLanguages32A(
 	nameW = HEAP_strdupAtoW(heap,0,name);
     else
     	nameW = (LPWSTR)name;
-    resdir = GetResDirEntryW(resdir,nameW,(DWORD)pem->pe_resource);
+    resdir = GetResDirEntryW(resdir,nameW,(DWORD)pem->pe_resource,FALSE);
     if (HIWORD(nameW))
     	HeapFree(heap,0,nameW);
     if (!resdir)
@@ -333,7 +334,7 @@ PE_EnumResourceLanguages32A(
 	typeW = HEAP_strdupAtoW(heap,0,type);
     else
 	typeW = (LPWSTR)type;
-    resdir = GetResDirEntryW(resdir,typeW,(DWORD)pem->pe_resource);
+    resdir = GetResDirEntryW(resdir,typeW,(DWORD)pem->pe_resource,FALSE);
     if (HIWORD(typeW))
     	HeapFree(heap,0,typeW);
     if (!resdir)
@@ -367,10 +368,10 @@ PE_EnumResourceLanguages32W(
     	return FALSE;
 
     resdir = (LPIMAGE_RESOURCE_DIRECTORY)pem->pe_resource;
-    resdir = GetResDirEntryW(resdir,name,(DWORD)pem->pe_resource);
+    resdir = GetResDirEntryW(resdir,name,(DWORD)pem->pe_resource,FALSE);
     if (!resdir)
     	return FALSE;
-    resdir = GetResDirEntryW(resdir,type,(DWORD)pem->pe_resource);
+    resdir = GetResDirEntryW(resdir,type,(DWORD)pem->pe_resource,FALSE);
     if (!resdir)
     	return FALSE;
     et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));

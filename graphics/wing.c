@@ -44,7 +44,7 @@ static int	__WinGOK = -1;
 
 static BITMAPINFOHEADER __bmpiWinG = { 0, 1, -1, 1, 8, BI_RGB, 1, 0, 0, 0, 0 };
 
-static void __initWinG()
+static void __initWinG(void)
 {
   if( __WinGOK < 0 )
   {

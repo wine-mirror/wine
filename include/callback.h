@@ -19,7 +19,8 @@ extern int (*IF1632_CallLargeStack)( int (*func)(), void *arg );
 
 typedef struct
 {
-    VOID (CALLBACK *CallRegisterProc)( CONTEXT *, INT32 );
+    LONG (CALLBACK *CallRegisterShortProc)( CONTEXT *, INT32 );
+    LONG (CALLBACK *CallRegisterLongProc)( CONTEXT *, INT32 );
     VOID (CALLBACK *CallTaskRescheduleProc)(void);
     VOID (CALLBACK *CallFrom16WndProc)(void);
     LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
@@ -36,6 +37,7 @@ typedef struct
     VOID (CALLBACK *CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
     WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
     VOID (CALLBACK *CallSystemTimerProc)( FARPROC16 );
+    DWORD (CALLBACK *CallWOWCallbackProc)( FARPROC16, DWORD );
     LRESULT (CALLBACK *CallASPIPostProc)( FARPROC16, SEGPTR );
     /* Following are the graphics driver callbacks */
     WORD (CALLBACK *CallDrvControlProc)( FARPROC16, SEGPTR, WORD,

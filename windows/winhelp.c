@@ -28,21 +28,28 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
 BOOL32 WINAPI WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
                           DWORD dwData )
 {
-	static WORD WM_WINHELP=0;
+	static WORD WM_WINHELP = 0;
 	HWND32 hDest;
 	LPWINHELP lpwh;
 	HGLOBAL16 hwh;
 	int size,dsize,nlen;
         if (wCommand != HELP_QUIT)  /* FIXME */
-            if(WinExec32("winhelp.exe -x",SW_SHOWNORMAL)<=32)
+	{
+            if (WinExec32("winhelp.exe -x",SW_SHOWNORMAL) <= 32)
 		return FALSE;
-	/* FIXME: Should be directed yield, to let winhelp open the window */
-	Yield16();
-	if(!WM_WINHELP) {
+
+	    /* NOTE: Probably, this should be directed yield, 
+		     to let winhelp open the window in all cases. */
+	    Yield16();
+	}
+
+	if(!WM_WINHELP) 
+	{
 		WM_WINHELP=RegisterWindowMessage32A("WM_WINHELP");
 		if(!WM_WINHELP)
 			return FALSE;
 	}
+
 	hDest = FindWindow32A( "MS_WINHELP", NULL );
 	if(!hDest)
 		if(wCommand == HELP_QUIT)

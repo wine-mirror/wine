@@ -14,6 +14,8 @@
 typedef struct
 {
     int          style;
+    int          endcap;
+    int          linejoin;
     int          pixel;
     int          width;
     char *       dashes;

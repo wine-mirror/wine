@@ -605,7 +605,7 @@ static DWORD ANIM_mciSet(UINT16 wDevID, DWORD dwFlags, LPMCI_SET_PARMS lpParms)
 * 				ANIM_DriverProc		[sample driver]
 */
 LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-							DWORD dwParam1, DWORD dwParam2)
+		     DWORD dwParam1, DWORD dwParam2)
 {
 #if defined(linux) || defined(__FreeBSD__)
 	switch(wMsg) {

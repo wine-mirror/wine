@@ -10,13 +10,14 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "module.h"
+#include "ldt.h"
 
 /***********************************************************************
  *           Get16DLLAddress       (KERNEL32)
  *
  * rough guesswork, but seems to work
  */
-FARPROC16 Get16DLLAddress(HMODULE32 handle, LPSTR name) {
+FARPROC16 WINAPI Get16DLLAddress(HMODULE16 handle, LPSTR name) {
         if (!handle) handle=GetModuleHandle16("WIN32S16");
         return (FARPROC16)WIN32_GetProcAddress16(handle, name);
 }

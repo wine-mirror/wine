@@ -2070,7 +2070,7 @@ fi
 
 
 
-for ac_func in memmove tcgetattr usleep wait4 waitpid
+for ac_func in memmove strerror tcgetattr usleep wait4 waitpid
 do
 echo $ac_n "checking for $ac_func""... $ac_c" 1>&6
 echo "configure:2077: checking for $ac_func" >&5
@@ -2523,10 +2523,12 @@ multimedia/Makefile
 objects/Makefile
 ole/Makefile
 programs/Makefile
+programs/notepad/Makefile
 programs/progman/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 rc/Makefile
+relay32/Makefile
 resources/Makefile
 scheduler/Makefile
 tools/Makefile
@@ -2647,10 +2649,12 @@ multimedia/Makefile
 objects/Makefile
 ole/Makefile
 programs/Makefile
+programs/notepad/Makefile
 programs/progman/Makefile
 programs/winhelp/Makefile
 programs/winver/Makefile
 rc/Makefile
+relay32/Makefile
 resources/Makefile
 scheduler/Makefile
 tools/Makefile

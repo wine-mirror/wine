@@ -39,7 +39,6 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPS16 lpCaps, DWORD dwSize)
 {
 #ifdef linux
 	int 		mixer,mask;
-	struct	mixer_info	mi;
 
 	dprintf_mmaux(stddeb,"MIX_GetDevCaps(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
 	if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
@@ -47,16 +46,10 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPS16 lpCaps, DWORD dwSize)
 		dprintf_mmaux(stddeb,"MIX_GetDevCaps // mixer device not available !\n");
 		return MMSYSERR_NOTENABLED;
 	}
-	if (ioctl(mixer, SOUND_MIXER_INFO, &mi) == -1) {
-		close(mixer);
-		perror("ioctl mixer SOUND_MIXER_INFO");
-		return MMSYSERR_NOTENABLED;
-	}
-	fprintf(stderr,"SOUND_MIXER_INFO returns { \"%s\",\"%s\" }\n",mi.id,mi.name);
 	lpCaps->wMid = 0xAA;
 	lpCaps->wPid = 0x55;
 	lpCaps->vDriverVersion = 0x0100;
-	strcpy(lpCaps->szPname,mi.name);
+	strcpy(lpCaps->szPname,"WINE Generic Mixer");
 	if (ioctl(mixer, SOUND_MIXER_READ_DEVMASK, &mask) == -1) {
 		close(mixer);
 		perror("ioctl mixer SOUND_MIXER_DEVMASK");

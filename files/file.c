@@ -147,7 +147,7 @@ void FILE_SetDosError(void)
     int save_errno = errno; /* errno gets overwritten by printf */
 
     dprintf_file(stddeb, "FILE_SetDosError: errno = %d %s\n", errno,
-		 sys_errlist[errno] );
+		 strerror(errno) );
     switch (save_errno)
     {
     case EAGAIN:
@@ -531,7 +531,7 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     char temppath[144];
 
     if (!(drive & ~TF_FORCEDRIVE)) /* drive 0 means current default drive */
-        drive |= DRIVE_GetCurrentDrive();
+        drive |= DRIVE_GetCurrentDrive() + 'A';
 
     if ((drive & TF_FORCEDRIVE) &&
         !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
@@ -542,12 +542,17 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     }
 
     if (drive & TF_FORCEDRIVE)
-        sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
+    {
+        sprintf( temppath, "%c:\\", drive & ~TF_FORCEDRIVE );
+	lstrcpyn32A( temppath + 3,
+                     DRIVE_GetDosCwd( toupper(drive & ~TF_FORCEDRIVE) - 'A'),
+                     129 );
+    }
     else
     {
         GetTempPath32A( 132, temppath );
-        strcat( temppath, "\\" );
     }
+    strcat( temppath, "\\" );
     return (UINT16)GetTempFileName32A( temppath, prefix, unique, buffer );
 }
 
@@ -1603,6 +1608,8 @@ static BOOL32 DOS_AddLock(FILE_OBJECT *file, struct flock *f)
   /* check if lock overlaps a current lock for the same file */
   for (curr = locks; curr; curr = curr->next) {
     if (strcmp(curr->unix_name, file->unix_name) == 0) {
+      if ((f->l_start == curr->base) && (f->l_len == curr->len))
+	return TRUE;/* region is identic */
       if ((f->l_start < (curr->base + curr->len)) &&
 	  ((f->l_start + f->l_len) > curr->base)) {
 	/* region overlaps */

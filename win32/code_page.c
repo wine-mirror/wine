@@ -85,54 +85,82 @@ BOOL32 WINAPI IsValidCodePage(UINT32 CodePage)
 /***********************************************************************
  *              MultiByteToWideChar                (KERNEL32.392)
  */
-int WINAPI MultiByteToWideChar(UINT32 page, DWORD flags, char *src, int srclen,
+int WINAPI MultiByteToWideChar(UINT32 page, DWORD flags,
+			       const char *src, int srclen,
                                WCHAR *dst, int dstlen)
 {
-    if (srclen == -1)
-   	 srclen = lstrlen32A(src)+1;
-    if (!dstlen || !dst)
-         return srclen;
+    int ret;
 
-    lstrcpynAtoW(dst,src,srclen); /* FIXME */
-    return srclen-1;
+    if (srclen == -1)
+	srclen = lstrlen32A(src)+1;
+    if (!dstlen || !dst)
+	return srclen;
+
+    ret = srclen;
+    while (srclen > 0 && dstlen > 0) {
+	*dst = (WCHAR)(unsigned char)*src;
+	if (!*src)
+	    return ret;
+	dst++;    src++;
+	dstlen--; srclen--;
+    }
+    if (dstlen == 0) {
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return 0;
+    }
+    return ret;
 }
 
 int WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,
                                char *dst, int dstlen, char* defchar, BOOL32 *used)
 {
-	int count = 0;
-	int dont_copy= (dstlen==0);
-	if(page!=GetACP() && page!=CP_OEMCP && page!=CP_ACP)
-		fprintf(stdnimp,"Conversion in CP %d not supported\n",page);
+    int count = 0;
+    int eos = 0;
+    int dont_copy= (dstlen==0);
+    if (page!=GetACP() && page!=CP_OEMCP && page!=CP_ACP)
+	fprintf(stdnimp,"Conversion in CP %d not supported\n",page);
 #if 0
-	if(flags)
-		fprintf(stdnimp,"WideCharToMultiByte flags %lx not supported\n",flags);
+    if (flags)
+	fprintf(stdnimp,"WideCharToMultiByte flags %lx not supported\n",flags);
 #endif
-	if(used)
-		*used=0;
-	while(srclen && (dont_copy || dstlen))
-	{
-		if(!dont_copy){
-			if(*src<256)
-				*dst = *src;
-			else
-			{
-				/* FIXME: Is this correct ?*/
-				if(flags & WC_DEFAULTCHAR){
-					*dst = defchar ? *defchar : '?';
-					if(used)*used=1;
-				}
-			}
-			dstlen--;
-			dst++;
-		}
-		count++;
-		if(!*src)
-			break;
-		if(srclen!=-1)srclen--;
-		src++;
+    if(used)
+	*used=0;
+    if (srclen == -1)
+	srclen = lstrlen32W(src)+1;
+    while(srclen && (dont_copy || dstlen))
+    {
+	if(!dont_copy){
+	    if(*src<256)
+		*dst = *src;
+	    else
+	    {
+		/* ??? The WC_DEFAULTCHAR flag only gets used in
+		 * combination with the WC_COMPOSITECHECK flag or at
+		 * least this is what it seems from using the function
+		 * on NT4.0 in combination with reading the documentation.
+		 */
+		*dst = defchar ? *defchar : '?';
+		if(used)*used=1;
+	    }
+	    dstlen--;
+	    dst++;
 	}
+	count++;
+	srclen--;
+	if(!*src) {
+	    eos = 1;
+	    break;
+	}
+	src++;
+    }
+    if (dont_copy)
 	return count;
+
+    if (!eos && srclen > 0) {
+	SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	return 0;
+    }
+    return count;
 }
 
 

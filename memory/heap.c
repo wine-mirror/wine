@@ -885,7 +885,7 @@ LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
         dprintf_heap( stddeb, "HeapAlloc(%08x,%08lx,%08lx): returning NULL\n",
                   heap, flags, size  );
         if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
-        SetLastError( ERROR_OUTOFMEMORY );
+        SetLastError( ERROR_COMMITMENT_LIMIT );
         return NULL;
     }
 
@@ -911,7 +911,6 @@ LPVOID WINAPI HeapAlloc( HANDLE32 heap, DWORD flags, DWORD size )
     else if (debugging_heap) memset( pInUse + 1, ARENA_INUSE_FILLER, size );
 
     if (!(flags & HEAP_NO_SERIALIZE)) HeapUnlock( heap );
-    SetLastError( 0 );
 
     dprintf_heap( stddeb, "HeapAlloc(%08x,%08lx,%08lx): returning %08lx\n",
                   heap, flags, size, (DWORD)(pInUse + 1) );

@@ -1,0 +1,8 @@
+
+ - En.rc is translated from german version of Notepad. 
+   I don't know what the real strings are, as I do not have an english
+   copy of Notepad. Please check strings in En.rc and submit corrections.
+
+ - create new *.rc files for all languages you know.
+
+

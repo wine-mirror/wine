@@ -41,9 +41,9 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "task.h"
+#include "user.h"
 
 extern UINT16 COLOR_GetSystemPaletteSize();
-extern HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16, HMODULE16, HRSRC16 );
 
 Cursor CURSORICON_XCursor = None;    /* Current X cursor */
 static HCURSOR32 hActiveCursor = 0;  /* Active cursor */
@@ -437,6 +437,27 @@ HICON16 WINAPI CreateIconFromResourceEx16( LPBYTE bits, UINT16 cbSize, BOOL16 bI
 	return CURSORICON_CreateFromResource( pTask->hInstance, 0, bits, cbSize, bIcon, dwVersion,
 					      width, height, cFlag );
     return 0;
+}
+
+
+ /**********************************************************************
+ *          CreateIconFromResource          (USER32)
+ */
+HICON32 WINAPI CreateIconFromResource32( LPBYTE bits, UINT32 cbSize,
+                                           BOOL32 bIcon, DWORD dwVersion)
+/*FIXME: bon@elektron.ikp.physik.tu-darmstadt.de 971130: Test with weditres
+	 showed only blank layout. Couldn't determine if this is a problem
+	 with CreateIconFromResource32 or the application. The application
+	 windows behaves strange (no redraw) before  CreateIconFromResource32
+*/
+{
+    HICON32 ret;
+    ret = CreateIconFromResourceEx16( bits, cbSize, bIcon, dwVersion, 0,0,0);
+    fprintf(stdnimp,"CreateIconFromResource3 probably only a stub\n");
+    dprintf_icon(stddeb, 
+	"CreateIconFromResource32 %s at %p size %d winver %d return 0x%04x\n",
+                 (bIcon)?"Icon":"Cursor",bits,cbSize,bIcon,ret);
+    return ret;
 }
 
 

@@ -18,46 +18,6 @@
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 
-  /* Default DC values */
-static const WIN_DC_INFO DC_defaultValues =
-{
-    0,                      /* flags */
-    NULL,                   /* devCaps */
-    0,                      /* hClipRgn */
-    0,                      /* hVisRgn */
-    0,                      /* hGCClipRgn */
-    STOCK_BLACK_PEN,        /* hPen */
-    STOCK_WHITE_BRUSH,      /* hBrush */
-    STOCK_SYSTEM_FONT,      /* hFont */
-    0,                      /* hBitmap */
-    0,                      /* hFirstBitmap */
-    0,                      /* hDevice */
-    STOCK_DEFAULT_PALETTE,  /* hPalette */
-    R2_COPYPEN,             /* ROPmode */
-    ALTERNATE,              /* polyFillMode */
-    BLACKONWHITE,           /* stretchBltMode */
-    ABSOLUTE,               /* relAbsMode */
-    OPAQUE,                 /* backgroundMode */
-    RGB( 255, 255, 255 ),   /* backgroundColor */
-    RGB( 0, 0, 0 ),         /* textColor */
-    0,                      /* backgroundPixel */
-    0,                      /* textPixel */
-    0,                      /* brushOrgX */
-    0,                      /* brushOrgY */
-    TA_LEFT | TA_TOP | TA_NOUPDATECP,  /* textAlign */
-    0,                      /* charExtra */
-    0,                      /* breakTotalExtra */
-    0,                      /* breakCount */
-    0,                      /* breakExtra */
-    0,                      /* breakRem */
-    1,                      /* bitsPerPixel */
-    MM_TEXT,                /* MapMode */
-    GM_COMPATIBLE,          /* GraphicsMode */
-    0,                      /* DCOrgX */
-    0,                      /* DCOrgY */
-    0,                      /* CursPosX */
-    0                       /* CursPosY */
-};
 
   /* ROP code to GC function conversion */
 const int DC_XROPfunction[16] =
@@ -134,6 +94,54 @@ void DC_FillDevCaps( DeviceCaps * caps )
 
 
 /***********************************************************************
+ *           DC_Init_DC_INFO
+ *
+ * Fill the WIN_DC_INFO structure.
+ */
+static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
+{
+    win_dc_info->flags           = 0;
+    win_dc_info->devCaps         = NULL;
+    win_dc_info->hClipRgn        = 0;
+    win_dc_info->hVisRgn         = 0;
+    win_dc_info->hGCClipRgn      = 0;
+    win_dc_info->hPen            = STOCK_BLACK_PEN;
+    win_dc_info->hBrush          = STOCK_WHITE_BRUSH;
+    win_dc_info->hFont           = STOCK_SYSTEM_FONT;
+    win_dc_info->hBitmap         = 0;
+    win_dc_info->hFirstBitmap    = 0;
+    win_dc_info->hDevice         = 0;
+    win_dc_info->hPalette        = STOCK_DEFAULT_PALETTE;
+    win_dc_info->ROPmode         = R2_COPYPEN;
+    win_dc_info->polyFillMode    = ALTERNATE;
+    win_dc_info->stretchBltMode  = BLACKONWHITE;
+    win_dc_info->relAbsMode      = ABSOLUTE;
+    win_dc_info->backgroundMode  = OPAQUE;
+    win_dc_info->backgroundColor = RGB( 255, 255, 255 );
+    win_dc_info->textColor       = RGB( 0, 0, 0 );
+    win_dc_info->backgroundPixel = 0;
+    win_dc_info->textPixel       = 0;
+    win_dc_info->brushOrgX       = 0;
+    win_dc_info->brushOrgY       = 0;
+    win_dc_info->textAlign       = TA_LEFT | TA_TOP | TA_NOUPDATECP;
+    win_dc_info->charExtra       = 0;
+    win_dc_info->breakTotalExtra = 0;
+    win_dc_info->breakCount      = 0;
+    win_dc_info->breakExtra      = 0;
+    win_dc_info->breakRem        = 0;
+    win_dc_info->bitsPerPixel    = 1;
+    win_dc_info->MapMode         = MM_TEXT;
+    win_dc_info->GraphicsMode    = GM_COMPATIBLE;
+    win_dc_info->DCOrgX          = 0;
+    win_dc_info->DCOrgY          = 0;
+    win_dc_info->CursPosX        = 0;
+    win_dc_info->CursPosY        = 0;
+
+    PATH_InitGdiPath(&win_dc_info->path);
+}
+
+
+/***********************************************************************
  *           DC_AllocDC
  */
 DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
@@ -159,7 +167,8 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     dc->vportExtX  = 1;
     dc->vportExtY  = 1;
 
-    memcpy( &dc->w, &DC_defaultValues, sizeof(DC_defaultValues) );
+    DC_Init_DC_INFO( &dc->w );
+
     return dc;
 }
 
@@ -349,8 +358,32 @@ BOOL32 DC_SetupGCForPen( DC * dc )
     }
     else val.line_style = LineSolid;
     val.line_width = dc->u.x.pen.width;
-    val.cap_style  = (val.line_width <= 1) ? CapNotLast : CapRound;
-    val.join_style = JoinMiter;
+    if (val.line_width <= 1) {
+	val.cap_style = CapNotLast;
+    } else {
+	switch (dc->u.x.pen.endcap)
+	{
+	case PS_ENDCAP_SQUARE:
+	    val.cap_style = CapProjecting;
+	    break;
+	case PS_ENDCAP_FLAT:
+	    val.cap_style = CapButt;
+	    break;
+	case PS_ENDCAP_ROUND:
+	default:
+	    val.cap_style = CapRound;
+	}
+    }
+    switch (dc->u.x.pen.linejoin)
+    {
+    case PS_JOIN_BEVEL:
+	val.join_style = JoinBevel;
+    case PS_JOIN_MITER:
+	val.join_style = JoinMiter;
+    case PS_JOIN_ROUND:
+    default:
+	val.join_style = JoinRound;
+    }
     XChangeGC( display, dc->u.x.gc, 
 	       GCFunction | GCForeground | GCBackground | GCLineWidth |
 	       GCLineStyle | GCCapStyle | GCJoinStyle | GCFillStyle, &val );
@@ -453,6 +486,8 @@ HDC16 WINAPI GetDCState( HDC16 hdc )
     newdc->hSelf = (HDC32)handle;
     newdc->saveLevel = 0;
 
+    PATH_InitGdiPath( &newdc->w.path );
+    
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
     newdc->w.hGCClipRgn = newdc->w.hVisRgn = 0;
@@ -572,6 +607,21 @@ INT32 WINAPI SaveDC32( HDC32 hdc )
       return 0;
     }
     dcs = (DC *) GDI_HEAP_LOCK( hdcs );
+
+    /* Copy path. The reason why path saving / restoring is in SaveDC/
+     * RestoreDC and not in GetDCState/SetDCState is that the ...DCState
+     * functions are only in Win16 (which doesn't have paths) and that
+     * SetDCState doesn't allow us to signal an error (which can happen
+     * when copying paths).
+     */
+    if (!PATH_AssignGdiPath( &dcs->w.path, &dc->w.path ))
+    {
+        GDI_HEAP_UNLOCK( hdc );
+	GDI_HEAP_UNLOCK( hdcs );
+	DeleteDC32( hdcs );
+	return 0;
+    }
+    
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
     dprintf_dc(stddeb, "SaveDC(%04x): returning %d\n", hdc, dc->saveLevel+1 );
@@ -597,6 +647,7 @@ BOOL16 WINAPI RestoreDC16( HDC16 hdc, INT16 level )
 BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
 {
     DC * dc, * dcs;
+    BOOL32 success;
 
     dprintf_dc(stddeb, "RestoreDC: %04x %d\n", hdc, level );
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -620,6 +671,7 @@ BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
       return FALSE;
     }
     
+    success=TRUE;
     while (dc->saveLevel >= level)
     {
 	HDC16 hdcs = dc->header.hNext;
@@ -629,11 +681,18 @@ BOOL32 WINAPI RestoreDC32( HDC32 hdc, INT32 level )
 	  return FALSE;
 	}	
 	dc->header.hNext = dcs->header.hNext;
-	if (--dc->saveLevel < level) SetDCState( hdc, hdcs );
+	if (--dc->saveLevel < level)
+	{
+	    SetDCState( hdc, hdcs );
+            if (!PATH_AssignGdiPath( &dc->w.path, &dcs->w.path ))
+		/* FIXME: This might not be quite right, since we're
+		 * returning FALSE but still destroying the saved DC state */
+	        success=FALSE;
+	}
 	DeleteDC32( hdcs );
     }
     GDI_HEAP_UNLOCK( hdc );
-    return TRUE;
+    return success;
 }
 
 
@@ -822,6 +881,8 @@ BOOL32 WINAPI DeleteDC32( HDC32 hdc )
     if (dc->w.hClipRgn) DeleteObject32( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject32( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject32( dc->w.hGCClipRgn );
+    
+    PATH_DestroyGdiPath(&dc->w.path);
     
     return GDI_FreeObject( hdc );
 }

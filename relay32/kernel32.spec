@@ -169,7 +169,7 @@ type	win32
 178 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 179 stub CreateToolhelp32Snapshot
 180 stub DebugActiveProcess
-181 register DebugBreak() DebugBreak32
+181 stub DebugBreak
 182 stub DefineDosDeviceA
 183 stub DefineDosDeviceW
 184 stdcall DeleteAtom(long) DeleteAtom32
@@ -236,11 +236,11 @@ type	win32
 245 stdcall FindAtomW(wstr) FindAtom32W
 247 stub FindCloseChangeNotification
 246 stdcall FindClose(long) FindClose32
-248 stub FindFirstChangeNotificationA
+248 stdcall FindFirstChangeNotificationA(str long long) FindFirstChangeNotification32A
 249 stub FindFirstChangeNotificationW
 250 stdcall FindFirstFileA(str ptr) FindFirstFile32A
 251 stdcall FindFirstFileW(wstr ptr) FindFirstFile32W
-252 stub FindNextChangeNotification
+252 stdcall FindNextChangeNotification(long) FindNextChangeNotification
 253 stdcall FindNextFileA(long ptr) FindNextFile32A
 254 stdcall FindNextFileW(long ptr) FindNextFile32W
 255 stdcall FindResourceA(long str str) FindResource32A
@@ -284,7 +284,7 @@ type	win32
 293 stdcall GetComputerNameA(ptr ptr) GetComputerName32A
 294 stdcall GetComputerNameW(ptr ptr) GetComputerName32W
 295 stdcall GetConsoleCP() GetConsoleCP
-296 stub GetConsoleCursorInfo
+296 stdcall GetConsoleCursorInfo(long ptr) GetConsoleCursorInfo32
 297 stdcall GetConsoleMode(long ptr) GetConsoleMode
 298 stdcall GetConsoleOutputCP() GetConsoleOutputCP
 299 stdcall GetConsoleScreenBufferInfo(long ptr) GetConsoleScreenBufferInfo
@@ -346,7 +346,7 @@ type	win32
 355 stub GetNumberFormatA
 356 stub GetNumberFormatW
 357 stdcall GetNumberOfConsoleInputEvents(long ptr) GetNumberOfConsoleInputEvents
-358 stub GetNumberOfConsoleMouseButtons
+358 stdcall GetNumberOfConsoleMouseButtons(long ptr) GetNumberOfConsoleMouseButtons
 359 stdcall GetOEMCP() GetOEMCP
 360 stub GetOverlappedResult
 361 stdcall GetPriorityClass(long) GetPriorityClass
@@ -538,8 +538,8 @@ type	win32
 547 stub OpenVxDHandle
 548 stdcall OutputDebugStringA(str) OutputDebugString32A
 549 stdcall OutputDebugStringW(wstr) OutputDebugString32W
-550 stub PeekConsoleInputA
-551 stub PeekConsoleInputW
+550 stdcall PeekConsoleInputA(ptr ptr long ptr) PeekConsoleInput32A
+551 stdcall PeekConsoleInputW(ptr ptr long ptr) PeekConsoleInput32W
 552 stub PeekNamedPipe
 553 stub PostQueuedCompletionStatus
 554 stub PrepareTape
@@ -590,7 +590,7 @@ type	win32
 599 register SMapLS_IP_EBP_36() SMapLS_IP_EBP_36
 600 register SMapLS_IP_EBP_40() SMapLS_IP_EBP_40
 601 register SMapLS_IP_EBP_8() SMapLS_IP_EBP_8
-602 stub SUnMapLS
+602 register SUnMapLS() SUnMapLS
 603 register SUnMapLS_IP_EBP_12() SUnMapLS_IP_EBP_12
 604 register SUnMapLS_IP_EBP_16() SUnMapLS_IP_EBP_16
 605 register SUnMapLS_IP_EBP_20() SUnMapLS_IP_EBP_20
@@ -614,7 +614,7 @@ type	win32
 623 stub SetConsoleActiveScreenBuffer
 624 stub SetConsoleCP
 625 stdcall SetConsoleCtrlHandler(ptr long) SetConsoleCtrlHandler
-626 stub SetConsoleCursorInfo
+626 stdcall SetConsoleCursorInfo(long ptr) SetConsoleCursorInfo32
 627 stdcall SetConsoleCursorPosition(long long) SetConsoleCursorPosition
 628 stdcall SetConsoleMode(long long) SetConsoleMode
 629 stub SetConsoleOutputCP
@@ -728,7 +728,7 @@ type	win32
 737 stdcall WriteConsoleW(long ptr long ptr ptr) WriteConsole32W
 738 stdcall WriteFile(long ptr long ptr ptr) WriteFile
 739 stub WriteFileEx
-740 stub WritePrivateProfileSectionA
+740 stdcall WritePrivateProfileSectionA(str str str) WritePrivateProfileSection32A
 741 stub WritePrivateProfileSectionW
 742 stdcall WritePrivateProfileStringA(str str str str) WritePrivateProfileString32A
 743 stdcall WritePrivateProfileStringW(wstr wstr wstr wstr) WritePrivateProfileString32W
@@ -860,15 +860,15 @@ type	win32
 868 stub GetConsoleInputExeNameW
 869 stub GetConsoleKeyboardLayoutNameA
 870 stub GetConsoleKeyboardLayoutNameW
-871 stub GetDiskFreeSpaceExA
-873 stub GetDiskFreeSpaceExW
+871 stdcall GetDiskFreeSpaceExA (str ptr ptr ptr) GetDiskFreeSpaceEx32A
+873 stdcall GetDiskFreeSpaceExW (wstr ptr ptr ptr) GetDiskFreeSpaceEx32W
 874 stub GetFileAttributesExA
 875 stub GetFileAttributesExW
 876 stub GetProcessPriorityBoost
 877 stub GetThreadPriorityBoost
 878 stub InterlockedCompareExchange
 879 stub InterlockedExchangeAdd
-880 stub IsProcessorFeaturePresent
+880 stdcall IsProcessorFeaturePresent(long) IsProcessorFeaturePresent
 881 stub OpenWaitableTimerA
 882 stub OpenWaitableTimerW
 883 stub ReadConsoleInputExA

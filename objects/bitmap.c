@@ -489,6 +489,29 @@ LONG WINAPI SetBitmapBits32( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     return height * bmp->bitmap.bmWidthBytes;
 }
 
+HANDLE16 WINAPI LoadImage16( HINSTANCE16 hinst, LPCSTR name, UINT16 type,
+                             INT16 desiredx, INT16 desiredy, UINT16 loadflags)
+{
+	if (HIWORD(name)) {
+		fprintf(stddeb,"LoadImage16(0x%04x,%s,%d,%d,%d,0x%08x)\n",
+			hinst,(char *)PTR_SEG_TO_LIN(name),type,desiredx,desiredy,loadflags
+		);
+	} else {
+		fprintf(stddeb,"LoadImage16(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+			hinst,name,type,desiredx,desiredy,loadflags
+		);
+	}
+	switch (type) {
+	case IMAGE_BITMAP:
+		return LoadBitmap16(hinst,name);
+	case IMAGE_ICON:
+		return LoadIcon16(hinst,name);
+	case IMAGE_CURSOR:
+		return LoadCursor16(hinst,name);
+	}
+	return 0;
+	
+}
 /**********************************************************************
  *	    LoadImageA    (USER32.364)
  * FIXME: implementation still lacks nearly all features, see LR_*

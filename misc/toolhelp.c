@@ -70,3 +70,18 @@ BOOL16 WINAPI NotifyUnregister( HTASK16 htask )
     nrofnotifys--;
     return TRUE;
 }
+
+BOOL16 WINAPI StackTraceCSIPFirst(STACKTRACEENTRY *ste, WORD wSS, WORD wCS, WORD wIP, WORD wBP)
+{
+    return TRUE;
+}
+
+BOOL16 WINAPI StackTraceFirst(STACKTRACEENTRY *ste, HTASK16 Task)
+{
+    return TRUE;
+}
+
+BOOL16 WINAPI StackTraceNext(STACKTRACEENTRY *ste)
+{
+    return TRUE;
+}

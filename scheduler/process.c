@@ -658,6 +658,7 @@ DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len)
 				ret = GetEnvironmentVariable32A(x,d,cursize-(d-xdst));
 				if (ret) {
 					d+=strlen(d);
+					s=end;
 				} else {
 					CHECK_FREE(strlen(x)+2);
 					*d++='%';
@@ -667,9 +668,9 @@ DWORD WINAPI ExpandEnvironmentStrings32A( LPCSTR src, LPSTR dst, DWORD len)
 				}
 				HeapFree(heap,0,x);
 			} else
-				*d=*s;
+				*d++=*s;
 
-			s++;d++;
+			s++;
 		} else {
 			CHECK_FREE(1);
 			*d++=*s++;

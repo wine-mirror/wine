@@ -21,6 +21,10 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#ifndef MS_SYNC
+#define MS_SYNC 0
+#endif
+
 /* File mapping */
 typedef struct
 {
@@ -190,6 +194,8 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT32 base, UINT32 size, UINT32 offset,
 
     /* Create the view structure */
 
+    assert( !(base & page_mask) );
+    assert( !(size & page_mask) );
     size >>= page_shift;
     if (!(view = (FILE_VIEW *)malloc( sizeof(*view) + size - 1 ))) return NULL;
     view->base    = base;
@@ -489,6 +495,13 @@ LPVOID WINAPI VirtualAlloc( LPVOID addr, DWORD size, DWORD type, DWORD protect)
             }
             if (view_size > size)
                 FILE_munmap( (void *)(ptr + size), 0, view_size - size );
+        }
+        else if (ptr != base)
+        {
+            /* We couldn't get the address we wanted */
+            FILE_munmap( (void *)ptr, 0, view_size );
+	    SetLastError( ERROR_INVALID_ADDRESS );
+	    return NULL;
         }
         if (!(view = VIRTUAL_CreateView( ptr, size, 0, 0, vprot, NULL )))
         {
@@ -1097,7 +1110,7 @@ BOOL32 WINAPI FlushViewOfFile( LPCVOID base, DWORD cbFlush )
         return FALSE;
     }
     if (!cbFlush) cbFlush = view->size;
-    if (!msync( addr, cbFlush, MS_SYNC )) return TRUE;
+    if (!msync( (void *)addr, cbFlush, MS_SYNC )) return TRUE;
     SetLastError( ERROR_INVALID_PARAMETER );
     return FALSE;
 

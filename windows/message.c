@@ -37,7 +37,7 @@ typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP,
 extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
 extern MESSAGEQUEUE *pActiveQueue;
 
-extern void JoySendMessages(void);
+extern void joySendMessages(void);
 
 DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
@@ -440,7 +440,7 @@ static BOOL32 MSG_PeekHardwareMsg( MSG16 *msg, HWND16 hwnd, DWORD filter,
     int i, kbd_msg, pos = sysMsgQueue->nextMessage;
 
     /* FIXME: there has to be a better way to do this */
-    JoySendMessages();
+    joySendMessages();
 
     /* If the queue is empty, attempt to fill it */
     if (!sysMsgQueue->msgCount && XPending(display))
@@ -1136,7 +1136,7 @@ LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     WND **list, **ppWnd;
     LRESULT ret;
 
-    if (hwnd == HWND_BROADCAST)
+    if (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST)
     {
         if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
             return TRUE;
@@ -1178,7 +1178,7 @@ LRESULT WINAPI SendMessage32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
 
 /***********************************************************************
- *           SendMessage32W   (USER32.458)
+ *           SendMessage32W   (USER32.459)
  */
 LRESULT WINAPI SendMessage32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                LPARAM lParam )
@@ -1187,7 +1187,7 @@ LRESULT WINAPI SendMessage32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     WND **list, **ppWnd;
     LRESULT ret;
 
-    if (hwnd == HWND_BROADCAST)
+    if (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST)
     {
         if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
             return TRUE;
@@ -1224,6 +1224,42 @@ LRESULT WINAPI SendMessage32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
     SPY_ExitMessage( SPY_RESULT_OK32, hwnd, msg, ret );
     return ret;
+}
+
+
+/***********************************************************************
+ *           SendMessageTimeout16    (not a WINAPI)
+ */
+LRESULT WINAPI SendMessageTimeout16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
+				     LPARAM lParam, UINT16 flags,
+				     UINT16 timeout, LPWORD resultp)
+{
+  fprintf (stdnimp, "SendMessageTimeout16 -- semistub\n");
+  return SendMessage16 (hwnd, msg, wParam, lParam);
+}
+
+
+/***********************************************************************
+ *           SendMessageTimeout32A   (USER32.457)
+ */
+LRESULT WINAPI SendMessageTimeout32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+				      LPARAM lParam, UINT32 flags,
+				      UINT32 timeout, LPDWORD resultp)
+{
+  fprintf (stdnimp, "SendMessageTimeout32A -- semistub\n");
+  return SendMessage32A (hwnd, msg, wParam, lParam);
+}
+
+
+/***********************************************************************
+ *           SendMessageTimeout32W   (USER32.458)
+ */
+LRESULT WINAPI SendMessageTimeout32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+				      LPARAM lParam, UINT32 flags,
+				      UINT32 timeout, LPDWORD resultp)
+{
+  fprintf (stdnimp, "SendMessageTimeout32W -- semistub\n");
+  return SendMessage32W (hwnd, msg, wParam, lParam);
 }
 
 

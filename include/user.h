@@ -24,5 +24,8 @@ extern WORD USER_HeapSel;
          ((handle) ? PTR_SEG_OFF_TO_SEGPTR(USER_HeapSel, (handle)) : (SEGPTR)0)
 
 void USER_SignalProc(HANDLE16, UINT16, UINT16, HINSTANCE16, HQUEUE16);
+void USER_ExitWindows(void);
+HGLOBAL16 USER_CallDefaultRsrcHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
+				       HRSRC16 hRsrc );
 
 #endif  /* __WINE_USER_H */

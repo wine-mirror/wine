@@ -5,7 +5,7 @@ type	win32
 # (these need to have these exact ordinals, for some win95 dlls 
 #  import shell32.dll by ordinal)
 
-   2 stub SHELL32_2
+   2 stdcall SHELL32_2(long long long long long long) SHELL32_2
    3 stub CheckEscapesA
    4 stub SHELL32_4
    5 stub SHELL32_5
@@ -29,10 +29,10 @@ type	win32
   27 stub SHELL32_27
   28 stub SHELL32_28
   29 stdcall SHELL32_29(str) SHELL32_29
-  30 stub SHELL32_30
-  31 stub SHELL32_31
+  30 stdcall SHELL32_30(ptr long) SHELL32_30
+  31 stdcall SHELL32_31(str) SHELL32_31
   32 stdcall SHELL32_32(str) SHELL32_32
-  33 stub SHELL32_33
+  33 stdcall SHELL32_33(str) SHELL32_33
   34 stdcall SHELL32_34(str) SHELL32_34
   35 stdcall SHELL32_35(str) SHELL32_35
   36 stdcall SHELL32_36(str str) SHELL32_36
@@ -55,19 +55,19 @@ type	win32
   53 stub DragQueryFileAorW
   54 stub DragQueryFileW
   55 stub SHELL32_55
-  56 stub SHELL32_56
+  56 stdcall SHELL32_56(str) SHELL32_56
   57 stub SHELL32_57
-  58 stub SHELL32_58
+  58 stdcall SHELL32_58(long long long long) SHELL32_58
   59 stub SHELL32_59
   60 stub SHELL32_60
   61 stub SHELL32_61
   62 stdcall SHELL32_62(long long long long) SHELL32_62
-  63 stub SHELL32_63
+  63 stdcall SHELL32_63(long long long long str str str) SHELL32_63
   64 stub SHELL32_64
   65 stub SHELL32_65
   66 stub SHELL32_66
   67 stub SHELL32_67
-  68 stub SHELL32_68
+  68 stdcall SHELL32_68(long long long) SHELL32_68
   69 stub SHELL32_69
   70 stub SHELL32_70
   71 stdcall SHELL32_71(ptr ptr) SHELL32_71
@@ -88,7 +88,7 @@ type	win32
   86 stub SHELL32_86
   87 stub SHELL32_87
   88 stub SHELL32_88
-  89 stub SHELL32_89
+  89 stdcall SHELL32_89(long long long) SHELL32_89
   90 stub SHELL32_90
   91 stub SHELL32_91
   92 stub SHELL32_92
@@ -100,7 +100,7 @@ type	win32
   98 stub SHELL32_98
   99 stub SHELL32_99
  100 stdcall SHELL32_100(long) SHELL32_100
- 101 stub ExtractAssociatedIconExA
+ 101 stdcall ExtractAssociatedIconA(long ptr long) ExtractAssociatedIcon32A
  102 stdcall SHELL32_102(ptr ptr long ptr ptr) SHELL32_102
  103 stub SHELL32_103
  104 stub SHELL32_104
@@ -219,10 +219,10 @@ type	win32
  217 stdcall SHGetFileInfo(ptr long ptr long long) SHGetFileInfo32A
  218 stdcall SHGetFileInfoA(ptr long ptr long long) SHGetFileInfo32A
  219 stub SHGetInstanceExplorer
- 220 stub SHGetMalloc
- 221 stub SHGetPathFromIDList
+ 220 stdcall SHGetMalloc(ptr) SHGetMalloc
+ 221 stdcall SHGetPathFromIDList(ptr ptr) SHGetPathFromIDList
  222 stub SHGetPathFromIDListA
- 223 stub SHGetSpecialFolderLocation
+ 223 stdcall SHGetSpecialFolderLocation(long long ptr) SHGetSpecialFolderLocation
  224 stub SHHelpShortcuts_RunDLL
  225 stub SHLoadInProc
  226 stub SheChangeDirA
@@ -248,8 +248,8 @@ type	win32
  246 stub ShellExecuteEx
  247 stub ShellExecuteExA
  248 stub ShellExecuteW
- 249 stub Shell_NotifyIcon
- 250 stub Shell_NotifyIconA
+ 249 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
+ 250 stdcall Shell_NotifyIconA(long ptr) Shell_NotifyIconA
  251 stub Shl1632_ThunkData32
  252 stub Shl3216_ThunkData32
  505 stub SHELL32_505

@@ -12,14 +12,14 @@ type	win16
 32     stub    STACKENTER
 33     stub    STACKLEAVE
 34     stub    MMDRVINSTALL
-101    pascal  JOYGETNUMDEVS() JoyGetNumDevs
-102    pascal  JOYGETDEVCAPS(word ptr word) JoyGetDevCaps
-103    pascal  JOYGETPOS(word ptr) JoyGetPos
-104    pascal  JOYGETTHRESHOLD(word ptr) JoyGetThreshold
-105    pascal  JOYRELEASECAPTURE(word) JoyReleaseCapture
-106    pascal  JOYSETCAPTURE(word word word word) JoySetCapture
-107    pascal  JOYSETTHRESHOLD(word word) JoySetThreshold
-109    pascal  JOYSETCALIBRATION(word) JoySetCalibration
+101    pascal  joyGetNumDevs() joyGetNumDevs16
+102    pascal  joyGetDevCaps(word ptr word) joyGetDevCaps16
+103    pascal  joyGetPos(word ptr) joyGetPos16
+104    pascal  joyGetThreshold(word ptr) joyGetThreshold16
+105    pascal  joyReleaseCapture(word) joyReleaseCapture16
+106    pascal  joySetCapture(word word word word) joySetCapture16
+107    pascal  joySetThreshold(word word) joySetThreshold16
+109    pascal  joySetCalibration(word) joySetCalibration16
 110    stub    JOYGETPOSEX
 111    stub    JOYCONFIGCHANGED
 201    pascal  midiOutGetNumDevs() midiOutGetNumDevs16
@@ -99,20 +99,20 @@ type	win16
 512    pascal  waveInGetPosition(word ptr word) waveInGetPosition16
 513    pascal  waveInGetID(word ptr) waveInGetID16
 514    pascal  waveInMessage(word word long long) waveInMessage16
-601    pascal  timeGetSystemTime(ptr word) timeGetSystemTime
-602    pascal  timeSetEvent(word word segptr long word) timeSetEvent
-603    pascal  timeKillEvent(word) timeKillEvent
-604    pascal  timeGetDevCaps(ptr word) timeGetDevCaps
-605    pascal  timeBeginPeriod(word) timeBeginPeriod
-606    pascal  timeEndPeriod(word) timeEndPeriod
+601    pascal  timeGetSystemTime(ptr word) timeGetSystemTime16
+602    pascal  timeSetEvent(word word segptr long word) timeSetEvent16
+603    pascal  timeKillEvent(word) timeKillEvent16
+604    pascal  timeGetDevCaps(ptr word) timeGetDevCaps16
+605    pascal  timeBeginPeriod(word) timeBeginPeriod16
+606    pascal  timeEndPeriod(word) timeEndPeriod16
 607    pascal  timeGetTime() timeGetTime
 701    pascal  MCISENDCOMMAND(word word long long) mciSendCommand
 702    pascal  MCISENDSTRING(str ptr word word) mciSendString
-703    pascal  MCIGETDEVICEID(ptr) mciGetDeviceID
-705    stub    MCILOADCOMMANDRESOURCE
+703    pascal  mciGetDeviceID(ptr) mciGetDeviceID
+705    pascal  mciLoadCommandResource(word str word) mciLoadCommandResource16
 706    pascal  mciGetErrorString(long ptr word) mciGetErrorString16
-707    stub    MCISETDRIVERDATA
-708    stub    MCIGETDRIVERDATA
+707    pascal  mciSetDriverData(word long) mciSetDriverData16
+708    pascal  mciGetDriverData(word) mciGetDriverData16
 710    stub    MCIDRIVERYIELD
 711    stub    MCIDRIVERNOTIFY
 712    stub    MCIEXECUTE
@@ -131,9 +131,9 @@ type	win16
 807    pascal  mixerGetLineControls(word ptr long) mixerGetLineControls16
 808    pascal  mixerGetControlDetails(word ptr long) mixerGetControlDetails16
 809    pascal  mixerSetControlDetails(word ptr long) mixerSetControlDetails16
-900    stub    MMTASKCREATE
+900    pascal  mmTaskCreate(ptr long long) mmTaskCreate16
 902    stub    MMTASKBLOCK
-903    stub    MMTASKSIGNAL
+903    pascal  mmTaskSignal(word) mmTaskSignal16
 904    stub    MMGETCURRENTTASK
 905    stub    MMTASKYIELD
 1100   pascal  DRVOPEN(str str long) DrvOpen
@@ -141,12 +141,12 @@ type	win16
 1102   pascal  DRVSENDMESSAGE(word word long long) DrvSendMessage
 1103   pascal  DRVGETMODULEHANDLE(word) DrvGetModuleHandle
 1104   pascal  DRVDEFDRIVERPROC(long word word long long) DrvDefDriverProc
-1120   stub    MMTHREADCREATE
-1121   stub    MMTHREADSIGNAL
+1120   pascal  mmThreadCreate(ptr ptr long long) mmThreadCreate16
+1121   pascal  mmThreadSignal(word) mmThreadSignal16
 1122   stub    MMTHREADBLOCK
 1123   stub    MMTHREADISCURRENT
 1124   stub    MMTHREADISVALID
-1125   stub    MMTHREADGETTASK
+1125   pascal  mmThreadGetTask(word) mmThreadGetTask16
 1150   stub    MMSHOWMMCPLPROPERTYSHEET
 1210   pascal  mmioOpen(str ptr long) mmioOpen16
 1211   pascal  MMIOCLOSE(word word) mmioClose

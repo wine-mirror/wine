@@ -66,7 +66,7 @@ static WORD xBaseUnit = 0, yBaseUnit = 0;
  *
  * Initialisation of the dialog manager.
  */
-BOOL32 DIALOG_Init()
+BOOL32 DIALOG_Init(void)
 {
     TEXTMETRIC16 tm;
     HDC16 hdc;

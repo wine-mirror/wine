@@ -170,13 +170,14 @@ static UINT16   __lfCheckSum( LPLOGFONT16 plf )
    return checksum;
 }
 
-static UINT16   __genericCheckSum( UINT16* ptr, int size )
+static UINT16   __genericCheckSum( const void *ptr, int size )
 {
-   UINT16	checksum = 0;
-   unsigned	i;
+   unsigned int checksum = 0;
+   const char *p = (const char *)ptr;
+   while (size-- > 0)
+     checksum ^= (checksum << 3) + (checksum >> 29) + *p++;
 
-   for( i = 0, size >>= 1; i < size; i++ ) checksum ^= *ptr++;
-   return checksum;
+   return checksum & 0xffff;
 }
 
 /*************************************************************************
@@ -613,7 +614,7 @@ static void XFONT_SetFontMetric(fontInfo* fi, fontResource* fr, XFontStruct* xfs
     fi->df.dfExternalLeading = (INT16)el;
 
     fi->df.dfPoints = (INT16)(((INT32)(fi->df.dfPixHeight - 
-				       fi->df.dfInternalLeading) * 72) / fi->df.dfVertRes);
+	       fi->df.dfInternalLeading) * 72 + (fi->df.dfVertRes >> 1)) / fi->df.dfVertRes);
 
     if( xfs->min_bounds.width != xfs->max_bounds.width )
         fi->df.dfPitchAndFamily |= TMPF_FIXED_PITCH; /* au contraire! */
@@ -831,25 +832,25 @@ static void XFONT_WindowsNames( char* buffer )
     }
 
     for( up = 0; relocTable[up]; up++ )
-      if( PROFILE_GetWineIniString( INIFontSection, relocTable[up], "", buffer, 128 ) )
-      {
-	while( *buffer && isspace(*buffer) ) buffer++;
-	for( fr = NULL, pfr = fontList; pfr; pfr = pfr->next )
+	if( PROFILE_GetWineIniString( INIFontSection, relocTable[up], "", buffer, 128 ) )
 	{
-	     i = lstrlen32A( pfr->resource );
-	     if( !lstrncmpi32A( pfr->resource, buffer, i) )
-	     {
-		 if( fr )
-		 {
-		     fr->next = pfr->next;
-		     pfr->next = fontList;
-		     fontList = pfr;
-		 }
-		 break;
-	     }
-	     fr = pfr;
+	    while( *buffer && isspace(*buffer) ) buffer++;
+	    for( fr = NULL, pfr = fontList; pfr; pfr = pfr->next )
+	    {
+		i = lstrlen32A( pfr->resource );
+		if( !lstrncmpi32A( pfr->resource, buffer, i) )
+		{
+		    if( fr )
+		    {
+			fr->next = pfr->next;
+			pfr->next = fontList;
+			fontList = pfr;
+		    }
+		    break;
+		}
+		fr = pfr;
+	    }
 	}
-      }
 }
 
 /***********************************************************************
@@ -1078,7 +1079,7 @@ static BOOL32 XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int
 			   pfi->df.dfFace = pfr->lfFaceName;
 			   pfi->df.dfHorizRes = pfi->df.dfVertRes = res;
 			   pfi->df.dfPoints = (INT16)(((INT32)(pfi->df.dfPixHeight -
-					pfi->df.dfInternalLeading) * 72) / res );
+				pfi->df.dfInternalLeading) * 72 + (res >> 1)) / res );
 			   pfi->next = pfi + 1;
 
 			   if( j > pfr->count ) break;
@@ -1244,9 +1245,10 @@ static void  XFONT_CheckIniCallback(
 
     /* Make sure this is a valid key */
     if((strncasecmp(key, INISubSection, 5) == 0) ||
-       (strcasecmp(key, INIDefault) == 0) ||
-       (strcasecmp(key, INIGlobalMetrics) == 0) ||
-       (strcasecmp(key, INIResolution) == 0) ) 
+       (strcasecmp( key, INIDefault) == 0) ||
+       (strcasecmp( key, INIDefaultFixed) == 0) ||
+       (strcasecmp( key, INIGlobalMetrics) == 0) ||
+       (strcasecmp( key, INIResolution) == 0) ) 
     {
 	/* Valid key; make sure the value doesn't contain a wildcard */
 	if(strchr(value, '*')) {
@@ -1331,7 +1333,7 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 #endif
 
      j = lstrlen32A( x_pattern[i] );
-     if( j ) x_checksum ^= __genericCheckSum( (UINT16*)(x_pattern[i]), j );
+     if( j ) x_checksum ^= __genericCheckSum( x_pattern[i], j );
   }
   x_checksum |= X_PFONT_MAGIC;
 
@@ -1557,7 +1559,8 @@ static UINT32 XFONT_Match( fontMatch* pfm )
 
    if( plf->lfCharSet == DEFAULT_CHARSET )
    {
-       if( (pfi->df.dfCharSet!= ANSI_CHARSET) && (pfi->df.dfCharSet!=DEFAULT_CHARSET) ) penalty += 0x200;
+       if( (pfi->df.dfCharSet!= ANSI_CHARSET) && (pfi->df.dfCharSet!=DEFAULT_CHARSET) ) 
+	    penalty += 0x200;
    }
    else if (plf->lfCharSet != pfi->df.dfCharSet) penalty += 0x200;
 
@@ -1650,9 +1653,11 @@ static UINT32 XFONT_MatchFIList( fontMatch* pfm )
 {
   BOOL32        skipRaster = (pfm->flags & FO_MATCH_NORASTER);
   UINT32        current_score, score = (UINT32)(-1);
+  UINT16        origflags = pfm->flags; /* Preserve FO_MATCH_XYINDEP */
   fontMatch     fm = *pfm;
 
-  for( fm.pfi = pfm->pfr->fi; fm.pfi && score; fm.pfi = fm.pfi->next )
+  for( fm.pfi = pfm->pfr->fi; fm.pfi && score; fm.pfi = fm.pfi->next,
+      fm.flags = origflags )
   {
      if( skipRaster && !(fm.pfi->fi_flags & FI_SCALABLE) )
          continue;

@@ -156,7 +156,7 @@ int WINAPI WNetUnlockQueueData(LPSTR szQueue)
 /**************************************************************************
  *				WNetGetConnection	[USER.512]
  */
-int WINAPI WNetGetConnection16(LPSTR lpLocalName, 
+int WINAPI WNetGetConnection16(LPCSTR lpLocalName, 
                                LPSTR lpRemoteName, UINT16 *cbRemoteName)
 {
     const char *path;

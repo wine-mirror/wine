@@ -22,7 +22,8 @@
  */
 WORD WINAPI AllocSelectorArray( WORD count )
 {
-    WORD i, size = 0;
+    WORD i, sel, size = 0;
+    ldt_entry entry;
 
     if (!count) return 0;
     for (i = FIRST_LDT_ENTRY_TO_ALLOC; i < LDT_SIZE; i++)
@@ -31,9 +32,22 @@ WORD WINAPI AllocSelectorArray( WORD count )
         else if (++size >= count) break;
     }
     if (i == LDT_SIZE) return 0;
-    /* Mark selector as allocated */
-    while (size--) ldt_flags_copy[i--] |= LDT_FLAGS_ALLOCATED;
-    return ENTRY_TO_SELECTOR( i + 1 );
+    sel = i - size + 1;
+
+    entry.base           = 0;
+    entry.type           = SEGMENT_DATA;
+    entry.seg_32bit      = FALSE;
+    entry.read_only      = FALSE;
+    entry.limit_in_pages = FALSE;
+    entry.limit          = 1;  /* avoid 0 base and limit */
+
+    for (i = 0; i < count; i++)
+    {
+        /* Mark selector as allocated */
+        ldt_flags_copy[sel + i] |= LDT_FLAGS_ALLOCATED;
+        LDT_SetEntry( sel + i, &entry );
+    }
+    return ENTRY_TO_SELECTOR( sel );
 }
 
 
@@ -651,4 +665,25 @@ void WINAPI WOWGetVDMPointerUnfix(DWORD vp)
 {
     fprintf(stdnimp,"WOWGetVDMPointerUnfix(%08lx), STUB\n",vp);
     /* FIXME: unfix heapsegment */
+}
+
+/***********************************************************************
+ *           UTSelectorOffsetToLinear       (WIN32S16.48)
+ *
+ * rough guesswork, but seems to work (I had no "reasonable" docu)
+ */
+LPVOID WINAPI UTSelectorOffsetToLinear(SEGPTR sptr)
+{
+        return PTR_SEG_TO_LIN(sptr);
+}
+
+/***********************************************************************
+ *           UTLinearToSelectorOffset       (WIN32S16.49)
+ *
+ * FIXME: I don't know if that's the right way to do linear -> segmented
+ */
+SEGPTR WINAPI UTLinearToSelectorOffset(LPVOID lptr)
+{
+    fprintf( stderr, "UTLinearToSelectorOffset(%p): stub\n", lptr );
+    return (SEGPTR)lptr;
 }

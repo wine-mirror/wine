@@ -1,7 +1,7 @@
 /*
  * What processor?
  *
- * Copyright 1995 Morten Welinder
+ * Copyright 1995,1997 Morten Welinder
  * Copyright 1997 Marcus Meissner
  */
 
@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "windows.h"
+#include "winnt.h"
 
 VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 {
@@ -98,4 +99,26 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 	/* FIXME: how do we do this on other systems? */
 	return;
 #endif  /* linux */
+}
+
+
+/* IsProcessorFeaturePresent [KERNEL32.880] */
+BOOL32 WINAPI IsProcessorFeaturePresent (DWORD feature)
+{
+  SYSTEM_INFO si;
+  GetSystemInfo (&si);
+  /* FIXME: these are relatively stupid approximations.  */
+  switch (feature)
+    {
+    case PF_FLOATING_POINT_PRECISION_ERRATA:
+      return si.wProcessorLevel == 5;
+    case PF_FLOATING_POINT_EMULATED:
+      return FALSE;
+    case PF_COMPARE_EXCHANGE_DOUBLE:
+      return si.wProcessorLevel >= 5;
+    case PF_MMX_INSTRUCTIONS_AVAILABLE:
+      return FALSE;
+    default:
+      return FALSE;
+    }
 }

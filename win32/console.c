@@ -2,6 +2,7 @@
  * Win32 kernel functions
  *
  * Copyright 1995 Martin von Loewis and Cameron Heide
+ * Copyright 1997 Karl Garrison
  */
 
 #include <stdio.h>
@@ -81,9 +82,7 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
 {
 	*mode = 	ENABLE_PROCESSED_INPUT	|
 			ENABLE_LINE_INPUT	|
-			ENABLE_ECHO_INPUT	|
-			ENABLE_WINDOW_INPUT	|
-			ENABLE_MOUSE_INPUT;
+			ENABLE_ECHO_INPUT;
 	return TRUE;
 }
 
@@ -118,7 +117,7 @@ DWORD WINAPI GetConsoleTitle32W(LPWSTR title,DWORD size)
  *            WriteConsoleA   (KERNEL32.567)
  */
 BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
-                               LPVOID lpBuffer,
+                               LPCVOID lpBuffer,
                                DWORD nNumberOfCharsToWrite,
                                LPDWORD lpNumberOfCharsWritten,
                                LPVOID lpReserved )
@@ -133,7 +132,7 @@ BOOL32 WINAPI WriteConsole32A( HANDLE32 hConsoleOutput,
  *            WriteConsoleW   (KERNEL32.577)
  */
 BOOL32 WINAPI WriteConsole32W( HANDLE32 hConsoleOutput,
-                               LPVOID lpBuffer,
+                               LPCVOID lpBuffer,
                                DWORD nNumberOfCharsToWrite,
                                LPDWORD lpNumberOfCharsWritten,
                                LPVOID lpReserved )
@@ -199,7 +198,8 @@ BOOL32 WINAPI SetConsoleTitle32W( LPCWSTR title )
 /***********************************************************************
  *            FlushConsoleInputBuffer   (KERNEL32.132)
  */
-BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput){
+BOOL32 WINAPI FlushConsoleInputBuffer(HANDLE32 hConsoleInput)
+{
     fprintf(stderr,"FlushConsoleInputBuffer(%d)\n",hConsoleInput);
     return TRUE;
 }
@@ -222,6 +222,70 @@ BOOL32 WINAPI SetConsoleCursorPosition(HANDLE32 hcons,COORD c)
  */
 BOOL32 WINAPI GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents)
 {
-	*nrofevents = 1;
+	*nrofevents = 0;
 	return TRUE;
+}
+
+/***********************************************************************
+ *            GetNumberOfConsoleMouseButtons   (KERNEL32.358)
+ */
+BOOL32 WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
+{
+    *nrofbuttons = 2;
+    fprintf(stderr,"GetNumberOfConsoleMouseButtons: STUB returning 2\n");
+    return TRUE;
+}
+
+/***********************************************************************
+ *            PeekConsoleInputA   (KERNEL32.550)
+ */
+BOOL32 WINAPI PeekConsoleInput32A(HANDLE32 hConsoleInput,
+                                  LPDWORD pirBuffer,
+                                  DWORD cInRecords,
+                                  LPDWORD lpcRead)
+/* FIXME: pirBuffer should be a pointer to an INPUT_RECORD structure
+   -Karl Garrison (12/01/97) */
+{
+    pirBuffer = NULL;
+    cInRecords = 0;
+    *lpcRead = 0;
+    fprintf(stderr,"GetNumberOfConsoleMouseButtons: STUB returning NULL\n");
+	return TRUE;
+}
+
+/***********************************************************************
+ *            PeekConsoleInputW   (KERNEL32.551)
+ */
+BOOL32 WINAPI PeekConsoleInput32W(HANDLE32 hConsoleInput,
+                                  LPDWORD pirBuffer,
+                                  DWORD cInRecords,
+                                  LPDWORD lpcRead)
+/* FIXME: pirBuffer should be a pointer to an INPUT_RECORD structure
+   -Karl Garrison (12/01/97) */
+{
+    pirBuffer = NULL;
+    cInRecords = 0;
+    *lpcRead = 0;
+    fprintf(stderr,"GetNumberOfConsoleMouseButtons: STUB returning NULL\n");
+    return TRUE;
+}
+
+/***********************************************************************
+ *            GetConsoleCursorInfo32   (KERNEL32.296)
+ */
+BOOL32 WINAPI GetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
+{
+  cinfo[0] = 10; /* 10% of character box is cursor.  */
+  cinfo[1] = TRUE;  /* Cursur is visible.  */
+  fprintf (stdnimp, "GetConsoleCursorInfo32 -- STUB!\n");
+  return TRUE;
+}
+
+/***********************************************************************
+ *            SetConsoleCursorInfo32   (KERNEL32.626)
+ */
+BOOL32 WINAPI SetConsoleCursorInfo32(HANDLE32 hcon, LPDWORD cinfo)
+{
+  fprintf (stdnimp, "SetConsoleCursorInfo32 -- STUB!\n");
+  return TRUE;
 }

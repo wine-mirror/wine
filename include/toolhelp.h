@@ -348,6 +348,18 @@ typedef struct {
     void      **lpBadParam;
 } NFYLOGPARAMERROR;
 
+typedef struct {
+    DWORD dwSize;
+    HTASK16 hTask;
+    WORD wSS;
+    WORD wBP;
+    WORD wCS;
+    WORD wIP;
+    HMODULE16 hModule;
+    WORD wSegment;
+    WORD wFlags;
+} STACKTRACEENTRY;
+
 #pragma pack(4)
 
 #endif /* __WINE_TOOLHELP_H */

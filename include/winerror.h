@@ -17,6 +17,7 @@ extern int WIN32_LastError;
 #define ERROR_TOO_MANY_OPEN_FILES   4
 #define ERROR_ACCESS_DENIED         5
 #define ERROR_INVALID_HANDLE        6
+#define ERROR_NOT_ENOUGH_MEMORY     8
 #define ERROR_BAD_FORMAT            11
 #define ERROR_OUTOFMEMORY           14
 #define ERROR_NO_MORE_FILES         18
@@ -28,6 +29,7 @@ extern int WIN32_LastError;
 #define ERROR_BROKEN_PIPE           109
 #define ERROR_DISK_FULL             112
 #define ERROR_CALL_NOT_IMPLEMENTED  120
+#define ERROR_INSUFFICIENT_BUFFER   122
 #define ERROR_SEEK_ON_DEVICE        132
 #define ERROR_DIR_NOT_EMPTY         145
 #define ERROR_BUSY                  170
@@ -35,9 +37,22 @@ extern int WIN32_LastError;
 #define ERROR_FILENAME_EXCED_RANGE  206
 #define ERROR_MORE_DATA             234
 #define ERROR_NO_MORE_ITEMS         259
+#define ERROR_INVALID_ADDRESS       487
+#define ERROR_CAN_NOT_COMPLETE      1003
 #define ERROR_IO_DEVICE             1117
 #define ERROR_POSSIBLE_DEADLOCK     1131
 #define ERROR_BAD_DEVICE            1200
 #define ERROR_NO_NETWORK            1222
+#define ERROR_COMMITMENT_LIMIT      1455
+
+/* HRESULT values for OLE, SHELL and other Interface stuff */
+#define	NOERROR				0
+#define	S_OK				0
+#define	E_UNEXPECTED			0x8000FFFF
+#define	E_OUTOFMEMORY			0x8007000E
+#define	E_INVALIDARG			0x80070057
+
+#define	OLE_E_ENUM_NOMORE		0x80040002
+#define	CLASS_E_CLASSNOTAVAILABLE	0x80040111
 
 #endif  /* __WINE_WINERROR_H */

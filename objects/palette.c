@@ -20,9 +20,6 @@
 /* #define DEBUG_PALETTE */
 #include "debug.h"
 
- /* lookup pixel among static entries of the system palette */
-extern int COLOR_LookupSystemPixel(COLORREF);
-
 static UINT32 SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
 static HPALETTE16 hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
@@ -36,8 +33,6 @@ static HPALETTE16 hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
  */
 HPALETTE16 PALETTE_Init(void)
 {
-    extern const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void);
-
     int                 i;
     HPALETTE16          hpalette;
     LOGPALETTE *        palPtr;
@@ -117,6 +112,14 @@ HPALETTE32 WINAPI CreatePalette32( const LOGPALETTE* palette )
     return hpalette;
 }
 
+/***********************************************************************
+ *           CreateHalftonePalette   (GDI32.47)
+ */
+HPALETTE32 WINAPI CreateHalftonePalette(HDC32 hdc)
+{
+  fprintf(stdnimp,"CreateHalftonePalette: empty stub!\n");
+  return NULL;
+}
 
 /***********************************************************************
  *           GetPaletteEntries16    (GDI.363)

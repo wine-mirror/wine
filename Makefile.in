@@ -7,6 +7,7 @@
 # install:              install everything
 # depend:		create the dependencies
 # etags:		create a TAGS file for Emacs.
+# manpages:		compile manpages for Wine API
 #
 
 # Main target to build
@@ -24,6 +25,7 @@ MODULE    = none
 
 LIBSUBDIRS = \
 	rc \
+	tools \
 	controls \
 	files \
 	graphics \
@@ -44,11 +46,11 @@ LIBSUBDIRS = \
 	windows
 
 EMUSUBDIRS = \
-	tools \
 	debugger \
 	graphics/win16drv \
 	if1632 \
-	miscemu
+	miscemu \
+	relay32
 
 PROGSUBDIRS = libtest programs
 
@@ -90,7 +92,8 @@ EMUOBJS = \
 	debugger/debugger.o \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
-	miscemu/miscemu.o
+	miscemu/miscemu.o \
+	relay32/relay32.o
 
 all: $(MAIN_TARGET)
 
@@ -138,6 +141,10 @@ depend:: dummy
 
 TAGS etags:
 	etags `find $(TOPSRCDIR) -name '*.[chS]' -print | grep -v dbgmain`
+
+manpages:
+	-$(MKDIR) $(TOPOBJDIR)/documentation/man3w
+	for i in $(LIBSUBDIRS); do (cd $$i && $(MAKE) man); done
 
 clean::
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done

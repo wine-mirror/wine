@@ -6,56 +6,39 @@ VPATH     = @srcdir@
 MODULE    = if1632
 
 DLLS = \
-	advapi32.spec \
-	comctl32.spec \
-	comdlg32.spec \
 	commdlg.spec \
 	compobj.spec \
-	crtdll.spec \
 	ddeml.spec \
 	gdi.spec \
-	gdi32.spec \
 	kernel.spec \
-	kernel32.spec \
 	keyboard.spec \
-	lz32.spec \
 	lzexpand.spec \
 	mmsystem.spec \
 	mouse.spec \
-	mpr.spec \
-	ntdll.spec \
 	ole2.spec \
 	ole2conv.spec \
 	ole2disp.spec \
 	ole2nls.spec \
 	ole2prox.spec \
-	ole32.spec \
+	ole2thk.spec \
 	olecli.spec \
-	olecli32.spec \
 	olesvr.spec \
-	olesvr32.spec \
 	shell.spec \
-	shell32.spec \
 	sound.spec \
 	storage.spec \
 	stress.spec \
 	system.spec \
 	toolhelp.spec \
 	user.spec \
-	user32.spec \
 	ver.spec \
-	version.spec \
-	w32skrnl.spec \
 	w32sys.spec \
 	win32s16.spec \
 	win87em.spec \
 	winaspi.spec \
+	windebug.spec \
 	wing.spec \
-	winmm.spec \
 	winsock.spec \
-	winspool.spec \
-	wprocs.spec \
-	wsock32.spec
+	wprocs.spec
 
 SPEC_FILES = $(DLLS:.spec=.s)
 
@@ -68,7 +51,6 @@ C_SRCS = \
 
 GEN_ASM_SRCS = \
 	$(SPEC_FILES) \
-	call32.s \
 	callfrom16.s \
 	callto16.s
 
@@ -85,9 +67,6 @@ $(SPEC_FILES): $(BUILD)
 
 callfrom16.s: $(SPEC_FILES)
 	$(BUILD) -o $@ -callfrom16 `cat $(SPEC_FILES) | grep CallFrom16_ | sed 's/.*CallFrom16_\(.*\)/\1/' | sort | uniq`
-
-call32.s: $(BUILD)
-	$(BUILD) -o $@ -call32
 
 callto16.s: $(SRCDIR)/thunk.c $(BUILD)
 	$(BUILD) -o $@ -callto16 $(SRCDIR)/thunk.c

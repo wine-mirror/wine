@@ -277,6 +277,10 @@ BOOL32 WINAPI PlayMetaFile32( HDC32 hdc, HMETAFILE32 hmf )
 	mr = (METARECORD *)((char *)mh + offset);
 	dprintf_metafile(stddeb,"offset = %04x size = %08lx function = %04x\n",
 			 offset,mr->rdSize,mr->rdFunction);
+	if (!mr->rdSize) {
+		fprintf(stderr,"METAFILE entry got size 0 at offset %d, total mf length is %ld\n",offset,mh->mtSize*2);
+		break; /* would loop endlessly otherwise */
+	}
 	offset += mr->rdSize * 2;
 	PlayMetaFileRecord16( hdc, ht, mr, mh->mtNoObjects );
     }
@@ -650,6 +654,8 @@ void WINAPI PlayMetaFileRecord16( HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
             dxx = (LPINT16)(sot+(((s1+1)>>1)*2));	   
           else 
 	  {
+	   dprintf_metafile(stddeb,"EXTTEXTOUT: %s  len: %ld\n",
+             sot,mr->rdSize);
            fprintf(stderr,
 	     "Please report: PlayMetaFile/ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
 		   len,s1,mr->rdSize,mr->rdParam[3]);

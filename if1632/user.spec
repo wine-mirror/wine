@@ -346,7 +346,7 @@ file	user.exe
 383 stub GetWindowContextHelpID
 384 stub SetMenuContextHelpID
 385 stub GetMenuContextHelpID
-389 stub LoadImage
+389 pascal LoadImage(word segstr word word word word) LoadImage16
 390 stub CopyImage
 391 stub SignalProc32
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
@@ -373,7 +373,7 @@ file	user.exe
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps16
 420 pascal16 wsprintf() WIN16_wsprintf16
-421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf16
+421 pascal16 wvsprintf(ptr str ptr) wvsprintf16
 422 pascal16 DlgDirSelectEx(word ptr word word) DlgDirSelectEx16
 423 pascal16 DlgDirSelectComboBoxEx(word ptr word word) DlgDirSelectComboBoxEx16
 427 pascal16 FindWindowEx(word word segstr str) FindWindowEx16

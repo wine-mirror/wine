@@ -76,18 +76,18 @@ typedef struct tagWINDOWPROC
           (WNDPROC16)((pproc)->thunk.t_from32.proc) : \
           (WNDPROC16)((pproc)->thunk.t_from16.proc))
 
-LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
-                                 WPARAM16 wParam, LPARAM lParam,
-                                 WNDPROC32 func );
-LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
-                                 WPARAM16 wParam, LPARAM lParam,
-                                 WNDPROC32 func );
 static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
                                                UINT32 msg, WPARAM32 wParam,
                                                LPARAM lParam );
 static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
                                                UINT32 msg, WPARAM32 wParam,
                                                LPARAM lParam );
+static LRESULT WINPROC_CallProc16To32A( HWND16 hwnd, UINT16 msg,
+					WPARAM16 wParam, LPARAM lParam,
+					WNDPROC32 func );
+static LRESULT WINPROC_CallProc16To32W( HWND16 hwnd, UINT16 msg,
+					WPARAM16 wParam, LPARAM lParam,
+					WNDPROC32 func );
 
 static HANDLE32 WinProcHeap;
 
@@ -739,8 +739,13 @@ INT32 WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT32 *pmsg32,
         *plparam   = (LPARAM)(HMENU32)HIWORD(*plparam);
         return 0;
     case WM_MDIACTIVATE:
-        *pwparam32 = (WPARAM32)(HWND32)HIWORD(*plparam);
-        *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+	if( *plparam )
+	{
+	    *pwparam32 = (WPARAM32)(HWND32)HIWORD(*plparam);
+	    *plparam   = (LPARAM)(HWND32)LOWORD(*plparam);
+	}
+	else /* message sent to MDI client */
+	    *pwparam32 = wParam16;
         return 0;
     case WM_NCCALCSIZE:
         {
@@ -1343,9 +1348,17 @@ INT32 WINPROC_MapMsg32ATo16( HWND32 hwnd, UINT32 msg32, WPARAM32 wParam32,
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
         return 0;
     case WM_MDIACTIVATE:
-        *pwparam16 = ((HWND32)*plparam == hwnd);
-        *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
-                               (HWND16)LOWORD(wParam32) );
+	if( WIDGETS_IsControl32(WIN_FindWndPtr(hwnd), BIC32_MDICLIENT) )
+	{
+	    *pwparam16 = (HWND32)wParam32;
+	    *plparam = 0;
+	}
+	else
+	{
+	    *pwparam16 = ((HWND32)*plparam == hwnd);
+	    *plparam = MAKELPARAM( (HWND16)LOWORD(*plparam),
+				   (HWND16)LOWORD(wParam32) );
+	}
         return 0;
     case WM_NCCALCSIZE:
         {

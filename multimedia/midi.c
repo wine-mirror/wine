@@ -1347,7 +1347,7 @@ DWORD modMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
  * 				MIDI_DriverProc		[sample driver]
  */
 LONG MIDI_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-						DWORD dwParam1, DWORD dwParam2)
+		     DWORD dwParam1, DWORD dwParam2)
 {
 #if defined(linux) || defined(__FreeBSD__)
 	switch(wMsg) {

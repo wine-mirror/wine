@@ -32,6 +32,16 @@ typedef struct { 	   /* structure for dropped files */
 	/* memory block with filenames follows */     
 } DROPFILESTRUCT, *LPDROPFILESTRUCT; 
 
+typedef struct _NOTIFYICONDATA {
+	DWORD cbSize;
+	HWND32 hWnd;
+	UINT32 uID;
+	UINT32 uFlags;
+	UINT32 uCallbackMessage;
+	HICON32 hIcon;
+	CHAR szTip[64];
+} NOTIFYICONDATA, *PNOTIFYICONDATA;
+
 typedef struct tagSHFILEINFO32A {
 	HICON32	hIcon;			/* icon */
 	int	iIcon;			/* icon index */
@@ -59,8 +69,6 @@ typedef struct _AppBarData {
 	LPARAM	lParam;
 } APPBARDATA, *PAPPBARDATA;
 
-DECL_WINELIB_TYPE(APPBARDATA);
-
 #define SHGFI_ICON              0x000000100     /* get icon */
 #define SHGFI_DISPLAYNAME       0x000000200     /* get display name */
 #define SHGFI_TYPENAME          0x000000400     /* get type name */
@@ -86,5 +94,23 @@ DWORD    WINAPI SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
 #define SE_ERR_DDEFAIL          29
 #define SE_ERR_DDEBUSY          30
 #define SE_ERR_NOASSOC          31
+
+#define	CSIDL_DESKTOP		0x0000
+#define	CSIDL_PROGRAMS		0x0002
+#define	CSIDL_CONTROLS		0x0003
+#define	CSIDL_PRINTERS		0x0004
+#define	CSIDL_PERSONAL		0x0005
+#define	CSIDL_FAVORITES		0x0006
+#define	CSIDL_STARTUP		0x0007
+#define	CSIDL_RECENT		0x0008
+#define	CSIDL_SENDTO		0x0009
+#define	CSIDL_BITBUCKET		0x000a
+#define	CSIDL_STARTMENU		0x000b
+#define	CSIDL_DESKTOPDIRECTORY	0x0010
+#define	CSIDL_DRIVES		0x0011
+#define	CSIDL_NETWORK		0x0012
+#define	CSIDL_NETHOOD		0x0013
+#define	CSIDL_FONTS		0x0014
+#define	CSIDL_TEMPLATES		0x0015
 
 #endif  /* __WINE_SHELL_H */

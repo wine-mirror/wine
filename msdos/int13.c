@@ -25,13 +25,11 @@ void WINAPI INT_Int13Handler( CONTEXT *context )
 		break;
 	       
 	case 0x05:                                     /* FORMAT TRACK */
+        case 0x06:             /* FORMAT TRACK AND SET BAD SECTOR FLAGS */
+        case 0x07:             /* FORMAT DRIVE STARTING AT GIVEN TRACK  */
+       /* despite of what Ralf Brown says, 0x06 and 0x07 seem to set CFLAG, too (at least my BIOS does that) */
 		AH_reg(context) = 0x0c;
                 SET_CFLAG(context);
-		break;
-
-	case 0x06:             /* FORMAT TRACK AND SET BAD SECTOR FLAGS */
-	case 0x07:             /* FORMAT DRIVE STARTING AT GIVEN TRACK  */ 
-		AH_reg(context) = 0x0c;
 		break;
 
 	case 0x08:                              /* GET DRIVE PARAMETERS  */

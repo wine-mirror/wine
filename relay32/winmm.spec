@@ -2,6 +2,8 @@ name winmm
 type win32
 
   1 stdcall PlaySoundA(ptr long long) PlaySound32A
+  2 stdcall WINMM_2(ptr long long) PlaySound32A
+  3 stub WINMM_3
   4 stub CloseDriver
   5 stub DefDriverProc
   6 stub DriverCallback
@@ -15,7 +17,7 @@ type win32
  14 stub GetDriverModuleHandle
  15 stdcall OpenDriver(ptr ptr long) OpenDriver
  16 stub OpenDriverA
- 17 stub PlaySound
+ 17 stdcall PlaySound(ptr long long) PlaySound32A
  18 stdcall PlaySoundW(ptr long long) PlaySound32W
  19 stub SendDriverMessage
  20 stdcall auxGetDevCapsA(long ptr long) auxGetDevCaps32A
@@ -25,12 +27,12 @@ type win32
  24 stdcall auxOutMessage(long long long long) auxOutMessage32
  25 stdcall auxSetVolume(long long) auxSetVolume32
  26 stub joyConfigChanged
- 27 stub joyGetDevCapsA
- 28 stub joyGetDevCapsW
- 29 stub joyGetNumDevs
- 30 stub joyGetPos
+ 27 stdcall joyGetDevCapsA(long ptr long) joyGetDevCaps32A
+ 28 stdcall joyGetDevCapsW(long ptr long) joyGetDevCaps32W
+ 29 stdcall joyGetNumDevs() joyGetNumDevs32
+ 30 stdcall joyGetPos(long ptr) joyGetPos32
  31 stub joyGetPosEx
- 32 stub joyGetThreshold
+ 32 stdcall joyGetThreshold(long ptr) joyGetThreshold32
  33 stub joyReleaseCapture
  34 stub joySetCapture
  35 stub joySetThreshold
@@ -47,7 +49,7 @@ type win32
  46 stdcall mciGetErrorStringW(long ptr long) mciGetErrorString32W
  47 stub mciGetYieldProc
  48 stub mciLoadCommandResource
- 49 stub mciSendCommandA
+ 49 stdcall mciSendCommandA(long long long long) mciSendCommand32A
  50 stub mciSendCommandW
  51 stdcall mciSendStringA(ptr ptr long long) mciSendString
  52 stub mciSendStringW
@@ -135,13 +137,13 @@ type win32
 134 stdcall mmsystemGetVersion() mmsystemGetVersion32
 135 stdcall sndPlaySoundA(ptr long) sndPlaySound
 136 stub sndPlaySoundW
-137 stub timeBeginPeriod
-138 stub timeEndPeriod
-139 stub timeGetDevCaps
-140 stub timeGetSystemTime
+137 stdcall timeBeginPeriod(long) timeBeginPeriod32
+138 stdcall timeEndPeriod(long) timeEndPeriod32
+139 stdcall timeGetDevCaps(ptr long) timeGetDevCaps32
+140 stdcall timeGetSystemTime(ptr long) timeGetSystemTime32
 141 stdcall timeGetTime() timeGetTime
-142 stub timeKillEvent
-143 stub timeSetEvent
+142 stdcall timeKillEvent(long) timeKillEvent32
+143 stdcall timeSetEvent(long long ptr long long) timeSetEvent32
 144 stdcall waveInAddBuffer(long ptr long) waveInAddBuffer32
 145 stdcall waveInClose(long) waveInClose32
 146 stdcall waveInGetDevCapsA(long ptr long) waveInGetDevCaps32A

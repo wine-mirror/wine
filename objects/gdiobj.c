@@ -90,6 +90,10 @@ static FONTOBJ OEMFixedFont =
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, OEM_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
+/* Filler to make the location counter dword aligned again.  This is necessary
+   since (a) FONTOBJ is packed, (b) gcc places initialised variables in the code
+   segment, and (c) Solaris assembler is stupid.  */
+static UINT16 align_OEMFixedFont = 1;
 
 static FONTOBJ AnsiFixedFont =
 {
@@ -97,6 +101,7 @@ static FONTOBJ AnsiFixedFont =
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
+static UINT16 align_AnsiFixedFont = 1;
 
 static FONTOBJ AnsiVarFont =
 {
@@ -104,6 +109,7 @@ static FONTOBJ AnsiVarFont =
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
 };
+static UINT16 align_AnsiVarFont = 1;
 
 static FONTOBJ SystemFont =
 {
@@ -111,6 +117,7 @@ static FONTOBJ SystemFont =
     { 16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "System" }
 };
+static UINT16 align_SystemFont = 1;
 
 static FONTOBJ DeviceDefaultFont =
 {
@@ -118,6 +125,7 @@ static FONTOBJ DeviceDefaultFont =
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
 };
+static UINT16 align_DeviceDefaultFont = 1;
 
 static FONTOBJ SystemFixedFont =
 {
@@ -125,6 +133,16 @@ static FONTOBJ SystemFixedFont =
     { 12, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN, "" }
 };
+static UINT16 align_SystemFixedFont = 1;
+
+/* FIXME: Is this correct? */
+static FONTOBJ DefaultGuiFont =
+{
+    { 9, FONT_MAGIC, 1 },   /* header */
+    { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
+};
+static UINT16 align_DefaultGuiFont = 1;
 
 
 static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
@@ -145,7 +163,8 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &SystemFont,
     (GDIOBJHDR *) &DeviceDefaultFont,
     NULL,            /* DEFAULT_PALETTE created by PALETTE_Init */
-    (GDIOBJHDR *) &SystemFixedFont
+    (GDIOBJHDR *) &SystemFixedFont,
+    (GDIOBJHDR *) &DefaultGuiFont
 };
 
 /******************************************************************************
@@ -212,6 +231,15 @@ BOOL32 GDI_Init(void)
 {
     extern BOOL32 X11DRV_Init(void);
     extern BOOL32 DIB_Init(void);
+
+    /* Kill some warnings.  */
+    (void)align_OEMFixedFont;
+    (void)align_AnsiFixedFont;
+    (void)align_AnsiVarFont;
+    (void)align_SystemFont;
+    (void)align_DeviceDefaultFont;
+    (void)align_SystemFixedFont;
+    (void)align_DefaultGuiFont;
 
     /* TWEAK: Initialize font hints */
     ReadFontInformation("OEMFixed", &OEMFixedFont, 12, 0, 0, 0, 0);
@@ -513,6 +541,28 @@ DWORD WINAPI GetObjectType( HANDLE32 handle )
 INT32 WINAPI GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 {
     return GetObject32A( handle, count, buffer );
+}
+
+/***********************************************************************
+ *           GetCurrentObject    	(GDI32.166)
+ */
+HANDLE32 WINAPI GetCurrentObject(HDC32 hdc,UINT32 type)
+{
+    DC * dc = DC_GetDCPtr( hdc );
+
+    if (!dc) 
+    	return 0;
+    switch (type) {
+    case OBJ_PEN:	return dc->w.hPen;
+    case OBJ_BRUSH:	return dc->w.hBrush;
+    case OBJ_PAL:	return dc->w.hPalette;
+    case OBJ_FONT:	return dc->w.hFont;
+    case OBJ_BITMAP:	return dc->w.hBitmap;
+    default:
+    	/* the SDK only mentions those above */
+    	fprintf(stderr,"GetCurrentObject(%08x,%d), unknown type.\n",hdc,type);
+	return 0;
+    }
 }
 
 

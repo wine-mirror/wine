@@ -11,6 +11,7 @@
 #include "ldt.h"
 #include "local.h"
 #include "x11drv.h"
+#include "path.h"
 
   /* GDI objects magic numbers */
 #define PEN_MAGIC             0x4f47
@@ -100,6 +101,8 @@ typedef struct
     HBITMAP16     hFirstBitmap; /* Bitmap selected at creation of the DC */
     HANDLE16      hDevice;
     HPALETTE16    hPalette;
+    
+    GdiPath       path;
 
     WORD          ROPmode;
     WORD          polyFillMode;
@@ -246,7 +249,7 @@ typedef struct tagDC_FUNCS
 
   /* Stock objects handles */
 
-#define NB_STOCK_OBJECTS          (SYSTEM_FIXED_FONT + 1)
+#define NB_STOCK_OBJECTS          (DEFAULT_GUI_FONT + 1)
 
 #define STOCK_WHITE_BRUSH       ((HBRUSH16)(FIRST_STOCK_HANDLE+WHITE_BRUSH))
 #define STOCK_LTGRAY_BRUSH      ((HBRUSH16)(FIRST_STOCK_HANDLE+LTGRAY_BRUSH))
@@ -265,11 +268,12 @@ typedef struct tagDC_FUNCS
 #define STOCK_DEVICE_DEFAULT_FONT ((HFONT16)(FIRST_STOCK_HANDLE+DEVICE_DEFAULT_FONT))
 #define STOCK_DEFAULT_PALETTE   ((HPALETTE16)(FIRST_STOCK_HANDLE+DEFAULT_PALETTE))
 #define STOCK_SYSTEM_FIXED_FONT ((HFONT16)(FIRST_STOCK_HANDLE+SYSTEM_FIXED_FONT))
+#define STOCK_DEFAULT_GUI_FONT  ((HFONT16)(FIRST_STOCK_HANDLE+DEFAULT_GUI_FONT))
 
 #define FIRST_STOCK_FONT        STOCK_OEM_FIXED_FONT
-#define LAST_STOCK_FONT         STOCK_SYSTEM_FIXED_FONT
+#define LAST_STOCK_FONT         STOCK_DEFAULT_GUI_FONT
 
-#define LAST_STOCK_HANDLE       ((DWORD)STOCK_SYSTEM_FIXED_FONT)
+#define LAST_STOCK_HANDLE       ((DWORD)STOCK_DEFAULT_GUI_FONT)
 
   /* Device <-> logical coords conversion */
 

@@ -18,6 +18,7 @@ typedef LPCSTR			HPCSTR;         /* a huge version of LPCSTR */
 
 #define MAXPNAMELEN      32     /* max product name length (including NULL) */
 #define MAXERRORLENGTH   128    /* max error text length (including NULL) */
+#define MAX_JOYSTICKOEMVXDNAME	260
 
 typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
 
@@ -27,6 +28,9 @@ DECL_WINELIB_TYPE(MMVERSION);
 typedef UINT16	MCIDEVICEID16;
 typedef UINT32	MCIDEVICEID32;
 DECL_WINELIB_TYPE(MCIDEVICEID);
+typedef	UINT16	MMRESULT16;
+typedef	UINT32	MMRESULT32;
+DECL_WINELIB_TYPE(MMRESULT);
 
 typedef struct {
     UINT16    wType;		/* indicates the contents of the union */
@@ -733,24 +737,45 @@ DWORD WINAPI auxOutMessage32(UINT32,UINT32,DWORD,DWORD);
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
 #define TIMERR_STRUCT         (TIMERR_BASE+33)     /* time struct size */
 
-typedef void (CALLBACK *LPTIMECALLBACK) (UINT16 uTimerID, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPTIMECALLBACK16)(UINT16 uTimerID, UINT16 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPTIMECALLBACK32)(UINT32 uTimerID, UINT32 uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+DECL_WINELIB_TYPE(LPTIMECALLBACK);
 
 #define TIME_ONESHOT    0   /* program timer for single event */
 #define TIME_PERIODIC   1   /* program for continuous periodic event */
 
 typedef struct {
-    UINT16    wPeriodMin;     /* minimum period supported  */
-    UINT16    wPeriodMax;     /* maximum period supported  */
-} TIMECAPS, *LPTIMECAPS;
+    UINT16	wPeriodMin;	/* minimum period supported  */
+    UINT16	wPeriodMax;	/* maximum period supported  */
+} TIMECAPS16,*LPTIMECAPS16;
 
-UINT16 WINAPI timeGetSystemTime(LPMMTIME16 lpTime, UINT16 uSize);
-DWORD WINAPI timeGetTime(void);
-UINT16 WINAPI timeSetEvent(UINT16 uDelay, UINT16 uResolution,
-    LPTIMECALLBACK lpFunction, DWORD dwUser, UINT16 uFlags);
-UINT16 WINAPI timeKillEvent(UINT16 uTimerID);
-UINT16 WINAPI timeGetDevCaps(TIMECAPS * lpTimeCaps, UINT16 uSize);
-UINT16 WINAPI timeBeginPeriod(UINT16 uPeriod);
-UINT16 WINAPI timeEndPeriod(UINT16 uPeriod);
+typedef struct {
+    UINT32	wPeriodMin;
+    UINT32	wPeriodMax;
+} TIMECAPS32, *LPTIMECAPS32;
+
+DECL_WINELIB_TYPE(TIMECAPS);
+DECL_WINELIB_TYPE(LPTIMECAPS);
+
+MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16,UINT16);
+MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32,UINT32);
+#define timeGetSystemTime WINELIB_NAME(timeGetSystemTime)
+DWORD WINAPI timeGetTime();	/* same for win32/win16 */
+MMRESULT16 WINAPI timeSetEvent16(UINT16,UINT16,LPTIMECALLBACK16,DWORD,UINT16);
+MMRESULT32 WINAPI timeSetEvent32(UINT32,UINT32,LPTIMECALLBACK32,DWORD,UINT32);
+#define timeSetEvent WINELIB_NAME(timeSetEvent)
+MMRESULT16 WINAPI timeKillEvent16(UINT16);
+MMRESULT32 WINAPI timeKillEvent32(UINT32);
+#define timeKillEvent WINELIB_NAME(timeKillEvent)
+MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16,UINT16);
+MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32,UINT32);
+#define timeGetDevCaps WINELIB_NAME(timeGetDevCaps)
+MMRESULT16 WINAPI timeBeginPeriod16(UINT16);
+MMRESULT32 WINAPI timeBeginPeriod32(UINT32);
+#define timeBeginPeriod WINELIB_NAME(timeBeginPeriod)
+MMRESULT16 WINAPI timeEndPeriod16(UINT16);
+MMRESULT32 WINAPI timeEndPeriod32(UINT32);
+#define timeEndPeriod WINELIB_NAME(timeEndPeriod)
 
 #define JOYERR_NOERROR        (0)                  /* no error */
 #define JOYERR_PARMS          (JOYERR_BASE+5)      /* bad parameters */
@@ -770,8 +795,8 @@ UINT16 WINAPI timeEndPeriod(UINT16 uPeriod);
 #define JOYSTICKID2         1
 
 typedef struct {
-    UINT16 wMid;                  /* manufacturer ID */
-    UINT16 wPid;                  /* product ID */
+    WORD wMid;                  /* manufacturer ID */
+    WORD wPid;                  /* product ID */
     char szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
     UINT16 wXmin;                 /* minimum x position value */
     UINT16 wXmax;                 /* maximum x position value */
@@ -782,23 +807,116 @@ typedef struct {
     UINT16 wNumButtons;           /* number of buttons */
     UINT16 wPeriodMin;            /* minimum message period when captured */
     UINT16 wPeriodMax;            /* maximum message period when captured */
-} JOYCAPS, *LPJOYCAPS;
+    /* win95,nt4 additions: */
+    UINT16 wRmin;		/* minimum r position value */
+    UINT16 wRmax;		/* maximum r position value */
+    UINT16 wUmin;		/* minimum u (5th axis) position value */
+    UINT16 wUmax;		/* maximum u (5th axis) position value */
+    UINT16 wVmin;		/* minimum v (6th axis) position value */
+    UINT16 wVmax;		/* maximum v (6th axis) position value */
+    UINT16 wCaps;		/* joystick capabilites */
+    UINT16 wMaxAxes;		/* maximum number of axes supported */
+    UINT16 wNumAxes;		/* number of axes in use */
+    UINT16 wMaxButtons;		/* maximum number of buttons supported */
+    CHAR szRegKey[MAXPNAMELEN]; /* registry key */
+    CHAR szOEMVxD[MAX_JOYSTICKOEMVXDNAME]; /* OEM VxD in use */
+} JOYCAPS16, *LPJOYCAPS16;
+
+typedef struct {
+    WORD wMid;
+    WORD wPid;
+    CHAR szPname[MAXPNAMELEN];
+    UINT32 wXmin;
+    UINT32 wXmax;
+    UINT32 wYmin;
+    UINT32 wYmax;
+    UINT32 wZmin;
+    UINT32 wZmax;
+    UINT32 wNumButtons;
+    UINT32 wPeriodMin;
+    UINT32 wPeriodMax;
+    UINT32 wRmin;
+    UINT32 wRmax;
+    UINT32 wUmin;
+    UINT32 wUmax;
+    UINT32 wVmin;
+    UINT32 wVmax;
+    UINT32 wCaps;
+    UINT32 wMaxAxes;
+    UINT32 wNumAxes;
+    UINT32 wMaxButtons;
+    CHAR szRegKey[MAXPNAMELEN];
+    CHAR szOEMVxD[MAX_JOYSTICKOEMVXDNAME];
+} JOYCAPS32A, *LPJOYCAPS32A;
+
+typedef struct {
+    WORD wMid;
+    WORD wPid;
+    WCHAR szPname[MAXPNAMELEN];
+    UINT32 wXmin;
+    UINT32 wXmax;
+    UINT32 wYmin;
+    UINT32 wYmax;
+    UINT32 wZmin;
+    UINT32 wZmax;
+    UINT32 wNumButtons;
+    UINT32 wPeriodMin;
+    UINT32 wPeriodMax;
+    UINT32 wRmin;
+    UINT32 wRmax;
+    UINT32 wUmin;
+    UINT32 wUmax;
+    UINT32 wVmin;
+    UINT32 wVmax;
+    UINT32 wCaps;
+    UINT32 wMaxAxes;
+    UINT32 wNumAxes;
+    UINT32 wMaxButtons;
+    WCHAR szRegKey[MAXPNAMELEN];
+    WCHAR szOEMVxD[MAX_JOYSTICKOEMVXDNAME];
+} JOYCAPS32W, *LPJOYCAPS32W;
+DECL_WINELIB_TYPE_AW(JOYCAPS)
+DECL_WINELIB_TYPE_AW(LPJOYCAPS)
 
 typedef struct {
     UINT16 wXpos;                 /* x position */
     UINT16 wYpos;                 /* y position */
     UINT16 wZpos;                 /* z position */
     UINT16 wButtons;              /* button states */
-} JOYINFO, *LPJOYINFO;
+} JOYINFO16, *LPJOYINFO16;
 
-UINT16 WINAPI joyGetDevCaps(UINT16 uJoyID, JOYCAPS * lpCaps, UINT16 uSize);
-UINT16 WINAPI joyGetNumDevs(void);
-UINT16 WINAPI joyGetPos(UINT16 uJoyID, JOYINFO * lpInfo);
-UINT16 WINAPI joyGetThreshold(UINT16 uJoyID, UINT16 * lpuThreshold);
-UINT16 WINAPI joyReleaseCapture(UINT16 uJoyID);
-UINT16 WINAPI joySetCapture(HWND16 hwnd, UINT16 uJoyID, UINT16 uPeriod,
-    BOOL16 bChanged);
-UINT16 WINAPI joySetThreshold(UINT16 uJoyID, UINT16 uThreshold);
+typedef struct {
+    UINT32 wXpos;
+    UINT32 wYpos;
+    UINT32 wZpos;
+    UINT32 wButtons;
+} JOYINFO32, *LPJOYINFO32;
+
+DECL_WINELIB_TYPE(JOYINFO)
+DECL_WINELIB_TYPE(LPJOYINFO)
+
+MMRESULT16 WINAPI joyGetDevCaps16 (UINT16,LPJOYCAPS16 ,UINT16);
+MMRESULT32 WINAPI joyGetDevCaps32A(UINT32,LPJOYCAPS32A,UINT32);
+MMRESULT32 WINAPI joyGetDevCaps32W(UINT32,LPJOYCAPS32W,UINT32);
+#define joyGetDevCaps WINELIB_NAME_AW(joyGetDevCaps)
+UINT16 WINAPI joyGetNumDevs16(void);
+UINT32 WINAPI joyGetNumDevs32(void);
+#define joyGetNumDevs WINELIB_NAME(joyGetNumDevs)
+MMRESULT16 WINAPI joyGetPos16(UINT16,LPJOYINFO16);
+MMRESULT32 WINAPI joyGetPos32(UINT32,LPJOYINFO32);
+#define joyGetPos WINELIB_NAME(joyGetPos)
+MMRESULT16 WINAPI joyGetThreshold16(UINT16,UINT16*);
+MMRESULT32 WINAPI joyGetThreshold32(UINT32,UINT32*);
+#define joyGetThreshold WINELIB_NAME(joyGetThreshold)
+MMRESULT16 WINAPI joyReleaseCapture16(UINT16);
+MMRESULT32 WINAPI joyReleaseCapture32(UINT32);
+#define joyReleaseCapture WINELIB_NAME(joyReleaseCapture)
+MMRESULT16 WINAPI joySetCapture16(HWND16,UINT16,UINT16,BOOL16);
+MMRESULT32 WINAPI joySetCapture32(HWND32,UINT32,UINT32,BOOL32);
+#define joySetCapture WINELIB_NAME(joySetCapture)
+MMRESULT16 WINAPI joySetThreshold16(UINT16,UINT16);
+MMRESULT32 WINAPI joySetThreshold32(UINT32,UINT32);
+#define joySetThreshold WINELIB_NAME(joySetThreshold)
 
 typedef struct {
 	WORD		wMid;		/* manufacturer id */
@@ -2560,11 +2678,11 @@ typedef struct {
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct {
-	UINT16		wDelay;
-	UINT16		wResolution;
-	LPTIMECALLBACK	lpFunction;
-	DWORD		dwUser;
-	UINT16		wFlags;
+	UINT16			wDelay;
+	UINT16			wResolution;
+	LPTIMECALLBACK16	lpFunction;
+	DWORD			dwUser;
+	UINT16			wFlags;
 } TIMEREVENT, *LPTIMEREVENT;
 
 typedef struct tMIXEROPENDESC
@@ -2603,6 +2721,16 @@ BOOL16 WINAPI DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
                              WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2);
 DWORD WINAPI auxMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
+
+struct LINUX_MCIDRIVER {
+	HDRVR16			hdrv;
+	DRIVERPROC16		driverproc;
+	MCI_OPEN_DRIVER_PARMS	modp;
+	MCI_OPEN_PARMS16	mop;
+	DWORD			private;
+};
+
+#pragma pack(4)
 DWORD WINAPI mixMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 					DWORD dwParam1, DWORD dwParam2);
 DWORD WINAPI midMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 

@@ -1,0 +1,135 @@
+What is this?
+------------
+
+This note is a short description of
+
+* How to port Wine to your favourite operating system
+* Why you probably shouldn't use "#ifdef MyOS"
+* What to do instead.
+
+This document does not say a thing about how to port Wine to non-386
+operating systems, though.  You would need a CPU emulator.  Let's get
+Wine into a better shape on 386 first, OK?
+
+
+
+
+Why "#ifdef MyOS" is probably a mistake.
+---------------------------------------
+
+Operating systems change.  Maybe yours doesn't have the "foo.h"
+header, but maybe a future version will have it.  If you want
+to "#include <foo.h>", it doesn't matter what operating system
+you are using; it only matters whether "foo.h" is there.
+
+Furthermore, operating systems change names or "fork" into
+several ones.  An "#ifdef MyOs" will break over time.
+
+If you use the feature of Autoconf, the Gnu auto-configuration
+utility wisely, you will help future porters automatically
+because your changes will test for _features_, not names of
+operating systems.  A feature can be many things:
+
+* existance of a header file
+* existance of a library function
+* existance of libraries
+* bugs in header files, library functions, the compiler, ...
+* (you name it)
+
+You will need Gnu Autoconf, which you can get from your
+friendly Gnu mirror.  This program takes Wine's "configure.in"
+file and produces a "configure" shell script that users use to
+configure Wine to their system.
+
+There _are_ exceptions to the "avoid #ifdef MyOS" rule.  Wine,
+for example, needs the internals of the signal stack -- that
+cannot easily be described in terms of features.
+
+Let's now turn to specific porting problems and how to solve
+them.
+
+
+
+MyOS doesn't have the `foo.h' header!
+------------------------------------
+
+This first step is to make Autoconf check for this header.
+In configure.in you add a segment like this in the section
+that checks for header files (search for "header files"):
+
+  AC_CHECK_HEADER(foo.h, AC_DEFINE(HAVE_FOO_H))
+
+If your operating system supports a header file with the
+same contents but a different name, say bar.h, add a check
+for that also.
+
+Now you can change
+
+  #include <foo.h>
+
+to
+
+  #ifdef HAVE_FOO_H
+  #include <foo.h>
+  #elif defined (HAVE_BAR_H)
+  #include <bat.h>
+  #endif
+
+If your system doesn't have a corresponding header file even
+though it has the library functions being used, you might
+have to add an "#else" section to the conditional.  Avoid
+this if you can.
+
+You will also need to add "#undef HAVE_FOO_H" (etc.) to
+include/config.h.in
+
+Finish up with "make configure" and "./configure".
+
+
+MyOS doesn't have the `bar' function!
+------------------------------------
+
+A typical example of this is the `memmove'.  To solve this
+problem you would add `memmove' to the list of functions
+that Autoconf checks for.  In configure.in you search for
+AC_CHECK_FUNCS and add `memmove'.  (You will notice that
+someone already did this for this particular function.)
+
+Secondly, you will also need to add "#undef HAVE_BAR"
+to include/config.h.in
+
+The next step depends on the nature of the missing function.
+
+Case 1: It's easy to write a complete emulation of the
+  function.  (`memmove' belongs to this case.)
+
+  You add your emulation in misc/port.c surrounded by
+  "#ifndef HAVE_MEMMOVE" and "#endif".
+
+  You might have to add a prototype for your function.  If so,
+  include/miscemu.h might be the place.  Don't forget to protect
+  that definition by "#ifndef HAVE_MEMMOVE" and "#endif" also!
+
+Case 2: A general emulation is hard, but Wine is only using
+  a special case.
+
+  An example is the various "wait" calls used in SIGNAL_child
+  from loader/signal.c.  Here we have a multi-branch case on
+  features:
+
+    #ifdef HAVE_THIS
+    ...
+    #elif defined (HAVE_THAT)
+    ...
+    #elif defined (HAVE_SOMETHING_ELSE)
+    ...
+    #endif
+
+  Note that this is very different from testing on operating
+  systems.  If a new version of your operating systems comes
+  out and adds a new function, this code will magically start
+  using it.
+
+Finish up with "make configure" and "./configure".
+
+

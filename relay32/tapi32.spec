@@ -1,0 +1,117 @@
+name	tapi32
+type	win32
+
+  1 stub    lineAccept
+  2 stub    lineAddProvider
+  3 stub    lineAddToConference
+  4 stub    lineAnswer
+  5 stub    lineBlindTransfer
+  6 stub    lineClose
+  7 stub    lineCompleteCall
+  8 stub    lineCompleteTransfer
+  9 stub    lineConfigDialog
+ 10 stub    lineConfigDialogEdit
+ 11 stub    lineConfigProvider
+ 12 stub    lineDeallocateCall
+ 13 stub    lineDevSpecific
+ 14 stub    lineDevSpecificFeature
+ 15 stub    lineDial
+ 16 stub    lineDrop
+ 17 stub    lineForward
+ 18 stub    lineGatherDigits
+ 19 stub    lineGenerateDigits
+ 20 stub    lineGenerateTone
+ 21 stub    lineGetAddressCaps
+ 22 stub    lineGetAddressID
+ 23 stub    lineGetAddressStatus
+ 24 stub    lineGetAppPriority
+ 25 stub    lineGetCallInfo
+ 26 stub    lineGetCallStatus
+ 27 stub    lineGetConfRelatedCalls
+ 28 stub    lineGetCountry
+ 29 stub    lineGetDevCaps
+ 30 stub    lineGetDevConfig
+ 31 stub    lineGetID
+ 32 stub    lineGetIcon
+ 33 stub    lineGetLineDevStatus
+ 34 stub    lineGetNewCalls
+ 35 stub    lineGetNumRings
+ 36 stub    lineGetProviderList
+ 37 stub    lineGetRequest
+ 38 stub    lineGetStatusMessages
+ 39 stub    lineGetTranslateCaps
+ 40 stub    lineHandoff
+ 41 stub    lineHold
+ 42 stub    lineInitialize
+ 43 stub    lineMakeCall
+ 44 stub    lineMonitorDigits
+ 45 stub    lineMonitorMedia
+ 46 stub    lineMonitorTones
+ 47 stub    lineNegotiateAPIVersion
+ 48 stub    lineNegotiateExtVersion
+ 49 stub    lineOpen
+ 50 stub    linePark
+ 51 stub    linePickup
+ 52 stub    linePrepareAddToConference
+ 53 stub    lineRedirect
+ 54 stub    lineRegisterRequestRecipient
+ 55 stub    lineReleaseUserUserInfo
+ 56 stub    lineRemoveFromConference
+ 57 stub    lineRemoveProvider
+ 58 stub    lineSecureCall
+ 59 stub    lineSendUserUserInfo
+ 60 stub    lineSetAppPriority
+ 61 stub    lineSetAppSpecific
+ 62 stub    lineSetCallParams
+ 63 stub    lineSetCallPrivilege
+ 64 stub    lineSetCurrentLocation
+ 65 stub    lineSetDevConfig
+ 66 stub    lineSetMediaControl
+ 67 stub    lineSetMediaMode
+ 68 stub    lineSetNumRings
+ 69 stub    lineSetStatusMessages
+ 70 stub    lineSetTerminal
+ 71 stub    lineSetTollList
+ 72 stub    lineSetupConference
+ 73 stub    lineSetupTransfer
+ 74 stub    lineShutdown
+ 75 stub    lineSwapHold
+ 76 stub    lineTranslateAddress
+ 77 stub    lineTranslateDialog
+ 78 stub    lineUncompleteCall
+ 79 stub    lineUnhold
+ 80 stub    lineUnpark
+ 81 stub    phoneClose
+ 82 stub    phoneConfigDialog
+ 83 stub    phoneDevSpecific
+ 84 stub    phoneGetButtonInfo
+ 85 stub    phoneGetData
+ 86 stub    phoneGetDevCaps
+ 87 stub    phoneGetDisplay
+ 88 stub    phoneGetGain
+ 89 stub    phoneGetHookSwitch
+ 90 stub    phoneGetID
+ 91 stub    phoneGetIcon
+ 92 stub    phoneGetLamp
+ 93 stub    phoneGetRing
+ 94 stub    phoneGetStatus
+ 95 stub    phoneGetStatusMessages
+ 96 stub    phoneGetVolume
+ 97 stub    phoneInitialize
+ 98 stub    phoneNegotiateAPIVersion
+ 99 stub    phoneNegotiateExtVersion
+100 stub    phoneOpen
+101 stub    phoneSetButtonInfo
+102 stub    phoneSetData
+103 stub    phoneSetDisplay
+104 stub    phoneSetGain
+105 stub    phoneSetHookSwitch
+106 stub    phoneSetLamp
+107 stub    phoneSetRing
+108 stub    phoneSetStatusMessages
+109 stub    phoneSetVolume
+110 stub    phoneShutdown
+111 stub    tapiGetLocationInfo
+112 stub    tapiRequestDrop
+113 stub    tapiRequestMakeCall
+114 stub    tapiRequestMediaCall

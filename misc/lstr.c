@@ -10,40 +10,50 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <wctype.h>
 
 #include "windows.h"
 #include "winnt.h"	/* HEAP_ macros */
+#include "task.h"
 #include "heap.h"
 #include "ldt.h"
+#include "stackframe.h"
 #include "module.h"
 #include "stddebug.h"
 #include "debug.h"
 
-#define ToUpper(c)	toupper(c)
-#define ToLower(c)	tolower(c)
-
 
 /* Funny to divide them between user and kernel. */
 
-/* IsCharAlpha USER 433 */
+/* be careful: always use functions from wctype.h if character > 255 */
+
+/***********************************************************************
+ *		IsCharAlpha (USER.433)
+ */
 BOOL16 WINAPI IsCharAlpha16(CHAR ch)
 {
   return isalpha(ch);   /* This is probably not right for NLS */
 }
 
-/* IsCharAlphanumeric USER 434 */
+/***********************************************************************
+ *		IsCharAlphanumeric (USER.434)
+ */
 BOOL16 WINAPI IsCharAlphaNumeric16(CHAR ch)
 {
     return isalnum(ch);
 }
 
-/* IsCharUpper USER 435 */
+/***********************************************************************
+ *		IsCharUpper (USER.435)
+ */
 BOOL16 WINAPI IsCharUpper16(CHAR ch)
 {
   return isupper(ch);
 }
 
-/* IsCharLower USER 436 */
+/***********************************************************************
+ *		IsCharLower (USER.436)
+ */
 BOOL16 WINAPI IsCharLower16(CHAR ch)
 {
   return islower(ch);
@@ -64,7 +74,7 @@ SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
         for (s = PTR_SEG_TO_LIN(strOrChar); *s; s++) *s = toupper(*s);
         return strOrChar;
     }
-    else return (SEGPTR)ToUpper( (int)strOrChar );
+    else return toupper((char)strOrChar);
 }
 
 
@@ -93,7 +103,7 @@ SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
         for (s = PTR_SEG_TO_LIN( strOrChar ); *s; s++) *s = tolower( *s );
         return strOrChar;
     }
-    else return (SEGPTR)tolower( (int)strOrChar );
+    else return tolower((char)strOrChar);
 }
 
 
@@ -274,7 +284,7 @@ LPSTR WINAPI CharLower32A(LPSTR x)
         }
         return x;
     }
-    else return (LPSTR)tolower(LOWORD(x));
+    else return (LPSTR)tolower((char)(int)x);
 }
 
 /***********************************************************************
@@ -285,6 +295,7 @@ DWORD WINAPI CharLowerBuff32A(LPSTR x,DWORD buflen)
 {
     DWORD done=0;
 
+    if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
         *x=tolower(*x);
@@ -302,9 +313,10 @@ DWORD WINAPI CharLowerBuff32W(LPWSTR x,DWORD buflen)
 {
     DWORD done=0;
 
+    if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
-        *x=tolower(*x);
+        *x=towlower(*x);
         x++;
         done++;
     }
@@ -322,12 +334,12 @@ LPWSTR WINAPI CharLower32W(LPWSTR x)
         LPWSTR s = x;
         while (*s)
         {
-            *s=tolower(*s);
+            *s=towlower(*s);
             s++;
         }
         return x;
     }
-    else return (LPWSTR)tolower(LOWORD(x));
+    else return (LPWSTR)towlower(LOWORD(x));
 }
 
 /***********************************************************************
@@ -346,7 +358,7 @@ LPSTR WINAPI CharUpper32A(LPSTR x)
         }
         return x;
     }
-    else return (LPSTR)toupper(LOWORD(x));
+    return (LPSTR)toupper((char)(int)x);
 }
 
 /***********************************************************************
@@ -357,6 +369,7 @@ DWORD WINAPI CharUpperBuff32A(LPSTR x,DWORD buflen)
 {
     DWORD done=0;
 
+    if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
         *x=toupper(*x);
@@ -374,9 +387,10 @@ DWORD WINAPI CharUpperBuff32W(LPWSTR x,DWORD buflen)
 {
     DWORD done=0;
 
+    if (!x) return 0; /* YES */
     while (*x && (buflen--))
     {
-        *x=toupper(*x);
+        *x=towupper(*x);
         x++;
         done++;
     }
@@ -394,12 +408,12 @@ LPWSTR WINAPI CharUpper32W(LPWSTR x)
         LPWSTR s = x;
         while (*s)
         {
-            *s=toupper(*s);
+            *s=towupper(*s);
             s++;
         }
         return x;
     }
-    else return (LPWSTR)toupper(LOWORD(x));
+    else return (LPWSTR)towupper(LOWORD(x));
 }
 
 /***********************************************************************
@@ -426,7 +440,7 @@ BOOL32 WINAPI IsCharAlphaNumeric32A(CHAR x)
  */
 BOOL32 WINAPI IsCharAlphaNumeric32W(WCHAR x)
 {
-    return isalnum(x);
+    return iswalnum(x);
 }
 
 /***********************************************************************
@@ -435,7 +449,7 @@ BOOL32 WINAPI IsCharAlphaNumeric32W(WCHAR x)
  */
 BOOL32 WINAPI IsCharAlpha32W(WCHAR x)
 {
-    return isalpha(x);
+    return iswalpha(x);
 }
 
 /***********************************************************************
@@ -453,7 +467,7 @@ BOOL32 WINAPI IsCharLower32A(CHAR x)
  */
 BOOL32 WINAPI IsCharLower32W(WCHAR x)
 {
-    return islower(x);
+    return iswlower(x);
 }
 
 /***********************************************************************
@@ -471,7 +485,7 @@ BOOL32 WINAPI IsCharUpper32A(CHAR x)
  */
 BOOL32 WINAPI IsCharUpper32W(WCHAR x)
 {
-    return isupper(x);
+    return iswupper(x);
 }
 
 /***********************************************************************

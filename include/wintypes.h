@@ -88,6 +88,7 @@ typedef int             INT32;
 typedef unsigned int    UINT32;
 typedef unsigned short  WORD;
 typedef unsigned long   DWORD;
+typedef unsigned long   ULONG;
 typedef unsigned char   BYTE;
 typedef long            LONG;
 typedef char            CHAR;

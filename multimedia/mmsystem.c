@@ -23,6 +23,7 @@
 #include "file.h"
 #include "mmsystem.h"
 #include "stddebug.h"
+/* #define DEBUG_MMSYS */
 #include "debug.h"
 #include "xmalloc.h"
 #include "callback.h"
@@ -31,11 +32,7 @@ static int	InstalledCount;
 static int	InstalledListLen;
 static LPSTR	lpInstallNames = NULL;
 
-MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
-/* struct below is to remember alias/devicenames for mcistring.c 
- * FIXME: should use some internal struct ... 
- */
-MCI_OPEN_PARMS16 mciOpenDrv[MAXMCIDRIVERS];
+struct LINUX_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
 UINT16 midiGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
 static UINT16 waveGetErrorText(UINT16 uError, LPSTR lpText, UINT16 uSize);
@@ -53,7 +50,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 
 
 #define GetDrv(wDevID) (&mciDrv[MMSYSTEM_DevIDToIndex(wDevID)])
-#define GetOpenDrv(wDevID) (&mciOpenDrv[MMSYSTEM_DevIDToIndex(wDevID)])
+#define GetOpenDrv(wDevID) (&(GetDrv(wDevID)->mop))
 
 /* The wDevID's returned by wine were originally in the range 
  * 0 - (MAXMCIDRIVERS - 1) and used directly as array indices.
@@ -122,25 +119,22 @@ MMSYSTEM_MMTIME16to32(LPMMTIME32 mmt32,LPMMTIME16 mmt16) {
 }
 
 /**************************************************************************
-* 				PlaySoundA		[WINMM.1]
-*/
+ * 				PlaySoundA		[WINMM.1]
+ */
 BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
 {
-  dprintf_mmsys(stddeb, "PlaySoundA: pszSound='%s' hmod=%04X fdwSound=%08lX\n",
+  dprintf_mmsys(stddeb, "PlaySoundA: pszSound='%p' hmod=%04X fdwSound=%08lX\n",
 		pszSound, hmod, fdwSound);
   if(hmod != 0 || !(fdwSound & SND_FILENAME)) {
     fprintf(stderr, "PlaySoundA: only disk sound files are supported\n");
     return FALSE;
-  } else {
-    BOOL16 bSound;
-    bSound = sndPlaySound(pszSound, (UINT16) fdwSound);
-    return (BOOL32) bSound;
-  }
+  } else
+    return  sndPlaySound(pszSound, (UINT16) fdwSound);
 }
 
 /**************************************************************************
-* 				PlaySoundW		[WINMM.18]
-*/
+ * 				PlaySoundW		[WINMM.18]
+ */
 BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
 {
   LPSTR pszSoundA = HEAP_strdupWtoA(GetProcessHeap(),0,pszSound);
@@ -537,7 +531,7 @@ UINT16 mixerGetControlDetails16(HMIXEROBJ16 hmix,LPMIXERCONTROLDETAILS16 lpmcd,D
 /**************************************************************************
  * 				mixerGetLineControlsA	[WINMM.104]
  */
-UINT32 mixerGetLineControls32A(HMIXEROBJ32 hmix,LPMIXERLINECONTROLS32A lpmlc,DWORD fdwControls) {
+UINT32 WINAPI mixerGetLineControls32A(HMIXEROBJ32 hmix,LPMIXERLINECONTROLS32A lpmlc,DWORD fdwControls) {
 	fprintf(stderr,"mixerGetLineControlsA(%04x,%p,%08lx),stub!\n",
 		hmix,lpmlc,fdwControls
 	);
@@ -547,7 +541,7 @@ UINT32 mixerGetLineControls32A(HMIXEROBJ32 hmix,LPMIXERLINECONTROLS32A lpmlc,DWO
 /**************************************************************************
  * 				mixerGetLineControlsW	[WINMM.105]
  */
-UINT32 mixerGetLineControls32W(HMIXEROBJ32 hmix,LPMIXERLINECONTROLS32W lpmlc,DWORD fdwControls) {
+UINT32 WINAPI mixerGetLineControls32W(HMIXEROBJ32 hmix,LPMIXERLINECONTROLS32W lpmlc,DWORD fdwControls) {
 	fprintf(stderr,"mixerGetLineControlsA(%04x,%p,%08lx),stub!\n",
 		hmix,lpmlc,fdwControls
 	);
@@ -557,7 +551,7 @@ UINT32 mixerGetLineControls32W(HMIXEROBJ32 hmix,LPMIXERLINECONTROLS32W lpmlc,DWO
 /**************************************************************************
  * 				mixerGetLineControls	[MMSYSTEM.807]
  */
-UINT16 mixerGetLineControls16(HMIXEROBJ16 hmix,LPMIXERLINECONTROLS16 lpmlc,DWORD fdwControls) {
+UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix,LPMIXERLINECONTROLS16 lpmlc,DWORD fdwControls) {
 	fprintf(stderr,"mixerGetLineControls(%04x,%p,%08lx),stub!\n",
 		hmix,lpmlc,fdwControls
 	);
@@ -567,7 +561,7 @@ UINT16 mixerGetLineControls16(HMIXEROBJ16 hmix,LPMIXERLINECONTROLS16 lpmlc,DWORD
 /**************************************************************************
  * 				mixerGetLineInfoA	[WINMM.106]
  */
-UINT32 mixerGetLineInfo32A(HMIXEROBJ32 hmix,LPMIXERLINE32A lpml,DWORD fdwInfo) {
+UINT32 WINAPI mixerGetLineInfo32A(HMIXEROBJ32 hmix,LPMIXERLINE32A lpml,DWORD fdwInfo) {
 	MIXERLINE16	ml16;
 	UINT32		ret;
 
@@ -599,7 +593,7 @@ UINT32 mixerGetLineInfo32A(HMIXEROBJ32 hmix,LPMIXERLINE32A lpml,DWORD fdwInfo) {
 /**************************************************************************
  * 				mixerGetLineInfoW	[WINMM.107]
  */
-UINT32 mixerGetLineInfo32W(HMIXEROBJ32 hmix,LPMIXERLINE32W lpml,DWORD fdwInfo) {
+UINT32 WINAPI mixerGetLineInfo32W(HMIXEROBJ32 hmix,LPMIXERLINE32W lpml,DWORD fdwInfo) {
 	MIXERLINE16	ml16;
 	UINT32		ret;
 
@@ -631,7 +625,7 @@ UINT32 mixerGetLineInfo32W(HMIXEROBJ32 hmix,LPMIXERLINE32W lpml,DWORD fdwInfo) {
 /**************************************************************************
  * 				mixerGetLineInfo	[MMSYSTEM.805]
  */
-UINT16 mixerGetLineInfo16(HMIXEROBJ16 hmix,LPMIXERLINE16 lpml,DWORD fdwInfo) {
+UINT16 WINAPI mixerGetLineInfo16(HMIXEROBJ16 hmix,LPMIXERLINE16 lpml,DWORD fdwInfo) {
 	UINT16 devid =  _get_mixerID_from_handle(hmix,fdwInfo);
 
 	fprintf(stderr,"mixerGetLineInfo16(%04x,%p[line %08lx],%08lx)\n",
@@ -643,7 +637,7 @@ UINT16 mixerGetLineInfo16(HMIXEROBJ16 hmix,LPMIXERLINE16 lpml,DWORD fdwInfo) {
 /**************************************************************************
  * 				mixerSetControlDetails	[WINMM.111]
  */
-UINT32 mixerSetControlDetails32(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,DWORD fdwDetails) {
+UINT32 WINAPI mixerSetControlDetails32(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,DWORD fdwDetails) {
 	fprintf(stderr,"mixerSetControlDetails32(%04x,%p,%08lx),stub!\n",
 		hmix,lpmcd,fdwDetails
 	);
@@ -653,7 +647,7 @@ UINT32 mixerSetControlDetails32(HMIXEROBJ32 hmix,LPMIXERCONTROLDETAILS32 lpmcd,D
 /**************************************************************************
  * 				mixerSetControlDetails	[MMSYSTEM.809]
  */
-UINT16 mixerSetControlDetails16(HMIXEROBJ16 hmix,LPMIXERCONTROLDETAILS16 lpmcd,DWORD fdwDetails) {
+UINT16 WINAPI mixerSetControlDetails16(HMIXEROBJ16 hmix,LPMIXERCONTROLDETAILS16 lpmcd,DWORD fdwDetails) {
 	fprintf(stderr,"mixerSetControlDetails16(%04x,%p,%08lx),stub!\n",
 		hmix,lpmcd,fdwDetails
 	);
@@ -663,7 +657,7 @@ UINT16 mixerSetControlDetails16(HMIXEROBJ16 hmix,LPMIXERCONTROLDETAILS16 lpmcd,D
 /**************************************************************************
  * 				mixerMessage		[WINMM.109]
  */
-UINT32 mixerMessage32(HMIXER32 hmix,UINT32 uMsg,DWORD dwParam1,DWORD dwParam2) {
+UINT32 WINAPI mixerMessage32(HMIXER32 hmix,UINT32 uMsg,DWORD dwParam1,DWORD dwParam2) {
 	LPMIXEROPENDESC	lpmod;
 	UINT16	uDeviceID;
 
@@ -679,7 +673,7 @@ UINT32 mixerMessage32(HMIXER32 hmix,UINT32 uMsg,DWORD dwParam1,DWORD dwParam2) {
 /**************************************************************************
  * 				mixerMessage		[MMSYSTEM.804]
  */
-UINT16 mixerMessage16(HMIXER16 hmix,UINT16 uMsg,DWORD dwParam1,DWORD dwParam2) {
+UINT16 WINAPI mixerMessage16(HMIXER16 hmix,UINT16 uMsg,DWORD dwParam1,DWORD dwParam2) {
 	LPMIXEROPENDESC	lpmod;
 	UINT16	uDeviceID;
 
@@ -1164,7 +1158,7 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS16 lp16Parms)
 	dprintf_mmsys(stddeb, "mciOpen(%08lX, %p (%p))\n", dwParam, lp16Parms, lpParms);
 	if (lp16Parms == NULL) return MCIERR_INTERNAL;
 
-	while(GetDrv(wDevID)->wType != 0) {
+	while(GetDrv(wDevID)->modp.wType != 0) {
 		wDevID = MMSYSTEM_NextDevID(wDevID);
 		if (!MMSYSTEM_DevIDValid(wDevID)) {
 			dprintf_mmsys(stddeb, "MCI_OPEN // MAXMCIDRIVERS reached !\n");
@@ -1204,8 +1198,21 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS16 lp16Parms)
 			if (strcmp(str,"*") == 0) {
 				dprintf_mmsys(stddeb,"No [mci extensions] entry for %s found.\n",t);
 				return MCIERR_EXTENSION_NOT_FOUND;
+#if testing16
 			} else  {
-				dprintf_mmsys(stddeb,"[mci extensions] entry %s for %s not supported.\n",str,t);
+				HDRVR16 hdrv = OpenDriver(str,"mci",NULL);
+				if (hdrv) {
+					HMODULE16	hmod;
+
+					hmod = GetDriverModuleHandle(hdrv);
+					GetDrv(wDevID)->hdrv = hdrv;
+					GetDrv(wDevID)->driverproc = GetProcAddress16(hmod,SEGPTR_GET(SEGPTR_STRDUP("DRIVERPROC")));
+					uDevTyp = MCI_DEVTYPE_OTHER;
+				} else {
+					dprintf_mmsys(stddeb,"[mci extensions] entry %s for %s not supported.\n",str,t);
+					return MCIERR_DEVICE_NOT_INSTALLED;
+				}
+#endif
 			}
 		} else
 			return MCIERR_EXTENSION_NOT_FOUND;
@@ -1245,11 +1252,26 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS16 lp16Parms)
 			} else
 			if (strcmp(str, "AVIVIDEO") == 0) {
 				uDevTyp = MCI_DEVTYPE_DIGITAL_VIDEO;
+			} else {
+#if testing16
+				HDRVR16 hdrv;
+				fprintf(stderr,"trying to load driver...\n");
+				hdrv = OpenDriver(str,"mci",NULL);
+				if (hdrv) {
+					HMODULE16	hmod;
+
+					hmod = GetDriverModuleHandle(hdrv);
+					GetDrv(wDevID)->hdrv = hdrv;
+					GetDrv(wDevID)->driverproc = GetProcAddress16(hmod,SEGPTR_GET(SEGPTR_STRDUP("DRIVERPROC")));
+					uDevTyp = MCI_DEVTYPE_OTHER;
+				} else
+#endif
+					return MCIERR_DEVICE_NOT_INSTALLED;
 			}
 		}
 	}
-	GetDrv(wDevID)->wType = uDevTyp;
-	GetDrv(wDevID)->wDeviceID = 0;  /* FIXME? for multiple devices */
+	GetDrv(wDevID)->modp.wType = uDevTyp;
+	GetDrv(wDevID)->modp.wDeviceID = 0;  /* FIXME? for multiple devices */
 	lpParms->wDeviceID = wDevID;
 	dprintf_mmsys(stddeb, "MCI_OPEN // mcidev=%d, uDevTyp=%04X wDeviceID=%04X !\n", 
 				wDevID, uDevTyp, lpParms->wDeviceID);
@@ -1263,7 +1285,7 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS16 lp16Parms)
 	  dwret =  WAVE_DriverProc( 0, 0, MCI_OPEN_DRIVER, 
 				   dwParam, (DWORD)lp16Parms);
 	  break;
-        case MCI_DEVTYPE_SEQUENCER:
+	case MCI_DEVTYPE_SEQUENCER:
 	  dwret = MIDI_DriverProc( 0, 0, MCI_OPEN_DRIVER, 
 				  dwParam, (DWORD)lp16Parms);
 	  break;
@@ -1275,7 +1297,10 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS16 lp16Parms)
 	  dprintf_mmsys(stddeb, "MCI_OPEN // No DIGITAL_VIDEO yet !\n");
 	  return MCIERR_DEVICE_NOT_INSTALLED;
         default:
+#if testing16
+	  dwret = Callbacks->CallDriverProc(GetDrv(wDevID)->driverproc,0,GetDrv(wDevID)->hdrv,MCI_OPEN_DRIVER,dwParam,(DWORD)lp16Parms);
 	  dprintf_mmsys(stddeb, "MCI_OPEN // Invalid Device Name '%08lx' !\n", (DWORD)lpParms->lpstrDeviceType);
+#endif
 	  return MCIERR_INVALID_DEVICE_NAME;
         }
 
@@ -1289,40 +1314,56 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS16 lp16Parms)
 	return dwret;
 }
 
+/**************************************************************************
+ * 			mciGetDriverData			[MMSYSTEM.708]
+ */
+DWORD WINAPI mciGetDriverData16(HDRVR16 hdrv) {
+	fprintf(stderr,"mciGetDriverData(%04x),stub!\n",hdrv);
+	return 0x42;
+}
 
 /**************************************************************************
-* 				mciClose				[internal]
-*/
+ * 			mciSetDriverData			[MMSYSTEM.707]
+ */
+DWORD WINAPI mciSetDriverData16(HDRVR16 hdrv,DWORD data) {
+	fprintf(stderr,"mciSetDriverData(%04x,%08lx),stub!\n",hdrv,data);
+	return 0;
+}
+
+/**************************************************************************
+ * 			mciClose				[internal]
+ */
 DWORD mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 {
 	DWORD	dwRet = MCIERR_INTERNAL;
 
 	dprintf_mmsys(stddeb, "mciClose(%04x, %08lX, %p)\n", wDevID, dwParam, lpParms);
-	switch(GetDrv(wDevID)->wType) {
-		case MCI_DEVTYPE_CD_AUDIO:
-			dwRet = CDAUDIO_DriverProc(GetDrv(wDevID)->wDeviceID,0,
-                                           MCI_CLOSE, dwParam, (DWORD)lpParms);
-			break;
-		case MCI_DEVTYPE_WAVEFORM_AUDIO:
-			dwRet = WAVE_DriverProc(GetDrv(wDevID)->wDeviceID, 0, 
-						MCI_CLOSE, dwParam,
-                                                (DWORD)lpParms);
-			break;
-		case MCI_DEVTYPE_SEQUENCER:
-			dwRet = MIDI_DriverProc(GetDrv(wDevID)->wDeviceID, 0, 
-						MCI_CLOSE, dwParam,
-                                                (DWORD)lpParms);
-			break;
-		case MCI_DEVTYPE_ANIMATION:
-			dwRet = ANIM_DriverProc(GetDrv(wDevID)->wDeviceID, 0, 
-						MCI_CLOSE, dwParam,
-                                                (DWORD)lpParms);
-			break;
-		default:
-			dprintf_mmsys(stddeb, "mciClose() // unknown device type=%04X !\n", GetDrv(wDevID)->wType);
-			dwRet = MCIERR_DEVICE_NOT_INSTALLED;
-		}
-	GetDrv(wDevID)->wType = 0;
+	switch(GetDrv(wDevID)->modp.wType) {
+	case MCI_DEVTYPE_CD_AUDIO:
+		dwRet = CDAUDIO_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,
+				   MCI_CLOSE, dwParam, (DWORD)lpParms);
+		break;
+	case MCI_DEVTYPE_WAVEFORM_AUDIO:
+		dwRet = WAVE_DriverProc(GetDrv(wDevID)->modp.wDeviceID, 0, 
+					MCI_CLOSE, dwParam,
+					(DWORD)lpParms);
+		break;
+	case MCI_DEVTYPE_SEQUENCER:
+		dwRet = MIDI_DriverProc(GetDrv(wDevID)->modp.wDeviceID, 0, 
+					MCI_CLOSE, dwParam,
+					(DWORD)lpParms);
+		break;
+	/*
+	case MCI_DEVTYPE_ANIMATION:
+		dwRet = ANIM_DriverProc(GetDrv(wDevID)->modp.wDeviceID, 0, 
+					MCI_CLOSE, dwParam,
+					(DWORD)lpParms);
+		break;
+	 */
+	default:
+		dwRet = Callbacks->CallDriverProc(GetDrv(wDevID)->driverproc,GetDrv(wDevID)->modp.wDeviceID,GetDrv(wDevID)->hdrv,MCI_CLOSE,dwParam,(DWORD)lpParms);
+	}
+	GetDrv(wDevID)->modp.wType = 0;
 
 	if (dwParam&MCI_NOTIFY)
 	  mciDriverNotify(lpParms->dwCallback,wDevID,
@@ -1334,8 +1375,8 @@ DWORD mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 
 
 /**************************************************************************
-* 			mciSysinfo				[internal]
-*/
+ * 			mciSysinfo				[internal]
+ */
 DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS16 lpParms)
 {
 	int	len;
@@ -1380,6 +1421,63 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS16 lpParms)
 	}
 	return MMSYSERR_INVALPARAM;
 }
+
+/**************************************************************************
+ *                    	mciLoadCommandResource
+ */
+UINT16 mciLoadCommandResource16(HANDLE16 hinst,LPCSTR resname,UINT16 type)
+{
+      char            buf[200];
+      OFSTRUCT        ofs;
+      HANDLE16        xhinst;
+      HRSRC16         hrsrc;
+      HGLOBAL16       hmem;
+      LPSTR           segstr;
+      SEGPTR          xmem;
+      LPBYTE          lmem;
+      static          mcidevtype = 0;
+
+      fprintf(stderr,"mciLoadCommandResource16(%04x,%s,%d),stub!\n",
+              hinst,resname,type
+      );
+      if (!lstrcmpi32A(resname,"core")) {
+              fprintf(stderr,"mciLoadCommandResource(...,\"core\",...), have to use internal tables... (not there yet)\n");
+              return 0;
+      }
+      /* if file exists "resname.mci", then load resource "resname" from it
+       * otherwise directly from driver
+       */
+      strcpy(buf,resname);
+      strcat(buf,".mci");
+      if (OpenFile32(buf,&ofs,OF_EXIST)!=HFILE_ERROR32) {
+              xhinst = LoadLibrary16(buf);
+              if (xhinst >32)
+                      hinst = xhinst;
+      } /* else use passed hinst */
+      segstr = SEGPTR_STRDUP(resname);
+      hrsrc = FindResource16(hinst,SEGPTR_GET(segstr),type);
+      SEGPTR_FREE(segstr);
+      if (!hrsrc) {
+              fprintf(stderr,"mciLoadCommandResource:no special commandlist found in resource\n");
+              return MCI_NO_COMMAND_TABLE;
+      }
+      hmem = LoadResource16(hinst,hrsrc);
+      if (!hmem) {
+              fprintf(stderr,"mciLoadCommandResource:couldn't load resource??\n");
+              return MCI_NO_COMMAND_TABLE;
+      }
+      xmem = WIN16_LockResource16(hmem);
+      if (!xmem) {
+              fprintf(stderr,"mciLoadCommandResource:couldn't lock resource??\n");
+              FreeResource16(hmem);
+              return MCI_NO_COMMAND_TABLE;
+      }
+      lmem = PTR_SEG_TO_LIN(xmem);
+      fprintf(stderr,"first resource entry is %s\n",(char*)lmem);
+      /* parse resource, register stuff, return unique id */
+      return ++mcidevtype;
+}
+
 
 /**************************************************************************
  * 			mciSound				[internal]
@@ -1441,8 +1539,19 @@ static const char *_mciCommandToString(UINT16 wMsg)
 }
 
 /**************************************************************************
-* 				mciSendCommand			[MMSYSTEM.701]
-*/
+ * 				mciSendCommandA			[WINMM.49]
+ */
+DWORD WINAPI mciSendCommand32A(UINT32 wDevID, UINT32 wMsg, DWORD dwParam1,
+                            DWORD dwParam2)
+{
+	fprintf(stderr,"mciSendCommand32A(%08x,%08x,%08lx,%08lx),stub!\n",
+		wDevID,wMsg,dwParam1,dwParam2
+	);
+	return 0; /* ok */
+}
+/**************************************************************************
+ * 				mciSendCommand			[MMSYSTEM.701]
+ */
 DWORD WINAPI mciSendCommand(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1,
                             DWORD dwParam2)
 {
@@ -1460,24 +1569,28 @@ DWORD WINAPI mciSendCommand(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1,
         return mciSysInfo( dwParam1,
                            (LPMCI_SYSINFO_PARMS16)PTR_SEG_TO_LIN(dwParam2));
     default:
-        switch(GetDrv(wDevID)->wType)
+        switch(GetDrv(wDevID)->modp.wType)
         {
         case MCI_DEVTYPE_CD_AUDIO:
-            return CDAUDIO_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+            return CDAUDIO_DriverProc(GetDrv(wDevID)->modp.wDeviceID, hDrv, 
                                       wMsg, dwParam1, dwParam2);
         case MCI_DEVTYPE_WAVEFORM_AUDIO:
-            return WAVE_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+            return WAVE_DriverProc(GetDrv(wDevID)->modp.wDeviceID, hDrv, 
                                    wMsg, dwParam1, dwParam2);
         case MCI_DEVTYPE_SEQUENCER:
-            return MIDI_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+            return MIDI_DriverProc(GetDrv(wDevID)->modp.wDeviceID, hDrv, 
                                    wMsg, dwParam1, dwParam2);
+	/*
         case MCI_DEVTYPE_ANIMATION:
-            return ANIM_DriverProc(GetDrv(wDevID)->wDeviceID, hDrv, 
+            return ANIM_DriverProc(GetDrv(wDevID)->modp.wDeviceID, hDrv, 
                                    wMsg, dwParam1, dwParam2);
+ 	 */
         default:
+	    return Callbacks->CallDriverProc(GetDrv(wDevID)->driverproc,GetDrv(wDevID)->modp.wDeviceID,GetDrv(wDevID)->hdrv,MCI_CLOSE,dwParam1,dwParam2);
+
             dprintf_mci(stddeb,
                         "mciSendCommand() // unknown device type=%04X !\n", 
-                        GetDrv(wDevID)->wType);
+                        GetDrv(wDevID)->modp.wType);
         }
     }
     return MMSYSERR_INVALPARAM;
@@ -1498,7 +1611,7 @@ UINT16 WINAPI mciGetDeviceID (LPCSTR lpstrName)
 	return 0;
 
     wDevID = MMSYSTEM_FirstDevID();
-    while(MMSYSTEM_DevIDValid(wDevID) && GetDrv(wDevID)->wType) {
+    while(MMSYSTEM_DevIDValid(wDevID) && GetDrv(wDevID)->modp.wType) {
 	if (GetOpenDrv(wDevID)->lpstrDeviceType && 
             strcmp(PTR_SEG_TO_LIN(GetOpenDrv(wDevID)->lpstrDeviceType), lpstrName) == 0)
 	    return wDevID;
@@ -3941,10 +4054,63 @@ HANDLE16 WINAPI DrvGetModuleHandle(HDRVR16 hDrvr)
 
 
 /**************************************************************************
-* 				DrvDefDriverProc	[MMSYSTEM.1104]
-*/
+ * 				DrvDefDriverProc	[MMSYSTEM.1104]
+ */
 LRESULT WINAPI DrvDefDriverProc(DWORD dwDriverID, HDRVR16 hDriv, WORD wMsg, 
                                 DWORD dwParam1, DWORD dwParam2)
 {
 	return DefDriverProc(dwDriverID, hDriv, wMsg, dwParam1, dwParam2);
 }
+
+/**************************************************************************
+ * 				mmThreadCreate		[MMSYSTEM.1120]
+ */
+LRESULT WINAPI mmThreadCreate16(LPVOID x1, LPWORD x2, DWORD x3, DWORD x4) {
+	fprintf(stderr,"mmThreadCreate16(%p,%p,%08lx,%08lx),stub!\n",
+		x1,x2,x3,x4
+	);
+	*x2 = 0xbabe;
+	return 0;
+}
+
+/**************************************************************************
+ * 				mmThreadGetTask		[MMSYSTEM.1125]
+ */
+LRESULT WINAPI mmThreadGetTask16(WORD hnd) {
+	fprintf(stderr,"mmThreadGetTask16(%04x),stub!\n",hnd);
+	return GetCurrentTask();
+}
+
+/**************************************************************************
+ * 				mmThreadSignal		[MMSYSTEM.1121]
+ */
+LRESULT WINAPI mmThreadSignal16(WORD hnd) {
+	fprintf(stderr,"mmThreadSignal16(%04x), stub!\n",hnd);
+	return 0;
+}
+
+/**************************************************************************
+ * 				mmTaskCreate		[MMSYSTEM.900]
+ */
+LRESULT WINAPI mmTaskCreate16(LPWORD lphnd,DWORD x1,DWORD x2) {
+	fprintf(stderr,"mmTaskCreate16(%p,%08lx,%08lx),stub!\n",lphnd,x1,x2);
+	*lphnd = 0xcafe;
+	return 0;
+}
+
+/**************************************************************************
+ * 				mmTaskSignal		[MMSYSTEM.903]
+ */
+LRESULT WINAPI mmTaskSignal16(HTASK16 ht) {
+	fprintf(stderr,"mmTaskSignal(%04x),stub!\n",ht);
+	return PostAppMessage16(ht,0x400,0,0);
+}
+
+/**************************************************************************
+ * 				mciDriverYield		[MMSYSTEM.710]
+ */
+LRESULT WINAPI mciDriverYield16(HANDLE16 hnd) {
+	fprintf(stderr,"mciDriverYield16(%04x),stub!\n",hnd);
+	return 0;
+}
+

@@ -1,0 +1,63 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = relay32
+
+DLLS = \
+	advapi32.spec \
+	comctl32.spec \
+	comdlg32.spec \
+	crtdll.spec \
+	dciman32.spec \
+	gdi32.spec \
+	kernel32.spec \
+	lz32.spec \
+	mpr.spec \
+	msvfw32.spec \
+	ntdll.spec \
+	ole32.spec \
+	olecli32.spec \
+	olesvr32.spec \
+	shell32.spec \
+	tapi32.spec \
+	user32.spec \
+	version.spec \
+	w32skrnl.spec \
+	winmm.spec \
+	winspool.spec \
+	wow32.spec \
+	wsock32.spec
+
+C_SRCS = \
+	builtin32.c \
+	relay386.c
+
+SPEC_FILES = $(DLLS:.spec=.c)
+
+EXTRA_OBJS = $(DLLS:.spec=.o)
+
+GEN_ASM_SRCS = \
+	call32.s
+
+.SUFFIXES: .spec
+
+.spec.c:
+	$(BUILD) -o $@ -spec $<
+
+all: checkbuild $(MODULE).o
+
+@MAKE_RULES@
+
+$(SPEC_FILES): $(BUILD)
+
+$(EXTRA_OBJS): $(TOPSRCDIR)/include/builtin32.h
+
+call32.s: $(BUILD)
+	$(BUILD) -o $@ -call32
+
+clean::
+	$(RM) $(SPEC_FILES)
+
+### Dependencies:

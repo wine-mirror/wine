@@ -144,6 +144,10 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     }
 
     GetRgnBox16( InquireVisRgn(lps->hdc), &lps->rcPaint );
+
+dprintf_win(stddeb,"box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
+		    lps->rcPaint.right, lps->rcPaint.bottom );
+
     DPtoLP16( lps->hdc, (LPPOINT16)&lps->rcPaint, 2 );
 
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)

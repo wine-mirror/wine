@@ -1512,7 +1512,7 @@ BOOL16 WINAPI TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 		switch( msg->wParam )
 		{
 		    case VK_F6:
-		    case VK_SEPARATOR:
+		    case VK_TAB:
 			 wParam = ( GetKeyState32(VK_SHIFT) & 0x8000 )
 				  ? SC_NEXTWINDOW : SC_PREVWINDOW;
 			 break;

@@ -29,9 +29,9 @@ LPCSTR WINAPI GetCommandLine32A(void)
  */
 LPCWSTR WINAPI GetCommandLine32W(void)
 {
-    static WCHAR buffer[256];
+    static WCHAR buffer[1024];
 
-    lstrcpynAtoW(buffer,GetCommandLine32A(),256);
+    lstrcpynAtoW(buffer,GetCommandLine32A(),1024);
     return buffer;
 }
 

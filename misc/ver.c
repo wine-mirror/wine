@@ -310,10 +310,6 @@ static int find_ne_resource(
 	}
 }
 
-extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(
-	LPIMAGE_RESOURCE_DIRECTORY resdirptr,LPCWSTR name,DWORD root
-);
-
 /* Loads the specified PE resource.
  * FIXME: shouldn't load the whole image
  */
@@ -368,20 +364,20 @@ find_pe_resource(
 			continue;
 	}
 	resourcedir = (LPIMAGE_RESOURCE_DIRECTORY)(image+resdir.VirtualAddress);
-	xresdir = GetResDirEntryW(resourcedir,typeid,(DWORD)resourcedir);
+	xresdir = GetResDirEntryW(resourcedir,typeid,(DWORD)resourcedir,FALSE);
 	if (!xresdir) {
 		dprintf_ver(stddeb,"...no typeid entry found for %p\n",typeid);
 		HeapFree(GetProcessHeap(),0,image);
 		return 0;
 	}
-	xresdir = GetResDirEntryW(xresdir,resid,(DWORD)resourcedir);
+	xresdir = GetResDirEntryW(xresdir,resid,(DWORD)resourcedir,FALSE);
 	if (!xresdir) {
 		dprintf_ver(stddeb,"...no resid entry found for %p\n",resid);
 		HeapFree(GetProcessHeap(),0,image);
 		return 0;
 	}
 	
-	xresdir = GetResDirEntryW(xresdir,0,(DWORD)resourcedir);
+	xresdir = GetResDirEntryW(xresdir,0,(DWORD)resourcedir,TRUE);
 	if (!xresdir) {
 		dprintf_ver(stddeb,"...no 0 (default language) entry found for %p\n",resid);
 		HeapFree(GetProcessHeap(),0,image);
@@ -1181,7 +1177,8 @@ _find_dataA(BYTE *block,LPCSTR str, int buff_remain) {
 			nextslash++;
 		if (!*nextslash)
 			nextslash=NULL;
-	}
+	} else if (*str == 0)
+		return NULL;
 
 
 	while (1) {
@@ -1208,7 +1205,7 @@ _find_dataA(BYTE *block,LPCSTR str, int buff_remain) {
 }
 
 /* this one used for Win32 resources, which are always in UNICODE format */
-extern LPWSTR CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
+extern LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar);
 static BYTE*
 _find_dataW(BYTE *block,LPCWSTR str, int buff_remain) {
 	LPWSTR	nextslash;
@@ -1227,7 +1224,8 @@ _find_dataW(BYTE *block,LPCWSTR str, int buff_remain) {
 			nextslash++;
 		if (!*nextslash)
 			nextslash=NULL;
-	}
+	} else if (*str == 0)
+		return NULL;
 
 
 	while (1) {
@@ -1298,6 +1296,7 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 		if (!b) {
 			fprintf(stderr,"key %s not found in versionresource.\n",s);
 			*buflen=0;
+			free (s);
 			return 0;
 		}
 		db=(struct dbW*)b;
@@ -1315,6 +1314,7 @@ DWORD WINAPI VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,
 		if (!b) {
 			fprintf(stderr,"key %s not found in versionresource.\n",s);
 			*buflen=0;
+			free (s);
 			return 0;
 		}
 		db=(struct dbA*)b;
@@ -1358,6 +1358,7 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		if (!b) {
 			fprintf(stderr,"key %s not found in versionresource.\n",s);
 			*buflen=0;
+			free (s);
 			return 0;
 		}
 		db	= (struct dbW*)b;
@@ -1369,12 +1370,15 @@ DWORD WINAPI VerQueryValue32A(LPVOID vblock,LPCSTR subblock,
 		    HeapFree(GetProcessHeap(),0,xs);
 		} else
 		    dprintf_ver(stderr,"->%p\n",b);
+		/* This is a leak.  */
+		b = HEAP_strdupWtoA(GetProcessHeap(),0,(WCHAR*)b);
 	} else {
 		struct	dbA	*db;
 		b=_find_dataA(block,s,*(WORD*)block);
 		if (!b) {
 			fprintf(stderr,"key %s not found in versionresource.\n",subblock);
 			*buflen=0;
+			free (s);
 			return 0;
 		}
 		db=(struct dbA*)b;

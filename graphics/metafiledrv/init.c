@@ -12,15 +12,13 @@
 #include "stddebug.h"
 #include "debug.h"
 
-static BOOL32 MFDRV_DeleteDC( DC *dc );
-
 static const DC_FUNCTIONS MFDRV_Funcs =
 {
     MFDRV_Arc,                       /* pArc */
     MFDRV_BitBlt,                    /* pBitBlt */
     MFDRV_Chord,                     /* pChord */
-    NULL,                            /* pCreateDC */
-    MFDRV_DeleteDC,                  /* pDeleteDC */
+    NULL, /* no implementation */    /* pCreateDC */
+    NULL, /* no implementation */    /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     MFDRV_Ellipse,                   /* pEllipse */
     NULL,                            /* pEnumDeviceFonts */
@@ -30,7 +28,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
     NULL,                            /* pGetCharWidth */
-    NULL /* no implementation */,    /* pGetPixel */
+    NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
@@ -131,6 +129,7 @@ static BOOL32 MFDRV_DeleteDC( DC *dc )
     if (physDev->mh) HeapFree( SystemHeap, 0, physDev->mh );
     HeapFree( SystemHeap, 0, physDev );
     dc->physDev = NULL;
+    GDI_FreeObject(dc->hSelf);
     return TRUE;
 }
 
@@ -154,13 +153,13 @@ HDC16 WINAPI CreateMetaFile16( LPCSTR filename )
         physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = _lcreat32( filename, 0 )) == HFILE_ERROR32)
         {
-            DeleteDC32( dc->hSelf );
+            MFDRV_DeleteDC( dc );
             return 0;
         }
         if (_lwrite32( hFile, (LPSTR)physDev->mh,
                        sizeof(*physDev->mh)) == HFILE_ERROR32)
 	{
-            DeleteDC32( dc->hSelf );
+            MFDRV_DeleteDC( dc );
             return 0;
 	}
 	physDev->mh->mtNoParameters = hFile; /* store file descriptor here */
@@ -186,7 +185,7 @@ HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
     
     dprintf_metafile( stddeb, "CloseMetaFile(%04x)\n", hdc );
 
-    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC ))) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
 
     /* Construct the end of metafile record - this is documented
@@ -195,7 +194,7 @@ HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
 
     if (!MF_MetaParam0(dc, META_EOF))
     {
-        DeleteDC32( hdc );
+        MFDRV_DeleteDC( dc );
 	return 0;
     }	
 
@@ -205,13 +204,13 @@ HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
 	physDev->mh->mtNoParameters = 0;
         if (_llseek32(hFile, 0L, 0) == HFILE_ERROR32)
         {
-            DeleteDC32( hdc );
+            MFDRV_DeleteDC( dc );
             return 0;
         }
         if (_lwrite32( hFile, (LPSTR)physDev->mh,
                        sizeof(*physDev->mh)) == HFILE_ERROR32)
         {
-            DeleteDC32( hdc );
+            MFDRV_DeleteDC( dc );
             return 0;
         }
         _lclose32(hFile);
@@ -223,7 +222,7 @@ HMETAFILE16 WINAPI CloseMetaFile16( HDC16 hdc )
                               physDev->mh->mtSize * sizeof(WORD),
                               GetCurrentPDB(), FALSE, FALSE, FALSE, NULL );
     physDev->mh = NULL;  /* So it won't be deleted */
-    DeleteDC32( hdc );
+    MFDRV_DeleteDC( dc );
     return hmf;
 }
 

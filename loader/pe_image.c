@@ -167,7 +167,7 @@ FARPROC32 PE_FindExportedFunction( HMODULE32 hModule, LPCSTR funcName)
 }
 
 void 
-fixup_imports (PDB32 *process,PE_MODREF *pem)
+fixup_imports (PDB32 *process,PE_MODREF *pem,HMODULE32 hModule)
 {
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     int	fixup_failed		= 0;
@@ -207,10 +207,10 @@ fixup_imports (PDB32 *process,PE_MODREF *pem)
 	/* don't use MODULE_Load, Win32 creates new task differently */
 	res = PE_LoadLibraryEx32A( name, 0, 0 );
 	if (res <= (HMODULE32) 32) {
-	    char *p, buffer[256];
+	    char *p, buffer[1024];
 
 	    /* Try with prepending the path of the current module */
-	    GetModuleFileName32A( pem->module, buffer, sizeof (buffer));
+	    GetModuleFileName32A( hModule, buffer, sizeof (buffer));
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
@@ -522,6 +522,11 @@ static HMODULE32 PE_MapImage( HMODULE32 hModule, PDB32 *process,
 	load_addr = (DWORD)VirtualAlloc( (void*)load_addr, vma_size,
                                          MEM_RESERVE | MEM_COMMIT,
                                          PAGE_EXECUTE_READWRITE );
+	if (load_addr == 0) {
+		load_addr = (DWORD)VirtualAlloc( NULL, vma_size,
+						 MEM_RESERVE | MEM_COMMIT,
+						 PAGE_EXECUTE_READWRITE );
+	}
 	pem->module = (HMODULE32)load_addr;
 
 	dprintf_win32(stddeb, "Load addr is really %lx, range %x\n",
@@ -647,7 +652,7 @@ static HMODULE32 PE_MapImage( HMODULE32 hModule, PDB32 *process,
 
 	if(pem->pe_reloc)	do_relocations(pem);
 	if(pem->pe_export)	dump_exports(pem->module);
-	if(pem->pe_import)	fixup_imports(process,pem);
+	if(pem->pe_import)	fixup_imports(process,pem,hModule);
   		
 	if (pem->pe_export)
 		modname = (char*)RVA(pem->pe_export->Name);
@@ -671,6 +676,7 @@ HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
 /******************************************************************************
  * The PE Library Loader frontend. 
  * FIXME: handle the flags.
+ *        internal module handling should be made better here (and in builtin.c)
  */
 HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 	OFSTRUCT	ofs;
@@ -690,6 +696,27 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 			pem = pem->next;
 		}
 		pModule = MODULE_GetPtr(hModule);
+		if (pModule->flags & NE_FFLAGS_BUILTIN) {
+			PDB32	*process = (PDB32*)GetCurrentProcessId();
+			IMAGE_DOS_HEADER	*dh;
+			IMAGE_NT_HEADERS	*nh;
+			IMAGE_SECTION_HEADER	*sh;
+
+			/* we only come here if we already have 'loaded' the
+			 * internal dll but in another process. Just create
+			 * a PE_MODREF and return.
+			 */
+			pem = (PE_MODREF*)HeapAlloc(GetProcessHeap(),
+				HEAP_ZERO_MEMORY,sizeof(*pem));
+			pem->module 	     = hModule;
+			dh = (IMAGE_DOS_HEADER*)pem->module;
+			nh = (IMAGE_NT_HEADERS*)(dh+1);
+			sh = (IMAGE_SECTION_HEADER*)(nh+1);
+			pem->pe_export	     = (IMAGE_EXPORT_DIRECTORY*)(sh+2);
+			pem->next	     = process->modref_list;
+			process->modref_list = pem;
+			return hModule;
+		}
 	} else {
 
 		/* try to load builtin, enabled modules first */

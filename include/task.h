@@ -131,5 +131,6 @@ extern HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
                                 UINT16 cmdShow );
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
+extern void TASK_Reschedule(void);
 
 #endif /* __WINE_TASK_H */

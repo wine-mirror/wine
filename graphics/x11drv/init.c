@@ -108,8 +108,6 @@ static DeviceCaps X11DRV_DevCaps = {
  */
 BOOL32 X11DRV_Init(void)
 {
-    extern BOOL32 COLOR_Init();
-
     /* FIXME: colormap management should be merged with the X11DRV */
 
     if( !COLOR_Init() ) return FALSE;

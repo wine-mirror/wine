@@ -1,0 +1,122 @@
+
+			Wine Documentation README
+
+
+Wine Man Page
+
+  The man page for the wine emulator is in this directory. It is installed 
+by 'make install'.
+
+Wine Reference Manual
+
+  Texinfo source for preliminary comprehensive documentation is in
+this directory.  Use 'make info' in this directory to generate the GNU
+info version, 'make dvi' to generate the DVI version (hit 'r' to
+ignore errors), or 'make all' for both. It is no longer installed by
+default.
+
+Wine API documentation
+
+  Do a 'make manpages' in the Wine toplevel directory to generate the
+API manpages from the Wine source, or 'make man' in any source
+subdirectory to generate manpages from only that directory. The
+manpages will be deposited in [documentation/man3w].  You will need
+c2man, available as source from http://www.debian.org/ and other
+places. Apply the patch included at the end of this file for improved
+terse description formatting.  The man pages are not installed
+automatically.
+
+Other READMEs
+
+  Other informational files are in this directory as well as scattered
+through the source tree.
+
+Other resources:
+
+  Usenet: news:comp.emulators.ms-windows.wine
+  WWW:    http://www.winehq.com/
+
+
+Writing Wine API Documentation
+
+To improve the documentation of the Wine API, just add comments to the
+existing source. For example,
+
+/******************************************************************
+ *         PlayMetaFile32 (GDI32.265) Render metafile to device
+ *
+ *    The metafile is rendered in the device context specified by hdc.
+ *
+ *  RETURNS
+ *
+ *    Always returns TRUE.
+ *
+ * FIXME
+ *    Wine metafiles are not 100% binary compatible with Microsoft Windows
+ *    metafiles.
+ */
+BOOL32 WINAPI PlayMetaFile32(
+        HDC32 hdc, /* handle of device context in which to render metafile */
+        HMETAFILE32 hmf /* metafile handle */
+) {
+
+becomes, after processing with c2man and nroff -man,
+
+
+PlayMetaFile32(3w)                             PlayMetaFile32(3w)
+
+
+NAME
+       PlayMetaFile32   -   PlayMetaFile32   (GDI32.265)   Render
+       metafile to device
+
+SYNOPSIS
+       BOOL32 PlayMetaFile32
+       (
+            HDC32 hdc,
+            HMETAFILE32 hmf
+       );
+
+PARAMETERS
+       HDC32 hdc
+              Handle  of  device  context  in  which  to   render
+              metafile.
+
+       HMETAFILE32 hmf
+              Metafile handle.
+
+DESCRIPTION
+       The  metafile  is rendered in the device context specified
+       by hdc.
+
+RETURNS
+       Always returns TRUE.
+
+FIXME
+       Wine  metafiles  are  not  100%  binary  compatible   with
+       Microsoft Windows metafiles.
+
+----------------------------------------------------------------
+Patch for c2man:
+
+diff -u c2man-2.41.orig/manpage.c c2man-2.41/manpage.c
+--- c2man-2.41.orig/manpage.c	Tue Apr 23 21:13:44 1996
++++ c2man-2.41/manpage.c	Thu Dec 18 13:20:08 1997
+@@ -585,10 +585,15 @@
+ 		    const char *endterse, *afterdash = skipdash(start_line);
+ 
+ 		    /* find the end of the terse comment */
+-		    while (*c && *c != '.' && *c != '\n')
++		    while (*c && *c != '\n')
++		    {
+ 			c++;
++		      /* '.' ends terse description only if it ends sentence */
++			if (*(c-1)=='.' && *c && isspace(*c)) 
++			  break;
++		    }
+ 
+-		    endterse = *c == '.' ? c+1 : c;
++		    endterse = c;
+ 		    *terse = alloc_string(
+ 			afterdash < endterse ? afterdash : start_line,
+ 			endterse);

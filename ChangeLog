@@ -1,4 +1,266 @@
 ----------------------------------------------------------------------
+Fri Dec 19 10:50:46 1997  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [Make.rules.in] [Makefile.in] [documentation/Makefile.in]
+ 	  [documentation/README.documentation]
+	First cut at Wine API documentation. No longer install reference
+	manual by default.
+
+Wed Dec 17 21:32:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [files/file.c]
+	Fixed GetTempFileName16() to use current path of requested drive
+	as needed.
+
+	* [if1632/Makefile.in] [if1632/builtin.c] [if1632/dciman32.spec]
+	  [if1632/msvfw32.spec] [if1632/tapi32.spec] [if1632/wow32.spec]
+	Added misc DLLs needed by various apps.
+
+Wed Dec 17 12:01:50 1997  Morten Eriksen <mortene@sim.no>
+
+	* [if1632/gdi32.spec] [include/windows.h] [objects/palette.c]
+	Inserted empty stub for CreateHalftonePalette.
+
+Tue Dec 16 22:08:06 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [windows/mdi.c]
+	Use VK_TAB instead of VK_SEPARATOR in TranslateMDISysAccel().
+
+	* [graphics/metafiledrv/init.c]
+	DeleteDC() on a MetaDC doesn't do anything - it shouldn't. Therefore
+	fix cleanup of MetaDCs in CloseMetaFile(); they now actually get
+	removed from the GDI heap!
+
+	* [graphics/x11drv/xfont.c]
+	Preserve FO_MATCH_XYINDEP flag in XFONT_MatchFIList(). Should reduce
+	the number of bold-italic matches.
+
+Tue Dec 16 20:11:43 1997  Bertho Stultiens <bertho@panter.soci.aau.dk>
+
+	* [graphics/painting.c]
+	Included an implementation of DrawState
+
+	* [if1632/thunk.c]
+	Changed many fprintfs into dprintf_thunk
+
+	* [include/cache.h] [graphics/cache.c]
+	New files to hold cached handles to regulary used GDI object.
+
+	* [include/windows.h]
+	Added DRAWSTATExx typedefs
+	Added DSS_DEFAULT define for DrawState
+
+	* [objects/text.c]
+	New implementation of GrayString()
+
+	* [controls/uitools.c]
+	Implemented DrawFrameControl() functions
+	Changed DrawEdge() behaviour to win95 implementation
+
+Mon Dec 15 23:43:01 1997  Martin Boehme <boehme@informatik.mu-luebeck.de>
+
+	* [graphics/path.c] [include/path.h] [graphics/painting.c]
+	  [if1632/gdi32.spec] [include/gdi.h] [include/windows.h]
+	  [objects/dc.c]
+        Added preliminary support for GDI paths.
+
+	* [objects/dc.c]
+	Added DC_Init_DC_INFO function for initializing WIN_DC_INFO
+	structure.
+
+	* [include/windows.h] [include/gdi.h] [objects/gdiobj.c]
+	Added DEFAULT_GUI_FONT.
+
+	* [include/winerror.h]
+	Added a few error codes.
+
+	* [memory/heap.c]
+	Changed HeapAlloc to make the correct calls to SetLastError
+	(now conforms to NT's behaviour).
+
+	* [windows/win.c]
+	Changed WIN_CreateWindowEx to allow child windows with zero
+	width / height.
+
+Sun Dec 14 12:01:07 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [if1632/*] [relay32/*]
+	Moved all 32-bit relay stuff to relay32/
+
+	* [fi1632/thunk.c] [win32/kernel32.c]
+	Moved all KERNEL32 ordinal functions to kernel32.c
+
+	* [memory/selector.c]
+	Initialize selectors in AllocSelectorArray.
+
+	* [tools/build.c]
+	Generate C instead of assembly for Win32 relays.
+	Fixed stack corruption in CallTo16 functions, found by Bertho
+	Stultiens.
+	
+Sun Dec 14 10:55:00 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [if1632/Makefile.in] [if1632/builtin.c] [if1632/ole2thk.spec]
+	Added built-in OLE2THK.DLL. 
+
+	* [if1632/toolhelp.spec] [include/toolhelp.h] [memory/selector.c]
+	  [misc/toolhelp.c]
+	Added stubs for StackTraceFirst(), StackTraceCSIPFirst(),
+	StackTraceNext(), UTSelectorOffsetToLinear()
+	and UTLinearToSelectorOffset().
+
+Sat Dec 13 17:26:41 1997  Alex Korobka  <alex@trantor.pharm.sunysb.edu>
+
+	* [misc/winsock.c]
+	32-bit API fixes for reported problems (thanks to Marcus
+	and David).
+
+	* [graphics/x11drv/xfont.c]
+	Little tweak in point size calculation.
+
+	* [windows/defwnd.c] [windows/dce.c] [windows/winhelp.c]
+	  [windows/winproc.c] [windows/win.c]
+	Bug fixes.
+
+Sat Dec 13 16:35:14 1997  Kai Morich <kai.morich@rhein-neckar.netsurf.de>
+
+	* [files/dos_fs.c]
+	OpenFile with empty filename and OF_PARSE returns current dir.
+
+	* [misc/commdlg.c]
+	Ignore initial dir if bogus.
+
+	* [files/file.c]
+	Locking an identic region in a file must not be an error.
+
+	* [misc/lstr.c]
+	Use wide char ctype functions.
+
+Fri Dec 12 23:46:22 1997  Uwe Bonnes  <bon@elektron.ikp.physik.tu-darmstadt.de>
+
+	* [file/drive.c]
+	First attempt for GetDiskFreeSpaceEx.
+
+Fri Dec 12 23:18:41 1997  Marcus Meissner  <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [loader/pe_resource.c]	
+	Fixed wrongly appearing menus problem (only use default lookups in
+	last resource subtree).
+
+	* [multimedia/*.c]
+	Added win32 support for time* and joy* lowlevel drivers,
+	(not excessively tested), some misc fixes and cleanups.
+
+	* [misc/shellord.c][misc/shell.c][ole/folders.c][ole/ifs.c]
+	  [include/interfaces.h][include/shlobj.h]
+	Added some more undocumented SHELL32 functions, some shell folder
+ 	interface stubs added, SHGetMalloc, SHGetDesktopFolder,
+	SHGetSpecialFolderLocation, SHGetPathFromIDList stubs added,
+	IMalloc, IUnknown implemented.
+
+	* [windows/msgbox.c]
+	Implemented MessageBoxIndirect*, some internal changes.
+
+	* [if1632/thunk.c]
+	KERNEL_431 implemented.
+
+	* [objects/gdiobj.c]
+	GetCurrentObject implemented.
+
+Wed Dec  3 01:09:17 1997  Gordon Chaffee  <chaffee@apu.cs.berkeley.edu>
+
+	* [objects/dib.c]
+	Fix a couple small DIB problems.
+
+	* [controls/edit.c]
+	Fix a typo.
+
+	* [files/dos_fs.c]
+	Try normal readdir in case fs is specified as vfat but isn't.
+
+	* [files/profile.c]
+	Implementation of WritePrivateProfileSection32A from Uwe Bonnes.
+
+	* [misc/printdrv.c]
+	OpenPrinter32A stub, helps Word97 start.
+
+	* [objects/text.c]
+	Fixup implementation of GetTextCharsetInfo.
+
+	* [scheduler/process.c]
+	Fix environment variable expansion.
+
+	* [win32/code_page.c]
+	Make MultiByteToWideChar and WideCharToMultiByte conform in return
+	values and error conditions to those in Windows NT 4.0.
+
+	* [windows/message.c]
+	Fix broadcasting problems in Win32.  The Win32 docs say to use
+	HWND_TOPMOST to broadcast to all Win32 Windows.
+
+	* [memory/virtual.c] [loader/pe_image.c]
+	Do not map in VirtualAlloc if address is specified and space is
+	not available.  This is required by Win32.
+
+	* [include/pen.h] [include/x11drv.h] [objects/dc.c]
+	  [objects/pen.c] [graphics/x11drv/pen.c]
+	Support for ExtCreatePen.
+
+Tue Dec  2 20:22:06 1997  Morten Welinder  <terra@diku.dk>
+
+	* [*/*.c] [*/*.h]
+	Add lots of prototypes.
+
+	* [if1632/kernel32.spec][include/windows.h][include/winnt.h]
+	  [misc/cpu.c]
+	Define IsProcessorFeaturePresent.
+
+	* [misc/crtdll.c]
+ 	(CRTDLL__getcwd): Allocate enough memory for the terminating zero.
+
+	* [misc/ver.c]
+	Improve check for null component in _find_data[AW].  Plug leaks
+	in VerQueryValue*.
+
+	* [win32/console.c][if1632/kernel32.spec]
+	Add stubs for GetConsoleCursorInfo32, SetConsoleCursorInfo32.
+
+	* [windows/message.c][if1632/user32.spec][include/windows.h]
+	Define SendMessageTimeout*.
+
+	* [graphics/x11drv/xfont.c]
+	Change algorithm of __genericCheckSum to be alignment safe.
+
+	* [misc/main.c] [misc/winsock.c] [misc/winsock_dns.c]
+	Include winsock.h early to avoid Solaris problem.
+
+	* [include/windows.h]
+	Undef FSHIFT before we define it.
+
+	* [rc/winerc.c]
+	Include <fcntl.h> instead of <sys/fcntl.h>.
+
+	* [files/file.c]
+	Use strerror in FILE_SetDosError if available.
+
+	* [include/config.h.in] [configure.in]
+	Check for strerror.
+
+	* [objects/gdiobj.c]
+	Make static font structures aligned.
+
+Mon Dec  1 10:10:21 1997  Karl Garrison  <karlos@eznet.net>
+
+	* [win32/console.c] [if1632/kernel32.spec] [include/windows.h]
+	Added stub for GetNumberOfConsoleMouseButtons.
+	Added stub for PeekConsoleInput(A,W).
+	Fixed parameter list for WriteConsole(A,W).
+	GetNumberOfConsoleInputEvents now returns 0 events instead of 1
+	(since low-level console functions are not yet supported).
+	GetConsoleMode no longer returns ENABLE_WINDOW_INPUT and
+	ENABLE_MOUSE_INPUT since these are not currently implemented.
+
+----------------------------------------------------------------------
 Sat Nov 29 12:35:26 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [if1632/builtin.c]

@@ -21,6 +21,9 @@
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
+
 /* Define if you have the tcgetattr function.  */
 #undef HAVE_TCGETATTR
 

@@ -386,8 +386,8 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     return TRUE;
 }
 
-extern BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
-                             INT32 width, INT32 height, DWORD rop )
+BOOL32 WIN16DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
+			INT32 width, INT32 height, DWORD rop )
 {
   
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;

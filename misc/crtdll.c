@@ -30,6 +30,7 @@ Unresolved issues Uwe Bonnes 970904:
 #include <ctype.h>
 #include <math.h>
 #include <fcntl.h>
+#include <setjmp.h>
 #include "win.h"
 #include "windows.h"
 #include "stddebug.h"
@@ -438,7 +439,7 @@ INT32 __cdecl CRTDLL__write(INT32 fd,LPCVOID buf,UINT32 count)
 	if (fd == -1)
 	  len = -1;
 	else if (fd<=2)
-	  len = (UINT32)write(fd,buf,(LONG)len);
+	  len = (UINT32)write(fd,buf,(LONG)count);
 	else
 	  len = _lwrite32(fd,buf,count);
 	dprintf_crtdll(stddeb,"CRTDLL_write %d/%d byte to dfh %d from %p,\n",
@@ -455,6 +456,8 @@ INT32 __cdecl CRTDLL__write(INT32 fd,LPCVOID buf,UINT32 count)
  *  FIXME           _cexit          (CRTDLL.49)
  *  FIXME           _exit           (CRTDLL.87)
  *  FIXME           exit            (CRTDLL.359)
+ *
+ * atexit-processing comes to mind -- MW.
  *
  */
 void __cdecl CRTDLL__cexit(INT32 ret)
@@ -502,10 +505,13 @@ INT32 __cdecl CRTDLL_fflush(LPVOID stream)
  */
 LPSTR __cdecl CRTDLL_gets(LPSTR buf)
 {
+   char * ret;
   /* BAD, for the whole WINE process blocks... just done this way to test
    * windows95's ftp.exe.
    */
-    return gets(buf);
+   ret = gets(buf);
+   dprintf_crtdll(stddeb,"CRTDLL_gets got %s\n",ret);
+   return ret;
 }
 
 
@@ -762,12 +768,12 @@ INT32 CRTDLL_system(LPSTR x)
   bp = buffer + strlen(buffer);
   i = strlen(buffer) + strlen(x) +2;
 
-  /* Calculate needed buffer size tp prevent overflow*/
+  /* Calculate needed buffer size to prevent overflow.  */
   while (*y) {
     if (*y =='\\') i++;
     y++;
   }
-  /* if buffer to short, exit */
+  /* If buffer too short, exit.  */
   if (i > SYSBUF_LENGTH) {
     dprintf_crtdll(stddeb,"_system buffer to small\n");
     return 127;
@@ -780,7 +786,7 @@ INT32 CRTDLL_system(LPSTR x)
     bp++; y++;
     if (*(y-1) =='\\') *bp++ = '\\';
   }
-  /* remove spaces from end of string */
+  /* Remove spaces from end of string.  */
   while (*(y-1) == ' ') {
     bp--;y--;
   }
@@ -834,6 +840,16 @@ LPWSTR __cdecl CRTDLL__wcslwr(LPWSTR x)
 	return x;
 }
 
+
+/*********************************************************************
+ *                  longjmp        (CRTDLL.426)
+ */
+VOID __cdecl CRTDLL_longjmp(jmp_buf env, int val)
+{
+    dprintf_crtdll(stdnimp,"CRTDLL_longjmp semistup, expect crash\n");
+    dprintf_crtdll(stddeb, "CRTDLL_longjmp semistup, expect crash\n");
+    return longjmp(env, val);
+}
 
 /*********************************************************************
  *                  malloc        (CRTDLL.427)
@@ -1088,14 +1104,14 @@ LPWSTR __cdecl CRTDLL_wcscat( LPWSTR s1, LPCWSTR s2 )
 /*********************************************************************
  *                  wcschr           (CRTDLL.504)
  */
-LPWSTR __cdecl CRTDLL_wcschr(LPWSTR str,WCHAR xchar)
+LPWSTR __cdecl CRTDLL_wcschr(LPCWSTR str,WCHAR xchar)
 {
-	LPWSTR	s;
+	LPCWSTR	s;
 
 	s=str;
 	do {
 		if (*s==xchar)
-			return s;
+			return (LPWSTR)s;
 	} while (*s++);
 	return NULL;
 }
@@ -1345,7 +1361,7 @@ INT32 __cdecl CRTDLL_mbstowcs(LPWSTR wcs, LPCSTR mbs, INT32 size)
 {
 
 /* Slightly modified lstrcpynAtoW functions from memory/strings.c
- *  We need the numberr of characters transfered 
+ *  We need the number of characters transfered 
  *  FIXME: No multibyte support yet
  */
 
@@ -1522,9 +1538,8 @@ CHAR* __cdecl CRTDLL__getcwd(LPSTR buf, INT32 size)
 
   len = size;
   if (!buf) {
-    len = size;
     if (size < 0) /* allocate as big as nescessary */
-      len =GetCurrentDirectory32A(1,test);
+      len =GetCurrentDirectory32A(1,test) + 1;
     if(!(buf = CRTDLL_malloc(len)))
     {
 	/* set error to OutOfRange */

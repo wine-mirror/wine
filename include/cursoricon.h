@@ -50,6 +50,9 @@ typedef struct
 
 #pragma pack(4)
 
+extern HCURSOR16 CURSORICON_IconToCursor( HICON16 hIcon,
+                                          BOOL32 bSemiTransparent );
+
 extern Cursor CURSORICON_XCursor;  /* Current X cursor */
 
 #endif /* __WINE_CURSORICON_H */

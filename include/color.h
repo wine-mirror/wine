@@ -14,6 +14,7 @@
 #define PC_SYS_RESERVED 0x40		/* system palentry is not to be mapped to */
 #define PC_SYS_MAPPED   0x10		/* logical palentry is a direct alias for system palentry */
 
+extern BOOL32     COLOR_Init(void);
 extern void	  COLOR_Cleanup(void);
 extern COLORREF	  COLOR_ToLogical(int pixel);
 extern int 	  COLOR_ToPhysical( DC *dc, COLORREF color );
@@ -22,11 +23,13 @@ extern BOOL32 	  COLOR_IsSolid( COLORREF color );
 extern Colormap	  COLOR_GetColormap();
 extern UINT16	  COLOR_GetSystemPaletteSize();
 extern UINT16	  COLOR_GetSystemPaletteFlags();
+extern const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void);
 extern BOOL32	  COLOR_GetMonoPlane( int* );
 
 extern COLORREF	  COLOR_LookupNearestColor( PALETTEENTRY*, int, COLORREF );
 extern int        COLOR_PaletteLookupPixel( PALETTEENTRY*, int, int* , COLORREF, BOOL32 );
 extern COLORREF   COLOR_GetSystemPaletteEntry(UINT32);
+extern int COLOR_LookupSystemPixel(COLORREF col);
 
 extern int 	COLOR_mapEGAPixel[16];
 extern int* 	COLOR_PaletteToPixel;

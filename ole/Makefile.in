@@ -7,6 +7,8 @@ MODULE    = ole
 
 C_SRCS = \
 	compobj.c \
+	ifs.c \
+	folders.c \
 	ole2.c \
 	ole2disp.c \
 	ole2nls.c \
@@ -18,4 +20,3 @@ all: $(MODULE).o
 @MAKE_RULES@
 
 ### Dependencies:
-

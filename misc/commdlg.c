@@ -538,10 +538,14 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
     }
   else
     *tmpstr = 0;
-  if (!FILEDLG_ScanDir(hWnd, tmpstr))
-    fprintf(stderr, "FileDlg: couldn't read initial directory %s!\n", tmpstr);
-  /* select current drive in combo 2 */
-  n = DRIVE_GetCurrentDrive();
+  if (!FILEDLG_ScanDir(hWnd, tmpstr)) {
+    *tmpstr = 0;
+    if (!FILEDLG_ScanDir(hWnd, tmpstr))
+      fprintf(stderr, "FileDlg: couldn't read initial directory %s!\n",tmpstr);
+  }
+  /* select current drive in combo 2, omit missing drives */
+  for(i=0, n=-1; i<=DRIVE_GetCurrentDrive(); i++)
+    if (DRIVE_IsValid(i))                  n++;
   SendDlgItemMessage16(hWnd, cmb2, CB_SETCURSEL16, n, 0);
   if (!(lpofn->Flags & OFN_SHOWHELP))
     ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);

@@ -148,6 +148,7 @@
 #undef DEBUG_STRING
 #undef DEBUG_TASK
 #undef DEBUG_TEXT
+#undef DEBUG_THUNK
 #undef DEBUG_TIMER
 #undef DEBUG_TOOLHELP
 #undef DEBUG_TWEAK
@@ -234,6 +235,7 @@
 #define DEBUG_STRING
 #define DEBUG_TASK
 #define DEBUG_TEXT
+#define DEBUG_THUNK
 #define DEBUG_TIMER
 #define DEBUG_TOOLHELP
 #define DEBUG_TWEAK

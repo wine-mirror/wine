@@ -3878,7 +3878,7 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
 BOOL32 WINAPI InsertMenuItem32A(HMENU32 hMenu, UINT32 uItem, BOOL32 bypos,
                                 const MENUITEMINFO32A *lpmii)
 {
-    MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos);
+    MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos ? MF_BYPOSITION : 0 );
     return SetMenuItemInfo32_common(item, lpmii, FALSE);
 }
 
@@ -3889,7 +3889,7 @@ BOOL32 WINAPI InsertMenuItem32A(HMENU32 hMenu, UINT32 uItem, BOOL32 bypos,
 BOOL32 WINAPI InsertMenuItem32W(HMENU32 hMenu, UINT32 uItem, BOOL32 bypos,
                                 const MENUITEMINFO32W *lpmii)
 {
-    MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos);
+    MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos ? MF_BYPOSITION : 0 );
     return SetMenuItemInfo32_common(item, (const MENUITEMINFO32A*)lpmii, TRUE);
 }
 

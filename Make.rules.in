@@ -36,6 +36,7 @@ LDCOMBINE = ld -r
 AR        = ar rc
 RM        = rm -f
 MKDIR     = mkdir
+C2MAN     = c2man
 BUILD     = $(TOPOBJDIR)/tools/build@PROGEXT@
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep@PROGEXT@
 WINERC    = $(TOPOBJDIR)/rc/winerc@PROGEXT@
@@ -108,6 +109,10 @@ $(BUILD) checkbuild:
 $(MODULE).o: $(OBJS)
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
 
+# Rule for man pages
+
+man: $(C_SRCS)
+	for i in $(C_SRCS); do $(C2MAN) -L -o$(TOPOBJDIR)/documentation/man3w -S3w $(DIVINCL) $$i; done
 
 # Misc. rules
 

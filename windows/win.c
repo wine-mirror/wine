@@ -45,11 +45,7 @@ static WORD wDragHeight= 3;
 
 extern BOOL32 ICONTITLE_Init(void);
 extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
-extern HCURSOR16 CURSORICON_IconToCursor(HICON16, BOOL32);
 extern HWND32 CARET_GetHwnd(void);
-extern BOOL32 WINPOS_CreateInternalPosAtom(void);
-extern void   WINPOS_CheckInternalPos(HWND32);
-extern BOOL32 WINPOS_ActivateOtherWindow(WND* pWnd);
 extern BOOL32 EVENT_CheckFocus(void);
 
 /***********************************************************************
@@ -623,8 +619,17 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
         if (cs->cy < minTrack.y ) cs->cy = minTrack.y;
     }
-    if (cs->cx <= 0) cs->cx = 1;
-    if (cs->cy <= 0) cs->cy = 1;
+
+    if(cs->style & WS_CHILD)
+    {
+        if(cs->cx < 0) cs->cx = 0;
+        if(cs->cy < 0) cs->cy = 0;
+    }
+    else
+    {
+        if (cs->cx <= 0) cs->cx = 1;
+        if (cs->cy <= 0) cs->cy = 1;
+    }
 
     wndPtr->rectWindow.left   = cs->x;
     wndPtr->rectWindow.top    = cs->y;
@@ -1148,13 +1153,15 @@ static HWND32 WIN_FindWindow( HWND32 parent, HWND32 child, ATOM className,
             return 0;
     }
 
+
     for ( ; pWnd; pWnd = pWnd->next)
     {
         if (className && !(pWnd->dwStyle & WS_CHILD))
         {
-            if (!(pClass = CLASS_FindClassByAtom( className, pWnd->hInstance)))
+            if (!(pClass = CLASS_FindClassByAtom( className, GetExePtr(pWnd->hInstance))))
                 continue;  /* Skip this window */
         }
+
         if (pClass && (pWnd->class != pClass))
             continue;  /* Not the right class */
 

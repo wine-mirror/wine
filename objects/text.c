@@ -13,6 +13,7 @@
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
+#include "cache.h"
 
 #define TAB     9
 #define LF     10
@@ -420,21 +421,117 @@ BOOL32 WINAPI TextOut32W(HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count)
 
 
 /***********************************************************************
+ *           TEXT_GrayString
+ *
+ * FIXME: The call to 16-bit code only works because the wine GDI is a 16-bit
+ * heap and we can guarantee that the handles fit in an INT16. We have to
+ * rethink the strategy once the migration to NT handles is complete.
+ * We are going to get a lot of code-duplication once this migration is
+ * completed...
+ * 
+ */
+static BOOL32 TEXT_GrayString(HDC32 hdc, HBRUSH32 hb, 
+                              GRAYSTRINGPROC32 fn, LPARAM lp, INT32 len,
+                              INT32 x, INT32 y, INT32 cx, INT32 cy, 
+                              BOOL32 unicode, BOOL32 _32bit)
+{
+    HBITMAP32 hbm, hbmsave;
+    HBRUSH32 hbsave;
+    HFONT32 hfsave;
+    HDC32 memdc = CreateCompatibleDC32(hdc);
+    int slen = len;
+    BOOL32 retval = TRUE;
+    RECT32 r;
+    COLORREF fg, bg;
+
+    if(!hdc) return FALSE;
+    
+    if(len == 0)
+    {
+        if(unicode)
+    	    slen = lstrlen32W((LPCWSTR)lp);
+    	else if(_32bit)
+    	    slen = lstrlen32A((LPCSTR)lp);
+    	else
+    	    slen = lstrlen32A((LPCSTR)PTR_SEG_TO_LIN(lp));
+    }
+
+    if((cx == 0 || cy == 0) && slen != -1)
+    {
+        SIZE32 s;
+        if(unicode)
+            GetTextExtentPoint32W(hdc, (LPCWSTR)lp, slen, &s);
+        else if(_32bit)
+            GetTextExtentPoint32A(hdc, (LPCSTR)lp, slen, &s);
+        else
+            GetTextExtentPoint32A(hdc, (LPCSTR)PTR_SEG_TO_LIN(lp), slen, &s);
+        if(cx == 0) cx = s.cx;
+        if(cy == 0) cy = s.cy;
+    }
+
+    r.left = r.top = 0;
+    r.right = cx;
+    r.bottom = cy;
+
+    hbm = CreateBitmap32(cx, cy, 1, 1, NULL);
+    hbmsave = (HBITMAP32)SelectObject32(memdc, hbm);
+    FillRect32(memdc, &r, (HBRUSH32)GetStockObject32(BLACK_BRUSH));
+    SetTextColor32(memdc, RGB(255, 255, 255));
+    SetBkColor32(memdc, RGB(0, 0, 0));
+    hfsave = (HFONT32)SelectObject32(memdc, GetCurrentObject(hdc, OBJ_FONT));
+            
+    if(fn)
+        if(_32bit)
+            retval = fn(memdc, lp, slen);
+        else
+            retval = (BOOL32)((BOOL16)((GRAYSTRINGPROC16)fn)((HDC16)memdc, lp, (INT16)slen));
+    else
+        if(unicode)
+            TextOut32W(memdc, 0, 0, (LPCWSTR)lp, slen);
+        else if(_32bit)
+            TextOut32A(memdc, 0, 0, (LPCSTR)lp, slen);
+        else
+            TextOut32A(memdc, 0, 0, (LPCSTR)PTR_SEG_TO_LIN(lp), slen);
+
+    SelectObject32(memdc, hfsave);
+
+/*
+ * Windows doc says that the bitmap isn't grayed when len == -1 and
+ * the callback function returns FALSE. However, testing this on
+ * win95 showed otherwise...
+*/
+#ifdef GRAYSTRING_USING_DOCUMENTED_BEHAVIOUR
+    if(retval || len != -1)
+#endif
+    {
+        hbsave = (HBRUSH32)SelectObject32(memdc, CACHE_GetPattern55AABrush());
+        PatBlt32(memdc, 0, 0, cx, cy, 0x000A0329);
+        SelectObject32(memdc, hbsave);
+    }
+
+    if(hb) hbsave = (HBRUSH32)SelectObject32(hdc, hb);
+    fg = SetTextColor32(hdc, RGB(0, 0, 0));
+    bg = SetBkColor32(hdc, RGB(255, 255, 255));
+    BitBlt32(hdc, x, y, cx, cy, memdc, 0, 0, 0x00E20746);
+    SetTextColor32(hdc, fg);
+    SetBkColor32(hdc, bg);
+    if(hb) SelectObject32(hdc, hbsave);
+
+    SelectObject32(memdc, hbmsave);
+    DeleteObject32(hbm);
+    DeleteDC32(memdc);
+    return retval;
+}
+
+
+/***********************************************************************
  *           GrayString16   (USER.185)
  */
 BOOL16 WINAPI GrayString16( HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc,
                             LPARAM lParam, INT16 cch, INT16 x, INT16 y,
                             INT16 cx, INT16 cy )
 {
-    BOOL16 ret;
-    COLORREF current_color;
-
-    if (!cch) cch = lstrlen16( (LPCSTR)PTR_SEG_TO_LIN(lParam) );
-    if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = SetTextColor32( hdc, GetSysColor32(COLOR_GRAYTEXT) );
-    ret = TextOut16( hdc, x, y, (LPCSTR)PTR_SEG_TO_LIN(lParam), cch );
-    SetTextColor32( hdc, current_color );
-    return ret;
+    return TEXT_GrayString(hdc, hbr, (GRAYSTRINGPROC32)gsprc, lParam, cch, x, y, cx, cy, FALSE, FALSE);
 }
 
 
@@ -445,15 +542,7 @@ BOOL32 WINAPI GrayString32A( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
                              LPARAM lParam, INT32 cch, INT32 x, INT32 y,
                              INT32 cx, INT32 cy )
 {
-    BOOL32 ret;
-    COLORREF current_color;
-
-    if (!cch) cch = lstrlen32A( (LPCSTR)lParam );
-    if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = SetTextColor32( hdc, GetSysColor32(COLOR_GRAYTEXT) );
-    ret = TextOut32A( hdc, x, y, (LPCSTR)lParam, cch );
-    SetTextColor32( hdc, current_color );
-    return ret;
+    return TEXT_GrayString(hdc, hbr, gsprc, lParam, cch, x, y, cx, cy, FALSE, TRUE);
 }
 
 
@@ -464,15 +553,7 @@ BOOL32 WINAPI GrayString32W( HDC32 hdc, HBRUSH32 hbr, GRAYSTRINGPROC32 gsprc,
                              LPARAM lParam, INT32 cch, INT32 x, INT32 y,
                              INT32 cx, INT32 cy )
 {
-    BOOL32 ret;
-    COLORREF current_color;
-
-    if (!cch) cch = lstrlen32W( (LPCWSTR)lParam );
-    if (gsprc) return gsprc( hdc, lParam, cch );
-    current_color = SetTextColor32( hdc, GetSysColor32(COLOR_GRAYTEXT) );
-    ret = TextOut32W( hdc, x, y, (LPCWSTR)lParam, cch );
-    SetTextColor32( hdc, current_color );
-    return ret;
+    return TEXT_GrayString(hdc, hbr, gsprc, lParam, cch, x, y, cx, cy, TRUE, TRUE);
 }
 
 
@@ -655,8 +736,10 @@ INT16 WINAPI GetTextCharset16(HDC16 hdc)
 INT32 WINAPI GetTextCharsetInfo(HDC32 hdc,LPCHARSETINFO csi,DWORD flags)
 {
     fprintf(stdnimp,"GetTextCharsetInfo(0x%x,%p,%08lx), stub!\n",hdc,csi,flags);
-    csi->ciCharset = DEFAULT_CHARSET;
-    csi->ciACP = GetACP();
+    if (csi) {
+	csi->ciCharset = DEFAULT_CHARSET;
+	csi->ciACP = GetACP();
+    }
     /* ... fill fontstruct too ... */
     return DEFAULT_CHARSET;
 }

@@ -12,6 +12,7 @@
 #include "heap.h"
 #include "nonclient.h"
 #include "winpos.h"
+#include "dce.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
@@ -27,8 +28,6 @@
 
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
-
-extern void  EndMenu(void);
 
 /***********************************************************************
  *           DEFWND_HandleWindowPosChanged
@@ -89,6 +88,33 @@ HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType )
     SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
     SetTextColor32( hDC, GetSysColor32(COLOR_WINDOWTEXT));
     return sysColorObjects.hbrushWindow;
+}
+
+
+/***********************************************************************
+ *           DEFWND_SetRedraw
+ */
+static void DEFWND_SetRedraw( WND* wndPtr, WPARAM32 wParam )
+{
+    BOOL32 bVisible = wndPtr->dwStyle & WS_VISIBLE;
+
+    if( wParam )
+    {
+	if( !bVisible )
+	{
+	    wndPtr->dwStyle |= WS_VISIBLE;
+	    DCE_InvalidateDCE( wndPtr->parent, &wndPtr->rectWindow );
+	}
+    }
+    else if( bVisible )
+    {
+	if( wndPtr->dwStyle & WS_MINIMIZE ) wParam = RDW_VALIDATE;
+	else wParam = RDW_ALLCHILDREN | RDW_VALIDATE;
+
+	PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, wParam, 0 );
+	DCE_InvalidateDCE( wndPtr->parent, &wndPtr->rectWindow );
+	wndPtr->dwStyle &= ~WS_VISIBLE;
+    }
 }
 
 /***********************************************************************
@@ -167,14 +193,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	}
 
     case WM_SETREDRAW:
-        if(wParam)
-            SetWindowPos32( wndPtr->hwndSelf, NULL, 0, 0, 0, 0,
-                SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-                SWP_NOACTIVATE | SWP_NOREDRAW );
-        else
-            SetWindowPos32( wndPtr->hwndSelf, NULL, 0, 0, 0, 0,
-                SWP_HIDEWINDOW | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
-                SWP_NOACTIVATE | SWP_NOREDRAW );
+	DEFWND_SetRedraw( wndPtr, wParam );
         return 0;
 
     case WM_CLOSE:

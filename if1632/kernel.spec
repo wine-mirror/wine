@@ -213,16 +213,16 @@ file	krnl386.exe
 213 stub KERNEL_213
 214 stub KERNEL_214
 216 pascal   RegEnumKey(long long ptr long) RegEnumKey16
-217 pascal   RegOpenKey(long ptr ptr) RegOpenKey16
-218 pascal   RegCreateKey(long ptr ptr) RegCreateKey16
-219 pascal   RegDeleteKey(long ptr) RegDeleteKey16
+217 pascal   RegOpenKey(long str ptr) RegOpenKey16
+218 pascal   RegCreateKey(long str ptr) RegCreateKey16
+219 pascal   RegDeleteKey(long str) RegDeleteKey16
 220 pascal   RegCloseKey(long) RegCloseKey
-221 pascal   RegSetValue(long ptr long ptr long) RegSetValue16
-222 pascal   RegDeleteValue(long ptr) RegDeleteValue16
+221 pascal   RegSetValue(long str long ptr long) RegSetValue16
+222 pascal   RegDeleteValue(long str) RegDeleteValue16
 223 pascal   RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue16
-224 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue16
-225 pascal   RegQueryValueEx(long ptr ptr ptr ptr ptr) RegQueryValueEx16
-226 pascal   RegSetValueEx(long ptr long long ptr long) RegSetValueEx16
+224 pascal   RegQueryValue(long str ptr ptr) RegQueryValue16
+225 pascal   RegQueryValueEx(long str ptr ptr ptr ptr) RegQueryValueEx16
+226 pascal   RegSetValueEx(long str long long ptr long) RegSetValueEx16
 227 pascal   RegFlushKey(long) RegFlushKey
 228 stub K228
 229 stub K229
@@ -298,7 +298,7 @@ file	krnl386.exe
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
-431 stub KERNEL_431
+431 pascal16 KERNEL_431(str word) KERNEL_431
 432 stub FileTimeToLocalFileTime
 435 stub KERNEL_435
 439 stub KERNEL_439

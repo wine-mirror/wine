@@ -11,7 +11,7 @@ struct tagGUID
     BYTE  Data4[8];
 };
 
-typedef struct tagGUID	GUID;
+typedef struct tagGUID	GUID,*LPGUID;
 typedef struct tagGUID	CLSID,*LPCLSID,*REFCLSID;
 typedef struct tagGUID	IID,*REFIID,*LPIID;
 

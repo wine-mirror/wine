@@ -942,6 +942,8 @@ INT32 WINAPI GetPrivateProfileString32A( LPCSTR section, LPCSTR entry,
                                          LPCSTR def_val, LPSTR buffer,
                                          INT32 len, LPCSTR filename )
 {
+    if (!filename) 
+	filename = "win.ini";
     if (PROFILE_Open( filename ))
         return PROFILE_GetString( section, entry, def_val, buffer, len );
     lstrcpyn32A( buffer, def_val, len );
@@ -1019,6 +1021,27 @@ BOOL32 WINAPI WritePrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
     HeapFree( GetProcessHeap(), 0, stringA );
     HeapFree( GetProcessHeap(), 0, filenameA );
     return res;
+}
+
+/***********************************************************************
+ *           WritePrivateProfileSection32A   (KERNEL32)
+ */
+BOOL32 WINAPI WritePrivateProfileSection32A( LPCSTR section, 
+                                            LPCSTR string, LPCSTR filename )
+{
+    char *p =(char*)string;
+
+    fprintf( stdnimp,"WritePrivateProfileSection32A empty stup\n");
+    if (debugging_profile) {
+      fprintf(stddeb,"file(%s) => [%s]\n", filename,section);
+      while (*(p+1)) {
+	fprintf(stddeb,"%s\n",p);
+        p += strlen(p);
+	p += 1;
+      }
+    }
+    
+    return FALSE;
 }
 
 

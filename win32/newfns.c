@@ -49,6 +49,17 @@ BOOL32 WINAPI QueryPerformanceCounter(LPLARGE_INTEGER counter)
 	return FALSE;
 }
 
+HANDLE32 WINAPI FindFirstChangeNotification32A(LPCSTR lpPathName,BOOL32 bWatchSubtree,DWORD dwNotifyFilter) {
+	fprintf(stderr,"FindFirstChangeNotification(%s,%d,%08lx),stub\n",
+		lpPathName,bWatchSubtree,dwNotifyFilter
+	);
+	return 0xcafebabe;
+}
+
+BOOL32 WINAPI FindNextChangeNotification(HANDLE32 fcnhandle) {
+	fprintf(stderr,"FindNextChangeNotification(%08x),stub!\n",fcnhandle);
+	return FALSE;
+}
 
 /****************************************************************************
  *		QueryPerformanceFrequency (KERNEL32.565)

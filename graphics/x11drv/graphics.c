@@ -250,11 +250,14 @@ X11DRV_Rectangle(DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom)
         bottom -= (width + 1) / 2;
     }
 
-    if (DC_SetupGCForBrush( dc ))
-	XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + left + (width + 1) / 2,
-		        dc->w.DCOrgY + top + (width + 1) / 2,
-		        right-left-width-1, bottom-top-width-1);
+    if ((right > left + width) && (bottom > top + width))
+    {
+        if (DC_SetupGCForBrush( dc ))
+            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                            dc->w.DCOrgX + left + (width + 1) / 2,
+                            dc->w.DCOrgY + top + (width + 1) / 2,
+                            right-left-width-1, bottom-top-width-1);
+    }
     if (DC_SetupGCForPen( dc ))
 	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,

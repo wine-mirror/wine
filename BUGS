@@ -5,7 +5,7 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Nov 1997 -
+As of Dec 1997 -
 
 General:
 
@@ -32,13 +32,15 @@ General:
 
 Miscellaneous:
 
- * Invisible controls in BCW dialogs.
+ * 16-bit Eudora 1.5.2 goes into recursion trying to display
+   a horizontal scrollbar (SetScrollPos() artifact).
 
  * mIRC 'commands' menu stays on top and will not refresh.
 
  * mIRC is unable to show 'Options' dialog.
 
- * Tab switching in mIRC 'Setup' dialog leaks memory.
+ * Tab switching in mIRC 'Setup' dialog stops erasing background
+   after a random number of repetitions.
 
  * nBytesWidth in CURSORICONINFO is bogus for some bpp
    (doesn't reflect the fact that bits are packed and 16-bit aligned).
@@ -47,7 +49,7 @@ Miscellaneous:
    (probably because of bytes width stuff).
 
  * Netscape displays partially downloaded inline graphics with
-   wrong offsets. Bitmap is missing in the splash-window.
+   wrong offsets. 
 
  * Text alignment problems in Word and Write (variable pitch fonts).
 
@@ -61,6 +63,8 @@ Miscellaneous:
 
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
+
+ * X11DRV_PaintRgn doesn't respect mapping modes
 
 Where to look in source files:
 

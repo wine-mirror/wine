@@ -18,12 +18,12 @@
 #include <X11/Xutil.h>
 #include <X11/Xlocale.h>
 #include <X11/cursorfont.h>
+#include "winsock.h"
 #include "heap.h"
 #include "message.h"
 #include "msdos.h"
 #include "windows.h"
 #include "color.h"
-#include "winsock.h"
 #include "options.h"
 #include "desktop.h"
 #include "process.h"

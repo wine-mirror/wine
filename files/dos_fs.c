@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
@@ -373,15 +374,15 @@ static BOOL32 DOSFS_ReadDir( DOS_DIR *dir, LPCSTR *long_name,
 #ifdef VFAT_IOCTL_READDIR_BOTH
     if (dir->fd != -1)
     {
-        if (ioctl( dir->fd, VFAT_IOCTL_READDIR_BOTH, (long)dir->dirent ) == -1)
-            return FALSE;
-        if (!dir->dirent[0].d_reclen) return FALSE;
-        if (!DOSFS_ToDosFCBFormat( dir->dirent[0].d_name, dir->short_name ))
-            dir->short_name[0] = '\0';
-        *short_name = dir->short_name;
-        if (dir->dirent[1].d_name[0]) *long_name = dir->dirent[1].d_name;
-        else *long_name = dir->dirent[0].d_name;
-        return TRUE;
+        if (ioctl( dir->fd, VFAT_IOCTL_READDIR_BOTH, (long)dir->dirent ) != -1) {
+	    if (!dir->dirent[0].d_reclen) return FALSE;
+	    if (!DOSFS_ToDosFCBFormat( dir->dirent[0].d_name, dir->short_name ))
+		dir->short_name[0] = '\0';
+	    *short_name = dir->short_name;
+	    if (dir->dirent[1].d_name[0]) *long_name = dir->dirent[1].d_name;
+	    else *long_name = dir->dirent[0].d_name;
+	    return TRUE;
+	}
     }
 #endif  /* VFAT_IOCTL_READDIR_BOTH */
 
@@ -518,8 +519,8 @@ BOOL32 DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
 
     if (!(dir = DOSFS_OpenDir( path )))
     {
-        dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s): can't open dir\n",
-                       path, name );
+        dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s): can't open dir: %s\n",
+                       path, name, strerror(errno) );
         return FALSE;
     }
 
@@ -853,16 +854,18 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     p = buffer;
     *p++ = 'A' + drive;
     *p++ = ':';
-    if (IS_END_OF_NAME(*name))  /* Absolute path */
+    if (IS_END_OF_NAME(*name) && (*name))  /* Absolute path */
     {
         while ((*name == '\\') || (*name == '/')) name++;
     }
-    else  /* Relative path */
+    else  /* Relative path or empty path */
     {
         *p++ = '\\';
         lstrcpyn32A( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 3 );
         if (*p) p += strlen(p); else p--;
     }
+    if (!*name) /* empty path */
+      *p++ = '\\';
     *p = '\0';
 
     while (*name)

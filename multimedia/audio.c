@@ -1738,7 +1738,7 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
  * 				AUDIO_DriverProc		[sample driver]
  */
 LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg, 
-						DWORD dwParam1, DWORD dwParam2)
+		     DWORD dwParam1, DWORD dwParam2)
 {
 #if defined(linux) || defined(__FreeBSD__)
 	dprintf_mciwave(stddeb,"WAVE_DriverProc(%08lX, %04X, %04X, %08lX, %08lX)\n", 

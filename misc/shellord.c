@@ -32,6 +32,81 @@
 #include "winreg.h"
 
 /*************************************************************************
+ *	 		 SHELL32_2   			[SHELL32.2]
+ */
+DWORD WINAPI SHELL32_2(HWND32 hwnd,DWORD x2,DWORD x3,DWORD x4,DWORD x5,DWORD x6) {
+	fprintf(stderr,"SHELL32_2(0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",
+		hwnd,x2,x3,x4,x5,x6
+	);
+	return 0;
+}
+/*************************************************************************
+ *	 		 SHELL32_16   			[SHELL32.16]
+ * find_lastitem_in_itemidlist()
+ */
+LPSHITEMID WINAPI SHELL32_16(LPITEMIDLIST iil) {
+	LPSHITEMID	lastsii,sii;
+
+	if (!iil)
+		return NULL;
+	sii = &(iil->mkid);
+	lastsii = sii;
+	while (sii->cb) {
+		lastsii = sii;
+		sii = (LPSHITEMID)(((char*)sii)+sii->cb);
+	}
+	return lastsii;
+}
+/*************************************************************************
+ *	 		 SHELL32_29   			[SHELL32.29]
+ * is_rootdir(const char*path)
+ */
+BOOL32 WINAPI SHELL32_29(LPCSTR x) {
+	if (!lstrcmp32A(x+1,":\\"))		/* "X:\" */
+		return 1;
+	if (!lstrcmp32A(x,"\\"))		/* "\" */
+		return 1;
+	if (x[0]=='\\' && x[1]=='\\') {		/* UNC "\\<xx>\" */
+		int	foundbackslash = 0;
+		x=x+2;
+		while (*x) {
+			if (*x++=='\\')
+				foundbackslash++;
+		}
+		if (foundbackslash<=1)	/* max 1 \ more ... */
+			return 1;
+	}
+	return 0;
+}
+
+/*************************************************************************
+ *	 		 SHELL32_30   			[SHELL32.30]
+ * get_rootdir(char*path,int drive)
+ */
+DWORD WINAPI SHELL32_30(LPSTR root,BYTE drive) {
+	strcpy(root,"A:\\");
+	root[0]+=drive;
+	return root;
+}
+
+/*************************************************************************
+ *					SHELL32_31      [SHELL32.31]
+ * returns pointer to last . in last pathcomponent or at \0.
+ */
+LPSTR WINAPI SHELL32_31(LPSTR path) {
+    LPSTR   lastpoint = NULL;
+
+    while (*path) {
+	if (*path=='\\'||*path==' ')
+	    lastpoint=NULL;
+	if (*path=='.')
+	    lastpoint=path;
+	path++;
+    }
+    return lastpoint?lastpoint:path;
+}
+
+/*************************************************************************
  *				SHELL32_32	[SHELL32.32]
  * append \ if there is none
  */
@@ -46,6 +121,27 @@ LPSTR WINAPI SHELL32_32(LPSTR path) {
     } else
     	return path+len;
 }
+
+/*************************************************************************
+ *				SHELL32_33      [SHELL32.33]
+ * remove spaces from beginning and end of passed string
+ */
+LPSTR WINAPI SHELL32_33(LPSTR str) {
+    LPSTR x = str;
+
+    while (*x==' ') x++;
+    if (x!=str)
+	lstrcpy32A(str,x);
+    if (!*str)
+	return str;
+    x=str+strlen(str)-1;
+    while (*x==' ')
+	x--;
+    if (*x==' ')
+	*x='\0';
+    return x;
+}
+
 
 /*************************************************************************
  *				SHELL32_34	[SHELL32.34]
@@ -135,6 +231,27 @@ LPSTR WINAPI SHELL32_36(LPSTR x1,LPSTR x2) {
 }
 
 /*************************************************************************
+ *				SHELL32_39	[SHELL32.39]
+ * isUNC(const char*path);
+ */
+BOOL32 WINAPI SHELL32_39(LPCSTR path) {
+	if ((path[0]=='\\') && (path[1]=='\\'))
+		return TRUE;
+	return FALSE;
+}
+
+/*************************************************************************
+ *				SHELL32_45	[SHELL32.45]
+ * file_exists(char *fn);
+ */
+BOOL32 WINAPI SHELL32_45(LPSTR fn) {
+    if (GetFileAttributes32A(fn)==-1)
+    	return FALSE;
+    else
+    	return TRUE;
+}
+
+/*************************************************************************
  *				SHELL32_52	[SHELL32.52]
  * look for next arg in string. handle "quoted" strings
  * returns pointer to argument *AFTER* the space. Or to the \0.
@@ -153,14 +270,95 @@ LPSTR WINAPI SHELL32_52(LPSTR cmdline) {
 }
 
 /*************************************************************************
- *				SHELL32_45	[SHELL32.45]
- * file_exists(char *fn);
+ *				SHELL32_56      [SHELL32.56]
+ * unquote string (remove ")
  */
-BOOL32 WINAPI SHELL32_45(LPSTR fn) {
-    if (GetFileAttributes32A(fn)==-1)
-    	return FALSE;
-    else
-    	return TRUE;
+VOID WINAPI SHELL32_56(LPSTR str) {
+    DWORD      len = lstrlen32A(str);
+
+    if (*str!='"') return;
+    if (str[len-1]!='"') return;
+    str[len-1]='\0';
+    lstrcpy32A(str,str+1);
+    return;
+}
+
+/*************************************************************************
+ *	 		 SHELL32_58   			[SHELL32.58]
+ */
+DWORD WINAPI SHELL32_58(LPCSTR src,DWORD x2,LPSTR target,DWORD pathlen) {
+	fprintf(stderr,"SHELL32_58(%s,0x%08lx,%p,%ld),STUB!\n",
+		src,x2,target,pathlen
+	);
+	if (!src)
+		return 0;
+	return 0;
+}
+
+/*************************************************************************
+ *	 		 SHELL32_62   			[SHELL32.62]
+ */
+DWORD WINAPI SHELL32_62(DWORD x,DWORD y,DWORD z,DWORD a) {
+	fprintf(stderr,"SHELL32_62(%08lx,%08lx,%08lx,%08lx),stub!\n",x,y,z,a);
+	return 0xffffffff;
+}
+
+/*************************************************************************
+ *                      SHELL32_63                     [SHELL32.63]
+ */
+DWORD WINAPI SHELL32_63(HWND32 howner, LPSTR targetbuf, DWORD len, DWORD x, LPCSTR suffix, LPCSTR y, LPCSTR cmd) {
+    fprintf(stderr,"SHELL32_63(%04x,%p,%ld,%08lx,%s,%s,%s),stub!\n",
+	    howner,targetbuf,len,x,suffix,y,cmd
+    );
+    /* puts up a Open Dialog and requests input into targetbuf */
+    /* OFN_HIDEREADONLY|OFN_NOCHANGEDIR|OFN_FILEMUSTEXIST|OFN_unknown */
+    lstrcpy32A(targetbuf,"x:\\s3.exe");
+    return 1;
+}
+
+/*************************************************************************
+ *                      SHELL32_68                     [SHELL32.68]
+ */
+DWORD WINAPI SHELL32_68(DWORD x,DWORD y,DWORD z) {
+	fprintf(stderr,"SHELL32_68(0x%08lx,0x%08lx,0x%08lx),stub!\n",
+		x,y,z
+	);
+	return 0;
+}
+/*************************************************************************
+ *			 SHELL32_71   			[SHELL32.71]
+ * returns internal shell values in the passed pointers
+ */
+BOOL32 WINAPI SHELL32_71(LPDWORD x,LPDWORD y) {
+
+	fprintf(stderr,"SHELL32_71(%p,%p),stub!\n",x,y);
+	return TRUE;
+}
+
+/*************************************************************************
+ *			 SHELL32_72   			[SHELL32.72]
+ * dunno. something with icons
+ */
+void WINAPI SHELL32_72(LPSTR x,DWORD y,DWORD z) {
+	fprintf(stderr,"SHELL32_72(%s,%08lx,%08lx),stub!\n",x,y,z);
+}
+
+/*************************************************************************
+ *			 SHELL32_89   			[SHELL32.89]
+ */
+DWORD WINAPI SHELL32_89(DWORD x1,DWORD x2,DWORD x3) {
+	fprintf(stderr,"SHELL32_89(0x%08lx,0x%08lx,0x%08lx),stub!\n",
+		x1,x2,x3
+	);
+	return 0;
+}
+
+/*************************************************************************
+ *				SHELL32_119	[SHELL32.119]
+ * unknown
+ */
+void WINAPI SHELL32_119(LPVOID x) {
+    fprintf(stderr,"SHELL32_119(%p(%s)),stub\n",x,(char *)x);
 }
 
 /*************************************************************************
@@ -182,14 +380,6 @@ void WINAPI SHELL32_181(DWORD x,DWORD y) {
 }
 
 /*************************************************************************
- *				SHELL32_119	[SHELL32.119]
- * unknown
- */
-void WINAPI SHELL32_119(LPVOID x) {
-    fprintf(stderr,"SHELL32_119(%p),stub\n",x);
-}
-
-/*************************************************************************
  *				SHELL32_75	[SHELL32.75]
  * unknown
  */
@@ -198,14 +388,24 @@ BOOL32 WINAPI SHELL32_75(LPDWORD x,LPDWORD y) {
     return TRUE;
 }
 
-DWORD WINAPI
-SHELL32_DllGetClassObject(REFCLSID *clsid,REFIID *iid,LPVOID *x) {
-	char	xclsid[50],xiid[50];
-
-	StringFromCLSID((LPCLSID)clsid,xclsid);
-	StringFromCLSID((LPCLSID)iid,xiid);
-	fprintf(stderr,"SHELL32_DllGetClassObject(%s,%s,%p), STUB\n",xclsid,xiid,x);
+/*************************************************************************
+ *	 		 SHELL32_77   			[SHELL32.77]
+ */
+DWORD WINAPI SHELL32_77(DWORD x,DWORD y,DWORD z) {
+	fprintf(stderr,"SHELL32_77(%08lx,%08lx,%08lx),stub!\n",x,y,z);
 	return 0;
+}
+
+/*************************************************************************
+ *	 		 SHELL32_79   			[SHELL32.79]
+ * create_directory_and_notify(...)
+ */
+DWORD WINAPI SHELL32_79(LPCSTR dir,LPVOID xvoid) {
+	fprintf(stderr,"mkdir %s,%p\n",dir,xvoid);
+	if (!CreateDirectory32A(dir,xvoid))
+		return FALSE;
+	/* SHChangeNotify(8,1,dir,0); */
+	return TRUE;
 }
 
 static FARPROC32 _find_moduleproc(LPSTR dllname,HMODULE32 *xhmod,LPSTR name) {
@@ -236,18 +436,26 @@ static DWORD _get_instance(REFCLSID clsid,LPSTR dllname,
 ) {
 	DWORD	WINAPI	(*dllgetclassob)(REFCLSID,REFIID,LPVOID);
 	DWORD		hres;
+/*
 	LPCLASSFACTORY	classfac;
+ */
 
 	dllgetclassob = (DWORD(*)(REFCLSID,REFIID,LPVOID))_find_moduleproc(dllname,NULL,"DllGetClassObject");
 	if (!dllgetclassob)
 		return 0x80070000|GetLastError();
 
-	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
+/* FIXME */
+	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,inst);
 	if (hres<0)
 		return hres;
 
+/*
+	hres = (*dllgetclassob)(clsid,(REFIID)&IID_IClassFactory,&classfac);
+	if (hres<0)
+		return hres;
 	classfac->lpvtbl->fnCreateInstance(classfac,unknownouter,refiid,inst);
 	classfac->lpvtbl->fnRelease(classfac);
+ */
 	return 0;
 }
 /*************************************************************************
@@ -321,24 +529,6 @@ void __cdecl SHELL32_183(HMODULE32 hmod,HWND32 hwnd,DWORD id,DWORD x,DWORD type,
 
 
 /*************************************************************************
- *			 SHELL32_71   			[SHELL32.71]
- * returns internal shell values in the passed pointers
- */
-BOOL32 WINAPI SHELL32_71(LPDWORD x,LPDWORD y) {
-
-	fprintf(stderr,"SHELL32_71(%p,%p),stub!\n",x,y);
-	return TRUE;
-}
-
-/*************************************************************************
- *			 SHELL32_72   			[SHELL32.72]
- * dunno. something with icons
- */
-void WINAPI SHELL32_72(LPSTR x,DWORD y,DWORD z) {
-	fprintf(stderr,"SHELL32_72(%s,%08lx,%08lx),stub!\n",x,y,z);
-}
-
-/*************************************************************************
  *			 SHELL32_100   			[SHELL32.100]
  * walks through policy table, queries <app> key, <type> value, returns 
  * queried (DWORD) value.
@@ -375,56 +565,6 @@ DWORD WINAPI SHELL32_100(DWORD pol) {
 	
 }
 
-DWORD WINAPI SHELL32_77(DWORD x,DWORD y,DWORD z) {
-	fprintf(stderr,"SHELL32_77(%08lx,%08lx,%08lx),stub!\n",x,y,z);
-	return 0;
-}
-
-/*************************************************************************
- *	 		 SHELL32_79   			[SHELL32.79]
- * create_directory_and_notify(...)
- */
-DWORD WINAPI SHELL32_79(LPCSTR dir,LPVOID xvoid) {
-	fprintf(stderr,"mkdir %s,%p\n",dir,xvoid);
-	if (!CreateDirectory32A(dir,xvoid))
-		return FALSE;
-	/* SHChangeNotify(8,1,dir,0); */
-	return TRUE;
-}
-
-/*************************************************************************
- *	 		 SHELL32_165   			[SHELL32.165]
- * create_path_and_notify(...)
- */
-DWORD WINAPI SHELL32_165(DWORD x,LPCSTR path) {
-	if (SHELL32_79(path,(LPVOID)x))
-		return 0;
-	fprintf(stderr,"SHELL32_165(%08lx,%s),stub!\n",x,path);
-	return 0;
-}
-
-/*************************************************************************
- *	 		 SHELL32_29   			[SHELL32.29]
- * is_rootdir(const char*path)
- */
-BOOL32 WINAPI SHELL32_29(LPCSTR x) {
-	if (!lstrcmp32A(x+1,":\\"))		/* "X:\" */
-		return 1;
-	if (!lstrcmp32A(x,"\\"))		/* "\" */
-		return 1;
-	if (x[0]=='\\' && x[1]=='\\') {		/* UNC "\\<xx>\" */
-		int	foundbackslash = 0;
-		x=x+2;
-		while (*x) {
-			if (*x++=='\\')
-				foundbackslash++;
-		}
-		if (foundbackslash<=1)	/* max 1 \ more ... */
-			return 1;
-	}
-	return 0;
-}
-
 /*************************************************************************
  *	 		 SHELL32_152   			[SHELL32.152]
  * itemlist_length
@@ -440,6 +580,34 @@ DWORD WINAPI SHELL32_152(LPITEMIDLIST iil) {
 		si	 = (LPSHITEMID)(((char*)si)+si->cb);
 	}
 	return len;
+}
+
+/*************************************************************************
+ *                      SHELL32_158                    [SHELL32.158]
+ */
+LPSTR WINAPI SHELL32_158(LPSTR path,DWORD y,DWORD z) {
+    fprintf(stderr,"SHELL32_158(%s,%08lx,%08lx)\n",path,y,z);
+    path = SHELL32_31(path);
+    return *path?(path+1):path;
+}
+
+/*************************************************************************
+ *	 		 SHELL32_165   			[SHELL32.165]
+ * create_path_and_notify(...)
+ */
+DWORD WINAPI SHELL32_165(DWORD x,LPCSTR path) {
+	if (SHELL32_79(path,(LPVOID)x))
+		return 0;
+	fprintf(stderr,"SHELL32_165(%08lx,%s),stub!\n",x,path);
+	return 0;
+}
+
+/*************************************************************************
+ *	 		 SHELL32_195   			[SHELL32.195]
+ * free_ptr() - frees memory using IMalloc
+ */
+DWORD WINAPI SHELL32_195(LPVOID x) {
+	return LocalFree32((HANDLE32)x);
 }
 
 /*************************************************************************
@@ -481,32 +649,6 @@ LPITEMIDLIST WINAPI SHELL32_25(LPITEMIDLIST iil1,LPITEMIDLIST iil2) {
 }
 
 /*************************************************************************
- *	 		 SHELL32_16   			[SHELL32.16]
- * find_lastitem_in_itemidlist()
- */
-LPSHITEMID WINAPI SHELL32_16(LPITEMIDLIST iil) {
-	LPSHITEMID	lastsii,sii;
-
-	if (!iil)
-		return NULL;
-	sii = &(iil->mkid);
-	lastsii = sii;
-	while (sii->cb) {
-		lastsii = sii;
-		sii = (LPSHITEMID)(((char*)sii)+sii->cb);
-	}
-	return lastsii;
-}
-
-/*************************************************************************
- *	 		 SHELL32_195   			[SHELL32.195]
- * free_ptr() - frees memory using IMalloc
- */
-DWORD WINAPI SHELL32_195(LPVOID x) {
-	return LocalFree32((HANDLE32)x);
-}
-
-/*************************************************************************
  *	 		 SHELL32_155   			[SHELL32.155]
  * free_check_ptr - frees memory (if not NULL) allocated by SHMalloc allocator
  */
@@ -514,12 +656,4 @@ DWORD WINAPI SHELL32_155(LPVOID x) {
 	if (!x)
 		return 0;
 	return SHELL32_195(x);
-}
-
-/*************************************************************************
- *	 		 SHELL32_62   			[SHELL32.62]
- */
-DWORD WINAPI SHELL32_62(DWORD x,DWORD y,DWORD z,DWORD a) {
-	fprintf(stderr,"SHELL32_62(%08lx,%08lx,%08lx,%08lx),stub!\n",x,y,z,a);
-	return 0xffffffff;
 }

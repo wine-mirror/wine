@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include "windows.h"
+#include "winerror.h"
 #include "file.h"
 #include "shell.h"
 #include "heap.h"
@@ -125,6 +126,7 @@ static const char * const SHELL_People[] =
     "William Smith",
     "Dominik Strasser",
     "Vadim Strizhevsky",
+    "Bertho Stultiens",
     "Erik Svendsen",
     "Tristan Tarrant",
     "Andrew Taylor",
@@ -180,9 +182,6 @@ typedef struct
 } icoICONDIR, *LPicoICONDIR;
 
 #pragma pack(4)
-
-extern HICON16   WINAPI LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew );
-extern WORD 	 WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType );
 
 static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
 static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";
@@ -754,6 +753,29 @@ BOOL32 WINAPI ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     return ret;
 }
 
+/*************************************************************************
+ *				Shell_NotifyIcon	[SHELL32.249]
+ *	FIXME
+ *	This function is supposed to deal with the systray.
+ *	Any ideas on how this is to be implimented?
+ */
+BOOL32 WINAPI Shell_NotifyIcon(	DWORD dwMessage,
+				PNOTIFYICONDATA pnid )
+{
+    return FALSE;
+}
+
+/*************************************************************************
+ *				Shell_NotifyIcon	[SHELL32.240]
+ *	FIXME
+ *	This function is supposed to deal with the systray.
+ *	Any ideas on how this is to be implimented?
+ */
+BOOL32 WINAPI Shell_NotifyIconA(DWORD dwMessage,
+				PNOTIFYICONDATA pnid )
+{
+    return FALSE;
+}
 
 /*************************************************************************
  *				SHELL_GetResourceTable
@@ -1048,7 +1070,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		_lclose32( hFile);
 		return 0;
 	}
-	icongroupresdir = GetResDirEntryW(rootresdir,(LPWSTR)RT_GROUP_ICON,(DWORD)rootresdir);
+	icongroupresdir = GetResDirEntryW(rootresdir,(LPWSTR)RT_GROUP_ICON,(DWORD)rootresdir,FALSE);
 	if (!icongroupresdir) {
 		fprintf(stderr,"InternalExtractIcon: No Icongroupresourcedirectory!\n");
 		UnmapViewOfFile(peimage);
@@ -1094,7 +1116,7 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		/* go down this resource entry, name */
 		resdir = (LPIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
 		/* default language (0) */
-		resdir = GetResDirEntryW(resdir,(LPWSTR)0,(DWORD)rootresdir);
+		resdir = GetResDirEntryW(resdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
 		igdataent = (LPIMAGE_RESOURCE_DATA_ENTRY)resdir;
 
 		/* lookup address in mapped image for virtual address */
@@ -1116,13 +1138,9 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 		/* found */
 		cid = (CURSORICONDIR*)igdata;
 		cids[i] = cid;
-		fprintf(stderr,"cursoricondir %d: idType %d, idCount %d\n",
-			i,cid->idType,cid->idCount
-		);
 		RetPtr[i] = LookupIconIdFromDirectoryEx32(igdata,TRUE,SYSMETRICS_CXICON,SYSMETRICS_CYICON,0);
-		fprintf(stderr,"-> best match is %08x\n",RetPtr[i]);
 	}
-	iconresdir=GetResDirEntryW(rootresdir,(LPWSTR)RT_ICON,(DWORD)rootresdir);
+	iconresdir=GetResDirEntryW(rootresdir,(LPWSTR)RT_ICON,(DWORD)rootresdir,FALSE);
 	if (!iconresdir) {
 	    fprintf(stderr,"InternalExtractIcon: No Iconresourcedirectory!\n");
 	    UnmapViewOfFile(peimage);
@@ -1133,8 +1151,8 @@ HGLOBAL16 WINAPI InternalExtractIcon(HINSTANCE16 hInstance,
 	for (i=0;i<n;i++) {
 	    LPIMAGE_RESOURCE_DIRECTORY	xresdir;
 
-	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)RetPtr[i],(DWORD)rootresdir);
-	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir);
+	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)RetPtr[i],(DWORD)rootresdir,FALSE);
+	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
 
 	    idataent = (LPIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 
@@ -1214,6 +1232,12 @@ HICON32 WINAPI ExtractIcon32W( HINSTANCE32 hInstance, LPCWSTR lpszExeFileName,
  * Return icon for given file (either from file itself or from associated
  * executable) and patch parameters if needed.
  */
+HICON32 WINAPI ExtractAssociatedIcon32A(HINSTANCE32 hInst,LPSTR lpIconPath,
+	LPWORD lpiIcon)
+{
+	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
+}
+
 HICON16 WINAPI ExtractAssociatedIcon16(HINSTANCE16 hInst,LPSTR lpIconPath,
 	LPWORD lpiIcon)
 {
@@ -1541,26 +1565,101 @@ void WINAPI FreeIconList( DWORD dw )
  *
  * http://premium.microsoft.com/msdn/library/sdkdoc/api2_48fo.htm
  */
-
-/* This is the wrong place, but where is the right one?  */
-#if 0
-#define E_OUTOFMEMORY 0x8007000EL
-
-HRESULT32 WINAPI SHELL32_DllGetClassObject (REFCLSID32 clsid,
-					    REFIID32 riid,
-					    LPVOID *ppv)
+DWORD WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid,REFIID iid,LPVOID *ppv)
 {
-  HRESULT32 hres = E_OUTOFMEMORY; 
-  *ppv = NULL; 
+    char	xclsid[50],xiid[50];
+    HRESULT	hres = E_OUTOFMEMORY;
 
-  fprintf (stdnimp, "SHELL32_DllGetClassObject (0x%x,0x%x,%p) -- STUB\n",
-	   clsid, riid, ppv);
 
-  return hres;
-}
-#endif
+    StringFromCLSID((LPCLSID)rclsid,xclsid);
+    StringFromCLSID((LPCLSID)iid,xiid);
+    fprintf(stderr,"SHELL32_DllGetClassObject(%s,%s,%p)\n",xclsid,xiid,ppv);
 
-DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder) {
-	*shellfolder = NULL;
+    *ppv = NULL;
+/* SDK example code looks like this:
+ *
+    HRESULT	hres = E_OUTOFMEMORY;
+
+    *ppv = NULL;
+    CClassFactory *pClassFactory = new CClassFactory(rclsid);
+    
+    if (pClassFactory) {
+    	hRes = pClassFactory->QueryInterface(riid,ppv);
+	pClassFactory->Release();
+    }
+    return hRes;
+ *
+ * The magic of the whole stuff is still unclear to me, so just hack together 
+ * something.
+ */
+  
+    if (!memcmp(rclsid,&CLSID_ShellDesktop,sizeof(CLSID_ShellDesktop))) {
+    	fprintf(stderr,"	requested CLSID_ShellDesktop, creating it.\n");
+	*ppv = IShellFolder_Constructor();
+	/* FIXME: Initialize this folder to be the shell desktop folder */
 	return 0;
+    }
+
+    fprintf (stdnimp, "	-> clsid not found. returning E_OUTOFMEMORY.\n");
+    return hres;
 }
+
+/*************************************************************************
+ *			 SHGetDesktopFolder		[SHELL32.216]
+ * returns the interface to the shell desktop folder.
+ *
+ * [SDK header win95/shlobj.h: This is equivalent to call CoCreateInstance with
+ *  CLSID_ShellDesktop.
+ *
+ *  CoCreateInstance(CLSID_Desktop, NULL,
+ *                   CLSCTX_INPROC, IID_IShellFolder, &pshf);
+ * ]
+ * So what we are doing is currently wrong....
+ */
+DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *shellfolder) {
+	*shellfolder = IShellFolder_Constructor();
+	return NOERROR;
+}
+
+/*************************************************************************
+ *			 SHGetMalloc			[SHELL32.220]
+ * returns the interface to shell malloc.
+ *
+ * [SDK header win95/shlobj.h:
+ * equivalent to:  #define SHGetMalloc(ppmem)   CoGetMalloc(MEMCTX_TASK, ppmem)
+ * ]
+ * What we are currently doing is not very wrong, since we always use the same
+ * heap (ProcessHeap).
+ */
+DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) {
+	fprintf(stderr,"SHGetMalloc()\n");
+	*lpmal = IMalloc_Constructor();
+	return NOERROR;
+}
+
+/*************************************************************************
+ *			 SHGetSpecialFolderLocation	[SHELL32.223]
+ * returns the PIDL of a special folder
+ *
+ * nFolder is a CSIDL_xxxxx.
+ */
+HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITEMIDLIST * ppidl) {
+	fprintf(stderr,"SHGetSpecialFolderLocation(%04x,%d,%p),stub!\n",
+		hwndOwner,nFolder,ppidl
+	);
+	*ppidl = (LPITEMIDLIST)HeapAlloc(GetProcessHeap(),0,2*sizeof(ITEMIDLIST));
+	/* FIXME: we return only the empty ITEMIDLIST currently. */
+	(*ppidl)->mkid.cb = 0;
+	return NOERROR;
+}
+
+/*************************************************************************
+ *			 SHGetPathFromIDList		[SHELL32.221]
+ * returns the path from a passed PIDL.
+ */
+BOOL32 WINAPI SHGetPathFromIDList(LPCITEMIDLIST pidl,LPSTR pszPath) {
+	fprintf(stderr,"SHGetPathFromIDList(%p,%p),stub!\n",pidl,pszPath);
+	lstrcpy32A(pszPath,"E:\\"); /* FIXME */
+	return NOERROR;
+}
+

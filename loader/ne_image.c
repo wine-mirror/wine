@@ -55,8 +55,8 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
     fd = MODULE_OpenFile( pModule->self );
-    dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
-                    segnum, pSeg->selector );
+    dprintf_module( stddeb, "Loading segment %d, selector=%04x, flags=%04x\n",
+                    segnum, pSeg->selector, pSeg->flags );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     if (pSeg->size) size = pSeg->size;
     else if (pSeg->minsize) size = pSeg->minsize;
@@ -631,7 +631,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
     dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
-    Callbacks->CallRegisterProc( &context, 0 );
+    Callbacks->CallRegisterShortProc( &context, 0 );
     return TRUE;
 }
 
@@ -674,4 +674,5 @@ void NE_InitializeDLLs( HMODULE16 hModule )
 /* It does nothing */
 void WINAPI PatchCodeHandle(HANDLE16 hSel)
 {
+	fprintf(stderr,"PatchCodeHandle(%04x),stub!\n",hSel);
 }

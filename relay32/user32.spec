@@ -76,7 +76,7 @@ type	win32
  73 stdcall CreateDialogParamA(long ptr long ptr long) CreateDialogParam32A
  74 stdcall CreateDialogParamW(long ptr long ptr long) CreateDialogParam32W
  75 stdcall CreateIcon(long long long long long ptr ptr) CreateIcon32
- 76 stub CreateIconFromResource
+ 76 stdcall CreateIconFromResource (ptr long long long) CreateIconFromResource32
  77 stdcall CreateIconFromResourceEx(ptr long long long long long long) CreateIconFromResourceEx32
  78 stdcall CreateIconIndirect(ptr) CreateIconIndirect
  79 stub CreateMDIWindowA
@@ -396,8 +396,8 @@ type	win32
 391 stdcall MessageBoxA(long str str long) MessageBox32A
 392 stdcall MessageBoxExA(long str str long long) MessageBoxEx32A
 393 stdcall MessageBoxExW(long wstr wstr long long) MessageBoxEx32W
-394 stub MessageBoxIndirectA
-395 stub MessageBoxIndirectW
+394 stdcall MessageBoxIndirectA(ptr) MessageBoxIndirect32A
+395 stdcall MessageBoxIndirectW(ptr) MessageBoxIndirect32W
 396 stdcall MessageBoxW(long wstr wstr long) MessageBox32W
 397 stdcall ModifyMenuA(long long long long ptr) ModifyMenu32A
 398 stdcall ModifyMenuW(long long long long ptr) ModifyMenu32W
@@ -459,8 +459,8 @@ type	win32
 454 stdcall SendMessageA(long long long long) SendMessage32A
 455 stub SendMessageCallbackA
 456 stub SendMessageCallbackW
-457 stub SendMessageTimeoutA
-458 stub SendMessageTimeoutW
+457 stdcall SendMessageTimeoutA(long long long long ptr ptr) SendMessageTimeout32A
+458 stdcall SendMessageTimeoutW(long long long long ptr ptr) SendMessageTimeout32W
 459 stdcall SendMessageW(long long long long) SendMessage32W
 460 stub SendNotifyMessageA
 461 stub SendNotifyMessageW
@@ -589,8 +589,8 @@ type	win32
 584 stub mouse_event
 585 varargs wsprintfA() wsprintf32A
 586 varargs wsprintfW() wsprintf32W
-587 stdcall wvsprintfA(str str ptr) wvsprintf32A
-588 stdcall wvsprintfW(wstr wstr ptr) wvsprintf32W
+587 stdcall wvsprintfA(ptr str ptr) wvsprintf32A
+588 stdcall wvsprintfW(ptr wstr ptr) wvsprintf32W
 #late additions
 589 stub ChangeDisplaySettingsA
 590 stub ChangeDisplaySettingsW

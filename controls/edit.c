@@ -3494,7 +3494,7 @@ static LRESULT EDIT_WM_LButtonDown(WND *wnd, EDITSTATE *es, DWORD keys, INT32 x,
 	e = EDIT_CharFromPos(wnd, es, x, y, &after_wrap);
 	EDIT_EM_SetSel(wnd, es, (keys & MK_SHIFT) ? es->selection_start : e, e, after_wrap);
 	EDIT_EM_ScrollCaret(wnd, es);
-	es->region_posx = es->region_posx = 0;
+	es->region_posx = es->region_posy = 0;
 	SetTimer32(wnd->hwndSelf, 0, 100, NULL);
 	return 0;
 }

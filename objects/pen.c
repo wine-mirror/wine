@@ -73,6 +73,30 @@ HPEN32 WINAPI CreatePenIndirect32( const LOGPEN32 * pen )
     return hpen;
 }
 
+/***********************************************************************
+ *           ExtCreatePen32    (GDI32.93)
+ *
+ * FIXME: PS_USERSTYLE not handled
+ */
+
+HPEN32 WINAPI ExtCreatePen32( DWORD style, DWORD width,
+                              const LOGBRUSH32 * brush, DWORD style_count,
+                              const DWORD *style_bits )
+{
+    LOGPEN32 logpen;
+
+    if ((style & PS_STYLE_MASK) == PS_USERSTYLE)
+	fprintf(stderr, "ExtCreatePen: PS_USERSTYLE not handled\n");
+    if ((style & PS_TYPE_MASK) == PS_GEOMETRIC)
+	if (brush->lbHatch)
+	    fprintf(stderr, "ExtCreatePen: Hatches not implemented\n");
+
+    logpen.lopnStyle = style & ~PS_TYPE_MASK;
+    logpen.lopnWidth.x = (style & PS_GEOMETRIC) ? width : 1;
+    logpen.lopnWidth.y = 0;
+    logpen.lopnColor = brush->lbColor;
+    return CreatePenIndirect32( &logpen );
+}
 
 /***********************************************************************
  *           PEN_GetObject16

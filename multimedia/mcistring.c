@@ -23,20 +23,17 @@
 #include "user.h"
 #include "driver.h"
 #include "mmsystem.h"
+#include "callback.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 
 
-extern MCI_OPEN_DRIVER_PARMS	mciDrv[MAXMCIDRIVERS];
-
-/* FIXME: I need to remember the aliasname of a spec. driver. 
- *        and this is the easiest way. *sigh*
- */
-extern MCI_OPEN_PARMS16		mciOpenDrv[MAXMCIDRIVERS];
+extern struct LINUX_MCIDRIVER mciDrv[MAXMCIDRIVERS];
 
 #define GetDrv(wDevID) (&mciDrv[MMSYSTEM_DevIDToIndex(wDevID)])
-#define GetOpenDrv(wDevID) (&mciOpenDrv[MMSYSTEM_DevIDToIndex(wDevID)])
+#define GetOpenDrv(wDevID) (&(GetDrv(wDevID)->mop))
+
 extern int MMSYSTEM_DevIDToIndex(UINT16 wDevID);
 extern UINT16 MMSYSTEM_FirstDevID(void);
 extern UINT16 MMSYSTEM_NextDevID(UINT16 wDevID);
@@ -80,24 +77,25 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 #define _MCI_CALL_DRIVER(cmd,params) \
 	switch(uDevTyp) {\
 	case MCI_DEVTYPE_CD_AUDIO:\
-		res=CDAUDIO_DriverProc(GetDrv(wDevID)->wDeviceID,0,cmd,dwFlags, (DWORD)(params));\
+		res=CDAUDIO_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags, (DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_WAVEFORM_AUDIO:\
-		res=WAVE_DriverProc(GetDrv(wDevID)->wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
+		res=WAVE_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_SEQUENCER:\
-		res=MIDI_DriverProc(GetDrv(wDevID)->wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
+		res=MIDI_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_ANIMATION:\
-		res=ANIM_DriverProc(GetDrv(wDevID)->wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
+		res=ANIM_DriverProc(GetDrv(wDevID)->modp.wDeviceID,0,cmd,dwFlags,(DWORD)(params));\
 		break;\
 	case MCI_DEVTYPE_DIGITAL_VIDEO:\
 		dprintf_mci(stddeb,"_MCI_CALL_DRIVER //No DIGITAL_VIDEO yet !\n");\
 		res=MCIERR_DEVICE_NOT_INSTALLED;\
 		break;\
 	default:\
-		dprintf_mci(stddeb,"_MCI_CALL_DRIVER //Invalid Device Name '%s' !\n",dev);\
-		res=MCIERR_INVALID_DEVICE_NAME;\
+		/*res = Callbacks->CallDriverProc(GetDrv(wDevID)->driverproc,GetDrv(wDevID)->modp.wDeviceID,GetDrv(wDevID)->hdrv,cmd,dwFlags,(DWORD)(params));\
+		break;*/\
+		res = MCIERR_DEVICE_NOT_INSTALLED;\
 		break;\
 	}
 /* print a DWORD in the specified timeformat */
@@ -335,17 +333,17 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		return MCIERR_INVALID_DEVICE_NAME;
 	}
 	wDevID=MMSYSTEM_FirstDevID();
-	while(GetDrv(wDevID)->wType) {
+	while(GetDrv(wDevID)->modp.wType) {
 		wDevID = MMSYSTEM_NextDevID(wDevID);
 		if (!MMSYSTEM_DevIDValid(wDevID)) {
-			dprintf_mci(stddeb, __FILE__":MCISTR_Open:MAXMCIDRIVERS reached!\n");
+			dprintf_mci(stddeb, __FILE__":MCISTR_Open:MAXMCIDRIVERS reached (%x) !\n", wDevID);
 			SEGPTR_FREE(PTR_SEG_TO_LIN(pU->openParams.lpstrElementName));
 			SEGPTR_FREE(pU);
 			return MCIERR_INTERNAL;
 		}
 	}
-	GetDrv(wDevID)->wType		= uDevTyp;
-	GetDrv(wDevID)->wDeviceID	= 0;  /* FIXME? for multiple devices */
+	GetDrv(wDevID)->modp.wType	= uDevTyp;
+	GetDrv(wDevID)->modp.wDeviceID	= 0;  /* FIXME? for multiple devices */
 	pU->openParams.dwCallback	= hwndCallback ;
 	pU->openParams.wDeviceID	= wDevID;
 	pU->ovlyopenParams.dwStyle	= 0; 
@@ -2190,7 +2188,7 @@ DWORD WINAPI mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 				return MCIERR_INVALID_DEVICE_NAME;
 			}
 		}
-		uDevTyp=GetDrv(wDevID)->wType;
+		uDevTyp=GetDrv(wDevID)->modp.wType;
 	}
 
  	for (i=0;MCISTR_cmdtable[i].cmd!=NULL;i++) {

@@ -2,7 +2,7 @@ name	win32s16
 type	win16
 
 1 stub WEP
-2 stub BOOTTASK
+2 pascal16 BootTask() BootTask
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
 5 pascal CONTINUEDEBUGEVENT(long long long) ContinueDebugEvent
@@ -48,8 +48,8 @@ type	win16
 45 stub FAPILOG16
 46 stub ALLOCCALLBACK
 47 stub LINEARTOHUGESELECTOROFFSET
-48 stub UTSELECTOROFFSETTOLINEAR
-49 stub UTLINEARTOSELECTOROFFSET
+48 pascal UTSelectorOffsetToLinear(ptr) UTSelectorOffsetToLinear
+49 pascal UTLinearToSelectorOffset(ptr) UTLinearToSelectorOffset
 50 stub SELFOREIGNTIB
 51 stub MYGLOBALREALLOC
 52 stub CREATEPEHEADER

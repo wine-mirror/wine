@@ -291,6 +291,7 @@ static void DIB_SetImageBits_1( int lines, const BYTE *srcbits,
 	    srcbits += linebytes;
 	}
     } else {
+	lines = -lines;
 	for (h = 0; h < lines; h++) {
 	    DIB_SetImageBits_1_Line(dstwidth, colors, bmpImage, h, srcbits);
 	    srcbits += linebytes;
@@ -327,6 +328,7 @@ static void DIB_SetImageBits_4( int lines, const BYTE *srcbits,
 	    bits	 = srcbits;
 	}
     } else {
+	lines = -lines;
 	for (h = 0; h < lines; h++) {
 	    for (i = dstwidth/2, x = 0; i > 0; i--) {
 		BYTE pix = *bits++;
@@ -731,6 +733,7 @@ static void DIB_SetImageBits_32( int lines, const BYTE *srcbits,
 	    bits = (srcbits += linebytes);
 	}
     } else {
+	lines = -lines;
 	for (h = 0; h < lines; h++) {
 	    for (x = 0; x < dstwidth; x++, bits += 4) {
 		XPutPixel( bmpImage, x, h,

@@ -159,7 +159,7 @@ void WINAPI InitializeCriticalSection(CRITICAL_SECTION *pcritical)
 
 void WINAPI DeleteCriticalSection(CRITICAL_SECTION *pcritical)
 {
-   semctl((int) pcritical->LockSemaphore,0,IPC_RMID,(union semun)NULL);
+   semctl((int) pcritical->LockSemaphore,0,IPC_RMID, (void *)0);
    pcritical->Reserved=-1;
 }
 

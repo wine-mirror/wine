@@ -386,7 +386,7 @@ static void TASK_CallToStart(void)
                       SELECTOROF(IF1632_Saved16_ss_sp),
                       OFFSETOF(IF1632_Saved16_ss_sp) );
 
-        Callbacks->CallRegisterProc( &context, 0 );
+        Callbacks->CallRegisterShortProc( &context, 0 );
         /* This should never return */
         fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
         TASK_KillCurrentTask( 1 );
@@ -629,8 +629,6 @@ static void TASK_DeleteTask( HTASK16 hTask )
  */
 void TASK_KillCurrentTask( INT16 exitCode )
 {
-    extern void USER_ExitWindows(void);
-
     TDB* pTask = (TDB*) GlobalLock16( hCurrentTask );
     if (!pTask) USER_ExitWindows();  /* No current task yet */
 

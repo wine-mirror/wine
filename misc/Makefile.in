@@ -37,6 +37,8 @@ C_SRCS = \
 	w32scomb.c \
 	w32skrnl.c \
 	w32sys.c \
+	win32s16.c \
+	windebug.c \
 	winsock.c \
 	winsock_dns.c \
 	wsprintf.c \

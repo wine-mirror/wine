@@ -13,14 +13,6 @@
 #include "resource.h"
 #include "task.h"
 
-typedef struct
-{
-    LPCSTR title;
-    LPCSTR text;
-    UINT32 type;
-} MSGBOX, *LPMSGBOX;
-
-
 /**************************************************************************
  *           MSGBOX_DlgProc
  *
@@ -29,7 +21,8 @@ typedef struct
 static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
                                         WPARAM32 wParam, LPARAM lParam )
 {
-  LPMSGBOX lpmb;
+  LPMSGBOXPARAMS32A lpmb;
+
   RECT32 rect, textrect;
   HWND32 hItem;
   HDC32 hdc;
@@ -39,11 +32,11 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
   
   switch(message) {
    case WM_INITDIALOG:
-    lpmb = (LPMSGBOX)lParam;
-    if (lpmb->title) SetWindowText32A(hwnd, lpmb->title);
-    SetWindowText32A(GetDlgItem32(hwnd, 100), lpmb->text);
+    lpmb = (LPMSGBOXPARAMS32A)lParam;
+    if (lpmb->lpszCaption) SetWindowText32A(hwnd, lpmb->lpszCaption);
+    SetWindowText32A(GetDlgItem32(hwnd, 100), lpmb->lpszText);
     /* Hide not selected buttons */
-    switch(lpmb->type & MB_TYPEMASK) {
+    switch(lpmb->dwStyle & MB_TYPEMASK) {
      case MB_OK:
       ShowWindow32(GetDlgItem32(hwnd, 2), SW_HIDE);
       /* fall through */
@@ -71,7 +64,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
       break;
     }
     /* Set the icon */
-    switch(lpmb->type & MB_ICONMASK) {
+    switch(lpmb->dwStyle & MB_ICONMASK) {
      case MB_ICONEXCLAMATION:
       SendDlgItemMessage16(hwnd, stc1, STM_SETICON16,
                            (WPARAM16)LoadIcon16(0, IDI_EXCLAMATION), 0);
@@ -121,7 +114,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
     
     GetClientRect32(hItem, &rect);
     hdc = GetDC32(hItem);
-    lRet = DrawText32A( hdc, lpmb->text, -1, &rect,
+    lRet = DrawText32A( hdc, lpmb->lpszText, -1, &rect,
                         DT_LEFT | DT_EXPANDTABS | DT_WORDBREAK | DT_CALCRECT);
     theight = rect.bottom  - rect.top;
     tiheight = 16 + MAX(iheight, theight);
@@ -150,7 +143,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
       /* some arithmetic to get the right order for YesNoCancel windows */
       hItem = GetDlgItem32(hwnd, (i + 5) % 7 + 1);
       if (GetWindowLong32A(hItem, GWL_STYLE) & WS_VISIBLE) {
-	if (buttons++ == ((lpmb->type & MB_DEFMASK) >> 8)) {
+	if (buttons++ == ((lpmb->dwStyle & MB_DEFMASK) >> 8)) {
 	  SetFocus32(hItem);
 	  SendMessage32A( hItem, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
 	}
@@ -195,13 +188,13 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
  */
 INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
 {
-    MSGBOX mbox;
+    MSGBOXPARAMS32A mbox;
 
     if (!text) text="<WINE-NULL>";
     if (!title) title="<WINE-NULL>";
-    mbox.title = title;
-    mbox.text  = text;
-    mbox.type  = type;
+    mbox.lpszCaption = title;
+    mbox.lpszText  = text;
+    mbox.dwStyle  = type;
     return DialogBoxIndirectParam32A( WIN_GetWindowInstance(hWnd),
                                       SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
                                       hWnd, MSGBOX_DlgProc, (LPARAM)&mbox );
@@ -241,6 +234,31 @@ INT32 WINAPI MessageBoxEx32W( HWND32 hWnd, LPCWSTR text, LPCWSTR title,
 {
     /* ignore language id for now */
     return MessageBox32W(hWnd,text,title,type);
+}
+
+/**************************************************************************
+ *           MessageBoxIndirect32A   (USER32.394)
+ */
+INT32 WINAPI MessageBoxIndirect32A( LPMSGBOXPARAMS32A msgbox )
+{
+    return DialogBoxIndirectParam32A( msgbox->hInstance,
+   				      SYSRES_GetResPtr( SYSRES_DIALOG_MSGBOX ),
+                                      msgbox->hwndOwner, MSGBOX_DlgProc,
+				      (LPARAM)msgbox );
+}
+
+/**************************************************************************
+ *           MessageBoxIndirect32W   (USER32.395)
+ */
+INT32 WINAPI MessageBoxIndirect32W( LPMSGBOXPARAMS32W msgbox )
+{
+    MSGBOXPARAMS32A	msgboxa;
+
+    memcpy(&msgboxa,msgbox,sizeof(msgboxa));
+    if (msgbox->lpszCaption)	lstrcpyWtoA(msgboxa.lpszCaption,msgbox->lpszCaption);
+    if (msgbox->lpszText)	lstrcpyWtoA(msgboxa.lpszText,msgbox->lpszText);
+
+    return MessageBoxIndirect32A(&msgboxa);
 }
 
 
