@@ -2589,9 +2589,6 @@ LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 {
     HWND hwnd = pWnd->hwndSelf;
 
-    if(GetForegroundWindow() != hwnd)
-        SetWindowPos( hwnd, 0, 0, 0,0,0,SWP_NOSIZE | SWP_NOMOVE | SWP_DRAWFRAME);
-
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
