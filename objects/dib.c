@@ -88,7 +88,8 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
  *           DIB_GetBitmapInfo
  *
  * Get the info from a bitmap header.
- * Return 1 for INFOHEADER, 0 for COREHEADER, -1 for error.
+ * Return 1 for INFOHEADER, 0 for COREHEADER,
+ * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
  */
 int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
                               int *height, WORD *bpp, WORD *compr )
@@ -110,7 +111,25 @@ int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, DWORD *width,
         *compr  = 0;
         return 0;
     }
-    WARN("(%ld): wrong size for header\n", header->biSize );
+    if (header->biSize == sizeof(BITMAPV4HEADER))
+    {
+        BITMAPV4HEADER *v4hdr = (BITMAPV4HEADER *)header;
+        *width  = v4hdr->bV4Width;
+        *height = v4hdr->bV4Height;
+        *bpp    = v4hdr->bV4BitCount;
+        *compr  = v4hdr->bV4Compression;
+        return 4;
+    }
+    if (header->biSize == sizeof(BITMAPV5HEADER))
+    {
+        BITMAPV5HEADER *v5hdr = (BITMAPV5HEADER *)header;
+        *width  = v5hdr->bV5Width;
+        *height = v5hdr->bV5Height;
+        *bpp    = v5hdr->bV5BitCount;
+        *compr  = v5hdr->bV5Compression;
+        return 5;
+    }
+    ERR("(%ld): unknown/wrong size for header\n", header->biSize );
     return -1;
 }
 
@@ -825,9 +844,27 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
             }
             else fColor = TRUE;
         }
+        else if (data->bmiHeader.biSize == sizeof(BITMAPV4HEADER))
+        { /* FIXME: correct ? */
+            RGBQUAD *rgb = data->bmiColors;
+            DWORD col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
+
+	    /* Check if the first color of the colormap is black */ 
+	    if ((col == RGB(0,0,0)))
+            {
+                rgb++;
+                col = RGB( rgb->rgbRed, rgb->rgbGreen, rgb->rgbBlue );
+		/* If the second color is white, create a monochrome bitmap */
+                fColor =  (col != RGB(0xff,0xff,0xff));
+            }
+	    /* Note : If the first color of the colormap is white 
+	       followed by black, we have to create a color bitmap. 
+	       If we don't the white will be displayed in black later on!*/ 
+            else fColor = TRUE;
+        }
         else
         {
-            WARN("(%ld): wrong size for data\n",
+            ERR("(%ld): wrong/unknown size for data\n",
                      data->bmiHeader.biSize );
             return 0;
         }
