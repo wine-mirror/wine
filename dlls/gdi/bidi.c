@@ -31,6 +31,7 @@
 #include "wingdi.h"
 #include "wine/debug.h"
 #include "gdi.h"
+#include "gdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
@@ -63,7 +64,7 @@ BOOL BIDI_Reorder(
     if ((dwFlags & GCP_REORDER) != 0) {
         UBiDi *bidi;
         UErrorCode err=0;
-        UBiDiLevel level;
+        UBiDiLevel level=0;
 
         bidi=ubidi_open();
         if( bidi==NULL ) {
