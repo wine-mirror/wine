@@ -152,7 +152,7 @@ void mwi_Color(HWND hWnd)
 
 	cc.lStructSize = sizeof(CHOOSECOLOR);
 	cc.hwndOwner = hWnd;
-	cc.hInstance = g_hInstance;
+	cc.hInstance = (HWND)g_hInstance; /* Should be an HINSTANCE but MS made a typo */
 	cc.rgbResult = RGB(0,0,0);
 	cc.lpCustColors = cc_cr;
 	cc.Flags = 0;

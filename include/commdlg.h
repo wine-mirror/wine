@@ -123,7 +123,7 @@ typedef UINT CALLBACK (*LPCCHOOKPROC) (HWND, UINT, WPARAM, LPARAM);
 typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
-	HWND		hInstance;
+	HWND		hInstance; /* Should be an HINSTANCE but MS made a typo */
 	DWORD	        rgbResult;
 	LPDWORD         lpCustColors;
 	DWORD 		Flags;
@@ -136,7 +136,7 @@ typedef CHOOSECOLORA *LPCHOOSECOLORA;
 typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
-	HWND		hInstance;
+	HWND		hInstance; /* Should be an HINSTANCE but MS made a typo */
 	DWORD	        rgbResult;
 	LPDWORD         lpCustColors;
 	DWORD 		Flags;
