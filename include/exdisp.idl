@@ -100,8 +100,7 @@ interface IWebBrowserApp : IWebBrowser
     HRESULT PutProperty([in] BSTR szProperty, [in] VARIANT vtValue);
     HRESULT GetProperty([in] BSTR szProperty, [out] VARIANT *pvtValue);
     [propget] HRESULT Name([out] BSTR* Name);
-    /* FIXME: get_HWND should be propget too but widl gets confused by the HWND */
-    HRESULT get_HWND([out] long *pHWND);
+    [propget] HRESULT HWND([out] long *pHWND);
     [propget] HRESULT FullName([out] BSTR* FullName);
     [propget] HRESULT Path([out] BSTR* Path);
     [propget] HRESULT Visible([out] VARIANT_BOOL* pBool);
