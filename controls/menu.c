@@ -3844,9 +3844,6 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 
         if (!lppop) return FALSE;
 
-	/* unregister menu in owning window */
-	SetWindowLongA( lppop->hWnd, GWL_ID, 0 );
-
         lppop->wMagic = 0;  /* Mark it as destroyed */
 
         if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
