@@ -4,15 +4,21 @@
  * Copyright 1997 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <errno.h>
+#ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include "winbase.h"
 #include "winerror.h"
 #include "file.h"

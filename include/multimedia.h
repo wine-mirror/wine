@@ -31,7 +31,9 @@
 # include <soundcard.h>
 #endif
 
+#ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
+#endif
 
 #ifdef HAVE_OSS
 #define MIDI_SEQ "/dev/sequencer"

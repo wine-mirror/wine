@@ -250,6 +250,9 @@
 /* Define if you have the <sys/cdio.h> header file.  */
 #undef HAVE_SYS_CDIO_H
 
+/* Define if you have the <sys/errno.h> header file.  */
+#undef HAVE_SYS_ERRNO_H
+
 /* Define if you have the <sys/file.h> header file.  */
 #undef HAVE_SYS_FILE_H
 
@@ -259,6 +262,9 @@
 /* Define if you have the <sys/lwp.h> header file.  */
 #undef HAVE_SYS_LWP_H
 
+/* Define if you have the <sys/mman.h> header file.  */
+#undef HAVE_SYS_MMAN_H
+
 /* Define if you have the <sys/modem.h> header file.  */
 #undef HAVE_SYS_MODEM_H
 
@@ -267,6 +273,9 @@
 
 /* Define if you have the <sys/param.h> header file.  */
 #undef HAVE_SYS_PARAM_H
+
+/* Define if you have the <sys/signal.h> header file.  */
+#undef HAVE_SYS_SIGNAL_H
 
 /* Define if you have the <sys/sockio.h> header file.  */
 #undef HAVE_SYS_SOCKIO_H
@@ -303,6 +312,9 @@
 
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
+
+/* Define if you have the m library (-lm).  */
+#undef HAVE_LIBM
 
 /* Define if you have the mmap library (-lmmap).  */
 #undef HAVE_LIBMMAP

@@ -9,7 +9,9 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,7 +32,9 @@
 # include <elf.h>
 #endif
 #include <link.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #elif defined(__EMX__)
 #include <a_out.h>
 #else

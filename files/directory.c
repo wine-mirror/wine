@@ -11,7 +11,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
+#endif
 
 #include "winbase.h"
 #include "wine/winbase16.h"

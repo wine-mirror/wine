@@ -8,7 +8,9 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <unistd.h>
 #include "wine/winbase16.h"
 #include "thread.h"

@@ -400,8 +400,12 @@ typedef LRESULT (CALLBACK *WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 
 #define __max(a,b) MAX(a,b)
 #define __min(a,b) MIN(a,b)
+#ifndef max
 #define max(a,b)   MAX(a,b)
+#endif
+#ifndef min
 #define min(a,b)   MIN(a,b)
+#endif
 
 #define _MAX_PATH  260
 #define MAX_PATH   260

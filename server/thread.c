@@ -4,13 +4,17 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>

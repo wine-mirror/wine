@@ -4,6 +4,8 @@
  * Copyright (C) 1998 Alexandre Julliard
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -11,7 +13,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <sys/uio.h>
 #include <unistd.h>
 #include <stdarg.h>

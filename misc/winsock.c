@@ -40,7 +40,9 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
+#ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
+#endif
 #include <netdb.h>
 #include <unistd.h>
 #include <stdlib.h>

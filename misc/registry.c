@@ -24,7 +24,9 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
+#endif
 #include <sys/types.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>

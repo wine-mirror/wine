@@ -18,7 +18,9 @@
 #include <string.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
+#endif
 #include "winuser.h"
 #include "winbase.h"
 #include "mmsystem.h"

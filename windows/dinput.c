@@ -22,7 +22,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#ifdef HAVE_SYS_SIGNAL_H
 #include <sys/signal.h>
+#endif
 
 #include "wine/obj_base.h"
 #include "debugtools.h"
