@@ -39,9 +39,34 @@
 #include "wine/debug.h"
 #include "cderr.h"
 #include "cdlg.h"
-#include "colordlg.h"
+#include "cdlg16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
+
+/* Chose Color PRIVATE Structure:
+ *
+ * This is a duplicate of the 32bit code with
+ * a extra member
+ */
+typedef struct CCPRIVATE
+{
+    LPCHOOSECOLORW lpcc; /* points to public known data structure */
+    LPCHOOSECOLOR16 lpcc16; /* save the 16 bits pointer */
+    int nextuserdef;     /* next free place in user defined color array */
+    HDC hdcMem;          /* color graph used for BitBlt() */
+    HBITMAP hbmMem;      /* color graph bitmap */
+    RECT fullsize;       /* original dialog window size */
+    UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
+    RECT old3angle;      /* last position of l-marker */
+    RECT oldcross;       /* last position of color/satuation marker */
+    BOOL updating;       /* to prevent recursive WM_COMMAND/EN_UPDATE processing */
+    int h;
+    int s;
+    int l;               /* for temporary storing of hue,sat,lum */
+    int capturedGraph;   /* control mouse captured */
+    RECT focusRect;      /* rectangle last focused item */
+    HWND hwndFocus;      /* handle last focused item */
+} *LCCPRIV;
 
 /***********************************************************************
  *                              CC_WMInitDialog16                  [internal]

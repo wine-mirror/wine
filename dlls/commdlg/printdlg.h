@@ -24,6 +24,9 @@
 #ifndef _WINE_PRINTDLG_H
 #define _WINE_PRINTDLG_H
 
+#include "cdlg.h"
+#include "cdlg16.h"
+
 /* This PRINTDLGA internal structure stores
  * pointers to several throughout useful structures.
  *

@@ -39,7 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
-#include "fontdlg.h"
+#include "cdlg16.h"
 
 static void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
 {

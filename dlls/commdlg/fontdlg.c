@@ -40,7 +40,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
-#include "fontdlg.h"
 
 static HBITMAP hBitmapTT = 0;
 
@@ -48,8 +47,6 @@ static HBITMAP hBitmapTT = 0;
 INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam,
                                     LPARAM lParam);
 INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
-                                    LPARAM lParam);
-BOOL16 CALLBACK FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
                                     LPARAM lParam);
 
 /* There is a table here of all charsets, and the sample text for each.

@@ -36,6 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 #include "cdlg.h"
+#include "cdlg16.h"
 
 struct FRPRIVATE
 {

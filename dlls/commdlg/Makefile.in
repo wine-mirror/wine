@@ -17,7 +17,6 @@ C_SRCS = \
 	finddlg32.c \
 	filetitle.c \
 	fontdlg.c \
-	generic.c \
 	printdlg.c
 
 C_SRCS16 = \
@@ -25,6 +24,7 @@ C_SRCS16 = \
 	filedlg16.c \
 	finddlg.c \
 	fontdlg16.c \
+	generic.c \
 	printdlg16.c
 
 RC_SRCS = rsrc.rc
