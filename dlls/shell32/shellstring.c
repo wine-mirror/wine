@@ -193,3 +193,43 @@ BOOL WINAPI OleStrToStrNAW (LPVOID lpOut, INT nOut, LPCVOID lpIn, INT nIn)
 	  return OleStrToStrNW (lpOut, nOut, lpIn, nIn);
 	return OleStrToStrNA (lpOut, nOut, lpIn, nIn);
 }
+
+
+/*************************************************************************
+ * CheckEscapes [SHELL32]
+ */
+DWORD WINAPI CheckEscapesA(
+    LPSTR    string,         /* [in]    string to check ??*/
+           DWORD    b,              /* [???]   is 0 */
+           DWORD    c,              /* [???]   is 0 */
+           LPDWORD  d,              /* [???]   is address */
+           LPDWORD  e,              /* [???]   is address */
+           DWORD    handle )        /* [in]    looks like handle but not */
+{
+    FIXME("(%p<%s> %ld %ld %p<%ld> %p<%ld> 0x%08lx) stub\n",
+   string, debugstr_a(string),
+   b,
+   c,
+   d, (d) ? *d : 0xabbacddc,
+   e, (e) ? *e : 0xabbacddd,
+   handle);
+    return 0;
+}
+
+DWORD WINAPI CheckEscapesW(
+    LPWSTR   string,         /* [in]    string to check ??*/
+           DWORD    b,              /* [???]   is 0 */
+           DWORD    c,              /* [???]   is 0 */
+           LPDWORD  d,              /* [???]   is address */
+           LPDWORD  e,              /* [???]   is address */
+           DWORD    handle )        /* [in]    looks like handle but not */
+{
+    FIXME("(%p<%s> %ld %ld %p<%ld> %p<%ld> 0x%08lx) stub\n",
+   string, debugstr_w(string),
+   b,
+   c,
+   d, (d) ? *d : 0xabbacddc,
+   e, (e) ? *e : 0xabbacddd,
+   handle);
+    return 0;
+}

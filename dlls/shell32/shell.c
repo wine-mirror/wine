@@ -650,6 +650,12 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
 	return ExtractAssociatedIcon16(hInst,lpIconPath,lpiIcon);
 }
 
+HICON WINAPI ExtractAssociatedIconExW(DWORD d1, DWORD d2, DWORD d3, DWORD d4)
+{
+  FIXME("(%lx %lx %lx %lx): stub\n", d1, d2, d3, d4);
+  return 0;
+}
+
 /*************************************************************************
  *				FindEnvironmentString	[SHELL.38]
  *

@@ -324,8 +324,8 @@ debug_channels (exec pidl shell shlctrl)
 # version 4.0 (win95)
 # _WIN32_IE >= 0x0200
 #
-@ stub CheckEscapesA
-@ stub CheckEscapesW
+@ stdcall CheckEscapesA(str long long ptr ptr long) CheckEscapesA
+@ stdcall CheckEscapesW(wstr long long ptr ptr long) CheckEscapesW
 @ stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
 @ stdcall Control_FillCache_RunDLL(long long long long)Control_FillCache_RunDLL
 @ stub Control_FillCache_RunDLLA
@@ -340,7 +340,7 @@ debug_channels (exec pidl shell shlctrl)
 @ stdcall DuplicateIcon(long long) DuplicateIcon
 @ stdcall ExtractAssociatedIconA(long ptr long)ExtractAssociatedIconA 
 @ stub ExtractAssociatedIconExA 
-@ stub ExtractAssociatedIconExW 
+@ stdcall ExtractAssociatedIconExW(long long long long)ExtractAssociatedIconExW 
 @ stub ExtractAssociatedIconW 
 @ stdcall ExtractIconA(long str long)ExtractIconA 
 @ stdcall ExtractIconEx(ptr long ptr ptr long)ExtractIconExAW
