@@ -1,0 +1,954 @@
+/*
+ * Marshaling Tests
+ *
+ * Copyright 2004 Robert Shearman
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#define _WIN32_DCOM
+#define COBJMACROS
+
+#include <stdarg.h>
+
+#include "windef.h"
+#include "winbase.h"
+#include "objbase.h"
+
+#include "wine/test.h"
+
+/* functions that are not present on all versions of Windows */
+HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
+
+/* helper macros to make tests a bit leaner */
+#define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %ld\n", cLocks)
+#define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %ld\n", cLocks)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
+
+static const LARGE_INTEGER ullZero;
+static LONG cLocks;
+
+static void LockModule()
+{
+    InterlockedIncrement(&cLocks);
+}
+
+static void UnlockModule()
+{
+    InterlockedDecrement(&cLocks);
+}
+
+
+static HRESULT WINAPI Test_IClassFactory_QueryInterface(
+    LPCLASSFACTORY iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = (LPVOID)iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IClassFactory_AddRef(LPCLASSFACTORY iface)
+{
+    LockModule();
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
+{
+    UnlockModule();
+    return 1; /* non-heap-based object */
+}
+
+static HRESULT WINAPI Test_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static HRESULT WINAPI Test_IClassFactory_LockServer(
+    LPCLASSFACTORY iface,
+    BOOL fLock)
+{
+    return S_OK;
+}
+
+static IClassFactoryVtbl TestClassFactory_Vtbl =
+{
+    Test_IClassFactory_QueryInterface,
+    Test_IClassFactory_AddRef,
+    Test_IClassFactory_Release,
+    Test_IClassFactory_CreateInstance,
+    Test_IClassFactory_LockServer
+};
+
+static IClassFactory Test_ClassFactory = { &TestClassFactory_Vtbl };
+
+#define RELEASEMARSHALDATA WM_USER
+
+struct host_object_data
+{
+    IStream *stream;
+    IID iid;
+    IUnknown *object;
+    MSHLFLAGS marshal_flags;
+    HANDLE marshal_event;
+    IMessageFilter *filter;
+};
+
+static DWORD CALLBACK host_object_proc(LPVOID p)
+{
+    struct host_object_data *data = (struct host_object_data *)p;
+    HRESULT hr;
+    MSG msg;
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    if (data->filter)
+    {
+        IMessageFilter * prev_filter = NULL;
+        hr = CoRegisterMessageFilter(data->filter, &prev_filter);
+        if (prev_filter) IMessageFilter_Release(prev_filter);
+        ok_ole_success(hr, CoRegisterMessageFilter);
+    }
+
+    hr = CoMarshalInterface(data->stream, &data->iid, data->object, MSHCTX_INPROC, NULL, data->marshal_flags);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    SetEvent(data->marshal_event);
+
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        if (msg.hwnd == NULL && msg.message == RELEASEMARSHALDATA)
+        {
+            CoReleaseMarshalData(data->stream);
+            SetEvent((HANDLE)msg.lParam);
+        }
+        else
+            DispatchMessage(&msg);
+    }
+
+    HeapFree(GetProcessHeap(), 0, data);
+
+    CoUninitialize();
+
+    return hr;
+}
+
+static DWORD start_host_object2(IStream *stream, REFIID riid, IUnknown *object, MSHLFLAGS marshal_flags, IMessageFilter *filter, HANDLE *thread)
+{
+    DWORD tid = 0;
+    HANDLE marshal_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    struct host_object_data *data = (struct host_object_data *)HeapAlloc(GetProcessHeap(), 0, sizeof(*data));
+
+    data->stream = stream;
+    data->iid = *riid;
+    data->object = object;
+    data->marshal_flags = marshal_flags;
+    data->marshal_event = marshal_event;
+    data->filter = filter;
+
+    *thread = CreateThread(NULL, 0, host_object_proc, data, 0, &tid);
+
+    /* wait for marshaling to complete before returning */
+    WaitForSingleObject(marshal_event, INFINITE);
+    CloseHandle(marshal_event);
+
+    return tid;
+}
+
+static DWORD start_host_object(IStream *stream, REFIID riid, IUnknown *object, MSHLFLAGS marshal_flags, HANDLE *thread)
+{
+    return start_host_object2(stream, riid, object, marshal_flags, NULL, thread);
+}
+
+/* asks thread to release the marshal data because it has to be done by the
+ * same thread that marshaled the interface in the first place. */
+static void release_host_object(DWORD tid)
+{
+    HANDLE event = CreateEvent(NULL, FALSE, FALSE, NULL);
+    PostThreadMessage(tid, RELEASEMARSHALDATA, 0, (LPARAM)event);
+    WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
+}
+
+static void end_host_object(DWORD tid, HANDLE thread)
+{
+    PostThreadMessage(tid, WM_QUIT, 0, 0);
+    /* be careful of races - don't return until hosting thread has terminated */
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+}
+
+/* tests normal marshal and then release without unmarshaling */
+static void test_normal_marshal_and_release()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    todo_wine { ok_no_locks(); }
+}
+
+/* tests success case of a same-thread marshal and unmarshal */
+static void test_normal_marshal_and_unmarshal()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoUnmarshalInterface);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+}
+
+/* tests success case of an interthread marshal */
+static void test_interthread_marshal_and_unmarshal()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
+/* tests that stubs are released when the containing apartment is destroyed */
+static void test_marshal_stub_apartment_shutdown()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    end_host_object(tid, thread);
+
+    todo_wine { ok_no_locks(); }
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+}
+
+/* tests that proxies are released when the containing apartment is destroyed */
+static void test_marshal_proxy_apartment_shutdown()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    CoUninitialize();
+
+    /* FIXME: this could be a bit racy - I don't know if there are any
+     * guarantees that the stub will get its disconnection message
+     * immediately */
+    todo_wine { ok_no_locks(); }
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+}
+
+/* tests success case of a same-thread table-weak marshal, unmarshal, unmarshal */
+static void test_tableweak_marshal_and_unmarshal_twice()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy1 = NULL;
+    IUnknown *pProxy2 = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_TABLEWEAK, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy1);
+    ok_ole_success(hr, CoReleaseMarshalData);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy1);
+    IUnknown_Release(pProxy2);
+
+    /* this line is shows the difference between weak and strong table marshaling:
+     *  weak has cLocks == 0
+     *  strong has cLocks > 0 */
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
+/* tests success case of a same-thread table-strong marshal, unmarshal, unmarshal */
+static void test_tablestrong_marshal_and_unmarshal_twice()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy1 = NULL;
+    IUnknown *pProxy2 = NULL;
+    DWORD tid;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_TABLESTRONG, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy1);
+    ok_ole_success(hr, CoReleaseMarshalData);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+    todo_wine { ok_ole_success(hr, CoUnmarshalInterface); }
+
+    ok_more_than_one_lock();
+
+    if (pProxy1) IUnknown_Release(pProxy1);
+    if (pProxy2) IUnknown_Release(pProxy2);
+
+    /* this line is shows the difference between weak and strong table marshaling:
+     *  weak has cLocks == 0
+     *  strong has cLocks > 0 */
+    todo_wine { ok_more_than_one_lock(); }
+
+    /* release the remaining reference on the object by calling
+     * CoReleaseMarshalData in the hosting thread */
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    release_host_object(tid);
+    IStream_Release(pStream);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
+/* tests CoLockObjectExternal */
+static void test_lock_object_external()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, TRUE);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, FALSE, TRUE);
+
+    todo_wine { ok_no_locks(); }
+}
+
+/* tests disconnecting stubs */
+static void test_disconnect_stub()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    CoLockObjectExternal((IUnknown*)&Test_ClassFactory, TRUE, TRUE);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    CoDisconnectObject((IUnknown*)&Test_ClassFactory, 0);
+
+    todo_wine { ok_no_locks(); }
+}
+
+/* tests failure case of a same-thread marshal and unmarshal twice */
+static void test_normal_marshal_and_unmarshal_twice()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy1 = NULL;
+    IUnknown *pProxy2 = NULL;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    hr = CoMarshalInterface(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy1);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+    todo_wine {
+    ok(hr == CO_E_OBJNOTCONNECTED,
+        "CoUnmarshalInterface should have failed with error CO_E_OBJNOTCONNECTED for double unmarshal, instead of 0x%08lx\n", hr);
+    }
+
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    IUnknown_Release(pProxy1);
+
+    ok_no_locks();
+}
+
+/* tests success case of marshaling and unmarshaling an HRESULT */
+static void test_hresult_marshaling()
+{
+    HRESULT hr;
+    HRESULT hr_marshaled = 0;
+    IStream *pStream = NULL;
+    static const HRESULT E_DEADBEEF = 0xdeadbeef;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    hr = CoMarshalHresult(pStream, E_DEADBEEF);
+    ok_ole_success(hr, CoMarshalHresult);
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = IStream_Read(pStream, &hr_marshaled, sizeof(HRESULT), NULL);
+    ok_ole_success(hr, IStream_Read);
+
+    ok(hr_marshaled == E_DEADBEEF, "Didn't marshal HRESULT as expected: got value 0x%08lx instead\n", hr_marshaled);
+
+    hr_marshaled = 0;
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalHresult(pStream, &hr_marshaled);
+    ok_ole_success(hr, CoUnmarshalHresult);
+
+    ok(hr_marshaled == E_DEADBEEF, "Didn't marshal HRESULT as expected: got value 0x%08lx instead\n", hr_marshaled);
+
+    IStream_Release(pStream);
+}
+
+
+/* helper for test_proxy_used_in_wrong_thread */
+static DWORD CALLBACK bad_thread_proc(LPVOID p)
+{
+    IClassFactory * cf = (IClassFactory *)p;
+    HRESULT hr;
+    IUnknown * dummy;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&dummy);
+
+    todo_wine {
+    ok(hr == RPC_E_WRONG_THREAD,
+        "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
+        hr);
+    }
+
+    CoUninitialize();
+
+    return 0;
+}
+
+/* tests failure case of a using a proxy in the wrong apartment */
+static void test_proxy_used_in_wrong_thread()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    DWORD tid, tid2;
+    HANDLE thread;
+    HANDLE host_thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &host_thread);
+
+    ok_more_than_one_lock();
+    
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    /* create a thread that we can misbehave in */
+    thread = CreateThread(NULL, 0, bad_thread_proc, (LPVOID)pProxy, 0, &tid2);
+
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, host_thread);
+}
+
+static HRESULT WINAPI MessageFilter_QueryInterface(IMessageFilter *iface, REFIID riid, void ** ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = (LPVOID)iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MessageFilter_AddRef(IMessageFilter *iface)
+{
+    return 2; /* non-heap object */
+}
+
+static ULONG WINAPI MessageFilter_Release(IMessageFilter *iface)
+{
+    return 1; /* non-heap object */
+}
+
+static DWORD WINAPI MessageFilter_HandleInComingCall(
+  IMessageFilter *iface,
+  DWORD dwCallType,
+  HTASK threadIDCaller,
+  DWORD dwTickCount,
+  LPINTERFACEINFO lpInterfaceInfo)
+{
+    static int callcount = 0;
+    DWORD ret;
+    trace("HandleInComingCall\n");
+    switch (callcount)
+    {
+    case 0:
+        ret = SERVERCALL_REJECTED;
+        break;
+    case 1:
+        ret = SERVERCALL_RETRYLATER;
+        break;
+    default:
+        ret = SERVERCALL_ISHANDLED;
+        break;
+    }
+    callcount++;
+    return ret;
+}
+
+static DWORD WINAPI MessageFilter_RetryRejectedCall(
+  IMessageFilter *iface,
+  HTASK threadIDCallee,
+  DWORD dwTickCount,
+  DWORD dwRejectType)
+{
+    trace("RetryRejectedCall\n");
+    return 0;
+}
+
+static DWORD WINAPI MessageFilter_MessagePending(
+  IMessageFilter *iface,
+  HTASK threadIDCallee,
+  DWORD dwTickCount,
+  DWORD dwPendingType)
+{
+    trace("MessagePending\n");
+    return PENDINGMSG_WAITNOPROCESS;
+}
+
+static IMessageFilterVtbl MessageFilter_Vtbl =
+{
+    MessageFilter_QueryInterface,
+    MessageFilter_AddRef,
+    MessageFilter_Release,
+    MessageFilter_HandleInComingCall,
+    MessageFilter_RetryRejectedCall,
+    MessageFilter_MessagePending
+};
+
+static IMessageFilter MessageFilter = { &MessageFilter_Vtbl };
+
+static void test_message_filter()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IClassFactory *cf = NULL;
+    DWORD tid;
+    IUnknown *dummy;
+    IMessageFilter *prev_filter = NULL;
+    HANDLE thread;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object2(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &MessageFilter, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&dummy);
+    todo_wine { ok(hr == RPC_E_CALL_REJECTED, "Call should have returned RPC_E_CALL_REJECTED, but return 0x%08lx instead\n", hr); }
+
+    hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
+    ok_ole_success(hr, CoRegisterMessageFilter);
+    if (prev_filter) IMessageFilter_Release(prev_filter);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&dummy);
+    ok(hr == CLASS_E_CLASSNOTAVAILABLE, "Call didn't wasn't accepted. hr = 0x%08lx\n", hr);
+
+    IClassFactory_Release(cf);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+}
+
+
+/* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
+#if 0
+
+static HANDLE heventShutdown;
+
+static void LockModuleOOP()
+{
+    InterlockedIncrement(&cLocks); /* for test purposes only */
+    CoAddRefServerProcess();
+}
+
+static void UnlockModuleOOP()
+{
+    InterlockedDecrement(&cLocks); /* for test purposes only */
+    if (!CoReleaseServerProcess())
+        SetEvent(heventShutdown);
+}
+
+
+static HRESULT WINAPI TestOOP_IClassFactory_QueryInterface(
+    LPCLASSFACTORY iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = (LPVOID)iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TestOOP_IClassFactory_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI TestOOP_IClassFactory_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap-based object */
+}
+
+static HRESULT WINAPI TestOOP_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static HRESULT WINAPI TestOOP_IClassFactory_LockServer(
+    LPCLASSFACTORY iface,
+    BOOL fLock)
+{
+    if (fLock)
+        LockModuleOOP();
+    else
+        UnlockModuleOOP();
+    return S_OK;
+}
+
+static IClassFactoryVtbl TestClassFactoryOOP_Vtbl =
+{
+    TestOOP_IClassFactory_QueryInterface,
+    TestOOP_IClassFactory_AddRef,
+    TestOOP_IClassFactory_Release,
+    TestOOP_IClassFactory_CreateInstance,
+    TestOOP_IClassFactory_LockServer
+};
+
+static IClassFactory TestOOP_ClassFactory = { &TestClassFactoryOOP_Vtbl };
+
+/* tests functions commonly used by out of process COM servers */
+static void test_out_of_process_com()
+{
+    static const CLSID CLSID_WineOOPTest = {
+        0x5201163f,
+        0x8164,
+        0x4fd0,
+        {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
+    }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
+    DWORD cookie;
+    HRESULT hr;
+    IClassFactory * cf;
+    DWORD ret;
+
+    heventShutdown = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+    cLocks = 0;
+
+    /* Start the object suspended */
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&TestOOP_ClassFactory,
+        CLSCTX_LOCAL_SERVER, REGCLS_MULTIPLEUSE | REGCLS_SUSPENDED, &cookie);
+    ok_ole_success(hr, CoRegisterClassObject);
+
+    /* ... and CoGetClassObject does not find it and fails when it looks for the
+     * class in the registry */
+    hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER,
+        NULL, &IID_IClassFactory, (LPVOID*)&cf);
+    todo_wine {
+    ok(hr == REGDB_E_CLASSNOTREG,
+        "CoGetClassObject should have returned REGDB_E_CLASSNOTREG instead of 0x%08lx\n", hr);
+    }
+
+    /* Resume the object suspended above ... */
+    hr = CoResumeClassObjects();
+    ok_ole_success(hr, CoResumeClassObjects);
+
+    /* ... and now it should succeed */
+    hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER,
+        NULL, &IID_IClassFactory, (LPVOID*)&cf);
+    ok_ole_success(hr, CoGetClassObject);
+
+    /* Now check the locking is working */
+    /* NOTE: we are accessing the class directly, not through a proxy */
+
+    ok_no_locks();
+
+    hr = IClassFactory_LockServer(cf, TRUE);
+    trace("IClassFactory_LockServer returned 0x%08lx\n", hr);
+
+    ok_more_than_one_lock();
+    
+    IClassFactory_LockServer(cf, FALSE);
+
+    ok_no_locks();
+
+    IClassFactory_Release(cf);
+
+    /* wait for shutdown signal */
+    ret = WaitForSingleObject(heventShutdown, 5000);
+    todo_wine { ok(ret != WAIT_TIMEOUT, "Server didn't shut down or machine is under very heavy load\n"); }
+
+    /* try to connect again after SCM has suspended registered class objects */
+    hr = CoGetClassObject(&CLSID_WineOOPTest, CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER, NULL,
+        &IID_IClassFactory, (LPVOID*)&cf);
+    todo_wine {
+    ok(hr == CO_E_SERVER_STOPPING,
+        "CoGetClassObject should have returned CO_E_SERVER_STOPPING instead of 0x%08lx\n", hr);
+    }
+
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, CoRevokeClassObject);
+
+    CloseHandle(heventShutdown);
+}
+#endif
+
+START_TEST(marshal)
+{
+    HMODULE hOle32 = GetModuleHandle("ole32");
+    if (!(pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx"))) goto no_test;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    /* FIXME: test CoCreateInstanceEx */
+
+    /* lifecycle management and marshaling tests */
+    test_normal_marshal_and_release();
+    test_normal_marshal_and_unmarshal();
+    test_interthread_marshal_and_unmarshal();
+    test_marshal_stub_apartment_shutdown();
+    test_marshal_proxy_apartment_shutdown();
+    test_tableweak_marshal_and_unmarshal_twice();
+    test_tablestrong_marshal_and_unmarshal_twice();
+    test_lock_object_external();
+    test_disconnect_stub();
+    test_normal_marshal_and_unmarshal_twice();
+    test_hresult_marshaling();
+    test_proxy_used_in_wrong_thread();
+    test_message_filter();
+    /* FIXME: test custom marshaling */
+    /* FIXME: test GIT */
+    /* FIXME: test COM re-entrancy */
+
+/*    test_out_of_process_com(); */
+    CoUninitialize();
+    return;
+
+no_test:
+    trace("You need DCOM95 installed to run this test\n");
+    return;
+}

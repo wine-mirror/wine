@@ -1,4 +1,6 @@
 Makefile
+marshal.ok
+moniker.ok
 propvariant.ok
 storage32.ok
 testlist.c

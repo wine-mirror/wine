@@ -3,10 +3,12 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ole32.dll
-IMPORTS   = oleaut32 ole32 kernel32 ntdll
+IMPORTS   = oleaut32 ole32 user32 kernel32 ntdll
 EXTRALIBS = -luuid
 
 CTESTS = \
+	marshal.c \
+	moniker.c \
 	propvariant.c \
 	storage32.c
 
