@@ -31,7 +31,6 @@ C_SRCS = \
 	tapi32.c \
 	toolhelp.c \
 	tweak.c \
-	ver.c \
 	version.c \
 	w32scomb.c \
 	w32skrnl.c \
