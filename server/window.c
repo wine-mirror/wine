@@ -645,6 +645,19 @@ static struct region *clip_children( struct window *parent, struct window *last,
 }
 
 
+/* set the region to the client rect clipped by the window rect, in parent-relative coordinates */
+static void set_region_client_rect( struct region *region, struct window *win )
+{
+    rectangle_t rect;
+
+    rect.left   = max( win->window_rect.left, win->client_rect.left );
+    rect.top    = max( win->window_rect.top, win->client_rect.top );
+    rect.right  = min( win->window_rect.right, win->client_rect.right );
+    rect.bottom = min( win->window_rect.bottom, win->client_rect.bottom );
+    set_region_rect( region, &rect );
+}
+
+
 /* compute the visible region of a window */
 static struct region *get_visible_region( struct window *win, struct window *top,
                                           unsigned int flags )
@@ -662,11 +675,8 @@ static struct region *get_visible_region( struct window *win, struct window *top
 
     if ((flags & DCX_PARENTCLIP) && win != top && win->parent)
     {
-        rectangle_t rect;
-        rect.left = rect.top = 0;
-        rect.right = win->parent->client_rect.right - win->parent->client_rect.left;
-        rect.bottom = win->parent->client_rect.bottom - win->parent->client_rect.top;
-        set_region_rect( region, &rect );
+        set_region_client_rect( region, win->parent );
+        offset_region( region, -win->parent->client_rect.left, -win->parent->client_rect.top );
         offset_x = win->client_rect.left;
         offset_y = win->client_rect.top;
     }
@@ -679,7 +689,7 @@ static struct region *get_visible_region( struct window *win, struct window *top
     }
     else
     {
-        set_region_rect( region, &win->client_rect );
+        set_region_client_rect( region, win );
         if (win->win_region && !intersect_window_region( region, win )) goto error;
         offset_x = win->client_rect.left;
         offset_y = win->client_rect.top;
@@ -712,7 +722,7 @@ static struct region *get_visible_region( struct window *win, struct window *top
             offset_x += win->client_rect.left;
             offset_y += win->client_rect.top;
             offset_region( region, win->client_rect.left, win->client_rect.top );
-            set_region_rect( tmp, &win->client_rect );
+            set_region_client_rect( tmp, win );
             if (win->win_region && !intersect_window_region( tmp, win ))
             {
                 free_region( tmp );
@@ -748,27 +758,14 @@ struct window_class* get_window_class( user_handle_t window )
 /* and converted from client to window coordinates. Helper for (in)validate_window. */
 static struct region *crop_region_to_win_rect( struct window *win, struct region *region, int frame )
 {
-    rectangle_t rect;
     struct region *tmp = create_empty_region();
 
     if (!tmp) return NULL;
 
     /* get bounding rect in client coords */
-    if (frame)
-    {
-        rect.left   = win->window_rect.left - win->client_rect.left;
-        rect.top    = win->window_rect.top - win->client_rect.top;
-        rect.right  = win->window_rect.right - win->client_rect.left;
-        rect.bottom = win->window_rect.bottom - win->client_rect.top;
-    }
-    else
-    {
-        rect.left   = 0;
-        rect.top    = 0;
-        rect.right  = win->client_rect.right - win->client_rect.left;
-        rect.bottom = win->client_rect.bottom - win->client_rect.top;
-    }
-    set_region_rect( tmp, &rect );
+    if (frame) set_region_rect( tmp, &win->window_rect );
+    else set_region_client_rect( tmp, win );
+    offset_region( tmp, -win->client_rect.left, -win->client_rect.top );
 
     /* intersect specified region with bounding rect */
     if (region && !intersect_region( tmp, region, tmp )) goto done;
@@ -831,8 +828,9 @@ static void validate_non_client( struct window *win )
     rect.right  = win->client_rect.right - win->window_rect.left;
     rect.bottom = win->client_rect.bottom - win->window_rect.top;
 
-    if ((tmp = create_region( &rect, 1 )))
+    if ((tmp = create_empty_region()))
     {
+        set_region_rect( tmp, &rect );
         if (intersect_region( tmp, win->update_region, tmp ))
             set_update_region( win, tmp );
         else
@@ -1056,23 +1054,6 @@ static void expose_window( struct window *win, struct window *top, struct region
 }
 
 
-/* validate that the specified window and client rects are valid */
-static int validate_window_rectangles( const rectangle_t *window_rect, const rectangle_t *client_rect )
-{
-    /* rectangles must be ordered properly */
-    if (window_rect->right < window_rect->left) return 0;
-    if (window_rect->bottom < window_rect->top) return 0;
-    if (client_rect->right < client_rect->left) return 0;
-    if (client_rect->bottom < client_rect->top) return 0;
-    /* client rect must be inside window rect */
-    if (client_rect->left < window_rect->left) return 0;
-    if (client_rect->right > window_rect->right) return 0;
-    if (client_rect->top < window_rect->top) return 0;
-    if (client_rect->bottom > window_rect->bottom) return 0;
-    return 1;
-}
-
-
 /* set the window and client rectangles, updating the update region if necessary */
 static void set_window_pos( struct window *win, struct window *top, struct window *previous,
                             unsigned int swp_flags, const rectangle_t *window_rect,
@@ -1138,18 +1119,16 @@ static void set_window_pos( struct window *win, struct window *top, struct windo
         memcmp( window_rect, &old_window_rect, sizeof(old_window_rect) ) ||
         memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
     {
-        struct region *tmp;
-
-        /* subtract the valid portion of client rect from the total region */
-        if (!memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
-            tmp = create_region( client_rect, 1 );
-        else if (valid_rects)
-            tmp = create_region( &valid_rects[0], 1 );
-        else
-            tmp = create_empty_region();
+        struct region *tmp = create_empty_region();
 
         if (tmp)
         {
+            /* subtract the valid portion of client rect from the total region */
+            if (!memcmp( client_rect, &old_client_rect, sizeof(old_client_rect) ))
+                set_region_rect( tmp, client_rect );
+            else if (valid_rects)
+                set_region_rect( tmp, &valid_rects[0] );
+
             set_region_rect( new_vis_rgn, window_rect );
             if (subtract_region( tmp, new_vis_rgn, tmp ))
             {
@@ -1479,7 +1458,8 @@ DECL_HANDLER(set_window_pos)
         if (previous == win) flags |= SWP_NOZORDER;  /* nothing to do */
     }
 
-    if (!validate_window_rectangles( &req->window, &req->client ))
+    /* window rectangle must be ordered properly */
+    if (req->window.right < req->window.left || req->window.bottom < req->window.top)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;

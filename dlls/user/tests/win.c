@@ -502,7 +502,8 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             GetClientRect(hwnd, &rc2);
             DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc1);
             MapWindowPoints(0, hwnd, (LPPOINT)&rc1, 2);
-            ok(EqualRect(&rc1, &rc2), "rects do not match\n");
+            ok(EqualRect(&rc1, &rc2), "rects do not match (%ld,%ld-%ld,%ld) / (%ld,%ld-%ld,%ld)\n",
+               rc1.left, rc1.top, rc1.right, rc1.bottom, rc2.left, rc2.top, rc2.right, rc2.bottom );
 	    break;
 	}
 	case WM_NCCREATE:
@@ -1664,21 +1665,59 @@ static void test_icons(void)
     ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
 }
 
+static LRESULT WINAPI nccalcsize_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    if (msg == WM_NCCALCSIZE)
+    {
+        RECT *rect = (RECT *)lparam;
+        /* first time around increase the rectangle, next time decrease it */
+        if (rect->left == 100) InflateRect( rect, 10, 10 );
+        else InflateRect( rect, -10, -10 );
+        return 0;
+    }
+    return DefWindowProc( hwnd, msg, wparam, lparam );
+}
+
 static void test_SetWindowPos(HWND hwnd)
 {
-    RECT orig_win_rc;
+    RECT orig_win_rc, rect;
+    LONG_PTR old_proc;
     BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
-
-    /* Win9x truncates coordinates to 16-bit irrespectively */
-    if (is_win9x) return;
 
     GetWindowRect(hwnd, &orig_win_rc);
 
-    SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
-    SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
+    old_proc = SetWindowLongPtr( hwnd, GWLP_WNDPROC, (ULONG_PTR)nccalcsize_proc );
+    SetWindowPos(hwnd, 0, 100, 100, 0, 0, SWP_NOZORDER|SWP_FRAMECHANGED);
+    GetWindowRect( hwnd, &rect );
+    ok( rect.left == 100 && rect.top == 100 && rect.right == 100 && rect.bottom == 100,
+        "invalid window rect %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
+    GetClientRect( hwnd, &rect );
+    MapWindowPoints( hwnd, 0, (POINT *)&rect, 2 );
+    ok( rect.left == 90 && rect.top == 90 && rect.right == 110 && rect.bottom == 110,
+        "invalid client rect %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
 
-    SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOSIZE);
-    SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
+    SetWindowPos(hwnd, 0, 200, 200, 0, 0, SWP_NOZORDER|SWP_FRAMECHANGED);
+    GetWindowRect( hwnd, &rect );
+    ok( rect.left == 200 && rect.top == 200 && rect.right == 200 && rect.bottom == 200,
+        "invalid window rect %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
+    GetClientRect( hwnd, &rect );
+    MapWindowPoints( hwnd, 0, (POINT *)&rect, 2 );
+    ok( rect.left == 210 && rect.top == 210 && rect.right == 190 && rect.bottom == 190,
+        "invalid client rect %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
+
+    SetWindowPos(hwnd, 0, orig_win_rc.left, orig_win_rc.top,
+                 orig_win_rc.right, orig_win_rc.bottom, 0);
+    SetWindowLongPtr( hwnd, GWLP_WNDPROC, old_proc );
+
+    /* Win9x truncates coordinates to 16-bit irrespectively */
+    if (!is_win9x)
+    {
+        SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOMOVE);
+        SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOMOVE);
+
+        SetWindowPos(hwnd, 0, -32769, -40000, -32769, -90000, SWP_NOSIZE);
+        SetWindowPos(hwnd, 0, 32768, 40000, 32768, 40000, SWP_NOSIZE);
+    }
 
     SetWindowPos(hwnd, 0, orig_win_rc.left, orig_win_rc.top,
                  orig_win_rc.right, orig_win_rc.bottom, 0);

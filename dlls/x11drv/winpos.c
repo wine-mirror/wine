@@ -413,21 +413,13 @@ static UINT SWP_DoNCCalcSize( WINDOWPOS* pWinpos, const RECT* pNewWindowRect, RE
 
         wvrFlags = SendMessageW( pWinpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
-        TRACE( "(%ld,%ld)-(%ld,%ld)\n", params.rgrc[0].left, params.rgrc[0].top,
-               params.rgrc[0].right, params.rgrc[0].bottom );
-
-        /* If the application sends back garbage, ignore it */
-
-        if (params.rgrc[0].left < pNewWindowRect->left) params.rgrc[0].left = pNewWindowRect->left;
-        if (params.rgrc[0].top < pNewWindowRect->top) params.rgrc[0].top = pNewWindowRect->top;
-        if (params.rgrc[0].right > pNewWindowRect->right) params.rgrc[0].right = pNewWindowRect->right;
-        if (params.rgrc[0].bottom > pNewWindowRect->bottom) params.rgrc[0].bottom = pNewWindowRect->bottom;
-
-        if (params.rgrc[0].left <= params.rgrc[0].right &&
-            params.rgrc[0].top <= params.rgrc[0].bottom)
-            *pNewClientRect = params.rgrc[0];
+        *pNewClientRect = params.rgrc[0];
 
         if (!(wndPtr = WIN_GetPtr( pWinpos->hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
+
+        TRACE( "hwnd %p old win %s old client %s new win %s new client %s\n", pWinpos->hwnd,
+               wine_dbgstr_rect(&wndPtr->rectWindow), wine_dbgstr_rect(&wndPtr->rectClient),
+               wine_dbgstr_rect(pNewWindowRect), wine_dbgstr_rect(pNewClientRect) );
 
         if( pNewClientRect->left != wndPtr->rectClient.left ||
             pNewClientRect->top != wndPtr->rectClient.top )

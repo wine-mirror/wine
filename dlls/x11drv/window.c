@@ -969,11 +969,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&rect );
 
     if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
-    if (rect.left < wndPtr->rectWindow.left) rect.left = wndPtr->rectWindow.left;
-    if (rect.right > wndPtr->rectWindow.right) rect.right = wndPtr->rectWindow.right;
-    if (rect.top < wndPtr->rectWindow.top) rect.top = wndPtr->rectWindow.top;
-    if (rect.bottom > wndPtr->rectWindow.bottom) rect.bottom = wndPtr->rectWindow.bottom;
-    if (rect.left > rect.right || rect.top > rect.bottom) rect = wndPtr->rectWindow;
 
     /* yes, even if the CBT hook was called with HWND_TOP */
     insert_after = ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
