@@ -54,21 +54,21 @@ static struct process *first_process;
 
 /* process operations */
 
-static void dump_process( struct object *obj, int verbose );
+static void process_dump( struct object *obj, int verbose );
 static int process_signaled( struct object *obj, struct thread *thread );
 static int process_satisfied( struct object *obj, struct thread *thread );
-static void destroy_process( struct object *obj );
+static void process_destroy( struct object *obj );
 static void free_handles( struct process *process );
 static int copy_handle_table( struct process *process, struct process *parent );
 
 static const struct object_ops process_ops =
 {
-    dump_process,
+    process_dump,
     add_queue,
     remove_queue,
     process_signaled,
     process_satisfied,
-    destroy_process
+    process_destroy
 };
 
 /* create a new process */
@@ -100,7 +100,7 @@ struct process *create_process(void)
 }
 
 /* destroy a process when its refcount is 0 */
-static void destroy_process( struct object *obj )
+static void process_destroy( struct object *obj )
 {
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );
@@ -116,7 +116,7 @@ static void destroy_process( struct object *obj )
 }
 
 /* dump a process on stdout for debugging purposes */
-static void dump_process( struct object *obj, int verbose )
+static void process_dump( struct object *obj, int verbose )
 {
     struct process *process = (struct process *)obj;
     assert( obj->ops == &process_ops );

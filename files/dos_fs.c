@@ -649,7 +649,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 			return handle;
 		}
 		if (!strcmp(DOSFS_Devices[i].name,"SCSIMGR$")) {
-		        if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
+		        if ((handle = FILE_Alloc( &file, -1 )) == INVALID_HANDLE_VALUE32)
 				return HFILE_ERROR32;
 			else {
 				file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
@@ -657,7 +657,7 @@ HFILE32 DOSFS_OpenDevice( const char *name, int unixmode )
 			}
 		}
                 if (!strcmp(DOSFS_Devices[i].name,"HPSCAN")) {
-                        if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
+                        if ((handle = FILE_Alloc( &file, -1 )) == INVALID_HANDLE_VALUE32)
                                 return HFILE_ERROR32;
                         else {
                                 file->unix_name = HEAP_strdupA( SystemHeap, 0, name );

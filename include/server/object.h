@@ -156,6 +156,13 @@ extern struct object *create_semaphore( const char *name, unsigned int initial, 
 extern int open_semaphore( unsigned int access, int inherit, const char *name );
 extern int release_semaphore( int handle, unsigned int count, unsigned int *prev_count );
 
+
+/* file functions */
+
+extern struct object *create_file( int fd );
+extern int file_get_unix_handle( int handle, unsigned int access );
+extern int get_file_info( int handle, struct get_file_info_reply *reply );
+
 extern int debug_level;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

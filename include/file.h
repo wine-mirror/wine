@@ -62,11 +62,12 @@ typedef struct
 
 
 /* files/file.c */
-extern FILE_OBJECT *FILE_GetFile( HFILE32 handle );
+extern FILE_OBJECT *FILE_GetFile( HFILE32 handle, DWORD access,
+                                  int *server_handle );
 extern void FILE_ReleaseFile( FILE_OBJECT *file );
-extern HFILE32 FILE_Alloc( FILE_OBJECT **file );
+extern HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle );
 extern void FILE_SetDosError(void);
-extern int FILE_GetUnixHandle( HFILE32 hFile );
+extern int FILE_GetUnixHandle( HFILE32 hFile, DWORD access );
 extern HFILE32 FILE_DupUnixHandle( int fd );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE32 FILE_Dup( HFILE32 hFile );
@@ -78,7 +79,7 @@ extern LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
                          DWORD size_high, DWORD size_low,
                          DWORD offset_high, DWORD offset_low,
                          int prot, int flags );
-extern LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
+extern LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
                            DWORD size_high, DWORD size_low,
                            DWORD offset_high, DWORD offset_low,
                          int prot, int flags );

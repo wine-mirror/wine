@@ -7,6 +7,9 @@
 #ifndef __WINE_SERVER_H
 #define __WINE_SERVER_H
 
+#include <stdlib.h>
+#include <time.h>
+
 /* message header as sent on the wire */
 struct header
 {
@@ -51,10 +54,18 @@ struct new_thread_reply
 };
 
 
+/* Set the server debug level */
+struct set_debug_request
+{
+    int          level;        /* New debug level */
+};
+
+
 /* Initialize a thread; called from the child after fork()/clone() */
 struct init_thread_request
 {
     int          unix_pid;     /* Unix pid of new thread */
+    char         cmd_line[0];  /* Thread command line */
 };
 
 
@@ -159,7 +170,7 @@ struct create_event_request
     int          manual_reset;  /* manual reset event */
     int          initial_state; /* initial state of the event */
     int          inherit;       /* inherit flag */
-    /* char name[] */
+    char         name[0];       /* event name */
 };
 struct create_event_reply
 {
@@ -180,7 +191,7 @@ struct create_mutex_request
 {
     int          owned;         /* initially owned? */
     int          inherit;       /* inherit flag */
-    /* char name[] */
+    char         name[0];       /* mutex name */
 };
 struct create_mutex_reply
 {
@@ -220,6 +231,7 @@ struct release_semaphore_reply
     unsigned int prev_count;    /* previous semaphore count */
 };
 
+
 /* Open a named object (event, mutex, semaphore) */
 struct open_named_obj_request
 {
@@ -235,6 +247,43 @@ struct open_named_obj_reply
     int          handle;        /* handle to the object */
 };
 
+
+/* Create a file */
+struct create_file_request
+{
+    unsigned int access;        /* wanted access rights */
+    int          inherit;       /* inherit flag */
+};
+struct create_file_reply
+{
+    int          handle;        /* handle to the file */
+};
+
+
+/* Get a Unix handle to a file */
+struct get_unix_handle_request
+{
+    int          handle;        /* handle to the file */
+    unsigned int access;        /* desired access */
+};
+
+
+struct get_file_info_request
+{
+    int          handle;        /* handle to the file */
+};
+struct get_file_info_reply
+{
+    int          attr;          /* file attributes */
+    time_t       access_time;   /* last access time */
+    time_t       write_time;    /* last write time */
+    int          size_high;     /* file size */
+    int          size_low;      /* file size */
+    int          links;         /* number of links */
+    int          index_high;    /* unique index */
+    int          index_low;     /* unique index */
+    unsigned int serial;        /* volume serial number */
+};
 
 /* client-side functions */
 
@@ -253,6 +302,7 @@ extern unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
 
 struct _THDB;
 extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
+extern int CLIENT_SetDebug( int level );
 extern int CLIENT_InitThread(void);
 extern int CLIENT_TerminateProcess( int handle, int exit_code );
 extern int CLIENT_TerminateThread( int handle, int exit_code );

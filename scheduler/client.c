@@ -247,6 +247,7 @@ int CLIENT_NewThread( THDB *thdb, int *thandle, int *phandle )
         case 0:  /* child */
             close( tmpfd[0] );
             sprintf( buffer, "%d", tmpfd[1] );
+/*#define EXEC_SERVER*/
 #ifdef EXEC_SERVER
             execlp( "wineserver", "wineserver", buffer, NULL );
             execl( "/usr/local/bin/wineserver", "wineserver", buffer, NULL );
@@ -314,6 +315,17 @@ int CLIENT_InitThread(void)
     return CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
+
+/***********************************************************************
+ *           CLIENT_SetDebug
+ *
+ * Send a set debug level request. Return 0 if OK.
+ */
+int CLIENT_SetDebug( int level )
+{
+    CLIENT_SendRequest( REQ_SET_DEBUG, -1, 1, &level, sizeof(level) );
+    return CLIENT_WaitReply( NULL, NULL, 0 );
+}
 
 /***********************************************************************
  *           CLIENT_TerminateProcess

@@ -22,19 +22,19 @@ struct mutex
     struct mutex  *prev;
 };
 
-static void dump_mutex( struct object *obj, int verbose );
+static void mutex_dump( struct object *obj, int verbose );
 static int mutex_signaled( struct object *obj, struct thread *thread );
 static int mutex_satisfied( struct object *obj, struct thread *thread );
-static void destroy_mutex( struct object *obj );
+static void mutex_destroy( struct object *obj );
 
 static const struct object_ops mutex_ops =
 {
-    dump_mutex,
+    mutex_dump,
     add_queue,
     remove_queue,
     mutex_signaled,
     mutex_satisfied,
-    destroy_mutex
+    mutex_destroy
 };
 
 
@@ -103,7 +103,7 @@ void abandon_mutexes( struct thread *thread )
     }
 }
 
-static void dump_mutex( struct object *obj, int verbose )
+static void mutex_dump( struct object *obj, int verbose )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
@@ -136,7 +136,7 @@ static int mutex_satisfied( struct object *obj, struct thread *thread )
     return 1;
 }
 
-static void destroy_mutex( struct object *obj )
+static void mutex_destroy( struct object *obj )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );

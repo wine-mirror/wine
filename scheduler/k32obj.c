@@ -12,9 +12,6 @@
 
 
 /* The declarations are here to avoid including a lot of unnecessary files */
-extern const K32OBJ_OPS SEMAPHORE_Ops;
-extern const K32OBJ_OPS EVENT_Ops;
-extern const K32OBJ_OPS MUTEX_Ops;
 extern const K32OBJ_OPS CRITICAL_SECTION_Ops;
 extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
@@ -24,6 +21,11 @@ extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
 extern const K32OBJ_OPS DEVICE_Ops;
 extern const K32OBJ_OPS CONSOLE_Ops;
 extern const K32OBJ_OPS SNAPSHOT_Ops;
+
+/* The following are fully implemented in the server and could be removed */
+extern const K32OBJ_OPS SEMAPHORE_Ops;
+extern const K32OBJ_OPS EVENT_Ops;
+extern const K32OBJ_OPS MUTEX_Ops;
 
 static const K32OBJ_OPS K32OBJ_NullOps =
 {

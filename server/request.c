@@ -152,6 +152,14 @@ DECL_HANDLER(init_thread)
     send_reply( current, -1, 0 );
 }
 
+/* set the debug level */
+DECL_HANDLER(set_debug)
+{
+    debug_level = req->level;
+    CLEAR_ERROR();
+    send_reply( current, -1, 0 );
+}
+
 /* terminate a process */
 DECL_HANDLER(terminate_process)
 {
@@ -372,3 +380,38 @@ DECL_HANDLER(open_named_obj)
     send_reply( current, -1, 1, &reply, sizeof(reply) );
 }
 
+/* create a file */
+DECL_HANDLER(create_file)
+{
+    struct create_file_reply reply = { -1 };
+    struct object *obj;
+    int new_fd;
+
+    if ((new_fd = dup(fd)) == -1)
+    {
+        SET_ERROR( ERROR_TOO_MANY_OPEN_FILES );
+        goto done;
+    }
+    if ((obj = create_file( new_fd )) != NULL)
+    {
+        reply.handle = alloc_handle( current->process, obj, req->access, req->inherit );
+        release_object( obj );
+    }
+ done:
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* get a Unix handle to a file */
+DECL_HANDLER(get_unix_handle)
+{
+    int handle = file_get_unix_handle( req->handle, req->access );
+    send_reply( current, handle, 0 );
+}
+
+/* get a file information */
+DECL_HANDLER(get_file_info)
+{
+    struct get_file_info_reply reply;
+    get_file_info( req->handle, &reply );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}

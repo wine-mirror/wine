@@ -9,8 +9,11 @@
 %formats =
 (
     "int"          => "%d",
+    "char"         => "%c",
+    "char[0]"      => "\\\"%.*s\\\"",
     "unsigned int" => "%08x",
-    "void*"        => "%p"
+    "void*"        => "%p",
+    "time_t"       => "%ld"
 );
 
 my @requests = ();
@@ -46,9 +49,8 @@ print TRACE<<EOF;
 
 struct dumper
 {
-    void (*dump_req)();
-    void (*dump_reply)();
-    unsigned int size;
+    int (*dump_req)( void *data, int len );
+    void (*dump_reply)( void *data );
 };
 
 static const struct dumper dumpers[REQ_NB_REQUESTS] =
@@ -59,9 +61,8 @@ foreach $req (@requests)
 {
     $request = $req . "_request";
     $reply = $replies{$req} ? "dump_${req}_reply" : "0";
-    print TRACE "    { (void(*)())dump_$request,\n";
-    print TRACE "      (void(*)())$reply,\n";
-    print TRACE "      sizeof(struct $request) },\n";
+    print TRACE "    { (int(*)(void *,int))dump_$request,\n";
+    print TRACE "      (void(*)())$reply },\n";
 }
 
 print TRACE <<EOF;
@@ -82,13 +83,13 @@ print TRACE <<EOF;
 
 void trace_request( enum request req, void *data, int len, int fd )
 {
+    int size;
     current->last_req = req;
     printf( "%08x: %s(", (unsigned int)current, req_names[req] );
-    dumpers[req].dump_req( data );
-    if (len > dumpers[req].size)
+    size = dumpers[req].dump_req( data, len );
+    if ((len -= size) > 0)
     {
-        unsigned char *ptr = (unsigned char *)data + dumpers[req].size;
-	len -= dumpers[req].size;
+        unsigned char *ptr = (unsigned char *)data + size;
         while (len--) printf( ", %02x", *ptr++ );
     }
     if (fd != -1) printf( " ) fd=%d\\n", fd );
@@ -196,8 +197,8 @@ sub DO_REQUEST
         next if /^{$/;
 	s!/\*.*\*/!!g;
 	next if /^\s*$/;
-	/ *(\w+\**( +\w+\**)*) +(\w+);/ or die "Unrecognized syntax $_";
-	my $type = $1;
+	/ *(\w+\**( +\w+\**)*) +(\w+)(\[0\])?;/ or die "Unrecognized syntax $_";
+	my $type = $1 . ($4 || "");
 	my $var = $3;
         die "Unrecognized type $type" unless defined($formats{$type});
 	push @struct, $type, $var;
@@ -232,15 +233,25 @@ sub DO_REPLY
 
 sub DO_DUMP_FUNC
 {
+    my $vararg = 0;
     my $name = shift;
-    print TRACE "\nstatic void dump_$name( struct $name *req )\n{\n";
+    print TRACE "\nstatic int dump_$name( struct $name *req, int len )\n{\n";
     while ($#_ >= 0)
     {
 	my $type = shift;
 	my $var = shift;
 	print TRACE "    printf( \" $var=$formats{$type}";
 	print TRACE "," if ($#_ > 0);
-	print TRACE "\", req->$var );\n";
+	print TRACE "\", ";
+	if ($type =~ s/\[0\]$//g)  # vararg type?
+	{
+	    $vararg = 1;
+	    print TRACE "len - (int)sizeof(*req), ($type *)(req+1) );\n";
+	}
+	else
+	{
+	    print TRACE "req->$var );\n";
+        }
     }
-    print TRACE "}\n";
+    print TRACE "    return ", $vararg ? "len" : "(int)sizeof(*req)", ";\n}\n";
 }

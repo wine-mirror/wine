@@ -19,19 +19,19 @@ struct semaphore
     unsigned int   max;    /* maximum possible count */
 };
 
-static void dump_semaphore( struct object *obj, int verbose );
+static void semaphore_dump( struct object *obj, int verbose );
 static int semaphore_signaled( struct object *obj, struct thread *thread );
 static int semaphore_satisfied( struct object *obj, struct thread *thread );
-static void destroy_semaphore( struct object *obj );
+static void semaphore_destroy( struct object *obj );
 
 static const struct object_ops semaphore_ops =
 {
-    dump_semaphore,
+    semaphore_dump,
     add_queue,
     remove_queue,
     semaphore_signaled,
     semaphore_satisfied,
-    destroy_semaphore
+    semaphore_destroy
 };
 
 
@@ -89,7 +89,7 @@ int release_semaphore( int handle, unsigned int count, unsigned int *prev_count 
     return 1;
 }
 
-static void dump_semaphore( struct object *obj, int verbose )
+static void semaphore_dump( struct object *obj, int verbose )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
@@ -112,7 +112,7 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* not abandoned */
 }
 
-static void destroy_semaphore( struct object *obj )
+static void semaphore_destroy( struct object *obj )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );

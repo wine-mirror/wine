@@ -4,7 +4,7 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 153
+#define DEBUG_CHANNEL_COUNT 147
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
 {1, 1, 0, 0},
@@ -154,20 +154,8 @@ short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
-{1, 1, 0, 0},
 };
 const char* debug_ch_name[] = {
-"1",
-"2",
-"3",
-"4",
-"5",
-"6",
 "accel",
 "advapi",
 "animate",
@@ -272,13 +260,13 @@ const char* debug_ch_name[] = {
 "region",
 "relay",
 "resource",
-"s",
 "scroll",
 "security",
 "segment",
 "selector",
 "sem",
 "sendmsg",
+"server",
 "shell",
 "shm",
 "snoop",

@@ -33,6 +33,7 @@ typedef struct
     DWORD         size_high;
     DWORD         size_low;
     FILE_OBJECT  *file;
+    int           unix_handle;
     BYTE          protect;
 } FILE_MAPPING;
 
@@ -604,7 +605,7 @@ LPVOID WINAPI VirtualAlloc(
     if ((type & MEM_RESERVE) || !base)
     {
         view_size = size + (base ? 0 : granularity_mask + 1);
-        ptr = (UINT32)FILE_dommap( NULL, (LPVOID)base, 0, view_size, 0, 0,
+        ptr = (UINT32)FILE_dommap( NULL, -1, (LPVOID)base, 0, view_size, 0, 0,
                                    VIRTUAL_GetUnixProt( vprot ), MAP_PRIVATE );
         if (ptr == (UINT32)-1)
         {
@@ -1086,6 +1087,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
     FILE_MAPPING *mapping = NULL;
+    int unix_handle = -1;
     HANDLE32 handle;
     BYTE vprot;
     BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
@@ -1172,7 +1174,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
         if (!(obj = HANDLE_GetObjPtr( PROCESS_Current(), hFile,
                                       K32OBJ_FILE, access, NULL )))
             goto error;
-
+        if ((unix_handle = FILE_GetUnixHandle( hFile, access )) == -1) goto error;
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
         if (!size_high && !size_low)
         {
@@ -1199,6 +1201,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
     mapping->size_high       = size_high;
     mapping->size_low        = ROUND_SIZE( 0, size_low );
     mapping->file            = (FILE_OBJECT *)obj;
+    mapping->unix_handle     = unix_handle;
 
     if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
     else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
@@ -1209,6 +1212,7 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
 error:
     if (obj) K32OBJ_DecCount( obj );
+    if (unix_handle != -1) close( unix_handle );
     if (mapping) HeapFree( SystemHeap, 0, mapping );
     return 0;
 }
@@ -1280,6 +1284,7 @@ static void VIRTUAL_DestroyMapping( K32OBJ *ptr )
     assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );
 
     if (mapping->file) K32OBJ_DecCount( &mapping->file->header );
+    if (mapping->unix_handle != -1) close( mapping->unix_handle );
     ptr->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, mapping );
 }
@@ -1380,7 +1385,8 @@ LPVOID WINAPI MapViewOfFileEx(
     TRACE(virtual, "handle=%x size=%x offset=%lx\n",
                      handle, size, offset_low );
 
-    ptr = (UINT32)FILE_dommap( mapping->file, addr, 0, size, 0, offset_low,
+    ptr = (UINT32)FILE_dommap( mapping->file, mapping->unix_handle,
+                               addr, 0, size, 0, offset_low,
                                VIRTUAL_GetUnixProt( mapping->protect ),
                                flags );
     if (ptr == (UINT32)-1) {

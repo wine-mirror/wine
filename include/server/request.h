@@ -6,6 +6,7 @@
 enum request
 {
     REQ_NEW_THREAD,
+    REQ_SET_DEBUG,
     REQ_INIT_THREAD,
     REQ_TERMINATE_PROCESS,
     REQ_TERMINATE_THREAD,
@@ -22,6 +23,9 @@ enum request
     REQ_CREATE_SEMAPHORE,
     REQ_RELEASE_SEMAPHORE,
     REQ_OPEN_NAMED_OBJ,
+    REQ_CREATE_FILE,
+    REQ_GET_UNIX_HANDLE,
+    REQ_GET_FILE_INFO,
     REQ_NB_REQUESTS
 };
 
@@ -31,6 +35,7 @@ enum request
     static void req_##name( struct name##_request *req, void *data, int len, int fd )
 
 DECL_HANDLER(new_thread);
+DECL_HANDLER(set_debug);
 DECL_HANDLER(init_thread);
 DECL_HANDLER(terminate_process);
 DECL_HANDLER(terminate_thread);
@@ -47,12 +52,16 @@ DECL_HANDLER(release_mutex);
 DECL_HANDLER(create_semaphore);
 DECL_HANDLER(release_semaphore);
 DECL_HANDLER(open_named_obj);
+DECL_HANDLER(create_file);
+DECL_HANDLER(get_unix_handle);
+DECL_HANDLER(get_file_info);
 
 static const struct handler {
     void       (*handler)();
     unsigned int min_size;
 } req_handlers[REQ_NB_REQUESTS] = {
     { (void(*)())req_new_thread, sizeof(struct new_thread_request) },
+    { (void(*)())req_set_debug, sizeof(struct set_debug_request) },
     { (void(*)())req_init_thread, sizeof(struct init_thread_request) },
     { (void(*)())req_terminate_process, sizeof(struct terminate_process_request) },
     { (void(*)())req_terminate_thread, sizeof(struct terminate_thread_request) },
@@ -69,6 +78,9 @@ static const struct handler {
     { (void(*)())req_create_semaphore, sizeof(struct create_semaphore_request) },
     { (void(*)())req_release_semaphore, sizeof(struct release_semaphore_request) },
     { (void(*)())req_open_named_obj, sizeof(struct open_named_obj_request) },
+    { (void(*)())req_create_file, sizeof(struct create_file_request) },
+    { (void(*)())req_get_unix_handle, sizeof(struct get_unix_handle_request) },
+    { (void(*)())req_get_file_info, sizeof(struct get_file_info_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

@@ -38,6 +38,9 @@
 #include "async.h"
 #include "debug.h"
 
+#include "server/request.h"
+#include "server.h"
+
 #if defined(MAP_ANONYMOUS) && !defined(MAP_ANON)
 #define MAP_ANON MAP_ANONYMOUS
 #endif
@@ -80,29 +83,42 @@ static void DOS_RemoveFileLocks(FILE_OBJECT *file);
 /***********************************************************************
  *           FILE_Alloc
  *
- * Allocate a file.
+ * Allocate a file. The unix_handle is closed.
  */
-HFILE32 FILE_Alloc( FILE_OBJECT **file )
+HFILE32 FILE_Alloc( FILE_OBJECT **file, int unix_handle )
 {
     HFILE32 handle;
+    struct create_file_request req;
+    struct create_file_reply reply;
+    int len;
+    int fd = dup(unix_handle);
+
+    req.access = FILE_ALL_ACCESS | GENERIC_READ |
+                 GENERIC_WRITE | GENERIC_EXECUTE;  /* FIXME */
+    req.inherit = 1;  /* FIXME */
+    CLIENT_SendRequest( REQ_CREATE_FILE, unix_handle, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    if (reply.handle == -1) return INVALID_HANDLE_VALUE32;
+
     *file = HeapAlloc( SystemHeap, 0, sizeof(FILE_OBJECT) );
     if (!*file)
     {
         DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
+        CLIENT_CloseHandle( reply.handle );
         return (HFILE32)NULL;
     }
     (*file)->header.type = K32OBJ_FILE;
     (*file)->header.refcount = 0;
-    (*file)->unix_handle = -1;
     (*file)->unix_name = NULL;
+    (*file)->unix_handle = fd;
     (*file)->type = FILE_TYPE_DISK;
     (*file)->pos = 0;
     (*file)->mode = 0;
     (*file)->wait_queue = NULL;
 
-    handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header,
-                           FILE_ALL_ACCESS | GENERIC_READ |
-                           GENERIC_WRITE | GENERIC_EXECUTE /*FIXME*/, TRUE, -1 );
+    handle = HANDLE_Alloc( PROCESS_Current(), &(*file)->header, req.access,
+                           req.inherit, reply.handle );
     /* If the allocation failed, the object is already destroyed */
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
@@ -111,6 +127,7 @@ HFILE32 FILE_Alloc( FILE_OBJECT **file )
 /***********************************************************************
  *		FILE_async_handler			[internal]
  */
+#if 1
 static void
 FILE_async_handler(int unixfd,void *private) {
 	FILE_OBJECT *file = (FILE_OBJECT*)private;
@@ -157,6 +174,7 @@ static BOOL32 FILE_Satisfied(K32OBJ *ptr, DWORD thread_id)
 {
 	return FALSE; /* not abandoned. Hmm? */
 }
+#endif
 
 /* FIXME: lpOverlapped is ignored */
 static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
@@ -241,7 +259,6 @@ static void FILE_Destroy( K32OBJ *ptr )
 
     DOS_RemoveFileLocks(file);
 
-    if (file->unix_handle != -1) close( file->unix_handle );
     if (file->unix_name) HeapFree( SystemHeap, 0, file->unix_name );
     ptr->type = K32OBJ_UNKNOWN;
     HeapFree( SystemHeap, 0, file );
@@ -254,10 +271,11 @@ static void FILE_Destroy( K32OBJ *ptr )
  * Return the DOS file associated to a task file handle. FILE_ReleaseFile must
  * be called to release the file.
  */
-FILE_OBJECT *FILE_GetFile( HFILE32 handle )
+FILE_OBJECT *FILE_GetFile( HFILE32 handle, DWORD access, int *server_handle )
 {
     return (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
-                                            K32OBJ_FILE, 0 /*FIXME*/, NULL );
+                                            K32OBJ_FILE, access,
+                                            server_handle );
 }
 
 
@@ -276,16 +294,22 @@ void FILE_ReleaseFile( FILE_OBJECT *file )
  *           FILE_GetUnixHandle
  *
  * Return the Unix handle associated to a file handle.
+ * The Unix handle must be closed after use.
  */
-int FILE_GetUnixHandle( HFILE32 hFile )
+int FILE_GetUnixHandle( HFILE32 hFile, DWORD access )
 {
     FILE_OBJECT *file;
-    int ret;
+    int unix_handle;
+    struct get_unix_handle_request req;
 
-    if (!(file = FILE_GetFile( hFile ))) return -1;
-    ret = file->unix_handle;
-    FILE_ReleaseFile( file );
-    return ret;
+    file = (FILE_OBJECT *)HANDLE_GetObjPtr( PROCESS_Current(), hFile,
+                                            K32OBJ_FILE, access, &req.handle );
+    if (!file) return -1;
+    req.access = access;
+    CLIENT_SendRequest( REQ_GET_UNIX_HANDLE, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( NULL, &unix_handle, 0 );
+    K32OBJ_DecCount( &file->header );
+    return unix_handle;
 }
 
 /***********************************************************************
@@ -526,7 +550,7 @@ static BOOL32 FILE_InUse(char * name, int * mode)
   if (!pdb) return 0;
   for (i=0;i<pdb->nbFiles;i++)
     {
-      file =FILE_GetFile( (HFILE32) i);
+      file =FILE_GetFile( (HFILE32)i, 0, NULL );
       if(file)
        {
          if(file->unix_name)
@@ -610,19 +634,15 @@ void FILE_SetDosError(void)
  */
 HFILE32 FILE_DupUnixHandle( int fd )
 {
-    HFILE32 handle;
+    int unix_handle;
     FILE_OBJECT *file;
 
-    if ((handle = FILE_Alloc( &file )) != INVALID_HANDLE_VALUE32)
+    if ((unix_handle = dup(fd)) == -1)
     {
-        if ((file->unix_handle = dup(fd)) == -1)
-        {
-            FILE_SetDosError();
-            CloseHandle( handle );
-            return INVALID_HANDLE_VALUE32;
-        }
+        FILE_SetDosError();
+        return INVALID_HANDLE_VALUE32;
     }
-    return handle;
+    return FILE_Alloc( &file, unix_handle );
 }
 
 
@@ -632,32 +652,31 @@ HFILE32 FILE_DupUnixHandle( int fd )
 HFILE32 FILE_OpenUnixFile( const char *name, int mode )
 {
     HFILE32 handle;
+    int unix_handle;
     FILE_OBJECT *file;
     struct stat st;
 
-    if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
-        return INVALID_HANDLE_VALUE32;
-
-    if ((file->unix_handle = open( name, mode, 0666 )) == -1)
+    if ((unix_handle = open( name, mode, 0666 )) == -1)
     {
         if (!Options.failReadOnly && (mode == O_RDWR))
-            file->unix_handle = open( name, O_RDONLY );
+            unix_handle = open( name, O_RDONLY );
     }
-    if ((file->unix_handle == -1) || (fstat( file->unix_handle, &st ) == -1))
+    if ((unix_handle == -1) || (fstat( unix_handle, &st ) == -1))
     {
         FILE_SetDosError();
-        CloseHandle( handle );
         return INVALID_HANDLE_VALUE32;
     }
     if (S_ISDIR(st.st_mode))
     {
         DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
-        CloseHandle( handle );
+        close( unix_handle );
         return INVALID_HANDLE_VALUE32;
     }
 
     /* File opened OK, now fill the FILE_OBJECT */
 
+    if ((handle = FILE_Alloc( &file, unix_handle )) == INVALID_HANDLE_VALUE32)
+        return INVALID_HANDLE_VALUE32;
     file->unix_name = HEAP_strdupA( SystemHeap, 0, name );
     return handle;
 }
@@ -716,7 +735,7 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode, INT32 shareMode )
       }
     hFileRet = FILE_OpenUnixFile( unixName, mode );
     /* we need to save the mode, but only if it is not in use yet*/
-    if ((hFileRet) && (!fileInUse) && ((file =FILE_GetFile(hFileRet))))
+    if ((hFileRet) && (!fileInUse) && ((file =FILE_GetFile(hFileRet, 0, NULL))))
       {
        file->mode=dosMode;
        FILE_ReleaseFile(file);
@@ -732,6 +751,7 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode, INT32 shareMode )
 static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 {
     HFILE32 handle;
+    int unix_handle;
     FILE_OBJECT *file;
     DOS_FULL_NAME full_name;
     BOOL32 fileInUse = FALSE;
@@ -749,14 +769,7 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
         return INVALID_HANDLE_VALUE32;
     }
 
-    if ((handle = FILE_Alloc( &file )) == INVALID_HANDLE_VALUE32)
-        return INVALID_HANDLE_VALUE32;
-
-    if (!DOSFS_GetFullName( path, FALSE, &full_name ))
-    {
-        CloseHandle( handle );
-        return INVALID_HANDLE_VALUE32;
-    }
+    if (!DOSFS_GetFullName( path, FALSE, &full_name )) return INVALID_HANDLE_VALUE32;
     
     dosMode = FILE_UnixToDosMode(mode);
     fileInUse = FILE_InUse(full_name.long_name,&oldMode);
@@ -766,17 +779,18 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
 	if (FILE_ShareDeny(dosMode,oldMode)) return INVALID_HANDLE_VALUE32;
       }
     
-    if ((file->unix_handle = open( full_name.long_name,
+    if ((unix_handle = open( full_name.long_name,
                            O_CREAT | O_TRUNC | O_RDWR | (unique ? O_EXCL : 0),
                            mode )) == -1)
     {
         FILE_SetDosError();
-        CloseHandle( handle );
         return INVALID_HANDLE_VALUE32;
     } 
 
     /* File created OK, now fill the FILE_OBJECT */
 
+    if ((handle = FILE_Alloc( &file, unix_handle )) == INVALID_HANDLE_VALUE32)
+        return INVALID_HANDLE_VALUE32;
     file->unix_name = HEAP_strdupA( SystemHeap, 0, full_name.long_name );
     file->mode = dosMode;
     return handle;
@@ -838,20 +852,28 @@ DWORD WINAPI GetFileInformationByHandle( HFILE32 hFile,
                                          BY_HANDLE_FILE_INFORMATION *info )
 {
     FILE_OBJECT *file;
-    DWORD ret = 0;
-    struct stat st;
+    struct get_file_info_request req;
+    struct get_file_info_reply reply;
+    int len;
 
     if (!info) return 0;
-
-    if (!(file = FILE_GetFile( hFile ))) return 0;
-    if (fstat( file->unix_handle, &st ) == -1) FILE_SetDosError();
-    else
-    {
-        FILE_FillInfo( &st, info );
-        ret = 1;
-    }
+    if (!(file = FILE_GetFile( hFile, 0, &req.handle ))) return 0;
+    CLIENT_SendRequest( REQ_GET_FILE_INFO, -1, 1, &req, sizeof(req) );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
     FILE_ReleaseFile( file );
-    return ret;
+
+    DOSFS_UnixTimeToFileTime( reply.write_time, &info->ftCreationTime, 0 );
+    DOSFS_UnixTimeToFileTime( reply.write_time, &info->ftLastWriteTime, 0 );
+    DOSFS_UnixTimeToFileTime( reply.access_time, &info->ftLastAccessTime, 0 );
+    info->dwFileAttributes     = reply.attr;
+    info->dwVolumeSerialNumber = reply.serial;
+    info->nFileSizeHigh        = reply.size_high;
+    info->nFileSizeLow         = reply.size_low;
+    info->nNumberOfLinks       = reply.links;
+    info->nFileIndexHigh       = reply.index_high;
+    info->nFileIndexLow        = reply.index_low;
+    return 1;
 }
 
 
@@ -966,7 +988,7 @@ HFILE32 FILE_Dup2( HFILE32 hFile1, HFILE32 hFile2 )
 
     TRACE(file, "FILE_Dup2 for handle %d\n", hFile1 );
     /* FIXME: should use DuplicateHandle */
-    if (!(file = FILE_GetFile( hFile1 ))) return HFILE_ERROR32;
+    if (!(file = FILE_GetFile( hFile1, 0, NULL ))) return HFILE_ERROR32;
     if (!HANDLE_SetObjPtr( PROCESS_Current(), hFile2, &file->header, 0 ))
         hFile2 = HFILE_ERROR32;
     FILE_ReleaseFile( file );
@@ -1207,7 +1229,7 @@ found:
     hFileRet = FILE_OpenUnixFile( full_name.long_name, unixMode );
     if (hFileRet == HFILE_ERROR32) goto not_found;
     /* we need to save the mode, but only if it is not in use yet*/
-    if( (!fileInUse) &&(file =FILE_GetFile(hFileRet)))
+    if( (!fileInUse) &&(file =FILE_GetFile(hFileRet,0,NULL)))
       {
        file->mode=mode;
        FILE_ReleaseFile(file);
@@ -1382,6 +1404,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
 {
     FILE_OBJECT *file;
     DWORD result = 0xffffffff;
+    int unix_handle;
 
     if (highword && *highword)
     {
@@ -1392,8 +1415,12 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
     TRACE(file, "handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
-    if (!(file = FILE_GetFile( hFile ))) return 0xffffffff;
-
+    if (!(file = FILE_GetFile( hFile, 0, NULL ))) return 0xffffffff;
+    if ((unix_handle = FILE_GetUnixHandle( hFile, 0 )) == -1)
+    {
+        FILE_ReleaseFile( file );
+        return 0xffffffff;
+    }
 
     /* the pointer may be positioned before the start of the file;
         no error is returned in that case,
@@ -1405,7 +1432,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
         case FILE_CURRENT:
             distance += file->pos; /* fall through */
         case FILE_BEGIN:
-            if ((result = lseek(file->unix_handle, distance, SEEK_SET)) == -1)
+            if ((result = lseek(unix_handle, distance, SEEK_SET)) == -1)
             {
                 if ((INT32)distance < 0)
                     file->pos = result = distance;
@@ -1414,15 +1441,15 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
             file->pos = result;
             break;
         case FILE_END:
-            if ((result = lseek(file->unix_handle, distance, SEEK_END)) == -1)
+            if ((result = lseek(unix_handle, distance, SEEK_END)) == -1)
             {
                 if ((INT32)distance < 0)
                 {
                     /* get EOF */
-                    result = lseek(file->unix_handle, 0, SEEK_END);
+                    result = lseek(unix_handle, 0, SEEK_END);
 
                     /* return to the old pos, as the first lseek failed */
-                    lseek(file->unix_handle, file->pos, SEEK_END);
+                    lseek(unix_handle, file->pos, SEEK_END);
 
                     file->pos = (result += distance);
                 }
@@ -1438,6 +1465,7 @@ DWORD WINAPI SetFilePointer( HFILE32 hFile, LONG distance, LONG *highword,
     if (result == -1)
         FILE_SetDosError();
 
+    close( unix_handle );
     FILE_ReleaseFile( file );
     return result;
 }
@@ -1547,15 +1575,16 @@ LONG WINAPI _hwrite32( HFILE32 handle, LPCSTR buffer, LONG count )
 	TRACE(file, "%d %p %ld\n", handle, buffer, count );
 
 	if (count == 0) {       /* Expand or truncate at current position */
-		FILE_OBJECT *file = FILE_GetFile(handle);
-
-		if ( ftruncate(file->unix_handle,
-			       lseek( file->unix_handle, 0, SEEK_CUR)) == 0 ) {
-			FILE_ReleaseFile(file);
+                int unix_handle = FILE_GetUnixHandle( handle, GENERIC_WRITE );
+                if ((unix_handle != -1) &&
+                    (ftruncate(unix_handle,
+			       lseek( unix_handle, 0, SEEK_CUR)) == 0 ))
+                {
+                        close( unix_handle );
 			return 0;
 		} else {
 			FILE_SetDosError();
-			FILE_ReleaseFile(file);
+                        close( unix_handle );
 			return HFILE_ERROR32;
 		}
 	}
@@ -1637,18 +1666,18 @@ UINT32 WINAPI SetHandleCount32( UINT32 count )
  */
 BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
 {
-    FILE_OBJECT *file;
+    int unix_handle;
     BOOL32 ret;
 
     TRACE(file, "(%d)\n", hFile );
-    if (!(file = FILE_GetFile( hFile ))) return FALSE;
-    if (fsync( file->unix_handle ) != -1) ret = TRUE;
+    if ((unix_handle = FILE_GetUnixHandle( hFile, 0)) == -1) return FALSE;
+    if (fsync( unix_handle ) != -1) ret = TRUE;
     else
     {
         FILE_SetDosError();
         ret = FALSE;
     }
-    FILE_ReleaseFile( file );
+    close( unix_handle );
     return ret;
 }
 
@@ -1658,18 +1687,18 @@ BOOL32 WINAPI FlushFileBuffers( HFILE32 hFile )
  */
 BOOL32 WINAPI SetEndOfFile( HFILE32 hFile )
 {
-    FILE_OBJECT *file;
+    int unix_handle;
     BOOL32 ret = TRUE;
 
     TRACE(file, "(%d)\n", hFile );
-    if (!(file = FILE_GetFile( hFile ))) return FALSE;
-    if (ftruncate( file->unix_handle,
-                   lseek( file->unix_handle, 0, SEEK_CUR ) ))
+    if ((unix_handle = FILE_GetUnixHandle( hFile, GENERIC_WRITE )) == -1) return FALSE;
+    if (ftruncate( unix_handle,
+                   lseek( unix_handle, 0, SEEK_CUR ) ))
     {
         FILE_SetDosError();
         ret = FALSE;
     }
-    FILE_ReleaseFile( file );
+    close( unix_handle );
     return ret;
 }
 
@@ -1726,7 +1755,7 @@ BOOL32 WINAPI DeleteFile32W( LPCWSTR path )
  */
 BOOL32 FILE_SetFileType( HFILE32 hFile, DWORD type )
 {
-    FILE_OBJECT *file = FILE_GetFile( hFile );
+    FILE_OBJECT *file = FILE_GetFile( hFile, 0, NULL );
     if (!file) return FALSE;
     file->type = type;
     FILE_ReleaseFile( file );
@@ -1743,10 +1772,16 @@ LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
                   int prot, int flags )
 {
     LPVOID ret;
-    FILE_OBJECT *file = FILE_GetFile( hFile );
+    int unix_handle;
+    FILE_OBJECT *file = FILE_GetFile( hFile, 0, NULL );
     if (!file) return (LPVOID)-1;
-    ret = FILE_dommap( file, start, size_high, size_low,
-                       offset_high, offset_low, prot, flags );
+    if ((unix_handle = FILE_GetUnixHandle( hFile, 0 )) == -1) ret = (LPVOID)-1;
+    else
+    {
+        ret = FILE_dommap( file, unix_handle, start, size_high, size_low,
+                           offset_high, offset_low, prot, flags );
+        close( unix_handle );
+    }
     FILE_ReleaseFile( file );
     return ret;
 }
@@ -1755,7 +1790,7 @@ LPVOID FILE_mmap( HFILE32 hFile, LPVOID start,
 /***********************************************************************
  *           FILE_dommap
  */
-LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
+LPVOID FILE_dommap( FILE_OBJECT *file, int unix_handle, LPVOID start,
                     DWORD size_high, DWORD size_low,
                     DWORD offset_high, DWORD offset_low,
                     int prot, int flags )
@@ -1792,7 +1827,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
 	flags |= MAP_PRIVATE;
 #endif
     }
-    else fd = file->unix_handle;
+    else fd = unix_handle;
 
     if ((ret = mmap( start, size_low, prot,
                      flags, fd, offset_low )) != (LPVOID)-1)
@@ -1816,7 +1851,7 @@ LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
     }
 /*    printf( "FILE_mmap: mmap failed (%d), faking it\n", errno );*/
     /* Reserve the memory with an anonymous mmap */
-    ret = FILE_dommap( NULL, start, size_high, size_low, 0, 0,
+    ret = FILE_dommap( NULL, -1, start, size_high, size_low, 0, 0,
                        PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1) return ret;
     /* Now read in the file */
@@ -1848,7 +1883,7 @@ int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
  */
 DWORD WINAPI GetFileType( HFILE32 hFile )
 {
-    FILE_OBJECT *file = FILE_GetFile(hFile);
+    FILE_OBJECT *file = FILE_GetFile(hFile, 0, NULL);
     if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
     FILE_ReleaseFile( file );
     return file->type;
@@ -2126,7 +2161,7 @@ BOOL32 WINAPI SetFileTime( HFILE32 hFile,
                            const FILETIME *lpLastAccessTime,
                            const FILETIME *lpLastWriteTime )
 {
-    FILE_OBJECT *file = FILE_GetFile(hFile);
+    FILE_OBJECT *file = FILE_GetFile(hFile, 0, NULL);
     struct utimbuf utimbuf;
     
     if (!file) return FILE_TYPE_UNKNOWN; /* FIXME: correct? */
@@ -2263,7 +2298,7 @@ BOOL32 WINAPI LockFile(
   f.l_pid = 0;
   f.l_type = F_WRLCK;
 
-  if (!(file = FILE_GetFile(hFile))) return FALSE;
+  if (!(file = FILE_GetFile(hFile,0,NULL))) return FALSE;
 
   /* shadow locks internally */
   if (!DOS_AddLock(file, &f)) {
@@ -2314,7 +2349,7 @@ BOOL32 WINAPI UnlockFile(
   f.l_pid = 0;
   f.l_type = F_UNLCK;
 
-  if (!(file = FILE_GetFile(hFile))) return FALSE;
+  if (!(file = FILE_GetFile(hFile,0,NULL))) return FALSE;
 
   DOS_RemoveLock(file, &f);	/* ok if fails - may be another wine */
 

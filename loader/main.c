@@ -42,6 +42,7 @@
 #include "task.h"
 #include "debug.h"
 #include "psdrv.h"
+#include "server.h"
 
 int __winelib = 1;  /* Winelib run-time flag */
 
@@ -50,6 +51,10 @@ int __winelib = 1;  /* Winelib run-time flag */
  */
 BOOL32 MAIN_MainInit(void)
 {
+    /* Set server debug level */
+    /* To fool make_debug: TRACE(server) */
+    CLIENT_SetDebug( TRACE_ON(server) );
+
     /* Initialize syslevel handling */
     SYSLEVEL_Init();
 

@@ -223,7 +223,7 @@ static void ioctlGetDeviceInfo( CONTEXT *context )
     RESET_CFLAG(context);
 
     /* DOS device ? */
-    if ((file = FILE_GetFile( HFILE16_TO_HFILE32(BX_reg(context)) )))
+    if ((file = FILE_GetFile( HFILE16_TO_HFILE32(BX_reg(context)), 0, NULL )))
     {
         const DOS_DEVICE *dev = DOSFS_GetDevice( file->unix_name );
         FILE_ReleaseFile( file );
@@ -1520,7 +1520,7 @@ void WINAPI DOS3Call( CONTEXT *context )
             break;
         case 0x02:{
            FILE_OBJECT *file;
-           file = FILE_GetFile(HFILE16_TO_HFILE32(BX_reg(context)));
+           file = FILE_GetFile(HFILE16_TO_HFILE32(BX_reg(context)),0,NULL);
            if (!strcasecmp(file->unix_name, "SCSIMGR$"))
                         ASPI_DOS_HandleInt(context);
            FILE_ReleaseFile( file );

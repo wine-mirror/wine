@@ -19,19 +19,19 @@ struct event
     int            signaled;        /* event has been signaled */
 };
 
-static void dump_event( struct object *obj, int verbose );
+static void event_dump( struct object *obj, int verbose );
 static int event_signaled( struct object *obj, struct thread *thread );
 static int event_satisfied( struct object *obj, struct thread *thread );
-static void destroy_event( struct object *obj );
+static void event_destroy( struct object *obj );
 
 static const struct object_ops event_ops =
 {
-    dump_event,
+    event_dump,
     add_queue,
     remove_queue,
     event_signaled,
     event_satisfied,
-    destroy_event
+    event_destroy
 };
 
 
@@ -96,7 +96,7 @@ int reset_event( int handle )
     return 1;
 }
 
-static void dump_event( struct object *obj, int verbose )
+static void event_dump( struct object *obj, int verbose )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
@@ -119,7 +119,7 @@ static int event_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* Not abandoned */
 }
 
-static void destroy_event( struct object *obj )
+static void event_destroy( struct object *obj )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );

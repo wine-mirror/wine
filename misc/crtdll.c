@@ -50,8 +50,6 @@ Unresolved issues Uwe Bonnes 970904:
 #include "options.h"
 #include "winnls.h"
 
-extern int FILE_GetUnixHandle( HFILE32  );
-
 static DOS_FULL_NAME CRTDLL_tmpname;
 
 UINT32 CRTDLL_argc_dll;         /* CRTDLL.23 */
@@ -310,7 +308,7 @@ DWORD __cdecl CRTDLL_fopen(LPCSTR path, LPCSTR mode)
     TRACE(crtdll, "%s in BINARY mode\n",path);
       
   dos_fildes=FILE_Open(path, flagmode,0);
-  unix_fildes=FILE_GetUnixHandle(dos_fildes);
+  unix_fildes=FILE_GetUnixHandle(dos_fildes,0);
   file = fdopen(unix_fildes,mode);
 
   TRACE(crtdll, "file %s mode %s got ufh %d dfh %d file %p\n",
@@ -1100,7 +1098,12 @@ INT32 __cdecl CRTDLL_fclose( FILE *stream )
 
     if (unix_handle<4) ret= fclose(stream);
     else {
-      while(FILE_GetUnixHandle(dos_handle) != unix_handle) dos_handle++;
+      int h;
+      while((h = FILE_GetUnixHandle(dos_handle,0)) != unix_handle)
+      {
+          close(h);
+          dos_handle++;
+      }
       fclose(stream);
       ret = _lclose32( dos_handle);
     }
