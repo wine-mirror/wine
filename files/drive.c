@@ -43,6 +43,9 @@
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif
 #ifdef STATFS_DEFINED_BY_SYS_VFS
 # include <sys/vfs.h>
 #else
@@ -1370,7 +1373,7 @@ BOOL WINAPI DefineDosDeviceW(DWORD flags,LPCWSTR devname,LPCWSTR targetpath)
 static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 			       PULARGE_INTEGER available )
 {
-    struct statfs info;
+    struct statvfs info;
 
     if (!DRIVE_IsValid(drive))
     {
@@ -1378,32 +1381,18 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
         return 0;
     }
 
-/* FIXME: add autoconf check for this */
-#if defined(__svr4__) || defined(_SCO_DS) || defined(__sun)
-    if (statfs( DOSDrives[drive].root, &info, 0, 0) < 0)
-#else
-    if (statfs( DOSDrives[drive].root, &info) < 0)
-#endif
+    if (statvfs( DOSDrives[drive].root, &info ) < 0)
     {
         FILE_SetDosError();
-        WARN("cannot do statfs(%s)\n", DOSDrives[drive].root);
+        WARN("cannot do statvfs(%s)\n", DOSDrives[drive].root);
         return 0;
     }
-
-    size->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bsize, info.f_blocks );
-#ifdef HAVE_STRUCT_STATFS_F_BAVAIL
-    available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bavail, info.f_bsize );
-#else
-# ifdef HAVE_STRUCT_STATFS_F_BFREE
-    available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bfree, info.f_bsize );
-# else
-#  error "statfs has no bfree/bavail member!"
-# endif
-#endif
+    size->QuadPart = RtlEnlargedUnsignedMultiply( info.f_frsize, info.f_blocks );
     if (DOSDrives[drive].type == DRIVE_CDROM)
-    { /* ALWAYS 0, even if no real CD-ROM mounted there !! */
-        available->QuadPart = 0;
-    }
+        available->QuadPart = 0; /* ALWAYS 0, even if no real CD-ROM mounted there !! */
+    else
+        available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_frsize, info.f_bavail );
+
     return 1;
 }
 

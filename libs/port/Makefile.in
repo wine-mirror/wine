@@ -21,7 +21,7 @@ C_SRCS = \
 	readlink.c \
 	sigsetjmp.c \
 	spawn.c \
-	statfs.c \
+	statvfs.c \
 	strcasecmp.c \
 	strerror.c \
 	strncasecmp.c \

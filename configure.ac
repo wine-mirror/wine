@@ -1056,6 +1056,7 @@ AC_CHECK_FUNCS(\
 	snprintf \
 	spawnvp \
 	statfs \
+	statvfs \
 	strcasecmp \
 	strerror \
 	strncasecmp \
@@ -1137,6 +1138,7 @@ AC_CHECK_HEADERS(\
 	sys/socket.h \
 	sys/sockio.h \
 	sys/statfs.h \
+	sys/statvfs.h \
 	sys/strtio.h \
 	sys/syscall.h \
 	sys/sysctl.h \
@@ -1236,7 +1238,7 @@ dnl **** Check for types ****
 
 AC_C_CONST
 AC_C_INLINE
-AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t, long long])
+AC_CHECK_TYPES([mode_t, off_t, pid_t, size_t, ssize_t, long long, fsblkcnt_t, fsfilcnt_t])
 
 AC_CACHE_CHECK([whether linux/input.h is for real],
 	wine_cv_linux_input_h,
@@ -1384,7 +1386,7 @@ fi
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
 dnl Check for statfs members
-AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail],,,
+AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail, struct statfs.f_frsize, struct statfs.f_ffree, struct statfs.f_favail],,,
 [#include <sys/types.h>
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
@@ -1399,6 +1401,11 @@ AC_CHECK_MEMBERS([struct statfs.f_bfree, struct statfs.f_bavail],,,
 #   include <sys/statfs.h>
 #  endif
 # endif
+#endif])
+
+AC_CHECK_MEMBERS([struct statvfs.f_blocks],,,
+[#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
 #endif])
 
 dnl Check for socket structure members

@@ -64,19 +64,29 @@ typedef unsigned int size_t;
 #ifndef HAVE_SSIZE_T
 typedef int ssize_t;
 #endif
+#ifndef HAVE_FSBLKCNT_T
+typedef unsigned long fsblkcnt_t;
+#endif
+#ifndef HAVE_FSFILCNT_T
+typedef unsigned long fsfilcnt_t;
+#endif
 
-#ifndef HAVE_STATFS
-# ifdef __BEOS__
-#  define HAVE_STRUCT_STATFS_F_BFREE
-struct statfs {
-  long   f_bsize;  /* block_size */
-  long   f_blocks; /* total_blocks */
-  long   f_bfree;  /* free_blocks */
+#ifndef HAVE_STRUCT_STATVFS_F_BLOCKS
+struct statvfs
+{
+    unsigned long f_bsize;
+    unsigned long f_frsize;
+    fsblkcnt_t    f_blocks;
+    fsblkcnt_t    f_bfree;
+    fsblkcnt_t    f_bavail;
+    fsfilcnt_t    f_files;
+    fsfilcnt_t    f_ffree;
+    fsfilcnt_t    f_favail;
+    unsigned long f_fsid;
+    unsigned long f_flag;
+    unsigned long f_namemax;
 };
-# else /* defined(__BEOS__) */
-struct statfs;
-# endif /* defined(__BEOS__) */
-#endif /* !defined(HAVE_STATFS) */
+#endif /* HAVE_STRUCT_STATVFS_F_BLOCKS */
 
 
 /****************************************************************
@@ -261,10 +271,6 @@ typedef jmp_buf sigjmp_buf;
 int sigsetjmp( sigjmp_buf buf, int savesigs );
 void siglongjmp( sigjmp_buf buf, int val );
 #endif /* HAVE_SIGSETJMP */
-
-#ifndef HAVE_STATFS
-int statfs(const char *name, struct statfs *info);
-#endif /* !defined(HAVE_STATFS) */
 
 #ifndef HAVE_STRNCASECMP
 # ifndef HAVE__STRNICMP
