@@ -5677,6 +5677,15 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
+  /* shared reading requires transacted mode */
+  if( STGM_SHARE_MODE(grfMode) == STGM_SHARE_DENY_WRITE &&
+      STGM_ACCESS_MODE(grfMode) == STGM_READWRITE &&
+     !(grfMode&STGM_TRANSACTED) )
+  {
+    hr = STG_E_INVALIDFLAG;
+    goto end;
+  }
+
   /*
    * Interpret the STGM value grfMode
    */
@@ -5728,7 +5737,17 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
+  /*
+   * Refuse to open the file if it's too small to be a structured storage file
+   * FIXME: verify the file when reading instead of here
+   */
   length = GetFileSize(hFile, NULL);
+  if (length < 0x100)
+  {
+    CloseHandle(hFile);
+    hr = STG_E_FILEALREADYEXISTS;
+    goto end;
+  }
 
   /*
    * Allocate and initialize the new IStorage32object.
@@ -5749,7 +5768,7 @@ HRESULT WINAPI StgOpenStorage(
          NULL,
          grfMode,
          TRUE,
-	 !length );
+	 FALSE );
 
   if (FAILED(hr))
   {
@@ -6134,7 +6153,7 @@ static HRESULT validateSTGM(DWORD stgm)
   /*
    * STGM_NOSCRATCH requires STGM_TRANSACTED
    */
-  if ( (stgm & STGM_NOSCRATCH) && (stgm & STGM_TRANSACTED) )
+  if ( (stgm & STGM_NOSCRATCH) && !(stgm & STGM_TRANSACTED) )
     return E_FAIL;
 
   /*

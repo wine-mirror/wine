@@ -315,6 +315,32 @@ void test_storage_stream(void)
     ok(r == TRUE, "file should exist\n");
 }
 
+static BOOL touch_file(LPCWSTR filename)
+{
+    HANDLE file;
+
+    file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, 
+                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file==INVALID_HANDLE_VALUE)
+        return FALSE;
+    CloseHandle(file);
+    return TRUE;
+}
+
+static BOOL is_zero_length(LPCWSTR filename)
+{
+    HANDLE file;
+    DWORD len;
+
+    file = CreateFileW(filename, GENERIC_READ, 0, NULL, 
+                OPEN_EXISTING, 0, NULL);
+    if (file==INVALID_HANDLE_VALUE)
+        return FALSE;
+    len = GetFileSize(file, NULL);
+    CloseHandle(file);
+    return len == 0;
+}
+
 void test_open_storage(void)
 {
     static const WCHAR szPrefix[] = { 's','t','g',0 };
@@ -323,9 +349,22 @@ void test_open_storage(void)
     WCHAR filename[MAX_PATH];
     IStorage *stg = NULL, *stg2 = NULL;
     HRESULT r;
+    DWORD stgm;
 
     if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
         return;
+
+    /* try opening a zero length file - it should stay zero length */
+    DeleteFileW(filename);
+    touch_file(filename);
+    stgm = STGM_NOSCRATCH | STGM_TRANSACTED | STGM_SHARE_DENY_WRITE | STGM_READWRITE;
+    r = StgOpenStorage( filename, NULL, stgm, NULL, 0, &stg);
+    ok(r==STG_E_FILEALREADYEXISTS, "StgOpenStorage didn't fail\n");
+
+    stgm = STGM_SHARE_EXCLUSIVE | STGM_READWRITE;
+    r = StgOpenStorage( filename, NULL, stgm, NULL, 0, &stg);
+    ok(r==STG_E_FILEALREADYEXISTS, "StgOpenStorage didn't fail\n");
+    ok(is_zero_length(filename), "file length changed\n");
 
     DeleteFileW(filename);
 
@@ -350,19 +389,37 @@ void test_open_storage(void)
     ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
     r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_READ | STGM_READ, NULL, 0, &stg);
     ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_WRITE | STGM_READWRITE, NULL, 0, &stg);
+    ok(r==STG_E_INVALIDFLAG, "StgOpenStorage failed\n");
 
     /* open it for real */
     r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_WRITE | STGM_READ, NULL, 0, &stg);
     ok(r==S_OK, "StgOpenStorage failed\n");
-    r = IStorage_Release(stg);
-    ok(r == 0, "wrong ref count\n");
+    if(stg)
+    {
+        r = IStorage_Release(stg);
+        ok(r == 0, "wrong ref count\n");
+    }
+
+    /* test the way word opens its custom dictionary */
+    r = StgOpenStorage( filename, NULL, STGM_NOSCRATCH | STGM_TRANSACTED |
+                        STGM_SHARE_DENY_WRITE | STGM_READWRITE, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed\n");
+    if(stg)
+    {
+        r = IStorage_Release(stg);
+        ok(r == 0, "wrong ref count\n");
+    }
 
     r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg);
     ok(r==S_OK, "StgOpenStorage failed\n");
     r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg2);
     ok(r==STG_E_SHAREVIOLATION, "StgOpenStorage failed\n");
-    r = IStorage_Release(stg);
-    ok(r == 0, "wrong ref count\n");
+    if(stg)
+    {
+        r = IStorage_Release(stg);
+        ok(r == 0, "wrong ref count\n");
+    }
 
     r = DeleteFileW(filename);
     ok(r, "file didn't exist\n");
