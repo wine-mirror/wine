@@ -1,0 +1,32 @@
+DEFS      = -DWINELIB -DSTRICT
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = uninstaller
+WRCEXTRA  = -s -p uninstaller
+
+LICENSELANG = En
+
+C_SRCS = \
+	main.c
+
+SPEC_SRCS = uninstaller.spec
+
+RC_SRCS = rsrc.rc
+
+all: check_wrc $(PROGRAMS)
+
+@MAKE_RULES@
+
+uninstaller: $(OBJS)
+	$(CC) -o uninstaller $(OBJS) $(DLL_LINK) $(LIBS)
+
+install::
+	$(INSTALL_PROGRAM) uninstaller $(bindir)/uninstaller
+
+uninstall::
+	$(RM) $(bindir)/uninstaller
+
+### Dependencies:

@@ -1,0 +1,21 @@
+Uninstaller README
+
+Uninstaller, copyright 2000, Andreas Mohr
+Uninstaller is to be distributed under the Wine License
+See the Wine License for further information.
+
+This is an uninstaller for all setup programs that put an uninstall entry
+into the registry, such as e.g. InstallShield or the WISE installer.
+Its files have been shamelessly ripped from WineMine partially :)
+
+TODO:
+    - implement sorting of the uninstall entries
+    - let the uninstall happen in a separate thread in order to be able to
+      uninstall several programs concurrently
+
+KNOWN BUGS:
+    - minimizing/maximizing is broken (just as with WineMine)
+    - the icon is, ermm, wrong ;-))
+
+UNKNOWN BUGS:
+    ???

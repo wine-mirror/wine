@@ -259,7 +259,7 @@ then
 
 	    if test "$wine_cv_opengl_version_OK" = "yes" -a \( "$wine_cv_opengl_version_threadsafe" = "no" -o $OPENGL = "yes" \)
             then
-		dnl Check for the presense of the library
+		dnl Check for the presence of the library
 		AC_CHECK_LIB(GL,glXCreateContext,
 			     X_PRE_LIBS="$X_PRE_LIBS -lGL"
 			     MESA_SRCS='$(MESA_SRCS)'
@@ -1040,7 +1040,6 @@ dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
 dlls/tapi32/Makefile
 dlls/ttydrv/Makefile
-dlls/ttydrv/Makefile
 dlls/urlmon/Makefile
 dlls/user/Makefile
 dlls/version/Makefile
@@ -1078,8 +1077,8 @@ include/Makefile
 library/Makefile
 libtest/Makefile
 loader/Makefile
-loader/ne/Makefile
 loader/dos/Makefile
+loader/ne/Makefile
 memory/Makefile
 misc/Makefile
 miscemu/Makefile
@@ -1087,15 +1086,16 @@ msdos/Makefile
 objects/Makefile
 ole/Makefile
 programs/Makefile
+programs/avitools/Makefile
 programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
-programs/avitools/Makefile
-programs/osversioncheck/Makefile
 programs/notepad/Makefile
+programs/osversioncheck/Makefile
 programs/progman/Makefile
-programs/regtest/Makefile
 programs/regapi/Makefile
+programs/regtest/Makefile
+programs/uninstaller/Makefile
 programs/view/Makefile
 programs/wcmd/Makefile
 programs/winemine/Makefile
@@ -1108,8 +1108,8 @@ server/Makefile
 tools/Makefile
 tools/cvdump/Makefile
 tools/winebuild/Makefile
-tools/wrc/Makefile
 tools/wmc/Makefile
+tools/wrc/Makefile
 tsx11/Makefile
 unicode/Makefile
 win32/Makefile
