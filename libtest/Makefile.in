@@ -35,7 +35,7 @@ hello2: hello2.o hello2.spec.o
 	$(CC) -o hello2 $+ $(DLL_LINK) $(LIBS)
 
 hello3: hello3.o hello3.spec.o hello3res.o
-	$(CC) -o hello3 $+  -L$(DLLDIR) -lcomdlg32 -lwinspool $(DLL_LINK) $(LIBS)
+	$(CC) -o hello3 $+  -L$(DLLDIR) -lcomdlg32 -lwinspool.drv $(DLL_LINK) $(LIBS)
 
 hello4: hello4.o hello4.spec.o
 	$(CC) -o hello4 $+ $(DLL_LINK) $(LIBS)

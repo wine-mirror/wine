@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
-IMPORTS   = shell32 comdlg32 ole32 winspool
+IMPORTS   = shell32 comdlg32 ole32 winspool.drv
 WRCEXTRA  = -s -p progman
 
 LICENSELANG = En

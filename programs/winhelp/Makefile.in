@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
-IMPORTS   = shell32 ole32 comdlg32 winspool
+IMPORTS   = shell32 ole32 comdlg32 winspool.drv
 WRCEXTRA  = -s -p winhelp
 
 C_SRCS = \

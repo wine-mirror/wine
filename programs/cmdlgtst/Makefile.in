@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = cmdlgtst
-IMPORTS   = comdlg32 winspool
+IMPORTS   = comdlg32 winspool.drv
 WRCEXTRA  = -s -p cmdlgtst
 
 C_SRCS = \
