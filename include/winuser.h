@@ -3569,9 +3569,6 @@ HWND      WINAPI WindowFromPoint(POINT);
 BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,DWORD);
 BOOL      WINAPI WinHelpW(HWND,LPCWSTR,UINT,DWORD);
 #define     WinHelp WINELIB_NAME_AW(WinHelp)
-UINT      WINAPI WNetAddConnectionA(LPCSTR,LPCSTR,LPCSTR);
-UINT      WINAPI WNetAddConnectionW(LPCWSTR,LPCWSTR,LPCWSTR);
-#define     WNetAddConnection WINELIB_NAME_AW(WNetAddConnection)
 INT       WINAPIV wsnprintfA(LPSTR,UINT,LPCSTR,...);
 INT       WINAPIV wsnprintfW(LPWSTR,UINT,LPCWSTR,...);
 #define     wsnprintf WINELIB_NAME_AW(wsnprintf)

@@ -802,6 +802,7 @@ dlls/dciman32/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
 dlls/lzexpand/Makefile
+dlls/mpr/Makefile
 dlls/msacm/Makefile
 dlls/msacm32/Makefile
 dlls/msnet32/Makefile

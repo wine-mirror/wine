@@ -8,6 +8,7 @@ SUBDIRS = \
 	imagehlp \
 	imm32 \
 	lzexpand \
+	mpr \
 	msacm \
 	msacm32 \
 	msnet32 \

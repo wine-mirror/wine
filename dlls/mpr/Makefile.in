@@ -1,0 +1,23 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = mpr
+
+SPEC_SRCS = mpr.spec
+
+C_SRCS = \
+	auth.c \
+	mpr_main.c \
+	multinet.c \
+	nps.c \
+	pwcache.c \
+	wnet.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:
+

@@ -39,6 +39,7 @@ LIBSUBDIRS = \
 	dlls/imagehlp \
 	dlls/imm32 \
 	dlls/lzexpand \
+	dlls/mpr \
 	dlls/msacm \
 	dlls/msacm32 \
 	dlls/msnet32 \
@@ -130,6 +131,7 @@ LIBOBJS = \
 	dlls/imagehlp/imagehlp.o \
 	dlls/imm32/imm32.o \
 	dlls/lzexpand/lzexpand.o \
+	dlls/mpr/mpr.o \
 	dlls/msacm/msacm.o \
 	dlls/msacm32/msacm32.o \
 	dlls/msnet32/msnet32.o \

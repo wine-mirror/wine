@@ -13,7 +13,6 @@ SPEC_SRCS = \
 	dsound.spec \
 	gdi32.spec \
 	kernel32.spec \
-	mpr.spec \
 	mcianim.spec \
 	mciavi.spec \
 	mcicda.spec \

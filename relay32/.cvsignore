@@ -12,7 +12,6 @@ mciavi.spec.c
 mcicda.spec.c
 mciseq.spec.c
 mciwave.spec.c
-mpr.spec.c
 ole32.spec.c
 oleaut32.spec.c
 olecli32.spec.c
