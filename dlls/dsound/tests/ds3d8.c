@@ -61,7 +61,8 @@ static int buffer_refill8(play_state_t* state, DWORD size)
 
     rc=IDirectSoundBuffer_Lock(state->dsbo,state->offset,size,
                                &ptr1,&len1,&ptr2,&len2,0);
-    ok(rc==DS_OK,"Lock: 0x%lx\n",rc);
+    ok(rc==DS_OK,"IDirectSoundBuffer_Lock() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return -1;
 
@@ -73,7 +74,8 @@ static int buffer_refill8(play_state_t* state, DWORD size)
     }
     state->offset=state->written % state->buffer_size;
     rc=IDirectSoundBuffer_Unlock(state->dsbo,ptr1,len1,ptr2,len2);
-    ok(rc==DS_OK,"Unlock: 0x%lx\n",rc);
+    ok(rc==DS_OK,"IDirectSoundBuffer_Unlock() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return -1;
     return size;
@@ -88,7 +90,8 @@ static int buffer_silence8(play_state_t* state, DWORD size)
 
     rc=IDirectSoundBuffer_Lock(state->dsbo,state->offset,size,
                                &ptr1,&len1,&ptr2,&len2,0);
-    ok(rc==DS_OK,"Lock: 0x%lx\n",rc);
+    ok(rc==DS_OK,"IDirectSoundBuffer_Lock() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return -1;
 
@@ -99,7 +102,8 @@ static int buffer_silence8(play_state_t* state, DWORD size)
     }
     state->offset=(state->offset+size) % state->buffer_size;
     rc=IDirectSoundBuffer_Unlock(state->dsbo,ptr1,len1,ptr2,len2);
-    ok(rc==DS_OK,"Unlock: 0x%lx\n",rc);
+    ok(rc==DS_OK,"IDirectSoundBuffer_Unlock() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK)
         return -1;
     return size;
@@ -111,7 +115,8 @@ static int buffer_service8(play_state_t* state)
     HRESULT rc;
 
     rc=IDirectSoundBuffer_GetCurrentPosition(state->dsbo,&play_pos,NULL);
-    ok(rc==DS_OK,"GetCurrentPosition: %lx\n",rc);
+    ok(rc==DS_OK,"IDirectSoundBuffer_GetCurrentPosition() failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc!=DS_OK) {
         goto STOP;
     }
@@ -125,7 +130,8 @@ static int buffer_service8(play_state_t* state)
 
     if (winetest_debug > 1)
         trace("buf size=%ld last_play_pos=%ld play_pos=%ld played=%ld / %ld\n",
-              state->buffer_size,last_play_pos,play_pos,state->played,state->wave_len);
+              state->buffer_size,last_play_pos,play_pos,state->played,
+              state->wave_len);
 
     if (state->played>state->wave_len)
     {
@@ -169,7 +175,8 @@ STOP:
     if (winetest_debug > 1)
         trace("stopping playback\n");
     rc=IDirectSoundBuffer_Stop(state->dsbo);
-    ok(rc==DS_OK,"Stop failed: rc=%ld\n",rc);
+    ok(rc==DS_OK,"IDirectSoundBuffer_Stop() failed: %s\n",
+       DXGetErrorString8(rc));
     return 0;
 }
 
@@ -198,7 +205,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER dsbo,
     dsbcaps.dwSize=sizeof(dsbcaps);
     rc=IDirectSoundBuffer_GetCaps(dsbo,&dsbcaps);
     ok(rc==DS_OK,"GetCaps failed: 0x%lx\n",rc);
-    if (rc==DS_OK) {
+    if (rc==DS_OK && winetest_interactive) {
         trace("    Caps: flags=0x%08lx size=%ld\n",dsbcaps.dwFlags,
               dsbcaps.dwBufferBytes);
     }
@@ -212,7 +219,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER dsbo,
 
     rc=IDirectSoundBuffer_GetFormat(dsbo,&wfx,sizeof(wfx),NULL);
     ok(rc==DS_OK,"GetFormat failed: 0x%lx\n",rc);
-    if (rc==DS_OK && is_primary) {
+    if (rc==DS_OK && is_primary && winetest_interactive) {
         trace("Primary buffer default format: tag=0x%04x %ldx%dx%d avg.B/s=%ld align=%d\n",
               wfx.wFormatTag,wfx.nSamplesPerSec,wfx.wBitsPerSample,
               wfx.nChannels,wfx.nAvgBytesPerSec,wfx.nBlockAlign);
@@ -289,8 +296,10 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER dsbo,
         DS3DBUFFER buffer_param;
         DWORD start_time,now;
 
-        trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
-              wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels);
+        if (winetest_interactive) {
+            trace("    Playing %g second 440Hz tone at %ldx%dx%d\n", duration,
+                  wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels);
+        }
 
         if (is_primary) {
             /* We must call SetCooperativeLevel to be allowed to call Lock */
@@ -524,14 +533,16 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
             bufdesc.dwFlags|=(DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
         bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
         bufdesc.lpwfxFormat=&wfx;
-        trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d\n",
-              has_3dbuffer?"3D ":"",
-              has_duplicate?"duplicated ":"",
-              listener!=NULL||move_sound?"with ":"",
-              move_listener?"moving ":"",
-              listener!=NULL?"listener ":"",
-              listener&&move_sound?"and moving sound ":move_sound?"moving sound ":"",
-              wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+        if (winetest_interactive) {
+            trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d\n",
+                  has_3dbuffer?"3D ":"",
+                  has_duplicate?"duplicated ":"",
+                  listener!=NULL||move_sound?"with ":"",
+                  move_listener?"moving ":"",
+                  listener!=NULL?"listener ":"",
+                  listener&&move_sound?"and moving sound ":move_sound?"moving sound ":"",
+                  wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
+        }
         rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,"CreateSoundBuffer failed to create a 3D secondary buffer 0x%lx\n",rc);
         if (rc==DS_OK && secondary!=NULL) {
@@ -889,7 +900,7 @@ static void ds3d8_tests()
 {
     HRESULT rc;
     rc=DirectSoundEnumerateA(&dsenum_callback,NULL);
-    ok(rc==DS_OK,"DirectSoundEnumerate failed: %ld\n",rc);
+    ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %s\n",DXGetErrorString8(rc));
 }
 
 START_TEST(ds3d8)

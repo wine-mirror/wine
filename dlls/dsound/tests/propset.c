@@ -31,6 +31,7 @@
 #include "dsound.h"
 #include "initguid.h"
 #include "dsconf.h"
+#include "dxerr8.h"
 
 #ifndef DSBCAPS_CTRLDEFAULT
 #define DSBCAPS_CTRLDEFAULT DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLPAN|DSBCAPS_CTRLVOLUME
@@ -216,14 +217,14 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     int ref;
                                                                                 
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
-    ok(rc==DS_OK,"DirectSoundCreate failed: 0x%lx\n",rc);
+    ok(rc==DS_OK,"DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         goto EXIT;
 
     /* We must call SetCooperativeLevel before calling CreateSoundBuffer */
     /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */
     rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
-    ok(rc==DS_OK,"SetCooperativeLevel failed: 0x%lx\n",rc);
+    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         goto EXIT;
                                                                                 
@@ -233,7 +234,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_LOCHARDWARE|DSBCAPS_CTRL3D;
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok(rc==DS_OK&&primary!=NULL,"CreateSoundBuffer failed to create a hardware 3D primary buffer: 0x%lx\n",rc);
+    ok(rc==DS_OK&&primary!=NULL,"IDirectSound_CreateSoundBuffer() failed to create a hardware 3D primary buffer: %s\n",DXGetErrorString8(rc));
     if (rc==DS_OK&&primary!=NULL) {
 	ZeroMemory(&wfx, sizeof(wfx));
 	wfx.wFormatTag=WAVE_FORMAT_PCM;
@@ -250,7 +251,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         trace("  Testing a secondary buffer at %ldx%dx%d\n",
             wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels);
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-        ok(rc==DS_OK&&secondary!=NULL,"CreateSoundBuffer failed to create a secondary buffer 0x%lx\n",rc);
+        ok(rc==DS_OK&&secondary!=NULL,"IDirectSound_CreateSoundBuffer() failed to create a secondary buffer %s\n",DXGetErrorString8(rc));
         if (rc==DS_OK&&secondary!=NULL) {
 	    IKsPropertySet * pPropertySet=NULL;
 	    rc=IDirectSoundBuffer_QueryInterface(secondary,&IID_IKsPropertySet,(void **)&pPropertySet);
@@ -291,21 +292,21 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 		    trace("    DSPROPSETID_ZOOMFX_BufferProperties not supported\n");
 		ref=IKsPropertySet_Release(pPropertySet);
 		/* try a few common ones */
-		ok(ref==0,"IKsPropertySet_Release secondary has %d references, should have 0\n",ref);
+		ok(ref==0,"IKsPropertySet_Release() secondary has %d references, should have 0\n",ref);
 	    } else
 		trace("  Doesn't support property sets\n");
             ref=IDirectSoundBuffer_Release(secondary);
-            ok(ref==0,"IDirectSoundBuffer_Release secondary has %d references, should have 0\n",ref);
+            ok(ref==0,"IDirectSoundBuffer_Release() secondary has %d references, should have 0\n",ref);
         }
  
         ref=IDirectSoundBuffer_Release(primary);
-        ok(ref==0,"IDirectSoundBuffer_Release primary has %d references, should have 0\n",ref);
+        ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, should have 0\n",ref);
     }
  
 EXIT:
     if (dso!=NULL) {
         ref=IDirectSound_Release(dso);
-        ok(ref==0,"IDirectSound_Release has %d references, should have 0\n",ref);
+        ok(ref==0,"IDirectSound_Release() has %d references, should have 0\n",ref);
     }
     return 1;
 }
@@ -314,7 +315,7 @@ static void propset_buffer_tests()
 {
     HRESULT rc;
     rc=DirectSoundEnumerateA(&dsenum_callback,NULL);
-    ok(rc==DS_OK,"DirectSoundEnumerate failed: %ld\n",rc);
+    ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %s\n",DXGetErrorString8(rc));
 }
 
 START_TEST(propset)

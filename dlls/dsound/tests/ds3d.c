@@ -956,7 +956,7 @@ static HRESULT test_primary_3d(LPGUID lpGuid)
     /* Set the CooperativeLevel back to normal */
     /* DSOUND: Setting DirectSound cooperative level to DSSCL_NORMAL */
     rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_NORMAL);
-    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel failed: %s\n",
+    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel() failed: %s\n",
        DXGetErrorString8(rc));
 
 EXIT:
@@ -987,14 +987,14 @@ static HRESULT test_primary_3d_with_listener(LPGUID lpGuid)
     ZeroMemory(&dscaps, sizeof(dscaps));
     dscaps.dwSize=sizeof(dscaps);
     rc=IDirectSound_GetCaps(dso,&dscaps);
-    ok(rc==DS_OK,"IDirectSound_GetCaps failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK,"IDirectSound_GetCaps() failed: %s\n",DXGetErrorString8(rc));
     if (rc!=DS_OK)
         goto EXIT;
 
     /* We must call SetCooperativeLevel before calling CreateSoundBuffer */
     /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */
     rc=IDirectSound_SetCooperativeLevel(dso,get_hwnd(),DSSCL_PRIORITY);
-    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel failed: %s\n",
+    ok(rc==DS_OK,"IDirectSound_SetCooperativeLevel() failed: %s\n",
        DXGetErrorString8(rc));
     if (rc!=DS_OK)
         goto EXIT;
@@ -1106,7 +1106,7 @@ static void ds3d_tests()
 {
     HRESULT rc;
     rc=DirectSoundEnumerateA(&dsenum_callback,NULL);
-    ok(rc==DS_OK,"DirectSoundEnumerate() failed: %s\n",DXGetErrorString8(rc));
+    ok(rc==DS_OK,"DirectSoundEnumerateA() failed: %s\n",DXGetErrorString8(rc));
 }
 
 START_TEST(ds3d)
