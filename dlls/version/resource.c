@@ -386,7 +386,7 @@ DWORD WINAPI GetFileResourceSize16( LPCSTR lpszFileName, LPCSTR lpszResType,
                 lpszResId );
 
     lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
-    if ( !lzfd ) return 0;
+    if ( lzfd < 0 ) return 0;
 
     switch ( read_xx_header( lzfd ) )
     {
@@ -423,7 +423,7 @@ DWORD WINAPI GetFileResource16( LPCSTR lpszFileName, LPCSTR lpszResType,
                 dwFileOffset, dwResLen, lpvData );
 
     lzfd = LZOpenFileA( lpszFileName, &ofs, OF_READ );
-    if ( lzfd == 0 ) return 0;
+    if ( lzfd < 0 ) return 0;
 
     if ( !dwFileOffset )
     {

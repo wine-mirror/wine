@@ -359,7 +359,7 @@ DWORD WINAPI VerInstallFileA(
     else pdest = destdir;
     sprintf(destfn,"%s\\%s",pdest,destfilename);
     hfsrc=LZOpenFileA(srcfn,&ofs,OF_READ);
-    if (hfsrc==HFILE_ERROR)
+    if (hfsrc < 0)
     	return VIF_CANNOTREADSRC;
     sprintf(tmpfn,"%s\\%s",pdest,destfilename);
     tmplast=strlen(pdest)+1;
