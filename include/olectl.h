@@ -2,6 +2,7 @@
 #define __WINE_OLECTL_H
 
 #include "windef.h"
+#include "ocidl.h"
 
 #ifdef __cplusplus
 #define DUMMY_UNION_NAME
@@ -81,11 +82,6 @@ typedef struct tagFONTDESC {
 
 #define FONTSIZE(n) { n##0000, 0 }
 
-/* COREL MOD PQ mar 9 - redecl in mfc */
-#if 0
-WINAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid, VOID** ppvObj);
-#endif
-
 #define PICTYPE_UNINITIALIZED (-1)
 #define PICTYPE_NONE          0
 #define PICTYPE_BITMAP        1
@@ -134,6 +130,28 @@ typedef enum
 typedef VARIANT_BOOL OLE_OPTEXCLUSIVE;
 typedef VARIANT_BOOL OLE_CANCELBOOL;
 typedef VARIANT_BOOL OLE_ENABLEDEFAULTBOOL;
+
+HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon);
+
+HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams);
+
+HRESULT WINAPI OleCreatePropertyFrame(
+	HWND hwndOwner, UINT x, UINT y, 
+	LPCOLESTR lpszCaption, ULONG cObjects, LPUNKNOWN* ppUnk, 
+	ULONG cPages, LPCLSID pPageClsID, LCID lcid, DWORD dwReserved, 
+	LPVOID pvReserved );
+
+HRESULT WINAPI OleLoadPicture(	LPSTREAM lpstream, LONG lSize, BOOL fRunmode, 
+		REFIID reed, LPVOID *lplpvObj );
+
+HRESULT WINAPI OleCreatePictureIndirect(LPPICTDESC lpPictDesc, REFIID riid, 
+		BOOL fOwn, LPVOID * lplpvObj );
+
+HRESULT WINAPI OleCreateFontIndirect(LPFONTDESC lpFontDesc, REFIID riid, 
+		LPVOID* lplpvObj);
+
+HRESULT WINAPI OleTranslateColor( OLE_COLOR clr, HPALETTE hpal,
+		COLORREF* lpcolorref);
 
 /* standard dispatch ID's */
 #define DISPID_AUTOSIZE                 (-500)

@@ -227,10 +227,10 @@ static ICOM_VTABLE(IPersistStream) OLEFontImpl_IPersistStream_VTable =
 /******************************************************************************
  *		OleCreateFontIndirect	[OLEAUT32.420]
  */
-INT WINAPI OleCreateFontIndirect(
+HRESULT WINAPI OleCreateFontIndirect(
   LPFONTDESC lpFontDesc,
   REFIID     riid,
-  VOID**     ppvObj)
+  LPVOID*     ppvObj)
 {
   OLEFontImpl* newFont = 0;
   HRESULT      hr      = S_OK;
