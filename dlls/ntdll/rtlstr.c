@@ -401,13 +401,13 @@ NTSTATUS WINAPI RtlUnicodeStringToAnsiString( STRING *ansi,
     NTSTATUS ret = STATUS_SUCCESS;
     DWORD len = RtlUnicodeStringToAnsiSize( uni );
 
-    ansi->Length = len;
+    ansi->Length = len - 1;
     if (doalloc)
     {
-        ansi->MaximumLength = len + 1;
-        if (!(ansi->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return STATUS_NO_MEMORY;
+        ansi->MaximumLength = len;
+        if (!(ansi->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
     }
-    else if (ansi->MaximumLength <= len)
+    else if (ansi->MaximumLength < len)
     {
         if (!ansi->MaximumLength) return STATUS_BUFFER_OVERFLOW;
         ansi->Length = ansi->MaximumLength - 1;
@@ -434,13 +434,13 @@ NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
     NTSTATUS ret = STATUS_SUCCESS;
     DWORD len = RtlUnicodeStringToOemSize( uni );
 
-    oem->Length = len;
+    oem->Length = len - 1;
     if (doalloc)
     {
-        oem->MaximumLength = len + 1;
-        if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len + 1 ))) return STATUS_NO_MEMORY;
+        oem->MaximumLength = len;
+        if (!(oem->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, len ))) return STATUS_NO_MEMORY;
     }
-    else if (oem->MaximumLength <= len)
+    else if (oem->MaximumLength < len)
     {
         if (!oem->MaximumLength) return STATUS_BUFFER_OVERFLOW;
         oem->Length = oem->MaximumLength - 1;
