@@ -1,6 +1,7 @@
 Makefile
 class.ok
 generated.ok
+input.ok
 listbox.ok
 msg.ok
 sysparams.ok

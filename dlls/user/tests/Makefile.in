@@ -8,6 +8,7 @@ IMPORTS   = user32 gdi32 advapi32
 CTESTS = \
 	class.c \
 	generated.c \
+	input.c \
 	listbox.c \
 	msg.c \
 	sysparams.c \
