@@ -793,6 +793,8 @@ typedef WORD TWOCC;
 
 #define AVI_HEADERSIZE	2048
 
+typedef BOOL (CALLBACK *AVISAVECALLBACK)(INT);
+
 typedef struct _MainAVIHeader
 {
     DWORD	dwMicroSecPerFrame;
@@ -907,6 +909,7 @@ DECL_WINELIB_TYPE_AW(PAVISTREAMINFO)
 #define AVIFILEINFO_HASINDEX		0x00000010
 #define AVIFILEINFO_MUSTUSEINDEX	0x00000020
 #define AVIFILEINFO_ISINTERLEAVED	0x00000100
+#define AVIFILEINFO_TRUSTCKTYPE         0x00000800
 #define AVIFILEINFO_WASCAPTUREFILE	0x00010000
 #define AVIFILEINFO_COPYRIGHTED		0x00020000
 
@@ -967,6 +970,23 @@ typedef struct {
     DWORD	cbParms;
     DWORD	dwInterleaveEvery;	/* for non-video streams only */
 } AVICOMPRESSOPTIONS, *LPAVICOMPRESSOPTIONS,*PAVICOMPRESSOPTIONS;
+
+#define FIND_DIR        0x0000000FL     /* direction mask */
+#define FIND_NEXT       0x00000001L     /* search forward */
+#define FIND_PREV       0x00000004L     /* search backward */
+#define FIND_FROM_START 0x00000008L     /* start at the logical beginning */
+
+#define FIND_TYPE       0x000000F0L     /* type mask */
+#define FIND_KEY        0x00000010L     /* find a key frame */
+#define FIND_ANY        0x00000020L     /* find any (non-empty) sample */
+#define FIND_FORMAT     0x00000040L     /* find a formatchange */
+
+#define FIND_RET        0x0000F000L     /* return mask */
+#define FIND_POS        0x00000000L     /* return logical position */
+#define FIND_LENGTH     0x00001000L     /* return logical size */
+#define FIND_OFFSET     0x00002000L     /* return physical position */
+#define FIND_SIZE       0x00003000L     /* return physical size */
+#define FIND_INDEX      0x00004000L     /* return physical index position */
 
 #include "ole2.h"
 
@@ -1048,13 +1068,33 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
 				      UINT mode, CLSID *pclsidHandler);
 #define AVIStreamOpenFromFile WINELIB_NAME_AW(AVIStreamOpenFromFile)
 
+HRESULT WINAPI AVIBuildFilterA(LPSTR szFilter, LONG cbFilter, BOOL fSaving);
+HRESULT WINAPI AVIBuildFilterW(LPWSTR szFilter, LONG cbFilter, BOOL fSaving);
+#define AVIBuildFilter WINELIB_NAME_AW(AVIBuildFilter)
+
+BOOL WINAPI AVISaveOptions(HWND hWnd,UINT uFlags,INT nStream,
+			   PAVISTREAM *ppavi,LPAVICOMPRESSOPTIONS *ppOptions);
+HRESULT WINAPI AVISaveOptionsFree(INT nStreams,LPAVICOMPRESSOPTIONS*ppOptions);
+
 LONG WINAPI AVIStreamStart(PAVISTREAM iface);
 LONG WINAPI AVIStreamLength(PAVISTREAM iface);
 LONG WINAPI AVIStreamSampleToTime(PAVISTREAM pstream, LONG lSample);
 LONG WINAPI AVIStreamTimeToSample(PAVISTREAM pstream, LONG lTime);
 
+#define AVIStreamEnd(pavi) \
+    (AVIStreamStart(pavi) + AVIStreamLength(pavi))
+#define AVIStreamEndTime(pavi) \
+    AVIStreamSampleToTime(pavi, AVIStreamEnd(pavi))
 #define AVIStreamFormatSize(pavi, lPos, plSize) \
     AVIStreamReadFormat(pavi, lPos, NULL, plSize)
+#define AVIStreamLengthTime(pavi) \
+    AVIStreamSampleToTime(pavi, AVIStreamLength(pavi))
+#define AVIStreamSampleSize(pavi,pos,psize) \
+    AVIStreamRead(pavi,pos,1,NULL,0,psize,NULL)
+#define AVIStreamSampleToSample(pavi1, pavi2, samp2) \
+    AVIStreamTimeToSample(pavi1, AVIStreamSampleToTime(pavi2, samp2))
+#define AVIStreamStartTime(pavi) \
+    AVIStreamSampleToTime(pavi, AVIStreamStart(pavi))
 
 /*****************************************************************************
  * IAVIFile interface
