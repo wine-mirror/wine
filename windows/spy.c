@@ -1855,53 +1855,30 @@ inline static void set_indent_level( int level )
 static const char *SPY_GetMsgInternal( UINT msg )
 {
     if (msg <= SPY_MAX_MSGNUM)
-    {
-        if (!MessageTypeNames[msg]) return "???";
         return MessageTypeNames[msg];
-    }
 
     if (msg >= LVM_FIRST && msg <= LVM_FIRST + SPY_MAX_LVMMSGNUM)
-    {
-        if (!LVMMessageTypeNames[msg-LVM_FIRST]) return "LVM_?";
         return LVMMessageTypeNames[msg-LVM_FIRST];
-    }
 
     if (msg >= TV_FIRST && msg <= TV_FIRST + SPY_MAX_TVMSGNUM)
-    {
-        if (!TVMessageTypeNames[msg-TV_FIRST]) return "TV_?";
         return TVMessageTypeNames[msg-TV_FIRST];
-    }
 
     if (msg >= HDM_FIRST && msg <= HDM_FIRST + SPY_MAX_HDMMSGNUM)
-    {
-        if (!HDMMessageTypeNames[msg-HDM_FIRST]) return "HDM_?";
         return HDMMessageTypeNames[msg-HDM_FIRST];
-    }
 
     if (msg >= TCM_FIRST && msg <= TCM_FIRST + SPY_MAX_TCMMSGNUM)
-    {
-        if (!TCMMessageTypeNames[msg-TCM_FIRST]) return "TCM_?";
         return TCMMessageTypeNames[msg-TCM_FIRST];
-    }
 
     if (msg >= PGM_FIRST && msg <= PGM_FIRST + SPY_MAX_PGMMSGNUM)
-    {
-        if (!PGMMessageTypeNames[msg-PGM_FIRST]) return "PGM_?";
         return PGMMessageTypeNames[msg-PGM_FIRST];
-    }
 
     if (msg >= CCM_FIRST && msg <= CCM_FIRST + SPY_MAX_CCMMSGNUM)
-    {
-        if (!CCMMessageTypeNames[msg-CCM_FIRST]) return "???";
         return CCMMessageTypeNames[msg-CCM_FIRST];
-    }
 
     if (msg >= WM_WINE_DESTROYWINDOW && msg <= WM_WINE_DESTROYWINDOW + SPY_MAX_WINEMSGNUM)
-    {
-        if (!WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW]) return "???";
         return WINEMessageTypeNames[msg-WM_WINE_DESTROYWINDOW];
-    }
-    return "";
+
+    return NULL;
 }
 
 /***********************************************************************
@@ -1946,13 +1923,10 @@ const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *last, UI
 static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 {
     const USER_MSG *p;
-
-    sp_e->msg_name[sizeof(sp_e->msg_name)-1] = 0;
-    strncpy (sp_e->msg_name, SPY_GetMsgInternal( sp_e->msgnum ),
-	     sizeof(sp_e->msg_name)-1);
+    const char *msg_name = SPY_GetMsgInternal( sp_e->msgnum );
 
     sp_e->data_len = 0;
-    if (!sp_e->msg_name[0])
+    if (!msg_name)
     {
 	INT i = 0;
 
@@ -1987,7 +1961,12 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
                 return;
             }
         }
-        sprintf( sp_e->msg_name, "WM_USER+%04x", sp_e->msgnum - WM_USER );
+        sprintf( sp_e->msg_name, "%04x", sp_e->msgnum );
+    }
+    else
+    {
+        strncpy(sp_e->msg_name, msg_name, sizeof(sp_e->msg_name)-1);
+        sp_e->msg_name[sizeof(sp_e->msg_name)-1] = 0;
     }
 }
 
