@@ -207,6 +207,8 @@ BOOL SYSTRAY_ItemInit(SystrayItem *ptrayItem)
 
 static void SYSTRAY_ItemTerm(SystrayItem *ptrayItem)
 {
+  if(ptrayItem->notifyIcon.hIcon)
+     DestroyIcon(ptrayItem->notifyIcon.hIcon);   
   if(ptrayItem->hWndToolTip)
       DestroyWindow(ptrayItem->hWndToolTip);
   if(ptrayItem->hWnd)
@@ -223,7 +225,7 @@ void SYSTRAY_ItemSetMessage(SystrayItem *ptrayItem, UINT uCallbackMessage)
 
 void SYSTRAY_ItemSetIcon(SystrayItem *ptrayItem, HICON hIcon)
 {
-  ptrayItem->notifyIcon.hIcon = hIcon; /* do we need a copy? */
+  ptrayItem->notifyIcon.hIcon = CopyIcon(hIcon);
   InvalidateRect(ptrayItem->hWnd, NULL, TRUE);
 }
 
