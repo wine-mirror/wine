@@ -20,7 +20,7 @@
 
 #include "wine/test.h"
 #include "winbase.h"
-#include "winerror.h"
+#include "winresrc.h" /* Ensure we use Unicode defns with native headers */
 #include "nb30.h"
 #include "lmcons.h"
 #include "lmerr.h"
