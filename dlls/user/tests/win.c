@@ -1244,6 +1244,7 @@ static void test_window_tree(HWND parent, const DWORD *style, const int *order, 
     hwnd = GetWindow(parent, GW_CHILD);
     ok(hwnd != 0, "GetWindow(GW_CHILD) failed\n");
     ok(hwnd == GetWindow(child[total - 1], GW_HWNDFIRST), "GW_HWNDFIRST is wrong\n");
+    ok(child[order[total - 1]] == GetWindow(child[0], GW_HWNDLAST), "GW_HWNDLAST is wrong\n");
 
     for (i = 0; i < total; i++)
     {
