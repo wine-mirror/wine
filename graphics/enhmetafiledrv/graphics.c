@@ -15,10 +15,10 @@
 DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 /**********************************************************************
- *	     EMFDRV_MoveToEx
+ *	     EMFDRV_MoveTo
  */
 BOOL
-EMFDRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt)
+EMFDRV_MoveTo(DC *dc, INT x, INT y)
 {
     EMRMOVETOEX emr;
 

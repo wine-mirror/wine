@@ -71,7 +71,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pInvertRgn */
     X11DRV_LineTo,                   /* pLineTo */
-    NULL,                            /* pMoveToEx */
+    NULL,                            /* pMoveTo */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg (optional) */
     NULL,                            /* pOffsetWindowOrg (optional) */

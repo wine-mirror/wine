@@ -59,10 +59,9 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
  */
 DWORD WINAPI MoveTo16( HDC16 hdc, INT16 x, INT16 y )
 {
-    POINT16	pt;
+    POINT pt;
 
-    if (!MoveToEx16(hdc,x,y,&pt))
-    	return 0;
+    if (!MoveToEx( (HDC)hdc, x, y, &pt )) return 0;
     return MAKELONG(pt.x,pt.y);
 }
 
@@ -77,7 +76,6 @@ BOOL16 WINAPI MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
     if (!MoveToEx( (HDC)hdc, (INT)x, (INT)y, &pt32 )) return FALSE;
     if (pt) CONV_POINT32TO16( &pt32, pt );
     return TRUE;
-
 }
 
 
@@ -87,7 +85,7 @@ BOOL16 WINAPI MoveToEx16( HDC16 hdc, INT16 x, INT16 y, LPPOINT16 pt )
 BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
 {
     BOOL ret = TRUE;
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = DC_GetDCPtr( hdc );
 
     if(!dc) return FALSE;
 
@@ -99,7 +97,7 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
     dc->CursPosY = y;
 
     if(PATH_IsPathOpen(dc->path)) ret = PATH_MoveTo(dc);
-    else if (dc->funcs->pMoveToEx) ret = dc->funcs->pMoveToEx(dc,x,y,pt);
+    else if (dc->funcs->pMoveTo) ret = dc->funcs->pMoveTo(dc,x,y);
     GDI_ReleaseObj( hdc );
     return ret;
 }

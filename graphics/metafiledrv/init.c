@@ -61,7 +61,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
     MFDRV_InvertRgn,                 /* pInvertRgn */
     MFDRV_LineTo,                    /* pLineTo */
-    MFDRV_MoveToEx,                  /* pMoveToEx */
+    MFDRV_MoveTo,                    /* pMoveTo */
     MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
     MFDRV_OffsetViewportOrg,         /* pOffsetViewportOrg */
     MFDRV_OffsetWindowOrg,           /* pOffsetWindowOrg */

@@ -207,7 +207,7 @@ typedef struct tagDC_FUNCS
     INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(DC*,HRGN);    
     BOOL     (*pLineTo)(DC*,INT,INT);
-    BOOL     (*pMoveToEx)(DC*,INT,INT,LPPOINT);
+    BOOL     (*pMoveTo)(DC*,INT,INT);
     INT      (*pOffsetClipRgn)(DC*,INT,INT);
     BOOL     (*pOffsetViewportOrg)(DC*,INT,INT);
     BOOL     (*pOffsetWindowOrg)(DC*,INT,INT);

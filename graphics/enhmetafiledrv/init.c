@@ -62,7 +62,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_IntersectClipRect,        /* pIntersectClipRect */
     EMFDRV_InvertRgn,                /* pInvertRgn */
     EMFDRV_LineTo,                   /* pLineTo */
-    EMFDRV_MoveToEx,                 /* pMoveToEx */
+    EMFDRV_MoveTo,                   /* pMoveTo */
     EMFDRV_OffsetClipRgn,            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg */
     NULL,                            /* pOffsetWindowOrg */

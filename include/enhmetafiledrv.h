@@ -56,7 +56,7 @@ extern INT      EMFDRV_IntersectClipRect( DC *dc, INT left, INT top, INT right,
 					  INT bottom );
 extern BOOL     EMFDRV_InvertRgn( DC *dc, HRGN hrgn );
 extern BOOL     EMFDRV_LineTo( DC *dc, INT x, INT y );
-extern BOOL     EMFDRV_MoveToEx( DC *dc, INT x, INT y, LPPOINT pt);
+extern BOOL     EMFDRV_MoveTo( DC *dc, INT x, INT y );
 extern INT      EMFDRV_OffsetClipRgn( DC *dc, INT x, INT y );
 extern BOOL     EMFDRV_OffsetViewportOrg( DC *dc, INT x, INT y );
 extern BOOL     EMFDRV_OffsetWindowOrg( DC *dc, INT x, INT y );

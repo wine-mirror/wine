@@ -9,23 +9,7 @@
 #include "win16drv.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(win16drv)
-
-/**********************************************************************
- *	     WIN16DRV_MoveToEx
- */
-BOOL
-WIN16DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt) 
-{
-    if (pt)
-    {
-	pt->x = dc->CursPosX;
-	pt->y = dc->CursPosY;
-    }
-    dc->CursPosX = x;
-    dc->CursPosY = y;
-    return TRUE;
-}
+DEFAULT_DEBUG_CHANNEL(win16drv);
 
 /***********************************************************************
  *           WIN16DRV_LineTo

@@ -16,10 +16,10 @@
 DEFAULT_DEBUG_CHANNEL(metafile);
 
 /**********************************************************************
- *	     MFDRV_MoveToEx
+ *	     MFDRV_MoveTo
  */
 BOOL
-MFDRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt)
+MFDRV_MoveTo(DC *dc, INT x, INT y)
 {
     return MFDRV_MetaParam2(dc,META_MOVETO,x,y);
 }

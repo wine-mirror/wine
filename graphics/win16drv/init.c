@@ -86,7 +86,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pInvertRgn */
     WIN16DRV_LineTo,                 /* pLineTo */
-    WIN16DRV_MoveToEx,               /* pMoveToEx */
+    NULL,                            /* pMoveTo */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrgEx */
     NULL,                            /* pOffsetWindowOrgEx */

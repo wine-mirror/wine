@@ -217,7 +217,6 @@ extern BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
                                   const RECT *lprect, LPCWSTR str, UINT count,
                                   const INT *lpDx );
 extern BOOL WIN16DRV_LineTo( DC *dc, INT x, INT y );
-extern BOOL WIN16DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt);
 extern BOOL WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count );
 extern BOOL WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count );
 extern BOOL WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom);
