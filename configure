@@ -11188,7 +11188,7 @@ fi
 
 if test x$ARTSCCONFIG != x -a x$ARTSCCONFIG != x'"$ARTSCCONFIG"';
 then
-    ARTSC_CFLAGS=`$ARTSCCONFIG --cflags`
+    ARTSC_CFLAGS=`$ARTSCCONFIG --cflags | sed 's/\-pthread//'`
     ARTSC_LIBS=`$ARTSCCONFIG --libs`
     save_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS $ARTSC_CFLAGS"
@@ -17329,10 +17329,8 @@ See \`config.log' for more details." >&2;}
 esac
 else
   if test "$cross_compiling" = yes; then
-  { { echo "$as_me:$LINENO: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&5
-echo "$as_me: error: cannot run test program while cross compiling
-See \`config.log' for more details." >&2;}
+  { { echo "$as_me:$LINENO: error: internal error: not reached in cross-compile" >&5
+echo "$as_me: error: internal error: not reached in cross-compile" >&2;}
    { (exit 1); exit 1; }; }
 else
   cat >conftest.$ac_ext <<_ACEOF
