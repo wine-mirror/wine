@@ -461,6 +461,8 @@ UINT WINAPI MsiDatabaseCommit( MSIHANDLE hdb )
 
     /* FIXME: unlock the database */
 
+    msiobj_release( &db->hdr );
+
     return r;
 }
 

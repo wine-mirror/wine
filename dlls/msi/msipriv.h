@@ -53,7 +53,7 @@ struct tagMSIOBJECTHDR
 {
     UINT magic;
     UINT type;
-    UINT refcount;
+    DWORD refcount;
     msihandledestructor destructor;
     struct tagMSIOBJECTHDR *next;
     struct tagMSIOBJECTHDR *prev;

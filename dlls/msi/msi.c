@@ -228,9 +228,12 @@ BOOL encode_base85_guid( GUID *guid, LPWSTR str )
 VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
 {
     MSIDATABASE *db = (MSIDATABASE *) arg;
+    DWORD r;
 
     free_cached_tables( db );
-    IStorage_Release( db->storage );
+    r = IStorage_Release( db->storage );
+    if( r )
+        ERR("database reference count was not zero (%ld)\n", r);
 }
 
 UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
