@@ -361,8 +361,22 @@ UINT WINAPI MsiDatabaseGenerateTransformW( MSIHANDLE hdb, MSIHANDLE hdbref,
 
 UINT WINAPI MsiDatabaseCommit( MSIHANDLE hdb )
 {
-    FIXME("%ld\n", hdb);
-    return ERROR_SUCCESS;
+    MSIDATABASE *db;
+    UINT r;
+
+    TRACE("%ld\n", hdb);
+
+    db = msihandle2msiinfo( hdb, MSIHANDLETYPE_DATABASE );
+    if( !db )
+        return ERROR_INVALID_HANDLE;
+
+    /* FIXME: lock the database */
+
+    r = MSI_CommitTables( db );
+
+    /* FIXME: unlock the database */
+
+    return r;
 }
 
 UINT WINAPI MsiDatabaseGetPrimaryKeysA(MSIHANDLE hdb, 
@@ -406,4 +420,3 @@ UINT WINAPI MsiGetComponentStateW(MSIHANDLE hInstall, LPWSTR szFeature,
     FIXME("%ld %s %p %p\n", hInstall, debugstr_w(szFeature), piInstalled, piAction);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
-

@@ -500,13 +500,13 @@ UINT WINAPI MsiEnableLogW(DWORD dwLogMode, LPCWSTR szLogFile, BOOL fAppend)
 INSTALLSTATE WINAPI MsiQueryProductStateA(LPCSTR szProduct)
 {
     FIXME("%s\n", debugstr_a(szProduct));
-    return 0;
+    return INSTALLSTATE_UNKNOWN;
 }
 
 INSTALLSTATE WINAPI MsiQueryProductStateW(LPCWSTR szProduct)
 {
     FIXME("%s\n", debugstr_w(szProduct));
-    return 0;
+    return INSTALLSTATE_UNKNOWN;
 }
 
 INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)

@@ -123,7 +123,7 @@ int msi_addstring( string_table *st, UINT string_no, CHAR *data, UINT len, UINT 
 {
     int n;
 
-    TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) );
+    /* TRACE("[%2d] = %s\n", string_no, debugstr_an(data,len) ); */
 
     n = st_find_free_entry( st );
     if( n < 0 )
@@ -145,7 +145,35 @@ int msi_addstring( string_table *st, UINT string_no, CHAR *data, UINT len, UINT 
     return n;
 }
 
-UINT msi_id2string( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
+UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
+{
+    UINT len;
+    LPSTR str;
+
+    TRACE("Finding string %d of %d\n", string_no, st->count);
+    if( string_no >= st->count )
+        return ERROR_FUNCTION_FAILED;
+
+    if( !st->strings[string_no].refcount )
+        return ERROR_FUNCTION_FAILED;
+
+    str = st->strings[string_no].str;
+    len = strlen( str );
+
+    if( !buffer )
+    {
+        *sz = MultiByteToWideChar(CP_ACP,0,str,len,NULL,0);
+        return ERROR_SUCCESS;
+    }
+
+    len = MultiByteToWideChar(CP_ACP,0,str,len+1,buffer,*sz);
+    if (!len) buffer[*sz-1] = 0;
+    else *sz = len;
+
+    return ERROR_SUCCESS;
+}
+
+UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz )
 {
     UINT len;
     LPSTR str;
@@ -166,7 +194,8 @@ UINT msi_id2string( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz )
         return ERROR_SUCCESS;
     }
 
-    len = MultiByteToWideChar(CP_ACP,0,str,len,buffer,*sz-1); 
+    if (len >= *sz) len = *sz - 1;
+    memcpy( buffer, str, len );
     buffer[len] = 0;
     *sz = len+1;
 
@@ -206,4 +235,28 @@ UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
         HeapFree( GetProcessHeap(), 0, str );
 
     return r;
+}
+
+UINT msi_string_count( string_table *st )
+{
+    return st->count;
+}
+
+UINT msi_id_refcount( string_table *st, UINT i )
+{
+    if( i >= st->count )
+        return 0;
+    return st->strings[i].refcount;
+}
+
+UINT msi_string_totalsize( string_table *st )
+{
+    UINT size = 0, i;
+
+    for( i=0; i<st->count; i++)
+    {
+        if( st->strings[i].str )
+            size += strlen( st->strings[i].str );
+    }
+    return size;
 }

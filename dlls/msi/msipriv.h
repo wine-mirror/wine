@@ -153,14 +153,20 @@ extern void free_cached_tables( MSIDATABASE *db );
 extern UINT find_cached_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
 extern UINT get_table(MSIDATABASE *db, LPCWSTR name, MSITABLE **table);
 extern UINT load_string_table( MSIDATABASE *db );
+extern UINT MSI_CommitTables( MSIDATABASE *db );
+
 
 /* string table functions */
 extern BOOL msi_addstring( string_table *st, UINT string_no, CHAR *data, UINT len, UINT refcount );
-extern UINT msi_id2string( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
+extern UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
+extern UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz );
 extern LPWSTR MSI_makestring( MSIDATABASE *db, UINT stringid);
 extern UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id );
 extern string_table *msi_init_stringtable( int entries );
 extern VOID msi_destroy_stringtable( string_table *st );
+extern UINT msi_string_count( string_table *st );
+extern UINT msi_id_refcount( string_table *st, UINT i );
+extern UINT msi_string_totalsize( string_table *st );
 
 UINT VIEW_find_column( MSIVIEW *view, LPWSTR name, UINT *n );
 
