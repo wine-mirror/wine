@@ -199,11 +199,12 @@ HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD s
 extern BOOL BUILTIN_Init(void);
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name, BOOL force );
 extern LPCSTR BUILTIN_GetEntryPoint16( WORD cs, WORD ip, WORD *pOrd );
-extern BOOL BUILTIN_ParseDLLOptions( const char *str );
+extern BOOL BUILTIN_ParseDLLOptions( char *str );
 extern void BUILTIN_PrintDLLs(void);
 
 /* relay32/builtin.c */
 extern HMODULE BUILTIN32_LoadImage( LPCSTR name, OFSTRUCT *ofs, BOOL force );
+extern BOOL BUILTIN32_ParseDLLOptions( char *str );
 
 /* if1632/builtin.c */
 extern HMODULE16 (*fnBUILTIN_LoadModule)(LPCSTR name, BOOL force);

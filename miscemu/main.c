@@ -140,8 +140,8 @@ int main( int argc, char *argv[] )
     /* Handle -dll option (hack) */
     if (Options.dllFlags)
     {
-        if (!BUILTIN_ParseDLLOptions( Options.dllFlags ))
-        {
+	/* If there are options left, or if the parser had errors, report it */
+        if (!BUILTIN_ParseDLLOptions( Options.dllFlags )||Options.dllFlags[0]) {
             MSG("%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",
                      argv[0] );
             BUILTIN_PrintDLLs();

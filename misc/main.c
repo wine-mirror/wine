@@ -34,6 +34,7 @@
 #include "debug.h"
 #include "debugdefs.h"
 #include "xmalloc.h"
+#include "module.h"
 #include "version.h"
 #include "winnls.h"
 #include "console.h"
@@ -815,6 +816,10 @@ BOOL MAIN_WineInit( int *argc, char *argv[] )
     MONITOR_PrimaryMonitor.pDriver = &TTYDRV_MONITOR_Driver;
 #endif /* !defined(X_DISPLAY_MISSING) */
     MONITOR_Initialize(&MONITOR_PrimaryMonitor);
+
+    if (Options.dllFlags)
+	BUILTIN32_ParseDLLOptions( Options.dllFlags );
+	/* if (__winelib && errors ) print_error_message_like_misc_main(); */
 
     atexit(called_at_exit);
     return TRUE;

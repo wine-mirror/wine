@@ -351,15 +351,20 @@ void BUILTIN_DefaultIntHandler( CONTEXT *context )
  *
  * Set runtime DLL usage flags
  */
-BOOL BUILTIN_ParseDLLOptions( const char *str )
+BOOL BUILTIN_ParseDLLOptions( char *str )
 {
     BUILTIN16_DLL *dll;
-    const char *p;
+    char *p,*last;
 
+
+    last = str;
     while (*str)
     {
-        while (*str && isspace(*str)) str++;
-        if (!*str) return TRUE;
+        while (*str && (*str==',' || isspace(*str))) str++;
+        if (!*str) {
+	    *last = '\0'; /* cut off garbage at end at */
+	    return TRUE;
+	}
         if ((*str != '+') && (*str != '-')) return FALSE;
         str++;
         if (!(p = strchr( str, ',' ))) p = str + strlen(str);
@@ -380,11 +385,22 @@ BOOL BUILTIN_ParseDLLOptions( const char *str )
                 break;
             }
         }
-        if (!dll->descr)
-            if (!BUILTIN32_EnableDLL( str, (int)(p - str), (str[-1] == '+') ))
-                return FALSE;
-        str = p;
-        while (*str && (isspace(*str) || (*str == ','))) str++;
+        if (!dll->descr) {
+	    /* not found, but could get handled by BUILTIN32_, so move last */
+	    last = p;
+	    str = p;
+	} else {
+	    /* handled. cut out the "[+-]DLL," string, so it isn't handled
+	     * by BUILTIN32
+	     */
+	    if (*p) {
+		memcpy(last,p,strlen(p)+1);
+		str = last;
+	    } else {
+	    	*last = '\0';
+	    	break;
+	    }
+	}
     }
     return TRUE;
 }

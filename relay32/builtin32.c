@@ -435,27 +435,59 @@ void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr, int ordinal )
     ExitProcess(1);
 }
 
-
 /***********************************************************************
- *           BUILTIN32_EnableDLL
+ *           BUILTIN32_ParseDLLOptions
  *
- * Enable or disable a built-in DLL.
+ * Set runtime DLL usage flags
  */
-int BUILTIN32_EnableDLL( const char *name, int len, int enable )
+BOOL BUILTIN32_ParseDLLOptions( char *str )
 {
-    int i;
     BUILTIN32_DLL *dll;
+    char *p,*last;
 
-    for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
+    last = str;
+    while (*str)
     {
-        if (!lstrncmpiA( name, dll->descr->name, len ))
-        {
-            dll->used = enable;
-            return TRUE;
-        }
+        while (*str && (*str==',' || isspace(*str))) str++;
+        if (!*str) {
+	    *last = '\0'; /* cut off garbage at end at */
+	    return TRUE;
+	}
+        if ((*str != '+') && (*str != '-')) return FALSE;
+        str++;
+        if (!(p = strchr( str, ',' ))) p = str + strlen(str);
+        while ((p > str) && isspace(p[-1])) p--;
+        if (p == str) return FALSE;
+	for (dll = BuiltinDLLs; dll->descr; dll++)
+	{
+	    if (!lstrncmpiA( dll->descr->name, str, (int)(p-str) ))
+	    {
+	        if (dll->descr->name[p-str]) /* partial match - skip */
+			continue;
+		dll->used = (str[-1]!='-');
+		break;
+	    }
+	}
+        if (!dll->descr) {
+	    /* not found, but could get handled by BUILTIN_, so move last */
+	    last = p;
+	    str = p;
+	} else {
+	    /* handled. cut out the "[+-]DLL," string, so it isn't handled
+	     * by BUILTIN
+	     */
+	    if (*p) {
+		memcpy(last,p,strlen(p)+1);
+		str = last;
+	    } else {
+	    	*last = '\0';
+		break;
+	    }
+	}
     }
-    return FALSE;
+    return TRUE;
 }
+
 
 
 /***********************************************************************
