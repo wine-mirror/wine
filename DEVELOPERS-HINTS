@@ -16,10 +16,9 @@ Wine API directories:
 KERNEL:
 
 	files/			- file I/O
-	loader/			- Win16-, Win32-binary loader
 	memory/			- memory management
-	msdos/			- DOS features and BIOS calls (interrupts)
 	scheduler/		- process and thread management
+	winnls/			- National Language Support configuration files
 
 GDI:
 
@@ -30,6 +29,7 @@ GDI:
 		psdrv/		- PostScript graphics driver
 		metafiledrv/	- metafile driver
 		enhmetafiledrv/	- enhanced metafile driver
+		wing/           - WinG (for games) internface
 	objects/		- logical objects
 
 USER:
@@ -42,12 +42,20 @@ Other DLLs:
 
 	dlls/			- Other system DLLs implemented by Wine
 		advapi32/	- crypto, systeminfo, security, eventlogging
+		avicap32/
 		avifil32/	- COM object to play AVI files
 		comctl32/	- common controls
 		commdlg/	- common dialog boxes (both 16 & 32 bit)
 		crtdll/		- Old C runtime library
+		crypt32/
+		dciman32/
+		ddraw/		- DirectX ddraw
+		dinput/		- DirectX dinput 
+		dplay/		- DirectX dplay
 		dplayx/		- DirectX dplayx
 		dsound/		- DirectX dsound
+		glu32/
+		icmp/
 		imagehlp/	- PE (Portable Executable) Image Helper lib
 		imm32/
 		lzexpand/	- Liv-Zempel compression/decompression
@@ -55,34 +63,57 @@ Other DLLs:
                                   network transport protocols)
 		msacm/		- audio compression manager (multimedia) (16 bit)
 		msacm32/	- audio compression manager (multimedia) (32 bit)
+		msdmo/
+		msimg32/
+		msisys/
 		msnet/
-		msvcrt/		- C runtime library
+		msrle32
+		msvcrt/		- 16 bit C runtime library 
+		msvcrt20/	- 32 bit C runtime library
 		msvideo/	- 16 bit video manager
+		netapi32/
+		ntdll/		- NT implementation of kernel calls
+		odbc32/
 		ole32/		- 32 bit OLE 2.0 libraries
 		oleaut32/	- 32 bit OLE 2.0 automation
 		olecli/		- 16 bit OLE client
 		oledlg/		- OLE 2.0 user interface support
+		olepro32/	- 32 bit OLE 2.0 automation
 		olesvr/		- 16 bit OLE server
-		ntdll/		- NT implementation of kernel calls
+		opengl32/	- OpenGL implementation
 		psapi/		- process status API
+		qcap/
+		quartz/
 		rasapi32/	- remote access server API
+		richedit/
+		rpcrt4/
+		serialui/
+		setupapi/
+		shdocvw/
+		shfolder/
 		shell32/	- COM object implementing shell views
-		sound/		- Sound on loudspeaker (not sound card)
+		shlwapi/
+		sti/
 		tapi32/		- telephone API
+		url
+		urlmon
 		ver/		- File Installation Library (16 bit)
 		version/	- File Installation Library (32 bit)
-		win32s
-		win87em		- 80387 math-emulation
+		win32s/
+		win87em/	- 80387 math-emulation
 		winaspi/	- 16 bit Advanced SCSI Peripheral Interface
-		windebug/	- Windows debugger
-		wing/		- WinG (for games) internface
+		winedos/	- DOS features and BIOS calls (interrupts)
 		winmm/		- multimedia (16 & 32 bit)
 			mciXXX/	- various MCI drivers
+			midimap/- midi mapper
+			wavemap/- audio mapper
 			winearts/ - ARTS audio driver
 			wineoss/- MM driver for OSS systems
-			wavemap/- audio mapper
-			midimap/- midi mapper
-		winspool/	- Printing & Print Spooler 
+		winnls/		- National Language Support
+		winsock/	
+		wsock32/
+		winspool/	- Printing & Print Spooler
+		wintrust/
 		wnaspi32/	- 32 bit ASPI
 
 Miscellaneous:
@@ -90,14 +121,10 @@ Miscellaneous:
 	misc/			- shell, registry, winsock, etc.
 	ipc/			- SysV IPC based interprocess communication
 	win32/			- misc Win32 functions
-        ole/			- OLE code 
-		nls/		- National Language Support 
-				  configuration files
 
 Tools:
 ------
 
-	rc/			- old resource compiler
 	tools/			- relay code builder, new rc, bugreport
 				  generator, wineconfigurator, etc.
 	documentation/		- some documentation
