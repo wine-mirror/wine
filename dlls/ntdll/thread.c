@@ -49,6 +49,7 @@ static PEB peb;
 static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
 static RTL_BITMAP tls_bitmap;
+static RTL_BITMAP tls_expansion_bitmap;
 static LIST_ENTRY tls_links;
 
 
@@ -109,8 +110,11 @@ void thread_init(void)
     peb.NumberOfProcessors = 1;
     peb.ProcessParameters  = &params;
     peb.TlsBitmap          = &tls_bitmap;
+    peb.TlsExpansionBitmap = &tls_expansion_bitmap;
     peb.LdrData            = &ldr;
     RtlInitializeBitMap( &tls_bitmap, peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
+    RtlInitializeBitMap( &tls_expansion_bitmap, peb.TlsExpansionBitmapBits,
+                         sizeof(peb.TlsExpansionBitmapBits) * 8 );
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
@@ -535,14 +539,29 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
             if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
             index = *(const DWORD *)data;
-            if (index >= 64) return STATUS_INVALID_PARAMETER;
-            RtlAcquirePebLock();
-            for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
+            if (index < TLS_MINIMUM_AVAILABLE)
             {
-                TEB *teb = CONTAINING_RECORD(entry, TEB, TlsLinks);
-                teb->TlsSlots[index] = 0;
+                RtlAcquirePebLock();
+                for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
+                {
+                    TEB *teb = CONTAINING_RECORD(entry, TEB, TlsLinks);
+                    teb->TlsSlots[index] = 0;
+                }
+                RtlReleasePebLock();
             }
-            RtlReleasePebLock();
+            else
+            {
+                index -= TLS_MINIMUM_AVAILABLE;
+                if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
+                    return STATUS_INVALID_PARAMETER;
+                RtlAcquirePebLock();
+                for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
+                {
+                    TEB *teb = CONTAINING_RECORD(entry, TEB, TlsLinks);
+                    if (teb->TlsExpansionSlots) teb->TlsExpansionSlots[index] = 0;
+                }
+                RtlReleasePebLock();
+            }
             return STATUS_SUCCESS;
         }
         FIXME( "ZeroTlsCell not supported on other threads\n" );

@@ -2192,11 +2192,32 @@ UINT WINAPI SetErrorMode( UINT mode )
 DWORD WINAPI TlsAlloc( void )
 {
     DWORD index;
+    PEB * const peb = NtCurrentTeb()->Peb;
 
     RtlAcquirePebLock();
-    index = RtlFindClearBitsAndSet( NtCurrentTeb()->Peb->TlsBitmap, 1, 0 );
+    index = RtlFindClearBitsAndSet( peb->TlsBitmap, 1, 0 );
     if (index != ~0UL) NtCurrentTeb()->TlsSlots[index] = 0; /* clear the value */
-    else SetLastError( ERROR_NO_MORE_ITEMS );
+    else
+    {
+        index = RtlFindClearBitsAndSet( peb->TlsExpansionBitmap, 1, 0 );
+        if (index != ~0UL)
+        {
+            if (!NtCurrentTeb()->TlsExpansionSlots &&
+                !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                         8 * sizeof(peb->TlsExpansionBitmapBits) * sizeof(void*) )))
+            {
+                RtlClearBits( peb->TlsExpansionBitmap, index, 1 );
+                index = ~0UL;
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            }
+            else
+            {
+                NtCurrentTeb()->TlsExpansionSlots[index] = 0; /* clear the value */
+                index += TLS_MINIMUM_AVAILABLE;
+            }
+        }
+        else SetLastError( ERROR_NO_MORE_ITEMS );
+    }
     RtlReleasePebLock();
     return index;
 }
@@ -2217,12 +2238,17 @@ BOOL WINAPI TlsFree(
     BOOL ret;
 
     RtlAcquirePebLock();
-    ret = RtlAreBitsSet( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
-    if (ret)
+    if (index >= TLS_MINIMUM_AVAILABLE)
     {
-        RtlClearBits( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
-        NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
+        ret = RtlAreBitsSet( NtCurrentTeb()->Peb->TlsExpansionBitmap, index - TLS_MINIMUM_AVAILABLE, 1 );
+        if (ret) RtlClearBits( NtCurrentTeb()->Peb->TlsExpansionBitmap, index - TLS_MINIMUM_AVAILABLE, 1 );
     }
+    else
+    {
+        ret = RtlAreBitsSet( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
+        if (ret) RtlClearBits( NtCurrentTeb()->Peb->TlsBitmap, index, 1 );
+    }
+    if (ret) NtSetInformationThread( GetCurrentThread(), ThreadZeroTlsCell, &index, sizeof(index) );
     else SetLastError( ERROR_INVALID_PARAMETER );
     RtlReleasePebLock();
     return TRUE;
@@ -2239,13 +2265,25 @@ BOOL WINAPI TlsFree(
 LPVOID WINAPI TlsGetValue(
     DWORD index) /* [in] TLS index to retrieve value for */
 {
-    if (index >= NtCurrentTeb()->Peb->TlsBitmap->SizeOfBitMap)
+    LPVOID ret;
+
+    if (index < TLS_MINIMUM_AVAILABLE)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return NULL;
+        ret = NtCurrentTeb()->TlsSlots[index];
+    }
+    else
+    {
+        index -= TLS_MINIMUM_AVAILABLE;
+        if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return NULL;
+        }
+        if (!NtCurrentTeb()->TlsExpansionSlots) ret = NULL;
+        else ret = NtCurrentTeb()->TlsExpansionSlots[index];
     }
     SetLastError( ERROR_SUCCESS );
-    return NtCurrentTeb()->TlsSlots[index];
+    return ret;
 }
 
 
@@ -2260,12 +2298,27 @@ BOOL WINAPI TlsSetValue(
     DWORD index,  /* [in] TLS index to set value for */
     LPVOID value) /* [in] Value to be stored */
 {
-    if (index >= NtCurrentTeb()->Peb->TlsBitmap->SizeOfBitMap)
+    if (index < TLS_MINIMUM_AVAILABLE)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
+        NtCurrentTeb()->TlsSlots[index] = value;
     }
-    NtCurrentTeb()->TlsSlots[index] = value;
+    else
+    {
+        index -= TLS_MINIMUM_AVAILABLE;
+        if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+        if (!NtCurrentTeb()->TlsExpansionSlots &&
+            !(NtCurrentTeb()->TlsExpansionSlots = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                         8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits) * sizeof(void*) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return FALSE;
+        }
+        NtCurrentTeb()->TlsExpansionSlots[index] = value;
+    }
     return TRUE;
 }
 

@@ -1589,6 +1589,8 @@ extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
 #define GetFiberData()     (*(void **)GetCurrentFiber())
 
+#define TLS_MINIMUM_AVAILABLE 64
+
 /*
  * File formats definitions
  */

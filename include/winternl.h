@@ -197,7 +197,7 @@ typedef struct _PEB
     ULONG                        ImageProcessAffinityMask;          /*  c0 */
     ULONG                        GdiHandleBuffer[34];               /*  c4 */
     ULONG                        PostProcessInitRoutine;            /* 14c */
-    ULONG                        TlsExpansionBitmap;                /* 150 */
+    PRTL_BITMAP                  TlsExpansionBitmap;                /* 150 */
     ULONG                        TlsExpansionBitmapBits[32];        /* 154 */
     ULONG                        SessionId;                         /* 1d4 */
 } PEB, *PPEB;
@@ -235,7 +235,7 @@ typedef struct _TEB
     PVOID           Reserved4[26];              /* f18 */
     PVOID           ReservedForOle;             /* f80 Windows 2000 only */
     PVOID           Reserved5[4];               /* f84 */
-    PVOID           TlsExpansionSlots;          /* f94 */
+    PVOID          *TlsExpansionSlots;          /* f94 */
 } TEB, *PTEB;
 # endif /* WINE_TEB_DEFINED */
 #endif  /* WINE_NO_TEB */

@@ -132,7 +132,7 @@ typedef struct _TEB
     DWORD        pad9[24];                   /* --n f20 */
     PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
     PVOID        pad10[4];                   /* --n f84 */
-    PVOID        TlsExpansionSlots;          /* -2- f94 */
+    PVOID       *TlsExpansionSlots;          /* -2- f94 */
 } TEB;
 #endif /* WINE_TEB_DEFINED */
 
