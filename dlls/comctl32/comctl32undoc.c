@@ -187,10 +187,14 @@ BOOL WINAPI
 DPA_Merge (const HDPA hdpa1, const HDPA hdpa2, DWORD dwFlags,
 	   PFNDPACOMPARE pfnCompare, PFNDPAMERGE pfnMerge, LPARAM lParam)
 {
+    INT nCount;
+
+#if 0    /* these go with the "incomplete implementation" below */
     LPVOID pWork1, pWork2;
     INT nResult;
-    INT nCount, nIndex;
+    INT nIndex;
     INT nNewItems;
+#endif
 
     TRACE("(%p %p %08lx %p %p %08lx): semi stub!\n",
 	   hdpa1, hdpa2, dwFlags, pfnCompare, pfnMerge, lParam);
@@ -2051,3 +2055,32 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
   
   return (INT)(lpLoop-lpStr);
 }
+
+/**************************************************************************
+ * comctl32_410 [COMCTL32.410]
+ *
+ * FIXME: What's this supposed to do?
+ *        Parameter 1 is an HWND, you're on your own for the rest.
+ */
+
+BOOL WINAPI comctl32_410( HWND hw, DWORD b, DWORD c, DWORD d) {
+
+   FIXME_(commctrl)("(%x, %lx, %lx, %lx): stub!\n", hw, b, c, d);
+
+   return TRUE;
+}
+
+/*************************************************************************
+ * InitMUILanguage [COMCTL32.70]
+ *
+ * FIXME: What's this supposed to do?  Apparently some i18n thing.
+ *
+ */
+
+BOOL WINAPI InitMUILanguage( DWORD a ) {
+
+   FIXME_(commctrl)("(%lx): stub!\n", a);
+
+   return TRUE;
+}
+
