@@ -68,6 +68,7 @@ foreach $i (split(/\s/,$makefiles))
             next;
         }
     }
+    push @{$imports{$module}}, "kernel32.dll" unless @{$imports{$module}} || $module eq "ntdll.dll";
 }
 
 open NEWMAKE,">Makefile.in.new" or die "cannot create Makefile.in.new";
