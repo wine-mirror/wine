@@ -72,13 +72,13 @@ static const struct message WmSWP_ShowOverlappedSeq[] = {
     { WM_ERASEBKGND, sent|optional },
     { HCBT_ACTIVATE, hook },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, 0 }, /* Win9x: SWP_NOSENDCHANGING */
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -113,7 +113,7 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -142,7 +142,7 @@ static const struct message WmHideOverlappedSeq[] = {
     { WM_ACTIVATE, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
-    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { 0 }
 };
 /* DestroyWindow for a visible overlapped window */
@@ -154,7 +154,7 @@ static const struct message WmDestroyOverlappedSeq[] = {
     { WM_ACTIVATE, sent|wparam, 0 },
     { WM_ACTIVATEAPP, sent|wparam, 0 },
     { WM_KILLFOCUS, sent|wparam, 0 },
-    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
@@ -206,7 +206,8 @@ static const struct message WmShowVisiblePopupSeq_3[] = {
     { WM_ACTIVATE, sent|wparam, 1 },
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent|parent },
-    { WM_IME_SETCONTEXT, sent|defwinproc|optional },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_SETFOCUS, sent|defwinproc },
     { 0 }
 };
@@ -257,7 +258,9 @@ static const struct message WmDestroyChildSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { HCBT_SETFOCUS, hook }, /* set focus to a parent */
     { WM_KILLFOCUS, sent },
-    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|parent|optional, 1 },
+    { WM_SETFOCUS, sent|parent },
     { WM_DESTROY, sent },
     { WM_DESTROY, sent|optional }, /* a bug in win2k sp4 ? */
     { WM_NCDESTROY, sent },
@@ -372,7 +375,8 @@ static const struct message WmCreateCustomDialogSeq[] = {
     { WM_GETTEXT, sent|optional|defwinproc },
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_KILLFOCUS, sent|parent },
-    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
     { WM_SETFOCUS, sent },
     { WM_GETDLGCODE, sent|defwinproc|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
@@ -422,12 +426,16 @@ static const struct message WmEndCustomDialogSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|optional },
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|parent|defwinproc },
     { 0 }
 };
 /* Creation and destruction of a modal dialog (32) */
 static const struct message WmModalDialogSeq[] = {
     { WM_CANCELMODE, sent|parent },
     { WM_KILLFOCUS, sent|parent },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|optional, 0 },
     { WM_ENABLE, sent|parent|wparam, 0 },
     { WM_SETFONT, sent },
     { WM_INITDIALOG, sent },
@@ -453,16 +461,17 @@ static const struct message WmModalDialogSeq[] = {
     { WM_GETICON, sent|optional },
     { WM_GETICON, sent|optional },
     { WM_GETTEXT, sent|optional },
-    { WM_NCCALCSIZE, sent },
-    { WM_NCPAINT, sent },
+    { WM_NCCALCSIZE, sent|optional },
+    { WM_NCPAINT, sent|optional },
     { WM_GETICON, sent|optional },
     { WM_GETICON, sent|optional },
     { WM_GETICON, sent|optional },
     { WM_GETTEXT, sent|optional },
-    { WM_ERASEBKGND, sent },
-    { WM_CTLCOLORDLG, sent },
-    { WM_PAINT, sent },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_CTLCOLORDLG, sent|optional },
+    { WM_PAINT, sent|optional },
     { WM_CTLCOLORBTN, sent },
+    { WM_ENTERIDLE, sent|parent },
     { WM_TIMER, sent },
     { WM_ENABLE, sent|parent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent },
@@ -480,6 +489,8 @@ static const struct message WmModalDialogSeq[] = {
     { WM_ACTIVATE, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|optional },
     { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|parent|wparam|defwinproc|optional, 1 },
+    { WM_SETFOCUS, sent|parent|defwinproc },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
     { 0 }
@@ -969,7 +980,9 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     if (message == WM_PARENTNOTIFY || message == WM_CANCELMODE ||
-	message == WM_KILLFOCUS || message == WM_ENABLE)
+	message == WM_SETFOCUS || message == WM_KILLFOCUS ||
+	message == WM_ENABLE ||	message == WM_ENTERIDLE ||
+	message == WM_IME_SETCONTEXT)
     {
         msg.message = message;
         msg.flags = sent|parent|wparam|lparam;
