@@ -299,7 +299,7 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
 		       page ? page->file->lpszTitle : szCaption,
 		       bPopup ? WS_POPUPWINDOW | WS_BORDER : WS_OVERLAPPEDWINDOW,
 		       origin.x, origin.y, size.cx, size.cy,
-		       0, bPrimary ? LoadMenu(Globals.hInstance, MAIN_MENU) : 0,
+		       0, bPrimary ? LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU)) : 0,
 		       Globals.hInstance, win);
 
   ShowWindow (hWnd, nCmdShow);

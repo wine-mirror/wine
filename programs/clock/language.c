@@ -96,7 +96,7 @@ VOID LANGUAGE_LoadMenus(VOID)
 
 
   /* Create menu */
-  hMainMenu = LoadMenu(Globals.hInstance, MAIN_MENU);
+  hMainMenu = LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU));
     Globals.hPropertiesMenu     = GetSubMenu(hMainMenu, 0);
     Globals.hLanguageMenu       = GetSubMenu(hMainMenu, 1);
     Globals.hInfoMenu           = GetSubMenu(hMainMenu, 2);

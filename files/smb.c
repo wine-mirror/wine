@@ -602,6 +602,7 @@ static BOOL SMB_TreeConnect(int fd, USHORT user_id, LPCSTR share_name, USHORT *t
     return TRUE;
 }
 
+#if 0  /* not yet */
 static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
                               LPCSTR filename, DWORD access, DWORD sharing,
                               LPSECURITY_ATTRIBUTES sa, DWORD creation,
@@ -686,6 +687,7 @@ static BOOL SMB_NtCreateOpen(int fd, USHORT tree_id, USHORT user_id, USHORT dial
 
     return TRUE;
 }
+#endif
 
 static USHORT SMB_GetMode(DWORD access, DWORD sharing)
 {
@@ -723,6 +725,7 @@ static USHORT SMB_GetMode(DWORD access, DWORD sharing)
     return mode;
 }
 
+#if 0  /* not yet */
 /* inverse of FILE_ConvertOFMode */
 static BOOL SMB_OpenAndX(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
                               LPCSTR filename, DWORD access, DWORD sharing,
@@ -753,6 +756,7 @@ static BOOL SMB_OpenAndX(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
     /*FIXME: complete */
     return FALSE;
 }
+#endif
 
 static BOOL SMB_Open(int fd, USHORT tree_id, USHORT user_id, USHORT dialect,
                               LPCSTR filename, DWORD access, DWORD sharing,
@@ -1122,4 +1126,3 @@ BOOL WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, LPDWORD
 
     return r;
 }
-

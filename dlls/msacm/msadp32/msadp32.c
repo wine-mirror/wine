@@ -510,7 +510,6 @@ static	void	ADPCM_Reset(PACMDRVSTREAMINSTANCE adsi, AcmAdpcmData* aad)
 static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 {
     AcmAdpcmData*	aad;
-    unsigned            nspb;
 
     assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
 
@@ -538,17 +537,20 @@ static	LRESULT	ADPCM_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
             adsi->pwfxDst->wBitsPerSample != 16)
 	    goto theEnd;
-#if 0
-        nspb = ((IMAADPCMWAVEFORMAT*)adsi->pwfxSrc)->wSamplesPerBlock;
-        FIXME("spb=%u\n", nspb);
 
-        /* we check that in a block, after the header, samples are present on
-         * 4-sample packet pattern
-         * we also check that the block alignement is bigger than the expected size
-         */
-        if (((nspb - 1) & 3) != 0) goto theEnd;
-        if ((((nspb - 1) / 2) + 4) * adsi->pwfxSrc->nChannels < adsi->pwfxSrc->nBlockAlign)
-            goto theEnd;
+#if 0
+        {
+            unsigned int nspb = ((IMAADPCMWAVEFORMAT*)adsi->pwfxSrc)->wSamplesPerBlock;
+            FIXME("spb=%u\n", nspb);
+
+            /* we check that in a block, after the header, samples are present on
+             * 4-sample packet pattern
+             * we also check that the block alignement is bigger than the expected size
+             */
+            if (((nspb - 1) & 3) != 0) goto theEnd;
+            if ((((nspb - 1) / 2) + 4) * adsi->pwfxSrc->nChannels < adsi->pwfxSrc->nBlockAlign)
+                goto theEnd;
+        }
 #endif
 
 	/* adpcm decoding... */

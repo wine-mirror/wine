@@ -22,15 +22,16 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <values.h>
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
@@ -43,8 +44,8 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "alsa.h"
+#include "wine/library.h"
 #include "wine/debug.h"
-#include "wine/port.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 
@@ -153,6 +154,7 @@ static DWORD            ALSA_WodNumDevs;
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 
 /* These strings used only for tracing */
+#if 0
 static const char *wodPlayerCmdString[] = {
     "WINE_WM_PAUSING",
     "WINE_WM_RESTARTING",
@@ -162,6 +164,7 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_BREAKLOOP",
     "WINE_WM_CLOSING",
 };
+#endif
 
 /*======================================================================*
  *                  Low level WAVE implementation			*
@@ -1142,7 +1145,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     EXIT_ON_ERROR( snd_pcm_hw_params(pcm, hw_params), MMSYSERR_INVALPARAM, "unable to set hw params for playback");
 
     snd_pcm_sw_params_current(pcm, sw_params);
-    EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? MAXINT : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
+    EXIT_ON_ERROR( snd_pcm_sw_params_set_start_threshold(pcm, sw_params, dwFlags & WAVE_DIRECTSOUND ? INT_MAX : 1 ), MMSYSERR_ERROR, "unable to set start threshold");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_size(pcm, sw_params, period_size*2), MMSYSERR_ERROR, "unable to set silence size");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_avail_min(pcm, sw_params, period_size), MMSYSERR_ERROR, "unable to set avail min");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_xfer_align(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set xfer align");
@@ -1635,7 +1638,6 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
     snd_pcm_format_t   format;
     snd_pcm_uframes_t  period_size;
     snd_pcm_sframes_t  avail;
-    snd_pcm_state_t    state;
 
     if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->p_handle)
     	return;

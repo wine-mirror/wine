@@ -57,17 +57,6 @@ void LANGUAGE_UpdateWindowCaption(void) {
 
 
 
-static BOOL LANGUAGE_LoadStringOther(UINT num, UINT ids, LPSTR str, UINT len)
-{
-  BOOL bOk;
-
-  ids -= Globals.wStringTableOffset;
-  ids += num * 0x100;
-
-  bOk = LoadString(Globals.hInstance, ids, str, len);
-
-  return(bOk);
-}
 
 VOID LANGUAGE_LoadMenus(VOID)
 {
@@ -81,7 +70,7 @@ VOID LANGUAGE_LoadMenus(VOID)
   /*lstrcpyn(STRING_PAGESETUP_Xx + sizeof(STRING_PAGESETUP_Xx) - 3, lang, 3);*/
 
   /* Create menu */
-  hMainMenu = LoadMenu(Globals.hInstance, MAIN_MENU);
+  hMainMenu = LoadMenu(Globals.hInstance, MAKEINTRESOURCE(MAIN_MENU));
     Globals.hFileMenu     = GetSubMenu(hMainMenu, 0);
     Globals.hEditMenu     = GetSubMenu(hMainMenu, 1);
     Globals.hSearchMenu   = GetSubMenu(hMainMenu, 2);
