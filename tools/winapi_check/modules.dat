@@ -356,6 +356,7 @@ dlls/win32s
 
 % dlls/win32s/win32s16.spec
 
+dlls/kernel
 dlls/win32s
 memory
 scheduler

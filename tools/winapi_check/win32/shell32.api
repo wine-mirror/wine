@@ -38,6 +38,7 @@ HIMAGELIST *
 HWND *
 IShellFolder **
 IStream *
+ITEMIDLIST *
 IUnknown *
 LPBROWSEINFOA
 LPBYTE

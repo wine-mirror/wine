@@ -51,6 +51,7 @@ MMIOINFO16 *
 UINT16 *
 WAVEHDR *
 WORD *
+YIELDPROC16
 
 %ptr # --forbidden
 
@@ -62,10 +63,6 @@ LPWAVEHDR
 FARPROC16
 LPTIMECALLBACK16
 SEGPTR
-
-%segptr # --forbidden
-
-YIELDPROC
 
 %str
 

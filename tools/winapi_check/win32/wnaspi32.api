@@ -1,7 +1,10 @@
 %long
 
+BOOL
 DWORD
 
 %ptr
 
+LPDWORD
 LPSRB
+LPVOID

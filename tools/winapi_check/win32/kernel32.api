@@ -38,10 +38,6 @@ HMODULE16
 UINT16
 int
 
-%longlong
-
-LARGE_INTEGER
-
 %ptr
 
 BOOL *

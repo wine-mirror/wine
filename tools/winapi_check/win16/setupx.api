@@ -9,16 +9,26 @@ LPDWORD
 
 %ptr # --forbidden
 
+HINF16 *
 LPHKEY
+LPWORD
 
 %str
 
 LPCSTR
 LPSTR
 
+%void
+
+void
+
 %word # --forbidden
 
 INT16
+LOGDISKID16
+HINF16
 HINSTANCE16
 HKEY
 HWND16
+RETERR16
+WORD

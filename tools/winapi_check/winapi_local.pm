@@ -75,7 +75,11 @@ sub check_function {
 	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
 	    $implemented_calling_convention = "varargs";
 	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
-	    $implemented_calling_convention = "stdcall";
+	    if($implemented_return_kind =~ /^longlong$/) {
+		$implemented_calling_convention = "stdcall64";
+	    } else {
+		$implemented_calling_convention = "stdcall";
+	    }
 	} else {
 	    $implemented_calling_convention = "cdecl";
 	}
