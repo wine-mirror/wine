@@ -13,7 +13,7 @@ type	win32
  10 stdcall CoFileTimeNow(ptr) CoFileTimeNow
  11 stdcall CoFileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
  12 stub CoFreeAllLibraries
- 13 stub CoFreeLibrary
+ 13 stdcall CoFreeLibrary(long) CoFreeLibrary
  14 stdcall CoFreeUnusedLibraries() CoFreeUnusedLibraries
  15 stub CoGetCallerTID
  16 stub CoGetClassObject

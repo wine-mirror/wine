@@ -571,6 +571,14 @@ HRESULT WINAPI CoCreateInstance(
 }
 
 /***********************************************************************
+ *           CoFreeLibrary [COMPOBJ.13]
+ */
+void WINAPI CoFreeLibrary(HINSTANCE32 hInst)
+{
+	FIXME(ole,"(), stub !\n");
+}
+
+/***********************************************************************
  *           CoFreeUnusedLibraries [COMPOBJ.17]
  */
 void WINAPI CoFreeUnusedLibraries()
