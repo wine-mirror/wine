@@ -450,12 +450,11 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
             }
         }
     }
-
     SelectObject(hDC, hOldFont);
     ReleaseDC(hWnd, hDC);
 
     config->cell_width  = w;
-    config->cell_height = tm.tmHeight;
+    config->cell_height = tm.tmHeight + tm.tmExternalLeading;
     config->font_weight = tm.tmWeight;
     lstrcpy(config->face_name, lf->lfFaceName);
 
@@ -578,10 +577,10 @@ static COORD	WCUSER_GetCell(const struct inner_data* data, LPARAM lParam)
  */
 static void	WCUSER_GetSelectionRect(const struct inner_data* data, LPRECT r)
 {
-    r->left   = (min(PRIVATE(data)->selectPt1.X, PRIVATE(data)->selectPt2.X)    ) * data->curcfg.cell_width;
-    r->top    = (min(PRIVATE(data)->selectPt1.Y, PRIVATE(data)->selectPt2.Y)    ) * data->curcfg.cell_height;
-    r->right  = (max(PRIVATE(data)->selectPt1.X, PRIVATE(data)->selectPt2.X) + 1) * data->curcfg.cell_width;
-    r->bottom = (max(PRIVATE(data)->selectPt1.Y, PRIVATE(data)->selectPt2.Y) + 1) * data->curcfg.cell_height;
+    r->left   = (min(PRIVATE(data)->selectPt1.X, PRIVATE(data)->selectPt2.X)     - data->curcfg.win_pos.X) * data->curcfg.cell_width;
+    r->top    = (min(PRIVATE(data)->selectPt1.Y, PRIVATE(data)->selectPt2.Y)     - data->curcfg.win_pos.Y) * data->curcfg.cell_height;
+    r->right  = (max(PRIVATE(data)->selectPt1.X, PRIVATE(data)->selectPt2.X) + 1 - data->curcfg.win_pos.X) * data->curcfg.cell_width;
+    r->bottom = (max(PRIVATE(data)->selectPt1.Y, PRIVATE(data)->selectPt2.Y) + 1 - data->curcfg.win_pos.Y) * data->curcfg.cell_height;
 }
 
 /******************************************************************
@@ -660,19 +659,19 @@ static void	WCUSER_CopySelectionToClipboard(const struct inner_data* data)
     if (!OpenClipboard(PRIVATE(data)->hWnd)) return;
     EmptyClipboard();
 
-    hMem = GlobalAlloc(GMEM_MOVEABLE, (w * h - 1) * sizeof(WCHAR));
+    hMem = GlobalAlloc(GMEM_MOVEABLE, (w * h) * sizeof(WCHAR));
     if (hMem && (p = GlobalLock(hMem)))
     {
 	COORD	c;
 	int	y;
 
-	c.X = data->curcfg.win_pos.X + min(PRIVATE(data)->selectPt1.X, PRIVATE(data)->selectPt2.X);
-	c.Y = data->curcfg.win_pos.Y + min(PRIVATE(data)->selectPt1.Y, PRIVATE(data)->selectPt2.Y);
+	c.X = min(PRIVATE(data)->selectPt1.X, PRIVATE(data)->selectPt2.X);
+	c.Y = min(PRIVATE(data)->selectPt1.Y, PRIVATE(data)->selectPt2.Y);
 
 	for (y = 0; y < h; y++, c.Y++)
 	{
 	    ReadConsoleOutputCharacter(data->hConOut, &p[y * w], w - 1, c, NULL);
-	    if (y < h - 1) p[y * w + w - 1] = '\n';
+	    p[y * w + w - 1] = (y < h - 1) ? '\n' : '\0';
 	}
 	GlobalUnlock(hMem);
 	SetClipboardData(CF_UNICODETEXT, hMem);
