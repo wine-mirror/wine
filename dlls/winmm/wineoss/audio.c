@@ -370,7 +370,12 @@ static DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
  */
 static void	OSS_CloseDevice(OSS_DEVICE* ossdev)
 {
-    if (--ossdev->open_count == 0)
+    if (ossdev->open_count>0) {
+        ossdev->open_count--;
+    } else {
+        WARN("OSS_CloseDevice called too many times\n");
+    }
+    if (ossdev->open_count == 0)
     {
        /* reset the device before we close it in case it is in a bad state */
        ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
