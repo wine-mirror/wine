@@ -52,8 +52,8 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
     cls.cbClsExtra    = NUMCLASSWORDS*sizeof(DWORD);
     cls.cbWndExtra    = 12;
     cls.hInstance     = hInstance;
-    cls.hIcon         = LoadIconW (0, IDI_APPLICATIONW);
-    cls.hCursor       = LoadCursorW (0, IDC_ARROWW);
+    cls.hIcon         = LoadIconW (0, (LPWSTR)IDI_APPLICATION);
+    cls.hCursor       = LoadCursorW (0, (LPWSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject (WHITE_BRUSH);
     cls.lpszMenuName  = 0;
     cls.lpszClassName = className;
@@ -79,8 +79,7 @@ BOOL ClassTest(HINSTANCE hInstance, BOOL global)
        CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0,
        0, hInstance, 0);
 
-    ok(hTestWnd,
-        "Failed to create window");
+    ok(hTestWnd!=0, "Failed to create window");
 
     /* test initial values of valid classwords */
     for(i=0; i<NUMCLASSWORDS; i++)

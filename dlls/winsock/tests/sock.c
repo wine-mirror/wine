@@ -67,7 +67,7 @@ typedef struct test_params
     int          sock_type;
     int          sock_prot;
     char        *inet_addr;
-    int          inet_port;
+    short        inet_port;
     int          chunk_size;
     int          n_chunks;
     int          n_clients;
