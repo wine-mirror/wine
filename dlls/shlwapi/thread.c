@@ -66,7 +66,7 @@ WINAPI SHLWAPI_356(LPSECURITY_ATTRIBUTES lpAttr, PSECURITY_DESCRIPTOR lpSec)
 
   TRACE("(%p,%p)\n", lpAttr, lpSec);
 
-  if (0) /* FIXME: SHWAPI_OsIsUnicode, as per shell32 */
+  if (!(GetVersion() & 0x80000000))  /* NT */
   {
     if (!lpSec || !lpAttr)
       return NULL;
