@@ -12,7 +12,7 @@
 #include "module.h"
 #include "font.h"
 #include "heap.h"
-#include "dc.h"
+#include "gdi.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win16drv);
@@ -74,10 +74,10 @@ BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICA *metrics )
 HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font)
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    HPEN prevHandle = dc->w.hFont;
+    HPEN prevHandle = dc->hFont;
     int	nSize;
 
-    dc->w.hFont = hfont;
+    dc->hFont = hfont;
 
     TRACE("WIN16DRV_FONT_SelectObject '%s' h=%d\n",
 		     font->logfont.lfFaceName, font->logfont.lfHeight);

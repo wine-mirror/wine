@@ -6,14 +6,14 @@
 
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "dc.h"
+#include "gdi.h"
 #include "heap.h"
 #include "global.h"
 #include "metafile.h"
 #include "metafiledrv.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(metafile)
+DEFAULT_DEBUG_CHANNEL(metafile);
 
 #include <string.h>
 

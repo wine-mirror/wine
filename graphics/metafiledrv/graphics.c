@@ -8,13 +8,12 @@
 #include <string.h>
 
 #include "gdi.h"
-#include "dc.h"
 #include "region.h"
 #include "metafiledrv.h"
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(metafile)
+DEFAULT_DEBUG_CHANNEL(metafile);
 
 /**********************************************************************
  *	     MFDRV_MoveToEx

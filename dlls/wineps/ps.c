@@ -310,12 +310,12 @@ INT PSDRV_WriteHeader( DC *dc, LPCSTR title )
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
       /* BBox co-ords are in default user co-ord system so urx < ury even in
 	 landscape mode */
-	urx = (int) (dc->w.devCaps->vertSize * 72.0 / 25.4);
-        ury = (int) (dc->w.devCaps->horzSize * 72.0 / 25.4);
+	urx = (int) (dc->devCaps->vertSize * 72.0 / 25.4);
+        ury = (int) (dc->devCaps->horzSize * 72.0 / 25.4);
 	orient = "Landscape";
     } else {
-        urx = (int) (dc->w.devCaps->horzSize * 72.0 / 25.4);
-	ury = (int) (dc->w.devCaps->vertSize * 72.0 / 25.4);
+        urx = (int) (dc->devCaps->horzSize * 72.0 / 25.4);
+	ury = (int) (dc->devCaps->vertSize * 72.0 / 25.4);
 	orient = "Portrait";
     }
 
@@ -440,8 +440,8 @@ INT PSDRV_WriteNewPage( DC *dc )
 
     if(physDev->Devmode->dmPublic.u1.s1.dmOrientation == DMORIENT_LANDSCAPE) {
         if(physDev->pi->ppd->LandscapeOrientation == -90) {
-	    xtrans = dc->w.devCaps->vertRes;
-	    ytrans = dc->w.devCaps->horzRes;
+	    xtrans = dc->devCaps->vertRes;
+	    ytrans = dc->devCaps->horzRes;
 	    rotation = 90;
 	} else {
 	    xtrans = ytrans = 0;
@@ -449,12 +449,12 @@ INT PSDRV_WriteNewPage( DC *dc )
 	}
     } else {
         xtrans = 0;
-	ytrans = dc->w.devCaps->vertRes;
+	ytrans = dc->devCaps->vertRes;
 	rotation = 0;
     }
 
     sprintf(buf, psnewpage, name, physDev->job.PageNo,
-	    dc->w.devCaps->logPixelsX, dc->w.devCaps->logPixelsY,
+	    dc->devCaps->logPixelsX, dc->devCaps->logPixelsY,
 	    xtrans, ytrans, rotation);
 
     if( WriteSpool16( physDev->job.hJob, buf, strlen(buf) ) != 
@@ -957,8 +957,8 @@ BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits)
     sprintf(buf, start, w, h, w, h);
     PSDRV_WriteSpool(dc,  buf, strlen(buf));
     PSDRV_WriteIndexColorSpaceBegin(dc, 1);
-    map[0] = dc->w.textColor;
-    map[1] = dc->w.backgroundColor;
+    map[0] = dc->textColor;
+    map[1] = dc->backgroundColor;
     PSDRV_WriteRGB(dc, map, 2);
     PSDRV_WriteIndexColorSpaceEnd(dc);
     ptr = buf;

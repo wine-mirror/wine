@@ -18,11 +18,11 @@ DEFAULT_DEBUG_CHANNEL(psdrv)
  */
 HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 {
-    HBRUSH prevbrush = dc->w.hBrush;
+    HBRUSH prevbrush = dc->hBrush;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     TRACE("hbrush = %08x\n", hbrush);
-    dc->w.hBrush = hbrush;
+    dc->hBrush = hbrush;
 
     switch(brush->logbrush.lbStyle) {
 
@@ -62,7 +62,7 @@ static BOOL PSDRV_SetBrush(DC *dc)
 {
     BOOL ret = TRUE;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
+    BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->hBrush, BRUSH_MAGIC );
 
     if(!brush) {
         ERR("Can't get BRUSHOBJ\n");
@@ -84,7 +84,7 @@ static BOOL PSDRV_SetBrush(DC *dc)
 
     }
     physDev->brush.set = TRUE;
-    GDI_ReleaseObj( dc->w.hBrush );
+    GDI_ReleaseObj( dc->hBrush );
     return TRUE;
 }
 
@@ -124,7 +124,7 @@ static BOOL PSDRV_Clip(DC *dc, BOOL EO)
 BOOL PSDRV_Brush(DC *dc, BOOL EO)
 {
     BOOL ret = TRUE;
-    BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->w.hBrush, BRUSH_MAGIC );
+    BRUSHOBJ *brush = (BRUSHOBJ *)GDI_GetObjPtr( dc->hBrush, BRUSH_MAGIC );
     PSDRV_PDEVICE *physDev = dc->physDev;
 
     if(!brush) {
@@ -224,7 +224,7 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	break;
     }
 
-    GDI_ReleaseObj( dc->w.hBrush );
+    GDI_ReleaseObj( dc->hBrush );
     return ret;
 }
 

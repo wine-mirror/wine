@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include "gdi.h"
 #include "callback.h"
-#include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -69,11 +68,11 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                       BITMAPOBJ * bmp )
 {
     HRGN hrgn;
-    HBITMAP prevHandle = dc->w.hBitmap;
+    HBITMAP prevHandle = dc->hBitmap;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
 
-    if (!(dc->w.flags & DC_MEMORY)) return 0;
+    if (!(dc->flags & DC_MEMORY)) return 0;
 
     if(!bmp->physBitmap)
         if(!X11DRV_CreateBitmap(hbitmap))
@@ -87,25 +86,25 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
     hrgn = CreateRectRgn(0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight);
     if (!hrgn) return 0;
 
-    dc->w.totalExtent.left   = 0;
-    dc->w.totalExtent.top    = 0;
-    dc->w.totalExtent.right  = bmp->bitmap.bmWidth;
-    dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
+    dc->totalExtent.left   = 0;
+    dc->totalExtent.top    = 0;
+    dc->totalExtent.right  = bmp->bitmap.bmWidth;
+    dc->totalExtent.bottom = bmp->bitmap.bmHeight;
 
     physDev->drawable = (Pixmap)bmp->physBitmap;
-    dc->w.hBitmap     = hbitmap;
+    dc->hBitmap     = hbitmap;
 
     SelectVisRgn16( dc->hSelf, hrgn );
     DeleteObject( hrgn );
 
       /* Change GC depth if needed */
 
-    if (dc->w.bitsPerPixel != bmp->bitmap.bmBitsPixel)
+    if (dc->bitsPerPixel != bmp->bitmap.bmBitsPixel)
     {
 	TSXFreeGC( display, physDev->gc );
 	physDev->gc = TSXCreateGC( display, physDev->drawable, 0, NULL );
 	TSXSetGraphicsExposures( display, physDev->gc, False );
-	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
+	dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }
     return prevHandle;

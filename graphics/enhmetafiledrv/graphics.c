@@ -8,12 +8,11 @@
 #include <string.h>
 
 #include "gdi.h"
-#include "dc.h"
 #include "enhmetafiledrv.h"
 #include "heap.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(enhmetafile)
+DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 /**********************************************************************
  *	     EMFDRV_MoveToEx
@@ -48,10 +47,10 @@ EMFDRV_LineTo( DC *dc, INT x, INT y )
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
     	return FALSE;
 
-    bounds.left   = min(x, dc->w.CursPosX);
-    bounds.top    = min(y, dc->w.CursPosY);
-    bounds.right  = max(x, dc->w.CursPosX);
-    bounds.bottom = max(y, dc->w.CursPosY);
+    bounds.left   = min(x, dc->CursPosX);
+    bounds.top    = min(y, dc->CursPosY);
+    bounds.right  = max(x, dc->CursPosX);
+    bounds.bottom = max(y, dc->CursPosY);
 
     EMFDRV_UpdateBBox( dc, &bounds );
 
@@ -77,7 +76,7 @@ EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -212,7 +211,7 @@ EMFDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -244,7 +243,7 @@ EMFDRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -275,7 +274,7 @@ EMFDRV_RoundRect( DC *dc, INT left, INT top, INT right,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->w.GraphicsMode == GM_COMPATIBLE) {
+    if(dc->GraphicsMode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }

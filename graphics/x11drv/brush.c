@@ -151,7 +151,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 {
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if ((dc->w.bitsPerPixel > 1) && (X11DRV_GetDepth() <= 8) && !COLOR_IsSolid( color ))
+    if ((dc->bitsPerPixel > 1) && (X11DRV_GetDepth() <= 8) && !COLOR_IsSolid( color ))
     {
 	  /* Dithered brush */
 	physDev->brush.pixmap = BRUSH_DitherColor( dc, color );
@@ -186,7 +186,7 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 	goto done;
     }
 
-    if ((dc->w.bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
+    if ((dc->bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
         physDev->brush.pixmap = TSXCreatePixmap( display, X11DRV_GetXRootWindow(), 8, 8, 1);
@@ -228,13 +228,13 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush, BRUSHOBJ * brush )
 {
     HBITMAP16 hBitmap;
     BITMAPINFO * bmpInfo;
-    HBRUSH16 prevHandle = dc->w.hBrush;
+    HBRUSH16 prevHandle = dc->hBrush;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     
     TRACE("hdc=%04x hbrush=%04x\n",
                 dc->hSelf,hbrush);
 
-    dc->w.hBrush = hbrush;
+    dc->hBrush = hbrush;
 
     if (physDev->brush.pixmap)
     {

@@ -8,11 +8,10 @@
 #include "winspool.h"
 #include "psdrv.h"
 #include "debugtools.h"
-#include "dc.h"
+#include "gdi.h"
 #include "winerror.h"
 
-DEFAULT_DEBUG_CHANNEL(psdrv)
-
+DEFAULT_DEBUG_CHANNEL(psdrv);
 
 
 /***********************************************************************
@@ -21,7 +20,7 @@ DEFAULT_DEBUG_CHANNEL(psdrv)
 HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
                                         FONTOBJ *font )
 {
-    HFONT16 prevfont = dc->w.hFont;
+    HFONT16 prevfont = dc->hFont;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     LOGFONT16 *lf = &(font->logfont);
     BOOL bd = FALSE, it = FALSE;
@@ -34,7 +33,7 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     TRACE("FaceName = '%s' Height = %d Italic = %d Weight = %d\n",
 	  lf->lfFaceName, lf->lfHeight, lf->lfItalic, lf->lfWeight);
 
-    dc->w.hFont = hfont;
+    dc->hFont = hfont;
 
     if(lf->lfItalic)
         it = TRUE;
@@ -143,8 +142,8 @@ HFONT16 PSDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
     physDev->font.tm.tmPitchAndFamily |= TMPF_DEVICE;
     physDev->font.tm.tmCharSet = ANSI_CHARSET;
     physDev->font.tm.tmOverhang = 0;
-    physDev->font.tm.tmDigitizedAspectX = dc->w.devCaps->logPixelsY;
-    physDev->font.tm.tmDigitizedAspectY = dc->w.devCaps->logPixelsX;
+    physDev->font.tm.tmDigitizedAspectX = dc->devCaps->logPixelsY;
+    physDev->font.tm.tmDigitizedAspectY = dc->devCaps->logPixelsX;
 
     physDev->font.set = FALSE;
 
@@ -301,8 +300,8 @@ static UINT PSDRV_GetFontMetric(HDC hdc, AFM *pafm, NEWTEXTMETRIC16 *pTM,
     pTM->tmDescent = -pafm->Descender * scale;
     pTM->tmInternalLeading = (pafm->FullAscender - pafm->Ascender) * scale;
     pTM->tmMaxCharWidth = pafm->CharWidths[77] * scale;
-    pTM->tmDigitizedAspectX = dc->w.devCaps->logPixelsY;
-    pTM->tmDigitizedAspectY = dc->w.devCaps->logPixelsX;
+    pTM->tmDigitizedAspectX = dc->devCaps->logPixelsY;
+    pTM->tmDigitizedAspectY = dc->devCaps->logPixelsX;
 
     *(INT*)&pTM->tmFirstChar = 32;
 

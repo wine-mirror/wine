@@ -19,11 +19,11 @@ WIN16DRV_MoveToEx(DC *dc,INT x,INT y,LPPOINT pt)
 {
     if (pt)
     {
-	pt->x = dc->w.CursPosX;
-	pt->y = dc->w.CursPosY;
+	pt->x = dc->CursPosX;
+	pt->y = dc->CursPosY;
     }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
+    dc->CursPosX = x;
+    dc->CursPosY = y;
     return TRUE;
 }
 
@@ -36,18 +36,18 @@ WIN16DRV_LineTo( DC *dc, INT x, INT y )
     BOOL bRet ;
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
     POINT16 points[2];
-    points[0].x = dc->w.DCOrgX + XLPTODP( dc, dc->w.CursPosX );
-    points[0].y = dc->w.DCOrgY + YLPTODP( dc, dc->w.CursPosY );
-    points[1].x = dc->w.DCOrgX + XLPTODP( dc, x );
-    points[1].y = dc->w.DCOrgY + YLPTODP( dc, y );
+    points[0].x = dc->DCOrgX + XLPTODP( dc, dc->CursPosX );
+    points[0].y = dc->DCOrgY + YLPTODP( dc, dc->CursPosY );
+    points[1].x = dc->DCOrgX + XLPTODP( dc, x );
+    points[1].y = dc->DCOrgY + YLPTODP( dc, y );
     bRet = PRTDRV_Output(physDev->segptrPDEVICE,
                          OS_POLYLINE, 2, points, 
                          physDev->PenInfo,
                          NULL,
-                         win16drv_SegPtr_DrawMode, dc->w.hClipRgn);
+                         win16drv_SegPtr_DrawMode, dc->hClipRgn);
 
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
+    dc->CursPosX = x;
+    dc->CursPosY = y;
     return TRUE;
 }
 
@@ -63,7 +63,7 @@ WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     POINT16 points[2];
 
     TRACE("In WIN16DRV_Rectangle, x %d y %d DCOrgX %d y %d\n",
-           left, top, dc->w.DCOrgX, dc->w.DCOrgY);
+           left, top, dc->DCOrgX, dc->DCOrgY);
     TRACE("In WIN16DRV_Rectangle, VPortOrgX %d y %d\n",
            dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
@@ -75,7 +75,7 @@ WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
                            OS_RECTANGLE, 2, points, 
                            physDev->PenInfo,
 			   physDev->BrushInfo,
-			   win16drv_SegPtr_DrawMode, dc->w.hClipRgn);
+			   win16drv_SegPtr_DrawMode, dc->hClipRgn);
     return bRet;
 }
 
@@ -111,7 +111,7 @@ WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count )
                          OS_WINDPOLYGON, count, points, 
                          physDev->PenInfo,
                          physDev->BrushInfo,
-                         win16drv_SegPtr_DrawMode, dc->w.hClipRgn);
+                         win16drv_SegPtr_DrawMode, dc->hClipRgn);
     HeapFree( GetProcessHeap(), 0, points );
     return bRet;
 }
@@ -142,7 +142,7 @@ WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count )
                          OS_POLYLINE, count, points, 
                          physDev->PenInfo,
                          NULL,
-                         win16drv_SegPtr_DrawMode, dc->w.hClipRgn);
+                         win16drv_SegPtr_DrawMode, dc->hClipRgn);
     HeapFree( GetProcessHeap(), 0, points );
     return bRet;
 }
@@ -159,7 +159,7 @@ WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom)
     BOOL bRet = 0;
     POINT16 points[2];
     TRACE("In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
-           left, top, dc->w.DCOrgX, dc->w.DCOrgY);
+           left, top, dc->DCOrgX, dc->DCOrgY);
     TRACE("In WIN16DRV_Ellipse, VPortOrgX %d y %d\n",
            dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
@@ -172,7 +172,7 @@ WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom)
                          OS_ELLIPSE, 2, points, 
                          physDev->PenInfo,
                          physDev->BrushInfo,
-                         win16drv_SegPtr_DrawMode, dc->w.hClipRgn);
+                         win16drv_SegPtr_DrawMode, dc->hClipRgn);
     return bRet;
 }
 

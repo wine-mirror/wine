@@ -7,7 +7,6 @@
 
 #include <stdlib.h>
 #include "win16drv.h"
-#include "dc.h"
 #include "gdi.h"
 #include "debugtools.h"
 #include "winbase.h"
@@ -45,8 +44,8 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     clipRect.left = 0;
     clipRect.top = 0;
         
-    clipRect.right = dc->w.devCaps->horzRes;
-    clipRect.bottom = dc->w.devCaps->vertRes;
+    clipRect.right = dc->devCaps->horzRes;
+    clipRect.bottom = dc->devCaps->vertRes;
     if (lprect) {
 	opaqueRect.left = lprect->left;
 	opaqueRect.top = lprect->top;
@@ -55,11 +54,11 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	lpOpaqueRect = &opaqueRect;
     }
         
-    TRACE("textalign = %d\n", dc->w.textAlign);
+    TRACE("textalign = %d\n", dc->textAlign);
 
-    if (dc->w.textAlign & TA_UPDATECP) {
-        x = dc->w.CursPosX;
-	y = dc->w.CursPosY;
+    if (dc->textAlign & TA_UPDATECP) {
+        x = dc->CursPosX;
+	y = dc->CursPosY;
     }
 
     x = XLPTODP( dc, x );
@@ -73,22 +72,22 @@ BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     width = LOWORD(dwRet);
 
-    switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
+    switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
-        if (dc->w.textAlign & TA_UPDATECP)
-	    dc->w.CursPosX = XDPTOLP( dc, x + width );
+        if (dc->textAlign & TA_UPDATECP)
+	    dc->CursPosX = XDPTOLP( dc, x + width );
 	break;
     case TA_RIGHT:
         x -= width;
-	if (dc->w.textAlign & TA_UPDATECP)
-	    dc->w.CursPosX = XDPTOLP( dc, x );
+	if (dc->textAlign & TA_UPDATECP)
+	    dc->CursPosX = XDPTOLP( dc, x );
 	break;
     case TA_CENTER:
         x -= width / 2;
 	break;
     }
 
-    switch( dc->w.textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) ) {
+    switch( dc->textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) ) {
     case TA_TOP:
         break;
     case TA_BOTTOM:

@@ -17,10 +17,10 @@ DEFAULT_DEBUG_CHANNEL(win16drv)
 HPEN WIN16DRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    HPEN prevHandle = dc->w.hPen;
+    HPEN prevHandle = dc->hPen;
     int		 nSize;
     LOGPEN16 	 lPen16;
-    dc->w.hPen = hpen;
+    dc->hPen = hpen;
     TRACE("In WIN16DRV_PEN_SelectObject\n");
     lPen16.lopnStyle   = pen->logpen.lopnStyle;
     lPen16.lopnWidth.x = pen->logpen.lopnWidth.x;

@@ -22,13 +22,12 @@
 #include "winreg.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "dc.h"
 #include "callback.h"
 #include "options.h"
 #include "heap.h"
 #include "file.h"
 
-DEFAULT_DEBUG_CHANNEL(print)
+DEFAULT_DEBUG_CHANNEL(print);
 
 static char PrinterModel[]	= "Printer Model";
 static char DefaultDevMode[]	= "Default DevMode";
@@ -242,7 +241,7 @@ BOOL16 WINAPI QueryAbort16(HDC16 hdc, INT16 reserved)
 	return FALSE;
     }
 
-    if (dc->w.pAbortProc) ret = dc->w.pAbortProc(hdc, 0);
+    if (dc->pAbortProc) ret = dc->pAbortProc(hdc, 0);
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -270,8 +269,8 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 {
     DC *dc = DC_GetDCPtr( hdc );
 
-    if(dc->w.pAbortProc) THUNK_Free((FARPROC)dc->w.pAbortProc);
-    dc->w.pAbortProc = abrtprc;
+    if(dc->pAbortProc) THUNK_Free((FARPROC)dc->pAbortProc);
+    dc->pAbortProc = abrtprc;
     GDI_ReleaseObj( hdc );
     return TRUE;
 }

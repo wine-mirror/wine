@@ -4,10 +4,10 @@
  * Copyright 1993 Alexandre Julliard
  */
 
-#include "dc.h"
+#include "gdi.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(gdi);
 
 
 /***********************************************************************
@@ -17,10 +17,10 @@ DEFAULT_DEBUG_CHANNEL(gdi)
  */
 void MAPPING_FixIsotropic( DC * dc )
 {
-    double xdim = (double)dc->vportExtX * dc->w.devCaps->horzSize /
-	          (dc->w.devCaps->horzRes * dc->wndExtX);
-    double ydim = (double)dc->vportExtY * dc->w.devCaps->vertSize /
-	          (dc->w.devCaps->vertRes * dc->wndExtY);
+    double xdim = (double)dc->vportExtX * dc->devCaps->horzSize /
+	          (dc->devCaps->horzRes * dc->wndExtX);
+    double ydim = (double)dc->vportExtY * dc->devCaps->vertSize /
+	          (dc->devCaps->vertRes * dc->wndExtY);
     if (xdim > ydim)
     {
 	dc->vportExtX = dc->vportExtX * fabs( ydim / xdim );
@@ -134,7 +134,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 
     TRACE("%04x %d\n", hdc, mode );
     
-    prevMode = dc->w.MapMode;
+    prevMode = dc->MapMode;
     switch(mode)
     {
       case MM_TEXT:
@@ -146,38 +146,38 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
 	  
       case MM_LOMETRIC:
       case MM_ISOTROPIC:
-	  dc->wndExtX   = dc->w.devCaps->horzSize;
-	  dc->wndExtY   = dc->w.devCaps->vertSize;
-	  dc->vportExtX = dc->w.devCaps->horzRes / 10;
-	  dc->vportExtY = dc->w.devCaps->vertRes / -10;
+	  dc->wndExtX   = dc->devCaps->horzSize;
+	  dc->wndExtY   = dc->devCaps->vertSize;
+	  dc->vportExtX = dc->devCaps->horzRes / 10;
+	  dc->vportExtY = dc->devCaps->vertRes / -10;
 	  break;
 	  
       case MM_HIMETRIC:
-	  dc->wndExtX   = dc->w.devCaps->horzSize * 10;
-	  dc->wndExtY   = dc->w.devCaps->vertSize * 10;
-	  dc->vportExtX = dc->w.devCaps->horzRes / 10;
-	  dc->vportExtY = dc->w.devCaps->vertRes / -10;
+	  dc->wndExtX   = dc->devCaps->horzSize * 10;
+	  dc->wndExtY   = dc->devCaps->vertSize * 10;
+	  dc->vportExtX = dc->devCaps->horzRes / 10;
+	  dc->vportExtY = dc->devCaps->vertRes / -10;
 	  break;
 	  
       case MM_LOENGLISH:
-	  dc->wndExtX   = dc->w.devCaps->horzSize;
-	  dc->wndExtY   = dc->w.devCaps->vertSize;
-	  dc->vportExtX = 254L * dc->w.devCaps->horzRes / 1000;
-	  dc->vportExtY = -254L * dc->w.devCaps->vertRes / 1000;
+	  dc->wndExtX   = dc->devCaps->horzSize;
+	  dc->wndExtY   = dc->devCaps->vertSize;
+	  dc->vportExtX = 254L * dc->devCaps->horzRes / 1000;
+	  dc->vportExtY = -254L * dc->devCaps->vertRes / 1000;
 	  break;	  
 	  
       case MM_HIENGLISH:
-	  dc->wndExtX   = dc->w.devCaps->horzSize * 10;
-	  dc->wndExtY   = dc->w.devCaps->vertSize * 10;
-	  dc->vportExtX = 254L * dc->w.devCaps->horzRes / 1000;
-	  dc->vportExtY = -254L * dc->w.devCaps->vertRes / 1000;
+	  dc->wndExtX   = dc->devCaps->horzSize * 10;
+	  dc->wndExtY   = dc->devCaps->vertSize * 10;
+	  dc->vportExtX = 254L * dc->devCaps->horzRes / 1000;
+	  dc->vportExtY = -254L * dc->devCaps->vertRes / 1000;
 	  break;
 	  
       case MM_TWIPS:
-	  dc->wndExtX   = 144L * dc->w.devCaps->horzSize / 10;
-	  dc->wndExtY   = 144L * dc->w.devCaps->vertSize / 10;
-	  dc->vportExtX = 254L * dc->w.devCaps->horzRes / 1000;
-	  dc->vportExtY = -254L * dc->w.devCaps->vertRes / 1000;
+	  dc->wndExtX   = 144L * dc->devCaps->horzSize / 10;
+	  dc->wndExtY   = 144L * dc->devCaps->vertSize / 10;
+	  dc->vportExtX = 254L * dc->devCaps->horzRes / 1000;
+	  dc->vportExtY = -254L * dc->devCaps->vertRes / 1000;
 	  break;
 	  
       case MM_ANISOTROPIC:
@@ -186,7 +186,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
       default:
 	  goto done;
     }
-    dc->w.MapMode = mode;
+    dc->MapMode = mode;
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
@@ -235,7 +235,7 @@ BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 	size->cx = dc->vportExtX;
 	size->cy = dc->vportExtY;
     }
-    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+    if ((dc->MapMode != MM_ISOTROPIC) && (dc->MapMode != MM_ANISOTROPIC))
 	goto done;
     if (!x || !y)
     {
@@ -244,7 +244,7 @@ BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     }
     dc->vportExtX = x;
     dc->vportExtY = y;
-    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
@@ -342,7 +342,7 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
 	size->cx = dc->wndExtX;
 	size->cy = dc->wndExtY;
     }
-    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+    if ((dc->MapMode != MM_ISOTROPIC) && (dc->MapMode != MM_ANISOTROPIC))
 	goto done;
     if (!x || !y)
     {
@@ -351,7 +351,7 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     }
     dc->wndExtX = x;
     dc->wndExtY = y;
-    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
@@ -551,7 +551,7 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
 	size->cx = dc->vportExtX;
 	size->cy = dc->vportExtY;
     }
-    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+    if ((dc->MapMode != MM_ISOTROPIC) && (dc->MapMode != MM_ANISOTROPIC))
 	goto done;
     if (!xNum || !xDenom || !xNum || !yDenom)
     {
@@ -562,7 +562,7 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
     dc->vportExtY = (dc->vportExtY * yNum) / yDenom;
     if (dc->vportExtX == 0) dc->vportExtX = 1;
     if (dc->vportExtY == 0) dc->vportExtY = 1;
-    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );
@@ -616,7 +616,7 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
 	size->cx = dc->wndExtX;
 	size->cy = dc->wndExtY;
     }
-    if ((dc->w.MapMode != MM_ISOTROPIC) && (dc->w.MapMode != MM_ANISOTROPIC))
+    if ((dc->MapMode != MM_ISOTROPIC) && (dc->MapMode != MM_ANISOTROPIC))
 	goto done;
     if (!xNum || !xDenom || !xNum || !yDenom)
     {
@@ -627,7 +627,7 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
     dc->wndExtY = (dc->wndExtY * yNum) / yDenom;
     if (dc->wndExtX == 0) dc->wndExtX = 1;
     if (dc->wndExtY == 0) dc->wndExtY = 1;
-    if (dc->w.MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
+    if (dc->MapMode == MM_ISOTROPIC) MAPPING_FixIsotropic( dc );
     DC_UpdateXforms( dc );
  done:
     GDI_ReleaseObj( hdc );

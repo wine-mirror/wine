@@ -129,8 +129,8 @@ static HBRUSH EMFDRV_BRUSH_SelectObject(DC *dc, HBRUSH hBrush )
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         return FALSE;
 
-    hOldBrush = dc->w.hBrush;
-    dc->w.hBrush = hBrush;
+    hOldBrush = dc->hBrush;
+    dc->hBrush = hBrush;
     return hOldBrush;
 }
 
@@ -210,8 +210,8 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         return FALSE;
 
-    hOldFont = dc->w.hFont;
-    dc->w.hFont = hFont;
+    hOldFont = dc->hFont;
+    dc->hFont = hFont;
     return hOldFont;
 }
 
@@ -271,8 +271,8 @@ static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
     if(!EMFDRV_WriteRecord( dc, &emr.emr ))
         return FALSE;
 
-    hOldPen = dc->w.hPen;
-    dc->w.hPen = hPen;
+    hOldPen = dc->hPen;
+    dc->hPen = hPen;
     return hOldPen; 
 }
 

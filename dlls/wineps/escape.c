@@ -27,8 +27,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    physDev->job.banding = TRUE;
             r->left   = 0;
             r->top    = 0;
-            r->right  = dc->w.devCaps->horzRes;
-            r->bottom = dc->w.devCaps->vertRes;
+            r->right  = dc->devCaps->horzRes;
+            r->bottom = dc->devCaps->vertRes;
 	    TRACE("NEXTBAND returning %d,%d - %d,%d\n", r->left,
 		  r->top, r->right, r->bottom );
 	    return 1;
@@ -127,8 +127,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
         {
 	    POINT16 *p  = (POINT16 *)PTR_SEG_TO_LIN(lpOutData);
 	    
-	    p->x = dc->w.devCaps->horzRes;
-	    p->y = dc->w.devCaps->vertRes;
+	    p->x = dc->devCaps->horzRes;
+	    p->y = dc->devCaps->vertRes;
 	    TRACE("GETPHYSPAGESIZE: returning %dx%d\n", p->x, p->y);
 	    return 1;
 	}

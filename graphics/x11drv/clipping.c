@@ -10,14 +10,14 @@
 
 #include <stdio.h>
 
-#include "dc.h"
+#include "gdi.h"
 #include "x11drv.h"
 #include "region.h"
 #include "debugtools.h"
 #include "heap.h"
 #include "local.h"
 
-DEFAULT_DEBUG_CHANNEL(x11drv)
+DEFAULT_DEBUG_CHANNEL(x11drv);
 
 /***********************************************************************
  *           X11DRV_SetDeviceClipping
@@ -31,7 +31,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
     XRectangle *pXrect;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     
-    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->w.hGCClipRgn, REGION_MAGIC);
+    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->hGCClipRgn, REGION_MAGIC);
     if (!obj)
     {
         ERR("Rgn is 0. Please report this.\n");
@@ -49,7 +49,7 @@ void X11DRV_SetDeviceClipping( DC * dc )
 	if(!pXrect)
 	{
 	    WARN("Can't alloc buffer\n");
-	    GDI_ReleaseObj( dc->w.hGCClipRgn );
+	    GDI_ReleaseObj( dc->hGCClipRgn );
 	    return;
 	}
 
@@ -70,6 +70,6 @@ void X11DRV_SetDeviceClipping( DC * dc )
     if(pXrect)
         HeapFree( GetProcessHeap(), 0, pXrect );
 
-    GDI_ReleaseObj( dc->w.hGCClipRgn );
+    GDI_ReleaseObj( dc->hGCClipRgn );
 }
 

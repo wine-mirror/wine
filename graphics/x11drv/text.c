@@ -15,7 +15,6 @@
 
 #include "windef.h"
 #include "winnls.h"
-#include "dc.h"
 #include "gdi.h"
 #include "heap.h"
 #include "x11font.h"
@@ -72,10 +71,10 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
                                      lprect->right, lprect->bottom );
       /* Setup coordinates */
 
-    if (dc->w.textAlign & TA_UPDATECP)
+    if (dc->textAlign & TA_UPDATECP)
     {
-	x = dc->w.CursPosX;
-	y = dc->w.CursPosY;
+	x = dc->CursPosX;
+	y = dc->CursPosY;
     }
 
     if (flags & (ETO_OPAQUE | ETO_CLIPPED))  /* there's a rectangle */
@@ -117,7 +116,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
         dibUpdateFlag = TRUE;
 	TSXSetForeground( display, physDev->gc, physDev->backgroundPixel );
 	TSXFillRectangle( display, physDev->drawable, physDev->gc,
-                        dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
+                        dc->DCOrgX + rect.left, dc->DCOrgY + rect.top,
                         rect.right-rect.left, rect.bottom-rect.top );
     }
     if (!count) goto END;  /* Nothing more to do */
@@ -144,20 +143,20 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     ywidth = pfo->lpX11Trans ? width * pfo->lpX11Trans->b /
       pfo->lpX11Trans->pixelsize : 0;
 
-    switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
+    switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
     {
       case TA_LEFT:
-	  if (dc->w.textAlign & TA_UPDATECP) {
-	      dc->w.CursPosX = XDPTOLP( dc, x + xwidth );
-	      dc->w.CursPosY = YDPTOLP( dc, y - ywidth );
+	  if (dc->textAlign & TA_UPDATECP) {
+	      dc->CursPosX = XDPTOLP( dc, x + xwidth );
+	      dc->CursPosY = YDPTOLP( dc, y - ywidth );
 	  }
 	  break;
       case TA_RIGHT:
 	  x -= xwidth;
 	  y += ywidth;
-	  if (dc->w.textAlign & TA_UPDATECP) {
-	      dc->w.CursPosX = XDPTOLP( dc, x );
-	      dc->w.CursPosY = YDPTOLP( dc, y );
+	  if (dc->textAlign & TA_UPDATECP) {
+	      dc->CursPosX = XDPTOLP( dc, x );
+	      dc->CursPosY = YDPTOLP( dc, y );
 	  }
 	  break;
       case TA_CENTER:
@@ -166,7 +165,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	  break;
     }
 
-    switch( dc->w.textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
+    switch( dc->textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
     {
       case TA_TOP:
 	  x -= pfo->lpX11Trans ? ascent * pfo->lpX11Trans->c /
@@ -201,7 +200,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
         dibUpdateFlag = TRUE;
     }
 
-    if (dc->w.backgroundMode != TRANSPARENT)
+    if (dc->backgroundMode != TRANSPARENT)
     {
           /* If rectangle is opaque and clipped, do nothing */
         if (!(flags & ETO_CLIPPED) || !(flags & ETO_OPAQUE))
@@ -217,8 +216,8 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
                 TSXSetForeground( display, physDev->gc,
 				  physDev->backgroundPixel );
                 TSXFillRectangle( display, physDev->drawable, physDev->gc,
-                                dc->w.DCOrgX + x,
-                                dc->w.DCOrgY + y - ascent,
+                                dc->DCOrgX + x,
+                                dc->DCOrgY + y - ascent,
                                 width,
                                 ascent + descent );
             }
@@ -232,11 +231,11 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     TSXSetForeground( display, physDev->gc, physDev->textPixel );
     if(!rotated)
     {
-      if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
+      if (!dc->charExtra && !dc->breakExtra && !lpDx)
       {
         X11DRV_cptable[pfo->fi->cptable].pDrawString(
 		pfo, display, physDev->drawable, physDev->gc,
-		dc->w.DCOrgX + x, dc->w.DCOrgY + y, str2b, count );
+		dc->DCOrgX + x, dc->DCOrgY + y, str2b, count );
       }
       else  /* Now the fun begins... */
       {
@@ -295,9 +294,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
 		do
                 {
-                    delta += dc->w.charExtra;
+                    delta += dc->charExtra;
                     if (str2b[i].byte2 == (char)dfBreakChar)
-		      delta += dc->w.breakExtra;
+		      delta += dc->breakExtra;
 		    pitem->nchars++;
                 } while ((++i < count) && !delta);
 		pitem++;
@@ -306,7 +305,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
 	X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, display,
 		physDev->drawable, physDev->gc,
-		dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
+		dc->DCOrgX + x, dc->DCOrgY + y, items, pitem - items );
         HeapFree( GetProcessHeap(), 0, items );
       }
     }
@@ -320,9 +319,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
       {
 	int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8) 
 	  - font->min_char_or_byte2;
-	int x_i = IROUND((double) (dc->w.DCOrgX + x) + offset *
+	int x_i = IROUND((double) (dc->DCOrgX + x) + offset *
 			 pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
-	int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset *
+	int y_i = IROUND((double) (dc->DCOrgY + y) - offset *
 			 pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
 
 	X11DRV_cptable[pfo->fi->cptable].pDrawString(
@@ -336,9 +335,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 			      font->per_char[char_metric_offset].attributes:
 			      font->min_bounds.attributes)
 	                  * pfo->lpX11Trans->pixelsize / 1000.0;
-	  offset += dc->w.charExtra;
+	  offset += dc->charExtra;
 	  if (str2b[i].byte2 == (char)dfBreakChar)
-	    offset += dc->w.breakExtra;
+	    offset += dc->breakExtra;
 	}
       }
     }
@@ -358,8 +357,8 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	TSXSetLineAttributes( display, physDev->gc, lineWidth,
 			      LineSolid, CapRound, JoinBevel ); 
         TSXDrawLine( display, physDev->drawable, physDev->gc,
-		     dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
-		     dc->w.DCOrgX + x + width, dc->w.DCOrgY + y + linePos );
+		     dc->DCOrgX + x, dc->DCOrgY + y + linePos,
+		     dc->DCOrgX + x + width, dc->DCOrgY + y + linePos );
     }
     if (lfStrikeOut)
     {
@@ -371,8 +370,8 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	TSXSetLineAttributes( display, physDev->gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
 	TSXDrawLine( display, physDev->drawable, physDev->gc,
-		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
-		   dc->w.DCOrgX + x + width, dc->w.DCOrgY + y - lineAscent );
+		   dc->DCOrgX + x, dc->DCOrgY + y - lineAscent,
+		   dc->DCOrgX + x + width, dc->DCOrgY + y - lineAscent );
     }
 
     if (flags & ETO_CLIPPED) 
@@ -408,8 +407,8 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    int info_width;
 	    X11DRV_cptable[pfo->fi->cptable].pTextExtents( pfo, p,
 				count, &dir, &ascent, &descent, &info_width );
-	    size->cx = abs((info_width + dc->w.breakRem + count * 
-			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
+	    size->cx = abs((info_width + dc->breakRem + count * 
+			    dc->charExtra) * dc->wndExtX / dc->vportExtX);
 	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
 			   dc->wndExtY / dc->vportExtY);
 	} else {
@@ -425,7 +424,7 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    TRACE("x = %f y = %f\n", x, y);
 	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
 	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
-	    size->cx = fabs((x + dc->w.breakRem + count * dc->w.charExtra) *
+	    size->cx = fabs((x + dc->breakRem + count * dc->charExtra) *
 			     dc->wndExtX / dc->vportExtX);
 	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
 	}

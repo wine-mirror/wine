@@ -17,7 +17,6 @@
 
 #include "bitmap.h"
 #include "brush.h"
-#include "dc.h"
 #include "font.h"
 #include "heap.h"
 #include "options.h"
@@ -31,9 +30,6 @@
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
-/**********************************************************************/
-
-GDI_DRIVER *GDI_Driver = NULL;
 
 /***********************************************************************
  *          GDI stock objects 
@@ -366,6 +362,38 @@ BOOL GDI_Init(void)
     return TRUE;
 }
 
+#define FIRST_LARGE_HANDLE 16
+#define MAX_LARGE_HANDLES ((GDI_HEAP_SIZE - FIRST_LARGE_HANDLE) >> 2)
+static GDIOBJHDR *large_handles[MAX_LARGE_HANDLES];
+static int next_large_handle;
+
+/***********************************************************************
+ *           alloc_large_heap
+ *
+ * Allocate a GDI handle from the large heap. Helper for GDI_AllocObject
+ */
+inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
+{
+    int i;
+    GDIOBJHDR *obj;
+
+    for (i = next_large_handle + 1; i < MAX_LARGE_HANDLES; i++)
+        if (!large_handles[i]) goto found;
+    for (i = 0; i <= next_large_handle; i++)
+        if (!large_handles[i]) goto found;
+    *handle = 0;
+    return NULL;
+
+ found:
+    if ((obj = HeapAlloc( GetProcessHeap(), 0, size )))
+    {
+        large_handles[i] = obj;
+        *handle = (i + FIRST_LARGE_HANDLE) << 2;
+        next_large_handle = i;
+    }
+    return obj;
+}
+
 
 /***********************************************************************
  *           GDI_AllocObject
@@ -376,18 +404,36 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
     GDIOBJHDR *obj;
 
     _EnterSysLevel( &GDI_level );
-    if (!(*handle = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size )))
+    switch(magic)
     {
-        _LeaveSysLevel( &GDI_level );
-        return NULL;
+        /* allocate DCs on the larger heap */
+    case DC_MAGIC:
+    case DISABLED_DC_MAGIC:
+    case META_DC_MAGIC:
+    case METAFILE_MAGIC:
+    case METAFILE_DC_MAGIC:
+    case ENHMETAFILE_MAGIC:
+    case ENHMETAFILE_DC_MAGIC:
+        if (!(obj = alloc_large_heap( size, handle ))) goto error;
+        break;
+    default:
+        if (!(*handle = LOCAL_Alloc( GDI_HeapSel, LMEM_MOVEABLE, size ))) goto error;
+        assert( *handle & 2 );
+        obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, *handle );
+        break;
     }
-    obj = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, *handle );
+
     obj->hNext   = 0;
     obj->wMagic  = magic|OBJECT_NOSYSTEM;
     obj->dwCount = ++count;
 
     TRACE_SEC( *handle, "enter" );
     return obj;
+
+error:
+    _LeaveSysLevel( &GDI_level );
+    *handle = 0;
+    return NULL;
 }
 
 
@@ -401,6 +447,7 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 {
     HGDIOBJ new_handle;
 
+    assert( handle & 2 );  /* no realloc for large handles */
     LOCAL_Unlock( GDI_HeapSel, handle );
     if (!(new_handle = LOCAL_ReAlloc( GDI_HeapSel, handle, size, LMEM_MOVEABLE )))
     {
@@ -424,8 +471,20 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
     if (handle < FIRST_STOCK_HANDLE)
     {
         object->wMagic = 0;  /* Mark it as invalid */
-        LOCAL_Unlock( GDI_HeapSel, handle );
-        LOCAL_Free( GDI_HeapSel, handle );
+        if (handle & 2)  /* GDI heap handle */
+        {
+            LOCAL_Unlock( GDI_HeapSel, handle );
+            LOCAL_Free( GDI_HeapSel, handle );
+        }
+        else  /* large heap handle */
+        {
+            int i = (handle >> 2) - FIRST_LARGE_HANDLE;
+            if (i >= 0 && large_handles[i])
+            {
+                HeapFree( GetProcessHeap(), 0, large_handles[i] );
+                large_handles[i] = NULL;
+            }
+        }
     }
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
@@ -452,7 +511,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
         if (ptr && (magic != MAGIC_DONTCARE)
 	&& (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
     }
-    else
+    else if (handle & 2)  /* GDI heap handle */
     {
         ptr = (GDIOBJHDR *)LOCAL_Lock( GDI_HeapSel, handle );
         if (ptr &&
@@ -460,6 +519,15 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
         {
             LOCAL_Unlock( GDI_HeapSel, handle );
             ptr = NULL;
+        }
+    }
+    else  /* large heap handle */
+    {
+        int i = (handle >> 2) - FIRST_LARGE_HANDLE;
+        if (i >= 0)
+        {
+            ptr = large_handles[i];
+            if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
         }
     }
 
@@ -480,7 +548,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    if (handle < FIRST_STOCK_HANDLE) LOCAL_Unlock( GDI_HeapSel, handle );
+    if (handle < FIRST_STOCK_HANDLE && (handle & 2)) LOCAL_Unlock( GDI_HeapSel, handle );
     TRACE_SEC( handle, "leave" );
     _LeaveSysLevel( &GDI_level );
 }
@@ -778,11 +846,11 @@ HANDLE WINAPI GetCurrentObject(HDC hdc,UINT type)
     if (dc) 
     {
     switch (type) {
-	case OBJ_PEN:	 ret = dc->w.hPen; break;
-	case OBJ_BRUSH:	 ret = dc->w.hBrush; break;
-	case OBJ_PAL:	 ret = dc->w.hPalette; break;
-	case OBJ_FONT:	 ret = dc->w.hFont; break;
-	case OBJ_BITMAP: ret = dc->w.hBitmap; break;
+	case OBJ_PEN:	 ret = dc->hPen; break;
+	case OBJ_BRUSH:	 ret = dc->hBrush; break;
+	case OBJ_PAL:	 ret = dc->hPalette; break;
+	case OBJ_FONT:	 ret = dc->hFont; break;
+	case OBJ_BITMAP: ret = dc->hBitmap; break;
     default:
     	/* the SDK only mentions those above */
     	FIXME("(%08x,%d): unknown type.\n",hdc,type);

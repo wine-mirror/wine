@@ -17,11 +17,11 @@
 #include "wingdi.h"
 #include "winerror.h"
 
-#include "dc.h"
+#include "gdi.h"
 #include "debugtools.h"
 #include "path.h"
 
-DEFAULT_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(gdi);
 
 /* Notes on the implementation
  *
@@ -104,14 +104,14 @@ BOOL WINAPI BeginPath(HDC hdc)
     else
     {
         /* If path is already open, do nothing */
-        if(dc->w.path.state != PATH_Open)
+        if(dc->path.state != PATH_Open)
         {
             /* Make sure that path is empty */
-            PATH_EmptyPath(&dc->w.path);
+            PATH_EmptyPath(&dc->path);
 
             /* Initialize variables for new path */
-            dc->w.path.newStroke=TRUE;
-            dc->w.path.state=PATH_Open;
+            dc->path.newStroke=TRUE;
+            dc->path.state=PATH_Open;
         }
     }
     GDI_ReleaseObj( hdc );
@@ -143,13 +143,13 @@ BOOL WINAPI EndPath(HDC hdc)
     else
     {
         /* Check that path is currently being constructed */
-        if(dc->w.path.state!=PATH_Open)
+        if(dc->path.state!=PATH_Open)
         {
             SetLastError(ERROR_CAN_NOT_COMPLETE);
             ret = FALSE;
         }
         /* Set flag to indicate that path is finished */
-        else dc->w.path.state=PATH_Closed;
+        else dc->path.state=PATH_Closed;
     }
     GDI_ReleaseObj( hdc );
     return ret;
@@ -187,7 +187,7 @@ BOOL WINAPI AbortPath( HDC hdc )
     if(dc->funcs->pAbortPath)
         ret = dc->funcs->pAbortPath(dc);
     else /* Remove all entries from the path */
-        PATH_EmptyPath( &dc->w.path );
+        PATH_EmptyPath( &dc->path );
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -219,7 +219,7 @@ BOOL WINAPI CloseFigure(HDC hdc)
     else
     {
         /* Check that path is open */
-        if(dc->w.path.state!=PATH_Open)
+        if(dc->path.state!=PATH_Open)
         {
             SetLastError(ERROR_CAN_NOT_COMPLETE);
             ret = FALSE;
@@ -229,10 +229,10 @@ BOOL WINAPI CloseFigure(HDC hdc)
             /* FIXME: Shouldn't we draw a line to the beginning of the
                figure? */
             /* Set PT_CLOSEFIGURE on the last entry and start a new stroke */
-            if(dc->w.path.numEntriesUsed)
+            if(dc->path.numEntriesUsed)
             {
-                dc->w.path.pFlags[dc->w.path.numEntriesUsed-1]|=PT_CLOSEFIGURE;
-                dc->w.path.newStroke=TRUE;
+                dc->path.pFlags[dc->path.numEntriesUsed-1]|=PT_CLOSEFIGURE;
+                dc->path.newStroke=TRUE;
             }
         }
     }
@@ -265,7 +265,7 @@ INT WINAPI GetPath(HDC hdc, LPPOINT pPoints, LPBYTE pTypes,
    
    if(!dc) return -1;
    
-   pPath = &dc->w.path;
+   pPath = &dc->path;
    
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed)
@@ -326,7 +326,7 @@ HRGN WINAPI PathToRegion(HDC hdc)
    /* Get pointer to path */
    if(!dc) return -1;
    
-    pPath = &dc->w.path;
+    pPath = &dc->path;
    
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed) SetLastError(ERROR_CAN_NOT_COMPLETE);
@@ -361,7 +361,7 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
    }
    
    /* Construct a region from the path and fill it */
-   if(PATH_PathToRegion(pPath, dc->w.polyFillMode, &hrgn))
+   if(PATH_PathToRegion(pPath, dc->polyFillMode, &hrgn))
    {
       /* Since PaintRgn interprets the region as being in logical coordinates
        * but the points we store for the path are already in device
@@ -436,12 +436,12 @@ BOOL WINAPI FillPath(HDC hdc)
         bRet = dc->funcs->pFillPath(dc);
     else
     {
-        bRet = PATH_FillPath(dc, &dc->w.path);
+        bRet = PATH_FillPath(dc, &dc->path);
         if(bRet)
         {
             /* FIXME: Should the path be emptied even if conversion
                failed? */
-            PATH_EmptyPath(&dc->w.path);
+            PATH_EmptyPath(&dc->path);
         }
     }
     GDI_ReleaseObj( hdc );
@@ -474,7 +474,7 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
      success = dc->funcs->pSelectClipPath(dc, iMode);
    else
    {
-       pPath = &dc->w.path;
+       pPath = &dc->path;
    
        /* Check that path is closed */
        if(pPath->state!=PATH_Closed)
@@ -566,7 +566,7 @@ BOOL PATH_AssignGdiPath(GdiPath *pPathDest, const GdiPath *pPathSrc)
  */
 BOOL PATH_MoveTo(DC *dc)
 {
-   GdiPath *pPath = &dc->w.path;
+   GdiPath *pPath = &dc->path;
    
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
@@ -588,7 +588,7 @@ BOOL PATH_MoveTo(DC *dc)
  */
 BOOL PATH_LineTo(DC *dc, INT x, INT y)
 {
-   GdiPath *pPath = &dc->w.path;
+   GdiPath *pPath = &dc->path;
    POINT point, pointCurPos;
    
    /* Check that path is open */
@@ -605,8 +605,8 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
    if(pPath->newStroke)
    {
       pPath->newStroke=FALSE;
-      pointCurPos.x = dc->w.CursPosX;
-      pointCurPos.y = dc->w.CursPosY;
+      pointCurPos.x = dc->CursPosX;
+      pointCurPos.y = dc->CursPosY;
       if(!LPtoDP(dc->hSelf, &pointCurPos, 1))
          return FALSE;
       if(!PATH_AddEntry(pPath, &pointCurPos, PT_MOVETO))
@@ -628,7 +628,7 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
  */
 BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height)
 {
-   GdiPath *pPath = &dc->w.path;
+   GdiPath *pPath = &dc->path;
    POINT corners[2], pointTemp;
    FLOAT_POINT ellCorners[2];
  
@@ -685,7 +685,7 @@ BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT e
  */
 BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2)
 {
-   GdiPath *pPath = &dc->w.path;
+   GdiPath *pPath = &dc->path;
    POINT corners[2], pointTemp;
 
    /* Check that path is open */
@@ -751,7 +751,7 @@ BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2)
 BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines)
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    double      angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
                /* Initialize angleEndQuadrant to silence gcc's warning */
    double      x, y;
@@ -807,7 +807,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    angleEnd=atan2(y, x);
 
    /* Make sure the end angle is "on the right side" of the start angle */
-   if(dc->w.ArcDirection==AD_CLOCKWISE)
+   if(dc->ArcDirection==AD_CLOCKWISE)
    {
       if(angleEnd<=angleStart)
       {
@@ -825,7 +825,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    }
 
    /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if(dc->w.GraphicsMode==GM_COMPATIBLE)
+   if(dc->GraphicsMode==GM_COMPATIBLE)
    {
       corners[1].x--;
       corners[1].y--;
@@ -841,7 +841,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       if(start)
       {
          angleStartQuadrant=angleStart;
-	 if(dc->w.ArcDirection==AD_CLOCKWISE)
+	 if(dc->ArcDirection==AD_CLOCKWISE)
 	    angleEndQuadrant=(floor(angleStart/M_PI_2)+1.0)*M_PI_2;
 	 else
 	    angleEndQuadrant=(ceil(angleStart/M_PI_2)-1.0)*M_PI_2;
@@ -849,16 +849,16 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       else
       {
 	 angleStartQuadrant=angleEndQuadrant;
-	 if(dc->w.ArcDirection==AD_CLOCKWISE)
+	 if(dc->ArcDirection==AD_CLOCKWISE)
 	    angleEndQuadrant+=M_PI_2;
 	 else
 	    angleEndQuadrant-=M_PI_2;
       }
 
       /* Have we reached the last part of the arc? */
-      if((dc->w.ArcDirection==AD_CLOCKWISE &&
+      if((dc->ArcDirection==AD_CLOCKWISE &&
          angleEnd<angleEndQuadrant) ||
-	 (dc->w.ArcDirection==AD_COUNTERCLOCKWISE &&
+	 (dc->ArcDirection==AD_COUNTERCLOCKWISE &&
 	 angleEnd>angleEndQuadrant))
       {
 	 /* Adjust the end angle for this quadrant */
@@ -891,7 +891,7 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
 
 BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt;
    INT         i;
 
@@ -903,8 +903,8 @@ BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
    if(pPath->newStroke)
    {
       pPath->newStroke=FALSE;
-      pt.x = dc->w.CursPosX;
-      pt.y = dc->w.CursPosY;
+      pt.x = dc->CursPosX;
+      pt.y = dc->CursPosY;
       if(!LPtoDP(dc->hSelf, &pt, 1))
          return FALSE;
       if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
@@ -922,7 +922,7 @@ BOOL PATH_PolyBezierTo(DC *dc, const POINT *pts, DWORD cbPoints)
    
 BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt;
    INT         i;
 
@@ -941,7 +941,7 @@ BOOL PATH_PolyBezier(DC *dc, const POINT *pts, DWORD cbPoints)
 
 BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt;
    INT         i;
 
@@ -960,7 +960,7 @@ BOOL PATH_Polyline(DC *dc, const POINT *pts, DWORD cbPoints)
    
 BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt;
    INT         i;
 
@@ -972,8 +972,8 @@ BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
    if(pPath->newStroke)
    {
       pPath->newStroke=FALSE;
-      pt.x = dc->w.CursPosX;
-      pt.y = dc->w.CursPosY;
+      pt.x = dc->CursPosX;
+      pt.y = dc->CursPosY;
       if(!LPtoDP(dc->hSelf, &pt, 1))
          return FALSE;
       if(!PATH_AddEntry(pPath, &pt, PT_MOVETO))
@@ -993,7 +993,7 @@ BOOL PATH_PolylineTo(DC *dc, const POINT *pts, DWORD cbPoints)
 
 BOOL PATH_Polygon(DC *dc, const POINT *pts, DWORD cbPoints)
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt;
    INT         i;
 
@@ -1015,7 +1015,7 @@ BOOL PATH_Polygon(DC *dc, const POINT *pts, DWORD cbPoints)
 BOOL PATH_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
 		       UINT polygons )
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt, startpt;
    INT         poly, point, i;
 
@@ -1040,7 +1040,7 @@ BOOL PATH_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
 BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
 			DWORD polylines )
 {
-   GdiPath     *pPath = &dc->w.path;
+   GdiPath     *pPath = &dc->path;
    POINT       pt;
    INT         poly, point, i;
 
@@ -1094,7 +1094,7 @@ static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, I
    }
    
    /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if(dc->w.GraphicsMode==GM_COMPATIBLE)
+   if(dc->GraphicsMode==GM_COMPATIBLE)
    {
       corners[1].x--;
       corners[1].y--;
@@ -1452,7 +1452,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
     if(dc->funcs->pFlattenPath) ret = dc->funcs->pFlattenPath(dc);
     else 
     {
-	GdiPath *pPath = &dc->w.path;
+	GdiPath *pPath = &dc->path;
         if(pPath->state != PATH_Closed)
 	    ret = PATH_FlattenPath(pPath);
     }
@@ -1538,9 +1538,9 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
        bRet = dc->funcs->pStrokeAndFillPath(dc);
    else
    {
-       bRet = PATH_FillPath(dc, &dc->w.path);
-       if(bRet) bRet = PATH_StrokePath(dc, &dc->w.path);
-       if(bRet) PATH_EmptyPath(&dc->w.path);
+       bRet = PATH_FillPath(dc, &dc->path);
+       if(bRet) bRet = PATH_StrokePath(dc, &dc->path);
+       if(bRet) PATH_EmptyPath(&dc->path);
    }
    GDI_ReleaseObj( hdc );
    return bRet;
@@ -1574,7 +1574,7 @@ BOOL WINAPI StrokePath(HDC hdc)
         bRet = dc->funcs->pStrokePath(dc);
     else
     {
-        pPath = &dc->w.path;
+        pPath = &dc->path;
         bRet = PATH_StrokePath(dc, pPath);
         PATH_EmptyPath(pPath);
     }

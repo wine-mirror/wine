@@ -9,7 +9,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "dc.h"
 #include "gdi.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -22,61 +21,6 @@
 
 DEFAULT_DEBUG_CHANNEL(dc);
 
-/***********************************************************************
- *           DC_Init_DC_INFO
- *
- * Fill the WIN_DC_INFO structure.
- */
-static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
-{
-    win_dc_info->flags               = 0;
-    win_dc_info->devCaps             = NULL;
-    win_dc_info->hClipRgn            = 0;
-    win_dc_info->hVisRgn             = 0;
-    win_dc_info->hGCClipRgn          = 0;
-    win_dc_info->hPen                = GetStockObject( BLACK_PEN );
-    win_dc_info->hBrush              = GetStockObject( WHITE_BRUSH );
-    win_dc_info->hFont               = GetStockObject( SYSTEM_FONT );
-    win_dc_info->hBitmap             = 0;
-    win_dc_info->hDevice             = 0;
-    win_dc_info->hPalette            = GetStockObject( DEFAULT_PALETTE );
-    win_dc_info->ROPmode             = R2_COPYPEN;
-    win_dc_info->polyFillMode        = ALTERNATE;
-    win_dc_info->stretchBltMode      = BLACKONWHITE;
-    win_dc_info->relAbsMode          = ABSOLUTE;
-    win_dc_info->backgroundMode      = OPAQUE;
-    win_dc_info->backgroundColor     = RGB( 255, 255, 255 );
-    win_dc_info->textColor           = RGB( 0, 0, 0 );
-    win_dc_info->brushOrgX           = 0;
-    win_dc_info->brushOrgY           = 0;
-    win_dc_info->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
-    win_dc_info->charExtra           = 0;
-    win_dc_info->breakTotalExtra     = 0;
-    win_dc_info->breakCount          = 0;
-    win_dc_info->breakExtra          = 0;
-    win_dc_info->breakRem            = 0;
-    win_dc_info->bitsPerPixel        = 1;
-    win_dc_info->MapMode             = MM_TEXT;
-    win_dc_info->GraphicsMode        = GM_COMPATIBLE;
-    win_dc_info->DCOrgX              = 0;
-    win_dc_info->DCOrgY              = 0;
-    win_dc_info->pAbortProc          = NULL;
-    win_dc_info->CursPosX            = 0;
-    win_dc_info->CursPosY            = 0;
-    win_dc_info->ArcDirection        = AD_COUNTERCLOCKWISE;
-    win_dc_info->xformWorld2Wnd.eM11 = 1.0f;
-    win_dc_info->xformWorld2Wnd.eM12 = 0.0f;
-    win_dc_info->xformWorld2Wnd.eM21 = 0.0f;
-    win_dc_info->xformWorld2Wnd.eM22 = 1.0f;
-    win_dc_info->xformWorld2Wnd.eDx  = 0.0f;
-    win_dc_info->xformWorld2Wnd.eDy  = 0.0f;
-    win_dc_info->xformWorld2Vport    = win_dc_info->xformWorld2Wnd;
-    win_dc_info->xformVport2World    = win_dc_info->xformWorld2Wnd;
-    win_dc_info->vport2WorldValid    = TRUE;
-
-    PATH_InitGdiPath(&win_dc_info->path);
-}
-
 
 /***********************************************************************
  *           DC_AllocDC
@@ -86,25 +30,72 @@ DC *DC_AllocDC( const DC_FUNCTIONS *funcs )
     HDC hdc;
     DC *dc;
 
-    if (!(dc = GDI_AllocObject( sizeof(DC), DC_MAGIC, &hdc ))) return NULL;
-    dc->hSelf      = hdc;
-    dc->funcs      = funcs;
-    dc->physDev    = NULL;
-    dc->saveLevel  = 0;
-    dc->dwHookData = 0L;
-    dc->hookProc   = NULL;
-    dc->hookThunk  = NULL;
-    dc->wndOrgX    = 0;
-    dc->wndOrgY    = 0;
-    dc->wndExtX    = 1;
-    dc->wndExtY    = 1;
-    dc->vportOrgX  = 0;
-    dc->vportOrgY  = 0;
-    dc->vportExtX  = 1;
-    dc->vportExtY  = 1;
+    if (!(dc = GDI_AllocObject( sizeof(*dc), DC_MAGIC, &hdc ))) return NULL;
 
-    DC_Init_DC_INFO( &dc->w );
-
+    dc->hSelf               = hdc;
+    dc->funcs               = funcs;
+    dc->physDev             = NULL;
+    dc->saveLevel           = 0;
+    dc->dwHookData          = 0;
+    dc->hookProc            = NULL;
+    dc->hookThunk           = NULL;
+    dc->wndOrgX             = 0;
+    dc->wndOrgY             = 0;
+    dc->wndExtX             = 1;
+    dc->wndExtY             = 1;
+    dc->vportOrgX           = 0;
+    dc->vportOrgY           = 0;
+    dc->vportExtX           = 1;
+    dc->vportExtY           = 1;
+    dc->flags               = 0;
+    dc->devCaps             = NULL;
+    dc->hClipRgn            = 0;
+    dc->hVisRgn             = 0;
+    dc->hGCClipRgn          = 0;
+    dc->hPen                = GetStockObject( BLACK_PEN );
+    dc->hBrush              = GetStockObject( WHITE_BRUSH );
+    dc->hFont               = GetStockObject( SYSTEM_FONT );
+    dc->hBitmap             = 0;
+    dc->hDevice             = 0;
+    dc->hPalette            = GetStockObject( DEFAULT_PALETTE );
+    dc->ROPmode             = R2_COPYPEN;
+    dc->polyFillMode        = ALTERNATE;
+    dc->stretchBltMode      = BLACKONWHITE;
+    dc->relAbsMode          = ABSOLUTE;
+    dc->backgroundMode      = OPAQUE;
+    dc->backgroundColor     = RGB( 255, 255, 255 );
+    dc->textColor           = RGB( 0, 0, 0 );
+    dc->brushOrgX           = 0;
+    dc->brushOrgY           = 0;
+    dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
+    dc->charExtra           = 0;
+    dc->breakTotalExtra     = 0;
+    dc->breakCount          = 0;
+    dc->breakExtra          = 0;
+    dc->breakRem            = 0;
+    dc->totalExtent.left    = 0;
+    dc->totalExtent.top     = 0;
+    dc->totalExtent.right   = 0;
+    dc->totalExtent.bottom  = 0;
+    dc->bitsPerPixel        = 1;
+    dc->MapMode             = MM_TEXT;
+    dc->GraphicsMode        = GM_COMPATIBLE;
+    dc->DCOrgX              = 0;
+    dc->DCOrgY              = 0;
+    dc->pAbortProc          = NULL;
+    dc->CursPosX            = 0;
+    dc->CursPosY            = 0;
+    dc->ArcDirection        = AD_COUNTERCLOCKWISE;
+    dc->xformWorld2Wnd.eM11 = 1.0f;
+    dc->xformWorld2Wnd.eM12 = 0.0f;
+    dc->xformWorld2Wnd.eM21 = 0.0f;
+    dc->xformWorld2Wnd.eM22 = 1.0f;
+    dc->xformWorld2Wnd.eDx  = 0.0f;
+    dc->xformWorld2Wnd.eDy  = 0.0f;
+    dc->xformWorld2Vport    = dc->xformWorld2Wnd;
+    dc->xformVport2World    = dc->xformWorld2Wnd;
+    dc->vport2WorldValid    = TRUE;
+    PATH_InitGdiPath(&dc->path);
     return dc;
 }
 
@@ -137,10 +128,10 @@ DC *DC_GetDCUpdate( HDC hdc )
 {
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return NULL;
-    while (dc->w.flags & DC_DIRTY)
+    while (dc->flags & DC_DIRTY)
     {
-        dc->w.flags &= ~DC_DIRTY;
-        if (!(dc->w.flags & (DC_SAVED | DC_MEMORY)))
+        dc->flags &= ~DC_DIRTY;
+        if (!(dc->flags & (DC_SAVED | DC_MEMORY)))
         {
             DCHOOKPROC proc = dc->hookThunk;
             if (proc)
@@ -164,11 +155,11 @@ DC *DC_GetDCUpdate( HDC hdc )
 void DC_InitDC( DC* dc )
 {
     RealizeDefaultPalette16( dc->hSelf );
-    SetTextColor( dc->hSelf, dc->w.textColor );
-    SetBkColor( dc->hSelf, dc->w.backgroundColor );
-    SelectObject( dc->hSelf, dc->w.hPen );
-    SelectObject( dc->hSelf, dc->w.hBrush );
-    SelectObject( dc->hSelf, dc->w.hFont );
+    SetTextColor( dc->hSelf, dc->textColor );
+    SetBkColor( dc->hSelf, dc->backgroundColor );
+    SelectObject( dc->hSelf, dc->hPen );
+    SelectObject( dc->hSelf, dc->hBrush );
+    SelectObject( dc->hSelf, dc->hFont );
     CLIPPING_UpdateGCRegion( dc );
 }
 
@@ -230,12 +221,12 @@ void DC_UpdateXforms( DC *dc )
         scaleY * (FLOAT)dc->wndOrgY;
 
     /* Combine with the world transformation */
-    CombineTransform( &dc->w.xformWorld2Vport, &dc->w.xformWorld2Wnd,
+    CombineTransform( &dc->xformWorld2Vport, &dc->xformWorld2Wnd,
         &xformWnd2Vport );
 
     /* Create inverse of world-to-viewport transformation */
-    dc->w.vport2WorldValid = DC_InvertXform( &dc->w.xformWorld2Vport,
-        &dc->w.xformVport2World );
+    dc->vport2WorldValid = DC_InvertXform( &dc->xformWorld2Vport,
+        &dc->xformVport2World );
 }
 
 
@@ -255,72 +246,73 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     }
     TRACE("(%04x): returning %04x\n", hdc, handle );
 
-    newdc->w.flags            = dc->w.flags | DC_SAVED;
-    newdc->w.devCaps          = dc->w.devCaps;
-    newdc->w.hPen             = dc->w.hPen;       
-    newdc->w.hBrush           = dc->w.hBrush;     
-    newdc->w.hFont            = dc->w.hFont;      
-    newdc->w.hBitmap          = dc->w.hBitmap;    
-    newdc->w.hDevice          = dc->w.hDevice;
-    newdc->w.hPalette         = dc->w.hPalette;   
-    newdc->w.totalExtent      = dc->w.totalExtent;
-    newdc->w.bitsPerPixel     = dc->w.bitsPerPixel;
-    newdc->w.ROPmode          = dc->w.ROPmode;
-    newdc->w.polyFillMode     = dc->w.polyFillMode;
-    newdc->w.stretchBltMode   = dc->w.stretchBltMode;
-    newdc->w.relAbsMode       = dc->w.relAbsMode;
-    newdc->w.backgroundMode   = dc->w.backgroundMode;
-    newdc->w.backgroundColor  = dc->w.backgroundColor;
-    newdc->w.textColor        = dc->w.textColor;
-    newdc->w.brushOrgX        = dc->w.brushOrgX;
-    newdc->w.brushOrgY        = dc->w.brushOrgY;
-    newdc->w.textAlign        = dc->w.textAlign;
-    newdc->w.charExtra        = dc->w.charExtra;
-    newdc->w.breakTotalExtra  = dc->w.breakTotalExtra;
-    newdc->w.breakCount       = dc->w.breakCount;
-    newdc->w.breakExtra       = dc->w.breakExtra;
-    newdc->w.breakRem         = dc->w.breakRem;
-    newdc->w.MapMode          = dc->w.MapMode;
-    newdc->w.GraphicsMode     = dc->w.GraphicsMode;
+    newdc->flags            = dc->flags | DC_SAVED;
+    newdc->devCaps          = dc->devCaps;
+    newdc->hPen             = dc->hPen;       
+    newdc->hBrush           = dc->hBrush;     
+    newdc->hFont            = dc->hFont;      
+    newdc->hBitmap          = dc->hBitmap;    
+    newdc->hDevice          = dc->hDevice;
+    newdc->hPalette         = dc->hPalette;   
+    newdc->totalExtent      = dc->totalExtent;
+    newdc->bitsPerPixel     = dc->bitsPerPixel;
+    newdc->ROPmode          = dc->ROPmode;
+    newdc->polyFillMode     = dc->polyFillMode;
+    newdc->stretchBltMode   = dc->stretchBltMode;
+    newdc->relAbsMode       = dc->relAbsMode;
+    newdc->backgroundMode   = dc->backgroundMode;
+    newdc->backgroundColor  = dc->backgroundColor;
+    newdc->textColor        = dc->textColor;
+    newdc->brushOrgX        = dc->brushOrgX;
+    newdc->brushOrgY        = dc->brushOrgY;
+    newdc->textAlign        = dc->textAlign;
+    newdc->charExtra        = dc->charExtra;
+    newdc->breakTotalExtra  = dc->breakTotalExtra;
+    newdc->breakCount       = dc->breakCount;
+    newdc->breakExtra       = dc->breakExtra;
+    newdc->breakRem         = dc->breakRem;
+    newdc->MapMode          = dc->MapMode;
+    newdc->GraphicsMode     = dc->GraphicsMode;
 #if 0
     /* Apparently, the DC origin is not changed by [GS]etDCState */
-    newdc->w.DCOrgX           = dc->w.DCOrgX;
-    newdc->w.DCOrgY           = dc->w.DCOrgY;
+    newdc->DCOrgX           = dc->DCOrgX;
+    newdc->DCOrgY           = dc->DCOrgY;
 #endif
-    newdc->w.CursPosX         = dc->w.CursPosX;
-    newdc->w.CursPosY         = dc->w.CursPosY;
-    newdc->w.ArcDirection     = dc->w.ArcDirection;
-    newdc->w.xformWorld2Wnd   = dc->w.xformWorld2Wnd;
-    newdc->w.xformWorld2Vport = dc->w.xformWorld2Vport;
-    newdc->w.xformVport2World = dc->w.xformVport2World;
-    newdc->w.vport2WorldValid = dc->w.vport2WorldValid;
-    newdc->wndOrgX            = dc->wndOrgX;
-    newdc->wndOrgY            = dc->wndOrgY;
-    newdc->wndExtX            = dc->wndExtX;
-    newdc->wndExtY            = dc->wndExtY;
-    newdc->vportOrgX          = dc->vportOrgX;
-    newdc->vportOrgY          = dc->vportOrgY;
-    newdc->vportExtX          = dc->vportExtX;
-    newdc->vportExtY          = dc->vportExtY;
+    newdc->CursPosX         = dc->CursPosX;
+    newdc->CursPosY         = dc->CursPosY;
+    newdc->ArcDirection     = dc->ArcDirection;
+    newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
+    newdc->xformWorld2Vport = dc->xformWorld2Vport;
+    newdc->xformVport2World = dc->xformVport2World;
+    newdc->vport2WorldValid = dc->vport2WorldValid;
+    newdc->wndOrgX          = dc->wndOrgX;
+    newdc->wndOrgY          = dc->wndOrgY;
+    newdc->wndExtX          = dc->wndExtX;
+    newdc->wndExtY          = dc->wndExtY;
+    newdc->vportOrgX        = dc->vportOrgX;
+    newdc->vportOrgY        = dc->vportOrgY;
+    newdc->vportExtX        = dc->vportExtX;
+    newdc->vportExtY        = dc->vportExtY;
 
     newdc->hSelf = (HDC)handle;
     newdc->saveLevel = 0;
 
-    PATH_InitGdiPath( &newdc->w.path );
+    PATH_InitGdiPath( &newdc->path );
     
-    newdc->w.pAbortProc = NULL;
+    newdc->pAbortProc = NULL;
     newdc->hookThunk  = NULL;
+    newdc->hookProc   = 0;
 
     /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
 
-    newdc->w.hGCClipRgn = newdc->w.hVisRgn = 0;
-    if (dc->w.hClipRgn)
+    newdc->hGCClipRgn = newdc->hVisRgn = 0;
+    if (dc->hClipRgn)
     {
-	newdc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
-	CombineRgn( newdc->w.hClipRgn, dc->w.hClipRgn, 0, RGN_COPY );
+	newdc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+	CombineRgn( newdc->hClipRgn, dc->hClipRgn, 0, RGN_COPY );
     }
     else
-	newdc->w.hClipRgn = 0;
+	newdc->hClipRgn = 0;
     GDI_ReleaseObj( handle );
     GDI_ReleaseObj( hdc );
     return handle;
@@ -333,14 +325,14 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
 void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 {
     DC *dc, *dcs;
-    
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
-    if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC )))
+
+    if (!(dc = GDI_GetObjPtr( hdc, DC_MAGIC ))) return;
+    if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC )))
     {
       GDI_ReleaseObj( hdc );
       return;
     }
-    if (!dcs->w.flags & DC_SAVED)
+    if (!dcs->flags & DC_SAVED)
     {
       GDI_ReleaseObj( hdc );
       GDI_ReleaseObj( hdcs );
@@ -348,70 +340,70 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
     }
     TRACE("%04x %04x\n", hdc, hdcs );
 
-    dc->w.flags            = dcs->w.flags & ~DC_SAVED;
-    dc->w.devCaps          = dcs->w.devCaps;
-    dc->w.hDevice          = dcs->w.hDevice;
-    dc->w.totalExtent      = dcs->w.totalExtent;
-    dc->w.ROPmode          = dcs->w.ROPmode;
-    dc->w.polyFillMode     = dcs->w.polyFillMode;
-    dc->w.stretchBltMode   = dcs->w.stretchBltMode;
-    dc->w.relAbsMode       = dcs->w.relAbsMode;
-    dc->w.backgroundMode   = dcs->w.backgroundMode;
-    dc->w.backgroundColor  = dcs->w.backgroundColor;
-    dc->w.textColor        = dcs->w.textColor;
-    dc->w.brushOrgX        = dcs->w.brushOrgX;
-    dc->w.brushOrgY        = dcs->w.brushOrgY;
-    dc->w.textAlign        = dcs->w.textAlign;
-    dc->w.charExtra        = dcs->w.charExtra;
-    dc->w.breakTotalExtra  = dcs->w.breakTotalExtra;
-    dc->w.breakCount       = dcs->w.breakCount;
-    dc->w.breakExtra       = dcs->w.breakExtra;
-    dc->w.breakRem         = dcs->w.breakRem;
-    dc->w.MapMode          = dcs->w.MapMode;
-    dc->w.GraphicsMode     = dcs->w.GraphicsMode;
+    dc->flags            = dcs->flags & ~DC_SAVED;
+    dc->devCaps          = dcs->devCaps;
+    dc->hDevice          = dcs->hDevice;
+    dc->totalExtent      = dcs->totalExtent;
+    dc->ROPmode          = dcs->ROPmode;
+    dc->polyFillMode     = dcs->polyFillMode;
+    dc->stretchBltMode   = dcs->stretchBltMode;
+    dc->relAbsMode       = dcs->relAbsMode;
+    dc->backgroundMode   = dcs->backgroundMode;
+    dc->backgroundColor  = dcs->backgroundColor;
+    dc->textColor        = dcs->textColor;
+    dc->brushOrgX        = dcs->brushOrgX;
+    dc->brushOrgY        = dcs->brushOrgY;
+    dc->textAlign        = dcs->textAlign;
+    dc->charExtra        = dcs->charExtra;
+    dc->breakTotalExtra  = dcs->breakTotalExtra;
+    dc->breakCount       = dcs->breakCount;
+    dc->breakExtra       = dcs->breakExtra;
+    dc->breakRem         = dcs->breakRem;
+    dc->MapMode          = dcs->MapMode;
+    dc->GraphicsMode     = dcs->GraphicsMode;
 #if 0
     /* Apparently, the DC origin is not changed by [GS]etDCState */
-    dc->w.DCOrgX           = dcs->w.DCOrgX;
-    dc->w.DCOrgY           = dcs->w.DCOrgY;
+    dc->DCOrgX           = dcs->DCOrgX;
+    dc->DCOrgY           = dcs->DCOrgY;
 #endif
-    dc->w.CursPosX         = dcs->w.CursPosX;
-    dc->w.CursPosY         = dcs->w.CursPosY;
-    dc->w.ArcDirection     = dcs->w.ArcDirection;
-    dc->w.xformWorld2Wnd   = dcs->w.xformWorld2Wnd;
-    dc->w.xformWorld2Vport = dcs->w.xformWorld2Vport;
-    dc->w.xformVport2World = dcs->w.xformVport2World;
-    dc->w.vport2WorldValid = dcs->w.vport2WorldValid;
+    dc->CursPosX         = dcs->CursPosX;
+    dc->CursPosY         = dcs->CursPosY;
+    dc->ArcDirection     = dcs->ArcDirection;
+    dc->xformWorld2Wnd   = dcs->xformWorld2Wnd;
+    dc->xformWorld2Vport = dcs->xformWorld2Vport;
+    dc->xformVport2World = dcs->xformVport2World;
+    dc->vport2WorldValid = dcs->vport2WorldValid;
 
-    dc->wndOrgX            = dcs->wndOrgX;
-    dc->wndOrgY            = dcs->wndOrgY;
-    dc->wndExtX            = dcs->wndExtX;
-    dc->wndExtY            = dcs->wndExtY;
-    dc->vportOrgX          = dcs->vportOrgX;
-    dc->vportOrgY          = dcs->vportOrgY;
-    dc->vportExtX          = dcs->vportExtX;
-    dc->vportExtY          = dcs->vportExtY;
+    dc->wndOrgX          = dcs->wndOrgX;
+    dc->wndOrgY          = dcs->wndOrgY;
+    dc->wndExtX          = dcs->wndExtX;
+    dc->wndExtY          = dcs->wndExtY;
+    dc->vportOrgX        = dcs->vportOrgX;
+    dc->vportOrgY        = dcs->vportOrgY;
+    dc->vportExtX        = dcs->vportExtX;
+    dc->vportExtY        = dcs->vportExtY;
 
-    if (!(dc->w.flags & DC_MEMORY)) dc->w.bitsPerPixel = dcs->w.bitsPerPixel;
+    if (!(dc->flags & DC_MEMORY)) dc->bitsPerPixel = dcs->bitsPerPixel;
 
-    if (dcs->w.hClipRgn)
+    if (dcs->hClipRgn)
     {
-        if (!dc->w.hClipRgn) dc->w.hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( dc->w.hClipRgn, dcs->w.hClipRgn, 0, RGN_COPY );
+        if (!dc->hClipRgn) dc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+        CombineRgn( dc->hClipRgn, dcs->hClipRgn, 0, RGN_COPY );
     }
     else
     {
-        if (dc->w.hClipRgn) DeleteObject16( dc->w.hClipRgn );
-        dc->w.hClipRgn = 0;
+        if (dc->hClipRgn) DeleteObject16( dc->hClipRgn );
+        dc->hClipRgn = 0;
     }
     CLIPPING_UpdateGCRegion( dc );
 
-    SelectObject( hdc, dcs->w.hBitmap );
-    SelectObject( hdc, dcs->w.hBrush );
-    SelectObject( hdc, dcs->w.hFont );
-    SelectObject( hdc, dcs->w.hPen );
-    SetBkColor( hdc, dcs->w.backgroundColor);
-    SetTextColor( hdc, dcs->w.textColor);
-    GDISelectPalette16( hdc, dcs->w.hPalette, FALSE );
+    SelectObject( hdc, dcs->hBitmap );
+    SelectObject( hdc, dcs->hBrush );
+    SelectObject( hdc, dcs->hFont );
+    SelectObject( hdc, dcs->hPen );
+    SetBkColor( hdc, dcs->backgroundColor);
+    SetTextColor( hdc, dcs->textColor);
+    GDISelectPalette16( hdc, dcs->hPalette, FALSE );
     GDI_ReleaseObj( hdcs );
     GDI_ReleaseObj( hdc );
 }
@@ -458,14 +450,14 @@ INT WINAPI SaveDC( HDC hdc )
      * SetDCState doesn't allow us to signal an error (which can happen
      * when copying paths).
      */
-    if (!PATH_AssignGdiPath( &dcs->w.path, &dc->w.path ))
+    if (!PATH_AssignGdiPath( &dcs->path, &dc->path ))
     {
         GDI_ReleaseObj( hdc );
 	GDI_ReleaseObj( hdcs );
 	DeleteDC( hdcs );
 	return 0;
     }
-    
+
     dcs->header.hNext = dc->header.hNext;
     dc->header.hNext = hdcs;
     TRACE("(%04x): returning %d\n", hdc, dc->saveLevel+1 );
@@ -520,7 +512,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     while (dc->saveLevel >= level)
     {
 	HDC16 hdcs = dc->header.hNext;
-	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC )))
+	if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC )))
 	{
 	  GDI_ReleaseObj( hdc );
 	  return FALSE;
@@ -529,7 +521,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
 	if (--dc->saveLevel < level)
 	{
 	    SetDCState16( hdc, hdcs );
-            if (!PATH_AssignGdiPath( &dc->w.path, &dcs->w.path ))
+            if (!PATH_AssignGdiPath( &dc->path, &dcs->path ))
 		/* FIXME: This might not be quite right, since we're
 		 * returning FALSE but still destroying the saved DC state */
 	        success=FALSE;
@@ -558,7 +550,7 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 
     if (!(funcs = DRIVER_FindDriver( buf ))) return 0;
     if (!(dc = DC_AllocDC( funcs ))) return 0;
-    dc->w.flags = 0;
+    dc->flags = 0;
 
     TRACE("(driver=%s, device=%s, output=%s): returning %04x\n",
                debugstr_a(driver), debugstr_a(device), debugstr_a(output), dc->hSelf );
@@ -656,7 +648,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     DC *dc, *origDC;
     const DC_FUNCTIONS *funcs;
 
-    if ((origDC = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
+    if ((origDC = GDI_GetObjPtr( hdc, DC_MAGIC ))) funcs = origDC->funcs;
     else funcs = DRIVER_FindDriver( "DISPLAY" );
 
     if (!funcs || !(dc = DC_AllocDC( funcs )))
@@ -668,9 +660,9 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     TRACE("(%04x): returning %04x\n",
                hdc, dc->hSelf );
 
-    dc->w.flags        = DC_MEMORY;
-    dc->w.bitsPerPixel = 1;
-    dc->w.hBitmap      = hPseudoStockBitmap;
+    dc->flags        = DC_MEMORY;
+    dc->bitsPerPixel = 1;
+    dc->hBitmap      = hPseudoStockBitmap;
 
     /* Copy the driver-specific physical device info into
      * the new DC. The driver may use this read-only info
@@ -708,13 +700,13 @@ BOOL16 WINAPI DeleteDC16( HDC16 hdc )
  */
 BOOL WINAPI DeleteDC( HDC hdc )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC * dc = GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
 
     TRACE("%04x\n", hdc );
 
     /* Call hook procedure to check whether is it OK to delete this DC */
-    if (dc->hookThunk && !(dc->w.flags & (DC_SAVED | DC_MEMORY)))
+    if (dc->hookThunk && !(dc->flags & (DC_SAVED | DC_MEMORY)))
     {
         DCHOOKPROC proc = dc->hookThunk;
         if (proc)
@@ -730,14 +722,14 @@ BOOL WINAPI DeleteDC( HDC hdc )
     {
 	DC * dcs;
 	HDC16 hdcs = dc->header.hNext;
-	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
+	if (!(dcs = GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
         GDI_ReleaseObj( hdcs );
 	DeleteDC( hdcs );
     }
     
-    if (!(dc->w.flags & DC_SAVED))
+    if (!(dc->flags & DC_SAVED))
     {
 	SelectObject( hdc, GetStockObject(BLACK_PEN) );
 	SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
@@ -745,12 +737,12 @@ BOOL WINAPI DeleteDC( HDC hdc )
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }
 
-    if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
-    if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
-    if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );
-    if (dc->w.pAbortProc) THUNK_Free( (FARPROC)dc->w.pAbortProc );
+    if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
+    if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
+    if (dc->hGCClipRgn) DeleteObject( dc->hGCClipRgn );
+    if (dc->pAbortProc) THUNK_Free( (FARPROC)dc->pAbortProc );
     if (dc->hookThunk) THUNK_Free( (FARPROC)dc->hookThunk );
-    PATH_DestroyGdiPath(&dc->w.path);
+    PATH_DestroyGdiPath(&dc->path);
     
     return GDI_FreeObject( hdc, dc );
 }
@@ -803,11 +795,9 @@ INT16 WINAPI GetDeviceCaps16( HDC16 hdc, INT16 cap )
  */
 INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc;
     INT ret = 0;
     POINT pt;
-
-    if (!dc) return 0;
 
     /* Device capabilities for the printer */
     switch (cap)
@@ -836,15 +826,16 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
         if (((cap>=46) && (cap<88)) || ((cap>=92) && (cap<104)))
             FIXME("(%04x,%d): unsupported DeviceCaps capability, will yield 0!\n",
                   hdc,cap );
-        ret = *(WORD *)(((char *)dc->w.devCaps) + cap);
-
-        if ((cap == NUMCOLORS) && (ret == 0xffff)) 
-	    ret = -1;
+        if ((dc = DC_GetDCPtr( hdc )))
+        {
+            ret = *(WORD *)(((char *)dc->devCaps) + cap);
+            GDI_ReleaseObj( hdc );
+            if ((cap == NUMCOLORS) && (ret == 0xffff)) ret = -1;
+        }
         break;
     }
 
     TRACE("(%04x,%d): returning %d\n", hdc, cap, ret );
-    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -870,8 +861,8 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
     if (dc->funcs->pSetBkColor)
         oldColor = dc->funcs->pSetBkColor(dc, color);
     else {
-	oldColor = dc->w.backgroundColor;
-	dc->w.backgroundColor = color;
+	oldColor = dc->backgroundColor;
+	dc->backgroundColor = color;
     }
     GDI_ReleaseObj( hdc );
     return oldColor;
@@ -899,8 +890,8 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
     if (dc->funcs->pSetTextColor)
         oldColor = dc->funcs->pSetTextColor(dc, color);
     else {
-	oldColor = dc->w.textColor;
-	dc->w.textColor = color;
+	oldColor = dc->textColor;
+	dc->textColor = color;
     }
     GDI_ReleaseObj( hdc );
     return oldColor;
@@ -926,8 +917,8 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
     if (dc->funcs->pSetTextAlign)
         prevAlign = dc->funcs->pSetTextAlign(dc, align);
     else {
-	prevAlign = dc->w.textAlign;
-	dc->w.textAlign = align;
+	prevAlign = dc->textAlign;
+	dc->textAlign = align;
     }
     GDI_ReleaseObj( hdc );
     return prevAlign;
@@ -941,12 +932,12 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
     DC * dc;
 
     if (!lpp) return FALSE;
-    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return FALSE;
+    if (!(dc = DC_GetDCPtr( hDC ))) return FALSE;
 
     lpp->x = lpp->y = 0;
     if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc, lpp );
-    lpp->x += dc->w.DCOrgX;
-    lpp->y += dc->w.DCOrgY;
+    lpp->x += dc->DCOrgX;
+    lpp->y += dc->DCOrgY;
     GDI_ReleaseObj( hDC );
     return TRUE;
 }
@@ -970,11 +961,11 @@ DWORD WINAPI GetDCOrg16( HDC16 hdc )
 DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD prevOrg;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
-    prevOrg = dc->w.DCOrgX | (dc->w.DCOrgY << 16);
-    dc->w.DCOrgX = x;
-    dc->w.DCOrgY = y;
+    prevOrg = dc->DCOrgX | (dc->DCOrgY << 16);
+    dc->DCOrgX = x;
+    dc->DCOrgY = y;
     GDI_ReleaseObj( hdc );
     return prevOrg;
 }
@@ -986,20 +977,19 @@ DWORD WINAPI SetDCOrg16( HDC16 hdc, INT16 x, INT16 y )
 INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 {
     INT ret = 0;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
 
     /* One would think that setting the graphics mode to GM_COMPATIBLE
      * would also reset the world transformation matrix to the unity
      * matrix. However, in Windows, this is not the case. This doesn't
      * make a lot of sense to me, but that's the way it is.
      */
-    
     if (!dc) return 0;
-    if ((mode > 0) || (mode <= GM_LAST)) 
+    if ((mode > 0) || (mode <= GM_LAST))
     {
-    ret = dc->w.GraphicsMode;
-    dc->w.GraphicsMode = mode;
-}
+        ret = dc->GraphicsMode;
+        dc->GraphicsMode = mode;
+    }
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -1028,10 +1018,10 @@ INT WINAPI SetArcDirection( HDC hdc, INT nDirection )
 	return 0;
     }
 
-    if ((dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC )))
+    if ((dc = DC_GetDCPtr( hdc )))
     {
-    nOldDirection = dc->w.ArcDirection;
-    dc->w.ArcDirection = nDirection;
+        nOldDirection = dc->ArcDirection;
+        dc->ArcDirection = nDirection;
         GDI_ReleaseObj( hdc );
     }
     return nOldDirection;
@@ -1045,8 +1035,8 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 {
     DC * dc;
     if (!xform) return FALSE;
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return FALSE;
-    *xform = dc->w.xformWorld2Wnd;
+    if (!(dc = DC_GetDCPtr( hdc ))) return FALSE;
+    *xform = dc->xformWorld2Wnd;
     GDI_ReleaseObj( hdc );
     return TRUE;
 }
@@ -1058,20 +1048,15 @@ BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )
 BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
 {
     BOOL ret = FALSE;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    
-    if (!dc)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
+    DC *dc = DC_GetDCPtr( hdc );
 
+    if (!dc) return FALSE;
     if (!xform) goto done;
-    
-    /* Check that graphics mode is GM_ADVANCED */
-    if (dc->w.GraphicsMode!=GM_ADVANCED) goto done;
 
-    dc->w.xformWorld2Wnd = *xform;
+    /* Check that graphics mode is GM_ADVANCED */
+    if (dc->GraphicsMode!=GM_ADVANCED) goto done;
+
+    dc->xformWorld2Wnd = *xform;
     DC_UpdateXforms( dc );
     ret = TRUE;
  done:
@@ -1106,35 +1091,31 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform,
     DWORD iMode )
 {
     BOOL ret = FALSE;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    
+    DC *dc = DC_GetDCPtr( hdc );
+
     /* Check for illegal parameters */
-    if (!dc)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return FALSE;
-    }
+    if (!dc) return FALSE;
     if (!xform) goto done;
-    
+
     /* Check that graphics mode is GM_ADVANCED */
-    if (dc->w.GraphicsMode!=GM_ADVANCED) goto done;
-       
+    if (dc->GraphicsMode!=GM_ADVANCED) goto done;
+
     switch (iMode)
     {
         case MWT_IDENTITY:
-	    dc->w.xformWorld2Wnd.eM11 = 1.0f;
-	    dc->w.xformWorld2Wnd.eM12 = 0.0f;
-	    dc->w.xformWorld2Wnd.eM21 = 0.0f;
-	    dc->w.xformWorld2Wnd.eM22 = 1.0f;
-	    dc->w.xformWorld2Wnd.eDx  = 0.0f;
-	    dc->w.xformWorld2Wnd.eDy  = 0.0f;
+	    dc->xformWorld2Wnd.eM11 = 1.0f;
+	    dc->xformWorld2Wnd.eM12 = 0.0f;
+	    dc->xformWorld2Wnd.eM21 = 0.0f;
+	    dc->xformWorld2Wnd.eM22 = 1.0f;
+	    dc->xformWorld2Wnd.eDx  = 0.0f;
+	    dc->xformWorld2Wnd.eDy  = 0.0f;
 	    break;
         case MWT_LEFTMULTIPLY:
-	    CombineTransform( &dc->w.xformWorld2Wnd, xform,
-	        &dc->w.xformWorld2Wnd );
+	    CombineTransform( &dc->xformWorld2Wnd, xform,
+	        &dc->xformWorld2Wnd );
 	    break;
 	case MWT_RIGHTMULTIPLY:
-	    CombineTransform( &dc->w.xformWorld2Wnd, &dc->w.xformWorld2Wnd,
+	    CombineTransform( &dc->xformWorld2Wnd, &dc->xformWorld2Wnd,
 	        xform );
 	    break;
         default:
@@ -1204,7 +1185,7 @@ extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
 /* ### stop build ### */
 BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
-    DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
     /*
@@ -1238,7 +1219,7 @@ BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
  */
 DWORD WINAPI GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 {
-    DC *dc = (DC *)GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     *phookProc = dc->hookProc;
     GDI_ReleaseObj( hdc );
@@ -1251,11 +1232,11 @@ DWORD WINAPI GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
  */
 WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
 {
-    DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hDC );
 
     if( dc )
     {
-        WORD wRet = dc->w.flags & DC_DIRTY;
+        WORD wRet = dc->flags & DC_DIRTY;
 
         /* "Undocumented Windows" info is slightly confusing.
          */
@@ -1263,9 +1244,9 @@ WORD WINAPI SetHookFlags16(HDC16 hDC, WORD flags)
         TRACE("hDC %04x, flags %04x\n",hDC,flags);
 
         if( flags & DCHF_INVALIDATEVISRGN )
-            dc->w.flags |= DC_DIRTY;
+            dc->flags |= DC_DIRTY;
         else if( flags & DCHF_VALIDATEVISRGN || !flags )
-            dc->w.flags &= ~DC_DIRTY;
+            dc->flags &= ~DC_DIRTY;
 	GDI_ReleaseObj( hDC );
         return wRet;
     }
@@ -1382,9 +1363,11 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
  */
 INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return 0;
-    return dc->w.relAbsMode;
+    INT ret = 0;
+    DC *dc = DC_GetDCPtr( hdc );
+    if (dc) ret = dc->relAbsMode;
+    GDI_ReleaseObj( hdc );
+    return ret;
 }
 
 /***********************************************************************

@@ -5,7 +5,7 @@
  */
 
 #include "bitmap.h"
-#include "dc.h"
+#include "gdi.h"
 #include "ttydrv.h"
 #include "winbase.h"
 #include "debugtools.h"
@@ -124,7 +124,7 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
 
   TRACE("(%p, 0x%04x, %p)\n", dc, hbitmap, bitmap);
 
-  if(!(dc->w.flags & DC_MEMORY)) 
+  if(!(dc->flags & DC_MEMORY)) 
     return 0;
 
   /* Assure that the bitmap device dependent */
@@ -136,14 +136,14 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
     return 0;
   }
 
-  dc->w.totalExtent.left   = 0;
-  dc->w.totalExtent.top    = 0;
-  dc->w.totalExtent.right  = bitmap->bitmap.bmWidth;
-  dc->w.totalExtent.bottom = bitmap->bitmap.bmHeight;
+  dc->totalExtent.left   = 0;
+  dc->totalExtent.top    = 0;
+  dc->totalExtent.right  = bitmap->bitmap.bmWidth;
+  dc->totalExtent.bottom = bitmap->bitmap.bmHeight;
 
   /* FIXME: Should be done in the common code instead */
-  if(dc->w.hVisRgn) {
-    SetRectRgn(dc->w.hVisRgn, 0, 0,
+  if(dc->hVisRgn) {
+    SetRectRgn(dc->hVisRgn, 0, 0,
 	       bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight);
   } else { 
     HRGN hrgn;
@@ -151,11 +151,11 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
     if(!(hrgn = CreateRectRgn(0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight)))
       return 0;
 
-    dc->w.hVisRgn = hrgn;
+    dc->hVisRgn = hrgn;
   }
 
-  hPreviousBitmap = dc->w.hBitmap;
-  dc->w.hBitmap = hbitmap;
+  hPreviousBitmap = dc->hBitmap;
+  dc->hBitmap = hbitmap;
 
   return hPreviousBitmap;
 }

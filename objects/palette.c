@@ -17,7 +17,6 @@
 #include "wine/winuser16.h"
 #include "gdi.h"
 #include "color.h"
-#include "dc.h"
 #include "palette.h"
 #include "debugtools.h"
 #include "callback.h"
@@ -484,22 +483,22 @@ UINT WINAPI GetSystemPaletteEntries(
 
     TRACE("hdc=%04x,start=%i,count=%i\n", hdc,start,count);
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
 
     if (!entries)
     {
-	count = dc->w.devCaps->sizePalette;
+	count = dc->devCaps->sizePalette;
         goto done;
     }
 
-    if (start >= dc->w.devCaps->sizePalette)
+    if (start >= dc->devCaps->sizePalette)
       {
 	count = 0;
         goto done;
       }
 
-    if (start+count >= dc->w.devCaps->sizePalette)
-	count = dc->w.devCaps->sizePalette - start;
+    if (start+count >= dc->devCaps->sizePalette)
+	count = dc->devCaps->sizePalette - start;
     for (i = 0; i < count; i++)
     {
 	*(COLORREF*)(entries + i) = COLOR_GetSystemPaletteEntry( start + i );
@@ -576,9 +575,9 @@ COLORREF WINAPI GetNearestColor(
     DC 		*dc;
     PALETTEOBJ  *palObj;
 
-    if ( (dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC )) )
+    if ( (dc = DC_GetDCPtr( hdc )) )
     {
-        HPALETTE hpal = (dc->w.hPalette)? dc->w.hPalette : GetStockObject( DEFAULT_PALETTE );
+        HPALETTE hpal = (dc->hPalette)? dc->hPalette : GetStockObject( DEFAULT_PALETTE );
         palObj = GDI_GetObjPtr( hpal, PALETTE_MAGIC );
         if (!palObj) {
             GDI_ReleaseObj( hdc );
@@ -649,8 +648,8 @@ HPALETTE16 WINAPI GDISelectPalette16( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
       return 0;
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
-    prev = dc->w.hPalette;
-    dc->w.hPalette = hpal;
+    prev = dc->hPalette;
+    dc->hPalette = hpal;
     GDI_ReleaseObj( hdc );
     if (!wBkg) hPrimaryPalette = hpal; 
     return prev;
@@ -670,29 +669,29 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
 
     TRACE("%04x...\n", hdc );
     
-    if(dc->w.hPalette != hLastRealizedPalette )
+    if(dc->hPalette != hLastRealizedPalette )
     {
-	if( dc->w.hPalette == GetStockObject( DEFAULT_PALETTE )) {
+	if( dc->hPalette == GetStockObject( DEFAULT_PALETTE )) {
             realized = RealizeDefaultPalette16( hdc );
 	    GDI_ReleaseObj( hdc );
 	    return (UINT16)realized;
 	}
 
 
-        palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC );
+        palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC );
 
 	if (!palPtr) {
 	    GDI_ReleaseObj( hdc );
-            FIXME("invalid selected palette %04x\n",dc->w.hPalette);
+            FIXME("invalid selected palette %04x\n",dc->hPalette);
             return 0;
 	}
         
         realized = PALETTE_Driver->
 	  pSetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
-		      (dc->w.hPalette != hPrimaryPalette) ||
-		      (dc->w.hPalette == GetStockObject( DEFAULT_PALETTE )));
-	hLastRealizedPalette = dc->w.hPalette;
-	GDI_ReleaseObj( dc->w.hPalette );
+		      (dc->hPalette != hPrimaryPalette) ||
+		      (dc->hPalette == GetStockObject( DEFAULT_PALETTE )));
+	hLastRealizedPalette = dc->hPalette;
+	GDI_ReleaseObj( dc->hPalette );
     }
     else TRACE("  skipping (hLastRealizedPalette = %04x)\n",
 			 hLastRealizedPalette);
@@ -716,7 +715,7 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
 
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
 
-    if (!(dc->w.flags & DC_MEMORY))
+    if (!(dc->flags & DC_MEMORY))
     {
         palPtr = (PALETTEOBJ*)GDI_GetObjPtr( GetStockObject(DEFAULT_PALETTE), PALETTE_MAGIC );
         if (palPtr)
@@ -735,10 +734,10 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
  */
 BOOL16 WINAPI IsDCCurrentPalette16(HDC16 hDC)
 {
-    DC* dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hDC );
     if (dc) 
     {
-      BOOL bRet = dc->w.hPalette == hPrimaryPalette;
+      BOOL bRet = dc->hPalette == hPrimaryPalette;
       GDI_ReleaseObj( hDC );
       return bRet;
     }
@@ -785,9 +784,9 @@ INT16 WINAPI UpdateColors16( HDC16 hDC )
     HWND hWnd;
     int size;
 
-    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return 0;
-    size = dc->w.devCaps->sizePalette;
-    GDI_ReleaseObj( hDC );    
+    if (!(dc = DC_GetDCPtr( hDC ))) return 0;
+    size = dc->devCaps->sizePalette;
+    GDI_ReleaseObj( hDC );
     hWnd = Callout.WindowFromDC( hDC );
 
     /* Docs say that we have to remap current drawable pixel by pixel

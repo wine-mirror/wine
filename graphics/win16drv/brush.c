@@ -16,10 +16,10 @@ HBRUSH WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush,
                                       BRUSHOBJ * brush )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    HBRUSH16	 prevHandle = dc->w.hBrush;
+    HBRUSH16	 prevHandle = dc->hBrush;
     int		 nSize;
     LOGBRUSH16 	 lBrush16;
-    dc->w.hBrush = hbrush;
+    dc->hBrush = hbrush;
     lBrush16.lbStyle = brush->logbrush.lbStyle;
     lBrush16.lbColor = brush->logbrush.lbColor;
     lBrush16.lbHatch = brush->logbrush.lbHatch;

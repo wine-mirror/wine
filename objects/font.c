@@ -14,11 +14,11 @@
 #include "options.h"
 #include "debugtools.h"
 #include "winerror.h"
-#include "dc.h"
+#include "gdi.h"
 #include "winnls.h"
 
-DEFAULT_DEBUG_CHANNEL(font)
-DECLARE_DEBUG_CHANNEL(gdi)
+DEFAULT_DEBUG_CHANNEL(font);
+DECLARE_DEBUG_CHANNEL(gdi);
 
 #define ENUM_UNICODE	0x00000001
 
@@ -726,9 +726,9 @@ INT16 WINAPI GetTextCharacterExtra16( HDC16 hdc )
 INT WINAPI GetTextCharacterExtra( HDC hdc )
 {
     INT ret;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
-    ret = abs( (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2)
+    ret = abs( (dc->charExtra * dc->wndExtX + dc->vportExtX / 2)
                  / dc->vportExtX );
     GDI_ReleaseObj( hdc );
     return ret;
@@ -757,8 +757,8 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
     else
     {
         extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
-        prev = (dc->w.charExtra * dc->wndExtX + dc->vportExtX / 2) / dc->vportExtX;
-        dc->w.charExtra = abs(extra);
+        prev = (dc->charExtra * dc->wndExtX + dc->vportExtX / 2) / dc->vportExtX;
+        dc->charExtra = abs(extra);
     }
     GDI_ReleaseObj( hdc );
     return prev;
@@ -788,17 +788,17 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
     {
         extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
         if (!extra) breaks = 0;
-        dc->w.breakTotalExtra = extra;
-        dc->w.breakCount = breaks;
+        dc->breakTotalExtra = extra;
+        dc->breakCount = breaks;
         if (breaks)
         {
-            dc->w.breakExtra = extra / breaks;
-            dc->w.breakRem   = extra - (dc->w.breakCount * dc->w.breakExtra);
+            dc->breakExtra = extra / breaks;
+            dc->breakRem   = extra - (dc->breakCount * dc->breakExtra);
         }
         else
         {
-            dc->w.breakExtra = 0;
-            dc->w.breakRem   = 0;
+            dc->breakExtra = 0;
+            dc->breakRem   = 0;
         }
     }
     GDI_ReleaseObj( hdc );
@@ -822,10 +822,10 @@ INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
     FONTOBJ *font;
     INT     ret = 0;
 
-    DC * dc = (DC *) DC_GetDCPtr( hdc );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
 
-    if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
+    if ((font = (FONTOBJ *) GDI_GetObjPtr( dc->hFont, FONT_MAGIC )))
     {
         if (name)
         {
@@ -833,7 +833,7 @@ INT WINAPI GetTextFaceA( HDC hdc, INT count, LPSTR name )
             ret = strlen(name);
         }
         else ret = strlen(font->logfont.lfFaceName) + 1;
-        GDI_ReleaseObj( dc->w.hFont );
+        GDI_ReleaseObj( dc->hFont );
     }
     GDI_ReleaseObj( hdc );
     return ret;

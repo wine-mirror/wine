@@ -6,7 +6,6 @@
 
 #include "bitmap.h"
 #include "brush.h"
-#include "dc.h"
 #include "font.h"
 #include "gdi.h"
 #include "pen.h"
@@ -30,8 +29,8 @@ static HBRUSH TTYDRV_DC_BRUSH_SelectObject(DC *dc, HBRUSH hbrush, BRUSHOBJ *brus
 
   TRACE("(%p, 0x%04x, %p)\n", dc, hbrush, brush);
 
-  hPreviousBrush = dc->w.hBrush;
-  dc->w.hBrush = hbrush;
+  hPreviousBrush = dc->hBrush;
+  dc->hBrush = hbrush;
 
   return hPreviousBrush;
 }
@@ -45,8 +44,8 @@ static HFONT TTYDRV_DC_FONT_SelectObject(DC* dc, HFONT hfont, FONTOBJ *font)
 
   TRACE("(%p, 0x%04x, %p)\n", dc, hfont, font);
 
-  hPreviousFont = dc->w.hFont;
-  dc->w.hFont = hfont;
+  hPreviousFont = dc->hFont;
+  dc->hFont = hfont;
 
   return hPreviousFont;
 }
@@ -60,8 +59,8 @@ static HPEN TTYDRV_DC_PEN_SelectObject(DC *dc, HBRUSH hpen, PENOBJ *pen)
 
   TRACE("(%p, 0x%04x, %p)\n", dc, hpen, pen);
 
-  hPreviousPen = dc->w.hPen;
-  dc->w.hPen = hpen;
+  hPreviousPen = dc->hPen;
+  dc->hPen = hpen;
 
   return hPreviousPen;
 }

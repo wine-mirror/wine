@@ -8,7 +8,6 @@
 
 #include "gdi.h"
 #include "bitmap.h"
-#include "dc.h"
 #include "palette.h"
 #include "ttydrv.h"
 #include "winbase.h"
@@ -214,36 +213,36 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
   }
   physDev = (TTYDRV_PDEVICE *) dc->physDev;
   
-  dc->w.devCaps = &TTYDRV_DC_DevCaps;
+  dc->devCaps = &TTYDRV_DC_DevCaps;
 
-  if(dc->w.flags & DC_MEMORY){
+  if(dc->flags & DC_MEMORY){
     physDev->window = NULL;
     physDev->cellWidth = 1;
     physDev->cellHeight = 1;
 
-    TTYDRV_DC_CreateBitmap(dc->w.hBitmap);
-    bmp = (BITMAPOBJ *) GDI_GetObjPtr(dc->w.hBitmap, BITMAP_MAGIC);
+    TTYDRV_DC_CreateBitmap(dc->hBitmap);
+    bmp = (BITMAPOBJ *) GDI_GetObjPtr(dc->hBitmap, BITMAP_MAGIC);
 				   
-    dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
+    dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
     
-    dc->w.totalExtent.left   = 0;
-    dc->w.totalExtent.top    = 0;
-    dc->w.totalExtent.right  = bmp->bitmap.bmWidth;
-    dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
-    dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
+    dc->totalExtent.left   = 0;
+    dc->totalExtent.top    = 0;
+    dc->totalExtent.right  = bmp->bitmap.bmWidth;
+    dc->totalExtent.bottom = bmp->bitmap.bmHeight;
+    dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );
     
-    GDI_ReleaseObj( dc->w.hBitmap );
+    GDI_ReleaseObj( dc->hBitmap );
   } else {
     physDev->window = TTYDRV_GetRootWindow();
     physDev->cellWidth = cell_width;
     physDev->cellHeight = cell_height;
     
-    dc->w.bitsPerPixel       = 1;
-    dc->w.totalExtent.left   = 0;
-    dc->w.totalExtent.top    = 0;
-    dc->w.totalExtent.right  = cell_width * screen_cols;
-    dc->w.totalExtent.bottom = cell_height * screen_rows;
-    dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );    
+    dc->bitsPerPixel       = 1;
+    dc->totalExtent.left   = 0;
+    dc->totalExtent.top    = 0;
+    dc->totalExtent.right  = cell_width * screen_cols;
+    dc->totalExtent.bottom = cell_height * screen_rows;
+    dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );    
   }
 
   return TRUE;

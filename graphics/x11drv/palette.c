@@ -669,7 +669,7 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
 int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 {
     WORD 		 index = 0;
-    HPALETTE16		 hPal = (dc)? dc->w.hPalette: GetStockObject(DEFAULT_PALETTE);
+    HPALETTE16		 hPal = (dc)? dc->hPalette: GetStockObject(DEFAULT_PALETTE);
     unsigned char	 spec_type = color >> 24;
     PALETTEOBJ* 	 palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
@@ -710,7 +710,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 	    /* fall through to RGB */
 
 	  case 0: /* RGB */
-	    if( dc && (dc->w.bitsPerPixel == 1) )
+	    if( dc && (dc->bitsPerPixel == 1) )
 	    {
 		GDI_ReleaseObj( hPal );
 		return (((color >> 16) & 0xff) +
@@ -745,7 +745,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
     {
 
 	if( !palPtr->mapping ) 
-            WARN("Palette %04x is not realized\n", dc->w.hPalette);
+            WARN("Palette %04x is not realized\n", dc->hPalette);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{
@@ -754,7 +754,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 		/* fall through to RGB */
 
        	    case 0:  /* RGB */
-		if( dc && (dc->w.bitsPerPixel == 1) )
+		if( dc && (dc->bitsPerPixel == 1) )
 		{
 		    GDI_ReleaseObj( hPal );
 		    return (((color >> 16) & 0xff) +

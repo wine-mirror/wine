@@ -347,12 +347,12 @@ static BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 
     /* etc */
 
-    dc->w.devCaps = devCaps;
+    dc->devCaps = devCaps;
 
-    dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes,
-    			    dc->w.devCaps->vertRes);
+    dc->hVisRgn = CreateRectRgn(0, 0, dc->devCaps->horzRes,
+    			    dc->devCaps->vertRes);
     
-    dc->w.hFont = PSDRV_DefaultFont;
+    dc->hFont = PSDRV_DefaultFont;
     physDev->job.output = output ?
       HEAP_strdupA( PSDRV_Heap, 0, output ) :
       HEAP_strdupA( PSDRV_Heap, 0, "LPT1:" );  /* HACK */
@@ -372,7 +372,7 @@ static BOOL PSDRV_DeleteDC( DC *dc )
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
     HeapFree( PSDRV_Heap, 0, physDev->job.output );
-    HeapFree( PSDRV_Heap, 0, (void *)dc->w.devCaps );
+    HeapFree( PSDRV_Heap, 0, (void *)dc->devCaps );
     HeapFree( PSDRV_Heap, 0, physDev );
     dc->physDev = NULL;
 

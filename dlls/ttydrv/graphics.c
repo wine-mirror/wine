@@ -7,7 +7,7 @@
 #include "config.h"
 
 #include "wine/winestring.h"
-#include "dc.h"
+#include "gdi.h"
 #include "heap.h"
 #include "debugtools.h"
 #include "ttydrv.h"
@@ -84,10 +84,10 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
   if(!physDev->window)
     return FALSE;
 
-  row1 = (dc->w.DCOrgY + XLPTODP(dc, dc->w.CursPosY)) / physDev->cellHeight;
-  col1 = (dc->w.DCOrgX + XLPTODP(dc, dc->w.CursPosX)) / physDev->cellWidth;
-  row2 = (dc->w.DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
-  col2 = (dc->w.DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
+  row1 = (dc->DCOrgY + XLPTODP(dc, dc->CursPosY)) / physDev->cellHeight;
+  col1 = (dc->DCOrgX + XLPTODP(dc, dc->CursPosX)) / physDev->cellWidth;
+  row2 = (dc->DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
+  col2 = (dc->DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
 
   if(row1 > row2) {
     INT tmp = row1;
@@ -195,10 +195,10 @@ BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
   if(!physDev->window)
     return FALSE;
 
-  row1 = (dc->w.DCOrgY + XLPTODP(dc, top)) / physDev->cellHeight;
-  col1 = (dc->w.DCOrgX + XLPTODP(dc, left)) / physDev->cellWidth;
-  row2 = (dc->w.DCOrgY + XLPTODP(dc, bottom)) / physDev->cellHeight;
-  col2 = (dc->w.DCOrgX + XLPTODP(dc, right)) / physDev->cellWidth;
+  row1 = (dc->DCOrgY + XLPTODP(dc, top)) / physDev->cellHeight;
+  col1 = (dc->DCOrgX + XLPTODP(dc, left)) / physDev->cellWidth;
+  row2 = (dc->DCOrgY + XLPTODP(dc, bottom)) / physDev->cellHeight;
+  col2 = (dc->DCOrgX + XLPTODP(dc, right)) / physDev->cellWidth;
 
   if(row1 > row2) {
     INT tmp = row1;
@@ -259,8 +259,8 @@ COLORREF TTYDRV_DC_SetBkColor(DC *dc, COLORREF color)
 
   TRACE("(%p, 0x%08lx)\n", dc, color);  
 
-  oldColor = dc->w.backgroundColor;
-  dc->w.backgroundColor = color;
+  oldColor = dc->backgroundColor;
+  dc->backgroundColor = color;
 
   return oldColor;
 }
@@ -279,8 +279,8 @@ COLORREF TTYDRV_DC_SetPixel(DC *dc, INT x, INT y, COLORREF color)
   if(!physDev->window)
     return FALSE;
 
-  row = (dc->w.DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
-  col = (dc->w.DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
+  row = (dc->DCOrgY + XLPTODP(dc, y)) / physDev->cellHeight;
+  col = (dc->DCOrgX + XLPTODP(dc, x)) / physDev->cellWidth;
 
   mvwaddch(physDev->window, row, col, ACS_BULLET);
   wrefresh(physDev->window);
@@ -302,8 +302,8 @@ COLORREF TTYDRV_DC_SetTextColor(DC *dc, COLORREF color)
 
   TRACE("(%p, 0x%08lx)\n", dc, color);
   
-  oldColor = dc->w.textColor;
-  dc->w.textColor = color;
+  oldColor = dc->textColor;
+  dc->textColor = color;
   
   return oldColor;
 }
@@ -373,25 +373,25 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
     return FALSE;
 
   /* FIXME: Is this really correct? */
-  if(dc->w.textAlign & TA_UPDATECP) {
-    x = dc->w.CursPosX;
-    y = dc->w.CursPosY;
+  if(dc->textAlign & TA_UPDATECP) {
+    x = dc->CursPosX;
+    y = dc->CursPosY;
   }
 
   x = XLPTODP(dc, x);
   y = YLPTODP(dc, y);
   
-  row = (dc->w.DCOrgY + y) / physDev->cellHeight;
-  col = (dc->w.DCOrgX + x) / physDev->cellWidth;
+  row = (dc->DCOrgY + y) / physDev->cellHeight;
+  col = (dc->DCOrgX + x) / physDev->cellWidth;
   ascii = HeapAlloc( GetProcessHeap(), 0, count+1 );
   lstrcpynWtoA(ascii, str, count+1);
   mvwaddnstr(physDev->window, row, col, ascii, count);
   HeapFree( GetProcessHeap(), 0, ascii );
   wrefresh(physDev->window);
 
-  if(dc->w.textAlign & TA_UPDATECP) {
-    dc->w.CursPosX += count * physDev->cellWidth;
-    dc->w.CursPosY += physDev->cellHeight;
+  if(dc->textAlign & TA_UPDATECP) {
+    dc->CursPosX += count * physDev->cellWidth;
+    dc->CursPosY += physDev->cellHeight;
   }
 
   return TRUE;

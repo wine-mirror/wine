@@ -37,7 +37,7 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
     METARECORD *mr;
     BITMAP16  BM;
 
-    GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
+    GetObject16(dcSrc->hBitmap, sizeof(BITMAP16), &BM);
     len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
     if (!(mr = HeapAlloc(GetProcessHeap(), 0, len)))
 	return FALSE;
@@ -48,7 +48,7 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
     *(mr->rdParm +10) = BM.bmPlanes;
     *(mr->rdParm +11) = BM.bmBitsPixel;
     TRACE("len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits(dcSrc->w.hBitmap,BM.bmWidthBytes * BM.bmHeight,
+    if (GetBitmapBits(dcSrc->hBitmap,BM.bmWidthBytes * BM.bmHeight,
                         mr->rdParm +12))
     {
       mr->rdSize = len / sizeof(INT16);
@@ -90,7 +90,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
 #endif  
-    GetObject16(dcSrc->w.hBitmap, sizeof(BITMAP16), &BM);
+    GetObject16(dcSrc->hBitmap, sizeof(BITMAP16), &BM);
 #ifdef STRETCH_VIA_DIB
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
     len = sizeof(METARECORD) + 10 * sizeof(INT16) 
@@ -129,7 +129,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
     *(mr->rdParm +13) = BM.bmPlanes;
     *(mr->rdParm +14) = BM.bmBitsPixel;
     TRACE("len = %ld  rop=%lx  \n",len,rop);
-    if (GetBitmapBits( dcSrc->w.hBitmap, BM.bmWidthBytes * BM.bmHeight,
+    if (GetBitmapBits( dcSrc->hBitmap, BM.bmWidthBytes * BM.bmHeight,
                          mr->rdParm +15))
 #endif    
     {

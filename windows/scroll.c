@@ -13,14 +13,13 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "winuser.h"
-#include "dc.h"
 #include "win.h"
 #include "gdi.h"
 #include "dce.h"
 #include "region.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(scroll)
+DEFAULT_DEBUG_CHANNEL(scroll);
 
 /*************************************************************************
  *             ScrollWindow16   (USER.61)
@@ -122,7 +121,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
     OffsetRect( &rSrc, -dx, -dy );
     IntersectRect( &rSrc, &rSrc, &rect );
 
-    if(dc->w.hVisRgn)
+    if(dc->hVisRgn)
     {
         if (!IsRectEmpty(&rSrc))
         {
@@ -153,9 +152,9 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
             HRGN hrgn2;
 
             hrgn2 = CreateRectRgnIndirect( &rect );
-            OffsetRgn( hrgn2, dc->w.DCOrgX, dc->w.DCOrgY );
-            CombineRgn( hrgn2, hrgn2, dc->w.hVisRgn, RGN_AND );
-            OffsetRgn( hrgn2, -dc->w.DCOrgX, -dc->w.DCOrgY );
+            OffsetRgn( hrgn2, dc->DCOrgX, dc->DCOrgY );
+            CombineRgn( hrgn2, hrgn2, dc->hVisRgn, RGN_AND );
+            OffsetRgn( hrgn2, -dc->DCOrgX, -dc->DCOrgY );
             SetRectRgn( hrgn, rClip.left, rClip.top,
                           rClip.right, rClip.bottom );
             CombineRgn( hrgn, hrgn, hrgn2, RGN_AND );
@@ -293,10 +292,10 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 
                 if( (dc = DC_GetDCPtr(hDC)) )
                 {
-                        OffsetRgn( hrgnTemp, dc->w.DCOrgX, dc->w.DCOrgY );
-                        CombineRgn( hrgnTemp, hrgnTemp, dc->w.hVisRgn,
+                        OffsetRgn( hrgnTemp, dc->DCOrgX, dc->DCOrgY );
+                        CombineRgn( hrgnTemp, hrgnTemp, dc->hVisRgn,
                                       RGN_AND );
-                        OffsetRgn( hrgnTemp, -dc->w.DCOrgX, -dc->w.DCOrgY );
+                        OffsetRgn( hrgnTemp, -dc->DCOrgX, -dc->DCOrgY );
                         CombineRgn( hrgnUpdate, hrgnTemp, hrgnClip,
                                       RGN_AND );
                         OffsetRgn( hrgnTemp, dx, dy );

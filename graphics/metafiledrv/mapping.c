@@ -13,7 +13,7 @@
  */
 INT MFDRV_SetMapMode( DC *dc, INT mode )
 {
-    INT prevMode = dc->w.MapMode;
+    INT prevMode = dc->MapMode;
     MFDRV_MetaParam1( dc, META_SETMAPMODE, mode );
     return prevMode;
 }

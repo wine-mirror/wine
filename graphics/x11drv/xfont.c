@@ -3071,7 +3071,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	    lf.lfHeight = MIN_FONT_SIZE;
     }
     else
-	lf.lfHeight = -(DEF_POINT_SIZE * dc->w.devCaps->logPixelsY + (72>>1)) / 72;
+	lf.lfHeight = -(DEF_POINT_SIZE * dc->devCaps->logPixelsY + (72>>1)) / 72;
     
     {
 	/* Fixup aliases before passing to RealizeFont */
@@ -3103,8 +3103,8 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	font->logfont.lfCharSet = charsetMatched;
     }
 
-    hPrevFont = dc->w.hFont;
-    dc->w.hFont = hfont;
+    hPrevFont = dc->hFont;
+    dc->hFont = hfont;
 
     LeaveCriticalSection( &crtsc_fonts_X11 );
 

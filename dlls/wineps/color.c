@@ -109,8 +109,8 @@ COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color )
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     COLORREF oldColor;
 
-    oldColor = dc->w.backgroundColor;
-    dc->w.backgroundColor = color;
+    oldColor = dc->backgroundColor;
+    dc->backgroundColor = color;
 
     PSDRV_CreateColor(physDev, &physDev->bkColor, color);
 
@@ -126,8 +126,8 @@ COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color )
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     COLORREF oldColor;
 
-    oldColor = dc->w.textColor;
-    dc->w.textColor = color;
+    oldColor = dc->textColor;
+    dc->textColor = color;
 
     PSDRV_CreateColor(physDev, &physDev->font.color, color);
     physDev->font.set = FALSE;

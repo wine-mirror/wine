@@ -87,9 +87,9 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
         return FALSE;
     }
 
-    if(dc->w.textAlign & TA_UPDATECP) {
-	x = dc->w.CursPosX;
-	y = dc->w.CursPosY;
+    if(dc->textAlign & TA_UPDATECP) {
+	x = dc->CursPosX;
+	y = dc->CursPosY;
     }
 
     x = XLPTODP(dc, x);
@@ -99,10 +99,10 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
     sz.cx = XLSTODS(dc, sz.cx);
     sz.cy = YLSTODS(dc, sz.cy);
 
-    switch(dc->w.textAlign & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
+    switch(dc->textAlign & (TA_LEFT | TA_CENTER | TA_RIGHT) ) {
     case TA_LEFT:
-        if(dc->w.textAlign & TA_UPDATECP)
-	    dc->w.CursPosX = XDPTOLP(dc, x + sz.cx);
+        if(dc->textAlign & TA_UPDATECP)
+	    dc->CursPosX = XDPTOLP(dc, x + sz.cx);
 	break;
 
     case TA_CENTER:
@@ -111,12 +111,12 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
 
     case TA_RIGHT:
 	x -= sz.cx;
-	if(dc->w.textAlign & TA_UPDATECP)
-	    dc->w.CursPosX = XDPTOLP(dc, x);
+	if(dc->textAlign & TA_UPDATECP)
+	    dc->CursPosX = XDPTOLP(dc, x);
 	break;
     }
 
-    switch(dc->w.textAlign & (TA_TOP | TA_BASELINE | TA_BOTTOM) ) {
+    switch(dc->textAlign & (TA_TOP | TA_BASELINE | TA_BOTTOM) ) {
     case TA_TOP:
         y += physDev->font.tm.tmAscent;
 	break;
@@ -132,7 +132,7 @@ static BOOL PSDRV_Text(DC *dc, INT x, INT y, LPCWSTR str, UINT count,
     memcpy(strbuf, str, count * sizeof(WCHAR));
     *(strbuf + count) = '\0';
     
-    if ((dc->w.backgroundMode != TRANSPARENT) && (bDrawBackground != FALSE))
+    if ((dc->backgroundMode != TRANSPARENT) && (bDrawBackground != FALSE))
     {
 	PSDRV_WriteGSave(dc);
 	PSDRV_WriteNewPath(dc);

@@ -243,45 +243,45 @@ static BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 	return FALSE;
     }
 
-    dc->w.devCaps      = &X11DRV_DevCaps;
-    if (dc->w.flags & DC_MEMORY)
+    dc->devCaps      = &X11DRV_DevCaps;
+    if (dc->flags & DC_MEMORY)
     {
-        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
+        BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
 	if (!bmp) 
 	{
 	    HeapFree( GetProcessHeap(), 0, physDev );
 	    return FALSE;
         }
-        if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->w.hBitmap );
+        if (!bmp->physBitmap) X11DRV_CreateBitmap( dc->hBitmap );
         physDev->drawable  = (Pixmap)bmp->physBitmap;
         physDev->gc        = TSXCreateGC(display, physDev->drawable, 0, NULL);
-        dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
+        dc->bitsPerPixel = bmp->bitmap.bmBitsPixel;
 
-        dc->w.totalExtent.left   = 0;
-        dc->w.totalExtent.top    = 0;
-        dc->w.totalExtent.right  = bmp->bitmap.bmWidth;
-        dc->w.totalExtent.bottom = bmp->bitmap.bmHeight;
-        dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
+        dc->totalExtent.left   = 0;
+        dc->totalExtent.top    = 0;
+        dc->totalExtent.right  = bmp->bitmap.bmWidth;
+        dc->totalExtent.bottom = bmp->bitmap.bmHeight;
+        dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );
 
-        GDI_ReleaseObj( dc->w.hBitmap );
+        GDI_ReleaseObj( dc->hBitmap );
     }
     else
     {
         physDev->drawable  = X11DRV_GetXRootWindow();
         physDev->gc        = TSXCreateGC( display, physDev->drawable, 0, NULL );
-        dc->w.bitsPerPixel = screen_depth;
+        dc->bitsPerPixel = screen_depth;
 
-        dc->w.totalExtent.left   = 0;
-        dc->w.totalExtent.top    = 0;
-        dc->w.totalExtent.right  = screen_width;
-        dc->w.totalExtent.bottom = screen_height;
-        dc->w.hVisRgn            = CreateRectRgnIndirect( &dc->w.totalExtent );
+        dc->totalExtent.left   = 0;
+        dc->totalExtent.top    = 0;
+        dc->totalExtent.right  = screen_width;
+        dc->totalExtent.bottom = screen_height;
+        dc->hVisRgn            = CreateRectRgnIndirect( &dc->totalExtent );
     }
 
     physDev->current_pf   = 0;
     physDev->used_visuals = 0;
     
-    if (!dc->w.hVisRgn)
+    if (!dc->hVisRgn)
     {
         TSXFreeGC( display, physDev->gc );
 	HeapFree( GetProcessHeap(), 0, physDev );

@@ -84,17 +84,28 @@ typedef struct tagDeviceCaps
     WORD   colorRes;      /* 108: color resolution */    
 } DeviceCaps;
 
-typedef struct tagGDI_DRIVER 
-{
-    BOOL (*pInitialize)(void);
-    void (*pFinalize)(void);
-} GDI_DRIVER;
+typedef BOOL16 CALLBACK (*DCHOOKPROC)(HDC16,WORD,DWORD,LPARAM);
 
-extern GDI_DRIVER *GDI_Driver;
-
-  /* Device independent DC information */
-typedef struct
+typedef struct tagDC
 {
+    GDIOBJHDR    header;
+    HDC          hSelf;            /* Handle to this DC */
+    const struct tagDC_FUNCS *funcs; /* DC function table */
+    void         *physDev;         /* Physical device (driver-specific) */
+    INT          saveLevel;
+    DWORD        dwHookData;
+    FARPROC16    hookProc;         /* the original SEGPTR ... */
+    DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */
+
+    INT          wndOrgX;          /* Window origin */
+    INT          wndOrgY;
+    INT          wndExtX;          /* Window extent */
+    INT          wndExtY;
+    INT          vportOrgX;        /* Viewport origin */
+    INT          vportOrgY;
+    INT          vportExtX;        /* Viewport extent */
+    INT          vportExtY;
+
     int           flags;
     const DeviceCaps *devCaps;
 
@@ -107,7 +118,7 @@ typedef struct
     HBITMAP16     hBitmap;
     HANDLE16      hDevice;
     HPALETTE16    hPalette;
-    
+
     GdiPath       path;
 
     WORD          ROPmode;
@@ -142,32 +153,6 @@ typedef struct
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */
     XFORM         xformVport2World;  /* Inverse of the above transformation */
     BOOL          vport2WorldValid;  /* Is xformVport2World valid? */
-} WIN_DC_INFO;
-
-
-typedef BOOL16 CALLBACK (*DCHOOKPROC)(HDC16,WORD,DWORD,LPARAM);
-
-typedef struct tagDC
-{
-    GDIOBJHDR    header;
-    HDC          hSelf;            /* Handle to this DC */
-    const struct tagDC_FUNCS *funcs; /* DC function table */
-    void         *physDev;         /* Physical device (driver-specific) */
-    INT          saveLevel;
-    DWORD        dwHookData;
-    FARPROC16    hookProc;         /* the original SEGPTR ... */
-    DCHOOKPROC   hookThunk;        /* ... and the thunk to call it */
-
-    INT          wndOrgX;          /* Window origin */
-    INT          wndOrgY;
-    INT          wndExtX;          /* Window extent */
-    INT          wndExtY;
-    INT          vportOrgX;        /* Viewport origin */
-    INT          vportOrgY;
-    INT          vportExtX;        /* Viewport extent */
-    INT          vportExtY;
-
-    WIN_DC_INFO w;
 } DC;
 
 /* Device functions for the Wine driver interface */
@@ -359,18 +344,18 @@ static inline BOOL WINE_UNUSED INTERNAL_DPTOLP_FLOAT(DC *dc, FLOAT_POINT *point)
     FLOAT x, y;
     
     /* Check that the viewport-to-world transformation is valid */
-    if (!dc->w.vport2WorldValid)
+    if (!dc->vport2WorldValid)
         return FALSE;
 
     /* Perform the transformation */
     x = point->x;
     y = point->y;
-    point->x = x * dc->w.xformVport2World.eM11 +
-               y * dc->w.xformVport2World.eM21 +
-	       dc->w.xformVport2World.eDx;
-    point->y = x * dc->w.xformVport2World.eM12 +
-               y * dc->w.xformVport2World.eM22 +
-	       dc->w.xformVport2World.eDy;
+    point->x = x * dc->xformVport2World.eM11 +
+               y * dc->xformVport2World.eM21 +
+	       dc->xformVport2World.eDx;
+    point->y = x * dc->xformVport2World.eM12 +
+               y * dc->xformVport2World.eM22 +
+	       dc->xformVport2World.eDy;
 
     return TRUE;
 }
@@ -405,12 +390,12 @@ static inline void WINE_UNUSED INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
     /* Perform the transformation */
     x = point->x;
     y = point->y;
-    point->x = x * dc->w.xformWorld2Vport.eM11 +
-               y * dc->w.xformWorld2Vport.eM21 +
-	       dc->w.xformWorld2Vport.eDx;
-    point->y = x * dc->w.xformWorld2Vport.eM12 +
-               y * dc->w.xformWorld2Vport.eM22 +
-	       dc->w.xformWorld2Vport.eDy;
+    point->x = x * dc->xformWorld2Vport.eM11 +
+               y * dc->xformWorld2Vport.eM21 +
+	       dc->xformWorld2Vport.eDx;
+    point->y = x * dc->xformWorld2Vport.eM12 +
+               y * dc->xformWorld2Vport.eM22 +
+	       dc->xformWorld2Vport.eDy;
 }
 
 /* Performs a world-to-viewport transformation on the specified point (which
@@ -466,5 +451,22 @@ extern BOOL DRIVER_GetDriverName( LPCSTR device, LPSTR driver, DWORD size );
 
 extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
 
+extern DC * DC_AllocDC( const DC_FUNCTIONS *funcs );
+extern DC * DC_GetDCPtr( HDC hdc );
+extern DC * DC_GetDCUpdate( HDC hdc );
+extern void DC_InitDC( DC * dc );
+extern void DC_UpdateXforms( DC * dc );
+
+
+#define CLIP_INTERSECT 0x0001
+#define CLIP_EXCLUDE   0x0002
+#define CLIP_KEEPRGN   0x0004
+
+/* objects/clipping.c */
+INT CLIPPING_IntersectClipRect( DC * dc, INT left, INT top,
+                                INT right, INT bottom, UINT flags );
+INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
+                               INT right, INT bottom, BOOL exclude );
+extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 #endif  /* __WINE_GDI_H */

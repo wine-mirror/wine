@@ -8,7 +8,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "gdi.h"
-#include "dc.h"
 
 #define COLORREF16 COLORREF  /*hack*/
 
@@ -16,7 +15,7 @@
 func_type WINAPI func_name( HDC16 hdc ) \
 { \
     func_type ret = 0; \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    DC * dc = DC_GetDCPtr( hdc ); \
     if (dc) \
     { \
         ret = dc->dc_field; \
@@ -34,7 +33,7 @@ func_type##16 WINAPI func_name##16( HDC16 hdc ) \
 func_type WINAPI func_name( HDC hdc ) \
 { \
     func_type ret = 0; \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    DC * dc = DC_GetDCPtr( hdc ); \
     if (dc) \
     { \
         ret = dc->dc_field; \
@@ -47,7 +46,7 @@ func_type WINAPI func_name( HDC hdc ) \
 func_type WINAPI func_name( HDC16 hdc ) \
 { \
     func_type ret = 0; \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    DC * dc = DC_GetDCPtr( hdc ); \
     if (dc) \
     { \
         ret = MAKELONG( dc->ret_x, dc->ret_y ); \
@@ -63,7 +62,7 @@ func_type WINAPI func_name( HDC16 hdc ) \
 #define DC_GET_VAL_EX( func_name, ret_x, ret_y, type ) \
 BOOL16 WINAPI func_name##16( HDC16 hdc, LP##type##16 pt ) \
 { \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    DC * dc = DC_GetDCPtr( hdc ); \
     if (!dc) return FALSE; \
     ((LPPOINT16)pt)->x = dc->ret_x; \
     ((LPPOINT16)pt)->y = dc->ret_y; \
@@ -73,7 +72,7 @@ BOOL16 WINAPI func_name##16( HDC16 hdc, LP##type##16 pt ) \
  \
 BOOL WINAPI func_name( HDC hdc, LP##type pt ) \
 { \
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
+    DC * dc = DC_GetDCPtr( hdc ); \
     if (!dc) return FALSE; \
     ((LPPOINT)pt)->x = dc->ret_x; \
     ((LPPOINT)pt)->y = dc->ret_y; \
@@ -110,72 +109,72 @@ INT WINAPI func_name( HDC hdc, INT mode ) \
  *		SetBkMode		(GDI.2) (GDI32.306)
  *
  */
-DC_SET_MODE( SetBkMode, w.backgroundMode, TRANSPARENT, OPAQUE ) 
+DC_SET_MODE( SetBkMode, backgroundMode, TRANSPARENT, OPAQUE ) 
 
 /***********************************************************************
  *		SetROP2			(GDI.4) (GDI32.331)
  */
-DC_SET_MODE( SetROP2, w.ROPmode, R2_BLACK, R2_WHITE )
+DC_SET_MODE( SetROP2, ROPmode, R2_BLACK, R2_WHITE )
 
 /***********************************************************************
  *		SetRelAbs		(GDI.5) (GDI32.333)
  */
-DC_SET_MODE( SetRelAbs, w.relAbsMode, ABSOLUTE, RELATIVE )
+DC_SET_MODE( SetRelAbs, relAbsMode, ABSOLUTE, RELATIVE )
 
 /***********************************************************************
  *		SetPolyFillMode		(GDI.6) (GDI32.330)
  */
-DC_SET_MODE( SetPolyFillMode, w.polyFillMode, ALTERNATE, WINDING )
+DC_SET_MODE( SetPolyFillMode, polyFillMode, ALTERNATE, WINDING )
 
 /***********************************************************************
  *		SetStretchBltMode	(GDI.7) (GDI32.334)
  */
-DC_SET_MODE( SetStretchBltMode, w.stretchBltMode, BLACKONWHITE, HALFTONE )
+DC_SET_MODE( SetStretchBltMode, stretchBltMode, BLACKONWHITE, HALFTONE )
 
 /***********************************************************************
  *		GetBkColor		(GDI.75) (GDI32.145)
  */
-DC_GET_VAL( COLORREF, GetBkColor, w.backgroundColor )
+DC_GET_VAL( COLORREF, GetBkColor, backgroundColor )
 
 /***********************************************************************
  *		GetBkMode		(GDI.76) (GDI32.146)
  */
-DC_GET_VAL( INT, GetBkMode, w.backgroundMode )
+DC_GET_VAL( INT, GetBkMode, backgroundMode )
 
 /***********************************************************************
  *		GetCurrentPosition16	(GDI.78)
  */
-DC_GET_X_Y( DWORD, GetCurrentPosition16, w.CursPosX, w.CursPosY )
+DC_GET_X_Y( DWORD, GetCurrentPosition16, CursPosX, CursPosY )
 
 /***********************************************************************
  *		GetMapMode		(GDI.81) (GDI32.196)
  */
-DC_GET_VAL( INT, GetMapMode, w.MapMode )
+DC_GET_VAL( INT, GetMapMode, MapMode )
 
 /***********************************************************************
  *		GetPolyFillMode		(GDI.84) (GDI32.213)
  */
-DC_GET_VAL( INT, GetPolyFillMode, w.polyFillMode )
+DC_GET_VAL( INT, GetPolyFillMode, polyFillMode )
 
 /***********************************************************************
  *		GetROP2			(GDI.85) (GDI32.214)
  */
-DC_GET_VAL( INT, GetROP2, w.ROPmode )
+DC_GET_VAL( INT, GetROP2, ROPmode )
 
 /***********************************************************************
  *		GetRelAbs16		(GDI.86)
  */
-DC_GET_VAL_16( INT16, GetRelAbs16, w.relAbsMode )
+DC_GET_VAL_16( INT16, GetRelAbs16, relAbsMode )
 
 /***********************************************************************
  *		GetStretchBltMode	(GDI.88) (GDI32.221)
  */
-DC_GET_VAL( INT, GetStretchBltMode, w.stretchBltMode )
+DC_GET_VAL( INT, GetStretchBltMode, stretchBltMode )
 
 /***********************************************************************
  *		GetTextColor		(GDI.90) (GDI32.227)
  */
-DC_GET_VAL( COLORREF, GetTextColor, w.textColor )
+DC_GET_VAL( COLORREF, GetTextColor, textColor )
 
 /***********************************************************************
  *		GetViewportExt16	(GDI.94)
@@ -200,47 +199,47 @@ DC_GET_X_Y( DWORD, GetWindowOrg16, wndOrgX, wndOrgY )
 /***********************************************************************
  *		InquireVisRgn16	(GDI.131)
  */
-DC_GET_VAL_16( HRGN16, InquireVisRgn16, w.hVisRgn )
+DC_GET_VAL_16( HRGN16, InquireVisRgn16, hVisRgn )
 
 /***********************************************************************
  *		GetClipRgn16	(GDI.173)
  */
-DC_GET_VAL_16( HRGN16, GetClipRgn16, w.hClipRgn )
+DC_GET_VAL_16( HRGN16, GetClipRgn16, hClipRgn )
 
 /***********************************************************************
  *		GetBrushOrg16	(GDI.149)
  */
-DC_GET_X_Y( DWORD, GetBrushOrg16, w.brushOrgX, w.brushOrgY )
+DC_GET_X_Y( DWORD, GetBrushOrg16, brushOrgX, brushOrgY )
 
 /***********************************************************************
  *		GetTextAlign	(GDI.345) (GDI32,224)
  */
-DC_GET_VAL( UINT, GetTextAlign, w.textAlign )
+DC_GET_VAL( UINT, GetTextAlign, textAlign )
 
 /***********************************************************************
  *		GetCurLogFont16	(GDI.411)
  */
-DC_GET_VAL_16( HFONT16, GetCurLogFont16, w.hFont )
+DC_GET_VAL_16( HFONT16, GetCurLogFont16, hFont )
 
 /***********************************************************************
  *		GetArcDirection	(GDI.524) (GDI32.141)
  */
-DC_GET_VAL( INT, GetArcDirection, w.ArcDirection )
+DC_GET_VAL( INT, GetArcDirection, ArcDirection )
 
 /***********************************************************************
  *		GetGraphicsMode (GDI32.188)
  */
-DC_GET_VAL( INT, GetGraphicsMode, w.GraphicsMode)
+DC_GET_VAL( INT, GetGraphicsMode, GraphicsMode)
 
 /***********************************************************************
  *		GetBrushOrgEx	(GDI.469) (GDI32.148)
  */
-DC_GET_VAL_EX( GetBrushOrgEx, w.brushOrgX, w.brushOrgY, POINT ) /*  */
+DC_GET_VAL_EX( GetBrushOrgEx, brushOrgX, brushOrgY, POINT ) /*  */
 
 /***********************************************************************
  *		GetCurrentPositionEx	(GDI.470) (GDI32.167)
  */
-DC_GET_VAL_EX( GetCurrentPositionEx, w.CursPosX, w.CursPosY, POINT )
+DC_GET_VAL_EX( GetCurrentPositionEx, CursPosX, CursPosY, POINT )
 
 /***********************************************************************
  *		GetViewportExtEx	(GDI.472 GDI32.239)

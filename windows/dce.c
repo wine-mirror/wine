@@ -599,9 +599,9 @@ HRGN DCE_GetVisRgn( HWND hwnd, WORD flags, HWND hwndChild, WORD cflags )
 static void DCE_OffsetVisRgn( HDC hDC, HRGN hVisRgn )
 {
     DC *dc;
-    if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return;
+    if (!(dc = DC_GetDCPtr( hDC ))) return;
 
-    OffsetRgn( hVisRgn, dc->w.DCOrgX, dc->w.DCOrgY );
+    OffsetRgn( hVisRgn, dc->DCOrgX, dc->DCOrgY );
 
     GDI_ReleaseObj( hDC );
 }
@@ -798,16 +798,16 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     dce->DCXflags = dcxFlags | (flags & DCX_WINDOWPAINT) | DCX_DCEBUSY;
     hdc = dce->hDC;
     
-    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC )))
+    if (!(dc = DC_GetDCPtr( hdc )))
     {
         hdc = 0;
         goto END;
     }
-    bUpdateVisRgn = bUpdateVisRgn || (dc->w.flags & DC_DIRTY);
+    bUpdateVisRgn = bUpdateVisRgn || (dc->flags & DC_DIRTY);
 
     /* recompute visible region */
     wndPtr->pDriver->pSetDrawable( wndPtr, hdc, flags, bUpdateClipOrigin );
-    dc->w.flags &= ~DC_DIRTY;
+    dc->flags &= ~DC_DIRTY;
     GDI_ReleaseObj( hdc );
 
     if( bUpdateVisRgn )

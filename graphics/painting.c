@@ -9,15 +9,15 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "dc.h"
+#include "windef.h"
+#include "wingdi.h"
+#include "winerror.h"
+#include "gdi.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "region.h"
 #include "path.h"
 #include "debugtools.h"
-#include "winerror.h"
-#include "windef.h"
-#include "wingdi.h"
 
 DEFAULT_DEBUG_CHANNEL(gdi);
 
@@ -41,13 +41,13 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
         ret = PATH_LineTo(dc, x, y);
     else
         ret = dc->funcs->pLineTo && dc->funcs->pLineTo(dc,x,y);
     if(ret) {
-        dc->w.CursPosX = x;
-        dc->w.CursPosY = y;
+        dc->CursPosX = x;
+        dc->CursPosY = y;
     }
     GDI_ReleaseObj( hdc );
     return ret;
@@ -92,13 +92,13 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
     if(!dc) return FALSE;
 
     if(pt) {
-        pt->x = dc->w.CursPosX;
-        pt->y = dc->w.CursPosY;
+        pt->x = dc->CursPosX;
+        pt->y = dc->CursPosY;
     }
-    dc->w.CursPosX = x;
-    dc->w.CursPosY = y;
+    dc->CursPosX = x;
+    dc->CursPosY = y;
 
-    if(PATH_IsPathOpen(dc->w.path)) ret = PATH_MoveTo(dc);
+    if(PATH_IsPathOpen(dc->path)) ret = PATH_MoveTo(dc);
     else if (dc->funcs->pMoveToEx) ret = dc->funcs->pMoveToEx(dc,x,y,pt);
     GDI_ReleaseObj( hdc );
     return ret;
@@ -129,7 +129,7 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
             ret = PATH_Arc(dc, left, top, right, bottom, xstart, ystart, xend, yend,0);
         else if (dc->funcs->pArc)
             ret = dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
@@ -201,7 +201,7 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
         ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,2); 
     else if(dc->funcs->pPie)
         ret = dc->funcs->pPie(dc,left,top,right,bottom,xstart,ystart,xend,yend);
@@ -233,7 +233,7 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
 	ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,1);
     else if(dc->funcs->pChord)
         ret = dc->funcs->pChord(dc,left,top,right,bottom,xstart,ystart,xend,yend);
@@ -263,7 +263,7 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
     DC * dc = DC_GetDCUpdate( hdc );
     if (!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
 	ret = PATH_Ellipse(dc,left,top,right,bottom);
     else if (dc->funcs->pEllipse)
         ret = dc->funcs->pEllipse(dc,left,top,right,bottom);
@@ -293,7 +293,7 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {  
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
             ret = PATH_Rectangle(dc, left, top, right, bottom);
         else if (dc->funcs->pRectangle)
             ret = dc->funcs->pRectangle(dc,left,top,right,bottom);
@@ -324,7 +324,7 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
 
     if (dc)
     {
-        if(PATH_IsPathOpen(dc->w.path))
+        if(PATH_IsPathOpen(dc->path))
 	    ret = PATH_RoundRect(dc,left,top,right,bottom,ell_width,ell_height);
         else if (dc->funcs->pRoundRect)
             ret = dc->funcs->pRoundRect(dc,left,top,right,bottom,ell_width,ell_height);
@@ -717,7 +717,7 @@ BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
-        if (PATH_IsPathOpen(dc->w.path)) ret = PATH_Polyline(dc, pt, count);
+        if (PATH_IsPathOpen(dc->path)) ret = PATH_Polyline(dc, pt, count);
         else if (dc->funcs->pPolyline) ret = dc->funcs->pPolyline(dc,pt,count);
         GDI_ReleaseObj( hdc );
     }
@@ -734,7 +734,7 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
         ret = PATH_PolylineTo(dc, pt, cCount);
 
     else if(dc->funcs->pPolylineTo)
@@ -745,16 +745,16 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 				sizeof(POINT) * (cCount + 1) );
 	if (pts)
         {
-	pts[0].x = dc->w.CursPosX;
-	pts[0].y = dc->w.CursPosY;
+	pts[0].x = dc->CursPosX;
+	pts[0].y = dc->CursPosY;
 	memcpy( pts + 1, pt, sizeof(POINT) * cCount );
 	ret = Polyline( hdc, pts, cCount + 1 );
 	HeapFree( GetProcessHeap(), 0, pts );
     }
     }
     if(ret) {
-        dc->w.CursPosX = pt[cCount-1].x;
-	dc->w.CursPosY = pt[cCount-1].y;
+        dc->CursPosX = pt[cCount-1].x;
+	dc->CursPosY = pt[cCount-1].y;
     }
     GDI_ReleaseObj( hdc );
     return ret;
@@ -787,7 +787,7 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
-        if (PATH_IsPathOpen(dc->w.path)) ret = PATH_Polygon(dc, pt, count);
+        if (PATH_IsPathOpen(dc->path)) ret = PATH_Polygon(dc, pt, count);
         else if (dc->funcs->pPolygon) ret = dc->funcs->pPolygon(dc,pt,count);
         GDI_ReleaseObj( hdc );
 }
@@ -836,7 +836,7 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
-        if (PATH_IsPathOpen(dc->w.path)) ret = PATH_PolyPolygon(dc, pt, counts, polygons);
+        if (PATH_IsPathOpen(dc->path)) ret = PATH_PolyPolygon(dc, pt, counts, polygons);
         else if (dc->funcs->pPolyPolygon) ret = dc->funcs->pPolyPolygon(dc,pt,counts,polygons);
         GDI_ReleaseObj( hdc );
     }
@@ -853,7 +853,7 @@ BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
     DC * dc = DC_GetDCUpdate( hdc );
     if (dc)
     {
-        if (PATH_IsPathOpen(dc->w.path)) ret = PATH_PolyPolyline(dc, pt, counts, polylines);
+        if (PATH_IsPathOpen(dc->path)) ret = PATH_PolyPolyline(dc, pt, counts, polylines);
         else if (dc->funcs->pPolyPolyline) ret = dc->funcs->pPolyPolyline(dc,pt,counts,polylines);
         GDI_ReleaseObj( hdc );
 }
@@ -955,7 +955,7 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT* lppt, DWORD cPoints )
 
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
 	ret = PATH_PolyBezier(dc, lppt, cPoints);
     else if (dc->funcs->pPolyBezier)
         ret = dc->funcs->pPolyBezier(dc, lppt, cPoints);
@@ -994,7 +994,7 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 
     if(!dc) return FALSE;
 
-    if(PATH_IsPathOpen(dc->w.path))
+    if(PATH_IsPathOpen(dc->path))
         ret = PATH_PolyBezierTo(dc, lppt, cPoints);
     else if(dc->funcs->pPolyBezierTo)
         ret = dc->funcs->pPolyBezierTo(dc, lppt, cPoints);
@@ -1002,15 +1002,15 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
         POINT *pt;
 	pt = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (cPoints + 1) );
 	if(!pt) return FALSE;
-	pt[0].x = dc->w.CursPosX;
-	pt[0].y = dc->w.CursPosY;
+	pt[0].x = dc->CursPosX;
+	pt[0].y = dc->CursPosY;
 	memcpy(pt + 1, lppt, sizeof(POINT) * cPoints);
 	ret = PolyBezier(dc->hSelf, pt, cPoints+1);
 	HeapFree( GetProcessHeap(), 0, pt );
     }
     if(ret) {
-        dc->w.CursPosX = lppt[cPoints-1].x;
-        dc->w.CursPosY = lppt[cPoints-1].y;
+        dc->CursPosX = lppt[cPoints-1].x;
+        dc->CursPosY = lppt[cPoints-1].y;
     }
     GDI_ReleaseObj( hdc );
     return ret;
@@ -1096,8 +1096,8 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	}
 
     /* if no moveto occurs, we will close the figure here */
-    lastmove.x = dc->w.CursPosX; 
-    lastmove.y = dc->w.CursPosY;
+    lastmove.x = dc->CursPosX;
+    lastmove.y = dc->CursPosY;
 
     /* now let's draw */
     for( i = 0; i < cCount; i++ )
@@ -1105,8 +1105,8 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	if( lpbTypes[i] == PT_MOVETO )
 	{
 	    MoveToEx( hdc, lppt[i].x, lppt[i].y, NULL ); 				
-	    lastmove.x = dc->w.CursPosX;
-	    lastmove.y = dc->w.CursPosY; 
+	    lastmove.x = dc->CursPosX;
+	    lastmove.y = dc->CursPosY;
 	}
 	else if( lpbTypes[i] & PT_LINETO )
 	    LineTo( hdc, lppt[i].x, lppt[i].y );
@@ -1120,7 +1120,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 
 	if( lpbTypes[i] & PT_CLOSEFIGURE )
 	{
-	    if( PATH_IsPathOpen( dc->w.path ) )
+	    if( PATH_IsPathOpen( dc->path ) )
 		CloseFigure( hdc );
 	    else 
 		LineTo( hdc, lastmove.x, lastmove.y );

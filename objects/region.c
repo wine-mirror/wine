@@ -88,7 +88,7 @@ SOFTWARE.
 #include "debugtools.h"
 #include "region.h"
 #include "heap.h"
-#include "dc.h"
+#include "gdi.h"
 
 DEFAULT_DEBUG_CHANNEL(region);
 
@@ -1164,7 +1164,7 @@ BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
 	  hdc, hDest, hSrc) ;
     if (!dc) return ret;
     
-    if (dc->w.MapMode == MM_TEXT) /* Requires only a translation */
+    if (dc->MapMode == MM_TEXT) /* Requires only a translation */
     {
         if( CombineRgn( hDest, hSrc, 0, RGN_COPY ) == ERROR ) goto done;
 	OffsetRgn( hDest, dc->vportOrgX - dc->wndOrgX, 
@@ -2937,7 +2937,7 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 	    POINT org;
 
 	    if (!dc) return -1;
-	    CombineRgn (hRgn, dc->w.hVisRgn, 0, RGN_COPY);
+	    CombineRgn (hRgn, dc->hVisRgn, 0, RGN_COPY);
 	    /*
 	     *     On Windows NT/2000,
 	     *           the region returned is in screen coordinates.
@@ -2949,8 +2949,8 @@ INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
 		GetDCOrgEx(hDC, &org);
 	    else
 		org.x = org.y = 0;
-	    org.x -= dc->w.DCOrgX;
-	    org.y -= dc->w.DCOrgY;
+	    org.x -= dc->DCOrgX;
+	    org.y -= dc->DCOrgY;
 	    OffsetRgn (hRgn, org.x, org.y);
             GDI_ReleaseObj( hDC );
 	    return 1;

@@ -10,7 +10,7 @@
 #include "winbase.h"
 #include "bitmap.h"
 #include "callback.h"
-#include "dc.h"
+#include "gdi.h"
 #include "debugtools.h"
 #include "palette.h"
 
@@ -312,7 +312,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
+    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
         return 0;
@@ -320,10 +320,10 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 
     /* Transfer color info */
     
-    if (dc->w.bitsPerPixel <= 8) {
+    if (dc->bitsPerPixel <= 8) {
 	palEntry = palette->logpalette.palPalEntry + startpos;
-	if (startpos + entries > (1 << dc->w.bitsPerPixel))
-	    entries = (1 << dc->w.bitsPerPixel) - startpos;
+	if (startpos + entries > (1 << dc->bitsPerPixel))
+	    entries = (1 << dc->bitsPerPixel) - startpos;
 
         if (startpos + entries > palette->logpalette.palNumEntries)
             entries = palette->logpalette.palNumEntries - startpos;
@@ -337,7 +337,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     } else {
 	entries = 0;
     }
-    GDI_ReleaseObj( dc->w.hPalette );
+    GDI_ReleaseObj( dc->hPalette );
     GDI_ReleaseObj( hdc );
     return entries;
 }
@@ -364,7 +364,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
+    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
         return 0;
@@ -372,10 +372,10 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
 
     /* Transfer color info */
     
-    if (dc->w.bitsPerPixel <= 8) {
+    if (dc->bitsPerPixel <= 8) {
 	palEntry = palette->logpalette.palPalEntry + startpos;
-	if (startpos + entries > (1 << dc->w.bitsPerPixel)) {
-	    entries = (1 << dc->w.bitsPerPixel) - startpos;
+	if (startpos + entries > (1 << dc->bitsPerPixel)) {
+	    entries = (1 << dc->bitsPerPixel) - startpos;
 	}
 	for (end = colors + entries; colors < end; palEntry++, colors++)
 	{
@@ -387,7 +387,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
     } else {
 	entries = 0;
     }
-    GDI_ReleaseObj( dc->w.hPalette );
+    GDI_ReleaseObj( dc->hPalette );
     GDI_ReleaseObj( hdc );
     return entries;
 }
@@ -485,7 +485,7 @@ INT WINAPI GetDIBits(
         GDI_ReleaseObj( hdc );
 	return 0;
     }
-    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
+    if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
         GDI_ReleaseObj( hbitmap );
@@ -548,7 +548,7 @@ INT WINAPI GetDIBits(
 	}
     }
 
-    GDI_ReleaseObj( dc->w.hPalette );
+    GDI_ReleaseObj( dc->hPalette );
 
     if (bits && lines)
     {

@@ -28,8 +28,8 @@ BOOL PSDRV_LineTo(DC *dc, INT x, INT y)
     TRACE("%d %d\n", x, y);
 
     PSDRV_SetPen(dc);
-    PSDRV_WriteMoveTo(dc, XLPTODP(dc, dc->w.CursPosX),
-		          YLPTODP(dc, dc->w.CursPosY));
+    PSDRV_WriteMoveTo(dc, XLPTODP(dc, dc->CursPosX),
+		          YLPTODP(dc, dc->CursPosY));
     PSDRV_WriteLineTo(dc, XLPTODP(dc, x), YLPTODP(dc, y));
     PSDRV_DrawLine(dc);
 
@@ -259,7 +259,7 @@ BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
 	PSDRV_WriteClosePath(dc);
     }
 
-    if(dc->w.polyFillMode == ALTERNATE)
+    if(dc->polyFillMode == ALTERNATE)
         PSDRV_Brush(dc, 1);
     else /* WINDING */
         PSDRV_Brush(dc, 0);

@@ -16,13 +16,13 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "color.h"
-#include "dc.h"
+#include "gdi.h"
 #include "metafile.h"
 #include "options.h"
 #include "x11drv.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(bitblt)
+DEFAULT_DEBUG_CHANNEL(bitblt);
 
 
 #define DST 0   /* Destination drawable */
@@ -859,13 +859,13 @@ static void BITBLT_GetSrcAreaStretch( DC *dcSrc, DC *dcDst,
                           visRectSrc->bottom - visRectSrc->top,
                           AllPlanes, ZPixmap );
     XCREATEIMAGE( imageDst, rectDst.right - rectDst.left,
-                  rectDst.bottom - rectDst.top, dcDst->w.bitsPerPixel );
+                  rectDst.bottom - rectDst.top, dcDst->bitsPerPixel );
     BITBLT_StretchImage( imageSrc, imageDst, widthSrc, heightSrc,
                          widthDst, heightDst, &rectSrc, &rectDst,
-                         physDevDst->textPixel, dcDst->w.bitsPerPixel != 1 ?
+                         physDevDst->textPixel, dcDst->bitsPerPixel != 1 ?
                          physDevDst->backgroundPixel :
 			 physDevSrc->backgroundPixel,
-                         dcDst->w.stretchBltMode );
+                         dcDst->stretchBltMode );
     XPutImage( display, pixmap, gc, imageDst, 0, 0, 0, 0,
                rectDst.right - rectDst.left, rectDst.bottom - rectDst.top );
     XDestroyImage( imageSrc );
@@ -889,12 +889,12 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
     X11DRV_PDEVICE *physDevSrc = (X11DRV_PDEVICE *)dcSrc->physDev;
     X11DRV_PDEVICE *physDevDst = (X11DRV_PDEVICE *)dcDst->physDev;
 
-    if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
+    if (dcSrc->bitsPerPixel == dcDst->bitsPerPixel)
     {
         if (!X11DRV_PALETTE_XPixelToPalette ||
-            (dcDst->w.bitsPerPixel == 1))  /* monochrome -> monochrome */
+            (dcDst->bitsPerPixel == 1))  /* monochrome -> monochrome */
         {
-            if (dcDst->w.bitsPerPixel == 1)
+            if (dcDst->bitsPerPixel == 1)
             {
                 /* MSDN says if StretchBlt must convert a bitmap from monochrome
                    to color or vice versa, the forground and background color of
@@ -912,7 +912,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
         }
         else  /* color -> color */
         {
-            if (dcSrc->w.flags & DC_MEMORY)
+            if (dcSrc->flags & DC_MEMORY)
                 imageSrc = XGetImage( display, physDevSrc->drawable,
                                       visRectSrc->left, visRectSrc->top,
                                       width, height, AllPlanes, ZPixmap );
@@ -936,7 +936,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
     }
     else
     {
-        if (dcSrc->w.bitsPerPixel == 1)  /* monochrome -> color */
+        if (dcSrc->bitsPerPixel == 1)  /* monochrome -> color */
         {
             if (X11DRV_PALETTE_XPixelToPalette)
             {
@@ -960,7 +960,7 @@ static void BITBLT_GetSrcArea( DC *dcSrc, DC *dcDst, Pixmap pixmap, GC gc,
             imageSrc = XGetImage( display, physDevSrc->drawable,
                                   visRectSrc->left, visRectSrc->top,
                                   width, height, AllPlanes, ZPixmap );
-            XCREATEIMAGE( imageDst, width, height, dcDst->w.bitsPerPixel );
+            XCREATEIMAGE( imageDst, width, height, dcDst->bitsPerPixel );
             for (y = 0; y < height; y++)
                 for (x = 0; x < width; x++)
                     XPutPixel(imageDst, x, y, (XGetPixel(imageSrc,x,y) ==
@@ -986,7 +986,7 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
     INT height = visRectDst->bottom - visRectDst->top;
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
-    if (!X11DRV_PALETTE_XPixelToPalette || (dc->w.bitsPerPixel == 1) ||
+    if (!X11DRV_PALETTE_XPixelToPalette || (dc->bitsPerPixel == 1) ||
 	(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( display, physDev->drawable, pixmap, gc,
@@ -997,7 +997,7 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
         register INT x, y;
         XImage *image;
 
-        if (dc->w.flags & DC_MEMORY)
+        if (dc->flags & DC_MEMORY)
             image = XGetImage( display, physDev->drawable,
                                visRectDst->left, visRectDst->top,
                                width, height, AllPlanes, ZPixmap );
@@ -1033,7 +1033,7 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT *visRectDst)
 
     /* !X11DRV_PALETTE_PaletteToXPixel is _NOT_ enough */
 
-    if (!X11DRV_PALETTE_PaletteToXPixel || (dc->w.bitsPerPixel == 1) || 
+    if (!X11DRV_PALETTE_PaletteToXPixel || (dc->bitsPerPixel == 1) || 
         (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) )
     {
         XCopyArea( display, pixmap, physDev->drawable, gc, 0, 0,
@@ -1079,7 +1079,7 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
     rect.bottom = yDst + heightDst;
     if (widthDst < 0) SWAP_INT32( &rect.left, &rect.right );
     if (heightDst < 0) SWAP_INT32( &rect.top, &rect.bottom );
-    GetRgnBox( dcDst->w.hGCClipRgn, &clipRect );
+    GetRgnBox( dcDst->hGCClipRgn, &clipRect );
     if (!IntersectRect( visRectDst, &rect, &clipRect )) return FALSE;
 
       /* Get the source visible rectangle */
@@ -1093,7 +1093,7 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clipping and visible regions are only for output, 
        so just check against totalExtent here to avoid BadMatch errors */
-    if (!IntersectRect( visRectSrc, &rect, &dcSrc->w.totalExtent )) 
+    if (!IntersectRect( visRectSrc, &rect, &dcSrc->totalExtent )) 
         return FALSE;
 
       /* Intersect the rectangles */
@@ -1186,8 +1186,8 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
 
       /* Map the coordinates to device coords */
 
-    xDst      = dcDst->w.DCOrgX + XLPTODP( dcDst, xDst );
-    yDst      = dcDst->w.DCOrgY + YLPTODP( dcDst, yDst );
+    xDst      = dcDst->DCOrgX + XLPTODP( dcDst, xDst );
+    yDst      = dcDst->DCOrgY + YLPTODP( dcDst, yDst );
 
     /* Here we have to round to integers, not truncate */
     widthDst  = MulDiv(widthDst, dcDst->vportExtX, dcDst->wndExtX);
@@ -1200,12 +1200,12 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
                     dcDst->wndExtX, dcDst->wndExtY );
     TRACE("    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
                     xDst, yDst, widthDst, heightDst,
-                    dcDst->w.DCOrgX, dcDst->w.DCOrgY );
+                    dcDst->DCOrgX, dcDst->DCOrgY );
 
     if (useSrc)
     {
-        xSrc      = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc );
-        ySrc      = dcSrc->w.DCOrgY + YLPTODP( dcSrc, ySrc );
+        xSrc      = dcSrc->DCOrgX + XLPTODP( dcSrc, xSrc );
+        ySrc      = dcSrc->DCOrgY + YLPTODP( dcSrc, ySrc );
         widthSrc  = widthSrc * dcSrc->vportExtX / dcSrc->wndExtX;
         heightSrc = heightSrc * dcSrc->vportExtY / dcSrc->wndExtY;
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
@@ -1216,7 +1216,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
                         dcSrc->wndExtX, dcSrc->wndExtY );
         TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
                         xSrc, ySrc, widthSrc, heightSrc,
-                        dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
+                        dcSrc->DCOrgX, dcSrc->DCOrgY );
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
@@ -1244,7 +1244,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     if (!fStretch) switch(rop)  /* A few optimisations */
     {
     case BLACKNESS:  /* 0x00 */
-        if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
+        if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( display, physDevDst->gc, GXclear );
         else
         {
@@ -1257,7 +1257,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         return TRUE;
 
     case DSTINVERT:  /* 0x55 */
-        if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
+        if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
             !perfect_graphics())
         {
             XSetFunction( display, physDevDst->gc, GXinvert );
@@ -1302,9 +1302,9 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
 	return TRUE;
 
     case SRCCOPY:  /* 0xcc */
-        if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
+        if (dcSrc->bitsPerPixel == dcDst->bitsPerPixel)
         {
-            BOOL expose = !(dcSrc->w.flags & DC_MEMORY) && !(dcDst->w.flags & DC_MEMORY);
+            BOOL expose = !(dcSrc->flags & DC_MEMORY) && !(dcDst->flags & DC_MEMORY);
             if ( expose ) XSetGraphicsExposures( display, physDevDst->gc, True );
             XSetFunction( display, physDevDst->gc, GXcopy );
 	    XCopyArea( display, physDevSrc->drawable,
@@ -1314,9 +1314,9 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
             if ( expose ) XSetGraphicsExposures( display, physDevDst->gc, False );
             return TRUE;
         }
-        if (dcSrc->w.bitsPerPixel == 1)
+        if (dcSrc->bitsPerPixel == 1)
         {
-            BOOL expose = !(dcSrc->w.flags & DC_MEMORY) && !(dcDst->w.flags & DC_MEMORY);
+            BOOL expose = !(dcSrc->flags & DC_MEMORY) && !(dcDst->flags & DC_MEMORY);
             XSetBackground( display, physDevDst->gc, physDevDst->textPixel );
             XSetForeground( display, physDevDst->gc, 
 			    physDevDst->backgroundPixel );
@@ -1339,7 +1339,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
         return TRUE;
 
     case WHITENESS:  /* 0xff */
-        if ((dcDst->w.bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
+        if ((dcDst->bitsPerPixel == 1) || !X11DRV_PALETTE_PaletteToXPixel)
             XSetFunction( display, physDevDst->gc, GXset );
         else
         {
@@ -1356,11 +1356,11 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     tmpGC = XCreateGC( display, physDevDst->drawable, 0, NULL );
     XSetGraphicsExposures( display, tmpGC, False );
     pixmaps[DST] = XCreatePixmap( display, X11DRV_GetXRootWindow(), width, height,
-                                  dcDst->w.bitsPerPixel );
+                                  dcDst->bitsPerPixel );
     if (useSrc)
     {
         pixmaps[SRC] = XCreatePixmap( display, X11DRV_GetXRootWindow(), width, height,
-                                      dcDst->w.bitsPerPixel );
+                                      dcDst->bitsPerPixel );
         if (fStretch)
             BITBLT_GetSrcAreaStretch( dcSrc, dcDst, pixmaps[SRC], tmpGC,
                                       xSrc, ySrc, widthSrc, heightSrc,
@@ -1386,7 +1386,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
             if (!pixmaps[TMP])
                 pixmaps[TMP] = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                               width, height,
-                                              dcDst->w.bitsPerPixel );
+                                              dcDst->bitsPerPixel );
             /* fall through */
         case OP_ARGS(DST,SRC):
         case OP_ARGS(SRC,DST):
@@ -1401,7 +1401,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
             if (!pixmaps[TMP] && !fNullBrush)
                 pixmaps[TMP] = XCreatePixmap( display, X11DRV_GetXRootWindow(),
                                               width, height,
-                                              dcDst->w.bitsPerPixel );
+                                              dcDst->bitsPerPixel );
             /* fall through */
         case OP_ARGS(PAT,DST):
         case OP_ARGS(PAT,SRC):

@@ -4,9 +4,11 @@
  * Copyright 1999 Huw D M Davies
  */
 
+#include <string.h>
+
 #include "windef.h"
 #include "wingdi.h"
-#include "dc.h"
+#include "gdi.h"
 #include "heap.h"
 #include "global.h"
 #include "enhmetafile.h"
@@ -14,9 +16,7 @@
 #include "wine/winestring.h"
 #include "debugtools.h"
 
-#include <string.h>
-
-DEFAULT_DEBUG_CHANNEL(enhmetafile)
+DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 static const DC_FUNCTIONS EMFDRV_Funcs =
 {

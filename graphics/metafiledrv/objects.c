@@ -184,7 +184,7 @@ static BOOL MFDRV_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
 static HFONT16 MFDRV_FONT_SelectObject( DC * dc, HFONT16 hfont,
                                         FONTOBJ * font )
 {
-    HFONT16 prevHandle = dc->w.hFont;
+    HFONT16 prevHandle = dc->hFont;
     if (MFDRV_CreateFontIndirect(dc, hfont, &(font->logfont)))
         return prevHandle;
     return 0;
@@ -219,7 +219,7 @@ static BOOL MFDRV_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
     LOGPEN16 logpen;
-    HPEN prevHandle = dc->w.hPen;
+    HPEN prevHandle = dc->hPen;
 
     logpen.lopnStyle = pen->logpen.lopnStyle;
     logpen.lopnWidth.x = pen->logpen.lopnWidth.x;

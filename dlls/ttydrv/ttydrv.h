@@ -40,8 +40,6 @@ struct DIDEVICEOBJECTDATA;
  * TTY GDI driver
  */
 
-extern struct tagGDI_DRIVER TTYDRV_GDI_Driver;
-
 extern BOOL TTYDRV_GDI_Initialize(void);
 extern void TTYDRV_GDI_Finalize(void);
 

@@ -23,12 +23,12 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
 
     TRACE("hdc=%04x\n", dc->hSelf);
 
-    if (dc->w.hGCClipRgn == 0) {
+    if (dc->hGCClipRgn == 0) {
         ERR("Rgn is 0. Please report this.\n");
 	return;
     }
 
-    size = GetRegionData(dc->w.hGCClipRgn, 0, NULL);
+    size = GetRegionData(dc->hGCClipRgn, 0, NULL);
     if(!size) {
         ERR("Invalid region\n");
 	return;
@@ -40,7 +40,7 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
 	return;
     }
 
-    GetRegionData(dc->w.hGCClipRgn, size, rgndata);
+    GetRegionData(dc->hGCClipRgn, size, rgndata);
 
     PSDRV_WriteInitClip(dc);
 

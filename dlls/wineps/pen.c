@@ -22,11 +22,11 @@ static char PEN_alternate[]  = "1";
  */
 extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen, PENOBJ * pen )
 {
-    HPEN prevpen = dc->w.hPen;
+    HPEN prevpen = dc->hPen;
     PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     TRACE("hpen = %08x colour = %08lx\n", hpen, pen->logpen.lopnColor);
-    dc->w.hPen = hpen;
+    dc->hPen = hpen;
 
     physDev->pen.width = XLSTODS(dc, pen->logpen.lopnWidth.x);
     if(physDev->pen.width < 0)

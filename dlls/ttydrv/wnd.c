@@ -7,7 +7,7 @@
 #include "config.h"
 
 #include "class.h"
-#include "dc.h"
+#include "gdi.h"
 #include "heap.h"
 #include "ttydrv.h"
 #include "win.h"
@@ -232,15 +232,15 @@ void TTYDRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
 
     /* FIXME: Should be done in the common code instead */
     if(!wndPtr)  {
-        dc->w.DCOrgX = 0;
-        dc->w.DCOrgY = 0;
+        dc->DCOrgX = 0;
+        dc->DCOrgY = 0;
     } else {
         if(flags & DCX_WINDOW) {
-            dc->w.DCOrgX = wndPtr->rectWindow.left;
-            dc->w.DCOrgY = wndPtr->rectWindow.top;
+            dc->DCOrgX = wndPtr->rectWindow.left;
+            dc->DCOrgY = wndPtr->rectWindow.top;
         } else {
-            dc->w.DCOrgX = wndPtr->rectClient.left;
-            dc->w.DCOrgY = wndPtr->rectClient.top;
+            dc->DCOrgX = wndPtr->rectClient.left;
+            dc->DCOrgY = wndPtr->rectClient.top;
         }
     }
     GDI_ReleaseObj( hdc );

@@ -313,11 +313,11 @@ HBRUSH WINAPI CreateSolidBrush( COLORREF color )
 DWORD WINAPI SetBrushOrg16( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD retval;
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
-    retval = dc->w.brushOrgX | (dc->w.brushOrgY << 16);
-    dc->w.brushOrgX = x;
-    dc->w.brushOrgY = y;
+    retval = dc->brushOrgX | (dc->brushOrgY << 16);
+    dc->brushOrgX = x;
+    dc->brushOrgY = y;
     GDI_ReleaseObj( hdc );
     return retval;
 }
@@ -328,16 +328,16 @@ DWORD WINAPI SetBrushOrg16( HDC16 hdc, INT16 x, INT16 y )
  */
 BOOL WINAPI SetBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    DC *dc = DC_GetDCPtr( hdc );
 
     if (!dc) return FALSE;
     if (oldorg)
     {
-        oldorg->x = dc->w.brushOrgX;
-        oldorg->y = dc->w.brushOrgY;
+        oldorg->x = dc->brushOrgX;
+        oldorg->y = dc->brushOrgY;
     }
-    dc->w.brushOrgX = x;
-    dc->w.brushOrgY = y;
+    dc->brushOrgX = x;
+    dc->brushOrgY = y;
     GDI_ReleaseObj( hdc );
     return TRUE;
 }

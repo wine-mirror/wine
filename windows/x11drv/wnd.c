@@ -20,7 +20,7 @@
 #include "bitmap.h"
 #include "debugtools.h"
 #include "dce.h"
-#include "dc.h"
+#include "gdi.h"
 #include "options.h"
 #include "message.h"
 #include "heap.h"
@@ -877,8 +877,8 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, HDC hdc, INT dx, INT dy,
 
     if (!dcPtr) return;
     physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
-    dst.x = (src.x = dcPtr->w.DCOrgX + rect->left) + dx;
-    dst.y = (src.y = dcPtr->w.DCOrgY + rect->top) + dy;
+    dst.x = (src.x = dcPtr->DCOrgX + rect->left) + dx;
+    dst.y = (src.y = dcPtr->DCOrgY + rect->top) + dy;
   
     if (bUpdate) /* handles non-Wine windows hanging over the copied area */
 	TSXSetGraphicsExposures( display, physDev->gc, True );
@@ -913,8 +913,8 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
     physDev = (X11DRV_PDEVICE *)dc->physDev;
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
-        dc->w.DCOrgX = 0;
-        dc->w.DCOrgY = 0;
+        dc->DCOrgX = 0;
+        dc->DCOrgY = 0;
         physDev->drawable = X11DRV_GetXRootWindow();
         TSXSetSubwindowMode( display, physDev->gc, IncludeInferiors );
     }
@@ -931,36 +931,36 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
          * modify the origin and reset the clipping. When the clipping is set,
          * it is moved according to the new DC origin.
          */
-         if ( (wndPtr->class->style & (CS_OWNDC | CS_CLASSDC)) && (dc->w.hClipRgn > 0))
+         if ( (wndPtr->class->style & (CS_OWNDC | CS_CLASSDC)) && (dc->hClipRgn > 0))
          {
-             dcOrgXCopy = dc->w.DCOrgX;
-             dcOrgYCopy = dc->w.DCOrgY;
+             dcOrgXCopy = dc->DCOrgX;
+             dcOrgYCopy = dc->DCOrgY;
              offsetClipRgn = TRUE;
          }
 
         if (flags & DCX_WINDOW)
         {
-            dc->w.DCOrgX  = wndPtr->rectWindow.left;
-            dc->w.DCOrgY  = wndPtr->rectWindow.top;
+            dc->DCOrgX  = wndPtr->rectWindow.left;
+            dc->DCOrgY  = wndPtr->rectWindow.top;
         }
         else
         {
-            dc->w.DCOrgX  = wndPtr->rectClient.left;
-            dc->w.DCOrgY  = wndPtr->rectClient.top;
+            dc->DCOrgX  = wndPtr->rectClient.left;
+            dc->DCOrgY  = wndPtr->rectClient.top;
         }
         while (!X11DRV_WND_GetXWindow(wndPtr))
         {
             wndPtr = wndPtr->parent;
-            dc->w.DCOrgX += wndPtr->rectClient.left;
-            dc->w.DCOrgY += wndPtr->rectClient.top;
+            dc->DCOrgX += wndPtr->rectClient.left;
+            dc->DCOrgY += wndPtr->rectClient.top;
         }
-        dc->w.DCOrgX -= wndPtr->rectWindow.left;
-        dc->w.DCOrgY -= wndPtr->rectWindow.top;
+        dc->DCOrgX -= wndPtr->rectWindow.left;
+        dc->DCOrgY -= wndPtr->rectWindow.top;
 
         /* reset the clip region, according to the new origin */
         if ( offsetClipRgn )
         {
-             OffsetRgn(dc->w.hClipRgn, dc->w.DCOrgX - dcOrgXCopy,dc->w.DCOrgY - dcOrgYCopy);
+             OffsetRgn(dc->hClipRgn, dc->DCOrgX - dcOrgXCopy,dc->DCOrgY - dcOrgYCopy);
         }
         
         physDev->drawable = X11DRV_WND_GetXWindow(wndPtr);
@@ -972,7 +972,7 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigi
 	 */
 
 	if( bSetClipOrigin )
-	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
+	    TSXSetClipOrigin( display, physDev->gc, dc->DCOrgX, dc->DCOrgY );
 #endif
     }
     GDI_ReleaseObj( hdc );

@@ -23,14 +23,14 @@
 #include "bitmap.h"
 #include "x11drv.h"
 #include "debugtools.h"
-#include "dc.h"
+#include "gdi.h"
 #include "color.h"
 #include "callback.h"
 #include "selectors.h"
 #include "global.h"
 
-DEFAULT_DEBUG_CHANNEL(bitmap)
-DECLARE_DEBUG_CHANNEL(x11drv)
+DEFAULT_DEBUG_CHANNEL(bitmap);
+DECLARE_DEBUG_CHANNEL(x11drv);
 
 static int bitmapDepthTable[] = { 8, 1, 32, 16, 24, 15, 4, 0 };
 static int ximageDepthTable[] = { 0, 0, 0,  0,  0,  0,  0 };
@@ -2802,7 +2802,7 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     if (!cx || !cy) return 0;
 
     X11DRV_SetupGCForText( dc );  /* To have the correct colors */
-    TSXSetFunction(display, physDev->gc, X11DRV_XROPfunction[dc->w.ROPmode-1]);
+    TSXSetFunction(display, physDev->gc, X11DRV_XROPfunction[dc->ROPmode-1]);
 
     switch (descr.infoBpp)
     {
@@ -2811,7 +2811,7 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
        case 8:
                descr.colorMap = (RGBQUAD *)X11DRV_DIB_BuildColorMap( 
                                             coloruse == DIB_PAL_COLORS ? dc : NULL, coloruse,
-                                            dc->w.bitsPerPixel, info, &descr.nColorMap );
+                                            dc->bitsPerPixel, info, &descr.nColorMap );
                if (!descr.colorMap) return 0;
                descr.rMask = descr.gMask = descr.bMask = 0;
                break;
@@ -2842,14 +2842,14 @@ INT X11DRV_SetDIBitsToDevice( DC *dc, INT xDest, INT yDest, DWORD cx,
     descr.palentry  = NULL;
     descr.lines     = tmpheight >= 0 ? lines : -lines;
     descr.infoWidth = width;
-    descr.depth     = dc->w.bitsPerPixel;
+    descr.depth     = dc->bitsPerPixel;
     descr.drawable  = physDev->drawable;
     descr.gc        = physDev->gc;
     descr.xSrc      = xSrc;
     descr.ySrc      = tmpheight >= 0 ? lines-(ySrc-startscan)-cy+(oldcy-cy) 
                                      : ySrc - startscan;
-    descr.xDest     = dc->w.DCOrgX + XLPTODP( dc, xDest );
-    descr.yDest     = dc->w.DCOrgY + YLPTODP( dc, yDest ) +
+    descr.xDest     = dc->DCOrgX + XLPTODP( dc, xDest );
+    descr.yDest     = dc->DCOrgY + YLPTODP( dc, yDest ) +
                                      (tmpheight >= 0 ? oldcy-cy : 0);
     descr.width     = cx;
     descr.height    = cy;
@@ -2969,7 +2969,7 @@ INT X11DRV_DIB_GetDIBits(
 	(int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
         startscan );
 
-  if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC )))
+  if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
       return 0;
 
   if( lines > info->bmiHeader.biHeight )  lines = info->bmiHeader.biHeight;
@@ -3065,7 +3065,7 @@ INT X11DRV_DIB_GetDIBits(
   info->bmiHeader.biCompression = 0;
 
 done:
-  GDI_ReleaseObj( dc->w.hPalette );
+  GDI_ReleaseObj( dc->hPalette );
  
   return lines;
 }
@@ -3292,9 +3292,9 @@ void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
   /* Ensure this is a Compatible DC that has a DIB section selected */
   
   if (!dc) return;
-  if (!(dc->w.flags & DC_MEMORY)) return;
+  if (!(dc->flags & DC_MEMORY)) return;
   
-  X11DRV_DIB_UpdateDIBSection2(dc->w.hBitmap, toDIB);
+  X11DRV_DIB_UpdateDIBSection2(dc->hBitmap, toDIB);
 }
 
 /***********************************************************************

@@ -4,7 +4,7 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
-#include "dc.h"
+#include "gdi.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(bitblt);
@@ -67,8 +67,8 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
     {
         dcSrc = DC_GetDCPtr( hdcSrc );
         TRACE("hdcSrc=%04x %d,%d %d bpp->hdcDest=%04x %d,%d %dx%dx%d rop=%06lx\n",
-              hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
-              hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
+              hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->bitsPerPixel : 0,
+              hdcDst, xDst, yDst, width, height, dcDst->bitsPerPixel, rop);
         if (dcDst->funcs->pBitBlt)
             ret = dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
                                          dcSrc, xSrc, ySrc, rop );
@@ -112,8 +112,8 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
 
         TRACE("%04x %d,%d %dx%dx%d -> %04x %d,%d %dx%dx%d rop=%06lx\n",
               hdcSrc, xSrc, ySrc, widthSrc, heightSrc,
-              dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
-              widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
+              dcSrc ? dcSrc->bitsPerPixel : 0, hdcDst, xDst, yDst,
+              widthDst, heightDst, dcDst->bitsPerPixel, rop );
 
 	if (dcSrc) {
 	    if (dcDst->funcs->pStretchBlt)

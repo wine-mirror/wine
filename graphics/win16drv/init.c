@@ -16,9 +16,8 @@
 #include "font.h"
 #include "options.h"
 #include "debugtools.h"
-#include "dc.h"
 
-DEFAULT_DEBUG_CHANNEL(win16drv)
+DEFAULT_DEBUG_CHANNEL(win16drv);
 
 #define SUPPORT_REALIZED_FONTS 1
 #include "pshpack1.h"
@@ -243,19 +242,19 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     wRet = PRTDRV_Enable(printerDevCaps, GETGDIINFO, device, driver, output,NULL); 
 
     /* Add this to the DC */
-    dc->w.devCaps = printerDevCaps;
-    dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
-    dc->w.bitsPerPixel = dc->w.devCaps->bitsPixel;
+    dc->devCaps = printerDevCaps;
+    dc->hVisRgn = CreateRectRgn(0, 0, dc->devCaps->horzRes, dc->devCaps->vertRes);
+    dc->bitsPerPixel = dc->devCaps->bitsPixel;
     
     TRACE("Got devcaps width %d height %d bits %d planes %d\n",
-	  dc->w.devCaps->horzRes, dc->w.devCaps->vertRes, 
-	  dc->w.devCaps->bitsPixel, dc->w.devCaps->planes);
+	  dc->devCaps->horzRes, dc->devCaps->vertRes, 
+	  dc->devCaps->bitsPixel, dc->devCaps->planes);
 
     /* Now we allocate enough memory for the PDEVICE structure */
     /* The size of this varies between printer drivers */
     /* This PDEVICE is used by the printer DRIVER not by the GDI so must */
     /* be accessable from 16 bit code */
-    nPDEVICEsize = dc->w.devCaps->pdeviceSize + sizeof(PDEVICE_HEADER);
+    nPDEVICEsize = dc->devCaps->pdeviceSize + sizeof(PDEVICE_HEADER);
 
     /* TTD Shouldn't really do pointer arithmetic on segment points */
     physDev->segptrPDEVICE = WIN16_GlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);

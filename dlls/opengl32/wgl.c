@@ -10,7 +10,6 @@
 #include "config.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "dc.h"
 #include "windef.h"
 #include "winerror.h"
 #include "wine_gl.h"

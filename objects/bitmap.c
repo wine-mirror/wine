@@ -10,7 +10,6 @@
 
 #include "wine/winbase16.h"
 #include "gdi.h"
-#include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
 #include "global.h"
@@ -185,7 +184,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
         if (!width || !height) 
 	   hbmpRet = CreateBitmap( 1, 1, 1, 1, NULL );
 	else 
-	   hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
+	   hbmpRet = CreateBitmap( width, height, 1, dc->bitsPerPixel, NULL );
 	if(dc->funcs->pCreateBitmap)
 	    dc->funcs->pCreateBitmap( hbmpRet );
     }
