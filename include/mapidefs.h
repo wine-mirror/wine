@@ -849,6 +849,49 @@ ICOM_DEFINE(IMAPIAdviseSink,IUnknown)
 #define IMAPIAdviseSink_OnNotify(p,a,b)       (p)->lpVtbl->OnNotify(p,a,b)
 #endif
 
+/*****************************************************************************
+ * IMAPIProp interface
+ */
+#define INTERFACE IMAPIProp
+#define IMAPIProp_METHODS \
+    IUnknown_METHODS \
+    STDMETHOD(GetLastError)(THIS_ HRESULT hRes, ULONG ulFlags, LPMAPIERROR *lppErr) PURE; \
+    STDMETHOD(SaveChanges)(THIS_ ULONG ulFlags) PURE; \
+    STDMETHOD(GetProps)(THIS_ LPSPropTagArray lpPropTags, ULONG ulFlags, ULONG *lpValues, LPSPropValue *lppProps) PURE; \
+    STDMETHOD(GetPropList)(THIS_ ULONG  ulFlags, LPSPropTagArray *lppPropTagArray) PURE; \
+    STDMETHOD(OpenProperty)(THIS_ ULONG ulPropTag, LPCIID lpIid, ULONG ulOpts, ULONG ulFlags, LPUNKNOWN *lppUnk) PURE; \
+    STDMETHOD(SetProps)(THIS_ ULONG cValues, LPSPropValue lpProps, LPSPropProblemArray *lppProbs) PURE; \
+    STDMETHOD(DeleteProps)(THIS_ LPSPropTagArray lpPropTags, LPSPropProblemArray *lppProbs) PURE; \
+    STDMETHOD(CopyTo)(THIS_ ULONG ciidExclude, LPCIID lpIid, LPSPropTagArray lpProps, ULONG ulParam, \
+                      LPMAPIPROGRESS lpProgress, LPCIID lpIface,LPVOID lpDest, ULONG ulFlags, \
+                      LPSPropProblemArray *lppProbs) PURE; \
+    STDMETHOD(CopyProps)(THIS_ LPSPropTagArray lpIncludeProps, ULONG ulParam, LPMAPIPROGRESS lpProgress, \
+                         LPCIID lpIid, LPVOID lpDestObj, ULONG ulFlags, LPSPropProblemArray *lppProblems) PURE; \
+    STDMETHOD(GetNamesFromIDs)(THIS_ LPSPropTagArray *lppPropTags, LPGUID lpIid, ULONG ulFlags, ULONG *lpCount, \
+                               LPMAPINAMEID **lpppNames) PURE; \
+    STDMETHOD(GetIDsFromNames)(THIS_ ULONG cPropNames, LPMAPINAMEID *lppNames, ULONG ulFlags, LPSPropTagArray *lppPropTags) PURE;
+ICOM_DEFINE(IMAPIProp,IUnknown)
+#undef INTERFACE
+
+#ifdef COBJMACROS
+        /*** IUnknown methods ***/
+#define IMAPIProp_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IMAPIProp_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IMAPIProp_Release(p)                   (p)->lpVtbl->Release(p)
+        /*** IMAPIProp methods ***/
+#define IMAPIProp_GetLastError(p,a,b,c)        (p)->lpVtbl->GetLastError(p,a,b,c)        
+#define IMAPIProp_SaveChanges(p,a)             (p)->lpVtbl->SaveChanges(p,a)             
+#define IMAPIProp_GetProps(p,a,b,c,d)          (p)->lpVtbl->GetProps(p,a,b,c,d)          
+#define IMAPIProp_GetPropList(p,a,b)           (p)->lpVtbl->GetPropList(p,a,b)           
+#define IMAPIProp_OpenProperty(p,a,b,c,d,e)    (p)->lpVtbl->OpenProperty(p,a,b,c,d,e)    
+#define IMAPIProp_SetProps(p,a,b,c)            (p)->lpVtbl->SetProps(p,a,b,c)            
+#define IMAPIProp_DeleteProps(p,a,b)           (p)->lpVtbl->DeleteProps(p,a,b)           
+#define IMAPIProp_CopyTo(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CopyTo(p,a,b,c,d,e,f,g,h,i)  
+#define IMAPIProp_CopyProps(p,a,b,c,d,e,f,g)   (p)->lpVtbl->CopyProps(p,a,b,c,d,e,f,g)   
+#define IMAPIProp_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e) 
+#define IMAPIProp_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)   
+#endif
+
 typedef struct
 {
     ULONG cb;

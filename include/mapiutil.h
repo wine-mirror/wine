@@ -209,6 +209,43 @@ static inline FILETIME FtMulDwDw(DWORD dwLeft, DWORD dwRight)
     return ftmap.ft;
 }
 
+/*****************************************************************************
+ * IPropData interface
+ *
+ */
+#define INTERFACE IPropData
+#define IPropData_METHODS \
+    IMAPIProp_METHODS \
+    STDMETHOD(HrSetObjAccess)(THIS_ ULONG ulAccess) PURE; \
+    STDMETHOD(HrSetPropAccess)(THIS_ LPSPropTagArray lpPropTags, ULONG *lpAccess) PURE; \
+    STDMETHOD(HrGetPropAccess)(THIS_ LPSPropTagArray *lppPropTags, ULONG **lppAccess) PURE; \
+    STDMETHOD(HrAddObjProps)(THIS_ LPSPropTagArray lppPropTags, LPSPropProblemArray *lppProbs) PURE;
+ICOM_DEFINE(IPropData,IMAPIProp)
+#undef INTERFACE
+
+#ifdef COBJMACROS
+        /*** IUnknown methods ***/
+#define IPropData_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
+#define IPropData_AddRef(p)                    (p)->lpVtbl->AddRef(p)
+#define IPropData_Release(p)                   (p)->lpVtbl->Release(p)
+        /*** IMAPIProp methods ***/
+#define IPropData_GetLastError(p,a,b,c)        (p)->lpVtbl->GetLastError(p,a,b,c)        
+#define IPropData_SaveChanges(p,a)             (p)->lpVtbl->SaveChanges(p,a)             
+#define IPropData_GetProps(p,a,b,c,d)          (p)->lpVtbl->GetProps(p,a,b,c,d)          
+#define IPropData_GetPropList(p,a,b)           (p)->lpVtbl->GetPropList(p,a,b)           
+#define IPropData_OpenProperty(p,a,b,c,d,e)    (p)->lpVtbl->OpenProperty(p,a,b,c,d,e)    
+#define IPropData_SetProps(p,a,b,c)            (p)->lpVtbl->SetProps(p,a,b,c)            
+#define IPropData_DeleteProps(p,a,b)           (p)->lpVtbl->DeleteProps(p,a,b)           
+#define IPropData_CopyTo(p,a,b,c,d,e,f,g,h,i)  (p)->lpVtbl->CopyTo(p,a,b,c,d,e,f,g,h,i)  
+#define IPropData_CopyProps(p,a,b,c,d,e,f,g)   (p)->lpVtbl->CopyProps(p,a,b,c,d,e,f,g)   
+#define IPropData_GetNamesFromIDs(p,a,b,c,d,e) (p)->lpVtbl->GetNamesFromIDs(p,a,b,c,d,e) 
+#define IPropData_GetIDsFromNames(p,a,b,c,d)   (p)->lpVtbl->GetIDsFromNames(p,a,b,c,d)   
+#define IPropData_HrSetObjAccess(p,a)          (p)->lpVtbl->HrSetObjAccess(p,a)
+#define IPropData_HrSetPropAccess(p,a,b)       (p)->lpVtbl->HrSetPropAccess(p,a,b)
+#define IPropData_HrGetPropAccess(p,a,b)       (p)->lpVtbl->HrGetPropAccess(p,a,b)
+#define IPropData_HrAddObjProps(p,a,b)         (p)->lpVtbl->HrAddObjProps(p,a,b)
+#endif
+
 #ifdef __cplusplus
 }
 #endif
