@@ -349,6 +349,10 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 	    return PAGER_MouseMove (wndPtr, wParam, lParam);
 
+	case WM_NOTIFY:
+	case WM_COMMAND:
+	    return SendMessage32A (wndPtr->parent->hwndSelf, uMsg, wParam, lParam);
+
 /*	case WM_PAINT: */
 /*	    return PAGER_Paint (wndPtr, wParam); */
 
