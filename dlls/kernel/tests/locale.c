@@ -33,6 +33,28 @@
 #include "winerror.h"
 #include "winnls.h"
 
+/* Some functions are only in later versions of kernel32.dll */
+static HMODULE hKernel32;
+
+typedef BOOL (WINAPI *EnumSystemLanguageGroupsAFn)(LANGUAGEGROUP_ENUMPROC,
+                                                   DWORD, LONG_PTR);
+static EnumSystemLanguageGroupsAFn pEnumSystemLanguageGroupsA;
+typedef BOOL (WINAPI *EnumLanguageGroupLocalesAFn)(LANGGROUPLOCALE_ENUMPROC,
+                                                   LGRPID, DWORD, LONG_PTR);
+static EnumLanguageGroupLocalesAFn pEnumLanguageGroupLocalesA;
+
+
+static void InitFunctionPointers(void)
+{
+  hKernel32 = GetModuleHandleA("kernel32");
+
+  if (hKernel32)
+  {
+    pEnumSystemLanguageGroupsA = (void*)GetProcAddress(hKernel32, "EnumSystemLanguageGroupsA");
+	pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
+  }
+}
+
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type "\n", \
            (label), (received), (expected))
@@ -1017,8 +1039,152 @@ void test_LCMapStringW(void)
     ok(!lstrcmpW(buf, symbols_stripped), "string comparison mismatch\n");
 }
 
+#define LCID_OK(l) \
+  ok(lcid == l, "Expected lcid = %08lx, got %08lx\n", l, lcid)
+#define MKLCID(x,y,z) MAKELCID(MAKELANGID(x, y), z)
+#define LCID_RES(src, res) lcid = ConvertDefaultLocale(src); LCID_OK(res)
+#define TEST_LCIDLANG(a,b) LCID_RES(MAKELCID(a,b), MAKELCID(a,b))
+#define TEST_LCID(a,b,c) LCID_RES(MKLCID(a,b,c), MKLCID(a,b,c))
+
+static void test_ConvertDefaultLocale(void)
+{
+  LCID lcid;
+
+  /* Doesn't change lcid, even if non default sublang/sort used */
+  TEST_LCID(LANG_ENGLISH,  SUBLANG_ENGLISH_US, SORT_DEFAULT);
+  TEST_LCID(LANG_ENGLISH,  SUBLANG_ENGLISH_UK, SORT_DEFAULT);
+  TEST_LCID(LANG_JAPANESE, SUBLANG_DEFAULT,    SORT_DEFAULT);
+  TEST_LCID(LANG_JAPANESE, SUBLANG_DEFAULT,    SORT_JAPANESE_UNICODE);
+
+  /* SUBLANG_NEUTRAL -> SUBLANG_DEFAULT */
+  LCID_RES(MKLCID(LANG_ENGLISH,  SUBLANG_NEUTRAL, SORT_DEFAULT),
+           MKLCID(LANG_ENGLISH,  SUBLANG_DEFAULT, SORT_DEFAULT));
+  LCID_RES(MKLCID(LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_DEFAULT),
+           MKLCID(LANG_JAPANESE, SUBLANG_DEFAULT, SORT_DEFAULT));
+  LCID_RES(MKLCID(LANG_JAPANESE, SUBLANG_NEUTRAL, SORT_JAPANESE_UNICODE),
+           MKLCID(LANG_JAPANESE, SUBLANG_DEFAULT, SORT_JAPANESE_UNICODE));
+
+  /* Invariant language is not treated specially */
+  TEST_LCID(LANG_INVARIANT, SUBLANG_DEFAULT, SORT_DEFAULT);
+  LCID_RES(MKLCID(LANG_INVARIANT, SUBLANG_NEUTRAL, SORT_DEFAULT),
+           MKLCID(LANG_INVARIANT, SUBLANG_DEFAULT, SORT_DEFAULT));
+
+  /* User/system default languages alone are not mapped */
+  TEST_LCIDLANG(LANG_SYSTEM_DEFAULT, SORT_JAPANESE_UNICODE);
+  TEST_LCIDLANG(LANG_USER_DEFAULT,   SORT_JAPANESE_UNICODE);
+
+  /* Default lcids */
+  LCID_RES(LOCALE_SYSTEM_DEFAULT, GetSystemDefaultLCID());
+  LCID_RES(LOCALE_USER_DEFAULT,   GetUserDefaultLCID());
+  LCID_RES(LOCALE_NEUTRAL,        GetUserDefaultLCID());
+}
+
+static BOOL CALLBACK langgrp_procA(LGRPID lgrpid, LPSTR lpszNum, LPSTR lpszName,
+                                    DWORD dwFlags, LONG_PTR lParam)
+{
+  trace("%08lx, %s, %s, %08lx, %08lx\n",
+        lgrpid, lpszNum, lpszName, dwFlags, lParam);
+
+  ok(IsValidLanguageGroup(lgrpid, dwFlags) == TRUE,
+     "Enumerated grp %ld not valid (flags %ld)\n", lgrpid, dwFlags);
+
+  /* If lParam is one, we are calling with flags defaulted from 0 */
+  ok(!lParam || dwFlags == LGRPID_INSTALLED,
+	 "Expected dwFlags == LGRPID_INSTALLED, got %ld\n", dwFlags);
+
+  return TRUE;
+}
+
+static void test_EnumSystemLanguageGroupsA(void)
+{
+  if (!pEnumSystemLanguageGroupsA)
+    return;
+
+  /* No enumeration proc */
+  SetLastError(0);
+  pEnumSystemLanguageGroupsA(0, LGRPID_INSTALLED, 0);
+  EXPECT_INVALID;
+
+  /* Invalid flags */
+  SetLastError(0);
+  pEnumSystemLanguageGroupsA(langgrp_procA, LGRPID_INSTALLED|LGRPID_SUPPORTED, 0);
+  EXPECT_FLAGS;
+
+  /* No flags - defaults to LGRPID_INSTALLED */
+  SetLastError(0);
+  pEnumSystemLanguageGroupsA(langgrp_procA, 0, 1);
+  EXPECT_VALID;
+
+  pEnumSystemLanguageGroupsA(langgrp_procA, LGRPID_INSTALLED, 0);
+  pEnumSystemLanguageGroupsA(langgrp_procA, LGRPID_SUPPORTED, 0);
+}
+
+
+static BOOL CALLBACK lgrplocale_procA(LGRPID lgrpid, LCID lcid, LPSTR lpszNum,
+                                      LONG_PTR lParam)
+{
+  trace("%08lx, %08lx, %s, %08lx\n", lgrpid, lcid, lpszNum, lParam);
+
+  ok(IsValidLanguageGroup(lgrpid, LGRPID_SUPPORTED) == TRUE,
+     "Enumerated grp %ld not valid\n", lgrpid);
+  ok(IsValidLocale(lcid, LCID_SUPPORTED) == TRUE,
+     "Enumerated grp locale %ld not valid\n", lcid);
+  return TRUE;
+}
+
+static void test_EnumLanguageGroupLocalesA(void)
+{
+  if (!pEnumLanguageGroupLocalesA)
+   return;
+
+  /* No enumeration proc */
+  SetLastError(0);
+  pEnumLanguageGroupLocalesA(0, LGRPID_WESTERN_EUROPE, 0, 0);
+  EXPECT_INVALID;
+
+  /* lgrpid too small */
+  SetLastError(0);
+  pEnumLanguageGroupLocalesA(lgrplocale_procA, 0, 0, 0);
+  EXPECT_INVALID;
+
+  /* lgrpid too big */
+  SetLastError(0);
+  pEnumLanguageGroupLocalesA(lgrplocale_procA, LGRPID_ARMENIAN + 1, 0, 0);
+  EXPECT_INVALID;
+
+  /* dwFlags is reserved */
+  SetLastError(0);
+  pEnumLanguageGroupLocalesA(0, LGRPID_WESTERN_EUROPE, 0x1, 0);
+  EXPECT_INVALID;
+
+  pEnumLanguageGroupLocalesA(lgrplocale_procA, LGRPID_WESTERN_EUROPE, 0, 0);
+}
+
+static void test_SetLocaleInfoA(void)
+{
+  BOOL bRet;
+  LCID lcid = GetUserDefaultLCID();
+
+  /* Null data */
+  SetLastError(0);
+  bRet = SetLocaleInfoA(lcid, LOCALE_SDATE, 0);
+  EXPECT_INVALID;
+
+  /* IDATE */
+  SetLastError(0);
+  bRet = SetLocaleInfoA(lcid, LOCALE_IDATE, (LPSTR)test_SetLocaleInfoA);
+  EXPECT_FLAGS;
+
+  /* ILDATE */
+  SetLastError(0);
+  bRet = SetLocaleInfoA(lcid, LOCALE_ILDATE, (LPSTR)test_SetLocaleInfoA);
+  EXPECT_FLAGS;
+}
+
 START_TEST(locale)
 {
+  InitFunctionPointers();
+
 #if 0
   test_EnumTimeFormats();
 #endif
@@ -1031,4 +1197,8 @@ START_TEST(locale)
   test_CompareStringA();
   test_LCMapStringA();
   test_LCMapStringW();
+  test_ConvertDefaultLocale();
+  test_EnumSystemLanguageGroupsA();
+  test_EnumLanguageGroupLocalesA();
+  test_SetLocaleInfoA();
 }
