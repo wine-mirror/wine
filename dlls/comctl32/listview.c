@@ -1810,16 +1810,14 @@ static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *infoPtr)
 #if 0
 static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
 {
-  RANGE *selection;
-  INT topSelection = infoPtr->hdpaSelectionRanges->nItemCount;
-  INT i;
+    INT i;
 
-  TRACE("Selections are:\n");
-  for (i = 0; i < topSelection; i++)
-  {
-    selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,i);
-    TRACE("     %lu - %lu\n",selection->lower,selection->upper);
-  }
+    ERR("Selections are:\n");
+    for (i = 0; i < infoPtr->hdpaSelectionRanges->nItemCount; i++)
+    {
+    	RANGE *selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges, i);
+    	ERR("   [%d - %d]\n", selection->lower, selection->upper);
+    }
 }
 #endif
 
@@ -2092,6 +2090,42 @@ static LRESULT LISTVIEW_RemoveAllSelections(LISTVIEW_INFO *infoPtr)
 
 /***
  * DESCRIPTION:
+ * Retrieves the number of items that are marked as selected.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ * Number of items selected.
+ */
+static INT LISTVIEW_GetSelectedCount(LISTVIEW_INFO *infoPtr)
+{
+    INT i, nSelectedCount = 0;
+
+    if (infoPtr->uCallbackMask & LVIS_SELECTED)
+    {
+        INT i;
+	for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
+  	{
+	    if (LISTVIEW_GetItemState(infoPtr, i, LVIS_SELECTED))
+		nSelectedCount++;
+	}
+    }
+    else
+    {
+	for (i = 0; i < infoPtr->hdpaSelectionRanges->nItemCount; i++)
+	{
+	    RANGE *sel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, i);
+	    nSelectedCount += sel->upper - sel->lower + 1;
+	}
+    }
+
+    TRACE("nSelectedCount=%d\n", nSelectedCount);
+    return nSelectedCount;
+}
+
+/***
+ * DESCRIPTION:
  * Manages the item focus.
  *
  * PARAMETER(S):
@@ -2231,13 +2265,20 @@ static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     UINT uView = LISTVIEW_GetType(infoPtr);
-    INT i, nFirst, nLast;
+    INT i;
     LVITEMW item;
     POINT ptItem;
     RECT rcSel;
 
+    LISTVIEW_RemoveAllSelections(infoPtr);
+    
+    item.state = LVIS_SELECTED; 
+    item.stateMask = LVIS_SELECTED;
+
     if ((uView == LVS_LIST) || (uView == LVS_REPORT))
     {
+	INT nFirst, nLast;
+
 	if (infoPtr->nSelectionMark == -1)
 	    infoPtr->nSelectionMark = nFirst = nLast = nItem;
 	else
@@ -2245,6 +2286,8 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	    nFirst = min(infoPtr->nSelectionMark, nItem);
 	    nLast = max(infoPtr->nSelectionMark, nItem);
 	}
+	for (i = nFirst; i < nLast; i++)
+	    LISTVIEW_SetItemState(infoPtr, i, &item);
     }
     else
     {
@@ -2255,22 +2298,14 @@ static void LISTVIEW_SetGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 	rcSelMark.left = LVIR_BOUNDS;
 	if (!LISTVIEW_GetItemRect(infoPtr, infoPtr->nSelectionMark, &rcSelMark)) return;
 	UnionRect(&rcSel, &rcItem, &rcSelMark);
-	nFirst = nLast = -1;
-    }
-
-    item.stateMask = LVIS_SELECTED;
-
-    for (i = 0; i <= GETITEMCOUNT(infoPtr); i++)
-    {
-	if (nFirst > -1) 
-	    item.state = (i < nFirst) || (i > nLast) ? 0 : LVIS_SELECTED;
-	else
+	for (i = 0; i <= GETITEMCOUNT(infoPtr); i++)
 	{
 	    LISTVIEW_GetItemPosition(infoPtr, i, &ptItem);
-	    item.state = PtInRect(&rcSel, ptItem) ? LVIS_SELECTED : 0;
+	    if (PtInRect(&rcSel, ptItem)) 
+		LISTVIEW_SetItemState(infoPtr, i, &item);
 	}
-	LISTVIEW_SetItemState(infoPtr, i, &item);
     }
+
     LISTVIEW_SetItemFocus(infoPtr, nItem);
 }
 
@@ -3314,20 +3349,23 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	    if (!LISTVIEW_GetItemW(infoPtr, &item)) continue;
 	   
 	    ZeroMemory(&dis, sizeof(dis)); 
-            dis.hwndItem = infoPtr->hwndSelf;
-            dis.hDC = hdc;
             dis.CtlType = ODT_LISTVIEW;
             dis.CtlID = uID;
             dis.itemID = nItem;
             dis.itemAction = ODA_DRAWENTIRE;
-            dis.itemData = item.lParam;
+            if (item.state & LVIS_SELECTED) dis.itemAction |= ODA_SELECT;
+            if (item.state & LVIS_FOCUSED) dis.itemAction |= ODA_FOCUS;
+	    /*dis.itemState = ODS_DEFAULT; */
             if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
             if (item.state & LVIS_FOCUSED) dis.itemState |= ODS_FOCUS;
+            dis.hwndItem = infoPtr->hwndSelf;
+            dis.hDC = hdc;
             dis.rcItem.left = lpCols[0].rc.left;
             dis.rcItem.right = lpCols[nColumnCount - 1].rc.right;
             dis.rcItem.top = nDrawPosY;
             dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
             OffsetRect(&dis.rcItem, ptOrig.x, 0);
+            dis.itemData = item.lParam;
 
 	    TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
             SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
@@ -4746,6 +4784,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	    if (lpLVItem->mask & LVIF_STATE)
 	        dispInfo.item.stateMask = lpLVItem->stateMask & infoPtr->uCallbackMask;
 	    notify_dispinfoT(infoPtr, LVN_GETDISPINFOW, &dispInfo, isW);
+	    dispInfo.item.stateMask = lpLVItem->stateMask;
 	    *lpLVItem = dispInfo.item;
 	    TRACE("   getdispinfo(1):lpLVItem=%s\n", debuglvitem_t(lpLVItem, isW));
 	}
@@ -4754,7 +4793,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	if (!(lpLVItem->mask & LVIF_STATE) || lpLVItem->iSubItem) return TRUE;
 
 	/* if focus is handled by us, report it */
-	if ( !(infoPtr->uCallbackMask & LVIS_FOCUSED) ) 
+	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED ) 
 	{
 	    lpLVItem->state &= ~LVIS_FOCUSED;
 	    if (infoPtr->nFocusedItem == lpLVItem->iItem)
@@ -4762,11 +4801,10 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
         }
 
 	/* and do the same for selection, if we handle it */
-	if ( !(infoPtr->uCallbackMask & LVIS_SELECTED) ) 
+	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED ) 
 	{
 	    lpLVItem->state &= ~LVIS_SELECTED;
-	    if ((lpLVItem->stateMask & LVIS_SELECTED) &&
-		is_item_selected(infoPtr, lpLVItem->iItem))
+	    if (is_item_selected(infoPtr, lpLVItem->iItem))
 		lpLVItem->state |= LVIS_SELECTED;
 	}
 	
@@ -4866,17 +4904,16 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	    lpLVItem->state &= ~dispInfo.item.stateMask;
 	    lpLVItem->state |= (dispInfo.item.state & dispInfo.item.stateMask);
 	}
-	if ( !(infoPtr->uCallbackMask & LVIS_FOCUSED) ) 
+	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_FOCUSED ) 
 	{
 	    lpLVItem->state &= ~LVIS_FOCUSED;
 	    if (infoPtr->nFocusedItem == lpLVItem->iItem)
 	        lpLVItem->state |= LVIS_FOCUSED;
         }
-	if ( !(infoPtr->uCallbackMask & LVIS_SELECTED) ) 
+	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED ) 
 	{
 	    lpLVItem->state &= ~LVIS_SELECTED;
-	    if ((lpLVItem->stateMask & LVIS_SELECTED) &&
-	        is_item_selected(infoPtr, lpLVItem->iItem))
+	    if (is_item_selected(infoPtr, lpLVItem->iItem))
 		lpLVItem->state |= LVIS_SELECTED;
 	}	    
     }
@@ -5515,31 +5552,6 @@ static BOOL LISTVIEW_GetOrigin(LISTVIEW_INFO *infoPtr, LPPOINT lpptOrigin)
     TRACE("(pt=(%ld,%ld))\n", lpptOrigin->x, lpptOrigin->y);
 
     return TRUE;
-}
-
-/***
- * DESCRIPTION:
- * Retrieves the number of items that are marked as selected.
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- *
- * RETURN:
- * Number of items selected.
- */
-static LRESULT LISTVIEW_GetSelectedCount(LISTVIEW_INFO *infoPtr)
-{
-/* REDO THIS */
-  INT nSelectedCount = 0;
-  INT i;
-
-  for (i = 0; i < GETITEMCOUNT(infoPtr); i++)
-  {
-    if (ListView_GetItemState(infoPtr->hwndSelf, i, LVIS_SELECTED) & LVIS_SELECTED)
-      nSelectedCount++;
-  }
-
-  return nSelectedCount;
 }
 
 /***
@@ -7688,11 +7700,12 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
   infoPtr->bLButtonDown = TRUE;
 
   nItem = LISTVIEW_GetItemAtPt(infoPtr, pt);
+  TRACE("nItem=%d\n", nItem);
   if ((nItem >= 0) && (nItem < GETITEMCOUNT(infoPtr)))
   {
     if (lStyle & LVS_SINGLESEL)
     {
-      if ((LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) & LVIS_SELECTED)
+      if ((LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED))
           && infoPtr->nEditLabelItem == -1)
           infoPtr->nEditLabelItem = nItem;
       else
@@ -7708,12 +7721,10 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 	{
           LVITEMW item;
 
-	  item.state = LVIS_SELECTED;
-	  item.stateMask = LVIS_SELECTED;
+	  item.state = LVIS_SELECTED | LVIS_FOCUSED;
+	  item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 
 	  LISTVIEW_SetItemState(infoPtr,nItem,&item);
-
-	  LISTVIEW_SetItemFocus(infoPtr, nItem);
 	  infoPtr->nSelectionMark = nItem;
 	}
       }
@@ -7723,11 +7734,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
 
 	bGroupSelect = (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) == 0);
 	
-	item.state = bGroupSelect ? LVIS_SELECTED : 0;
-        item.stateMask = LVIS_SELECTED;
+	item.state = (bGroupSelect ? LVIS_SELECTED : 0) | LVIS_FOCUSED;
+        item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 	LISTVIEW_SetItemState(infoPtr, nItem, &item);
-
-        LISTVIEW_SetItemFocus(infoPtr, nItem);
         infoPtr->nSelectionMark = nItem;
       }
       else  if (wKey & MK_SHIFT)
@@ -7736,8 +7745,7 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, POINTS pt
       }
       else
       {
-	BOOL was_selected =
-	    (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) & LVIS_SELECTED);
+	BOOL was_selected = LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED);
 
 	/* set selection (clears other pre-existing selections) */
         LISTVIEW_SetSelection(infoPtr, nItem);
