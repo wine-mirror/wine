@@ -1546,9 +1546,27 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
         SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
         PSID psidOwner, PSID psidGroup, PACL pDacl, PACL pSacl)
 {
-    FIXME("%s %d %ld %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
+    DWORD len;
+    LPWSTR wstr = NULL;
+    DWORD r;
+
+    TRACE("%s %d %ld %p %p %p %p\n", debugstr_a(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if( pObjectName )
+    {
+        len = MultiByteToWideChar( CP_ACP, 0, pObjectName, -1, NULL, 0 );
+        wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar( CP_ACP, 0, pObjectName, -1, wstr, len );
+    }
+
+    r = SetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, psidOwner,
+                           psidGroup, pDacl, pSacl );
+
+    if( wstr )
+        HeapFree( GetProcessHeap(), 0, wstr );
+
+    return r;
 }
 
 /******************************************************************************
