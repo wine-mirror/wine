@@ -420,11 +420,13 @@ else
                          freetype/internal/sfnt.h)
 	AC_TRY_CPP([#include <ft2build.h>
                     #include <freetype/fttrigon.h>],
-                    AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
-          [Define if you have the <freetype/fttrigon.h> header file.]))
+                    [AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
+          [Define if you have the <freetype/fttrigon.h> header file.])
+                    wine_cv_fttrigon=yes],
+                    wine_cv_fttrigon=no)
 	CPPFLAGS="$ac_save_CPPFLAGS"
 	dnl Check that we have at least freetype/freetype.h
-	if test "$ac_cv_header_freetype_freetype_h" = "yes"
+	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
 	then
 	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
 	    wine_cv_msg_freetype=no
@@ -1463,10 +1465,11 @@ if test "$wine_cv_msg_freetype" = "yes"
 then
   echo
   echo "*** Note: Your system appears to have the FreeType 2 runtime libraries"
-  echo "*** installed, but either 'freetype-config' is not in your PATH or"
-  echo "*** you do not have the FreeType include files.  Install the"
-  echo "*** freetype-devel package (or its equivalent on your distribution) to"
-  echo "*** enable Wine to use TrueType fonts."
+  echo "*** installed, but either 'freetype-config' is not in your PATH,"
+  echo "*** you do not have the FreeType include files or you have a version"
+  echo "*** of FreeType lower than 2.0.3.  Install the freetype-devel package"
+  echo "*** (or its equivalent on your distribution) to enable Wine to use"
+  echo "*** TrueType fonts."
 fi
 
 echo
