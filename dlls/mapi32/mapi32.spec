@@ -171,7 +171,7 @@
 232 stub cmc_logoff
 233 stub cmc_logon
 234 stub cmc_look_up
-235 stub cmc_query_configuration
+235 stdcall cmc_query_configuration( long long ptr ptr )
 236 stub cmc_read
 237 stub cmc_send
 238 stub cmc_send_documents

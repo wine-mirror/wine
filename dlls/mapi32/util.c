@@ -32,6 +32,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "mapival.h"
+#include "xcmc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mapi);
 
@@ -538,4 +539,30 @@ HRESULT WINAPI OpenStreamOnFile(LPALLOCATEBUFFER lpAlloc, LPFREEBUFFER lpFree,
     hRet = SHCreateStreamOnFileEx(szBuff, dwMode, dwAttributes, TRUE,
                                   NULL, lppStream);
     return hRet;
+}
+
+
+/*************************************************************************
+ * cmc_query_configuration (MAPI32.235)
+ *
+ * Retrieves the configuration information for the installed CMC
+ *
+ * PARAMS
+ *  session          [I]   MAPI session handle
+ *  item             [I]   Enumerated variable that identifies which 
+ *                         configuration information is being requested
+ *  reference        [O]   Buffer where configuration information is written
+ *  config_extensions[I/O] Path of file to create stream on
+ *
+ * RETURNS
+ * A CMD define
+ */
+CMC_return_code WINAPI cmc_query_configuration(
+  CMC_session_id session,
+  CMC_enum item,
+  CMC_buffer reference,
+  CMC_extension  *config_extensions)
+{
+	FIXME("stub");
+	return CMC_E_NOT_SUPPORTED;
 }
