@@ -64,6 +64,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
     X11DRV_GetCharWidth,             /* pGetCharWidth */
+    X11DRV_GetDCOrgEx,               /* pGetDCOrgEx */
     X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
     X11DRV_GetTextMetrics,           /* pGetTextMetrics */

@@ -53,6 +53,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_FlattenPath,              /* pFlattenPath */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
+    NULL,                            /* pGetDCOrgEx */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */

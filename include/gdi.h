@@ -204,6 +204,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pFlattenPath)(DC*);
     BOOL     (*pFrameRgn)(DC*,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
+    BOOL     (*pGetDCOrgEx)(DC*,LPPOINT);
     COLORREF (*pGetPixel)(DC*,INT,INT);
     BOOL     (*pGetTextExtentPoint)(DC*,LPCWSTR,INT,LPSIZE);
     BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICA*);

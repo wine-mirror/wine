@@ -49,6 +49,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pFlattenPath */
   NULL,                /* pFrameRgn */
   TTYDRV_DC_GetCharWidth, /* pGetCharWidth */
+  NULL,                /* pGetDCOrgEx */
   TTYDRV_DC_GetPixel,  /* pGetPixel */
   TTYDRV_DC_GetTextExtentPoint, /* pGetTextExtentPoint */
   TTYDRV_DC_GetTextMetrics,  /* pGetTextMetrics */

@@ -55,6 +55,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
     PSDRV_GetCharWidth,              /* pGetCharWidth */
+    NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetPixel */
     PSDRV_GetTextExtentPoint,        /* pGetTextExtentPoint */
     PSDRV_GetTextMetrics,            /* pGetTextMetrics */

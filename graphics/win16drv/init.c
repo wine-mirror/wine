@@ -75,6 +75,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pFlattenPath */
     NULL,                            /* pFrameRgn */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
+    NULL,                            /* pGetDCOrgEx */
     NULL,                            /* pGetPixel */
     WIN16DRV_GetTextExtentPoint,     /* pGetTextExtentPoint */
     WIN16DRV_GetTextMetrics,         /* pGetTextMetrics */

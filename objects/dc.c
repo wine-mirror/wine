@@ -7,11 +7,6 @@
 
 #include "config.h"
 
-#ifndef X_DISPLAY_MISSING
-#include "ts_xlib.h"
-#include "x11drv.h"
-#endif  /* !defined(X_DISPLAY_MISSING) */
-
 #include <stdlib.h>
 #include <string.h>
 #include "dc.h"
@@ -25,7 +20,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 
-DEFAULT_DEBUG_CHANNEL(dc)
+DEFAULT_DEBUG_CHANNEL(dc);
 
 /***********************************************************************
  *           DC_Init_DC_INFO
@@ -892,24 +887,10 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
     if (!lpp) return FALSE;
     if (!(dc = (DC *) GDI_GetObjPtr( hDC, DC_MAGIC ))) return FALSE;
 
-#ifndef X_DISPLAY_MISSING
-    if (!(dc->w.flags & DC_MEMORY))
-    {
-       X11DRV_PDEVICE *physDev;
-       Window root;
-       int w, h, border, depth;
-
-       physDev = (X11DRV_PDEVICE *) dc->physDev;
-
-       /* FIXME: this is not correct for managed windows */
-       TSXGetGeometry( display, physDev->drawable, &root,
-                    (int*)&lpp->x, (int*)&lpp->y, &w, &h, &border, &depth );
-    }
-    else 
-#endif  /* !defined(X_DISPLAY_MISSING) */
-      lpp->x = lpp->y = 0;
-
-    lpp->x += dc->w.DCOrgX; lpp->y += dc->w.DCOrgY;
+    lpp->x = lpp->y = 0;
+    if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc, lpp );
+    lpp->x += dc->w.DCOrgX;
+    lpp->y += dc->w.DCOrgY;
     GDI_HEAP_UNLOCK( hDC );
     return TRUE;
 }
@@ -1316,7 +1297,7 @@ BOOL WINAPI DeleteColorSpace( HCOLORSPACE hColorSpace )
 {
   FIXME( "stub\n" );
   
-  return True;
+  return TRUE;
 }
 
 /***********************************************************************

@@ -51,6 +51,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FlattenPath,               /* pFlattenPath */
     MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
+    NULL,                            /* pGetDCOrgEx */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */

@@ -91,6 +91,7 @@ extern BOOL X11DRV_EnumDeviceFonts( struct tagDC *dc, LPLOGFONT16 plf,
 				      DEVICEFONTENUMPROC dfeproc, LPARAM lp );
 extern BOOL X11DRV_GetCharWidth( struct tagDC *dc, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
+extern BOOL X11DRV_GetDCOrgEx( struct tagDC *dc, LPPOINT lpp );
 extern BOOL X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCWSTR str,
                                          INT count, LPSIZE size );
 extern BOOL X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);

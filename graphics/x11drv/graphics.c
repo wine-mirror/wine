@@ -1337,4 +1337,23 @@ X11DRV_SetTextColor( DC *dc, COLORREF color )
     return oldColor;
 }
 
+/***********************************************************************
+ *           X11DRV_GetDCOrgEx
+ */
+BOOL X11DRV_GetDCOrgEx( DC *dc, LPPOINT lpp )
+{
+    if (!(dc->w.flags & DC_MEMORY))
+    {
+       X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *) dc->physDev;
+       Window root;
+       int w, h, border, depth;
+
+       /* FIXME: this is not correct for managed windows */
+       TSXGetGeometry( display, physDev->drawable, &root,
+                       (int*)&lpp->x, (int*)&lpp->y, &w, &h, &border, &depth );
+    }
+    else lpp->x = lpp->y = 0;
+    return TRUE;
+}
+
 #endif /* !defined(X_DISPLAY_MISSING) */
