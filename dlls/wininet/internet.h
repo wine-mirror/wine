@@ -1,6 +1,8 @@
 #ifndef _WINE_INTERNET_H_
 #define _WINE_INTERNET_H_
 
+#include <time.h>
+
 typedef enum
 {
     WH_HINIT = INTERNET_HANDLE_TYPE_INTERNET,

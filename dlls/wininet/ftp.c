@@ -24,6 +24,7 @@
 #endif
 #include <sys/stat.h>
 #include <unistd.h>
+#include <time.h>
 #ifdef HAVE_NETINET_IN_SYSTM_H
 # include <netinet/in_systm.h>
 #endif
