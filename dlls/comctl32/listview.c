@@ -16,7 +16,7 @@
  *   LISTVIEW_Notify : most notifications from children (editbox and header)
  *
  * Data structure:
- *   LISTVIEW_SetItemCount : empty stub 
+ *   LISTVIEW_SetItemCount : not completed
  * 
  * Unicode:
  *   LISTVIEW_SetItemW : no unicode support
@@ -31,8 +31,8 @@
  *   LISTVIEW_GetHoverTime : not implemented
  *   LISTVIEW_GetISearchString : not implemented 
  *   LISTVIEW_GetBkImage : not implemented
- *   LISTVIEW_GetColumnOrderArray : not implemented
- *   LISTVIEW_SetColumnOrderArray : not implemented
+ *   LISTVIEW_GetColumnOrderArray : simple hack only
+ *   LISTVIEW_SetColumnOrderArray : simple hack only
  *   LISTVIEW_Arrange : empty stub
  *   LISTVIEW_ApproximateViewRect : incomplete
  *   LISTVIEW_Scroll : not implemented 
@@ -2034,6 +2034,22 @@ static VOID LISTVIEW_RefreshReport(HWND hwnd, HDC hdc)
   /* add 1 for displaying a partial item at the bottom */
   nLast = nItem + LISTVIEW_GetCountPerColumn(hwnd) + 1;
   nLast = min(nLast, GETITEMCOUNT(infoPtr));
+
+  /* send cache hint notification */
+  if (GetWindowLongA(hwnd,GWL_STYLE) & LVS_OWNERDATA)
+  {
+    NMLVCACHEHINT nmlv;
+
+    nmlv.hdr.hwndFrom = hwnd;
+    nmlv.hdr.idFrom = GetWindowLongA(hwnd,GWL_ID);
+    nmlv.hdr.code = LVN_ODCACHEHINT;
+    nmlv.iFrom = nItem;
+    nmlv.iTo   = nLast;
+
+    SendMessageA(GetParent(hwnd), WM_NOTIFY, (WPARAM)nmlv.hdr.idFrom,
+                 (LPARAM)&nmlv);
+  }
+
   for (; nItem < nLast; nItem++)
   {
     nColumnCount = Header_GetItemCount(infoPtr->hwndHeader);
@@ -3335,7 +3351,22 @@ static LRESULT LISTVIEW_GetColumnA(HWND hwnd, INT nItem, LPLVCOLUMNA lpColumn)
 }
 
 /* LISTVIEW_GetColumnW */
-/* LISTVIEW_GetColumnOrderArray */
+
+
+static LRESULT LISTVIEW_GetColumnOrderArray(HWND hwnd, INT iCount, LPINT lpiArray)
+{
+/*  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); */
+    INT i;
+
+    if (!lpiArray)
+	return FALSE;
+
+    /* little hack */
+    for (i = 0; i < iCount; i++)
+	lpiArray[i] = i;
+
+    return TRUE;
+}
 
 /***
  * DESCRIPTION:
@@ -5144,7 +5175,32 @@ static LRESULT LISTVIEW_SetColumnA(HWND hwnd, INT nColumn,
 }
 
 /* LISTVIEW_SetColumnW */
-/* LISTVIEW_SetColumnOrderArray */
+
+/***
+ * DESCRIPTION:
+ * Sets the column order array
+ *
+ * PARAMETERS:
+ * [I] HWND : window handle
+ * [I] INT : number of elements in column order array
+ * [I] INT : pointer to column order array
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static LRESULT LISTVIEW_SetColumnOrderArray(HWND hwnd, INT iCount, LPINT lpiArray)
+{
+/*  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); */
+
+    FIXME("iCount %d lpiArray %p\n", iCount, lpiArray);
+
+    if (!lpiArray)
+	return FALSE;
+
+    return TRUE;
+}
+
 
 /***
  * DESCRIPTION:
@@ -5346,7 +5402,7 @@ static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
  * 
  * PARAMETER(S):
  * [I] HWND : window handle
- * [I] INT : item count (prjected number of items)
+ * [I] INT   : item count (projected number of items)
  * [I] DWORD : update flags
  *
  * RETURN:
@@ -5362,6 +5418,12 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
   if (nItems == 0)
     return LISTVIEW_DeleteAllItems (hwnd);
 
+  if (GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA)
+  {
+    FIXME("LVS_OWNERDATA is set!\n");
+  }
+  else
+  {
   if (nItems > GETITEMCOUNT(infoPtr))
 {
     /* append items */
@@ -5373,6 +5435,7 @@ static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
     /* remove items */
     FIXME("remove items\n");
 
+  }
   }
 
   return TRUE;
@@ -5901,7 +5964,6 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
     case SB_PAGEUP:
       if (scrollInfo.nPos > scrollInfo.nMin)
       {
-
         if (scrollInfo.nPos >= scrollInfo.nPage)
         {
           scrollInfo.nPos -= scrollInfo.nPage;
@@ -6989,8 +7051,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 /*	case LVM_GETCOLUMNW: */
 
   case LVM_GETCOLUMNORDERARRAY:
-    FIXME("Unimplemented msg LVM_GETCOLUMNORDERARRAY\n");
-    return 0;
+    return LISTVIEW_GetColumnOrderArray(hwnd, (INT)wParam, (LPINT)lParam);
 
   case LVM_GETCOLUMNWIDTH:
     return LISTVIEW_GetColumnWidth(hwnd, (INT)wParam);
@@ -7120,8 +7181,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
     return 0;
 
   case LVM_SETCOLUMNORDERARRAY:
-    FIXME("Unimplemented msg LVM_SETCOLUMNORDERARRAY\n");
-    return 0;
+    return LISTVIEW_SetColumnOrderArray(hwnd, (INT)wParam, (LPINT)lParam);
 
   case LVM_SETCOLUMNWIDTH:
     return LISTVIEW_SetColumnWidth(hwnd, (INT)wParam, (INT)lParam);

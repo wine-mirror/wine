@@ -26,6 +26,8 @@ typedef struct tagINITCOMMONCONTROLSEX {
 
 BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 
+#define COMCTL32_VERSION                5  /* dll version */
+
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
 #define ICC_BAR_CLASSES        0x00000004  /* toolbar, statusbar, trackbar, tooltips */
@@ -66,6 +68,9 @@ BOOL WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 #define CCM_GETDROPTARGET    (CCM_FIRST+4)
 #define CCM_SETUNICODEFORMAT (CCM_FIRST+5)
 #define CCM_GETUNICODEFORMAT (CCM_FIRST+6)
+#define CCM_SETVERSION       (CCM_FIRST+7)
+#define CCM_GETVERSION       (CCM_FIRST+8)
+#define CCM_SETNOTIFYWINDOW  (CCM_FIRST+9)     /* wParam = hwndParent */
 
 
 /* common notification codes (WM_NOTIFY)*/
@@ -941,19 +946,12 @@ typedef struct _TBBUTTON {
 } TBBUTTON, *PTBBUTTON, *LPTBBUTTON;
 typedef const TBBUTTON *LPCTBBUTTON;
 
-typedef struct tagNMTOOLBAR {
-        NMHDR           hdr;
-        int             iItem;
-        TBBUTTON        tbButton;
-        int             cchText;
-        LPWSTR          pszText;
-        RECT            rcButton; /*Version 5.80*/
-} NMTOOLBARW, * LPNMTOOLBARW;
 
 typedef struct _COLORMAP {
     COLORREF from;
     COLORREF to;
 } COLORMAP, *LPCOLORMAP;
+
 
 typedef struct tagTBADDBITMAP {
     HINSTANCE hInst;
@@ -1063,6 +1061,29 @@ typedef struct tagNMTBGETINFOTIPW
 
 #define NMTBGETINFOTIP   WINELIB_NAME_AW(NMTBGETINFOFTIP)
 #define LPNMTBGETINFOTIP WINELIB_NAME_AW(LPNMTBGETINFOTIP)
+
+typedef struct tagNMTOOLBARA
+{
+    NMHDR    hdr;
+    INT      iItem;
+    TBBUTTON tbButton;
+    INT      cchText;
+    LPSTR    pszText;
+    RECT     rcButton; /* Version 5.80 */
+} NMTOOLBARA, *LPNMTOOLBARA;
+
+typedef struct tagNMTOOLBARW
+{
+    NMHDR    hdr;
+    INT      iItem;
+    TBBUTTON tbButton;
+    INT      cchText;
+    LPWSTR   pszText;
+    RECT     rcButton; /* Version 5.80 */
+} NMTOOLBARW, *LPNMTOOLBARW;
+
+#define NMTOOLBAR   WINELIB_NAME_AW(NMTOOLBAR)
+#define LPNMTOOLBAR WINELIB_NAME_AW(LPNMTOOLBAR)
 
 typedef struct
 {
@@ -2379,18 +2400,19 @@ typedef struct tagNMTVGETINFOTIPW
 #define LVN_BEGINDRAG           (LVN_FIRST-9)
 #define LVN_BEGINRDRAG          (LVN_FIRST-11)
 #define LVN_ODCACHEHINT         (LVN_FIRST-13)
-#define LVN_ODFINDITEMA       (LVN_FIRST-52)
-#define LVN_ODFINDITEMW       (LVN_FIRST-79)
-#define LVN_ODFINDITEM WINELIB_NAME_AW(LVN_ODFINDITEM)
 #define LVN_ITEMACTIVATE        (LVN_FIRST-14)
 #define LVN_ODSTATECHANGED      (LVN_FIRST-15)
 #define LVN_HOTTRACK            (LVN_FIRST-21)
+#define LVN_ODFINDITEMA         (LVN_FIRST-52)
+#define LVN_ODFINDITEMW         (LVN_FIRST-79)
+#define LVN_ODFINDITEM WINELIB_NAME_AW(LVN_ODFINDITEM)
 #define LVN_GETDISPINFOA      (LVN_FIRST-50)
 #define LVN_GETDISPINFOW      (LVN_FIRST-77)
 #define LVN_GETDISPINFO WINELIB_NAME_AW(LVN_GETDISPINFO)
 #define LVN_SETDISPINFOA      (LVN_FIRST-51)
 #define LVN_SETDISPINFOW      (LVN_FIRST-78)
 #define LVN_SETDISPINFO WINELIB_NAME_AW(LVN_SETDISPINFO)
+#define LVN_KEYDOWN             (LVN_FIRST-55)
 
 #define LVA_ALIGNLEFT           0x0000
 #define LVA_DEFAULT             0x0001
@@ -2501,8 +2523,6 @@ typedef struct tagLVDISPINFOW
 
 #define LV_DISPINFO     NMLVDISPINFO
 
-#define LVN_KEYDOWN     (LVN_FIRST-55)
-
 typedef struct tagLVKEYDOWN
 {
   NMHDR hdr;
@@ -2544,6 +2564,17 @@ typedef struct tagTCHITTESTINFO
 #define TC_HITTESTINFO TCHITTESTINFO
 
 typedef INT (CALLBACK *PFNLVCOMPARE)(LPARAM, LPARAM, LPARAM);
+
+typedef struct tagNMLVCACHEHINT
+{
+	NMHDR	hdr;
+	INT	iFrom;
+	INT	iTo;
+} NMLVCACHEHINT, *LPNMLVCACHEHINT;
+
+#define LPNM_CACHEHINT LPNMLVCACHEHINT
+#define PNM_CACHEHINT  LPNMLVCACHEHINT
+#define NM_CACHEHINT   NMLVCACHEHINT
 
 #define ListView_GetNextItem(hwnd,nItem,flags) \
     (INT)SendMessageA((hwnd),LVM_GETNEXTITEM,(WPARAM)(INT)(nItem),(LPARAM)(MAKELPARAM(flags,0)))
