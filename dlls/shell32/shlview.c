@@ -25,12 +25,16 @@
 #include "debug.h"
 #include "winerror.h"
 
+#include "docobj.h"
 #include "pidl.h"
 #include "shell32_main.h"
 
 typedef struct 
 {	ICOM_VTABLE(IShellView)* lpvtbl;
 	DWORD		ref;
+	ICOM_VTABLE(IOleCommandTarget)*	lpvtblOleCommandTarget;
+	ICOM_VTABLE(IDropTarget)*	lpvtblDropTarget;
+	ICOM_VTABLE(IViewObject)*	lpvtblViewObject;
 	IShellFolder*	pSFParent;
 	IShellBrowser*	pShellBrowser;
 	ICommDlgBrowser*	pCommDlgBrowser;
@@ -46,35 +50,18 @@ typedef struct
 
 static struct ICOM_VTABLE(IShellView) svvt;
 
-/***********************************************************************
-*   IShellView implementation
-*/
-/*
-static HRESULT WINAPI IShellView_QueryInterface(LPSHELLVIEW,REFIID, LPVOID *);
-static ULONG WINAPI IShellView_AddRef(LPSHELLVIEW) ;
-static ULONG WINAPI IShellView_Release(LPSHELLVIEW);
-*/
-    /* IOleWindow methods */
-/*
-static HRESULT WINAPI IShellView_GetWindow(LPSHELLVIEW,HWND * lphwnd);
-static HRESULT WINAPI IShellView_ContextSensitiveHelp(LPSHELLVIEW,BOOL fEnterMode);
-*/
-    /* IShellView methods */
-/*
-static HRESULT WINAPI IShellView_TranslateAccelerator(LPSHELLVIEW,LPMSG lpmsg);
-static HRESULT WINAPI IShellView_EnableModeless(LPSHELLVIEW,BOOL fEnable);
-static HRESULT WINAPI IShellView_UIActivate(LPSHELLVIEW,UINT uState);
-static HRESULT WINAPI IShellView_Refresh(LPSHELLVIEW);
-static HRESULT WINAPI IShellView_CreateViewWindow(LPSHELLVIEW, IShellView *lpPrevView,LPCFOLDERSETTINGS lpfs, IShellBrowser * psb,RECT * prcView, HWND  *phWnd);
-static HRESULT WINAPI IShellView_DestroyViewWindow(LPSHELLVIEW);
-static HRESULT WINAPI IShellView_GetCurrentInfo(LPSHELLVIEW, LPFOLDERSETTINGS lpfs);
-static HRESULT WINAPI IShellView_AddPropertySheetPages(LPSHELLVIEW, DWORD dwReserved,LPFNADDPROPSHEETPAGE lpfn, LPARAM lparam);
-static HRESULT WINAPI IShellView_SaveViewState(LPSHELLVIEW);
-static HRESULT WINAPI IShellView_SelectItem(LPSHELLVIEW, LPCITEMIDLIST pidlItem, UINT uFlags);
-static HRESULT WINAPI IShellView_GetItemObject(LPSHELLVIEW, UINT uItem, REFIID riid,LPVOID *ppv);
+static struct ICOM_VTABLE(IOleCommandTarget) ctvt;
+#define _IOleCommandTarget_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblOleCommandTarget))) 
+#define _ICOM_THIS_From_IOleCommandTarget(class, name) class* This = (class*)(((void*)name)-_IOleCommandTarget_Offset); 
 
-static BOOL ShellView_CanDoIDockingWindow(LPSHELLVIEW);
-*/
+static struct ICOM_VTABLE(IDropTarget) dtvt;
+#define _IDropTarget_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblDropTarget))) 
+#define _ICOM_THIS_From_IDropTarget(class, name) class* This = (class*)(((void*)name)-_IDropTarget_Offset); 
+
+static struct ICOM_VTABLE(IViewObject) vovt;
+#define _IViewObject_Offset ((int)(&(((IShellViewImpl*)0)->lpvtblViewObject))) 
+#define _ICOM_THIS_From_IViewObject(class, name) class* This = (class*)(((void*)name)-_IViewObject_Offset); 
+
 /*menu items */
 #define IDM_VIEW_FILES  (FCIDM_SHVIEWFIRST + 0x500)
 #define IDM_VIEW_IDW    (FCIDM_SHVIEWFIRST + 0x501)
@@ -125,6 +112,9 @@ IShellView * IShellView_Constructor( IShellFolder * pFolder, LPCITEMIDLIST pidl)
 	sv=(IShellViewImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IShellViewImpl));
 	sv->ref=1;
 	sv->lpvtbl=&svvt;
+	sv->lpvtblOleCommandTarget=&ctvt;
+	sv->lpvtblDropTarget=&dtvt;
+	sv->lpvtblViewObject=&vovt;
 
 	sv->hMenu	= 0;
 	sv->pSFParent	= pFolder;
@@ -987,8 +977,6 @@ LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpnmh)
 	LPITEMIDLIST pidl;
 	DWORD dwCursor; 
 	STRRET   str;  
-	UINT  uFlags;
-	IExtractIcon *pei;
 
 	TRACE(shell,"%p CtlID=%u lpnmh->code=%x\n",This,CtlID,lpnmh->code);
 
@@ -1091,12 +1079,7 @@ LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpnmh)
 	      }
 
 	      if(lpdi->item.mask & LVIF_IMAGE) 		/*is the image being requested?*/
-	      { if(SUCCEEDED(IShellFolder_GetUIObjectOf(This->pSFParent,This->hWnd,1,
-				(LPCITEMIDLIST*)&pidl, (REFIID)&IID_IExtractIconA, NULL, (LPVOID*)&pei)))
-	        { IExtractIconA_GetIconLocation(pei, GIL_FORSHELL, NULL, 0, &lpdi->item.iImage, &uFlags);
-	          IExtractIconA_Release(pei);
-		  TRACE(shell,"-- image=%x\n",lpdi->item.iImage);
-	        }
+	      { lpdi->item.iImage = SHMapPIDLToSystemImageListIndex(This->pSFParent, pidl, 0);
 	      }
 	    }
 	    break;
@@ -1218,6 +1201,15 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 	else if(IsEqualIID(riid, &IID_IShellView))  /*IShellView*/
 	{ *ppvObj = (IShellView*)This;
 	}
+	else if(IsEqualIID(riid, &IID_IOleCommandTarget))  /*IOleCommandTarget*/
+	{    *ppvObj = (IOleCommandTarget*)&(This->lpvtblOleCommandTarget);
+	}   
+	else if(IsEqualIID(riid, &IID_IDropTarget))  /*IDropTarget*/
+	{    *ppvObj = (IDropTarget*)&(This->lpvtblDropTarget);
+	}   
+	else if(IsEqualIID(riid, &IID_IViewObject))  /*ViewObject*/
+	{    *ppvObj = (IViewObject*)&(This->lpvtblViewObject);
+	}   
 
 	if(*ppvObj)
 	{ IShellView_AddRef( (IShellView*) *ppvObj);
@@ -1531,5 +1523,324 @@ static struct ICOM_VTABLE(IShellView) svvt =
 	IShellView_fnSaveViewState,
 	IShellView_fnSelectItem,
 	IShellView_fnGetItemObject
+};
+
+
+/************************************************************************
+ * ISVOleCmdTarget_QueryInterface (IUnknown)
+ */
+static HRESULT WINAPI ISVOleCmdTarget_QueryInterface(
+	IOleCommandTarget *	iface,
+	REFIID			iid,
+	LPVOID*			ppvObj)
+{
+	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
+
+	return IShellFolder_QueryInterface((IShellFolder*)This, iid, ppvObj);
+}
+
+/************************************************************************
+ * ISVOleCmdTarget_AddRef (IUnknown)
+ */
+static ULONG WINAPI ISVOleCmdTarget_AddRef(
+	IOleCommandTarget *	iface)
+{
+	_ICOM_THIS_From_IOleCommandTarget(IShellFolder, iface);
+
+	return IShellFolder_AddRef((IShellFolder*)This);
+}
+
+/************************************************************************
+ * ISVOleCmdTarget_Release (IUnknown)
+ */
+static ULONG WINAPI ISVOleCmdTarget_Release(
+	IOleCommandTarget *	iface)
+{
+	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
+
+	return IShellFolder_Release((IShellFolder*)This);
+}
+
+/************************************************************************
+ * ISVOleCmdTarget_Exec (IOleCommandTarget)
+ */
+static HRESULT WINAPI ISVOleCmdTarget_QueryStatus(
+	IOleCommandTarget *iface,
+	const GUID* pguidCmdGroup,
+	ULONG cCmds, 
+	OLECMD * prgCmds,
+	OLECMDTEXT* pCmdText)
+{
+	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
+
+	FIXME(shell, "(%p)->(%p 0x%08lx %p %p\n", This, pguidCmdGroup, cCmds, prgCmds, pCmdText);
+	return E_NOTIMPL;
+}
+
+/************************************************************************
+ * ISVOleCmdTarget_Exec (IOleCommandTarget)
+ */
+static HRESULT WINAPI ISVOleCmdTarget_Exec(
+	IOleCommandTarget *iface,
+	const GUID* pguidCmdGroup,
+	DWORD nCmdID,
+	DWORD nCmdexecopt,
+	VARIANT* pvaIn,
+	VARIANT* pvaOut)
+{
+	_ICOM_THIS_From_IOleCommandTarget(IShellViewImpl, iface);
+
+	FIXME(shell, "(%p)->(%p 0x%08lx 0x%08lx %p %p)\n", This, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+	return E_NOTIMPL;
+}
+
+static ICOM_VTABLE(IOleCommandTarget) ctvt = 
+{
+	ISVOleCmdTarget_QueryInterface,
+	ISVOleCmdTarget_AddRef,
+	ISVOleCmdTarget_Release,
+	ISVOleCmdTarget_QueryStatus,
+	ISVOleCmdTarget_Exec
+};
+
+/****************************************************************************
+ * ISVDropTarget implementation
+ */
+
+static HRESULT WINAPI ISVDropTarget_QueryInterface(
+	IDropTarget *iface,
+	REFIID riid,
+	LPVOID *ppvObj)
+{
+	char	xriid[50];
+
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	WINE_StringFromCLSID((LPCLSID)riid,xriid);
+
+	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+
+	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI ISVDropTarget_AddRef( IDropTarget *iface)
+{
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+
+	return IShellFolder_AddRef((IShellFolder*)This);
+}
+
+static ULONG WINAPI ISVDropTarget_Release( IDropTarget *iface)
+{
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+
+	return IShellFolder_Release((IShellFolder*)This);
+}
+
+static HRESULT WINAPI ISVDropTarget_DragEnter(
+	IDropTarget 	*iface,
+	IDataObject	*pDataObject,
+	DWORD		grfKeyState,
+	POINTL		pt,
+	DWORD		*pdwEffect)
+{	
+
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p, DataObject=%p\n",This,pDataObject);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ISVDropTarget_DragOver(
+	IDropTarget	*iface,
+	DWORD		grfKeyState,
+	POINTL		pt,
+	DWORD		*pdwEffect)
+{
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ISVDropTarget_DragLeave(
+	IDropTarget	*iface)
+{
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ISVDropTarget_Drop(
+	IDropTarget	*iface,
+	IDataObject*	pDataObject,
+	DWORD		grfKeyState,
+	POINTL		pt,
+	DWORD		*pdwEffect)
+{
+	_ICOM_THIS_From_IDropTarget(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+
+static struct ICOM_VTABLE(IDropTarget) dtvt = 
+{
+	ISVDropTarget_QueryInterface,
+	ISVDropTarget_AddRef,
+	ISVDropTarget_Release,
+	ISVDropTarget_DragEnter,
+	ISVDropTarget_DragOver,
+	ISVDropTarget_DragLeave,
+	ISVDropTarget_Drop
+};
+
+/****************************************************************************
+ * ISVViewObject implementation
+ */
+
+static HRESULT WINAPI ISVViewObject_QueryInterface(
+	IViewObject *iface,
+	REFIID riid,
+	LPVOID *ppvObj)
+{
+	char	xriid[50];
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	WINE_StringFromCLSID((LPCLSID)riid,xriid);
+
+	TRACE(shell,"(%p)->(\n\tIID:\t%s,%p)\n",This,xriid,ppvObj);
+
+	return IShellFolder_QueryInterface((IShellFolder*)This, riid, ppvObj);
+}
+
+static ULONG WINAPI ISVViewObject_AddRef( IViewObject *iface)
+{
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+
+	return IShellFolder_AddRef((IShellFolder*)This);
+}
+
+static ULONG WINAPI ISVViewObject_Release( IViewObject *iface)
+{
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
+
+	return IShellFolder_Release((IShellFolder*)This);
+}
+
+static HRESULT WINAPI ISVViewObject_Draw(
+	IViewObject 	*iface,
+	DWORD dwDrawAspect,
+	LONG lindex,
+	void* pvAspect,
+	DVTARGETDEVICE* ptd,
+	HDC hdcTargetDev,
+	HDC hdcDraw,
+	LPCRECTL lprcBounds,
+	LPCRECTL lprcWBounds, 
+	pfnContinue pfnContinue,
+	DWORD dwContinue)
+{	
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+static HRESULT WINAPI ISVViewObject_GetColorSet(
+	IViewObject 	*iface,
+	DWORD dwDrawAspect,
+	LONG lindex,
+	void *pvAspect,
+	DVTARGETDEVICE* ptd,
+	HDC hicTargetDevice,
+	LOGPALETTE** ppColorSet)
+{	
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+static HRESULT WINAPI ISVViewObject_Freeze(
+	IViewObject 	*iface,
+	DWORD dwDrawAspect,
+	LONG lindex,
+	void* pvAspect,
+	DWORD* pdwFreeze)
+{	
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+static HRESULT WINAPI ISVViewObject_Unfreeze(
+	IViewObject 	*iface,
+	DWORD dwFreeze)
+{	
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+static HRESULT WINAPI ISVViewObject_SetAdvise(
+	IViewObject 	*iface,
+	DWORD aspects,
+	DWORD advf,
+	IAdviseSink* pAdvSink)
+{	
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+static HRESULT WINAPI ISVViewObject_GetAdvise(
+	IViewObject 	*iface,
+	DWORD* pAspects,
+	DWORD* pAdvf,
+	IAdviseSink** ppAdvSink)
+{	
+
+	_ICOM_THIS_From_IViewObject(IShellViewImpl, iface);
+
+	FIXME(shell, "Stub: This=%p\n",This);
+
+	return E_NOTIMPL;
+}
+
+
+static struct ICOM_VTABLE(IViewObject) vovt = 
+{
+	ISVViewObject_QueryInterface,
+	ISVViewObject_AddRef,
+	ISVViewObject_Release,
+	ISVViewObject_Draw,
+	ISVViewObject_GetColorSet,
+	ISVViewObject_Freeze,
+	ISVViewObject_Unfreeze,
+	ISVViewObject_SetAdvise,
+	ISVViewObject_GetAdvise
 };
 

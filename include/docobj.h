@@ -231,7 +231,7 @@ ICOM_DEFINE(IEnumOleDocumentViews,IUnknown)
  */
 #define ICOM_INTERFACE IOleCommandTarget
 #define IOleCommandTarget_METHODS \
-	ICOM_METHOD4(HRESULT,QueryStatus, const GUID*,pguidCmdGroup, ULONG,cCmds, OLECMD,prgCmds[1], OLECMDTEXT*,pCmdText) \
+	ICOM_METHOD4(HRESULT,QueryStatus, const GUID*,pguidCmdGroup, ULONG,cCmds, OLECMD*,prgCmds[1], OLECMDTEXT*,pCmdText) \
 	ICOM_METHOD5(HRESULT,Exec, const GUID*,pguidCmdGroup, DWORD,nCmdID, DWORD,nCmdexecopt, VARIANT*,pvaIn, VARIANT*,pvaOut)
 #define IOleCommandTarget_IMETHODS \
 	IUnknown_IMETHODS \

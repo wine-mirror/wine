@@ -21,6 +21,7 @@
 #include "vfw.h"
 #include "shlguid.h"
 #include "shlobj.h"
+#include "docobj.h"
 
 /* FIXME: don't really know where to put this. */
 DEFINE_GUID(GUID_NULL,   0,0,0,0,0,0,0,0,0,0,0);
