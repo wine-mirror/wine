@@ -495,10 +495,10 @@ HRESULT WINAPI SHCreateStreamOnFileW(LPCWSTR lpszPath, DWORD dwMode,
  * PARAMS
  *  lpszPath  [I] Path of file to create stream on
  *  dwMode    [I] Mode to create stream in
- *  lppStream [O] Destination for created stream
+ *  lppStream [O] Destination for created IStream object
  *
  * RETURNS
- * Success: S_OK. lppStream contains the new stream object
+ * Success: S_OK. lppStream contains the new IStream object
  * Failure: E_INVALIDARG if any parameter is invalid, or an HRESULT error code
  */
 HRESULT WINAPI SHCreateStreamOnFileA(LPCSTR lpszPath, DWORD dwMode,
@@ -517,7 +517,7 @@ HRESULT WINAPI SHCreateStreamOnFileA(LPCSTR lpszPath, DWORD dwMode,
 /*************************************************************************
  * @       [SHLWAPI.184]
  *
- * Call IStream::Read on a Stream.
+ * Call IStream_Read() on a stream.
  *
  * PARAMS
  *  lpStream [I] IStream object
@@ -589,7 +589,7 @@ BOOL WINAPI SHLWAPI_166(IStream *lpStream)
 /*************************************************************************
  * @       [SHLWAPI.212]
  *
- * Call IStream::Write on a Stream.
+ * Call IStream_Write() on a stream.
  *
  * PARAMS
  *  lpStream [I] IStream object
@@ -639,7 +639,7 @@ HRESULT WINAPI SHLWAPI_213(IStream *lpStream)
 /*************************************************************************
  * @       [SHLWAPI.214]
  *
- * Get the size of a Stream.
+ * Get the size of a stream.
  *
  * PARAMS
  *  lpStream [I] IStream object
