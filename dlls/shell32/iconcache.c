@@ -457,6 +457,9 @@ typedef struct
 	DWORD dwAccessTime;
 } SIC_ENTRY, * LPSIC_ENTRY;
 
+static HDPA		sic_hdpa = 0;
+static CRITICAL_SECTION	SHELL32_SicCS;
+
 /*****************************************************************************
  * SIC_CompareEntrys			[called by comctl32.dll]
  *
@@ -482,7 +485,7 @@ INT CALLBACK SIC_CompareEntrys( LPVOID p1, LPVOID p2, LPARAM lparam)
  */
 static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIcon, HICON hBigIcon)
 {	LPSIC_ENTRY lpsice;
-	INT index, index1;
+	INT ret, index, index1;
 	
 	TRACE("%s %i %x %x\n", sSourceFile, dwSourceIndex, hSmallIcon ,hBigIcon);
 
@@ -491,22 +494,29 @@ static INT SIC_IconAppend (LPCSTR sSourceFile, INT dwSourceIndex, HICON hSmallIc
 	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(), 0, PathFindFilenameA(sSourceFile));
 	lpsice->dwSourceIndex = dwSourceIndex;
 	
+	EnterCriticalSection(&SHELL32_SicCS);
+
 	index = pDPA_InsertPtr(sic_hdpa, 0x7fff, lpsice);
 	if ( INVALID_INDEX == index )
-	{ SHFree(lpsice);
-	  return INVALID_INDEX;
+	{
+	  SHFree(lpsice);
+	  ret = INVALID_INDEX;
+	}
+	else
+	{
+	  index = pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
+	  index1= pImageList_AddIcon (ShellBigIconList, hBigIcon);
+
+	  if (index!=index1)
+	  {
+	    FIXME("iconlists out of sync 0x%x 0x%x\n", index, index1);
+	  }
+	  lpsice->dwListIndex = index;
+	  ret = lpsice->dwListIndex;
 	}
 
-	index = pImageList_AddIcon (ShellSmallIconList, hSmallIcon);
-	index1= pImageList_AddIcon (ShellBigIconList, hBigIcon);
-
-	if (index!=index1)
-	{ FIXME("iconlists out of sync 0x%x 0x%x\n", index, index1);
-	}
-	lpsice->dwListIndex = index;
-	
-	return lpsice->dwListIndex;
-	
+	LeaveCriticalSection(&SHELL32_SicCS);
+	return ret;	
 }
 /****************************************************************************
  * SIC_LoadIcon				[internal]
@@ -523,7 +533,8 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
 
 
 	if ( !hiconLarge ||  !hiconSmall)
-	{ WARN("failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
+	{
+	  WARN("failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
 	  return -1;
 	}
 	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);		
@@ -541,23 +552,32 @@ static INT SIC_LoadIcon (LPCSTR sSourceFile, INT dwSourceIndex)
  */
 INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex )
 {	SIC_ENTRY sice;
-	INT index = INVALID_INDEX;
+	INT ret, index = INVALID_INDEX;
 		
 	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
 	sice.sSourceFile = PathFindFilenameA(sSourceFile);
 	sice.dwSourceIndex = dwSourceIndex;
 	
+	EnterCriticalSection(&SHELL32_SicCS);
+
 	if (NULL != pDPA_GetPtr (sic_hdpa, 0))
-	{ index = pDPA_Search (sic_hdpa, &sice, -1L, SIC_CompareEntrys, 0, 0);
+	{
+	  index = pDPA_Search (sic_hdpa, &sice, -1L, SIC_CompareEntrys, 0, 0);
 	}
 
 	if ( INVALID_INDEX == index )
-	{  return SIC_LoadIcon (sSourceFile, dwSourceIndex);
+	{
+	  ret = SIC_LoadIcon (sSourceFile, dwSourceIndex);
 	}
-	
-	TRACE("-- found\n");
-	return ((LPSIC_ENTRY)pDPA_GetPtr(sic_hdpa, index))->dwListIndex;
+	else
+	{
+	  TRACE("-- found\n");
+	  ret = ((LPSIC_ENTRY)pDPA_GetPtr(sic_hdpa, index))->dwListIndex;
+	}
+
+	LeaveCriticalSection(&SHELL32_SicCS);
+	return ret;
 }
 /****************************************************************************
  * SIC_LoadIcon				[internal]
@@ -571,8 +591,10 @@ static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOO
 	TRACE("%s %i\n", sSourceFile, dwSourceIndex);
 
 	index = SIC_GetIconIndex(sSourceFile, dwSourceIndex);
+
 	if (INVALID_INDEX == index)
-	{ return INVALID_INDEX;
+	{
+	  return INVALID_INDEX;
 	}
 
 	if (bSmallIcon)
@@ -588,9 +610,8 @@ static HICON WINE_UNUSED SIC_GetIcon (LPCSTR sSourceFile, INT dwSourceIndex, BOO
  *  will be removed when the resource-compiler is ready
  */
 BOOL SIC_Initialize(void)
-{	CHAR   		szShellPath[MAX_PATH];
-	HGLOBAL	hSmRet, hLgRet;
-	HICON		*pSmRet, *pLgRet;
+{
+	HICON		hSm, hLg;
 	UINT		index;
 
 	TRACE("\n");
@@ -598,23 +619,14 @@ BOOL SIC_Initialize(void)
 	if (sic_hdpa)	/* already initialized?*/
 	  return TRUE;
 	  
+	InitializeCriticalSection(&SHELL32_SicCS);
+
 	sic_hdpa = pDPA_Create(16);
-
+	
 	if (!sic_hdpa)
-	{ return(FALSE);
+	{
+	  return(FALSE);
 	}
-
-	GetSystemDirectoryA(szShellPath,MAX_PATH);
-	PathAddBackslashA(szShellPath);
-	strcat(szShellPath,"shell32.dll");
-
-	hSmRet = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON)*40);
-	hLgRet = GlobalAlloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON)*40);
-
-	pSmRet = (HICON*)GlobalLock(hSmRet);
-	pLgRet = (HICON*)GlobalLock(hLgRet);
-
-	ExtractIconExA ( szShellPath, 0, pLgRet, pSmRet, 40 );
 
 	ShellSmallIconList = pImageList_Create(16,16,ILC_COLORDDB | ILC_MASK,0,0x20);
 	ShellBigIconList = pImageList_Create(32,32,ILC_COLORDDB | ILC_MASK,0,0x20);
@@ -622,21 +634,18 @@ BOOL SIC_Initialize(void)
 	pImageList_SetBkColor(ShellSmallIconList, GetSysColor(COLOR_WINDOW));
 	pImageList_SetBkColor(ShellBigIconList, GetSysColor(COLOR_WINDOW));
 
-	for (index=0; index<40; index++)
-	{ if (! pSmRet[index] )
-	  { MESSAGE("*** failure loading resources from %s\n", szShellPath );
-	    MESSAGE("*** this is a hack for loading the internal and external dll at the same time\n");
-	    MESSAGE("*** you can ignore it but you will miss some icons in win95 dialogs\n\n");
-	    break;
-	  }
-	  SIC_IconAppend (szShellPath, index, pSmRet[index], pLgRet[index]);
-	}
-		
-	GlobalUnlock(hLgRet);
-	GlobalFree(hLgRet);
+	for (index=1; index<39; index++)
+	{
+	  hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, 16, 16,LR_SHARED);
+	  hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(index), IMAGE_ICON, 32, 32,LR_SHARED);
 
-	GlobalUnlock(hSmRet);
-	GlobalFree(hSmRet);
+	  if(!hSm)
+	  {
+	    hSm = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(0), IMAGE_ICON, 16, 16,LR_SHARED);
+	    hLg = LoadImageA(shell32_hInstance, MAKEINTRESOURCEA(0), IMAGE_ICON, 32, 32,LR_SHARED);
+	  }
+	  SIC_IconAppend ("shell32.dll", index, hSm, hLg);
+	}
 
 	TRACE("hIconSmall=%p hIconBig=%p\n",ShellSmallIconList, ShellBigIconList);
 
@@ -654,6 +663,8 @@ void SIC_Destroy(void)
 
 	TRACE("\n");
 
+	EnterCriticalSection(&SHELL32_SicCS);
+
 	if (sic_hdpa && NULL != pDPA_GetPtr (sic_hdpa, 0))
 	{
 	  for (i=0; i < pDPA_GetPtrCount(sic_hdpa); ++i)
@@ -665,6 +676,8 @@ void SIC_Destroy(void)
 	}
 
 	sic_hdpa = NULL;
+
+	LeaveCriticalSection(&SHELL32_SicCS);
 }
 /*************************************************************************
  * Shell_GetImageList			[SHELL32.71]
@@ -733,7 +746,7 @@ UINT WINAPI SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh, LPITEMIDLIST pidl,
 {
 	UINT	Index;
 
-	WARN("(SF=%p,pidl=%p,%p)\n",sh,pidl,pIndex);
+	TRACE("(SF=%p,pidl=%p,%p)\n",sh,pidl,pIndex);
 	pdump(pidl);
 	
 	if (pIndex)
