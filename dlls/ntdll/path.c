@@ -1,7 +1,7 @@
 /*
  * Ntdll path functions
  *
- * Copyright 2002, 2003 Alexandre Julliard
+ * Copyright 2002, 2003, 2004 Alexandre Julliard
  * Copyright 2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,8 @@
 #include "config.h"
 
 #include <stdarg.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -29,6 +31,7 @@
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
@@ -43,6 +46,148 @@ HANDLE (WINAPI *pCreateFileW)( LPCWSTR filename, DWORD access, DWORD sharing,
                                DWORD attributes, HANDLE template );
 
 #define IS_SEPARATOR(ch)  ((ch) == '\\' || (ch) == '/')
+
+#define MAX_DOS_DRIVES 26
+
+struct drive_info
+{
+    dev_t dev;
+    ino_t ino;
+};
+
+/***********************************************************************
+ *           get_drives_info
+ *
+ * Retrieve device/inode number for all the drives. Helper for find_drive_root.
+ */
+static inline int get_drives_info( struct drive_info info[MAX_DOS_DRIVES] )
+{
+    const char *config_dir = wine_get_config_dir();
+    char *buffer, *p;
+    struct stat st;
+    int i, ret;
+
+    buffer = RtlAllocateHeap( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/dosdevices/a:") );
+    if (!buffer) return 0;
+    strcpy( buffer, config_dir );
+    strcat( buffer, "/dosdevices/a:" );
+    p = buffer + strlen(buffer) - 2;
+
+    for (i = ret = 0; i < MAX_DOS_DRIVES; i++)
+    {
+        *p = 'a' + i;
+        if (!stat( buffer, &st ))
+        {
+            info[i].dev = st.st_dev;
+            info[i].ino = st.st_ino;
+            ret++;
+        }
+        else
+        {
+            info[i].dev = 0;
+            info[i].ino = 0;
+        }
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           remove_last_component
+ *
+ * Remove the last component of the path. Helper for find_drive_root.
+ */
+static inline int remove_last_component( const WCHAR *path, int len )
+{
+    int level = 0;
+
+    while (level < 1)
+    {
+        /* find start of the last path component */
+        int prev = len;
+        if (prev <= 1) break;  /* reached root */
+        while (prev > 1 && !IS_SEPARATOR(path[prev - 1])) prev--;
+        /* does removing it take us up a level? */
+        if (len - prev != 1 || path[prev] != '.')  /* not '.' */
+        {
+            if (len - prev == 2 && path[prev] == '.' && path[prev+1] == '.')  /* is it '..'? */
+                level--;
+            else
+                level++;
+        }
+        /* strip off trailing slashes */
+        while (prev > 1 && IS_SEPARATOR(path[prev - 1])) prev--;
+        len = prev;
+    }
+    return len;
+}
+
+
+/***********************************************************************
+ *           find_drive_root
+ *
+ * Find a drive for which the root matches the beginning of the given path.
+ * This can be used to translate a Unix path into a drive + DOS path.
+ * Return value is the drive, or -1 on error. On success, ppath is modified
+ * to point to the beginning of the DOS path.
+ */
+static int find_drive_root( LPCWSTR *ppath )
+{
+    /* Starting with the full path, check if the device and inode match any of
+     * the wine 'drives'. If not then remove the last path component and try
+     * again. If the last component was a '..' then skip a normal component
+     * since it's a directory that's ascended back out of.
+     */
+    int drive, lenA, lenW;
+    char *buffer, *p;
+    const WCHAR *path = *ppath;
+    struct stat st;
+    struct drive_info info[MAX_DOS_DRIVES];
+
+    /* get device and inode of all drives */
+    if (!get_drives_info( info )) return -1;
+
+    /* strip off trailing slashes */
+    lenW = strlenW(path);
+    while (lenW > 1 && IS_SEPARATOR(path[lenW - 1])) lenW--;
+
+    /* convert path to Unix encoding */
+    lenA = ntdll_wcstoumbs( 0, path, lenW, NULL, 0, NULL, NULL );
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, lenA + 1 ))) return -1;
+    lenA = ntdll_wcstoumbs( 0, path, lenW, buffer, lenA, NULL, NULL );
+    buffer[lenA] = 0;
+    for (p = buffer; *p; p++) if (*p == '\\') *p = '/';
+
+    for (;;)
+    {
+        if (!stat( buffer, &st ) && S_ISDIR( st.st_mode ))
+        {
+            /* Find the drive */
+            for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+            {
+                if ((info[drive].dev == st.st_dev) && (info[drive].ino == st.st_ino))
+                {
+                    if (lenW == 1) lenW = 0;  /* preserve root slash in returned path */
+                    TRACE( "%s -> drive %c:, root=%s, name=%s\n",
+                           debugstr_w(path), 'A' + drive, debugstr_a(buffer), debugstr_w(path + lenW));
+                    *ppath += lenW;
+                    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+                    return drive;
+                }
+            }
+        }
+        if (lenW <= 1) break;  /* reached root */
+        lenW = remove_last_component( path, lenW );
+
+        /* we only need the new length, buffer already contains the converted string */
+        lenA = ntdll_wcstoumbs( 0, path, lenW, NULL, 0, NULL, NULL );
+        buffer[lenA] = 0;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, buffer );
+    return -1;
+}
+
 
 /***********************************************************************
  *             RtlDetermineDosPathNameType_U   (NTDLL.@)
@@ -484,6 +629,22 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         break;
 
     case ABSOLUTE_PATH:         /* \xxx    */
+        if (name[0] == '/')  /* may be a Unix path */
+        {
+            const WCHAR *ptr = name;
+            int drive = find_drive_root( &ptr );
+            if (drive != -1)
+            {
+                reqsize = 3 * sizeof(WCHAR);
+                tmp[0] = 'A' + drive;
+                tmp[1] = ':';
+                tmp[2] = '\\';
+                ins_str = tmp;
+                mark = 3;
+                dep = ptr - name;
+                break;
+            }
+        }
         if (cd->Buffer[1] == ':')
         {
             reqsize = 2 * sizeof(WCHAR);
