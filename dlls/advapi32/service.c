@@ -1024,7 +1024,10 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     init_service_handle( retval, hscm, hKey, lpServiceName );
 
     if (dp != REG_CREATED_NEW_KEY)
+    {
+        SetLastError(ERROR_SERVICE_EXISTS);
         goto error;
+    }
 
     if(lpDisplayName)
     {
