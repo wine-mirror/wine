@@ -429,6 +429,18 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         SetLastError( ERROR_INVALID_PARAMETER );
         return HFILE_ERROR;
     }
+    TRACE(file,"%s %s%s%s%s%s%s%s\n",filename,
+	  ((access & GENERIC_READ)==GENERIC_READ)?"GENERIC_READ ":"",
+	  ((access & GENERIC_WRITE)==GENERIC_WRITE)?"GENERIC_WRITE ":"",
+	  (!access)?"QUERY_ACCESS ":"",
+	  ((sharing & FILE_SHARE_READ)==FILE_SHARE_READ)?"FILE_SHARE_READ ":"",
+	  ((sharing & FILE_SHARE_WRITE)==FILE_SHARE_WRITE)?"FILE_SHARE_WRITE ":"",
+	  ((sharing & FILE_SHARE_DELETE)==FILE_SHARE_DELETE)?"FILE_SHARE_DELETE ":"",
+	  (creation ==CREATE_NEW)?"CREATE_NEW":
+	  (creation ==CREATE_ALWAYS)?"CREATE_ALWAYS ":
+	  (creation ==OPEN_EXISTING)?"OPEN_EXISTING ":
+	  (creation ==OPEN_ALWAYS)?"OPEN_ALWAYS ":
+	  (creation ==TRUNCATE_EXISTING)?"TRUNCATE_EXISTING ":"");
 
     /* If the name starts with '\\?\', ignore the first 4 chars. */
     if (!strncmp(filename, "\\\\?\\", 4))
@@ -784,6 +796,27 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     char *p;
 
     if (!ofs) return HFILE_ERROR;
+    
+    TRACE(file,"%s %s %s %s%s%s%s%s%s%s%s%s\n",name,
+	  ((mode & 0x3 )==OF_READ)?"OF_READ":
+	  ((mode & 0x3 )==OF_WRITE)?"OF_WRITE":
+	  ((mode & 0x3 )==OF_READWRITE)?"OF_READWRITE":"unknown",
+	  ((mode & 0x70 )==OF_SHARE_COMPAT)?"OF_SHARE_COMPAT":
+	  ((mode & 0x70 )==OF_SHARE_DENY_NONE)?"OF_SHARE_DENY_NONE":
+	  ((mode & 0x70 )==OF_SHARE_DENY_READ)?"OF_SHARE_DENY_READ":
+	  ((mode & 0x70 )==OF_SHARE_DENY_WRITE)?"OF_SHARE_DENY_WRITE":
+	  ((mode & 0x70 )==OF_SHARE_EXCLUSIVE)?"OF_SHARE_EXCLUSIVE":"unknown",
+	  ((mode & OF_PARSE )==OF_PARSE)?"OF_PARSE ":"",
+	  ((mode & OF_DELETE )==OF_DELETE)?"OF_DELETE ":"",
+	  ((mode & OF_VERIFY )==OF_VERIFY)?"OF_VERIFY ":"",
+	  ((mode & OF_SEARCH )==OF_SEARCH)?"OF_SEARCH ":"",
+	  ((mode & OF_CANCEL )==OF_CANCEL)?"OF_CANCEL ":"",
+	  ((mode & OF_CREATE )==OF_CREATE)?"OF_CREATE ":"",
+	  ((mode & OF_PROMPT )==OF_PROMPT)?"OF_PROMPT ":"",
+	  ((mode & OF_EXIST )==OF_EXIST)?"OF_EXIST ":"",
+	  ((mode & OF_REOPEN )==OF_REOPEN)?"OF_REOPEN ":""
+	  );
+      
 
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
