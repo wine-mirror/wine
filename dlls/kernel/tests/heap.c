@@ -33,57 +33,57 @@ START_TEST(heap)
 
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
-    ok(mem != NULL, "memory not allocated for size 0");
+    ok(mem != NULL, "memory not allocated for size 0\n");
 
     mem = HeapReAlloc(GetProcessHeap(), 0, NULL, 10);
-    ok(mem == NULL, "memory allocated by HeapReAlloc");
+    ok(mem == NULL, "memory allocated by HeapReAlloc\n");
 
     /* Global*() functions */
     gbl = GlobalAlloc(GMEM_MOVEABLE, 0);
-    ok(gbl != NULL, "global memory not allocated for size 0");
+    ok(gbl != NULL, "global memory not allocated for size 0\n");
 
     gbl = GlobalReAlloc(gbl, 10, GMEM_MOVEABLE);
-    ok(gbl != NULL, "Can't realloc global memory");
+    ok(gbl != NULL, "Can't realloc global memory\n");
     size = GlobalSize(gbl);
-    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld", size);
+    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld\n", size);
 
     todo_wine
     { 
         gbl = GlobalReAlloc(gbl, 0, GMEM_MOVEABLE);
-        ok(gbl != NULL, "GlobalReAlloc should not fail on size 0");
+        ok(gbl != NULL, "GlobalReAlloc should not fail on size 0\n");
     }
 
     size = GlobalSize(gbl);
-    ok(size == 0, "Memory not resized to size 0, instead size=%ld", size);
-    ok(GlobalFree(gbl) == NULL, "Memory not freed");
+    ok(size == 0, "Memory not resized to size 0, instead size=%ld\n", size);
+    ok(GlobalFree(gbl) == NULL, "Memory not freed\n");
     size = GlobalSize(gbl);
-    ok(size == 0, "Memory should have been freed, size=%ld", size);
+    ok(size == 0, "Memory should have been freed, size=%ld\n", size);
 
     gbl = GlobalReAlloc(0, 10, GMEM_MOVEABLE);
-    ok(gbl == NULL, "global realloc allocated memory");
+    ok(gbl == NULL, "global realloc allocated memory\n");
 
     /* Local*() functions */
     gbl = LocalAlloc(GMEM_MOVEABLE, 0);
-    ok(gbl != NULL, "local memory not allocated for size 0");
+    ok(gbl != NULL, "local memory not allocated for size 0\n");
 
     gbl = LocalReAlloc(gbl, 10, GMEM_MOVEABLE);
-    ok(gbl != NULL, "Can't realloc local memory");
+    ok(gbl != NULL, "Can't realloc local memory\n");
     size = LocalSize(gbl);
-    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld", size);
+    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%ld\n", size);
 
     todo_wine
     {
         gbl = LocalReAlloc(gbl, 0, GMEM_MOVEABLE);
-        ok(gbl != NULL, "LocalReAlloc should not fail on size 0");
+        ok(gbl != NULL, "LocalReAlloc should not fail on size 0\n");
     }
 
     size = LocalSize(gbl);
-    ok(size == 0, "Memory not resized to size 0, instead size=%ld", size);
-    ok(LocalFree(gbl) == NULL, "Memory not freed");
+    ok(size == 0, "Memory not resized to size 0, instead size=%ld\n", size);
+    ok(LocalFree(gbl) == NULL, "Memory not freed\n");
     size = LocalSize(gbl);
-    ok(size == 0, "Memory should have been freed, size=%ld", size);
+    ok(size == 0, "Memory should have been freed, size=%ld\n", size);
 
     gbl = LocalReAlloc(0, 10, GMEM_MOVEABLE);
-    ok(gbl == NULL, "local realloc allocated memory");
+    ok(gbl == NULL, "local realloc allocated memory\n");
 
 }

@@ -92,7 +92,7 @@ VOID WINAPI threadFunc1(t1Struct *tstruct)
 /* write our thread # into shared memory */
    tstruct->threadmem[tstruct->threadnum]=GetCurrentThreadId();
    ok(TlsSetValue(tlsIndex,(LPVOID)(tstruct->threadnum+1))!=0,
-      "TlsSetValue failed");
+      "TlsSetValue failed\n");
 /* The threads synchronize before terminating.  This is done by
    Signaling an event, and waiting for all events to occur
 */
@@ -106,7 +106,7 @@ VOID WINAPI threadFunc1(t1Struct *tstruct)
    }
 /* Check that noone cahnged our tls memory */
    ok((int)TlsGetValue(tlsIndex)-1==tstruct->threadnum,
-      "TlsGetValue failed");
+      "TlsGetValue failed\n");
    ExitThread(NUM_THREADS+tstruct->threadnum);
 }
 
@@ -164,7 +164,7 @@ VOID test_CreateThread_basic()
 /* Retrieve current Thread ID for later comparisons */
   curthreadId=GetCurrentThreadId();
 /* Allocate some local storage */
-  ok((tlsIndex=TlsAlloc())!=TLS_OUT_OF_INDEXES,"TlsAlloc failed");
+  ok((tlsIndex=TlsAlloc())!=TLS_OUT_OF_INDEXES,"TlsAlloc failed\n");
 /* Create events for thread synchronization */
   for(i=0;i<NUM_THREADS;i++) {
     threadmem[i]=0;
@@ -181,17 +181,17 @@ VOID test_CreateThread_basic()
   for(i=0;i<NUM_THREADS;i++) {
     thread[i] = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc1,
                              &tstruct[i],0,&threadid[i]);
-    ok(thread[i]!=NULL,"Create Thread failed.");
+    ok(thread[i]!=NULL,"Create Thread failed\n");
   }
 /* Test that the threads actually complete */
   for(i=0;i<NUM_THREADS;i++) {
     error=WaitForSingleObject(thread[i],5000);
-    ok(error==WAIT_OBJECT_0, "Thread did not complete within timelimit");
+    ok(error==WAIT_OBJECT_0, "Thread did not complete within timelimit\n");
     if(error!=WAIT_OBJECT_0) {
       TerminateThread(thread[i],i+NUM_THREADS);
     }
-    ok(GetExitCodeThread(thread[i],&exitCode),"Could not retrieve ext code");
-    ok(exitCode==i+NUM_THREADS,"Thread returned an incorrect exit code");
+    ok(GetExitCodeThread(thread[i],&exitCode),"Could not retrieve ext code\n");
+    ok(exitCode==i+NUM_THREADS,"Thread returned an incorrect exit code\n");
   }
 /* Test that each thread executed in its parent's address space
    (it was able to change threadmem and pass that change back to its parent)
@@ -207,10 +207,10 @@ VOID test_CreateThread_basic()
       }
     }
     ok(!error && threadmem[i]==threadid[i] && threadmem[i]!=curthreadId,
-         "Thread did not execute successfully");
-    ok(CloseHandle(thread[i])!=0,"CloseHandle failed");
+         "Thread did not execute successfully\n");
+    ok(CloseHandle(thread[i])!=0,"CloseHandle failed\n");
   }
-  ok(TlsFree(tlsIndex)!=0,"TlsFree failed");
+  ok(TlsFree(tlsIndex)!=0,"TlsFree failed\n");
 }
 
 /* Check that using the CREATE_SUSPENDED flag works */
@@ -222,24 +222,24 @@ VOID test_CreateThread_suspended()
 
   thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc2,NULL,
                         CREATE_SUSPENDED,&threadId);
-  ok(thread!=NULL,"Create Thread failed.");
+  ok(thread!=NULL,"Create Thread failed\n");
 /* Check that the thread is suspended */
-  ok(SuspendThread(thread)==1,"Thread did not start suspended");
-  ok(ResumeThread(thread)==2,"Resume thread returned an invalid value");
+  ok(SuspendThread(thread)==1,"Thread did not start suspended\n");
+  ok(ResumeThread(thread)==2,"Resume thread returned an invalid value\n");
 /* Check that resume thread didn't actually start the thread.  I can't think
    of a better way of checking this than just waiting.  I am not sure if this
    will work on slow computers.
 */
   ok(WaitForSingleObject(thread,1000)==WAIT_TIMEOUT,
-     "ResumeThread should not have actually started the thread");
+     "ResumeThread should not have actually started the thread\n");
 /* Now actually resume the thread and make sure that it actually completes*/
-  ok(ResumeThread(thread)==1,"Resume thread returned an invalid value");
+  ok(ResumeThread(thread)==1,"Resume thread returned an invalid value\n");
   ok((error=WaitForSingleObject(thread,1000))==WAIT_OBJECT_0,
-     "Thread did not resume");
+     "Thread did not resume\n");
   if(error!=WAIT_OBJECT_0) {
     TerminateThread(thread,1);
   }
-  ok(CloseHandle(thread)!=0,"CloseHandle failed");
+  ok(CloseHandle(thread)!=0,"CloseHandle failed\n");
 }
 
 /* Check that SuspendThread and ResumeThread work */
@@ -251,7 +251,7 @@ VOID test_SuspendThread()
 
   thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc3,NULL,
                         0,&threadId);
-  ok(thread!=NULL,"Create Thread failed.");
+  ok(thread!=NULL,"Create Thread failed\n");
 /* Check that the thread is suspended */
 /* Note that this is a polling method, and there is a race between
    SuspendThread being called (in the child, and the loop below timing out,
@@ -266,36 +266,36 @@ VOID test_SuspendThread()
       i++;
     }
   }
-  ok(error==1,"SuspendThread did not work");
+  ok(error==1,"SuspendThread did not work\n");
 /* check that access restrictions are obeyed */
   if (pOpenThread) {
     access_thread=pOpenThread(THREAD_ALL_ACCESS & (~THREAD_SUSPEND_RESUME),
                            0,threadId);
-    ok(access_thread!=NULL,"OpenThread returned an invalid handle");
+    ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
       ok(SuspendThread(access_thread)==-1,
-         "SuspendThread did not obey access restrictions");
+         "SuspendThread did not obey access restrictions\n");
       ok(ResumeThread(access_thread)==-1,
-         "ResumeThread did not obey access restrictions");
-      ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
+         "ResumeThread did not obey access restrictions\n");
+      ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
     }
   }
 /* Double check that the thread really is suspended */
   ok((error=GetExitCodeThread(thread,&exitCode))!=0 && exitCode==STILL_ACTIVE,
-     "Thread did not really suspend");
+     "Thread did not really suspend\n");
 /* Resume the thread, and make sure it actually completes */
-  ok(ResumeThread(thread)==1,"Resume thread returned an invalid value");
+  ok(ResumeThread(thread)==1,"Resume thread returned an invalid value\n");
   ok((error=WaitForSingleObject(thread,1000))==WAIT_OBJECT_0,
-     "Thread did not resume");
+     "Thread did not resume\n");
   if(error!=WAIT_OBJECT_0) {
     TerminateThread(thread,1);
   }
   /* Trying to suspend a terminated thread should fail */
   error=SuspendThread(thread);
-  ok(error==0xffffffff, "wrong return code: %d", error);
-  ok(GetLastError()==ERROR_ACCESS_DENIED || GetLastError()==ERROR_NO_MORE_ITEMS, "unexpected error code: %ld", GetLastError());
+  ok(error==0xffffffff, "wrong return code: %d\n", error);
+  ok(GetLastError()==ERROR_ACCESS_DENIED || GetLastError()==ERROR_NO_MORE_ITEMS, "unexpected error code: %ld\n", GetLastError());
 
-  ok(CloseHandle(thread)!=0,"CloseHandle Failed");
+  ok(CloseHandle(thread)!=0,"CloseHandle Failed\n");
 }
 
 /* Check that TerminateThread works properly
@@ -309,33 +309,33 @@ VOID test_TerminateThread()
   event=CreateEventA(NULL,TRUE,FALSE,NULL);
   thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc4,
                         (LPVOID)event, 0,&threadId);
-  ok(thread!=NULL,"Create Thread failed.");
+  ok(thread!=NULL,"Create Thread failed\n");
 /* Terminate thread has a race condition in Wine.  If the thread is terminated
    before it starts, it leaves a process behind.  Therefore, we wait for the
    thread to signal that it has started.  There is no easy way to force the
    race to occur, so we don't try to find it.
 */
   ok(WaitForSingleObject(event,5000)==WAIT_OBJECT_0,
-     "TerminateThread didn't work");
+     "TerminateThread didn't work\n");
 /* check that access restrictions are obeyed */
   if (pOpenThread) {
     access_thread=pOpenThread(THREAD_ALL_ACCESS & (~THREAD_TERMINATE),
                              0,threadId);
-    ok(access_thread!=NULL,"OpenThread returned an invalid handle");
+    ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
       ok(TerminateThread(access_thread,99)==0,
-         "TerminateThread did not obey access restrictions");
-      ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
+         "TerminateThread did not obey access restrictions\n");
+      ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
     }
   }
 /* terminate a job and make sure it terminates */
-  ok(TerminateThread(thread,99)!=0,"TerminateThread failed");
+  ok(TerminateThread(thread,99)!=0,"TerminateThread failed\n");
   ok(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0,
-     "TerminateThread didn't work");
+     "TerminateThread didn't work\n");
   ok(GetExitCodeThread(thread,&exitCode)!=STILL_ACTIVE,
-     "TerminateThread should not leave the thread 'STILL_ACTIVE'");
-  ok(exitCode==99, "TerminateThread returned invalid exit code");
-  ok(CloseHandle(thread)!=0,"Error Closing thread handle");
+     "TerminateThread should not leave the thread 'STILL_ACTIVE'\n");
+  ok(exitCode==99, "TerminateThread returned invalid exit code\n");
+  ok(CloseHandle(thread)!=0,"Error Closing thread handle\n");
 }
 
 /* Check if CreateThread obeys the specified stack size.  This code does
@@ -356,14 +356,14 @@ VOID test_CreateThread_stack()
      SYSTEM_INFO sysInfo;
      sysInfo.dwPageSize=0;
      GetSystemInfo(&sysInfo);
-     ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size");
+     ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size\n");
      thread = CreateThread(NULL,sysInfo.dwPageSize,
                            (LPTHREAD_START_ROUTINE)threadFunc5,&exitCode,
                            0,&threadId);
      ok(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0,
-        "TerminateThread didn't work");
-     ok(exitCode==1,"CreateThread did not obey stack-size-limit");
-     ok(CloseHandle(thread)!=0,"CloseHandle failed");
+        "TerminateThread didn't work\n");
+     ok(exitCode==1,"CreateThread did not obey stack-size-limit\n");
+     ok(CloseHandle(thread)!=0,"CloseHandle failed\n");
 #endif
 }
 
@@ -385,28 +385,28 @@ VOID test_thread_priority()
          anyway, enable USE_EXTENDED_PRIORITIES
 */
    ok(GetThreadPriority(curthread)==THREAD_PRIORITY_NORMAL,
-      "GetThreadPriority Failed");
+      "GetThreadPriority Failed\n");
 
    if (pOpenThread) {
 /* check that access control is obeyed */
      access_thread=pOpenThread(THREAD_ALL_ACCESS &
                        (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
                        0,curthreadId);
-     ok(access_thread!=NULL,"OpenThread returned an invalid handle");
+     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
      if (access_thread!=NULL) {
        ok(SetThreadPriority(access_thread,1)==0,
-          "SetThreadPriority did not obey access restrictions");
+          "SetThreadPriority did not obey access restrictions\n");
        ok(GetThreadPriority(access_thread)==THREAD_PRIORITY_ERROR_RETURN,
-          "GetThreadPriority did not obey access restrictions");
+          "GetThreadPriority did not obey access restrictions\n");
        if (pSetThreadPriorityBoost)
          ok(pSetThreadPriorityBoost(access_thread,1)==0,
-            "SetThreadPriorityBoost did not obey access restrictions");
+            "SetThreadPriorityBoost did not obey access restrictions\n");
        if (pGetThreadPriorityBoost)
          ok(pGetThreadPriorityBoost(access_thread,&disabled)==0,
-            "GetThreadPriorityBoost did not obey access restrictions");
+            "GetThreadPriorityBoost did not obey access restrictions\n");
        ok(GetExitCodeThread(access_thread,&exitCode)==0,
-          "GetExitCodeThread did not obey access restrictions");
-       ok(CloseHandle(access_thread),"Error Closing thread handle");
+          "GetExitCodeThread did not obey access restrictions\n");
+       ok(CloseHandle(access_thread),"Error Closing thread handle\n");
      }
 #if USE_EXTENDED_PRIORITIES
      min_priority=-7; max_priority=6;
@@ -414,19 +414,19 @@ VOID test_thread_priority()
    }
    for(i=min_priority;i<=max_priority;i++) {
      ok(SetThreadPriority(curthread,i)!=0,
-        "SetThreadPriority Failed for priority: %d",i);
+        "SetThreadPriority Failed for priority: %d\n",i);
      ok(GetThreadPriority(curthread)==i,
-        "GetThreadPriority Failed for priority: %d",i);
+        "GetThreadPriority Failed for priority: %d\n",i);
    }
    ok(SetThreadPriority(curthread,THREAD_PRIORITY_TIME_CRITICAL)!=0,
-      "SetThreadPriority Failed");
+      "SetThreadPriority Failed\n");
    ok(GetThreadPriority(curthread)==THREAD_PRIORITY_TIME_CRITICAL,
-      "GetThreadPriority Failed");
+      "GetThreadPriority Failed\n");
    ok(SetThreadPriority(curthread,THREAD_PRIORITY_IDLE)!=0,
-       "SetThreadPriority Failed");
+       "SetThreadPriority Failed\n");
    ok(GetThreadPriority(curthread)==THREAD_PRIORITY_IDLE,
-       "GetThreadPriority Failed");
-   ok(SetThreadPriority(curthread,0)!=0,"SetThreadPriority Failed");
+       "GetThreadPriority Failed\n");
+   ok(SetThreadPriority(curthread,0)!=0,"SetThreadPriority Failed\n");
 
 /* Check thread priority boost */
    if (pGetThreadPriorityBoost && pSetThreadPriorityBoost) {
@@ -435,19 +435,19 @@ VOID test_thread_priority()
          SetLastError(0);
          rc=pGetThreadPriorityBoost(curthread,&disabled);
          if (rc!=0 || GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
-             ok(rc!=0,"error=%ld",GetLastError());
+             ok(rc!=0,"error=%ld\n",GetLastError());
 
              ok(pSetThreadPriorityBoost(curthread,1)!=0,
-                "error=%ld",GetLastError());
+                "error=%ld\n",GetLastError());
              rc=pGetThreadPriorityBoost(curthread,&disabled);
              ok(rc!=0 && disabled==1,
-                "rc=%d error=%ld disabled=%d",rc,GetLastError(),disabled);
+                "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
 
              ok(pSetThreadPriorityBoost(curthread,0)!=0,
-                "error=%ld",GetLastError());
+                "error=%ld\n",GetLastError());
              rc=pGetThreadPriorityBoost(curthread,&disabled);
              ok(rc!=0 && disabled==0,
-                "rc=%d error=%ld disabled=%d",rc,GetLastError(),disabled);
+                "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
          }
      }
    }
@@ -464,22 +464,22 @@ VOID test_GetThreadTimes()
      thread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)threadFunc2,NULL,
                            CREATE_SUSPENDED,&threadId);
 
-     ok(thread!=NULL,"Create Thread failed.");
+     ok(thread!=NULL,"Create Thread failed\n");
 /* check that access control is obeyed */
      if (pOpenThread) {
        access_thread=pOpenThread(THREAD_ALL_ACCESS &
                                    (~THREAD_QUERY_INFORMATION), 0,threadId);
        ok(access_thread!=NULL,
-          "OpenThread returned an invalid handle");
+          "OpenThread returned an invalid handle\n");
      }
-     ok(ResumeThread(thread)==1,"Resume thread returned an invalid value");
+     ok(ResumeThread(thread)==1,"Resume thread returned an invalid value\n");
      ok(WaitForSingleObject(thread,5000)==WAIT_OBJECT_0,
-        "ResumeThread didn't work");
+        "ResumeThread didn't work\n");
      if(access_thread!=NULL) {
        error=GetThreadTimes(access_thread,&creationTime,&exitTime,
                             &kernelTime,&userTime);
-       ok(error==0, "GetThreadTimes did not obey access restrictions");
-       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed");
+       ok(error==0, "GetThreadTimes did not obey access restrictions\n");
+       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
      }
      creationTime.dwLowDateTime=99; creationTime.dwHighDateTime=99;
      exitTime.dwLowDateTime=99;     exitTime.dwHighDateTime=99;
@@ -489,16 +489,16 @@ VOID test_GetThreadTimes()
      error=GetThreadTimes(thread,&creationTime,&exitTime,
                           &kernelTime,&userTime);
      if (error!=0 || GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
-       ok(error!=0,"GetThreadTimes failed");
+       ok(error!=0,"GetThreadTimes failed\n");
        ok(creationTime.dwLowDateTime!=99 || creationTime.dwHighDateTime!=99,
-          "creationTime was invalid");
+          "creationTime was invalid\n");
        ok(exitTime.dwLowDateTime!=99 || exitTime.dwHighDateTime!=99,
-          "exitTime was invalid");
+          "exitTime was invalid\n");
        ok(kernelTime.dwLowDateTime!=99 || kernelTime.dwHighDateTime!=99,
-          "kernelTimewas invalid");
+          "kernelTimewas invalid\n");
        ok(userTime.dwLowDateTime!=99 || userTime.dwHighDateTime!=99,
-          "userTime was invalid");
-       ok(CloseHandle(thread)!=0,"CloseHandle failed");
+          "userTime was invalid\n");
+       ok(CloseHandle(thread)!=0,"CloseHandle failed\n");
      }
 }
 
@@ -515,35 +515,35 @@ VOID test_thread_processor()
    sysInfo.dwNumberOfProcessors=0;
    GetSystemInfo(&sysInfo);
    ok(sysInfo.dwNumberOfProcessors>0,
-      "GetSystemInfo failed to return a valid # of processors");
+      "GetSystemInfo failed to return a valid # of processors\n");
 /* Use the current Thread/process for all tests */
    curthread=GetCurrentThread();
-   ok(curthread!=NULL,"GetCurrentThread failed");
+   ok(curthread!=NULL,"GetCurrentThread failed\n");
    curproc=GetCurrentProcess();
-   ok(curproc!=NULL,"GetCurrentProcess failed");
+   ok(curproc!=NULL,"GetCurrentProcess failed\n");
 /* Check the Affinity Mask functions */
    ok(GetProcessAffinityMask(curproc,&processMask,&systemMask)!=0,
-      "GetProcessAffinityMask failed");
+      "GetProcessAffinityMask failed\n");
    ok(SetThreadAffinityMask(curthread,processMask)==1,
-      "SetThreadAffinityMask failed");
+      "SetThreadAffinityMask failed\n");
    ok(SetThreadAffinityMask(curthread,processMask+1)==0,
-      "SetThreadAffinityMask passed for an illegal processor");
+      "SetThreadAffinityMask passed for an illegal processor\n");
 /* NOTE: This only works on WinNT/2000/XP) */
    if (pSetThreadIdealProcessor) {
      todo_wine {
        SetLastError(0);
        error=pSetThreadIdealProcessor(curthread,0);
        if (GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
-         ok(error!=-1, "SetThreadIdealProcessor failed");
+         ok(error!=-1, "SetThreadIdealProcessor failed\n");
        }
      }
      if (GetLastError()!=ERROR_CALL_NOT_IMPLEMENTED) {
        error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
        ok(error==-1,
-          "SetThreadIdealProcessor succeeded with an illegal processor #");
+          "SetThreadIdealProcessor succeeded with an illegal processor #\n");
        todo_wine {
          error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS);
-         ok(error==0, "SetThreadIdealProcessor returned an incorrect value");
+         ok(error==0, "SetThreadIdealProcessor returned an incorrect value\n");
        }
      }
    }
@@ -556,7 +556,7 @@ START_TEST(thread)
    so that the compile passes
 */
    lib=LoadLibraryA("kernel32");
-   ok(lib!=NULL,"Couldn't load kernel32.dll");
+   ok(lib!=NULL,"Couldn't load kernel32.dll\n");
    pGetThreadPriorityBoost=(GetThreadPriorityBoost_t)GetProcAddress(lib,"GetThreadPriorityBoost");
    pOpenThread=(OpenThread_t)GetProcAddress(lib,"OpenThread");
    pSetThreadIdealProcessor=(SetThreadIdealProcessor_t)GetProcAddress(lib,"SetThreadIdealProcessor");

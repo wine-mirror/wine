@@ -135,7 +135,7 @@ static void test_FindFirstChangeNotification(void)
     lstrcatA(dirname1, "dir");
 
     ret = CreateDirectoryA(dirname1, NULL);
-    ok(ret, "CreateDirectoryA error: %ld", GetLastError());
+    ok(ret, "CreateDirectoryA error: %ld\n", GetLastError());
 
     /* What if we remove the directory we registered notification for? */
     thread = StartNotificationThread(dirname1, FALSE, FILE_NOTIFY_CHANGE_DIR_NAME);

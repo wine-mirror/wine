@@ -79,7 +79,7 @@ static void test_profile_int(void)
 
        res = GetPrivateProfileIntA(profileInt[i].section, profileInt[i].key, 
                  profileInt[i].defaultVal, profileInt[i].iniFile); 
-       ok(res == profileInt[i].result, "test<%02d>: ret<%010u> exp<%010u>",
+       ok(res == profileInt[i].result, "test<%02d>: ret<%010u> exp<%010u>\n",
                                        i, res, profileInt[i].result);
     }
 

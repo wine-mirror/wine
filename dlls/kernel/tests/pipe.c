@@ -71,22 +71,22 @@ void test_CreateNamedPipe(void)
     if (hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) {
         /* Is this the right way to notify user of skipped tests? */
         ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED,
-            "CreateNamedPipe not supported on this platform, skipping tests.");
+            "CreateNamedPipe not supported on this platform, skipping tests.\n");
         return;
     }
     ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_INVALID_NAME,
-        "CreateNamedPipe should fail if name doesn't start with \\\\.\\pipe");
+        "CreateNamedPipe should fail if name doesn't start with \\\\.\\pipe\n");
 
     hnp = CreateNamedPipe(NULL,
         PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
     ok(hnp == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
-        "CreateNamedPipe should fail if name is NULL");
+        "CreateNamedPipe should fail if name is NULL\n");
 
     hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(hFile == INVALID_HANDLE_VALUE
         && GetLastError() == ERROR_FILE_NOT_FOUND,
-        "connecting to nonexistent named pipe should fail with ERROR_FILE_NOT_FOUND");
+        "connecting to nonexistent named pipe should fail with ERROR_FILE_NOT_FOUND\n");
 
     /* Functional checks */
 
@@ -96,10 +96,10 @@ void test_CreateNamedPipe(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed");
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed\n");
 
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {
@@ -107,18 +107,18 @@ void test_CreateNamedPipe(void)
 
         /* Make sure we can read and write a few bytes in both directions */
         memset(ibuf, 0, sizeof(ibuf));
-        ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile");
-        ok(written == sizeof(obuf), "write file len");
-        ok(ReadFile(hFile, ibuf, sizeof(obuf), &readden, NULL), "ReadFile");
-        ok(readden == sizeof(obuf), "read file len");
-        ok(memcmp(obuf, ibuf, written) == 0, "content check");
+        ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        ok(ReadFile(hFile, ibuf, sizeof(obuf), &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf), "read file len\n");
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
 
         memset(ibuf, 0, sizeof(ibuf));
-        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile");
-        ok(written == sizeof(obuf), "write file len");
-        ok(ReadFile(hnp, ibuf, sizeof(obuf), &readden, NULL), "ReadFile");
-        ok(readden == sizeof(obuf), "read file len");
-        ok(memcmp(obuf, ibuf, written) == 0, "content check");
+        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        ok(ReadFile(hnp, ibuf, sizeof(obuf), &readden, NULL), "ReadFile\n");
+        ok(readden == sizeof(obuf), "read file len\n");
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
 
         /* Picky conformance tests */
 
@@ -129,27 +129,27 @@ void test_CreateNamedPipe(void)
          */
         hFile2 = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         ok(hFile2 == INVALID_HANDLE_VALUE,
-            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail");
+            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail\n");
         ok(GetLastError() == ERROR_PIPE_BUSY,
-            "connecting to named pipe before other client closes should fail with ERROR_PIPE_BUSY");
+            "connecting to named pipe before other client closes should fail with ERROR_PIPE_BUSY\n");
 
-        ok(CloseHandle(hFile), "CloseHandle");
+        ok(CloseHandle(hFile), "CloseHandle\n");
 
         /* case 2: other client already closed */
         hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         ok(hFile == INVALID_HANDLE_VALUE,
-            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail");
+            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail\n");
         ok(GetLastError() == ERROR_PIPE_BUSY,
-            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail with ERROR_PIPE_BUSY");
+            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail with ERROR_PIPE_BUSY\n");
 
-        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
 
         /* case 3: server has called DisconnectNamedPipe but not ConnectNamed Pipe */
         hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
         ok(hFile == INVALID_HANDLE_VALUE,
-            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail");
+            "connecting to named pipe after other client closes but before DisconnectNamedPipe should fail\n");
         ok(GetLastError() == ERROR_PIPE_BUSY,
-            "connecting to named pipe after other client closes but before ConnectNamedPipe should fail with ERROR_PIPE_BUSY");
+            "connecting to named pipe after other client closes but before ConnectNamedPipe should fail with ERROR_PIPE_BUSY\n");
 
         /* to be complete, we'd call ConnectNamedPipe here and loop,
          * but by default that's blocking, so we'd either have
@@ -158,7 +158,7 @@ void test_CreateNamedPipe(void)
          */
     }
 
-    ok(CloseHandle(hnp), "CloseHandle");
+    ok(CloseHandle(hnp), "CloseHandle\n");
 
     trace("test_CreateNamedPipe returning\n");
 }
@@ -174,7 +174,7 @@ void test_CreateNamedPipe_instances_must_match(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 2,
@@ -182,10 +182,10 @@ void test_CreateNamedPipe_instances_must_match(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    ok(CloseHandle(hnp), "CloseHandle");
-    ok(CloseHandle(hnp2), "CloseHandle");
+    ok(CloseHandle(hnp), "CloseHandle\n");
+    ok(CloseHandle(hnp2), "CloseHandle\n");
 
     /* Check nMaxInstances */
     hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
@@ -194,7 +194,7 @@ void test_CreateNamedPipe_instances_must_match(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
@@ -203,9 +203,9 @@ void test_CreateNamedPipe_instances_must_match(void)
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
     ok(hnp2 == INVALID_HANDLE_VALUE
-        && GetLastError() == ERROR_PIPE_BUSY, "nMaxInstances not obeyed");
+        && GetLastError() == ERROR_PIPE_BUSY, "nMaxInstances not obeyed\n");
 
-    ok(CloseHandle(hnp), "CloseHandle");
+    ok(CloseHandle(hnp), "CloseHandle\n");
 
     /* Check PIPE_ACCESS_* */
     hnp = CreateNamedPipe(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT,
@@ -214,7 +214,7 @@ void test_CreateNamedPipe_instances_must_match(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     hnp2 = CreateNamedPipe(PIPENAME, PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE | PIPE_WAIT,
         /* nMaxInstances */ 1,
@@ -223,9 +223,9 @@ void test_CreateNamedPipe_instances_must_match(void)
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
     ok(hnp2 == INVALID_HANDLE_VALUE
-        && GetLastError() == ERROR_ACCESS_DENIED, "PIPE_ACCESS_* mismatch allowed");
+        && GetLastError() == ERROR_ACCESS_DENIED, "PIPE_ACCESS_* mismatch allowed\n");
 
-    ok(CloseHandle(hnp), "CloseHandle");
+    ok(CloseHandle(hnp), "CloseHandle\n");
 
     /* etc, etc */
 }
@@ -236,7 +236,7 @@ static DWORD CALLBACK alarmThreadMain(LPVOID arg)
     DWORD timeout = (DWORD) arg;
     trace("alarmThreadMain\n");
     Sleep(timeout);
-    ok(FALSE, "alarm");
+    ok(FALSE, "alarm\n");
     ExitProcess(1);
     return 1;
 }
@@ -258,7 +258,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
 
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
     for (i = 0; ; i++) {
         char buf[512];
         DWORD written;
@@ -268,7 +268,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         /* Wait for client to connect */
         trace("Server calling ConnectNamedPipe...\n");
         ok(ConnectNamedPipe(hnp, NULL)
-            || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe");
+            || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe\n");
         trace("ConnectNamedPipe returned.\n");
 
         /* Echo bytes once */
@@ -277,18 +277,18 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         trace("Server reading...\n");
         success = ReadFile(hnp, buf, sizeof(buf), &readden, NULL);
         trace("Server done reading.\n");
-        ok(success, "ReadFile");
-		ok(readden, "short read");
+        ok(success, "ReadFile\n");
+        ok(readden, "short read\n");
 
         trace("Server writing...\n");
-        ok(WriteFile(hnp, buf, readden, &written, NULL), "WriteFile");
+        ok(WriteFile(hnp, buf, readden, &written, NULL), "WriteFile\n");
         trace("Server done writing.\n");
-        ok(written == readden, "write file len");
+        ok(written == readden, "write file len\n");
 
         /* finish this connection, wait for next one */
-        ok(FlushFileBuffers(hnp), "FlushFileBuffers");
+        ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
         trace("Server done flushing.\n");
-        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
         trace("Server done disconnecting.\n");
     }
 }
@@ -308,7 +308,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     for (i = 0; ; i++) {
         char buf[512];
@@ -319,7 +319,7 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         /* Wait for client to connect */
         trace("Server calling ConnectNamedPipe...\n");
         ok(ConnectNamedPipe(hnp, NULL)
-            || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe");
+            || GetLastError() == ERROR_PIPE_CONNECTED, "ConnectNamedPipe\n");
         trace("ConnectNamedPipe returned.\n");
 
         /* Echo bytes once */
@@ -328,16 +328,16 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         trace("Server reading...\n");
         success = ReadFile(hnp, buf, sizeof(buf), &readden, NULL);
         trace("Server done reading.\n");
-        ok(success, "ReadFile");
+        ok(success, "ReadFile\n");
 
         trace("Server writing...\n");
-        ok(WriteFile(hnp, buf, readden, &written, NULL), "WriteFile");
+        ok(WriteFile(hnp, buf, readden, &written, NULL), "WriteFile\n");
         trace("Server done writing.\n");
-        ok(written == readden, "write file len");
+        ok(written == readden, "write file len\n");
 
         /* finish this connection, wait for next one */
-        ok(FlushFileBuffers(hnp), "FlushFileBuffers");
-        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe");
+        ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
 
         /* Set up next echo server */
         hnpNext =
@@ -349,9 +349,9 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
             /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
             /* lpSecurityAttrib */ NULL);
 
-        ok(hnpNext != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+        ok(hnpNext != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-        ok(CloseHandle(hnp), "CloseHandle");
+        ok(CloseHandle(hnp), "CloseHandle\n");
         hnp = hnpNext;
     }
 }
@@ -371,13 +371,13 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     hEvent = CreateEvent(NULL,  /* security attribute */
         TRUE,                   /* manual reset event */
         FALSE,                  /* initial state */
         NULL);                  /* name */
-    ok(hEvent != NULL, "CreateEvent");
+    ok(hEvent != NULL, "CreateEvent\n");
 
     for (i = 0; ; i++) {
         char buf[512];
@@ -398,16 +398,16 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         success = ConnectNamedPipe(hnp, &oOverlap);
         err = GetLastError();
         ok(success || err == ERROR_IO_PENDING
-            || err == ERROR_PIPE_CONNECTED, "overlapped ConnectNamedPipe");
+            || err == ERROR_PIPE_CONNECTED, "overlapped ConnectNamedPipe\n");
         trace("overlapped ConnectNamedPipe returned.\n");
         if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
-            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ConnectNamedPipe");
+            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ConnectNamedPipe\n");
         success = GetOverlappedResult(hnp, &oOverlap, &dummy, letGORwait);
 	if (!letGORwait && !letWFSOEwait && !success) {
-	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult");
+	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
 	    success = GetOverlappedResult(hnp, &oOverlap, &dummy, TRUE);
 	}
-	ok(success, "GetOverlappedResult ConnectNamedPipe");
+	ok(success, "GetOverlappedResult ConnectNamedPipe\n");
         trace("overlapped ConnectNamedPipe operation complete.\n");
 
         /* Echo bytes once */
@@ -417,38 +417,38 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         success = ReadFile(hnp, buf, sizeof(buf), NULL, &oOverlap);
         trace("Server ReadFile returned...\n");
         err = GetLastError();
-        ok(success || err == ERROR_IO_PENDING, "overlapped ReadFile");
+        ok(success || err == ERROR_IO_PENDING, "overlapped ReadFile\n");
         trace("overlapped ReadFile returned.\n");
         if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
-            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ReadFile");
+            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait ReadFile\n");
         success = GetOverlappedResult(hnp, &oOverlap, &readden, letGORwait);
 	if (!letGORwait && !letWFSOEwait && !success) {
-	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult");
+	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
 	    success = GetOverlappedResult(hnp, &oOverlap, &readden, TRUE);
 	}
         trace("Server done reading.\n");
-        ok(success, "overlapped ReadFile");
+        ok(success, "overlapped ReadFile\n");
 
         trace("Server writing...\n");
         success = WriteFile(hnp, buf, readden, NULL, &oOverlap);
         trace("Server WriteFile returned...\n");
         err = GetLastError();
-        ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile");
+        ok(success || err == ERROR_IO_PENDING, "overlapped WriteFile\n");
         trace("overlapped WriteFile returned.\n");
         if (!success && (err == ERROR_IO_PENDING) && letWFSOEwait)
-            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait WriteFile");
+            ok(WaitForSingleObjectEx(hEvent, INFINITE, TRUE) == 0, "wait WriteFile\n");
         success = GetOverlappedResult(hnp, &oOverlap, &written, letGORwait);
 	if (!letGORwait && !letWFSOEwait && !success) {
-	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult");
+	    ok(GetLastError() == ERROR_IO_INCOMPLETE, "GetOverlappedResult\n");
 	    success = GetOverlappedResult(hnp, &oOverlap, &written, TRUE);
 	}
         trace("Server done writing.\n");
-        ok(success, "overlapped WriteFile");
-        ok(written == readden, "write file len");
+        ok(success, "overlapped WriteFile\n");
+        ok(written == readden, "write file len\n");
 
         /* finish this connection, wait for next one */
-        ok(FlushFileBuffers(hnp), "FlushFileBuffers");
-        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe");
+        ok(FlushFileBuffers(hnp), "FlushFileBuffers\n");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe\n");
     }
 }
 
@@ -475,29 +475,29 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
                 break;
 	    err = GetLastError();
 	    if (loop == 0)
-	        ok(err == ERROR_PIPE_BUSY || err == ERROR_FILE_NOT_FOUND, "connecting to pipe");
+	        ok(err == ERROR_PIPE_BUSY || err == ERROR_FILE_NOT_FOUND, "connecting to pipe\n");
 	    else
-	        ok(err == ERROR_PIPE_BUSY, "connecting to pipe");
+	        ok(err == ERROR_PIPE_BUSY, "connecting to pipe\n");
             trace("connect failed, retrying\n");
             Sleep(200);
         }
-        ok(hFile != INVALID_HANDLE_VALUE, "client opening named pipe");
+        ok(hFile != INVALID_HANDLE_VALUE, "client opening named pipe\n");
 
         /* Make sure it can echo */
         memset(ibuf, 0, sizeof(ibuf));
         trace("Client writing...\n");
-        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile to client end of pipe");
-        ok(written == sizeof(obuf), "write file len");
+        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile to client end of pipe\n");
+        ok(written == sizeof(obuf), "write file len\n");
         trace("Client reading...\n");
-        ok(ReadFile(hFile, ibuf, sizeof(obuf), &readden, NULL), "ReadFile from client end of pipe");
-        ok(readden == sizeof(obuf), "read file len");
-        ok(memcmp(obuf, ibuf, written) == 0, "content check");
+        ok(ReadFile(hFile, ibuf, sizeof(obuf), &readden, NULL), "ReadFile from client end of pipe\n");
+        ok(readden == sizeof(obuf), "read file len\n");
+        ok(memcmp(obuf, ibuf, written) == 0, "content check\n");
 
         trace("Client closing...\n");
-        ok(CloseHandle(hFile), "CloseHandle");
+        ok(CloseHandle(hFile), "CloseHandle\n");
     }
 
-    ok(TerminateThread(serverThread, 0), "TerminateThread");
+    ok(TerminateThread(serverThread, 0), "TerminateThread\n");
     CloseHandle(hnp);
     trace("exercizeServer returning\n");
 }
@@ -520,23 +520,23 @@ void test_NamedPipe_2(void)
 
     /* Try server #1 */
     serverThread = CreateThread(NULL, 0, serverThreadMain1, 0, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread");
+    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain1", serverThread);
 
     /* Try server #2 */
     serverThread = CreateThread(NULL, 0, serverThreadMain2, 0, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread");
+    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain2", serverThread);
 
     if( 0 ) /* overlapped pipe server doesn't work yet - it randomly fails */
     {
     /* Try server #3 */
     serverThread = CreateThread(NULL, 0, serverThreadMain3, 0, 0, &serverThreadId);
-    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread");
+    ok(serverThread != INVALID_HANDLE_VALUE, "CreateThread\n");
     exercizeServer(PIPENAME "serverThreadMain3", serverThread);
     }
 
-    ok(TerminateThread(alarmThread, 0), "TerminateThread");
+    ok(TerminateThread(alarmThread, 0), "TerminateThread\n");
     trace("test_NamedPipe_2 returning\n");
 }
 
@@ -555,15 +555,15 @@ void test_DisconnectNamedPipe(void)
         /* nInBufSize */ 1024,
         /* nDefaultWait */ NMPWAIT_USE_DEFAULT_WAIT,
         /* lpSecurityAttrib */ NULL);
-    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed");
+    ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
     ok(WriteFile(hnp, obuf, sizeof(obuf), &written, NULL) == 0
-        && GetLastError() == ERROR_PIPE_LISTENING, "WriteFile to not-yet-connected pipe");
+        && GetLastError() == ERROR_PIPE_LISTENING, "WriteFile to not-yet-connected pipe\n");
     ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL) == 0
-        && GetLastError() == ERROR_PIPE_LISTENING, "ReadFile from not-yet-connected pipe");
+        && GetLastError() == ERROR_PIPE_LISTENING, "ReadFile from not-yet-connected pipe\n");
 
     hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed");
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed\n");
 
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {
@@ -572,18 +572,18 @@ void test_DisconnectNamedPipe(void)
          * when there are bytes in the pipe
          */
 
-        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile");
-        ok(written == sizeof(obuf), "write file len");
-        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe while messages waiting");
+        ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL), "WriteFile\n");
+        ok(written == sizeof(obuf), "write file len\n");
+        ok(DisconnectNamedPipe(hnp), "DisconnectNamedPipe while messages waiting\n");
         ok(WriteFile(hFile, obuf, sizeof(obuf), &written, NULL) == 0
-            && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "WriteFile to disconnected pipe");
+            && GetLastError() == ERROR_PIPE_NOT_CONNECTED, "WriteFile to disconnected pipe\n");
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL) == 0
             && GetLastError() == ERROR_PIPE_NOT_CONNECTED,
-            "ReadFile from disconnected pipe with bytes waiting");
-        ok(CloseHandle(hFile), "CloseHandle");
+            "ReadFile from disconnected pipe with bytes waiting\n");
+        ok(CloseHandle(hFile), "CloseHandle\n");
     }
 
-    ok(CloseHandle(hnp), "CloseHandle");
+    ok(CloseHandle(hnp), "CloseHandle\n");
 
 }
 
