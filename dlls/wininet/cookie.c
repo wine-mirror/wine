@@ -390,7 +390,7 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     if (lpCookieData == NULL)
     {
 	cnt += 1; /* NULL */
-	*lpdwSize = cnt;
+	*lpdwSize = cnt*sizeof(WCHAR);
 	TRACE("returning\n");
 	return TRUE;
     }
@@ -398,7 +398,7 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     if (!domain_count)
         return FALSE;
 
-    *lpdwSize = cnt + 1;
+    *lpdwSize = (cnt + 1)*sizeof(WCHAR);
 
     TRACE("Returning %i (from %i domains): %s\n", cnt, domain_count,
            debugstr_w(lpCookieData));
