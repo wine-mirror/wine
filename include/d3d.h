@@ -1325,7 +1325,7 @@ struct IDirect3DTexture2 {
 #ifdef HAVE_MESAGL
   GLuint tex_name;
 #endif  
-  LPDIRECTDRAWSURFACE3       surface;
+  LPDIRECTDRAWSURFACE4       surface;
 };
 
 #undef THIS

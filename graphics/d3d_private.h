@@ -105,8 +105,8 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 #endif /* HAVE_MESAGL */
 
 /* All non-static functions 'exported' by various sub-objects */
-extern LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE3 surf) ;
-extern LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE3 surf) ;
+extern LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE4 surf) ;
+extern LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE4 surf) ;
 
 extern LPDIRECT3DLIGHT d3dlight_create_dx3(LPDIRECT3D d3d) ;
 extern LPDIRECT3DLIGHT d3dlight_create(LPDIRECT3D2 d3d) ;

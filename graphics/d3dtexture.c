@@ -29,7 +29,7 @@ static IDirect3DTexture_VTable texture_vtable;
 /*******************************************************************************
  *				Texture2 Creation functions
  */
-LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE3 surf)
+LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE4 surf)
 {
   LPDIRECT3DTEXTURE2 mat;
   
@@ -44,7 +44,7 @@ LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE3 surf)
 /*******************************************************************************
  *				Texture Creation functions
  */
-LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE3 surf)
+LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE4 surf)
 {
   LPDIRECT3DTEXTURE mat;
   
@@ -425,12 +425,12 @@ static IDirect3DTexture_VTable texture_vtable = {
 #else /* HAVE_MESAGL */
 
 /* These function should never be called if MesaGL is not present */
-LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE3 surf) {
+LPDIRECT3DTEXTURE2 d3dtexture2_create(LPDIRECTDRAWSURFACE4 surf) {
   ERR(ddraw, "Should not be called...\n");
   return NULL;
 }
 
-LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE3 surf) {
+LPDIRECT3DTEXTURE d3dtexture_create(LPDIRECTDRAWSURFACE4 surf) {
   ERR(ddraw, "Should not be called...\n");
   return NULL;
 }

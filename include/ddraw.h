@@ -20,20 +20,24 @@ DEFINE_GUID( CLSID_DirectDraw,		0xD7B70EE0,0x4340,0x11CF,0xB0,0x63,0x00,0x20,0xA
 DEFINE_GUID( CLSID_DirectDrawClipper,	0x593817A0,0x7DB3,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xb9,0x33,0x56 );
 DEFINE_GUID( IID_IDirectDraw,		0x6C14DB80,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDraw2,		0xB3A6F3E0,0x2B43,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56 );
+DEFINE_GUID( IID_IDirectDraw4,          0x9c59509a,0x39bd,0x11d1,0x8c,0x4a,0x00,0xc0,0x4f,0xd9,0x30,0xc5 );
 DEFINE_GUID( IID_IDirectDrawSurface,	0x6C14DB81,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawSurface2,	0x57805885,0x6eec,0x11cf,0x94,0x41,0xa8,0x23,0x03,0xc1,0x0e,0x27 );
 DEFINE_GUID( IID_IDirectDrawSurface3,	0xDA044E00,0x69B2,0x11D0,0xA1,0xD5,0x00,0xAA,0x00,0xB8,0xDF,0xBB );
+DEFINE_GUID( IID_IDirectDrawSurface4,   0x0B2B8630,0xAD35,0x11D0,0x8E,0xA6,0x00,0x60,0x97,0x97,0xEA,0x5B );
 DEFINE_GUID( IID_IDirectDrawPalette,	0x6C14DB84,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawClipper,	0x6C14DB85,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDrawColorControl,0x4B9F0EE0,0x0D7E,0x11D0,0x9B,0x06,0x00,0xA0,0xC9,0x03,0xA3,0xB8 );
 
 typedef struct IDirectDraw IDirectDraw,*LPDIRECTDRAW;
 typedef struct IDirectDraw2 IDirectDraw2,*LPDIRECTDRAW2;
+typedef struct IDirectDraw4 IDirectDraw4,*LPDIRECTDRAW4;
 typedef struct IDirectDrawClipper IDirectDrawClipper,*LPDIRECTDRAWCLIPPER;
 typedef struct IDirectDrawPalette IDirectDrawPalette,*LPDIRECTDRAWPALETTE;
 typedef struct IDirectDrawSurface IDirectDrawSurface,*LPDIRECTDRAWSURFACE;
 typedef struct IDirectDrawSurface2 IDirectDrawSurface2,*LPDIRECTDRAWSURFACE2;
 typedef struct IDirectDrawSurface3 IDirectDrawSurface3,*LPDIRECTDRAWSURFACE3;
+typedef struct IDirectDrawSurface4 IDirectDrawSurface4,*LPDIRECTDRAWSURFACE4;
 typedef struct IDirectDrawColorControl IDirectDrawColorControl,*LPDIRECTDRAWCOLORCONTROL;
 
 #define DDENUMRET_CANCEL	0
@@ -810,6 +814,19 @@ typedef struct _DDBLTBATCH
     LPDDBLTFX		lpDDBltFx;
 } DDBLTBATCH,*LPDDBLTBATCH;
 
+#define MAX_DDDEVICEID_STRING          512
+
+typedef struct tagDDDEVICEIDENTIFIER {
+  char    szDriver[MAX_DDDEVICEID_STRING];
+  char    szDescription[MAX_DDDEVICEID_STRING];
+  LARGE_INTEGER  liDriverVersion;
+  DWORD   dwVendorId;
+  DWORD   dwDeviceId;
+  DWORD   dwSubSysId;
+  DWORD   dwRevision;
+  GUID    guidDeviceIdentifier;
+} DDDEVICEIDENTIFIER, * LPDDDEVICEIDENTIFIER;
+
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
 #define STDMETHOD_(ret,xfn) ret (CALLBACK *fn##xfn)
 #define PURE
@@ -995,11 +1012,65 @@ struct IDirectDraw2 {
 };
 #undef THIS
 
+#define THIS LPDIRECTDRAW4 this
+typedef struct IDirectDraw4_VTable
+{
+    /*** IUnknown methods ***/
+/*00*/	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID FAR * ppvObj) PURE;
+/*04*/	STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+/*08*/	STDMETHOD_(ULONG,Release) (THIS) PURE;
+    /*** IDirectDraw methods ***/
+/*0C*/	STDMETHOD(Compact)(THIS) PURE;
+/*10*/	STDMETHOD(CreateClipper)(THIS_ DWORD, LPDIRECTDRAWCLIPPER FAR*, IUnknown FAR * ) PURE;
+/*14*/	STDMETHOD(CreatePalette)(THIS_ DWORD,LPPALETTEENTRY,
+				 LPDIRECTDRAWPALETTE FAR*, IUnknown FAR *) PURE;
+/*18*/	STDMETHOD(CreateSurface)(THIS_ LPDDSURFACEDESC,LPDIRECTDRAWSURFACE
+				 FAR *, IUnknown FAR *) PURE;
+/*1C*/	STDMETHOD(DuplicateSurface)(THIS_ LPDIRECTDRAWSURFACE, 
+				    LPDIRECTDRAWSURFACE FAR * ) PURE;
+/*20*/	STDMETHOD(EnumDisplayModes)(THIS_ DWORD, LPDDSURFACEDESC, LPVOID,
+				    LPDDENUMMODESCALLBACK ) PURE;
+/*24*/	STDMETHOD(EnumSurfaces)(THIS_ DWORD, LPDDSURFACEDESC, LPVOID,
+				LPDDENUMSURFACESCALLBACK ) PURE;
+/*28*/	STDMETHOD(FlipToGDISurface)(THIS) PURE;
+/*2C*/	STDMETHOD(GetCaps)( THIS_ LPDDCAPS, LPDDCAPS) PURE;
+/*30*/	STDMETHOD(GetDisplayMode)( THIS_ LPDDSURFACEDESC) PURE;
+/*34*/	STDMETHOD(GetFourCCCodes)(THIS_  LPDWORD, LPDWORD ) PURE;
+/*38*/	STDMETHOD(GetGDISurface)(THIS_ LPDIRECTDRAWSURFACE FAR *) PURE;
+/*3C*/	STDMETHOD(GetMonitorFrequency)(THIS_ LPDWORD) PURE;
+/*40*/	STDMETHOD(GetScanLine)(THIS_ LPDWORD) PURE;
+/*44*/	STDMETHOD(GetVerticalBlankStatus)(THIS_ BOOL32* ) PURE;
+/*48*/	STDMETHOD(Initialize)(THIS_ GUID FAR *) PURE;
+/*4C*/	STDMETHOD(RestoreDisplayMode)(THIS) PURE;
+/*50*/	STDMETHOD(SetCooperativeLevel)(THIS_ HWND32, DWORD) PURE;
+/*54*/	STDMETHOD(SetDisplayMode)(THIS_ DWORD, DWORD, DWORD, DWORD, DWORD) PURE;
+/*58*/	STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD, HANDLE32 ) PURE;
+    /*** Added in the v2 interface ***/
+/*5C*/	STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS, LPDWORD, LPDWORD) PURE;
+    /*** Added in the V4 Interface ***/
+/*60*/   STDMETHOD(GetSurfaceFromDC) (THIS_ HDC32, LPDIRECTDRAWSURFACE *) PURE;
+/*64*/   STDMETHOD(RestoreAllSurfaces)(THIS) PURE;
+/*68*/   STDMETHOD(TestCooperativeLevel)(THIS) PURE;
+/*6C*/   STDMETHOD(GetDeviceIdentifier)(THIS_ LPDDDEVICEIDENTIFIER, DWORD ) PURE;
+} IDirectDraw4_VTable,*LPDIRECTDRAW4_VTABLE;
+/* MUST HAVE THE SAME LAYOUT AS struct IDirectDraw */
+
+struct IDirectDraw4 {
+	LPDIRECTDRAW4_VTABLE	lpvtbl;
+	DWORD			ref;
+	struct _common_directdrawdata	d;
+	union {
+		struct _xlib_directdrawdata xlib;
+		struct _dga_directdrawdata dga;
+	} e;
+};
+#undef THIS
+
 #define THIS LPDIRECTDRAWSURFACE this
 struct _common_directdrawsurface {
     LPDIRECTDRAWPALETTE		palette;
     LPDIRECTDRAW2		ddraw;
-    LPDIRECTDRAWSURFACE3	backbuffer;
+    LPDIRECTDRAWSURFACE4	backbuffer;
 
     DDSURFACEDESC               surface_desc;
 };
@@ -1119,7 +1190,6 @@ struct IDirectDrawSurface2 {
     struct _common_directdrawsurface	s;
     union {
 	struct _dga_directdrawsurface	dga;
-	struct _xlib_directdrawsurface	xshm;
 	struct _xlib_directdrawsurface	xlib;
     } t;
 };
@@ -1179,11 +1249,77 @@ struct IDirectDrawSurface3 {
     struct _common_directdrawsurface	s;
     union {
 	struct _dga_directdrawsurface	dga;
-	struct _xlib_directdrawsurface	xshm;
 	struct _xlib_directdrawsurface	xlib;
     } t;
 };
 #undef THIS
+
+#define THIS LPDIRECTDRAWSURFACE4 this
+
+typedef struct IDirectDrawSurface4_VTable {
+    /*** IUnknown methods ***/
+/*00*/STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID FAR * ppvObj) PURE;
+/*04*/STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+/*08*/STDMETHOD_(ULONG,Release) (THIS) PURE;
+    /*** IDirectDrawSurface methods ***/
+/*0c*/STDMETHOD(AddAttachedSurface)(THIS_ LPDIRECTDRAWSURFACE4) PURE;
+/*10*/STDMETHOD(AddOverlayDirtyRect)(THIS_ LPRECT32) PURE;
+/*14*/STDMETHOD(Blt)(THIS_ LPRECT32,LPDIRECTDRAWSURFACE4, LPRECT32,DWORD, LPDDBLTFX) PURE;
+/*18*/STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH, DWORD, DWORD ) PURE;
+/*1c*/STDMETHOD(BltFast)(THIS_ DWORD,DWORD,LPDIRECTDRAWSURFACE4, LPRECT32,DWORD) PURE;
+/*20*/STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD,LPDIRECTDRAWSURFACE4) PURE;
+/*24*/STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID,LPDDENUMSURFACESCALLBACK) PURE;    
+/*28*/STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD,LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
+/*2c*/STDMETHOD(Flip)(THIS_ LPDIRECTDRAWSURFACE4, DWORD) PURE;
+/*30*/STDMETHOD(GetAttachedSurface)(THIS_ LPDDSCAPS, LPDIRECTDRAWSURFACE4 FAR *) PURE;
+/*34*/STDMETHOD(GetBltStatus)(THIS_ DWORD) PURE;
+/*38*/STDMETHOD(GetCaps)(THIS_ LPDDSCAPS) PURE;
+/*3c*/STDMETHOD(GetClipper)(THIS_ LPDIRECTDRAWCLIPPER FAR*) PURE;
+/*40*/STDMETHOD(GetColorKey)(THIS_ DWORD, LPDDCOLORKEY) PURE;
+/*44*/STDMETHOD(GetDC)(THIS_ HDC32 FAR *) PURE;
+/*48*/STDMETHOD(GetFlipStatus)(THIS_ DWORD) PURE;
+/*4c*/STDMETHOD(GetOverlayPosition)(THIS_ LPLONG, LPLONG ) PURE;
+/*50*/STDMETHOD(GetPalette)(THIS_ LPDIRECTDRAWPALETTE FAR*) PURE;
+/*54*/STDMETHOD(GetPixelFormat)(THIS_ LPDDPIXELFORMAT) PURE;
+/*58*/STDMETHOD(GetSurfaceDesc)(THIS_ LPDDSURFACEDESC) PURE;
+/*5c*/STDMETHOD(Initialize)(THIS_ LPDIRECTDRAW, LPDDSURFACEDESC) PURE;
+/*60*/STDMETHOD(IsLost)(THIS) PURE;
+/*64*/STDMETHOD(Lock)(THIS_ LPRECT32,LPDDSURFACEDESC,DWORD,HANDLE32) PURE;
+/*68*/STDMETHOD(ReleaseDC)(THIS_ HDC32) PURE;
+/*6c*/STDMETHOD(Restore)(THIS) PURE;
+/*70*/STDMETHOD(SetClipper)(THIS_ LPDIRECTDRAWCLIPPER) PURE;
+/*74*/STDMETHOD(SetColorKey)(THIS_ DWORD, LPDDCOLORKEY) PURE;
+/*78*/STDMETHOD(SetOverlayPosition)(THIS_ LONG, LONG ) PURE;
+/*7c*/STDMETHOD(SetPalette)(THIS_ LPDIRECTDRAWPALETTE) PURE;
+/*80*/STDMETHOD(Unlock)(THIS_ LPVOID) PURE;
+/*84*/STDMETHOD(UpdateOverlay)(THIS_ LPRECT32, LPDIRECTDRAWSURFACE4,LPRECT32,DWORD, LPDDOVERLAYFX) PURE;
+/*88*/STDMETHOD(UpdateOverlayDisplay)(THIS_ DWORD) PURE;
+/*8c*/STDMETHOD(UpdateOverlayZOrder)(THIS_ DWORD, LPDIRECTDRAWSURFACE4) PURE;
+    /*** Added in the v2 interface ***/
+/*90*/STDMETHOD(GetDDInterface)(THIS_ LPVOID FAR *) PURE;
+/*94*/STDMETHOD(PageLock)(THIS_ DWORD) PURE;
+/*98*/STDMETHOD(PageUnlock)(THIS_ DWORD) PURE;
+    /*** Added in the V3 interface ***/
+/*9c*/STDMETHOD(SetSurfaceDesc)(THIS_ LPDDSURFACEDESC, DWORD) PURE;
+    /*** Added in the v4 interface ***/
+/*a0*/STDMETHOD(SetPrivateData)(THIS_ REFGUID, LPVOID, DWORD, DWORD) PURE;
+/*a4*/STDMETHOD(GetPrivateData)(THIS_ REFGUID, LPVOID, LPDWORD) PURE;
+/*a8*/STDMETHOD(FreePrivateData)(THIS_ REFGUID) PURE;
+/*ac*/STDMETHOD(GetUniquenessValue)(THIS_ LPDWORD) PURE;
+/*b0*/STDMETHOD(ChangeUniquenessValue)(THIS) PURE;
+} *LPDIRECTDRAWSURFACE4_VTABLE,IDirectDrawSurface4_VTable;
+
+struct IDirectDrawSurface4 {
+    LPDIRECTDRAWSURFACE4_VTABLE	lpvtbl;
+    DWORD			ref;
+    struct _common_directdrawsurface	s;
+    union {
+	struct _dga_directdrawsurface	dga;
+	struct _xlib_directdrawsurface	xlib;
+    } t;
+};
+#undef THIS
+
 
 #define THIS LPDIRECTDRAWCOLORCONTROL this
 typedef struct IDirectDrawColorControl_VTable {
