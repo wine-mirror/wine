@@ -45,11 +45,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winreg.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/port.h"
 #include "heap.h"
-#include "options.h"
 #include "winerror.h"
 
 #include "debugtools.h"
@@ -114,14 +114,24 @@ void COMM_Init(void)
 {
 	int x;
 	char option[10], temp[256], *btemp;
+	HKEY hkey;
 
 	for (x=0; x!=MAX_PORTS; x++) {
 		strcpy(option,"COMx");
 		option[3] = '1' + x;
 		option[4] = '\0';
 
-		PROFILE_GetWineIniString( "serialports", option, "*",
-                                          temp, sizeof(temp) );
+		/* default value */
+		strcpy(temp, "*");
+
+		if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\serialports", &hkey))
+		{
+		    DWORD type, count = sizeof(temp);
+
+		    RegQueryValueExA(hkey, option, 0, &type, temp, &count);
+		    RegCloseKey(hkey);
+		}
+
 		if (!strcmp(temp, "*") || *temp == '\0') 
 			COM[x].devicename = NULL;
 		else {
@@ -145,8 +155,17 @@ void COMM_Init(void)
 		option[3] = '1' + x;
 		option[4] = '\0';
 
-		PROFILE_GetWineIniString( "parallelports", option, "*",
-                                          temp, sizeof(temp) );
+		/* default value */
+		strcpy(temp, "*");
+
+		if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\parallelports", &hkey))
+		{
+		    DWORD type, count = sizeof(temp);
+
+		    RegQueryValueExA(hkey, option, 0, &type, temp, &count);
+		    RegCloseKey(hkey);
+		}
+
 		if (!strcmp(temp, "*") || *temp == '\0')
 			LPT[x].devicename = NULL;
 		else {
