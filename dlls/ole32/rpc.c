@@ -392,19 +392,22 @@ RPC_QueueRequestAndWait(wine_rpc_request *req) {
 
     /* This loop is about allowing re-entrancy. While waiting for the
      * response to one RPC we may receive a request starting another. */
-    while (1) {
+    while (!hres) {
 	hres = _read_one(xpipe);
 	if (hres) break;
 
 	for (i=0;i<nrofreqs;i++) {
 	    xreq = reqs[i];
 	    if ((xreq->state==REQSTATE_REQ_GOT) && (xreq->hPipe==req->hPipe)) {
-		_invoke_onereq(xreq);
+		hres = _invoke_onereq(xreq);
+		if (hres) break;
 	    }
 	}
 	if (req->state == REQSTATE_RESP_GOT)
 	    return S_OK;
     }
+    if (FAILED(hres))
+        WARN("-- 0x%08lx\n", hres);
     return hres;
 }
 
@@ -734,10 +737,10 @@ static DWORD WINAPI
 _StubReaderThread(LPVOID param) {
     wine_pipe		*xpipe = (wine_pipe*)param;
     HANDLE		xhPipe = xpipe->hPipe;
-    HRESULT		hres;
+    HRESULT		hres = S_OK;
 
     TRACE("STUB reader thread %lx\n",GetCurrentProcessId());
-    while (1) {
+    while (!hres) {
 	int i;
 	hres = _read_one(xpipe);
 	if (hres) break;
@@ -745,7 +748,8 @@ _StubReaderThread(LPVOID param) {
 	for (i=nrofreqs;i--;) {
 	    wine_rpc_request *xreq = reqs[i];
 	    if ((xreq->state == REQSTATE_REQ_GOT) && (xreq->hPipe == xhPipe)) {
-		_invoke_onereq(xreq);
+		hres = _invoke_onereq(xreq);
+		if (!hres) break;
 	    }
 	}
     }
