@@ -47,7 +47,7 @@ use File::Basename;
 use strict;
 use Carp;
 
-GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s') || &Usage;
+GetOptions('windir=s', 'sysdir=s', 'thorough', 'debug:s', 'inifile=s') || &Usage;
 
 &ReadFSTAB();
 &FindWindowsDir();
@@ -60,6 +60,7 @@ sub Usage {
     print "-windir <filename>   Location of windows dir in DOS space\n";
     print "-thorough            Do careful analysis (default)\n";
     print "-sysdir <filename>   Location of systems dir in DOS space\n";
+    print "-inifile <filename>  Path to the wine.ini file (by default './wine.ini')\n";
 #    print "-tmpdir <filename>   Location of tmp directory\n";
     print "Generates (to STDOUT) a wine configuration file based on\n";
     print "/etc/fstab and searching around in DOS directories\n";
@@ -425,7 +426,11 @@ sub InsertDefaultFile {
 }
 
 sub StandardStuff {
-   &InsertDefaultFile("./wine.ini", "wineconf");
+    if (!$::opt_inifile) {
+	&InsertDefaultFile("./wine.ini", "wineconf");
+    } else {
+	&InsertDefaultFile($::opt_inifile, "wineconf");
+    }
 }
 
 sub byFileAge {
