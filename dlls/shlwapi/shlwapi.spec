@@ -637,8 +637,8 @@ init SHLWAPI_LibMain
 @ stdcall StrRChrIA (str str long) StrRChrIA
 @ stdcall StrRChrIW (str str long) StrRChrIW
 @ stdcall StrRChrW (wstr wstr long) StrRChrW
-@ stdcall StrRStrIA (str str) StrRStrIA
-@ stdcall StrRStrIW (wstr wstr) StrRStrIW
+@ stdcall StrRStrIA (str str str) StrRStrIA
+@ stdcall StrRStrIW (wstr wstr wstr) StrRStrIW
 @ stdcall StrSpnA (str str) StrSpnA
 @ stdcall StrSpnW (wstr wstr) StrSpnW
 @ stdcall StrStrA(str str)StrStrA
