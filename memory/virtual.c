@@ -1133,15 +1133,29 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
     if (hFile == INVALID_HANDLE_VALUE32)
     {
-    	FIXME(virtual,"shared anon mapping not correctly supported!\n");
-        if (!size_high && !size_low)
-        {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return 0;
-        }
-        obj = NULL;
+	FIXME(virtual,"shared anon mapping (%s, size %d) not correctly supported!\n",debugstr_a(name),size_low);
+	if (!size_high && !size_low)
+	{
+	    SetLastError( ERROR_INVALID_PARAMETER );
+	    return 0;
+	}
+	obj = NULL;
+        if (name)
+	{
+	    CHAR	buf[260];
+
+	    GetTempPath32A(260,buf);
+	    GetTempFileName32A(buf,"wine",260,buf);
+	    hFile = CreateFile32A(buf,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_ALWAYS,0,0);
+	    if (hFile == INVALID_HANDLE_VALUE32)
+	    	FIXME(virtual,"could not create temp. file for anon shared mapping: reason was 0x%08lx\n",GetLastError());
+	    else {
+                SetFilePointer(hFile,size_low,&size_high,FILE_BEGIN);
+	    	SetEndOfFile(hFile);
+	    }
+	}
     }
-    else  /* We have a file */
+    if (hFile != INVALID_HANDLE_VALUE32) /* We have a file */
     {
         BY_HANDLE_FILE_INFORMATION info;
         DWORD access = GENERIC_READ;
