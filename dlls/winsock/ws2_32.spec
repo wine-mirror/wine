@@ -36,7 +36,7 @@ debug_channels (winsock)
 21  stdcall  setsockopt(long long long ptr long) WSOCK32_setsockopt
 22  stdcall  shutdown(long long) WSOCK32_shutdown
 23  stdcall  socket(long long long) WSOCK32_socket
-24  stub     WSApSetPostRoutine
+24  stdcall  WSApSetPostRoutine(ptr) WSApSetPostRoutine
 25  stub     WPUCompleteOverlappedRequest
 26  stub     WSAAccept
 27  stub     WSAAddressToStringA

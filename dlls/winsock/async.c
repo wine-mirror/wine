@@ -690,3 +690,12 @@ INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
 {
     return (HANDLE16)WSACancelAsyncRequest((HANDLE)hAsyncTaskHandle);
 }
+
+/***********************************************************************
+ *       WSApSetPostRoutine	(WS2_32.24)
+ */
+INT WINAPI WSApSetPostRoutine(LPVOID /* LPWPUPOSTMESSAGE */lpPostRoutine)
+{
+    FIXME("(%p), stub !\n", lpPostRoutine);
+    return 0;
+}
