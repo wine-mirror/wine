@@ -479,7 +479,7 @@ static void test_RtlDuplicateUnicodeString(void)
 static void test_RtlCopyString(void)
 {
     static const char teststring[] = "Some Wild String";
-    static char deststring[] = "                    ";
+    char deststring[] = "                    ";
     STRING str;
     STRING deststr;
 
