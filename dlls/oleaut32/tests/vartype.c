@@ -472,6 +472,7 @@ static HRESULT (WINAPI *pVarBstrFromR4)(FLOAT,LCID,ULONG,BSTR*);
 static HRESULT (WINAPI *pVarBstrFromDate)(DATE,LCID,ULONG,BSTR*);
 
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
+static void (WINAPI *pClearCustData)(LPCUSTDATA);
 
 /* Internal representation of a BSTR */
 typedef struct tagINTERNAL_BSTR
@@ -5183,6 +5184,53 @@ static void test_NullChangeTypeEx(void)
   }
 }
 
+ 
+/* VT_UINT */
+static void test_UintChangeTypeEx(void)
+{
+  HRESULT hres;
+  VARIANTARG vSrc, vDst;
+  LCID lcid;
+
+  lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+
+  /* Converting a VT_UINT to a VT_INT does not check for overflow */
+  V_VT(&vDst) = VT_EMPTY;
+  V_VT(&vSrc) = VT_UINT;
+  V_UI4(&vSrc) = -1;
+  hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, VT_I4);
+  ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == -1,
+     "change uint: Expected %d,0x%08lx,%d got %d,0x%08lx,%ld\n",
+     VT_I4, S_OK, -1, V_VT(&vDst), hres, V_I4(&vDst));
+}
+
+#define NUM_CUST_ITEMS 16
+
+static void test_ClearCustData(void)
+{
+  WCHAR buff[sizeof(CUSTDATAITEM) * NUM_CUST_ITEMS / sizeof(WCHAR)];
+  CUSTDATA ci;
+  unsigned i;
+
+  CHECKPTR(ClearCustData);
+
+  memset(buff, 0, sizeof(buff));
+
+  ci.cCustData = NUM_CUST_ITEMS;
+  /* This is a bit tricky. We use SysAllocStringByteLen to allocate the
+   * array, since native uses an internal IMalloc interface for allocating
+   * its memory, while Wine uses HeapAlloc(). Doing this ensures we allocate
+   * using the correct function whether with native or builtin.
+   */
+  ci.prgCustData = (LPCUSTDATAITEM)SysAllocStringByteLen((LPCSTR)buff, sizeof(buff));
+  for (i = 0; i < NUM_CUST_ITEMS; i++)
+    VariantInit(&ci.prgCustData[i].varValue);
+  pClearCustData(&ci);
+  ok(!ci.cCustData && !ci.prgCustData, "ClearCustData didn't clear fields!\n");
+}
+
+
+
 START_TEST(vartype)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -5465,4 +5513,7 @@ START_TEST(vartype)
   test_ErrorChangeTypeEx();
   test_EmptyChangeTypeEx();
   test_NullChangeTypeEx();
+  test_UintChangeTypeEx();
+
+  test_ClearCustData();
 }
