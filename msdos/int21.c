@@ -1078,7 +1078,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 						   DX_reg(context) ));
 	int res;
 	
-	TRACE(int21,"BUFFERED INPUT\n");
+	TRACE(int21,"BUFFERED INPUT (size=%d)\n",buffer[0]);
 	if (buffer[1])
 	  TRACE(int21,"Handle old chars in buffer!\n");
 	res=_lread16( 0, buffer+2,buffer[0]);
@@ -1347,8 +1347,13 @@ void WINAPI DOS3Call( CONTEXT *context )
 
     case 0x3e: /* "CLOSE" - CLOSE FILE */
         TRACE(int21,"CLOSE handle %d\n",BX_reg(context));
-	if (BX_reg(context)<5) {
+	if ((BX_reg(context)<5)||
+	    /* FIXME: need to improve on those handle conversion macros */
+	    (BX_reg(context)==HFILE32_TO_HFILE16(GetStdHandle(STD_INPUT_HANDLE)))||
+	    (BX_reg(context)==HFILE32_TO_HFILE16(GetStdHandle(STD_OUTPUT_HANDLE)))||
+	    (BX_reg(context)==HFILE32_TO_HFILE16(GetStdHandle(STD_ERROR_HANDLE)))) {
 	    /* hack to make sure stdio isn't closed */
+	    FIXME(int21, "stdio handle closed, need proper conversion\n");
 	    DOS_ExtendedError = 0x06;
 	    bSetDOSExtendedError = TRUE;
 	} else
