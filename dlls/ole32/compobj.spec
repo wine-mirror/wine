@@ -59,7 +59,7 @@
 59 stub _IID_IDFRESERVED3
 60 stub _IID_IMESSAGEFILTER
 61 pascal CLSIDFromProgID(str ptr) CLSIDFromProgID16
-62 stub PROGIDFROMCLSID
+62 pascal ProgIDFromCLSID(ptr ptr) ProgIDFromCLSID16
 63 pascal CoLockObjectExternal(segptr word word) CoLockObjectExternal16
 64 stub _CLSID_STDMARSHAL
 65 stub COGETTREATASCLASS

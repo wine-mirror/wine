@@ -587,46 +587,65 @@ HRESULT WINE_StringFromCLSID(
   return S_OK;
 }
 
+extern BOOL WINAPI K32WOWCallback16Ex(	DWORD vpfn16, DWORD dwFlags,
+					DWORD cbArgs, LPVOID pArgs,
+					LPDWORD pdwRetCode );
+
+/******************************************************************************
+ *		_xmalloc16	[internal]
+ * Allocates size bytes from the standard ole16 allocator.
+ *
+ * RETURNS
+ *	the allocated segmented pointer and a HRESULT
+ */
+HRESULT
+_xmalloc16(DWORD size, SEGPTR *ptr) {
+  LPMALLOC16 mllc;
+  DWORD args[2];
+
+  if (CoGetMalloc16(0,&mllc))
+    return E_OUTOFMEMORY;
+
+  args[0] = (DWORD)mllc;
+  args[1] = size;
+  /* No need for a Callback entry, we have WOWCallback16Ex which does
+   * everything we need.
+   */
+  if (!K32WOWCallback16Ex(
+      (DWORD)((ICOM_VTABLE(IMalloc16)*)MapSL(
+	  (SEGPTR)ICOM_VTBL(((LPMALLOC16)MapSL((SEGPTR)mllc))))
+      )->Alloc,
+      WCB16_CDECL,
+      2*sizeof(DWORD),
+      (LPVOID)args,
+      (LPDWORD)ptr
+  )) {
+      ERR("CallTo16 IMalloc16 (%ld) failed\n",size);
+      return E_FAIL;
+  }
+  return S_OK;
+}
+
 /******************************************************************************
  *		StringFromCLSID	[COMPOBJ.19]
  * Converts a GUID into the respective string representation.
  * The target string is allocated using the OLE IMalloc.
+ *
  * RETURNS
  *	the string representation and HRESULT
  */
+
 HRESULT WINAPI StringFromCLSID16(
-        REFCLSID id,            /* [in] the GUID to be converted */
-	LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
+  REFCLSID id,		/* [in] the GUID to be converted */
+  LPOLESTR16 *idstr	/* [out] a pointer to a to-be-allocated segmented pointer pointing to the resulting string */
 
 ) {
-    extern BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
-                                           DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode );
-    LPMALLOC16	mllc;
-    HRESULT	ret;
-    DWORD	args[2];
+  HRESULT ret;
 
-    ret = CoGetMalloc16(0,&mllc);
-    if (ret) return ret;
-
-    args[0] = (DWORD)mllc;
-    args[1] = 40;
-
-    /* No need for a Callback entry, we have WOWCallback16Ex which does
-     * everything we need.
-     */
-    if (!K32WOWCallback16Ex(
-    	(DWORD)((ICOM_VTABLE(IMalloc16)*)MapSL(
-            (SEGPTR)ICOM_VTBL(((LPMALLOC16)MapSL((SEGPTR)mllc))))
-	)->Alloc,
-	WCB16_CDECL,
-	2*sizeof(DWORD),
-	(LPVOID)args,
-	(LPDWORD)idstr
-    )) {
-    	WARN("CallTo16 IMalloc16 failed\n");
-    	return E_FAIL;
-    }
-    return WINE_StringFromCLSID(id,MapSL((SEGPTR)*idstr));
+  ret = _xmalloc16(40,(SEGPTR*)idstr);
+  if (ret != S_OK)
+    return ret;
+  return WINE_StringFromCLSID(id,MapSL((SEGPTR)*idstr));
 }
 
 /******************************************************************************
@@ -726,6 +745,51 @@ HRESULT WINAPI ProgIDFromCLSID(
     HeapFree(GetProcessHeap(), 0, buf2);
   }
 
+  RegCloseKey(xhkey);
+  return ret;
+}
+
+/******************************************************************************
+ * ProgIDFromCLSID [COMPOBJ.62]
+ * Converts a class id into the respective Program ID. (By using a registry lookup)
+ * RETURNS S_OK on success
+ * riid associated with the progid
+ */
+HRESULT WINAPI ProgIDFromCLSID16(
+  REFCLSID clsid, /* [in] class id as found in registry */
+  LPOLESTR16 *lplpszProgID/* [out] associated Prog ID */
+) {
+  char     strCLSID[50], *buf, *buf2;
+  DWORD    buf2len;
+  HKEY     xhkey;
+  HRESULT  ret = S_OK;
+
+  WINE_StringFromCLSID(clsid, strCLSID);
+
+  buf = HeapAlloc(GetProcessHeap(), 0, strlen(strCLSID)+14);
+  sprintf(buf,"CLSID\\%s\\ProgID", strCLSID);
+  if (RegOpenKeyA(HKEY_CLASSES_ROOT, buf, &xhkey))
+    ret = REGDB_E_CLASSNOTREG;
+
+  HeapFree(GetProcessHeap(), 0, buf);
+
+  if (ret == S_OK)
+  {
+    buf2 = HeapAlloc(GetProcessHeap(), 0, 255);
+    buf2len = 255;
+    if (RegQueryValueA(xhkey, NULL, buf2, &buf2len))
+      ret = REGDB_E_CLASSNOTREG;
+
+    if (ret == S_OK)
+    {
+      ret = _xmalloc16(buf2len+1, (SEGPTR*)lplpszProgID);
+      if (ret != S_OK)
+        return ret;
+      strcpy(MapSL((SEGPTR)*lplpszProgID),buf2);
+      ret = S_OK;
+    }
+    HeapFree(GetProcessHeap(), 0, buf2);
+  }
   RegCloseKey(xhkey);
   return ret;
 }
