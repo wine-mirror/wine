@@ -1342,6 +1342,15 @@ info break	lists all (break|watch)points (with state)
 	  &lt;id&gt; exist, the debugger will prompt for the symbol you want to use. 
 	  Pick up the one you want from its number.
 	</para>
+        <para>
+          Alternatively you can specify a DLL in the &lt;id&gt; (for example 
+          MYDLL.DLL.myFunc for function myFunc of
+          <filename>G:\AnyPath\MyDll.dll)</filename>.
+        </para>
+        <para>
+          You can use the symbol <emphasis>EntryPoint</emphasis> to stand for 
+          the entry point of the Dll.
+        </para>
       </sect2>
 
       <sect2>
