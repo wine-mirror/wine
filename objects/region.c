@@ -361,9 +361,11 @@ BOOL EqualRgn( HRGN rgn1, HRGN rgn2 )
  */
 static int REGION_CopyRegion( RGNOBJ *src, RGNOBJ *dest )
 {
+    Region tmprgn;
     if (src->xrgn)
     {
-        Region tmprgn = XCreateRegion();
+        if (src->xrgn == dest->xrgn) return COMPLEXREGION;
+        tmprgn = XCreateRegion();
         if (!dest->xrgn) dest->xrgn = XCreateRegion();
         XUnionRegion( tmprgn, src->xrgn, dest->xrgn );
         XDestroyRegion( tmprgn );
@@ -401,11 +403,14 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, int x, int y )
 
 /***********************************************************************
  *           CombineRgn    (GDI.451)
+ *
+ * The behavior is correct even if src and dest regions are the same.
  */
 INT CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode )
 {
     RGNOBJ *destObj, *src1Obj, *src2Obj;
-    
+    Region destrgn;
+
     dprintf_region(stddeb, "CombineRgn: "NPFMT","NPFMT" -> "NPFMT" mode=%x\n", 
 		   hSrc1, hSrc2, hDest, mode );
     
@@ -445,29 +450,32 @@ INT CombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode )
 
       /* Perform the operation with the two X regions */
 
-    if (!destObj->xrgn) destObj->xrgn = XCreateRegion();
+    if (!(destrgn = XCreateRegion())) return ERROR;
     switch(mode)
     {
     case RGN_AND:
-        XIntersectRegion( src1Obj->xrgn, src2Obj->xrgn, destObj->xrgn );
+        XIntersectRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
         break;
     case RGN_OR:
-        XUnionRegion( src1Obj->xrgn, src2Obj->xrgn, destObj->xrgn );
+        XUnionRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
         break;
     case RGN_XOR:
-        XXorRegion( src1Obj->xrgn, src2Obj->xrgn, destObj->xrgn );
+        XXorRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
         break;
     case RGN_DIFF:
-        XSubtractRegion( src1Obj->xrgn, src2Obj->xrgn, destObj->xrgn );
+        XSubtractRegion( src1Obj->xrgn, src2Obj->xrgn, destrgn );
         break;
     default:
+        XDestroyRegion( destrgn );
         return ERROR;
     }
+    if (destObj->xrgn) XDestroyRegion( destObj->xrgn );
+    destObj->xrgn = destrgn;
     if (XEmptyRegion(destObj->xrgn))
     {
         XDestroyRegion( destObj->xrgn );
         destObj->xrgn = 0;
         return NULLREGION;
     }
-    else return COMPLEXREGION;
+    return COMPLEXREGION;
 }

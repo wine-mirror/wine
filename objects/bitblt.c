@@ -667,13 +667,13 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     {
         yinc = ((int)heightSrc << 16) / heightDst;
         ydst = visRectDst->top;
-        ysrc = yinc * ydst;
+        ysrc = yinc * ydst + (vswap ? heightSrc<<16 : 0);
     }
     else
     {
         yinc = ((int)heightDst << 16) / heightSrc;
         ysrc = visRectSrc->top;
-        ydst = yinc * ysrc;
+        ydst = yinc * ysrc - (vswap ? (heightDst-1)<<16 : 0);
     }
 
     while(vstretch ? (ydst < visRectDst->bottom) : (ysrc < visRectSrc->bottom))
@@ -685,7 +685,8 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
 
           /* Stretch or shrink it */
         if (hstretch)
-            BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left,
+            BITBLT_StretchRow( rowSrc, rowDst, visRectDst->left +
+			       (hswap ? widthDst : 0),
                                visRectDst->right-visRectDst->left, xinc, mode);
         else BITBLT_ShrinkRow( rowSrc, rowDst, visRectSrc->left,
                                visRectSrc->right-visRectSrc->left, xinc, mode);
@@ -714,7 +715,7 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
         
           /* Store the destination row */
 
-        pixel = rowDst + visRectDst->right - 1;
+        pixel = rowDst + visRectDst->right - 1 + (hswap ? widthDst : 0);
         if (vswap)
             y = visRectDst->bottom - (vstretch ? ydst : ydst >> 16);
         else
@@ -972,7 +973,8 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, short xDst, short yDst,
 
     if (!dcSrc) return TRUE;
     SetRect( &tmpRect, xSrc, ySrc, xSrc + widthSrc, ySrc + heightSrc );
-    GetRgnBox( dcSrc->w.hGCClipRgn, &clipRect );
+    /* Apparently the clip region is only for output, so use hVisRgn here */
+    GetRgnBox( dcSrc->w.hVisRgn, &clipRect );
     OffsetRect( &clipRect, dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
     if (!IntersectRect( visRectSrc, &tmpRect, &clipRect )) return FALSE;
 

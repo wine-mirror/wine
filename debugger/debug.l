@@ -90,6 +90,9 @@ enable|enabl|enab|ena		{ return ENABLE;}
 disable|disabl|disab|disa|dis	{ return DISABLE; }
 delete|delet|dele|del		{ return DELETE; }
 quit|qui|qu|q			{ return QUIT; }
+walk|w				{ return WALK; }
+queue|queu|que			{ return QUEUE; }
+window|windo|wind|win|wnd	{ return WND; }
 x				{ return EXAM; }
 
 help|hel|he|"?"			{ return HELP; }

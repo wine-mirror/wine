@@ -15,9 +15,6 @@
 #include "debug.h"
 #include "spy.h"
 
-#define SPY_MAX_MSGNUM		WM_USER
-#define SPY_MAX_INDENTLEVEL     64
-
 const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
     "WM_NULL",			/* 0x00 */
@@ -130,7 +127,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_NCMBUTTONDBLCLK",	/* 0x00A9 */
     NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x00B0 */
+    /* 0x00B0 - Win32 Edit controls */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -142,11 +139,11 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x00E0 */
+    /* 0x00E0 - Win32 Scrollbars */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x00F0 */
+    /* 0x00F0 - Win32 Buttons */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -186,7 +183,7 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x0140 */
+    /* 0x0140 - Win32 Comboboxes */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -198,11 +195,11 @@ const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x0170 */
+    /* 0x0170 - Win32 Static controls */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    /* 0x0180 */
+    /* 0x0180 - Win32 Listboxes */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -398,7 +395,7 @@ static BOOL  	SpyFilters [SPY_MAX_MSGNUM+1];
 static BOOL 	SpyIncludes[SPY_MAX_MSGNUM+1];
 
 static int      iSpyMessageIndentLevel  = 0;
-static char     lpstrSpyMessageIndent[SPY_MAX_INDENTLEVEL];
+       char     lpstrSpyMessageIndent[SPY_MAX_INDENTLEVEL]; /* referenced in debugger/info.c */
 static char    *lpstrSpyMessageFromWine = "Wine";
 static char     lpstrSpyMessageFromTask[10]; 
 static char    *lpstrSpyMessageFromSelf = "self";
@@ -501,8 +498,11 @@ void ExitSpyMessage(int iFlag, HWND hWnd, WORD msg, LONG lReturn)
 
   if( !SpyIncludes[wCheckMsg] || SpyFilters[wCheckMsg]) return;
 
-  iSpyMessageIndentLevel--;
-  lpstrSpyMessageIndent[iSpyMessageIndentLevel]='\0';
+  if( iSpyMessageIndentLevel )
+    {
+      iSpyMessageIndentLevel--;
+      lpstrSpyMessageIndent[iSpyMessageIndentLevel]='\0';
+    }
 
   switch(iFlag)
     {

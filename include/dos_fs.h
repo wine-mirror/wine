@@ -25,7 +25,7 @@ typedef struct
 
 #define IS_END_OF_NAME(ch)  (!(ch) || ((ch) == '/') || ((ch) == '\\'))
 
-extern void DOSFS_ToDosDateTime( time_t *unixtime, WORD *pDate, WORD *pTime );
+extern void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime );
 extern const char *DOSFS_ToDosFCBFormat( const char *name );
 extern const char *DOSFS_ToDosDTAFormat( const char *name );
 extern const char *DOSFS_IsDevice( const char *name );

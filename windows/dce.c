@@ -146,30 +146,28 @@ static BOOL DCE_GetVisRect( WND *wndPtr, BOOL clientArea, RECT *lprect )
 static HRGN DCE_ClipWindows( HWND hwndStart, HWND hwndEnd,
                              HRGN hrgn, int xoffset, int yoffset )
 {
-    HRGN hrgnTmp = 0, hrgnNew = 0;
+    HRGN hrgnNew;
     WND *wndPtr;
 
     if (!hwndStart) return hrgn;
+    if (!(hrgnNew = CreateRectRgn( 0, 0, 0, 0 )))
+    {
+        if (hrgn) DeleteObject( hrgn );
+        return 0;
+    }
     for (; hwndStart != hwndEnd; hwndStart = wndPtr->hwndNext)
     {
-        hrgnTmp = hrgnNew = 0;
         wndPtr = WIN_FindWndPtr( hwndStart );
         if (!(wndPtr->dwStyle & WS_VISIBLE)) continue;
-        if (!(hrgnTmp = CreateRectRgn( 0, 0, 0, 0 ))) break;
-        if (!(hrgnNew = CreateRectRgn( wndPtr->rectWindow.left + xoffset,
-                                       wndPtr->rectWindow.top + yoffset,
-                                       wndPtr->rectWindow.right + xoffset,
-                                       wndPtr->rectWindow.bottom + yoffset )))
-            break;
-        if (!CombineRgn( hrgnTmp, hrgn, hrgnNew, RGN_DIFF )) break;
-        DeleteObject( hrgn );
-        DeleteObject( hrgnNew );
-        hrgn = hrgnTmp;
+        SetRectRgn( hrgnNew, wndPtr->rectWindow.left + xoffset,
+                    wndPtr->rectWindow.top + yoffset,
+                    wndPtr->rectWindow.right + xoffset,
+                    wndPtr->rectWindow.bottom + yoffset );
+        if (!CombineRgn( hrgn, hrgn, hrgnNew, RGN_DIFF )) break;
     }
     if (hwndStart != hwndEnd)  /* something went wrong */
     {
-        if (hrgnTmp) DeleteObject( hrgnTmp );
-        if (hrgnNew) DeleteObject( hrgnNew );
+        DeleteObject( hrgnNew );
         if (hrgn) DeleteObject( hrgn );
         return 0;
     }
@@ -380,14 +378,8 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
     {
-	HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-	if (hrgn)
-	{
-            CombineRgn( hrgn, hrgnVisible, hrgnClip,
-                       (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
-	    DeleteObject( hrgnVisible );
-            hrgnVisible = hrgn;
-	}
+        CombineRgn( hrgnVisible, hrgnVisible, hrgnClip,
+                    (flags & DCX_INTERSECTRGN) ? RGN_AND : RGN_DIFF );
     }
     SelectVisRgn( hdc, hrgnVisible );
     DeleteObject( hrgnVisible );

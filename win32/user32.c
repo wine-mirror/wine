@@ -24,45 +24,6 @@
 #include "debug.h"
 #include "stddebug.h"
 
-/* Structure copy functions */
-static void MSG16to32(MSG *msg16,struct WIN32_MSG *msg32)
-{
-	msg32->hwnd=(DWORD)msg16->hwnd;
-	msg32->message=msg16->message;
-	msg32->wParam=msg16->wParam;
-	msg32->lParam=msg16->lParam;
-	msg32->time=msg16->time;
-	msg32->pt.x=msg16->pt.x;
-	msg32->pt.y=msg16->pt.y;
-}
-
-static void MSG32to16(struct WIN32_MSG *msg32,MSG *msg16)
-{
-	msg16->hwnd=(HWND)msg32->hwnd;
-	msg16->message=msg32->message;
-	msg16->wParam=msg32->wParam;
-	msg16->lParam=msg32->lParam;
-	msg16->time=msg32->time;
-	msg16->pt.x=msg32->pt.x;
-	msg16->pt.y=msg32->pt.y;
-}
-
-void USER32_RECT32to16(const RECT32* r32,RECT *r16)
-{
-	r16->left = r32->left;
-	r16->right = r32->right;
-	r16->top = r32->top;
-	r16->bottom = r32->bottom;
-}
-
-void USER32_RECT16to32(const RECT* r16,RECT32 *r32)
-{
-	r32->left = r16->left;
-	r32->right = r16->right;
-	r32->top = r16->top;
-	r32->bottom = r16->bottom;
-}
-
 /***********************************************************************
  *           RegisterClassA      (USER32.426)
  */
@@ -113,19 +74,19 @@ ATOM USER32_RegisterClassA(WNDCLASSA* wndclass)
 /***********************************************************************
  *          GetMessageA          (USER32.269)
  */
-BOOL USER32_GetMessageA(struct WIN32_MSG* lpmsg,DWORD hwnd,DWORD min,DWORD max)
+BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
 {
 	BOOL ret;
 	MSG msg;
 	ret=GetMessage(MAKE_SEGPTR(&msg),(HWND)hwnd,min,max);
-	MSG16to32(&msg,lpmsg);
+	STRUCT32_MSG16to32(&msg,lpmsg);
 	return ret;
 }
 
 /***********************************************************************
  *          BeginPaint           (USER32.9)
  */
-HDC USER32_BeginPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
+HDC USER32_BeginPaint(DWORD hwnd,PAINTSTRUCT32 *lpps)
 {
 	PAINTSTRUCT ps;
 	HDC ret;
@@ -144,7 +105,7 @@ HDC USER32_BeginPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
 /***********************************************************************
  *          EndPaint             (USER32.175)
  */
-BOOL USER32_EndPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
+BOOL USER32_EndPaint(DWORD hwnd,PAINTSTRUCT32 *lpps)
 {
 	PAINTSTRUCT ps;
 	ps.hdc=(HDC)lpps->hdc;
@@ -162,23 +123,23 @@ BOOL USER32_EndPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps)
 /***********************************************************************
  *         DispatchMessageA       (USER32.140)
  */
-LONG USER32_DispatchMessageA(struct WIN32_MSG* lpmsg)
+LONG USER32_DispatchMessageA(MSG32* lpmsg)
 {
 	MSG msg;
 	LONG ret;
-	MSG32to16(lpmsg,&msg);
+	STRUCT32_MSG32to16(lpmsg,&msg);
 	ret=DispatchMessage(&msg);
-	MSG16to32(&msg,lpmsg);
+	STRUCT32_MSG16to32(&msg,lpmsg);
 	return ret;
 }
 
 /***********************************************************************
  *         TranslateMessage       (USER32.555)
  */
-BOOL USER32_TranslateMessage(struct WIN32_MSG* lpmsg)
+BOOL USER32_TranslateMessage(MSG32* lpmsg)
 {
 	MSG msg;
-	MSG32to16(lpmsg,&msg);
+	STRUCT32_MSG32to16(lpmsg,&msg);
 	return TranslateMessage(&msg);
 }
 
@@ -256,7 +217,7 @@ BOOL USER32_InvalidateRect(HWND hWnd,const RECT32 *lpRect,BOOL bErase)
 	if (lpRect == NULL)
 		InvalidateRect(hWnd, (RECT *)NULL, bErase);
 	else {
-		USER32_RECT32to16(lpRect,&r);
+		STRUCT32_RECT32to16(lpRect,&r);
 		InvalidateRect(hWnd,&r,bErase);
 	}
 	/* FIXME: Return meaningful value */
@@ -269,7 +230,7 @@ BOOL USER32_InvalidateRect(HWND hWnd,const RECT32 *lpRect,BOOL bErase)
 int USER32_DrawTextA(HDC hdc,LPCSTR lpStr,int count,RECT32* r32,UINT uFormat)
 {
 	RECT r;
-	USER32_RECT32to16(r32,&r);
+	STRUCT32_RECT32to16(r32,&r);
 	return DrawText(hdc,lpStr,count,&r,uFormat);
 }
 
@@ -280,7 +241,7 @@ BOOL USER32_GetClientRect(HWND hwnd,RECT32 *r32)
 {
 	RECT r;
 	GetClientRect(hwnd,&r);
-	USER32_RECT16to32(&r,r32);
+	STRUCT32_RECT16to32(&r,r32);
 	/* FIXME: return value */
 	return 0;
 }

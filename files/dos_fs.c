@@ -259,9 +259,9 @@ static int DOSFS_Match( const char *mask, const char *name )
  *
  * Convert a Unix time in the DOS date/time format.
  */
-void DOSFS_ToDosDateTime( time_t *unixtime, WORD *pDate, WORD *pTime )
+void DOSFS_ToDosDateTime( time_t unixtime, WORD *pDate, WORD *pTime )
 {
-    struct tm *tm = localtime( unixtime );
+    struct tm *tm = localtime( &unixtime );
     if (pTime)
         *pTime = (tm->tm_hour << 11) + (tm->tm_min << 5) + (tm->tm_sec / 2);
     if (pDate)
@@ -652,12 +652,11 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
     
     if ((attr & ~(FA_UNUSED | FA_ARCHIVE | FA_RDONLY)) == FA_LABEL)
     {
-        time_t now = time(NULL);
         if (skip) return 0;
         strcpy( entry->name, DRIVE_GetLabel( drive ) );
         entry->attr = FA_LABEL;
         entry->size = 0;
-        DOSFS_ToDosDateTime( &now, &entry->date, &entry->time );
+        DOSFS_ToDosDateTime( time(NULL), &entry->date, &entry->time );
         return 1;
     }
 

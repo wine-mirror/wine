@@ -1,4 +1,100 @@
 ----------------------------------------------------------------------
+Fri Mar  8 19:07:18 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [configure.in]
+	Quote '[' and ']' in the test program for the strength-reduce
+	bug. This should work much better...
+
+	* [files/file.c]
+	Augmented DOS_FILE structure. Most internal functions now return a
+	DOS_FILE* instead of a Unix handle.
+	Added a local file array to replace the PDB list upon startup, to
+	allow using file I/O functions before the first task is created.
+	Added FILE_SetDateTime() and FILE_Sync() functions.
+	
+	* [loader/module.c]
+	Use the DOS file I/O functions in MODULE_LoadExeHeader().
+
+	* [objects/bitblt.c]
+	Use visible region instead of GC clip region to clip source
+	area. This fixes the card drawing bug in freecell.
+
+	* [objects/region.c]
+	Fixed CombineRgn() to allow src and dest regions to be the same.
+
+Fri Mar  8 16:32:23 1996  Frans van Dorsselaer <dorssel@rulhm1.leidenuniv.nl>
+
+	* [controls/EDIT.TODO]
+	Updated so it reflects the current status.
+
+	* [controls/edit.c]
+	Implemented internal EDIT_WordBreakProc().
+	Implemented ES_READONLY.
+	Implemented WM_LBUTTONDBLCLK to select whole words.
+	Fixed a lot of types in the function definitions.
+
+Wed Mar  6 19:55:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [debugger/info.c]
+	Added "walk window" command to walk window list. 
+
+	* [windows/mdi.c]
+	Added proper(?) WM_MDISETMENU message handling.
+
+Wed Mar  6 09:27:12 1996  Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [if1632/callback.c][if1632/relay32.c]
+	RELAY32_CallWindowProcConvStruct: new function.
+
+	* [win32/struct32.c][win32/Makefile.in][win32/param.c][win32/user32.c]
+	struct32.c: new file. Moved all structure conversions into that file
+	PARAM32_POINT32to16,MSG16to32,USER32_RECT32to16: 
+	renamed to STRUCT32_POINT32to16, ...
+	WIN32_POINT,WIN32_MSG,WIN32_RECT,WIN32_PAINTSTRUCT: renamed to
+	POINT32, ...
+	New conversion functions for NCCALCSIZE_PARAMS, WINDOWPOS,
+ 	CREATESTRUCT.
+
+	* [include/windows.h][misc/exec.c]
+	WINHELP, MULTIKEYHELP, HELPWININFO: new structures
+	WinHelp: Reimplemented. Thanks to Peter Balch
+ 	(100710.2566@compuserve.com) for his valuable research.
+
+	* [win32/winprocs.c]
+	WIN32_CallWindowProcTo16: new function, call in
+ 	USER32_DefWindowProcA,...
+
+Mon Mar  4 23:22:40 1996  Jim Peterson <jspeter@birch.ee.vt.edu>
+
+	* [include/wintypes.h]
+	Added "#define __export".
+
+	* [programs/progman/main.c]
+	Added "#include <resource.h>" for definition of HAVE_WINE_CONSTRUCTOR.
+
+	* [rc/parser.h] [rc/parser.l] [rc/parser.y] [rc/winerc.c]
+	Eliminated shift/reduce conflict in style definition.
+	Added crude error message support: "stdin:%d: parse error before '%s'".
+	Implemented string table support to the best of my ability (it works
+	with LoadString() calls).
+
+	* [windows/nonclient.c]
+	Fixed bug in NC_DoSizeMove() that made system menu pop up when title
+	bar of non-iconized window was clicked (checked for iconization).
+
+Mon Mar 04 20:55:19 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/lzexpand.spec] [if1632/relay.c]
+	  [include/lzexpand.h][misc/lzexpand.c]
+	LZEXPAND.DLL added.
+
+Sun Mar 03 18:10:22 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [windows/win.c]
+	Prevent usage of invalid HWNDs in WIN_EnumChildWin(),
+	this prevents too early termination of EnumChildWindows().
+
+----------------------------------------------------------------------
 Sat Mar  2 18:19:06 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/scroll.c]

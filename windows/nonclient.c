@@ -1075,9 +1075,9 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT pt )
     SendMessage( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
 
-    /* Single click brings up the system menu */
+    /* Single click brings up the system menu when iconized */
 
-    if (!moved)
+    if (!moved && (wndPtr->dwStyle & WS_MINIMIZE))
     {
         NC_TrackSysMenu( hwnd, hdc, pt );
         return;

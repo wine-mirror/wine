@@ -54,6 +54,9 @@ void INT_Int2fHandler( struct sigcontext_struct context )
             INT_BARF( &context, 0x2f );
         }
         break;
+    case 0xb7:  /* append */
+        AL_reg(&context) = 0; /* not installed */
+        break;
     default:
         INT_BARF( &context, 0x2f );
         break;

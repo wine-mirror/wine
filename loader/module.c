@@ -411,7 +411,7 @@ HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
 /***********************************************************************
  *           MODULE_LoadExeHeader
  */
-HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
+HMODULE MODULE_LoadExeHeader( HFILE hFile, OFSTRUCT *ofs )
 {
     struct mz_header_s mz_header;
     struct ne_header_s ne_header;
@@ -427,15 +427,15 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
        ((fastload && ((offset) >= fastload_offset) && \
          ((offset)+(size) <= fastload_offset+fastload_length)) ? \
         (memcpy( buffer, fastload+(offset)-fastload_offset, (size) ), TRUE) : \
-        (lseek( fd, mz_header.ne_offset+(offset), SEEK_SET), \
-         read( fd, (buffer), (size) ) == (size)))
+        (_llseek( hFile, mz_header.ne_offset+(offset), SEEK_SET), \
+         FILE_Read( hFile, (buffer), (size) ) == (size)))
 
-    lseek( fd, 0, SEEK_SET );
-    if ((read( fd, &mz_header, sizeof(mz_header) ) != sizeof(mz_header)) ||
+    _llseek( hFile, 0, SEEK_SET );
+    if ((FILE_Read(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
         (mz_header.mz_magic != MZ_SIGNATURE)) return (HMODULE)11;  /* invalid exe */
 
-    lseek( fd, mz_header.ne_offset, SEEK_SET );
-    if (read( fd, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
+    _llseek( hFile, mz_header.ne_offset, SEEK_SET );
+    if (FILE_Read( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
         return (HMODULE)11;  /* invalid exe */
 
     if (ne_header.ne_magic == PE_SIGNATURE) return (HMODULE)21;  /* win32 exe */
@@ -477,8 +477,8 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
                         fastload_offset, fastload_length );
         if ((fastload = (char *)malloc( fastload_length )) != NULL)
         {
-            lseek( fd, mz_header.ne_offset + fastload_offset, SEEK_SET );
-            if (read( fd, fastload, fastload_length ) != fastload_length)
+            _llseek( hFile, mz_header.ne_offset + fastload_offset, SEEK_SET );
+            if (FILE_Read( hFile, fastload, fastload_length ) != fastload_length)
             {
                 free( fastload );
                 fastload = NULL;
@@ -572,8 +572,8 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
                                                hModule, FALSE, FALSE, FALSE );
         if (!pModule->nrname_handle) return (HMODULE)11;  /* invalid exe */
         buffer = GlobalLock( pModule->nrname_handle );
-        lseek( fd, ne_header.nrname_tab_offset, SEEK_SET );
-        if (read( fd, buffer, ne_header.nrname_tab_length )
+        _llseek( hFile, ne_header.nrname_tab_offset, SEEK_SET );
+        if (FILE_Read( hFile, buffer, ne_header.nrname_tab_length )
               != ne_header.nrname_tab_length) return (HMODULE)11;  /* invalid exe */
     }
     else pModule->nrname_handle = 0;
@@ -925,7 +925,8 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
 #ifndef WINELIB
     WORD *pModRef, *pDLLs;
-    int i, fd;
+    HFILE hFile;
+    int i;
 
     hModule = MODULE_FindModule( name );
 
@@ -936,7 +937,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
         /* Try to load the built-in first if not disabled */
         if ((hModule = MODULE_LoadBuiltin( name, FALSE ))) return hModule;
 
-        if ((fd = FILE_OpenFile( name, &ofs, OF_READ )) == -1)
+        if ((hFile = OpenFile( name, &ofs, OF_READ )) == HFILE_ERROR)
         {
             /* Now try the built-in even if disabled */
             if ((hModule = MODULE_LoadBuiltin( name, TRUE )))
@@ -949,17 +950,20 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
           /* Create the module structure */
 
-        hModule = MODULE_LoadExeHeader( fd, &ofs );
+        hModule = MODULE_LoadExeHeader( hFile, &ofs );
         if (hModule < 32)
         {
+            /* FIXME: Hack because PE_LoadModule is recursive */
+            int fd = dup( FILE_GetUnixHandle(hFile) );
+            _lclose( hFile );
             if (hModule == 21) hModule = PE_LoadModule( fd, &ofs, paramBlock );
-            close(fd);
+            close( fd );
             if (hModule < 32)
                 fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
                          name, hModule );
             return hModule;
         }
-        close( fd );
+        _lclose( hFile );
         pModule = (NE_MODULE *)GlobalLock( hModule );
 
           /* Allocate the segments for this module */
@@ -1017,6 +1021,7 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 
 	if (pModule->flags & NE_FFLAGS_SELFLOAD)
 	{
+                int fd;
 		/* Handle self loading modules */
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
@@ -1069,6 +1074,8 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 		  IF1632_Stack32_base = WIN16_GlobalLock(hInitialStack32);
 
 		}
+                /* FIXME: we probably need a DOS handle here */
+                fd = MODULE_OpenFile( hModule );
 		CallTo16_word_ww (selfloadheader->BootApp,
 			pModule->self_loading_sel, hModule, fd);
 		/* some BootApp procs overwrite the selector of dgroup */

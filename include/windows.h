@@ -2553,6 +2553,32 @@ typedef struct {
         WORD wMilliseconds;
 } SYSTEMTIME, *LPSYSTEMTIME;
 
+/* WinHelp internal structure */
+typedef struct {
+	WORD size;
+	WORD command;
+	LONG data;
+	LONG reserved;
+	WORD ofsFilename;
+	WORD ofsData;
+} WINHELP,*LPWINHELP;
+
+typedef struct {
+	UINT mkSize;
+	BYTE mkKeyList;
+	BYTE szKeyPhrase[1];
+} MULTIKEYHELP, *LPMULTIKEYHELP;
+
+typedef struct {
+	WORD wStructSize;
+	WORD x;
+	WORD y;
+	WORD dx;
+	WORD dy;
+	WORD wMax;
+	char rgchMember[2];
+} HELPWININFO, *LPHELPWININFO;
+
 #define HELP_CONTEXT        0x0001
 #define HELP_QUIT           0x0002
 #define HELP_INDEX          0x0003

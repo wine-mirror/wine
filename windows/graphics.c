@@ -659,6 +659,9 @@ void DrawFocusRect( HDC hdc, const RECT* rc )
     oldDrawMode = SetROP2(hdc, R2_XORPEN);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
 
+    /* Hack: make sure the XORPEN operation has an effect */
+    dc->u.x.pen.pixel = (1 << screenDepth) - 1;
+
     if (DC_SetupGCForPen( dc ))
 	XDrawRectangle( display, dc->u.x.drawable, dc->u.x.gc,
 		        dc->w.DCOrgX + left, dc->w.DCOrgY + top,

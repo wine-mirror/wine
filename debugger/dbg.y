@@ -34,7 +34,8 @@ int yyerror(char *);
 }
 
 %token CONT STEP LIST NEXT QUIT HELP BACKTRACE INFO STACK SEGMENTS REGS
-%token ENABLE DISABLE BREAK DELETE SET MODE PRINT EXAM DEFINE ABORT
+%token ENABLE DISABLE BREAK DELETE SET MODE PRINT EXAM DEFINE ABORT WALK
+%token WND QUEUE 
 %token NO_SYMBOL EOL
 %token SYMBOLFILE
 
@@ -93,6 +94,8 @@ int yyerror(char *);
 			       }
 	| DELETE BREAK NUM EOL { DEBUG_DelBreakpoint( $3 ); }
 	| BACKTRACE EOL	       { DEBUG_BackTrace(); }
+	| WALK WND EOL	       { DEBUG_InitWalk(); DEBUG_WndWalk( NULL ); }
+	| WALK WND NUM EOL     { DEBUG_InitWalk(); DEBUG_WndWalk( $3 ); }
 	| infocmd
 	| x_command
 	| print_command
@@ -180,6 +183,8 @@ x_command:
 	| INFO BREAK EOL          { DEBUG_InfoBreakpoints(); }
 	| INFO SEGMENTS EOL	  { LDT_Print( 0, -1 ); }
 	| INFO SEGMENTS expr EOL  { LDT_Print( SELECTOR_TO_ENTRY($3), 1 ); }
+	| INFO WND expr EOL       { DEBUG_WndDump( $3 ); } 
+	| INFO QUEUE expr EOL     { DEBUG_QueueDump( $3 ); }
 
 
 %%

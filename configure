@@ -1473,11 +1473,11 @@ cat > conftest.$ac_ext <<EOF
 #include "confdefs.h"
 
 int main(void) {
-  static int Array3;
+  static int Array[3];
   unsigned int B = 3;
   int i;
-  for(i=0; i<B; i++) Arrayi = i - 3;
-  exit( Array1 != -2 );
+  for(i=0; i<B; i++) Array[i] = i - 3;
+  exit( Array[1] != -2 );
 }
 EOF
 eval $ac_link

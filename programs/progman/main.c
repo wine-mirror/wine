@@ -9,6 +9,7 @@
 #include "license.h"
 #include "progman.h"
 #ifdef WINELIB
+#include <resource.h>
 #include <options.h>
 #include <shell.h>
 #endif

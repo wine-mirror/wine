@@ -74,6 +74,7 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
  	oldselector = pSeg->selector;
  	IF1632_Saved16_ss = pModule->self_loading_sel;
  	IF1632_Saved16_sp = 0xFF00;
+        /* FIXME: we probably need to pass a DOS file handle here */
  	newselector =  CallTo16_word_www(selfloadheader->LoadAppSeg,
  		pModule->self_loading_sel, hModule, fd, segnum);
  	if (newselector != oldselector) {

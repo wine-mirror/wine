@@ -7,6 +7,7 @@
 #ifndef _RELAY32_H
 #define _RELAY32_H
 #include "pe_image.h"
+#include "struct32.h"
 
 void RELAY32_Unimplemented(char *dll, int item);
 WIN32_builtin *RELAY32_GetBuiltinDLL(char *name);
@@ -27,41 +28,10 @@ typedef struct tagWNDCLASSA{
 	char*	lpszClassName;
 }WNDCLASSA;
 
-struct WIN32_POINT{
-	LONG x;
-	LONG y;
-};
-
-struct WIN32_MSG{
-	DWORD hwnd;
-	DWORD message;
-	DWORD wParam;
-	DWORD lParam;
-	DWORD time;
-	struct WIN32_POINT pt;
-};
-
-struct WIN32_RECT{
-	LONG left;
-	LONG top;
-	LONG right;
-	LONG bottom;
-};
-
-struct WIN32_PAINTSTRUCT{
-	DWORD hdc;
-	DWORD fErase;
-	struct WIN32_RECT rcPaint;
-	DWORD fRestore;
-	DWORD fIncUpdate;
-	BYTE rgbReserved[32];
-};
-
-
 ATOM USER32_RegisterClassA(WNDCLASSA *);
 LRESULT USER32_DefWindowProcA(DWORD hwnd,DWORD msg,DWORD wParam,DWORD lParam);
-BOOL USER32_GetMessageA(struct WIN32_MSG* lpmsg,DWORD hwnd,DWORD min,DWORD max);
-HDC USER32_BeginPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps);
-BOOL USER32_EndPaint(DWORD hwnd,struct WIN32_PAINTSTRUCT *lpps);
+BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max);
+HDC USER32_BeginPaint(DWORD hwnd,PAINTSTRUCT32 *lpps);
+BOOL USER32_EndPaint(DWORD hwnd,PAINTSTRUCT32 *lpps);
 #endif
 

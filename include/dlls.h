@@ -54,8 +54,9 @@ DECLARE_DLL(COMPOBJ)
 DECLARE_DLL(STORAGE)
 DECLARE_DLL(WINPROCS)
 DECLARE_DLL(DDEML)
+DECLARE_DLL(LZEXPAND)
 
-#define N_BUILTINS	25
+#define N_BUILTINS	26
 
 extern struct dll_table_s dll_builtin_table[];
 

@@ -143,6 +143,7 @@ typedef FARPROC HOOKPROC;
 #define _near
 #define PASCAL
 #define _pascal
+#define __export
 #define VOID                void
 #define WINAPI              PASCAL
 #define CALLBACK            PASCAL

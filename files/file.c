@@ -8,11 +8,13 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <utime.h>
 
 #include "windows.h"
 #include "directory.h"
@@ -25,91 +27,115 @@
 #include "task.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "xmalloc.h"
 
 #define MAX_OPEN_FILES 64  /* Max. open files for all tasks; must be <255 */
 
-typedef struct
+typedef struct tagDOS_FILE
 {
-    int unix_handle;
-    int mode;
+    struct tagDOS_FILE *next;
+    int                 count;        /* Usage count (0 if free) */
+    int                 unix_handle;
+    int                 mode;
+    char               *unix_name;
+    WORD                filedate;
+    WORD                filetime;
 } DOS_FILE;
 
 /* Global files array */
-static DOS_FILE DOSFiles[MAX_OPEN_FILES];
+static DOS_FILE DOSFiles[MAX_OPEN_FILES] = { { 0, }, };
 
+static DOS_FILE *FILE_First = DOSFiles;
+static DOS_FILE *FILE_LastUsed = DOSFiles;
+
+/* Small file handles array for boot-up, before the first PDB is created */
+#define MAX_BOOT_HANDLES  4
+static BYTE bootFileHandles[MAX_BOOT_HANDLES] = { 0xff, 0xff, 0xff, 0xff };
 
 /***********************************************************************
- *           FILE_AllocDOSFile
+ *           FILE_Alloc
  *
- * Allocate a file from the DOS files array.
+ * Allocate a DOS file.
  */
-static BYTE FILE_AllocDOSFile( int unix_handle )
+static DOS_FILE *FILE_Alloc(void)
 {
-    BYTE i;
-    for (i = 0; i < MAX_OPEN_FILES; i++) if (!DOSFiles[i].mode)
+    DOS_FILE *file = FILE_First;
+    if (file) FILE_First = file->next;
+    else if (FILE_LastUsed >= &DOSFiles[MAX_OPEN_FILES-1])
     {
-        DOSFiles[i].unix_handle = unix_handle;
-        DOSFiles[i].mode = 1;
-        return i;
+        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
+        return NULL;
     }
-    return 0xff;
+    else file = ++FILE_LastUsed;
+    file->count = 1;
+    file->unix_handle = -1;
+    file->unix_name = NULL;
+    return file;
 }
 
 
 /***********************************************************************
- *           FILE_FreeDOSFile
+ *           FILE_Close
  *
- * Free a file from the DOS files array.
+ * Close a DOS file.
  */
-static BOOL FILE_FreeDOSFile( BYTE handle )
+static BOOL FILE_Close( DOS_FILE *file )
 {
-    if (handle >= MAX_OPEN_FILES) return FALSE;
-    if (!DOSFiles[handle].mode) return FALSE;
-    DOSFiles[handle].mode = 0;
+    if (!file->count) return FALSE;
+    if (--file->count > 0) return TRUE;
+    /* Now really close the file */
+    if (file->unix_handle != -1) close( file->unix_handle );
+    if (file->unix_name) free( file->unix_name );
+    file->next = FILE_First;
+    FILE_First = file;
     return TRUE;
 }
 
 
 /***********************************************************************
- *           FILE_GetUnixHandle
+ *           FILE_GetPDBFiles
  *
- * Return the Unix handle for a global DOS file handle.
+ * Return a pointer to the current PDB files array.
  */
-static int FILE_GetUnixHandle( BYTE handle )
+static void FILE_GetPDBFiles( BYTE **files, WORD *nbFiles )
 {
-    if (handle >= MAX_OPEN_FILES) return -1;
-    if (!DOSFiles[handle].mode) return -1;
-    return DOSFiles[handle].unix_handle;
+    PDB *pdb;
+
+    if ((pdb = (PDB *)GlobalLock( GetCurrentPDB() )) != NULL)
+    {
+        *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+        *nbFiles = pdb->nbFiles;
+    }
+    else
+    {
+        *files = bootFileHandles;
+        *nbFiles = MAX_BOOT_HANDLES;
+    }
 }
 
 
 /***********************************************************************
  *           FILE_AllocTaskHandle
  *
- * Allocate a per-task file handle.
+ * Allocate a task file handle for a DOS file.
  */
-static HFILE FILE_AllocTaskHandle( int unix_handle )
+static HFILE FILE_AllocTaskHandle( DOS_FILE *dos_file )
 {
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
     BYTE *files, *fp;
-    WORD i;
+    WORD i, nbFiles;
 
-    if (!pdb)
-    {
-        fprintf(stderr,"FILE_MakeTaskHandle: internal error, no current PDB.\n");
-        exit(1);
-    }
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    FILE_GetPDBFiles( &files, &nbFiles );
     fp = files + 1;  /* Don't use handle 0, as some programs don't like it */
-    for (i = pdb->nbFiles - 1; (i > 0) && (*fp != 0xff); i--, fp++);
-    if (!i || (*fp = FILE_AllocDOSFile( unix_handle )) == 0xff)
+    for (i = nbFiles - 1; (i > 0) && (*fp != 0xff); i--, fp++);
+    if (!i)
     {  /* No more handles or files */
         DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
         return -1;
     }
+    *fp = dos_file ? (BYTE)(dos_file - DOSFiles) : 0;
     dprintf_file(stddeb, 
-       "FILE_AllocTaskHandle: returning task handle %d, file %d for unix handle %d file %d of %d \n", 
-             (fp - files), *fp, unix_handle, pdb->nbFiles - i, pdb->nbFiles  );
+       "FILE_AllocTaskHandle: returning task handle %d, dos_file %d, file %d of %d \n", 
+             (fp - files), *fp, nbFiles - i, nbFiles  );
     return (HFILE)(fp - files);
 }
 
@@ -121,19 +147,13 @@ static HFILE FILE_AllocTaskHandle( int unix_handle )
  */
 static void FILE_FreeTaskHandle( HFILE handle )
 {
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
     BYTE *files;
-    
-    if (!pdb)
-    {
-        fprintf(stderr,"FILE_FreeTaskHandle: internal error, no current PDB.\n");
-        exit(1);
-    }
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    WORD nbFiles;
+
+    FILE_GetPDBFiles( &files, &nbFiles );
     dprintf_file( stddeb,"FILE_FreeTaskHandle: dos=%d file=%d\n",
                   handle, files[handle] );
-    if ((handle < 0) || (handle >= (INT)pdb->nbFiles) ||
-        !FILE_FreeDOSFile( files[handle] ))
+    if ((handle < 0) || (handle >= (INT)nbFiles))
     {
         fprintf( stderr, "FILE_FreeTaskHandle: invalid file handle %d\n",
                  handle );
@@ -144,29 +164,49 @@ static void FILE_FreeTaskHandle( HFILE handle )
 
 
 /***********************************************************************
- *           FILE_GetUnixTaskHandle
+ *           FILE_SetTaskHandle
  *
- * Return the Unix file handle associated to a task file handle.
+ * Set the value of a task handle (no error checking).
  */
-int FILE_GetUnixTaskHandle( HFILE handle )
+static void FILE_SetTaskHandle( HFILE handle, DOS_FILE *file )
 {
-    PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
     BYTE *files;
-    int unix_handle;
+    WORD nbFiles;
 
-    if (!pdb)
-    {
-        fprintf(stderr,"FILE_GetUnixHandle: internal error, no current PDB.\n");
-        exit(1);
-    }
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    if ((handle < 0) || (handle >= (INT)pdb->nbFiles) ||
-        ((unix_handle = FILE_GetUnixHandle( files[handle] )) == -1))
+    FILE_GetPDBFiles( &files, &nbFiles );
+    files[handle] = (BYTE)(file - DOSFiles);
+}
+
+
+/***********************************************************************
+ *           FILE_GetFile
+ *
+ * Return the DOS file associated to a task file handle.
+ */
+static DOS_FILE *FILE_GetFile( HFILE handle )
+{
+    BYTE *files;
+    WORD nbFiles;
+    DOS_FILE *file;
+
+    FILE_GetPDBFiles( &files, &nbFiles );
+    if ((handle < 0) || (handle >= (INT)nbFiles) ||
+        (files[handle] >= MAX_OPEN_FILES) ||
+        !(file = &DOSFiles[files[handle]])->count)
     {
         DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
-        return -1;
+        return NULL;
     }
-    return unix_handle;
+    return file;
+}
+
+
+int FILE_GetUnixHandle( HFILE hFile )
+{
+    DOS_FILE *file;
+
+    if (!(file = FILE_GetFile( hFile ))) return -1;
+    return file->unix_handle;
 }
 
 
@@ -180,22 +220,14 @@ void FILE_CloseAllFiles( HANDLE hPDB )
     BYTE *files;
     WORD count;
     PDB *pdb = (PDB *)GlobalLock( hPDB );
-    int unix_handle;
 
     if (!pdb) return;
     files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
     dprintf_file(stddeb,"FILE_CloseAllFiles: closing %d files\n",pdb->nbFiles);
     for (count = pdb->nbFiles; count > 0; count--, files++)
     {
-        if (*files != 0xff)
-        {
-            if ((unix_handle = FILE_GetUnixHandle( *files )) != -1)
-            {
-                close( unix_handle );
-                FILE_FreeDOSFile( *files );
-            }
-            *files = 0xff;
-        }
+        if (*files < MAX_OPEN_FILES) FILE_Close( &DOSFiles[*files] );
+        *files = 0xff;
     }
 }
 
@@ -251,42 +283,45 @@ void FILE_SetDosError(void)
 /***********************************************************************
  *           FILE_OpenUnixFile
  */
-static int FILE_OpenUnixFile( const char *name, int mode )
+static DOS_FILE *FILE_OpenUnixFile( const char *name, int mode )
 {
-    int handle;
+    DOS_FILE *file;
     struct stat st;
 
-    if ((handle = open( name, mode )) == -1)
+    if (!(file = FILE_Alloc())) return NULL;
+    if ((file->unix_handle = open( name, mode )) == -1)
     {
         if (Options.allowReadOnly && (mode == O_RDWR))
         {
-            if ((handle = open( name, O_RDONLY )) != -1)
+            if ((file->unix_handle = open( name, O_RDONLY )) != -1)
                 fprintf( stderr, "Warning: could not open %s for writing, opening read-only.\n", name );
         }
     }
-    if (handle != -1)  /* Make sure it's not a directory */
+    if ((file->unix_handle == -1) || (fstat( file->unix_handle, &st ) == -1))
     {
-        if ((fstat( handle, &st ) == -1))
-        {
-            FILE_SetDosError();
-            close( handle );
-            handle = -1;
-        }
-        else if (S_ISDIR(st.st_mode))
-        {
-            DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
-            close( handle );
-            handle = -1;
-        }
+        FILE_SetDosError();
+        FILE_Close( file );
+        return NULL;
     }
-    return handle;
+    if (S_ISDIR(st.st_mode))
+    {
+        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+        FILE_Close( file );
+        return NULL;
+    }
+
+    /* File opened OK, now fill the DOS_FILE */
+
+    file->unix_name = xstrdup( name );
+    DOSFS_ToDosDateTime( st.st_mtime, &file->filedate, &file->filetime );
+    return file;
 }
 
 
 /***********************************************************************
  *           FILE_Open
  */
-int FILE_Open( LPCSTR path, int mode )
+static DOS_FILE *FILE_Open( LPCSTR path, int mode )
 {
     const char *unixName;
 
@@ -298,10 +333,10 @@ int FILE_Open( LPCSTR path, int mode )
         {
             dprintf_file(stddeb, "FILE_Open: Non-existing device\n");
             DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-            return -1;
+            return NULL;
         }
     }
-    else if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return -1;
+    else if (!(unixName = DOSFS_GetUnixFileName( path, TRUE ))) return NULL;
     return FILE_OpenUnixFile( unixName, mode );
 }
 
@@ -309,10 +344,10 @@ int FILE_Open( LPCSTR path, int mode )
 /***********************************************************************
  *           FILE_Create
  */
-int FILE_Create( LPCSTR path, int mode, int unique )
+static DOS_FILE *FILE_Create( LPCSTR path, int mode, int unique )
 {
+    DOS_FILE *file;
     const char *unixName;
-    int handle;
 
     dprintf_file(stddeb, "FILE_Create: '%s' %04x %d\n", path, mode, unique );
 
@@ -320,15 +355,30 @@ int FILE_Create( LPCSTR path, int mode, int unique )
     {
         dprintf_file(stddeb, "FILE_Create: creating device '%s'!\n", unixName);
         DOS_ERROR( ER_AccessDenied, EC_NotFound, SA_Abort, EL_Disk );
-        return -1;
+        return NULL;
     }
 
-    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE ))) return -1;
-    if ((handle = open( unixName,
-                        O_CREAT | O_TRUNC | O_RDWR | (unique ? O_EXCL : 0),
-                        mode )) == -1)
+    if (!(file = FILE_Alloc())) return NULL;
+
+    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE )))
+    {
+        FILE_Close( file );
+        return NULL;
+    }
+    if ((file->unix_handle = open( unixName,
+                           O_CREAT | O_TRUNC | O_RDWR | (unique ? O_EXCL : 0),
+                           mode )) == -1)
+    {
         FILE_SetDosError();
-    return handle;
+        FILE_Close( file );
+        return NULL;
+    } 
+
+    /* File created OK, now fill the DOS_FILE */
+
+    file->unix_name = xstrdup( unixName );
+    DOSFS_ToDosDateTime( time(NULL), &file->filedate, &file->filetime );
+    return file;
 }
 
 
@@ -375,32 +425,74 @@ int FILE_Stat( LPCSTR unixName, BYTE *pattr, DWORD *psize,
     }
     if (pattr) *pattr = FA_ARCHIVE | (S_ISDIR(st.st_mode) ? FA_DIRECTORY : 0);
     if (psize) *psize = S_ISDIR(st.st_mode) ? 0 : st.st_size;
-    DOSFS_ToDosDateTime( &st.st_mtime, pdate, ptime );
+    DOSFS_ToDosDateTime( st.st_mtime, pdate, ptime );
     return 1;
 }
 
 
 /***********************************************************************
- *           FILE_Fstat
+ *           FILE_GetDateTime
  *
- * Stat a DOS handle. Return 1 if OK.
+ * Get the date and time of a file.
  */
-int FILE_Fstat( HFILE hFile, BYTE *pattr, DWORD *psize,
-                WORD *pdate, WORD *ptime )
+int FILE_GetDateTime( HFILE hFile, WORD *pdate, WORD *ptime, BOOL refresh )
 {
-    struct stat st;
-    int handle;
+    DOS_FILE *file;
 
-    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return 0;
-    if (fstat( handle, &st ) == -1)
+    if (!(file = FILE_GetFile( hFile ))) return 0;
+    if (refresh)
     {
-        FILE_SetDosError();
-        return 0;
+        struct stat st;
+        if (fstat( file->unix_handle, &st ) == -1)
+        {
+            FILE_SetDosError();
+            return 0;
+        }
+        DOSFS_ToDosDateTime( st.st_mtime, &file->filedate, &file->filetime );
     }
-    if (pattr) *pattr = FA_ARCHIVE | (S_ISDIR(st.st_mode) ? FA_DIRECTORY : 0);
-    if (psize) *psize = S_ISDIR(st.st_mode) ? 0 : st.st_size;
-    DOSFS_ToDosDateTime( &st.st_mtime, pdate, ptime );
+    *pdate = file->filedate;
+    *ptime = file->filetime;
     return 1;
+}
+
+
+/***********************************************************************
+ *           FILE_SetDateTime
+ *
+ * Set the date and time of a file.
+ */
+int FILE_SetDateTime( HFILE hFile, WORD date, WORD time )
+{
+    DOS_FILE *file;
+    struct tm newtm;
+    struct utimbuf filetime;
+
+    if (!(file = FILE_GetFile( hFile ))) return 0;
+    newtm.tm_sec  = (time & 0x1f) * 2;
+    newtm.tm_min  = (time >> 5) & 0x3f;
+    newtm.tm_hour = (time >> 11);
+    newtm.tm_mday = (date & 0x1f);
+    newtm.tm_mon  = ((date >> 5) & 0x0f) - 1;
+    newtm.tm_year = (date >> 9) + 80;
+
+    filetime.actime = filetime.modtime = mktime( &newtm );
+    if (utime( file->unix_name, &filetime ) != -1) return 1;
+    FILE_SetDosError();
+    return 0;
+}
+
+
+/***********************************************************************
+ *           FILE_Sync
+ */
+int FILE_Sync( HFILE hFile )
+{
+    DOS_FILE *file;
+
+    if (!(file = FILE_GetFile( hFile ))) return 0;
+    if (fsync( file->unix_handle ) != -1) return 1;
+    FILE_SetDosError();
+    return 0;
 }
 
 
@@ -461,20 +553,14 @@ int FILE_RemoveDir( LPCSTR path )
  */
 HFILE FILE_Dup( HFILE hFile )
 {
-    int handle, newhandle;
-    HFILE dosHandle;
+    DOS_FILE *file;
+    HFILE handle;
 
-    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
-    dprintf_file( stddeb, "FILE_Dup for handle %d\n",handle);
-    if ((newhandle = dup(handle)) == -1)
-    {
-        FILE_SetDosError();
-        return HFILE_ERROR;
-    }
-    if ((dosHandle = FILE_AllocTaskHandle( newhandle )) == HFILE_ERROR)
-        close( newhandle );
-    dprintf_file( stddeb, "FILE_Dup return handle %d\n",dosHandle);
-    return dosHandle;
+    dprintf_file( stddeb, "FILE_Dup for handle %d\n", hFile );
+    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR;
+    if ((handle = FILE_AllocTaskHandle( file )) != HFILE_ERROR) file->count++;
+    dprintf_file( stddeb, "FILE_Dup return handle %d\n", handle );
+    return handle;
 }
 
 
@@ -485,73 +571,138 @@ HFILE FILE_Dup( HFILE hFile )
  */
 HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
 {
+    DOS_FILE *file;
     PDB *pdb = (PDB *)GlobalLock( GetCurrentPDB() );
-    BYTE *files;
-    int handle, newhandle;
+    BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
 
-    if ((handle = FILE_GetUnixTaskHandle( hFile1 )) == -1) return HFILE_ERROR;
-    dprintf_file( stddeb, "FILE_Dup2 for handle %d\n",handle);
+    dprintf_file( stddeb, "FILE_Dup2 for handle %d\n", hFile1 );
+    if (!(file = FILE_GetFile( hFile1 ))) return HFILE_ERROR;
+
     if ((hFile2 < 0) || (hFile2 >= (INT)pdb->nbFiles))
     {
         DOS_ERROR( ER_InvalidHandle, EC_ProgramError, SA_Abort, EL_Disk );
         return HFILE_ERROR;
     }
-
-    if ((newhandle = dup(handle)) == -1)
+    if (files[hFile2] < MAX_OPEN_FILES)
     {
-        FILE_SetDosError();
-        return HFILE_ERROR;
+        dprintf_file( stddeb, "FILE_Dup2 closing old handle2 %d\n",
+                      files[hFile2] );
+        FILE_Close( &DOSFiles[files[hFile2]] );
     }
-    if (newhandle >= 0xff)
-    {
-        DOS_ERROR( ER_TooManyOpenFiles, EC_ProgramError, SA_Abort, EL_Disk );
-        close( newhandle );
-        return HFILE_ERROR;
-    }
-    files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
-    if (files[hFile2] != 0xff) 
-    {
-        dprintf_file( stddeb, "FILE_Dup2 closing old  handle2 %d\n",
-                      files[hFile2]);
-        close( files[hFile2] );
-    }
-    files[hFile2] = (BYTE)newhandle;
-    dprintf_file( stddeb, "FILE_Dup2 return handle2 %d\n",newhandle);
+    files[hFile2] = (BYTE)(file - DOSFiles);
+    file->count++;
+    dprintf_file( stddeb, "FILE_Dup2 return handle2 %d\n", hFile2 );
     return hFile2;
 }
 
 
 /***********************************************************************
- *           FILE_OpenFile
- *
- * Implementation of API function OpenFile(). Returns a Unix file handle.
+ *           FILE_Read
  */
-int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
+LONG FILE_Read( HFILE hFile, void *buffer, LONG count )
 {
+    DOS_FILE *file;
+    LONG result;
+
+    dprintf_file( stddeb, "FILE_Read: %d %p %ld\n", hFile, buffer, count );
+    if (!(file = FILE_GetFile( hFile ))) return -1;
+    if (!count) return 0;
+    if ((result = read( file->unix_handle, buffer, count )) == -1)
+        FILE_SetDosError();
+    return result;
+}
+
+
+/***********************************************************************
+ *           GetTempFileName   (KERNEL.97)
+ */
+INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
+{
+    int i;
+    UINT num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
+    char *p;
+
+    if (drive & TF_FORCEDRIVE)
+    {
+        sprintf( buffer, "%c:", drive & ~TF_FORCEDRIVE );
+    }
+    else
+    {
+        DIR_GetTempDosDir( buffer, 132 );  /* buffer must be at least 144 */
+        strcat( buffer, "\\" );
+    }
+
+    p = buffer + strlen(buffer);
+    for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
+    sprintf( p, "%04x.tmp", num );
+
+    if (unique)
+    {
+        lstrcpyn( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
+        dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
+        return unique;
+    }
+
+    /* Now try to create it */
+
+    do
+    {
+        DOS_FILE *file;
+        if ((file = FILE_Create( buffer, 0666, TRUE )) != NULL)
+        {  /* We created it */
+            dprintf_file( stddeb, "GetTempFileName: created %s\n", buffer );
+            FILE_Close( file );
+            break;
+        }
+        if (DOS_ExtendedError != ER_FileExists) break;  /* No need to go on */
+        num++;
+        sprintf( p, "%04x.tmp", num );
+    } while (num != (unique & 0xffff));
+
+    lstrcpyn( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
+    dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
+    return num;
+}
+
+
+/***********************************************************************
+ *           OpenFile   (KERNEL.74)
+ */
+HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
+{
+    DOS_FILE *file;
+    HFILE hFileRet;
+    WORD filedatetime[2];
     const char *unixName, *dosName;
     char *p;
-    int handle, len, i, unixMode;
-    struct stat st;
+    int len, i, unixMode;
 
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
     if (mode & OF_REOPEN) name = ofs->szPathName;
-    dprintf_file( stddeb, "FILE_Openfile: %s %04x\n", name, mode );
+    dprintf_file( stddeb, "OpenFile: %s %04x\n", name, mode );
+
+    /* First allocate a task handle */
+
+    if ((hFileRet = FILE_AllocTaskHandle( NULL )) == HFILE_ERROR)
+    {
+        ofs->nErrCode = DOS_ExtendedError;
+        dprintf_file( stddeb, "OpenFile: no more task handles.\n" );
+        return HFILE_ERROR;
+    }
 
     /* OF_PARSE simply fills the structure */
 
     if (mode & OF_PARSE)
     {
-        if (!(dosName = DOSFS_GetDosTrueName( name, FALSE )))
-        {
-            ofs->nErrCode = DOS_ExtendedError;
-            dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
-            return -1;
-        }
+        if (!(dosName = DOSFS_GetDosTrueName( name, FALSE ))) goto error;
         lstrcpyn( ofs->szPathName, dosName, sizeof(ofs->szPathName) );
         ofs->fFixedDisk = (GetDriveType( dosName[0]-'A' ) != DRIVE_REMOVABLE);
-        dprintf_file( stddeb, "FILE_Openfile: %s  return = 0\n", name);
-        return 0;
+        dprintf_file( stddeb, "OpenFile(%s): OF_PARSE, res = '%s', %d\n",
+                      name, ofs->szPathName, hFileRet );
+        /* Return the handle, but close it first */
+        FILE_FreeTaskHandle( hFileRet );
+        return hFileRet;
     }
 
     /* OF_CREATE is completely different from all other options, so
@@ -559,25 +710,10 @@ int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
     if (mode & OF_CREATE)
     {
-        if ((unixName = DOSFS_GetUnixFileName( name, FALSE )) == NULL)
-        {
-            ofs->nErrCode = DOS_ExtendedError;
-            dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
-            return -1;
-        }
-        dprintf_file( stddeb, "FILE_OpenFile: creating '%s'\n", unixName );
-        handle = open( unixName, O_TRUNC | O_RDWR | O_CREAT, 0666 );
-        if (handle == -1)
-        {
-            FILE_SetDosError();
-            ofs->nErrCode = DOS_ExtendedError;
-            dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
-            return -1;
-        }   
+        if (!(file = FILE_Create( name, 0666, FALSE ))) goto error;
         lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( name, FALSE ),
                   sizeof(ofs->szPathName) );
-        dprintf_file( stddeb, "FILE_Openfile: %s  return = %d \n", name, handle);
-        return handle;
+        goto success;
     }
 
     /* Now look for the file */
@@ -638,30 +774,25 @@ int FILE_OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
     for (i = 0; ; i++)
     {
-        if (!DIR_GetDosPath( i, ofs->szPathName, len )) break;
+        if (!DIR_GetDosPath( i, ofs->szPathName, len )) goto not_found;
         strcat( ofs->szPathName, "\\" );
         strcat( ofs->szPathName, name );
         if ((unixName = DOSFS_GetUnixFileName( ofs->szPathName, TRUE)) != NULL)
-            goto found;
+            break;
     }
 
-not_found:
-    dprintf_file( stddeb, "FILE_OpenFile: '%s' not found\n", name );
-    DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
-    ofs->nErrCode = ER_FileNotFound;
-    dprintf_file( stddeb, "FILE_Openfile: %s  return =-1\n", name);
-    return -1;
-
 found:
-    dprintf_file( stddeb, "FILE_OpenFile: found '%s'\n", unixName );
+    dprintf_file( stddeb, "OpenFile: found '%s'\n", unixName );
     lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( ofs->szPathName, FALSE ),
               sizeof(ofs->szPathName) );
 
     if (mode & OF_DELETE)
     {
         if (unlink( unixName ) == -1) goto not_found;
-        dprintf_file( stddeb, "FILE_Openfile: %s  return = 0\n", name);
-        return 0;
+        dprintf_file( stddeb, "OpenFile(%s): OF_DELETE return = OK\n", name);
+        /* Return the handle, but close it first */
+        FILE_FreeTaskHandle( hFileRet );
+        return hFileRet;
     }
 
     switch(mode & 3)
@@ -675,119 +806,45 @@ found:
         unixMode = O_RDONLY; break;
     }
 
-    if ((handle = FILE_OpenUnixFile( unixName, unixMode )) == -1)
-        goto not_found;
-
-    if (fstat( handle, &st ) != -1)
+    if (!(file = FILE_OpenUnixFile( unixName, unixMode ))) goto not_found;
+    filedatetime[0] = file->filedate;
+    filedatetime[1] = file->filetime;
+    if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
     {
-        if ((mode & OF_VERIFY) && (mode & OF_REOPEN))
+        if (memcmp( ofs->reserved, filedatetime, sizeof(ofs->reserved) ))
         {
-            if (memcmp( ofs->reserved, &st.st_mtime, sizeof(ofs->reserved) ))
-            {
-                dprintf_file( stddeb, "FILE_Openfile: %s  return = -1\n", name);
-                close( handle );
-                return -1;
-            }
+            FILE_Close( file );
+            dprintf_file( stddeb, "OpenFile(%s): OF_VERIFY failed\n", name );
+            /* FIXME: what error here? */
+            DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+            goto error;
         }
-        memcpy( ofs->reserved, &st.st_mtime, sizeof(ofs->reserved) );
     }
+    memcpy( ofs->reserved, filedatetime, sizeof(ofs->reserved) );
 
     if (mode & OF_EXIST)
     {
-        close( handle );
-        return 0;
-    }
-    dprintf_file( stddeb, "FILE_Openfile: %s  return = %d\n", name,handle);
-
-    return handle;
-}
-
-
-/***********************************************************************
- *           FILE_Read
- */
-LONG FILE_Read( HFILE hFile, LPSTR buffer, LONG count )
-{
-    int handle;
-    LONG result;
-
-    dprintf_file( stddeb, "FILE_Read: %d %p %ld\n", hFile, buffer, count );
-    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return -1;
-    if (!count) return 0;
-    if ((result = read( handle, buffer, count )) == -1) FILE_SetDosError();
-    return result;
-}
-
-
-/***********************************************************************
- *           GetTempFileName   (KERNEL.97)
- */
-INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
-{
-    int i, handle;
-    UINT num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
-    char *p;
-
-    if (drive & TF_FORCEDRIVE)
-    {
-        sprintf( buffer, "%c:", drive & ~TF_FORCEDRIVE );
-    }
-    else
-    {
-        DIR_GetTempDosDir( buffer, 132 );  /* buffer must be at least 144 */
-        strcat( buffer, "\\" );
+        FILE_Close( file );
+        /* Return the handle, but close it first */
+        FILE_FreeTaskHandle( hFileRet );
+        return hFileRet;
     }
 
-    p = buffer + strlen(buffer);
-    for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
-    sprintf( p, "%04x.tmp", num );
+success:  /* We get here if the open was successful */
+    dprintf_file( stddeb, "OpenFile(%s): OK, return = %d\n", name, hFileRet );
+    FILE_SetTaskHandle( hFileRet, file );
+    return hFileRet;
 
-    if (unique)
-    {
-        lstrcpyn( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
-        dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
-        return unique;
-    }
+not_found:  /* We get here if the file does not exist */
+    dprintf_file( stddeb, "OpenFile: '%s' not found\n", name );
+    DOS_ERROR( ER_FileNotFound, EC_NotFound, SA_Abort, EL_Disk );
+    /* fall through */
 
-    /* Now try to create it */
-
-    do
-    {
-        if ((handle = FILE_Create( buffer, 0666, TRUE )) != -1)
-        {  /* We created it */
-            dprintf_file( stddeb, "GetTempFileName: created %s\n", buffer );
-            close( handle );
-            break;
-        }
-        if (DOS_ExtendedError != ER_FileExists) break;  /* No need to go on */
-        num++;
-        sprintf( p, "%04x.tmp", num );
-    } while (num != (unique & 0xffff));
-
-    lstrcpyn( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
-    dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
-    return num;
-}
-
-
-/***********************************************************************
- *           OpenFile   (KERNEL.74)
- */
-HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
-{
-    int unixHandle;
-    HFILE handle;
-
-    dprintf_file( stddeb, "OpenFile %s \n",name);
-    if ((unixHandle = FILE_OpenFile( name, ofs, mode )) == -1)
-        return HFILE_ERROR;
-    if ((handle = FILE_AllocTaskHandle( unixHandle )) == HFILE_ERROR)
-    {
-        ofs->nErrCode = DOS_ExtendedError;
-        if (unixHandle) close( unixHandle );
-    }
-    if (!unixHandle) FILE_FreeTaskHandle( handle );
-    return handle;
+error:  /* We get here if there was an error opening the file */
+    ofs->nErrCode = DOS_ExtendedError;
+    dprintf_file( stddeb, "OpenFile(%s): return = HFILE_ERROR\n", name );
+    FILE_FreeTaskHandle( hFileRet );
+    return HFILE_ERROR;
 }
 
 
@@ -796,18 +853,12 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
  */
 HFILE _lclose( HFILE hFile )
 {
-    int handle;
+    DOS_FILE *file;
 
-    
-    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
-    dprintf_file( stddeb, "_lclose: doshandle %d unixhandle %d\n", hFile,handle );
-    if (handle <= 2)
-    {
-        fprintf( stderr, "_lclose: internal error: closing handle %d\n", handle );
-        exit(1);
-    }
+    dprintf_file( stddeb, "_lclose: handle %d\n", hFile );
+    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR;
+    FILE_Close( file );
     FILE_FreeTaskHandle( hFile );
-    close( handle );
     return 0;
 }
 
@@ -826,15 +877,15 @@ INT _lread( HFILE hFile, SEGPTR buffer, WORD count )
  */
 INT _lcreat( LPCSTR path, INT attr )
 {
-    int unixHandle, mode;
+    DOS_FILE *file;
     HFILE handle;
+    int mode;
     
     dprintf_file( stddeb, "_lcreat: %s %02x\n", path, attr );
     mode = (attr & 1) ? 0444 : 0666;
-    if ((unixHandle = FILE_Create( path, mode, FALSE )) == -1)
-        return HFILE_ERROR;
-    if ((handle = FILE_AllocTaskHandle( unixHandle )) == HFILE_ERROR)
-        close( unixHandle );
+    if (!(file = FILE_Create( path, mode, FALSE ))) return HFILE_ERROR;
+    if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
+        FILE_Close( file );
     return handle;
 }
 
@@ -844,15 +895,15 @@ INT _lcreat( LPCSTR path, INT attr )
  */
 INT _lcreat_uniq( LPCSTR path, INT attr )
 {
-    int unixHandle, mode;
+    DOS_FILE *file;
     HFILE handle;
+    int mode;
     
     dprintf_file( stddeb, "_lcreat: %s %02x\n", path, attr );
     mode = (attr & 1) ? 0444 : 0666;
-    if ((unixHandle = FILE_Create( path, mode, TRUE )) == -1)
-        return HFILE_ERROR;
-    if ((handle = FILE_AllocTaskHandle( unixHandle )) == HFILE_ERROR)
-        close( unixHandle );
+    if (!(file = FILE_Create( path, mode, TRUE ))) return HFILE_ERROR;
+    if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
+        FILE_Close( file );
     return handle;
 }
 
@@ -862,12 +913,13 @@ INT _lcreat_uniq( LPCSTR path, INT attr )
  */
 LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
 {
-    int handle, origin, result;
+    DOS_FILE *file;
+    int origin, result;
 
     dprintf_file( stddeb, "_llseek: handle %d, offset %ld, origin %d\n", 
                   hFile, lOffset, nOrigin);
 
-    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
+    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR;
     switch(nOrigin)
     {
         case 1:  origin = SEEK_CUR; break;
@@ -875,8 +927,9 @@ LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
         default: origin = SEEK_SET; break;
     }
 
-    if ((result = lseek( handle, lOffset, origin )) == -1) FILE_SetDosError();
-    return (result == -1) ? HFILE_ERROR : result;
+    if ((result = lseek( file->unix_handle, lOffset, origin )) == -1)
+        FILE_SetDosError();
+    return result;
 }
 
 
@@ -885,7 +938,7 @@ LONG _llseek( HFILE hFile, LONG lOffset, INT nOrigin )
  */
 HFILE _lopen( LPCSTR path, INT mode )
 {
-    int unixHandle;
+    DOS_FILE *file;
     int unixMode;
     HFILE handle;
 
@@ -904,9 +957,9 @@ HFILE _lopen( LPCSTR path, INT mode )
         unixMode = O_RDONLY;
         break;
     }
-    if ((unixHandle = FILE_Open( path, unixMode )) == -1) return HFILE_ERROR;
-    if ((handle = FILE_AllocTaskHandle( unixHandle )) == HFILE_ERROR)
-        close( unixHandle );
+    if (!(file = FILE_Open( path, unixMode ))) return HFILE_ERROR;
+    if ((handle = FILE_AllocTaskHandle( file )) == HFILE_ERROR)
+        FILE_Close( file );
     return handle;
 }
 
@@ -944,20 +997,21 @@ LONG _hread( HFILE hFile, SEGPTR buffer, LONG count )
  */
 LONG _hwrite( HFILE hFile, LPCSTR buffer, LONG count )
 {
-    int handle;
+    DOS_FILE *file;
     LONG result;
 
     dprintf_file( stddeb, "_hwrite: %d %p %ld\n", hFile, buffer, count );
 
-    if ((handle = FILE_GetUnixTaskHandle( hFile )) == -1) return HFILE_ERROR;
+    if (!(file = FILE_GetFile( hFile ))) return HFILE_ERROR;
     
     if (count == 0)  /* Expand or truncate at current position */
-        result = ftruncate( handle, lseek( handle, 0, SEEK_CUR ) );
+        result = ftruncate( file->unix_handle,
+                            lseek( file->unix_handle, 0, SEEK_CUR ) );
     else
-        result = write( handle, buffer, count );
+        result = write( file->unix_handle, buffer, count );
 
     if (result == -1) FILE_SetDosError();
-    return (result == -1) ? HFILE_ERROR : result;
+    return result;
 }
 
 

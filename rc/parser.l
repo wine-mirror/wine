@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include "parser.h"
 #include "y.tab.h"
+
+int line_number=1;
 %}
 %%
 ACCELERATORS	return ACCELERATORS;
@@ -70,7 +72,8 @@ VIRTKEY		return VIRTKEY;
 [A-Za-z][A-Za-z_0-9]*	yylval.str=strdup(yytext);return IDENT;
 \"[^"]*\"	yylval.str=parse_c_string(yytext);return STRING;
 \'[^']*\'   yylval.str=strdup(yytext+1);return SINGLE_QUOTED;
-[ \t\n\r]		;
+\n                      { line_number++; }
+[ \t\r]                 ;
 .			return yytext[0];
 %%
 

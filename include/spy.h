@@ -12,6 +12,9 @@
 #define SPY_RESULT_OK           0x0000
 #define SPY_RESULT_INVALIDHWND  0x0001
 
+#define SPY_MAX_MSGNUM          WM_USER
+#define SPY_MAX_INDENTLEVEL     64
+
 extern void EnterSpyMessage( int, HWND, WORD, WORD, LONG);
 extern void  ExitSpyMessage( int, HWND, WORD, LONG);
 extern void         SpyInit( void);

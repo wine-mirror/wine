@@ -519,7 +519,7 @@ static void INT21_ChangeDir(struct sigcontext_struct *context)
     char *dirname = PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context));
 
     dprintf_int(stddeb,"int21: changedir %s\n", dirname);
-    if (dirname[1] == ':')
+    if (dirname[0] && (dirname[1] == ':'))
     {
         drive = toupper(dirname[0]) - 'A';
         dirname += 2;
@@ -596,28 +596,6 @@ static int INT21_FindNext(struct sigcontext_struct *context)
     dta->filesize = entry.size;
     strcpy( dta->filename, DOSFS_ToDosDTAFormat( entry.name ) );
     return 1;
-}
-
-
-static int INT21_SetFileDateTime(struct sigcontext_struct *context)
-{
-    fprintf( stderr, "INT21_SetFileDateTime: not implemented yet.\n" );
-    return 1;
-#if 0
-    char *filename;
-    struct utimbuf filetime;
-	
-    /* FIXME: Argument isn't the name of the file in DS:DX,
-       but the file handle in BX */
-    filename = DOSFS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS_reg(context),
-                                                         DX_reg(context)),TRUE );
-
-    filetime.actime = 0L;
-    filetime.modtime = filetime.actime;
-    
-    utime(filename, &filetime);
-    RESET_CFLAG(context);
-#endif
 }
 
 
@@ -1429,16 +1407,18 @@ void DOS3Call( struct sigcontext_struct context )
     case 0x57: /* FILE DATE AND TIME */
         switch (AL_reg(&context))
         {
-        case 0x00:
-            if (!FILE_Fstat( BX_reg(&context), NULL, NULL,
-                             &DX_reg(&context), &CX_reg(&context) ))
+        case 0x00:  /* Get */
+            if (!FILE_GetDateTime( BX_reg(&context), &DX_reg(&context),
+                                   &CX_reg(&context), TRUE ))
             {
                 AX_reg(&context) = DOS_ExtendedError;
                 SET_CFLAG(&context);
             }
             break;
-        case 0x01:
-            if (!INT21_SetFileDateTime(&context))
+
+        case 0x01:  /* Set */
+            if (!FILE_SetDateTime( BX_reg(&context), DX_reg(&context),
+                                   CX_reg(&context) ))
             {
                 AX_reg(&context) = DOS_ExtendedError;
                 SET_CFLAG(&context);
@@ -1566,9 +1546,8 @@ void DOS3Call( struct sigcontext_struct context )
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */
     case 0x6a: /* COMMIT FILE */
-        if (fsync( FILE_GetUnixTaskHandle( BX_reg(&context) )) == -1)
+        if (!FILE_Sync( BX_reg(&context) ))
         {
-            FILE_SetDosError();
             AX_reg(&context) = DOS_ExtendedError;
             SET_CFLAG(&context);
         }

@@ -133,7 +133,7 @@ HBRUSH GetControlBrush( HWND hwnd, HDC hdc, WORD control )
  */
 BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
 {
-    HRGN tmpRgn, hrgn;
+    HRGN hrgn;
     RECT rectClient;
     WND * wndPtr;
 
@@ -159,13 +159,10 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     {
         if (wndPtr->hrgnUpdate)  /* Is there already an update region? */
         {
-            tmpRgn = CreateRectRgn( 0, 0, 0, 0 );
             if ((hrgn = hrgnUpdate) == 0)
                 hrgn = CreateRectRgnIndirect( rectUpdate ? rectUpdate :
                                               &rectClient );
-            CombineRgn( tmpRgn, wndPtr->hrgnUpdate, hrgn, RGN_OR );
-            DeleteObject( wndPtr->hrgnUpdate );
-            wndPtr->hrgnUpdate = tmpRgn;
+            CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate, hrgn, RGN_OR );
             if (!hrgnUpdate) DeleteObject( hrgn );
         }
         else  /* No update region yet */
@@ -197,17 +194,14 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
             }
             else
             {
-                tmpRgn = CreateRectRgn( 0, 0, 0, 0 );
                 if ((hrgn = hrgnUpdate) == 0)
                     hrgn = CreateRectRgnIndirect( rectUpdate );
-                if (CombineRgn( tmpRgn, wndPtr->hrgnUpdate,
+                if (CombineRgn( wndPtr->hrgnUpdate, wndPtr->hrgnUpdate,
                                 hrgn, RGN_DIFF ) == NULLREGION)
                 {
-                    DeleteObject( tmpRgn );
-                    tmpRgn = 0;
+                    DeleteObject( wndPtr->hrgnUpdate );
+                    wndPtr->hrgnUpdate = 0;
                 }
-                DeleteObject( wndPtr->hrgnUpdate );
-                wndPtr->hrgnUpdate = tmpRgn;
                 if (!hrgnUpdate) DeleteObject( hrgn );
             }
             if (!wndPtr->hrgnUpdate)  /* No more update region */

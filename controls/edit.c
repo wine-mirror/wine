@@ -3,7 +3,14 @@
  *
  * Copyright  David W. Metcalfe, 1994
  * Copyright  William Magro, 1995, 1996
+ * Copyright  Frans van Dorsselaer, 1996
  *
+ * Note: I'm doing a rewrite in order to implement word wrap
+ *       Please e-mail me if you want to word on edit.c as well, so
+ *       we can synchronize.
+ *
+ *       Frans van Dorsselaer
+ *       dorssel@rulhm1.LeidenUniv.nl
  */
 
 #include <stdio.h>
@@ -72,7 +79,6 @@ typedef struct
     int ClientHeight;        /* ditto */
     char PasswordChar;       /* The password character */
     EDITWORDBREAKPROC WordBreakProc;
-    BOOL WeOwnCaret;         /* Do we own the caret ? */
     int CaretPrepareCount;   /* Did we already prepare the caret ? */
     BOOL CaretHidden;        /* Did we hide the caret during painting ? */
     int oldWndCol;           /* WndCol before we started painting */
@@ -96,6 +102,7 @@ typedef struct
 #define IsMultiLine(hwnd) (GetWindowLong(hwnd,GWL_STYLE) & ES_MULTILINE)
 #define IsVScrollBar(hwnd) (GetWindowLong(hwnd,GWL_STYLE) & WS_VSCROLL)
 #define IsHScrollBar(hwnd) (GetWindowLong(hwnd,GWL_STYLE) & WS_HSCROLL)
+#define IsReadOnly(hwnd) (GetWindowLong(hwnd,GWL_STYLE) & ES_READONLY)
 
 /* internal variables */
 static BOOL TextMarking;         /* TRUE if text marking in progress */
@@ -117,7 +124,7 @@ static HLOCAL EDIT_HeapAlloc(HWND hwnd, int bytes, WORD flags)
     
     ret = LOCAL_Alloc( WIN_GetWindowInstance(hwnd), flags, bytes );
     if (!ret)
-        printf("EDIT_HeapAlloc: Out of heap-memory\n");
+	fprintf(stderr, "EDIT_HeapAlloc: Out of heap-memory\n");
     return ret;
 }
 
@@ -235,7 +242,7 @@ static void EDIT_CaretHide(HWND hwnd)
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     if (!es) return;
-    if (!es->WeOwnCaret) return;
+    if (!es->HaveFocus) return;
     if (!es->CaretPrepareCount) return;
     
     if (!es->CaretHidden)
@@ -260,7 +267,7 @@ static void EDIT_CaretUpdate(HWND hwnd)
     es->CaretPrepareCount--;
     
     if (es->CaretPrepareCount) return;
-    if (!es->WeOwnCaret) return;
+    if (!es->HaveFocus) return;
 
     if ((es->WndCol != es->oldWndCol) || (es->WndRow != es->oldWndRow))
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
@@ -276,15 +283,53 @@ static void EDIT_CaretUpdate(HWND hwnd)
  *  EDIT_WordBreakProc
  *
  *  Find the beginning of words.
+ *  Note: unlike the specs for a WordBreakProc, this function only
+ *        allows to be called without linebreaks between s[0] upto
+ *        s[count - 1].  Remember it is only called
+ *        internally, so we can decide this for ourselves.
  */
-static int CALLBACK EDIT_WordBreakProc(char * pch, int ichCurrent,
-					int cch, int code)
+static int EDIT_WordBreakProc(char *s, int index, int count, int action)
 {
-    dprintf_edit(stddeb, "EDIT_WordBreakProc: pch=%p, ichCurrent=%d"
-	", cch=%d, code=%d\n", pch, ichCurrent, cch, code);
+    int ret = 0;
 
-    dprintf_edit(stddeb, "string=%s\n", pch);
-    return 0;
+    dprintf_edit(stddeb, "EDIT_WordBreakProc: s=%p, index=%d"
+	", count=%d, action=%d\n", s, index, count, action);
+
+    switch (action) {
+    case WB_LEFT:
+	if (!count) break;
+	if (index) index--;
+	if (s[index] == ' ') {
+	    while (index && (s[index] == ' ')) index--;
+	    if (index) {
+		while (index && (s[index] != ' ')) index--;
+		if (s[index] == ' ') index++;
+	    }
+	} else {
+	    while (index && (s[index] != ' ')) index--;
+	    if (s[index] == ' ') index++;
+	}
+	ret = index;
+	break;
+    case WB_RIGHT:
+	if (!count) break;
+	if (index) index--;
+	if (s[index] == ' ')
+	    while ((index < count) && (s[index] == ' ')) index++;
+	else {
+	    while (s[index] && (s[index] != ' ') && (index < count)) index++;
+	    while ((s[index] == ' ') && (index < count)) index++;
+	}
+	ret = index;
+	break;
+    case WB_ISDELIMITER:
+	ret = (s[index] == ' ');
+	break;
+    default:
+	fprintf(stderr, "EDIT_WordBreakProc: unknown action code !\n");
+	break;
+    }
+    return ret;
 }
 
 /*********************************************************************
@@ -1912,7 +1957,7 @@ static void EDIT_KeyTyped(HWND hwnd, short ch)
 /*********************************************************************
  *  EM_UNDO message function
  */
-static LONG EDIT_UndoMsg(HWND hwnd)
+static LRESULT EDIT_UndoMsg(HWND hwnd)
 {
     char *text;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -1976,7 +2021,7 @@ static void EDIT_SetHandleMsg(HWND hwnd, WPARAM wParam)
 /*********************************************************************
  *  EM_SETTABSTOPS message function
  */
-static LONG EDIT_SetTabStopsMsg(HWND hwnd, WORD wParam, LONG lParam)
+static LRESULT EDIT_SetTabStopsMsg(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
@@ -2000,7 +2045,7 @@ static LONG EDIT_SetTabStopsMsg(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  EM_GETLINE message function
  */
-static LONG EDIT_GetLineMsg(HWND hwnd, WORD wParam, LONG lParam)
+static LRESULT EDIT_GetLineMsg(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     char *cp;
     int len = 0;
@@ -2032,13 +2077,13 @@ static LONG EDIT_GetLineMsg(HWND hwnd, WORD wParam, LONG lParam)
     dprintf_edit( stddeb, "EDIT_GetLineMsg: %d %d, len %d\n", (int)(WORD)(*buffer), (int)(WORD)(*(char *)buffer), len);
     lstrcpyn(buffer, cp, len);
 
-    return (LONG)len;
+    return (LRESULT)len;
 }
 
 /*********************************************************************
  *  EM_GETSEL message function
  */
-static LONG EDIT_GetSelMsg(HWND hwnd)
+static LRESULT EDIT_GetSelMsg(HWND hwnd)
 {
     int so, eo;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2046,13 +2091,13 @@ static LONG EDIT_GetSelMsg(HWND hwnd)
     so = es->textptrs[es->SelBegLine] + es->SelBegCol;
     eo = es->textptrs[es->SelEndLine] + es->SelEndCol;
 
-    return MAKELONG(so, eo);
+    return (LRESULT)MAKELONG(so, eo);
 }
 
 /*********************************************************************
  *  EM_REPLACESEL message function
  */
-static void EDIT_ReplaceSel(HWND hwnd, LONG lParam)
+static void EDIT_ReplaceSel(HWND hwnd, LPARAM lParam)
 {
     EDIT_DeleteSel(hwnd);
     EDIT_InsertText(hwnd, (char *)PTR_SEG_TO_LIN(lParam),
@@ -2064,24 +2109,24 @@ static void EDIT_ReplaceSel(HWND hwnd, LONG lParam)
 /*********************************************************************
  *  EM_LINEFROMCHAR message function
  */
-static LONG EDIT_LineFromCharMsg(HWND hwnd, WORD wParam)
+static LRESULT EDIT_LineFromCharMsg(HWND hwnd, WPARAM wParam)
 {
     int row, col;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
     if (wParam == (WORD)-1)
-	return (LONG)(es->SelBegLine);
+	return (LRESULT)(es->SelBegLine);
     else
 	EDIT_GetLineCol(hwnd, wParam, &row, &col);
 
-    return (LONG)row;
+    return (LRESULT)row;
 }
 
 
 /*********************************************************************
  *  EM_LINEINDEX message function
  */
-static LONG EDIT_LineIndexMsg(HWND hwnd, WORD wParam)
+static LRESULT EDIT_LineIndexMsg(HWND hwnd, WPARAM wParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
 
@@ -2093,7 +2138,7 @@ static LONG EDIT_LineIndexMsg(HWND hwnd, WORD wParam)
 /*********************************************************************
  *  EM_LINELENGTH message function
  */
-static LONG EDIT_LineLengthMsg(HWND hwnd, WORD wParam)
+static LRESULT EDIT_LineLengthMsg(HWND hwnd, WPARAM wParam)
 {
     int row, col, len;
     int sbl, sbc, sel, sec;
@@ -2142,7 +2187,7 @@ static LONG EDIT_LineLengthMsg(HWND hwnd, WORD wParam)
 /*********************************************************************
  *  EM_SETSEL message function
  */
-static void EDIT_SetSelMsg(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_SetSelMsg(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     INT so, eo;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2259,7 +2304,7 @@ static void EDIT_WM_SetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (lParam) UpdateWindow(hwnd);
     EDIT_RecalcSize(hwnd,es);
 
-    if (es->WeOwnCaret)
+    if (es->HaveFocus)
     {
 	EDIT_CaretHide(hwnd);
 	DestroyCaret();
@@ -2336,7 +2381,7 @@ static BOOL LOCAL_HeapExists(HANDLE ds)
 /*********************************************************************
  *  WM_NCCREATE
  */
-static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
+static long EDIT_WM_NCCreate(HWND hwnd, LPARAM lParam)
 {
     CREATESTRUCT *createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
     WND *wndPtr = WIN_FindWndPtr(hwnd);
@@ -2361,7 +2406,7 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
     /* Caret stuff */
     es->CaretPrepareCount = 1;
     es->CaretHidden = FALSE;
-    es->WeOwnCaret = FALSE;
+    es->HaveFocus = FALSE;
     /*
      * Hack - If there is no local heap then hwnd should be a globalHeap block
      * and the local heap needs to be initilised to the same size(minus something)
@@ -2458,7 +2503,7 @@ static long EDIT_WM_NCCreate(HWND hwnd, LONG lParam)
 /*********************************************************************
  *  WM_CREATE
  */
-static long EDIT_WM_Create(HWND hwnd, LONG lParam)
+static LRESULT EDIT_WM_Create(HWND hwnd, LPARAM lParam)
 {
     HDC hdc;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2507,7 +2552,7 @@ static long EDIT_WM_Create(HWND hwnd, LONG lParam)
 /*********************************************************************
  *  WM_VSCROLL
  */
-static void EDIT_WM_VScroll(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_WM_VScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 /*
  *    EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2532,7 +2577,7 @@ static void EDIT_WM_VScroll(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  WM_HSCROLL
  */
-static void EDIT_WM_HScroll(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_WM_HScroll(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 /*
  *    EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2548,7 +2593,7 @@ static void EDIT_WM_HScroll(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  WM_SIZE
  */
-static void EDIT_WM_Size(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_WM_Size(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
   
@@ -2562,7 +2607,7 @@ static void EDIT_WM_Size(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  WM_LBUTTONDOWN
  */
-static void EDIT_WM_LButtonDown(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_WM_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     char *cp;
     int len;
@@ -2605,7 +2650,7 @@ static void EDIT_WM_LButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  WM_MOUSEMOVE
  */
-static void EDIT_WM_MouseMove(HWND hwnd, WORD wParam, LONG lParam)
+static void EDIT_WM_MouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 /*
  *    EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2625,7 +2670,7 @@ static void EDIT_WM_MouseMove(HWND hwnd, WORD wParam, LONG lParam)
 /*********************************************************************
  *  WM_CHAR
  */
-static void EDIT_WM_Char(HWND hwnd, WORD wParam)
+static void EDIT_WM_Char(HWND hwnd, WPARAM wParam)
 {
     dprintf_edit(stddeb,"EDIT_WM_Char: wParam=%c\n", (char)wParam);
 
@@ -2635,17 +2680,25 @@ static void EDIT_WM_Char(HWND hwnd, WORD wParam)
     case '\n':
 	if (!IsMultiLine(hwnd))
 	    break;
+	if (IsReadOnly(hwnd))
+	{
+	    EDIT_Home(hwnd);
+	    EDIT_Downward(hwnd);
+	    break;
+	}
 	wParam = '\n';
 	EDIT_KeyTyped(hwnd, wParam);
 	break;
 
     case VK_TAB:
+	if (IsReadOnly(hwnd)) break;
 	if (!IsMultiLine(hwnd))
 	    break;
 	EDIT_KeyTyped(hwnd, wParam);
 	break;
 
     default:
+	if (IsReadOnly(hwnd)) break;
 	if (wParam >= 20 && wParam <= 254 && wParam != 127 )
 	    EDIT_KeyTyped(hwnd, wParam);
 	break;
@@ -2655,7 +2708,7 @@ static void EDIT_WM_Char(HWND hwnd, WORD wParam)
 /*********************************************************************
  *  WM_KEYDOWN
  */
-static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
+static void EDIT_WM_KeyDown(HWND hwnd, WPARAM wParam)
 {
     EDITSTATE *es = EDIT_GetEditState(hwnd);
     BOOL motionKey = FALSE;
@@ -2717,6 +2770,7 @@ static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
 	break;
 
     case VK_BACK:
+	if (IsReadOnly(hwnd)) break;
 	if (SelMarked(es))
 	    EDIT_DeleteSel(hwnd);
 	else
@@ -2729,6 +2783,7 @@ static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
 	break;
 
     case VK_DELETE:
+	if (IsReadOnly(hwnd)) break;
 	if (SelMarked(es))
 	    EDIT_DeleteSel(hwnd);
 	else
@@ -2758,7 +2813,7 @@ static void EDIT_WM_KeyDown(HWND hwnd, WORD wParam)
 /*********************************************************************
  *  WM_SETTEXT
  */
-static LONG EDIT_WM_SetText(HWND hwnd, LONG lParam)
+static LRESULT EDIT_WM_SetText(HWND hwnd, LPARAM lParam)
 {
     int len;
     char *text,*settext;
@@ -2790,11 +2845,34 @@ static LONG EDIT_WM_SetText(HWND hwnd, LONG lParam)
 }
 
 /*********************************************************************
+ *  WM_LBUTTONDBLCLK
+ */
+static void EDIT_WM_LButtonDblClk(HWND hwnd)
+{
+    EDITSTATE *es = EDIT_GetEditState(hwnd);
+
+    dprintf_edit(stddeb, "WM_LBUTTONDBLCLK: hwnd=%d\n", hwnd);
+    if (SelMarked(es)) EDIT_ClearSel(hwnd);
+    es->SelBegLine = es->SelEndLine = es->CurrLine;
+    es->SelBegCol = EDIT_CallWordBreakProc(hwnd,
+			EDIT_TextLine(hwnd, es->CurrLine),
+			es->CurrCol, 
+			EDIT_LineLength(hwnd, es->CurrLine), 
+			WB_LEFT);
+    es->SelEndCol = EDIT_CallWordBreakProc(hwnd,
+			EDIT_TextLine(hwnd, es->CurrLine),
+			es->CurrCol, 
+			EDIT_LineLength(hwnd, es->CurrLine), 
+			WB_RIGHT);
+    EDIT_WriteTextLine(hwnd, NULL, es->CurrLine);
+}
+
+/*********************************************************************
  * EditWndProc()
  */
 LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    LONG lResult = 0;
+    LRESULT lResult = 0;
     char *textPtr;
     int len;
     EDITSTATE *es = EDIT_GetEditState(hwnd);
@@ -2803,7 +2881,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     switch (uMsg) {
     case EM_CANUNDO:
-	lResult = (LONG)es->hDeletedText;
+	lResult = (LRESULT)es->hDeletedText;
 	break;
 	
     case EM_EMPTYUNDOBUFFER:
@@ -2823,21 +2901,17 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case EM_GETHANDLE:
-	lResult = (LONG)es->hText;
+	lResult = (LRESULT)es->hText;
 	break;
 
     case EM_GETLINE:
 	if (IsMultiLine(hwnd))
 	    lResult = EDIT_GetLineMsg(hwnd, wParam, lParam);
-	else
-	    lResult = 0L;
 	break;
 
     case EM_GETLINECOUNT:
 	if (IsMultiLine(hwnd))
 	    lResult = es->wlines;
-	else
-	    lResult = 0L;
 	break;
 
     case EM_GETMODIFY:
@@ -2858,7 +2932,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case EM_GETWORDBREAKPROC:
 	dprintf_edit(stddeb, "EM_GETWORDBREAKPROC\n");
-	lResult = (LONG)es->WordBreakProc;
+	lResult = (LRESULT)es->WordBreakProc;
 	break;
 
     case EM_LIMITTEXT:
@@ -2877,8 +2951,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case EM_LINEINDEX:
 	if (IsMultiLine(hwnd))
 	    lResult = EDIT_LineIndexMsg(hwnd, wParam);
-	else
-	    lResult = 0L;
 	break;
 
     case EM_LINELENGTH:
@@ -2907,7 +2979,10 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case EM_SETREADONLY:
-	fprintf(stdnimp,"edit: cannot process EM_SETREADONLY message\n");
+	dprintf_edit(stddeb, "EM_SETREADONLY, wParam=%d\n", wParam);
+	SetWindowLong(hwnd, GWL_STYLE,
+	    (BOOL)wParam ? (GetWindowLong(hwnd, GWL_STYLE) | ES_READONLY)
+		: (GetWindowLong(hwnd, GWL_STYLE) & ~(DWORD)ES_READONLY));
 	break;
 
     case EM_SETRECT:
@@ -2973,16 +3048,14 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	if ((int)wParam > len)
 	{
 	    strcpy((char *)PTR_SEG_TO_LIN(lParam), textPtr);
-	    lResult = (DWORD)len ;
+	    lResult = (LRESULT)len ;
 	}
-	else
-	    lResult = 0L;
 	EDIT_HeapUnlock(hwnd, es->hText);
 	break;
 
     case WM_GETTEXTLENGTH:
 	textPtr = EDIT_HeapLock(hwnd, es->hText);
-	lResult = (DWORD)strlen(textPtr);
+	lResult = (LRESULT)strlen(textPtr);
 	EDIT_HeapUnlock(hwnd, es->hText);
 	break;
 
@@ -2998,7 +3071,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	dprintf_edit(stddeb, "WM_KILLFOCUS\n");
 	es->HaveFocus = FALSE;
 	DestroyCaret();
-	es->WeOwnCaret = FALSE;
 	if (SelMarked(es))
             if(GetWindowLong(hwnd,GWL_STYLE) & ES_NOHIDESEL)
 	        EDIT_UpdateSel(hwnd);
@@ -3026,7 +3098,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case WM_MOVE:
-	lResult = 0;
 	break;
 
     case WM_NCCREATE:
@@ -3046,7 +3117,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	es->HaveFocus = TRUE;
 	if (SelMarked(es)) EDIT_UpdateSel(hwnd);
 	CreateCaret(hwnd, 0, 2, es->txtht);
-	es->WeOwnCaret = TRUE;
 	SetCaretPos(es->WndCol, es->WndRow * es->txtht);
 	es->CaretHidden = TRUE;
 	NOTIFY_PARENT(hwnd, EN_SETFOCUS);
@@ -3059,7 +3129,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_SETREDRAW:
 	dprintf_edit(stddeb, "WM_SETREDRAW: hwnd=%d, wParam=%x\n",
 		     hwnd, wParam);
-	lResult = 0;
 	break;
 #endif
     case WM_SETTEXT:
@@ -3069,7 +3138,6 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case WM_SIZE:
 	EDIT_WM_Size(hwnd, wParam, lParam);
-	lResult = 0;
 	break;
 
     case WM_VSCROLL:
@@ -3077,9 +3145,7 @@ LRESULT EditWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	break;
 
     case WM_LBUTTONDBLCLK:
-	dprintf_edit(stddeb, "WM_LBUTTONDBLCLK: hwnd=%d, wParam=%x\n",
-		     hwnd, wParam);
-	lResult = 0;
+	EDIT_WM_LButtonDblClk(hwnd);
 	break;
 
     default:

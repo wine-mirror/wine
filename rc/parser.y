@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "parser.h"
 #include "windows.h"
 %}
@@ -29,7 +30,7 @@
 %type <res> iconinfo menu menu_body item_definitions rcdata raw_data raw_elements 
 %type <res> stringtable strings versioninfo
 %type <num> acc_options item_options
-%type <style> style optional_style
+%type <style> style style_elm optional_style
 %%
 
 resource_file: resources {create_output($1);}
@@ -48,6 +49,11 @@ resource:	NUMBER resource_definition
 		{$$=$2;$$->n.s_name=$1;$$->n_type=1;
 			if(verbose)fprintf(stderr,"Got %s %s\n",get_typename($2),$1);
 		}
+                | stringtable
+                {$$=$1; /* <-- should be NULL */
+			if(verbose)fprintf(stderr,"Got STRINGTABLE\n");
+                }
+                ;
 
 /* get the value for a single resource*/
 resource_definition:	accelerators {$$=$1;}
@@ -58,8 +64,8 @@ resource_definition:	accelerators {$$=$1;}
 		| icon {$$=$1;}
 		| menu {$$=$1;}
 		| rcdata {$$=$1;}
-		| stringtable {$$=$1;}
 		| versioninfo {$$=$1;}
+                ;
 
 /* have to use tBEGIN because BEGIN is predefined */
 accelerators:	ACCELERATORS  tBEGIN  events tEND {$$=$3;$$->type=acc;}
@@ -190,20 +196,27 @@ raw_elements:	SINGLE_QUOTED {$$=hex_to_raw($1,new_res());}
 stringtable:	STRINGTABLE load_and_memoption tBEGIN strings tEND
 			{$$=$4;}
 strings:	{$$=0;}|
-		NUMBER STRING strings {$$=0;}
+		NUMBER STRING strings {$$=0;add_str_tbl_elm($1,$2);}
 
 versioninfo:	VERSIONINFO NOT_SUPPORTED {$$=0;}
 
 /* NOT x | NOT y | a | b means (a|b)& ~x & ~y
    NOT is used to disable default styles */
-style:		NUMBER {$$=new_style();$$->or=$1;}
+style:	        {$$=new_style();}
+                | style_elm {$$=$1;}
+		| style_elm '|' style 
+                {$$=$1;$$->or|=$3->or;$$->and&=$3->and;free($3);}
+
+style_elm:      NUMBER {$$=new_style();$$->or=$1;}
 		| NOT NUMBER {$$=new_style();$$->and=~($2);}
 		| '(' style ')' {$$=$2;}
-		| style '|' style {$$=$1;$$->or|=$3->or;$$->and&=$3->and;}
 %%
+extern int line_number;
+extern char* yytext;
+
 int yyerror(char *s)
 {
-	puts(s);
+	fprintf(stderr,"stdin:%d: %s before '%s'\n",line_number,s,yytext);
 	return 0;
 }
 

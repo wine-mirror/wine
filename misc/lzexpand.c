@@ -1,0 +1,492 @@
+/*
+ * LZ Decompression functions 
+ *
+ * Copyright 1996 Marcus Meissner
+ */
+/* 
+ * FIXME: return values might be wrong
+ */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "windows.h"
+#include "file.h"
+#include "lzexpand.h"
+#include "stackframe.h"
+#include "stddebug.h"
+#include "debug.h"
+#include "xmalloc.h"
+
+/* The readahead length of the decompressor. Reading single bytes
+ * using _lread() would be SLOW.
+ */
+#define	GETLEN	2048
+
+/* Format of first 14 byte of LZ compressed file */
+struct lzfileheader {
+	BYTE	magic[8];
+	BYTE	compressiontype;
+	CHAR	lastchar;
+	DWORD	reallength;		
+};
+static BYTE LZMagic[8]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
+
+static struct lzstate {
+	HFILE	lzfd;		/* the handle used by the program */
+	HFILE	realfd;		/* the real filedescriptor */
+	CHAR	lastchar;	/* the last char of the filename */
+
+	DWORD	reallength;	/* the decompressed length of the file */
+	DWORD	realcurrent;	/* the position the decompressor currently is */
+	DWORD	realwanted;	/* the position the user wants to read from */
+
+	BYTE	table[0x1000];	/* the rotating LZ table */
+	UINT	curtabent;	/* CURrent TABle ENTry */
+
+	BYTE	stringlen;	/* length and position of current string */ 
+	DWORD	stringpos;	/* from stringtable */
+
+
+	WORD	bytetype;	/* bitmask within blocks */
+
+	BYTE	*get;		/* GETLEN bytes */
+	DWORD	getcur;		/* current read */
+	DWORD	getlen;		/* length last got */
+} *lzstates=NULL;
+static int nroflzstates=0;
+
+/* reads one compressed byte, including buffering */
+#define GET(lzs,b)	_lzget(lzs,&b)
+#define GET_FLUSH(lzs)	lzs->getcur=lzs->getlen;
+
+int
+_lzget(struct lzstate *lzs,BYTE *b) {
+	if (lzs->getcur<lzs->getlen) {
+		*b		= lzs->get[lzs->getcur++];
+		return		1;
+	} else {
+		int ret = FILE_Read(lzs->realfd,lzs->get,GETLEN);
+		if (ret==HFILE_ERROR)
+			return HFILE_ERROR;
+		if (ret==0)
+			return 0;
+		lzs->getlen	= ret;
+		lzs->getcur	= 1;
+		*b		= *(lzs->get);
+		return 1;
+	}
+}
+/* internal function, reads lzheader
+ * returns BADINHANDLE for non filedescriptors
+ * return 0 for file not compressed using LZ 
+ * return UNKNOWNALG for unknown algorithm
+ * returns lzfileheader in *head
+ */
+static INT
+read_header(HFILE fd,struct lzfileheader *head) {
+	BYTE	buf[14];
+
+	if (_llseek(fd,0,SEEK_SET)==-1)
+		return LZERROR_BADINHANDLE;
+
+	/* We can't directly read the lzfileheader struct due to 
+	 * structure element alignment
+	 */
+	if (FILE_Read(fd,buf,14)<14)
+		return 0;
+	memcpy(head->magic,buf,8);
+	memcpy(&(head->compressiontype),buf+8,1);
+	memcpy(&(head->lastchar),buf+9,1);
+
+	/* FIXME: consider endianess on non-intel architectures */
+	memcpy(&(head->reallength),buf+10,4);
+
+	if (memcmp(head->magic,LZMagic,8))
+		return 0;
+	if (head->compressiontype!='A')
+		return LZERROR_UNKNOWNALG;
+	return 1;
+}
+/* 
+ * LZSTART							[LZEXPAND.7] 
+ */
+INT
+LZStart(void) {
+	dprintf_file(stddeb,"LZStart(void)\n");
+	return 1;
+}
+
+/*
+ * LZINIT							[LZEXPAND.3]
+ * 
+ * initializes internal decompression buffers, returns lzfiledescriptor.
+ * (return value the same as hfSrc, if hfSrc is not compressed)
+ * on failure, returns error code <0
+ * lzfiledescriptors range from 0x400 to 0x410 (only 16 open files per process)
+ * we use as much as we need, we just OR 0x400 to the passed HFILE.
+ *
+ * since _llseek uses the same types as libc.lseek, we just use the macros of 
+ *  libc
+ */
+HFILE
+LZInit(HFILE hfSrc) {
+	struct	lzfileheader	head;
+	struct	lzstate		*lzs;
+	DWORD	ret;
+
+	dprintf_file(stddeb,"LZInit(%d)\n",hfSrc);
+	ret=read_header(hfSrc,&head);
+	if (ret<=0) {
+		_llseek(hfSrc,0,SEEK_SET);
+		return ret?ret:hfSrc;
+	}
+	lzstates=xrealloc(lzstates,(++nroflzstates)*sizeof(struct lzstate));
+	lzs		= lzstates+(nroflzstates-1);
+
+	memset(lzs,'\0',sizeof(*lzs));
+	lzs->realfd	= hfSrc;
+	lzs->lzfd	= hfSrc | 0x400;
+	lzs->lastchar	= head.lastchar;
+	lzs->reallength = head.reallength;
+
+	lzs->get	= xmalloc(GETLEN);
+	lzs->getlen	= 0;
+	lzs->getcur	= 0;
+
+	/* Yes, preinitialize with spaces */
+	memset(lzs->table,' ',0x1000);
+	/* Yes, start 16 byte from the END of the table */
+	lzs->curtabent	= 0xff0; 
+	return lzs->lzfd;
+}
+
+/*
+ * LZDone					[LZEXPAND.9] 
+ */
+
+void
+LZDone(void) {
+	dprintf_file(stddeb,"LZDone()\n");
+}
+
+/*
+ * GetExpandedName				[LZEXPAND.10]
+ *
+ * gets the full filename of the compressed file 'in' by opening it
+ * and reading the header
+ *
+ * "file." is being translated to "file"
+ * "file.bl_" (with lastchar 'a') is being translated to "file.bla"
+ * "FILE.BL_" (with lastchar 'a') is being translated to "FILE.BLA"
+ */
+
+INT
+GetExpandedName(LPCSTR in,LPSTR out) {
+	struct lzfileheader	head;
+	HFILE		fd;
+	OFSTRUCT	ofs;
+	INT		fnislowercased,ret,len;
+	LPSTR		s,t;
+
+	dprintf_file(stddeb,"GetExpandedName(%s)\n",in);
+	fd=OpenFile(in,&ofs,OF_READ);
+	if (fd==HFILE_ERROR)
+		return LZERROR_BADINHANDLE;
+	ret=read_header(fd,&head);
+	if (ret<=0) {
+		_lclose(fd);
+		return LZERROR_BADINHANDLE;
+	}
+
+	/* This line will crash if the caller hasn't allocated enough memory
+	 * for us.
+	 */
+	strcpy(out,in);
+
+	/* look for directory prefix and skip it. */
+	s=out;
+	while (NULL!=(t=strpbrk(s,"/\\:")))
+		s=t+1;
+
+	/* now mangle the basename */
+	if (!*s) {
+		/* FIXME: hmm. shouldn't happen? */
+		fprintf(stddeb,__FILE__":GetExpandedFileName(), specified a directory or what? (%s)\n",in);
+		_lclose(fd);
+		return 1;
+	}
+	/* see if we should use lowercase or uppercase on the last char */
+	fnislowercased=1;
+	t=s+strlen(s)-1;
+	while (t>=out) {
+		if (!isalpha(*t)) {
+			t--;
+			continue;
+		}
+		fnislowercased=islower(*t);
+		break;
+	}
+	if (isalpha(head.lastchar)) {
+		if (fnislowercased)
+			head.lastchar=tolower(head.lastchar);
+		else
+			head.lastchar=toupper(head.lastchar);
+	}	
+
+	/* now look where to replace the last character */
+	if (NULL!=(t=strchr(s,'.'))) {
+		if (t[1]=='\0') {
+			t[0]='\0';
+		} else {
+			len=strlen(t)-1;
+			if (t[len]=='_')
+				t[len]=head.lastchar;
+		}
+	} /* else no modification necessary */
+	_lclose(fd);
+	return 1;
+}
+
+/*
+ * LZRead				[LZEXPAND.5]
+ * just as normal read, but reads from LZ special fd and uncompresses.
+ */
+INT
+LZRead(HFILE fd,SEGPTR segbuf,WORD toread) {
+	int	i,howmuch;
+	BYTE	b;
+	BYTE	*buf;
+	struct	lzstate	*lzs;
+
+	dprintf_file(stddeb,"LZRead(%d,%08lx,%d)\n",fd,segbuf,toread);
+	howmuch=toread;
+	for (i=0;i<nroflzstates;i++)
+		if (lzstates[i].lzfd==fd)
+			break;
+	if (i==nroflzstates)
+		return _lread(fd,segbuf,toread);
+	lzs=lzstates+i;
+
+
+/* The decompressor itself is in a define, cause we need it twice
+ * in this function. (the decompressed byte will be in b)
+ */
+#define DECOMPRESS_ONE_BYTE 						\
+		if (lzs->stringlen) {					\
+			b		= lzs->table[lzs->stringpos];	\
+			lzs->stringpos	= (lzs->stringpos+1)&0xFFF;	\
+			lzs->stringlen--;				\
+		} else {						\
+			if (!(lzs->bytetype&0x100)) {			\
+				if (1!=GET(lzs,b)) 			\
+					return toread-howmuch;		\
+				lzs->bytetype = b|0xFF00;		\
+			}						\
+			if (lzs->bytetype & 1) {			\
+				if (1!=GET(lzs,b))			\
+					return toread-howmuch;		\
+			} else {					\
+				BYTE	b1,b2;				\
+									\
+				if (1!=GET(lzs,b1))			\
+					return toread-howmuch;		\
+				if (1!=GET(lzs,b2))			\
+					return toread-howmuch;		\
+				/* Format:				\
+				 * b1 b2				\
+				 * AB CD 				\
+				 * where CAB is the stringoffset in the table\
+				 * and D+3 is the len of the string	\
+				 */					\
+				lzs->stringpos	= b1|((b2&0xf0)<<4);	\
+				lzs->stringlen	= (b2&0xf)+2; 		\
+				/* 3, but we use a  byte already below ... */\
+				b		= lzs->table[lzs->stringpos];\
+				lzs->stringpos	= (lzs->stringpos+1)&0xFFF;\
+			}						\
+			lzs->bytetype>>=1;				\
+		}							\
+		/* store b in table */					\
+		lzs->table[lzs->curtabent++]= b;			\
+		lzs->curtabent	&= 0xFFF;				\
+		lzs->realcurrent++;
+
+	/* if someone has seeked, we have to bring the decompressor 
+	 * to that position
+	 */
+	if (lzs->realcurrent!=lzs->realwanted) {
+		/* if the wanted position is before the current position 
+		 * I see no easy way to unroll ... We have to restart at
+		 * the beginning. *sigh*
+		 */
+		if (lzs->realcurrent>lzs->realwanted) {
+			/* flush decompressor state */
+			_llseek(lzs->realfd,14,SEEK_SET);
+			GET_FLUSH(lzs);
+			lzs->realcurrent= 0;
+			lzs->bytetype	= 0;
+			lzs->stringlen	= 0;
+			memset(lzs->table,' ',0x1000);
+			lzs->curtabent	= 0xFF0;
+		}
+		while (lzs->realcurrent<lzs->realwanted) {
+			DECOMPRESS_ONE_BYTE;
+		}
+	}
+
+	buf=PTR_SEG_TO_LIN(segbuf);
+	while (howmuch) {
+		DECOMPRESS_ONE_BYTE;
+		lzs->realwanted++;
+		*buf++		= b;
+		howmuch--;
+	}
+	return 	toread;
+#undef DECOMPRESS_ONE_BYTE
+}
+
+/* 
+ * LZSeek				[LZEXPAND.4]
+ *
+ * works as the usual _llseek
+ */
+
+LONG
+LZSeek(HFILE fd,LONG off,INT type) {
+	int	i;
+	struct	lzstate	*lzs;
+	LONG	lastwanted,newwanted;
+
+	dprintf_file(stddeb,"LZSeek(%d,%ld,%d)\n",fd,off,type);
+	for (i=0;i<nroflzstates;i++)
+		if (lzstates[i].lzfd==fd)
+			break;
+	/* not compressed? just use normal _llseek() */
+	if (i==nroflzstates)
+		return _llseek(fd,off,type);
+	lzs		= lzstates+i;
+	lastwanted	= lzs->realwanted;
+	newwanted	= lzs->realwanted;
+	switch (type) {
+	case 1:	/* SEEK_CUR */
+		newwanted      += off;
+		break;
+	case 2:	/* SEEK_END */
+		newwanted	= lzs->reallength-off;
+		break;
+	default:/* SEEK_SET */
+		newwanted	= off;
+		break;
+	}
+	if (newwanted>lzs->reallength)
+		return LZERROR_BADVALUE;
+	if (newwanted<0)
+		return LZERROR_BADVALUE;
+	lzs->realwanted	= newwanted;
+	return lastwanted;
+}
+
+/* 
+ * LZCopy				[LZEXPAND.1]
+ *
+ * Copies everything from src to dest
+ * if src is a LZ compressed file, it will be uncompressed.
+ * will return the number of bytes written to dest or errors.
+ */
+LONG
+LZCopy(HFILE src,HFILE dest) {
+	int	i,ret,wret;
+	LONG	len;
+#define BUFLEN	1000
+	BYTE	buf[BUFLEN];
+	INT	(*xread)(HFILE,SEGPTR,WORD);
+
+	dprintf_file(stddeb,"LZCopy(%d,%d)\n",src,dest);
+	for (i=0;i<nroflzstates;i++)
+		if (src==lzstates[i].lzfd)
+			break;
+
+	/* not compressed? just copy */
+	if (i==nroflzstates)
+		xread=_lread;
+	else
+		xread=LZRead;
+	len=0;
+	while (1) {
+		ret=xread(src,MAKE_SEGPTR(buf),BUFLEN);
+		if (ret<=0) {
+			if (ret==0)
+				break;
+			if (ret==-1)
+				return LZERROR_READ;
+			return ret;
+		}
+		len    += ret;
+		wret	= _lwrite(dest,buf,ret);
+		if (wret!=ret)
+			return LZERROR_WRITE;
+	}
+	return len;
+#undef BUFLEN
+}
+
+/*
+ * LZOpenFile				[LZEXPAND.2]
+ * Opens a file. If not compressed, open it as a normal file.
+ */
+HFILE
+LZOpenFile(LPCSTR fn,LPOFSTRUCT ofs,UINT mode) {
+	HFILE	fd,cfd;
+
+	dprintf_file(stddeb,"LZOpenFile(%s,%p,%d)\n",fn,ofs,mode);
+	/* 0x70 represents all OF_SHARE_* flags, ignore them for the check */
+	fd=OpenFile(fn,ofs,mode);
+	if ((mode&~0x70)!=OF_READ)
+		return fd;
+	if (fd==HFILE_ERROR)
+		return HFILE_ERROR;
+	cfd=LZInit(fd);
+	if (cfd<=0)
+		return fd;
+	return cfd;
+}
+
+/*
+ * LZClose				[LZEXPAND.6]
+ */
+void
+LZClose(HFILE fd) {
+	int	i;
+
+	dprintf_file(stddeb,"LZClose(%d)\n",fd);
+	for (i=0;i<nroflzstates;i++)
+		if (lzstates[i].lzfd==fd)
+			break;
+	if (i==nroflzstates) {
+		_lclose(fd);
+		return;
+	}
+	if (lzstates[i].get)
+		free(lzstates[i].get);
+	_lclose(lzstates[i].realfd);
+	memcpy(lzstates+i,lzstates+i+1,sizeof(struct lzstate)*(nroflzstates-i-1));
+	nroflzstates--;
+	lzstates=xrealloc(lzstates,sizeof(struct lzstate)*nroflzstates);
+}
+
+/*
+ * CopyLZFile					[LZEXPAND.8]
+ *
+ * Copy src to dest (including uncompressing src).
+ * NOTE: Yes. This is exactly the same function as LZCopy.
+ */
+LONG
+CopyLZFile(HFILE src,HFILE dest) {
+	dprintf_file(stddeb,"CopyLZFile(%d,%d)\n",src,dest);
+	return LZCopy(src,dest);
+}

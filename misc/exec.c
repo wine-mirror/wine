@@ -116,27 +116,75 @@ BOOL ExitWindows( DWORD dwReturnCode, WORD wReserved )
  */
 BOOL WinHelp(HWND hWnd, LPSTR lpHelpFile, WORD wCommand, DWORD dwData)
 {
-	char	str[256];
-    	dprintf_exec(stddeb,"WinHelp(%s, %u, %lu)\n", 
-		lpHelpFile, wCommand, dwData);
-	switch(wCommand) {
-	case 0:
-	case HELP_HELPONHELP:
-		GetWindowsDirectory(str, sizeof(str));
-		strcat(str, "\\winhelp.exe winhelp.hlp");
-        dprintf_exec(stddeb,"'%s'\n", str);
-		break;
-	case HELP_INDEX:
-		GetWindowsDirectory(str, sizeof(str));
-		strcat(str, "\\winhelp.exe ");
-		strcat(str, lpHelpFile);
-        dprintf_exec(stddeb,"'%s'\n", str);
-		break;
-        case HELP_QUIT:
-            return TRUE;
-	default:
+	static WORD WM_WINHELP=0;
+	HWND hDest;
+	char szBuf[20];
+	LPWINHELP lpwh;
+	HANDLE hwh;
+	void *data=0;
+	int size,dsize,nlen;
+        if (wCommand != HELP_QUIT)  /* FIXME */
+            if(WinExec("winhelp.exe -x",SW_SHOWNORMAL)<=32)
 		return FALSE;
+	/* FIXME: Should be directed yield, to let winhelp open the window */
+	Yield();
+	if(!WM_WINHELP) {
+		strcpy(szBuf,"WM_WINHELP");
+		WM_WINHELP=RegisterWindowMessage(MAKE_SEGPTR(szBuf));
+		if(!WM_WINHELP)
+			return FALSE;
 	}
-	WinExec(str, SW_SHOWNORMAL);
-	return(TRUE);
+	strcpy(szBuf,"MS_WINHELP");
+	hDest = FindWindow(MAKE_SEGPTR(szBuf),0);
+	if(!hDest)
+		return FALSE;
+	switch(wCommand)
+	{
+		case HELP_CONTEXT:
+		case HELP_CONTENTS:
+		case HELP_SETCONTENTS:
+		case HELP_CONTEXTPOPUP:
+		case HELP_FORCEFILE:
+		case HELP_HELPONHELP:
+		case HELP_QUIT:
+			dsize=0;
+			break;
+		case HELP_KEY:
+		case HELP_PARTIALKEY:
+		case HELP_COMMAND:
+			data = PTR_SEG_TO_LIN(dwData);
+			dsize = strlen(data)+1;
+			break;
+		case HELP_MULTIKEY:
+			data = PTR_SEG_TO_LIN(dwData);
+			dsize = ((LPMULTIKEYHELP)data) -> mkSize;
+			break;
+		case HELP_SETWINPOS:
+			data = PTR_SEG_TO_LIN(dwData);
+			dsize = ((LPHELPWININFO)data) -> wStructSize;
+			break;
+		default:
+			fprintf(stderr,"Unknown help command %d\n",wCommand);
+			return FALSE;
+	}
+	if(lpHelpFile)
+		nlen =  strlen(lpHelpFile)+1;
+	else
+		nlen = 0;
+	size = sizeof(WINHELP) + nlen + dsize;
+	hwh = GlobalAlloc(0,size);
+	lpwh = GlobalLock(hwh);
+	lpwh->size = size;
+	lpwh->command = wCommand;
+	if(nlen) {
+		lpwh->ofsFilename = sizeof(WINHELP);
+		strcpy(((char*)lpwh) + sizeof(WINHELP),lpHelpFile);
+	}
+	if(dsize) {
+		memcpy(((char*)lpwh)+sizeof(WINHELP)+nlen,data,dsize);
+		lpwh->ofsData = sizeof(WINHELP)+nlen;
+	} else
+		lpwh->ofsData = 0;
+	GlobalUnlock(hwh);
+	return SendMessage(hDest,WM_WINHELP,hWnd,hwh);
 }

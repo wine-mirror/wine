@@ -89,6 +89,10 @@ extern void DEBUG_Print( const DBG_ADDR *addr, int count, char format );
 extern void DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen );
 extern void DEBUG_Help(void);
 extern void DEBUG_List( DBG_ADDR *addr, int count );
+extern void DEBUG_InitWalk(void);
+extern void DEBUG_WndWalk( HWND );
+extern void DEBUG_WndDump( HWND );
+extern void DEBUG_QueueDump( HQUEUE );
 
   /* debugger/memory.c */
 extern BOOL DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size );

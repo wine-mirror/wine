@@ -435,7 +435,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
     InflateRect( &r, -1, -1 );
     GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
     if ((hwndTracking == hwnd) && (nBarTracking == nBar))
-        SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, uTrackingPos);
+        SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, uTrackingPos);
 }
 
 

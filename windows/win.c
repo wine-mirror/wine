@@ -306,7 +306,7 @@ HWND CreateWindowEx( DWORD exStyle, SEGPTR className, SEGPTR windowName,
 {
     HANDLE class, hwnd;
     CLASS *classPtr;
-    WND *wndPtr, *parentWndPtr;
+    WND *wndPtr;
     POINT maxSize, maxPos, minTrack, maxTrack;
     CREATESTRUCT createStruct;
     int wmcreate;
@@ -1207,13 +1207,17 @@ BOOL EnumTaskWindows( HTASK hTask, WNDENUMPROC lpEnumFunc, LPARAM lParam )
 static BOOL WIN_EnumChildWin(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
 {
     WND *wndPtr;
+    HWND hwndN,hwndCh;
 
     while (hwnd)
     {
         if (!(wndPtr=WIN_FindWndPtr(hwnd))) return 0;
+        hwndN=wndPtr->hwndNext;		/* storing hwnd is a way to avoid.. */
+        hwndCh=wndPtr->hwndChild;		/* ..side effects after wndenumprc  */
         if (!CallEnumWindowsProc( wndenumprc, hwnd, lParam )) return 0;
-        if (!WIN_EnumChildWin(wndPtr->hwndChild, wndenumprc, lParam)) return 0;
-        hwnd=wndPtr->hwndNext;
+        if (IsWindow(hwndCh))			/* to prevent too early termination */
+         if (!WIN_EnumChildWin(hwndCh, wndenumprc, lParam)) return 0;
+        hwnd=hwndN;
     } 
     return 1;
 }

@@ -52,7 +52,8 @@ struct dll_table_s dll_builtin_table[N_BUILTINS] =
     DLL_ENTRY_NOTUSED(COMPOBJ),
     DLL_ENTRY_NOTUSED(STORAGE),
     DLL_ENTRY(WINPROCS),
-    DLL_ENTRY_NOTUSED(DDEML)
+    DLL_ENTRY_NOTUSED(DDEML),
+    DLL_ENTRY(LZEXPAND)
 };
 
 /* don't forget to increase N_BUILTINS in dlls.h if you add a dll */

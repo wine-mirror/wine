@@ -18,6 +18,7 @@ C_SRCS = \
 	process.c \
 	resource.c \
 	string32.c \
+	struct32.c \
 	thread.c \
 	time.c \
 	user32.c \

@@ -182,16 +182,10 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT rect, LPRECT clipRect)
         HRGN hrgnInv = SCROLL_TraceChildren(hwnd,dx,dy,DCX_CLIPCHILDREN |
 						       DCX_CLIPSIBLINGS );
         if( hrgnInv )
- 	  {
-	    HRGN hrgnCombine = CreateRectRgn(0,0,0,0);
-
-	    CombineRgn(hrgnCombine,hrgnInv,hrgnUpdate,RGN_OR);
-	    dprintf_scroll(stddeb,"ScrollWindow: hrgnComb="NPFMT" hrgnInv="NPFMT" hrgnUpd="NPFMT"\n",
-	 					           hrgnCombine,hrgnInv,hrgnUpdate);
-
-	    DeleteObject(hrgnUpdate); DeleteObject(hrgnInv);
-	    hrgnUpdate = hrgnCombine;
-	  }
+        {
+	    CombineRgn(hrgnUpdate,hrgnInv,hrgnUpdate,RGN_OR);
+            DeleteObject(hrgnInv);
+        }
 
         RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW);
       }

@@ -8,11 +8,7 @@
 
 -  ES_LOWERCASE and ES_UPPERCASE.
 
--  ES_PASSWORD and EM_PASSWORDCHAR.
-
 -  ES_OEMCONVERT.  Probably won't do anything very much.
-
--  ES_READONLY.
 
 -  ES_WANTRETURN and Ctrl-Enter to move to next line when this
    functionality is enabled.
@@ -21,3 +17,17 @@
    entered text as well as deleted text.  You can also undo an undo.
 
 -  Add word wrap - this is a very big change!
+
+I'm doing a rewrite on edit.c.  Please e-mail me if you want
+to work on edit.c as well, so we can synchronize.
+
+Bugs in the current version, known to me:
+-  An empty document still contains "\r\n"
+-  UNDO is unstable (incomplete, and it can cause a segfault)
+-  WM_LBUTTONDBLCLK lets you select whole words, but doesn't set
+   the caret at the end of the selection
+-  Scrolling (left-right) works, but the scrollbar doesn't
+
+
+Frans van Dorsselaer
+dorssel@rulhm1.LeidenUniv.nl

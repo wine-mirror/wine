@@ -11,6 +11,7 @@ C_SRCS = \
 	escape.c \
 	keyboard.c \
 	lstr.c \
+	lzexpand.c \
 	main.c \
 	network.c \
 	ole2.c \
