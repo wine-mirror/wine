@@ -186,7 +186,7 @@ by
 For example, if you want to execute 
 .B wine 
 with the options 
-.I --managed --display :0.2
+.I --managed --dll riched32=n
 and if 
 .B wine 
 should run the program 
@@ -196,7 +196,7 @@ with the arguments
 , then you could use the following command line to invoke 
 .B wine:
 .PP
-.I wine --managed --display :0.2 -- myapp.exe --display 3d somefile
+.I wine --managed --dll riched32=n -- myapp.exe --display 3d somefile
 .PP 
 Note that in contrast to previous versions of 
 .B wine, 
