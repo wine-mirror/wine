@@ -588,6 +588,10 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 	goto closeprinter;
     }
 
+    /* Some gimp-print ppd files don't contain a DefaultResolution line
+       set it to 300 if it's not specified */
+    if(pi->ppd->DefaultResolution == 0)
+        pi->ppd->DefaultResolution = 300;
 
     if(using_default_devmode) {
         DWORD papersize;
@@ -604,6 +608,13 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 		 REG_BINARY, (LPBYTE)pi->Devmode, sizeof(DefaultDevmode) );
     }
 
+    if(pi->ppd->DefaultPageSize) { /* We'll let the ppd override the devmode */
+        PSDRV_DEVMODEA dm;
+        memset(&dm, 0, sizeof(dm));
+        dm.dmPublic.dmFields = DM_PAPERSIZE;
+        dm.dmPublic.u1.s1.dmPaperSize = pi->ppd->DefaultPageSize->WinPage;
+        PSDRV_MergeDevmodes(pi->Devmode, &dm, pi);
+    }
 
     /*
      *	This is a hack.  The default paper size should be read in as part of

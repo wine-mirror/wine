@@ -355,9 +355,13 @@ static BOOL PSDRV_PPDGetSymbolValue(char *pos, PPDTuple *tuple)
  */
 static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 {
-    char line[257], *opt = NULL, *cp, *trans, *endkey;
-    BOOL gotoption = TRUE;
+    char line[257], *opt, *cp, *trans, *endkey;
+    BOOL gotoption;
 
+ start:
+
+    gotoption = TRUE;
+    opt = NULL;
     memset(tuple, 0, sizeof(*tuple));
 
     do {
@@ -369,7 +373,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 
     if(line[strlen(line)-1] != '\n') {
         ERR("Line too long.\n");
-	return FALSE;
+	goto start;
     }
 
     for(cp = line; !isspace(*cp) && *cp != ':'; cp++)
@@ -398,7 +402,8 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
         cp = strpbrk(opt, ":/");
 	if(!cp) {
 	    ERR("Error in line '%s'?\n", line);
-	    return FALSE;
+            HeapFree(GetProcessHeap(), 0, tuple->key);
+	    goto start;
 	}
 	tuple->option = HeapAlloc( PSDRV_Heap, 0, cp - opt + 1 );
 	if(!tuple->option) return FALSE;
@@ -410,7 +415,9 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
 	    cp = strchr(trans, ':');
 	    if(!cp) {
 	        ERR("Error in line '%s'?\n", line);
-		return FALSE;
+                HeapFree(GetProcessHeap(), 0, tuple->option);
+                HeapFree(GetProcessHeap(), 0, tuple->key);
+		goto start;
 	    }
 	    buf = HeapAlloc( PSDRV_Heap, 0, cp - trans + 1 );
 	    if(!buf) return FALSE;
@@ -547,6 +554,7 @@ PPD *PSDRV_ParsePPD(char *fname)
     FILE *fp;
     PPD *ppd;
     PPDTuple tuple;
+    char *default_pagesize = NULL;
 
     TRACE("file '%s'\n", fname);
 
@@ -675,7 +683,16 @@ PPD *PSDRV_ParsePPD(char *fname)
 	    }
 	}
 
-	else if(!strcmp("*ImageableArea", tuple.key)) {
+        else if(!strcmp("*DefaultPageSize", tuple.key)) {
+            if(default_pagesize) {
+                WARN("Already set default pagesize\n");
+            } else {
+                default_pagesize = tuple.value;
+                tuple.value = NULL;
+           }
+        }
+
+        else if(!strcmp("*ImageableArea", tuple.key)) {
 	    PAGESIZE *page;
 	    page = PSDRV_PPDGetPageSizeInfo(ppd, tuple.option);
 
@@ -803,6 +820,23 @@ PPD *PSDRV_ParsePPD(char *fname)
 
     }
 
+
+    ppd->DefaultPageSize = NULL;
+    if(default_pagesize) {
+	PAGESIZE *page;
+	for(page = ppd->PageSizes; page; page = page->next) {
+            if(!strcmp(page->Name, default_pagesize)) {
+                ppd->DefaultPageSize = page;
+                TRACE("DefaultPageSize: %s\n", page->Name);
+                break;
+            }
+        }
+        HeapFree(PSDRV_Heap, 0, default_pagesize);
+    }
+    if(!ppd->DefaultPageSize) {
+        ppd->DefaultPageSize = ppd->PageSizes;
+        TRACE("Setting DefaultPageSize to first in list\n");
+    }
 
     {
         FONTNAME *fn;

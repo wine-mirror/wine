@@ -184,6 +184,7 @@ typedef struct {
     char		*DefaultFont;
     FONTNAME		*InstalledFonts; /* ptr to a list of FontNames */
     PAGESIZE		*PageSizes;
+    PAGESIZE            *DefaultPageSize;
     OPTION		*InstalledOptions;
     CONSTRAINT		*Constraints;
     INPUTSLOT		*InputSlots;
