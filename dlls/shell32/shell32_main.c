@@ -829,10 +829,12 @@ BOOL WINAPI ShellAboutW( HWND hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
     HRSRC hRes;
     LPVOID template;
     BOOL bRet;
+    static const WCHAR wszSHELL_ABOUT_MSGBOX[] =
+        {'S','H','E','L','L','_','A','B','O','U','T','_','M','S','G','B','O','X',0};
 
     TRACE("\n");
 
-    if(!(hRes = FindResourceA(shell32_hInstance, "SHELL_ABOUT_MSGBOX", (LPSTR)RT_DIALOG)))
+    if(!(hRes = FindResourceW(shell32_hInstance, wszSHELL_ABOUT_MSGBOX, (LPWSTR)RT_DIALOG)))
         return FALSE;
     if(!(template = (LPVOID)LoadResource(shell32_hInstance, hRes)))
         return FALSE;
