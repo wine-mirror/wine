@@ -57,27 +57,33 @@ inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
 /*************************************************************************
  *      @	[SHLWAPI.17]
  *
- * Write a compact list to a stream.
+ * Write a compact list to an IStream object.
  *
  * PARAMS
- *  lpStream  [I] Stream to write the list to
+ *  lpStream  [I] IStream object to write the list to
  *  lpList    [I] List of items to write
  *
  * RETURNS
- *  Success: S_OK
+ *  Success: S_OK. The object is written to the stream.
  *  Failure: An HRESULT error code
  *
  * NOTES
  *  Ordinals 17,18,19,20,21 and 22 are related and together provide a compact
- *  list structure which may be stored and retrieved from a stream.
+ *  list structure which may be stored and retrieved from an IStream object.
  *
  *  The exposed API consists of:
- *   @17 Write a compact list to a stream
- *   @18 Read and create a list from a stream
- *   @19 Free a list
- *   @20 Insert a new item into a list
- *   @21 Remove an item from a list
- *   @22 Find an item in a list
+ *
+ *   SHLWAPI_17() Write a compact list to a stream,
+ *
+ *   SHLWAPI_18() Read and create a list from a stream,
+ *
+ *   SHLWAPI_19() Free a list,
+ *
+ *   SHLWAPI_20() Insert a new item into a list,
+ *
+ *   SHLWAPI_21() Remove an item from a list,
+ *
+ *   SHLWAPI_22() Find an item in a list.
  *
  *  The compact list is stored packed into a memory array. Each element has a
  *  size and an associated ID. Elements must be less than 64k if the list is
@@ -131,7 +137,7 @@ HRESULT WINAPI SHLWAPI_17(IStream* lpStream, LPSHLWAPI_CLIST lpList)
 /*************************************************************************
  *      @	[SHLWAPI.18]
  *
- * Read and create a compact list from a stream
+ * Read and create a compact list from an IStream object.
  *
  * PARAMS
  *  lpStream  [I] Stream to read the list from
@@ -143,6 +149,7 @@ HRESULT WINAPI SHLWAPI_17(IStream* lpStream, LPSHLWAPI_CLIST lpList)
  *
  * NOTES
  *  When read from a file, list objects are limited in size to 64k.
+ *  See SHLWAPI_17.
  */
 HRESULT WINAPI SHLWAPI_18(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
 {
@@ -237,6 +244,9 @@ HRESULT WINAPI SHLWAPI_18(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
  *
  * RETURNS
  *  Nothing.
+ *
+ * NOTES
+ *  See SHLWAPI_17.
  */
 VOID WINAPI SHLWAPI_19(LPSHLWAPI_CLIST lpList)
 {
@@ -256,8 +266,14 @@ VOID WINAPI SHLWAPI_19(LPSHLWAPI_CLIST lpList)
  *  lpNewItem [I] The new item to add to the list
  *
  * RETURNS
- *  Success: The size of the inserted item.
+ *  Success: S_OK. The item is added to the list.
  *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  If the size of the element to be inserted is less than the size of a
+ *  SHLWAPI_CLIST node, or the Id for the item is CLIST_ID_CONTAINER,
+ *  the call returns S_OK but does not actually add the element.
+ *  See SHLWAPI_17.
  */
 HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewItem)
 {
@@ -266,10 +282,12 @@ HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewItem)
 
   TRACE("(%p,%p)\n", lppList, lpNewItem);
 
-  if(!lppList || !lpNewItem ||
-     lpNewItem->ulId == CLIST_ID_CONTAINER ||
-     lpNewItem->ulSize < sizeof(SHLWAPI_CLIST))
+  if(!lppList || !lpNewItem )
     return E_INVALIDARG;
+
+  if (lpNewItem->ulSize < sizeof(SHLWAPI_CLIST) ||
+      lpNewItem->ulId == CLIST_ID_CONTAINER)
+    return S_OK;
 
   ulSize = lpNewItem->ulSize;
 
@@ -345,6 +363,9 @@ HRESULT WINAPI SHLWAPI_20(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewItem)
  * RETURNS
  *  Success: TRUE.
  *  Failure: FALSE, If any parameters are invalid, or the item was not found.
+ *
+ * NOTES
+ *  See SHLWAPI_17.
  */
 BOOL WINAPI SHLWAPI_21(LPSHLWAPI_CLIST* lppList, ULONG ulId)
 {
@@ -407,11 +428,14 @@ BOOL WINAPI SHLWAPI_21(LPSHLWAPI_CLIST* lppList, ULONG ulId)
  *
  * PARAMS
  *  lpList [I] List to search
- *  ulId   [I] ID of item to find
+ *  ulId   [I] Id of item to find
  *
  * RETURNS
  *  Success: A pointer to the list item found
  *  Failure: NULL
+ *
+ * NOTES
+ *  See SHLWAPI_17.
  */
 LPSHLWAPI_CLIST WINAPI SHLWAPI_22(LPSHLWAPI_CLIST lpList, ULONG ulId)
 {

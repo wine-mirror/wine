@@ -364,12 +364,17 @@ static void test_CList(void)
   inserted->ulSize = sizeof(SHLWAPI_CLIST) -1;
   inserted->ulId = 33;
   hRet = pSHLWAPI_20(&list, inserted);
-  ok(hRet == E_INVALIDARG, "allowed bad element size");
+  /* The call succeeds but the item is not inserted */
+  ok(hRet == S_OK, "failed bad element size");
+  inserted = pSHLWAPI_22(list, 33);
+  ok(inserted == NULL, "inserted bad element size");
 
+  inserted = (LPSHLWAPI_CLIST)buff;
   inserted->ulSize = 44;
   inserted->ulId = -1;
   hRet = pSHLWAPI_20(&list, inserted);
-  ok(hRet == E_INVALIDARG, "allowed adding a container");
+  /* The call succeeds but the item is not inserted */
+  ok(hRet == S_OK, "failed adding a container");
 
   item = SHLWAPI_CLIST_items;
 
