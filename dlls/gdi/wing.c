@@ -61,8 +61,8 @@ BOOL16 WINAPI WinGRecommendDIBFormat16(BITMAPINFO *bmpi)
     bmpi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmpi->bmiHeader.biWidth = 320;
     bmpi->bmiHeader.biHeight = -1;
-    bmpi->bmiHeader.biPlanes = GetDeviceCaps( hdc, PLANES );
-    bmpi->bmiHeader.biBitCount = GetDeviceCaps( hdc, BITSPIXEL );
+    bmpi->bmiHeader.biPlanes = 1;
+    bmpi->bmiHeader.biBitCount = 8;
     bmpi->bmiHeader.biCompression = BI_RGB;
     bmpi->bmiHeader.biSizeImage = 0;
     bmpi->bmiHeader.biXPelsPerMeter = 0;
