@@ -25,6 +25,7 @@
 #include "debugger.h"
 #include "neexe.h"
 #include "process.h"
+#include "server.h"
 #include "main.h"
 #include "expr.h"
 #include "user.h"
@@ -416,6 +417,7 @@ void mode_command(int newmode)
 static void DEBUG_Main( int signal )
 {
     static int loaded_symbols = 0;
+    static BOOL frozen = FALSE;
     static BOOL in_debugger = FALSE;
     char SymbolTableFile[256];
     int newmode;
@@ -437,6 +439,12 @@ static void DEBUG_Main( int signal )
     if (!loaded_symbols)
     {
         loaded_symbols++;
+
+        if ( !frozen )
+        {
+            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+            frozen = TRUE;
+        }
 
 	/*
 	 * Initialize the type handling stuff.
@@ -491,14 +499,18 @@ static void DEBUG_Main( int signal )
 
         GlobalUnlock16( GetCurrentTask() );
 
+        if ( !frozen )
+        {
+            CLIENT_DebuggerRequest( DEBUGGER_FREEZE_ALL );
+            frozen = TRUE;
+        }
+
         /* Put the display in a correct state */
 	USER_Driver->pBeginDebugging();
 
         newmode = ISV86(&DEBUG_context) ? 16 : IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
-
-        PROCESS_SuspendOtherThreads();
 
 	DEBUG_DoDisplay();
 
@@ -561,7 +573,12 @@ static void DEBUG_Main( int signal )
     if( dbg_exec_mode == EXEC_CONT )
       {
 	dbg_exec_count = 0;
-        PROCESS_ResumeOtherThreads();
+
+        if ( frozen )
+        {
+            CLIENT_DebuggerRequest( DEBUGGER_UNFREEZE_ALL );
+            frozen = FALSE;
+        }
       }
 
     in_debugger = FALSE;
