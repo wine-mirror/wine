@@ -38,7 +38,9 @@ extern "C" {
 /* Note that Winelib is purely Win32.                             */
 
 #ifdef __WINE__
-# define WINELIB_NAME_AW(func)   this_is_a_syntax_error this_is_a_syntax_error
+# define WINELIB_NAME_AW(func) \
+    func##_must_be_suffixed_with_W_or_A_in_this_context \
+    func##_must_be_suffixed_with_W_or_A_in_this_context
 #else  /* __WINE__ */
 # ifdef UNICODE
 #  define WINELIB_NAME_AW(func) func##W
