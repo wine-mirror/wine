@@ -392,21 +392,26 @@ NTSTATUS WINAPI RtlValidSecurityDescriptor(
 ULONG WINAPI RtlLengthSecurityDescriptor(
 	PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
-	ULONG Size;
-	Size = SECURITY_DESCRIPTOR_MIN_LENGTH;
+	ULONG offset = 0;
+	ULONG Size = SECURITY_DESCRIPTOR_MIN_LENGTH;
+
 	if ( SecurityDescriptor == NULL )
 		return 0;
 
-	if ( SecurityDescriptor->Owner != NULL )
-		Size += SecurityDescriptor->Owner->SubAuthorityCount;
-	if ( SecurityDescriptor->Group != NULL )
-		Size += SecurityDescriptor->Group->SubAuthorityCount;
+	if (SecurityDescriptor->Control & SE_SELF_RELATIVE)
+		offset = (ULONG) SecurityDescriptor;
 
+	if ( SecurityDescriptor->Owner != NULL )
+		Size += RtlLengthSid((PSID)((LPBYTE)SecurityDescriptor->Owner + offset));
+
+	if ( SecurityDescriptor->Group != NULL )
+		Size += RtlLengthSid((PSID)((LPBYTE)SecurityDescriptor->Group + offset));
 
 	if ( SecurityDescriptor->Sacl != NULL )
-		Size += SecurityDescriptor->Sacl->AclSize;
+		Size += ((PACL)((LPBYTE)SecurityDescriptor->Sacl + offset))->AclSize;
+
 	if ( SecurityDescriptor->Dacl != NULL )
-		Size += SecurityDescriptor->Dacl->AclSize;
+		Size += ((PACL)((LPBYTE)SecurityDescriptor->Dacl + offset))->AclSize;
 
 	return Size;
 }
@@ -540,13 +545,22 @@ NTSTATUS WINAPI RtlGetOwnerSecurityDescriptor(
 	if ( !SecurityDescriptor  || !Owner || !OwnerDefaulted )
 		return STATUS_INVALID_PARAMETER;
 
-	*Owner = SecurityDescriptor->Owner;
-	if ( *Owner != NULL )  {
-		if ( SecurityDescriptor->Control & SE_OWNER_DEFAULTED )
-			*OwnerDefaulted = TRUE;
-		else
-			*OwnerDefaulted = FALSE;
-	}
+	if (SecurityDescriptor->Owner != NULL)
+	{
+            if (SecurityDescriptor->Control & SE_SELF_RELATIVE)
+                *Owner = (PSID)((LPBYTE)SecurityDescriptor +
+                                (ULONG)SecurityDescriptor->Owner);
+            else
+                *Owner = SecurityDescriptor->Owner;
+
+            if ( SecurityDescriptor->Control & SE_OWNER_DEFAULTED )
+                *OwnerDefaulted = TRUE;
+            else
+                *OwnerDefaulted = FALSE;
+        }
+	else
+	    *Owner = NULL;
+
 	return STATUS_SUCCESS;
 }
 
@@ -602,13 +616,22 @@ NTSTATUS WINAPI RtlGetGroupSecurityDescriptor(
 	if ( !SecurityDescriptor || !Group || !GroupDefaulted )
 		return STATUS_INVALID_PARAMETER;
 
-	*Group = SecurityDescriptor->Group;
-	if ( *Group != NULL )  {
-		if ( SecurityDescriptor->Control & SE_GROUP_DEFAULTED )
-			*GroupDefaulted = TRUE;
-		else
-			*GroupDefaulted = FALSE;
+	if (SecurityDescriptor->Group != NULL)
+	{
+            if (SecurityDescriptor->Control & SE_SELF_RELATIVE)
+                *Group = (PSID)((LPBYTE)SecurityDescriptor +
+                                (ULONG)SecurityDescriptor->Group);
+            else
+                *Group = SecurityDescriptor->Group;
+
+            if ( SecurityDescriptor->Control & SE_GROUP_DEFAULTED )
+                *GroupDefaulted = TRUE;
+            else
+                *GroupDefaulted = FALSE;
 	}
+	else
+	    *Group = NULL;
+
 	return STATUS_SUCCESS;
 }
 
@@ -620,9 +643,176 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
 	IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
 	IN OUT LPDWORD lpdwBufferLength)
 {
-	FIXME("(%p,%p,%p(%lu))\n", pAbsoluteSecurityDescriptor,
-	pSelfRelativeSecurityDescriptor, lpdwBufferLength,*lpdwBufferLength);
-	return STATUS_SUCCESS;
+    ULONG offsetRel;
+    ULONG length;
+    PSECURITY_DESCRIPTOR pAbs = pAbsoluteSecurityDescriptor;
+    PSECURITY_DESCRIPTOR pRel = pSelfRelativeSecurityDescriptor;
+
+    TRACE(" %p %p %p(%ld)\n", pAbs, pRel, lpdwBufferLength,
+        lpdwBufferLength ? *lpdwBufferLength: -1);
+
+    if (!lpdwBufferLength || !pAbs)
+        return STATUS_INVALID_PARAMETER;
+
+    length = RtlLengthSecurityDescriptor(pAbs);
+    if (*lpdwBufferLength < length)
+    {
+        *lpdwBufferLength = length;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if (!pRel)
+        return STATUS_INVALID_PARAMETER;
+
+    if (pAbs->Control & SE_SELF_RELATIVE)
+    {
+        memcpy(pRel, pAbs, length);
+        return STATUS_SUCCESS;
+    }
+
+    pRel->Revision = pAbs->Revision;
+    pRel->Sbz1 = pAbs->Sbz1;
+    pRel->Control = pAbs->Control | SE_SELF_RELATIVE;
+
+    offsetRel = sizeof(SECURITY_DESCRIPTOR);
+    pRel->Owner = (PSID) offsetRel;
+    length = RtlLengthSid(pAbs->Owner);
+    memcpy((LPBYTE)pRel + offsetRel, pAbs->Owner, length);
+
+    offsetRel += length;
+    pRel->Group = (PSID) offsetRel;
+    length = RtlLengthSid(pAbs->Group);
+    memcpy((LPBYTE)pRel + offsetRel, pAbs->Group, length);
+
+    if (pRel->Control & SE_SACL_PRESENT)
+    {
+        offsetRel += length;
+        pRel->Sacl = (PACL) offsetRel;
+        length = pAbs->Sacl->AclSize;
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Sacl, length);
+    }
+    else
+    {
+        pRel->Sacl = NULL;
+    }
+
+    if (pRel->Control & SE_DACL_PRESENT)
+    {
+        offsetRel += length;
+        pRel->Dacl = (PACL) offsetRel;
+        length = pAbs->Dacl->AclSize;
+        memcpy((LPBYTE)pRel + offsetRel, pAbs->Dacl, length);
+    }
+    else
+    {
+        pRel->Dacl = NULL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
++ *                 RtlSelfRelativeToAbsoluteSD [NTDLL.@]
++ */
+NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
+        IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
+	OUT PSECURITY_DESCRIPTOR pAbsoluteSecurityDescriptor,
+	OUT LPDWORD lpdwAbsoluteSecurityDescriptorSize,
+	OUT PACL pDacl,
+	OUT LPDWORD lpdwDaclSize,
+	OUT PACL pSacl,
+	OUT LPDWORD lpdwSaclSize,
+	OUT PSID pOwner,
+	OUT LPDWORD lpdwOwnerSize,
+	OUT PSID pPrimaryGroup,
+	OUT LPDWORD lpdwPrimaryGroupSize)
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PSECURITY_DESCRIPTOR pAbs = pAbsoluteSecurityDescriptor;
+    PSECURITY_DESCRIPTOR pRel = pSelfRelativeSecurityDescriptor;
+
+    if (!pRel ||
+        !lpdwAbsoluteSecurityDescriptorSize ||
+        !lpdwDaclSize ||
+        !lpdwSaclSize ||
+        !lpdwOwnerSize ||
+        !lpdwPrimaryGroupSize ||
+        ~pRel->Control & SE_SELF_RELATIVE)
+        return STATUS_INVALID_PARAMETER;
+
+    /* Confirm buffers are sufficiently large */
+    if (*lpdwAbsoluteSecurityDescriptorSize < sizeof(SECURITY_DESCRIPTOR))
+    {
+        *lpdwAbsoluteSecurityDescriptorSize = sizeof(SECURITY_DESCRIPTOR);
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if (pRel->Control & SE_DACL_PRESENT &&
+        *lpdwDaclSize  < ((PACL)((LPBYTE)pRel->Dacl + (ULONG)pRel))->AclSize)
+    {
+        *lpdwDaclSize = ((PACL)((LPBYTE)pRel->Dacl + (ULONG)pRel))->AclSize;
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if (pRel->Control & SE_SACL_PRESENT &&
+        *lpdwSaclSize  < ((PACL)((LPBYTE)pRel->Sacl + (ULONG)pRel))->AclSize)
+    {
+        *lpdwSaclSize = ((PACL)((LPBYTE)pRel->Sacl + (ULONG)pRel))->AclSize;
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if (pRel->Owner &&
+        *lpdwOwnerSize < RtlLengthSid((PSID)((LPBYTE)pRel->Owner + (ULONG)pRel)))
+    {
+        *lpdwOwnerSize = RtlLengthSid((PSID)((LPBYTE)pRel->Owner + (ULONG)pRel));
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if (pRel->Group &&
+        *lpdwPrimaryGroupSize < RtlLengthSid((PSID)((LPBYTE)pRel->Group + (ULONG)pRel)))
+    {
+        *lpdwPrimaryGroupSize = RtlLengthSid((PSID)((LPBYTE)pRel->Group + (ULONG)pRel));
+        status = STATUS_BUFFER_TOO_SMALL;
+    }
+
+    if (status != STATUS_SUCCESS)
+        return status;
+
+    /* Copy structures */
+    pAbs->Revision = pRel->Revision;
+    pAbs->Control = pRel->Control & ~SE_SELF_RELATIVE;
+
+    if (pRel->Control & SE_SACL_PRESENT)
+    {
+        PACL pAcl = (PACL)((LPBYTE)pRel->Sacl + (ULONG)pRel);
+
+        memcpy(pSacl, pAcl, pAcl->AclSize);
+        pAbs->Sacl = pSacl;
+    }
+
+    if (pRel->Control & SE_DACL_PRESENT)
+    {
+        PACL pAcl = (PACL)((LPBYTE)pRel->Dacl + (ULONG)pRel);
+        memcpy(pDacl, pAcl, pAcl->AclSize);
+        pAbs->Dacl = pDacl;
+    }
+
+    if (pRel->Owner)
+    {
+        PSID psid = (PSID)((LPBYTE)pRel->Owner + (ULONG)pRel);
+        memcpy(pOwner, psid, RtlLengthSid(psid));
+        pAbs->Owner = pOwner;
+    }
+
+    if (pRel->Group)
+    {
+        PSID psid = (PSID)((LPBYTE)pRel->Group + (ULONG)pRel);
+        memcpy(pPrimaryGroup, psid, RtlLengthSid(psid));
+        pAbs->Group = pPrimaryGroup;
+    }
+
+    return status;
 }
 
 /*

@@ -512,7 +512,7 @@
 @ stub RtlRunEncodeUnicodeString
 @ stdcall RtlSecondsSince1970ToTime(long ptr)
 @ stdcall RtlSecondsSince1980ToTime(long ptr)
-@ stub RtlSelfRelativeToAbsoluteSD
+@ stdcall RtlSelfRelativeToAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall RtlSetAllBits(ptr)
 @ stdcall RtlSetBits(ptr long long)
 @ stdcall RtlSetCurrentDirectory_U(ptr)
