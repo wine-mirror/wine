@@ -1434,390 +1434,423 @@ OPTIONAL:
       </sect2>
     </sect1>
 
-    <sect1 id="dll-overrides">
-      <title>Dll Overrides</title>
-
-      <para>
-        Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
-      </para>
-      <para>
-        (Extracted from <filename>wine/documentation/dll-overrides</filename>)
-      </para>
-
-      <para>
-        The <filename>wine.conf</filename> directives [DllDefaults]
-        and [DllOverrides] are the subject of some confusion. The
-        overall purpose of most of these directives are clear enough,
-        though - given a choice, should Wine use its own built-in
-        DLLs, or should it use <filename>.DLL</filename> files found
-        in an existing Windows installation? This document explains
-        how this feature works.
-      </para>
-
-      <sect2>
-        <title>DLL types</title>
-        <variablelist>
-          <varlistentry>
-            <term>native</term>
-            <listitem> <para>
-                A "native" DLL is a <filename>.DLL</filename> file
-                written for the real Microsoft Windows.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>builtin</term>
-            <listitem> <para>
-                A "builtin" DLL is a Wine DLL. These can either be a
-                part of <filename>libwine.so</filename>, or more
-                recently, in a special <filename>.so</filename> file
-                that Wine is able to load on demand.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>elfdll</term>
-            <listitem> <para>
-                An "elfdll" is a Wine <filename>.so</filename> file
-                with a special Windows-like file structure that is as
-                close to Windows as possible, and that can also
-                seamlessly link dynamically with "native" DLLs, by
-                using special ELF loader and linker tricks. Bertho
-                Stultiens did some work on this, but this feature has
-                not yet been merged back into Wine (because of
-                political reasons and lack of time), so this DLL type
-                does not exist in the official Wine at this time. In
-                the meantime, the "builtin" DLL type gained some of
-                the features of elfdlls (such as dynamic loading), so
-                it's possible that "elfdll" functionality will be
-                folded into "builtin" at some point.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>so</term>
-            <listitem> <para>
-                A native Unix <filename>.so</filename> file, with
-                calling convention conversion thunks generated on the
-                fly as the library is loaded. This is mostly useful
-                for libraries such as "glide" that have exactly the
-                same API on both Windows and Unix.
-              </para> </listitem>
-          </varlistentry>
-        </variablelist>          
-      </sect2>
-
-      <sect2>
-        <title>The [DllDefaults] section</title>
-        <variablelist>
-          <varlistentry>
-            <term>DefaultLoadOrder</term>
-            <listitem> <para>
-                This specifies in what order Wine should search for
-                available DLL types, if the DLL in question was not
-                found in the [DllOverrides] section.
-              </para> </listitem>
-          </varlistentry>
-        </variablelist>
-      </sect2>
-
-      <sect2>
-        <title>The [DllPairs] section</title>
+    <sect1 id="dll-config">
+      <title>DLL configuration</title>
+      <sect2 id="dll-overrides">
+        <title>DLL Overrides</title>
+  
         <para>
-          At one time, there was a section called [DllPairs] in the
-          default configuration file, but this has been obsoleted
-          because the pairing information has now been embedded into
-          Wine itself. (The purpose of this section was merely to be
-          able to issue warnings if the user attempted to pair
-          codependent 16-bit/32-bit DLLs of different types.) If you
-          still have this in your <filename>wine.conf</filename> or
-          <filename>~/.wine/config</filename>, you may safely delete it.
-        </para>
-      </sect2>
-
-      <sect2>
-        <title>The [DllOverrides] section</title>
-        <para>
-          This section specifies how you want specific DLLs to be
-          handled, in particular whether you want to use "native" DLLs
-          or not, if you have some from a real Windows configuration.
-          Because builtins do not mix seamlessly with native DLLs yet,
-          certain DLL dependencies may be problematic, but workarounds
-          exist in Wine for many popular DLL configurations. Also see
-          WWN's [16]Status Page to figure out how well your favorite
-          DLL is implemented in Wine.
+          Written by &name-ove-kaaven; <email>&email-ove-kaaven;</email>
         </para>
         <para>
-          It is of course also possible to override these settings by
-          explictly using Wine's <parameter>--dll</parameter>
-          command-line option (see the man page for details).  Some
-          hints for choosing your optimal configuration (listed by
-          16/32-bit DLL pair):
+          (Extracted from <filename>wine/documentation/dll-overrides</filename>)
         </para>
-        <variablelist>
-          <varlistentry>
-            <term>krnl386, kernel32</term>
-            <listitem> <para>
-                Native versions of these will never work, so don't try. Leave
-                at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>gdi, gdi32</term>
-            <listitem> <para>
-                Graphics Device Interface. No effort has been made at trying to
-                run native GDI. Leave at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>user, user32</term>
-            <listitem> <para>
-                Window management and standard controls. It was
-                possible to use Win95's <literal>native</literal>
-                versions at some point (if all other DLLs that depend
-                on it, such as comctl32 and comdlg32, were also run
-                <literal>native</literal>). However, this is no longer
-                possible after the Address Space Separation, so leave
-                at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>ntdll</term>
-            <listitem> <para>
-                NT kernel API. Although badly documented, the
-                <literal>native</literal> version of this will never
-                work. Leave at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>w32skrnl</term>
-            <listitem> <para>
-                Win32s (for Win3.x). The <literal>native</literal>
-                version will probably never work. Leave at
-                <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>wow32</term>
-            <listitem> <para>
-                Win16 support library for NT. The
-                <literal>native</literal> version will probably never
-                work. Leave at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>system</term>
-            <listitem> <para>
-                Win16 kernel stuff. Will never work
-                <literal>native</literal>. Leave at
-                <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>display</term>
-            <listitem> <para>
-                Display driver. Definitely leave at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>toolhelp</term>
-            <listitem> <para>
-                Tool helper routines. This is rarely a source of problems.
-                Leave at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>ver, version</term>
-            <listitem> <para>
-                Versioning. Seldom useful to mess with.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>advapi32</term>
-            <listitem> <para>
-                Registry and security features. Trying the
-                <literal>native</literal> version of this may or may
-                not work.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>commdlg, comdlg32</term>
-            <listitem> <para>
-                Common Dialogs, such as color picker, font dialog,
-                print dialog, open/save dialog, etc. It is safe to try
-                <literal>native</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>commctrl, comctl32</term>
-            <listitem> <para>
-                Common Controls. This is toolbars, status bars, list controls,
-                the works. It is safe to try <literal>native</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>shell, shell32</term>
-            <listitem> <para>
-                Shell interface (desktop, filesystem, etc). Being one of the
-                most undocumented pieces of Windows, you may have luck with the
-                <literal>native</literal> version, should you need it.
-              </para> </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>winsock, wsock32</term>
-            <listitem> <para>
-                Windows Sockets. The <literal>native</literal> version
-                will not work under Wine, so leave at
-                <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>icmp</term>
-            <listitem> <para>
-                ICMP routines for wsock32. As with wsock32, leave at
-                <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mpr</term>
-            <listitem> <para>
-                The <literal>native</literal> version may not work due
-                to thunking issues. Leave at
-                <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>lzexpand, lz32</term>
-            <listitem> <para>
-                Lempel-Ziv decompression. Wine's
-                <literal>builtin</literal> version ought to work fine.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>winaspi, wnaspi32</term>
-            <listitem> <para>
-                Advanced SCSI Peripheral Interface. The
-                <literal>native</literal> version will probably never
-                work. Leave at <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>crtdll</term>
-            <listitem> <para>
-                C Runtime library. The <literal>native</literal>
-                version will easily work better than Wine's on this
-                one.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>winspool.drv</term>
-            <listitem> <para>
-                Printer spooler. You are not likely to have more luck
-                with the <literal>native</literal> version.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>ddraw</term>
-            <listitem> <para>
-                DirectDraw/Direct3D. Since Wine does not implement the
-                DirectX HAL, the <literal>native</literal> version
-                will not work at this time.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>dinput</term>
-            <listitem> <para>
-                DirectInput. Running this <literal>native</literal>
-                may or may not work.
-              </para> </listitem>
-          </varlistentry>          
-          <varlistentry>
-            <term>dsound</term>
-            <listitem> <para>
-                DirectSound. It may be possible to run this
-                <literal>native</literal>, but don't count on it.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>dplay/dplayx</term>
-            <listitem> <para>
-                DirectPlay. The <literal>native</literal> version
-                ought to work best on this, if at all.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mmsystem, winmm</term>
-            <listitem> <para>
-                Multimedia system. The <literal>native</literal>
-                version is not likely to work. Leave at
-                <literal>builtin</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>msacm, msacm32</term>
-            <listitem> <para>
-                Audio Compression Manager. The
-                <literal>builtin</literal> version works best, if you
-                set msacm.drv to the same.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>msvideo, msvfw32</term>
-            <listitem> <para>
-                Video for Windows. It is safe (and recommended) to try
-                <literal>native</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mcicda.drv</term>
-            <listitem> <para>
-                CD Audio MCI driver.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mciseq.drv</term>
-            <listitem> <para>
-                MIDI Sequencer MCI driver (<filename>.MID</filename>
-                playback).
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mciwave.drv</term>
-            <listitem> <para>
-                Wave audio MCI driver (<filename>.WAV</filename> playback).
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mciavi.drv</term>
-            <listitem> <para>
-                AVI MCI driver (<filename>.AVI</filename> video
-                playback). Best to use <literal>native</literal>.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>mcianim.drv</term>
-            <listitem> <para>
-                Animation MCI driver.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>msacm.drv</term>
-            <listitem> <para>
-                Audio Compression Manager. Set to same as msacm32.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>midimap.drv</term>
-            <listitem> <para>
-                MIDI Mapper.
-              </para> </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>wprocs</term>
-            <listitem> <para>
-                This is a pseudo-DLL used by Wine for thunking
-                purposes. A <literal>native</literal> version of this
-                doesn't exist.
-              </para> </listitem>
-          </varlistentry>
-        </variablelist>          
+  
+        <para>
+          The <filename>wine.conf</filename> directives [DllDefaults]
+          and [DllOverrides] are the subject of some confusion. The
+          overall purpose of most of these directives are clear enough,
+          though - given a choice, should Wine use its own built-in
+          DLLs, or should it use <filename>.DLL</filename> files found
+          in an existing Windows installation? This document explains
+          how this feature works.
+        </para>
+  
+        <sect3>
+          <title>DLL types</title>
+          <variablelist>
+            <varlistentry>
+              <term>native</term>
+              <listitem> <para>
+                  A "native" DLL is a <filename>.DLL</filename> file
+                  written for the real Microsoft Windows.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>builtin</term>
+              <listitem> <para>
+                  A "builtin" DLL is a Wine DLL. These can either be a
+                  part of <filename>libwine.so</filename>, or more
+                  recently, in a special <filename>.so</filename> file
+                  that Wine is able to load on demand.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>elfdll</term>
+              <listitem> <para>
+                  An "elfdll" is a Wine <filename>.so</filename> file
+                  with a special Windows-like file structure that is as
+                  close to Windows as possible, and that can also
+                  seamlessly link dynamically with "native" DLLs, by
+                  using special ELF loader and linker tricks. Bertho
+                  Stultiens did some work on this, but this feature has
+                  not yet been merged back into Wine (because of
+                  political reasons and lack of time), so this DLL type
+                  does not exist in the official Wine at this time. In
+                  the meantime, the "builtin" DLL type gained some of
+                  the features of elfdlls (such as dynamic loading), so
+                  it's possible that "elfdll" functionality will be
+                  folded into "builtin" at some point.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>so</term>
+              <listitem> <para>
+                  A native Unix <filename>.so</filename> file, with
+                  calling convention conversion thunks generated on the
+                  fly as the library is loaded. This is mostly useful
+                  for libraries such as "glide" that have exactly the
+                  same API on both Windows and Unix.
+                </para> </listitem>
+            </varlistentry>
+          </variablelist>          
+        </sect3>
+  
+        <sect3>
+          <title>The [DllDefaults] section</title>
+          <variablelist>
+            <varlistentry>
+              <term>DefaultLoadOrder</term>
+              <listitem> <para>
+                  This specifies in what order Wine should search for
+                  available DLL types, if the DLL in question was not
+                  found in the [DllOverrides] section.
+                </para> </listitem>
+            </varlistentry>
+          </variablelist>
+        </sect3>
+  
+        <sect3>
+          <title>The [DllPairs] section</title>
+          <para>
+            At one time, there was a section called [DllPairs] in the
+            default configuration file, but this has been obsoleted
+            because the pairing information has now been embedded into
+            Wine itself. (The purpose of this section was merely to be
+            able to issue warnings if the user attempted to pair
+            codependent 16-bit/32-bit DLLs of different types.) If you
+            still have this in your <filename>wine.conf</filename> or
+            <filename>~/.wine/config</filename>, you may safely delete it.
+          </para>
+        </sect3>
+  
+        <sect3>
+          <title>The [DllOverrides] section</title>
+          <para>
+            This section specifies how you want specific DLLs to be
+            handled, in particular whether you want to use "native" DLLs
+            or not, if you have some from a real Windows configuration.
+            Because builtins do not mix seamlessly with native DLLs yet,
+            certain DLL dependencies may be problematic, but workarounds
+            exist in Wine for many popular DLL configurations. Also see
+            WWN's [16]Status Page to figure out how well your favorite
+            DLL is implemented in Wine.
+          </para>
+          <para>
+            It is of course also possible to override these settings by
+            explictly using Wine's <parameter>--dll</parameter>
+            command-line option (see the man page for details).  Some
+            hints for choosing your optimal configuration (listed by
+            16/32-bit DLL pair):
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term>krnl386, kernel32</term>
+              <listitem> <para>
+                  Native versions of these will never work, so don't try. Leave
+                  at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>gdi, gdi32</term>
+              <listitem> <para>
+                  Graphics Device Interface. No effort has been made at trying to
+                  run native GDI. Leave at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>          
+            <varlistentry>
+              <term>user, user32</term>
+              <listitem> <para>
+                  Window management and standard controls. It was
+                  possible to use Win95's <literal>native</literal>
+                  versions at some point (if all other DLLs that depend
+                  on it, such as comctl32 and comdlg32, were also run
+                  <literal>native</literal>). However, this is no longer
+                  possible after the Address Space Separation, so leave
+                  at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>ntdll</term>
+              <listitem> <para>
+                  NT kernel API. Although badly documented, the
+                  <literal>native</literal> version of this will never
+                  work. Leave at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>w32skrnl</term>
+              <listitem> <para>
+                  Win32s (for Win3.x). The <literal>native</literal>
+                  version will probably never work. Leave at
+                  <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>wow32</term>
+              <listitem> <para>
+                  Win16 support library for NT. The
+                  <literal>native</literal> version will probably never
+                  work. Leave at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>system</term>
+              <listitem> <para>
+                  Win16 kernel stuff. Will never work
+                  <literal>native</literal>. Leave at
+                  <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>          
+            <varlistentry>
+              <term>display</term>
+              <listitem> <para>
+                  Display driver. Definitely leave at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>toolhelp</term>
+              <listitem> <para>
+                  Tool helper routines. This is rarely a source of problems.
+                  Leave at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>ver, version</term>
+              <listitem> <para>
+                  Versioning. Seldom useful to mess with.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>advapi32</term>
+              <listitem> <para>
+                  Registry and security features. Trying the
+                  <literal>native</literal> version of this may or may
+                  not work.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>commdlg, comdlg32</term>
+              <listitem> <para>
+                  Common Dialogs, such as color picker, font dialog,
+                  print dialog, open/save dialog, etc. It is safe to try
+                  <literal>native</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>commctrl, comctl32</term>
+              <listitem> <para>
+                  Common Controls. This is toolbars, status bars, list controls,
+                  the works. It is safe to try <literal>native</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>shell, shell32</term>
+              <listitem> <para>
+                  Shell interface (desktop, filesystem, etc). Being one of the
+                  most undocumented pieces of Windows, you may have luck with the
+                  <literal>native</literal> version, should you need it.
+                </para> </listitem>
+            </varlistentry>          
+            <varlistentry>
+              <term>winsock, wsock32</term>
+              <listitem> <para>
+                  Windows Sockets. The <literal>native</literal> version
+                  will not work under Wine, so leave at
+                  <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>icmp</term>
+              <listitem> <para>
+                  ICMP routines for wsock32. As with wsock32, leave at
+                  <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mpr</term>
+              <listitem> <para>
+                  The <literal>native</literal> version may not work due
+                  to thunking issues. Leave at
+                  <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>lzexpand, lz32</term>
+              <listitem> <para>
+                  Lempel-Ziv decompression. Wine's
+                  <literal>builtin</literal> version ought to work fine.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>winaspi, wnaspi32</term>
+              <listitem> <para>
+                  Advanced SCSI Peripheral Interface. The
+                  <literal>native</literal> version will probably never
+                  work. Leave at <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>crtdll</term>
+              <listitem> <para>
+                  C Runtime library. The <literal>native</literal>
+                  version will easily work better than Wine's on this
+                  one.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>winspool.drv</term>
+              <listitem> <para>
+                  Printer spooler. You are not likely to have more luck
+                  with the <literal>native</literal> version.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>ddraw</term>
+              <listitem> <para>
+                  DirectDraw/Direct3D. Since Wine does not implement the
+                  DirectX HAL, the <literal>native</literal> version
+                  will not work at this time.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>dinput</term>
+              <listitem> <para>
+                  DirectInput. Running this <literal>native</literal>
+                  may or may not work.
+                </para> </listitem>
+            </varlistentry>          
+            <varlistentry>
+              <term>dsound</term>
+              <listitem> <para>
+                  DirectSound. It may be possible to run this
+                  <literal>native</literal>, but don't count on it.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>dplay/dplayx</term>
+              <listitem> <para>
+                  DirectPlay. The <literal>native</literal> version
+                  ought to work best on this, if at all.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mmsystem, winmm</term>
+              <listitem> <para>
+                  Multimedia system. The <literal>native</literal>
+                  version is not likely to work. Leave at
+                  <literal>builtin</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>msacm, msacm32</term>
+              <listitem> <para>
+                  Audio Compression Manager. The
+                  <literal>builtin</literal> version works best, if you
+                  set msacm.drv to the same.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>msvideo, msvfw32</term>
+              <listitem> <para>
+                  Video for Windows. It is safe (and recommended) to try
+                  <literal>native</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mcicda.drv</term>
+              <listitem> <para>
+                  CD Audio MCI driver.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mciseq.drv</term>
+              <listitem> <para>
+                  MIDI Sequencer MCI driver (<filename>.MID</filename>
+                  playback).
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mciwave.drv</term>
+              <listitem> <para>
+                  Wave audio MCI driver (<filename>.WAV</filename> playback).
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mciavi.drv</term>
+              <listitem> <para>
+                  AVI MCI driver (<filename>.AVI</filename> video
+                  playback). Best to use <literal>native</literal>.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>mcianim.drv</term>
+              <listitem> <para>
+                  Animation MCI driver.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>msacm.drv</term>
+              <listitem> <para>
+                  Audio Compression Manager. Set to same as msacm32.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>midimap.drv</term>
+              <listitem> <para>
+                  MIDI Mapper.
+                </para> </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>wprocs</term>
+              <listitem> <para>
+                  This is a pseudo-DLL used by Wine for thunking
+                  purposes. A <literal>native</literal> version of this
+                  doesn't exist.
+                </para> </listitem>
+            </varlistentry>
+          </variablelist>          
+        </sect3>
+      </sect2>
+      <sect2 id="dll-missing">
+        <title>Missing DLLs</title>
+  
+        <para>
+          Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+        </para>
+  
+        <para>
+	  In case Wine complains about a missing DLL, you should check whether
+	  this file is a publicly available DLL or a custom DLL belonging
+	  to your program (by searching for its name on the internet).
+	  If you managed to get hold of the DLL, then you should make sure
+	  that Wine is able to find and load it.
+	  DLLs usually get loaded according to the mechanism of the
+	  SearchPath() function.
+	  This function searches directories in the following order:
+	  
+	  a) The directory the program was started from.
+	  b) The current directory.
+	  c) The Windows system directory.
+	  d) The Windows directory.
+	  e) The PATH variable directories.
+	  
+	  In short: either put the required DLL into your application
+	  directory (might be ugly), or usually put it into the Windows system
+	  directory. Just find out its directory by having a look at the Wine
+	  config File variable "System" (which indicates the location of the
+	  Windows system directory) and the associated drive entry.
+        </para>
       </sect2>
     </sect1>
 

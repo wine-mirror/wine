@@ -141,7 +141,7 @@ If you plan on using MFC, there are three hurdles to legally using
 MFC. The first hurdle is how to legally get MFC source code on your
 computer. MFC source code comes as a part of Visual Studio. The
 license for Visual Studio implies it is a single product that can not
-be broken up into its components. The cleanest way to get MFC on you
+be broken up into its components. The cleanest way to get MFC on your
 system is to use a dual boot Linux box with the windows partition
 visible to the Linux OS. Boot into windows and install Visual
 Studio. Since Visual Studio is installed on the computer, you have not
@@ -221,7 +221,7 @@ protection program that does work under Linux.
 During the execution of your program, Wine prints error messages to
 standard error. These error messages include "stubs", which are
 windows API functions that have not been completely
-implemented. Depending on the the system call, these could be harmless
+implemented. Depending on the system call, these could be harmless
 or crash your program. Most of the common windows API functions have
 already been implemented, so you should have no missing API functions
 or only a few missing functions. If you intend to continue with the
@@ -403,9 +403,7 @@ init	WinMain
 import  winmm
 
 If you need to list multiple DLLs, then the import specification can
-appear multiple times.
-
-FIXME: can multiple libraries appear on one import line?
+appear multiple times, one line per imported DLL.
 
 VI. Compiling A Win32 Program With Resources
 
@@ -494,7 +492,7 @@ windows program dumpbin and the windows version of the DLL. See the
 file <wine>/tools/winebuild/README for more details on the spec file
 format.
 
-During the the compile process, a command like
+During the compile process, a command like
     winebuild -fPIC -o winedll.spec.c -spec winedll.spec
 will be executed to create the file winedll.spec.c from information in
 the file winedll.spec. The file winedll.spec.c and winedll.c are
@@ -551,7 +549,7 @@ that will load the "hidden" DLL and initialize the function
 pointers. There is no need for any function ordinals unless your
 program calls functions by the ordinal.
 
-During the the compile process, a command like
+During the compile process, a command like
     winebuild -fPIC -o winedll.spec.c -spec winedll.spec
 will be executed to create the file winedll.spec.c from information in
 the file winedll.spec. The file winedll.spec.c and winedll.c are
@@ -559,7 +557,7 @@ compiled into object files and used to create the shared library.
 
 Now that the shared library is compiled, you still need to compile
 your program. Part of the compile process for your program will
-consist of a spec file for you program. For example,
+consist of a spec file for your program. For example,
     name	program
     mode	guiexe
     type	win32
@@ -571,7 +569,7 @@ specification that tells WineLib that the main program uses
 winedll.dll. If this import line is not included, the "hidden" DLL
 will not be loaded and the function pointers will not be initialized.
 
-During the the compile process, a command like
+During the compile process, a command like
     winebuild -fPIC -o program.spec.c -spec program.spec
 will be executed to create the file program.spec.c from information in
 the file program.spec. The file program.spec.c and your source code are
@@ -596,7 +594,7 @@ The init function is the name of the initialization function for the
 shared library (what you renamed DllMain to). There is no need for any
 function ordinals unless your program calls functions by the ordinal.
 
-During the the compile process, a command like
+During the compile process, a command like
     winebuild -fPIC -o winedll.spec.c -spec winedll.spec
 will be executed to create the file winedll.spec.c from information in
 the file winedll.spec. The file winedll.spec.c and the source code for
@@ -611,7 +609,7 @@ spec file for you program will look something like
     init	WinMain
     import winedll.dll
 
-During the the compile process, a command like
+During the compile process, a command like
     winebuild -fPIC -o program.spec.c -spec program.spec
 will be executed to create the file program.spec.c from information in
 the file program.spec. The file program.spec.c and your source code are
@@ -638,7 +636,7 @@ First of all WineLib suppport for Win16 has been discontinued
 for quite some time, because:
 
 1. It is difficult for us to support and it is impossible
-   to do so prefectly without special compiler support,
+   to do so perfectly without special compiler support,
    because of memory layout issues. For example Win16 int
    is 16-bit and data is aligned 16-bit.
 2. It is in almost all cases easier to port a

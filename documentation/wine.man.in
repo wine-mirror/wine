@@ -81,6 +81,8 @@ RtlEnterCriticalSection.
 .br 
 .I --debugmsg +relay=advapi32
 will only turn on relay messages into the ADVAPI32 code.
+Never ever use simply --debugmsg +all ! Way too much info, and it crashes
+way too easily, thus confusing unexperienced users.
 .PP
 The full list of names is:
 all, accel, advapi, animate, aspi, atom, avifile, bitblt, bitmap, caret,

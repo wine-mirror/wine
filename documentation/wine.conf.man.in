@@ -104,25 +104,30 @@ programs always request read-write access, even on CD-ROM drives...).
 .br
 default: "C:\\\\WINDOWS"
 .br
-Used to specify a different Windows directory; make sure to double the
-backslashes.
-So if you previously configured drive C: to be at /dos, this now means that
-the windows directory should be at /dos/WINDOWS.
+Used to specify where Wine is supposed to have its Windows directory
+(which is an essential part of a Windows environment); make sure to double
+the backslashes.
+In case of e.g. C:\\WINDOWS, with drive C: being configured as
+/home/user/wine_c, the /home/user/wine_c/WINDOWS directory would be used for
+this.
 .PP
 .I format: """system""=""<directory>"""
 .br
 default: "C:\\\\WINDOWS\\\\System"
 .br
-Used to specify a different system directory; make sure to double the
-backslashes.
-Again, given a drive C: at /dos, this would be at /dos/WINDOWS/System.
+Used to specify where Wine is supposed to have its Windows system directory
+(again, essential part of Windows environment); make sure to double the backslashes.
+Given a setting of C:\\WINDOWS\\System (the standard setting on Windows)
+and a C: drive again at /home/user/wine_c, the /home/user/wine_c/WINDOWS/System
+directory would be used for this.
 .PP
 .I format: """temp""=""<directory>"""
 .br
 default: "C:\\\\TEMP"
 .br
 Used to specify a directory where Windows applications can store 
-temporary files.
+temporary files. E.g. with a C: drive at /home/user/wine_c, this would be
+the /home/user/wine_c/TEMP directory.
 .PP
 .I format: """profile""=""<directory>"""
 .br
