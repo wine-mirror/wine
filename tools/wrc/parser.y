@@ -644,7 +644,7 @@ resource_definition
 		else
 			$$ = NULL;
 		}
-	| messagetable	{ $$ = new_resource(res_msg, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, dup_language(currentlanguage)); }
+	| messagetable	{ $$ = new_resource(res_msg, $1, WRC_MO_MOVEABLE | WRC_MO_DISCARDABLE, $1->data->lvc.language); }
 	| rcdata	{ $$ = new_resource(res_rdt, $1, $1->memopt, $1->data->lvc.language); }
 	| toolbar	{ $$ = new_resource(res_toolbar, $1, $1->memopt, $1->lvc.language); }
 	| userres	{ $$ = new_resource(res_usr, $1, $1->memopt, $1->data->lvc.language); }
