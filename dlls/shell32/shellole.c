@@ -590,6 +590,24 @@ UINT WINAPI DragQueryFileA(
 
 	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->pFiles;
 
+        if(lpDropFileStruct->fWide == TRUE) {
+            LPWSTR lpszFileW = NULL;
+
+            if(lpszFile) {
+                lpszFileW = (LPWSTR) HeapAlloc(GetProcessHeap(), 0, lLength*sizeof(WCHAR));
+                if(lpszFileW == NULL) {
+                    goto end;
+                }
+            }
+            i = DragQueryFileW(hDrop, lFile, lpszFileW, lLength);
+
+            if(lpszFileW) {
+                WideCharToMultiByte(CP_ACP, 0, lpszFileW, -1, lpszFile, lLength, 0, NULL);
+                HeapFree(GetProcessHeap(), 0, lpszFileW);
+            }
+            goto end;
+        }
+
 	while (i++ < lFile)
 	{
 	  while (*lpDrop++); /* skip filename */
@@ -628,6 +646,24 @@ UINT WINAPI DragQueryFileW(
 	if(!lpDropFileStruct) goto end;
 
 	lpwDrop = (LPWSTR) ((LPSTR)lpDropFileStruct + lpDropFileStruct->pFiles);
+
+        if(lpDropFileStruct->fWide == FALSE) {
+            LPSTR lpszFileA = NULL;
+ 
+            if(lpszwFile) {
+                lpszFileA = (LPSTR) HeapAlloc(GetProcessHeap(), 0, lLength);
+                if(lpszFileA == NULL) {
+                    goto end;
+                }
+            }
+            i = DragQueryFileA(hDrop, lFile, lpszFileA, lLength);
+
+            if(lpszFileA) {
+                MultiByteToWideChar(CP_ACP, 0, lpszFileA, -1, lpszwFile, lLength);
+                HeapFree(GetProcessHeap(), 0, lpszFileA);
+            }
+            goto end;
+        }
 
 	i = 0;
 	while (i++ < lFile)
