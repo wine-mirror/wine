@@ -1110,7 +1110,7 @@ static const unsigned char CT_CType2_LUT[] = {
   C2_LEFTTORIGHT /* ÿ - 255 */
 };
 
-static const WORD CT_CType3_LUT[] = { 
+const WORD OLE2NLS_CT_CType3_LUT[] = { 
   0x0000, /*   -   0 */
   0x0000, /*   -   1 */
   0x0000, /*   -   2 */
@@ -1434,7 +1434,7 @@ BOOL32 WINAPI GetStringTypeEx32A(LCID locale,DWORD dwInfoType,LPCSTR src,
 	case CT_CTYPE3:
 	  for (i=0;i<cchSrc;i++) 
 	  {
-	    chartype[i]=CT_CType3_LUT[i];
+	    chartype[i]=OLE2NLS_CT_CType3_LUT[i];
 	  }
 	  return TRUE;
 
@@ -1497,76 +1497,19 @@ BOOL32 WINAPI GetStringTypeEx32W(LCID locale,DWORD dwInfoType,LPCWSTR src,
 }
 
 /*****************************************************************
- * VerLanguageName16   [VER.10] 
+ * WINE_GetLanguageName   [internal] 
+ *
+ * FIXME:  Windows keeps language names in a string table
+ *         resource in VER.DLL ...
  */
-DWORD WINAPI VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen)
+LPCSTR WINE_GetLanguageName( UINT32 langid )
 {
-	int	i;
-	DWORD	result;
-	char	buffer[80];
+    int i;
+    for ( i = 0; languages[i].langid != 0; i++ )
+        if ( langid == languages[i].langid )
+            break;
 
-	TRACE(ver,"(%d,%p,%d)\n",langid,langname,langnamelen);
-	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
-	 * from the registry. 
-	 */
-	sprintf(buffer,
-		"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
-		langid);
-	result = RegQueryValue16(HKEY_LOCAL_MACHINE, buffer, langname,
-				(LPDWORD)&langnamelen);
-	if (result == ERROR_SUCCESS) {
-		langname[langnamelen-1]='\0';
-		return langnamelen;
-	}
-	/* if that fails, use the internal table */
-	for (i=0;languages[i].langid!=0;i++)
-		if (langid==languages[i].langid)
-			break;
-	strncpy(langname,languages[i].langname,langnamelen);
-	langname[langnamelen-1]='\0';
-	return strlen(languages[i].langname);
-}
-
-/*****************************************************************
- * VerLanguageName32A				[VERSION.9] 
- */
-DWORD WINAPI VerLanguageName32A(UINT32 langid,LPSTR langname,
-                                UINT32 langnamelen)
-{
-	return VerLanguageName16(langid,langname,langnamelen);
-}
-
-/*****************************************************************
- * VerLanguageName32W				[VERSION.10] 
- */
-DWORD WINAPI VerLanguageName32W(UINT32 langid,LPWSTR langname,
-                                UINT32 langnamelen)
-{
-	int	i;
-	LPWSTR	keyname;
-	DWORD	result;
-	char	buffer[80];
-
-	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
-	 * from the registry. 
-	 */
-	sprintf(buffer,
-		"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",
-		langid);
-	keyname = HEAP_strdupAtoW( GetProcessHeap(), 0, buffer );
-	result = RegQueryValue32W(HKEY_LOCAL_MACHINE, keyname, langname,
-				(LPDWORD)&langnamelen);
-	HeapFree( GetProcessHeap(), 0, keyname );
-	if (result != ERROR_SUCCESS) {
-		/* if that fails, use the internal table */
-		for (i=0;languages[i].langid!=0;i++)
-			if (langid==languages[i].langid)
-				break;
-        	lstrcpyAtoW( langname, languages[i].langname );
-		langnamelen = strlen(languages[i].langname);
-	 	/* same as strlenW(langname); */
-	}
-	return langnamelen;
+    return languages[i].langname;
 }
  
 static const unsigned char LCM_Unicode_LUT[] = {
@@ -1972,6 +1915,28 @@ static int OLE2NLS_isPunctuation(unsigned char c)
 }
 
 /******************************************************************************
+ * OLE2NLS_isNonSpacing [INTERNAL]
+ */
+static int OLE2NLS_isNonSpacing(unsigned char c) 
+{
+  /* This function is used by LCMapString32A.  Characters 
+     for which it returns true are ignored when mapping a
+     string with NORM_IGNORENONSPACE */
+  return ((c==136) || (c==170) || (c==186));
+}
+
+/******************************************************************************
+ * OLE2NLS_isSymbol [INTERNAL]
+ */
+static int OLE2NLS_isSymbol(unsigned char c) 
+{
+  /* This function is used by LCMapString32A.  Characters 
+     for which it returns true are ignored when mapping a
+     string with NORM_IGNORESYMBOLS */
+  return ( (c!=0) && !IsCharAlphaNumeric32A(c) );
+}
+
+/******************************************************************************
  *		identity	[Internal]
  */
 static int identity(int c)
@@ -1999,12 +1964,11 @@ static int identity(int c)
  *    If called with dstlen = 0, returns the buffer length that 
  *      would be required.
  *
- *    NORM_IGNOREWIDTH means to compare ASCII and Unicode characters
- *    as if they are equal.  Since Wine separates ASCII and Unicode into
- *    separate functions, we shouldn't have to do anything for this flag.
- *    I added it to the list of flags that don't need a fixme message
- *    to make MS Word 95 not print several thousand fixme messages for 
- *    this function.
+ *    NORM_IGNOREWIDTH means to compare ASCII and wide characters
+ *    as if they are equal.  
+ *    In the only code page implemented so far, there may not be
+ *    wide characters in strings passed to LCMapString32A,
+ *    so there is nothing to be done for this flag.
  */
 INT32 WINAPI LCMapString32A(
 	LCID lcid /* locale identifier created with MAKELCID; 
@@ -2030,16 +1994,20 @@ INT32 WINAPI LCMapString32A(
   if (srclen == -1) 
     srclen = lstrlen32A(srcstr) + 1 ;    /* (include final '\0') */
 
-  if (mapflags & ~ ( LCMAP_UPPERCASE | LCMAP_LOWERCASE | LCMAP_SORTKEY |
-		     NORM_IGNORECASE | NORM_IGNORENONSPACE | SORT_STRINGSORT |
-		     NORM_IGNOREWIDTH) )
+#define LCMAPSTRING32A_SUPPORTED_FLAGS (LCMAP_UPPERCASE     | \
+                                        LCMAP_LOWERCASE     | \
+                                        LCMAP_SORTKEY       | \
+                                        NORM_IGNORECASE     | \
+                                        NORM_IGNORENONSPACE | \
+                                        SORT_STRINGSORT     | \
+                                        NORM_IGNOREWIDTH)
+
+  if (mapflags & ~LCMAPSTRING32A_SUPPORTED_FLAGS)
   {
     FIXME(string,"(0x%04lx,0x%08lx,%p,%d,%p,%d): "
 	  "unimplemented flags: 0x%08lx\n",
 	  lcid,
-  	  mapflags&~(LCMAP_UPPERCASE | LCMAP_LOWERCASE | LCMAP_SORTKEY |
-		     NORM_IGNORECASE | NORM_IGNORENONSPACE | SORT_STRINGSORT |
-		     NORM_IGNOREWIDTH),
+  	  mapflags & ~LCMAPSTRING32A_SUPPORTED_FLAGS,
 	  srcstr,
 	  srclen,
 	  dststr,
@@ -2050,21 +2018,54 @@ INT32 WINAPI LCMapString32A(
 
   if ( !(mapflags & LCMAP_SORTKEY) )
   {
-    int (*f)(int)=identity; 
+    int i,j;
+    int (*f)(int) = identity; 
+    int flag_ignorenonspace = mapflags & NORM_IGNORENONSPACE;
+    int flag_ignoresymbols = mapflags & NORM_IGNORESYMBOLS;
 
-    if (dstlen==0)
-      return srclen;  /* dstlen=0 means "do nothing but return required length" */
-    if (dstlen<srclen) {
-      SetLastError(ERROR_INSUFFICIENT_BUFFER);
-      return 0;
+    if (flag_ignorenonspace || flag_ignoresymbols)
+    {
+      /* For some values of mapflags, the length of the resulting 
+	 string is not known at this point.  Windows does map the string
+	 and does not SetLastError ERROR_INSUFFICIENT_BUFFER in
+	 these cases. */
+      if (dstlen==0)
+      {
+	/* Compute required length */
+	for (i=j=0; i < srclen; i++)
+	{
+	  if ( !(flag_ignorenonspace && OLE2NLS_isNonSpacing(srcstr[i]))
+	       && !(flag_ignoresymbols && OLE2NLS_isSymbol(srcstr[i])) )
+	    j++;
+	}
+	return j;
+      }
+    }
+    else
+    {
+      if (dstlen==0)
+	return srclen;  
+      if (dstlen<srclen) 
+	   {
+	     SetLastError(ERROR_INSUFFICIENT_BUFFER);
+	     return 0;
+	   }
     }
     if (mapflags & LCMAP_UPPERCASE)
       f = toupper;
     else if (mapflags & LCMAP_LOWERCASE)
       f = tolower;
-    for (i=0; i < srclen; i++)
-      dststr[i] = (CHAR) f(srcstr[i]);
-    return srclen;
+    /* FIXME: NORM_IGNORENONSPACE requires another conversion */
+    for (i=j=0; (i<srclen) && (j<dstlen) ; i++)
+    {
+      if ( !(flag_ignorenonspace && OLE2NLS_isNonSpacing(srcstr[i]))
+	   && !(flag_ignoresymbols && OLE2NLS_isSymbol(srcstr[i])) )
+      {
+	dststr[j] = (CHAR) f(srcstr[i]);
+	j++;
+      }
+    }
+    return j;
   }
 
   /* else ... (mapflags & LCMAP_SORTKEY)  */
