@@ -648,7 +648,16 @@ HWND WINAPI GetActiveWindow(void)
 static BOOL WINPOS_CanActivate(HWND hwnd)
 {
     if (!hwnd) return FALSE;
-    return ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_DISABLED|WS_VISIBLE|WS_CHILD)) == WS_VISIBLE);
+    return ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_DISABLED|WS_CHILD)) == 0);
+}
+
+/*******************************************************************
+ *         WINPOS_IsVisible
+ */
+static BOOL WINPOS_IsVisible(HWND hwnd)
+{
+    if (!hwnd) return FALSE;
+    return ((GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE) == WS_VISIBLE);
 }
 
 
@@ -1394,6 +1403,7 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
 {
     HWND hwndActive = 0;
     HWND hwndTo = 0;
+    HWND hwndDefaultTo = 0;
     HWND owner;
 
     /* Get current active window from the active queue */
@@ -1417,16 +1427,23 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
 
     if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_POPUP) ||
         !(owner = GetWindow( hwnd, GW_OWNER )) ||
-        !WINPOS_CanActivate((hwndTo = GetAncestor( owner, GA_ROOT ))) )
+        !WINPOS_CanActivate((hwndTo = GetAncestor( owner, GA_ROOT ))) ||
+        !WINPOS_IsVisible(hwndTo))
     {
         HWND tmp = GetAncestor( hwnd, GA_ROOT );
         hwndTo = hwndPrevActive;
 
-        while( !WINPOS_CanActivate(hwndTo) )
+        while( !WINPOS_CanActivate(hwndTo) || !WINPOS_IsVisible(hwndTo))
         {
             /* by now owned windows should've been taken care of */
+            if(!hwndDefaultTo && WINPOS_CanActivate(hwndTo))
+            	hwndDefaultTo = hwndTo;
             tmp = hwndTo = GetWindow( tmp, GW_HWNDNEXT );
-            if( !hwndTo ) break;
+            if( !hwndTo )
+            {
+            	hwndTo = hwndDefaultTo;
+            	break;
+            }
         }
     }
 
