@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winecfg.exe
 APPMODE   = gui
-IMPORTS   = comctl32 user32
+IMPORTS   = comctl32 user32 advapi32
 
 C_SRCS = \
 	main.c \

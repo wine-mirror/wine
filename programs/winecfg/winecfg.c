@@ -23,6 +23,10 @@
 #include <stdio.h>
 #include <limits.h>
 #include <windows.h>
+#include <winreg.h>
+#include <wine/debug.h>
+
+WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #include "winecfg.h"
 
@@ -70,6 +74,68 @@ int freeConfig (WINECFG_DESC* pCfg)
 }
 
 /*****************************************************************************
+ */
+int GetConfigValueSZ (HKEY hCurrent, LPSTR subkey, LPSTR valueName, LPSTR RetVal, 
+                    int length, LPSTR DefRes)
+{
+    CHAR *buffer=NULL;
+    DWORD dataLength=0;
+    HKEY hSubKey=NULL;
+    DWORD res;
+
+    if( (res=RegOpenKeyEx( hCurrent, subkey, 0, KEY_ALL_ACCESS, &hSubKey ))
+            !=ERROR_SUCCESS )
+    {
+        if( res==ERROR_FILE_NOT_FOUND )
+        {
+            WINE_TRACE("Value not present - using default\n");
+            strncpy( RetVal,DefRes,length);
+            res=TRUE;
+        }
+        else
+        {
+            WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
+            res=FALSE;
+        }
+        goto end;
+    }
+    res = RegQueryValueExA( hSubKey, valueName, NULL, NULL, NULL, &dataLength);
+        if( res==ERROR_FILE_NOT_FOUND )
+    {
+        WINE_TRACE("Value not present - using default\n");
+        strncpy( RetVal,DefRes,length);
+        res=TRUE;
+        goto end;
+    }
+
+    if( res!=ERROR_SUCCESS )
+    {
+        WINE_ERR("Couldn't query value's length (%ld)\n", res );
+        res=FALSE;
+        goto end;
+    }
+
+    buffer=malloc( dataLength );
+    if( buffer==NULL )
+    {
+        WINE_ERR("Couldn't allocate %lu bytes for the value\n", dataLength );
+        res=FALSE;
+        goto end;
+    }
+    
+    RegQueryValueEx( hSubKey, valueName, NULL, NULL, (LPBYTE)buffer, &dataLength);
+    strncpy( RetVal,buffer,length);
+    free(buffer);
+    
+end:
+   if( hSubKey!=NULL )
+        RegCloseKey( hSubKey );
+
+    return res;
+    
+}
+
+/*****************************************************************************
  * Name       : loadConfig
  * Description: Loads and populates a configuration structure
  * Parameters : pCfg
@@ -82,28 +148,37 @@ int freeConfig (WINECFG_DESC* pCfg)
 int loadConfig (WINECFG_DESC* pCfg)
 {
     const DLL_DESC *pDllDefaults;
+    
+    HKEY hSession=NULL;
+    DWORD res;
 
-    /*
-     * The default versions for all applications
-     */
-    strcpy(pCfg->szDOSVer, "6.22");
-    strcpy(pCfg->szWinVer, "win95");
-    strcpy(pCfg->szWinLook, "win95");
+    if( (res=RegOpenKeyEx( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config", 0, KEY_ALL_ACCESS, &hSession ))
+            !=ERROR_SUCCESS )
+    {
+        if( res==ERROR_FILE_NOT_FOUND )
+            WINE_ERR("Wine config key does not exist");
+        else
+            WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);
+        
+        res=FALSE;
+        return 1;
+    }
+    
+    /* Windows and DOS versions */
+    GetConfigValueSZ(hSession,"Version","Windows",pCfg->szWinVer,MAX_VERSION_LENGTH,"win95");
+    GetConfigValueSZ(hSession,"Version","DOS",pCfg->szDOSVer,MAX_VERSION_LENGTH,"6.22");
+    GetConfigValueSZ(hSession,"Tweak.Layout","WineLook",pCfg->szWinLook,MAX_VERSION_LENGTH,"win95");
 
-    /*
-     * Default directories
-     */
-    strcpy(pCfg->szWinDir, "c:\\Windows");
-    strcpy(pCfg->szWinSysDir, "c:\\Windows\\System");
-    strcpy(pCfg->szWinTmpDir, "c:\\Windows\\Temp");
-    strcpy(pCfg->szWinProfDir, "c:\\Windows\\Profiles\\Administrator");
-    strcpy(pCfg->szWinPath, "c:\\Windows;c:\\Windows\\System");
+    /* System Paths */
+    GetConfigValueSZ(hSession,"Wine","Windows",pCfg->szWinDir,MAX_PATH,"c:\\Windows");
+    GetConfigValueSZ(hSession,"Wine","System",pCfg->szWinSysDir,MAX_PATH,"c:\\Windows\\System");
+    GetConfigValueSZ(hSession,"Wine","Temp",pCfg->szWinTmpDir,MAX_PATH,"c:\\Windows\\Temp");
+    GetConfigValueSZ(hSession,"Wine","Profile",pCfg->szWinProfDir,MAX_PATH,"c:\\Windows\\Profiles\\Administrator");
+    GetConfigValueSZ(hSession,"Wine","Path",pCfg->szWinPath,MAX_PATH,"c:\\Windows;c:\\Windows\\System");
 
-    /*
-     * Graphics driver
-     */
-    strcpy(pCfg->szGraphDriver, "x11drv");
-
+    /* Graphics driver */
+    GetConfigValueSZ(hSession,"Wine","GraphicsDriver",pCfg->szGraphDriver,MAX_NAME_LENGTH,"x11drv");
+    
     /*
      * DLL defaults for all applications is built using
      * the default DLL structure
@@ -142,10 +217,11 @@ int loadConfig (WINECFG_DESC* pCfg)
     pCfg->sX11Drv.nTextCP = 0;
     pCfg->sX11Drv.nXVideoPort = 43;
     pCfg->sX11Drv.nSynchronous = 1;
+    
+    RegCloseKey( hSession );
 
     return 0;
 }
-
 
 /*****************************************************************************
  * Name: saveConfig
