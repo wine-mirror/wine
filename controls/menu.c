@@ -854,6 +854,11 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         {
             lpitem->rect.right  += bm.bmWidth;
             lpitem->rect.bottom += bm.bmHeight;
+            if (TWEAK_WineLook == WIN98_LOOK) {
+                /* Leave space for the sunken border */
+                lpitem->rect.right  += 2;
+                lpitem->rect.bottom += 2;
+            }
 
         }
     }
@@ -914,7 +919,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     SelectObject( hdc, hMenuFont);
     
     start = 0;
-    maxX = (TWEAK_WineLook == WIN31_LOOK) ? GetSystemMetrics(SM_CXBORDER) : 2 ;
+    maxX = (TWEAK_WineLook == WIN31_LOOK) ? GetSystemMetrics(SM_CXBORDER) : 2+1 ;
 
     while (start < lppop->nItems)
     {
@@ -988,7 +993,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
                  lprect->left, lprect->top, lprect->right, lprect->bottom);
     lppop->Width  = lprect->right - lprect->left;
     lppop->Height = 0;
-    maxY = lprect->top;
+    maxY = lprect->top+1;
     start = 0;
     helpPos = -1;
     while (start < lppop->nItems)
