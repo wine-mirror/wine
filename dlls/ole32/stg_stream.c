@@ -826,10 +826,44 @@ HRESULT WINAPI StgStreamImpl_Stat(
   return E_FAIL;
 }
         
+/***
+ * This method is part of the IStream interface.
+ *
+ * This method returns a clone of the interface that allows for
+ * another seek pointer
+ *
+ * See the documentation of IStream for more info.
+ *
+ * I am not totally sure what I am doing here but I presume that this
+ * should be basically as simple as creating a new stream with the same
+ * parent etc and positioning its seek cursor.
+ */        
 HRESULT WINAPI StgStreamImpl_Clone( 
 				   IStream*     iface,
 				   IStream**    ppstm) /* [out] */ 
 {
-  FIXME("not implemented!\n");
-  return E_NOTIMPL;
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+  HRESULT hres;
+  StgStreamImpl* new_stream;
+  LARGE_INTEGER seek_pos;
+
+  /*
+   * Sanity check
+   */
+  if ( ppstm == 0 )
+    return STG_E_INVALIDPOINTER;
+
+  new_stream = StgStreamImpl_Construct (This->parentStorage, This->grfMode, This->ownerProperty);
+
+  if (!new_stream)
+    return STG_E_INSUFFICIENTMEMORY; /* Currently the only reason for new_stream=0 */
+
+  *ppstm = (IStream*) new_stream;
+  seek_pos.QuadPart = This->currentPosition.QuadPart;
+  
+  hres=StgStreamImpl_Seek (*ppstm, seek_pos, STREAM_SEEK_SET, NULL);
+  
+  assert (SUCCEEDED(hres));
+
+  return S_OK;
 }
