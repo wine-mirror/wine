@@ -243,10 +243,10 @@ struct IDirect3DDevice2Impl
 /* Matrix copy WITH transposition */
 #define conv_mat2(mat,gl_mat)			\
 {						\
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
+  TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
+  TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
+  TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
+  TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
   (gl_mat)[ 0] = (mat)->_11;			\
   (gl_mat)[ 1] = (mat)->_21;			\
   (gl_mat)[ 2] = (mat)->_31;			\
@@ -268,18 +268,18 @@ struct IDirect3DDevice2Impl
 /* Matrix copy WITHOUT transposition */
 #define conv_mat(mat,gl_mat)			\
 {                                               \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
+  TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
+  TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
+  TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
+  TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44); \
   memcpy(gl_mat, (mat), 16 * sizeof(float));      \
 };
 
 #define dump_mat(mat) \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
-  TRACE(ddraw, "%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44);
+  TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \
+  TRACE("%f %f %f %f\n", (mat)->_21, (mat)->_22, (mat)->_23, (mat)->_24); \
+  TRACE("%f %f %f %f\n", (mat)->_31, (mat)->_32, (mat)->_33, (mat)->_34); \
+  TRACE("%f %f %f %f\n", (mat)->_41, (mat)->_42, (mat)->_43, (mat)->_44);
 
 typedef struct render_state {
   /* This is used for the device mode */
@@ -329,8 +329,8 @@ typedef struct OpenGL_IDirect3DDevice {
   D3DMATRIX *proj_mat;
 } OpenGL_IDirect3DDevice;
 
-#define _dump_colorvalue(s,v)                      \
-  TRACE(ddraw, " " s " : %f %f %f %f\n",           \
+#define _dump_colorvalue(s,v)               \
+  TRACE(" " s " : %f %f %f %f\n",           \
 	(v).r.r, (v).g.g, (v).b.b, (v).a.a);
 
 /* Common functions defined in d3dcommon.c */
