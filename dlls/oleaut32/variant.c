@@ -728,7 +728,10 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
         {
           V_BSTR(pvargDest) = SysAllocStringByteLen((char*)V_BSTR(pvargSrc), SysStringByteLen(V_BSTR(pvargSrc)));
           if (!V_BSTR(pvargDest))
+	  {
+	    TRACE("!V_BSTR(pvargDest), SysAllocStringByteLen() failed to allocate %d bytes\n", SysStringByteLen(V_BSTR(pvargSrc)));
             hres = E_OUTOFMEMORY;
+	  }
         }
       }
       else if (V_VT(pvargSrc) == VT_RECORD)
@@ -840,7 +843,10 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
   {
     /* Copy into another variant. Free the variant in pvargDest */
     if (FAILED(hres = VariantClear(pvargDest)))
+    {
+      TRACE("VariantClear() of destination failed\n");
       return hres;
+    }
   }
 
   if (V_ISARRAY(pSrc))
@@ -1504,9 +1510,6 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
 
   TRACE("(%s,%ld,0x%08lx,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
 
-  if (pNumprs->dwInFlags & NUMPRS_HEX_OCT)
-    FIXME("dwInFlags & NUMPRS_HEX_OCT not yet implemented!\n");
-
   if (!pNumprs || !rgbDig)
     return E_INVALIDARG;
 
@@ -1718,8 +1721,23 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   {
     if (dwState & B_INEXACT_ZEROS)
       pNumprs->dwOutFlags &= ~NUMPRS_INEXACT; /* All zeros doesn't set NUMPRS_INEXACT */
-  }
-  else
+  } else if(pNumprs->dwInFlags & NUMPRS_HEX_OCT)
+  {
+    /* copy all of the digits into the output digit buffer */
+    /* this is exactly what windows does although it also returns */
+    /* cDig of X and writes X+Y where Y>=0 number of digits to rgbDig */
+    memcpy(rgbDig, rgbTmp, pNumprs->cDig * sizeof(BYTE));
+
+    while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
+    {
+      if (pNumprs->dwOutFlags & NUMPRS_DECIMAL)
+        pNumprs->nPwr10--;
+      else
+        pNumprs->nPwr10++;
+
+      pNumprs->cDig--;
+    }
+  } else
   {
     /* Remove trailing zeros from the last (whole number or decimal) part */
     while (pNumprs->cDig > 1 && !rgbTmp[pNumprs->cDig - 1])
@@ -1728,6 +1746,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         pNumprs->nPwr10--;
       else
         pNumprs->nPwr10++;
+
       pNumprs->cDig--;
     }
   }
@@ -2941,7 +2960,8 @@ HRESULT WINAPI VarOr(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             rc = S_OK;
 
         } else {
-            FIXME("unimplemented part\n");
+            FIXME("unimplemented part, V_VT(left) == 0x%X, V_VT(right) == 0x%X\n", 
+		V_VT(left) & VT_TYPEMASK, V_VT(right) & VT_TYPEMASK);
         }
     }
 
@@ -3392,7 +3412,9 @@ HRESULT WINAPI VarNot(LPVARIANT pVarIn, LPVARIANT pVarOut)
         V_VT(pVarOut) = VT_I4;
         break;
     case VT_CY:
-        /* FIXME: */
+        hRet = VarI4FromCy(V_CY(pVarIn), &V_I4(pVarOut));
+        V_I4(pVarOut) = ~V_I4(pVarOut);
+        V_VT(pVarOut) = VT_I4;
         break;
     case VT_EMPTY:
     case VT_NULL:
@@ -3414,13 +3436,216 @@ HRESULT WINAPI VarNot(LPVARIANT pVarIn, LPVARIANT pVarOut)
 /**********************************************************************
  *              VarMod [OLEAUT32.154]
  *
+ * Perform the modulus operation of the right hand variant on the left
+ *
+ * PARAMS
+ *  left     [I] Left hand variant
+ *  right    [I] Right hand variant
+ *  result   [O] Destination for converted value
+ *
+ * RETURNS
+ *  Success: S_OK. result contains the remainder.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTE:
+ *   If an error occurs the type of result will be modified but the value will not be.
+ *   Doesn't support arrays or any special flags yet.
  */
-HRESULT WINAPI VarMod(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut)
+HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
-    FIXME("(%p->(%s%s),%p->(%s%s),%p)\n", pVarLeft, debugstr_VT(pVarLeft),
-          debugstr_VF(pVarLeft), pVarRight, debugstr_VT(pVarRight),
-          debugstr_VF(pVarRight), pVarOut);
-    return E_FAIL;
+    BOOL         lOk        = TRUE;
+    BOOL         rOk        = TRUE;
+    HRESULT      rc         = E_FAIL;
+    int          resT = 0;
+    VARIANT      lv,rv;
+
+    VariantInit(&lv);
+    VariantInit(&rv);
+
+    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
+		  debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    /* check for invalid inputs */
+    lOk = TRUE;
+    switch (V_VT(left) & VT_TYPEMASK) {
+    case VT_BOOL :
+    case VT_I1   :
+    case VT_I2   :
+    case VT_I4   :
+    case VT_I8   :
+    case VT_INT  :
+    case VT_UI1  :
+    case VT_UI2  :
+    case VT_UI4  :
+    case VT_UI8  :
+    case VT_UINT :
+    case VT_R4   :
+    case VT_R8   :
+    case VT_CY   :
+    case VT_EMPTY:
+    case VT_DATE :
+    case VT_BSTR :
+      break;
+    case VT_VARIANT:
+    case VT_UNKNOWN:
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_TYPEMISMATCH;
+    case VT_DECIMAL:
+      V_VT(result) = VT_EMPTY;
+      return E_INVALIDARG;
+    case VT_ERROR:
+      return DISP_E_TYPEMISMATCH;
+    case VT_RECORD:
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_TYPEMISMATCH;
+    case VT_NULL:
+      break;
+    default:
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_BADVARTYPE;
+    }
+
+
+    rOk = TRUE;
+    switch (V_VT(right) & VT_TYPEMASK) {
+    case VT_BOOL :
+    case VT_I1   :
+    case VT_I2   :
+    case VT_I4   :
+    case VT_I8   :
+      if((V_VT(left) == VT_INT) && (V_VT(right) == VT_I8))
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_TYPEMISMATCH;
+      }
+    case VT_INT  :
+      if((V_VT(right) == VT_INT) && (V_VT(left) == VT_I8))
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_TYPEMISMATCH;
+      }
+    case VT_UI1  :
+    case VT_UI2  :
+    case VT_UI4  :
+    case VT_UI8  :
+    case VT_UINT :
+    case VT_R4   :
+    case VT_R8   :
+    case VT_CY   :
+      if(V_VT(left) == VT_EMPTY)
+      {
+	V_VT(result) = VT_I4;
+	return S_OK;
+      }
+    case VT_EMPTY:
+    case VT_DATE :
+    case VT_BSTR:
+      if(V_VT(left) == VT_NULL)
+      {
+	V_VT(result) = VT_NULL;
+	return S_OK;
+      }
+      break;
+
+    case VT_VOID:
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_BADVARTYPE;
+    case VT_NULL:
+      if(V_VT(left) == VT_VOID)
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_BADVARTYPE;
+      } else if((V_VT(left) == VT_NULL) || (V_VT(left) == VT_EMPTY) || (V_VT(left) == VT_ERROR) ||
+		lOk)
+      {
+        V_VT(result) = VT_NULL;
+	return S_OK;
+      } else
+      {
+	V_VT(result) = VT_NULL;
+	return DISP_E_BADVARTYPE;
+      }
+    case VT_VARIANT:
+    case VT_UNKNOWN:
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_TYPEMISMATCH;
+    case VT_DECIMAL:
+      if(V_VT(left) == VT_ERROR)
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_TYPEMISMATCH;
+      } else
+      {
+	V_VT(result) = VT_EMPTY;
+        return E_INVALIDARG;
+      }
+    case VT_ERROR:
+      return DISP_E_TYPEMISMATCH;
+    case VT_RECORD:
+      if((V_VT(left) == 15) || ((V_VT(left) >= 24) && (V_VT(left) <= 35)) || !lOk)
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_BADVARTYPE;
+      } else
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_TYPEMISMATCH;
+      }
+    default:
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_BADVARTYPE;
+    }
+
+    /* determine the result type */
+    if((V_VT(left) == VT_I8)        || (V_VT(right) == VT_I8))   resT = VT_I8;
+    else if((V_VT(left) == VT_UI1)  && (V_VT(right) == VT_BOOL)) resT = VT_I2;
+    else if((V_VT(left) == VT_UI1)  && (V_VT(right) == VT_UI1))  resT = VT_UI1;
+    else if((V_VT(left) == VT_UI1)  && (V_VT(right) == VT_I2))   resT = VT_I2;
+    else if((V_VT(left) == VT_I2)   && (V_VT(right) == VT_BOOL)) resT = VT_I2;
+    else if((V_VT(left) == VT_I2)   && (V_VT(right) == VT_UI1))  resT = VT_I2;
+    else if((V_VT(left) == VT_I2)   && (V_VT(right) == VT_I2))   resT = VT_I2;
+    else if((V_VT(left) == VT_BOOL) && (V_VT(right) == VT_BOOL)) resT = VT_I2;
+    else if((V_VT(left) == VT_BOOL) && (V_VT(right) == VT_UI1))  resT = VT_I2;
+    else if((V_VT(left) == VT_BOOL) && (V_VT(right) == VT_I2))   resT = VT_I2;
+    else resT = VT_I4; /* most outputs are I4 */
+
+    /* convert to I8 for the modulo */
+    rc = VariantChangeType(&lv, left, 0, VT_I8);
+    if(FAILED(rc))
+    {
+      FIXME("Could not convert left type %d to %d? rc == 0x%lX\n", V_VT(left), VT_I8, rc);
+      return rc;
+    }
+
+    rc = VariantChangeType(&rv, right, 0, VT_I8);
+    if(FAILED(rc))
+    {
+      FIXME("Could not convert right type %d to %d? rc == 0x%lX\n", V_VT(right), VT_I8, rc);
+      return rc;
+    }
+
+    /* if right is zero set VT_EMPTY and return divide by zero */
+    if(V_I8(&rv) == 0)
+    {
+      V_VT(result) = VT_EMPTY;
+      return DISP_E_DIVBYZERO;
+    }
+
+    /* perform the modulo operation */
+    V_VT(result) = VT_I8;
+    V_I8(result) = V_I8(&lv) % V_I8(&rv);
+
+    TRACE("V_I8(left) == %ld, V_I8(right) == %ld, V_I8(result) == %ld\n", (long)V_I8(&lv), (long)V_I8(&rv), (long)V_I8(result));
+
+    /* convert left and right to the destination type */
+    rc = VariantChangeType(result, result, 0, resT);
+    if(FAILED(rc))
+    {
+      FIXME("Could not convert 0x%x to %d?\n", V_VT(result), resT);
+      return rc;
+    }
+
+    return S_OK;
 }
 
 /**********************************************************************
