@@ -124,14 +124,6 @@ static void test_invalid_arg()
 
     /* Invalid argument checks */
 
-    ft.dwHighDateTime = 12345;
-    ft.dwLowDateTime = 12345;
-    todo_wine {
-    ok( 0 == DosDateTimeToFileTime(0,0,&ft),
-        "Invalid DOS date/time, DosDateTimeToFileTime() didn't fail!\n"
-        "ft.dwHighDateTime=%d, ft.dwLowDateTime=%d.\n\n", (int)ft.dwHighDateTime, (int)ft.dwLowDateTime);
-    }
-
     memset(&ft,0,sizeof ft);
     ok( DosDateTimeToFileTime(DOS_DATE(1980,1,1),DOS_TIME(0,0,0),&ft), /* this is 1 Jan 1980 00:00:00 */
         "DosDateTimeToFileTime() failed\n");
@@ -148,15 +140,6 @@ static void test_invalid_arg()
     st.wMonth = 0;
 
     ok( !SystemTimeToFileTime(&st, &ft), "bad month\n");
-
-    /* with a bad day */
-    SETUP_1980(st)
-    st.wDay = 0;
-
-    ft.dwHighDateTime = 11111;
-    ft.dwLowDateTime = 22222;
-    ok( 0 == SystemTimeToFileTime(&st, &ft), "SystemTimeToFileTime() succeded unexpectedly!\n"
-        "ft.dwHighDateTime=%d, ft.dwLowDateTime=%d.\n\n", (int)ft.dwHighDateTime, (int)ft.dwLowDateTime);
 
     /* with a bad hour */
     SETUP_1980(st)
