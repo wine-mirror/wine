@@ -4668,10 +4668,6 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
  found:
     if (message == WM_KEYUP || message == WM_SYSKEYUP)
         mesg = 1;
-    else if (GetCapture())
-        mesg = 2;
-    else if (!IsWindowEnabled(hWnd))
-        mesg = 3;
     else
     {
         HMENU hMenu, hSubMenu, hSysMenu;
@@ -4686,14 +4682,21 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
         nPos = cmd;
         if(MENU_FindItem(&hSubMenu, &nPos, MF_BYCOMMAND))
         {
-            SendMessageW(hWnd, WM_INITMENU, (WPARAM)hSysMenu, 0L);
-            if(hSubMenu != hSysMenu)
+            if (GetCapture())
+                mesg = 2;
+            if (!IsWindowEnabled(hWnd))
+                mesg = 3;
+            else
             {
-                nPos = MENU_FindSubMenu(&hSysMenu, hSubMenu);
-                TRACE_(accel)("hSysMenu = %p, hSubMenu = %p, nPos = %d\n", hSysMenu, hSubMenu, nPos);
-                SendMessageW(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, TRUE));
+                SendMessageW(hWnd, WM_INITMENU, (WPARAM)hSysMenu, 0L);
+                if(hSubMenu != hSysMenu)
+                {
+                    nPos = MENU_FindSubMenu(&hSysMenu, hSubMenu);
+                    TRACE_(accel)("hSysMenu = %p, hSubMenu = %p, nPos = %d\n", hSysMenu, hSubMenu, nPos);
+                    SendMessageW(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, TRUE));
+                }
+                uSysStat = GetMenuState(GetSubMenu(hSysMenu, 0), cmd, MF_BYCOMMAND);
             }
-            uSysStat = GetMenuState(GetSubMenu(hSysMenu, 0), cmd, MF_BYCOMMAND);
         }
         else /* 2. in the window's menu */
         {
@@ -4701,40 +4704,50 @@ static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARA
             nPos = cmd;
             if(MENU_FindItem(&hSubMenu, &nPos, MF_BYCOMMAND))
             {
-                SendMessageW(hWnd, WM_INITMENU, (WPARAM)hMenu, 0L);
-                if(hSubMenu != hMenu)
+                if (GetCapture())
+                    mesg = 2;
+                if (!IsWindowEnabled(hWnd))
+                    mesg = 3;
+                else
                 {
-                    nPos = MENU_FindSubMenu(&hMenu, hSubMenu);
-                    TRACE_(accel)("hMenu = %p, hSubMenu = %p, nPos = %d\n", hMenu, hSubMenu, nPos);
-                    SendMessageW(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, FALSE));
+                    SendMessageW(hWnd, WM_INITMENU, (WPARAM)hMenu, 0L);
+                    if(hSubMenu != hMenu)
+                    {
+                        nPos = MENU_FindSubMenu(&hMenu, hSubMenu);
+                        TRACE_(accel)("hMenu = %p, hSubMenu = %p, nPos = %d\n", hMenu, hSubMenu, nPos);
+                        SendMessageW(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, FALSE));
+                    }
+                    uStat = GetMenuState(hMenu, cmd, MF_BYCOMMAND);
                 }
-                uStat = GetMenuState(hMenu, cmd, MF_BYCOMMAND);
             }
         }
 
-        if (uSysStat != (UINT)-1)
+        if (mesg == 0)
         {
-            if (uSysStat & (MF_DISABLED|MF_GRAYED))
-                mesg=4;
-            else
-                mesg=WM_SYSCOMMAND;
-        }
-        else
-        {
-            if (uStat != (UINT)-1)
+            if (uSysStat != (UINT)-1)
             {
-                if (IsIconic(hWnd))
-                    mesg=5;
+                if (uSysStat & (MF_DISABLED|MF_GRAYED))
+                    mesg=4;
                 else
-                {
-                    if (uStat & (MF_DISABLED|MF_GRAYED))
-                        mesg=6;
-                    else
-                        mesg=WM_COMMAND;
-                }
+                    mesg=WM_SYSCOMMAND;
             }
             else
-                mesg=WM_COMMAND;
+            {
+                if (uStat != (UINT)-1)
+                {
+                    if (IsIconic(hWnd))
+                        mesg=5;
+                    else
+                    {
+                        if (uStat & (MF_DISABLED|MF_GRAYED))
+                            mesg=6;
+                        else
+                            mesg=WM_COMMAND;
+                    }
+                }
+                else
+                    mesg=WM_COMMAND;
+            }
         }
     }
 
