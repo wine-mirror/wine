@@ -109,6 +109,7 @@ typedef double          DATE;
 typedef long		SCODE;
 typedef long            LONG_PTR;
 typedef unsigned long   ULONG_PTR;
+typedef double          DOUBLE;
 #ifdef __i386__
 typedef double          LONGLONG;
 typedef double          ULONGLONG;
@@ -118,6 +119,8 @@ typedef double          ULONGLONG;
 
 typedef UINT16          HANDLE16;
 typedef UINT32          HANDLE32;
+typedef UINT16         *LPHANDLE16;
+typedef UINT32         *LPHANDLE32;
 typedef UINT16          WPARAM16;
 typedef UINT32          WPARAM32;
 typedef LONG            LPARAM;
@@ -149,9 +152,13 @@ typedef LONG           *PLONG;
 typedef DWORD          *PDWORD;
 /* common win32 types */
 typedef CHAR           *LPSTR;
+typedef CHAR           *PSTR;
 typedef const CHAR     *LPCSTR;
+typedef const CHAR     *PCSTR;
 typedef WCHAR          *LPWSTR;
+typedef WCHAR          *PWSTR;
 typedef const WCHAR    *LPCWSTR;
+typedef const WCHAR    *PCWSTR;
 typedef BYTE           *LPBYTE;
 typedef WORD           *LPWORD;
 typedef DWORD          *LPDWORD;
@@ -165,6 +172,7 @@ typedef INT32          *LPINT32;
 typedef UINT32         *PUINT32;
 typedef UINT32         *LPUINT32;
 typedef HKEY           *LPHKEY;
+typedef HKEY           *PHKEY;
 typedef FLOAT          *PFLOAT;
 typedef FLOAT          *LPFLOAT;
 typedef BOOL32         *PBOOL32;
@@ -243,6 +251,9 @@ DECL_WINELIB_TYPE_AW(EDITWORDBREAKPROC)
 typedef LRESULT (CALLBACK *FARPROC16)();
 typedef LRESULT (CALLBACK *FARPROC32)();
 DECL_WINELIB_TYPE(FARPROC)
+typedef INT16   (CALLBACK *PROC16)();
+typedef INT32   (CALLBACK *PROC32)();
+DECL_WINELIB_TYPE(PROC)
 typedef INT16   (CALLBACK *GOBJENUMPROC16)(SEGPTR,LPARAM);
 typedef INT32   (CALLBACK *GOBJENUMPROC32)(LPVOID,LPARAM);
 DECL_WINELIB_TYPE(GOBJENUMPROC)
@@ -302,10 +313,12 @@ DECL_WINELIB_TYPE(PUINT)
 DECL_WINELIB_TYPE(LPUINT)
 DECL_WINELIB_TYPE(UINT)
 DECL_WINELIB_TYPE(BOOL)
+DECL_WINELIB_TYPE(LPBOOL)
 DECL_WINELIB_TYPE(WPARAM)
 
 DECL_WINELIB_TYPE(HACCEL)
 DECL_WINELIB_TYPE(HANDLE)
+DECL_WINELIB_TYPE(LPHANDLE)
 DECL_WINELIB_TYPE(HBITMAP)
 DECL_WINELIB_TYPE(HBRUSH)
 DECL_WINELIB_TYPE(HCOLORSPACE)
@@ -418,7 +431,10 @@ DECL_WINELIB_TYPE(HWND)
 #define min(a,b)   MIN(a,b)
 
 #define _MAX_PATH  260
+#define _MAX_DRIVE 3
+#define _MAX_DIR   256
 #define _MAX_FNAME 255
+#define _MAX_EXT   256
 
 /* Winelib run-time flag */
 
@@ -432,16 +448,19 @@ typedef struct
 {
     INT16  cx;
     INT16  cy;
-} SIZE16, *LPSIZE16;
+} SIZE16, *PSIZE16, *LPSIZE16;
 
 typedef struct tagSIZE
 {
     INT32  cx;
     INT32  cy;
-} SIZE32, *LPSIZE32;
+} SIZE32, *PSIZE32, *LPSIZE32;
 
 DECL_WINELIB_TYPE(SIZE)
+DECL_WINELIB_TYPE(PSIZE)
 DECL_WINELIB_TYPE(LPSIZE)
+
+typedef SIZE32 SIZEL, *PSIZEL, *LPSIZEL;
 
 #define CONV_SIZE16TO32(s16,s32) \
             ((s32)->cx = (INT32)(s16)->cx, (s32)->cy = (INT32)(s16)->cy)
@@ -454,16 +473,24 @@ typedef struct
 {
     INT16  x;
     INT16  y;
-} POINT16, *LPPOINT16;
+} POINT16, *PPOINT16, *LPPOINT16;
 
 typedef struct tagPOINT
 {
-    INT32  x;
-    INT32  y;
-} POINT32, *LPPOINT32;
+    LONG  x;
+    LONG  y;
+} POINT32, *PPOINT32, *LPPOINT32;
 
 DECL_WINELIB_TYPE(POINT)
+DECL_WINELIB_TYPE(PPOINT)
 DECL_WINELIB_TYPE(LPPOINT)
+
+typedef struct  tagPOINTL
+{
+    LONG x;
+    LONG y;
+} POINTL, *PPOINTL, *LPPOINTL;
+
 
 #define CONV_POINT16TO32(p16,p32) \
             ((p32)->x = (INT32)(p16)->x, (p32)->y = (INT32)(p16)->y)
@@ -472,6 +499,21 @@ DECL_WINELIB_TYPE(LPPOINT)
 
 #define MAKEPOINT16(l) (*((POINT16 *)&(l)))
 #define MAKEPOINT WINELIB_NAME(MAKEPOINT)
+
+/* The POINTS structure */
+
+typedef struct tagPOINTS
+{
+	SHORT x;
+	SHORT y;
+} POINTS32, *PPOINTS32, *LPPOINTS32;
+
+DECL_WINELIB_TYPE(POINTS)
+DECL_WINELIB_TYPE(PPOINTS)
+DECL_WINELIB_TYPE(LPPOINTS)
+
+#define MAKEPOINTS(l)  (*((POINTS *)&(l)))
+
 
 /* The RECT structure */
 
@@ -489,10 +531,21 @@ typedef struct tagRECT
     INT32  top;
     INT32  right;
     INT32  bottom;
-} RECT32, *LPRECT32;
+} RECT32, *PRECT32, *LPRECT32;
 
 DECL_WINELIB_TYPE(RECT)
+DECL_WINELIB_TYPE(PRECT)
 DECL_WINELIB_TYPE(LPRECT)
+
+typedef struct tagRECTL
+{
+    LONG left;
+    LONG top;  
+    LONG right;
+    LONG bottom;
+} RECTL, *PRECTL, *LPRECTL;
+
+typedef const RECTL *LPCRECTL;
 
 #define CONV_RECT16TO32(r16,r32) \
     ((r32)->left  = (INT32)(r16)->left,  (r32)->top    = (INT32)(r16)->top, \
