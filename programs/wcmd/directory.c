@@ -8,11 +8,6 @@
  * environment-variable and batch parameter substitution already done.
  */
 
-/*
- * FIXME:
- * - DIR /S fails if the starting directory is not the current default.
- */
-
 #include "wcmd.h"
 
 int WCMD_dir_sort (const void *a, const void *b);
@@ -36,7 +31,6 @@ __int64 byte_total;
  * WCMD_directory
  *
  * List a file directory.
- * FIXME: /S switch only works for the current directory
  *
  */
 
@@ -47,6 +41,8 @@ int status;
 ULARGE_INTEGER avail, total, free;
 
   line_count = 5;
+  byte_total = 0;
+  file_total = dir_total = 0;
   page_mode = (strstr(quals, "/P") != NULL);
   recurse = (strstr(quals, "/S") != NULL);
   if (param1[0] == '\0') strcpy (param1, ".");
