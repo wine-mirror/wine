@@ -1932,6 +1932,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int			format;
     int			dsp_stereo;
     WINE_WAVEIN*	wwi;
+    int			audio_fragment;
 
     TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
@@ -1989,9 +1990,20 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     dsp_stereo = (wwi->format.wf.nChannels > 1) ? TRUE : FALSE;
     format = (wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8;
 
+
     IOCTL(audio, SNDCTL_DSP_SETFMT, format);
     IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo);
     IOCTL(audio, SNDCTL_DSP_SPEED,  sample_rate);
+
+
+    /* This is actually hand tuned to work so that my SB Live:
+     * - does not skip
+     * - does not buffer too much
+     * when sending with the Shoutcast winamp plugin
+     */
+    /* 7 fragments max, 2^10 = 1024 bytes per fragment */
+    audio_fragment = 0x0007000A;
+    IOCTL(audio, SNDCTL_DSP_SETFRAGMENT, audio_fragment);
 
     /* paranoid checks */
     if (format != ((wwi->format.wBitsPerSample == 16) ? AFMT_S16_LE : AFMT_U8))
