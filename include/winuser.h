@@ -636,6 +636,8 @@ typedef struct
 #define WM_COPYDATA		0x004a
 #define WM_CANCELJOURNAL	0x004b
 #define WM_NOTIFY		0x004e
+#define WM_INPUTLANGCHANGEREQUEST       0x0050
+#define WM_INPUTLANGCHANGE              0x0051
 #define WM_TCARD                0x0052
 #define WM_HELP			0x0053
 #define WM_USERCHANGED		0x0054
@@ -1396,7 +1398,7 @@ typedef struct tagMSG
     LPARAM    lParam;
     DWORD     time;
     POINT   pt;
-} MSG, *LPMSG;
+} MSG, *PMSG, *LPMSG;
 
 #define POINTSTOPOINT(pt, pts)                          \
         { (pt).x = (LONG)(SHORT)LOWORD(*(LONG*)&pts);   \
@@ -2140,6 +2142,10 @@ typedef struct
 #define IDI_WINLOGOA       MAKEINTRESOURCEA(32517)
 #define IDI_WINLOGOW       MAKEINTRESOURCEW(32517)
 #define IDI_WINLOGO        WINELIB_NAME_AW(IDI_WINLOGO)
+
+#define IDI_WARNING        IDI_EXCLAMATION
+#define IDI_ERROR          IDI_HAND
+#define IDI_INFORMATION    IDI_ASTERISK
 
 #define IDC_BUMMERA      MAKEINTRESOURCEA(100)
 #define IDC_BUMMERW      MAKEINTRESOURCEW(100)
@@ -3111,6 +3117,9 @@ BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
 BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
 #define     EnumDisplayDevices WINELIB_NAME_AW(EnumDisplayDevices)
+BOOL        WINAPI EnumDisplaySettingsA(LPCSTR,DWORD,LPDEVMODEA);
+BOOL        WINAPI EnumDisplaySettingsW(LPCWSTR,DWORD,LPDEVMODEW);
+#define     EnumDisplaySettings WINELIB_NAME_AW(EnumDisplaySettings)
 INT       WINAPI EnumPropsExA(HWND,PROPENUMPROCEXA,LPARAM);
 INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)

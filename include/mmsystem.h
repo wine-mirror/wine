@@ -27,6 +27,7 @@ typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
    
 typedef WORD    VERSION;        /* major (high byte), minor (low byte) */
 
+typedef DWORD   MCIERROR;
 typedef UINT16	MMVERSION16;
 typedef UINT	MMVERSION;
 typedef UINT16	MCIDEVICEID16;
@@ -326,7 +327,7 @@ typedef struct wavehdr_tag {
 
     struct wavehdr_tag *lpNext;	/* reserved for driver */
     DWORD       reserved;	/* reserved for driver */
-} WAVEHDR, *LPWAVEHDR;
+} WAVEHDR, *PWAVEHDR, *NPWAVEHDR, *LPWAVEHDR;
 
 #define WHDR_DONE       0x00000001  /* done bit */
 #define WHDR_PREPARED   0x00000002  /* set if this header has been prepared */
