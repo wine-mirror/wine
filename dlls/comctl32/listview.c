@@ -4796,7 +4796,11 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
     {
       Str_SetPtrA(ppszText, dispInfo.item.pszText);
     }
-    /* Here lpLVItem->pszText==dispInfo.item.pszText so a copy is unnecessary */
+    /* If lpLVItem->pszText==dispInfo.item.pszText a copy is unnecessary, but */
+    /* some apps give a new pointer in ListView_Notify so we can't be sure.  */
+    if (lpLVItem->pszText!=dispInfo.item.pszText) {
+      lstrcpynA(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
+    }
   }
   else if (lpLVItem->mask & LVIF_TEXT)
   {
