@@ -40,9 +40,6 @@
 /* Define if the X Window System is missing or not being used.  */
 #undef X_DISPLAY_MISSING
 
-/* Define if lex declares yytext as a char * by default, not a char[].  */
-#undef YYTEXT_POINTER
-
 /* Define if .type asm directive must be inside a .def directive */
 #undef NEED_TYPE_IN_DEF
 
@@ -525,6 +522,9 @@
 
 /* Define if you have the xpg4 library (-lxpg4).  */
 #undef HAVE_LIBXPG4
+
+/* Define if we can use ppdev.h for parallel port access */
+#undef HAVE_PPDEV
 
 /* Set this to 64 to enable 64-bit file support on Linux */
 #undef _FILE_OFFSET_BITS

@@ -62,13 +62,17 @@ static BYTE cmosimage[64] =
 # define DIRECT_IO_ACCESS
 #else
 # undef DIRECT_IO_ACCESS
+# undef PP_IO_ACCESS
 #endif  /* linux && __i386__ */
 
 #ifdef DIRECT_IO_ACCESS
 
 extern int iopl(int level);
-
 static char do_direct_port_access = -1;
+#ifdef HAVE_PPDEV
+static char do_pp_port_access = -1; /* -1: uninitialized, 1: not available
+				       0: available);*/
+#endif
 static char port_permissions[0x10000];
 
 #define IO_READ  1
@@ -258,6 +262,13 @@ DWORD IO_inport( int port, int size )
 
     TRACE("%d-byte value from port 0x%02x\n", size, port );
 
+#ifdef HAVE_PPDEV
+    if (do_pp_port_access == -1) 
+      do_pp_port_access =IO_pp_init();
+    if ((do_pp_port_access == 0 ) && (size == 1))
+      if (!IO_pp_inp(port,&res))
+         return res;
+#endif
 #ifdef DIRECT_IO_ACCESS
     if (do_direct_port_access == -1) IO_port_init();
     if ((do_direct_port_access)
@@ -371,7 +382,15 @@ void IO_outport( int port, int size, DWORD value )
     TRACE("IO: 0x%lx (%d-byte value) to port 0x%02x\n",
                  value, size, port );
 
+#ifdef HAVE_PPDEV
+    if (do_pp_port_access == -1) 
+      do_pp_port_access = IO_pp_init();
+    if ((do_pp_port_access == 0) && (size == 1))
+      if (!IO_pp_outp(port,&value))
+         return;
+#endif
 #ifdef DIRECT_IO_ACCESS
+
     if (do_direct_port_access == -1) IO_port_init();
     if ((do_direct_port_access)
         /* Make sure we have access to the port */

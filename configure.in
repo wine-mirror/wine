@@ -430,6 +430,19 @@ fi
 AC_SUBST(FREETYPELIBS)
 AC_SUBST(FREETYPEINCL)
 
+dnl **** Check for parport (currently Linux only) ****
+AC_CACHE_CHECK("for parport header/ppdev.h", ac_cv_c_ppdev,
+ AC_TRY_COMPILE(
+   [#include <linux/ppdev.h>],
+   [ioctl (1,PPCLAIM,0)],
+   [ac_cv_c_ppdev="yes"],
+   [ac_cv_c_ppdev="no"])
+ )
+if test "$ac_cv_c_ppdev" = "yes"
+then
+    AC_DEFINE(HAVE_PPDEV,1,[Define if we can use ppdev.h for parallel port access])
+fi
+
 dnl **** Check for IPX (currently Linux only) ****
 AC_CACHE_CHECK("for GNU style IPX support", ac_cv_c_ipx_gnu,
  AC_TRY_COMPILE(

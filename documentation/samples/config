@@ -167,6 +167,14 @@ WINE REGISTRY Version 2
 [parallelports]
 "Lpt1" = "/dev/lp0"
 
+[ppdev]
+;; key:  io-base of the emulated port
+;; value : parport-device{,timeout}
+;; timeout for auto closing an open device ( not yet implemented)
+;"378" = "/dev/parport0"
+;"278" = "/dev/parport1"
+;"3bc" = "/dev/parport2"
+
 [spooler]
 "FILE:" = "tmp.ps"
 "LPT1:" = "|lpr"
