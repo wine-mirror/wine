@@ -609,6 +609,8 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &arg) == 0) {
         TRACE("OSS dsp out caps=%08X\n", arg);
+        if (arg & DSP_CAP_TRIGGER)
+            ossdev->bTriggerSupport = TRUE;
         if ((arg & DSP_CAP_REALTIME) && !(arg & DSP_CAP_BATCH)) {
             ossdev->out_caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
         }
@@ -675,7 +677,6 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     ossdev->in_caps.dwFormats = 0x00000000;
     ossdev->in_caps.wChannels = 1;
     ossdev->in_caps.wReserved1 = 0;
-    ossdev->bTriggerSupport = FALSE;
 
     /* direct sound caps */
     ossdev->dsc_caps.dwSize = sizeof(ossdev->dsc_caps);
@@ -2155,6 +2156,20 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
     WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = TRUE;
     enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
     if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
+	if (errno == EINVAL) {
+	    /* Don't give up yet. OSS trigger support is inconsistent. */
+	    if (WOutDev[This->drv->wDevID].ossdev->open_count == 1) {
+		/* try the opposite input enable */
+		if (WOutDev[This->drv->wDevID].ossdev->bInputEnabled == FALSE)
+		    WOutDev[This->drv->wDevID].ossdev->bInputEnabled = TRUE;
+		else
+		    WOutDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
+		/* try it again */
+    		enable = getEnables(WOutDev[This->drv->wDevID].ossdev);
+		if (ioctl(WOutDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) >= 0)
+		    return DS_OK;
+	    }	 
+	}
 	ERR("ioctl(%s, SNDCTL_DSP_SETTRIGGER) failed (%s)\n",WOutDev[This->drv->wDevID].ossdev->dev_name, strerror(errno));
 	WOutDev[This->drv->wDevID].ossdev->bOutputEnabled = FALSE;
 	return DSERR_GENERIC;
