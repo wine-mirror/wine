@@ -112,11 +112,13 @@ DLLs (under dlls/):
 	qcap/			- DirectShow runtime
 	quartz/			- DirectShow runtime
 	rasapi32/		- Remote Access Server interface
+	riched20/		- Rich text editing control version 2.0
 	richedit/		- Rich text editing control
 	rpcrt4/			- Remote Procedure Call runtime
 	rsabase/		- RSA encryption
 	rsaenh/			- Crypto API that provides algorithms for DES, 3DES, and RSA among others
 	secur32/                - Contains Windows Security functions
+	sensapi/		- System Event Notification Service
 	serialui/		- Serial port property pages
 	setupapi/		- Setup interface
 	shdocvw/		- Shell document object and control
@@ -169,6 +171,7 @@ DLLs (under dlls/):
 	wintrust/		- Trust verification interface
 	wow32/			- WOW subsystem
 	wsock32/		- Sockets 1.1 (networking)
+	wtsapi32/		- Terminal Services
 	x11drv/			- X11 display driver (Wine specific)
 
 Winelib programs (under programs/):
