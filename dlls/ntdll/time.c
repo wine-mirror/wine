@@ -257,8 +257,6 @@ static const struct tagTZ_INFO TZ_INFO[] =
      'e','\0'}, -780, 0}
 };
 
-/*********** start of code by Rex Jolliff (rex@lvcablemodem.com) **************/
-
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
 #define SECSPERDAY         86400
@@ -469,6 +467,27 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 	return TRUE;
 }
 
+/***********************************************************************
+ *       TIME_GetBias [internal]
+ *
+ * Helper function calculates delta local time from UTC. 
+ *
+ * PARAMS
+ *   utc [I] The current utc time.
+ *   pdaylight [I] Local daylight.
+ *
+ * RETURNS
+ *   The bias for the current timezone.
+ */
+static int TIME_GetBias(time_t utc, int *pdaylight)
+{
+    struct tm *ptm = localtime(&utc);
+    *pdaylight = ptm->tm_isdst; /* daylight for local timezone */
+    ptm = gmtime(&utc);
+    ptm->tm_isdst = *pdaylight; /* use local daylight, not that of Greenwich */
+    return (int)(utc-mktime(ptm));
+}
+
 /******************************************************************************
  *        RtlLocalTimeToSystemTime [NTDLL.@]
  *
@@ -485,12 +504,15 @@ BOOLEAN WINAPI RtlTimeFieldsToTime(
 NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
                                           PLARGE_INTEGER SystemTime)
 {
-    TIME_ZONE_INFORMATION tzinfo;
+    time_t gmt;
+    int bias, daylight;
 
     TRACE("(%p, %p)\n", LocalTime, SystemTime);
 
-    RtlQueryTimeZoneInformation(&tzinfo);
-    SystemTime->QuadPart = LocalTime->QuadPart + tzinfo.Bias * 60 * (LONGLONG)10000000;
+    gmt = time(NULL);
+    bias = TIME_GetBias(gmt, &daylight);
+
+    SystemTime->QuadPart = LocalTime->QuadPart - bias * (LONGLONG)10000000;
     return STATUS_SUCCESS;
 }
 
@@ -510,12 +532,15 @@ NTSTATUS WINAPI RtlLocalTimeToSystemTime( const LARGE_INTEGER *LocalTime,
 NTSTATUS WINAPI RtlSystemTimeToLocalTime( const LARGE_INTEGER *SystemTime,
                                           PLARGE_INTEGER LocalTime )
 {
-    TIME_ZONE_INFORMATION tzinfo;
+    time_t gmt;
+    int bias, daylight;
 
     TRACE("(%p, %p)\n", SystemTime, LocalTime);
 
-    RtlQueryTimeZoneInformation(&tzinfo);
-    LocalTime->QuadPart = SystemTime->QuadPart - tzinfo.Bias * 60 * (LONGLONG)10000000;
+    gmt = time(NULL);
+    bias = TIME_GetBias(gmt, &daylight);
+
+    LocalTime->QuadPart = SystemTime->QuadPart + bias * (LONGLONG)10000000;
     return STATUS_SUCCESS;
 }
 
@@ -656,27 +681,6 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
     Time->QuadPart = now.tv_sec * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
     Time->QuadPart += now.tv_usec * 10;
     return STATUS_SUCCESS;
-}
-
-/***********************************************************************
- *       TIME_GetBias [internal]
- *
- * Helper function calculates delta local time from UTC. 
- *
- * PARAMS
- *   utc [I] The current utc time.
- *   pdaylight [I] Local daylight.
- *
- * RETURNS
- *   The bias for the current timezone.
- */
-static int TIME_GetBias(time_t utc, int *pdaylight)
-{
-    struct tm *ptm = localtime(&utc);
-    *pdaylight = ptm->tm_isdst; /* daylight for local timezone */
-    ptm = gmtime(&utc);
-    ptm->tm_isdst = *pdaylight; /* use local daylight, not that of Greenwich */
-    return (int)(utc-mktime(ptm));
 }
 
 /***********************************************************************
