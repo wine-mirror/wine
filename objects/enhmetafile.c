@@ -193,7 +193,7 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
     )
 {
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
-     INT first;
+     INT first, first_A;
  
      if(!emh) return FALSE;
      if(emh->nDescription == 0 || emh->offDescription == 0) {
@@ -208,12 +208,14 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
      first = lstrlenW( (WCHAR *) ((char *) emh + emh->offDescription));
  
      lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription), size);
-     buf += first + 1;
+     first_A = lstrlenA( buf );
+     buf += first_A + 1;
      lstrcpynWtoA(buf, (WCHAR *) ((char *) emh + emh->offDescription+2*(first+1)),
- 		 size - first - 1);
+ 		 size - first_A - 1); /* i18n ready */
+     first_A += lstrlenA(buf) + 1;
  
      EMF_ReleaseEnhMetaHeader(hmf);
-     return min(size, emh->nDescription);
+     return min(size, first_A);
 }
 
 /*****************************************************************************

@@ -913,22 +913,47 @@ INT WINAPI LoadStringW( HINSTANCE instance, UINT resource_id,
 INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
                             LPSTR buffer, INT buflen )
 {
-    INT retval;
-    LPWSTR buffer2 = NULL;
-    if (buffer && buflen)
-	buffer2 = HeapAlloc( GetProcessHeap(), 0, buflen * 2 );
-    retval = LoadStringW(instance,resource_id,buffer2,buflen);
+    INT    retval;
+    INT    wbuflen;
+    INT    abuflen;
+    LPWSTR wbuf = NULL;
+    LPSTR  abuf = NULL;
 
-    if (buffer2)
+    if ( buffer != NULL && buflen > 0 )
+	*buffer = 0;
+
+    wbuflen = LoadStringW(instance,resource_id,NULL,0);
+    if ( !wbuflen )
+	return 0;
+    wbuflen ++;
+
+    retval = 0;
+    wbuf = HeapAlloc( GetProcessHeap(), 0, wbuflen * sizeof(WCHAR) );
+    wbuflen = LoadStringW(instance,resource_id,wbuf,wbuflen);
+    if ( wbuflen > 0 )
     {
-	if (retval) {
-	    lstrcpynWtoA( buffer, buffer2, buflen );
-	    retval = lstrlenA( buffer );
+	abuflen = WideCharToMultiByte(CP_ACP,0,wbuf,wbuflen,NULL,0,NULL,NULL);
+	if ( abuflen > 0 )
+	{
+	    if ( buffer == NULL || buflen == 0 )
+		retval = abuflen;
+	    else
+	    {
+		abuf = HeapAlloc( GetProcessHeap(), 0, abuflen * sizeof(CHAR) );
+		abuflen = WideCharToMultiByte(CP_ACP,0,wbuf,wbuflen,abuf,abuflen,NULL,NULL);
+		if ( abuflen > 0 )
+		{
+		    abuflen = min(abuflen,buflen - 1);
+		    memcpy( buffer, abuf, abuflen );
+		    buffer[abuflen] = 0;
+		    retval = abuflen;
+		}
+		HeapFree( GetProcessHeap(), 0, abuf );
+	    }
 	}
-	else
-	    *buffer = 0;
-	HeapFree( GetProcessHeap(), 0, buffer2 );
     }
+    HeapFree( GetProcessHeap(), 0, wbuf );
+
     return retval;
 }
 

@@ -15,6 +15,7 @@
 #include "debugtools.h"
 #include "winerror.h"
 #include "dc.h"
+#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(font)
 DECLARE_DEBUG_CHANNEL(gdi)
@@ -869,15 +870,19 @@ BOOL WINAPI GetTextExtentPoint32A( HDC hdc, LPCSTR str, INT count,
 {
     LPWSTR p;
     BOOL ret;
+    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
+    UINT wlen;
 
   /* str may not be 0 terminated so we can't use HEAP_strdupWtoA.
    * We allocate one more than we need so that lstrcpynWtoA can write a
    * trailing 0 if it wants.
    */
 
-    p = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(WCHAR) );
-    lstrcpynAtoW(p, str, count+1);
-    ret = GetTextExtentPoint32W( hdc, p, count, size );
+    wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
+    p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
+    wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
+
+    ret = GetTextExtentPoint32W( hdc, p, wlen, size );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }

@@ -18,6 +18,7 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "cache.h"
+#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(text);
 
@@ -381,12 +382,16 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
                              const RECT *lprect, LPCSTR str, UINT count,
                              const INT *lpDx )
 {
-    /* str need not be \0 terminated but lstrcpynAtoW adds \0 so we allocate one
-       more byte */
-    LPWSTR p = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(WCHAR) );
+    LPWSTR p;
     INT ret;
-    lstrcpynAtoW( p, str, count+1 );
-    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, count, lpDx );
+    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
+    UINT wlen;
+
+    wlen = MultiByteToWideChar(codepage,0,str,count,NULL,0);
+    p = HeapAlloc( GetProcessHeap(), 0, wlen * sizeof(WCHAR) );
+    wlen = MultiByteToWideChar(codepage,0,str,count,p,wlen);
+
+    ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDx );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
@@ -679,9 +684,14 @@ LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str,
                               const INT *lpTabPos, INT nTabOrg )
 {
     LONG ret;
-    LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, count + 1 );
-    lstrcpynWtoA( p, str, count + 1 );
-    ret = TabbedTextOutA( hdc, x, y, p, count, cTabStops,
+    LPSTR p;
+    INT acount;
+    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
+
+    acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
+    p = HEAP_xalloc( GetProcessHeap(), 0, acount ); 
+    acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
+    ret = TabbedTextOutA( hdc, x, y, p, acount, cTabStops,
                             lpTabPos, nTabOrg );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
@@ -721,9 +731,14 @@ DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count,
                                      INT cTabStops, const INT *lpTabPos )
 {
     LONG ret;
-    LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, count + 1 );
-    lstrcpynWtoA( p, lpstr, count + 1 );
-    ret = GetTabbedTextExtentA( hdc, p, count, cTabStops, lpTabPos );
+    LPSTR p;
+    INT acount;
+    UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
+
+    acount = WideCharToMultiByte(codepage,0,lpstr,count,NULL,0,NULL,NULL);
+    p = HEAP_xalloc( GetProcessHeap(), 0, acount );
+    acount = WideCharToMultiByte(codepage,0,lpstr,count,p,acount,NULL,NULL);
+    ret = GetTabbedTextExtentA( hdc, p, acount, cTabStops, lpTabPos );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }

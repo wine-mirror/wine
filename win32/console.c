@@ -50,6 +50,7 @@
 #include "heap.h"
 #include "server.h"
 #include "debugtools.h"
+#include "winnls.h"
 
 DEFAULT_DEBUG_CHANNEL(console)
 
@@ -847,13 +848,18 @@ BOOL WINAPI WriteConsoleW( HANDLE hConsoleOutput,
                                LPVOID lpReserved )
 {
         BOOL ret;
-        LPSTR xstring=HeapAlloc( GetProcessHeap(), 0, nNumberOfCharsToWrite );
+        LPSTR xstring;
+	DWORD n;
 
-	lstrcpynWtoA( xstring,  lpBuffer,nNumberOfCharsToWrite);
+	n = WideCharToMultiByte(CP_ACP,0,lpBuffer,nNumberOfCharsToWrite,NULL,0,NULL,NULL);
+	xstring=HeapAlloc( GetProcessHeap(), 0, n );
+
+	n = WideCharToMultiByte(CP_ACP,0,lpBuffer,nNumberOfCharsToWrite,xstring,n,NULL,NULL);
 
 	/* FIXME: should I check if this is a console handle? */
-	ret= WriteFile(hConsoleOutput, xstring, nNumberOfCharsToWrite,
+	ret= WriteFile(hConsoleOutput, xstring, n,
 			 lpNumberOfCharsWritten, NULL);
+	/* FIXME: lpNumberOfCharsWritten should be converted to numofchars in UNICODE */ 
 	HeapFree( GetProcessHeap(), 0, xstring );
 	return ret;
 }
