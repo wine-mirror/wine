@@ -1206,7 +1206,7 @@ BOOL WINAPI DrawAnimatedRects( HWND hwnd, INT idAni,
                                    const RECT* lprcFrom,
                                    const RECT* lprcTo )
 {
-    FIXME_(win)("(%p,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
+    FIXME("(%p,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
     return TRUE;
 }
 
