@@ -533,16 +533,24 @@ undo:
 
 /******** Notification functions i************************************/
 
-static inline BOOL notify_hdr(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
+static LRESULT notify_hdr(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
 {
+    LRESULT result;
+    
+    TRACE("(code=%d)\n", code);
+
     pnmh->hwndFrom = infoPtr->hwndSelf;
     pnmh->idFrom = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
     pnmh->code = code;
-    return (BOOL)SendMessageW(GetParent(infoPtr->hwndSelf), WM_NOTIFY,
-			      (WPARAM)pnmh->idFrom, (LPARAM)pnmh);
+    result = SendMessageW(GetParent(infoPtr->hwndSelf), WM_NOTIFY,
+			  (WPARAM)pnmh->idFrom, (LPARAM)pnmh);
+
+    TRACE("  <= %ld\n", result);
+
+    return result;
 }
 
-static inline BOOL notify(LISTVIEW_INFO *infoPtr, INT code)
+static inline LRESULT notify(LISTVIEW_INFO *infoPtr, INT code)
 {
     NMHDR nmh;
     return notify_hdr(infoPtr, code, &nmh);
@@ -553,12 +561,12 @@ static inline void notify_itemactivate(LISTVIEW_INFO *infoPtr)
     notify(infoPtr, LVN_ITEMACTIVATE);
 }
 
-static inline BOOL notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLISTVIEW plvnm)
+static inline LRESULT notify_listview(LISTVIEW_INFO *infoPtr, INT code, LPNMLISTVIEW plvnm)
 {
     return notify_hdr(infoPtr, code, (LPNMHDR)plvnm);
 }
 
-static BOOL notify_click(LISTVIEW_INFO *infoPtr,  INT code, LVHITTESTINFO *lvht)
+static LRESULT notify_click(LISTVIEW_INFO *infoPtr,  INT code, LVHITTESTINFO *lvht)
 {
     NMLISTVIEW nmlv;
     
@@ -656,45 +664,13 @@ static BOOL notify_dispinfoT(LISTVIEW_INFO *infoPtr, INT notificationCode, LPNML
     return bResult;
 }
 
-static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HDC hdc, LPRECT rcBounds, LVITEMW *lpLVItem)
+static void customdraw_fill(NMLVCUSTOMDRAW *lpnmlvcd, LISTVIEW_INFO *infoPtr, HDC hdc, LPRECT rcBounds)
 {
-    BOOL isSelected;
-    
     ZeroMemory(lpnmlvcd, sizeof(NMLVCUSTOMDRAW));
     lpnmlvcd->nmcd.hdc = hdc;
     lpnmlvcd->nmcd.rc = *rcBounds;
-    if (lpLVItem)
-    {
-	lpnmlvcd->nmcd.dwItemSpec = lpLVItem->iItem;
-	lpnmlvcd->iSubItem = lpLVItem->iSubItem;
-        if (lpLVItem->state & LVIS_SELECTED) lpnmlvcd->nmcd.uItemState |= CDIS_SELECTED;
-	if (lpLVItem->state & LVIS_FOCUSED) lpnmlvcd->nmcd.uItemState |= CDIS_FOCUS;
-	if (lpLVItem->iItem == infoPtr->nHotItem) lpnmlvcd->nmcd.uItemState |= CDIS_HOT;
-	lpnmlvcd->nmcd.lItemlParam = lpLVItem->lParam;
-    }
-
-    isSelected = lpnmlvcd->nmcd.uItemState & CDIS_SELECTED;
-    /* subitems are selected only in full-row-select, report mode */
-    if ( lpnmlvcd->iSubItem != 0 && 
-	 !((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT && 
-	   (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) )
-	isSelected = FALSE;
-
-    if (isSelected && infoPtr->bFocus)
-    {
-	lpnmlvcd->clrTextBk = comctl32_color.clrHighlight;
-	lpnmlvcd->clrText   = comctl32_color.clrHighlightText;
-    }
-    else if (isSelected && (infoPtr->dwStyle & LVS_SHOWSELALWAYS))
-    {
-	lpnmlvcd->clrTextBk = comctl32_color.clr3dFace;
-	lpnmlvcd->clrText   = comctl32_color.clrBtnText;
-    }
-    else
-    {
-	lpnmlvcd->clrTextBk = infoPtr->clrTextBk;
-	lpnmlvcd->clrText   = infoPtr->clrText;
-    }
+    lpnmlvcd->clrTextBk = infoPtr->clrTextBk;
+    lpnmlvcd->clrText   = infoPtr->clrText;
 }
 
 static inline DWORD notify_customdraw (LISTVIEW_INFO *infoPtr, DWORD dwDrawStage, NMLVCUSTOMDRAW *lpnmlvcd)
@@ -3203,7 +3179,30 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     TRACE("    rcBox=%s, rcState=%s, rcIcon=%s. rcLabel=%s\n", 
 	debugrect(&rcBox), debugrect(&rcState), debugrect(&rcIcon), debugrect(&rcLabel));
 
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox, &lvItem);
+    /* fill in the custom draw structure */
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcBox);
+    nmlvcd.nmcd.dwItemSpec = lvItem.iItem;
+    nmlvcd.iSubItem = lvItem.iSubItem;
+    if (lvItem.state & LVIS_SELECTED) nmlvcd.nmcd.uItemState |= CDIS_SELECTED;
+    if (lvItem.state & LVIS_FOCUSED) nmlvcd.nmcd.uItemState |= CDIS_FOCUS;
+    if (lvItem.iItem == infoPtr->nHotItem) nmlvcd.nmcd.uItemState |= CDIS_HOT;
+    nmlvcd.nmcd.lItemlParam = lvItem.lParam;
+    if ((lvItem.state & LVIS_SELECTED) && 
+	(lvItem.iSubItem == 0 || 
+	 (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))))
+    {
+	if (infoPtr->bFocus)
+	{
+	    nmlvcd.clrTextBk = comctl32_color.clrHighlight;
+	    nmlvcd.clrText   = comctl32_color.clrHighlightText;
+        }
+	else if (infoPtr->dwStyle & LVS_SHOWSELALWAYS)
+	{
+	    nmlvcd.clrTextBk = comctl32_color.clr3dFace;
+	    nmlvcd.clrText   = comctl32_color.clrBtnText;
+	}
+    }
+    
     if (cdmode & CDRF_NOTIFYITEMDRAW)
         cditemmode = notify_customdraw (infoPtr, CDDS_ITEMPREPAINT, &nmlvcd);
     if (cditemmode & CDRF_SKIPDEFAULT) goto postpaint;
@@ -3494,7 +3493,7 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     oldClrText   = infoPtr->clrText;
    
     GetClientRect(infoPtr->hwndSelf, &rcClient);
-    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient, NULL);
+    customdraw_fill(&nmlvcd, infoPtr, hdc, &rcClient);
     cdmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (cdmode & CDRF_SKIPDEFAULT) goto enddraw;
 
@@ -3872,26 +3871,21 @@ static LRESULT LISTVIEW_DeleteItem(LISTVIEW_INFO *infoPtr, INT nItem)
 {
   LONG lStyle = infoPtr->dwStyle;
   UINT uView = lStyle & LVS_TYPEMASK;
-  LONG lCtrlId = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
   NMLISTVIEW nmlv;
   BOOL bResult = FALSE;
   HDPA hdpaSubItems;
   LISTVIEW_ITEM *lpItem;
   LISTVIEW_SUBITEM *lpSubItem;
-  INT i;
   LVITEMW item;
+  INT i;
 
   TRACE("(nItem=%d)\n", nItem);
 
 
   /* First, send LVN_DELETEITEM notification. */
-  memset(&nmlv, 0, sizeof (NMLISTVIEW));
-  nmlv.hdr.hwndFrom = infoPtr->hwndSelf;
-  nmlv.hdr.idFrom = lCtrlId;
-  nmlv.hdr.code = LVN_DELETEITEM;
+  ZeroMemory(&nmlv, sizeof (NMLISTVIEW));
   nmlv.iItem = nItem;
-  SendMessageW((infoPtr->hwndSelf), WM_NOTIFY, (WPARAM)lCtrlId,
-               (LPARAM)&nmlv);
+  notify_listview(infoPtr, LVN_DELETEITEM, &nmlv);
 
   if (nItem == infoPtr->nFocusedItem)
   {
