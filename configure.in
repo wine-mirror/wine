@@ -390,10 +390,10 @@ then
   then
     LDSHARED="\$(CC) -shared -Wl,-soname,\$(SONAME),-rpath,\$(libdir)"
   else
-    AC_CACHE_CHECK("whether we can build a UnixWare dll",
+    AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
                  ac_cv_c_dll_unixware,
     [saved_cflags=$CFLAGS
-    CFLAGS="$CFLAGS -fPIC -Wl,-G,conftest.so.1.0"
+    CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0"
     AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
     CFLAGS=$saved_cflags
     ])
@@ -428,7 +428,8 @@ if test "$LIB_TYPE" = "nolib"; then
     ALT_LINK="\$(LIBOBJS) \$(X11OBJS)"
     LIB_TARGET=""
 else
-    ALT_LINK="-Wl,--whole-archive -L\$(TOPOBJDIR) -lwine -Wl,--no-whole-archive"
+    ALT_LINK="-L\$(TOPOBJDIR) -lwine"
+
     if test "$LIB_TYPE" = "dll"; then
         LIB_TARGET="libwine.so"
         BUILDFLAGS="-pic"
@@ -436,6 +437,29 @@ else
         LIBEXT="so"
     else
         LIB_TARGET="libwine.a"
+ 	AC_CACHE_CHECK([whether the linker supports --[[no]]-whole-archive (Linux)],
+ 	               ac_cv_c_whole_archive,
+            [saved_cflags=$CFLAGS
+            CFLAGS="$CFLAGS -Wl,--whole-archive -Wl,--no-whole-archive"
+            AC_TRY_LINK(,[return 1],ac_cv_c_whole_archive="yes",ac_cv_c_whole_archive="no")
+            CFLAGS=$saved_cflags
+            ])
+        if test "$ac_cv_c_whole_archive" = "yes"
+        then
+            ALT_LINK="-Wl,--whole-archive -L\$(TOPOBJDIR) -lwine -Wl,--no-whole-archive"
+        else
+            AC_CACHE_CHECK([whether the linker supports -z {all,default}extract (Linux)],
+                           ac_cv_c_allextract,
+		[saved_cflags=$CFLAGS
+		CFLAGS="$CFLAGS -Wl,-z,allextract -Wl,-z,defaultextract"
+		AC_TRY_LINK(,[return 1],ac_cv_c_allextract="yes",ac_cv_c_allextract="no")
+		CFLAGS=$saved_cflags
+		])
+            if test "$ac_cv_c_allextract" = "yes"
+            then
+                ALT_LINK="-Wl,-z,allextract -L\$(TOPOBJDIR) -lwine -Wl,-z,defaultextract"
+            fi
+        fi
     fi
 fi
 

@@ -151,7 +151,7 @@ lib$(MODULE).so.$(SOVERSION): $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 
 lib$(MODULE).so: lib$(MODULE).so.$(SOVERSION)
 	$(RM) $@
-	$(LN_S) $< $@
+	$(LN_S) lib$(MODULE).so.$(SOVERSION) $@
 
 lib$(MODULE).a: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(RM) $@
