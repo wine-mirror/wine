@@ -2272,14 +2272,22 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	* I only see this happen with nIndex == -1, but it could have a special
 	* meaning (like -nIndex (or ~nIndex) to get the real position of insertion).
 	*/
-       int	len = lstrlenA((char*)lpTbb->iString) + 2;
-       LPSTR	ptr = COMCTL32_Alloc(len);
+       int	len;
+       LPSTR	ptr;
 
-       nIndex = infoPtr->nNumButtons;
-       strcpy(ptr, (char*)lpTbb->iString);
-       ptr[len - 1] = 0; /* ended by two '\0' */
-       lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
-       COMCTL32_Free(ptr);
+       if(lpTbb->iString) {
+           len = lstrlenA((char*)lpTbb->iString) + 2;
+           ptr = COMCTL32_Alloc(len);
+           nIndex = infoPtr->nNumButtons;
+           strcpy(ptr, (char*)lpTbb->iString);
+           ptr[len - 1] = 0; /* ended by two '\0' */
+           lpTbb->iString = TOOLBAR_AddStringA(hwnd, 0, (LPARAM)ptr);
+           COMCTL32_Free(ptr);
+       }
+       else {
+           ERR("lpTbb->iString is NULL\n");
+           return FALSE;
+       }
 
     } else if (nIndex < 0)
        return FALSE;
@@ -2721,12 +2729,21 @@ TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
     if ((LOWORD(lParam) <= 0) || (HIWORD(lParam)<=0))
+    {
+        ERR("invalid parameter\n");
 	return FALSE;
+    }
 
     /* Button size can only be set before adding any button to the toolbar
        according to the documentation.  */
+    /* this appears to be wrong. WINZIP32.EXE (ver 8) calls this on
+       one of its buttons after adding it to the toolbar, and it
+       checks that the return value is nonzero - mjm */
     if( infoPtr->nNumButtons != 0 )
-        return FALSE;
+    {
+        FIXME("Button size set after button in toolbar\n");
+        return TRUE;
+    }
 
     infoPtr->nButtonWidth = (INT)LOWORD(lParam);
     infoPtr->nButtonHeight = (INT)HIWORD(lParam);
