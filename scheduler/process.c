@@ -1124,25 +1124,15 @@ BOOL WINAPI GetProcessWorkingSetSize(HANDLE hProcess,LPDWORD minset,
  *
  * CHANGED - James Sutherland (JamesSutherland@gmx.de)
  * Now tracks changes made (but does not act on these changes)
- * NOTE: the definition for SHUTDOWN_NORETRY was done on guesswork.
- * It really shouldn't be here, but I'll move it when it's been checked!
  */
-#define SHUTDOWN_NORETRY 1
-static unsigned int shutdown_noretry = 0;
-static unsigned int shutdown_priority = 0x280L;
-BOOL WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
+static DWORD shutdown_flags = 0;
+static DWORD shutdown_priority = 0x280;
+
+BOOL WINAPI SetProcessShutdownParameters(DWORD level, DWORD flags)
 {
-    if (flags & SHUTDOWN_NORETRY)
-      shutdown_noretry = 1;
-    else
-      shutdown_noretry = 0;
-    if (level > 0x100L && level < 0x3FFL)
-      shutdown_priority = level;
-    else
-      {
-	ERR("invalid priority level 0x%08lx\n", level);
-	return FALSE;
-      }
+    FIXME("(%08lx, %08lx): partial stub.\n", level, flags);
+    shutdown_flags = flags;
+    shutdown_priority = level;
     return TRUE;
 }
 
@@ -1151,13 +1141,14 @@ BOOL WINAPI SetProcessShutdownParameters(DWORD level,DWORD flags)
  * GetProcessShutdownParameters                 (KERNEL32)
  *
  */
-BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel,
-					    LPDWORD lpdwFlags )
+BOOL WINAPI GetProcessShutdownParameters( LPDWORD lpdwLevel, LPDWORD lpdwFlags )
 {
-  (*lpdwLevel) = shutdown_priority;
-  (*lpdwFlags) = (shutdown_noretry * SHUTDOWN_NORETRY);
-  return TRUE;
+    *lpdwLevel = shutdown_priority;
+    *lpdwFlags = shutdown_flags;
+    return TRUE;
 }
+
+
 /***********************************************************************
  *           SetProcessPriorityBoost    (KERNEL32)
  */

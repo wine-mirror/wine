@@ -247,6 +247,8 @@ typedef struct
 
 #define TLS_OUT_OF_INDEXES ((DWORD)0xFFFFFFFF)
 
+#define SHUTDOWN_NORETRY 1
+
 /* comm */
 
 #define CBR_110	0xFF10
