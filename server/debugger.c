@@ -61,7 +61,8 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
     {
     case CREATE_THREAD_DEBUG_EVENT:
         if ((event->data.create_thread.handle = alloc_handle( debugger->process, thread,
-                  THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME, FALSE )) == -1)
+               /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
+                                                              THREAD_ALL_ACCESS, FALSE )) == -1)
             return 0;
         break;
     case CREATE_PROCESS_DEBUG_EVENT:
@@ -73,13 +74,15 @@ static int fill_debug_event( struct thread *debugger, struct thread *thread,
             event->data.create_process.file = handle;
         }
         if ((event->data.create_process.process = alloc_handle( debugger->process, thread->process,
-                                              PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE )) == -1)
+                                           /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
+                                                                PROCESS_ALL_ACCESS, FALSE )) == -1)
         {
             if (handle != -1) close_handle( debugger->process, handle );
             return 0;
         }
         if ((event->data.create_process.thread = alloc_handle( debugger->process, thread,
-                  THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME, FALSE )) == -1)
+               /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
+                                                               THREAD_ALL_ACCESS, FALSE )) == -1)
         {
             if (handle != -1) close_handle( debugger->process, handle );
             close_handle( debugger->process, event->data.create_process.process );
@@ -198,7 +201,7 @@ static int wait_for_debug_event( int timeout )
 
     if (!debug_ctx)  /* current thread is not a debugger */
     {
-        set_error( ERROR_ACCESS_DENIED ); /* FIXME */
+        set_error( ERROR_INVALID_HANDLE );
         return 0;
     }
     assert( !debug_ctx->waiting );
@@ -339,7 +342,7 @@ static void debugger_detach( struct process *process )
 
     if (process->debug_next) process->debug_next->debug_prev = process->debug_prev;
     if (process->debug_prev) process->debug_prev->debug_next = process->debug_next;
-    else debugger->debug_first = process;
+    else debugger->debug_first = process->debug_next;
     process->debugger = NULL;
 }
 
