@@ -916,16 +916,13 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
     {
 #ifdef VFAT_IOCTL_READDIR_BOTH
-        if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
-            goto done;
+        if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) == -1)
 #endif
 #ifdef USE_GETDENTS
-        if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
-            goto done;
+            if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) == -1)
 #endif
-        read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
+                read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );
 
-    done:
         if (fchdir( cwd ) == -1) chdir( "/" );
     }
     else io->u.Status = FILE_GetNtStatus();
