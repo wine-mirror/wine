@@ -213,7 +213,6 @@ struct IDirectDrawSurface2Impl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
-    LPDIRECTDRAWCLIPPER lpClipper;
 };
 
 /*****************************************************************************
@@ -230,7 +229,6 @@ struct IDirectDrawSurface3Impl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
-    LPDIRECTDRAWCLIPPER lpClipper;
 };
 
 /*****************************************************************************
@@ -248,7 +246,6 @@ struct IDirectDrawSurface4Impl
 	struct _dga_directdrawsurface	dga;
 	struct _xlib_directdrawsurface	xlib;
     } t;
-    LPDIRECTDRAWCLIPPER lpClipper;
 } ;
 
 struct _surface_chain {

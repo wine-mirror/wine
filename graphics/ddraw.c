@@ -1561,7 +1561,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4Impl_Release(LPDIRECTDRAWSURFACE4 if
 
     /* Free the clipper if present */
     if( This->s.lpClipper )
-      IDirectDrawClipper_Release(This->lpClipper);
+      IDirectDrawClipper_Release(This->s.lpClipper);
 
     HeapFree(GetProcessHeap(),0,This);
     return S_OK;
@@ -1645,9 +1645,9 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_SetClipper(
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
 	TRACE("(%p)->(%p)!\n",This,lpClipper);
 
-	IDirectDrawClipper_Release( This->s.lpClipper );
+	if (This->s.lpClipper) IDirectDrawClipper_Release( This->s.lpClipper );
 	This->s.lpClipper = lpClipper;
-	IDirectDrawClipper_AddRef( lpClipper ); /* Add the reference to it */
+	if (lpClipper) IDirectDrawClipper_AddRef( lpClipper );
 	return DD_OK;
 }
 
@@ -3041,15 +3041,17 @@ static HRESULT common_off_screen_CreateSurface(IDirectDraw2Impl* This,
     /* No pixel format => use DirectDraw's format */
       lpdsf->s.surface_desc.ddpfPixelFormat = This->d.directdraw_pixelformat;
       lpdsf->s.surface_desc.dwFlags |= DDSD_PIXELFORMAT;
-  }
-
+    }
     bpp = GET_BPP(lpdsf->s.surface_desc);
   }
 
   if (lpdsf->s.surface_desc.dwFlags & DDSD_LPSURFACE) {
     /* The surface was preallocated : seems that we have nothing to do :-) */
-    WARN("Creates a surface that is already allocated : assuming this is an application bug !\n");
+    ERR("Creates a surface that is already allocated : assuming this is an application bug !\n");
   }
+
+  assert(bpp);
+  FIXME("using w=%ld, h=%ld, bpp=%d\n",lpdsf->s.surface_desc.dwWidth,lpdsf->s.surface_desc.dwHeight,bpp);
   
   lpdsf->s.surface_desc.dwFlags |= DDSD_PITCH|DDSD_LPSURFACE;
   lpdsf->s.surface_desc.u1.lpSurface =
@@ -4775,6 +4777,8 @@ static HRESULT WINAPI IDirectDraw2Impl_GetScanLine(LPDIRECTDRAW2 iface,
   ICOM_THIS(IDirectDraw2Impl,iface);
   FIXME("(%p)->(%p)\n", This, lpdwScanLine);
 
+  if (lpdwScanLine)
+	  *lpdwScanLine = 0;
   return DD_OK;
 }
 
