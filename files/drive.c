@@ -72,7 +72,7 @@ static DRIVETYPE DRIVE_GetDriveType( const char *name )
     PROFILE_GetWineIniString( name, "Type", "hd", buffer, sizeof(buffer) );
     for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
     {
-        if (!lstrcmpi( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
+        if (!lstrcmpi32A( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
     }
     fprintf( stderr, "%s: unknown type '%s', defaulting to 'hd'.\n",
              name, buffer );
@@ -362,7 +362,7 @@ int DRIVE_Chdir( int drive, const char *path )
     dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:,%s)\n", 'A' + drive, path );
     strcpy( buffer, "A:" );
     buffer[0] += drive;
-    lstrcpyn( buffer + 2, path, sizeof(buffer) - 2 );
+    lstrcpyn32A( buffer + 2, path, sizeof(buffer) - 2 );
 
     if (!(unix_cwd = DOSFS_GetUnixFileName( buffer, TRUE ))) return 0;
     if (!FILE_Stat( unix_cwd, &attr, NULL, NULL, NULL )) return 0;
@@ -374,7 +374,7 @@ int DRIVE_Chdir( int drive, const char *path )
     unix_cwd += strlen( DOSDrives[drive].root );
     while (*unix_cwd == '/') unix_cwd++;
     buffer[2] = '/';
-    lstrcpyn( buffer + 3, unix_cwd, sizeof(buffer) - 3 );
+    lstrcpyn32A( buffer + 3, unix_cwd, sizeof(buffer) - 3 );
     if (!(dos_cwd = DOSFS_GetDosTrueName( buffer, TRUE ))) return 0;
 
     dprintf_dosfs( stddeb, "DRIVE_Chdir(%c:): unix_cwd=%s dos_cwd=%s\n",
@@ -388,7 +388,7 @@ int DRIVE_Chdir( int drive, const char *path )
     if (pTask && (pTask->curdrive & 0x80) && 
         ((pTask->curdrive & ~0x80) == drive))
     {
-        lstrcpyn( pTask->curdir, dos_cwd + 2, sizeof(pTask->curdir) );
+        lstrcpyn32A( pTask->curdir, dos_cwd + 2, sizeof(pTask->curdir) );
         DRIVE_LastTask = GetCurrentTask();
     }
     return 1;
@@ -511,7 +511,7 @@ UINT32 GetCurrentDirectory( UINT32 buflen, LPSTR buf )
         *buf = '\0';
         return 0;
     }
-    lstrcpyn( buf, s, buflen );
+    lstrcpyn32A( buf, s, buflen );
     return strlen(s); /* yes */
 }
 

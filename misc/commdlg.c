@@ -206,13 +206,13 @@ static LPSTR FILEDLG_GetFileType(LPSTR cfptr, LPSTR fptr, WORD index)
 /***********************************************************************
  *                              FILEDLG_WMDrawItem              [internal]
  */
-static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,int savedlg)
 {
     LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char str[512];
     HBRUSH hBrush;
     HBITMAP hBitmap, hPrevBitmap;
-    BITMAP bm;
+    BITMAP16 bm;
     HDC hMemDC;
 
     str[0]=0;
@@ -222,6 +222,14 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, LB_GETTEXT, lpdis->itemID, 
                       (LPARAM)MAKE_SEGPTR(str));
+
+	if (savedlg)       /* use _gray_ text in FileSaveDlg */
+	  if (!lpdis->itemState)
+	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_GRAYTEXT) );
+	  else  
+	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_WINDOWTEXT) );
+	    /* inversion of gray would be bad readable */	  	  
+
 	TextOut16(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
                   str, strlen(str));
 	if (lpdis->itemState != 0) {
@@ -238,7 +246,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
                       (LPARAM)MAKE_SEGPTR(str));
 
 	hBitmap = hFolder;
-	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+	GetObject16( hBitmap, sizeof(bm), &bm );
 	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
                   lpdis->rcItem.top, str, strlen(str));
 	hMemDC = CreateCompatibleDC(lpdis->hDC);
@@ -266,7 +274,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
         case TYPE_NETWORK:
         default:           hBitmap = hHDisk; break;
         }
-	GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+	GetObject16( hBitmap, sizeof(bm), &bm );
 	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
                   lpdis->rcItem.top, str, strlen(str));
 	hMemDC = CreateCompatibleDC(lpdis->hDC);
@@ -288,11 +296,11 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam)
  */
 static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam) 
 {
-    BITMAP bm;
-    LPMEASUREITEMSTRUCT lpmeasure;
+    BITMAP16 bm;
+    LPMEASUREITEMSTRUCT16 lpmeasure;
     
-    GetObject(hFolder2, sizeof(BITMAP), (LPSTR)&bm);
-    lpmeasure = (LPMEASUREITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
+    GetObject16( hFolder2, sizeof(bm), &bm );
+    lpmeasure = (LPMEASUREITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     lpmeasure->itemHeight = bm.bmHeight;
     return TRUE;
 }
@@ -512,7 +520,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       if (lRet == LB_ERR) return TRUE;
       lpofn->nFilterIndex = lRet + 1;
       dprintf_commdlg(stddeb,"commdlg: lpofn->nFilterIndex=%ld\n", lpofn->nFilterIndex);
-      lstrcpyn(tmpstr2, 
+      lstrcpyn32A(tmpstr2, 
 	     FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrCustomFilter),
 				 PTR_SEG_TO_LIN(lpofn->lpstrFilter),
 				 lRet), sizeof(tmpstr2));
@@ -526,7 +534,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	  /* strip off the pathname */
 	  *pstr = 0;
           SetDlgItemText32A( hWnd, edt1, pstr + 1 );
-	  lstrcpyn(tmpstr2, pstr+1, sizeof(tmpstr2) );
+	  lstrcpyn32A(tmpstr2, pstr+1, sizeof(tmpstr2) );
 	  /* Should we MessageBox() if this fails? */
 	  if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
 	  strcpy(tmpstr, tmpstr2);
@@ -607,7 +615,7 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
     case WM_MEASUREITEM:
       return FILEDLG_WMMeasureItem(hWnd, wParam, lParam);
     case WM_DRAWITEM:
-      return FILEDLG_WMDrawItem(hWnd, wParam, lParam);
+      return FILEDLG_WMDrawItem(hWnd, wParam, lParam, FALSE);
     case WM_COMMAND:
       return FILEDLG_WMCommand(hWnd, wParam, lParam);
 #if 0
@@ -651,7 +659,7 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
       return FILEDLG_WMMeasureItem(hWnd, wParam, lParam);
     
    case WM_DRAWITEM:
-      return FILEDLG_WMDrawItem(hWnd, wParam, lParam);
+      return FILEDLG_WMDrawItem(hWnd, wParam, lParam, TRUE);
 
    case WM_COMMAND:
       return FILEDLG_WMCommand(hWnd, wParam, lParam);
@@ -1403,7 +1411,7 @@ static int CC_CheckDigitsInEdit(HWND hwnd,int maxval)
  long editpos;
  char buffer[30];
  GetWindowText32A(hwnd,buffer,sizeof(buffer));
- m=lstrlen(buffer);
+ m=strlen(buffer);
  result=0;
 
  for (i=0;i<m;i++)
@@ -2228,7 +2236,7 @@ static BOOL CFn_HookCallChk(LPCHOOSEFONT lpcf)
 /***********************************************************************
  *                FontFamilyEnumProc                       (COMMDLG.19)
  */
-int FontFamilyEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM lParam)
+int FontFamilyEnumProc(LPLOGFONT16 lplf, LPTEXTMETRIC16 lptm, int nFontType, LPARAM lParam)
 {
   int i;
   WORD w;
@@ -2265,7 +2273,7 @@ int FontFamilyEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM 
  *
  * Fill font style information into combobox  (without using font.c directly)
  */
-static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT lplf ,LPTEXTMETRIC lptm)
+static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT16 lplf ,LPTEXTMETRIC16 lptm)
 {
    #define FSTYLES 4
    struct FONTSTYLE
@@ -2304,7 +2312,7 @@ static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT lplf ,LPTEXTMETRI
 /*************************************************************************
  *              SetFontSizesToCombo3                           [internal]
  */
-static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT lplf, LPCHOOSEFONT lpcf)
+static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT16 lplf, LPCHOOSEFONT lpcf)
 {
   int sizes[]={8,9,10,11,12,14,16,18,20,22,24,26,28,36,48,72,0};
   int h,i,j;
@@ -2335,7 +2343,7 @@ static int SetFontSizesToCombo3(HWND hwnd, LPLOGFONT lplf, LPCHOOSEFONT lpcf)
 /***********************************************************************
  *                 FontStyleEnumProc                     (COMMDLG.18)
  */
-int FontStyleEnumProc(LPLOGFONT lplf ,LPTEXTMETRIC lptm, int nFontType, LPARAM lParam)
+int FontStyleEnumProc(LPLOGFONT16 lplf ,LPTEXTMETRIC16 lptm, int nFontType, LPARAM lParam)
 {
   HWND hcmb2=LOWORD(lParam);
   HWND hcmb3=HIWORD(lParam);
@@ -2374,7 +2382,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
   int i,j,res,init=0;
   long l;
   FARPROC enumCallback = MODULE_GetWndProcEntry16("FontFamilyEnumProc");
-  LPLOGFONT lpxx;
+  LPLOGFONT16 lpxx;
   HCURSOR hcursor=SetCursor(LoadCursor(0,IDC_WAIT));
   LPCHOOSEFONT lpcf;
 
@@ -2484,11 +2492,11 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
  */
 LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
-  BITMAP bm;
-  LPMEASUREITEMSTRUCT lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT)lParam);
+  BITMAP16 bm;
+  LPMEASUREITEMSTRUCT16 lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT16)lParam);
   if (!hBitmapTT)
     hBitmapTT = LoadBitmap(0, MAKEINTRESOURCE(OBM_TRTYPE));
-  GetObject(hBitmapTT, sizeof(BITMAP), (LPSTR)&bm);
+  GetObject16( hBitmapTT, sizeof(bm), &bm );
   lpmi->itemHeight=bm.bmHeight;
   /* FIXME: use MAX of bm.bmHeight and tm.tmHeight .*/
   return 0;
@@ -2502,7 +2510,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
   HBRUSH hBrush;
   char buffer[40];
-  BITMAP bm;
+  BITMAP16 bm;
   COLORREF cr;
   RECT16 rect;
 #if 0  
@@ -2531,9 +2539,9 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
     case cmb1:	/* dprintf_commdlg(stddeb,"WM_Drawitem cmb1\n"); */
 		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 			(LPARAM)MAKE_SEGPTR(buffer));	          
-		GetObject(hBitmapTT, sizeof(BITMAP), (LPSTR)&bm);
+		GetObject16( hBitmapTT, sizeof(bm), &bm );
 		TextOut16(lpdi->hDC, lpdi->rcItem.left + bm.bmWidth + 10,
-                          lpdi->rcItem.top, buffer, lstrlen(buffer));
+                          lpdi->rcItem.top, buffer, lstrlen16(buffer));
 #if 0
 		nFontType = SendMessage16(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		  /* FIXME: draw bitmap if truetype usage */
@@ -2553,14 +2561,14 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
 			(LPARAM)MAKE_SEGPTR(buffer));
 		TextOut16(lpdi->hDC, lpdi->rcItem.left,
-                          lpdi->rcItem.top, buffer, lstrlen(buffer));
+                          lpdi->rcItem.top, buffer, lstrlen16(buffer));
 		break;
 
     case cmb4:	/* dprintf_commdlg(stddeb,"WM_DRAWITEM cmb4 (=COLOR)\n"); */
 		SendMessage16(lpdi->hwndItem, CB_GETLBTEXT, lpdi->itemID,
     		    (LPARAM)MAKE_SEGPTR(buffer));
 		TextOut16(lpdi->hDC, lpdi->rcItem.left +  25+5,
-                          lpdi->rcItem.top, buffer, lstrlen(buffer));
+                          lpdi->rcItem.top, buffer, lstrlen16(buffer));
 		cr = SendMessage16(lpdi->hwndItem, CB_GETITEMDATA, lpdi->itemID,0L);
 		hBrush = CreateSolidBrush(cr);
 		if (hBrush)
@@ -2613,7 +2621,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
   long l;
   HDC hdc;
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
-  LPLOGFONT lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
+  LPLOGFONT16 lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
   
   dprintf_commdlg(stddeb,"FormatCharDlgProc // WM_COMMAND lParam=%08lX\n", lParam);
   switch (wParam)

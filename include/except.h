@@ -6,15 +6,7 @@
 #ifndef __WINE_EXCEPT_H
 #define __WINE_EXCEPT_H
 
-#include"windows.h"
-
-/* 
- * general definitions
- */
- 
-#ifndef PVOID
-#define PVOID void *
-#endif
+#include"wintypes.h"
 
 /*
  * exception codes
@@ -162,7 +154,7 @@ typedef struct __EXCEPTION_RECORD
     DWORD    ExceptionFlags;
     struct __EXCEPTION_RECORD *ExceptionRecord;
 
-    PVOID    ExceptionAddress;
+    LPVOID   ExceptionAddress;
     DWORD    NumberParameters;
     DWORD    ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
 } EXCEPTION_RECORD;
@@ -173,7 +165,7 @@ typedef struct __EXCEPTION_RECORD_MIN
     DWORD    ExceptionFlags;
     struct __EXCEPTION_RECORD *ExceptionRecord;
 
-    PVOID    ExceptionAddress;
+    LPVOID   ExceptionAddress;
     DWORD    NumberParameters;
     DWORD    ExceptionInformation[0];
 } EXCEPTION_RECORD_MIN;
@@ -203,7 +195,7 @@ struct __EXCEPTION_FRAME;
 typedef DWORD ( *PEXCEPTION_HANDLER)( PEXCEPTION_RECORD          pexcrec,
                                       struct __EXCEPTION_FRAME  *pestframe,
                                       PCONTEXT                   pcontext,
-                                      PVOID                      pdispatcher);
+                                      LPVOID                     pdispatcher);
 
 /*
  * function pointer to a UnhandledExceptionFilter();

@@ -26,10 +26,10 @@ BOOL MF_MetaParam6(DC *dc, short func, short param1, short param2,
 BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2, 
 		   short param3, short param4, short param5,
 		   short param6, short param7, short param8);
-BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush);
-BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush);
-BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN *logpen);
-BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT *logfont);
+BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush);
+BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush);
+BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen);
+BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT16 *logfont);
 BOOL MF_TextOut(DC *dc, short x, short y, LPCSTR str, short count);
 BOOL MF_MetaPoly(DC *dc, short func, LPPOINT16 pt, short count);
 BOOL MF_BitBlt(DC *dcDest, short xDest, short yDest, short width,

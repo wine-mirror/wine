@@ -848,7 +848,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 {
     WND                   *wndPtr          = WIN_FindWndPtr(hWnd);
     WND                   *wndTemp         = WIN_FindWndPtr(hwndActive);
-    CBTACTIVATESTRUCT     *cbtStruct;
+    CBTACTIVATESTRUCT16   *cbtStruct;
     FARPROC                enumCallback    = MODULE_GetWndProcEntry16("ActivateAppProc");
     ACTIVATESTRUCT         actStruct;
     WORD                   wIconized=0;
@@ -872,7 +872,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus )
 	dprintf_win(stddeb,"WINPOS_ActivateWindow: no current active window.\n");
 
     /* call CBT hook chain */
-    if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT)))
+    if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT16)))
     {
         LRESULT wRet;
         cbtStruct->fMouse     = fMouse;

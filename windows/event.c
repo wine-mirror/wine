@@ -54,8 +54,8 @@ typedef char *XPointer;
 static XContext winContext = 0;
 
   /* State variables */
-BOOL MouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
-BOOL AsyncMouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
+BOOL MouseButtonsStates[NB_BUTTONS];
+BOOL AsyncMouseButtonsStates[NB_BUTTONS];
 BYTE KeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 
@@ -67,26 +67,26 @@ static HWND 	captureWnd = 0;
 static BOOL	InputEnabled = TRUE;
 
 /* Keyboard translation tables */
-static int special_key[] =
+static const int special_key[] =
 {
     VK_BACK, VK_TAB, 0, VK_CLEAR, 0, VK_RETURN, 0, 0,           /* FF08 */
     0, 0, 0, VK_PAUSE, VK_SCROLL, 0, 0, 0,                      /* FF10 */
     0, 0, 0, VK_ESCAPE                                          /* FF18 */
 };
 
-static cursor_key[] =
+static const int cursor_key[] =
 {
     VK_HOME, VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN, VK_PRIOR, 
                                        VK_NEXT, VK_END          /* FF50 */
 };
 
-static misc_key[] =
+static const int misc_key[] =
 {
     VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
     VK_CANCEL, VK_HELP, VK_CANCEL, VK_MENU                      /* FF68 */
 };
 
-static keypad_key[] =
+static const int keypad_key[] =
 {
     VK_MENU, VK_NUMLOCK,                                        /* FF7E */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF80 */
@@ -101,14 +101,14 @@ static keypad_key[] =
     VK_NUMPAD8, VK_NUMPAD9                                      /* FFB8 */
 };
     
-static function_key[] =
+static const int function_key[] =
 {
     VK_F1, VK_F2,                                               /* FFBE */
     VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
     VK_F11, VK_F12, VK_F13, VK_F14, VK_F15, VK_F16              /* FFC8 */
 };
 
-static modifier_key[] =
+static const int modifier_key[] =
 {
     VK_SHIFT, VK_SHIFT, VK_CONTROL, VK_CONTROL, VK_CAPITAL,
                                                 0, 0,           /* FFE1 */
@@ -133,7 +133,7 @@ typedef union
 
 static BOOL KeyDown = FALSE;
 
-static const char *event_names[] =
+static const char * const event_names[] =
 {
     "", "", "KeyPress", "KeyRelease", "ButtonPress", "ButtonRelease",
     "MotionNotify", "EnterNotify", "LeaveNotify", "FocusIn", "FocusOut",

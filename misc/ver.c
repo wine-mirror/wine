@@ -15,20 +15,23 @@
 #include "lzexpand.h"
 #include "module.h"
 #include "neexe.h"
-#include "stackframe.h"	/* MAKE_SEGPTR */
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
 #include "winreg.h"
+#include "string32.h"
 
-#define LZREAD(what)	if (sizeof(*what)!=LZRead(lzfd,MAKE_SEGPTR(what),sizeof(*what))) return 0;
+#define LZREAD(what)	if (sizeof(*what)!=LZRead32(lzfd,what,sizeof(*what))) return 0;
+
+#define strdupW2A(x)	STRING32_DupUniToAnsi(x)
+#define strdupA2W(x)	STRING32_DupAnsiToUni(x)
 
 int
 read_ne_header(HFILE lzfd,struct ne_header_s *nehd) {
 	struct	mz_header_s	mzh;
 
 	LZSeek(lzfd,0,SEEK_SET);
-	if (sizeof(mzh)!=LZRead(lzfd,MAKE_SEGPTR(&mzh),sizeof(mzh)))
+	if (sizeof(mzh)!=LZRead32(lzfd,&mzh,sizeof(mzh)))
 		return 0;
 	if (mzh.mz_magic!=MZ_SIGNATURE)
 		return 0;
@@ -87,12 +90,12 @@ find_ne_resource(
 				);
 				LZREAD(&len);
 				str=xmalloc(len);
-				if (len!=LZRead(lzfd,MAKE_SEGPTR(str),len))
+				if (len!=LZRead32(lzfd,str,len))
 					return 0;
 				dprintf_resource(stderr,"read %s to compare it with %s\n",
 					str,(char*)PTR_SEG_TO_LIN(typeid)
 				);
-				if (lstrcmpi(str,(char*)PTR_SEG_TO_LIN(typeid)))
+				if (lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
 					skipflag=1;
 				free(str);
 				LZSeek(lzfd,whereleft,SEEK_SET);
@@ -127,12 +130,12 @@ find_ne_resource(
 					);
 					LZREAD(&len);
 					str=xmalloc(len);
-					if (len!=LZRead(lzfd,MAKE_SEGPTR(str),len))
+					if (len!=LZRead32(lzfd,str,len))
 						return 0;
 					dprintf_resource(stderr,"read %s to compare it with %s\n",
 						str,(char*)PTR_SEG_TO_LIN(typeid)
 					);
-					if (!lstrcmpi(str,(char*)PTR_SEG_TO_LIN(typeid)))
+					if (!lstrcmpi32A(str,(char*)PTR_SEG_TO_LIN(typeid)))
 						skipflag=0;
 					free(str);
 					LZSeek(lzfd,whereleft,SEEK_SET);
@@ -144,7 +147,7 @@ find_ne_resource(
 			*off	= (int)ni.offset<<shiftcount;
 			len	= ni.length<<shiftcount;
 			rdata=(WORD*)xmalloc(len);
-			if (len!=LZRead(lzfd,MAKE_SEGPTR(rdata),len)) {
+			if (len!=LZRead32(lzfd,rdata,len)) {
 				free(rdata);
 				return 0;
 			}
@@ -156,6 +159,7 @@ find_ne_resource(
 	}
 }
 
+/* GetFileResourceSize				[VER.2] */
 DWORD
 GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 	HFILE	lzfd;
@@ -167,7 +171,7 @@ GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 	fprintf(stderr,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
 	);
-	lzfd=LZOpenFile(filename,&ofs,OF_READ);
+	lzfd=LZOpenFile16(filename,&ofs,OF_READ);
 	if (lzfd==0)
 		return 0;
 	if (!read_ne_header(lzfd,&nehd)) {
@@ -183,6 +187,7 @@ GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
 	return reslen;
 }
 
+/* GetFileResourceSize				[VER.3] */
 DWORD
 GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD datalen,LPVOID data
@@ -196,7 +201,7 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
 
-	lzfd=LZOpenFile(filename,&ofs,OF_READ);
+	lzfd=LZOpenFile16(filename,&ofs,OF_READ);
 	if (lzfd==0)
 		return 0;
 	if (!off) {
@@ -213,19 +218,19 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 	LZSeek(lzfd,off,SEEK_SET);
 	if (reslen>datalen)
 		reslen=datalen;
-	LZRead(lzfd,MAKE_SEGPTR(data),reslen);
+	LZRead32(lzfd,data,reslen);
 	LZClose(lzfd);
 	return reslen;
 }
 
+/* GetFileVersionInfoSize			[VER.6] */
 DWORD
-GetFileVersionInfoSize(LPCSTR filename,LPDWORD handle) {
+GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle) {
 	DWORD	len,ret;
 	BYTE	buf[72];
 	VS_FIXEDFILEINFO *vffi;
 
-	fprintf(stderr,"GetFileVersionInfoSize(%s,%p)\n",filename,handle);
-
+	dprintf_resource(stderr,"GetFileVersionInfoSize16(%s,%p)\n",filename,handle);
 	len=GetFileResourceSize(filename,VS_FILE_INFO,VS_VERSION_INFO,handle);
 	if (!len)
 		return 0;
@@ -330,9 +335,29 @@ GetFileVersionInfoSize(LPCSTR filename,LPDWORD handle) {
 	return len;
 }
 
+/* GetFileVersionInfoSize32A			[VERSION.1] */
+DWORD
+GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle) {
+	dprintf_resource(stderr,"GetFileVersionInfoSize32A(%s,%p)\n",filename,handle);
+	return GetFileVersionInfoSize16(filename,handle);
+}
+
+/* GetFileVersionInfoSize32W			[VERSION.2] */
+DWORD
+GetFileVersionInfoSize32W(LPCWSTR filename,LPDWORD handle) {
+	LPSTR	xfn;
+	DWORD	ret;
+
+	xfn	= strdupW2A(filename);
+	ret=GetFileVersionInfoSize16(xfn,handle);
+	free(xfn);
+	return	ret;
+}
+
+/* GetFileVersionInfo				[VER.7] */
 DWORD 
-GetFileVersionInfo(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
-	fprintf(stderr,"GetFileVersionInfo(%s,%ld,%ld,%p)\n->",
+GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
+	dprintf_resource(stderr,"GetFileVersionInfo16(%s,%ld,%ld,%p)\n->",
 		filename,handle,datasize,data
 	);
 	return GetFileResource(
@@ -340,10 +365,29 @@ GetFileVersionInfo(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
 	);
 }
 
+/* GetFileVersionInfoA				[VERSION.0] */
 DWORD 
-VerFindFile(
-	UINT flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
-	LPSTR curdir,UINT *curdirlen,LPSTR destdir,UINT*destdirlen
+GetFileVersionInfo32A(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data) {
+	return GetFileVersionInfo16(filename,handle,datasize,data);
+}
+
+/* GetFileVersionInfoW				[VERSION.3] */
+DWORD 
+GetFileVersionInfo32W(LPCWSTR filename,DWORD handle,DWORD datasize,LPVOID data){
+	DWORD	ret;
+	LPSTR	fn;
+
+	fn	= strdupW2A(filename);
+	ret	= GetFileVersionInfo16(fn,handle,datasize,data);
+	free(fn);
+	return	ret;
+}
+
+/* VerFindFile				[VER.8] */
+DWORD
+VerFindFile16(
+	UINT16 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
+	LPSTR curdir,UINT16 *curdirlen,LPSTR destdir,UINT16 *destdirlen
 ) {
 	fprintf(stderr,"VerFindFile(%x,%s,%s,%s,%p,%d,%p,%d)\n",
 		flags,filename,windir,appdir,curdir,*curdirlen,destdir,*destdirlen
@@ -355,21 +399,88 @@ VerFindFile(
 	return 0;
 }
 
+/* VerFindFileA						[VERSION.5] */
 DWORD
-VerInstallFile(
-	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT*tmpfilelen
+VerFindFile32A(
+	UINT32 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
+	LPSTR curdir,UINT32 *curdirlen,LPSTR destdir,UINT32 *destdirlen
+) {
+	return VerFindFile16(flags,filename,windir,appdir,curdir,curdirlen,destdir,destdirlen);
+}
+
+/* VerFindFileW						[VERSION.6] */
+DWORD
+VerFindFile32W(
+	UINT32 flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
+	LPWSTR curdir,UINT32 *curdirlen,LPWSTR destdir,UINT32 *destdirlen
+) {
+	LPSTR	wfn,wwd,wad,wdd,wcd;
+	DWORD	ret;
+
+	wfn = strdupW2A(filename);
+	wwd = strdupW2A(windir);
+	wad = strdupW2A(appdir);
+	wcd = (LPSTR)malloc(*curdirlen);
+	wdd = (LPSTR)malloc(*destdirlen);
+	ret=VerFindFile16(flags,wfn,wwd,wad,wcd,curdirlen,wdd,destdirlen);
+	STRING32_AnsiToUni(curdir,wcd);
+	STRING32_AnsiToUni(destdir,wdd);
+	*curdirlen	= strlen(wcd);
+	*destdirlen	= strlen(wdd);
+	return ret;
+}
+
+/* VerInstallFile					[VER.9] */
+DWORD
+VerInstallFile16(
+	UINT16 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+	LPCSTR destdir,LPSTR tmpfile,UINT16 *tmpfilelen
 ) {
 	fprintf(stderr,"VerInstallFile(%x,%s,%s,%s,%s,%p,%d)\n",
 		flags,srcfilename,destfilename,srcdir,destdir,tmpfile,*tmpfilelen
 	);
+
+	/* FIXME: Implementation still missing .... */
+
 	return VIF_SRCOLD;
 }
 
+/* VerFindFileA					[VERSION.5] */
+DWORD
+VerInstallFile32A(
+	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+	LPCSTR destdir,LPSTR tmpfile,UINT32 *tmpfilelen
+) {
+	return VerInstallFile16(flags,srcfilename,destfilename,srcdir,destdir,tmpfile,tmpfilelen);
+}
+
+/* VerFindFileW					[VERSION.6] */
+DWORD
+VerInstallFile32W(
+	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
+	LPCWSTR destdir,LPWSTR tmpfile,UINT32 *tmpfilelen
+) {
+	LPSTR	wsrcf,wsrcd,wdestf,wdestd,wtmpf;
+	DWORD	ret;
+
+	wsrcf	= strdupW2A(srcfilename);
+	wsrcd	= strdupW2A(srcdir);
+	wdestf	= strdupW2A(destfilename);
+	wdestd	= strdupW2A(destdir);
+	wtmpf	= strdupW2A(tmpfile);
+	ret=VerInstallFile32A(flags,wsrcf,wdestf,wsrcd,wdestd,wtmpf,tmpfilelen);
+	free(wsrcf);
+	free(wsrcd);
+	free(wdestf);
+	free(wdestd);
+	free(wtmpf);
+	return ret;
+}
+
 /* FIXME: This table should, of course, be language dependend */
-static struct map_id2str {
+static const struct map_id2str {
 	UINT	langid;
-	char	*langname;
+	const char *langname;
 } languages[]={
 	{0x0401,"Arabisch"},
 	{0x0402,"Bulgarisch"},
@@ -419,12 +530,23 @@ static struct map_id2str {
 	{0x0000,"Unbekannt"},
 };
 
-
+/* VerLanguageName				[VER.10] */
 DWORD
-VerLanguageName(UINT langid,LPSTR langname,UINT langnamelen) {
+VerLanguageName16(UINT16 langid,LPSTR langname,UINT16 langnamelen) {
 	int	i;
+	char	*buf;
 
 	fprintf(stderr,"VerLanguageName(%d,%p,%d)\n",langid,langname,langnamelen);
+	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
+	 * from the registry. 
+	 */
+	buf=(char*)malloc(strlen("\\System\\CurrentControlSet\\control\\Nls\\Locale\\")+9);
+	sprintf(buf,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
+	if (ERROR_SUCCESS==RegQueryValue16(HKEY_LOCAL_MACHINE,buf,langname,(LPDWORD)&langnamelen)) {
+		langname[langnamelen-1]='\0';
+		return langnamelen;
+	}
+	/* if that fails, use the interal table */
 	for (i=0;languages[i].langid!=0;i++)
 		if (langid==languages[i].langid)
 			break;
@@ -433,6 +555,45 @@ VerLanguageName(UINT langid,LPSTR langname,UINT langnamelen) {
 	return strlen(languages[i].langname);
 }
 
+/* VerLanguageNameA				[VERSION.9] */
+DWORD
+VerLanguageName32A(UINT32 langid,LPSTR langname,UINT32 langnamelen) {
+	return VerLanguageName16(langid,langname,langnamelen);
+}
+
+/* VerLanguageNameW				[VERSION.10] */
+DWORD
+VerLanguageName32W(UINT32 langid,LPWSTR langname,UINT32 langnamelen) {
+	int	i;
+	char	*buf;
+	LPWSTR	keyname,result;
+
+	/* First, check \System\CurrentControlSet\control\Nls\Locale\<langid>
+	 * from the registry. 
+	 */
+	buf=(char*)malloc(strlen("\\System\\CurrentControlSet\\control\\Nls\\Locale\\")+9);
+	sprintf(buf,"\\System\\CurrentControlSet\\control\\Nls\\Locale\\%08x",langid);
+	keyname=strdupA2W(buf);free(buf);
+	if (ERROR_SUCCESS==RegQueryValue32W(HKEY_LOCAL_MACHINE,keyname,langname,(LPDWORD)&langnamelen)) {
+		free(keyname);
+		return langnamelen;
+	}
+	free(keyname);
+	/* if that fails, use the interal table */
+	for (i=0;languages[i].langid!=0;i++)
+		if (langid==languages[i].langid)
+			break;
+	result=strdupA2W(languages[i].langname);
+	i=lstrlen32W(result)*sizeof(WCHAR);
+	if (i>langnamelen)
+		i=langnamelen;
+	memcpy(langname,result,i);
+	langname[langnamelen-1]='\0';
+	free(result);
+	return strlen(languages[i].langname); /* same as strlenW(result); */
+}
+
+/* FIXME: UNICODE? */
 struct db {
 	WORD	nextoff;
 	WORD	datalen;
@@ -484,17 +645,18 @@ _find_data(BYTE *block,LPCSTR str) {
 		}
 		block=block+((db->nextoff+3)&~3);
 	}
-
 }
 
+/* VerQueryValue 			[VER.11] */
 /* take care, 'buffer' is NOT a SEGPTR, it just points to one */
 DWORD
-VerQueryValue(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT *buflen) {
+VerQueryValue16(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen)
+{
 	BYTE	*block=PTR_SEG_TO_LIN(segblock),*b;
 	struct	db	*db;
 	char	*s;
 
-	fprintf(stderr,"VerQueryValue(%p,%s,%p,%d)\n",
+	fprintf(stderr,"VerQueryValue16(%p,%s,%p,%d)\n",
 		block,subblock,buffer,*buflen
 	);
 	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(subblock)+1);
@@ -516,8 +678,60 @@ VerQueryValue(SEGPTR segblock,LPCSTR subblock,SEGPTR *buffer,UINT *buflen) {
 	return 1;
 }
 
-/*
-   20 GETFILEVERSIONINFORAW
-   21 VERFTHK_THUNKDATA16
-   22 VERTHKSL_THUNKDATA16
-*/
+DWORD
+VerQueryValue32A(LPVOID vblock,LPCSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
+{
+	BYTE	*b,*block=(LPBYTE)vblock,**buffer=(LPBYTE*)vbuffer;
+	struct	db	*db;
+	char	*s;
+
+	fprintf(stderr,"VerQueryValue32A(%p,%s,%p,%d)\n",
+		block,subblock,buffer,*buflen
+	);
+	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(subblock)+1);
+	strcpy(s,"VS_VERSION_INFO");strcat(s,subblock);
+	b=_find_data(block,s);
+	if (b==NULL) {
+		*buflen=0;
+		return 0;
+	}
+	db=(struct db*)b;
+	*buflen	= db->datalen;
+	/* let b point to data area */
+	b	= b+4+((strlen(db->name)+4)&3);
+	*buffer	= b;
+	fprintf(stderr,"	-> %s=%s\n",subblock,b);
+	return 1;
+}
+
+DWORD
+VerQueryValue32W(LPVOID vblock,LPCWSTR subblock,LPVOID *vbuffer,UINT32 *buflen)
+{
+	/* FIXME: hmm, we not only need to convert subblock, but also 
+	 *        the content...or?
+	 * And what about UNICODE version info?
+	 * And the NAMES of the values?
+	 */
+	BYTE		*b,**buffer=(LPBYTE*)vbuffer,*block=(LPBYTE)vblock;
+	struct	db	*db;
+	char		*s,*sb;
+
+	sb=strdupW2A(subblock);
+	s=(char*)xmalloc(strlen("VS_VERSION_INFO")+strlen(sb)+1);
+	strcpy(s,"VS_VERSION_INFO");strcat(s,sb);
+	b=_find_data(block,s);
+	if (b==NULL) {
+		*buflen=0;
+		free(sb);
+		return 0;
+	}
+	db=(struct db*)b;
+	*buflen	= db->datalen;
+	/* let b point to data area */
+	b	= b+4+((strlen(db->name)+4)&3);
+	*buffer	= b;
+	fprintf(stderr,"	-> %s=%s\n",sb,b);
+	free(sb);
+	return 1;
+}
+/* 20 GETFILEVERSIONINFORAW */

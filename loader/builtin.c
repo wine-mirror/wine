@@ -100,9 +100,11 @@ extern const DLL_DESCRIPTOR CRTDLL_Descriptor;
 extern const DLL_DESCRIPTOR OLE32_Descriptor;
 extern const DLL_DESCRIPTOR GDI32_Descriptor;
 extern const DLL_DESCRIPTOR KERNEL32_Descriptor;
+extern const DLL_DESCRIPTOR LZ32_Descriptor;
 extern const DLL_DESCRIPTOR NTDLL_Descriptor;
 extern const DLL_DESCRIPTOR SHELL32_Descriptor;
 extern const DLL_DESCRIPTOR USER32_Descriptor;
+extern const DLL_DESCRIPTOR VERSION_Descriptor;
 extern const DLL_DESCRIPTOR WINSPOOL_Descriptor;
 extern const DLL_DESCRIPTOR WSOCK32_Descriptor;
 
@@ -147,9 +149,11 @@ static BUILTIN_DLL BuiltinDLLs[] =
     { &OLE32_Descriptor,    0 },
     { &GDI32_Descriptor,    0 },
     { &KERNEL32_Descriptor, DLL_FLAG_ALWAYS_USED },
+    { &LZ32_Descriptor,     0 },
     { &NTDLL_Descriptor,    0 },
     { &SHELL32_Descriptor,  0 },
     { &USER32_Descriptor,   0 },
+    { &VERSION_Descriptor,  0 },
     { &WINSPOOL_Descriptor, 0 },
     { &WSOCK32_Descriptor,  0 },
     /* Last entry */
@@ -202,11 +206,11 @@ HMODULE BUILTIN_LoadModule( LPCSTR name, BOOL force )
     /* Fix the name in case we have a full path and extension */
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
-    lstrcpyn( dllname, name, sizeof(dllname) );
+    lstrcpyn32A( dllname, name, sizeof(dllname) );
     if ((p = strrchr( dllname, '.' ))) *p = '\0';
 
     for (table = BuiltinDLLs; table->descr; table++)
-        if (!lstrcmpi( table->descr->name, dllname )) break;
+        if (!lstrcmpi32A( table->descr->name, dllname )) break;
     if (!table->descr) return 0;
     if ((table->flags & DLL_FLAG_NOT_USED) && !force) return 0;
 
@@ -389,7 +393,7 @@ BOOL BUILTIN_ParseDLLOptions( const char *str )
         if (p == str) return FALSE;
         for (dll = BuiltinDLLs; dll->descr; dll++)
         {
-            if (!lstrncmpi( str, dll->descr->name, (int)(p - str) ))
+            if (!lstrncmpi32A( str, dll->descr->name, (int)(p - str) ))
             {
                 if (str[-1] == '-')
                 {

@@ -2743,7 +2743,7 @@ static LRESULT EDIT_WM_SetFocus(WND *wndPtr, WPARAM wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 {
-	TEXTMETRIC tm;
+	TEXTMETRIC16 tm;
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	LPARAM sel = EDIT_EM_GetSel(wndPtr, 0, 0L);
 	HDC hdc;

@@ -272,7 +272,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG * msg, DWORD extraInfo )
+BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG16 * msg, DWORD extraInfo )
 {
     int pos;
     MESSAGEQUEUE *msgQueue;
@@ -315,7 +315,7 @@ int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd, int first, int last )
         
     for (i = 0; i < msgQueue->msgCount; i++)
     {
-	MSG * msg = &msgQueue->messages[pos].msg;
+	MSG16 * msg = &msgQueue->messages[pos].msg;
 
 	if (!hwnd || (msg->hwnd == hwnd))
 	{
@@ -405,7 +405,7 @@ static void QUEUE_WakeSomeone( UINT message )
 void hardware_event( WORD message, WORD wParam, LONG lParam,
 		     int xPos, int yPos, DWORD time, DWORD extraInfo )
 {
-    MSG *msg;
+    MSG16 *msg;
     int pos;
 
     if (!sysMsgQueue) return;

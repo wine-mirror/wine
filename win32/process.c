@@ -119,6 +119,14 @@ HANDLE32 LoadLibraryA(char *libname)
 	return handle;
 }
 
+/***********************************************************************
+ *           FreeLibrary
+ */
+BOOL FreeLibrary32(HINSTANCE hLibModule)
+{
+	fprintf(stderr,"FreeLibrary: empty stub\n");
+	return TRUE;
+}
 
 #ifndef WINELIB
 /***********************************************************************

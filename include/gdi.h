@@ -158,7 +158,7 @@ typedef struct
 typedef struct
 {
     XFontStruct * fstruct;
-    TEXTMETRIC    metrics;
+    TEXTMETRIC16  metrics;
 } X_PHYSFONT;
 
   /* X physical palette information */
@@ -280,9 +280,6 @@ extern HANDLE GDI_AllocObject( WORD, WORD );
 extern BOOL GDI_FreeObject( HANDLE );
 extern GDIOBJHDR * GDI_GetObjPtr( HANDLE, WORD );
 extern FARPROC16 GDI_GetDefDCHook(void);
-
-#define UpdateDirtyDC(dc) \
-	    DC_CallHookProc(dc, DCHC_INVALIDVISRGN, 0)
 
 extern Display * display;
 extern Screen * screen;

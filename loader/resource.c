@@ -304,7 +304,7 @@ HANDLE LoadAccelerators(HANDLE instance, SEGPTR lpTableName)
 /**********************************************************************
  *			TranslateAccelerator 	[USER.178]
  */
-int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG msg)
+int TranslateAccelerator(HWND hWnd, HANDLE hAccel, LPMSG16 msg)
 {
     ACCELHEADER	*lpAccelTbl;
     int 	i;

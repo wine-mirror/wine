@@ -83,10 +83,10 @@ type	win16
 84  pascal   _llseek(word long word) _llseek
 85  pascal16 _lopen(ptr word) _lopen
 86  pascal16 _lwrite(word ptr word) _lwrite
-87  pascal16 RESERVED5(ptr ptr) lstrcmp
-88  pascal lstrcpy(segptr segptr) lstrcpy
-89  pascal lstrcat(segptr segptr) lstrcat
-90  pascal16 lstrlen(ptr) lstrlen
+87  pascal16 RESERVED5(ptr ptr) lstrcmp16
+88  pascal   lstrcpy(segptr segptr) lstrcpy16
+89  pascal   lstrcat(segptr segptr) lstrcat16
+90  pascal16 lstrlen(ptr) lstrlen16
 91  register InitTask() InitTask
 92  pascal16 GetTempDrive(byte) GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
@@ -259,8 +259,8 @@ type	win16
 349 pascal   _hread(word segptr long) _hread
 350 pascal   _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
-352 stub lstrcatn
-353 pascal lstrcpyn(segptr segptr word) WIN16_lstrcpyn
+352 pascal   lstrcatn(segptr segptr word) lstrcatn16
+353 pascal   lstrcpyn(segptr segptr word) lstrcpyn16
 354 stub GetAppCompatFlags
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo

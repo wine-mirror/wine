@@ -71,7 +71,7 @@ HANDLE GetProp( HWND hwnd, SEGPTR str )
         PROPERTY *prop = (PROPERTY *)USER_HEAP_LIN_ADDR(hProp);
         if (HIWORD(str))
         {
-            if (!prop->atom && !lstrcmpi( prop->string, PTR_SEG_TO_LIN(str)))
+            if (!prop->atom && !lstrcmpi32A(prop->string, PTR_SEG_TO_LIN(str)))
                 return prop->hData;
         }
         else if (prop->atom && (prop->atom == LOWORD(str))) return prop->hData;
@@ -96,7 +96,7 @@ HANDLE RemoveProp( HWND hwnd, SEGPTR str )
     {
         PROPERTY *prop = (PROPERTY *)USER_HEAP_LIN_ADDR( *hProp );
         if ((HIWORD(str) && !prop->atom &&
-             !lstrcmpi( prop->string, PTR_SEG_TO_LIN(str))) ||
+             !lstrcmpi32A( prop->string, PTR_SEG_TO_LIN(str))) ||
             (!HIWORD(str) && prop->atom && (prop->atom == LOWORD(str))))
         {
             HANDLE hNext = prop->next;

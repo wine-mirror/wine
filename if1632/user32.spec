@@ -208,7 +208,7 @@ base	1
 0201 stdcall FlashWindow(long long) FlashWindow
 0202 stdcall FrameRect(long ptr long) FrameRect32
 0203 stub FreeDDElParam
-0204 stub GetActiveWindow
+0204 stdcall GetActiveWindow() GetActiveWindow
 0205 stub GetAppCompatFlags
 0206 stub GetAsyncKeyState
 0207 stub GetCapture
@@ -419,8 +419,8 @@ base	1
 0412 stub OpenWindowStationW
 0413 stub PackDDElParam
 0414 stub PaintDesktop
-0415 stub PeekMessageA
-0416 stub PeekMessageW
+0415 stdcall PeekMessageA(ptr long long long long) PeekMessage32A
+0416 stdcall PeekMessageW(ptr long long long long) PeekMessage32W
 0417 stub PlaySoundEvent
 0418 stdcall PostMessageA(long long long long) PostMessage
 0419 stub PostMessageW
@@ -588,10 +588,10 @@ base	1
 0581 stdcall WindowFromPoint(long long) WindowFromPoint32
 0582 stub keybd_event
 0583 stub mouse_event
-0584 stdcall wsprintfA() USER32_wsprintfA
-0585 stub wsprintfW
-0586 stub wvsprintfA
-0587 stub wvsprintfW
+0584 stdcall wsprintfA() WIN32_wsprintf32A
+0585 stdcall wsprintfW() WIN32_wsprintf32W
+0586 stdcall wvsprintfA(ptr ptr ptr) wvsprintf32A
+0587 stdcall wvsprintfW(ptr ptr ptr) wvsprintf32W
 #late additions
 0588 stub ChangeDisplaySettingsA
 0588 stub ChangeDisplaySettingsW

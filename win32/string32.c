@@ -11,17 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "windows.h"
 #include "string32.h"
 #include "xmalloc.h"
-
-int
-STRING32_UniLen(LPCWSTR s)
-{
-	int i;
-	for(i=0;*s;s++)
-		i++;
-	return i;
-}
 
 void STRING32_UniToAnsi(LPSTR dest,LPCWSTR src)
 {
@@ -55,7 +47,7 @@ STRING32_AnsiToUni(LPWSTR dest,LPCSTR src) {
 
 LPSTR STRING32_DupUniToAnsi(LPCWSTR src)
 {
-	LPSTR dest=xmalloc(STRING32_UniLen(src)+1);
+	LPSTR dest=xmalloc(lstrlen32W(src)+1);
 	STRING32_UniToAnsi(dest,src);
 	return dest;
 }
@@ -67,61 +59,12 @@ LPWSTR STRING32_DupAnsiToUni(LPCSTR src)
 	return dest;
 }
 
-LPWSTR STRING32_lstrcpyW(LPWSTR dst, LPCWSTR src)
-{
-    register LPWSTR p = dst;
-    while ((*p++ = *src++));
-    return dst;
-}
-
-
-DWORD STRING32_lstrlenW(LPCWSTR str)
-{
-	int len;
-	for(len=0;*str;str++)
-		len++;
-	return len;
-}
-
 /* not an API function */
 
 WCHAR STRING32_tolowerW(WCHAR c)
 {
 	/* FIXME: Unicode */
 	return tolower(c);
-}
-
-int STRING32_lstrcmpniW(LPCWSTR a,LPCWSTR b,DWORD len)
-{
-	while(len--)
-	{
-		WCHAR c1,c2;
-		c1 = STRING32_tolowerW(*a);
-		c2 = STRING32_tolowerW(*b);
-		if(c1<c2)return -1;
-		if(c1>c2)return 1;
-		if(c1==0 && c2==0)return 0;
-		if(c1==0)return -1;
-		if(c2==0)return 1;
-		a++;
-		b++;
-	}
-	return 0;
-}
-
-int
-STRING32_lstrcmpW(LPCWSTR a,LPCWSTR b) {
-	WCHAR	diff;
-
-	while(*a && *b) {
-		diff=*a-*b;
-		if (diff) return diff;
-		a++;
-		b++;
-	}
-	if (*a) return *a;
-	if (*b) return -*b;
-	return 0;
 }
 
 LPWSTR
@@ -139,7 +82,7 @@ STRING32_strdupW(LPCWSTR a) {
 	LPWSTR	b;
 	int	len;
 
-	len=sizeof(WCHAR)*(STRING32_UniLen(a)+1);
+	len=sizeof(WCHAR)*(lstrlen32W(a)+1);
 	b=(LPWSTR)xmalloc(len);
 	memcpy(b,a,len);
 	return b;

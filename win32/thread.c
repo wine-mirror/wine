@@ -79,9 +79,12 @@ DWORD TlsAlloc()
 	if(!Tls){
 		TlsCount++;
 		Tls=xmalloc(sizeof(LPVOID));
+		/* Tls needs to be zero initialized */
+		Tls[0]=0;
 		return 0;
 	}
 	Tls=xrealloc(Tls,sizeof(LPVOID)*(++TlsCount));
+	Tls[TlsCount-1]=0;
 	return TlsCount-1;
 }
 
@@ -109,4 +112,60 @@ void TlsSetValue(DWORD index,LPVOID value)
 		return;
 	}
 	Tls[index]=value;
+}
+
+/* FIXME: This is required to work cross-addres space as well */
+static CRITICAL_SECTION interlocked;
+static int interlocked_init;
+
+static void get_interlocked()
+{
+	if(!interlocked_init)
+		InitializeCriticalSection(&interlocked);
+	interlocked_init=1;
+	EnterCriticalSection(&interlocked);
+}
+
+static void release_interlocked()
+{
+	LeaveCriticalSection(&interlocked);
+}
+
+/***********************************************************************
+ *           InterlockedIncrement
+ */
+LONG InterlockedIncrement(LPLONG lpAddend)
+{
+	int ret;
+	get_interlocked();
+	(*lpAddend)++;
+	ret=*lpAddend;
+	release_interlocked();
+	return ret;
+}
+
+/***********************************************************************
+ *           InterlockedDecrement
+ */
+LONG InterlockedDecrement(LPLONG lpAddend)
+{
+	int ret;
+	get_interlocked();
+	(*lpAddend)--;
+	ret=*lpAddend;
+	release_interlocked();
+	return ret;
+}
+
+/***********************************************************************
+ *           InterlockedExchange
+ */
+LONG InterlockedExchange(LPLONG target, LONG value)
+{
+	int ret;
+	get_interlocked();
+	ret=*target;
+	*target=value;
+	release_interlocked();
+	return ret;
 }

@@ -7,8 +7,6 @@
 /*	At the moment, these are only empty stubs.
  */
 
-#include "windows.h"
-#include "compobj.h"
 #include "ole.h"
 #include "ole2.h"
 #include "stddebug.h"

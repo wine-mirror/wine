@@ -198,8 +198,8 @@ BOOL SetDeskWallPaper( LPCSTR filename )
     infoPtr->fTileWallPaper = GetProfileInt( "desktop", "TileWallPaper", 0 );
     if (hbitmap)
     {
-	BITMAP bmp;
-	GetObject( hbitmap, sizeof(bmp), (LPSTR)&bmp );
+	BITMAP16 bmp;
+	GetObject16( hbitmap, sizeof(bmp), &bmp );
 	infoPtr->bitmapSize.cx = (bmp.bmWidth != 0) ? bmp.bmWidth : 1;
 	infoPtr->bitmapSize.cy = (bmp.bmHeight != 0) ? bmp.bmHeight : 1;
     }

@@ -15,6 +15,7 @@ DLLS	= \
 	kernel.spec \
 	kernel32.spec \
 	keyboard.spec \
+	lz32.spec \
 	lzexpand.spec \
 	mmsystem.spec \
 	mouse.spec \
@@ -37,6 +38,7 @@ DLLS	= \
 	user.spec \
 	user32.spec \
 	ver.spec \
+	version.spec \
 	w32sys.spec \
 	win87em.spec \
 	winsock.spec \

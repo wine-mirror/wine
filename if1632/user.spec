@@ -108,7 +108,7 @@ heap	65520
 106 pascal16 GetKeyState(word) GetKeyState
 107 pascal   DefWindowProc(word word word long) DefWindowProc16
 108 pascal16 GetMessage(segptr word word word) GetMessage
-109 pascal16 PeekMessage(ptr word word word word) PeekMessage
+109 pascal16 PeekMessage(ptr word word word word) PeekMessage16
 110 pascal16 PostMessage(word word word long) PostMessage
 111 pascal   SendMessage(word word word long) SendMessage16
 112 pascal16 WaitMessage() WaitMessage
@@ -184,7 +184,7 @@ heap	65520
 182 pascal16 KillSystemTimer(word word) KillSystemTimer
 183 pascal16 GetCaretPos(ptr) GetCaretPos16
 184 stub QuerySendMessage
-185 pascal16 GrayString(word word ptr ptr word word word word word) GrayString
+185 pascal16 GrayString(word word segptr segptr s_word s_word s_word s_word s_word) GrayString
 186 pascal16 SwapMouseButton(word) SwapMouseButton
 187 pascal16 EndMenu() EndMenu
 188 pascal16 SetSysModalWindow(word) SetSysModalWindow
@@ -372,14 +372,14 @@ heap	65520
 416 pascal16 TrackPopupMenu(word word s_word s_word s_word word ptr) TrackPopupMenu16
 417 pascal   GetMenuCheckMarkDimensions() GetMenuCheckMarkDimensions
 418 pascal16 SetMenuItemBitmaps(word word word word word) SetMenuItemBitmaps
-420 pascal16 wsprintf() wsprintf
-421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf
+420 pascal16 wsprintf() WIN16_wsprintf16
+421 pascal16 wvsprintf(ptr ptr ptr) wvsprintf16
 422 stub DlgDirSelectEx
 423 stub DlgDirSelectComboBoxEx
 427 pascal16 FindWindowEx(word word segptr ptr) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows
-430 pascal16 lstrcmp(ptr ptr) lstrcmp
+430 pascal16 lstrcmp(ptr ptr) lstrcmp16
 431 pascal   AnsiUpper(segptr) WIN16_AnsiUpper
 432 pascal   AnsiLower(segptr) WIN16_AnsiLower
 433 pascal16 IsCharAlpha(byte) IsCharAlpha
@@ -413,7 +413,7 @@ heap	65520
 465 pascal16 DragDetect(word long) DragDetect
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect16
 470 stub StringFunc
-471 pascal16 lstrcmpi(ptr ptr) lstrcmpi
+471 pascal16 lstrcmpi(ptr ptr) lstrcmpi16
 472 pascal   AnsiNext(segptr) AnsiNext
 473 pascal   AnsiPrev(segptr segptr) AnsiPrev
 475 stub SetScrollInfo

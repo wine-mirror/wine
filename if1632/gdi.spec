@@ -56,7 +56,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 #46  pascal __GP?
 47  pascal16 CombineRgn(word word word s_word) CombineRgn
 48  pascal16 CreateBitmap(word word word word ptr) CreateBitmap
-49  pascal16 CreateBitmapIndirect(ptr) CreateBitmapIndirect
+49  pascal16 CreateBitmapIndirect(ptr) CreateBitmapIndirect16
 50  pascal16 CreateBrushIndirect(ptr) CreateBrushIndirect
 51  pascal16 CreateCompatibleBitmap(word word word) CreateCompatibleBitmap
 52  pascal16 CreateCompatibleDC(word) CreateCompatibleDC
@@ -89,7 +89,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 79  pascal GetDCOrg(word) GetDCOrg
 80  pascal16 GetDeviceCaps(word s_word) GetDeviceCaps
 81  pascal16 GetMapMode(word) GetMapMode
-82  pascal16 GetObject(word word ptr) GetObject
+82  pascal16 GetObject(word s_word ptr) GetObject16
 83  pascal GetPixel(word s_word s_word) GetPixel
 84  pascal16 GetPolyFillMode(word) GetPolyFillMode
 85  pascal16 GetROP2(word) GetROP2

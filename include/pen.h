@@ -17,7 +17,7 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGPEN      logpen WINE_PACKED;
+    LOGPEN16    logpen WINE_PACKED;
 } PENOBJ;
 
 #ifndef WINELIB

@@ -31,7 +31,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-#define MDIS_ALLCHILDSTYLES	0x1
 
 static HBITMAP hBmpClose   = 0;
 static HBITMAP hBmpRestore = 0;
@@ -104,7 +103,7 @@ static BOOL MDI_MenuModifyItem(WND* clientWnd, HWND hWndChild )
 
  if( !clientInfo->hWindowMenu ) return 0;
 
- if (wndPtr->text) lstrcpyn(buffer + n, wndPtr->text, sizeof(buffer) - n );
+ if (wndPtr->text) lstrcpyn32A(buffer + n, wndPtr->text, sizeof(buffer) - n );
 
  n    = GetMenuState(clientInfo->hWindowMenu,wndPtr->wIDmenu ,MF_BYCOMMAND); 
  bRet = ModifyMenu32A(clientInfo->hWindowMenu , wndPtr->wIDmenu, 
@@ -148,7 +147,7 @@ static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
 
 	n = sprintf(buffer, "%d ",index - clientInfo->idFirstChild);
 	if (wndPtr->text)
-            lstrcpyn(buffer + n, wndPtr->text, sizeof(buffer) - n );	
+            lstrcpyn32A(buffer + n, wndPtr->text, sizeof(buffer) - n );	
 
 	/* change menu */
 	ModifyMenu32A(clientInfo->hWindowMenu ,index ,MF_BYCOMMAND | MF_STRING,
@@ -305,7 +304,7 @@ WORD MDIIconArrange(HWND parent)
 HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 {
     POINT16          pos[2]; 
-    MDICREATESTRUCT *cs = (MDICREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
+    MDICREATESTRUCT16 *cs = (MDICREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
     DWORD	     style = cs->style | (WS_CHILD | WS_CLIPSIBLINGS);
     HWND 	     hwnd, hwndMax = 0;
     WORD	     wIDmenu = ci->idFirstChild + ci->nActiveChildren;
@@ -911,7 +910,7 @@ void MDI_UpdateFrameText(WND *frameWnd, HWND hClient, BOOL repaint, LPCSTR lpTit
 	 int	i_frame_text_length = strlen(ci->frameTitle);
 	 int    i_child_text_length = strlen(childWnd->text);
 
-	 lstrcpyn( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
+	 lstrcpyn32A( lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH);
 
 	 if( i_frame_text_length + 6 < MDI_MAXTITLELENGTH )
          {
@@ -924,9 +923,9 @@ void MDI_UpdateFrameText(WND *frameWnd, HWND hClient, BOOL repaint, LPCSTR lpTit
              }
 	     else
              {
-                 lstrcpyn( lpBuffer + i_frame_text_length + 4, 
-                           childWnd->text,
-                           MDI_MAXTITLELENGTH - i_frame_text_length - 5 );
+                 lstrcpyn32A( lpBuffer + i_frame_text_length + 4, 
+                              childWnd->text,
+                              MDI_MAXTITLELENGTH - i_frame_text_length - 5 );
                  strcat( lpBuffer, "]" );
 		}
 	   }
@@ -958,7 +957,7 @@ void MDI_UpdateFrameText(WND *frameWnd, HWND hClient, BOOL repaint, LPCSTR lpTit
 LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     LPCREATESTRUCT16     cs;
-    LPCLIENTCREATESTRUCT ccs;
+    LPCLIENTCREATESTRUCT16 ccs;
     MDICLIENTINFO       *ci;
     RECT16		 rect;
     WND                 *w 	  = WIN_FindWndPtr(hwnd);
@@ -970,7 +969,7 @@ LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
       case WM_CREATE:
 	cs                      = (LPCREATESTRUCT16) PTR_SEG_TO_LIN(lParam);
-	ccs                     = (LPCLIENTCREATESTRUCT) PTR_SEG_TO_LIN(cs->lpCreateParams);
+	ccs                     = (LPCLIENTCREATESTRUCT16) PTR_SEG_TO_LIN(cs->lpCreateParams);
 
 	ci->hWindowMenu         = ccs->hWindowMenu;
 	ci->idFirstChild        = ccs->idFirstChild;
@@ -1501,7 +1500,7 @@ LRESULT DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
  *					TranslateMDISysAccel (USER.451)
  *
  */
-BOOL TranslateMDISysAccel(HWND hwndClient, LPMSG msg)
+BOOL TranslateMDISysAccel(HWND hwndClient, LPMSG16 msg)
 {
   WND* clientWnd = WIN_FindWndPtr( hwndClient);
   WND* wnd;

@@ -106,7 +106,7 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   /* create dummy hdc to set text height */
   if ((hdc = GetDC(0)))
   {
-      TEXTMETRIC tm;
+      TEXTMETRIC16 tm;
       GetTextMetrics( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
       dprintf_listbox(stddeb,"CreateListBoxStruct:  font height %d\n",
@@ -305,8 +305,8 @@ int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y)
 
 void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)  
 {
-  HANDLE hTemp = USER_HEAP_ALLOC( sizeof(MEASUREITEMSTRUCT) );
-  MEASUREITEMSTRUCT *lpmeasure = (MEASUREITEMSTRUCT *) USER_HEAP_LIN_ADDR(hTemp);
+  HANDLE hTemp = USER_HEAP_ALLOC( sizeof(MEASUREITEMSTRUCT16) );
+  MEASUREITEMSTRUCT16 *lpmeasure = (MEASUREITEMSTRUCT16 *) USER_HEAP_LIN_ADDR(hTemp);
 
   if (lpmeasure == NULL) {
     fprintf(stdnimp,"ListBoxAskMeasure() out of memory !\n");
@@ -1274,7 +1274,7 @@ static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* or are we guaranteed to get a LBSetFont before the first insert/add? */
   if ((hdc = GetDC(0)))
   {
-      TEXTMETRIC tm;
+      TEXTMETRIC16 tm;
       GetTextMetrics( hdc, &tm );
       lphl->StdItemHeight = tm.tmHeight;
       dprintf_listbox(stddeb,"LBSetFont:  new font %d with height %d\n",
@@ -2107,7 +2107,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
                 p = filespec;
                 if ((p2 = strrchr( p, '\\' ))) p = p2 + 1;
                 if ((p2 = strrchr( p, '/' ))) p = p2 + 1;
-                lstrcpyn( mask, p, sizeof(mask) );
+                lstrcpyn32A( mask, p, sizeof(mask) );
                 if (p != filespec)
                 {
                     p[-1] = '\0';
@@ -2151,7 +2151,7 @@ INT DlgDirList( HWND hDlg, SEGPTR spec, INT idLBox, INT idStatic, UINT attrib )
         int drive = DRIVE_GetCurrentDrive();
         strcpy( temp, "A:\\" );
         temp[0] += drive;
-        lstrcpyn( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
+        lstrcpyn32A( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
         AnsiLower( temp );
         /* Can't use PostMessage() here, because the string is on the stack */
         SetDlgItemText32A( hDlg, idStatic, temp );

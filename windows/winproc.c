@@ -722,7 +722,7 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, WORD ds, HWND32 hwnd,
 	
     case WM_SETTEXT:
         {
-            LPSTR str = SEGPTR_ALLOC( STRING32_lstrlenW( (LPWSTR)lParam ) );
+            LPSTR str = SEGPTR_ALLOC( lstrlen32W( (LPWSTR)lParam ) );
             if (!str) return 0;
             STRING32_UniToAnsi( str, (LPWSTR)lParam );
             result = CallWndProc16( func, ds, hwnd, msg, (WPARAM16)wParam,

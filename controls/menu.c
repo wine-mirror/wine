@@ -132,18 +132,18 @@ static HMENU MENU_CopySysMenu(void)
  */
 BOOL MENU_Init()
 {
-    BITMAP bm;
+    BITMAP16 bm;
 
       /* Load bitmaps */
 
     if (!(hStdCheck = LoadBitmap( 0, MAKEINTRESOURCE(OBM_CHECK) )))
 	return FALSE;
-    GetObject( hStdCheck, sizeof(BITMAP), (LPSTR)&bm );
+    GetObject16( hStdCheck, sizeof(bm), &bm );
     check_bitmap_width = bm.bmWidth;
     check_bitmap_height = bm.bmHeight;
     if (!(hStdMnArrow = LoadBitmap( 0, MAKEINTRESOURCE(OBM_MNARROW) )))
 	return FALSE;
-    GetObject( hStdMnArrow, sizeof(BITMAP), (LPSTR)&bm );
+    GetObject16( hStdMnArrow, sizeof(bm), &bm );
     arrow_bitmap_width = bm.bmWidth;
     arrow_bitmap_height = bm.bmHeight;
 
@@ -331,8 +331,8 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     if (lpitem->item_flags & MF_OWNERDRAW)
     {
-        MEASUREITEMSTRUCT *mis;
-        if (!(mis = SEGPTR_NEW(MEASUREITEMSTRUCT))) return;
+        MEASUREITEMSTRUCT16 *mis;
+        if (!(mis = SEGPTR_NEW(MEASUREITEMSTRUCT16))) return;
         mis->CtlType    = ODT_MENU;
         mis->itemID     = lpitem->item_id;
         mis->itemData   = (DWORD)lpitem->text;
@@ -362,9 +362,8 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     if (lpitem->item_flags & MF_BITMAP)
     {
-	BITMAP bm;
-        if (GetObject( (HBITMAP16)(UINT32)lpitem->text,
-                       sizeof(BITMAP), (LPSTR)&bm ))
+	BITMAP16 bm;
+        if (GetObject16( (HBITMAP16)(UINT32)lpitem->text, sizeof(bm), &bm ))
         {
             lpitem->rect.right  += bm.bmWidth;
             lpitem->rect.bottom += bm.bmHeight;
@@ -1119,7 +1118,7 @@ static LPCSTR MENU_ParseResource( LPCSTR res, HMENU hMenu, BOOL unicode )
                      flags );
         str = res;
         if (!unicode) res += strlen(str) + 1;
-        else res += (STRING32_lstrlenW((LPCWSTR)str) + 1) * sizeof(WCHAR);
+        else res += (lstrlen32W((LPCWSTR)str) + 1) * sizeof(WCHAR);
         if (flags & MF_POPUP)
         {
             HMENU hSubMenu = CreatePopupMenu();
@@ -1540,7 +1539,7 @@ static void MENU_KeyRight( HWND hwndOwner, HMENU hmenu, HMENU *hmenuCurrent )
 static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
 			    HWND hwnd, const RECT16 *lprect )
 {
-    MSG *msg;
+    MSG16 *msg;
     HLOCAL16 hMsg;
     POPUPMENU *menu;
     HMENU hmenuCurrent = hmenu;
@@ -1555,8 +1554,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
 	MENU_ButtonDown( hwnd, hmenu, &hmenuCurrent, pt );
     }
     SetCapture( hwnd );
-    hMsg = USER_HEAP_ALLOC( sizeof(MSG) );
-    msg = (MSG *)USER_HEAP_LIN_ADDR( hMsg );
+    hMsg = USER_HEAP_ALLOC( sizeof(MSG16) );
+    msg = (MSG16 *)USER_HEAP_LIN_ADDR( hMsg );
     while (!fClosed)
     {
 	if (!MSG_InternalGetMessage( (SEGPTR)USER_HEAP_SEG_ADDR(hMsg), 0,
@@ -1695,7 +1694,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
 	if (!fClosed) fRemove = TRUE;
 
         if (fRemove)  /* Remove the message from the queue */
-	    PeekMessage( msg, 0, msg->message, msg->message, PM_REMOVE );
+	    PeekMessage16( msg, 0, msg->message, msg->message, PM_REMOVE );
     }
     USER_HEAP_FREE( hMsg );
     ReleaseCapture();
@@ -2019,7 +2018,7 @@ int GetMenuString( HMENU hMenu, UINT wItemID,
     str[0] = '\0';
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->item_flags)) return 0;
-    lstrcpyn( str, item->text, nMaxSiz );
+    lstrcpyn32A( str, item->text, nMaxSiz );
     dprintf_menu( stddeb, "GetMenuString: returning '%s'\n", str );
     return strlen(str);
 }

@@ -32,7 +32,7 @@ static int COLOR_Graymax = 0;
 #define NB_RESERVED_COLORS  20
 
   /* The first and last eight colors are EGA colors */
-static PALETTEENTRY COLOR_sysPaletteEntries[NB_RESERVED_COLORS] =
+static const PALETTEENTRY COLOR_sysPaletteEntries[NB_RESERVED_COLORS] =
 {
     /* red  green blue  flags */
     { 0x00, 0x00, 0x00, 0 },
@@ -271,7 +271,7 @@ HPALETTE16 COLOR_Init(void)
 BOOL COLOR_IsSolid( COLORREF color )
 {
     int i;
-    PALETTEENTRY *pEntry = COLOR_sysPaletteEntries;
+    const PALETTEENTRY *pEntry = COLOR_sysPaletteEntries;
 
     if (color & 0xff000000) return TRUE;
     if (!color || (color == 0xffffff)) return TRUE;

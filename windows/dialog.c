@@ -65,7 +65,7 @@ static WORD xBaseUnit = 0, yBaseUnit = 0;
  */
 BOOL DIALOG_Init()
 {
-    TEXTMETRIC tm;
+    TEXTMETRIC16 tm;
     HDC hdc;
     
       /* Calculate the dialog base units */
@@ -154,7 +154,7 @@ static LPCSTR DIALOG_GetControl16( LPCSTR p, DLG_CONTROL_INFO *info )
         dprintf_dialog(stddeb,"'%s'", info->windowName );
     }
 
-    info->data = (LPVOID)(*p ? p + 1 : NULL);  /* FIXME: is this right? */
+    info->data = (LPVOID)(*p ? p + 1 : NULL);  /* FIXME: should be a segptr */
     p += *p + 1;
 
     dprintf_dialog( stddeb," %d, %d, %d, %d, %d, %08lx, %08lx\n", 
@@ -200,7 +200,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
     else
     {
         info->className = (LPCSTR)p;
-        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        p += lstrlen32W( (LPCWSTR)p ) + 1;
     }
     dprintf_dialog(stddeb, "   %p ", info->className );
 
@@ -213,7 +213,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
     else
     {
 	info->windowName = (LPCSTR)p;
-        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        p += lstrlen32W( (LPCWSTR)p ) + 1;
         dprintf_dialog(stddeb,"'%p'", info->windowName );
     }
 
@@ -427,7 +427,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     default:
         result->menuName = (LPCSTR)p;
         dprintf_dialog( stddeb, " MENU '%p'\n", p );
-        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        p += lstrlen32W( (LPCWSTR)p ) + 1;
         break;
     }
 
@@ -447,14 +447,14 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     default:
         result->className = (LPCSTR)p;
         dprintf_dialog( stddeb, " CLASS '%p'\n", p );
-        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        p += lstrlen32W( (LPCWSTR)p ) + 1;
         break;
     }
 
     /* Get the window caption */
 
     result->caption = (LPCSTR)p;
-    p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+    p += lstrlen32W( (LPCWSTR)p ) + 1;
     dprintf_dialog( stddeb, " CAPTION '%p'\n", result->caption );
 
     /* Get the font name */
@@ -464,7 +464,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 	result->pointSize = GET_WORD(p);
         p++;
 	result->faceName = (LPCSTR)p;
-        p += STRING32_lstrlenW( (LPCWSTR)p ) + 1;
+        p += lstrlen32W( (LPCWSTR)p ) + 1;
 	dprintf_dialog( stddeb, " FONT %d,'%p'\n",
                         result->pointSize, result->faceName );
     }
@@ -517,7 +517,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
                             template.faceName );  /* FIXME: win32 */
 	if (hFont)
 	{
-	    TEXTMETRIC tm;
+	    TEXTMETRIC16 tm;
 	    HFONT oldFont;
 	    HDC hdc;
 
@@ -577,7 +577,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
       /* Initialise dialog extra data */
 
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    dlgInfo->dlgProc   = dlgProc;
     dlgInfo->hUserFont = hFont;
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;
@@ -596,6 +595,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     /* Send initialisation messages and set focus */
 
+    dlgInfo->dlgProc   = dlgProc;
     dlgInfo->hwndFocus = DIALOG_GetFirstTabItem( hwnd );
     if (dlgInfo->hUserFont)
 	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
@@ -610,7 +610,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
  *           CreateDialog16   (USER.89)
  */
 HWND16 CreateDialog16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
-                       HWND16 owner, DLGPROC dlgProc )
+                       HWND16 owner, DLGPROC16 dlgProc )
 {
     return CreateDialogParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -620,7 +620,7 @@ HWND16 CreateDialog16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
  *           CreateDialogParam16   (USER.241)
  */
 HWND16 CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
-                            HWND16 owner, DLGPROC dlgProc, LPARAM param )
+                            HWND16 owner, DLGPROC16 dlgProc, LPARAM param )
 {
     HWND16 hwnd = 0;
     HRSRC hRsrc;
@@ -644,7 +644,7 @@ HWND16 CreateDialogParam16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
  *           CreateDialogParam32A   (USER32.72)
  */
 HWND32 CreateDialogParam32A( HINSTANCE32 hInst, LPCSTR name,
-                             HWND32 owner, DLGPROC dlgProc, LPARAM param )
+                             HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
 {
     if (HIWORD(name))
     {
@@ -661,7 +661,7 @@ HWND32 CreateDialogParam32A( HINSTANCE32 hInst, LPCSTR name,
  *           CreateDialogParam32W   (USER32.73)
  */
 HWND32 CreateDialogParam32W( HINSTANCE32 hInst, LPCWSTR name,
-                             HWND32 owner, DLGPROC dlgProc, LPARAM param )
+                             HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
 {
     HANDLE32 hrsrc = FindResource32( hInst, name, (LPWSTR)RT_DIALOG );
     if (!hrsrc) return 0;
@@ -674,7 +674,7 @@ HWND32 CreateDialogParam32W( HINSTANCE32 hInst, LPCWSTR name,
  *           CreateDialogIndirect16   (USER.219)
  */
 HWND16 CreateDialogIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
-                               HWND16 owner, DLGPROC dlgProc )
+                               HWND16 owner, DLGPROC16 dlgProc )
 {
     return CreateDialogIndirectParam16( hInst, dlgTemplate, owner, dlgProc, 0);
 }
@@ -684,7 +684,7 @@ HWND16 CreateDialogIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
  *           CreateDialogIndirectParam16   (USER.242)
  */
 HWND16 CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
-                                    HWND16 owner, DLGPROC dlgProc,
+                                    HWND16 owner, DLGPROC16 dlgProc,
                                     LPARAM param )
 {
     HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_16 );
@@ -697,7 +697,7 @@ HWND16 CreateDialogIndirectParam16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
  *           CreateDialogIndirectParam32A   (USER32.69)
  */
 HWND32 CreateDialogIndirectParam32A( HINSTANCE32 hInst, LPCVOID dlgTemplate,
-                                     HWND32 owner, DLGPROC dlgProc,
+                                     HWND32 owner, DLGPROC32 dlgProc,
                                      LPARAM param )
 {
     HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_32A );
@@ -710,7 +710,7 @@ HWND32 CreateDialogIndirectParam32A( HINSTANCE32 hInst, LPCVOID dlgTemplate,
  *           CreateDialogIndirectParam32W   (USER32.71)
  */
 HWND32 CreateDialogIndirectParam32W( HINSTANCE32 hInst, LPCVOID dlgTemplate,
-                                     HWND32 owner, DLGPROC dlgProc,
+                                     HWND32 owner, DLGPROC32 dlgProc,
                                      LPARAM param )
 {
     HANDLE32 proc = WINPROC_AllocWinProc( (UINT32)dlgProc, WIN_PROC_32W );
@@ -727,14 +727,14 @@ static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
     WND * wndPtr;
     DIALOGINFO * dlgInfo;
     HANDLE msgHandle;
-    MSG* lpmsg;
+    MSG16* lpmsg;
     INT32 retval;
 
       /* Owner must be a top-level window */
     owner = WIN_GetTopParent( owner );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
-    if (!(msgHandle = USER_HEAP_ALLOC( sizeof(MSG) ))) return -1;
-    lpmsg = (MSG *) USER_HEAP_LIN_ADDR( msgHandle );
+    if (!(msgHandle = USER_HEAP_ALLOC( sizeof(MSG16) ))) return -1;
+    lpmsg = (MSG16 *) USER_HEAP_LIN_ADDR( msgHandle );
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
     EnableWindow( owner, FALSE );
     ShowWindow( hwnd, SW_SHOW );
@@ -762,7 +762,7 @@ static INT32 DIALOG_DoDialogBox( HWND hwnd, HWND owner )
  *           DialogBox16   (USER.87)
  */
 INT16 DialogBox16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
-                   HWND16 owner, DLGPROC dlgProc )
+                   HWND16 owner, DLGPROC16 dlgProc )
 {
     return DialogBoxParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -772,7 +772,7 @@ INT16 DialogBox16( HINSTANCE16 hInst, SEGPTR dlgTemplate,
  *           DialogBoxParam16   (USER.239)
  */
 INT16 DialogBoxParam16( HINSTANCE16 hInst, SEGPTR template,
-                        HWND16 owner, DLGPROC dlgProc, LPARAM param )
+                        HWND16 owner, DLGPROC16 dlgProc, LPARAM param )
 {
     HWND16 hwnd = CreateDialogParam16( hInst, template, owner, dlgProc, param);
     if (hwnd) return (INT16)DIALOG_DoDialogBox( hwnd, owner );
@@ -784,7 +784,7 @@ INT16 DialogBoxParam16( HINSTANCE16 hInst, SEGPTR template,
  *           DialogBoxParam32A   (USER32.138)
  */
 INT32 DialogBoxParam32A( HINSTANCE32 hInst, LPCSTR name,
-                         HWND32 owner, DLGPROC dlgProc, LPARAM param )
+                         HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
 {
     HWND32 hwnd = CreateDialogParam32A( hInst, name, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -796,7 +796,7 @@ INT32 DialogBoxParam32A( HINSTANCE32 hInst, LPCSTR name,
  *           DialogBoxParam32W   (USER32.139)
  */
 INT32 DialogBoxParam32W( HINSTANCE32 hInst, LPCWSTR name,
-                         HWND32 owner, DLGPROC dlgProc, LPARAM param )
+                         HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
 {
     HWND32 hwnd = CreateDialogParam32W( hInst, name, owner, dlgProc, param );
     if (hwnd) return DIALOG_DoDialogBox( hwnd, owner );
@@ -808,7 +808,7 @@ INT32 DialogBoxParam32W( HINSTANCE32 hInst, LPCWSTR name,
  *           DialogBoxIndirect16   (USER.218)
  */
 INT16 DialogBoxIndirect16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
-                           HWND16 owner, DLGPROC dlgProc )
+                           HWND16 owner, DLGPROC16 dlgProc )
 {
     return DialogBoxIndirectParam16( hInst, dlgTemplate, owner, dlgProc, 0 );
 }
@@ -818,7 +818,7 @@ INT16 DialogBoxIndirect16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
  *           DialogBoxIndirectParam16   (USER.240)
  */
 INT16 DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
-                                HWND16 owner, DLGPROC dlgProc, LPARAM param )
+                                HWND16 owner, DLGPROC16 dlgProc, LPARAM param )
 {
     HWND16 hwnd;
     LPCVOID ptr;
@@ -835,7 +835,7 @@ INT16 DialogBoxIndirectParam16( HINSTANCE16 hInst, HANDLE16 dlgTemplate,
  *           DialogBoxIndirectParam32A   (USER32.135)
  */
 INT32 DialogBoxIndirectParam32A( HINSTANCE32 hInstance, LPCVOID template,
-                                 HWND32 owner, DLGPROC dlgProc ,LPARAM param )
+                                 HWND32 owner, DLGPROC32 dlgProc ,LPARAM param)
 {
     HWND32 hwnd = CreateDialogIndirectParam32A( hInstance, template,
                                                 owner, dlgProc, param );
@@ -848,7 +848,7 @@ INT32 DialogBoxIndirectParam32A( HINSTANCE32 hInstance, LPCVOID template,
  *           DialogBoxIndirectParam32W   (USER32.137)
  */
 INT32 DialogBoxIndirectParam32W( HINSTANCE32 hInstance, LPCVOID template,
-                                 HWND32 owner, DLGPROC dlgProc ,LPARAM param )
+                                 HWND32 owner, DLGPROC32 dlgProc ,LPARAM param)
 {
     HWND32 hwnd = CreateDialogIndirectParam32W( hInstance, template,
                                                 owner, dlgProc, param );
@@ -874,7 +874,7 @@ BOOL16 EndDialog( HWND32 hwnd, INT32 retval )
 /***********************************************************************
  *           IsDialogMessage   (USER.90)
  */
-BOOL IsDialogMessage( HWND hwndDlg, LPMSG msg )
+BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
 {
     WND * wndPtr;
     int dlgCode;

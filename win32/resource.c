@@ -59,7 +59,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
                         sizeof(IMAGE_RESOURCE_DIRECTORY));
-	namelen = STRING32_lstrlenW(name);
+	namelen = lstrlen32W(name);
 	for (entrynum = 0; entrynum < resdirptr->NumberOfNamedEntries; entrynum++)
 	{
 		PIMAGE_RESOURCE_DIR_STRING_U str =
@@ -67,7 +67,7 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 			(entryTable[entrynum].Name & 0x7fffffff));
 		if(namelen != str->Length)
 			continue;
-		if(STRING32_lstrcmpniW(name,str->NameString,str->Length)==0)
+		if(lstrncmpi32W(name,str->NameString,str->Length)==0)
 			return (PIMAGE_RESOURCE_DIRECTORY) (
 				root +
 				(entryTable[entrynum].OffsetToData & 0x7fffffff));

@@ -93,7 +93,7 @@ static LPSTR CLASS_GetMenuNameA( CLASS *classPtr )
     {
         /* We need to copy the Unicode string */
         if ((classPtr->menuNameA = SEGPTR_ALLOC(
-                                 STRING32_lstrlenW(classPtr->menuNameW) + 1 )))
+                                        lstrlen32W(classPtr->menuNameW) + 1 )))
             STRING32_UniToAnsi( classPtr->menuNameA, classPtr->menuNameW );
     }
     return classPtr->menuNameA;
@@ -149,8 +149,8 @@ static void CLASS_SetMenuNameW( CLASS *classPtr, LPCWSTR name )
     if (HIWORD(classPtr->menuNameA)) SEGPTR_FREE( classPtr->menuNameA );
     if (classPtr->menuNameW) HeapFree( SystemHeap, 0, classPtr->menuNameW );
     if ((classPtr->menuNameW = HeapAlloc( SystemHeap, 0,
-                                 (STRING32_lstrlenW(name)+1)*sizeof(WCHAR) )))
-        STRING32_lstrcpyW( classPtr->menuNameW, name );
+                                         (lstrlen32W(name)+1)*sizeof(WCHAR) )))
+        lstrcpy32W( classPtr->menuNameW, name );
     classPtr->menuNameA = 0;
 }
 
@@ -619,7 +619,7 @@ WORD GetClassWord( HWND32 hwnd, INT32 offset )
 /***********************************************************************
  *           GetClassLong16    (USER.131)
  */
-LONG GetClassLong16( HWND hwnd, INT16 offset )
+LONG GetClassLong16( HWND16 hwnd, INT16 offset )
 {
     LONG ret;
 
@@ -641,7 +641,7 @@ LONG GetClassLong16( HWND hwnd, INT16 offset )
 /***********************************************************************
  *           GetClassLong32A    (USER32.214)
  */
-LONG GetClassLong32A( HWND hwnd, INT32 offset )
+LONG GetClassLong32A( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
     
@@ -675,7 +675,7 @@ LONG GetClassLong32A( HWND hwnd, INT32 offset )
 /***********************************************************************
  *           GetClassLong32W    (USER32.215)
  */
-LONG GetClassLong32W( HWND hwnd, INT32 offset )
+LONG GetClassLong32W( HWND32 hwnd, INT32 offset )
 {
     WND * wndPtr;
     
@@ -731,7 +731,7 @@ WORD SetClassWord( HWND32 hwnd, INT32 offset, WORD newval )
 /***********************************************************************
  *           SetClassLong16    (USER.132)
  */
-LONG SetClassLong16( HWND hwnd, INT16 offset, LONG newval )
+LONG SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
 {
     WND *wndPtr;
 
@@ -752,7 +752,7 @@ LONG SetClassLong16( HWND hwnd, INT16 offset, LONG newval )
 /***********************************************************************
  *           SetClassLong32A    (USER32.466)
  */
-LONG SetClassLong32A( HWND hwnd, INT32 offset, LONG newval )
+LONG SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
 {
     WND * wndPtr;
     LONG retval = 0;
@@ -801,7 +801,7 @@ LONG SetClassLong32A( HWND hwnd, INT32 offset, LONG newval )
 /***********************************************************************
  *           SetClassLong32W    (USER32.467)
  */
-LONG SetClassLong32W( HWND hwnd, INT32 offset, LONG newval )
+LONG SetClassLong32W( HWND32 hwnd, INT32 offset, LONG newval )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -823,7 +823,7 @@ LONG SetClassLong32W( HWND hwnd, INT32 offset, LONG newval )
 /***********************************************************************
  *           GetClassName16      (USER.58)
  */
-INT16 GetClassName16( HWND hwnd, LPSTR buffer, INT16 count )
+INT16 GetClassName16( HWND16 hwnd, LPSTR buffer, INT16 count )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -834,7 +834,7 @@ INT16 GetClassName16( HWND hwnd, LPSTR buffer, INT16 count )
 /***********************************************************************
  *           GetClassName32A      (USER32.216)
  */
-INT32 GetClassName32A( HWND hwnd, LPSTR buffer, INT32 count )
+INT32 GetClassName32A( HWND32 hwnd, LPSTR buffer, INT32 count )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -845,7 +845,7 @@ INT32 GetClassName32A( HWND hwnd, LPSTR buffer, INT32 count )
 /***********************************************************************
  *           GetClassName32W      (USER32.217)
  */
-INT32 GetClassName32W( HWND hwnd, LPWSTR buffer, INT32 count )
+INT32 GetClassName32W( HWND32 hwnd, LPWSTR buffer, INT32 count )
 {
     WND *wndPtr;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
@@ -856,7 +856,7 @@ INT32 GetClassName32W( HWND hwnd, LPWSTR buffer, INT32 count )
 /***********************************************************************
  *           GetClassInfo16      (USER.404)
  */
-BOOL GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
+BOOL16 GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -884,7 +884,7 @@ BOOL GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc )
 /***********************************************************************
  *           GetClassInfo32A      (USER32.210)
  */
-BOOL GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASS32A *wc )
+BOOL32 GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASS32A *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -910,7 +910,7 @@ BOOL GetClassInfo32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASS32A *wc )
 /***********************************************************************
  *           GetClassInfo32W      (USER32.213)
  */
-BOOL GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASS32W *wc )
+BOOL32 GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASS32W *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -939,7 +939,7 @@ BOOL GetClassInfo32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASS32W *wc )
  * FIXME: this is just a guess, I have no idea if GetClassInfoEx() is the
  * same in Win16 as in Win32. --AJ
  */
-BOOL GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16 *wc )
+BOOL16 GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16 *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -968,7 +968,8 @@ BOOL GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16 *wc )
 /***********************************************************************
  *           GetClassInfoEx32A      (USER32.211)
  */
-BOOL GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASSEX32A *wc )
+BOOL32 GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name,
+                          WNDCLASSEX32A *wc )
 {
     ATOM atom;
     CLASS *classPtr;
@@ -995,7 +996,8 @@ BOOL GetClassInfoEx32A( HINSTANCE32 hInstance, LPCSTR name, WNDCLASSEX32A *wc )
 /***********************************************************************
  *           GetClassInfoEx32W      (USER32.212)
  */
-BOOL GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name, WNDCLASSEX32W *wc)
+BOOL32 GetClassInfoEx32W( HINSTANCE32 hInstance, LPCWSTR name,
+                          WNDCLASSEX32W *wc )
 {
     ATOM atom;
     CLASS *classPtr;

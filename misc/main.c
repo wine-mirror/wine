@@ -26,6 +26,8 @@
 #include "options.h"
 #include "desktop.h"
 #include "shell.h"
+#include "winbase.h"
+#include "string32.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
@@ -53,7 +55,7 @@ const char people[] = "Wine is available thanks to the work of "
 "Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale, "
 "and James Youngman. ";
 
-const char *langNames[] =
+const char * langNames[] =
 {
     "En",  /* LANG_En */
     "Es",  /* LANG_Es */
@@ -87,6 +89,9 @@ Window rootWindow;
 int screenWidth = 0, screenHeight = 0;  /* Desktop window dimensions */
 int screenDepth = 0;  /* Screen depth to use */
 int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
+int getVersion16 = 0;
+int getVersion32 = 0;
+OSVERSIONINFO32A getVersionEx;
 
 struct options Options =
 {  /* default options */
@@ -128,7 +133,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-dll",           ".dll",             XrmoptionSepArg, (caddr_t)NULL },
     { "-allowreadonly", ".allowreadonly",   XrmoptionNoArg,  (caddr_t)"on" },
     { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
-    { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"}
+    { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
+    { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -153,7 +159,8 @@ static XrmOptionDescRec optionsTable[] =
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
   "    -privatemap     Use a private color map\n" \
-  "    -synchronous    Turn on synchronous display mode\n"
+  "    -synchronous    Turn on synchronous display mode\n" \
+  "    -winver         Version to imitate (one of win31,win95,nt351)\n"
 
 
 
@@ -237,7 +244,7 @@ BOOL ParseDebugOptions(char *options)
       l=strchr(options,',')-options;
     else
       l=strlen(options);
-    if (!lstrncmpi(options+1,"all",l-1))
+    if (!lstrncmpi32A(options+1,"all",l-1))
       {
 	int i;
 	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
@@ -247,7 +254,7 @@ BOOL ParseDebugOptions(char *options)
       {
 	int i;
 	for (i=0;i<sizeof(debug_msg_enabled)/sizeof(short);i++)
-	  if (debug_msg_name && (!lstrncmpi(options+1,debug_msg_name[i],l-1)))
+	  if (debug_msg_name && (!lstrncmpi32A(options+1,debug_msg_name[i],l-1)))
 	    {
 	      debug_msg_enabled[i]=(*options=='+');
 	      break;
@@ -279,7 +286,7 @@ static void MAIN_ParseLanguageOption( char *arg )
     Options.language = LANG_En;  /* First language */
     for (p = langNames; *p; p++)
     {
-        if (!lstrcmpi( *p, arg )) return;
+        if (!lstrcmpi32A( *p, arg )) return;
         Options.language++;
     }
     fprintf( stderr, "Invalid language specified '%s'. Supported languages are: ", arg );
@@ -296,8 +303,8 @@ static void MAIN_ParseLanguageOption( char *arg )
  */
 static void MAIN_ParseModeOption( char *arg )
 {
-    if (!lstrcmpi("enhanced", arg)) Options.mode = MODE_ENHANCED;
-    else if (!lstrcmpi("standard", arg)) Options.mode = MODE_STANDARD;
+    if (!lstrcmpi32A("enhanced", arg)) Options.mode = MODE_ENHANCED;
+    else if (!lstrcmpi32A("standard", arg)) Options.mode = MODE_STANDARD;
     else
     {
         fprintf(stderr, "Invalid mode '%s' specified.\n", arg);
@@ -306,6 +313,47 @@ static void MAIN_ParseModeOption( char *arg )
     }
 }
 
+/**********************************************************************
+ *           MAIN_ParseVersion
+ */
+static void MAIN_ParseVersion( char *arg )
+{
+    /* If you add any other options, 
+       verify the values you return on the real thing */
+    if(strcmp(arg,"win31")==0) 
+    {
+        getVersion16 = 0x06160A03;
+        /* FIXME: My Win32s installation failed to execute the
+           MSVC 4 test program. So check these values */
+        getVersion32 = 0x80000A03;
+        getVersionEx.dwMajorVersion=3;
+        getVersionEx.dwMinorVersion=10;
+        getVersionEx.dwBuildNumber=0;
+        getVersionEx.dwPlatformId=VER_PLATFORM_WIN32s;
+        strcpy(getVersionEx.szCSDVersion,"Win32s 1.3");
+    }
+    else if(strcmp(arg, "win95")==0)
+    {
+        getVersion16 = 0x07005F03;
+        getVersion32 = 0xC0000004;
+        getVersionEx.dwMajorVersion=4;
+        getVersionEx.dwMinorVersion=0;
+        getVersionEx.dwBuildNumber=0x40003B6;
+        getVersionEx.dwPlatformId=VER_PLATFORM_WIN32_WINDOWS;
+        strcpy(getVersionEx.szCSDVersion,"");
+    }
+    else if(strcmp(arg, "nt351")==0)
+    {
+        getVersion16 = 0x05000A03;
+        getVersion32 = 0x04213303;
+        getVersionEx.dwMajorVersion=3;
+        getVersionEx.dwMinorVersion=51;
+        getVersionEx.dwBuildNumber=0x421;
+        getVersionEx.dwPlatformId=VER_PLATFORM_WIN32_NT;
+        strcpy(getVersionEx.szCSDVersion,"Service Pack 2");
+    }
+    else fprintf(stderr, "Unknown winver system code - ignored\n");
+}
 
 /***********************************************************************
  *           MAIN_ParseOptions
@@ -326,7 +374,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 #ifdef WINELIB
     /* Need to assemble command line and pass it to WinMain */
 #else
-    if (*argc < 2 || lstrcmpi(argv[1], "-h") == 0) 
+    if (*argc < 2 || lstrcmpi32A(argv[1], "-h") == 0) 
     	MAIN_Usage( argv[0] );
 #endif
 
@@ -414,6 +462,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
           fprintf(stderr,"-dll not supported in libwine\n");
 #endif
       }
+
+      if(MAIN_GetResource( db, ".winver", &value))
+          MAIN_ParseVersion( (char*)value.addr );
 }
 
 
@@ -593,6 +644,7 @@ int main( int argc, char *argv[] )
     return ret_val;
 }
 
+
 /***********************************************************************
  *           MessageBeep    (USER.104)
  */
@@ -601,12 +653,75 @@ void MessageBeep(WORD i)
 	XBell(display, 100);
 }
 
+
 /***********************************************************************
  *      GetVersion (KERNEL.3)
  */
 LONG GetVersion(void)
 {
+    if (getVersion16) return getVersion16;
     return MAKELONG( WINVERSION, WINDOSVER );
+}
+
+
+/***********************************************************************
+ *      GetVersion32
+ */
+LONG GetVersion32(void)
+{
+    if (getVersion32) return getVersion32;
+    return MAKELONG( 4, DOSVERSION);
+}
+
+
+/***********************************************************************
+ *      GetVersionExA
+ */
+BOOL32 GetVersionEx32A(OSVERSIONINFO32A *v)
+{
+    if(v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32A))
+    {
+        fprintf(stddeb,"wrong OSVERSIONINFO size from app");
+        return FALSE;
+    }
+    if(!getVersion32)
+    {
+        /* Return something like NT 3.5 */
+        v->dwMajorVersion = 3;
+        v->dwMinorVersion = 5;
+        v->dwBuildNumber = 42;
+        v->dwPlatformId = VER_PLATFORM_WIN32_NT;
+        strcpy(v->szCSDVersion, "Wine is not an emulator");
+        return TRUE;
+    }
+    v->dwMajorVersion = getVersionEx.dwMajorVersion;
+    v->dwMinorVersion = getVersionEx.dwMinorVersion;
+    v->dwBuildNumber = getVersionEx.dwBuildNumber;
+    v->dwPlatformId = getVersionEx.dwPlatformId;
+    strcpy(v->szCSDVersion, getVersionEx.szCSDVersion);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *     GetVersionExW
+ */
+BOOL32 GetVersionEx32W(OSVERSIONINFO32W *v)
+{
+	OSVERSIONINFO32A v1;
+	if(v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32W))
+	{
+		fprintf(stddeb,"wrong OSVERSIONINFO size from app");
+		return FALSE;
+	}
+	v1.dwOSVersionInfoSize=sizeof(v1);
+	GetVersionEx32A(&v1);
+	v->dwMajorVersion = v1.dwMajorVersion;
+	v->dwMinorVersion = v1.dwMinorVersion;
+	v->dwBuildNumber = v1.dwBuildNumber;
+	v->dwPlatformId = v1.dwPlatformId;
+	STRING32_AnsiToUni(v->szCSDVersion, v1.szCSDVersion);
+	return TRUE;
 }
 
 /***********************************************************************
@@ -984,7 +1099,7 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 	        case SPI_GETICONTITLELOGFONT: 
 	        {
 		    /* FIXME GetProfileString( "?", "?", "?" ) */
-		  LPLOGFONT lpLogFont = (LPLOGFONT)lpvParam;
+		  LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
 		  lpLogFont->lfHeight = 10;
 		  lpLogFont->lfWidth = 0;
 		  lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
@@ -1012,14 +1127,6 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, LPVOID lpvParam, UINT fuWi
 			break;
 	}
 	return 1;
-}
-
-/***********************************************************************
-*	HMEMCPY (KERNEL.348)
-*/
-void hmemcpy(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
-{
-	memcpy(hpvDest,	hpvSource, cbCopy);
 }
 
 /***********************************************************************

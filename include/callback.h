@@ -20,28 +20,28 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
 /* by the build program to generate the file if1632/callto16.S */
 
                                /* func     ds    parameters */
-extern WORD CallTo16_word_     ( FARPROC, WORD );
+extern WORD CallTo16_word_     ( FARPROC16, WORD );
 
 #ifndef WINELIB
 
-extern WORD CallTo16_word_ww   ( FARPROC, WORD, WORD, WORD );
-extern WORD CallTo16_word_wl   ( FARPROC, WORD, WORD, LONG );
-extern WORD CallTo16_word_ll   ( FARPROC, WORD, LONG, LONG );
-extern WORD CallTo16_word_www  ( FARPROC, WORD, WORD, WORD, WORD );
-extern WORD CallTo16_word_wwl  ( FARPROC, WORD, WORD, WORD, LONG );
-extern WORD CallTo16_word_wlw  ( FARPROC, WORD, WORD, LONG, WORD );
-extern LONG CallTo16_long_wwl  ( FARPROC, WORD, WORD, WORD, LONG );
-extern WORD CallTo16_word_llwl ( FARPROC, WORD, LONG, LONG, WORD, LONG );
-extern LONG CallTo16_long_wwwl ( FARPROC, WORD, WORD, WORD, WORD, LONG );
-extern WORD CallTo16_word_lwww ( FARPROC, WORD, LONG, WORD, WORD, WORD );
-extern WORD CallTo16_word_wwll ( FARPROC, WORD, WORD, WORD, LONG, LONG);
-extern WORD CallTo16_word_wllwl( FARPROC, WORD, WORD, LONG, LONG, WORD, LONG );
-extern WORD CallTo16_word_wwlll( FARPROC, WORD, WORD, WORD, LONG, LONG, LONG );
-extern LONG CallTo16_long_lllllllwlwwwl( FARPROC, WORD, LONG, LONG, LONG,
+extern WORD CallTo16_word_ww   (FARPROC16, WORD, WORD, WORD);
+extern WORD CallTo16_word_wl   (FARPROC16, WORD, WORD, LONG);
+extern WORD CallTo16_word_ll   (FARPROC16, WORD, LONG, LONG);
+extern WORD CallTo16_word_www  (FARPROC16, WORD, WORD, WORD, WORD);
+extern WORD CallTo16_word_wwl  (FARPROC16, WORD, WORD, WORD, LONG);
+extern WORD CallTo16_word_wlw  (FARPROC16, WORD, WORD, LONG, WORD);
+extern LONG CallTo16_long_wwl  (FARPROC16, WORD, WORD, WORD, LONG);
+extern WORD CallTo16_word_llwl (FARPROC16, WORD, LONG, LONG, WORD, LONG);
+extern LONG CallTo16_long_wwwl (FARPROC16, WORD, WORD, WORD, WORD, LONG);
+extern WORD CallTo16_word_lwww (FARPROC16, WORD, LONG, WORD, WORD, WORD);
+extern WORD CallTo16_word_wwll (FARPROC16, WORD, WORD, WORD, LONG, LONG);
+extern WORD CallTo16_word_wllwl(FARPROC16, WORD, WORD, LONG, LONG, WORD, LONG);
+extern WORD CallTo16_word_wwlll(FARPROC16, WORD, WORD, WORD, LONG, LONG, LONG);
+extern LONG CallTo16_long_lllllllwlwwwl( FARPROC16, WORD, LONG, LONG, LONG,
                                          LONG, LONG, LONG, LONG, WORD, LONG,
                                          WORD, WORD, WORD, LONG );
 
-extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
+extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
                             WORD bx, WORD cx, WORD dx, WORD si, WORD di );
 
 #define CallEnumChildProc( func, hwnd, lParam ) \

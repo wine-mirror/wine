@@ -1,7 +1,7 @@
 #ifndef __WINE_WINBASE_H
 #define __WINE_WINBASE_H
 
-
+#include "wintypes.h"
 
 #ifdef UNICODE
 #define LoadAccelerators LoadAcceleratorsW
@@ -112,7 +112,34 @@ typedef struct {
 	DWORD Reserved;
 }CRITICAL_SECTION;
 
+typedef struct {
+	DWORD dwOSVersionInfoSize;
+	DWORD dwMajorVersion;
+	DWORD dwMinorVersion;
+	DWORD dwBuildNumber;
+	DWORD dwPlatformId;
+	CHAR szCSDVersion[128];
+} OSVERSIONINFO32A;
+
+typedef struct {
+	DWORD dwOSVersionInfoSize;
+	DWORD dwMajorVersion;
+	DWORD dwMinorVersion;
+	DWORD dwBuildNumber;
+	DWORD dwPlatformId;
+	WCHAR szCSDVersion[128];
+} OSVERSIONINFO32W;
+
+DECL_WINELIB_TYPE_AW(OSVERSIONINFO);
+
+#define VER_PLATFORM_WIN32s             0
+#define VER_PLATFORM_WIN32_WINDOWS      1
+#define VER_PLATFORM_WIN32_NT           2
+
 /*DWORD WINAPI GetVersion( void );*/
+BOOL32 GetVersionEx32A(OSVERSIONINFO32A*);
+BOOL32 GetVersionEx32W(OSVERSIONINFO32W*);
+#define GetVersionEx WINELIB_NAME_AW(GetVersionEx)
 
 int WinMain(HINSTANCE, HINSTANCE prev, char *cmd, int show);
 

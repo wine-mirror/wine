@@ -3,17 +3,25 @@
  * Copyright 1996 Marcus Meissner
  */
 
-LONG	LZCopy(HFILE,HFILE);
-HFILE	LZOpenFile(LPCSTR,LPOFSTRUCT,UINT);
-HFILE	LZInit(HFILE);
-LONG	LZSeek(HFILE,LONG,INT);
-INT	LZRead(HFILE,SEGPTR,WORD); 
-void	LZClose(HFILE);
-INT	LZStart(void);
-LONG	CopyLZFile(HFILE,HFILE);
-void	LZDone(void);
-INT	GetExpandedName(LPCSTR,LPSTR);
+INT16      LZStart(void);
+HFILE      LZInit(HFILE);
+void       LZDone(void);
+LONG       LZSeek(HFILE,LONG,INT32);
+LONG       LZCopy(HFILE,HFILE);
+void       LZClose(HFILE);
+LONG       CopyLZFile(HFILE,HFILE);
 
+INT16      GetExpandedName16(LPCSTR,LPSTR);
+INT32      GetExpandedName32A(LPCSTR,LPSTR);
+INT32      GetExpandedName32W(LPCWSTR,LPWSTR);
+#define    GetExpandedName WINELIB_NAME_AW(GetExpandedName)
+HFILE      LZOpenFile16(LPCSTR,LPOFSTRUCT,UINT16);
+HFILE      LZOpenFile32A(LPCSTR,LPOFSTRUCT,UINT32);
+HFILE      LZOpenFile32W(LPCWSTR,LPOFSTRUCT,UINT32);
+#define    LZOpenFile WINELIB_NAME_AW(LZOpenFile)
+INT16      LZRead16(HFILE,SEGPTR,UINT16); 
+INT32      LZRead32(HFILE,LPVOID,UINT32); 
+#define    LZRead WINELIB_NAME(LZRead)
 
 #define LZERROR_BADINHANDLE	0xFFFF	/* -1 */
 #define LZERROR_BADOUTHANDLE	0xFFFE	/* -2 */

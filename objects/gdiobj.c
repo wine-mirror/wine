@@ -299,12 +299,12 @@ HANDLE GetStockObject( int obj )
 
 
 /***********************************************************************
- *           GetObject    (GDI.82)
+ *           GetObject16    (GDI.82)
  */
-int GetObject( HANDLE handle, int count, LPSTR buffer )
+INT16 GetObject16( HANDLE16 handle, INT16 count, LPVOID buffer )
 {
     GDIOBJHDR * ptr = NULL;
-    dprintf_gdi(stddeb, "GetObject: %04x %d %p\n", handle, count, buffer );
+    dprintf_gdi(stddeb, "GetObject16: %04x %d %p\n", handle, count, buffer );
     if (!count) return 0;
 
     if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
@@ -320,13 +320,53 @@ int GetObject( HANDLE handle, int count, LPSTR buffer )
       case BRUSH_MAGIC: 
 	  return BRUSH_GetObject( (BRUSHOBJ *)ptr, count, buffer );
       case BITMAP_MAGIC: 
-	  return BITMAP_GetObject( (BITMAPOBJ *)ptr, count, buffer );
+	  return BITMAP_GetObject16( (BITMAPOBJ *)ptr, count, buffer );
       case FONT_MAGIC:
 	  return FONT_GetObject( (FONTOBJ *)ptr, count, buffer );
       case PALETTE_MAGIC:
 	  return PALETTE_GetObject( (PALETTEOBJ *)ptr, count, buffer );
     }
     return 0;
+}
+
+
+/***********************************************************************
+ *           GetObject32A    (GDI32.204)
+ */
+INT32 GetObject32A( HANDLE32 handle, INT32 count, LPVOID buffer )
+{
+    GDIOBJHDR * ptr = NULL;
+    dprintf_gdi(stddeb, "GetObject32A: %08x %d %p\n", handle, count, buffer );
+    if (!count) return 0;
+
+    if ((handle >= FIRST_STOCK_HANDLE) && (handle <= LAST_STOCK_HANDLE))
+      ptr = StockObjects[handle - FIRST_STOCK_HANDLE];
+    else
+      ptr = (GDIOBJHDR *) GDI_HEAP_LIN_ADDR( handle );
+    if (!ptr) return 0;
+    
+    switch(ptr->wMagic)
+    {
+      case BITMAP_MAGIC: 
+	  return BITMAP_GetObject32( (BITMAPOBJ *)ptr, count, buffer );
+      case PEN_MAGIC:
+      case BRUSH_MAGIC: 
+      case FONT_MAGIC:
+      case PALETTE_MAGIC:
+          fprintf( stderr, "GetObject32: magic %04x not implemented\n",
+                   ptr->wMagic );
+          break;
+    }
+    return 0;
+}
+
+
+/***********************************************************************
+ *           GetObject32W    (GDI32.206)
+ */
+INT32 GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
+{
+    return GetObject32A( handle, count, buffer );
 }
 
 
@@ -397,8 +437,8 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
     };
     
     int i, retval = 0;
-    LOGPEN *pen;
-    LOGBRUSH *brush = NULL;
+    LOGPEN16 *pen;
+    LOGBRUSH16 *brush = NULL;
 
     dprintf_gdi( stddeb, "EnumObjects: %04x %d %08lx %08lx\n",
                  hdc, nObjType, (DWORD)lpEnumFunc, lParam );
@@ -406,7 +446,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
     {
     case OBJ_PEN:
         /* Enumerate solid pens */
-        if (!(pen = SEGPTR_NEW(LOGPEN))) break;
+        if (!(pen = SEGPTR_NEW(LOGPEN16))) break;
         for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
         {
             pen->lopnStyle   = PS_SOLID;
@@ -424,7 +464,7 @@ INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC lpEnumFunc, LPARAM lParam )
 
     case OBJ_BRUSH:
         /* Enumerate solid brushes */
-        if (!(brush = SEGPTR_NEW(LOGBRUSH))) break;
+        if (!(brush = SEGPTR_NEW(LOGBRUSH16))) break;
         for (i = 0; i < sizeof(solid_colors)/sizeof(solid_colors[0]); i++)
         {
             brush->lbStyle = BS_SOLID;

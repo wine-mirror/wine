@@ -526,7 +526,7 @@ msg# 543 : tmsf
 			msgptr = "Unknown MCI Error !\n";
 			break;
 		}
-        lstrcpyn(lpstrBuffer, msgptr, uLength);
+        lstrcpyn32A(lpstrBuffer, msgptr, uLength);
 	return TRUE;
 }
 
@@ -701,7 +701,7 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS lpParms)
 				}
 			}
 			if (lpParms->dwRetSize < InstalledListLen)
-				lstrcpyn(lpstrReturn, lpInstallNames, lpParms->dwRetSize - 1);
+				lstrcpyn32A(lpstrReturn, lpInstallNames, lpParms->dwRetSize - 1);
 			else
 				strcpy(lpstrReturn, lpInstallNames);
 			return 0;
@@ -888,7 +888,7 @@ msg# 343 : There are no MIDI devices installed on the system. Use the Drivers op
 			msgptr = "Unknown MIDI Error !\n";
 			break;
 		}
-	lstrcpyn(lpText, msgptr, uSize);
+	lstrcpyn32A(lpText, msgptr, uSize);
 	return TRUE;
 }
 
@@ -1341,7 +1341,7 @@ UINT waveGetErrorText(UINT uError, LPSTR lpText, UINT uSize)
 			msgptr = "Unknown MMSYSTEM Error !\n";
 			break;
 		}
-	lstrcpyn(lpText, msgptr, uSize);
+	lstrcpyn32A(lpText, msgptr, uSize);
 	return TRUE;
 }
 

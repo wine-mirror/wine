@@ -182,7 +182,7 @@ int DIR_Init(void)
  */
 UINT DIR_GetTempDosDir( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn( path, DIR_TempDosDir, count );
+    if (path) lstrcpyn32A( path, DIR_TempDosDir, count );
     return strlen( DIR_TempDosDir );
 }
 
@@ -192,7 +192,7 @@ UINT DIR_GetTempDosDir( LPSTR path, UINT count )
  */
 UINT DIR_GetTempUnixDir( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn( path, DIR_TempUnixDir, count );
+    if (path) lstrcpyn32A( path, DIR_TempUnixDir, count );
     return strlen( DIR_TempUnixDir );
 }
 
@@ -202,7 +202,7 @@ UINT DIR_GetTempUnixDir( LPSTR path, UINT count )
  */
 UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn( path, DIR_WindowsUnixDir, count );
+    if (path) lstrcpyn32A( path, DIR_WindowsUnixDir, count );
     return strlen( DIR_WindowsUnixDir );
 }
 
@@ -212,7 +212,7 @@ UINT DIR_GetWindowsUnixDir( LPSTR path, UINT count )
  */
 UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn( path, DIR_SystemUnixDir, count );
+    if (path) lstrcpyn32A( path, DIR_SystemUnixDir, count );
     return strlen( DIR_SystemUnixDir );
 }
 
@@ -223,7 +223,7 @@ UINT DIR_GetSystemUnixDir( LPSTR path, UINT count )
 UINT DIR_GetDosPath( int element, LPSTR path, UINT count )
 {
     if ((element < 0) || (element >= DIR_PathElements)) return 0;
-    if (path) lstrcpyn( path, DIR_DosPath[element], count );
+    if (path) lstrcpyn32A( path, DIR_DosPath[element], count );
     return strlen( DIR_DosPath[element] );
 }
 
@@ -242,7 +242,7 @@ BYTE GetTempDrive( BYTE ignored )
  */
 UINT GetWindowsDirectory( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn( path, DIR_WindowsDosDir, count );
+    if (path) lstrcpyn32A( path, DIR_WindowsDosDir, count );
     return strlen( DIR_WindowsDosDir );
 }
 
@@ -252,6 +252,6 @@ UINT GetWindowsDirectory( LPSTR path, UINT count )
  */
 UINT GetSystemDirectory( LPSTR path, UINT count )
 {
-    if (path) lstrcpyn( path, DIR_SystemDosDir, count );
+    if (path) lstrcpyn32A( path, DIR_SystemDosDir, count );
     return strlen( DIR_SystemDosDir );
 }

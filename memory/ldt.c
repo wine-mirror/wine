@@ -37,8 +37,8 @@ extern int i386_set_ldt(int, union descriptor *, int);
 #endif  /* ifndef WINELIB */
 
 
-ldt_copy_entry ldt_copy[LDT_SIZE] = { {0,0}, };
-unsigned char ldt_flags_copy[LDT_SIZE] = { 0, };
+ldt_copy_entry ldt_copy[LDT_SIZE];
+unsigned char ldt_flags_copy[LDT_SIZE];
 
         
 /***********************************************************************

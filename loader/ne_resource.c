@@ -64,8 +64,8 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                 if (p[1] & 0x8000)
                 {
                     if (!HIWORD(typeId)) continue;
-                    if (lstrcmpi( (char *)PTR_SEG_TO_LIN(typeId),
-                                  (char *)(p + 3) )) continue;
+                    if (lstrcmpi32A( (char *)PTR_SEG_TO_LIN(typeId),
+                                     (char *)(p + 3) )) continue;
                 }
                 else if (HIWORD(typeId) || ((typeId & ~0x8000)!= p[1]))
                   continue;
@@ -75,7 +75,7 @@ static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
                 if (p[2] & 0x8000)
                 {
                     if (!HIWORD(resId)) continue;
-                    if (lstrcmpi( (char *)PTR_SEG_TO_LIN(resId),
+                    if (lstrcmpi32A( (char *)PTR_SEG_TO_LIN(resId),
                                (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
                     
                 }
@@ -116,7 +116,7 @@ static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
         {
             if (pNameInfo->id & 0x8000) continue;
             p = (BYTE *)pModule + pModule->res_table + pNameInfo->id;
-            if ((*p == len) && !lstrncmpi( p+1, str, len ))
+            if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
                 return (HRSRC)((int)pNameInfo - (int)pModule);
         }
     }
@@ -163,7 +163,7 @@ HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
             if (!(pTypeInfo->type_id & 0x8000))
             {
                 BYTE *p = (BYTE*)pModule+pModule->res_table+pTypeInfo->type_id;
-                if ((*p == len) && !lstrncmpi( p+1, str, len ))
+                if ((*p == len) && !lstrncmpi32A( p+1, str, len ))
                 {
                     dprintf_resource( stddeb, "  Found type '%s'\n", str );
                     hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, resId);

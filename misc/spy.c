@@ -18,7 +18,7 @@
 #define SPY_MAX_MSGNUM   WM_USER
 #define SPY_INDENT_UNIT  4  /* 4 spaces */
 
-static const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
+static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
     "WM_NULL",			/* 0x00 */
     "WM_CREATE",	
@@ -411,7 +411,7 @@ static const char *MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 };
 
 
-static BOOL SPY_Exclude[SPY_MAX_MSGNUM+1] = { FALSE, };
+static BOOL SPY_Exclude[SPY_MAX_MSGNUM+1];
 static int SPY_IndentLevel  = 0;
 
 #define SPY_EXCLUDE(msg) \

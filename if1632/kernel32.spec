@@ -145,7 +145,7 @@ base	1
 0140 stub FreeConsole
 0141 stdcall FreeEnvironmentStringsA(ptr)	FreeEnvironmentStringsA
 0142 stdcall FreeEnvironmentStringsW(ptr)	FreeEnvironmentStringsW
-0143 stub FreeLibrary
+0143 stdcall FreeLibrary(long) FreeLibrary32
 0144 stub FreeLibraryAndExitThread
 0145 stdcall FreeResource(long) FreeResource32
 0146 stub FreeVirtualBuffer
@@ -308,10 +308,9 @@ base	1
 0303 stub GetUserDefaultLCID
 0304 stub GetUserDefaultLangID
 0305 stub GetVDMCurrentDirectories
-#Use Win 3.1 GetVersion for now
-0306	stdcall GetVersion()	GetVersion
-0307 stub GetVersionExA
-0308 stub GetVersionExW
+0306 stdcall GetVersion() GetVersion32
+0307 stdcall GetVersionExA(ptr) GetVersionEx32A
+0308 stdcall GetVersionExW(ptr) GetVersionEx32W
 0309 stub GetVolumeInformationA
 0310 stub GetVolumeInformationW
 0311 stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectory
@@ -350,9 +349,9 @@ base	1
 0344 stdcall HeapWalk(long ptr) HeapWalk
 0345 stub InitAtomTable
 0346 stdcall InitializeCriticalSection(ptr) InitializeCriticalSection
-0347 stub InterlockedDecrement
-0348 stub InterlockedExchange
-0349 stub InterlockedIncrement
+0347 stdcall InterlockedDecrement(ptr) InterlockedDecrement
+0348 stdcall InterlockedExchange(ptr) InterlockedExchange
+0349 stdcall InterlockedIncrement(ptr) InterlockedIncrement
 0350 stub InvalidateConsoleDIBits
 0351 stdcall IsBadCodePtr(ptr long)	WIN32_IsBadCodePtr
 0352 stub IsBadHugeReadPtr
@@ -489,7 +488,7 @@ base	1
 0483 stub SetEndOfFile
 0484    stdcall SetEnvironmentVariableA(ptr ptr) SetEnvironmentVariableA
 0485 stub SetEnvironmentVariableW
-0486 stub SetErrorMode
+0486 stdcall SetErrorMode(long) SetErrorMode
 0487 	stdcall	SetEvent(long) SetEvent
 0488 stub SetFileApisToANSI
 0489 stub SetFileApisToOEM
@@ -601,24 +600,24 @@ base	1
 0595 stub _lopen
 0596 stub _lread
 0597 stub _lwrite
-0598    stdcall lstrcat(ptr ptr) strcat
-0599    stdcall lstrcatA(ptr ptr) strcat
-0600 stub lstrcatW
-0601    stdcall lstrcmp(ptr ptr) strcmp
-0602    stdcall lstrcmpA(ptr ptr) strcmp
-0603 stub lstrcmpW
-0604 stub lstrcmpi
-0605 stub lstrcmpiA
-0606 stub lstrcmpiW
-0607    stdcall lstrcpy(ptr ptr) strcpy
-0608 	stdcall lstrcpyA(ptr ptr) strcpy
-0609 stub lstrcpyW
-0610 stub lstrcpyn
-0611 stub lstrcpynA
-0612 stub lstrcpynW
-0613    stdcall lstrlen(ptr) strlen
-0614 	stdcall lstrlenA(ptr) strlen
-0615 stub lstrlenW
+0598 stdcall lstrcat(ptr ptr) lstrcat32A
+0599 stdcall lstrcatA(ptr ptr) lstrcat32A
+0600 stdcall lstrcatW(ptr ptr) lstrcat32W
+0601 stdcall lstrcmp(ptr ptr) lstrcmp32A
+0602 stdcall lstrcmpA(ptr ptr) lstrcmp32A
+0603 stdcall lstrcmpW(ptr ptr) lstrcmp32W
+0604 stdcall lstrcmpi(ptr ptr) lstrcmpi32A
+0605 stdcall lstrcmpiA(ptr ptr) lstrcmpi32A
+0606 stdcall lstrcmpiW(ptr ptr) lstrcmpi32W
+0607 stdcall lstrcpy(ptr ptr) lstrcpy32A
+0608 stdcall lstrcpyA(ptr ptr) lstrcpy32A
+0609 stdcall lstrcpyW(ptr ptr) lstrcpy32W
+0610 stdcall lstrcpyn(ptr ptr long) lstrcpyn32A
+0611 stdcall lstrcpynA(ptr ptr long) lstrcpyn32A
+0612 stdcall lstrcpynW(ptr ptr long) lstrcpyn32W
+0613 stdcall lstrlen(ptr) lstrlen32A
+0614 stdcall lstrlenA(ptr) lstrlen32A
+0615 stdcall lstrlenW(ptr) lstrlen32W
 #late additions
 0616 stub GetPrivateProfileSectionNamesA
 0617 stub GetPrivateProfileSectionNamesW

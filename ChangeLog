@@ -1,4 +1,85 @@
 ----------------------------------------------------------------------
+Tue Jun 11 15:20:43 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [debugger/break.c] [loader/signal.c]
+	Fixed breakpoints in 32-bit code.
+
+	* [include/windows.h]
+	Added many more Win32 versions of standard structures.
+
+	* [include/winreg.h] [misc/registry.c]
+	Moved private types into registry.c.
+
+	* [memory/string.c] (New file)
+	Moved most string functions from misc/lstr.c; added Win32 version
+	of all functions.
+
+	* [misc/wsprintf.c]
+	Implemented Win32 wsprintf functions.
+
+	* [objects/bitmap.c]
+	Implemented Win32 bitmap functions.
+
+	* [windows/dialog.c]
+	Don't set dialog procedure before the controls are created. This
+	avoids a crash in Winhelp.
+
+Tue Jun 11 14:10:06 1996 Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [controls/menu.c] [if1632/user.spec] [windows/message.c]
+	Replace PeekMessage with PeekMessage16.
+
+	* [if1632/kernel32.spec][misc/main.c]
+	GetVersion32,GetVersionEx32A,GetVersionEx32W: new functions.
+	MAIN_ParseVersion: new function, new command line option -winver.
+	GetVersion: modified to take command line argument into account.
+
+	* [if1632/kernel32.spec] [win32/process.c]
+	FreeLibrary32: new function.
+	TlsAlloc: initialize Tls to zero.
+	InterlockedIncrement,InterlockedDecrement,InterlockedExchange: new
+	functions.
+
+	* [if1632/kernel32.spec]
+	SetErrorMode,GetActiveWindow: new relays to existing functions.
+
+	* [if1632/kernel32.spec][win32/user32.c]
+	PeekMessage32A,PeekMessage32W: new functions.
+
+	* [include/struct32.h][include/windows.h]
+	Moved MSG32 to windows.h.
+	Renamed MSG to MSG16.
+	Modified prototypes to use MSG16
+
+	* [include/winbase.h]
+	OSVERSIONINFO32A,OSVERSIONINFO32W: new structures.
+
+Sun Jun  9 20:53:30 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/Makefile.in] [loader/builtin.c]
+	version.dll,lz32.dll added.
+
+	* [include/lzexpand.h] [if1632/lz32.spec] [if1632/lzexpand.spec]
+	  [misc/lzexpand.c]
+	lz32.dll added.
+	Modified to new function naming standard.
+
+	* [include/ver.h] [if1632/ver.spec] [if1632/version.spec] [misc/ver.c]
+	version.dll added (win32 version of ver.dll).
+	Modified to new function naming standard.
+	Use registry to look up a LOCALE langids too.
+	(VerInstallFile,VerFindFile still stubs)
+
+Fri Jun  7 20:40:20 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [files/file.c]
+	Added a warning if GetTempFileName() gets a bad drive parameter.
+
+	* [misc/commdlg.c]
+	Changed file listbox color to gray in SaveFile dialog 
+	(just like Windows does this).
+
+----------------------------------------------------------------------
 Wed Jun  5 20:13:54 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/button.c] [controls/listbox.c]

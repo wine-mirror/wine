@@ -57,7 +57,7 @@ void EXC_Init(void)
  *  
  */
 
-void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,PVOID unusedEip, 
+void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,LPVOID unusedEip, 
                    PEXCEPTION_RECORD pRecord, DWORD returnEax,
                    PCONTEXT pcontext)
 {   
@@ -73,7 +73,7 @@ void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,PVOID unusedEip,
      record.ExceptionCode=   0xC0000026;  /* invalid disposition */ 
      record.ExceptionFlags=  0;
      record.ExceptionRecord= NULL;
-     record.ExceptionAddress=(PVOID) pcontext->Eip; 
+     record.ExceptionAddress=(LPVOID) pcontext->Eip; 
      record.NumberParameters= 0;
      pRecord=&record;     
    }
@@ -99,7 +99,7 @@ void EXC_RtlUnwind(PEXCEPTION_FRAME pEndFrame,PVOID unusedEip,
                               retval, (int) dispatch);
   
        if(retval==ExceptionCollidedUnwind)
-          TebExceptionFrame=(PVOID) dispatch;
+          TebExceptionFrame=(LPVOID) dispatch;
        else if(TebExceptionFrame!=pEndFrame)
           TebExceptionFrame=TebExceptionFrame->Prev;
        else
@@ -130,7 +130,7 @@ VOID EXC_RaiseException(DWORD dwExceptionCode,
     record.ExceptionFlags      = dwExceptionFlags;
     record.ExceptionRecord     = NULL;
     record.NumberParameters    = cArguments;
-    record.ExceptionAddress    = (PVOID) pcontext->Eip;
+    record.ExceptionAddress    = (LPVOID) pcontext->Eip;
     
     for(i=0;i<cArguments;i++)
        record.ExceptionInformation[i]=lpArguments[i];

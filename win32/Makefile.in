@@ -10,7 +10,6 @@ C_SRCS = \
 	error.c \
 	except.c \
 	file.c \
-	gdi32.c \
 	init.c \
 	memory.c \
 	newfns.c \

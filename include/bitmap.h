@@ -13,7 +13,7 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    BITMAP      bitmap;
+    BITMAP16    bitmap;
     Pixmap      pixmap;
     SIZE16      size;   /* For SetBitmapDimension() */
 } BITMAPOBJ;
@@ -37,7 +37,8 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 
   /* objects/bitmap.c */
 extern BOOL BITMAP_Init(void);
-extern int BITMAP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer );
+extern INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer );
+extern INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer );
 extern BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap );
 extern HBITMAP BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
                                     BITMAPOBJ * bmp );

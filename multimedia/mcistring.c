@@ -52,7 +52,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 /* The reason why I just don't lowercase the keywords array in 
  * mciSendString is left as an exercise to the reader.
  */
-#define STRCMP(x,y) lstrcmpi(x,y)
+#define STRCMP(x,y) lstrcmpi32A(x,y)
 
 /* standard functionparameters for all functions */
 #define _MCISTR_PROTO_ \
@@ -65,7 +65,7 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, WORD wMsg,
 #define _MCI_STR(s) do {\
 	dprintf_mci(stddeb,"->returns \"%s\"",s);\
 	if (lpstrReturnString) {\
-	    lstrcpyn(lpstrReturnString,s,uReturnLength);\
+	    lstrcpyn32A(lpstrReturnString,s,uReturnLength);\
 	    dprintf_mci(stddeb,"-->\"%s\"\n",lpstrReturnString);\
 	}\
 } while(0)

@@ -7,7 +7,7 @@
 #ifndef __WINE_RESOURCE_H
 #define __WINE_RESOURCE_H
 
-#include "wintypes.h"
+#include "windows.h"
 
 struct resource
 {

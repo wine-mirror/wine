@@ -665,7 +665,7 @@ LOCVAL(LOCALE_INEGSEPBYSPACE)
 	}
 
 	if(retLen>len)retLen=len;
-	lstrcpyn(buf,retString,len);
+	lstrcpyn32A(buf,retString,len);
 	return retLen;
 }
 
@@ -690,8 +690,7 @@ int CompareStringA(DWORD lcid, DWORD fdwStyle,
 	l2 = (l2==-1)?strlen(s2):l2;
 	len = l1<l2 ? l1:l2;
 	ret = (fdwStyle & NORM_IGNORECASE) ?
-		lstrncmpi(s1,s2,len)	:
-		strncmp(s1,s2,len);
+		lstrncmpi32A(s1,s2,len)	: lstrncmp32A(s1,s2,len);
 	/* not equal, return 1 or 3 */
 	if(ret!=0)return ret+2;
 	/* same len, return 2 */

@@ -25,7 +25,7 @@ struct name_hash
 
 #define NR_NAME_HASH 128
 
-static struct name_hash * name_hash_table[NR_NAME_HASH] = {0,};
+static struct name_hash * name_hash_table[NR_NAME_HASH];
 
 static unsigned int name_hash( const char * name )
 {

@@ -70,50 +70,54 @@ static void wine_timer(int signal, int code, struct sigcontext *context)
 
 
 /**********************************************************************
- *		win_fault
+ *		SIGNAL_trap
+ *
+ * SIGTRAP handler.
+ */
+#ifdef linux
+static void SIGNAL_trap(int signal, struct sigcontext_struct context_struct)
+{
+    struct sigcontext_struct *context = &context_struct;
+#elif defined(__svr4__) || defined(_SCO_DS)
+static void SIGNAL_trap(int signal, void *siginfo, ucontext_t *context)
+{
+#else
+static void SIGNAL_trap(int signal, int code, struct sigcontext *context)
+{
+#endif
+    wine_debug( signal, context );  /* Enter our debugger */
+}
+
+
+/**********************************************************************
+ *		SIGNAL_fault
  *
  * Segfault handler.
  */
 #ifdef linux
-static void win_fault(int signal, struct sigcontext_struct context_struct)
+static void SIGNAL_fault(int signal, struct sigcontext_struct context_struct)
 {
     struct sigcontext_struct *context = &context_struct;
 #elif defined(__svr4__) || defined(_SCO_DS)
-static void win_fault(int signal, void *siginfo, ucontext_t *context)
+static void SIGNAL_fault(int signal, void *siginfo, ucontext_t *context)
 {
 #else
-static void win_fault(int signal, int code, struct sigcontext *context)
+static void SIGNAL_fault(int signal, int code, struct sigcontext *context)
 {
 #endif
-    if (signal == SIGTRAP)
+    if (CS_reg(context) == WINE_CODE_SELECTOR)
     {
-        /* If SIGTRAP not caused by breakpoint or single step 
-           don't jump into the debugger */
-        if (!(EFL_reg(context) & STEP_FLAG))
-        {
-            DBG_ADDR addr;
-            addr.seg = CS_reg(context);
-            addr.off = EIP_reg(context) - 1;
-            if (DEBUG_FindBreakpoint(&addr) == -1) return;
-        }
+        fprintf( stderr, "Segmentation fault in Wine program (%x:%lx)."
+                         "  Please debug.\n",
+                 CS_reg(context), EIP_reg(context) );
     }
-    else if (signal != SIGHUP)
+    else
     {
-        if (CS_reg(context) == WINE_CODE_SELECTOR)
-        {
-            fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
-                            "  Please debug.\n",
-                            CS_reg(context), EIP_reg(context) );
-        }
-        else
-        {
-            if (INSTR_EmulateInstruction( context )) return;
-            fprintf( stderr, "Segmentation fault in Windows program %x:%lx.\n",
-                     CS_reg(context), EIP_reg(context) );
-        }
+        if (INSTR_EmulateInstruction( context )) return;
+        fprintf( stderr, "Segmentation fault in Windows program %x:%lx.\n",
+                 CS_reg(context), EIP_reg(context) );
     }
-
-    wine_debug( signal, context );  /* Enter our debugger */
+    wine_debug( signal, context );
 }
 
 
@@ -201,13 +205,13 @@ void init_wine_signals(void)
 #endif  /* __svr4__ || _SCO_DS */
     
     SIGNAL_SetHandler( SIGALRM, (void (*)())wine_timer );
-    SIGNAL_SetHandler( SIGSEGV, (void (*)())win_fault );
-    SIGNAL_SetHandler( SIGILL,  (void (*)())win_fault );
-    SIGNAL_SetHandler( SIGFPE,  (void (*)())win_fault );
-    SIGNAL_SetHandler( SIGTRAP, (void (*)())win_fault ); /* For debugger */
-    SIGNAL_SetHandler( SIGHUP,  (void (*)())win_fault ); /* For forced break */
+    SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault );
+    SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault );
+    SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault );
+    SIGNAL_SetHandler( SIGTRAP, (void (*)())SIGNAL_trap ); /* debugger */
+    SIGNAL_SetHandler( SIGHUP,  (void (*)())SIGNAL_trap ); /* forced break */
 #ifdef SIGBUS
-    SIGNAL_SetHandler( SIGBUS,  (void (*)())win_fault );
+    SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault );
 #endif
 #ifdef CONFIG_IPC
     SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait ); /* For IPC */

@@ -27,8 +27,8 @@ base	1
 0022 stub CopyEnhMetaFileW
 0023 stub CopyMetaFileA
 0024 stub CopyMetaFileW
-0025 stub CreateBitmap
-0026 stub CreateBitmapIndirect
+0025 stdcall CreateBitmap(long long long long ptr) CreateBitmap
+0026 stdcall CreateBitmapIndirect(ptr) CreateBitmapIndirect32
 0027 stub CreateBrushIndirect
 0028 stub CreateColorSpaceA
 0029 stub CreateColorSpaceW
@@ -40,7 +40,7 @@ base	1
 0035 stub CreateDIBPatternBrushPt
 0036 stub CreateDIBSection
 0037 stub CreateDIBitmap
-0038 stub CreateDiscardableBitmap
+0038 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap
 0039 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn
 0040 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
 0041 stub CreateEnhMetaFileA
@@ -145,7 +145,7 @@ base	1
 0140 stub GdiSetServerAttr
 0141 stub GetArcDirection
 0142 stub GetAspectRatioFilterEx
-0143 stub GetBitmapBits
+0143 stdcall GetBitmapBits(long long ptr) GetBitmapBits
 0144 stdcall GetBitmapDimensionEx(long ptr) GetBitmapDimensionEx32
 0145 stub GetBkColor
 0146 stub GetBkMode
@@ -206,9 +206,9 @@ base	1
 0201 stub GetMiterLimit
 0202 stdcall GetNearestColor(long long) GetNearestColor
 0203 stub GetNearestPaletteIndex
-0204 stdcall GetObjectA(long long ptr) WIN32_GetObject
+0204 stdcall GetObjectA(long long ptr) GetObject32A
 0205 stub GetObjectType
-0206 stub GetObjectW
+0206 stdcall GetObjectW(long long ptr) GetObject32W
 0207 stub GetOutlineTextMetricsA
 0208 stub GetOutlineTextMetricsW
 0209 stub GetPaletteEntries
@@ -305,7 +305,7 @@ base	1
 0300 stub SelectPalette
 0301 stub SetAbortProc
 0302 stub SetArcDirection
-0303 stub SetBitmapBits
+0303 stdcall SetBitmapBits(long long ptr) SetBitmapBits
 0304 stdcall SetBitmapDimensionEx(long long long ptr) SetBitmapDimensionEx32
 0305 stdcall SetBkColor(long long) SetBkColor
 0306 stub SetBkMode

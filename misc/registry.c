@@ -41,6 +41,31 @@
 #define KEY_REGISTRY	"Software\\The WINE team\\WINE\\Registry"
 #define VAL_SAVEUPDATED	"SaveOnlyUpdatedKeys"
 
+/* one value of a key */
+typedef struct tagKEYVALUE
+{
+    LPWSTR   name;          /* name of value (UNICODE) or NULL for win31 */
+    DWORD    type;          /* type of value */
+    DWORD    len;           /* length of data */
+    DWORD    lastmodified;  /* time of seconds since 1.1.1970 */
+    LPBYTE   data;          /* content, may be strings, binaries, etc. */
+} KEYVALUE,*LPKEYVALUE;
+
+/* a registry key */
+typedef struct tagKEYSTRUCT
+{
+    LPWSTR               keyname;       /* name of THIS key (UNICODE) */
+    DWORD                flags;         /* flags. */
+    LPWSTR               class;
+    /* values */
+    DWORD                nrofvalues;    /* nr of values in THIS key */
+    LPKEYVALUE           values;        /* values in THIS key */
+    /* key management pointers */
+    struct tagKEYSTRUCT	*next;          /* next key on same hierarchy */
+    struct tagKEYSTRUCT	*nextsub;       /* keys that hang below THIS key */
+} KEYSTRUCT, *LPKEYSTRUCT;
+
+
 static KEYSTRUCT	*key_classes_root=NULL;	/* windows 3.1 global values */
 static KEYSTRUCT	*key_current_user=NULL;	/* user specific values */
 static KEYSTRUCT	*key_local_machine=NULL;/* machine specific values */
@@ -57,10 +82,10 @@ static KEYSTRUCT	*key_dyn_data=NULL;
 #define strdupA2W(x)	STRING32_DupAnsiToUni(x)
 #define strdupW2A(x)	STRING32_DupUniToAnsi(x)
 #define strdupW(x)	STRING32_strdupW(x)
-#define strcmpW(a,b)	STRING32_lstrcmpW(a,b)
+#define strcmpW(a,b)	lstrcmp32W(a,b)
 #define strcmpniW(a,b)	STRING32_lstrcmpniW(a,b)
 #define strchrW(a,c)	STRING32_lstrchrW(a,c)
-#define strlenW(a)	STRING32_UniLen(a)
+#define strlenW(a)	lstrlen32W(a)
 #define strcpyWA(a,b)	STRING32_UniToAnsi(a,b)
 
 static struct openhandle {

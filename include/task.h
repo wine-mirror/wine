@@ -119,7 +119,4 @@ extern HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance,
                               HANDLE hPrevInstance, HANDLE hEnvironment,
                               char *cmdLine, WORD cmdShow );
 
-  /* TASK_Reschedule() 16-bit entry point */
-extern FARPROC RELAY_RescheduleProcAddr;
-
 #endif /* _WINE_TASK_H */

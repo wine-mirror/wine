@@ -15,6 +15,7 @@
  * DCX_WINDOWPAINT - BeginPaint specific flag
  */
 
+#include "options.h"
 #include "dce.h"
 #include "class.h"
 #include "win.h"
@@ -119,6 +120,9 @@ HANDLE DCE_FindDCE(HDC hDC)
 
 /***********************************************************************
  *   DCE_InvalidateDCE
+ *
+ * It is called from SetWindowPos - we have to invalidate all busy
+ * DCE's for windows whose client rect intersects with update rectangle 
  */
 BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 {
@@ -130,6 +134,7 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
  dprintf_dc(stddeb,"InvalidateDCE: scope hwnd = %04x, (%i,%i - %i,%i)\n",
                     wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
 				        pRectUpdate->right,pRectUpdate->bottom);
+ /* walk all DCE's */
 
  for( hdce = firstDCE; (hdce); hdce=dce->hNext)
   { 
@@ -141,9 +146,11 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 
 	wnd = wndCurrent = WIN_FindWndPtr(dce->hwndCurrent);
 
-	/* desktop is not critical */
+	/* desktop is not critical (DC is not owned anyway) */
 
-	if( wnd == WIN_GetDesktop() ) continue;
+	if( wnd == WIN_GetDesktop() ) continue; 
+
+	/* check if DCE window is within z-order scope */
 
 	for( ; wnd ; wnd = wnd->parent )
 	    if( wnd == wndScope )
@@ -152,8 +159,9 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 
 	        dprintf_dc(stddeb,"\tgot hwnd %04x\n", wndCurrent->hwndSelf);
   
-	        MapWindowPoints16(wndCurrent->parent->hwndSelf, wndScope->hwndSelf,
-			 				(LPPOINT16)&wndRect, 2);
+	        if( wndCurrent->parent != wndScope )
+	            MapWindowPoints16(wndCurrent->parent->hwndSelf, wndScope->hwndSelf,
+			 				         (LPPOINT16)&wndRect, 2);
 	        if( IntersectRect16(&wndRect,&wndRect,pRectUpdate) )
 	            SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
 	        break;
@@ -496,8 +504,11 @@ HDC GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
             else OffsetRgn( hrgnVisible, -wndPtr->rectClient.left,
                                          -wndPtr->rectClient.top );
         }
-      else if( hwnd==GetDesktopWindow() ) hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
-                                     SYSMETRICS_CYSCREEN);
+           /* optimize away GetVisRgn for desktop if it isn't there */
+
+      else if( hwnd==GetDesktopWindow() && !Options.desktopGeometry ) 
+	       hrgnVisible = CreateRectRgn( 0, 0, SYSMETRICS_CXSCREEN,
+                                                  SYSMETRICS_CYSCREEN);
       else hrgnVisible = DCE_GetVisRgn( hwnd, flags );
 
       dc->w.flags &= ~DC_DIRTY;
@@ -581,11 +592,9 @@ int ReleaseDC( HWND hwnd, HDC hdc )
 	if( dce->DCXflags & DCX_KEEPCLIPRGN )
 	    dce->DCXflags &= ~DCX_KEEPCLIPRGN;
 	else
-	  {
 	    if( dce->hClipRgn > 1 )
 	        DeleteObject( dce->hClipRgn );
-	    dce->hClipRgn = 0;
-	  } 
+
         dce->hClipRgn = 0;
 	RestoreVisRgn(dce->hDC);
     }
@@ -593,7 +602,7 @@ int ReleaseDC( HWND hwnd, HDC hdc )
     if (dce->DCXflags & DCX_CACHE)
     {
 	SetDCState( dce->hDC, defaultDCstate );
-	dce->DCXflags &= ~DCX_DCEBUSY;
+	dce->DCXflags = DCX_CACHE;
     }
     return 1;
 }

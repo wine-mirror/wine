@@ -563,17 +563,17 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE *ht, METARECORD *mr,
 	
     case META_CREATEPENINDIRECT:
 	MF_AddHandle(ht, nHandles, 
-		     CreatePenIndirect((LOGPEN *)(&(mr->rdParam))));
+		     CreatePenIndirect((LOGPEN16 *)(&(mr->rdParam))));
 	break;
 
     case META_CREATEFONTINDIRECT:
 	MF_AddHandle(ht, nHandles, 
-		     CreateFontIndirect((LOGFONT *)(&(mr->rdParam))));
+		     CreateFontIndirect((LOGFONT16 *)(&(mr->rdParam))));
 	break;
 
     case META_CREATEBRUSHINDIRECT:
 	MF_AddHandle(ht, nHandles, 
-		     CreateBrushIndirect((LOGBRUSH *)(&(mr->rdParam))));
+		     CreateBrushIndirect((LOGBRUSH16 *)(&(mr->rdParam))));
 	break;
 
     /* W. Magro: Some new metafile operations.  Not all debugged. */
@@ -930,17 +930,17 @@ BOOL MF_MetaParam8(DC *dc, short func, short param1, short param2,
  *         MF_CreateBrushIndirect
  */
 
-BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
+BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
 {
     int index;
     HMETAFILE handle;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGBRUSH)];
+    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGBRUSH16)];
     METARECORD *mr = (METARECORD *)&buffer;
     METAHEADER *mh;
 
-    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGBRUSH) - 2) / 2;
+    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGBRUSH16) - 2) / 2;
     mr->rdFunction = META_CREATEBRUSHINDIRECT;
-    memcpy(&(mr->rdParam), logbrush, sizeof(LOGBRUSH));
+    memcpy(&(mr->rdParam), logbrush, sizeof(LOGBRUSH16));
     if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, 
 					  mr, mr->rdSize * 2)))
 	return FALSE;
@@ -968,7 +968,7 @@ BOOL MF_CreateBrushIndirect(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
  *         MF_CreatePatternBrush
  */
 
-BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
+BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH16 *logbrush)
 {
     DWORD len, bmSize, biSize;
     HANDLE hmr;
@@ -1009,8 +1009,9 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
 
     case BS_DIBPATTERN:
 	info = (BITMAPINFO *)GlobalLock16((HANDLE)logbrush->lbHatch);
-	bmSize = info->bmiHeader.biSizeImage;
-	if (!bmSize)
+	if (info->bmiHeader.biCompression)
+            bmSize = info->bmiHeader.biSizeImage;
+        else
 	    bmSize = (info->bmiHeader.biWidth * info->bmiHeader.biBitCount 
 		    + 31) / 32 * 8 * info->bmiHeader.biHeight;
 	biSize = DIB_BitmapInfoSize(info, LOWORD(logbrush->lbColor)); 
@@ -1058,17 +1059,17 @@ BOOL MF_CreatePatternBrush(DC *dc, HBRUSH hBrush, LOGBRUSH *logbrush)
  *         MF_CreatePenIndirect
  */
 
-BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN *logpen)
+BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
 {
     int index;
     HMETAFILE handle;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGPEN)];
+    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGPEN16)];
     METARECORD *mr = (METARECORD *)&buffer;
     METAHEADER *mh;
 
-    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGPEN) - 2) / 2;
+    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGPEN16) - 2) / 2;
     mr->rdFunction = META_CREATEPENINDIRECT;
-    memcpy(&(mr->rdParam), logpen, sizeof(LOGPEN));
+    memcpy(&(mr->rdParam), logpen, sizeof(LOGPEN16));
     if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, mr, 
 					   mr->rdSize * 2)))
 	return FALSE;
@@ -1095,17 +1096,17 @@ BOOL MF_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN *logpen)
  *         MF_CreateFontIndirect
  */
 
-BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT *logfont)
+BOOL MF_CreateFontIndirect(DC *dc, HFONT hFont, LOGFONT16 *logfont)
 {
     int index;
     HMETAFILE handle;
-    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT)];
+    char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT16)];
     METARECORD *mr = (METARECORD *)&buffer;
     METAHEADER *mh;
 
-    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGFONT) - 2) / 2;
+    mr->rdSize = (sizeof(METARECORD) + sizeof(LOGFONT16) - 2) / 2;
     mr->rdFunction = META_CREATEFONTINDIRECT;
-    memcpy(&(mr->rdParam), logfont, sizeof(LOGFONT));
+    memcpy(&(mr->rdParam), logfont, sizeof(LOGFONT16));
     if (!(dc->w.hMetaFile = MF_WriteRecord(dc->w.hMetaFile, mr, 
 					  mr->rdSize * 2)))
 	return FALSE;

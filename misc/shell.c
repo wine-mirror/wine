@@ -573,7 +573,7 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
   UINT 	l = strlen(entry); 
   for( ; *lpEnv ; lpEnv+=strlen(lpEnv)+1 )
      {
-       if( lstrncmpi(lpEnv, entry, l) ) continue;
+       if( lstrncmpi32A(lpEnv, entry, l) ) continue;
        
        if( !*(lpEnv+l) )
          return (lpEnv + l); 		/* empty entry */

@@ -5,6 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  */
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -43,7 +44,7 @@ typedef struct tagDOS_FILE
 } DOS_FILE;
 
 /* Global files array */
-static DOS_FILE DOSFiles[MAX_OPEN_FILES] = { { 0, }, };
+static DOS_FILE DOSFiles[MAX_OPEN_FILES];
 
 static DOS_FILE *FILE_First = DOSFiles;
 static DOS_FILE *FILE_LastUsed = DOSFiles;
@@ -599,12 +600,12 @@ HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 )
 /***********************************************************************
  *           FILE_Read
  */
-LONG FILE_Read( HFILE hFile, void *buffer, LONG count )
+INT32 FILE_Read( HFILE hFile, LPVOID buffer, UINT32 count )
 {
     DOS_FILE *file;
-    LONG result;
+    INT32 result;
 
-    dprintf_file( stddeb, "FILE_Read: %d %p %ld\n", hFile, buffer, count );
+    dprintf_file( stddeb, "FILE_Read: %d %p %d\n", hFile, buffer, count );
     if (!(file = FILE_GetFile( hFile ))) return -1;
     if (!count) return 0;
     if ((result = read( file->unix_handle, buffer, count )) == -1)
@@ -622,6 +623,14 @@ INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
     UINT num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
     char *p;
 
+    if ((drive & TF_FORCEDRIVE) &&
+        !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
+    {
+        drive &= ~TF_FORCEDRIVE;
+        fprintf( stderr, "Warning: GetTempFileName: invalid drive %d specified\n",
+                 drive );
+    }
+
     if (drive & TF_FORCEDRIVE)
     {
         sprintf( buffer, "%c:", drive & ~TF_FORCEDRIVE );
@@ -638,7 +647,7 @@ INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
 
     if (unique)
     {
-        lstrcpyn( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
+        lstrcpyn32A( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
         dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
         return unique;
     }
@@ -659,7 +668,7 @@ INT GetTempFileName( BYTE drive, LPCSTR prefix, UINT unique, LPSTR buffer )
         sprintf( p, "%04x.tmp", num );
     } while (num != (unique & 0xffff));
 
-    lstrcpyn( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
+    lstrcpyn32A( buffer, DOSFS_GetDosTrueName( buffer, FALSE ), 144 );
     dprintf_file( stddeb, "GetTempFileName: returning %s\n", buffer );
     return num;
 }
@@ -696,7 +705,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     if (mode & OF_PARSE)
     {
         if (!(dosName = DOSFS_GetDosTrueName( name, FALSE ))) goto error;
-        lstrcpyn( ofs->szPathName, dosName, sizeof(ofs->szPathName) );
+        lstrcpyn32A( ofs->szPathName, dosName, sizeof(ofs->szPathName) );
         ofs->fFixedDisk = (GetDriveType( dosName[0]-'A' ) != DRIVE_REMOVABLE);
         dprintf_file( stddeb, "OpenFile(%s): OF_PARSE, res = '%s', %d\n",
                       name, ofs->szPathName, hFileRet );
@@ -712,8 +721,8 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
     if (mode & OF_CREATE)
     {
         if (!(file = FILE_Create( name, 0666, FALSE ))) goto error;
-        lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( name, FALSE ),
-                  sizeof(ofs->szPathName) );
+        lstrcpyn32A( ofs->szPathName, DOSFS_GetDosTrueName( name, FALSE ),
+                     sizeof(ofs->szPathName) );
         goto success;
     }
 
@@ -721,7 +730,7 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
     /* First try the current directory */
 
-    lstrcpyn( ofs->szPathName, name, sizeof(ofs->szPathName) );
+    lstrcpyn32A( ofs->szPathName, name, sizeof(ofs->szPathName) );
     if ((unixName = DOSFS_GetUnixFileName( ofs->szPathName, TRUE )) != NULL)
         goto found;
 
@@ -784,8 +793,8 @@ HFILE OpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode )
 
 found:
     dprintf_file( stddeb, "OpenFile: found '%s'\n", unixName );
-    lstrcpyn( ofs->szPathName, DOSFS_GetDosTrueName( ofs->szPathName, FALSE ),
-              sizeof(ofs->szPathName) );
+    lstrcpyn32A(ofs->szPathName, DOSFS_GetDosTrueName( ofs->szPathName, FALSE),
+                sizeof(ofs->szPathName) );
 
     if (mode & OF_DELETE)
     {

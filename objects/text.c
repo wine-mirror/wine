@@ -194,7 +194,7 @@ INT16 DrawText16( HDC16 hdc, LPCSTR str, INT16 i_count,
     int len, lh, count=i_count;
     int prefix_x = 0;
     int prefix_end = 0;
-    TEXTMETRIC tm;
+    TEXTMETRIC16 tm;
     int x = rect->left, y = rect->top;
     int width = rect->right - rect->left;
     int max_width = 0;
@@ -581,20 +581,16 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam, 
 		INT cch, INT x, INT y, INT cx, INT cy)
 {
-	int s, current_color;
+    BOOL ret;
+    COLORREF current_color;
 
-	if (gsprc) {
-		return CallGrayStringProc(gsprc, hdc, lParam, 
-					cch ? cch : lstrlen((LPCSTR) lParam) );
-	} else {
-		current_color = GetTextColor(hdc);
-		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT) );
-		s = TextOut16(hdc, x, y, (LPSTR) lParam, 
-                              cch ? cch : lstrlen((LPCSTR) lParam) );
-		SetTextColor(hdc, current_color);
-		
-		return s;
-	}
+    if (!cch) cch = lstrlen16( (LPCSTR)PTR_SEG_TO_LIN(lParam) );
+    if (gsprc) return CallGrayStringProc( gsprc, hdc, lParam, cch );
+    current_color = GetTextColor( hdc );
+    SetTextColor( hdc, GetSysColor(COLOR_GRAYTEXT) );
+    ret = TextOut16( hdc, x, y, (LPCSTR)PTR_SEG_TO_LIN(lParam), cch );
+    SetTextColor( hdc, current_color );
+    return ret;
 }
 
 
@@ -621,7 +617,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
     }
     else
     {
-        TEXTMETRIC tm;
+        TEXTMETRIC16 tm;
         GetTextMetrics( hdc, &tm );
         defWidth = 8 * tm.tmAveCharWidth;
     }

@@ -29,7 +29,7 @@
 BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
 {
 	BOOL ret;
-	MSG msg;
+	MSG16 msg;
 	ret=GetMessage(MAKE_SEGPTR(&msg),(HWND)hwnd,min,max);
 	STRUCT32_MSG16to32(&msg,lpmsg);
 	return ret;
@@ -40,7 +40,7 @@ BOOL USER32_GetMessageA(MSG32* lpmsg,DWORD hwnd,DWORD min,DWORD max)
  */
 LONG USER32_DispatchMessageA(MSG32* lpmsg)
 {
-	MSG msg;
+	MSG16 msg;
 	LONG ret;
 	STRUCT32_MSG32to16(lpmsg,&msg);
 	ret=DispatchMessage(&msg);
@@ -53,11 +53,34 @@ LONG USER32_DispatchMessageA(MSG32* lpmsg)
  */
 BOOL USER32_TranslateMessage(MSG32* lpmsg)
 {
-	MSG msg;
+	MSG16 msg;
 	STRUCT32_MSG32to16(lpmsg,&msg);
 	return TranslateMessage(&msg);
 }
 
+/***********************************************************************
+ *         PeekMessageA
+ */
+BOOL32 PeekMessage32A( LPMSG32 lpmsg, HWND32 hwnd,
+                       UINT32 min,UINT32 max,UINT32 wRemoveMsg)
+{
+	MSG16 msg;
+	BOOL ret;
+	ret=PeekMessage16(&msg,hwnd,min,max,wRemoveMsg);
+        /* FIXME: should translate the message to Win32 */
+	STRUCT32_MSG16to32(&msg,lpmsg);
+	return ret;
+}
+
+/***********************************************************************
+ *         PeekMessageW
+ */
+BOOL32 PeekMessage32W( LPMSG32 lpmsg, HWND32 hwnd,
+                       UINT32 min,UINT32 max,UINT32 wRemoveMsg)
+{
+	/* FIXME: Should perform Unicode translation on specific messages */
+	return PeekMessage32A(lpmsg,hwnd,min,max,wRemoveMsg);
+}
 
 UINT USER32_SetTimer(HWND hwnd, UINT id, UINT timeout, void *proc)
 
@@ -66,9 +89,3 @@ UINT USER32_SetTimer(HWND hwnd, UINT id, UINT timeout, void *proc)
 (LONG)proc );
     return SetTimer( hwnd, id, timeout, MAKE_SEGPTR(proc));
 }   
-
-
-int USER32_wsprintfA( int *args )
-{
-    return vsprintf( (char *)args[0], (char *)args[1], (va_list)&args[2] );
-}

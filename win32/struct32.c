@@ -30,7 +30,7 @@ void STRUCT32_SIZE16to32(const SIZE16* p16, SIZE32* p32)
         p32->cy = p16->cy;
 }
 
-void STRUCT32_MSG16to32(MSG *msg16,MSG32 *msg32)
+void STRUCT32_MSG16to32(const MSG16 *msg16,MSG32 *msg32)
 {
 	msg32->hwnd=(DWORD)msg16->hwnd;
 	msg32->message=msg16->message;
@@ -41,7 +41,7 @@ void STRUCT32_MSG16to32(MSG *msg16,MSG32 *msg32)
 	msg32->pt.y=msg16->pt.y;
 }
 
-void STRUCT32_MSG32to16(MSG32 *msg32,MSG *msg16)
+void STRUCT32_MSG32to16(const MSG32 *msg32,MSG16 *msg16)
 {
 	msg16->hwnd=(HWND)msg32->hwnd;
 	msg16->message=msg32->message;

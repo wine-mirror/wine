@@ -288,7 +288,7 @@ BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
                 0 : CS_reg(DEBUG_context);
     addr.off = EIP_reg(DEBUG_context);
         
-    bpnum  = DEBUG_FindBreakpoint( &addr );
+    bpnum = DEBUG_FindBreakpoint( &addr );
     breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
 
     if ((bpnum != 0) && (bpnum != -1))
@@ -299,6 +299,12 @@ BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
         fprintf( stderr, "\n" );
         return FALSE;
     }
+
+    /* If there's no breakpoint and we are not single-stepping, then we     */
+    /* must have encountered an int3 in the Windows program; let's skip it. */
+    if ((bpnum == -1) && !(EFL_reg(DEBUG_context) & STEP_FLAG))
+        EIP_reg(DEBUG_context)++;
+
       /* no breakpoint, continue if in continuous mode */
     return (mode == EXEC_CONT);
 }

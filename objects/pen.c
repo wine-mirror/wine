@@ -15,7 +15,7 @@
  */
 HPEN16 CreatePen( INT style, INT width, COLORREF color )
 {
-    LOGPEN logpen = { style, { width, 0 }, color };
+    LOGPEN16 logpen = { style, { width, 0 }, color };
     dprintf_gdi(stddeb, "CreatePen: %d %d %06lx\n", style, width, color );
     return CreatePenIndirect( &logpen );
 }
@@ -24,7 +24,7 @@ HPEN16 CreatePen( INT style, INT width, COLORREF color )
 /***********************************************************************
  *           CreatePenIndirect    (GDI.62)
  */
-HPEN16 CreatePenIndirect( const LOGPEN * pen )
+HPEN16 CreatePenIndirect( const LOGPEN16 * pen )
 {
     PENOBJ * penPtr;
     HPEN16 hpen;
@@ -33,7 +33,7 @@ HPEN16 CreatePenIndirect( const LOGPEN * pen )
     hpen = GDI_AllocObject( sizeof(PENOBJ), PEN_MAGIC );
     if (!hpen) return 0;
     penPtr = (PENOBJ *) GDI_HEAP_LIN_ADDR( hpen );    
-    memcpy( &penPtr->logpen, pen, sizeof(LOGPEN) );
+    memcpy( &penPtr->logpen, pen, sizeof(*pen) );
     return hpen;
 }
 
@@ -43,7 +43,7 @@ HPEN16 CreatePenIndirect( const LOGPEN * pen )
  */
 int PEN_GetObject( PENOBJ * pen, int count, LPSTR buffer )
 {
-    if (count > sizeof(LOGPEN)) count = sizeof(LOGPEN);
+    if (count > sizeof(pen->logpen)) count = sizeof(pen->logpen);
     memcpy( buffer, &pen->logpen, count );
     return count;
 }

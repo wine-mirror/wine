@@ -2,6 +2,12 @@
  *	ole.h	-	Declarations for OLESVR and OLECLI
  */
 
+#ifndef __WINE_OLE_H
+#define __WINE_OLE_H
+
+#include "windows.h"
+
+typedef	LPVOID	LPUNKNOWN;
 typedef LPCSTR	OLE_LPCSTR;
 
 /* object types */
@@ -160,6 +166,7 @@ typedef struct _OLESERVERDOCVTBL {
 	OLESTATUS	(*Close)(LPOLESERVERDOC);
 	OLESTATUS	(*SetHostNames)(LPOLESERVERDOC,OLE_LPCSTR,OLE_LPCSTR);
 	OLESTATUS	(*SetDocDimensions)(LPOLESERVERDOC,LPRECT16);
+#undef GetObject  /* FIXME */
 	OLESTATUS	(*GetObject)(LPOLESERVERDOC,OLE_LPCSTR,LPOLEOBJECT*,LPOLECLIENT);
 	OLESTATUS	(*Release)(LPOLESERVERDOC);
 	OLESTATUS	(*SetColorScheme)(LPOLESERVERDOC,LPLOGPALETTE);
@@ -251,3 +258,5 @@ OLESTATUS OleRenameClientDoc(LHCLIENTDOC,LPCSTR);
 OLESTATUS OleRevokeServerDoc(LHSERVERDOC);
 OLESTATUS OleRevokeClientDoc(LHCLIENTDOC);
 OLESTATUS OleRevokeServer(LHSERVER);
+
+#endif  /* __WINE_OLE_H */

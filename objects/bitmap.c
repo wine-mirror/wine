@@ -3,6 +3,7 @@
  *
  * Copyright 1993 Alexandre Julliard
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
@@ -12,8 +13,6 @@
 #include "dc.h"
 #include "bitmap.h"
 #include "stddebug.h"
-/* #define DEBUG_GDI    */
-/* #define DEBUG_BITMAP */
 #include "debug.h"
 
   /* GCs used for B&W and color bitmap operations */
@@ -55,7 +54,7 @@ BOOL BITMAP_Init(void)
  *
  * Create an XImage pointing to the bitmap data.
  */
-static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
+static XImage *BITMAP_BmpToImage( BITMAP16 * bmp, LPVOID bmpData )
 {
     extern void _XInitImageFuncPtrs( XImage* );
     XImage * image;
@@ -73,12 +72,13 @@ static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
 
 
 /***********************************************************************
- *           CreateBitmap    (GDI.48)
+ *           CreateBitmap    (GDI.48) (GDI32.25)
  */
-HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits )
+HBITMAP16 CreateBitmap( INT32 width, INT32 height, UINT32 planes,
+                        UINT32 bpp, LPCVOID bits )
 {
     BITMAPOBJ * bmpObjPtr;
-    HBITMAP hbitmap;
+    HBITMAP16 hbitmap;
 
     dprintf_gdi( stddeb, "CreateBitmap: %dx%d, %d colors\n", 
                  width, height, 1 << (planes*bpp) );
@@ -97,11 +97,11 @@ HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits 
     bmpObjPtr->size.cx = 0;
     bmpObjPtr->size.cy = 0;
     bmpObjPtr->bitmap.bmType = 0;
-    bmpObjPtr->bitmap.bmWidth = width;
-    bmpObjPtr->bitmap.bmHeight = height;
-    bmpObjPtr->bitmap.bmPlanes = planes;
-    bmpObjPtr->bitmap.bmBitsPixel = bpp;
-    bmpObjPtr->bitmap.bmWidthBytes = BITMAP_WIDTH_BYTES( width, bpp );
+    bmpObjPtr->bitmap.bmWidth = (INT16)width;
+    bmpObjPtr->bitmap.bmHeight = (INT16)height;
+    bmpObjPtr->bitmap.bmPlanes = (BYTE)planes;
+    bmpObjPtr->bitmap.bmBitsPixel = (BYTE)bpp;
+    bmpObjPtr->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmBits = NULL;
 
       /* Create the pixmap */
@@ -118,28 +118,27 @@ HBITMAP CreateBitmap( INT width, INT height, UINT planes, UINT bpp, LPVOID bits 
 
 
 /***********************************************************************
- *           CreateCompatibleBitmap    (GDI.51)
+ *           CreateCompatibleBitmap    (GDI.51) (GDI32.30)
  */
-HBITMAP CreateCompatibleBitmap( HDC hdc, INT width, INT height )
+HBITMAP16 CreateCompatibleBitmap( HDC32 hdc, INT32 width, INT32 height )
 {
-    HBITMAP	hbmpRet = 0;
-    DC * 	dc;
-    dprintf_gdi(stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
-		hdc, width, height );
+    HBITMAP hbmpRet = 0;
+    DC *dc;
+
+    dprintf_gdi( stddeb, "CreateCompatibleBitmap(%04x,%d,%d) = \n", 
+                 hdc, width, height );
     if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
     
     hbmpRet = CreateBitmap( width, height, 1, dc->w.bitsPerPixel, NULL );
-
     dprintf_gdi(stddeb,"\t\t%04x\n", hbmpRet);
-
     return hbmpRet;
 }
 
 
 /***********************************************************************
- *           CreateBitmapIndirect    (GDI.49)
+ *           CreateBitmapIndirect16    (GDI.49)
  */
-HBITMAP CreateBitmapIndirect( const BITMAP * bmp )
+HBITMAP16 CreateBitmapIndirect16( const BITMAP16 * bmp )
 {
     return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
                          bmp->bmBitsPixel, PTR_SEG_TO_LIN( bmp->bmBits ) );
@@ -147,9 +146,19 @@ HBITMAP CreateBitmapIndirect( const BITMAP * bmp )
 
 
 /***********************************************************************
- *           GetBitmapBits    (GDI.74)
+ *           CreateBitmapIndirect32    (GDI32.26)
  */
-LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
+HBITMAP32 CreateBitmapIndirect32( const BITMAP32 * bmp )
+{
+    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
+                         bmp->bmBitsPixel, bmp->bmBits );
+}
+
+
+/***********************************************************************
+ *           GetBitmapBits    (GDI.74) (GDI32.143)
+ */
+LONG GetBitmapBits( HBITMAP32 hbitmap, LONG count, LPVOID buffer )
 {
     BITMAPOBJ * bmp;
     LONG height;
@@ -182,9 +191,9 @@ LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
 
 
 /***********************************************************************
- *           SetBitmapBits    (GDI.106)
+ *           SetBitmapBits    (GDI.106) (GDI32.303)
  */
-LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
+LONG SetBitmapBits( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
 {
     BITMAPOBJ * bmp;
     LONG height;
@@ -207,7 +216,7 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     if (height > bmp->bitmap.bmHeight) height = bmp->bitmap.bmHeight;
     if (!height) return 0;
     	
-    if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
+    if (!(image = BITMAP_BmpToImage( &bmp->bitmap, (LPVOID)buffer ))) return 0;
     CallTo32_LargeStack( XPutImage, 10,
                          display, bmp->pixmap, BITMAP_GC(bmp), image, 0, 0,
                          0, 0, bmp->bitmap.bmWidth, height );
@@ -271,12 +280,31 @@ BOOL BITMAP_DeleteObject( HBITMAP hbitmap, BITMAPOBJ * bitmap )
 
 	
 /***********************************************************************
- *           BITMAP_GetObject
+ *           BITMAP_GetObject16
  */
-int BITMAP_GetObject( BITMAPOBJ * bmp, int count, LPSTR buffer )
+INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 {
-    if (count > sizeof(BITMAP)) count = sizeof(BITMAP);
+    if (count > sizeof(bmp->bitmap)) count = sizeof(bmp->bitmap);
     memcpy( buffer, &bmp->bitmap, count );
+    return count;
+}
+    
+
+/***********************************************************************
+ *           BITMAP_GetObject32
+ */
+INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
+{
+    BITMAP32 bmp32;
+    bmp32.bmType       = bmp->bitmap.bmType;
+    bmp32.bmWidth      = bmp->bitmap.bmWidth;
+    bmp32.bmHeight     = bmp->bitmap.bmHeight;
+    bmp32.bmWidthBytes = bmp->bitmap.bmWidthBytes;
+    bmp32.bmPlanes     = bmp->bitmap.bmPlanes;
+    bmp32.bmBitsPixel  = bmp->bitmap.bmBitsPixel;
+    bmp32.bmBits       = NULL;
+    if (count > sizeof(bmp32)) count = sizeof(bmp32);
+    memcpy( buffer, &bmp32, count );
     return count;
 }
     
@@ -313,9 +341,9 @@ HBITMAP BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
 }
 
 /***********************************************************************
- *           CreateDiscardableBitmap    (GDI.156)
+ *           CreateDiscardableBitmap    (GDI.156) (GDI32.38)
  */
-HBITMAP CreateDiscardableBitmap(HDC hdc, INT width, INT height)
+HBITMAP16 CreateDiscardableBitmap( HDC32 hdc, INT32 width, INT32 height )
 {
     dprintf_bitmap(stddeb,"CreateDiscardableBitmap(%04x, %d, %d); "
 	   "// call CreateCompatibleBitmap() for now!\n",
@@ -337,7 +365,7 @@ BOOL16 GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
 
 
 /***********************************************************************
- *           GetBitmapDimensionEx32    (GDI.468)
+ *           GetBitmapDimensionEx32    (GDI32.144)
  */
 BOOL32 GetBitmapDimensionEx32( HBITMAP32 hbitmap, LPSIZE32 size )
 {
@@ -376,7 +404,7 @@ BOOL16 SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
 
 
 /***********************************************************************
- *           SetBitmapDimensionEx32    (GDI.478)
+ *           SetBitmapDimensionEx32    (GDI32.304)
  */
 BOOL32 SetBitmapDimensionEx32( HBITMAP32 hbitmap, INT32 x, INT32 y,
                                LPSIZE32 prevSize )

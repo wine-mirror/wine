@@ -1,8 +1,6 @@
 /*
  * 				Shell Library definitions
  */
-#include "wintypes.h"
-
 #ifndef __WINE_WINREG_H
 #define __WINE_WINREG_H
 
@@ -85,27 +83,6 @@
 				 KEY_READ|KEY_WRITE|	\
 				 KEY_CREATE_LINK	\
 				)
-/* one value of a key */
-typedef struct tagKEYVALUE {
-	LPWSTR	name;	/* name of value (UNICODE) or NULL for win31 */
-	DWORD	type;	/* type of value */
-	DWORD	len;	/* length of data */
-	DWORD	lastmodified; /* time of seconds since 1.1.1970 */
-	LPBYTE	data;	/* content, may be strings, binaries, etc. */
-} KEYVALUE,*LPKEYVALUE;
-
-/* a registry key */
-typedef struct tagKEYSTRUCT {
-	LPWSTR			keyname;	/* name of THIS key (UNICODE) */
-	DWORD			flags;		/* flags. */
-	LPWSTR			class;
-	/* values */
-	DWORD			nrofvalues;	/* nr of values in THIS key */
-	LPKEYVALUE		values;		/* values in THIS key */
-	/* key management pointers */
-	struct tagKEYSTRUCT	*next;		/* next key on same hierarchy */
-	struct tagKEYSTRUCT	*nextsub;	/* keys that hang below THIS key */
-} KEYSTRUCT, *LPKEYSTRUCT;
 
 void SHELL_Init();
 void SHELL_SaveRegistry();

@@ -152,16 +152,19 @@ DECLARE_HANDLE(HWND);
 /* Callback function pointers types for Win16. */
 
 #ifdef WINELIB
-typedef LRESULT (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
+typedef LRESULT (*DLGPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 typedef LRESULT (*FARPROC16)();
+typedef LRESULT (*WNDPROC16)(HWND16,UINT16,WPARAM16,LPARAM);
 #else
 /* Function pointers are SEGPTR in Win16 */
+typedef SEGPTR DLGPROC16;
 typedef SEGPTR FARPROC16;
 typedef SEGPTR WNDPROC16;
 #endif
 
 /* Callback function pointers types for Win32. */
 
+typedef LRESULT (*DLGPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
 typedef LRESULT (*FARPROC32)();
 typedef LRESULT (*WNDPROC32)(HWND32,UINT32,WPARAM32,LPARAM);
 
@@ -225,71 +228,6 @@ DECL_WINELIB_TYPE(HWND);
 
 DECL_WINELIB_TYPE(FARPROC);
 DECL_WINELIB_TYPE(WNDPROC);
-
-/* Library data types defined as a transition aid for the emulator. */
-/* These should _not_ be used in the emulator and will be removed someday. */
-
-#ifndef NO_TRANSITION_TYPES
-
-#ifndef WINELIB
-typedef INT16 INT;
-typedef UINT16 UINT;
-typedef BOOL16 BOOL;
-typedef WPARAM16 WPARAM;
-typedef HANDLE16 HANDLE;
-typedef HANDLE16 HBITMAP;
-typedef HANDLE16 HBRUSH;
-typedef HANDLE16 HCURSOR;
-typedef HANDLE16 HDC;
-typedef HANDLE16 HDRVR;
-typedef HANDLE16 HFONT;
-typedef HANDLE16 HGLOBAL;
-typedef HANDLE16 HICON;
-typedef HANDLE16 HINSTANCE;
-typedef HANDLE16 HMENU;
-typedef HANDLE16 HMETAFILE;
-typedef HANDLE16 HMIDI;
-typedef HANDLE16 HMIDIIN;
-typedef HANDLE16 HMIDIOUT;
-typedef HANDLE16 HMMIO;
-typedef HANDLE16 HMODULE;
-typedef HANDLE16 HQUEUE;
-typedef HANDLE16 HRGN;
-typedef HANDLE16 HRSRC;
-typedef HANDLE16 HTASK;
-typedef HANDLE16 HWAVE;
-typedef HANDLE16 HWAVEIN;
-typedef HANDLE16 HWAVEOUT;
-typedef HANDLE16 HWND;
-typedef FARPROC16 FARPROC;
-typedef WNDPROC16 WNDPROC;
-#endif  /* WINELIB */
-
-/* Callback function pointers types. */
-
-#ifdef WINELIB
-typedef LONG (*DRIVERPROC)(DWORD, HDRVR, UINT, LPARAM, LPARAM);
-typedef int (*EDITWORDBREAKPROC)(LPSTR lpch, int ichCurrent, int cch,int code);
-/*typedef int (*FONTENUMPROC)(const LOGFONT*,const TEXTMETRIC*,DWORD,LPARAM);*/
-typedef int (*FONTENUMPROC)(const void*,const void*,DWORD,LPARAM);
-typedef int (*GOBJENUMPROC)(LPVOID,LPARAM);
-/*typedef int (*MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,int,LPARAM);*/
-typedef int (*MFENUMPROC)(HDC,void*,void*,int,LPARAM);
-typedef BOOL (*PROPENUMPROC)(HWND,LPCTSTR,HANDLE);
-typedef LRESULT (*WNDENUMPROC)(HWND,LPARAM);
-#else
-typedef SEGPTR DRIVERPROC;
-typedef SEGPTR EDITWORDBREAKPROC;
-typedef SEGPTR FONTENUMPROC;
-typedef SEGPTR GOBJENUMPROC;
-typedef SEGPTR MFENUMPROC;
-typedef SEGPTR PROPENUMPROC;
-typedef SEGPTR WNDENUMPROC;
-#endif
-typedef FARPROC DLGPROC;
-typedef FARPROC HOOKPROC;
-
-#endif  /* NO_TRANSITION_TYPES */
 
 /* Misc. constants. */
 

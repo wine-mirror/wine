@@ -32,8 +32,8 @@ typedef struct tagCLIPFORMAT {
     LPSTR	Name;
     HANDLE	hData;
     DWORD	BufSize;
-    void	*PrevFormat;
-    void	*NextFormat;
+    struct tagCLIPFORMAT *PrevFormat;
+    struct tagCLIPFORMAT *NextFormat;
 } CLIPFORMAT, *LPCLIPFORMAT;
 
 /* *************************************************************************
@@ -50,7 +50,7 @@ static WORD LastRegFormat = CF_REGFORMATBASE;
 static Bool wait_for_selection = False;
 static Bool wineOwnsSelection = False;
 
-CLIPFORMAT ClipFormats[16]  = {
+static CLIPFORMAT ClipFormats[16]  = {
     { CF_TEXT, 1, 0, "Text", (HANDLE)NULL, 0, NULL, &ClipFormats[1] },
     { CF_BITMAP, 1, 0, "Bitmap", (HANDLE)NULL, 0, &ClipFormats[0], &ClipFormats[2] },
     { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE)NULL, 0, &ClipFormats[1], &ClipFormats[3] },
@@ -117,12 +117,16 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
  */
 BOOL CLIPBOARD_RequestXSelection()
 {
+  HWND hWnd = hWndClipWindow;
+
+  if( !hWnd ) hWnd = GetActiveWindow(); 
+
   wait_for_selection=True;
   dprintf_clipboard(stddeb,"Requesting selection\n");
 
   XConvertSelection(display,XA_PRIMARY,XA_STRING,
                     XInternAtom(display,"PRIMARY_TEXT",False),
-                    WIN_GetXWindow(hWndClipWindow),CurrentTime);
+                    WIN_GetXWindow(hWnd),CurrentTime);
 
   /* TODO: need time-out for broken clients */
   while(wait_for_selection) EVENT_WaitXEvent(-1);

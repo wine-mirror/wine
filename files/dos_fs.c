@@ -397,7 +397,7 @@ static int DOSFS_FindUnixName( const char *path, const char *name,
             if (!strcmp( dos_name, hash_name )) break;
         }
     }
-    if (dirent) lstrcpyn( buffer, dirent->d_name, maxlen );
+    if (dirent) lstrcpyn32A( buffer, dirent->d_name, maxlen );
     closedir( dir );
     dprintf_dosfs( stddeb, "DOSFS_FindUnixName(%s,%s) -> %s\n",
                    path, name, dirent ? buffer : "** Not found **" );
@@ -422,7 +422,7 @@ const char *DOSFS_IsDevice( const char *name )
     for (i = 0; i < sizeof(DOSFS_Devices)/sizeof(DOSFS_Devices[0]); i++)
     {
         const char *dev = DOSFS_Devices[i][0];
-        if (!lstrncmpi( dev, name, strlen(dev) ))
+        if (!lstrncmpi32A( dev, name, strlen(dev) ))
         {
             p = name + strlen( dev );
             if (!*p || (*p == '.')) return DOSFS_Devices[i][1];
@@ -468,7 +468,7 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
         DOS_ERROR( ER_InvalidDrive, EC_MediaError, SA_Abort, EL_Disk );
         return NULL;
     }
-    lstrcpyn( buffer, DRIVE_GetRoot(drive), MAX_PATHNAME_LEN );
+    lstrcpyn32A( buffer, DRIVE_GetRoot(drive), MAX_PATHNAME_LEN );
     if (buffer[1]) root = buffer + strlen(buffer);
     else root = buffer;  /* root directory */
 
@@ -478,8 +478,8 @@ const char * DOSFS_GetUnixFileName( const char * name, int check_last )
     }
     else
     {
-        lstrcpyn( root + 1, DRIVE_GetUnixCwd(drive),
-                  MAX_PATHNAME_LEN - (int)(root - buffer) - 1 );
+        lstrcpyn32A( root + 1, DRIVE_GetUnixCwd(drive),
+                     MAX_PATHNAME_LEN - (int)(root - buffer) - 1 );
         if (root[1]) *root = '/';
     }
 
@@ -582,7 +582,7 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
     else
     {
         *p++ = '\\';
-        lstrcpyn( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 3 );
+        lstrcpyn32A( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 3 );
         if (*p) p += strlen(p); else p--;
     }
     *p = '\0';
@@ -605,7 +605,7 @@ const char * DOSFS_GetDosTrueName( const char *name, int unix_format )
         *p++ = '\\';
         if (unix_format)  /* Hash it into a DOS name */
         {
-            lstrcpyn( p, DOSFS_Hash( name, FALSE ), len );
+            lstrcpyn32A( p, DOSFS_Hash( name, FALSE ), len );
             len -= strlen(p);
             p += strlen(p);
             while (!IS_END_OF_NAME(*name)) name++;
@@ -678,7 +678,7 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
             if (!*drive_path) drive_root = 1;
         }
         dprintf_dosfs(stddeb, "DOSFS_FindNext: drive_root = %d\n", drive_root);
-        lstrcpyn( buffer, path, sizeof(buffer) - 1 );
+        lstrcpyn32A( buffer, path, sizeof(buffer) - 1 );
         
     }
     strcat( buffer, "/" );
@@ -695,7 +695,7 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         if (drive_root && (dirent->d_name[0] == '.') &&
             (!dirent->d_name[1] ||
              ((dirent->d_name[1] == '.') && !dirent->d_name[2]))) continue;
-        lstrcpyn( p, dirent->d_name, sizeof(buffer) - (int)(p - buffer) );
+        lstrcpyn32A( p, dirent->d_name, sizeof(buffer) - (int)(p - buffer) );
 
         if (!FILE_Stat( buffer, &entry->attr, &entry->size,
                         &entry->date, &entry->time ))
@@ -705,7 +705,7 @@ int DOSFS_FindNext( const char *path, const char *mask, int drive,
         }
         if (entry->attr & ~attr) continue;
         strcpy( entry->name, hash_name );
-        lstrcpyn( entry->unixname, dirent->d_name, sizeof(entry->unixname) );
+        lstrcpyn32A( entry->unixname, dirent->d_name, sizeof(entry->unixname));
         dprintf_dosfs( stddeb, "DOSFS_FindNext: returning %s %02x %ld\n",
                        entry->name, entry->attr, entry->size );
         cur_pos += count;

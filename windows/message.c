@@ -29,7 +29,7 @@
 extern BYTE* 	KeyStateTable;				 /* event.c */
 extern WPARAM	lastEventChar;				 /* event.c */
 
-extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
+extern BOOL TIMER_CheckTimer( LONG *next, MSG16 *msg,
 			      HWND hwnd, BOOL remove );  /* timer.c */
 
 DWORD MSG_WineStartTicks;  				 /* Ticks at Wine startup */
@@ -51,7 +51,7 @@ static WORD doubleClickSpeed = 452;
  *   the coordinates to client coordinates.
  * - Send the WM_SETCURSOR message.
  */
-static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
+static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 {
     WND *pWnd;
     BOOL eatMsg = FALSE;
@@ -60,7 +60,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
     static WORD  lastClickMsg = 0;
     static POINT16 lastClickPos = { 0, 0 };
     POINT16 pt = msg->pt;
-    MOUSEHOOKSTRUCT hook = { msg->pt, 0, HTCLIENT, 0 };
+    MOUSEHOOKSTRUCT16 hook = { msg->pt, 0, HTCLIENT, 0 };
 
     BOOL mouseClick = ((msg->message == WM_LBUTTONDOWN) ||
 		       (msg->message == WM_RBUTTONDOWN) ||
@@ -170,7 +170,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
  * Return value indicates whether the translated message must be passed
  * to the user.
  */
-static BOOL MSG_TranslateKeyboardMsg( MSG *msg, BOOL remove )
+static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
 {
       /* Should check Ctrl-Esc and PrintScreen here */
 
@@ -195,7 +195,7 @@ static BOOL MSG_TranslateKeyboardMsg( MSG *msg, BOOL remove )
  *
  * Peek for a hardware message matching the hwnd and message filters.
  */
-static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
+static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
                                  BOOL remove )
 {
     MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
@@ -221,8 +221,8 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
         }
         else  /* Non-standard hardware event */
         {
-            HARDWAREHOOKSTRUCT hook = { msg->hwnd, msg->message,
-                                        msg->wParam, msg->lParam };
+            HARDWAREHOOKSTRUCT16 hook = { msg->hwnd, msg->message,
+                                          msg->wParam, msg->lParam };
             if (HOOK_CallHooks( WH_HARDWARE, remove ? HC_ACTION : HC_NOREMOVE,
                                 0, (LPARAM)MAKE_SEGPTR(&hook) )) continue;
         }
@@ -237,7 +237,7 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
             continue;  /* Not for this task */
         if (remove)
         {
-            MSG tmpMsg = *msg; /* FIXME */
+            MSG16 tmpMsg = *msg; /* FIXME */
             HOOK_CallHooks( WH_JOURNALRECORD, HC_ACTION,
                             0, (LPARAM)MAKE_SEGPTR(&tmpMsg) );
             QUEUE_RemoveMsg( sysMsgQueue, pos );
@@ -274,7 +274,7 @@ WORD GetDoubleClickTime()
  * are not translated.
  * Warning: msg->hwnd is always 0.
  */
-BOOL MSG_GetHardwareMessage( LPMSG msg )
+BOOL MSG_GetHardwareMessage( LPMSG16 msg )
 {
 #if 0
     int pos;
@@ -375,7 +375,7 @@ void ReplyMessage( LRESULT result )
 /***********************************************************************
  *           MSG_PeekMessage
  */
-static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
+static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
                              WORD flags, BOOL peek )
 {
     int pos, mask;
@@ -525,37 +525,38 @@ BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
+	    if (!MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
                                   0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
                 if (IsWindow(hwndOwner))
                     SendMessage16( hwndOwner, WM_ENTERIDLE,
                                    code, (LPARAM)hwnd );
-		MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
+		MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
                                  0, 0, 0, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
+	    MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
                              0, 0, 0, flags, FALSE );
 
 	if (!CallMsgFilter( msg, code ))
-            return (((MSG *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
+            return (((MSG16 *)PTR_SEG_TO_LIN(msg))->message != WM_QUIT);
 
 	  /* Message filtered -> remove it from the queue */
 	  /* if it's still there. */
 	if (!(flags & PM_REMOVE))
-	    MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
+	    MSG_PeekMessage( (MSG16 *)PTR_SEG_TO_LIN(msg),
                              0, 0, 0, PM_REMOVE, TRUE );
     }
 }
 
 
 /***********************************************************************
- *           PeekMessage   (USER.109)
+ *           PeekMessage16   (USER.109)
  */
-BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
+BOOL16 PeekMessage16( LPMSG16 msg, HWND16 hwnd, UINT16 first,
+                      UINT16 last, UINT16 flags )
 {
     return MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
 }
@@ -566,7 +567,7 @@ BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
  */
 BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last ) 
 {
-    MSG* lpmsg = (MSG *)PTR_SEG_TO_LIN(msg);
+    MSG16 *lpmsg = (MSG16 *)PTR_SEG_TO_LIN(msg);
     MSG_PeekMessage( lpmsg,
                      hwnd, first, last, PM_REMOVE, FALSE );
 
@@ -582,7 +583,7 @@ BOOL GetMessage( SEGPTR msg, HWND hwnd, UINT first, UINT last )
  */
 BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 {
-    MSG 	msg;
+    MSG16 	msg;
     WND 	*wndPtr;
 
     msg.hwnd    = hwnd;
@@ -625,7 +626,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
  */
 BOOL PostAppMessage( HTASK hTask, WORD message, WORD wParam, LONG lParam )
 {
-    MSG 	msg;
+    MSG16 msg;
 
     if (GetTaskQueue(hTask) == 0) return FALSE;
     msg.hwnd    = 0;
@@ -791,7 +792,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
  */
 void WaitMessage( void )
 {
-    MSG msg;
+    MSG16 msg;
     MESSAGEQUEUE *queue;
     LONG nextExp = -1;  /* Next timer expiration time */
 
@@ -820,7 +821,7 @@ void WaitMessage( void )
 
 #define ASCII_CHAR_HACK 0x0800
 
-BOOL TranslateMessage( LPMSG msg )
+BOOL TranslateMessage( LPMSG16 msg )
 {
     UINT message = msg->message;
     /* BYTE wparam[2]; */
@@ -851,7 +852,7 @@ BOOL TranslateMessage( LPMSG msg )
 /***********************************************************************
  *           DispatchMessage   (USER.114)
  */
-LONG DispatchMessage( const MSG* msg )
+LONG DispatchMessage( const MSG16* msg )
 {
     WND * wndPtr;
     LONG retval;
@@ -863,7 +864,7 @@ LONG DispatchMessage( const MSG* msg )
 	if (msg->lParam)
         {
 /*            HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
-	    return CallWindowProc16( (WNDPROC)msg->lParam, msg->hwnd,
+	    return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,
                                    msg->message, msg->wParam, GetTickCount() );
         }
     }

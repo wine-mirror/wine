@@ -21,6 +21,12 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "string32.h"
+
+#define strdupW2A(x)	STRING32_DupUniToAnsi(x)
+#define strdupA2W(x)	STRING32_DupAnsiToUni(x)
+#define strcpyWA(a,b)	STRING32_UniToAnsi(a,b)
+#define strcpyAW(a,b)	STRING32_AnsiToUni(a,b)
 
 /* The readahead length of the decompressor. Reading single bytes
  * using _lread() would be SLOW.
@@ -64,7 +70,7 @@ static int nroflzstates=0;
 #define GET(lzs,b)	_lzget(lzs,&b)
 #define GET_FLUSH(lzs)	lzs->getcur=lzs->getlen;
 
-int
+static int
 _lzget(struct lzstate *lzs,BYTE *b) {
 	if (lzs->getcur<lzs->getlen) {
 		*b		= lzs->get[lzs->getcur++];
@@ -113,16 +119,16 @@ read_header(HFILE fd,struct lzfileheader *head) {
 	return 1;
 }
 /* 
- * LZSTART							[LZEXPAND.7] 
+ * LZStart				[LZEXPAND.7] [LZ32.6]
  */
-INT
-LZStart(void) {
-	dprintf_file(stddeb,"LZStart(void)\n");
-	return 1;
+INT16 LZStart(void)
+{
+    dprintf_file(stddeb,"LZStart(void)\n");
+    return 1;
 }
 
 /*
- * LZINIT							[LZEXPAND.3]
+ * LZInit				[LZEXPAND.3] [LZ32.2]
  * 
  * initializes internal decompression buffers, returns lzfiledescriptor.
  * (return value the same as hfSrc, if hfSrc is not compressed)
@@ -166,7 +172,7 @@ LZInit(HFILE hfSrc) {
 }
 
 /*
- * LZDone					[LZEXPAND.9] 
+ * LZDone				[LZEXPAND.9]  [LZ32.8]
  */
 
 void
@@ -175,7 +181,7 @@ LZDone(void) {
 }
 
 /*
- * GetExpandedName				[LZEXPAND.10]
+ * GetExpandedName			[LZEXPAND.10]
  *
  * gets the full filename of the compressed file 'in' by opening it
  * and reading the header
@@ -185,8 +191,8 @@ LZDone(void) {
  * "FILE.BL_" (with lastchar 'a') is being translated to "FILE.BLA"
  */
 
-INT
-GetExpandedName(LPCSTR in,LPSTR out) {
+INT16
+GetExpandedName16(LPCSTR in,LPSTR out) {
 	struct lzfileheader	head;
 	HFILE		fd;
 	OFSTRUCT	ofs;
@@ -252,26 +258,57 @@ GetExpandedName(LPCSTR in,LPSTR out) {
 	return 1;
 }
 
+/* 
+ * GetExpandedNameW			[LZ32.11] 
+ */
+INT32
+GetExpandedName32W(LPCWSTR in,LPWSTR out) {
+	char	*xin,*xout;
+	INT32	ret;
+
+	xout	= malloc(lstrlen32W(in)+3);
+	xin	= strdupW2A(in);
+	ret	= GetExpandedName16(xin,xout);
+	if (ret>0)
+		strcpyAW(out,xout);
+	free(xin);
+	free(xout);
+	return	ret;
+}
+
+/* 
+ * GetExpandedNameA			[LZ32.9] 
+ */
+INT32
+GetExpandedName32A(LPCSTR in,LPSTR out) {
+	return	GetExpandedName16(in,out);
+}
+
 /*
- * LZRead				[LZEXPAND.5]
+ * LZRead				[LZEXPAND.5] [LZ32.4]
  * just as normal read, but reads from LZ special fd and uncompresses.
  */
-INT
-LZRead(HFILE fd,SEGPTR segbuf,WORD toread) {
+INT16
+LZRead16(HFILE fd,SEGPTR segbuf,UINT16 toread) {
+	dprintf_file(stddeb,"LZRead16(%d,%08lx,%d)\n",fd,(DWORD)segbuf,toread);
+	return LZRead32(fd,(LPBYTE)PTR_SEG_TO_LIN(segbuf),toread);
+}
+
+INT32
+LZRead32(HFILE fd,LPVOID vbuf,UINT32 toread) {
 	int	i,howmuch;
-	BYTE	b;
-	BYTE	*buf;
+	BYTE	b,*buf;
 	struct	lzstate	*lzs;
 
-	dprintf_file(stddeb,"LZRead(%d,%08lx,%d)\n",fd,(DWORD)segbuf,toread);
+	buf=(LPBYTE)vbuf;
+	dprintf_file(stddeb,"LZRead32(%d,%p,%d)\n",fd,buf,toread);
 	howmuch=toread;
 	for (i=0;i<nroflzstates;i++)
 		if (lzstates[i].lzfd==fd)
 			break;
 	if (i==nroflzstates)
-		return _lread(fd,segbuf,toread);
+		return FILE_Read(fd,buf,toread);
 	lzs=lzstates+i;
-
 
 /* The decompressor itself is in a define, cause we need it twice
  * in this function. (the decompressed byte will be in b)
@@ -339,7 +376,6 @@ LZRead(HFILE fd,SEGPTR segbuf,WORD toread) {
 		}
 	}
 
-	buf=PTR_SEG_TO_LIN(segbuf);
 	while (howmuch) {
 		DECOMPRESS_ONE_BYTE;
 		lzs->realwanted++;
@@ -351,13 +387,13 @@ LZRead(HFILE fd,SEGPTR segbuf,WORD toread) {
 }
 
 /* 
- * LZSeek				[LZEXPAND.4]
+ * LZSeek				[LZEXPAND.4] [LZ32.3]
  *
  * works as the usual _llseek
  */
 
 LONG
-LZSeek(HFILE fd,LONG off,INT type) {
+LZSeek(HFILE fd,LONG off,INT32 type) {
 	int	i;
 	struct	lzstate	*lzs;
 	LONG	lastwanted,newwanted;
@@ -392,7 +428,7 @@ LZSeek(HFILE fd,LONG off,INT type) {
 }
 
 /* 
- * LZCopy				[LZEXPAND.1]
+ * LZCopy			[LZEXPAND.1] [LZ32.0]
  *
  * Copies everything from src to dest
  * if src is a LZ compressed file, it will be uncompressed.
@@ -404,7 +440,7 @@ LZCopy(HFILE src,HFILE dest) {
 	LONG	len;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
-	INT	(*xread)(HFILE,SEGPTR,WORD);
+	INT32	(*xread)(HFILE,LPVOID,UINT32);
 
 	dprintf_file(stddeb,"LZCopy(%d,%d)\n",src,dest);
 	for (i=0;i<nroflzstates;i++)
@@ -413,12 +449,12 @@ LZCopy(HFILE src,HFILE dest) {
 
 	/* not compressed? just copy */
 	if (i==nroflzstates)
-		xread=_lread;
+		xread=FILE_Read;
 	else
-		xread=LZRead;
+		xread=LZRead32;
 	len=0;
 	while (1) {
-		ret=xread(src,MAKE_SEGPTR(buf),BUFLEN);
+		ret=xread(src,buf,BUFLEN);
 		if (ret<=0) {
 			if (ret==0)
 				break;
@@ -440,7 +476,7 @@ LZCopy(HFILE src,HFILE dest) {
  * Opens a file. If not compressed, open it as a normal file.
  */
 HFILE
-LZOpenFile(LPCSTR fn,LPOFSTRUCT ofs,UINT mode) {
+LZOpenFile16(LPCSTR fn,LPOFSTRUCT ofs,UINT16 mode) {
 	HFILE	fd,cfd;
 
 	dprintf_file(stddeb,"LZOpenFile(%s,%p,%d)\n",fn,ofs,mode);
@@ -456,8 +492,37 @@ LZOpenFile(LPCSTR fn,LPOFSTRUCT ofs,UINT mode) {
 	return cfd;
 }
 
+/* 
+ * LZOpenFileA				[LZ32.1]
+ */
+HFILE
+LZOpenFile32A(LPCSTR fn,LPOFSTRUCT ofs,UINT32 mode) {
+	return LZOpenFile16(fn,ofs,mode);
+}
+
+/* 
+ * LZOpenFileW				[LZ32.10]
+ */
+HFILE
+LZOpenFile32W(LPCWSTR fn,LPOFSTRUCT ofs,UINT32 mode) {
+	LPSTR	xfn;
+	LPWSTR	yfn;
+	HFILE	ret;
+
+	xfn	= strdupW2A(fn);
+	ret	= LZOpenFile16(xfn,ofs,mode);
+	free(xfn);
+	if (ret!=HFILE_ERROR) {
+		/* ofs->szPathName is an array with the OFSTRUCT */
+		yfn 	= strdupA2W(ofs->szPathName);
+		memcpy(ofs->szPathName,yfn,lstrlen32W(yfn)*2+2);
+		free(yfn);
+	}
+	return	ret;
+}
+
 /*
- * LZClose				[LZEXPAND.6]
+ * LZClose			[LZEXPAND.6] [LZ32.5]
  */
 void
 LZClose(HFILE fd) {
@@ -480,7 +545,7 @@ LZClose(HFILE fd) {
 }
 
 /*
- * CopyLZFile					[LZEXPAND.8]
+ * CopyLZFile				[LZEXPAND.8] [LZ32.7]
  *
  * Copy src to dest (including uncompressing src).
  * NOTE: Yes. This is exactly the same function as LZCopy.

@@ -5,11 +5,14 @@
  */
 
 #include <stdio.h>
-#include "region.h"
+#include "dc.h"
 #include "metafile.h"
+#include "region.h"
 #include "stddebug.h"
 /* #define DEBUG_CLIPPING */
 #include "debug.h"
+
+#define UpdateDirtyDC(dc) DC_CallHookProc( dc, DCHC_INVALIDVISRGN, 0 )
 
 /***********************************************************************
  *           CLIPPING_SetDeviceClipping

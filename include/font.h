@@ -17,7 +17,7 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGFONT     logfont WINE_PACKED;
+    LOGFONT16   logfont WINE_PACKED;
 } FONTOBJ;
 
 /* may be switched... */

@@ -882,7 +882,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
 {
     LONG hittest = 0;
     POINT16 pt;
-    MSG msg;
+    MSG16 msg;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
 
     if ((wParam & 0xfff0) == SC_MOVE)
@@ -963,7 +963,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
  */
 static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
 {
-    MSG msg;
+    MSG16 msg;
     LONG hittest;
     RECT16 sizingRect, mouseRect;
     HDC hdc;
@@ -1137,7 +1137,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
  */
 static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 {
-    MSG msg;
+    MSG16 msg;
     HDC hdc = GetWindowDC( hwnd );
     BOOL pressed = TRUE;
 
@@ -1180,7 +1180,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
  */
 static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT16 pt )
 {
-    MSG *msg;
+    MSG16 *msg;
     WORD scrollbar;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -1195,7 +1195,7 @@ static void NC_TrackScrollBar( HWND hwnd, WORD wParam, POINT16 pt )
 	scrollbar = SB_VERT;
     }
 
-    if (!(msg = SEGPTR_NEW(MSG))) return;
+    if (!(msg = SEGPTR_NEW(MSG16))) return;
     pt.x -= wndPtr->rectWindow.left;
     pt.y -= wndPtr->rectWindow.top;
     SetCapture( hwnd );

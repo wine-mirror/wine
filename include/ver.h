@@ -127,6 +127,7 @@ typedef struct tagVS_FIXEDFILEINFO {
 	DWORD   dwFileDateLS;
 } VS_FIXEDFILEINFO;
 
+/* following two aren't in version.dll */
 DWORD
 GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off);
 
@@ -135,34 +136,60 @@ GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD reslen,LPVOID data
 );
 
-DWORD
-GetFileVersionInfoSize(LPCSTR filename,LPDWORD handle);
+DWORD GetFileVersionInfoSize16(LPCSTR filename,LPDWORD handle);
+DWORD GetFileVersionInfoSize32A(LPCSTR filename,LPDWORD handle);
+DWORD GetFileVersionInfoSize32W(LPCWSTR filename,LPDWORD handle);
+#define GetFileVersionInfoSize WINELIB_NAME_AW(GetFileVersionInfoSize)
+
+DWORD GetFileVersionInfo16(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data);
+DWORD GetFileVersionInfo32A(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data);
+DWORD GetFileVersionInfo32W(LPCWSTR filename,DWORD handle,DWORD datasize,LPVOID data);
+#define GetFileVersionInfo WINELIB_NAME_AW(GetFileVersionInfo)
 
 DWORD
-GetFileVersionInfo(LPCSTR filename,DWORD handle,DWORD datasize,LPVOID data);
-
-DWORD
-VerFindFile(
-	UINT flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
-	LPSTR curdir,UINT *curdirlen,LPSTR destdir,UINT*destdirlen
+VerFindFile16(
+	UINT16 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
+	LPSTR curdir,UINT16 *curdirlen,LPSTR destdir,UINT16 *destdirlen
 );
-
 DWORD
-VerInstallFile(
-	UINT flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT*tmpfilelen
+VerFindFile32A(
+	UINT32 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
+	LPSTR curdir,UINT32 *curdirlen,LPSTR destdir,UINT32 *destdirlen
 );
+DWORD
+VerFindFile32W(
+	UINT32 flags,LPCWSTR filename,LPCWSTR windir,LPCWSTR appdir,
+	LPWSTR curdir,UINT32 *curdirlen,LPWSTR destdir,UINT32 *destdirlen
+);
+#define VerFindFile WINELIB_NAME_AW(VerFindFile)
 
 DWORD
-VerLanguageName(UINT lang,LPSTR langname,UINT langnamelen);
-
+VerInstallFile16(
+	UINT16 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+	LPCSTR destdir,LPSTR tmpfile,UINT16 *tmpfilelen
+);
 DWORD
-VerQueryValue(SEGPTR block,LPCSTR subblock,SEGPTR *buffer,UINT *buflen);
+VerInstallFile32A(
+	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+	LPCSTR destdir,LPSTR tmpfile,UINT32 *tmpfilelen
+);
+DWORD
+VerInstallFile32W(
+	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
+	LPCWSTR destdir,LPWSTR tmpfile,UINT32 *tmpfilelen
+);
+#define VerInstallFile WINELIB_NAME_AW(VerInstallFile)
 
-/*
-   20 GETFILEVERSIONINFORAW
-   21 VERFTHK_THUNKDATA16
-   22 VERTHKSL_THUNKDATA16
-*/
+DWORD VerLanguageName16(UINT16 lang,LPSTR langname,UINT16 langnamelen);
+DWORD VerLanguageName32A(UINT32 lang,LPSTR langname,UINT32 langnamelen);
+DWORD VerLanguageName32W(UINT32 lang,LPWSTR langname,UINT32 langnamelen);
+#define VerLanguageName WINELIB_NAME_AW(VerLanguageName)
+
+DWORD VerQueryValue16(SEGPTR block,LPCSTR subblock,SEGPTR *buffer,UINT16 *buflen);
+DWORD VerQueryValue32A(LPVOID block,LPCSTR subblock,LPVOID *buffer,UINT32 *buflen);
+DWORD VerQueryValue32W(LPVOID block,LPCWSTR subblock,LPVOID *buffer,UINT32 *buflen);
+#define VerQueryValue WINELIB_NAME_AW(VerQueryValue)
+
+/* 20 GETFILEVERSIONINFORAW */
 
 #endif	/* __WINE_VER_H */

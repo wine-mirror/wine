@@ -1199,7 +1199,7 @@ BOOL HeapWalk( HANDLE32 heap, void *entry )
  */
 LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
 {
-    INT32 len = lstrlen(str) + 1;
+    INT32 len = lstrlen32A(str) + 1;
     LPSTR p = HeapAlloc( heap, flags, len );
     if (p) strcpy( p, str );
     return p;

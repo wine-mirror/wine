@@ -73,7 +73,7 @@ static void PROFILE_CopyEntry( char *buffer, const char *value, int len,
 
     if (!handle_env)
     {
-        lstrcpyn( buffer, value, len );
+        lstrcpyn32A( buffer, value, len );
         if (quote && (len >= strlen(value))) buffer[strlen(buffer)-1] = '\0';
         return;
     }
@@ -86,10 +86,10 @@ static void PROFILE_CopyEntry( char *buffer, const char *value, int len,
             const char *env_p;
             const char *p2 = strchr( p, '}' );
             if (!p2) continue;  /* ignore it */
-            lstrcpyn( env_val, p + 2, MIN( sizeof(env_val), (int)(p2-p)-1 ) );
+            lstrcpyn32A(env_val, p + 2, MIN( sizeof(env_val), (int)(p2-p)-1 ));
             if ((env_p = getenv( env_val )) != NULL)
             {
-                lstrcpyn( buffer, env_p, len );
+                lstrcpyn32A( buffer, env_p, len );
                 buffer += strlen( buffer );
                 len -= strlen( buffer );
             }
@@ -230,7 +230,7 @@ static BOOL PROFILE_DeleteSection( PROFILESECTION **section, const char *name )
 {
     while (*section)
     {
-        if ((*section)->name && !lstrcmpi( (*section)->name, name ))
+        if ((*section)->name && !lstrcmpi32A( (*section)->name, name ))
         {
             PROFILESECTION *to_del = *section;
             *section = to_del->next;
@@ -254,12 +254,12 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
 {
     while (*section)
     {
-        if ((*section)->name && !lstrcmpi( (*section)->name, section_name ))
+        if ((*section)->name && !lstrcmpi32A( (*section)->name, section_name ))
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
             {
-                if (!lstrcmpi( (*key)->name, key_name ))
+                if (!lstrcmpi32A( (*key)->name, key_name ))
                 {
                     PROFILEKEY *to_del = *key;
                     *key = to_del->next;
@@ -288,12 +288,12 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
 {
     while (*section)
     {
-        if ((*section)->name && !lstrcmpi( (*section)->name, section_name ))
+        if ((*section)->name && !lstrcmpi32A( (*section)->name, section_name ))
         {
             PROFILEKEY **key = &(*section)->key;
             while (*key)
             {
-                if (!lstrcmpi( (*key)->name, key_name )) return *key;
+                if (!lstrcmpi32A( (*key)->name, key_name )) return *key;
                 key = &(*key)->next;
             }
             if (!create) return NULL;
@@ -446,7 +446,7 @@ static INT PROFILE_GetSection( PROFILESECTION *section,
     PROFILEKEY *key;
     while (section)
     {
-        if (section->name && !lstrcmpi( section->name, section_name ))
+        if (section->name && !lstrcmpi32A( section->name, section_name ))
         {
             INT oldlen = len;
             for (key = section->key; key; key = key->next)
@@ -574,7 +574,7 @@ int PROFILE_LoadWineIni(void)
 
     if ((p = getenv( "HOME" )) != NULL)
     {
-        lstrcpyn( buffer, p, MAX_PATHNAME_LEN - sizeof(PROFILE_WineIniName) );
+        lstrcpyn32A(buffer, p, MAX_PATHNAME_LEN - sizeof(PROFILE_WineIniName));
         strcat( buffer, PROFILE_WineIniName );
         if ((f = fopen( buffer, "r" )) != NULL)
         {
@@ -662,7 +662,7 @@ INT GetPrivateProfileString( LPCSTR section, LPCSTR entry, LPCSTR def_val,
 {
     if (PROFILE_Open( filename ))
         return PROFILE_GetString( section, entry, def_val, buffer, len );
-    lstrcpyn( buffer, def_val, len );
+    lstrcpyn32A( buffer, def_val, len );
     return strlen( buffer );
 }
 

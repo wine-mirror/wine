@@ -827,10 +827,10 @@ HMODULE MODULE_FindModule( LPCSTR path )
         if (!(modulename = strrchr( modulepath, '\\' )))
             modulename = modulepath;
         else modulename++;
-        if (!lstrcmpi( modulename, filename )) return hModule;
+        if (!lstrcmpi32A( modulename, filename )) return hModule;
 
         name_table = (BYTE *)pModule + pModule->name_table;
-        if ((*name_table == len) && !lstrncmpi(filename, name_table+1, len))
+        if ((*name_table == len) && !lstrncmpi32A(filename, name_table+1, len))
             return hModule;
         hModule = pModule->next;
     }
@@ -1193,7 +1193,7 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
 
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    lstrcpyn( lpFileName, NE_MODULE_NAME(pModule), nSize );
+    lstrcpyn32A( lpFileName, NE_MODULE_NAME(pModule), nSize );
     dprintf_module( stddeb, "GetModuleFilename: %s\n", lpFileName );
     return strlen(lpFileName);
 }
@@ -1221,7 +1221,7 @@ HANDLE LoadLibrary( LPCSTR libname )
     if (handle == (HANDLE)2)  /* file not found */
     {
         char buffer[256];
-        lstrcpyn( buffer, libname, 252 );
+        lstrcpyn32A( buffer, libname, 252 );
         strcat( buffer, ".dll" );
         handle = LoadModule( buffer, (LPVOID)-1 );
     }
@@ -1253,8 +1253,13 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
     char *p, *cmdline, filename[256];
     static int use_load_module = 1;
 
-    if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) ))) return 0;
-    if (!(cmdLineHandle = GlobalAlloc16( 0, 256 ))) return 0;
+    if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) )))
+        return 8;  /* Out of memory */
+    if (!(cmdLineHandle = GlobalAlloc16( 0, 256 )))
+    {
+        GlobalFree16( cmdShowHandle );
+        return 8;  /* Out of memory */
+    }
 
       /* Store nCmdShow */
 
@@ -1265,9 +1270,9 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
       /* Build the filename and command-line */
 
     cmdline = (char *)GlobalLock16( cmdLineHandle );
-    lstrcpyn( filename, lpCmdLine, sizeof(filename) - 4 /* for extension */ );
+    lstrcpyn32A(filename, lpCmdLine, sizeof(filename) - 4 /* for extension */);
     for (p = filename; *p && (*p != ' ') && (*p != '\t'); p++);
-    if (*p) lstrcpyn( cmdline, p + 1, 128 );
+    if (*p) lstrcpyn32A( cmdline, p + 1, 128 );
     else cmdline[0] = '\0';
     *p = '\0';
 

@@ -93,8 +93,8 @@ void debug_handles()
  * Create a global heap block for a fixed range of linear memory.
  */
 HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
-                              HGLOBAL16 hOwner, BOOL isCode,
-                              BOOL is32Bit, BOOL isReadOnly,
+                              HGLOBAL16 hOwner, BOOL16 isCode,
+                              BOOL16 is32Bit, BOOL16 isReadOnly,
                               SHMDATA *shmdata  )
 {
     WORD sel, selcount;
@@ -156,7 +156,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
  * Free a block allocated by GLOBAL_CreateBlock, without touching
  * the associated linear memory range.
  */
-BOOL GLOBAL_FreeBlock( HGLOBAL16 handle )
+BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
 {
     WORD sel;
 
@@ -174,7 +174,7 @@ BOOL GLOBAL_FreeBlock( HGLOBAL16 handle )
  * Implementation of GlobalAlloc16()
  */
 HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
-                        BOOL isCode, BOOL is32Bit, BOOL isReadOnly )
+                        BOOL16 isCode, BOOL16 is32Bit, BOOL16 isReadOnly )
 {
     void *ptr;
     HGLOBAL16 handle;

@@ -199,7 +199,7 @@ struct resource_nameinfo_s
     unsigned short length;
     unsigned short flags;
     unsigned short id;
-            HANDLE handle;
+    HANDLE16 handle;
     unsigned short usage;
 };
 

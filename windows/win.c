@@ -1005,7 +1005,7 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className,
 /***********************************************************************
  *           FindWindow16   (USER.50)
  */
-HWND FindWindow16( SEGPTR className, LPCSTR title )
+HWND16 FindWindow16( SEGPTR className, LPCSTR title )
 {
     return FindWindowEx16( 0, 0, className, title );
 }
@@ -1014,7 +1014,8 @@ HWND FindWindow16( SEGPTR className, LPCSTR title )
 /***********************************************************************
  *           FindWindowEx16   (USER.427)
  */
-HWND FindWindowEx16( HWND parent, HWND child, SEGPTR className, LPCSTR title )
+HWND16 FindWindowEx16( HWND16 parent, HWND16 child,
+                       SEGPTR className, LPCSTR title )
 {
     ATOM atom;
 
@@ -1026,7 +1027,7 @@ HWND FindWindowEx16( HWND parent, HWND child, SEGPTR className, LPCSTR title )
 /***********************************************************************
  *           FindWindow32A   (USER32.197)
  */
-HWND FindWindow32A( LPCSTR className, LPCSTR title )
+HWND32 FindWindow32A( LPCSTR className, LPCSTR title )
 {
     return FindWindowEx32A( 0, 0, className, title );
 }
@@ -1035,7 +1036,8 @@ HWND FindWindow32A( LPCSTR className, LPCSTR title )
 /***********************************************************************
  *           FindWindowEx32A   (USER32.198)
  */
-HWND FindWindowEx32A( HWND parent, HWND child, LPCSTR className, LPCSTR title )
+HWND32 FindWindowEx32A( HWND32 parent, HWND32 child,
+                        LPCSTR className, LPCSTR title )
 {
     ATOM atom;
 
@@ -1047,7 +1049,8 @@ HWND FindWindowEx32A( HWND parent, HWND child, LPCSTR className, LPCSTR title )
 /***********************************************************************
  *           FindWindowEx32W   (USER32.199)
  */
-HWND FindWindowEx32W(HWND parent, HWND child, LPCWSTR className, LPCWSTR title)
+HWND32 FindWindowEx32W( HWND32 parent, HWND32 child,
+                        LPCWSTR className, LPCWSTR title )
 {
     ATOM atom;
     char *buffer;
@@ -1064,7 +1067,7 @@ HWND FindWindowEx32W(HWND parent, HWND child, LPCWSTR className, LPCWSTR title)
 /***********************************************************************
  *           FindWindow32W   (USER32.200)
  */
-HWND FindWindow32W( LPCWSTR className, LPCWSTR title )
+HWND32 FindWindow32W( LPCWSTR className, LPCWSTR title )
 {
     return FindWindowEx32W( 0, 0, className, title );
 }
@@ -1838,7 +1841,7 @@ BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
  */
 BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
 {
-  MSG   msg;
+  MSG16 msg;
   RECT16  rect;
 
   rect.left = pt.x - wDragWidth;
@@ -1851,7 +1854,7 @@ BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
 
   while(1)
    {
-        while(PeekMessage(&msg ,0 ,WM_MOUSEFIRST ,WM_MOUSELAST ,PM_REMOVE))
+        while(PeekMessage16(&msg ,0 ,WM_MOUSEFIRST ,WM_MOUSELAST ,PM_REMOVE))
          {
            if( msg.message == WM_LBUTTONUP )
                 {
@@ -1880,7 +1883,7 @@ BOOL16 DragDetect(HWND16 hWnd, POINT16 pt)
 DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
                 WORD szList , HCURSOR hCursor)
 {
- MSG	 	msg;
+ MSG16	 	msg;
  LPDRAGINFO	lpDragInfo;
  SEGPTR		spDragInfo;
  HCURSOR 	hDragCursor=0, hOldCursor=0, hBummer=0;
@@ -1933,7 +1936,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE hOfStruct,
   {
     WaitMessage();
 
-    if( !PeekMessage(&msg,0,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE) )
+    if( !PeekMessage16(&msg,0,WM_MOUSEFIRST,WM_MOUSELAST,PM_REMOVE) )
 	 continue;
 
    *(lpDragInfo+1) = *lpDragInfo;

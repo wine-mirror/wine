@@ -9,8 +9,8 @@ C_SRCS = \
 	ne_resource.c \
 	pe_image.c \
 	pe_resource.c \
-	signal.c \
 	resource.c \
+	signal.c \
 	task.c
 
 all: $(MODULE).o

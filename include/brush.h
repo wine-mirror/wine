@@ -17,7 +17,7 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGBRUSH    logbrush WINE_PACKED;
+    LOGBRUSH16  logbrush WINE_PACKED;
 } BRUSHOBJ;
 
 #ifndef WINELIB

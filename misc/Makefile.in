@@ -32,6 +32,7 @@ C_SRCS = \
 	ver.c \
 	w32sys.c \
 	winsocket.c \
+	wsprintf.c \
 	xmalloc.c
 
 all: $(MODULE).o

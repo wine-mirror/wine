@@ -131,8 +131,8 @@ BOOL CreateCaret(HWND hwnd, HBITMAP bitmap, INT width, INT height)
 
     if (bitmap && (bitmap != 1))
     {
-        BITMAP bmp;
-        if (!GetObject( bitmap, sizeof(bmp), (LPSTR)&bmp )) return FALSE;
+        BITMAP16 bmp;
+        if (!GetObject16( bitmap, sizeof(bmp), &bmp )) return FALSE;
         Caret.width = bmp.bmWidth;
         Caret.height = bmp.bmHeight;
         /* FIXME: we should make a copy of the bitmap instead of a brush */

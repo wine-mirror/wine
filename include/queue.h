@@ -17,7 +17,7 @@
 typedef struct tagQMSG
 {
     DWORD   extraInfo;  /* Only in 3.1 */
-    MSG     msg;
+    MSG16   msg;
 } QMSG;
 
 
@@ -84,7 +84,7 @@ extern void QUEUE_DecTimerCount( HQUEUE hQueue );
 extern BOOL QUEUE_CreateSysMsgQueue( int size );
 extern BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue );
 extern HTASK QUEUE_GetQueueTask( HQUEUE hQueue );
-extern BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG * msg, DWORD extraInfo );
+extern BOOL QUEUE_AddMsg( HQUEUE hQueue, MSG16 * msg, DWORD extraInfo );
 extern int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND hwnd,
                           int first, int last );
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos );

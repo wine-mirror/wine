@@ -48,11 +48,11 @@ static WORD CBitHeight, CBitWidth;
 
 static int COMBO_Init()
 {
-  BITMAP bm;
+  BITMAP16 bm;
   
   dprintf_combo(stddeb, "COMBO_Init\n");
   hComboBit = LoadBitmap(0, MAKEINTRESOURCE(OBM_COMBO));
-  GetObject(hComboBit, sizeof(BITMAP), (LPSTR)&bm);
+  GetObject16( hComboBit, sizeof(bm), &bm );
   CBitHeight = bm.bmHeight;
   CBitWidth = bm.bmWidth;
   return 0;
@@ -1208,7 +1208,7 @@ static INT32 COMBO_DlgDirList( HWND32 hDlg, LPARAM path, INT32 idCBox,
         char temp[512] = "A:\\";
         int drive = DRIVE_GetCurrentDrive();
         temp[0] += drive;
-        lstrcpyn( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
+        lstrcpyn32A( temp + 3, DRIVE_GetDosCwd(drive), sizeof(temp)-3 );
         AnsiLower( temp );
         SetDlgItemText32A( hDlg, idStatic, temp );
     } 

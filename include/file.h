@@ -24,7 +24,7 @@ extern int FILE_MakeDir( LPCSTR path );
 extern int FILE_RemoveDir( LPCSTR path );
 extern HFILE FILE_Dup( HFILE hFile );
 extern HFILE FILE_Dup2( HFILE hFile1, HFILE hFile2 );
-extern LONG FILE_Read( HFILE hFile, void *buffer, LONG count );
+extern INT32 FILE_Read( HFILE hFile, LPVOID buffer, UINT32 count );
 extern INT _lcreat_uniq( LPCSTR path, INT attr );
 
 #endif  /* __WINE_FILE_H */

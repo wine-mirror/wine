@@ -631,7 +631,7 @@ static int INT21_GetCurrentDirectory(struct sigcontext_struct *context)
         return 0;
     }
 
-    lstrcpyn( ptr, DRIVE_GetDosCwd(drive), 64 );
+    lstrcpyn32A( ptr, DRIVE_GetDosCwd(drive), 64 );
     if (!ptr[0]) strcpy( ptr, "\\" );
     return 1;
 }
@@ -1358,8 +1358,10 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 	
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */
-        WinExec( PTR_SEG_OFF_TO_LIN( DS_reg(&context), DX_reg(&context) ),
-                 SW_NORMAL );
+        AX_reg(&context) = WinExec( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                        DX_reg(&context) ),
+                                    SW_NORMAL );
+        if (AX_reg(&context) < 32) SET_CFLAG(&context);
         break;		
 	
     case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
@@ -1507,8 +1509,9 @@ void DOS3Call( struct sigcontext_struct context )
             }
             else
             {
-                lstrcpyn(PTR_SEG_OFF_TO_LIN(ES_reg(&context),DI_reg(&context)),
-                         truename, 128 );
+                lstrcpyn32A( PTR_SEG_OFF_TO_LIN( ES_reg(&context),
+                                                 DI_reg(&context) ),
+                             truename, 128 );
                 AX_reg(&context) = 0;
             }
         }
@@ -1519,6 +1522,7 @@ void DOS3Call( struct sigcontext_struct context )
     case 0x64: /* OS/2 DOS BOX */
     case 0x65: /* GET EXTENDED COUNTRY INFORMATION */
         INT_BARF( &context, 0x21 );
+        SET_CFLAG(&context);
         break;
 	
     case 0x66: /* GLOBAL CODE PAGE TABLE */

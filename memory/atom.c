@@ -141,7 +141,7 @@ static ATOM ATOM_AddAtom( WORD selector, LPCSTR str )
     {
 	entryPtr = ATOM_MakePtr( selector, entry );
 	if ((entryPtr->length == len) && 
-	    (!lstrncmpi( entryPtr->str, str, len )))
+	    (!lstrncmpi32A( entryPtr->str, str, len )))
 	{
 	    entryPtr->refCount++;
 	    return HANDLETOATOM( entry );
@@ -218,7 +218,7 @@ static ATOM ATOM_FindAtom( WORD selector, LPCSTR str )
     {
 	ATOMENTRY * entryPtr = ATOM_MakePtr( selector, entry );
 	if ((entryPtr->length == len) && 
-	    (!lstrncmpi( entryPtr->str, str, len )))
+	    (!lstrncmpi32A( entryPtr->str, str, len )))
 	    return HANDLETOATOM( entry );
 	entry = entryPtr->next;
     }
@@ -294,7 +294,7 @@ ATOM AddAtom( SEGPTR str )
         /* If the string is in the same data segment as the atom table, make */
         /* a copy of the string to be sure it doesn't move in linear memory. */
         char buffer[256];
-        lstrcpyn( buffer, (char *)PTR_SEG_TO_LIN(str), sizeof(buffer) );
+        lstrcpyn32A( buffer, (char *)PTR_SEG_TO_LIN(str), sizeof(buffer) );
         atom = ATOM_AddAtom( ds, buffer );
     }
     else atom = ATOM_AddAtom( ds, (LPCSTR)PTR_SEG_TO_LIN(str) );

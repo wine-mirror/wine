@@ -149,7 +149,7 @@ static const struct
 #define OIC_FIRST  OIC_SAMPLE      /* First OEM icon */
 #define OIC_LAST   OIC_WINEICON   /* Last OEM icon */
 
-static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
+static char ** const OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 {
     oic_sample,    /* OIC_SAMPLE */
     oic_hand,      /* OIC_HAND */
@@ -216,7 +216,7 @@ static char **OBM_Cursors_Data[NB_CURSORS] =
 #endif
 };
 
-static HCURSOR OBM_Cursors[NB_CURSORS] = { 0, };
+static HCURSOR OBM_Cursors[NB_CURSORS];
 
 
   /* All the colors used in the xpm files must be included in this   */

@@ -127,7 +127,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 
     for (e = environ, size = initial_size; *e; e++)
     {
-	if (lstrncmpi(*e, "path=", 5))
+	if (lstrncmpi32A(*e, "path=", 5))
 	{
             int len = strlen(*e) + 1;
             if (size + len >= 32767)
@@ -149,7 +149,7 @@ static HANDLE TASK_CreateDOSEnvironment(void)
 
     for (e = environ, size = initial_size; *e; e++)
     {
-	if (lstrncmpi(*e, "path=", 5))
+	if (lstrncmpi32A(*e, "path=", 5))
 	{
             int len = strlen(*e) + 1;
             if (size + len >= 32767) break;
@@ -478,7 +478,7 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     pTask->pdb.environment    = hEnvironment;
     pTask->pdb.nbFiles        = 20;
-    lstrcpyn( pTask->pdb.cmdLine + 1, cmdLine, 127 );
+    lstrcpyn32A( pTask->pdb.cmdLine + 1, cmdLine, 127 );
     pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
 
       /* Get the compatibility flags */

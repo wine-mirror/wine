@@ -1,7 +1,7 @@
 /*
  * Default window procedure
  *
- * Copyright 1993 Alexandre Julliard
+ * Copyright 1993, 1996 Alexandre Julliard
  *	     1995 Alex Korobka
  */
 
@@ -15,7 +15,6 @@
 #include "string32.h"
 #include "syscolor.h"
 #include "stddebug.h"
-/* #define DEBUG_MESSAGE */
 #include "debug.h"
 #include "spy.h"
 
@@ -100,26 +99,24 @@ void DEFWND_SetText( WND *wndPtr, LPCSTR text )
 static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                                   LPARAM lParam )
 {
-    HWND16 hwnd = wndPtr->hwndSelf;
-
     switch(msg)
     {
     case WM_PAINTICON: 
     case WM_NCPAINT:
-	return NC_HandleNCPaint( hwnd, (HRGN)wParam );
+	return NC_HandleNCPaint( wndPtr->hwndSelf, (HRGN)wParam );
 
     case WM_NCHITTEST:
-        return NC_HandleNCHitTest( hwnd, MAKEPOINT16(lParam) );
+        return NC_HandleNCHitTest( wndPtr->hwndSelf, MAKEPOINT16(lParam) );
 
     case WM_NCLBUTTONDOWN:
-	return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
+	return NC_HandleNCLButtonDown( wndPtr->hwndSelf, wParam, lParam );
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
 	return NC_HandleNCLButtonDblClk( wndPtr, wParam, lParam );
 
     case WM_NCACTIVATE:
-	return NC_HandleNCActivate( hwnd, wParam );
+	return NC_HandleNCActivate( wndPtr->hwndSelf, wParam );
 
     case WM_NCDESTROY:
 	if (wndPtr->text) HeapFree( SystemHeap, 0, wndPtr->text );
@@ -132,35 +129,35 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_PAINT:
 	{
 	    PAINTSTRUCT16 paintstruct;
-	    BeginPaint16( hwnd, &paintstruct );
-	    EndPaint16( hwnd, &paintstruct );
+	    BeginPaint16( wndPtr->hwndSelf, &paintstruct );
+	    EndPaint16( wndPtr->hwndSelf, &paintstruct );
 	    return 0;
 	}
 
     case WM_SETREDRAW:
         if (!wParam)
         {
-            ValidateRect32( hwnd, NULL );
+            ValidateRect32( wndPtr->hwndSelf, NULL );
             wndPtr->flags |= WIN_NO_REDRAW;
         }
         else wndPtr->flags &= ~WIN_NO_REDRAW;
         return 0;
 
     case WM_CLOSE:
-	DestroyWindow( hwnd );
+	DestroyWindow( wndPtr->hwndSelf );
 	return 0;
 
     case WM_MOUSEACTIVATE:
 	if (wndPtr->dwStyle & WS_CHILD)
 	{
-	    LONG ret = SendMessage16( wndPtr->parent->hwndSelf, WM_MOUSEACTIVATE,
-				    wParam, lParam );
+	    LONG ret = SendMessage16( wndPtr->parent->hwndSelf,
+                                      WM_MOUSEACTIVATE, wParam, lParam );
 	    if (ret) return ret;
 	}
 	return MA_ACTIVATE;
 
     case WM_ACTIVATE:
-	if (LOWORD(wParam) != WA_INACTIVE) SetFocus( hwnd );
+	if (LOWORD(wParam) != WA_INACTIVE) SetFocus( wndPtr->hwndSelf );
 	break;
 
     case WM_ERASEBKGND:
@@ -172,12 +169,13 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                  HBRUSH hbrush;
                  hbrush = CreateSolidBrush(
                      GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
-                 FillWindow( GetParent(hwnd), hwnd, (HDC)wParam, hbrush);
+                 FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+                             (HDC)wParam, hbrush);
                  DeleteObject (hbrush);
             }
             else
-	         FillWindow( GetParent(hwnd), hwnd, (HDC)wParam,
-                             wndPtr->class->hbrBackground );
+	         FillWindow( GetParent(wndPtr->hwndSelf), wndPtr->hwndSelf,
+                             (HDC)wParam, wndPtr->class->hbrBackground );
 	    return 1;
 	}
 
@@ -226,10 +224,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	    if (SendMessage16(wndPtr->parent->hwndSelf, WM_SETCURSOR,
                             wParam, lParam))
 		return TRUE;
-	return NC_HandleSetCursor( hwnd, wParam, lParam );
+	return NC_HandleSetCursor( wndPtr->hwndSelf, wParam, lParam );
 
     case WM_SYSCOMMAND:
-        return NC_HandleSysCommand( hwnd, wParam, MAKEPOINT16(lParam) );
+        return NC_HandleSysCommand( wndPtr->hwndSelf, wParam,
+                                    MAKEPOINT16(lParam) );
 
     case WM_KEYDOWN:
 	if(wParam == VK_F10) iF10Key = VK_F10;
@@ -251,8 +250,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	         iF10Key = 1;
 	     else
 	         if( wParam == VK_ESCAPE && GetKeyState(VK_SHIFT) < 0 )
-		     SendMessage16( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, 
- 						       (LPARAM)VK_SPACE);
+		     SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
+                                    (WPARAM)SC_KEYMENU, (LPARAM)VK_SPACE);
 	break;
 
     case WM_KEYUP:
@@ -260,8 +259,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	/* Press and release F10 or ALT */
 	if (((wParam == VK_MENU) && iMenuSysKey) ||
             ((wParam == VK_F10) && iF10Key))
-	      SendMessage16( WIN_GetTopParent(hwnd), WM_SYSCOMMAND,
-			   SC_KEYMENU, 0L );
+	      SendMessage16( WIN_GetTopParent(wndPtr->hwndSelf),
+                             WM_SYSCOMMAND, SC_KEYMENU, 0L );
 	iMenuSysKey = iF10Key = 0;
         break;
 
@@ -269,7 +268,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	iMenuSysKey = 0;
 	if (wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE))
         {
-	    PostMessage(hwnd, WM_SYSCOMMAND, (WPARAM)SC_RESTORE, 0L ); 
+	    PostMessage( wndPtr->hwndSelf, WM_SYSCOMMAND,
+                         (WPARAM)SC_RESTORE, 0L ); 
 	    break;
         } 
 	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
@@ -278,7 +278,8 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	    if (wParam == VK_SPACE && (wndPtr->dwStyle & WS_CHILD))
                 SendMessage16( wndPtr->parent->hwndSelf, msg, wParam, lParam );
 	    else
-                SendMessage16( hwnd, WM_SYSCOMMAND, (WPARAM)SC_KEYMENU, (LPARAM)(DWORD)wParam );
+                SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
+                               (WPARAM)SC_KEYMENU, (LPARAM)(DWORD)wParam );
         } 
 	else /* check for Ctrl-Esc */
             if (wParam != VK_ESCAPE) MessageBeep(0);
@@ -289,7 +290,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
         if (!(wndPtr->dwStyle & WS_POPUP) || !wndPtr->owner) return 0;
         if ((wndPtr->dwStyle & WS_VISIBLE) && wParam) return 0;
 	else if (!(wndPtr->dwStyle & WS_VISIBLE) && !wParam) return 0;
-        ShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
+        ShowWindow( wndPtr->hwndSelf, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
 	break; 
 
     case WM_INITMENUPOPUP:
@@ -302,7 +303,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CANCELMODE:
 	/* EndMenu() should be called if in menu state but currently it's
 	   impossible to detect - menu code should be updated*/
-	if (GetCapture() == hwnd) ReleaseCapture();
+	if (GetCapture() == wndPtr->hwndSelf) ReleaseCapture();
 	break;
 
     case WM_VKEYTOITEM:
@@ -344,6 +345,7 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
 
+    if (!wndPtr) return 0;
     SPY_EnterMessage( SPY_DEFWNDPROC16, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -376,7 +378,7 @@ LRESULT DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            lstrcpyn( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
+            lstrcpyn32A( (LPSTR)PTR_SEG_TO_LIN(lParam), wndPtr->text, wParam );
             result = (LRESULT)strlen( (LPSTR)PTR_SEG_TO_LIN(lParam) ) + 1;
         }
         break;
@@ -405,6 +407,7 @@ LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     LRESULT result = 0;
 
+    if (!wndPtr) return 0;
     SPY_EnterMessage( SPY_DEFWNDPROC32, hwnd, msg, wParam, lParam );
 
     switch(msg)
@@ -441,7 +444,7 @@ LRESULT DefWindowProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            lstrcpyn( (LPSTR)lParam, wndPtr->text, wParam );
+            lstrcpyn32A( (LPSTR)lParam, wndPtr->text, wParam );
             result = (LRESULT)strlen( (LPSTR)lParam ) + 1;
         }
         break;
@@ -483,6 +486,7 @@ LRESULT DefWindowProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
             }
 	    result = 1;
 	}
+        break;
 
     case WM_GETTEXT:
         {

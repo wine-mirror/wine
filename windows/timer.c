@@ -169,7 +169,7 @@ LONG TIMER_GetNextExp(void)
  * If 'hwnd' is not NULL, only consider timers for this window.
  * If 'remove' is TRUE, remove all expired timers up to the returned one.
  */
-BOOL TIMER_CheckTimer( LONG *next, MSG *msg, HWND hwnd, BOOL remove )
+BOOL TIMER_CheckTimer( LONG *next, MSG16 *msg, HWND hwnd, BOOL remove )
 {
     TIMER * pTimer = pNextTimer;
     DWORD curTime = GetTickCount();

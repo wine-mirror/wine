@@ -14,9 +14,9 @@
 /* #define DEBUG_SYSCOLOR */
 #include "debug.h"
 
-struct SysColorObjects sysColorObjects = { 0, };
+struct SysColorObjects sysColorObjects;
 
-static char * DefSysColors[] =
+static const char * const DefSysColors[] =
 {
     "Scrollbar", "224 224 224",      /* COLOR_SCROLLBAR           */
     "Background", "192 192 192",     /* COLOR_BACKGROUND          */
@@ -132,7 +132,7 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 void SYSCOLOR_Init(void)
 {
     int i, r, g, b;
-    char **p;
+    const char * const *p;
     char buffer[100];
 
     for (i = 0, p = DefSysColors; i < NUM_SYS_COLORS; i++, p += 2)

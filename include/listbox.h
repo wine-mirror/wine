@@ -3,7 +3,7 @@
  */
 
 typedef struct tagLISTSTRUCT {
-        MEASUREITEMSTRUCT mis;
+        MEASUREITEMSTRUCT16 mis;
         UINT            itemState;
         RECT16          itemRect;
 	HANDLE		hData;

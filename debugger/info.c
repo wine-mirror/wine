@@ -95,7 +95,7 @@ void DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen )
 void DEBUG_Help(void)
 {
     int i = 0;
-    static const char * helptext[] =
+    static const char * const helptext[] =
 {
 "The commands accepted by the Wine debugger are a small subset",
 "of the commands that gdb would accept.  The commands currently",

@@ -20,7 +20,7 @@ static void BUTTON_CheckAutoRadioButton( WND *wndPtr );
 
 #define MAX_BTN_TYPE  12
 
-static WORD maxCheckState[MAX_BTN_TYPE] =
+static const WORD maxCheckState[MAX_BTN_TYPE] =
 {
     BUTTON_UNCHECKED,   /* BS_PUSHBUTTON */
     BUTTON_UNCHECKED,   /* BS_DEFPUSHBUTTON */
@@ -38,7 +38,7 @@ static WORD maxCheckState[MAX_BTN_TYPE] =
 
 typedef void (*pfPaint)( WND *wndPtr, HDC hdc, WORD action );
 
-static pfPaint btnPaintFunc[MAX_BTN_TYPE] =
+static const pfPaint btnPaintFunc[MAX_BTN_TYPE] =
 {
     PB_Paint,    /* BS_PUSHBUTTON */
     PB_Paint,    /* BS_DEFPUSHBUTTON */
@@ -97,9 +97,9 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     case WM_CREATE:
         if (!hbitmapCheckBoxes)
         {
-            BITMAP bmp;
+            BITMAP16 bmp;
             hbitmapCheckBoxes = LoadBitmap(0, MAKEINTRESOURCE(OBM_CHECKBOXES));
-            GetObject( hbitmapCheckBoxes, sizeof(bmp), (LPSTR)&bmp );
+            GetObject16( hbitmapCheckBoxes, sizeof(bmp), &bmp );
             checkBoxWidth  = bmp.bmWidth / 4;
             checkBoxHeight = bmp.bmHeight / 3;
         }
@@ -255,7 +255,7 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     HPEN16 hOldPen;
     HBRUSH hOldBrush;
     DWORD dwTextSize;
-    TEXTMETRIC tm;
+    TEXTMETRIC16 tm;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     GetClientRect16(wndPtr->hwndSelf, &rc);
@@ -296,8 +296,8 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
     /* draw button label, if any: */
     if (wndPtr->text && wndPtr->text[0])
     {
-     LOGBRUSH lb;
-     GetObject(sysColorObjects.hbrushBtnFace,sizeof(LOGBRUSH),(LPSTR)&lb);
+     LOGBRUSH16 lb;
+     GetObject16( sysColorObjects.hbrushBtnFace, sizeof(lb), &lb );
      if (wndPtr->dwStyle & WS_DISABLED &&
          GetSysColor(COLOR_GRAYTEXT)==lb.lbColor)
          /* don't write gray text on gray bkg */
@@ -372,7 +372,7 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
     RECT16 rc;
     HBRUSH hBrush;
     int textlen, delta, x, y;
-    TEXTMETRIC tm;
+    TEXTMETRIC16 tm;
     SIZE16 size;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 

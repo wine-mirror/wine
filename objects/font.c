@@ -24,7 +24,7 @@
 
 #define FONTCACHE 	32	/* dynamic font cache size */
 #define MAX_FONTS	256
-static LPLOGFONT lpLogFontList[MAX_FONTS] = { NULL };
+static LPLOGFONT16 lpLogFontList[MAX_FONTS];
 
 static int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz);
 
@@ -146,7 +146,7 @@ static const char *FONT_TranslateName( char *winFaceName )
  *
  * Find a X font matching the logical font.
  */
-static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
+static XFontStruct * FONT_MatchFont( LOGFONT16 * font, DC * dc )
 {
     char pattern[100];
     const char *family, *weight, *charset;
@@ -276,8 +276,8 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
 /***********************************************************************
  *           FONT_GetMetrics
  */
-void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
-		      TEXTMETRIC * metrics )
+void FONT_GetMetrics( LOGFONT16 * logfont, XFontStruct * xfont,
+		      TEXTMETRIC16 * metrics )
 {    
     int average, i, count;
     unsigned long prop;
@@ -357,7 +357,7 @@ BOOL CreateScalableFontResource( UINT fHidden,LPSTR lpszResourceFile,
 /***********************************************************************
  *           CreateFontIndirect    (GDI.57)
  */
-HFONT CreateFontIndirect( const LOGFONT * font )
+HFONT CreateFontIndirect( const LOGFONT16 * font )
 {
     FONTOBJ * fontPtr;
     HFONT hfont;
@@ -370,7 +370,7 @@ HFONT CreateFontIndirect( const LOGFONT * font )
     hfont = GDI_AllocObject( sizeof(FONTOBJ), FONT_MAGIC );
     if (!hfont) return 0;
     fontPtr = (FONTOBJ *) GDI_HEAP_LIN_ADDR( hfont );
-    memcpy( &fontPtr->logfont, font, sizeof(LOGFONT) );
+    memcpy( &fontPtr->logfont, font, sizeof(LOGFONT16) );
     AnsiLower( fontPtr->logfont.lfFaceName );
     dprintf_font(stddeb,"CreateFontIndirect(%p (%d,%d)); return %04x\n",
 	font, font->lfHeight, font->lfWidth, hfont);
@@ -386,8 +386,8 @@ HFONT CreateFont( INT height, INT width, INT esc, INT orient, INT weight,
 		  BYTE outpres, BYTE clippres, BYTE quality, BYTE pitch,
 		  LPCSTR name )
 {
-    LOGFONT logfont = { height, width, esc, orient, weight, italic, underline,
-		    strikeout, charset, outpres, clippres, quality, pitch, };
+    LOGFONT16 logfont = {height, width, esc, orient, weight, italic, underline,
+                      strikeout, charset, outpres, clippres, quality, pitch, };
     dprintf_font(stddeb,"CreateFont(%d,%d)\n", height, width);
     if (name)
 	{
@@ -404,7 +404,7 @@ HFONT CreateFont( INT height, INT width, INT esc, INT orient, INT weight,
  */
 int FONT_GetObject( FONTOBJ * font, int count, LPSTR buffer )
 {
-    if (count > sizeof(LOGFONT)) count = sizeof(LOGFONT);
+    if (count > sizeof(LOGFONT16)) count = sizeof(LOGFONT16);
     memcpy( buffer, &font->logfont, count );
     return count;
 }
@@ -419,7 +419,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 
     static struct {
 		HFONT		id;
-		LOGFONT		logfont;
+		LOGFONT16	logfont;
 		int		access;
 		int		used;
 		X_PHYSFONT	cacheFont; } cacheFonts[FONTCACHE], *cacheFontsMin;
@@ -462,7 +462,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 		/*
 		 * Check if Handle matches the font 
 		 */
-		if(memcmp(&cacheFonts[i].logfont,&(font->logfont), sizeof(LOGFONT))) {
+		if(memcmp(&cacheFonts[i].logfont,&(font->logfont), sizeof(LOGFONT16))) {
 			/* No: remove handle id from dynamic font cache */
 			cacheFonts[i].access=0;
 			cacheFonts[i].used=0;
@@ -470,7 +470,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 			/* may be there is an unused handle which contains the font */
 			for(i=0; i<FONTCACHE; i++) {
 				if((cacheFonts[i].used == 0) &&
-				  (memcmp(&cacheFonts[i].logfont,&(font->logfont), sizeof(LOGFONT)))== 0) {
+				  (memcmp(&cacheFonts[i].logfont,&(font->logfont), sizeof(LOGFONT16)))== 0) {
 					/* got it load from cache and set new handle id */
 					stockPtr = &cacheFonts[i].cacheFont;
 					cacheFonts[i].access=1;
@@ -564,7 +564,7 @@ HFONT FONT_SelectObject( DC * dc, HFONT hfont, FONTOBJ * font )
 	cacheFontsMin->used=1;
 	cacheFontsMin->id=hfont;
 	memcpy( &dc->u.x.font, &(cacheFontsMin->cacheFont), sizeof(cacheFontsMin->cacheFont) );
-	memcpy(&cacheFontsMin->logfont,&(font->logfont), sizeof(LOGFONT));
+	memcpy(&cacheFontsMin->logfont,&(font->logfont), sizeof(LOGFONT16));
 
     }
     return prevHandle;
@@ -635,7 +635,7 @@ INT GetTextFace( HDC hdc, INT count, LPSTR name )
     if (!dc) return 0;
     if (!(font = (FONTOBJ *) GDI_GetObjPtr( dc->w.hFont, FONT_MAGIC )))
         return 0;
-    lstrcpyn( name, font->logfont.lfFaceName, count );
+    lstrcpyn32A( name, font->logfont.lfFaceName, count );
     return strlen(name);
 }
 
@@ -703,7 +703,7 @@ BOOL32 GetTextExtentPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
 /***********************************************************************
  *           GetTextMetrics    (GDI.93)
  */
-BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC metrics )
+BOOL GetTextMetrics( HDC hdc, LPTEXTMETRIC16 metrics )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -783,7 +783,7 @@ DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
 /***********************************************************************
  *           GetCharABCWidths   (GDI.307)
  */
-BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC lpABC)
+BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC16 lpABC)
 {
 
     /* No TrueType fonts in Wine so far */
@@ -881,7 +881,8 @@ int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 
 static int logfcmp(const void *a,const void *b) 
 {
-  return strcmp( (*(LPLOGFONT *)a)->lfFaceName, (*(LPLOGFONT *)b)->lfFaceName );
+  return strcmp( (*(LPLOGFONT16 *)a)->lfFaceName,
+                 (*(LPLOGFONT16 *)b)->lfFaceName );
 }
 
 void InitFontsList(void)
@@ -892,7 +893,7 @@ void InitFontsList(void)
   char 	**names;
   char 	slant, spacing;
   int 	i, count;
-  LPLOGFONT lpNewFont;
+  LPLOGFONT16 lpNewFont;
   weight = "medium";
   slant = 'r';
   spacing = '*';
@@ -904,7 +905,7 @@ void InitFontsList(void)
   names = XListFonts( display, pattern, MAX_FONTS, &count );
   dprintf_font(stddeb,"InitFontsList // count=%d \n", count);
   for (i = 0; i < count; i++) {
-    lpNewFont = malloc(sizeof(LOGFONT) + LF_FACESIZE);
+    lpNewFont = malloc(sizeof(LOGFONT16) + LF_FACESIZE);
     if (lpNewFont == NULL) {
       dprintf_font(stddeb, "InitFontsList // Error alloc new font structure !\n");
       break;
@@ -969,8 +970,8 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
   HANDLE       hMet;
   HFONT	       hFont;
   HFONT	       hOldFont;
-  LPLOGFONT    lpLogFont;
-  LPTEXTMETRIC lptm;
+  LPLOGFONT16  lpLogFont;
+  LPTEXTMETRIC16 lptm;
   LPSTR	       lpOldName;
   char	       FaceName[LF_FACESIZE];
   int          nRet = 0;
@@ -979,14 +980,14 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
   dprintf_font(stddeb,"EnumFonts(%04x, %p='%s', %08lx, %08lx)\n", 
 	       hDC, lpFaceName, lpFaceName, (LONG)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
-  hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
-  lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
+  hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT16) + LF_FACESIZE );
+  lpLogFont = (LPLOGFONT16) GDI_HEAP_LIN_ADDR(hLog);
   if (lpLogFont == NULL) {
     fprintf(stderr,"EnumFonts // can't alloc LOGFONT struct !\n");
     return 0;
   }
-  hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
-  lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
+  hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC16) );
+  lptm = (LPTEXTMETRIC16) GDI_HEAP_LIN_ADDR(hMet);
   if (lptm == NULL) {
     GDI_HEAP_FREE(hLog);
     fprintf(stderr, "EnumFonts // can't alloc TEXTMETRIC struct !\n");
@@ -1010,7 +1011,7 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC lpEnumFunc, LPARAM lpData
     }
     dprintf_font(stddeb,"EnumFonts // enum '%s' !\n", lpLogFontList[i]->lfFaceName);
     dprintf_font(stddeb,"EnumFonts // %p !\n", lpLogFontList[i]);
-    memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT) + LF_FACESIZE);
+    memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT16) + LF_FACESIZE);
     hFont = CreateFontIndirect(lpLogFont);
     hOldFont = SelectObject(hDC, hFont);
     GetTextMetrics(hDC, lptm);
@@ -1039,8 +1040,8 @@ INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM
   HANDLE       	hMet;
   HFONT	       	hFont;
   HFONT	       	hOldFont;
-  LPENUMLOGFONT lpEnumLogFont;
-  LPTEXTMETRIC	lptm;
+  LPENUMLOGFONT16 lpEnumLogFont;
+  LPTEXTMETRIC16 lptm;
   LPSTR	       	lpOldName;
   char	       	FaceName[LF_FACESIZE];
   int	       	nRet = 0;
@@ -1049,14 +1050,14 @@ INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM
   dprintf_font(stddeb,"EnumFontFamilies(%04x, %p, %08lx, %08lx)\n",
 	       hDC, lpszFamily, (DWORD)lpEnumFunc, lpData);
   if (lpEnumFunc == 0) return 0;
-  hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONT) );
-  lpEnumLogFont = (LPENUMLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
+  hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONT16) );
+  lpEnumLogFont = (LPENUMLOGFONT16) GDI_HEAP_LIN_ADDR(hLog);
   if (lpEnumLogFont == NULL) {
     fprintf(stderr,"EnumFontFamilies // can't alloc LOGFONT struct !\n");
     return 0;
   }
-  hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
-  lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
+  hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC16) );
+  lptm = (LPTEXTMETRIC16) GDI_HEAP_LIN_ADDR(hMet);
   if (lptm == NULL) {
     GDI_HEAP_FREE(hLog);
     fprintf(stderr,"EnumFontFamilies // can't alloc TEXTMETRIC struct !\n");
@@ -1077,10 +1078,10 @@ INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC lpEnumFunc, LPARAM
     } else {
       if (strcmp(FaceName, lpLogFontList[i]->lfFaceName) != 0) continue;
     }
-    memcpy(lpEnumLogFont, lpLogFontList[i], sizeof(LOGFONT));
+    memcpy(lpEnumLogFont, lpLogFontList[i], sizeof(LOGFONT16));
     strcpy(lpEnumLogFont->elfFullName,"");
     strcpy(lpEnumLogFont->elfStyle,"");
-    hFont = CreateFontIndirect((LPLOGFONT)lpEnumLogFont);
+    hFont = CreateFontIndirect((LPLOGFONT16)lpEnumLogFont);
     hOldFont = SelectObject(hDC, hFont);
     GetTextMetrics(hDC, lptm);
     SelectObject(hDC, hOldFont);
@@ -1119,7 +1120,7 @@ BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 /*************************************************************************
  *             GetKerningPairs      [GDI.332]
  */
-int GetKerningPairs(HDC hDC,int cBufLen,LPKERNINGPAIR lpKerningPairs)
+int GetKerningPairs(HDC hDC,int cBufLen,LPKERNINGPAIR16 lpKerningPairs)
 {
 	/* Wine fonts are ugly and don't support kerning :) */
 	return 0;
