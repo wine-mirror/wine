@@ -486,6 +486,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateAudioPath (LPDIRECTMUSICPERFORM
  */
 HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath** ppNewPath) {
 	IDirectMusicAudioPathImpl *default_path;
+	IDirectMusicAudioPath *pPath;
 	DSBUFFERDESC desc;
 	WAVEFORMATEX format;
 	LPDIRECTSOUNDBUFFER8 buffer;
@@ -499,9 +500,10 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	  return E_POINTER;
 	}
 	
-	DMUSIC_CreateDirectMusicAudioPathImpl (&IID_IDirectMusicAudioPath, (LPVOID*)&default_path, NULL);
+	DMUSIC_CreateDirectMusicAudioPathImpl (&IID_IDirectMusicAudioPath, (LPVOID*)&pPath, NULL);
+	default_path = (IDirectMusicAudioPathImpl*)((char*)(pPath) - offsetof(IDirectMusicAudioPathImpl,AudioPathVtbl));
 	default_path->pPerf = (IDirectMusicPerformance8*) This;
-
+	
 	/* Secondary buffer description */
 	format.wFormatTag = WAVE_FORMAT_PCM;
 	format.nChannels = 1;
@@ -565,7 +567,7 @@ HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIRECTMUSI
 	}
 	default_path->pPrimary = (IDirectSoundBuffer*) buffer;
 
-	*ppNewPath = (LPDIRECTMUSICAUDIOPATH) default_path;
+	*ppNewPath = (LPDIRECTMUSICAUDIOPATH) pPath;
 	
 	TRACE(" returning IDirectMusicPerformance interface at %p.\n", *ppNewPath);
 
