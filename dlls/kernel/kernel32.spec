@@ -87,20 +87,20 @@ import  ntdll.dll
  69 stdcall K32WOWGetVDMPointerUnfix(long) WOWGetVDMPointerUnfix
  70 stdcall K32WOWGetDescriptor(long long) WOWGetDescriptor
  71 stub IsThreadId
- 72 stub K32RtlLargeIntegerAdd
- 73 stub K32RtlEnlargedIntegerMultiply
- 74 stub K32RtlEnlargedUnsignedMultiply
- 75 stub K32RtlEnlargedUnsignedDivide
- 76 stdcall K32RtlExtendedLargeIntegerDivide(long long long ptr) RtlExtendedLargeIntegerDivide
- 77 stub K32RtlExtendedMagicDivide
- 78 stdcall K32RtlExtendedIntegerMultiply(long long long) RtlExtendedIntegerMultiply
- 79 stub K32RtlLargeIntegerShiftLeft
- 80 stub K32RtlLargeIntegerShiftRight
- 81 stub K32RtlLargeIntegerArithmeticShift
- 82 stub K32RtlLargeIntegerNegate
- 83 stub K32RtlLargeIntegerSubtract
- 84 stub K32RtlConvertLongToLargeInteger
- 85 stub K32RtlConvertUlongToLargeInteger
+ 72 forward K32RtlLargeIntegerAdd ntdll.RtlLargeIntegerAdd
+ 73 forward K32RtlEnlargedIntegerMultiply ntdll.RtlEnlargedIntegerMultiply
+ 74 forward K32RtlEnlargedUnsignedMultiply ntdll.RtlEnlargedUnsignedMultiply
+ 75 forward K32RtlEnlargedUnsignedDivide ntdll.RtlEnlargedUnsignedDivide
+ 76 forward K32RtlExtendedLargeIntegerDivide ntdll.RtlExtendedLargeIntegerDivide
+ 77 forward K32RtlExtendedMagicDivide ntdll.RtlExtendedMagicDivide
+ 78 forward K32RtlExtendedIntegerMultiply ntdll.RtlExtendedIntegerMultiply
+ 79 forward K32RtlLargeIntegerShiftLeft ntdll.RtlLargeIntegerShiftLeft
+ 80 forward K32RtlLargeIntegerShiftRight ntdll.RtlLargeIntegerShiftRight
+ 81 forward K32RtlLargeIntegerArithmeticShift ntdll.RtlLargeIntegerArithmeticShift
+ 82 forward K32RtlLargeIntegerNegate ntdll.RtlLargeIntegerNegate
+ 83 forward K32RtlLargeIntegerSubtract ntdll.RtlLargeIntegerSubtract
+ 84 forward K32RtlConvertLongToLargeInteger ntdll.RtlConvertLongToLargeInteger
+ 85 forward K32RtlConvertUlongToLargeInteger ntdll.RtlConvertUlongToLargeInteger
  86 stdcall _KERNEL32_86(ptr) _KERNEL32_86
  87 stdcall SSOnBigStack() SSOnBigStack
  88 varargs SSCall(long long ptr) SSCall
