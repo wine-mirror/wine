@@ -1576,7 +1576,7 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     }
 
     TRACE_(key)("ToUnicode about to return %d with char %x %s\n",
-		ret, bufW ? bufW[1] : 0, bufW ? "" : "(no buffer)");
+		ret, bufW ? bufW[0] : 0, bufW ? "" : "(no buffer)");
     return ret;
 }
 
