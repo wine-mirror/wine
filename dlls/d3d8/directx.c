@@ -391,8 +391,6 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     ICOM_THIS(IDirect3D8Impl,iface);
     TRACE("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
-
-    /* NOTE: Most of the values here are complete garbage for now */
     pCaps->DeviceType = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
     pCaps->AdapterOrdinal = Adapter;
 
@@ -508,15 +506,16 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     pCaps->ExtentsAdjust = 0;
 
-    pCaps->StencilCaps = D3DSTENCILCAPS_DECRSAT | 
-                         D3DSTENCILCAPS_INCRSAT | 
-                         D3DSTENCILCAPS_INVERT  | 
-                         D3DSTENCILCAPS_KEEP    | 
-                         D3DSTENCILCAPS_REPLACE | 
-                         D3DSTENCILCAPS_ZERO;
-                         /* FIXME: Add
-                             D3DSTENCILCAPS_DECR
-                             D3DSTENCILCAPS_INCR */
+    pCaps->StencilCaps =  D3DSTENCILCAPS_DECRSAT | 
+                          D3DSTENCILCAPS_INCRSAT | 
+                          D3DSTENCILCAPS_INVERT  | 
+                          D3DSTENCILCAPS_KEEP    | 
+                          D3DSTENCILCAPS_REPLACE | 
+                          D3DSTENCILCAPS_ZERO;
+#if defined(GL_VERSION_1_4) || defined(GL_EXT_stencil_wrap)
+    pCaps->StencilCaps |= D3DSTENCILCAPS_DECR    |
+                          D3DSTENCILCAPS_INCR;
+#endif
 
     pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x80000;
 

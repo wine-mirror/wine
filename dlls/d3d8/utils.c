@@ -407,11 +407,19 @@ GLenum StencilOp(DWORD op) {
     case D3DSTENCILOP_REPLACE : return GL_REPLACE;
     case D3DSTENCILOP_INCRSAT : return GL_INCR;
     case D3DSTENCILOP_DECRSAT : return GL_DECR;
-    case D3DSTENCILOP_INVERT  : return GL_INVERT;
+    case D3DSTENCILOP_INVERT  : return GL_INVERT; 
+#if defined(GL_VERSION_1_4)
+    case D3DSTENCILOP_INCR    : return GL_INCR_WRAP;
+    case D3DSTENCILOP_DECR    : return GL_DECR_WRAP;
+#elif defined(GL_EXT_stencil_wrap)
+    case D3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
+    case D3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
+#else
     case D3DSTENCILOP_INCR    : FIXME("Unsupported stencil op D3DSTENCILOP_INCR\n");
                                 return GL_INCR; /* Fixme - needs to support wrap */
     case D3DSTENCILOP_DECR    : FIXME("Unsupported stencil op D3DSTENCILOP_DECR\n");
                                 return GL_DECR; /* Fixme - needs to support wrap */
+#endif
     default:
         FIXME("Invalid stencil op %ld\n", op);
         return GL_ALWAYS;
