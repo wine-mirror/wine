@@ -1060,9 +1060,14 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 
 	CopyMemory(dsb->pwfx, wfex, cp_size);
 
-	dsb->buflen = dsbd->dwBufferBytes;
-	dsb->freq = dsbd->lpwfxFormat->nSamplesPerSec;
+	if (dsbd->dwBufferBytes % dsbd->lpwfxFormat->nBlockAlign)
+		dsb->buflen = dsbd->dwBufferBytes + 
+			(dsbd->lpwfxFormat->nBlockAlign - 
+			(dsbd->dwBufferBytes % dsbd->lpwfxFormat->nBlockAlign));
+	else
+		dsb->buflen = dsbd->dwBufferBytes;
 
+	dsb->freq = dsbd->lpwfxFormat->nSamplesPerSec;
 	dsb->notify = NULL;
 	dsb->notifies = NULL;
 	dsb->nrofnotifies = 0;

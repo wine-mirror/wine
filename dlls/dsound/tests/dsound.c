@@ -305,7 +305,8 @@ static HRESULT test_dsound(LPGUID lpGuid)
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
         bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRL3D;
-        bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+        bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                    wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,
@@ -573,7 +574,8 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                        wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx2;
             if (winetest_interactive) {
                 trace("  Testing a primary buffer at %ldx%dx%d with a "
@@ -672,7 +674,8 @@ static HRESULT test_secondary(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                        wfx.nBlockAlign);
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DSERR_INVALIDPARAM,"IDirectSound_CreateSoundBuffer() "
                "should have returned DSERR_INVALIDPARAM, returned: %s\n",
@@ -684,7 +687,8 @@ static HRESULT test_secondary(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                        wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             if (winetest_interactive) {
                 trace("  Testing a secondary buffer at %ldx%dx%d "
@@ -727,6 +731,53 @@ EXIT:
     return rc;
 }
 
+static HRESULT test_block_align(LPGUID lpGuid)
+{
+    HRESULT rc;
+    LPDIRECTSOUND dso=NULL;
+    LPDIRECTSOUNDBUFFER secondary=NULL;
+    DSBUFFERDESC bufdesc;
+    DSBCAPS dsbcaps;
+    WAVEFORMATEX wfx;
+    int ref;
+
+    /* Create the DirectSound object */
+    rc=DirectSoundCreate(lpGuid,&dso,NULL);
+    ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate() failed: %s\n",DXGetErrorString8(rc));
+    if (rc!=DS_OK)
+        return rc;
+
+    init_format(&wfx,WAVE_FORMAT_PCM,11025,16,2);
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize=sizeof(bufdesc);
+    bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
+    bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec + 1;
+    bufdesc.lpwfxFormat=&wfx;
+    rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+    ok(rc==DS_OK,"IDirectSound_CreateSoundBuffer() "
+       "should have returned DS_OK, returned: %s\n",
+       DXGetErrorString8(rc));
+
+    if (rc==DS_OK && secondary!=NULL) {
+        rc=IDirectSoundBuffer_GetCaps(secondary,&dsbcaps);
+        ok(rc==DS_OK,"IDirectSoundBuffer_GetCaps() should have returned DS_OK, "
+           "returned: %s\n", DXGetErrorString8(rc));
+        ok(dsbcaps.dwBufferBytes==(wfx.nAvgBytesPerSec + 4),
+           "Buffer size not a multiple of nBlockAlign\n");
+        ref=IDirectSoundBuffer_Release(secondary);
+        ok(ref==0,"IDirectSoundBuffer_Release() secondary has %d references, "
+           "should have 0\n",ref);
+    }
+
+    ref=IDirectSound_Release(dso);
+    ok(ref==0,"IDirectSound_Release() has %d references, should have 0\n",ref);
+    if (ref!=0)
+        return DSERR_GENERIC;
+
+    return rc;
+}
+
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                                    LPCSTR lpcstrModule, LPVOID lpContext)
 {
@@ -738,6 +789,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     else if (rc == DSERR_ALLOCATED)
         trace("  Already In Use\n");
     else {
+        test_block_align(lpGuid);
         test_primary(lpGuid);
         test_primary_secondary(lpGuid);
         test_secondary(lpGuid);

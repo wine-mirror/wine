@@ -38,6 +38,11 @@
 
 static HRESULT (WINAPI *pDirectSoundCreate8)(LPCGUID,LPDIRECTSOUND8*,LPUNKNOWN)=NULL;
 
+int align(int length, int align)
+{
+    return (length / align) * align;
+}
+
 static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
                                LPCGUID lpGuid)
 {
@@ -315,7 +320,8 @@ static HRESULT test_dsound8(LPGUID lpGuid)
         ZeroMemory(&bufdesc, sizeof(bufdesc));
         bufdesc.dwSize=sizeof(bufdesc);
         bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2 | DSBCAPS_CTRL3D;
-        bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+        bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                    wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
         ok(rc==DS_OK && secondary!=NULL,
@@ -594,7 +600,8 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                        wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx2;
             if (winetest_interactive) {
                 trace("  Testing a primary buffer at %ldx%dx%d with a "
@@ -693,7 +700,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                        wfx.nBlockAlign);
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DSERR_INVALIDPARAM,"IDirectSound8_CreateSoundBuffer() "
                "should have returned DSERR_INVALIDPARAM, returned: %s\n",
@@ -705,7 +713,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
             ZeroMemory(&bufdesc, sizeof(bufdesc));
             bufdesc.dwSize=sizeof(bufdesc);
             bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
-            bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+            bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                        wfx.nBlockAlign);
             bufdesc.lpwfxFormat=&wfx;
             if (winetest_interactive) {
                 trace("  Testing a secondary buffer at %ldx%dx%d "

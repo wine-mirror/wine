@@ -713,7 +713,8 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         else
             bufdesc.dwFlags|=
                 (DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
-        bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+        bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                    wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;
         if (winetest_interactive) {
             trace("  Testing a %s%ssecondary buffer %s%s%s%sat %ldx%dx%d "

@@ -615,7 +615,8 @@ static HRESULT test_secondary8(LPGUID lpGuid, int play,
         else
             bufdesc.dwFlags|=
                 (DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
-        bufdesc.dwBufferBytes=wfx.nAvgBytesPerSec*BUFFER_LEN/1000;
+        bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
+                                    wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;
         if (has_3d) {
             /* a stereo 3D buffer should fail */
