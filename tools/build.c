@@ -2845,101 +2845,6 @@ static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
 }
 
 
-/*******************************************************************
- *         BuildCallTo32LargeStack
- *
- * Build the function used to switch to the original 32-bit stack
- * before calling a 32-bit function from 32-bit code. This is used for
- * functions that need a large stack, like X bitmaps functions.
- *
- * The generated function has the following prototype:
- *   int xxx( int (*func)(), void *arg );
- *
- * The pointer to the function can be retrieved by calling CALL32_Init,
- * which also takes care of saving the current 32-bit stack pointer.
- * Furthermore, CALL32_Init switches to a new stack and jumps to the
- * specified target address.
- *
- * NOTE: The CALL32_LargeStack routine may be recursively entered by the 
- *       same thread, but not concurrently entered by several threads.
- *
- * Stack layout of CALL32_Init:
- *
- * (esp+12)  new stack address
- * (esp+8)   target address
- * (esp+4)   pointer to variable to receive CALL32_LargeStack address
- * (esp)     ret addr
- *
- * Stack layout of CALL32_LargeStack:
- *   ...     ...
- * (ebp+12)  arg
- * (ebp+8)   func
- * (ebp+4)   ret addr
- * (ebp)     ebp
- */
-static void BuildCallTo32LargeStack( FILE *outfile )
-{
-    /* Initialization function */
-
-    fprintf( outfile, "\n\t.align 4\n" );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CALL32_Init:F1\",36,0,0," PREFIX "CALL32_Init\n");
-#endif
-    fprintf( outfile, "\t.globl " PREFIX "CALL32_Init\n" );
-    fprintf( outfile, "\t.type " PREFIX "CALL32_Init,@function\n" );
-    fprintf( outfile, PREFIX "CALL32_Init:\n" );
-    fprintf( outfile, "\tmovl %%esp,CALL32_Original32_esp\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tmovl $CALL32_LargeStack,(%%eax)\n" );
-    fprintf( outfile, "\tpopl %%eax\n" );
-    fprintf( outfile, "\tpopl %%esp\n" );
-    fprintf( outfile, "\tpushl %%eax\n" );
-    fprintf( outfile, "\tret\n" );
-
-    /* Function header */
-
-    fprintf( outfile, "\n\t.align 4\n" );
-#ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CALL32_LargeStack:F1\",36,0,0,CALL32_LargeStack\n");
-#endif
-    fprintf( outfile, "CALL32_LargeStack:\n" );
-    
-    /* Entry code */
-
-    fprintf( outfile, "\tpushl %%ebp\n" );
-    fprintf( outfile, "\tmovl %%esp,%%ebp\n" );
-
-    /* Switch to the original 32-bit stack pointer */
-
-    fprintf( outfile, "\tcmpl $0, CALL32_RecursionCount\n" );
-    fprintf( outfile, "\tjne  CALL32_skip\n" );
-    fprintf( outfile, "\tmovl CALL32_Original32_esp, %%esp\n" );
-    fprintf( outfile, "CALL32_skip:\n" );
-
-    fprintf( outfile, "\tincl CALL32_RecursionCount\n" );
-
-    /* Transfer the argument and call the function */
-
-    fprintf( outfile, "\tpushl 12(%%ebp)\n" );
-    fprintf( outfile, "\tcall *8(%%ebp)\n" );
-
-    /* Restore registers and return */
-
-    fprintf( outfile, "\tdecl CALL32_RecursionCount\n" );
-
-    fprintf( outfile, "\tmovl %%ebp,%%esp\n" );
-    fprintf( outfile, "\tpopl %%ebp\n" );
-    fprintf( outfile, "\tret\n" );
-
-    /* Data */
-
-    fprintf( outfile, "\t.data\n" );
-    fprintf( outfile, "CALL32_Original32_esp:\t.long 0\n" );
-    fprintf( outfile, "CALL32_RecursionCount:\t.long 0\n" );
-    fprintf( outfile, "\t.text\n" );
-}
-
 
 /*******************************************************************
  *         BuildCallFrom32Regs
@@ -3268,10 +3173,6 @@ static void BuildCall32( FILE *outfile )
         fprintf( outfile, "Code_Start:\n" );
     }
 #endif
-
-    /* Build the 32-bit large stack callback */
-
-    BuildCallTo32LargeStack( outfile );
 
     /* Build the register callback function */
 

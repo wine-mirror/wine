@@ -413,7 +413,7 @@ static void PROCESS_Start( HMODULE main_module, LPCSTR filename )
     SIGNAL_Init();  /* reinitialize signal stack */
 
     /* switch to the new stack */
-    CALL32_Init( &IF1632_CallLargeStack, start_process, NtCurrentTeb()->stack_top );
+    SYSDEPS_SwitchToThreadStack( start_process );
 }
 
 

@@ -16,6 +16,7 @@ static int *ph_errno = &h_errno;
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/resource.h>
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
@@ -218,6 +219,103 @@ void SYSDEPS_ExitThread( int status )
      * but it eliminates a compiler warning.
      */
     exit( status );
+}
+
+
+/***********************************************************************
+ *           SYSDEPS_CallOnStack
+ */
+static int SYSDEPS_DoCallOnStack( int (*func)(LPVOID), LPVOID arg ) WINE_UNUSED;
+static int SYSDEPS_DoCallOnStack( int (*func)(LPVOID), LPVOID arg )
+{
+    int retv = 0;
+
+    __TRY
+    {
+        retv = func( arg );
+    }
+    __EXCEPT(UnhandledExceptionFilter)
+    {
+        TerminateThread( GetCurrentThread(), GetExceptionCode() );
+        return 0;
+    }
+    __ENDTRY
+
+    return retv;
+}
+
+#ifdef __i386__
+int SYSDEPS_CallOnStack( LPVOID stackTop, LPVOID stackLow,
+                         int (*func)(LPVOID), LPVOID arg );
+__ASM_GLOBAL_FUNC( SYSDEPS_CallOnStack,
+                   "pushl %ebp\n\t"
+                   "movl %esp, %ebp\n\t"
+                   ".byte 0x64; pushl 0x04\n\t"
+                   ".byte 0x64; pushl 0x08\n\t"
+                   "movl 8(%ebp), %esp\n\t"
+                   "movl 12(%ebp), %eax\n\t"
+                   ".byte 0x64; movl %esp, 0x04\n\t"
+                   ".byte 0x64; movl %eax, 0x08\n\t"
+                   "pushl 20(%ebp)\n\t"
+                   "pushl 16(%ebp)\n\t"
+                   "call " __ASM_NAME("SYSDEPS_DoCallOnStack") "\n\t"
+                   "leal -8(%ebp), %esp\n\t"
+                   ".byte 0x64; popl 0x08\n\t"
+                   ".byte 0x64; popl 0x04\n\t"
+                   "popl %ebp\n\t"
+                   "ret" );
+#else
+int SYSDEPS_CallOnStack( LPVOID stackTop, LPVOID stackLow,
+                         int (*func)(LPVOID), LPVOID arg )
+{
+    return SYSDEPS_DoCallOnStack( func, arg );
+}
+#endif
+
+/***********************************************************************
+ *           SYSDEPS_SwitchToThreadStack
+ */
+
+static LPVOID SYSDEPS_LargeStackTop = NULL;
+static LPVOID SYSDEPS_LargeStackLow = NULL;
+
+void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
+{
+    TEB *teb = NtCurrentTeb();
+    LPVOID stackTop = teb->stack_top;
+    LPVOID stackLow = teb->stack_low;
+
+    struct rlimit rl;
+
+    if ( getrlimit(RLIMIT_STACK, &rl) < 0 ) 
+    {
+        WARN("Can't get rlimit\n");
+        rl.rlim_cur = 8*1024*1024;
+    }
+
+    SYSDEPS_LargeStackTop = teb->stack_top = &func - 128;
+    SYSDEPS_LargeStackLow = teb->stack_low = teb->stack_top - rl.rlim_cur;
+
+    SYSDEPS_CallOnStack( stackTop, stackLow, 
+                         (int (*)(void *))func, NULL );
+}
+
+/***********************************************************************
+ *           SYSDEPS_CallOnLargeStack
+ */
+int SYSDEPS_CallOnLargeStack( int (*func)(LPVOID), LPVOID arg )
+{
+    static int recurse = 0;
+    int retv;
+
+    if ( recurse++ == 0 && SYSDEPS_LargeStackTop )
+        retv = SYSDEPS_CallOnStack( SYSDEPS_LargeStackTop,
+                                    SYSDEPS_LargeStackLow, func, arg );
+    else
+        retv = func( arg );
+
+    recurse--;
+    return retv;
 }
 
 

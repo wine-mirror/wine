@@ -43,8 +43,6 @@ DECLARE_DEBUG_CHANNEL(toolhelp)
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
 
-  /* Pointer to function to switch to a larger stack */
-int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
 
 static THHOOK DefaultThhook = { 0 };
 THHOOK *pThhook = &DefaultThhook;
