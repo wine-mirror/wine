@@ -24,6 +24,8 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <errno.h>
+#include <stdio.h>
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -36,12 +38,164 @@
 #include "winternl.h"
 
 #include "kernel_private.h"
+#include "file.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 #define MAX_PATHNAME_LEN        1024
+
+
+/* check if a file name is for an executable file (.exe or .com) */
+inline static BOOL is_executable( const WCHAR *name )
+{
+    static const WCHAR exeW[] = {'.','e','x','e',0};
+    static const WCHAR comW[] = {'.','c','o','m',0};
+    int len = strlenW(name);
+
+    if (len < 4) return FALSE;
+    return (!strcmpiW( name + len - 4, exeW ) || !strcmpiW( name + len - 4, comW ));
+}
+
+
+/***********************************************************************
+ *           add_boot_rename_entry
+ *
+ * Adds an entry to the registry that is loaded when windows boots and
+ * checks if there are some files to be removed or renamed/moved.
+ * <fn1> has to be valid and <fn2> may be NULL. If both pointers are
+ * non-NULL then the file is moved, otherwise it is deleted.  The
+ * entry of the registrykey is always appended with two zero
+ * terminated strings. If <fn2> is NULL then the second entry is
+ * simply a single 0-byte. Otherwise the second filename goes
+ * there. The entries are prepended with \??\ before the path and the
+ * second filename gets also a '!' as the first character if
+ * MOVEFILE_REPLACE_EXISTING is set. After the final string another
+ * 0-byte follows to indicate the end of the strings.
+ * i.e.:
+ * \??\D:\test\file1[0]
+ * !\??\D:\test\file1_renamed[0]
+ * \??\D:\Test|delete[0]
+ * [0]                        <- file is to be deleted, second string empty
+ * \??\D:\test\file2[0]
+ * !\??\D:\test\file2_renamed[0]
+ * [0]                        <- indicates end of strings
+ *
+ * or:
+ * \??\D:\test\file1[0]
+ * !\??\D:\test\file1_renamed[0]
+ * \??\D:\Test|delete[0]
+ * [0]                        <- file is to be deleted, second string empty
+ * [0]                        <- indicates end of strings
+ *
+ */
+static BOOL add_boot_rename_entry( LPCWSTR fn1, LPCWSTR fn2, DWORD flags )
+{
+    static const WCHAR PreString[] = {'\\','?','?','\\',0};
+    static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
+                                      'F','i','l','e','R','e','n','a','m','e',
+                                      'O','p','e','r','a','t','i','o','n','s',0};
+    static const WCHAR SessionW[] = {'M','a','c','h','i','n','e','\\',
+                                     'S','y','s','t','e','m','\\',
+                                     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                     'C','o','n','t','r','o','l','\\',
+                                     'S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',0};
+    static const int info_size = FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data );
+
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    KEY_VALUE_PARTIAL_INFORMATION *info;
+    BOOL rc = FALSE;
+    HKEY Reboot = 0;
+    DWORD len0, len1, len2;
+    DWORD DataSize = 0;
+    BYTE *Buffer = NULL;
+    WCHAR *p;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, SessionW );
+
+    if (NtCreateKey( &Reboot, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
+    {
+        WARN("Error creating key for reboot managment [%s]\n",
+             "SYSTEM\\CurrentControlSet\\Control\\Session Manager");
+        return FALSE;
+    }
+
+    len0 = strlenW(PreString);
+    len1 = strlenW(fn1) + len0 + 1;
+    if (fn2)
+    {
+        len2 = strlenW(fn2) + len0 + 1;
+        if (flags & MOVEFILE_REPLACE_EXISTING) len2++; /* Plus 1 because of the leading '!' */
+    }
+    else len2 = 1; /* minimum is the 0 characters for the empty second string */
+
+    /* convert characters to bytes */
+    len0 *= sizeof(WCHAR);
+    len1 *= sizeof(WCHAR);
+    len2 *= sizeof(WCHAR);
+
+    RtlInitUnicodeString( &nameW, ValueName );
+
+    /* First we check if the key exists and if so how many bytes it already contains. */
+    if (NtQueryValueKey( Reboot, &nameW, KeyValuePartialInformation,
+                         NULL, 0, &DataSize ) == STATUS_BUFFER_OVERFLOW)
+    {
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) )))
+            goto Quit;
+        if (NtQueryValueKey( Reboot, &nameW, KeyValuePartialInformation,
+                             Buffer, DataSize, &DataSize )) goto Quit;
+        info = (KEY_VALUE_PARTIAL_INFORMATION *)Buffer;
+        if (info->Type != REG_MULTI_SZ) goto Quit;
+        if (DataSize > sizeof(info)) DataSize -= sizeof(WCHAR);  /* remove terminating null (will be added back later) */
+    }
+    else
+    {
+        DataSize = info_size;
+        if (!(Buffer = HeapAlloc( GetProcessHeap(), 0, DataSize + len1 + len2 + sizeof(WCHAR) )))
+            goto Quit;
+    }
+
+    p = (WCHAR *)(Buffer + DataSize);
+    strcpyW( p, PreString );
+    strcatW( p, fn1 );
+    DataSize += len1;
+    if (fn2)
+    {
+        p = (WCHAR *)(Buffer + DataSize);
+        if (flags & MOVEFILE_REPLACE_EXISTING)
+            *p++ = '!';
+        strcpyW( p, PreString );
+        strcatW( p, fn2 );
+        DataSize += len2;
+    }
+    else
+    {
+        p = (WCHAR *)(Buffer + DataSize);
+        *p = 0;
+        DataSize += sizeof(WCHAR);
+    }
+
+    /* add final null */
+    p = (WCHAR *)(Buffer + DataSize);
+    *p = 0;
+    DataSize += sizeof(WCHAR);
+
+    rc = !NtSetValueKey(Reboot, &nameW, 0, REG_MULTI_SZ, Buffer + info_size, DataSize - info_size);
+
+ Quit:
+    if (Reboot) NtClose(Reboot);
+    if (Buffer) HeapFree( GetProcessHeap(), 0, Buffer );
+    return(rc);
+}
+
 
 /***********************************************************************
  *           GetFullPathNameW   (KERNEL32.@)
@@ -658,4 +812,190 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
     RtlFreeUnicodeString(&nameW);
     RtlFreeUnicodeString(&extW);
     return ret;
+}
+
+
+/**************************************************************************
+ *           MoveFileExW   (KERNEL32.@)
+ */
+BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
+{
+    FILE_BASIC_INFORMATION info;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE source_handle = 0, dest_handle;
+    char *source_unix = NULL, *dest_unix = NULL;
+
+    TRACE("(%s,%s,%04lx)\n", debugstr_w(source), debugstr_w(dest), flag);
+
+    if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
+        return add_boot_rename_entry( source, dest, flag );
+
+    if (!dest)
+        return DeleteFileW( source );
+
+    /* check if we are allowed to rename the source */
+
+    if (!RtlDosPathNameToNtPathName_U( source, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        return FALSE;
+    }
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.ObjectName = &nt_name;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtOpenFile( &source_handle, 0, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        goto error;
+    }
+    status = NtQueryInformationFile( source_handle, &io, &info, sizeof(info), FileBasicInformation );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        goto error;
+    }
+
+    if (!(source_unix = wine_get_unix_file_name( source )))  /* should not happen */
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        goto error;
+    }
+
+    if (info.FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        if (flag & MOVEFILE_REPLACE_EXISTING)  /* cannot replace directory */
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            goto error;
+        }
+    }
+
+    /* we must have write access to the destination, and it must */
+    /* not exist except if MOVEFILE_REPLACE_EXISTING is set */
+
+    if (!RtlDosPathNameToNtPathName_U( dest, &nt_name, NULL, NULL ))
+    {
+        SetLastError( ERROR_PATH_NOT_FOUND );
+        goto error;
+    }
+    status = NtOpenFile( &dest_handle, GENERIC_READ | GENERIC_WRITE, &attr, &io, 0,
+                         FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    RtlFreeUnicodeString( &nt_name );
+    if (status == STATUS_SUCCESS)
+    {
+        NtClose( dest_handle );
+        if (!(flag & MOVEFILE_REPLACE_EXISTING))
+        {
+            SetLastError( ERROR_ALREADY_EXISTS );
+            goto error;
+        }
+    }
+    else if (status != STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        goto error;
+    }
+    if (!(dest_unix = wine_get_unix_file_name( dest )))  /* should not happen */
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
+        goto error;
+    }
+
+    /* now perform the rename */
+
+    if (rename( source_unix, dest_unix ) == -1)
+    {
+        if (errno == EXDEV && (flag & MOVEFILE_COPY_ALLOWED))
+        {
+            NtClose( source_handle );
+            HeapFree( GetProcessHeap(), 0, source_unix );
+            HeapFree( GetProcessHeap(), 0, dest_unix );
+            return (CopyFileW( source, dest, TRUE ) && DeleteFileW( source ));
+        }
+        FILE_SetDosError();
+        /* if we created the destination, remove it */
+        if (io.Information == FILE_CREATED) unlink( dest_unix );
+        goto error;
+    }
+
+    /* fixup executable permissions */
+
+    if (is_executable( source ) != is_executable( dest ))
+    {
+        struct stat fstat;
+        if (stat( dest_unix, &fstat ) != -1)
+        {
+            if (is_executable( dest ))
+                /* set executable bit where read bit is set */
+                fstat.st_mode |= (fstat.st_mode & 0444) >> 2;
+            else
+                fstat.st_mode &= ~0111;
+            chmod( dest_unix, fstat.st_mode );
+        }
+    }
+
+    NtClose( source_handle );
+    HeapFree( GetProcessHeap(), 0, source_unix );
+    HeapFree( GetProcessHeap(), 0, dest_unix );
+    return TRUE;
+
+error:
+    if (source_handle) NtClose( source_handle );
+    if (source_unix) HeapFree( GetProcessHeap(), 0, source_unix );
+    if (dest_unix) HeapFree( GetProcessHeap(), 0, dest_unix );
+    return FALSE;
+}
+
+/**************************************************************************
+ *           MoveFileExA   (KERNEL32.@)
+ */
+BOOL WINAPI MoveFileExA( LPCSTR source, LPCSTR dest, DWORD flag )
+{
+    UNICODE_STRING sourceW, destW;
+    BOOL ret;
+
+    if (!source)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    RtlCreateUnicodeStringFromAsciiz(&sourceW, source);
+    if (dest) RtlCreateUnicodeStringFromAsciiz(&destW, dest);
+    else destW.Buffer = NULL;
+
+    ret = MoveFileExW( sourceW.Buffer, destW.Buffer, flag );
+
+    RtlFreeUnicodeString(&sourceW);
+    RtlFreeUnicodeString(&destW);
+    return ret;
+}
+
+
+/**************************************************************************
+ *           MoveFileW   (KERNEL32.@)
+ *
+ *  Move file or directory
+ */
+BOOL WINAPI MoveFileW( LPCWSTR source, LPCWSTR dest )
+{
+    return MoveFileExW( source, dest, MOVEFILE_COPY_ALLOWED );
+}
+
+
+/**************************************************************************
+ *           MoveFileA   (KERNEL32.@)
+ */
+BOOL WINAPI MoveFileA( LPCSTR source, LPCSTR dest )
+{
+    return MoveFileExA( source, dest, MOVEFILE_COPY_ALLOWED );
 }
