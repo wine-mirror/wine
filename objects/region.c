@@ -1018,7 +1018,10 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 	if (obj) {
             pEndRect = (RECT *)rgndata->Buffer + rgndata->rdh.nCount;
             for(pCurRect = (RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
-                REGION_UnionRectWithRegion( pCurRect, obj->rgn );
+            {
+                if (pCurRect->left < pCurRect->right && pCurRect->top < pCurRect->bottom)
+                    REGION_UnionRectWithRegion( pCurRect, obj->rgn );
+            }
 	    GDI_ReleaseObj( hrgn );
 
             TRACE("%p\n", hrgn );
