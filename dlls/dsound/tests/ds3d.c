@@ -867,6 +867,27 @@ EXIT:
     return rc;
 }
 
+static HRESULT test_for_driver(LPGUID lpGuid)
+{
+    HRESULT rc;
+    LPDIRECTSOUND dso=NULL;
+    int ref;
+
+    /* Create the DirectSound object */
+    rc=DirectSoundCreate(lpGuid,&dso,NULL);
+    ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
+       DXGetErrorString8(rc));
+    if (rc!=DS_OK)
+        return rc;
+
+    ref=IDirectSound_Release(dso);
+    ok(ref==0,"IDirectSound_Release() has %d references, should have 0\n",ref);
+    if (ref!=0)
+        return DSERR_GENERIC;
+
+    return rc;
+}
+
 static HRESULT test_primary(LPGUID lpGuid)
 {
     HRESULT rc;
@@ -1128,7 +1149,14 @@ return DSERR_GENERIC;
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                                    LPCSTR lpcstrModule, LPVOID lpContext)
 {
+    HRESULT rc;
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
+
+    rc = test_for_driver(lpGuid);
+    if (rc == DSERR_NODRIVER) {
+        trace("  No Driver\n");
+        return 1;
+    }
 
     trace("  Testing the primary buffer\n");
     test_primary(lpGuid);

@@ -270,8 +270,11 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=DirectSoundCreate(lpGuid,&dso,NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER,"DirectSoundCreate() failed: %s\n",
        DXGetErrorString8(rc));
-    if (rc!=DS_OK)
+    if (rc!=DS_OK) {
+        if (rc==DSERR_NODRIVER)
+            trace("  No Driver\n");
         goto EXIT;
+    }
 
     /* We must call SetCooperativeLevel before calling CreateSoundBuffer */
     /* DSOUND: Setting DirectSound cooperative level to DSSCL_PRIORITY */

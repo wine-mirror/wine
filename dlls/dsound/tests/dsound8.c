@@ -222,20 +222,23 @@ static void IDirectSound8_tests()
 
     /* try with no device specified */
     rc=pDirectSoundCreate8(NULL,&dso,NULL);
-    ok(rc==S_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
-    if (dso)
+    ok(rc==S_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
+    if (rc==DS_OK && dso)
         IDirectSound8_test(dso, TRUE, NULL);
 
     /* try with default playback device specified */
     rc=pDirectSoundCreate8(&DSDEVID_DefaultPlayback,&dso,NULL);
-    ok(rc==S_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
-    if (dso)
+    ok(rc==S_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
+    if (rc==DS_OK && dso)
         IDirectSound8_test(dso, TRUE, NULL);
 
     /* try with default voice playback device specified */
     rc=pDirectSoundCreate8(&DSDEVID_DefaultVoicePlayback,&dso,NULL);
-    ok(rc==S_OK,"DirectSoundCreate8() failed: %s\n",DXGetErrorString8(rc));
-    if (dso)
+    ok(rc==S_OK||rc==DSERR_NODRIVER,"DirectSoundCreate8() failed: %s\n",
+       DXGetErrorString8(rc));
+    if (rc==DS_OK && dso)
         IDirectSound8_test(dso, TRUE, NULL);
 
     /* try with a bad device specified */
@@ -740,11 +743,16 @@ EXIT:
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                                    LPCSTR lpcstrModule, LPVOID lpContext)
 {
+    HRESULT rc;
     trace("*** Testing %s - %s ***\n",lpcstrDescription,lpcstrModule);
-    test_dsound8(lpGuid);
-    test_primary8(lpGuid);
-    test_primary_secondary8(lpGuid);
-    test_secondary8(lpGuid);
+    rc = test_dsound8(lpGuid);
+    if (rc == DSERR_NODRIVER)
+        trace("  No Driver\n");
+    else {
+        test_primary8(lpGuid);
+        test_primary_secondary8(lpGuid);
+        test_secondary8(lpGuid);
+    }
 
     return 1;
 }
