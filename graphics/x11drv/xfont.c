@@ -250,6 +250,59 @@ static fontEncodingTemplate __fETTable[] = {
 };
 static fontEncodingTemplate* fETTable = __fETTable;
 
+/* a charset database for known facenames */
+struct CharsetBindingInfo
+{
+	const char*	pszFaceName;
+	BYTE		charset;
+};
+static const struct CharsetBindingInfo charsetbindings[] =
+{
+	/* special facenames */
+	{ "System", DEFAULT_CHARSET },
+	{ "FixedSys", DEFAULT_CHARSET },
+
+	/* known facenames */
+	{ "MS Serif", ANSI_CHARSET },
+	{ "MS Sans Serif", ANSI_CHARSET },
+	{ "Courier", ANSI_CHARSET },
+	{ "Symbol", SYMBOL_CHARSET },
+
+	{ "Arial", ANSI_CHARSET },
+	{ "Arial Greek", GREEK_CHARSET },
+	{ "Arial Tur", TURKISH_CHARSET },
+	{ "Arial Baltic", BALTIC_CHARSET },
+	{ "Arial CE", EASTEUROPE_CHARSET },
+	{ "Arial Cyr", RUSSIAN_CHARSET },
+	{ "Courier New", ANSI_CHARSET },
+	{ "Courier New Greek", GREEK_CHARSET },
+	{ "Courier New Tur", TURKISH_CHARSET },
+	{ "Courier New Baltic", BALTIC_CHARSET },
+	{ "Courier New CE", EASTEUROPE_CHARSET },
+	{ "Courier New Cyr", RUSSIAN_CHARSET },
+	{ "Times New Roman", ANSI_CHARSET },
+	{ "Times New Roman Greek", GREEK_CHARSET },
+	{ "Times New Roman Tur", TURKISH_CHARSET },
+	{ "Times New Roman Baltic", BALTIC_CHARSET },
+	{ "Times New Roman CE", EASTEUROPE_CHARSET },
+	{ "Times New Roman Cyr", RUSSIAN_CHARSET },
+
+	{ "\x82\x6c\x82\x72 \x83\x53\x83\x56\x83\x62\x83\x4e",
+			SHIFTJIS_CHARSET }, /* MS gothic */
+	{ "\x82\x6c\x82\x72 \x82\x6f\x83\x53\x83\x56\x83\x62\x83\x4e",
+			SHIFTJIS_CHARSET }, /* MS P gothic */
+	{ "\x82\x6c\x82\x72 \x96\xbe\x92\xa9",
+			SHIFTJIS_CHARSET }, /* MS mincho */
+	{ "\x82\x6c\x82\x72 \x82\x6f\x96\xbe\x92\xa9",
+			SHIFTJIS_CHARSET }, /* MS P mincho */
+	{ "GulimChe", HANGEUL_CHARSET },
+	{ "MS Song", GB2312_CHARSET },
+	{ "MS Hei", GB2312_CHARSET },
+
+	{ NULL, 0 }
+};
+
+
 static int		DefResolution = 0;
 
 static CRITICAL_SECTION crtsc_fonts_X11 = CRITICAL_SECTION_INIT;
@@ -2256,7 +2309,11 @@ static UINT XFONT_Match( fontMatch* pfm )
    {
      if( pfm->internal_charset == DEFAULT_CHARSET )
      {
+	/*
          if (pfi->internal_charset != ANSI_CHARSET)
+	    penalty += 0x200;
+	*/
+	if ( pfi->codepage != GetACP() )
 	    penalty += 0x200;
      }
      else if (pfm->internal_charset != pfi->internal_charset)
@@ -2439,6 +2496,24 @@ static void XFONT_MatchDeviceFont( fontResource* start, fontMatch* pfm)
 		if (pfm->pfi)
 		    return;
 	    }
+	}
+
+	/* get charset if lfFaceName is one of known facenames. */
+	{
+	    const struct CharsetBindingInfo* pcharsetbindings;
+
+	    pcharsetbindings = &charsetbindings[0];
+	    while ( pcharsetbindings->pszFaceName != NULL )
+	    {
+		if ( !strcmp( pcharsetbindings->pszFaceName,
+			      fm.plf->lfFaceName ) )
+		{
+		    fm.internal_charset = pcharsetbindings->charset;
+		    break;
+		}
+		pcharsetbindings ++;
+	    }
+	    TRACE( "%s charset %u\n", fm.plf->lfFaceName, fm.internal_charset );
 	}
     }
 
@@ -2768,7 +2843,8 @@ static BOOL XFONT_SetX11Trans( fontObject *pfo )
  */
 static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 				     LPCSTR* faceMatched, BOOL bSubFont,
-				     WORD internal_charset )
+				     WORD internal_charset,
+				     WORD* pcharsetMatched )
 {
     UINT16	checksum;
     INT         index = 0;
@@ -2857,6 +2933,7 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 	    if ( bSubFont == FALSE )
 	    {
 		WORD charset_sub;
+		WORD charsetMatchedSub;
 		LOGFONT16 lfSub;
 		LPCSTR faceMatchedSub;
 
@@ -2867,13 +2944,19 @@ static X_PHYSFONT XFONT_RealizeFont( const LPLOGFONT16 plf,
 		    if ( charset_sub == DEFAULT_CHARSET ) break;
 
 		    lfSub = *plf;
+		    lfSub.lfWidth = 0;
+		    lfSub.lfHeight = pfo->fi->df.dfPixHeight;
+		    if ( plf->lfHeight < 0 )
+			lfSub.lfHeight = - lfSub.lfHeight;
 		    lfSub.lfCharSet = (BYTE)(charset_sub & 0xff);
 		    lfSub.lfFaceName[0] = '\0'; /* FIXME? */
 		    /* this font has sub font */
 		    if ( i == 0 ) pfo->prefobjs[0] = (X_PHYSFONT)0;
 		    pfo->prefobjs[i] =
 			XFONT_RealizeFont( &lfSub, &faceMatchedSub,
-					   TRUE, charset_sub );
+					   TRUE, charset_sub,
+					   &charsetMatchedSub );
+		    /* FIXME: check charsetMatchedSub */
 		}
 	    }
 	}
@@ -2908,6 +2991,7 @@ END:
 
     TRACE("physfont %i\n", index);
     *faceMatched = pfo->fi->df.dfFace;
+    *pcharsetMatched = pfo->fi->internal_charset;
 
     return (X_PHYSFONT)(X_PFONT_MAGIC | index);
 }
@@ -2992,10 +3076,12 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
         /* alias = Windows name in the alias table */
 	LPCSTR alias = XFONT_UnAlias( lf.lfFaceName );
 	LPCSTR faceMatched;
+	WORD charsetMatched;
 
 	TRACE("hfont=%04x\n", hfont); /* to connect with the trace from RealizeFont */
 	physDev->font = XFONT_RealizeFont( &lf, &faceMatched,
-					   FALSE, lf.lfCharSet );
+					   FALSE, lf.lfCharSet,
+					   &charsetMatched );
 
 	/* set face to the requested facename if it matched 
 	 * so that GetTextFace can get the correct face name
@@ -3004,6 +3090,15 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont, FONTOBJ* font )
 	    strcpy( font->logfont.lfFaceName, alias );
 	else
 	    strcpy( font->logfont.lfFaceName, faceMatched );
+
+	/*
+	 * In X, some encodings may have the same lfFaceName.
+	 * for example:
+	 *   -misc-fixed-*-iso8859-1
+	 *   -misc-fixed-*-jisx0208.1990-0
+	 * so charset should be saved...
+	 */
+	font->logfont.lfCharSet = charsetMatched;
     }
 
     hPrevFont = dc->w.hFont;
