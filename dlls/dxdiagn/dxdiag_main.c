@@ -92,7 +92,7 @@ static IClassFactoryImpl DXDiag_CFS[] = {
 };
 
 /***********************************************************************
- *             DllCanUnloadNow (DXDiag.@)
+ *             DllCanUnloadNow (DXDIAGN.@)
  */
 HRESULT WINAPI DllCanUnloadNow(void)
 {
@@ -100,7 +100,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 }
 
 /***********************************************************************
- *		DllGetClassObject (DXDiag.@)
+ *		DllGetClassObject (DXDIAGN.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {

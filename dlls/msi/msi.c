@@ -1165,6 +1165,9 @@ static ICOM_VTABLE(IClassFactory) MsiCF_Vtbl = {
 
 static IClassFactoryImpl Msi_CF = {&MsiCF_Vtbl, 1 };
 
+/******************************************************************
+ *		DllGetClassObject (MSI.@)
+ */
 HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
   FIXME("(%s, %s, %p): almost a stub.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
   if (IsEqualCLSID (rclsid, &CLSID_IMsiServer)) {
@@ -1192,6 +1195,9 @@ HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) 
   return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+/******************************************************************
+ *		DllGetVerison (MSI.@)
+ */
 HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 {
   TRACE("%p\n",pdvi);
@@ -1207,6 +1213,9 @@ HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
   return S_OK;
 }
 
+/******************************************************************
+ *		DllCanUnloadNow (MSI.@)
+ */
 BOOL WINAPI MSI_DllCanUnloadNow(void)
 {
   return S_FALSE;

@@ -19,19 +19,22 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
 #include "config.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
 #include <sys/types.h>
 #include <assert.h>
-#include <regex.h>
-#include "wine/debug.h"
+#ifdef HAVE_REGEX_H
+# include <regex.h>
+#endif
 
+#include "wine/debug.h"
 #include "dbghelp_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);

@@ -86,7 +86,7 @@
 @ cdecl CountClipboardFormats() X11DRV_CountClipboardFormats
 @ cdecl CreateWindow(long ptr long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
-@ cdecl EmptyClipboard() X11DRV_EmptyClipboard
+@ cdecl EmptyClipboard(long) X11DRV_EmptyClipboard
 @ cdecl EndClipboardUpdate() X11DRV_EndClipboardUpdate
 @ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
 @ cdecl ForceWindowRaise(long) X11DRV_ForceWindowRaise
@@ -99,7 +99,7 @@
 @ cdecl ReleaseDC(long long) X11DRV_ReleaseDC
 @ cdecl ResetSelectionOwner(long long) X11DRV_ResetSelectionOwner
 @ cdecl ScrollWindowEx(long long long ptr ptr long ptr long) X11DRV_ScrollWindowEx
-@ cdecl SetClipboardData(long long long) X11DRV_SetClipboardData
+@ cdecl SetClipboardData(long long long long) X11DRV_SetClipboardData
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon

@@ -78,7 +78,8 @@ static DWORD CALLBACK start_thread16( LPVOID threadArgs )
 /* symbols exported from relay16.s */
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
-extern void Call16_Ret_Start(), Call16_Ret_End();
+extern void Call16_Ret_Start();
+extern void Call16_Ret_End();
 extern void CallTo16_Ret();
 extern void CALL32_CBClient_Ret();
 extern void CALL32_CBClientEx_Ret();

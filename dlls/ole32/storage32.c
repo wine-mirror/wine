@@ -5536,6 +5536,9 @@ HRESULT WINAPI StgCreateDocfile(
   return hr;
 }
 
+/******************************************************************************
+ *              StgCreateStorageEx        [OLE32.@]
+ */
 HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgfmt, DWORD grfAttrs, STGOPTIONS* pStgOptions, void* reserved, REFIID riid, void** ppObjectOpen)
 {
     TRACE("(%s, %lx, %lx, %lx, %p, %p, %p, %p)\n", debugstr_w(pwcsName),

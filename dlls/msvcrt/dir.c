@@ -599,7 +599,7 @@ MSVCRT_wchar_t* _wgetdcwd(int drive, MSVCRT_wchar_t * buf, int size)
  * NOTES
  *  See GetLastError().
  */
-unsigned int MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT(_diskfree_t)* d)
+unsigned int MSVCRT__getdiskfree(unsigned int disk, struct MSVCRT__diskfree_t * d)
 {
   WCHAR drivespec[4] = {'@', ':', '\\', 0};
   DWORD ret[4];

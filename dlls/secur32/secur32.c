@@ -154,12 +154,18 @@ static SecurityFunctionTableW securityFunctionTableW = {
     SetContextAttributesW
 };
 
-PSecurityFunctionTableA SEC_ENTRY InitSecurityInterfaceA(void)
+/***********************************************************************
+ *		InitSecurityInterfaceA (SECUR32.@)
+ */
+PSecurityFunctionTableA WINAPI InitSecurityInterfaceA(void)
 {
     return &securityFunctionTableA;
 }
 
-PSecurityFunctionTableW SEC_ENTRY InitSecurityInterfaceW(void)
+/***********************************************************************
+ *		InitSecurityInterfaceW (SECUR32.@)
+ */
+PSecurityFunctionTableW WINAPI InitSecurityInterfaceW(void)
 {
     return &securityFunctionTableW;
 }
@@ -686,11 +692,14 @@ static void SECUR32_freeProviders(void)
     DeleteCriticalSection(&cs);
 }
 
-/* Doh--if pv was allocated by a crypto package, this may not be correct.
+/***********************************************************************
+ *		FreeContextBuffer (SECUR32.@)
+ *
+ * Doh--if pv was allocated by a crypto package, this may not be correct.
  * The sample ssp seems to use LocalAlloc/LocalFee, but there doesn't seem to
  * be any guarantee, nor is there an alloc function in secur32.
  */
-SECURITY_STATUS SEC_ENTRY FreeContextBuffer(PVOID pv)
+SECURITY_STATUS WINAPI FreeContextBuffer(PVOID pv)
 {
     SECURITY_STATUS ret;
 
@@ -707,7 +716,10 @@ SECURITY_STATUS SEC_ENTRY FreeContextBuffer(PVOID pv)
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesW(PULONG pcPackages,
+/***********************************************************************
+ *		EnumerateSecurityPackagesW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
  PSecPkgInfoW *ppPackageInfo)
 {
     SECURITY_STATUS ret = SEC_E_OK;
@@ -845,7 +857,10 @@ static PSecPkgInfoA thunk_PSecPkgInfoWToA(ULONG cPackages,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(PULONG pcPackages,
+/***********************************************************************
+ *		EnumerateSecurityPackagesA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI EnumerateSecurityPackagesA(PULONG pcPackages,
  PSecPkgInfoA *ppPackageInfo)
 {
     SECURITY_STATUS ret;
@@ -865,6 +880,9 @@ SECURITY_STATUS SEC_ENTRY EnumerateSecurityPackagesA(PULONG pcPackages,
     return ret;
 }
 
+/***********************************************************************
+ *		DllMain (SECUR32.0)
+ */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     if (fdwReason == DLL_PROCESS_ATTACH)

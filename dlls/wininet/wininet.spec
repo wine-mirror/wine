@@ -18,7 +18,7 @@
 
 @ stdcall InternetInitializeAutoProxyDll(long)
 @ stub ShowCertificate
-@ stdcall CommitUrlCacheEntryA(str str double double long str long str str)
+@ stdcall CommitUrlCacheEntryA(str str long long long long long str long str str)
 @ stub CommitUrlCacheEntryW
 @ stub CreateUrlCacheContainerA
 @ stub CreateUrlCacheContainerW

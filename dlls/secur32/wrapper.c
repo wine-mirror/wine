@@ -56,7 +56,10 @@ static SECURITY_STATUS SECUR32_makeSecHandle(PSecHandle phSec,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(
+/***********************************************************************
+ *		AcquireCredentialsHandleA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI AcquireCredentialsHandleA(
  SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, ULONG fCredentialsUse,
  PLUID pvLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
@@ -99,7 +102,10 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleA(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(
+/***********************************************************************
+ *		AcquireCredentialsHandleW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI AcquireCredentialsHandleW(
  SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialsUse,
  PLUID pvLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
@@ -142,7 +148,10 @@ SECURITY_STATUS SEC_ENTRY AcquireCredentialsHandleW(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(
+/***********************************************************************
+ *		FreeCredentialsHandle (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI FreeCredentialsHandle(
  PCredHandle phCredential)
 {
     SECURITY_STATUS ret;
@@ -165,7 +174,10 @@ SECURITY_STATUS SEC_ENTRY FreeCredentialsHandle(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(
+/***********************************************************************
+ *		QueryCredentialsAttributesA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QueryCredentialsAttributesA(
  PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
@@ -192,7 +204,10 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(
+/***********************************************************************
+ *		QueryCredentialsAttributesW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QueryCredentialsAttributesW(
  PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
@@ -219,7 +234,10 @@ SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(
+/***********************************************************************
+ *		InitializeSecurityContextA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI InitializeSecurityContextA(
  PCredHandle phCredential, PCtxtHandle phContext,
  SEC_CHAR *pszTargetName, unsigned long fContextReq,
  unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
@@ -265,7 +283,10 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(
+/***********************************************************************
+ *		InitializeSecurityContextW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext,
  SEC_WCHAR *pszTargetName, unsigned long fContextReq,
  unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
@@ -311,7 +332,10 @@ SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(
+/***********************************************************************
+ *		AcceptSecurityContext (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI AcceptSecurityContext(
  PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
  unsigned long fContextReq, unsigned long TargetDataRep,
  PCtxtHandle phNewContext, PSecBufferDesc pOutput,
@@ -355,7 +379,10 @@ SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext,
+/***********************************************************************
+ *		CompleteAuthToken (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI CompleteAuthToken(PCtxtHandle phContext,
  PSecBufferDesc pToken)
 {
     SECURITY_STATUS ret;
@@ -382,7 +409,10 @@ SECURITY_STATUS SEC_ENTRY CompleteAuthToken(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
+/***********************************************************************
+ *		DeleteSecurityContext (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI DeleteSecurityContext(PCtxtHandle phContext)
 {
     SECURITY_STATUS ret;
 
@@ -404,7 +434,10 @@ SECURITY_STATUS SEC_ENTRY DeleteSecurityContext(PCtxtHandle phContext)
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext,
+/***********************************************************************
+ *		ApplyControlToken (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI ApplyControlToken(PCtxtHandle phContext,
  PSecBufferDesc pInput)
 {
     SECURITY_STATUS ret;
@@ -431,7 +464,10 @@ SECURITY_STATUS SEC_ENTRY ApplyControlToken(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext,
+/***********************************************************************
+ *		QueryContextAttributesA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QueryContextAttributesA(PCtxtHandle phContext,
  unsigned long ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
@@ -458,7 +494,10 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext,
+/***********************************************************************
+ *		QueryContextAttributesW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QueryContextAttributesW(PCtxtHandle phContext,
  unsigned long ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
@@ -485,7 +524,10 @@ SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext)
+/***********************************************************************
+ *		ImpersonateSecurityContext (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI ImpersonateSecurityContext(PCtxtHandle phContext)
 {
     SECURITY_STATUS ret;
 
@@ -511,7 +553,10 @@ SECURITY_STATUS SEC_ENTRY ImpersonateSecurityContext(PCtxtHandle phContext)
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext)
+/***********************************************************************
+ *		RevertSecurityContext (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI RevertSecurityContext(PCtxtHandle phContext)
 {
     SECURITY_STATUS ret;
 
@@ -537,7 +582,10 @@ SECURITY_STATUS SEC_ENTRY RevertSecurityContext(PCtxtHandle phContext)
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP,
+/***********************************************************************
+ *		MakeSignature (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI MakeSignature(PCtxtHandle phContext, ULONG fQOP,
  PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     SECURITY_STATUS ret;
@@ -564,7 +612,10 @@ SECURITY_STATUS SEC_ENTRY MakeSignature(PCtxtHandle phContext, ULONG fQOP,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext,
+/***********************************************************************
+ *		VerifySignature (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI VerifySignature(PCtxtHandle phContext,
  PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     SECURITY_STATUS ret;
@@ -591,7 +642,10 @@ SECURITY_STATUS SEC_ENTRY VerifySignature(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR *pszPackageName,
+/***********************************************************************
+ *		QuerySecurityPackageInfoA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QuerySecurityPackageInfoA(SEC_CHAR *pszPackageName,
  PSecPkgInfoA *ppPackageInfo)
 {
     SECURITY_STATUS ret;
@@ -655,7 +709,10 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoA(SEC_CHAR *pszPackageName,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR *pszPackageName,
+/***********************************************************************
+ *		QuerySecurityPackageInfoW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QuerySecurityPackageInfoW(SEC_WCHAR *pszPackageName,
  PSecPkgInfoW *ppPackageInfo)
 {
     SECURITY_STATUS ret;
@@ -710,7 +767,10 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityPackageInfoW(SEC_WCHAR *pszPackageName,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext,
+/***********************************************************************
+ *		ExportSecurityContext (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI ExportSecurityContext(PCtxtHandle phContext,
  ULONG fFlags, PSecBuffer pPackedContext, void **pToken)
 {
     SECURITY_STATUS ret;
@@ -737,7 +797,10 @@ SECURITY_STATUS SEC_ENTRY ExportSecurityContext(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR *pszPackage,
+/***********************************************************************
+ *		ImportSecurityContextA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI ImportSecurityContextA(SEC_CHAR *pszPackage,
  PSecBuffer pPackedContext, void *Token, PCtxtHandle phContext)
 {
     SECURITY_STATUS ret;
@@ -769,7 +832,10 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextA(SEC_CHAR *pszPackage,
 
 }
 
-SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR *pszPackage,
+/***********************************************************************
+ *		ImportSecurityContextW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI ImportSecurityContextW(SEC_WCHAR *pszPackage,
  PSecBuffer pPackedContext, void *Token, PCtxtHandle phContext)
 {
     SECURITY_STATUS ret;
@@ -800,7 +866,10 @@ SECURITY_STATUS SEC_ENTRY ImportSecurityContextW(SEC_WCHAR *pszPackage,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY AddCredentialsA(PCredHandle hCredentials,
+/***********************************************************************
+ *		AddCredentialsA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI AddCredentialsA(PCredHandle hCredentials,
  SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, unsigned long fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry)
@@ -832,7 +901,10 @@ SECURITY_STATUS SEC_ENTRY AddCredentialsA(PCredHandle hCredentials,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY AddCredentialsW(PCredHandle hCredentials,
+/***********************************************************************
+ *		AddCredentialsW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI AddCredentialsW(PCredHandle hCredentials,
  SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, unsigned long fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry)
@@ -864,7 +936,10 @@ SECURITY_STATUS SEC_ENTRY AddCredentialsW(PCredHandle hCredentials,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext,
+/***********************************************************************
+ *		QuerySecurityContextToken (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI QuerySecurityContextToken(PCtxtHandle phContext,
  HANDLE *phToken)
 {
     SECURITY_STATUS ret;
@@ -891,7 +966,10 @@ SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
+/***********************************************************************
+ *		EncryptMessage (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
  PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     SECURITY_STATUS ret;
@@ -918,7 +996,10 @@ SECURITY_STATUS SEC_ENTRY EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext,
+/***********************************************************************
+ *		DecryptMessage (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI DecryptMessage(PCtxtHandle phContext,
  PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     SECURITY_STATUS ret;
@@ -945,7 +1026,10 @@ SECURITY_STATUS SEC_ENTRY DecryptMessage(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext,
+/***********************************************************************
+ *		SetContextAttributesA (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI SetContextAttributesA(PCtxtHandle phContext,
  unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer)
 {
     SECURITY_STATUS ret;
@@ -972,7 +1056,10 @@ SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext,
     return ret;
 }
 
-SECURITY_STATUS SEC_ENTRY SetContextAttributesW(PCtxtHandle phContext,
+/***********************************************************************
+ *		SetContextAttributesW (SECUR32.@)
+ */
+SECURITY_STATUS WINAPI SetContextAttributesW(PCtxtHandle phContext,
  unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer)
 {
     SECURITY_STATUS ret;

@@ -1687,7 +1687,7 @@ static ICOM_VTABLE(IClassFactory) DSCCF_Vtbl =
 IClassFactoryImpl DSOUND_CAPTURE_CF = { &DSCCF_Vtbl, 1 };
 
 /***************************************************************************
- * DirectSoundFullDuplexCreate8 [DSOUND.10]
+ * DirectSoundFullDuplexCreate [DSOUND.10]
  *
  * Create and initialize a DirectSoundFullDuplex interface.
  *
@@ -1709,7 +1709,7 @@ IClassFactoryImpl DSOUND_CAPTURE_CF = { &DSCCF_Vtbl, 1 };
  *             DSERR_OUTOFMEMORY DSERR_INVALIDCALL DSERR_NODRIVER
  */
 HRESULT WINAPI 
-DirectSoundFullDuplexCreate8(
+DirectSoundFullDuplexCreate(
     LPCGUID pcGuidCaptureDevice,
     LPCGUID pcGuidRenderDevice,
     LPCDSCBUFFERDESC pcDSCBufferDesc,

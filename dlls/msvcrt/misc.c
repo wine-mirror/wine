@@ -121,6 +121,7 @@ void* _lsearch(const void* match, void* start,
 #ifdef __i386__
 
 # ifdef __GNUC__
+
 __ASM_GLOBAL_FUNC(_chkesp,
                   "jnz 1f\n\t"
                   "ret\n"
@@ -143,7 +144,13 @@ void MSVCRT_chkesp_fail(void)
 }
 
 # else  /* __GNUC__ */
-void _chkesp(void) { }
+
+/**********************************************************************/
+
+void _chkesp(void)
+{
+}
+
 # endif  /* __GNUC__ */
 
 #endif  /* __i386__ */

@@ -565,12 +565,20 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
  *           NtCurrentTeb   (NTDLL.@)
  */
 #if defined(__i386__) && defined(__GNUC__)
+
 __ASM_GLOBAL_FUNC( NtCurrentTeb, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" );
+
 #elif defined(__i386__) && defined(_MSC_VER)
+
 /* Nothing needs to be done. MS C "magically" exports the inline version from winnt.h */
+
 #else
+
+/**********************************************************************/
+
 TEB * WINAPI NtCurrentTeb(void)
 {
     return wine_pthread_get_current_teb();
 }
+
 #endif  /* __i386__ */
