@@ -511,8 +511,11 @@ BOOL WINAPI SetConsoleActiveScreenBuffer(
 /***********************************************************************
  *            GetLargestConsoleWindowSize   (KERNEL32.226)
  *
- * Note: this should return a COORD, but calling convention for returning
- * structures is different between Windows and gcc on i386.
+ * NOTE
+ *	This should return a COORD, but calling convention for returning
+ *      structures is different between Windows and gcc on i386.
+ *
+ * VERSION: [i386]
  */
 #ifdef __i386__
 #undef GetLargestConsoleWindowSize
@@ -523,7 +526,19 @@ DWORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
     c.Y = 24;
     return *(DWORD *)&c;
 }
-#else  /* __i386__ */
+#endif /* defined(__i386__) */
+
+
+/***********************************************************************
+ *            GetLargestConsoleWindowSize   (KERNEL32.226)
+ *
+ * NOTE
+ *	This should return a COORD, but calling convention for returning
+ *      structures is different between Windows and gcc on i386.
+ *
+ * VERSION: [!i386]
+ */
+#ifndef __i386__
 COORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
 {
     COORD c;
@@ -531,7 +546,8 @@ COORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
     c.Y = 24;
     return c;
 }
-#endif  /* __i386__ */
+#endif /* defined(__i386__) */
+
 
 /***********************************************************************
  *            FreeConsole (KERNEL32.267)

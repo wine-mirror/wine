@@ -1248,7 +1248,10 @@ LPVOID __cdecl CRTDLL__lsearch(LPVOID match,LPVOID start, LPUINT array_size,
  *
  * Convert an integer to a wide char string.
  */
+
 extern LPSTR  __cdecl _itoa( long , LPSTR , INT); /* ntdll */
+
+/********************************************************************/
 
 WCHAR* __cdecl CRTDLL__itow(INT value,WCHAR* out,INT base)
 {
@@ -1265,7 +1268,10 @@ WCHAR* __cdecl CRTDLL__itow(INT value,WCHAR* out,INT base)
  *
  * Convert a long to a wide char string.
  */
+
 extern LPSTR  __cdecl _ltoa( long , LPSTR , INT); /* ntdll */
+
+/********************************************************************/
 
 WCHAR* __cdecl CRTDLL__ltow(LONG value,WCHAR* out,INT base)
 {
@@ -1282,7 +1288,10 @@ WCHAR* __cdecl CRTDLL__ltow(LONG value,WCHAR* out,INT base)
  *
  * Convert an unsigned long to a wide char string.
  */
+
 extern LPSTR  __cdecl _ultoa( long , LPSTR , INT); /* ntdll */
+
+/********************************************************************/
 
 WCHAR* __cdecl CRTDLL__ultow(ULONG value,WCHAR* out,INT base)
 {
@@ -1512,9 +1521,11 @@ VOID __cdecl CRTDLL__purecall(VOID)
  *                  div               (CRTDLL.358)
  *
  * Return the quotient and remainder of long integer division.
+ *
+ * VERSION
+ *	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-/* Windows binary compatible - returns the struct in eax/edx. */
 LONGLONG __cdecl CRTDLL_div(INT x, INT y)
 {
   LONGLONG retVal;
@@ -1522,22 +1533,33 @@ LONGLONG __cdecl CRTDLL_div(INT x, INT y)
   retVal = ((LONGLONG)dt.rem << 32) | dt.quot;
   return retVal;
 }
-#else
-/* Non-x86 cant run win32 apps so dont need binary compatibility */
+#endif /* !defined(__i386__) */
+
+
+/*********************************************************************
+ *                  div               (CRTDLL.358)
+ *
+ * Return the quotient and remainder of long integer division.
+ *
+ * VERSION
+ *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
+ */
+#ifndef __i386__
 div_t __cdecl CRTDLL_div(INT x, INT y)
 {
   return div(x,y);
 }
-#endif /* __i386__ */
+#endif /* !defined(__i386__) */
 
 
 /*********************************************************************
  *                  ldiv               (CRTDLL.249)
  *
  * Return the quotient and remainder of long integer division.
+ * VERSION
+ * 	[i386] Windows binary compatible - returns the struct in eax/edx.
  */
 #ifdef __i386__
-/* Windows binary compatible - returns the struct in eax/edx. */
 LONGLONG __cdecl CRTDLL_ldiv(LONG x, LONG y)
 {
   LONGLONG retVal;
@@ -1545,13 +1567,23 @@ LONGLONG __cdecl CRTDLL_ldiv(LONG x, LONG y)
   retVal = ((LONGLONG)ldt.rem << 32) | ldt.quot;
   return retVal;
 }
-#else
-/* Non-x86 cant run win32 apps so dont need binary compatibility */
+#endif /* defined(__i386__) */
+
+
+/*********************************************************************
+ *                  ldiv               (CRTDLL.249)
+ *
+ * Return the quotient and remainder of long integer division.
+ *
+ * VERSION
+ *	[!i386] Non-x86 can't run win32 apps so we don't need binary compatibility
+ */
+#ifndef __i386__
 ldiv_t __cdecl CRTDLL_ldiv(LONG x, LONG y)
 {
   return ldiv(x,y);
 }
-#endif /* __i386__ */
+#endif /* !defined(__i386__) */
 
 
 /*********************************************************************

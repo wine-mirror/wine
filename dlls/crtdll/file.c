@@ -313,8 +313,10 @@ INT __cdecl CRTDLL__creat(LPCSTR path, INT flags)
  *                  _eof           (CRTDLL.076)
  *
  * Determine if the file pointer is at the end of a file.
+ *
+ * FIXME
+ *	Care for large files
  */
-/* FIXME: Care for large files */
 INT __cdecl CRTDLL__eof( INT fd )
 {
   DWORD curpos,endpos;
@@ -1655,8 +1657,11 @@ LPSTR __cdecl CRTDLL_tmpnam(LPSTR s)
  *
  * Write formatted output to a file.
  */
+
 /* we have avoided libc stdio.h so far, lets not start now */
 extern int vsprintf(void *, const void *, va_list);
+
+/********************************************************************/
 
 INT __cdecl CRTDLL_vfprintf( CRTDLL_FILE* file, LPCSTR format, va_list args )
 {

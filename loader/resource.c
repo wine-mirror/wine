@@ -388,6 +388,10 @@ SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
     /* May need to reload the resource if discarded */
     return WIN16_GlobalLock16( handle );
 }
+
+/**********************************************************************
+ *          LockResource16   (KERNEL but also exported from KERNEL32 in Wine)
+ */
 LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 {
     return PTR_SEG_TO_LIN( WIN16_LockResource16(handle) );

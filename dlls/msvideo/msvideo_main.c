@@ -85,7 +85,13 @@ BOOL VFWAPI ICInfo(
 	return FALSE;
 }
 
-BOOL16 VFWAPI ICInfo16(DWORD fccType, DWORD fccHandler, ICINFO16* /*SEGPTR*/ lpicinfo) {
+/**********************************************************************/
+
+BOOL16 VFWAPI ICInfo16(
+	DWORD     fccType,    /* [in] */
+	DWORD     fccHandler, /* [in] */
+	ICINFO16 *lpicinfo)   /* [in/out] NOTE: SEGPTR */
+{
 	BOOL16 ret;
 	LPVOID lpv;
 	DWORD lParam = (DWORD)lpicinfo;
@@ -377,6 +383,8 @@ errout:
 	TRACE("=> 0\n");
 	return 0;
 }
+
+/**********************************************************************/
 
 HIC16 VFWAPI ICGetDisplayFormat16(HIC16 hic, LPBITMAPINFOHEADER lpbiIn,
 								  LPBITMAPINFOHEADER lpbiOut, INT16 depth, INT16 dx, INT16 dy) {
@@ -930,23 +938,24 @@ LRESULT VFWAPIV ICMessage16(void) {
 /***********************************************************************
  *		ICDrawBegin		[MSVFW.28]
  */
-DWORD	VFWAPIV	ICDrawBegin(
-        HIC			hic,
-        DWORD			dwFlags,/* flags */
-        HPALETTE		hpal,	/* palette to draw with */
-        HWND			hwnd,	/* window to draw to */
-        HDC			hdc,	/* HDC to draw to */
-        INT			xDst,	/* destination rectangle */
-        INT			yDst,
-        INT			dxDst,
-        INT			dyDst,
-        LPBITMAPINFOHEADER	lpbi,	/* format of frame to draw */
-        INT			xSrc,	/* source rectangle */
-        INT			ySrc,
-        INT			dxSrc,
-        INT			dySrc,
-        DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
-        DWORD			dwScale) {
+DWORD VFWAPIV ICDrawBegin(
+	HIC                hic,     /* [in] */
+	DWORD              dwFlags, /* [in] flags */
+	HPALETTE           hpal,    /* [in] palette to draw with */
+	HWND               hwnd,    /* [in] window to draw to */
+	HDC                hdc,     /* [in] HDC to draw to */
+	INT                xDst,    /* [in] destination rectangle */
+	INT                yDst,    /* [in] */
+	INT                dxDst,   /* [in] */
+	INT                dyDst,   /* [in] */
+	LPBITMAPINFOHEADER lpbi,    /* [in] format of frame to draw */
+	INT                xSrc,    /* [in] source rectangle */
+	INT                ySrc,    /* [in] */
+	INT                dxSrc,   /* [in] */
+	INT                dySrc,   /* [in] */
+	DWORD              dwRate,  /* [in] frames/second = (dwRate/dwScale) */
+	DWORD              dwScale) /* [in] */
+{
 	
 	ICDRAWBEGIN	icdb;
 
@@ -976,23 +985,23 @@ DWORD	VFWAPIV	ICDrawBegin(
  *		_ICDrawBegin		[MSVIDEO.232]
  */
 DWORD VFWAPIV ICDrawBegin16(
-							HIC16			hic,
-							DWORD			dwFlags,/* flags */
-							HPALETTE16		hpal,	/* palette to draw with */
-							HWND16			hwnd,	/* window to draw to */
-							HDC16			hdc,	/* HDC to draw to */
-							INT16			xDst,	/* destination rectangle */
-							INT16			yDst,
-							INT16			dxDst,
-							INT16			dyDst,
-						 	LPBITMAPINFOHEADER /*SEGPTR*/ lpbi,	/* format of frame to draw */
-							INT16			xSrc,	/* source rectangle */
-							INT16			ySrc,
-							INT16			dxSrc,
-							INT16			dySrc,
-							DWORD			dwRate,	/* frames/second = (dwRate/dwScale) */
-							DWORD			dwScale) {
-
+	HIC16               hic,     /* [in] */
+	DWORD               dwFlags, /* [in] flags */
+	HPALETTE16          hpal,    /* [in] palette to draw with */
+	HWND16              hwnd,    /* [in] window to draw to */
+	HDC16               hdc,     /* [in] HDC to draw to */
+	INT16               xDst,    /* [in] destination rectangle */
+	INT16               yDst,    /* [in] */
+	INT16               dxDst,   /* [in] */
+	INT16               dyDst,   /* [in] */
+	LPBITMAPINFOHEADER  lpbi,    /* [in] format of frame to draw NOTE: SEGPTR */
+	INT16		    xSrc,    /* [in] source rectangle */
+	INT16		    ySrc,    /* [in] */
+	INT16		    dxSrc,   /* [in] */
+	INT16		    dySrc,   /* [in] */
+	DWORD		    dwRate,  /* [in] frames/second = (dwRate/dwScale) */
+	DWORD		    dwScale) /* [in] */
+{
 	DWORD ret;
 	ICDRAWBEGIN16* icdb = SEGPTR_NEW(ICDRAWBEGIN16); /* SEGPTR for mapper to deal with */
 
@@ -1041,9 +1050,14 @@ DWORD VFWAPIV ICDraw(HIC hic, DWORD dwFlags, LPVOID lpFormat, LPVOID lpData, DWO
 /***********************************************************************
  *		_ICDraw			[MSVIDEO.234]
  */
-DWORD VFWAPIV ICDraw16(HIC16 hic, DWORD dwFlags, LPVOID /*SEGPTR*/ lpFormat,
-					   LPVOID /*SEGPTR*/ lpData, DWORD cbData, LONG lTime) {
-
+DWORD VFWAPIV ICDraw16(
+	HIC16 hic,
+	DWORD dwFlags,
+	LPVOID lpFormat, /* [???] NOTE: SEGPTR */
+	LPVOID lpData,   /* [???] NOTE: SEGPTR */
+	DWORD cbData, 
+	LONG lTime) 
+{
 	ICDRAW* icd = SEGPTR_NEW(ICDRAW); /* SEGPTR for mapper to deal with */
 
 	TRACE("(0x%08lx,0x%08lx,%p,%p,%ld,%ld)\n",(DWORD)hic,dwFlags,lpFormat,lpData,cbData,lTime);

@@ -12,7 +12,6 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #if defined(__GNUC__) && defined(__i386__)
-#define USING_REAL_FPU
 #define DO_FPU(x,y) __asm__ __volatile__( x " %0;fwait" : "=m" (y) : )
 #define POP_FPU(x) DO_FPU("fstpl",x)
 #endif
@@ -50,8 +49,11 @@ LPCSTR debugstr_us( const UNICODE_STRING *us )
 
 /*********************************************************************
  *                  _ftol   (NTDLL)
+ *
+ * VERSION
+ *	[GNUC && i386]
  */
-#ifdef USING_REAL_FPU
+#if defined(__GNUC__) && defined(__i386__)
 LONG __cdecl NTDLL__ftol(void)
 {
 	/* don't just do DO_FPU("fistp",retval), because the rounding
@@ -60,18 +62,42 @@ LONG __cdecl NTDLL__ftol(void)
 	POP_FPU(fl);
 	return (LONG)fl;
 }
-#else
+#endif /* defined(__GNUC__) && defined(__i386__) */
+
+/*********************************************************************
+ *                  _ftol   (NTDLL)
+ *
+ * FIXME
+ *	Should be register function
+ * VERSION
+ *	[!GNUC && i386]
+ */
+#if !defined(__GNUC__) & defined(__i386__)
 LONG __cdecl NTDLL__ftol(double fl)
 {
 	FIXME("should be register function\n");
 	return (LONG)fl;
 }
-#endif
+#endif /* !defined(__GNUC__) && defined(__i386__) */
+
+/*********************************************************************
+ *                  _ftol   (NTDLL)
+ * VERSION
+ *	[!i386]
+ */
+#ifndef __i386__
+LONG __cdecl NTDLL__ftol(double fl)
+{
+	return (LONG) fl;
+}
+#endif /* !defined(__i386__) */
 
 /*********************************************************************
  *                  _CIpow   (NTDLL)
+ * VERSION
+ *	[GNUC && i386]
  */
-#ifdef USING_REAL_FPU
+#if defined(__GNUC__) && defined(__i386__)
 double __cdecl NTDLL__CIpow(void)
 {
 	double x,y;
@@ -79,10 +105,36 @@ double __cdecl NTDLL__CIpow(void)
 	POP_FPU(x);
 	return pow(x,y);
 }
-#else
+#endif /* defined(__GNUC__) && defined(__i386__) */
+
+
+/*********************************************************************
+ *                  _CIpow   (NTDLL)
+ *
+ * FIXME
+ *	Should be register function
+ *
+ * VERSION
+ *	[!GNUC && i386]
+ */
+#if !defined(__GNUC__) && defined(__i386__)
 double __cdecl NTDLL__CIpow(double x,double y)
 {
 	FIXME("should be register function\n");
 	return pow(x,y);
 }
-#endif
+#endif /* !defined(__GNUC__) && defined(__i386__) */
+
+/*********************************************************************
+ *                  _CIpow   (NTDLL)
+ * VERSION
+ *	[!i386]
+ */
+#ifndef __i386__
+double __cdecl NTDLL__CIpow(double x,double y)
+{
+	return pow(x,y);
+}
+#endif /* !defined(__i386__) */
+
+
