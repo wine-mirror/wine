@@ -3,6 +3,10 @@
  *
  * Copyright 1993, 1994 Alexandre Julliard
  *
+ * Contains 
+ *   1.  DrawText functions
+ *   2.  GrayString functions
+ *   3.  TabbedText functions
  */
 
 #include <string.h>
@@ -18,6 +22,11 @@
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(text);
+
+/*********************************************************************
+ *
+ *            DrawText functions
+ */
 
 #define TAB     9
 #define LF     10
@@ -35,29 +44,10 @@ static const WCHAR ELLIPSISW[] = {'.','.','.', 0};
 static const WCHAR FORWARD_SLASHW[] = {'/', 0};
 static const WCHAR BACK_SLASHW[] = {'\\', 0};
 
-#define SWAP_INT(a,b)  { int t = a; a = b; b = t; }
-
-static int tabstop = 8;
+static int tabstop;
 static int tabwidth;
 static int spacewidth;
 static int prefix_offset;
-
-/* ### start build ### */
-extern WORD CALLBACK TEXT_CallTo16_word_wlw(GRAYSTRINGPROC16,WORD,LONG,WORD);
-/* ### stop build ### */
-
-struct gray_string_info
-{
-    GRAYSTRINGPROC16 proc;
-    LPARAM           param;
-};
-
-/* callback for 16-bit gray string proc */
-static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
-{
-    const struct gray_string_info *info = (struct gray_string_info *)param;
-    return TEXT_CallTo16_word_wlw( info->proc, hdc, info->param, len );
-}
 
 
 /*********************************************************************
@@ -221,25 +211,6 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
 
 
 /***********************************************************************
- *           DrawText    (USER.85)
- */
-INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT16 flags )
-{
-    INT16 ret;
-
-    if (rect)
-    {
-        RECT rect32;
-        CONV_RECT16TO32( rect, &rect32 );
-        ret = DrawTextA( hdc, str, count, &rect32, flags );
-        CONV_RECT32TO16( &rect32, rect );
-    }
-    else ret = DrawTextA( hdc, str, count, NULL, flags);
-    return ret;
-}
-
-
-/***********************************************************************
  *           DrawTextExW    (USER32.@)
  */
 #define MAX_STATIC_BUFFER 1024
@@ -284,8 +255,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
         dtp->uiLengthDrawn = 0;     /* This param RECEIVES number of chars processed */
     }
 
-    if (flags & DT_TABSTOP)
-	tabstop = dtp ? dtp->iTabLength : flags >> 8;
+    tabstop = ((flags & DT_TABSTOP) && dtp) ? dtp->iTabLength : 8;
 
     if (flags & DT_EXPANDTABS)
     {
@@ -482,7 +452,15 @@ INT WINAPI DrawTextExA( HDC hdc, LPSTR str, INT count,
  */
 INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count, LPRECT rect, UINT flags )
 {
-    return DrawTextExW(hdc, (LPWSTR)str, count, rect, flags, NULL);
+    DRAWTEXTPARAMS dtp;
+
+    memset (&dtp, 0, sizeof(dtp));
+    if (flags & DT_TABSTOP)
+    {
+        dtp.iTabLength = (flags >> 8) && 0xff;
+        flags &= 0xffff00ff;
+    }
+    return DrawTextExW(hdc, (LPWSTR)str, count, rect, flags, &dtp);
 }
 
 /***********************************************************************
@@ -490,7 +468,56 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count, LPRECT rect, UINT flags )
  */
 INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
 {
-    return DrawTextExA( hdc, (LPSTR)str, count, rect, flags, NULL );
+    DRAWTEXTPARAMS dtp;
+
+    memset (&dtp, 0, sizeof(dtp));
+    if (flags & DT_TABSTOP)
+    {
+        dtp.iTabLength = (flags >> 8) && 0xff;
+        flags &= 0xffff00ff;
+    }
+    return DrawTextExA( hdc, (LPSTR)str, count, rect, flags, &dtp );
+}
+
+/***********************************************************************
+ *           DrawText    (USER.85)
+ */
+INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT16 flags )
+{
+    INT16 ret;
+
+    if (rect)
+    {
+        RECT rect32;
+        CONV_RECT16TO32( rect, &rect32 );
+        ret = DrawTextA( hdc, str, count, &rect32, flags );
+        CONV_RECT32TO16( &rect32, rect );
+    }
+    else ret = DrawTextA( hdc, str, count, NULL, flags);
+    return ret;
+}
+
+
+/***********************************************************************
+ *
+ *           GrayString functions
+ */
+
+/* ### start build ### */
+extern WORD CALLBACK TEXT_CallTo16_word_wlw(GRAYSTRINGPROC16,WORD,LONG,WORD);
+/* ### stop build ### */
+
+struct gray_string_info
+{
+    GRAYSTRINGPROC16 proc;
+    LPARAM           param;
+};
+
+/* callback for 16-bit gray string proc */
+static BOOL CALLBACK gray_string_callback( HDC hdc, LPARAM param, INT len )
+{
+    const struct gray_string_info *info = (struct gray_string_info *)param;
+    return TEXT_CallTo16_word_wlw( info->proc, hdc, info->param, len );
 }
 
 /***********************************************************************
@@ -636,6 +663,11 @@ BOOL WINAPI GrayStringW( HDC hdc, HBRUSH hbr, GRAYSTRINGPROC gsprc,
     return TEXT_GrayString(hdc, hbr, gsprc, lParam, cch, x, y, cx, cy,
                            TRUE, TRUE);
 }
+
+/***********************************************************************
+ *
+ *           TabbedText functions
+ */
 
 /***********************************************************************
  *           TEXT_TabbedTextOut
