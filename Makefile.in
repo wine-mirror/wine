@@ -185,6 +185,7 @@ clean::
 
 distclean: clean
 	$(RM) config.* TAGS Make.rules dlls/Makedll.rules programs/Makeprog.rules include/config.h
+	$(RM) -r autom4te.cache
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
 ### Dependencies:
