@@ -217,9 +217,8 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     DWORD		bAuto = FALSE;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
-    char*		cmdline = NULL;
+    char*		cmdline;
     char*		format = NULL;
-    DWORD		format_size;
     BOOL		ret = FALSE;
 
     static const WCHAR AeDebugW[] = {'M','a','c','h','i','n','e','\\',
@@ -245,8 +244,8 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     {
         char buffer[64];
         KEY_VALUE_PARTIAL_INFORMATION *info;
+        DWORD format_size = 0;
 
-        format_size = 0;
         RtlInitUnicodeString( &nameW, DebuggerW );
         if (NtQueryValueKey( hDbgConf, &nameW, KeyValuePartialInformation,
                              NULL, 0, &format_size ) == STATUS_BUFFER_OVERFLOW)
@@ -291,9 +290,18 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
        else bAuto = TRUE;
 
        NtClose(hDbgConf);
-    } else {
-	/* try a default setup... */
-	strcpy( format, "winedbg --debugmsg -all --auto %ld %ld" );
+    }
+
+    if (format)
+    {
+        cmdline = HeapAlloc(GetProcessHeap(), 0, strlen(format) + 2*20);
+        sprintf(cmdline, format, GetCurrentProcessId(), hEvent);
+        HeapFree(GetProcessHeap(), 0, format);
+    }
+    else
+    {
+        cmdline = HeapAlloc(GetProcessHeap(), 0, 80);
+        sprintf(cmdline, "winedbg --debugmsg -all --auto %ld %d", GetCurrentProcessId(), hEvent);
     }
 
     if (!bAuto)
@@ -314,32 +322,19 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
 	}
     }
 
-    if (format) {
-        TRACE("Starting debugger (fmt=%s)\n", format);
-        cmdline=HeapAlloc(GetProcessHeap(), 0, format_size+2*20);
-        sprintf(cmdline, format, GetCurrentProcessId(), hEvent);
-        memset(&startup, 0, sizeof(startup));
-        startup.cb = sizeof(startup);
-        startup.dwFlags = STARTF_USESHOWWINDOW;
-        startup.wShowWindow = SW_SHOWNORMAL;
-        if (CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info)) {
-            /* wait for debugger to come up... */
-            WaitForSingleObject(hEvent, INFINITE);
-            ret = TRUE;
-            goto EXIT;
-        }
-    } else {
-        cmdline = NULL;
-    }
-    ERR("Couldn't start debugger (%s) (%ld)\n"
-	"Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
-	debugstr_a(cmdline), GetLastError());
+    TRACE("Starting debugger %s\n", debugstr_a(cmdline));
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &info);
 
+    if (ret) WaitForSingleObject(hEvent, INFINITE);  /* wait for debugger to come up... */
+    else ERR("Couldn't start debugger (%s) (%ld)\n"
+             "Read the Wine Developers Guide on how to set up winedbg or another debugger\n",
+             debugstr_a(cmdline), GetLastError());
 EXIT:
-    if (cmdline)
-        HeapFree(GetProcessHeap(), 0, cmdline);
-    if (format)
-        HeapFree(GetProcessHeap(), 0, format);
+    HeapFree(GetProcessHeap(), 0, cmdline);
     return ret;
 }
 
