@@ -13,11 +13,6 @@
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
-extern WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs );
-extern LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs );
-extern void CALLBACK CallTo16RegisterShort( struct _CONTEXT86 *context, INT nArgs );
-extern void CALLBACK CallTo16RegisterLong ( struct _CONTEXT86 *context, INT nArgs );
-
 #include "pshpack1.h"
 
 typedef struct

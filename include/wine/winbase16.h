@@ -255,4 +255,10 @@ SEGPTR      WINAPI WIN16_LockResource16(HGLOBAL16);
 LONG        WINAPI WIN16_hread(HFILE16,SEGPTR,LONG);
 UINT16      WINAPI WIN16_lread(HFILE16,SEGPTR,UINT16);
 
+/* Wine-specific functions */
+WORD        WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs );
+LONG        WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs );
+void        WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs );
+void        WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs );
+
 #endif /* __WINE_WINE_WINBASE16_H */

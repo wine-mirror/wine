@@ -238,7 +238,7 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     args[3] = msg;
     args[4] = hwnd;
 
-    CallTo16RegisterShort( &context, 5 * sizeof(WORD) );
+    wine_call_to_16_regs_short( &context, 5 * sizeof(WORD) );
     ret = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
     if (offset) stack16_pop( offset );
 

@@ -287,7 +287,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             ctx.SegEs = rmcb->regs_sel;
             ctx.Edi   = rmcb->regs_ofs;
             /* FIXME: I'm pretty sure this isn't right - should push flags first */
-            CallTo16RegisterShort(&ctx, 0);
+            wine_call_to_16_regs_short(&ctx, 0);
             es = ctx.SegEs;
             edi = ctx.Edi;
         }
@@ -615,7 +615,7 @@ static void StartPM( CONTEXT86 *context, LPDOSTASK lpDosTask )
     pm_ctx.SegGs = 0;
 
     TRACE("DOS program is now entering protected mode\n");
-    CallTo16RegisterShort(&pm_ctx, 0);
+    wine_call_to_16_regs_short(&pm_ctx, 0);
 
     /* in the current state of affairs, we won't ever actually return here... */
     /* we should have int21/ah=4c do it someday, though... */

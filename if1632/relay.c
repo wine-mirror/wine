@@ -63,17 +63,37 @@ BOOL RELAY_Init(void)
  * (these will never be called but need to be present to satisfy the linker ...)
  */
 #ifndef __i386__
-WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs )
-{ assert( FALSE ); }
+/***********************************************************************
+ *		wine_call_to_16_word
+ */
+WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs )
+{
+    assert( FALSE );
+}
 
-LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs )
-{ assert( FALSE ); }
+/***********************************************************************
+ *		wine_call_to_16_long
+ */
+LONG WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs )
+{
+    assert( FALSE );
+}
 
-void CALLBACK CallTo16RegisterShort( CONTEXT86 *context, INT nArgs )
-{ assert( FALSE ); }
+/***********************************************************************
+ *		wine_call_to_16_regs_short
+ */
+void WINAPI wine_call_to_16_regs_short( CONTEXT86 *context, INT nArgs )
+{
+    assert( FALSE );
+}
 
-void CALLBACK CallTo16RegisterLong ( CONTEXT86 *context, INT nArgs )
-{ assert( FALSE ); }
+/***********************************************************************
+ *		wine_call_to_16_regs_long
+ */
+void WINAPI wine_call_to_16_regs_long ( CONTEXT86 *context, INT nArgs )
+{
+    assert( FALSE );
+}
 
 /***********************************************************************
  *		__wine_call_from_16_word

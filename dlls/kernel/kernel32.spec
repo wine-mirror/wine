@@ -950,3 +950,7 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ varargs __wine_call_from_16_long() __wine_call_from_16_long
 @ varargs __wine_call_from_16_regs() __wine_call_from_16_regs
 @ varargs __wine_call_from_16_thunk() __wine_call_from_16_thunk
+@ stdcall wine_call_to_16_word(ptr long) wine_call_to_16_word
+@ stdcall wine_call_to_16_long(ptr long) wine_call_to_16_long
+@ stdcall wine_call_to_16_regs_short(ptr long) wine_call_to_16_regs_short
+@ stdcall wine_call_to_16_regs_long (ptr long) wine_call_to_16_regs_long

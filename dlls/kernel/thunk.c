@@ -303,7 +303,7 @@ void WINAPI QT_Thunk( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)context->Esp, argsize );
 
-    CallTo16RegisterShort( &context16, argsize );
+    wine_call_to_16_regs_short( &context16, argsize );
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
     context->Ecx = context16.Ecx;
@@ -430,7 +430,7 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 					 + (*(LPBYTE *)arg - oldstack));
 	}
 
-    CallTo16RegisterShort( &context16, argsize );
+    wine_call_to_16_regs_short( &context16, argsize );
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
     context->Ecx = context16.Ecx;
@@ -637,7 +637,7 @@ void WINAPI Common32ThkLS( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)context->Esp, argsize );
 
-    CallTo16RegisterLong(&context16, argsize + 32);
+    wine_call_to_16_regs_long(&context16, argsize + 32);
     context->Eax = context16.Eax;
 
     /* Clean up caller's stack frame */
@@ -688,7 +688,7 @@ void WINAPI OT_32ThkLSF( CONTEXT86 *context )
     memcpy( (LPBYTE)CURRENT_STACK16 - argsize,
             (LPBYTE)context->Esp, argsize );
 
-    CallTo16RegisterShort(&context16, argsize);
+    wine_call_to_16_regs_short(&context16, argsize);
     context->Eax = context16.Eax;
     context->Edx = context16.Edx;
 

@@ -83,7 +83,7 @@ static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
     context.Esi   = LOWORD( dwExtraInfo );
     context.Edi   = HIWORD( dwExtraInfo );
 
-    CallTo16RegisterShort( &context, 0 );
+    wine_call_to_16_regs_short( &context, 0 );
 }
 
 VOID WINAPI WIN16_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )

@@ -413,7 +413,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
  * 
  * These routines are provided solely for convenience; they simply
  * write the arguments onto the 16-bit stack, and call the appropriate
- * CallTo16... core routine.
+ * wine_call_to_16... core routine.
  *
  * If you have more sophisticated argument conversion requirements than
  * are provided by these routines, you might as well call the core 
@@ -463,8 +463,8 @@ static void BuildCallTo16Func( FILE *outfile, char *profile, char *prefix )
         fprintf( outfile, " *)args = arg%d;\n", i+1 );
     }
 
-    fprintf( outfile, "    return CallTo16%s( proc, %d );\n}\n\n",
-             short_ret? "Word" : "Long", argsize );
+    fprintf( outfile, "    return wine_call_to_16_%s( proc, %d );\n}\n\n",
+             short_ret? "word" : "long", argsize );
 }
 
 
@@ -802,8 +802,8 @@ void BuildGlue( FILE *outfile, FILE *infile )
     fprintf( outfile, "#include \"builtin16.h\"\n" );
     fprintf( outfile, "#include \"stackframe.h\"\n\n" );
 
-    fprintf( outfile, "extern WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs );\n" );
-    fprintf( outfile, "extern LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs );\n" );
+    fprintf( outfile, "extern WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs );\n" );
+    fprintf( outfile, "extern LONG WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs );\n" );
 
     /* Build the callback glue functions */
 

@@ -266,12 +266,12 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
     /*
      * Actually, we should take care whether the called routine cleans up
-     * its stack or not.  Fortunately, our CallTo16 core doesn't rely on 
+     * its stack or not.  Fortunately, our wine_call_to_16 core doesn't rely on 
      * the callee to do so; after the routine has returned, the 16-bit 
      * stack pointer is always reset to the position it had before. 
      */
 
-    ret = CallTo16Long( (FARPROC16)vpfn16, cbArgs );
+    ret = wine_call_to_16_long( (FARPROC16)vpfn16, cbArgs );
 
     if ( pdwRetCode )
         *pdwRetCode = ret;

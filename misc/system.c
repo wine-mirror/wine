@@ -136,7 +136,7 @@ static void SYSTEM_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 
     AX_reg( &context ) = timer;
 
-    CallTo16RegisterShort( &context, 0 );
+    wine_call_to_16_regs_short( &context, 0 );
 }
 
 WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )

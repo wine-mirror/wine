@@ -82,7 +82,7 @@ static VOID WINAPI MOUSE_CallMouseEventProc( FARPROC16 proc,
     context.Esi   = LOWORD( dwExtraInfo );
     context.Edi   = HIWORD( dwExtraInfo );
 
-    CallTo16RegisterShort( &context, 0 );
+    wine_call_to_16_regs_short( &context, 0 );
 }
 
 VOID WINAPI WIN16_MOUSE_Enable( FARPROC16 proc )

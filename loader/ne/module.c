@@ -1192,7 +1192,7 @@ static void NE_InitProcess(void)
               SELECTOROF(pTask->teb->cur_stack),
               OFFSETOF(pTask->teb->cur_stack) );
 
-        CallTo16RegisterShort( &context, 0 );
+        wine_call_to_16_regs_short( &context, 0 );
         ExitThread( LOWORD(context.Eax) );
     }
 

@@ -417,10 +417,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
  *
  * This routine builds the core routines used in 32->16 thunks:
  *
- *   extern void CALLBACK CallTo16Word( SEGPTR target, int nb_args );
- *   extern void CALLBACK CallTo16Long( SEGPTR target, int nb_args );
- *   extern void CALLBACK CallTo16RegisterShort( const CONTEXT86 *context, int nb_args );
- *   extern void CALLBACK CallTo16RegisterLong ( const CONTEXT86 *context, int nb_args );
+ *   extern void WINAPI wine_call_to_16_word( SEGPTR target, int nb_args );
+ *   extern void WINAPI wine_call_to_16_long( SEGPTR target, int nb_args );
+ *   extern void WINAPI wine_call_to_16_regs_short( const CONTEXT86 *context, int nb_args );
+ *   extern void WINAPI wine_call_to_16_regs_long ( const CONTEXT86 *context, int nb_args );
  *
  * These routines can be called directly from 32-bit code. 
  *
@@ -442,19 +442,19 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 
 static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 {
-    char *name = reg_func == 2 ? "RegisterLong" : 
-                 reg_func == 1 ? "RegisterShort" :
-                 short_ret? "Word" : "Long";
+    char *name = reg_func == 2 ? "regs_long" :
+                 reg_func == 1 ? "regs_short" :
+                 short_ret? "word" : "long";
 
     /* Function header */
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CallTo16%s:F1\",36,0,0," PREFIX "CallTo16%s\n", 
+    fprintf( outfile, ".stabs \"wine_call_to_16_%s:F1\",36,0,0," PREFIX "wine_call_to_16_%s\n", 
 	     name, name);
 #endif
-    fprintf( outfile, "\t.type " PREFIX "CallTo16%s,@function\n", name );
-    fprintf( outfile, "\t.globl " PREFIX "CallTo16%s\n", name );
-    fprintf( outfile, PREFIX "CallTo16%s:\n", name );
+    fprintf( outfile, "\t.type " PREFIX "wine_call_to_16_%s,@function\n", name );
+    fprintf( outfile, "\t.globl " PREFIX "wine_call_to_16_%s\n", name );
+    fprintf( outfile, PREFIX "wine_call_to_16_%s:\n", name );
 
     /* Function entry sequence */
     fprintf( outfile, "\tpushl %%ebp\n" );
@@ -470,10 +470,10 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     if ( UsePIC )
     {
         /* Get Global Offset Table into %ebx */
-        fprintf( outfile, "\tcall .LCallTo16%s.getgot1\n", name );
-        fprintf( outfile, ".LCallTo16%s.getgot1:\n", name );
+        fprintf( outfile, "\tcall .Lwine_call_to_16_%s.getgot1\n", name );
+        fprintf( outfile, ".Lwine_call_to_16_%s.getgot1:\n", name );
         fprintf( outfile, "\tpopl %%ebx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallTo16%s.getgot1], %%ebx\n", name );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.Lwine_call_to_16_%s.getgot1], %%ebx\n", name );
     }
 
     /* Enter Win16 Mutex */
@@ -509,7 +509,7 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
-    fprintf( outfile, "\tcall .LCallTo16%s\n", name );
+    fprintf( outfile, "\tcall .Lwine_call_to_16_%s\n", name );
 
     if ( !reg_func )
     {
@@ -553,10 +553,10 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     if ( UsePIC )
     {
         /* Get Global Offset Table into %ebx (might have been overwritten) */
-        fprintf( outfile, "\tcall .LCallTo16%s.getgot2\n", name );
-        fprintf( outfile, ".LCallTo16%s.getgot2:\n", name );
+        fprintf( outfile, "\tcall .Lwine_call_to_16_%s.getgot2\n", name );
+        fprintf( outfile, ".Lwine_call_to_16_%s.getgot2:\n", name );
         fprintf( outfile, "\tpopl %%ebx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallTo16%s.getgot2], %%ebx\n", name );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.Lwine_call_to_16_%s.getgot2], %%ebx\n", name );
     }
 
     /* Print debugging info */
@@ -595,7 +595,7 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
 
     /* Start of the actual CallTo16 routine */
 
-    fprintf( outfile, ".LCallTo16%s:\n", name );
+    fprintf( outfile, ".Lwine_call_to_16_%s:\n", name );
 
     /* Complete STACK32FRAME */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );

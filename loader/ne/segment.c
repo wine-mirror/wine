@@ -627,7 +627,7 @@ static BOOL NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
     TRACE_(dll)("Calling LibMain, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n", 
                  context.SegCs, context.Eip, context.SegDs,
                  LOWORD(context.Edi), LOWORD(context.Ecx) );
-    CallTo16RegisterShort( &context, 0 );
+    wine_call_to_16_regs_short( &context, 0 );
     return TRUE;
 }
 
@@ -712,7 +712,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         *(DWORD *)(stack - 14) = 0;             /* dwReserved1 */
         *(WORD *) (stack - 16) = 0;             /* wReserved2 */
 
-        CallTo16RegisterShort( &context, 16 );
+        wine_call_to_16_regs_short( &context, 16 );
     }
 }
 
