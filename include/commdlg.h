@@ -72,7 +72,7 @@ extern "C" {
 
 typedef UINT (CALLBACK *LPOFNHOOKPROC)(HWND,UINT,WPARAM,LPARAM);
 
-typedef struct {
+typedef struct tagOFNA {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HINSTANCE	hInstance;
@@ -95,7 +95,7 @@ typedef struct {
 	LPCSTR		lpTemplateName;
 } OPENFILENAMEA,*LPOPENFILENAMEA;
 
-typedef struct {
+typedef struct tagOFNW {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HINSTANCE	hInstance;
