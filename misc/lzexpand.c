@@ -540,7 +540,14 @@ static LPSTR LZEXPAND_MangleName( LPCSTR fn )
  */
 HFILE16 WINAPI LZOpenFile16( LPCSTR fn, LPOFSTRUCT ofs, UINT16 mode )
 {
-    return LZOpenFile32A( fn, ofs, mode );
+    HFILE32	hfret;
+
+    hfret = LZOpenFile32A( fn, ofs, mode );
+    /* return errors and LZ handles unmodified */
+    if (IS_LZ_HANDLE(hfret) || (hfret>=0xfff0) || (hfret<=0))
+    	return hfret;
+    /* but allocate a dos handle for 'normal' files */
+    return FILE_AllocDosHandle(hfret);
 }
 
 
