@@ -29,6 +29,13 @@
 
 /*#define EMULATE_SB16*/
 
+/* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
+#define USE_PIPE_SYNC
+
+/* an exact wodGetPosition is usually not worth the extra context switches,
+ * as we're going to have near fragment accuracy anyway */
+/* #define EXACT_WODPOSITION */
+
 #include "config.h"
 
 #include <stdlib.h>
@@ -45,6 +52,10 @@
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
+
 #include "windef.h"
 #include "wingdi.h"
 #include "winerror.h"
@@ -93,6 +104,21 @@ enum win_wm_message {
     WINE_WM_UPDATE, WINE_WM_BREAKLOOP, WINE_WM_CLOSING
 };
 
+#ifdef USE_PIPE_SYNC
+#define SIGNAL_OMR(omr) do { int x = 0; write((omr)->msg_pipe[1], &x, sizeof(x)); } while (0)
+#define CLEAR_OMR(omr) do { int x = 0; read((omr)->msg_pipe[0], &x, sizeof(x)); } while (0)
+#define RESET_OMR(omr) do { } while (0)
+#define WAIT_OMR(omr, sleep) \
+  do { struct pollfd pfd; pfd.fd = (omr)->msg_pipe[0]; \
+       pfd.events = POLLIN; poll(&pfd, 1, sleep); } while (0)
+#else
+#define SIGNAL_OMR(omr) do { SetEvent((omr)->msg_event); } while (0)
+#define CLEAR_OMR(omr) do { } while (0)
+#define RESET_OMR(omr) do { ResetEvent((omr)->msg_event); } while (0)
+#define WAIT_OMR(omr, sleep) \
+  do { WaitForSingleObject((omr)->msg_event, sleep); } while (0)
+#endif
+
 typedef struct {
     enum win_wm_message 	msg;	/* message identifier */
     DWORD	                param;  /* parameter for this message */
@@ -105,11 +131,16 @@ typedef struct {
  */
 typedef struct {
     /* FIXME: this could be made a dynamically growing array (if needed) */
-#define OSS_RING_BUFFER_SIZE	30
+    /* maybe it's needed, a Humongous game manages to transmit 128 messages at once at startup */
+#define OSS_RING_BUFFER_SIZE	192
     OSS_MSG			messages[OSS_RING_BUFFER_SIZE];
     int				msg_tosave;
     int				msg_toget;
+#ifdef USE_PIPE_SYNC
+    int				msg_pipe[2];
+#else
     HANDLE			msg_event;
+#endif
     CRITICAL_SECTION		msg_crst;
 } OSS_MSG_RING;
 
@@ -132,6 +163,7 @@ typedef struct {
 
     DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
     DWORD                       dwWrittenTotal;         /* number of bytes written to OSS buffer since opening */
+    BOOL                        bNeedPost;              /* whether audio still needs to be physically started */
 
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
@@ -592,7 +624,15 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
 {
     omr->msg_toget = 0;
     omr->msg_tosave = 0;
+#ifdef USE_PIPE_SYNC
+    if (pipe(omr->msg_pipe) < 0) {
+	omr->msg_pipe[0] = -1;
+	omr->msg_pipe[1] = -1;
+	ERR("could not create pipe, error=%s\n", strerror(errno));
+    }
+#else
     omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+#endif
     memset(omr->messages, 0, sizeof(OSS_MSG) * OSS_RING_BUFFER_SIZE);
     InitializeCriticalSection(&omr->msg_crst);
     return 0;
@@ -604,7 +644,12 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
  */
 static int OSS_DestroyRingMessage(OSS_MSG_RING* omr)
 {
+#ifdef USE_PIPE_SYNC
+    close(omr->msg_pipe[0]);
+    close(omr->msg_pipe[1]);
+#else
     CloseHandle(omr->msg_event);
+#endif
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -653,7 +698,7 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
     }
     LeaveCriticalSection(&omr->msg_crst);
     /* signal a new message */
-    SetEvent(omr->msg_event);
+    SIGNAL_OMR(omr);
     if (wait)
     {
         /* wait for playback/record thread to have processed the message */
@@ -684,6 +729,7 @@ static int OSS_RetrieveRingMessage(OSS_MSG_RING* omr,
     *param = omr->messages[omr->msg_toget].param;
     *hEvent = omr->messages[omr->msg_toget].hEvent;
     omr->msg_toget = (omr->msg_toget + 1) % OSS_RING_BUFFER_SIZE;
+    CLEAR_OMR(omr);
     LeaveCriticalSection(&omr->msg_crst);
     return 1;
 }
@@ -952,7 +998,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 
             wodNotifyClient(wwo, WOM_DONE, param, 0);
         }
-        ResetEvent(wwo->msgRing.msg_event);
+        RESET_OMR(&wwo->msgRing);
         LeaveCriticalSection(&wwo->msgRing.msg_crst);
     } else {
         if (wwo->lpLoopPtr) {
@@ -1061,14 +1107,11 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     wodUpdatePlayedTotal(wwo, &dspspace);
     availInQ = dspspace.bytes;
     TRACE("fragments=%d/%d, fragsize=%d, bytes=%d\n",
-          dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
+	  dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
 
     /* input queue empty and output buffer with less than one fragment to play */
-    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize) {
-        TRACE("Run out of wavehdr:s... flushing (%lu => %lu)\n",
-              wwo->dwPlayedTotal, wwo->dwWrittenTotal);
-        ioctl(wwo->unixdev, SNDCTL_DSP_SYNC, 0);
-        wwo->dwPlayedTotal = wwo->dwWrittenTotal;
+    if (!wwo->lpPlayPtr && wwo->dwBufferSize < availInQ + wwo->dwFragmentSize) {
+	TRACE("Run out of wavehdr:s...\n");
         return INFINITE;
     }
 
@@ -1087,6 +1130,14 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
                 /* note the value that dwPlayedTotal will return when this wave finishes playing */
                 wwo->lpPlayPtr->reserved = wwo->dwWrittenTotal + wwo->lpPlayPtr->dwBufferLength;
             } while (wodPlayer_WriteMaxFrags(wwo, &availInQ) && wwo->lpPlayPtr && availInQ > 0);
+        }
+
+        if (wwo->bNeedPost) {
+            /* OSS doesn't start before it gets either 2 fragments or a SNDCTL_DSP_POST;
+             * if it didn't get one, we give it the other */
+            if (wwo->dwBufferSize < availInQ + 2 * wwo->dwFragmentSize)
+                ioctl(wwo->unixdev, SNDCTL_DSP_POST, 0);
+            wwo->bNeedPost = FALSE;
         }
     }
 
@@ -1114,11 +1165,25 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
          */
         dwSleepTime = min(dwNextFeedTime, dwNextNotifyTime);
         TRACE("waiting %lums (%lu,%lu)\n", dwSleepTime, dwNextFeedTime, dwNextNotifyTime);
-        WaitForSingleObject(wwo->msgRing.msg_event, dwSleepTime);
+	WAIT_OMR(&wwo->msgRing, dwSleepTime);
 	wodPlayer_ProcessMessages(wwo);
 	if (wwo->state == WINE_WS_PLAYING) {
 	    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
 	    dwNextNotifyTime = wodPlayer_NotifyCompletions(wwo, FALSE);
+	    if (dwNextFeedTime == INFINITE) {
+		/* FeedDSP ran out of data, but before flushing, */
+		/* check that a notification didn't give us more */
+		wodPlayer_ProcessMessages(wwo);
+		if (!wwo->lpPlayPtr) {
+		    TRACE("flushing\n");
+		    ioctl(wwo->unixdev, SNDCTL_DSP_SYNC, 0);
+		    wwo->dwPlayedTotal = wwo->dwWrittenTotal;
+		}
+		else {
+		    TRACE("recovering\n");
+		    dwNextFeedTime = wodPlayer_FeedDSP(wwo);
+		}
+	    }
 	} else {
 	    dwNextFeedTime = dwNextNotifyTime = INFINITE;
 	}
@@ -1246,6 +1311,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->dwBufferSize = info.fragstotal * info.fragsize;
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
+    wwo->bNeedPost = TRUE;
 
     OSS_InitRingMessage(&wwo->msgRing);
 
@@ -1462,7 +1528,9 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
     if (lpTime == NULL)	return MMSYSERR_INVALPARAM;
 
     wwo = &WOutDev[wDevID];
+#ifdef EXACT_WODPOSITION
     OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+#endif
     val = wwo->dwPlayedTotal;
 
     TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
@@ -2246,7 +2314,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             }
 	}
 
-	WaitForSingleObject(wwi->msgRing.msg_event, dwSleepTime);
+	WAIT_OMR(&wwi->msgRing, dwSleepTime);
 
 	while (OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
