@@ -97,7 +97,6 @@ typedef struct tagLISTVIEW_ITEM
   UINT state;
   LPARAM lParam;
   INT iIndent;
-  BOOL valid;
 } LISTVIEW_ITEM;
 
 typedef struct tagRANGE
@@ -2878,6 +2877,7 @@ static inline BOOL is_assignable_item(LPLVITEMW lpLVItem, LONG lStyle)
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
  * [I] lpLVItem : valid pointer to new item atttributes
+ * [I] isNew : the item being set is being inserted
  * [I] isW : TRUE if lpLVItem is Unicode, FALSE if it's ANSI
  * [O] bChanged : will be set to TRUE if the item really changed
  *
@@ -2885,7 +2885,7 @@ static inline BOOL is_assignable_item(LPLVITEMW lpLVItem, LONG lStyle)
  *   SUCCESS : TRUE
  *   FAILURE : FALSE
  */
-static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, BOOL *bChanged)
+static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isNew, BOOL isW, BOOL *bChanged)
 {
     LISTVIEW_ITEM *lpItem;
     NMLISTVIEW nmlv;
@@ -2893,6 +2893,8 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     LVITEMW item;
 
     TRACE("()\n");
+
+    if (lpLVItem->mask == 0) return TRUE;   
 
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
@@ -2945,7 +2947,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     
     /* send LVN_ITEMCHANGING notification, if the item is not being inserted */
     /* and we are _NOT_ virtual (LVS_OWERNDATA) */
-    if(lpItem && lpItem->valid && notify_listview(infoPtr, LVN_ITEMCHANGING, &nmlv)) 
+    if(lpItem && !isNew && notify_listview(infoPtr, LVN_ITEMCHANGING, &nmlv))
 	return FALSE;
 
     /* copy information */
@@ -2991,7 +2993,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
     }
 
     /* if we're inserting the item, we're done */
-    if (lpItem && !lpItem->valid) return TRUE;
+    if (isNew) return TRUE;
     
     /* send LVN_ITEMCHANGED notification */
     if (lpLVItem->mask & LVIF_PARAM) nmlv.lParam = lpLVItem->lParam;
@@ -3002,7 +3004,7 @@ static BOOL set_main_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW, 
 
 /***
  * DESCRIPTION:
- * Helper for LISTVIEW_SetItemT *only*: sets subitem attributes.
+ * Helper for LISTVIEW_{Set,Insert}ItemT *only*: sets subitem attributes.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -3098,8 +3100,6 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
 	return FALSE;
 
-    if (lpLVItem->mask == 0) return TRUE;   
-
     /* For efficiency, we transform the lpLVItem->pszText to Unicode here */
     if ((lpLVItem->mask & LVIF_TEXT) && is_textW(lpLVItem->pszText))
     {
@@ -3113,7 +3113,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (lpLVItem->iSubItem)
 	bResult = set_sub_item(infoPtr, lpLVItem, TRUE, &bChanged);
     else
-	bResult = set_main_item(infoPtr, lpLVItem, TRUE, &bChanged);
+	bResult = set_main_item(infoPtr, lpLVItem, FALSE, TRUE, &bChanged);
 
     /* redraw item, if necessary */
     if (bChanged && !infoPtr->bIsDrawing)
@@ -4741,7 +4741,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if ((lpLVItem->mask & LVIF_IMAGE) && pItemHdr->iImage == I_IMAGECALLBACK)
 	dispInfo.item.mask |= LVIF_IMAGE;
 
-    /* Do we need to enquire about the text? */
+    /* Apps depend on calling back for text if it is NULL or LPSTR_TEXTCALLBACKW */
     if ((lpLVItem->mask & LVIF_TEXT) && !is_textW(pItemHdr->pszText))
     {
 	dispInfo.item.mask |= LVIF_TEXT;
@@ -4765,7 +4765,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     if (dispInfo.item.mask & LVIF_IMAGE)
     {
 	lpLVItem->iImage = dispInfo.item.iImage;
-	if ((dispInfo.item.mask & LVIF_DI_SETITEM) && (pItemHdr->iImage==I_IMAGECALLBACK))
+	if ((dispInfo.item.mask & LVIF_DI_SETITEM) && pItemHdr->iImage == I_IMAGECALLBACK)
 	    pItemHdr->iImage = dispInfo.item.iImage;
     }
     else if (lpLVItem->mask & LVIF_IMAGE)
@@ -5792,7 +5792,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     HDPA hdpaSubItems;
     NMLISTVIEW nmlv;
     LISTVIEW_ITEM *lpItem;
-    BOOL is_sorted;
+    BOOL is_sorted, has_changed;
 
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
@@ -5826,9 +5826,9 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
     if (nItem == -1) goto fail;
     /* the array may be sparsly populated, we can't just increment the count here */
     infoPtr->nItemCount = infoPtr->hdpaItems->nItemCount;
-   
-    if (!LISTVIEW_SetItemT(infoPtr, lpLVItem, isW))
-	goto undo;
+  
+    /* set the item attributes */ 
+    if (!set_main_item(infoPtr, lpLVItem, TRUE, isW, &has_changed)) goto undo;
 
     /* if we're sorted, sort the list, and update the index */
     if (is_sorted)
@@ -5855,8 +5855,6 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
      */
     LISTVIEW_ShiftIndices(infoPtr, nItem, 1);
     
-    lpItem->valid = TRUE;
-
     /* send LVN_INSERTITEM notification */
     ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
     nmlv.iItem = nItem;
