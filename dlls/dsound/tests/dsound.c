@@ -40,6 +40,203 @@
 
 #include "dsound_test.h"
 
+static void dsound_dsound_tests()
+{
+    HRESULT rc;
+    LPDIRECTSOUND dso=NULL;
+    DSCAPS dscaps;
+    int ref;
+    IUnknown * unknown;
+    IDirectSound * ds;
+    IDirectSound8 * ds8;
+
+    rc=CoCreateInstance(&CLSID_DirectSound, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectSound, (void**)&dso);
+    ok(rc==S_OK,"CoCreateInstance failed: %s\n",DXGetErrorString9(rc));
+    if (dso) {
+        /* Try to Query for objects */
+        rc=IDirectSound_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
+        ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IUnknown) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound_Release(unknown);
+
+        rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
+        ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IDirectSound) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound_Release(ds);
+
+        rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound8,(LPVOID*)&ds8);
+        ok(rc==E_NOINTERFACE,"IDirectSound_QueryInterface(IID_IDirectSound8) should have failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound8_Release(ds8);
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound_GetCaps(dso,0);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        ZeroMemory(&dscaps, sizeof(dscaps));
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound_GetCaps(dso,&dscaps);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        dscaps.dwSize=sizeof(dscaps);
+
+        /* DSOUND: Running on a certified driver */
+        rc=IDirectSound_GetCaps(dso,&dscaps);
+        ok(rc==DS_OK,"GetCaps failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK) {
+            trace("  DirectSound Caps: flags=0x%08lx secondary min=%ld max=%ld\n",
+                  dscaps.dwFlags,dscaps.dwMinSecondarySampleRate,
+                  dscaps.dwMaxSecondarySampleRate);
+        }
+
+        ref=IDirectSound_Release(dso);
+        ok(ref==0,"IDirectSound_Release has %d references, should have 0\n",ref);
+    }
+
+    rc=DirectSoundCreate(NULL,&dso,NULL);
+    ok(rc==S_OK,"DirectSoundCreate failed: %s\n",DXGetErrorString9(rc));
+    if (dso) {
+        /* Try to Query for objects */
+        rc=IDirectSound_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
+        ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IUnknown) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound_Release(unknown);
+
+        rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
+        ok(rc==DS_OK,"IDirectSound_QueryInterface(IID_IDirectSound) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound_Release(ds);
+
+        rc=IDirectSound_QueryInterface(dso,&IID_IDirectSound8,(LPVOID*)&ds8);
+        ok(rc==E_NOINTERFACE,"IDirectSound_QueryInterface(IID_IDirectSound8) should have failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound8_Release(ds8);
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound_GetCaps(dso,0);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        ZeroMemory(&dscaps, sizeof(dscaps));
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound_GetCaps(dso,&dscaps);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        dscaps.dwSize=sizeof(dscaps);
+
+        /* DSOUND: Running on a certified driver */
+        rc=IDirectSound_GetCaps(dso,&dscaps);
+        ok(rc==DS_OK,"GetCaps failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK) {
+            trace("  DirectSound Caps: flags=0x%08lx secondary min=%ld max=%ld\n",
+                  dscaps.dwFlags,dscaps.dwMinSecondarySampleRate,
+                  dscaps.dwMaxSecondarySampleRate);
+        }
+
+        ref=IDirectSound_Release(dso);
+        ok(ref==0,"IDirectSound_Release has %d references, should have 0\n",ref);
+    }
+}
+
+static void dsound_dsound8_tests()
+{
+    HRESULT rc;
+    LPDIRECTSOUND8 dso=NULL;
+    DSCAPS dscaps;
+    int ref;
+    IUnknown * unknown;
+    IDirectSound * ds;
+    IDirectSound8 * ds8;
+
+    rc=CoCreateInstance(&CLSID_DirectSound8, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectSound8, (void**)&dso);
+    ok(rc==S_OK,"CoCreateInstance failed: %s\n",DXGetErrorString9(rc));
+    if (dso) {
+        /* Try to Query for objects */
+        rc=IDirectSound8_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
+        ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IUnknown) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound8_Release(unknown);
+
+        rc=IDirectSound8_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
+        ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound_Release(ds);
+
+        rc=IDirectSound8_QueryInterface(dso,&IID_IDirectSound8,(LPVOID*)&ds8);
+        ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound8) should have failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound8_Release(ds8);
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound8_GetCaps(dso,0);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        ZeroMemory(&dscaps, sizeof(dscaps));
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound8_GetCaps(dso,&dscaps);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        dscaps.dwSize=sizeof(dscaps);
+
+        /* DSOUND: Running on a certified driver */
+        rc=IDirectSound8_GetCaps(dso,&dscaps);
+        ok(rc==DS_OK,"GetCaps failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK) {
+            trace("  DirectSound Caps: flags=0x%08lx secondary min=%ld max=%ld\n",
+                  dscaps.dwFlags,dscaps.dwMinSecondarySampleRate,
+                  dscaps.dwMaxSecondarySampleRate);
+        }
+
+        ref=IDirectSound8_Release(dso);
+        ok(ref==0,"IDirectSound8_Release has %d references, should have 0\n",ref);
+    }
+
+    rc=DirectSoundCreate8(NULL,&dso,NULL);
+    ok(rc==S_OK,"DirectSoundCreate8 failed: %s\n",DXGetErrorString9(rc));
+    if (dso) {
+        /* Try to Query for objects */
+        rc=IDirectSound8_QueryInterface(dso,&IID_IUnknown,(LPVOID*)&unknown);
+        ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IUnknown) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound8_Release(unknown);
+
+        rc=IDirectSound8_QueryInterface(dso,&IID_IDirectSound,(LPVOID*)&ds);
+        ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound) failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound_Release(ds);
+
+        rc=IDirectSound8_QueryInterface(dso,&IID_IDirectSound8,(LPVOID*)&ds8);
+        ok(rc==DS_OK,"IDirectSound8_QueryInterface(IID_IDirectSound8) should have failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK)
+            IDirectSound8_Release(ds8);
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound8_GetCaps(dso,0);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        ZeroMemory(&dscaps, sizeof(dscaps));
+
+        /* DSOUND: Error: Invalid caps buffer */
+        rc=IDirectSound8_GetCaps(dso,&dscaps);
+        ok(rc==DSERR_INVALIDPARAM,"GetCaps should have failed: %s\n",DXGetErrorString9(rc));
+
+        dscaps.dwSize=sizeof(dscaps);
+
+        /* DSOUND: Running on a certified driver */
+        rc=IDirectSound8_GetCaps(dso,&dscaps);
+        ok(rc==DS_OK,"GetCaps failed: %s\n",DXGetErrorString9(rc));
+        if (rc==DS_OK) {
+            trace("  DirectSound Caps: flags=0x%08lx secondary min=%ld max=%ld\n",
+                  dscaps.dwFlags,dscaps.dwMinSecondarySampleRate,
+                  dscaps.dwMaxSecondarySampleRate);
+        }
+
+        ref=IDirectSound8_Release(dso);
+        ok(ref==0,"IDirectSound_Release has %d references, should have 0\n",ref);
+    }
+}
 
 static HRESULT test_dsound(LPGUID lpGuid)
 {
@@ -417,5 +614,9 @@ static void dsound_tests()
 
 START_TEST(dsound)
 {
+    CoInitialize(NULL);
+
+    dsound_dsound_tests();
+    dsound_dsound8_tests();
     dsound_tests();
 }
