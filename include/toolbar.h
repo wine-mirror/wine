@@ -65,6 +65,8 @@ typedef struct tagTOOLBAR_INFO
 } TOOLBAR_INFO;
 
 
+extern BOOL WINAPI TBARCUST_DialogProc (HWND, UINT, WPARAM, LPARAM);
+
 extern VOID TOOLBAR_Register (VOID);
 extern VOID TOOLBAR_Unregister (VOID);
 

@@ -15,7 +15,7 @@
 #include "commctrl.h"
 #include "prsht.h"
 #include "winnls.h"
-#include "propsheet.h"
+#include "comctl32.h"
 #include "debug.h"
 
 

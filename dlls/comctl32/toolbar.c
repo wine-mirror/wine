@@ -1,8 +1,7 @@
-
 /*
  * Toolbar control
  *
- * Copyright 1998 Eric Kohl
+ * Copyright 1998,1999 Eric Kohl
  *
  * TODO:
  *   - A little bug in TOOLBAR_DrawMasked()
@@ -14,7 +13,7 @@
  *   - Unicode suppport.
  *   - Internal COMMCTL32 bitmaps.
  *   - Fix TOOLBAR_SetButtonInfo32A.
- *   - Fix TOOLBAR_Customize. (Customize dialog.)
+ *   - Customize dialog (under construction).
  *
  * Testing:
  *   - Run tests using Waite Group Windows95 API Bible Volume 2.
@@ -32,6 +31,7 @@
 #include "commctrl.h"
 #include "sysmetrics.h"
 #include "cache.h"
+#include "comctl32.h"
 #include "toolbar.h"
 #include "debug.h"
 
@@ -41,8 +41,8 @@ DEFAULT_DEBUG_CHANNEL(toolbar)
 #define TOP_BORDER         2
 #define BOTTOM_BORDER      2
 
-
 #define TOOLBAR_GetInfoPtr(wndPtr) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
+
 
 static void
 TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
@@ -716,6 +716,151 @@ TOOLBAR_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
     SendMessageA (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
 }
 
+
+/***********************************************************************
+ * TOOLBAR_CustomizeDialogProc
+ * This function implements the toolbar customization dialog.
+ */
+BOOL WINAPI
+TOOLBAR_CustomizeDialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = (TOOLBAR_INFO *)GetWindowLongA (hwnd, DWL_USER);
+    static HDSA hDsa = NULL;
+
+    switch (uMsg)
+    {
+	case WM_INITDIALOG:
+	    infoPtr = (TOOLBAR_INFO *)lParam;
+	    SetWindowLongA (hwnd, DWL_USER, (DWORD)infoPtr);
+
+	    hDsa = DSA_Create (sizeof(TBUTTON_INFO), 5);
+
+	    if (infoPtr)
+	    {
+		TBUTTON_INFO *btnPtr;
+		INT i;
+
+		/* insert 'virtual' separator button into 'available buttons' list */
+		SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)"");
+
+		/* copy all buttons and append them to the right listbox */		
+		btnPtr = infoPtr->buttons;
+		for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
+		{
+		    DSA_InsertItem (hDsa, i, btnPtr);
+
+		    if (btnPtr->fsState & TBSTATE_HIDDEN)
+		    {
+			SendDlgItemMessageA (hwnd, IDC_AVAILBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)"");
+		    }
+		    else
+		    {
+			SendDlgItemMessageA (hwnd, IDC_TOOLBARBTN_LBOX, LB_ADDSTRING, 0, (LPARAM)"");
+		    }
+		}
+
+		/* append 'virtual' sepatator button to the 'toolbar buttons' list */
+		/* TODO */
+	    }
+	    return TRUE;
+
+	case WM_CLOSE:
+	    EndDialog(hwnd, FALSE);
+	    return TRUE;
+
+	case WM_COMMAND:
+	    switch (LOWORD(wParam))
+	    {
+		case IDCANCEL:
+		    EndDialog(hwnd, FALSE);
+		    break;
+	    }
+	    return TRUE;
+
+	case WM_DESTROY:
+	    if (hDsa)
+		DSA_Destroy (hDsa);
+	    return TRUE;
+
+	case WM_DRAWITEM:
+	    if (wParam == IDC_AVAILBTN_LBOX || wParam == IDC_TOOLBARBTN_LBOX)
+	    {
+		LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)lParam;
+		RECT rcButton;
+		RECT rcText;
+		HPEN hOldPen;
+		HBRUSH hOldBrush;
+		COLORREF oldText = 0;
+		COLORREF oldBk = 0;
+
+		FIXME(toolbar, "action: %x itemState: %x\n",
+		      lpdis->itemAction, lpdis->itemState);		
+
+		if (lpdis->itemState & ODS_FOCUS)
+		{
+		    oldBk = SetBkColor (lpdis->hDC, GetSysColor(COLOR_HIGHLIGHT));
+		    oldText = SetTextColor (lpdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+		}
+
+		hOldPen = SelectObject (lpdis->hDC, GetSysColorPen ((lpdis->itemState & ODS_SELECTED)?COLOR_HIGHLIGHT:COLOR_WINDOW));
+		hOldBrush = SelectObject (lpdis->hDC, GetSysColorBrush ((lpdis->itemState & ODS_FOCUS)?COLOR_HIGHLIGHT:COLOR_WINDOW));
+
+		/* fill background rectangle */
+		Rectangle (lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+			   lpdis->rcItem.right, lpdis->rcItem.bottom);
+
+		/* calculate button and text rectangles */
+		CopyRect (&rcButton, &lpdis->rcItem);
+		InflateRect (&rcButton, -1, -1);
+		CopyRect (&rcText, &rcButton);
+		rcButton.right = rcButton.left + infoPtr->nBitmapWidth + 6;
+		rcText.left = rcButton.right + 2;
+
+		/* draw focus rectangle */
+		if (lpdis->itemState & ODS_FOCUS)
+		    DrawFocusRect (lpdis->hDC, &lpdis->rcItem);
+
+		/* draw button */
+		DrawEdge (lpdis->hDC, &rcButton, EDGE_RAISED, BF_RECT|BF_MIDDLE|BF_SOFT);
+
+		/* draw text */
+		if (wParam == IDC_AVAILBTN_LBOX && lpdis->itemID == 0)
+		    DrawTextA (lpdis->hDC, "Separator", -1, &rcText,
+			       DT_LEFT | DT_VCENTER | DT_SINGLELINE);
+
+		if (lpdis->itemState & ODS_FOCUS)
+		{
+		    SetBkColor (lpdis->hDC, oldBk);
+		    SetTextColor (lpdis->hDC, oldText);
+		}
+
+		SelectObject (lpdis->hDC, hOldBrush);
+		SelectObject (lpdis->hDC, hOldPen);
+
+		return TRUE;
+	    }
+	    return FALSE;
+
+	case WM_MEASUREITEM:
+	    if (wParam == IDC_AVAILBTN_LBOX || wParam == IDC_TOOLBARBTN_LBOX)
+	    {
+		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*)lParam;
+
+		if (infoPtr)
+		    lpmis->itemHeight = infoPtr->nBitmapHeight + 8;
+		else
+		    lpmis->itemHeight = 16 + 8; /* default height */
+
+		return TRUE;
+	    }
+	    return FALSE;
+
+	default:
+	    return FALSE;
+    }
+}
+
+
 /***********************************************************************
  * TOOLBAR_AddBitmap:  Add the bitmaps to the default image list.
  *
@@ -1156,9 +1301,41 @@ TOOLBAR_CommandToIndex (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_Customize (HWND hwnd)
 {
-    FIXME (toolbar, "customization not implemented!\n");
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    LRESULT ret;
+    LPCVOID template;
+    HRSRC hRes;
+    NMHDR nmhdr;
 
-    return 0;
+    /* send TBN_BEGINADJUST notification */
+    nmhdr.hwndFrom = hwnd;
+    nmhdr.idFrom   = GetWindowLongA (hwnd, GWL_ID);
+    nmhdr.code     = TBN_BEGINADJUST;
+
+    SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+		  (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
+
+    if (!(hRes = FindResourceA (COMCTL32_hModule,
+                                MAKEINTRESOURCEA(IDD_TBCUSTOMIZE),
+                                RT_DIALOGA)))
+	return FALSE;
+
+    if(!(template = (LPVOID)LoadResource (COMCTL32_hModule, hRes)))
+	return FALSE;
+
+    ret = DialogBoxIndirectParamA (GetWindowLongA (hwnd, GWL_HINSTANCE),
+                                   (LPDLGTEMPLATEA)template,
+                                   hwnd,
+                                   (DLGPROC)TOOLBAR_CustomizeDialogProc,
+                                   (LPARAM)infoPtr);
+
+    /* send TBN_ENDADJUST notification */
+    nmhdr.code = TBN_ENDADJUST;
+
+    SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
+		  (WPARAM)nmhdr.idFrom, (LPARAM)&nmhdr);
+
+    return ret;
 }
 
 
@@ -2769,7 +2946,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_ADDBUTTONSA:
 	    return TOOLBAR_AddButtonsA (hwnd, wParam, lParam);
 
-/*	case TB_ADDBUTTONS32W: */
+/*	case TB_ADDBUTTONSW: */
 
 	case TB_ADDSTRINGA:
 	    return TOOLBAR_AddStringA (hwnd, wParam, lParam);
@@ -2818,7 +2995,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_GETBUTTONINFOA:
 	    return TOOLBAR_GetButtonInfoA (hwnd, wParam, lParam);
 
-/*	case TB_GETBUTTONINFO32W:		*/ /* 4.71 */
+/*	case TB_GETBUTTONINFOW:		*/ /* 4.71 */
 
 	case TB_GETBUTTONSIZE:
 	    return TOOLBAR_GetButtonSize (hwnd);
@@ -2826,7 +3003,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_GETBUTTONTEXTA:
 	    return TOOLBAR_GetButtonTextA (hwnd, wParam, lParam);
 
-/*	case TB_GETBUTTONTEXT32W: */
+/*	case TB_GETBUTTONTEXTW: */
 /*	case TB_GETCOLORSCHEME:			*/ /* 4.71 */
 
 	case TB_GETDISABLEDIMAGELIST:
@@ -2888,7 +3065,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_INSERTBUTTONA:
 	    return TOOLBAR_InsertButtonA (hwnd, wParam, lParam);
 
-/*	case TB_INSERTBUTTON32W: */
+/*	case TB_INSERTBUTTONW: */
 /*	case TB_INSERTMARKHITTEST:		*/ /* 4.71 */
 
 	case TB_ISBUTTONCHECKED:
@@ -2910,8 +3087,8 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return TOOLBAR_IsButtonPressed (hwnd, wParam, lParam);
 
 /*	case TB_LOADIMAGES:			*/ /* 4.70 */
-/*	case TB_MAPACCELERATOR32A:		*/ /* 4.71 */
-/*	case TB_MAPACCELERATOR32W:		*/ /* 4.71 */
+/*	case TB_MAPACCELERATORA:		*/ /* 4.71 */
+/*	case TB_MAPACCELERATORW:		*/ /* 4.71 */
 /*	case TB_MARKBUTTON:			*/ /* 4.71 */
 /*	case TB_MOVEBUTTON:			*/ /* 4.71 */
 
@@ -2923,7 +3100,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SAVERESTOREA:
 	    return TOOLBAR_SaveRestoreA (hwnd, wParam, lParam);
 
-/*	case TB_SAVERESTORE32W: */
+/*	case TB_SAVERESTOREW: */
 /*	case TB_SETANCHORHIGHLIGHT:		*/ /* 4.71 */
 
 	case TB_SETBITMAPSIZE:
@@ -2932,7 +3109,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SETBUTTONINFOA:
 	    return TOOLBAR_SetButtonInfoA (hwnd, wParam, lParam);
 
-/*	case TB_SETBUTTONINFO32W:		*/ /* 4.71 */
+/*	case TB_SETBUTTONINFOW:			*/ /* 4.71 */
 
 	case TB_SETBUTTONSIZE:
 	    return TOOLBAR_SetButtonSize (hwnd, wParam, lParam);
