@@ -111,8 +111,21 @@ static void init_process( struct process *process )
 /* create the initial process */
 struct process *create_initial_process(void)
 {
+    struct new_process_request *info;
+
     copy_handle_table( &initial_process, NULL );
     init_process( &initial_process );
+
+    if (!alloc_console( &initial_process )) return NULL;
+    if (!(info = mem_alloc( sizeof(*info) ))) return NULL;
+    info->start_flags = STARTF_USESTDHANDLES;
+    info->hstdin  = alloc_handle( &initial_process, initial_process.console_in,
+                                  GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+    info->hstdout = alloc_handle( &initial_process, initial_process.console_out,
+                                  GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+    info->hstderr = alloc_handle( &initial_process, initial_process.console_out,
+                                  GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, 1 );
+    initial_process.info = info;
     grab_object( &initial_process ); /* so that we never free it */
     return &initial_process;
 
