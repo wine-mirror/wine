@@ -6,7 +6,7 @@
 
       <para>
         Written by &name-eric-pouech; <email>&email-eric-pouech;</email>
-	(Last updated: 6/14/2000)
+	(Last updated: 9/15/2002)
       </para>
       <para>
         (Extracted from <filename>wine/documentation/winedbg</filename>)
@@ -98,7 +98,7 @@
         </itemizedlist>
         <para>
           Wine implements most of the Windows' debugging API (the
-          part in KERNEL32, not the one in
+          part in <filename>KERNEL32.DLL</filename>, not the one in
           <filename>IMAGEHLP.DLL</filename>), and allows any program
           (emulated or Winelib) using that API to debug a
           <varname>W-process</varname>.
@@ -153,7 +153,7 @@ winedbg "hl.exe -windowed"
       </sect2>
 
       <sect2 id="dbg-on-exception">
-        <title id="dbg-exception-title">On exception</title>
+        <title id="dbg-exception-title">On exceptions</title>
 
         <para>
           When something goes wrong, Windows tracks this as an
@@ -232,16 +232,26 @@ winedbg "hl.exe -windowed"
         </note>
       </sect2>
 
+      <sect2 id="interrupt">
+        <title>Interrupting</title>
+
+	<para>
+	  You can stop the debugger while it's running by hitting
+	  Ctrl-C in its window. This will stop the debugged process,
+	  and let you manipulate the current context
+	</para>
+      </sect2>
+
       <sect2>
         <title>Quitting</title>
 
         <para>
-          Unfortunately, Windows doesn't provide a detach kind of API,
-          meaning that once you started debugging a process, you must
-          do so until the process dies. Killing (or stopping/aborting)
-          the debugger will also kill the debugged process. This will
-          be true for any Windows' debugging API compliant debugger,
-          starting with <command>WineDbg</command>.
+	  Wine supports the new XP APIs, allowing for a debugger to
+	  detach from a program being debugged (see
+	  <command>detach</command> command). Unfortunately, as the
+	  debugger cannot, for now, neither clear its internal
+	  information, nor restart a new process, the debugger, after
+	  detaching itself, cannot do much except being quited.  
         </para>
       </sect2>
     </sect1>
@@ -797,6 +807,17 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
                   </para>
                 </listitem>
               </varlistentry>
+              <varlistentry>
+                <term>
+                  <application>winedump</application>:
+                </term>
+                <listitem>
+                  <para>
+                    Dumps the imports and exports of a PE (Portable
+                    Executable) DLL (included in wine tree).
+                  </para>
+                </listitem>
+              </varlistentry>
             </variablelist>
           </listitem>
         </itemizedlist>
@@ -831,8 +852,8 @@ wine -debug myprog.exe
   info reg           (to see registers)
   info stack         (to see hex values in the stack)
   info local         (to see local variables)
-  list &lt;line number> (to list source code)
-  x &lt;variable name>  (to examine a variable; only works if code
+  list &lt;line number&gt; (to list source code)
+  x &lt;variable name&gt;  (to examine a variable; only works if code
                       is not compiled with optimization)
   x 0x4269978        (to examine a memory location)
   ?                  (help)
@@ -1354,6 +1375,10 @@ info break	lists all (break|watch)points (with state)
           You can use the symbol <emphasis>EntryPoint</emphasis> to stand for
           the entry point of the Dll.
         </para>
+	<para>
+          When setting a break/watch-point by &lt;id&gt;, if the symbol cannot be found (for example, the symbol is contained in a not yet loaded module), winedbg will
+          recall the name of the symbol and will try to set the breakpoint each time a new module is loaded (until it succeeds).
+        </para>
       </sect2>
 
       <sect2>
@@ -1381,7 +1406,9 @@ info local	prints information on local variables for current
 show dir
 dir &lt;pathname&gt;
 dir
-symbolfile &lt;module&gt; &lt;pathname&gt;
+symbolfile &lt;pathname&gt;   loads external symbol definition
+symbolfile &lt;pathname&gt; N loads external symbol definition
+                           (applying an offset of N to addresses)
         </screen>
         <screen>
 list		lists 10 source lines from current position
@@ -1459,6 +1486,8 @@ walk wnd N	lists all the window hierarchy starting from the
 walk process	lists all w-processes in Wine session
 walk thread	lists all w-threads in Wine session
 walk modref	(no longer avail)
+walk exception  lists the exception frames (starting from current
+                stack frame)
         </screen>
       </sect2>
 
@@ -1485,9 +1514,9 @@ i =&gt; instructions (disassemble)
 x =&gt; 32 bit unsigned hexadecimal integer
 d =&gt; 32 bit signed decimal integer
 w =&gt; 16 bit unsigned hexadecimal integer
-c =&gt; character (only printable 0x20-0x7f are actually
-     printed)
+c =&gt; character (only printable 0x20-0x7f are actuallyprinted)
 b =&gt; 8 bit unsigned hexadecimal integer
+g =&gt; GUID
         </screen>
       </sect2>
 
@@ -1500,8 +1529,9 @@ b =&gt; 8 bit unsigned hexadecimal integer
 	  <itemizedlist>
 	    <listitem>
 	      <para>
-		Identifiers can take a '.' in their names. This allow mainly to access symbols
-	        from different DLLs like USER32.DLL.CreateWindowA
+		Identifiers can take a '.' in their names. This allow
+		mainly to access symbols from different DLLs like
+		<function>USER32.DLL.CreateWindowA</function>.
 	      </para>
 	    </listitem>
 	    <listitem>
@@ -1515,7 +1545,7 @@ b =&gt; 8 bit unsigned hexadecimal integer
 	</para>
       </sect2>
       <sect2>
-          <title>debug messages</title>
+          <title>Debug channels</title>
 	      <para>
                It is possible to turn on and off debug messages as you are debuging using
                the set command.
@@ -1532,6 +1562,49 @@ set - fixme	=&gt; turn off the 'fixme' class
 
     <sect1 id="dbg-others">
       <title>Other debuggers</title>
+
+      <sect2>
+        <title>GDB mode</title>
+
+        <para>
+	  WineDbg can act as a remote monitor for GDB. This allows to
+	  use all the power of GDB, but while debugging wine and/or
+	  any Win32 application. To enable this mode, just add
+	  <parameter>--gdb</parameter> to winedbg command line. You'll
+	  end up on a GDB prompt. You'll have to use the GDB commands
+	  (not the wine nes).
+	</para>
+
+	<para>
+	  However, some limitation in GDB while debugging wine (see
+	  below) don't ppear in this mode:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		GDB will correctly present Win32 thread
+		information and breakpoint behavior
+	      </para> 
+	    </listitem>
+	    <listitem>
+	      <para>
+		Moreover, it also provides support for the Dwarf II
+		debug format (which became the default format (instead
+		of stabs) in gcc 3.1). 
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+
+	<para>
+	  A few wine extensions available through the monitor command.
+<screen>
+monitor wnd           lists all window in the Wine session
+monitor proc          lists all processes in the Wine session
+monitor mem           displays memory mapping of debugged process
+                      (doesn't work)
+</screen>
+	</para>
+      </sect2>
 
       <sect2>
         <title>Using other Unix debuggers</title>
@@ -1640,25 +1713,40 @@ $ gdb wine
 
       <sect2>
         <title>Main differences between winedbg and regular Unix debuggers</title>
-
-        <!-- FIXME: convert this into a table -->
-        <screen>
-+----------------------------------+---------------------------------+
-|             WineDbg              |                 gdb             |
-+----------------------------------+---------------------------------+
-|WineDbg debugs a Windows' process:|gdb debugs a Windows' thread:    |
-|+ the various threads will be     |+ a separate gdb session is      |
-|  handled by the same WineDbg     |  needed for each thread of      |
-| session                          |  Windows' process               |
-|+ a breakpoint will be triggered  |+ a breakpoint will be triggered |
-|  for any thread of the w-process |  only for the w-thread debugged |
-+----------------------------------+---------------------------------+
-|WineDbg supports debug information|gdb supports debug information   |
-|from:                             |from:                            |
-|+ stabs (standard Unix format)    |+ stabs (standard Unix format)   |
-|+ Microsoft's C, CodeView, .DBG   |                                 |
-+----------------------------------+---------------------------------+
-        </screen>
+	<table><title>Debuggers comparison</title>
+	  <tgroup cols=2 align="left">
+	    <tbody>
+	      <row>
+		<entry>WineDbg</entry><entry>gdb</entry>
+	      </row>
+	      <row>
+		<entry>
+		  WineDbg debugs a Windows' process: the various
+		  threads will be handled by the same WineDbg session,
+		  and a breakpoint will be triggered for any thread of
+		  the W-process 
+                </entry>
+	        <entry>
+		  gdb debugs a Windows' thread: a separate gdb session
+		  is needed for each thread of a Windows' process and
+		  a breakpoint will be triggered only for the w-thread
+		  debugged 
+                </entry>
+	      </row>
+	      <row>
+		<entry>
+		  WineDbg supports debug information from stabs
+		  (standard Unix format) and Microsoft's C, CodeView,
+		  .DBG
+                </entry>
+		<entry>
+		  GDB supports debug information from stabs (standard
+		  Unix format) and Dwarf II.
+                </entry>
+	      </row>
+            </tbody>
+          </tgroup>
+        </table>
       </sect2>
     </sect1>
 
@@ -1666,11 +1754,19 @@ $ gdb wine
     <sect1 id="dbg-limits">
       <title>Limitations</title>
 
-      <para>
-        16 bit processes are not supported (but calls to 16 bit code
-        in 32 bit  applications are).
-      </para>
-
+      <itemizedlist>
+	<listitem>
+	  <para>
+	    16 bit processes are not supported (but calls to 16 bit
+	    code in 32 bit  applications are).
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>
+	    Function call in expression is no longer supported
+	  </para>
+	</listitem>
+      </itemizedlist>
     </sect1>
   </chapter>
 
