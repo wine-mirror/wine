@@ -197,28 +197,72 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 
 	    case D3DRENDERSTATE_SRCBLEND:           /* 19 */
 	        switch ((D3DBLEND) dwRenderState) {
+		    case D3DBLEND_ZERO:
+		          rs->src = GL_ZERO;
+			  break;
 		    case D3DBLEND_ONE:
 		          rs->src = GL_ONE;
 			  break;
 		    case D3DBLEND_SRCALPHA:
 		          rs->src = GL_SRC_ALPHA;
 			  break;
+		    case D3DBLEND_INVSRCALPHA:
+		          rs->src = GL_ONE_MINUS_SRC_ALPHA;
+			  break;
+		    case D3DBLEND_DESTALPHA:
+		          rs->src = GL_DST_ALPHA;
+			  break;
+		    case D3DBLEND_INVDESTALPHA:
+		          rs->src = GL_ONE_MINUS_DST_ALPHA;
+			  break;
+		    case D3DBLEND_DESTCOLOR:
+		          rs->src = GL_DST_COLOR;
+			  break;
+		    case D3DBLEND_INVDESTCOLOR:
+		          rs->src = GL_ONE_MINUS_DST_COLOR;
+			  break;
+		    case D3DBLEND_SRCCOLOR:
+		    case D3DBLEND_INVSRCCOLOR:
+		          /* Cannot be supported with OpenGL */
+			  break;
 		    default:
-			  ERR("Unhandled blend mode %ld !\n",dwRenderState);
+			  ERR("Unhandled src blend mode %ld !\n",dwRenderState);
 		}
 	        glBlendFunc(rs->src, rs->dst);
 	        break;
 
 	    case D3DRENDERSTATE_DESTBLEND:          /* 20 */
 	        switch ((D3DBLEND) dwRenderState) {
+		    case D3DBLEND_ZERO:
+		        rs->dst = GL_ZERO;
+			break;
 		    case D3DBLEND_ONE:
 		        rs->dst = GL_ONE;
+			break;
+		    case D3DBLEND_SRCCOLOR:
+		        rs->dst = GL_SRC_COLOR;
+			break;
+		    case D3DBLEND_INVSRCCOLOR:
+		        rs->dst = GL_ONE_MINUS_SRC_COLOR;
+			break;
+		    case D3DBLEND_SRCALPHA:
+		        rs->dst = GL_SRC_ALPHA;
 			break;
 		    case D3DBLEND_INVSRCALPHA:
 		        rs->dst = GL_ONE_MINUS_SRC_ALPHA;
 			break;
+		    case D3DBLEND_DESTALPHA:
+		        rs->dst = GL_DST_ALPHA;
+			break;
+		    case D3DBLEND_INVDESTALPHA:
+		        rs->dst = GL_ONE_MINUS_DST_ALPHA;
+			break;
+		    case D3DBLEND_DESTCOLOR:
+		    case D3DBLEND_INVDESTCOLOR:
+		        /* Cannot be supported with OpenGL */
+			break;
 		    default:
-			ERR("Unhandled blend mode %ld !\n",dwRenderState);
+			ERR("Unhandled dest blend mode %ld !\n",dwRenderState);
 		}
 	        glBlendFunc(rs->src, rs->dst);
 	        break;
