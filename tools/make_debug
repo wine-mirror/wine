@@ -30,7 +30,7 @@ EOF
 chno=0
 for ch in $DEBUG_CHANNELS
 do
-    echo "int dbch_$ch = $chno;"
+    echo "const int dbch_$ch = $chno;"
     chno=`expr $chno + 1`
 done
 echo

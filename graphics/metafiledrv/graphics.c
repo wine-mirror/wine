@@ -5,6 +5,8 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+
 #include "gdi.h"
 #include "dc.h"
 #include "region.h"

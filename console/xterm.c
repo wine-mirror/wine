@@ -25,9 +25,9 @@ DEFAULT_DEBUG_CHANNEL(console)
 
 char console_xterm_prog[80];
 
-static BOOL wine_create_console(FILE **master, FILE **slave, int *pid);
-FILE *wine_openpty(int *master, int *slave, char *name,
-                        struct termios *term, struct winsize *winsize);
+static BOOL wine_create_console(FILE **master, FILE **slave, pid_t *pid);
+int wine_openpty(int *master, int *slave, char *name,
+		 struct termios *term, struct winsize *winsize);
 
 /* The console -- I chose to keep the master and slave
  * (UNIX) file descriptors around in case they are needed for
@@ -36,7 +36,7 @@ FILE *wine_openpty(int *master, int *slave, char *name,
 typedef struct _XTERM_CONSOLE {
         FILE    *master;                 /* xterm side of pty */
         FILE    *slave;                  /* wine side of pty */
-        int     pid;                     /* xterm's pid, -1 if no xterm */
+        pid_t    pid;                    /* xterm's pid, -1 if no xterm */
 } XTERM_CONSOLE;
 
 static XTERM_CONSOLE xterm_console;
@@ -109,7 +109,7 @@ void XTERM_ResizeScreen(int x, int y)
 }
 
 
-static BOOL wine_create_console(FILE **master, FILE **slave, int *pid)
+static BOOL wine_create_console(FILE **master, FILE **slave, pid_t *pid)
 {
         /* There is definately a bug in this routine that causes a lot
            of garbage to be written to the screen, but I can't find it...

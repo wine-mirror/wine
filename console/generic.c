@@ -69,8 +69,8 @@ void GENERIC_ScrollUpWindow(char row1, char col1, char row2, char col2,
 {
    /* Scroll Up Window: Characters go down */
 
-   char trow, tcol;
-   int old_refresh, x;
+   char trow, tcol, x;
+   int old_refresh;
 
    TRACE("Scroll Up %d lines from %d to %d.\n", lines, row1,
       row2);
@@ -101,8 +101,8 @@ void GENERIC_ScrollDownWindow(char row1, char col1, char row2, char col2,
 {
    /* Scroll Down Window: Characters go up */
 
-   char trow, tcol;
-   int old_refresh, x;
+   char trow, tcol, x;
+   int old_refresh;
 
    /* Abort if we have only partial functionality */
    if (!(driver.getCursorPosition && driver.moveCursor && driver.write
@@ -144,7 +144,7 @@ static void GENERIC_ClearLine(char row, char col1, char col2, int bgcolor,
       functions but may be useful elsewhere. If it can be used from
       outside here, it should be made non-static */
 
-   int x;
+   char x;
 
    TRACE("Clear Line: %d from %d to %d.\n", row, col1, col2);
 
@@ -165,7 +165,7 @@ static void GENERIC_MoveLine(char row1, char row2, char col1, char col2)
       functions but may be useful elsewhere. If it can be used from
       outside here, it should be made non-static */
 
-   int x;
+   char x;
    int bg_color, fg_color, attribute;
    char ch;
 

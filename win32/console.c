@@ -53,8 +53,8 @@ DEFAULT_DEBUG_CHANNEL(console)
 
 /* FIXME:  Should be in an internal header file.  OK, so which one?
    Used by CONSOLE_makecomplex. */
-FILE *wine_openpty(int *master, int *slave, char *name,
-                   struct termios *term, struct winsize *winsize);
+int wine_openpty(int *master, int *slave, char *name,
+                 struct termios *term, struct winsize *winsize);
 
 /****************************************************************************
  *		CONSOLE_GetPid

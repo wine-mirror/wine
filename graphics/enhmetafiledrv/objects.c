@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "bitmap.h"
 #include "brush.h"
 #include "font.h"

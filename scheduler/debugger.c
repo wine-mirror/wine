@@ -4,6 +4,8 @@
  * Copyright (C) 1999 Alexandre Julliard
  */
 
+#include <string.h>
+
 #include "process.h"
 #include "thread.h"
 #include "server.h"

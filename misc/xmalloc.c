@@ -18,7 +18,7 @@
 #include "xmalloc.h"
 #include "debugtools.h"
 
-void *xmalloc( int size )
+void *xmalloc( size_t size )
 {
     void *res;
 
@@ -32,7 +32,7 @@ void *xmalloc( int size )
     return res;
 }
 
-void *xcalloc( int size )
+void *xcalloc( size_t size )
 {
     void *res;
 
@@ -42,7 +42,7 @@ void *xcalloc( int size )
 }
 
 
-void *xrealloc( void *ptr, int size )
+void *xrealloc( void *ptr, size_t size )
 {
     void *res = realloc (ptr, size);
     if ((res == NULL) && size)

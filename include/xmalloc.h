@@ -5,9 +5,9 @@
 extern "C" {
 #endif
 
-void *xmalloc( int size );
-void *xcalloc( int size );
-void *xrealloc( void *ptr, int size );
+void *xmalloc( size_t size );
+void *xcalloc( size_t size );
+void *xrealloc( void *ptr, size_t size );
 char *xstrdup( const char *str );
 
 #ifdef __cplusplus

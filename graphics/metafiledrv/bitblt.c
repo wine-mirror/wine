@@ -4,6 +4,8 @@
  * Copyright 1993, 1994  Alexandre Julliard
  */
 
+#include <string.h>
+
 #include "gdi.h"
 #include "metafiledrv.h"
 #include "heap.h"

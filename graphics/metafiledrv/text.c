@@ -5,6 +5,8 @@
  *
  */
 
+#include <string.h>
+
 #include "windef.h"
 #include "metafiledrv.h"
 #include "debugtools.h"
