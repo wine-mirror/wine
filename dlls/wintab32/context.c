@@ -463,12 +463,15 @@ int WINAPI WTPacketsGet(HCTX hCtx, int cMaxPkts, LPVOID lpPkts)
 
     TRACE("(%p, %d, %p)\n", hCtx, cMaxPkts, lpPkts);
 
-    if (!hCtx || !lpPkts) return 0;
+    if (!hCtx)
+        return 0;
 
     EnterCriticalSection(&csTablet);
 
     context = TABLET_FindOpenContext(hCtx);
-    TABLET_BlankPacketData(context,lpPkts,cMaxPkts);
+
+    if (lpPkts != NULL)
+        TABLET_BlankPacketData(context,lpPkts,cMaxPkts);
 
     if (context->PacketsQueued == 0)
     {
@@ -476,13 +479,20 @@ int WINAPI WTPacketsGet(HCTX hCtx, int cMaxPkts, LPVOID lpPkts)
         return 0;
     }
 
-    for(limit = 0; limit < cMaxPkts && limit < context->PacketsQueued; limit++)
-        ptr=TABLET_CopyPacketData(context ,ptr, &context->PacketQueue[limit]);
+    limit = min(cMaxPkts,context->PacketsQueued);
+
+    if(ptr != NULL)
+    {
+        int i = 0;
+        for(i = 0; i < limit; i++)
+            ptr=TABLET_CopyPacketData(context ,ptr, &context->PacketQueue[i]);
+    }
+
 
     if (limit < context->PacketsQueued)
     {
-        memcpy(context->PacketQueue, &context->PacketQueue[limit],
-            (context->QueueSize - (limit))*sizeof(WTPACKET));
+        memmove(context->PacketQueue, &context->PacketQueue[limit],
+            (context->PacketsQueued - (limit))*sizeof(WTPACKET));
     }
     context->PacketsQueued -= limit;
     LeaveCriticalSection(&csTablet);
@@ -503,7 +513,8 @@ BOOL WINAPI WTPacket(HCTX hCtx, UINT wSerial, LPVOID lpPkt)
 
     TRACE("(%p, %d, %p)\n", hCtx, wSerial, lpPkt);
 
-    if (!hCtx) return 0;
+    if (!hCtx)
+        return 0;
 
     EnterCriticalSection(&csTablet);
 
@@ -518,8 +529,8 @@ BOOL WINAPI WTPacket(HCTX hCtx, UINT wSerial, LPVOID lpPkt)
 
         if ((rc+1) < context->QueueSize)
         {
-            memcpy(context->PacketQueue, &context->PacketQueue[rc+1],
-                (context->QueueSize - (rc+1))*sizeof(WTPACKET));
+            memmove(context->PacketQueue, &context->PacketQueue[rc+1],
+                (context->PacketsQueued - (rc+1))*sizeof(WTPACKET));
         }
         context->PacketsQueued -= (rc+1);
     }
@@ -583,7 +594,7 @@ BOOL WINAPI WTGetA(HCTX hCtx, LPLOGCONTEXTA lpLogCtx)
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
-    memcpy(lpLogCtx,&context->context,sizeof(LOGCONTEXTA));
+    memmove(lpLogCtx,&context->context,sizeof(LOGCONTEXTA));
     LeaveCriticalSection(&csTablet);
 
     return TRUE;
@@ -747,12 +758,12 @@ int WINAPI WTDataGet(HCTX hCtx, UINT wBegin, UINT wEnd,
     }
 
     for (num = bgn; num <= end; num++)
-        ptr = TABLET_CopyPacketData(context ,ptr, &context->PacketQueue[end]);
+        ptr = TABLET_CopyPacketData(context ,ptr, &context->PacketQueue[num]);
 
     /* remove read packets */
     if ((end+1) < context->PacketsQueued)
-        memcpy( &context->PacketQueue[bgn], &context->PacketQueue[end+1],
-                (context->PacketsQueued - ((end-bgn)+1)) * sizeof (WTPACKET));
+        memmove( &context->PacketQueue[bgn], &context->PacketQueue[end+1],
+                (context->PacketsQueued - (end+1)) * sizeof (WTPACKET));
 
     context->PacketsQueued -= ((end-bgn)+1);
     *lpNPkts = ((end-bgn)+1);
@@ -777,7 +788,7 @@ int WINAPI WTDataPeek(HCTX hCtx, UINT wBegin, UINT wEnd,
     TRACE("(%p, %u, %u, %d, %p, %p)\n",
 	  hCtx, wBegin, wEnd, cMaxPkts, lpPkts, lpNPkts);
 
-    if (!hCtx) return 0;
+    if (!hCtx || !lpPkts) return 0;
 
     EnterCriticalSection(&csTablet);
 
@@ -806,7 +817,7 @@ int WINAPI WTDataPeek(HCTX hCtx, UINT wBegin, UINT wEnd,
     }
 
     for (num = bgn; num <= end; num++)
-        ptr = TABLET_CopyPacketData(context ,ptr, &context->PacketQueue[end]);
+        ptr = TABLET_CopyPacketData(context ,ptr, &context->PacketQueue[num]);
 
     *lpNPkts = ((end-bgn)+1);
     LeaveCriticalSection(&csTablet);
