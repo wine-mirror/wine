@@ -4452,6 +4452,7 @@ BOOL      WINAPI SetDoubleClickTime(UINT);
 HWND      WINAPI SetFocus(HWND);
 BOOL      WINAPI SetForegroundWindow(HWND);
 void        WINAPI SetInternalWindowPos(HWND,UINT,LPRECT,LPPOINT);
+BOOL        WINAPI SetLayeredWindowAttributes(HWND,COLORREF,BYTE,DWORD);
 BOOL        WINAPI SetMenu(HWND,HMENU);
 BOOL        WINAPI SetMenuContextHelpId(HMENU,DWORD);
 BOOL        WINAPI SetMenuItemBitmaps(HMENU,UINT,UINT,HBITMAP,HBITMAP);
