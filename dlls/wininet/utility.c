@@ -175,6 +175,11 @@ VOID SendAsyncCallbackInt(LPWININETAPPINFOA hIC, HINTERNET hHttpSession,
         if (! (hIC->lpfnStatusCB))
             return;
 
+        /* the IE5 version of wininet does not
+           send callbacks if dwContext is zero */
+        if( !dwContext )
+            return;
+
         TRACE("--> Callback %ld\n",dwInternetStatus);
 
         hIC->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
