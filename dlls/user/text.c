@@ -89,13 +89,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
 
 static const WCHAR ELLIPSISW[] = {'.','.','.', 0};
 
-/* These will have to go into a structure to be passed around rather than
- * sitting in static memory
- */
-static int tabwidth;
-static int prefix_offset;
-static int len_before_ellipsis, len_ellipsis, len_under_ellipsis,
-           len_after_ellipsis;
+typedef struct tag_ellipsis_data
+{
+    int before;
+    int len;
+    int under;
+    int after;
+} ellipsis_data;
 
 /*********************************************************************
  *                      TEXT_Ellipsify (static)
@@ -181,10 +181,7 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  *                    made sufficient space available so we don't need to
  *                    know the size of the space.  This pointer may be NULL if
  *                    the modified string is not required.
- *   len_before [out] The number of characters before the ellipsis.
- *   len_ellip  [out] The number of characters in the ellipsis.
- *   len_under  [out] The number of characters replaced by the ellipsis.
- *   len_after  [out] The number of characters after the ellipsis.
+ *   pellip     [out] The ellipsification results
  *
  * For now we will simply use three dots rather than worrying about whether
  * the font contains an explicit ellipsis character.
@@ -199,8 +196,8 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  * 3. Everything after the last \ or / of the string (if any) or the whole
  *    string if there is no / or \.  I believe that under Win95 this would
  *    include everything even though some might be clipped off the end whereas
- *    under Win98 that might be ellipsified too.  (Not yet implemented).  Yet
- *    to be investigated is whether this would include wordbreaking if the
+ *    under Win98 that might be ellipsified too.
+ *    Yet to be investigated is whether this would include wordbreaking if the
  *    filename is more than 1 word and splitting if DT_EDITCONTROL was in
  *    effect.  (If DT_EDITCONTROL is in effect then on occasions text will be
  *    broken within words).
@@ -208,12 +205,11 @@ static void TEXT_Ellipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  */
 static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
                                 unsigned int *len_str, int width, SIZE *size,
-                                WCHAR *modstr,
-                                int *len_before, int *len_ellip, int *len_under,
-                                int *len_after)
+                                WCHAR *modstr, ellipsis_data *pellip)
 {
     int len_ellipsis;
     int len_trailing;
+    int len_under;
     WCHAR *lastBkSlash, *lastFwdSlash, *lastSlash;
 
     len_ellipsis = strlenW (ELLIPSISW);
@@ -240,7 +236,7 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
      * of the last slash and len_trailing includes the ellipsis
      */
 
-    *len_under = 0;
+    len_under = 0;
     for ( ; ; )
     {
         if (!GetTextExtentExPointW (hdc, str, *len_str + len_ellipsis, width,
@@ -251,14 +247,15 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
         /* overlap-safe movement to the left */
         memmove (lastSlash-1, lastSlash, len_trailing * sizeof(WCHAR));
         lastSlash--;
-        (*len_under)++;
+        len_under++;
         
         assert (*len_str);
         (*len_str)--;
     }
-    *len_before = lastSlash-str;
-    *len_ellip = len_ellipsis;
-    *len_after = len_trailing - len_ellipsis;
+    pellip->before = lastSlash-str;
+    pellip->len = len_ellipsis;
+    pellip->under = len_under;
+    pellip->after = len_trailing - len_ellipsis;
     *len_str += len_ellipsis;
 
     if (modstr)
@@ -472,41 +469,42 @@ static void TEXT_SkipChars (int *new_count, const WCHAR **new_str,
  *
  * Parameters
  *   str        [in] The original string segment (including all characters)
- *   n1         [in] The number of characters visible before the path ellipsis
- *   n2         [in] The number of characters replaced by the path ellipsis
- *   ne         [in] The number of characters in the path ellipsis, ignored if
- *              n2 is zero
- *   n3         [in] The number of characters visible after the path ellipsis
+ *   ns         [in] The number of characters in str (including prefixes)
+ *   pe         [in] The ellipsification data
  *
  * Return Values
  *   The prefix offset within the new string segment (the one that contains the
  *   ellipses and does not contain the prefix characters) (-1 if none)
- *
- * Remarks
- *   We know that n1+n2+n3 must be strictly less than the length of the segment
- *   (because otherwise there would be no need to call this function)
  */
 
-static int TEXT_Reprefix (const WCHAR *str, unsigned int n1, unsigned int n2,
-                          unsigned int ne, unsigned int n3)
+static int TEXT_Reprefix (const WCHAR *str, unsigned int ns,
+                          const ellipsis_data *pe)
 {
     int result = -1;
     unsigned int i = 0;
-    unsigned int n = n1 + n2 + n3;
-    if (!n2) ne = 0;
+    unsigned int n = pe->before + pe->under + pe->after;
+    assert (n <= ns);
     while (i < n)
     {
-        if (i == n1)
+        if (i == pe->before)
         {
             /* Reached the path ellipsis; jump over it */
-            str += n2;
-            i += n2;
-            if (!n3) break; /* Nothing after the path ellipsis */
+            if (ns < pe->under) break;
+            str += pe->under;
+            ns -= pe->under;
+            i += pe->under;
+            if (!pe->after) break; /* Nothing after the path ellipsis */
         }
+        if (!ns) break;
+        ns--;
         if (*str++ == PREFIX)
         {
-            result = (i < n1) ? i : i - n2 + ne;
+            if (!ns) break;
+            if (*str != PREFIX)
+                result = (i < pe->before || pe->under == 0) ? i : i - pe->under + pe->len;
+                /* pe->len may be non-zero while pe_under is zero */
             str++;
+            ns--;
         }
         else;
         i++;
@@ -545,13 +543,25 @@ static int remainder_is_none_or_newline (int num_chars, const WCHAR *str)
  * last_line - TRUE if is the last line that will be processed
  * p_retstr - If DT_MODIFYSTRING this points to a cursor in the buffer in which
  *            the return string is built.
+ * tabwidth - The width of a tab in logical coordinates
+ * pprefix_offset - Here is where we return the offset within dest of the first
+ *                  prefixed (underlined) character.  -1 is returned if there 
+ *                  are none.  Note that there may be more; the calling code
+ *                  will need to use TEXT_Reprefix to find any later ones.
+ * pellip - Here is where we return the information about any ellipsification
+ *          that was carried out.  Note that if tabs are being expanded then
+ *          this data will correspond to the last text segment actually
+ *          returned in dest; by definition there would not have been any 
+ *          ellipsification in earlier text segments of the line.
  *
  * Returns pointer to next char in str after end of the line
  * or NULL if end of str reached.
  */
 static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                                  WCHAR *dest, int *len, int width, DWORD format,
-                                 SIZE *retsize, int last_line, WCHAR **p_retstr)
+                                 SIZE *retsize, int last_line, WCHAR **p_retstr,
+                                 int tabwidth, int *pprefix_offset,
+                                 ellipsis_data *pellip)
 {
     int i = 0, j = 0;
     int plen = 0;
@@ -603,9 +613,9 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
                     /* Swallow it before we see it again */
 		    (*count)--; if (j < maxl) dest[j++] = str[i++]; else i++;
                 }
-		else if (prefix_offset == -1 || prefix_offset >= seg_j)
+		else if (*pprefix_offset == -1 || *pprefix_offset >= seg_j)
                 {
-                    prefix_offset = j;
+                    *pprefix_offset = j;
                 }
                 /* else the previous prefix was in an earlier segment of the
                  * line; we will leave it to the drawing code to catch this
@@ -647,15 +657,15 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
             i = s - str;
             word_broken = 1;
         }
-        len_before_ellipsis = j_in_seg;
-        len_under_ellipsis = 0;
-        len_after_ellipsis = 0;
-        len_ellipsis = 0;
+        pellip->before = j_in_seg;
+        pellip->under = 0;
+        pellip->after = 0;
+        pellip->len = 0;
         ellipsified = 0;
         if (!line_fits && (format & DT_PATH_ELLIPSIS))
         {
             TEXT_PathEllipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
-                                max_seg_width, &size, *p_retstr, &len_before_ellipsis, &len_ellipsis, &len_under_ellipsis, &len_after_ellipsis);
+                                max_seg_width, &size, *p_retstr, pellip);
             line_fits = (size.cx <= max_seg_width);
             ellipsified = 1;
         }
@@ -666,19 +676,25 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
               ((last_line && *count) ||
                (remainder_is_none_or_newline (*count, &str[i]) && !line_fits))))
         {
-            int before;
+            int before, len_ellipsis;
             TEXT_Ellipsify (hdc, dest + seg_j, maxl-seg_j, &j_in_seg,
                             max_seg_width, &size, *p_retstr, &before, &len_ellipsis);
-            if (before > len_before_ellipsis)
+            if (before > pellip->before)
             {
                 /* We must have done a path ellipsis too */
-                len_after_ellipsis = before - len_before_ellipsis - len_ellipsis;
+                pellip->after = before - pellip->before - pellip->len;
+                /* Leave the len as the length of the first ellipsis */
             }
             else
             {
-                len_before_ellipsis = before;
-                /* len_after_ellipsis remains as zero as does
-                 * len_under_ellsipsis
+                /* If we are here after a path ellipsification it must be
+                 * because even the ellipsis itself didn't fit.
+                 */
+                assert (pellip->under == 0 && pellip->after == 0);
+                pellip->before = before;
+                pellip->len = len_ellipsis;
+                /* pellip->after remains as zero as does
+                 * pellip->under
                  */
             }
             line_fits = (size.cx <= max_seg_width);
@@ -702,13 +718,11 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         }
 
         j = seg_j + j_in_seg;
-        if (prefix_offset >= seg_j + len_before_ellipsis)
+        if (*pprefix_offset >= seg_j + pellip->before)
         {
-            prefix_offset = TEXT_Reprefix (str + seg_i, len_before_ellipsis,
-                                           len_under_ellipsis, len_ellipsis,
-                                           len_after_ellipsis);
-            if (prefix_offset != -1)
-                prefix_offset += seg_j;
+            *pprefix_offset = TEXT_Reprefix (str + seg_i, i - seg_i, pellip);
+            if (*pprefix_offset != -1)
+                *pprefix_offset += seg_j;
         }
 
         plen += size.cx;
@@ -802,6 +816,9 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     int width = rect->right - rect->left;
     int max_width = 0;
     int last_line;
+    int tabwidth /* to keep gcc happy */ = 0;
+    int prefix_offset;
+    ellipsis_data ellip;
 
     TRACE("%s, %d , [(%d,%d),(%d,%d)]\n", debugstr_wn (str, count), count,
 	  rect->left, rect->top, rect->right, rect->bottom);
@@ -856,10 +873,9 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
 
     do
     {
-	prefix_offset = -1;
 	len = MAX_STATIC_BUFFER;
         last_line = !(flags & DT_NOCLIP) && y + ((flags & DT_EDITCONTROL) ? 2*lh-1 : lh) > rect->bottom;
-	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, &p_retstr);
+	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags, &size, last_line, &p_retstr, tabwidth, &prefix_offset, &ellip);
 
 	if (flags & DT_CENTER) x = (rect->left + rect->right -
 				    size.cx) / 2;
@@ -913,7 +929,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
                             /* We have just drawn an underscore; we ought to
                              * figure out where the next one is.  I am going
                              * to leave it for now until I have a better model
-                             * for the line, which will make reprefixing easier
+                             * for the line, which will make reprefixing easier.
+                             * This is where ellip would be used.
                              */
                             prefix_offset = -1;
                         }
