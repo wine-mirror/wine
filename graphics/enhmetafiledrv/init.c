@@ -199,12 +199,12 @@ int EMFDRV_AddHandleDC( DC *dc )
 
 /**********************************************************************
  *          CreateEnhMetaFileA   (GDI32.41)
-*/
+ */
 HDC WINAPI CreateEnhMetaFileA( 
-    HDC hdc, /* optional reference DC */
-    LPCSTR filename, /* optional filename for disk metafiles */
-    const RECT *rect, /* optional bounding rectangle */
-    LPCSTR description /* optional description */ 
+    HDC hdc,           /* [in] optional reference DC */
+    LPCSTR filename,   /* [in] optional filename for disk metafiles */
+    const RECT *rect,  /* [in] optional bounding rectangle */
+    LPCSTR description /* [in] optional description */ 
     )
 {
     LPWSTR filenameW = NULL;
@@ -237,10 +237,10 @@ HDC WINAPI CreateEnhMetaFileA(
  *          CreateEnhMetaFileW   (GDI32.42)
  */
 HDC WINAPI CreateEnhMetaFileW(
-    HDC           hdc,        /* optional reference DC */
-    LPCWSTR       filename,   /* optional filename for disk metafiles */
-    const RECT*   rect,       /* optional bounding rectangle */
-    LPCWSTR       description /* optional description */ 
+    HDC           hdc,        /* [in] optional reference DC */
+    LPCWSTR       filename,   /* [in] optional filename for disk metafiles */
+    const RECT*   rect,       /* [in] optional bounding rectangle */
+    LPCWSTR       description /* [in] optional description */ 
     )
 {
     HDC ret;
@@ -344,7 +344,7 @@ HDC WINAPI CreateEnhMetaFileW(
 /******************************************************************
  *             CloseEnhMetaFile
  */
-HENHMETAFILE WINAPI CloseEnhMetaFile( HDC hdc /* metafile DC */ )
+HENHMETAFILE WINAPI CloseEnhMetaFile(HDC hdc) /* [in] metafile DC */
 {
     HENHMETAFILE hmf;
     EMFDRV_PDEVICE *physDev;

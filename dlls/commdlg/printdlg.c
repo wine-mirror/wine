@@ -879,7 +879,7 @@ static BOOL PRINTDLG_CreateDC(LPPRINTDLGA lppd)
  *    default printer settings.
  */
 BOOL WINAPI PrintDlgA(
-		      LPPRINTDLGA lppd /* ptr to PRINTDLG32 struct */
+		      LPPRINTDLGA lppd /* [in/out] ptr to PRINTDLG32 struct */
 		      )
 {
     BOOL      bRet = FALSE;
@@ -1197,7 +1197,7 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
 /***********************************************************************
  *	PrintDlgExA
  */
-HRESULT WINAPI PrintDlgExA(/*LPPRINTDLGEXA*/ LPVOID lpPrintDlgExA)
+HRESULT WINAPI PrintDlgExA(LPVOID lpPrintDlgExA) /* [???] FIXME: LPPRINTDLGEXA */
 {
 	FIXME("stub\n");
 	return E_NOTIMPL;
@@ -1205,7 +1205,7 @@ HRESULT WINAPI PrintDlgExA(/*LPPRINTDLGEXA*/ LPVOID lpPrintDlgExA)
 /***********************************************************************
  *	PrintDlgExW
  */
-HRESULT WINAPI PrintDlgExW(/*LPPRINTDLGEXW*/ LPVOID lpPrintDlgExW)
+HRESULT WINAPI PrintDlgExW(LPVOID lpPrintDlgExW) /* [???] FIXME: LPPRINTDLGEXW */
 {
 	FIXME("stub\n");
 	return E_NOTIMPL;

@@ -1316,10 +1316,10 @@ INT16 WINAPI SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
  *  the text), and info->nPage=25.
  */
 INT WINAPI SetScrollInfo( 
-HWND hwnd /* [I] Handle of window whose scrollbar will be affected */, 
-INT nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */, 
-const SCROLLINFO *info /* [I] Specifies what to change and new values */,
-BOOL bRedraw /* [I] Should scrollbar be redrawn afterwards ? */)
+HWND hwnd /* [in] Handle of window whose scrollbar will be affected */, 
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */, 
+const SCROLLINFO *info /* [in] Specifies what to change and new values */,
+BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 {
     INT action;
     INT retVal = SCROLL_SetScrollInfo( hwnd, nBar, info, &action );
@@ -1493,9 +1493,9 @@ BOOL16 WINAPI GetScrollInfo16( HWND16 hwnd, INT16 nBar, LPSCROLLINFO info )
  * RETURNS STD
  */
 BOOL WINAPI GetScrollInfo( 
-  HWND hwnd /* [I] Handle of window */ , 
-  INT nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */, 
-  LPSCROLLINFO info /* [IO] (info.fMask [I] specifies which values are to retrieve) */)
+  HWND hwnd /* [in] Handle of window */ , 
+  INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */, 
+  LPSCROLLINFO info /* [in/out] (info.fMask [in] specifies which values are to retrieve) */)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1539,10 +1539,10 @@ INT16 WINAPI SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos,
  *    to make sure there was an error (and to know which one).
  */
 INT WINAPI SetScrollPos( 
-HWND hwnd /* [I] Handle of window whose scrollbar will be affected */,
-INT nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */,
-INT nPos /* [I] New value */,
-BOOL bRedraw /* [I] Should scrollbar be redrawn afterwards ? */ )
+HWND hwnd /* [in] Handle of window whose scrollbar will be affected */,
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */,
+INT nPos /* [in] New value */,
+BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */ )
 {
     SCROLLINFO info;
     SCROLLBAR_INFO *infoPtr;
@@ -1579,8 +1579,8 @@ INT16 WINAPI GetScrollPos16( HWND16 hwnd, INT16 nBar )
  *    to make sure there was an error (and to know which one).
  */
 INT WINAPI GetScrollPos( 
-HWND hwnd, /* [I] Handle of window */
-INT nBar /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */)
+HWND hwnd, /* [in] Handle of window */
+INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1607,11 +1607,11 @@ void WINAPI SetScrollRange16( HWND16 hwnd, INT16 nBar,
  * RETURNS STD
  */
 BOOL WINAPI SetScrollRange( 
-HWND hwnd, /* [I] Handle of window whose scrollbar will be affected */
-INT nBar, /* [I] One of SB_HORZ, SB_VERT, or SB_CTL */
-INT MinVal, /* [I] New minimum value */
-INT MaxVal, /* [I] New maximum value */
-BOOL bRedraw /* [I] Should scrollbar be redrawn afterwards ? */)
+HWND hwnd, /* [in] Handle of window whose scrollbar will be affected */
+INT nBar, /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */
+INT MinVal, /* [in] New minimum value */
+INT MaxVal, /* [in] New maximum value */
+BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 {
     SCROLLINFO info;
 
@@ -1678,10 +1678,10 @@ BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar,
  * RETURNS STD
  */
 BOOL WINAPI GetScrollRange( 
-HWND hwnd, /* [I] Handle of window */
-INT nBar, /* [I] One of SB_HORZ, SB_VERT, or SB_CTL  */
-LPINT lpMin, /* [O] Where to store minimum value */
-LPINT lpMax /* [O] Where to store maximum value */)
+HWND hwnd, /* [in] Handle of window */
+INT nBar, /* [in] One of SB_HORZ, SB_VERT, or SB_CTL  */
+LPINT lpMin, /* [out] Where to store minimum value */
+LPINT lpMax /* [out] Where to store maximum value */)
 {
     SCROLLBAR_INFO *infoPtr;
 
@@ -1788,9 +1788,9 @@ void WINAPI ShowScrollBar16( HWND16 hwnd, INT16 nBar, BOOL16 fShow )
  * RETURNS STD
  */
 BOOL WINAPI ShowScrollBar(
-HWND hwnd, /* [I] Handle of window whose scrollbar(s) will be affected   */
-INT nBar, /* [I] One of SB_HORZ, SB_VERT, SB_BOTH or SB_CTL */
-BOOL fShow /* [I] TRUE = show, FALSE = hide  */)
+HWND hwnd, /* [in] Handle of window whose scrollbar(s) will be affected   */
+INT nBar, /* [in] One of SB_HORZ, SB_VERT, SB_BOTH or SB_CTL */
+BOOL fShow /* [in] TRUE = show, FALSE = hide  */)
 {
     SCROLL_ShowScrollBar( hwnd, nBar, (nBar == SB_VERT) ? 0 : fShow,
                                       (nBar == SB_HORZ) ? 0 : fShow );

@@ -877,8 +877,8 @@ BOOL WINAPI SHGetSpecialFolderPathAW (
 HRESULT WINAPI SHGetFolderPathA(
 	HWND hwndOwner,
 	int nFolder,
-	HANDLE hToken,	/* FIXME: get paths for specific user */
-	DWORD dwFlags,	/* FIXME: SHGFP_TYPE_CURRENT|SHGFP_TYPE_DEFAULT */
+	HANDLE hToken,	/* [in] FIXME: get paths for specific user */
+	DWORD dwFlags,	/* [in] FIXME: SHGFP_TYPE_CURRENT|SHGFP_TYPE_DEFAULT */
 	LPSTR pszPath)
 {
 	return (SHGetSpecialFolderPathA(

@@ -487,9 +487,9 @@ static ICOM_VTABLE(IClassFactory) dclfvt =
 HRESULT WINAPI SHCreateDefClassObject(
 	REFIID	riid,				
 	LPVOID*	ppv,	
-	LPFNCREATEINSTANCE lpfnCI,	/* create instance callback entry */
-	PLONG	pcRefDll,		/* ref count of the dll */
-	REFIID	riidInst)		/* optional interface to the instance */
+	LPFNCREATEINSTANCE lpfnCI,	/* [in] create instance callback entry */
+	PLONG	pcRefDll,		/* [in/out] ref count of the dll */
+	REFIID	riidInst)		/* [in] optional interface to the instance */
 {
 	TRACE("\n\tIID:\t%s %p %p %p \n\tIIDIns:\t%s\n",
               debugstr_guid(riid), ppv, lpfnCI, pcRefDll, debugstr_guid(riidInst));

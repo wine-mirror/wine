@@ -1480,7 +1480,7 @@ static LRESULT WINAPI FileOpenDlgProc(HWND hWnd, UINT wMsg,
  *    unknown, there are some FIXME's left.
  */
 BOOL16 WINAPI GetOpenFileName16( 
-				SEGPTR ofn /* addess of structure with data*/
+				SEGPTR ofn /* [in/out] address of structure with data*/
 				)
 {
     HINSTANCE hInst;
@@ -1519,7 +1519,7 @@ BOOL16 WINAPI GetOpenFileName16(
  *    unknown. There are some FIXME's left.
  */
 BOOL16 WINAPI GetSaveFileName16( 
-				SEGPTR ofn /* addess of structure with data*/
+				SEGPTR ofn /* [in/out] addess of structure with data*/
 				)
 {
     HINSTANCE hInst;
@@ -1556,7 +1556,7 @@ BOOL16 WINAPI GetSaveFileName16(
  *
  */
 BOOL WINAPI GetOpenFileNameA(
-	LPOPENFILENAMEA ofn) /* address of init structure */
+	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
 
@@ -1587,7 +1587,7 @@ BOOL WINAPI GetOpenFileNameA(
  *
  */
 BOOL WINAPI GetOpenFileNameW(
-	LPOPENFILENAMEW ofn) /* address of init structure */
+	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
 
@@ -1618,7 +1618,7 @@ BOOL WINAPI GetOpenFileNameW(
  *
  */
 BOOL WINAPI GetSaveFileNameA(
-	LPOPENFILENAMEA ofn) /* address of init structure */
+	LPOPENFILENAMEA ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
 
@@ -1649,7 +1649,7 @@ BOOL WINAPI GetSaveFileNameA(
  *
  */
 BOOL WINAPI GetSaveFileNameW(
-	LPOPENFILENAMEW ofn) /* address of init structure */
+	LPOPENFILENAMEW ofn) /* [in/out] address of init structure */
 {
     BOOL  newlook = TRUE; /* FIXME: TWEAK_WineLook */
 

@@ -905,7 +905,7 @@ HDC16 WINAPI GetDC16( HWND16 hwnd )
  *	NULL: Failure
  */
 HDC WINAPI GetDC(
-	     HWND hwnd /* handle of window */
+	     HWND hwnd /* [in] handle of window */
 ) {
     if (!hwnd)
         return GetDCEx( GetDesktopWindow(), 0, DCX_CACHE | DCX_WINDOW );
@@ -950,8 +950,8 @@ INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
  *	0: Failure
  */
 INT WINAPI ReleaseDC( 
-             HWND hwnd /* Handle of window - ignored */, 
-             HDC hdc   /* Handle of device context */
+             HWND hwnd /* [in] Handle of window - ignored */, 
+             HDC hdc   /* [in] Handle of device context */
 ) {
     DCE * dce;
     INT nRet = 0;

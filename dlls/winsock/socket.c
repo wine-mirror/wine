@@ -784,6 +784,8 @@ static void WSOCK32_async_accept(LPWSINFO pwsi, SOCKET s, SOCKET as)
     _enable_event(s, WS_FD_SERVEVENT, 0, 0);
 }
 
+/**********************************************************************/
+
 SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
                                  INT *addrlen32)
 {
@@ -1276,6 +1278,8 @@ char* WINAPI WSOCK32_inet_ntoa(struct in_addr in)
     }
     return NULL;
 }
+
+/**********************************************************************/
 
 SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 {
@@ -2722,6 +2726,8 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
     }
 }
 
+/**********************************************************************/
+
 INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
     LPWSINFO      pwsi = WINSOCK_GetIData();
@@ -2767,6 +2773,8 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
     else SetLastError(WSAEINVAL);
     return SOCKET_ERROR; 
 }
+
+/**********************************************************************/
 
 INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
 {

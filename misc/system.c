@@ -124,6 +124,8 @@ WORD WINAPI CreateSystemTimer( WORD rate, SYSTEMTIMERPROC callback )
     return 0;
 }
 
+/**********************************************************************/
+
 static void SYSTEM_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 {
     CONTEXT86 context;
@@ -138,6 +140,8 @@ static void SYSTEM_CallSystemTimerProc( FARPROC16 proc, WORD timer )
 
     wine_call_to_16_regs_short( &context, 0 );
 }
+
+/**********************************************************************/
 
 WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
 {

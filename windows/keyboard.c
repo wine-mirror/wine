@@ -69,6 +69,8 @@ VOID WINAPI KEYBOARD_Enable( LPKEYBD_EVENT_PROC lpKeybEventProc,
   initDone = TRUE;
 }
 
+/**********************************************************************/
+
 static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
                                                 BYTE bVk, BYTE bScan,
                                                 DWORD dwFlags, DWORD dwExtraInfo )
@@ -85,6 +87,8 @@ static VOID WINAPI KEYBOARD_CallKeybdEventProc( FARPROC16 proc,
 
     wine_call_to_16_regs_short( &context, 0 );
 }
+
+/**********************************************************************/
 
 VOID WINAPI WIN16_KEYBOARD_Enable( FARPROC16 proc, LPBYTE lpKeyState )
 {
@@ -159,8 +163,8 @@ DWORD WINAPI OemKeyScan(WORD wOemChar)
 
 /**********************************************************************
  *    	VkKeyScan			[KEYBOARD.129]
- */
-/* VkKeyScan translates an ANSI character to a virtual-key and shift code
+ *
+ * VkKeyScan translates an ANSI character to a virtual-key and shift code
  * for the current keyboard.
  * high-order byte yields :
  *	0	Unshifted

@@ -550,7 +550,7 @@ DWORD __cdecl GetASPI32DLLVersion(void)
 /***********************************************************************
  *             GetASPI32Buffer   (WNASPI32.@)
  */
-BOOL __cdecl GetASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
+BOOL __cdecl GetASPI32Buffer(LPVOID pab) /* [???] FIXME: PASPI32BUFF */
 {
     FIXME("(%p), stub !\n", pab);
     return TRUE;
@@ -559,7 +559,7 @@ BOOL __cdecl GetASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
 /***********************************************************************
  *             FreeASPI32Buffer   (WNASPI32.@)
  */
-BOOL __cdecl FreeASPI32Buffer(/*PASPI32BUFF*/LPVOID pab)
+BOOL __cdecl FreeASPI32Buffer(LPVOID pab) /* [???] FIXME: PASPI32BUFF */
 {
     FIXME("(%p), stub !\n", pab);
     return TRUE;

@@ -118,7 +118,7 @@ static HENHMETAFILE EMF_GetEnhMetaFile( HFILE hFile )
  *
  */
 HENHMETAFILE WINAPI GetEnhMetaFileA( 
-	     LPCSTR lpszMetaFile  /* filename of enhanced metafile */
+	     LPCSTR lpszMetaFile  /* [in] filename of enhanced metafile */
     )
 {
     HENHMETAFILE hmf;
@@ -140,7 +140,7 @@ HENHMETAFILE WINAPI GetEnhMetaFileA(
  *          GetEnhMetaFileW  (GDI32.180)
  */
 HENHMETAFILE WINAPI GetEnhMetaFileW(
-             LPCWSTR lpszMetaFile)  /* filename of enhanced metafile */ 
+             LPCWSTR lpszMetaFile)  /* [in] filename of enhanced metafile */ 
 {
     HENHMETAFILE hmf;
     HFILE hFile;
@@ -165,9 +165,9 @@ HENHMETAFILE WINAPI GetEnhMetaFileW(
  *  buf.
  */
 UINT WINAPI GetEnhMetaFileHeader( 
-       HENHMETAFILE hmf, /* enhanced metafile */
-       UINT bufsize,     /* size of buffer */
-       LPENHMETAHEADER buf /* buffer */ 
+       HENHMETAFILE hmf,   /* [in] enhanced metafile */
+       UINT bufsize,       /* [in] size of buffer */
+       LPENHMETAHEADER buf /* [out] buffer */ 
     )
 {
     LPENHMETAHEADER emh;
@@ -191,9 +191,9 @@ UINT WINAPI GetEnhMetaFileHeader(
  *          GetEnhMetaFileDescriptionA  (GDI32.176)
  */
 UINT WINAPI GetEnhMetaFileDescriptionA( 
-       HENHMETAFILE hmf, /* enhanced metafile */
-       UINT size, /* size of buf */ 
-       LPSTR buf /* buffer to receive description */
+       HENHMETAFILE hmf, /* [in] enhanced metafile */
+       UINT size,        /* [in] size of buf */ 
+       LPSTR buf         /* [out] buffer to receive description */
     )
 {
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
@@ -229,9 +229,9 @@ UINT WINAPI GetEnhMetaFileDescriptionA(
  *  number of characters copied.
  */
 UINT WINAPI GetEnhMetaFileDescriptionW( 
-       HENHMETAFILE hmf, /* enhanced metafile */
-       UINT size, /* size of buf */ 
-       LPWSTR buf /* buffer to receive description */
+       HENHMETAFILE hmf, /* [in] enhanced metafile */
+       UINT size,        /* [in] size of buf */ 
+       LPWSTR buf        /* [out] buffer to receive description */
     )
 {
      LPENHMETAHEADER emh = EMF_GetEnhMetaHeader(hmf);
@@ -304,10 +304,10 @@ UINT WINAPI GetEnhMetaFileBits(
  *    No error handling on record play failures (ie checking return codes)
  */
 BOOL WINAPI PlayEnhMetaFileRecord( 
-     HDC hdc, /* device context in which to render EMF record */
-     LPHANDLETABLE handletable, /* array of handles to be used in rendering record */
-     const ENHMETARECORD *mr, /* EMF record to render */
-     UINT handles  /* size of handle array */
+     HDC hdc,                   /* [in] device context in which to render EMF record */
+     LPHANDLETABLE handletable, /* [in] array of handles to be used in rendering record */
+     const ENHMETARECORD *mr,   /* [in] EMF record to render */
+     UINT handles               /* [in] size of handle array */
      ) 
 {
   int type;
@@ -1197,11 +1197,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
  *   Ignores rect.
  */
 BOOL WINAPI EnumEnhMetaFile( 
-     HDC hdc, /* device context to pass to _EnhMetaFunc_ */
-     HENHMETAFILE hmf, /* EMF to walk */
-     ENHMFENUMPROC callback, /* callback function */ 
-     LPVOID data, /* optional data for callback function */
-     const RECT *lpRect  /* bounding rectangle for rendered metafile */
+     HDC hdc,                /* [in] device context to pass to _EnhMetaFunc_ */
+     HENHMETAFILE hmf,       /* [in] EMF to walk */
+     ENHMFENUMPROC callback, /* [in] callback function */ 
+     LPVOID data,            /* [in] optional data for callback function */
+     const RECT *lpRect      /* [in] bounding rectangle for rendered metafile */
     )
 {
     BOOL ret;
@@ -1324,9 +1324,9 @@ static INT CALLBACK EMF_PlayEnhMetaFileCallback(HDC hdc, HANDLETABLE *ht,
  *
  */
 BOOL WINAPI PlayEnhMetaFile( 
-       HDC hdc, /* DC to render into */
-       HENHMETAFILE hmf, /* metafile to render */
-       const RECT *lpRect  /* rectangle to place metafile inside */
+       HDC hdc,           /* [in] DC to render into */
+       HENHMETAFILE hmf,  /* [in] metafile to render */
+       const RECT *lpRect /* [in] rectangle to place metafile inside */
       )
 {
     return EnumEnhMetaFile(hdc, hmf, EMF_PlayEnhMetaFileCallback, NULL,

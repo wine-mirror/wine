@@ -237,7 +237,7 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
 /***********************************************************************
  *           PropVariantClear			    [OLE32.166]
  */
-HRESULT WINAPI PropVariantClear(/*PROPVARIANT* */void* pvar)
+HRESULT WINAPI PropVariantClear(void *pvar) /* [in/out] FIXME: PROPVARIANT * */
 {
 	FIXME("(%p): stub:\n", pvar);
 
@@ -249,8 +249,8 @@ HRESULT WINAPI PropVariantClear(/*PROPVARIANT* */void* pvar)
 /***********************************************************************
  *           PropVariantCopy			    [OLE32.246]
  */
-HRESULT WINAPI PropVariantCopy(/*PROPVARIANT* */void* pvarDest,
-				 /*const PROPVARIANT* */ void* pvarSrc)
+HRESULT WINAPI PropVariantCopy(void *pvarDest,      /* [out] FIXME: PROPVARIANT * */
+			       const void *pvarSrc) /* [in] FIXME: const PROPVARIANT * */
 {
 	FIXME("(%p, %p): stub:\n", pvarDest, pvarSrc);
 
@@ -260,7 +260,8 @@ HRESULT WINAPI PropVariantCopy(/*PROPVARIANT* */void* pvarDest,
 /***********************************************************************
  *           FreePropVariantArray			    [OLE32.195]
  */
-HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /*PROPVARIANT* */void* rgvars)
+HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
+				    void *rgvars)    /* [in/out] FIXME: PROPVARIANT * */
 {
 	FIXME("(%lu, %p): stub:\n", cVariants, rgvars);
 

@@ -1686,13 +1686,13 @@ static BOOL WINSPOOL_EnumPrinters(DWORD dwType, LPWSTR lpszName,
  *      exist, which makes this function return an empty list.
  */
 BOOL  WINAPI EnumPrintersW(
-		DWORD dwType,        /* Types of print objects to enumerate */
-                LPWSTR lpszName,     /* name of objects to enumerate */
-	        DWORD dwLevel,       /* type of printer info structure */
-                LPBYTE lpbPrinters,  /* buffer which receives info */
-		DWORD cbBuf,         /* max size of buffer in bytes */
-		LPDWORD lpdwNeeded,  /* pointer to var: # bytes used/needed */
-		LPDWORD lpdwReturned /* number of entries returned */
+		DWORD dwType,        /* [in] Types of print objects to enumerate */
+                LPWSTR lpszName,     /* [in] name of objects to enumerate */
+	        DWORD dwLevel,       /* [in] type of printer info structure */
+                LPBYTE lpbPrinters,  /* [out] buffer which receives info */
+		DWORD cbBuf,         /* [in] max size of buffer in bytes */
+		LPDWORD lpdwNeeded,  /* [out] pointer to var: # bytes used/needed */
+		LPDWORD lpdwReturned /* [out] number of entries returned */
 		)
 {
     return WINSPOOL_EnumPrinters(dwType, lpszName, dwLevel, lpbPrinters, cbBuf,
@@ -2167,8 +2167,8 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
  * BUGS
  *	   implemented as stub only
  */
-BOOL WINAPI PrinterProperties(HWND hWnd,      /* handle to parent window */
-                              HANDLE hPrinter /* handle to printer object */
+BOOL WINAPI PrinterProperties(HWND hWnd,      /* [in] handle to parent window */
+                              HANDLE hPrinter /* [in] handle to printer object */
 ){
     FIXME("(%d,%d): stub\n", hWnd, hPrinter);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

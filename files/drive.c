@@ -1210,7 +1210,7 @@ UINT16 WINAPI GetDriveType16(
  *
  *  DRIVE_RAMDISK is unsupported.
  */
-UINT WINAPI GetDriveTypeA(LPCSTR root /* String describing drive */)
+UINT WINAPI GetDriveTypeA(LPCSTR root) /* [in] String describing drive */
 {
     int drive;
     TRACE("(%s)\n", debugstr_a(root));

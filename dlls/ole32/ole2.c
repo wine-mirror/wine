@@ -269,8 +269,8 @@ void WINAPI OleUninitialize(void)
  *		CoRegisterMessageFilter	[OLE32.38]
  */
 HRESULT WINAPI CoRegisterMessageFilter(
-    LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
-    LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
+    LPMESSAGEFILTER lpMessageFilter,	/* [in] Pointer to interface */
+    LPMESSAGEFILTER *lplpMessageFilter	/* [out] Indirect pointer to prior instance if non-NULL */
 ) {
     FIXME("stub\n");
     if (lplpMessageFilter) {
@@ -497,10 +497,10 @@ HRESULT WINAPI OleRegGetUserType(
  * DoDragDrop [OLE32.65]
  */
 HRESULT WINAPI DoDragDrop (
-  IDataObject *pDataObject,  /* ptr to the data obj           */
-  IDropSource* pDropSource,  /* ptr to the source obj         */
-  DWORD       dwOKEffect,    /* effects allowed by the source */
-  DWORD       *pdwEffect)    /* ptr to effects of the source  */
+  IDataObject *pDataObject,  /* [in] ptr to the data obj           */
+  IDropSource* pDropSource,  /* [in] ptr to the source obj         */
+  DWORD       dwOKEffect,    /* [in] effects allowed by the source */
+  DWORD       *pdwEffect)    /* [out] ptr to effects of the source */
 {
   TrackerWindowInfo trackerInfo;
   HWND            hwndTrackWindow;

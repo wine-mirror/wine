@@ -2527,11 +2527,11 @@ LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
  *   ECMA-234, Win32 
  */
 LRESULT WINAPI CallWindowProcA( 
-    WNDPROC func, /* window procedure */
-    HWND hwnd, /* target window */
-    UINT msg,  /* message */
-    WPARAM wParam, /* message dependent parameter */
-    LPARAM lParam    /* message dependent parameter */
+    WNDPROC func,  /* [in] window procedure */
+    HWND hwnd,     /* [in] target window */
+    UINT msg,      /* [in] message */
+    WPARAM wParam, /* [in] message dependent parameter */
+    LPARAM lParam  /* [in] message dependent parameter */
 ) {
     WINDOWPROC *proc = WINPROC_GetPtr( (WNDPROC16)func );
 

@@ -1461,11 +1461,11 @@ BOOL WINAPI PeekMessageA( LPMSG lpmsg, HWND hwnd,
  *
  */
 BOOL WINAPI PeekMessageW( 
-  LPMSG lpmsg,    /* buffer to receive message */
-  HWND hwnd,      /* restrict to messages for hwnd */
-  UINT min,       /* minimum message to receive */
-  UINT max,       /* maximum message to receive */
-  UINT wRemoveMsg /* removal flags */ 
+  LPMSG lpmsg,    /* [out] buffer to receive message */
+  HWND hwnd,      /* [in] restrict to messages for hwnd */
+  UINT min,       /* [in] minimum message to receive */
+  UINT max,       /* [in] maximum message to receive */
+  UINT wRemoveMsg /* [in] removal flags */ 
 ) 
 {
     BOOL ret = MSG_PeekMessage( QMSG_WIN32W, lpmsg, hwnd, min, max, wRemoveMsg, TRUE );
@@ -1554,10 +1554,10 @@ BOOL WINAPI GetMessageA( MSG *lpmsg, HWND hwnd, UINT min, UINT max )
  * 
  */
 BOOL WINAPI GetMessageW(
-  MSG* lpmsg, /* buffer to receive message */
-  HWND hwnd,  /* restrict to messages for hwnd */
-  UINT min,   /* minimum message to receive */
-  UINT max    /* maximum message to receive */
+  MSG* lpmsg, /* [out] buffer to receive message */
+  HWND hwnd,  /* [in] restrict to messages for hwnd */
+  UINT min,   /* [in] minimum message to receive */
+  UINT max    /* [in] maximum message to receive */
 ) 
 {
     MSG_PeekMessage( QMSG_WIN32W, lpmsg, hwnd, min, max, PM_REMOVE, FALSE );
@@ -1871,12 +1871,12 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wParam,
  *  ECMA-234, Win32 
  */
 LRESULT WINAPI SendMessageW( 
-  HWND hwnd,    /* Window to send message to. If HWND_BROADCAST, 
-                 the message will be sent to all top-level windows. */
+  HWND hwnd,     /* [in] Window to send message to. If HWND_BROADCAST, 
+                         the message will be sent to all top-level windows. */
 
-  UINT msg,      /* message */
-  WPARAM wParam, /* message parameter */
-  LPARAM lParam    /* additional message parameter */
+  UINT msg,      /* [in] message */
+  WPARAM wParam, /* [in] message parameter */
+  LPARAM lParam  /* [in] additional message parameter */
 ) {
     LRESULT res;
 

@@ -1510,6 +1510,8 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
     return 0;
 }
 
+/**********************************************************************/
+
 HMODULE16 WINAPI WIN16_GetExePtr( HANDLE16 handle )
 {
     HTASK16 hTask = 0;
@@ -1519,6 +1521,8 @@ HMODULE16 WINAPI WIN16_GetExePtr( HANDLE16 handle )
     if (hTask) frame->es = hTask;
     return hModule;
 }
+
+/**********************************************************************/
 
 HMODULE16 WINAPI GetExePtr( HANDLE16 handle )
 {

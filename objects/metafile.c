@@ -382,8 +382,8 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
  *  Copying to disk returns NULL even if successful.
  */
 HMETAFILE WINAPI CopyMetaFileA(
-		   HMETAFILE hSrcMetaFile, /* handle of metafile to copy */
-		   LPCSTR lpFilename /* filename if copying to a file */
+		   HMETAFILE hSrcMetaFile, /* [in] handle of metafile to copy */
+		   LPCSTR lpFilename       /* [in] filename if copying to a file */
 ) {
     METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
     METAHEADER *mh2 = NULL;
@@ -546,8 +546,8 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
  *  hdc. Returns FALSE on failure, TRUE on success.
  */
 BOOL WINAPI PlayMetaFile( 
-			     HDC hdc, /* handle of DC to render in */
-			     HMETAFILE hmf /* handle of metafile to render */
+			     HDC hdc,      /* [in] handle of DC to render in */
+			     HMETAFILE hmf /* [in] handle of metafile to render */
 )
 {
     BOOL ret;
@@ -756,10 +756,10 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr);
  *
  */
 void WINAPI PlayMetaFileRecord16( 
-	  HDC16 hdc, /* DC to render metafile into */
-	  HANDLETABLE16 *ht, /* pointer to handle table for metafile objects */
-	  METARECORD *mr, /* pointer to metafile record to render */
-	  UINT16 nHandles /* size of handle table */
+	  HDC16 hdc,         /* [in] DC to render metafile into */
+	  HANDLETABLE16 *ht, /* [in] pointer to handle table for metafile objects */
+	  METARECORD *mr,    /* [in] pointer to metafile record to render */
+	  UINT16 nHandles    /* [in] size of handle table */
 ) {
     short s1;
     HANDLE16 hndl;
@@ -1236,7 +1236,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *handletable,
  */
 
 HGLOBAL16 WINAPI GetMetaFileBits16(
-				 HMETAFILE16 hmf /* metafile handle */
+				 HMETAFILE16 hmf /* [in] metafile handle */
 				 )
 {
     TRACE("hMem out: %04x\n", hmf);
@@ -1253,7 +1253,7 @@ HGLOBAL16 WINAPI GetMetaFileBits16(
  */
 HMETAFILE16 WINAPI SetMetaFileBits16( 
 				   HGLOBAL16 hMem 
-			/* handle to a memory region holding a metafile */
+			/* [in] handle to a memory region holding a metafile */
 )
 {
     TRACE("hmf out: %04x\n", hMem);
@@ -1286,8 +1286,8 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
  *  Use _GetMetaFileBitsEx_ to get raw data from a metafile.
  */
 HMETAFILE WINAPI SetMetaFileBitsEx( 
-     UINT size, /* size of metafile, in bytes */
-     const BYTE *lpData /* pointer to metafile data */  
+     UINT size,         /* [in] size of metafile, in bytes */
+     const BYTE *lpData /* [in] pointer to metafile data */  
     )
 {
     METAHEADER *mh = HeapAlloc( GetProcessHeap(), 0, size );
@@ -1304,9 +1304,9 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
  *  returns number of bytes copied.
  */
 UINT WINAPI GetMetaFileBitsEx( 
-     HMETAFILE hmf, /* metafile */
-     UINT nSize, /* size of buf */ 
-     LPVOID buf   /* buffer to receive raw metafile data */  
+     HMETAFILE hmf, /* [in] metafile */
+     UINT nSize,    /* [in] size of buf */ 
+     LPVOID buf     /* [out] buffer to receive raw metafile data */  
 ) {
     METAHEADER *mh = MF_GetMetaHeader(hmf);
     UINT mfSize;

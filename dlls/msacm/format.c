@@ -382,7 +382,7 @@ static BOOL CALLBACK MSACM_FormatEnumCallbackWtoA(HACMDRIVERID hadid,
 
 /***********************************************************************
  *           acmFormatEnumA (MSACM32.27)
-s */
+ */
 MMRESULT WINAPI acmFormatEnumA(HACMDRIVER had, PACMFORMATDETAILSA pafda,
 			       ACMFORMATENUMCBA fnCallback, DWORD dwInstance, 
 			       DWORD fdwEnum)
@@ -459,6 +459,8 @@ static BOOL MSACM_FormatEnumHelper(PWINE_ACMDRIVERID padid, HACMDRIVER had,
     }
     return TRUE;
 }
+
+/**********************************************************************/
 
 MMRESULT WINAPI acmFormatEnumW(HACMDRIVER had, PACMFORMATDETAILSW pafd,
 			       ACMFORMATENUMCBW fnCallback, DWORD dwInstance,  

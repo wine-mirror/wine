@@ -704,8 +704,8 @@ NTSTATUS WINAPI RtlFormatCurrentUserKeyPath(
  *
  */
 DWORD WINAPI RtlOpenCurrentUser(
-	IN ACCESS_MASK DesiredAccess,
-	OUT PHANDLE KeyHandle)	/* handle of HKEY_CURRENT_USER */
+	IN ACCESS_MASK DesiredAccess, /* [in] */
+	OUT PHANDLE KeyHandle)	      /* [out] handle of HKEY_CURRENT_USER */
 {
 	OBJECT_ATTRIBUTES ObjectAttributes;
 	UNICODE_STRING ObjectName;

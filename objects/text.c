@@ -179,7 +179,7 @@ UINT16 WINAPI GetTextCharset16(HDC16 hdc)
  *    Failure: DEFAULT_CHARSET
  */
 UINT WINAPI GetTextCharsetInfo(
-    HDC hdc,          /* [in]  Handle to device context */
+    HDC hdc,            /* [in]  Handle to device context */
     LPFONTSIGNATURE fs, /* [out] Pointer to struct to receive data */
     DWORD flags)        /* [in]  Reserved - must be 0 */
 {
@@ -206,9 +206,9 @@ UINT WINAPI GetTextCharsetInfo(
  * PolyTextOutA [GDI.402]  Draw several Strings
  */
 BOOL WINAPI PolyTextOutA (
-			  HDC hdc,               /* Handle to device context */			  
-			  PPOLYTEXTA pptxt,      /* array of strings */
-			  INT cStrings           /* Number of strings in array */
+			  HDC hdc,               /* [in] Handle to device context */			  
+			  PPOLYTEXTA pptxt,      /* [in] Array of strings */
+			  INT cStrings           /* [in] Number of strings in array */
 			  )
 {
   FIXME("stub!\n");
@@ -222,9 +222,9 @@ BOOL WINAPI PolyTextOutA (
  * PolyTextOutW [GDI.403] Draw several Strings
  */
 BOOL WINAPI PolyTextOutW ( 
-			  HDC hdc,               /* Handle to device context */			  
-			  PPOLYTEXTW pptxt,      /* array of strings */
-			  INT cStrings           /* Number of strings in array */
+			  HDC hdc,               /* [in] Handle to device context */			  
+			  PPOLYTEXTW pptxt,      /* [in] Array of strings */
+			  INT cStrings           /* [in] Number of strings in array */
 			  )
 {
   FIXME("stub!\n");

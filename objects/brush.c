@@ -233,8 +233,8 @@ HBRUSH16 WINAPI CreateDIBPatternBrush16( HGLOBAL16 hbitmap, UINT16 coloruse )
  *	
  */
 HBRUSH WINAPI CreateDIBPatternBrush( 
-		HGLOBAL hbitmap, 		/* Global object containg BITMAPINFO structure */
-		UINT coloruse 		/* Specifies color format, if provided */
+		HGLOBAL hbitmap, /* [in] Global object containg BITMAPINFO structure */
+		UINT coloruse 	 /* [in] Specifies color format, if provided */
 )
 {
     LOGBRUSH logbrush;
@@ -263,8 +263,8 @@ HBRUSH WINAPI CreateDIBPatternBrush(
  *	
  */
 HBRUSH WINAPI CreateDIBPatternBrushPt(
-		const void* data,		/* Pointer to a BITMAPINFO structure followed by more data */ 
-		UINT coloruse 		/* Specifies color format, if provided */
+		const void* data, /* [in] Pointer to a BITMAPINFO structure followed by more data */ 
+		UINT coloruse 	  /* [in] Specifies color format, if provided */
 )
 {
     BITMAPINFO *info=(BITMAPINFO*)data;

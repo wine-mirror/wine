@@ -151,8 +151,8 @@ DWORD WINAPI SHLWAPI_153(DWORD dw1, DWORD dw2, DWORD dw3)
  * FIXME: function guessed
  */
 DWORD WINAPI SHLWAPI_156 (
-	LPWSTR str1,	/* "shell32.dll" */
-	LPWSTR str2)	/* "shell32.dll" */
+	LPWSTR str1,	/* [???] NOTE: "shell32.dll" */
+	LPWSTR str2)	/* [???] NOTE: "shell32.dll" */
 {
 	FIXME("(%s %s)stub\n",debugstr_w(str1),debugstr_w(str2));
 	return lstrcmpW(str1,str2);
@@ -209,10 +209,10 @@ LPWSTR WINAPI SHLWAPI_215 (
  *  error codes: E_POINTER, E_NOINTERFACE
  */
 HRESULT WINAPI SHLWAPI_219 (
-	LPVOID w, /* returned by LocalAlloc, 0x450 bytes, iface */
+	LPVOID w, /* [???] NOTE: returned by LocalAlloc, 0x450 bytes, iface */
 	LPVOID x,
 	LPVOID y,
-	LPWSTR z) /* OUT: path */
+	LPWSTR z) /* [???] NOTE: OUT: path */
 {
 	FIXME("(%p %p %p %p)stub\n",w,x,y,z);
 	return 0xabba1252;
@@ -299,8 +299,8 @@ DWORD WINAPI SHLWAPI_266 (
  *      SHLWAPI_267	[SHLWAPI.267]
  */
 HRESULT WINAPI SHLWAPI_267 (
-	LPVOID w, /* same as 1th parameter of SHLWAPI_219 */
-	LPVOID x, /* same as 2nd parameter of SHLWAPI_219 */
+	LPVOID w, /* [???] NOTE: same as 1th parameter of SHLWAPI_219 */
+	LPVOID x, /* [???] NOTE: same as 2nd parameter of SHLWAPI_219 */
 	LPVOID y,
 	LPVOID z)
 {
@@ -421,8 +421,8 @@ DWORD WINAPI SHLWAPI_377 (LPVOID x, LPVOID y, LPVOID z)
  */
 DWORD WINAPI SHLWAPI_378 (
 	LPSTR x,
-	LPVOID y, /* 0x50000000 */
-	LPVOID z) /* 4 */
+	LPVOID y, /* [???] 0x50000000 */
+	LPVOID z) /* [???] 4 */
 {
 	FIXME("(%s %p %p)stub\n", x,y,z);
 	return LoadLibraryA(x);

@@ -534,10 +534,10 @@ HRESULT WINAPI PrivateExtractIconsW (
 	int nIndex,
 	DWORD sizeX,
 	DWORD sizeY,
-	HICON * phicon,	/* HICON* */
-	DWORD w,	/* 0 */
+	HICON * phicon,	/* [???] NOTE: HICON* */
+	DWORD w,	/* [in] NOTE: 0 */
 	UINT nIcons,
-	DWORD y )	/* 0x80 maybe LR_* constant */
+	DWORD y )	/* [in] NOTE: 0x80 maybe LR_* constant */
 {
 	DWORD ret;
 	TRACE("%s 0x%08x 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx\n",
@@ -563,9 +563,9 @@ HRESULT WINAPI PrivateExtractIconsA (
 	DWORD sizeX,
 	DWORD sizeY,
 	HICON * phicon,
-	DWORD w,	/* 0 */
+	DWORD w,	/* [in] NOTE: 0 */
 	UINT  nIcons,
-	DWORD y )	/* 0x80 */
+	DWORD y )	/* [in] NOTE: 0x80 */
 {
 	DWORD ret;
 	LPWSTR lpwstrFile = HEAP_strdupAtoW(GetProcessHeap(), 0, lpstrFile);

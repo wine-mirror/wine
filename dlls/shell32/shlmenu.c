@@ -354,6 +354,9 @@ BOOL WINAPI FileMenu_AppendItemA(
 	return TRUE;
 
 }
+
+/**********************************************************************/
+
 BOOL WINAPI FileMenu_AppendItemAW(
 	HMENU hMenu,
 	LPCVOID lpText,
@@ -821,6 +824,8 @@ BOOL _SHIsMenuSeparator(HMENU hm, int i)
 
 	return(FALSE);
 }
+
+/**********************************************************************/
 
 HRESULT WINAPI Shell_MergeMenus (HMENU hmDst, HMENU hmSrc, UINT uInsert, UINT uIDAdjust, UINT uIDAdjustMax, ULONG uFlags)
 {	int		nItem;

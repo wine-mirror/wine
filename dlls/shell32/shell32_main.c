@@ -420,7 +420,8 @@ HICON WINAPI ExtractIconW( HINSTANCE hInstance, LPCWSTR lpszExeFileName,
  */
 HINSTANCE WINAPI FindExecutableA( LPCSTR lpFile, LPCSTR lpDirectory,
                                       LPSTR lpResult )
-{ HINSTANCE retval=31;    /* default - 'No association was found' */
+{ 
+  HINSTANCE retval=31;    /* default - 'No association was found' */
     char old_dir[1024];
 
   TRACE("File %s, Dir %s\n", 

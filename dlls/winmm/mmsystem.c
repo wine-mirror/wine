@@ -2208,9 +2208,9 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
 /**************************************************************************
  * 				midiOutPrepareHeader	[MMSYSTEM.206]
  */
-UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,
-                                     LPMIDIHDR16 /*SEGPTR*/ lpsegMidiOutHdr, 	
-				     UINT16 uSize)
+UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
+                                     LPMIDIHDR16 lpsegMidiOutHdr, /* [???] NOTE: SEGPTR */
+				     UINT16 uSize)                /* [in] */
 {
     LPWINE_MLD		wmld;
 
@@ -2245,9 +2245,9 @@ UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
 /**************************************************************************
  * 				midiOutUnprepareHeader	[MMSYSTEM.207]
  */
-UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,
-				       LPMIDIHDR16 /*SEGPTR*/ lpsegMidiOutHdr, 
-				       UINT16 uSize)
+UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
+				       LPMIDIHDR16 lpsegMidiOutHdr, /* [???] NOTE: SEGPTR */
+				       UINT16 uSize)                /* [in] */
 {
     LPWINE_MLD		wmld;
     LPMIDIHDR16		lpMidiOutHdr = PTR_SEG_TO_LIN(lpsegMidiOutHdr);
@@ -2306,9 +2306,9 @@ UINT WINAPI midiOutLongMsg(HMIDIOUT hMidiOut,
 /**************************************************************************
  * 				midiOutLongMsg		[MMSYSTEM.209]
  */
-UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16 hMidiOut,
-                               LPMIDIHDR16 /* SEGPTR */ lpsegMidiOutHdr, 
-			       UINT16 uSize)
+UINT16 WINAPI midiOutLongMsg16(HMIDIOUT16 hMidiOut,          /* [in] */
+                               LPMIDIHDR16 lpsegMidiOutHdr,  /* [???] NOTE: SEGPTR */
+			       UINT16 uSize)                 /* [in] */
 {
     LPWINE_MLD		wmld;
 
@@ -2721,9 +2721,9 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
 /**************************************************************************
  * 				midiInPrepareHeader	[MMSYSTEM.306]
  */
-UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,
-                                    MIDIHDR16* /*SEGPTR*/ lpsegMidiInHdr, 
-				    UINT16 uSize)
+UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
+                                    MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
+				    UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
 
@@ -2758,9 +2758,9 @@ UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
 /**************************************************************************
  * 				midiInUnprepareHeader	[MMSYSTEM.307]
  */
-UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,
-                                      MIDIHDR16* /* SEGPTR */ lpsegMidiInHdr, 
-				      UINT16 uSize)
+UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
+                                      MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
+				      UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
     LPMIDIHDR16		lpMidiInHdr = PTR_SEG_TO_LIN(lpsegMidiInHdr);
@@ -2796,9 +2796,9 @@ UINT WINAPI midiInAddBuffer(HMIDIIN hMidiIn,
 /**************************************************************************
  * 				midiInAddBuffer		[MMSYSTEM.308]
  */
-UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,
-                                MIDIHDR16* /* SEGPTR */ lpsegMidiInHdr, 
-				UINT16 uSize)
+UINT16 WINAPI midiInAddBuffer16(HMIDIIN16 hMidiIn,         /* [in] */
+                                MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
+				UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
 
@@ -3922,9 +3922,9 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
 /**************************************************************************
  * 				waveOutPrepareHeader	[MMSYSTEM.406]
  */
-UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,
-                                     WAVEHDR* /*SEGPTR*/ lpsegWaveOutHdr, 
-				     UINT16 uSize)
+UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,      /* [in] */
+                                     WAVEHDR* lpsegWaveOutHdr, /* [???] NOTE: SEGPTR */
+				     UINT16 uSize)             /* [in] */
 {
     LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveOutHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveOutHdr);
@@ -3962,9 +3962,9 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
 /**************************************************************************
  * 				waveOutUnprepareHeader	[MMSYSTEM.407]
  */
-UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,
-				       LPWAVEHDR /*SEGPTR*/ lpsegWaveOutHdr, 
-				       UINT16 uSize)
+UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,       /* [in] */
+				       LPWAVEHDR lpsegWaveOutHdr, /* [???] NOTE: SEGPTR */
+				       UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveOutHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveOutHdr);
@@ -4000,9 +4000,9 @@ UINT WINAPI waveOutWrite(HWAVEOUT hWaveOut, LPWAVEHDR lpWaveOutHdr,
 /**************************************************************************
  * 				waveOutWrite		[MMSYSTEM.408]
  */
-UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut, 
-			     LPWAVEHDR /*SEGPTR*/ lpsegWaveOutHdr,
-			     UINT16 uSize)
+UINT16 WINAPI waveOutWrite16(HWAVEOUT16 hWaveOut,       /* [in] */
+			     LPWAVEHDR lpsegWaveOutHdr, /* [???] NOTE: SEGPTR */
+			     UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
     
@@ -4563,9 +4563,9 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 /**************************************************************************
  * 				waveInPrepareHeader		[MMSYSTEM.506]
  */
-UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,
-				    WAVEHDR* /* SEGPTR */ lpsegWaveInHdr, 
-				    UINT16 uSize)
+UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
+				    WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
+				    UINT16 uSize)            /* [in] */
 {
     LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveInHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveInHdr);
@@ -4607,9 +4607,9 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
 /**************************************************************************
  * 				waveInUnprepareHeader	[MMSYSTEM.507]
  */
-UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn, 
-				      WAVEHDR* /* SEGPTR */ lpsegWaveInHdr, 
-				      UINT16 uSize)
+UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */  
+				      WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
+				      UINT16 uSize)            /* [in] */
 {
     LPWINE_MLD		wmld;
     LPWAVEHDR		lpWaveInHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveInHdr);
@@ -4648,9 +4648,9 @@ UINT WINAPI waveInAddBuffer(HWAVEIN hWaveIn,
 /**************************************************************************
  * 				waveInAddBuffer		[MMSYSTEM.508]
  */
-UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn, 
-				WAVEHDR* /* SEGPTR */ lpsegWaveInHdr, 
-				UINT16 uSize)
+UINT16 WINAPI waveInAddBuffer16(HWAVEIN16 hWaveIn,       /* [in] */
+				WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
+				UINT16 uSize)            /* [in] */
 {
     LPWINE_MLD		wmld;
     

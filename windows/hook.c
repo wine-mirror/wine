@@ -1436,8 +1436,7 @@ BOOL16 WINAPI CallMsgFilter32_16( SEGPTR msg16_32, INT16 code, BOOL16 wHaveParam
 
 /***********************************************************************
  *           CallMsgFilterA   (USER32.15)
- */
-/*
+ *
  * FIXME: There are ANSI and UNICODE versions of this, plus an unspecified
  * version, plus USER (the 16bit one) has a CallMsgFilter32 function.
  */

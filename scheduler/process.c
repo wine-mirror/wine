@@ -1328,8 +1328,8 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
  *   Failure: FALSE
  */
 BOOL WINAPI GetExitCodeProcess(
-    HANDLE hProcess,  /* [I] handle to the process */
-    LPDWORD lpExitCode) /* [O] address to receive termination status */
+    HANDLE hProcess,    /* [in] handle to the process */
+    LPDWORD lpExitCode) /* [out] address to receive termination status */
 {
     BOOL ret;
     SERVER_START_REQ

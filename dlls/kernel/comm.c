@@ -2501,8 +2501,8 @@ BOOL WINAPI GetCommTimeouts(HANDLE hComm,LPCOMMTIMEOUTS lptimeouts)
  *     - used in WriteFile to calculate GetOverlappedResult's timeout
  */
 BOOL WINAPI SetCommTimeouts(
-    HANDLE hComm,              /* [I] handle of COMM device */
-    LPCOMMTIMEOUTS lptimeouts /* [I] pointer to COMMTIMEOUTS structure */
+    HANDLE hComm,             /* [in] handle of COMM device */
+    LPCOMMTIMEOUTS lptimeouts /* [in] pointer to COMMTIMEOUTS structure */
 ) {
     BOOL ret;
     int fd;
@@ -2630,9 +2630,9 @@ VOID COMM_WaitCommEventService(void **args)
  *  Only supports EV_RXCHAR and EV_TXEMPTY
  */
 BOOL WINAPI WaitCommEvent(
-    HANDLE hFile,             /* [I] handle of comm port to wait for */
-    LPDWORD lpdwEvents,       /* [O] event(s) that were detected */
-    LPOVERLAPPED lpOverlapped /* [I/O] for Asynchronous waiting */
+    HANDLE hFile,             /* [in] handle of comm port to wait for */
+    LPDWORD lpdwEvents,       /* [out] event(s) that were detected */
+    LPOVERLAPPED lpOverlapped /* [in/out] for Asynchronous waiting */
 ) {
     OVERLAPPED ov;
     LPOVERLAPPED lpov;
@@ -2718,8 +2718,8 @@ BOOL WINAPI WaitCommEvent(
  *  properties of the comm port.
  */
 BOOL WINAPI GetCommProperties(
-	HANDLE hFile,          /* handle of the comm port */
-	LPCOMMPROP lpCommProp /* pointer to struct to be filled */
+	HANDLE hFile,         /* [in] handle of the comm port */
+	LPCOMMPROP lpCommProp /* [out] pointer to struct to be filled */
 ) {
     FIXME("(%d %p )\n",hFile,lpCommProp);
     if(!lpCommProp)
@@ -2788,9 +2788,9 @@ static CHAR lpszSerialUI[] = "serialui.dll";
  * Perhaps this should be done when the comm port is closed?
  */
 BOOL WINAPI CommConfigDialogA(
-	LPCSTR lpszDevice,         /* name of communications device */
-	HANDLE hWnd,               /* parent window for the dialog */
-	LPCOMMCONFIG lpCommConfig  /* pointer to struct to fill */
+	LPCSTR lpszDevice,         /* [in] name of communications device */
+	HANDLE hWnd,               /* [in] parent window for the dialog */
+	LPCOMMCONFIG lpCommConfig  /* [out] pointer to struct to fill */
 ) {
     FARPROC lpfnCommDialog;
     HMODULE hConfigModule;
@@ -2820,9 +2820,9 @@ BOOL WINAPI CommConfigDialogA(
  * see CommConfigDialogA for more info
  */
 BOOL WINAPI CommConfigDialogW(
-	LPCWSTR lpszDevice,        /* name of communications device */
-	HANDLE hWnd,               /* parent window for the dialog */
-	LPCOMMCONFIG lpCommConfig  /* pointer to struct to fill */
+	LPCWSTR lpszDevice,        /* [in] name of communications device */
+	HANDLE hWnd,               /* [in] parent window for the dialog */
+	LPCOMMCONFIG lpCommConfig  /* [out] pointer to struct to fill */
 ) {
     BOOL r;
     LPSTR lpDeviceA;

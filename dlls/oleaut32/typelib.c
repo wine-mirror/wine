@@ -254,7 +254,7 @@ HRESULT WINAPI LoadTypeLib(
  */
 HRESULT WINAPI LoadTypeLibEx(
     LPCOLESTR szFile,  /* [in] Name of file to load from */
-    REGKIND  regkind,  /* specify kind of registration */
+    REGKIND  regkind,  /* [in] Specify kind of registration */
     ITypeLib **pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     LPSTR p;
@@ -311,9 +311,9 @@ HRESULT WINAPI LoadRegTypeLib(
  *    Failure: Status
  */
 HRESULT WINAPI RegisterTypeLib(
-     ITypeLib * ptlib,      /*[in] Pointer to the library*/
-     OLECHAR * szFullPath, /*[in] full Path of the library*/
-     OLECHAR * szHelpDir)  /*[in] dir to the helpfile for the library,
+     ITypeLib * ptlib,     /* [in] Pointer to the library*/
+     OLECHAR * szFullPath, /* [in] full Path of the library*/
+     OLECHAR * szHelpDir)  /* [in] dir to the helpfile for the library,
 							 may be NULL*/
 {   FIXME("(%p,%s,%s): stub\n",ptlib, debugstr_w(szFullPath),debugstr_w(szHelpDir));
     return S_OK;	/* FIXME: pretend everything is OK */

@@ -1874,14 +1874,14 @@ static int identity(int c)
  *    so there is nothing to be done for this flag.
  */
 INT WINAPI LCMapStringA(
-	LCID lcid /* locale identifier created with MAKELCID; 
-		     LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are 
-                     predefined values. */,
-	DWORD mapflags /* flags */,
-	LPCSTR srcstr  /* source buffer */,
-	INT srclen   /* source length */,
-	LPSTR dststr   /* destination buffer */,
-	INT dstlen   /* destination buffer length */) 
+	LCID lcid,      /* [in] locale identifier created with MAKELCID; 
+		                LOCALE_SYSTEM_DEFAULT and LOCALE_USER_DEFAULT are 
+                                predefined values. */
+	DWORD mapflags, /* [in] flags */
+	LPCSTR srcstr,  /* [in] source buffer */
+	INT srclen,     /* [in] source length */
+	LPSTR dststr,   /* [out] destination buffer */
+	INT dstlen)     /* [in] destination buffer length */
 {
   int i;
 
@@ -2452,12 +2452,12 @@ static inline int OLE2NLS_EstimateMappingLength(LCID lcid, DWORD dwMapFlags,
  * Quite inefficient.
  */
 UINT WINAPI CompareStringA(
-    DWORD lcid,     /* locale ID */
-    DWORD fdwStyle, /* comparison-style options */
-    LPCSTR s1,      /* first string */
-    DWORD l1,       /* length of first string */
-    LPCSTR s2,      /* second string */
-    DWORD l2)       /* length of second string */
+    DWORD lcid,     /* [in] locale ID */
+    DWORD fdwStyle, /* [in] comparison-style options */
+    LPCSTR s1,      /* [in] first string */
+    DWORD l1,       /* [in] length of first string */
+    LPCSTR s2,      /* [in] second string */
+    DWORD l2)       /* [in] length of second string */
 {
   int mapstring_flags;
   int len1,len2;
@@ -4150,12 +4150,12 @@ static LCID OLE2NLS_CheckLocale (LCID locale)
  *
  */
 INT WINAPI 
-GetTimeFormatA(LCID locale,        /* in  */
-		 DWORD flags,        /* in  */
-		 LPSYSTEMTIME xtime, /* in  */ 
-		 LPCSTR format,      /* in  */
-		 LPSTR timestr,      /* out */
-		 INT timelen       /* in  */) 
+GetTimeFormatA(LCID locale,        /* [in]  */
+	       DWORD flags,        /* [in]  */
+	       LPSYSTEMTIME xtime, /* [in]  */ 
+	       LPCSTR format,      /* [in]  */
+	       LPSTR timestr,      /* [out] */
+	       INT timelen         /* [in]  */) 
 { char format_buf[40];
   LPCSTR thisformat;
   SYSTEMTIME t;
@@ -4204,12 +4204,12 @@ GetTimeFormatA(LCID locale,        /* in  */
  * Makes a Unicode string of the time
  */
 INT WINAPI 
-GetTimeFormatW(LCID locale,        /* in  */
-		 DWORD flags,        /* in  */
-		 LPSYSTEMTIME xtime, /* in  */ 
-		 LPCWSTR format,     /* in  */
-		 LPWSTR timestr,     /* out */
-		 INT timelen       /* in  */) 
+GetTimeFormatW(LCID locale,        /* [in]  */
+	       DWORD flags,        /* [in]  */
+	       LPSYSTEMTIME xtime, /* [in]  */ 
+	       LPCWSTR format,     /* [in]  */
+	       LPWSTR timestr,     /* [out] */
+	       INT timelen         /* [in]  */) 
 {	WCHAR format_buf[40];
 	LPCWSTR thisformat;
 	SYSTEMTIME t;

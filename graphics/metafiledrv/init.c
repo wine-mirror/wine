@@ -183,7 +183,7 @@ static BOOL MFDRV_DeleteDC( DC *dc )
  *  A handle to the metafile DC if successful, NULL on failure.
  */
 HDC16 WINAPI CreateMetaFile16( 
-			      LPCSTR filename /* Filename of disk metafile */
+			      LPCSTR filename /* [in] Filename of disk metafile */
 )
 {
     HDC ret;
@@ -227,7 +227,7 @@ HDC16 WINAPI CreateMetaFile16(
  *	     CreateMetaFileA   (GDI32.51)
  */
 HDC WINAPI CreateMetaFileA( 
-			      LPCSTR filename /* Filename of disk metafile */
+			      LPCSTR filename /* [in] Filename of disk metafile */
 )
 {
   return CreateMetaFile16( filename );
@@ -298,7 +298,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
  *	     CloseMetaFile16   (GDI.126)
  */
 HMETAFILE16 WINAPI CloseMetaFile16( 
-				   HDC16 hdc /* Metafile DC to close */
+				   HDC16 hdc /* [in] Metafile DC to close */
 )
 {
     HMETAFILE16 hmf;
@@ -326,7 +326,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
  *  Handle of newly created metafile on success, NULL on failure.
  */
 HMETAFILE WINAPI CloseMetaFile( 
-				   HDC hdc /* Metafile DC to close */
+				   HDC hdc /* [in] Metafile DC to close */
 )
 {
     HMETAFILE hmf;

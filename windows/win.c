@@ -2187,9 +2187,9 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  *
  */
 LONG WINAPI SetWindowLongW( 
-    HWND hwnd, /* window to alter */
-    INT offset, /* offset, in bytes, of location to alter */
-    LONG newval  /* new value of location */
+    HWND hwnd,  /* [in] window to alter */
+    INT offset, /* [in] offset, in bytes, of location to alter */
+    LONG newval /* [in] new value of location */
 ) {
     return WIN_SetWindowLong( hwnd, offset, newval, WIN_PROC_32W );
 }

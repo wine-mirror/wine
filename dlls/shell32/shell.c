@@ -679,6 +679,8 @@ LPSTR SHELL_FindString(LPSTR lpEnv, LPCSTR entry)
     return NULL;
 }
 
+/**********************************************************************/
+
 SEGPTR WINAPI FindEnvironmentString16(LPSTR str)
 { SEGPTR  spEnv;
   LPSTR lpEnv,lpString;

@@ -1130,8 +1130,8 @@ DWORD WINAPI VirtualQueryEx(
  *      TRUE: Otherwise
  */
 BOOL WINAPI IsBadReadPtr(
-              LPCVOID ptr, /* Address of memory block */
-              UINT size )  /* Size of block */
+              LPCVOID ptr, /* [in] Address of memory block */
+              UINT size )  /* [in] Size of block */
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
     __TRY

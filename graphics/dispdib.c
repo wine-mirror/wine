@@ -109,9 +109,9 @@ static void DISPDIB_Show(LPBITMAPINFOHEADER lpbi,LPSTR lpBits,WORD uFlags)
  *  Waiting for keypresses is not implemented.
  */
 WORD WINAPI DisplayDib(
-		LPBITMAPINFO lpbi, /* DIB header with resolution and palette */
-		LPSTR lpBits, /* Bitmap bits to show */
-		WORD wFlags
+		LPBITMAPINFO lpbi, /* [in] DIB header with resolution and palette */
+		LPSTR lpBits,      /* [in] Bitmap bits to show */
+		WORD wFlags        /* [in] */
 	)
 {
     WORD ret;

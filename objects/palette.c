@@ -847,6 +847,8 @@ VOID WINAPI SetMagicColors16(HDC16 hDC, COLORREF color, UINT16 index)
 
 #define WINEICM "winefake.icm"  /* easy-to-identify fake filename */
 
+/*********************************************************************/
+
 BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
 {
     DWORD callerLen;

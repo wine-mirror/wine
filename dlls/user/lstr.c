@@ -502,12 +502,12 @@ BOOL WINAPI IsCharAlphaW(WCHAR x)
  */
 DWORD WINAPI FormatMessage16(
     DWORD   dwFlags,
-    SEGPTR lpSource, /*not always a valid pointer*/
+    SEGPTR lpSource,     /* [in] NOTE: not always a valid pointer */
     WORD   dwMessageId,
     WORD   dwLanguageId,
-    LPSTR  lpBuffer, /* *((HLOCAL16*)) for FORMAT_MESSAGE_ALLOCATE_BUFFER*/
+    LPSTR  lpBuffer,     /* [out] NOTE: *((HLOCAL16*)) for FORMAT_MESSAGE_ALLOCATE_BUFFER*/
     WORD   nSize,
-    LPDWORD args /* va_list *args */
+    LPDWORD args         /* [in] NOTE: va_list *args */
 ) {
 #ifdef __i386__
 /* This implementation is completely dependant on the format of the va_list on x86 CPUs */

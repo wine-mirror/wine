@@ -1542,13 +1542,13 @@ DWORD WINAPI GetKerningPairsW( HDC hDC, DWORD cPairs,
  *
  */
 BOOL WINAPI TranslateCharsetInfo(
-  LPDWORD lpSrc, /*
+  LPDWORD lpSrc, /* [in]
        if flags == TCI_SRCFONTSIG: pointer to fsCsb of a FONTSIGNATURE
        if flags == TCI_SRCCHARSET: a character set value
        if flags == TCI_SRCCODEPAGE: a code page value
 		 */
-  LPCHARSETINFO lpCs, /* structure to receive charset information */
-  DWORD flags /* determines interpretation of lpSrc */
+  LPCHARSETINFO lpCs, /* [out] structure to receive charset information */
+  DWORD flags /* [in] determines interpretation of lpSrc */
 ) {
     int index = 0;
     switch (flags) {

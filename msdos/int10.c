@@ -57,8 +57,8 @@ static void BIOS_SetCursorPos(BIOSDATA*data,unsigned page,unsigned X,unsigned Y)
  *    ask me, I don't work for them.
  *
  * Joseph Pranevich - 9/98 
- */
-/*  Jess Haas 2/99
+ *
+ *  Jess Haas 2/99
  *	Added support for Vesa. It is not complete but is a start. 
  *	NOTE: Im not sure if i did all this right or if eny of it works.
  *	Currently i dont have a program that uses Vesa that actually gets far 

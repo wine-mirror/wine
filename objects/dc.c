@@ -1193,9 +1193,13 @@ BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
 /***********************************************************************
  *           SetDCHook   (GDI.190)
  */
+
 /* ### start build ### */
 extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
 /* ### stop build ### */
+
+/**********************************************************************/
+
 BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
     DC *dc = DC_GetDCPtr( hdc );

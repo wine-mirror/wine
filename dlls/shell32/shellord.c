@@ -459,8 +459,8 @@ DWORD WINAPI SHAddToRecentDocs (UINT uFlags,LPCVOID pv)
  *  see IShellFolder::CreateViewObject
  */
 HRESULT WINAPI SHCreateShellFolderViewEx(
-	LPCSHELLFOLDERVIEWINFO psvcbi, /*[in ] shelltemplate struct*/
-	LPSHELLVIEW* ppv)              /*[out] IShellView pointer*/
+	LPCSHELLFOLDERVIEWINFO psvcbi, /* [in] shelltemplate struct */
+	LPSHELLVIEW* ppv)              /* [out] IShellView pointer */
 {
 	IShellView * psf;
 	HRESULT hRes;

@@ -1379,7 +1379,7 @@ HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
  *	A handle to the previous cursor shape.
  */
 HCURSOR WINAPI SetCursor(
-	         HCURSOR hCursor /* Handle of cursor to show */
+	         HCURSOR hCursor /* [in] Handle of cursor to show */
 ) {
     HCURSOR hOldCursor;
 

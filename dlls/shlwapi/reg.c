@@ -78,7 +78,7 @@ BOOL WINAPI SHRegGetBoolUSValueW(
  *      SHRegQueryUSValueA	[SHLWAPI]
  */
 LONG WINAPI SHRegQueryUSValueA(
-	HKEY/*HUSKEY*/ hUSKey,
+	HKEY hUSKey,             /* [in] FIXME: HUSKEY */
 	LPCSTR pszValue,
 	LPDWORD pdwType,
 	void *pvData,

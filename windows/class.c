@@ -461,7 +461,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
  *	>0: Unique identifier
  *	0: Failure
  */
-ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* Address of structure with class data */
+ATOM WINAPI RegisterClassA( const WNDCLASSA* wc ) /* [in] Address of structure with class data */
 {
     ATOM atom;
     int iSmIconWidth, iSmIconHeight;
