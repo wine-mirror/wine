@@ -48,21 +48,31 @@ void WCMD_batch (char *file, char *command, int called) {
 
 HANDLE h = INVALID_HANDLE_VALUE;
 char string[MAXSTRING];
-char extension[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
+char extension_batch[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
+char extension_exe[WCMD_BATCH_EXT_SIZE] = ".exe";
 unsigned int  i;
 BATCH_CONTEXT *prev_context;
 
-  for(i=0; (i<(sizeof(extension)/WCMD_BATCH_EXT_SIZE)) && 
+  for(i=0; (i<(sizeof(extension_batch)/WCMD_BATCH_EXT_SIZE)) && 
            (h == INVALID_HANDLE_VALUE); i++) {
   strcpy (string, file);
   CharLower (string);
-    if (strstr (string, extension[i]) == NULL) strcat (string, extension[i]);
+    if (strstr (string, extension_batch[i]) == NULL) strcat (string, extension_batch[i]);
   h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
                   NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   }
   if (h == INVALID_HANDLE_VALUE) {
-    SetLastError (ERROR_FILE_NOT_FOUND);
-    WCMD_print_error ();
+    strcpy (string, file);
+    CharLower (string);
+    if (strstr (string, extension_exe) == NULL) strcat (string, extension_exe);
+    h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
+                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h != INVALID_HANDLE_VALUE) {
+      WCMD_run_program (command);
+    } else {
+      SetLastError (ERROR_FILE_NOT_FOUND);
+      WCMD_print_error ();
+    }
     return;
   }
 
