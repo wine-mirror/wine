@@ -86,7 +86,7 @@
 @ stub __badioinfo
 @ stub __crtCompareStringA
 @ stub __crtGetLocaleInfoW
-@ stub __crtLCMapStringA
+@ cdecl __crtLCMapStringA(long long str long ptr long long long) __crtLCMapStringA
 @ cdecl __dllonexit(ptr ptr ptr) __dllonexit
 @ cdecl __doserrno() __doserrno
 @ stub __fpecode #()
