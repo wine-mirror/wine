@@ -324,7 +324,7 @@ typedef struct WS(hostent)
  * Sockets
  */
 
-typedef u_int                  SOCKET;
+typedef UINT_PTR SOCKET;
 
 /*
  * This is used instead of -1, since the

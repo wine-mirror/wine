@@ -131,6 +131,10 @@ extern CRITICAL_SECTION csWSgetXXXbyYYY;
                         inet_ntoa(((struct sockaddr_in *)a)->sin_addr), \
                         ntohs(((struct sockaddr_in *)a)->sin_port))
 
+/* HANDLE<->SOCKET conversion (SOCKET is UINT_PTR). */
+#define SOCKET2HANDLE(s) ((HANDLE)(s))
+#define HANDLE2SOCKET(h) ((SOCKET)(h))
+
 /****************************************************************
  * Async IO declarations
  ****************************************************************/
@@ -314,14 +318,15 @@ inline static int _get_sock_fd(SOCKET s)
 {
     int fd;
 
-    if (set_error( wine_server_handle_to_fd( s, GENERIC_READ, &fd, NULL, NULL ) )) return -1;
+    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), GENERIC_READ, &fd, NULL, NULL ) ))
+        return -1;
     return fd;
 }
 
 inline static int _get_sock_fd_type( SOCKET s, DWORD access, enum fd_type *type, int *flags )
 {
     int fd;
-    if (set_error( wine_server_handle_to_fd( s, access, &fd, type, flags ) )) return -1;
+    if (set_error( wine_server_handle_to_fd( SOCKET2HANDLE(s), access, &fd, type, flags ) )) return -1;
     if ( ( (access & GENERIC_READ)  && (*flags & FD_FLAG_RECV_SHUTDOWN ) ) ||
          ( (access & GENERIC_WRITE) && (*flags & FD_FLAG_SEND_SHUTDOWN ) ) )
     {
@@ -332,8 +337,8 @@ inline static int _get_sock_fd_type( SOCKET s, DWORD access, enum fd_type *type,
     return fd;
 }
 
-static void _enable_event(SOCKET s, unsigned int event,
-			  unsigned int sstate, unsigned int cstate)
+static void _enable_event( HANDLE s, unsigned int event,
+                           unsigned int sstate, unsigned int cstate )
 {
     SERVER_START_REQ( enable_socket_event )
     {
@@ -351,7 +356,7 @@ static int _is_blocking(SOCKET s)
     int ret;
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = s;
+        req->handle  = SOCKET2HANDLE(s);
         req->service = FALSE;
         req->c_event = 0;
         wine_server_call( req );
@@ -366,7 +371,7 @@ static unsigned int _get_sock_mask(SOCKET s)
     unsigned int ret;
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = s;
+        req->handle  = SOCKET2HANDLE(s);
         req->service = FALSE;
         req->c_event = 0;
         wine_server_call( req );
@@ -389,7 +394,7 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
 
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = s;
+        req->handle  = SOCKET2HANDLE(s);
         req->service = FALSE;
         req->c_event = 0;
         wine_server_set_reply( req, events, sizeof(events) );
@@ -427,7 +432,7 @@ static void WINSOCK_DeleteIData(void)
  */
 BOOL WINAPI WS_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("0x%x 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
         opentype_tls_index = TlsAlloc();
@@ -1089,7 +1094,7 @@ WS2_make_async (SOCKET s, int fd, int type, struct iovec *iovec, DWORD dwBufferC
     }
 
     wsa->overlapped->InternalHigh = 0;
-    TRACE ( "wsa %p, ops %p, h %d, ev %d, fd %d, func %p, ov %p, uov %p, cfunc %p\n",
+    TRACE ( "wsa %p, ops %p, h %p, ev %p, fd %d, func %p, ov %p, uov %p, cfunc %p\n",
             wsa, wsa->async.ops, wsa->async.handle, wsa->async.event, wsa->async.fd, wsa->async.func,
             wsa->overlapped, wsa->user_overlapped, wsa->completion_func );
 
@@ -1196,7 +1201,7 @@ static void WS2_async_recv ( async_private *as )
         wsa->overlapped->Internal = STATUS_SUCCESS;
         wsa->overlapped->InternalHigh = result;
         TRACE ( "received %d bytes\n", result );
-        _enable_event ( (SOCKET) wsa->async.handle, FD_READ, 0, 0 );
+        _enable_event ( wsa->async.handle, FD_READ, 0, 0 );
         return;
     }
 
@@ -1204,7 +1209,7 @@ static void WS2_async_recv ( async_private *as )
     if ( err == WSAEINTR || err == WSAEWOULDBLOCK )  /* errno: EINTR / EAGAIN */
     {
         wsa->overlapped->Internal = STATUS_PENDING;
-        _enable_event ( (SOCKET) wsa->async.handle, FD_READ, 0, 0 );
+        _enable_event ( wsa->async.handle, FD_READ, 0, 0 );
         TRACE ( "still pending\n" );
     }
     else
@@ -1288,7 +1293,7 @@ static void WS2_async_send ( async_private *as )
         wsa->overlapped->Internal = STATUS_SUCCESS;
         wsa->overlapped->InternalHigh = result;
         TRACE ( "sent %d bytes\n", result );
-        _enable_event ( (SOCKET) wsa->async.handle, FD_WRITE, 0, 0 );
+        _enable_event ( wsa->async.handle, FD_WRITE, 0, 0 );
         return;
     }
 
@@ -1296,7 +1301,7 @@ static void WS2_async_send ( async_private *as )
     if ( err == WSAEINTR )
     {
         wsa->overlapped->Internal = STATUS_PENDING;
-        _enable_event ( (SOCKET) wsa->async.handle, FD_WRITE, 0, 0 );
+        _enable_event ( wsa->async.handle, FD_WRITE, 0, 0 );
         TRACE ( "still pending\n" );
     }
     else
@@ -1373,7 +1378,7 @@ static int WS2_register_async_shutdown ( SOCKET s, int fd, int type )
         goto out;
     }
     /* Try immediate completion */
-    if ( WSAGetOverlappedResult ( (HANDLE) s, ovl, NULL, FALSE, NULL ) )
+    if ( WSAGetOverlappedResult ( s, ovl, NULL, FALSE, NULL ) )
         return 0;
     if ( (err = WSAGetLastError ()) == WSA_IO_INCOMPLETE )
         return 0;
@@ -1411,11 +1416,11 @@ SOCKET WINAPI WS_accept(SOCKET s, struct WS_sockaddr *addr,
         close(fd);
         SERVER_START_REQ( accept_socket )
         {
-            req->lhandle = s;
+            req->lhandle = SOCKET2HANDLE(s);
             req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
             req->inherit = TRUE;
             set_error( wine_server_call( req ) );
-            as = (SOCKET)reply->handle;
+            as = HANDLE2SOCKET( reply->handle );
         }
         SERVER_END_REQ;
 	if (as)
@@ -1524,7 +1529,7 @@ INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct WS_sockaddr *name, INT16 namelen)
 int WINAPI WS_closesocket(SOCKET s)
 {
     TRACE("socket %08x\n", s);
-    if (CloseHandle(s)) return 0;
+    if (CloseHandle(SOCKET2HANDLE(s))) return 0;
     return SOCKET_ERROR;
 }
 
@@ -1571,7 +1576,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
         if (errno == EINPROGRESS)
         {
             /* tell wineserver that a connection is in progress */
-            _enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
+            _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
                           FD_CONNECT|FD_READ|FD_WRITE,
                           FD_WINE_CONNECTED|FD_WINE_LISTENING);
             if (_is_blocking(s))
@@ -1608,7 +1613,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
 
 connect_success:
     close(fd);
-    _enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
+    _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
                   FD_WINE_CONNECTED|FD_READ|FD_WRITE,
                   FD_CONNECT|FD_WINE_LISTENING);
     return 0;
@@ -2236,9 +2241,9 @@ int WINAPI WS_ioctlsocket(SOCKET s, long cmd, u_long *argp)
 		}
 		close(fd);
 		if (*argp)
-		    _enable_event(s, 0, FD_WINE_NONBLOCKING, 0);
+		    _enable_event(SOCKET2HANDLE(s), 0, FD_WINE_NONBLOCKING, 0);
 		else
-		    _enable_event(s, 0, 0, FD_WINE_NONBLOCKING);
+		    _enable_event(SOCKET2HANDLE(s), 0, 0, FD_WINE_NONBLOCKING);
 		return 0;
 
 	case WS_SIOCATMARK:
@@ -2295,7 +2300,7 @@ int WINAPI WS_listen(SOCKET s, int backlog)
 	if (listen(fd, backlog) == 0)
 	{
 	    close(fd);
-	    _enable_event(s, FD_ACCEPT,
+	    _enable_event(SOCKET2HANDLE(s), FD_ACCEPT,
 			  FD_WINE_LISTENING,
 			  FD_CONNECT|FD_WINE_CONNECTED);
 	    return 0;
@@ -2571,7 +2576,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         /* Try immediate completion */
         if ( lpOverlapped && !NtResetEvent( lpOverlapped->hEvent, NULL ) )
         {
-            if  ( WSAGetOverlappedResult ( (HANDLE) s, lpOverlapped,
+            if  ( WSAGetOverlappedResult ( s, lpOverlapped,
                                            lpNumberOfBytesSent, FALSE, &dwFlags) )
                 return 0;
 
@@ -2594,7 +2599,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     {
         err = wsaErrno();
         if ( err == WSAEWOULDBLOCK )
-            _enable_event (s, FD_WRITE, 0, 0);
+            _enable_event (SOCKET2HANDLE(s), FD_WRITE, 0, 0);
         goto err_free;
     }
 
@@ -2858,12 +2863,12 @@ int WINAPI WS_shutdown(SOCKET s, int how)
         close(fd);
     }
 
-    _enable_event( s, 0, 0, clear_flags );
+    _enable_event( SOCKET2HANDLE(s), 0, 0, clear_flags );
     if ( how > 1) WSAAsyncSelect( s, 0, 0, 0 );
     return 0;
 
 error:
-    _enable_event( s, 0, 0, clear_flags );
+    _enable_event( SOCKET2HANDLE(s), 0, 0, clear_flags );
     WSASetLastError ( err );
     return SOCKET_ERROR;
 }
@@ -3256,11 +3261,11 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 {
     int ret;
 
-    TRACE("%08x, hEvent %08x, lpEvent %08x\n", s, hEvent, (unsigned)lpEvent );
+    TRACE("%08x, hEvent %p, lpEvent %08x\n", s, hEvent, (unsigned)lpEvent );
 
     SERVER_START_REQ( get_socket_event )
     {
-        req->handle  = s;
+        req->handle  = SOCKET2HANDLE(s);
         req->service = TRUE;
         req->c_event = hEvent;
         wine_server_set_reply( req, lpEvent->iErrorCode, sizeof(lpEvent->iErrorCode) );
@@ -3279,11 +3284,11 @@ int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 {
     int ret;
 
-    TRACE("%08x, hEvent %08x, event %08x\n", s, hEvent, (unsigned)lEvent );
+    TRACE("%08x, hEvent %p, event %08x\n", s, hEvent, (unsigned)lEvent );
 
     SERVER_START_REQ( set_socket_event )
     {
-        req->handle = s;
+        req->handle = SOCKET2HANDLE(s);
         req->mask   = lEvent;
         req->event  = hEvent;
         req->window = 0;
@@ -3328,7 +3333,7 @@ BOOL WINAPI WSAGetOverlappedResult ( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
         if ( r == WAIT_OBJECT_0 )
             NtSetEvent ( lpOverlapped->hEvent, NULL );
     }
-    
+
     if ( lpcbTransfer )
         *lpcbTransfer = lpOverlapped->InternalHigh;
 
@@ -3357,11 +3362,11 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
 {
     int ret;
 
-    TRACE("%x, hWnd %x, uMsg %08x, event %08lx\n", s, hWnd, uMsg, lEvent );
+    TRACE("%x, hWnd %p, uMsg %08x, event %08lx\n", s, hWnd, uMsg, lEvent );
 
     SERVER_START_REQ( set_socket_event )
     {
-        req->handle = s;
+        req->handle = SOCKET2HANDLE(s);
         req->mask   = lEvent;
         req->event  = 0;
         req->window = hWnd;
@@ -3413,7 +3418,7 @@ WSAEVENT WINAPI WSACreateEvent(void)
  */
 BOOL WINAPI WSACloseEvent(WSAEVENT event)
 {
-    TRACE ("event=0x%x\n", event);
+    TRACE ("event=%p\n", event);
 
     return CloseHandle(event);
 }
@@ -3500,7 +3505,7 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
         req->flags    = dwFlags;
         req->inherit  = TRUE;
         set_error( wine_server_call( req ) );
-        ret = (SOCKET)reply->handle;
+        ret = HANDLE2SOCKET( reply->handle );
     }
     SERVER_END_REQ;
     if (ret)
@@ -4014,7 +4019,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         /* Try immediate completion */
         if ( lpOverlapped && !NtResetEvent( lpOverlapped->hEvent, NULL ) )
         {
-            if  ( WSAGetOverlappedResult ( (HANDLE) s, lpOverlapped,
+            if  ( WSAGetOverlappedResult ( s, lpOverlapped,
                                            lpNumberOfBytesRecvd, FALSE, lpFlags) )
                 return 0;
 
@@ -4045,7 +4050,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     HeapFree (GetProcessHeap(), 0, iovec);
     close(fd);
-    _enable_event(s, FD_READ, 0, 0);
+    _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
 
     return 0;
 
@@ -4136,12 +4141,12 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                case CF_DEFER:
                        SERVER_START_REQ ( set_socket_deferred )
                        {
-                           req->handle = s;
-                           req->deferred = cs;
+                           req->handle = SOCKET2HANDLE (s);
+                           req->deferred = SOCKET2HANDLE (cs);
                            if ( !wine_server_call_err ( req ) )
                            {
                                SetLastError ( WSATRY_AGAIN );
-                               CloseHandle ( cs );
+                               WS_closesocket ( cs );
                            }
                        }
                        SERVER_END_REQ;
@@ -4193,7 +4198,7 @@ int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA
     * the target use the global duplicate, or we could copy a reference to us to the structure
     * and let the target duplicate it from us, but let's do it as simple as possible */
    hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
-   DuplicateHandle(GetCurrentProcess(), s,
+   DuplicateHandle(GetCurrentProcess(), SOCKET2HANDLE(s),
                    hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
                    0, FALSE, DUPLICATE_SAME_ACCESS);
    CloseHandle(hProcess);

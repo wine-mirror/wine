@@ -136,6 +136,10 @@ UINT16 wsaHerrno(int errnr);
 #define AQ_GETSERV	2
 #define AQ_GETMASK	3
 
+/* The handles used are pseudo-handles that can be simply casted. */
+/* 16-bit values are used internally (to be sure handle comparison works right in 16-bit apps). */
+#define WSA_H32(h16) ((HANDLE)(ULONG_PTR)(h16))
+
 /* ----------------------------------- helper functions - */
 
 static int list_size(char** l, int item_size)
@@ -335,7 +339,7 @@ static int WS_copy_se(char *p_to,char *p_base,int t_size,struct servent* p_se, i
 	return size;
 }
 
-static HANDLE __ws_async_handle = 0xdead;
+static HANDLE16 __ws_async_handle = 0xdead;
 
 /* Generic async query struct. we use symbolic names for the different queries
  * for readability.
@@ -486,7 +490,7 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 		}
 		break;
 	}
-	PostMessageA(HWND_32(aq->hWnd),aq->uMsg,aq->async_handle,size|(fail<<16));
+	PostMessageA(HWND_32(aq->hWnd),aq->uMsg,(WPARAM) aq->async_handle,size|(fail<<16));
 	HeapFree(GetProcessHeap(),0,arg);
 	return 0;
 }
@@ -547,7 +551,8 @@ static HANDLE16	__WSAsyncDBQuery(
 	aq->ptr1	= ptr1;
 	aq->int2	= int2;
 	aq->ptr2	= ptr2;
-	aq->async_handle = ++__ws_async_handle;
+	/* avoid async_handle = 0 */
+	aq->async_handle = (++__ws_async_handle ? __ws_async_handle : ++__ws_async_handle);
 	aq->flags	= flags;
 	aq->sbuf	= (SEGPTR)sbuf;
 	aq->sbuflen	= sbuflen;
@@ -579,10 +584,10 @@ HANDLE16 WINAPI WSAAsyncGetHostByAddr16(HWND16 hWnd, UINT16 uMsg, LPCSTR addr,
 HANDLE WINAPI WSAAsyncGetHostByAddr(HWND hWnd, UINT uMsg, LPCSTR addr,
                                INT len, INT type, LPSTR sbuf, INT buflen)
 {
-	TRACE("hwnd %04x, msg %04x, addr %08x[%i]\n",
+	TRACE("hwnd %p, msg %04x, addr %08x[%i]\n",
 	       hWnd, uMsg, (unsigned)addr , len );
-	return __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,sbuf,buflen,
-				AQ_NUMBER|AQ_COPYPTR1|AQ_WIN32|AQ_GETHOST);
+	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,len,addr,type,NULL,sbuf,buflen,
+				AQ_NUMBER|AQ_COPYPTR1|AQ_WIN32|AQ_GETHOST));
 }
 
 /***********************************************************************
@@ -604,10 +609,10 @@ HANDLE16 WINAPI WSAAsyncGetHostByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 HANDLE WINAPI WSAAsyncGetHostByName(HWND hWnd, UINT uMsg, LPCSTR name,
 					LPSTR sbuf, INT buflen)
 {
-	TRACE("hwnd %04x, msg %08x, host %s, buffer %i\n",
+	TRACE("hwnd %p, msg %08x, host %s, buffer %i\n",
 	       hWnd, uMsg, (name)?name:"<null>", (int)buflen );
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
-				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETHOST);
+	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
+				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETHOST));
 }
 
 /***********************************************************************
@@ -629,10 +634,10 @@ HANDLE16 WINAPI WSAAsyncGetProtoByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 HANDLE WINAPI WSAAsyncGetProtoByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                          LPSTR sbuf, INT buflen)
 {
-	TRACE("hwnd %04x, msg %08x, protocol %s\n",
+	TRACE("hwnd %p, msg %08x, protocol %s\n",
 	       hWnd, uMsg, (name)?name:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
-				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETPROTO);
+	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,0,name,0,NULL,sbuf,buflen,
+				AQ_NAME|AQ_DUPLOWPTR1|AQ_WIN32|AQ_GETPROTO));
 }
 
 
@@ -654,9 +659,9 @@ HANDLE16 WINAPI WSAAsyncGetProtoByNumber16(HWND16 hWnd,UINT16 uMsg,INT16 number,
 HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND hWnd, UINT uMsg, INT number,
                                            LPSTR sbuf, INT buflen)
 {
-	TRACE("hwnd %04x, msg %04x, num %i\n", hWnd, uMsg, number );
-	return __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,sbuf,buflen,
-				AQ_GETPROTO|AQ_NUMBER|AQ_WIN32);
+	TRACE("hwnd %p, msg %04x, num %i\n", hWnd, uMsg, number );
+	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,number,NULL,0,NULL,sbuf,buflen,
+				AQ_GETPROTO|AQ_NUMBER|AQ_WIN32));
 }
 
 /***********************************************************************
@@ -678,10 +683,10 @@ HANDLE16 WINAPI WSAAsyncGetServByName16(HWND16 hWnd, UINT16 uMsg, LPCSTR name,
 HANDLE WINAPI WSAAsyncGetServByName(HWND hWnd, UINT uMsg, LPCSTR name,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
 {
-	TRACE("hwnd %04x, msg %04x, name %s, proto %s\n",
+	TRACE("hwnd %p, msg %04x, name %s, proto %s\n",
 	       hWnd, uMsg, (name)?name:"<null>", (proto)?proto:"<null>");
-	return __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,sbuf,buflen,
-				AQ_GETSERV|AQ_NAME|AQ_DUPLOWPTR1|AQ_DUPLOWPTR2|AQ_WIN32);
+	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,0,name,0,proto,sbuf,buflen,
+				AQ_GETSERV|AQ_NAME|AQ_DUPLOWPTR1|AQ_DUPLOWPTR2|AQ_WIN32));
 }
 
 /***********************************************************************
@@ -703,10 +708,10 @@ HANDLE16 WINAPI WSAAsyncGetServByPort16(HWND16 hWnd, UINT16 uMsg, INT16 port,
 HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
                                         LPCSTR proto, LPSTR sbuf, INT buflen)
 {
-	TRACE("hwnd %04x, msg %04x, port %i, proto %s\n",
+	TRACE("hwnd %p, msg %04x, port %i, proto %s\n",
 	       hWnd, uMsg, port, (proto)?proto:"<null>" );
-	return __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,sbuf,buflen,
-				AQ_GETSERV|AQ_NUMBER|AQ_DUPLOWPTR2|AQ_WIN32);
+	return WSA_H32( __WSAsyncDBQuery(hWnd,uMsg,port,NULL,0,proto,sbuf,buflen,
+				AQ_GETSERV|AQ_NUMBER|AQ_DUPLOWPTR2|AQ_WIN32));
 }
 
 /***********************************************************************
@@ -714,7 +719,7 @@ HANDLE WINAPI WSAAsyncGetServByPort(HWND hWnd, UINT uMsg, INT port,
  */
 INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
 {
-    FIXME("(%08x),stub\n", hAsyncTaskHandle);
+    FIXME("(%p),stub\n", hAsyncTaskHandle);
     return 0;
 }
 
@@ -723,7 +728,7 @@ INT WINAPI WSACancelAsyncRequest(HANDLE hAsyncTaskHandle)
  */
 INT16 WINAPI WSACancelAsyncRequest16(HANDLE16 hAsyncTaskHandle)
 {
-    return (HANDLE16)WSACancelAsyncRequest((HANDLE)hAsyncTaskHandle);
+    return (INT16)WSACancelAsyncRequest(WSA_H32 (hAsyncTaskHandle));
 }
 
 /***********************************************************************
