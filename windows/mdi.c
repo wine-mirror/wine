@@ -75,6 +75,7 @@
 #include "winuser.h"
 #include "wine/unicode.h"
 #include "win.h"
+#include "class.h"
 #include "heap.h"
 #include "nonclient.h"
 #include "mdi.h"
@@ -1645,6 +1646,14 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
     WIN_ReleaseWndPtr(tmpWnd);
 
+    /* Sanity check */
+    if (clientWnd->class->cbWndExtra < sizeof(MDICLIENTINFO))
+    {
+        WARN("called on non-MDI child window %x\n", hwnd);
+        WIN_ReleaseWndPtr(clientWnd);
+        return DefWindowProc16(hwnd, message, wParam, lParam);
+    }
+
     switch (message)
     {
       case WM_SETTEXT:
@@ -1837,6 +1846,14 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
     WIN_ReleaseWndPtr(tmpWnd);
 
+    /* Sanity check */
+    if (clientWnd->class->cbWndExtra < sizeof(MDICLIENTINFO))
+    {
+        WARN("called on non-MDI child window %x\n", hwnd);
+        WIN_ReleaseWndPtr(clientWnd);
+        return DefWindowProcA(hwnd, message, wParam, lParam);
+    }
+
     switch (message)
     {
       case WM_SETTEXT:
@@ -1906,6 +1923,14 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
     clientWnd  = WIN_FindWndPtr(tmpWnd->parent->hwndSelf);
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
     WIN_ReleaseWndPtr(tmpWnd);
+
+    /* Sanity check */
+    if (clientWnd->class->cbWndExtra < sizeof(MDICLIENTINFO))
+    {
+        WARN("called on non-MDI child window %x\n", hwnd);
+        WIN_ReleaseWndPtr(clientWnd);
+        return DefWindowProcW(hwnd, message, wParam, lParam);
+    }
 
     switch (message)
     {
