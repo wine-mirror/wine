@@ -12497,6 +12497,57 @@ echo "${ECHO_T}$ac_cv_ld_reloc_exec" >&6
           LDEXECFLAGS="-Wl,--section-start,.interp=0x3c000100"
 
         fi
+        echo "$as_me:$LINENO: checking whether the linker accepts --export-dynamic" >&5
+echo $ECHO_N "checking whether the linker accepts --export-dynamic... $ECHO_C" >&6
+if test "${ac_cv_c_export_dynamic+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fPIC -Wl,--export-dynamic"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_c_export_dynamic="yes"
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_c_export_dynamic="no"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+echo "$as_me:$LINENO: result: $ac_cv_c_export_dynamic" >&5
+echo "${ECHO_T}$ac_cv_c_export_dynamic" >&6
+        if test "$ac_cv_c_export_dynamic" = "yes"
+        then
+          LDEXECFLAGS="$LDEXECFLAGS -Wl,--export-dynamic"
+        fi
       else
         echo "$as_me:$LINENO: checking whether we can build a UnixWare (Solaris) dll" >&5
 echo $ECHO_N "checking whether we can build a UnixWare (Solaris) dll... $ECHO_C" >&6

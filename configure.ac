@@ -891,6 +891,13 @@ case $host_os in
         then
           AC_SUBST(LDEXECFLAGS,["-Wl,--section-start,.interp=0x3c000100"])
         fi
+        AC_CACHE_CHECK([whether the linker accepts --export-dynamic], ac_cv_c_export_dynamic,
+          [WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
+                           ac_cv_c_export_dynamic="yes",ac_cv_c_export_dynamic="no")])
+        if test "$ac_cv_c_export_dynamic" = "yes"
+        then
+          LDEXECFLAGS="$LDEXECFLAGS -Wl,--export-dynamic"
+        fi
       else
         AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
             [WINE_TRY_CFLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
