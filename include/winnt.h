@@ -3362,6 +3362,12 @@ typedef enum tagSID_NAME_USE {
 #define KEY_NOTIFY		0x00000010
 #define KEY_CREATE_LINK		0x00000020
 
+/* for RegKeyRestore flags */
+#define REG_WHOLE_HIVE_VOLATILE 0x00000001
+#define REG_REFRESH_HIVE        0x00000002
+#define REG_NO_LAZY_FLUSH       0x00000004
+#define REG_FORCE_RESTORE       0x00000008
+
 #define KEY_READ	      ((STANDARD_RIGHTS_READ|  \
 				KEY_QUERY_VALUE|  \
 				KEY_ENUMERATE_SUB_KEYS|  \
