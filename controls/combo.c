@@ -2100,8 +2100,9 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                 if (wParam & (MK_SHIFT | MK_CONTROL))
                     return unicode ? DefWindowProcW(hwnd, message, wParam, lParam) :
 				     DefWindowProcA(hwnd, message, wParam, lParam);
-                if (SHIWORD(wParam) > 0) return SendMessageW(hwnd, WM_KEYDOWN, VK_UP, 0);
-                if (SHIWORD(wParam) < 0) return SendMessageW(hwnd, WM_KEYDOWN, VK_DOWN, 0);
+
+                if (GET_WHEEL_DELTA_WPARAM(wParam) > 0) return SendMessageW(hwnd, WM_KEYDOWN, VK_UP, 0);
+                if (GET_WHEEL_DELTA_WPARAM(wParam) < 0) return SendMessageW(hwnd, WM_KEYDOWN, VK_DOWN, 0);
                 return TRUE;
 
 	/* Combo messages */

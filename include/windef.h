@@ -176,8 +176,6 @@ typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 typedef unsigned long   ULONG,      *PULONG;
 typedef float           FLOAT,      *PFLOAT;
-typedef double          DOUBLE;
-typedef double          DATE;
 
 #include <winnt.h>
 
@@ -212,8 +210,6 @@ typedef LONG_PTR        LRESULT;
 /* Integer types */
 
 typedef WORD            ATOM;
-typedef WORD            CATCHBUF[9];
-typedef WORD           *LPCATCHBUF;
 typedef DWORD           COLORREF, *LPCOLORREF;
 
 
@@ -270,17 +266,8 @@ typedef INT     (CALLBACK *PROC)();
 #define LOWORD(l)              ((WORD)(DWORD)(l))
 #define HIWORD(l)              ((WORD)((DWORD)(l) >> 16))
 
-#define SLOWORD(l)             ((SHORT)(LONG)(l))
-#define SHIWORD(l)             ((SHORT)((LONG)(l) >> 16))
-
 #define MAKEWORD(low,high)     ((WORD)(((BYTE)(low)) | ((WORD)((BYTE)(high))) << 8))
 #define MAKELONG(low,high)     ((LONG)(((WORD)(low)) | (((DWORD)((WORD)(high))) << 16)))
-#define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
-#define MAKEWPARAM(low,high)   ((WPARAM)MAKELONG(low,high))
-#define MAKELRESULT(low,high)  ((LRESULT)MAKELONG(low,high))
-
-#define SELECTOROF(ptr)     (HIWORD(ptr))
-#define OFFSETOF(ptr)       (LOWORD(ptr))
 
 /* min and max macros */
 #ifndef NOMINMAX

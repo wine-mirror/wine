@@ -34,8 +34,6 @@ typedef unsigned long ULONG;
 
 typedef float FLOAT;
 
-typedef double DOUBLE;
-
 typedef void *PVOID, *LPVOID;
 
 typedef char CHAR;
@@ -79,8 +77,6 @@ typedef void *HKEY;
 typedef void *HICON;
 
 typedef LONG_PTR LRESULT;
-
-typedef double DATE;
 
 typedef LONG HRESULT;
 
@@ -188,6 +184,8 @@ typedef struct tagMSG {
 } MSG, *PMSG, *NPMSG, *LPMSG;
 
 #endif /* winnt.h */
+typedef double DOUBLE;
+
 #ifndef _PALETTEENTRY_DEFINED
 #define _PALETTEENTRY_DEFINED
 typedef struct tagPALETTEENTRY {
@@ -619,6 +617,8 @@ typedef enum tagSTATFLAG {
     STATFLAG_NONAME = 1,
     STATFLAG_NOOPEN = 2
 } STATFLAG;
+
+typedef double DATE;
 
 #if 0
 typedef struct tagCY {

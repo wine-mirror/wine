@@ -41,7 +41,12 @@ typedef UINT16          WPARAM16;
 typedef INT16          *LPINT16;
 typedef UINT16         *LPUINT16;
 
+typedef WORD            CATCHBUF[9];
+typedef WORD           *LPCATCHBUF;
+
 #define MAKESEGPTR(seg,off) ((SEGPTR)MAKELONG(off,seg))
+#define SELECTOROF(ptr)     (HIWORD(ptr))
+#define OFFSETOF(ptr)       (LOWORD(ptr))
 
 typedef WORD *VA_LIST16;
 

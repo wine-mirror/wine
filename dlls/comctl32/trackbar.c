@@ -1488,7 +1488,7 @@ TRACKBAR_MouseMove (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 {
     DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     INT clickPlace = (dwStyle & TBS_VERT) ? pts.y : pts.x;
-    DOUBLE dragPos, oldPos = infoPtr->lPos;
+    LONG dragPos, oldPos = infoPtr->lPos;
 
     TRACE("(x=%d. y=%d)\n", pts.x, pts.y);
 
@@ -1503,8 +1503,6 @@ TRACKBAR_MouseMove (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 
     dragPos = TRACKBAR_ConvertPlaceToPosition (infoPtr, clickPlace,
                                                dwStyle & TBS_VERT);
-    if (dragPos > ((INT)dragPos) + 0.5) dragPos++;
-
     if (dragPos == oldPos) return TRUE;
 
     infoPtr->lPos = dragPos;

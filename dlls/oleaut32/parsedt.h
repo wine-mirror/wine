@@ -48,6 +48,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wtypes.h"
 
 /* ----------------------------------------------------------------
  *				Section 1:	bool, true, false, TRUE, FALSE

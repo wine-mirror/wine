@@ -45,7 +45,6 @@ typedef unsigned short USHORT;
 typedef long LONG;
 typedef unsigned long ULONG;
 typedef float FLOAT;
-typedef double DOUBLE;
 
 typedef void *PVOID, *LPVOID;
 
@@ -79,7 +78,6 @@ DECLARE_HANDLE(HICON);
 
 typedef LONG_PTR LRESULT;
 
-typedef double DATE;
 typedef LONG HRESULT;
 typedef DWORD LCID;
 
@@ -185,6 +183,8 @@ typedef struct tagMSG
 } MSG, *PMSG, *NPMSG, *LPMSG;
 
 cpp_quote("#endif /* winnt.h */")
+
+typedef double DOUBLE;
 
 cpp_quote("#ifndef _PALETTEENTRY_DEFINED")
 cpp_quote("#define _PALETTEENTRY_DEFINED")
@@ -574,6 +574,8 @@ typedef enum tagSTATFLAG {
 } STATFLAG;
 
 /******************** OLE Automation ********************/
+
+typedef double DATE;
 
 cpp_quote("#if 0") /* for IDL only */
 typedef struct tagCY {

@@ -1097,6 +1097,8 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 
 #define WHEEL_DELTA      120
 #define WHEEL_PAGESCROLL  (UINT_MAX)
+#define GET_WHEEL_DELTA_WPARAM(wParam)  ((short)HIWORD(wParam))
+
 #define WM_PARENTNOTIFY     0x0210
 #define WM_ENTERMENULOOP    0x0211
 #define WM_EXITMENULOOP     0x0212
@@ -1785,6 +1787,9 @@ typedef struct tagMSG
 
 #define POINTTOPOINTS(pt)      (MAKELONG((short)((pt).x), (short)((pt).y)))
 
+#define MAKELPARAM(low,high)   ((LPARAM)MAKELONG(low,high))
+#define MAKEWPARAM(low,high)   ((WPARAM)MAKELONG(low,high))
+#define MAKELRESULT(low,high)  ((LRESULT)MAKELONG(low,high))
 
 /* Cursors / Icons */
 
