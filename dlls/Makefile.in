@@ -108,6 +108,7 @@ BASEDIRS = \
 	qcap \
 	quartz \
 	rasapi32 \
+	riched20 \
 	richedit \
 	rpcrt4 \
 	rsabase \
@@ -351,6 +352,7 @@ SYMLINKS_SO = \
 	qcap.dll.so \
 	quartz.dll.so \
 	rasapi32.dll.so \
+	riched20.dll.so \
 	riched32.dll.so \
 	rpcrt4.dll.so \
 	rsabase.dll.so \
@@ -781,6 +783,9 @@ rasapi32.dll.so: rasapi32/rasapi32.dll.so
 rasapi16.dll.so : rasapi32.dll.so
 	$(RM) $@ && $(LN_S) rasapi32.dll.so $@
 
+riched20.dll.so: riched20/riched20.dll.so
+	$(RM) $@ && $(LN_S) riched20/riched20.dll.so $@
+
 riched32.dll.so: richedit/riched32.dll.so
 	$(RM) $@ && $(LN_S) richedit/riched32.dll.so $@
 
@@ -1092,6 +1097,7 @@ IMPORT_LIBS = \
 	libqcap.$(IMPLIBEXT) \
 	libquartz.$(IMPLIBEXT) \
 	librasapi32.$(IMPLIBEXT) \
+	libriched20.$(IMPLIBEXT) \
 	libriched32.$(IMPLIBEXT) \
 	librpcrt4.$(IMPLIBEXT) \
 	librsabase.$(IMPLIBEXT) \
@@ -1590,6 +1596,11 @@ librasapi32.def: rasapi32/rasapi32.spec.def
 librasapi32.a: rasapi32/rasapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d rasapi32/rasapi32.spec.def
 
+libriched20.def: riched20/riched20.spec.def
+	$(RM) $@ && $(LN_S) riched20/riched20.spec.def $@
+libriched20.a: riched20/riched20.spec.def
+	$(DLLTOOL) -k -l $@ -d riched20/riched20.spec.def
+
 libriched32.def: richedit/riched32.spec.def
 	$(RM) $@ && $(LN_S) richedit/riched32.spec.def $@
 libriched32.a: richedit/riched32.spec.def
@@ -1880,6 +1891,7 @@ psapi/psapi.spec.def: $(WINEBUILD)
 qcap/qcap.spec.def: $(WINEBUILD)
 quartz/quartz.spec.def: $(WINEBUILD)
 rasapi32/rasapi32.spec.def: $(WINEBUILD)
+riched20/riched20.spec.def: $(WINEBUILD)
 richedit/riched32.spec.def: $(WINEBUILD)
 rpcrt4/rpcrt4.spec.def: $(WINEBUILD)
 rsabase/rsabase.spec.def: $(WINEBUILD)
@@ -2032,6 +2044,7 @@ psapi/psapi.dll.so: psapi
 qcap/qcap.dll.so: qcap
 quartz/quartz.dll.so: quartz
 rasapi32/rasapi32.dll.so: rasapi32
+riched20/riched20.dll.so: riched20
 richedit/riched32.dll.so: richedit
 rpcrt4/rpcrt4.dll.so: rpcrt4
 rsabase/rsabase.dll.so: rsabase
