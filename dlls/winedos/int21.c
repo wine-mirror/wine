@@ -732,6 +732,111 @@ static void INT21_Ioctl( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_LongFilename
+ *
+ * Handler for function 0x71.
+ */
+static void INT21_LongFilename( CONTEXT86 *context )
+{
+    BOOL bSetDOSExtendedError = FALSE;
+
+    if (HIBYTE(HIWORD(GetVersion16())) < 0x07)
+    {
+        TRACE( "LONG FILENAME - functions supported only under DOS7\n" );
+        SET_CFLAG( context );
+        SET_AL( context, 0 );
+        return;
+    }
+
+    switch (AL_reg(context))
+    {
+    case 0x0d: /* RESET DRIVE */
+    case 0x39: /* LONG FILENAME - MAKE DIRECTORY */
+        INT_Int21Handler( context );
+        break;
+
+    case 0x3a: /* LONG FILENAME - REMOVE DIRECTORY */
+        {
+            WCHAR dirW[MAX_PATH];
+            char *dirA = CTX_SEG_OFF_TO_LIN(context,
+                                            context->SegDs, context->Edx);
+
+            TRACE( "LONG FILENAME - REMOVE DIRECTORY %s\n", dirA );
+            MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
+
+            if (!RemoveDirectoryW( dirW ))
+                bSetDOSExtendedError = TRUE;
+        }
+        break;
+
+    case 0x3b: /* LONG FILENAME - CHANGE DIRECTORY */
+        INT_Int21Handler( context );
+        break;
+
+    case 0x41: /* LONG FILENAME - DELETE FILE */
+        {
+            WCHAR fileW[MAX_PATH];
+            char *fileA = CTX_SEG_OFF_TO_LIN(context, 
+                                             context->SegDs, context->Edx);
+
+            TRACE( "LONG FILENAME - DELETE FILE %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+            if (!DeleteFileW( fileW ))
+                bSetDOSExtendedError = TRUE;
+        }
+        break;
+
+    case 0x43: /* LONG FILENAME - EXTENDED GET/SET FILE ATTRIBUTES */
+    case 0x47: /* LONG FILENAME - GET CURRENT DIRECTORY */
+    case 0x4e: /* LONG FILENAME - FIND FIRST MATCHING FILE */
+    case 0x4f: /* LONG FILENAME - FIND NEXT MATCHING FILE */
+        INT_Int21Handler( context );
+        break;
+
+    case 0x56: /* LONG FILENAME - RENAME FILE */
+        {
+            WCHAR fromW[MAX_PATH];
+            WCHAR toW[MAX_PATH];
+            char *fromA = CTX_SEG_OFF_TO_LIN(context, 
+                                             context->SegDs,context->Edx);
+            char *toA = CTX_SEG_OFF_TO_LIN(context, 
+                                           context->SegEs,context->Edi);
+
+            TRACE( "LONG FILENAME - RENAME FILE %s to %s\n", fromA, toA );
+            MultiByteToWideChar(CP_OEMCP, 0, fromA, -1, fromW, MAX_PATH);
+            MultiByteToWideChar(CP_OEMCP, 0, toA, -1, toW, MAX_PATH);
+
+            if (!MoveFileW( fromW, toW ))
+                bSetDOSExtendedError = TRUE;
+        }
+        break;
+
+    case 0x60: /* LONG FILENAME - CONVERT PATH */
+    case 0x6c: /* LONG FILENAME - CREATE OR OPEN FILE */
+    case 0xa0: /* LONG FILENAME - GET VOLUME INFORMATION */
+    case 0xa1: /* LONG FILENAME - "FindClose" - TERMINATE DIRECTORY SEARCH */
+    case 0xa6: /* LONG FILENAME - GET FILE INFO BY HANDLE */
+    case 0xa7: /* LONG FILENAME - CONVERT TIME */
+    case 0xa8: /* LONG FILENAME - GENERATE SHORT FILENAME */
+    case 0xa9: /* LONG FILENAME - SERVER CREATE OR OPEN FILE */
+    case 0xaa: /* LONG FILENAME - SUBST */
+        INT_Int21Handler( context );
+        break;
+
+    default:
+        INT_BARF( context, 0x21 );
+    }
+
+    if (bSetDOSExtendedError)
+    {
+        SET_AX( context, GetLastError() );
+        SET_CFLAG( context );
+    }
+}
+
+
+/***********************************************************************
  *           INT21_GetExtendedError
  */
 static void INT21_GetExtendedError( CONTEXT86 *context )
@@ -1244,11 +1349,36 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
-    case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
+        INT_Int21Handler( context );
+        break;
+
+    case 0x3a: /* "RMDIR" - REMOVE DIRECTORY */
+        {
+            WCHAR dirW[MAX_PATH];
+            char *dirA = CTX_SEG_OFF_TO_LIN(context,
+                                            context->SegDs, context->Edx);
+
+            TRACE( "REMOVE DIRECTORY %s\n", dirA );
+
+            MultiByteToWideChar(CP_OEMCP, 0, dirA, -1, dirW, MAX_PATH);
+
+            if (!RemoveDirectoryW( dirW ))
+                bSetDOSExtendedError = TRUE;
+        }
+        break;
+
     case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
     case 0x3c: /* "CREAT" - CREATE OR TRUNCATE FILE */
     case 0x3d: /* "OPEN" - OPEN EXISTING FILE */
+        INT_Int21Handler( context );
+        break;
+
     case 0x3e: /* "CLOSE" - CLOSE FILE */
+        TRACE( "CLOSE handle %d\n", BX_reg(context) );
+        if (_lclose16( BX_reg(context) ) == HFILE_ERROR16)
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
         INT_Int21Handler( context );
         break;
@@ -1280,6 +1410,20 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x41: /* "UNLINK" - DELETE FILE */
+        {
+            WCHAR fileW[MAX_PATH];
+            char *fileA = CTX_SEG_OFF_TO_LIN(context, 
+                                             context->SegDs, 
+                                             context->Edx);
+
+            TRACE( "UNLINK %s\n", fileA );
+            MultiByteToWideChar(CP_OEMCP, 0, fileA, -1, fileW, MAX_PATH);
+
+            if (!DeleteFileW( fileW ))
+                bSetDOSExtendedError = TRUE;
+        }
+        break;
+
     case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
     case 0x43: /* FILE ATTRIBUTES */
         INT_Int21Handler( context );
@@ -1310,6 +1454,12 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
+        TRACE( "FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",
+               BX_reg(context), CX_reg(context) );
+        if (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR16)
+            bSetDOSExtendedError = TRUE;
+        break;
+
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
         INT_Int21Handler( context );
         break;
@@ -1467,7 +1617,21 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x56: /* "RENAME" - RENAME FILE */
-        INT_Int21Handler( context );
+        {
+            WCHAR fromW[MAX_PATH];
+            WCHAR toW[MAX_PATH];
+            char *fromA = CTX_SEG_OFF_TO_LIN(context, 
+                                             context->SegDs,context->Edx);
+            char *toA = CTX_SEG_OFF_TO_LIN(context, 
+                                           context->SegEs,context->Edi);
+
+            TRACE( "RENAME %s to %s\n", fromA, toA );
+            MultiByteToWideChar(CP_OEMCP, 0, fromA, -1, fromW, MAX_PATH);
+            MultiByteToWideChar(CP_OEMCP, 0, toA, -1, toW, MAX_PATH);
+
+            if (!MoveFileW( fromW, toW ))
+                bSetDOSExtendedError = TRUE;
+        }
         break;
 
     case 0x57: /* FILE DATE AND TIME */
@@ -1632,7 +1796,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x71: /* MSDOS 7 - LONG FILENAME FUNCTIONS */
-        INT_Int21Handler( context );
+        INT21_LongFilename( context );
         break;
 
     case 0x73: /* MSDOS7 - FAT32 */

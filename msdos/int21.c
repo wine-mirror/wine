@@ -1041,13 +1041,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 	}
         break;
 
-    case 0x3a: /* "RMDIR" - REMOVE SUBDIRECTORY */
-        TRACE("RMDIR %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = (!RemoveDirectory16( CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                                 context->Edx )));
-        break;
-
     case 0x3b: /* "CHDIR" - SET CURRENT DIRECTORY */
         TRACE("CHDIR %s\n",
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
@@ -1064,12 +1057,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         TRACE("OPEN mode 0x%02x %s\n",AL_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
         OpenExistingFile(context);
-        break;
-
-    case 0x3e: /* "CLOSE" - CLOSE FILE */
-        TRACE("CLOSE handle %d\n",BX_reg(context));
-	SET_AX( context, _lclose16( BX_reg(context) ));
-        bSetDOSExtendedError = (AX_reg(context) != 0);
         break;
 
     case 0x3f: /* "READ" - READ FROM FILE OR DEVICE */
@@ -1089,13 +1076,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             if (result == -1) bSetDOSExtendedError = TRUE;
             else SET_AX( context, (WORD)result );
         }
-        break;
-
-    case 0x41: /* "UNLINK" - DELETE FILE */
-        TRACE("UNLINK %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-        bSetDOSExtendedError = (!DeleteFileA( CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                             context->Edx )));
         break;
 
     case 0x42: /* "LSEEK" - SET CURRENT FILE POSITION */
@@ -1241,12 +1221,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         }
         break;
 
-    case 0x46: /* "DUP2", "FORCEDUP" - FORCE DUPLICATE FILE HANDLE */
-        TRACE("FORCEDUP - FORCE DUPLICATE FILE HANDLE %d to %d\n",
-	      BX_reg(context),CX_reg(context));
-        bSetDOSExtendedError = (FILE_Dup2( BX_reg(context), CX_reg(context) ) == HFILE_ERROR16);
-        break;
-
     case 0x47: /* "CWD" - GET CURRENT DIRECTORY */
         TRACE("CWD - GET CURRENT DIRECTORY for drive %s\n",
 	      INT21_DriveName( DL_reg(context)));
@@ -1268,15 +1242,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
             SET_CFLAG(context);
         }
         else SET_AX( context, 0 );  /* OK */
-        break;
-
-    case 0x56: /* "RENAME" - RENAME FILE */
-        TRACE("RENAME %s to %s\n",
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
-	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi));
-        bSetDOSExtendedError =
-		(!MoveFileA( CTX_SEG_OFF_TO_LIN(context, context->SegDs,context->Edx),
-			       CTX_SEG_OFF_TO_LIN(context, context->SegEs,context->Edi)));
         break;
 
     case 0x5a: /* CREATE TEMPORARY FILE */
@@ -1366,12 +1331,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x71: /* MS-DOS 7 (Windows95) - LONG FILENAME FUNCTIONS */
-	if ((GetVersion()&0xC0000004)!=0xC0000004) {
-	    /* not supported on anything but Win95 */
-	    TRACE("LONG FILENAME functions supported only by win95\n");
-	    SET_CFLAG(context);
-	    SET_AL( context, 0 );
-	} else
         switch(AL_reg(context))
         {
         case 0x39:  /* Create directory */
@@ -1396,13 +1355,7 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 		    }
 	    }
             break;
-        case 0x3a:  /* Remove directory */
-	    TRACE("LONG FILENAME - REMOVE DIRECTORY %s\n",
-		  (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx));
-            bSetDOSExtendedError = (!RemoveDirectoryA(
-					CTX_SEG_OFF_TO_LIN(context,  context->SegDs,
-                                                        context->Edx )));
-            break;
+
         case 0x43:  /* Get/Set file attributes */
 	  TRACE("LONG FILENAME -EXTENDED GET/SET FILE ATTRIBUTES %s\n",
 		(LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx));
@@ -1527,29 +1480,7 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
 		SET_AL( context, GetLastError() );
 	    }
 	    break;
-        case 0x41:  /* Delete file */
-            TRACE("LONG FILENAME - DELETE FILE %s\n",
-		 (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
-	    if (!DeleteFileA(CTX_SEG_OFF_TO_LIN(context,
-	    				context->SegDs,
-					context->Edx)
-	    )) {
-		SET_CFLAG(context);
-		SET_AL( context, GetLastError() );
-	    }
-	    break;
-        case 0x56:  /* Move (rename) file */
-	    {
-		LPCSTR fn1 = (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx);
-		LPCSTR fn2 = (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegEs, context->Edi);
-                TRACE("LONG FILENAME - RENAME FILE %s to %s\n", fn1, fn2);
-	        if (!MoveFileA(fn1, fn2))
-		{
-		    SET_CFLAG(context);
-		    SET_AL( context, GetLastError() );
-		}
-	    }
-	    break;
+
         default:
             FIXME("Unimplemented long file name function:\n");
             INT_BARF( context, 0x21 );

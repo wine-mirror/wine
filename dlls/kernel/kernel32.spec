@@ -1070,6 +1070,7 @@
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
+@ stdcall _lclose16(long) _lclose16
 @ stdcall AllocCStoDSAlias16(long) AllocCStoDSAlias16
 @ stdcall AllocSelectorArray16(long) AllocSelectorArray16
 @ stdcall ConvertDialog32To16(ptr long ptr) ConvertDialog32To16
@@ -1144,6 +1145,7 @@
 @ cdecl DOSMEM_Init(long) DOSMEM_Init
 @ cdecl DOSMEM_ResizeBlock(ptr long long) DOSMEM_ResizeBlock
 @ cdecl DRIVE_OpenDevice(long long) DRIVE_OpenDevice
+@ cdecl FILE_Dup2(long long) FILE_Dup2
 @ stdcall INT_Int21Handler(ptr) INT_Int21Handler
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc
 @ cdecl LOCAL_Compact(long long long) LOCAL_Compact
