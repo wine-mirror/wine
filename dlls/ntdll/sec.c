@@ -11,6 +11,7 @@
 #include <math.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wine/exception.h"
 #include "wine/winestring.h"
 #include "file.h"
 #include "heap.h"
@@ -26,6 +27,14 @@
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
 #define NT_SUCCESS(status) (status == STATUS_SUCCESS)
+
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /*
  *	SID FUNCTIONS
@@ -226,19 +235,23 @@ DWORD WINAPI RtlCopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID
 BOOL WINAPI
 RtlValidSid( PSID pSid )
 {
-    if (IsBadReadPtr(pSid, 4))
+    BOOL ret;
+    __TRY
+    {
+        ret = TRUE;
+        if (!pSid || pSid->Revision != SID_REVISION ||
+            pSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
+        {
+            ret = FALSE;
+        }
+    }
+    __EXCEPT(page_fault)
     {
         WARN("(%p): invalid pointer!\n", pSid);
         return FALSE;
     }
-
-    if (pSid->SubAuthorityCount > SID_MAX_SUB_AUTHORITIES)
-        return FALSE;
-
-    if (!pSid || pSid->Revision != SID_REVISION)
-        return FALSE;
-
-    return TRUE;
+    __ENDTRY
+    return ret;
 }
 
 

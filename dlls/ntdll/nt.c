@@ -584,12 +584,17 @@ NTSTATUS WINAPI NtCreatePagingFile(
  * 
  * writes a string to the nt-textmode screen eg. during startup
  */
-NTSTATUS WINAPI NtDisplayString (
-	PUNICODE_STRING string)
+NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
 {
-	TRACE("%p(%s)\n",string->Buffer, debugstr_w(string->Buffer));
-	WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), string->Buffer, string->Length, 0, 0);
-	return 0;
+    STRING stringA;
+    NTSTATUS ret;
+
+    if (!(ret = RtlUnicodeStringToAnsiString( &stringA, string, TRUE )))
+    {
+        MESSAGE( "%.*s", stringA.Length, stringA.Buffer );
+        RtlFreeAnsiString( &stringA );
+    }
+    return ret;
 }
 
 /******************************************************************************

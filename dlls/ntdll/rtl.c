@@ -41,7 +41,7 @@ void WINAPI RtlInitializeResource(LPRTL_RWLOCK rwl)
 	rwl->uSharedWaiters = 0;
 	rwl->hOwningThreadId = 0;
 	rwl->dwTimeoutBoost = 0; /* no info on this one, default value is 0 */
-	InitializeCriticalSection( &rwl->rtlCS );
+	RtlInitializeCriticalSection( &rwl->rtlCS );
         NtCreateSemaphore( &rwl->hExclusiveReleaseSemaphore, 0, NULL, 0, 65535 );
         NtCreateSemaphore( &rwl->hSharedReleaseSemaphore, 0, NULL, 0, 65535 );
     }
@@ -55,7 +55,7 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
 {
     if( rwl )
     {
-	EnterCriticalSection( &rwl->rtlCS );
+	RtlEnterCriticalSection( &rwl->rtlCS );
 	if( rwl->iNumberActive || rwl->uExclusiveWaiters || rwl->uSharedWaiters )
 	    MESSAGE("Deleting active MRSW lock (%p), expect failure\n", rwl );
 	rwl->hOwningThreadId = 0;
@@ -63,8 +63,8 @@ void WINAPI RtlDeleteResource(LPRTL_RWLOCK rwl)
 	rwl->iNumberActive = 0;
 	NtClose( rwl->hExclusiveReleaseSemaphore );
 	NtClose( rwl->hSharedReleaseSemaphore );
-	LeaveCriticalSection( &rwl->rtlCS );
-	DeleteCriticalSection( &rwl->rtlCS );
+	RtlLeaveCriticalSection( &rwl->rtlCS );
+	RtlDeleteCriticalSection( &rwl->rtlCS );
     }
 }
 
@@ -78,7 +78,7 @@ BYTE WINAPI RtlAcquireResourceExclusive(LPRTL_RWLOCK rwl, BYTE fWait)
     if( !rwl ) return 0;
 
 start:
-    EnterCriticalSection( &rwl->rtlCS );
+    RtlEnterCriticalSection( &rwl->rtlCS );
     if( rwl->iNumberActive == 0 ) /* lock is free */
     {
 	rwl->iNumberActive = -1;
@@ -97,7 +97,7 @@ wait:
 	 {
 	     rwl->uExclusiveWaiters++;
 
-	     LeaveCriticalSection( &rwl->rtlCS );
+	     RtlLeaveCriticalSection( &rwl->rtlCS );
 	     if( WaitForSingleObject( rwl->hExclusiveReleaseSemaphore, INFINITE ) == WAIT_FAILED )
 		 goto done;
 	     goto start; /* restart the acquisition to avoid deadlocks */
@@ -110,7 +110,7 @@ wait:
     if( retVal == 1 )
 	rwl->hOwningThreadId = GetCurrentThreadId();
 done:
-    LeaveCriticalSection( &rwl->rtlCS );
+    RtlLeaveCriticalSection( &rwl->rtlCS );
     return retVal;
 }
 
@@ -124,7 +124,7 @@ BYTE WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK rwl, BYTE fWait)
     if( !rwl ) return 0;
 
 start:
-    EnterCriticalSection( &rwl->rtlCS );
+    RtlEnterCriticalSection( &rwl->rtlCS );
     if( rwl->iNumberActive < 0 )
     {
 	if( rwl->hOwningThreadId == GetCurrentThreadId() )
@@ -137,7 +137,7 @@ start:
 	if( fWait )
 	{
 	    rwl->uSharedWaiters++;
-	    LeaveCriticalSection( &rwl->rtlCS );
+	    RtlLeaveCriticalSection( &rwl->rtlCS );
 	    if( (dwWait = WaitForSingleObject( rwl->hSharedReleaseSemaphore, INFINITE )) == WAIT_FAILED )
 		goto done;
 	    goto start;
@@ -150,7 +150,7 @@ start:
 	retVal = 1;
     }
 done:
-    LeaveCriticalSection( &rwl->rtlCS );
+    RtlLeaveCriticalSection( &rwl->rtlCS );
     return retVal;
 }
 
@@ -160,7 +160,7 @@ done:
  */
 void WINAPI RtlReleaseResource(LPRTL_RWLOCK rwl)
 {
-    EnterCriticalSection( &rwl->rtlCS );
+    RtlEnterCriticalSection( &rwl->rtlCS );
 
     if( rwl->iNumberActive > 0 ) /* have one or more readers */
     {
@@ -193,7 +193,7 @@ wake_exclusive:
 		}
 	}
     }
-    LeaveCriticalSection( &rwl->rtlCS );
+    RtlLeaveCriticalSection( &rwl->rtlCS );
 }
 
 
@@ -421,12 +421,9 @@ LARGE_INTEGER WINAPI RtlExtendedIntegerMultiply(
 BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(
 	LPWSTR from,PUNICODE_STRING us,DWORD x2,DWORD x3)
 {
-	LPSTR	fromA = HEAP_strdupWtoA(GetProcessHeap(),0,from);
-
-	FIXME("(%s,%p,%08lx,%08lx)\n",fromA,us,x2,x3);
-	if (us)
-		RtlInitUnicodeString(us,HEAP_strdupW(GetProcessHeap(),0,from));
-	return TRUE;
+    FIXME("(%s,%p,%08lx,%08lx)\n",debugstr_w(from),us,x2,x3);
+    if (us) RtlCreateUnicodeString( us, from );
+    return TRUE;
 }
 
 
