@@ -1099,6 +1099,7 @@ AC_CHECK_FUNCS(\
 	pwrite \
 	readlink \
 	rfork \
+	sched_yield \
 	select \
 	sendmsg \
 	settimeofday \

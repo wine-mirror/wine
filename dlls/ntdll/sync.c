@@ -35,6 +35,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_SCHED_H
+# include <sched.h>
+#endif
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -632,6 +635,9 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     {
         for (;;) select( 0, NULL, NULL, NULL, NULL );
     }
+#ifdef HAVE_SCHED_YIELD
+    else if (!timeout->QuadPart) sched_yield();
+#endif
     else
     {
         abs_time_t when;
