@@ -49,7 +49,6 @@ HRESULT Main_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
     if (dwFlags & DDPCAPS_8BITENTRIES)
 	WARN("creating palette with 8 bit entries\n");
 
-    This->flags = dwFlags;
     This->palNumEntries = Main_DirectDrawPalette_Size(dwFlags);
     This->ref = 1;
 
@@ -57,6 +56,7 @@ HRESULT Main_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
     This->local.lpDD_lcl = &pDD->local;
     This->global.lpDD_lcl = &pDD->local;
     This->global.dwProcessId = GetCurrentProcessId();
+    This->global.dwFlags = dwFlags;
 
     This->final_release = Main_DirectDrawPalette_final_release;
     ICOM_INIT_INTERFACE(This, IDirectDrawPalette, DDRAW_Main_Palette_VTable);
@@ -116,10 +116,10 @@ Main_DirectDrawPalette_GetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 	  palent);
 
     if (dwFlags != 0) return DDERR_INVALIDPARAMS; /* unchecked */
-    if (dwStart + dwCount > Main_DirectDrawPalette_Size(This->flags))
+    if (dwStart + dwCount > Main_DirectDrawPalette_Size(This->global.dwFlags))
 	return DDERR_INVALIDPARAMS;
 
-    if (This->flags & DDPCAPS_8BITENTRIES)
+    if (This->global.dwFlags & DDPCAPS_8BITENTRIES)
     {
 	int i;
 	LPBYTE entry = (LPBYTE)palent;
@@ -143,7 +143,7 @@ Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
     TRACE("(%p)->SetEntries(%08lx,%ld,%ld,%p)\n",This,dwFlags,dwStart,dwCount,
 	  palent);
 
-    if (This->flags & DDPCAPS_8BITENTRIES)
+    if (This->global.dwFlags & DDPCAPS_8BITENTRIES)
     {
 	int i;
 	const BYTE* entry = (const BYTE*)palent;
@@ -157,7 +157,7 @@ Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
 	if (This->hpal)
 	    SetPaletteEntries(This->hpal, dwStart, dwCount, This->palents+dwStart);
 
-	if (This->flags & DDPCAPS_PRIMARYSURFACE) {
+	if (This->global.dwFlags & DDPCAPS_PRIMARYSURFACE) {
 	    /* update physical palette */
 	    LPDIRECTDRAWSURFACE7 psurf = NULL;
 	    IDirectDraw7_GetGDISurface(ICOM_INTERFACE(This->ddraw_owner,IDirectDraw7), &psurf);
@@ -241,7 +241,7 @@ Main_DirectDrawPalette_GetCaps(LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps)
    ICOM_THIS(IDirectDrawPaletteImpl,iface);
    TRACE("(%p)->(%p)\n",This,lpdwCaps);
 
-   *lpdwCaps = This->flags;
+   *lpdwCaps = This->global.dwFlags;
 
    return DD_OK;
 }

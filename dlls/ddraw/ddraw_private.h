@@ -169,7 +169,6 @@ struct IDirectDrawPaletteImpl
     DDRAWI_DDRAWPALETTE_GBL global;
 
     /* IDirectDrawPalette fields */
-    DWORD		flags;
     HPALETTE		hpal;
     WORD		palVersion, palNumEntries; /* LOGPALETTE */
     PALETTEENTRY	palents[256];

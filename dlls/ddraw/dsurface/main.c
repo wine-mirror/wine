@@ -1062,7 +1062,7 @@ Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
 
     if (This->palette != NULL) {
 	if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-	    This->palette->flags &= ~DDPCAPS_PRIMARYSURFACE;
+	    This->palette->global.dwFlags &= ~DDPCAPS_PRIMARYSURFACE;
 	IDirectDrawPalette_Release(ICOM_INTERFACE(This->palette,
 						  IDirectDrawPalette));
     }
@@ -1072,7 +1072,7 @@ Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
     if (pPalette != NULL) {
 	IDirectDrawPalette_AddRef(pPalette);
 	if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-	    This->palette->flags |= DDPCAPS_PRIMARYSURFACE;
+	    This->palette->global.dwFlags |= DDPCAPS_PRIMARYSURFACE;
     }
 
     This->set_palette(This, This->palette);
