@@ -2556,6 +2556,14 @@ then
       [has_gxx_no_for_scope="yes"],
       [has_gxx_no_for_scope="no"])
    )
+  CXXFLAGS="-fshort-wchar";
+  AC_CACHE_CHECK([for g++ -fshort-wchar option], has_gxx_short_wchar,
+    AC_TRY_COMPILE(,[
+        ;
+      ],
+      [has_gxx_short_wchar="yes"],
+      [has_gxx_short_wchar="no"])
+  )
   CXXFLAGS="$OLDCXXFLAGS";
   if test "$has_gxx_permissive" = "yes"
   then
@@ -2568,6 +2576,10 @@ then
   if test "$has_gxx_no_for_scope" = "yes"
   then
     CXXFLAGS="$CXXFLAGS -fno-for-scope"
+  fi
+  if test "$has_gxx_short_wchar" = "yes"
+  then
+    CXXFLAGS="$CXXFLAGS -fshort-wchar"
   fi
 fi
 AC_LANG_C()
