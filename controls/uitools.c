@@ -1140,6 +1140,14 @@ static BOOL UITOOLS95_DrawFrameScroll(HDC dc, LPRECT r, UINT uFlags)
     int tri = 290*SmallDiam/1000 - 1;
     int d46, d93;
 
+    /*
+     * This fixes a problem with really tiny "scroll" buttons. In particular
+     * with the updown control. 
+     * Making sure that the arrow is as least 3 pixels wide (or high).
+     */
+    if (tri == 0)
+      tri = 1;
+
     switch(uFlags & 0xff)
     {
     case DFCS_SCROLLCOMBOBOX:
