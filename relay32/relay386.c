@@ -156,12 +156,12 @@ static BOOL check_relay_include( const char *module, const char *func )
     }
     for(; *listitem; listitem++)
     {
-        char *p = strchr( *listitem, '.' );
+        char *p = strrchr( *listitem, '.' );
         if (p && p > *listitem)  /* check module and function */
         {
             int len = p - *listitem;
             if (strncasecmp( *listitem, module, len-1 ) || module[len]) continue;
-            if (!strcmp( p + 1, func )) return !show;
+            if (!strcmp( p + 1, func ) || !strcmp( p + 1, "*" )) return !show;
         }
         else  /* function only */
         {
@@ -202,7 +202,7 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_EXPORT_DIRECTORY *exp = NULL;
     DEBUG_ENTRY_POINT *debug;
-    char *base = NULL;
+    char *p, *base = NULL;
     const char *name;
     int ordinal = 0;
     WINE_MODREF *wm;
@@ -226,10 +226,14 @@ static void get_entry_point( char *buffer, DEBUG_ENTRY_POINT *relay )
 
     /* Now find the function */
 
+    strcpy( buffer, base + exp->Name );
+    p = buffer + strlen(buffer);
+    if (p > buffer + 4 && !strcasecmp( p - 4, ".dll" )) p -= 4;
+
     if ((name = find_exported_name( base, exp, ordinal + exp->Base )))
-        sprintf( buffer, "%s.%s", base + exp->Name, name );
+        sprintf( p, ".%s", name );
     else
-        sprintf( buffer, "%s.%ld", base + exp->Name, ordinal + exp->Base );
+        sprintf( p, ".%ld", ordinal + exp->Base );
 }
 
 
@@ -505,14 +509,17 @@ void RELAY_SetupDLL( const char *module )
     DEBUG_ENTRY_POINT *debug;
     DWORD *funcs;
     int i;
-    const char *name, *dllname;
+    const char *name;
+    char *p, dllname[80];
 
     dir = &PE_HEADER(module)->OptionalHeader.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
     if (!dir->Size) return;
     exports = (IMAGE_EXPORT_DIRECTORY *)(module + dir->VirtualAddress);
     debug = (DEBUG_ENTRY_POINT *)((char *)exports + dir->Size);
     funcs = (DWORD *)(module + exports->AddressOfFunctions);
-    dllname = module + exports->Name;
+    strcpy( dllname, module + exports->Name );
+    p = dllname + strlen(dllname) - 4;
+    if (p > dllname && !strcasecmp( p, ".dll" )) *p = 0;
 
     for (i = 0; i < exports->NumberOfFunctions; i++, funcs++, debug++)
     {
