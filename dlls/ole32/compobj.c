@@ -1061,40 +1061,9 @@ _LocalServerThread(LPVOID param) {
     ULONG		res;
 
     TRACE("Starting threader for %s.\n",debugstr_guid(&newClass->classIdentifier));
+
     strcpy(pipefn,PIPEPREF);
     WINE_StringFromCLSID(&newClass->classIdentifier,pipefn+strlen(PIPEPREF));
-
-    hres = IUnknown_QueryInterface(newClass->classObject,&IID_IClassFactory,(LPVOID*)&classfac);
-    if (hres) return hres;
-
-    hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
-    if (hres) {
-	FIXME("Failed to create stream on hglobal.\n");
-	return hres;
-    }
-    hres = CoMarshalInterface(pStm,&IID_IClassFactory,(LPVOID)classfac,0,NULL,0);
-    if (hres) {
-	FIXME("CoMarshalInterface failed, %lx!\n",hres);
-	return hres;
-    }
-    hres = IStream_Stat(pStm,&ststg,0);
-    if (hres) return hres;
-
-    buflen = ststg.cbSize.u.LowPart;
-    buffer = HeapAlloc(GetProcessHeap(),0,buflen);
-    seekto.u.LowPart = 0;
-    seekto.u.HighPart = 0;
-    hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
-    if (hres) {
-	FIXME("IStream_Seek failed, %lx\n",hres);
-	return hres;
-    }
-    hres = IStream_Read(pStm,buffer,buflen,&res);
-    if (hres) {
-	FIXME("Stream Read failed, %lx\n",hres);
-	return hres;
-    }
-    IStream_Release(pStm);
 
     hPipe = CreateNamedPipeA( pipefn, PIPE_ACCESS_DUPLEX,
                PIPE_TYPE_BYTE|PIPE_WAIT, PIPE_UNLIMITED_INSTANCES,
@@ -1108,9 +1077,51 @@ _LocalServerThread(LPVOID param) {
             ERR("Failure during ConnectNamedPipe %lx, ABORT!\n",GetLastError());
             break;
         }
+
+        TRACE("marshalling IClassFactory to client\n");
+        
+        hres = IUnknown_QueryInterface(newClass->classObject,&IID_IClassFactory,(LPVOID*)&classfac);
+        if (hres) return hres;
+
+        hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
+        if (hres) {
+            FIXME("Failed to create stream on hglobal.\n");
+            return hres;
+        }
+        hres = CoMarshalInterface(pStm,&IID_IClassFactory,(LPVOID)classfac,0,NULL,0);
+        if (hres) {
+            FIXME("CoMarshalInterface failed, %lx!\n",hres);
+            return hres;
+        }
+
+        IUnknown_Release(classfac); /* is this right? */
+
+        hres = IStream_Stat(pStm,&ststg,0);
+        if (hres) return hres;
+
+        buflen = ststg.cbSize.u.LowPart;
+        buffer = HeapAlloc(GetProcessHeap(),0,buflen);
+        seekto.u.LowPart = 0;
+        seekto.u.HighPart = 0;
+        hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
+        if (hres) {
+            FIXME("IStream_Seek failed, %lx\n",hres);
+            return hres;
+        }
+        
+        hres = IStream_Read(pStm,buffer,buflen,&res);
+        if (hres) {
+            FIXME("Stream Read failed, %lx\n",hres);
+            return hres;
+        }
+        
+        IStream_Release(pStm);
+
         WriteFile(hPipe,buffer,buflen,&res,NULL);
         FlushFileBuffers(hPipe);
         DisconnectNamedPipe(hPipe);
+
+        TRACE("done marshalling IClassFactory\n");
     }
     CloseHandle(hPipe);
     return 0;
