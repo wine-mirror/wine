@@ -673,6 +673,22 @@ static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
     }
 }
 
+/* This function calculate the Z coordinate from Zproj */ 
+static float ZfromZproj(IDirect3DDeviceImpl *This, D3DVALUE Zproj)
+{
+    float a,b,c,d;
+    /* Assume that X = Y = 0 and W = 1 */
+    a = This->proj_mat->_33;
+    b = This->proj_mat->_34;
+    c = This->proj_mat->_43;
+    d = This->proj_mat->_44;
+    /* We have in homogenous coordinates Z' = a * Z + c and W' = b * Z + d
+     * So in non homogenous coordinates we have Zproj = (a * Z + b) / (c * Z + d)
+     * And finally Z = (d * Zproj - c) / (a - b * Zproj)
+     */
+    return (d*Zproj - c) / (a - b*Zproj);
+}
+
 static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 					   BOOLEAN vertex_transformed,
 					   BOOLEAN vertex_lit) {
@@ -688,17 +704,34 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceImpl *This,
 			   This->world_mat, This->view_mat, This->proj_mat);
 	glThis->transform_state = GL_TRANSFORM_NORMAL;
 
-	if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE)
-	    glEnable(GL_FOG);
     } else if ((vertex_transformed == TRUE) &&
 	       (glThis->transform_state != GL_TRANSFORM_ORTHO)) {
         /* Set our orthographic projection */
         glThis->transform_state = GL_TRANSFORM_ORTHO;
 	d3ddevice_set_ortho(This);
-    
-	/* Remove also fogging... */
-	glDisable(GL_FOG);
     }
+    if (This->state_block.render_state[D3DRENDERSTATE_FOGENABLE - 1] == TRUE) {glHint(GL_FOG_HINT,GL_NICEST);
+        if (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1] != D3DFOG_NONE) {
+            switch (This->state_block.render_state[D3DRENDERSTATE_FOGTABLEMODE - 1]) {
+                case D3DFOG_LINEAR: glFogi(GL_FOG_MODE,GL_LINEAR); break; 
+                case D3DFOG_EXP:    glFogi(GL_FOG_MODE,GL_EXP); break; 
+                case D3DFOG_EXP2:   glFogi(GL_FOG_MODE,GL_EXP2); break;
+            }
+            glFogf(GL_FOG_START,ZfromZproj(This,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGSTART - 1]));
+            glFogf(GL_FOG_END,ZfromZproj(This,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGEND - 1]));
+  	    glEnable(GL_FOG);
+        } else if ( (This->state_block.render_state[D3DRENDERSTATE_FOGVERTEXMODE - 1] != D3DFOG_NONE) &&
+                    (vertex_lit == FALSE) && (vertex_transformed == FALSE) ) {
+            /* D3DFOG_EXP and D3DFOG_EXP2 are treated as D3DFOG_LINEAR */
+            glFogi(GL_FOG_MODE,GL_LINEAR);
+            glFogf(GL_FOG_START,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGSTART - 1]);
+            glFogf(GL_FOG_END,*(float*)&This->state_block.render_state[D3DRENDERSTATE_FOGEND - 1]);
+  	    glEnable(GL_FOG);          
+        } else
+            glDisable(GL_FOG);
+    }
+    else
+	glDisable(GL_FOG);
 
     /* Handle the 'no-normal' case */
     if (vertex_lit == TRUE)

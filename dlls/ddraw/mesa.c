@@ -83,7 +83,6 @@ GLenum convert_D3D_blendop_to_GL(D3DBLEND dwRenderState)
 void set_render_state(IDirect3DDeviceImpl* This,
 		      D3DRENDERSTATETYPE dwRenderStateType, STATEBLOCK *lpStateBlock)
 {
-    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
     DWORD dwRenderState = lpStateBlock->render_state[dwRenderStateType - 1];
 
     if (TRACE_ON(ddraw))
@@ -304,12 +303,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        break;
 	      
 	    case D3DRENDERSTATE_FOGENABLE: /* 28 */
-	        if ((dwRenderState == TRUE) &&
-		    (glThis->transform_state != GL_TRANSFORM_ORTHO)) {
-		    glEnable(GL_FOG);
-		} else {
-		    glDisable(GL_FOG);
-		}
+	        /* Nothing to do here. Only the storage matters :-) */
 	        break;
 
 	    case D3DRENDERSTATE_SPECULARENABLE: /* 29 */
@@ -320,7 +314,7 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	    case D3DRENDERSTATE_SUBPIXEL:  /* 31 */
 	    case D3DRENDERSTATE_SUBPIXELX: /* 32 */
 	        /* We do not support this anyway, so why protest :-) */
-	        break;
+	        break; 
 
  	    case D3DRENDERSTATE_STIPPLEDALPHA: /* 33 */
 	        if (dwRenderState)
@@ -328,15 +322,26 @@ void set_render_state(IDirect3DDeviceImpl* This,
 		break;
 
 	    case D3DRENDERSTATE_FOGCOLOR: { /* 34 */
-	        GLint color[4];
-		color[0] = (dwRenderState >> 16) & 0xFF;
-		color[1] = (dwRenderState >>  8) & 0xFF;
-		color[2] = (dwRenderState >>  0) & 0xFF;
-		color[3] = (dwRenderState >> 24) & 0xFF;
-		glFogiv(GL_FOG_COLOR, color);
+	        GLfloat color[4];
+		color[0] = ((dwRenderState >> 16) & 0xFF)/255.0f;
+		color[1] = ((dwRenderState >>  8) & 0xFF)/255.0f;
+		color[2] = ((dwRenderState >>  0) & 0xFF)/255.0f;
+		color[3] = ((dwRenderState >> 24) & 0xFF)/255.0f;
+		glFogfv(GL_FOG_COLOR,color);
+		/* Note: glFogiv does not seem to work */
 	    } break;
 
-	      
+ 	    case D3DRENDERSTATE_FOGTABLEMODE:  /* 35 */
+ 	    case D3DRENDERSTATE_FOGVERTEXMODE: /* 140 */
+ 	    case D3DRENDERSTATE_FOGSTART:      /* 36 */
+	    case D3DRENDERSTATE_FOGEND:        /* 37 */
+	        /* Nothing to do here. Only the storage matters :-) */
+		break;
+
+	    case D3DRENDERSTATE_FOGDENSITY:    /* 38 */
+		glFogi(GL_FOG_DENSITY,*(float*)&dwRenderState);
+		break;
+
 	    case D3DRENDERSTATE_COLORKEYENABLE:     /* 41 */
 	        /* This needs to be fixed. */
 	        if (dwRenderState)
