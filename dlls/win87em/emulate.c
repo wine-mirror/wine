@@ -125,12 +125,18 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
         /* returns current controlword */
         {
             DWORD dw=0;
+            WORD save,mask;
             /* I don't know much about asm() programming. This could be
              * wrong.
              */
 #ifdef __i386__
+           __asm__ __volatile__("fstcw %0;wait" : "=m" (save) : : "memory");
+           __asm__ __volatile__("fstcw %0;wait" : "=m" (mask) : : "memory");
+           __asm__ __volatile__("orw $0xC00,%0" : "=m" (mask) : : "memory");
+           __asm__ __volatile__("fldcw %0;wait" : : "m" (mask));
            __asm__ __volatile__("frndint");
            __asm__ __volatile__("fist %0;wait" : "=m" (dw) : : "memory");
+           __asm__ __volatile__("fldcw %0" : : "m" (save));
 #endif
             TRACE("On top of stack is %ld\n",dw);
         }
