@@ -456,18 +456,16 @@ static int WINAPI IMallocSpy_fnPostDidAlloc(LPMALLOCSPY iface, void* pRequest, B
     return fActual;
 }
 
-static int WINAPI IMallocSpy_fnPreHeapMinimize(LPMALLOCSPY iface)
+static void WINAPI IMallocSpy_fnPreHeapMinimize(LPMALLOCSPY iface)
 {
     ICOM_THIS (_MallocSpy, iface);
     TRACE ("(%p)->()\n", This);
-    return 0;
 }
 
-static int WINAPI IMallocSpy_fnPostHeapMinimize(LPMALLOCSPY iface)
+static void WINAPI IMallocSpy_fnPostHeapMinimize(LPMALLOCSPY iface)
 {
     ICOM_THIS (_MallocSpy, iface);
     TRACE ("(%p)->()\n", This);
-    return 0;
 }
 
 static void MallocSpyDumpLeaks() {

@@ -44,15 +44,15 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wtypes.h"
-#include "wine/obj_base.h"
-#include "wine/obj_marshal.h"
-#include "wine/obj_channel.h"
 
 #include "compobj_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+const CLSID CLSID_DfMarshal       = { 0x0000030b, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
+const CLSID CLSID_PSFactoryBuffer = { 0x00000320, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
 /* From: http://msdn.microsoft.com/library/en-us/com/cmi_m_4lda.asp
  *

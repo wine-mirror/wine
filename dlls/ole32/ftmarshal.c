@@ -26,10 +26,7 @@
 #include <assert.h>
 
 #include "winbase.h"
-
 #include "objbase.h"
-#include "wine/obj_storage.h"
-#include "wine/obj_marshal.h"
 
 #include "wine/debug.h"
 
