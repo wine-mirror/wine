@@ -28,6 +28,7 @@ DWORD WINAPI RasEnumEntriesA( LPSTR Reserved, LPSTR lpszPhoneBook,
 {
 	FIXME("(%p,%s,%p,%p,%p),stub!\n",Reserved,debugstr_a(lpszPhoneBook),
             lpRasEntryName,lpcb,lpcEntries);
+        *lpcEntries = 0;
 	return 0;
 }
 
