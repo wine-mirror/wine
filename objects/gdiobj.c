@@ -1462,8 +1462,10 @@ BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
  */
 BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
 {
-        FIXME("SetMiterLimit, stub\n");
-        return 0;
+    FIXME("(%p,%f,%p) stub\n", hdc, eNewLimit, peOldLimit);
+    if (peOldLimit)
+        *peOldLimit = 10.0; /* Default miter is 10, see msdn */
+    return TRUE;
 }
 
 /*******************************************************************
