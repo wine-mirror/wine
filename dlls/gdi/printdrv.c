@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "winbase.h"
+#include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
 #include "winspool.h"
@@ -24,7 +25,6 @@
 #include "winreg.h"
 #include "debugtools.h"
 #include "gdi.h"
-#include "callback.h"
 #include "heap.h"
 #include "file.h"
 
@@ -250,14 +250,32 @@ extern WORD CALLBACK PRTDRV_CallTo16_word_ww(FARPROC16,WORD,WORD);
 /* ### stop build ### */
 
 /**********************************************************************
- *           SetAbortProc   (GDI.381)
- *
+ *           call_abort_proc16
  */
-INT16 WINAPI SetAbortProc16(HDC16 hdc, SEGPTR abrtprc)
+static BOOL CALLBACK call_abort_proc16( HDC hdc, INT code )
 {
-    ABORTPROC proc32 = (ABORTPROC)THUNK_Alloc((FARPROC16)abrtprc,
-					      (RELAY)PRTDRV_CallTo16_word_ww);
-    return SetAbortProc(hdc, proc32);
+    ABORTPROC16 proc16;
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (!dc) return FALSE;
+    proc16 = dc->pAbortProc16;
+    GDI_ReleaseObj( hdc );
+    if (proc16) return PRTDRV_CallTo16_word_ww( (FARPROC16)proc16, hdc, code );
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *           SetAbortProc   (GDI.381)
+ */
+INT16 WINAPI SetAbortProc16(HDC16 hdc, ABORTPROC16 abrtprc)
+{
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (!dc) return FALSE;
+    dc->pAbortProc16 = abrtprc;
+    GDI_ReleaseObj( hdc );
+    return SetAbortProc( hdc, call_abort_proc16 );
 }
 
 /**********************************************************************
@@ -268,7 +286,7 @@ INT WINAPI SetAbortProc(HDC hdc, ABORTPROC abrtprc)
 {
     DC *dc = DC_GetDCPtr( hdc );
 
-    if(dc->pAbortProc) THUNK_Free((FARPROC)dc->pAbortProc);
+    if (!dc) return FALSE;
     dc->pAbortProc = abrtprc;
     GDI_ReleaseObj( hdc );
     return TRUE;

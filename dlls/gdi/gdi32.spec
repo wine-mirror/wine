@@ -421,3 +421,4 @@ debug_channels (bitblt bitmap clipping dc ddraw driver enhmetafile font gdi
 #
 @ stdcall CreateMetaFile16(str) CreateMetaFile16
 @ stdcall CloseMetaFile16(long) CloseMetaFile16
+@ stdcall SetDCHook(long ptr long) SetDCHook

@@ -23,7 +23,12 @@ C_SRCS = \
 	region.c \
 	text.c
 
-GLUE = dc.c
+GLUE = \
+	dc.c \
+	font.c \
+	gdiobj.c \
+	linedda.c \
+	metafile.c
 
 all: $(MODULE).o
 

@@ -46,8 +46,6 @@ typedef struct tagGDIOBJHDR
 } GDIOBJHDR;
 
 
-typedef BOOL16 CALLBACK (*DCHOOKPROC)(HDC16,WORD,DWORD,LPARAM);
-
 typedef struct tagGdiFont *GdiFont;
 
 typedef struct tagDC
@@ -109,6 +107,7 @@ typedef struct tagDC
     INT           DCOrgX;            /* DC origin */
     INT           DCOrgY;
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */
+    ABORTPROC16   pAbortProc16;
     INT           CursPosX;          /* Current position */
     INT           CursPosY;
     INT           ArcDirection;

@@ -103,7 +103,7 @@ INT16 WINAPI Escape16( HDC16 hdc, INT16 escape, INT16 in_count,
 
     /* Escape(hdc,SETABORTPROC,ABORTPROC,NULL); */
     case SETABORTPROC:
-        return SetAbortProc16( hdc, in_data );
+        return SetAbortProc16( hdc, (ABORTPROC16)in_data );
 
     /* Escape(hdc,STARTDOC,LPSTR,LPDOCINFO16);
      * lpvOutData is actually a pointer to the DocInfo structure and used as

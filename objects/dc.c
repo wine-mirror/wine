@@ -13,7 +13,6 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "font.h"
-#include "callback.h"
 #include "winerror.h"
 #include "windef.h"
 #include "wingdi.h"
@@ -21,6 +20,9 @@
 
 DEFAULT_DEBUG_CHANNEL(dc);
 
+/* ### start build ### */
+extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
+/* ### stop build ### */
 
 /***********************************************************************
  *           DC_AllocDC
@@ -773,8 +775,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc->hGCClipRgn) DeleteObject( dc->hGCClipRgn );
-    if (dc->pAbortProc) THUNK_Free( (FARPROC)dc->pAbortProc );
-    if (dc->hookThunk) THUNK_Free( (FARPROC)dc->hookThunk );
     if (dc->gdiFont) WineEngDecRefFont( dc->gdiFont );
     PATH_DestroyGdiPath(&dc->path);
 
@@ -1181,43 +1181,45 @@ BOOL WINAPI CombineTransform( LPXFORM xformResult, const XFORM *xform1,
 
 
 /***********************************************************************
+ *           SetDCHook   (GDI32.@)
+ *
+ * Note: this doesn't exist in Win32, we add it here because user32 needs it.
+ */
+BOOL WINAPI SetDCHook( HDC hdc, DCHOOKPROC hookProc, DWORD dwHookData )
+{
+    DC *dc = DC_GetDCPtr( hdc );
+
+    if (!dc) return FALSE;
+    dc->dwHookData = dwHookData;
+    dc->hookThunk = hookProc;
+    GDI_ReleaseObj( hdc );
+    return TRUE;
+}
+
+
+/* relay function to call the 16-bit DC hook proc */
+static BOOL16 WINAPI call_dc_hook16( HDC16 hdc, WORD code, DWORD data, LPARAM lParam )
+{
+    FARPROC16 proc = NULL;
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return FALSE;
+    proc = dc->hookProc;
+    GDI_ReleaseObj( hdc );
+    if (!proc) return FALSE;
+    return GDI_CallTo16_word_wwll( proc, hdc, code, data, lParam );
+}
+
+/***********************************************************************
  *           SetDCHook   (GDI.190)
  */
-
-/* ### start build ### */
-extern WORD CALLBACK GDI_CallTo16_word_wwll(FARPROC16,WORD,WORD,LONG,LONG);
-/* ### stop build ### */
-
-/**********************************************************************/
-
-BOOL16 WINAPI SetDCHook( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
+BOOL16 WINAPI SetDCHook16( HDC16 hdc, FARPROC16 hookProc, DWORD dwHookData )
 {
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
 
-    /*
-     * Note: We store the original SEGPTR 'hookProc' as we need to be
-     *       able to return it verbatim in GetDCHook,
-     *
-     *       On the other hand, we still call THUNK_Alloc and store the
-     *       32-bit thunk into another DC member, because THUNK_Alloc
-     *       recognizes the (typical) case that the 'hookProc' is indeed
-     *       the 16-bit API entry point of a built-in routine (e.g. DCHook16)
-     *
-     *       We could perform that test every time the hook is about to
-     *       be called (or else we could live with the 32->16->32 detour),
-     *       but this way is the most efficient ...
-     */
-
     dc->hookProc = hookProc;
-    dc->dwHookData = dwHookData;
-
-    THUNK_Free( (FARPROC)dc->hookThunk );
-    dc->hookThunk = (DCHOOKPROC)
-                    THUNK_Alloc( hookProc, (RELAY)GDI_CallTo16_word_wwll );
-
     GDI_ReleaseObj( hdc );
-    return TRUE;
+    return SetDCHook( hdc, call_dc_hook16, dwHookData );
 }
 
 

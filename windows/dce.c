@@ -68,7 +68,6 @@ static void DCE_DumpCache(void)
  */
 DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 {
-    FARPROC16 hookProc;
     DCE * dce;
     
     if (!(dce = HeapAlloc( GetProcessHeap(), 0, sizeof(DCE) ))) return NULL;
@@ -81,8 +80,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
 
     /* store DCE handle in DC hook data field */
 
-    hookProc = GetProcAddress16( GetModuleHandle16("USER"), (LPCSTR)362 );
-    SetDCHook( dce->hDC, hookProc, (DWORD)dce );
+    SetDCHook( dce->hDC, DCHook16, (DWORD)dce );
 
     dce->hwndCurrent = WIN_GetFullHandle( hWnd );
     dce->hClipRgn    = 0;
