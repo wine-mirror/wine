@@ -48,6 +48,9 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 #define RICHEDIT_CLASS		RICHEDIT_CLASS10A
 #endif
 
+#ifndef EM_SCROLLCARET
+#define EM_SCROLLCARET		(WM_USER + 49)
+#endif
 #define EM_CANPASTE		(WM_USER + 50)
 #define EM_DISPLAYBAND		(WM_USER + 51)
 #define EM_EXGETSEL		(WM_USER + 52)
