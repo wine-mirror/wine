@@ -1431,6 +1431,35 @@ static void dump_create_serial_reply( const struct create_serial_request *req )
     fprintf( stderr, " handle=%d", req->handle );
 }
 
+static void dump_get_serial_info_request( const struct get_serial_info_request *req )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_get_serial_info_reply( const struct get_serial_info_request *req )
+{
+    fprintf( stderr, " readinterval=%08x,", req->readinterval );
+    fprintf( stderr, " readconst=%08x,", req->readconst );
+    fprintf( stderr, " readmult=%08x,", req->readmult );
+    fprintf( stderr, " writeconst=%08x,", req->writeconst );
+    fprintf( stderr, " writemult=%08x,", req->writemult );
+    fprintf( stderr, " eventmask=%08x,", req->eventmask );
+    fprintf( stderr, " commerror=%08x", req->commerror );
+}
+
+static void dump_set_serial_info_request( const struct set_serial_info_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " flags=%d,", req->flags );
+    fprintf( stderr, " readinterval=%08x,", req->readinterval );
+    fprintf( stderr, " readconst=%08x,", req->readconst );
+    fprintf( stderr, " readmult=%08x,", req->readmult );
+    fprintf( stderr, " writeconst=%08x,", req->writeconst );
+    fprintf( stderr, " writemult=%08x,", req->writemult );
+    fprintf( stderr, " eventmask=%08x,", req->eventmask );
+    fprintf( stderr, " commerror=%08x", req->commerror );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_wait_process_request,
@@ -1540,6 +1569,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wake_queue_request,
     (dump_func)dump_wait_input_idle_request,
     (dump_func)dump_create_serial_request,
+    (dump_func)dump_get_serial_info_request,
+    (dump_func)dump_set_serial_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1651,6 +1682,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_wait_input_idle_reply,
     (dump_func)dump_create_serial_reply,
+    (dump_func)dump_get_serial_info_reply,
+    (dump_func)0,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1762,6 +1795,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "wake_queue",
     "wait_input_idle",
     "create_serial",
+    "get_serial_info",
+    "set_serial_info",
 };
 
 /* ### make_requests end ### */

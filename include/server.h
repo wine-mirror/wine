@@ -1322,6 +1322,36 @@ struct create_serial_request
     IN  char         name[1];      /* file name */
 };
 
+struct get_serial_info_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int          handle;       /* handle to comm port */
+    OUT unsigned int readinterval;
+    OUT unsigned int readconst;
+    OUT unsigned int readmult;
+    OUT unsigned int writeconst;
+    OUT unsigned int writemult;
+    OUT unsigned int eventmask;
+    OUT unsigned int commerror;
+};
+
+struct set_serial_info_request
+{
+    REQUEST_HEADER;                /* request header */
+    IN  int          handle;       /* handle to comm port */
+    IN  int          flags;        /* bitmask to set values (see below) */
+    IN  unsigned int readinterval;
+    IN  unsigned int readconst;
+    IN  unsigned int readmult;
+    IN  unsigned int writeconst;
+    IN  unsigned int writemult;
+    IN  unsigned int eventmask;
+    IN  unsigned int commerror;
+};
+#define SERIALINFO_SET_TIMEOUTS  0x01
+#define SERIALINFO_SET_MASK      0x02
+#define SERIALINFO_SET_ERROR     0x04
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1435,6 +1465,8 @@ enum request
     REQ_WAKE_QUEUE,
     REQ_WAIT_INPUT_IDLE,
     REQ_CREATE_SERIAL,
+    REQ_GET_SERIAL_INFO,
+    REQ_SET_SERIAL_INFO,
     REQ_NB_REQUESTS
 };
 
@@ -1550,9 +1582,11 @@ union generic_request
     struct wake_queue_request wake_queue;
     struct wait_input_idle_request wait_input_idle;
     struct create_serial_request create_serial;
+    struct get_serial_info_request get_serial_info;
+    struct set_serial_info_request set_serial_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 21
+#define SERVER_PROTOCOL_VERSION 22
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

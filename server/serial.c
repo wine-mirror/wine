@@ -196,3 +196,58 @@ DECL_HANDLER(create_serial)
     }
 }
 
+DECL_HANDLER(get_serial_info)
+{
+    struct serial *serial;
+
+    if ((serial = get_serial_obj( current->process, req->handle, 0 )))
+    {
+        /* timeouts */
+        req->readinterval = serial->readinterval;
+        req->readconst    = serial->readconst;
+        req->readmult     = serial->readmult;
+        req->writeconst   = serial->writeconst;
+        req->writemult    = serial->writemult;
+
+        /* event mask */
+        req->eventmask    = serial->eventmask;
+
+        /* comm port error status */
+        req->commerror    = serial->commerror;
+
+        release_object( serial );
+    }
+}
+
+DECL_HANDLER(set_serial_info)
+{
+    struct serial *serial;
+
+    if ((serial = get_serial_obj( current->process, req->handle, 0 )))
+    {
+        /* timeouts */
+        if(req->flags & SERIALINFO_SET_TIMEOUTS)
+        {
+            serial->readinterval = req->readinterval;
+            serial->readconst    = req->readconst;
+            serial->readmult     = req->readmult;
+            serial->writeconst   = req->writeconst;
+            serial->writemult    = req->writemult;
+        }
+
+        /* event mask */
+        if(req->flags & SERIALINFO_SET_MASK)
+        {
+            serial->eventmask = req->eventmask;
+        }
+
+        /* comm port error status */
+        if(req->flags & SERIALINFO_SET_ERROR)
+        {
+            serial->commerror = req->commerror;
+        }
+
+        release_object( serial );
+    }
+}
+

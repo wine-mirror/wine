@@ -1906,26 +1906,17 @@ BOOL WINAPI SetupComm( HANDLE handle, DWORD insize, DWORD outsize)
  */
 BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
 {
-    int fd;
+    struct get_serial_info_request *req = get_req_buffer();
 
     TRACE("handle %d, mask %p\n", handle, evtmask);
-    if(0>(fd=COMM_GetReadFd(handle))) 
-    {
-	FIXME("no handle %d found\n",handle);
+
+    req->handle = handle;
+
+    if(server_call( REQ_GET_SERIAL_INFO ))
         return FALSE;
-    }
-    close(fd);
-    *evtmask = eventmask;
-    TRACE("%s%s%s%s%s%s%s%s%s\n",
-	  (eventmask&EV_BREAK)?"EV_BREAK":"",
-	  (eventmask&EV_CTS)?"EV_CTS":"",
-	  (eventmask&EV_DSR)?"EV_DSR":"",
-	  (eventmask&EV_ERR)?"EV_ERR":"",
-	  (eventmask&EV_RING)?"EV_RING":"",
-	  (eventmask&EV_RLSD)?"EV_RLSD":"",
-	  (eventmask&EV_RXCHAR)?"EV_RXCHAR":"",
-	  (eventmask&EV_RXFLAG)?"EV_RXFLAG":"",
-	  (eventmask&EV_TXEMPTY)?"EV_TXEMPTY":"");
+
+    if(evtmask)
+        *evtmask = req->eventmask;
 	  
     return TRUE;
 }
@@ -1935,26 +1926,17 @@ BOOL WINAPI GetCommMask(HANDLE handle,LPDWORD evtmask)
  */
 BOOL WINAPI SetCommMask(HANDLE handle,DWORD evtmask)
 {
-    int fd;
+    struct set_serial_info_request *req = get_req_buffer();
 
     TRACE("handle %d, mask %lx\n", handle, evtmask);
-    TRACE("%s%s%s%s%s%s%s%s%s\n",
-	  (evtmask&EV_BREAK)?"EV_BREAK":"",
-	  (evtmask&EV_CTS)?"EV_CTS":"",
-	  (evtmask&EV_DSR)?"EV_DSR":"",
-	  (evtmask&EV_ERR)?"EV_ERR":"",
-	  (evtmask&EV_RING)?"EV_RING":"",
-	  (evtmask&EV_RLSD)?"EV_RLSD":"",
-	  (evtmask&EV_RXCHAR)?"EV_RXCHAR":"",
-	  (evtmask&EV_RXFLAG)?"EV_RXFLAG":"",
-	  (evtmask&EV_TXEMPTY)?"EV_TXEMPTY":"");
 	  
-    if(0>(fd=COMM_GetWriteFd(handle))) {
-	FIXME("no handle %d found\n",handle);
+    req->handle    = handle;
+    req->flags     = SERIALINFO_SET_MASK;
+    req->eventmask = evtmask;
+
+    if(server_call( REQ_SET_SERIAL_INFO ))
         return FALSE;
-    }
-    close(fd);
-    eventmask = evtmask;
+
     return TRUE;
 }
 
@@ -2461,41 +2443,78 @@ BOOL WINAPI TransmitCommChar(HANDLE hComm,CHAR chTransmit)
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.160)
  */
-BOOL WINAPI GetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts)
+BOOL WINAPI GetCommTimeouts(HANDLE hComm,LPCOMMTIMEOUTS lptimeouts)
 {
-	FIXME("(%x,%p):stub.\n",hcom,lptimeouts);
+    struct get_serial_info_request *req = get_req_buffer();
+
+    TRACE("(%x,%p)\n",hComm,lptimeouts);
+
+    if(!lptimeouts)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    req->handle = hComm;
+
+    if(server_call( REQ_GET_SERIAL_INFO ))
+        return FALSE;
+
+    lptimeouts->ReadIntervalTimeout         = req->readinterval;
+    lptimeouts->ReadTotalTimeoutMultiplier  = req->readmult;
+    lptimeouts->ReadTotalTimeoutConstant    = req->readconst;
+    lptimeouts->WriteTotalTimeoutMultiplier = req->writemult;
+    lptimeouts->WriteTotalTimeoutConstant   = req->writeconst;
+
 	return TRUE;
 }
 
 /*****************************************************************************
  *	SetCommTimeouts		(KERNEL32.453)
+ *
+ * Sets the timeouts used when reading and writing data to/from COMM ports.
+ *
+ * ReadIntervalTimeout 
+ *     - converted and passes to linux kernel as c_cc[VTIME]
+ * ReadTotalTimeoutMultiplier, ReadTotalTimeoutConstant
+ *     - used in ReadFile to calculate GetOverlappedResult's timeout
+ * WriteTotalTimeoutMultiplier, WriteTotalTimeoutConstant
+ *     - used in WriteFile to calculate GetOverlappedResult's timeout
  */
-BOOL WINAPI SetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts) {
-	/* struct DosDeviceStruct *ptr; */
-	struct termios	tios;
+BOOL WINAPI SetCommTimeouts(
+    HANDLE hComm,              /* [I] handle of COMM device */
+    LPCOMMTIMEOUTS lptimeouts /* [I] pointer to COMMTIMEOUTS structure */
+) {
+    struct set_serial_info_request *req = get_req_buffer();
 	int	fd;
+    struct termios tios;
 
-	FIXME("(%x,%p):stub.\n",hcom,lptimeouts);
-	/* 
-	if ((ptr = GetDeviceStruct(hcom)) == NULL) {
-		FIXME("no handle for cid = %0x!.\n",hcom);
-		return FALSE;
-	}
-	 */
+    TRACE("(%x,%p)\n",hComm,lptimeouts);
 
-	fd = COMM_GetWriteFd(hcom);
-	if (fd < 0) {
-		FIXME("no fd for cid = %0x!.\n",hcom);
+    if(!lptimeouts)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
 
+    req->handle       = hComm;
+    req->flags        = SERIALINFO_SET_TIMEOUTS;
 
-	FIXME("ReadIntervalTimeout %ld\n",lptimeouts->ReadIntervalTimeout);
-	FIXME("ReadTotalTimeoutMultiplier %ld\n",lptimeouts->ReadTotalTimeoutMultiplier);
-	FIXME("ReadTotalTimeoutConstant %ld\n",lptimeouts->ReadTotalTimeoutConstant);
-	FIXME("WriteTotalTimeoutMultiplier %ld\n",lptimeouts->WriteTotalTimeoutMultiplier);
-	FIXME("WriteTotalTimeoutConstant %ld\n",lptimeouts->WriteTotalTimeoutConstant);
+    req->readinterval = lptimeouts->ReadIntervalTimeout ;
+    req->readmult     = lptimeouts->ReadTotalTimeoutMultiplier ;
+    req->readconst    = lptimeouts->ReadTotalTimeoutConstant ;
+    req->writemult    = lptimeouts->WriteTotalTimeoutMultiplier ;
+    req->writeconst   = lptimeouts->WriteTotalTimeoutConstant ;
 
+    if(server_call( REQ_SET_SERIAL_INFO ))
+        return FALSE;
+
+    /* FIXME: move this stuff to the server */
+    fd = COMM_GetWriteFd(hComm);
+    if (fd < 0) {
+       FIXME("no fd for handle = %0x!.\n",hComm);
+       return FALSE;
+    }
 
 	if (-1==tcgetattr(fd,&tios)) {
 		FIXME("tcgetattr on fd %d failed!\n",fd);
@@ -2507,6 +2526,7 @@ BOOL WINAPI SetCommTimeouts(HANDLE hcom,LPCOMMTIMEOUTS lptimeouts) {
 		FIXME("tcsetattr on fd %d failed!\n",fd);
 		return FALSE;
 	}
+    close(fd);
 	return TRUE;
 }
 
