@@ -513,6 +513,6 @@ typedef enum tagREGKIND
 
 HRESULT WINAPI LoadTypeLib(OLECHAR *szFile, ITypeLib **pptLib);
 HRESULT WINAPI LoadTypeLibEx(LPOLESTR szFile, REGKIND regKind, ITypeLib **pptLib);
-
+INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
 
 #endif /*__WINE_OLEAUTO_H*/
