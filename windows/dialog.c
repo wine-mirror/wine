@@ -1476,7 +1476,7 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
         if(!retWnd)
             retWnd = DIALOG_GetNextTabItem(hwndMain,hwndMain,NULL,fPrevious );
     }
-    return retWnd;
+    return retWnd ? retWnd : hwndCtrl;
 }
 
 /***********************************************************************
