@@ -4,20 +4,19 @@
  *      
  *      Esperanto seems not to be supported by Windows
  *
- *      TODO: ISO numerical ID for language ?
+ *      TODO: MS numerical ID for language ?
  *
- *	I choose 8f for esperanto language as it is high enough
+ *	I choose 0x8f for esperanto language as it is high enough
  *	not to be attributed to another language in the immediate
- *	future (as of 19980901 the last official languageID is 51)
+ *	future (as of 19980901 the last official languageID is 0x51)
  *
- * 	Which DOS and Windows codepages should be used ?
- *	Is cp1252 enough to handle all esperanto symbols ?
+ * 	No Windows 125[0-8] codepage has the c^ g^ h^ j^ s^ used by esperanto.
  *	And for DOS codepage ?
  *
  *	ISO 2 letter code for esperanto is "eo" but as Windows use
  *	three letter codes I added an "x" to the end.	
  *
- *	In which charset encoding are the strings written ?
+ *	(esperanto strings in iso-8859-3)
  */
 
 LOCVAL(LOCALE_ILANGUAGE,"048f")
@@ -30,10 +29,10 @@ LOCVAL(LOCALE_SNATIVELANGNAME,"Esperanto")
 /* LOCVAL(LOCALE_SENGCOUNTRY,"") */
 /* LOCVAL(LOCALE_SABBREVCTRYNAME,"") */
 /* LOCVAL(LOCALE_SNATIVECTRYNAME,"") */
-LOCVAL(LOCALE_IDEFAULTLANGUAGE,"048f") /* ISO ID of lang TODO */
+LOCVAL(LOCALE_IDEFAULTLANGUAGE,"048f") /* MS LANGID TODO */
 /* LOCVAL(LOCALE_IDEFAULTCOUNTRY,"") */
 /* LOCVAL(LOCALE_IDEFAULTCODEPAGE,"") */
-LOCVAL(LOCALE_IDEFAULTANSICODEPAGE,"1252")
+/* LOCVAL(LOCALE_IDEFAULTANSICODEPAGE,"") */
 LOCVAL(LOCALE_SLIST,";")
 LOCVAL(LOCALE_IMEASURE,"0")
 LOCVAL(LOCALE_SDECIMAL,",")
@@ -46,8 +45,8 @@ LOCVAL(LOCALE_ILZERO,"1")
 /* euro symbol; it is 0xa4 in iso-8859-15 and 0x80 in cp1252 */
 LOCVAL(LOCALE_SCURRENCY,"¤")
 LOCVAL(LOCALE_SINTLSYMBOL,"EMU") 
-/* LOCVAL(LOCALE_SMONDECIMALSEP) */
-/* LOCVAL(LOCALE_SMONTHOUSANDSEP) */
+LOCVAL(LOCALE_SMONDECIMALSEP,",")
+LOCVAL(LOCALE_SMONTHOUSANDSEP,".")
 /* LOCVAL(LOCALE_SMONGROUPING) */
 /* LOCVAL(LOCALE_ICURRDIGITS,"2") */
 /* LOCVAL(LOCALE_IINTLCURRDIGITS) */
@@ -124,3 +123,7 @@ LOCVAL(LOCALE_SABBREVMONTHNAME13,"")
 /* LOCVAL(LOCALE_IPOSSEPBYSPACE) */
 /* LOCVAL(LOCALE_INEGSYMPRECEDES) */
 /* LOCVAL(LOCALE_INEGSEPBYSPACE) */
+/* LOCVAL(LOCALE_FONTSIGNATURE, "") */
+LOCVAL(LOCALE_SISO639LANGNAME,"eo")
+/* LOCVAL(LOCALE_SISO3166CTRYNAME, "") */
+
