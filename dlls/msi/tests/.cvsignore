@@ -1,4 +1,5 @@
 Makefile
 db.ok
 record.ok
+suminfo.ok
 testlist.c

@@ -98,9 +98,20 @@ typedef struct tagMSISUMMARYINFO
 static const WCHAR szSumInfo[] = { 5 ,'S','u','m','m','a','r','y',
                        'I','n','f','o','r','m','a','t','i','o','n',0 };
 
+static void free_prop( PROPVARIANT *prop )
+{
+    if (prop->vt == VT_LPSTR )
+        HeapFree( GetProcessHeap(), 0, prop->u.pszVal );
+    prop->vt = VT_EMPTY;
+}
+
 static void MSI_CloseSummaryInfo( MSIOBJECTHDR *arg )
 {
     MSISUMMARYINFO *si = (MSISUMMARYINFO *) arg;
+    DWORD i;
+
+    for( i = 0; i < MSI_MAX_PROPS; i++ )
+        free_prop( &si->property[i] );
     msiobj_release( &si->db->hdr );
 }
 
@@ -142,7 +153,7 @@ static UINT get_property_count( PROPVARIANT *property )
 
     if( !property )
         return n;
-    for( i=0; i<MSI_MAX_PROPS; i++ )
+    for( i = 0; i < MSI_MAX_PROPS; i++ )
         if( property[i].vt != VT_EMPTY )
             n++;
     return n;
@@ -645,11 +656,12 @@ static UINT set_prop( MSIHANDLE handle, UINT uiProperty, UINT uiDataType,
             goto end;
         }
         si->update_count--;
-        prop->vt = type;
     }
     else if( prop->vt != type )
         goto end;
 
+    free_prop( prop );
+    prop->vt = type;
     switch( type )
     {
     case VT_I4:
@@ -662,7 +674,6 @@ static UINT set_prop( MSIHANDLE handle, UINT uiProperty, UINT uiDataType,
         memcpy( &prop->u.filetime, pftValue, sizeof prop->u.filetime );
         break;
     case VT_LPSTR:
-        HeapFree( GetProcessHeap(), 0, prop->u.pszVal );
         if( str->unicode )
         {
             len = WideCharToMultiByte( CP_ACP, 0, str->str.w, -1,
