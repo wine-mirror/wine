@@ -948,7 +948,7 @@ static const char * const PGMMessageTypeNames[SPY_MAX_PGMMSGNUM + 1] =
 };
 
 
-#define SPY_MAX_CCMMSGNUM   6
+#define SPY_MAX_CCMMSGNUM   9
 static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
 {
     NULL,		/* 0x2000 */
@@ -957,7 +957,10 @@ static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
     "CCM_GETCOLORSCHEME",
     "CCM_GETDROPTARGET",
     "CCM_SETUNICODEFORMAT",
-    "CCM_GETUNICODEFORMAT"
+    "CCM_GETUNICODEFORMAT",
+    "CCM_SETVERSION",
+    "CCM_GETVERSION",
+    "CCM_SETNOTIFYWINDOW"
 };
 
 #define SPY_MAX_WINEMSGNUM   6
