@@ -1078,8 +1078,8 @@ DWORD WINAPI SHLWAPI_172 (
  */
 DWORD WINAPI SHLWAPI_174(
 	IUnknown *p1,     /* [in]   OLE object                          */
-        LPVOID *p2)       /* [out]  ptr to result of either GetClassID  */
-                          /*        or SetSite call.                    */
+        LPVOID *p2)       /* [out]  ptr to result of either GetClassID 
+                                    or SetSite call.                    */
 {
     DWORD ret, aa;
 

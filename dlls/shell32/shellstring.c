@@ -18,21 +18,15 @@ DEFAULT_DEBUG_CHANNEL(shell);
 
 /************************* STRRET functions ****************************/
 
-/*************************************************************************
- * StrRetToStrN				[SHELL32.96]
- * 
- * converts a STRRET to a normal string
- *
- * NOTES
- *  the pidl is for STRRET OFFSET
- *
+/*
  * ***** NOTE *****
- *  This routine is identical to StrRetToBufA in dlls/shlwapi/string.c.
- *  It was duplicated here because not every version of Shlwapi.dll exports
- *  StrRetToBufA. If you change one routine, change them both. YOU HAVE BEEN
+ *  These routines are identical to StrRetToBuf[AW] in dlls/shlwapi/string.c.
+ *  They were duplicated here because not every version of Shlwapi.dll exports
+ *  StrRetToBuf[AW]. If you change one routine, change them both. YOU HAVE BEEN
  *  WARNED.
  * ***** NOTE *****
  */
+
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
 	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
@@ -63,21 +57,7 @@ HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMID
 	return S_OK;
 }
 
-/*************************************************************************
- * StrRetToStrNW				[SHELL32.96]
- * 
- * converts a STRRET to a normal string
- *
- * NOTES
- *  the pidl is for STRRET OFFSET
- *
- * ***** NOTE *****
- *  This routine is identical to StrRetToBufW in dlls/shlwapi/string.c.
- *  It was duplicated here because not every version of Shlwapi.dll exports
- *  StrRetToBufW. If you change one routine, change them both. YOU HAVE BEEN
- *  WARNED.
- * ***** NOTE *****
- */
+/************************************************************************/
 
 HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
@@ -115,8 +95,15 @@ HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMI
 	return S_OK;
 }
 
-/*************************************************************************/
 
+/*************************************************************************
+ * StrRetToStrN				[SHELL32.96]
+ * 
+ * converts a STRRET to a normal string
+ *
+ * NOTES
+ *  the pidl is for STRRET OFFSET
+ */
 HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
 	if(SHELL_OsIsUnicode())

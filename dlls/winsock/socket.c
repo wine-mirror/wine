@@ -3472,6 +3472,9 @@ INT WINAPI WSCDeinstallProvider(LPGUID lpProviderId, LPINT lpErrno)
 }
 
 
+/***********************************************************************
+ *              WSAAccept                        (WS2_32.26)
+ */
 SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
                LPCONDITIONPROC lpfnCondition, DWORD dwCallbackData)
 {

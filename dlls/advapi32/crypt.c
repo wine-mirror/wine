@@ -1057,7 +1057,7 @@ BOOL WINAPI CryptSetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData, DW
 }
 
 /******************************************************************************
- * CryptGetKeyParam (ADVAPI32.@)
+ * CryptSetKeyParam (ADVAPI32.@)
  */
 BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags)
 {

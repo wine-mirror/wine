@@ -521,8 +521,11 @@ static BOOL WINAPI CONSOLE_DefaultHandler(DWORD dwCtrlType)
  * Does not yet do any error checking, or set LastError if failed.
  * This doesn't yet matter, since these handlers are not yet called...!
  */
+
 static unsigned int console_ignore_ctrl_c = 0; /* FIXME: this should be inherited somehow */
 static PHANDLER_ROUTINE handlers[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,CONSOLE_DefaultHandler};
+
+/*****************************************************************************/
 
 BOOL WINAPI SetConsoleCtrlHandler(PHANDLER_ROUTINE func, BOOL add)
 {
