@@ -385,6 +385,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     pformat->dwSize = sizeof(DDPIXELFORMAT);
     pformat->dwFourCC = 0;
 
+#if 0
+    /* See argument about the RGBA format for 'packed' texture formats */
     TRACE("Enumerating GL_RGBA unpacked (32)\n");
     pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
     pformat->u1.dwRGBBitCount = 32;
@@ -392,6 +394,17 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb_1,
     pformat->u3.dwGBitMask =        0x00FF0000;
     pformat->u4.dwBBitMask =        0x0000FF00;
     pformat->u5.dwRGBAlphaBitMask = 0x000000FF;
+    if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
+    if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
+#endif
+    
+    TRACE("Enumerating GL_RGBA unpacked (32)\n");
+    pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+    pformat->u1.dwRGBBitCount = 32;
+    pformat->u2.dwRBitMask =        0x00FF0000;
+    pformat->u3.dwGBitMask =        0x0000FF00;
+    pformat->u4.dwBBitMask =        0x000000FF;
+    pformat->u5.dwRGBAlphaBitMask = 0xFF000000;
     if (cb_1) if (cb_1(&sdesc , context) == 0) return DD_OK;
     if (cb_2) if (cb_2(pformat, context) == 0) return DD_OK;
 

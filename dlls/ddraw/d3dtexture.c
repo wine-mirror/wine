@@ -386,6 +386,35 @@ gltex_upload_texture(IDirectDrawSurfaceImpl *This) {
 	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
 		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
 		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
+		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0xFF000000)) {
+	        /* Convert from ARGB (Windows' format) to RGBA.
+		   Note: need to check for GL extensions handling ARGB instead of always converting */
+	        DWORD i;
+		DWORD *src = (DWORD *) src_d->lpSurface, *dst;
+		
+		surface = (DWORD *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, src_d->dwWidth * src_d->dwHeight * sizeof(DWORD));
+		dst = (DWORD *) surface;
+		if (src_d->dwFlags & DDSD_CKSRCBLT) {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        DWORD color = *src++;
+			*dst = (color & 0x00FFFFFF) << 8;
+			if ((color < src_d->ddckCKSrcBlt.dwColorSpaceLowValue) ||
+			    (color > src_d->ddckCKSrcBlt.dwColorSpaceHighValue))
+			    *dst |= (color & 0xFF000000) >> 24;
+			dst++;
+		    }
+		} else {
+		    for (i = 0; i < src_d->dwHeight * src_d->dwWidth; i++) {
+		        DWORD color = *src++;
+			*dst = (color & 0x00FFFFFF) << 8;
+			*dst |= (color & 0xFF000000) >> 24;
+		    }
+		}
+		format = GL_RGBA;
+		pixel_format = GL_UNSIGNED_INT_8_8_8_8;
+	    } else if ((src_d->ddpfPixelFormat.u2.dwRBitMask ==        0x00FF0000) &&
+		       (src_d->ddpfPixelFormat.u3.dwGBitMask ==        0x0000FF00) &&
+		       (src_d->ddpfPixelFormat.u4.dwBBitMask ==        0x000000FF) &&
 		       (src_d->ddpfPixelFormat.u5.dwRGBAlphaBitMask == 0x00000000)) {
 	        /* Just add an alpha component and handle color-keying... */
 	        DWORD i;
