@@ -24,7 +24,11 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <sys/types.h>
+
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
+
 
 #include "windef.h"
 #include "winbase.h"

@@ -35,7 +35,9 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef HAVE_UTIME_H
 #include <utime.h>
+#endif
 
 #include "winerror.h"
 #include "winbase.h"
