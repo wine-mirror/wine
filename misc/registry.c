@@ -1086,7 +1086,8 @@ static void _save_at_exit(HKEY hkey,LPCSTR path)
 }
 
 /* configure save files and start the periodic saving timer [Internal] */
-static void _init_registry_saving( HKEY hkey_users_default )
+static void _init_registry_saving( HKEY hkey_local_machine, HKEY hkey_current_user,
+                                   HKEY hkey_users_default )
 {
     int all;
     int period = 0;
@@ -1106,8 +1107,8 @@ static void _init_registry_saving( HKEY hkey_users_default )
 
     if (PROFILE_GetWineIniBool(registryW, WritetoHomeRegistryFilesW, 1))
     {
-        _save_at_exit(HKEY_CURRENT_USER,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
-        _save_at_exit(HKEY_LOCAL_MACHINE,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
+        _save_at_exit(hkey_current_user,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER );
+        _save_at_exit(hkey_local_machine,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
         _save_at_exit(hkey_users_default,"/" SAVE_LOCAL_REGBRANCH_USER_DEFAULT);
     }
 
@@ -1503,7 +1504,8 @@ static void _convert_and_load_native_registry(LPCWSTR fn, HKEY hkey, int reg_typ
 }
 
 /* load all native windows registry files [Internal] */
-static void _load_windows_registry( HKEY hkey_users_default )
+static void _load_windows_registry( HKEY hkey_local_machine, HKEY hkey_current_user,
+                                    HKEY hkey_users_default )
 {
     int reg_type;
     WCHAR windir[MAX_PATHNAME_LEN];
@@ -1515,7 +1517,6 @@ static void _load_windows_registry( HKEY hkey_users_default )
     static const WCHAR WineW[] = {'W','i','n','e',0};
     static const WCHAR ProfileW[] = {'P','r','o','f','i','l','e',0};
     static const WCHAR empty_strW[] = { 0 };
-    static const WCHAR Machine[] = {'M','a','c','h','i','n','e',0};
     static const WCHAR System[] = {'M','a','c','h','i','n','e','\\','S','y','s','t','e','m',0};
     static const WCHAR Software[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e',0};
     static const WCHAR Clone[] = {'M','a','c','h','i','n','e','\\',
@@ -1545,7 +1546,7 @@ static void _load_windows_registry( HKEY hkey_users_default )
             /* user specific ntuser.dat */
             if (PROFILE_GetWineIniString( WineW, ProfileW, empty_strW, path, MAX_PATHNAME_LEN )) {
                 strcatW(path, ntuser_datW);
-                _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WINNT,1);
+                _convert_and_load_native_registry(path,hkey_current_user,REG_WINNT,1);
             }
 
             /* default user.dat */
@@ -1576,18 +1577,13 @@ static void _load_windows_registry( HKEY hkey_users_default )
                 NtClose( hkey );
             }
 
-            RtlInitUnicodeString( &nameW, Machine );
-            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
-            {
-                strcpyW(path, windir);
-                strcatW(path, samW);
-                _convert_and_load_native_registry(path,hkey,REG_WINNT,0);
+            strcpyW(path, windir);
+            strcatW(path, samW);
+            _convert_and_load_native_registry(path,hkey_local_machine,REG_WINNT,0);
 
-                strcpyW(path,windir);
-                strcatW(path, securityW);
-                _convert_and_load_native_registry(path,hkey,REG_WINNT,0);
-                NtClose( hkey );
-            }
+            strcpyW(path,windir);
+            strcatW(path, securityW);
+            _convert_and_load_native_registry(path,hkey_local_machine,REG_WINNT,0);
 
             /* this key is generated when the nt-core booted successfully */
             RtlInitUnicodeString( &nameW, Clone );
@@ -1602,16 +1598,11 @@ static void _load_windows_registry( HKEY hkey_users_default )
             static const WCHAR classes_datW[] = {'\\','c','l','a','s','s','e','s','.','d','a','t',0};
             static const WCHAR user_datW[] = {'\\','u','s','e','r','.','d','a','t',0};
 
-            RtlInitUnicodeString( &nameW, Machine );
-            if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
-            {
-                _convert_and_load_native_registry(system_1stW,hkey,REG_WIN95,0);
+            _convert_and_load_native_registry(system_1stW,hkey_local_machine,REG_WIN95,0);
 
-                strcpyW(path, windir);
-                strcatW(path, system_datW);
-                _convert_and_load_native_registry(path,hkey,REG_WIN95,0);
-                NtClose( hkey );
-            }
+            strcpyW(path, windir);
+            strcatW(path, system_datW);
+            _convert_and_load_native_registry(path,hkey_local_machine,REG_WIN95,0);
 
             RtlInitUnicodeString( &nameW, ClassesRootW );
             if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
@@ -1625,7 +1616,7 @@ static void _load_windows_registry( HKEY hkey_users_default )
             if (PROFILE_GetWineIniString(WineW, ProfileW, empty_strW, path, MAX_PATHNAME_LEN)) {
 	        /* user specific user.dat */
 	        strcatW(path, user_datW);
-                _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WIN95,1);
+                _convert_and_load_native_registry(path,hkey_current_user,REG_WIN95,1);
 
 	        /* default user.dat */
 	        if (hkey_users_default) {
@@ -1636,7 +1627,7 @@ static void _load_windows_registry( HKEY hkey_users_default )
             } else {
                 strcpyW(path, windir);
                 strcatW(path, user_datW);
-                _convert_and_load_native_registry(path,HKEY_CURRENT_USER,REG_WIN95,1);
+                _convert_and_load_native_registry(path,hkey_current_user,REG_WIN95,1);
             }
             break;
         }
@@ -1658,19 +1649,20 @@ static void _load_windows_registry( HKEY hkey_users_default )
 }
 
 /* load global registry files (stored in /etc/wine) [Internal] */
-static void _load_global_registry(void)
+static void _load_global_registry( HKEY hkey_local_machine, HKEY hkey_users )
 {
     TRACE("(void)\n");
 
     /* Load the global HKU hive directly from sysconfdir */
-    load_wine_registry( HKEY_USERS, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT );
+    load_wine_registry( hkey_users, SAVE_GLOBAL_REGBRANCH_USER_DEFAULT );
 
     /* Load the global machine defaults directly from sysconfdir */
-    load_wine_registry( HKEY_LOCAL_MACHINE, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE );
+    load_wine_registry( hkey_local_machine, SAVE_GLOBAL_REGBRANCH_LOCAL_MACHINE );
 }
 
 /* load home registry files (stored in ~/.wine) [Internal] */
-static void _load_home_registry( HKEY hkey_users_default )
+static void _load_home_registry( HKEY hkey_local_machine, HKEY hkey_current_user,
+                                 HKEY hkey_users_default )
 {
     LPCSTR confdir = wine_get_config_dir();
     LPSTR tmp = _xmalloc(strlen(confdir)+20);
@@ -1681,11 +1673,11 @@ static void _load_home_registry( HKEY hkey_users_default )
 
     strcpy(tmp,confdir);
     strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_CURRENT_USER);
-    load_wine_registry(HKEY_CURRENT_USER,tmp);
+    load_wine_registry(hkey_current_user,tmp);
 
     strcpy(tmp,confdir);
     strcat(tmp,"/" SAVE_LOCAL_REGBRANCH_LOCAL_MACHINE);
-    load_wine_registry(HKEY_LOCAL_MACHINE,tmp);
+    load_wine_registry(hkey_local_machine,tmp);
 
     free(tmp);
 }
@@ -1693,11 +1685,13 @@ static void _load_home_registry( HKEY hkey_users_default )
 /* load all registry (native and global and home) */
 void SHELL_LoadRegistry( void )
 {
-    HKEY hkey_users_default;
+    HKEY hkey_local_machine, hkey_users, hkey_users_default, hkey_current_user;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    static const WCHAR DefaultW[] = {'U','s','e','r','\\','.','D','e','f','a','u','l','t',0};
+    static const WCHAR MachineW[] = {'M','a','c','h','i','n','e',0};
+    static const WCHAR UserW[] = {'U','s','e','r',0};
+    static const WCHAR DefaultW[] = {'.','D','e','f','a','u','l','t',0};
     static const WCHAR RegistryW[] = {'R','e','g','i','s','t','r','y',0};
     static const WCHAR load_win_reg_filesW[] = {'L','o','a','d','W','i','n','d','o','w','s','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
     static const WCHAR load_global_reg_filesW[] = {'L','o','a','d','G','l','o','b','a','l','R','e','g','i','s','t','r','y','F','i','l','e','s',0};
@@ -1714,22 +1708,32 @@ void SHELL_LoadRegistry( void )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
+    RtlInitUnicodeString( &nameW, MachineW );
+    NtCreateKey( &hkey_local_machine, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL );
+    RtlInitUnicodeString( &nameW, UserW );
+    NtCreateKey( &hkey_users, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL );
+
+    attr.RootDirectory = hkey_users;
     RtlInitUnicodeString( &nameW, DefaultW );
     if (NtCreateKey( &hkey_users_default, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
     {
         ERR("Cannot create HKEY_USERS/.Default\n" );
         ExitProcess(1);
     }
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey_current_user );
 
     _set_registry_levels(0,0,0);
     _allocate_default_keys();
     if (PROFILE_GetWineIniBool(RegistryW, load_win_reg_filesW, 1))
-        _load_windows_registry( hkey_users_default );
+        _load_windows_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
     if (PROFILE_GetWineIniBool(RegistryW, load_global_reg_filesW, 1))
-        _load_global_registry();
+        _load_global_registry( hkey_local_machine, hkey_users );
     _set_registry_levels(1,0,0);
     if (PROFILE_GetWineIniBool(RegistryW, load_home_reg_filesW, 1))
-        _load_home_registry( hkey_users_default );
-    _init_registry_saving( hkey_users_default );
+        _load_home_registry( hkey_local_machine, hkey_current_user, hkey_users_default );
+    _init_registry_saving( hkey_local_machine, hkey_current_user, hkey_users_default );
     NtClose(hkey_users_default);
+    NtClose(hkey_current_user);
+    NtClose(hkey_users);
+    NtClose(hkey_local_machine);
 }

@@ -621,7 +621,7 @@ DWORD WINAPI RtlOpenCurrentUser(
 
 	RtlFormatCurrentUserKeyPath(&ObjectName);
 	InitializeObjectAttributes(&ObjectAttributes,&ObjectName,OBJ_CASE_INSENSITIVE,0, NULL);
-	ret = NtOpenKey(KeyHandle, DesiredAccess, &ObjectAttributes);
+	ret = NtCreateKey(KeyHandle, DesiredAccess, &ObjectAttributes, 0, NULL, 0, NULL);
 	RtlFreeUnicodeString(&ObjectName);
 	return ret;
 }

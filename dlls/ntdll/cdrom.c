@@ -188,7 +188,7 @@ void CDROM_InitRegistry(int dev)
     DWORD disp;
 
     attr.Length = sizeof(attr);
-    attr.RootDirectory = HKEY_LOCAL_MACHINE;
+    attr.RootDirectory = 0;
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
@@ -198,7 +198,7 @@ void CDROM_InitRegistry(int dev)
         return;
 
     /* Ensure there is Scsi key */
-    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "HARDWARE\\DEVICEMAP\\Scsi" ) ||
+    if (!RtlCreateUnicodeStringFromAsciiz( &nameW, "Machine\\HARDWARE\\DEVICEMAP\\Scsi" ) ||
         NtCreateKey( &scsiKey, KEY_ALL_ACCESS, &attr, 0,
                      NULL, REG_OPTION_VOLATILE, &disp ))
     {

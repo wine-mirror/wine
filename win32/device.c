@@ -570,11 +570,94 @@ void VxDCall( DWORD service, CONTEXT86 *context )
  */
 
 
+#define HKEY_SPECIAL_ROOT_FIRST   HKEY_CLASSES_ROOT
+#define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
+#define NB_SPECIAL_ROOT_KEYS      ((UINT)HKEY_SPECIAL_ROOT_LAST - (UINT)HKEY_SPECIAL_ROOT_FIRST + 1)
+
+static HKEY special_root_keys[NB_SPECIAL_ROOT_KEYS];
+
+static const WCHAR name_CLASSES_ROOT[] =
+    {'M','a','c','h','i','n','e','\\',
+     'S','o','f','t','w','a','r','e','\\',
+     'C','l','a','s','s','e','s',0};
+static const WCHAR name_LOCAL_MACHINE[] =
+    {'M','a','c','h','i','n','e',0};
+static const WCHAR name_USERS[] =
+    {'U','s','e','r',0};
+static const WCHAR name_PERFORMANCE_DATA[] =
+    {'P','e','r','f','D','a','t','a',0};
+static const WCHAR name_CURRENT_CONFIG[] =
+    {'M','a','c','h','i','n','e','\\',
+     'S','y','s','t','e','m','\\',
+     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+     'H','a','r','d','w','a','r','e','P','r','o','f','i','l','e','s','\\',
+     'C','u','r','r','e','n','t',0};
+static const WCHAR name_DYN_DATA[] =
+    {'D','y','n','D','a','t','a',0};
+
+#define DECL_STR(key) { sizeof(name_##key)-sizeof(WCHAR), sizeof(name_##key), (LPWSTR)name_##key }
+static UNICODE_STRING root_key_names[NB_SPECIAL_ROOT_KEYS] =
+{
+    DECL_STR(CLASSES_ROOT),
+    { 0, 0, NULL },         /* HKEY_CURRENT_USER is determined dynamically */
+    DECL_STR(LOCAL_MACHINE),
+    DECL_STR(USERS),
+    DECL_STR(PERFORMANCE_DATA),
+    DECL_STR(CURRENT_CONFIG),
+    DECL_STR(DYN_DATA)
+};
+#undef DECL_STR
+
+
 /* check if value type needs string conversion (Ansi<->Unicode) */
 inline static int is_string( DWORD type )
 {
     return (type == REG_SZ) || (type == REG_EXPAND_SZ) || (type == REG_MULTI_SZ);
 }
+
+/* create one of the HKEY_* special root keys */
+static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
+{
+    HKEY ret = 0;
+    int idx = (UINT)hkey - (UINT)HKEY_SPECIAL_ROOT_FIRST;
+
+    if (hkey == HKEY_CURRENT_USER)
+    {
+        if (RtlOpenCurrentUser( access, &hkey )) return 0;
+    }
+    else
+    {
+        OBJECT_ATTRIBUTES attr;
+
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = 0;
+        attr.ObjectName = &root_key_names[idx];
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        if (NtCreateKey( &hkey, access, &attr, 0, NULL, 0, NULL )) return 0;
+    }
+
+    if (!(ret = InterlockedCompareExchange( (PLONG)&special_root_keys[idx], hkey, 0 )))
+        ret = hkey;
+    else
+        NtClose( hkey );  /* somebody beat us to it */
+    return ret;
+}
+
+/* map the hkey from special root to normal key if necessary */
+inline static HKEY get_special_root_hkey( HKEY hkey )
+{
+    HKEY ret = hkey;
+
+    if ((hkey >= HKEY_SPECIAL_ROOT_FIRST) && (hkey <= HKEY_SPECIAL_ROOT_LAST))
+    {
+        if (!(ret = special_root_keys[(UINT)hkey - (UINT)HKEY_SPECIAL_ROOT_FIRST]))
+            ret = create_special_root_hkey( hkey, KEY_ALL_ACCESS );
+    }
+    return ret;
+}
+
 
 /******************************************************************************
  *           VMM_RegCreateKeyA
@@ -585,6 +668,8 @@ static DWORD VMM_RegCreateKeyA( HKEY hkey, LPCSTR name, LPHKEY retkey )
     UNICODE_STRING nameW;
     ANSI_STRING nameA;
     NTSTATUS status;
+
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -613,6 +698,8 @@ DWORD WINAPI VMM_RegOpenKeyExA(HKEY hkey, LPCSTR name, DWORD reserved, REGSAM ac
     UNICODE_STRING nameW;
     STRING nameA;
     NTSTATUS status;
+
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -649,7 +736,9 @@ static DWORD VMM_RegDeleteKeyA( HKEY hkey, LPCSTR name )
     DWORD ret;
     HKEY tmp;
 
-    if (!name || !*name) return NtDeleteKey( hkey );
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
+    if (!name || !*name) return RtlNtStatusToDosError( NtDeleteKey( hkey ) );
     if (!(ret = VMM_RegOpenKeyExA( hkey, name, 0, 0, &tmp )))
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
@@ -669,6 +758,8 @@ static DWORD VMM_RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD t
     ANSI_STRING nameA;
     WCHAR *dataW = NULL;
     NTSTATUS status;
+
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     if (is_string(type))
     {
@@ -726,6 +817,8 @@ static DWORD VMM_RegDeleteValueA( HKEY hkey, LPCSTR name )
     STRING nameA;
     NTSTATUS status;
 
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
     RtlInitAnsiString( &nameA, name );
     if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
     {
@@ -751,6 +844,7 @@ static DWORD VMM_RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPD
     static const int info_size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
 
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     RtlInitAnsiString( &nameA, name );
     if ((status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
@@ -862,6 +956,7 @@ static DWORD VMM_RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val
 
     /* NT only checks count, not val_count */
     if ((data && !count) || reserved) return ERROR_INVALID_PARAMETER;
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     total_size = info_size + (MAX_PATH + 1) * sizeof(WCHAR);
     if (data) total_size += *count;
@@ -957,6 +1052,8 @@ static DWORD VMM_RegEnumKeyA( HKEY hkey, DWORD index, LPSTR name, DWORD name_len
     KEY_NODE_INFORMATION *info = (KEY_NODE_INFORMATION *)buffer;
     DWORD total_size;
 
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+
     status = NtEnumerateKey( hkey, index, KeyNodeInformation,
                              buffer, sizeof(buffer), &total_size );
 
@@ -1002,6 +1099,8 @@ static DWORD VMM_RegQueryInfoKeyA( HKEY hkey, LPDWORD subkeys, LPDWORD max_subke
     NTSTATUS status;
     KEY_FULL_INFORMATION info;
     DWORD total_size;
+
+    if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
     status = NtQueryKey( hkey, KeyFullInformation, &info, sizeof(info), &total_size );
     if (status && status != STATUS_BUFFER_OVERFLOW) return RtlNtStatusToDosError( status );
