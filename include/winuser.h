@@ -63,6 +63,9 @@ DECL_WINELIB_TYPE_AW(PROPENUMPROCEX)
 DECL_WINELIB_TYPE_AW(WINSTAENUMPROC)
 
 
+typedef HANDLE HDWP;
+
+
 /* flags for HIGHCONTRAST dwFlags field */
 #define HCF_HIGHCONTRASTON  0x00000001
 #define HCF_AVAILABLE       0x00000002
@@ -3133,6 +3136,9 @@ HACCEL      WINAPI CreateAcceleratorTableW(LPACCEL,INT);
 #define     CreateAcceleratorTable WINELIB_NAME_AW(CreateAcceleratorTable)
 HICON     WINAPI CreateIconIndirect(PICONINFO);
 BOOL      WINAPI DestroyAcceleratorTable(HACCEL);
+BOOL        WINAPI EnumDesktopsA(HWINSTA,DESKTOPENUMPROCA,LPARAM);
+BOOL        WINAPI EnumDesktopsW(HWINSTA,DESKTOPENUMPROCW,LPARAM);
+#define     EnumDesktops WINELIB_NAME_AW(EnumDesktops)
 BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
 BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
@@ -3441,6 +3447,9 @@ INT       WINAPI EnumPropsA(HWND,PROPENUMPROCA);
 INT       WINAPI EnumPropsW(HWND,PROPENUMPROCW);
 #define     EnumProps WINELIB_NAME_AW(EnumProps)
 BOOL      WINAPI EnumWindows(WNDENUMPROC,LPARAM);
+BOOL        WINAPI EnumWindowStationsA(WINSTAENUMPROCA,LPARAM);
+BOOL        WINAPI EnumWindowStationsW(WINSTAENUMPROCW,LPARAM);
+#define     EnumWindowStations WINELIB_NAME_AW(EnumWindowStations)
 BOOL      WINAPI EqualRect(const RECT*,const RECT*);
 BOOL      WINAPI EscapeCommFunction(HANDLE,UINT);
 INT       WINAPI ExcludeUpdateRgn(HDC,HWND);
@@ -3556,6 +3565,7 @@ LONG        WINAPI GetWindowLongW(HWND,INT);
 BOOL      WINAPI GetWindowPlacement(HWND,LPWINDOWPLACEMENT);
 BOOL      WINAPI GetWindowRect(HWND,LPRECT);
 INT       WINAPI GetWindowRgn(HWND,HRGN);
+HWINSTA     WINAPI GetProcessWindowStation(void);
 #define     GetWindowTask(hwnd) ((HTASK)GetWindowThreadProcessId(hwnd,NULL))
 INT       WINAPI GetWindowTextA(HWND,LPSTR,INT);
 INT       WINAPI GetWindowTextW(HWND,LPWSTR,INT);
@@ -3668,6 +3678,9 @@ BOOL      WINAPI OemToCharBuffW(LPCSTR,LPWSTR,DWORD);
 BOOL      WINAPI OffsetRect(LPRECT,INT,INT);
 BOOL      WINAPI OpenClipboard(HWND);
 BOOL      WINAPI OpenIcon(HWND);
+HWINSTA     WINAPI OpenWindowStationA(LPSTR,BOOL,ACCESS_MASK);
+HWINSTA     WINAPI OpenWindowStationW(LPWSTR,BOOL,ACCESS_MASK);
+#define     OpenWindowStation WINELIB_NAME_AW(OpenWindowStation)
 BOOL      WINAPI PeekMessageA(LPMSG,HWND,UINT,UINT,UINT);
 BOOL      WINAPI PeekMessageW(LPMSG,HWND,UINT,UINT,UINT);
 #define     PeekMessage WINELIB_NAME_AW(PeekMessage)

@@ -537,7 +537,7 @@ HWINSTA WINAPI CreateWindowStationW(
 	FIXME_(win32)("(%s,0x%08lx,0x%08lx,%p),stub!\n",debugstr_w(winstation),
 		res1,desiredaccess,lpsa
 	);
-	return 0xdeadcafe;
+	return (HWINSTA)0xdeadcafe;
 }
 
 /***********************************************************************

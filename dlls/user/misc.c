@@ -51,10 +51,10 @@ void WINAPI SetLastErrorEx(
  *    Success: Handle to window station associated with calling process
  *    Failure: NULL
  */
-DWORD WINAPI GetProcessWindowStation(void)
+HWINSTA WINAPI GetProcessWindowStation(void)
 {
     FIXME("(void): stub\n");
-    return 1;
+    return (HWINSTA)1;
 }
 
 
