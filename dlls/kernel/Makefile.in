@@ -40,6 +40,7 @@ EXTRASUBDIRS = \
 	tests
 
 CTESTS = \
+	tests/alloc.c \
 	tests/directory.c
 
 PLTESTS = \
