@@ -1091,6 +1091,9 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
     ATOM classAtom;
     CREATESTRUCTA cs;
 
+    if(!instance)
+        instance=GetModuleHandleA(NULL);
+
     if(exStyle & WS_EX_MDICHILD)
         return MDI_CreateMDIWindowA(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
     /* Find the class atom */
@@ -1132,6 +1135,9 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
 {
     ATOM classAtom;
     CREATESTRUCTW cs;
+
+    if(!instance)
+        instance=GetModuleHandleA(NULL);
 
     if(exStyle & WS_EX_MDICHILD)
         return MDI_CreateMDIWindowW(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
