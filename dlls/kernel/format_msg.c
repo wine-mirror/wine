@@ -260,8 +260,7 @@ DWORD WINAPI FormatMessageA(
 						        argliststart=(*(DWORD**)args)+insertnr-1;
 
 						/* CMF - This makes a BIG assumption about va_list */
-                                                /* FIXME: wvsnprintfA is a USER function */
-						while (wvsnprintfA(b, sz, fmtstr, (va_list) argliststart) < 0) {
+						while (vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) {
 						        b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz += 100);
 						}
 						for (x=b; *x; x++) ADD_TO_T(*x);
@@ -318,6 +317,7 @@ DWORD WINAPI FormatMessageA(
 	}
 	HeapFree(GetProcessHeap(),0,target);
 	if (from) HeapFree(GetProcessHeap(),0,from);
+	TRACE("-- returning %d\n", (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?  strlen(*(LPSTR*)lpBuffer):strlen(lpBuffer));
 	return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ? 
 			strlen(*(LPSTR*)lpBuffer):
 			strlen(lpBuffer);
@@ -472,8 +472,7 @@ DWORD WINAPI FormatMessageW(
 						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
 
 						/* CMF - This makes a BIG assumption about va_list */
-                                                /* FIXME: wvsprintfA is a USER function */
-						wvsprintfA(sprintfbuf, fmtstr, (va_list) argliststart);
+						vsprintf(sprintfbuf, fmtstr, (va_list) argliststart);
 					}
 					x=sprintfbuf;
 					while (*x) {
