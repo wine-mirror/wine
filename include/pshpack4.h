@@ -4,7 +4,6 @@
 #if defined(__GNUC__) || defined(__SUNPRO_CC)
 #pragma pack(4)
 #elif defined(__SUNPRO_C)
-#warning "Assumes default alignment is 4"
 #pragma pack()
 #elif !defined(RC_INVOKED)
 #error "4 as alignment isn't supported by the compiler"
