@@ -2144,7 +2144,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     wine_tsx11_unlock();
 
     if (ret == 0)
-	{
+    {
 	BYTE dead_char;
 
 #ifdef XK_EuroSign
@@ -2157,6 +2157,15 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             goto found;
         }
 #endif
+        /* Special case: X turns shift-tab into ISO_Left_Tab. */
+        /* Here we change it back. */
+        if (keysym == XK_ISO_Left_Tab)
+        {
+            bufW[0] = 0x09;
+            ret = 1;
+            goto found;
+        }
+
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
 	    {
