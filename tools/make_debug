@@ -14,8 +14,8 @@ mv $DEBUG_H $DEBUG_H.old
 mv $STDDEBUG_H $STDDEBUG_H.old
 
 # Build the list of debug identifiers
-grep -h dprintf_ */*.c | sed 's/.*dprintf_\([A-Za-z0-9_]*\).*/\1/g' | \
-	sort | uniq > temp.$$
+grep -h dprintf_ `find . -name '*.c' -print` | \
+    sed 's/.*dprintf_\([A-Za-z0-9_]*\).*/\1/g' | sort | uniq > temp.$$
 
 # Build debug.h
 

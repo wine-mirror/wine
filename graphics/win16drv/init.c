@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include "windows.h"
+#include "module.h"
 #include "win16drv.h"
 #include "gdi.h"
 #include "bitmap.h"
@@ -79,6 +81,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSelectPalette */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
+    NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */
@@ -112,6 +115,7 @@ static LOADED_PRINTER_DRIVER *gapLoadedPrinterDrivers[MAX_PRINTER_DRIVERS];
 BOOL32 WIN16DRV_Init(void)
 {
     return DRIVER_RegisterDriver( NULL /* generic driver */, &WIN16DRV_Funcs );
+        
 }
 
 /* Tempory functions, for initialising structures */
@@ -152,7 +156,7 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
  * Thunking utility functions
  */
 
-static BOOL32 AddData(SEGPTR *pSegPtr, void *pData, int nSize, SEGPTR Limit)
+static BOOL32 AddData(SEGPTR *pSegPtr, const void *pData, int nSize, SEGPTR Limit)
 {
     BOOL32 bRet = FALSE;
     char *pBuffer = PTR_SEG_TO_LIN((*pSegPtr));
@@ -165,7 +169,7 @@ static BOOL32 AddData(SEGPTR *pSegPtr, void *pData, int nSize, SEGPTR Limit)
 	SEGPTR SegPtrOld = *pSegPtr;
 	SEGPTR SegPtrNew;
 
-	printf("AddData: Copying %d from %p to %p(0x%x)\n", nSize, pData, pBuffer, (UINT32)*pSegPtr);
+	dprintf_win16drv(stddeb, "AddData: Copying %d from %p to %p(0x%x)\n", nSize, pData, pBuffer, (UINT32)*pSegPtr);
 	memcpy(pBuffer, pData, nSize); 
 	SegPtrNew = (SegPtrOld + nSize + 1);
 	*pdw = (DWORD)SegPtrNew;
@@ -179,7 +183,7 @@ static BOOL32 GetParamData(SEGPTR SegPtrSrc,void *pDataDest, int nSize)
     char *pSrc =  PTR_SEG_TO_LIN(SegPtrSrc);
     char *pDest = pDataDest;
 
-    printf("GetParamData: Copying %d from %lx(%lx) to %lx\n", nSize, (DWORD)pSrc, (DWORD)SegPtrSrc, (DWORD)pDataDest);
+    dprintf_win16drv(stddeb, "GetParamData: Copying %d from %lx(%lx) to %lx\n", nSize, (DWORD)pSrc, (DWORD)SegPtrSrc, (DWORD)pDataDest);
     memcpy(pDest, pSrc, nSize);
     return TRUE;
 }
@@ -195,7 +199,7 @@ static void GetPrinterDriverFunctions(HINSTANCE16 hInst, LOADED_PRINTER_DRIVER *
       LoadPrinterDrvFunc(FUNC_ENUMDFONTS, ORD_ENUMDFONTS);	/* 6 */
       LoadPrinterDrvFunc(FUNC_REALIZEOBJECT, ORD_REALIZEOBJECT);/* 10 */
       LoadPrinterDrvFunc(FUNC_EXTTEXTOUT, ORD_EXTTEXTOUT);	/* 14 */
-      printf ("got func CONTROL 0x%p enable 0x%p enumDfonts 0x%p realizeobject 0x%p extextout 0x%p\n",
+      dprintf_win16drv (stddeb,"got func CONTROL 0x%p enable 0x%p enumDfonts 0x%p realizeobject 0x%p extextout 0x%p\n",
               pLPD->fn[FUNC_CONTROL],
               pLPD->fn[FUNC_ENABLE],
               pLPD->fn[FUNC_ENUMDFONTS],
@@ -221,7 +225,7 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromPDEVICE(SEGPTR segptrPDEVICE)
     return pLPD;
 }
 
-static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(char *pszDriver)
+static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(const char *pszDriver)
 {
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     int		nDriverSlot = 0;
@@ -233,7 +237,7 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromName(char *pszDriver)
 	ptmpLPD = gapLoadedPrinterDrivers[nDriverSlot++];
 	if (ptmpLPD != NULL)
 	{
-	    printf("Comparing %s,%s\n",ptmpLPD->szDriver,pszDriver);
+	    dprintf_win16drv(stddeb, "Comparing %s,%s\n",ptmpLPD->szDriver,pszDriver);
 	    /* Found driver store info, exit loop */
 	    if (lstrcmpi32A(ptmpLPD->szDriver, pszDriver) == 0)
 	      pLPD = ptmpLPD;
@@ -282,7 +286,7 @@ static LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
         strcat(drvName, ".DRV");
         hInst = LoadLibrary(drvName);
     }
-    printf("Loaded the library\n");
+    dprintf_win16drv(stddeb, "Loaded the library\n");
 
     
     if (hInst <= 32)
@@ -304,7 +308,7 @@ static LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver)
 	/* Get DS for the printer module */
 	pLPD->ds_reg = hInst;
 
-	printf("DS for %s is %x\n", pszDriver, pLPD->ds_reg);
+	dprintf_win16drv(stddeb, "DS for %s is %x\n", pszDriver, pLPD->ds_reg);
 
 	/* Get address of printer driver functions */
 	GetPrinterDriverFunctions(hInst, pLPD);
@@ -336,7 +340,7 @@ INT16 PRTDRV_Control(LPPDEVICE lpDestDev, WORD wfunction, SEGPTR lpInData, SEGPT
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
 
-    printf("PRTDRV_Control: %08x 0x%x %08lx %08lx\n", (unsigned int)lpDestDev, wfunction, lpInData, lpOutData);
+    dprintf_win16drv(stddeb, "PRTDRV_Control: %08x 0x%x %08lx %08lx\n", (unsigned int)lpDestDev, wfunction, lpInData, lpOutData);
 
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -345,7 +349,7 @@ INT16 PRTDRV_Control(LPPDEVICE lpDestDev, WORD wfunction, SEGPTR lpInData, SEGPT
 
 	if (pLPD->fn[FUNC_CONTROL] == NULL)
 	{
-	    printf("PRTDRV_Control: Not supported by driver\n");
+	    dprintf_win16drv(stddeb, "PRTDRV_Control: Not supported by driver\n");
 	    return 0;
 	}
 
@@ -357,7 +361,7 @@ INT16 PRTDRV_Control(LPPDEVICE lpDestDev, WORD wfunction, SEGPTR lpInData, SEGPT
 	wRet = CallTo16_word_lwll(pLPD->fn[FUNC_CONTROL], 
                                   lP1, wP2, lP3, lP4);
     }
-    printf("PRTDRV_Control: return %x\n", wRet);
+    dprintf_win16drv(stddeb, "PRTDRV_Control: return %x\n", wRet);
     return wRet;
 
     return 0;
@@ -372,7 +376,7 @@ static WORD PRTDRV_Enable(LPVOID lpDevInfo, WORD wStyle, LPCSTR  lpDestDevType,
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
 
-    printf("PRTDRV_Enable: %s %s\n",lpDestDevType, lpOutputFile);
+    dprintf_win16drv(stddeb, "PRTDRV_Enable: %s %s\n",lpDestDevType, lpOutputFile);
 
     /* Get the printer driver info */
     if (wStyle == INITPDEVICE)
@@ -393,7 +397,7 @@ static WORD PRTDRV_Enable(LPVOID lpDevInfo, WORD wStyle, LPCSTR  lpDestDevType,
 
 	if (pLPD->fn[FUNC_ENABLE] == NULL)
 	{
-	    printf("PRTDRV_Enable: Not supported by driver\n");
+	    dprintf_win16drv(stddeb, "PRTDRV_Enable: Not supported by driver\n");
 	    return 0;
 	}
 
@@ -433,7 +437,7 @@ static WORD PRTDRV_Enable(LPVOID lpDevInfo, WORD wStyle, LPCSTR  lpDestDevType,
 	    GetParamData(lP1, lpDevInfo, nSize);
 	}
     }
-    printf("PRTDRV_Enable: return %x\n", wRet);
+    dprintf_win16drv(stddeb, "PRTDRV_Enable: return %x\n", wRet);
     return wRet;
 }
 
@@ -461,7 +465,7 @@ WORD WineEnumDFontCallback(LPLOGFONT16 lpLogFont, LPTEXTMETRIC16 lpTextMetrics,
     /* Make sure we have the right structure */
     if (pWEPFC != NULL )
     {
-        printf("mode is 0x%x\n",pWEPFC->nMode);
+        dprintf_win16drv(stddeb, "mode is 0x%x\n",pWEPFC->nMode);
         
 	switch (pWEPFC->nMode)
 	{
@@ -475,7 +479,7 @@ WORD WineEnumDFontCallback(LPLOGFONT16 lpLogFont, LPTEXTMETRIC16 lpTextMetrics,
 	  {
 	      PRINTER_FONTS_INFO *pPFI;
                   
-	      printf("WineEnumDFontCallback: Found %s %x\n", 
+	      dprintf_win16drv(stddeb, "WineEnumDFontCallback: Found %s %x\n", 
 		     lpLogFont->lfFaceName, wFontType);
 	      
 	      pPFI = &pWEPFC->pLPD->paPrinterFonts[pWEPFC->nCount];
@@ -488,7 +492,7 @@ WORD WineEnumDFontCallback(LPLOGFONT16 lpLogFont, LPTEXTMETRIC16 lpTextMetrics,
 	}
 	wRet = 1;
     }
-    printf("WineEnumDFontCallback: returnd %d\n", wRet);
+    dprintf_win16drv(stddeb, "WineEnumDFontCallback: returnd %d\n", wRet);
     return wRet;
 }
 
@@ -501,7 +505,7 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
     WORD wRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
 
-    printf("PRTDRV_EnumDFonts:\n");
+    dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts:\n");
 
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -513,7 +517,7 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
 
 	if (pLPD->fn[FUNC_ENUMDFONTS] == NULL)
 	{
-	    printf("PRTDRV_EnumDFonts: Not supported by driver\n");
+	    dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts: Not supported by driver\n");
 	    return 0;
 	}
 
@@ -540,7 +544,7 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
     else 
         printf("Failed to find device\n");
     
-    printf("PRTDRV_EnumDFonts: return %x\n", wRet);
+    dprintf_win16drv(stddeb, "PRTDRV_EnumDFonts: return %x\n", wRet);
     return wRet;
 }
 
@@ -554,7 +558,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
     WORD dwRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     
-    printf("PRTDRV_RealizeObject:\n");
+    dprintf_win16drv(stddeb, "PRTDRV_RealizeObject:\n");
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -566,7 +570,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 
 	if (pLPD->fn[FUNC_REALIZEOBJECT] == NULL)
 	{
-	    printf("PRTDRV_RealizeObject: Not supported by driver\n");
+	    dprintf_win16drv(stddeb, "PRTDRV_RealizeObject: Not supported by driver\n");
 	    return 0;
 	}
 
@@ -601,7 +605,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
                                     lP1, wP2, lP3, lP4, lP5);
 
     }
-    printf("PRTDRV_RealizeObject: return %x\n", dwRet);
+    dprintf_win16drv(stddeb, "PRTDRV_RealizeObject: return %x\n", dwRet);
     return dwRet;
 }
 
@@ -620,8 +624,16 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     /* Realizing fonts */
     TEXTXFORM TextXForm;
     int nSize;
+    char printerEnabled[20];
+    PROFILE_GetWineIniString( "wine", "printer", "off",
+                             printerEnabled, sizeof(printerEnabled) );
+    if (strcmp(printerEnabled,"on"))
+    {
+        printf("WIN16DRV_CreateDC disabled in wine.conf file\n");
+        return FALSE;
+    }
 
-    printf("In creatdc for (%s,%s,%s) initData 0x%p\n",driver, device, output, initData);
+    dprintf_win16drv(stddeb, "In creatdc for (%s,%s,%s) initData 0x%p\n",driver, device, output, initData);
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( SystemHeap, 0, sizeof(*physDev) );
     if (!physDev) return FALSE;
@@ -630,11 +642,11 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     pLPD = LoadPrinterDriver(driver);
     if (pLPD == NULL)
     {
-	printf("LPGDI_CreateDC: Failed to find printer driver\n");
+	dprintf_win16drv(stddeb, "LPGDI_CreateDC: Failed to find printer driver\n");
         HeapFree( SystemHeap, 0, physDev );
         return FALSE;
     }
-    printf("windevCreateDC pLPD 0x%p\n", pLPD);
+    dprintf_win16drv(stddeb, "windevCreateDC pLPD 0x%p\n", pLPD);
 
     /* Now Get the device capabilities from the printer driver */
     
@@ -646,7 +658,15 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* Add this to the DC */
     dc->w.devCaps = printerDevCaps;
+    dc->w.hVisRgn = CreateRectRgn(0, 0, dc->w.devCaps->horzRes, dc->w.devCaps->vertRes);
+    dc->w.bitsPerPixel = dc->w.devCaps->bitsPixel;
     
+    printf("Got devcaps width %d height %d bits %d planes %d\n",
+           dc->w.devCaps->horzRes,
+           dc->w.devCaps->vertRes, 
+           dc->w.devCaps->bitsPixel,
+           dc->w.devCaps->planes);
+
     /* Now we allocate enough memory for the PDEVICE structure */
     /* The size of this varies between printer drivers */
     /* This PDEVICE is used by the printer DRIVER not by the GDI so must */
@@ -662,7 +682,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     pPDH = (PDEVICE_HEADER *)(PTR_SEG_TO_LIN(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
     pPDH->pLPD = pLPD;
     
-    printf("PRTDRV_Enable: PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
+    dprintf_win16drv(stddeb, "PRTDRV_Enable: PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
     
     /* Now get the printer driver to initialise this data */
     wRet = PRTDRV_Enable((LPVOID)physDev->segptrPDEVICE, INITPDEVICE, device, driver, output, NULL); 
@@ -690,7 +710,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 	    
 	    /* Allocate a buffer to store all of the fonts */
 	    pLPD->nPrinterFonts = wepfc.nCount;
-            printf("Got %d fonts\n",wepfc.nCount);
+            dprintf_win16drv(stddeb, "Got %d fonts\n",wepfc.nCount);
             
 	    if (wepfc.nCount > 0)
 	    {
@@ -737,7 +757,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     {  
 	FONTINFO *p = (FONTINFO *)PTR_SEG_TO_LIN(physDev->segptrFontInfo);
 
-	printf("T:%d VR:%d HR:%d, F:%d L:%d\n",
+	dprintf_win16drv(stddeb, "T:%d VR:%d HR:%d, F:%d L:%d\n",
 	       p->dfType,
 	       p->dfVertRes, p->dfHorizRes,
 	       p->dfFirstCHAR, p->dfLastCHAR
@@ -789,7 +809,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
     DWORD dwRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
     
-    printf("PRTDRV_ExtTextOut:\n");
+    dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut:\n");
     
     if ((pLPD = FindPrinterDriverFromPDEVICE(lpDestDev)) != NULL)
     {
@@ -801,7 +821,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 
 	if (pLPD->fn[FUNC_EXTTEXTOUT] == NULL)
 	{
-	    printf("PRTDRV_ExtTextOut: Not supported by driver\n");
+	    dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: Not supported by driver\n");
 	    return 0;
 	}
 
@@ -813,7 +833,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	{
 	    lP4 = SegPtr;
 	    nSize = sizeof(RECT16);
-            printf("Adding lpClipRect\n");
+            dprintf_win16drv(stddeb, "Adding lpClipRect\n");
             
 	    AddData(&SegPtr, lpClipRect, nSize, Limit);	
 	}
@@ -825,7 +845,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	    /* TTD WARNING THIS STRING ISNT NULL TERMINATED */
 	    lP5 = SegPtr;
 	    nSize = strlen(lpString);
-            printf("Adding string size %d\n",nSize);
+            dprintf_win16drv(stddeb, "Adding string size %d\n",nSize);
             
 	    AddData(&SegPtr, lpString, nSize, Limit);	
 	}
@@ -841,7 +861,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	{
 	    lP8 = SegPtr;
 	    nSize = sizeof(DRAWMODE);
-            printf("adding lpDrawMode\n");
+            dprintf_win16drv(stddeb, "adding lpDrawMode\n");
             
 	    AddData(&SegPtr, lpDrawMode, nSize, Limit);	
 	}
@@ -852,28 +872,28 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	{
 	    lP9 = SegPtr;
 	    nSize = sizeof(TEXTXFORM);
-            printf("Adding TextXForm\n");
+            dprintf_win16drv(stddeb, "Adding TextXForm\n");
 	    AddData(&SegPtr, lpTextXForm, nSize, Limit);	
 	}
 	else
 	  lP9 = 0L;
 	
 	if (lpCharWidths != NULL) 
-	  printf("PRTDRV_ExtTextOut: Char widths not supported\n");
+	  dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: Char widths not supported\n");
 	lP10 = 0;
 	
 	if (lpOpaqueRect != NULL)
 	{
 	    lP11 = SegPtr;
 	    nSize = sizeof(RECT16);
-            printf("Adding opaqueRect\n");
+            dprintf_win16drv(stddeb, "Adding opaqueRect\n");
 	    AddData(&SegPtr, lpOpaqueRect, nSize, Limit);	
 	}
 	else
 	  lP11 = 0L;
 	
 	wP12 = wOptions;
-	printf("Calling exttextout 0x%lx 0x%x 0x%x 0x%lx\n0x%lx 0x%x 0x%lx 0x%lx\n"
+	dprintf_win16drv(stddeb, "Calling exttextout 0x%lx 0x%x 0x%x 0x%lx\n0x%lx 0x%x 0x%lx 0x%lx\n"
                "0x%lx 0x%lx 0x%lx 0x%x\n",lP1, wP2, wP3, lP4, 
 					   lP5, wP6, lP7, lP8, lP9, lP10,
 					   lP11, wP12);
@@ -882,7 +902,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 					   lP5, wP6, lP7, lP8, lP9, lP10,
 					   lP11, wP12);
     }
-    printf("PRTDRV_ExtTextOut: return %lx\n", dwRet);
+    dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: return %lx\n", dwRet);
     return dwRet;
 }
 
@@ -913,7 +933,7 @@ static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const 
     if (count == 0)
       return FALSE;
 
-    printf("LPGDI_ExtTextOut: %04x %d %d %x %p %*s %p\n", dc->hSelf, x, y, 
+    dprintf_win16drv(stddeb, "LPGDI_ExtTextOut: %04x %d %d %x %p %*s %p\n", dc->hSelf, x, y, 
 	   flags,  lprect, count > 0 ? count : 8, str, lpDx);
 
     InitTextXForm(lpTextXForm);
@@ -1055,7 +1075,7 @@ HANDLE16 OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
     HANDLE16 hHandle = SP_ERROR;
     PPRINTJOB pPrintJob;
 
-    printf("OpenJob: \"%s\" \"%s\" %04x\n", lpOutput, lpTitle, hDC);
+    dprintf_win16drv(stddeb, "OpenJob: \"%s\" \"%s\" %04x\n", lpOutput, lpTitle, hDC);
 
     pPrintJob = gPrintJobsTable[0];
     if (pPrintJob == NULL)
@@ -1080,7 +1100,7 @@ HANDLE16 OpenJob(LPSTR lpOutput, LPSTR lpTitle, HDC16 hDC)
 	    gPrintJobsTable[pPrintJob->nIndex] = pPrintJob; 
 	}
     }
-    printf("OpenJob: return %04x\n", hHandle);
+    dprintf_win16drv(stddeb, "OpenJob: return %04x\n", hHandle);
     return hHandle;
 }
 
@@ -1089,7 +1109,7 @@ int CloseJob(HANDLE16 hJob)
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
 
-    printf("CloseJob: %04x\n", hJob);
+    dprintf_win16drv(stddeb, "CloseJob: %04x\n", hJob);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL)
@@ -1107,7 +1127,7 @@ int WriteSpool(HANDLE16 hJob, LPSTR lpData, WORD cch)
     int nRet = SP_ERROR;
     PPRINTJOB pPrintJob = NULL;
 
-    printf("WriteSpool: %04x %08lx %04x\n", hJob, (DWORD)lpData, cch);
+    dprintf_win16drv(stddeb, "WriteSpool: %04x %08lx %04x\n", hJob, (DWORD)lpData, cch);
 
     pPrintJob = FindPrintJobFromHandle(hJob);
     if (pPrintJob != NULL && pPrintJob->fd >= 0 && cch)
@@ -1124,7 +1144,7 @@ int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 {
     int nRet = 0;
 
-    printf("WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
+    dprintf_win16drv(stddeb, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
 
     nRet = MessageBox(NULL, lpMsg, "Printing Error", MB_OKCANCEL);
     return nRet;
@@ -1134,7 +1154,7 @@ int DeleteJob(HANDLE16 hJob, WORD wNotUsed)
 {
     int nRet;
 
-    printf("DeleteJob: %04x\n", hJob);
+    dprintf_win16drv(stddeb, "DeleteJob: %04x\n", hJob);
 
     nRet = FreePrintJob(hJob);
     return nRet;
@@ -1147,13 +1167,13 @@ int DeleteJob(HANDLE16 hJob, WORD wNotUsed)
  */
 int StartSpoolPage(HANDLE16 hJob)
 {
-    printf("StartSpoolPage GDI.246 unimplemented\n");
+    dprintf_win16drv(stddeb, "StartSpoolPage GDI.246 unimplemented\n");
     return 1;
 
 }
 int EndSpoolPage(HANDLE16 hJob)
 {
-    printf("EndSpoolPage GDI.247 unimplemented\n");
+    dprintf_win16drv(stddeb, "EndSpoolPage GDI.247 unimplemented\n");
     return 1;
 }
 
@@ -1161,6 +1181,6 @@ int EndSpoolPage(HANDLE16 hJob)
 DWORD GetSpoolJob(int nOption, LONG param)
 {
     DWORD retval = 0;
-    printf("In GetSpoolJob param 0x%lx noption %d\n",param, nOption);
+    dprintf_win16drv(stddeb, "In GetSpoolJob param 0x%lx noption %d\n",param, nOption);
     return retval;
 }

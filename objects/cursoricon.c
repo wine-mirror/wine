@@ -608,10 +608,10 @@ BOOL DestroyCursor( HCURSOR16 hCursor )
 /***********************************************************************
  *           DrawIcon    (USER.84)
  */
-BOOL DrawIcon( HDC hdc, INT x, INT y, HICON16 hIcon )
+BOOL DrawIcon( HDC16 hdc, INT x, INT y, HICON16 hIcon )
 {
     CURSORICONINFO *ptr;
-    HDC hMemDC;
+    HDC16 hMemDC;
     HBITMAP16 hXorBits, hAndBits;
     COLORREF oldFg, oldBg;
 

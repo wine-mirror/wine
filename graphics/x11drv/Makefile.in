@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = x11drv
 
 C_SRCS = \
+	clipping.c \
 	font.c \
 	init.c
 

@@ -59,6 +59,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pSelectPalette */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
+    X11DRV_SetDeviceClipping,        /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */

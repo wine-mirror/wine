@@ -12,29 +12,26 @@ hour.
 To add a new language to the list of languages that Wine can handle
 you must...
 
-1.  Edit resources/Makefile.in variable "LANGUAGES" to include a new
-    abbreviation for the language.
-
-2.  Edit ./wine.man (search for -language) to show the new language
+1.  Edit ./wine.man (search for -language) to show the new language
     abbreviation.
 
-3.  Edit misc/main.c variable "Languages" to contain the new language
+2.  Edit misc/main.c variable "Languages" to contain the new language
     abbreviation and language ID.  Also edit macro "USAGE" to show the
     new abbreviation.
 
-4.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
+3.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
     LANG_XX where XX is the new abbreviation.
 
-5.  Edit misc/ole2nls.c function "GetUserDefaultLCID" to contain an
+4.  Edit misc/ole2nls.c function "GetUserDefaultLCID" to contain an
     extra case for your language.  The correct return values seem to
     be a mystery, but don't worry.
 
-6.  Edit resources/sysrec.c to include "sysres_XX.h" where XX is the
+5.  Edit resources/sysrec.c to include "sysres_XX.h" where XX is the
     abbreviation for your language.  (That file will be produced auto-
     matically.)  Edit variable "SYSRES_Resources" to contain an entry
     for your language.
 
-7.  Create a new file, resources/sysres_XX.rc, where XX is the
+6.  Create a new file, resources/sysres_XX.rc, where XX is the
     abbreviation that you chose.  Your best bet is to copy one of the
     other *.rc files and start translating.  [Warning: the author of
     this file does not know the details of the structure of these
@@ -45,6 +42,9 @@ you must...
     You should place these "&"s suitably for your language, not just
     copy the positions from (say) English.  In particular, items within
     one menu should have different highlighted letters.
+
+7.  Edit resources/Makefile.in to add the name of the new file to the
+    SYSRES_SRCS variable.
 
 8.  Edit misc/ole2nls.c function "GetLocaleInfoA" to contain a case for
     your language.

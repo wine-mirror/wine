@@ -69,13 +69,14 @@ Enter the debugger before starting application
 Turn debugging messages on or off - for instance, 
 .I -debugmsg +dll,+heap
 will turn on DLL and heap debugging messages.  The full list is:
-all, accel, bitblt, bitmap, caret, catch, cdaudio, class, clipboard, clipping,
-combo, comm, cursor, dc, dialog, dll, dosfs, driver, edit, enum, event, exec,
-file, fixup, font, gdi, global, graphics, icon, int, key, keyboard, ldt,
-listbox, local, malloc, mci, mcianim, mciwave, mdi, menu, menucalc, message,
-metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient, ole, palette, 
-profile, prop, reg, region, relay, resource, scroll, selector, selectors, 
-stress, syscolor, task, text, timer, toolhelp, utility, win, winsock.
+all, accel, atom, bitblt, bitmap, caret, cdaudio, class, clipboard, clipping,
+combo, comm, commdlg, crtdll, cursor, dc, dde, dialog, dll, dosfs, driver, edit,
+env, event, exec, file, fixup, font, gdi, global, graphics, heap, hook, icon,
+int, key, keyboard, ldt, listbox, local, mci, mcianim, mciwave, mdi, menu,
+message, metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient, ole,
+palette, profile, prop, reg, region, relay, resource, scroll, selector,
+sem, sendmsg, shm, stress, syscolor, task, text, timer, toolhelp, ver, vxd, win,
+win32, winsock.
 .TP
 .I -depth n
 Change the depth to use for multiple-depth screens
@@ -91,9 +92,11 @@ Enables/disables built-in DLL's - starting wine with
 .I -dll -commdlg
 is probably a good idea.
 The full list of DLLs modifiable by this is:
-KERNEL, USER, GDI, WIN87EM, SHELL, SOUND, KEYBOARD, WINSOCK, STRESS, MMSYSTEM,
-SYSTEM, TOOLHELP, MOUSE, COMMDLG, OLE2, OLE2CONV, OLE2DISP, OLE2NLS, OLE2PROX,
-OLECLI, OLESVR, COMPOBJ, STORAGE, WINPROCS, DDEML
+WIN87EM, SHELL, SOUND, KEYBOARD, WINSOCK, STRESS, MMSYSTEM, SYSTEM, TOOLHELP,
+MOUSE, COMMDLG, OLE2, OLE2CONV, OLE2DISP, OLE2NLS, OLE2PROX, OLECLI, OLESVR,
+COMPOBJ, STORAGE, WINPROCS, DDEML, ADVAPI32, COMCTL32, COMDLG32, CRTDLL,
+GDI32, LZ32, MPR, NTDLL, OLE32, SHELL32, USER32, VER, VERSION, W32SYS, WINMM,
+WINSPOOL, WSOCK32
 .TP
 .I -fixedmap
 Use a "standard" color map.
@@ -126,6 +129,10 @@ Use a private color map
 .TP
 .I -synchronous
 Turn on synchronous display mode
+.TP
+.I -winver version
+Specify which Windows version WINE should imitate.
+Possible arguments are: win31, win95 and nt351.
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 

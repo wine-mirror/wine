@@ -357,7 +357,7 @@ INT32 GetObject32W( HANDLE32 handle, INT32 count, LPVOID buffer )
 /***********************************************************************
  *           SelectObject    (GDI.45)
  */
-HGDIOBJ16 SelectObject( HDC hdc, HGDIOBJ16 handle )
+HGDIOBJ16 SelectObject( HDC16 hdc, HGDIOBJ16 handle )
 {
     GDIOBJHDR * ptr = NULL;
     DC * dc;
@@ -423,7 +423,7 @@ BOOL UnrealizeObject( HGDIOBJ16 obj )
 /***********************************************************************
  *           EnumObjects    (GDI.71)
  */
-INT EnumObjects( HDC hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
+INT EnumObjects( HDC16 hdc, INT nObjType, GOBJENUMPROC16 lpEnumFunc,
                  LPARAM lParam )
 {
     /* Solid colors to enumerate */

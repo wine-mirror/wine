@@ -330,8 +330,9 @@ void FONT_GetMetrics( LOGFONT16 * logfont, XFontStruct * xfont,
 /***********************************************************************
  *           GetGlyphOutLine    (GDI.309)
  */
-DWORD GetGlyphOutLine(HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, 
-                      DWORD cbBuffer, LPSTR lpBuffer, LPMAT2 lpmat2) 
+DWORD GetGlyphOutLine( HDC16 hdc, UINT uChar, UINT fuFormat,
+                       LPGLYPHMETRICS lpgm, DWORD cbBuffer, LPSTR lpBuffer,
+                       LPMAT2 lpmat2) 
 {
     fprintf( stdnimp,"GetGlyphOutLine(%04x, '%c', %04x, %p, %ld, %p, %p) // - empty stub!\n",
              hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
@@ -685,7 +686,7 @@ HFONT16 FONT_SelectObject( DC * dc, HFONT16 hfont, FONTOBJ * font )
 /***********************************************************************
  *           GetTextCharacterExtra    (GDI.89)
  */
-short GetTextCharacterExtra( HDC hdc )
+short GetTextCharacterExtra( HDC16 hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -697,7 +698,7 @@ short GetTextCharacterExtra( HDC hdc )
 /***********************************************************************
  *           SetTextCharacterExtra    (GDI.8)
  */
-short SetTextCharacterExtra( HDC hdc, short extra )
+short SetTextCharacterExtra( HDC16 hdc, short extra )
 {
     short prev;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -712,7 +713,7 @@ short SetTextCharacterExtra( HDC hdc, short extra )
 /***********************************************************************
  *           SetTextJustification    (GDI.10)
  */
-short SetTextJustification( HDC hdc, short extra, short breaks )
+short SetTextJustification( HDC16 hdc, short extra, short breaks )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -738,7 +739,7 @@ short SetTextJustification( HDC hdc, short extra, short breaks )
 /***********************************************************************
  *           GetTextFace    (GDI.92)
  */
-INT GetTextFace( HDC hdc, INT count, LPSTR name )
+INT GetTextFace( HDC16 hdc, INT count, LPSTR name )
 {
     FONTOBJ *font;
 
@@ -754,7 +755,7 @@ INT GetTextFace( HDC hdc, INT count, LPSTR name )
 /***********************************************************************
  *           GetTextExtent    (GDI.91)
  */
-DWORD GetTextExtent( HDC hdc, LPCSTR str, short count )
+DWORD GetTextExtent( HDC16 hdc, LPCSTR str, short count )
 {
     SIZE16 size;
     if (!GetTextExtentPoint16( hdc, str, count, &size )) return 0;
@@ -944,7 +945,7 @@ BOOL32 GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
 /***********************************************************************
  *           SetMapperFlags    (GDI.349)
  */
-DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
+DWORD SetMapperFlags(HDC16 hDC, DWORD dwFlag)
 {
     dprintf_font(stdnimp,"SetmapperFlags(%04x, %08lX) // Empty Stub !\n", 
 		 hDC, dwFlag); 
@@ -955,7 +956,7 @@ DWORD SetMapperFlags(HDC hDC, DWORD dwFlag)
 /***********************************************************************
  *           GetCharABCWidths   (GDI.307)
  */
-BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC16 lpABC)
+BOOL GetCharABCWidths(HDC16 hdc, UINT wFirstChar, UINT wLastChar, LPABC16 lpABC)
 {
 
     /* No TrueType fonts in Wine so far */
@@ -970,7 +971,7 @@ BOOL GetCharABCWidths(HDC hdc, UINT wFirstChar, UINT wLastChar, LPABC16 lpABC)
 /***********************************************************************
  *           GetCharWidth    (GDI.350)
  */
-BOOL GetCharWidth(HDC hdc, WORD wFirstChar, WORD wLastChar, LPINT16 lpBuffer)
+BOOL GetCharWidth(HDC16 hdc, WORD wFirstChar, WORD wLastChar, LPINT16 lpBuffer)
 {
     int i, j;
     XFontStruct *xfont;
@@ -1153,7 +1154,7 @@ void InitFontsList(void)
 /*************************************************************************
  *				EnumFonts			[GDI.70]
  */
-INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
+INT EnumFonts(HDC16 hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
 {
   HLOCAL16     hLog;
   HLOCAL16     hMet;
@@ -1223,7 +1224,7 @@ INT EnumFonts(HDC hDC, LPCSTR lpFaceName, FONTENUMPROC16 lpEnumFunc, LPARAM lpDa
 /*************************************************************************
  *				EnumFontFamilies	[GDI.330]
  */
-INT EnumFontFamilies(HDC hDC, LPCSTR lpszFamily, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
+INT EnumFontFamilies(HDC16 hDC, LPCSTR lpszFamily, FONTENUMPROC16 lpEnumFunc, LPARAM lpData)
 {
   HLOCAL16     	hLog;
   HLOCAL16     	hMet;
@@ -1307,7 +1308,7 @@ BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 /*************************************************************************
  *             GetKerningPairs      [GDI.332]
  */
-int GetKerningPairs(HDC hDC,int cPairs,LPKERNINGPAIR16 lpKerningPairs)
+int GetKerningPairs(HDC16 hDC,int cPairs,LPKERNINGPAIR16 lpKerningPairs)
 {
     /* This has to be dealt with when proper font handling is in place 
      *

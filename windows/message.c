@@ -36,7 +36,7 @@
 
 typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, SYSQ_MSG_ACCEPT } SYSQ_STATUS;
 
-extern WPARAM	lastEventChar;				 /* event.c */
+extern WPARAM16 lastEventChar;				 /* event.c */
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
 extern BYTE KeyStateTable[256];
@@ -146,7 +146,7 @@ static SYSQ_STATUS MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
       /* Send the WM_SETCURSOR message */
 
-    SendMessage16( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
+    SendMessage16( msg->hwnd, WM_SETCURSOR, (WPARAM16)msg->hwnd,
                    MAKELONG( hittest, msg->message ));
     if (eatMsg) return SYSQ_MSG_SKIP;
 
@@ -295,7 +295,7 @@ static void MSG_JournalRecordMsg( MSG16 *msg )
 /*****************************************************************
  *              MSG_JournalPlayBackIsAscii
  */
-static BOOL MSG_JournalPlayBackIsAscii(WPARAM wParam)
+static BOOL MSG_JournalPlayBackIsAscii(WPARAM16 wParam)
 {
  return ((wParam>VK_HELP && wParam<VK_F1) || 
           wParam == VK_SPACE  ||
@@ -494,7 +494,7 @@ WORD GetDoubleClickTime()
  * Implementation of an inter-task SendMessage.
  */
 static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND hwnd, UINT msg,
-                                WPARAM wParam, LPARAM lParam )
+                                WPARAM16 wParam, LPARAM lParam )
 {
     INT32	  prevSMRL = debugSMRL;
     QSMCTRL 	  qCtrl = { 0, 1};
@@ -956,6 +956,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
             msg    = pmsg->wMsg;
             wParam = pmsg->wParam;
             lParam = pmsg->lParam;
+            SEGPTR_FREE( pmsg );
         }
     }
 

@@ -151,6 +151,7 @@
 #undef DEBUG_VER
 #undef DEBUG_VXD
 #undef DEBUG_WIN
+#undef DEBUG_WIN16DRV
 #undef DEBUG_WIN32
 #undef DEBUG_WINSOCK
 #endif
@@ -231,6 +232,7 @@
 #define DEBUG_VER
 #define DEBUG_VXD
 #define DEBUG_WIN
+#define DEBUG_WIN16DRV
 #define DEBUG_WIN32
 #define DEBUG_WINSOCK
 #endif

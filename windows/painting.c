@@ -133,7 +133,7 @@ HDC16 BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
         lps->fErase = !SendMessage16(hwnd, (bIcon) ? WM_ICONERASEBKGND
                                                    : WM_ERASEBKGND,
-                                     (WPARAM)lps->hdc, 0 );
+                                     (WPARAM16)lps->hdc, 0 );
     }
     else lps->fErase = TRUE;
 
@@ -208,7 +208,7 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 	if (!hwndParent) return;
 	hbrush = (HBRUSH16)SendMessage32A( hwndParent, 
                                            WM_CTLCOLORMSGBOX + (UINT32)hbrush,
-                                           (WPARAM)hdc, (LPARAM)hwnd );
+                                           (WPARAM32)hdc, (LPARAM)hwnd );
     }
     if (hbrush) FillRect16( hdc, rect, hbrush );
 }
@@ -217,10 +217,10 @@ void PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
 /***********************************************************************
  *           GetControlBrush    (USER.326)
  */
-HBRUSH16 GetControlBrush( HWND hwnd, HDC hdc, WORD control )
+HBRUSH16 GetControlBrush( HWND hwnd, HDC16 hdc, WORD control )
 {
     return (HBRUSH16)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
-                                     (WPARAM)hdc, (LPARAM)hwnd );
+                                     (WPARAM32)hdc, (LPARAM)hwnd );
 }
 
 
@@ -379,7 +379,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
             {
                if (SendMessage16( hwnd, (bIcon) ? WM_ICONERASEBKGND
 						: WM_ERASEBKGND,
-                                  (WPARAM)hdc, 0 ))
+                                  (WPARAM16)hdc, 0 ))
                   wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
                ReleaseDC32( hwnd, hdc );
             }

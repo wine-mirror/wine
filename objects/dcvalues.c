@@ -10,7 +10,7 @@
 
 
 #define DC_GET_VAL( func_type, func_name, dc_field ) \
-func_type func_name( HDC hdc ) \
+func_type func_name( HDC16 hdc ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return 0; \
@@ -18,7 +18,7 @@ func_type func_name( HDC hdc ) \
 }
 
 #define DC_GET_X_Y( func_type, func_name, ret_x, ret_y ) \
-func_type func_name( HDC hdc ) \
+func_type func_name( HDC16 hdc ) \
 { \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \
     if (!dc) return 0; \
@@ -45,7 +45,7 @@ BOOL32 func_name##32( HDC32 hdc, LPPOINT32 pt ) \
 }
 
 #define DC_SET_MODE( func_name, dc_field, min_val, max_val, meta_func ) \
-WORD func_name( HDC hdc, WORD mode ) \
+WORD func_name( HDC16 hdc, WORD mode ) \
 { \
     WORD prevMode; \
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ); \

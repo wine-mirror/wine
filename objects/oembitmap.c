@@ -176,10 +176,8 @@ static char ** const OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 #include "bitmaps/ocr_sizens"
 #include "bitmaps/ocr_bummer"
 #include "bitmaps/ocr_dragobject"
-#if 0
-#include "bitmaps/ocr_sizeall"
-#include "bitmaps/ocr_icocur"
-#endif
+/*#include "bitmaps/ocr_sizeall"*/
+/*#include "bitmaps/ocr_icocur"*/
 
 /* Cursor are not all contiguous (go figure...) */
 #define OCR_FIRST0 OCR_BUMMER

@@ -29,7 +29,4 @@ y.tab.c y.tab.h: dbg.y
 lex.yy.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
 
-clean::
-	$(RM) y.tab.h
-
 ### Dependencies:

@@ -6,19 +6,19 @@
  */
 
 #include <stdio.h>
-#include <windows.h>
+#include "windows.h"
 #include "win.h"
 #include "static.h"
 
-static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc );
-static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc );
+static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc );
+static void STATIC_PaintRectfn( WND *wndPtr, HDC32 hdc );
+static void STATIC_PaintIconfn( WND *wndPtr, HDC32 hdc );
 
 
 static COLORREF color_windowframe, color_background, color_window;
 
 
-typedef void (*pfPaint)( WND *, HDC);
+typedef void (*pfPaint)( WND *, HDC32 );
 
 #define LAST_STATIC_TYPE  SS_LEFTNOWORDWRAP
 
@@ -67,7 +67,7 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
 /***********************************************************************
  *           StaticWndProc
  */
-LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
 {
     LRESULT lResult = 0;
     WND *wndPtr = WIN_FindWndPtr(hWnd);
@@ -180,7 +180,7 @@ LRESULT StaticWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintTextfn( WND *wndPtr, HDC32 hdc )
 {
     RECT16 rc;
     HBRUSH16 hBrush;
@@ -228,7 +228,7 @@ static void STATIC_PaintTextfn( WND *wndPtr, HDC hdc )
     if (wndPtr->text) DrawText16( hdc, wndPtr->text, -1, &rc, wFormat );
 }
 
-static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintRectfn( WND *wndPtr, HDC32 hdc )
 {
     RECT16 rc;
     HBRUSH16 hBrush;
@@ -268,7 +268,7 @@ static void STATIC_PaintRectfn( WND *wndPtr, HDC hdc )
 }
 
 
-static void STATIC_PaintIconfn( WND *wndPtr, HDC hdc )
+static void STATIC_PaintIconfn( WND *wndPtr, HDC32 hdc )
 {
     RECT16 rc;
     HBRUSH16 hbrush;

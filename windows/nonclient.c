@@ -431,10 +431,10 @@ LONG NC_HandleNCHitTest( HWND hwnd, POINT16 pt )
 /***********************************************************************
  *           NC_DrawSysButton
  */
-void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
+void NC_DrawSysButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
     RECT16 rect;
-    HDC hdcMem;
+    HDC16 hdcMem;
     HBITMAP16 hbitmap;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
@@ -455,7 +455,7 @@ void NC_DrawSysButton( HWND hwnd, HDC hdc, BOOL down )
 /***********************************************************************
  *           NC_DrawMaxButton
  */
-static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
+static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -475,7 +475,7 @@ static void NC_DrawMaxButton( HWND hwnd, HDC hdc, BOOL down )
 /***********************************************************************
  *           NC_DrawMinButton
  */
-static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
+static void NC_DrawMinButton( HWND hwnd, HDC16 hdc, BOOL down )
 {
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -497,7 +497,7 @@ static void NC_DrawMinButton( HWND hwnd, HDC hdc, BOOL down )
  * Draw a window frame inside the given rectangle, and update the rectangle.
  * The correct pen for the frame must be selected in the DC.
  */
-static void NC_DrawFrame( HDC hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
+static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
 {
     short width, height, tmp;
 
@@ -573,7 +573,7 @@ static void NC_DrawFrame( HDC hdc, RECT16 *rect, BOOL dlgFrame, BOOL active )
  *
  * Draw the frame used when moving or resizing window.
  */
-static void NC_DrawMovingFrame( HDC hdc, RECT16 *rect, BOOL thickframe )
+static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL thickframe )
 {
     if (thickframe)
     {
@@ -600,7 +600,7 @@ static void NC_DrawMovingFrame( HDC hdc, RECT16 *rect, BOOL thickframe )
  * Draw the window caption.
  * The correct pen for the window frame must be selected in the DC.
  */
-static void NC_DrawCaption( HDC hdc, RECT16 *rect, HWND hwnd,
+static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND hwnd,
 			    DWORD style, BOOL active )
 {
     RECT16 r = *rect;
@@ -778,7 +778,7 @@ LONG NC_HandleNCPaint( HWND hwnd , HRGN32 clip)
  *
  * Handle a WM_NCACTIVATE message. Called from DefWindowProc().
  */
-LONG NC_HandleNCActivate( WND *wndPtr, WPARAM wParam )
+LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
 {
     WORD wStateChange;
 
@@ -804,7 +804,7 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM wParam )
  *
  * Handle a WM_SETCURSOR message. Called from DefWindowProc().
  */
-LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LONG NC_HandleSetCursor( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 {
     if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
 
@@ -873,7 +873,7 @@ BOOL NC_GetSysPopupPos( WND* wndPtr, RECT16* rect )
  *
  * Track a mouse button press on the system menu.
  */
-static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT16 pt )
+static void NC_TrackSysMenu( HWND hwnd, HDC16 hdc, POINT16 pt )
 {
     RECT16 rect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -906,7 +906,7 @@ static void NC_TrackSysMenu( HWND hwnd, HDC hdc, POINT16 pt )
  * Initialisation of a move or resize, when initiatied from a menu choice.
  * Return hit test code for caption or sizing border.
  */
-static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
+static LONG NC_StartSizeMove( HWND hwnd, WPARAM16 wParam, POINT16 *capturePoint )
 {
     LONG hittest = 0;
     POINT16 pt;
@@ -979,7 +979,7 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
     }
     *capturePoint = pt;
     SetCursorPos( capturePoint->x, capturePoint->y );
-    NC_HandleSetCursor( hwnd, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    NC_HandleSetCursor( hwnd, (WPARAM16)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
     return hittest;
 }
 
@@ -1278,7 +1278,7 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM16 wParam, LPARAM lParam )
 {
     HDC32 hdc;
 
@@ -1334,7 +1334,7 @@ LONG NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
 {
     /*
      * if this is an icon, send a restore since we are handling
@@ -1370,7 +1370,7 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM wParam, LPARAM lParam )
  *
  * Handle a WM_SYSCOMMAND message. Called from DefWindowProc().
  */
-LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, POINT16 pt )
+LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     POINT32 pt32;

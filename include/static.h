@@ -17,6 +17,6 @@ typedef struct
     HICON16  hIcon;   /* Icon handle for SS_ICON controls */ 
 } STATICINFO;
 
-extern LRESULT StaticWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam );
+extern LRESULT StaticWndProc(HWND hWnd,UINT uMsg,WPARAM16 wParam,LPARAM lParam );
 
 #endif  /* STATIC_H */

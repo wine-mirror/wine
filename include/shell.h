@@ -81,6 +81,6 @@ DWORD SHGetFileInfo32W(LPCWSTR,DWORD,SHFILEINFO32W*,UINT32,UINT32);
 #define SE_ERR_DDEBUSY          30
 #define SE_ERR_NOASSOC          31
 
-LRESULT AboutDlgProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+LRESULT AboutDlgProc(HWND hWnd,UINT msg,WPARAM16 wParam,LPARAM lParam);
 
 #endif  /* __WINE_SHELL_H */

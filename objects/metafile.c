@@ -184,7 +184,7 @@ BOOL IsValidMetaFile(HMETAFILE16 hmf)
  *         CloseMetafile         GDI.126
  */
 
-HMETAFILE16 CloseMetaFile(HDC hdc)
+HMETAFILE16 CloseMetaFile(HDC16 hdc)
 {
     DC *dc;
     METAHEADER *mh;
@@ -254,7 +254,7 @@ BOOL DeleteMetaFile(HMETAFILE16 hmf)
  *         PlayMetafile         GDI.123
  */
 
-BOOL PlayMetaFile(HDC hdc, HMETAFILE16 hmf)
+BOOL PlayMetaFile(HDC16 hdc, HMETAFILE16 hmf)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -298,7 +298,7 @@ BOOL PlayMetaFile(HDC hdc, HMETAFILE16 hmf)
  *                                    Niels de carpentier, april 1996
  */
 
-BOOL EnumMetaFile(HDC hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpData)
+BOOL EnumMetaFile(HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,LPARAM lpData)
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
@@ -383,8 +383,8 @@ static LPSTR MF_GetDIBitsPointer(LPBITMAPINFO info)
  *         PlayMetaFileRecord      GDI.176
  */
 
-void PlayMetaFileRecord(HDC hdc, HANDLETABLE16 *ht, METARECORD *mr,
-			                           WORD nHandles)
+void PlayMetaFileRecord(HDC16 hdc, HANDLETABLE16 *ht, METARECORD *mr,
+                        WORD nHandles)
 {
     short s1;
     HANDLE16 hndl;
@@ -698,7 +698,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE16 *ht, METARECORD *mr,
 
     case META_STRETCHBLT:
       {
-       HDC hdcSrc=CreateCompatibleDC(hdc);
+       HDC16 hdcSrc=CreateCompatibleDC(hdc);
        HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[10], /*Width */
                                       mr->rdParam[11], /*Height*/
                                       mr->rdParam[13], /*Planes*/
@@ -716,7 +716,7 @@ void PlayMetaFileRecord(HDC hdc, HANDLETABLE16 *ht, METARECORD *mr,
 
     case META_BITBLT:            /* <-- not yet debugged */
       {
-       HDC hdcSrc=CreateCompatibleDC(hdc);
+       HDC16 hdcSrc=CreateCompatibleDC(hdc);
        HBITMAP16 hbitmap=CreateBitmap(mr->rdParam[7]/*Width */,mr->rdParam[8]/*Height*/,
                             mr->rdParam[10]/*Planes*/,mr->rdParam[11]/*BitsPixel*/,
                             (LPSTR)&mr->rdParam[12]/*bits*/);

@@ -2016,7 +2016,7 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
         {
             HDC32 hDC = GetDC32(hWnd);
             
-            if (!SendMessage16( hWnd, WM_ERASEBKGND, (WPARAM)hDC, (LPARAM)0 ))
+            if (!SendMessage16( hWnd, WM_ERASEBKGND, (WPARAM16)hDC, 0 ))
                 wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
             
             ReleaseDC32( hWnd, hDC );
@@ -2032,7 +2032,7 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
     }
     else
     {
-        WPARAM wparam;
+        WPARAM16 wparam;
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
         else wparam = (hWnd == GetActiveWindow());
 
@@ -2126,7 +2126,7 @@ BOOL DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo )
  ptrDragInfo->hScope = hQueryWnd;
 
  bResult = SendMessage16( hQueryWnd ,WM_QUERYDROPOBJECT ,
-                       (WPARAM)wParam ,(LPARAM) spDragInfo );
+                          (WPARAM16)wParam ,(LPARAM) spDragInfo );
  if( !bResult ) 
       ptrDragInfo->pt = pt;
 
@@ -2257,7 +2257,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
     dprintf_msg(stddeb,"drag: got %04x\n",btemp);
 
     /* send WM_DRAGLOOP */
-    SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM)(hCurrentCursor != hBummer) , 
+    SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM16)(hCurrentCursor != hBummer) , 
 	                            (LPARAM) spDragInfo );
     /* send WM_DRAGSELECT or WM_DRAGMOVE */
     if( hCurrentWnd != lpDragInfo->hScope )
@@ -2292,7 +2292,7 @@ DWORD DragObject(HWND hwndScope, HWND hWnd, WORD wObj, HANDLE16 hOfStruct,
 
  if( hCurrentCursor != hBummer ) 
 	dwRet = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT, 
-			     (WPARAM)hWnd, (LPARAM)spDragInfo );
+                               (WPARAM16)hWnd, (LPARAM)spDragInfo );
  GlobalFree16(hDragInfo);
 
  return dwRet;

@@ -133,7 +133,7 @@ typedef FINDREPLACE *LPFINDREPLACE;
 typedef struct {
 	DWORD			lStructSize;
 	HWND			hwndOwner;          /* caller's window handle   */
-	HDC            	        hDC;                /* printer DC/IC or NULL    */
+	HDC16          	        hDC;                /* printer DC/IC or NULL    */
 	SEGPTR                  lpLogFont;          /* ptr. to a LOGFONT struct */
 	short			iPointSize;         /* 10 * size in points of selected font */
 	DWORD			Flags WINE_PACKED;  /* enum. type flags         */
@@ -208,7 +208,7 @@ typedef struct {
 	HWND 		hwndOwner;
 	HGLOBAL16       hDevMode;
 	HGLOBAL16       hDevNames;
-	HDC	       	hDC;
+	HDC16	       	hDC;
 	DWORD 		Flags;
 	UINT		nFromPage;
 	UINT		nToPage;
@@ -285,14 +285,14 @@ BOOL  PrintDlg( SEGPTR print);
 BOOL  ReplaceText( SEGPTR find);
 BOOL  ChooseFont(LPCHOOSEFONT lpChFont);
 
-LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT ColorDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
+LRESULT FormatCharDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam);
 
 #ifdef __cplusplus
 }

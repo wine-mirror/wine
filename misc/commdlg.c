@@ -214,14 +214,14 @@ static LPSTR FILEDLG_GetFileType(LPSTR cfptr, LPSTR fptr, WORD index)
 /***********************************************************************
  *                              FILEDLG_WMDrawItem              [internal]
  */
-static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,int savedlg)
+static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam,int savedlg)
 {
     LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char *str;
     HBRUSH16 hBrush;
     HBITMAP16 hBitmap, hPrevBitmap;
     BITMAP16 bm;
-    HDC hMemDC;
+    HDC16 hMemDC;
 
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1)
     {
@@ -306,7 +306,7 @@ static LONG FILEDLG_WMDrawItem(HWND hWnd, WPARAM wParam, LPARAM lParam,int saved
 /***********************************************************************
  *                              FILEDLG_WMMeasureItem           [internal]
  */
-static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM wParam, LPARAM lParam) 
+static LONG FILEDLG_WMMeasureItem(HWND hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
     BITMAP16 bm;
     LPMEASUREITEMSTRUCT16 lpmeasure;
@@ -333,7 +333,7 @@ static int FILEDLG_HookCallChk(LPOPENFILENAME lpofn)
  *                              FILEDLG_WMInitDialog            [internal]
  */
 
-static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam) 
+static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   int i, n;
   LPOPENFILENAME lpofn;
@@ -422,7 +422,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              FILEDLG_WMCommand               [internal]
  */
-static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam) 
+static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   LONG lRet;
   LPOPENFILENAME lpofn;
@@ -614,7 +614,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           FileOpenDlgProc   (COMMDLG.6)
  */
-LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {  
  LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
@@ -637,14 +637,14 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
       return FILEDLG_WMCommand(hWnd, wParam, lParam);
 #if 0
     case WM_CTLCOLOR:
-      SetBkColor((HDC)wParam, 0x00C0C0C0);
+      SetBkColor((HDC16)wParam, 0x00C0C0C0);
       switch (HIWORD(lParam))
 	{
 	case CTLCOLOR_BTN:
-	  SetTextColor((HDC)wParam, 0x00000000);
+	  SetTextColor((HDC16)wParam, 0x00000000);
 	  return hGRAYBrush;
 	case CTLCOLOR_STATIC:
-	  SetTextColor((HDC)wParam, 0x00000000);
+	  SetTextColor((HDC16)wParam, 0x00000000);
 	  return hGRAYBrush;
 	}
       break;
@@ -657,7 +657,7 @@ LRESULT FileOpenDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           FileSaveDlgProc   (COMMDLG.7)
  */
-LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
  LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
@@ -684,14 +684,14 @@ LRESULT FileSaveDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
   
   /*
   case WM_CTLCOLOR:
-   SetBkColor((HDC)wParam, 0x00C0C0C0);
+   SetBkColor((HDC16)wParam, 0x00C0C0C0);
    switch (HIWORD(lParam))
    {
     case CTLCOLOR_BTN:
-     SetTextColor((HDC)wParam, 0x00000000);
+     SetTextColor((HDC16)wParam, 0x00000000);
      return hGRAYBrush;
     case CTLCOLOR_STATIC:
-     SetTextColor((HDC)wParam, 0x00000000);
+     SetTextColor((HDC16)wParam, 0x00000000);
      return hGRAYBrush;
    }
    return FALSE;
@@ -764,7 +764,7 @@ BOOL ReplaceText( SEGPTR find )
 /***********************************************************************
  *                              FINDDLG_WMInitDialog            [internal]
  */
-static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
 
@@ -809,7 +809,7 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              FINDDLG_WMCommand               [internal]
  */
-static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
@@ -852,7 +852,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           FindTextDlgProc   (COMMDLG.13)
  */
-LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -867,7 +867,7 @@ LRESULT FindTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              REPLACEDLG_WMInitDialog         [internal]
  */
-static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
 
@@ -903,7 +903,7 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              REPLACEDLG_WMCommand            [internal]
  */
-static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
+static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPFINDREPLACE lpfr;
     int uFindReplaceMessage = RegisterWindowMessage32A( FINDMSGSTRING );
@@ -972,7 +972,7 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           ReplaceTextDlgProc   (COMMDLG.14)
  */
-LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT ReplaceTextDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
     switch (wMsg) {
 	case WM_INITDIALOG:
@@ -1018,7 +1018,7 @@ BOOL PrintDlg( SEGPTR printdlg )
 /***********************************************************************
  *           PrintDlgProc   (COMMDLG.21)
  */
-LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -1045,7 +1045,7 @@ LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           PrintSetupDlgProc   (COMMDLG.22)
  */
-LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
 {
   switch (wMsg)
     {
@@ -1176,7 +1176,7 @@ struct CCPRIVATE
 {
  LPCHOOSECOLOR lpcc;  /* points to public known data structure */
  int nextuserdef;     /* next free place in user defined color array */
- HDC hdcMem;          /* color graph used for BitBlt() */
+ HDC16 hdcMem;        /* color graph used for BitBlt() */
  HBITMAP16 hbmMem;    /* color graph bitmap */    
  RECT16 fullsize;     /* original dialog window size */
  UINT msetrgb;        /* # of SETRGBSTRING message (today not used)  */
@@ -1866,7 +1866,7 @@ static BOOL CC_HookCallChk(LPCHOOSECOLOR lpcc)
 /***********************************************************************
  *                            CC_WMInitDialog                 [internal]
  */
-static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam) 
+static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
    int i,res;
    HWND hwnd;
@@ -1936,7 +1936,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              CC_WMCommand                  [internal]
  */
-static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam) 
+static LRESULT CC_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
     int r,g,b,i,xx;
     UINT cokmsg;
@@ -2063,7 +2063,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              CC_WMPaint                    [internal]
  */
-static LRESULT CC_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam) 
+static LRESULT CC_WMPaint(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
     struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
     /* we have to paint dialog children except text and buttons */
@@ -2090,7 +2090,7 @@ static LRESULT CC_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *                              CC_WMLButtonDown              [internal]
  */
-static LRESULT CC_WMLButtonDown(HWND hDlg, WPARAM wParam, LPARAM lParam) 
+static LRESULT CC_WMLButtonDown(HWND hDlg, WPARAM16 wParam, LPARAM lParam) 
 {
    struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
    int r,g,b,i;
@@ -2139,7 +2139,7 @@ static LRESULT CC_WMLButtonDown(HWND hDlg, WPARAM wParam, LPARAM lParam)
  *           ColorDlgProc   (COMMDLG.8)
  */
 LRESULT ColorDlgProc(HWND hDlg, UINT message,
-			 UINT wParam, LONG lParam)
+                     WPARAM16 wParam, LONG lParam)
 {
  int res;
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
@@ -2302,7 +2302,7 @@ INT16 FontFamilyEnumProc( SEGPTR logfont, SEGPTR metrics,
  *
  * Fill font style information into combobox  (without using font.c directly)
  */
-static int SetFontStylesToCombo2(HWND hwnd, HDC hdc, LPLOGFONT16 lplf,
+static int SetFontStylesToCombo2(HWND hwnd, HDC16 hdc, LPLOGFONT16 lplf,
                                  LPTEXTMETRIC16 lptm)
 {
    #define FSTYLES 4
@@ -2402,7 +2402,7 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
 
   if (!SendMessage16(hcmb2,CB_GETCOUNT,0,0))
   {
-       HDC hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
+       HDC32 hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
        i=SetFontStylesToCombo2(hcmb2,hdc,lplf,lptm);
        if (!(lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC))
          ReleaseDC32(hDlg,hdc);
@@ -2416,7 +2416,7 @@ INT16 FontStyleEnumProc( SEGPTR logfont, SEGPTR metrics,
 /***********************************************************************
  *           CFn_WMInitDialog                            [internal]
  */
-LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
+LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   HDC32 hdc;
   int i,j,res,init=0;
@@ -2532,7 +2532,7 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMMeasureItem                           [internal]
  */
-LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
+LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   BITMAP16 bm;
   LPMEASUREITEMSTRUCT16 lpmi=PTR_SEG_TO_LIN((LPMEASUREITEMSTRUCT16)lParam);
@@ -2548,7 +2548,7 @@ LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMDrawItem                              [internal]
  */
-LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
+LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   HBRUSH16 hBrush;
   char *buffer;
@@ -2556,7 +2556,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
   COLORREF cr;
   RECT16 rect;
 #if 0  
-  HDC hMemDC;
+  HDC16 hMemDC;
   int nFontType;
   HBITMAP16 hBitmap; /* for later TT usage */
 #endif  
@@ -2640,7 +2640,7 @@ LRESULT CFn_WMDrawItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMCtlColor                              [internal]
  */
-LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
+LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
 
@@ -2656,12 +2656,12 @@ LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           CFn_WMCommand                               [internal]
  */
-LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
+LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 {
   HFONT16 hFont;
   int i,j;
   long l;
-  HDC hdc;
+  HDC16 hdc;
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
   LPLOGFONT16 lpxx=PTR_SEG_TO_LIN(lpcf->lpLogFont);
   
@@ -2793,7 +2793,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam)
                     2. some CF_.. flags are not supported
                     3. some TType extensions
  */
-LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT FormatCharDlgProc(HWND hDlg, UINT message, WPARAM16 wParam, LPARAM lParam)
 {
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER);  
   if (message!=WM_INITDIALOG)

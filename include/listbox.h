@@ -64,10 +64,10 @@ extern int ListBoxGetItemRect(LPHEADLIST lphl, WORD wIndex, LPRECT16 rect);
 extern int ListBoxSetItemHeight(LPHEADLIST lphl, WORD wIndex, long height);
 extern int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar);
 
-extern void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc,
+extern void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC16 hdc,
 			     LPLISTSTRUCT lpls, RECT16 *rect, WORD itemAction,
 			     WORD itemState);
 extern int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y);
 extern void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls);
 
-extern LRESULT ListBoxWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam);
+extern LRESULT ListBoxWndProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lParam);

@@ -3,17 +3,17 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-PROGRAM   = winerc
+PROGRAMS  = winerc
 MODULE    = none
 
 C_SRCS     = winerc.c
 GEN_C_SRCS = y.tab.c lex.yy.c
 
-all: $(PROGRAM)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-$(PROGRAM): $(OBJS)
+$(PROGRAMS): $(OBJS)
 	$(CC) $(CFLAGS) -o winerc $(OBJS) $(LEXLIB)
 
 y.tab.c y.tab.h: parser.y
@@ -21,8 +21,5 @@ y.tab.c y.tab.h: parser.y
 
 lex.yy.c: parser.l
 	$(LEX) -8 -I $(SRCDIR)/parser.l
-
-clean::
-	$(RM) y.tab.h $(PROGRAM)
 
 ### Dependencies:

@@ -359,7 +359,8 @@ BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
 {
  if( lpFormat->wDataPresent && !lpFormat->hData )
    if( IsWindow(hWndClipOwner) )
-       SendMessage16(hWndClipOwner,WM_RENDERFORMAT,(WPARAM)lpFormat->wFormatID,0L);
+       SendMessage16(hWndClipOwner,WM_RENDERFORMAT,
+                     (WPARAM16)lpFormat->wFormatID,0L);
    else
    {
        dprintf_clipboard(stddeb,"\thWndClipOwner (%04x) is lost!\n", 
@@ -633,7 +634,8 @@ BOOL ChangeClipboardChain(HWND hWnd, HWND hWndNext)
     dprintf_clipboard(stdnimp, "ChangeClipboardChain(%04x, %04x)\n", hWnd, hWndNext);
 
     if( hWndViewer )
-      bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN, (WPARAM)hWnd, (LPARAM)hWndNext);   
+      bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN,
+                             (WPARAM16)hWnd, (LPARAM)hWndNext);   
     else
       dprintf_clipboard(stddeb,"ChangeClipboardChain: hWndViewer is lost\n");
 

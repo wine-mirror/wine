@@ -2,7 +2,7 @@
 #define __MSDOS_H
 
 #include <dirent.h>
-#include <windows.h>
+#include "windows.h"
 #include "comm.h"
 
 struct fcb {

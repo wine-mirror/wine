@@ -141,7 +141,7 @@ BOOL AnimatePalette(HPALETTE16 hPal, UINT StartIndex, UINT NumEntries,
 /***********************************************************************
  *           SetSystemPaletteUse    (GDI.373)
  */
-WORD SetSystemPaletteUse( HDC hdc, WORD use)
+WORD SetSystemPaletteUse( HDC16 hdc, WORD use)
 {
 	 WORD old=SystemPaletteUse;
 	 fprintf(stdnimp,"SetSystemPaletteUse(%04x,%04x) // empty stub !!!\n", hdc, use);
@@ -152,7 +152,7 @@ WORD SetSystemPaletteUse( HDC hdc, WORD use)
 /***********************************************************************
  *           GetSystemPaletteUse    (GDI.374)
  */
-WORD GetSystemPaletteUse( HDC hdc )
+WORD GetSystemPaletteUse( HDC16 hdc )
 {
 	fprintf(stdnimp,"GetSystemPaletteUse(%04x) // empty stub !!!\n", hdc);
 	return SystemPaletteUse;
@@ -162,7 +162,7 @@ WORD GetSystemPaletteUse( HDC hdc )
 /***********************************************************************
  *           GetSystemPaletteEntries    (GDI.375)
  */
-WORD GetSystemPaletteEntries( HDC hdc, WORD start, WORD count,
+WORD GetSystemPaletteEntries( HDC16 hdc, WORD start, WORD count,
 			      LPPALETTEENTRY entries )
 {
     WORD i;
@@ -207,7 +207,7 @@ WORD GetNearestPaletteIndex( HPALETTE16 hpalette, COLORREF color )
 /***********************************************************************
  *           GetNearestColor    (GDI.154)
  */
-COLORREF GetNearestColor( HDC hdc, COLORREF color )
+COLORREF GetNearestColor( HDC16 hdc, COLORREF color )
 {
     COLORREF 	 nearest = 0xFADECAFE;
     DC 		*dc;
@@ -268,7 +268,7 @@ BOOL32 PALETTE_DeleteObject( HPALETTE16 hpalette, PALETTEOBJ *palette )
 /***********************************************************************
  *           GDISelectPalette    (GDI.361)
  */
-HPALETTE16 GDISelectPalette( HDC hdc, HPALETTE16 hpal, WORD wBkg)
+HPALETTE16 GDISelectPalette( HDC16 hdc, HPALETTE16 hpal, WORD wBkg)
 {
     HPALETTE16 prev;
     DC *dc;
@@ -292,7 +292,7 @@ HPALETTE16 GDISelectPalette( HDC hdc, HPALETTE16 hpal, WORD wBkg)
  *           GDIRealizePalette    (GDI.362)
  *
  */
-UINT GDIRealizePalette( HDC hdc )
+UINT GDIRealizePalette( HDC16 hdc )
 {
     PALETTEOBJ* palPtr;
     int		realized = 0;
@@ -326,7 +326,7 @@ UINT GDIRealizePalette( HDC hdc )
 /***********************************************************************
  *           RealizeDefaultPalette    (GDI.365)
  */
-WORD RealizeDefaultPalette( HDC hdc )
+WORD RealizeDefaultPalette( HDC16 hdc )
 {
     DC          *dc;
     PALETTEOBJ*  palPtr;
@@ -364,7 +364,7 @@ WORD RealizeDefaultPalette( HDC hdc )
 /***********************************************************************
  *           IsDCCurrentPalette   (GDI.412)
  */
-BOOL IsDCCurrentPalette(HDC hDC)
+BOOL IsDCCurrentPalette(HDC16 hDC)
 {
     DC* dc = (DC *)GDI_GetObjPtr( hDC, DC_MAGIC );
     return (dc)?(dc->w.hPalette == hPrimaryPalette):FALSE;
@@ -373,7 +373,7 @@ BOOL IsDCCurrentPalette(HDC hDC)
 /***********************************************************************
  *           SelectPalette    (USER.282)
  */
-HPALETTE16 SelectPalette( HDC hDC, HPALETTE16 hPal, BOOL bForceBackground )
+HPALETTE16 SelectPalette( HDC16 hDC, HPALETTE16 hPal, BOOL bForceBackground )
 {
     WORD	wBkgPalette = 1;
     PALETTEOBJ* lpt = (PALETTEOBJ*) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
@@ -426,7 +426,7 @@ UINT16 RealizePalette( HDC32 hDC )
  *	    UpdateColors	(GDI.366)
  *
  */
-int UpdateColors( HDC hDC )
+int UpdateColors( HDC16 hDC )
 {
     HWND32 hWnd = WindowFromDC32( hDC );
 

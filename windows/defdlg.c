@@ -122,7 +122,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    return 0;
 
         case WM_ERASEBKGND:
-	    FillWindow( hwnd, hwnd, (HDC)wParam, (HBRUSH16)CTLCOLOR_DLG );
+	    FillWindow( hwnd, hwnd, (HDC16)wParam, (HBRUSH16)CTLCOLOR_DLG );
 	    return 1;
 
 	case WM_NCDESTROY:

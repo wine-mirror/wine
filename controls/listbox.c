@@ -200,8 +200,8 @@ LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex)
 }
 
 
-void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls, 
-		      RECT16 *rect, WORD itemAction, WORD itemState)
+void ListBoxDrawItem(HWND hwnd, LPHEADLIST lphl, HDC16 hdc, LPLISTSTRUCT lpls, 
+                     RECT16 *rect, WORD itemAction, WORD itemState)
 {
     if (lphl->OwnerDrawn)
     {
@@ -286,7 +286,7 @@ BOOL32 lbDeleteItemNotify(LPHEADLIST lphl, LPLISTSTRUCT lpls)
     delItem->hwndItem = lphl->hSelf;
     delItem->itemData = lpls->mis.itemData;
 
-    ret = SendMessage16( lphl->hParent, WM_DELETEITEM, (WPARAM)lphl->CtlID,
+    ret = SendMessage16( lphl->hParent, WM_DELETEITEM, (WPARAM16)lphl->CtlID,
                          (LPARAM)SEGPTR_GET(delItem) );
     SEGPTR_FREE(delItem);
     return ret;
@@ -397,7 +397,8 @@ int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exa
            itemCmp->itemID2      = -1;
            itemCmp->itemData2    = matchData;
 
-           b = SendMessage16( lphl->hParent, WM_COMPAREITEM, (WPARAM)lphl->CtlID, 
+           b = SendMessage16( lphl->hParent, WM_COMPAREITEM,
+                              (WPARAM16)lphl->CtlID,
                               (LPARAM)SEGPTR_GET(itemCmp) );
          }
 
@@ -1400,7 +1401,7 @@ static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetFont
  */
-static LONG LBSetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
+static LONG LBSetFont(HWND hwnd, WPARAM16 wParam, LPARAM lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
   HDC32 hdc;
@@ -1455,7 +1456,7 @@ static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
   hOldFont = SelectObject(hdc, lphl->hFont);
 
   hBrush = (HBRUSH16)SendMessage32A( lphl->hParent, WM_CTLCOLORLISTBOX,
-                                     (WPARAM)hdc, (LPARAM)hwnd);
+                                     (WPARAM32)hdc, (LPARAM)hwnd);
   if (hBrush == 0) hBrush = GetStockObject(WHITE_BRUSH);
 
   FillRect16(hdc, &rect, hBrush);
@@ -2076,7 +2077,7 @@ static LONG LBSetItemHeight(HWND hwnd, WORD wParam, LONG lParam)
 /***********************************************************************
  *	     LBPassToParent
  */
-static LRESULT LBPassToParent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+static LRESULT LBPassToParent(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
 {
   WND* ptrWnd = WIN_FindWndPtr(hwnd);  
 
@@ -2090,7 +2091,7 @@ static LRESULT LBPassToParent(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 /***********************************************************************
  *           ListBoxWndProc 
  */
-LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
 { 
     switch (message) {
      case WM_CREATE: return LBCreate(hwnd, wParam, lParam);

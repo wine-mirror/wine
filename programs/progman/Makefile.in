@@ -55,9 +55,6 @@ progman: $(MOSTOBJS) $(STRINGOBJS)
 install: dummy
 	$(INSTALL_PROGRAM) progman $(bindir)/progman
 
-clean::
-	$(RM) accel.c accel.h $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h) progman
-
 accel.c accel.h: $(WINERC) Xx.rc
 
 $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc

@@ -328,7 +328,7 @@ BOOL16 THUNK_UnhookWindowsHookEx16( HHOOK hhook )
 {
     THUNK *thunk = (THUNK *)HOOK_GetProc16( hhook );
     BOOL16 ret = UnhookWindowsHookEx16( hhook );
-    THUNK_Free( thunk );
+    if (thunk) THUNK_Free( thunk );
     return ret;
 }
 

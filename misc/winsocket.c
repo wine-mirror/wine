@@ -1183,7 +1183,7 @@ static void recv_message(int sig)
 		}
 
 		result = PostMessage(message.hWnd, message.wMsg,
-				     (WPARAM)message.handle, message.lParam);
+				     (WPARAM16)message.handle, message.lParam);
 		if (result != FALSE) {
 			message_is_valid = 1;
 			break;

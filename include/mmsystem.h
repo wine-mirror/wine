@@ -1257,7 +1257,7 @@ typedef struct {
 typedef struct {
 	DWORD   dwCallback;
 	RECT16  rc;
-	HDC     hDC;
+	HDC16   hDC;
 } MCI_ANIM_UPDATE_PARMS, *LPMCI_ANIM_UPDATE_PARMS;
 
 #define MCI_OVLY_OPEN_WS                0x00010000L

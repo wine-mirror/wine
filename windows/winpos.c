@@ -962,7 +962,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
         LRESULT wRet;
         cbtStruct->fMouse     = fMouse;
         cbtStruct->hWndActive = hwndActive;
-        wRet = HOOK_CallHooks( WH_CBT, HCBT_ACTIVATE, (WPARAM)hWnd,
+        wRet = HOOK_CallHooks( WH_CBT, HCBT_ACTIVATE, (WPARAM16)hWnd,
                                (LPARAM)SEGPTR_GET(cbtStruct) );
         SEGPTR_FREE(cbtStruct);
         if (wRet) return wRet;
@@ -990,7 +990,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
 
     /* send palette messages */
     if (hWnd && SendMessage16( hWnd, WM_QUERYNEWPALETTE, 0, 0L))
-	SendMessage16((HWND16)-1, WM_PALETTEISCHANGING, (WPARAM)hWnd, 0L );
+	SendMessage16((HWND16)-1, WM_PALETTEISCHANGING, (WPARAM16)hWnd, 0L );
 
     /* if prev wnd is minimized redraw icon title 
   if( hwndPrevActive )

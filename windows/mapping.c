@@ -111,7 +111,7 @@ BOOL32 LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
 /***********************************************************************
  *           SetMapMode    (GDI.3)
  */
-WORD SetMapMode( HDC hdc, WORD mode )
+WORD SetMapMode( HDC16 hdc, WORD mode )
 {
     WORD prevMode;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );

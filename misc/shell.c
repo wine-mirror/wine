@@ -351,7 +351,7 @@ static char AppName[128], AppMisc[1536];
 /*************************************************************************
  *				AboutDlgProc		[SHELL.33]
  */
-LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT AboutDlgProc(HWND hWnd, UINT msg, WPARAM16 wParam, LPARAM lParam)
 {
   char Template[512], AppTitle[512];
  

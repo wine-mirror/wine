@@ -28,7 +28,7 @@
 /***********************************************************************
  *           LineTo    (GDI.19)
  */
-BOOL LineTo( HDC hdc, short x, short y )
+BOOL LineTo( HDC16 hdc, short x, short y )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -54,7 +54,7 @@ BOOL LineTo( HDC hdc, short x, short y )
 /***********************************************************************
  *           MoveTo    (GDI.20)
  */
-DWORD MoveTo( HDC hdc, short x, short y )
+DWORD MoveTo( HDC16 hdc, short x, short y )
 {
     short oldx, oldy;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -110,7 +110,7 @@ BOOL32 MoveToEx32( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 pt )
  * Helper functions for Arc(), Chord() and Pie().
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
  */
-static BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
+static BOOL GRAPH_DrawArc( HDC16 hdc, int left, int top, int right, int bottom,
 		    int xstart, int ystart, int xend, int yend, int lines )
 {
     int xcenter, ycenter, istart_angle, idiff_angle, tmp;
@@ -200,7 +200,7 @@ static BOOL GRAPH_DrawArc( HDC hdc, int left, int top, int right, int bottom,
 /***********************************************************************
  *           Arc    (GDI.23)
  */
-BOOL Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
+BOOL Arc( HDC16 hdc, INT left, INT top, INT right, INT bottom,
 	  INT xstart, INT ystart, INT xend, INT yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
@@ -211,7 +211,7 @@ BOOL Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           Pie    (GDI.26)
  */
-BOOL Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+BOOL Pie( HDC16 hdc, INT left, INT top, INT right, INT bottom,
 	  INT xstart, INT ystart, INT xend, INT yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
@@ -222,7 +222,7 @@ BOOL Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           Chord    (GDI.348)
  */
-BOOL Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
+BOOL Chord( HDC16 hdc, INT left, INT top, INT right, INT bottom,
 	    INT xstart, INT ystart, INT xend, INT yend )
 {
     return GRAPH_DrawArc( hdc, left, top, right, bottom,
@@ -233,7 +233,7 @@ BOOL Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
 /***********************************************************************
  *           Ellipse    (GDI.24)
  */
-BOOL Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
+BOOL Ellipse( HDC16 hdc, INT left, INT top, INT right, INT bottom )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) 
@@ -278,7 +278,7 @@ BOOL Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 /***********************************************************************
  *           Rectangle    (GDI.27)
  */
-BOOL Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
+BOOL Rectangle( HDC16 hdc, INT left, INT top, INT right, INT bottom )
 {
     INT32 width;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -336,7 +336,7 @@ BOOL Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 /***********************************************************************
  *           RoundRect    (GDI.28)
  */
-BOOL RoundRect( HDC hDC, INT left, INT top, INT right, INT bottom,
+BOOL RoundRect( HDC16 hDC, INT left, INT top, INT right, INT bottom,
                 INT ell_width, INT ell_height )
 {
     DC * dc = (DC *) GDI_GetObjPtr(hDC, DC_MAGIC);
@@ -554,7 +554,7 @@ INT32 FrameRect32( HDC32 hdc, const RECT32 *rect, HBRUSH32 hbrush )
 /***********************************************************************
  *           SetPixel    (GDI.31)
  */
-COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
+COLORREF SetPixel( HDC16 hdc, short x, short y, COLORREF color )
 {
     Pixel pixel;
     
@@ -584,7 +584,7 @@ COLORREF SetPixel( HDC hdc, short x, short y, COLORREF color )
 /***********************************************************************
  *           GetPixel    (GDI.83)
  */
-COLORREF GetPixel( HDC hdc, short x, short y )
+COLORREF GetPixel( HDC16 hdc, short x, short y )
 {
     static Pixmap pixmap = 0;
     XImage * image;
@@ -626,7 +626,7 @@ COLORREF GetPixel( HDC hdc, short x, short y )
 /***********************************************************************
  *           PaintRgn    (GDI.43)
  */
-BOOL PaintRgn( HDC hdc, HRGN32 hrgn )
+BOOL PaintRgn( HDC16 hdc, HRGN32 hrgn )
 {
     RECT16 box;
     HRGN32 tmpVisRgn, prevVisRgn;
@@ -663,7 +663,7 @@ BOOL PaintRgn( HDC hdc, HRGN32 hrgn )
 /***********************************************************************
  *           FillRgn    (GDI.40)
  */
-BOOL FillRgn( HDC hdc, HRGN32 hrgn, HBRUSH16 hbrush )
+BOOL FillRgn( HDC16 hdc, HRGN32 hrgn, HBRUSH16 hbrush )
 {
     BOOL retval;
     HBRUSH16 prevBrush = SelectObject( hdc, hbrush );
@@ -676,7 +676,7 @@ BOOL FillRgn( HDC hdc, HRGN32 hrgn, HBRUSH16 hbrush )
 /***********************************************************************
  *           FrameRgn     (GDI.41)
  */
-BOOL FrameRgn( HDC hdc, HRGN32 hrgn, HBRUSH16 hbrush, int nWidth, int nHeight )
+BOOL FrameRgn( HDC16 hdc, HRGN32 hrgn, HBRUSH16 hbrush, int nWidth, int nHeight )
 {
     HRGN32 tmp = CreateRectRgn( 0, 0, 0, 0 );
     if(!REGION_FrameRgn( tmp, hrgn, nWidth, nHeight )) return 0;
@@ -688,7 +688,7 @@ BOOL FrameRgn( HDC hdc, HRGN32 hrgn, HBRUSH16 hbrush, int nWidth, int nHeight )
 /***********************************************************************
  *           InvertRgn    (GDI.42)
  */
-BOOL InvertRgn( HDC hdc, HRGN32 hrgn )
+BOOL InvertRgn( HDC16 hdc, HRGN32 hrgn )
 {
     HBRUSH16 prevBrush = SelectObject( hdc, GetStockObject(BLACK_BRUSH) );
     WORD prevROP = SetROP2( hdc, R2_NOT );

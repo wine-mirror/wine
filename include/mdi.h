@@ -21,7 +21,7 @@
 #define WM_MDICALCCHILDSCROLL   0x10AC /* this is exactly what Windows uses */
 
 extern LRESULT MDIClientWndProc(HWND hwnd, UINT message, 
-				WPARAM wParam, LPARAM lParam); /* mdi.c */
+				WPARAM16 wParam, LPARAM lParam); /* mdi.c */
 
 typedef struct tagMDIWCL
 {

@@ -59,6 +59,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pSelectPalette */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
+    NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */

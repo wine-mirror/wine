@@ -366,7 +366,7 @@ BOOL32 DC_SetupGCForText( DC * dc )
 /***********************************************************************
  *           GetDCState    (GDI.179)
  */
-HDC GetDCState( HDC hdc )
+HDC16 GetDCState( HDC16 hdc )
 {
     DC * newdc, * dc;
     HGDIOBJ16 handle;
@@ -381,7 +381,7 @@ HDC GetDCState( HDC hdc )
     memcpy( &newdc->w, &dc->w, sizeof(dc->w) );
     memcpy( &newdc->u.x.pen, &dc->u.x.pen, sizeof(dc->u.x.pen) );
 
-    newdc->hSelf = (HDC)handle;
+    newdc->hSelf = (HDC32)handle;
     newdc->saveLevel = 0;
     newdc->w.flags |= DC_SAVED;
 
@@ -400,7 +400,7 @@ HDC GetDCState( HDC hdc )
 /***********************************************************************
  *           SetDCState    (GDI.180)
  */
-void SetDCState( HDC hdc, HDC hdcs )
+void SetDCState( HDC16 hdc, HDC16 hdcs )
 {
     DC * dc, * dcs;
     HRGN32 hVisRgn, hClipRgn, hGCClipRgn;
@@ -439,9 +439,9 @@ void SetDCState( HDC hdc, HDC hdcs )
 /***********************************************************************
  *           SaveDC    (GDI.30)
  */
-int SaveDC( HDC hdc )
+int SaveDC( HDC16 hdc )
 {
-    HDC hdcs;
+    HDC16 hdcs;
     DC * dc, * dcs;
 
     dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -464,7 +464,7 @@ int SaveDC( HDC hdc )
 /***********************************************************************
  *           RestoreDC    (GDI.39)
  */
-BOOL RestoreDC( HDC hdc, short level )
+BOOL RestoreDC( HDC16 hdc, short level )
 {
     DC * dc, * dcs;
 
@@ -483,7 +483,7 @@ BOOL RestoreDC( HDC hdc, short level )
     
     while ((short)dc->saveLevel >= level)
     {
-	HDC hdcs = dc->header.hNext;
+	HDC16 hdcs = dc->header.hNext;
 	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) return FALSE;
 	dc->header.hNext = dcs->header.hNext;
 	if ((short)--dc->saveLevel < level) SetDCState( hdc, hdcs );
@@ -496,7 +496,7 @@ BOOL RestoreDC( HDC hdc, short level )
 /***********************************************************************
  *           CreateDC    (GDI.53)
  */
-HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
+HDC16 CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
 {
     DC * dc;
     const DC_FUNCTIONS *funcs;
@@ -524,7 +524,7 @@ HDC CreateDC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
 /***********************************************************************
  *           CreateIC    (GDI.153)
  */
-HDC CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
+HDC16 CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initData )
 {
       /* Nothing special yet for ICs */
     return CreateDC( driver, device, output, initData );
@@ -534,7 +534,7 @@ HDC CreateIC( LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODE* initDa
 /***********************************************************************
  *           CreateCompatibleDC    (GDI.52)
  */
-HDC CreateCompatibleDC( HDC hdc )
+HDC16 CreateCompatibleDC( HDC16 hdc )
 {
     DC *dc, *origDC;
     HBITMAP16 hbitmap;
@@ -577,7 +577,7 @@ HDC CreateCompatibleDC( HDC hdc )
 /***********************************************************************
  *           DeleteDC    (GDI.68)
  */
-BOOL DeleteDC( HDC hdc )
+BOOL DeleteDC( HDC16 hdc )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return FALSE;
@@ -587,7 +587,7 @@ BOOL DeleteDC( HDC hdc )
     while (dc->saveLevel)
     {
 	DC * dcs;
-	HDC hdcs = dc->header.hNext;
+	HDC16 hdcs = dc->header.hNext;
 	if (!(dcs = (DC *) GDI_GetObjPtr( hdcs, DC_MAGIC ))) break;
 	dc->header.hNext = dcs->header.hNext;
 	dc->saveLevel--;
@@ -614,7 +614,7 @@ BOOL DeleteDC( HDC hdc )
 /***********************************************************************
  *           ResetDC    (GDI.376)
  */
-HDC ResetDC( HDC hdc, /* DEVMODE */ void *devmode )
+HDC16 ResetDC( HDC16 hdc, /* DEVMODE */ void *devmode )
 {
     fprintf( stderr, "ResetDC: empty stub!\n" );
     return hdc;
@@ -624,7 +624,7 @@ HDC ResetDC( HDC hdc, /* DEVMODE */ void *devmode )
 /***********************************************************************
  *           GetDeviceCaps    (GDI.80)
  */
-int GetDeviceCaps( HDC hdc, WORD cap )
+int GetDeviceCaps( HDC16 hdc, WORD cap )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc) return 0;
@@ -684,7 +684,7 @@ COLORREF SetTextColor( HDC32 hdc, COLORREF color )
 /***********************************************************************
  *           SetTextAlign    (GDI.346)
  */
-WORD SetTextAlign( HDC hdc, WORD textAlign )
+WORD SetTextAlign( HDC16 hdc, WORD textAlign )
 {
     WORD prevAlign;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -703,7 +703,7 @@ WORD SetTextAlign( HDC hdc, WORD textAlign )
 /***********************************************************************
  *           GetDCOrg    (GDI.79)
  */
-DWORD GetDCOrg( HDC hdc )
+DWORD GetDCOrg( HDC16 hdc )
 {
     Window root;
     int x, y, w, h, border, depth;
@@ -720,7 +720,7 @@ DWORD GetDCOrg( HDC hdc )
 /***********************************************************************
  *           SetDCOrg    (GDI.117)
  */
-DWORD SetDCOrg( HDC hdc, short x, short y )
+DWORD SetDCOrg( HDC16 hdc, short x, short y )
 {
     DWORD prevOrg;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -764,7 +764,7 @@ DWORD GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
 /***********************************************************************
  *           SetHookFlags       (GDI.192)
  */
-WORD SetHookFlags(HDC hDC, WORD flags)
+WORD SetHookFlags(HDC16 hDC, WORD flags)
 {
   DC* dc = (DC*)GDI_GetObjPtr( hDC, DC_MAGIC );
 

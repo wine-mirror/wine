@@ -9,7 +9,7 @@
 #include "windows.h"
 #include "gdi.h"
 
-INT Escape( HDC hdc, INT nEscape, INT cbInput,
+INT Escape( HDC16 hdc, INT nEscape, INT cbInput,
             SEGPTR lpszInData, SEGPTR lpvOutData )
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );

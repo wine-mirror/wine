@@ -52,5 +52,6 @@ struct tagDC;
 
 extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
                                          INT32 count, LPSIZE32 size );
+extern VOID X11DRV_SetDeviceClipping(struct tagDC *dc);
 
 #endif  /* __WINE_X11DRV_H */

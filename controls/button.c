@@ -114,10 +114,10 @@ LRESULT ButtonWndProc(HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     case WM_PAINT:
         if (btnPaintFunc[style])
         {
-            PAINTSTRUCT16 ps;
-            HDC hdc = BeginPaint16( hWnd, &ps );
+            PAINTSTRUCT32 ps;
+            HDC32 hdc = BeginPaint32( hWnd, &ps );
             (btnPaintFunc[style])( wndPtr, hdc, ODA_DRAWENTIRE );
-            EndPaint16( hWnd, &ps );
+            EndPaint32( hWnd, &ps );
         }
         break;
 
@@ -338,7 +338,7 @@ void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text)
 {
     static int Pattern[] = {0xAA,0x55,0xAA,0x55,0xAA,0x55,0xAA,0x55};
     HBITMAP16 hbm  = CreateBitmap(8, 8, 1, 1, Pattern);
-    HDC hdcMem   = CreateCompatibleDC(hDC);
+    HDC32 hdcMem = CreateCompatibleDC(hDC);
     HBITMAP16 hbmMem;
     HBRUSH16 hBr;
     RECT32 rect,rc2;

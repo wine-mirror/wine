@@ -91,6 +91,7 @@
 #undef DEBUG_VER
 #undef DEBUG_VXD
 #undef DEBUG_WIN
+#undef DEBUG_WIN16DRV
 #undef DEBUG_WIN32
 #undef DEBUG_WINSOCK
 #endif
@@ -171,6 +172,7 @@
 #define DEBUG_VER
 #define DEBUG_VXD
 #define DEBUG_WIN
+#define DEBUG_WIN16DRV
 #define DEBUG_WIN32
 #define DEBUG_WINSOCK
 #endif
@@ -549,6 +551,11 @@ short debug_msg_enabled[]={
     0,
 #endif
 #ifdef DEBUG_WIN
+    1,
+#else
+    0,
+#endif
+#ifdef DEBUG_WIN16DRV
     1,
 #else
     0,
@@ -1546,8 +1553,21 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_win32 if(!debug_msg_enabled[75]) ; else fprintf
-#define debugging_win32 debug_msg_enabled[75]
+#define dprintf_win16drv if(!debug_msg_enabled[75]) ; else fprintf
+#define debugging_win16drv debug_msg_enabled[75]
+#else
+#ifdef DEBUG_WIN16DRV
+#define dprintf_win16drv fprintf
+#define debugging_win16drv 1
+#else
+#define dprintf_win16drv while(0) fprintf
+#define debugging_win16drv 0
+#endif
+#endif
+
+#ifdef DEBUG_RUNTIME
+#define dprintf_win32 if(!debug_msg_enabled[76]) ; else fprintf
+#define debugging_win32 debug_msg_enabled[76]
 #else
 #ifdef DEBUG_WIN32
 #define dprintf_win32 fprintf
@@ -1559,8 +1579,8 @@ extern short debug_msg_enabled[];
 #endif
 
 #ifdef DEBUG_RUNTIME
-#define dprintf_winsock if(!debug_msg_enabled[76]) ; else fprintf
-#define debugging_winsock debug_msg_enabled[76]
+#define dprintf_winsock if(!debug_msg_enabled[77]) ; else fprintf
+#define debugging_winsock debug_msg_enabled[77]
 #else
 #ifdef DEBUG_WINSOCK
 #define dprintf_winsock fprintf
@@ -1650,6 +1670,7 @@ static char *debug_msg_name[] = {
     "ver",
     "vxd",
     "win",
+    "win16drv",
     "win32",
     "winsock",
     ""

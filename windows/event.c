@@ -50,8 +50,8 @@ BYTE KeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 
 
-       WPARAM   lastEventChar = 0; /* this will have to be changed once
-				    * ToAscii starts working */
+WPARAM16 lastEventChar = 0; /* this will have to be changed once
+                             * ToAscii starts working */
 
 static HWND32 captureWnd = 0;
 static BOOL32 InputEnabled = TRUE;

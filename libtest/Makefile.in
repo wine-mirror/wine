@@ -10,10 +10,12 @@ C_SRCS = \
 	hello.c \
 	hello2.c \
 	hello3.c \
-	hello3res.c \
 	hello4.c \
 	new.c \
 	rolex.c
+
+GEN_C_SRCS = \
+	hello3res.c
 
 all: check_winerc $(PROGRAMS)
 
@@ -36,9 +38,6 @@ new: new.o
 
 rolex: rolex.o
 	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
-
-clean::
-	$(RM) $(PROGRAMS) hello3res.c hello3res.h
 
 hello3res.c hello3res.h: $(WINERC)
 

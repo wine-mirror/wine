@@ -28,7 +28,7 @@
 #define NB_DCE    5  /* Number of DCEs created at startup */
 
 static DCE *firstDCE = 0;
-static HDC defaultDCstate = 0;
+static HDC32 defaultDCstate = 0;
 
 /***********************************************************************
  *           DCE_AllocDCE
@@ -396,7 +396,7 @@ HDC16 GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
 HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 {
     HRGN32 	hrgnVisible;
-    HDC 	hdc = 0;
+    HDC32 	hdc = 0;
     DCE * 	dce;
     DC * 	dc;
     WND * 	wndPtr;

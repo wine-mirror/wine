@@ -17,5 +17,5 @@ typedef struct {
   BOOL    bRedrawFlag;
 } HEADCOMBO,*LPHEADCOMBO;
 
-LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT ComboBoxWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam);
+LRESULT ComboLBoxWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam);

@@ -105,7 +105,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_PAINT:
 	{
 	    PAINTSTRUCT16 ps;
-	    HDC		  hdc = BeginPaint16( wndPtr->hwndSelf, &ps );
+	    HDC16 hdc = BeginPaint16( wndPtr->hwndSelf, &ps );
 	    if( hdc ) 
 	    {
 	      if( (wndPtr->dwStyle & WS_MINIMIZE) && wndPtr->class->hIcon )
@@ -162,7 +162,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 		 if( wndPtr->flags & WIN_NCACTIVATED )
 		 {
 		   FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                               (HDC)wParam, sysColorObjects.hbrushActiveCaption );
+                               (HDC16)wParam, sysColorObjects.hbrushActiveCaption );
 		   return 1;
 		 }
 
@@ -175,11 +175,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                 HBRUSH16 hbrush = CreateSolidBrush( 
 			 GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
                  FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                             (HDC)wParam, hbrush);
+                             (HDC16)wParam, hbrush);
                  DeleteObject (hbrush);
             }
             else FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                                  (HDC)wParam, wndPtr->class->hbrBackground );
+                             (HDC16)wParam, wndPtr->class->hbrBackground );
 	    return 1;
 	}
 
@@ -192,13 +192,13 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CTLCOLORBTN:
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
-        SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
-        SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
+        SetBkColor( (HDC32)wParam, GetSysColor(COLOR_WINDOW) );
+        SetTextColor( (HDC32)wParam, GetSysColor(COLOR_WINDOWTEXT) );
         return (LRESULT)sysColorObjects.hbrushWindow;
 
     case WM_CTLCOLORSCROLLBAR:
-        SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
-        SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
+        SetBkColor( (HDC32)wParam, RGB(255, 255, 255) );
+        SetTextColor( (HDC32)wParam, RGB(0, 0, 0) );
         UnrealizeObject( sysColorObjects.hbrushScrollbar );
         return (LRESULT)sysColorObjects.hbrushScrollbar;
 
@@ -206,15 +206,15 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	{
 	    if (HIWORD(lParam) == CTLCOLOR_SCROLLBAR)
 	    {
-		SetBkColor( (HDC)wParam, RGB(255, 255, 255) );
-		SetTextColor( (HDC)wParam, RGB(0, 0, 0) );
+		SetBkColor( (HDC32)wParam, RGB(255, 255, 255) );
+		SetTextColor( (HDC32)wParam, RGB(0, 0, 0) );
 		UnrealizeObject( sysColorObjects.hbrushScrollbar );
 		return (LRESULT)sysColorObjects.hbrushScrollbar;
 	    }
 	    else
 	    {
-		SetBkColor( (HDC)wParam, GetSysColor(COLOR_WINDOW) );
-		SetTextColor( (HDC)wParam, GetSysColor(COLOR_WINDOWTEXT) );
+		SetBkColor( (HDC32)wParam, GetSysColor(COLOR_WINDOW) );
+		SetTextColor( (HDC32)wParam, GetSysColor(COLOR_WINDOWTEXT) );
 		return (LRESULT)sysColorObjects.hbrushWindow;
 	    }
 	}
@@ -255,7 +255,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	     else
 	         if( wParam == VK_ESCAPE && GetKeyState(VK_SHIFT) < 0 )
 		     SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
-                                    (WPARAM)SC_KEYMENU, (LPARAM)VK_SPACE);
+                                    (WPARAM16)SC_KEYMENU, (LPARAM)VK_SPACE);
 	break;
 
     case WM_KEYUP:
@@ -273,7 +273,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	if (wParam == VK_RETURN && (wndPtr->dwStyle & WS_MINIMIZE))
         {
 	    PostMessage( wndPtr->hwndSelf, WM_SYSCOMMAND,
-                         (WPARAM)SC_RESTORE, 0L ); 
+                         (WPARAM16)SC_RESTORE, 0L ); 
 	    break;
         } 
 	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
@@ -283,7 +283,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                 SendMessage16( wndPtr->parent->hwndSelf, msg, wParam, lParam );
 	    else
                 SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
-                               (WPARAM)SC_KEYMENU, (LPARAM)(DWORD)wParam );
+                               (WPARAM16)SC_KEYMENU, (LPARAM)(DWORD)wParam );
         } 
 	else /* check for Ctrl-Esc */
             if (wParam != VK_ESCAPE) MessageBeep(0);

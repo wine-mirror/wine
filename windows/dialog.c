@@ -64,7 +64,7 @@ static WORD xBaseUnit = 0, yBaseUnit = 0;
 BOOL32 DIALOG_Init()
 {
     TEXTMETRIC16 tm;
-    HDC hdc;
+    HDC16 hdc;
     
       /* Calculate the dialog base units */
 
@@ -281,7 +281,7 @@ static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
 
             /* Send initialisation messages to the control */
         if (dlgInfo->hUserFont) SendMessage32A( hwndCtrl, WM_SETFONT,
-                                               (WPARAM)dlgInfo->hUserFont, 0 );
+                                             (WPARAM32)dlgInfo->hUserFont, 0 );
         if (SendMessage32A(hwndCtrl, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
         {
               /* If there's already a default push-button, set it back */
@@ -582,8 +582,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 
     dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
     if (dlgInfo->hUserFont)
-	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );
-    if (SendMessage32A(hwnd, WM_INITDIALOG, (WPARAM)dlgInfo->hwndFocus, param))
+	SendMessage32A( hwnd, WM_SETFONT, (WPARAM32)dlgInfo->hUserFont, 0 );
+    if (SendMessage32A( hwnd, WM_INITDIALOG,
+                        (WPARAM32)dlgInfo->hwndFocus, param ))
 	SetFocus32( dlgInfo->hwndFocus );
     if (template.style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
     return hwnd;

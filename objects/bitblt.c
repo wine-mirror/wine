@@ -1287,7 +1287,7 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
 /***********************************************************************
  *           PatBlt    (GDI.29)
  */
-BOOL PatBlt( HDC hdc, short left, short top,
+BOOL PatBlt( HDC16 hdc, short left, short top,
 	     short width, short height, DWORD rop)
 {
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -1312,8 +1312,8 @@ BOOL PatBlt( HDC hdc, short left, short top,
 /***********************************************************************
  *           BitBlt    (GDI.34)
  */
-BOOL BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width, INT height,
-	     HDC hdcSrc, INT xSrc, INT ySrc, DWORD rop )
+BOOL BitBlt( HDC16 hdcDst, INT xDst, INT yDst, INT width, INT height,
+	     HDC16 hdcSrc, INT xSrc, INT ySrc, DWORD rop )
 {
     DC *dcDst, *dcSrc;
 
@@ -1340,9 +1340,9 @@ BOOL BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width, INT height,
 /***********************************************************************
  *           StretchBlt    (GDI.35)
  */
-BOOL StretchBlt( HDC hdcDst, short xDst, short yDst,
+BOOL StretchBlt( HDC16 hdcDst, short xDst, short yDst,
                  short widthDst, short heightDst,
-                 HDC hdcSrc, short xSrc, short ySrc,
+                 HDC16 hdcSrc, short xSrc, short ySrc,
                  short widthSrc, short heightSrc, DWORD rop )
 {
     DC *dcDst, *dcSrc;

@@ -55,10 +55,6 @@ install: dummy
 	$(INSTALL_PROGRAM) winhelp $(bindir)/winhelp
 	$(INSTALL_PROGRAM) hlp2sgml $(bindir)/hlp2sgml
 
-clean::
-	$(RM) $(PROGRAMS) lex.yy.c y.tab.c y.tab.h
-	$(RM) $(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h)
-
 y.tab.c y.tab.h: macro.yacc.y
 	$(YACC) -d -t $(SRCDIR)/macro.yacc.y
 

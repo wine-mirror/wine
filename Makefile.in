@@ -129,19 +129,16 @@ $(ALLSUBDIRS): dummy
 install_programs: dummy
 	@cd programs; $(SUBMAKE) install
 
-depend: libdepend emudepend
-
-libdepend: dummy
-	for i in $(COMMONSUBDIRS) $(LIBSUBDIRS); do (cd $$i; $(MAKE) depend); done
-
-emudepend: dummy
-	for i in $(EMUSUBDIRS); do (cd $$i; $(MAKE) depend); done
+depend: dummy
+	for i in $(COMMONSUBDIRS) $(LIBSUBDIRS) $(EMUSUBDIRS); do \
+	  (cd $$i; $(MAKE) depend) || exit 1; \
+	done
 
 etags:
 	etags `find . -name '*.[chS]' -print`
 
 clean:
-	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean); done
+	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
 	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
 	(cd include; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc)

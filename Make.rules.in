@@ -26,17 +26,17 @@ LDLIBS    = @LDLIBS@
 YACC      = @YACC@
 LEX       = @LEX@
 LEXLIB    = @LEXLIB@
-DIVINCL   = -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include -I.
+DIVINCL   = -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include -I$(SRCDIR) -I.
 ALLCFLAGS = $(CFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL) $(X_CFLAGS)
 LDCOMBINE = ld -r
 RM        = rm -f
 BUILD     = $(TOPOBJDIR)/tools/build
+MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WINERC    = $(TOPOBJDIR)/rc/winerc
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
 
 OBJS = $(C_SRCS:.c=.o) $(GEN_C_SRCS:.c=.o) $(ASM_SRCS:.S=.o) $(EXTRA_OBJS)
-DEPEND_SRCS = $(C_SRCS:%=$(SRCDIR)/%) $(GEN_C_SRCS:%=./%)
 
 # Implicit rules
 
@@ -68,6 +68,10 @@ DEPEND_SRCS = $(C_SRCS:%=$(SRCDIR)/%) $(GEN_C_SRCS:%=./%)
 $(WINERC) check_winerc:
 	cd $(TOPOBJDIR)/rc; $(SUBMAKE) winerc
 
+# Rule to rebuild the makedep program
+
+$(MAKEDEP) check_makedep:
+	cd $(TOPOBJDIR)/tools; $(SUBMAKE) makedep
 
 # Rule for main module
 
@@ -77,13 +81,11 @@ $(MODULE).o: $(OBJS)
 
 # Misc. rules
 
-depend:: $(C_SRCS) $(GEN_C_SRCS)
-	sed '/\#\#\# Dependencies/q' < Makefile > tmp_make
-	$(CC) $(ALLCFLAGS) -MM $(DEPEND_SRCS) >> tmp_make
-	mv tmp_make Makefile
+depend:: $(MAKEDEP) $(C_SRCS) $(GEN_C_SRCS)
+	$(MAKEDEP) $(DIVINCL) -C. $(GEN_C_SRCS) -C$(SRCDIR) $(C_SRCS)
 
 clean::
-	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc tmp_make winerctmp.c $(GEN_C_SRCS)
+	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc winerctmp.c $(GEN_C_SRCS) $(GEN_C_SRCS:.c=.h) $(PROGRAMS)
 
 dummy:
 

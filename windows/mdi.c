@@ -41,9 +41,6 @@ void MDI_UpdateFrameText(WND *, HWND, BOOL, LPCSTR);
 BOOL MDI_AugmentFrameMenu(MDICLIENTINFO*, WND *, HWND);
 BOOL MDI_RestoreFrameMenu(WND *, HWND);
 
-void ScrollChildren(HWND , UINT , WPARAM , LPARAM );
-void CalcChildScroll(HWND, WORD);
-
 static LONG MDI_ChildActivate(WND* ,HWND );
 
 /* -------- Miscellaneous service functions ----------
@@ -544,7 +541,7 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
 	SendMessage16( prevActiveWnd, WM_NCACTIVATE, FALSE, 0L );
 
 #ifdef WINELIB32
-        SendMessage32A( prevActiveWnd, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, 
+        SendMessage32A( prevActiveWnd, WM_MDIACTIVATE, (WPARAM32)prevActiveWnd, 
                         (LPARAM)hWndChild);
 #else 
 
@@ -592,13 +589,13 @@ LONG MDI_ChildActivate(WND *clientPtr, HWND hWndChild)
 	    SendMessage16( hWndChild, WM_NCACTIVATE, TRUE, 0L);
 	    if( GetFocus32() == clientInfo->self )
 		SendMessage16( clientInfo->self, WM_SETFOCUS, 
-			    (WPARAM)clientInfo->self, 0L );
+			    (WPARAM16)clientInfo->self, 0L );
 	    else
 		SetFocus32( clientInfo->self );
     }
 
 #ifdef WINELIB32
-    SendMessage32A( hWndChild, WM_MDIACTIVATE, (WPARAM)hWndChild,
+    SendMessage32A( hWndChild, WM_MDIACTIVATE, (WPARAM32)hWndChild,
                     (LPARAM)prevActiveWnd );
 #else
     SendMessage16( hWndChild, WM_MDIACTIVATE, TRUE,
@@ -666,8 +663,8 @@ MDIWCL* MDI_BuildWCL(WND* clientWnd, INT16* iTotal)
  */
 HBITMAP16 CreateMDIMenuBitmap(void)
 {
- HDC 		hDCSrc  = CreateCompatibleDC(0);
- HDC		hDCDest	= CreateCompatibleDC(hDCSrc);
+ HDC16 		hDCSrc  = CreateCompatibleDC(0);
+ HDC16		hDCDest	= CreateCompatibleDC(hDCSrc);
  HBITMAP16	hbClose = LoadBitmap16(0, MAKEINTRESOURCE(OBM_CLOSE) );
  HBITMAP16	hbCopy,hb_src,hb_dest;
 
@@ -977,7 +974,7 @@ void MDI_UpdateFrameText(WND *frameWnd, HWND hClient, BOOL repaint, LPCSTR lpTit
  *
  * This function is the handler for all MDI requests.
  */
-LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT MDIClientWndProc(HWND hwnd, UINT message, WPARAM16 wParam, LPARAM lParam)
 {
     LPCREATESTRUCT16     cs;
     LPCLIENTCREATESTRUCT16 ccs;
@@ -1197,7 +1194,8 @@ LRESULT DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient, UINT16 message,
 	    	childHwnd = MDI_GetChildByID( WIN_FindWndPtr(hwndMDIClient),
                                           wParam );
  	    	if( childHwnd )
-	            SendMessage16(hwndMDIClient, WM_MDIACTIVATE, (WPARAM)childHwnd , 0L);
+	            SendMessage16(hwndMDIClient, WM_MDIACTIVATE,
+                                  (WPARAM16)childHwnd , 0L);
 	      }
 	    break;
 
@@ -1341,7 +1339,7 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
         return 0;
 
       case WM_CLOSE:
-	SendMessage16(ci->self,WM_MDIDESTROY,(WPARAM)hwnd,0L);
+	SendMessage16(ci->self,WM_MDIDESTROY,(WPARAM16)hwnd,0L);
 	return 0;
 
       case WM_SETFOCUS:
@@ -1446,7 +1444,7 @@ LRESULT DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 
 	/* MDI children don't have menu bars */
 	PostMessage( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
-				          (WPARAM)SC_KEYMENU, (LPARAM)wParam);
+                     (WPARAM16)SC_KEYMENU, (LPARAM)wParam);
 	return 0x00010000L;
 
       case WM_NEXTMENU:
@@ -1500,7 +1498,7 @@ LRESULT DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
 
 	/* MDI children don't have menu bars */
 	PostMessage( clientWnd->parent->hwndSelf, WM_SYSCOMMAND, 
-                     (WPARAM)SC_KEYMENU, (LPARAM)LOWORD(wParam) );
+                     (WPARAM16)SC_KEYMENU, (LPARAM)LOWORD(wParam) );
 	return 0x00010000L;
 
       case WM_CLOSE:
@@ -1564,7 +1562,7 @@ BOOL TranslateMDISysAccel(HWND hwndClient, LPMSG16 msg)
   WND* clientWnd = WIN_FindWndPtr( hwndClient);
   WND* wnd;
   MDICLIENTINFO       *ci     = NULL;
-  WPARAM	       wParam = 0;
+  WPARAM16	       wParam = 0;
 
   if( (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) || !clientWnd )
     return 0;
@@ -1651,7 +1649,7 @@ void CalcChildScroll( HWND hwnd, WORD scroll )
 /***********************************************************************
  *           ScrollChildren   (USER.463)
  */
-void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void ScrollChildren(HWND hWnd, UINT uMsg, WPARAM16 wParam, LPARAM lParam)
 {
  WND	*wndPtr = WIN_FindWndPtr(hWnd);
  short 	 newPos=-1;

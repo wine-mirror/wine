@@ -79,8 +79,10 @@ HANDLE16 HOOK_GetHook( INT16 id , HQUEUE16 hQueue )
  */
 HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
 {
-    HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR( hhook );
-    return data ? data->proc : NULL;
+    HOOKDATA *data;
+    if (HIWORD(hhook) != HOOK_MAGIC) return NULL;
+    if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR( LOWORD(hhook) ))) return NULL;
+    return data->proc;
 }
 
 

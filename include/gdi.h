@@ -188,6 +188,7 @@ typedef struct tagDC_FUNCS
     HPALETTE32 (*pSelectPalette)(DC*,HPALETTE32,BOOL32);
     COLORREF   (*pSetBkColor)(DC*,COLORREF);
     WORD       (*pSetBkMode)(DC*,WORD);
+    VOID       (*pSetDeviceClipping)(DC*);
     INT32      (*pSetDIBitsToDevice)(DC*,INT32,INT32,DWORD,DWORD,INT32,INT32,UINT32,UINT32,LPCVOID,const BITMAPINFO*,UINT32);
     WORD       (*pSetMapMode)(DC*,WORD);
     DWORD      (*pSetMapperFlags)(DC*,DWORD);

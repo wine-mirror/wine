@@ -87,7 +87,7 @@ static BOOL fEndMenuCalled = FALSE;
 #define IS_STRING_ITEM(flags) (!((flags) & (MF_BITMAP | MF_OWNERDRAW | \
 			     MF_MENUBARBREAK | MF_MENUBREAK | MF_SEPARATOR)))
 
-extern void  NC_DrawSysButton(HWND hwnd, HDC hdc, BOOL down); /* nonclient.c */
+extern void  NC_DrawSysButton(HWND hwnd, HDC32 hdc, BOOL down); /*nonclient.c*/
 extern BOOL  NC_GetSysPopupPos(WND* wndPtr, RECT16* rect);
 extern HTASK16 TASK_GetNextTask(HTASK16);
 
@@ -345,7 +345,7 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU16 hmenu, UINT key )
  *
  * Calculate the size of the menu item and store it in lpitem->rect.
  */
-static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
+static void MENU_CalcItemSize( HDC32 hdc, MENUITEM *lpitem, HWND hwndOwner,
 			       int orgX, int orgY, BOOL menuBar )
 {
     DWORD dwSize;
@@ -484,8 +484,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
  *
  * Calculate the size of the menu bar.
  */
-static void MENU_MenuBarCalcSize( HDC hdc, LPRECT16 lprect, LPPOPUPMENU lppop,
-				  HWND hwndOwner )
+static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT16 lprect,
+                                  LPPOPUPMENU lppop, HWND hwndOwner )
 {
     MENUITEM *lpitem;
     int start, i, orgX, orgY, maxY, helpPos;
@@ -552,7 +552,7 @@ static void MENU_MenuBarCalcSize( HDC hdc, LPRECT16 lprect, LPPOPUPMENU lppop,
  *
  * Draw a single menu item.
  */
-static void MENU_DrawMenuItem( HWND hwnd, HDC hdc, MENUITEM *lpitem,
+static void MENU_DrawMenuItem( HWND hwnd, HDC32 hdc, MENUITEM *lpitem,
 			       UINT height, BOOL menuBar )
 {
     RECT16 rect;
@@ -704,7 +704,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HDC hdc, MENUITEM *lpitem,
  *
  * Paint a popup menu.
  */
-static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU16 hmenu )
+static void MENU_DrawPopupMenu( HWND hwnd, HDC32 hdc, HMENU16 hmenu )
 {
     POPUPMENU *menu;
     MENUITEM *item;
@@ -725,7 +725,8 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU16 hmenu )
  *
  * Paint a menu bar. Returns the height of the menu bar.
  */
-UINT MENU_DrawMenuBar(HDC hDC, LPRECT16 lprect, HWND hwnd, BOOL suppress_draw)
+UINT MENU_DrawMenuBar( HDC32 hDC, LPRECT16 lprect, HWND hwnd,
+                       BOOL suppress_draw)
 {
     LPPOPUPMENU lppop;
     int i;
@@ -803,7 +804,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU16 hmenu, UINT id, int x, int y,
 	menu->items[menu->FocusedItem].item_flags &= ~(MF_HILITE|MF_MOUSESELECT);
 	menu->FocusedItem = NO_SELECTED_ITEM;
     }
-    SendMessage16( hwndOwner, WM_INITMENUPOPUP, (WPARAM)hmenu,
+    SendMessage16( hwndOwner, WM_INITMENUPOPUP, (WPARAM16)hmenu,
 		 MAKELONG( id, (menu->wFlags & MF_SYSMENU) ? 1 : 0 ));
     MENU_PopupMenuCalcSize( menu, hwndOwner );
 
@@ -862,7 +863,7 @@ static BOOL MENU_ShowPopup(HWND hwndOwner, HMENU16 hmenu, UINT id, int x, int y,
 	if( !skip_init )
 	  {
             MENU_SwitchTPWndTo(GetCurrentTask());
-	    SendMessage16( pTopPWnd->hwndSelf, WM_USER, (WPARAM)hmenu, 0L);
+	    SendMessage16( pTopPWnd->hwndSelf, WM_USER, (WPARAM16)hmenu, 0L);
 	  }
 	menu->hWnd = pTopPWnd->hwndSelf;
     }
@@ -1470,7 +1471,7 @@ static LRESULT MENU_DoNextMenu( HWND* hwndOwner, HMENU16* hmenu,
       || menu->FocusedItem == SYSMENU_SELECTED 
       || ((menu->wFlags & (MF_POPUP | MF_SYSMENU)) == (MF_POPUP | MF_SYSMENU)) )
   {
-    LRESULT l = SendMessage16( *hwndOwner, WM_NEXTMENU, (WPARAM)vk, 
+    LRESULT l = SendMessage16( *hwndOwner, WM_NEXTMENU, (WPARAM16)vk, 
 				(LPARAM)((menu->FocusedItem == SYSMENU_SELECTED)
 					? GetSystemMenu( *hwndOwner, 0) 
 					: *hmenu));
@@ -1930,7 +1931,7 @@ BOOL32 TrackPopupMenu32( HMENU32 hMenu, UINT32 wFlags, INT32 x, INT32 y,
 /***********************************************************************
  *           PopupMenuWndProc
  */
-LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM wParam,LPARAM lParam)
+LRESULT PopupMenuWndProc(HWND hwnd,UINT message,WPARAM16 wParam,LPARAM lParam)
 {    
     switch(message)
     {

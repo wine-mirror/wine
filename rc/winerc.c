@@ -12,8 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
-#include <windows.h>
-/* #include <neexe.h> */
+#include "windows.h"
 #include "parser.h"
 #include "y.tab.h"
 

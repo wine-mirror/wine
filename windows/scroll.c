@@ -101,7 +101,7 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
  *             ScrollDC         (USER.221)
  *
  */
-BOOL ScrollDC(HDC hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
+BOOL ScrollDC(HDC16 hdc, short dx, short dy, LPRECT16 rc, LPRECT16 cliprc,
 	      HRGN32 hrgnUpdate, LPRECT16 rcUpdate)
 {
     HRGN32 hrgnClip = 0;

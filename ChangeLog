@@ -1,4 +1,32 @@
 ----------------------------------------------------------------------
+Tue Oct 22 20:09:52 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [*/Makefile.in] [tools/makedep.c]
+	New program to generate dependencies; should be faster and more
+	portable than 'gcc -MM'.
+
+	* [*/*]
+	Replaced WPARAM and HDC by explicitly-sized types.
+
+	* [windows/hook.c]
+	Fixed bug in HOOK_GetHook16 function.
+
+Thu Oct 17 09:13:50 1996  John Harvey <john@division.co.uk>
+
+	* [include/debug.h] [include/stddebug.h]
+        Added debug option for win16drv (-debugmsg +win16drv)
+
+	* [graphics/win16drv/init.c]
+        Only enable CreateDC if printer=on specified in wine section of
+ 	wine.conf.
+ 	printfs changed to dprintf_win16drv.
+	Some tidying up.
+
+	* [include/gdi.h] [graphics/x11drv/clipping.c]
+	  [graphics/x11drv/Makefile.in]
+        Moved SetDeviceClipping into drivers.
+
+----------------------------------------------------------------------
 Sun Oct 13 15:32:32 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [Make.rules.in] [*/Makefile.in]

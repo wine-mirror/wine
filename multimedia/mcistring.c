@@ -345,7 +345,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 		FLAG1("shareable",MCI_OPEN_SHAREABLE);
 		if (!strcmp(keywords[i],"alias") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ALIAS;
-			pU->openParams.lpstrAlias=SEGPTR_GET(SEGPTR_STRDUP(keywords[i]));
+			pU->openParams.lpstrAlias=SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
 			i+=2;
 			continue;
 		}

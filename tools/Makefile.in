@@ -4,19 +4,19 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 
-PROGRAM = build
-MODULE  = none
+PROGRAMS = build makedep
+MODULE   = none
 
-C_SRCS = build.c
+C_SRCS = build.c makedep.c
 
-all: $(PROGRAM)
+all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-$(PROGRAM): $(OBJS)
-	$(CC) $(CFLAGS) -o build $(OBJS)
+build: build.o
+	$(CC) $(CFLAGS) -o build build.o
 
-clean::
-	$(RM) $(PROGRAM)
+makedep: makedep.o
+	$(CC) $(CFLAGS) -o makedep makedep.o
 
 ### Dependencies:

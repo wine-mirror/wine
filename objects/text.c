@@ -34,7 +34,7 @@ static int prefix_offset;
 extern int CLIPPING_IntersectClipRect( DC * dc, short left, short top,
                                          short right, short bottom, UINT16 flags);
 
-static const char *TEXT_NextLine( HDC hdc, const char *str, int *count,
+static const char *TEXT_NextLine( HDC16 hdc, const char *str, int *count,
                                   char *dest, int *len, int width, WORD format)
 {
     /* Return next line of text from a string.
@@ -638,7 +638,7 @@ BOOL32 TextOut32W( HDC32 hdc, INT32 x, INT32 y, LPCWSTR str, INT32 count )
 /***********************************************************************
  *           GrayString   (USER.185)
  */
-BOOL GrayString(HDC hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam, 
+BOOL GrayString(HDC16 hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam, 
 		INT cch, INT x, INT y, INT cx, INT cy)
 {
     BOOL ret;
@@ -661,7 +661,7 @@ BOOL GrayString(HDC hdc, HBRUSH16 hbr, GRAYSTRINGPROC16 gsprc, LPARAM lParam,
  * Note: this doesn't work too well for text-alignment modes other
  *       than TA_LEFT|TA_TOP. But we want bug-for-bug compatibility :-)
  */
-LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count, 
+LONG TEXT_TabbedTextOut( HDC16 hdc, int x, int y, LPSTR lpstr, int count, 
                          int cTabStops, LPINT16 lpTabPos, int nTabOrg,
                          BOOL fDisplayText)
 {
@@ -717,7 +717,7 @@ LONG TEXT_TabbedTextOut( HDC hdc, int x, int y, LPSTR lpstr, int count,
 /***********************************************************************
  *           TabbedTextOut    (USER.196)
  */
-LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count, 
+LONG TabbedTextOut( HDC16 hdc, short x, short y, LPSTR lpstr, short count, 
                     short cTabStops, LPINT16 lpTabPos, short nTabOrg )
 {
     dprintf_text( stddeb, "TabbedTextOut: %04x %d,%d '%*.*s' %d\n",
@@ -730,7 +730,7 @@ LONG TabbedTextOut( HDC hdc, short x, short y, LPSTR lpstr, short count,
 /***********************************************************************
  *           GetTabbedTextExtent    (USER.197)
  */
-DWORD GetTabbedTextExtent( HDC hdc, LPSTR lpstr, int count, 
+DWORD GetTabbedTextExtent( HDC16 hdc, LPSTR lpstr, int count, 
                           int cTabStops, LPINT16 lpTabPos )
 {
     dprintf_text( stddeb, "GetTabbedTextExtent: %04x '%*.*s' %d\n",

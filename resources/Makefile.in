@@ -5,9 +5,18 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = resources
 
-LANGUAGES = En Es De No Fr Fi Da Cz Eo It Ko
-
-SYSRES_SRCS = $(LANGUAGES:%=sysres_%.c)
+SYSRES_SRCS = \
+	sysres_Cz.c \
+	sysres_Da.c \
+	sysres_De.c \
+	sysres_En.c \
+	sysres_Eo.c \
+	sysres_Es.c \
+	sysres_Fi.c \
+	sysres_Fr.c \
+	sysres_It.c \
+	sysres_Ko.c \
+	sysres_No.c
 
 C_SRCS = sysres.c
 GEN_C_SRCS = $(SYSRES_SRCS)
@@ -17,8 +26,5 @@ all: check_winerc $(MODULE).o
 @MAKE_RULES@
 
 $(SYSRES_SRCS): $(WINERC)
-
-clean::
-	$(RM) $(SYSRES_SRCS:.c=.h)
 
 ### Dependencies:
