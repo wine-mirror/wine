@@ -188,7 +188,7 @@ typedef enum {
 
 extern	HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInst, UINT uType, UINT uFmt, HCONV hConv,
 					    HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-					    DWORD dwData1, DWORD dwData2);
+					    ULONG_PTR dwData1, ULONG_PTR dwData2);
 extern	HDDEDATA 	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt, HCONV hConv,
 					      HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
 					      DWORD dwData1, DWORD dwData2);

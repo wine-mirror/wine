@@ -713,8 +713,8 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
  * callback for the DDE connection. not really usefull
  */
 static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
-                                HSZ hsz1, HSZ hsz2,
-                                HDDEDATA hData, DWORD dwData1, DWORD dwData2)
+                                HSZ hsz1, HSZ hsz2, HDDEDATA hData,
+                                ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
     return NULL;
 }

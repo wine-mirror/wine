@@ -458,7 +458,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 		{
 		    /* pass on to the callback  */
 		    hDdeData = WDML_InvokeCallback(pInstance, XTYP_CONNECT,
-						   0, 0, hszTop, hszApp, 0, (DWORD)pcc, self);
+						   0, 0, hszTop, hszApp, 0, (ULONG_PTR)pcc, self);
 		    if ((UINT)hDdeData)
 		    {
 			pConv = WDML_CreateServerConv(pInstance, hwndClient, hwndServer,
@@ -467,7 +467,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
                         {
                             if (pcc) pConv->wStatus |= ST_ISLOCAL;
                             WDML_InvokeCallback(pInstance, XTYP_CONNECT_CONFIRM, 0, (HCONV)pConv,
-                                                hszTop, hszApp, 0, (DWORD)pcc, self);
+                                                hszTop, hszApp, 0, (ULONG_PTR)pcc, self);
                         }
 		    }
 		}
@@ -476,7 +476,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    {
 		/* pass on to the callback  */
 		hDdeData = WDML_InvokeCallback(pInstance, XTYP_WILDCONNECT,
-					       0, 0, hszTop, hszApp, 0, (DWORD)pcc, self);
+					       0, 0, hszTop, hszApp, 0, (ULONG_PTR)pcc, self);
 
 		if (hDdeData == (HDDEDATA)CBR_BLOCK)
 		{
@@ -499,7 +499,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
                             {
                                 if (pcc) pConv->wStatus |= ST_ISLOCAL;
                                 WDML_InvokeCallback(pInstance, XTYP_CONNECT_CONFIRM, 0, (HCONV)pConv,
-                                                    hszp[i].hszTopic, hszp[i].hszSvc, 0, (DWORD)pcc, self);
+                                                    hszp[i].hszTopic, hszp[i].hszSvc, 0, (ULONG_PTR)pcc, self);
                             }
 			}
 			DdeUnaccessData(hDdeData);

@@ -717,7 +717,7 @@ void WDML_NotifyThreadDetach(void)
  */
 HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInstance, UINT uType, UINT uFmt, HCONV hConv,
 				    HSZ hsz1, HSZ hsz2, HDDEDATA hdata,
-				    DWORD dwData1, DWORD dwData2)
+				    ULONG_PTR dwData1, ULONG_PTR dwData2)
 {
     HDDEDATA	ret;
 
