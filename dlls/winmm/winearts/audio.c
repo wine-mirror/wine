@@ -222,6 +222,55 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_STOPPING",
 };
 
+static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
+                             PCMWAVEFORMAT* format)
+{
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+          lpTime->wType, format->wBitsPerSample, format->wf.nSamplesPerSec,
+          format->wf.nChannels, format->wf.nAvgBytesPerSec);
+    TRACE("Position in bytes=%lu\n", position);
+
+    switch (lpTime->wType) {
+    case TIME_SAMPLES:
+        lpTime->u.sample = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
+        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        break;
+    case TIME_MS:
+        lpTime->u.ms = 1000.0 * position / (format->wBitsPerSample / 8 * format->wf.nChannels * format->wf.nSamplesPerSec);
+        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        break;
+    case TIME_SMPTE:
+        position = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
+        lpTime->u.smpte.sec = position / format->wf.nSamplesPerSec;
+        position -= lpTime->u.smpte.sec * format->wf.nSamplesPerSec;
+        lpTime->u.smpte.min = lpTime->u.smpte.sec / 60;
+        lpTime->u.smpte.sec -= 60 * lpTime->u.smpte.min;
+        lpTime->u.smpte.hour = lpTime->u.smpte.min / 60;
+        lpTime->u.smpte.min -= 60 * lpTime->u.smpte.hour;
+        lpTime->u.smpte.fps = 30;
+        lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->wf.nSamplesPerSec;
+        position -= lpTime->u.smpte.frame * format->wf.nSamplesPerSec / lpTime->u.smpte.fps;
+        if (position != 0)
+        {
+            /* Round up */
+            lpTime->u.smpte.frame++;
+        }
+        TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
+              lpTime->u.smpte.hour, lpTime->u.smpte.min,
+              lpTime->u.smpte.sec, lpTime->u.smpte.frame);
+        break;
+    default:
+        FIXME("Format %d not supported ! use TIME_BYTES !\n", lpTime->wType);
+        lpTime->wType = TIME_BYTES;
+        /* fall through */
+    case TIME_BYTES:
+        lpTime->u.cb = position;
+        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        break;
+    }
+    return MMSYSERR_NOERROR;
+}
+
 /*======================================================================*
  *                  Low level WAVE implementation			*
  *======================================================================*/
@@ -1386,8 +1435,6 @@ static DWORD wodReset(WORD wDevID)
  */
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-    double		time;
-    DWORD		val;
     WINE_WAVEOUT*	wwo;
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
@@ -1403,46 +1450,8 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     wwo = &WOutDev[wDevID];
     ARTS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
-    val = wwo->dwPlayedTotal;
 
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
-	  lpTime->wType, wwo->format.wBitsPerSample,
-	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
-	  wwo->format.wf.nAvgBytesPerSec);
-    TRACE("dwPlayedTotal=%lu\n", val);
-
-    switch (lpTime->wType) {
-    case TIME_BYTES:
-	lpTime->u.cb = val;
-	TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
-	break;
-    case TIME_SAMPLES:
-	lpTime->u.sample = val * 8 / wwo->format.wBitsPerSample /wwo->format.wf.nChannels;
-	TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
-	break;
-    case TIME_SMPTE:
-	time = (double)val / (double)wwo->format.wf.nAvgBytesPerSec;
-	lpTime->u.smpte.hour = time / (60 * 60);
-	time -= lpTime->u.smpte.hour * (60 * 60);
-	lpTime->u.smpte.min = time / 60;
-	time -= lpTime->u.smpte.min * 60;
-	lpTime->u.smpte.sec = time;
-	time -= lpTime->u.smpte.sec;
-	lpTime->u.smpte.frame = round(time * 30);
-	lpTime->u.smpte.fps = 30;
-	TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
-	      lpTime->u.smpte.hour, lpTime->u.smpte.min,
-	      lpTime->u.smpte.sec, lpTime->u.smpte.frame);
-	break;
-    default:
-	FIXME("Format %d not supported ! use TIME_MS !\n", lpTime->wType);
-	lpTime->wType = TIME_MS;
-    case TIME_MS:
-	lpTime->u.ms = val * 1000.0 / wwo->format.wf.nAvgBytesPerSec;
-	TRACE("TIME_MS=%lu\n", lpTime->u.ms);
-	break;
-    }
-    return MMSYSERR_NOERROR;
+    return bytes_to_mmtime(lpTime, wwo->dwPlayedTotal, &wwo->format);
 }
 
 /**************************************************************************
