@@ -72,7 +72,7 @@ static int msvcrt_spawn(int flags, const char* exe, char* cmdline, char* env)
   switch(flags)
   {
   case _P_WAIT:
-    WaitForSingleObject(pi.hProcess,-1); /* wait forvever */
+    WaitForSingleObject(pi.hProcess, INFINITE);
     GetExitCodeProcess(pi.hProcess,&pi.dwProcessId);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -200,7 +200,7 @@ int _cwait(int *status, int pid, int action)
 
   action = action; /* Remove warning */
 
-  if (!WaitForSingleObject(hPid, -1)) /* wait forever */
+  if (!WaitForSingleObject(hPid, INFINITE))
   {
     if (status)
     {
