@@ -7235,7 +7235,7 @@ void OLECONVERT_GetOle20PresData(LPSTORAGE pStorage, OLECONVERT_OLESTREAM_DATA *
     {
         LARGE_INTEGER iSeekPos;
         METAFILEPICT16 MetaFilePict;
-        char strMetafilePictName[] = "METAFILEPICT";
+        static const char strMetafilePictName[] = "METAFILEPICT";
 
         /* Set the TypeID for a Metafile */
         pOleStreamData[1].dwTypeID = 5;

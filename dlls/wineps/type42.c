@@ -142,7 +142,7 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
     WORD num_of_tables = sizeof(tables_templ) / sizeof(tables_templ[0]) - 1;
     char *buf;
     TYPE42 *t42;
-    const char start[] = /* name, fontbbox */
+    static const char start[] = /* name, fontbbox */
             "25 dict begin\n"
 	    " /FontName /%s def\n"
 	    " /Encoding 256 array 0 1 255{1 index exch /.notdef put} for\n"
@@ -155,10 +155,10 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
 	    "  /.notdef 0 def\n"
             " currentdict end def\n"
 	    " /sfnts [\n";
-    const char TT_offset_table[] = "<00010000%04x%04x%04x%04x\n";
-    const char TT_table_dir_entry[] = "%08lx%08lx%08lx%08lx\n";
-    const char storage[] ="]\nhavetype42gdir{pop}{{string} forall}ifelse\n";
-    const char end[] = "] def\n"
+    static const char TT_offset_table[] = "<00010000%04x%04x%04x%04x\n";
+    static const char TT_table_dir_entry[] = "%08lx%08lx%08lx%08lx\n";
+    static const char storage[] ="]\nhavetype42gdir{pop}{{string} forall}ifelse\n";
+    static const char end[] = "] def\n"
       "havetype42gdir{/GlyphDirectory 256 dict def\n"
       " sfnts 0 get dup %ld (locx) putinterval %ld (glfx) putinterval}if\n"
       "currentdict end dup /FontName get exch definefont pop\n";

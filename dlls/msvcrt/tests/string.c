@@ -33,7 +33,7 @@ static int* (*pmemcmp)(void *, const void *, size_t n);
 START_TEST(string)
 {
     void *mem;
-    char xilstring[]="c:/xilinx";
+    static const char xilstring[]="c:/xilinx";
     int nLen=strlen(xilstring);
     HMODULE hMsvcrt = LoadLibraryA("msvcrt.dll");
     ok(hMsvcrt != 0, "LoadLibraryA failed\n");

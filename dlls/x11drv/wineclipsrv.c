@@ -151,10 +151,10 @@ static char *progname;                 /* name this program was invoked by */
 static Window g_win = 0;               /* the hidden clipboard server window */
 static GC g_gc = 0;
 
-static char *g_szOutOfMemory = "Insufficient memory!\n";
+static const char g_szOutOfMemory[] = "Insufficient memory!\n";
 
 /* X selection context info */
-static char _CLIPBOARD[] = "CLIPBOARD";        /* CLIPBOARD atom name */
+static const char _CLIPBOARD[] = "CLIPBOARD";  /* CLIPBOARD atom name */
 static int  g_selectionToAcquire = 0;          /* Masks for the selection to be acquired */
 static int  g_selectionAcquired = 0;           /* Contains the current selection masks */
 static int  g_clearAllSelections = 0;          /* If TRUE *all* selections are lost on SelectionClear */

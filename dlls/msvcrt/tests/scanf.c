@@ -28,16 +28,16 @@ static void test_sscanf( void )
     char format[20];
     int result, ret;
     float res1= -82.6267f, res2= 27.76f, res11, res12;
-    char pname[]=" St. Petersburg, Florida\n";
+    static const char pname[]=" St. Petersburg, Florida\n";
     int hour=21,min=59,sec=20;
     int  number,number_so_far;
 
-    
+
     /* check EOF */
     strcpy(buffer,"");
     ret = sscanf(buffer, "%d", &result);
     ok( ret == EOF,"sscanf returns %x instead of %x\n", ret, EOF );
-		
+
     /* check %x */
     strcpy(buffer,"0x519");
     ok( sscanf(buffer, "%x", &result) == 1, "sscanf failed\n"  );

@@ -1312,7 +1312,7 @@ HRESULT WINAPI URLDownloadToFileW(LPUNKNOWN pCaller,
     URL_COMPONENTSW url;
     WCHAR host[0x80], path[0x100];
     HANDLE hfile;
-    WCHAR wszAppName[]={'u','r','l','m','o','n','.','d','l','l',0};
+    static const WCHAR wszAppName[]={'u','r','l','m','o','n','.','d','l','l',0};
 
     /* Note: all error codes would need to be checked agains real Windows behaviour... */
     TRACE("(%p,%s,%s,%08lx,%p) stub!\n", pCaller, debugstr_w(szURL), debugstr_w(szFileName), dwReserved, lpfnCB);

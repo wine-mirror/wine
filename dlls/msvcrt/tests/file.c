@@ -31,7 +31,8 @@
 
 static void test_fdopen( void )
 {
-    static char buffer[] = {0,1,2,3,4,5,6,7,8,9};
+    static const char buffer[] = {0,1,2,3,4,5,6,7,8,9};
+    char ibuf[10];
     int fd;
     FILE *file;
 
@@ -42,15 +43,15 @@ static void test_fdopen( void )
     fd = open ("fdopen.tst", O_RDONLY | O_BINARY);
     lseek (fd, 5, SEEK_SET);
     file = fdopen (fd, "rb");
-    ok (fread (buffer, 1, sizeof (buffer), file) == 5, "read wrong byte count\n");
-    ok (memcmp (buffer, buffer + 5, 5) == 0, "read wrong bytes\n");
+    ok (fread (ibuf, 1, sizeof (buffer), file) == 5, "read wrong byte count\n");
+    ok (memcmp (ibuf, buffer + 5, 5) == 0, "read wrong bytes\n");
     fclose (file);
     unlink ("fdopen.tst");
 }
 
 static void test_fileops( void )
 {
-    static char outbuffer[] = "0,1,2,3,4,5,6,7,8,9";
+    static const char outbuffer[] = "0,1,2,3,4,5,6,7,8,9";
     char buffer[256];
     WCHAR wbuffer[256];
     int fd;
@@ -85,7 +86,7 @@ static void test_fileops( void )
     ok(lstrlenW(wbuffer) == 1,"fgets dropped chars\n");
     fclose (file);
     unlink ("fdopen.tst");
-} 
+}
 
 static WCHAR* AtoW( char* p )
 {
@@ -102,12 +103,12 @@ static void test_fgetwc( void )
 
   char* tempf;
   FILE *tempfh;
-  const char mytext[]= "This is test_fgetwc\n";
+  static const char mytext[]= "This is test_fgetwc\n";
   WCHAR wtextW[LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
   BOOL diff_found = FALSE;
   unsigned int i;
-  
+
   tempf=_tempnam(".","wne");
   tempfh = fopen(tempf,"wt"); /* open in TEXT mode */
   fputs(mytext,tempfh);
@@ -127,13 +128,13 @@ static void test_fgetwc( void )
   fclose(tempfh);
   unlink(tempf);
 }
-  
+
 static void test_file_put_get( void )
 {
   char* tempf;
   FILE *tempfh;
-  const char mytext[]=  "This is a test_file_put_get\n";
-  const char dostext[]= "This is a test_file_put_get\r\n";
+  static const char mytext[]=  "This is a test_file_put_get\n";
+  static const char dostext[]= "This is a test_file_put_get\r\n";
   char btext[LLEN];
   WCHAR wtextW[LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
@@ -176,12 +177,13 @@ static void test_file_put_get( void )
   fclose(tempfh);
   unlink(tempf);
 }
+
 static void test_file_write_read( void )
 {
   char* tempf;
   int tempfd;
-  const char mytext[]=  "This is test_file_write_read\nsecond line\n";
-  const char dostext[]= "This is test_file_write_read\r\nsecond line\r\n";
+  static const char mytext[]=  "This is test_file_write_read\nsecond line\n";
+  static const char dostext[]= "This is test_file_write_read\r\nsecond line\r\n";
   char btext[LLEN];
 
   tempf=_tempnam(".","wne");

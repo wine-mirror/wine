@@ -20,15 +20,15 @@
 
 /* Class names */
 
-char MAIN_WIN_CLASS_NAME[]       = "MS_WINHELP";
-char BUTTON_BOX_WIN_CLASS_NAME[] = "WHButtonBox";
-char TEXT_WIN_CLASS_NAME[]       = "WHText";
-char SHADOW_WIN_CLASS_NAME[]     = "WHShadow";
-char HISTORY_WIN_CLASS_NAME[]    = "WHHistory";
-char STRING_BUTTON[]             = "BUTTON";
+const char MAIN_WIN_CLASS_NAME[]       = "MS_WINHELP";
+const char BUTTON_BOX_WIN_CLASS_NAME[] = "WHButtonBox";
+const char TEXT_WIN_CLASS_NAME[]       = "WHText";
+const char SHADOW_WIN_CLASS_NAME[]     = "WHShadow";
+const char HISTORY_WIN_CLASS_NAME[]    = "WHHistory";
+const char STRING_BUTTON[]             = "BUTTON";
 
 /* Resource names */
-char STRING_DIALOG_TEST[]        = "DIALOG_TEST";
+const char STRING_DIALOG_TEST[]        = "DIALOG_TEST";
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

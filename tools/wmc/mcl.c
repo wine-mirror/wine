@@ -182,7 +182,7 @@ static char *xlatebuffer = NULL;
 static int fill_inputbuffer(void)
 {
 	int n;
-	static char err_fatalread[] = "Fatal: reading input failed";
+	static const char err_fatalread[] = "Fatal: reading input failed";
 	static int endian = -1;
 
 	if(!inputbuffer)

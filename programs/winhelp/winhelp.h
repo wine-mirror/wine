@@ -142,14 +142,14 @@ INT  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
 HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile);
 HLPFILE_WINDOWINFO* WINHELP_GetWindowInfo(HLPFILE* hlpfile, LPCSTR name);
 
-extern char MAIN_WIN_CLASS_NAME[];
-extern char BUTTON_BOX_WIN_CLASS_NAME[];
-extern char TEXT_WIN_CLASS_NAME[];
-extern char SHADOW_WIN_CLASS_NAME[];
-extern char HISTORY_WIN_CLASS_NAME[];
-extern char STRING_BUTTON[];
-extern char STRING_MENU_Xx[];
-extern char STRING_DIALOG_TEST[];
+extern const char MAIN_WIN_CLASS_NAME[];
+extern const char BUTTON_BOX_WIN_CLASS_NAME[];
+extern const char TEXT_WIN_CLASS_NAME[];
+extern const char SHADOW_WIN_CLASS_NAME[];
+extern const char HISTORY_WIN_CLASS_NAME[];
+extern const char STRING_BUTTON[];
+extern const char STRING_MENU_Xx[];
+extern const char STRING_DIALOG_TEST[];
 #endif
 
 /* Buttons */

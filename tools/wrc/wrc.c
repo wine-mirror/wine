@@ -103,7 +103,7 @@ static char usage[] =
 	"with -o, then the output is written to \"wrc.tab.res\"\n"
 	;
 
-char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
+static const char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
 			"Copyright 1998-2000 Bertho A. Stultiens\n"
 			"          1994 Martin von Loewis\n";
 

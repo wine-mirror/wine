@@ -137,3 +137,9 @@ typedef struct {
 
 /* Must be last in list */
 #define WCMD_EXIT   38
+
+/* Some standard messages */
+extern const char nyi[];
+extern const char newline[];
+extern const char version_string[];
+extern const char anykey[];

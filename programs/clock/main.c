@@ -384,10 +384,10 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
 {
     MSG      msg;
     WNDCLASS class;
-    
-    char szClassName[] = "CLClass";  /* To make sure className >= 0x10000 */
-    char szWinName[]   = "Clock";
-    
+
+    static const char szClassName[] = "CLClass";  /* To make sure className >= 0x10000 */
+    static const char szWinName[]   = "Clock";
+
     /* Setup Globals */
     memset(&Globals.hFont, 0, sizeof (Globals.hFont));
     Globals.bAnalog         = TRUE;

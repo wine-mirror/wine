@@ -617,7 +617,7 @@ BOOL PSDRV_WriteIndexColorSpaceBegin(PSDRV_PDEVICE *physDev, int size)
 
 BOOL PSDRV_WriteIndexColorSpaceEnd(PSDRV_PDEVICE *physDev)
 {
-    char buf[] = ">\n] setcolorspace\n";
+    static const char buf[] = ">\n] setcolorspace\n";
     return PSDRV_WriteSpool(physDev, buf, sizeof(buf) - 1);
 }
 
@@ -643,17 +643,17 @@ BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst
 			  INT widthDst, INT heightDst, INT widthSrc,
 			  INT heightSrc, char *bits, BOOL mask)
 {
-    const char start[] = "%d %d translate\n%d %d scale\n<<\n"
+    static const char start[] = "%d %d translate\n%d %d scale\n<<\n"
       " /ImageType 1\n /Width %d\n /Height %d\n /BitsPerComponent %d\n"
       " /ImageMatrix [%d 0 0 %d 0 %d]\n";
 
-    const char decode1[] = " /Decode [0 %d]\n";
-    const char decode3[] = " /Decode [0 1 0 1 0 1]\n";
+    static const char decode1[] = " /Decode [0 %d]\n";
+    static const char decode3[] = " /Decode [0 1 0 1 0 1]\n";
 
-    const char end[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> image\n";
-    const char endmask[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> imagemask\n";
+    static const char end[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> image\n";
+    static const char endmask[] = " /DataSource currentfile /ASCII85Decode filter /RunLengthDecode filter\n>> imagemask\n";
 
-    const char endbits[] = " /DataSource <%s>\n>> image\n";
+    static const char endbits[] = " /DataSource <%s>\n>> image\n";
 
     char *buf = HeapAlloc(PSDRV_Heap, 0, 1000);
 
@@ -775,10 +775,10 @@ BOOL PSDRV_WriteRectClip2(PSDRV_PDEVICE *physDev, CHAR *pszArrayName)
 
 BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 {
-    const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+    static const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
       "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
 
-    const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    static const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
     char *buf, *ptr;
     INT w, h, x, y;
     COLORREF map[2];
@@ -809,10 +809,10 @@ BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits)
 
 BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage)
 {
-    const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
+    static const char start[] = "<<\n /PaintType 1\n /PatternType 1\n /TilingType 1\n "
       "/BBox [0 0 %d %d]\n /XStep %d\n /YStep %d\n /PaintProc {\n  begin\n";
 
-    const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
+    static const char end[] = "  end\n }\n>>\n matrix makepattern setpattern\n";
     char *buf, *ptr;
     BYTE *bits;
     INT w, h, x, y, colours;

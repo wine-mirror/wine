@@ -211,7 +211,7 @@ int unistricmp(const WCHAR *s1, const WCHAR *s2)
 {
 	int i;
 	int once = 0;
-	static char warn[] = "Don't know the uppercase equivalent of non acsii characters;"
+	static const char warn[] = "Don't know the uppercase equivalent of non acsii characters;"
 	       		     "comparison might yield wrong results";
 	while(*s1 && *s2)
 	{
@@ -252,4 +252,3 @@ int unistrcmp(const WCHAR *s1, const WCHAR *s2)
 
 	return *s1 - *s2;
 }
-

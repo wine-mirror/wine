@@ -54,10 +54,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(print);
 
-static char PrinterModel[]	= "Printer Model";
-static char DefaultDevMode[]	= "Default DevMode";
-static char PrinterDriverData[] = "PrinterDriverData";
-static char Printers[]		= "System\\CurrentControlSet\\Control\\Print\\Printers\\";
+static const char PrinterModel[]      = "Printer Model";
+static const char DefaultDevMode[]    = "Default DevMode";
+static const char PrinterDriverData[] = "PrinterDriverData";
+static const char Printers[]          = "System\\CurrentControlSet\\Control\\Print\\Printers\\";
 
 
 /******************************************************************

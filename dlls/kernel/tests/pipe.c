@@ -54,12 +54,12 @@
 
 static HANDLE alarm_event;
 
-void test_CreateNamedPipe(pipemode)
+static void test_CreateNamedPipe(pipemode)
 {
     HANDLE hnp;
     HANDLE hFile;
-    const char obuf[] = "Bit Bucket";
-    const char obuf2[] = "More bits";
+    static const char obuf[] = "Bit Bucket";
+    static const char obuf2[] = "More bits";
     char ibuf[32], *pbuf;
     DWORD written;
     DWORD readden;
@@ -617,7 +617,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
     trace("exercizeServer starting\n");
     for (i = 0; i < NB_SERVER_LOOPS; i++) {
         HANDLE hFile=INVALID_HANDLE_VALUE;
-        const char obuf[] = "Bit Bucket";
+        static const char obuf[] = "Bit Bucket";
         char ibuf[32];
         DWORD written;
         DWORD readden;
@@ -660,7 +660,7 @@ static void exercizeServer(const char *pipename, HANDLE serverThread)
     trace("exercizeServer returning\n");
 }
 
-void test_NamedPipe_2(void)
+static void test_NamedPipe_2(void)
 {
     HANDLE serverThread;
     DWORD serverThreadId;
@@ -700,11 +700,11 @@ void test_NamedPipe_2(void)
     trace("test_NamedPipe_2 returning\n");
 }
 
-void test_DisconnectNamedPipe(void)
+static void test_DisconnectNamedPipe(void)
 {
     HANDLE hnp;
     HANDLE hFile;
-    const char obuf[] = "Bit Bucket";
+    static const char obuf[] = "Bit Bucket";
     char ibuf[32];
     DWORD written;
     DWORD readden;

@@ -152,7 +152,7 @@ enum res_e res_type_from_id(const name_id_t *nid)
 
 static resource_t *read_res32(FILE *fp)
 {
-	static char wrong_format[] = "Wrong resfile format (32bit)";
+	static const char wrong_format[] = "Wrong resfile format (32bit)";
 	DWORD ressize;
 	DWORD hdrsize;
 	DWORD totsize;

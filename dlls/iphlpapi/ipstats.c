@@ -162,7 +162,7 @@ DWORD getICMPStats(MIB_ICMP *stats)
   /* get most of these stats from /proc/net/snmp, no error if can't */
   fp = fopen("/proc/net/snmp", "r");
   if (fp) {
-    const char hdr[] = "Icmp:";
+    static const char hdr[] = "Icmp:";
     char buf[512] = { 0 }, *ptr;
 
     do {
@@ -292,7 +292,7 @@ DWORD getIPStats(PMIB_IPSTATS stats)
   /* get most of these stats from /proc/net/snmp, no error if can't */
   fp = fopen("/proc/net/snmp", "r");
   if (fp) {
-    const char hdr[] = "Ip:";
+    static const char hdr[] = "Ip:";
     char buf[512] = { 0 }, *ptr;
 
     do {
@@ -401,7 +401,7 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
   /* get from /proc/net/snmp, no error if can't */
   fp = fopen("/proc/net/snmp", "r");
   if (fp) {
-    const char hdr[] = "Tcp:";
+    static const char hdr[] = "Tcp:";
     char buf[512] = { 0 }, *ptr;
 
 
@@ -491,7 +491,7 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
   /* get from /proc/net/snmp, no error if can't */
   fp = fopen("/proc/net/snmp", "r");
   if (fp) {
-    const char hdr[] = "Udp:";
+    static const char hdr[] = "Udp:";
     char buf[512] = { 0 }, *ptr;
 
 

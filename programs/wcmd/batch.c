@@ -22,9 +22,6 @@
 
 void WCMD_batch_command (char *line);
 
-extern char nyi[];
-extern char newline[];
-extern char version_string[];
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;

@@ -113,15 +113,15 @@ send_file (const char *name)
 
     /* RFC 2068 */
 #define SEP "-"
-    const char head[] = "POST /submit HTTP/1.0\r\n"
+    static const char head[] = "POST /submit HTTP/1.0\r\n"
         "Host: test.winehq.org\r\n"
         "User-Agent: Winetest Shell\r\n"
         "Content-Type: multipart/form-data; boundary=" SEP "\r\n"
         "Content-Length: %u\r\n\r\n";
-    const char body1[] = "--" SEP "\r\n"
+    static const char body1[] = "--" SEP "\r\n"
         "Content-Disposition: form-data; name=reportfile; filename=\"%s\"\r\n"
         "Content-Type: application/octet-stream\r\n\r\n";
-    const char body2[] = "\r\n--" SEP "\r\n"
+    static const char body2[] = "\r\n--" SEP "\r\n"
         "Content-Disposition: form-data; name=submit\r\n\r\n"
         "Upload File\r\n"
         "--" SEP "--\r\n";

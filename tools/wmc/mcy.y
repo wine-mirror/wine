@@ -519,7 +519,7 @@ static void test_id(int id)
 
 static int check_languages(node_t *head)
 {
-	static char err_missing[] = "Missing definition for language 0x%x; MessageID %d, facility 0x%x, severity 0x%x";
+	static const char err_missing[] = "Missing definition for language 0x%x; MessageID %d, facility 0x%x, severity 0x%x";
 	node_t *ndp;
 	int nm = 0;
 	msg_t *msg = NULL;

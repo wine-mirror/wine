@@ -268,7 +268,7 @@ BOOL PSDRV_WriteDownloadGlyphShow(PSDRV_PDEVICE *physDev, WORD *glyphs,
 BOOL PSDRV_EmptyDownloadList(PSDRV_PDEVICE *physDev, BOOL write_undef)
 {
     DOWNLOAD *pdl, *old;
-    char undef[] = "/%s findfont 40 scalefont setfont /%s undefinefont\n";
+    static const char undef[] = "/%s findfont 40 scalefont setfont /%s undefinefont\n";
     char buf[sizeof(undef) + 200];
     char *default_font = physDev->pi->ppd->DefaultFont ?
         physDev->pi->ppd->DefaultFont : "Courier";

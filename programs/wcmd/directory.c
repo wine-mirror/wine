@@ -35,10 +35,6 @@ char * WCMD_filesize64 (ULONGLONG free);
 char * WCMD_strrev (char *buff);
 
 
-extern char nyi[];
-extern char newline[];
-extern char version_string[];
-extern char anykey[];
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern DWORD errorlevel;
@@ -131,7 +127,6 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 void WCMD_list_directory (char *search_path, int level) {
 
 char string[1024], datestring[32], timestring[32];
-char mem_err[] = "Memory Allocation Error";
 char *p;
 char real_path[MAX_PATH];
 WIN32_FIND_DATA *fd;
@@ -193,7 +188,7 @@ ULARGE_INTEGER byte_count, file_size;
     fd = realloc (fd, (entry_count+1)*sizeof(WIN32_FIND_DATA));
     if (fd == NULL) {
       FindClose (hff);
-      WCMD_output (mem_err);
+      WCMD_output ("Memory Allocation Error");
        return;
     }
   } while (FindNextFile(hff, (fd+entry_count)) != 0);

@@ -58,9 +58,9 @@ struct FlagTableEntry {
 
 #define EXPORT
 
-static char menuName[] = "CmdlgtstMenu";
-static char className[] = "CmdlgtstClass";
-static char windowName[] = "Cmdlgtst Window";
+static const char menuName[]   = "CmdlgtstMenu";
+static const char className[]  = "CmdlgtstClass";
+static const char windowName[] = "Cmdlgtst Window";
 
 /*
  * global hInstance variable.  This makes the code non-threadable,
@@ -80,7 +80,7 @@ static COLORREF cc_cr[16];
 static CHOOSECOLOR cc;
 static LOGFONT cf_lf;
 static CHOOSEFONT cf;
-static char ofn_filepat[] = "All Files (*.*)\0*.*\0Only Text Files (*.txt)\0*.txt\0";
+static const char ofn_filepat[] = "All Files (*.*)\0*.*\0Only Text Files (*.txt)\0*.txt\0";
 static char ofn_result[1024];
 static char ofn_titleresult[128];
 static OPENFILENAME ofn;
@@ -196,7 +196,7 @@ void mwi_File(HWND hWnd)
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = hWnd;
 	ofn.hInstance = g_hInstance;
-	ofn.lpstrFilter = (LPSTR) ofn_filepat;
+	ofn.lpstrFilter = ofn_filepat;
 	ofn.lpstrCustomFilter = 0;
 	ofn.nMaxCustFilter = 0;
 	ofn.nFilterIndex = 0;

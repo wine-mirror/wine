@@ -77,7 +77,7 @@ static char usage[] =
 "    * 0x20 Preprocessor yacc trace\n"
 ;
 
-char version_string[] = "Wine IDL Compiler Version " WIDL_FULLVERSION "\n"
+static const char version_string[] = "Wine IDL Compiler Version " WIDL_FULLVERSION "\n"
 			"Copyright 2002 Ove Kaaven\n";
 
 int win32 = 1;

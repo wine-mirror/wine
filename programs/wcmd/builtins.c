@@ -46,10 +46,6 @@ struct env_stack *saved_environment;
 
 extern HINSTANCE hinst;
 extern char *inbuilt[];
-extern char nyi[];
-extern char newline[];
-extern char version_string[];
-extern char anykey[];
 extern int echo_mode, verify_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
@@ -1027,7 +1023,6 @@ int WCMD_volume (int mode, char *path) {
 DWORD count, serial;
 char string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
 BOOL status;
-static char syntax[] = "Syntax Error\n\n";
 
   if (lstrlen(path) == 0) {
     status = GetCurrentDirectory (sizeof(curdir), curdir);
@@ -1040,7 +1035,7 @@ static char syntax[] = "Syntax Error\n\n";
   }
   else {
     if ((path[1] != ':') || (lstrlen(path) != 2)) {
-      WCMD_output_asis(syntax);
+      WCMD_output_asis("Syntax Error\n\n");
       return 0;
     }
     wsprintf (curdir, "%s\\", path);

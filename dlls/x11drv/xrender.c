@@ -634,7 +634,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 		TRACE(output);
 	    }
 	} else {
-	    char blks[] = " .:;!o*#";
+	    static const char blks[] = " .:;!o*#";
 	    char str[2];
 
 	    str[1] = '\0';

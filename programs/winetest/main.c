@@ -321,7 +321,8 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
     FILE *subfile;
     size_t total;
     char buffer[8192], *index;
-    const char header[] = "Valid test names:", seps[] = " \r\n";
+    static const char header[] = "Valid test names:";
+    static const char seps[] = " \r\n";
     int allocated;
 
     test->subtest_count = 0;

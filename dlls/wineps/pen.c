@@ -28,11 +28,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
-static char PEN_dash[]       = "50 30";     /* -----   -----   -----  */
-static char PEN_dot[]        = "20";      /* --  --  --  --  --  -- */
-static char PEN_dashdot[]    = "40 30 20 30";  /* ----   --   ----   --  */
-static char PEN_dashdotdot[] = "40 20 20 20 20 20"; /* ----  --  --  ----  */
-static char PEN_alternate[]  = "1";
+static const char PEN_dash[]       = "50 30";     /* -----   -----   -----  */
+static const char PEN_dot[]        = "20";      /* --  --  --  --  --  -- */
+static const char PEN_dashdot[]    = "40 30 20 30";  /* ----   --   ----   --  */
+static const char PEN_dashdotdot[] = "40 20 20 20 20 20"; /* ----  --  --  ----  */
+static const char PEN_alternate[]  = "1";
 
 /***********************************************************************
  *           SelectPen   (WINEPS.@)
