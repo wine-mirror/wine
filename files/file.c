@@ -415,7 +415,8 @@ static BOOL32 FILE_ShareDeny( int mode, int oldmode)
   return TRUE;
   
 test_ro_int24:
-  FIXME(file,"test if file is RO missing\n");
+  if (oldmode & OF_READ)
+    return FALSE;
   /* Fall through */
 fail_int24:
   FIXME(file,"generate INT24 missing\n");
@@ -424,9 +425,11 @@ fail_int24:
   return TRUE;
   
 test_ro_err05:
-  FIXME(file,"test if file is RO missing\n");
+  if (oldmode & OF_READ)
+    return FALSE;
   /* fall through */
 fail_error05:
+  TRACE(file,"Access Denied, oldmode 0x%02x mode 0x%02x\n",oldmode,mode);
   DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
   return TRUE;
 }
@@ -944,12 +947,16 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
 UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
                                   LPSTR buffer)
 {
+    static UINT32 unique_temp;
     DOS_FULL_NAME full_name;
     int i;
     LPSTR p;
-    UINT32 num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
+    UINT32 num;
 
     if ( !path || !prefix || !buffer ) return 0;
+
+    if (!unique_temp) unique_temp = time(NULL) & 0xffff;
+    num = unique ? (unique & 0xffff) : (unique_temp++ & 0xffff);
 
     strcpy( buffer, path );
     p = buffer + strlen(buffer);
