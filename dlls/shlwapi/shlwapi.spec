@@ -137,7 +137,7 @@ init SHLWAPI_LibMain
 135 forward @ user32.SendDlgItemMessageW
 136 forward @ user32.SendMessageW
 137 forward @ kernel32.SetCurrentDirectoryW
-138 stub @
+138 stdcall @(long long wstr) SHLWAPI_138
 139 stub @
 140 forward @ user32.SetPropW
 141 forward @ user32.SetWindowLongW
@@ -156,7 +156,7 @@ init SHLWAPI_LibMain
 154 stdcall @(wstr wstr long) SHLWAPI_154
 155 stdcall @(str str) SHLWAPI_155
 156 stdcall @(wstr wstr) SHLWAPI_156
-157 stub @
+157 stdcall @(str str) SHLWAPI_157
 158 stdcall @(wstr wstr) SHLWAPI_158
 159 forward @ kernel32.CompareStringW
 160 stub @
@@ -179,7 +179,7 @@ init SHLWAPI_LibMain
 177 stub @
 178 stub @
 179 stub @
-180 stub @
+180 stdcall @(long) SHLWAPI_180
 181 stdcall @(long long long) SHLWAPI_181
 182 stub @
 183 stdcall @(ptr) SHLWAPI_183
@@ -196,14 +196,14 @@ init SHLWAPI_LibMain
 194 stub @
 195 stub @
 196 stub @
-197 stub @
+197 stdcall @(long ptr long) SHLWAPI_197
 198 stub @
 199 stdcall @(ptr ptr) SHLWAPI_199
 200 stub @
 201 stub @
 202 stub @
 203 stub @
-204 stub @
+204 stdcall @(long long) SHLWAPI_204
 205 stdcall @(long str str ptr ptr ptr) SHLWAPI_205
 206 stdcall @(long wstr wstr ptr ptr ptr) SHLWAPI_206
 207 stub @

@@ -886,12 +886,12 @@ BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
 /*************************************************************************
  *      @	[SHLWAPI.36]
  *
+ * Insert a bitmap menu item into a menu.
  */
-BOOL WINAPI SHLWAPI_36(HMENU h1, UINT ui2, UINT h3, LPCWSTR p4)
+BOOL WINAPI SHLWAPI_36(HMENU hMenu, UINT flags, UINT id, LPCWSTR str)
 {
-    TRACE("(0x%08x, 0x%08x, 0x%08x, %s): stub\n",
-	  h1, ui2, h3, debugstr_w(p4));
-    return AppendMenuW(h1, ui2, h3, p4);
+    TRACE("(0x%08x,0x%08x,0x%08x,%s)\n",hMenu, flags, id, debugstr_w(str));
+    return InsertMenuW(hMenu, -1, flags | MF_BITMAP, id, str);
 }
 
 /*************************************************************************
@@ -911,11 +911,24 @@ INT WINAPI SHLWAPI_74(HWND hWnd, INT nItem, LPWSTR lpsDest,INT nDestLen)
 }
 
 /*************************************************************************
+ *      @   [SHLWAPI.138]
+ *
+ * Set the text of a dialog item if it exists.
+ */
+BOOL WINAPI SHLWAPI_138(HWND hWnd, INT iItem, LPCWSTR lpszText)
+{
+    HWND hWndItem = GetDlgItem(hWnd, iItem);
+    if (hWndItem)
+        return SetWindowTextW(hWndItem, lpszText);
+    return FALSE;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.151]
  * Function:  Compare two ASCII strings for "len" bytes.
  * Returns:   *str1-*str2  (case sensitive)
  */
-DWORD WINAPI SHLWAPI_151(LPSTR str1, LPSTR str2, INT len)
+DWORD WINAPI SHLWAPI_151(LPCSTR str1, LPCSTR str2, INT len)
 {
     return strncmp( str1, str2, len );
 }
@@ -926,7 +939,7 @@ DWORD WINAPI SHLWAPI_151(LPSTR str1, LPSTR str2, INT len)
  * Function:  Compare two WIDE strings for "len" bytes.
  * Returns:   *str1-*str2  (case sensitive)
  */
-DWORD WINAPI SHLWAPI_152(LPWSTR str1, LPWSTR str2, INT len)
+DWORD WINAPI SHLWAPI_152(LPCWSTR str1, LPCWSTR str2, INT len)
 {
     return strncmpW( str1, str2, len );
 }
@@ -936,7 +949,7 @@ DWORD WINAPI SHLWAPI_152(LPWSTR str1, LPWSTR str2, INT len)
  * Function:  Compare two ASCII strings for "len" bytes via caseless compare.
  * Returns:   *str1-*str2  (case insensitive)
  */
-DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD len)
+DWORD WINAPI SHLWAPI_153(LPCSTR str1, LPCSTR str2, DWORD len)
 {
     return strncasecmp( str1, str2, len );
 }
@@ -947,7 +960,7 @@ DWORD WINAPI SHLWAPI_153(LPSTR str1, LPSTR str2, DWORD len)
  * Function:  Compare two WIDE strings for "len" bytes via caseless compare.
  * Returns:   *str1-*str2  (case insensitive)
  */
-DWORD WINAPI SHLWAPI_154(LPWSTR str1, LPWSTR str2, DWORD len)
+DWORD WINAPI SHLWAPI_154(LPCWSTR str1, LPCWSTR str2, DWORD len)
 {
     return strncmpiW( str1, str2, len );
 }
@@ -957,7 +970,7 @@ DWORD WINAPI SHLWAPI_154(LPWSTR str1, LPWSTR str2, DWORD len)
  *
  *	Case sensitive string compare (ASCII). Does not SetLastError().
  */
-DWORD WINAPI SHLWAPI_155 ( LPSTR str1, LPSTR str2)
+DWORD WINAPI SHLWAPI_155(LPCSTR str1, LPCSTR str2)
 {
     return strcmp(str1, str2);
 }
@@ -967,17 +980,26 @@ DWORD WINAPI SHLWAPI_155 ( LPSTR str1, LPSTR str2)
  *
  *	Case sensitive string compare. Does not SetLastError().
  */
-DWORD WINAPI SHLWAPI_156 ( LPWSTR str1, LPWSTR str2)
+DWORD WINAPI SHLWAPI_156(LPCWSTR str1, LPCWSTR str2)
 {
     return strcmpW( str1, str2 );
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.157]
+ *
+ *	Case insensitive string compare (ASCII). Does not SetLastError().
+ */
+DWORD WINAPI SHLWAPI_157(LPCSTR str1, LPCSTR str2)
+{
+    return strcasecmp(str1, str2);
+}
+/*************************************************************************
  *      @	[SHLWAPI.158]
  *
  *	Case insensitive string compare. Does not SetLastError(). ??
  */
-DWORD WINAPI SHLWAPI_158 ( LPWSTR str1, LPWSTR str2)
+DWORD WINAPI SHLWAPI_158 (LPCWSTR str1, LPCWSTR str2)
 {
     return strcmpiW( str1, str2 );
 }
@@ -1226,6 +1248,24 @@ DWORD WINAPI SHLWAPI_176 (
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.180]
+ *
+ *      Remove all sub-menus from a menu.
+ */
+DWORD WINAPI SHLWAPI_180(HMENU hMenu)
+{
+  int iItemCount = GetMenuItemCount(hMenu) - 1;
+  while (iItemCount >= 0)
+  {
+    HMENU hSubMenu = GetSubMenu(hMenu, iItemCount);
+    if (hSubMenu)
+      RemoveMenu(hMenu, iItemCount, 0x400);
+    iItemCount--;
+  }
+  return iItemCount;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.181]
  *
  *	Enable or disable a menu item.
@@ -1276,6 +1316,19 @@ DWORD WINAPI SHLWAPI_193 ()
 }
 
 /*************************************************************************
+ *      @       [SHLWAPI.197]
+ *
+ * Blank out a region of text by drawing the background only.
+ */
+DWORD WINAPI SHLWAPI_197(HDC hDC, LPCRECT pRect, COLORREF cRef)
+{
+    COLORREF cOldColor = SetBkColor(hDC, cRef);
+    ExtTextOutA(hDC, 0, 0, ETO_OPAQUE, pRect, 0, 0, 0);
+    SetBkColor(hDC, cOldColor);
+    return 0;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.199]
  *
  * Copy interface pointer
@@ -1294,6 +1347,30 @@ DWORD WINAPI SHLWAPI_199 (
 	    }
 	}
 	return 4;
+}
+
+/*************************************************************************
+ * @	[SHLWAPI.204]
+ *
+ * Determine if a window is not a child of another window.
+ *
+ * PARAMS
+ * hParent [I] Suspected parent window
+ * hChild  [I] Suspected child window
+ *
+ * RETURNS
+ * TRUE:  If hChild is a child window of hParent
+ * FALSE: If hChild is not a child window of hParent, or they are equal
+ */
+BOOL WINAPI SHLWAPI_204(HWND hParent, HWND hChild)
+{
+  TRACE("(%08x,%08x)\n", hParent, hChild);
+
+  if (!hParent || !hChild)
+    return TRUE;
+  else if(hParent == hChild)
+    return FALSE;
+  return !IsChild(hParent, hChild);
 }
 
 /*************************************************************************
