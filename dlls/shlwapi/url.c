@@ -1172,7 +1172,29 @@ HRESULT WINAPI UrlHashA(LPCSTR pszUrl, unsigned char *lpDest, INT nDestLen)
     return E_INVALIDARG;
 
   HashData(pszUrl, strlen(pszUrl), lpDest, nDestLen);
-  return NOERROR;
+  return S_OK;
+}
+
+/*************************************************************************
+ * UrlHashW	[SHLWAPI.@]
+ *
+ * See UrlHashA.
+ */
+HRESULT WINAPI UrlHashW(LPCWSTR pszUrl, unsigned char *lpDest, INT nDestLen)
+{
+  char szUrl[MAX_PATH];
+
+  TRACE("(%s,%p,%d)\n",debugstr_w(pszUrl), lpDest, nDestLen);
+
+  if (IsBadStringPtrW(pszUrl, -1) || IsBadWritePtr(lpDest, nDestLen))
+    return E_INVALIDARG;
+
+  /* Win32 hashes the data as an ASCII string, presumably so that both A+W
+   * return the same digests for the same URL.
+   */
+  WideCharToMultiByte(0, 0, pszUrl, -1, szUrl, MAX_PATH, 0, 0);
+  HashData(szUrl, strlen(szUrl), lpDest, nDestLen);
+  return S_OK;
 }
 
 /*************************************************************************

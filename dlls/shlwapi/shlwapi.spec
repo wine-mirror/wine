@@ -668,7 +668,7 @@ init SHLWAPI_LibMain
 @ stdcall UrlGetPartA(str ptr ptr long long) UrlGetPartA
 @ stdcall UrlGetPartW(wstr ptr ptr long long) UrlGetPartW
 @ stdcall UrlHashA(str ptr long) UrlHashA
-@ stub    UrlHashW
+@ stdcall UrlHashW(wstr ptr long) UrlHashW
 @ stdcall UrlIsA(str long) UrlIsA
 @ stdcall UrlIsNoHistoryA(str) UrlIsNoHistoryA
 @ stdcall UrlIsNoHistoryW(wstr) UrlIsNoHistoryW
