@@ -19,5 +19,10 @@
 #define WINE_OLESELFREGISTER
 #define WINE_FILEDESCRIPTION_STR "Wine Quartz dll"
 #define WINE_FILENAME_STR "quartz.dll"
+#define WINE_FILEVERSION 6,3,1,881
+#define WINE_FILEVERSION_STR "6.3.1.881"
+#define WINE_PRODUCTVERSION 6,3,1,881
+#define WINE_PRODUCTVERSION_STR "6.3"
+#define WINE_PRODUCTNAME_STR "DirectX"
 
 #include "wine/wine_common_ver.rc"
