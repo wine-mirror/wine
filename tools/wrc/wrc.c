@@ -314,7 +314,7 @@ int main(int argc,char *argv[])
 				byteorder = WRC_BO_BIG;
 				break;
 			default:
-				fprintf(stderr, "Byteordering must be n[ative], l[ittle] or b[ig]\n");
+				fprintf(stderr, "Byte ordering must be n[ative], l[ittle] or b[ig]\n");
 				lose++;
 			}
 			break;
@@ -444,13 +444,13 @@ int main(int argc,char *argv[])
 
 		if(indirect)
 		{
-			warning("Option -l ignored with compile to .res\n");
+			warning("Option -t ignored with compile to .res\n");
 			indirect = 0;
 		}
 
 		if(indirect_only)
 		{
-			warning("Option -L ignored with compile to .res\n");
+			warning("Option -T ignored with compile to .res\n");
 			indirect_only = 0;
 		}
 
@@ -493,13 +493,13 @@ int main(int argc,char *argv[])
 
 		if(indirect)
 		{
-			warning("Option -l ignored with preprocess only\n");
+			warning("Option -t ignored with preprocess only\n");
 			indirect = 0;
 		}
 
 		if(indirect_only)
 		{
-			error("Option -E and -L cannot be used together\n");
+			error("Option -E and -T cannot be used together\n");
 		}
 
 		if(global)
