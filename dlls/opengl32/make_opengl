@@ -596,12 +596,11 @@ print NORM "
 #include \"wine/debug.h\"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
-
 ";
 foreach (sort keys %norm_functions) {
     $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe);
 
-    print NORM "$string\n";
+    print NORM "\n$string";
 }
 close(NORM);
 
@@ -671,10 +670,10 @@ foreach (sort keys %ext_functions) {
 print EXT "};\n";
 
 # And, finally, the thunks themselves....
-print EXT "\n/* The thunks themselves....*/\n";
+print EXT "\n/* The thunks themselves....*/";
 foreach (sort keys %ext_functions) {
     $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
 
-    print EXT "$string\n";
+    print EXT "\n$string";
 }
 close(EXT);
