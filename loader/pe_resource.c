@@ -185,10 +185,10 @@ PE_EnumResourceTypesA(HMODULE hmod,ENUMRESTYPEPROCA lpfun,LONG lparam) {
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
     	LPSTR	name;
 
-	if (HIWORD(et[i].u1.Name))
-		name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.Name));
+	if (et[i].u1.s.NameIsString)
+		name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset));
 	else
-		name = (LPSTR)et[i].u1.Name;
+		name = (LPSTR)(int)et[i].u1.Id;
 	ret = lpfun(hmod,name,lparam);
 	if (HIWORD(name))
 		HeapFree(heap,0,name);
@@ -217,10 +217,10 @@ PE_EnumResourceTypesW(HMODULE hmod,ENUMRESTYPEPROCW lpfun,LONG lparam) {
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
 	LPWSTR	type;
-    	if (HIWORD(et[i].u1.Name))
-		type = (LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.Name);
+    	if (et[i].u1.s.NameIsString)
+		type = (LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset);
 	else
-		type = (LPWSTR)et[i].u1.Name;
+		type = (LPWSTR)(int)et[i].u1.Id;
 
 	ret = lpfun(hmod,type,lparam);
 	if (!ret)
@@ -261,10 +261,10 @@ PE_EnumResourceNamesA(
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
     	LPSTR	name;
 
-	if (HIWORD(et[i].u1.Name))
-	    name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.Name));
+	if (et[i].u1.s.NameIsString)
+	    name = HEAP_strdupWtoA(heap,0,(LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset));
 	else
-	    name = (LPSTR)et[i].u1.Name;
+	    name = (LPSTR)(int)et[i].u1.Id;
 	ret = lpfun(hmod,type,name,lparam);
 	if (HIWORD(name)) HeapFree(heap,0,name);
 	if (!ret)
@@ -297,10 +297,10 @@ PE_EnumResourceNamesW(
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
 	LPWSTR	name;
-    	if (HIWORD(et[i].u1.Name))
-		name = (LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.Name);
+    	if (et[i].u1.s.NameIsString)
+		name = (LPWSTR)((LPBYTE)pem->pe_resource+et[i].u1.s.NameOffset);
 	else
-		name = (LPWSTR)et[i].u1.Name;
+		name = (LPWSTR)(int)et[i].u1.Id;
 	ret = lpfun(hmod,type,name,lparam);
 	if (!ret)
 		break;
