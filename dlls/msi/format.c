@@ -231,13 +231,13 @@ static BOOL find_next_outermost_key(LPCWSTR source, DWORD len_remaining,
     *nested = FALSE;
     for (i = 1; (*mark - source) + i < len_remaining && count > 0; i++)
     {
-        if ((*mark)[i] == '[') 
+        if ((*mark)[i] == '[' && (*mark)[i-1] != '\\')
         {
             count ++;
             total_count ++;
             *nested = TRUE;
         }
-        else if ((*mark)[i] == ']')
+        else if ((*mark)[i] == ']' && (*mark)[i-1] != '\\')
         {
             count --;
         }
