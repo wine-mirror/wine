@@ -19,17 +19,6 @@ extern "C" {
 #include "winnls.h"
 #include "objbase.h"
 
-/* FIXME: remove the following includes which are not in SDK */
-#include "ntdll.h"
-#include "wine/keyboard16.h"
-#include "wine/shell16.h"
-#include "wine/w32skrnl.h"
-#include "wine/winbase16.h"
-#include "wine/winesound.h"
-#include "wine/winestring.h"
-#include "wine/winuser16.h"
-
-
 #if 0
   Where does this belong? Nobody uses this stuff anyway.
 typedef struct {
