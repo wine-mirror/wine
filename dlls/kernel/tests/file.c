@@ -49,6 +49,8 @@ static void test__hread( void )
     long bytes_wanted;
     UINT i;
 
+    SetFileAttributesA(filename,FILE_ATTRIBUTE_NORMAL); /* be sure to remove stale files */
+    DeleteFileA( filename );
     filehandle = _lcreat( filename, 0 );
     if (filehandle == HFILE_ERROR)
     {
@@ -224,14 +226,11 @@ static void test__lcreat( void )
 
     ok( INVALID_HANDLE_VALUE != FindFirstFileA( filename, &search_results ), "should be able to find file" );
 
-    todo_wine
-    {
-        ok( 0 == DeleteFileA( filename ), "shouldn't be able to delete a readonly file" );
+    ok( 0 == DeleteFileA( filename ), "shouldn't be able to delete a readonly file" );
 
-        ok( SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL ) != 0, "couldn't change attributes on file" );
+    ok( SetFileAttributesA(filename, FILE_ATTRIBUTE_NORMAL ) != 0, "couldn't change attributes on file" );
 
-        ok( DeleteFileA( filename ) != 0, "now it should be possible to delete the file!" );
-    }
+    ok( DeleteFileA( filename ) != 0, "now it should be possible to delete the file!" );
 
     filehandle = _lcreat( filename, 2 );
     ok( HFILE_ERROR != filehandle, "couldn't create file \"%s\" (err=%d)", filename, GetLastError(  ) );

@@ -2149,6 +2149,7 @@ BOOL16 WINAPI DeleteFile16( LPCSTR path )
 BOOL WINAPI DeleteFileA( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
+    HANDLE hFile;
 
     if (!path)
     {
@@ -2170,11 +2171,20 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
     }
 
     if (!DOSFS_GetFullName( path, TRUE, &full_name )) return FALSE;
+
+    /* check if we are allowed to delete the source */
+    hFile = FILE_CreateFile( full_name.long_name, GENERIC_READ|GENERIC_WRITE, 0,
+                             NULL, OPEN_EXISTING, 0, 0, TRUE,
+                             GetDriveTypeA( full_name.short_name ) );
+    if (!hFile) return FALSE;
+
     if (unlink( full_name.long_name ) == -1)
     {
         FILE_SetDosError();
+        CloseHandle(hFile);
         return FALSE;
     }
+    CloseHandle(hFile);
     return TRUE;
 }
 
@@ -2317,6 +2327,7 @@ static BOOL FILE_AddBootRenameEntry( const char *fn1, const char *fn2, DWORD fla
 BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 {
     DOS_FULL_NAME full_name1, full_name2;
+    HANDLE hFile;
 
     TRACE("(%s,%s,%04lx)\n", fn1, fn2, flag);
 
@@ -2384,6 +2395,21 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
                   fn1, fn2);
             return FILE_AddBootRenameEntry( fn1, fn2, flag );
         }
+
+        /* check if we are allowed to delete the source */
+        hFile = FILE_CreateFile( full_name1.long_name, GENERIC_READ|GENERIC_WRITE, 0,
+                                 NULL, OPEN_EXISTING, 0, 0, TRUE,
+                                 GetDriveTypeA( full_name1.short_name ) );
+        if (!hFile) return FALSE;
+        CloseHandle(hFile);
+
+        /* check, if we are allowed to delete the destination,
+        **     (but the file not being there is fine) */
+        hFile = FILE_CreateFile( full_name2.long_name, GENERIC_READ|GENERIC_WRITE, 0,
+                                 NULL, OPEN_EXISTING, 0, 0, TRUE,
+                                 GetDriveTypeA( full_name2.short_name ) );
+        if(!hFile && GetLastError() != ERROR_FILE_NOT_FOUND) return FALSE;
+        CloseHandle(hFile);
 
         if (full_name1.drive != full_name2.drive)
         {
