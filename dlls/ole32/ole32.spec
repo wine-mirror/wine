@@ -20,9 +20,9 @@ debug_channels (ole relay storage)
   6 stdcall CoCreateGuid(ptr) CoCreateGuid
   7 stdcall CoCreateInstance(ptr ptr long ptr ptr) CoCreateInstance
   8 stdcall CoDisconnectObject(ptr long) CoDisconnectObject
-  9 stdcall CoDosDateTimeToFileTime(long long ptr) DosDateTimeToFileTime
+  9 forward CoDosDateTimeToFileTime kernel32.DosDateTimeToFileTime
  10 stdcall CoFileTimeNow(ptr) CoFileTimeNow
- 11 stdcall CoFileTimeToDosDateTime(ptr ptr ptr) FileTimeToDosDateTime
+ 11 forward CoFileTimeToDosDateTime kernel32.FileTimeToDosDateTime
  12 stdcall CoFreeAllLibraries() CoFreeAllLibraries
  13 stdcall CoFreeLibrary(long) CoFreeLibrary
  14 stdcall CoFreeUnusedLibraries() CoFreeUnusedLibraries

@@ -35,7 +35,7 @@ debug_channels (dll)
 27 stub _NtDupSection@4
 28 stub _GetSelModName@20
 29 stub _FGetDscr@8
-30 stdcall _RtlNtStatusToDosError@4(long) RtlNtStatusToDosError #FIXME: not sure
+30 forward _RtlNtStatusToDosError ntdll.RtlNtStatusToDosError #FIXME: not sure
 31 stub _NtFlushVirtualMemory@16
 32 stub _snprintf
 33 stub _NtUnmapViewOfSection@8

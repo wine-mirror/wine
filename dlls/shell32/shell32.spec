@@ -249,28 +249,28 @@ debug_channels (exec pidl shell)
  299 stub Shl1632_ThunkData32
  300 stub Shl3216_ThunkData32
  301 forward StrChrA shlwapi.StrChrA   
- 302 stub StrChrIA
- 303 stub StrChrIW
+ 302 forward StrChrIA shlwapi.StrChrIA
+ 303 forward StrChrIW shlwapi.StrChrIW
  304 forward StrChrW shlwapi.StrChrW
  305 forward StrCmpNA shlwapi.StrCmpNA 
  306 forward StrCmpNIA shlwapi.StrCmpNIA
  307 forward StrCmpNIW shlwapi.StrCmpNIW
  308 forward StrCmpNW shlwapi.StrCmpNW
  309 stdcall StrCpyNA (ptr str long) lstrcpynA
- 310 stdcall StrCpyNW (ptr wstr long)lstrcpynW
- 311 stub StrNCmpA
- 312 stub StrNCmpIA
- 313 stub StrNCmpIW
- 314 stub StrNCmpW
+ 310 forward StrCpyNW shlwapi.StrCpyNW
+ 311 forward StrNCmpA shlwapi.StrCmpNA
+ 312 forward StrNCmpIA shlwapi.StrCmpNIA
+ 313 forward StrNCmpIW shlwapi.StrCmpNIW
+ 314 forward StrNCmpW shlwapi.StrCmpNW
  315 stdcall StrNCpyA (ptr str long) lstrcpynA
- 316 stdcall StrNCpyW (ptr wstr long)lstrcpynW
+ 316 forward StrNCpyW shlwapi.StrNCpyW
  317 forward StrRChrA shlwapi.StrRChrA
- 318 stub StrRChrIA
- 319 stub StrRChrIW
+ 318 forward StrRChrIA shlwapi.StrRChrIA
+ 319 forward StrRChrIW shlwapi.StrRChrIW
  320 forward StrRChrW shlwapi.StrRChrW
  321 stub StrRStrA
- 322 stub StrRStrIA
- 323 stub StrRStrIW
+ 322 forward StrRStrIA shlwapi.StrRStrIA
+ 323 forward StrRStrIW shlwapi.StrRStrIW
  324 stub StrRStrW
  325 forward StrStrA shlwapi.StrStrA
  326 forward StrStrIA shlwapi.StrStrIA

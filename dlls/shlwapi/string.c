@@ -36,6 +36,15 @@ LPWSTR WINAPI StrChrW (LPCWSTR str, WCHAR x )
 }
 
 /*************************************************************************
+ * StrCmpIW					[SHLWAPI]
+ */
+int WINAPI StrCmpIW ( LPCWSTR wstr1, LPCWSTR wstr2 )
+{
+    TRACE("%s %s\n", debugstr_w(wstr1),debugstr_w(wstr2));
+    return strcmpiW( wstr1, wstr2 );
+}
+
+/*************************************************************************
  * StrCmpNA					[SHLWAPI]
  */
 INT WINAPI StrCmpNA ( LPCSTR str1, LPCSTR str2, INT len)
@@ -72,6 +81,15 @@ int WINAPI StrCmpNIW ( LPCWSTR wstr1, LPCWSTR wstr2, int len)
 }
 
 /*************************************************************************
+ * StrCmpW					[SHLWAPI]
+ */
+int WINAPI StrCmpW ( LPCWSTR wstr1, LPCWSTR wstr2 )
+{
+    TRACE("%s %s\n", debugstr_w(wstr1),debugstr_w(wstr2));
+    return strcmpW( wstr1, wstr2 );
+}
+
+/*************************************************************************
  * StrCatW					[SHLWAPI]
  */
 LPWSTR WINAPI StrCatW( LPWSTR wstr1, LPCWSTR wstr2 )
@@ -86,6 +104,15 @@ LPWSTR WINAPI StrCatW( LPWSTR wstr1, LPCWSTR wstr2 )
 LPWSTR WINAPI StrCpyW( LPWSTR wstr1, LPCWSTR wstr2 )
 {
     return strcpyW( wstr1, wstr2 );
+}
+
+
+/*************************************************************************
+ * StrCpyNW					[SHLWAPI]
+ */
+LPWSTR WINAPI StrCpyNW( LPWSTR wstr1, LPCWSTR wstr2, int n )
+{
+    return lstrcpynW( wstr1, wstr2, n );
 }
 
 
