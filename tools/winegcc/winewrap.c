@@ -216,7 +216,7 @@ static const char *wrapper_code =
 ;
 
 static const char *output_name = "a.out";
-static strarray *other_lib_files, *arh_files, *dll_files, *llib_paths, *lib_paths, *obj_files;
+static strarray *so_files, *arh_files, *dll_files, *llib_paths, *lib_paths, *obj_files;
 static int keep_generated = 0;
 
 static void rm_temp_file(const char *file)
@@ -273,49 +273,41 @@ static char *try_path( const char *path, const char *name, const char *ext )
     return NULL;
 }
 
-/* open the .def library for a given dll in a specified path */
-static char *try_dll_path( const char *path, const char *name )
-{
-    return try_path(path, name, "def");
-}
 
-/* open the .a library for a given lib in a specified path */
-static char *try_lib_path( const char *path, const char *name )
+static char* find_in_path(const strarray* path, const char* name, const char* ext)
 {
-    return try_path(path, name, "a");
-}
-
-/* find the .def library for a given dll */
-static char *find_dll(const char *name)
-{
-    char *fullname;
     int i;
-
-    for (i = 0; i < lib_paths->size; i++)
+    for (i = 0; i < path->size; i++)
     {
-        if ((fullname = try_dll_path( lib_paths->base[i], name ))) return fullname;
+	char* fullname;
+        if ((fullname = try_path( path->base[i], name, ext )))
+	    return fullname;
     }
     return NULL;
 }
-
-/* find a static library */
-static char *find_lib(const char *name)
-{
-    static const char* std_paths[] = { "/usr/lib", "/usr/local/lib" };
-    char *fullname;
-    int i;
     
-    for (i = 0; i < lib_paths->size; i++)
+/* find the .def library for a given dll */
+static char *find_dll(const char *name)
+{
+    return find_in_path(lib_paths, name, "def");
+}
+
+/* find a unix library */
+static char *find_unix_lib(const char *name, const char* ext)
+{
+    char* fullname;
+    static strarray *std_paths;
+    if (!std_paths)
     {
-        if ((fullname = try_lib_path( lib_paths->base[i], name ))) return fullname;
+        std_paths = strarray_alloc();
+	strarray_add(std_paths, "/usr/lib");
+	strarray_add(std_paths, "/usr/local/lib");
     }
 
-    for (i = 0; i < sizeof(std_paths)/sizeof(std_paths[0]); i++)
-    {
-        if ((fullname = try_lib_path( std_paths[i], name ))) return fullname;
-    }
+    if ((fullname = find_in_path( lib_paths, name, ext )))
+	return fullname;
 
-    return 0;
+    return find_in_path( std_paths, name, ext );
 }
 
 static void add_lib_path(const char* path)
@@ -328,18 +320,25 @@ static void identify_lib_file(const char* library)
 {
     char *lib;
 
-    if (find_dll(library))
+    if (find_unix_lib(library, "so"))
     {
+	/* Unix shared object */
+        strarray_add(so_files, strmake("-l%s", library));
+    }
+    else if (find_dll(library))
+    {
+	/* Windows DLL */
 	strarray_add(dll_files, strmake("-l%s", library));
     }
-    else if ((lib = find_lib(library)))
+    else if ((lib = find_unix_lib(library, "a")))
     {
 	/* winebuild needs the full path for .a files */
         strarray_add(arh_files, lib);
     }
     else
     {
-        strarray_add(other_lib_files, strmake("-l%s", library));
+        fprintf(stderr, "cannot find %s.{so,def,a} in library search path\n",
+		library);
     }
 }
  
@@ -447,7 +446,7 @@ int main(int argc, char **argv)
     strarray *spec_args, *comp_args, *link_args;
     strarray *lib_files;
 
-    other_lib_files = strarray_alloc();
+    so_files = strarray_alloc();
     arh_files = strarray_alloc();
     dll_files = strarray_alloc();
     lib_files = strarray_alloc();
@@ -624,8 +623,8 @@ int main(int argc, char **argv)
 	strarray_add(link_args, llib_paths->base[i]);
     strarray_add(link_args, "-lwine");
     strarray_add(link_args, "-lm");
-    for (i = 0; i < other_lib_files->size; i++)
-	strarray_add(link_args, other_lib_files->base[i]);
+    for (i = 0; i < so_files->size; i++)
+	strarray_add(link_args, so_files->base[i]);
 
     strarray_add(link_args, "-o");
     if (create_wrapper)
