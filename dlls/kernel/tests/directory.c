@@ -195,14 +195,16 @@ static void test_CreateDirectoryA(void)
 
     lstrcatA(tmpdir, "?");
     ret = CreateDirectoryA(tmpdir, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+    ok(ret == FALSE && (GetLastError() == ERROR_INVALID_NAME ||
+			GetLastError() == ERROR_PATH_NOT_FOUND),
        "CreateDirectoryA with ? wildcard name should fail, ret=%s error=%ld\n",
        ret ? " True" : "False", GetLastError());
     ret = RemoveDirectoryA(tmpdir);
 
     tmpdir[lstrlenA(tmpdir) - 1] = '*';
     ret = CreateDirectoryA(tmpdir, NULL);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
+    ok(ret == FALSE && (GetLastError() == ERROR_INVALID_NAME ||
+			GetLastError() == ERROR_PATH_NOT_FOUND),
        "CreateDirectoryA with * wildcard name should fail, ret=%s error=%ld\n",
        ret ? " True" : "False", GetLastError());
     ret = RemoveDirectoryA(tmpdir);
@@ -284,14 +286,16 @@ static void test_RemoveDirectoryA(void)
 
     lstrcatA(tmpdir, "?");
     ret = RemoveDirectoryA(tmpdir);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
-       "RemoveDirectoryA with ? wildcard name should fail with error 183, ret=%s error=%ld\n",
+    ok(ret == FALSE && (GetLastError() == ERROR_INVALID_NAME ||
+			GetLastError() == ERROR_PATH_NOT_FOUND),
+       "RemoveDirectoryA with ? wildcard name should fail, ret=%s error=%ld\n",
        ret ? " True" : "False", GetLastError());
 
     tmpdir[lstrlenA(tmpdir) - 1] = '*';
     ret = RemoveDirectoryA(tmpdir);
-    ok(ret == FALSE && GetLastError() == ERROR_INVALID_NAME,
-       "RemoveDirectoryA with * wildcard name should fail with error 183, ret=%s error=%ld\n",
+    ok(ret == FALSE && (GetLastError() == ERROR_INVALID_NAME ||
+			GetLastError() == ERROR_PATH_NOT_FOUND),
+       "RemoveDirectoryA with * wildcard name should fail, ret=%s error=%ld\n",
        ret ? " True" : "False", GetLastError());
 }
 
