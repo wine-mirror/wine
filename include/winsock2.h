@@ -249,7 +249,7 @@ typedef struct _QUALITYOFSERVICE {
         WSABUF             ProviderSpecific; 
    } QOS, *LPQOS;
 
-typedef int CALLBACK (*LPCONDITIONPROC)
+typedef int (CALLBACK *LPCONDITIONPROC)
 (
     LPWSABUF lpCallerId,
     LPWSABUF lpCallerData,
@@ -261,7 +261,7 @@ typedef int CALLBACK (*LPCONDITIONPROC)
     DWORD dwCallbackData
 );
 
-typedef void CALLBACK (*LPWSAOVERLAPPED_COMPLETION_ROUTINE)
+typedef void (CALLBACK *LPWSAOVERLAPPED_COMPLETION_ROUTINE)
 (
     DWORD dwError,
     DWORD cbTransferred,

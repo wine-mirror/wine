@@ -700,7 +700,7 @@ typedef struct _DllVersionInfo {
 #define DLLVER_PLATFORM_WINDOWS 0x01 /* Win9x */
 #define DLLVER_PLATFORM_NT      0x02 /* WinNT */
 
-typedef HRESULT CALLBACK (*DLLGETVERSIONPROC)(DLLVERSIONINFO *);
+typedef HRESULT (CALLBACK *DLLGETVERSIONPROC)(DLLVERSIONINFO *);
 
 #ifdef __cplusplus
 } /* extern "C" */

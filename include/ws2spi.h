@@ -13,7 +13,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-typedef BOOL WINAPI (*LPWPUPOSTMESSAGE)(HWND,UINT,WPARAM,LPARAM);
+typedef BOOL (WINAPI *LPWPUPOSTMESSAGE)(HWND,UINT,WPARAM,LPARAM);
 
 #ifdef __cplusplus
 } /* extern "C" */

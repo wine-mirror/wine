@@ -353,7 +353,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile, char *prefix, int
 
     ret_type = reg_func? "void" : short_ret ? "unsigned short" : "unsigned int";
 
-    fprintf( outfile, "typedef %s __stdcall (*proc_%s_t)( ", ret_type, profile );
+    fprintf( outfile, "typedef %s (__stdcall *proc_%s_t)( ", ret_type, profile );
     args = profile + 7;
     for ( i = 0; args[i]; i++ )
     {

@@ -265,7 +265,7 @@ DECLARE_HANDLE(HDDEDATA);
 
 *******************************************************/
 
-typedef HDDEDATA CALLBACK (*PFNCALLBACK)(UINT, UINT, HCONV, HSZ, HSZ,
+typedef HDDEDATA (CALLBACK *PFNCALLBACK)(UINT, UINT, HCONV, HSZ, HSZ,
 					 HDDEDATA, DWORD, DWORD);
 
 /***************************************************

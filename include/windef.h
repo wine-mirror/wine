@@ -93,8 +93,8 @@ typedef HICON HCURSOR;
 
 /* Callback function pointers types */
 
-typedef INT     CALLBACK (*FARPROC)();
-typedef INT     CALLBACK (*PROC)();
+typedef INT     (CALLBACK *FARPROC)();
+typedef INT     (CALLBACK *PROC)();
 
 
 /* Macros to split words and longs. */

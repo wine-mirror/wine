@@ -156,7 +156,7 @@ extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 
 /* msdos/interrupts.c */
-typedef void WINAPI (*INTPROC)(CONTEXT86*);
+typedef void (WINAPI *INTPROC)(CONTEXT86*);
 extern FARPROC16 INT_GetPMHandler( BYTE intnum );
 extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
 
@@ -196,7 +196,7 @@ extern void WINAPI INT_Int2aHandler(CONTEXT86*);
 extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
 /* msdos/dpmi.c */
-typedef void WINAPI (*RMCBPROC)(CONTEXT86*);
+typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 extern void WINAPI INT_Int31Handler(CONTEXT86*);
 extern BOOL DPMI_LoadDosSystem(void);
 extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);

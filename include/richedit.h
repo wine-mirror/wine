@@ -136,7 +136,7 @@ static const WCHAR RICHEDIT_CLASS20W[] = { 'R','i','c','h','E','d','i','t','2','
 #define EN_ALIGNRTL			0x0711
 
 
-typedef DWORD CALLBACK(* EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
+typedef DWORD (CALLBACK * EDITSTREAMCALLBACK)( DWORD, LPBYTE, LONG, LONG * );
 
 /* Rich edit control styles */
 #define ES_SAVESEL            0x00008000

@@ -232,8 +232,8 @@ typedef struct {
     DWORD               dwScale;
     DWORD               dwOverheadPerFrame;
     DWORD               dwReserved2;
-    LONG CALLBACK (*GetData)(LPARAM lInput,LONG lFrame,LPVOID lpBits,LONG len);
-    LONG CALLBACK (*PutData)(LPARAM lOutput,LONG lFrame,LPVOID lpBits,LONG len);
+    LONG (CALLBACK *GetData)(LPARAM lInput,LONG lFrame,LPVOID lpBits,LONG len);
+    LONG (CALLBACK *PutData)(LPARAM lOutput,LONG lFrame,LPVOID lpBits,LONG len);
 } ICCOMPRESSFRAMES;
 
 typedef struct {
@@ -246,8 +246,8 @@ typedef struct {
 #define ICSTATUS_ERROR	    3
 #define ICSTATUS_YIELD	    4
     /* FIXME: some X11 libs define Status as int... */
-    /* LONG CALLBACK (*zStatus)(LPARAM lParam, UINT message, LONG l); */
-    LONG CALLBACK (*zStatus)(LPARAM lParam, UINT message, LONG l);
+    /* LONG (CALLBACK *zStatus)(LPARAM lParam, UINT message, LONG l); */
+    LONG (CALLBACK *zStatus)(LPARAM lParam, UINT message, LONG l);
 } ICSETSTATUSPROC;
 
 /* Values for wMode of ICOpen() */
@@ -663,7 +663,7 @@ inline static LRESULT VFWAPI ICDrawSuggestFormat(HIC hic, LPBITMAPINFOHEADER lpb
     ICSendMessage(hic, ICM_DRAW_RENDERBUFFER, 0, 0)
 
 inline static LRESULT VFWAPI ICSetStatusProc(HIC hic, DWORD dwFlags, LRESULT lParam,
-					     LONG CALLBACK (*fpfnStatus)(LPARAM, UINT, LONG))
+					     LONG (CALLBACK *fpfnStatus)(LPARAM, UINT, LONG))
 {
     ICSETSTATUSPROC ic;
 

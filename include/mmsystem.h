@@ -28,7 +28,7 @@ DECLARE_OLD_HANDLE(HMMIO);
 
 #include "pshpack1.h"
    
-typedef LRESULT CALLBACK (*DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
+typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
 
 #define MAXWAVEDRIVERS	10
 #define MAXMIDIDRIVERS	10
@@ -210,7 +210,7 @@ DWORD	WINAPI GetDriverFlags(HDRVR hDriver);
 #define WINE_GDF_16BIT	0x10000000
 #endif
 
-typedef void CALLBACK (*LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR h, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
 
@@ -690,7 +690,7 @@ DWORD		WINAPI	auxOutMessage(UINT,UINT,DWORD,DWORD);
 #define TIMERR_NOCANDO        (TIMERR_BASE+1)      /* request not completed */
 #define TIMERR_STRUCT         (TIMERR_BASE+33)     /* time struct size */
 
-typedef void CALLBACK (*LPTIMECALLBACK)(UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
+typedef void (CALLBACK *LPTIMECALLBACK)(UINT uTimerID, UINT uMessage, DWORD dwUser, DWORD dw1, DWORD dw2);
 
 #define TIME_ONESHOT			0x0000	/* program timer for single event */
 #define TIME_PERIODIC			0x0001	/* program for continuous periodic event */
@@ -1249,7 +1249,7 @@ UINT		WINAPI	mixerSetControlDetails(HMIXEROBJ,LPMIXERCONTROLDETAILS,DWORD);
 #define CFSEPCHAR       '+'             /* compound file name separator char. */
 
 typedef DWORD           FOURCC;         /* a four character code */
-typedef LRESULT CALLBACK (*LPMMIOPROC)  (LPSTR lpmmioinfo, UINT uMessage,
+typedef LRESULT (CALLBACK *LPMMIOPROC)  (LPSTR lpmmioinfo, UINT uMessage,
 					 LPARAM lParam1, LPARAM lParam2);
 
 typedef struct {
@@ -1377,7 +1377,7 @@ MMRESULT	WINAPI	mmioDescend(HMMIO,MMCKINFO*,const MMCKINFO*,UINT);
 MMRESULT	WINAPI	mmioAscend(HMMIO,MMCKINFO*,UINT);
 MMRESULT	WINAPI	mmioCreateChunk(HMMIO,MMCKINFO*,UINT);
 
-typedef UINT CALLBACK (*YIELDPROC)(MCIDEVICEID,DWORD);
+typedef UINT (CALLBACK *YIELDPROC)(MCIDEVICEID,DWORD);
 
 DWORD		WINAPI	mciSendCommandA(UINT,UINT,DWORD,DWORD);
 DWORD		WINAPI	mciSendCommandW(UINT,UINT,DWORD,DWORD);
