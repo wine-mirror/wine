@@ -864,8 +864,22 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     }
 
     /* process the IDList */
-    if ((sei_tmp.fMask & SEE_MASK_INVOKEIDLIST) == SEE_MASK_INVOKEIDLIST) /*0x0c*/
+    if (sei_tmp.fMask & SEE_MASK_IDLIST)
     {
+	IShellExecuteHookW* pSEH;
+
+	HRESULT hr = SHBindToParent(sei_tmp.lpIDList, &IID_IShellExecuteHookW, (LPVOID*)&pSEH, NULL);
+
+	if (SUCCEEDED(hr))
+	{
+	    hr = IShellExecuteHookW_Execute(pSEH, sei);
+
+	    IShellExecuteHookW_Release(pSEH);
+
+	    if (hr == S_OK)
+		return TRUE;
+	}
+
         wszApplicationName[0] = '"';
         SHGetPathFromIDListW(sei_tmp.lpIDList, wszApplicationName+1);
         strcatW(wszApplicationName, wQuote);
