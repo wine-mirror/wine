@@ -618,9 +618,9 @@ HRESULT WINAPI GetAcceptLanguagesA( LPSTR langbuf, LPDWORD buflen)
  * Convert a GUID to a string.
  *
  * PARAMS
- *  guid [I] GUID to convert
- *  str  [O] Destination for string
- *  cmax [I] Length of output buffer
+ *  guid     [I] GUID to convert
+ *  lpszDest [O] Destination for string
+ *  cchMax   [I] Length of output buffer
  *
  * RETURNS
  *  The length of the string created.
