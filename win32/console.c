@@ -65,10 +65,15 @@ int wine_openpty(int *master, int *slave, char *name,
  */
 static int CONSOLE_GetPid( HANDLE handle )
 {
-    struct get_console_info_request *req = get_req_buffer();
-    req->handle = handle;
-    if (server_call( REQ_GET_CONSOLE_INFO )) return 0;
-    return req->pid;
+    int ret = 0;
+    SERVER_START_REQ
+    {
+        struct get_console_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = handle;
+        if (!server_call( REQ_GET_CONSOLE_INFO )) ret = req->pid;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /****************************************************************************
@@ -295,6 +300,36 @@ CONSOLE_get_input( HANDLE handle, BOOL blockwait )
     HeapFree(GetProcessHeap(),0,buf);
 }
 
+
+/******************************************************************************
+ * read_console_input
+ *
+ * Helper function for ReadConsole, ReadConsoleInput and PeekConsoleInput
+ */
+static BOOL read_console_input( HANDLE handle, LPINPUT_RECORD buffer, DWORD count,
+                                LPDWORD read, BOOL flush )
+{
+    BOOL ret;
+
+    count = min( count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD) );
+
+    SERVER_START_REQ
+    {
+        struct read_console_input_request *req = server_alloc_req( sizeof(*req),
+                                                                   count*sizeof(INPUT_RECORD) );
+        req->handle = handle;
+        req->flush = flush;
+        if ((ret = !server_call( REQ_READ_CONSOLE_INPUT )))
+        {
+            if (count) memcpy( buffer, server_data_ptr(req), server_data_size(req) );
+            if (read) *read = req->read;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /******************************************************************************
  * SetConsoleCtrlHandler [KERNEL32.459]  Adds function to calling process list
  *
@@ -475,7 +510,14 @@ DWORD WINAPI WIN32_GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
  */
 BOOL WINAPI FreeConsole(VOID)
 {
-    return !server_call( REQ_FREE_CONSOLE );
+    BOOL ret;
+    SERVER_START_REQ
+    {
+        struct free_console_request *req = server_alloc_req( sizeof(*req), 0 );
+        ret = !server_call( REQ_FREE_CONSOLE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -487,13 +529,18 @@ BOOL WINAPI FreeConsole(VOID)
 HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
 {
     int ret = -1;
-    struct open_console_request *req = get_req_buffer();
 
-    req->output  = output;
-    req->access  = access;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    SetLastError(0);
-    if (!server_call( REQ_OPEN_CONSOLE )) ret = req->handle;
+    SERVER_START_REQ
+    {
+        struct open_console_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->output  = output;
+        req->access  = access;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        SetLastError(0);
+        if (!server_call( REQ_OPEN_CONSOLE )) ret = req->handle;
+    }
+    SERVER_END_REQ;
     return ret;
 }
 
@@ -514,7 +561,6 @@ HANDLE CONSOLE_OpenHandle( BOOL output, DWORD access, LPSECURITY_ATTRIBUTES sa )
  */
 static BOOL CONSOLE_make_complex(HANDLE handle)
 {
-        struct set_console_fd_request *req = get_req_buffer();
 	struct termios term;
 	char buf[256];
 	char c = '\0';
@@ -563,10 +609,15 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
             CloseHandle( pty_handle );
             return FALSE;
 	}
-        req->handle = handle;
-        req->file_handle = pty_handle;
-        req->pid = xpid;
-        server_call( REQ_SET_CONSOLE_FD );
+        SERVER_START_REQ
+        {
+            struct set_console_fd_request *req = server_alloc_req( sizeof(*req), 0 );
+            req->handle = handle;
+            req->file_handle = pty_handle;
+            req->pid = xpid;
+            server_call( REQ_SET_CONSOLE_FD );
+        }
+        SERVER_END_REQ;
         CloseHandle( pty_handle );
 
 	/* enable mouseclicks */
@@ -591,18 +642,26 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
  */
 BOOL WINAPI AllocConsole(VOID)
 {
-    struct alloc_console_request *req = get_req_buffer();
+    BOOL ret;
     HANDLE hStderr;
     int handle_in, handle_out;
 
     TRACE("()\n");
-    req->access  = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
-    req->inherit = FALSE;
-    if (server_call( REQ_ALLOC_CONSOLE )) return FALSE;
-    handle_in = req->handle_in;
-    handle_out = req->handle_out;
 
-    if (!DuplicateHandle( GetCurrentProcess(), req->handle_out, GetCurrentProcess(), &hStderr,
+    SERVER_START_REQ
+    {
+        struct alloc_console_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->access  = GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE;
+        req->inherit = FALSE;
+        ret = !server_call( REQ_ALLOC_CONSOLE );
+        handle_in = req->handle_in;
+        handle_out = req->handle_out;
+    }
+    SERVER_END_REQ;
+    if (!ret) return FALSE;
+
+    if (!DuplicateHandle( GetCurrentProcess(), handle_out, GetCurrentProcess(), &hStderr,
                           0, TRUE, DUPLICATE_SAME_ACCESS ))
     {
         CloseHandle( handle_in );
@@ -708,19 +767,26 @@ BOOL WINAPI SetConsoleOutputCP( UINT cp )
  */
 DWORD WINAPI GetConsoleTitleA(LPSTR title,DWORD size)
 {
-    struct get_console_info_request *req = get_req_buffer();
     DWORD ret = 0;
     HANDLE hcon;
 
     if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ, 0, NULL,
                                OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return 0;
-    req->handle = hcon;
-    if (!server_call( REQ_GET_CONSOLE_INFO ))
+    SERVER_START_REQ
     {
-        lstrcpynA( title, req->title, size );
-        ret = strlen(req->title);
+        struct get_console_info_request *req = server_alloc_req( sizeof(*req),
+                                                                 REQUEST_MAX_VAR_SIZE );
+        req->handle = hcon;
+        if (!server_call( REQ_GET_CONSOLE_INFO ))
+        {
+            ret = server_data_size(req);
+            size = min( size-1, ret );
+            memcpy( title, server_data_ptr(req), size );
+            title[size] = 0;
+        }
     }
+    SERVER_END_REQ;
     CloseHandle( hcon );
     return ret;
 }
@@ -940,7 +1006,6 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
 {
     int		charsread = 0;
     LPSTR	xbuf = (LPSTR)lpBuffer;
-    LPINPUT_RECORD	ir;
 
     TRACE("(%d,%p,%ld,%p,%p)\n",
 	    hConsoleInput,lpBuffer,nNumberOfCharsToRead,
@@ -952,19 +1017,14 @@ BOOL WINAPI ReadConsoleA( HANDLE hConsoleInput,
     /* FIXME: should we read at least 1 char? The SDK does not say */
     while (charsread<nNumberOfCharsToRead)
     {
-        struct read_console_input_request *req = get_req_buffer();
-        req->handle = hConsoleInput;
-        req->count = 1;
-        req->flush = 1;
-        if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
-        if (!req->read) break;
-	ir = (LPINPUT_RECORD)(req+1);
-    	if (!ir->Event.KeyEvent.bKeyDown)
-		continue;
-    	if (ir->EventType != KEY_EVENT)
-		continue;
-	*xbuf++ = ir->Event.KeyEvent.uChar.AsciiChar; 
-	charsread++;
+        INPUT_RECORD ir;
+        DWORD count;
+        if (!read_console_input( hConsoleInput, &ir, 1, &count, TRUE )) return FALSE;
+        if (!count) break;
+        if (ir.EventType != KEY_EVENT) continue;
+        if (!ir.Event.KeyEvent.bKeyDown) continue;
+        *xbuf++ = ir.Event.KeyEvent.uChar.AsciiChar;
+        charsread++;
     }
     if (lpNumberOfCharsRead)
     	*lpNumberOfCharsRead = charsread;
@@ -1013,22 +1073,25 @@ BOOL WINAPI ReadConsoleW( HANDLE hConsoleInput,
 BOOL WINAPI ReadConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
                               DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
-    struct read_console_input_request *req = get_req_buffer();
+    if (!nLength)
+    {
+        if (lpNumberOfEventsRead) *lpNumberOfEventsRead = 0;
+        return TRUE;
+    }
 
     /* loop until we get at least one event */
     for (;;)
     {
-        req->handle = hConsoleInput;
-        req->count = nLength;
-        req->flush = 1;
-        if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
-        if (req->read)
+        DWORD count;
+        BOOL ret = read_console_input( hConsoleInput, lpBuffer, nLength, &count, TRUE );
+
+        if (!ret) return FALSE;
+        if (count)
         {
-            memcpy( lpBuffer, req + 1, req->read * sizeof(*lpBuffer) );
-            if (lpNumberOfEventsRead) *lpNumberOfEventsRead = req->read;
+            if (lpNumberOfEventsRead) *lpNumberOfEventsRead = count;
             return TRUE;
         }
-	CONSOLE_get_input(hConsoleInput,TRUE);
+        CONSOLE_get_input(hConsoleInput,TRUE);
         /*WaitForSingleObject( hConsoleInput, INFINITE32 );*/
     }
 }
@@ -1050,11 +1113,7 @@ BOOL WINAPI ReadConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer,
  */
 BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
 {
-    struct read_console_input_request *req = get_req_buffer();
-    req->handle = handle;
-    req->count = -1;  /* get all records */
-    req->flush = 1;
-    return !server_call( REQ_READ_CONSOLE_INPUT );
+    return read_console_input( handle, NULL, 0, NULL, TRUE );
 }
 
 
@@ -1065,20 +1124,15 @@ BOOL WINAPI FlushConsoleInputBuffer( HANDLE handle )
  *
  * Does not need a complex console.
  */
-BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer,
-                                   DWORD count, LPDWORD read )
+BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count, LPDWORD read )
 {
-    struct read_console_input_request *req = get_req_buffer();
-
     CONSOLE_get_input(handle,FALSE);
-
-    req->handle = handle;
-    req->count = count;
-    req->flush = 0;
-    if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
-    if (req->read) memcpy( buffer, req + 1, req->read * sizeof(*buffer) );
-    if (read) *read = req->read;
-    return TRUE;
+    if (!count)
+    {
+        if (read) *read = 0;
+        return TRUE;
+    }
+    return read_console_input( handle, buffer, count, read, FALSE );
 }
 
 
@@ -1102,22 +1156,28 @@ BOOL WINAPI PeekConsoleInputW(HANDLE hConsoleInput,
 BOOL WINAPI WriteConsoleInputA( HANDLE handle, INPUT_RECORD *buffer,
                                 DWORD count, LPDWORD written )
 {
-    struct write_console_input_request *req = get_req_buffer();
-    const DWORD max = server_remaining( req + 1 ) / sizeof(INPUT_RECORD);
+    BOOL ret = TRUE;
 
     if (written) *written = 0;
-    while (count)
+    while (count && ret)
     {
-        DWORD len = count < max ? count : max;
-        req->count = len;
-        req->handle = handle;
-        memcpy( req + 1, buffer, len * sizeof(*buffer) );
-        if (server_call( REQ_WRITE_CONSOLE_INPUT )) return FALSE;
-        if (written) *written += req->written;
-        count -= len;
-        buffer += len;
+        DWORD len = min( count, REQUEST_MAX_VAR_SIZE/sizeof(INPUT_RECORD) );
+        SERVER_START_REQ
+        {
+            struct write_console_input_request *req = server_alloc_req( sizeof(*req),
+                                                                        len*sizeof(INPUT_RECORD) );
+            req->handle = handle;
+            memcpy( server_data_ptr(req), buffer, len * sizeof(INPUT_RECORD) );
+            if ((ret = !server_call( REQ_WRITE_CONSOLE_INPUT )))
+            {
+                if (written) *written += req->written;
+                count -= len;
+                buffer += len;
+            }
+        }
+        SERVER_END_REQ;
     }
-    return TRUE;
+    return ret;
 }
 
 /******************************************************************************
@@ -1145,18 +1205,27 @@ BOOL WINAPI WriteConsoleInputW( HANDLE handle, INPUT_RECORD *buffer,
  */
 BOOL WINAPI SetConsoleTitleA(LPCSTR title)
 {
-    struct set_console_info_request *req = get_req_buffer();
+    size_t len = strlen(title);
     HANDLE hcon;
     DWORD written;
+    BOOL ret;
 
     if ((hcon = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
                                OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE)
         return FALSE;
-    req->handle = hcon;
-    req->mask = SET_CONSOLE_INFO_TITLE;
-    lstrcpynA( req->title, title, server_remaining(req->title) );
-    if (server_call( REQ_SET_CONSOLE_INFO )) goto error;
-    if (CONSOLE_GetPid( hcon ))
+
+    len = min( len, REQUEST_MAX_VAR_SIZE );
+    SERVER_START_REQ
+    {
+        struct set_console_info_request *req = server_alloc_req( sizeof(*req), len );
+        req->handle = hcon;
+        req->mask = SET_CONSOLE_INFO_TITLE;
+        memcpy( server_data_ptr(req), title, len );
+        ret = !server_call( REQ_SET_CONSOLE_INFO );
+    }
+    SERVER_END_REQ;
+
+    if (ret && CONSOLE_GetPid( hcon ))
     {
         /* only set title for complex console (own xterm) */
         WriteFile( hcon, "\033]2;", 4, &written, NULL );
@@ -1164,10 +1233,7 @@ BOOL WINAPI SetConsoleTitleA(LPCSTR title)
         WriteFile( hcon, "\a", 1, &written, NULL );
     }
     CloseHandle( hcon );
-    return TRUE;
- error:
-    CloseHandle( hcon );
-    return FALSE;
+    return ret;
 }
 
 
@@ -1231,16 +1297,7 @@ BOOL WINAPI SetConsoleCursorPosition( HANDLE hcon, COORD pos )
  */
 BOOL WINAPI GetNumberOfConsoleInputEvents(HANDLE hcon,LPDWORD nrofevents)
 {
-    struct read_console_input_request *req = get_req_buffer();
-
-    CONSOLE_get_input(hcon,FALSE);
-
-    req->handle = hcon;
-    req->count = -1;
-    req->flush = 0;
-    if (server_call( REQ_READ_CONSOLE_INPUT )) return FALSE;
-    if (nrofevents) *nrofevents = req->read;
-    return TRUE;
+    return read_console_input( hcon, NULL, 0, nrofevents, FALSE );
 }
 
 /***********************************************************************
@@ -1266,15 +1323,21 @@ BOOL WINAPI GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons)
  */
 BOOL WINAPI GetConsoleCursorInfo( HANDLE hcon, LPCONSOLE_CURSOR_INFO cinfo )
 {
-    struct get_console_info_request *req = get_req_buffer();
-    req->handle = hcon;
-    if (server_call( REQ_GET_CONSOLE_INFO )) return FALSE;
-    if (cinfo)
+    BOOL ret;
+
+    SERVER_START_REQ
     {
-        cinfo->dwSize = req->cursor_size;
-        cinfo->bVisible = req->cursor_visible;
+        struct get_console_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle = hcon;
+        ret = !server_call( REQ_GET_CONSOLE_INFO );
+        if (ret && cinfo)
+        {
+            cinfo->dwSize = req->cursor_size;
+            cinfo->bVisible = req->cursor_visible;
+        }
     }
-    return TRUE;
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1289,19 +1352,25 @@ BOOL WINAPI SetConsoleCursorInfo(
     HANDLE hcon,                /* [in] Handle to console screen buffer */
     LPCONSOLE_CURSOR_INFO cinfo)  /* [in] Address of cursor information */
 {
-    struct set_console_info_request *req = get_req_buffer();
     char	buf[8];
     DWORD	xlen;
+    BOOL ret;
 
     CONSOLE_make_complex(hcon);
     sprintf(buf,"\033[?25%c",cinfo->bVisible?'h':'l');
     WriteFile(hcon,buf,strlen(buf),&xlen,NULL);
 
-    req->handle         = hcon;
-    req->cursor_size    = cinfo->dwSize;
-    req->cursor_visible = cinfo->bVisible;
-    req->mask           = SET_CONSOLE_INFO_CURSOR;
-    return !server_call( REQ_SET_CONSOLE_INFO );
+    SERVER_START_REQ
+    {
+        struct set_console_info_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->handle         = hcon;
+        req->cursor_size    = cinfo->dwSize;
+        req->cursor_visible = cinfo->bVisible;
+        req->mask           = SET_CONSOLE_INFO_CURSOR;
+        ret = !server_call( REQ_SET_CONSOLE_INFO );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

@@ -486,6 +486,7 @@ DECL_HANDLER(set_socket_event)
 DECL_HANDLER(get_socket_event)
 {
     struct sock *sock;
+    size_t size;
 
     sock=(struct sock*)get_handle_obj(current->process,req->handle,GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,&sock_ops);
     if (!sock)
@@ -499,8 +500,10 @@ DECL_HANDLER(get_socket_event)
     req->mask    = sock->mask;
     req->pmask   = sock->pmask;
     req->state   = sock->state;
-    memcpy(req->errors, sock->errors, sizeof(sock->errors));
-    clear_error();
+    size = min( get_req_data_size(req), sizeof(sock->errors) );
+    memcpy( get_req_data(req), sock->errors, size );
+    set_req_data_size( req, size );
+
     if (req->service)
     {
         if (req->s_event)

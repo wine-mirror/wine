@@ -33,10 +33,9 @@
 #include "dosexe.h"
 #include "dosmod.h"
 #include "options.h"
-#include "server.h"
 #include "vga.h"
 
-DEFAULT_DEBUG_CHANNEL(module)
+DEFAULT_DEBUG_CHANNEL(module);
 
 #ifdef MZ_SUPPORTED
 
@@ -378,8 +377,6 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
   int write_fd[2],x_fd;
   pid_t child;
   char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
-  struct get_read_fd_request *r_req = get_req_buffer();
-  struct get_write_fd_request *w_req = get_req_buffer();
 
   if (!lpDosTask) return FALSE;
   /* create pipes */
@@ -390,10 +387,8 @@ BOOL MZ_InitTask( LPDOSTASK lpDosTask )
     return FALSE;
   }
 
-  r_req->handle = lpDosTask->hReadPipe;
-  server_call_fd( REQ_GET_READ_FD, -1, &lpDosTask->read_pipe );
-  w_req->handle = lpDosTask->hXPipe;
-  server_call_fd( REQ_GET_WRITE_FD, -1, &x_fd );
+  lpDosTask->read_pipe = FILE_GetUnixHandle( lpDosTask->hReadPipe, GENERIC_READ );
+  x_fd = FILE_GetUnixHandle( lpDosTask->hXPipe, GENERIC_WRITE );
 
   TRACE("win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
 	       lpDosTask->hReadPipe,lpDosTask->hXPipe,lpDosTask->read_pipe,x_fd);

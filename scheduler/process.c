@@ -39,7 +39,7 @@ DECLARE_DEBUG_CHANNEL(win32);
 PDB current_process;
 
 static char **main_exe_argv;
-static char *main_exe_name;
+static char main_exe_name[MAX_PATH];
 static HFILE main_exe_file = -1;
 
 
@@ -185,15 +185,18 @@ static BOOL process_init( char *argv[] )
     /* Retrieve startup info from the server */
     SERVER_START_REQ
     {
-        struct init_process_request *req = server_alloc_req( sizeof(*req), 0 );
+        struct init_process_request *req = server_alloc_req( sizeof(*req),
+                                                             sizeof(main_exe_name)-1 );
 
         req->ldt_copy  = ldt_copy;
         req->ldt_flags = ldt_flags_copy;
         req->ppid      = getppid();
         if ((ret = !server_call( REQ_INIT_PROCESS )))
         {
-            main_exe_file               = req->exe_file;
-            if (req->filename[0]) main_exe_name = strdup( req->filename );
+            size_t len = server_data_size( req );
+            memcpy( main_exe_name, server_data_ptr(req), len );
+            main_exe_name[len] = 0;
+            main_exe_file = req->exe_file;
             current_startupinfo.dwFlags     = req->start_flags;
             current_startupinfo.wShowWindow = req->cmd_show;
             current_envdb.hStdin   = current_startupinfo.hStdInput  = req->hstdin;
@@ -367,17 +370,16 @@ static void start_process(void)
  *           PROCESS_Start
  *
  * Startup routine of a new Win32 process once the main module has been loaded.
- * The filename is free'd by this routine.
  */
-static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPSTR filename ) WINE_NORETURN;
-static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPSTR filename )
+static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPCSTR filename ) WINE_NORETURN;
+static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPCSTR filename )
 {
     if (!filename)
     {
         /* if no explicit filename, use argv[0] */
-        if (!(filename = malloc( MAX_PATH ))) ExitProcess(1);
-        if (!GetLongPathNameA( full_argv0, filename, MAX_PATH ))
-            lstrcpynA( filename, full_argv0, MAX_PATH );
+        filename = main_exe_name;
+        if (!GetLongPathNameA( full_argv0, main_exe_name, sizeof(main_exe_name) ))
+            lstrcpynA( main_exe_name, full_argv0, sizeof(main_exe_name) );
     }
 
     /* load main module */
@@ -387,7 +389,6 @@ static void PROCESS_Start( HMODULE main_module, HFILE hFile, LPSTR filename )
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( main_module, filename, 0, hFile, FALSE ))
         goto error;
-    free( filename );
 
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(),
@@ -416,22 +417,16 @@ void PROCESS_InitWine( int argc, char *argv[] )
 
     main_exe_argv = ++argv;  /* remove argv[0] (wine itself) */
 
-    if (!main_exe_name)
+    if (!main_exe_name[0])
     {
-        char buffer[MAX_PATH];
         if (!argv[0]) OPTIONS_Usage();
 
         /* open the exe file */
-        if (!SearchPathA( NULL, argv[0], ".exe", sizeof(buffer), buffer, NULL ) &&
-            !SearchPathA( NULL, argv[0], NULL, sizeof(buffer), buffer, NULL ))
+        if (!SearchPathA( NULL, argv[0], ".exe", sizeof(main_exe_name), main_exe_name, NULL ) &&
+            !SearchPathA( NULL, argv[0], NULL, sizeof(main_exe_name), main_exe_name, NULL ))
         {
             MESSAGE( "%s: cannot find '%s'\n", argv0, argv[0] );
             goto error;
-        }
-        if (!(main_exe_name = strdup(buffer)))
-        {
-            MESSAGE( "%s: out of memory\n", argv0 );
-            ExitProcess(1);
         }
     }
 
@@ -723,54 +718,64 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     const char *unixdir = NULL;
     DOS_FULL_NAME full_name;
     HANDLE load_done_evt = -1;
-    struct new_process_request *req = get_req_buffer();
 
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
-    
-    /* create the process on the server side */
 
-    req->inherit_all  = inherit;
-    req->create_flags = flags;
-    req->start_flags  = startup->dwFlags;
-    req->exe_file     = hFile;
-    if (startup->dwFlags & STARTF_USESTDHANDLES)
+    if (lpCurrentDirectory)
     {
-        req->hstdin  = startup->hStdInput;
-        req->hstdout = startup->hStdOutput;
-        req->hstderr = startup->hStdError;
+        if (DOSFS_GetFullName( lpCurrentDirectory, TRUE, &full_name ))
+            unixdir = full_name.long_name;
     }
     else
     {
-        req->hstdin  = GetStdHandle( STD_INPUT_HANDLE );
-        req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
-        req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
-    }
-    req->cmd_show = startup->wShowWindow;
-    req->alloc_fd = 0;
-
-    if (lpCurrentDirectory) {
-        if (DOSFS_GetFullName( lpCurrentDirectory, TRUE, &full_name ))
-	    unixdir = full_name.long_name;
-    } else {
-	CHAR	buf[260];
-	if (GetCurrentDirectoryA(sizeof(buf),buf)) {
-	    if (DOSFS_GetFullName( buf, TRUE, &full_name ))
-		unixdir = full_name.long_name;
-	}
+        char buf[MAX_PATH];
+        if (GetCurrentDirectoryA(sizeof(buf),buf))
+        {
+            if (DOSFS_GetFullName( buf, TRUE, &full_name ))
+                unixdir = full_name.long_name;
+        }
     }
 
-    if (hFile == -1)  /* unix process */
+    /* create the process on the server side */
+
+    SERVER_START_REQ
     {
-        unixfilename = filename;
-        if (DOSFS_GetFullName( filename, TRUE, &full_name )) unixfilename = full_name.long_name;
-        req->filename[0] = 0;
+        size_t len = (hFile == -1) ? 0 : MAX_PATH;
+        struct new_process_request *req = server_alloc_req( sizeof(*req), len );
+        req->inherit_all  = inherit;
+        req->create_flags = flags;
+        req->start_flags  = startup->dwFlags;
+        req->exe_file     = hFile;
+        if (startup->dwFlags & STARTF_USESTDHANDLES)
+        {
+            req->hstdin  = startup->hStdInput;
+            req->hstdout = startup->hStdOutput;
+            req->hstderr = startup->hStdError;
+        }
+        else
+        {
+            req->hstdin  = GetStdHandle( STD_INPUT_HANDLE );
+            req->hstdout = GetStdHandle( STD_OUTPUT_HANDLE );
+            req->hstderr = GetStdHandle( STD_ERROR_HANDLE );
+        }
+        req->cmd_show = startup->wShowWindow;
+        req->alloc_fd = 0;
+
+        if (hFile == -1)  /* unix process */
+        {
+            unixfilename = filename;
+            if (DOSFS_GetFullName( filename, TRUE, &full_name ))
+                unixfilename = full_name.long_name;
+        }
+        else  /* new wine process */
+        {
+            if (!GetLongPathNameA( filename, server_data_ptr(req), MAX_PATH ))
+                lstrcpynA( server_data_ptr(req), filename, MAX_PATH );
+        }
+        ret = !server_call( REQ_NEW_PROCESS );
     }
-    else  /* new wine process */
-    {
-        if (!GetLongPathNameA( filename, req->filename, server_remaining(req->filename) ))
-            lstrcpynA( req->filename, filename, server_remaining(req->filename) );
-    }
-    if (server_call( REQ_NEW_PROCESS )) return FALSE;
+    SERVER_END_REQ;
+    if (!ret) return FALSE;
 
     /* fork and execute */
 

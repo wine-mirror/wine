@@ -41,6 +41,9 @@ struct request_max_size
     int pad[16]; /* the max request size is 16 ints */
 };
 
+/* max size of the variable part of a request */
+#define REQUEST_MAX_VAR_SIZE  1024
+
 /* a path name for server requests (Unicode) */
 typedef WCHAR path_t[MAX_PATH+1];
 
@@ -131,7 +134,7 @@ struct new_process_request
     IN  int          hstderr;      /* handle for stderr */
     IN  int          cmd_show;     /* main window show mode */
     IN  int          alloc_fd;     /* create the fd pair right now? */
-    IN  char         filename[1];  /* file name of main exe */
+    IN  VARARG(filename,string);   /* file name of main exe */
 };
 
 
@@ -183,7 +186,7 @@ struct init_process_request
     OUT int          hstdout;      /* handle for stdout */
     OUT int          hstderr;      /* handle for stderr */
     OUT int          cmd_show;     /* main window show mode */
-    OUT char         filename[1];  /* file name of main exe */
+    OUT VARARG(filename,string);   /* file name of main exe */
 };
 
 
@@ -529,7 +532,7 @@ struct create_file_request
     IN  int          create;        /* file create action */
     IN  unsigned int attrs;         /* file attributes for creation */
     OUT int          handle;        /* handle to the file */
-    IN  char         name[1];       /* file name */
+    IN  VARARG(filename,string);    /* file name */
 };
 
 
@@ -694,7 +697,7 @@ struct get_socket_event_request
     OUT unsigned int mask;          /* event mask */
     OUT unsigned int pmask;         /* pending events */
     OUT unsigned int state;         /* status bits */
-    OUT int          errors[1];     /* event errors */
+    OUT VARARG(errors,ints);        /* event errors */
 };
 
 
@@ -774,7 +777,7 @@ struct set_console_info_request
     IN  int          mask;          /* setting mask (see below) */
     IN  int          cursor_size;   /* size of cursor (percentage filled) */
     IN  int          cursor_visible;/* cursor visibility flag */
-    IN  char         title[1];      /* console title */
+    IN  VARARG(title,string);       /* console title */
 };
 #define SET_CONSOLE_INFO_CURSOR 0x01
 #define SET_CONSOLE_INFO_TITLE  0x02
@@ -787,7 +790,7 @@ struct get_console_info_request
     OUT int          cursor_size;   /* size of cursor (percentage filled) */
     OUT int          cursor_visible;/* cursor visibility flag */
     OUT int          pid;           /* pid of xterm (hack) */
-    OUT char         title[1];      /* console title */
+    OUT VARARG(title,string);       /* console title */
 };
 
 
@@ -796,9 +799,8 @@ struct write_console_input_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console input */
-    IN  int          count;         /* number of input records */
     OUT int          written;       /* number of records written */
- /* INPUT_RECORD records[0]; */     /* input records */
+    IN  VARARG(rec,input_records);  /* input records */
 };
 
 /* Fetch input records from a console input queue */
@@ -806,10 +808,9 @@ struct read_console_input_request
 {
     REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console input */
-    IN  int          count;         /* max number of records to retrieve */
     IN  int          flush;         /* flush the retrieved records from the queue? */
     OUT int          read;          /* number of records read */
- /* INPUT_RECORD records[0]; */     /* input records */
+    OUT VARARG(rec,input_records);  /* input records */
 };
 
 
@@ -947,10 +948,10 @@ struct wait_debug_event_request
 struct exception_event_request
 {
     REQUEST_HEADER;                /* request header */
-    IN  EXCEPTION_RECORD record;   /* exception record */
     IN  int              first;    /* first chance exception? */
-    IN  CONTEXT          context;  /* thread context */
     OUT int              status;   /* event continuation status */
+    IN  VARARG(record,exc_event);  /* thread context followed by exception record */
+    OUT VARARG(context,context);   /* modified thread context */
 };
 
 
@@ -1213,7 +1214,7 @@ struct get_thread_context_request
     REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  unsigned int flags;        /* context flags */
-    OUT CONTEXT      context;      /* thread context */
+    OUT VARARG(context,context);   /* thread context */
 };
 
 
@@ -1223,7 +1224,7 @@ struct set_thread_context_request
     REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  unsigned int flags;        /* context flags */
-    IN  CONTEXT      context;      /* thread context */
+    IN  VARARG(context,context);   /* thread context */
 };
 
 
@@ -1540,7 +1541,7 @@ union generic_request
     struct wait_input_idle_request wait_input_idle;
 };
 
-#define SERVER_PROTOCOL_VERSION 19
+#define SERVER_PROTOCOL_VERSION 20
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

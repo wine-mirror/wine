@@ -319,6 +319,31 @@ HFILE FILE_DupUnixHandle( int fd, DWORD access )
 
 
 /***********************************************************************
+ *           FILE_GetUnixHandle
+ *
+ * Retrieve the Unix handle corresponding to a file handle.
+ */
+int FILE_GetUnixHandle( HANDLE handle, DWORD access )
+{
+    int unix_handle = -1;
+    if (access == GENERIC_READ)
+    {
+        struct get_read_fd_request *req = get_req_buffer();
+        req->handle = handle;
+        server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
+    }
+    else if (access == GENERIC_WRITE)
+    {
+        struct get_write_fd_request *req = get_req_buffer();
+        req->handle = handle;
+        server_call_fd( REQ_GET_WRITE_FD, -1, &unix_handle );
+    }
+    else ERR( "bad access %08lx\n", access );
+    return unix_handle;
+}
+
+
+/***********************************************************************
  *           FILE_CreateFile
  *
  * Implementation of CreateFile. Takes a Unix path name.
@@ -328,21 +353,35 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
                         DWORD attributes, HANDLE template, BOOL fail_read_only )
 {
     DWORD err;
-    struct create_file_request *req = get_req_buffer();
+    HANDLE ret;
+    size_t len = strlen(filename);
+
+    if (len > REQUEST_MAX_VAR_SIZE)
+    {
+        FIXME("filename '%s' too long\n", filename );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return -1;
+    }
 
  restart:
-    req->access  = access;
-    req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    req->sharing = sharing;
-    req->create  = creation;
-    req->attrs   = attributes;
-    lstrcpynA( req->name, filename, server_remaining(req->name) );
-    SetLastError(0);
-    err = server_call( REQ_CREATE_FILE );
+    SERVER_START_REQ
+    {
+        struct create_file_request *req = server_alloc_req( sizeof(*req), len );
+        req->access  = access;
+        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+        req->sharing = sharing;
+        req->create  = creation;
+        req->attrs   = attributes;
+        memcpy( server_data_ptr(req), filename, len );
+        SetLastError(0);
+        err = server_call( REQ_CREATE_FILE );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
 
     /* If write access failed, retry without GENERIC_WRITE */
 
-    if ((req->handle == -1) && !fail_read_only && (access & GENERIC_WRITE)) 
+    if ((ret == -1) && !fail_read_only && (access & GENERIC_WRITE)) 
     {
 	if ((err == STATUS_MEDIA_WRITE_PROTECTED) || (err == STATUS_ACCESS_DENIED))
         {
@@ -353,11 +392,11 @@ HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,
         }
     }
 
-    if (req->handle == -1)
+    if (ret == -1)
 	WARN("Unable to create file '%s' (GLE %ld)\n", filename,
 	     GetLastError());
 
-    return req->handle;
+    return ret;
 }
 
 
@@ -1140,7 +1179,6 @@ BOOL WINAPI GetOverlappedResult(HANDLE hFile,LPOVERLAPPED lpOverlapped,
 BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
                         LPDWORD bytesRead, LPOVERLAPPED overlapped )
 {
-    struct get_read_fd_request *req = get_req_buffer();
     int unix_handle, result;
 
     TRACE("%d %p %ld\n", hFile, buffer, bytesToRead );
@@ -1153,8 +1191,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
       return FALSE;
     }
 
-    req->handle = hFile;
-    server_call_fd( REQ_GET_READ_FD, -1, &unix_handle );
+    unix_handle = FILE_GetUnixHandle( hFile, GENERIC_READ );
     if (unix_handle == -1) return FALSE;
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
@@ -1176,7 +1213,6 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
 BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
                          LPDWORD bytesWritten, LPOVERLAPPED overlapped )
 {
-    struct get_write_fd_request *req = get_req_buffer();
     int unix_handle, result;
 
     TRACE("%d %p %ld\n", hFile, buffer, bytesToWrite );
@@ -1189,8 +1225,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
       return FALSE;
     }
 
-    req->handle = hFile;
-    server_call_fd( REQ_GET_WRITE_FD, -1, &unix_handle );
+    unix_handle = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
     if (unix_handle == -1) return FALSE;
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {

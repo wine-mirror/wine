@@ -471,10 +471,7 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
 
     if (shared_size)
     {
-        struct get_read_fd_request *req = get_req_buffer();
-        req->handle = shared_file;
-        server_call_fd( REQ_GET_READ_FD, -1, &shared_fd );
-        if (shared_fd == -1) goto error;
+        if ((shared_fd = FILE_GetUnixHandle( shared_file, GENERIC_READ )) == -1) goto error;
         CloseHandle( shared_file );  /* we no longer need it */
         shared_file = INVALID_HANDLE_VALUE; 
     }

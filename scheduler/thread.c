@@ -502,10 +502,11 @@ BOOL WINAPI SetThreadContext( HANDLE handle,           /* [in]  Handle to thread
     BOOL ret;
     SERVER_START_REQ
     {
-        struct set_thread_context_request *req = server_alloc_req( sizeof(*req), 0 );
+        struct set_thread_context_request *req = server_alloc_req( sizeof(*req),
+                                                                   sizeof(*context) );
         req->handle = handle;
         req->flags = context->ContextFlags;
-        memcpy( &req->context, context, sizeof(*context) );
+        memcpy( server_data_ptr(req), context, sizeof(*context) );
         ret = !server_call( REQ_SET_THREAD_CONTEXT );
     }
     SERVER_END_REQ;
@@ -526,12 +527,13 @@ BOOL WINAPI GetThreadContext( HANDLE handle,     /* [in]  Handle to thread with 
     BOOL ret;
     SERVER_START_REQ
     {
-        struct get_thread_context_request *req = server_alloc_req( sizeof(*req), 0 );
+        struct get_thread_context_request *req = server_alloc_req( sizeof(*req),
+                                                                   sizeof(*context) );
         req->handle = handle;
         req->flags = context->ContextFlags;
-        memcpy( &req->context, context, sizeof(*context) );
+        memcpy( server_data_ptr(req), context, sizeof(*context) );
         if ((ret = !server_call( REQ_GET_THREAD_CONTEXT )))
-            memcpy( context, &req->context, sizeof(*context) );
+            memcpy( context, server_data_ptr(req), sizeof(*context) );
     }
     SERVER_END_REQ;
     return ret;

@@ -15,11 +15,8 @@
     "void*"         => "%p",
     "time_t"        => "%ld",
     "path_t"        => "&dump_path_t",
-    "debug_event_t" => "&dump_debug_event_t",
-    "CONTEXT"       => "&dump_context",
-    "EXCEPTION_RECORD" => "&dump_exc_record",
-    "char[1]"          => "&dump_string",
-    "WCHAR[1]"         => "&dump_unicode_string"
+    "char[1]"       => "&dump_string",
+    "WCHAR[1]"      => "&dump_unicode_string"
 );
 
 my @requests = ();

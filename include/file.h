@@ -33,6 +33,7 @@ typedef struct
 /* files/file.c */
 extern void FILE_SetDosError(void);
 extern HFILE FILE_DupUnixHandle( int fd, DWORD access );
+extern int FILE_GetUnixHandle( HANDLE handle, DWORD access );
 extern BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );
 extern HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 );
 extern HANDLE FILE_CreateFile( LPCSTR filename, DWORD access, DWORD sharing,

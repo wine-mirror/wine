@@ -10,22 +10,13 @@
 #include <sys/uio.h>
 #include "winsock2.h"
 #include "winnt.h"
+#include "winbase.h"
+#include "wincon.h"
 #include "request.h"
 #include "unicode.h"
 
 
 /* utility functions */
-
-static void dump_ints( const int *ptr, int len )
-{
-    fputc( '{', stderr );
-    while (len > 0)
-    {
-        fprintf( stderr, "%d", *ptr++ );
-        if (--len) fputc( ',', stderr );
-    }
-    fputc( '}', stderr );
-}
 
 static void dump_uints( const int *ptr, int len )
 {
@@ -68,25 +59,7 @@ static void dump_path_t( const void *req, const path_t *path )
     dump_unicode_string( req, *path );
 }
 
-static void dump_context( const void *req, const CONTEXT *context )
-{
-#ifdef __i386__
-    fprintf( stderr, "{flags=%08lx,eax=%08lx,ebx=%08lx,ecx=%08lx,edx=%08lx,esi=%08lx,edi=%08lx,"
-             "ebp=%08lx,eip=%08lx,esp=%08lx,eflags=%08lx,cs=%04lx,ds=%04lx,es=%04lx,"
-             "fs=%04lx,gs=%04lx,dr0=%08lx,dr1=%08lx,dr2=%08lx,dr3=%08lx,dr6=%08lx,dr7=%08lx,",
-             context->ContextFlags, context->Eax, context->Ebx, context->Ecx, context->Edx,
-             context->Esi, context->Edi, context->Ebp, context->Eip, context->Esp, context->EFlags,
-             context->SegCs, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
-             context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
-    fprintf( stderr, "float=" );
-    dump_uints( (int *)&context->FloatSave, sizeof(context->FloatSave) / sizeof(int) );
-    fprintf( stderr, "}" );
-#else
-    dump_uints( (int *)context, sizeof(*context) / sizeof(int) );
-#endif
-}
-
-static void dump_exc_record( const void *req, const EXCEPTION_RECORD *rec )
+static void dump_exc_record( const EXCEPTION_RECORD *rec )
 {
     int i;
     fprintf( stderr, "{code=%lx,flags=%lx,rec=%p,addr=%p,params={",
@@ -128,6 +101,11 @@ static void dump_varargs_ptrs( const void *ptr, size_t len )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_string( const void *ptr, size_t len )
+{
+    fprintf( stderr, "\"%.*s\"", (int)len, (char *)ptr );
+}
+
 static void dump_varargs_unicode_str( const void *ptr, size_t len )
 {
     fprintf( stderr, "L\"" );
@@ -135,15 +113,48 @@ static void dump_varargs_unicode_str( const void *ptr, size_t len )
     fputc( '\"', stderr );
 }
 
+static void dump_varargs_context( const void *ptr, size_t len )
+{
+    const CONTEXT *context = ptr;
+#ifdef __i386__
+    fprintf( stderr, "{flags=%08lx,eax=%08lx,ebx=%08lx,ecx=%08lx,edx=%08lx,esi=%08lx,edi=%08lx,"
+             "ebp=%08lx,eip=%08lx,esp=%08lx,eflags=%08lx,cs=%04lx,ds=%04lx,es=%04lx,"
+             "fs=%04lx,gs=%04lx,dr0=%08lx,dr1=%08lx,dr2=%08lx,dr3=%08lx,dr6=%08lx,dr7=%08lx,",
+             context->ContextFlags, context->Eax, context->Ebx, context->Ecx, context->Edx,
+             context->Esi, context->Edi, context->Ebp, context->Eip, context->Esp, context->EFlags,
+             context->SegCs, context->SegDs, context->SegEs, context->SegFs, context->SegGs,
+             context->Dr0, context->Dr1, context->Dr2, context->Dr3, context->Dr6, context->Dr7 );
+    fprintf( stderr, "float=" );
+    dump_uints( (int *)&context->FloatSave, sizeof(context->FloatSave) / sizeof(int) );
+    fprintf( stderr, "}" );
+#else
+    dump_uints( (int *)context, sizeof(*context) / sizeof(int) );
+#endif
+}
+
+static void dump_varargs_exc_event( const void *ptr, size_t len )
+{
+    fprintf( stderr, "{context=" );
+    dump_varargs_context( ptr, sizeof(CONTEXT) );
+    fprintf( stderr, ",rec=" );
+    dump_exc_record( (EXCEPTION_RECORD *)((CONTEXT *)ptr + 1) );
+    fputc( '}', stderr );
+}
+
 static void dump_varargs_debug_event( const void *ptr, size_t len )
 {
     const debug_event_t *event = ptr;
 
+    if (!len)
+    {
+        fprintf( stderr, "{}" );
+        return;
+    }
     switch(event->code)
     {
     case EXCEPTION_DEBUG_EVENT:
         fprintf( stderr, "{exception," );
-        dump_exc_record( ptr, &event->info.exception.record );
+        dump_exc_record( &event->info.exception.record );
         fprintf( stderr, ",first=%d}", event->info.exception.first );
         break;
     case CREATE_THREAD_DEBUG_EVENT:
@@ -193,12 +204,22 @@ static void dump_varargs_debug_event( const void *ptr, size_t len )
     }
 }
 
-/* dumping for functions for requests that have a variable part */
-
-static void dump_varargs_get_socket_event_reply( const struct get_socket_event_request *req )
+static void dump_varargs_input_records( const void *ptr, size_t len )
 {
-    dump_ints( req->errors, FD_MAX_EVENTS );
+    const INPUT_RECORD *rec = ptr;
+    len /= sizeof(*rec);
+
+    fputc( '{', stderr );
+    while (len > 0)
+    {
+        fprintf( stderr, "{%04x,...}", rec->EventType );
+        rec++;
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
 }
+
+/* dumping for functions for requests that have a variable part */
 
 static void dump_varargs_read_process_memory_reply( const struct read_process_memory_request *req )
 {
@@ -247,7 +268,7 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " alloc_fd=%d,", req->alloc_fd );
     fprintf( stderr, " filename=" );
-    dump_string( req, req->filename );
+    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_wait_process_request( const struct wait_process_request *req )
@@ -300,7 +321,7 @@ static void dump_init_process_reply( const struct init_process_request *req )
     fprintf( stderr, " hstderr=%d,", req->hstderr );
     fprintf( stderr, " cmd_show=%d,", req->cmd_show );
     fprintf( stderr, " filename=" );
-    dump_string( req, req->filename );
+    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
@@ -627,8 +648,8 @@ static void dump_create_file_request( const struct create_file_request *req )
     fprintf( stderr, " sharing=%08x,", req->sharing );
     fprintf( stderr, " create=%d,", req->create );
     fprintf( stderr, " attrs=%08x,", req->attrs );
-    fprintf( stderr, " name=" );
-    dump_string( req, req->name );
+    fprintf( stderr, " filename=" );
+    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_create_file_reply( const struct create_file_request *req )
@@ -782,7 +803,7 @@ static void dump_get_socket_event_reply( const struct get_socket_event_request *
     fprintf( stderr, " pmask=%08x,", req->pmask );
     fprintf( stderr, " state=%08x,", req->state );
     fprintf( stderr, " errors=" );
-    dump_varargs_get_socket_event_reply( req );
+    dump_varargs_ints( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_enable_socket_event_request( const struct enable_socket_event_request *req )
@@ -851,7 +872,7 @@ static void dump_set_console_info_request( const struct set_console_info_request
     fprintf( stderr, " cursor_size=%d,", req->cursor_size );
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
     fprintf( stderr, " title=" );
-    dump_string( req, req->title );
+    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_get_console_info_request( const struct get_console_info_request *req )
@@ -865,13 +886,14 @@ static void dump_get_console_info_reply( const struct get_console_info_request *
     fprintf( stderr, " cursor_visible=%d,", req->cursor_visible );
     fprintf( stderr, " pid=%d,", req->pid );
     fprintf( stderr, " title=" );
-    dump_string( req, req->title );
+    dump_varargs_string( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_write_console_input_request( const struct write_console_input_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " count=%d", req->count );
+    fprintf( stderr, " rec=" );
+    dump_varargs_input_records( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_write_console_input_reply( const struct write_console_input_request *req )
@@ -882,13 +904,14 @@ static void dump_write_console_input_reply( const struct write_console_input_req
 static void dump_read_console_input_request( const struct read_console_input_request *req )
 {
     fprintf( stderr, " handle=%d,", req->handle );
-    fprintf( stderr, " count=%d,", req->count );
     fprintf( stderr, " flush=%d", req->flush );
 }
 
 static void dump_read_console_input_reply( const struct read_console_input_request *req )
 {
-    fprintf( stderr, " read=%d", req->read );
+    fprintf( stderr, " read=%d,", req->read );
+    fprintf( stderr, " rec=" );
+    dump_varargs_input_records( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_create_change_notification_request( const struct create_change_notification_request *req )
@@ -1027,17 +1050,16 @@ static void dump_wait_debug_event_reply( const struct wait_debug_event_request *
 
 static void dump_exception_event_request( const struct exception_event_request *req )
 {
-    fprintf( stderr, " record=" );
-    dump_exc_record( req, &req->record );
-    fprintf( stderr, "," );
     fprintf( stderr, " first=%d,", req->first );
-    fprintf( stderr, " context=" );
-    dump_context( req, &req->context );
+    fprintf( stderr, " record=" );
+    dump_varargs_exc_event( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_exception_event_reply( const struct exception_event_request *req )
 {
-    fprintf( stderr, " status=%d", req->status );
+    fprintf( stderr, " status=%d,", req->status );
+    fprintf( stderr, " context=" );
+    dump_varargs_context( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_output_debug_string_request( const struct output_debug_string_request *req )
@@ -1297,7 +1319,7 @@ static void dump_get_thread_context_request( const struct get_thread_context_req
 static void dump_get_thread_context_reply( const struct get_thread_context_request *req )
 {
     fprintf( stderr, " context=" );
-    dump_context( req, &req->context );
+    dump_varargs_context( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_set_thread_context_request( const struct set_thread_context_request *req )
@@ -1305,7 +1327,7 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
     fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " flags=%08x,", req->flags );
     fprintf( stderr, " context=" );
-    dump_context( req, &req->context );
+    dump_varargs_context( get_req_data(req), get_req_data_size(req) );
 }
 
 static void dump_get_selector_entry_request( const struct get_selector_entry_request *req )

@@ -1620,13 +1620,9 @@ BOOL WINAPI BuildCommDCBW(LPCWSTR devid,LPDCB lpdcb)
  *  Returns a file descriptor for reading.
  *  Make sure to close the handle afterwards!
  */
-static int COMM_GetReadFd( HANDLE handle)
+inline static int COMM_GetReadFd( HANDLE handle)
 {
-    int fd;
-    struct get_read_fd_request *req = get_req_buffer();
-    req->handle = handle;
-    server_call_fd( REQ_GET_READ_FD, -1, &fd );
-    return fd;
+    return FILE_GetUnixHandle( handle, GENERIC_READ );
 }
 
 /*****************************************************************************
@@ -1634,13 +1630,9 @@ static int COMM_GetReadFd( HANDLE handle)
  *  Returns a file descriptor for writing.
  *  Make sure to close the handle afterwards!
  */
-static int COMM_GetWriteFd( HANDLE handle)
+inline static int COMM_GetWriteFd( HANDLE handle)
 {
-    int fd = -1;
-    struct get_write_fd_request *req = get_req_buffer();
-    req->handle = handle;
-    server_call_fd( REQ_GET_WRITE_FD, -1, &fd );
-    return fd;
+    return FILE_GetUnixHandle( handle, GENERIC_WRITE );
 }
 
 /* FIXME: having these global for win32 for now */

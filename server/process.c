@@ -259,9 +259,12 @@ static void init_process( int ppid, struct init_process_request *req )
 
     if (info)
     {
+        size_t size = strlen(info->filename);
+        if (size > get_req_data_size(req)) size = get_req_data_size(req);
         req->start_flags = info->start_flags;
         req->cmd_show    = info->cmd_show;
-        strcpy( req->filename, info->filename );
+        memcpy( get_req_data(req), info->filename, size );
+        set_req_data_size( req, size );
         info->process = (struct process *)grab_object( process );
         info->thread  = (struct thread *)grab_object( current );
         wake_up( &info->obj, 0 );
@@ -270,7 +273,7 @@ static void init_process( int ppid, struct init_process_request *req )
     {
         req->start_flags  = STARTF_USESTDHANDLES;
         req->cmd_show     = 0;
-        req->filename[0]  = 0;
+        set_req_data_size( req, 0 );
     }
  error:
 }
@@ -711,7 +714,7 @@ struct module_snapshot *module_snap( struct process *process, int *count )
 /* create a new process */
 DECL_HANDLER(new_process)
 {
-    size_t len = get_req_strlen( req, req->filename );
+    size_t len = get_req_data_size( req );
     struct startup_info *info;
     int sock[2];
 
@@ -742,11 +745,12 @@ DECL_HANDLER(new_process)
         return;
     }
 
-    if (!(info->filename = memdup( req->filename, len+1 )))
+    if (!(info->filename = mem_alloc( len + 1 )))
     {
         release_object( info );
         return;
     }
+    memcpy( info->filename, get_req_data(req), len );
     info->filename[len] = 0;
 
     if (req->alloc_fd)

@@ -86,6 +86,7 @@
 #include "wine/port.h"
 #include "services.h"
 #include "server.h"
+#include "file.h"
 #include "debugtools.h"
 
 
@@ -222,11 +223,7 @@ static char* _check_buffer(LPWSINFO pwsi, int size);
 
 static int _get_sock_fd(SOCKET s)
 {
-    struct get_read_fd_request *req = get_req_buffer();
-    int fd;
-    
-    req->handle = s;
-    server_call_fd( REQ_GET_READ_FD, -1, &fd );
+    int fd = FILE_GetUnixHandle( s, GENERIC_READ );
     if (fd == -1)
         FIXME("handle %d is not a socket (GLE %ld)\n",s,GetLastError());
     return fd;    
@@ -235,37 +232,53 @@ static int _get_sock_fd(SOCKET s)
 static void _enable_event(SOCKET s, unsigned int event,
 			  unsigned int sstate, unsigned int cstate)
 {
-    struct enable_socket_event_request *req = get_req_buffer();
-    
-    req->handle = s;
-    req->mask   = event;
-    req->sstate = sstate;
-    req->cstate = cstate;
-    sock_server_call( REQ_ENABLE_SOCKET_EVENT );
+    SERVER_START_REQ
+    {
+        struct enable_socket_event_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->handle = s;
+        req->mask   = event;
+        req->sstate = sstate;
+        req->cstate = cstate;
+        sock_server_call( REQ_ENABLE_SOCKET_EVENT );
+    }
+    SERVER_END_REQ;
 }
 
 static int _is_blocking(SOCKET s)
 {
-    struct get_socket_event_request *req = get_req_buffer();
-    
-    req->handle  = s;
-    req->service = FALSE;
-    req->s_event = 0;
-    req->c_event = 0;
-    sock_server_call( REQ_GET_SOCKET_EVENT );
-    return (req->state & WS_FD_NONBLOCKING) == 0;
+    int ret;
+    SERVER_START_REQ
+    {
+        struct get_socket_event_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->handle  = s;
+        req->service = FALSE;
+        req->s_event = 0;
+        req->c_event = 0;
+        sock_server_call( REQ_GET_SOCKET_EVENT );
+        ret = (req->state & WS_FD_NONBLOCKING) == 0;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 static unsigned int _get_sock_mask(SOCKET s)
 {
-    struct get_socket_event_request *req = get_req_buffer();
-    
-    req->handle  = s;
-    req->service = FALSE;
-    req->s_event = 0;
-    req->c_event = 0;
-    sock_server_call( REQ_GET_SOCKET_EVENT );
-    return req->mask;
+    unsigned int ret;
+    SERVER_START_REQ
+    {
+        struct get_socket_event_request *req = server_alloc_req( sizeof(*req), 0 );
+
+        req->handle  = s;
+        req->service = FALSE;
+        req->s_event = 0;
+        req->c_event = 0;
+        sock_server_call( REQ_GET_SOCKET_EVENT );
+        ret = req->mask;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 static void _sync_sock_state(SOCKET s)
@@ -277,14 +290,20 @@ static void _sync_sock_state(SOCKET s)
 
 static int _get_sock_error(SOCKET s, unsigned int bit)
 {
-    struct get_socket_event_request *req = get_req_buffer();
-    
-    req->handle  = s;
-    req->service = FALSE;
-    req->s_event = 0;
-    req->c_event = 0;
-    sock_server_call( REQ_GET_SOCKET_EVENT );
-    return req->errors[bit];
+    int ret;
+    SERVER_START_REQ
+    {
+        struct get_socket_event_request *req = server_alloc_req( sizeof(*req),
+                                                                 FD_MAX_EVENTS*sizeof(int) );
+        req->handle  = s;
+        req->service = FALSE;
+        req->s_event = 0;
+        req->c_event = 0;
+        sock_server_call( REQ_GET_SOCKET_EVENT );
+        ret = *((int *)server_data_ptr(req) + bit);
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 static LPWSINFO lpFirstIData = NULL;
@@ -803,12 +822,12 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 #ifdef HAVE_IPX
     struct ws_sockaddr_ipx*  addr2 = (struct ws_sockaddr_ipx *)addr;
 #endif
-    struct accept_socket_request *req = get_req_buffer();
 
     TRACE("(%08x): socket %04x\n", 
 				  (unsigned)pwsi, (UINT16)s ); 
     if( _check_ws(pwsi, s) )
     {
+        SOCKET as;
 	if (_is_blocking(s))
 	{
 	    /* block here */
@@ -820,13 +839,19 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 	    SetLastError(_get_sock_error(s, FD_ACCEPT_BIT));
 	    /* FIXME: care about the error? */
 	}
-	req->lhandle = s;
-	req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-	req->inherit = TRUE;
-	sock_server_call( REQ_ACCEPT_SOCKET );
-	if( req->handle >= 0 )
+        SERVER_START_REQ
+        {
+            struct accept_socket_request *req = server_alloc_req( sizeof(*req), 0 );
+
+            req->lhandle = s;
+            req->access  = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+            req->inherit = TRUE;
+            sock_server_call( REQ_ACCEPT_SOCKET );
+            as = req->handle;
+        }
+        SERVER_END_REQ;
+	if( as >= 0 )
 	{
-	    SOCKET as = req->handle;
 	    unsigned omask = _get_sock_mask( s );
 	    int fd = _get_sock_fd( as );
 	    if( getpeername(fd, addr, addrlen32) != -1 )
@@ -2152,7 +2177,7 @@ INT16 WINAPI WINSOCK_shutdown16(SOCKET16 s, INT16 how)
 SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
 {
   LPWSINFO      pwsi = WINSOCK_GetIData();
-  struct create_socket_request *req = get_req_buffer();
+  SOCKET ret;
 
   TRACE("(%08x): af=%d type=%d protocol=%d\n", 
 			  (unsigned)pwsi, af, type, protocol);
@@ -2195,17 +2220,22 @@ SOCKET WINAPI WSOCK32_socket(INT af, INT type, INT protocol)
           default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
         }
 
-    req->family   = af;
-    req->type     = type;
-    req->protocol = protocol;
-    req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
-    req->inherit  = TRUE;
-    sock_server_call( REQ_CREATE_SOCKET );
-    if ( req->handle >= 0)
+    SERVER_START_REQ
     {
-	TRACE("\tcreated %04x\n", req->handle);
-
-	return req->handle;
+        struct create_socket_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->family   = af;
+        req->type     = type;
+        req->protocol = protocol;
+        req->access   = GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE;
+        req->inherit  = TRUE;
+        sock_server_call( REQ_CREATE_SOCKET );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    if ( ret >= 0)
+    {
+        TRACE("\tcreated %04x\n", ret );
+        return ret;
     }
 
     if (GetLastError() == WSAEACCES) /* raw socket denied */
@@ -2518,20 +2548,25 @@ INT16 WINAPI WINSOCK_gethostname16(char *name, INT16 namelen)
 int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lpEvent)
 {
     LPWSINFO      pwsi = WINSOCK_GetIData();
-    struct get_socket_event_request *req = get_req_buffer();
 
     TRACE("(%08x): %08x, hEvent %08x, lpEvent %08x\n",
 			  (unsigned)pwsi, s, hEvent, (unsigned)lpEvent );
     if( _check_ws(pwsi, s) )
     {
-	req->handle  = s;
-	req->service = TRUE;
-	req->s_event = 0;
-	req->c_event = hEvent;
-	sock_server_call( REQ_GET_SOCKET_EVENT );
-	lpEvent->lNetworkEvents = req->pmask;
-	memcpy(lpEvent->iErrorCode, req->errors, sizeof(lpEvent->iErrorCode));
-	return 0;
+        SERVER_START_REQ
+        {
+            struct get_socket_event_request *req = server_alloc_req( sizeof(*req),
+                                                                     sizeof(lpEvent->iErrorCode) );
+            req->handle  = s;
+            req->service = TRUE;
+            req->s_event = 0;
+            req->c_event = hEvent;
+            sock_server_call( REQ_GET_SOCKET_EVENT );
+            lpEvent->lNetworkEvents = req->pmask;
+            memcpy(lpEvent->iErrorCode, server_data_ptr(req), server_data_size(req) );
+        }
+        SERVER_END_REQ;
+        return 0;
     }
     else SetLastError(WSAEINVAL);
     return SOCKET_ERROR; 
@@ -2543,17 +2578,21 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
 int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
 {
     LPWSINFO      pwsi = WINSOCK_GetIData();
-    struct set_socket_event_request *req = get_req_buffer();
 
     TRACE("(%08x): %08x, hEvent %08x, event %08x\n",
 			  (unsigned)pwsi, s, hEvent, (unsigned)lEvent );
     if( _check_ws(pwsi, s) )
     {
-	req->handle = s;
-	req->mask   = lEvent;
-	req->event  = hEvent;
-	sock_server_call( REQ_SET_SOCKET_EVENT );
-	return 0;
+        SERVER_START_REQ
+        {
+            struct set_socket_event_request *req = server_alloc_req( sizeof(*req), 0 );
+            req->handle = s;
+            req->mask   = lEvent;
+            req->event  = hEvent;
+            sock_server_call( REQ_SET_SOCKET_EVENT );
+        }
+        SERVER_END_REQ;
+        return 0;
     }
     else SetLastError(WSAEINVAL);
     return SOCKET_ERROR; 
@@ -2567,23 +2606,30 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
 {
     ws_select_info *info = (ws_select_info*)ptr;
     LPWSINFO      pwsi = info->pwsi;
-    struct get_socket_event_request *req = get_req_buffer();
     unsigned int i, pmask, orphan = FALSE;
+    int errors[FD_MAX_EVENTS];
 
     TRACE("socket %08x, event %08x\n", info->sock, info->event);
     SetLastError(0);
-    req->handle  = info->sock;
-    req->service = TRUE;
-    req->s_event = info->event; /* <== avoid race conditions */
-    req->c_event = info->event;
-    sock_server_call( REQ_GET_SOCKET_EVENT );
+    SERVER_START_REQ
+    {
+        struct get_socket_event_request *req = server_alloc_req( sizeof(*req), sizeof(errors) );
+        req->handle  = info->sock;
+        req->service = TRUE;
+        req->s_event = info->event; /* <== avoid race conditions */
+        req->c_event = info->event;
+        sock_server_call( REQ_GET_SOCKET_EVENT );
+        pmask = req->pmask;
+        memcpy( errors, server_data_ptr(req), server_data_size(req) );
+    }
+    SERVER_END_REQ;
     if ( (GetLastError() == WSAENOTSOCK) || (GetLastError() == WSAEINVAL) )
     {
 	/* orphaned event (socket closed or something) */
 	pmask = WS_FD_SERVEVENT;
 	orphan = TRUE;
-    } else
-	pmask = req->pmask;
+    }
+
     /* check for accepted sockets that needs to inherit WSAAsyncSelect */
     if (pmask & WS_FD_SERVEVENT) {
 	int q;
@@ -2602,9 +2648,9 @@ VOID CALLBACK WINSOCK_DoAsyncEvent( ULONG_PTR ptr )
     /* dispatch network events */
     for (i=0; i<FD_MAX_EVENTS; i++)
 	if (pmask & (1<<i)) {
-	    TRACE("post: event bit %d, error %d\n", i, req->errors[i]);
+	    TRACE("post: event bit %d, error %d\n", i, errors[i]);
 	    PostMessageA(info->hWnd, info->uMsg, info->sock,
-			 WSAMAKESELECTREPLY(1<<i, req->errors[i]));
+			 WSAMAKESELECTREPLY(1<<i, errors[i]));
 	}
     /* cleanup */
     if (orphan)

@@ -593,13 +593,20 @@ DECL_HANDLER(exception_event)
     {
         struct debug_event_exception data;
         struct debug_event *event;
+        CONTEXT *context = get_req_data( req );
+        EXCEPTION_RECORD *rec = (EXCEPTION_RECORD *)(context + 1);
 
-        data.record = req->record;
+        if (get_req_data_size( req ) < sizeof(*rec) + sizeof(*context))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        data.record = *rec;
         data.first  = req->first;
         if ((event = queue_debug_event( current, EXCEPTION_DEBUG_EVENT, &data )))
         {
             struct object *obj = &event->obj;
-            current->context = &req->context;
+            current->context = context;
             sleep_on( 1, &obj, 0, -1, build_exception_event_reply );
             release_object( event );
         }

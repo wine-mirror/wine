@@ -133,6 +133,7 @@ void *server_alloc_req( size_t fixed_size, size_t var_size )
     size_t size = sizeof(*req) + var_size;
 
     assert( fixed_size <= sizeof(*req) );
+    assert( var_size <= REQUEST_MAX_VAR_SIZE );
 
     if ((char *)req + size > (char *)NtCurrentTeb()->buffer_info)
         server_protocol_error( "buffer overflow %d bytes\n",

@@ -68,30 +68,40 @@ void WINAPI RaiseException( DWORD code, DWORD flags, DWORD nbargs, const LPDWORD
  */
 DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 {
-    struct exception_event_request *req = get_req_buffer();
     PDB*		pdb = PROCESS_Current();
     char 		format[256];
     char 		buffer[256];
     HKEY		hDbgConf;
     DWORD		bAuto = FALSE;
     DWORD		ret = EXCEPTION_EXECUTE_HANDLER;
+    int status;
 
     /* send a last chance event to the debugger */
-    req->record  = *epointers->ExceptionRecord;
-    req->first   = 0;
-    req->context = *epointers->ContextRecord;
-    if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *epointers->ContextRecord = req->context;
-    switch (req->status)
+    SERVER_START_REQ
+    {
+        struct exception_event_request *req = server_alloc_req( sizeof(*req),
+                                                  sizeof(EXCEPTION_RECORD)+sizeof(CONTEXT) );
+        CONTEXT *context_ptr = server_data_ptr(req);
+        EXCEPTION_RECORD *rec_ptr = (EXCEPTION_RECORD *)(context_ptr + 1);
+        req->first   = 0;
+        *rec_ptr     = *epointers->ExceptionRecord;
+        *context_ptr = *epointers->ContextRecord;
+        if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *epointers->ContextRecord = *context_ptr;
+        status = req->status;
+    }
+    SERVER_END_REQ;
+
+    switch (status)
     {
     case DBG_CONTINUE: 
-       return EXCEPTION_CONTINUE_EXECUTION;
+        return EXCEPTION_CONTINUE_EXECUTION;
     case DBG_EXCEPTION_NOT_HANDLED: 
-       TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
-       break; /* not reached */
+        TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
+        break; /* not reached */
     case 0: /* no debugger is present */
-       break;
+        break;
     default: 	
-       FIXME("Unsupported yet debug continue value %d (please report)\n", req->status);
+        FIXME("Unsupported yet debug continue value %d (please report)\n", status);
     }
 
     if (pdb->top_filter)

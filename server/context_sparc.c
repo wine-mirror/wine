@@ -159,16 +159,21 @@ DECL_HANDLER(get_thread_context)
     struct thread *thread;
     int flags = req->flags & ~CONTEXT_SPARC;  /* get rid of CPU id */
 
+    if (get_req_data_size(req) < sizeof(CONTEXT))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
     if ((thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT )))
     {
         if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( &req->context, thread->context, flags );
+            copy_context( get_req_data(req), thread->context, flags );
             flags = 0;
         }
         if (flags && suspend_for_ptrace( thread ))
         {
-            get_thread_context( thread, flags, &req->context );
+            get_thread_context( thread, flags, get_req_data(req) );
             resume_thread( thread );
         }
         release_object( thread );
@@ -182,16 +187,21 @@ DECL_HANDLER(set_thread_context)
     struct thread *thread;
     int flags = req->flags & ~CONTEXT_SPARC;  /* get rid of CPU id */
 
+    if (get_req_data_size(req) < sizeof(CONTEXT))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
         if (thread->context)  /* thread is inside an exception event */
         {
-            copy_context( thread->context, &req->context, flags );
+            copy_context( thread->context, get_req_data(req), flags );
             flags = 0;
         }
         if (flags && suspend_for_ptrace( thread ))
         {
-            set_thread_context( thread, flags, &req->context );
+            set_thread_context( thread, flags, get_req_data(req) );
             resume_thread( thread );
         }
         release_object( thread );

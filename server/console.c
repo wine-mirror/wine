@@ -300,16 +300,25 @@ static int write_console_input( int handle, int count, INPUT_RECORD *records )
 }
 
 /* retrieve a pointer to the console input records */
-static int read_console_input( int handle, int count, INPUT_RECORD *rec, int max, int flush )
+static int read_console_input( int handle, int count, INPUT_RECORD *rec, int flush )
 {
     struct console_input *console;
 
     if (!(console = (struct console_input *)get_handle_obj( current->process, handle,
                                                             GENERIC_READ, &console_input_ops )))
         return -1;
-    if ((count < 0) || (count > console->recnum)) count = console->recnum;
-    if (count > max) count = max;
-    memcpy( rec, console->records, count * sizeof(INPUT_RECORD) );
+
+    if (!count)
+    {
+        /* special case: do not retrieve anything, but return
+         * the total number of records available */
+        count = console->recnum;
+    }
+    else
+    {
+        if (count > console->recnum) count = console->recnum;
+        memcpy( rec, console->records, count * sizeof(INPUT_RECORD) );
+    }
     if (flush)
     {
         int i;
@@ -440,24 +449,30 @@ DECL_HANDLER(open_console)
 /* set info about a console (output only) */
 DECL_HANDLER(set_console_info)
 {
-    size_t len = get_req_strlen( req, req->title );
-    set_console_info( req->handle, req, req->title, len );
+    set_console_info( req->handle, req, get_req_data(req), get_req_data_size(req) );
 }
 
 /* get info about a console (output only) */
 DECL_HANDLER(get_console_info)
 {
     struct screen_buffer *console;
-    req->title[0] = 0;
+    size_t len = 0;
+
     if ((console = (struct screen_buffer *)get_handle_obj( current->process, req->handle,
                                                            GENERIC_READ, &screen_buffer_ops )))
     {
         req->cursor_size    = console->cursor_size;
         req->cursor_visible = console->cursor_visible;
         req->pid            = console->pid;
-        if (console->title) strcpy( req->title, console->title );
+        if (console->title)
+        {
+            len = strlen( console->title );
+            if (len > get_req_data_size(req)) len = get_req_data_size(req);
+            memcpy( get_req_data(req), console->title, len );
+        }
         release_object( console );
     }
+    set_req_data_size( req, len );
 }
 
 /* set a console fd */
@@ -498,17 +513,16 @@ DECL_HANDLER(set_console_mode)
 /* add input records to a console input queue */
 DECL_HANDLER(write_console_input)
 {
-    int max = get_req_size( req, req + 1, sizeof(INPUT_RECORD) );
-    int count = req->count;
-
-    if (count > max) count = max;
-    req->written = write_console_input( req->handle, count, (INPUT_RECORD *)(req + 1) );
+    req->written = write_console_input( req->handle, get_req_data_size(req) / sizeof(INPUT_RECORD),
+                                        get_req_data(req) );
 }
 
 /* fetch input records from a console input queue */
 DECL_HANDLER(read_console_input)
 {
-    int max = get_req_size( req, req + 1, sizeof(INPUT_RECORD) );
-    req->read = read_console_input( req->handle, req->count, (INPUT_RECORD *)(req + 1),
-                                    max, req->flush );
+    size_t size = get_req_data_size(req) / sizeof(INPUT_RECORD);
+    int res = read_console_input( req->handle, size, get_req_data(req), req->flush );
+    /* if size was 0 we didn't fetch anything */
+    if (size) set_req_data_size( req, res * sizeof(INPUT_RECORD) );
+    req->read = res;
 }

@@ -95,11 +95,14 @@ static inline int send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CON
     int ret;
     SERVER_START_REQ
     {
-        struct exception_event_request *req = server_alloc_req( sizeof(*req), 0 );
-        req->record  = *rec;
+        struct exception_event_request *req = server_alloc_req( sizeof(*req),
+                                                                sizeof(*rec)+sizeof(*context) );
+        CONTEXT *context_ptr = server_data_ptr(req);
+        EXCEPTION_RECORD *rec_ptr = (EXCEPTION_RECORD *)(context_ptr + 1);
         req->first   = first_chance;
-        req->context = *context;
-        if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *context = req->context;
+        *rec_ptr     = *rec;
+        *context_ptr = *context;
+        if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *context = *context_ptr;
         ret = req->status;
     }
     SERVER_END_REQ;
