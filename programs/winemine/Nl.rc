@@ -28,7 +28,7 @@ STRINGTABLE {
 MENU_WINEMINE MENU DISCARDABLE
 {
     POPUP "&Opties" {
-        MENUITEM "&Nieuw spel",     IDM_NEW
+        MENUITEM "&Nieuw spel\tF2", IDM_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Markeer vraag",  IDM_MARKQ
         MENUITEM SEPARATOR
@@ -37,7 +37,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Expert",         IDM_EXPERT
         MENUITEM "Aa&ngepast spel", IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM "&Afsluiten",      IDM_EXIT
+        MENUITEM "&Afsluiten\tAlt+X", IDM_EXIT
     }
     POPUP "&Info" {
         MENUITEM "&Snelste tijden", IDM_TIMES

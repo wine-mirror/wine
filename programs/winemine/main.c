@@ -72,7 +72,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     ShowWindow( hWnd, cmdshow );
     UpdateWindow( hWnd );
 
-    haccel = LoadAccelerators( hInst, appname );
+    haccel = LoadAccelerators( hInst, MAKEINTRESOURCE(IDA_WINEMINE) );
     SetTimer( hWnd, ID_TIMER, 1000, NULL );
 
     while( GetMessage(&msg, NULL_HANDLE, 0, 0) ) {
@@ -790,6 +790,7 @@ void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board )
 void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg )
 {
     POINT pt;
+    unsigned col,row;
 
     pt.x = x;
     pt.y = y;
@@ -807,6 +808,20 @@ void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg )
 
     if( p_board->boxes_left == 0 ) {
         p_board->status = WON;
+
+        if (p_board->num_flags < p_board->mines) {
+            for( row = 1; row <= p_board->rows; row++ ) {
+                for( col = 1; col <= p_board->cols; col++ ) {
+                    if (p_board->box[col][row].IsMine && p_board->box[col][row].FlagType != FLAG)
+                        p_board->box[col][row].FlagType = FLAG;
+                }
+            }
+
+            p_board->num_flags = p_board->mines;
+
+            RedrawWindow( p_board->hWnd, NULL, NULL_HANDLE,
+                RDW_INVALIDATE | RDW_UPDATENOW );
+        }
 
         if( p_board->difficulty != CUSTOM &&
                     p_board->time < p_board->best_time[p_board->difficulty] ) {

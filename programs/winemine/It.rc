@@ -31,7 +31,7 @@ STRINGTABLE {
 MENU_WINEMINE MENU DISCARDABLE
 {
     POPUP "&Opzioni" {
-        MENUITEM "&Nuovo",           IDM_NEW
+        MENUITEM "&Nuovo\tF2",           IDM_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Contrassegna domanda", IDM_MARKQ
         MENUITEM SEPARATOR
@@ -40,7 +40,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Esperto",        IDM_EXPERT
         MENUITEM "&Presonalizza",        IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM "E&sci",          IDM_EXIT
+        MENUITEM "E&sci\Alt+X",          IDM_EXIT
     }
     POPUP "&Informazioni" {
         MENUITEM "&Tempi migliori",    IDM_TIMES

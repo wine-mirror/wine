@@ -29,7 +29,7 @@ STRINGTABLE {
 MENU_WINEMINE MENU DISCARDABLE
 {
     POPUP "&Možnosti" {
-        MENUITEM "&Nova igra",           IDM_NEW
+        MENUITEM "&Nova igra\tF2",           IDM_NEW
         MENUITEM SEPARATOR
         MENUITEM "&Vprašaji", IDM_MARKQ
         MENUITEM SEPARATOR
@@ -38,7 +38,7 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Strokovnjak",        IDM_EXPERT
         MENUITEM "&Poljubno",        IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM "Iz&hod",          IDM_EXIT
+        MENUITEM "Iz&hod\tAlt+X",          IDM_EXIT
     }
     POPUP "&Info" {
         MENUITEM "&Najboljši èasi",    IDM_TIMES
