@@ -405,8 +405,6 @@ BOOL16 WINAPI AdjustWindowRectEx16( LPRECT16 rect, DWORD style,
 BOOL WINAPI AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL menu, DWORD exStyle )
 {
     /* Correct the window style */
-
-    if (!(style & (WS_POPUP | WS_CHILD))) style |= WS_CAPTION; /* Overlapped window */
     style &= (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME | WS_CHILD);
     exStyle &= (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE |
                 WS_EX_STATICEDGE | WS_EX_TOOLWINDOW);
