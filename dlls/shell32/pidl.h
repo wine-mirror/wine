@@ -63,7 +63,6 @@ typedef struct tagPIDLDATA
 	    /* end of MS compatible. Here are comming just one or two
 	    strings. The first is the long name. The second the dos name
 	    when needed. */
-	    DWORD dwSFGAO;		/*12*/
 	    CHAR  szAlternateName[14];	/* the 8.3 Name*/
 	    CHAR  szText[1];		/* last entry, variable size */
 	  } file, folder, generic; 

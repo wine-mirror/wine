@@ -212,16 +212,15 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 	  lpSV->lpvtbl->fnGetWindow(lpSV, &hWndSV);
 	  
 	  /* these verbs are used by the filedialogs*/
+	  TRACE(shell,"%s\n",lpcmi->lpVerb);
 	  if (! strcmp(lpcmi->lpVerb,CMDSTR_NEWFOLDER))
-	  { FIXME(shell,"%s\n",lpcmi->lpVerb);
+	  { FIXME(shell,"%s not implemented\n",lpcmi->lpVerb);
 	  }
 	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWLIST))
-	  { FIXME(shell,"%s\n",lpcmi->lpVerb);
-	    SendMessage32A(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
+	  { SendMessage32A(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
 	  }
 	  else if (! strcmp(lpcmi->lpVerb,CMDSTR_VIEWDETAILS))
-	  { FIXME(shell,"%s\n",lpcmi->lpVerb);
-	    SendMessage32A(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
+	  { SendMessage32A(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
 	  } 
 	  else
 	  { FIXME(shell,"please report: unknown verb %s\n",lpcmi->lpVerb);

@@ -21,6 +21,7 @@
 #include "if_macros.h"
 #include "shell32_main.h"
 #include "shresdef.h"
+#include "spy.h"
 
 #include "debug.h"
 
@@ -829,7 +830,7 @@ LRESULT ShellView_OnCommand(LPSHELLVIEW this,DWORD dwCmdID, DWORD dwCmd, HWND32 
 	    break;
 
 	  default:
-	    FIXME(shell,"-- COMMAND unhandled\n");
+	    TRACE(shell,"-- COMMAND 0x%04lx unhandled\n", dwCmdID);
 	}
 	return 0;
 }
@@ -976,9 +977,9 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	STRRET   str;  
 	UINT32  uFlags;
 	IExtractIcon *pei;
-  
+
 	TRACE(shell,"%p CtlID=%u lpnmh->code=%x\n",this,CtlID,lpnmh->code);
-  
+
 	switch(lpnmh->code)
 	{ case NM_SETFOCUS:
 	    TRACE(shell,"-- NM_SETFOCUS %p\n",this);
@@ -995,15 +996,10 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	    /*nColumn1 = ListView_GetColumnWidth(this->hWndList, 0);
 	    nColumn2 = ListView_GetColumnWidth(this->hWndList, 1);*/
 	    break;
-   
+
 	  case LVN_DELETEITEM:
 	    TRACE(shell,"-- LVN_DELETEITEM %p\n",this);
 	    SHFree((LPITEMIDLIST)lpnmlv->lParam);     /*delete the pidl because we made a copy of it*/
-	    break;
-   
-	  case NM_DBLCLK:
-	  case NM_RETURN:
-	    TRACE(shell,"-- NM_RETURN|NM_DBLCLK ignored, waiting for LVN_ITEMACTIVATE\n");
 	    break;
 
 	  case LVN_ITEMACTIVATE:
@@ -1011,7 +1007,7 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	    OnStateChange(this, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
 	    ShellView_DoContextMenu(this, 0, 0, TRUE);
 	    break;
-   
+
 	  case NM_RCLICK:
 	    TRACE(shell,"-- NM_RCLICK %p\n",this);
 	    dwCursor = GetMessagePos();
@@ -1093,38 +1089,14 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	    }
 	    break;
 
-	  case NM_CLICK:
-	    WARN(shell,"-- NM_CLICK %p\n",this);
-	    break;
-
-	  case LVN_ITEMCHANGING:
-	    WARN(shell,"-- LVN_ITEMCHANGING %p\n",this);
-	    break;
-
 	  case LVN_ITEMCHANGED:
 	    TRACE(shell,"-- LVN_ITEMCHANGED %p\n",this);
 	    ShellView_GetSelections(this);
 	    OnStateChange(this, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
 	    break;
 
-	  case LVN_DELETEALLITEMS:
-	    WARN(shell,"-- LVN_DELETEALLITEMS %p\n",this);
-	    break;
-
-	  case LVN_INSERTITEM:
-	    WARN(shell,"-- LVN_INSERTITEM %p\n",this);
-	    break;
-
-	  case LVN_BEGINDRAG:
-	    WARN(shell,"-- LVN_BEGINDRAG %p\n",this);
-	    break;
-
-	  case NM_CUSTOMDRAW:
-	    WARN(shell,"NM_CUSTOMDRAW %p\n",this);
-	    break;
-
 	  default:
-	    FIXME (shell,"-- WM_NOTIFY unhandled\n");
+	    TRACE (shell,"-- %p WM_COMMAND %s unhandled\n", this, SPY_GetMsgName(lpnmh->code));
 	    break;;
 	}
 	return 0;
@@ -1203,81 +1175,8 @@ LRESULT CALLBACK ShellView_WndProc(HWND32 hWnd, UINT32 uMessage, WPARAM32 wParam
       }
       break;
 
-/* -------------*/
-   case WM_MOVE:
-      WARN(shell,"-- WM_MOVE\n");   
-      break;
-   
-   case WM_ACTIVATEAPP:
-      WARN(shell,"-- WM_ACTIVATEAPP\n");
-      break;
-
-   case WM_NOTIFYFORMAT:
-      WARN(shell,"-- WM_NOTIFYFORMAT\n");
-      break;
-
-   case WM_NCPAINT:
-      WARN(shell,"-- WM_NCPAINT\n");
-      break;
-
-   case WM_ERASEBKGND:
-      WARN(shell,"-- WM_ERASEBKGND\n");
-      break;
-
-   case WM_PAINT:
-      WARN(shell,"-- WM_PAINT\n");
-      break;
-
-   case WM_NCCALCSIZE:
-      WARN(shell,"-- WM_NCCALCSIZE\n");
-      break;
-
-   case WM_WINDOWPOSCHANGING:
-      WARN(shell,"-- WM_WINDOWPOSCHANGING\n");
-      break;
-
-   case WM_WINDOWPOSCHANGED:
-      WARN(shell,"-- WM_WINDOWPOSCHANGED\n");
-      break;
-
-   case WM_MOUSEACTIVATE:
-      WARN(shell,"-- WM_MOUSEACTIVATE\n");
-      break;
-
-   case WM_SETCURSOR:
-      WARN(shell,"-- WM_SETCURSOR\n");
-      break;
-
-   case WM_DESTROY:
-      WARN(shell,"-- WM_DESTROY\n");
-      break;
-
-   case WM_NCDESTROY:
-      WARN(shell,"-- WM_NCDESTROY\n");
-      break;
-
-   case WM_CONTEXTMENU:
-      WARN(shell,"-- WM_CONTEXTMENU\n");
-      break;
-
-   case WM_MENUSELECT:
-      WARN(shell,"-- WM_MENUSELECT\n");
-      break;
-
-   case WM_CAPTURECHANGED:
-      WARN(shell,"-- WM_CAPTURECHANGED\n");
-      break;
-
-   case WM_CHILDACTIVATE:
-      WARN(shell,"-- WM_CHILDACTIVATE\n");
-      break;
-
-   case WM_ENTERIDLE:
-      WARN(shell,"-- WM_ENTERIDLE\n");
-      break;
-
    default:
-      FIXME(shell,"-- MESSAGE unhandled\n");
+      TRACE(shell,"-- message %s unhandled\n", SPY_GetMsgName(uMessage));
       break;
   }
   return DefWindowProc32A (hWnd, uMessage, wParam, lParam);

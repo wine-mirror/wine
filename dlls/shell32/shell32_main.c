@@ -120,7 +120,22 @@ DWORD WINAPI SHGetFileInfo32A(LPCSTR path,DWORD dwFileAttributes,
 	if (flags & SHGFI_ATTRIBUTES)
 	{ if (flags & SHGFI_PIDL)
 	  { pData = _ILGetDataPointer((LPCITEMIDLIST)path);
-	    psfi->dwAttributes = pData->u.generic.dwSFGAO; /* fixme: no direct access*/
+	    switch (pData->type)
+	    { case PT_DESKTOP:
+	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
+	      case PT_MYCOMP:
+	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR |
+	                             SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANRENAME | SFGAO_CANLINK ;
+	      case PT_SPECIAL:
+	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_CAPABILITYMASK;
+	      case PT_DRIVE:
+	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM  | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR |
+	                             SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK;
+	      case PT_FOLDER:
+	        psfi->dwAttributes = SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_CAPABILITYMASK;
+	      case PT_VALUE:
+	        psfi->dwAttributes = SFGAO_FILESYSTEM | SFGAO_CAPABILITYMASK;
+	    }
 	    ret=TRUE;
 	  }
 	  else

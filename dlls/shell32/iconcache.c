@@ -495,7 +495,7 @@ static INT32 SIC_LoadIcon (LPCSTR sSourceFile, INT32 dwSourceIndex)
 
 
 	if ( !hiconLarge ||  !hiconSmall)
-	{ FIXME(shell, "*** failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
+	{ WARN(shell, "failure loading icon %i from %s (%x %x)\n", dwSourceIndex, sSourceFile, hiconLarge, hiconSmall);
 	  return -1;
 	}
 	return SIC_IconAppend (sSourceFile, dwSourceIndex, hiconSmall, hiconLarge);		

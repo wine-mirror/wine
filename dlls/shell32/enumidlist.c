@@ -232,9 +232,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
   		/*create the pidl for this item */
 	    pidl = _ILCreateMyComputer();
 	    if(pidl)
-	    { pData = _ILGetDataPointer(pidl);
-	      pData->u.generic.dwSFGAO = SFGAO_HASPROPSHEET | SFGAO_READONLY | SFGAO_HASSUBFOLDER;
-	      if(!IEnumIDList_AddToEnumList(this, pidl))
+	    { if(!IEnumIDList_AddToEnumList(this, pidl))
 	        return FALSE;
 	    }
 	  }   
@@ -245,9 +243,6 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	    while (szDriveName[0]<='Z')
 	    { if(dwDrivemap & 0x00000001L)
 	      { pidl = _ILCreateDrive(szDriveName);
-	        pData = _ILGetDataPointer(pidl);
-	        pData->u.drive.dwSFGAO = SFGAO_HASPROPSHEET | SFGAO_READONLY | SFGAO_CANLINK | 
-		                 SFGAO_HASSUBFOLDER | SFGAO_DROPTARGET | SFGAO_FILESYSTEM;
 	        if(pidl)
 	        { if(!IEnumIDList_AddToEnumList(this, pidl))
 	          return FALSE;
@@ -266,12 +261,6 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	        { pidl = _ILCreateFolder( stffile.cFileName);
 	          if(pidl)
 	          { pData = _ILGetDataPointer(pidl);
-		    pData->u.folder.dwSFGAO = SFGAO_CANCOPY | SFGAO_CANDELETE | SFGAO_CANLINK  |
-		                     SFGAO_CANMOVE | SFGAO_CANRENAME | SFGAO_DROPTARGET |
-				     SFGAO_HASPROPSHEET | SFGAO_FILESYSTEM | SFGAO_FOLDER;
-		    if ( stffile.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-		    { pData->u.folder.dwSFGAO |= SFGAO_READONLY;
-		    }
 		    FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.folder.uFileDate,&pData->u.folder.uFileTime);
 		    pData->u.folder.dwFileSize = stffile.nFileSizeLow;
 		    pData->u.folder.uFileAttribs=stffile.dwFileAttributes;
@@ -300,12 +289,6 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	        { pidl = _ILCreateValue( stffile.cFileName);
 	          if(pidl)
 	          { pData = _ILGetDataPointer(pidl);
-		    pData->u.file.dwSFGAO = SFGAO_CANCOPY | SFGAO_CANDELETE | SFGAO_CANLINK  |
-		                     SFGAO_CANMOVE | SFGAO_CANRENAME | SFGAO_DROPTARGET |
-				     SFGAO_HASPROPSHEET | SFGAO_FILESYSTEM;
-		    if ( stffile.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-		    { pData->u.file.dwSFGAO |= SFGAO_READONLY;
-		    }
 		    FileTimeToDosDateTime(&stffile.ftLastWriteTime,&pData->u.file.uFileDate,&pData->u.file.uFileTime);
 		    pData->u.file.dwFileSize = stffile.nFileSizeLow;
 		    pData->u.file.uFileAttribs=stffile.dwFileAttributes;
