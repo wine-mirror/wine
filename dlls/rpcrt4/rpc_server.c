@@ -436,6 +436,24 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( LPWSTR Protseq, UINT MaxCalls, LPWST
 }
 
 /***********************************************************************
+ *             RpcServerUseProtseqA (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcServerUseProtseqA(LPSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
+{
+  FIXME("stub\n");
+  return RPC_S_OK;
+}
+
+/***********************************************************************
+ *             RpcServerUseProtseqW (RPCRT4.@)
+ */
+RPC_STATUS WINAPI RpcServerUseProtseqW(LPWSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor)
+{
+  FIXME("stub\n");
+  return RPC_S_OK;
+}
+
+/***********************************************************************
  *             RpcServerRegisterIf (RPCRT4.@)
  */
 RPC_STATUS WINAPI RpcServerRegisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv )

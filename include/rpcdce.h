@@ -183,6 +183,14 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, RPC_MGR_EPV* MgrEpv,
                         UINT Flags, UINT MaxCalls, UINT MaxRpcSize, RPC_IF_CALLBACK_FN* IfCallbackFn );
 
+
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcServerUseProtseqA(LPSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
+RPCRTAPI RPC_STATUS RPC_ENTRY
+  RpcServerUseProtseqW(LPWSTR Protseq, unsigned int MaxCalls, void *SecurityDescriptor);
+#define RpcServerUseProtseq WINELIB_NAME_AW(RpcServerUseProtseq)
+
+
 RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcServerUseProtseqEpA( LPSTR Protseq, UINT MaxCalls, LPSTR Endpoint, LPVOID SecurityDescriptor );
 RPCRTAPI RPC_STATUS RPC_ENTRY

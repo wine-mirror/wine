@@ -121,8 +121,8 @@ init	RPCRT4_LibMain
 @ stub RpcServerUseAllProtseqsEx
 @ stub RpcServerUseAllProtseqsIf
 @ stub RpcServerUseAllProtseqsIfEx
-@ stub RpcServerUseProtseqA
-@ stub RpcServerUseProtseqW
+@ stdcall RpcServerUseProtseqA(str long ptr) RpcServerUseProtseqA
+@ stdcall RpcServerUseProtseqW(wstr long ptr) RpcServerUseProtseqW
 @ stub RpcServerUseProtseqExA
 @ stub RpcServerUseProtseqExW
 @ stdcall RpcServerUseProtseqEpA(str  long str  ptr) RpcServerUseProtseqEpA
