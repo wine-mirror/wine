@@ -71,11 +71,6 @@ typedef struct
 
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, KERNEL_DIRENT [2] )
 
-/* To avoid blocking on non-directories in DOSFS_OpenDir_VFAT*/
-#ifndef O_DIRECTORY
-# define O_DIRECTORY 0200000 /* must be directory */
-#endif
-
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
 #endif  /* linux */
@@ -443,7 +438,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     if (show_dir_symlinks == -1) init_options();
 
-    if ((cwd = open(".", O_RDONLY|O_DIRECTORY)) != -1 && fchdir( fd ) != -1)
+    if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
     {
         off_t old_pos = 0;
 
