@@ -392,7 +392,7 @@ void wine_pthread_abort_thread( int status )
  * If they are not available, the libc defaults to
  * non-threadsafe operation (not good). */
 
-#if defined(__GLIBC__) || defined(__FreeBSD__)
+#if defined(HAVE_PTHREAD_H) && (defined(__GLIBC__) || defined(__FreeBSD__))
 
 /* adapt as necessary (a construct like this is used in glibc sources) */
 #define strong_alias(orig, alias) \
@@ -1010,4 +1010,4 @@ static struct pthread_functions libc_pthread_functions =
     _pthread_cleanup_pop           /* ptr__pthread_cleanup_pop */
 };
 
-#endif /* __GLIBC__ || __FREEBSD__ */
+#endif /* HAVE_PTHREAD_H && (__GLIBC__ || __FREEBSD__) */
