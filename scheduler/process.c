@@ -820,9 +820,16 @@ static char **build_envp( const char *env, const char *extra_env )
         /* now put the Windows environment strings */
         for (p = env; *p; p += strlen(p) + 1)
         {
-            if (memcmp( p, "PATH=", 5 ) &&
-                memcmp( p, "HOME=", 5 ) &&
-                memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = (char *)p;
+            if (!memcmp( p, "PATH=", 5 ))  /* store PATH as WINEPATH */
+            {
+                char *winepath = malloc( strlen(p) + 5 );
+                strcpy( winepath, "WINE" );
+                strcpy( winepath + 4, p );
+                *envptr++ = winepath;
+            }
+            else if (memcmp( p, "HOME=", 5 ) &&
+                     memcmp( p, "WINEPATH=", 9 ) &&
+                     memcmp( p, "WINEPREFIX=", 11 )) *envptr++ = (char *)p;
         }
         *envptr = 0;
     }

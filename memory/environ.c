@@ -152,7 +152,11 @@ static BOOL build_environment(void)
     /* Compute the total size of the Unix environment */
 
     size = sizeof(BYTE) + sizeof(WORD) + sizeof(ENV_program_name);
-    for (e = environ; *e; e++) size += strlen(*e) + 1;
+    for (e = environ; *e; e++)
+    {
+        if (!memcmp( *e, "PATH=", 5 )) continue;
+        size += strlen(*e) + 1;
+    }
 
     /* Now allocate the environment */
 
@@ -164,7 +168,10 @@ static BOOL build_environment(void)
 
     for (e = environ; *e; e++)
     {
-        strcpy( p, *e );
+        /* skip Unix PATH and store WINEPATH as PATH */
+        if (!memcmp( *e, "PATH=", 5 )) continue;
+        if (!memcmp( *e, "WINEPATH=", 9 )) strcpy( p, *e + 4 );
+        else strcpy( p, *e );
         p += strlen(p) + 1;
     }
 

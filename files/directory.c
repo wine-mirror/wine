@@ -160,17 +160,21 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, DIR_Windows.short_name + 2 );
     }
 
-    PROFILE_GetWineIniString(wineW, pathW, path_dirW, longpath, MAX_PATHNAME_LEN);
-    if (strchrW(longpath, '/'))
-    {
-	MESSAGE("Fix your wine config to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n");
-	PROFILE_UsageWineIni();
-	ExitProcess(1);
-    }
-
     /* Set the environment variables */
 
-    SetEnvironmentVariableW( path_capsW, longpath );
+    /* set PATH only if not set already */
+    if (!GetEnvironmentVariableW( path_capsW, longpath, MAX_PATHNAME_LEN ))
+    {
+        PROFILE_GetWineIniString(wineW, pathW, path_dirW, longpath, MAX_PATHNAME_LEN);
+        if (strchrW(longpath, '/'))
+        {
+            MESSAGE("Fix your wine config to use DOS drive syntax in [wine] 'Path=' statement! (no '/' allowed)\n");
+            PROFILE_UsageWineIni();
+            ExitProcess(1);
+        }
+        SetEnvironmentVariableW( path_capsW, longpath );
+    }
+
     SetEnvironmentVariableW( temp_capsW, tmp_dir.short_name );
     SetEnvironmentVariableW( tmp_capsW, tmp_dir.short_name );
     SetEnvironmentVariableW( windirW, DIR_Windows.short_name );
