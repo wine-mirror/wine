@@ -136,18 +136,16 @@ static void CreateBPB(int drive, BYTE *data)
 
 static int INT21_GetFreeDiskSpace(struct sigcontext_struct *context)
 {
-    DWORD size, available;
-    int drive = DOS_GET_DRIVE( DL_reg(context) );
+    DWORD cluster_sectors, sector_bytes, free_clusters, total_clusters;
+    char root[] = "A:\\";
 
-    if (!DRIVE_GetFreeSpace(drive, &size, &available)) return 0;
-
-    CX_reg(context) = 512;  /* bytes per sector */
-    size /= 512;
-    available /= 512;
-    AX_reg(context) = 1;  /* sectors per cluster */
-    while (AX_reg(context) * 65530 < size) AX_reg(context) *= 2;
-    BX_reg(context) = available / AX_reg(context);  /* free clusters */
-    DX_reg(context) = size / AX_reg(context);  /* total clusters */
+    *root += DOS_GET_DRIVE( DL_reg(context) );
+    if (!GetDiskFreeSpace32A( root, &cluster_sectors, &sector_bytes,
+                              &free_clusters, &total_clusters )) return 0;
+    AX_reg(context) = cluster_sectors;
+    BX_reg(context) = free_clusters;
+    CX_reg(context) = sector_bytes;
+    DX_reg(context) = total_clusters;
     return 1;
 }
 
@@ -1129,8 +1127,8 @@ void DOS3Call( struct sigcontext_struct context )
         break;
 
     case 0x39: /* "MKDIR" - CREATE SUBDIRECTORY */
-        if (!FILE_MakeDir( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
-                                               DX_reg(&context) )))
+        if (!CreateDirectory32A( PTR_SEG_OFF_TO_LIN( DS_reg(&context),
+                                                     DX_reg(&context) ), NULL))
         {
             AX_reg(&context) = DOS_ExtendedError;
             SET_CFLAG(&context);
@@ -1550,7 +1548,7 @@ void DOS3Call( struct sigcontext_struct context )
 
     case 0x68: /* "FFLUSH" - COMMIT FILE */
     case 0x6a: /* COMMIT FILE */
-        if (!FILE_Sync( BX_reg(&context) ))
+        if (!FlushFileBuffers( BX_reg(&context) ))
         {
             AX_reg(&context) = DOS_ExtendedError;
             SET_CFLAG(&context);

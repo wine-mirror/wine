@@ -1600,7 +1600,7 @@ BOOL SetWindowPos( HWND hwnd, HWND hwndInsertAfter, INT x, INT y,
 	    (oldClientRect.top - oldWindowRect.top !=
 	     newClientRect.top - newWindowRect.top) )
 
-	    RedrawWindow32( wndPtr->hwndSelf, NULL, 0,
+	    RedrawWindow32( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE |
                             RDW_ALLCHILDREN | RDW_FRAME | RDW_ERASE );
 	else
 	    if( winpos.flags & SWP_FRAMECHANGED )

@@ -41,10 +41,10 @@ base	1
 0036 stub CopyFileA
 0037 stub CopyFileW
 0038 stub CreateConsoleScreenBuffer
-0039 stub CreateDirectoryA
+0039 stdcall CreateDirectoryA(ptr ptr) CreateDirectory32A
 0040 stub CreateDirectoryExA
 0041 stub CreateDirectoryExW
-0042 stub CreateDirectoryW
+0042 stdcall CreateDirectoryW(ptr ptr) CreateDirectory32W
 0043 	stdcall CreateEventA(ptr long long ptr) CreateEventA
 0044 stub CreateEventW
 0045   stdcall CreateFileA(ptr long long ptr long long long) CreateFileA
@@ -130,12 +130,12 @@ base	1
 0125 stub FindNextChangeNotification
 0126 stub FindNextFileA
 0127 stub FindNextFileW
-0128 stdcall FindResourceA(long ptr ptr) FindResource32
+0128 stdcall FindResourceA(long ptr ptr) FindResource32A
 0129 stub FindResourceExA
 0130 stub FindResourceExW
-0131 stub FindResourceW
+0131 stdcall FindResourceW(long ptr ptr) FindResource32W
 0132 stub FlushConsoleInputBuffer
-0133 stub FlushFileBuffers
+0133 stdcall FlushFileBuffers(long) FlushFileBuffers
 0134 stub FlushInstructionCache
 0135 stub FlushViewOfFile
 0136 stub FoldStringA
@@ -198,7 +198,7 @@ base	1
 0193 stub GetCurrencyFormatA
 0194 stub GetCurrencyFormatW
 0195 stub GetCurrentConsoleFont
-0196 stub GetCurrentDirectoryA
+0196 	stdcall GetCurrentDirectoryA(ptr ptr) GetCurrentDirectory
 0197 stub GetCurrentDirectoryW
 0198 	stdcall GetCurrentProcess() GetCurrentProcess
 0199 stdcall GetCurrentProcessId() GetCurrentThreadId
@@ -208,8 +208,8 @@ base	1
 0203 stub GetDateFormatW
 0204 stub GetDefaultCommConfigA
 0205 stub GetDefaultCommConfigW
-0206 stub GetDiskFreeSpaceA
-0207 stub GetDiskFreeSpaceW
+0206 	stdcall GetDiskFreeSpaceA(ptr ptr ptr ptr ptr) GetDiskFreeSpace32A
+0207 	stdcall GetDiskFreeSpaceW(ptr ptr ptr ptr ptr) GetDiskFreeSpace32W
 0208 stdcall GetDriveTypeA(ptr) GetDriveType32A
 0209 stub GetDriveTypeW
 0210	stdcall GetEnvironmentStrings()	GetEnvironmentStrings
@@ -311,8 +311,8 @@ base	1
 0306 stdcall GetVersion() GetVersion32
 0307 stdcall GetVersionExA(ptr) GetVersionEx32A
 0308 stdcall GetVersionExW(ptr) GetVersionEx32W
-0309 stub GetVolumeInformationA
-0310 stub GetVolumeInformationW
+0309 stdcall GetVolumeInformationA(ptr ptr long ptr ptr ptr ptr long) GetVolumeInformation32A
+0310 stdcall GetVolumeInformationW(ptr ptr long ptr ptr ptr ptr long) GetVolumeInformation32W
 0311 stdcall GetWindowsDirectoryA(ptr long) GetWindowsDirectory
 0312 stub GetWindowsDirectoryW
 0313 stdcall GlobalAddAtomA(ptr) GlobalAddAtom32A
@@ -386,7 +386,7 @@ base	1
 0381 stdcall LocalUnlock(long) LocalUnlock32
 0382 stub LockFile
 0383 stub LockFileEx
-0384 stub LockResource
+0384 stdcall LockResource(long) LockResource32
 0385 stub MapViewOfFile
 0386 	stdcall MapViewOfFileEx(long long long long long long) MapViewOfFileEx
 0387 stub MoveFileA
@@ -481,7 +481,7 @@ base	1
 0476 stub SetConsoleTitleA
 0477 stub SetConsoleTitleW
 0478 stub SetConsoleWindowInfo
-0479 stub SetCurrentDirectoryA
+0479 stdcall SetCurrentDirectoryA(ptr) SetCurrentDirectory
 0480 stub SetCurrentDirectoryW
 0481 stub SetDefaultCommConfigA
 0482 stub SetDefaultCommConfigW
@@ -524,7 +524,7 @@ base	1
 0519 stub SetVolumeLabelW
 0520 stub SetupComm
 0521 stub ShowConsoleCursor
-0522 stub SizeofResource
+0522 stdcall SizeofResource(long long) SizeofResource
 0523 	stdcall Sleep(long) Sleep
 0524 stub SleepEx
 0525 stub SuspendThread
@@ -633,7 +633,7 @@ base	1
 0627 stub HeapUsage
 0628 stub IsDebuggerPresent
 0629 stub PostQueuedCompletionStatus
-0630    stdcall SetSystemPowerState(byte byte) SetSystemPowerState
+0630    stdcall SetSystemPowerState(long long) SetSystemPowerState
 0631 stub WritePrivateProfileStructA
 0632 stub WritePrivateProfileStructW
 0633 stub MakeCriticalSectionGlobal

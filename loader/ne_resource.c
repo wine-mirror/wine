@@ -325,7 +325,7 @@ BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
     WORD count;
 
     NE_MODULE *pModule = MODULE_GetPtr( hModule );
-    if (!pModule || !pModule->res_table) return FALSE;
+    if (!pModule || !pModule->res_table) return handle;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
     while (pTypeInfo->type_id)
     {
@@ -340,13 +340,13 @@ BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
                     GlobalFree16( pNameInfo->handle );
                     pNameInfo->handle = 0;
                 }
-                return TRUE;
+                return 0;
             }
             pNameInfo++;
         }
         pTypeInfo = (NE_TYPEINFO *)pNameInfo;
     }
     fprintf( stderr, "FreeResource: %04x %04x not found!\n", hModule, handle );
-    return FALSE;
+    return handle;
 }
 #endif /* WINELIB */

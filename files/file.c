@@ -26,6 +26,7 @@
 #include "options.h"
 #include "ldt.h"
 #include "task.h"
+#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -480,45 +481,6 @@ int FILE_SetDateTime( HFILE hFile, WORD date, WORD time )
     if (utime( file->unix_name, &filetime ) != -1) return 1;
     FILE_SetDosError();
     return 0;
-}
-
-
-/***********************************************************************
- *           FILE_Sync
- */
-int FILE_Sync( HFILE hFile )
-{
-    DOS_FILE *file;
-
-    if (!(file = FILE_GetFile( hFile ))) return 0;
-    if (fsync( file->unix_handle ) != -1) return 1;
-    FILE_SetDosError();
-    return 0;
-}
-
-
-/***********************************************************************
- *           FILE_MakeDir
- */
-int FILE_MakeDir( LPCSTR path )
-{
-    const char *unixName;
-
-    dprintf_file(stddeb, "FILE_MakeDir: '%s'\n", path );
-
-    if ((unixName = DOSFS_IsDevice( path )) != NULL)
-    {
-        dprintf_file(stddeb, "FILE_MakeDir: device '%s'!\n", unixName);
-        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
-        return 0;
-    }
-    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE ))) return 0;
-    if ((mkdir( unixName, 0777 ) == -1) && (errno != EEXIST))
-    {
-        FILE_SetDosError();
-        return 0;
-    }
-    return 1;
 }
 
 
@@ -1099,4 +1061,65 @@ WORD SetHandleCount( WORD count )
         pdb->nbFiles = count;
     }
     return pdb->nbFiles;
+}
+
+
+/***********************************************************************
+ *           FlushFileBuffers   (KERNEL32.133)
+ */
+BOOL32 FlushFileBuffers( HFILE hFile )
+{
+    DOS_FILE *file;
+
+    dprintf_file( stddeb, "FlushFileBuffers(%d)\n", hFile );
+    if (!(file = FILE_GetFile( hFile ))) return FALSE;
+    if (fsync( file->unix_handle ) != -1) return TRUE;
+    FILE_SetDosError();
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           CreateDirectory16   (KERNEL.144)
+ */
+BOOL16 CreateDirectory16( LPCSTR path, LPVOID dummy )
+{
+    dprintf_file( stddeb,"CreateDirectory16(%s,%p)\n", path, dummy );
+    return (BOOL16)CreateDirectory32A( path, NULL );
+}
+
+
+/***********************************************************************
+ *           CreateDirectory32A   (KERNEL32.39)
+ */
+BOOL32 CreateDirectory32A( LPCSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
+{
+    const char *unixName;
+
+    dprintf_file( stddeb, "CreateDirectory32A(%s,%p)\n", path, lpsecattribs );
+    if ((unixName = DOSFS_IsDevice( path )) != NULL)
+    {
+        dprintf_file(stddeb, "CreateDirectory: device '%s'!\n", unixName);
+        DOS_ERROR( ER_AccessDenied, EC_AccessDenied, SA_Abort, EL_Disk );
+        return FALSE;
+    }
+    if (!(unixName = DOSFS_GetUnixFileName( path, FALSE ))) return 0;
+    if ((mkdir( unixName, 0777 ) == -1) && (errno != EEXIST))
+    {
+        FILE_SetDosError();
+        return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           CreateDirectory32W   (KERNEL32.42)
+ */
+BOOL32 CreateDirectory32W( LPCWSTR path, LPSECURITY_ATTRIBUTES lpsecattribs )
+{
+    LPSTR xpath = STRING32_DupUniToAnsi(path);
+    BOOL32 ret = CreateDirectory32A(xpath,lpsecattribs);
+    free(xpath);
+    return ret;
 }

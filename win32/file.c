@@ -482,17 +482,21 @@ static int TranslateCreationFlags(DWORD create_flags)
 DWORD GetFileAttributesA(LPCSTR lpFileName)
 {
 	struct stat buf;
-	DWORD res=0;
-	if(stat(lpFileName,&buf)==-1)
-	{
+	DWORD	res=0;
+	char	*fn;
+
+	dprintf_win32(stddeb,"GetFileAttributesA(%s)\n",lpFileName);
+	fn=DOSFS_GetUnixFileName(lpFileName,FALSE);
+	/* fn points to a static buffer, don't free it */
+	if(stat(fn,&buf)==-1) {
 		SetLastError(ErrnoToLastError(errno));
-		return 0;
+		return 0xFFFFFFFF;
 	}
-    if(buf.st_mode & S_IFREG)
-        res |= FILE_ATTRIBUTE_NORMAL;
-    if(buf.st_mode & S_IFDIR)
-        res |= FILE_ATTRIBUTE_DIRECTORY;
-    if((buf.st_mode & S_IWRITE) == 0)
-        res |= FILE_ATTRIBUTE_READONLY;
+	if(buf.st_mode & S_IFREG)
+		res |= FILE_ATTRIBUTE_NORMAL;
+	if(buf.st_mode & S_IFDIR)
+		res |= FILE_ATTRIBUTE_DIRECTORY;
+	if((buf.st_mode & S_IWRITE) == 0)
+		res |= FILE_ATTRIBUTE_READONLY;
 	return res;
 }

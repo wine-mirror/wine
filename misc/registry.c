@@ -435,7 +435,7 @@ SHELL_SaveRegistry() {
 			strcpy(buf,"yes");
 		RegCloseKey(hkey);
 	}
-	if (strcasecmp(buf,"yes"))
+	if (lstrcmpi32A(buf,"yes"))
 		all=1;
 	pwd=getpwuid(getuid());
 	if (pwd!=NULL && pwd->pw_dir!=NULL) {
@@ -1695,8 +1695,9 @@ DWORD RegQueryValueEx32W(
 	LPKEYSTRUCT	lpkey;
 	int		i;
 
-	dprintf_reg(stddeb,"RegQueryValueEx32W(%x,%s,%p,%p,%p,%p)\n",
-		hkey,W2C(lpszValueName,0),lpdwReserved,lpdwType,lpbData,lpcbData
+	dprintf_reg(stddeb,"RegQueryValueEx32W(%x,%s,%p,%p,%p,%ld)\n",
+		hkey,W2C(lpszValueName,0),lpdwReserved,lpdwType,lpbData,
+		lpcbData?*lpcbData:0
 	);
 
 	lpkey	= lookup_hkey(hkey);
@@ -1749,8 +1750,9 @@ DWORD RegQueryValue32W(
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
 
-	dprintf_reg(stddeb,"RegQueryValue32W(%x,%s,%p,%p)\n->",
-		hkey,W2C(lpszSubKey,0),lpszData,lpcbData
+	dprintf_reg(stddeb,"RegQueryValue32W(%x,%s,%p,%ld)\n->",
+		hkey,W2C(lpszSubKey,0),lpszData,
+		lpcbData?*lpcbData:0
 	);
 
 	/* only open subkey, if we really do descend */
@@ -1789,8 +1791,9 @@ DWORD RegQueryValueEx32A(
 	DWORD	ret,myxlen;
 	DWORD	*mylen;
 
-	dprintf_reg(stddeb,"RegQueryValueEx32A(%x,%s,%p,%p,%p,%p)\n->",
-		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,lpcbData
+	dprintf_reg(stddeb,"RegQueryValueEx32A(%x,%s,%p,%p,%p,%ld)\n->",
+		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,
+		lpcbData?*lpcbData:0
 	);
 	if (lpbData) {
 		/* double buffer */
@@ -1802,7 +1805,7 @@ DWORD RegQueryValueEx32A(
 		if (lpcbData) {
 			myxlen	= *lpcbData*2;
 			mylen	= &myxlen;
-		}
+		} else
 			mylen	= NULL;
 	}
 	if (lpszValueName)
@@ -1855,8 +1858,9 @@ DWORD RegQueryValueEx16(
 	LPBYTE	lpbData,
 	LPDWORD	lpcbData
 ) {
-	dprintf_reg(stddeb,"RegQueryValueEx16(%x,%s,%p,%p,%p,%p)\n",
-		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,lpcbData
+	dprintf_reg(stddeb,"RegQueryValueEx16(%x,%s,%p,%p,%p,%ld)\n",
+		hkey,lpszValueName,lpdwReserved,lpdwType,lpbData,
+		lpcbData?*lpcbData:0
 	);
 	return RegQueryValueEx32A(
 		hkey,
@@ -1878,8 +1882,9 @@ DWORD RegQueryValue32A(
 	HKEY	xhkey;
 	DWORD	ret,lpdwType;
 
-	dprintf_reg(stddeb,"RegQueryValue32A(%x,%s,%p,%p)\n",
-		hkey,lpszSubKey,lpszData,lpcbData
+	dprintf_reg(stddeb,"RegQueryValue32A(%x,%s,%p,%ld)\n",
+		hkey,lpszSubKey,lpszData,
+		lpcbData?*lpcbData:0
 	);
 
 	/* only open subkey, if we really do descend */
@@ -1911,9 +1916,15 @@ DWORD RegQueryValue16(
 	LPSTR	lpszData,
 	LPDWORD	lpcbData
 ) {
-	dprintf_reg(stddeb,"RegQueryValue16(%x,%s,%p,%p)\n",
-		hkey,lpszSubKey,lpszData,lpcbData
+	dprintf_reg(stddeb,"RegQueryValue16(%x,%s,%p,%ld)\n",
+		hkey,lpszSubKey,lpszData,lpcbData?*lpcbData:0
 	);
+	/* HACK: the 16bit RegQueryValue doesn't handle selectorblocks
+	 *       anyway, so we just mask out the high 16 bit.
+	 *       (this (not so much incidently;) hopefully fixes Aldus FH4)
+	 */
+	if (lpcbData)
+		*lpcbData &= 0xFFFF;
 	return RegQueryValue32A(hkey,lpszSubKey,lpszData,lpcbData);
 }
 

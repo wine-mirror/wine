@@ -35,6 +35,5 @@ extern DRIVETYPE DRIVE_GetType( int drive );
 extern int DRIVE_Chdir( int drive, const char *path );
 extern int DRIVE_Disable( int drive  );
 extern int DRIVE_Enable( int drive  );
-extern int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available );
 
 #endif  /* __WINE_DRIVE_H */

@@ -287,7 +287,26 @@ static int ParseExportFunction(int ordinal, int type)
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
     int i;
-    
+
+    switch(SpecType)
+    {
+    case SPEC_WIN16:
+        if (type == TYPE_STDCALL)
+        {
+            fprintf( stderr, "%d: 'stdcall' not supported for Win16\n", Line );
+            exit(1);
+        }
+        break;
+    case SPEC_WIN32:
+        if ((type == TYPE_PASCAL) || (type == TYPE_PASCAL_16))
+        {
+            fprintf( stderr, "%d: 'pascal' not supported for Win32\n", Line );
+            exit(1);
+        }
+        break;
+    default:
+        break;
+    }
     odp = &OrdinalDefinitions[ordinal];
     strcpy(odp->export_name, GetToken());
     odp->type = type;
@@ -301,25 +320,39 @@ static int ParseExportFunction(int ordinal, int type)
 	exit(1);
     }
 
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < sizeof(fdp->arg_types)-1; i++)
     {
 	token = GetToken();
 	if (*token == ')')
 	    break;
 
-	if (!strcmp(token, "byte") || !strcmp(token, "word"))
+        if (!strcmp(token, "byte") || !strcmp(token, "word"))
             fdp->arg_types[i] = 'w';
-	else if (!strcmp(token, "s_byte") || !strcmp(token, "s_word"))
+        else if (!strcmp(token, "s_byte") || !strcmp(token, "s_word"))
             fdp->arg_types[i] = 's';
-	else if (!strcmp(token, "long") || !strcmp(token, "segptr"))
+        else if (!strcmp(token, "long") || !strcmp(token, "segptr"))
             fdp->arg_types[i] = 'l';
-	else if (!strcmp(token, "ptr"))
+        else if (!strcmp(token, "ptr"))
             fdp->arg_types[i] = 'p';
-	else
-	{
-	    fprintf(stderr, "%d: Unknown variable type '%s'\n", Line, token);
-	    exit(1);
-	}
+        else
+        {
+            fprintf(stderr, "%d: Unknown variable type '%s'\n", Line, token);
+            exit(1);
+        }
+        if (SpecType == SPEC_WIN32)
+        {
+            if (strcmp(token, "long") && strcmp(token, "ptr"))
+            {
+                fprintf( stderr, "%d: Type '%s' not supported for Win32\n",
+                         Line, token );
+                exit(1);
+            }
+        }
+    }
+    if (*token != ')')
+    {
+        fprintf( stderr, "%d: Too many arguments\n", Line );
+        exit(1);
     }
     fdp->arg_types[i] = '\0';
 
@@ -424,33 +457,28 @@ static int ParseOrdinal(int ordinal)
 
     if (strcmp(token, "byte") == 0)
 	return ParseVariable(ordinal, TYPE_BYTE);
-    else if (strcmp(token, "word") == 0)
+    if (strcmp(token, "word") == 0)
 	return ParseVariable(ordinal, TYPE_WORD);
-    else if (strcmp(token, "long") == 0)
+    if (strcmp(token, "long") == 0)
 	return ParseVariable(ordinal, TYPE_LONG);
-    else if (strcmp(token, "p") == 0)
+    if (strcmp(token, "pascal") == 0)
 	return ParseExportFunction(ordinal, TYPE_PASCAL);
-    else if (strcmp(token, "pascal") == 0)
-	return ParseExportFunction(ordinal, TYPE_PASCAL);
-    else if (strcmp(token, "pascal16") == 0)
+    if (strcmp(token, "pascal16") == 0)
 	return ParseExportFunction(ordinal, TYPE_PASCAL_16);
-    else if (strcmp(token, "register") == 0)
+    if (strcmp(token, "register") == 0)
         return ParseExportFunction(ordinal, TYPE_REGISTER);
-    else if (strcmp(token, "stdcall") == 0)
+    if (strcmp(token, "stdcall") == 0)
         return ParseExportFunction(ordinal, TYPE_STDCALL);
-    else if (strcmp(token, "equate") == 0)
+    if (strcmp(token, "equate") == 0)
 	return ParseEquate(ordinal);
-    else if (strcmp(token, "return") == 0)
+    if (strcmp(token, "return") == 0)
 	return ParseReturn(ordinal);
-    else if (strcmp(token, "stub") == 0)
+    if (strcmp(token, "stub") == 0)
 	return ParseStub(ordinal);
-    else
-    {
-	fprintf(stderr, 
-		"%d: Expected type after ordinal, found '%s' instead\n",
-		Line, token);
-	exit(1);
-    }
+    fprintf(stderr, 
+            "%d: Expected type after ordinal, found '%s' instead\n",
+            Line, token);
+    exit(1);
 }
 
 static int ParseTopLevel(void)

@@ -24,6 +24,7 @@
 #endif
 
 #include "windows.h"
+#include "winbase.h"
 #include "dos_fs.h"
 #include "drive.h"
 #include "file.h"
@@ -31,6 +32,7 @@
 #include "options.h"
 #include "task.h"
 #include "xmalloc.h"
+#include "string32.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -428,7 +430,7 @@ int DRIVE_Enable( int drive  )
 /***********************************************************************
  *           DRIVE_GetFreeSpace
  */
-int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
+static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
 {
     struct statfs info;
 
@@ -456,6 +458,69 @@ int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
     *available = info.f_bavail * info.f_bsize;
 #endif
     return 1;
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpace16   (KERNEL.422)
+ */
+BOOL16 GetDiskFreeSpace16( LPCSTR root, LPDWORD cluster_sectors,
+                           LPDWORD sector_bytes, LPDWORD free_clusters,
+                           LPDWORD total_clusters )
+{
+    return GetDiskFreeSpace32A( root, cluster_sectors, sector_bytes,
+                                free_clusters, total_clusters );
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpaceA   (KERNEL32.206)
+ */
+BOOL32 GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
+                            LPDWORD sector_bytes, LPDWORD free_clusters,
+                            LPDWORD total_clusters )
+{
+    int	drive;
+    DWORD size,available;
+
+    if (!root) drive = DRIVE_GetCurrentDrive();
+    else
+    {
+        if ((root[1] != ':') || (root[2] != '\\'))
+        {
+            fprintf( stderr, "GetDiskFreeSpaceA: invalid root '%s'\n", root );
+            return FALSE;
+        }
+        drive = toupper(root[0]) - 'A';
+    }
+    if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
+
+    *sector_bytes    = 512;
+    size            /= 512;
+    available       /= 512;
+    *cluster_sectors = 1;
+    while (*cluster_sectors * 65530 < size) *cluster_sectors *= 2;
+    *free_clusters   = available/ *cluster_sectors;
+    *total_clusters  = size/ *cluster_sectors;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetDiskFreeSpaceW   (KERNEL32.207)
+ */
+BOOL32 GetDiskFreeSpace32W( LPCWSTR root, LPDWORD cluster_sectors,
+                            LPDWORD sector_bytes, LPDWORD free_clusters,
+                            LPDWORD total_clusters )
+{
+    LPSTR xroot;
+    BOOL ret;
+
+    xroot = STRING32_DupUniToAnsi(root);
+    ret = GetDiskFreeSpace32A( xroot,cluster_sectors, sector_bytes,
+                               free_clusters, total_clusters );
+    free( xroot );
+    return ret;
 }
 
 
@@ -501,7 +566,7 @@ WORD GetDriveType32A( LPCSTR root )
 
 
 /***********************************************************************
- *           GetCurrentDirectory   (KERNEL.411)
+ *           GetCurrentDirectory   (KERNEL.411) (KERNEL32.196)
  */
 UINT32 GetCurrentDirectory( UINT32 buflen, LPSTR buf )
 {
@@ -587,5 +652,65 @@ DWORD GetLogicalDrives(void)
 
     for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
         if (DRIVE_IsValid(drive)) ret |= (1 << drive);
+    return ret;
+}
+
+
+/***********************************************************************
+ *           GetVolumeInformation32A   (KERNEL32.309)
+ */
+BOOL32 GetVolumeInformation32A( LPCSTR root, LPSTR label, DWORD label_len,
+                                DWORD *serial, DWORD *filename_len,
+                                DWORD *flags, LPSTR fsname, DWORD fsname_len )
+{
+    int drive;
+
+    /* FIXME, SetLastErrors missing */
+
+    if (!root) drive = DRIVE_GetCurrentDrive();
+    else
+    {
+        if ((root[1] != ':') || (root[2] != '\\'))
+        {
+            fprintf( stderr, "GetVolumeInformation: invalid root '%s'\n",root);
+            return FALSE;
+        }
+        drive = toupper(root[0]) - 'A';
+    }
+    if (!DRIVE_IsValid( drive )) return FALSE;
+    if (label) lstrcpyn32A( label, DOSDrives[drive].label, label_len );
+    if (serial) *serial = DOSDrives[drive].serial;
+
+    /* Set the filesystem information */
+    /* Note: we only emulate a FAT fs at the present */
+
+    if (filename_len) *filename_len = 12;
+    if (flags) *flags = 0;
+    if (fsname) lstrcpyn32A( fsname, "FAT", fsname_len );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetVolumeInformation32W   (KERNEL32.310)
+ */
+BOOL32 GetVolumeInformation32W( LPCWSTR root, LPWSTR label, DWORD label_len,
+                                DWORD *serial, DWORD *filename_len,
+                                DWORD *flags, LPWSTR fsname, DWORD fsname_len)
+{
+    LPSTR xroot    = STRING32_DupUniToAnsi(root);
+    LPSTR xvolname = (char*)xmalloc( label_len );
+    LPSTR xfsname  = (char*)xmalloc( fsname_len );
+    BOOL32 ret = GetVolumeInformation32A( xroot, xvolname, label_len, serial,
+                                          filename_len, flags, xfsname,
+                                          fsname_len );
+    if (ret)
+    {
+        STRING32_AnsiToUni( label, xvolname );
+        STRING32_AnsiToUni( fsname, xfsname );
+    }
+    free(xroot);
+    free(xvolname);
+    free(xfsname);
     return ret;
 }

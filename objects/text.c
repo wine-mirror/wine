@@ -380,8 +380,19 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
       /* Compute text starting position */
 
     XTextExtents( font, str, count, &dir, &ascent, &descent, &info );
-    info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
-    if (lpDx) for (i = 0; i < count; i++) info.width += lpDx[i];
+
+    if (lpDx) /* have explicit character cell x offsets */
+    {
+	/* sum lpDx array and add the width of last character */
+
+        info.width = XTextWidth( font, str + count - 1, 1) + dc->w.charExtra;
+        if (str[count-1] == (char)dc->u.x.font.metrics.tmBreakChar)
+            info.width += dc->w.breakExtra;
+
+        for (i = 0; i < count; i++) info.width += lpDx[i];
+    }
+    else
+       info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
 
     switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
     {
@@ -443,7 +454,7 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
         }
     }
     
-      /* Draw the text */
+    /* Draw the text (count > 0 verified) */
 
     XSetForeground( display, dc->u.x.gc, dc->w.textPixel );
     if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
@@ -454,30 +465,42 @@ BOOL16 ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
     else  /* Now the fun begins... */
     {
         XTextItem *items, *pitem;
+	int delta;
 
-        items = xmalloc( count * sizeof(XTextItem) );
-        for (i = 0, pitem = items; i < count; i++, pitem++)
+	/* allocate max items */
+
+        pitem = items = xmalloc( count * sizeof(XTextItem) );
+        delta = i = 0;
+        while (i < count)
         {
+	    /* initialize text item with accumulated delta */
+
             pitem->chars  = (char *)str + i;
-            pitem->nchars = 1;
+	    pitem->delta  = delta; 
+            pitem->nchars = 0;
             pitem->font   = None;
-            if (i == 0)
+            delta = 0;
+
+	    /* stuff characters into the same XTextItem until new delta 
+	     * becomes  non-zero */
+
+	    do
             {
-                pitem->delta = 0;
-                continue;  /* First iteration -> no delta */
-            }
-            pitem->delta = dc->w.charExtra;
-            if (str[i] == (char)dc->u.x.font.metrics.tmBreakChar)
-                pitem->delta += dc->w.breakExtra;
-            if (lpDx)
-            {
-                INT16 width;
-                GetCharWidth( hdc, str[i], str[i], &width );
-                pitem->delta += lpDx[i-1] - width;
-            }
+                if (lpDx) delta += lpDx[i] - XTextWidth( font, str + i, 1);
+                else
+                {
+                    delta += dc->w.charExtra;
+                    if (str[i] == (char)dc->u.x.font.metrics.tmBreakChar)
+                        delta += dc->w.breakExtra;
+                }
+                pitem->nchars++;
+            } 
+	    while ((++i < count) && !delta);
+            pitem++;
         }
+
         XDrawText( display, dc->u.x.drawable, dc->u.x.gc,
-                   dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, count );
+                   dc->w.DCOrgX + x, dc->w.DCOrgY + y, items, pitem - items );
         free( items );
     }
 

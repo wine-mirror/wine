@@ -10,7 +10,8 @@
 
 #include <stddef.h>
 
-HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type );
+HANDLE32 FindResource32A( HINSTANCE hModule, LPCSTR name, LPCSTR type );
+HANDLE32 FindResource32W( HINSTANCE hModule, LPCWSTR name, LPCWSTR type );
 HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc );
 LPVOID LockResource32( HANDLE32 handle );
 BOOL FreeResource32( HANDLE32 handle );

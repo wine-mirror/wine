@@ -1270,3 +1270,17 @@ BOOL TaskFindHandle( TASKENTRY *lpte, HTASK hTask )
     lpte->hNext = hTask;
     return TaskNext( lpte );
 }
+
+
+/***********************************************************************
+ *           GetAppCompatFlags   (KERNEL.354) (USER32.205)
+ */
+DWORD GetAppCompatFlags( HTASK32 hTask )
+{
+    TDB *pTask;
+
+    if (!hTask) hTask = GetCurrentTask();
+    if (!(pTask=(TDB *)GlobalLock16( (HTASK16)hTask ))) return 0;
+    if (GlobalSize16(hTask) < sizeof(TDB)) return 0;
+    return pTask->compat_flags;
+}

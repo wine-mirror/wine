@@ -112,7 +112,7 @@ static char *FONT_ChkX11Family(char *winFaceName )
   int i;
 
   for(i = 0; lpLogFontList[i] != NULL; i++)
-    if( !strcasecmp(winFaceName, lpLogFontList[i]->lfFaceName) )
+    if( !lstrcmpi32A(winFaceName, lpLogFontList[i]->lfFaceName) )
     {
 	strcpy(x11fam,"*-");
 	return strcat(x11fam,winFaceName);
@@ -1120,8 +1120,15 @@ BOOL GetRasterizerCaps(LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 /*************************************************************************
  *             GetKerningPairs      [GDI.332]
  */
-int GetKerningPairs(HDC hDC,int cBufLen,LPKERNINGPAIR16 lpKerningPairs)
+int GetKerningPairs(HDC hDC,int cPairs,LPKERNINGPAIR16 lpKerningPairs)
 {
-	/* Wine fonts are ugly and don't support kerning :) */
-	return 0;
+    /* This has to be dealt with when proper font handling is in place 
+     *
+     * At this time kerning is ignored (set to 0)
+     */
+
+    int i;
+    fprintf(stdnimp,"GetKerningPairs: almost empty stub!\n");
+    for (i = 0; i < cPairs; i++) lpKerningPairs[i].iKernAmount = 0;
+    return 0;
 }

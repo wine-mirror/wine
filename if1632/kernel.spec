@@ -142,7 +142,7 @@ type	win16
 141 stub InitTask1
 142 stub GetProfileSectionNames
 143 stub GetPrivateProfileSectionNames
-144 stub CreateDirectory
+144 pascal16 CreateDirectory(ptr ptr) CreateDirectory16
 145 stub RemoveDirectory
 146 stub DeleteFile
 147 stub SetLastError
@@ -261,7 +261,7 @@ type	win16
 #351 BUNNY_351
 352 pascal   lstrcatn(segptr segptr word) lstrcatn16
 353 pascal   lstrcpyn(segptr segptr word) lstrcpyn16
-354 stub GetAppCompatFlags
+354 pascal   GetAppCompatFlags(word) GetAppCompatFlags
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
 360 stub OpenFileEx
@@ -281,7 +281,7 @@ type	win16
 419 stub GetProfileSection
 420 stub GetFileAttributes
 421 stub SetFileAttributes
-422 stub GetDiskFreeSpace
+422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
 432 stub FileTimeToLocalFileTime
 450 pascal16 KERNEL_450() stub_KERNEL_450
 491 stub RegisterServiceProcess

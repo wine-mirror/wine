@@ -174,11 +174,9 @@ int ListMaxFirstVisible(LPHEADLIST lphl)
 
 void ListBoxUpdateWindow(HWND hwnd, LPHEADLIST lphl, BOOL repaint)
 {
-  WND *wndPtr = WIN_FindWndPtr(hwnd);
-
-  if (wndPtr->dwStyle & WS_VSCROLL)
+  if (lphl->dwStyle & WS_VSCROLL)
     SetScrollRange(hwnd, SB_VERT, 0, ListMaxFirstVisible(lphl), TRUE);
-  if ((wndPtr->dwStyle & WS_HSCROLL) && (lphl->ItemsPerColumn != 0))
+  if ((lphl->dwStyle & WS_HSCROLL) && (lphl->ItemsPerColumn != 0))
     SetScrollRange(hwnd, SB_HORZ, 1, lphl->ItemsVisible /
 		   lphl->ItemsPerColumn + 1, TRUE);
 

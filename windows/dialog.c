@@ -663,7 +663,7 @@ HWND32 CreateDialogParam32A( HINSTANCE32 hInst, LPCSTR name,
 HWND32 CreateDialogParam32W( HINSTANCE32 hInst, LPCWSTR name,
                              HWND32 owner, DLGPROC32 dlgProc, LPARAM param )
 {
-    HANDLE32 hrsrc = FindResource32( hInst, name, (LPWSTR)RT_DIALOG );
+    HANDLE32 hrsrc = FindResource32W( hInst, name, (LPWSTR)RT_DIALOG );
     if (!hrsrc) return 0;
     return CreateDialogIndirectParam32W( hInst, LoadResource32( hInst, hrsrc ),
                                          owner, dlgProc, param );

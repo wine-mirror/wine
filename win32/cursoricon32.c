@@ -243,7 +243,7 @@ static BOOL CURSORICON32_LoadDirEntry(HANDLE hInstance, LPCWSTR name,
     CURSORICONDIR32 *dir;
     CURSORICONDIRENTRY32 *entry = NULL;
 
-    if (!(hRsrc = FindResource32( hInstance, name,
+    if (!(hRsrc = FindResource32W( hInstance, name,
                 (LPCWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
         return FALSE;
     if (!(hMem = LoadResource32( hInstance, hRsrc ))) return FALSE;
@@ -439,7 +439,7 @@ static HANDLE CURSORICON32_Load( HANDLE hInstance, LPCWSTR name, int width,
 
     /* Load the resource */
 
-    if (!(hRsrc = FindResource32( hInstance,
+    if (!(hRsrc = FindResource32W( hInstance,
                       (LPWSTR) (DWORD) dirEntry.icon.wResId,
                       (LPWSTR) (fCursor ? RT_CURSOR : RT_ICON )))) return 0;
     if (!(handle = LoadResource32( hInstance, hRsrc ))) return 0;

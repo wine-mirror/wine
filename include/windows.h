@@ -3161,6 +3161,7 @@ VOID       hmemcpy(LPVOID,LPCVOID,LONG);
 
 /* Declarations for functions that exist only in Win32 */
 
+BOOL32     FlushFileBuffers(HFILE);
 DWORD      GetLogicalDrives(void);
 
 /* Declarations for functions that are the same in Win16 and Win32 */
@@ -3170,6 +3171,7 @@ HBITMAP16  CreateCompatibleBitmap(HDC32,INT32,INT32);
 HBITMAP16  CreateDiscardableBitmap(HDC32,INT32,INT32);
 BOOL16     EndDialog(HWND32,INT32);
 INT16      ExcludeUpdateRgn(HDC32,HWND32);
+DWORD      GetAppCompatFlags(HTASK32);
 LONG       GetBitmapBits(HBITMAP32,LONG,LPVOID);
 WORD       GetClassWord(HWND32,INT32);
 INT16      GetUpdateRgn(HWND32,HRGN32,BOOL32);
@@ -3239,6 +3241,10 @@ HWND16     CreateDialogParam16(HINSTANCE16,SEGPTR,HWND16,DLGPROC16,LPARAM);
 HWND32     CreateDialogParam32A(HINSTANCE32,LPCSTR,HWND32,DLGPROC32,LPARAM);
 HWND32     CreateDialogParam32W(HINSTANCE32,LPCWSTR,HWND32,DLGPROC32,LPARAM);
 #define    CreateDialogParam WINELIB_NAME_AW(CreateDialogParam)
+BOOL16     CreateDirectory16(LPCSTR,LPVOID);
+BOOL32     CreateDirectory32A(LPCSTR,LPSECURITY_ATTRIBUTES);
+BOOL32     CreateDirectory32W(LPCWSTR,LPSECURITY_ATTRIBUTES);
+#define    CreateDirectory WINELIB_NAME_AW(CreateDirectory)
 HRGN16     CreateEllipticRgnIndirect16(const RECT16 *);
 HRGN32     CreateEllipticRgnIndirect32(const RECT32 *);
 #define    CreateEllipticRgnIndirect WINELIB_NAME(CreateEllipticRgnIndirect)
@@ -3379,6 +3385,10 @@ BOOL32     GetCurrentPositionEx32(HDC32,LPPOINT32);
 void       GetCursorPos16(LPPOINT16);
 void       GetCursorPos32(LPPOINT32);
 #define    GetCursorPos WINELIB_NAME(GetCursorPos)
+BOOL16     GetDiskFreeSpace16(LPCSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
+BOOL32     GetDiskFreeSpace32A(LPCSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
+BOOL32     GetDiskFreeSpace32W(LPCWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
+#define    GetDiskFreeSpace WINELIB_NAME_AW(GetDiskFreeSpace)
 INT16      GetDlgItemText16(HWND16,INT16,SEGPTR,UINT16);
 INT32      GetDlgItemText32A(HWND32,INT32,LPSTR,UINT32);
 INT32      GetDlgItemText32W(HWND32,INT32,LPWSTR,UINT32);
@@ -3388,7 +3398,7 @@ UINT32     GetInternalWindowPos32(HWND32,LPRECT32,LPPOINT32);
 #define    GetInternalWindowPos WINELIB_NAME(GetInternalWindowPos)
 UINT32     GetLogicalDriveStrings32A(UINT32,LPSTR);
 UINT32     GetLogicalDriveStrings32W(UINT32,LPWSTR);
-#define    GetLogicalDriveStrings WINELIB_NAME(GetLogicalDriveStrings)
+#define    GetLogicalDriveStrings WINELIB_NAME_AW(GetLogicalDriveStrings)
 INT16      GetObject16(HANDLE16,INT16,LPVOID);
 INT32      GetObject32A(HANDLE32,INT32,LPVOID);
 INT32      GetObject32W(HANDLE32,INT32,LPVOID);
@@ -3409,6 +3419,9 @@ BOOL32     GetViewportExtEx32(HDC32,LPPOINT32);
 BOOL16     GetViewportOrgEx16(HDC16,LPPOINT16);
 BOOL32     GetViewportOrgEx32(HDC32,LPPOINT32);
 #define    GetViewportOrgEx WINELIB_NAME(GetViewportOrgEx)
+BOOL32     GetVolumeInformation32A(LPCSTR,LPSTR,DWORD,LPDWORD,LPDWORD,LPDWORD,LPSTR,DWORD);
+BOOL32     GetVolumeInformation32W(LPCWSTR,LPWSTR,DWORD,LPDWORD,LPDWORD,LPDWORD,LPWSTR,DWORD);
+#define    GetVolumeInformation WINELIB_NAME_AW(GetVolumeInformation)
 BOOL16     GetWindowExtEx16(HDC16,LPPOINT16);
 BOOL32     GetWindowExtEx32(HDC32,LPPOINT32);
 #define    GetWindowExtEx WINELIB_NAME(GetWindowExtEx)

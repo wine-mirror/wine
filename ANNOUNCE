@@ -1,12 +1,12 @@
-This is release 960616 of Wine, the MS Windows emulator.  This is still a
+This is release 960623 of Wine, the MS Windows emulator.  This is still a
 developer's only release.  There are many bugs and many unimplemented API
 features.  Most applications still do not work correctly.
 
 Patches should be submitted to "julliard@lrc.epfl.ch".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-960616: (see ChangeLog for details)
-	- Inter-task messaging begins to work.
+WHAT'S NEW with Wine-960623: (see ChangeLog for details)
+	- More Win32 code.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -15,10 +15,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-    sunsite.unc.edu:/pub/Linux/ALPHA/wine/development/Wine-960616.tar.gz
-    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-960616.tar.gz
-    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-960616.tar.gz
-    aris.com:/pub/linux/ALPHA/Wine/development/Wine-960616.tar.gz
+    sunsite.unc.edu:/pub/Linux/ALPHA/wine/development/Wine-960623.tar.gz
+    tsx-11.mit.edu:/pub/linux/ALPHA/Wine/development/Wine-960623.tar.gz
+    ftp.infomagic.com:/pub/mirrors/linux/wine/development/Wine-960623.tar.gz
+    aris.com:/pub/linux/ALPHA/Wine/development/Wine-960623.tar.gz
 
 It should also be available from any site that mirrors tsx-11 or sunsite.
 

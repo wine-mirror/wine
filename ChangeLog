@@ -1,4 +1,56 @@
 ----------------------------------------------------------------------
+Wed Jun 19 14:49:27 1996  Marcus Meissner <msmeissn@faui45.informatik.uni-erlangen.de>
+
+	* [files/drive.c] 
+	GetFreeDiskSpace*, GetVolumeInformation* added.
+
+	* [files/file.c]
+	FlushFileBuffers, CreateDirectory* added.
+
+	* [include/winbase.h] [include/windows.h]
+	Prototypes, defines added and fixes.
+
+	* [if1632/kernel32.spec] [include/resource32.h]
+	  [win32/cursoricon32.c] [win32/resource.c] [windows/dialog.c]
+	Fixes to resource handling.
+
+	* [if1632/kernel.spec] [if1632/kernel32.spec] [if1632/user32.spec]
+	Specs for implemented functions added
+	Some thunks to functions which are same as win16 equivalents.
+
+	* [loader/task.c]
+	GetAppCompatFlags() added.
+
+	* [misc/registry.c]
+	One missing else added, small hack to RegQueryValue16().
+
+	* [win32/file.c]
+	GetFileAttributesA() fixed (was using DOS path as UNIX path).
+
+Tue Jun 18 21:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [loader/ne_resource.c]
+	Fixed FreeResource() return value.
+
+	* [objects/text.c]
+	Fixed a bug in ExtTextOut() that was causing overlapped characters
+	in WinWord.
+
+	* [windows/winpos.c]
+	SWP_FRAMECHANGED for top-level windows now invalidates client
+	area as clock.exe wants.
+
+Tue Jun 18 11:30:22 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [controls/listbox.c]
+	Mini bugfix: 'revival' of missing scrollbar in listboxes.
+
+Mon Jun 17 20:27:41 1996  Robert Pouliot <krynos@clic.net>
+
+	* [resources/sysres_Fr.rc] [resources/TODO]
+	Made changes for Choose_Font dialog.
+
+----------------------------------------------------------------------
 Sun Jun 16 16:51:31 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [memory/heap.c]

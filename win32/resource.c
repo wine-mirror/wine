@@ -30,23 +30,21 @@
 
 int language = 0x0409;
 
-#if 0
-#define PrintId(name) \
+#define PrintIdA(name) \
     if (HIWORD((DWORD)name)) \
         dprintf_resource( stddeb, "'%s'", name); \
     else \
         dprintf_resource( stddeb, "#%04x", LOWORD(name)); 
-#else
+#define PrintIdW(name)
 #define PrintId(name)
-#endif
 
 /**********************************************************************
- *	    GetResDirEntry
+ *	    GetResDirEntryW
  *
  *	Helper function - goes down one level of PE resource tree
  *
  */
-PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
+PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 					 LPCWSTR name,
 					 DWORD root)
 {
@@ -88,9 +86,56 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntry(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 }
 
 /**********************************************************************
- *	    FindResource    (KERNEL.60)
+ *	    GetResDirEntryA
+ *
+ *	Helper function - goes down one level of PE resource tree
+ *
  */
-HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
+PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY resdirptr,
+					 LPCSTR name,
+					 DWORD root)
+{
+	LPWSTR				xname;
+	PIMAGE_RESOURCE_DIRECTORY	ret;
+
+	if (HIWORD((DWORD)name))
+		xname	= STRING32_DupAnsiToUni(name);
+	else
+		xname	= (LPWSTR)name;
+
+	ret=GetResDirEntryW(resdirptr,xname,root);
+	if (HIWORD((DWORD)name))
+		free(xname);
+	return ret;
+}
+
+/**********************************************************************
+ *	    FindResourceA    (KERNEL32.128)
+ */
+HANDLE32 FindResource32A( HINSTANCE hModule, LPCSTR name, LPCSTR type ) {
+	LPWSTR		xname,xtype;
+	HANDLE32	ret;
+
+	if (HIWORD((DWORD)name))
+		xname = STRING32_DupAnsiToUni(name);
+	else
+		xname = (LPWSTR)name;
+	if (HIWORD((DWORD)type))
+		xtype = STRING32_DupAnsiToUni(type);
+	else
+		xtype = (LPWSTR)type;
+	ret=FindResource32W(hModule,xname,xtype);
+	if (HIWORD((DWORD)name))
+		free(xname);
+	if (HIWORD((DWORD)type))
+		free(xtype);
+	return ret;
+}
+
+/**********************************************************************
+ *	    FindResourceW    (KERNEL32.131)
+ */
+HANDLE32 FindResource32W( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 {
 #ifndef WINELIB
     PE_MODULE *pe;
@@ -99,6 +144,10 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
     DWORD root;
 	HANDLE32 result;
 
+    /* Sometimes we get passed hModule = 0x00000000. FIXME: is GetTaskDS()
+     * ok?
+     */
+    if (!hModule) hModule = GetTaskDS();
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "FindResource: module=%08x type=", hModule );
     PrintId( type );
@@ -111,14 +160,14 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 
     resdirptr = (PIMAGE_RESOURCE_DIRECTORY) pe->pe_resource;
     root = (DWORD) resdirptr;
-    if ((resdirptr = GetResDirEntry(resdirptr, type, root)) == NULL)
+    if ((resdirptr = GetResDirEntryW(resdirptr, type, root)) == NULL)
 	return 0;
-    if ((resdirptr = GetResDirEntry(resdirptr, name, root)) == NULL)
+    if ((resdirptr = GetResDirEntryW(resdirptr, name, root)) == NULL)
 	return 0;
-    result = GetResDirEntry(resdirptr, (LPCWSTR)language, root);
+    result = (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)language, root);
 	/* Try LANG_NEUTRAL, too */
     if(!result)
-        return GetResDirEntry(resdirptr, (LPCWSTR)0, root);
+        return (HANDLE32)GetResDirEntryW(resdirptr, (LPCWSTR)0, root);
     return result;
     
 #else
@@ -128,7 +177,7 @@ HANDLE32 FindResource32( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 
 
 /**********************************************************************
- *	    LoadResource    (KERNEL.61)
+ *	    LoadResource    (KERNEL32.370)
  */
 HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc )
 {
@@ -136,6 +185,7 @@ HANDLE32 LoadResource32( HINSTANCE hModule, HANDLE32 hRsrc )
     NE_MODULE *pModule;
     PE_MODULE *pe;
 
+    if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
     hModule = GetExePtr( hModule );  /* In case we were passed an hInstance */
     dprintf_resource(stddeb, "LoadResource: module=%04x res=%04x\n",
                      hModule, hRsrc );
@@ -275,7 +325,7 @@ WIN32_LoadStringW(HINSTANCE instance, DWORD resource_id, LPWSTR buffer, int bufl
     dprintf_resource(stddeb, "LoadString: instance = %04x, id = %04x, buffer = %08x, "
 	   "length = %d\n", instance, (int)resource_id, (int) buffer, buflen);
 
-    hrsrc = FindResource32( instance, (LPCWSTR)((resource_id>>4)+1), 
+    hrsrc = FindResource32W( instance, (LPCWSTR)((resource_id>>4)+1), 
 		(LPCWSTR)RT_STRING );
     if (!hrsrc) return 0;
     hmem = LoadResource32( instance, hrsrc );
@@ -351,7 +401,7 @@ HBITMAP WIN32_LoadBitmapW( HANDLE instance, LPCWSTR name )
         return OBM_LoadBitmap( LOWORD((int)name) );
     }
 
-    if (!(hRsrc = FindResource32( instance, name, 
+    if (!(hRsrc = FindResource32W( instance, name, 
 		(LPWSTR)RT_BITMAP ))) return 0;
     if (!(handle = LoadResource32( instance, hRsrc ))) return 0;
 
@@ -387,7 +437,7 @@ HBITMAP WIN32_LoadBitmapA( HANDLE instance, LPCSTR name )
 HMENU WIN32_LoadMenuW(HANDLE instance, LPCWSTR name)
 {
 	HANDLE32 hrsrc;
-	hrsrc=FindResource32(instance,name,(LPWSTR)RT_MENU);
+	hrsrc=FindResource32W(instance,name,(LPWSTR)RT_MENU);
 	if(!hrsrc)return 0;
         return LoadMenuIndirect32W( LoadResource32(instance, hrsrc) );
 }

@@ -138,7 +138,7 @@ base	1
 0131 stub DestroyCursor
 0132 stub DestroyIcon
 0133 stub DestroyMenu
-0134 stub DestroyWindow
+0134 stdcall DestroyWindow(long) DestroyWindow
 0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParam32A
 0136 stub DialogBoxIndirectParamAorW
 0137 stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParam32W
@@ -209,7 +209,7 @@ base	1
 0202 stdcall FrameRect(long ptr long) FrameRect32
 0203 stub FreeDDElParam
 0204 stdcall GetActiveWindow() GetActiveWindow
-0205 stub GetAppCompatFlags
+0205 stdcall GetAppCompatFlags(long) GetAppCompatFlags
 0206 stub GetAsyncKeyState
 0207 stub GetCapture
 0208 stub GetCaretBlinkTime
@@ -523,7 +523,7 @@ base	1
 0516 stdcall SetWindowLongA(long long long) SetWindowLong32A
 0517 stdcall SetWindowLongW(long long long) SetWindowLong32W
 0518 stdcall SetWindowPlacement(long ptr) SetWindowPlacement32
-0519 stub SetWindowPos
+0519 stdcall SetWindowPos(long long long long long long long) SetWindowPos
 0520 stub SetWindowStationUser
 0521 stdcall SetWindowTextA(long ptr) SetWindowText32A
 0522 stdcall SetWindowTextW(long ptr) SetWindowText32W
