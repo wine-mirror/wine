@@ -1777,7 +1777,7 @@ LRESULT WINAPI ComboWndProc( HWND hwnd, UINT message,
 		    retvalue = SendMessageA( lphc->hWndEdit, message, wParam, lParam );
 		else
 		    retvalue = SendMessageA( lphc->hWndLBox, message, wParam, lParam );
-
+		goto END;
 	case WM_LBUTTONDOWN: 
 		if( !(lphc->wState & CBF_FOCUSED) ) SetFocus( lphc->self->hwndSelf );
 		if( lphc->wState & CBF_FOCUSED ) COMBO_LButtonDown( lphc, lParam );
