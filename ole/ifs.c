@@ -25,12 +25,16 @@
  */
 
 /******************************************************************************
- *		IUnknown_AddRef	[???]
+ *		IUnknown_AddRef	[VTABLE:IUNKNOWN.1]
  */
 static ULONG WINAPI IUnknown_AddRef(LPUNKNOWN this) { 
 	TRACE(relay,"(%p)->AddRef()\n",this);
 	return ++(this->ref);
 }
+
+/******************************************************************************
+ * IUnknown_Release [VTABLE:IUNKNOWN.2]
+ */
 static ULONG WINAPI IUnknown_Release(LPUNKNOWN this) {
 	TRACE(relay,"(%p)->Release()\n",this);
 	if (!--(this->ref)) {
@@ -40,6 +44,9 @@ static ULONG WINAPI IUnknown_Release(LPUNKNOWN this) {
 	return this->ref;
 }
 
+/******************************************************************************
+ * IUnknown_QueryInterface [VTABLE:IUNKNOWN.0]
+ */
 static HRESULT WINAPI IUnknown_QueryInterface(LPUNKNOWN this,REFIID refiid,LPVOID *obj) {
 	char	xrefiid[50];
 
@@ -59,7 +66,9 @@ static IUnknown_VTable uvt = {
 	IUnknown_Release
 };
 
-
+/******************************************************************************
+ * IUnknown_Constructor [INTERNAL]
+ */
 LPUNKNOWN
 IUnknown_Constructor() {
 	LPUNKNOWN	unk;
@@ -107,29 +116,49 @@ HRESULT WINAPI IMalloc16_QueryInterface(LPMALLOC16 this,REFIID refiid,LPVOID *ob
 	return OLE_E_ENUM_NOMORE; 
 }
 
+/******************************************************************************
+ * IMalloc16_Alloc [COMPOBJ.503]
+ */
 LPVOID WINAPI IMalloc16_Alloc(LPMALLOC16 this,DWORD cb) {
 	TRACE(relay,"(%p)->Alloc(%ld)\n",this,cb);
 	return (LPVOID)PTR_SEG_OFF_TO_SEGPTR(this->heap,LOCAL_Alloc(this->heap,0,cb));
 }
 
+/******************************************************************************
+ * IMalloc16_Realloc [COMPOBJ.504]
+ */
 LPVOID WINAPI IMalloc16_Realloc(LPMALLOC16 this,LPVOID pv,DWORD cb) {
 	TRACE(relay,"(%p)->Realloc(%p,%ld)\n",this,pv,cb);
 	return (LPVOID)PTR_SEG_OFF_TO_SEGPTR(this->heap,LOCAL_ReAlloc(this->heap,0,LOWORD(pv),cb));
 }
+
+/******************************************************************************
+ * IMalloc16_Free [COMPOBJ.505]
+ */
 VOID WINAPI IMalloc16_Free(LPMALLOC16 this,LPVOID pv) {
 	TRACE(relay,"(%p)->Free(%p)\n",this,pv);
 	LOCAL_Free(this->heap,LOWORD(pv));
 }
 
+/******************************************************************************
+ * IMalloc16_GetSize [COMPOBJ.506]
+ */
 DWORD WINAPI IMalloc16_GetSize(LPMALLOC16 this,LPVOID pv) {
 	TRACE(relay,"(%p)->GetSize(%p)\n",this,pv);
 	return LOCAL_Size(this->heap,LOWORD(pv));
 }
 
+/******************************************************************************
+ * IMalloc16_DidAlloc [COMPOBJ.507]
+ */
 INT16 WINAPI IMalloc16_DidAlloc(LPMALLOC16 this,LPVOID pv) {
 	TRACE(relay,"(%p)->DidAlloc(%p)\n",this,pv);
 	return (INT16)-1;
 }
+
+/******************************************************************************
+ * IMalloc16_HeapMinimize [COMPOBJ.508]
+ */
 LPVOID WINAPI IMalloc16_HeapMinimize(LPMALLOC16 this) {
 	TRACE(relay,"(%p)->HeapMinimize()\n",this);
 	return NULL;
@@ -151,6 +180,9 @@ static IMalloc16_VTable mvt16 = {
 #endif
 static IMalloc16_VTable *msegvt16 = NULL;
 
+/******************************************************************************
+ * IMalloc16_Constructor [VTABLE]
+ */
 LPMALLOC16
 IMalloc16_Constructor() {
 	LPMALLOC16	this;
@@ -186,7 +218,7 @@ IMalloc16_Constructor() {
  */
 
 /******************************************************************************
- *		IMalloc32_AddRef	[???]
+ *		IMalloc32_AddRef	[VTABLE]
  */
 static ULONG WINAPI IMalloc32_AddRef(LPMALLOC32 this) {
 	TRACE(relay,"(%p)->AddRef()\n",this);
@@ -194,7 +226,7 @@ static ULONG WINAPI IMalloc32_AddRef(LPMALLOC32 this) {
 }
 
 /******************************************************************************
- *		IMalloc32_Release	[???]
+ *		IMalloc32_Release	[VTABLE]
  */
 static ULONG WINAPI IMalloc32_Release(LPMALLOC32 this) {
 	TRACE(relay,"(%p)->Release()\n",this);
@@ -202,7 +234,7 @@ static ULONG WINAPI IMalloc32_Release(LPMALLOC32 this) {
 }
 
 /******************************************************************************
- *		IMalloc32_QueryInterface	[???]
+ *		IMalloc32_QueryInterface	[VTABLE]
  */
 static HRESULT WINAPI IMalloc32_QueryInterface(LPMALLOC32 this,REFIID refiid,LPVOID *obj) {
 	char	xrefiid[50];
@@ -218,29 +250,49 @@ static HRESULT WINAPI IMalloc32_QueryInterface(LPMALLOC32 this,REFIID refiid,LPV
 	return OLE_E_ENUM_NOMORE; 
 }
 
+/******************************************************************************
+ * IMalloc32_Alloc [VTABLE]
+ */
 static LPVOID WINAPI IMalloc32_Alloc(LPMALLOC32 this,DWORD cb) {
 	TRACE(relay,"(%p)->Alloc(%ld)\n",this,cb);
 	return HeapAlloc(GetProcessHeap(),0,cb);
 }
 
+/******************************************************************************
+ * IMalloc32_Realloc [VTABLE]
+ */
 static LPVOID WINAPI IMalloc32_Realloc(LPMALLOC32 this,LPVOID pv,DWORD cb) {
 	TRACE(relay,"(%p)->Realloc(%p,%ld)\n",this,pv,cb);
 	return HeapReAlloc(GetProcessHeap(),0,pv,cb);
 }
+
+/******************************************************************************
+ * IMalloc32_Free [VTABLE]
+ */
 static VOID WINAPI IMalloc32_Free(LPMALLOC32 this,LPVOID pv) {
 	TRACE(relay,"(%p)->Free(%p)\n",this,pv);
 	HeapFree(GetProcessHeap(),0,pv);
 }
 
+/******************************************************************************
+ * IMalloc32_GetSize [VTABLE]
+ */
 static DWORD WINAPI IMalloc32_GetSize(LPMALLOC32 this,LPVOID pv) {
 	TRACE(relay,"(%p)->GetSize(%p)\n",this,pv);
 	return HeapSize(GetProcessHeap(),0,pv);
 }
 
+/******************************************************************************
+ * IMalloc32_DidAlloc [VTABLE]
+ */
 static INT32 WINAPI IMalloc32_DidAlloc(LPMALLOC32 this,LPVOID pv) {
 	TRACE(relay,"(%p)->DidAlloc(%p)\n",this,pv);
 	return -1;
 }
+
+/******************************************************************************
+ * IMalloc32_HeapMinimize [VTABLE]
+ */
 static LPVOID WINAPI IMalloc32_HeapMinimize(LPMALLOC32 this) {
 	TRACE(relay,"(%p)->HeapMinimize()\n",this);
 	return NULL;
@@ -258,6 +310,9 @@ static IMalloc32_VTable VT_IMalloc32 = {
 	IMalloc32_HeapMinimize,
 };
 
+/******************************************************************************
+ * IMalloc32_Constructor [VTABLE]
+ */
 LPMALLOC32
 IMalloc32_Constructor() {
 	LPMALLOC32	this;

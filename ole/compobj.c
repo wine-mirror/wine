@@ -238,6 +238,10 @@ OLESTATUS WINAPI CLSIDFromString32(
 /******************************************************************************
  *		WINE_StringFromCLSID	[???]
  * Converts a GUID into the respective string representation.
+ *
+ * NOTES
+ *    Why is this WINAPI?
+ *
  * RETURNS
  *	the string representation and OLESTATUS
  */

@@ -40,7 +40,7 @@ static IStream16_VTable strvt16;
 static IStream16_VTable *segstrvt16 = NULL;
 static IStream32_VTable strvt32;
 
-ULONG WINAPI IStorage16_AddRef(LPSTORAGE16 this);
+/*ULONG WINAPI IStorage16_AddRef(LPSTORAGE16 this);*/
 static void _create_istorage16(LPSTORAGE16 *stg);
 static void _create_istream16(LPSTREAM16 *str);
 
@@ -67,6 +67,9 @@ STORAGE_get_big_block(HFILE32 hf,int n,BYTE *block) {
 	return TRUE;
 }
 
+/******************************************************************************
+ * STORAGE_put_big_block [INTERNAL]
+ */
 static BOOL32
 STORAGE_put_big_block(HFILE32 hf,int n,BYTE *block) {
 	assert(n>=-1);
@@ -82,6 +85,9 @@ STORAGE_put_big_block(HFILE32 hf,int n,BYTE *block) {
 	return TRUE;
 }
 
+/******************************************************************************
+ * STORAGE_get_next_big_blocknr [INTERNAL]
+ */
 static int
 STORAGE_get_next_big_blocknr(HFILE32 hf,int blocknr) {
 	INT32	bbs[BIGSIZE/sizeof(INT32)];
@@ -98,6 +104,9 @@ STORAGE_get_next_big_blocknr(HFILE32 hf,int blocknr) {
 	return bbs[blocknr&0x7f];
 }
 
+/******************************************************************************
+ * STORAGE_get_nth_next_big_blocknr [INTERNAL]
+ */
 static int
 STORAGE_get_nth_next_big_blocknr(HFILE32 hf,int blocknr,int nr) {
 	INT32	bbs[BIGSIZE/sizeof(INT32)];
@@ -148,6 +157,9 @@ STORAGE_get_root_pps_entry(HFILE32 hf,struct storage_pps_entry *pstde) {
 	return FALSE;
 }
 
+/******************************************************************************
+ * STORAGE_get_small_block [INTERNAL]
+ */
 static BOOL32
 STORAGE_get_small_block(HFILE32 hf,int blocknr,BYTE *sblock) {
 	BYTE				block[BIGSIZE];
@@ -164,6 +176,9 @@ STORAGE_get_small_block(HFILE32 hf,int blocknr,BYTE *sblock) {
 	return TRUE;
 }
 
+/******************************************************************************
+ * STORAGE_put_small_block [INTERNAL]
+ */
 static BOOL32
 STORAGE_put_small_block(HFILE32 hf,int blocknr,BYTE *sblock) {
 	BYTE				block[BIGSIZE];
@@ -182,7 +197,9 @@ STORAGE_put_small_block(HFILE32 hf,int blocknr,BYTE *sblock) {
 	return TRUE;
 }
 
-
+/******************************************************************************
+ * STORAGE_get_next_small_blocknr [INTERNAL]
+ */
 static int
 STORAGE_get_next_small_blocknr(HFILE32 hf,int blocknr) {
 	BYTE				block[BIGSIZE];
@@ -199,6 +216,9 @@ STORAGE_get_next_small_blocknr(HFILE32 hf,int blocknr) {
 	return sbd[blocknr & (128-1)];
 }
 
+/******************************************************************************
+ * STORAGE_get_nth_next_small_blocknr [INTERNAL]
+ */
 static int
 STORAGE_get_nth_next_small_blocknr(HFILE32 hf,int blocknr,int nr) {
 	int	lastblocknr;
@@ -225,6 +245,9 @@ STORAGE_get_nth_next_small_blocknr(HFILE32 hf,int blocknr,int nr) {
 	return blocknr;
 }
 
+/******************************************************************************
+ * STORAGE_get_pps_entry [INTERNAL]
+ */
 static int
 STORAGE_get_pps_entry(HFILE32 hf,int n,struct storage_pps_entry *pstde) {
 	int	blocknr;
@@ -324,6 +347,9 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 	DUMP("size: %ld\n",stde->pps_size);
 }
 
+/******************************************************************************
+ * STORAGE_init_storage [INTERNAL]
+ */
 static BOOL32 
 STORAGE_init_storage(HFILE32 hf) {
 	BYTE	block[BIGSIZE];
@@ -393,6 +419,9 @@ STORAGE_set_big_chain(HFILE32 hf,int blocknr,INT32 type) {
 	return TRUE;
 }
 
+/******************************************************************************
+ * STORAGE_set_small_chain [INTERNAL]
+ */
 static BOOL32
 STORAGE_set_small_chain(HFILE32 hf,int blocknr,INT32 type) {
 	BYTE	block[BIGSIZE];
@@ -621,10 +650,16 @@ HRESULT WINAPI IStream16_QueryInterface(
 	
 }
 
+/******************************************************************************
+ * IStream16_AddRef [STORAGE.519]
+ */
 ULONG WINAPI IStream16_AddRef(LPSTREAM16 this) {
 	return ++(this->ref);
 }
 
+/******************************************************************************
+ * IStream16_Release [STORAGE.520]
+ */
 ULONG WINAPI IStream16_Release(LPSTREAM16 this) {
 	FlushFileBuffers(this->hf);
 	this->ref--;
@@ -1061,7 +1096,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 }
 
 /*****************************************************************************
- *		IStream32_QueryInterface	[???]
+ *		IStream32_QueryInterface	[VTABLE]
  */
 HRESULT WINAPI IStream32_QueryInterface(
 	LPSTREAM32 this,REFIID refiid,LPVOID *obj
@@ -1078,10 +1113,16 @@ HRESULT WINAPI IStream32_QueryInterface(
 	
 }
 
+/******************************************************************************
+ * IStream32_AddRef [VTABLE]
+ */
 ULONG WINAPI IStream32_AddRef(LPSTREAM32 this) {
 	return ++(this->ref);
 }
 
+/******************************************************************************
+ * IStream32_Release [VTABLE]
+ */
 ULONG WINAPI IStream32_Release(LPSTREAM32 this) {
 	FlushFileBuffers(this->hf);
 	this->ref--;
@@ -1126,10 +1167,16 @@ HRESULT WINAPI IStorage16_QueryInterface(
 	return OLE_E_ENUM_NOMORE;
 }
 
+/******************************************************************************
+ * IStorage16_AddRef [STORAGE.501]
+ */
 ULONG WINAPI IStorage16_AddRef(LPSTORAGE16 this) {
 	return ++(this->ref);
 }
 
+/******************************************************************************
+ * IStorage16_Release [STORAGE.502]
+ */
 ULONG WINAPI IStorage16_Release(LPSTORAGE16 this) {
 	this->ref--;
 	if (this->ref)
@@ -1138,6 +1185,9 @@ ULONG WINAPI IStorage16_Release(LPSTORAGE16 this) {
 	return 0;
 }
 
+/******************************************************************************
+ * IStorage16_Stat [STORAGE.517]
+ */
 HRESULT WINAPI IStorage16_Stat(
         LPSTORAGE16 this,STATSTG *pstatstg, DWORD grfStatFlag
 ) {
@@ -1170,6 +1220,9 @@ HRESULT WINAPI IStorage16_Commit(
 	return OLE_OK;
 }
 
+/******************************************************************************
+ * IStorage16_CopyTo [STORAGE.507]
+ */
 HRESULT WINAPI IStorage16_CopyTo(LPSTORAGE16 this,DWORD ciidExclude,const IID *rgiidExclude,SNB16 SNB16Exclude,IStorage16 *pstgDest) {
 	char	xguid[50];
 
@@ -1184,7 +1237,9 @@ HRESULT WINAPI IStorage16_CopyTo(LPSTORAGE16 this,DWORD ciidExclude,const IID *r
 }
 
 
-
+/******************************************************************************
+ * IStorage16_CreateStorage [STORAGE.505]
+ */
 HRESULT WINAPI IStorage16_CreateStorage(
 	LPSTORAGE16 this,LPCOLESTR16 pwcsName,DWORD grfMode,DWORD dwStgFormat,DWORD reserved2, IStorage16 **ppstg
 ) {
@@ -1325,6 +1380,9 @@ HRESULT WINAPI IStorage16_OpenStorage(
 	return OLE_OK;
 }
 
+/******************************************************************************
+ * IStorage16_OpenStream [STORAGE.504]
+ */
 HRESULT WINAPI IStorage16_OpenStream(
 	LPSTORAGE16 this,LPCOLESTR16 pwcsName, void *reserved1, DWORD grfMode, DWORD reserved2, IStream16 **ppstm
 ) {
@@ -1357,6 +1415,9 @@ HRESULT WINAPI IStorage16_OpenStream(
 	return OLE_OK;
 }
 
+/******************************************************************************
+ * _create_istorage16 [INTERNAL]
+ */
 static void _create_istorage16(LPSTORAGE16 *stg) {
 	LPSTORAGE16	lpst;
 
@@ -1420,7 +1481,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 }
 
 /******************************************************************************
- *		IStorage32_QueryInterface	[???]
+ *		IStorage32_QueryInterface	[VTABLE]
  */
 HRESULT WINAPI IStorage32_QueryInterface(
 	LPSTORAGE32 this,REFIID refiid,LPVOID *obj
@@ -1437,10 +1498,16 @@ HRESULT WINAPI IStorage32_QueryInterface(
 	return OLE_E_ENUM_NOMORE;
 }
 
+/******************************************************************************
+ * IStorage32_AddRef [VTABLE]
+ */
 ULONG WINAPI IStorage32_AddRef(LPSTORAGE32 this) {
 	return ++(this->ref);
 }
 
+/******************************************************************************
+ * IStorage32_Release [VTABLE]
+ */
 ULONG WINAPI IStorage32_Release(LPSTORAGE32 this) {
 	this->ref--;
 	if (this->ref)
@@ -1449,6 +1516,9 @@ ULONG WINAPI IStorage32_Release(LPSTORAGE32 this) {
 	return 0;
 }
 
+/******************************************************************************
+ * IStorage32_CreateStream [VTABLE]
+ */
 HRESULT WINAPI IStorage32_CreateStream(
 	LPSTORAGE32 this,LPCOLESTR32 pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2, IStream32 **ppstm
 ) {
@@ -1462,6 +1532,9 @@ HRESULT WINAPI IStorage32_CreateStream(
 	return OLE_OK;
 }
 
+/******************************************************************************
+ * IStorage32_OpenStream [VTABLE]
+ */
 HRESULT WINAPI IStorage32_OpenStream(
 	LPSTORAGE32 this,LPCOLESTR32 pwcsName, void *reserved1, DWORD grfMode, DWORD reserved2, IStream32 **ppstm
 ) {
@@ -1555,6 +1628,9 @@ OLESTATUS WINAPI StgCreateDocFile32(
 	return OLE_OK;
 }
 
+/******************************************************************************
+ * StgIsStorageFile16 [STORAGE.5]
+ */
 OLESTATUS WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 	HFILE32		hf;
 	OFSTRUCT	ofs;
@@ -1589,6 +1665,9 @@ OLESTATUS WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 	return STG_E_INVALIDHEADER;
 }
 
+/******************************************************************************
+ * StgIsStorageFile32 [OLE32.146]
+ */
 OLESTATUS WINAPI 
 StgIsStorageFile32(LPCOLESTR32 fn) 
 {
@@ -1600,7 +1679,9 @@ StgIsStorageFile32(LPCOLESTR32 fn)
 }
 
 
-
+/******************************************************************************
+ * StgOpenStorage16 [STORAGE.3]
+ */
 OLESTATUS WINAPI StgOpenStorage16(
 	const OLECHAR16 * pwcsName,IStorage16 *pstgPriority,DWORD grfMode,
 	SNB16 snbExclude,DWORD reserved, IStorage16 **ppstgOpen

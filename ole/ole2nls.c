@@ -16,8 +16,7 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "debug.h"
-
-int MAIN_GetLanguageID(char*lang, char*country, char*charset, char*dialect);
+#include "main.h"
 
 /* Locale name to id map. used by EnumSystemLocales, GetLocalInfoA 
  * MUST contain all #defines from winnls.h
@@ -413,6 +412,9 @@ INT16 WINAPI GetLocaleInfo16(LCID lcid,LCTYPE LCType,LPSTR buf,INT16 len)
 	return GetLocaleInfo32A(lcid,LCType,buf,len);
 }
 
+/******************************************************************************
+ * GetLocaleInfo32A [KERNEL32.342]
+ */
 INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 {
 	char	*retString;
@@ -1777,6 +1779,9 @@ static const unsigned char LCM_Diacritic_LUT[] = {
  19,  /* ÿ - 255 */
 } ;
 
+/******************************************************************************
+ * OLE2NLS_isPunctuation [INTERNAL]
+ */
 static int OLE2NLS_isPunctuation(unsigned char c) 
 {
   /* "punctuation character" in this context is a character which is 
@@ -2416,8 +2421,8 @@ INT32 WINAPI OLE_GetFormatA(LCID locale,
    return outpos;
 }
 
-/**************************************************************
- * OLE_GetFormatW  [internal]  
+/******************************************************************************
+ * OLE_GetFormatW [INTERNAL]
  */
 INT32 WINAPI OLE_GetFormatW(LCID locale, DWORD flags, DWORD tflags,
 			    LPSYSTEMTIME xtime,

@@ -26,11 +26,17 @@ static BSTR16 BSTR_AllocBytes(int n)
     return (BSTR16)SEGPTR_GET(ptr);
 }
 
+/******************************************************************************
+ * BSTR_Free [INTERNAL]
+ */
 static void BSTR_Free(BSTR16 in)
 {
     SEGPTR_FREE( PTR_SEG_TO_LIN(in) );
 }
 
+/******************************************************************************
+ * BSTR_GetAddr [INTERNAL]
+ */
 static void* BSTR_GetAddr(BSTR16 in)
 {
     return in ? PTR_SEG_TO_LIN(in) : 0;
@@ -123,6 +129,9 @@ int WINAPI SysStringLen16(BSTR16 str)
 	return strlen(BSTR_GetAddr(str));
 }
 
+/******************************************************************************
+ * CreateDispTypeInfo [OLE2DISP.31]
+ */
 OLESTATUS WINAPI CreateDispTypeInfo(
 	INTERFACEDATA *pidata,
 	LCID lcid,
@@ -132,11 +141,14 @@ OLESTATUS WINAPI CreateDispTypeInfo(
 	return 0;
 }
 
+/******************************************************************************
+ * RegisterActiveObject [OLE2DISP.35]
+ */
 OLESTATUS WINAPI RegisterActiveObject(
 	IUnknown * punk,REFCLSID rclsid,DWORD dwFlags, DWORD * pdwRegister
 ) {
 	char	buf[80];
 	WINE_StringFromCLSID(rclsid,buf);
-	FIXME(ole,"RegisterActiveObject(%p,%s,0x%08lx,%p),stub\n",punk,buf,dwFlags,pdwRegister);
+	FIXME(ole,"(%p,%s,0x%08lx,%p):stub\n",punk,buf,dwFlags,pdwRegister);
 	return 0;
 }
