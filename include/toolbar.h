@@ -17,8 +17,8 @@ typedef struct tagTBUTTON_INFO
     DWORD dwData;
     INT32 iString;
 
+    INT32 nRow;
     RECT32 rect;
-
 } TBUTTON_INFO; 
 
 
@@ -32,7 +32,7 @@ typedef struct tagTOOLBAR_INFO
     INT32      nBitmapHeight;
     INT32      nBitmapWidth;
     INT32      nIndent;
-    INT32      nMaxRows;        /* maximum number of button rows */
+    INT32      nRows;           /* number of button rows */
     INT32      nMaxTextRows;    /* maximum number of text rows */
     INT32      cxMin;           /* minimum button width */
     INT32      cxMax;           /* maximum button width */

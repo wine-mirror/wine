@@ -4,10 +4,11 @@
  * Copyright 1998 Eric Kohl
  *
  * TODO:
- *   - Button wrapping.
+ *   - A little bug in TOOLBAR_DrawMasked()
+ *   - Button wrapping (under construction).
  *   - Messages.
  *   - Notifications.
- *   - Fix TB_GETROWS and TB_SETROWS.
+ *   - Fix TB_SETROWS.
  *   - Tooltip support (almost complete).
  *   - Unicode suppport.
  *   - Internal COMMCTL32 bitmaps.
@@ -32,6 +33,7 @@
 #include "win.h"
 #include "debug.h"
 
+// #define __NEW_WRAP_CODE__
 
 #define SEPARATOR_WIDTH    8
 #define SEPARATOR_HEIGHT   5
@@ -126,23 +128,40 @@ TOOLBAR_DrawMasked (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 	      internals directly */
 
     HDC32 hdcImageList = CreateCompatibleDC32 (0);
+    HDC32 hdcMask = CreateCompatibleDC32 (0);
     HIMAGELIST himl = infoPtr->himlDef;
+    HBITMAP32 hbmMask;
 
-    /* draw the mask */
+    /* create new bitmap */
+    hbmMask = CreateBitmap32 (himl->cx, himl->cy, 1, 1, NULL);
+    SelectObject32 (hdcMask, hbmMask);
+
+    /* copy the mask bitmap */
     SelectObject32 (hdcImageList, himl->hbmMask);
     SetBkColor32 (hdcImageList, RGB(255, 255, 255));
     SetTextColor32 (hdcImageList, RGB(0, 0, 0));
+    BitBlt32 (hdcMask, 0, 0, himl->cx, himl->cy,
+	      hdcImageList, himl->cx * btnPtr->iBitmap, 0, SRCCOPY);
 
+#if 0
+    /* add white mask from image */
+    SelectObject32 (hdcImageList, himl->hbmImage);
+    SetBkColor32 (hdcImageList, RGB(0, 0, 0));
+    BitBlt32 (hdcMask, 0, 0, himl->cx, himl->cy,
+	      hdcImageList, himl->cx * btnPtr->iBitmap, 0, MERGEPAINT);
+#endif
+
+    /* draw the new mask */
     SelectObject32 (hdc, GetSysColorBrush32 (COLOR_3DHILIGHT));
     BitBlt32 (hdc, x+1, y+1, himl->cx, himl->cy,
-	      hdcImageList, himl->cx * btnPtr->iBitmap, 0,
-		  0xB8074A);
+	      hdcMask, 0, 0, 0xB8074A);
 
     SelectObject32 (hdc, GetSysColorBrush32 (COLOR_3DSHADOW));
     BitBlt32 (hdc, x, y, himl->cx, himl->cy,
-	      hdcImageList, himl->cx * btnPtr->iBitmap, 0,
-		  0xB8074A);
+	      hdcMask, 0, 0, 0xB8074A);
 
+    DeleteObject32 (hbmMask);
+    DeleteDC32 (hdcMask);
     DeleteDC32 (hdcImageList);
 }
 
@@ -275,11 +294,15 @@ static void
 TOOLBAR_CalcToolbar (WND *wndPtr)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
-    TBUTTON_INFO *btnPtr;
+    TBUTTON_INFO *btnPtr, *grpPtr;
     INT32 i, j, nRows;
     INT32 x, y, cx, cy;
-    BOOL32 bVertical;
+    BOOL32 bWrap;
     SIZE32  sizeString;
+/* --- new --- */
+    INT32  nGrpCount = 0;
+    INT32  grpX;
+/* --- end new --- */
 
     TOOLBAR_CalcStrings (wndPtr, &sizeString);
 
@@ -297,7 +320,10 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
     y  = TOP_BORDER;
     cx = infoPtr->nButtonWidth;
     cy = infoPtr->nButtonHeight;
-    nRows = 1;
+    nRows = 0;
+
+    /* calculate the size of each button according to it's style */
+//     TOOLBAR_CalcButtons (wndPtr);
 
     infoPtr->rcBound.top = y;
     infoPtr->rcBound.left = x;
@@ -306,11 +332,86 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
 
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
-	bVertical = FALSE;
+	bWrap = FALSE;
 
-	if (btnPtr->fsState & TBSTATE_HIDDEN)
+	if (btnPtr->fsState & TBSTATE_HIDDEN) {
+	    SetRectEmpty32 (&btnPtr->rect);
 	    continue;
+	}
 
+#ifdef __NEW_WRAP_CODE__
+//#if 0
+	if (btnPtr->fsStyle & TBSTYLE_SEP) {
+	    /* UNDOCUMENTED: If a separator has a non zero bitmap index, */
+	    /* it is the actual width of the separator. This is used for */
+	    /* custom controls in toolbars.                              */
+	    if ((wndPtr->dwStyle & TBSTYLE_WRAPABLE) &&
+		(btnPtr->fsState & TBSTATE_WRAP)) {
+		x = 0;
+		y += cy;
+		cx = infoPtr->nWidth;
+		cy = ((btnPtr->iBitmap > 0) ?
+		     btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 / 3;
+//		nRows++;
+//		bWrap = TRUE;
+	    }
+	    else
+		cx = (btnPtr->iBitmap > 0) ?
+		     btnPtr->iBitmap : SEPARATOR_WIDTH;
+	}
+	else {
+	    /* this must be a button */
+	    cx = infoPtr->nButtonWidth;
+	}
+//#endif
+
+/* --- begin test --- */
+	if ((i >= nGrpCount) && (btnPtr->fsStyle & TBSTYLE_GROUP)) {
+	    for (j = i, grpX = x, nGrpCount = 0; j < infoPtr->nNumButtons; j++) {
+		grpPtr = &infoPtr->buttons[j];
+		if (grpPtr->fsState & TBSTATE_HIDDEN)
+		    continue;
+
+		grpX += cx;
+
+		if ((grpPtr->fsStyle & TBSTYLE_SEP) ||
+		    !(grpPtr->fsStyle & TBSTYLE_GROUP) ||
+		    (grpX > infoPtr->nWidth)) {
+		    nGrpCount = j;
+		    break;
+		}
+		else if (grpX + x > infoPtr->nWidth) {
+		    bWrap = TRUE;
+		    nGrpCount = j;
+		    break;
+		}
+	    }
+	}
+
+	bWrap = ((bWrap || (x + cx > infoPtr->nWidth)) &&
+		 (wndPtr->dwStyle & TBSTYLE_WRAPABLE));
+	if (bWrap) {
+	    nRows++;
+	    y += cy;
+	    x  = infoPtr->nIndent;
+	    bWrap = FALSE;
+	}
+
+	SetRect32 (&btnPtr->rect, x, y, x + cx, y + cy);
+
+	btnPtr->nRow = nRows;
+	x += cx;
+
+	if (btnPtr->fsState & TBSTATE_WRAP) {
+	    nRows++;
+	    y += (cy + SEPARATOR_HEIGHT);
+	    x  = infoPtr->nIndent;
+	}
+
+	infoPtr->nRows = nRows + 1;
+
+/* --- end test --- */
+#else
 	if (btnPtr->fsStyle & TBSTYLE_SEP) {
 	    /* UNDOCUMENTED: If a separator has a non zero bitmap index, */
 	    /* it is the actual width of the separator. This is used for */
@@ -323,7 +424,7 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
 		cy = ((btnPtr->iBitmap > 0) ?
 		     btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 / 3;
 		nRows++;
-		bVertical = TRUE;
+		bWrap = TRUE;
 	    }
 	    else
 		cx = (btnPtr->iBitmap > 0) ?
@@ -358,7 +459,7 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
 			    0, (LPARAM)&ti);
 	}
 
-	if (bVertical) {
+	if (bWrap) {
 	    x = 0;
 	    y += cy;
 	    if (i < infoPtr->nNumButtons)
@@ -366,6 +467,7 @@ TOOLBAR_CalcToolbar (WND *wndPtr)
 	}
 	else
 	    x += cx;
+#endif
     }
 
     infoPtr->nHeight = y + cy + BOTTOM_BORDER;
@@ -621,7 +723,7 @@ TOOLBAR_AddString32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
     INT32 nIndex;
 
-    if (wParam) {
+    if ((wParam) && (HIWORD(lParam) == 0)) {
 	char szString[256];
 	INT32 len;
 	TRACE (toolbar, "adding string from resource!\n");
@@ -704,7 +806,7 @@ TOOLBAR_AutoSize (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     GetClientRect32(parent, &parent_rect);
 
     if (wndPtr->dwStyle & CCS_NORESIZE) {
-	uPosFlags |= SWP_NOSIZE;
+	uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
 	cx = 0;
 	cy = 0;
     }
@@ -1187,7 +1289,7 @@ TOOLBAR_GetRows (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(wndPtr);
 
     if (wndPtr->dwStyle & TBSTYLE_WRAPABLE)
-	return infoPtr->nMaxRows;
+	return infoPtr->nRows;
     else
 	return 1;
 }
@@ -1929,7 +2031,7 @@ TOOLBAR_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->nBitmapWidth = 16;
 
     infoPtr->nHeight = infoPtr->nButtonHeight + TOP_BORDER + BOTTOM_BORDER;
-    infoPtr->nMaxRows = 1;
+    infoPtr->nRows = 1;
     infoPtr->nMaxTextRows = 1;
     infoPtr->cxMin = -1;
     infoPtr->cxMax = -1;
@@ -2368,7 +2470,7 @@ TOOLBAR_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	GetClientRect32(parent, &parent_rect);
 
 	if (wndPtr->dwStyle & CCS_NORESIZE) {
-	    uPosFlags |= SWP_NOSIZE;
+	    uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
 
 	    /* FIXME */
 //	    infoPtr->nWidth = parent_rect.right - parent_rect.left;
