@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -111,10 +112,10 @@ RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Prots
 {
   RpcBinding* NewBinding;
   if (Binding)
-    TRACE("  (*Binding == ^%p, server == %s, Protseq == \"%s\")\n", *Binding, server ? "Yes" : "No", debugstr_w(Protseq));
+    TRACE("(*Binding == ^%p, server == %s, Protseq == \"%s\")\n", *Binding, server ? "Yes" : "No", debugstr_w(Protseq));
   else {
     ERR("!RpcBinding?\n"); 
-    *((char *)0) = 0; /* we will crash below anyhow... */
+    assert(FALSE); /* we will crash below anyhow... */
   }
 
   NewBinding = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcBinding));
@@ -131,7 +132,7 @@ RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Prots
 RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPSTR Endpoint,  LPSTR NetworkOptions)
 {
   
-  TRACE("  (RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding, NetworkAddr, Endpoint, NetworkOptions);
+  TRACE("(RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding, NetworkAddr, Endpoint, NetworkOptions);
 
   RPCRT4_strfree(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
@@ -148,7 +149,7 @@ RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPST
 RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr, LPWSTR Endpoint, LPWSTR NetworkOptions)
 {
 
-  TRACE("  (RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding, 
+  TRACE("(RpcBinding == ^%p, NetworkAddr == \"%s\", EndPoint == \"%s\", NetworkOptions == \"%s\")\n", Binding, 
    debugstr_w(NetworkAddr), debugstr_w(Endpoint), debugstr_w(NetworkOptions));
 
   RPCRT4_strfree(Binding->NetworkAddr);
@@ -173,7 +174,7 @@ RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPSTR Endpoint)
 
 RPC_STATUS RPCRT4_SetBindingObject(RpcBinding* Binding, UUID* ObjectUuid)
 {
-  TRACE("  (*RpcBinding == ^%p, UUID == %s)\n", Binding, debugstr_guid(ObjectUuid)); 
+  TRACE("(*RpcBinding == ^%p, UUID == %s)\n", Binding, debugstr_guid(ObjectUuid)); 
   if (ObjectUuid) memcpy(&Binding->ObjectUuid, ObjectUuid, sizeof(UUID));
   else UuidCreateNil(&Binding->ObjectUuid);
   return RPC_S_OK;
@@ -183,7 +184,7 @@ RPC_STATUS RPCRT4_SpawnBinding(RpcBinding** Binding, RpcBinding* OldBinding)
 {
   RpcBinding* NewBinding;
   if (Binding)
-    TRACE("  (*RpcBinding == ^%p, OldBinding == ^%p)\n", *Binding, OldBinding);
+    TRACE("(*RpcBinding == ^%p, OldBinding == ^%p)\n", *Binding, OldBinding);
   else {
     ERR("!RpcBinding?"); 
     /* we will crash below anyhow... */
@@ -355,7 +356,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding)
 
 RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding)
 {
-  TRACE("  (Binding == ^%p)\n", Binding);
+  TRACE("(Binding == ^%p)\n", Binding);
   if (Binding->conn) {
     CancelIo(Binding->conn);
     CloseHandle(Binding->conn);

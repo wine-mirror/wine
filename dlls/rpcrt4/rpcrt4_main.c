@@ -29,11 +29,7 @@
  *   right now.
  *
  * - The server portions of the patch don't seem to be getting accepted by
- *   Alexandre.  My guess is that once I have a working test he'll conceed to
- *   let this in.  To implement this properly is tricky and possibly beyond my
- *   abilities; Ove seems to think the right way to do this is to use LPC
- *   (Local Procedure Call, another undocumented monster).  LPC has no implementation
- *   in wine and is not going to be trivial to create.
+ *   Alexandre.  Instead, we are working on "rpcss.exe.so" which will replace them.
  *
  * - There are several different memory allocation schemes for MSRPC.
  *   I don't even understand what they all are yet, much less have them
@@ -51,7 +47,7 @@
  *   up the code with conditionals like we do now.
  * 
  * - Data marshalling: So far, only the very beginnings of an implementation
- *   exist in wine.  NDR protocol is mostly documented, but the MS API's to
+ *   exist in wine.  NDR protocol itself is documented, but the MS API's to
  *   convert data-types in memory into NDR are not.
  *
  * - ORPC is RPC for OLE; once we have a working RPC framework, we can
@@ -63,7 +59,6 @@
  * 
  * - In-source API Documentation, at least for those functions which we have
  *   implemented, but preferably for everything we can document, would be nice.
- *   I started out being quite good about this, and ended up getting lazy.
  *   Some stuff is undocumented by Microsoft and we are guessing how to implement
  *   (in these cases we should document the behavior we implemented, or, if there
  *   is no implementation, at least hazard some kind of guess, and put a few
@@ -77,9 +72,9 @@
  *
  * - Concurrency: right now I don't think (?) we handle more than one request at a time;
  *   we are supposed to be able to do this, and to queue requests which exceed the
- *   concurrency limit.
+ *   concurrency limit.  Lots of scenarios are untested.
  *
- * - Protocol Towers: Totally unimplemented.  I don't even know what these are.
+ * - Protocol Towers: Totally unimplemented.... I think.
  *
  * - Context Handle Rundown: whatever that is.
  *
@@ -88,6 +83,8 @@
  * - Statistics: we are supposed to be keeping various counters.  we aren't.
  *
  * - Connectionless RPC: unimplemented.
+ *
+ * - XML RPC: Dunno if microsoft does it... but we'd might as well just for kicks.
  * 
  * - ...?  More stuff I haven't thought of.  If you think of more RPC todo's drop me
  *   an e-mail <gmturner007@ameritech.net> or send a patch to wine-patches.
@@ -501,6 +498,8 @@ unsigned short WINAPI UuidHash(UUID *uuid, RPC_STATUS *Status)
   short c0 = 0, c1 = 0, x, y;
   int i;
 
+  if (!uuid) data = (BYTE*)(uuid = &uuid_nil);
+
   TRACE("(%s)\n", debugstr_guid(uuid));
 
   for (i=0; i<sizeof(UUID); i++) {
@@ -538,6 +537,8 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, LPSTR* StringUuid)
   if(!(*StringUuid))
     return RPC_S_OUT_OF_MEMORY;
 
+  if (!Uuid) Uuid = &uuid_nil;
+
   sprintf(*StringUuid, "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                  Uuid->Data1, Uuid->Data2, Uuid->Data3,
                  Uuid->Data4[0], Uuid->Data4[1], Uuid->Data4[2],
@@ -558,6 +559,8 @@ RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, LPSTR* StringUuid)
 RPC_STATUS WINAPI UuidToStringW(UUID *Uuid, LPWSTR* StringUuid)
 {
   char buf[37];
+
+  if (!Uuid) Uuid = &uuid_nil;
 
   sprintf(buf, "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                Uuid->Data1, Uuid->Data2, Uuid->Data3,
