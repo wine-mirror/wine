@@ -379,14 +379,15 @@ DWORD IncrementInstanceId( DDE_HANDLE_ENTRY *this_instance)
 		s_attrib.bInheritHandle = TRUE;
 		s_attrib.lpSecurityDescriptor = NULL;
 		s_attrib.nLength = sizeof(s_attrib);
-		inst_count_mutex = CreateMutexA(&s_attrib,1,DDEInstanceAccess); /* 1st time through */
-	} else {
+		inst_count_mutex = CreateMutexA(&s_attrib,0,DDEInstanceAccess); /* 1st time through */
+	} 
+        if ( inst_count_mutex )
+        {
         	if ( !WaitForMutex(inst_count_mutex) )
         	{
                 	return DMLERR_SYS_ERROR;
         	}
-	}
-	if ( !inst_count_mutex )
+        } else
 	{
 		ERR("CreateMutex failed - inst_count %li\n",GetLastError());
 		Release_reserved_mutex (handle_mutex,"handle_mutex",0,1,this_instance);
@@ -606,23 +607,22 @@ UINT WINAPI DdeInitializeW( LPDWORD pidInst, PFNCALLBACK pfnCallback,
         TRACE("new instance, callback %p flags %lX\n",pfnCallback,afCmd);
         if ( DDE_Max_Assigned_Instance == 0 )
         {
-                /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
-	/*  Need to set up Mutex in case it is not already present */
-	s_att->bInheritHandle = TRUE;
-	s_att->lpSecurityDescriptor = NULL;
-	s_att->nLength = sizeof(s_att);
-	handle_mutex = CreateMutexA(s_att,1,DDEHandleAccess);
-	if ( !handle_mutex ) {
-		ERR("CreateMutex failed - handle list  %li\n",GetLastError());
-		HeapFree(GetProcessHeap(), 0, this_instance);
-		return DMLERR_SYS_ERROR;
-	}
-    } else {
-	if ( !WaitForMutex(handle_mutex) )
-	{
-		return DMLERR_SYS_ERROR;
-	}
-    }
+            /*  Nothing has been initialised - exit now ! can return TRUE since effect is the same */
+            /*  Need to set up Mutex in case it is not already present */
+            s_att->bInheritHandle = TRUE;
+            s_att->lpSecurityDescriptor = NULL;
+            s_att->nLength = sizeof(s_att);
+            handle_mutex = CreateMutexA(s_att,0,DDEHandleAccess);
+            if ( !handle_mutex ) {
+                    ERR("CreateMutex failed - handle list  %li\n",GetLastError());
+                    HeapFree(GetProcessHeap(), 0, this_instance);
+                    return DMLERR_SYS_ERROR;
+            }
+        }
+        if ( !WaitForMutex(handle_mutex) )
+        {
+                return DMLERR_SYS_ERROR;
+        }
 
 	TRACE("Handle Mutex created/reserved\n");
         if (DDE_Handle_Table_Base == NULL ) 
