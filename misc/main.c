@@ -240,7 +240,7 @@ int MAIN_GetLanguageID(LPCSTR Lang,LPCSTR Country,LPCSTR Charset,LPCSTR Dialect)
 
 #define LANG_ENTRY_BEGIN(x,y)	if(!strcmp(lang, x )) { \
 				    if (!country[0]) { \
-					ret=LANG_##y ; \
+					ret=MAKELANGID(LANG_##y, SUBLANG_DEFAULT); \
 					goto end_MAIN_GetLanguageID; \
 				    }
 #define LANG_SUB_ENTRY(x,y,z)	    if (!strcmp(country, x )) { \

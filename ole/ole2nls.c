@@ -360,7 +360,9 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 	if(!retString)
 	    FIXME("Unkown LC type %lX\n", LCType);
 	else
-	    ERR("'%s' not supported for your language (%04X)\n",
+	    FIXME("'%s' is not defined for your language (%04X).\n"
+		"Please define it in dlls/kernel/nls/YourLanguage.nls\n"
+		"and submit patch for inclusion into the next Wine release.\n",
 			retString, LOWORD(lcid));
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;			

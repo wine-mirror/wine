@@ -116,10 +116,10 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
 }
 
 /**********************************************************************
- *	    PE_FindResourceEx32W
+ *	    PE_FindResourceExW
  */
 HANDLE PE_FindResourceExW(
-	WINE_MODREF *wm,LPCWSTR name,LPCWSTR type,WORD lang
+	WINE_MODREF *wm,LPCWSTR name,LPCWSTR type,WORD lang, BOOL allowdefault
 ) {
     PIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
@@ -137,14 +137,8 @@ HANDLE PE_FindResourceExW(
 	return 0;
     result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
 
-    /* Try with only the primary language set */
-    if (!result)
-    {
-        lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_DEFAULT);
-        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
 	/* Try LANG_NEUTRAL, too */
-    if(!result)
+    if(!result && allowdefault)
         return (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)0, root, TRUE);
     return result;
 }
