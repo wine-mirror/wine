@@ -278,7 +278,11 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
     /* turn full duplex on if it has been requested */
     if (ossdev->open_access == O_RDWR && ossdev->full_duplex) {
         rc = ioctl(fd, SNDCTL_DSP_SETDUPLEX, 0);
-        if (rc != 0) {
+        /* on *BSD, as full duplex is always enabled by default, this ioctl
+         * will fail with EINVAL
+         * so, we don't consider EINVAL an error here
+         */
+        if (rc != 0 && errno != EINVAL) {
 	    ERR("ioctl(%s, SNDCTL_DSP_SETDUPLEX) failed (%s)\n", ossdev->dev_name, strerror(errno));
             goto error;
 	}
