@@ -34,8 +34,6 @@ static HMODULE hOleaut32;
 /* Is a given function exported from oleaut32? */
 #define HAVE_FUNC(func) ((void*)GetProcAddress(hOleaut32, #func) != NULL)
 
-/* Have proper locale conversions? */
-#define HAVE_OLEAUT32_LOCALES HAVE_FUNC(GetVarConversionLocaleSetting)
 /* Have IRecordInfo data type? */
 #define HAVE_OLEAUT32_RECORD  HAVE_FUNC(SafeArraySetRecordInfo)
 /* Have DECIMAL data type with new error checking? */
@@ -44,6 +42,13 @@ static HMODULE hOleaut32;
 #define HAVE_OLEAUT32_CY      HAVE_FUNC(VarCyAdd)
 /* Have I8/UI8 data type? */
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
+/* Have proper locale conversions? */
+#define HAVE_OLEAUT32_LOCALES (HAVE_FUNC(GetVarConversionLocaleSetting) && HAVE_OLEAUT32_I8)
+/* Is this an ancient version with support for only I2/I4/R4/R8/DATE? */
+#define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))
+/* Is vt a type unavailable to ancient versions? */
+#define IS_MODERN_VTYPE(vt) (vt==VT_VARIANT||vt==VT_DECIMAL|| \
+    vt==VT_I1||vt==VT_UI2||vt==VT_UI4||vt == VT_INT||vt == VT_UINT)
 
 /* Macros for converting and testing results */
 #define CONVVARS(typ) HRESULT hres; CONV_TYPE out; typ in
@@ -60,7 +65,7 @@ static HMODULE hOleaut32;
 #define EXPECT_GT       EXPECTRES(VARCMP_GT, VARCMP_GT)
 #define EXPECT_EQ       EXPECTRES(VARCMP_EQ, VARCMP_EQ)
 #define EXPECT_DBL(x)   \
-  ok(hres == S_OK && fabs(out-(x))<1e-14, "expected " #x ", got %g; hres=0x%08lx", out, hres)
+  ok(hres == S_OK && fabs(out-(x))<1e-14, "expected " #x ", got %16.16g; hres=0x%08lx", out, hres)
 
 #define CONVERT(func, val) in = val; hres = p##func(in, &out)
 #define CONVERTRANGE(func,start,end) for (i = start; i < end; i+=1) { CONVERT(func, i); EXPECT(i); };
@@ -135,14 +140,19 @@ static HMODULE hOleaut32;
   VariantInit(&vDst); \
   V_VT(&vSrc) = vt; \
   (val(&vSrc)) = in; \
-  TYPETEST(VT_I1, V_I1(&vDst), fs); \
+  if (!IS_ANCIENT) { \
+    TYPETEST(VT_I1, V_I1(&vDst), fs); \
+    TYPETEST(VT_UI2, V_UI2(&vDst), fs); \
+    TYPETEST(VT_UI4, V_UI4(&vDst), fs); \
+    TYPETEST(VT_INT, V_INT(&vDst), fs); \
+    TYPETEST(VT_UINT, V_UINT(&vDst), fs); \
+  } else {  \
+    BADVAR(VT_I1); BADVAR(VT_UI2); BADVAR(VT_UI4); \
+    BADVAR(VT_INT); BADVAR(VT_UINT); \
+  } \
   TYPETEST(VT_UI1, V_UI1(&vDst), fs); \
   TYPETEST(VT_I2, V_I2(&vDst), fs); \
-  TYPETEST(VT_UI2, V_UI2(&vDst), fs); \
   TYPETEST(VT_I4, V_I4(&vDst), fs); \
-  TYPETEST(VT_UI4, V_UI4(&vDst), fs); \
-  TYPETEST(VT_INT, V_INT(&vDst), fs); \
-  TYPETEST(VT_UINT, V_UINT(&vDst), fs); \
   TYPETEST(VT_R4, V_R4(&vDst), fs); \
   TYPETEST(VT_R8, V_R8(&vDst), fs); \
   TYPETEST(VT_DATE, V_DATE(&vDst), fs); \
@@ -209,7 +219,7 @@ static HMODULE hOleaut32;
   MISMATCH(VT_DISPATCH); \
   MISMATCH(VT_ERROR); \
   MISMATCH(VT_UNKNOWN); \
-  MISMATCH(VT_VARIANT); \
+  if (!IS_ANCIENT) { MISMATCH(VT_VARIANT); } else { BADVAR(VT_VARIANT); } \
   if (HAVE_OLEAUT32_RECORD) \
   { \
     MISMATCH(VT_RECORD); \
@@ -787,7 +797,10 @@ static void test_VarI1FromStr(void)
 
 static void test_VarI1Copy(void)
 {
-  COPYTEST(1, VT_I1, V_I1(&vSrc), V_I1(&vDst), V_I1REF(&vSrc), V_I1REF(&vDst), "%d");
+  if (!IS_ANCIENT)
+  {
+      COPYTEST(1, VT_I1, V_I1(&vSrc), V_I1(&vDst), V_I1REF(&vSrc), V_I1REF(&vDst), "%d");
+  }
 }
 
 static void test_VarI1ChangeTypeEx(void)
@@ -797,8 +810,11 @@ static void test_VarI1ChangeTypeEx(void)
 
   in = 1;
 
-  INITIAL_TYPETEST(VT_I1, V_I1, "%d");
-  COMMON_TYPETEST;
+  if (!IS_ANCIENT)
+  {
+      INITIAL_TYPETEST(VT_I1, V_I1, "%d");
+      COMMON_TYPETEST;
+  }
 }
 
 #undef CONV_TYPE
@@ -1550,7 +1566,10 @@ static void test_VarUI2FromStr(void)
 
 static void test_VarUI2Copy(void)
 {
-  COPYTEST(1, VT_UI2, V_UI2(&vSrc), V_UI2(&vDst), V_UI2REF(&vSrc), V_UI2REF(&vDst), "%d");
+  if (!IS_ANCIENT)
+  {
+      COPYTEST(1, VT_UI2, V_UI2(&vSrc), V_UI2(&vDst), V_UI2REF(&vSrc), V_UI2REF(&vDst), "%d");
+  }
 }
 
 static void test_VarUI2ChangeTypeEx(void)
@@ -1560,8 +1579,11 @@ static void test_VarUI2ChangeTypeEx(void)
 
   in = 1;
 
-  INITIAL_TYPETEST(VT_UI2, V_UI2, "%d");
-  COMMON_TYPETEST;
+  if (!IS_ANCIENT)
+  {
+    INITIAL_TYPETEST(VT_UI2, V_UI2, "%d");
+    COMMON_TYPETEST;
+  }
 }
 
 /*
@@ -2031,7 +2053,10 @@ static void test_VarUI4FromStr(void)
 
 static void test_VarUI4Copy(void)
 {
-  COPYTEST(1ul, VT_UI4, V_UI4(&vSrc), V_UI4(&vDst), V_UI4REF(&vSrc), V_UI4REF(&vDst), "%lu");
+  if (!IS_ANCIENT)
+  {
+      COPYTEST(1ul, VT_UI4, V_UI4(&vSrc), V_UI4(&vDst), V_UI4REF(&vSrc), V_UI4REF(&vDst), "%lu");
+  }
 }
 
 static void test_VarUI4ChangeTypeEx(void)
@@ -2041,8 +2066,11 @@ static void test_VarUI4ChangeTypeEx(void)
 
   in = 1;
 
-  INITIAL_TYPETEST(VT_UI4, V_UI4, "%lu");
-  COMMON_TYPETEST;
+  if (!IS_ANCIENT)
+  {
+    INITIAL_TYPETEST(VT_UI4, V_UI4, "%lu");
+    COMMON_TYPETEST;
+  }
 }
 
 /*
@@ -3269,16 +3297,16 @@ static void test_VarDateFromStr(void)
   /* After 30, two digit dates are expected to be in the 1900's */
   DFS("1 2 30"); EXPECT_DBL(10960.0);
   DFS("1 2 31"); EXPECT_DBL(11325.0);
-  /* DFS("3 am 1 2"); EXPECT_DBL(37623.125); FIXME: assumes year is 2003 */
-  /* DFS("1 2 3 am"); EXPECT_DBL(37623.125); FIXME: assumes year is 2003 */
+  DFS("3 am 1 2"); MKRELDATE(2,1); relative += 0.125; EXPECT_DBL(relative);
+  DFS("1 2 3 am"); EXPECT_DBL(relative);
 
   /* 4 elements -interpreted as 2 digit date & time */
   DFS("1.2 3 4");   MKRELDATE(4,3); relative += 0.04305555556; EXPECT_DBL(relative);
   DFS("3 4 1.2");   EXPECT_DBL(relative);
   /* 5 elements - interpreted as 2 & 3 digit date/times */
-  /* DFS("1.2.3 4 5"); EXPECT_DBL(37716.04309027778); FIXME: assumes year is 2003 */
+  DFS("1.2.3 4 5"); MKRELDATE(5,4); relative += 0.04309027778; EXPECT_DBL(relative);
   DFS("1.2 3 4 5"); EXPECT_DBL(38415.04305555556);
-  /* DFS("1 2 3.4.5"); EXPECT_DBL(37623.12783564815); FIXME: assumes year is 2003 */
+  DFS("1 2 3.4.5"); MKRELDATE(2,1); relative += 0.12783564815; EXPECT_DBL(relative);
   DFS("1 2 3 4.5"); EXPECT_DBL(37623.17013888889);
   /* 6 elements - interpreted as 3 digit date/times */
   DFS("1.2.3 4 5 6"); EXPECT_DBL(38812.04309027778);
@@ -4442,9 +4470,12 @@ static void test_VarBoolChangeTypeEx(void)
   V_VT(&vSrc) = VT_BOOL;
   V_BOOL(&vSrc) = 1;
 
-  BOOL_STR(VARIANT_ALPHABOOL, szTrue);
-  V_BOOL(&vSrc) = 0;
-  BOOL_STR(VARIANT_ALPHABOOL, szFalse);
+  if (!IS_ANCIENT)
+  {
+      BOOL_STR(VARIANT_ALPHABOOL, szTrue);
+      V_BOOL(&vSrc) = 0;
+      BOOL_STR(VARIANT_ALPHABOOL, szFalse);
+  }
 
   if (HAVE_OLEAUT32_LOCALES)
   {
@@ -4574,10 +4605,13 @@ static void test_SysAllocStringLen()
   const OLECHAR szTest[5] = { 'T','e','s','t','\0' };
   BSTR str;
 
+  /* Very early native dlls do not limit the size of strings, so skip this test */
+#if 0
   str = SysAllocStringLen(szTest, 0x80000000);
   todo_wine {
   ok (str == NULL, "Expected NULL, got %p\n", str);
   }
+#endif
   
   str = SysAllocStringLen(NULL, 0);
   ok (str != NULL, "Expected non-NULL\n");
@@ -4607,7 +4641,6 @@ static void test_SysAllocStringByteLen()
   const OLECHAR szTest[10] = { 'T','e','s','t','\0' };
   const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
   BSTR str;
-  HRESULT hres;
 
   str = SysAllocStringByteLen(szTestA, 0x80000000);
   ok (str == NULL, "Expected NULL, got %p\n", str);
@@ -4641,20 +4674,9 @@ static void test_SysAllocStringByteLen()
   {
     const CHAR szTestTruncA[4] = { 'T','e','s','\0' };
     LPINTERNAL_BSTR bstr = Get(str);
-    VARIANT vt1, vt2;
 
     ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
-
-    V_VT(&vt1) = VT_BSTR;
-    V_BSTR(&vt1) = str;
-    V_VT(&vt2) = VT_EMPTY;
-    hres = VariantCopy(&vt2, &vt1);
-    ok (hres == S_OK,"Failed to copy binary bstring with hres 0x%08lx\n", hres);
-    bstr = Get(V_BSTR(&vt2));
-    ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
-    ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
-
     SysFreeString(str);
   }
 
@@ -4745,6 +4767,30 @@ static void test_SysReAllocStringLen()
     ok (!lstrcmpW(bstr->szString, szLarger), "String different\n");
 
     SysFreeString(str);
+  }
+}
+
+static void test_BstrCopy()
+{
+  const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
+  const CHAR szTestTruncA[4] = { 'T','e','s','\0' };
+  LPINTERNAL_BSTR bstr;
+  BSTR str;
+  HRESULT hres;
+  VARIANT vt1, vt2;
+
+  str = SysAllocStringByteLen(szTestA, 3);
+  ok (str != NULL, "Expected non-NULL\n");
+  if (str)
+  {
+    V_VT(&vt1) = VT_BSTR;
+    V_BSTR(&vt1) = str;
+    V_VT(&vt2) = VT_EMPTY;
+    hres = VariantCopy(&vt2, &vt1);
+    ok (hres == S_OK,"Failed to copy binary bstring with hres 0x%08lx\n", hres);
+    bstr = Get(V_BSTR(&vt2));
+    ok (bstr->dwLen == 3, "Expected 3, got %ld\n", bstr->dwLen);
+    ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
   }
 }
 
@@ -4880,6 +4926,9 @@ static void test_IUnknownChangeTypeEx(void)
       else if (vt  >= VT_I2 && vt <= VT_UINT && vt != (VARTYPE)15)
         hExpected = DISP_E_TYPEMISMATCH;
     }
+    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
+        hExpected = DISP_E_BADVARTYPE;
+
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
     ok(hres == hExpected,
        "change unk(badvar): vt %d expected 0x%08lx, got 0x%08lx\n",
@@ -5030,6 +5079,8 @@ static void test_ErrorChangeTypeEx(void)
       else if (vt <= VT_UINT && vt != (VARTYPE)15)
         hExpected = DISP_E_TYPEMISMATCH;
     }
+    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
+        hExpected = DISP_E_BADVARTYPE;
 
     ok(hres == hExpected,
      "change err: vt %d expected 0x%08lx, got 0x%08lx\n", vt, hExpected, hres);
@@ -5072,10 +5123,13 @@ static void test_EmptyChangeTypeEx(void)
     else if (vt <= VT_UINT && vt != (VARTYPE)15)
       hExpected = S_OK;
 
+    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
+        hExpected = DISP_E_BADVARTYPE;
+
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
 
     ok(hres == hExpected && (hres != S_OK || V_VT(&vDst) == vt),
-       "change err: vt %d expected 0x%08lx, got 0x%08lx, vt %d\n",
+       "change empty: vt %d expected 0x%08lx, got 0x%08lx, vt %d\n",
        vt, hExpected, hres, V_VT(&vDst));
   }
 }
@@ -5117,6 +5171,9 @@ static void test_NullChangeTypeEx(void)
               vt == VT_UNKNOWN || vt == VT_ERROR ||
               (vt <= VT_UINT && vt != (VARTYPE)15))
       hExpected = DISP_E_TYPEMISMATCH;
+
+    if (IS_ANCIENT && IS_MODERN_VTYPE(vt))
+        hExpected = DISP_E_BADVARTYPE;
 
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
 
@@ -5395,6 +5452,7 @@ START_TEST(vartype)
   test_SysAllocStringByteLen();
   test_SysReAllocString();
   test_SysReAllocStringLen();
+  test_BstrCopy();
 
   test_IUnknownClear();
   test_IUnknownCopy();
