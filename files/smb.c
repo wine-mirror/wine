@@ -110,6 +110,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "lmerr.h"
 #include "file.h"
 #include "smb.h"
 
@@ -532,35 +533,106 @@ static BOOL NB_Transaction(int fd, struct NB_Buffer *in, struct NB_Buffer *out)
 #define SMB_PCOUNT  32
 #define SMB_HDRSIZE 33
 
-static DWORD SMB_GetError(unsigned char *buffer)
+static DWORD NetSrvErrorToDOSError(USHORT code)
 {
-    const char *err_class;
+    DWORD ret;
 
-    switch(buffer[SMB_ERRCLASS])
+    switch (code)
     {
-    case 0:
-        return STATUS_SUCCESS;
     case 1:
-        err_class = "DOS";
+        ret = ERROR_INTERNAL_ERROR;
         break;
     case 2:
-        err_class = "net server";
+        ret = ERROR_INVALID_PASSWORD;
         break;
     case 3:
-        err_class = "hardware";
+        ret = ERROR_BAD_NETPATH;
         break;
-    case 0xff:
-        err_class = "smb";
+    case 4:
+        ret = ERROR_ACCESS_DENIED;
+        break;
+    /* unmapped: case 5: invalid transaction ID? */
+    case 6:
+        ret = ERROR_INVALID_NETNAME;
+        break;
+    case 7:
+        ret = ERROR_BAD_DEV_TYPE;
+        break;
+    case 49:
+        ret = ERROR_PRINTQ_FULL;
+        break;
+    case 50:
+        ret = ERROR_NO_SPOOL_SPACE;
+        break;
+    case 65:
+        ret = ERROR_INTERNAL_ERROR;
+        break;
+    case 69:
+        ret = ERROR_ACCESS_DENIED;
+        break;
+    case 81:
+        ret = NERR_PausedRemote;
+        break;
+    case 82:
+        ret = NERR_BadReceive;
+        break;
+    case 83:
+        ret = NERR_RemoteFull;
+        break;
+    case 87:
+        ret = NERR_TooManyNames;
+        break;
+    case 88:
+        ret = ERROR_TIMEOUT;
+        break;
+    case 89:
+        ret = ERROR_NO_SYSTEM_RESOURCES;
+        break;
+    case 91:
+        ret = ERROR_BAD_USERNAME;
+        break;
+    case 0xffff:
+        ret = ERROR_NOT_SUPPORTED;
         break;
     default:
-        err_class = "unknown";
-        break;
+        ret = ERROR_INVALID_PARAMETER;
     }
+    return ret;
+}
 
-    ERR("%s error %d \n",err_class, buffer[SMB_ERRCODE]);
+DWORD SMBErrorToDOSError(UCHAR errorClass, USHORT code)
+{
+    DWORD ret;
 
-    /* FIXME: return propper error codes */
-    return STATUS_INVALID_PARAMETER;
+    switch (errorClass)
+    {
+    case 0:
+        ret = NO_ERROR;
+        break;
+    case 1:
+        /* the DOS class corresponds exactly to DOS error codes */
+        ret = code;
+        break;
+    case 2:
+        ret = NetSrvErrorToDOSError(code);
+        break;
+    case 3:
+        /* the hardware error values are the same as the DOS error codes */
+        ret = code;
+        break;
+    default:
+        ret = ERROR_INVALID_PARAMETER;
+    }
+    return ret;
+}
+
+static DWORD SMB_GetError(unsigned char *buffer)
+{
+    /* FIXME: should check to see whether the error was a DOS error or an
+     * NT status
+     */
+    return SMBErrorToDOSError(buffer[SMB_ERRCLASS],
+     *(PSHORT)(buffer + SMB_ERRCODE));
 }
 
 static int SMB_Header(unsigned char *buffer, unsigned char command, USHORT tree_id, USHORT user_id)
