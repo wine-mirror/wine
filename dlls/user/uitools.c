@@ -1415,6 +1415,192 @@ BOOL WINAPI DrawFrameControl( HDC hdc, LPRECT rc, UINT uType,
 
 
 /***********************************************************************
+ *		SetRect (USER32.@)
+ */
+BOOL WINAPI SetRect( LPRECT rect, INT left, INT top,
+                       INT right, INT bottom )
+{
+    if (!rect) return FALSE;
+    rect->left   = left;
+    rect->right  = right;
+    rect->top    = top;
+    rect->bottom = bottom;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		SetRectEmpty (USER32.@)
+ */
+BOOL WINAPI SetRectEmpty( LPRECT rect )
+{
+    if (!rect) return FALSE;
+    rect->left = rect->right = rect->top = rect->bottom = 0;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		CopyRect (USER32.@)
+ */
+BOOL WINAPI CopyRect( RECT *dest, const RECT *src )
+{
+    if (!dest || !src) return FALSE;
+    *dest = *src;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		IsRectEmpty (USER32.@)
+ *
+ * Bug compat: Windows checks for 0 or negative width/height.
+ */
+BOOL WINAPI IsRectEmpty( const RECT *rect )
+{
+    if (!rect) return TRUE;
+    return ((rect->left >= rect->right) || (rect->top >= rect->bottom));
+}
+
+
+/***********************************************************************
+ *		PtInRect (USER32.@)
+ */
+BOOL WINAPI PtInRect( const RECT *rect, POINT pt )
+{
+    if (!rect) return FALSE;
+    return ((pt.x >= rect->left) && (pt.x < rect->right) &&
+            (pt.y >= rect->top) && (pt.y < rect->bottom));
+}
+
+
+/***********************************************************************
+ *		OffsetRect (USER32.@)
+ */
+BOOL WINAPI OffsetRect( LPRECT rect, INT x, INT y )
+{
+    if (!rect) return FALSE;
+    rect->left   += x;
+    rect->right  += x;
+    rect->top    += y;
+    rect->bottom += y;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		InflateRect (USER32.@)
+ */
+BOOL WINAPI InflateRect( LPRECT rect, INT x, INT y )
+{
+    if (!rect) return FALSE;
+    rect->left   -= x;
+    rect->top    -= y;
+    rect->right  += x;
+    rect->bottom += y;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		IntersectRect (USER32.@)
+ */
+BOOL WINAPI IntersectRect( LPRECT dest, const RECT *src1, const RECT *src2 )
+{
+    if (!dest || !src1 || !src2) return FALSE;
+    if (IsRectEmpty(src1) || IsRectEmpty(src2) ||
+        (src1->left >= src2->right) || (src2->left >= src1->right) ||
+        (src1->top >= src2->bottom) || (src2->top >= src1->bottom))
+    {
+        SetRectEmpty( dest );
+        return FALSE;
+    }
+    dest->left   = max( src1->left, src2->left );
+    dest->right  = min( src1->right, src2->right );
+    dest->top    = max( src1->top, src2->top );
+    dest->bottom = min( src1->bottom, src2->bottom );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		UnionRect (USER32.@)
+ */
+BOOL WINAPI UnionRect( LPRECT dest, const RECT *src1, const RECT *src2 )
+{
+    if (!dest) return FALSE;
+    if (IsRectEmpty(src1))
+    {
+        if (IsRectEmpty(src2))
+        {
+            SetRectEmpty( dest );
+            return FALSE;
+        }
+        else *dest = *src2;
+    }
+    else
+    {
+        if (IsRectEmpty(src2)) *dest = *src1;
+        else
+        {
+            dest->left   = min( src1->left, src2->left );
+            dest->right  = max( src1->right, src2->right );
+            dest->top    = min( src1->top, src2->top );
+            dest->bottom = max( src1->bottom, src2->bottom );
+        }
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		EqualRect (USER32.@)
+ */
+BOOL WINAPI EqualRect( const RECT* rect1, const RECT* rect2 )
+{
+    if (!rect1 || !rect2) return FALSE;
+    return ((rect1->left == rect2->left) && (rect1->right == rect2->right) &&
+            (rect1->top == rect2->top) && (rect1->bottom == rect2->bottom));
+}
+
+
+/***********************************************************************
+ *		SubtractRect (USER32.@)
+ */
+BOOL WINAPI SubtractRect( LPRECT dest, const RECT *src1, const RECT *src2 )
+{
+    RECT tmp;
+
+    if (!dest) return FALSE;
+    if (IsRectEmpty( src1 ))
+    {
+        SetRectEmpty( dest );
+        return FALSE;
+    }
+    *dest = *src1;
+    if (IntersectRect( &tmp, src1, src2 ))
+    {
+        if (EqualRect( &tmp, dest ))
+        {
+            SetRectEmpty( dest );
+            return FALSE;
+        }
+        if ((tmp.top == dest->top) && (tmp.bottom == dest->bottom))
+        {
+            if (tmp.left == dest->left) dest->left = tmp.right;
+            else if (tmp.right == dest->right) dest->right = tmp.left;
+        }
+        else if ((tmp.left == dest->left) && (tmp.right == dest->right))
+        {
+            if (tmp.top == dest->top) dest->top = tmp.bottom;
+            else if (tmp.bottom == dest->bottom) dest->bottom = tmp.top;
+        }
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
  *		FillRect (USER32.@)
  */
 INT WINAPI FillRect( HDC hdc, const RECT *rect, HBRUSH hbrush )
