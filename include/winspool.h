@@ -972,7 +972,7 @@ BOOL WINAPI FindNextPrinterChangeNotification(HANDLE hChange,
 					      PDWORD pdwChange,
 					      LPVOID pvReserved,
 					      LPVOID *ppPrinterNotifyInfo);
-BOOL WINAPI FreePrinterBotifyInfo(PPRINTER_NOTIFY_INFO pPrinterNotifyInfo);
+BOOL WINAPI FreePrinterNotifyInfo(PPRINTER_NOTIFY_INFO pPrinterNotifyInfo);
 BOOL WINAPI FindClosePrinterChangeNotification(HANDLE hChange);
 
 DWORD WINAPI PrinterMessageBoxA(HANDLE hPrinter, DWORD Error, HWND hWnd,
