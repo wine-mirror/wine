@@ -1247,14 +1247,9 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     if ((hwndPrevActive = hwndActive) && IsWindow(hwndPrevActive))
     {
         MESSAGEQUEUE *pTempActiveQueue = 0;
-        
-        if (!SendMessageA( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 ))
-        {
-            if (GetSysModalWindow16() != WIN_Handle16(hWnd)) goto CLEANUP_END;
-	    /* disregard refusal if hWnd is sysmodal */
-        }
 
-	SendMessageA( hwndPrevActive, WM_ACTIVATE,
+        SendNotifyMessageA( hwndPrevActive, WM_NCACTIVATE, FALSE, 0 );
+        SendNotifyMessageA( hwndPrevActive, WM_ACTIVATE,
                         MAKEWPARAM( WA_INACTIVE, wIconized ),
                         (LPARAM)hWnd );
 
@@ -1321,7 +1316,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
             {
                 if (!IsWindow( *phwnd )) continue;
                 if (GetWindowThreadProcessId( *phwnd, NULL ) == old_thread)
-                    SendMessageW( *phwnd, WM_ACTIVATEAPP, 0, new_thread );
+                    SendNotifyMessageW( *phwnd, WM_ACTIVATEAPP, 0, new_thread );
             }
             HeapFree( GetProcessHeap(), 0, list );
         }

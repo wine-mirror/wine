@@ -42,7 +42,8 @@ void FOCUS_SwitchFocus( MESSAGEQUEUE *pMsgQ, HWND hFocusFrom, HWND hFocusTo )
 {
     PERQDATA_SetFocusWnd( pMsgQ->pQData, hFocusTo );
 
-    if (hFocusFrom) SendMessageA( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0 );
+    if (hFocusFrom)
+        SendNotifyMessageA( hFocusFrom, WM_KILLFOCUS, (WPARAM)hFocusTo, 0 );
 
     if( !hFocusTo || hFocusTo != PERQDATA_GetFocusWnd( pMsgQ->pQData ) )
     {
