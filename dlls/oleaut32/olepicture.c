@@ -942,7 +942,8 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     ColorMapObject      *cm;
     int                 transparent = -1;
     ExtensionBlock      *eb;
-    
+    int                 padding;
+
     gd.data   = xbuf;
     gd.curoff = 0;
     gd.len    = xread;
@@ -965,8 +966,9 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       gif->Image.Interlace
     );
     /* */
+    padding = (gif->SWidth+3) & ~3;
     bmi  = HeapAlloc(GetProcessHeap(),0,sizeof(BITMAPINFOHEADER)+(1<<gif->SColorResolution)*sizeof(RGBQUAD));
-    bytes= HeapAlloc(GetProcessHeap(),0,gif->SWidth*gif->SHeight);
+    bytes= HeapAlloc(GetProcessHeap(),0,padding*gif->SHeight);
     si   = gif->SavedImages+0;
     gid  = &(si->ImageDesc);
     cm   = gid->ColorMap;
@@ -993,17 +995,18 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       }
     }
 
-    /* Map to in picture coordinates */
-    for (i=0;i<gid->Height;i++)
-      for (j=0;j<gid->Width;j++)
-        bytes[(gid->Top+(gif->SHeight-i-1))*gif->SWidth+gid->Left+j]=si->RasterBits[i*gid->Width+j];
+    /* Map to in picture coordinates */    
+    for (i=0;i<gid->Height;i++) 
+	for (j=0;j<gid->Width;j++) 
+	    bytes[(gid->Top+i)*(padding)+gid->Left+j]=si->RasterBits[i*gid->Width+j];
+
     bmi->bmiHeader.biSize		= sizeof(BITMAPINFOHEADER);
     bmi->bmiHeader.biWidth		= gif->SWidth;
-    bmi->bmiHeader.biHeight		= gif->SHeight;
+    bmi->bmiHeader.biHeight		= -gif->SHeight;
     bmi->bmiHeader.biPlanes		= 1;
     bmi->bmiHeader.biBitCount		= 8;
     bmi->bmiHeader.biCompression	= BI_RGB;
-    bmi->bmiHeader.biSizeImage		= gif->SWidth*gif->SHeight;
+    bmi->bmiHeader.biSizeImage		= padding*gif->SHeight;
     bmi->bmiHeader.biXPelsPerMeter	= 0;
     bmi->bmiHeader.biYPelsPerMeter	= 0;
     bmi->bmiHeader.biClrUsed		= 1 << gif->SColorResolution;
