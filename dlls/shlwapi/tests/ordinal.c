@@ -60,6 +60,7 @@ static void test_GetAcceptLanguagesA(void)
     }
     ok( (ERROR_NO_IMPERSONATION_TOKEN == GetLastError()) || 
 	(ERROR_CLASS_DOES_NOT_EXIST == GetLastError()) ||
+	(ERROR_PROC_NOT_FOUND == GetLastError()) ||
 	(ERROR_SUCCESS == GetLastError()), "last error set to %ld\n", GetLastError());
     exactsize = strlen(buffer);
 
