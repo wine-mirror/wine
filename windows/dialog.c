@@ -22,9 +22,7 @@
 #include "drive.h"
 #include "heap.h"
 #include "win.h"
-#include "ldt.h"
 #include "user.h"
-#include "winproc.h"
 #include "message.h"
 #include "queue.h"
 #include "debugtools.h"
@@ -1267,6 +1265,9 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                 {
                     /* find the accelerator key */
                     LPWSTR p = wndPtr->text - 2;
+		    char a_char = vKey;
+		    WCHAR w_char = 0;
+
                     do
                     {
                         p = strchrW( p + 2, '&' );
@@ -1274,8 +1275,8 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                     while (p != NULL && p[1] == '&');
 
                     /* and check if it's the one we're looking for */
-		    /* FIXME: convert vKey to unicode */
-                    if (p != NULL && toupperW( p[1] ) == (WCHAR)toupper( vKey ) )
+		    MultiByteToWideChar(CP_ACP, 0, &a_char, 1, &w_char, 1);
+                    if (p != NULL && toupperW( p[1] ) == toupperW( w_char ) )
                     {
                         if ((dlgCode & DLGC_STATIC) || 
                             (wndPtr->dwStyle & 0x0f) == BS_GROUPBOX )
@@ -1385,6 +1386,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
 
       /* Only the key messages get special processing */
     if ((message != WM_KEYDOWN) &&
+        (message != WM_SYSKEYDOWN) &&
         (message != WM_SYSCHAR) &&
 	(message != WM_CHAR))
         return FALSE;
@@ -1462,6 +1464,10 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
             return TRUE;
         }
         break;
+
+    case WM_SYSKEYDOWN:
+        *translate = TRUE;
+        break;
     }
 
     /* If we get here, the message has not been treated specially */
@@ -1484,7 +1490,6 @@ BOOL16 WINAPI WIN16_IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
         return FALSE;
 
     if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_SYSCHAR) ||
         (msg->message == WM_CHAR))
     {
        dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg16);
@@ -1521,7 +1526,6 @@ BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
         return FALSE;
 
     if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_SYSCHAR) ||
         (msg->message == WM_CHAR))
     {
         dlgCode = SendMessageA( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
@@ -1547,7 +1551,6 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
         return FALSE;
 
     if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_SYSCHAR) ||
         (msg->message == WM_CHAR))
     {
         dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
@@ -2419,6 +2422,11 @@ BOOL WINAPI DlgDirSelectComboBoxExW( HWND hwnd, LPWSTR str, INT len,
 INT16 WINAPI DlgDirList16( HWND16 hDlg, LPSTR spec, INT16 idLBox,
                            INT16 idStatic, UINT16 attrib )
 {
+    /* according to Win16 docs, DDL_DRIVES should make DDL_EXCLUSIVE
+     * be set automatically (this is different in Win32, and
+     * DIALOG_DlgDirList sends Win32 messages to the control,
+     * so do it here) */
+    if (attrib & DDL_DRIVES) attrib |= DDL_EXCLUSIVE;
     return DIALOG_DlgDirList( hDlg, spec, idLBox, idStatic, attrib, FALSE );
 }
 
