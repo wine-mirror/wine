@@ -40,6 +40,7 @@ LN_S      = @LN_S@
 DIVINCL   = -I$(SRCDIR) -I. -I$(TOPSRCDIR)/include -I$(TOPOBJDIR)/include
 ALLCFLAGS = $(DIVINCL) $(CFLAGS) $(DEFS) $(OPTIONS) $(X_CFLAGS)
 LDCOMBINE = ld -r
+LDFLAGS   = @LDFLAGS@
 AR        = ar rc
 RM        = rm -f
 MV        = mv

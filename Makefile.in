@@ -115,7 +115,7 @@ Make.rules: Make.rules.in configure
 	@exit 1
 
 wine: libwine.$(LIBEXT) libwine_unicode.$(LIBEXT) dlls $(EMUOBJS)
-	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS)
+	$(CC) -o wine $(EMUOBJS) $(DLL_LINK) $(LIBS) $(LDFLAGS)
 
 llib-lwine.ln : $(LIBLINTS)
 	$(LINT) $(ALLLINTFLAGS) -owine $(LIBLINTS)
