@@ -7688,7 +7688,7 @@ static LRESULT LISTVIEW_GetFont(HWND hwnd)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [I] INT : scroll code
- * [I] SHORT : current scroll position if scroll code is SB_THIMBPOSITION 
+ * [I] SHORT : current scroll position if scroll code is SB_THUMBPOSITION 
  *             or SB_THUMBTRACK.
  * [I] HWND : scrollbar control window handle
  *
@@ -7754,6 +7754,7 @@ static LRESULT LISTVIEW_VScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
       }
       break;
 
+    case SB_THUMBPOSITION:
     case SB_THUMBTRACK:
         scrollInfo.nPos = nCurrentPos;
         if (scrollInfo.nPos > scrollInfo.nMax)
@@ -7851,6 +7852,7 @@ static LRESULT LISTVIEW_HScroll(HWND hwnd, INT nScrollCode, SHORT nCurrentPos,
       }
       break;
 
+    case SB_THUMBPOSITION:
     case SB_THUMBTRACK:
         scrollInfo.nPos = nCurrentPos;
 
