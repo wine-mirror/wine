@@ -124,12 +124,12 @@ inline static void set_button_state( HWND hwnd, LONG state )
 
 inline static HFONT get_button_font( HWND hwnd )
 {
-    return GetWindowLongA( hwnd, HFONT_GWL_OFFSET );
+    return (HFONT)GetWindowLongA( hwnd, HFONT_GWL_OFFSET );
 }
 
 inline static void set_button_font( HWND hwnd, HFONT font )
 {
-    SetWindowLongA( hwnd, HFONT_GWL_OFFSET, font );
+    SetWindowLongA( hwnd, HFONT_GWL_OFFSET, (LONG)font );
 }
 
 inline static UINT get_button_type( LONG window_style )
@@ -308,9 +308,11 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         HBRUSH hbrush;
         RECT client, rc;
 
-        hbrush = SendMessageW(GetParent(hWnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hWnd);
+        hbrush = (HBRUSH)SendMessageW(GetParent(hWnd), WM_CTLCOLORSTATIC,
+				      (WPARAM)hdc, (LPARAM)hWnd);
         if (!hbrush) /* did the app forget to call DefWindowProc ? */
-            hbrush = DefWindowProcW(GetParent(hWnd), WM_CTLCOLORSTATIC, hdc, (LPARAM)hWnd);
+            hbrush = (HBRUSH)DefWindowProcW(GetParent(hWnd), WM_CTLCOLORSTATIC,
+					    (WPARAM)hdc, (LPARAM)hWnd);
 
         GetClientRect(hWnd, &client);
         rc = client;
@@ -331,12 +333,12 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
     }
 
     case WM_SETFONT:
-        set_button_font( hWnd, wParam );
+        set_button_font( hWnd, (HFONT)wParam );
         if (lParam) paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
         break;
 
     case WM_GETFONT:
-        return get_button_font( hWnd );
+        return (LRESULT)get_button_font( hWnd );
 
     case WM_SETFOCUS:
         if ((btn_type == BS_RADIOBUTTON || btn_type == BS_AUTORADIOBUTTON) && (GetCapture() != hWnd) &&
@@ -394,9 +396,9 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         default:
             return 0;
         }
-        oldHbitmap = SetWindowLongA( hWnd, HIMAGE_GWL_OFFSET, lParam );
+        oldHbitmap = (HBITMAP)SetWindowLongA( hWnd, HIMAGE_GWL_OFFSET, lParam );
 	InvalidateRect( hWnd, NULL, FALSE );
-	return oldHbitmap;
+	return (LRESULT)oldHbitmap;
 
     case BM_GETIMAGE:
         return GetWindowLongA( hWnd, HIMAGE_GWL_OFFSET );
@@ -716,7 +718,7 @@ static void PB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
-    SendMessageW( GetParent(hwnd), WM_CTLCOLORBTN, hDC, (LPARAM)hwnd );
+    SendMessageW( GetParent(hwnd), WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hwnd );
     hOldPen = (HPEN)SelectObject(hDC, SYSCOLOR_GetPen(COLOR_WINDOWFRAME));
     hOldBrush =(HBRUSH)SelectObject(hDC,GetSysColorBrush(COLOR_BTNFACE));
     oldBkMode = SetBkMode(hDC, TRANSPARENT);
@@ -841,9 +843,11 @@ static void CB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
 
-    hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
+    hBrush = (HBRUSH)SendMessageW(GetParent(hwnd), WM_CTLCOLORSTATIC,
+				  (WPARAM)hDC, (LPARAM)hwnd);
     if (!hBrush) /* did the app forget to call defwindowproc ? */
-        hBrush = DefWindowProcW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
+        hBrush = (HBRUSH)DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC,
+					(WPARAM)hDC, (LPARAM)hwnd );
 
     if (style & BS_LEFTTEXT)
     {
@@ -989,9 +993,10 @@ static void GB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
     /* GroupBox acts like static control, so it sends CTLCOLORSTATIC */
-    hbr = SendMessageW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
+    hbr = (HBRUSH)SendMessageW(GetParent(hwnd), WM_CTLCOLORSTATIC, (WPARAM)hDC, (LPARAM)hwnd);
     if (!hbr) /* did the app forget to call defwindowproc ? */
-        hbr = DefWindowProcW( GetParent(hwnd), WM_CTLCOLORSTATIC, hDC, (LPARAM)hwnd );
+        hbr = (HBRUSH)DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC,
+				     (WPARAM)hDC, (LPARAM)hwnd);
 
     GetClientRect( hwnd, &rc);
     if (TWEAK_WineLook == WIN31_LOOK) {
@@ -1049,9 +1054,10 @@ static void UB_Paint( HWND hwnd, HDC hDC, UINT action )
 
     if ((hFont = get_button_font( hwnd ))) SelectObject( hDC, hFont );
 
-    hBrush = SendMessageW( GetParent(hwnd), WM_CTLCOLORBTN, hDC, (LPARAM)hwnd );
+    hBrush = (HBRUSH)SendMessageW(GetParent(hwnd), WM_CTLCOLORBTN, (WPARAM)hDC, (LPARAM)hwnd);
     if (!hBrush) /* did the app forget to call defwindowproc ? */
-        hBrush = DefWindowProcW( GetParent(hwnd), WM_CTLCOLORBTN, hDC, (LPARAM)hwnd );
+        hBrush = (HBRUSH)DefWindowProcW(GetParent(hwnd), WM_CTLCOLORBTN,
+					(WPARAM)hDC, (LPARAM)hwnd);
 
     FillRect( hDC, &rc, hBrush );
     if ((action == ODA_FOCUS) ||
@@ -1098,4 +1104,3 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     SendMessageW( GetParent(hwnd), WM_DRAWITEM, id, (LPARAM)&dis );
     SelectClipRgn(hDC, clipRegion);
 }
-

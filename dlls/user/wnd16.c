@@ -24,8 +24,9 @@
 #include "win.h"
 #include "stackframe.h"
 
-/* handle --> handle16 conversions */
+/* handle <--> handle16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
+#define HANDLE_32(h16)		((HANDLE)(ULONG_PTR)(h16))
 
 static HWND16 hwndSysModal;
 
@@ -131,7 +132,7 @@ HANDLE16 WINAPI GetProp16( HWND16 hwnd, LPCSTR str )
  */
 BOOL16 WINAPI SetProp16( HWND16 hwnd, LPCSTR str, HANDLE16 handle )
 {
-    return SetPropA( WIN_Handle32(hwnd), str, handle );
+    return SetPropA( WIN_Handle32(hwnd), str, HANDLE_32(handle) );
 }
 
 
@@ -257,7 +258,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     PAINTSTRUCT ps;
 
     BeginPaint( WIN_Handle32(hwnd), &ps );
-    lps->hdc            = ps.hdc;
+    lps->hdc            = HDC_16(ps.hdc);
     lps->fErase         = ps.fErase;
     lps->rcPaint.top    = ps.rcPaint.top;
     lps->rcPaint.left   = ps.rcPaint.left;
@@ -276,7 +277,7 @@ BOOL16 WINAPI EndPaint16( HWND16 hwnd, const PAINTSTRUCT16* lps )
 {
     PAINTSTRUCT ps;
 
-    ps.hdc = lps->hdc;
+    ps.hdc = HDC_32(lps->hdc);
     return EndPaint( WIN_Handle32(hwnd), &ps );
 }
 
@@ -1153,7 +1154,7 @@ HWND16 WINAPI GetOpenClipboardWindow16(void)
  */
 HDWP16 WINAPI BeginDeferWindowPos16( INT16 count )
 {
-    return BeginDeferWindowPos( count );
+    return HDWP_16(BeginDeferWindowPos( count ));
 }
 
 

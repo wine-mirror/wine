@@ -250,7 +250,7 @@ static HRESULT ICO_ExtractIconExW(
 	UINT cxDesired,
 	UINT cyDesired )
 {
-	HGLOBAL		hRet = E_FAIL;
+	HRESULT		hRet = E_FAIL;
 	LPBYTE		pData;
 	DWORD		sig;
 	HANDLE		hFile;

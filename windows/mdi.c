@@ -186,7 +186,7 @@ const struct builtin_class_descr MDICLIENT_builtin_class =
     MDIClientWndProcW,      /* procW */
     sizeof(MDICLIENTINFO),  /* extra */
     IDC_ARROWA,             /* cursor */
-    COLOR_APPWORKSPACE+1    /* brush */
+    (HBRUSH)(COLOR_APPWORKSPACE+1)    /* brush */
 };
 
 
@@ -439,7 +439,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
         {
             if( ci->hwndChildMaximized )
                 MDI_AugmentFrameMenu( GetParent(hwnd), ci->hwndChildMaximized );
-            return oldFrameMenu;
+            return (LRESULT)oldFrameMenu;
         }
     }
     else
@@ -477,7 +477,7 @@ static LRESULT MDIRefreshMenu( HWND hwnd, HMENU hmenuFrame,
 
     FIXME("partially function stub\n");
 
-    return oldFrameMenu;
+    return (LRESULT)oldFrameMenu;
 }
 
 

@@ -691,8 +691,8 @@ static void LISTBOX_RepaintItem( HWND hwnd, LB_DESCR *descr, INT index,
     if (LISTBOX_GetItemRect( descr, index, &rect ) != 1) return;
     if (!(hdc = GetDCEx( hwnd, 0, DCX_CACHE ))) return;
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
-    hbrush = SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
-                             hdc, (LPARAM)hwnd );
+    hbrush = (HBRUSH)SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
+				   (WPARAM)hdc, (LPARAM)hwnd );
     if (hbrush) oldBrush = SelectObject( hdc, hbrush );
     if (!IsWindowEnabled(hwnd))
         SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
@@ -1012,8 +1012,8 @@ static LRESULT LISTBOX_Paint( HWND hwnd, LB_DESCR *descr, HDC hdc )
     }
 
     if (descr->font) oldFont = SelectObject( hdc, descr->font );
-    hbrush = SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
-                             hdc, (LPARAM)hwnd );
+    hbrush = (HBRUSH)SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
+			   	   (WPARAM)hdc, (LPARAM)hwnd );
     if (hbrush) oldBrush = SelectObject( hdc, hbrush );
     if (!IsWindowEnabled(hwnd)) SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
 
@@ -2245,7 +2245,7 @@ static LRESULT LISTBOX_HandleKeyDown( HWND hwnd, LB_DESCR *descr, WPARAM wParam 
     {
         caret = SendMessageW( descr->owner, WM_VKEYTOITEM,
                                 MAKEWPARAM(LOWORD(wParam), descr->focus_item),
-                                hwnd );
+                                (LPARAM)hwnd );
         if (caret == -2) return 0;
     }
     if (caret == -1) switch(wParam)
@@ -2926,7 +2926,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         LISTBOX_UpdateSize( hwnd, descr );
         return 0;
     case WM_GETFONT:
-        return descr->font;
+        return (LRESULT)descr->font;
     case WM_SETFONT:
         LISTBOX_SetFont( hwnd, descr, (HFONT)wParam );
         if (lParam) InvalidateRect( hwnd, 0, TRUE );
@@ -2987,7 +2987,7 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         if ((IS_OWNERDRAW(descr)) && !(descr->style & LBS_DISPLAYCHANGED))
         {
             RECT rect;
-            HBRUSH hbrush = SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
+            HBRUSH hbrush = (HBRUSH)SendMessageW( descr->owner, WM_CTLCOLORLISTBOX,
                                               wParam, (LPARAM)hwnd );
 	    TRACE("hbrush = %04x\n", hbrush);
 	    if(!hbrush)

@@ -168,8 +168,8 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
     {
         case WM_ERASEBKGND:
         {
-            HBRUSH brush = SendMessageW( hwnd, WM_CTLCOLORDLG, wParam, (LPARAM)hwnd );
-            if (!brush) brush = DefWindowProcW( hwnd, WM_CTLCOLORDLG, wParam, (LPARAM)hwnd );
+            HBRUSH brush = (HBRUSH)SendMessageW( hwnd, WM_CTLCOLORDLG, wParam, (LPARAM)hwnd );
+            if (!brush) brush = (HBRUSH)DefWindowProcW( hwnd, WM_CTLCOLORDLG, wParam, (LPARAM)hwnd );
             if (brush)
             {
                 RECT rect;
@@ -252,7 +252,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 	    return DefWindowProcA( hwnd, msg, wParam, lParam );
 
 	case WM_GETFONT:
-            return dlgInfo ? dlgInfo->hUserFont : 0;
+            return dlgInfo ? (LRESULT)dlgInfo->hUserFont : 0;
 
         case WM_CLOSE:
             PostMessageA( hwnd, WM_COMMAND, IDCANCEL,
