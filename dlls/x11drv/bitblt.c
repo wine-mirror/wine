@@ -1126,13 +1126,15 @@ static int BITBLT_PutDstArea(X11DRV_PDEVICE *physDev, Pixmap pixmap, RECT *visRe
  * Get the source and destination visible rectangles for StretchBlt().
  * Return FALSE if one of the rectangles is empty.
  */
-static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
+static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                                      INT widthDst, INT heightDst,
-                                     DC *dcSrc, INT xSrc, INT ySrc,
+                                     X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
                                      INT widthSrc, INT heightSrc,
                                      RECT *visRectSrc, RECT *visRectDst )
 {
     RECT rect, clipRect;
+    DC *dcSrc = physDevSrc ? physDevSrc->dc : NULL;
+    DC *dcDst = physDevDst->dc;
 
       /* Get the destination visible rectangle */
 
@@ -1147,7 +1149,7 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, INT xDst, INT yDst,
 
       /* Get the source visible rectangle */
 
-    if (!dcSrc) return TRUE;
+    if (!physDevSrc) return TRUE;
     rect.left   = xSrc;
     rect.top    = ySrc;
     rect.right  = xSrc + widthSrc;
@@ -1229,8 +1231,6 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     Pixmap pixmaps[3] = { 0, 0, 0 };  /* pixmaps for DST, SRC, TMP */
     GC tmpGC = 0;
     POINT pts[2];
-    DC *dcSrc = physDevSrc ? physDevSrc->dc : NULL;
-    DC *dcDst = physDevDst->dc;
 
     /* compensate for off-by-one shifting for negative widths and heights */
     if (widthDst < 0)
@@ -1245,7 +1245,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     usePat = (((rop >> 4) & 0x0f0000) != (rop & 0x0f0000));
     useSrc = (((rop >> 2) & 0x330000) != (rop & 0x330000));
     useDst = (((rop >> 1) & 0x550000) != (rop & 0x550000));
-    if (!dcSrc && useSrc) return FALSE;
+    if (!physDevSrc && useSrc) return FALSE;
 
       /* Map the coordinates to device coords */
 
@@ -1259,11 +1259,6 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     widthDst  = pts[1].x - pts[0].x;
     heightDst = pts[1].y - pts[0].y;
 
-    TRACE("    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
-                    dcDst->vportOrgX, dcDst->vportOrgY,
-                    dcDst->vportExtX, dcDst->vportExtY,
-                    dcDst->wndOrgX, dcDst->wndOrgY,
-                    dcDst->wndExtX, dcDst->wndExtY );
     TRACE("    rectdst=%d,%d-%d,%d orgdst=%ld,%ld\n",
                     xDst, yDst, widthDst, heightDst,
                     physDevDst->org.x, physDevDst->org.y );
@@ -1281,16 +1276,11 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         heightSrc = pts[1].y - pts[0].y;
 
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
-        TRACE("    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
-                        dcSrc->vportOrgX, dcSrc->vportOrgY,
-                        dcSrc->vportExtX, dcSrc->vportExtY,
-                        dcSrc->wndOrgX, dcSrc->wndOrgY,
-                        dcSrc->wndExtX, dcSrc->wndExtY );
         TRACE("    rectsrc=%d,%d-%d,%d orgsrc=%ld,%ld\n",
                         xSrc, ySrc, widthSrc, heightSrc,
                         physDevSrc->org.x, physDevSrc->org.y );
-        if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
-                                      dcSrc, xSrc, ySrc, widthSrc, heightSrc,
+        if (!BITBLT_GetVisRectangles( physDevDst, xDst, yDst, widthDst, heightDst,
+                                      physDevSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
         TRACE("    vissrc=%ld,%ld-%ld,%ld visdst=%ld,%ld-%ld,%ld\n",
@@ -1302,7 +1292,7 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
     else
     {
         fStretch = FALSE;
-        if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
+        if (!BITBLT_GetVisRectangles( physDevDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
         TRACE("    vissrc=none visdst=%ld,%ld-%ld,%ld\n",
@@ -1551,8 +1541,6 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
     BOOL result = FALSE;
     INT sSrc, sDst;
     RECT visRectDst, visRectSrc;
-    DC *dcSrc = physDevSrc ? physDevSrc->dc : NULL;
-    DC *dcDst = physDevDst->dc;
 
     if (((rop >> 16) & 0x55) == ((rop >> 17) & 0x55)) {
       /* FIXME: seems the ROP doesn't include destination;
@@ -1588,8 +1576,8 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
       yDst = pts[0].y;
 
       /* Perform basic clipping */
-      if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, width, height,
-                                    dcSrc, xSrc, ySrc, width, height,
+      if (!BITBLT_GetVisRectangles( physDevDst, xDst, yDst, width, height,
+                                    physDevSrc, xSrc, ySrc, width, height,
                                     &visRectSrc, &visRectDst ))
         goto END;
 

@@ -848,9 +848,8 @@ static int X11DRV_SysPaletteLookupPixel( COLORREF col, BOOL skipReserved )
  */
 int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    DC *dc = physDev ? physDev->dc : NULL;
     WORD 		 index = 0;
-    HPALETTE		 hPal = (dc)? dc->hPalette: GetStockObject(DEFAULT_PALETTE);
+    HPALETTE hPal = physDev ? GetCurrentObject(physDev->hdc, OBJ_PAL ) : GetStockObject(DEFAULT_PALETTE);
     unsigned char	 spec_type = color >> 24;
     PALETTEOBJ* 	 palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
@@ -935,7 +934,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
     {
 
 	if( !palPtr->mapping )
-            WARN("Palette %p is not realized\n", dc->hPalette);
+            WARN("Palette %p is not realized\n", hPal);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{

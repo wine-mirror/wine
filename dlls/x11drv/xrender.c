@@ -32,6 +32,8 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "x11drv.h"
+#include "gdi.h"
+#include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -492,7 +494,7 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
         XFreePixmap(gdi_display, physDev->xrender->tile_xpm);
 
     if(physDev->xrender->pict) {
-	TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->dc);
+	TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->hdc);
         pXRenderFreePicture(gdi_display, physDev->xrender->pict);
     }
     wine_tsx11_unlock();
@@ -517,7 +519,7 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
     if(physDev->xrender->pict) {
         TRACE("freeing pict %08lx from dc %p drawable %08lx\n", physDev->xrender->pict,
-	      physDev->dc, physDev->drawable);
+              physDev->hdc, physDev->drawable);
         wine_tsx11_lock();
         XFlush(gdi_display);
         pXRenderFreePicture(gdi_display, physDev->xrender->pict);
@@ -951,6 +953,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     int textPixel, backgroundPixel;
     INT *deltas = NULL;
     INT char_extra;
+    UINT align = GetTextAlign( hdc );
 
     TRACE("%p, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
@@ -965,11 +968,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if(lprect)
       TRACE("rect: %ld,%ld - %ld,%ld\n", lprect->left, lprect->top, lprect->right,
 	    lprect->bottom);
-    TRACE("align = %x bkmode = %x mapmode = %x\n", dc->textAlign, GetBkMode(hdc), dc->MapMode);
+    TRACE("align = %x bkmode = %x mapmode = %x\n", align, GetBkMode(hdc), dc->MapMode);
 
-    if(dc->textAlign & TA_UPDATECP) {
-        x = dc->CursPosX;
-	y = dc->CursPosY;
+    if(align & TA_UPDATECP)
+    {
+        GetCurrentPositionEx( hdc, &pt );
+        x = pt.x;
+        y = pt.y;
     }
 
     GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
@@ -994,7 +999,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    rc = *lprect;
 	}
 
-	LPtoDP(physDev->hdc, (POINT*)&rc, 2);
+	LPtoDP(hdc, (POINT*)&rc, 2);
 
 	if(rc.left > rc.right) {INT tmp = rc.left; rc.left = rc.right; rc.right = tmp;}
 	if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
@@ -1038,13 +1043,13 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
     pt.x = x;
     pt.y = y;
-    LPtoDP(physDev->hdc, &pt, 1);
+    LPtoDP(hdc, &pt, 1);
     x = pt.x;
     y = pt.y;
 
     TRACE("real x,y %d,%d\n", x, y);
 
-    if((char_extra = GetTextCharacterExtra(physDev->hdc)) != 0) {
+    if((char_extra = GetTextCharacterExtra(hdc)) != 0) {
         INT i;
 	SIZE tmpsz;
         deltas = HeapAlloc(GetProcessHeap(), 0, count * sizeof(INT));
@@ -1080,12 +1085,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     tm.tmDescent = X11DRV_YWStoDS(physDev, tm.tmDescent);
     switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
-        if (dc->textAlign & TA_UPDATECP) {
+        if (align & TA_UPDATECP) {
 	    pt.x = x + xwidth;
 	    pt.y = y - ywidth;
-	    DPtoLP(physDev->hdc, &pt, 1);
-	    dc->CursPosX = pt.x;
-	    dc->CursPosY = pt.y;
+	    DPtoLP(hdc, &pt, 1);
+	    MoveToEx(hdc, pt.x, pt.y, NULL);
 	}
 	break;
 
@@ -1097,17 +1101,16 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     case TA_RIGHT:
         x -= xwidth;
 	y += ywidth;
-	if (dc->textAlign & TA_UPDATECP) {
+	if (align & TA_UPDATECP) {
 	    pt.x = x;
 	    pt.y = y;
-	    DPtoLP(physDev->hdc, &pt, 1);
-	    dc->CursPosX = pt.x;
-	    dc->CursPosY = pt.y;
+	    DPtoLP(hdc, &pt, 1);
+	    MoveToEx(hdc, pt.x, pt.y, NULL);
 	}
 	break;
     }
 
-    switch( dc->textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) ) {
+    switch( align & (TA_TOP | TA_BOTTOM | TA_BASELINE) ) {
     case TA_TOP:
         y += tm.tmAscent * cosEsc;
 	x += tm.tmAscent * sinEsc;
@@ -1125,7 +1128,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if (flags & ETO_CLIPPED)
     {
         SaveVisRgn16( HDC_16(hdc) );
-        IntersectVisRect16( HDC_16(dc->hSelf), lprect->left, lprect->top, lprect->right, lprect->bottom );
+        IntersectVisRect16( HDC_16(hdc), lprect->left, lprect->top, lprect->right, lprect->bottom );
     }
 
     if(X11DRV_XRender_Installed) {

@@ -39,7 +39,6 @@
 #include "bitmap.h"
 #include "x11drv.h"
 #include "wine/debug.h"
-#include "gdi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 WINE_DECLARE_DEBUG_CHANNEL(x11drv);
@@ -3786,9 +3785,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   PALETTEENTRY palette[256];
   BITMAPOBJ *bmp;
   int height;
-  DC *dc = physDev->dc;
 
-  GetPaletteEntries( dc->hPalette, 0, 256, palette );
+  GetPaletteEntries( GetCurrentObject( physDev->hdc, OBJ_PAL ), 0, 256, palette );
 
   if (!(bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
 
@@ -4007,11 +4005,10 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
                                DWORD width, DWORD height)
 {
   BITMAPOBJ *bmp;
-  DC *dcSrc = physDevSrc->dc;
-  DC *dcDst = physDevDst->dc;
+  HBITMAP hBitmap;
   int nColorMap = 0, *colorMap = NULL, aColorMap = FALSE;
 
-  TRACE("(%p,%p,%ld,%ld,%ld,%ld,%ld,%ld)\n", dcSrc, dcDst,
+  TRACE("(%p,%p,%ld,%ld,%ld,%ld,%ld,%ld)\n", physDevSrc->hdc, physDevDst->hdc,
     xSrc, ySrc, xDest, yDest, width, height);
   /* this function is meant as an optimization for BitBlt,
    * not to be called otherwise */
@@ -4020,10 +4017,11 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     return;
   }
 
-  bmp = (BITMAPOBJ *)GDI_GetObjPtr( dcSrc->hBitmap, BITMAP_MAGIC );
+  hBitmap = GetCurrentObject( physDevSrc->hdc, OBJ_BITMAP );
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC );
   if (!(bmp && bmp->dib)) {
     ERR("called for non-DIBSection!?\n");
-    GDI_ReleaseObj( dcSrc->hBitmap );
+    GDI_ReleaseObj( hBitmap );
     return;
   }
   /* while BitBlt should already have made sure we only get
@@ -4038,8 +4036,8 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
      * DC's palette for color conversion (not the DIB color table) */
     if (bmp->dib->dsBm.bmBitsPixel <= 8) {
       X11DRV_DIBSECTION *dib = (X11DRV_DIBSECTION *) bmp->dib;
-      if ((!dcSrc->hPalette) ||
-	  (dcSrc->hPalette == GetStockObject(DEFAULT_PALETTE))) {
+      HPALETTE hPalette = GetCurrentObject( physDevSrc->hdc, OBJ_PAL );
+      if (!hPalette || (hPalette == GetStockObject(DEFAULT_PALETTE))) {
 	/* HACK: no palette has been set in the source DC,
 	 * use the DIB colormap instead - this is necessary in some
 	 * cases since we need to do depth conversion in some places
@@ -4063,7 +4061,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     if (aColorMap)
       HeapFree(GetProcessHeap(), 0, colorMap);
   }
-  GDI_ReleaseObj( dcSrc->hBitmap );
+  GDI_ReleaseObj( hBitmap );
 }
 
 /***********************************************************************
@@ -4418,7 +4416,7 @@ void X11DRV_UnlockDIBSection2(HBITMAP hBmp, BOOL commit)
 INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
 {
   if (!physDev) return DIB_Status_None;
-  return X11DRV_CoerceDIBSection2( physDev->dc->hBitmap, req, lossy );
+  return X11DRV_CoerceDIBSection2( GetCurrentObject( physDev->hdc, OBJ_BITMAP ), req, lossy );
 }
 
 /***********************************************************************
@@ -4429,7 +4427,7 @@ INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
   if (!physDev) return DIB_Status_None;
   if (GetObjectType( physDev->hdc ) != OBJ_MEMDC) return DIB_Status_None;
 
-  return X11DRV_LockDIBSection2( physDev->dc->hBitmap, req, lossy );
+  return X11DRV_LockDIBSection2( GetCurrentObject( physDev->hdc, OBJ_BITMAP ), req, lossy );
 }
 
 /***********************************************************************
@@ -4440,7 +4438,7 @@ void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev, BOOL commit)
   if (!physDev) return;
   if (GetObjectType( physDev->hdc ) != OBJ_MEMDC) return;
 
-  X11DRV_UnlockDIBSection2( physDev->dc->hBitmap, commit );
+  X11DRV_UnlockDIBSection2( GetCurrentObject( physDev->hdc, OBJ_BITMAP ), commit );
 }
 
 
@@ -4710,8 +4708,9 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
     BITMAPOBJ * bmp;
     X11DRV_DIBSECTION *dib;
     UINT ret = 0;
+    HBITMAP hBitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
 
-    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( physDev->dc->hBitmap, BITMAP_MAGIC ))) return 0;
+    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC ))) return 0;
     dib = (X11DRV_DIBSECTION *) bmp->dib;
 
     if (dib && dib->colorMap) {
@@ -4729,7 +4728,7 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
         X11DRV_DIB_Unlock(bmp, TRUE);
         ret = end - start;
     }
-    GDI_ReleaseObj( physDev->dc->hBitmap );
+    GDI_ReleaseObj( hBitmap );
     return ret;
 }
 
@@ -4741,8 +4740,9 @@ UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, R
     BITMAPOBJ * bmp;
     X11DRV_DIBSECTION *dib;
     UINT ret = 0;
+    HBITMAP hBitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
 
-    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( physDev->dc->hBitmap, BITMAP_MAGIC ))) return 0;
+    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( hBitmap, BITMAP_MAGIC ))) return 0;
     dib = (X11DRV_DIBSECTION *) bmp->dib;
 
     if (dib && dib->colorMap) {
@@ -4757,7 +4757,7 @@ UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, R
         }
         ret = end-start;
     }
-    GDI_ReleaseObj( physDev->dc->hBitmap );
+    GDI_ReleaseObj( hBitmap );
     return ret;
 }
 

@@ -58,6 +58,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     BOOL                result = TRUE;
     POINT               pt;
     DC *dc = physDev->dc;
+    UINT align = GetTextAlign( physDev->hdc );
 
     if(dc->gdiFont)
         return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count,
@@ -76,7 +77,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
     TRACE("hdc=%p df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
-	  dc->hSelf, (UINT16)(physDev->font), x, y,
+	  physDev->hdc, (UINT16)(physDev->font), x, y,
 	  debugstr_wn (wstr, count), count, flags, lpDx);
 
     /* some strings sent here end in a newline for whatever reason.  I have no
@@ -89,10 +90,11 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                                      lprect->right, lprect->bottom );
       /* Setup coordinates */
 
-    if (dc->textAlign & TA_UPDATECP)
+    if (align & TA_UPDATECP)
     {
-	x = dc->CursPosX;
-	y = dc->CursPosY;
+        GetCurrentPositionEx( physDev->hdc, &pt );
+        x = pt.x;
+        y = pt.y;
     }
 
     if (flags & (ETO_OPAQUE | ETO_CLIPPED))  /* there's a rectangle */
@@ -167,26 +169,24 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     ywidth = pfo->lpX11Trans ? width * pfo->lpX11Trans->b /
       pfo->lpX11Trans->pixelsize : 0;
 
-    switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
+    switch( align & (TA_LEFT | TA_RIGHT | TA_CENTER) )
     {
       case TA_LEFT:
-	  if (dc->textAlign & TA_UPDATECP) {
+	  if (align & TA_UPDATECP) {
 	      pt.x = x + xwidth;
 	      pt.y = y - ywidth;
 	      DPtoLP(physDev->hdc, &pt, 1);
-	      dc->CursPosX = pt.x;
-	      dc->CursPosY = pt.y;
+	      MoveToEx(physDev->hdc, pt.x, pt.y, NULL);
 	  }
 	  break;
       case TA_RIGHT:
 	  x -= xwidth;
 	  y += ywidth;
-	  if (dc->textAlign & TA_UPDATECP) {
+	  if (align & TA_UPDATECP) {
 	      pt.x = x;
 	      pt.y = y;
 	      DPtoLP(physDev->hdc, &pt, 1);
-	      dc->CursPosX = pt.x;
-	      dc->CursPosY = pt.y;
+	      MoveToEx(physDev->hdc, pt.x, pt.y, NULL);
 	  }
 	  break;
       case TA_CENTER:
@@ -195,7 +195,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 	  break;
     }
 
-    switch( dc->textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
+    switch( align & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
     {
       case TA_TOP:
 	  x -= pfo->lpX11Trans ? ascent * pfo->lpX11Trans->c /
@@ -217,8 +217,8 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn16( HDC_16(dc->hSelf) );
-        IntersectVisRect16( HDC_16(dc->hSelf), lprect->left, lprect->top, lprect->right, lprect->bottom );
+        SaveVisRgn16( HDC_16(physDev->hdc) );
+        IntersectVisRect16( HDC_16(physDev->hdc), lprect->left, lprect->top, lprect->right, lprect->bottom );
     }
 
       /* Draw the text background if necessary */
@@ -410,7 +410,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     }
     wine_tsx11_unlock();
 
-    if (flags & ETO_CLIPPED) RestoreVisRgn16( HDC_16(dc->hSelf) );
+    if (flags & ETO_CLIPPED) RestoreVisRgn16( HDC_16(physDev->hdc) );
     goto END;
 
 FAIL:

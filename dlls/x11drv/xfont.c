@@ -42,6 +42,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "x11font.h"
+#include "gdi.h"
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -3258,15 +3259,14 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 {
     LOGFONTW logfont;
     LOGFONT16 lf;
-    DC *dc = physDev->dc;
 
-    TRACE("dc=%p, hfont=%p\n", dc, hfont);
+    TRACE("hdc=%p, hfont=%p\n", physDev->hdc, hfont);
 
     if (!GetObjectW( hfont, sizeof(logfont), &logfont )) return HGDI_ERROR;
 
-    TRACE("dc->gdiFont = %p\n", dc->gdiFont);
+    TRACE("dc->gdiFont = %p\n", physDev->dc->gdiFont);
 
-    if(dc->gdiFont && using_client_side_fonts) {
+    if(physDev->dc->gdiFont && using_client_side_fonts) {
         X11DRV_XRender_SelectFont(physDev, hfont);
 	return FALSE;
     }
@@ -3302,7 +3302,7 @@ HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
     }
 
     if (!lf.lfHeight)
-        lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(dc->hSelf,LOGPIXELSY) + (72>>1)) / 72;
+        lf.lfHeight = -(DEF_POINT_SIZE * GetDeviceCaps(physDev->hdc,LOGPIXELSY) + (72>>1)) / 72;
 
     {
 	/* Fixup aliases before passing to RealizeFont */

@@ -21,10 +21,13 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
-#include "gdi.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "psdrv.h"
 #include "winspool.h"
 #include "wine/debug.h"
@@ -823,8 +826,8 @@ BOOL PSDRV_WriteDIBPatternDict(PSDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usa
     sprintf(buf, start, w, h, w, h);
     PSDRV_WriteSpool(physDev,  buf, strlen(buf));
     PSDRV_WriteIndexColorSpaceBegin(physDev, 1);
-    map[0] = physDev->dc->textColor;
-    map[1] = physDev->dc->backgroundColor;
+    map[0] = GetTextColor( physDev->hdc );
+    map[1] = GetBkColor( physDev->hdc );
     PSDRV_WriteRGB(physDev, map, 2);
     PSDRV_WriteIndexColorSpaceEnd(physDev);
     ptr = buf;

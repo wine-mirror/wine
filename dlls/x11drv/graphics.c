@@ -38,7 +38,6 @@
 
 #include "x11drv.h"
 #include "x11font.h"
-#include "gdi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
@@ -1285,12 +1284,12 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
 {
     XImage *image;
     RECT rect;
-    DC *dc = physDev->dc;
 
     TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n", x, y, color, fillType );
 
     if (!PtVisible( physDev->hdc, x, y )) return FALSE;
-    if (GetRgnBox( dc->hGCClipRgn, &rect ) == ERROR) return FALSE;
+    if (GetClipBox( physDev->hdc, &rect ) == ERROR) return FALSE;
+    LPtoDP( physDev->hdc, (LPPOINT)&rect, 2 );
 
     wine_tsx11_lock();
     image = XGetImage( gdi_display, physDev->drawable,

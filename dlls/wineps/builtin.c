@@ -20,6 +20,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include <assert.h>
 
 #include "windef.h"
@@ -28,7 +29,6 @@
 #include "wingdi.h"
 #include "winspool.h"
 
-#include "gdi.h"
 #include "psdrv.h"
 #include "wine/debug.h"
 
@@ -257,7 +257,6 @@ BOOL PSDRV_WriteBuiltinGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count)
  */
 BOOL PSDRV_GetTextMetrics(PSDRV_PDEVICE *physDev, TEXTMETRICW *metrics)
 {
-    assert(physDev->dc->gdiFont == 0);
     assert(physDev->font.fontloc == Builtin);
 
     memcpy(metrics, &(physDev->font.fontinfo.Builtin.tm),
@@ -311,8 +310,8 @@ BOOL PSDRV_GetTextExtentPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count, LP
 {
     int     	    i;
     float   	    width = 0.0;
+    POINT pt[3];
 
-    assert(physDev->dc->gdiFont == 0);
     assert(physDev->font.fontloc == Builtin);
 
     TRACE("%s %i\n", debugstr_wn(str, count), count);
@@ -322,9 +321,16 @@ BOOL PSDRV_GetTextExtentPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count, LP
 
     width *= physDev->font.fontinfo.Builtin.scale;
 
-    size->cx = GDI_ROUND((FLOAT)width * physDev->dc->xformVport2World.eM11);
-    size->cy = GDI_ROUND((FLOAT)physDev->font.fontinfo.Builtin.tm.tmHeight *
-    	    physDev->dc->xformVport2World.eM22);
+    /* convert back to logical coords */
+    pt[0].x = 0;
+    pt[0].y = 0;
+    pt[1].x = width;
+    pt[1].y = 0;
+    pt[2].x = 0;
+    pt[2].y = physDev->font.fontinfo.Builtin.tm.tmHeight;
+    DPtoLP( physDev->hdc, pt, 3 );
+    size->cx = pt[1].x - pt[0].x;
+    size->cy = pt[2].y - pt[0].y;
 
     TRACE("cx=%li cy=%li\n", size->cx, size->cy);
 
@@ -338,7 +344,6 @@ BOOL PSDRV_GetCharWidth(PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, L
 {
     UINT    	    i;
 
-    assert(physDev->dc->gdiFont == 0);
     assert(physDev->font.fontloc == Builtin);
 
     TRACE("U+%.4X U+%.4X\n", firstChar, lastChar);
@@ -351,8 +356,8 @@ BOOL PSDRV_GetCharWidth(PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, L
 
     for (i = firstChar; i <= lastChar; ++i)
     {
-    	*buffer = GDI_ROUND(PSDRV_UVMetrics(i, physDev->font.fontinfo.Builtin.afm)->WX
-	    	* physDev->font.fontinfo.Builtin.scale);
+        *buffer = floor( PSDRV_UVMetrics(i, physDev->font.fontinfo.Builtin.afm)->WX
+                         * physDev->font.fontinfo.Builtin.scale + 0.5 );
 	TRACE("U+%.4X: %i\n", i, *buffer);
 	++buffer;
     }
