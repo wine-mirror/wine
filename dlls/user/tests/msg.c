@@ -30,6 +30,7 @@
 
 #include "wine/test.h"
 
+#define MDI_FIRST_CHILD_ID 2004
 
 /*
 FIXME: add tests for these
@@ -238,7 +239,7 @@ static const struct message WmCreateMaximizedChildSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent },
-    { WM_NCCALCSIZE, sent },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGED, sent },
     { WM_SIZE, sent|defwinproc },
     { WM_PARENTNOTIFY, sent|parent|wparam, WM_CREATE },
@@ -733,7 +734,8 @@ static void ok_sequence(const struct message *expected, const char *context)
 
   todo_wine {
     if (expected->message || actual->message)
-	ok (FALSE, "%s: the msg sequence is not complete (got 0x%04x)\n", context, actual->message);
+	ok (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
+	    context, expected->message, actual->message);
   }
 
     flush_sequence();
@@ -753,6 +755,7 @@ static const struct message WmCreateMDIframeSeq[] = {
     { HCBT_ACTIVATE, hook },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, 0 }, /* Win9x */
     { WM_ACTIVATEAPP, sent|wparam, 1 },
     { WM_NCACTIVATE, sent|wparam, 1 },
     { WM_ACTIVATE, sent|wparam, 1 },
@@ -764,49 +767,165 @@ static const struct message WmCreateMDIframeSeq[] = {
     { WM_MOVE, sent },
     { 0 }
 };
+/* DestroyWindow for MDI frame window, initially visible */
+static const struct message WmDestroyMDIframeSeq[] = {
+    { HCBT_DESTROYWND, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_ACTIVATE, sent|wparam|optional, 0 }, /* Win9x */
+    { WM_ACTIVATEAPP, sent|wparam|optional, 0 }, /* Win9x */
+    { WM_DESTROY, sent },
+    { WM_NCDESTROY, sent },
+    { 0 }
+};
 /* CreateWindow for MDI client window, initially visible */
 static const struct message WmCreateMDIclientSeq[] = {
     { HCBT_CREATEWND, hook },
     { WM_NCCREATE, sent },
-    { WM_NCCALCSIZE, sent }, /*|wparam, 8 },*/
+    { WM_NCCALCSIZE, sent|wparam, 0 },
     { WM_CREATE, sent },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { WM_PARENTNOTIFY, sent|wparam, WM_CREATE }, /* in MDI frame */
-    { WM_SHOWWINDOW, sent }, /*|wparam, 8 },*/
-    { WM_WINDOWPOSCHANGING, sent }, /*|wparam, 8 },*/
-    { WM_WINDOWPOSCHANGED, sent }, /*|wparam, 8 },*/
+    { WM_SHOWWINDOW, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* DestroyWindow for MDI client window, initially visible */
+static const struct message WmDestroyMDIclientSeq[] = {
+    { HCBT_DESTROYWND, hook },
+    { WM_PARENTNOTIFY, sent|wparam, WM_DESTROY }, /* in MDI frame */
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_DESTROY, sent },
+    { WM_NCDESTROY, sent },
     { 0 }
 };
 /* CreateWindow for MDI child window, initially visible */
-static const struct message WmCreateMDIchildSeq[] = {
+static const struct message WmCreateMDIchildVisibleSeq[] = {
     { HCBT_CREATEWND, hook },
-    { WM_GETMINMAXINFO, sent },
     { WM_NCCREATE, sent }, 
     { WM_NCCALCSIZE, sent|wparam, 0 },
     { WM_CREATE, sent },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
-    { WM_PARENTNOTIFY, sent|wparam, WM_KILLFOCUS }, /* in MDI client */
+    /* Win2k sends wparam set to
+     * MAKEWPARAM(WM_CREATE, MDI_FIRST_CHILD_ID + nTotalCreated),
+     * while Win9x doesn't bother to set child window id according to
+     * CLIENTCREATESTRUCT.idFirstChild
+     */
+    { WM_PARENTNOTIFY, sent /*|wparam, WM_CREATE*/ }, /* in MDI client */
     { WM_SHOWWINDOW, sent|wparam, 1 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 }, /*SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER*/
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
     { WM_MDIREFRESHMENU, sent/*|wparam|lparam, 0, 0*/ },
-    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 }, /*SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE*/
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam|defwinproc, 0 }, /*SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE*/
+
+    /* Win9x: message sequence terminates here. */
+
     { WM_NCACTIVATE, sent|wparam|defwinproc, 1 },
     { HCBT_SETFOCUS, hook }, /* in MDI client */
-    { WM_KILLFOCUS, sent }, /* in MDI frame */
-    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI frame */
-    { WM_IME_SETCONTEXT, sent|wparam|optional, 8 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
     { WM_SETFOCUS, sent }, /* in MDI client */
     { HCBT_SETFOCUS, hook },
     { WM_KILLFOCUS, sent }, /* in MDI client */
-    { WM_IME_SETCONTEXT, sent|wparam|optional, 8 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_SETFOCUS, sent|defwinproc },
     { WM_MDIACTIVATE, sent|defwinproc },
+    { 0 }
+};
+/* DestroyWindow for MDI child window, initially visible */
+static const struct message WmDestroyMDIchildVisibleSeq[] = {
+    { HCBT_DESTROYWND, hook },
+    /* Win2k sends wparam set to
+     * MAKEWPARAM(WM_DESTROY, MDI_FIRST_CHILD_ID + nTotalCreated),
+     * while Win9x doesn't bother to set child window id according to
+     * CLIENTCREATESTRUCT.idFirstChild
+     */
+    { WM_PARENTNOTIFY, sent /*|wparam, WM_DESTROY*/ }, /* in MDI client */
+    { WM_SHOWWINDOW, sent|wparam, 0 },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 }, /*SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER*/
+    { WM_ERASEBKGND, sent|parent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+
+    /* { WM_DESTROY, sent }
+     * Win9x: message sequence terminates here.
+     */
+
+    { HCBT_SETFOCUS, hook }, /* set focus to MDI client */
+    { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { HCBT_SETFOCUS, hook }, /* MDI client sets focus back to MDI child */
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { HCBT_SETFOCUS, hook }, /* set focus to MDI client */
+    { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { HCBT_SETFOCUS, hook }, /* MDI client sets focus back to MDI child */
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { WM_DESTROY, sent },
+
+    { HCBT_SETFOCUS, hook }, /* set focus to MDI client */
+    { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 }, /* in MDI client */
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { HCBT_SETFOCUS, hook }, /* MDI client sets focus back to MDI child */
+    { WM_KILLFOCUS, sent }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 0 }, /* in MDI client */
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_SETFOCUS, sent }, /* in MDI client */
+
+    { WM_NCDESTROY, sent },
+    { 0 }
+};
+/* CreateWindow for MDI child window, initially invisible */
+static const struct message WmCreateMDIchildInvisibleSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent }, 
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    /* Win2k sends wparam set to
+     * MAKEWPARAM(WM_CREATE, MDI_FIRST_CHILD_ID + nTotalCreated),
+     * while Win9x doesn't bother to set child window id according to
+     * CLIENTCREATESTRUCT.idFirstChild
+     */
+    { WM_PARENTNOTIFY, sent /*|wparam, WM_CREATE*/ }, /* in MDI client */
+    { 0 }
+};
+/* DestroyWindow for MDI child window, initially invisible */
+static const struct message WmDestroyMDIchildInvisibleSeq[] = {
+    { HCBT_DESTROYWND, hook },
+    /* Win2k sends wparam set to
+     * MAKEWPARAM(WM_DESTROY, MDI_FIRST_CHILD_ID + nTotalCreated),
+     * while Win9x doesn't bother to set child window id according to
+     * CLIENTCREATESTRUCT.idFirstChild
+     */
+    { WM_PARENTNOTIFY, sent /*|wparam, WM_DESTROY*/ }, /* in MDI client */
+    { WM_DESTROY, sent },
+    { WM_NCDESTROY, sent },
     { 0 }
 };
 
@@ -827,8 +946,8 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
 
         msg.message = message;
         msg.flags = sent|wparam|lparam;
-        msg.wParam = wparam;
-        msg.lParam = lparam;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
         add_message(&msg);
     }
 
@@ -848,6 +967,21 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
         message != WM_GETTEXT)
     {
         trace("mdi child: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        switch (message)
+        {
+            case WM_WINDOWPOSCHANGING:
+            case WM_WINDOWPOSCHANGED:
+            {
+                WINDOWPOS *winpos = (WINDOWPOS *)lParam;
+
+                trace("%s\n", (message == WM_WINDOWPOSCHANGING) ? "WM_WINDOWPOSCHANGING" : "WM_WINDOWPOSCHANGED");
+                trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
+                      winpos->hwnd, winpos->hwndInsertAfter,
+                      winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+                break;
+            }
+        }
 
         msg.message = message;
         msg.flags = sent|wparam|lparam;
@@ -944,25 +1078,56 @@ static void test_mdi_messages(void)
 
     trace("creating MDI client window\n");
     client_cs.hWindowMenu = 0;
-    client_cs.idFirstChild = 1;
+    client_cs.idFirstChild = MDI_FIRST_CHILD_ID;
     mdi_client = CreateWindowExA(0, "MDI_client_class",
                                  NULL,
-                                 WS_CHILD | WS_VISIBLE,
+                                 WS_CHILD | WS_VISIBLE | MDIS_ALLCHILDSTYLES,
                                  0, 0, 0, 0,
                                  mdi_frame, 0, GetModuleHandleA(0), &client_cs);
     assert(mdi_client);
-    ok_sequence(WmCreateMDIclientSeq, "Create MDI client window");
+    ok_sequence(WmCreateMDIclientSeq, "Create visible MDI client window");
 
-    trace("creating MDI child window\n");
+    ok(GetFocus() == mdi_frame, "input focus should be on MDI frame not on %p\n", GetFocus());
+
+    SetFocus(0);
+    flush_sequence();
+
+    trace("creating visible MDI child window\n");
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_VISIBLE,
                                 0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     assert(mdi_child);
-    ok_sequence(WmCreateMDIchildSeq, "Create MDI child window");
+    ok_sequence(WmCreateMDIchildVisibleSeq, "Create visible MDI child window");
+
+    ok(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
+    ok(IsWindowVisible(mdi_child), "MDI child should be visible\n");
 
     DestroyWindow(mdi_child);
+    ok_sequence(WmDestroyMDIchildVisibleSeq, "Destroy visible MDI child window");
+
+    SetFocus(0);
+    flush_sequence();
+
+    trace("creating invisible MDI child window\n");
+    mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
+                                WS_CHILD,
+                                0, 0, CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, GetModuleHandleA(0), NULL);
+    assert(mdi_child);
+    ok_sequence(WmCreateMDIchildInvisibleSeq, "Create invisible MDI child window");
+
+    ok(!(GetWindowLongA(mdi_child, GWL_STYLE) & WS_VISIBLE), "MDI child should not be visible\n");
+    ok(!IsWindowVisible(mdi_child), "MDI child should not be visible\n");
+
+    DestroyWindow(mdi_child);
+    ok_sequence(WmDestroyMDIchildInvisibleSeq, "Destroy invisible MDI child window");
+
+    DestroyWindow(mdi_client);
+    ok_sequence(WmDestroyMDIclientSeq, "Destroy MDI client window");
+
     DestroyWindow(mdi_frame);
+    ok_sequence(WmDestroyMDIframeSeq, "Destroy MDI frame window");
 }
 /************************* End of MDI test **********************************/
 
