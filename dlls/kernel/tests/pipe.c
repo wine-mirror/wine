@@ -130,6 +130,8 @@ static void test_CreateNamedPipe(int pipemode)
         ok(written == sizeof(obuf2), "write file len 2\n");
         ok(PeekNamedPipe(hnp, NULL, 0, NULL, &readden, NULL), "Peek\n");
         ok(readden == sizeof(obuf2), "peek 2 got %ld bytes\n", readden);
+        ok(PeekNamedPipe(hnp, (LPVOID)1, 0, NULL, &readden, NULL), "Peek\n");
+        ok(readden == sizeof(obuf2), "peek 2 got %ld bytes\n", readden);
         ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
         ok(readden == sizeof(obuf2), "read 2 got %ld bytes\n", readden);
         ok(memcmp(obuf2, ibuf, written) == 0, "content 2 check\n");
