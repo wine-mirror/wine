@@ -250,3 +250,18 @@ const char * qzdebugstr_State(FILTER_STATE state)
         return "State_Unknown";
     }
 }
+
+LONG AmpFactorToDB(LONG ampfactor)
+{
+    FIXME("(%ld) Stub!\n", ampfactor);
+    return 0;
+}
+
+LONG DBToAmpFactor(LONG db)
+{
+    FIXME("(%ld) Stub!\n", db);
+    /* Avoid divide by zero (probably during range computation) in Windows Media Player 6.4 */
+    if (db < -1000)
+	return 0;
+    return 100;
+}
