@@ -724,7 +724,8 @@ int _open(const char *path,int flags,...)
   DWORD access = 0, creation = 0;
   int ioflag = 0, fd;
   HANDLE hand;
-
+  SECURITY_ATTRIBUTES sa;
+  
   TRACE(":file (%s) mode 0x%04x\n",path,flags);
 
   switch(flags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
@@ -776,9 +777,13 @@ int _open(const char *path,int flags,...)
   if (flags & ~(_O_BINARY|_O_TEXT|_O_APPEND|_O_TRUNC|_O_EXCL
                 |_O_CREAT|_O_RDWR|_O_TEMPORARY))
     TRACE(":unsupported flags 0x%04x\n",flags);
+      
+  sa.nLength              = sizeof( SECURITY_ATTRIBUTES );
+  sa.lpSecurityDescriptor = NULL;
+  sa.bInheritHandle       = TRUE;
 
   hand = CreateFileA(path, access, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                      NULL, creation, FILE_ATTRIBUTE_NORMAL, 0);
+                      &sa, creation, FILE_ATTRIBUTE_NORMAL, 0);
 
   if (hand == INVALID_HANDLE_VALUE)
   {
