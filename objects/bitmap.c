@@ -439,10 +439,12 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
         {
 	HDC hdc = GetDC(0);
 	UINT palEnts = GetSystemPaletteEntries(hdc, 0, 0, NULL);
+	if (palEnts == 0)
+	    palEnts = 256;
 	ReleaseDC(0, hdc);
 
 	return CURSORICON_Load(hinst, name, desiredx, desiredy,
-				 MIN(16, palEnts), FALSE, loadflags);
+				 palEnts, FALSE, loadflags);
 	}
 
     case IMAGE_CURSOR:
