@@ -1032,7 +1032,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     {
         case SW_HIDE:
             if (!wasVisible) goto END;;
-	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | 
+	    swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE |
 		        SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
@@ -1331,7 +1331,7 @@ static HWND query_zorder( Display *display, HWND hWndCheck)
                     pos = __td_lookup( w, children, total );
                     if( pos < best && pos > check )
                     {
-                        /* find a nearest Wine window precedes 
+                        /* find a nearest Wine window precedes
                          * pWndCheck in the real z-order... */
                         best = pos;
                         hwndInsertAfter = pWnd->hwndSelf;
@@ -1416,8 +1416,9 @@ void X11DRV_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
         TRACE( "%04x moving from (%d,%d) to (%d,%d)\n",
                hwnd, rect.left, rect.top, winpos.x, winpos.y );
 
-    if (rect.right - rect.left == winpos.cx &&
-        rect.bottom - rect.top == winpos.cy) winpos.flags |= SWP_NOSIZE;
+    if ((rect.right - rect.left == winpos.cx && rect.bottom - rect.top == winpos.cy) ||
+        (IsRectEmpty( &rect ) && winpos.cx == 1 && winpos.cy == 1))
+        winpos.flags |= SWP_NOSIZE;
     else
         TRACE( "%04x resizing from (%dx%d) to (%dx%d)\n",
                hwnd, rect.right - rect.left, rect.bottom - rect.top,
@@ -1951,7 +1952,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 /***********************************************************************
  *		ForceWindowRaise   (X11DRV.@)
  *
- * Raise a window on top of the X stacking order, while preserving 
+ * Raise a window on top of the X stacking order, while preserving
  * the correct Windows Z order.
  *
  * FIXME: this should go away.
