@@ -18,12 +18,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <math.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-#include "math.h"
 
 #include "d3d8_private.h"
 
@@ -163,21 +163,20 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
             glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
             checkGLcall("glOrtho");
-#if 1
+
         } else {
             glMatrixMode(GL_PROJECTION);
-	    checkGLcall("glMatrixMode");
-	    glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_PROJECTION].u.m[0][0]);
-	    checkGLcall("glLoadMatrixf");
+	        checkGLcall("glMatrixMode");
+            glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_PROJECTION].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
 
-	    glMatrixMode(GL_MODELVIEW);
-	    checkGLcall("glMatrixMode");
-	    glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
-	    checkGLcall("glLoadMatrixf");
-	    glMultMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
-	    checkGLcall("glMultMatrixf");
-#endif
-	}
+            glMatrixMode(GL_MODELVIEW);
+            checkGLcall("glMatrixMode");
+            glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
+            glMultMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            checkGLcall("glMultMatrixf");
+        }
 
         /* Set OpenGL to the appropriate Primitive Type */
         switch (PrimitiveType) {
@@ -1369,9 +1368,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
     }
 
     /* Apply it */
+
+    /* Clip Plane settings are affected by the model view in OpenGL, the World transform in direct3d, I think?*/
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+    glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_WORLD].u.m[0][0]);
+
     TRACE("Clipplane [%f,%f,%f,%f]\n", This->UpdateStateBlock->clipplane[Index][0], This->UpdateStateBlock->clipplane[Index][1],
           This->UpdateStateBlock->clipplane[Index][2], This->UpdateStateBlock->clipplane[Index][3]);
     glClipPlane(GL_CLIP_PLANE0+Index, This->UpdateStateBlock->clipplane[Index]);
+
+    glPopMatrix();
     checkGLcall("glClipPlane");
 
     return D3D_OK;
@@ -1387,8 +1394,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetClipPlane(LPDIRECT3DDEVICE8 iface, DWOR
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3DRENDERSTATETYPE State,DWORD Value) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
+    DWORD OldValue = This->StateBlock.renderstate[State];
+        
     TRACE("(%p)->state = %d, value = %ld\n", This, State, Value);
-
     This->UpdateStateBlock->Changed.renderstate[State] = TRUE;
     This->UpdateStateBlock->Set.renderstate[State] = TRUE;
     This->UpdateStateBlock->renderstate[State] = Value;
@@ -1439,6 +1447,10 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         break;
 
     case D3DRS_CULLMODE                  :
+
+        /* If we are culling "back faces with clockwise vertices" then
+           set front faces to be counter clockwise and enable culling  
+           of back faces                                               */
         switch ((D3DCULL) Value) {
         case D3DCULL_NONE:
             glDisable(GL_CULL_FACE);
@@ -1447,14 +1459,16 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         case D3DCULL_CW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            glFrontFace(GL_CW);
-            checkGLcall("glFrontFace GL_CW");
+            glFrontFace(GL_CCW);
+            checkGLcall("glFrontFace GL_CCW");
+            glCullFace(GL_BACK);
             break;
         case D3DCULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            glFrontFace(GL_CW); /* FIXME: Samples show this is required, but why not CCW? */
-            checkGLcall("glFrontFace GL_CCW");
+            glFrontFace(GL_CW); 
+            checkGLcall("glFrontFace GL_CW");
+            glCullFace(GL_BACK);
             break;
         default:
             FIXME("Unrecognized/Unhandled D3DCULL value %ld\n", Value);
@@ -1636,17 +1650,22 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_CLIPPLANEENABLE           :
         {
-            int i = GL_CLIP_PLANE0;
-            DWORD tmp = Value;
+            /* Ensure we only do the changed clip planes */
+			DWORD enable =   Value & ~OldValue;
+			DWORD disable = ~Value &  OldValue;
+			if (enable & D3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
+			if (enable & D3DCLIPPLANE1)  { glEnable(GL_CLIP_PLANE1);  checkGLcall("glEnable(clip plane 1)"); }
+			if (enable & D3DCLIPPLANE2)  { glEnable(GL_CLIP_PLANE2);  checkGLcall("glEnable(clip plane 2)"); }
+			if (enable & D3DCLIPPLANE3)  { glEnable(GL_CLIP_PLANE3);  checkGLcall("glEnable(clip plane 3)"); }
+			if (enable & D3DCLIPPLANE4)  { glEnable(GL_CLIP_PLANE4);  checkGLcall("glEnable(clip plane 4)"); }
+			if (enable & D3DCLIPPLANE5)  { glEnable(GL_CLIP_PLANE5);  checkGLcall("glEnable(clip plane 5)"); }
 
-            while (tmp) {
-                TRACE("Value %lx, %%2 = %lx, i=%x\n", tmp, tmp%2, i);
-                if (tmp%2) glEnable(i);
-                else glDisable(i);
-                checkGLcall("Enable/Disable clip planes");
-                tmp = tmp>>1;
-                i++;
-            }
+			if (disable & D3DCLIPPLANE0) { glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)"); }
+			if (disable & D3DCLIPPLANE1) { glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)"); }
+			if (disable & D3DCLIPPLANE2) { glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)"); }
+			if (disable & D3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
+			if (disable & D3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
+			if (disable & D3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
         }
         break;
 
