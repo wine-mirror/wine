@@ -215,7 +215,7 @@ LPCLASSFACTORY IClassFactory_Constructor(REFCLSID rclsid)
 	lpclf->rclsid = (CLSID*)rclsid;
 
 	TRACE("(%p)->()\n",lpclf);
-	shell32_ObjCount++;
+	InterlockedIncrement(&shell32_ObjCount);
 	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
@@ -252,8 +252,8 @@ static ULONG WINAPI IClassFactory_fnAddRef(LPCLASSFACTORY iface)
 	ICOM_THIS(IClassFactoryImpl,iface);
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount++;
-	return ++(This->ref);
+	InterlockedIncrement(&shell32_ObjCount);
+	return InterlockedIncrement(&This->ref);
 }
 /******************************************************************************
  * IClassFactory_Release
@@ -263,11 +263,12 @@ static ULONG WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface)
 	ICOM_THIS(IClassFactoryImpl,iface);
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount--;
-	if (!--(This->ref)) 
-	{ TRACE("-- destroying IClassFactory(%p)\n",This);
-		HeapFree(GetProcessHeap(),0,This);
-		return 0;
+	InterlockedDecrement(&shell32_ObjCount);
+	if (!InterlockedDecrement(&This->ref)) 
+	{
+	  TRACE("-- destroying IClassFactory(%p)\n",This);
+	  HeapFree(GetProcessHeap(),0,This);
+	  return 0;
 	}
 	return This->ref;
 }
@@ -355,7 +356,7 @@ typedef struct
     CLSID			*rclsid;
     LPFNCREATEINSTANCE		lpfnCI;
     const IID *			riidInst;
-    UINT *			pcRefDll; /* pointer to refcounter in external dll (ugrrr...) */
+    ULONG *			pcRefDll; /* pointer to refcounter in external dll (ugrrr...) */
 } IDefClFImpl;
 
 static ICOM_VTABLE(IClassFactory) dclfvt;
@@ -364,7 +365,7 @@ static ICOM_VTABLE(IClassFactory) dclfvt;
  *  IDefClF_fnConstructor
  */
 
-IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, UINT * pcRefDll, REFIID riidInst)
+IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll, REFIID riidInst)
 {
 	IDefClFImpl* lpclf;
 
@@ -374,13 +375,11 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, UINT * pcRefDll
 	lpclf->lpfnCI = lpfnCI;
 	lpclf->pcRefDll = pcRefDll;
 
-	if (pcRefDll) 
-	  (*pcRefDll)++;
-
+	if (pcRefDll) InterlockedIncrement(pcRefDll);
 	lpclf->riidInst = riidInst;
 
 	TRACE("(%p)\n\tIID:\t%s\n",lpclf, debugstr_guid(riidInst));
-	shell32_ObjCount++;
+	InterlockedIncrement(&shell32_ObjCount);
 	return (LPCLASSFACTORY)lpclf;
 }
 /**************************************************************************
@@ -418,9 +417,8 @@ static ULONG WINAPI IDefClF_fnAddRef(LPCLASSFACTORY iface)
 	ICOM_THIS(IDefClFImpl,iface);
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount++;
-
-	return ++(This->ref);
+	InterlockedIncrement(&shell32_ObjCount);
+	return InterlockedIncrement(&This->ref);
 }
 /******************************************************************************
  * IDefClF_fnRelease
@@ -430,12 +428,11 @@ static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 	ICOM_THIS(IDefClFImpl,iface);
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
-	shell32_ObjCount--;
+	InterlockedDecrement(&shell32_ObjCount);
 
-	if (!--(This->ref)) 
+	if (!InterlockedDecrement(&This->ref)) 
 	{ 
-	  if (This->pcRefDll) 
-	    (*This->pcRefDll)--;
+	  if (This->pcRefDll) InterlockedDecrement(This->pcRefDll);
 
 	  TRACE("-- destroying IClassFactory(%p)\n",This);
 	  HeapFree(GetProcessHeap(),0,This);
@@ -495,7 +492,7 @@ HRESULT WINAPI SHCreateDefClassObject(
 	REFIID	riid,				
 	LPVOID*	ppv,	
 	LPFNCREATEINSTANCE lpfnCI,	/* create instance callback entry */
-	UINT	*pcRefDll,		/* ref count of the dll */
+	PLONG	pcRefDll,		/* ref count of the dll */
 	REFIID	riidInst)		/* optional interface to the instance */
 {
 	TRACE("\n\tIID:\t%s %p %p %p \n\tIIDIns:\t%s\n",
@@ -514,3 +511,126 @@ HRESULT WINAPI SHCreateDefClassObject(
 	return E_NOINTERFACE;
 }
 
+/*************************************************************************
+ *  DragAcceptFiles		[SHELL32.54]
+ */
+void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
+{
+	LONG exstyle;
+  
+	if( !IsWindow(hWnd) ) return;
+	exstyle = GetWindowLongA(hWnd,GWL_EXSTYLE);
+	if (b)
+	  exstyle |= WS_EX_ACCEPTFILES;
+	else
+	  exstyle &= ~WS_EX_ACCEPTFILES;
+	SetWindowLongA(hWnd,GWL_EXSTYLE,exstyle);
+}
+
+/*************************************************************************
+ * DragFinish		[SHELL32.80]
+ */
+void WINAPI DragFinish(HDROP h)
+{
+	TRACE("\n");
+	GlobalFree((HGLOBAL)h);
+}
+
+/*************************************************************************
+ * DragQueryPoint		[SHELL32.135]
+ */
+BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
+{
+	LPDROPFILESTRUCT lpDropFileStruct;  
+	BOOL bRet;
+
+	TRACE("\n");
+
+	lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop);
+  
+	memcpy(p,&lpDropFileStruct->ptMousePos,sizeof(POINT));
+	bRet = lpDropFileStruct->fInNonClientArea;
+  
+	GlobalUnlock(hDrop);
+	return bRet;
+}
+
+/*************************************************************************
+ *  DragQueryFileA		[SHELL32.81] [shell32.82]
+ */
+UINT WINAPI DragQueryFileA(
+	HDROP hDrop,
+	UINT lFile,
+	LPSTR lpszFile,
+	UINT lLength)
+{
+	LPSTR lpDrop;
+	UINT i = 0;
+	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+    
+	TRACE("(%08x, %x, %p, %u)\n",	hDrop,lFile,lpszFile,lLength);
+    
+	if(!lpDropFileStruct) goto end;
+
+	lpDrop = (LPSTR) lpDropFileStruct + lpDropFileStruct->lSize;
+
+	while (i++ < lFile)
+	{
+	  while (*lpDrop++); /* skip filename */
+	  if (!*lpDrop) 
+	  {
+	    i = (lFile == 0xFFFFFFFF) ? i : 0; 
+	    goto end;
+	  }
+	}
+    
+	i = lstrlenA(lpDrop);
+	i++;
+	if (!lpszFile ) goto end;   /* needed buffer size */
+	i = (lLength > i) ? i : lLength;
+	lstrcpynA (lpszFile,  lpDrop,  i);
+end:
+	GlobalUnlock(hDrop);
+	return i;
+}
+
+/*************************************************************************
+ *  DragQueryFileW		[shell32.133]
+ */
+UINT WINAPI DragQueryFileW(
+	HDROP hDrop,
+	UINT lFile,
+	LPWSTR lpszwFile,
+	UINT lLength)
+{
+	LPWSTR lpwDrop;
+	UINT i = 0;
+	LPDROPFILESTRUCT lpDropFileStruct = (LPDROPFILESTRUCT) GlobalLock(hDrop); 
+    
+	TRACE("(%08x, %x, %p, %u)\n", hDrop,lFile,lpszwFile,lLength);
+    
+	if(!lpDropFileStruct) goto end;
+
+	lpwDrop = (LPWSTR) lpDropFileStruct + lpDropFileStruct->lSize;
+
+	i = 0;
+	while (i++ < lFile)
+	{
+	  while (*lpwDrop++); /* skip filename */
+	  if (!*lpwDrop) 
+	  {
+	    i = (lFile == 0xFFFFFFFF) ? i : 0; 
+	    goto end;
+	  }
+	}
+    
+	i = lstrlenW(lpwDrop);
+	i++;
+	if ( !lpszwFile) goto end;   /* needed buffer size */
+
+	i = (lLength > i) ? i : lLength;
+	lstrcpynW (lpszwFile, lpwDrop, i);
+end:
+	GlobalUnlock(hDrop);
+	return i;
+}
