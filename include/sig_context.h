@@ -37,8 +37,8 @@ typedef struct
 } SIGCONTEXT;
 #define __HAVE_SIGCONTEXT
 
-#define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context)
-#define HANDLER_CONTEXT (&context)
+#define HANDLER_DEF(name) void name (int signal, SIGCONTEXT __context)
+#define HANDLER_CONTEXT (&__context)
 
 #endif  /* linux */
 
@@ -61,8 +61,8 @@ typedef struct
 typedef struct trapframe SIGCONTEXT;
 #define __HAVE_SIGCONTEXT
 
-#define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
-#define HANDLER_CONTEXT context
+#define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *__context)
+#define HANDLER_CONTEXT __context
 
 #define EFL_sig(context)     ((context)->tf_eflags)
 
@@ -77,8 +77,8 @@ typedef struct trapframe SIGCONTEXT;
 typedef struct sigcontext SIGCONTEXT;
 #define __HAVE_SIGCONTEXT
 
-#define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
-#define HANDLER_CONTEXT context
+#define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *__context)
+#define HANDLER_CONTEXT __context
 
 #endif  /* FreeBSD */
 
@@ -92,8 +92,8 @@ typedef struct sigcontext SIGCONTEXT;
 typedef struct ucontext SIGCONTEXT;
 #define __HAVE_SIGCONTEXT
 
-#define HANDLER_DEF(name) void name(int signal, void *siginfo, SIGCONTEXT *context)
-#define HANDLER_CONTEXT context
+#define HANDLER_DEF(name) void name(int signal, void *siginfo, SIGCONTEXT *__context)
+#define HANDLER_CONTEXT __context
 
 #endif  /* svr4 || SCO_DS */
 
@@ -158,6 +158,7 @@ typedef struct _CONTEXT		/* Note 1 */
 #define GS_sig(context)      ((context)->sc_gs)
 #define CR2_sig(context)     ((context)->cr2)
 #define TRAP_sig(context)    ((context)->sc_trapno)
+#define ERROR_sig(context)   ((context)->sc_err)
 #endif
 
 #ifndef __FreeBSD__
