@@ -341,9 +341,17 @@ HRESULT WINAPI DirectDrawCreate(
 HRESULT WINAPI DirectDrawCreateEx(
 	LPGUID lpGUID, LPVOID* lplpDD, REFIID iid, LPUNKNOWN pUnkOuter
 ) {
-  FIXME(":semi stub\n");
-  /* I don't know about what functionality is unique to Ex */
-  return DirectDrawCreate(lpGUID,(LPDIRECTDRAW*)lplpDD,pUnkOuter);
+  LPDIRECTDRAW	ddraw;
+  HRESULT	hres;
+
+  FIXME("(%p,%p,%s,%p), might be wrong.\n",lpGUID,lplpDD,debugstr_guid(iid),pUnkOuter);
+
+  hres=DirectDrawCreate(lpGUID,(LPDIRECTDRAW*)&ddraw,pUnkOuter);
+  if (!hres) {
+      hres=IDirectDraw_QueryInterface(ddraw,iid,lplpDD);
+      IDirectDraw_Release(ddraw);
+  }
+  return hres;
 }
 
 /*******************************************************************************
