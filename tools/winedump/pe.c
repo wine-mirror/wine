@@ -142,6 +142,14 @@ static	void*	get_dir(unsigned idx)
 	       PE_nt_headers->OptionalHeader.DataDirectory[idx].Size);
 }
 
+static void *get_dir_and_size(unsigned int idx, unsigned int *size)
+{
+    if (idx >= PE_nt_headers->OptionalHeader.NumberOfRvaAndSizes)
+        return NULL;
+    *size = PE_nt_headers->OptionalHeader.DataDirectory[idx].Size;
+    return RVA(PE_nt_headers->OptionalHeader.DataDirectory[idx].VirtualAddress, *size);
+}
+
 static const char*	DirectoryNames[16] = {
     "EXPORT",		"IMPORT",	"RESOURCE", 	"EXCEPTION",
     "SECURITY", 	"BASERELOC", 	"DEBUG", 	"ARCHITECTURE",
@@ -330,7 +338,8 @@ static	void	dump_sections(void* addr, unsigned num_sect)
 
 static	void	dump_dir_exported_functions(void)
 {
-    IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY);
+    unsigned int size;
+    IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
     unsigned int		i;
     DWORD*			pFunc;
     DWORD*			pName;
@@ -385,13 +394,17 @@ static	void	dump_dir_exported_functions(void)
 		printf(symbol.arg_text[0]);
 	    else
 		output_prototype(stdout, &symbol);
-	    printf("\n");
 	    symbol_clear(&symbol);
 	}
 	else
 	{
-	    printf("  %08lX  %4lu %s\n", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
+	    printf("  %08lX  %4lu %s", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
 	}
+        /* check for forwarded function */
+        if ((char *)RVA(pFunc[*pOrdl],sizeof(void*)) >= (char *)exportDir &&
+            (char *)RVA(pFunc[*pOrdl],sizeof(void*)) < (char *)exportDir + size)
+            printf( " (-> %s)", (char *)RVA(pFunc[*pOrdl],1));
+        printf("\n");
     }
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
     if (!pFunc) {printf("Can't grab functions' address table\n"); return;}
