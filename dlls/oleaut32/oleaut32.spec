@@ -278,14 +278,14 @@
 280 stdcall VarUI4FromI1(long ptr)
 281 stdcall VarUI4FromUI2(long ptr)
 282 stub VarUI4FromDec
-283 stdcall BSTR_UserSize(ptr long ptr) BSTR_UserSize
-284 stdcall BSTR_UserMarshal(ptr ptr ptr) BSTR_UserMarshal
-285 stdcall BSTR_UserUnmarshal(ptr ptr ptr) BSTR_UserUnmarshal
-286 stdcall BSTR_UserFree(ptr ptr) BSTR_UserFree
-287 stdcall VARIANT_UserSize(ptr long ptr) VARIANT_UserSize
-288 stdcall VARIANT_UserMarshal(ptr ptr ptr) VARIANT_UserMarshal
-289 stdcall VARIANT_UserUnmarshal(ptr ptr ptr) VARIANT_UserUnmarshal
-290 stdcall VARIANT_UserFree(ptr ptr) VARIANT_UserFree
+283 stdcall BSTR_UserSize(ptr long ptr)
+284 stdcall BSTR_UserMarshal(ptr ptr ptr)
+285 stdcall BSTR_UserUnmarshal(ptr ptr ptr)
+286 stdcall BSTR_UserFree(ptr ptr)
+287 stdcall VARIANT_UserSize(ptr long ptr)
+288 stdcall VARIANT_UserMarshal(ptr ptr ptr)
+289 stdcall VARIANT_UserUnmarshal(ptr ptr ptr)
+290 stdcall VARIANT_UserFree(ptr ptr)
 291 stub LPSAFEARRAY_UserSize
 292 stub LPSAFEARRAY_UserMarshal
 293 stub LPSAFEARRAY_UserUnmarshal

@@ -347,7 +347,7 @@
 @ stdcall RtlDestroyHeap(long)
 @ stub RtlDestroyProcessParameters
 @ stub RtlDestroyQueryDebugBuffer
-@ stdcall RtlDetermineDosPathNameType_U(wstr) RtlDetermineDosPathNameType_U
+@ stdcall RtlDetermineDosPathNameType_U(wstr)
 @ stub RtlDoesFileExists_U
 @ stdcall RtlDosPathNameToNtPathName_U(ptr ptr long long)
 @ stub RtlDosSearchPath_U
