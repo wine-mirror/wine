@@ -903,8 +903,16 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 #endif
     size->s.LowPart = (DWORD)bigsize;
     size->s.HighPart = (DWORD)(bigsize>>32);
-    available->s.LowPart = (DWORD)bigavail;
-    available->s.HighPart = (DWORD)(bigavail>>32);
+    if (DRIVE_GetType(drive) == TYPE_CDROM)
+    { /* ALWAYS 0, even if no real CD-ROM mounted there !! */
+	available->s.LowPart = 0;
+	available->s.HighPart = 0;
+    }
+    else
+    {
+	available->s.LowPart = (DWORD)bigavail;
+	available->s.HighPart = (DWORD)(bigavail>>32);
+    }
     return 1;
 }
 
@@ -973,7 +981,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
                                    LPDWORD sector_bytes, LPDWORD free_clusters,
                                    LPDWORD total_clusters )
 {
-    int	drive;
+    int	drive, sec_size;
     ULARGE_INTEGER size,available;
     LPCSTR path;
     DWORD cluster_sec;
@@ -1000,32 +1008,26 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 
     /* Cap the size and available at 2GB as per specs.  */
     if ((size.s.HighPart) ||(size.s.LowPart > 0x7fffffff))
-	{
-	  size.s.HighPart = 0;
-	  size.s.LowPart = 0x7fffffff;
-	}
+    {
+	size.s.HighPart = 0;
+	size.s.LowPart = 0x7fffffff;
+    }
     if ((available.s.HighPart) ||(available.s.LowPart > 0x7fffffff))
-      {
+    {
 	available.s.HighPart =0;
 	available.s.LowPart = 0x7fffffff;
-      }
-    if (DRIVE_GetType(drive)==TYPE_CDROM) {
-	if (sector_bytes)
-	*sector_bytes    = 2048;
-	size.s.LowPart            /= 2048;
-	available.s.LowPart       /= 2048;
-    } else {
-	if (sector_bytes)
-	*sector_bytes    = 512;
-	size.s.LowPart            /= 512;
-	available.s.LowPart       /= 512;
     }
+    sec_size = (DRIVE_GetType(drive)==TYPE_CDROM) ? 2048 : 512;
+    size.s.LowPart            /= sec_size;
+    available.s.LowPart       /= sec_size;
     /* fixme: probably have to adjust those variables too for CDFS */
     cluster_sec = 1;
     while (cluster_sec * 65536 < size.s.LowPart) cluster_sec *= 2;
 
     if (cluster_sectors)
 	*cluster_sectors = cluster_sec;
+    if (sector_bytes)
+	*sector_bytes    = sec_size;
     if (free_clusters)
 	*free_clusters   = available.s.LowPart / cluster_sec;
     if (total_clusters)
