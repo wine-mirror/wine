@@ -642,7 +642,7 @@ static BOOL CONSOLE_make_complex(HANDLE handle)
         CloseHandle( pty_handle );
 
 	/* enable mouseclicks */
-	strcpy( buf, "\033[?1001s\033[?1000h" );
+	strcpy( buf, "\033[?1002h" );
 	WriteFile(handle,buf,strlen(buf),NULL,NULL);
 
         strcpy( buf, "\033]2;" );
