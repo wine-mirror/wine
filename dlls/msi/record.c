@@ -294,6 +294,7 @@ UINT MSI_RecordGetStringA(MSIRECORD *rec, unsigned int iField,
         len = 1;
         if( *pcchValue > 0 )
             szValue[0] = 0;
+        break;
     default:
         ret = ERROR_INVALID_PARAMETER;
         break;
