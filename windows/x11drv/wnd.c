@@ -434,6 +434,7 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
 {
   HWND32 hwnd =  wndPtr->hwndSelf;
   XWindowAttributes win_attr;
+  Window win;
   
   /* Only mess with the X focus if there's */
   /* no desktop window and no window manager. */
@@ -448,13 +449,12 @@ void X11DRV_WND_SetFocus(WND *wndPtr)
   
   /* Set X focus and install colormap */
   
-  if (!X11DRV_WND_GetXWindow(wndPtr)) return;
-  
-  if (!TSXGetWindowAttributes( display, X11DRV_WND_GetXWindow(wndPtr), &win_attr ) ||
+  if (!(win = X11DRV_WND_FindXWindow(wndPtr))) return;
+  if (!TSXGetWindowAttributes( display, win, &win_attr ) ||
       (win_attr.map_state != IsViewable))
     return;  /* If window is not viewable, don't change anything */
   
-  TSXSetInputFocus( display, X11DRV_WND_GetXWindow(wndPtr), RevertToParent, CurrentTime );
+  TSXSetInputFocus( display, win, RevertToParent, CurrentTime );
   if (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE)
     TSXInstallColormap( display, COLOR_GetColormap() );
   
