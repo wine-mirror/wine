@@ -146,6 +146,7 @@ sub FindWindowsDir {
     my(@FATD)=@::FatDrives;
     my(@wininis) = ();
     my ($winini);
+    my ($ThisDrive);
 
     if (!$::opt_windir && !$::opt_fast && !$::opt_thorough) {
 	$::opt_thorough++;
@@ -161,8 +162,7 @@ sub FindWindowsDir {
     }
     elsif ($::opt_thorough) {
 	if ($::opt_debug) { print STDERR "DEBUG: Num FATD = ", $#FATD+1, "\n"; }
-	foreach(@FATD) {
-	    my $ThisDrive = shift(@FATD);
+       foreach $ThisDrive (@FATD) {
 	    my $MntPoint = $ThisDrive->[1];
 	    push(@wininis, `find $MntPoint -iname win.ini -print`);
 	}
