@@ -29,8 +29,10 @@ static void test_sscanf( void )
     int result, ret;
     float res1= -82.6267f, res2= 27.76f, res11, res12;
     char pname[]=" St. Petersburg, Florida\n";
-    
+    int hour=21,min=59,sec=20;
+    int  number,number_so_far;
 
+    
     /* check EOF */
     strcpy(buffer,"");
     ret = sscanf(buffer, "%d", &result);
@@ -61,9 +63,16 @@ static void test_sscanf( void )
     ok( (res11 == res1) && (res12 == res2), "Error reading floats");
     ret = sprintf(buffer," %s", pname);
     ret = sscanf(buffer,"%*c%[^\n]",buffer1);
-    ok( ret = 1, "Error with format \"%s\"","%*c%[^\n]");
+    ok( ret == 1, "Error with format \"%s\"","%*c%[^\n]");
     ok( strncmp(pname,buffer1,strlen(buffer1)) == 0, "Error with \"%s\" \"%s\"",pname, buffer1);
-    
+    ret = sprintf(buffer,"%d:%d:%d",hour,min,sec);
+    ret = sscanf(buffer,"%d%n",&number,&number_so_far);
+    ok(ret == 1 , "problem with format arg \"%%d%%n\"");
+    ok(number == hour,"Read wrong arg %d instead of %d",number, hour);
+    ok(number_so_far == 2,"Read wrong arg for \"%%n\" %d instead of 2",number_so_far);
+    ret = sscanf(buffer+2,"%*c%n",&number_so_far);
+    ok(ret == 0 , "problem with format arg \"%%*c%%n\"");
+    ok(number_so_far == 1,"Read wrong arg for \"%%n\" %d instead of 2",number_so_far);
 }
 
 
