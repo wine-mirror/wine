@@ -588,7 +588,7 @@ static void WM_NEXTDLGCTLTest(void)
          * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
          */
         dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
-        todo_wine ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+        ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
 
         /*
          * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
@@ -621,7 +621,7 @@ static void WM_NEXTDLGCTLTest(void)
          */
         if ( IDCANCEL == (LOWORD(dwVal)) )
         {
-            todo_wine ok ( ((GetWindowLong( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
+                ok ( ((GetWindowLong( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
                         "Button2 style not set to BS_DEFPUSHBUTTON\n" );
 
                 ok ( !((GetWindowLong( g_hwndTestDlgBut1, GWL_STYLE)) & BS_DEFPUSHBUTTON),
@@ -638,7 +638,7 @@ static void WM_NEXTDLGCTLTest(void)
          * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
          */
         dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
-        todo_wine ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+        ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
     }
 }
 
