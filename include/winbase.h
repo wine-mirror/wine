@@ -164,8 +164,8 @@ typedef struct
 /* GetTempFileName() Flags */
 #define TF_FORCEDRIVE	        0x80
 
-#define DRIVE_CANNOTDETERMINE      0
-#define DRIVE_DOESNOTEXIST         1
+#define DRIVE_UNKNOWN              0
+#define DRIVE_NO_ROOT_DIR          1
 #define DRIVE_REMOVABLE            2
 #define DRIVE_FIXED                3
 #define DRIVE_REMOTE               4

@@ -64,7 +64,7 @@ typedef struct
     char      label_conf[12]; /* drive label as cfg'd in wine.conf */
     char      label_read[12]; /* drive label as read from device */
     DWORD     serial_conf;    /* drive serial number as cfg'd in wine.conf */
-    DRIVETYPE type;      /* drive type */
+    UINT      type;      /* drive type */
     UINT      flags;     /* drive flags */
     dev_t     dev;       /* unix device number */
     ino_t     ino;       /* unix inode number */
@@ -73,10 +73,13 @@ typedef struct
 
 static const char * const DRIVE_Types[] =
 {
-    "floppy",   /* TYPE_FLOPPY */
-    "hd",       /* TYPE_HD */
-    "cdrom",    /* TYPE_CDROM */
-    "network"   /* TYPE_NETWORK */
+    "",         /* DRIVE_UNKNOWN */
+    "",         /* DRIVE_NO_ROOT_DIR */
+    "floppy",   /* DRIVE_REMOVABLE */
+    "hd",       /* DRIVE_FIXED */
+    "network",  /* DRIVE_REMOTE */
+    "cdrom",    /* DRIVE_CDROM */
+    "ramdisk"   /* DRIVE_RAMDISK */
 };
 
 
@@ -109,7 +112,7 @@ static HTASK16 DRIVE_LastTask = 0;
 /***********************************************************************
  *           DRIVE_GetDriveType
  */
-static DRIVETYPE DRIVE_GetDriveType( const char *name )
+static UINT DRIVE_GetDriveType( const char *name )
 {
     char buffer[20];
     int i;
@@ -117,11 +120,11 @@ static DRIVETYPE DRIVE_GetDriveType( const char *name )
     PROFILE_GetWineIniString( name, "Type", "hd", buffer, sizeof(buffer) );
     for (i = 0; i < sizeof(DRIVE_Types)/sizeof(DRIVE_Types[0]); i++)
     {
-        if (!strcasecmp( buffer, DRIVE_Types[i] )) return (DRIVETYPE)i;
+        if (!strcasecmp( buffer, DRIVE_Types[i] )) return i;
     }
     MESSAGE("%s: unknown drive type '%s', defaulting to 'hd'.\n",
 	name, buffer );
-    return TYPE_HD;
+    return DRIVE_FIXED;
 }
 
 
@@ -218,7 +221,7 @@ int DRIVE_Init(void)
                 drive->flags |= DRIVE_FAIL_READ_ONLY;
 
             /* Make the first hard disk the current drive */
-            if ((DRIVE_CurDrive == -1) && (drive->type == TYPE_HD))
+            if ((DRIVE_CurDrive == -1) && (drive->type == DRIVE_FIXED))
                 DRIVE_CurDrive = i;
 
             count++;
@@ -240,7 +243,7 @@ int DRIVE_Init(void)
         DOSDrives[2].unix_cwd = HEAP_strdupA( GetProcessHeap(), 0, "" );
         strcpy( DOSDrives[2].label_conf, "Drive C    " );
         DOSDrives[2].serial_conf   = 12345678;
-        DOSDrives[2].type     = TYPE_HD;
+        DOSDrives[2].type     = DRIVE_FIXED;
         DOSDrives[2].device   = NULL;
         DOSDrives[2].flags    = 0;
         DRIVE_CurDrive = 2;
@@ -463,16 +466,16 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
 
     switch(DOSDrives[drive].type)
     {
-	case TYPE_FLOPPY:
-	case TYPE_HD:
+	case DRIVE_REMOVABLE:
+	case DRIVE_FIXED:
 	    offs = 0;
 	    break;
-	case TYPE_CDROM:
+	case DRIVE_CDROM:
 	    offs = CDROM_Data_FindBestVoldesc(fd);
 	    break;
-		default:
-		    offs = 0;
-		    break;
+        default:
+            offs = 0;
+            break;
     }
 
     if ((offs) && (lseek(fd,offs,SEEK_SET)!=offs)) return -4;
@@ -480,8 +483,8 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
 
     switch(DOSDrives[drive].type)
     {
-	case TYPE_FLOPPY:
-	case TYPE_HD:
+	case DRIVE_REMOVABLE:
+	case DRIVE_FIXED:
 	    if ((buff[0x26]!=0x29) ||  /* Check for FAT present */
                 /* FIXME: do really all FAT have their name beginning with
                    "FAT" ? (At least FAT12, FAT16 and FAT32 have :) */
@@ -492,7 +495,7 @@ int DRIVE_ReadSuperblock (int drive, char * buff)
                 return -3;
             }
             break;
-	case TYPE_CDROM:
+	case DRIVE_CDROM:
 	    if (strncmp(&buff[1],"CD001",5)) /* Check for iso9660 present */
 		return -3;
 	    /* FIXME: do we need to check for "CDROM", too ? (high sierra) */
@@ -552,7 +555,7 @@ const char * DRIVE_GetLabel( int drive )
     int offs = -1;
 
     if (!DRIVE_IsValid( drive )) return NULL;
-    if (DRIVE_GetType(drive) == TYPE_CDROM)
+    if (DOSDrives[drive].type == DRIVE_CDROM)
     {
 	read = CDROM_GetLabel(drive, DOSDrives[drive].label_read); 
     }
@@ -563,8 +566,8 @@ const char * DRIVE_GetLabel( int drive )
 	    ERR("Invalid or unreadable superblock on %s (%c:).\n",
 		DOSDrives[drive].device, (char)(drive+'A'));
 	else {
-	    if (DOSDrives[drive].type == TYPE_FLOPPY ||
-		DOSDrives[drive].type == TYPE_HD)
+	    if (DOSDrives[drive].type == DRIVE_REMOVABLE ||
+		DOSDrives[drive].type == DRIVE_FIXED)
 		offs = 0x2b;
 
 	    /* FIXME: ISO9660 uses a 32 bytes long label. Should we do also? */
@@ -593,20 +596,20 @@ char buff[DRIVE_SUPER];
     {
 	switch(DOSDrives[drive].type)
 	{
-	    case TYPE_FLOPPY:
-	    case TYPE_HD:
-      if (DRIVE_ReadSuperblock(drive,(char *) buff))
-        MESSAGE("Invalid or unreadable superblock on %s (%c:)."
-			" Maybe not FAT?\n" ,
-			DOSDrives[drive].device, 'A'+drive);
-      else
-		    serial = *((DWORD*)(buff+0x27));
-		break;
-	    case TYPE_CDROM:
-		serial = CDROM_GetSerial(drive);
-		break;
-	    default:
-	        FIXME("Serial number reading from file system on drive %c: not supported yet.\n", drive+'A');
+        case DRIVE_REMOVABLE:
+        case DRIVE_FIXED:
+            if (DRIVE_ReadSuperblock(drive,(char *) buff))
+                MESSAGE("Invalid or unreadable superblock on %s (%c:)."
+                        " Maybe not FAT?\n" ,
+                        DOSDrives[drive].device, 'A'+drive);
+            else
+                serial = *((DWORD*)(buff+0x27));
+            break;
+        case DRIVE_CDROM:
+            serial = CDROM_GetSerial(drive);
+            break;
+        default:
+            FIXME("Serial number reading from file system on drive %c: not supported yet.\n", drive+'A');
 	}
     }
 		
@@ -625,15 +628,15 @@ int DRIVE_SetSerialNumber( int drive, DWORD serial )
 
     if (DOSDrives[drive].flags & DRIVE_READ_VOL_INFO)
     {
-        if ((DOSDrives[drive].type != TYPE_FLOPPY) &&
-            (DOSDrives[drive].type != TYPE_HD)) return 0;
+        if ((DOSDrives[drive].type != DRIVE_REMOVABLE) &&
+            (DOSDrives[drive].type != DRIVE_FIXED)) return 0;
         /* check, if the drive has a FAT filesystem */ 
         if (DRIVE_ReadSuperblock(drive, buff)) return 0;
         if (DRIVE_WriteSuperblockEntry(drive, 0x27, 4, (char *) &serial)) return 0;
         return 1;
     }
 
-    if (DOSDrives[drive].type == TYPE_CDROM) return 0;
+    if (DOSDrives[drive].type == DRIVE_CDROM) return 0;
     DOSDrives[drive].serial_conf = serial;
     return 1;
 }
@@ -642,9 +645,9 @@ int DRIVE_SetSerialNumber( int drive, DWORD serial )
 /***********************************************************************
  *           DRIVE_GetType
  */
-DRIVETYPE DRIVE_GetType( int drive )
+static UINT DRIVE_GetType( int drive )
 {
-    if (!DRIVE_IsValid( drive )) return TYPE_INVALID;
+    if (!DRIVE_IsValid( drive )) return DRIVE_UNKNOWN;
     return DOSDrives[drive].type;
 }
 
@@ -889,7 +892,7 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 #  error "statfs has no bfree/bavail member!"
 # endif
 #endif
-    if (DRIVE_GetType(drive) == TYPE_CDROM)
+    if (DOSDrives[drive].type == DRIVE_CDROM)
     { /* ALWAYS 0, even if no real CD-ROM mounted there !! */
         available->QuadPart = 0;
     }
@@ -1025,7 +1028,7 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
 	available.s.HighPart =0;
 	available.s.LowPart = 0x7fffffff;
     }
-    sec_size = (DRIVE_GetType(drive)==TYPE_CDROM) ? 2048 : 512;
+    sec_size = (DRIVE_GetType(drive)==DRIVE_CDROM) ? 2048 : 512;
     size.s.LowPart            /= sec_size;
     available.s.LowPart       /= sec_size;
     /* fixme: probably have to adjust those variables too for CDFS */
@@ -1165,19 +1168,12 @@ BOOL WINAPI GetDiskFreeSpaceExW( LPCWSTR root, PULARGE_INTEGER avail,
  * RETURNS
  *	drivetype DRIVE_xxx
  */
-UINT16 WINAPI GetDriveType16(
-	UINT16 drive	/* [in] number (NOT letter) of drive */
-) {
+UINT16 WINAPI GetDriveType16( UINT16 drive ) /* [in] number (NOT letter) of drive */
+{
+    UINT type = DRIVE_GetType(drive);
     TRACE("(%c:)\n", 'A' + drive );
-    switch(DRIVE_GetType(drive))
-    {
-    case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
-    case TYPE_HD:      return DRIVE_FIXED;
-    case TYPE_CDROM:   return DRIVE_REMOTE;
-    case TYPE_NETWORK: return DRIVE_REMOTE;
-    case TYPE_INVALID:
-    default:           return DRIVE_CANNOTDETERMINE;
-    }
+    if (type == DRIVE_CDROM) type = DRIVE_REMOTE;
+    return type;
 }
 
 
@@ -1198,17 +1194,6 @@ UINT16 WINAPI GetDriveType16(
  *   DRIVE_REMOTE      network disk
  *   DRIVE_CDROM       CDROM drive
  *   DRIVE_RAMDISK     virtual disk in RAM
- *
- *   DRIVE_DOESNOTEXIST    FIXME Not valid return value
- *   DRIVE_CANNOTDETERMINE FIXME Not valid return value
- *   
- * BUGS
- *
- *  Currently returns DRIVE_DOESNOTEXIST and DRIVE_CANNOTDETERMINE
- *  when it really should return DRIVE_NO_ROOT_DIR and DRIVE_UNKNOWN.
- *  Why were the former defines used?
- *
- *  DRIVE_RAMDISK is unsupported.
  */
 UINT WINAPI GetDriveTypeA(LPCSTR root) /* [in] String describing drive */
 {
@@ -1221,19 +1206,11 @@ UINT WINAPI GetDriveTypeA(LPCSTR root) /* [in] String describing drive */
         if ((root[1]) && (root[1] != ':'))
 	{
 	    WARN("invalid root '%s'\n", debugstr_a(root));
-	    return DRIVE_DOESNOTEXIST;
+	    return DRIVE_NO_ROOT_DIR;
 	}
 	drive = toupper(root[0]) - 'A';
     }
-    switch(DRIVE_GetType(drive))
-    {
-    case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
-    case TYPE_HD:      return DRIVE_FIXED;
-    case TYPE_CDROM:   return DRIVE_CDROM;
-    case TYPE_NETWORK: return DRIVE_REMOTE;
-    case TYPE_INVALID: return DRIVE_DOESNOTEXIST;
-    default:           return DRIVE_CANNOTDETERMINE;
-    }
+    return DRIVE_GetType(drive);
 }
 
 
@@ -1410,7 +1387,7 @@ DWORD WINAPI GetLogicalDrives(void)
     for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
     {
         if ( (DRIVE_IsValid(drive)) ||
-            (DOSDrives[drive].type == TYPE_CDROM)) /* audio CD is also valid */
+            (DOSDrives[drive].type == DRIVE_CDROM)) /* audio CD is also valid */
             ret |= (1 << drive);
     }
     return ret;
@@ -1469,7 +1446,7 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
       }
     if (fsname) {
     	/* Diablo checks that return code ... */
-    	if (DRIVE_GetType(drive)==TYPE_CDROM)
+        if (DOSDrives[drive].type == DRIVE_CDROM)
 	    lstrcpynA( fsname, "CDFS", fsname_len );
 	else
 	    lstrcpynA( fsname, "FAT", fsname_len );
@@ -1525,7 +1502,7 @@ BOOL WINAPI SetVolumeLabelA( LPCSTR root, LPCSTR volname )
     if (!DRIVE_IsValid( drive )) return FALSE;
 
     /* some copy protection stuff check this */
-    if (DRIVE_GetType( drive ) == TYPE_CDROM) return FALSE;
+    if (DOSDrives[drive].type == DRIVE_CDROM) return FALSE;
 
     FIXME("(%s,%s),stub!\n", root, volname);
     return TRUE;

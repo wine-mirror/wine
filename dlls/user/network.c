@@ -11,7 +11,6 @@
 #include "winbase.h"
 #include "wine/winnet16.h"
 #include "winnetwk.h"
-#include "drive.h"
 #include "debugtools.h"
 #include "heap.h"
 
@@ -167,34 +166,29 @@ WORD WINAPI WNetCancelConnection16( LPSTR lpName, BOOL16 bForce )
 WORD WINAPI WNetGetConnection16( LPSTR lpLocalName, 
                                  LPSTR lpRemoteName, UINT16 *cbRemoteName )
 {
-    const char *path;
+    char label[32];
 
     TRACE( "local %s\n", lpLocalName );
-    if (lpLocalName[1] == ':')
+    switch(GetDriveTypeA(lpLocalName))
     {
-        int drive = toupper(lpLocalName[0]) - 'A';
-        switch(GetDriveTypeA(lpLocalName))
+    case DRIVE_REMOTE:
+        GetVolumeInformationA( lpLocalName, label, sizeof(label), NULL, NULL, NULL, NULL, 0 );
+        if (strlen(label) + 1 > *cbRemoteName)
         {
-        case DRIVE_REMOTE:
-            path = DRIVE_GetLabel(drive);
-            if (strlen(path) + 1 > *cbRemoteName)
-            {
-                *cbRemoteName = strlen(path) + 1;
-                return WN16_MORE_DATA;
-            }
-            strcpy( lpRemoteName, path );
-            *cbRemoteName = strlen(lpRemoteName) + 1;
-            return WN16_SUCCESS;
-	case DRIVE_REMOVABLE:
-	case DRIVE_FIXED:
-	case DRIVE_CDROM:
-	  TRACE("file is local\n");
-	  return WN16_NOT_CONNECTED;
-	default:
-	    return WN16_BAD_LOCALNAME;
+            *cbRemoteName = strlen(label) + 1;
+            return WN16_MORE_DATA;
         }
+        strcpy( lpRemoteName, label );
+        *cbRemoteName = strlen(lpRemoteName) + 1;
+        return WN16_SUCCESS;
+    case DRIVE_REMOVABLE:
+    case DRIVE_FIXED:
+    case DRIVE_CDROM:
+        TRACE("file is local\n");
+        return WN16_NOT_CONNECTED;
+    default:
+        return WN16_BAD_LOCALNAME;
     }
-    return WN16_BAD_LOCALNAME;
 }
 
 /**************************************************************************
@@ -396,7 +390,7 @@ WORD WINAPI WNetGetPropertyText16( WORD iButton, WORD nPropSel, LPSTR lpszName,
 WORD WINAPI WNetGetDirectoryType16( LPSTR lpName, LPINT16 lpType )
 {
     UINT type = GetDriveTypeA(lpName);
-    if ( type == DRIVE_DOESNOTEXIST )
+    if ( type == DRIVE_NO_ROOT_DIR )
         type = GetDriveTypeA(NULL);
 
     *lpType = (type == DRIVE_REMOTE)? WNDT_NETWORK : WNDT_NORMAL;

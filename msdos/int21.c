@@ -383,7 +383,7 @@ static BOOL ioctlGenericBlkDevReq( CONTEXT86 *context )
 
 		case 0x72:
 			/* Trail on error implementation */
-			AX_reg(context) = GetDriveType16(BL_reg(context)) == DRIVE_CANNOTDETERMINE ? 0x0f : 0x01;
+			AX_reg(context) = GetDriveType16(BL_reg(context)) == DRIVE_UNKNOWN ? 0x0f : 0x01;
 			SET_CFLAG(context);	/* Seems to be set all the time */
 			break;
 
@@ -1651,7 +1651,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		 INT21_DriveName( BL_reg(context)));
             switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
             {
-            case DRIVE_CANNOTDETERMINE:
+            case DRIVE_UNKNOWN:
                 SetLastError( ERROR_INVALID_DRIVE );
                 AX_reg(context) = ERROR_INVALID_DRIVE;
                 SET_CFLAG(context);
@@ -1670,7 +1670,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		 INT21_DriveName( BL_reg(context))); 
             switch(GetDriveType16( DOS_GET_DRIVE( BL_reg(context) )))
             {
-            case DRIVE_CANNOTDETERMINE:
+            case DRIVE_UNKNOWN:
                 SetLastError( ERROR_INVALID_DRIVE );
                 AX_reg(context) = ERROR_INVALID_DRIVE;
                 SET_CFLAG(context);
@@ -2241,37 +2241,20 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 	    {
 		LPCSTR driveroot = (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs,context->Edx);
 		LPSTR buffer = (LPSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegEs,context->Edi);
-		int drive;
-		UINT flags;
+                DWORD filename_len, flags;
 
 		TRACE("LONG FILENAME - GET VOLUME INFORMATION for drive having root dir '%s'.\n", driveroot);
 		AX_reg(context) = 0;
-		if (!driveroot)
-		{
-		    INT_BARF( context, 0x21 );
-		    SET_CFLAG(context);
-		    break;
-		}
-		drive = toupper(driveroot[0]) - 'A';
-		flags = DRIVE_GetFlags(toupper(driveroot[0]) - 'A');
-		BX_reg(context) = 0x4000; /* support for LFN functions */
-		if (flags & DRIVE_CASE_SENSITIVE)
-			BX_reg(context) |= 1;
-		if (flags & DRIVE_CASE_PRESERVING)
-			BX_reg(context) |= 2;
-		/***** FIXME: not supported yet (needed ?)
-		if (flags & DRIVE_UNICODE)
-			BX_reg(context) |= 4;
-		if (flags & DRIVE_COMPRESSED)
-			BX_reg(context) |= 0x8000;
-		*****/
-		CX_reg(context) = (flags & DRIVE_SHORT_NAMES) ? 11 : 255; /* FIXME: 12 ? */
+                if (!GetVolumeInformationA( driveroot, NULL, 0, NULL, &filename_len,
+                                            &flags, buffer, 8 ))
+                {
+                    INT_BARF( context, 0x21 );
+                    SET_CFLAG(context);
+                    break;
+                }
+		BX_reg(context) = flags | 0x4000; /* support for LFN functions */
+		CX_reg(context) = filename_len;
 		DX_reg(context) = MAX_PATH; /* FIXME: which len if DRIVE_SHORT_NAMES ? */
-		if (DRIVE_GetType(drive) == TYPE_CDROM)
-			/* valid for data _and_ audio */
-			strcpy(buffer, "CDFS"); /* FIXME: fail if no CD in drive */
-		else
-			strcpy(buffer, "FAT");
 	    }
 	    break;
         case 0xa1:  /* Find close */

@@ -42,8 +42,9 @@ int	CDROM_Open(WINE_CDAUDIO* wcda, int drive)
 
     if (drive == -1)
     {
-	for (i=0; i < MAX_DOS_DRIVES; i++)
-	    if (DRIVE_GetType(i) == TYPE_CDROM)
+        char root[] = "A:\\";
+	for (i=0; i < MAX_DOS_DRIVES; i++, root[0]++)
+            if (GetDriveTypeA(root) == DRIVE_CDROM)
 	    {
 		drive = i;
 		avail = TRUE;

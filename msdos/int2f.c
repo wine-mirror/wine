@@ -11,7 +11,6 @@
 
 #include "wine/winbase16.h"
 #include "dosexe.h"
-#include "drive.h"
 #include "miscemu.h"
 #include "module.h"
 #include "task.h"
@@ -424,6 +423,13 @@ static	void	MSCDEX_StoreMSF(DWORD frame, BYTE* val)
     val[0] = frame - CDFRAMES_PERMIN * val[2] - CDFRAMES_PERSEC * val[1]; /* frames */
 }
 
+static int is_cdrom( int drive)
+{
+    char root[] = "A:\\";
+    root[0] += drive;
+    return (GetDriveTypeA(root) == DRIVE_CDROM);
+}
+
 static void MSCDEX_Handler(CONTEXT86* context)
 {
     int 	drive, count;
@@ -433,19 +439,19 @@ static void MSCDEX_Handler(CONTEXT86* context)
     case 0x00: /* Installation check */
 	/* Count the number of contiguous CDROM drives
 	 */
-	for (drive = count = 0; drive < MAX_DOS_DRIVES; drive++) {
-	    if (DRIVE_GetType(drive) == TYPE_CDROM) {
-		while (DRIVE_GetType(drive + count) == TYPE_CDROM) count++;
+	for (drive = count = 0; drive < 26; drive++) {
+	    if (is_cdrom(drive)) {
+		while (is_cdrom(drive + count)) count++;
 		break;
 	    }
 	}
 	TRACE("Installation check: %d cdroms, starting at %d\n", count, drive);
 	BX_reg(context) = count;
-	CX_reg(context) = (drive < MAX_DOS_DRIVES) ? drive : 0;
+	CX_reg(context) = (drive < 26) ? drive : 0;
 	break;
 	
     case 0x0B: /* drive check */
-	AX_reg(context) = (DRIVE_GetType(CX_reg(context)) == TYPE_CDROM);
+	AX_reg(context) = is_cdrom(CX_reg(context));
 	BX_reg(context) = 0xADAD;
 	break;
 	
@@ -456,9 +462,9 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	
     case 0x0D: /* get drive letters */
 	p = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
-	memset(p, 0, MAX_DOS_DRIVES);
-	for (drive = 0; drive < MAX_DOS_DRIVES; drive++) {
-	    if (DRIVE_GetType(drive) == TYPE_CDROM) *p++ = drive;
+	memset(p, 0, 26);
+	for (drive = 0; drive < 26; drive++) {
+	    if (is_cdrom(drive)) *p++ = drive;
 	}
 	TRACE("Get drive letters\n");
 	break;
@@ -490,9 +496,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    dev = CDROM_OpenDev(&wcda);
 	    TRACE("CDROM device driver -> command <%d>\n", (unsigned char)driver_request[2]);
 	    
-	    for (drive = 0; 
-		 drive < MAX_DOS_DRIVES && DRIVE_GetType(drive) != TYPE_CDROM; 
-		 drive++);
+	    for (drive = 0; drive < 26; drive++) if (is_cdrom(drive)) break;
 	    /* drive contains the first CD ROM */
 	    if (CX_reg(context) != drive) {
 		WARN("Request made doesn't match a CD ROM drive (%d/%d)\n", CX_reg(context), drive);

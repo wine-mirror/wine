@@ -63,11 +63,12 @@ void WINAPI INT_Int13Handler( CONTEXT86 *context )
 			BYTE drive_nr = DL_reg(context);
                         int floppy_fd;
                         struct floppy_drive_params floppy_parm;
+                        char root[] = "A:\\";
 
                         AH_reg(context) = 0x00; /* success */
 
-                        for (i = 0; i < MAX_DOS_DRIVES; i++)
-                        if (DRIVE_GetType(i) == TYPE_FLOPPY) nr_of_drives++;
+                        for (i = 0; i < MAX_DOS_DRIVES; i++, root[0]++)
+                            if (GetDriveTypeA(root) == DRIVE_REMOVABLE) nr_of_drives++;
                         DL_reg(context) = nr_of_drives;
 
 			if (drive_nr > 1) { /* invalid drive ? */

@@ -9,7 +9,6 @@
 #include "windef.h"
 #include "miscemu.h"
 #include "msdos.h"
-#include "drive.h"
 #include "debugtools.h"
 #include "options.h"
 
@@ -51,8 +50,8 @@ void WINAPI INT_Int11Handler( CONTEXT86 *context )
 		bit  2			(always set)
 */
 
-    if (DRIVE_IsValid(0)) diskdrives++;
-    if (DRIVE_IsValid(1)) diskdrives++;
+    if (GetDriveTypeA("A:\\") == DRIVE_REMOVABLE) diskdrives++;
+    if (GetDriveTypeA("B:\\") == DRIVE_REMOVABLE) diskdrives++;
     if (diskdrives) diskdrives--;
 	
     for (x=0; x < 9; x++)

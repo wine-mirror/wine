@@ -843,8 +843,8 @@ UINT16 WINAPI DriveType16( UINT16 drive )
     case DRIVE_CDROM:
         ret = DRIVE_REMOTE;
         break;
-    case DRIVE_DOESNOTEXIST:
-        ret = DRIVE_CANNOTDETERMINE;
+    case DRIVE_NO_ROOT_DIR:
+        ret = DRIVE_UNKNOWN;
         break;
     }
     return ret;

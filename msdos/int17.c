@@ -7,7 +7,6 @@
 #include "miscemu.h"
 #include "debugtools.h"
 #include "msdos.h"
-#include "drive.h"
 #include "winnt.h"
 
 DEFAULT_DEBUG_CHANNEL(int17);

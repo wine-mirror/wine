@@ -13,7 +13,6 @@
 #include "wine/winbase16.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "drive.h"
 #include "heap.h"
 #include "spy.h"
 #include "selectors.h"
@@ -1736,10 +1735,11 @@ static LRESULT LISTBOX_Directory( WND *wnd, LB_DESCR *descr, UINT attrib,
     if ((ret >= 0) && (attrib & DDL_DRIVES))
     {
         char buffer[] = "[-a-]";
+        char root[] = "A:\\";
         int drive;
-        for (drive = 0; drive < MAX_DOS_DRIVES; drive++, buffer[2]++)
+        for (drive = 0; drive < 26; drive++, buffer[2]++, root[0]++)
         {
-            if (!DRIVE_IsValid(drive)) continue;
+            if (GetDriveTypeA(root) <= DRIVE_NO_ROOT_DIR) continue;
             if ((ret = LISTBOX_InsertString( wnd, descr, -1, buffer )) < 0)
                 break;
         }

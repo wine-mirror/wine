@@ -18,7 +18,6 @@
 #include "user.h"
 #include "heap.h"
 #include "controls.h"
-#include "drive.h"
 #include "debugtools.h"
 #include "tweak.h"
 

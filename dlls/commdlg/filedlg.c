@@ -610,7 +610,7 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM wParam, LPARAM lParam)
       for(i = 0, n = -1; i < 26; i++)
       {
           str[0] = 'a' + i;
-          if (GetDriveTypeA(str) != DRIVE_DOESNOTEXIST) n++;
+          if (GetDriveTypeA(str) <= DRIVE_NO_ROOT_DIR) n++;
           if (toupper(str[0]) == toupper(dir[0])) break;
       }
   }

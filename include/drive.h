@@ -11,15 +11,6 @@
 
 #define MAX_DOS_DRIVES  26
 
-typedef enum
-{
-    TYPE_FLOPPY,
-    TYPE_HD,
-    TYPE_CDROM,
-    TYPE_NETWORK,
-    TYPE_INVALID
-} DRIVETYPE;
-
 /* Drive flags */
 
 #define DRIVE_DISABLED        0x0001  /* Drive is disabled */
@@ -41,7 +32,6 @@ extern const char * DRIVE_GetDevice( int drive );
 extern const char * DRIVE_GetLabel( int drive );
 extern DWORD DRIVE_GetSerialNumber( int drive );
 extern int DRIVE_SetSerialNumber( int drive, DWORD serial );
-extern DRIVETYPE DRIVE_GetType( int drive );
 extern UINT DRIVE_GetFlags( int drive );
 extern int DRIVE_Chdir( int drive, const char *path );
 extern int DRIVE_Disable( int drive  );
