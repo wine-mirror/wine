@@ -410,13 +410,21 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                {
                   if (!strcmp("%1",sTemp))            /* icon is in the file */
                      strcpy(sTemp, path);
-              
-                  IconNotYetLoaded=FALSE;
-                  /* FIXME: is it working correctly? */
-                  PrivateExtractIconsA(sTemp,dwNr,(flags&SHGFI_LARGEICON) ? 
-                    GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXSMICON),
-                    (flags&SHGFI_LARGEICON) ? GetSystemMetrics(SM_CYICON) :
-                    GetSystemMetrics(SM_CYSMICON), &psfi->hIcon,0,1,0);
+          
+                  if (flags & SHGFI_SYSICONINDEX) 
+                  {    
+                      psfi->iIcon = SIC_GetIconIndex(sTemp,dwNr);
+                      if (psfi->iIcon == -1) psfi->iIcon = 0;
+                  } 
+                  else 
+                  {
+                      IconNotYetLoaded=FALSE;
+                      PrivateExtractIconsA(sTemp,dwNr,(flags&SHGFI_LARGEICON) ? 
+                        GetSystemMetrics(SM_CXICON) : GetSystemMetrics(SM_CXSMICON),
+                        (flags&SHGFI_LARGEICON) ? GetSystemMetrics(SM_CYICON) :
+                        GetSystemMetrics(SM_CYSMICON), &psfi->hIcon,0,1,0);
+                      psfi->iIcon = dwNr;
+                  }
                }
             }
 	  }

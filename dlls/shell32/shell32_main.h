@@ -54,6 +54,7 @@ BOOL WINAPI Shell_GetImageList(HIMAGELIST * lpBigList, HIMAGELIST * lpSmallList)
 BOOL SIC_Initialize(void);
 void SIC_Destroy(void);
 BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT uFlags, UINT * pIndex);
+INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex );
 
 /* Classes Root */
 BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL bPrependDot);
