@@ -92,7 +92,7 @@ init	MAIN_UserInit
  88 stdcall DdeAccessData(long ptr) DdeAccessData32
  89 stub DdeAddData
  90 stdcall DdeClientTransaction(ptr long long long long long long ptr) DdeClientTransaction32
- 91 stdcall DdeCmpStringHandles(long long) DdeCmpStringHandles32
+ 91 stdcall DdeCmpStringHandlesA(long long) DdeCmpStringHandles32A
  92 stdcall DdeConnect(long long long ptr) DdeConnect32
  93 stdcall DdeConnectList(long long long long ptr) DdeConnectList32
  94 stdcall DdeCreateDataHandle(long ptr long long long long long) DdeCreateDataHandle32
@@ -615,7 +615,6 @@ init	MAIN_UserInit
 610 stdcall MonitorFromRect(ptr long) MonitorFromRect
 611 stdcall MonitorFromPoint(long long long) MonitorFromPoint
 612 stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors
-
 613 stdcall PrivateExtractIconExA (long long long long long) PrivateExtractIconExA
 614 stdcall PrivateExtractIconExW (long long long long long) PrivateExtractIconExW
 615 stdcall PrivateExtractIconsW (long long long long long long long long) PrivateExtractIconsW
@@ -626,3 +625,4 @@ init	MAIN_UserInit
 620 stdcall GetTaskmanWindow () GetTaskmanWindow
 621 stdcall SetTaskmanWindow (long) SetTaskmanWindow
 622 stdcall GetProgmanWindow () GetProgmanWindow
+623 stdcall DdeCmpStringHandlesW(long long) DdeCmpStringHandles32W

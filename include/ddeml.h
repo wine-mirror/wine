@@ -10,6 +10,11 @@
 
 #include "wintypes.h"
 
+/* Codepage Constants
+ */
+#define CP_WINANSI      1004
+#define CP_WINUNICODE   1200
+
 #define MSGF_DDEMGR 0x8001
 
 typedef DWORD HCONVLIST;
@@ -61,7 +66,7 @@ HCONV     WINAPI DdeQueryNextServer32(HCONVLIST, HCONV);
 #define   DdeQueryNextServer WINELIB_NAME(DdeQueryNextServer)
 DWORD     WINAPI DdeQueryString32A(DWORD, HSZ, LPSTR, DWORD, INT32);
 DWORD     WINAPI DdeQueryString32W(DWORD, HSZ, LPWSTR, DWORD, INT32);
-#define   DdeQueryString WINELIB_NAME(DdeQueryString)
+#define   DdeQueryString WINELIB_NAME_AW(DdeQueryString)
 BOOL16    WINAPI DdeDisconnectList16(HCONVLIST);
 BOOL32    WINAPI DdeDisconnectList32(HCONVLIST);
 #define   DdeDisConnectList WINELIB_NAME(DdeDisconnectList)
@@ -110,9 +115,9 @@ BOOL16    WINAPI DdeEnableCallback16(DWORD,HCONV,UINT16);
 BOOL32    WINAPI DdeEnableCallback32(DWORD,HCONV,UINT32);
 #define   DdeEnableCallback WINELIB_NAME(DdeEnableCallback)
 int       WINAPI DdeCmpStringHandles16(HSZ,HSZ);
-int       WINAPI DdeCmpStringHandles32(HSZ,HSZ);
-#define   DdeCmpStringHandles WINELIB_NAME(DdeCmpStringHandles)
-
+int       WINAPI DdeCmpStringHandles32A(HSZ,HSZ);
+int       WINAPI DdeCmpStringHandles32W(HSZ,HSZ);
+#define   DdeCmpStringHandles WINELIB_NAME_AW(DdeCmpStringHandles)
 
 HDDEDATA  WINAPI DdeNameService16(DWORD,HSZ,HSZ,UINT16);
 HDDEDATA  WINAPI DdeNameService32(DWORD,HSZ,HSZ,UINT32);
