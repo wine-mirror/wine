@@ -164,6 +164,7 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     MSG         msg;
     LONG        lHash = 0;
     HLPFILE*    hlpfile;
+    CHAR*       quote;
 
     Globals.hInstance = hInstance;
     
@@ -207,6 +208,11 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     WINHELP_RegisterWinClasses();
     if (*cmdline)
     {
+        if ((*cmdline == '"') && (quote = strchr(cmdline+1, '"')))
+        {
+            cmdline++;
+            *quote = '\0';
+        }
         hlpfile = WINHELP_LookupHelpFile(cmdline);
         if (!hlpfile) return 0;
     }

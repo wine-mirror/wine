@@ -287,7 +287,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
     DWORD       ref = 0x0C;
     unsigned    index, old_index, offset, len, offs;
 
-    hFile = OpenFile(lpszPath, &ofs, OF_READ | OF_SEARCH);
+    hFile = OpenFile(lpszPath, &ofs, OF_READ);
     if (hFile == HFILE_ERROR) return FALSE;
 
     ret = HLPFILE_ReadFileToBuffer(hFile);
