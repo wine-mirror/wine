@@ -539,7 +539,7 @@ static inline INT WINE_UNUSED INTERNAL_YWSTODS(DC *dc, INT height)
 
     /* Perform operation with floating point */
     floatHeight = (FLOAT)height;
-    INTERNAL_XWSTODS_FLOAT(dc, &floatHeight);
+    INTERNAL_YWSTODS_FLOAT(dc, &floatHeight);
 
     /* Round to integers */
     return GDI_ROUND(floatHeight);
