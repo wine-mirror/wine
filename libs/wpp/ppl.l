@@ -45,7 +45,7 @@
  *		|  {ws} # {ws} error {ws} {anytext} \n
  *		|  {ws} # {ws} warning {ws} {anytext} \n
  *		|  {ws} # {ws} line {ws} " {anytext} " {number} \n
- *		|  {ws} # {ws} {number} " {anytext} " {number} [{number} [{number}]] \n
+ *		|  {ws} # {ws} {number} " {anytext} " {number} [ {number} [{number}] ] \n
  *		|  {ws} # {ws} \n
  *
  * ws		:= [ \t\r\f\v]*
