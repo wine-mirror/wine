@@ -74,6 +74,15 @@
 #    that require root access
 #  add text to tell the user we need to run stuff as root so they don't 
 #    think we are trying to pull something funny
+# Apr 14 2002 - Dustin Navea
+#  Fix sed command when finding real-windows registry so it actually 
+#   accesses a file (~/.wine/config) instead of null ($CONF?!)
+#  Added search for clean-install (not upgrade) Win2k registry
+#  (next day, after some sleep)
+#  Fix sed string when finding real-windows registry to actually find 
+#   windows partition name in [Drive C] section
+#  it should now almost always find the windows partition and real-windows 
+#  registry (if not, let me know)
 
 #--- defaults (change these if you are a packager)
 CONFARGS="--enable-opengl"    # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -578,12 +587,14 @@ fi
 # (not to be done if windows registry exists)
 if [ "$DOREG" = 'auto' ]
 then {
-  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^Path=\(.*\)/\1/p' $CONF`
+  CROOT=`sed -n '/^\[Drive C\]$/,/^\[.*\]$/ s/^\"Path\" = \"\(.*\)\"/\1/p' $LCONF`
   echo "Checking for real Windows registry..."
   if [ -f "$CROOT/windows/system.dat" ]
   then DOREG=no
   elif [ -f "$CROOT/windows/system32/config/system" ]
   then DOREG=no
+  elif [ -f "$CROOT/WINNT/system32/config/system" ]
+  then DOREG=no 
   else DOREG=yes
   fi
   if [ "$DOREG" = 'yes' ]
