@@ -673,9 +673,8 @@ static LPVOID map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
             if (imports && imports->VirtualAddress >= sec->VirtualAddress &&
                 imports->VirtualAddress < sec->VirtualAddress + size)
             {
-                DWORD base = imports->VirtualAddress & ~page_mask;
-                DWORD end = imports->VirtualAddress + ROUND_SIZE( imports->VirtualAddress,
-                                                                  imports->Size );
+                UINT_PTR base = imports->VirtualAddress & ~page_mask;
+                UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size );
                 if (end > sec->VirtualAddress + size) end = sec->VirtualAddress + size;
                 if (end > base) VIRTUAL_mmap( shared_fd, ptr + base, end - base,
                                               pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
