@@ -753,13 +753,31 @@ static void *unaligned_mmap( void *addr, size_t length, unsigned int prot,
     if (!offset_high && (offset_low & page_mask))
     {
         int ret;
+
+        struct
+        {
+            void        *addr;
+            unsigned int length;
+            unsigned int prot;
+            unsigned int flags;
+            unsigned int fd;
+            unsigned int offset;
+        } args;
+
+        args.addr   = addr;
+        args.length = length;
+        args.prot   = prot;
+        args.flags  = flags;
+        args.fd     = fd;
+        args.offset = offset_low;
+
         __asm__ __volatile__("push %%ebx\n\t"
                              "movl %2,%%ebx\n\t"
                              "int $0x80\n\t"
                              "popl %%ebx"
                              : "=a" (ret)
                              : "0" (90), /* SYS_mmap */
-                               "g" (&addr) );
+                               "g" (&args) );
         if (ret < 0 && ret > -4096)
         {
             errno = -ret;
