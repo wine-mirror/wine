@@ -162,6 +162,7 @@ static LRESULT WINPROC_CallWndProc( WNDPROC proc, HWND hwnd, UINT msg,
     LRESULT retvalue;
     int iWndsLocks;
 
+    hwnd = WIN_GetFullHandle( hwnd );
     if (TRACE_ON(relay))
         DPRINTF( "%08lx:Call window proc %p (hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
                  GetCurrentThreadId(), proc, hwnd, SPY_GetMsgName(msg), wParam, lParam );
@@ -516,28 +517,20 @@ WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc )
  *
  * Return TRUE if the lparam is a string
  */
-static BOOL WINPROC_TestCBForStr ( HWND hwnd )
+inline static BOOL WINPROC_TestCBForStr( HWND hwnd )
 {
-    BOOL retvalue;
-    WND * wnd = WIN_FindWndPtr(hwnd);
-    retvalue = ( !(LOWORD(wnd->dwStyle) & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) ||
-	      (LOWORD(wnd->dwStyle) & CBS_HASSTRINGS) );
-    WIN_ReleaseWndPtr(wnd);
-    return retvalue;
+    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
+    return (!(style & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE)) || (style & CBS_HASSTRINGS));
 }
 /**********************************************************************
  *	     WINPROC_TestLBForStr
  *
  * Return TRUE if the lparam is a string
  */
-static BOOL WINPROC_TestLBForStr ( HWND hwnd )
+inline static BOOL WINPROC_TestLBForStr( HWND hwnd )
 {
-    BOOL retvalue;
-    WND * wnd = WIN_FindWndPtr(hwnd); 
-    retvalue = ( !(LOWORD(wnd->dwStyle) & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) ||
-	    (LOWORD(wnd->dwStyle) & LBS_HASSTRINGS) );
-    WIN_ReleaseWndPtr(wnd);
-    return retvalue;
+    DWORD style = GetWindowLongA( hwnd, GWL_STYLE );
+    return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
 
 }
 /**********************************************************************

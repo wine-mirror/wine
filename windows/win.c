@@ -147,6 +147,26 @@ static WND *free_window_handle( HWND hwnd )
 
 
 /***********************************************************************
+ *           WIN_GetFullHandle
+ *
+ * Get the full 32-bit window handle from a possibly truncated handle.
+ */
+HWND WIN_GetFullHandle( HWND hwnd )
+{
+    if (!HIWORD(hwnd))
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = hwnd;
+            if (!SERVER_CALL_ERR()) hwnd = req->full_handle;
+        }
+        SERVER_END_REQ;
+    }
+    return hwnd;
+}
+
+
+/***********************************************************************
  *           WIN_FindWndPtr
  *
  * Return a pointer to the WND structure corresponding to a HWND.
@@ -294,10 +314,9 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
         if (*ppWnd) *ppWnd = wndPtr->next;
     }
 
-    wndPtr->parent = parentPtr;
-
     if (parentPtr)
     {
+        wndPtr->parent = parentPtr;
         if ((hwndInsertAfter == HWND_TOP) || (hwndInsertAfter == HWND_BOTTOM))
         {
             ppWnd = &parentPtr->child;  /* Point to first sibling hwnd */
@@ -314,6 +333,7 @@ void WIN_LinkWindow( HWND hwnd, HWND parent, HWND hwndInsertAfter )
         wndPtr->next = *ppWnd;
         *ppWnd = wndPtr;
     }
+    else wndPtr->next = NULL;  /* unlinked */
 
  done:
     WIN_ReleaseWndPtr( parentPtr );
@@ -2155,11 +2175,10 @@ HWND WINAPI GetParent( HWND hwnd )
 HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 {
     HWND ret;
-    WND *wndPtr, *parent;
+    WND *wndPtr;
 
     if (hwnd == GetDesktopWindow()) return 0;
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
-    parent = wndPtr->parent;
 
     switch(type)
     {
@@ -2173,7 +2192,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
     case GA_ROOTOWNER:
         while (wndPtr->parent->hwndSelf != GetDesktopWindow())
             WIN_UpdateWndPtr( &wndPtr, wndPtr->parent );
-        while (wndPtr->owner)
+        while (wndPtr && wndPtr->owner)
         {
             WND *ptr = WIN_FindWndPtr( wndPtr->owner );
             WIN_ReleaseWndPtr( wndPtr );
@@ -2181,7 +2200,7 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
         }
         break;
     }
-    ret = wndPtr->hwndSelf;
+    ret = wndPtr ? wndPtr->hwndSelf : 0;
     WIN_ReleaseWndPtr( wndPtr );
     return ret;
 }
