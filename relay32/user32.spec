@@ -185,8 +185,8 @@ init	MAIN_UserInit
 181 stub EnumDesktopsW
 182 stub EnumDisplayDeviceModesA
 183 stub EnumDisplayDeviceModesW
-184 stub EnumDisplayDevicesA
-185 stub EnumDisplayDevicesW
+184 stdcall EnumDisplayDevicesA(ptr long ptr long) EnumDisplayDevicesA
+185 stdcall EnumDisplayDevicesW(ptr long ptr long) EnumDisplayDevicesW
 186 stdcall EnumPropsA(long ptr) EnumPropsA
 187 stdcall EnumPropsExA(long ptr long) EnumPropsExA
 188 stdcall EnumPropsExW(long ptr long) EnumPropsExW

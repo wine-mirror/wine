@@ -410,6 +410,42 @@ BOOL WINAPI EnumDisplaySettingsW(LPCWSTR name,DWORD n,LPDEVMODEW devmode) {
 }
 
 /***********************************************************************
+ *           EnumDisplayDevicesA   (USER32.184)
+ */
+BOOL WINAPI EnumDisplayDevicesA(
+	LPVOID unused,DWORD i,LPDISPLAY_DEVICEA lpDisplayDevice,DWORD dwFlags
+) {
+	if (i)
+		return FALSE;
+	FIXME_(system)("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
+	strcpy(lpDisplayDevice->DeviceName,"X11");
+	strcpy(lpDisplayDevice->DeviceString,"X 11 Windowing System");
+	lpDisplayDevice->StateFlags =
+			DISPLAY_DEVICE_ATTACHED_TO_DESKTOP	|
+			DISPLAY_DEVICE_PRIMARY_DEVICE		|
+			DISPLAY_DEVICE_VGA_COMPATIBLE;
+	return TRUE;
+}
+
+/***********************************************************************
+ *           EnumDisplayDevicesW   (USER32.185)
+ */
+BOOL WINAPI EnumDisplayDevicesW(
+	LPVOID unused,DWORD i,LPDISPLAY_DEVICEW lpDisplayDevice,DWORD dwFlags
+) {
+	if (i)
+		return FALSE;
+	FIXME_(system)("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
+	lstrcpyAtoW(lpDisplayDevice->DeviceName,"X11");
+	lstrcpyAtoW(lpDisplayDevice->DeviceString,"X 11 Windowing System");
+	lpDisplayDevice->StateFlags =
+			DISPLAY_DEVICE_ATTACHED_TO_DESKTOP	|
+			DISPLAY_DEVICE_PRIMARY_DEVICE		|
+			DISPLAY_DEVICE_VGA_COMPATIBLE;
+	return TRUE;
+}
+
+/***********************************************************************
  *           SetEventHook   (USER.321)
  *
  *	Used by Turbo Debugger for Windows

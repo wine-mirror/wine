@@ -2898,6 +2898,9 @@ HACCEL      WINAPI CreateAcceleratorTableW(LPACCEL,INT);
 HICON     WINAPI CreateIconIndirect(LPICONINFO);
 BOOL      WINAPI DestroyAcceleratorTable(HACCEL);
 BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
+BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
+BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
+#define     EnumDisplayDevices WINELIB_NAME_AW(EnumDisplayDevices)
 INT       WINAPI EnumPropsExA(HWND,PROPENUMPROCEXA,LPARAM);
 INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
