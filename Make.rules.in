@@ -141,7 +141,7 @@ $(BUILD) checkbuild:
 
 # Rule for main module
 
-$(MODULE).o: $(OBJS)
+$(MODULE).o: $(OBJS) Makefile.in $(TOPSRCDIR)/Make.rules.in
 	$(LDCOMBINE) $(OBJS) -o $(MODULE).o
 
 # Rules for makefile
