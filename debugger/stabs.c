@@ -1229,6 +1229,8 @@ static enum DbgInfoLoad DEBUG_ProcessElfFile(const char* filename,
      * table.
      */
     ehptr = (Elf32_Ehdr*) addr;
+    if (memcmp( ehptr->e_ident, ELFMAG, SELFMAG )) goto leave;
+
     spnt = (Elf32_Shdr*) (addr + ehptr->e_shoff);
     shstrtab = (addr + spnt[ehptr->e_shstrndx].sh_offset);
 
