@@ -577,7 +577,7 @@ static	BOOL	DRIVER_AddToList(LPWINE_DRIVER lpNewDrv, LPARAM lParam, BOOL bCallFr
     lpNewDrv->dwMagic = WINE_DI_MAGIC;
     /* First driver to be loaded for this module, need to load correctly the module */
     if (DRIVER_GetNumberOfModuleRefs(lpNewDrv) == 0) {
-	if (SendDriverMessage((HDRVR)lpNewDrv, DRV_LOAD,   0L, 0L) != DRV_SUCCESS) {
+	if (SendDriverMessage((HDRVR)lpNewDrv, DRV_LOAD, 0L, 0L) != DRV_SUCCESS) {
 	    TRACE(driver, "DRV_LOAD failed on driver 0x%08lx\n", (DWORD)lpNewDrv);
 	    return FALSE;
 	}
@@ -916,13 +916,16 @@ HMODULE WINAPI GetDriverModuleHandle(HDRVR hDrvr)
 LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg, 
                                LPARAM lParam1, LPARAM lParam2)
 {
+    TRACE(driver, "devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx\n",
+	  dwDevID, hDriv, wMsg, lParam1, lParam2);
+
     switch(wMsg) {
     case DRV_LOAD:		return (LRESULT)0L;
     case DRV_FREE:		return (LRESULT)0L;
     case DRV_OPEN:		return (LRESULT)0L;
     case DRV_CLOSE:		return (LRESULT)0L;
-    case DRV_ENABLE:		return (LRESULT)0L;
-    case DRV_DISABLE:		return (LRESULT)0L;
+    case DRV_ENABLE:		return (LRESULT)1L;
+    case DRV_DISABLE:		return (LRESULT)1L;
     case DRV_QUERYCONFIGURE:	return (LRESULT)0L;
     case DRV_CONFIGURE:		MessageBoxA(0, "Driver isn't configurable !", "Wine Driver", MB_OK); return (LRESULT)0L;
     case DRV_INSTALL:		return (LRESULT)DRVCNF_RESTART;
