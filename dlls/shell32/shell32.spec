@@ -19,11 +19,8 @@ import kernel32.dll
 # This list was updated to dll version 4.72
 
    2 stdcall SHChangeNotifyRegister(long long long long long long) SHChangeNotifyRegister
-   3 stub CheckEscapesA@8
    4 stdcall SHChangeNotifyDeregister (long) SHChangeNotifyDeregister
    5 stub SHChangeNotifyUpdateEntryList@16
-   6 stub CheckEscapesW@8
-   7 stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
    9 stub PifMgr_OpenProperties@16
   10 stub PifMgr_GetProperties@20
   11 stub PifMgr_SetProperties@20
@@ -54,7 +51,6 @@ import kernel32.dll
   39 stdcall PathIsUNC (ptr) PathIsUNCAW
   40 stdcall PathIsRelative (ptr) PathIsRelativeAW
   43 stdcall PathIsExe (ptr) PathIsExeAW
-  44 stub DoEnvironmentSubstA@8
   45 stdcall PathFileExists(ptr) PathFileExistsAW
   46 stdcall PathMatchSpec (ptr ptr) PathMatchSpecAW
   47 stdcall PathMakeUniqueName (ptr long ptr ptr ptr)PathMakeUniqueNameAW
@@ -325,12 +321,15 @@ import kernel32.dll
 # version 4.0 (win95)
 # _WIN32_IE >= 0x0200
 #
+@ stub CheckEscapesA
+@ stub CheckEscapesW
+@ stdcall CommandLineToArgvW(wstr ptr) CommandLineToArgvW
 @ stdcall Control_FillCache_RunDLL(long long long long)Control_FillCache_RunDLL
-@ stub Control_FillCache_RunDLLA@16
-@ stub Control_FillCache_RunDLLW@16
+@ stub Control_FillCache_RunDLLA
+@ stub Control_FillCache_RunDLLW
 @ stdcall Control_RunDLL(long long long long)Control_RunDLL
-@ stub Control_RunDLLA@16
-@ stub Control_RunDLLW@16
+@ stub Control_RunDLLA
+@ stub Control_RunDLLW
 @ stdcall DllInstall(long wstr)SHELL32_DllInstall
 @ stdcall DoEnvironmentSubstA(str str)DoEnvironmentSubstA
 @ stdcall DoEnvironmentSubstW(wstr wstr)DoEnvironmentSubstW

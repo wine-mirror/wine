@@ -6,6 +6,7 @@ import user32.dll
 import gdi32.dll
 import rpcrt4.dll
 import kernel32.dll
+import ntdll.dll
 
   1 stub BindMoniker                # stdcall (ptr long ptr ptr) return 0,ERR_NOTIMPLEMENTED
   2 stdcall CLSIDFromProgID(wstr ptr) CLSIDFromProgID

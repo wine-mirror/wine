@@ -374,24 +374,24 @@ libx11drv.@LIBEXT@: x11drv/libx11drv.@LIBEXT@
 
 advapi32/libadvapi32.so: libkernel32.so
 avifil32/libavifil32.so: libmsvfw32.so libkernel32.so
-comctl32/libcomctl32.so: libuser32.so libgdi32.so libkernel32.so
+comctl32/libcomctl32.so: libuser32.so libgdi32.so libadvapi32.so libkernel32.so
 commdlg/libcomdlg32.so: libshell32.so libshlwapi.so libcomctl32.so libuser32.so libwinspool.drv.so libgdi32.so libkernel32.so
 crtdll/libcrtdll.so: libkernel32.so
 ddraw/libddraw.so: libole32.so libuser32.so libx11drv.so libgdi32.so libkernel32.so
 dinput/libdinput.so: libuser32.so libkernel32.so
 dplay/libdplay.so: libdplayx.so
-dplayx/libdplayx.so: libwinmm.so libole32.so libadvapi32.so libkernel32.so
+dplayx/libdplayx.so: libwinmm.so libole32.so libuser32.so libadvapi32.so libkernel32.so
 dsound/libdsound.so: libwinmm.so libkernel32.so
-gdi/libgdi32.so: libkernel32.so
+gdi/libgdi32.so: libadvapi32.so libkernel32.so
 icmp/libicmp.so: libkernel32.so
 imagehlp/libimagehlp.so: libkernel32.so
 imm32/libimm32.so: libkernel32.so
 lzexpand/liblz32.so: libkernel32.so
 mpr/libmpr.so: libkernel32.so
-msacm/libmsacm32.so: libwinmm.so libkernel32.so
+msacm/libmsacm32.so: libwinmm.so libuser32.so libkernel32.so
 msvideo/libmsvfw32.so: libwinmm.so libuser32.so libgdi32.so libkernel32.so
 ole32/libole32.so: libadvapi32.so libuser32.so libgdi32.so librpcrt4.so libkernel32.so
-oleaut32/liboleaut32.so: libole32.so libgdi32.so libkernel32.so
+oleaut32/liboleaut32.so: libole32.so libuser32.so libgdi32.so libkernel32.so
 olecli/libolecli32.so: libole32.so libolesvr32.so libgdi32.so
 olepro32/libolepro32.so: liboleaut32.so
 opengl32/libopengl32.so: libx11drv.so libkernel32.so
@@ -405,10 +405,10 @@ shlwapi/libshlwapi.so: libadvapi32.so libuser32.so libgdi32.so libkernel32.so
 tapi32/libtapi32.so: libkernel32.so
 ttydrv/libttydrv.so: libuser32.so libgdi32.so libkernel32.so
 urlmon/liburlmon.so: libole32.so
-user/libuser32.so: libgdi32.so libkernel32.so
+user/libuser32.so: libgdi32.so libadvapi32.so libkernel32.so
 version/libversion.so: liblz32.so libkernel32.so
 win32s/libw32skrnl.so: libkernel32.so
-winaspi/libwnaspi32.so: libkernel32.so
+winaspi/libwnaspi32.so: libadvapi32.so libkernel32.so
 wineps/libwineps.so: libuser32.so libgdi32.so libkernel32.so
 wininet/libwininet.so: libuser32.so libkernel32.so
 winmm/joystick/libjoystick.drv.so: libwinmm.so libuser32.so

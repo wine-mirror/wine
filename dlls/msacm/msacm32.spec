@@ -4,6 +4,7 @@ init MSACM32_LibMain
 rsrc msacm
 
 import winmm.dll
+import user32.dll
 import kernel32.dll
 
  1 stub XRegThunkEntry

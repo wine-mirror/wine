@@ -4,6 +4,7 @@ init DPLAYX_LibMain
 
 import winmm.dll
 import ole32.dll
+import user32.dll
 import advapi32.dll
 import kernel32.dll
 

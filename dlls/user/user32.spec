@@ -4,7 +4,9 @@ init	USER_Init
 rsrc	user32
 
 import	gdi32.dll
+import	advapi32.dll
 import	kernel32.dll
+import	ntdll.dll
 
 @ stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout
 @ stdcall AdjustWindowRect(ptr long long) AdjustWindowRect

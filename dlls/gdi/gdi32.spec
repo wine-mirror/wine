@@ -2,6 +2,7 @@ name    gdi32
 type    win32
 init    MAIN_GdiInit
 
+import	advapi32.dll
 import	kernel32.dll
 
 # ordinal exports
