@@ -112,6 +112,11 @@ extern HBRUSH  COMCTL32_hPattern55AABrush;
 /* HOTKEY internal strings */
 #define HKY_NONE                        2048
 
+/* Tooltip icons */
+#define IDI_TT_INFO_SM                   22
+#define IDI_TT_WARN_SM                   25
+#define IDI_TT_ERROR_SM                  28
+
 typedef struct
 {
     COLORREF clrBtnHighlight;       /* COLOR_BTNHIGHLIGHT                  */
