@@ -5849,6 +5849,7 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
                 lprc->right = lprc->left + infoPtr->iconSpacing.cx - 1;
                 ListView_UpdateLargeItemLabelRect (hwnd, infoPtr, nItem, lprc);
               }
+              lprc->bottom = lprc->top + infoPtr->ntmHeight + HEIGHT_PADDING;
             }
           }
         }
@@ -6103,6 +6104,9 @@ static LRESULT LISTVIEW_GetItemRect(HWND hwnd, INT nItem, LPRECT lprc)
         }
         break;
       }
+      TRACE("result %s (%d,%d)-(%d,%d)\n",
+	    (bResult) ? "TRUE" : "FALSE",
+	    lprc->left, lprc->top, lprc->right, lprc->bottom);
   }
 
   TRACE("result %s (%d,%d)-(%d,%d)\n", bResult ? "TRUE" : "FALSE",
@@ -7705,12 +7709,21 @@ static HIMAGELIST LISTVIEW_SetImageList(HWND hwnd, INT nType, HIMAGELIST himl)
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongW(hwnd, 0);
   HIMAGELIST himlOld = 0;
   INT oldHeight;
+  UINT uView = GetWindowLongW(hwnd, GWL_STYLE) & LVS_TYPEMASK;
 
   switch (nType)
   {
   case LVSIL_NORMAL:
     himlOld = infoPtr->himlNormal;
     infoPtr->himlNormal = himl;
+    if(himl && (LVS_ICON == uView))
+    {
+        INT cx, cy;
+        ImageList_GetIconSize(himl, &cx, &cy);
+        infoPtr->iconSize.cx = cx;
+        infoPtr->iconSize.cy = cy;
+        LISTVIEW_SetIconSpacing(hwnd,0);
+    }
     break;
 
   case LVSIL_SMALL:
@@ -9587,6 +9600,7 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
 
     if (uNewView == LVS_ICON)
     {
+      /* FIXME: should get icon size from imagelist - mjm */
       infoPtr->iconSize.cx = GetSystemMetrics(SM_CXICON);
       infoPtr->iconSize.cy = GetSystemMetrics(SM_CYICON);
       infoPtr->nItemWidth = LISTVIEW_GetItemWidth(hwnd);
