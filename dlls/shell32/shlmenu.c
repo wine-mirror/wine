@@ -1,6 +1,7 @@
 /*
- *
+ * see www.geocities.com/SiliconValley/4942/filemenu.html
  */
+#include <assert.h>
 #include <string.h>
 
 #include "wine/obj_base.h"
@@ -14,10 +15,194 @@
 
 #include "pidl.h"
 
+BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu);
+BOOL WINAPI FileMenu_AppendItemA(HMENU hMenu, LPCSTR lpText, UINT uID, int icon, HMENU hMenuPopup, int nItemHeight);
+
+typedef struct
+{	BOOL		bInitialized;
+	BOOL		bIsMagic;
+
+	/* create */
+	COLORREF	crBorderColor;
+	int		nBorderWidth;
+	HBITMAP		hBorderBmp;
+
+	/* insert using pidl */
+	LPITEMIDLIST	pidl;
+	UINT		uID;
+	UINT		uFlags;
+	UINT		uEnumFlags;
+	LPFNFMCALLBACK lpfnCallback;
+} FMINFO, *LPFMINFO;
+
+typedef struct
+{	int	cchItemText;
+	int	iIconIndex;
+	HMENU	hMenu;
+	char	szItemText[1];
+} FMITEM, * LPFMITEM;
+
+static BOOL bAbortInit;
+
+#define	CCH_MAXITEMTEXT 256
+
 DEFAULT_DEBUG_CHANNEL(shell)
 
-BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu);
+LPFMINFO FM_GetMenuInfo(HMENU hmenu)
+{	MENUINFO	MenuInfo;
+	LPFMINFO	menudata;
 
+	MenuInfo.cbSize = sizeof(MENUINFO);
+	MenuInfo.fMask = MIM_MENUDATA;
+
+	if (! GetMenuInfo(hmenu, &MenuInfo))
+	  return NULL;
+
+	menudata = (LPFMINFO)MenuInfo.dwMenuData;
+
+	assert ((menudata != 0) && (MenuInfo.cbSize == sizeof(MENUINFO)));
+	
+	return menudata;
+
+}
+/*************************************************************************
+ * FM_SetMenuParameter				[internal]
+ *
+ */
+static LPFMINFO FM_SetMenuParameter(
+	HMENU hmenu,
+	UINT uID,
+	LPCITEMIDLIST pidl,
+	UINT uFlags,
+	UINT uEnumFlags,
+	LPFNFMCALLBACK lpfnCallback)
+{
+	LPFMINFO	menudata;
+
+	TRACE(shell,"\n");
+	
+	menudata = FM_GetMenuInfo(hmenu);
+	
+	if ( menudata->pidl)
+	{ SHFree(menudata->pidl);
+	}
+	
+	menudata->uID = uID;
+	menudata->pidl = ILClone(pidl);
+	menudata->uFlags = uFlags;
+	menudata->uEnumFlags = uEnumFlags;
+	menudata->lpfnCallback = lpfnCallback;
+
+	return menudata;
+}
+
+/*************************************************************************
+ * FM_InitMenuPopup				[internal]
+ *
+ */
+static int FM_InitMenuPopup(HMENU hmenu, LPITEMIDLIST pAlternatePidl)
+{	IShellFolder	*lpsf, *lpsf2;
+	ULONG		ulItemAttr;
+	UINT		uID, uFlags, uEnumFlags;
+	LPFNFMCALLBACK	lpfnCallback;
+	LPITEMIDLIST	pidl;
+	char		sTemp[MAX_PATH];
+	int		NumberOfItems = 0, iIcon;
+	MENUINFO	MenuInfo;
+	LPFMINFO	menudata;
+
+	TRACE(shell,"\n");
+
+	MenuInfo.cbSize = sizeof(MENUINFO);
+	MenuInfo.fMask = MIM_MENUDATA;
+
+	if (! GetMenuInfo(hmenu, &MenuInfo))
+	  return FALSE;
+
+	menudata = (LPFMINFO)MenuInfo.dwMenuData;
+	
+	assert ((menudata != 0) && (MenuInfo.cbSize == sizeof(MENUINFO)));
+	
+	if (menudata->bInitialized)
+	  return 0;
+	
+	uID = menudata->uID;
+	pidl = ((pAlternatePidl) ? pAlternatePidl : menudata->pidl);
+	uFlags = menudata->uFlags;
+	uEnumFlags = menudata->uEnumFlags;
+	lpfnCallback = menudata->lpfnCallback;
+
+	menudata->bInitialized = FALSE;
+	SetMenuInfo(hmenu, &MenuInfo);
+	
+	if (SUCCEEDED (SHGetDesktopFolder(&lpsf)))
+	{
+	  if (SUCCEEDED(IShellFolder_BindToObject(lpsf, pidl,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
+	  {
+	    IEnumIDList	*lpe = NULL;
+
+	    if (SUCCEEDED (IShellFolder_EnumObjects(lpsf2, 0, uEnumFlags, &lpe )))
+	    {
+
+	      LPITEMIDLIST pidlTemp = NULL;
+	      ULONG ulFetched;
+
+	      while ((!bAbortInit) && (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched)))
+	      {
+		if (SUCCEEDED (IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulItemAttr)))
+		{
+		  ILGetDisplayName( pidlTemp, sTemp);
+		  if (! (PidlToSicIndex(lpsf, pidlTemp, FALSE, &iIcon)))
+		    iIcon = FM_BLANK_ICON;
+		  if ( SFGAO_FOLDER & ulItemAttr)
+		  {
+		    LPFMINFO lpFmMi;
+		    MENUINFO MenuInfo;
+		    HMENU hMenuPopup = CreatePopupMenu();
+	
+		    lpFmMi = (LPFMINFO) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FMINFO));
+
+		    lpFmMi->pidl = ILCombine(pidl, pidlTemp);
+		    lpFmMi->uEnumFlags = SHCONTF_FOLDERS | SHCONTF_NONFOLDERS;
+
+		    MenuInfo.cbSize = sizeof(MENUINFO);
+		    MenuInfo.fMask = MIM_MENUDATA;
+		    MenuInfo.dwMenuData = (DWORD) lpFmMi;
+		    SetMenuInfo (hMenuPopup, &MenuInfo);
+
+		    FileMenu_AppendItemA (hmenu, sTemp, uID, iIcon, hMenuPopup, FM_DEFAULT_HEIGHT);
+		  }
+		  else
+		  {
+		    ((LPSTR)PathFindExtensionA(sTemp))[0] = 0x00;
+		    FileMenu_AppendItemA (hmenu, sTemp, uID, iIcon, 0, FM_DEFAULT_HEIGHT);
+		  }
+		}
+
+		if (lpfnCallback)
+		{
+		  TRACE(shell,"enter callback\n");
+		  lpfnCallback ( pidl, pidlTemp);
+		  TRACE(shell,"leave callback\n");
+		}
+
+		NumberOfItems++;
+	      }
+	      IEnumIDList_Release (lpe);
+	    }
+	    IShellFolder_Release(lpsf2);
+	  }
+	  IShellFolder_Release(lpsf);
+	}
+
+	if ( GetMenuItemCount (hmenu) == 0 )
+	  FileMenu_AppendItemA (hmenu, "(empty)", uID, FM_BLANK_ICON, 0, FM_DEFAULT_HEIGHT);
+
+	menudata->bInitialized = TRUE;
+	SetMenuInfo(hmenu, &MenuInfo);
+
+	return NumberOfItems;
+}
 /*************************************************************************
  * FileMenu_Create				[SHELL32.114]
  *
@@ -29,12 +214,26 @@ HMENU WINAPI FileMenu_Create (
 	int nSelHeight,
 	UINT uFlags)
 {
-	HMENU ret = CreatePopupMenu();
+	MENUINFO	MenuInfo;
+	LPFMINFO	menudata;
 
-	FIXME(shell,"0x%08lx 0x%08x 0x%08x 0x%08x 0x%08x  ret=0x%08x\n",
-	crBorderColor, nBorderWidth, hBorderBmp, nSelHeight, uFlags, ret);
+	HMENU hMenu = CreatePopupMenu();
 
-	return ret;
+	TRACE(shell,"0x%08lx 0x%08x 0x%08x 0x%08x 0x%08x  hMenu=0x%08x\n",
+	crBorderColor, nBorderWidth, hBorderBmp, nSelHeight, uFlags, hMenu);
+
+	menudata = (LPFMINFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(FMINFO));
+	menudata->bIsMagic = TRUE;
+	menudata->crBorderColor = crBorderColor;
+	menudata->nBorderWidth = nBorderWidth;
+	menudata->hBorderBmp = hBorderBmp;
+
+	MenuInfo.cbSize = sizeof(MENUINFO);
+	MenuInfo.fMask = MIM_MENUDATA;
+	MenuInfo.dwMenuData = (DWORD) menudata;
+	SetMenuInfo (hMenu, &MenuInfo);
+
+	return hMenu;
 }
 
 /*************************************************************************
@@ -43,17 +242,82 @@ HMENU WINAPI FileMenu_Create (
  * NOTES
  *  exported by name
  */
-void WINAPI FileMenu_Destroy (HMENU hMenu)
+void WINAPI FileMenu_Destroy (HMENU hmenu)
 {
-	TRACE(shell,"0x%08x\n", hMenu);
-	FileMenu_DeleteAllItems (hMenu);
-	DestroyMenu (hMenu);
+	LPFMINFO	menudata;
+
+	TRACE(shell,"0x%08x\n", hmenu);
+
+	FileMenu_DeleteAllItems (hmenu);
+	
+	menudata = FM_GetMenuInfo(hmenu);
+
+	if ( menudata->pidl)
+	{ SHFree( menudata->pidl);
+	}
+	HeapFree(GetProcessHeap(), 0, menudata);
+
+	DestroyMenu (hmenu);
 }
 
 /*************************************************************************
  * FileMenu_AppendItemAW			[SHELL32.115]
  *
  */
+BOOL WINAPI FileMenu_AppendItemA(
+	HMENU hMenu,
+	LPCSTR lpText,
+	UINT uID,
+	int icon,
+	HMENU hMenuPopup,
+	int nItemHeight)
+{
+	LPSTR lpszText = (LPSTR)lpText;
+	MENUITEMINFOA	mii;
+	LPFMITEM myItem;
+
+	TRACE(shell,"0x%08x %s 0x%08x 0x%08x 0x%08x 0x%08x\n",
+	hMenu, (lpszText!=FM_SEPARATOR) ? lpText: NULL,
+	uID, icon, hMenuPopup, nItemHeight);
+	
+	ZeroMemory (&mii, sizeof(MENUITEMINFOA));
+	
+	mii.cbSize = sizeof(MENUITEMINFOA);
+
+	if (lpText != FM_SEPARATOR)
+	{ int len = strlen (lpText);
+	  myItem = (LPFMITEM) SHAlloc( sizeof(FMITEM) + len);
+	  strcpy (myItem->szItemText, lpText);
+	  myItem->cchItemText = len;
+	  myItem->iIconIndex = icon;
+	  myItem->hMenu = hMenu;
+	  mii.fMask = MIIM_DATA;
+	  mii.dwItemData = (DWORD) myItem;
+	}
+	
+	if ( hMenuPopup )
+	{ /* sub menu */
+	  mii.fMask |= MIIM_TYPE | MIIM_SUBMENU;
+	  mii.fType = MFT_OWNERDRAW;
+	  mii.hSubMenu = hMenuPopup;
+	}
+	else if (lpText == FM_SEPARATOR )
+	{ mii.fMask |= MIIM_ID | MIIM_TYPE;
+	  mii.fType = MFT_SEPARATOR;
+	}
+	else
+	{ /* normal item */
+	  mii.fMask |= MIIM_ID | MIIM_TYPE | MIIM_STATE;
+	  mii.fState = MFS_ENABLED | MFS_DEFAULT;
+	  mii.fType = MFT_OWNERDRAW;
+	}
+	mii.wID = uID;
+
+	InsertMenuItemA (hMenu, (UINT)-1, TRUE, &mii);
+
+	return TRUE;
+
+}
 BOOL WINAPI FileMenu_AppendItemAW(
 	HMENU hMenu,
 	LPCVOID lpText,
@@ -62,48 +326,19 @@ BOOL WINAPI FileMenu_AppendItemAW(
 	HMENU hMenuPopup,
 	int nItemHeight)
 {
-	LPSTR lpszText = (LPSTR)lpText;
-	MENUITEMINFOA	mii;
-	ZeroMemory (&mii, sizeof(MENUITEMINFOA));
-	
-	if (VERSION_OsIsUnicode() && (lpszText!=FM_SEPARATOR))
+	BOOL ret;
+	LPSTR lpszText=NULL;
+
+	if (VERSION_OsIsUnicode() && (lpText!=FM_SEPARATOR))
 	  lpszText = HEAP_strdupWtoA ( GetProcessHeap(),0, lpText);
 
-	FIXME(shell,"0x%08x %s 0x%08x 0x%08x 0x%08x 0x%08x\n",
-	hMenu, (lpszText!=FM_SEPARATOR) ? lpszText: NULL,
-	uID, icon, hMenuPopup, nItemHeight);
+	ret = FileMenu_AppendItemA(hMenu, (lpszText) ? lpszText : lpText, uID, icon, hMenuPopup, nItemHeight);
 
-	mii.cbSize = sizeof(mii);
-	
-	if ( hMenuPopup )
-	{ /* sub menu */
-	  mii.fMask = MIIM_SUBMENU | MIIM_TYPE | MIIM_DATA;;
-	  mii.hSubMenu = hMenuPopup;
-	  mii.fType = MFT_STRING;
-	  mii.dwTypeData = lpszText;
-	}
-	else if (lpText == FM_SEPARATOR )
-	{ mii.fMask = MIIM_ID | MIIM_TYPE;
-	  mii.fType = MFT_SEPARATOR;
-	}
-	else
-	{ /* normal item */
-	  mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-	  mii.dwTypeData = lpszText;
-	  mii.fState = MFS_ENABLED | MFS_DEFAULT;
-	  mii.fType = MFT_STRING;
-	}
-	mii.wID = uID;
-
-	InsertMenuItemA (hMenu, (UINT)-1, TRUE, &mii);
-
-	if (VERSION_OsIsUnicode())
+	if (lpszText)
 	  HeapFree( GetProcessHeap(), 0, lpszText );
-	
-	return TRUE;
 
+	return ret;
 }
- 
 /*************************************************************************
  * FileMenu_InsertUsingPidl			[SHELL32.110]
  *
@@ -111,51 +346,23 @@ BOOL WINAPI FileMenu_AppendItemAW(
  *	uEnumFlags	any SHCONTF flag
  */
 int WINAPI FileMenu_InsertUsingPidl (
-	HMENU hMenu,
+	HMENU hmenu,
 	UINT uID,
 	LPCITEMIDLIST pidl,
 	UINT uFlags,
 	UINT uEnumFlags,
 	LPFNFMCALLBACK lpfnCallback)
 {	
-	IShellFolder	*lpsf, *lpsf2;
-	IEnumIDList	*lpe=0;
-	ULONG		ulFetched;
-	LPITEMIDLIST	pidlTemp=0;
-	ULONG		ulItemAttr;
-	char		sTemp[MAX_PATH];
-	int		NumberOfItems = 0;
+	TRACE(shell,"0x%08x 0x%08x %p 0x%08x 0x%08x %p\n",
+	hmenu, uID, pidl, uFlags, uEnumFlags, lpfnCallback);
 
-	FIXME(shell,"0x%08x 0x%08x %p 0x%08x 0x%08x %p\n",
-	hMenu, uID, pidl, uFlags, uEnumFlags, lpfnCallback);
 	pdump (pidl);
 
-	if (SUCCEEDED (SHGetDesktopFolder(&lpsf)))
-	{ if (SUCCEEDED(IShellFolder_BindToObject(lpsf, pidl,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
-	  { if (SUCCEEDED (IShellFolder_EnumObjects(lpsf2, 0, uEnumFlags, &lpe )))
-	    { while (NOERROR == IEnumIDList_Next(lpe,1,&pidlTemp,&ulFetched))
-	      { if (SUCCEEDED (IShellFolder_GetAttributesOf(lpsf, 1, &pidlTemp, &ulItemAttr)))
-		{ ILGetDisplayName( pidlTemp, sTemp);
-		  if ( SFGAO_FOLDER & ulItemAttr)
-		  { FileMenu_AppendItemAW (hMenu, sTemp, uID, FM_BLANK_ICON, CreatePopupMenu(), FM_DEFAULT_HEIGHT);
-		  }
-		  else
-		  { FileMenu_AppendItemAW (hMenu, sTemp, uID, FM_BLANK_ICON, 0, FM_DEFAULT_HEIGHT);
-		  }
-		}
-		TRACE(shell,"enter callback\n");
-		lpfnCallback ( pidl, pidlTemp);
-		TRACE(shell,"leave callback\n");
-	        NumberOfItems++;
-	      }
-	      IEnumIDList_Release (lpe);
-	    }
-	    IShellFolder_Release(lpsf2);
-	  }
-	  IShellFolder_Release(lpsf);
-	}
+	bAbortInit = FALSE;
 
-	return NumberOfItems;
+	FM_SetMenuParameter(hmenu, uID, pidl, uFlags, uEnumFlags, lpfnCallback);	
+
+	return FM_InitMenuPopup(hmenu, NULL);
 }
 
 /*************************************************************************
@@ -163,15 +370,20 @@ int WINAPI FileMenu_InsertUsingPidl (
  *
  */
 int WINAPI FileMenu_ReplaceUsingPidl(
-	HMENU	hMenu,
+	HMENU	hmenu,
 	UINT	uID,
 	LPCITEMIDLIST	pidl,
 	UINT	uEnumFlags,
 	LPFNFMCALLBACK lpfnCallback)
 {
-	FIXME(shell,"0x%08x 0x%08x %p 0x%08x %p\n",
-	hMenu, uID, pidl, uEnumFlags, lpfnCallback);
-	return 0;
+	TRACE(shell,"0x%08x 0x%08x %p 0x%08x %p\n",
+	hmenu, uID, pidl, uEnumFlags, lpfnCallback);
+	
+	FileMenu_DeleteAllItems (hmenu);
+
+	FM_SetMenuParameter(hmenu, uID, pidl, 0, uEnumFlags, lpfnCallback);	
+
+	return FM_InitMenuPopup(hmenu, NULL);
 }
 
 /*************************************************************************
@@ -197,11 +409,23 @@ HMENU WINAPI FileMenu_FindSubMenuByPidl(
  * FileMenu_AppendFilesForPidl			[SHELL32.124]
  */
 HMENU WINAPI FileMenu_AppendFilesForPidl(
-	HMENU	hMenu,
+	HMENU	hmenu,
 	LPCITEMIDLIST	pidl,
 	BOOL	bAddSeperator)
 {
-	FIXME(shell,"0x%08x %p 0x%08x\n",hMenu, pidl,bAddSeperator);	
+	LPFMINFO	menudata;
+
+	menudata = FM_GetMenuInfo(hmenu);
+	
+	menudata->bInitialized = FALSE;
+	
+	FM_InitMenuPopup(hmenu, pidl);
+
+	if (bAddSeperator)
+	  FileMenu_AppendItemA (hmenu, FM_SEPARATOR, 0, 0, 0, FM_DEFAULT_HEIGHT);
+
+	TRACE (shell,"0x%08x %p 0x%08x\n",hmenu, pidl,bAddSeperator);	
+
 	return 0;
 }
 /*************************************************************************
@@ -211,7 +435,7 @@ HMENU WINAPI FileMenu_AppendFilesForPidl(
  *	uEnumFlags	any SHCONTF flag
  */
 int WINAPI FileMenu_AddFilesForPidl (
-	HMENU	hMenu,
+	HMENU	hmenu,
 	UINT	uReserved,
 	UINT	uID,
 	LPCITEMIDLIST	pidl,
@@ -219,10 +443,10 @@ int WINAPI FileMenu_AddFilesForPidl (
 	UINT	uEnumFlags,
 	LPFNFMCALLBACK	lpfnCallback)
 {
-	FIXME(shell,"0x%08x 0x%08x 0x%08x %p 0x%08x 0x%08x %p\n",
-	hMenu, uReserved, uID, pidl, uFlags, uEnumFlags, lpfnCallback);
-	pdump (pidl);
-	return 0;
+	TRACE(shell,"0x%08x 0x%08x 0x%08x %p 0x%08x 0x%08x %p\n",
+	hmenu, uReserved, uID, pidl, uFlags, uEnumFlags, lpfnCallback);
+
+	return FileMenu_InsertUsingPidl ( hmenu, uID, pidl, uFlags, uEnumFlags, lpfnCallback);
 
 }
 
@@ -238,7 +462,7 @@ HRESULT WINAPI FileMenu_TrackPopupMenuEx (
 	HWND hWnd,
 	LPTPMPARAMS lptpm)
 {
-	FIXME(shell,"0x%08x 0x%08x 0x%x 0x%x 0x%08x %p stub\n",
+	TRACE(shell,"0x%08x 0x%08x 0x%x 0x%x 0x%08x %p\n",
 	hMenu, uFlags, x, y, hWnd, lptpm);
 	return TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, lptpm);
 }
@@ -255,6 +479,12 @@ BOOL WINAPI FileMenu_GetLastSelectedItemPidls(
 	return 0;
 }
 
+#define FM_ICON_SIZE	16
+#define FM_Y_SPACE	4
+#define FM_SPACE1	4
+#define FM_SPACE2	2
+#define FM_LEFTBORDER	2
+#define FM_RIGHTBORDER	8
 /*************************************************************************
  * FileMenu_MeasureItem				[SHELL32.112]
  */
@@ -262,10 +492,27 @@ LRESULT WINAPI FileMenu_MeasureItem(
 	HWND	hWnd,
 	LPMEASUREITEMSTRUCT	lpmis)
 {
-	FIXME(shell,"0x%08x %p\n", hWnd, lpmis);
+	LPFMITEM pMyItem = (LPFMITEM)(lpmis->itemData);
+	HDC hdc = GetDC(hWnd);
+	SIZE size;
+	LPFMINFO menuinfo;
+		
+	TRACE(shell,"0x%08x %p %s\n", hWnd, lpmis, pMyItem->szItemText);
+	
+	GetTextExtentPoint32A(hdc, pMyItem->szItemText, pMyItem->cchItemText, &size);
+	
+	lpmis->itemWidth = size.cx + FM_LEFTBORDER + FM_ICON_SIZE + FM_SPACE1 + FM_SPACE2 + FM_RIGHTBORDER;
+	lpmis->itemHeight = (size.cy > (FM_ICON_SIZE + FM_Y_SPACE)) ? size.cy : (FM_ICON_SIZE + FM_Y_SPACE);
+
+	/* add the menubitmap */
+	menuinfo = FM_GetMenuInfo(pMyItem->hMenu);
+	if (menuinfo->bIsMagic)
+	  lpmis->itemWidth += menuinfo->nBorderWidth;
+	
+	TRACE(shell,"-- 0x%04x 0x%04x\n", lpmis->itemWidth, lpmis->itemHeight);
+	ReleaseDC (hWnd, hdc);
 	return 0;
 }
-
 /*************************************************************************
  * FileMenu_DrawItem				[SHELL32.105]
  */
@@ -273,8 +520,55 @@ LRESULT WINAPI FileMenu_DrawItem(
 	HWND			hWnd,
 	LPDRAWITEMSTRUCT	lpdis)
 {
-	FIXME(shell,"0x%08x %p\n", hWnd, lpdis);
-	return 0;
+	LPFMITEM pMyItem = (LPFMITEM)(lpdis->itemData);
+	COLORREF clrPrevText, clrPrevBkgnd;
+	int xi,yi,xt,yt;
+	HIMAGELIST hImageList;
+	RECT TextRect, BorderRect;
+	LPFMINFO menuinfo;
+	
+	TRACE(shell,"0x%08x %p %s\n", hWnd, lpdis, pMyItem->szItemText);
+	
+	if (lpdis->itemState & ODS_SELECTED)
+	{
+	  clrPrevText = SetTextColor(lpdis->hDC, GetSysColor (COLOR_HIGHLIGHTTEXT));
+	  clrPrevBkgnd = SetBkColor(lpdis->hDC, GetSysColor (COLOR_HIGHLIGHT));
+	}
+	else
+	{
+	  clrPrevText = SetTextColor(lpdis->hDC, GetSysColor (COLOR_MENUTEXT));
+	  clrPrevBkgnd = SetBkColor(lpdis->hDC, GetSysColor (COLOR_MENU));
+	}
+	
+	CopyRect(&TextRect, &(lpdis->rcItem));
+
+	/* add the menubitmap */
+	menuinfo = FM_GetMenuInfo(pMyItem->hMenu);
+	if (menuinfo->bIsMagic)
+	  TextRect.left += menuinfo->nBorderWidth;
+	
+	BorderRect.right = menuinfo->nBorderWidth;
+/*	FillRect(lpdis->hDC, &BorderRect, CreateSolidBrush( menuinfo->crBorderColor));
+*/
+	TextRect.left += FM_LEFTBORDER;
+	xi = TextRect.left + FM_SPACE1;
+	yi = TextRect.top + FM_Y_SPACE/2;
+	TextRect.bottom -= FM_Y_SPACE/2;
+
+	xt = xi + FM_ICON_SIZE + FM_SPACE2;
+	yt = yi;
+
+	ExtTextOutA (lpdis->hDC, xt , yt, ETO_OPAQUE, &TextRect, pMyItem->szItemText, pMyItem->cchItemText, NULL);
+	
+	Shell_GetImageList(0, &hImageList);
+	pImageList_Draw(hImageList, pMyItem->iIconIndex, lpdis->hDC, xi, yi, ILD_NORMAL);
+
+	TRACE(shell,"-- 0x%04x 0x%04x 0x%04x 0x%04x\n", TextRect.left, TextRect.top, TextRect.right, TextRect.bottom);
+	
+	SetTextColor(lpdis->hDC, clrPrevText);
+	SetBkColor(lpdis->hDC, clrPrevBkgnd);
+
+	return TRUE;
 }
 
 /*************************************************************************
@@ -285,9 +579,10 @@ LRESULT WINAPI FileMenu_DrawItem(
  *  WM_INITPOPUPMENU
  *
  */
-HRESULT WINAPI FileMenu_InitMenuPopup (DWORD hmenu)
-{	FIXME(shell,"hmenu=0x%lx stub\n",hmenu);
-	return 0;
+BOOL WINAPI FileMenu_InitMenuPopup (HMENU hmenu)
+{
+	FM_InitMenuPopup(hmenu, NULL);
+	return TRUE;
 }
 
 /*************************************************************************
@@ -307,10 +602,35 @@ LRESULT WINAPI FileMenu_HandleMenuChar(
  * NOTES
  *  exported by name
  */
-BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu)
-{
-	FIXME(shell,"0x%08x stub\n", hMenu);
-	DestroyMenu (hMenu);
+BOOL WINAPI FileMenu_DeleteAllItems (HMENU hmenu)
+{	
+	MENUITEMINFOA	mii;
+	LPFMINFO	menudata;
+
+	int i;
+	
+	TRACE(shell,"0x%08x\n", hmenu);
+	
+	ZeroMemory ( &mii, sizeof(MENUITEMINFOA));
+	mii.cbSize = sizeof(MENUITEMINFOA);
+	mii.fMask = MIIM_SUBMENU|MIIM_DATA;
+
+	for (i = 0; i < GetMenuItemCount( hmenu ); i++)
+	{ GetMenuItemInfoA(hmenu, i, TRUE, &mii );
+
+	  if (mii.dwItemData)
+	    SHFree((LPFMINFO)mii.dwItemData);
+
+	  if (mii.hSubMenu)
+	    FileMenu_Destroy(mii.hSubMenu);
+	}
+	
+	while (DeleteMenu (hmenu, 0, MF_BYPOSITION)){};
+
+	menudata = FM_GetMenuInfo(hmenu);
+	
+	menudata->bInitialized = FALSE;
+	
 	return TRUE;
 }
 
@@ -320,7 +640,16 @@ BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu)
  */
 BOOL WINAPI FileMenu_DeleteItemByCmd (HMENU hMenu, UINT uID)
 {
+	MENUITEMINFOA mii;
+
 	TRACE(shell,"0x%08x 0x%08x\n", hMenu, uID);
+	
+	ZeroMemory ( &mii, sizeof(MENUITEMINFOA));
+	mii.cbSize = sizeof(MENUITEMINFOA);
+	mii.fMask = MIIM_SUBMENU;
+
+	GetMenuItemInfoA(hMenu, uID, FALSE, &mii );
+	if ( mii.hSubMenu );
 
 	DeleteMenu(hMenu, MF_BYCOMMAND, uID);
 	return TRUE;
@@ -331,7 +660,16 @@ BOOL WINAPI FileMenu_DeleteItemByCmd (HMENU hMenu, UINT uID)
  */
 BOOL WINAPI FileMenu_DeleteItemByIndex ( HMENU hMenu, UINT uPos)
 {
+	MENUITEMINFOA mii;
+
 	TRACE(shell,"0x%08x 0x%08x\n", hMenu, uPos);
+
+	ZeroMemory ( &mii, sizeof(MENUITEMINFOA));
+	mii.cbSize = sizeof(MENUITEMINFOA);
+	mii.fMask = MIIM_SUBMENU;
+
+	GetMenuItemInfoA(hMenu, uPos, TRUE, &mii );
+	if ( mii.hSubMenu );
 
 	DeleteMenu(hMenu, MF_BYPOSITION, uPos);
 	return TRUE;
@@ -371,7 +709,9 @@ BOOL WINAPI FileMenu_EnableItemByCmd(
 
 /*************************************************************************
  * FileMenu_GetItemExtent			[SHELL32.144]
- *
+ * 
+ * NOTES
+ *  if the menu is to big, entrys are getting cut away!!
  */
 DWORD WINAPI FileMenu_GetItemExtent (HMENU hMenu, UINT uPos)
 {	RECT rect;
@@ -383,7 +723,7 @@ DWORD WINAPI FileMenu_GetItemExtent (HMENU hMenu, UINT uPos)
 	  rect.right, rect.left, rect.top, rect.bottom);
 	  return ((rect.right-rect.left)<<16) + (rect.top-rect.bottom);
 	}
-	return 0x00200020; /*fixme*/
+	return 0x00100010; /*fixme*/
 }
 
 /*************************************************************************
@@ -392,17 +732,8 @@ DWORD WINAPI FileMenu_GetItemExtent (HMENU hMenu, UINT uPos)
  */
 void WINAPI FileMenu_AbortInitMenu (void)
 {	TRACE(shell,"\n");
+	bAbortInit = TRUE;
 }
-
-
-
-
-
-
-
-
-
-
 
 /*************************************************************************
  * SHFind_InitMenuPopup				[SHELL32.149]
