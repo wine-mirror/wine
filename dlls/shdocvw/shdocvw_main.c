@@ -82,36 +82,36 @@ HRESULT WINAPI SHDOCVW_DllInstall(BOOL bInstall, LPCWSTR cmdline)
 }
 
 /***********************************************************************
- *		SHDOCVW_110 (SHDOCVW.110)
+ *		@ (SHDOCVW.110)
  *
  * Called by Win98 explorer.exe main binary, definitely has 0
  * parameters.
  */
-DWORD WINAPI SHDOCVW_110(void)
+DWORD WINAPI WinList_Init(void)
 {
     FIXME("(), stub!\n");
     return 0x0deadfeed;
 }
 
 /***********************************************************************
- *		SHDOCVW_118 (SHDOCVW.118)
+ *		@ (SHDOCVW.118)
  *
  * Called by Win98 explorer.exe main binary, definitely has only one
  * parameter.
  */
-DWORD WINAPI SHDOCVW_118(DWORD dw1)
+DWORD WINAPI ShellDDEInit(DWORD dw1)
 {
     FIXME("(%08lx), stub!\n", dw1);
     return 0xcafedead;
 }
 
 /***********************************************************************
- *		SHDOCVW_125 (SHDOCVW.125)
+ *		@ (SHDOCVW.125)
  *
  * Called by Win98 explorer.exe main binary, definitely has 0
  * parameters.
  */
-DWORD WINAPI SHDOCVW_125(void)
+DWORD WINAPI RunInstallUninstallStubs(void)
 {
     FIXME("(), stub!\n");
     return 0x0deadbee;

@@ -94,8 +94,8 @@
 386 stdcall -noname DPA_DestroyCallback(ptr ptr long)
 387 stdcall -noname DSA_EnumCallback(ptr ptr long)
 388 stdcall -noname DSA_DestroyCallback(ptr ptr long)
-389 stub @
-390 stub @
+389 stub -noname SHGetProcessDword
+390 stub -noname ImageList_SetColorTable
 400 stdcall -noname CreateMRUListW(ptr)
 401 stdcall -noname AddMRUStringW(long wstr)
 402 stdcall -noname FindMRUStringW(long wstr ptr)
@@ -105,14 +105,14 @@
 411 stdcall GetWindowSubclass(long ptr long ptr)
 412 stdcall RemoveWindowSubclass(long ptr long)
 413 stdcall DefSubclassProc(long long long long)
-414 stub @
-415 stdcall @(long long long long long) COMCTL32_415
-416 stub @
-417 stdcall @(long long long long ptr wstr long ptr) COMCTL32_417
-418 stub @
-419 stdcall @(long long long long) COMCTL32_419
-420 stub @
-421 stub @
+414 stub -noname MirrorIcon
+415 stdcall -noname DrawTextWrap(long long long long long)
+416 stub -noname DrawTextExPrivWrap
+417 stdcall -noname ExtTextOutWrap(long long long long ptr wstr long ptr)
+418 stub -noname GetCharWidthWrap
+419 stdcall -noname GetTextExtentPointWrap(long long long long)
+420 stub -noname GetTextExtentPoint32Wrap
+421 stub -noname TextOutWrap
 
 # Functions imported by name
 

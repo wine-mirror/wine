@@ -165,7 +165,7 @@ DPA_LoadStream (HDPA *phDpa, DPALOADPROC loadProc, IStream *pStream, LPARAM lPar
 
     /* store the handle to the dpa */
     *phDpa = hDpa;
-    FIXME ("new hDpa=%p\n", hDpa);
+    FIXME ("new hDpa=%p, errorcode=%lx\n", hDpa, errCode);
 
     return errCode;
 }
@@ -2741,7 +2741,7 @@ INT WINAPI COMCTL32_StrSpnW( LPWSTR lpStr, LPWSTR lpSet) {
  *        Parameter 1 is an HWND, you're on your own for the rest.
  */
 
-BOOL WINAPI COMCTL32_415( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
+BOOL WINAPI DrawTextWrap( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
 {
 
    FIXME("(%p, %lx, %lx, %lx, %lx): stub!\n", hwnd, b, c, d, e);
@@ -2753,7 +2753,7 @@ BOOL WINAPI COMCTL32_415( HWND hwnd, DWORD b, DWORD c, DWORD d, DWORD e)
  * @ [COMCTL32.417]
  *
  */
-BOOL WINAPI COMCTL32_417(HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
+BOOL WINAPI ExtTextOutWrap(HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
                          LPCWSTR str, UINT count, const INT *lpDx)
 {
     return ExtTextOutW(hdc, x, y, flags, lprect, str, count, lpDx);
@@ -2765,7 +2765,7 @@ BOOL WINAPI COMCTL32_417(HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
  * FIXME: What's this supposed to do?
  */
 
-BOOL WINAPI COMCTL32_419( DWORD a, DWORD b, DWORD c, DWORD d)
+BOOL WINAPI GetTextExtentPointWrap( DWORD a, DWORD b, DWORD c, DWORD d)
 {
 
    FIXME("(%lx, %lx, %lx, %lx): stub!\n", a, b, c, d);
