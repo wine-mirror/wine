@@ -14,30 +14,24 @@ WINE REGISTRY Version 2
 ;; "Device"="/dev/xx" (only if you want to allow raw device access)
 ;;
 [Drive A]
-"Path" = "/mnt/fd0"
 "Type" = "floppy"
 "Device" = "/dev/fd0"
 
 [Drive C]
-"Path" = "/c"
 "Type" = "hd"
 
 [Drive D]
-"Path" = "/cdrom"
 "Type" = "cdrom"
 ; make sure that device is correct and has proper permissions !
 "Device" = "/dev/cdrom"
 
 [Drive E]
-"Path" = "/tmp"
 "Type" = "hd"
 
 [Drive F]
-"Path" = "%HOME%"
 "Type" = "network"
 
 [Drive Z]
-"Path" = "/"
 "Type" = "hd"
 
 [wine]

@@ -525,7 +525,7 @@ then {
   # create $LCONF using the default config file $WINEINI
   if [ "$DOLOCALCONF" = 'yes' ]
   then {
-    sed "s|\"Path\" = \"/c\"\$|\"Path\" = \"${CROOT}\"|" $WINEINI > $TMPCONF
+    cp $WINEINI $TMPCONF
     conf_reset_question default_config
     conf_question low default_config \
      "Created $LCONF using default Wine configuration." \
@@ -547,6 +547,7 @@ then
   if [ ! -w ~/.wine ]
   then
     mkdir ~/.wine
+    mkdir ~/.wine/dosdevices
   fi
   cp $TMPCONF $LCONF > /dev/null
 else
@@ -599,15 +600,18 @@ then {
   echo "Preparing to install default Wine registry entries..."
 
   # Make sure we are on a Windows drive
-  mv $LCONF $LCONF.orig
-  sed "s/\"Path\" = \"%HOME%\"$/\"Path\" = \"%PWD%\"/" $LCONF.orig> $LCONF
+  ln -s /mnt/fd0 ~/.wine/dosdevices/a:
+  ln -s $CROOT ~/.wine/dosdevices/c:
+  ln -s /cdrom ~/.wine/dosdevices/d:
+  ln -s /tmp ~/.wine/dosdevices/e:
+  ln -s ~ ~/.wine/dosdevices/f:
+  ln -s / ~/.wine/dosdevices/z:
 
   echo "Installing default Wine registry entries..."
   echo
   if ! $RUNDLL32 setupapi.dll,InstallHinfSection DefaultInstall 128 $INFSCRIPT > /dev/null
   then {
     echo "Registry install failed."
-    mv $LCONF.orig $LCONF
     conf_reset_question regedit_error
     conf_question high regedit_error
     exit 1
@@ -615,7 +619,6 @@ then {
   else {
     echo
     echo "Registry entries successfully installed."
-    mv $LCONF.orig $LCONF
   }
   fi
   if [ "$SYSREG" = 'auto' ]
