@@ -31,6 +31,17 @@
 #include <math.h>
 #include <time.h>
 
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
+
+#ifndef FLT_MAX
+# ifdef MAXFLOAT
+#  define FLT_MAX MAXFLOAT
+# else
+#  error "Can't find #define for MAXFLOAT/FLT_MAX"
+# endif
+#endif
 
 static const char CHAR_MAX = 127;
 static const char CHAR_MIN = -128;
