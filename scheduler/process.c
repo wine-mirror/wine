@@ -42,6 +42,7 @@ static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
 static HFILE main_exe_file = INVALID_HANDLE_VALUE;
 
+unsigned int server_startticks;
 
 /***********************************************************************
  *           PROCESS_CallUserSignalProc
@@ -198,6 +199,7 @@ static BOOL process_init( char *argv[] )
             main_exe_name[len] = 0;
             main_exe_file = req->exe_file;
             current_startupinfo.dwFlags     = req->start_flags;
+            server_startticks               = req->server_start;
             current_startupinfo.wShowWindow = req->cmd_show;
             current_envdb.hStdin   = current_startupinfo.hStdInput  = req->hstdin;
             current_envdb.hStdout  = current_startupinfo.hStdOutput = req->hstdout;

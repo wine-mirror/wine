@@ -275,6 +275,7 @@ static void init_process( int ppid, struct init_process_request *req )
         req->cmd_show     = 0;
         set_req_data_size( req, 0 );
     }
+    req->server_start = server_start_ticks;
  error:
 }
 

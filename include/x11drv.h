@@ -83,6 +83,8 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 
 extern DeviceCaps X11DRV_DevCaps;
 
+extern unsigned int X11DRV_server_startticks;
+
 /* Wine driver X11 functions */
 
 extern const DC_FUNCTIONS X11DRV_DC_Funcs;
@@ -288,7 +290,7 @@ void X11DRV_GDI_Finalize(void);
 
 /* X11 GDI palette driver */
 
-#define X11DRV_PALETTE_FIXED    0x0001 /* read-only colormap - have to use XAllocColor (if not virtual)*/
+#define X11DRV_PALETTE_FIXED    0x0001 /* read-only colormap - have to use XAllocColor (if not virtual) */
 #define X11DRV_PALETTE_VIRTUAL  0x0002 /* no mapping needed - pixel == pixel color */
 
 #define X11DRV_PALETTE_PRIVATE  0x1000 /* private colormap, identity mapping */

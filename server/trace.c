@@ -315,6 +315,7 @@ static void dump_init_process_request( const struct init_process_request *req )
 static void dump_init_process_reply( const struct init_process_request *req )
 {
     fprintf( stderr, " start_flags=%d,", req->start_flags );
+    fprintf( stderr, " server_start=%08x,", req->server_start );
     fprintf( stderr, " exe_file=%d,", req->exe_file );
     fprintf( stderr, " hstdin=%d,", req->hstdin );
     fprintf( stderr, " hstdout=%d,", req->hstdout );

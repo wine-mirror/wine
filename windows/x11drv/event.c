@@ -717,12 +717,12 @@ static void EVENT_MotionNotify( HWND hWnd, XMotionEvent *event )
     X11DRV_SendEvent( MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 
                             xOffset + event->x, yOffset + event->y,
                             X11DRV_EVENT_XStateToKeyState( event->state ), 
-                            event->time, hWnd);
+                            event->time - X11DRV_server_startticks, hWnd);
   } else {
     X11DRV_SendEvent( MOUSEEVENTF_MOVE,
                             event->x_root, event->y_root,
                             X11DRV_EVENT_XStateToKeyState( event->state ), 
-                            event->time, hWnd);
+                            event->time - X11DRV_server_startticks, hWnd);
   }
 }
 
@@ -776,7 +776,7 @@ static void EVENT_ButtonPress( HWND hWnd, XButtonEvent *event )
   X11DRV_SendEvent( statusCodes[buttonNum], 
                           xOffset + event->x, yOffset + event->y,
                           MAKEWPARAM(keystate,wData),
-                          event->time, hWnd);
+                          event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -823,7 +823,7 @@ static void EVENT_ButtonRelease( HWND hWnd, XButtonEvent *event )
 
   X11DRV_SendEvent( statusCodes[buttonNum], 
                           xOffset + event->x, yOffset + event->y,
-                          keystate, event->time, hWnd);
+                          keystate, event->time - X11DRV_server_startticks, hWnd);
 }
 
 
@@ -1942,7 +1942,7 @@ static void EVENT_DGAMotionEvent( XDGAMotionEvent *event )
   X11DRV_SendEvent( MOUSEEVENTF_MOVE, 
 		   event->dx, event->dy,
 		   X11DRV_EVENT_XStateToKeyState( event->state ), 
-		   event->time, DGAhwnd );
+		   event->time - X11DRV_server_startticks, DGAhwnd );
 }
 
 static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
@@ -1970,7 +1970,7 @@ static void EVENT_DGAButtonPressEvent( XDGAButtonEvent *event )
       break;
   }
   
-  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
+  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time - X11DRV_server_startticks, DGAhwnd );
 }
 
 static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
@@ -1998,7 +1998,7 @@ static void EVENT_DGAButtonReleaseEvent( XDGAButtonEvent *event )
       break;
   }
   
-  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time, DGAhwnd );
+  X11DRV_SendEvent( statusCodes[buttonNum], 0, 0, keystate, event->time - X11DRV_server_startticks, DGAhwnd );
 }
 
 #endif

@@ -181,9 +181,13 @@ extern void close_registry(void);
 
 extern void close_atom_table(void);
 
-/* global variables (command-line options) */
+/* global variables */
 
+  /* command-line options */
 extern int debug_level;
 extern int persistent_server;
+
+  /* server start time used for GetTickCount() */
+extern unsigned int server_start_ticks;
 
 #endif  /* __WINE_SERVER_OBJECT_H */

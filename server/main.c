@@ -21,6 +21,8 @@
 int debug_level = 0;
 int persistent_server = 0;
 
+unsigned int server_start_ticks = 0;
+
 /* parse-line args */
 /* FIXME: should probably use getopt, and add a help option */
 static void parse_args( int argc, char *argv[] )
@@ -68,6 +70,14 @@ static void signal_init(void)
     signal( SIGABRT, sigterm_handler );
 }
 
+/* get server start ticks used to calculate GetTickCount() in Wine clients */
+static void get_start_ticks(void)
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    server_start_ticks = (t.tv_sec * 1000) + (t.tv_usec / 1000);
+}
+
 int main( int argc, char *argv[] )
 {
     parse_args( argc, argv );
@@ -76,6 +86,7 @@ int main( int argc, char *argv[] )
     setvbuf( stderr, NULL, _IOLBF, 0 );
 
     if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
+    get_start_ticks();
     init_registry();
     select_loop();
     close_registry();

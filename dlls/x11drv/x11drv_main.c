@@ -10,6 +10,8 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include <X11/cursorfont.h>
 #include "ts_xlib.h"
 #include "ts_xutil.h"
@@ -40,6 +42,8 @@ unsigned int screen_height;
 unsigned int screen_depth;
 Window root_window;
 
+unsigned int X11DRV_server_startticks;
+
 /***********************************************************************
  *		error_handler
  */
@@ -47,6 +51,20 @@ static int error_handler(Display *display, XErrorEvent *error_evt)
 {
     DebugBreak();  /* force an entry in the debugger */
     return 0;
+}
+
+
+/***********************************************************************
+ *		get_server_startup
+ *
+ * Get the server startup time 
+ * Won't be exact, but should be sufficient
+ */
+static void get_server_startup(void)
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    X11DRV_server_startticks = ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - GetTickCount();
 }
 
 
@@ -216,6 +234,7 @@ static void process_attach(void)
 {
     WND_Driver       = &X11DRV_WND_Driver;
 
+    get_server_startup();
     setup_options();
 
     /* Open display */

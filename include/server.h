@@ -181,6 +181,7 @@ struct init_process_request
     IN  void*        ldt_flags;    /* addr of LDT flags */
     IN  int          ppid;         /* parent Unix pid */
     OUT int          start_flags;  /* flags from startup info */
+    OUT unsigned int server_start; /* server start time (GetTickCount) */
     OUT int          exe_file;     /* file handle for main exe */
     OUT int          hstdin;       /* handle for stdin */
     OUT int          hstdout;      /* handle for stdout */
@@ -1586,7 +1587,7 @@ union generic_request
     struct set_serial_info_request set_serial_info;
 };
 
-#define SERVER_PROTOCOL_VERSION 22
+#define SERVER_PROTOCOL_VERSION 23
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

@@ -606,7 +606,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 
     INT event_x = (pWnd? pWnd->rectWindow.left : 0) + event->x;
     INT event_y = (pWnd? pWnd->rectWindow.top  : 0) + event->y;
-    DWORD event_time = event->time;
+    DWORD event_time = event->time - X11DRV_server_startticks;
 
     /* this allows support for dead keys */
     if ((event->keycode >> 8) == 0x10)
@@ -614,7 +614,7 @@ void X11DRV_KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 
     ascii_chars = TSXLookupString(event, Str, 1, &keysym, &cs);
 
-    TRACE_(key)("EVENT_key : state = %X\n", event->state);
+    TRACE_(key)("state = %X\n", event->state);
 
     /* If XKB extensions is used, the state mask for AltGr will used the group
        index instead of the modifier mask. The group index is set in bits
