@@ -596,10 +596,10 @@ HWND WINAPI GetCapture(void)
  * mouse or key had been depressed since the last call to 
  * GetAsyncKeyState.
  */
-WORD WINAPI GetAsyncKeyState(INT nKey)
+SHORT WINAPI GetAsyncKeyState(INT nKey)
 {
-    WORD retval = ((AsyncKeyStateTable[nKey] & 0x80) ? 0x0001 : 0) |
-                  ((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0);
+    SHORT retval = ((AsyncKeyStateTable[nKey] & 0x80) ? 0x0001 : 0) |
+                   ((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0);
     AsyncKeyStateTable[nKey] = 0;
     TRACE_(key)("(%x) -> %x\n", nKey, retval);
     return retval;
@@ -608,7 +608,7 @@ WORD WINAPI GetAsyncKeyState(INT nKey)
 /**********************************************************************
  *		GetAsyncKeyState (USER.249)
  */
-WORD WINAPI GetAsyncKeyState16(INT16 nKey)
+INT16 WINAPI GetAsyncKeyState16(INT16 nKey)
 {
     return GetAsyncKeyState(nKey);
 }

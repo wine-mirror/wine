@@ -704,7 +704,7 @@ BOOL16      WINAPI FlashWindow16(HWND16,BOOL16);
 DWORD       WINAPI FormatMessage16(DWORD,SEGPTR,WORD,WORD,LPSTR,WORD,LPDWORD);
 INT16       WINAPI FrameRect16(HDC16,const RECT16*,HBRUSH16);
 HWND16      WINAPI GetActiveWindow16(void);
-WORD        WINAPI GetAsyncKeyState16(INT16);
+INT16       WINAPI GetAsyncKeyState16(INT16);
 HWND16      WINAPI GetCapture16(void);
 UINT16      WINAPI GetCaretBlinkTime16(void);
 VOID        WINAPI GetCaretPos16(LPPOINT16);

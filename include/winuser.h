@@ -3822,7 +3822,7 @@ INT         WINAPI FrameRect(HDC,const RECT*,HBRUSH);
 HWND        WINAPI GetActiveWindow(void);
 HWND        WINAPI GetAncestor(HWND,UINT);
 DWORD       WINAPI GetAppCompatFlags(HTASK);
-WORD        WINAPI GetAsyncKeyState(INT);
+SHORT       WINAPI GetAsyncKeyState(INT);
 HWND        WINAPI GetCapture(void);
 UINT        WINAPI GetCaretBlinkTime(void);
 BOOL        WINAPI GetCaretPos(LPPOINT);
