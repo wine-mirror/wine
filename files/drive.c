@@ -1110,8 +1110,8 @@ BOOL WINAPI GetDiskFreeSpaceExA( LPCSTR root,
 
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
-    {
-        if ((root[1]) && ((root[1] != ':') || (root[2] != '\\')))
+    { /* C: always works for GetDiskFreeSpaceEx */
+        if ((root[1]) && ((root[1] != ':') || (root[2] && root[2] != '\\')))
         {
             FIXME("there are valid root names which are not supported yet\n");
 	    /* ..like UNC names, for instance. */
