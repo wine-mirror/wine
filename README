@@ -62,7 +62,10 @@ supply a different name when configuring wine) or a file called .winerc
 in your home directory.
 
 The format of this file is explained in the man page. The file
-wine.ini contains a config file example.
+wine.ini contains a config file example which has to be adapted
+and copied to one of the two locations mentioned above.
+
+See www.winehq.com/config.html for further configuration hints.
 
 
 4. RUNNING PROGRAMS
