@@ -376,6 +376,10 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
       SetMapMode(dc->hSelf, MM_TEXT);
       SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
       SetWindowOrgEx(dc->hSelf, 0, 0, NULL);
+      graphicsMode=GetGraphicsMode(dc->hSelf);
+      SetGraphicsMode(dc->hSelf, GM_ADVANCED);
+      ModifyWorldTransform(dc->hSelf, &xform, MWT_IDENTITY);
+      SetGraphicsMode(dc->hSelf, graphicsMode);
 
       /* Paint the region */
       PaintRgn(dc->hSelf, hrgn);
@@ -1120,7 +1124,7 @@ static BOOL PATH_FlattenPath(GdiPath *pPath)
     }
     newPath.state = PATH_Closed;
     PATH_AssignGdiPath(pPath, &newPath);
-    PATH_EmptyPath(&newPath);
+    PATH_DestroyGdiPath(&newPath);
     return TRUE;
 }
 
@@ -1453,7 +1457,10 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     SetMapMode(dc->hSelf, MM_TEXT);
     SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
     SetWindowOrgEx(dc->hSelf, 0, 0, NULL);
-
+    graphicsMode=GetGraphicsMode(dc->hSelf);
+    SetGraphicsMode(dc->hSelf, GM_ADVANCED);
+    ModifyWorldTransform(dc->hSelf, &xform, MWT_IDENTITY);
+    SetGraphicsMode(dc->hSelf, graphicsMode);
 
     for(i = 0; i < pPath->numEntriesUsed; i++) {
         switch(pPath->pFlags[i]) {
