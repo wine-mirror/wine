@@ -4718,7 +4718,7 @@ TREEVIEW_MouseWheel(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 /* Create/Destroy *******************************************************/
 
 static LRESULT
-TREEVIEW_Create(HWND hwnd)
+TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
     RECT rcClient;
     TREEVIEW_INFO *infoPtr;
@@ -4797,7 +4797,7 @@ TREEVIEW_Create(HWND hwnd)
     infoPtr->root->iLevel = -1;
     infoPtr->root->visibleOrder = -1;
 
-    infoPtr->hwndNotify = GetParent(hwnd);
+    infoPtr->hwndNotify = lpcs->hwndParent;
 #if 0
     infoPtr->bTransparent = ( GetWindowLongA( hwnd, GWL_STYLE) & TBSTYLE_FLAT);
 #endif
@@ -5179,7 +5179,7 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     else
     {
 	if (uMsg == WM_CREATE)
-	    TREEVIEW_Create(hwnd);
+	    TREEVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
 	else
 	    goto def;
     }

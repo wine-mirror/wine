@@ -59,6 +59,7 @@ typedef struct
 
 typedef struct
 {
+  HWND       hwndNotify;      /* notification window (parent) */
   UINT       uNumItem;        /* number of tab items */
   UINT       uNumRows;	      /* number of tab rows */
   INT        tabHeight;       /* height of the tab row */
@@ -118,13 +119,14 @@ static void TAB_DrawItemInterior(HWND hwnd, HDC hdc, INT iItem, RECT* drawRect);
 static BOOL
 TAB_SendSimpleNotify (HWND hwnd, UINT code)
 {
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
     NMHDR nmhdr;
 
     nmhdr.hwndFrom = hwnd;
     nmhdr.idFrom = GetWindowLongA(hwnd, GWL_ID);
     nmhdr.code = code;
 
-    return (BOOL) SendMessageA (GetParent (hwnd), WM_NOTIFY,
+    return (BOOL) SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
             (WPARAM) nmhdr.idFrom, (LPARAM) &nmhdr);
 }
 
@@ -1526,7 +1528,7 @@ TAB_DrawItemInterior
     /*
      * send the draw message
      */
-    SendMessageA( GetParent(hwnd), WM_DRAWITEM, (WPARAM)id, (LPARAM)&dis );
+    SendMessageA( infoPtr->hwndNotify, WM_DRAWITEM, (WPARAM)id, (LPARAM)&dis );
   }
   else
   {
@@ -3001,6 +3003,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   SetWindowLongA(hwnd, 0, (DWORD)infoPtr);
 
+  infoPtr->hwndNotify      = ((LPCREATESTRUCTW)lParam)->hwndParent;
   infoPtr->uNumItem        = 0;
   infoPtr->uNumRows        = 0;
   infoPtr->uHItemPadding   = 6;
@@ -3044,7 +3047,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
       nmttc.hdr.code = NM_TOOLTIPSCREATED;
       nmttc.hwndToolTips = infoPtr->hwndToolTip;
 
-      SendMessageA (GetParent (hwnd), WM_NOTIFY,
+      SendMessageA (infoPtr->hwndNotify, WM_NOTIFY,
 		    (WPARAM)GetWindowLongA(hwnd, GWL_ID), (LPARAM)&nmttc);
     }
   }
@@ -3113,6 +3116,7 @@ TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
 
     TRACE("hwnd=%p msg=%x wParam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
     if (!TAB_GetInfoPtr(hwnd) && (uMsg != WM_CREATE))
@@ -3243,7 +3247,7 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_LButtonUp (hwnd, wParam, lParam);
 
     case WM_NOTIFY:
-      return SendMessageA(GetParent(hwnd), WM_NOTIFY, wParam, lParam);
+      return SendMessageA(infoPtr->hwndNotify, WM_NOTIFY, wParam, lParam);
 
     case WM_RBUTTONDOWN:
       return TAB_RButtonDown (hwnd, wParam, lParam);

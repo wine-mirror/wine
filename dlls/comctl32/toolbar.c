@@ -4715,7 +4715,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nButtonDown = -1;
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
-    infoPtr->hwndNotify = GetParent (hwnd);
+    infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
     infoPtr->bTransparent = (dwStyle & TBSTYLE_TRANSPARENT);
     infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE : DT_CENTER;
@@ -5453,7 +5453,7 @@ TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     INT i;
 
     if (lParam == NF_REQUERY) {
-	i = SendMessageA(GetParent(infoPtr->hwndSelf),
+	i = SendMessageA(infoPtr->hwndNotify,
 			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
 	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
 	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
@@ -5649,6 +5649,8 @@ TOOLBAR_SysColorChange (HWND hwnd)
 static LRESULT WINAPI
 ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+
     TRACE("hwnd=%p msg=%x wparam=%x lparam=%lx\n",
 	  hwnd, uMsg, /* SPY_GetMsgName(uMsg), */ wParam, lParam);
 
@@ -6002,13 +6004,7 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_DRAWITEM:
 	case WM_MEASUREITEM:
 	case WM_VKEYTOITEM:
-	    {
-                TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-                if(infoPtr != NULL)
-                    return SendMessageA (infoPtr->hwndNotify, uMsg, wParam, lParam);
-                else
-                    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
-            }
+            return SendMessageA (infoPtr->hwndNotify, uMsg, wParam, lParam);
 
 	/* We see this in Outlook Express 5.x and just does DefWindowProc */
         case PGM_FORWARDMOUSE:
