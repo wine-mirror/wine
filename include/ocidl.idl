@@ -1089,6 +1089,27 @@ interface IPointerInactive : IUnknown
 
 
 /*****************************************************************************
+ * IObjectWithSite interface
+ */
+[
+    object,
+    uuid(fc4801a3-2ba9-11cf-a229-00aa003d7352),
+    pointer_default(unique)
+]
+interface IObjectWithSite : IUnknown
+{
+    typedef IObjectWithSite *LPOBJECTWITHSITE;
+
+    HRESULT SetSite(
+        [in] IUnknown * pUnkSite);
+
+    HRESULT GetSite(
+        [in] REFIID riid, 
+        [out, iid_is(riid)] PVOID *ppvSite);
+}
+
+
+/*****************************************************************************
  * IOleUndoUnit interface
  */
 interface IOleUndoManager;  /* forward declaration */

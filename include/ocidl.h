@@ -5312,6 +5312,103 @@ void __RPC_STUB IPointerInactive_OnInactiveSetCursor_Stub(
 
 #endif  /* __IPointerInactive_INTERFACE_DEFINED__ */
 
+#ifndef __IObjectWithSite_FWD_DEFINED__
+#define __IObjectWithSite_FWD_DEFINED__
+typedef struct IObjectWithSite IObjectWithSite;
+#endif
+
+typedef IObjectWithSite *LPOBJECTWITHSITE;
+
+/*****************************************************************************
+ * IObjectWithSite interface
+ */
+#ifndef __IObjectWithSite_INTERFACE_DEFINED__
+#define __IObjectWithSite_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IObjectWithSite, 0xfc4801a3, 0x2ba9, 0x11cf, 0xa2,0x29, 0x00,0xaa,0x00,0x3d,0x73,0x52);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IObjectWithSite : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE SetSite(
+        IUnknown* pUnkSite) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE GetSite(
+        REFIID riid,
+        PVOID* ppvSite) = 0;
+
+};
+#else
+typedef struct IObjectWithSiteVtbl IObjectWithSiteVtbl;
+struct IObjectWithSite {
+    const IObjectWithSiteVtbl* lpVtbl;
+};
+struct IObjectWithSiteVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IObjectWithSite* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IObjectWithSite* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IObjectWithSite* This);
+
+    /*** IObjectWithSite methods ***/
+    HRESULT (STDMETHODCALLTYPE *SetSite)(
+        IObjectWithSite* This,
+        IUnknown* pUnkSite);
+
+    HRESULT (STDMETHODCALLTYPE *GetSite)(
+        IObjectWithSite* This,
+        REFIID riid,
+        PVOID* ppvSite);
+
+};
+
+/*** IUnknown methods ***/
+#define IObjectWithSite_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IObjectWithSite_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IObjectWithSite_Release(p) (p)->lpVtbl->Release(p)
+/*** IObjectWithSite methods ***/
+#define IObjectWithSite_SetSite(p,a) (p)->lpVtbl->SetSite(p,a)
+#define IObjectWithSite_GetSite(p,a,b) (p)->lpVtbl->GetSite(p,a,b)
+
+#endif
+
+#define IObjectWithSite_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IObjectWithSite methods ***/ \
+    STDMETHOD_(HRESULT,SetSite)(THIS_ IUnknown* pUnkSite) PURE; \
+    STDMETHOD_(HRESULT,GetSite)(THIS_ REFIID riid, PVOID* ppvSite) PURE;
+
+HRESULT CALLBACK IObjectWithSite_SetSite_Proxy(
+    IObjectWithSite* This,
+    IUnknown* pUnkSite);
+void __RPC_STUB IObjectWithSite_SetSite_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+HRESULT CALLBACK IObjectWithSite_GetSite_Proxy(
+    IObjectWithSite* This,
+    REFIID riid,
+    PVOID* ppvSite);
+void __RPC_STUB IObjectWithSite_GetSite_Stub(
+    struct IRpcStubBuffer* This,
+    struct IRpcChannelBuffer* pRpcChannelBuffer,
+    PRPC_MESSAGE pRpcMessage,
+    DWORD* pdwStubPhase);
+
+#endif  /* __IObjectWithSite_INTERFACE_DEFINED__ */
+
 #ifndef __IOleUndoManager_FWD_DEFINED__
 #define __IOleUndoManager_FWD_DEFINED__
 typedef struct IOleUndoManager IOleUndoManager;
