@@ -62,8 +62,8 @@ char **MSVCRT___initenv = 0;
 MSVCRT_wchar_t **MSVCRT___winitenv = 0;
 int MSVCRT_timezone;
 int MSVCRT_app_type;
-char MSVCRT_pgm[MAX_PATH];
 char* MSVCRT__pgmptr = 0;
+WCHAR* MSVCRT__wpgmptr = 0;
 
 /* Get a snapshot of the current environment
  * and construct the __p__environ array
@@ -154,6 +154,11 @@ unsigned int* __p__commode(void) { return &MSVCRT__commode; }
  *              __p__pgmptr (MSVCRT.@)
  */
 char** __p__pgmptr(void) { return &MSVCRT__pgmptr; }
+
+/***********************************************************************
+ *              __p__wpgmptr (MSVCRT.@)
+ */
+WCHAR** __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
 
 /***********************************************************************
  *		__p__fmode (MSVCRT.@)
@@ -284,9 +289,13 @@ void msvcrt_init_args(void)
   MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);
   MSVCRT___winitenv= msvcrt_SnapshotOfEnvironmentW(NULL);
 
-  MSVCRT_pgm[0] = '\0';
-  GetModuleFileNameA(0, MSVCRT_pgm, sizeof(MSVCRT_pgm)/sizeof(MSVCRT_pgm[0]));
-  MSVCRT__pgmptr = MSVCRT_pgm;
+  MSVCRT__pgmptr = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+  if (MSVCRT__pgmptr)
+    GetModuleFileNameA(0, MSVCRT__pgmptr, MAX_PATH);
+
+  MSVCRT__wpgmptr = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
+  if (MSVCRT__wpgmptr)
+    GetModuleFileNameW(0, MSVCRT__wpgmptr, MAX_PATH);
 }
 
 
@@ -294,10 +303,12 @@ void msvcrt_init_args(void)
 void msvcrt_free_args(void)
 {
   /* FIXME: more things to free */
-  if (MSVCRT___initenv) HeapFree(GetProcessHeap(), 0,MSVCRT___initenv);
-  if (MSVCRT___winitenv) HeapFree(GetProcessHeap(), 0,MSVCRT___winitenv);
-  if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0,MSVCRT__environ);
-  if (MSVCRT__wenviron) HeapFree(GetProcessHeap(), 0,MSVCRT__wenviron);
+  if (MSVCRT___initenv) HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
+  if (MSVCRT___winitenv) HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
+  if (MSVCRT__environ) HeapFree(GetProcessHeap(), 0, MSVCRT__environ);
+  if (MSVCRT__wenviron) HeapFree(GetProcessHeap(), 0, MSVCRT__wenviron);
+  if (MSVCRT__pgmptr) HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
+  if (MSVCRT__wpgmptr) HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
 }
 
 /*********************************************************************

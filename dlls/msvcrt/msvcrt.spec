@@ -128,7 +128,7 @@
 @ cdecl __p__winmajor()
 @ cdecl __p__winminor()
 @ cdecl __p__winver()
-@ stub __p__wpgmptr #()
+@ cdecl __p__wpgmptr()
 @ stub __pioinfo #()
 @ stub __pxcptinfoptrs #()
 @ cdecl __set_app_type(long) MSVCRT___set_app_type
@@ -533,7 +533,7 @@
 @ cdecl _wmktemp(wstr)
 @ varargs _wopen(wstr long)
 @ stub _wperror #(wstr)
-@ stub _wpgmptr # extern
+@ extern _wpgmptr MSVCRT__wpgmptr
 @ stub _wpopen #(wstr wstr)
 @ cdecl _wputenv(wstr)
 @ cdecl _wremove(wstr)
