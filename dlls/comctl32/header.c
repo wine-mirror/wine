@@ -859,10 +859,10 @@ HEADER_HitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     HEADER_InternalHitTest (hwnd, &phti->pt, &phti->flags, &phti->iItem);
 
-    if (phti->flags == HHT_ONHEADER)
-        return phti->iItem;
-    else
+    if (phti->flags == HHT_NOWHERE)
         return -1;
+    else
+        return phti->iItem;
 }
 
 
@@ -1501,9 +1501,9 @@ HEADER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		infoPtr->items[infoPtr->iMoveItem].cxy = nWidth;
             }
 
-			HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGINGA, infoPtr->iMoveItem, HDI_WIDTH);
 	    HEADER_SetItemBounds (hwnd);
-	    InvalidateRect(hwnd, NULL, FALSE);
+	    InvalidateRect(hwnd, NULL, TRUE);
+	    HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGEDA, infoPtr->iMoveItem, HDI_WIDTH);
        /*
 	* }
         */
@@ -1576,7 +1576,7 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
 	else if (infoPtr->bTracking) {
 	    if (dwStyle & HDS_FULLDRAG) {
-		if (HEADER_SendHeaderNotify (hwnd, HDN_ITEMCHANGINGA, infoPtr->iMoveItem, HDI_WIDTH))
+		if (HEADER_SendHeaderNotify (hwnd, HDN_TRACKA, infoPtr->iMoveItem, HDI_WIDTH))
 		{
 		nWidth = pt.x - infoPtr->items[infoPtr->iMoveItem].rect.left + infoPtr->xTrackOffset;
 		if (nWidth < 0)
@@ -1585,7 +1585,6 @@ HEADER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 			HEADER_SendHeaderNotify(hwnd, HDN_ITEMCHANGEDA, infoPtr->iMoveItem, HDI_WIDTH);
 		}
 		HEADER_SetItemBounds (hwnd);
-		InvalidateRect(hwnd, NULL, FALSE);
 	    }
 	    else {
 		hdc = GetDC (hwnd);
