@@ -508,8 +508,8 @@ int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path)
 
     memset(&package->files[index],0,sizeof(MSIFILE));
 
-    package->files[index].File = dupstrW(name);
-    package->files[index].TargetPath = dupstrW(path);
+    package->files[index].File = strdupW(name);
+    package->files[index].TargetPath = strdupW(path);
     package->files[index].Temporary = TRUE;
 
     TRACE("Tracking tempfile (%s)\n",debugstr_w(package->files[index].File));  
@@ -677,7 +677,7 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
         package->ActionFormat = load_dynamic_stringW(row,3);
 
         HeapFree(GetProcessHeap(),0,package->LastAction);
-        package->LastAction = dupstrW(action);
+        package->LastAction = strdupW(action);
 
         msiobj_release(&row->hdr);
         MSI_ViewClose(view);
@@ -875,8 +875,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         LPWSTR p, check, path;
  
-        package->PackagePath = dupstrW(szPackagePath);
-        path = dupstrW(szPackagePath);
+        package->PackagePath = strdupW(szPackagePath);
+        path = strdupW(szPackagePath);
         p = strrchrW(path,'\\');    
         if (p)
         {
@@ -1921,7 +1921,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 
     memset(&package->folders[index],0,sizeof(MSIFOLDER));
 
-    package->folders[index].Directory = dupstrW(dir);
+    package->folders[index].Directory = strdupW(dir);
 
     rc = MSI_OpenQuery(package->db, &view, Query, dir);
     if (rc != ERROR_SUCCESS)
@@ -1980,13 +1980,13 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     {
         TRACE("   TargetDefault = %s\n",debugstr_w(targetdir));
         HeapFree(GetProcessHeap(),0, package->folders[index].TargetDefault);
-        package->folders[index].TargetDefault = dupstrW(targetdir);
+        package->folders[index].TargetDefault = strdupW(targetdir);
     }
 
     if (srcdir)
-       package->folders[index].SourceDefault = dupstrW(srcdir);
+        package->folders[index].SourceDefault = strdupW(srcdir);
     else if (targetdir)
-        package->folders[index].SourceDefault = dupstrW(targetdir);
+        package->folders[index].SourceDefault = strdupW(targetdir);
     HeapFree(GetProcessHeap(), 0, ptargetdir);
 
     parent = load_dynamic_stringW(row,2);
@@ -2084,13 +2084,13 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 
     if (!source && package->folders[i].ResolvedTarget)
     {
-        path = dupstrW(package->folders[i].ResolvedTarget);
+        path = strdupW(package->folders[i].ResolvedTarget);
         TRACE("   already resolved to %s\n",debugstr_w(path));
         return path;
     }
     else if (source && package->folders[i].ResolvedSource)
     {
-        path = dupstrW(package->folders[i].ResolvedSource);
+        path = strdupW(package->folders[i].ResolvedSource);
         return path;
     }
     else if (!source && package->folders[i].Property)
@@ -2114,7 +2114,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         {
             TRACE("   TargetDefault = %s\n",debugstr_w(package->folders[i].TargetDefault));
             path = build_directory_name(3, p, package->folders[i].TargetDefault, NULL);
-            package->folders[i].ResolvedTarget = dupstrW(path);
+            package->folders[i].ResolvedTarget = strdupW(path);
             TRACE("   resolved into %s\n",debugstr_w(path));
             if (set_prop)
                 MSI_SetPropertyW(package,name,path);
@@ -2122,7 +2122,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         else 
         {
             path = build_directory_name(3, p, package->folders[i].SourceDefault, NULL);
-            package->folders[i].ResolvedSource = dupstrW(path);
+            package->folders[i].ResolvedSource = strdupW(path);
         }
         HeapFree(GetProcessHeap(),0,p);
     }
@@ -3119,7 +3119,7 @@ inline static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
         {
             if (package->files[index].State >= 2)
             {
-                *file_source = dupstrW(package->files[index].TargetPath);
+                *file_source = strdupW(package->files[index].TargetPath);
                 return ERROR_SUCCESS;
             }
             else
@@ -3231,7 +3231,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         if (MSI_RecordIsNull(row,5))
         {
             LPWSTR p;
-            dest_path = dupstrW(file_source);
+            dest_path = strdupW(file_source);
             p = strrchrW(dest_path,'\\');
             if (p)
                 *p=0;
@@ -3759,7 +3759,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
 
         if (j>=0)
         {
-            LPWSTR p = dupstrW(package->files[j].TargetPath);
+            LPWSTR p = strdupW(package->files[j].TargetPath);
             return p;
         }
     }
@@ -4882,7 +4882,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         {
             LPWSTR keypath;
             FIXME("poorly handled shortcut format, advertised shortcut\n");
-            keypath = dupstrW(package->components[index].FullKeypath);
+            keypath = strdupW(package->components[index].FullKeypath);
             IShellLinkW_SetPath(sl,keypath);
             HeapFree(GetProcessHeap(),0,keypath);
         }

@@ -309,7 +309,7 @@ static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
     control->handler = msi_dialog_checkbox_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
-        control->property = dupstrW( prop );
+        control->property = strdupW( prop );
     msi_dialog_checkbox_sync_state( dialog, control );
 
     return ERROR_SUCCESS;
@@ -364,7 +364,7 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     control->handler = msi_dialog_edit_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
-        control->property = dupstrW( prop );
+        control->property = strdupW( prop );
     val = load_dynamic_property( dialog->package, control->property, NULL );
     SetWindowTextW( control->hwnd, val );
     HeapFree( GetProcessHeap(), 0, val );
@@ -433,7 +433,7 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
 
     prop = MSI_RecordGetString( rec, 1 );
     if( prop )
-        control->property = dupstrW( prop );
+        control->property = strdupW( prop );
 
     return ERROR_SUCCESS;
 }
@@ -467,7 +467,7 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     }
 
     if( prop )
-        control->property = dupstrW( prop );
+        control->property = strdupW( prop );
 
     /* query the Radio Button table for all control in this group */
     r = MSI_OpenQuery( package->db, &view, query, prop );

@@ -114,7 +114,7 @@ static LPWSTR deformat_file(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
     index = get_loaded_file(package,key);
     if (index >=0)
     {
-        value = dupstrW(package->files[index].TargetPath);
+        value = strdupW(package->files[index].TargetPath);
         *sz = (strlenW(value)) * sizeof(WCHAR);
     }
 
