@@ -98,7 +98,6 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
     if (protect & VPROT_READ) access |= GENERIC_READ;
     if (protect & VPROT_WRITE) access |= GENERIC_WRITE;
 
-    size_low = ROUND_SIZE( 0, size_low );
     if (handle != -1)
     {
         if (!(mapping->file = get_file_obj( current->process, handle, access ))) goto error;
@@ -124,7 +123,7 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         if (!grow_file( mapping->file, size_high, size_low )) goto error;
     }
     mapping->size_high = size_high;
-    mapping->size_low  = size_low;
+    mapping->size_low  = ROUND_SIZE( 0, size_low );
     mapping->protect   = protect;
     return &mapping->obj;
 
