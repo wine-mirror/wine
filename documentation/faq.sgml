@@ -1,10 +1,11 @@
 <!-- *** Wine FAQ *** -->
-    <para>This is the general Wine FAQ.</para>
-    <para>
-       For technical questions, visit the 
-       <ulink url="http://www.winehq.org/fom-meta/cache/19.html">
-       Wine Troubleshooting Guide</ulink> instead.
-    </para>
+  <title>Wine FAQ</title>
+  <para>
+     For technical questions, visit the 
+     <ulink url="http://www.winehq.org/fom-meta/cache/19.html">
+     Wine Troubleshooting Guide</ulink> instead.
+  </para>
+
   <qandaset>
     <qandadiv id="About-this-FAQ"><title>About this FAQ</title>
       <qandaentry>

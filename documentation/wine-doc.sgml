@@ -146,11 +146,12 @@
   <!-- *** Wine Faq *** -->
   <book id="faq">
     <bookinfo>
-
-    <title>Wine FAQ</title>
+      <title>Wine FAQ</title>
     </bookinfo>
 
-    &faq;
+    <article class="faq">
+      &faq;
+    </article>
 
   </book>
 </set>

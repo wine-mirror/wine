@@ -7,8 +7,6 @@
 <!entity faq SYSTEM "faq.sgml">
 ]>
 
-<article id="index">
-  <title>Wine FAQ</title>
-  
-  &faq;
+<article class="faq">
+&faq;
 </article>
