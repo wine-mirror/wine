@@ -387,6 +387,7 @@ typedef struct _IMAGELIST *HIMAGELIST;
 #define ILD_BLEND        ILD_BLEND50
 
 #define INDEXTOOVERLAYMASK(i)  ((i)<<8)
+#define INDEXTOSTATEIMAGEMASK(i) ((i)<<12)
 
 #define ILCF_MOVE        (0x00000000)
 #define ILCF_SWAP        (0x00000001)
@@ -1705,26 +1706,6 @@ typedef struct
 #define TVM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
 #define TVM_GETUNICODEFORMAT    CCM_GETUNICODEFORMAT
 
-#define TreeView_GetItemState(hwndTV, hti, mask) \
-   (UINT)SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
-#define TreeView_GetCheckState(hwndTV, hti) \
-   ((((UINT)(SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
-                     TVIS_STATEIMAGEMASK))) >> 12) -1)
-#define TreeView_SetLineColor(hwnd, clr) \
-    (COLORREF)SendMessageA((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
-#define TreeView_GetLineColor(hwnd) \
-    (COLORREF)SendMessageA((hwnd), TVM_GETLINECOLOR, 0, 0)
-#define TreeView_SetItemState(hwndTV, hti, data, _mask) \
-{ TVITEM _TVi; \
-  _TVi.mask = TVIF_STATE; \
-  _TVi.hItem = hti; \
-  _TVi.stateMask = _mask; \
-  _TVi.state = data; \
-  SendMessageA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
-}
-
-
-
 
 
 #define TVN_FIRST               (0U-400U)
@@ -1815,6 +1796,7 @@ typedef struct
 #define TVS_FULLROWSELECT	  0x1000
 #define TVS_NOSCROLL     	  0x2000
 #define TVS_NONEVENHEIGHT	  0x4000
+#define TVS_NOHSCROLL         0x8000 
 
 #define TVS_SHAREDIMAGELISTS  0x0000
 #define TVS_PRIVATEIMAGELISTS 0x0400
@@ -2061,7 +2043,7 @@ typedef struct tagNMTVGETINFOTIPW
 (LPARAM)(HTREEITEM) (hitem))
 
 #define TreeView_GetChild(hwnd, hitem) \
-	 	 TreeView_GetNextItem(hwnd, hitem , TVGN_CHILD)
+	 	TreeView_GetNextItem(hwnd, hitem , TVGN_CHILD)
 #define TreeView_GetNextSibling(hwnd, hitem) \
 		TreeView_GetNextItem(hwnd, hitem , TVGN_NEXT)
 #define TreeView_GetPrevSibling(hwnd, hitem) \
@@ -2094,21 +2076,23 @@ typedef struct tagNMTVGETINFOTIPW
 #define TreeView_SelectItem(hwnd, hitem) \
 		TreeView_Select(hwnd, hitem, TVGN_CARET)
 #define TreeView_SelectDropTarget(hwnd, hitem) \
-        	TreeView_Select(hwnd, hitem, TVGN_DROPHILITE)
-/* FIXME
-#define TreeView_SelectSetFirstVisible(hwnd, hitem)  \ 
-		TreeView_Select(hwnd, hitem, TVGN_FIRSTVISIBLE)
-*/
+       	TreeView_Select(hwnd, hitem, TVGN_DROPHILITE)
+#define TreeView_SelectSetFirstVisible(hwnd, hitem) \
+       	TreeView_Select(hwnd, hitem, TVGN_FIRSTVISIBLE)
+
 
 #define TreeView_GetItemA(hwnd, pitem) \
  (BOOL)SendMessageA((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
+#define TreeView_GetItemW(hwnd, pitem) \
+ (BOOL)SendMessageW((hwnd), TVM_GETITEMA, 0, (LPARAM) (TVITEMA *)(pitem))
 
 #define TreeView_SetItemA(hwnd, pitem) \
  (BOOL)SendMessageA((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem)) 
+#define TreeView_SetItemW(hwnd, pitem) \
+ (BOOL)SendMessageW((hwnd), TVM_SETITEMA, 0, (LPARAM)(const TVITEMA *)(pitem)) 
 
 #define TreeView_EditLabel(hwnd, hitem) \
     (HWND)SendMessageA((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
-
 
 #define TreeView_GetEditControl(hwnd) \
     (HWND)SendMessageA((hwnd), TVM_GETEDITCONTROL, 0, 0)
@@ -2138,12 +2122,19 @@ typedef struct tagNMTVGETINFOTIPW
 #define TreeView_EndEditLabelNow(hwnd, fCancel) \
     (BOOL)SendMessageA((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
 
-#define TreeView_GetISearchString(hwndTV, lpsz) \
-    (BOOL)SendMessageA((hwndTV), TVM_GETISEARCHSTRING, 0, \
+#define TreeView_GetISearchString(hwnd, lpsz) \
+    (BOOL)SendMessageA((hwnd), TVM_GETISEARCHSTRING, 0, \
 							(LPARAM)(LPTSTR)lpsz)
+
+#define TreeView_SetToolTips(hwnd,  hwndTT) \
+    (BOOL)SendMessageA((hwnd), TVM_SETTOOLTIPS, (WPARAM)(hwndTT), 0)
+
+#define TreeView_GetToolTips(hwnd) \
+    (BOOL)SendMessageA((hwnd), TVM_GETTOOLTIPS, 0, 0)
 
 #define TreeView_SetItemHeight(hwnd,  iHeight) \
     (INT)SendMessageA((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
+
 #define TreeView_GetItemHeight(hwnd) \
     (INT)SendMessageA((hwnd), TVM_GETITEMHEIGHT, 0, 0)
 
@@ -2165,10 +2156,36 @@ typedef struct tagNMTVGETINFOTIPW
 #define TreeView_GetScrollTime(hwnd) \
     (UINT)SendMessageA((hwnd), TVM_GETSCROLLTIME, 0, 0)
 
+#define TreeView_SetInsertMark(hwnd, hItem, fAfter) \
+    (BOOL)SendMessageA((hwnd), TVM_SETINSERTMARK, (WPARAM)(fAfter), \
+                       (LPARAM) (hItem))
+
 #define TreeView_SetInsertMarkColor(hwnd, clr) \
     (COLORREF)SendMessageA((hwnd), TVM_SETINSERTMARKCOLOR, 0, (LPARAM)clr)
+
 #define TreeView_GetInsertMarkColor(hwnd) \
     (COLORREF)SendMessageA((hwnd), TVM_GETINSERTMARKCOLOR, 0, 0)
+
+#define TreeView_GetItemState(hwndTV, hti, mask) \
+   (UINT)SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
+#define TreeView_GetCheckState(hwndTV, hti) \
+   ((((UINT)(SendMessageA((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti),  \
+                     TVIS_STATEIMAGEMASK))) >> 12) -1)
+
+#define TreeView_SetLineColor(hwnd, clr) \
+    (COLORREF)SendMessageA((hwnd), TVM_SETLINECOLOR, 0, (LPARAM)(clr))
+
+#define TreeView_GetLineColor(hwnd) \
+    (COLORREF)SendMessageA((hwnd), TVM_GETLINECOLOR, 0, 0)
+
+#define TreeView_SetItemState(hwndTV, hti, data, _mask) \
+{ TVITEM _TVi; \
+  _TVi.mask = TVIF_STATE; \
+  _TVi.hItem = hti; \
+  _TVi.stateMask = _mask; \
+  _TVi.state = data; \
+  SendMessageA((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
+}
 
 
 
