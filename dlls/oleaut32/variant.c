@@ -3118,7 +3118,7 @@ HRESULT WINAPI VarOr(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             rc = S_OK;
 
         } else {
-            FIXME("unimplemented part, V_VT(left) == 0x%X, V_VT(right) == 0x%X\n", 
+            FIXME("unimplemented part, V_VT(left) == 0x%X, V_VT(right) == 0x%X\n",
 		V_VT(left) & VT_TYPEMASK, V_VT(right) & VT_TYPEMASK);
         }
     }
@@ -3366,6 +3366,202 @@ HRESULT WINAPI VarInt(LPVARIANT pVarIn, LPVARIANT pVarOut)
         return VarFix(pVarIn, pVarOut);
     }
 
+    return hRet;
+}
+
+/**********************************************************************
+ *              VarEqv [OLEAUT32.172]
+ *
+ * Determine if two variants contain the same value.
+ *
+ * PARAMS
+ *  pVarLeft  [I] First variant to compare
+ *  pVarRight [I] Variant to compare to pVarLeft
+ *  pVarOut   [O] Destination for comparason result
+ *
+ * RETURNS
+ *  Success: S_OK. pVarOut contains the result of the comparason (VARIANT_TRUE
+ *           if equivalent or VARIANT_FALSE or -2 otherwise, with type from the
+ *           table below).
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  - Equvalence is defined as containing the same value if one variant is
+ *    converted to the other.
+ *  - Any value in pVarLeft or pVarRight that will not fit in a VT_I4 will
+ *    cause overflow (This is compatable with the native implementation).
+ *  - The result stored in pVarOut depends on the types of pVarLeft/pVarRight
+ *    according to the following table:
+ *|  Type 1     Type 2       Result Type
+ *|  ------     ------       -----------
+ *|  VT_NULL    All Others   VT_NULL
+ *|  VT_BOOL    VT_BOOL      VT_BOOL
+ *|             VT_EMPTY     VT_I2
+ *|             VT_UI1       VT_I2
+ *|             VT_I2        VT_I2
+ *|  VT_EMPTY   VT_EMPTY     VT_I2
+ *|             VT_UI1       VT_I2
+ *|             VT_BOOL      VT_I2
+ *|             VT_I2        VT_I2
+ *|  VT_UI1     VT_UI1       VT_UI1
+ *|             VT_EMPTY     VT_I2
+ *|             VT_BOOL      VT_I2
+ *|             VT_I2        VT_I2
+ *|  VT_I2      VT_I2        VT_I2
+ *|             VT_EMPTY     VT_I2
+ *|             VT_BOOL      VT_I2
+ *|  All Other Combinations  VT_UI4
+ */
+HRESULT WINAPI VarEqv(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut)
+{
+    VARTYPE vt = VT_UI4;
+    VARIANT varLeft, varRight;
+    HRESULT hRet;
+
+    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", pVarLeft, debugstr_VT(pVarLeft),
+          debugstr_VF(pVarLeft), pVarRight, debugstr_VT(pVarRight),
+          debugstr_VF(pVarRight), pVarOut);
+
+    if (V_EXTRA_TYPE(pVarLeft) || V_EXTRA_TYPE(pVarRight) ||
+        V_VT(pVarLeft) == VT_UNKNOWN || V_VT(pVarRight) == VT_UNKNOWN ||
+        V_VT(pVarLeft) == VT_DISPATCH || V_VT(pVarRight) == VT_DISPATCH ||
+        V_VT(pVarLeft) == VT_RECORD || V_VT(pVarRight) == VT_RECORD)
+        return DISP_E_BADVARTYPE;
+
+    if (V_VT(pVarLeft) == VT_NULL || V_VT(pVarRight) == VT_NULL)
+    {
+        if (V_VT(pVarLeft) == VT_NULL)
+            pVarLeft = pVarRight; /* point to the non-NULL var */
+
+        switch (V_VT(pVarLeft))
+        {
+        case VT_BSTR:
+            if (!V_BSTR(pVarLeft))
+                return DISP_E_BADVARTYPE;
+            /* Fall Through ... */
+        case VT_NULL: case VT_EMPTY: case VT_DATE: case VT_CY:
+        case VT_DECIMAL: case VT_R4: case VT_R8: case VT_BOOL:
+        case VT_I1: case VT_UI1: case VT_I2: case VT_UI2:
+        case VT_I4: case VT_UI4: case VT_I8: case VT_UI8:
+        case VT_INT: case VT_UINT:
+            V_VT(pVarOut) = VT_NULL;
+            return S_OK;
+        default:
+            return DISP_E_BADVARTYPE;
+        }
+    }
+
+    if (V_VT(pVarLeft) == VT_EMPTY || V_VT(pVarRight) == VT_EMPTY)
+    {
+        if (V_VT(pVarLeft) == VT_EMPTY)
+            pVarLeft = pVarRight; /* point to the non-EMPTY var */
+
+        switch (V_VT(pVarLeft))
+        {
+        case VT_EMPTY: case VT_UI1: case VT_BOOL: case VT_I2:
+            V_VT(pVarOut) = VT_I2;
+            V_I2(pVarOut) = VARIANT_FALSE;
+            return S_OK;
+
+        case VT_BSTR:
+            if (!V_BSTR(pVarLeft))
+                return DISP_E_BADVARTYPE;
+            /* Fall Through ... */
+        case VT_DATE: case VT_CY: case VT_DECIMAL: case VT_R4: case VT_R8:
+        case VT_I1: case VT_UI2: case VT_I4: case VT_UI4:
+        case VT_INT: case VT_UINT: case VT_I8: case VT_UI8:
+            V_VT(pVarOut) = VT_I4;
+            V_I4(pVarOut) = VARIANT_FALSE;
+            return S_OK;
+        default:
+            return DISP_E_BADVARTYPE;
+        }
+    }
+
+    if (V_VT(pVarLeft) == VT_BOOL && V_VT(pVarRight) == VT_BOOL)
+    {
+        V_VT(pVarOut) = VT_BOOL;
+        if (V_BOOL(pVarLeft) == V_BOOL(pVarRight))
+            V_BOOL(pVarOut) = VARIANT_TRUE;
+        else if (V_BOOL(pVarLeft) == VARIANT_TRUE && V_BOOL(pVarRight) == VARIANT_FALSE)
+        {
+            V_BOOL(pVarOut) = VARIANT_FALSE;
+        }
+        else if (V_BOOL(pVarLeft) == VARIANT_FALSE && V_BOOL(pVarRight) == VARIANT_TRUE)
+        {
+            V_BOOL(pVarOut) = VARIANT_FALSE;
+        }
+        else
+            V_BOOL(pVarOut) = -2; /* Go Figure; this matches native */
+
+        return S_OK;
+    }
+
+    if (V_VT(pVarLeft) == VT_UI1 && V_VT(pVarRight) == VT_UI1)
+    {
+        V_VT(pVarOut) = VT_UI1;
+        V_UI1(pVarOut) = V_UI1(pVarLeft) == V_UI1(pVarRight) ? 0xff : 0xfe;
+        return S_OK;
+    }
+
+    if ((V_VT(pVarLeft) == VT_BOOL || V_VT(pVarLeft) == VT_UI1 ||
+        V_VT(pVarLeft) == VT_I2) &&
+        (V_VT(pVarRight) == VT_BOOL || V_VT(pVarRight) == VT_UI1 ||
+        V_VT(pVarRight) == VT_I2))
+        vt = VT_I2;
+
+    V_VT(&varLeft) = V_VT(&varRight) = VT_EMPTY;
+    hRet = VariantCopy(&varLeft, pVarLeft);
+    if (FAILED(hRet))
+        goto VarEqv_Exit;
+
+    hRet = VariantCopy(&varRight, pVarRight);
+    if (FAILED(hRet))
+        goto VarEqv_Exit;
+
+    hRet = VariantChangeTypeEx(&varLeft, pVarLeft, LOCALE_USER_DEFAULT, 0, vt);
+    if (FAILED(hRet))
+        goto VarEqv_Exit;
+
+    hRet = VariantChangeTypeEx(&varRight, pVarRight, LOCALE_USER_DEFAULT, 0, vt);
+    if (FAILED(hRet))
+        goto VarEqv_Exit;
+
+    V_VT(pVarOut) = vt;
+    if (vt == VT_UI4)
+    {
+        if (V_UI4(&varLeft) == V_UI4(&varRight))
+            V_UI4(pVarOut) = VARIANT_TRUE;
+        else if (V_UI4(&varLeft) == VARIANT_TRUE && V_UI4(&varRight) == VARIANT_FALSE)
+        {
+            V_UI4(pVarOut) = VARIANT_FALSE;
+        }
+        else if (V_UI4(&varLeft) == VARIANT_FALSE && V_UI4(&varRight) == VARIANT_TRUE)
+        {
+            V_UI4(pVarOut) = VARIANT_FALSE;
+        }
+        else
+            V_UI4(pVarOut) = -2;
+    }
+    else
+    {
+        if (V_I2(&varLeft) == V_I2(&varRight))
+            V_I2(pVarOut) = VARIANT_TRUE;
+        else if (V_I2(&varLeft) == VARIANT_TRUE && V_I2(&varRight) == VARIANT_FALSE)
+        {
+            V_I2(pVarOut) = VARIANT_FALSE;
+        }
+        else if (V_I2(&varLeft) == VARIANT_FALSE && V_I2(&varRight) == VARIANT_TRUE)
+        {
+            V_I2(pVarOut) = VARIANT_FALSE;
+        }
+        else
+            V_I2(pVarOut) = -2;
+    }
+
+VarEqv_Exit:
+    VariantClear(&varLeft);
+    VariantClear(&varRight);
     return hRet;
 }
 

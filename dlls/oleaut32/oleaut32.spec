@@ -147,7 +147,7 @@
 148 stdcall SafeArrayPtrOfIndex(ptr ptr ptr)
 149 stdcall SysStringByteLen(ptr)
 150 stdcall SysAllocStringByteLen(ptr long)
-152 stub VarEqv # stdcall (ptr ptr ptr)
+152 stdcall VarEqv(ptr ptr ptr)
 153 stub VarIdiv # stdcall (ptr ptr ptr)
 154 stub VarImp # stdcall (ptr ptr ptr)
 155 stdcall VarMod(ptr ptr ptr)
