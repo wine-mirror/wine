@@ -17,7 +17,6 @@
 
 #include "wine/obj_base.h"
 #include "wine/winbase16.h"
-#include "heap.h"
 #include "ifs.h"
 
 #include "debugtools.h"
@@ -199,35 +198,36 @@ LPVOID WINAPI IMalloc16_fnHeapMinimize(IMalloc16* iface) {
 	return NULL;
 }
 
-static ICOM_VTABLE(IMalloc16)* msegvt16 = NULL;
-
 /******************************************************************************
  * IMalloc16_Constructor [VTABLE]
  */
 LPMALLOC16
-IMalloc16_Constructor() {
-	IMalloc16Impl*	This;
-        HMODULE16	hcomp = GetModuleHandle16("COMPOBJ");
+IMalloc16_Constructor()
+{
+    static ICOM_VTABLE(IMalloc16) vt16;
+    static SEGPTR msegvt16;
+    IMalloc16Impl* This;
+    HMODULE16 hcomp = GetModuleHandle16("COMPOBJ");
 
-	This = (IMalloc16Impl*)SEGPTR_NEW(IMalloc16Impl);
-        if (!msegvt16) {
-            msegvt16 = SEGPTR_NEW(ICOM_VTABLE(IMalloc16));
-
-#define VTENT(x) msegvt16->x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(msegvt16->x)
-            VTENT(QueryInterface);
-            VTENT(AddRef);
-            VTENT(Release);
-            VTENT(Alloc);
-            VTENT(Realloc);
-            VTENT(Free);
-            VTENT(GetSize);
-            VTENT(DidAlloc);
-            VTENT(HeapMinimize);
+    This = HeapAlloc( GetProcessHeap(), 0, sizeof(IMalloc16Impl) );
+    if (!msegvt16)
+    {
+#define VTENT(x) vt16.x = (void*)GetProcAddress16(hcomp,"IMalloc16_"#x);assert(vt16.x)
+        VTENT(QueryInterface);
+        VTENT(AddRef);
+        VTENT(Release);
+        VTENT(Alloc);
+        VTENT(Realloc);
+        VTENT(Free);
+        VTENT(GetSize);
+        VTENT(DidAlloc);
+        VTENT(HeapMinimize);
 #undef VTENT
-	}
-        ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
-	This->ref = 1;
-	return (LPMALLOC16)SEGPTR_GET(This);
+        msegvt16 = MapLS( &vt16 );
+    }
+    ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)msegvt16;
+    This->ref = 1;
+    return (LPMALLOC16)MapLS( This );
 }
 
 

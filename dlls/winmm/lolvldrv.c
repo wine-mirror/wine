@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <assert.h>
 #include "wine/winbase16.h"
-#include "heap.h"
 #include "winreg.h"
 #include "winver.h"
 #include "winemm.h"
@@ -584,8 +583,8 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case MODM_GETDEVCAPS:
 	{
-            LPMIDIOUTCAPSA		moc32 = (LPMIDIOUTCAPSA)*lpParam1;
-	    LPSTR			ptr = SEGPTR_ALLOC(sizeof(LPMIDIOUTCAPSA) + sizeof(MIDIOUTCAPS16));
+            LPMIDIOUTCAPSA moc32 = (LPMIDIOUTCAPSA)*lpParam1;
+            LPSTR ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPMIDIOUTCAPSA)+sizeof(MIDIOUTCAPS16));
 
 	    if (ptr) {
 		*(LPMIDIOUTCAPSA*)ptr = moc32;
@@ -593,7 +592,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    } else {
 		ret = MMDRV_MAP_NOMEM;
 	    }
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIOUTCAPSA);
+	    *lpParam1 = (DWORD)MapLS(ptr) + sizeof(LPMIDIOUTCAPSA);
 	    *lpParam2 = sizeof(MIDIOUTCAPS16);
 	}
 	break;
@@ -601,12 +600,14 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	{
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)*lpParam1;
 	    LPMIDIHDR		mh16; 
-	    LPVOID		ptr = SEGPTR_ALLOC(sizeof(LPMIDIHDR) + sizeof(MIDIHDR) + mh32->dwBufferLength);
+	    LPVOID ptr = HeapAlloc( GetProcessHeap(), 0,
+                                    sizeof(LPMIDIHDR) + sizeof(MIDIHDR) + mh32->dwBufferLength);
 
 	    if (ptr) {
 		*(LPMIDIHDR*)ptr = mh32;
 		mh16 = (LPMIDIHDR)((LPSTR)ptr + sizeof(LPMIDIHDR));
-		mh16->lpData = (LPSTR)SEGPTR_GET(ptr) + sizeof(LPMIDIHDR) + sizeof(MIDIHDR);
+		*lpParam1 = MapLS(mh16);
+		mh16->lpData = (LPSTR)*lpParam1 + sizeof(MIDIHDR);
 		/* data will be copied on WODM_WRITE */
 		mh16->dwBufferLength = mh32->dwBufferLength;
 		mh16->dwBytesRecorded = mh32->dwBytesRecorded;
@@ -620,9 +621,8 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		mh32->reserved = *lpParam2;
 
 		TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n", 
-		      (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIHDR), (DWORD)mh16->lpData,
+		      *lpParam1, (DWORD)mh16->lpData,
 		      mh32->dwBufferLength, (DWORD)mh32->lpData);
-		*lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIHDR);
 		*lpParam2 = sizeof(MIDIHDR);
 
 		ret = MMDRV_MAP_OKMEM;
@@ -640,15 +640,14 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 
 	    assert(*(LPMIDIHDR*)ptr == mh32);
 	    
-	    TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n", 
-		  (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIHDR), (DWORD)mh16->lpData,
-		  mh32->dwBufferLength, (DWORD)mh32->lpData);
-
 	    if (wMsg == MODM_LONGDATA)
 		memcpy((LPSTR)mh16 + sizeof(MIDIHDR), mh32->lpData, mh32->dwBufferLength);
 
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIHDR);
+	    *lpParam1 = MapLS(mh16);
 	    *lpParam2 = sizeof(MIDIHDR);
+	    TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n", 
+                  *lpParam1, (DWORD)mh16->lpData, mh32->dwBufferLength, (DWORD)mh32->lpData);
+
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (mh16->dwBufferLength < mh32->dwBufferLength) {
 		ERR("Size of buffer has been increased (%ld, %ld)\n",
@@ -672,10 +671,12 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	       MIDIOPENDESC16	mod16: openDesc passed to driver
 	       MIDIOPENSTRMID	cIds 
 	    */
-	    ptr = SEGPTR_ALLOC(sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD) + sizeof(MIDIOPENDESC16) + 
-			       mod32->cIds ? (mod32->cIds - 1) * sizeof(MIDIOPENSTRMID) : 0);
+            ptr = HeapAlloc( GetProcessHeap(), 0,
+                             sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD) + sizeof(MIDIOPENDESC16) +
+                             mod32->cIds ? (mod32->cIds - 1) * sizeof(MIDIOPENSTRMID) : 0);
 
 	    if (ptr) {
+                SEGPTR segptr = MapLS(ptr);
 		*(LPMIDIOPENDESC*)ptr = mod32;
 		*(LPDWORD)(ptr + sizeof(LPMIDIOPENDESC)) = *lpdwUser;
 		mod16 = (LPMIDIOPENDESC16)((LPSTR)ptr + sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD));
@@ -687,8 +688,8 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		mod16->cIds = mod32->cIds;
 		memcpy(&mod16->rgIds, &mod32->rgIds, mod32->cIds * sizeof(MIDIOPENSTRMID));
 
-		*lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD);
-		*lpdwUser = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMIDIOPENDESC) + sizeof(DWORD);
+		*lpParam1 = (DWORD)segptr + sizeof(LPMIDIOPENDESC) + 2*sizeof(DWORD);
+		*lpdwUser = (DWORD)segptr + sizeof(LPMIDIOPENDESC) + sizeof(DWORD);
 
 		ret = MMDRV_MAP_OKMEM;
 	    } else {
@@ -736,9 +737,8 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    moc32->wNotes		= moc16->wNotes;
 	    moc32->wChannelMask		= moc16->wChannelMask;
 	    moc32->dwSupport		= moc16->dwSupport;
-
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
+            UnMapLS( *lpParam1 );
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -751,13 +751,13 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)ptr;
 
 	    assert(mh32->lpNext == (LPMIDIHDR)mh16);
+            UnMapLS( *lpParam1 );
 	    mh32->dwBytesRecorded = mh16->dwBytesRecorded;
 	    mh32->dwUser = mh16->dwUser;
 	    mh32->dwFlags = mh16->dwFlags;
 
 	    if (wMsg == MODM_UNPREPARE) {
-		if (!SEGPTR_FREE(ptr))
-		    FIXME("bad free line=%d\n", __LINE__);
+                HeapFree( GetProcessHeap(), 0, ptr );
 		mh32->lpNext = 0;
 	    }
 	    ret = MMDRV_MAP_OK;
@@ -767,12 +767,10 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	{
 	    LPMIDIOPENDESC16		mod16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)mod16 - sizeof(LPMIDIOPENDESC) - 2*sizeof(DWORD);
-
+            UnMapLS( *lpParam1 );
 	    **(DWORD**)(ptr + sizeof(LPMIDIOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPMIDIOPENDESC) + sizeof(DWORD));
 
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1052,15 +1050,17 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		sz += ((LPWAVEFORMATEX)wod32->lpFormat)->cbSize;
 	    }
 
-	    ptr = SEGPTR_ALLOC(sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16) + sz);
+            ptr = HeapAlloc( GetProcessHeap(), 0,
+                             sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16) + sz);
 
 	    if (ptr) {
+                SEGPTR seg_ptr = MapLS( ptr );
 		*(LPWAVEOPENDESC*)ptr = wod32;
 		*(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
 		wod16 = (LPWAVEOPENDESC16)((LPSTR)ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD));
 
 		wod16->hWave = wod32->hWave;
-		wod16->lpFormat = (LPWAVEFORMATEX)((DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
+		wod16->lpFormat = (LPWAVEFORMATEX)(seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
 		memcpy(wod16 + 1, wod32->lpFormat, sz);
 		
 		wod16->dwCallback = wod32->dwCallback;
@@ -1068,8 +1068,8 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		wod16->uMappedDeviceID = wod32->uMappedDeviceID;
 		wod16->dnDevNode = wod32->dnDevNode;
 		
-		*lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
-		*lpdwUser = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
+		*lpParam1 = seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
+		*lpdwUser = seg_ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
 
 		ret = MMDRV_MAP_OKMEM;
 	    } else {
@@ -1081,12 +1081,14 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	{
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)*lpParam1;
 	    LPWAVEHDR		wh16; 
-	    LPVOID		ptr = SEGPTR_ALLOC(sizeof(LPWAVEHDR) + sizeof(WAVEHDR) + wh32->dwBufferLength);
+	    LPVOID ptr = HeapAlloc( GetProcessHeap(), 0,
+                                    sizeof(LPWAVEHDR) + sizeof(WAVEHDR) + wh32->dwBufferLength);
 
 	    if (ptr) {
+                SEGPTR seg_ptr = MapLS( ptr );
 		*(LPWAVEHDR*)ptr = wh32;
 		wh16 = (LPWAVEHDR)((LPSTR)ptr + sizeof(LPWAVEHDR));
-		wh16->lpData = (LPSTR)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR) + sizeof(WAVEHDR);
+		wh16->lpData = (LPSTR)seg_ptr + sizeof(LPWAVEHDR) + sizeof(WAVEHDR);
 		/* data will be copied on WODM_WRITE */
 		wh16->dwBufferLength = wh32->dwBufferLength;
 		wh16->dwBytesRecorded = wh32->dwBytesRecorded;
@@ -1097,9 +1099,9 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
 		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
-		      (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
+		      seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		      wh32->dwBufferLength, (DWORD)wh32->lpData);
-		*lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR);
+		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 		*lpParam2 = sizeof(WAVEHDR);
 
 		ret = MMDRV_MAP_OKMEM;
@@ -1114,17 +1116,18 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(*lpParam1);
 	    LPWAVEHDR		wh16 = wh32->lpNext;
 	    LPSTR		ptr = (LPSTR)wh16 - sizeof(LPWAVEHDR);
+            SEGPTR seg_ptr = MapLS( ptr );
 
 	    assert(*(LPWAVEHDR*)ptr == wh32);
 	    
 	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
-		  (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
+		  seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		  wh32->dwBufferLength, (DWORD)wh32->lpData);
 
 	    if (wMsg == WIDM_ADDBUFFER)
 		memcpy((LPSTR)wh16 + sizeof(WAVEHDR), wh32->lpData, wh32->dwBufferLength);
 
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR);
+	    *lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wh32->dwBufferLength < wh16->dwBufferLength) {
@@ -1138,8 +1141,8 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	break;
    case WIDM_GETDEVCAPS:
 	{
-            LPWAVEINCAPSA		wic32 = (LPWAVEINCAPSA)*lpParam1;
-	    LPSTR			ptr = SEGPTR_ALLOC(sizeof(LPWAVEINCAPSA) + sizeof(WAVEINCAPS16));
+            LPWAVEINCAPSA wic32 = (LPWAVEINCAPSA)*lpParam1;
+            LPSTR ptr = HeapAlloc( GetProcessHeap(), 0 ,sizeof(LPWAVEINCAPSA) + sizeof(WAVEINCAPS16));
 
 	    if (ptr) {
 		*(LPWAVEINCAPSA*)ptr = wic32;
@@ -1147,15 +1150,15 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    } else {
 		ret = MMDRV_MAP_NOMEM;
 	    }
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEINCAPSA);
+	    *lpParam1 = MapLS(ptr) + sizeof(LPWAVEINCAPSA);
 	    *lpParam2 = sizeof(WAVEINCAPS16);
 	}
 	break;
     case WIDM_GETPOS:
  	{
-            LPMMTIME		mmt32 = (LPMMTIME)*lpParam1;
-	    LPSTR		ptr = SEGPTR_ALLOC(sizeof(LPMMTIME) + sizeof(MMTIME16));
-	    LPMMTIME16		mmt16 = (LPMMTIME16)(ptr + sizeof(LPMMTIME));
+            LPMMTIME mmt32 = (LPMMTIME)*lpParam1;
+            LPSTR ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPMMTIME) + sizeof(MMTIME16));
+            LPMMTIME16 mmt16 = (LPMMTIME16)(ptr + sizeof(LPMMTIME));
 
 	    if (ptr) {
 		*(LPMMTIME*)ptr = mmt32;
@@ -1164,35 +1167,15 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 	    } else {
 		ret = MMDRV_MAP_NOMEM;
 	    }
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMMTIME);
+	    *lpParam1 = MapLS(ptr) + sizeof(LPMMTIME);
 	    *lpParam2 = sizeof(MMTIME16);
 	}
 	break;
     case DRVM_MAPPER_STATUS:
  	{
-            LPDWORD		p32 = (LPDWORD)*lpParam2;
-	    int			sz;
-	    LPSTR		ptr;
-	    LPDWORD		p16;
-
-	    switch (*lpParam1) {
-	    case WAVEIN_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
- 	    case WAVEIN_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
-	    case WAVEIN_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
-	    default:
-		ERR("Unknown value: %lu\n", *lpParam1);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    ptr = SEGPTR_ALLOC(sizeof(LPDWORD) + sz);
-	    p16 = (LPDWORD)(ptr + sizeof(LPDWORD));
-
-	    if (ptr) {
-		*(LPDWORD*)ptr = p32;
-		ret = MMDRV_MAP_OKMEM;
-	    } else {
-		ret = MMDRV_MAP_NOMEM;
-	    }
-	    *lpParam2 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPDWORD);
+            LPDWORD p32 = (LPDWORD)*lpParam2;
+            *lpParam2 = MapLS(p32);
+            ret = MMDRV_MAP_OKMEM;
 	}
 	break;
     default:
@@ -1224,12 +1207,10 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    LPSTR			ptr   = (LPSTR)wod16 - sizeof(LPWAVEOPENDESC) - 2*sizeof(DWORD);
             LPWAVEOPENDESC		wod32 = *(LPWAVEOPENDESC*)ptr;
 
+            UnMapLS( *lpParam1 );
 	    wod32->uMappedDeviceID = wod16->uMappedDeviceID;
 	    **(DWORD**)(ptr + sizeof(LPWAVEOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD));
-
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1247,10 +1228,10 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    wh32->dwUser = wh16->dwUser;
 	    wh32->dwFlags = wh16->dwFlags;
 	    wh32->dwLoops = wh16->dwLoops;
+            UnMapLS( *lpParam1 );
 
 	    if (wMsg == WIDM_UNPREPARE) {
-		if (!SEGPTR_FREE(ptr))
-		    FIXME("bad free line=%d\n", __LINE__);
+                HeapFree( GetProcessHeap(), 0, ptr );
 		wh32->lpNext = 0;
 	    }
 	    ret = MMDRV_MAP_OK;
@@ -1268,8 +1249,8 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	    strcpy(wic32->szPname, wic16->szPname);
 	    wic32->dwFormats = wic16->dwFormats;
 	    wic32->wChannels = wic16->wChannels;
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
+            UnMapLS( *lpParam1 );
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1280,33 +1261,14 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
             LPMMTIME		mmt32 = *(LPMMTIME*)ptr;
 
 	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
-
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            UnMapLS( *lpParam1 );
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
     case DRVM_MAPPER_STATUS:
 	{
-	    LPDWORD		p16 = MapSL(*lpParam2);
-	    LPSTR		ptr = (LPSTR)p16 - sizeof(LPDWORD);
-            LPDWORD		p32 = *(LPDWORD*)ptr;
-	    int			sz;
-
-	    switch (*lpParam1) {
-	    case WAVEIN_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
- 	    case WAVEIN_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
-	    case WAVEIN_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
-	    default:
-		ERR("Unknown value: %lu\n", *lpParam1);
-		return MMDRV_MAP_MSGERROR;
-	    }
-
-	    memcpy(p32, p16, sz);
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            UnMapLS( *lpParam2 );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1586,8 +1548,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	
     case WODM_GETDEVCAPS:
 	{
-            LPWAVEOUTCAPSA		woc32 = (LPWAVEOUTCAPSA)*lpParam1;
-	    LPSTR			ptr = SEGPTR_ALLOC(sizeof(LPWAVEOUTCAPSA) + sizeof(WAVEOUTCAPS16));
+            LPWAVEOUTCAPSA woc32 = (LPWAVEOUTCAPSA)*lpParam1;
+            LPSTR ptr = HeapAlloc( GetProcessHeap(), 0,
+                                   sizeof(LPWAVEOUTCAPSA) + sizeof(WAVEOUTCAPS16));
 
 	    if (ptr) {
 		*(LPWAVEOUTCAPSA*)ptr = woc32;
@@ -1595,7 +1558,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    } else {
 		ret = MMDRV_MAP_NOMEM;
 	    }
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOUTCAPSA);
+	    *lpParam1 = MapLS(ptr) + sizeof(LPWAVEOUTCAPSA);
 	    *lpParam2 = sizeof(WAVEOUTCAPS16);
 	}
 	break;
@@ -1609,9 +1572,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case WODM_GETPOS:
 	{
-            LPMMTIME		mmt32 = (LPMMTIME)*lpParam1;
-	    LPSTR		ptr = SEGPTR_ALLOC(sizeof(LPMMTIME) + sizeof(MMTIME16));
-	    LPMMTIME16		mmt16 = (LPMMTIME16)(ptr + sizeof(LPMMTIME));
+            LPMMTIME mmt32 = (LPMMTIME)*lpParam1;
+            LPSTR ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPMMTIME) + sizeof(MMTIME16));
+            LPMMTIME16 mmt16 = (LPMMTIME16)(ptr + sizeof(LPMMTIME));
 
 	    if (ptr) {
 		*(LPMMTIME*)ptr = mmt32;
@@ -1620,7 +1583,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    } else {
 		ret = MMDRV_MAP_NOMEM;
 	    }
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPMMTIME);
+	    *lpParam1 = MapLS(ptr) + sizeof(LPMMTIME);
 	    *lpParam2 = sizeof(MMTIME16);
 	}
 	break;
@@ -1648,15 +1611,17 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		sz += ((LPWAVEFORMATEX)wod32->lpFormat)->cbSize;
 	    }
 
-	    ptr = SEGPTR_ALLOC(sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16) + sz);
+	    ptr = HeapAlloc( GetProcessHeap(), 0,
+                             sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16) + sz);
 
 	    if (ptr) {
+                SEGPTR seg_ptr = MapLS( ptr );
 		*(LPWAVEOPENDESC*)ptr = wod32;
 		*(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC)) = *lpdwUser;
 		wod16 = (LPWAVEOPENDESC16)((LPSTR)ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD));
 
 		wod16->hWave = wod32->hWave;
-		wod16->lpFormat = (LPWAVEFORMATEX)((DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
+		wod16->lpFormat = (LPWAVEFORMATEX)(seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD) + sizeof(WAVEOPENDESC16));
 		memcpy(wod16 + 1, wod32->lpFormat, sz);
 		
 		wod16->dwCallback = wod32->dwCallback;
@@ -1664,8 +1629,8 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		wod16->uMappedDeviceID = wod32->uMappedDeviceID;
 		wod16->dnDevNode = wod32->dnDevNode;
 		
-		*lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
-		*lpdwUser = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
+		*lpParam1 = seg_ptr + sizeof(LPWAVEOPENDESC) + 2*sizeof(DWORD);
+		*lpdwUser = seg_ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD);
 
 		ret = MMDRV_MAP_OKMEM;
 	    } else {
@@ -1677,12 +1642,14 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	{
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)*lpParam1;
 	    LPWAVEHDR		wh16; 
-	    LPVOID		ptr = SEGPTR_ALLOC(sizeof(LPWAVEHDR) + sizeof(WAVEHDR) + wh32->dwBufferLength);
+	    LPVOID ptr = HeapAlloc( GetProcessHeap(), 0,
+                                    sizeof(LPWAVEHDR) + sizeof(WAVEHDR) + wh32->dwBufferLength);
 
 	    if (ptr) {
+                SEGPTR seg_ptr = MapLS( ptr );
 		*(LPWAVEHDR*)ptr = wh32;
 		wh16 = (LPWAVEHDR)((LPSTR)ptr + sizeof(LPWAVEHDR));
-		wh16->lpData = (LPSTR)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR) + sizeof(WAVEHDR);
+		wh16->lpData = (LPSTR)seg_ptr + sizeof(LPWAVEHDR) + sizeof(WAVEHDR);
 		/* data will be copied on WODM_WRITE */
 		wh16->dwBufferLength = wh32->dwBufferLength;
 		wh16->dwBytesRecorded = wh32->dwBytesRecorded;
@@ -1693,9 +1660,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
 		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
-		      (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
+		      seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		      wh32->dwBufferLength, (DWORD)wh32->lpData);
-		*lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR);
+		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 		*lpParam2 = sizeof(WAVEHDR);
 
 		ret = MMDRV_MAP_OKMEM;
@@ -1710,17 +1677,18 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(*lpParam1);
 	    LPWAVEHDR		wh16 = wh32->lpNext;
 	    LPSTR		ptr = (LPSTR)wh16 - sizeof(LPWAVEHDR);
+            SEGPTR seg_ptr = MapLS( ptr );
 
 	    assert(*(LPWAVEHDR*)ptr == wh32);
 	    
 	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n", 
-		  (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
+		  seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
 		  wh32->dwBufferLength, (DWORD)wh32->lpData);
 
 	    if (wMsg == WODM_WRITE)
 		memcpy((LPSTR)wh16 + sizeof(WAVEHDR), wh32->lpData, wh32->dwBufferLength);
 
-	    *lpParam1 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPWAVEHDR);
+	    *lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wh16->dwBufferLength < wh32->dwBufferLength) {
@@ -1734,30 +1702,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map32ATo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case DRVM_MAPPER_STATUS:
  	{
-            LPDWORD		p32 = (LPDWORD)*lpParam2;
-	    int			sz;
-	    LPSTR		ptr;
-	    LPDWORD		p16;
-
-	    switch (*lpParam1) {
-	    case WAVEOUT_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
- 	    case WAVEOUT_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
-	    case WAVEOUT_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
-	    default:
-		ERR("Unknown value: %lu\n", *lpParam1);
-		return MMDRV_MAP_MSGERROR;
-	    }
-	    ptr = SEGPTR_ALLOC(sizeof(LPDWORD) + sz);
-	    p16 = (LPDWORD)(ptr + sizeof(LPDWORD));
-
-	    if (ptr) {
-		*(LPDWORD*)ptr = p32;
-		memcpy(p16, p32, sz);
-		ret = MMDRV_MAP_OKMEM;
-	    } else {
-		ret = MMDRV_MAP_NOMEM;
-	    }
-	    *lpParam2 = (DWORD)SEGPTR_GET(ptr) + sizeof(LPDWORD);
+            LPDWORD p32 = (LPDWORD)*lpParam2;
+            *lpParam2 = MapLS(p32);
+            ret = MMDRV_MAP_OKMEM;
 	}
 	break;
     default:
@@ -1802,8 +1749,8 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    woc32->dwFormats = woc16->dwFormats;
 	    woc32->wChannels = woc16->wChannels;
 	    woc32->dwSupport = woc16->dwSupport;
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
+            UnMapLS( *lpParam1 );
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1822,10 +1769,8 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
             LPMMTIME		mmt32 = *(LPMMTIME*)ptr;
 
 	    MMSYSTEM_MMTIME16to32(mmt32, mmt16);
-
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            UnMapLS( *lpParam1 );
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1837,10 +1782,8 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 
 	    wod32->uMappedDeviceID = wod16->uMappedDeviceID;
 	    **(DWORD**)(ptr + sizeof(LPWAVEOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPWAVEOPENDESC) + sizeof(DWORD));
-
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            UnMapLS( *lpParam1 );
+            HeapFree( GetProcessHeap(), 0, ptr );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;
@@ -1858,9 +1801,9 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	    wh32->dwFlags = wh16->dwFlags;
 	    wh32->dwLoops = wh16->dwLoops;
 
+            UnMapLS( *lpParam1 );
 	    if (wMsg == WODM_UNPREPARE) {
-		if (!SEGPTR_FREE(ptr))
-		    FIXME("bad free line=%d\n", __LINE__);
+                HeapFree( GetProcessHeap(), 0, ptr );
 		wh32->lpNext = 0;
 	    }
 	    ret = MMDRV_MAP_OK;
@@ -1872,24 +1815,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case DRVM_MAPPER_STATUS:
 	{
-	    LPDWORD		p16 = MapSL(*lpParam2);
-	    LPSTR		ptr = (LPSTR)p16 - sizeof(LPDWORD);
-            LPDWORD		p32 = *(LPDWORD*)ptr;
-	    int			sz;
-
-	    switch (*lpParam1) {
-	    case WAVEOUT_MAPPER_STATUS_DEVICE:	sz = sizeof(DWORD);		break;
- 	    case WAVEOUT_MAPPER_STATUS_MAPPED:	sz = sizeof(DWORD);		break;
-	    case WAVEOUT_MAPPER_STATUS_FORMAT:	sz = sizeof(WAVEFORMATEX);	break;
-	    default:
-		ERR("Unknown value: %lu\n", *lpParam1);
-		return MMDRV_MAP_MSGERROR;
-	    }
-
-	    memcpy(p32, p16, sz);
-	    if (!SEGPTR_FREE(ptr))
-		FIXME("bad free line=%d\n", __LINE__);
-
+            UnMapLS( *lpParam2 );
 	    ret = MMDRV_MAP_OK;
 	}
 	break;

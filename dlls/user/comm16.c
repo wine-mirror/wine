@@ -49,7 +49,6 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/port.h"
-#include "heap.h"
 #include "win.h"
 #include "winerror.h"
 
@@ -88,8 +87,9 @@ struct DosDeviceStruct {
     OVERLAPPED read_ov, write_ov;
     /* save terminal states */
     DCB16 dcb;
-    /* pointer to unknown(==undocumented) comm structure */ 
-    LPCVOID *unknown;
+    /* pointer to unknown(==undocumented) comm structure */
+    SEGPTR seg_unknown;
+    BYTE unknown[40];
 };
 
 static struct DosDeviceStruct COM[MAX_PORTS];
@@ -521,8 +521,8 @@ INT16 WINAPI OpenComm16(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			ERR("Couldn't open %s ! (%s)\n", COM[port].devicename, strerror(errno));
 			return IE_HARDWARE;
 		} else {
-                        COM[port].unknown = SEGPTR_ALLOC(40);
-			memset(COM[port].unknown, 0, 40);
+			memset(COM[port].unknown, 0, sizeof(COM[port].unknown));
+                        COM[port].seg_unknown = 0;
 			COM[port].handle = handle;
 			COM[port].commerror = 0;
 			COM[port].eventmask = 0;
@@ -609,8 +609,7 @@ INT16 WINAPI CloseComm16(INT16 cid)
 	}
 	if (!(cid&FLAG_LPT)) {
 		/* COM port */
-		SEGPTR_FREE(COM[cid].unknown); /* [LW] */
-
+                UnMapLS( COM[cid].seg_unknown );
 		CloseHandle(COM[cid].read_ov.hEvent);
 		CloseHandle(COM[cid].write_ov.hEvent);
 
@@ -843,7 +842,8 @@ SEGPTR WINAPI SetCommEventMask16(INT16 cid,UINT16 fuEvtMask)
 	COMM_MSRUpdate( ptr->handle, stol );
 
 	TRACE(" modem dcd construct %x\n",*stol);
-	return SEGPTR_GET(COM[cid].unknown);
+        if (!COM[cid].seg_unknown) COM[cid].seg_unknown = MapLS( COM[cid].unknown );
+        return COM[cid].seg_unknown;
 }
 
 /*****************************************************************************

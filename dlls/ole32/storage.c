@@ -16,11 +16,11 @@
 #include "ntddk.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
+#include "wine/unicode.h"
 #include "wingdi.h"
 #include "wtypes.h"
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -715,7 +715,8 @@ ULONG WINAPI IStream16_fnRelease(IStream16* iface) {
 	This->ref--;
 	if (!This->ref) {
 		CloseHandle(This->hf);
-		SEGPTR_FREE(This);
+                UnMapLS( This->thisptr );
+		HeapFree( GetProcessHeap(), 0, This );
 		return 0;
 	}
 	return This->ref;
@@ -1117,9 +1118,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 			VTENT(Stat);
 			VTENT(Clone);
 #undef VTENT
-			segstrvt16 = SEGPTR_NEW(ICOM_VTABLE(IStream16));
-			memcpy(segstrvt16,&strvt16,sizeof(strvt16));
-			segstrvt16 = (ICOM_VTABLE(IStream16)*)SEGPTR_GET(segstrvt16);
+			segstrvt16 = (ICOM_VTABLE(IStream16)*)MapLS( &strvt16 );
 		} else {
 #define VTENT(xfn) strvt16.xfn = IStream16_fn##xfn;
 			VTENT(QueryInterface);
@@ -1142,10 +1141,10 @@ static void _create_istream16(LPSTREAM16 *str) {
 			segstrvt16 = &strvt16;
 		}
 	}
-	lpst = SEGPTR_NEW(IStream16Impl);
+	lpst = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpst) );
 	ICOM_VTBL(lpst)	= segstrvt16;
 	lpst->ref	= 1;
-	lpst->thisptr	= SEGPTR_GET(lpst);
+	lpst->thisptr	= MapLS( lpst );
 	*str = (void*)lpst->thisptr;
 }
 
@@ -1198,7 +1197,7 @@ ULONG WINAPI IStream_fnRelease(IStream* iface) {
 	This->ref--;
 	if (!This->ref) {
 		CloseHandle(This->hf);
-		SEGPTR_FREE(This);
+		HeapFree( GetProcessHeap(), 0, This );
 		return 0;
 	}
 	return This->ref;
@@ -1251,7 +1250,8 @@ ULONG WINAPI IStorage16_fnRelease(IStorage16* iface) {
 	This->ref--;
 	if (This->ref)
 		return This->ref;
-	SEGPTR_FREE(This);
+        UnMapLS( This->thisptr );
+        HeapFree( GetProcessHeap(), 0, This );
 	return 0;
 }
 
@@ -1262,10 +1262,14 @@ HRESULT WINAPI IStorage16_fnStat(
         LPSTORAGE16 iface,STATSTG16 *pstatstg, DWORD grfStatFlag
 ) {
 	ICOM_THIS(IStorage16Impl,iface);
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, This->stde.pps_rawname, -1, NULL, 0, NULL, NULL );
+        LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, len );
+
 	TRACE("(%p)->(%p,0x%08lx)\n",
 		This,pstatstg,grfStatFlag
 	);
-	pstatstg->pwcsName=(LPOLESTR16)SEGPTR_GET(SEGPTR_STRDUP_WtoA(This->stde.pps_rawname));
+        WideCharToMultiByte( CP_ACP, 0, This->stde.pps_rawname, -1, nameA, len, NULL, NULL );
+	pstatstg->pwcsName=(LPOLESTR16)MapLS( nameA );
 	pstatstg->type = This->stde.pps_type;
 	pstatstg->cbSize.s.LowPart = This->stde.pps_size;
 	pstatstg->mtime = This->stde.pps_ft1; /* FIXME */ /* why? */
@@ -1520,9 +1524,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 			VTENT(SetStateBits)
 			VTENT(Stat)
 #undef VTENT
-			segstvt16 = SEGPTR_NEW(ICOM_VTABLE(IStorage16));
-			memcpy(segstvt16,&stvt16,sizeof(stvt16));
-			segstvt16 = (ICOM_VTABLE(IStorage16)*)SEGPTR_GET(segstvt16);
+			segstvt16 = (ICOM_VTABLE(IStorage16)*)MapLS( &stvt16 );
 		} else {
 #define VTENT(xfn) stvt16.xfn = IStorage16_fn##xfn;
 			VTENT(QueryInterface)
@@ -1549,10 +1551,10 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 			segstvt16 = &stvt16;
 		}
 	}
-	lpst = SEGPTR_NEW(IStorage16Impl);
+	lpst = HeapAlloc( GetProcessHeap(), 0, sizeof(*lpst) );
 	ICOM_VTBL(lpst)	= segstvt16;
 	lpst->ref	= 1;
-	lpst->thisptr	= SEGPTR_GET(lpst);
+	lpst->thisptr	= MapLS(lpst);
 	*stg = (void*)lpst->thisptr;
 }
 
@@ -1648,11 +1650,14 @@ HRESULT WINAPI StgIsStorageFile16(LPCOLESTR16 fn) {
 HRESULT WINAPI 
 StgIsStorageFile(LPCOLESTR fn) 
 {
-	LPOLESTR16	xfn = HEAP_strdupWtoA(GetProcessHeap(),0,fn);
-	HRESULT	ret = StgIsStorageFile16(xfn);
+    HRESULT ret;
+    DWORD len = WideCharToMultiByte( CP_ACP, 0, fn, -1, NULL, 0, NULL, NULL );
+    LPSTR strA = HeapAlloc( GetProcessHeap(), 0, len );
 
-	HeapFree(GetProcessHeap(),0,xfn);
-	return ret;
+    WideCharToMultiByte( CP_ACP, 0, fn, -1, strA, len, NULL, NULL );
+    ret = StgIsStorageFile16(strA);
+    HeapFree( GetProcessHeap(), 0, strA );
+    return ret;
 }
 
 

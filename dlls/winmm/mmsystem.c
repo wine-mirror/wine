@@ -4864,12 +4864,12 @@ DWORD WINAPI waveInMessage16(HWAVEIN16 hWaveIn, UINT16 uMessage,
  */
 HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD dwPmt)
 {
-    DWORD 		*pShowCmd;
-    LPSTR 		cmdline;
-    LOADPARAMS16*	lp;
     HINSTANCE16 	ret;
     HINSTANCE16		handle;
-    
+    char cmdline[16];
+    DWORD showCmd = 0x40002;
+    LOADPARAMS16 lp;
+
     TRACE("(%08lx, %p, %08lx);\n", spProc, lphMmTask, dwPmt);
     /* This to work requires NE modules to be started with a binary command line
      * which is not currently the case. A patch exists but has never been committed.
@@ -4880,25 +4880,20 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
      */
     FIXME("This is currently broken. It will fail\n");
 
-    cmdline = SEGPTR_ALLOC(0x0d);
     cmdline[0] = 0x0d;
     *(LPDWORD)(cmdline + 1) = (DWORD)spProc;
     *(LPDWORD)(cmdline + 5) = dwPmt;
     *(LPDWORD)(cmdline + 9) = 0;
 
-    pShowCmd = SEGPTR_ALLOC(sizeof(DWORD));
-    *pShowCmd = 0x40002;
-
-    lp = (LOADPARAMS16*)HeapAlloc(GetProcessHeap(), 0, sizeof(LOADPARAMS16));
-    lp->hEnvironment = 0;
-    lp->cmdLine = SEGPTR_GET(cmdline);
-    lp->showCmd = SEGPTR_GET(pShowCmd);
-    lp->reserved = 0;
+    lp.hEnvironment = 0;
+    lp.cmdLine = MapLS(cmdline);
+    lp.showCmd = MapLS(&showCmd);
+    lp.reserved = 0;
     
 #ifndef USE_MM_TSK_WINE
-    handle = LoadModule16("c:\\windows\\system\\mmtask.tsk", lp);
+    handle = LoadModule16("c:\\windows\\system\\mmtask.tsk", &lp);
 #else
-    handle = LoadModule16("mmtask.tsk", lp);
+    handle = LoadModule16("mmtask.tsk", &lp);
 #endif
     if (handle < 32) {
 	ret = (handle) ? 1 : 2;
@@ -4909,10 +4904,8 @@ HINSTANCE16 WINAPI mmTaskCreate16(SEGPTR spProc, HINSTANCE16 *lphMmTask, DWORD d
     if (lphMmTask)
 	*lphMmTask = handle;
 
-    HeapFree(GetProcessHeap(), 0, lp);
-    SEGPTR_FREE(pShowCmd);
-    SEGPTR_FREE(cmdline);
-
+    UnMapLS( lp.cmdLine );
+    UnMapLS( lp.showCmd );
     TRACE("=> 0x%04x/%d\n", handle, ret);
     return ret;
 }

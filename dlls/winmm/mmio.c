@@ -338,28 +338,15 @@ static LPMMIOPROC MMIO_InstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
 static LRESULT	MMIO_Map32To16(DWORD wMsg, LPARAM* lp1, LPARAM* lp2)
 {
     switch (wMsg) {
-    case MMIOM_OPEN:
-	{
-	    char *lp = SEGPTR_STRDUP( (LPSTR)*lp1 );
-	    if (!lp) return MMSYSERR_NOMEM;
-	    *lp1 = SEGPTR_GET(lp);
-	}
-	break;
     case MMIOM_CLOSE:
     case MMIOM_SEEK:
 	/* nothing to do */
 	break;
+    case MMIOM_OPEN:
     case MMIOM_READ:
     case MMIOM_WRITE:
     case MMIOM_WRITEFLUSH:
-	{
-	    void*	lp = SEGPTR_ALLOC(*lp2);
-	    if (!lp) return MMSYSERR_NOMEM;
-	   
-	    if (wMsg != MMIOM_READ)
-		memcpy(lp, (void*)*lp1, *lp2);
-	    *lp1 = SEGPTR_GET(lp);
-	}
+        *lp1 = MapLS( (void *)*lp1 );
 	break;
     default:
 	TRACE("Not a mappable message (%ld)\n", wMsg);
@@ -374,63 +361,19 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 				 LPARAM lp1, LPARAM lp2)
 {
     switch (wMsg) {
-    case MMIOM_OPEN:
-	if (!SEGPTR_FREE((void*)lp1)) {
-	    FIXME("bad free line=%d\n", __LINE__);
-	} 
-	break;
     case MMIOM_CLOSE:
     case MMIOM_SEEK:
 	/* nothing to do */
 	break;
+    case MMIOM_OPEN:
     case MMIOM_READ:
-	memcpy((void*)lParam1, MapSL(lp1), lp2);
-	/* fall through */
     case MMIOM_WRITE:
     case MMIOM_WRITEFLUSH:
-	if (!SEGPTR_FREE(MapSL(lp1))) {
-	    FIXME("bad free line=%d\n", __LINE__);
-	} 
+        UnMapLS( lp1 );
 	break;
     default:
 	TRACE("Not a mappable message (%ld)\n", wMsg);
     }
-    return MMSYSERR_NOERROR;
-}
-
-/****************************************************************
- *       	MMIO_GenerateInfoForIOProc 		[INTERNAL]
- */
-static	SEGPTR	MMIO_GenerateInfoForIOProc(const WINE_MMIO* wm)
-{
-    LPMMIOINFO16 mmioInfo16 = SEGPTR_ALLOC(sizeof(MMIOINFO16));
-
-    memset(mmioInfo16, 0, sizeof(MMIOINFO16));
-
-    mmioInfo16->lDiskOffset = wm->info.lDiskOffset;
-    mmioInfo16->adwInfo[0]  = wm->info.adwInfo[0];
-    mmioInfo16->adwInfo[1]  = wm->info.adwInfo[1];
-    mmioInfo16->adwInfo[2]  = wm->info.adwInfo[2];
-    mmioInfo16->adwInfo[3]  = wm->info.adwInfo[3];
-
-    return SEGPTR_GET(mmioInfo16);
-}
-
-/****************************************************************
- *       	MMIO_UpdateInfoForIOProc		[INTERNAL]
- */
-static	LRESULT MMIO_UpdateInfoForIOProc(WINE_MMIO* wm, SEGPTR segmmioInfo16)
-{
-    MMIOINFO16* mmioInfo16 = MapSL(segmmioInfo16);
-
-    wm->info.lDiskOffset = mmioInfo16->lDiskOffset;
-    wm->info.adwInfo[0]  = mmioInfo16->adwInfo[0];
-    wm->info.adwInfo[1]  = mmioInfo16->adwInfo[1];
-    wm->info.adwInfo[2]  = mmioInfo16->adwInfo[2];
-    wm->info.adwInfo[3]  = mmioInfo16->adwInfo[3];
-
-    if (!SEGPTR_FREE(mmioInfo16)) FIXME("bad free\n");
-
     return MMSYSERR_NOERROR;
 }
 
@@ -440,6 +383,7 @@ static	LRESULT MMIO_UpdateInfoForIOProc(WINE_MMIO* wm, SEGPTR segmmioInfo16)
 static LRESULT	MMIO_SendMessage(LPWINE_MMIO wm, DWORD wMsg, LPARAM lParam1, 
 				 LPARAM lParam2, enum mmioProcType type)
 {
+    MMIOINFO16 mmioInfo16;
     LRESULT 		result;
     SEGPTR		segmmioInfo16;
     LPARAM		lp1 = lParam1, lp2 = lParam2;
@@ -451,7 +395,12 @@ static LRESULT	MMIO_SendMessage(LPWINE_MMIO wm, DWORD wMsg, LPARAM lParam1,
 
     switch (wm->ioProc->type) {
     case MMIO_PROC_16:
-	segmmioInfo16 = MMIO_GenerateInfoForIOProc(wm);
+        memset( &mmioInfo16, 0, sizeof(MMIOINFO16));
+        mmioInfo16.lDiskOffset = wm->info.lDiskOffset;
+        mmioInfo16.adwInfo[0]  = wm->info.adwInfo[0];
+        mmioInfo16.adwInfo[1]  = wm->info.adwInfo[1];
+        mmioInfo16.adwInfo[2]  = wm->info.adwInfo[2];
+        mmioInfo16.adwInfo[3]  = wm->info.adwInfo[3];
 	if (wm->ioProc->type != type) {
 	    /* map (lParam1, lParam2) into (lp1, lp2) 32=>16 */
 	    if ((result = MMIO_Map32To16(wMsg, &lp1, &lp2)) != MMSYSERR_NOERROR)
@@ -460,13 +409,17 @@ static LRESULT	MMIO_SendMessage(LPWINE_MMIO wm, DWORD wMsg, LPARAM lParam1,
 	/* FIXME: is wm->info.pIOProc a segmented or a linear address ?
 	 * sounds to me it's a segmented one, should use a thunk somewhere
 	 */
-	result = ((LPMMIOPROC16)wm->info.pIOProc)((LPSTR)segmmioInfo16, 
-						  wMsg, lp1, lp2);
-	
+        segmmioInfo16 = MapLS( &mmioInfo16 );
+        result = ((LPMMIOPROC16)wm->info.pIOProc)((LPSTR)segmmioInfo16, wMsg, lp1, lp2);
+        UnMapLS( segmmioInfo16 );
 	if (wm->ioProc->type != type) {
 	    MMIO_UnMap32To16(wMsg, lParam1, lParam2, lp1, lp2);
 	}
-	MMIO_UpdateInfoForIOProc(wm, segmmioInfo16);
+        wm->info.lDiskOffset = mmioInfo16.lDiskOffset;
+        wm->info.adwInfo[0]  = mmioInfo16.adwInfo[0];
+        wm->info.adwInfo[1]  = mmioInfo16.adwInfo[1];
+        wm->info.adwInfo[2]  = mmioInfo16.adwInfo[2];
+        wm->info.adwInfo[3]  = mmioInfo16.adwInfo[3];
 	break;
     case MMIO_PROC_32A:
     case MMIO_PROC_32W:

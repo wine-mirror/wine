@@ -95,34 +95,30 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 	 * lParam2 is a pointer to DRVCONFIGINFO 
 	 */
 	if (*lParam2) {
-            LPDRVCONFIGINFO16	dci16 = (LPDRVCONFIGINFO16)SEGPTR_ALLOC(sizeof(DRVCONFIGINFO16));
+            LPDRVCONFIGINFO16 dci16 = HeapAlloc( GetProcessHeap(), 0, sizeof(*dci16) );
             LPDRVCONFIGINFO	dci32 = (LPDRVCONFIGINFO)(*lParam2);
 	    
 	    if (dci16) {
-		LPSTR	str1, str2;
+		LPSTR str1;
 		
 		dci16->dwDCISize = sizeof(DRVCONFIGINFO16);
 		
-		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL &&
-		    (str2 = SEGPTR_STRDUP(str1)) != NULL) {
-		    dci16->lpszDCISectionName = SEGPTR_GET(str2);
-		    if (!HeapFree(GetProcessHeap(), 0, str1))
-			FIXME("bad free line=%d\n", __LINE__);
+		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL)
+                {
+		    dci16->lpszDCISectionName = MapLS( str1 );
 		} else {
 		    return -2;
 		}
-		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL &&
-		    (str2 = SEGPTR_STRDUP(str1)) != NULL) {
-		    dci16->lpszDCIAliasName = SEGPTR_GET(str2);
-		    if (!HeapFree(GetProcessHeap(), 0, str1))
-			FIXME("bad free line=%d\n", __LINE__);
+		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL)
+                {
+		    dci16->lpszDCIAliasName = MapLS( str1 );
 		} else {
 		    return -2;
 		}
 	    } else {
 		return -2;
 	    }
-	    *lParam2 = (LPARAM)SEGPTR_GET(dci16);
+	    *lParam2 = MapLS( dci16 );
 	    ret = 1;
 	} else {
 	    ret = 0;
@@ -168,13 +164,12 @@ static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
 	if (lParam2) {
 	    LPDRVCONFIGINFO16	dci16 = MapSL(lParam2);
-	    
-	    if (!SEGPTR_FREE(MapSL(dci16->lpszDCISectionName)))
-		FIXME("bad free line=%d\n", __LINE__);
-	    if (!SEGPTR_FREE(MapSL(dci16->lpszDCIAliasName)))
-		FIXME("bad free line=%d\n", __LINE__);
-	    if (!SEGPTR_FREE(dci16))
-		FIXME("bad free line=%d\n", __LINE__);
+            HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCISectionName) );
+            HeapFree( GetProcessHeap(), 0, MapSL(dci16->lpszDCIAliasName) );
+            HeapFree( GetProcessHeap(), 0, dci16 );
+            UnMapLS( lParam2 );
+            UnMapLS( dci16->lpszDCISectionName );
+            UnMapLS( dci16->lpszDCIAliasName );
 	}
 	ret = 0;
 	break;

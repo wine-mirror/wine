@@ -90,7 +90,6 @@
 #include "wsipx.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
-#include "heap.h"
 #include "services.h"
 #include "wine/server.h"
 #include "file.h"
@@ -114,9 +113,7 @@ extern CRITICAL_SECTION csWSgetXXXbyYYY;
 /* ws_... struct conversion flags */
 
 #define WS_DUP_LINEAR           0x0001
-#define WS_DUP_NATIVE           0x0000          /* not used anymore */
-#define WS_DUP_OFFSET           0x0002          /* internal pointers are offsets */
-#define WS_DUP_SEGPTR           0x0004          /* internal pointers are SEGPTRs */
+#define WS_DUP_SEGPTR           0x0002          /* internal pointers are SEGPTRs */
                                                 /* by default, internal pointers are linear */
 typedef struct          /* WSAAsyncSelect() control struct */
 {
@@ -138,17 +135,20 @@ typedef struct          /* WSAAsyncSelect() control struct */
 static volatile HANDLE accept_old[WS_ACCEPT_QUEUE], accept_new[WS_ACCEPT_QUEUE];
 
 static void *he_buffer;          /* typecast for Win16/32 ws_hostent */
+static SEGPTR he_buffer_seg;
 static void *se_buffer;          /* typecast for Win16/32 ws_servent */
+static SEGPTR se_buffer_seg;
 static void *pe_buffer;          /* typecast for Win16/32 ws_protoent */
-static char* local_buffer;       /* allocated from SEGPTR heap */
-static char* dbuffer;            /* buffer for dummies (32 bytes) */
+static SEGPTR pe_buffer_seg;
+static char* local_buffer;
+static SEGPTR dbuffer_seg;
 static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook;
 
 /* function prototypes */
-int WS_dup_he(struct hostent* p_he, int flag);
-int WS_dup_pe(struct protoent* p_pe, int flag);
-int WS_dup_se(struct servent* p_se, int flag);
+static int WS_dup_he(struct hostent* p_he, int flag);
+static int WS_dup_pe(struct protoent* p_pe, int flag);
+static int WS_dup_se(struct servent* p_se, int flag);
 
 typedef void	WIN_hostent;
 typedef void	WIN_protoent;
@@ -323,16 +323,22 @@ static void WINSOCK_DeleteIData(void)
 {
     /* delete scratch buffers */
 
-    if (he_buffer) SEGPTR_FREE(he_buffer);
-    if (se_buffer) SEGPTR_FREE(se_buffer);
-    if (pe_buffer) SEGPTR_FREE(pe_buffer);
-    if (local_buffer) SEGPTR_FREE(local_buffer);
-    if (dbuffer) SEGPTR_FREE(dbuffer);
+    UnMapLS( he_buffer_seg );
+    UnMapLS( se_buffer_seg );
+    UnMapLS( pe_buffer_seg );
+    UnMapLS( dbuffer_seg );
+    if (he_buffer) HeapFree( GetProcessHeap(), 0, he_buffer );
+    if (se_buffer) HeapFree( GetProcessHeap(), 0, se_buffer );
+    if (pe_buffer) HeapFree( GetProcessHeap(), 0, pe_buffer );
+    if (local_buffer) HeapFree( GetProcessHeap(), 0, local_buffer );
     he_buffer = NULL;
     se_buffer = NULL;
     pe_buffer = NULL;
     local_buffer = NULL;
-    dbuffer = NULL;
+    he_buffer_seg = 0;
+    se_buffer_seg = 0;
+    pe_buffer_seg = 0;
+    dbuffer_seg = 0;
     num_startup = 0;
 }
 
@@ -714,9 +720,9 @@ static char* check_buffer(int size)
     if (local_buffer)
     {
         if (local_buflen >= size ) return local_buffer;
-        SEGPTR_FREE(local_buffer);
+        HeapFree( GetProcessHeap(), 0, local_buffer );
     }
-    local_buffer = SEGPTR_ALLOC((local_buflen = size));
+    local_buffer = HeapAlloc( GetProcessHeap(), 0, (local_buflen = size) );
     return local_buffer;
 }
 
@@ -726,9 +732,11 @@ static struct ws_hostent* check_buffer_he(int size)
     if (he_buffer)
     {
         if (he_len >= size ) return he_buffer;
-        SEGPTR_FREE(he_buffer);
+        UnMapLS( he_buffer_seg );
+        HeapFree( GetProcessHeap(), 0, he_buffer );
     }
-    he_buffer = SEGPTR_ALLOC((he_len = size));
+    he_buffer = HeapAlloc( GetProcessHeap(), 0, (he_len = size) );
+    he_buffer_seg = MapLS( he_buffer );
     return he_buffer;
 }
 
@@ -738,9 +746,11 @@ static void* check_buffer_se(int size)
     if (se_buffer)
     {
         if (se_len >= size ) return se_buffer;
-        SEGPTR_FREE(se_buffer);
+        UnMapLS( se_buffer_seg );
+        HeapFree( GetProcessHeap(), 0, se_buffer );
     }
-    se_buffer = SEGPTR_ALLOC((se_len = size));
+    se_buffer = HeapAlloc( GetProcessHeap(), 0, (se_len = size) );
+    se_buffer_seg = MapLS( he_buffer );
     return se_buffer;
 }
 
@@ -750,9 +760,11 @@ static struct ws_protoent* check_buffer_pe(int size)
     if (pe_buffer)
     {
         if (pe_len >= size ) return pe_buffer;
-        SEGPTR_FREE(pe_buffer);
+        UnMapLS( pe_buffer_seg );
+        HeapFree( GetProcessHeap(), 0, pe_buffer );
     }
-    pe_buffer = SEGPTR_ALLOC((pe_len = size));
+    pe_buffer = HeapAlloc( GetProcessHeap(), 0, (pe_len = size) );
+    pe_buffer_seg = MapLS( he_buffer );
     return pe_buffer;
 }
 
@@ -1374,17 +1386,11 @@ char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
    * propensity to decode addresses in ws_hostent structure without 
    * saving them first...
    */
+    static char dbuffer[16]; /* Yes, 16: 4*3 digits + 3 '.' + 1 '\0' */
+
     char* s = inet_ntoa(*((struct in_addr*)&in));
     if( s )
     {
-        if( dbuffer == NULL ) {
-            /* Yes, 16: 4*3 digits + 3 '.' + 1 '\0' */
-            if((dbuffer = (char*) SEGPTR_ALLOC(16)) == NULL )
-            {
-                SetLastError(WSAENOBUFS);
-                return NULL;
-            }
-        }
         strcpy(dbuffer, s);
         return dbuffer;
     }
@@ -1397,8 +1403,10 @@ char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
  */
 SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 {
-  char* retVal = WS_inet_ntoa(*((struct WS_in_addr*)&in));
-  return SEGPTR_GET(retVal);
+    char* retVal;
+    if (!(retVal = WS_inet_ntoa(*((struct WS_in_addr*)&in)))) return 0;
+    if (!dbuffer_seg) dbuffer_seg = MapLS( retVal );
+    return dbuffer_seg;
 }
 
 
@@ -2414,7 +2422,6 @@ SOCKET16 WINAPI WINSOCK_socket16(INT16 af, INT16 type, INT16 protocol)
  * the relay32/wsock32.spec.
  */
 
-static char*	NULL_STRING = "NULL";
 
 /***********************************************************************
  *		__ws_gethostbyaddr
@@ -2464,11 +2471,9 @@ static WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int type, int 
  */
 SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
 {
-    WIN_hostent* retval;
-    TRACE("ptr %08x, len %d, type %d\n",
-                            (unsigned) addr, len, type);
-    retval = __ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR );
-    return SEGPTR_GET(retval);
+    TRACE("ptr %p, len %d, type %d\n", addr, len, type);
+    if (!__ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR )) return 0;
+    return he_buffer_seg;
 }
 
 /***********************************************************************
@@ -2527,10 +2532,9 @@ static WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
  */
 SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
 {
-    WIN_hostent* retval;
-    TRACE("%s\n", (name)?name:NULL_STRING);
-    retval = __ws_gethostbyname( name, WS_DUP_SEGPTR );
-    return SEGPTR_GET(retval);
+    TRACE( "%s\n", debugstr_a(name) );
+    if (!__ws_gethostbyname( name, WS_DUP_SEGPTR )) return 0;
+    return he_buffer_seg;
 }
 
 /***********************************************************************
@@ -2538,7 +2542,7 @@ SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
  */
 struct WS_hostent* WINAPI WS_gethostbyname(const char* name)
 {
-    TRACE("%s\n", (name)?name:NULL_STRING);
+    TRACE( "%s\n", debugstr_a(name) );
     return __ws_gethostbyname( name, WS_DUP_LINEAR );
 }
 
@@ -2572,10 +2576,9 @@ static WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
  */
 SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
 {
-    WIN_protoent* retval;
-    TRACE("%s\n", (name)?name:NULL_STRING);
-    retval = __ws_getprotobyname(name, WS_DUP_SEGPTR);
-    return SEGPTR_GET(retval);
+    TRACE( "%s\n", debugstr_a(name) );
+    if (!__ws_getprotobyname(name, WS_DUP_SEGPTR)) return 0;
+    return pe_buffer_seg;
 }
 
 /***********************************************************************
@@ -2583,7 +2586,7 @@ SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
  */
 struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
 {
-    TRACE("%s\n", (name)?name:NULL_STRING);
+    TRACE( "%s\n", debugstr_a(name) );
     return __ws_getprotobyname(name, WS_DUP_LINEAR);
 }
 
@@ -2616,10 +2619,9 @@ static WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
  */
 SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
 {
-    WIN_protoent* retval;
     TRACE("%i\n", number);
-    retval = __ws_getprotobynumber(number, WS_DUP_SEGPTR);
-    return SEGPTR_GET(retval);
+    if (!__ws_getprotobynumber(number, WS_DUP_SEGPTR)) return 0;
+    return pe_buffer_seg;
 }
 
 /***********************************************************************
@@ -2668,11 +2670,9 @@ static WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
  */
 SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
 {
-    WIN_servent* retval;
-    TRACE("'%s', '%s'\n",
-                            (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
-    retval = __ws_getservbyname(name, proto, WS_DUP_SEGPTR);
-    return SEGPTR_GET(retval);
+    TRACE( "%s, %s\n", debugstr_a(name), debugstr_a(proto) );
+    if (!__ws_getservbyname(name, proto, WS_DUP_SEGPTR)) return 0;
+    return se_buffer_seg;
 }
 
 /***********************************************************************
@@ -2680,8 +2680,7 @@ SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
  */
 struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
 {
-    TRACE("'%s', '%s'\n",
-                            (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
+    TRACE( "%s, %s\n", debugstr_a(name), debugstr_a(proto) );
     return __ws_getservbyname(name, proto, WS_DUP_LINEAR);
 }
 
@@ -2717,11 +2716,9 @@ static WIN_servent* __ws_getservbyport(int port, const char* proto, int dup_flag
  */
 SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
 {
-    WIN_servent* retval;
-    TRACE("%d (i.e. port %d), '%s'\n",
-                            (int)port, (int)ntohl(port), (proto)?proto:NULL_STRING);
-    retval = __ws_getservbyport(port, proto, WS_DUP_SEGPTR);
-    return SEGPTR_GET(retval);
+    TRACE("%d (i.e. port %d), %s\n", (int)port, (int)ntohl(port), debugstr_a(proto));
+    if (!__ws_getservbyport(port, proto, WS_DUP_SEGPTR)) return 0;
+    return se_buffer_seg;
 }
 
 /***********************************************************************
@@ -2729,8 +2726,7 @@ SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
  */
 struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
 {
-    TRACE("%d (i.e. port %d), '%s'\n",
-                            (int)port, (int)ntohl(port), (proto)?proto:NULL_STRING);
+    TRACE("%d (i.e. port %d), %s\n", (int)port, (int)ntohl(port), debugstr_a(proto));
     return __ws_getservbyport(port, proto, WS_DUP_LINEAR);
 }
 
@@ -3144,7 +3140,7 @@ static int hostent_size(struct hostent* p_he)
  * and handle all Win16/Win32 dependent things (struct size, ...) *correctly*.
  * Dito for protoent and servent.
  */
-int WS_dup_he(struct hostent* p_he, int flag)
+static int WS_dup_he(struct hostent* p_he, int flag)
 {
     /* Convert hostent structure into ws_hostent so that the data fits 
      * into local_buffer. Internal pointers can be linear, SEGPTR, or 
@@ -3166,8 +3162,7 @@ int WS_dup_he(struct hostent* p_he, int flag)
 	p_to32 = he_buffer;
 
 	p = p_to;
-	p_base = (flag & WS_DUP_OFFSET) ? NULL
-	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
+	p_base = (flag & WS_DUP_SEGPTR) ? (char*)he_buffer_seg : he_buffer;
 	p += (flag & WS_DUP_SEGPTR) ?
 	    sizeof(struct ws_hostent16) : sizeof(struct WS_hostent);
 	p_name = p;
@@ -3211,7 +3206,7 @@ static int protoent_size(struct protoent* p_pe)
   return size;
 }
 
-int WS_dup_pe(struct protoent* p_pe, int flag)
+static int WS_dup_pe(struct protoent* p_pe, int flag)
 {
     int size = protoent_size(p_pe);
     if( size )
@@ -3226,8 +3221,7 @@ int WS_dup_pe(struct protoent* p_pe, int flag)
 	p_to16 = pe_buffer;
 	p_to32 = pe_buffer;
 	p = p_to;
-	p_base = (flag & WS_DUP_OFFSET) ? NULL
-	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
+	p_base = (flag & WS_DUP_SEGPTR) ? (char*)pe_buffer_seg : pe_buffer;
 	p += (flag & WS_DUP_SEGPTR) ?
 	    sizeof(struct ws_protoent16) : sizeof(struct WS_protoent);
 	p_name = p;
@@ -3265,7 +3259,7 @@ static int servent_size(struct servent* p_se)
   return size;
 }
 
-int WS_dup_se(struct servent* p_se, int flag)
+static int WS_dup_se(struct servent* p_se, int flag)
 {
     int size = servent_size(p_se);
     if( size )
@@ -3280,8 +3274,7 @@ int WS_dup_se(struct servent* p_se, int flag)
 	p_to16 = se_buffer;
 	p_to32 = se_buffer;
 	p = p_to;
-	p_base = (flag & WS_DUP_OFFSET) ? NULL 
-	    : ((flag & WS_DUP_SEGPTR) ? (char*)SEGPTR_GET(p) : p);
+	p_base = (flag & WS_DUP_SEGPTR) ? (char*)se_buffer_seg : se_buffer;
 	p += (flag & WS_DUP_SEGPTR) ?
 	    sizeof(struct ws_servent16) : sizeof(struct WS_servent);
 	p_name = p;
