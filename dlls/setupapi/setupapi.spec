@@ -178,7 +178,7 @@ debug_channels (setupapi)
 209 stdcall SetupOpenAppendInfFileA(str ptr ptr)              SetupOpenAppendInfFileA
 #210 stdcall SetupOpenAppendInfFileW()                        SetupOpenAppendInfFileW
 211 stdcall SetupOpenFileQueue()                              SetupOpenFileQueue
-212 stdcall SetupOpenInfFileA(ptr ptr long ptr)               SetupOpenInfFileA
+212 stdcall SetupOpenInfFileA(str str long ptr)               SetupOpenInfFileA
 #213 stdcall SetupOpenInfFileW()                              SetupOpenInfFileW
 #214 stdcall SetupOpenMasterInf()                             SetupOpenMasterInf
 #215 stdcall SetupPromptForDiskA()                            SetupPromptForDiskA
