@@ -1332,6 +1332,7 @@ TOOLBAR_GetButtonIndex (TOOLBAR_INFO *infoPtr, INT idCommand, BOOL CommandIsInde
 
     if (CommandIsIndex) {
 	TRACE("command is really index command=%d\n", idCommand);
+	if (idCommand >= infoPtr->nNumButtons) return -1;
 	return idCommand;
     }
     btnPtr = infoPtr->buttons;
