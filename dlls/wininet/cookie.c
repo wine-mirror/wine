@@ -139,10 +139,8 @@ static cookie *COOKIE_findCookie(cookie_domain *domain, LPCWSTR lpszCookieName)
 /* removes a cookie from the list, if its the last cookie we also remove the domain */
 static void COOKIE_deleteCookie(cookie *deadCookie, BOOL deleteDomain)
 {
-    if (deadCookie->lpCookieName)
-	HeapFree(GetProcessHeap(), 0, deadCookie->lpCookieName);
-    if (deadCookie->lpCookieData)
-	HeapFree(GetProcessHeap(), 0, deadCookie->lpCookieData);
+    HeapFree(GetProcessHeap(), 0, deadCookie->lpCookieName);
+    HeapFree(GetProcessHeap(), 0, deadCookie->lpCookieData);
     list_remove(&deadCookie->entry);
 
     /* special case: last cookie, lets remove the domain to save memory */
@@ -234,10 +232,8 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain)
         list_remove(cursor);
     }
 
-    if (deadDomain->lpCookieDomain)
-	HeapFree(GetProcessHeap(), 0, deadDomain->lpCookieDomain);
-    if (deadDomain->lpCookiePath)
-	HeapFree(GetProcessHeap(), 0, deadDomain->lpCookiePath);
+    HeapFree(GetProcessHeap(), 0, deadDomain->lpCookieDomain);
+    HeapFree(GetProcessHeap(), 0, deadDomain->lpCookiePath);
 
     list_remove(&deadDomain->entry);
 

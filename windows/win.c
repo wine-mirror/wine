@@ -149,7 +149,7 @@ static WND *free_window_handle( HWND hwnd )
         SERVER_END_REQ;
     }
     USER_Unlock();
-    if (ptr) HeapFree( GetProcessHeap(), 0, ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
     return ptr;
 }
 
@@ -1580,8 +1580,8 @@ static HWND WIN_FindWindow( HWND parent, HWND child, ATOM className, LPCWSTR tit
     retvalue = list[i];
 
  done:
-    if (list) HeapFree( GetProcessHeap(), 0, list );
-    if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+    HeapFree( GetProcessHeap(), 0, list );
+    HeapFree( GetProcessHeap(), 0, buffer );
     return retvalue;
 }
 

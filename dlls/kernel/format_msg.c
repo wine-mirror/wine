@@ -330,7 +330,7 @@ DWORD WINAPI FormatMessageA(
         lstrcpynA(lpBuffer,target,nSize);
     }
     HeapFree(GetProcessHeap(),0,target);
-    if (from) HeapFree(GetProcessHeap(),0,from);
+    HeapFree(GetProcessHeap(),0,from);
     TRACE("-- returning %d\n", (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?  strlen(*(LPSTR*)lpBuffer):strlen(lpBuffer));
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         strlen(*(LPSTR*)lpBuffer):
@@ -543,7 +543,7 @@ DWORD WINAPI FormatMessageW(
     else lstrcpynW(lpBuffer, target, nSize);
 
     HeapFree(GetProcessHeap(),0,target);
-    if (from) HeapFree(GetProcessHeap(),0,from);
+    HeapFree(GetProcessHeap(),0,from);
     TRACE("ret=%s\n", wine_dbgstr_w((dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         *(LPWSTR*)lpBuffer : lpBuffer));
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?

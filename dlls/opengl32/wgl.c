@@ -544,8 +544,8 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
 
 	if (needed_size > size) {
 	    size = needed_size;
-	    if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
-	    if (gl_bitmap) HeapFree(GetProcessHeap(), 0, gl_bitmap);
+            HeapFree(GetProcessHeap(), 0, bitmap);
+            HeapFree(GetProcessHeap(), 0, gl_bitmap);
 	    bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	    gl_bitmap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 	}
@@ -610,8 +610,8 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
     glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
     LEAVE_GL();
     
-    if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
-    if (gl_bitmap) HeapFree(GetProcessHeap(), 0, gl_bitmap);
+    HeapFree(GetProcessHeap(), 0, bitmap);
+    HeapFree(GetProcessHeap(), 0, gl_bitmap);
     return TRUE;
 
   error:
@@ -619,8 +619,8 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc,
     glPixelStorei(GL_UNPACK_ALIGNMENT, org_alignment);
     LEAVE_GL();
 
-    if (bitmap) HeapFree(GetProcessHeap(), 0, bitmap);
-    if (gl_bitmap) HeapFree(GetProcessHeap(), 0, gl_bitmap);
+    HeapFree(GetProcessHeap(), 0, bitmap);
+    HeapFree(GetProcessHeap(), 0, gl_bitmap);
     return FALSE;    
 }
 

@@ -651,7 +651,7 @@ HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
     RtlFreeUnicodeString(&driverW);
     RtlFreeUnicodeString(&deviceW);
     RtlFreeUnicodeString(&outputW);
-    if (initDataW) HeapFree(GetProcessHeap(), 0, initDataW);
+    HeapFree(GetProcessHeap(), 0, initDataW);
     return ret;
 }
 
@@ -825,7 +825,7 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 
     ret = ResetDCW(hdc, devmodeW);
 
-    if (devmodeW) HeapFree(GetProcessHeap(), 0, devmodeW);
+    HeapFree(GetProcessHeap(), 0, devmodeW);
     return ret;
 }
 

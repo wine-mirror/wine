@@ -317,8 +317,7 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	LeaveCriticalSection(&keyboard_crit);
 
 	/* Free the data queue */
-	if (This->buffer != NULL)
-	  HeapFree(GetProcessHeap(),0,This->buffer);
+	HeapFree(GetProcessHeap(),0,This->buffer);
 
 	DeleteCriticalSection(&(This->crit));
 

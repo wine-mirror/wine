@@ -156,8 +156,7 @@ static ULONG WINAPI BaseMemAllocator_Release(IMemAllocator * iface)
         CloseHandle(This->hSemWaiting);
         if (This->bCommitted)
             This->fnFree(iface);
-        if (This->pProps)
-            HeapFree(GetProcessHeap(), 0, This->pProps);
+        HeapFree(GetProcessHeap(), 0, This->pProps);
         CoTaskMemFree(This);
         return 0;
     }

@@ -550,7 +550,7 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
                 {
                     PROFILEKEY *to_del = *key;
                     *key = to_del->next;
-                    if (to_del->value) HeapFree( GetProcessHeap(), 0, to_del->value);
+                    HeapFree( GetProcessHeap(), 0, to_del->value);
                     HeapFree( GetProcessHeap(), 0, to_del );
                     return TRUE;
                 }
@@ -707,7 +707,7 @@ static void PROFILE_ReleaseFile(void)
 {
     PROFILE_FlushFile();
     PROFILE_Free( CurProfile->section );
-    if (CurProfile->filename) HeapFree( GetProcessHeap(), 0, CurProfile->filename );
+    HeapFree( GetProcessHeap(), 0, CurProfile->filename );
     CurProfile->changed = FALSE;
     CurProfile->section = NULL;
     CurProfile->filename  = NULL;
@@ -1170,7 +1170,7 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
     RtlFreeUnicodeString(&entryW);
     RtlFreeUnicodeString(&def_valW);
     RtlFreeUnicodeString(&filenameW);
-    if (bufferW) HeapFree(GetProcessHeap(), 0, bufferW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
     return ret;
 }
 
@@ -1214,7 +1214,7 @@ INT WINAPI GetPrivateProfileStringA( LPCSTR section, LPCSTR entry,
     RtlFreeUnicodeString(&entryW);
     RtlFreeUnicodeString(&def_valW);
     RtlFreeUnicodeString(&filenameW);
-    if (bufferW) HeapFree(GetProcessHeap(), 0, bufferW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
     return ret;
 }
 
@@ -1381,7 +1381,7 @@ INT WINAPI GetPrivateProfileSectionA( LPCSTR section, LPSTR buffer,
 
     RtlFreeUnicodeString(&sectionW);
     RtlFreeUnicodeString(&filenameW);
-    if (bufferW) HeapFree(GetProcessHeap(), 0, bufferW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
     return ret;
 }
 
@@ -1632,7 +1632,7 @@ DWORD WINAPI GetPrivateProfileSectionNamesA( LPSTR buffer, DWORD size,
     }
 
     RtlFreeUnicodeString(&filenameW);
-    if (bufferW) HeapFree(GetProcessHeap(), 0, bufferW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
     return ret;
 }
 

@@ -432,7 +432,7 @@ void on_edit_changed(HWND dialog, WORD id)
             char *label;
 
             label = get_text(dialog, id);
-            if (current_drive->label) HeapFree(GetProcessHeap(), 0, current_drive->label);
+            HeapFree(GetProcessHeap(), 0, current_drive->label);
             current_drive->label = label ? label :  strdupA("");
 
             WINE_TRACE("set label to %s\n", current_drive->label);
@@ -446,7 +446,7 @@ void on_edit_changed(HWND dialog, WORD id)
             char *path;
 
             path = get_text(dialog, id);
-            if (current_drive->unixpath) HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
+            HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
             current_drive->unixpath = path ? path : strdupA("drive_c");
 
             WINE_TRACE("set path to %s\n", current_drive->unixpath);
@@ -460,7 +460,7 @@ void on_edit_changed(HWND dialog, WORD id)
             char *serial;
 
             serial = get_text(dialog, id);
-            if (current_drive->serial) HeapFree(GetProcessHeap(), 0, current_drive->serial);
+            HeapFree(GetProcessHeap(), 0, current_drive->serial);
             current_drive->serial = serial ? serial : strdupA("");
 
             WINE_TRACE("set serial to %s", current_drive->serial);
@@ -472,7 +472,7 @@ void on_edit_changed(HWND dialog, WORD id)
         {
             char *device = get_text(dialog, id);
             /* TODO: handle device if/when it makes sense to do so.... */
-            if (device) HeapFree(GetProcessHeap(), 0, device);
+            HeapFree(GetProcessHeap(), 0, device);
             fill_drives_list(dialog);
             break;
         }
@@ -588,11 +588,11 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     char *str;
 
                     str = get_text(dialog, IDC_EDIT_LABEL);
-                    if (current_drive->label) HeapFree(GetProcessHeap(), 0, current_drive->label);
+                    HeapFree(GetProcessHeap(), 0, current_drive->label);
                     current_drive->label = str ? str : strdupA("");
 
                     str = get_text(dialog, IDC_EDIT_SERIAL);
-                    if (current_drive->serial) HeapFree(GetProcessHeap(), 0, current_drive->serial);
+                    HeapFree(GetProcessHeap(), 0, current_drive->serial);
                     current_drive->serial = str ? str : strdupA("");
 
                     /* TODO: we don't have a device at this point */

@@ -226,7 +226,7 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
     RtlFreeUnicodeString( &source_name );
     RtlFreeUnicodeString( &dest_name );
     if (Reboot) NtClose(Reboot);
-    if (Buffer) HeapFree( GetProcessHeap(), 0, Buffer );
+    HeapFree( GetProcessHeap(), 0, Buffer );
     return(rc);
 }
 
@@ -638,7 +638,7 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique, LPSTR buf
     ret = GetTempFileNameW(pathW, prefixW, unique, bufferW);
     if (ret) FILE_name_WtoA( bufferW, -1, buffer, MAX_PATH );
 
-    if (prefixW) HeapFree( GetProcessHeap(), 0, prefixW );
+    HeapFree( GetProcessHeap(), 0, prefixW );
     return ret;
 }
 
@@ -830,7 +830,7 @@ DWORD WINAPI SearchPathA( LPCSTR path, LPCSTR name, LPCSTR ext,
     ret = SearchPathW(pathW, nameW, extW, MAX_PATH, bufferW, NULL);
 
     HeapFree( GetProcessHeap(), 0, pathW );
-    if (extW) HeapFree( GetProcessHeap(), 0, extW );
+    HeapFree( GetProcessHeap(), 0, extW );
 
     if (!ret) return 0;
     if (ret > MAX_PATH)
@@ -1218,7 +1218,7 @@ BOOL WINAPI CreateDirectoryExA( LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBU
     if (template && !(templateW = FILE_name_AtoW( template, TRUE ))) return FALSE;
 
     ret = CreateDirectoryExW( templateW, pathW, sa );
-    if (templateW) HeapFree( GetProcessHeap(), 0, templateW );
+    HeapFree( GetProcessHeap(), 0, templateW );
     return ret;
 }
 

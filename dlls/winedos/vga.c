@@ -496,8 +496,7 @@ int VGA_SetMode(unsigned Xres,unsigned Yres,unsigned Depth)
       newSize = 256 * 1024;
 
     if(vga_fb_size < newSize) {
-      if(vga_fb_data)
-        HeapFree(GetProcessHeap(), 0, vga_fb_data);
+      HeapFree(GetProcessHeap(), 0, vga_fb_data);
       vga_fb_data = HeapAlloc(GetProcessHeap(), 0, newSize);
       vga_fb_size = newSize;
     }

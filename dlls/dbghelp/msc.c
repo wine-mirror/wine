@@ -378,8 +378,7 @@ static void codeview_clear_type_table(void)
         cv_zmodules[i].allowed = FALSE;
         cv_zmodules[i].defined_types = NULL;
         cv_zmodules[i].num_defined_types = 0;
-        if (cv_zmodules[i].bitfields)
-            HeapFree(GetProcessHeap(), 0, cv_zmodules[i].bitfields);
+        HeapFree(GetProcessHeap(), 0, cv_zmodules[i].bitfields);
         cv_zmodules[i].bitfields = NULL;
         cv_zmodules[i].num_bitfields = cv_zmodules[i].used_bitfields = 0;
     }
@@ -1542,7 +1541,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 
     if (curr_func) symt_normalize_function(msc_dbg->module, curr_func);
 
-    if (linetab) HeapFree(GetProcessHeap(), 0, linetab);
+    HeapFree(GetProcessHeap(), 0, linetab);
     return TRUE;
 }
 

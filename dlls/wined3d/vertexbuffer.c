@@ -49,7 +49,7 @@ ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        if (NULL != This->allocatedMemory) HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
         IWineD3DDevice_Release(This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     } else {

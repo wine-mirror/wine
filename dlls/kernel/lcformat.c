@@ -2066,10 +2066,8 @@ BOOL WINAPI NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
   }
 
 NLS_EnumCalendarInfoAW_Cleanup:
-  if (opt != NULL)
-    HeapFree(GetProcessHeap(), 0, opt);
-  if (buf != NULL)
-    HeapFree(GetProcessHeap(), 0, buf);
+  HeapFree(GetProcessHeap(), 0, opt);
+  HeapFree(GetProcessHeap(), 0, buf);
   return ret;
 }
 

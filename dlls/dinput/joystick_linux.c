@@ -580,18 +580,12 @@ static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput,
 FAILED:
     hr = DIERR_OUTOFMEMORY;
 FAILED1:
-    if (newDevice->axis_map)
-        HeapFree(GetProcessHeap(),0,newDevice->axis_map);
-    if (newDevice->name)
-        HeapFree(GetProcessHeap(),0,newDevice->name);
-    if (newDevice->props)
-        HeapFree(GetProcessHeap(),0,newDevice->props);
-    if (newDevice->user_df->rgodf)
-        HeapFree(GetProcessHeap(),0,newDevice->user_df->rgodf);
-    if (newDevice->user_df)
-        HeapFree(GetProcessHeap(),0,newDevice->user_df);
-    if (newDevice)
-        HeapFree(GetProcessHeap(),0,newDevice);
+    HeapFree(GetProcessHeap(),0,newDevice->axis_map);
+    HeapFree(GetProcessHeap(),0,newDevice->name);
+    HeapFree(GetProcessHeap(),0,newDevice->props);
+    HeapFree(GetProcessHeap(),0,newDevice->user_df->rgodf);
+    HeapFree(GetProcessHeap(),0,newDevice->user_df);
+    HeapFree(GetProcessHeap(),0,newDevice);
     *pdev = 0;
 
     return hr;
@@ -676,16 +670,13 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
         return ref;
 
     /* Free the device name */
-    if (This->name)
-        HeapFree(GetProcessHeap(),0,This->name);
+    HeapFree(GetProcessHeap(),0,This->name);
 
     /* Free the axis map */
-    if (This->axis_map)
-        HeapFree(GetProcessHeap(),0,This->axis_map);
+    HeapFree(GetProcessHeap(),0,This->axis_map);
 
     /* Free the data queue */
-    if (This->data_queue != NULL)
-        HeapFree(GetProcessHeap(),0,This->data_queue);
+    HeapFree(GetProcessHeap(),0,This->data_queue);
 
     /* Free the DataFormat */
     HeapFree(GetProcessHeap(), 0, This->user_df->rgodf);
@@ -769,12 +760,9 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 
 FAILED:
     WARN("out of memory\n");
-    if (new_props)
-        HeapFree(GetProcessHeap(),0,new_props);
-    if (new_rgodf)
-        HeapFree(GetProcessHeap(),0,new_rgodf);
-    if (new_df)
-        HeapFree(GetProcessHeap(),0,new_df);
+    HeapFree(GetProcessHeap(),0,new_props);
+    HeapFree(GetProcessHeap(),0,new_rgodf);
+    HeapFree(GetProcessHeap(),0,new_df);
     return DIERR_OUTOFMEMORY;
 }
 

@@ -268,10 +268,10 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
         hlpfile = 0;
     }
 
-    if (phrases.offsets)  HeapFree(GetProcessHeap(), 0, phrases.offsets);
-    if (phrases.buffer)   HeapFree(GetProcessHeap(), 0, phrases.buffer);
-    if (topic.map)        HeapFree(GetProcessHeap(), 0, topic.map);
-    if (file_buffer)      HeapFree(GetProcessHeap(), 0, file_buffer);
+    HeapFree(GetProcessHeap(), 0, phrases.offsets);
+    HeapFree(GetProcessHeap(), 0, phrases.buffer);
+    HeapFree(GetProcessHeap(), 0, topic.map);
+    HeapFree(GetProcessHeap(), 0, file_buffer);
 
     return hlpfile;
 }
@@ -1992,8 +1992,8 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
     HLPFILE_DeleteMacro(hlpfile->first_macro);
 
     if (hlpfile->numWindows)    HeapFree(GetProcessHeap(), 0, hlpfile->windows);
-    if (hlpfile->Context)       HeapFree(GetProcessHeap(), 0, hlpfile->Context);
-    if (hlpfile->lpszTitle)     HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
-    if (hlpfile->lpszCopyright) HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
+    HeapFree(GetProcessHeap(), 0, hlpfile->Context);
+    HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
+    HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
     HeapFree(GetProcessHeap(), 0, hlpfile);
 }

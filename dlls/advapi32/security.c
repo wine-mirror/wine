@@ -1215,8 +1215,7 @@ GetFileSecurityA( LPCSTR lpFileName,
 
     r = GetFileSecurityW( name, RequestedInformation, pSecurityDescriptor,
                           nLength, lpnLengthNeeded );
-    if( name )
-        HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, name );
 
     return r;
 }
@@ -1332,8 +1331,7 @@ BOOL WINAPI SetFileSecurityA( LPCSTR lpFileName,
     }
 
     r = SetFileSecurityW( name, RequestedInformation, pSecurityDescriptor );
-    if( name )
-        HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, name );
 
     return r;
 }
@@ -2017,8 +2015,7 @@ DWORD WINAPI SetNamedSecurityInfoA(LPSTR pObjectName,
     r = SetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, psidOwner,
                            psidGroup, pDacl, pSacl );
 
-    if( wstr )
-        HeapFree( GetProcessHeap(), 0, wstr );
+    HeapFree( GetProcessHeap(), 0, wstr );
 
     return r;
 }
@@ -2946,8 +2943,7 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
     r = GetNamedSecurityInfoW( wstr, ObjectType, SecurityInfo, ppsidOwner,
                            ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor );
 
-    if( wstr )
-        HeapFree( GetProcessHeap(), 0, wstr );
+    HeapFree( GetProcessHeap(), 0, wstr );
 
     return r;
 }

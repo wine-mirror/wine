@@ -608,7 +608,7 @@ HRESULT WINAPI GetAcceptLanguagesA( LPSTR langbuf, LPDWORD buflen)
                                   *buflen, NULL, NULL);
     *buflen = buflenW ? convlen : 0;
 
-    if(langbufW) HeapFree(GetProcessHeap(), 0, langbufW);
+    HeapFree(GetProcessHeap(), 0, langbufW);
     return retval;
 }
 

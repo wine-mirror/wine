@@ -864,8 +864,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 			    MultiByteToWideChar(CP_ACP, 0, nameA, -1, nameW, countW);
 		    }
 		    result = EDIT_WM_Create(es, nameW);
-		    if(nameW)
-			HeapFree(GetProcessHeap(), 0, nameW);
+                    HeapFree(GetProcessHeap(), 0, nameW);
 		}
 		break;
 
@@ -3527,8 +3526,7 @@ static BOOL EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs)
 {
 	if (!(es->style & ES_MULTILINE))
 		return FALSE;
-	if (es->tabs)
-		HeapFree(GetProcessHeap(), 0, es->tabs);
+        HeapFree(GetProcessHeap(), 0, es->tabs);
 	es->tabs_count = count;
 	if (!count)
 		es->tabs = NULL;
@@ -3549,8 +3547,7 @@ static BOOL EDIT_EM_SetTabStops16(EDITSTATE *es, INT count, LPINT16 tabs)
 {
 	if (!(es->style & ES_MULTILINE))
 		return FALSE;
-	if (es->tabs)
-		HeapFree(GetProcessHeap(), 0, es->tabs);
+        HeapFree(GetProcessHeap(), 0, es->tabs);
 	es->tabs_count = count;
 	if (!count)
 		es->tabs = NULL;

@@ -3896,7 +3896,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   result = X11DRV_DIB_SetImageBits( &descr );
   X11DRV_DIB_Unlock(bmp, TRUE);
 
-  if (descr.colorMap) HeapFree(GetProcessHeap(), 0, descr.colorMap);
+  HeapFree(GetProcessHeap(), 0, descr.colorMap);
 
   GDI_ReleaseObj( hbitmap );
   return result;
@@ -4853,9 +4853,9 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
         }
 
       if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
-      if (colorMap) { HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL; }
-      if (colorTable) { HeapFree(GetProcessHeap(), 0, colorTable); colorTable = NULL; }
-      if (dib) { HeapFree(GetProcessHeap(), 0, dib); dib = NULL; }
+      HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL;
+      HeapFree(GetProcessHeap(), 0, colorTable); colorTable = NULL;
+      HeapFree(GetProcessHeap(), 0, dib); dib = NULL;
       if (bmp) { GDI_ReleaseObj(res); bmp = NULL; }
       if (res) { DeleteObject(res); res = 0; }
     }
@@ -4901,10 +4901,8 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
       wine_tsx11_unlock();
   }
 
-  if (dib->colorMap)
-    HeapFree(GetProcessHeap(), 0, dib->colorMap);
-  if (dib->colorTable)
-    HeapFree(GetProcessHeap(), 0, dib->colorTable);
+  HeapFree(GetProcessHeap(), 0, dib->colorMap);
+  HeapFree(GetProcessHeap(), 0, dib->colorTable);
 
   DeleteCriticalSection(&(dib->lock));
 }

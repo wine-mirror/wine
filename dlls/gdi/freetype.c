@@ -1210,8 +1210,8 @@ BOOL WineEngInit(void)
                 vlen = valuelen;
             }
         }
-	if (data) HeapFree(GetProcessHeap(), 0, data);
-	if (valueW) HeapFree(GetProcessHeap(), 0, valueW);
+        HeapFree(GetProcessHeap(), 0, data);
+        HeapFree(GetProcessHeap(), 0, valueW);
 	RegCloseKey(hkey);
     }
 
@@ -1387,8 +1387,8 @@ static GdiFont alloc_font(void)
 static void free_font(GdiFont font)
 {
     if (font->ft_face) pFT_Done_Face(font->ft_face);
-    if (font->potm) HeapFree(GetProcessHeap(), 0, font->potm);
-    if (font->name) HeapFree(GetProcessHeap(), 0, font->name);
+    HeapFree(GetProcessHeap(), 0, font->potm);
+    HeapFree(GetProcessHeap(), 0, font->name);
     HeapFree(GetProcessHeap(), 0, font->gm);
     HeapFree(GetProcessHeap(), 0, font);
 }

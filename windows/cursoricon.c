@@ -642,8 +642,8 @@ static BOOL CURSORICON_SimulateLoadingFromResourceW( LPCWSTR filename, BOOL fCur
     UnmapViewOfFile( bits );
     return TRUE;
 fail:
-    if (*res) HeapFree( GetProcessHeap(), 0, *res );
-    if (*ptr) HeapFree( GetProcessHeap(), 0, *ptr );
+    HeapFree( GetProcessHeap(), 0, *res );
+    HeapFree( GetProcessHeap(), 0, *ptr );
     UnmapViewOfFile( bits );
     return FALSE;
 }

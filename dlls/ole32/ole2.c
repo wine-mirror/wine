@@ -985,8 +985,7 @@ BOOL OLEMenu_UnInstallHooks( DWORD tid )
 
 CLEANUP:
   /* Release the hook table entry */
-  if (pHookItem)
-    HeapFree(pHookItem->hHeap, 0, pHookItem );
+  HeapFree(pHookItem->hHeap, 0, pHookItem );
 
   return FALSE;
 }

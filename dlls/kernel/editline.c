@@ -229,11 +229,8 @@ static void WCEL_InsertChar(WCEL_Context* ctx, WCHAR c)
 
 static void WCEL_FreeYank(WCEL_Context* ctx)
 {
-    if (ctx->yanked)
-    {
-        HeapFree(GetProcessHeap(), 0, ctx->yanked);
-        ctx->yanked = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, ctx->yanked);
+    ctx->yanked = NULL;
 }
 
 static void WCEL_SaveYank(WCEL_Context* ctx, int beg, int end)
@@ -310,7 +307,7 @@ static void    WCEL_MoveToHist(WCEL_Context* ctx, int idx)
     /* save current line edition for recall when needed (FIXME seems broken to me) */
     if (ctx->histPos == ctx->histSize - 1)
     {
-	if (ctx->histCurr) HeapFree(GetProcessHeap(), 0, ctx->histCurr);
+	HeapFree(GetProcessHeap(), 0, ctx->histCurr);
 	ctx->histCurr = HeapAlloc(GetProcessHeap(), 0, (ctx->len + 1) * sizeof(WCHAR));
 	memcpy(ctx->histCurr, ctx->line, (ctx->len + 1) * sizeof(WCHAR));
     }
@@ -865,6 +862,6 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 	CONSOLE_AppendHistory(ctx.line);
 
     CloseHandle(ctx.hConOut);
-    if (ctx.histCurr) HeapFree(GetProcessHeap(), 0, ctx.histCurr);
+    HeapFree(GetProcessHeap(), 0, ctx.histCurr);
     return ctx.line;
 }

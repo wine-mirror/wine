@@ -358,7 +358,7 @@ static void dispose_service_thread_data( struct service_thread_data* thread_data
 {
     if( thread_data->mutex ) CloseHandle( thread_data->mutex );
     if( thread_data->ack_event ) CloseHandle( thread_data->ack_event );
-    if( thread_data->argv ) HeapFree( GetProcessHeap(), 0, thread_data->argv );
+    HeapFree( GetProcessHeap(), 0, thread_data->argv );
     if( thread_data->seb ) UnmapViewOfFile( thread_data->seb );
     if( thread_data->hServiceShmem ) CloseHandle( thread_data->hServiceShmem );
     HeapFree( GetProcessHeap(), 0, thread_data );

@@ -96,7 +96,7 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
     if ((textW = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
-        if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
+        HeapFree(GetProcessHeap(), 0, wndPtr->text);
         wndPtr->text = textW;
         MultiByteToWideChar( CP_ACP, 0, text, -1, textW, count );
         SERVER_START_REQ( set_window_text )
@@ -129,7 +129,7 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
     count = strlenW(text) + 1;
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return;
-    if (wndPtr->text) HeapFree(GetProcessHeap(), 0, wndPtr->text);
+    HeapFree(GetProcessHeap(), 0, wndPtr->text);
     if ((wndPtr->text = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR))))
     {
         strcpyW( wndPtr->text, text );
@@ -408,10 +408,10 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         {
             WND *wndPtr = WIN_GetPtr( hwnd );
             if (!wndPtr) return 0;
-            if (wndPtr->text) HeapFree( GetProcessHeap(), 0, wndPtr->text );
+            HeapFree( GetProcessHeap(), 0, wndPtr->text );
             wndPtr->text = NULL;
-            if (wndPtr->pVScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
-            if (wndPtr->pHScroll) HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
+            HeapFree( GetProcessHeap(), 0, wndPtr->pVScroll );
+            HeapFree( GetProcessHeap(), 0, wndPtr->pHScroll );
             wndPtr->pVScroll = wndPtr->pHScroll = NULL;
             WIN_ReleasePtr( wndPtr );
             return 0;

@@ -210,7 +210,7 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
     DC *dc = physDev->dc;
     DWORD index;
 
-    if (physDev->mh) HeapFree( GetProcessHeap(), 0, physDev->mh );
+    HeapFree( GetProcessHeap(), 0, physDev->mh );
     for(index = 0; index < physDev->handles_size; index++)
         if(physDev->handles[index])
             GDI_hdc_not_using_object(physDev->handles[index], physDev->hdc);

@@ -1532,8 +1532,7 @@ HANDLE WINAPI CreateMailslotA( LPCSTR lpName, DWORD nMaxMessageSize,
 
     handle = CreateMailslotW( name, nMaxMessageSize, lReadTimeout, sa );
 
-    if( name )
-        HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, name );
 
     return handle;
 }
@@ -1671,8 +1670,7 @@ HANDLE WINAPI CreateJobObjectA( LPSECURITY_ATTRIBUTES attr, LPCSTR name )
 
     r = CreateJobObjectW( attr, str );
 
-    if( str )
-        HeapFree( GetProcessHeap(), 0, str );
+    HeapFree( GetProcessHeap(), 0, str );
 
     return r;
 }

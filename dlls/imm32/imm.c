@@ -1282,11 +1282,8 @@ BOOL WINAPI ImmSetCompositionStringA(
     rc =  ImmSetCompositionStringW(hIMC, dwIndex, CompBuffer, comp_len,
                                    ReadBuffer, read_len);
 
-    if (CompBuffer)
-        HeapFree(GetProcessHeap(), 0, CompBuffer);
-
-    if (ReadBuffer)
-        HeapFree(GetProcessHeap(), 0, ReadBuffer);
+    HeapFree(GetProcessHeap(), 0, CompBuffer);
+    HeapFree(GetProcessHeap(), 0, ReadBuffer);
 
     return rc;
 }

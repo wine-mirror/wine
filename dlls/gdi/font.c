@@ -1677,7 +1677,7 @@ BOOL WINAPI ExtTextOutA( HDC hdc, INT x, INT y, UINT flags,
     ret = ExtTextOutW( hdc, x, y, flags, lprect, p, wlen, lpDxW );
 
     HeapFree( GetProcessHeap(), 0, p );
-    if (lpDxW) HeapFree( GetProcessHeap(), 0, lpDxW );
+    HeapFree( GetProcessHeap(), 0, lpDxW );
     return ret;
 }
 
@@ -1922,8 +1922,7 @@ DWORD WINAPI GetGlyphOutlineA( HDC hdc, UINT uChar, UINT fuFormat,
         c = uChar;
     ret = GetGlyphOutlineW(hdc, c, fuFormat, lpgm, cbBuffer, lpBuffer,
 			   lpmat2);
-    if(p)
-        HeapFree(GetProcessHeap(), 0, p);
+    HeapFree(GetProcessHeap(), 0, p);
     return ret;
 }
 

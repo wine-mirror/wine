@@ -751,7 +751,7 @@ static void BUTTON_DrawLabel(HWND hwnd, HDC hdc, UINT dtFlags, RECT *rc)
 
    DrawStateW(hdc, hbr, lpOutputProc, lp, wp, rc->left, rc->top,
               rc->right - rc->left, rc->bottom - rc->top, flags);
-   if (text) HeapFree( GetProcessHeap(), 0, text );
+   HeapFree( GetProcessHeap(), 0, text );
 }
 
 /**********************************************************************

@@ -640,7 +640,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
           X11DRV_PALETTE_XPixelToPalette[X11DRV_PALETTE_PaletteToXPixel[i]] = i;
    }
 
-   if( pixDynMapping ) HeapFree(GetProcessHeap(), 0, pixDynMapping);
+   HeapFree(GetProcessHeap(), 0, pixDynMapping);
 
    return TRUE;
 }

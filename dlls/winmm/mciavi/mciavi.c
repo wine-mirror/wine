@@ -237,29 +237,29 @@ static void MCIAVI_CleanUp(WINE_MCIAVI* wma)
 	mmioClose(wma->hFile, 0);
 	wma->hFile = 0;
 
-        if (wma->lpFileName) HeapFree(GetProcessHeap(), 0, wma->lpFileName);
+        HeapFree(GetProcessHeap(), 0, wma->lpFileName);
         wma->lpFileName = NULL;
 
-	if (wma->lpVideoIndex)	HeapFree(GetProcessHeap(), 0, wma->lpVideoIndex);
+        HeapFree(GetProcessHeap(), 0, wma->lpVideoIndex);
 	wma->lpVideoIndex = NULL;
-	if (wma->lpAudioIndex)	HeapFree(GetProcessHeap(), 0, wma->lpAudioIndex);
+        HeapFree(GetProcessHeap(), 0, wma->lpAudioIndex);
 	wma->lpAudioIndex = NULL;
 	if (wma->hic)		ICClose(wma->hic);
 	wma->hic = 0;
-	if (wma->inbih)		HeapFree(GetProcessHeap(), 0, wma->inbih);
+        HeapFree(GetProcessHeap(), 0, wma->inbih);
 	wma->inbih = NULL;
-	if (wma->outbih)	HeapFree(GetProcessHeap(), 0, wma->outbih);
+        HeapFree(GetProcessHeap(), 0, wma->outbih);
 	wma->outbih = NULL;
-        if (wma->indata)	HeapFree(GetProcessHeap(), 0, wma->indata);
+        HeapFree(GetProcessHeap(), 0, wma->indata);
 	wma->indata = NULL;
-    	if (wma->outdata)	HeapFree(GetProcessHeap(), 0, wma->outdata);
+        HeapFree(GetProcessHeap(), 0, wma->outdata);
 	wma->outdata = NULL;
     	if (wma->hbmFrame)	DeleteObject(wma->hbmFrame);
 	wma->hbmFrame = 0;
 	if (wma->hWnd)		DestroyWindow(wma->hWnd);
 	wma->hWnd = 0;
 
-	if (wma->lpWaveFormat)	HeapFree(GetProcessHeap(), 0, wma->lpWaveFormat);
+        HeapFree(GetProcessHeap(), 0, wma->lpWaveFormat);
 	wma->lpWaveFormat = 0;
 
 	memset(&wma->mah, 0, sizeof(wma->mah));

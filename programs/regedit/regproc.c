@@ -435,8 +435,7 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data)
                lpbData,
                dwLen);
 
-    if (bBigBuffer)
-        HeapFree (GetProcessHeap(), 0, bBigBuffer);
+    HeapFree (GetProcessHeap(), 0, bBigBuffer);
     return hRes;
 }
 

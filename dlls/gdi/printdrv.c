@@ -105,12 +105,9 @@ INT WINAPI StartDocW(HDC hdc, const DOCINFOW* doc)
 
     ret = StartDocA(hdc, &docA);
 
-    if(docA.lpszDocName)
-        HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDocName );
-    if(docA.lpszOutput)
-        HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszOutput );
-    if(docA.lpszDatatype)
-        HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDatatype );
+    HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDocName );
+    HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszOutput );
+    HeapFree( GetProcessHeap(), 0, (LPSTR)docA.lpszDatatype );
 
     return ret;
 }

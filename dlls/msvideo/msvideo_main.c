@@ -259,7 +259,7 @@ BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDe
     
    return TRUE;
  oom:
-   if (driver) HeapFree(GetProcessHeap(), 0, driver);
+   HeapFree(GetProcessHeap(), 0, driver);
    return FALSE;
 }
 
@@ -284,8 +284,7 @@ BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags)
 
     /* Remove the driver from the list */
     *pdriver = (*pdriver)->next;
-    if ((*pdriver)->name)
-        HeapFree(GetProcessHeap(), 0, (*pdriver)->name);
+    HeapFree(GetProcessHeap(), 0, (*pdriver)->name);
     HeapFree(GetProcessHeap(), 0, *pdriver);
     
     return TRUE;  
@@ -1104,8 +1103,7 @@ err:
 		ICDecompressEnd( hic );
 	if ( bReleaseIC )
 		ICClose(hic);
-	if ( pHdr != NULL )
-		HeapFree(GetProcessHeap(),0,pHdr);
+        HeapFree(GetProcessHeap(),0,pHdr);
 	if ( pMem != NULL )
 		GlobalUnlock( hMem );
 	if ( !bSucceeded && hMem != NULL )

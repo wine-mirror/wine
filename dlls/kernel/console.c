@@ -390,7 +390,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput, const CHAR_INFO *lpBuffe
     }
     new_coord.X = new_coord.Y = 0;
     ret = WriteConsoleOutputW( hConsoleOutput, ciw, new_size, new_coord, region );
-    if (ciw) HeapFree( GetProcessHeap(), 0, ciw );
+    HeapFree( GetProcessHeap(), 0, ciw );
     return ret;
 }
 
@@ -1224,7 +1224,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
     {
 	if (!S_EditString || S_EditString[S_EditStrPos] == 0)
 	{
-	    if (S_EditString) HeapFree(GetProcessHeap(), 0, S_EditString);
+	    HeapFree(GetProcessHeap(), 0, S_EditString);
 	    if (!(S_EditString = CONSOLE_Readline(hConsoleInput)))
 		return FALSE;
 	    S_EditStrPos = 0;

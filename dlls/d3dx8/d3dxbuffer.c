@@ -60,7 +60,7 @@ ULONG WINAPI ID3DXBufferImpl_Release(LPD3DXBUFFER iface) {
   ULONG ref = --This->ref;
   TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
   if (ref == 0) {
-    if (NULL != This->buffer) HeapFree(GetProcessHeap(), 0, This->buffer);
+    HeapFree(GetProcessHeap(), 0, This->buffer);
     HeapFree(GetProcessHeap(), 0, This);
   }
   return ref;

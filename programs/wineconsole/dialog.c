@@ -461,7 +461,7 @@ static BOOL  fill_list_size(struct dialog_info* di, BOOL doInit)
 
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_FONT, LB_GETTEXT, idx, (LPARAM)lfFaceName);
     SendDlgItemMessage(di->hDlg, IDC_FNT_LIST_SIZE, LB_RESETCONTENT, 0L, 0L);
-    if (di->font) HeapFree(GetProcessHeap(), 0, di->font);
+    HeapFree(GetProcessHeap(), 0, di->font);
     di->nFont = 0;
     di->font = NULL;
 

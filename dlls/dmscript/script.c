@@ -72,10 +72,10 @@ ULONG WINAPI IDirectMusicScriptImpl_IUnknown_Release (LPUNKNOWN iface) {
   ULONG ref = --This->ref;
   TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
   if (ref == 0) {
-    if (NULL != This->pHeader) HeapFree(GetProcessHeap(), 0, This->pHeader);
-    if (NULL != This->pVersion) HeapFree(GetProcessHeap(), 0, This->pVersion);
-    if (NULL != This->pwzLanguage) HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
-    if (NULL != This->pwzSource) HeapFree(GetProcessHeap(), 0, This->pwzSource);
+    HeapFree(GetProcessHeap(), 0, This->pHeader);
+    HeapFree(GetProcessHeap(), 0, This->pVersion);
+    HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
+    HeapFree(GetProcessHeap(), 0, This->pwzSource);
     HeapFree(GetProcessHeap(), 0, This);
   }
   return ref;

@@ -288,7 +288,7 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG_PTR l
             if (newlen + 1 > len)
             {
                 len = newlen + 1;
-                if (type) HeapFree( GetProcessHeap(), 0, type );
+                HeapFree( GetProcessHeap(), 0, type );
                 if (!(type = HeapAlloc( GetProcessHeap(), 0, len ))) return FALSE;
             }
             WideCharToMultiByte( CP_ACP, 0, str->NameString, str->Length, type, len, NULL, NULL);
@@ -301,7 +301,7 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG_PTR l
         }
         if (!ret) break;
     }
-    if (type) HeapFree( GetProcessHeap(), 0, type );
+    HeapFree( GetProcessHeap(), 0, type );
     return ret;
 }
 
@@ -337,7 +337,7 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG_PTR l
             if (str->Length + 1 > len)
             {
                 len = str->Length + 1;
-                if (type) HeapFree( GetProcessHeap(), 0, type );
+                HeapFree( GetProcessHeap(), 0, type );
                 if (!(type = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
             }
             memcpy(type, str->NameString, str->Length * sizeof (WCHAR));
@@ -350,7 +350,7 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG_PTR l
         }
         if (!ret) break;
     }
-    if (type) HeapFree( GetProcessHeap(), 0, type );
+    HeapFree( GetProcessHeap(), 0, type );
     return ret;
 }
 
@@ -393,7 +393,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
             if (newlen + 1 > len)
             {
                 len = newlen + 1;
-                if (name) HeapFree( GetProcessHeap(), 0, name );
+                HeapFree( GetProcessHeap(), 0, name );
                 if (!(name = HeapAlloc(GetProcessHeap(), 0, len + 1 )))
                 {
                     ret = FALSE;
@@ -411,7 +411,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
         if (!ret) break;
     }
 done:
-    if (name) HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, name );
     if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
@@ -454,7 +454,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
             if (str->Length + 1 > len)
             {
                 len = str->Length + 1;
-                if (name) HeapFree( GetProcessHeap(), 0, name );
+                HeapFree( GetProcessHeap(), 0, name );
                 if (!(name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
                 {
                     ret = FALSE;
@@ -472,7 +472,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
         if (!ret) break;
     }
 done:
-    if (name) HeapFree( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, name );
     if (HIWORD(typeW.Buffer)) HeapFree( GetProcessHeap(), 0, typeW.Buffer );
     if (status != STATUS_SUCCESS) SetLastError( RtlNtStatusToDosError(status) );
     return ret;
@@ -747,7 +747,7 @@ HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResou
 done:
     if(!ret && current_updates)
     {
-        if(current_updates->pFileName) HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
+        HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
         GlobalUnlock(hUpdate);
         GlobalFree(hUpdate);
         hUpdate = NULL;
@@ -890,7 +890,7 @@ done:
     {
         if(HIWORD(current_resource->lpType)) HeapFree(GetProcessHeap(), 0, current_resource->lpType);
         if(HIWORD(current_resource->lpName)) HeapFree(GetProcessHeap(), 0, current_resource->lpName);
-        if(current_resource->lpData) HeapFree(GetProcessHeap(), 0, current_resource->lpData);
+        HeapFree(GetProcessHeap(), 0, current_resource->lpData);
         HeapFree(GetProcessHeap(), 0, current_resource);
     }
     if(found) GlobalUnlock(hUpdate);

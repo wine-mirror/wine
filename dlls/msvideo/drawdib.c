@@ -131,16 +131,10 @@ BOOL VFWAPI DrawDibEnd(HDRAWDIB hdd)
 
     whdd->hpal = 0; /* Do not free this */
     whdd->hdc = 0;
-    if (whdd->lpbi) 
-    {
-        HeapFree(GetProcessHeap(), 0, whdd->lpbi);
-        whdd->lpbi = NULL;
-    }
-    if (whdd->lpbiOut) 
-    {
-        HeapFree(GetProcessHeap(), 0, whdd->lpbiOut);
-        whdd->lpbiOut = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, whdd->lpbi);
+    whdd->lpbi = NULL;
+    HeapFree(GetProcessHeap(), 0, whdd->lpbiOut);
+    whdd->lpbiOut = NULL;
 
     whdd->begun = FALSE;
 
@@ -282,11 +276,8 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
     {
         if (whdd->hic)
             ICClose(whdd->hic);
-        if (whdd->lpbiOut) 
-        {
-            HeapFree(GetProcessHeap(), 0, whdd->lpbiOut);
-            whdd->lpbiOut = NULL;
-        }
+        HeapFree(GetProcessHeap(), 0, whdd->lpbiOut);
+        whdd->lpbiOut = NULL;
     }
 
     return ret;

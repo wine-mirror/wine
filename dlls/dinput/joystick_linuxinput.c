@@ -346,8 +346,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 		return ref;
 
 	/* Free the data queue */
-	if (This->data_queue != NULL)
-	  HeapFree(GetProcessHeap(),0,This->data_queue);
+	HeapFree(GetProcessHeap(),0,This->data_queue);
 
 	/* Free the DataFormat */
 	HeapFree(GetProcessHeap(), 0, This->df);

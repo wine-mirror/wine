@@ -2703,8 +2703,7 @@ BOOL WINAPI GetPrinterDriverDirectoryA(LPSTR pName, LPSTR pEnvironment,
 
     TRACE("provided<%ld> required <%ld>\n", cbBuf, *pcbNeeded);
 
-    if(driverDirectoryW)
-        HeapFree( GetProcessHeap(), 0, driverDirectoryW );
+    HeapFree( GetProcessHeap(), 0, driverDirectoryW );
     RtlFreeUnicodeString(&environmentW);
     RtlFreeUnicodeString(&nameW);
 
@@ -3203,7 +3202,7 @@ BOOL WINAPI GetDefaultPrinterW(LPWSTR name, LPDWORD namesize)
     strcpyW(name, buffer);
 
 end:
-    if(buffer) HeapFree( GetProcessHeap(), 0, buffer);
+    HeapFree( GetProcessHeap(), 0, buffer);
     return retval;
 }
 
@@ -3243,7 +3242,7 @@ BOOL WINAPI GetDefaultPrinterA(LPSTR name, LPDWORD namesize)
     TRACE("0x%08lx/0x%08lx:%s\n", *namesize, insize, debugstr_w(bufferW));
 
 end:
-    if(bufferW) HeapFree( GetProcessHeap(), 0, bufferW);
+    HeapFree( GetProcessHeap(), 0, bufferW);
     return retval;
 }
 

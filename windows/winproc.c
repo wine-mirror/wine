@@ -889,8 +889,8 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	      LPWSTR lpszClass;		/* allocated Class */
 	    };
             struct s *xs = (struct s *)lParam;
-            if (xs->lpszName)  HeapFree( GetProcessHeap(), 0, xs->lpszName );
-            if (xs->lpszClass) HeapFree( GetProcessHeap(), 0, xs->lpszClass );
+            HeapFree( GetProcessHeap(), 0, xs->lpszName );
+            HeapFree( GetProcessHeap(), 0, xs->lpszClass );
 
             if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {

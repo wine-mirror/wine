@@ -336,8 +336,8 @@ static inline const PROV_ENUMALGS_EX* get_algid_info(KEYCONTAINER *pKeyContainer
  */
 static inline void free_hmac_info(PHMAC_INFO hmac_info) {
     if (!hmac_info) return;
-    if (hmac_info->pbInnerString) HeapFree(GetProcessHeap(), 0, hmac_info->pbInnerString);
-    if (hmac_info->pbOuterString) HeapFree(GetProcessHeap(), 0, hmac_info->pbOuterString);
+    HeapFree(GetProcessHeap(), 0, hmac_info->pbInnerString);
+    HeapFree(GetProcessHeap(), 0, hmac_info->pbOuterString);
     HeapFree(GetProcessHeap(), 0, hmac_info);
 }
 
@@ -2836,8 +2836,8 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST B
     
     res = TRUE;
 cleanup:
-    if (pbConstructed) HeapFree(GetProcessHeap(), 0, pbConstructed);
-    if (pbDecrypted) HeapFree(GetProcessHeap(), 0, pbDecrypted);
+    HeapFree(GetProcessHeap(), 0, pbConstructed);
+    HeapFree(GetProcessHeap(), 0, pbDecrypted);
     return res;
 }
 

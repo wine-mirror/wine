@@ -110,8 +110,7 @@ static void execute(IDirect3DExecuteBufferImpl *This,
 		
 		if (count*3>This->nb_indices) {
 		    This->nb_indices = count * 3;
-		    if (This->indices)
-		        HeapFree(GetProcessHeap(),0,This->indices);
+                    HeapFree(GetProcessHeap(),0,This->indices);
 		    This->indices = HeapAlloc(GetProcessHeap(),0,sizeof(WORD)*This->nb_indices);
 		}
 			
@@ -532,10 +531,8 @@ Main_IDirect3DExecuteBufferImpl_1_Release(LPDIRECT3DEXECUTEBUFFER iface)
     if (!--(This->ref)) {
         if ((This->desc.lpData != NULL) && This->need_free)
 	    HeapFree(GetProcessHeap(),0,This->desc.lpData);
-	if (This->vertex_data != NULL)
-	    HeapFree(GetProcessHeap(),0,This->vertex_data);
-	if (This->indices != NULL)
-	    HeapFree(GetProcessHeap(),0,This->indices);
+        HeapFree(GetProcessHeap(),0,This->vertex_data);
+        HeapFree(GetProcessHeap(),0,This->indices);
 	HeapFree(GetProcessHeap(),0,This);
 	return 0;
     }
@@ -594,8 +591,7 @@ Main_IDirect3DExecuteBufferImpl_1_SetExecuteData(LPDIRECT3DEXECUTEBUFFER iface,
     nbvert = This->data.dwVertexCount;
     
     /* Prepares the transformed vertex buffer */
-    if (This->vertex_data != NULL)
-        HeapFree(GetProcessHeap(), 0, This->vertex_data);
+    HeapFree(GetProcessHeap(), 0, This->vertex_data);
     This->vertex_data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbvert * sizeof(D3DTLVERTEX));
 
     if (TRACE_ON(ddraw)) {

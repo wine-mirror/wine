@@ -336,8 +336,7 @@ static DWORD WAVE_mciCreateRIFFSkeleton(WINE_MCIWAVE* wmw)
    return 0;
 
 err:
-   if (wmw->lpWaveFormat)
-       HeapFree(GetProcessHeap(), 0, wmw->lpWaveFormat);
+   HeapFree(GetProcessHeap(), 0, wmw->lpWaveFormat);
    wmw->lpWaveFormat = NULL;
    return MCIERR_INVALID_FILE;
 }

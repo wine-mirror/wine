@@ -1307,15 +1307,8 @@ static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, LPDPNAME lpSrc, BOOL bAnsi )
   }
 
   /* Delete any existing pointers */
-  if( lpDst->u1.lpszShortNameA )
-  {
-    HeapFree( GetProcessHeap(), 0, lpDst->u1.lpszShortNameA );
-  }
-
-  if( lpDst->u2.lpszLongNameA )
-  {
-    HeapFree( GetProcessHeap(), 0, lpDst->u1.lpszShortNameA );
-  }
+  HeapFree( GetProcessHeap(), 0, lpDst->u1.lpszShortNameA );
+  HeapFree( GetProcessHeap(), 0, lpDst->u2.lpszLongNameA );
 
   /* Copy as required */
   CopyMemory( lpDst, lpSrc, lpSrc->dwSize );

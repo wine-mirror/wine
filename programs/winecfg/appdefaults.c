@@ -276,7 +276,7 @@ static void on_add_app_click(HWND dialog)
       HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
       int count = ListView_GetItemCount(listview);
       
-      if (current_app) HeapFree(GetProcessHeap(), 0, current_app);
+      HeapFree(GetProcessHeap(), 0, current_app);
       current_app = strdupA(filetitle);
 
       WINE_TRACE("adding %s\n", current_app);

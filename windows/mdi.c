@@ -949,7 +949,7 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient, LPCWSTR lpTitle )
     /* store new "default" title if lpTitle is not NULL */
     if (lpTitle)
     {
-	if (ci->frameTitle) HeapFree( GetProcessHeap(), 0, ci->frameTitle );
+	HeapFree( GetProcessHeap(), 0, ci->frameTitle );
 	if ((ci->frameTitle = HeapAlloc( GetProcessHeap(), 0, (strlenW(lpTitle)+1)*sizeof(WCHAR))))
             strcpyW( ci->frameTitle, lpTitle );
     }
@@ -1053,8 +1053,8 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
           ci->nActiveChildren = 0;
           MDI_RefreshMenu(ci);
 
-          if (ci->child) HeapFree( GetProcessHeap(), 0, ci->child );
-          if (ci->frameTitle) HeapFree( GetProcessHeap(), 0, ci->frameTitle );
+          HeapFree( GetProcessHeap(), 0, ci->child );
+          HeapFree( GetProcessHeap(), 0, ci->frameTitle );
 
           return 0;
       }

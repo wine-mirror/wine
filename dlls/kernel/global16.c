@@ -442,7 +442,7 @@ HGLOBAL16 WINAPI GlobalFree16(
 
     TRACE("%04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
-    if (ptr) HeapFree( GetProcessHeap(), 0, ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
     return 0;
 }
 

@@ -325,7 +325,7 @@ DWORD WINAPI ExpandEnvironmentStringsA( LPCSTR src, LPSTR dst, DWORD count )
     else ret = ExpandEnvironmentStringsW( us_src.Buffer, NULL, 0);
 
     RtlFreeUnicodeString( &us_src );
-    if (dstW) HeapFree(GetProcessHeap(), 0, dstW);
+    HeapFree(GetProcessHeap(), 0, dstW);
 
     return ret;
 }

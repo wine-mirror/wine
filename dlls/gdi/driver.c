@@ -629,7 +629,7 @@ INT WINAPI Escape( HDC hdc, INT escape, INT in_count, LPCSTR in_data, LPVOID out
             }
             doc.lpszDocName = name;
             ret = StartDocA( hdc, &doc );
-            if (name) HeapFree( GetProcessHeap(), 0, name );
+            HeapFree( GetProcessHeap(), 0, name );
             if (ret > 0) ret = StartPage( hdc );
             return ret;
         }

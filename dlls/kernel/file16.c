@@ -402,7 +402,7 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
 
     ret = GetTempFileNameA( temppath, prefix16, unique, buffer );
 
-    if (prefix16) HeapFree(GetProcessHeap(), 0, prefix16);
+    HeapFree(GetProcessHeap(), 0, prefix16);
     return ret;
 }
 

@@ -234,10 +234,8 @@ HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 			HeapFree(GetProcessHeap(),0,This->pwave[c]);
 		}
 	}
-	if (This->pwfx) {
-		HeapFree(GetProcessHeap(),0,This->pwfx);
-		This->pwfx=NULL;
-	}
+        HeapFree(GetProcessHeap(),0,This->pwfx);
+        This->pwfx=NULL;
 	return DS_OK;
 }
 

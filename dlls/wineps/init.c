@@ -369,8 +369,7 @@ BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
     TRACE("\n");
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
-    if(physDev->job.output)
-        HeapFree( PSDRV_Heap, 0, physDev->job.output );
+    HeapFree( PSDRV_Heap, 0, physDev->job.output );
     HeapFree( PSDRV_Heap, 0, physDev );
 
     return TRUE;
@@ -753,14 +752,10 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
 closeprinter:
     ClosePrinter(hPrinter);
 cleanup:
-    if (ppdFileName)
-        HeapFree(PSDRV_Heap, 0, ppdFileName);
-    if (pi->FontSubTable)
-    	HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
-    if (pi->FriendlyName)
-    	HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
-    if (pi->Devmode)
-    	HeapFree(PSDRV_Heap, 0, pi->Devmode);
+    HeapFree(PSDRV_Heap, 0, ppdFileName);
+    HeapFree(PSDRV_Heap, 0, pi->FontSubTable);
+    HeapFree(PSDRV_Heap, 0, pi->FriendlyName);
+    HeapFree(PSDRV_Heap, 0, pi->Devmode);
 fail:
     HeapFree(PSDRV_Heap, 0, pi);
     if (ppd) unlink(ppd);

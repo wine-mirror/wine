@@ -1870,7 +1870,7 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
         rect32.bottom = lprect->bottom;
     }
     ret = ExtTextOutA(HDC_32(hdc),x,y,flags,lprect?&rect32:NULL,str,count,lpdx32);
-    if (lpdx32) HeapFree( GetProcessHeap(), 0, lpdx32 );
+    HeapFree( GetProcessHeap(), 0, lpdx32 );
     return ret;
 }
 

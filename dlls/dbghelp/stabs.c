@@ -1474,7 +1474,7 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
 done:
     HeapFree(GetProcessHeap(), 0, stabbuff);
     stabs_free_includes();
-    if (pending_vars) HeapFree(GetProcessHeap(), 0, pending_vars);
+    HeapFree(GetProcessHeap(), 0, pending_vars);
 
     return ret;
 }

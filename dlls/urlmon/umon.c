@@ -123,9 +123,7 @@ static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
 
     /* destroy the object if there's no more reference on it */
     if (ref == 0) {
-        if (This->URLName!=NULL)
-            HeapFree(GetProcessHeap(),0,This->URLName);
-
+        HeapFree(GetProcessHeap(),0,This->URLName);
         HeapFree(GetProcessHeap(),0,This);
     }
 
@@ -186,8 +184,7 @@ static HRESULT WINAPI URLMonikerImpl_Load(IMoniker* iface,IStream* pStm)
     res = IStream_Read(pStm, &len, sizeof(ULONG), &got);
     if(SUCCEEDED(res)) {
         if(got == sizeof(ULONG)) {
-            if(This->URLName)
-                HeapFree(GetProcessHeap(), 0, This->URLName);
+            HeapFree(GetProcessHeap(), 0, This->URLName);
             This->URLName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(len+1));
             if(!This->URLName)
                 res = E_OUTOFMEMORY;

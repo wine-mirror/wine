@@ -389,7 +389,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_DeleteStateBlock(IDirect3DDevice8Impl* This, 
       HeapFree(GetProcessHeap(), 0, (void *)(tmp->prev));
       tmp = tmp->next;
   }
-  if (tmp) HeapFree(GetProcessHeap(), 0, (void *)tmp);
+  HeapFree(GetProcessHeap(), 0, (void *)tmp);
   HeapFree(GetProcessHeap(), 0, (void *)pSB);
   return D3D_OK;
 }

@@ -377,8 +377,8 @@ void T42_free(TYPE42 *t42)
     OTTable *table;
     for(table = t42->tables; table->MS_tag; table++)
         if(table->data) HeapFree(GetProcessHeap(), 0, table->data);
-    if(t42->glyph_sent) HeapFree(GetProcessHeap(), 0, t42->glyph_sent);
-    if(t42->glyf_blocks) HeapFree(GetProcessHeap(), 0, t42->glyf_blocks);
+    HeapFree(GetProcessHeap(), 0, t42->glyph_sent);
+    HeapFree(GetProcessHeap(), 0, t42->glyf_blocks);
     HeapFree(GetProcessHeap(), 0, t42);
     return;
 }

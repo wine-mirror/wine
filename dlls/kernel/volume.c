@@ -896,8 +896,8 @@ BOOL WINAPI GetVolumeInformationA( LPCSTR root, LPSTR label,
         if (fsname) FILE_name_WtoA( fsnameW, -1, fsname, fsname_len );
     }
 
-    if (labelW) HeapFree( GetProcessHeap(), 0, labelW );
-    if (fsnameW) HeapFree( GetProcessHeap(), 0, fsnameW );
+    HeapFree( GetProcessHeap(), 0, labelW );
+    HeapFree( GetProcessHeap(), 0, fsnameW );
     return ret;
 }
 
@@ -1011,7 +1011,7 @@ BOOL WINAPI SetVolumeLabelA(LPCSTR root, LPCSTR volname)
     if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return FALSE;
     if (volname && !(volnameW = FILE_name_AtoW( volname, TRUE ))) return FALSE;
     ret = SetVolumeLabelW( rootW, volnameW );
-    if (volnameW) HeapFree( GetProcessHeap(), 0, volnameW );
+    HeapFree( GetProcessHeap(), 0, volnameW );
     return ret;
 }
 
@@ -1092,7 +1092,7 @@ BOOL WINAPI DefineDosDeviceW( DWORD flags, LPCWSTR devname, LPCWSTR targetpath )
         }
         HeapFree( GetProcessHeap(), 0, path );
     }
-    if (target) HeapFree( GetProcessHeap(), 0, target );
+    HeapFree( GetProcessHeap(), 0, target );
     return ret;
 }
 
@@ -1108,7 +1108,7 @@ BOOL WINAPI DefineDosDeviceA(DWORD flags, LPCSTR devname, LPCSTR targetpath)
     if (!(devW = FILE_name_AtoW( devname, FALSE ))) return FALSE;
     if (targetpath && !(targetW = FILE_name_AtoW( targetpath, TRUE ))) return FALSE;
     ret = DefineDosDeviceW(flags, devW, targetW);
-    if (targetW) HeapFree( GetProcessHeap(), 0, targetW );
+    HeapFree( GetProcessHeap(), 0, targetW );
     return ret;
 }
 

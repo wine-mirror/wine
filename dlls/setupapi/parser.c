@@ -169,8 +169,7 @@ static void *grow_array( void *array, unsigned int *count, size_t elem )
     if (new_array)
         *count = new_count;
     else
-	if (array)
-    	    HeapFree( GetProcessHeap(), 0, array );
+        HeapFree( GetProcessHeap(), 0, array );
     return new_array;
 }
 

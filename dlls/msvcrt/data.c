@@ -310,12 +310,12 @@ void msvcrt_init_args(void)
 void msvcrt_free_args(void)
 {
   /* FIXME: more things to free */
-  if (MSVCRT___initenv) HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
-  if (MSVCRT___winitenv) HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
-  if (_environ) HeapFree(GetProcessHeap(), 0, _environ);
-  if (_wenviron) HeapFree(GetProcessHeap(), 0, _wenviron);
-  if (MSVCRT__pgmptr) HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
-  if (MSVCRT__wpgmptr) HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
+  HeapFree(GetProcessHeap(), 0, MSVCRT___initenv);
+  HeapFree(GetProcessHeap(), 0, MSVCRT___winitenv);
+  HeapFree(GetProcessHeap(), 0, _environ);
+  HeapFree(GetProcessHeap(), 0, _wenviron);
+  HeapFree(GetProcessHeap(), 0, MSVCRT__pgmptr);
+  HeapFree(GetProcessHeap(), 0, MSVCRT__wpgmptr);
 }
 
 /*********************************************************************

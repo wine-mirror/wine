@@ -96,7 +96,7 @@ LPWSTR RPCRT4_strndupW(LPWSTR src, INT slen)
 
 void RPCRT4_strfree(LPSTR src)
 {
-  if (src) HeapFree(GetProcessHeap(), 0, src);
+  HeapFree(GetProcessHeap(), 0, src);
 }
 
 RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPSTR Protseq, LPSTR NetworkAddr, LPSTR Endpoint, LPSTR NetworkOptions, RpcBinding* Binding)

@@ -1335,8 +1335,7 @@ shfileop_end:
 	if (hFind != INVALID_HANDLE_VALUE)
 	    FindClose(hFind);
 	hFind = INVALID_HANDLE_VALUE;
-	if (pTempFrom)
-	    HeapFree(GetProcessHeap(), 0, pTempFrom);
+        HeapFree(GetProcessHeap(), 0, pTempFrom);
 	if (retCode)
 	    nFileOp.fAnyOperationsAborted = TRUE;
 	TRACE("%s level=%ld AnyOpsAborted=%s ret=0x%x, with %s %s%s\n",

@@ -1518,7 +1518,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     return (HANDLE)info;
 
 error:
-    if (info) HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, info );
     RtlFreeUnicodeString( &nt_name );
     return INVALID_HANDLE_VALUE;
 }

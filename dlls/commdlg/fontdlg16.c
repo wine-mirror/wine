@@ -280,10 +280,8 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     WideCharToMultiByte(CP_ACP, 0, cf32w.lpLogFont->lfFaceName,
                           LF_FACESIZE, font16->lfFaceName, LF_FACESIZE, 0, 0);
 
-    if(cf32w.lpTemplateName)
-        HeapFree(GetProcessHeap(), 0, (LPBYTE)cf32w.lpTemplateName);
-    if(cf32w.lpszStyle)
-        HeapFree(GetProcessHeap(), 0, cf32w.lpszStyle);
+    HeapFree(GetProcessHeap(), 0, (LPBYTE)cf32w.lpTemplateName);
+    HeapFree(GetProcessHeap(), 0, cf32w.lpszStyle);
 
     return bRet;
 }

@@ -1306,8 +1306,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
         MultiByteToWideChar(CP_ACP,0,lpszHeaders,dwHeaderLength,szHeaders,nLen);
     }
     result=HttpSendRequestW(hHttpRequest, szHeaders, nLen, lpOptional, dwOptionalLength);
-    if(szHeaders!=NULL)
-        HeapFree(GetProcessHeap(),0,szHeaders);
+    HeapFree(GetProcessHeap(),0,szHeaders);
     return result;
 }
 
@@ -1372,11 +1371,9 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                            HTTP_ADDHDR_FLAG_ADD_IF_NEW);
 #endif
         
-        if (NULL != lpwhs->lpszServerName)
-            HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
+        HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
         lpwhs->lpszServerName = WININET_strdupW(hostName);
-        if (NULL != lpwhs->lpszUserName)
-            HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
+        HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
         lpwhs->lpszUserName = WININET_strdupW(userName);
         lpwhs->nServerPort = urlComponents.nPort;
 
@@ -1401,8 +1398,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
 
     }
 
-    if(lpwhr->lpszPath)
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     lpwhr->lpszPath=NULL;
     if (strlenW(path))
     {
@@ -2087,7 +2083,7 @@ BOOL HTTP_GetResponseHeaders(LPWININETHTTPREQW lpwhr)
 	}
     }while(1);
 
-    if (lpwhr->lpszRawHeaders) HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
     lpwhr->lpszRawHeaders = lpszRawHeaders;
     TRACE("raw headers: %s\n", debugstr_w(lpszRawHeaders));
     bSuccess = TRUE;
@@ -2288,8 +2284,7 @@ BOOL HTTP_ReplaceHeaderValue( LPHTTPHEADERW lphttpHdr, LPCWSTR value )
 {
     INT len = 0;
 
-    if( lphttpHdr->lpszValue )
-        HeapFree( GetProcessHeap(), 0, lphttpHdr->lpszValue );
+    HeapFree( GetProcessHeap(), 0, lphttpHdr->lpszValue );
     lphttpHdr->lpszValue = NULL;
 
     if( value )
@@ -2484,12 +2479,9 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
     if (NETCON_connected(&lpwhr->netConnection))
         HTTP_CloseConnection(lpwhr);
 
-    if (lpwhr->lpszPath)
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
-    if (lpwhr->lpszVerb)
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
-    if (lpwhr->lpszRawHeaders)
-        HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
+    HeapFree(GetProcessHeap(), 0, lpwhr->lpszRawHeaders);
 
     for (i = 0; i <= HTTP_QUERY_MAX; i++)
     {
@@ -2524,10 +2516,8 @@ void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("%p\n", lpwhs);
 
-    if (lpwhs->lpszServerName)
-        HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
-    if (lpwhs->lpszUserName)
-        HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
+    HeapFree(GetProcessHeap(), 0, lpwhs->lpszUserName);
     HeapFree(GetProcessHeap(), 0, lpwhs);
 }
 

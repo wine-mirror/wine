@@ -152,10 +152,8 @@ void interfaceMapInit(void)
 void interfaceMapFree(void)
 {
     DeleteCriticalSection(&mapCS);
-    if (gNonLoopbackInterfaceMap)
-        HeapFree(GetProcessHeap(), 0, gNonLoopbackInterfaceMap);
-    if (gLoopbackInterfaceMap)
-        HeapFree(GetProcessHeap(), 0, gLoopbackInterfaceMap);
+    HeapFree(GetProcessHeap(), 0, gNonLoopbackInterfaceMap);
+    HeapFree(GetProcessHeap(), 0, gLoopbackInterfaceMap);
 }
 
 /* Sizes the passed-in map to have enough space for numInterfaces interfaces.
@@ -321,8 +319,7 @@ static void enumerateInterfaces(void)
         guessedNumInterfaces = INITIAL_INTERFACES_ASSUMED;
       else
         guessedNumInterfaces *= 2;
-      if (ifc.ifc_buf)
-        HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
+      HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
       ifc.ifc_len = sizeof(struct ifreq) * guessedNumInterfaces;
       ifc.ifc_buf = (char *)HeapAlloc(GetProcessHeap(), 0, ifc.ifc_len);
       ret = ioctl(fd, SIOCGIFCONF, &ifc);
@@ -336,8 +333,7 @@ static void enumerateInterfaces(void)
       LeaveCriticalSection(&mapCS);
     }
 
-    if (ifc.ifc_buf)
-      HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
+    HeapFree(GetProcessHeap(), 0, ifc.ifc_buf);
     close(fd);
   }
 }

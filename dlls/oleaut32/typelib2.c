@@ -3032,10 +3032,8 @@ static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface)
 	    }
 	}
 
-	if (This->filename) {
-	    HeapFree(GetProcessHeap(), 0, This->filename);
-	    This->filename = NULL;
-	}
+        HeapFree(GetProcessHeap(), 0, This->filename);
+        This->filename = NULL;
 
 	while (This->typeinfos) {
 	    ICreateTypeInfo2Impl *typeinfo = This->typeinfos;

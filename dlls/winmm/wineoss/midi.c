@@ -1182,10 +1182,8 @@ static DWORD modClose(WORD wDevID)
 	return MMSYSERR_NOTENABLED;
     }
 
-    if (MidiOutDev[wDevID].lpExtra != 0) {
-        HeapFree(GetProcessHeap(), 0, MidiOutDev[wDevID].lpExtra);
-	MidiOutDev[wDevID].lpExtra = 0;
-    }
+    HeapFree(GetProcessHeap(), 0, MidiOutDev[wDevID].lpExtra);
+    MidiOutDev[wDevID].lpExtra = 0;
 
     MidiOutDev[wDevID].bufsize = 0;
     if (MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {

@@ -198,8 +198,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
             FIXME("Variant type %x not supported for regtype %lx\n", V_VT(pVar), type);
     }
 
-    if (pData)
-        HeapFree(GetProcessHeap(), 0, pData);
+    HeapFree(GetProcessHeap(), 0, pData);
 
     TRACE("<- %lx\n", res);
     return res;

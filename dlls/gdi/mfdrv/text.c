@@ -150,6 +150,6 @@ MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     ret = MFDRV_MetaExtTextOut(dev,x,y,flags,lprect?&rect16:NULL,ascii,len,lpdx16);
     HeapFree( GetProcessHeap(), 0, ascii );
-    if (lpdx16)	HeapFree( GetProcessHeap(), 0, lpdx16 );
+    HeapFree( GetProcessHeap(), 0, lpdx16 );
     return ret;
 }

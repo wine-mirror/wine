@@ -319,7 +319,6 @@ CLEANUP:
         DestroyWindow(hWnd);
     if (hDll)
         FreeLibrary(hDll);
-    if (szDllName)
-        HeapFree(GetProcessHeap(),0,szDllName);
+    HeapFree(GetProcessHeap(),0,szDllName);
     return 0; /* rundll32 always returns 0! */
 }

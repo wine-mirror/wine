@@ -75,8 +75,7 @@ void destroy_handle_table(HANDLETABLE *lpTable)
 {
     TRACE("(lpTable=%p)\n", lpTable);
         
-    if (lpTable->paEntries) 
-        HeapFree(GetProcessHeap(), 0, lpTable->paEntries);
+    HeapFree(GetProcessHeap(), 0, lpTable->paEntries);
     DeleteCriticalSection(&lpTable->mutex);
 }
 

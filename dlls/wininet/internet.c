@@ -958,21 +958,11 @@ static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("%p\n",lpwai);
 
-    if (lpwai->lpszAgent)
-        HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
-
-    if (lpwai->lpszProxy)
-        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
-
-    if (lpwai->lpszProxyBypass)
-        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
-
-    if (lpwai->lpszProxyUsername)
-        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
-
-    if (lpwai->lpszProxyPassword)
-        HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
-
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyUsername);
+    HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyPassword);
     HeapFree(GetProcessHeap(), 0, lpwai);
 }
 
@@ -2609,8 +2599,7 @@ static VOID INTERNET_ExecuteWork(void)
         req = &workRequest.u.FtpFindFirstFileW;
         FTP_FtpFindFirstFileW(lpwfs, req->lpszSearchFile,
            req->lpFindFileData, req->dwFlags, req->dwContext);
-	if (req->lpszSearchFile != NULL)
-	    HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
+        HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
         }
 	break;
 

@@ -336,12 +336,8 @@ static void ARTS_CloseWaveOutDevice(WINE_WAVEOUT* wwo)
   wwo->play_stream = (arts_stream_t*)-1;
 
   /* free up the buffer we use for volume and reset the size */
-  if(wwo->sound_buffer)
-  {
-    HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
-    wwo->sound_buffer = NULL;
-  }
-
+  HeapFree(GetProcessHeap(), 0, wwo->sound_buffer);
+  wwo->sound_buffer = NULL;
   wwo->buffer_size = 0;
 }
 

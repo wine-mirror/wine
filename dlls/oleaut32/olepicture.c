@@ -301,7 +301,7 @@ static void OLEPictureImpl_Destroy(OLEPictureImpl* Obj)
       break;
     }
   }
-  if (Obj->data) HeapFree(GetProcessHeap(), 0, Obj->data);
+  HeapFree(GetProcessHeap(), 0, Obj->data);
   HeapFree(GetProcessHeap(), 0, Obj);
 }
 

@@ -1279,7 +1279,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
             retval = execute_from_key(lpstrProtocol, wszApplicationName, env, sei_tmp.lpParameters, execfunc, &sei_tmp, sei);
         else
             retval = execfunc(wszQuotedCmd, env, FALSE, &sei_tmp, sei);
-        if (env) HeapFree( GetProcessHeap(), 0, env );
+        HeapFree( GetProcessHeap(), 0, env );
     }
     else if (PathIsURLW((LPWSTR)lpFile))    /* File not found, check for URL */
     {

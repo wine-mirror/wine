@@ -411,21 +411,13 @@ static HRESULT WINAPI IDirectPlaySPImpl_GetSPPlayerData
   /* What to do in the case where there is nothing set yet? */
   if( dwFlags == DPSET_LOCAL )
   {
-    if( lpPlayerData->lpPlayerLocalData )
-    {
-      HeapFree( GetProcessHeap(), 0, lpPlayerData->lpPlayerLocalData );
-    }
-
+    HeapFree( GetProcessHeap(), 0, lpPlayerData->lpPlayerLocalData );
     *lplpData     = lpPlayerData->lpPlayerLocalData;
     *lpdwDataSize = lpPlayerData->dwPlayerLocalDataSize;
   }
   else if( dwFlags == DPSET_REMOTE )
   {
-    if( lpPlayerData->lpPlayerRemoteData )
-    {
-      HeapFree( GetProcessHeap(), 0, lpPlayerData->lpPlayerRemoteData );
-    }
-
+    HeapFree( GetProcessHeap(), 0, lpPlayerData->lpPlayerRemoteData );
     *lplpData     = lpPlayerData->lpPlayerRemoteData;
     *lpdwDataSize = lpPlayerData->dwPlayerRemoteDataSize;
   }
@@ -908,21 +900,13 @@ static HRESULT WINAPI IDirectPlaySPImpl_SetSPData
   /* If we have data already allocated, free it and replace it */
   if( dwFlags == DPSET_REMOTE )
   {
-    if( This->sp->lpSpRemoteData )
-    {
-      HeapFree( GetProcessHeap(), 0, This->sp->lpSpRemoteData );
-    }
-
+    HeapFree( GetProcessHeap(), 0, This->sp->lpSpRemoteData );
     This->sp->dwSpRemoteDataSize = dwDataSize;
     This->sp->lpSpRemoteData = lpSpData;
   }
   else if ( dwFlags == DPSET_LOCAL )
   {
-    if( This->sp->lpSpLocalData )
-    {
-      HeapFree( GetProcessHeap(), 0, This->sp->lpSpLocalData );
-    }
-
+    HeapFree( GetProcessHeap(), 0, This->sp->lpSpLocalData );
     This->sp->lpSpLocalData     = lpSpData;
     This->sp->dwSpLocalDataSize = dwDataSize;
   }

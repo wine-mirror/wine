@@ -566,9 +566,9 @@ INT WINAPI WSACleanup16(void)
             se_buffer_seg = 0;
             pe_buffer_seg = 0;
             dbuffer_seg = 0;
-            if (he_buffer) HeapFree( GetProcessHeap(), 0, he_buffer );
-            if (se_buffer) HeapFree( GetProcessHeap(), 0, se_buffer );
-            if (pe_buffer) HeapFree( GetProcessHeap(), 0, pe_buffer );
+            HeapFree( GetProcessHeap(), 0, he_buffer );
+            HeapFree( GetProcessHeap(), 0, se_buffer );
+            HeapFree( GetProcessHeap(), 0, pe_buffer );
             he_buffer = NULL;
             se_buffer = NULL;
             pe_buffer = NULL;

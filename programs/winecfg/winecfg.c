@@ -222,7 +222,7 @@ static void free_setting(struct setting *setting)
 
     HeapFree(GetProcessHeap(), 0, setting->path);
     HeapFree(GetProcessHeap(), 0, setting->name);
-    if (setting->value) HeapFree(GetProcessHeap(), 0, setting->value);
+    HeapFree(GetProcessHeap(), 0, setting->value);
 
     list_remove(&setting->entry);
 
@@ -298,7 +298,7 @@ void set(char *path, char *name, char *value)
         if (strcasecmp(s->name, name) != 0) continue;
 
         /* yes, we have already set it, so just replace the content and return  */
-        if (s->value) HeapFree(GetProcessHeap(), 0, s->value);
+        HeapFree(GetProcessHeap(), 0, s->value);
         s->value = value ? strdupA(value) : NULL;
 
         return;
@@ -478,7 +478,7 @@ char *keypath(char *section)
 {
     static char *result = NULL;
 
-    if (result) HeapFree(GetProcessHeap(), 0, result);
+    HeapFree(GetProcessHeap(), 0, result);
 
     if (current_app)
     {

@@ -77,9 +77,7 @@ static void test_Heap(void)
     */
       mem1=HeapAlloc(heap,0,5*memchunk+1);
       ok(mem1==NULL,"HeapCreate allocated more Ram than it should have\n");
-      if(mem1) {
-        HeapFree(heap,0,mem1);
-      }
+      HeapFree(heap,0,mem1);
     }
 
 /* Check that a normal alloc works */

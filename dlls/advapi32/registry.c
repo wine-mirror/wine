@@ -1006,7 +1006,7 @@ DWORD WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD type,
     {
         status = NtSetValueKey( hkey, &NtCurrentTeb()->StaticUnicodeString, 0, type, data, count );
     }
-    if (dataW) HeapFree( GetProcessHeap(), 0, dataW );
+    HeapFree( GetProcessHeap(), 0, dataW );
     return RtlNtStatusToDosError( status );
 }
 

@@ -4055,7 +4055,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
     }
     TRACE_(d3d_shader)("(%p) : freing VertexShader %p\n", This, object);
     /* TODO: check validity of object */
-    if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
+    HeapFree(GetProcessHeap(), 0, (void *)object->function);
     if (object->prgId != 0) {
         GL_EXTCALL(glDeleteProgramsARB( 1, &object->prgId ));
     }
@@ -4240,7 +4240,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 iface,
     }
     TRACE_(d3d_shader)("(%p) : freeing PixelShader %p\n", This, object);
     /* TODO: check validity of object before free */
-    if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
+    HeapFree(GetProcessHeap(), 0, (void *)object->function);
     if (object->prgId != 0) {
         GL_EXTCALL(glDeleteProgramsARB( 1, &object->prgId ));
     }

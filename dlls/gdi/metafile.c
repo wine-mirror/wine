@@ -794,7 +794,7 @@ BOOL WINAPI EnumMetaFile(
     /* free handle table */
     HeapFree( GetProcessHeap(), 0, ht);
     /* free a copy of metafile */
-    if (mhTemp) HeapFree( GetProcessHeap(), 0, mhTemp );
+    HeapFree( GetProcessHeap(), 0, mhTemp );
     return result;
 }
 

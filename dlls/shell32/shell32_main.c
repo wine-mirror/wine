@@ -812,8 +812,8 @@ BOOL WINAPI ShellAboutA( HWND hWnd, LPCSTR szApp, LPCSTR szOtherStuff, HICON hIc
 
     ret = ShellAboutW(hWnd, appW, otherW, hIcon);
 
-    if (otherW) HeapFree(GetProcessHeap(), 0, otherW);
-    if (appW) HeapFree(GetProcessHeap(), 0, appW);
+    HeapFree(GetProcessHeap(), 0, otherW);
+    HeapFree(GetProcessHeap(), 0, appW);
     return ret;
 }
 

@@ -275,8 +275,7 @@ static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
     ref = InterlockedDecrement(&(This->ref));
     if (ref == 0) {
         IDsDriverBuffer_Release((PIDSDRIVERBUFFER)This->buffer);
-        if (This->notifies != NULL)
-            HeapFree(GetProcessHeap(), 0, This->notifies);
+        HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }

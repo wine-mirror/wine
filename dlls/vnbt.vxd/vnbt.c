@@ -114,8 +114,7 @@ BOOL WINAPI VNBT_DeviceIoControl(DWORD dwIoControlCode,
                      * ipconfig.exe and winipcfg.exe read these from the
                      * registry, there's no point */
                 }
-                if (fixedInfo)
-                    HeapFree(GetProcessHeap(), 0, fixedInfo);
+                HeapFree(GetProcessHeap(), 0, fixedInfo);
             }
             size = 0;
             error = GetAdaptersInfo(NULL, &size);
@@ -145,8 +144,7 @@ BOOL WINAPI VNBT_DeviceIoControl(DWORD dwIoControlCode,
                         info->numEntries++;
                     }
                 }
-                if (adapterInfo)
-                    HeapFree(GetProcessHeap(), 0, adapterInfo);
+                HeapFree(GetProcessHeap(), 0, adapterInfo);
             }
         }
         break;

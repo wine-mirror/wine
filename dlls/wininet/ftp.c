@@ -2471,8 +2471,7 @@ BOOL FTP_SendData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, HANDLE hFile)
 
     TRACE("file transfer complete!\n");
 
-    if(lpszBuffer != NULL)
-        HeapFree(GetProcessHeap(), 0, lpszBuffer);
+    HeapFree(GetProcessHeap(), 0, lpszBuffer);
 
     return nTotalSent;
 }
@@ -2574,8 +2573,7 @@ BOOL FTP_RetrieveFileData(LPWININETFTPSESSIONW lpwfs, INT nDataSocket, DWORD nBy
     }
 
     TRACE("Data transfer complete\n");
-    if (NULL != lpszBuffer)
-        HeapFree(GetProcessHeap(), 0, lpszBuffer);
+    HeapFree(GetProcessHeap(), 0, lpszBuffer);
 
 recv_end:
     return  (nRC != -1);
@@ -2607,12 +2605,8 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
     if (lpwfs->lstnSocket != -1)
         closesocket(lpwfs->lstnSocket);
 
-    if (lpwfs->lpszPassword)
-        HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
-
-    if (lpwfs->lpszUserName)
-        HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
-
+    HeapFree(GetProcessHeap(), 0, lpwfs->lpszPassword);
+    HeapFree(GetProcessHeap(), 0, lpwfs->lpszUserName);
     HeapFree(GetProcessHeap(), 0, lpwfs);
 }
 

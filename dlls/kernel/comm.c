@@ -2296,8 +2296,7 @@ BOOL WINAPI SetDefaultCommConfigA(
         MultiByteToWideChar( CP_ACP, 0, lpszDevice, -1, lpDeviceW, len );
     }
     r = SetDefaultCommConfigW(lpDeviceW,lpCommConfig,dwSize);
-    if (lpDeviceW) 
-        HeapFree( GetProcessHeap(), 0, lpDeviceW );
+    HeapFree( GetProcessHeap(), 0, lpDeviceW );
     return r;
 }
 

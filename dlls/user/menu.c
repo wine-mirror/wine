@@ -1697,7 +1697,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT_PTR id,
     /* Don't call SetRectEmpty here! */
 
 
-    if (prevText) HeapFree( GetProcessHeap(), 0, prevText );
+    HeapFree( GetProcessHeap(), 0, prevText );
 
     debug_print_menuitem("MENU_SetItemData to  : ", item, "");
     return TRUE;
@@ -4135,8 +4135,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     if (lpmii->fMask & MIIM_STRING ) {
 	if (IS_STRING_ITEM(menu->fType)) {
             /* free the string when used */
-            if(menu->text)
-                HeapFree(GetProcessHeap(), 0, menu->text);
+            HeapFree(GetProcessHeap(), 0, menu->text);
             set_menu_item_text( menu, lpmii->dwTypeData, unicode );
 	}
     }

@@ -766,7 +766,7 @@ DWORD WINAPI FormatMessage16(
     } else
         lstrcpynA(lpBuffer,target,nSize);
     HeapFree(GetProcessHeap(),0,target);
-    if (from) HeapFree(GetProcessHeap(),0,from);
+    HeapFree(GetProcessHeap(),0,from);
     return (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) ?
         strlen(allocstring):
 	strlen(lpBuffer);

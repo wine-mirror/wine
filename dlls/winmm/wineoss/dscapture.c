@@ -459,8 +459,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
         wwi->dwFragmentSize = 0;
         This->drv->capture_buffer = NULL;
 
-        if (This->notifies != NULL)
-            HeapFree(GetProcessHeap(), 0, This->notifies);
+        HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }

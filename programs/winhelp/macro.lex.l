@@ -277,11 +277,8 @@ BOOL MACRO_ExecuteMacro(LPCSTR macro)
         }
     }
 
-    if (strptr)
-    {
-        HeapFree(GetProcessHeap(), 0, strptr);
-        strptr = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, strptr);
+    strptr = NULL;
     quote_stk_idx = 0;
 
     return 1;

@@ -2141,7 +2141,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
     nextfont:
 	HeapFree(GetProcessHeap(), 0, typeface);
     }
-    if( fi ) HeapFree(GetProcessHeap(), 0, fi);
+    HeapFree(GetProcessHeap(), 0, fi);
 
     /* Scan through the font list and remove FontResource(s) (fr)
      * that have no associated Fontinfo(s) (fi).
@@ -2301,7 +2301,7 @@ static BOOL XFONT_ReadCachedMetrics( int fd, int res, unsigned x_checksum, int x
 	          u,x_checksum,i,x_count);
 	}
 fail:
-	if( fontList ) HeapFree( GetProcessHeap(), 0, fontList );
+        HeapFree( GetProcessHeap(), 0, fontList );
 	fontList = NULL;
 	close( fd );
     }
@@ -2821,8 +2821,7 @@ static fontObject* XFONT_GetCacheEntry(void)
 	    else fontMRU = (INT16)fontCache[j].lru;
 
 	    /* FIXME: lpXForm, lpPixmap */
-	    if(fontCache[j].lpX11Trans)
-	        HeapFree( GetProcessHeap(), 0, fontCache[j].lpX11Trans );
+            HeapFree( GetProcessHeap(), 0, fontCache[j].lpX11Trans );
 
             wine_tsx11_lock();
             XFreeFont( gdi_display, fontCache[j].fs );

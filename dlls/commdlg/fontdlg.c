@@ -1045,8 +1045,7 @@ LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpc
         HeapFree(GetProcessHeap(), 0, lpcfw->lpszStyle);
     }
 
-    if(lpcfw->lpTemplateName)
-        HeapFree(GetProcessHeap(), 0, (LPBYTE)lpcfw->lpTemplateName);
+    HeapFree(GetProcessHeap(), 0, (LPBYTE)lpcfw->lpTemplateName);
     HeapFree(GetProcessHeap(), 0, lpcfw->lpLogFont);
     HeapFree(GetProcessHeap(), 0, lpcfw);
 

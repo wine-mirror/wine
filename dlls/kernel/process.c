@@ -835,7 +835,7 @@ static void init_current_directory( CURDIR *cur_dir )
         RtlInitUnicodeString( &dir_str, DIR_Windows );
         RtlSetCurrentDirectory_U( &dir_str );
     }
-    if (cwd) HeapFree( GetProcessHeap(), 0, cwd );
+    HeapFree( GetProcessHeap(), 0, cwd );
 
 done:
     if (!cur_dir->Handle) chdir("/"); /* change to root directory so as not to lock cdroms */
@@ -1849,9 +1849,9 @@ BOOL WINAPI CreateProcessA( LPCSTR app_name, LPSTR cmd_line, LPSECURITY_ATTRIBUT
     ret = CreateProcessW( app_nameW, cmd_lineW, process_attr, thread_attr,
                           inherit, flags, env, cur_dirW, &infoW, info );
 done:
-    if (app_nameW) HeapFree( GetProcessHeap(), 0, app_nameW );
-    if (cmd_lineW) HeapFree( GetProcessHeap(), 0, cmd_lineW );
-    if (cur_dirW) HeapFree( GetProcessHeap(), 0, cur_dirW );
+    HeapFree( GetProcessHeap(), 0, app_nameW );
+    HeapFree( GetProcessHeap(), 0, cmd_lineW );
+    HeapFree( GetProcessHeap(), 0, cur_dirW );
     RtlFreeUnicodeString( &desktopW );
     RtlFreeUnicodeString( &titleW );
     return ret;
@@ -1988,7 +1988,7 @@ BOOL WINAPI CreateProcessW( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_ATTRIB
  done:
     if (tidy_cmdline != cmd_line) HeapFree( GetProcessHeap(), 0, tidy_cmdline );
     if (envW != env) HeapFree( GetProcessHeap(), 0, envW );
-    if (unixdir) HeapFree( GetProcessHeap(), 0, unixdir );
+    HeapFree( GetProcessHeap(), 0, unixdir );
     return retv;
 }
 

@@ -1575,7 +1575,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
                 }
                 else
                 {
-                    if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+                    HeapFree( GetProcessHeap(), 0, buffer );
                     buffer_size = reply->total;
                 }
             }
@@ -1640,7 +1640,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
 		}
 	    }
             *msg = info.msg;
-            if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+            HeapFree( GetProcessHeap(), 0, buffer );
             return TRUE;
         }
 
@@ -1652,7 +1652,7 @@ BOOL MSG_peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
         reply_message( &info, result, TRUE );
         queue->receive_info = old_info;
     next:
-        if (buffer) HeapFree( GetProcessHeap(), 0, buffer );
+        HeapFree( GetProcessHeap(), 0, buffer );
     }
 }
 
@@ -1807,7 +1807,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
     if (!status && reply_size)
         unpack_reply( info->hwnd, info->msg, info->wparam, info->lparam, reply_data, reply_size );
 
-    if (reply_data) HeapFree( GetProcessHeap(), 0, reply_data );
+    HeapFree( GetProcessHeap(), 0, reply_data );
 
     TRACE( "hwnd %p msg %x (%s) wp %x lp %lx got reply %lx (err=%ld)\n",
            info->hwnd, info->msg, SPY_GetMsgName(info->msg, info->hwnd), info->wparam,

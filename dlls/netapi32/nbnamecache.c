@@ -53,8 +53,7 @@ static void NBNameCacheUnlinkNode(struct NBNameCache *cache,
     {
         NBNameCacheNode *next = (*prev)->next;
 
-        if ((*prev)->entry)
-            HeapFree(cache->heap, 0, (*prev)->entry);
+        HeapFree(cache->heap, 0, (*prev)->entry);
         HeapFree(cache->heap, 0, *prev);
         *prev = next;
     }

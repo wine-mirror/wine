@@ -306,16 +306,10 @@ void X11DRV_XRandR_Init(void)
 
 void X11DRV_XRandR_Cleanup(void)
 {
-    if (real_xrandr_rates)
-    {
-        HeapFree(GetProcessHeap(), 0, real_xrandr_rates);
-        real_xrandr_rates = NULL;
-    }
-    if (real_xrandr_rates_count)
-    {
-        HeapFree(GetProcessHeap(), 0, real_xrandr_rates_count);
-        real_xrandr_rates_count = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, real_xrandr_rates);
+    real_xrandr_rates = NULL;
+    HeapFree(GetProcessHeap(), 0, real_xrandr_rates_count);
+    real_xrandr_rates_count = NULL;
 }
 
 #endif /* HAVE_LIBXRANDR */

@@ -757,12 +757,12 @@ void FD31_MapOfnStructA(LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL open)
  */
 void FD31_FreeOfnW(LPOPENFILENAMEW ofnW)
 {
-   if (ofnW->lpstrFilter) HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrFilter);
-   if (ofnW->lpstrCustomFilter) HeapFree(GetProcessHeap(), 0, ofnW->lpstrCustomFilter);
-   if (ofnW->lpstrFile) HeapFree(GetProcessHeap(), 0, ofnW->lpstrFile);
-   if (ofnW->lpstrFileTitle) HeapFree(GetProcessHeap(), 0, ofnW->lpstrFileTitle);
-   if (ofnW->lpstrInitialDir) HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrInitialDir);
-   if (ofnW->lpstrTitle) HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrTitle);
+   HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrFilter);
+   HeapFree(GetProcessHeap(), 0, ofnW->lpstrCustomFilter);
+   HeapFree(GetProcessHeap(), 0, ofnW->lpstrFile);
+   HeapFree(GetProcessHeap(), 0, ofnW->lpstrFileTitle);
+   HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrInitialDir);
+   HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpstrTitle);
    if ((ofnW->lpTemplateName) && (HIWORD(ofnW->lpTemplateName)))
        HeapFree(GetProcessHeap(), 0, (LPWSTR) ofnW->lpTemplateName);
 }

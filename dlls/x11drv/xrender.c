@@ -1524,8 +1524,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                        physDev->org.y + y - width * sinEsc - strikeoutPos * cosEsc);
         }
         wine_tsx11_unlock();
-        if(otm)
-            HeapFree(GetProcessHeap(), 0, otm);
+        HeapFree(GetProcessHeap(), 0, otm);
     }
 
     if(deltas && deltas != lpDx)

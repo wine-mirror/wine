@@ -296,11 +296,8 @@ static BOOL IEnumDMO_Destructor(IEnumDMO* iface)
     if (This->hkey)
         RegCloseKey(This->hkey);
 
-    if (This->pInTypes)
-        HeapFree(GetProcessHeap(), 0, This->pInTypes);
-
-    if (This->pOutTypes)
-        HeapFree(GetProcessHeap(), 0, This->pOutTypes);
+    HeapFree(GetProcessHeap(), 0, This->pInTypes);
+    HeapFree(GetProcessHeap(), 0, This->pOutTypes);
 
     return TRUE;
 }

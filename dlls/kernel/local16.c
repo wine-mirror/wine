@@ -1927,7 +1927,7 @@ HANDLE WINAPI Local32Init16( WORD segment, DWORD tableSize,
     selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, WINE_LDT_FLAGS_DATA );
     if ( !selectorTable || !selectorEven || !selectorOdd )
     {
-        if ( selectorTable ) HeapFree( header->heap, 0, selectorTable );
+        HeapFree( header->heap, 0, selectorTable );
         if ( selectorEven  ) SELECTOR_FreeBlock( selectorEven );
         if ( selectorOdd   ) SELECTOR_FreeBlock( selectorOdd );
         HeapDestroy( header->heap );

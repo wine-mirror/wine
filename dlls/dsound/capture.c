@@ -397,9 +397,7 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
             IDsCaptureDriver_Release(This->driver);
 	}
 
-	if (This->pwfx)
-	    HeapFree(GetProcessHeap(), 0, This->pwfx);
-
+        HeapFree(GetProcessHeap(), 0, This->pwfx);
         This->lock.DebugInfo->Spare[1] = 0;
         DeleteCriticalSection( &(This->lock) );
         HeapFree( GetProcessHeap(), 0, This );
@@ -730,8 +728,7 @@ DSOUND_CreateDirectSoundCaptureBuffer(
                 /* let driver allocate memory */
                 ipDSC->buflen = lpcDSCBufferDesc->dwBufferBytes;
                 /* FIXME: */
-                if (ipDSC->buffer)
-                    HeapFree( GetProcessHeap(), 0, ipDSC->buffer);
+                HeapFree( GetProcessHeap(), 0, ipDSC->buffer);
                 ipDSC->buffer = NULL;
             }
 
@@ -868,10 +865,8 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
 	memcpy(This->dscb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	This->dscb->nrofnotifies = howmuch;
     } else {
-        if (This->dscb->notifies) {
-            HeapFree(GetProcessHeap(), 0, This->dscb->notifies);
-            This->dscb->notifies = NULL;
-        }
+        HeapFree(GetProcessHeap(), 0, This->dscb->notifies);
+        This->dscb->notifies = NULL;
         This->dscb->nrofnotifies = 0;
     }
 
@@ -985,16 +980,13 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 	if (This->dsound->state == STATE_CAPTURING)
 	    This->dsound->state = STATE_STOPPING;
 
-        if (This->pdscbd)
-            HeapFree(GetProcessHeap(),0, This->pdscbd);
+        HeapFree(GetProcessHeap(),0, This->pdscbd);
 
 	if (This->dsound->hwi) {
 	    waveInReset(This->dsound->hwi);
 	    waveInClose(This->dsound->hwi);
-	    if (This->dsound->pwave) {
-	    	HeapFree(GetProcessHeap(),0, This->dsound->pwave);
-		This->dsound->pwave = 0;
-	    }
+            HeapFree(GetProcessHeap(),0, This->dsound->pwave);
+            This->dsound->pwave = 0;
 	    This->dsound->hwi = 0;
 	}
 
@@ -1010,9 +1002,7 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
         if (This->notify)
 	    IDirectSoundNotify_Release((LPDIRECTSOUNDNOTIFY)This->notify);
 
-	if (This->notifies != NULL)
-		HeapFree(GetProcessHeap(), 0, This->notifies);
-
+	HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree( GetProcessHeap(), 0, This );
 	TRACE("(%p) released\n",This);
     }

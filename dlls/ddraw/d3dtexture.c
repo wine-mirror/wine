@@ -577,8 +577,7 @@ gltex_final_release(IDirectDrawSurfaceImpl *This)
         glDeleteTextures(1, &(glThis->tex_name));
     LEAVE_GL();	
 
-    if (glThis->surface_ptr != NULL)
-        HeapFree(GetProcessHeap(), 0, glThis->surface_ptr);
+    HeapFree(GetProcessHeap(), 0, glThis->surface_ptr);
 
     /* And if this texture was the current one, remove it at the device level */
     if (This->d3ddevice != NULL)

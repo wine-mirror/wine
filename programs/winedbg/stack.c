@@ -153,7 +153,7 @@ void stack_backtrace(DWORD tid, BOOL noisy)
     if (tid == dbg_curr_tid)
     {
         thread = dbg_curr_thread;
-        if (frames) HeapFree(GetProcessHeap(), 0, frames);
+        HeapFree(GetProcessHeap(), 0, frames);
         frames = NULL;
     }
     else

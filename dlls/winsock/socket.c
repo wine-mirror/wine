@@ -936,9 +936,7 @@ static void ws2_async_cleanup ( struct async_private *ap )
         HeapFree ( GetProcessHeap(), 0, as->async.iosb );
     }
 
-    if ( as->iovec )
-        HeapFree ( GetProcessHeap(), 0, as->iovec );
-
+    HeapFree ( GetProcessHeap(), 0, as->iovec );
     HeapFree ( GetProcessHeap(), 0, as );
 }
 
@@ -2809,7 +2807,7 @@ struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
     }
     else SetLastError(WSANO_DATA);
     LeaveCriticalSection( &csWSgetXXXbyYYY );
-    if (proto_str) HeapFree( GetProcessHeap(), 0, proto_str );
+    HeapFree( GetProcessHeap(), 0, proto_str );
     HeapFree( GetProcessHeap(), 0, name_str );
     TRACE( "%s, %s ret %p\n", debugstr_a(name), debugstr_a(proto), retval );
     return retval;
@@ -2836,7 +2834,7 @@ struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
     }
     else SetLastError(WSANO_DATA);
     LeaveCriticalSection( &csWSgetXXXbyYYY );
-    if (proto_str) HeapFree( GetProcessHeap(), 0, proto_str );
+    HeapFree( GetProcessHeap(), 0, proto_str );
 #endif
     TRACE("%d (i.e. port %d), %s ret %p\n", port, (int)ntohl(port), debugstr_a(proto), retval);
     return retval;

@@ -853,11 +853,11 @@ PPD *PSDRV_ParsePPD(char *fname)
            }
         }
 
-	if(tuple.key) HeapFree(PSDRV_Heap, 0, tuple.key);
-	if(tuple.option) HeapFree(PSDRV_Heap, 0, tuple.option);
-	if(tuple.value) HeapFree(PSDRV_Heap, 0, tuple.value);
-	if(tuple.opttrans) HeapFree(PSDRV_Heap, 0, tuple.opttrans);
-	if(tuple.valtrans) HeapFree(PSDRV_Heap, 0, tuple.valtrans);
+        HeapFree(PSDRV_Heap, 0, tuple.key);
+        HeapFree(PSDRV_Heap, 0, tuple.option);
+        HeapFree(PSDRV_Heap, 0, tuple.value);
+        HeapFree(PSDRV_Heap, 0, tuple.opttrans);
+        HeapFree(PSDRV_Heap, 0, tuple.valtrans);
 
     }
 

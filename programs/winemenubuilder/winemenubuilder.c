@@ -476,8 +476,7 @@ static char *extract_icon( const char *path, int index)
     }
     if (iconsdir==NULL || *iconsdir=='\0')
     {
-        if (iconsdir)
-            HeapFree(GetProcessHeap(), 0, iconsdir);
+        HeapFree(GetProcessHeap(), 0, iconsdir);
         return NULL;  /* No icon created */
     }
 
@@ -814,10 +813,8 @@ static BOOL InvokeShellLinker( IShellLinkA *sl, LPCWSTR link )
     HeapFree( GetProcessHeap(), 0, icon_name );
     HeapFree( GetProcessHeap(), 0, work_dir );
     HeapFree( GetProcessHeap(), 0, link_name );
-    if (escaped_args)
-        HeapFree( GetProcessHeap(), 0, escaped_args );
-    if (escaped_path)
-        HeapFree( GetProcessHeap(), 0, escaped_path );
+    HeapFree( GetProcessHeap(), 0, escaped_args );
+    HeapFree( GetProcessHeap(), 0, escaped_path );
 
     if (r)
     {

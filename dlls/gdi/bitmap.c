@@ -532,8 +532,7 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle, void *obj )
     if (bmp->funcs && bmp->funcs->pDeleteBitmap)
         bmp->funcs->pDeleteBitmap( handle );
 
-    if( bmp->bitmap.bmBits )
-        HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
+    HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
 
     if (bmp->dib)
     {

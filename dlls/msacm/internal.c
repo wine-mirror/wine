@@ -341,10 +341,8 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
     while (p->pACMDriverList)
 	acmDriverClose((HACMDRIVER) p->pACMDriverList, 0);
 
-    if (p->pszDriverAlias)
-	HeapFree(MSACM_hHeap, 0, p->pszDriverAlias);
-    if (p->pszFileName)
-	HeapFree(MSACM_hHeap, 0, p->pszFileName);
+    HeapFree(MSACM_hHeap, 0, p->pszDriverAlias);
+    HeapFree(MSACM_hHeap, 0, p->pszFileName);
     HeapFree(MSACM_hHeap, 0, p->aFormatTag);
 
     if (p == MSACM_pFirstACMDriverID)

@@ -60,7 +60,7 @@ ULONG WINAPI IDirect3DVertexBuffer8Impl_Release(LPDIRECT3DVERTEXBUFFER8 iface) {
     ULONG ref = --This->ref;
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        if (NULL != This->allocatedMemory) HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

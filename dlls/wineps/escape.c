@@ -416,9 +416,8 @@ INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
 	ret = 0;
     }
     physDev->job.hJob = 0;
-    if(physDev->job.DocName) {
-        HeapFree(GetProcessHeap(), 0, physDev->job.DocName);
-        physDev->job.DocName = NULL;
-    }
+    HeapFree(GetProcessHeap(), 0, physDev->job.DocName);
+    physDev->job.DocName = NULL;
+
     return ret;
 }

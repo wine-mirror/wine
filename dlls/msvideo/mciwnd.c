@@ -1328,11 +1328,8 @@ end_of_mci_open:
             mwi->mode = MCI_MODE_NOT_READY;
             mwi->position = -1;
 
-            if (mwi->lpName)
-            {
-                HeapFree(GetProcessHeap(), 0, mwi->lpName);
-                mwi->lpName = NULL;
-            }
+            HeapFree(GetProcessHeap(), 0, mwi->lpName);
+            mwi->lpName = NULL;
             MCIWND_UpdateState(mwi);
 
             GetClientRect(hWnd, &rc);

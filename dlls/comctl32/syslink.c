@@ -115,14 +115,8 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
 {
     if(DocItem->Type == slLink)
     {
-        if(DocItem->u.Link.szID != NULL)
-        {
-            SYSLINK_Free(DocItem->u.Link.szID);
-        }
-        if(DocItem->u.Link.szUrl != NULL)
-        {
-            SYSLINK_Free(DocItem->u.Link.szUrl);
-        }
+        SYSLINK_Free(DocItem->u.Link.szID);
+        SYSLINK_Free(DocItem->u.Link.szUrl);
     }
 
     if(DocItem->Type == slLink && DocItem->u.Link.hRgn != NULL)

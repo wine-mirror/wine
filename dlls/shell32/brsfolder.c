@@ -491,10 +491,7 @@ LPITEMIDLIST WINAPI SHBrowseForFolderA (LPBROWSEINFOA lpbi)
 	  WideCharToMultiByte(CP_ACP, 0, bi.pszDisplayName, -1, lpbi->pszDisplayName, MAX_PATH, 0, NULL);
 	  HeapFree(GetProcessHeap(), 0, bi.pszDisplayName);
 	}
-	if (bi.lpszTitle)
-	{
-	  HeapFree(GetProcessHeap(), 0, (LPVOID)bi.lpszTitle);
-	}
+        HeapFree(GetProcessHeap(), 0, (LPVOID)bi.lpszTitle);
 	lpbi->iImage = bi.iImage;
 	return lpid;
 }

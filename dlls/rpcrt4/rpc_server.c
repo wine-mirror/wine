@@ -422,7 +422,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
 #endif
     msg = NULL;
   }
-  if (msg) HeapFree(GetProcessHeap(), 0, msg);
+  HeapFree(GetProcessHeap(), 0, msg);
   RPCRT4_DestroyConnection(conn);
   return 0;
 }

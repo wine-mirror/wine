@@ -2546,8 +2546,7 @@ char	*p;
 
 void RTFFree(char *p)
 {
-	if (p != (char *) NULL)
-		HeapFree(RICHED32_hHeap, 0, p);
+        HeapFree(RICHED32_hHeap, 0, p);
 }
 
 

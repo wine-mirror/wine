@@ -423,8 +423,7 @@ static LPWSTR SERIALUI_strdup( LPCSTR str )
 
 static VOID SERIALUI_strfree( LPWSTR strW )
 {
-    if (strW)
-        HeapFree( GetProcessHeap(), 0, strW );
+    HeapFree( GetProcessHeap(), 0, strW );
 }
 
 /***********************************************************************

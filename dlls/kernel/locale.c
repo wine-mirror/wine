@@ -2267,12 +2267,10 @@ INT WINAPI FoldStringA(DWORD dwFlags, LPCSTR src, INT srclen,
         }
     }
 
-    if (dstW)
-        HeapFree(GetProcessHeap(), 0, dstW);
+    HeapFree(GetProcessHeap(), 0, dstW);
 
 FoldStringA_exit:
-    if (srcW)
-        HeapFree(GetProcessHeap(), 0, srcW);
+    HeapFree(GetProcessHeap(), 0, srcW);
     return ret;
 }
 

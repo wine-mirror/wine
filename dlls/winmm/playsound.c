@@ -410,8 +410,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 errCleanUp:
     TRACE("Done playing='%s' => %s!\n", debugstr_w(wps->pszSound), bRet ? "ok" : "ko");
     CloseHandle(s.hEvent);
-    if (waveHdr)        HeapFree(GetProcessHeap(), 0, waveHdr);
-    if (lpWaveFormat)   HeapFree(GetProcessHeap(), 0, lpWaveFormat);
+    HeapFree(GetProcessHeap(), 0, waveHdr);
+    HeapFree(GetProcessHeap(), 0, lpWaveFormat);
     if (hWave)		while (waveOutClose(hWave) == WAVERR_STILLPLAYING) Sleep(100);
     if (hmmio) 		mmioClose(hmmio, 0);
 

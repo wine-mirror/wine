@@ -575,8 +575,7 @@ int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
     ret = GetCalendarInfoW(lcid, Calendar, CalType, lpCalDataW, cchData, lpValue);
     if(ret && lpCalDataW && lpCalData)
       WideCharToMultiByte(CP_ACP, 0, lpCalDataW, cchData, lpCalData, cchData, NULL, NULL);
-    if(lpCalDataW)
-      HeapFree(GetProcessHeap(), 0, lpCalDataW);
+    HeapFree(GetProcessHeap(), 0, lpCalDataW);
 
     return ret;
 }

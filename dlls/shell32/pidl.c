@@ -1057,7 +1057,7 @@ LPITEMIDLIST WINAPI SHSimpleIDListFromPathA(LPCSTR lpszPath)
 
     _ILParsePathW(wPath, NULL, TRUE, &pidl, NULL);
 
-    if (wPath) HeapFree(GetProcessHeap(), 0, wPath);
+    HeapFree(GetProcessHeap(), 0, wPath);
     TRACE("%s %p\n", debugstr_a(lpszPath), pidl);
     return pidl;
 }

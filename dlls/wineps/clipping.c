@@ -115,7 +115,7 @@ void PSDRV_SetClip( PSDRV_PDEVICE *physDev )
         }
     }
 end:
-    if(rgndata) HeapFree( GetProcessHeap(), 0, rgndata );
+    HeapFree( GetProcessHeap(), 0, rgndata );
     DeleteObject(hrgn);
 }
 

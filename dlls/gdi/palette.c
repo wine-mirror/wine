@@ -696,11 +696,9 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
 {
     PALETTEOBJ *palette = obj;
 
-    if (palette->mapping)
-    {
-        HeapFree( GetProcessHeap(), 0, palette->mapping );
-        palette->mapping = NULL;
-    }
+    HeapFree( GetProcessHeap(), 0, palette->mapping );
+    palette->mapping = NULL;
+
     if (hLastRealizedPalette == handle)
     {
         TRACE("unrealizing palette %p\n", handle);

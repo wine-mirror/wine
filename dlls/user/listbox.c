@@ -739,7 +739,7 @@ static LRESULT LISTBOX_InitStorage( LB_DESCR *descr, INT nb_items )
 static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL short_ints )
 {
     if (!(descr->style & LBS_USETABSTOPS)) return TRUE;
-    if (descr->tabs) HeapFree( GetProcessHeap(), 0, descr->tabs );
+    HeapFree( GetProcessHeap(), 0, descr->tabs );
     if (!(descr->nb_tabs = count))
     {
         descr->tabs = NULL;
@@ -1596,7 +1596,7 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
     if (index == -1) index = descr->nb_items;
     if ((ret = LISTBOX_InsertItem( descr, index, new_str, data )) != 0)
     {
-        if (new_str) HeapFree( GetProcessHeap(), 0, new_str );
+        HeapFree( GetProcessHeap(), 0, new_str );
         return ret;
     }
 
@@ -1710,7 +1710,7 @@ static void LISTBOX_ResetContent( LB_DESCR *descr )
     INT i;
 
     for (i = 0; i < descr->nb_items; i++) LISTBOX_DeleteItem( descr, i );
-    if (descr->items) HeapFree( GetProcessHeap(), 0, descr->items );
+    HeapFree( GetProcessHeap(), 0, descr->items );
     descr->nb_items      = 0;
     descr->top_item      = 0;
     descr->selected_item = -1;

@@ -427,7 +427,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     goto END;
 
 FAIL:
-    if(str2b != NULL) HeapFree( GetProcessHeap(), 0, str2b );
+    HeapFree( GetProcessHeap(), 0, str2b );
     result = FALSE;
 
 END:

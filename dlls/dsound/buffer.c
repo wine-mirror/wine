@@ -132,10 +132,8 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	    memcpy(This->dsb->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
 	    This->dsb->nrofnotifies = howmuch;
         } else {
-           if (This->dsb->notifies) {
-               HeapFree(GetProcessHeap(), 0, This->dsb->notifies);
-               This->dsb->notifies = NULL;
-           }
+           HeapFree(GetProcessHeap(), 0, This->dsb->notifies);
+           This->dsb->notifies = NULL;
            This->dsb->nrofnotifies = 0;
         }
 
@@ -406,12 +404,8 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 		}
 	}
 
-	if (This->notifies != NULL)
-		HeapFree(GetProcessHeap(), 0, This->notifies);
-
-	if (This->pwfx)
-		HeapFree(GetProcessHeap(), 0, This->pwfx);
-
+	HeapFree(GetProcessHeap(), 0, This->notifies);
+	HeapFree(GetProcessHeap(), 0, This->pwfx);
 	HeapFree(GetProcessHeap(),0,This);
 
 	TRACE("(%p) released\n",This);
@@ -1207,10 +1201,8 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	if (!(dsbd->dwFlags & DSBCAPS_PRIMARYBUFFER)) {
 		err = DSOUND_AddBuffer(ds, dsb);
 		if (err != DS_OK) {
-			if (dsb->buffer->memory)
-				HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
-			if (dsb->buffer)
-				HeapFree(GetProcessHeap(),0,dsb->buffer);
+			HeapFree(GetProcessHeap(),0,dsb->buffer->memory);
+			HeapFree(GetProcessHeap(),0,dsb->buffer);
         		dsb->lock.DebugInfo->Spare[1] = 0;
 			DeleteCriticalSection(&(dsb->lock));
 			HeapFree(GetProcessHeap(),0,dsb->pwfx);
