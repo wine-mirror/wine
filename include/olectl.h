@@ -279,6 +279,8 @@ typedef VARIANT_BOOL OLE_ENABLEDEFAULTBOOL;
 #define CTL_E_SEARCHTEXTNOTFOUND        STD_CTL_SCODE(744)
 #define CTL_E_REPLACEMENTSTOOLONG       STD_CTL_SCODE(746)
 
+#define VT_COLOR            VT_I4
+#define VT_FONT             VT_DISPATCH
 #define VT_STREAMED_PROPSET 73  //       [P]  Stream contains a property set
 #define VT_STORED_PROPSET   74  //       [P]  Storage contains a property set
 #define VT_BLOB_PROPSET     75  //       [P]  Blob contains a property set

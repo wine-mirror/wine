@@ -744,6 +744,24 @@ WORD WINAPI VkKeyScanW(WCHAR cChar)
 	return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
 }
 
+/**********************************************************************
+ *           VkKeyScanExA      (USER32.574)
+ */
+WORD WINAPI VkKeyScanExA(CHAR cChar, HKL dwhkl)
+{
+				/* FIXME: complete workaround this is */
+				return VkKeyScan16(cChar);
+}
+
+/******************************************************************************
+ *      VkKeyScanExW      (USER32.575)
+ */
+WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
+{
+				/* FIXME: complete workaround this is */
+				return VkKeyScanA((CHAR)cChar); /* FIXME: check unicode */
+}
+ 
 /******************************************************************************
  *    	GetKeyboardType32      (USER32.255)
  */
@@ -858,6 +876,16 @@ INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 INT WINAPI ToAscii( UINT virtKey,UINT scanCode,LPBYTE lpKeyState,
                         LPWORD lpChar,UINT flags )
 {
+    return ToAscii16(virtKey,scanCode,lpKeyState,lpChar,flags);
+}
+
+/****************************************************************************
+ *	ToAscii32      (USER32.547)
+ */
+INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
+                      LPWORD lpChar, UINT flags, HKL dwhkl )
+{
+		/* FIXME: need true implementation */
     return ToAscii16(virtKey,scanCode,lpKeyState,lpChar,flags);
 }
 

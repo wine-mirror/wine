@@ -3397,6 +3397,7 @@ LONG        WINAPI TabbedTextOutA(HDC,INT,INT,LPCSTR,INT,INT,const INT*,INT);
 LONG        WINAPI TabbedTextOutW(HDC,INT,INT,LPCWSTR,INT,INT,const INT*,INT);
 #define     TabbedTextOut WINELIB_NAME_AW(TabbedTextOut)
 INT       WINAPI ToAscii(UINT,UINT,LPBYTE,LPWORD,UINT);
+INT       WINAPI ToAsciiEx(UINT,UINT,LPBYTE,LPWORD,UINT,HKL);
 BOOL      WINAPI TrackPopupMenu(HMENU,UINT,INT,INT,INT,HWND,const RECT*);
 INT       WINAPI TranslateAccelerator(HWND,HACCEL,LPMSG);
 BOOL      WINAPI TranslateMDISysAccel(HWND,LPMSG);
@@ -3413,6 +3414,9 @@ VOID        WINAPI ValidateRgn(HWND,HRGN);
 WORD        WINAPI VkKeyScanA(CHAR);
 WORD        WINAPI VkKeyScanW(WCHAR);
 #define     VkKeyScan WINELIB_NAME_AW(VkKeyScan)
+WORD        WINAPI VkKeyScanExA(CHAR, HKL);
+WORD        WINAPI VkKeyScanExW(WCHAR, HKL);
+#define     VkKeyScanEx WINELIB_NAME_AW(VkKeyScanEx)
 HWND      WINAPI WindowFromDC(HDC);
 HWND      WINAPI WindowFromPoint(POINT);
 BOOL      WINAPI WinHelpA(HWND,LPCSTR,UINT,DWORD);

@@ -548,7 +548,7 @@ init	MAIN_UserInit
 544 stub TileChildWindows
 545 stdcall TileWindows(long long ptr long ptr) TileWindows
 546 stdcall ToAscii(long long ptr ptr long) ToAscii
-547 stub ToAsciiEx
+547 stdcall ToAsciiEx(long long ptr ptr long long) ToAsciiEx
 548 stdcall ToUnicode(long long ptr wstr long long) ToUnicode
 549 stdcall TrackPopupMenu(long long long long long long ptr) TrackPopupMenu
 550 stdcall TrackPopupMenuEx(long long long long long ptr) TrackPopupMenuEx
@@ -575,8 +575,8 @@ init	MAIN_UserInit
 571 stdcall ValidateRect(long ptr) ValidateRect
 572 stdcall ValidateRgn(long long) ValidateRgn
 573 stdcall VkKeyScanA(long) VkKeyScanA
-574 stub VkKeyScanExA
-575 stub VkKeyScanExW
+574 stdcall VkKeyScanExA(long long) VkKeyScanExA
+575 stdcall VkKeyScanExW(long long) VkKeyScanExW
 576 stdcall VkKeyScanW(long) VkKeyScanW
 577 stdcall WaitForInputIdle(long long) WaitForInputIdle
 578 stdcall WaitMessage() WaitMessage

@@ -95,7 +95,7 @@ type win32
 101 stdcall VarCyFromR4(long ptr) VarCyFromR4
 102 stdcall VarCyFromR8(double ptr) VarCyFromR8
 103 stdcall VarCyFromDate(double ptr) VarCyFromDate
-104 stub VarCyFromStr
+104 stdcall VarCyFromStr(ptr long long ptr) VarCyFromStr
 105 stub VarCyFromDisp
 106 stdcall VarCyFromBool(long ptr) VarCyFromBool
 108 stdcall VarBstrFromUI1(long long long ptr) VarBstrFromUI1
@@ -103,7 +103,7 @@ type win32
 110 stdcall VarBstrFromI4(long long long ptr) VarBstrFromI4
 111 stdcall VarBstrFromR4(long long long ptr) VarBstrFromR4
 112 stdcall VarBstrFromR8(double long long ptr) VarBstrFromR8
-113 stub VarBstrFromCy
+113 stdcall VarBstrFromCy(double long long ptr) VarBstrFromCy
 114 stdcall VarBstrFromDate(long long long ptr) VarBstrFromDate
 115 stub VarBstrFromDisp
 116 stdcall VarBstrFromBool(long long long ptr) VarBstrFromBool

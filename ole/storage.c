@@ -1567,6 +1567,26 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
  */
 
 /******************************************************************************
+ *		StgOpenStorageOnILockBytes    [OLE32.149]
+ */
+HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved, IStorage **ppstgOpen)
+{
+	FIXME(ole, "(not shown) stub!\n");
+	return S_OK;
+}
+
+
+/******************************************************************************
+ *		StgCreateDocfileOnILockBytes    [OLE32.145]
+ */
+HRESULT WINAPI StgCreateDocfileOnILockBytes(ILockBytes *plkbyt,DWORD grfMode, DWORD reserved, IStorage** ppstgOpen)
+{
+	FIXME(ole, "(not shown) stub!\n");
+	return S_OK;
+}
+
+
+/******************************************************************************
  *		StgCreateDocFile16	[STORAGE.1]
  */
 HRESULT WINAPI StgCreateDocFile16(

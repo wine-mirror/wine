@@ -296,6 +296,7 @@ HRESULT WINAPI VarCyFromI4(LONG lIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromR4(FLOAT fltIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromR8(double dblIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut);
+HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut);
 HRESULT WINAPI VarCyFromBool(VARIANT_BOOL boolIn, CY* pcyOut);
 HRESULT WINAPI VarCyFromI1(CHAR cIn, CY*pcyOut);
 HRESULT WINAPI VarCyFromUI2(USHORT uiIn, CY*pcyOut);
@@ -311,6 +312,7 @@ HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOu
 HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
 HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
 HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
+HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut);
 HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
 HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut);
 HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR*pbstrOut);

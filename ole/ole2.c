@@ -427,7 +427,7 @@ HRESULT WINAPI DoDragDrop (
 /***********************************************************************
  * OleQueryLinkFromData32 [OLE32.118]
  */
-HRESULT WINAPI OleQueryLinkFromData32(
+HRESULT WINAPI OleQueryLinkFromData(
   IDataObject* pSrcDataObject)
 {
   FIXME(ole,"(%p),stub!\n", pSrcDataObject);
@@ -435,9 +435,9 @@ HRESULT WINAPI OleQueryLinkFromData32(
 }
 
 /***********************************************************************
- * OleRegGetMiscStatus32 [OLE32.121]
+ * OleRegGetMiscStatus [OLE32.121]
  */
-HRESULT WINAPI OleRegGetMiscStatus32(
+HRESULT WINAPI OleRegGetMiscStatus(
   REFCLSID clsid,
   DWORD    dwAspect,
   DWORD*   pdwStatus)
@@ -449,7 +449,7 @@ HRESULT WINAPI OleRegGetMiscStatus32(
 /***********************************************************************
  * OleGetClipboard32 [OLE32.105]
  */
-HRESULT WINAPI OleGetClipboard32(
+HRESULT WINAPI OleGetClipboard(
   IDataObject** ppDataObj)
 {
   FIXME(ole,"(%p),stub!\n", ppDataObj);

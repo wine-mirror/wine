@@ -3189,6 +3189,15 @@ HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
 }
 
 /******************************************************************************
+ *    VarBstrFromCy   [OLEAUT32.113]
+ */
+HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut) {
+				/* FIXME */
+	return E_NOTIMPL;
+}
+
+ 
+/******************************************************************************
  *		VarBstrFromDate32		[OLEAUT32.114]
  *
  * The date is implemented using an 8 byte floating-point number.
@@ -4196,6 +4205,15 @@ HRESULT WINAPI VarCyFromDate(DATE dateIn, CY* pcyOut) {
    return S_OK;
 }
 
+/**********************************************************************
+ *              VarCyFromDate32 [OLEAUT32.104]
+ */
+HRESULT WINAPI VarCyFromStr(OLECHAR *strIn, LCID lcid, ULONG dwFlags, CY *pcyOut) {
+				/* FIXME */
+		return E_NOTIMPL;
+}
+
+ 
 /**********************************************************************
  *              VarCyFromBool32 [OLEAUT32.106]
  * Convert boolean to currency

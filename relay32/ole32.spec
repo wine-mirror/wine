@@ -46,22 +46,22 @@ type	win32
  43 stdcall CoTaskMemAlloc(long) CoTaskMemAlloc
  44 stdcall CoTaskMemFree(ptr) CoTaskMemFree
  45 stdcall CoTaskMemRealloc(ptr long) CoTaskMemRealloc
- 46 stub CoTreatAsClass             # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
+ 46 stdcall CoTreatAsClass(ptr ptr) CoTreatAsClass
  47 stdcall CoUninitialize() CoUninitialize
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult         # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
  50 stub CoUnmarshalInterface       # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
  51 stdcall CreateAntiMoniker(ptr)  CreateAntiMoniker
  52 stdcall CreateBindCtx(long ptr) CreateBindCtx
- 53 stub CreateDataAdviseHolder     # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
- 54 stub CreateDataCache            # stdcall (ptr ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
+ 53 stdcall CreateDataAdviseHolder(ptr) CreateDataAdviseHolder
+ 54 stdcall CreateDataCache(ptr ptr ptr ptr) CreateDataCache
  55 stdcall CreateFileMoniker(wstr ptr) CreateFileMoniker
  56 stdcall CreateGenericComposite(ptr ptr ptr) CreateGenericComposite
- 57 stub CreateILockBytesOnHGlobal  # stdcall (ptr long ptr) return 0,ERR_NOTIMPLEMENTED
+ 57 stdcall CreateILockBytesOnHGlobal(ptr long ptr) CreateILockBytesOnHGlobal
  58 stdcall CreateItemMoniker(wstr wstr ptr) CreateItemMoniker
  59 stdcall CreateOleAdviseHolder(ptr) CreateOleAdviseHolder
  60 stub CreatePointerMoniker       # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 61 stub CreateStreamOnHGlobal      # stdcall (ptr long ptr) return 0,ERR_NOTIMPLEMENTED
+ 61 stdcall CreateStreamOnHGlobal(ptr long ptr) CreateStreamOnHGlobal
  62 stub DllDebugObjectRPCHook
  63 stub DllGetClassObject
  64 stub DllGetClassObjectWOW
@@ -70,12 +70,12 @@ type	win32
  67 stdcall GetClassFile(ptr ptr) GetClassFile
  68 stub GetConvertStg
  69 stub GetDocumentBitStg
- 70 stub GetHGlobalFromILockBytes
+ 70 stdcall GetHGlobalFromILockBytes(ptr ptr) GetHGlobalFromILockBytes
  71 stub GetHGlobalFromStream
  72 stub GetHookInterface
  73 stdcall GetRunningObjectTable(long ptr) GetRunningObjectTable
  74 stub IIDFromString
- 75 stub IsAccelerator
+ 75 stdcall IsAccelerator(long long ptr long) IsAccelerator
  76 stdcall IsEqualGUID(ptr ptr) IsEqualGUID32
  77 stub IsValidIid
  78 stdcall IsValidInterface(ptr) IsValidInterface
@@ -89,67 +89,67 @@ type	win32
  86 stub OleConvertIStorageToOLESTREAMEx
  87 stub OleConvertOLESTREAMToIStorage
  88 stub OleConvertOLESTREAMToIStorageEx
- 89 stub OleCreate
+ 89 stdcall OleCreate(ptr ptr long ptr ptr ptr ptr) OleCreate
  90 stub OleCreateDefaultHandler
  91 stub OleCreateEmbeddingHelper
- 92 stub OleCreateFromData
- 93 stub OleCreateFromFile
- 94 stub OleCreateLink
- 95 stub OleCreateLinkFromData
- 96 stub OleCreateLinkToFile
+ 92 stdcall OleCreateFromData(ptr ptr long ptr ptr ptr ptr) OleCreateFromData
+ 93 stdcall OleCreateFromFile(ptr ptr ptr long ptr ptr ptr ptr) OleCreateFromFile
+ 94 stdcall OleCreateLink(ptr ptr long ptr ptr ptr ptr) OleCreateLink
+ 95 stdcall OleCreateLinkFromData(ptr ptr long ptr ptr ptr ptr) OleCreateLinkFromData
+ 96 stdcall OleCreateLinkToFile(ptr ptr long ptr ptr ptr ptr) OleCreateLinkToFile
  97 stdcall OleCreateMenuDescriptor(long ptr) OleCreateMenuDescriptor
- 98 stub OleCreateStaticFromData
+ 98 stdcall OleCreateStaticFromData(ptr ptr long ptr ptr ptr ptr) OleCreateStaticFromData
  99 stdcall OleDestroyMenuDescriptor(long) OleDestroyMenuDescriptor
 100 stub OleDoAutoConvert
 101 stub OleDraw
-102 stub OleDuplicateData
-103 stub OleFlushClipboard
+102 stdcall OleDuplicateData(long long long) OleDuplicateData
+103 stdcall OleFlushClipboard() OleFlushClipboard
 104 stub OleGetAutoConvert
-105 stdcall OleGetClipboard(ptr) OleGetClipboard32
-106 stub OleGetIconOfClass
+105 stdcall OleGetClipboard(ptr) OleGetClipboard
+106 stdcall OleGetIconOfClass(ptr ptr long) OleGetIconOfClass
 107 stub OleGetIconOfFile
 108 stdcall OleInitialize(ptr) OleInitialize
 109 stdcall OleInitializeWOW(long) OleInitializeWOW
 110 stdcall OleIsCurrentClipboard(ptr) OleIsCurrentClipboard
-111 stub OleIsRunning
-112 stub OleLoad
-113 stub OleLoadFromStream
-114 stub OleLockRunning
+111 stdcall OleIsRunning(ptr) OleIsRunning
+112 stdcall OleLoad(ptr ptr ptr ptr) OleLoad
+113 stdcall OleLoadFromStream(ptr ptr ptr) OleLoadFromStream
+114 stdcall OleLockRunning(ptr long long) OleLockRunning
 115 stub OleMetafilePictFromIconAndLabel
 116 stub OleNoteObjectVisible
-117 stub OleQueryCreateFromData
-118 stdcall OleQueryLinkFromData(ptr) OleQueryLinkFromData32
+117 stdcall OleQueryCreateFromData(ptr) OleQueryCreateFromData
+118 stdcall OleQueryLinkFromData(ptr) OleQueryLinkFromData
 119 stub OleRegEnumFormatEtc
-120 stub OleRegEnumVerbs
-121 stdcall OleRegGetMiscStatus(ptr long ptr) OleRegGetMiscStatus32
+120 stdcall OleRegEnumVerbs(long ptr) OleRegEnumVerbs
+121 stdcall OleRegGetMiscStatus(ptr long ptr) OleRegGetMiscStatus
 122 stdcall OleRegGetUserType(long long ptr) OleRegGetUserType
-123 stub OleRun
-124 stub OleSave
-125 stub OleSaveToStream
+123 stdcall OleRun(ptr) OleRun
+124 stdcall OleSave(ptr ptr long) OleSave
+125 stdcall OleSaveToStream(ptr ptr) OleSaveToStream
 126 stub OleSetAutoConvert
 127 stdcall OleSetClipboard(ptr) OleSetClipboard
-128 stub OleSetContainedObject
+128 stdcall OleSetContainedObject(ptr long) OleSetContainedObject
 129 stdcall OleSetMenuDescriptor(long long long ptr ptr) OleSetMenuDescriptor
-130 stub OleTranslateAccelerator
+130 stdcall OleTranslateAccelerator(ptr ptr ptr) OleTranslateAccelerator
 131 stdcall OleUninitialize() OleUninitialize
 132 stub OpenOrCreateStream
 133 stub ProgIDFromCLSID
-134 stdcall ReadClassStg(ptr ptr) ReadClassStg 
-135 stdcall ReadClassStm(ptr ptr) ReadClassStm 
-136 stub ReadFmtUserTypeStg
+134 stdcall ReadClassStg(ptr ptr) ReadClassStg
+135 stdcall ReadClassStm(ptr ptr) ReadClassStm
+136 stdcall ReadFmtUserTypeStg(ptr ptr ptr) ReadFmtUserTypeStg
 137 stub ReadOleStg
 138 stub ReadStringStream
 139 stdcall RegisterDragDrop(long ptr) RegisterDragDrop
 140 stdcall ReleaseStgMedium(ptr) ReleaseStgMedium
 141 stdcall RevokeDragDrop(long) RevokeDragDrop
-142 stub SetConvertStg
+142 stdcall SetConvertStg(ptr long) SetConvertStg
 143 stub SetDocumentBitStg
 144 stdcall StgCreateDocfile(wstr long long ptr) StgCreateDocfile
-145 stub StgCreateDocfileOnILockBytes
+145 stdcall StgCreateDocfileOnILockBytes(ptr long long ptr) StgCreateDocfileOnILockBytes
 146 stdcall StgIsStorageFile(wstr) StgIsStorageFile
 147 stub StgIsStorageILockBytes
 148 stdcall StgOpenStorage(wstr ptr long ptr long ptr) StgOpenStorage
-149 stub StgOpenStorageOnILockBytes
+149 stdcall StgOpenStorageOnILockBytes(ptr ptr long long long ptr) StgOpenStorageOnILockBytes
 150 stub StgSetTimes
 151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID
 152 stdcall StringFromGUID2(ptr ptr long) StringFromGUID2
@@ -160,7 +160,7 @@ type	win32
 157 stub UtGetDvtd32Info
 158 stdcall WriteClassStg(ptr ptr) WriteClassStg
 159 stdcall WriteClassStm(ptr ptr) WriteClassStm
-160 stub WriteFmtUserTypeStg
+160 stdcall WriteFmtUserTypeStg(ptr long ptr) WriteFmtUserTypeStg
 161 stub WriteOleStg
 162 stub WriteStringStream
 163 stdcall CoInitializeEx(ptr long) CoInitializeEx
