@@ -530,8 +530,8 @@ BOOL DOSFS_FindUnixName( LPCSTR path, LPCSTR name, LPSTR long_buf,
     const char *p = strchr( name, '/' );
     int len = p ? (int)(p - name) : strlen(name);
     if ((p = strchr( name, '\\' ))) len = min( (int)(p - name), len );
-    /* Ignore trailing dots */
-    while (len > 1 && name[len-1] == '.') len--;
+    /* Ignore trailing dots and spaces */
+    while (len > 1 && (name[len-1] == '.' || name[len-1] == ' ')) len--;
     if (long_len < len + 1) return FALSE;
 
     TRACE("%s,%s\n", path, name );
@@ -855,6 +855,11 @@ BOOL DOSFS_GetFullName( LPCSTR name, BOOL check_last, DOS_FULL_NAME *full )
 		else *p_l++ = *name;
                 name++;
             }
+	    /* Ignore trailing dots and spaces */
+	    while(p_l[-1] == '.' || p_l[-1] == ' ') {
+		--p_l;
+		--p_s;
+	    }
             *p_l = *p_s = '\0';
         }
         while ((*name == '\\') || (*name == '/')) name++;
