@@ -1149,7 +1149,6 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->hInstance      = cs->hInstance;
     wndPtr->text           = NULL;
     wndPtr->hrgnUpdate     = 0;
-    wndPtr->hrgnWnd        = 0;
     wndPtr->dwStyle        = cs->style & ~WS_VISIBLE;
     wndPtr->dwExStyle      = cs->dwExStyle;
     wndPtr->wIDmenu        = 0;

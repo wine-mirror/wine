@@ -227,7 +227,6 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
 int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 {
     static const RECT empty_rect;
-    WND *wndPtr;
     BOOL ret;
 
     if (hrgn)
@@ -263,35 +262,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         SERVER_END_REQ;
     }
 
-    if (!ret) return FALSE;
-
-    if ((wndPtr = WIN_GetPtr( hwnd )) == WND_OTHER_PROCESS)
-    {
-        if (IsWindow( hwnd ))
-            FIXME( "not properly supported on other process window %p\n", hwnd );
-        wndPtr = NULL;
-    }
-    if (!wndPtr)
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-
-    if (wndPtr->hrgnWnd == hrgn)
-    {
-        WIN_ReleasePtr( wndPtr );
-        return TRUE;
-    }
-    if (wndPtr->hrgnWnd)
-    {
-        /* delete previous region */
-        DeleteObject(wndPtr->hrgnWnd);
-        wndPtr->hrgnWnd = 0;
-    }
-    wndPtr->hrgnWnd = hrgn;
-    WIN_ReleasePtr( wndPtr );
-
-    if (USER_Driver.pSetWindowRgn)
+    if (ret && USER_Driver.pSetWindowRgn)
         ret = USER_Driver.pSetWindowRgn( hwnd, hrgn, bRedraw );
 
     if (ret && bRedraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );

@@ -53,7 +53,6 @@ typedef struct tagWND
     void          *pHScroll;      /* Horizontal scroll-bar info */
     struct tagDCE *dce;           /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
     HRGN           hrgnUpdate;    /* Update region */
-    HRGN           hrgnWnd;       /* window's region */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
     DWORD          clsStyle;      /* Class style at window creation */
