@@ -112,22 +112,29 @@ static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
   /* FIXME: more PSP stuff */
 }
 
-static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdline )
+static void MZ_FillPSP( LPVOID lpPSP, LPBYTE cmdline, int length )
 {
- PDB16*psp=lpPSP;
- const char*cmd=cmdline?strchr(cmdline,' '):NULL;
+  PDB16      *psp = lpPSP;
 
- /* copy parameters */
- if (cmd) {
-#if 0
-  /* command.com doesn't do this */
-  while (*cmd == ' ') cmd++;
-#endif
-  psp->cmdLine[0]=strlen(cmd);
-  strcpy(psp->cmdLine+1,cmd);
-  psp->cmdLine[psp->cmdLine[0]+1]='\r';
- } else psp->cmdLine[1]='\r';
- /* FIXME: more PSP stuff */
+  while(length > 0 && *cmdline != ' ') {
+    length--;
+    cmdline++;
+  }
+
+  /* command.com does not skip over multiple spaces */
+
+  if(length > 126) {
+    ERR("Command line truncated! (length %d > maximum length 126)\n", 
+       length);
+    length = 126;
+  }
+
+  psp->cmdLine[0] = length;
+  if(length > 0)
+    memmove(psp->cmdLine+1, cmdline, length);
+  psp->cmdLine[length+1] = '\r';
+
+  /* FIXME: more PSP stuff */
 }
 
 /* default INT 08 handler: increases timer tick counter but not much more */
@@ -356,7 +363,11 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
        * let's work on the new values now */
       LPBYTE psp_start = (LPBYTE)((DWORD)DOSVM_psp << 4);
       ExecBlock *blk = (ExecBlock *)paramblk;
-      MZ_FillPSP(psp_start, DOSMEM_MapRealToLinear(blk->cmdline));
+      LPBYTE cmdline = DOSMEM_MapRealToLinear(blk->cmdline);
+
+      /* First character contains the length of the command line. */
+      MZ_FillPSP(psp_start, cmdline + 1, cmdline[0]);
+
       /* the lame MS-DOS engineers decided that the return address should be in int22 */
       DOSVM_SetRMHandler(0x22, (FARPROC16)MAKESEGPTR(context->SegCs, LOWORD(context->Eip)));
       if (func) {
@@ -462,8 +473,9 @@ static void MZ_Launch(void)
 {
   TDB *pTask = TASK_GetCurrent();
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
+  LPSTR cmdline = GetCommandLineA();
 
-  MZ_FillPSP(psp_start, GetCommandLineA());
+  MZ_FillPSP(psp_start, cmdline, cmdline ? strlen(cmdline) : 0);
   pTask->flags |= TDBF_WINOLDAP;
 
   _LeaveWin16Lock();
