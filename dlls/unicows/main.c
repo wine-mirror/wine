@@ -34,6 +34,7 @@
 #include "wincon.h"
 #include "oledlg.h"
 #include "ras.h"
+#include "sspi.h"
 #include "mmsystem.h"
 #include "shlobj.h"
 #include "shellapi.h"
@@ -45,6 +46,7 @@
  */
 const void *dummy_references[] =
 {
+    AcquireCredentialsHandleW,
     AddAtomW,
     AddFontResourceW,
     AddJobW,
@@ -76,6 +78,7 @@ const void *dummy_references[] =
     CommConfigDialogW,
     CompareStringW,
     CopyAcceleratorTableW,
+    CopyEnhMetaFileW,
     CopyFileExW ,
     CopyFileW,
     CopyMetaFileW,
@@ -138,6 +141,8 @@ const void *dummy_references[] =
     EnableWindow,
     EndUpdateResourceA,
     EndUpdateResourceW,
+    EnumCalendarInfoExW,
+    EnumCalendarInfoW,
     EnumClipboardFormats,
     EnumDateFormatsW,
     EnumDisplayDevicesW,
@@ -146,6 +151,9 @@ const void *dummy_references[] =
     EnumFontFamiliesExW,
     EnumFontFamiliesW,
     EnumFontsW,
+    EnumICMProfilesW,
+    EnumMonitorsW,
+    EnumPrintProcessorsW,
     EnumPrinterDriversW,
     EnumPrintersW,
     EnumPropsA,
@@ -155,6 +163,7 @@ const void *dummy_references[] =
     EnumSystemCodePagesW,
     EnumSystemLocalesW,
     EnumTimeFormatsW,
+    EnumerateSecurityPackagesW,
     ExpandEnvironmentStringsW,
     ExtTextOutW,
     ExtractIconExW,
@@ -172,6 +181,7 @@ const void *dummy_references[] =
     FindWindowExW,
     FindWindowW,
     FormatMessageW,
+    FreeContextBuffer,
     FreeEnvironmentStringsW,
     GetAtomNameW,
     GetCPInfo,
@@ -193,6 +203,7 @@ const void *dummy_references[] =
     GetConsoleTitleW,
     GetCurrencyFormatW,
     GetCurrentDirectoryW,
+    GetCurrentHwProfileW,
     GetDateFormatW,
     GetDefaultCommConfigW,
     GetDiskFreeSpaceExW ,
@@ -274,6 +285,8 @@ const void *dummy_references[] =
     GlobalFindAtomW,
     GlobalGetAtomNameW,
     GrayStringW,
+    InitSecurityInterfaceW,
+    InitializeSecurityContextW,
     InsertMenuItemW,
     InsertMenuW,
     IsBadStringPtrW,
@@ -337,12 +350,16 @@ const void *dummy_references[] =
     PostMessageW,
     PostThreadMessageW,
     PrintDlgW,
+    QueryContextAttributesW,
+    QueryCredentialsAttributesW,
     QueryDosDeviceW,
+    QuerySecurityPackageInfoW,
     RasDeleteEntryW,
     RasEnumConnectionsW,
     RasEnumDevicesW,
     RasEnumEntriesW,
     RasSetEntryPropertiesW,
+    RasValidateEntryNameW,
     ReadConsoleInputW,
     ReadConsoleOutputCharacterW,
     ReadConsoleOutputW,
@@ -370,6 +387,7 @@ const void *dummy_references[] =
     RegisterClassExW,
     RegisterClassW,
     RegisterClipboardFormatW,
+    RegisterDeviceNotificationW,
     RegisterWindowMessageW,
     RemoveDirectoryW,
     RemoveFontResourceW,

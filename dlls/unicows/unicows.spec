@@ -1,4 +1,4 @@
-@ stub AcquireCredentialsHandleW
+@ stdcall AcquireCredentialsHandleW(wstr wstr long ptr ptr ptr ptr ptr ptr)
 @ stdcall AddAtomW(wstr)
 @ stdcall AddFontResourceW(wstr)
 @ stdcall AddJobW(long long ptr long ptr)
@@ -36,7 +36,7 @@
 @ stdcall CompareStringW(long long wstr long wstr long)
 @ stub ConfigurePortW
 @ stdcall CopyAcceleratorTableW(long ptr long)
-@ stub CopyEnhMetaFileW
+@ stdcall CopyEnhMetaFileW(long wstr)
 @ stdcall CopyFileExW (wstr wstr ptr ptr ptr long)
 @ stdcall CopyFileW(wstr wstr long)
 @ stdcall CopyMetaFileW(long wstr)
@@ -105,8 +105,8 @@
 @ stdcall EnableWindow(long long)
 @ stdcall EndUpdateResourceA(long long)
 @ stdcall EndUpdateResourceW(long long)
-@ stub EnumCalendarInfoExW
-@ stub EnumCalendarInfoW
+@ stdcall EnumCalendarInfoExW(ptr long long long)
+@ stdcall EnumCalendarInfoW(ptr long long long)
 @ stdcall EnumClipboardFormats(long)
 @ stub EnumDateFormatsExW
 @ stdcall EnumDateFormatsW(ptr long long)
@@ -116,11 +116,11 @@
 @ stdcall EnumFontFamiliesExW(long ptr ptr long long)
 @ stdcall EnumFontFamiliesW(long wstr ptr long)
 @ stdcall EnumFontsW(long wstr ptr long)
-@ stub EnumICMProfilesW
-@ stub EnumMonitorsW
+@ stdcall EnumICMProfilesW(long ptr long)
+@ stdcall EnumMonitorsW(wstr long ptr long long long)
 @ stub EnumPortsW
 @ stub EnumPrintProcessorDatatypesW
-@ stub EnumPrintProcessorsW
+@ stdcall EnumPrintProcessorsW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrinterDriversW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrintersW(long ptr long ptr long ptr ptr)
 @ stdcall EnumPropsA(long ptr)
@@ -130,7 +130,7 @@
 @ stdcall EnumSystemCodePagesW(ptr long)
 @ stdcall EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsW(ptr long long)
-@ stub EnumerateSecurityPackagesW
+@ stdcall EnumerateSecurityPackagesW(ptr ptr)
 @ stdcall ExpandEnvironmentStringsW(wstr ptr long)
 @ stdcall ExtTextOutW(long long long long ptr wstr long ptr)
 @ stdcall ExtractIconExW(wstr long ptr ptr long)
@@ -148,7 +148,7 @@
 @ stdcall FindWindowExW(long long wstr wstr)
 @ stdcall FindWindowW(wstr wstr)
 @ stdcall FormatMessageW(long ptr long long ptr long ptr)
-@ stub FreeContextBuffer
+@ stdcall FreeContextBuffer(ptr)
 @ stdcall FreeEnvironmentStringsW(ptr)
 @ stub GetAltTabInfoW
 @ stdcall GetAtomNameW(long ptr long)
@@ -171,7 +171,7 @@
 @ stdcall GetConsoleTitleW(ptr long)
 @ stdcall GetCurrencyFormatW(long long str ptr str long)
 @ stdcall GetCurrentDirectoryW(long ptr)
-@ stub GetCurrentHwProfileW
+@ stdcall GetCurrentHwProfileW(ptr)
 @ stdcall GetDateFormatW(long long ptr wstr ptr long)
 @ stdcall GetDefaultCommConfigW(wstr ptr long)
 @ stdcall GetDiskFreeSpaceExW (wstr ptr ptr ptr)
@@ -259,8 +259,8 @@
 @ stdcall GlobalFindAtomW(wstr)
 @ stdcall GlobalGetAtomNameW(long ptr long)
 @ stdcall GrayStringW(long long ptr long long long long long long)
-@ stub InitSecurityInterfaceW
-@ stub InitializeSecurityContextW
+@ stdcall InitSecurityInterfaceW()
+@ stdcall InitializeSecurityContextW(ptr ptr wstr long long long ptr long ptr ptr ptr ptr)
 @ stdcall InsertMenuItemW(long long long ptr)
 @ stdcall InsertMenuW(long long long long ptr)
 @ stdcall IsBadStringPtrW(ptr long)
@@ -325,10 +325,10 @@
 @ stdcall PostMessageW(long long long long)
 @ stdcall PostThreadMessageW(long long long long)
 @ stdcall PrintDlgW(ptr)
-@ stub QueryContextAttributesW
-@ stub QueryCredentialsAttributesW
+@ stdcall QueryContextAttributesW(ptr long ptr)
+@ stdcall QueryCredentialsAttributesW(ptr long ptr)
 @ stdcall QueryDosDeviceW(wstr ptr long)
-@ stub QuerySecurityPackageInfoW
+@ stdcall QuerySecurityPackageInfoW(wstr ptr)
 @ stub RasConnectionNotificationW
 @ stub RasCreatePhonebookEntryW
 @ stdcall RasDeleteEntryW(wstr wstr)
@@ -348,7 +348,7 @@
 @ stub RasSetEntryDialParamsW
 @ stdcall RasSetEntryPropertiesW(wstr wstr ptr long ptr long)
 @ stub RasSetSubEntryPropertiesW
-@ stub RasValidateEntryNameW
+@ stdcall RasValidateEntryNameW(wstr wstr)
 @ stdcall ReadConsoleInputW(long ptr long ptr)
 @ stdcall ReadConsoleOutputCharacterW(long ptr long long ptr)
 @ stdcall ReadConsoleOutputW(long ptr long long ptr)
@@ -376,7 +376,7 @@
 @ stdcall RegisterClassExW(ptr)
 @ stdcall RegisterClassW(ptr)
 @ stdcall RegisterClipboardFormatW(wstr)
-@ stub RegisterDeviceNotificationW
+@ stdcall RegisterDeviceNotificationW(long ptr long)
 @ stdcall RegisterWindowMessageW(wstr)
 @ stdcall RemoveDirectoryW(wstr)
 @ stdcall RemoveFontResourceW(wstr)
