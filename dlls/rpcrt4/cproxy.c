@@ -84,13 +84,6 @@ struct StublessThunk {
  x->pad[1] = 0x76; \
  x->pad[2] = 0x00;
 
-#else
-/* can't do that on this arch */
-struct ObjectStubless {};
-#define FILL_STUBLESS(x,idx) \
- ERR("stubless proxies are not supported on this architecture\n");
-#endif
-
 static HRESULT WINAPI ObjectStubless(DWORD index)
 {
   char *args = (char*)(&index + 2);
@@ -104,6 +97,16 @@ static HRESULT WINAPI ObjectStubless(DWORD index)
 
   return RPCRT4_NdrClientCall2(This->stubless->pStubDesc, fs, args);
 }
+
+#else  /* __i386__ */
+
+/* can't do that on this arch */
+struct StublessThunk { int dummy; };
+#define FILL_STUBLESS(x,idx,stk) \
+ ERR("stubless proxies are not supported on this architecture\n");
+#define STACK_ADJUST 0
+
+#endif  /* __i386__ */
 
 HRESULT WINAPI StdProxy_Construct(REFIID riid,
                                  LPUNKNOWN pUnkOuter,
