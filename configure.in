@@ -89,6 +89,8 @@ dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
+dnl Check for -lmmap for OS/2
+AC_CHECK_LIB(mmap,mmap)
 
 AC_CHECK_HEADERS(dlfcn.h,
 	AC_CHECK_FUNCS(dlopen,

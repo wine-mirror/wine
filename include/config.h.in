@@ -279,6 +279,9 @@
 /* Define if you have the i386 library (-li386).  */
 #undef HAVE_LIBI386
 
+/* Define if you have the mmap library (-lmmap).  */
+#undef HAVE_LIBMMAP
+
 /* Define if you have the ncurses library (-lncurses).  */
 #undef HAVE_LIBNCURSES
 
