@@ -131,13 +131,17 @@ void set_render_state(IDirect3DDeviceImpl* This,
 	        break;
 
 	    case D3DRENDERSTATE_WRAPU: /* 5 */
-	        if (dwRenderState)
-		    ERR("WRAPU mode unsupported by OpenGL.. Expect graphical glitches !\n");
-	        break;
-	      
 	    case D3DRENDERSTATE_WRAPV: /* 6 */
+	    case D3DRENDERSTATE_WRAP0: /* 128 */
+	    case D3DRENDERSTATE_WRAP1: /* 129 */
+	    case D3DRENDERSTATE_WRAP2: /* 130 */
+	    case D3DRENDERSTATE_WRAP3: /* 131 */
+	    case D3DRENDERSTATE_WRAP4: /* 132 */
+	    case D3DRENDERSTATE_WRAP5: /* 133 */
+	    case D3DRENDERSTATE_WRAP6: /* 134 */
+	    case D3DRENDERSTATE_WRAP7: /* 135 */
 	        if (dwRenderState)
-		    ERR("WRAPV mode unsupported by OpenGL.. Expect graphical glitches !\n");
+		    ERR("Texture WRAP modes unsupported by OpenGL.. Expect graphical glitches !\n");
 	        break;
 
 	    case D3DRENDERSTATE_ZENABLE:          /*  7 */
@@ -487,6 +491,16 @@ void store_render_state(IDirect3DDeviceImpl *This,
     } else if (dwRenderStateType == D3DRENDERSTATE_TEXTUREADDRESS) {
         lpStateBlock->render_state[D3DRENDERSTATE_TEXTUREADDRESSU - 1] = dwRenderState;
         lpStateBlock->render_state[D3DRENDERSTATE_TEXTUREADDRESSV - 1] = dwRenderState;
+    } else if (dwRenderStateType == D3DRENDERSTATE_WRAPU) {
+        if (dwRenderState) 
+	    lpStateBlock->render_state[D3DRENDERSTATE_WRAP0] |= D3DWRAP_U;
+	else
+	    lpStateBlock->render_state[D3DRENDERSTATE_WRAP0] &= ~D3DWRAP_U;
+    } else if (dwRenderStateType == D3DRENDERSTATE_WRAPV) {
+        if (dwRenderState) 
+	    lpStateBlock->render_state[D3DRENDERSTATE_WRAP0] |= D3DWRAP_V;
+	else
+	    lpStateBlock->render_state[D3DRENDERSTATE_WRAP0] &= ~D3DWRAP_V;
     }
     
     /* Default case */

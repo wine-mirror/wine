@@ -723,7 +723,7 @@ static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
 	    break;
 
 	default:
-	    TRACE("Unhandled primitive\n");
+	    FIXME("Unhandled primitive %08x\n", d3dpt);
 	    break;
     }
 }
@@ -1860,6 +1860,12 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	    color[3] = ((dwState >> 24) & 0xFF) / 255.0;
 
 	    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, color);
+
+	    TRACE(" Stage type : D3DTSS_BORDERCOLOR => %02lx %02lx %02lx %02lx (RGBA)\n",
+		  ((dwState >> 16) & 0xFF),
+		  ((dwState >>  8) & 0xFF),
+		  ((dwState >>  0) & 0xFF),
+		  ((dwState >> 24) & 0xFF));
 	} break;
 	    
 	case D3DTSS_TEXCOORDINDEX: {
