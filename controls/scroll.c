@@ -32,10 +32,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
 typedef struct
 {
-    INT   CurVal;   /* Current scroll-bar value */
-    INT   MinVal;   /* Minimum scroll-bar value */
-    INT   MaxVal;   /* Maximum scroll-bar value */
-    INT   Page;     /* Page size of scroll bar (Win32) */
+    INT   curVal;   /* Current scroll-bar value */
+    INT   minVal;   /* Minimum scroll-bar value */
+    INT   maxVal;   /* Maximum scroll-bar value */
+    INT   page;     /* Page size of scroll bar (Win32) */
     UINT  flags;    /* EnableScrollBar flags */
 } SCROLLBAR_INFO;
 
@@ -181,8 +181,8 @@ static SCROLLBAR_INFO *SCROLL_GetScrollInfo( HWND hwnd, INT nBar )
     {
         if ((infoPtr = HeapAlloc( GetProcessHeap(), 0, sizeof(SCROLLBAR_INFO) )))
         {
-            infoPtr->MinVal = infoPtr->CurVal = infoPtr->Page = 0;
-            infoPtr->MaxVal = 100;
+            infoPtr->minVal = infoPtr->curVal = infoPtr->page = 0;
+            infoPtr->maxVal = 100;
             infoPtr->flags  = ESB_ENABLE_BOTH;
             if (nBar == SB_HORZ) wndPtr->pHScroll = infoPtr;
             else wndPtr->pVScroll = infoPtr;
@@ -269,9 +269,9 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         *arrowSize = GetSystemMetrics(SM_CXVSCROLL);
         pixels -= (2 * (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP));
 
-        if (info->Page)
+        if (info->page)
         {
-	    *thumbSize = MulDiv(pixels,info->Page,(info->MaxVal-info->MinVal+1));
+	    *thumbSize = MulDiv(pixels,info->page,(info->maxVal-info->minVal+1));
             if (*thumbSize < SCROLL_MIN_THUMB) *thumbSize = SCROLL_MIN_THUMB;
         }
         else *thumbSize = GetSystemMetrics(SM_CXVSCROLL);
@@ -284,12 +284,12 @@ static BOOL SCROLL_GetScrollBarRect( HWND hwnd, INT nBar, RECT *lprect,
         }
         else
         {
-            INT max = info->MaxVal - max( info->Page-1, 0 );
-            if (info->MinVal >= max)
+            INT max = info->maxVal - max( info->page-1, 0 );
+            if (info->minVal >= max)
                 *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
             else
                 *thumbPos = *arrowSize - SCROLL_ARROW_THUMB_OVERLAP
-		  + MulDiv(pixels, (info->CurVal-info->MinVal),(max - info->MinVal));
+		  + MulDiv(pixels, (info->curVal-info->minVal),(max - info->minVal));
         }
     }
     WIN_ReleaseWndPtr(wndPtr);
@@ -310,23 +310,23 @@ static UINT SCROLL_GetThumbVal( SCROLLBAR_INFO *infoPtr, RECT *rect,
     INT pixels = vertical ? rect->bottom-rect->top : rect->right-rect->left;
 
     if ((pixels -= 2*(GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP)) <= 0)
-        return infoPtr->MinVal;
+        return infoPtr->minVal;
 
-    if (infoPtr->Page)
+    if (infoPtr->page)
     {
-        thumbSize = MulDiv(pixels,infoPtr->Page,(infoPtr->MaxVal-infoPtr->MinVal+1));
+        thumbSize = MulDiv(pixels,infoPtr->page,(infoPtr->maxVal-infoPtr->minVal+1));
         if (thumbSize < SCROLL_MIN_THUMB) thumbSize = SCROLL_MIN_THUMB;
     }
     else thumbSize = GetSystemMetrics(SM_CXVSCROLL);
 
-    if ((pixels -= thumbSize) <= 0) return infoPtr->MinVal;
+    if ((pixels -= thumbSize) <= 0) return infoPtr->minVal;
 
     pos = max( 0, pos - (GetSystemMetrics(SM_CXVSCROLL) - SCROLL_ARROW_THUMB_OVERLAP) );
     if (pos > pixels) pos = pixels;
 
-    if (!infoPtr->Page) pos *= infoPtr->MaxVal - infoPtr->MinVal;
-    else pos *= infoPtr->MaxVal - infoPtr->MinVal - infoPtr->Page + 1;
-    return infoPtr->MinVal + ((pos + pixels / 2) / pixels);
+    if (!infoPtr->page) pos *= infoPtr->maxVal - infoPtr->minVal;
+    else pos *= infoPtr->maxVal - infoPtr->minVal - infoPtr->page + 1;
+    return infoPtr->minVal + ((pos + pixels / 2) / pixels);
 }
 
 /***********************************************************************
@@ -1475,9 +1475,9 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (info->fMask & SIF_PAGE)
     {
-	if( infoPtr->Page != info->nPage )
+	if( infoPtr->page != info->nPage )
 	{
-            infoPtr->Page = info->nPage;
+            infoPtr->page = info->nPage;
 	   *action |= SA_SSI_REFRESH;
            bChangeParams = TRUE;
 	}
@@ -1487,9 +1487,9 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (info->fMask & SIF_POS)
     {
-	if( infoPtr->CurVal != info->nPos )
+	if( infoPtr->curVal != info->nPos )
 	{
-	    infoPtr->CurVal = info->nPos;
+	    infoPtr->curVal = info->nPos;
 	   *action |= SA_SSI_REFRESH;
 	}
     }
@@ -1502,18 +1502,18 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
         if ((info->nMin > info->nMax) ||
             ((UINT)(info->nMax - info->nMin) >= 0x80000000))
         {
-            infoPtr->MinVal = 0;
-            infoPtr->MaxVal = 0;
+            infoPtr->minVal = 0;
+            infoPtr->maxVal = 0;
             bChangeParams = TRUE;
         }
         else
         {
-	    if( infoPtr->MinVal != info->nMin ||
-		infoPtr->MaxVal != info->nMax )
+	    if( infoPtr->minVal != info->nMin ||
+		infoPtr->maxVal != info->nMax )
 	    {
                 *action |= SA_SSI_REFRESH;
-                infoPtr->MinVal = info->nMin;
-                infoPtr->MaxVal = info->nMax;
+                infoPtr->minVal = info->nMin;
+                infoPtr->maxVal = info->nMax;
                 bChangeParams = TRUE;
 	    }
         }
@@ -1521,20 +1521,20 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     /* Make sure the page size is valid */
 
-    if (infoPtr->Page < 0) infoPtr->Page = 0;
-    else if (infoPtr->Page > infoPtr->MaxVal - infoPtr->MinVal + 1 )
-        infoPtr->Page = infoPtr->MaxVal - infoPtr->MinVal + 1;
+    if (infoPtr->page < 0) infoPtr->page = 0;
+    else if (infoPtr->page > infoPtr->maxVal - infoPtr->minVal + 1 )
+        infoPtr->page = infoPtr->maxVal - infoPtr->minVal + 1;
 
     /* Make sure the pos is inside the range */
 
-    if (infoPtr->CurVal < infoPtr->MinVal)
-        infoPtr->CurVal = infoPtr->MinVal;
-    else if (infoPtr->CurVal > infoPtr->MaxVal - max( infoPtr->Page-1, 0 ))
-        infoPtr->CurVal = infoPtr->MaxVal - max( infoPtr->Page-1, 0 );
+    if (infoPtr->curVal < infoPtr->minVal)
+        infoPtr->curVal = infoPtr->minVal;
+    else if (infoPtr->curVal > infoPtr->maxVal - max( infoPtr->page-1, 0 ))
+        infoPtr->curVal = infoPtr->maxVal - max( infoPtr->page-1, 0 );
 
     TRACE("    new values: page=%d pos=%d min=%d max=%d\n",
-		 infoPtr->Page, infoPtr->CurVal,
-		 infoPtr->MinVal, infoPtr->MaxVal );
+		 infoPtr->page, infoPtr->curVal,
+		 infoPtr->minVal, infoPtr->maxVal );
 
     /* don't change the scrollbar state if SetScrollInfo
      * is just called with SIF_DISABLENOSCROLL
@@ -1546,7 +1546,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     if (info->fMask & (SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL))
     {
         new_flags = infoPtr->flags;
-        if (infoPtr->MinVal >= infoPtr->MaxVal - max( infoPtr->Page-1, 0 ))
+        if (infoPtr->minVal >= infoPtr->maxVal - max( infoPtr->page-1, 0 ))
         {
             /* Hide or disable scroll-bar */
             if (info->fMask & SIF_DISABLENOSCROLL)
@@ -1577,7 +1577,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 done:
     /* Return current position */
 
-    return infoPtr->CurVal;
+    return infoPtr->curVal;
 }
 
 
@@ -1600,14 +1600,14 @@ BOOL WINAPI GetScrollInfo(
     if ((info->cbSize != sizeof(*info)) &&
         (info->cbSize != sizeof(*info)-sizeof(info->nTrackPos))) return FALSE;
 
-    if (info->fMask & SIF_PAGE) info->nPage = infoPtr->Page;
-    if (info->fMask & SIF_POS) info->nPos = infoPtr->CurVal;
+    if (info->fMask & SIF_PAGE) info->nPage = infoPtr->page;
+    if (info->fMask & SIF_POS) info->nPos = infoPtr->curVal;
     if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
-        info->nTrackPos = (SCROLL_TrackingWin == WIN_GetFullHandle(hwnd)) ? SCROLL_TrackingVal : infoPtr->CurVal;
+        info->nTrackPos = (SCROLL_TrackingWin == WIN_GetFullHandle(hwnd)) ? SCROLL_TrackingVal : infoPtr->curVal;
     if (info->fMask & SIF_RANGE)
     {
-	info->nMin = infoPtr->MinVal;
-	info->nMax = infoPtr->MaxVal;
+	info->nMin = infoPtr->minVal;
+	info->nMax = infoPtr->maxVal;
     }
     return (info->fMask & SIF_ALL) != 0;
 }
@@ -1635,7 +1635,7 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */ )
     INT oldPos;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
-    oldPos      = infoPtr->CurVal;
+    oldPos      = infoPtr->curVal;
     info.cbSize = sizeof(info);
     info.nPos   = nPos;
     info.fMask  = SIF_POS;
@@ -1662,7 +1662,7 @@ INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
     SCROLLBAR_INFO *infoPtr;
 
     if (!(infoPtr = SCROLL_GetScrollInfo( hwnd, nBar ))) return 0;
-    return infoPtr->CurVal;
+    return infoPtr->curVal;
 }
 
 
@@ -1674,15 +1674,15 @@ INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
 BOOL WINAPI SetScrollRange(
 HWND hwnd, /* [in] Handle of window whose scrollbar will be affected */
 INT nBar, /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */
-INT MinVal, /* [in] New minimum value */
-INT MaxVal, /* [in] New maximum value */
+INT minVal, /* [in] New minimum value */
+INT maxVal, /* [in] New maximum value */
 BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 {
     SCROLLINFO info;
 
     info.cbSize = sizeof(info);
-    info.nMin   = MinVal;
-    info.nMax   = MaxVal;
+    info.nMin   = minVal;
+    info.nMax   = maxVal;
     info.fMask  = SIF_RANGE;
     SetScrollInfo( hwnd, nBar, &info, bRedraw );
     return TRUE;
@@ -1745,8 +1745,8 @@ LPINT lpMax /* [out] Where to store maximum value */)
         if (lpMax) lpMax = 0;
         return FALSE;
     }
-    if (lpMin) *lpMin = infoPtr->MinVal;
-    if (lpMax) *lpMax = infoPtr->MaxVal;
+    if (lpMin) *lpMin = infoPtr->minVal;
+    if (lpMax) *lpMax = infoPtr->maxVal;
     return TRUE;
 }
 
