@@ -3,6 +3,9 @@
  * defined in the 'configure' script.
  */
 
+/* Define if bitfields are bigendian */
+#undef BITFIELDS_BIGENDIAN
+
 /* Define if .type asm directive must be inside a .def directive */
 #undef NEED_TYPE_IN_DEF
 

@@ -2478,17 +2478,35 @@ typedef struct _IMAGE_RESOURCE_DIRECTORY {
 typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY {
 	union {
 		struct {
+#ifdef BITFIELDS_BIGENDIAN
+			unsigned NameIsString:1;
+			unsigned NameOffset:31;
+#else
 			unsigned NameOffset:31;
 			unsigned NameIsString:1;
+#endif
 		} DUMMYSTRUCTNAME1;
 		DWORD   Name;
-		WORD    Id;
+                struct {
+#ifdef WORDS_BIGENDIAN
+			WORD    __pad;
+			WORD    Id;
+#else
+			WORD    Id;
+			WORD    __pad;
+#endif
+		} DUMMYSTRUCTNAME2;
 	} DUMMYUNIONNAME1;
 	union {
 		DWORD   OffsetToData;
 		struct {
+#ifdef BITFIELDS_BIGENDIAN
+			unsigned DataIsDirectory:1;
+			unsigned OffsetToDirectory:31;
+#else
 			unsigned OffsetToDirectory:31;
 			unsigned DataIsDirectory:1;
+#endif
 		} DUMMYSTRUCTNAME2;
 	} DUMMYUNIONNAME2;
 } IMAGE_RESOURCE_DIRECTORY_ENTRY,*PIMAGE_RESOURCE_DIRECTORY_ENTRY;

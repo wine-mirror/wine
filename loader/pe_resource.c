@@ -66,9 +66,9 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DI
     while (min <= max)
     {
         pos = (min + max) / 2;
-        if (entry[pos].u1.Id == id)
+        if (entry[pos].u1.s2.Id == id)
             return (IMAGE_RESOURCE_DIRECTORY *)((char *)root + entry[pos].u2.s2.OffsetToDirectory);
-        if (entry[pos].u1.Id > id) max = pos - 1;
+        if (entry[pos].u1.s2.Id > id) max = pos - 1;
         else min = pos + 1;
     }
     return NULL;
@@ -300,7 +300,7 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lpara
         }
         else
         {
-            type = (LPSTR)(int)et[i].u1.Id;
+            type = (LPSTR)(int)et[i].u1.s2.Id;
             ret = lpfun(hmod,type,lparam);
         }
 	if (!ret)
@@ -339,7 +339,7 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lpara
         }
         else
         {
-            type = (LPWSTR)(int)et[i].u1.Id;
+            type = (LPWSTR)(int)et[i].u1.s2.Id;
             ret = lpfun(hmod,type,lparam);
         }
 	if (!ret)
@@ -384,7 +384,7 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
         }
         else
         {
-            name = (LPSTR)(int)et[i].u1.Id;
+            name = (LPSTR)(int)et[i].u1.s2.Id;
             ret = lpfun(hmod,type,name,lparam);
         }
 	if (!ret)
@@ -426,7 +426,7 @@ BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpf
         }
         else
         {
-            name = (LPWSTR)(int)et[i].u1.Id;
+            name = (LPWSTR)(int)et[i].u1.s2.Id;
             ret = lpfun(hmod,type,name,lparam);
         }
 	if (!ret)
@@ -456,7 +456,7 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
         /* languages are just ids... I hope */
-	ret = lpfun(hmod,type,name,et[i].u1.Id,lparam);
+	ret = lpfun(hmod,type,name,et[i].u1.s2.Id,lparam);
 	if (!ret)
 		break;
     }
@@ -484,7 +484,7 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
     for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++) {
-	ret = lpfun(hmod,type,name,et[i].u1.Id,lparam);
+	ret = lpfun(hmod,type,name,et[i].u1.s2.Id,lparam);
 	if (!ret)
 		break;
     }
