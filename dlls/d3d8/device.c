@@ -474,6 +474,21 @@ int OPERANDx_ALPHA_EXT(DWORD arg) {
         return GL_OPERAND0_ALPHA_EXT;
     }
 }
+GLenum StencilOp(DWORD op) {
+    switch(op) {                
+    case D3DSTENCILOP_KEEP    : return GL_KEEP;
+    case D3DSTENCILOP_ZERO    : return GL_ZERO;
+    case D3DSTENCILOP_REPLACE : return GL_REPLACE;
+    case D3DSTENCILOP_INCRSAT : return GL_INCR;
+    case D3DSTENCILOP_DECRSAT : return GL_DECR;
+    case D3DSTENCILOP_INVERT  : return GL_INVERT;
+    case D3DSTENCILOP_INCR    : return GL_INCR; /* Fixme - needs to support wrap */
+    case D3DSTENCILOP_DECR    : return GL_DECR; /* Fixme - needs to support wrap */
+    default:
+        FIXME("Invalid stencil op %ld\n", op);
+        return GL_ALWAYS;
+    }
+}
 
 /* IDirect3D IUnknown parts follow: */
 HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID riid,LPVOID *ppobj)
@@ -1782,8 +1797,18 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
             /* Note the texture color applies to all textures whereas 
                GL_TEXTURE_ENV_COLOR applies to active only */
+            float col[4];
+            col[0] = ((Value >> 16) & 0xFF) / 255.0;
+            col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
+            col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
+            col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
+
+            /* Set the default alpha blend color */
+            glBlendColor(col[0], col[1], col[2], col[3]);
+            checkGLcall("glBlendColor");
+
+            /* And now the default texture color as well */
             for (i=0; i<8; i++) {
-                float col[4];
 
                 if (This->StateBlock.textures[i]) {
                    glActiveTextureARB(GL_TEXTURE0_ARB + i);
@@ -1791,10 +1816,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
                    /* Note the D3DRS value applies to all textures, but GL has one
                       per texture, so apply it now ready to be used!               */
-                   col[0] = ((Value >> 16) & 0xFF) / 255.0;
-                   col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
-                   col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
-                   col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
                    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
                    checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
                 }
@@ -1814,6 +1835,138 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
         }
         break;
 
+    case D3DRS_STENCILENABLE             :
+        if (Value) {
+            glEnable(GL_STENCIL_TEST);
+            checkGLcall("glEnable GL_STENCIL_TEST");
+        } else {
+            glDisable(GL_STENCIL_TEST);
+            checkGLcall("glDisable GL_STENCIL_TEST");
+        }
+        break;
+
+    case D3DRS_STENCILFUNC               :
+        {
+           int glParm = GL_ALWAYS;
+           int ref = 0;
+           GLuint mask = 0xFFFFFFFF;
+
+           glGetIntegerv(GL_STENCIL_REF, &ref);
+           checkGLcall("glGetFloatv(GL_STENCIL_REF, &ref);");
+           glGetIntegerv(GL_STENCIL_VALUE_MASK, &mask);
+           checkGLcall("glGetFloatv(GL_STENCIL_VALUE_MASK, &glParm);");
+
+           switch ((D3DCMPFUNC) Value) {
+           case D3DCMP_NEVER:         glParm=GL_NEVER; break;
+           case D3DCMP_LESS:          glParm=GL_LESS; break;
+           case D3DCMP_EQUAL:         glParm=GL_EQUAL; break;
+           case D3DCMP_LESSEQUAL:     glParm=GL_LEQUAL; break;
+           case D3DCMP_GREATER:       glParm=GL_GREATER; break;
+           case D3DCMP_NOTEQUAL:      glParm=GL_NOTEQUAL; break;
+           case D3DCMP_GREATEREQUAL:  glParm=GL_GEQUAL; break;
+           case D3DCMP_ALWAYS:        glParm=GL_ALWAYS; break;
+           default:
+               FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
+           }
+           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           glStencilFunc(glParm, ref, mask);
+           checkGLcall("glStencilFunc");
+        }
+        break;
+
+    case D3DRS_STENCILREF                :
+        {
+           int glParm = GL_ALWAYS;
+           int ref = 0;
+           GLuint mask = 0xFFFFFFFF;
+
+           glGetIntegerv(GL_STENCIL_FUNC, &glParm);
+           checkGLcall("glGetFloatv(GL_STENCIL_FUNC, &glParm);");
+           glGetIntegerv(GL_STENCIL_VALUE_MASK, &mask);
+           checkGLcall("glGetFloatv(GL_STENCIL_VALUE_MASK, &glParm);");
+
+           ref = Value;
+           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           glStencilFunc(glParm, ref, mask);
+           checkGLcall("glStencilFunc");
+        }
+        break;
+
+    case D3DRS_STENCILMASK               :
+        {
+           int glParm = GL_ALWAYS;
+           int ref = 0.0;
+           GLuint mask = Value;
+
+           glGetIntegerv(GL_STENCIL_REF, &ref);
+           checkGLcall("glGetFloatv(GL_STENCIL_REF, &ref);");
+           glGetIntegerv(GL_STENCIL_FUNC, &glParm);
+           checkGLcall("glGetFloatv(GL_STENCIL_FUNC, &glParm);");
+
+           TRACE("glStencilFunc with Parm=%x, ref=%d, mask=%x\n", glParm, ref, mask);
+           glStencilFunc(glParm, ref, mask);
+           checkGLcall("glStencilFunc");
+        }
+        break;
+
+    case D3DRS_STENCILFAIL               :
+        {
+            GLenum fail  ; 
+            GLenum zpass ; 
+            GLenum zfail ; 
+
+            fail = StencilOp(Value);
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);");
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);");
+
+            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
+            glStencilOp(fail, zfail, zpass);
+            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        }
+        break;
+    case D3DRS_STENCILZFAIL              :
+        {
+            GLenum fail  ; 
+            GLenum zpass ; 
+            GLenum zfail ; 
+
+            glGetIntegerv(GL_STENCIL_FAIL, &fail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_PASS, &zpass);");
+            zfail = StencilOp(Value);
+
+            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
+            glStencilOp(fail, zfail, zpass);
+            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        }
+        break;
+    case D3DRS_STENCILPASS               :
+        {
+            GLenum fail  ; 
+            GLenum zpass ; 
+            GLenum zfail ; 
+
+            glGetIntegerv(GL_STENCIL_FAIL, &fail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_FAIL, &fail);");
+            zpass = StencilOp(Value);
+            glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);
+            checkGLcall("glGetIntegerv(GL_STENCIL_PASS_DEPTH_FAIL, &zfail);");
+
+            TRACE("StencilOp fail=%x, zfail=%x, zpass=%x\n", fail, zfail, zpass);
+            glStencilOp(fail, zfail, zpass);
+            checkGLcall("glStencilOp(fail, zfail, zpass);");
+        }
+        break;
+
+    case D3DRS_STENCILWRITEMASK          :
+        {
+            glStencilMask(Value);
+            checkGLcall("glStencilMask");
+        }
+        break;
 
         /* Unhandled yet...! */
     case D3DRS_LINEPATTERN               :
@@ -1828,14 +1981,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_EDGEANTIALIAS             :
     case D3DRS_ZBIAS                     :
     case D3DRS_RANGEFOGENABLE            :
-    case D3DRS_STENCILENABLE             :
-    case D3DRS_STENCILFAIL               :
-    case D3DRS_STENCILZFAIL              :
-    case D3DRS_STENCILPASS               :
-    case D3DRS_STENCILFUNC               :
-    case D3DRS_STENCILREF                :
-    case D3DRS_STENCILMASK               :
-    case D3DRS_STENCILWRITEMASK          :
     case D3DRS_WRAP0                     :
     case D3DRS_WRAP1                     :
     case D3DRS_WRAP2                     :
