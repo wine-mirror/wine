@@ -56,6 +56,7 @@ typedef struct _FV
 
 /* Per-view flags */
 #define VFLAG_SYSTEM     0x01
+#define VFLAG_VALLOC     0x02  /* allocated by VirtualAlloc */
 
 /* Conversion from VPROT_* to Win32 flags */
 static const BYTE VIRTUAL_Win32Flags[16] =
@@ -139,10 +140,13 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
     UINT addr = view->base;
     BYTE prot = view->prot[0];
 
-    DPRINTF( "View: %08x - %08x%s",
-	  view->base, view->base + view->size - 1,
-	  (view->flags & VFLAG_SYSTEM) ? " (system)" : "" );
-    if (view->mapping)
+    DPRINTF( "View: %08x - %08x",
+             view->base, view->base + view->size - 1 );
+    if (view->flags & VFLAG_SYSTEM)
+        DPRINTF( " (system)\n" );
+    else if (view->flags & VFLAG_VALLOC)
+        DPRINTF( " (valloc)\n" );
+    else if (view->mapping)
         DPRINTF( " %d\n", view->mapping );
     else
         DPRINTF( " (anonymous)\n");
@@ -791,8 +795,9 @@ LPVOID WINAPI VirtualAlloc(
 	    SetLastError( ERROR_INVALID_ADDRESS );
 	    return NULL;
         }
-        if (!(view = VIRTUAL_CreateView( ptr, size, (type & MEM_SYSTEM) ?
-                                         VFLAG_SYSTEM : 0, vprot, 0 )))
+        if (!(view = VIRTUAL_CreateView( ptr, size,
+                                         VFLAG_VALLOC | ((type & MEM_SYSTEM) ? VFLAG_SYSTEM : 0),
+                                         vprot, 0 )))
         {
             munmap( (void *)ptr, size );
             SetLastError( ERROR_OUTOFMEMORY );
@@ -859,7 +864,8 @@ BOOL WINAPI VirtualFree(
     base = ROUND_ADDR( addr );
 
     if (!(view = VIRTUAL_FindView( base )) ||
-        (base + size > view->base + view->size))
+        (base + size > view->base + view->size) ||
+        !(view->flags & VFLAG_VALLOC))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
