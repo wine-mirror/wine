@@ -176,7 +176,7 @@ C:\                Root directory of primary disk drive
         without having to install Windows on their machine. Wine
         implements the functionality of the main DLLs usually
         provided with Windows. Therefore, once Wine is finished, you
-        will not need to have windows installed to use Wine.
+        will not need to have Windows installed to use Wine.
       </para>
       <para>
         Wine has already made enough progress that it may be possible
@@ -187,25 +187,32 @@ C:\                Root directory of primary disk drive
       <orderedlist>
         <listitem>
           <para>
-            Create empty <filename>C:\windows</filename>,
-            <filename>C:\windows\system</filename>,
-            <filename>C:\windows\Start Menu</filename>, and
-            <filename>C:\windows\Start Menu\Programs</filename>
+            Point <medialabel>[Drive C]</medialabel> in
+            <filename>~/.wine/config</filename> to the directory where you want
+            <filename>C:</filename> to be. Refer to the wine.conf man page
+            for more information.
+	    The directory to be used for emulating a C: drive will be
+	    the base directory for some Windows specific directories
+	    created below.
+	    Remember to use
+            <userinput>"Filesystem" = "win95"</userinput>!
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+	    Within the directory to be used for C:, create empty
+	    <filename>windows</filename>,
+            <filename>windows/system</filename>,
+            <filename>windows/Start Menu</filename>, and
+            <filename>windows/Start Menu/Programs</filename>
             directories. Do not point Wine to a
             <filename>Windows</filename> directory full of old
             installations and a messy registry. (Wine creates a
             special registry in your <filename >home</filename>
             directory, in <filename>$HOME/.wine/*.reg</filename>.
             Perhaps you have to remove these files).
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Point <medialabel>[Drive C]</medialabel> in
-            <filename>~/.wine/config</filename> to where you want
-            <filename>C:</filename> to be. Refer to the Wine man page
-            for more information. Remember to use
-            <userinput>"Filesystem" = "win95"</userinput>!
+	    In one line:
+	    mkdir -p windows windows/system windows/Start\ Menu windows/Start\ Menu/Programs
           </para>
         </listitem>
         <listitem>
@@ -215,9 +222,9 @@ C:\                Root directory of primary disk drive
             it yourself, compile <filename>programs/regapi</filename>,
             and run:
           </para>
-		  <screen>
-			<userinput>programs/regapi/regapi setValue &lt; winedefault.reg</userinput>
-		  </screen>
+	  <screen>
+		<userinput>programs/regapi/regapi setValue &lt; winedefault.reg</userinput>
+	  </screen>
         </listitem>
         <listitem>
           <para>
@@ -301,6 +308,32 @@ C:\                Root directory of primary disk drive
           </para>
         </listitem>
       </itemizedlist>
+    </sect1>
+
+    <sect1 id="with-windows">
+      <title>Installing Wine Using An Existing Windows Partition As Base</title>
+      <para>
+        Some people intend to use the data of an existing Windows partition
+	with Wine in order to gain some better compatibility or to run already
+	installed programs in a setup as original as possible.
+	Note that many Windows programs assume that they have full write
+	access to all windows directories.
+
+	This means that you either have to configure the Windows
+	partition mount point for write permission by your Wine user
+	(see <link linkend="vfat">Dealing with FAT/VFAT partitions</link>
+	on how to do that), or you'll have to copy over (some parts of) the Windows
+	partition content to a directory of a Unix partition and make
+	sure this directory structure is writable by your user.
+	We HIGHLY DISCOURAGE people from directly using a Windows partition with
+	write access as a base for Wine !! (some programs, notably
+	Explorer, corrupt large parts of the Windows partition in case
+	of an incorrect setup; you've been warned).
+	Not to mention that NTFS write support in Linux is still very
+	experimental and DANGEROUS (in case you're using an NT-based
+	Windows version using the NTFS file system).
+	Thus we advise you to go the Unix directory way.
+      </para>
     </sect1>
 
     <sect1 id="vfat">
@@ -590,7 +623,7 @@ drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows</computeroutput>
       </sect2>
 
       <sect2>
-        <title>LINUX requirements:</title>
+        <title>Linux requirements</title>
         <orderedlist>
           <listitem>
             <para>

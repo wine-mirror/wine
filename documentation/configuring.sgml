@@ -401,6 +401,8 @@ And here is a setup for Drive A, a generic floppy drive:
 	    WARNING: if you use ttydrv here, then you won't be able to run
 	    any Windows GUI programs. Thus this option is mainly interesting
 	    for e.g. embedded use of Wine in web server scripts.
+	    Note that ttydrv is still very lacking, so if it doesn't work,
+	    resort to using "xvfb", a virtual X11 server.
 	  </para>
 	  <para>
             <programlisting>"Printer" = "off|on"</programlisting> Tells wine
@@ -929,7 +931,7 @@ OPTIONAL:
           </para>
 	</sect3>
 
-        <sect3>
+        <sect3 id="appdefaults-section">
           <title>The [AppDefaults] Section</title>
           <para>
             The section is used to overwrite certain settings of this file for a
@@ -1053,11 +1055,6 @@ OPTIONAL:
         <title>x11drv modes of operation</title>
 
         <para>
-          <!-- FIXME: This is outdated -->
-          Note: This is now all done in the config file. Needs an update...
-        </para>
-
-        <para>
           The x11drv driver consists of two conceptually distinct
           pieces, the graphics driver (GDI part), and the windowing
           driver (USER part). Both of these are linked into the
@@ -1076,24 +1073,10 @@ OPTIONAL:
 
         <variablelist>
           <varlistentry>
-            <term>Unmanaged/Normal</term>
-            <listitem>
-              <para>
-                The default. Window-manager-independent (any running
-                window manager is ignored completely). Window
-                decorations (title bars, borders, etc) are drawn by
-                Wine to look and feel like the real Windows. This is
-                compatible with applications that depend on being able
-                to compute the exact sizes of any such decorations, or
-                that want to draw their own.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
             <term>Managed</term>
             <listitem>
               <para>
-                Specified by using the <literal>Managed</literal>
+                The default. Specified by using the <literal>Managed</literal>
                 wine config file option (see below).
                 Ordinary top-level frame windows with thick borders,
                 title bars, and system menus will be managed by your
@@ -1101,8 +1084,24 @@ OPTIONAL:
                 better with the rest of your desktop, but may not
                 always work perfectly. (A rewrite of this mode of
                 operation, to make it more robust and less patchy, is
-                highly desirable, though, and is planned to be done
-                before the Wine 1.0 release.)
+                currently being done, though, and it's planned to be
+                finished before the Wine 1.0 release.)
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Unmanaged/Normal</term>
+            <listitem>
+              <para>
+                Window-manager-independent (any running
+                window manager is ignored completely). Window
+                decorations (title bars, borders, etc) are drawn by
+                Wine to look and feel like the real Windows. This is
+                compatible with applications that depend on being able
+                to compute the exact sizes of any such decorations, or
+                that want to draw their own.
+                Unmanaged mode is only used if both Managed and Desktop
+                are set to disabled.
               </para>
             </listitem>
           </varlistentry>
@@ -1124,8 +1123,8 @@ OPTIONAL:
                 applications can roam freely within this virtual
                 workspace and think they own it all, without
                 disturbing your other X apps.
-		Note: currently there's on desktop window for every
-		application; this will be fixed in the future.
+		Note: currently there's one desktop window for every
+		application; this will be fixed at some time.
               </para>
             </listitem>
           </varlistentry>
@@ -1296,17 +1295,11 @@ OPTIONAL:
             <term>TextCP</term>
             <listitem>
               <para>
-                <!-- FIXME: To be documented -->
-                To be documented...
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>XVideoPort</term>
-            <listitem>
-              <para>
-                <!-- FIXME: To be documented -->
-                To be documented...
+	        Codepage to be used for rendering the text in X11
+		output. Some sample values would be 437 (USA, Canada),
+		850 (Europe), 852 (Central/Eastern Europe), 855
+		(Cyrillic). For additional suitable values, see e.g. the Linux
+		kernel's codepage configuration page.
               </para>
             </listitem>
           </varlistentry>
@@ -1316,6 +1309,76 @@ OPTIONAL:
 
     &registry;
 
+    <sect1 id="windows-versions">
+
+      <title>Setting the windows and DOS version value that's passed to
+      programs</title>
+      
+      <para>
+        Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+        Oct 18 2002
+      </para>
+
+      <para>
+        The windows and DOS version value a program gets e.g. by calling the
+	Windows function GetVersion() plays a very important role:
+	If your Wine installation for whatever reason fails to provide
+	to your program the correct version value that it expects,
+	then the program might assume some very bad things and fail (in
+	the worst case even silently !).
+    
+        Fortunately Wine contains some more or less intelligent Windows
+	version guessing algorithm that will try to guess the Windows
+	version a program might expect and pass that one on to the
+	program.
+
+	Thus you should <emphasis>not</emphasis> lightly configure a version value, as this will be a "forced" value and thus turn out to be rather harmful to proper operation. In other words: only explicitly set a Windows version value in case Wine's own version detection was unable to provide the correct Windows version and the program fails.
+      </para>
+
+      <sect2>
+        <title>How to configure the Windows and DOS version value Wine
+	should return</title>
+	
+	<para>
+	The version values can be configured in the wine config file in
+	the [Version] section.
+	</para>
+
+	<variablelist>
+	  <varlistentry>
+	    <term>"Windows" = "&lt;version string&gt;"</term>
+	    <listitem>
+	      <para>
+	        default: none; chosen by semi-intelligent detection
+	        mechanism based on DLL environment.
+	        Used to specify which Windows version to return to
+	        programs  (forced  value, overrides standard detection
+	        mechanism  !). Valid  settings are e.g. "win31", "win95",
+	        "win98",  "win2k",  "winxp".
+		Also valid as an
+		<link linkend="appdefaults-section">AppDefaults</link>
+	        setting (recommended/preferred use).
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term>"DOS"="&lt;version string&gt;"</term>
+	    <listitem>
+	      <para>
+	        Used to specify the DOS version that should be returned
+		to programs. Only takes effect in case Wine acts as
+		"win31" Windows version ! Common DOS version settings
+		include 6.22, 6.20, 6.00, 5.00, 4.00, 3.30, 3.10.
+		Also valid as an
+		<link linkend="appdefaults-section">AppDefaults</link>
+	        setting (recommended/preferred use).
+	      </para>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </sect2>
+    </sect1>
+    
     <sect1 id="cdrom-labels">
       <sect1info>
         <authorgroup>
@@ -1400,7 +1463,7 @@ OPTIONAL:
         <para>
           If you don't do that, then you should give fixed
           <literal>"Label" =</literal> or <literal>"Serial" =</literal>
-          entries in <filename>~./wine/config</filename>, as Wine returns
+          entries in <filename>~/.wine/config</filename>, as Wine returns
           these entries instead if no device is given. If they don't
           exist, then Wine will return default values (label
           <literal>Drive X</literal> and serial
@@ -1896,6 +1959,24 @@ OPTIONAL:
 	  directory. Just find out its directory by having a look at the Wine
 	  config File variable "System" (which indicates the location of the
 	  Windows system directory) and the associated drive entry.
+	  Note that you probably shouldn't use NT-based native DLLs,
+	  since Wine's NT API support is somewhat weaker than its Win9x
+	  API support (thus leading to even worse compatibility with NT DLLs
+	  than with a no-windows setup !), so better use Win9x native DLLs
+	  instead or no native DLLs at all.
+        </para>
+      </sect2>
+      <sect2 id="dll-windows">
+        <title>Fetching native DLLs from a Windows CD</title>
+
+        <para>
+          Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+        </para>
+
+        <para>
+	The Linux <command>cabextract</command> utility can be used to
+	extract native Windows .dll files from .cab files that are to be
+	found on many Windows installation CDs.
         </para>
       </sect2>
     </sect1>

@@ -1,5 +1,194 @@
   <chapter id="bugs">
-    <title>Finding and Reporting Bugs</title>
+    <title>Troubleshooting / Reporting bugs</title>
+
+    <sect1 id="troubleshooting">
+      <title>What to do if some program still doesn't work ?</title>
+
+      <para>
+      There are times when you've been trying everything, you even killed a cat
+      at full moon and ate it with rotten garlic and foul fish
+      while doing the Devil's Dance, yet nothing helped to make some damn
+      program work on some Wine version.
+      Don't despair, we're here to help you...
+      (in other words: how much do you want to pay ?)
+      </para>
+      
+      <sect2>
+        <title>Run "winecheck" to check your configuration</title>
+
+	<para>
+	Run a Perl script called <command>winecheck</command>, to be
+	found in Wine's tools/ directory.
+
+	The latest version can always be found at
+	<ulink
+	url="http://home.arcor.de/andi.mohr/download/winecheck">http://home.arcor.de/andi.mohr/download/winecheck</ulink>.
+
+	Make sure to run <command>chmod +x winecheck</command> first before
+	trying to execute it...
+	(or alternatively run it via <command>perl ./winecheck</command>)
+
+	The winecheck output will be a percentage score indicating Wine
+	configuration correctness.
+	Note that winecheck is only alpha, so it's not very complete or
+	100% accurate.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Use different windows version settings</title>
+
+	<para>
+	In several cases using <link linkend="windows-versions">different windows version settings</link> can help.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Use different startup paths</title>
+
+	<para>
+	  This sometimes helps, too:
+
+	  Try to use both
+	  <command>wine prg.exe</command>
+	  and
+	  <command>wine x:\\full\\path\\to\\prg.exe</command>
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Fiddle with DLL configuration</title>
+
+	<para>
+	  Run with --debugmsg +loaddll to figure out which DLLs are
+	  being used, and whether they're being loaded as native or
+	  builtin.
+	  Then make sure you have proper native DLL files in your
+	  configured C:\windows\system directory and fiddle with DLL
+	  load order settings at command line or in config file.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Check your system environment !</title>
+
+	<para>
+	  Just an idea: could it be that your Wine build/execution
+	  environment is broken ?
+
+	  Make sure that there are no problems whatsoever with the
+	  packages
+	  that Wine depends on (gcc, glibc, X libraries, OpenGL (!), ...)
+
+	  E.g. some people have strange failures to find stuff when
+	  using "wrong" header files for the "right" libraries !!!
+	  (which results in days of debugging to desperately try to find
+	  out why that lowlevel function fails in a way that is completely
+	  beyond imagination... ARGH !)
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Use different GUI (Window Manager) modes</title>
+	
+	<para>
+	  Instruct Wine via config file to use either desktop mode,
+	  managed mode or plain ugly "normal" mode.
+	  That can make one hell of a difference, too.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Check your app !</title>
+	
+	<para>
+	  Maybe your app is using some kind of copy protection ?
+
+	  Many copy protections currently don't work on Wine.
+	  Some might work in the future, though.
+	  (the CD-ROM layer isn't really full-featured yet).
+	</para>
+
+	<para>
+	  Go to <ulink
+	  url="http://www.gamecopyworld.com">GameCopyWorld</ulink>
+	  and try to find a decent crack for your game that gets rid of
+	  that ugly copy protection.
+	  I hope you do have a legal copy of the program, though... :-)
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Check your Wine environment !</title>
+        
+	<para>
+	  Running with or without a Windows partition can have a
+	  dramatic impact.
+
+	  Configure Wine to do the opposite of what you used to have.
+
+	  Also, install DCOM98 or DCOM95. This can be very beneficial.
+	</para>
+      </sect2>
+
+      <sect2>
+        <title>Reconfigure Wine</title>
+	
+	<para>
+	  Sometimes wine installation process changes and new versions of
+	  Wine acccount on these changes.
+	  This is especially true if your setup was created long time ago.
+
+	  Rename your existing <filename>~/.wine</filename> directory
+	  for backup purposes.
+	  Use the setup process that's recommended for your Wine distribution
+	  to create new configuration.
+	  Use information in old <filename>~/.wine</filename>
+	  directory as a reference.
+	  For source wine distribution to configure Wine run
+	  tools/wineinstall script as a user you want to do the configuration
+	  for.
+	  This is a pretty safe operation. Later you can remove the new
+	  <filename>~/.wine</filename> directory and rename your old one back.
+	</para>
+      </sect2>
+
+      <sect2>
+      <title>Check out further information</title>
+      
+      <para>
+        Check out the <ulink
+	url="http://www.winehq.org/fom-meta/cache/19.html">Wine Troubleshooting Guide</ulink> on WineHQ.
+
+	Go to <ulink url="http://groups.google.com">Google Groups</ulink>
+	and check whether some guys are smarter than you ;-)
+	(well, whether they found a solution to the problem, that is)
+
+	Go to <ulink url="http://appdb.codeweavers.com">WineHQ's
+	Application Database</ulink> and check whether
+	someone posted the vital config hint for your app.
+
+	If that doesn't help, then consider going to
+	irc.openprojects.net channel #WineHQ, posting to
+	news:comp.emulators.ms-windows.wine or mailing to the wine-users
+	(or maybe sometimes even wine-devel) mailing lists.
+      </para>
+      </sect2>
+
+      <sect2>
+        <title>Debug it!</title>
+
+	<para>
+	  Have you used the Search feature of the <ulink
+	  url="http://www.winehq.org/fom-meta/cache/19.html">Wine Troubleshooting Guide</ulink> ?? (i.e. are you sure there's no answer ?)
+	  If you have, then try
+	  <ulink url="http://www.winehq.org/fom-meta/cache/230.html">
+	  The Perfect Enduser Wine Debugging Guide</ulink>, and of
+	  course don't forget to read the Wine Developers Guide.
+	</para>
+      </sect2>
+	
+    </sect1>
 
     <sect1 id="bug-reporting">
       <title>How To Report A Bug</title>
@@ -8,7 +197,7 @@
         Written by (???)
       </para>
       <para>
-        (Extracted from <filename>wine/documentation/bugreports</filename>)
+        (Originally extracted from <filename>wine/documentation/bugreports</filename>)
       </para>
 
       <para>

@@ -5,7 +5,7 @@ wine \- run Windows programs on Unix
 .SH SYNOPSIS
 .BI "wine " "[wine_options] " "[--] " "program " "[arguments ... ]"
 .PP
-For instructions on passing arguments to Windows programs, please see the 
+For instructions on passing arguments to Windows programs, please see the
 .B
 PROGRAM/ARGUMENTS
 section of the man page.
@@ -39,8 +39,8 @@ using none at all or the ones from older Windows versions.
 A large percentage of the API has been implemented,
 although there are still several major pieces of work left to do.
 .SH REQUIREMENTS AND INSTALLATION
-Read the README file in the Wine source distribution to know what Wine
-requires and how it is installed from source.
+Read the README file in the Wine source distribution and the wine.conf
+man page to know what Wine requires and how it is installed from source.
 .SH OPTIONS
 .TP
 .I --debugmsg [xxx]#name[,[xxx1]#name1][,<+|->relay=yyy1[:yyy2]]
