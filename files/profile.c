@@ -1154,13 +1154,15 @@ UINT WINAPI GetProfileIntW( LPCWSTR section, LPCWSTR entry, INT def_val )
 }
 
 /*
- * undoc_feature means:
- * return section names string list if both section and entry are NULL.
+ * if allow_section_name_copy is TRUE, allow the copying :
+ *   - of Section names if 'section' is NULL
+ *   - of Keys in a Section if 'entry' is NULL
+ * (see MSDN doc for GetPrivateProfileString)
  */
 static int PROFILE_GetPrivateProfileString( LPCSTR section, LPCSTR entry,
 					    LPCSTR def_val, LPSTR buffer,
 					    UINT16 len, LPCSTR filename,
-					    BOOL undoc_feature )
+					    BOOL allow_section_name_copy )
 {
     int		ret;
     LPSTR	pDefVal = NULL;
@@ -1193,10 +1195,10 @@ static int PROFILE_GetPrivateProfileString( LPCSTR section, LPCSTR entry,
     EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
-	if ((undoc_feature) && (section == NULL) && (entry == NULL))
-            /* undocumented; both section and entry are NULL */
+	if ((allow_section_name_copy) && (section == NULL))
             ret = PROFILE_GetSectionNames(buffer, len);
 	else
+	    /* PROFILE_GetString already handles the 'entry == NULL' case */
             ret = PROFILE_GetString( section, entry, pDefVal, buffer, len );
     } else {
        lstrcpynA( buffer, pDefVal, len );
