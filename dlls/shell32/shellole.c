@@ -533,7 +533,7 @@ IClassFactory * IDefClF_fnConstructor(LPFNCREATEINSTANCE lpfnCI, PLONG pcRefDll,
 static HRESULT WINAPI IDefClF_fnQueryInterface(
   LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
-	ICOM_THIS(IDefClFImpl,iface);
+	IDefClFImpl *This = (IDefClFImpl *)iface;
 
 	TRACE("(%p)->(%s)\n",This,shdebugstr_guid(riid));
 
@@ -553,7 +553,7 @@ static HRESULT WINAPI IDefClF_fnQueryInterface(
  */
 static ULONG WINAPI IDefClF_fnAddRef(LPCLASSFACTORY iface)
 {
-	ICOM_THIS(IDefClFImpl,iface);
+	IDefClFImpl *This = (IDefClFImpl *)iface;
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	return InterlockedIncrement(&This->ref);
@@ -563,7 +563,7 @@ static ULONG WINAPI IDefClF_fnAddRef(LPCLASSFACTORY iface)
  */
 static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 {
-	ICOM_THIS(IDefClFImpl,iface);
+	IDefClFImpl *This = (IDefClFImpl *)iface;
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
 	if (!InterlockedDecrement(&This->ref))
@@ -582,7 +582,7 @@ static ULONG WINAPI IDefClF_fnRelease(LPCLASSFACTORY iface)
 static HRESULT WINAPI IDefClF_fnCreateInstance(
   LPCLASSFACTORY iface, LPUNKNOWN pUnkOuter, REFIID riid, LPVOID *ppvObject)
 {
-	ICOM_THIS(IDefClFImpl,iface);
+	IDefClFImpl *This = (IDefClFImpl *)iface;
 
 	TRACE("%p->(%p,%s,%p)\n",This,pUnkOuter,shdebugstr_guid(riid),ppvObject);
 
@@ -603,7 +603,7 @@ static HRESULT WINAPI IDefClF_fnCreateInstance(
  */
 static HRESULT WINAPI IDefClF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 {
-	ICOM_THIS(IDefClFImpl,iface);
+	IDefClFImpl *This = (IDefClFImpl *)iface;
 	TRACE("%p->(0x%x), not implemented\n",This, fLock);
 	return E_NOTIMPL;
 }

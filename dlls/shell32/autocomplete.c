@@ -132,7 +132,7 @@ static HRESULT WINAPI IAutoComplete_fnQueryInterface(
     REFIID riid,
     LPVOID *ppvObj)
 {
-    ICOM_THIS(IAutoCompleteImpl, iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     
     TRACE("(%p)->(\n\tIID:\t%s,%p)\n", This, shdebugstr_guid(riid), ppvObj);
     *ppvObj = NULL;
@@ -166,7 +166,7 @@ static HRESULT WINAPI IAutoComplete_fnQueryInterface(
 static ULONG WINAPI IAutoComplete_fnAddRef(
 	IAutoComplete * iface)
 {
-    ICOM_THIS(IAutoCompleteImpl,iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     
     TRACE("(%p)->(%lu)\n",This,This->ref);
     return ++(This->ref);
@@ -178,7 +178,7 @@ static ULONG WINAPI IAutoComplete_fnAddRef(
 static ULONG WINAPI IAutoComplete_fnRelease(
 	IAutoComplete * iface)
 {
-    ICOM_THIS(IAutoCompleteImpl,iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     
     TRACE("(%p)->(%lu)\n",This,This->ref);
 
@@ -205,7 +205,7 @@ static HRESULT WINAPI IAutoComplete_fnEnable(
     IAutoComplete * iface,
     BOOL fEnable)
 {
-    ICOM_THIS(IAutoCompleteImpl, iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
 
     HRESULT hr = S_OK;
 
@@ -226,7 +226,7 @@ static HRESULT WINAPI IAutoComplete_fnInit(
     LPCOLESTR pwzsRegKeyPath,
     LPCOLESTR pwszQuickComplete)
 {
-    ICOM_THIS(IAutoCompleteImpl, iface);
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)iface;
     static const WCHAR lbName[] = {'L','i','s','t','B','o','x',0};
 
     TRACE("(%p)->(0x%08lx, %p, %s, %s)\n", 
@@ -447,7 +447,7 @@ static IAutoComplete2Vtbl ac2vt =
  */
 static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    ICOM_THIS(IAutoCompleteImpl, GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     LPOLESTR strs;
     HRESULT hr;
     WCHAR hwndText[255];
@@ -617,7 +617,7 @@ static LRESULT APIENTRY ACEditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, 
 
 static LRESULT APIENTRY ACLBoxSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    ICOM_THIS(IAutoCompleteImpl, GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+    IAutoCompleteImpl *This = (IAutoCompleteImpl *)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
     WCHAR *msg;
     int sel = -1, len;
 

@@ -324,7 +324,7 @@ DECL_GLOBAL_CONSTRUCTOR(joydev_register) { dinput_register_device(&joydev); }
  */
 static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
-	ICOM_THIS(JoystickImpl,iface);
+	JoystickImpl *This = (JoystickImpl *)iface;
 
 	This->ref--;
 	if (This->ref)
@@ -349,7 +349,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df
 )
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
 
   TRACE("(this=%p,%p)\n",This,df);
 
@@ -370,7 +370,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     int		i;
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     char	buf[200];
 
     TRACE("(this=%p)\n",This);
@@ -428,7 +428,7 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
   */
 static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(this=%p)\n",This);
     if (This->joyfd!=-1) {
@@ -625,7 +625,7 @@ static void joy_polldev(JoystickImpl *This) {
 static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 ) {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     joy_polldev(This);
 
@@ -649,7 +649,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 					      LPDWORD entries,
 					      DWORD flags
 ) {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
 
   FIXME("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx),STUB!\n",This,dodsize,*entries,flags);
 
@@ -670,7 +670,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 					    REFGUID rguid,
 					    LPCDIPROPHEADER ph)
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
 
   FIXME("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
   FIXME("ph.dwSize = %ld, ph.dwHeaderSize =%ld, ph.dwObj = %ld, ph.dwHow= %ld\n",ph->dwSize, ph->dwHeaderSize,ph->dwObj,ph->dwHow);
@@ -724,7 +724,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 static HRESULT WINAPI JoystickAImpl_SetEventNotification(
 	LPDIRECTINPUTDEVICE8A iface, HANDLE hnd
 ) {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
     This->hEvent = hnd;
@@ -735,7 +735,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     int		xfd = This->joyfd;
     int		i,axes,buttons;
     int		wasacquired = 1;
@@ -765,7 +765,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 }
 
 static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface) {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     TRACE("(),stub!\n");
 
     joy_polldev(This);
@@ -781,7 +781,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
   DIDEVICEOBJECTINSTANCEA ddoi;
   int xfd = This->joyfd;
 
@@ -942,7 +942,7 @@ static HRESULT WINAPI JoystickWImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
 						LPVOID lpvRef,
 						DWORD dwFlags)
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
 
   device_enumobjects_AtoWcb_data data;
 
@@ -959,7 +959,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 						REFGUID rguid,
 						LPDIPROPHEADER pdiph)
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
 
   TRACE("(this=%p,%s,%p): stub!\n",
 	iface, debugstr_guid(rguid), pdiph);

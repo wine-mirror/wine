@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 	LPDIRECTSOUNDNOTIFY iface,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IDirectSoundNotifyImpl,iface);
+	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
 	if (This->dsb == NULL) {
@@ -69,7 +69,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_QueryInterface(
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface) {
-	ICOM_THIS(IDirectSoundNotifyImpl,iface);
+	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
 	DWORD ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -79,7 +79,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface) {
 }
 
 static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
-	ICOM_THIS(IDirectSoundNotifyImpl,iface);
+	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
 	DWORD ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -97,7 +97,7 @@ static ULONG WINAPI IDirectSoundNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface) {
 static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	LPDIRECTSOUNDNOTIFY iface,DWORD howmuch,LPCDSBPOSITIONNOTIFY notify
 ) {
-	ICOM_THIS(IDirectSoundNotifyImpl,iface);
+	IDirectSoundNotifyImpl *This = (IDirectSoundNotifyImpl *)iface;
 	TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
         if (howmuch > 0 && notify == NULL) {
@@ -194,7 +194,7 @@ HRESULT WINAPI IDirectSoundNotifyImpl_Destroy(
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 
 	TRACE("(%p,%p)\n",This,wfex);
 	/* This method is not available on secondary buffers */
@@ -205,7 +205,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LONG vol
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	LONG oldVol;
 
 	TRACE("(%p,%ld)\n",This,vol);
@@ -252,7 +252,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
 static HRESULT WINAPI IDirectSoundBufferImpl_GetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG vol
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,vol);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -273,7 +273,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetVolume(
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD freq
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD oldFreq;
 
 	TRACE("(%p,%ld)\n",This,freq);
@@ -314,7 +314,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD reserved1,DWORD reserved2,DWORD flags
 ) {
 	HRESULT hres = DS_OK;
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%08lx,%08lx,%08lx)\n",This,reserved1,reserved2,flags);
 
 	/* **** */
@@ -344,7 +344,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(
 static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 {
 	HRESULT hres = DS_OK;
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p)\n",This);
 
 	/* **** */
@@ -370,7 +370,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 }
 
 static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -384,7 +384,7 @@ static DWORD WINAPI IDirectSoundBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface) {
 
 static DWORD WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD ref;
 
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -480,7 +480,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD playpos,LPDWORD writepos
 ) {
 	HRESULT	hres;
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
 	if (This->hwbuf) {
 		hres=IDsDriverBuffer_GetPosition(This->hwbuf,playpos,writepos);
@@ -547,7 +547,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 static HRESULT WINAPI IDirectSoundBufferImpl_GetStatus(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD status
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%p), thread is %04lx\n",This,status,GetCurrentThreadId());
 
 	if (status == NULL) {
@@ -574,7 +574,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFormat(
     LPDWORD wfwritten)
 {
     DWORD size;
-    ICOM_THIS(IDirectSoundBufferImpl,iface);
+    IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
     TRACE("(%p,%p,%ld,%p)\n",This,lpwf,wfsize,wfwritten);
 
     size = sizeof(WAVEFORMATEX) + This->pwfx->cbSize;
@@ -606,7 +606,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD writecursor,DWORD writebytes,LPVOID lplpaudioptr1,LPDWORD audiobytes1,LPVOID lplpaudioptr2,LPDWORD audiobytes2,DWORD flags
 ) {
 	HRESULT hres = DS_OK;
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 
 	TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx) at %ld\n",
 		This,
@@ -708,7 +708,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetCurrentPosition(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD newpos
 ) {
 	HRESULT hres = DS_OK;
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%ld)\n",This,newpos);
 
 	/* **** */
@@ -732,7 +732,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LONG pan
 ) {
 	HRESULT hres = DS_OK;
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 
 	TRACE("(%p,%ld)\n",This,pan);
 
@@ -772,7 +772,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 static HRESULT WINAPI IDirectSoundBufferImpl_GetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG pan
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,pan);
 
 	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -793,7 +793,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetPan(
 static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	LPDIRECTSOUNDBUFFER8 iface,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD probably_valid_to;
 
 	TRACE("(%p,%p,%ld,%p,%ld)\n", This,p1,x1,p2,x2);
@@ -831,7 +831,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 static HRESULT WINAPI IDirectSoundBufferImpl_Restore(
 	LPDIRECTSOUNDBUFFER8 iface
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	FIXME("(%p):stub\n",This);
 	return DS_OK;
 }
@@ -839,7 +839,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Restore(
 static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD freq
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,freq);
 
 	if (freq == NULL) {
@@ -856,7 +856,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetFrequency(
 static HRESULT WINAPI IDirectSoundBufferImpl_SetFX(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD dwEffectsCount,LPDSEFFECTDESC pDSFXDesc,LPDWORD pdwResultCodes
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD u;
 
 	FIXME("(%p,%lu,%p,%p): stub\n",This,dwEffectsCount,pDSFXDesc,pdwResultCodes);
@@ -871,7 +871,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFX(
 static HRESULT WINAPI IDirectSoundBufferImpl_AcquireResources(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD dwFlags,DWORD dwEffectsCount,LPDWORD pdwResultCodes
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD u;
 
 	FIXME("(%p,%08lu,%lu,%p): stub\n",This,dwFlags,dwEffectsCount,pdwResultCodes);
@@ -886,7 +886,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_AcquireResources(
 static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(
 	LPDIRECTSOUNDBUFFER8 iface,REFGUID rguidObject,DWORD dwIndex,REFGUID rguidInterface,LPVOID* ppObject
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 
 	FIXME("(%p,%s,%lu,%s,%p): stub\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
 
@@ -897,7 +897,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(
 static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
 	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
 	DPRINTF("Re-Init!!!\n");
 	WARN("already initialized\n");
@@ -907,7 +907,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
 static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 	LPDIRECTSOUNDBUFFER8 iface,LPDSBCAPS caps
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
   	TRACE("(%p)->(%p)\n",This,caps);
 
 	if (caps == NULL) {
@@ -939,7 +939,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCaps(
 static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	LPDIRECTSOUNDBUFFER8 iface,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
@@ -1280,7 +1280,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Destroy(
 static HRESULT WINAPI SecondaryBufferImpl_QueryInterface(
 	LPDIRECTSOUNDBUFFER8 iface,REFIID riid,LPVOID *ppobj)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
 	return IDirectSoundBufferImpl_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb,riid,ppobj);
@@ -1288,7 +1288,7 @@ static HRESULT WINAPI SecondaryBufferImpl_QueryInterface(
 
 static DWORD WINAPI SecondaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
 {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD ref;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
@@ -1301,7 +1301,7 @@ static DWORD WINAPI SecondaryBufferImpl_AddRef(LPDIRECTSOUNDBUFFER8 iface)
 
 static DWORD WINAPI SecondaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 {
-	ICOM_THIS(IDirectSoundBufferImpl,iface);
+	IDirectSoundBufferImpl *This = (IDirectSoundBufferImpl *)iface;
 	DWORD ref;
 	TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
@@ -1318,7 +1318,7 @@ static DWORD WINAPI SecondaryBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 static HRESULT WINAPI SecondaryBufferImpl_GetCaps(
 	LPDIRECTSOUNDBUFFER8 iface,LPDSBCAPS caps)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
   	TRACE("(%p)->(%p)\n",This,caps);
 
 	return IDirectSoundBufferImpl_GetCaps((LPDIRECTSOUNDBUFFER8)This->dsb,caps);
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetCaps(
 static HRESULT WINAPI SecondaryBufferImpl_GetCurrentPosition(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD playpos,LPDWORD writepos)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p,%p)\n",This,playpos,writepos);
 
 	return IDirectSoundBufferImpl_GetCurrentPosition((LPDIRECTSOUNDBUFFER8)This->dsb,playpos,writepos);
@@ -1336,7 +1336,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetCurrentPosition(
 static HRESULT WINAPI SecondaryBufferImpl_GetFormat(
 	LPDIRECTSOUNDBUFFER8 iface,LPWAVEFORMATEX lpwf,DWORD wfsize,LPDWORD wfwritten)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p,%ld,%p)\n",This,lpwf,wfsize,wfwritten);
 
 	return IDirectSoundBufferImpl_GetFormat((LPDIRECTSOUNDBUFFER8)This->dsb,lpwf,wfsize,wfwritten);
@@ -1345,7 +1345,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetFormat(
 static HRESULT WINAPI SecondaryBufferImpl_GetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG vol)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,vol);
 
 	return IDirectSoundBufferImpl_GetVolume((LPDIRECTSOUNDBUFFER8)This->dsb,vol);
@@ -1354,7 +1354,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetVolume(
 static HRESULT WINAPI SecondaryBufferImpl_GetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG pan)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,pan);
 
 	return IDirectSoundBufferImpl_GetPan((LPDIRECTSOUNDBUFFER8)This->dsb,pan);
@@ -1363,7 +1363,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetPan(
 static HRESULT WINAPI SecondaryBufferImpl_GetFrequency(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD freq)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,freq);
 
 	return IDirectSoundBufferImpl_GetFrequency((LPDIRECTSOUNDBUFFER8)This->dsb,freq);
@@ -1372,7 +1372,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetFrequency(
 static HRESULT WINAPI SecondaryBufferImpl_GetStatus(
 	LPDIRECTSOUNDBUFFER8 iface,LPDWORD status)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,status);
 
 	return IDirectSoundBufferImpl_GetStatus((LPDIRECTSOUNDBUFFER8)This->dsb,status);
@@ -1381,7 +1381,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetStatus(
 static HRESULT WINAPI SecondaryBufferImpl_Initialize(
 	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p,%p)\n",This,dsound,dbsd);
 
 	return IDirectSoundBufferImpl_Initialize((LPDIRECTSOUNDBUFFER8)This->dsb,dsound,dbsd);
@@ -1397,7 +1397,7 @@ static HRESULT WINAPI SecondaryBufferImpl_Lock(
     LPDWORD audiobytes2,
     DWORD dwFlags)
 {
-    ICOM_THIS(SecondaryBufferImpl,iface);
+    SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
     TRACE("(%p,%ld,%ld,%p,%p,%p,%p,0x%08lx)\n",
         This,writecursor,writebytes,lplpaudioptr1,audiobytes1,lplpaudioptr2,audiobytes2,dwFlags);
 
@@ -1408,7 +1408,7 @@ static HRESULT WINAPI SecondaryBufferImpl_Lock(
 static HRESULT WINAPI SecondaryBufferImpl_Play(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD reserved1,DWORD reserved2,DWORD flags)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%08lx,%08lx,%08lx)\n",This,reserved1,reserved2,flags);
 
 	return IDirectSoundBufferImpl_Play((LPDIRECTSOUNDBUFFER8)This->dsb,reserved1,reserved2,flags);
@@ -1417,7 +1417,7 @@ static HRESULT WINAPI SecondaryBufferImpl_Play(
 static HRESULT WINAPI SecondaryBufferImpl_SetCurrentPosition(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD newpos)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%ld)\n",This,newpos);
 
 	return IDirectSoundBufferImpl_SetCurrentPosition((LPDIRECTSOUNDBUFFER8)This->dsb,newpos);
@@ -1426,7 +1426,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetCurrentPosition(
 static HRESULT WINAPI SecondaryBufferImpl_SetFormat(
 	LPDIRECTSOUNDBUFFER8 iface,LPCWAVEFORMATEX wfex)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%p)\n",This,wfex);
 
 	return IDirectSoundBufferImpl_SetFormat((LPDIRECTSOUNDBUFFER8)This->dsb,wfex);
@@ -1435,7 +1435,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetFormat(
 static HRESULT WINAPI SecondaryBufferImpl_SetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LONG vol)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%ld)\n",This,vol);
 
 	return IDirectSoundBufferImpl_SetVolume((LPDIRECTSOUNDBUFFER8)This->dsb,vol);
@@ -1444,7 +1444,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetVolume(
 static HRESULT WINAPI SecondaryBufferImpl_SetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LONG pan)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%ld)\n",This,pan);
 
 	return IDirectSoundBufferImpl_SetPan((LPDIRECTSOUNDBUFFER8)This->dsb,pan);
@@ -1453,7 +1453,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetPan(
 static HRESULT WINAPI SecondaryBufferImpl_SetFrequency(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD freq)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%ld)\n",This,freq);
 
 	return IDirectSoundBufferImpl_SetFrequency((LPDIRECTSOUNDBUFFER8)This->dsb,freq);
@@ -1461,7 +1461,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetFrequency(
 
 static HRESULT WINAPI SecondaryBufferImpl_Stop(LPDIRECTSOUNDBUFFER8 iface)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p)\n",This);
 
 	return IDirectSoundBufferImpl_Stop((LPDIRECTSOUNDBUFFER8)This->dsb);
@@ -1474,7 +1474,7 @@ static HRESULT WINAPI SecondaryBufferImpl_Unlock(
     LPVOID lpvAudioPtr2,
     DWORD dwAudioBytes2)
 {
-    ICOM_THIS(SecondaryBufferImpl,iface);
+    SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
     TRACE("(%p,%p,%ld,%p,%ld)\n",
         This, lpvAudioPtr1, dwAudioBytes1, lpvAudioPtr2, dwAudioBytes2);
 
@@ -1485,7 +1485,7 @@ static HRESULT WINAPI SecondaryBufferImpl_Unlock(
 static HRESULT WINAPI SecondaryBufferImpl_Restore(
 	LPDIRECTSOUNDBUFFER8 iface)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p)\n",This);
 
 	return IDirectSoundBufferImpl_Restore((LPDIRECTSOUNDBUFFER8)This->dsb);
@@ -1494,7 +1494,7 @@ static HRESULT WINAPI SecondaryBufferImpl_Restore(
 static HRESULT WINAPI SecondaryBufferImpl_SetFX(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD dwEffectsCount,LPDSEFFECTDESC pDSFXDesc,LPDWORD pdwResultCodes)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%lu,%p,%p)\n",This,dwEffectsCount,pDSFXDesc,pdwResultCodes);
 
 	return IDirectSoundBufferImpl_SetFX((LPDIRECTSOUNDBUFFER8)This->dsb,dwEffectsCount,pDSFXDesc,pdwResultCodes);
@@ -1503,7 +1503,7 @@ static HRESULT WINAPI SecondaryBufferImpl_SetFX(
 static HRESULT WINAPI SecondaryBufferImpl_AcquireResources(
 	LPDIRECTSOUNDBUFFER8 iface,DWORD dwFlags,DWORD dwEffectsCount,LPDWORD pdwResultCodes)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%08lu,%lu,%p)\n",This,dwFlags,dwEffectsCount,pdwResultCodes);
 
 	return IDirectSoundBufferImpl_AcquireResources((LPDIRECTSOUNDBUFFER8)This->dsb,dwFlags,dwEffectsCount,pdwResultCodes);
@@ -1512,7 +1512,7 @@ static HRESULT WINAPI SecondaryBufferImpl_AcquireResources(
 static HRESULT WINAPI SecondaryBufferImpl_GetObjectInPath(
 	LPDIRECTSOUNDBUFFER8 iface,REFGUID rguidObject,DWORD dwIndex,REFGUID rguidInterface,LPVOID* ppObject)
 {
-	ICOM_THIS(SecondaryBufferImpl,iface);
+	SecondaryBufferImpl *This = (SecondaryBufferImpl *)iface;
 	TRACE("(%p,%s,%lu,%s,%p)\n",This,debugstr_guid(rguidObject),dwIndex,debugstr_guid(rguidInterface),ppObject);
 
 	return IDirectSoundBufferImpl_GetObjectInPath((LPDIRECTSOUNDBUFFER8)This->dsb,rguidObject,dwIndex,rguidInterface,ppObject);

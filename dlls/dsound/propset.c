@@ -65,7 +65,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj )
 {
-    ICOM_THIS(IKsBufferPropertySetImpl,iface);
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     return IDirectSoundBuffer_QueryInterface((LPDIRECTSOUNDBUFFER8)This->dsb, riid, ppobj);
@@ -73,7 +73,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QueryInterface(
 
 static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
-    ICOM_THIS(IKsBufferPropertySetImpl,iface);
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
@@ -83,7 +83,7 @@ static ULONG WINAPI IKsBufferPropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 
 static ULONG WINAPI IKsBufferPropertySetImpl_Release(LPKSPROPERTYSET iface)
 {
-    ICOM_THIS(IKsBufferPropertySetImpl,iface);
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
@@ -107,7 +107,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_Get(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
-    ICOM_THIS(IKsBufferPropertySetImpl,iface);
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     PIDSDRIVERPROPERTYSET ps;
     TRACE("(iface=%p,guidPropSet=%s,dwPropID=%ld,pInstanceData=%p,cbInstanceData=%ld,pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
 	This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
@@ -142,7 +142,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_Set(
     LPVOID pPropData,
     ULONG cbPropData )
 {
-    ICOM_THIS(IKsBufferPropertySetImpl,iface);
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     PIDSDRIVERPROPERTYSET ps;
     TRACE("(%p,%s,%ld,%p,%ld,%p,%ld)\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
 
@@ -172,7 +172,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
     ULONG dwPropID,
     PULONG pTypeSupport )
 {
-    ICOM_THIS(IKsBufferPropertySetImpl,iface);
+    IKsBufferPropertySetImpl *This = (IKsBufferPropertySetImpl *)iface;
     PIDSDRIVERPROPERTYSET ps;
     TRACE("(%p,%s,%ld,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
 
@@ -239,7 +239,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj )
 {
-    ICOM_THIS(IKsPrivatePropertySetImpl,iface);
+    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     *ppobj = NULL;
@@ -248,7 +248,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QueryInterface(
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 {
-    ICOM_THIS(IKsPrivatePropertySetImpl,iface);
+    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
@@ -258,7 +258,7 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_AddRef(LPKSPROPERTYSET iface)
 
 static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
 {
-    ICOM_THIS(IKsPrivatePropertySetImpl,iface);
+    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
     ULONG ulReturn;
 
     TRACE("(%p) ref was %ld\n", This, This->ref);
@@ -988,7 +988,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Get(
     ULONG cbPropData,
     PULONG pcbReturned
 ) {
-    ICOM_THIS(IKsPrivatePropertySetImpl,iface);
+    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
     TRACE("(iface=%p,guidPropSet=%s,dwPropID=%ld,pInstanceData=%p,cbInstanceData=%ld,pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
 	This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
 
@@ -1035,7 +1035,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_Set(
     LPVOID pPropData,
     ULONG cbPropData )
 {
-    ICOM_THIS(IKsPrivatePropertySetImpl,iface);
+    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
 
     FIXME("(%p,%s,%ld,%p,%ld,%p,%ld), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
     return E_PROP_ID_UNSUPPORTED;
@@ -1047,7 +1047,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QuerySupport(
     ULONG dwPropID,
     PULONG pTypeSupport )
 {
-    ICOM_THIS(IKsPrivatePropertySetImpl,iface);
+    IKsPrivatePropertySetImpl *This = (IKsPrivatePropertySetImpl *)iface;
     TRACE("(%p,%s,%ld,%p)\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
 
     if ( IsEqualGUID( &DSPROPSETID_DirectSoundDevice, guidPropSet) ) {

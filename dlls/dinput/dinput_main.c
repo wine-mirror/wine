@@ -236,7 +236,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	LPDIRECTINPUT7A iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback,
 	LPVOID pvRef, DWORD dwFlags)
 {
-    ICOM_THIS(IDirectInputImpl,iface);
+    IDirectInputImpl *This = (IDirectInputImpl *)iface;
     DIDEVICEINSTANCEA devInstance;
     int i;
     
@@ -263,7 +263,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 	LPDIRECTINPUT7W iface, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback,
 	LPVOID pvRef, DWORD dwFlags) 
 {
-    ICOM_THIS(IDirectInputImpl,iface);
+    IDirectInputImpl *This = (IDirectInputImpl *)iface;
     DIDEVICEINSTANCEW devInstance;
     int i;
     
@@ -286,13 +286,13 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 
 static ULONG WINAPI IDirectInputAImpl_AddRef(LPDIRECTINPUT7A iface)
 {
-	ICOM_THIS(IDirectInputImpl,iface);
+	IDirectInputImpl *This = (IDirectInputImpl *)iface;
 	return ++(This->ref);
 }
 
 static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 {
-	ICOM_THIS(IDirectInputImpl,iface);
+	IDirectInputImpl *This = (IDirectInputImpl *)iface;
 	if (!(--This->ref)) {
 		HeapFree(GetProcessHeap(),0,This);
 		return 0;
@@ -301,7 +301,7 @@ static ULONG WINAPI IDirectInputAImpl_Release(LPDIRECTINPUT7A iface)
 }
 
 static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectInputImpl,iface);
+	IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
 	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	if (IsEqualGUID(&IID_IUnknown,riid) ||
@@ -317,7 +317,7 @@ static HRESULT WINAPI IDirectInputAImpl_QueryInterface(LPDIRECTINPUT7A iface, RE
 }
 
 static HRESULT WINAPI IDirectInputWImpl_QueryInterface(LPDIRECTINPUT7W iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS(IDirectInputImpl,iface);
+	IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
 	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 	if (IsEqualGUID(&IID_IUnknown,riid) ||
@@ -336,7 +336,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 	LPDIRECTINPUT7A iface,REFGUID rguid,LPDIRECTINPUTDEVICEA* pdev,
 	LPUNKNOWN punk
 ) {
-	ICOM_THIS(IDirectInputImpl,iface);
+	IDirectInputImpl *This = (IDirectInputImpl *)iface;
 	HRESULT ret_value = DIERR_DEVICENOTREG;
 	int i;
 
@@ -357,7 +357,7 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 
 static HRESULT WINAPI IDirectInputWImpl_CreateDevice(LPDIRECTINPUT7A iface, 
 						     REFGUID rguid, LPDIRECTINPUTDEVICEW* pdev, LPUNKNOWN punk) {
-        ICOM_THIS(IDirectInputImpl,iface);
+        IDirectInputImpl *This = (IDirectInputImpl *)iface;
 	HRESULT ret_value = DIERR_DEVICENOTREG;
 	int i;
 
@@ -382,7 +382,7 @@ static HRESULT WINAPI IDirectInputAImpl_Initialize(LPDIRECTINPUT7A iface, HINSTA
 
 static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface,
 							REFGUID rguid) {
-  ICOM_THIS(IDirectInputImpl,iface);
+  IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
   FIXME("(%p)->(%s): stub\n",This,debugstr_guid(rguid));
 
@@ -392,7 +392,7 @@ static HRESULT WINAPI IDirectInputAImpl_GetDeviceStatus(LPDIRECTINPUT7A iface,
 static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 							HWND hwndOwner,
 							DWORD dwFlags) {
-  ICOM_THIS(IDirectInputImpl,iface);
+  IDirectInputImpl *This = (IDirectInputImpl *)iface;
   FIXME("(%p)->(%08lx,%08lx): stub\n",This, (DWORD) hwndOwner, dwFlags);
 
   return DI_OK;
@@ -400,7 +400,7 @@ static HRESULT WINAPI IDirectInputAImpl_RunControlPanel(LPDIRECTINPUT7A iface,
 
 static HRESULT WINAPI IDirectInput2AImpl_FindDevice(LPDIRECTINPUT7A iface, REFGUID rguid,
 						    LPCSTR pszName, LPGUID pguidInstance) {
-  ICOM_THIS(IDirectInputImpl,iface);
+  IDirectInputImpl *This = (IDirectInputImpl *)iface;
   FIXME("(%p)->(%s, %s, %p): stub\n", This, debugstr_guid(rguid), pszName, pguidInstance);
 
   return DI_OK;
@@ -408,7 +408,7 @@ static HRESULT WINAPI IDirectInput2AImpl_FindDevice(LPDIRECTINPUT7A iface, REFGU
 
 static HRESULT WINAPI IDirectInput2WImpl_FindDevice(LPDIRECTINPUT7W iface, REFGUID rguid,
 						    LPCWSTR pszName, LPGUID pguidInstance) {
-  ICOM_THIS(IDirectInputImpl,iface);
+  IDirectInputImpl *This = (IDirectInputImpl *)iface;
   FIXME("(%p)->(%s, %s, %p): stub\n", This, debugstr_guid(rguid), debugstr_w(pszName), pguidInstance);
 
   return DI_OK;
@@ -417,7 +417,7 @@ static HRESULT WINAPI IDirectInput2WImpl_FindDevice(LPDIRECTINPUT7W iface, REFGU
 static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, REFGUID rguid,
 							REFIID riid, LPVOID* pvOut, LPUNKNOWN lpUnknownOuter)
 {
-  ICOM_THIS(IDirectInputImpl,iface);
+  IDirectInputImpl *This = (IDirectInputImpl *)iface;
   HRESULT ret_value = DIERR_DEVICENOTREG;
   int i;
 
@@ -439,7 +439,7 @@ static HRESULT WINAPI IDirectInput7AImpl_CreateDeviceEx(LPDIRECTINPUT7A iface, R
 static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, REFGUID rguid,
 							REFIID riid, LPVOID* pvOut, LPUNKNOWN lpUnknownOuter)
 {
-  ICOM_THIS(IDirectInputImpl,iface);
+  IDirectInputImpl *This = (IDirectInputImpl *)iface;
   HRESULT ret_value = DIERR_DEVICENOTREG;
   int i;
 
@@ -459,7 +459,7 @@ static HRESULT WINAPI IDirectInput7WImpl_CreateDeviceEx(LPDIRECTINPUT7W iface, R
 }
 
 static HRESULT WINAPI IDirectInput8AImpl_QueryInterface(LPDIRECTINPUT8A iface, REFIID riid, LPVOID *ppobj) {
-      ICOM_THIS(IDirectInputImpl,iface);
+      IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
       TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
       if (IsEqualGUID(&IID_IUnknown,riid) ||
@@ -473,7 +473,7 @@ static HRESULT WINAPI IDirectInput8AImpl_QueryInterface(LPDIRECTINPUT8A iface, R
 }
 
 static HRESULT WINAPI IDirectInput8WImpl_QueryInterface(LPDIRECTINPUT8W iface, REFIID riid, LPVOID *ppobj) {
-      ICOM_THIS(IDirectInputImpl,iface);
+      IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
       TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
       if (IsEqualGUID(&IID_IUnknown,riid) ||
@@ -492,7 +492,7 @@ static HRESULT WINAPI IDirectInput8AImpl_EnumDevicesBySemantics(
       LPVOID pvRef, DWORD dwFlags
 )
 {
-      ICOM_THIS(IDirectInputImpl,iface);
+      IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
       FIXME("(this=%p,%s,%p,%p,%p,%04lx): stub\n", This, ptszUserName, lpdiActionFormat,
             lpCallback, pvRef, dwFlags);
@@ -505,7 +505,7 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
       LPVOID pvRef, DWORD dwFlags
 )
 {
-      ICOM_THIS(IDirectInputImpl,iface);
+      IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
       FIXME("(this=%p,%s,%p,%p,%p,%04lx): stub\n", This, debugstr_w(ptszUserName), lpdiActionFormat,
             lpCallback, pvRef, dwFlags);
@@ -517,7 +517,7 @@ static HRESULT WINAPI IDirectInput8AImpl_ConfigureDevices(
       LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData
 )
 {
-      ICOM_THIS(IDirectInputImpl,iface);
+      IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
       FIXME("(this=%p,%p,%p,%04lx,%p): stub\n", This, lpdiCallback, lpdiCDParams,
             dwFlags, pvRefData);
@@ -529,7 +529,7 @@ static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
       LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData
 )
 {
-      ICOM_THIS(IDirectInputImpl,iface);
+      IDirectInputImpl *This = (IDirectInputImpl *)iface;
 
       FIXME("(this=%p,%p,%p,%04lx,%p): stub\n", This, lpdiCallback, lpdiCDParams,
             dwFlags, pvRefData);
@@ -628,19 +628,19 @@ typedef struct
 } IClassFactoryImpl;
 
 static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	return ++(This->ref);
 }
 
 static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	return --(This->ref);
 }
@@ -648,7 +648,7 @@ static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI DICF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
 	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 	if ( IsEqualGUID( &IID_IDirectInputA, riid ) ||
@@ -668,7 +668,7 @@ static HRESULT WINAPI DICF_CreateInstance(
 }
 
 static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }

@@ -438,7 +438,7 @@ HRESULT WINAPI DirectSoundEnumerateW(
 
 static HRESULT WINAPI
 DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -446,13 +446,13 @@ DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 DSCF_AddRef(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p) ref was %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	TRACE("(%p) ref was %ld\n", This, This->ref);
 	return --(This->ref);
@@ -461,7 +461,7 @@ static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface) {
 static HRESULT WINAPI DSCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
 	if (ppobj == NULL) {
@@ -482,7 +482,7 @@ static HRESULT WINAPI DSCF_CreateInstance(
 }
 
 static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }
@@ -503,7 +503,7 @@ static IClassFactoryImpl DSOUND_CF = { &DSCF_Vtbl, 1 };
 
 static HRESULT WINAPI
 DSPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
 	FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
 	return E_NOINTERFACE;
@@ -511,14 +511,14 @@ DSPCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
 
 static ULONG WINAPI
 DSPCF_AddRef(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p) ref was %ld\n", This, This->ref);
 	return ++(This->ref);
 }
 
 static ULONG WINAPI
 DSPCF_Release(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	/* static class, won't be  freed */
 	TRACE("(%p) ref was %ld\n", This, This->ref);
 	return --(This->ref);
@@ -528,7 +528,7 @@ static HRESULT WINAPI
 DSPCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
 	if (ppobj == NULL) {
@@ -548,7 +548,7 @@ DSPCF_CreateInstance(
 
 static HRESULT WINAPI
 DSPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
-	ICOM_THIS(IClassFactoryImpl,iface);
+	IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 	FIXME("(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }

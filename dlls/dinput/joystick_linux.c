@@ -635,7 +635,7 @@ DECL_GLOBAL_CONSTRUCTOR(joydev_register) { dinput_register_device(&joydev); }
  */
 static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     This->ref--;
     if (This->ref)
@@ -680,7 +680,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     LPDIRECTINPUTDEVICE8A iface,
     LPCDIDATAFORMAT df)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     unsigned int i;
     LPDIDATAFORMAT new_df = 0;
     LPDIOBJECTDATAFORMAT new_rgodf = 0;
@@ -747,7 +747,7 @@ FAILED:
   */
 static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p)\n",This);
 
@@ -777,7 +777,7 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
   */
 static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p)\n",This);
 
@@ -964,7 +964,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     DWORD len,
     LPVOID ptr)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p,0x%08lx,%p)\n",This,len,ptr);
 
@@ -992,7 +992,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(
     LPDWORD entries,
     DWORD flags)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     FIXME("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx),STUB!\n",This,dodsize,*entries,flags);
 
@@ -1037,7 +1037,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
     REFGUID rguid,
     LPCDIPROPHEADER ph)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     int i;
 
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
@@ -1118,7 +1118,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
 static HRESULT WINAPI JoystickAImpl_SetEventNotification(
 	LPDIRECTINPUTDEVICE8A iface, HANDLE hnd
 ) {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(this=%p,0x%08lx)\n",This,(DWORD)hnd);
     This->hEvent = hnd;
@@ -1129,7 +1129,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     int size;
 
     TRACE("%p->(%p)\n",iface,lpDIDevCaps);
@@ -1151,7 +1151,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 
 static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p)\n",This);
 
@@ -1173,7 +1173,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
   DIDEVICEOBJECTINSTANCEA ddoi;
   BYTE i;
   int user_offset;
@@ -1303,7 +1303,7 @@ static HRESULT WINAPI JoystickWImpl_EnumObjects(
 	LPVOID lpvRef,
 	DWORD dwFlags)
 {
-  ICOM_THIS(JoystickImpl,iface);
+  JoystickImpl *This = (JoystickImpl *)iface;
 
   device_enumobjects_AtoWcb_data data;
 
@@ -1321,7 +1321,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
     REFGUID rguid,
     LPDIPROPHEADER pdiph)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p,%s,%p)\n", iface, debugstr_guid(rguid), pdiph);
 
@@ -1387,7 +1387,7 @@ HRESULT WINAPI JoystickAImpl_GetObjectInfo(
         DWORD dwObj,
         DWORD dwHow)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
     DIDEVICEOBJECTINSTANCEA didoiA;
     unsigned int i;
 
@@ -1473,7 +1473,7 @@ HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
     LPDIRECTINPUTDEVICE8A iface,
     LPDIDEVICEINSTANCEA pdidi)
 {
-    ICOM_THIS(JoystickImpl,iface);
+    JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p,%p)\n", iface, pdidi);
 

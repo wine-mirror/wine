@@ -1591,7 +1591,7 @@ static LRESULT CALLBACK ShellView_WndProc(HWND hWnd, UINT uMessage, WPARAM wPara
 */
 static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid, LPVOID *ppvObj)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n",This,debugstr_guid(riid),ppvObj);
 
@@ -1637,7 +1637,7 @@ static HRESULT WINAPI IShellView_fnQueryInterface(IShellView * iface,REFIID riid
 */
 static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)->(count=%lu)\n",This,This->ref);
 
@@ -1648,7 +1648,7 @@ static ULONG WINAPI IShellView_fnAddRef(IShellView * iface)
 */
 static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)->()\n",This);
 
@@ -1678,7 +1678,7 @@ static ULONG WINAPI IShellView_fnRelease(IShellView * iface)
 */
 static HRESULT WINAPI IShellView_fnGetWindow(IShellView * iface,HWND * phWnd)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)\n",This);
 
@@ -1689,7 +1689,7 @@ static HRESULT WINAPI IShellView_fnGetWindow(IShellView * iface,HWND * phWnd)
 
 static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView * iface,BOOL fEnterMode)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	FIXME("(%p) stub\n",This);
 
@@ -1705,7 +1705,7 @@ static HRESULT WINAPI IShellView_fnContextSensitiveHelp(IShellView * iface,BOOL 
 static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG lpmsg)
 {
 #if 0
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	FIXME("(%p)->(%p: hwnd=%x msg=%x lp=%lx wp=%x) stub\n",This,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
 #endif
@@ -1719,7 +1719,7 @@ static HRESULT WINAPI IShellView_fnTranslateAccelerator(IShellView * iface,LPMSG
 
 static HRESULT WINAPI IShellView_fnEnableModeless(IShellView * iface,BOOL fEnable)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	FIXME("(%p) stub\n",This);
 
@@ -1728,7 +1728,7 @@ static HRESULT WINAPI IShellView_fnEnableModeless(IShellView * iface,BOOL fEnabl
 
 static HRESULT WINAPI IShellView_fnUIActivate(IShellView * iface,UINT uState)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 /*
 	CHAR	szName[MAX_PATH];
@@ -1771,7 +1771,7 @@ static HRESULT WINAPI IShellView_fnUIActivate(IShellView * iface,UINT uState)
 
 static HRESULT WINAPI IShellView_fnRefresh(IShellView * iface)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)\n",This);
 
@@ -1789,7 +1789,7 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 	RECT * prcView,
 	HWND  *phWnd)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	WNDCLASSA wc;
 	*phWnd = 0;
@@ -1855,7 +1855,7 @@ static HRESULT WINAPI IShellView_fnCreateViewWindow(
 
 static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView * iface)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)\n",This);
 
@@ -1877,7 +1877,7 @@ static HRESULT WINAPI IShellView_fnDestroyViewWindow(IShellView * iface)
 
 static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView * iface, LPFOLDERSETTINGS lpfs)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)->(%p) vmode=%x flags=%x\n",This, lpfs,
 		This->FolderSettings.ViewMode, This->FolderSettings.fFlags);
@@ -1890,7 +1890,7 @@ static HRESULT WINAPI IShellView_fnGetCurrentInfo(IShellView * iface, LPFOLDERSE
 
 static HRESULT WINAPI IShellView_fnAddPropertySheetPages(IShellView * iface, DWORD dwReserved,LPFNADDPROPSHEETPAGE lpfn, LPARAM lparam)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	FIXME("(%p) stub\n",This);
 
@@ -1899,7 +1899,7 @@ static HRESULT WINAPI IShellView_fnAddPropertySheetPages(IShellView * iface, DWO
 
 static HRESULT WINAPI IShellView_fnSaveViewState(IShellView * iface)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	FIXME("(%p) stub\n",This);
 
@@ -1911,7 +1911,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 	LPCITEMIDLIST pidl,
 	UINT uFlags)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 	int i;
 
 	TRACE("(%p)->(pidl=%p, 0x%08x) stub\n",This, pidl, uFlags);
@@ -1960,7 +1960,7 @@ static HRESULT WINAPI IShellView_fnSelectItem(
 
 static HRESULT WINAPI IShellView_fnGetItemObject(IShellView * iface, UINT uItem, REFIID riid, LPVOID *ppvOut)
 {
-	ICOM_THIS(IShellViewImpl, iface);
+	IShellViewImpl *This = (IShellViewImpl *)iface;
 
 	TRACE("(%p)->(uItem=0x%08x,\n\tIID=%s, ppv=%p)\n",This, uItem, debugstr_guid(riid), ppvOut);
 

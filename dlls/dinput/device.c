@@ -443,7 +443,7 @@ BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) 
 HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
 	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df
 ) {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     
     TRACE("(this=%p,%p)\n",This,df);
     
@@ -455,7 +455,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
 HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 	LPDIRECTINPUTDEVICE8A iface,HWND hwnd,DWORD dwflags
 ) {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     TRACE("(this=%p,0x%08lx,0x%08lx)\n",This,(DWORD)hwnd,dwflags);
     if (TRACE_ON(dinput)) {
 	TRACE(" cooperative level : ");
@@ -467,14 +467,14 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
 HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 	LPDIRECTINPUTDEVICE8A iface,HANDLE hnd
 ) {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     FIXME("(this=%p,0x%08lx): stub\n",This,(DWORD)hnd);
     return DI_OK;
 }
 
 ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     This->ref--;
     if (This->ref)
 	return This->ref;
@@ -486,7 +486,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
 	LPDIRECTINPUTDEVICE8A iface,REFIID riid,LPVOID *ppobj
 )
 {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     
     TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(&IID_IUnknown,riid)) {
@@ -517,7 +517,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(
 	LPDIRECTINPUTDEVICE8W iface,REFIID riid,LPVOID *ppobj
 )
 {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     
     TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     if (IsEqualGUID(&IID_IUnknown,riid)) {
@@ -547,7 +547,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(
 ULONG WINAPI IDirectInputDevice2AImpl_AddRef(
 	LPDIRECTINPUTDEVICE8A iface)
 {
-    ICOM_THIS(IDirectInputDevice2AImpl,iface);
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     return ++This->ref;
 }
 

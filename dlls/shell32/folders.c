@@ -89,7 +89,7 @@ IExtractIconW* IExtractIconW_Constructor(LPCITEMIDLIST pidl)
  */
 static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFIID riid, LPVOID *ppvObj)
 {
-	ICOM_THIS(IExtractIconWImpl, iface);
+	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
 	TRACE("(%p)->(\n\tIID:\t%s,%p)\n", This, debugstr_guid(riid), ppvObj);
 
@@ -127,7 +127,7 @@ static HRESULT WINAPI IExtractIconW_fnQueryInterface(IExtractIconW *iface, REFII
 */
 static ULONG WINAPI IExtractIconW_fnAddRef(IExtractIconW * iface)
 {
-	ICOM_THIS(IExtractIconWImpl, iface);
+	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
 	TRACE("(%p)->(count=%lu)\n",This, This->ref );
 
@@ -138,7 +138,7 @@ static ULONG WINAPI IExtractIconW_fnAddRef(IExtractIconW * iface)
 */
 static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 {
-	ICOM_THIS(IExtractIconWImpl, iface);
+	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
 	TRACE("(%p)->()\n",This);
 
@@ -155,7 +155,7 @@ static ULONG WINAPI IExtractIconW_fnRelease(IExtractIconW * iface)
 static HRESULT getIconLocationForFolder(IExtractIconW *iface, UINT uFlags,
  LPWSTR szIconFile, UINT cchMax, int *piIndex, UINT *pwFlags)
 {
-    ICOM_THIS(IExtractIconWImpl, iface);
+    IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
     WCHAR path[MAX_PATH];
     BOOL found = FALSE;
@@ -242,7 +242,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	int * piIndex,
 	UINT * pwFlags)		/* returned GIL_ flags */
 {
-	ICOM_THIS(IExtractIconWImpl, iface);
+	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
 	char	sTemp[MAX_PATH];
 	DWORD	dwNr;
@@ -372,7 +372,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 */
 static HRESULT WINAPI IExtractIconW_fnExtract(IExtractIconW * iface, LPCWSTR pszFile, UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize)
 {
-	ICOM_THIS(IExtractIconWImpl, iface);
+	IExtractIconWImpl *This = (IExtractIconWImpl *)iface;
 
 	FIXME("(%p) (file=%p index=%u %p %p size=%u) semi-stub\n", This, debugstr_w(pszFile), nIconIndex, phiconLarge, phiconSmall, nIconSize);
 
@@ -399,7 +399,7 @@ static struct IExtractIconWVtbl eivt =
 */
 IExtractIconA* IExtractIconA_Constructor(LPCITEMIDLIST pidl)
 {
-	ICOM_THIS(IExtractIconWImpl, IExtractIconW_Constructor(pidl));
+	IExtractIconWImpl *This = (IExtractIconWImpl *)IExtractIconW_Constructor(pidl);
 	IExtractIconA *eia = (IExtractIconA *)&This->lpvtblExtractIconA;
 	
 	TRACE("(%p)->(%p)\n", This, eia);

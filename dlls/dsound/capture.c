@@ -140,7 +140,7 @@ DirectSoundCaptureCreate8(
 	WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
     } else {
-        ICOM_THIS(IDirectSoundCaptureImpl, *ippDSC);
+        IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)*ippDSC;
 
         This->ref = 1;
         This->state = STATE_STOPPED;
@@ -348,7 +348,7 @@ IDirectSoundCaptureImpl_QueryInterface(
     REFIID riid,
     LPVOID* ppobj )
 {
-    ICOM_THIS(IDirectSoundCaptureImpl,iface);
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
     if (ppobj == NULL) {
@@ -374,7 +374,7 @@ static ULONG WINAPI
 IDirectSoundCaptureImpl_AddRef( LPDIRECTSOUNDCAPTURE iface )
 {
     ULONG uRef;
-    ICOM_THIS(IDirectSoundCaptureImpl,iface);
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
     EnterCriticalSection( &(This->lock) );
@@ -392,7 +392,7 @@ static ULONG WINAPI
 IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
 {
     ULONG uRef;
-    ICOM_THIS(IDirectSoundCaptureImpl,iface);
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
     EnterCriticalSection( &(This->lock) );
@@ -432,7 +432,7 @@ IDirectSoundCaptureImpl_CreateCaptureBuffer(
     LPUNKNOWN pUnk )
 {
     HRESULT hr;
-    ICOM_THIS(IDirectSoundCaptureImpl,iface);
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
 
     TRACE( "(%p,%p,%p,%p)\n",This,lpcDSCBufferDesc,lplpDSCaptureBuffer,pUnk );
 
@@ -476,7 +476,7 @@ IDirectSoundCaptureImpl_GetCaps(
     LPDIRECTSOUNDCAPTURE iface,
     LPDSCCAPS lpDSCCaps )
 {
-    ICOM_THIS(IDirectSoundCaptureImpl,iface);
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p,%p)\n",This,lpDSCCaps);
 
     if (lpDSCCaps== NULL) {
@@ -512,7 +512,7 @@ IDirectSoundCaptureImpl_Initialize(
 {
     HRESULT err = DSERR_INVALIDPARAM;
     unsigned wid, widn;
-    ICOM_THIS(IDirectSoundCaptureImpl,iface);
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p)\n", This);
 
     if (!This) {
@@ -694,7 +694,7 @@ DSOUND_CreateDirectSoundCaptureBuffer(
 	return DSERR_OUTOFMEMORY;
     } else {
     	HRESULT err = DS_OK;
-        ICOM_THIS(IDirectSoundCaptureBufferImpl,*ppobj);
+        IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)*ppobj;
 
         This->ref = 1;
         This->dsound = ipDSC;
@@ -773,7 +773,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_QueryInterface(
     REFIID riid,
     LPVOID *ppobj)
 {
-    ICOM_THIS(IDirectSoundCaptureNotifyImpl,iface);
+    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if (This->dscb == NULL) {
@@ -786,7 +786,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_QueryInterface(
 
 static ULONG WINAPI IDirectSoundCaptureNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY iface)
 {
-    ICOM_THIS(IDirectSoundCaptureNotifyImpl,iface);
+    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     DWORD ref;
 
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -797,7 +797,7 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY ifa
 
 static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY iface)
 {
-    ICOM_THIS(IDirectSoundCaptureNotifyImpl,iface);
+    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     DWORD ref;
 
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
@@ -819,7 +819,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     DWORD howmuch,
     LPCDSBPOSITIONNOTIFY notify)
 {
-    ICOM_THIS(IDirectSoundCaptureNotifyImpl,iface);
+    IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
 
     if (howmuch > 0 && notify == NULL) {
@@ -908,7 +908,7 @@ IDirectSoundCaptureBufferImpl_QueryInterface(
     REFIID riid,
     LPVOID* ppobj )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     HRESULT hres;
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
@@ -958,7 +958,7 @@ static ULONG WINAPI
 IDirectSoundCaptureBufferImpl_AddRef( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
     ULONG uRef;
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
     assert(This->dsound);
@@ -976,7 +976,7 @@ static ULONG WINAPI
 IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
     ULONG uRef;
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
     assert(This->dsound);
@@ -1032,7 +1032,7 @@ IDirectSoundCaptureBufferImpl_GetCaps(
     LPDIRECTSOUNDCAPTUREBUFFER8 iface,
     LPDSCBCAPS lpDSCBCaps )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p)\n", This, lpDSCBCaps );
 
     if (This == NULL) {
@@ -1071,7 +1071,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
     LPDWORD lpdwCapturePosition,
     LPDWORD lpdwReadPosition )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p,%p)\n", This, lpdwCapturePosition, lpdwReadPosition );
 
     if (This == NULL) {
@@ -1132,7 +1132,7 @@ IDirectSoundCaptureBufferImpl_GetFormat(
     DWORD dwSizeAllocated,
     LPDWORD lpdwSizeWritten )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p,0x%08lx,%p)\n", This, lpwfxFormat, dwSizeAllocated, 
         lpdwSizeWritten );
 
@@ -1171,7 +1171,7 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     LPDIRECTSOUNDCAPTUREBUFFER8 iface,
     LPDWORD lpdwStatus )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p, %p), thread is %04lx\n", This, lpdwStatus, GetCurrentThreadId() );
 
     if (This == NULL) {
@@ -1215,7 +1215,7 @@ IDirectSoundCaptureBufferImpl_Initialize(
     LPDIRECTSOUNDCAPTURE lpDSC,
     LPCDSCBUFFERDESC lpcDSCBDesc )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
 
     FIXME( "(%p,%p,%p): stub\n", This, lpDSC, lpcDSCBDesc );
 
@@ -1234,7 +1234,7 @@ IDirectSoundCaptureBufferImpl_Lock(
     DWORD dwFlags )
 {
     HRESULT err = DS_OK;
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %ld\n", This, dwReadCusor,
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
@@ -1298,7 +1298,7 @@ IDirectSoundCaptureBufferImpl_Start(
     DWORD dwFlags )
 {
     HRESULT err = DS_OK;
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,0x%08lx)\n", This, dwFlags );
 
     if (This == NULL) {
@@ -1453,7 +1453,7 @@ static HRESULT WINAPI
 IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
     HRESULT err = DS_OK;
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p)\n", This );
 
     if (This == NULL) {
@@ -1510,7 +1510,7 @@ IDirectSoundCaptureBufferImpl_Unlock(
     LPVOID lpvAudioPtr2,
     DWORD dwAudioBytes2 )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     TRACE( "(%p,%p,%08lu,%p,%08lu)\n", This, lpvAudioPtr1, dwAudioBytes1, 
         lpvAudioPtr2, dwAudioBytes2 );
 
@@ -1550,7 +1550,7 @@ IDirectSoundCaptureBufferImpl_GetObjectInPath(
     REFGUID rguidInterface,
     LPVOID* ppObject )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
 
     FIXME( "(%p,%s,%lu,%s,%p): stub\n", This, debugstr_guid(rguidObject), 
         dwIndex, debugstr_guid(rguidInterface), ppObject );
@@ -1564,7 +1564,7 @@ IDirectSoundCaptureBufferImpl_GetFXStatus(
     DWORD dwFXCount,
     LPDWORD pdwFXStatus )
 {
-    ICOM_THIS(IDirectSoundCaptureBufferImpl,iface);
+    IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
 
     FIXME( "(%p,%lu,%p): stub\n", This, dwFXCount, pdwFXStatus );
 
@@ -1601,7 +1601,7 @@ static IDirectSoundCaptureBuffer8Vtbl dscbvt =
 static HRESULT WINAPI
 DSCCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) 
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
     return E_NOINTERFACE;
@@ -1610,7 +1610,7 @@ DSCCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 static ULONG WINAPI
 DSCCF_AddRef(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
     return ++(This->ref);
 }
@@ -1618,7 +1618,7 @@ DSCCF_AddRef(LPCLASSFACTORY iface)
 static ULONG WINAPI 
 DSCCF_Release(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     /* static class, won't be  freed */
     TRACE("(%p) ref was %ld\n", This, This->ref);
     return --(This->ref);
@@ -1628,7 +1628,7 @@ static HRESULT WINAPI
 DSCCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj )
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
     if (ppobj == NULL) {
@@ -1650,7 +1650,7 @@ DSCCF_CreateInstance(
 static HRESULT WINAPI 
 DSCCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }
@@ -1719,7 +1719,7 @@ DirectSoundFullDuplexCreate(
 	return DSERR_OUTOFMEMORY;
     } else {
 	HRESULT hres;
-        ICOM_THIS(IDirectSoundFullDuplexImpl, *ippDSFD);
+        IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)*ippDSFD;
 
         This->ref = 1;
         This->lpVtbl = &dsfdvt;
@@ -1745,7 +1745,7 @@ IDirectSoundFullDuplexImpl_QueryInterface(
     REFIID riid,
     LPVOID* ppobj )
 {
-    ICOM_THIS(IDirectSoundFullDuplexImpl,iface);
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
     if (ppobj == NULL) {
@@ -1761,7 +1761,7 @@ static ULONG WINAPI
 IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
 {
     ULONG uRef;
-    ICOM_THIS(IDirectSoundFullDuplexImpl,iface);
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
     EnterCriticalSection( &(This->lock) );
@@ -1777,7 +1777,7 @@ static ULONG WINAPI
 IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
 {
     ULONG uRef;
-    ICOM_THIS(IDirectSoundFullDuplexImpl,iface);
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n",This, This->ref, GetCurrentThreadId());
 
     EnterCriticalSection( &(This->lock) );
@@ -1807,7 +1807,7 @@ IDirectSoundFullDuplexImpl_Initialize(
     LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
     LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 )
 {
-    ICOM_THIS(IDirectSoundFullDuplexImpl,iface);
+    IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     IDirectSoundCaptureBufferImpl** ippdscb=(IDirectSoundCaptureBufferImpl**)lplpDirectSoundCaptureBuffer8;
     IDirectSoundBufferImpl** ippdsc=(IDirectSoundBufferImpl**)lplpDirectSoundBuffer8;
 
@@ -1836,7 +1836,7 @@ static IDirectSoundFullDuplexVtbl dsfdvt =
 static HRESULT WINAPI
 DSFDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
     return E_NOINTERFACE;
@@ -1845,7 +1845,7 @@ DSFDCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 static ULONG WINAPI
 DSFDCF_AddRef(LPCLASSFACTORY iface)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     TRACE("(%p) ref was %ld\n", This, This->ref);
     return ++(This->ref);
 }
@@ -1853,7 +1853,7 @@ DSFDCF_AddRef(LPCLASSFACTORY iface)
 static ULONG WINAPI 
 DSFDCF_Release(LPCLASSFACTORY iface) 
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     /* static class, won't be  freed */
     TRACE("(%p) ref was %ld\n", This, This->ref);
     return --(This->ref);
@@ -1863,7 +1863,7 @@ static HRESULT WINAPI
 DSFDCF_CreateInstance(
     LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj )
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
 
     TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
 
@@ -1887,7 +1887,7 @@ DSFDCF_CreateInstance(
 static HRESULT WINAPI 
 DSFDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 {
-    ICOM_THIS(IClassFactoryImpl,iface);
+    IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
     FIXME("(%p)->(%d),stub!\n",This,dolock);
     return S_OK;
 }

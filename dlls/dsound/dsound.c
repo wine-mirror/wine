@@ -148,7 +148,7 @@ static HRESULT WINAPI DSOUND_QueryInterface(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if (ppobj == NULL) {
@@ -192,7 +192,7 @@ static HRESULT WINAPI DSOUND_QueryInterface8(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
 
     if (ppobj == NULL) {
@@ -246,7 +246,7 @@ static HRESULT WINAPI DSOUND_QueryInterface8(
 static ULONG WINAPI IDirectSoundImpl_AddRef(
     LPDIRECTSOUND8 iface)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
 
     return InterlockedIncrement(&This->ref);
@@ -255,7 +255,7 @@ static ULONG WINAPI IDirectSoundImpl_AddRef(
 static ULONG WINAPI IDirectSoundImpl_Release(
     LPDIRECTSOUND8 iface)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     ULONG ref;
     TRACE("(%p) ref was %ld, thread is %04lx\n",
           This, This->ref, GetCurrentThreadId());
@@ -317,7 +317,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
     LPLPDIRECTSOUNDBUFFER ppdsb,
     LPUNKNOWN lpunk)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
     FIXME("shouldn't be called directly\n");
     return DSERR_GENERIC;
@@ -330,7 +330,7 @@ static HRESULT WINAPI DSOUND_CreateSoundBuffer(
     LPUNKNOWN lpunk,
     BOOL from8)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     HRESULT hres = DS_OK;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
 
@@ -430,7 +430,7 @@ static HRESULT WINAPI IDirectSoundImpl_GetCaps(
     LPDIRECTSOUND8 iface,
     LPDSCAPS lpDSCaps)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,%p)\n",This,lpDSCaps);
 
     if (This == NULL) {
@@ -496,7 +496,7 @@ static HRESULT WINAPI IDirectSoundImpl_DuplicateSoundBuffer(
     IDirectSoundBufferImpl* dsb;
     HRESULT hres = DS_OK;
     int size;
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
 
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
 
@@ -626,7 +626,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
     HWND hwnd,
     DWORD level)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
 
     if (level==DSSCL_PRIORITY || level==DSSCL_EXCLUSIVE) {
@@ -640,7 +640,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetCooperativeLevel(
 static HRESULT WINAPI IDirectSoundImpl_Compact(
     LPDIRECTSOUND8 iface)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p)\n",This);
 
     if (This->initialized == FALSE) {
@@ -660,7 +660,7 @@ static HRESULT WINAPI IDirectSoundImpl_GetSpeakerConfig(
     LPDIRECTSOUND8 iface,
     LPDWORD lpdwSpeakerConfig)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p, %p)\n",This,lpdwSpeakerConfig);
 
     if (This->initialized == FALSE) {
@@ -682,7 +682,7 @@ static HRESULT WINAPI IDirectSoundImpl_SetSpeakerConfig(
     LPDIRECTSOUND8 iface,
     DWORD config)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,0x%08lx)\n",This,config);
 
     if (This->initialized == FALSE) {
@@ -699,7 +699,7 @@ static HRESULT WINAPI IDirectSoundImpl_Initialize(
     LPDIRECTSOUND8 iface,
     LPCGUID lpcGuid)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p,%s)\n",This,debugstr_guid(lpcGuid));
 
     This->initialized = TRUE;
@@ -711,7 +711,7 @@ static HRESULT WINAPI IDirectSoundImpl_VerifyCertification(
     LPDIRECTSOUND8 iface,
     LPDWORD pdwCertified)
 {
-    ICOM_THIS(IDirectSoundImpl,iface);
+    IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     TRACE("(%p, %p)\n",This,pdwCertified);
 
     if (This->initialized == FALSE) {
@@ -973,7 +973,7 @@ static HRESULT WINAPI IDirectSound_IUnknown_QueryInterface(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSound_IUnknown,iface);
+    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     return DSOUND_QueryInterface(This->pds, riid, ppobj);
 }
@@ -981,7 +981,7 @@ static HRESULT WINAPI IDirectSound_IUnknown_QueryInterface(
 static ULONG WINAPI IDirectSound_IUnknown_AddRef(
     LPUNKNOWN iface)
 {
-    ICOM_THIS(IDirectSound_IUnknown,iface);
+    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     return InterlockedIncrement(&This->ref);
 }
@@ -989,7 +989,7 @@ static ULONG WINAPI IDirectSound_IUnknown_AddRef(
 static ULONG WINAPI IDirectSound_IUnknown_Release(
     LPUNKNOWN iface)
 {
-    ICOM_THIS(IDirectSound_IUnknown,iface);
+    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     ulReturn = InterlockedDecrement(&This->ref);
@@ -1051,7 +1051,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_QueryInterface(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     return DSOUND_QueryInterface(This->pds, riid, ppobj);
 }
@@ -1059,7 +1059,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_QueryInterface(
 static ULONG WINAPI IDirectSound_IDirectSound_AddRef(
     LPDIRECTSOUND iface)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     return InterlockedIncrement(&This->ref);
 }
@@ -1067,7 +1067,7 @@ static ULONG WINAPI IDirectSound_IDirectSound_AddRef(
 static ULONG WINAPI IDirectSound_IDirectSound_Release(
     LPDIRECTSOUND iface)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     ulReturn = InterlockedDecrement(&This->ref);
@@ -1085,7 +1085,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_CreateSoundBuffer(
     LPLPDIRECTSOUNDBUFFER ppdsb,
     LPUNKNOWN lpunk)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
     return DSOUND_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk,FALSE);
 }
@@ -1094,7 +1094,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_GetCaps(
     LPDIRECTSOUND iface,
     LPDSCAPS lpDSCaps)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p,%p)\n",This,lpDSCaps);
     return IDirectSoundImpl_GetCaps(This->pds, lpDSCaps);
 }
@@ -1104,7 +1104,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_DuplicateSoundBuffer(
     LPDIRECTSOUNDBUFFER psb,
     LPLPDIRECTSOUNDBUFFER ppdsb)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
     return IDirectSoundImpl_DuplicateSoundBuffer(This->pds,psb,ppdsb);
 }
@@ -1114,7 +1114,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_SetCooperativeLevel(
     HWND hwnd,
     DWORD level)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
     return IDirectSoundImpl_SetCooperativeLevel(This->pds,hwnd,level);
 }
@@ -1122,7 +1122,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_SetCooperativeLevel(
 static HRESULT WINAPI IDirectSound_IDirectSound_Compact(
     LPDIRECTSOUND iface)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p)\n", This);
     return IDirectSoundImpl_Compact(This->pds);
 }
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_GetSpeakerConfig(
     LPDIRECTSOUND iface,
     LPDWORD lpdwSpeakerConfig)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p, %p)\n", This, lpdwSpeakerConfig);
     return IDirectSoundImpl_GetSpeakerConfig(This->pds,lpdwSpeakerConfig);
 }
@@ -1140,7 +1140,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_SetSpeakerConfig(
     LPDIRECTSOUND iface,
     DWORD config)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p,0x%08lx)\n",This,config);
     return IDirectSoundImpl_SetSpeakerConfig(This->pds,config);
 }
@@ -1149,7 +1149,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_Initialize(
     LPDIRECTSOUND iface,
     LPCGUID lpcGuid)
 {
-    ICOM_THIS(IDirectSound_IDirectSound,iface);
+    IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     TRACE("(%p, %s)\n", This, debugstr_guid(lpcGuid));
     return IDirectSoundImpl_Initialize(This->pds,lpcGuid);
 }
@@ -1212,7 +1212,7 @@ static HRESULT WINAPI IDirectSound8_IUnknown_QueryInterface(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSound_IUnknown,iface);
+    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     return DSOUND_QueryInterface8(This->pds, riid, ppobj);
 }
@@ -1220,7 +1220,7 @@ static HRESULT WINAPI IDirectSound8_IUnknown_QueryInterface(
 static ULONG WINAPI IDirectSound8_IUnknown_AddRef(
     LPUNKNOWN iface)
 {
-    ICOM_THIS(IDirectSound_IUnknown,iface);
+    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     return InterlockedIncrement(&This->ref);
 }
@@ -1228,7 +1228,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_AddRef(
 static ULONG WINAPI IDirectSound8_IUnknown_Release(
     LPUNKNOWN iface)
 {
-    ICOM_THIS(IDirectSound_IUnknown,iface);
+    IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     ulReturn = InterlockedDecrement(&This->ref);
@@ -1290,7 +1290,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_QueryInterface(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     return DSOUND_QueryInterface8(This->pds, riid, ppobj);
 }
@@ -1298,7 +1298,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_QueryInterface(
 static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(
     LPDIRECTSOUND iface)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     return InterlockedIncrement(&This->ref);
 }
@@ -1306,7 +1306,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(
 static ULONG WINAPI IDirectSound8_IDirectSound_Release(
     LPDIRECTSOUND iface)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     ulReturn = InterlockedDecrement(&This->ref);
@@ -1324,7 +1324,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_CreateSoundBuffer(
     LPLPDIRECTSOUNDBUFFER ppdsb,
     LPUNKNOWN lpunk)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
     return DSOUND_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk,TRUE);
 }
@@ -1333,7 +1333,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_GetCaps(
     LPDIRECTSOUND iface,
     LPDSCAPS lpDSCaps)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,%p)\n",This,lpDSCaps);
     return IDirectSoundImpl_GetCaps(This->pds, lpDSCaps);
 }
@@ -1343,7 +1343,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_DuplicateSoundBuffer(
     LPDIRECTSOUNDBUFFER psb,
     LPLPDIRECTSOUNDBUFFER ppdsb)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
     return IDirectSoundImpl_DuplicateSoundBuffer(This->pds,psb,ppdsb);
 }
@@ -1353,7 +1353,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_SetCooperativeLevel(
     HWND hwnd,
     DWORD level)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
     return IDirectSoundImpl_SetCooperativeLevel(This->pds,hwnd,level);
 }
@@ -1361,7 +1361,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_SetCooperativeLevel(
 static HRESULT WINAPI IDirectSound8_IDirectSound_Compact(
     LPDIRECTSOUND iface)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p)\n", This);
     return IDirectSoundImpl_Compact(This->pds);
 }
@@ -1370,7 +1370,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_GetSpeakerConfig(
     LPDIRECTSOUND iface,
     LPDWORD lpdwSpeakerConfig)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p, %p)\n", This, lpdwSpeakerConfig);
     return IDirectSoundImpl_GetSpeakerConfig(This->pds,lpdwSpeakerConfig);
 }
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_SetSpeakerConfig(
     LPDIRECTSOUND iface,
     DWORD config)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,0x%08lx)\n",This,config);
     return IDirectSoundImpl_SetSpeakerConfig(This->pds,config);
 }
@@ -1388,7 +1388,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_Initialize(
     LPDIRECTSOUND iface,
     LPCGUID lpcGuid)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p, %s)\n", This, debugstr_guid(lpcGuid));
     return IDirectSoundImpl_Initialize(This->pds,lpcGuid);
 }
@@ -1451,7 +1451,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_QueryInterface(
     REFIID riid,
     LPVOID * ppobj)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
     return DSOUND_QueryInterface8(This->pds, riid, ppobj);
 }
@@ -1459,7 +1459,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_QueryInterface(
 static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
     LPDIRECTSOUND8 iface)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     return InterlockedIncrement(&This->ref);
 }
@@ -1467,7 +1467,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
 static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
     LPDIRECTSOUND8 iface)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ulReturn;
     TRACE("(%p) ref was %ld, thread is %04lx\n", This, This->ref, GetCurrentThreadId());
     ulReturn = InterlockedDecrement(&This->ref);
@@ -1485,7 +1485,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_CreateSoundBuffer(
     LPLPDIRECTSOUNDBUFFER ppdsb,
     LPUNKNOWN lpunk)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%p,%p,%p)\n",This,dsbd,ppdsb,lpunk);
     return DSOUND_CreateSoundBuffer(This->pds,dsbd,ppdsb,lpunk,TRUE);
 }
@@ -1494,7 +1494,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_GetCaps(
     LPDIRECTSOUND8 iface,
     LPDSCAPS lpDSCaps)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound,iface);
+    IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     TRACE("(%p,%p)\n",This,lpDSCaps);
     return IDirectSoundImpl_GetCaps(This->pds, lpDSCaps);
 }
@@ -1504,7 +1504,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_DuplicateSoundBuffer(
     LPDIRECTSOUNDBUFFER psb,
     LPLPDIRECTSOUNDBUFFER ppdsb)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%p,%p)\n",This,psb,ppdsb);
     return IDirectSoundImpl_DuplicateSoundBuffer(This->pds,psb,ppdsb);
 }
@@ -1514,7 +1514,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_SetCooperativeLevel(
     HWND hwnd,
     DWORD level)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,%08lx,%s)\n",This,(DWORD)hwnd,dumpCooperativeLevel(level));
     return IDirectSoundImpl_SetCooperativeLevel(This->pds,hwnd,level);
 }
@@ -1522,7 +1522,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_SetCooperativeLevel(
 static HRESULT WINAPI IDirectSound8_IDirectSound8_Compact(
     LPDIRECTSOUND8 iface)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p)\n", This);
     return IDirectSoundImpl_Compact(This->pds);
 }
@@ -1531,7 +1531,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_GetSpeakerConfig(
     LPDIRECTSOUND8 iface,
     LPDWORD lpdwSpeakerConfig)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p, %p)\n", This, lpdwSpeakerConfig);
     return IDirectSoundImpl_GetSpeakerConfig(This->pds,lpdwSpeakerConfig);
 }
@@ -1540,7 +1540,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_SetSpeakerConfig(
     LPDIRECTSOUND8 iface,
     DWORD config)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p,0x%08lx)\n",This,config);
     return IDirectSoundImpl_SetSpeakerConfig(This->pds,config);
 }
@@ -1549,7 +1549,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_Initialize(
     LPDIRECTSOUND8 iface,
     LPCGUID lpcGuid)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p, %s)\n", This, debugstr_guid(lpcGuid));
     return IDirectSoundImpl_Initialize(This->pds,lpcGuid);
 }
@@ -1558,7 +1558,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_VerifyCertification(
     LPDIRECTSOUND8 iface,
     LPDWORD pdwCertified)
 {
-    ICOM_THIS(IDirectSound8_IDirectSound8,iface);
+    IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     TRACE("(%p, %p)\n", This, pdwCertified);
     return IDirectSoundImpl_VerifyCertification(This->pds,pdwCertified);
 }
