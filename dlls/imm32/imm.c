@@ -12,6 +12,11 @@
 #include "debugtools.h"
 #include "imm.h"
 
+typedef struct INPUTCONTEXT
+{
+  int dummy;
+} *LPINPUTCONTEXT;
+
 DEFAULT_DEBUG_CHANNEL(imm);
 
 /***********************************************************************
@@ -733,3 +738,170 @@ BOOL WINAPI ImmUnregisterWordW(
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
+
+/***********************************************************************
+ *		ImmLockIMC (IMM32.@)
+ */
+LPINPUTCONTEXT WINAPI ImmLockIMC(HIMC hIMC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return NULL;
+}
+
+/***********************************************************************
+ *		ImmUnlockIMC (IMM32.@)
+ */
+BOOL WINAPI ImmUnlockIMC(HIMC hIMC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *		ImmGetIMCLockCount (IMM32.@)
+ */
+DWORD WINAPI ImmGetIMCLockCount(HIMC hIMC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return 0;
+}
+
+/***********************************************************************
+ *		ImmCreateIMCC (IMM32.@)
+ */
+HIMCC WINAPI ImmCreateIMCC(DWORD dwSize)
+{
+	FIXME("(%lu): stub\n", dwSize);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return (HIMCC)NULL;
+}
+
+/***********************************************************************
+ *		ImmDestroyIMCC (IMM32.@)
+ */
+HIMCC WINAPI ImmDestroyIMCC(HIMCC hIMCC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return (HIMCC)hIMCC;
+}
+
+/***********************************************************************
+ *		ImmLockIMCC (IMM32.@)
+ */
+LPVOID WINAPI ImmLockIMCC(HIMCC hIMCC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return NULL;
+}
+
+/***********************************************************************
+ *		ImmUnlockIMCC (IMM32.@)
+ */
+BOOL WINAPI ImmUnlockIMCC(HIMCC hIMCC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *		ImmGetIMCCLockCount (IMM32.@)
+ */
+DWORD WINAPI ImmGetIMCCLockCount(HIMCC hIMCC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return 0;
+}
+
+/***********************************************************************
+ *		ImmReSizeIMCC (IMM32.@)
+ */
+HIMCC WINAPI ImmReSizeIMCC(HIMCC hIMCC, DWORD dwSize)
+{
+	FIXME("(0x%08x,%lu): stub\n", (unsigned)hIMCC, dwSize);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return (HIMCC)NULL;
+}
+
+/***********************************************************************
+ *		ImmGetIMCCSize (IMM32.@)
+ */
+DWORD WINAPI ImmGetIMCCSize(HIMCC hIMCC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMCC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return 0;
+}
+
+/***********************************************************************
+ *		ImmCreateSoftKeyboard (IMM32.@)
+ */
+HWND WINAPI ImmCreateSoftKeyboard(UINT uType, HWND hOwner, int x, int y)
+{
+	FIXME("(0x%08x, 0x%08x, %d, %d): stub\n", uType, (unsigned)hOwner, x, y);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return (HWND)NULL;
+}
+
+/***********************************************************************
+ *		ImmDestroySoftKeyboard (IMM32.@)
+ */
+BOOL WINAPI ImmDestroySoftKeyboard(HWND hwndSoftKeyboard)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hwndSoftKeyboard);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *		ImmShowSoftKeyboard (IMM32.@)
+ */
+BOOL WINAPI ImmShowSoftKeyboard(HWND hwndSoftKeyboard, int nCmdShow)
+{
+	FIXME("(0x%08x, %d): stub\n", (unsigned)hwndSoftKeyboard, nCmdShow);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *		ImmGetHotKey (IMM32.@)
+ */
+BOOL WINAPI ImmGetHotKey(DWORD dwHotKeyID, LPUINT lpuModifiers,
+			 LPUINT lpuVKey, LPHKL lphKL)
+{
+	FIXME("(0x%08lx, %p, %p, %p): stub\n",
+	       dwHotKeyID, lpuModifiers, lpuVKey, lphKL);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *		ImmSetHotKey (IMM32.@)
+ */
+BOOL WINAPI ImmSetHotKey(DWORD dwHotKeyID, UINT uModifiers,
+			 UINT uVKey, HKL hKL)
+{
+	FIXME("(0x%08lx, 0x%08x, 0x%08x, 0x%08x): stub\n",
+	       dwHotKeyID, uModifiers, uVKey, (unsigned)hKL);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+/***********************************************************************
+ *		ImmGenerateMessage (IMM32.@)
+ */
+BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
+{
+	FIXME("(0x%08x): stub\n", (unsigned)hIMC);
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+
+

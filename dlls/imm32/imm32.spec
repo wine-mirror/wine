@@ -10,16 +10,16 @@ debug_channels (imm)
 @ stdcall ImmConfigureIMEA(long long long ptr) ImmConfigureIMEA
 @ stdcall ImmConfigureIMEW(long long long ptr) ImmConfigureIMEW
 @ stdcall ImmCreateContext() ImmCreateContext
-@ stub ImmCreateIMCC
-@ stub ImmCreateSoftKeyboard
+@ stdcall ImmCreateIMCC(long) ImmCreateIMCC
+@ stdcall ImmCreateSoftKeyboard(long long long long) ImmCreateSoftKeyboard
 @ stdcall ImmDestroyContext(long) ImmDestroyContext
-@ stub ImmDestroyIMCC
-@ stub ImmDestroySoftKeyboard
+@ stdcall ImmDestroyIMCC(long) ImmDestroyIMCC
+@ stdcall ImmDestroySoftKeyboard(long) ImmDestroySoftKeyboard
 @ stdcall ImmEnumRegisterWordA(long ptr str long str ptr) ImmEnumRegisterWordA
 @ stdcall ImmEnumRegisterWordW(long ptr wstr long wstr ptr) ImmEnumRegisterWordW
 @ stdcall ImmEscapeA(long long long ptr) ImmEscapeA
 @ stdcall ImmEscapeW(long long long ptr) ImmEscapeW
-@ stub ImmGenerateMessage
+@ stdcall ImmGenerateMessage(long) ImmGenerateMessage
 @ stdcall ImmGetCandidateListA(long long ptr long) ImmGetCandidateListA
 @ stdcall ImmGetCandidateListCountA(long ptr) ImmGetCandidateListCountA
 @ stdcall ImmGetCandidateListCountW(long ptr) ImmGetCandidateListCountW
@@ -39,10 +39,10 @@ debug_channels (imm)
 @ stdcall ImmGetDescriptionW(long wstr long) ImmGetDescriptionW
 @ stdcall ImmGetGuideLineA(long long str long) ImmGetGuideLineA
 @ stdcall ImmGetGuideLineW(long long wstr long) ImmGetGuideLineW
-@ stub ImmGetHotKey
-@ stub ImmGetIMCCLockCount
-@ stub ImmGetIMCCSize
-@ stub ImmGetIMCLockCount
+@ stdcall ImmGetHotKey(long ptr ptr ptr) ImmGetHotKey
+@ stdcall ImmGetIMCCLockCount(long) ImmGetIMCCLockCount
+@ stdcall ImmGetIMCCSize(long) ImmGetIMCCSize
+@ stdcall ImmGetIMCLockCount(long) ImmGetIMCLockCount
 @ stdcall ImmGetIMEFileNameA(long str long) ImmGetIMEFileNameA
 @ stdcall ImmGetIMEFileNameW(long wstr long) ImmGetIMEFileNameW
 @ stdcall ImmGetOpenStatus(long) ImmGetOpenStatus
@@ -56,10 +56,10 @@ debug_channels (imm)
 @ stdcall ImmIsIME(long) ImmIsIME
 @ stdcall ImmIsUIMessageA(long long long long) ImmIsUIMessageA
 @ stdcall ImmIsUIMessageW(long long long long) ImmIsUIMessageW
-@ stub ImmLockIMC
-@ stub ImmLockIMCC
+@ stdcall ImmLockIMC(long) ImmLockIMC
+@ stdcall ImmLockIMCC(long) ImmLockIMCC
 @ stdcall ImmNotifyIME(long long long long) ImmNotifyIME
-@ stub ImmReSizeIMCC
+@ stdcall ImmReSizeIMCC(long long) ImmReSizeIMCC
 @ stdcall ImmRegisterWordA(long str long str) ImmRegisterWordA
 @ stdcall ImmRegisterWordW(long wstr long wstr) ImmRegisterWordW
 @ stdcall ImmReleaseContext(long long) ImmReleaseContext
@@ -70,12 +70,12 @@ debug_channels (imm)
 @ stdcall ImmSetCompositionStringW(long long ptr long ptr long) ImmSetCompositionStringW
 @ stdcall ImmSetCompositionWindow(long ptr) ImmSetCompositionWindow
 @ stdcall ImmSetConversionStatus(long long long) ImmSetConversionStatus
-@ stub ImmSetHotKey
+@ stdcall ImmSetHotKey(long long long long) ImmSetHotKey
 @ stdcall ImmSetOpenStatus(long long) ImmSetOpenStatus
 @ stdcall ImmSetStatusWindowPos(long ptr) ImmSetStatusWindowPos
-@ stub ImmShowSoftKeyboard
+@ stdcall ImmShowSoftKeyboard(long long) ImmShowSoftKeyboard
 @ stdcall ImmSimulateHotKey(long long) ImmSimulateHotKey
-@ stub ImmUnlockIMC
-@ stub ImmUnlockIMCC
+@ stdcall ImmUnlockIMC(long) ImmUnlockIMC
+@ stdcall ImmUnlockIMCC(long) ImmUnlockIMCC
 @ stdcall ImmUnregisterWordA(long str long str) ImmUnregisterWordA
 @ stdcall ImmUnregisterWordW(long wstr long wstr) ImmUnregisterWordW
