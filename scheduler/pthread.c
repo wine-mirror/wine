@@ -563,47 +563,46 @@ void __pthread_cleanup_upto(jmp_buf target, char *frame)
 }
 
 /***** CONDITIONS *****/
-/* not implemented right now */
 
 int __pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
 {
-  P_OUTPUT("FIXME:pthread_cond_init\n");
-  return 0;
+    if (!funcs.ptr_pthread_cond_init) return 0;
+    return funcs.ptr_pthread_cond_init(cond, cond_attr);
 }
 strong_alias(__pthread_cond_init, pthread_cond_init);
 
 int __pthread_cond_destroy(pthread_cond_t *cond)
 {
-  P_OUTPUT("FIXME:pthread_cond_destroy\n");
-  return 0;
+    if (!funcs.ptr_pthread_cond_destroy) return 0;
+    return funcs.ptr_pthread_cond_destroy(cond);
 }
 strong_alias(__pthread_cond_destroy, pthread_cond_destroy);
 
 int __pthread_cond_signal(pthread_cond_t *cond)
 {
-  P_OUTPUT("FIXME:pthread_cond_signal\n");
-  return 0;
+    if (!funcs.ptr_pthread_cond_signal) return 0;
+    return funcs.ptr_pthread_cond_signal(cond);
 }
 strong_alias(__pthread_cond_signal, pthread_cond_signal);
 
 int __pthread_cond_broadcast(pthread_cond_t *cond)
 {
-  P_OUTPUT("FIXME:pthread_cond_broadcast\n");
-  return 0;
+    if (!funcs.ptr_pthread_cond_broadcast) return 0;
+    return funcs.ptr_pthread_cond_broadcast(cond);
 }
 strong_alias(__pthread_cond_broadcast, pthread_cond_broadcast);
 
 int __pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
-  P_OUTPUT("FIXME:pthread_cond_wait\n");
-  return 0;
+    if (!funcs.ptr_pthread_cond_wait) return 0;
+    return funcs.ptr_pthread_cond_wait(cond, mutex);
 }
 strong_alias(__pthread_cond_wait, pthread_cond_wait);
 
 int __pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex, const struct timespec *abstime)
 {
-  P_OUTPUT("FIXME:pthread_cond_timedwait\n");
-  return 0;
+    if (!funcs.ptr_pthread_cond_timedwait) return 0;
+    return funcs.ptr_pthread_cond_timedwait(cond, mutex, abstime);
 }
 strong_alias(__pthread_cond_timedwait, pthread_cond_timedwait);
 

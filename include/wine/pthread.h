@@ -56,6 +56,13 @@ struct wine_pthread_functions
     int       (*ptr_pthread_rwlock_wrlock)(pthread_rwlock_t *rwlock);
     int       (*ptr_pthread_rwlock_trywrlock)(pthread_rwlock_t *rwlock);
     int       (*ptr_pthread_rwlock_unlock)(pthread_rwlock_t *rwlock);
+    int       (*ptr_pthread_cond_init)(pthread_cond_t *cond, const pthread_condattr_t *cond_attr);
+    int       (*ptr_pthread_cond_destroy)(pthread_cond_t *cond);
+    int       (*ptr_pthread_cond_signal)(pthread_cond_t *cond);
+    int       (*ptr_pthread_cond_broadcast)(pthread_cond_t *cond);
+    int       (*ptr_pthread_cond_wait)(pthread_cond_t *cond, pthread_mutex_t *mutex);
+    int       (*ptr_pthread_cond_timedwait)(pthread_cond_t *cond, pthread_mutex_t *mutex,
+                                            const struct timespec *abstime);
 };
 
 extern void wine_pthread_init_process( const struct wine_pthread_functions *functions );

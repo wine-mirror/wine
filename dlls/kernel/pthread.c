@@ -304,6 +304,230 @@ static int wine_pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
   return 0;
 }
 
+/***** CONDITIONS *****/
+
+/* The condition code is basically cut-and-pasted from Douglas
+ * Schmidt's paper:
+ *   "Strategies for Implementing POSIX Condition Variables on Win32",
+ * at http://www.cs.wustl.edu/~schmidt/win32-cv-1.html and
+ * http://www.cs.wustl.edu/~schmidt/win32-cv-2.html.
+ * This paper formed the basis for the condition variable
+ * impementation used in the ACE library.
+ */
+
+/* Possible problems with ACE:
+ * - unimplemented pthread_mutexattr_init
+ */
+typedef struct {
+  /* Number of waiting threads. */
+  int waiters_count;
+
+  /* Serialize access to <waiters_count>. */
+  CRITICAL_SECTION waiters_count_lock;
+
+  /*
+   * Semaphore used to queue up threads waiting for the condition to
+   * become signaled.
+   */
+  HANDLE sema;
+
+  /*
+   * An auto-reset event used by the broadcast/signal thread to wait
+   * for all the waiting thread(s) to wake up and be released from the
+   * semaphore.
+   */
+  HANDLE waiters_done;
+
+  /*
+   * Keeps track of whether we were broadcasting or signaling.  This
+   * allows us to optimize the code if we're just signaling.
+   */
+  size_t was_broadcast;
+} wine_cond_detail;
+
+/* see wine_mutex above for comments */
+typedef struct {
+  wine_cond_detail *cond;
+} *wine_cond;
+
+static void wine_cond_real_init(pthread_cond_t *cond)
+{
+  wine_cond_detail *detail = HeapAlloc(GetProcessHeap(), 0, sizeof(wine_cond_detail));
+  detail->waiters_count = 0;
+  detail->was_broadcast = 0;
+  detail->sema = CreateSemaphoreW( NULL, 0, 0x7fffffff, NULL );
+  detail->waiters_done = CreateEventW( NULL, FALSE, FALSE, NULL );
+  RtlInitializeCriticalSection (&detail->waiters_count_lock);
+
+  if (InterlockedCompareExchangePointer((void**)&(((wine_cond)cond)->cond), detail, NULL) != NULL)
+  {
+    /* too late, some other thread already did it */
+    P_OUTPUT("FIXME:pthread_cond_init:expect troubles...\n");
+    CloseHandle(detail->sema);
+    RtlDeleteCriticalSection(&detail->waiters_count_lock);
+    CloseHandle(detail->waiters_done);
+    HeapFree(GetProcessHeap(), 0, detail);
+  }
+}
+
+int wine_pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *cond_attr)
+{
+  /* The same as for wine_pthread_mutex_init, we postpone initialization
+     until condition is really used.*/
+  ((wine_cond)cond)->cond = NULL;
+  return 0;
+}
+
+int wine_pthread_cond_destroy(pthread_cond_t *cond)
+{
+  wine_cond_detail *detail = ((wine_cond)cond)->cond;
+
+  if (!detail) return 0;
+  CloseHandle(detail->sema);
+  RtlDeleteCriticalSection(&detail->waiters_count_lock);
+  CloseHandle(detail->waiters_done);
+  HeapFree(GetProcessHeap(), 0, detail);
+  ((wine_cond)cond)->cond = NULL;
+  return 0;
+}
+
+int wine_pthread_cond_signal(pthread_cond_t *cond)
+{
+  int have_waiters;
+  wine_cond_detail *detail;
+
+  if ( !((wine_cond)cond)->cond ) wine_cond_real_init(cond);
+  detail = ((wine_cond)cond)->cond;
+
+  RtlEnterCriticalSection (&detail->waiters_count_lock);
+  have_waiters = detail->waiters_count > 0;
+  RtlLeaveCriticalSection (&detail->waiters_count_lock);
+
+  /* If there aren't any waiters, then this is a no-op. */
+  if (have_waiters)
+    ReleaseSemaphore(detail->sema, 1, NULL);
+
+  return 0;
+}
+
+int wine_pthread_cond_broadcast(pthread_cond_t *cond)
+{
+  int have_waiters = 0;
+  wine_cond_detail *detail;
+
+  if ( !((wine_cond)cond)->cond ) wine_cond_real_init(cond);
+  detail = ((wine_cond)cond)->cond;
+
+  /*
+   * This is needed to ensure that <waiters_count> and <was_broadcast> are
+   * consistent relative to each other.
+   */
+  RtlEnterCriticalSection (&detail->waiters_count_lock);
+
+  if (detail->waiters_count > 0) {
+    /*
+     * We are broadcasting, even if there is just one waiter...
+     * Record that we are broadcasting, which helps optimize
+     * <pthread_cond_wait> for the non-broadcast case.
+     */
+    detail->was_broadcast = 1;
+    have_waiters = 1;
+  }
+
+  if (have_waiters) {
+    /* Wake up all the waiters atomically. */
+    ReleaseSemaphore(detail->sema, detail->waiters_count, NULL);
+
+    RtlLeaveCriticalSection (&detail->waiters_count_lock);
+
+    /* Wait for all the awakened threads to acquire the counting semaphore. */
+    WaitForSingleObject (detail->waiters_done, INFINITE);
+
+    /*
+     * This assignment is okay, even without the <waiters_count_lock> held
+     * because no other waiter threads can wake up to access it.
+     */
+    detail->was_broadcast = 0;
+  }
+  else
+    RtlLeaveCriticalSection (&detail->waiters_count_lock);
+  return 0;
+}
+
+int wine_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+{
+  wine_cond_detail *detail;
+  int last_waiter;
+
+  if ( !((wine_cond)cond)->cond ) wine_cond_real_init(cond);
+  detail = ((wine_cond)cond)->cond;
+
+  /* Avoid race conditions. */
+  RtlEnterCriticalSection (&detail->waiters_count_lock);
+  detail->waiters_count++;
+  RtlLeaveCriticalSection (&detail->waiters_count_lock);
+
+  RtlLeaveCriticalSection ( ((wine_mutex)mutex)->critsect );
+  WaitForSingleObject(detail->sema, INFINITE);
+
+  /* Reacquire lock to avoid race conditions. */
+  RtlEnterCriticalSection (&detail->waiters_count_lock);
+
+  /* We're no longer waiting... */
+  detail->waiters_count--;
+
+  /* Check to see if we're the last waiter after <pthread_cond_broadcast>. */
+  last_waiter = detail->was_broadcast && detail->waiters_count == 0;
+
+  RtlLeaveCriticalSection (&detail->waiters_count_lock);
+
+  /*
+   * If we're the last waiter thread during this particular broadcast
+   * then let all the other threads proceed.
+   */
+  if (last_waiter) SetEvent(detail->waiters_done);
+  RtlEnterCriticalSection (((wine_mutex)mutex)->critsect);
+  return 0;
+}
+
+int wine_pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+                                const struct timespec *abstime)
+{
+  DWORD ms = abstime->tv_sec * 1000 + abstime->tv_nsec / 1000000;
+  int last_waiter;
+  wine_cond_detail *detail;
+
+  if ( !((wine_cond)cond)->cond ) wine_cond_real_init(cond);
+  detail = ((wine_cond)cond)->cond;
+
+  /* Avoid race conditions. */
+  RtlEnterCriticalSection (&detail->waiters_count_lock);
+  detail->waiters_count++;
+  RtlLeaveCriticalSection (&detail->waiters_count_lock);
+
+  RtlLeaveCriticalSection (((wine_mutex)mutex)->critsect);
+  WaitForSingleObject (detail->sema, ms);
+
+  /* Reacquire lock to avoid race conditions. */
+  RtlEnterCriticalSection (&detail->waiters_count_lock);
+
+  /* We're no longer waiting... */
+  detail->waiters_count--;
+
+  /* Check to see if we're the last waiter after <pthread_cond_broadcast>. */
+  last_waiter = detail->was_broadcast && detail->waiters_count == 0;
+
+  RtlLeaveCriticalSection (&detail->waiters_count_lock);
+
+  /*
+   * If we're the last waiter thread during this particular broadcast
+   * then let all the other threads proceed.
+   */
+  if (last_waiter) SetEvent (detail->waiters_done);
+  RtlEnterCriticalSection (((wine_mutex)mutex)->critsect);
+  return 0;
+}
+
 /***** MISC *****/
 
 static pthread_t wine_pthread_self(void)
@@ -353,5 +577,11 @@ static const struct wine_pthread_functions functions =
     wine_pthread_rwlock_tryrdlock,  /* ptr_pthread_rwlock_tryrdlock */
     wine_pthread_rwlock_wrlock,     /* ptr_pthread_rwlock_wrlock */
     wine_pthread_rwlock_trywrlock,  /* ptr_pthread_rwlock_trywrlock */
-    wine_pthread_rwlock_unlock      /* ptr_pthread_rwlock_unlock */
+    wine_pthread_rwlock_unlock,     /* ptr_pthread_rwlock_unlock */
+    wine_pthread_cond_init,         /* ptr_pthread_cond_init */
+    wine_pthread_cond_destroy,      /* ptr_pthread_cond_destroy */
+    wine_pthread_cond_signal,       /* ptr_pthread_cond_signal */
+    wine_pthread_cond_broadcast,    /* ptr_pthread_cond_broadcast */
+    wine_pthread_cond_wait,         /* ptr_pthread_cond_wait */
+    wine_pthread_cond_timedwait     /* ptr_pthread_cond_timedwait */
 };
