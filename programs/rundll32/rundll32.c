@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
     /* try loading the UNICODE version first */
     strcpy(szEntryPoint,comma+1);
     strcat(szEntryPoint,"W");
-    pfEntryPointW=LoadProc(szDllName, szEntryPoint, &DllHandle);
+    pfEntryPointW=(EntryPointW)LoadProc(szDllName, szEntryPoint, &DllHandle);
     if(pfEntryPointW!=NULL)
     {
         WCHAR wszCmdLine[2048];
@@ -112,11 +112,11 @@ int main(int argc, char* argv[])
     {
         strcpy(szEntryPoint,comma+1);
         strcat(szEntryPoint,"A");
-        pfEntryPointA=LoadProc(szDllName, szEntryPoint, &DllHandle);
+        pfEntryPointA=(EntryPointA)LoadProc(szDllName, szEntryPoint, &DllHandle);
         if(pfEntryPointA==NULL)
         {
             strcpy(szEntryPoint,comma+1);
-            pfEntryPointA=LoadProc(szDllName, szEntryPoint, &DllHandle);
+            pfEntryPointA=(EntryPointA)LoadProc(szDllName, szEntryPoint, &DllHandle);
             if(pfEntryPointA==NULL)
                 return 0;
         }

@@ -426,12 +426,13 @@ BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD si
                 memcpy( name, buf, len );
                 name[len] = 0;
                 *size = len;
+                ret = TRUE;
             }
         }
         __EXCEPT(page_fault)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
-            ret = FALSE;
+            return FALSE;
         }
         __ENDTRY
     }
@@ -476,26 +477,27 @@ BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD 
         TRACE ("-> %s (%d)\n", debugstr_a (buf), len);
         __TRY
         {
-            int len = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
-            if ( *size < len )
+            int lenW = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
+            if ( *size < lenW )
             {
                 MultiByteToWideChar( CP_ACP, 0, buf, len, name, *size );
                 name[*size] = 0;
-                *size = len;
+                *size = lenW;
                 SetLastError( ERROR_MORE_DATA );
                 ret = FALSE;
             }
             else
             {
-                MultiByteToWideChar( CP_ACP, 0, buf, len, name, len );
-                name[len] = 0;
-                *size = len;
+                MultiByteToWideChar( CP_ACP, 0, buf, len, name, lenW );
+                name[lenW] = 0;
+                *size = lenW;
+                ret = TRUE;
             }
         }
         __EXCEPT(page_fault)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
-            ret = FALSE;
+            return FALSE;
         }
         __ENDTRY
     }
