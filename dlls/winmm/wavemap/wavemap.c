@@ -56,6 +56,9 @@ typedef	struct tagWAVEMAPDATA {
     DWORD	dwCallback;
     DWORD	dwClientInstance;
     DWORD	dwFlags;
+    /* ratio to compute position from a PCM playback to any format */
+    DWORD       avgSpeedOuter;
+    DWORD       avgSpeedInner;
 } WAVEMAPDATA;
 
 static	BOOL	WAVEMAP_IsData(WAVEMAPDATA* wm)
@@ -161,6 +164,7 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wom->dwFlags = dwFlags;
     wom->dwClientInstance = lpDesc->dwInstance;
     wom->u.out.hOuterWave = (HWAVEOUT)lpDesc->hWave;
+    wom->avgSpeedOuter = wom->avgSpeedInner = lpDesc->lpFormat->nAvgBytesPerSec;
 
     for (i = ndlo; i < ndhi; i++) {
 	/* if no ACM stuff is involved, no need to handle callbacks at this
@@ -181,7 +185,8 @@ static	DWORD	wodOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         /* try some ACM stuff */
 
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) goto found;
+                        if (wodOpenHelper(wom, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) \
+                        {wom->avgSpeedInner = wfx.nAvgBytesPerSec; goto found;}
 
         for (i = ndlo; i < ndhi; i++) {
             /* first try with same stereo/mono option as source */
@@ -344,9 +349,11 @@ static	DWORD	wodUnprepare(WAVEMAPDATA* wom, LPWAVEHDR lpWaveHdrSrc, DWORD dwPara
 
 static	DWORD	wodGetPosition(WAVEMAPDATA* wom, LPMMTIME lpTime, DWORD dwParam2)
 {
-    if (wom->hAcmStream)
-	FIXME("No position conversion done for PCM => non-PCM, returning PCM position\n");
-    return waveOutGetPosition(wom->u.out.hInnerWave, lpTime, dwParam2);
+    DWORD       val = waveOutGetPosition(wom->u.out.hInnerWave, lpTime, dwParam2);
+    if (lpTime->wType == TIME_BYTES)
+        val = MulDiv(val, wom->avgSpeedOuter, wom->avgSpeedInner);
+    /* other time types don't require conversion */
+    return val;
 }
 
 static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveCaps, DWORD dwParam2)
@@ -579,6 +586,8 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ndlo = 0;
     }
 
+    wim->avgSpeedOuter = wim->avgSpeedInner = lpDesc->lpFormat->nAvgBytesPerSec;
+
     for (i = ndlo; i < ndhi; i++) {
 	if (waveInOpen(&wim->u.in.hInnerWave, i, lpDesc->lpFormat, (DWORD)widCallback,
                        (DWORD)wim, (dwFlags & ~CALLBACK_TYPEMASK) | CALLBACK_FUNCTION | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) {
@@ -596,7 +605,8 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         /* try some ACM stuff */
         
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
-                        if (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) goto found;
+                        if (widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT) == MMSYSERR_NOERROR) \
+                        {wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found;}
         
         for (i = ndlo; i < ndhi; i++) {
             /* first try with same stereo/mono option as source */
@@ -733,9 +743,11 @@ static	DWORD	widUnprepare(WAVEMAPDATA* wim, LPWAVEHDR lpWaveHdrDst, DWORD dwPara
 
 static	DWORD	widGetPosition(WAVEMAPDATA* wim, LPMMTIME lpTime, DWORD dwParam2)
 {
-    if (wim->hAcmStream)
-	FIXME("No position conversion done for PCM => non-PCM, returning PCM position\n");
-    return waveInGetPosition(wim->u.in.hInnerWave, lpTime, dwParam2);
+    DWORD       val = waveInGetPosition(wim->u.in.hInnerWave, lpTime, dwParam2);
+    if (lpTime->wType == TIME_BYTES)
+        val = MulDiv(val, wim->avgSpeedOuter, wim->avgSpeedInner);
+    /* other time types don't require conversion */
+    return val;
 }
 
 static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSA lpWaveCaps, DWORD dwParam2)
