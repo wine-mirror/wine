@@ -87,7 +87,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &MPR_Descriptor,      TRUE  },
     { &MSACM32_Descriptor,  FALSE },
     { &MSNET32_Descriptor,  FALSE },
-    { &MSVFW32_Descriptor,  FALSE },
+    { &MSVFW32_Descriptor,  TRUE  },
     { &NTDLL_Descriptor,    TRUE  },
     { &OLE32_Descriptor,    FALSE },
     { &OLEAUT32_Descriptor, FALSE },

@@ -37,7 +37,7 @@ type	win32
  32 stub    ICImageDecompress
  33 stdcall ICInfo(long long ptr) ICInfo32
  34 stub    ICInstall
- 35 stub    ICLocate
+ 35 stdcall ICLocate(long long ptr ptr long) ICLocate32
  36 stub    ICMThunk32
  37 stdcall ICOpen(long long long) ICOpen32
  38 stub    ICOpenFunction

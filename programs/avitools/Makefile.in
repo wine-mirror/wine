@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-PROGRAMS  = icinfo
+PROGRAMS  = icinfo aviinfo aviplay
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 WRCEXTRA  = -A -p $*
@@ -12,19 +12,12 @@ WRCEXTRA  = -A -p $*
 LANGUAGES   =
 LICENSELANG =
 
-MOSTSRCS = \
-	icinfo.c
-
-# Some strings need addresses >= 0x10000
-STRINGSRCS = \
-	$(LICENSELANG:%=License_%.c)
-
-RC_SRCS = $(LANGUAGES:%=%.rc)
-
-C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
+MOSTSRCS = 		\
+	icinfo.c	\
+	aviinfo.c	\
+	aviinfo.c
 
 MOSTOBJS = $(MOSTSRCS:.c=.o)
-STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
 
 all: check_wrc $(PROGRAMS)
 
@@ -33,23 +26,21 @@ depend::
 @MAKE_RULES@
 
 # Override resource compiler rules
-.rc.s:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -o $*.s
+icinfo: icinfo.o
+	$(CC) -o icinfo icinfo.o $(LDOPTIONS) $(ALL_LIBS)
 
-.rc.h:
-	$(CPP) $(DEFS) $(OPTIONS) $(DIVINCL) -DRC_INVOKED -P -x c $< | $(WRC) $(WRCFLAGS) $(WRCEXTRA) -nH $*.h
-
-
-icinfo: $(MOSTOBJS) $(STRINGOBJS)
-	$(CC) -o icinfo $(MOSTOBJS) $(LDOPTIONS) $(ALL_LIBS) $(STRINGOBJS)
+aviinfo: aviinfo.o
+	$(CC) -o aviinfo aviinfo.o $(LDOPTIONS) $(ALL_LIBS)
+aviplay: aviplay.o
+	$(CC) -o aviplay aviplay.o $(LDOPTIONS) $(ALL_LIBS)
 
 install: dummy
-	$(INSTALL_PROGRAM) clock $(bindir)/clock
+	$(INSTALL_PROGRAM) icinfo $(bindir)/icinfo
+	$(INSTALL_PROGRAM) aviinfo $(bindir)/aviinfo
+	$(INSTALL_PROGRAM) aviplay $(bindir)/aviplay
 
 uninstall: dummy
-	$(RM) $(bindir)/clock
-
-$(RC_SRCS:.rc=.s): $(WRC)
+	$(RM) $(bindir)/aviinfo $(bindir)/icinfo $(bindir)/aviplay
 
 dummy:
 

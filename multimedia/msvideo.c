@@ -71,18 +71,8 @@ ICOpen32(DWORD fccType,DWORD fccHandler,UINT32 wMode) {
 	memcpy(type,&fccType,4);type[4]=0;
 	memcpy(handler,&fccHandler,4);handler[4]=0;
 	TRACE(msvideo,"(%s,%s,0x%08lx)\n",type,handler,(DWORD)wMode);
-	/* FIXME: When do we use 'vids' , when 'vidc'? Unclear */
-	if (!strcasecmp(type,"vids")) {
-	    sprintf(codecname,"vidc.%s",handler);
-	    fccType = mmioFOURCC('v','i','d','c');
-	} else
-	    sprintf(codecname,"%s.%s",type,handler);
-	hdrv=OpenDriver32A(codecname,"drivers32",0);
-	if (!hdrv)
-		return 0;
-	whic = HeapAlloc(GetProcessHeap(),0,sizeof(WINE_HIC));
-	whic->hdrv	= hdrv;
-	whic->driverproc= GetProcAddress32(GetDriverModuleHandle32(hdrv),"DriverProc");
+	sprintf(codecname,"%s.%s",type,handler);
+
 	/* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the 
 	 * same layout as ICOPEN
 	 */
@@ -91,7 +81,21 @@ ICOpen32(DWORD fccType,DWORD fccHandler,UINT32 wMode) {
 	icopen.dwSize		= sizeof(ICOPEN);
 	icopen.dwFlags		= wMode;
 	/* FIXME: do we need to fill out the rest too? */
+	hdrv=OpenDriver32A(codecname,"drivers32",(LPARAM)&icopen);
+	if (!hdrv) {
+	    if (!strcasecmp(type,"vids")) {
+		sprintf(codecname,"vidc.%s",handler);
+		fccType = mmioFOURCC('v','i','d','c');
+	    }
+	    hdrv=OpenDriver32A(codecname,"drivers32",(LPARAM)&icopen);
+	    return 0;
+	}
+	whic = HeapAlloc(GetProcessHeap(),0,sizeof(WINE_HIC));
+	whic->hdrv	= hdrv;
+#if 0
+	whic->driverproc= GetProcAddress32(GetDriverModuleHandle32(hdrv),"DriverProc");
 	whic->private	= whic->driverproc(0,hdrv,DRV_OPEN,0,&icopen);
+#endif
 	return (HIC32)whic;
 }
 
@@ -103,6 +107,45 @@ ICGetInfo32(HIC32 hic,ICINFO32 *picinfo,DWORD cb) {
 	ret = ICSendMessage32(hic,ICM_GETINFO,(DWORD)picinfo,cb);
 	TRACE(msvideo,"	-> 0x%08lx\n",ret);
 	return ret;
+}
+
+HIC32  VFWAPI
+ICLocate32(
+	DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
+	LPBITMAPINFOHEADER lpbiOut, WORD wMode
+) {
+	char	type[5],handler[5];
+	HIC32	hic;
+	DWORD	querymsg;
+
+	switch (wMode) {
+	case ICMODE_FASTCOMPRESS:
+	case ICMODE_COMPRESS: 
+		querymsg = ICM_COMPRESS_QUERY;
+		break;
+	case ICMODE_DECOMPRESS:
+	case ICMODE_FASTDECOMPRESS:
+		querymsg = ICM_DECOMPRESS_QUERY;
+		break;
+	case ICMODE_DRAW:
+		querymsg = ICM_DRAW_QUERY;
+		break;
+	default:
+		FIXME(msvideo,"Unknown mode (%d)\n",wMode);
+		return 0;
+	}
+
+	/* Easy case: handler/type match, we just fire a query and return */
+	hic = ICOpen32(fccType,fccHandler,wMode);
+	if (hic) {
+		if (!ICSendMessage32(hic,querymsg,(DWORD)lpbiIn,(DWORD)lpbiOut))
+			return hic;
+		ICClose32(hic);
+	}
+	type[4]='\0';memcpy(type,&fccType,4);
+	handler[4]='\0';memcpy(handler,&fccHandler,4);
+	FIXME(msvideo,"(%s,%s,%p,%p,0x%04x),unhandled!\n",type,handler,lpbiIn,lpbiOut,wMode);
+	return 0;
 }
 
 DWORD VFWAPIV
@@ -145,14 +188,6 @@ ICDecompress32(HIC32 hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,LPVOID lpDa
 	icd.ckid	= ??? ckid from AVI file? how do we get it? ;
 	 */
 	return ICSendMessage32(hic,ICM_DECOMPRESS,(LPARAM)&icd,sizeof(icd));
-}
-
-HIC32 WINAPI
-ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
-	 LPBITMAPINFOHEADER lpbiOut, WORD wFlags
-) {
-	FIXME(msvideo,"stub!\n");
-	return 0;
 }
 
 LRESULT VFWAPI
@@ -206,7 +241,8 @@ ICSendMessage32(HIC32 hic,UINT32 msg,DWORD lParam1,DWORD lParam2) {
 	default:
 		FIXME(msvideo,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx)\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2);
 	}
-	ret = whic->driverproc(whic->private,whic->hdrv,msg,lParam1,lParam2);
+	ret = SendDriverMessage32(whic->hdrv,msg,lParam1,lParam2);
+/*	ret = whic->driverproc(whic->private,whic->hdrv,msg,lParam1,lParam2);*/
 	TRACE(msvideo,"	-> 0x%08lx\n",ret);
 	return ret;
 }
@@ -232,7 +268,11 @@ DWORD	VFWAPIV	ICDrawBegin32(
 }
 
 LRESULT WINAPI ICClose32(HIC32 hic) {
-	FIXME(msvideo,"(%d),stub!\n",hic);
+	WINE_HIC	*whic = (WINE_HIC*)hic;
+	TRACE(msvideo,"(%d).\n",hic);
+	/* FIXME: correct? */
+	CloseDriver32(whic->hdrv,0,0);
+	HeapFree(GetProcessHeap(),0,whic);
 	return 0;
 }
 
