@@ -866,7 +866,7 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
 /* open() wrapper using a struct fd */
 /* the fd must have been created with alloc_fd */
 /* on error the fd object is released */
-struct fd *open_fd( struct fd *fd, const char *name, int flags, int *mode )
+struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode )
 {
     struct stat st;
     struct closed_fd *closed_fd;

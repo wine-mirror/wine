@@ -45,7 +45,7 @@ struct fd_ops
 /* file descriptor functions */
 
 extern struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user );
-extern struct fd *open_fd( struct fd *fd, const char *name, int flags, int *mode );
+extern struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user );
 extern void *get_fd_user( struct fd *fd );
