@@ -274,15 +274,19 @@ static atom_t find_atom( struct atom_table *table, const WCHAR *str )
 /* increment the ref count of a global atom; used for window properties */
 int grab_global_atom( atom_t atom )
 {
-    struct atom_entry *entry = get_atom_entry( global_table, atom );
-    if (entry) entry->count++;
-    return (entry != NULL);
+    if (atom >= MIN_STR_ATOM)
+    {
+        struct atom_entry *entry = get_atom_entry( global_table, atom );
+        if (entry) entry->count++;
+        return (entry != NULL);
+    }
+    else return 1;
 }
 
 /* decrement the ref count of a global atom; used for window properties */
 void release_global_atom( atom_t atom )
 {
-    delete_atom( global_table, atom );
+    if (atom >= MIN_STR_ATOM) delete_atom( global_table, atom );
 }
 
 /* add a global atom */
