@@ -635,10 +635,9 @@ DECL_HANDLER(init_thread)
     }
     current->unix_pid = req->unix_pid;
     current->teb      = req->teb;
-    current->entry    = req->entry;
     if (current->suspend + current->process->suspend > 0) stop_thread( current );
     if (current->process->running_threads > 1)
-        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, current );
+        generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, req->entry );
 }
 
 /* terminate a thread */

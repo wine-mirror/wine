@@ -86,6 +86,7 @@ int main( int argc, char *argv[] )
     parse_args( argc, argv );
     signal_init();
     open_master_socket();
+    setvbuf( stderr, NULL, _IOLBF, 0 );
 
     if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
     select_loop();

@@ -94,7 +94,7 @@ static int fill_exception_event( struct debug_event *event, void *arg )
 static int fill_create_thread_event( struct debug_event *event, void *arg )
 {
     struct process *debugger = event->debugger->process;
-    struct thread *thread = arg;
+    struct thread *thread = event->sender;
     int handle;
     
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
@@ -102,15 +102,15 @@ static int fill_create_thread_event( struct debug_event *event, void *arg )
         return 0;
     event->data.info.create_thread.handle = handle;
     event->data.info.create_thread.teb    = thread->teb;
-    event->data.info.create_thread.start  = thread->entry;
+    event->data.info.create_thread.start  = arg;
     return 1;
 }
 
 static int fill_create_process_event( struct debug_event *event, void *arg )
 {
     struct process *debugger = event->debugger->process;
-    struct process *process = arg;
-    struct thread *thread = process->thread_list;
+    struct thread *thread = event->sender;
+    struct process *process = thread->process;
     int handle;
 
     /* documented: PROCESS_VM_READ | PROCESS_VM_WRITE */
@@ -138,7 +138,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     event->data.info.create_process.file       = handle;
     event->data.info.create_process.teb        = thread->teb;
     event->data.info.create_process.base       = process->exe.base;
-    event->data.info.create_process.start      = thread->entry;
+    event->data.info.create_process.start      = arg;
     event->data.info.create_process.dbg_offset = process->exe.dbg_offset;
     event->data.info.create_process.dbg_size   = process->exe.dbg_size;
     event->data.info.create_process.name       = 0;
@@ -472,15 +472,15 @@ static int debugger_attach( struct process *process, struct thread *debugger )
 }
 
 /* generate all startup events of a given process */
-void generate_startup_debug_events( struct process *process )
+void generate_startup_debug_events( struct process *process, void *entry )
 {
     struct process_dll *dll;
     struct thread *thread = process->thread_list;
 
     /* generate creation events */
-    generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, process );
+    generate_debug_event( thread, CREATE_PROCESS_DEBUG_EVENT, entry );
     while ((thread = thread->proc_next))
-        generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, thread );
+        generate_debug_event( thread, CREATE_THREAD_DEBUG_EVENT, NULL );
 
     /* generate dll events (in loading order, i.e. reverse list order) */
     for (dll = &process->exe; dll->next; dll = dll->next);
@@ -559,13 +559,13 @@ DECL_HANDLER(debug_process)
 
     if (debugger_attach( process, current ))
     {
-        generate_startup_debug_events( process );
+        generate_startup_debug_events( process, NULL );
         resume_process( process );
 
         data.record.ExceptionCode    = EXCEPTION_BREAKPOINT;
         data.record.ExceptionFlags   = EXCEPTION_CONTINUABLE;
         data.record.ExceptionRecord  = NULL;
-        data.record.ExceptionAddress = process->thread_list->entry; /* FIXME */
+        data.record.ExceptionAddress = get_thread_ip( process->thread_list );
         data.record.NumberParameters = 0;
         data.first = 1;
         if ((event = queue_debug_event( process->thread_list, EXCEPTION_DEBUG_EVENT, &data )))

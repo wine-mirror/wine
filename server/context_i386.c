@@ -458,6 +458,19 @@ static void copy_context( CONTEXT *to, CONTEXT *from, int flags )
     /* always need to be accessed by ptrace anyway */
 }
 
+/* retrieve the current instruction pointer of a thread */
+void *get_thread_ip( struct thread *thread )
+{
+    CONTEXT context;
+    context.Eip = 0;
+    if (suspend_for_ptrace( thread ))
+    {
+        get_thread_context( thread, CONTEXT_CONTROL, &context );
+        resume_thread( thread );
+    }
+    return (void *)context.Eip;
+}
+
 /* retrieve the current context of a thread */
 DECL_HANDLER(get_thread_context)
 {

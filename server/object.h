@@ -155,7 +155,7 @@ extern int free_console( struct process *process );
 
 extern int set_process_debugger( struct process *process, struct thread *debugger );
 extern void generate_debug_event( struct thread *thread, int code, void *arg );
-extern void generate_startup_debug_events( struct process *process );
+extern void generate_startup_debug_events( struct process *process, void *entry );
 extern void debug_exit_thread( struct thread *thread );
 
 /* mapping functions */

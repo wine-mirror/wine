@@ -49,7 +49,6 @@ struct thread
     int                 unix_pid;  /* Unix pid of client */
     CONTEXT            *context;   /* current context if in an exception handler */
     void               *teb;       /* TEB address (in client address space) */
-    void               *entry;     /* thread entry point (in client address space) */
     int                 priority;  /* priority level */
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */
@@ -89,6 +88,7 @@ extern void detach_thread( struct thread *thread, int sig );
 extern int suspend_for_ptrace( struct thread *thread );
 extern int read_thread_int( struct thread *thread, const int *addr, int *data );
 extern int write_thread_int( struct thread *thread, int *addr, int data, unsigned int mask );
+extern void *get_thread_ip( struct thread *thread );
 
 
 static inline int get_error(void)       { return current->error; }
