@@ -844,9 +844,6 @@ TREEVIEW_ComputeTextWidth(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item, HDC hDC)
 	return;
     }
 
-    if (item->textWidth != 0 && !(item->callbackMask & TVIF_TEXT))
-       return;
-
     if (hDC != 0)
     {
 	hdc = hDC;
