@@ -478,7 +478,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
     {
         HWND hwnd = hwndFrom;
 
-        while (hwnd)
+        while (hwnd && hwnd != GetDesktopWindow())
         {
             if (hwnd == hwndTo) return;
             if (!(wndPtr = WIN_GetPtr( hwnd )))
@@ -499,7 +499,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, POINT *offset )
     {
         HWND hwnd = hwndTo;
 
-        while (hwnd)
+        while (hwnd && hwnd != GetDesktopWindow())
         {
             if (!(wndPtr = WIN_GetPtr( hwnd )))
             {
