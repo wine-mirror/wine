@@ -28,7 +28,7 @@
 #include "vfw.h"
 
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     int			bytesline,i,n,pos;
     time_t		tstart,tend;

@@ -5,7 +5,7 @@
 #include "vfw.h"
 
 
-int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
+int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
     int n=0,doabout=0,doconfigure=0;
     char	buf[128],type[5],handler[5];
