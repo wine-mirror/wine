@@ -33,8 +33,6 @@
 #include "winuser.h"
 #include "dxfile.h"
 
-HRESULT XF_create(IUnknown *pUnkOuter, LPVOID *ppObj);
-
 typedef struct {
     IDirectXFile lpVtbl;
     int ref;
@@ -69,5 +67,13 @@ typedef struct {
     IDirectXFileSaveObject lpVtbl;
     int ref;
 } IDirectXFileSaveObjectImpl;
+
+HRESULT IDirectXFileImpl_Create(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT IDirectXFileBinaryImpl_Create(IDirectXFileBinaryImpl** ppObj);
+HRESULT IDirectXFileDataImpl_Create(IDirectXFileDataImpl** ppObj);
+HRESULT IDirectXFileDataReferenceImpl_Create(IDirectXFileDataReferenceImpl** ppObj);
+HRESULT IDirectXFileEnumObjectImpl_Create(IDirectXFileEnumObjectImpl** ppObj);
+HRESULT IDirectXFileFileObjectImpl_Create(IDirectXFileObjectImpl** ppObj);
+HRESULT IDirectXFileFileSaveObjectImpl_Create(IDirectXFileSaveObjectImpl** ppObj);
 
 #endif /* __D3DXOF_PRIVATE_INCLUDED__ */

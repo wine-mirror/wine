@@ -75,7 +75,7 @@ struct object_creation_info
 
 static const struct object_creation_info object_creation[] =
 {
-    { &CLSID_CDirectXFile, XF_create },
+    { &CLSID_CDirectXFile, IDirectXFileImpl_Create },
 };
 
 static HRESULT WINAPI XFCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid, LPVOID *ppobj)
@@ -157,11 +157,13 @@ static ICOM_VTABLE(IClassFactory) XFCF_Vtbl =
 HRESULT WINAPI DirectXFileCreate(LPDIRECTXFILE* lplpDirectXFile)
 {
     HRESULT hr;
-    FIXME("(%p) Stub\n", lplpDirectXFile);
+
+    TRACE("(%p)\n", lplpDirectXFile);
+
     if (!lplpDirectXFile)
 	return DXFILEERR_BADVALUE;
 
-    hr = XF_create(NULL, (LPVOID)lplpDirectXFile);
+    hr = IDirectXFileImpl_Create(NULL, (LPVOID)lplpDirectXFile);
 
     if (FAILED(hr))
 	return DXFILEERR_BADALLOC;
