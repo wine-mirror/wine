@@ -642,6 +642,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
     int			msg;
     DWORD		param;
     DWORD		tc;
+    BOOL                had_msg;
 
     wwo->state = WINE_WS_STOPPED;
 
@@ -678,11 +679,14 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	        dwSleepTime = 0;
 	}
 
-	TRACE("imhere[1]\n");
+	TRACE("imhere[1] tc = %08lx\n", GetTickCount());
 	if (dwSleepTime)
-	WaitForSingleObject(wwo->msg_event, dwSleepTime);
-	TRACE("imhere[2] (q=%p p=%p)\n", wwo->lpQueuePtr, wwo->lpPlayPtr);
+	    WaitForSingleObject(wwo->msg_event, dwSleepTime);
+	TRACE("imhere[2] (q=%p p=%p) tc = %08lx\n", wwo->lpQueuePtr,
+	      wwo->lpPlayPtr, GetTickCount());
+	had_msg = FALSE;
 	while (wodPlayer_RetrieveMessage(wwo, &msg, &param)) {
+	    had_msg = TRUE;
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wodPlayer_Reset(wwo, uDevID, FALSE);
@@ -722,11 +726,19 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 		FIXME("unknown message %d\n", msg);
 		break;
 	    }
+	    if (wwo->state == WINE_WS_PLAYING) {
+		wodPlayer_WriteFragments(wwo);
+	    }
+	    wodPlayer_Notify(wwo, uDevID, FALSE);
 	}
-	if (wwo->state == WINE_WS_PLAYING) {
-	    wodPlayer_WriteFragments(wwo);
+
+	if (!had_msg) { /* if we've received a msg we've just done this so we
+			   won't repeat it */
+	    if (wwo->state == WINE_WS_PLAYING) {
+		wodPlayer_WriteFragments(wwo);
+	    }
+	    wodPlayer_Notify(wwo, uDevID, FALSE);
 	}
-	wodPlayer_Notify(wwo, uDevID, FALSE);
     }
     ExitThread(0);
     /* just for not generating compilation warnings... should never be executed */
