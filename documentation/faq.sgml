@@ -820,7 +820,6 @@
           Windows=c:\windows
           System=c:\windows\system
           Temp=e:\
-          Path=c:\windows;c:\windows\system;c:
         </screen>
         <para>
          In <filename>/var/lib/wine/windows</filename>, you will need to

@@ -359,16 +359,13 @@
         <sect3 id="config-wine">
           <title>The [wine] Section </title>
           <para>
-            The [wine] section of the configuration file contains all kinds
-            of general settings for Wine.
+            The [wine] section of the configuration file contains basic settings for Wine.
   	  </para>
           <para>
             <programlisting>
 "Windows" = "c:\\windows"
-"System" = "c:\\windows\\system"
-"Temp" = "c:\\temp"
-"Path" = "c:\\windows;c:\\windows\\system;c:\\blanco"
 "ShowDirSymlinks" = "1"
+"ShowDotFiles" = "1"
             </programlisting>
 	    For a detailed description of drive layer configuration and
 	    the meaning of these parameters, please look at the <link
@@ -973,35 +970,6 @@ ln -s /dev/lp0 lpt1
           recommended, as Windows programs always assume write access
             to the Windows directory!
         </para>
-        <para>
-          <programlisting>"System" = "c:\\windows\\system"</programlisting>
-          This sets up where the windows system files are. The Windows
-            system directory should reside below the directory used for the
-          <literal>Windows</literal> setting.
-            Thus when using the example above, the system directory would be
-            <filename>/usr/local/wine_c/windows/system</filename>.
-          Again, no trailing slash, and write access!
-        </para>
-        <para>
-          <programlisting>"Temp" = "c:\\temp"</programlisting> This should
-          be the directory you want your temp files stored in,
-            /usr/local/wine_c/temp in our example.
-          Again, no trailing slash, and <emphasis>write
-            access</emphasis>!!
-        </para>
-        <para>
-          <programlisting>"Path" = "c:\\windows;c:\\windows\\system;c:\\blanco"</programlisting>
-          Behaves like the <envar>PATH</envar> setting on UNIX
-          boxes. When wine is run like <userinput>wine
-            sol.exe</userinput>, if <filename>sol.exe</filename>
-          resides in a directory specified in the
-          <literal>Path</literal> setting, wine will run it (Of
-          course, if <filename>sol.exe</filename> resides in the
-          current directory, wine will run that one). Make sure it
-          always has your <filename>windows</filename> directory and
-          system directory (For this setup, it must have
-          <filename>"c:\\windows;c:\\windows\\system"</filename>).
-        </para>
         <para id="dirsymlinks">
           <programlisting>"ShowDirSymlinks" = "1"</programlisting>
           Wine doesn't pass directory symlinks to Windows programs by
@@ -1017,6 +985,9 @@ ln -s /dev/lp0 lpt1
 	  Windows programs when using the above method! (in other words:
 	  enabling it is certainly not recommended)
         </para>
+	<para>Old Path, Temp, System configuration are now moved into the
+	  registry. See the <link linkend="environment-variables">Environment
+	  Variables</link> paragraph.</para>
       </sect2>
 
       <sect2>

@@ -88,16 +88,14 @@ Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program
       <para>
         The first argument should be the name of the file you
         want <command>wine</command> to execute.  If the executable is
-        in the <parameter>Path</parameter> parameter in the
-        configuration file, you can simply give the executable file
-        name.  However, if the executable is not in
-        <parameter>Path</parameter>, you must give the full path to
+        in the <parameter>Path</parameter> environment variable, you can
+        simply give the executable file name. However, if the executable
+        is not in <parameter>Path</parameter>, you must give the full path to
         the executable (in Windows format, not UNIX format!).  For
         example, given a <parameter>Path</parameter> of the following:
       </para>
       <screen>
-[wine]
-"Path"="c:\\windows;c:\\windows\\system;e:\\;e:\\test;f:\\"
+Path="c:\windows;c:\windows\system;e:\;e:\test;f:\"
       </screen>
       <para>
         You could run the file
@@ -375,17 +373,45 @@ Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program
 	place the setting into /etc/profile, or also ~/.bashrc in the case of
 	bash.
       </para>
-      <para>
-        Note however that there is an exception to the rule:
-	If you want to change the PATH environment variable, then of
-	course you can't modify it that way, since this will alter the
-	Unix PATH environment setting. Instead, you should set the
-	WINEPATH environment variable. An alternative way to
-	indicate the content of the DOS PATH environment variable would
-	be to change the "path" setting in the wine config file's <link
-	linkend="config-wine">[wine]</link> section.
+      <para>Note however that there are some exceptions to the rule:
+        If you want to change the PATH, SYSTEM or TEMP variables, the of course
+        you can't modify it that way, since this will alter the Unix environment
+        settings. Instead, you should set them into the registry. To set them
+        you should launch <userinput>wine regedit</userinput> and then go to the
+        <screen>HKEY_CURRENT_USER/Environment</screen> key. Now you can create
+        or modify the values of the variables you need
       </para>
-
+      <para>
+        <programlisting>"System" = "c:\\windows\\system"</programlisting>
+        This sets up where the windows system files are. The Windows
+          system directory should reside below the directory used for the
+        <literal>Windows</literal> setting.
+          Thus when using /usr/local/wine_c_windows as Windows path,
+          the system directory would be
+          <filename>/usr/local/wine_c/windows/system</filename>.
+        It must be set with no trailing slash, and you must be sure that
+        you have write access to it.
+      </para>
+      <para>
+        <programlisting>"Temp" = "c:\\temp"</programlisting> This should
+        be the directory you want your temp files stored in,
+          /usr/local/wine_c/temp in our previous example.
+        Again, no trailing slash, and <emphasis>write
+          access</emphasis>!!
+      </para>
+      <para>
+        <programlisting>"Path" = "c:\\windows;c:\\windows\\system;c:\\blanco"</programlisting>
+        Behaves like the <envar>PATH</envar> setting on UNIX
+        boxes. When wine is run like <userinput>wine
+          sol.exe</userinput>, if <filename>sol.exe</filename>
+        resides in a directory specified in the
+        <literal>Path</literal> setting, wine will run it (Of
+        course, if <filename>sol.exe</filename> resides in the
+        current directory, wine will run that one). Make sure it
+        always has your <filename>windows</filename> directory and
+        system directory (For this setup, it must have
+        <filename>"c:\\windows;c:\\windows\\system"</filename>).
+      </para>
     </sect1>
 
     <sect1 id="CUI-programs">
