@@ -25,6 +25,9 @@
 /* Define if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
 
+/* Define if you have ARTS sound server */
+#undef HAVE_ARTS
+
 /* Define to use .string instead of .ascii */
 #undef HAVE_ASM_STRING
 

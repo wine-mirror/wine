@@ -510,6 +510,37 @@ then
     AC_DEFINE(HAVE_OSS_MIDI, 1, [Define if you have the Open Sound system (MIDI interface)])
 fi
 
+dnl **** Check for aRts Sound Server ****
+AC_PATH_PROG(ARTSCCONFIG, artsc-config)
+AC_CACHE_CHECK([for aRts Sound server],
+        ac_cv_c_artsserver,
+        if test x$ARTSCCONFIG = x -o x$ARTSCCONFIG = x'"$ARTSCCONFIG"';
+        then
+            ac_cv_c_artsserver=no
+        else
+            ARTSC_CFLAGS=`$ARTSCCONFIG --cflags`
+            ARTSC_LIBS=`$ARTSCCONFIG --libs`
+            ac_cv_c_artsserver=no
+            save_CFLAGS="$CFLAGS"
+            CFLAGS="$CFLAGS $ARTSC_CFLAGS"
+            AC_TRY_COMPILE([
+             #include <artsc.h>
+            ],[
+             arts_stream_t stream;
+            ],[
+            ac_cv_c_artsserver=yes
+            ])
+            CFLAGS="$save_CFLAGS"
+        fi)
+
+if test "$ac_cv_c_artsserver" = "yes"
+then
+    AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
+    AC_SUBST(ARTSINCL, $ARTSC_CFLAGS)
+
+    AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])
+fi
+
 dnl **** Check for broken glibc mmap64 ****
 
 AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,
@@ -1317,6 +1348,7 @@ dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
 dlls/winmm/midimap/Makefile
 dlls/winmm/wavemap/Makefile
+dlls/winmm/winearts/Makefile
 dlls/winmm/wineoss/Makefile
 dlls/winnls/Makefile
 dlls/winsock/Makefile

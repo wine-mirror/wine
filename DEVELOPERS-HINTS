@@ -78,6 +78,7 @@ Other DLLs:
 		wing/		- WinG (for games) internface
 		winmm/		- multimedia (16 & 32 bit)
 			mciXXX/	- various MCI drivers
+			winearts/ - ARTS audio driver
 			wineoss/- MM driver for OSS systems
 			wavemap/- audio mapper
 			midimap/- midi mapper

@@ -238,6 +238,7 @@ WINE REGISTRY Version 2
 
 [WinMM]
 "Drivers" = "wineoss.drv"
+#"Drivers" = "winearts.drv"
 "WaveMapper" = "msacm.drv"
 "MidiMapper" = "midimap.drv"
 

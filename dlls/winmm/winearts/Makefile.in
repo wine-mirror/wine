@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winearts.drv
+EXTRADEFS = @ARTSINCL@
+EXTRALIBS = @ARTSLIBS@
+
+LDDLLFLAGS = @LDDLLFLAGS@
+SYMBOLFILE = $(MODULE).tmp.o
+
+C_SRCS = \
+	arts.c \
+	audio.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

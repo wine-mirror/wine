@@ -294,7 +294,7 @@ HRESULT WINAPI DirectSoundEnumerateA(
 
 #ifdef HAVE_OSS
 	if (lpDSEnumCallback != NULL)
-		lpDSEnumCallback(NULL,"WINE DirectSound using Open Sound System",
+		lpDSEnumCallback(NULL,"WINE DirectSound",
 		    "sound",lpContext);
 #endif
 

@@ -87,6 +87,7 @@ SUBDIRS = \
 	winmm/mciwave \
 	winmm/midimap \
 	winmm/wavemap \
+	winmm/winearts \
 	winmm/wineoss \
 	winnls \
 	winsock \
@@ -207,6 +208,7 @@ all: \
 	win87em.dll$(DLLEXT) \
 	winaspi.dll$(DLLEXT) \
 	windebug.dll$(DLLEXT) \
+	winearts.drv$(DLLEXT) \
 	winedos.dll$(DLLEXT) \
 	wineoss.drv$(DLLEXT) \
 	wineps.dll$(DLLEXT) \
@@ -439,6 +441,9 @@ version.dll$(DLLEXT) ver.dll$(DLLEXT): version/version.dll$(DLLEXT)
 
 w32skrnl.dll$(DLLEXT) w32sys.dll$(DLLEXT) win32s16.dll$(DLLEXT): win32s/w32skrnl.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) win32s/w32skrnl.dll$(DLLEXT) $@
+
+winearts.drv$(DLLEXT): winmm/winearts/winearts.drv$(DLLEXT)
+	$(RM) $@ && $(LN_S) winmm/winearts/winearts.drv$(DLLEXT) $@
 
 winedos.dll$(DLLEXT): winedos/winedos.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedos/winedos.dll$(DLLEXT) $@
@@ -752,6 +757,10 @@ winmm/midimap/midimap.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT)
 winmm/wavemap/msacm.drv$(DLLEXT): dummy msacm32.dll$(DLLEXT) winmm.dll$(DLLEXT) \
   user32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd winmm/wavemap && $(MAKE) msacm.drv$(DLLEXT)
+
+winmm/winearts/winearts.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+	@cd winmm/winearts && $(MAKE) winearts.drv$(DLLEXT)
 
 winmm/wineoss/wineoss.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
   kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
