@@ -2,13 +2,12 @@ name	comdlg32
 type	win32
 init	COMDLG32_DllEntryPoint
 rsrc	comdlg32
-import   winspool.drv
 
-import	shell32.dll
+import shell32.dll
 import shlwapi.dll
-import	comctl32.dll
+import comctl32.dll
 import user32.dll
-import	winspool.drv
+import winspool.drv
 
  0 stub ArrowBtnWndProc
  1 stdcall ChooseColorA(ptr) ChooseColorA
