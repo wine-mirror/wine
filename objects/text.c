@@ -371,15 +371,15 @@ BOOL16 WINAPI ExtTextOut16( HDC16 hdc, INT16 x, INT16 y, UINT16 flags,
     RECT	rect32;
     LPINT	lpdx32 = NULL;
 
-    if (lpDx) lpdx32 = (LPINT)HEAP_xalloc( GetProcessHeap(), 0,
-                                             sizeof(INT)*count );
+    if (lpDx) {
+	lpdx32 = (LPINT)HeapAlloc( GetProcessHeap(),0, sizeof(INT)*count );
+	if(lpdx32 == NULL) return FALSE;
+	for (i=count;i--;) lpdx32[i]=lpDx[i];
+    }    
     if (lprect)	CONV_RECT16TO32(lprect,&rect32);
-    if (lpdx32)	for (i=count;i--;) lpdx32[i]=lpDx[i];
     ret = ExtTextOutA(hdc,x,y,flags,lprect?&rect32:NULL,str,count,lpdx32);
     if (lpdx32) HeapFree( GetProcessHeap(), 0, lpdx32 );
     return ret;
-
-
 }
 
 
@@ -715,7 +715,8 @@ LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str,
     UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
 
     acount = WideCharToMultiByte(codepage,0,str,count,NULL,0,NULL,NULL);
-    p = HEAP_xalloc( GetProcessHeap(), 0, acount ); 
+    p = HeapAlloc( GetProcessHeap(), 0, acount );
+    if(p == NULL) return 0; /* FIXME: is this the correct return on failure */ 
     acount = WideCharToMultiByte(codepage,0,str,count,p,acount,NULL,NULL);
     ret = TabbedTextOutA( hdc, x, y, p, acount, cTabStops,
                             lpTabPos, nTabOrg );
@@ -762,7 +763,8 @@ DWORD WINAPI GetTabbedTextExtentW( HDC hdc, LPCWSTR lpstr, INT count,
     UINT codepage = CP_ACP; /* FIXME: get codepage of font charset */
 
     acount = WideCharToMultiByte(codepage,0,lpstr,count,NULL,0,NULL,NULL);
-    p = HEAP_xalloc( GetProcessHeap(), 0, acount );
+    p = HeapAlloc( GetProcessHeap(), 0, acount );
+    if(p == NULL) return 0; /* FIXME: is this the correct failure value? */
     acount = WideCharToMultiByte(codepage,0,lpstr,count,p,acount,NULL,NULL);
     ret = GetTabbedTextExtentA( hdc, p, acount, cTabStops, lpTabPos );
     HeapFree( GetProcessHeap(), 0, p );

@@ -940,10 +940,9 @@ INT WINAPI GetKeyboardLayoutNameA(LPSTR pwszKLID)
  */
 INT WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
-	LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, strlen("00000409")+1);
+	char buf[9];
 	int res = GetKeyboardLayoutNameA(buf);
 	lstrcpyAtoW(pwszKLID,buf);
-	HeapFree( GetProcessHeap(), 0, buf );
 	return res;
 }
 
@@ -960,8 +959,10 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
  */
 INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
-	LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, nSize );
-	int res = GetKeyNameTextA(lParam,buf,nSize);
+	int res;
+	LPSTR buf = HeapAlloc( GetProcessHeap(), 0, nSize );
+	if(buf == NULL) return 0; /* FIXME: is this the correct failure value?*/
+	res = GetKeyNameTextA(lParam,buf,nSize);
 
 	lstrcpynAtoW(lpBuffer,buf,nSize);
 	HeapFree( GetProcessHeap(), 0, buf );
@@ -1069,11 +1070,9 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
  */
 HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
-    LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, strlen("00000409")+1);
-    int res;
+    char buf[9];
+    
     lstrcpynWtoA(buf,pwszKLID,8);
     buf[8] = 0;
-    res = LoadKeyboardLayoutA(buf, Flags);
-    HeapFree( GetProcessHeap(), 0, buf );
-    return res;
+    return LoadKeyboardLayoutA(buf, Flags);
 }

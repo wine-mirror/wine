@@ -383,8 +383,9 @@ static BOOL OBM_CreateBitmaps( OBM_BITMAP_DESCR *descr )
     XpmAttributes *attrs;
     int err;
 
-    attrs = (XpmAttributes *)HEAP_xalloc( GetProcessHeap(), 0,
-                                          XpmAttributesSize() );
+    attrs = (XpmAttributes *)HeapAlloc( GetProcessHeap(), 0,
+		                         XpmAttributesSize() );
+    if(attrs == NULL) return FALSE;
     attrs->valuemask    = XpmColormap | XpmDepth | XpmColorSymbols |XpmHotspot;
     attrs->colormap     = X11DRV_PALETTE_PaletteXColormap;
     attrs->depth        = descr->color ? X11DRV_GetDepth() : 1;

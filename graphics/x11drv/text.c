@@ -35,14 +35,15 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 {
     int 	        i;
     fontObject*		pfo;
-    INT	 	width, ascent, descent, xwidth, ywidth;
+    INT	 	        width, ascent, descent, xwidth, ywidth;
     XFontStruct*	font;
     RECT 		rect;
     char		dfBreakChar, lfUnderline, lfStrikeOut;
     BOOL		rotated = FALSE;
     X11DRV_PDEVICE      *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    XChar2b *str2b;
+    XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
+    BOOL                result = TRUE; 
 
     if (!X11DRV_SetupGCForText( dc )) return TRUE;
 
@@ -224,6 +225,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     
     /* Draw the text (count > 0 verified) */
     str2b = HeapAlloc( GetProcessHeap(), 0, count * sizeof(XChar2b) );
+    if( str2b == NULL) goto FAIL;
     for(i = 0; i < count; i++) {
       str2b[i].byte1 = wstr[i] >> 8;
       str2b[i].byte2 = wstr[i] & 0xff;
@@ -244,8 +246,9 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
 	/* allocate max items */
 
-        pitem = items = HEAP_xalloc( GetProcessHeap(), 0,
-                                     count * sizeof(XTextItem16) );
+        pitem = items = HeapAlloc( GetProcessHeap(), 0,
+                                   count * sizeof(XTextItem16) );
+	if(items == NULL) goto FAIL; 
         delta = i = 0;
 	if( lpDx ) /* explicit character widths */
 	{
@@ -366,8 +369,14 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     if (flags & ETO_CLIPPED) 
         RestoreVisRgn16( dc->hSelf );
 
+    goto END;
+	    
+FAIL:
+    if(str2b != NULL) HeapFree( GetProcessHeap(), 0, str2b );
+    result = FALSE;
+    
 END:
     if (dibUpdateFlag) X11DRV_DIB_UpdateDIBSection( dc, TRUE );
-    return TRUE;
+    return result;
 }
 

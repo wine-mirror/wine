@@ -620,7 +620,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
-	  LPARAM *ptr = (LPARAM *) HEAP_xalloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
+	  LPARAM *ptr = (LPARAM *) HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
 	  *((WORD *) ptr) = len;   /* Store the length */
@@ -844,7 +844,7 @@ INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM *plparam 
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
-	  LPARAM *ptr = (LPARAM *) HEAP_xalloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
+	  LPARAM *ptr = (LPARAM *) HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
 	  *((WORD *) ptr) = len;   /* Store the length */

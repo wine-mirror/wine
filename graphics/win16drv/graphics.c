@@ -97,7 +97,9 @@ WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count )
     if(pt[0].x != pt[count-1].x || pt[0].y != pt[count-1].y)
         count++; /* Ensure polygon is closed */
 
-    points = HEAP_xalloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
+    points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
+    if(points == NULL) return FALSE;    
+ 
     for (i = 0; i < count - 1; i++)
     {
       points[i].x = XLPTODP( dc, pt[i].x );
@@ -128,7 +130,9 @@ WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count )
 
     if(count < 2) return TRUE;
 
-    points = HEAP_xalloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
+    points = HeapAlloc( GetProcessHeap(), 0, count * sizeof(POINT16) );
+    if(points == NULL) return FALSE;
+ 
     for (i = 0; i < count; i++)
     {
       points[i].x = XLPTODP( dc, pt[i].x );

@@ -1634,31 +1634,15 @@ DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
 
 
 /***********************************************************************
- *           HEAP_xalloc
- *
- * Same as HeapAlloc(), but die on failure.
- */
-LPVOID HEAP_xalloc( HANDLE heap, DWORD flags, DWORD size )
-{
-    LPVOID p = HeapAlloc( heap, flags, size );
-    if (!p)
-    {
-        MESSAGE("Virtual memory exhausted.\n" );
-        exit(1);
-    }
-    SET_EIP(p);
-    return p;
-}
-
-
-/***********************************************************************
  *           HEAP_strdupA
  */
 LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
 {
-    LPSTR p = HEAP_xalloc( heap, flags, strlen(str) + 1 );
-    SET_EIP(p);
-    strcpy( p, str );
+    LPSTR p = HeapAlloc( heap, flags, strlen(str) + 1 );
+    if(p) {
+        SET_EIP(p);
+        strcpy( p, str );
+    }
     return p;
 }
 
@@ -1669,9 +1653,11 @@ LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
 LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
 {
     INT len = lstrlenW(str) + 1;
-    LPWSTR p = HEAP_xalloc( heap, flags, len * sizeof(WCHAR) );
-    SET_EIP(p);
-    lstrcpyW( p, str );
+    LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
+    if(p) {
+        SET_EIP(p);
+        lstrcpyW( p, str );
+    }
     return p;
 }
 
@@ -1684,9 +1670,11 @@ LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
     LPWSTR ret;
 
     if (!str) return NULL;
-    ret = HEAP_xalloc( heap, flags, (strlen(str)+1) * sizeof(WCHAR) );
-    SET_EIP(ret);
-    lstrcpyAtoW( ret, str );
+    ret = HeapAlloc( heap, flags, (strlen(str)+1) * sizeof(WCHAR) );
+    if (ret) {
+        SET_EIP(ret);
+        lstrcpyAtoW( ret, str );
+    }
     return ret;
 }
 
@@ -1699,9 +1687,11 @@ LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
     LPSTR ret;
 
     if (!str) return NULL;
-    ret = HEAP_xalloc( heap, flags, lstrlenW(str) + 1 );
-    SET_EIP(ret);
-    lstrcpyWtoA( ret, str );
+    ret = HeapAlloc( heap, flags, lstrlenW(str) + 1 );
+    if(ret) {
+        SET_EIP(ret);
+        lstrcpyWtoA( ret, str );
+    }
     return ret;
 }
 

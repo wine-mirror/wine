@@ -1126,8 +1126,11 @@ INT WINAPI GetClipboardFormatNameA( UINT wFormat, LPSTR retStr, INT maxlen )
  */
 INT WINAPI GetClipboardFormatNameW( UINT wFormat, LPWSTR retStr, INT maxlen )
 {
-    LPSTR p = HEAP_xalloc( GetProcessHeap(), 0, maxlen );
-    INT ret = GetClipboardFormatNameA( wFormat, p, maxlen );
+    INT ret;
+    LPSTR p = HeapAlloc( GetProcessHeap(), 0, maxlen );
+    if(p == NULL) return 0; /* FIXME: is this the correct failure value? */
+    
+    ret = GetClipboardFormatNameA( wFormat, p, maxlen );
     lstrcpynAtoW( retStr, p, maxlen );
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
