@@ -293,7 +293,10 @@ TTYget()
     while ( ( retv = read( 0, &c, (size_t)1 ) ) == -1 )
     {
         if ( errno != EINTR )
+        {
             perror( "read" );
+            return EOF;
+        }
     }
 
     return retv == 1 ? c : EOF;
