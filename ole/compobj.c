@@ -1583,7 +1583,8 @@ void WINAPI CoFreeUnusedLibraries(void)
 	DllCanUnloadNow = (DllCanUnloadNowFunc)
 	    GetProcAddress(ptr->hLibrary, "DllCanUnloadNow");
 	
-	if (DllCanUnloadNow() == S_OK) {
+	if ( (DllCanUnloadNow != NULL) &&
+	     (DllCanUnloadNow() == S_OK) ) {
 	    tmp=ptr->next;
 	    CoFreeLibrary(ptr->hLibrary);
 	    ptr = tmp;
