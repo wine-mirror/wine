@@ -866,37 +866,22 @@ static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
         if ((pcmd = strchr(line, '"'))) /* closing '"' available, too ? */
             len = ++pcmd - line;
     }
-
-    if (!len)
+    else
     {
-        p = strchr(line, ' ');
-        do {
-            len = (p? p-line : strlen(line)) + 1;
-            if (len > namelen - 4) len = namelen - 4;
-            lstrcpynA(name, line, len);
-            if (extension && !strchr(name, '\\') && !strchr(name, '.'))
-                strcat(name, ".exe");
-            if (GetFileAttributesA(name) != -1) {
-                pcmd = p ? p : line+strlen(line);
-                break;
-            }
-            /* if there is a space and no file found yet, include the word
-             * up to the next space too. If there is no next space, just
-             * use the first word.
-             */
-            if (p) {
-                p = strchr(p+1, ' ');
-            } else {
-                p = strchr(line, ' ');
-                len = (p? p-line : strlen(line)) + 1;
-                if (len > namelen - 4)
-                    len = namelen - 4;
-                pcmd = p ? p + 1 : line+strlen(line);
-                break;
-            }
-        } while (1);
+	if((p = strchr(line, ' '))) 
+	{
+		len = p - line;
+		pcmd = p+1;
+	}
+	else
+		len = strlen(line);
+	
+	len++;
     }
+    if(len > (namelen - 4)) len = namelen - 4;
     lstrcpynA(name, line, len);
+    if(extension && (strrchr(name, '.') <= strrchr(name, '\\')) )
+        	strcat(name, ".exe");
     if (after) *after = pcmd;
 }
 
@@ -917,9 +902,6 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     DWORD type;
     char name[256];
     LPCSTR cmdline;
-#if 0
-    LPCSTR p = NULL;
-#endif
 
     /* Get name and command line */
 
@@ -932,23 +914,14 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     name[0] = '\0';
 
     if (lpApplicationName) {
-        get_executable_name( lpApplicationName, name, sizeof(name), NULL, FALSE);
-#if 0
-        p = strrchr(name, '.');
-        if (p >= name+strlen(name)-4) /* FIXME */
-            *p = '\0';
-#endif
+       get_executable_name( lpApplicationName, name, sizeof(name), NULL, TRUE );
     }
     else {
-      get_executable_name ( lpCommandLine, name, sizeof ( name ), NULL, FALSE );
+       get_executable_name( lpCommandLine, name, sizeof ( name ), NULL, TRUE );
     }
     if (!lpCommandLine) 
       cmdline = lpApplicationName;
     else cmdline = lpCommandLine;
-
-    if (!strchr(name, '\\') && !strchr(name, '.'))
-        strcat(name, ".exe");
-
 
     /* Warn if unsupported features are used */
 
