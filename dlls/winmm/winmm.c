@@ -2425,19 +2425,29 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
 	  lphndl, (int)uDeviceID, (uType==MMDRV_WAVEOUT)?"Out":"In", lpFormat, dwCallback,
 	  dwInstance, dwFlags, bFrom32?32:16);
 
-    if (dwFlags & WAVE_FORMAT_QUERY)	TRACE("WAVE_FORMAT_QUERY requested !\n");
+    if (dwFlags & WAVE_FORMAT_QUERY)
+        TRACE("WAVE_FORMAT_QUERY requested !\n");
 
-    if (lpFormat == NULL) return WAVERR_BADFORMAT;
-    if ((dwFlags & WAVE_MAPPED) && (uDeviceID == (UINT)-1))
+    if (lpFormat == NULL) {
+        WARN("bad format\n");
+        return WAVERR_BADFORMAT;
+    }
+
+    if ((dwFlags & WAVE_MAPPED) && (uDeviceID == (UINT)-1)) {
+        WARN("invalid parameter\n");
 	return MMSYSERR_INVALPARAM;
+    }
 
-    TRACE("wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u, cbSize=%u\n",
+    /* may have a PCMWAVEFORMAT rather than a WAVEFORMATEX so don't read cbSize */
+    TRACE("wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u\n",
 	  lpFormat->wFormatTag, lpFormat->nChannels, lpFormat->nSamplesPerSec,
-	  lpFormat->nAvgBytesPerSec, lpFormat->nBlockAlign, lpFormat->wBitsPerSample, lpFormat->cbSize);
+	  lpFormat->nAvgBytesPerSec, lpFormat->nBlockAlign, lpFormat->wBitsPerSample);
 
     if ((wmld = MMDRV_Alloc(sizeof(WINE_WAVE), uType, &handle,
-			    &dwFlags, &dwCallback, &dwInstance, bFrom32)) == NULL)
+			    &dwFlags, &dwCallback, &dwInstance, bFrom32)) == NULL) {
+        WARN("no memory\n");
 	return MMSYSERR_NOMEM;
+    }
 
     wod.hWave = handle;
     wod.lpFormat = lpFormat;  /* should the struct be copied iso pointer? */
