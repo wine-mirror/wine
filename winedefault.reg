@@ -2838,3 +2838,18 @@
 "LongDistanceRule"=" 8WFG"
 "Name"="Uzbekistan"
 "SameAreaRule"="G"
+
+#
+# Entries to get ShellExecute to map .txt files to notepad
+#
+
+[HKEY_CLASSES_ROOT\.txt]
+@="txtfile"
+"Content Type"="text/plain"
+
+[HKEY_CLASSES_ROOT\txtfile\shell\open\command]
+@="C:\\WINDOWS\\NOTEPAD.EXE %1"
+
+[HKEY_CLASSES_ROOT\txtfile\shell\print\command]
+@="C:\\WINDOWS\\NOTEPAD.EXE /p %1"
+
