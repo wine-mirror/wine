@@ -976,22 +976,32 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wMask, UINT wFlags)
 /*************************************************************************
  *      @	[SHLWAPI.167]
  *
- * Change a windows parent.
+ * Change a window's parent.
  *
  * PARAMS
  *  hWnd       [I] Window to change parent of
  *  hWndParent [I] New parent window
  *
  * RETURNS
- *  Nothing.
+ *  The old parent of hWnd.
  *
  * NOTES
  *  If hWndParent is NULL (desktop), the window style is changed to WS_POPUP.
+ *  If hWndParent is NOT NULL then we set the WS_CHILD style.
  */
-DWORD WINAPI SHLWAPI_167(HWND hWnd, HWND hWndParent)
+HWND WINAPI SHLWAPI_167(HWND hWnd, HWND hWndParent)
 {
-	FIXME("%p,%p\n", hWnd, hWndParent);
-	return 0;
+  TRACE("%p, %p\n", hWnd, hWndParent);
+
+  if(GetParent(hWnd) == hWndParent)
+    return 0;
+
+  if(hWndParent)
+    SHLWAPI_165(hWnd, GWL_STYLE, WS_CHILD, WS_CHILD);
+  else
+    SHLWAPI_165(hWnd, GWL_STYLE, WS_POPUP, WS_POPUP);
+
+  return SetParent(hWnd, hWndParent);
 }
 
 /*************************************************************************
@@ -1100,12 +1110,40 @@ LPCSTR WINAPI SHLWAPI_170(LPCSTR lpszSrc)
 /*************************************************************************
  *      @		[SHLWAPI.171]
  *
- * _SHIsSameObject
+ * Check the two interfaces if they come from the same object.
+ *
+ * PARAMS
+ *   lpInt1 [I]: Interface to check against lpInt2.
+ *   lpInt2 [I]: Interface to check against lpInt1.
+ *
+ * RETURNS
+ *   TRUE: Interfaces come from the same object.
+ *   FALSE: Interfaces come from different objects.
  */
-BOOL WINAPI SHLWAPI_171(LPVOID x, LPVOID y)
+BOOL WINAPI SHLWAPI_171(IUnknown* lpInt1, IUnknown* lpInt2)
 {
-	FIXME("%p %p\n",x,y);
-	return 0;
+  LPVOID lpUnknown1, lpUnknown2;
+
+  TRACE("%p %p\n", lpInt1, lpInt2);
+
+  if (!lpInt1 || !lpInt2)
+    return FALSE;
+
+  if (lpInt1 == lpInt2)
+    return TRUE;
+
+  if (!SUCCEEDED(IUnknown_QueryInterface(lpInt1, &IID_IUnknown,
+                                       (LPVOID *)&lpUnknown1)))
+    return FALSE;
+
+  if (!SUCCEEDED(IUnknown_QueryInterface(lpInt2, &IID_IUnknown,
+                                       (LPVOID *)&lpUnknown2)))
+    return FALSE;
+
+  if (lpUnknown1 == lpUnknown2)
+    return TRUE;
+  
+  return FALSE;
 }
 
 /*************************************************************************
@@ -2055,6 +2093,18 @@ HRESULT WINAPI SHLWAPI_281(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
 }
 
 /*************************************************************************
+ *      @       [SHLWAPI.282]
+ *
+ * This function seems to be a forward to SHLWAPI.281 (whatever THAT
+ * function does...).
+ */
+HRESULT WINAPI SHLWAPI_282(LPVOID w, LPVOID x, LPVOID y, LPVOID z)
+{
+  FIXME("%p %p %p %p\n", w, x, y, z);
+  return E_FAIL;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.284]
  *
  * _IConnectionPoint_SimpleInvoke
@@ -2526,6 +2576,15 @@ COLORREF WINAPI ColorHLSToRGB(WORD wHue, WORD wLuminosity, WORD wSaturation)
 
   wRed = wLuminosity * 255 / 240;
   return RGB(wRed, wRed, wRed);
+}
+
+/*************************************************************************
+ *      @       [SHLWAPI.406]
+ */
+DWORD WINAPI SHLWAPI_406(LPVOID u, LPVOID v, LPVOID w, LPVOID x, LPVOID y, LPVOID z)
+{
+  FIXME("%p %p %p %p %p %p\n", u, v, w, x, y, z);
+  return 0;
 }
 
 /*************************************************************************

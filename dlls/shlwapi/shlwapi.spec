@@ -279,7 +279,7 @@
 279 stub @
 280 stub @
 281 stdcall @(ptr ptr ptr ptr) SHLWAPI_281
-282 stub @
+282 stdcall @(ptr ptr ptr ptr) SHLWAPI_282
 283 stub @
 284 stdcall @(ptr ptr ptr) SHLWAPI_284
 285 stub @
@@ -403,7 +403,7 @@
 403 stdcall @(ptr) SHLWAPI_403
 404 stdcall ColorHLSToRGB(long long long) ColorHLSToRGB
 405 stub @
-406 stub @
+406 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_406
 407 stub @
 408 stub @
 409 stub @
