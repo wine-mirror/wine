@@ -61,7 +61,7 @@ extern "C" {
 # elif !defined(_MSC_VER)
 #  define __cdecl
 # endif
-#endif /* __stdcall */
+#endif /* __cdecl */
 
 #ifdef __WINESRC__
 #define __ONLY_IN_WINELIB(x)	do_not_use_this_in_wine
