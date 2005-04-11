@@ -2647,10 +2647,24 @@ void test_scrollvalidate( HWND parent)
             rcu.left,rcu.top,rcu.right,rcu.bottom);
     ReleaseDC( hwnd1, hdc);
 
+    /* test scrolling a window with an update region */
+    DestroyWindow( hwnd2);
+    ValidateRect( hwnd1, NULL);
+    SetRect( &rc, 40,40, 50,50);
+    InvalidateRect( hwnd1, &rc, 1);
+    GetClientRect( hwnd1, &rc);
+    cliprc=rc;
+    ScrollWindowEx( hwnd1, -10, 0, &rc, &cliprc, hrgn, &rcu,
+      SW_SCROLLCHILDREN | SW_INVALIDATE);
+    if (winetest_debug > 0) dump_region(hrgn);
+    exprgn = CreateRectRgn( 88,0,98,98);
+    tmprgn = CreateRectRgn( 30, 40, 50, 50);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
+
     /* now test ScrollWindowEx with a combination of
      * WS_CLIPCHILDREN style and SW_SCROLLCHILDREN flag */
     /* make hwnd2 the child of hwnd1 */
-    DestroyWindow( hwnd2);
     hwnd2 = CreateWindowExA(0, "static", NULL,
             WS_CHILD| WS_VISIBLE | WS_BORDER ,
             50, 50, 100, 100, hwnd1, 0, 0, NULL);

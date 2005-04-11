@@ -77,6 +77,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     BOOL  bUpdate = (rcUpdate || hrgnUpdate || flags & (SW_INVALIDATE | SW_ERASE));
     int rdw_flags;
     HRGN  hrgnTemp;
+    HRGN  hrgnWinupd = 0;
     HDC   hDC;
     RECT  rc, cliprc;
     RECT caretrc;
@@ -125,15 +126,22 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
                 RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags);
         }
 
-        /* Take into account the fact that some damage may have occurred during
-         * the scroll */
+        /* If the windows has an update region, this must be
+         * scrolled as well. Keep a copy in hrgnWinupd 
+         * to be added to hrngUpdate at the end. */
         hrgnTemp = CreateRectRgn( 0, 0, 0, 0 );
         retVal = GetUpdateRgn( hwnd, hrgnTemp, FALSE );
         if (retVal != NULLREGION)
         {
             HRGN hrgnClip = CreateRectRgnIndirect(&cliprc);
+            if( !bOwnRgn) {
+                hrgnWinupd = CreateRectRgn( 0, 0, 0, 0);
+                CombineRgn( hrgnWinupd, hrgnTemp, 0, RGN_COPY);
+            }
             OffsetRgn( hrgnTemp, dx, dy );
             CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
+            if( !bOwnRgn)
+                CombineRgn( hrgnWinupd, hrgnWinupd, hrgnTemp, RGN_OR );
             RedrawWindow( hwnd, NULL, hrgnTemp, rdw_flags);
             DeleteObject( hrgnClip );
         }
@@ -168,6 +176,11 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
     if( flags & (SW_INVALIDATE | SW_ERASE) )
         RedrawWindow( hwnd, NULL, hrgnUpdate, rdw_flags |
                       ((flags & SW_SCROLLCHILDREN) ? RDW_ALLCHILDREN : 0 ) );
+
+    if( hrgnWinupd) { 
+        CombineRgn( hrgnUpdate, hrgnUpdate, hrgnWinupd, RGN_OR);
+        DeleteObject( hrgnWinupd);
+    }
 
     if( hwndCaret ) {
         SetCaretPos( caretrc.left + dx, caretrc.top + dy );
