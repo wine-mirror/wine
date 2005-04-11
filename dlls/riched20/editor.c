@@ -1172,6 +1172,27 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     break;
   }
+  case WM_MOUSEWHEEL:
+  {
+    int gcWheelDelta = 0, nPos = editor->nScrollPosY;
+    UINT pulScrollLines;
+
+    SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
+    gcWheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
+    if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
+      nPos += pulScrollLines * (gcWheelDelta / WHEEL_DELTA) * 8;
+    if(nPos>=editor->nTotalLength)
+      nPos = editor->nTotalLength - 1;
+    if (nPos<0) 
+      nPos = 0;
+    if (nPos != editor->nScrollPosY) {
+      ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
+      editor->nScrollPosY = nPos;
+      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
+      UpdateWindow(hWnd);
+    }
+    break;
+  }
   case WM_SIZE:
   {
     ME_MarkAllForWrapping(editor);
