@@ -36,7 +36,7 @@ END
 
 
 STRINGTABLE DISCARDABLE {
-     IDS_APPNAME, "Wine Application Unsinstaller"
+     IDS_APPNAME, "Wine Application Uninstaller"
      IDS_ABOUT, "Wine Application Uninstaller (C) 2005 by Andreas Mohr, Hannu Valtonen and Jonathan Ernst."
      IDS_ABOUTTITLE, "About Uninstaller"
      IDS_REGISTRYKEYNOTAVAILABLE, "Uninstall registry key not available (yet), nothing to do !"
