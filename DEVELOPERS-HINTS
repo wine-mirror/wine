@@ -29,6 +29,7 @@ DLLs (under dlls/):
 	commdlg/		- Common dialog boxes (both 16 & 32 bit)
 	crtdll/			- Old C runtime library
 	crypt32/		- Cryptography
+	cryptdll/		- Cryptography Manager
 	ctl3d/          	- 3D Effects for Common GUI Components
 	d3d8/			- Direct3D (3D graphics)
 	d3d9/			- Direct3D (3D graphics)
@@ -126,6 +127,7 @@ DLLs (under dlls/):
 	shfolder/		- Shell folder service
 	shlwapi/		- Shell Light-Weight interface
 	snmpapi/		- SNMP protocol interface (networking)
+	stdole32.tlb/		- Standard OLE typelib
 	sti/			- Still Image service
 	tapi32/			- Telephone interface
 	ttydrv/			- TTY display driver (Wine specific)
