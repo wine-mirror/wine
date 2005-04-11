@@ -192,7 +192,8 @@ const char* get_file_rev(const char* file)
 void extract_rev_infos ()
 {
     char revinfo[256], *p;
-    int size = 0, i, len;
+    int size = 0, i;
+    unsigned int len;
     HMODULE module = GetModuleHandle (NULL);
 
     for (i = 0; TRUE; i++) {
