@@ -337,8 +337,8 @@ static void test_RtlCheckRegistryKey(void)
     status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer);
     ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE: 0x%08lx\n", status);
 
-    status = pRtlCheckRegistryKey((RTL_REGISTRY_ABSOLUTE & RTL_REGISTRY_OPTIONAL), winetestpath.Buffer);
-    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE & RTL_REGISTRY_OPTIONAL: 0x%08lx\n", status);
+    status = pRtlCheckRegistryKey((RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL), winetestpath.Buffer);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and RTL_REGISTRY_OPTIONAL: 0x%08lx\n", status);
 }
 
 static void test_NtDeleteKey()
