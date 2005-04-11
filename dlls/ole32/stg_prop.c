@@ -79,6 +79,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 #define PROPSETHDR_OSVER_KIND_MAC       1
 #define PROPSETHDR_OSVER_KIND_WIN32     2
 
+#define CP_UNICODE 1200
+
 /* The format version (and what it implies) is described here:
  * http://msdn.microsoft.com/library/en-us/stg/stg/format_version.asp
  */
@@ -106,7 +108,7 @@ typedef struct tagPROPERTYSECTIONHEADER
 typedef struct tagPROPERTYIDOFFSET
 {
     DWORD propid;
-    DWORD dwOffset;
+    DWORD dwOffset; /* from beginning of section */
 } PROPERTYIDOFFSET;
 
 /* Initializes the property storage from the stream (and undoes any uncommitted
@@ -209,6 +211,7 @@ static PROPVARIANT *PropertyStorage_FindProperty(PropertyStorage_impl *This,
     if (!This)
         return NULL;
     dictionary_find(This->propid_to_prop, (void *)propid, (void **)&ret);
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -222,6 +225,7 @@ static PROPVARIANT *PropertyStorage_FindPropertyByName(
         return NULL;
     if (dictionary_find(This->name_to_propid, name, (void **)&propid))
         ret = PropertyStorage_FindProperty(This, (PROPID)propid);
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -233,6 +237,7 @@ static LPWSTR PropertyStorage_FindPropertyNameById(PropertyStorage_impl *This,
     if (!This)
         return NULL;
     dictionary_find(This->propid_to_name, (void *)propid, (void **)&ret);
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -246,7 +251,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     PROPVARIANT rgpropvar[])
 {
     PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
-    HRESULT hr = S_OK;
+    HRESULT hr = S_FALSE;
     ULONG i;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpspec, rgpspec, rgpropvar);
@@ -298,6 +303,8 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
         {
             PropVariantCopy(prop, propvar);
             dictionary_insert(This->propid_to_prop, (void *)propid, prop);
+            if (propid > This->highestProp)
+                This->highestProp = propid;
         }
         else
             hr = STG_E_INSUFFICIENTMEMORY;
@@ -341,6 +348,9 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                 PropVariantCopy(prop, &rgpropvar[i]);
             else
             {
+                /* Note that I don't do the special cases here that I do below,
+                 * because naming the special PIDs isn't supported.
+                 */
                 if (propidNameFirst < PID_FIRST_USABLE ||
                  propidNameFirst >= PID_MIN_READONLY)
                     hr = STG_E_INVALIDPARAMETER;
@@ -352,11 +362,12 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                      len * sizeof(WCHAR));
 
                     strcpyW(name, rgpspec[i].u.lpwstr);
+                    TRACE("Adding prop name %s, propid %ld\n", debugstr_w(name),
+                     nextId);
                     dictionary_insert(This->name_to_propid, name,
                      (void *)nextId);
                     dictionary_insert(This->propid_to_name, (void *)nextId,
                      name);
-                    This->highestProp = nextId;
                     hr = PropertyStorage_StorePropWithId(This, nextId,
                      &rgpropvar[i]);
                 }
@@ -364,12 +375,38 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
         }
         else
         {
-            /* FIXME: certain propid's have special behavior.  E.g., you can't
-             * set propid 0, and setting PID_BEHAVIOR affects the
-             * case-sensitivity.
-             */
-            hr = PropertyStorage_StorePropWithId(This, rgpspec[i].u.propid,
-             &rgpropvar[i]);
+            switch (rgpspec[i].u.propid)
+            {
+            case PID_DICTIONARY:
+                /* Can't set the dictionary */
+                hr = STG_E_INVALIDPARAMETER;
+                break;
+            case PID_CODEPAGE:
+                /* Can only set the code page if nothing else has been set */
+                if (dictionary_num_entries(This->propid_to_prop) == 0 &&
+                 rgpropvar[i].vt == VT_I2)
+                    This->codePage = rgpropvar[i].u.iVal;
+                else
+                    hr = STG_E_INVALIDPARAMETER;
+                break;
+            case PID_LOCALE:
+                /* Can only set the locale if nothing else has been set */
+                if (dictionary_num_entries(This->propid_to_prop) == 0 &&
+                 rgpropvar[i].vt == VT_I4)
+                    This->locale = rgpropvar[i].u.lVal;
+                else
+                    hr = STG_E_INVALIDPARAMETER;
+                break;
+            case PID_ILLEGAL:
+                /* silently ignore like MSDN says */
+                break;
+            default:
+                if (rgpspec[i].u.propid >= PID_MIN_READONLY)
+                    hr = STG_E_INVALIDPARAMETER;
+                else
+                    hr = PropertyStorage_StorePropWithId(This,
+                     rgpspec[i].u.propid, &rgpropvar[i]);
+            }
         }
     }
     LeaveCriticalSection(&This->cs);
@@ -391,7 +428,7 @@ static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
     TRACE("(%p, %ld, %p)\n", iface, cpspec, rgpspec);
     if (!This)
         return E_INVALIDARG;
-    if (!rgpspec)
+    if (cpspec && !rgpspec)
         return E_INVALIDARG;
     if (!(This->grfMode & STGM_READWRITE))
         return STG_E_ACCESSDENIED;
@@ -409,13 +446,12 @@ static HRESULT WINAPI IPropertyStorage_fnDeleteMultiple(
         }
         else
         {
-            /* FIXME: certain propid's have special meaning.  For example,
-             * removing propid 0 is supposed to remove the dictionary, and
-             * removing PID_BEHAVIOR should change this to a case-insensitive
-             * property set.  Unknown "read-only" propid's should be ignored.
-             */
-            dictionary_remove(This->propid_to_prop,
-             (void *)rgpspec[i].u.propid);
+            if (rgpspec[i].u.propid >= PID_FIRST_USABLE &&
+             rgpspec[i].u.propid < PID_MIN_READONLY)
+                dictionary_remove(This->propid_to_prop,
+                 (void *)rgpspec[i].u.propid);
+            else
+                hr = STG_E_INVALIDPARAMETER;
         }
     }
     LeaveCriticalSection(&This->cs);
@@ -433,17 +469,13 @@ static HRESULT WINAPI IPropertyStorage_fnReadPropertyNames(
 {
     PropertyStorage_impl *This = (PropertyStorage_impl *)iface;
     ULONG i;
-    HRESULT hr;
+    HRESULT hr = S_FALSE;
 
     TRACE("(%p, %ld, %p, %p)\n", iface, cpropid, rgpropid, rglpwstrName);
     if (!This)
         return E_INVALIDARG;
     if (cpropid && (!rgpropid || !rglpwstrName))
         return E_INVALIDARG;
-    /* MSDN says S_FALSE is returned if no strings matching rgpropid are found,
-     * default to that
-     */
-    hr = S_FALSE;
     EnterCriticalSection(&This->cs);
     for (i = 0; i < cpropid && SUCCEEDED(hr); i++)
     {
@@ -664,6 +696,11 @@ static int PropertyStorage_PropNameCompare(const void *a, const void *b,
 {
     PropertyStorage_impl *This = (PropertyStorage_impl *)extra;
 
+    TRACE("(%s, %s)\n", debugstr_w(a), debugstr_w(b));
+    /* FIXME: this assumes property names are always Unicode, but they
+     * might be ANSI, depending on whether This->grfFlags & PROPSETFLAG_ANSI
+     * is true.
+     */
     if (This->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
         return strcmpW((LPCWSTR)a, (LPCWSTR)b);
     else
@@ -678,6 +715,7 @@ static void PropertyStorage_PropNameDestroy(void *k, void *d, void *extra)
 static int PropertyStorage_PropCompare(const void *a, const void *b,
  void *extra)
 {
+    TRACE("(%ld, %ld)\n", (PROPID)a, (PROPID)b);
     return (PROPID)a - (PROPID)b;
 }
 
@@ -691,6 +729,8 @@ static void PropertyStorage_PropertyDestroy(void *k, void *d, void *extra)
  * the entries according to the values of This->codePage and This->locale.
  * FIXME: there isn't any checking whether the read property extends past the
  * end of the buffer.
+ * FIXME: this always stores dictionary entries as Unicode, but it should store
+ * them as ANSI if (This->grfFlags & PROPSETFLAG_ANSI) is true.
  */
 static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
  BYTE *ptr)
@@ -699,10 +739,6 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
     HRESULT hr = S_OK;
 
     ptr += sizeof(DWORD);
-    This->name_to_propid = dictionary_create(PropertyStorage_PropNameCompare,
-     PropertyStorage_PropNameDestroy, This);
-    This->propid_to_name = dictionary_create(PropertyStorage_PropCompare, NULL,
-     This);
     if (This->name_to_propid && This->propid_to_name)
     {
         DWORD i;
@@ -742,7 +778,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
             }
             ptr += sizeof(DWORD) + cbEntry;
             /* Unicode entries are padded to DWORD boundaries */
-            if (This->codePage == 1200 && cbEntry % sizeof(DWORD))
+            if (This->codePage == CP_UNICODE && cbEntry % sizeof(DWORD))
                 ptr += sizeof(DWORD) - (cbEntry % sizeof(DWORD));
         }
     }
@@ -863,6 +899,8 @@ static HRESULT PropertyStorage_ReadHeaderFromStream(IStream *stm,
     ULONG count = 0;
     HRESULT hr;
 
+    assert(stm);
+    assert(hdr);
     hr = IStream_Read(stm, buf, sizeof(buf), &count);
     if (SUCCEEDED(hr))
     {
@@ -896,6 +934,8 @@ static HRESULT PropertyStorage_ReadFmtIdOffsetFromStream(IStream *stm,
     ULONG count = 0;
     HRESULT hr;
 
+    assert(stm);
+    assert(fmt);
     hr = IStream_Read(stm, buf, sizeof(buf), &count);
     if (SUCCEEDED(hr))
     {
@@ -923,6 +963,8 @@ static HRESULT PropertyStorage_ReadSectionHeaderFromStream(IStream *stm,
     ULONG count = 0;
     HRESULT hr;
 
+    assert(stm);
+    assert(hdr);
     hr = IStream_Read(stm, buf, sizeof(buf), &count);
     if (SUCCEEDED(hr))
     {
@@ -962,9 +1004,29 @@ static HRESULT PropertyStorage_ReadFromStream(IPropertyStorage *iface)
     This->dirty = FALSE;
     This->highestProp = 0;
     dictionary_destroy(This->name_to_propid);
-    This->name_to_propid = NULL;
     dictionary_destroy(This->propid_to_name);
-    This->propid_to_name = NULL;
+    dictionary_destroy(This->propid_to_prop);
+    This->name_to_propid = dictionary_create(PropertyStorage_PropNameCompare,
+     PropertyStorage_PropNameDestroy, This);
+    if (!This->name_to_propid)
+    {
+        hr = STG_E_INSUFFICIENTMEMORY;
+        goto end;
+    }
+    This->propid_to_name = dictionary_create(PropertyStorage_PropCompare, NULL,
+     This);
+    if (!This->propid_to_name)
+    {
+        hr = STG_E_INSUFFICIENTMEMORY;
+        goto end;
+    }
+    This->propid_to_prop = dictionary_create(PropertyStorage_PropCompare,
+     PropertyStorage_PropertyDestroy, This);
+    if (!This->propid_to_prop)
+    {
+        hr = STG_E_INSUFFICIENTMEMORY;
+        goto end;
+    }
     hr = IStream_Stat(This->stm, &stat, STATFLAG_NONAME);
     if (FAILED(hr))
         goto end;
@@ -1047,9 +1109,6 @@ static HRESULT PropertyStorage_ReadFromStream(IPropertyStorage *iface)
      sizeof(PROPERTYSECTIONHEADER), &count);
     if (FAILED(hr))
         goto end;
-    dictionary_destroy(This->propid_to_prop);
-    This->propid_to_prop = dictionary_create(PropertyStorage_PropCompare,
-     PropertyStorage_PropertyDestroy, This);
     for (i = 0; SUCCEEDED(hr) && i < sectionHdr.cProperties; i++)
     {
         PROPERTYIDOFFSET *idOffset = (PROPERTYIDOFFSET *)(buf +
@@ -1064,7 +1123,7 @@ static HRESULT PropertyStorage_ReadFromStream(IPropertyStorage *iface)
              idOffset->propid < PID_MIN_READONLY && idOffset->propid >
              This->highestProp)
                 This->highestProp = idOffset->propid;
-            if (idOffset->propid == 0)
+            if (idOffset->propid == PID_DICTIONARY)
             {
                 /* Don't read the dictionary yet, its entries depend on the
                  * code page.  Just store the offset so we know to read it
@@ -1083,10 +1142,6 @@ static HRESULT PropertyStorage_ReadFromStream(IPropertyStorage *iface)
                  buf + idOffset->dwOffset - sizeof(PROPERTYSECTIONHEADER) +
                  sizeof(DWORD))))
                 {
-                    /* FIXME: the PID_CODEPAGE and PID_LOCALE special cases
-                     * aren't really needed, just look them up in
-                     * propid_to_prop when needed
-                     */
                     switch(idOffset->propid)
                     {
                     case PID_CODEPAGE:
@@ -1117,7 +1172,7 @@ static HRESULT PropertyStorage_ReadFromStream(IPropertyStorage *iface)
         if (This->grfFlags & PROPSETFLAG_ANSI)
             This->codePage = GetACP();
         else
-            This->codePage = 1200;
+            This->codePage = CP_UNICODE;
     }
     if (!This->locale)
         This->locale = LOCALE_SYSTEM_DEFAULT;
@@ -1128,9 +1183,17 @@ static HRESULT PropertyStorage_ReadFromStream(IPropertyStorage *iface)
 
 end:
     HeapFree(GetProcessHeap(), 0, buf);
+    if (FAILED(hr))
+    {
+        dictionary_destroy(This->name_to_propid);
+        This->name_to_propid = NULL;
+        dictionary_destroy(This->propid_to_name);
+        This->propid_to_name = NULL;
+        dictionary_destroy(This->propid_to_prop);
+        This->propid_to_prop = NULL;
+    }
     return hr;
 }
-
 
 static HRESULT PropertyStorage_WriteToStream(IPropertyStorage *iface)
 {

@@ -42,7 +42,8 @@ typedef void (*destroyfunc)(void *k, void *v, void *extra);
 /* Called for each element in the dictionary.  Return FALSE if you don't want
  * to enumerate any more.
  */
-typedef BOOL (*enumeratefunc)(const void *k, const void *d, void *extra);
+typedef BOOL (*enumeratefunc)(const void *k, const void *v, void *extra,
+ void *closure);
 
 /* Constructs a dictionary, using c as a comparison function for keys.
  * If d is not NULL, it will be called whenever an item is about to be removed
@@ -55,6 +56,11 @@ struct dictionary *dictionary_create(comparefunc c, destroyfunc d, void *extra);
 
 /* Assumes d is not NULL. */
 void dictionary_destroy(struct dictionary *d);
+
+/* Returns how many entries have been stored in the dictionary.  If two values
+ * with the same key are inserted, only one is counted.
+ */
+UINT dictionary_num_entries(struct dictionary *d);
 
 /* Sets an element with key k and value v to the dictionary.  If a value
  * already exists with key k, its value is replaced, and the destroyfunc (if
@@ -82,6 +88,6 @@ BOOL dictionary_find(struct dictionary *d, const void *k, void **v);
  */
 void dictionary_remove(struct dictionary *d, const void *k);
 
-void dictionary_enumerate(struct dictionary *d, enumeratefunc e);
+void dictionary_enumerate(struct dictionary *d, enumeratefunc e, void *closure);
 
 #endif /* ndef __DICTIONARY_H__ */

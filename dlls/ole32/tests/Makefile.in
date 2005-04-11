@@ -10,6 +10,7 @@ CTESTS = \
 	marshal.c \
 	moniker.c \
 	propvariant.c \
+	stg_prop.c \
 	storage32.c
 
 @MAKE_TEST_RULES@
