@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 José Manuel Ferrer Ortiz
+ * Copyright 2003, 2005 José Manuel Ferrer Ortiz
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@ FONT 8, "MS Shell Dlg"
 {
  LTEXT "Por favor introduzca su nombre de usuario y contraseña:", -1, 40, 6, 150, 15
  LTEXT "Proxy", -1, 40, 26, 50, 10
- LTEXT "Realm", -1, 40, 46, 50, 10
+ LTEXT "Dominio", -1, 40, 46, 50, 10
  LTEXT "Usuario", -1, 40, 66, 50, 10
  LTEXT "Contraseña", -1, 40, 86, 50, 10
  LTEXT "" IDC_PROXY, 80, 26, 150, 14, 0
@@ -36,4 +36,9 @@ FONT 8, "MS Shell Dlg"
            80, 106, 150, 12, BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP
  PUSHBUTTON "Aceptar", IDOK, 98, 126, 56, 14, WS_GROUP | WS_TABSTOP | BS_DEFPUSHBUTTON
  PUSHBUTTON "Cancelar", IDCANCEL, 158, 126, 56, 14, WS_GROUP | WS_TABSTOP
+}
+
+STRINGTABLE DISCARDABLE
+{
+  IDS_LANCONNECTION "Conexión LAN"
 }
