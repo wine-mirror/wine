@@ -1771,9 +1771,9 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             else
             {
                 memcpy(lpBuffer, &type, sizeof(ULONG));
-                *lpdwBufferLength = sizeof(ULONG);
                 bSuccess = TRUE;
             }
+            *lpdwBufferLength = sizeof(ULONG);
             break;
         }
 
@@ -1786,9 +1786,9 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             else
             {
                 memcpy(lpBuffer, &flags, sizeof(ULONG));
-                *lpdwBufferLength = sizeof(ULONG);
                 bSuccess = TRUE;
             }
+            *lpdwBufferLength = sizeof(ULONG);
             break;
         }
 
@@ -1806,60 +1806,162 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                 LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
                 WCHAR url[1023];
                 static const WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
+                DWORD sizeRequired;
 
                 sprintfW(url,szFmt,lpreq->StdHeaders[HTTP_QUERY_HOST].lpszValue,lpreq->lpszPath);
                 TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
-                if (*lpdwBufferLength < strlenW(url)+1)
-                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                if(!bIsUnicode)
+                {
+                    sizeRequired = WideCharToMultiByte(CP_ACP,0,url,-1,
+                     lpBuffer,*lpdwBufferLength,NULL,NULL);
+                    if (sizeRequired > *lpdwBufferLength)
+                        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                    else
+                        bSuccess = TRUE;
+                    *lpdwBufferLength = sizeRequired;
+                }
                 else
                 {
-                    if(!bIsUnicode)
-                    {
-                        *lpdwBufferLength=WideCharToMultiByte(CP_ACP,0,url,-1,lpBuffer,*lpdwBufferLength,NULL,NULL);
-                    }
+                    sizeRequired = (lstrlenW(url)+1) * sizeof(WCHAR);
+                    if (*lpdwBufferLength < sizeRequired)
+                        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                     else
                     {
                         strcpyW(lpBuffer, url);
-                        *lpdwBufferLength = strlenW(url)+1;
+                        bSuccess = TRUE;
                     }
-                    bSuccess = TRUE;
+                    *lpdwBufferLength = sizeRequired;
                 }
             }
             break;
         }
-       case INTERNET_OPTION_HTTP_VERSION:
-       {
-            /*
-             * Presently hardcoded to 1.1
-             */
-            ((HTTP_VERSION_INFO*)lpBuffer)->dwMajorVersion = 1;
-            ((HTTP_VERSION_INFO*)lpBuffer)->dwMinorVersion = 1;
-            bSuccess = TRUE;
+        case INTERNET_OPTION_HTTP_VERSION:
+        {
+            if (*lpdwBufferLength < sizeof(HTTP_VERSION_INFO))
+                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            else
+            {
+                /*
+                 * Presently hardcoded to 1.1
+                 */
+                ((HTTP_VERSION_INFO*)lpBuffer)->dwMajorVersion = 1;
+                ((HTTP_VERSION_INFO*)lpBuffer)->dwMinorVersion = 1;
+                bSuccess = TRUE;
+            }
+            *lpdwBufferLength = sizeof(HTTP_VERSION_INFO);
             break;
-       }
+        }
        case INTERNET_OPTION_CONNECTED_STATE:
        {
-           INTERNET_CONNECTED_INFO * pCi = (INTERNET_CONNECTED_INFO *)lpBuffer;
-           FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
+            INTERNET_CONNECTED_INFO * pCi = (INTERNET_CONNECTED_INFO *)lpBuffer;
+            FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
 
-           if (*lpdwBufferLength < sizeof(INTERNET_CONNECTED_INFO))
-                INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
-           else
-           {
-               pCi->dwConnectedState = INTERNET_STATE_CONNECTED;
-               pCi->dwFlags = 0;
-               *lpdwBufferLength = sizeof(INTERNET_CONNECTED_INFO);
-               bSuccess = TRUE;
-           }
-           break;
-       }
-       case INTERNET_OPTION_SECURITY_FLAGS:
-         FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
-         break;
+            if (*lpdwBufferLength < sizeof(INTERNET_CONNECTED_INFO))
+                 INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            else
+            {
+                pCi->dwConnectedState = INTERNET_STATE_CONNECTED;
+                pCi->dwFlags = 0;
+                bSuccess = TRUE;
+            }
+            *lpdwBufferLength = sizeof(INTERNET_CONNECTED_INFO);
+            break;
+        }
+        case INTERNET_OPTION_PROXY:
+        {
+            LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW)lpwhh;
 
-       default:
-         FIXME("Stub! %ld \n",dwOption);
-         break;
+            if (bIsUnicode)
+            {
+                INTERNET_PROXY_INFOW *pPI = (INTERNET_PROXY_INFOW *)lpBuffer;
+                DWORD proxyBytesRequired = 0, proxyBypassBytesRequired = 0;
+
+                if (lpwai->lpszProxy)
+                    proxyBytesRequired = (lstrlenW(lpwai->lpszProxy) + 1) *
+                     sizeof(WCHAR);
+                if (lpwai->lpszProxyBypass)
+                    proxyBypassBytesRequired =
+                     (lstrlenW(lpwai->lpszProxyBypass) + 1) * sizeof(WCHAR);
+                if (*lpdwBufferLength < sizeof(INTERNET_PROXY_INFOW) +
+                 proxyBytesRequired + proxyBypassBytesRequired)
+                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                else
+                {
+                    pPI->dwAccessType = lpwai->dwAccessType;
+                    if (lpwai->lpszProxy)
+                    {
+                        pPI->lpszProxy = (LPWSTR)((LPBYTE)lpBuffer +
+                         sizeof(INTERNET_PROXY_INFOW));
+                        lstrcpyW((LPWSTR)pPI->lpszProxy, lpwai->lpszProxy);
+                    }
+                    else
+                        pPI->lpszProxy = NULL;
+                    if (lpwai->lpszProxyBypass)
+                    {
+                        pPI->lpszProxyBypass = (LPWSTR)((LPBYTE)lpBuffer +
+                         sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired);
+                        lstrcpyW((LPWSTR)pPI->lpszProxyBypass,
+                         lpwai->lpszProxyBypass);
+                    }
+                    else
+                        pPI->lpszProxyBypass = NULL;
+                    bSuccess = TRUE;
+                }
+                *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOW) +
+                 proxyBytesRequired + proxyBypassBytesRequired;
+            }
+            else
+            {
+                INTERNET_PROXY_INFOA *pPI = (INTERNET_PROXY_INFOA *)lpBuffer;
+                DWORD proxyBytesRequired = 0, proxyBypassBytesRequired = 0;
+
+                if (lpwai->lpszProxy)
+                    proxyBytesRequired = WideCharToMultiByte(CP_ACP, 0,
+                     lpwai->lpszProxy, -1, NULL, 0, NULL, NULL);
+                if (lpwai->lpszProxyBypass)
+                    proxyBypassBytesRequired = WideCharToMultiByte(CP_ACP, 0,
+                     lpwai->lpszProxyBypass, -1, NULL, 0, NULL, NULL);
+                if (*lpdwBufferLength < sizeof(INTERNET_PROXY_INFOA) +
+                 proxyBytesRequired + proxyBypassBytesRequired)
+                    INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
+                else
+                {
+                    pPI->dwAccessType = lpwai->dwAccessType;
+                    FIXME("INTERNET_OPTION_PROXY: Stub\n");
+                    if (lpwai->lpszProxy)
+                    {
+                        pPI->lpszProxy = (LPSTR)((LPBYTE)lpBuffer +
+                         sizeof(INTERNET_PROXY_INFOA));
+                        WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxy, -1,
+                         (LPSTR)pPI->lpszProxy, proxyBytesRequired, NULL, NULL);
+                    }
+                    else
+                        pPI->lpszProxy = NULL;
+                    if (lpwai->lpszProxyBypass)
+                    {
+                        pPI->lpszProxyBypass = (LPSTR)((LPBYTE)lpBuffer +
+                         sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired);
+                        WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxyBypass,
+                         -1, (LPSTR)pPI->lpszProxyBypass,
+                         proxyBypassBytesRequired,
+                         NULL, NULL);
+                    }
+                    else
+                        pPI->lpszProxyBypass = NULL;
+                    bSuccess = TRUE;
+                }
+                *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOA) +
+                 proxyBytesRequired + proxyBypassBytesRequired;
+            }
+            break;
+        }
+        case INTERNET_OPTION_SECURITY_FLAGS:
+            FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
+            break;
+
+        default:
+            FIXME("Stub! %ld \n",dwOption);
+            break;
     }
     if (lpwhh)
         WININET_Release( lpwhh );
