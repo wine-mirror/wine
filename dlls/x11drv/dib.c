@@ -418,18 +418,24 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
     else
     {
         HPALETTE hpal = GetCurrentObject(physDev->hdc, OBJ_PAL);
-        PALETTEENTRY pal_ents[256];
+        PALETTEENTRY * pal_ents;
         WORD *index = (WORD*) ((LPBYTE) info + (WORD) info->bmiHeader.biSize);
+        int logcolors, entry;
 
-        GetPaletteEntries(hpal, 0, 256, pal_ents);
+        logcolors = GetPaletteEntries( hpal, 0, 0, NULL );
+        pal_ents = HeapAlloc(GetProcessHeap(), 0, logcolors * sizeof(*pal_ents));
+        logcolors = GetPaletteEntries( hpal, 0, logcolors, pal_ents );
 
         for(i = 0; i < colors; i++, index++)
         {
-            colorTable[i].rgbRed = pal_ents[*index].peRed;
-            colorTable[i].rgbGreen = pal_ents[*index].peGreen;
-            colorTable[i].rgbBlue = pal_ents[*index].peBlue;
+            entry = *index % logcolors;
+            colorTable[i].rgbRed = pal_ents[entry].peRed;
+            colorTable[i].rgbGreen = pal_ents[entry].peGreen;
+            colorTable[i].rgbBlue = pal_ents[entry].peBlue;
             colorTable[i].rgbReserved = 0;
         }
+
+        HeapFree(GetProcessHeap(), 0, pal_ents);
     }
     return colorTable;
 }
