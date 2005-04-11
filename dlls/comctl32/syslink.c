@@ -17,11 +17,19 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * NOTES
+ *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Apr. 4, 2005, by Dimitrie O. Paun.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ * 
  * TODO:
  * - Fix SHIFT+TAB and TAB issue (wrong link is selected when control gets the focus)
  * - Better string parsing
  * - Improve word wrapping
- * - Control styles?!
  *
  */
 
@@ -82,6 +90,8 @@ typedef struct _DOC_ITEM
 typedef struct
 {
     HWND      Self;         /* The window handle for this control */
+    HWND      Notify;       /* The parent handle to receive notifications */
+    DWORD     Style;        /* Styles for this control */
     PDOC_ITEM Items;        /* Address to the first document item */
     BOOL      HasFocus;     /* Whether the control has the input focus */
     int       MouseDownID;  /* ID of the link that the mouse button first selected */
@@ -131,7 +141,7 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
  * SYSLINK_AppendDocItem
  * Create and append a new document item.
  */
-static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPWSTR Text, UINT textlen,
+static PDOC_ITEM SYSLINK_AppendDocItem (SYSLINK_INFO *infoPtr, LPCWSTR Text, UINT textlen,
                                         SL_ITEM_TYPE type, PDOC_ITEM LastItem)
 {
     PDOC_ITEM Item;
@@ -188,25 +198,16 @@ static VOID SYSLINK_ClearDoc (SYSLINK_INFO *infoPtr)
  * Parses the window text string and creates a document. Returns the
  * number of document items created.
  */
-static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPWSTR Text)
+static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 {
-    WCHAR *current, *textstart, *linktext, *firsttag;
-    int taglen = 0, textlen, linklen, docitems = 0;
+    LPCWSTR current, textstart = NULL, linktext = NULL, firsttag = NULL;
+    int taglen = 0, textlen = 0, linklen = 0, docitems = 0;
     PDOC_ITEM Last = NULL;
     SL_ITEM_TYPE CurrentType = slText;
-    DWORD Style;
-    LPWSTR lpID, lpUrl;
+    LPCWSTR lpID, lpUrl;
     UINT lenId, lenUrl;
 
-    Style = GetWindowLongW(infoPtr->Self, GWL_STYLE);
-
-    firsttag = NULL;
-    textstart = NULL;
-    linktext = NULL;
-    textlen = 0;
-    linklen = 0;
-    
-    for(current = (WCHAR*)Text; *current != 0;)
+    for(current = Text; *current != 0;)
     {
         if(*current == '<')
         {
@@ -229,9 +230,8 @@ static UINT SYSLINK_ParseText (SYSLINK_INFO *infoPtr, LPWSTR Text)
                 case ' ':
                 {
                     /* we expect parameters, parse them */
-                    LPWSTR *CurrentParameter = NULL;
+                    LPCWSTR *CurrentParameter = NULL, tmp;
                     UINT *CurrentParameterLen = NULL;
-                    WCHAR *tmp;
 
                     taglen = 3;
                     tmp = current + taglen;
@@ -359,7 +359,7 @@ CheckParameter:
                     {
                         int nc;
 
-                        if(!(Style & WS_DISABLED))
+                        if(!(infoPtr->Style & WS_DISABLED))
                         {
                             Last->u.Link.state |= LIS_ENABLED;
                         }
@@ -439,7 +439,7 @@ CheckParameter:
         {
             int nc;
 
-            if(!(Style & WS_DISABLED))
+            if(!(infoPtr->Style & WS_DISABLED))
             {
                 Last->u.Link.state |= LIS_ENABLED;
             }
@@ -937,7 +937,7 @@ static HFONT SYSLINK_SetFont (SYSLINK_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
  *           SYSLINK_SetText
  * Set new text for the SysLink control.
  */
-static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPWSTR Text)
+static LRESULT SYSLINK_SetText (SYSLINK_INFO *infoPtr, LPCWSTR Text)
 {
     int textlen;
 
@@ -1239,7 +1239,7 @@ static LRESULT SYSLINK_SendParentNotify (SYSLINK_INFO *infoPtr, UINT code, PDOC_
         nml.item.szUrl[0] = 0;
     }
 
-    return SendMessageW(GetParent(infoPtr->Self), WM_NOTIFY, (WPARAM)nml.hdr.idFrom, (LPARAM)&nml);
+    return SendMessageW(infoPtr->Notify, WM_NOTIFY, (WPARAM)nml.hdr.idFrom, (LPARAM)&nml);
 }
 
 /***********************************************************************
@@ -1604,6 +1604,21 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
     case WM_KILLFOCUS:
         return SYSLINK_KillFocus(infoPtr, (HWND)wParam);
 
+    case WM_ENABLE:
+	infoPtr->Style &= ~WS_DISABLED;
+	infoPtr->Style |= (wParam ? 0 : WS_DISABLED);
+	InvalidateRect (infoPtr->Self, NULL, FALSE);
+	return 0;
+
+    case WM_STYLECHANGED:
+        if (wParam == GWL_STYLE)
+        {
+            infoPtr->Style = ((LPSTYLESTRUCT)lParam)->styleNew;
+
+            InvalidateRect(infoPtr->Self, NULL, TRUE);
+        }
+        return 0;
+
     case WM_CREATE:
         /* allocate memory for info struct */
         infoPtr = Alloc (sizeof(SYSLINK_INFO));
@@ -1612,6 +1627,8 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
 
         /* initialize the info struct */
         infoPtr->Self = hwnd;
+        infoPtr->Notify = ((LPCREATESTRUCTW)lParam)->hwndParent;
+        infoPtr->Style = ((LPCREATESTRUCTW)lParam)->style;
         infoPtr->Font = 0;
         infoPtr->LinkFont = 0;
         infoPtr->Items = NULL;
@@ -1621,8 +1638,7 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         infoPtr->LinkColor = GetSysColor(COLOR_HIGHLIGHT);
         infoPtr->VisitedColor = GetSysColor(COLOR_HIGHLIGHT);
         TRACE("SysLink Ctrl creation, hwnd=%p\n", hwnd);
-        lParam = (LPARAM)(((LPCREATESTRUCTW)lParam)->lpszName);
-        SYSLINK_SetText(infoPtr, (LPWSTR)lParam);
+        SYSLINK_SetText(infoPtr, ((LPCREATESTRUCTW)lParam)->lpszName);
         return 0;
 
     case WM_DESTROY:
