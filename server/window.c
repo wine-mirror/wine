@@ -713,7 +713,7 @@ static inline struct window *get_top_clipping_window( struct window *win )
 /* compute the visible region of a window, in window coordinates */
 static struct region *get_visible_region( struct window *win, struct window *top, unsigned int flags )
 {
-    struct region *tmp, *region;
+    struct region *tmp = NULL, *region;
     int offset_x, offset_y;
 
     if (!(region = create_empty_region())) return NULL;
@@ -767,16 +767,8 @@ static struct region *get_visible_region( struct window *win, struct window *top
             offset_y += win->client_rect.top;
             offset_region( region, win->client_rect.left, win->client_rect.top );
             set_region_client_rect( tmp, win );
-            if (win->win_region && !intersect_window_region( tmp, win ))
-            {
-                free_region( tmp );
-                goto error;
-            }
-            if (!intersect_region( region, region, tmp ))
-            {
-                free_region( tmp );
-                goto error;
-            }
+            if (win->win_region && !intersect_window_region( tmp, win )) goto error;
+            if (!intersect_region( region, region, tmp )) goto error;
             if (is_region_empty( region )) break;
         }
         free_region( tmp );
@@ -785,6 +777,7 @@ static struct region *get_visible_region( struct window *win, struct window *top
     return region;
 
 error:
+    if (tmp) free_region( tmp );
     free_region( region );
     return NULL;
 }
