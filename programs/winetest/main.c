@@ -598,6 +598,9 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             break;
         case 't':
             tag = strtok (NULL, whitespace);
+            if (strlen (tag) > MAXTAGLEN)
+                report (R_FATAL, "tag is too long (maximum %d characters)",
+                        MAXTAGLEN);
             cp = badtagchar (tag);
             if (cp) {
                 report (R_ERROR, "invalid char in tag: %c", *cp);

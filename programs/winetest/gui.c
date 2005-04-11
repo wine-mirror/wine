@@ -328,7 +328,7 @@ AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         switch (LOWORD (wParam)) {
         case IDOK:
             len = GetWindowTextLengthA (GetDlgItem (hwnd, IDC_TAG));
-            if (len <= 20) {    /* keep it consistent with IDD_TAG */
+            if (len <= MAXTAGLEN) {
                 tag = xmalloc (len+1);
                 GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
                 if (!badtagchar (tag)) EndDialog (hwnd, IDOK);

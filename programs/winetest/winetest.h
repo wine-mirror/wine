@@ -57,6 +57,7 @@ enum report_type {
     R_QUIET
 };
 
+#define MAXTAGLEN 20
 extern char *tag;
 int guiAskTag (void);
 int report (enum report_type t, ...);
