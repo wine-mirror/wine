@@ -417,6 +417,8 @@ gltex_bltfast(IDirectDrawSurfaceImpl *surf_ptr, DWORD dstx,
 	    ENTER_GL();
 	    
 	    glGetIntegerv(GL_TEXTURE_BINDING_2D, &cur_tex);
+	    /* This call is to create the actual texture name in GL (as we do 'late' ID creation) */
+	    gltex_get_tex_name(surf_ptr);
 	    glBindTexture(GL_TEXTURE_2D, gl_surf_ptr->tex_name);
 	    
 	    if ((gl_surf_ptr->dirty_flag == SURFACE_MEMORY_DIRTY) &&
@@ -706,9 +708,6 @@ GL_IDirect3DTextureImpl_2_1T_Load(LPDIRECT3DTEXTURE2 iface,
 	        memcpy(dst_d->lpSurface, src_d->lpSurface, src_d->u1.lPitch * src_d->dwHeight);
 
 	    if (gl_dst_ptr != NULL) {
-	        /* If the GetHandle was not done, it is an error... */
-	        if (gl_dst_ptr->tex_name == 0) ERR("Unbound GL texture !!!\n");
-
 		/* Set this texture as dirty */
 		gl_dst_ptr->dirty_flag = SURFACE_MEMORY_DIRTY;
 		*(gl_dst_ptr->global_dirty_flag) = SURFACE_MEMORY_DIRTY;
@@ -875,6 +874,8 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
         private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DTextureGLImpl));
 	if (private == NULL) return DDERR_OUTOFMEMORY;
 
+	surf->tex_private = private;
+	
 	private->final_release = surf->final_release;
 	private->lock_update = surf->lock_update;
 	private->unlock_update = surf->unlock_update;
@@ -885,7 +886,6 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
 	surf->final_release = gltex_final_release;
 	surf->lock_update = gltex_lock_update;
 	surf->unlock_update = gltex_unlock_update;
-	surf->tex_private = private;
 	surf->aux_setcolorkey_cb = gltex_setcolorkey_cb;
 	surf->set_palette = gltex_set_palette;
 
@@ -895,25 +895,43 @@ HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BO
 	surf->aux_bltfast = gltex_bltfast;
 	
 	TRACE(" GL texture created for surface %p (private data at %p)\n", surf, private);
-	
+
+	/* Do not create the OpenGL texture id here as some game generate textures from a different thread which
+	    cause problems.. */
+	private->tex_name = 0;
+	if (surf->mipmap_level == 0) {
+	    private->main = NULL;
+	    private->global_dirty_flag = &(private->__global_dirty_flag);
+	} else {
+	    private->main = main;
+	    private->global_dirty_flag = &(((IDirect3DTextureGLImpl *) (private->main->tex_private))->__global_dirty_flag);
+	}
+	private->initial_upload_done = FALSE;
+    }
+
+    return D3D_OK;
+}
+
+GLuint gltex_get_tex_name(IDirectDrawSurfaceImpl *surf)
+{
+    IDirect3DTextureGLImpl *private = (IDirect3DTextureGLImpl *) (surf->tex_private);
+    
+    if (private->tex_name == 0) {
+	/* The texture was not created yet... */	
 	ENTER_GL();
 	if (surf->mipmap_level == 0) {
 	    glGenTextures(1, &(private->tex_name));
 	    if (private->tex_name == 0) ERR("Error at creation of OpenGL texture ID !\n");
 	    TRACE(" GL texture id is : %d.\n", private->tex_name);
-	    private->__global_dirty_flag = (at_creation == FALSE ? SURFACE_MEMORY_DIRTY : SURFACE_MEMORY);
-	    private->global_dirty_flag = &(private->__global_dirty_flag);
+	    private->__global_dirty_flag = SURFACE_MEMORY_DIRTY;
 	} else {
-	    private->tex_name = ((IDirect3DTextureGLImpl *) (main->tex_private))->tex_name;
-	    TRACE(" GL texture id reusing id %d from surface %p (private at %p)).\n", private->tex_name, main, main->tex_private);
-	    private->global_dirty_flag = &(((IDirect3DTextureGLImpl *) (main->tex_private))->__global_dirty_flag);
+	    private->tex_name = gltex_get_tex_name(private->main);
+	    TRACE(" GL texture id reusing id %d from surface %p (private at %p)).\n", private->tex_name, private->main, private->main->tex_private);
 	}
 	LEAVE_GL();
 
 	/* And set the dirty flag accordingly */
-	private->dirty_flag = (at_creation == FALSE ? SURFACE_MEMORY_DIRTY : SURFACE_MEMORY);
-	private->initial_upload_done = FALSE;
+	private->dirty_flag = SURFACE_MEMORY_DIRTY;
     }
-
-    return D3D_OK;
+    return ((IDirect3DTextureGLImpl *) (surf->tex_private))->tex_name;
 }

@@ -2257,7 +2257,7 @@ draw_primitive_handle_textures(IDirect3DDeviceImpl *This)
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDisable(GL_TEXTURE_2D);
 	    } else {
-		GLenum tex_name = ((IDirect3DTextureGLImpl *) surf_ptr->tex_private)->tex_name;
+		GLenum tex_name = gltex_get_tex_name(surf_ptr);
 		
 		unit = GL_TEXTURE0_WINE + stage;
 		if (unit != glThis->current_active_tex_unit) {

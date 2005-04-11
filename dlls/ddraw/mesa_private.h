@@ -63,7 +63,8 @@ typedef struct IDirect3DTextureGLImpl
 {
     GLuint tex_name;
     BOOLEAN loaded; /* For the moment, this is here.. Should be part of surface management though */
-
+    IDirectDrawSurfaceImpl *main; /* Pointer to the 'main' surface of the mip-map set */
+    
     /* Texture upload management */
     BOOLEAN initial_upload_done;
     SURFACE_STATE dirty_flag;
@@ -201,6 +202,9 @@ extern BOOL d3ddevice_init_at_startup(void *gl_handle);
 
 /* Used to upload the texture */
 extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This, IDirect3DDeviceImpl *d3ddev, DWORD stage) ;
+
+/* Used to get the texture name */
+extern GLuint gltex_get_tex_name(IDirectDrawSurfaceImpl *This) ;
 
 /* Used to set-up our orthographic projection */
 extern void d3ddevice_set_ortho(IDirect3DDeviceImpl *This) ;
