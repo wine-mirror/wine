@@ -3387,6 +3387,217 @@ typedef enum _LATENCY_TIME {
 	LT_LOWEST_LATENCY
 } LATENCY_TIME, *PLATENCY_TIME;
 
+#define DISCHARGE_POLICY_CRITICAL 	0
+#define DISCHARGE_POLICY_LOW		1
+#define NUM_DISCHARGE_POLICIES		4
+
+#define PO_THROTTLE_NONE		0
+#define PO_THROTTLE_CONSTANT		1
+#define PO_THROTTLE_DEGRADE		2
+#define PO_THROTTLE_ADAPTIVE		3
+
+typedef enum _POWER_ACTION {
+	PowerActionNone = 0,
+	PowerActionReserved,
+	PowerActionSleep,
+	PowerActionHibernate,
+	PowerActionShutdown,
+	PowerActionShutdownReset,
+	PowerActionShutdownOff,
+	PowerActionWarmEject
+} POWER_ACTION,
+*PPOWER_ACTION;
+
+typedef enum _SYSTEM_POWER_STATE {
+	PowerSystemUnspecified = 0,
+	PowerSystemWorking = 1,
+	PowerSystemSleeping1 = 2,
+	PowerSystemSleeping2 = 3,
+	PowerSystemSleeping3 = 4,
+	PowerSystemHibernate = 5,
+	PowerSystemShutdown = 6,
+	PowerSystemMaximum = 7
+} SYSTEM_POWER_STATE,
+*PSYSTEM_POWER_STATE;
+
+typedef enum _POWER_INFORMATION_LEVEL {
+        SystemPowerPolicyAc,
+        SystemPowerPolicyDc,
+        VerifySystemPolicyAc,
+        VerifySystemPolicyDc,
+        SystemPowerCapabilities,
+        SystemBatteryState,
+        SystemPowerStateHandler,
+        ProcessorStateHandler,
+        SystemPowerPolicyCurrent,
+        AdministratorPowerPolicy,
+        SystemReserveHiberFile,
+        ProcessorInformation,
+        SystemPowerInformation,
+        ProcessorStateHandler2,
+        LastWakeTime,
+        LastSleepTime,
+        SystemExecutionState,
+        SystemPowerStateNotifyHandler,
+        ProcessorPowerPolicyAc,
+        ProcessorPowerPolicyDc,
+        VerifyProcessorPowerPolicyAc,
+        VerifyProcessorPowerPolicyDc,
+        ProcessorPowerPolicyCurrent
+} POWER_INFORMATION_LEVEL;
+
+typedef struct _ADMINISTRATOR_POWER_POLICY {
+	SYSTEM_POWER_STATE MinSleep;
+	SYSTEM_POWER_STATE MaxSleep;
+	ULONG MinVideoTimeout;
+	ULONG MaxVideoTimeout;
+	ULONG MinSpindownTimeout;
+	ULONG MaxSpindownTimeout;
+} ADMINISTRATOR_POWER_POLICY, *PADMINISTRATOR_POWER_POLICY;
+
+typedef struct {
+	ULONG Granularity;
+	ULONG Capacity;
+} BATTERY_REPORTING_SCALE,
+*PBATTERY_REPORTING_SCALE;
+
+typedef struct {
+	POWER_ACTION Action;
+	ULONG Flags;
+	ULONG EventCode;
+} POWER_ACTION_POLICY,
+*PPOWER_ACTION_POLICY;
+
+typedef struct _PROCESSOR_POWER_INFORMATION {
+	ULONG Number;
+	ULONG MaxMhz;
+	ULONG CurrentMhz;
+	ULONG MhzLimit;
+	ULONG MaxIdleState;
+	ULONG CurrentIdleState;
+} PROCESSOR_POWER_INFORMATION,
+*PPROCESSOR_POWER_INFORMATION;
+
+typedef struct _PROCESSOR_POWER_POLICY_INFO {
+	ULONG TimeCheck;
+	ULONG DemoteLimit;
+	ULONG PromoteLimit;
+	UCHAR DemotePercent;
+	UCHAR PromotePercent;
+	UCHAR Spare[2];
+	ULONG AllowDemotion:1;
+	ULONG AllowPromotion:1;
+	ULONG Reserved:30;
+} PROCESSOR_POWER_POLICY_INFO,
+*PPROCESSOR_POWER_POLICY_INFO;
+
+typedef struct _PROCESSOR_POWER_POLICY {
+	DWORD Revision;
+	BYTE DynamicThrottle;
+	BYTE Spare[3];
+	DWORD DisableCStates:1;
+	DWORD Reserved:31;
+	DWORD PolicyCount;
+	PROCESSOR_POWER_POLICY_INFO Policy[3];
+} PROCESSOR_POWER_POLICY,
+*PPROCESSOR_POWER_POLICY;
+
+typedef struct {
+	BOOLEAN AcOnLine;
+	BOOLEAN BatteryPresent;
+	BOOLEAN Charging;
+	BOOLEAN Discharging;
+	BOOLEAN Spare1[4];
+	ULONG MaxCapacity;
+	ULONG RemainingCapacity;
+	ULONG Rate;
+	ULONG EstimatedTime;
+	ULONG DefaultAlert1;
+	ULONG DefaultAlert2;
+} SYSTEM_BATTERY_STATE,
+*PSYSTEM_BATTERY_STATE;
+
+typedef struct {
+	BOOLEAN PowerButtonPresent;
+	BOOLEAN SleepButtonPresent;
+	BOOLEAN LidPresent;
+	BOOLEAN SystemS1;
+	BOOLEAN SystemS2;
+	BOOLEAN SystemS3;
+	BOOLEAN SystemS4;
+	BOOLEAN SystemS5;
+	BOOLEAN HiberFilePresent;
+	BOOLEAN FullWake;
+	BOOLEAN VideoDimPresent;
+	BOOLEAN ApmPresent;
+	BOOLEAN UpsPresent;
+	BOOLEAN ThermalControl;
+	BOOLEAN ProcessorThrottle;
+	UCHAR ProcessorMinThrottle;
+	UCHAR ProcessorMaxThrottle;
+	UCHAR spare2[4];
+	BOOLEAN DiskSpinDown;
+	UCHAR spare3[8];
+	BOOLEAN SystemBatteriesPresent;
+	BOOLEAN BatteriesAreShortTerm;
+	BATTERY_REPORTING_SCALE BatteryScale[3];
+	SYSTEM_POWER_STATE AcOnLineWake;
+	SYSTEM_POWER_STATE SoftLidWake;
+	SYSTEM_POWER_STATE RtcWake;
+	SYSTEM_POWER_STATE MinDeviceWakeState;
+	SYSTEM_POWER_STATE DefaultLowLatencyWake;
+} SYSTEM_POWER_CAPABILITIES,
+*PSYSTEM_POWER_CAPABILITIES;
+
+typedef struct _SYSTEM_POWER_INFORMATION {
+	ULONG MaxIdlenessAllowed;
+	ULONG Idleness;
+	ULONG TimeRemaining;
+	UCHAR CoolingMode;
+} SYSTEM_POWER_INFORMATION,
+*PSYSTEM_POWER_INFORMATION;
+
+typedef struct _SYSTEM_POWER_LEVEL {
+	BOOLEAN Enable;
+	UCHAR Spare[3];
+	ULONG BatteryLevel;
+	POWER_ACTION_POLICY PowerPolicy;
+	SYSTEM_POWER_STATE MinSystemState;
+} SYSTEM_POWER_LEVEL,
+*PSYSTEM_POWER_LEVEL;
+
+typedef struct _SYSTEM_POWER_POLICY {
+	ULONG Revision;
+	POWER_ACTION_POLICY PowerButton;
+	POWER_ACTION_POLICY SleepButton;
+	POWER_ACTION_POLICY LidClose;
+	SYSTEM_POWER_STATE LidOpenWake;
+	ULONG Reserved;
+	POWER_ACTION_POLICY Idle;
+	ULONG IdleTimeout;
+	UCHAR IdleSensitivity;
+	UCHAR DynamicThrottle;
+	UCHAR Spare2[2];
+	SYSTEM_POWER_STATE MinSleep;
+	SYSTEM_POWER_STATE MaxSleep;
+	SYSTEM_POWER_STATE ReducedLatencySleep;
+	ULONG WinLogonFlags;
+	ULONG Spare3;
+	ULONG DozeS4Timeout;
+	ULONG BroadcastCapacityResolution;
+	SYSTEM_POWER_LEVEL DischargePolicy[NUM_DISCHARGE_POLICIES];
+	ULONG VideoTimeout;
+	BOOLEAN VideoDimDisplay;
+	ULONG VideoReserved[3];
+	ULONG SpindownTimeout;
+	BOOLEAN OptimizeForPower;
+	UCHAR FanThrottleTolerance;
+	UCHAR ForcedThrottle;
+	UCHAR MinThrottle;
+	POWER_ACTION_POLICY OverThrottled;
+} SYSTEM_POWER_POLICY,
+*PSYSTEM_POWER_POLICY;
+
 /* ----------------------------- begin registry ----------------------------- */
 
 /* Registry security values */
