@@ -50,6 +50,87 @@ static const char * wave_in_error(MMRESULT error)
     return long_msg;
 }
 
+static void check_position(int device, HWAVEIN win, DWORD bytes,
+                           LPWAVEFORMATEX pwfx )
+{
+    MMTIME mmtime;
+    DWORD samples;
+    double duration;
+    MMRESULT rc;
+    DWORD returned;
+
+    samples=bytes/(pwfx->wBitsPerSample/8*pwfx->nChannels);
+    duration=((double)samples)/pwfx->nSamplesPerSec;
+
+    mmtime.wType = TIME_BYTES;
+    rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetPosition(%s): rc=%s\n",dev_name(device),wave_in_error(rc));
+    if (mmtime.wType != TIME_BYTES && winetest_debug > 1)
+        trace("waveInGetPosition(%s): TIME_BYTES not supported, returned %s\n",
+              dev_name(device),wave_time_format(mmtime.wType));
+    returned = time_to_bytes(&mmtime, pwfx);
+    ok(returned == bytes, "waveInGetPosition(%s): returned %ld bytes, "
+       "should be %ld\n", dev_name(device), returned, bytes);
+
+    mmtime.wType = TIME_SAMPLES;
+    rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetPosition(%s): rc=%s\n",dev_name(device),wave_in_error(rc));
+    if (mmtime.wType != TIME_SAMPLES && winetest_debug > 1)
+        trace("waveInGetPosition(%s): TIME_SAMPLES not supported, "
+              "returned %s\n",dev_name(device),wave_time_format(mmtime.wType));
+    returned = time_to_bytes(&mmtime, pwfx);
+    ok(returned == bytes, "waveInGetPosition(%s): returned %ld samples, "
+       "should be %ld\n", dev_name(device), bytes_to_samples(returned, pwfx),
+       bytes_to_samples(bytes, pwfx));
+
+    mmtime.wType = TIME_MS;
+    rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetPosition(%s): rc=%s\n",dev_name(device),wave_in_error(rc));
+    if (mmtime.wType != TIME_MS && winetest_debug > 1)
+        trace("waveInGetPosition(%s): TIME_MS not supported, returned %s\n",
+              dev_name(device), wave_time_format(mmtime.wType));
+    returned = time_to_bytes(&mmtime, pwfx);
+    ok(returned == bytes, "waveInGetPosition(%s): returned %ld ms, "
+       "should be %ld\n", dev_name(device), bytes_to_ms(returned, pwfx),
+       bytes_to_ms(bytes, pwfx));
+
+    mmtime.wType = TIME_SMPTE;
+    rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetPosition(%s): rc=%s\n",dev_name(device),wave_in_error(rc));
+    if (mmtime.wType != TIME_SMPTE && winetest_debug > 1)
+        trace("waveInGetPosition(%s): TIME_SMPTE not supported, returned %s\n",
+              dev_name(device),wave_time_format(mmtime.wType));
+    returned = time_to_bytes(&mmtime, pwfx);
+    ok(returned == bytes, "waveInGetPosition(%s): SMPTE test failed\n",
+       dev_name(device));
+
+    mmtime.wType = TIME_MIDI;
+    rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetPosition(%s): rc=%s\n",dev_name(device),wave_in_error(rc));
+    if (mmtime.wType != TIME_MIDI && winetest_debug > 1)
+        trace("waveInGetPosition(%s): TIME_MIDI not supported, returned %s\n",
+              dev_name(device),wave_time_format(mmtime.wType));
+    returned = time_to_bytes(&mmtime, pwfx);
+    ok(returned == bytes, "waveInGetPosition(%s): MIDI test failed\n",
+       dev_name(device));
+
+    mmtime.wType = TIME_TICKS;
+    rc=waveInGetPosition(win, &mmtime, sizeof(mmtime));
+    ok(rc==MMSYSERR_NOERROR,
+       "waveInGetPosition(%s): rc=%s\n",dev_name(device),wave_in_error(rc));
+    if (mmtime.wType != TIME_TICKS && winetest_debug > 1)
+        trace("waveInGetPosition(%s): TIME_TICKS not supported, returned %s\n",
+              dev_name(device),wave_time_format(mmtime.wType));
+    returned = time_to_bytes(&mmtime, pwfx);
+    ok(returned == bytes, "waveInGetPosition(%s): TICKS test failed\n",
+       dev_name(device));
+}
+
 static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEINCAPS pcaps)
 {
     HWAVEIN win;
@@ -107,6 +188,9 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
        pwfx->nSamplesPerSec, pwfx->wBitsPerSample,
        pwfx->nChannels, nSamplesPerSec, wBitsPerSample, nChannels);
 
+    /* Check that the position is 0 at start */
+    check_position(device, win, 0, pwfx);
+
     frag.lpData=malloc(pwfx->nAvgBytesPerSec);
     frag.dwBufferLength=pwfx->nAvgBytesPerSec;
     frag.dwBytesRecorded=0;
@@ -131,6 +215,9 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
         ok(rc==MMSYSERR_NOERROR,"waveInAddBuffer(%s): rc=%s\n",
            dev_name(device),wave_in_error(rc));
 
+        /* Check that the position is 0 at start */
+        check_position(device, win, 0, pwfx);
+
         rc=waveInStart(win);
         ok(rc==MMSYSERR_NOERROR,"waveInStart(%s): rc=%s\n",
            dev_name(device),wave_in_error(rc));
@@ -141,6 +228,7 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
         ok(frag.dwBytesRecorded==pwfx->nAvgBytesPerSec,
            "frag.dwBytesRecorded=%ld, should=%ld\n",
            frag.dwBytesRecorded,pwfx->nAvgBytesPerSec);
+
         /* stop playing on error */
         if (res!=WAIT_OBJECT_0) {
             rc=waveInStop(win);
@@ -316,11 +404,12 @@ static void wave_in_test_device(int device)
         format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
         format.cbSize=0;
         wave_in_test_deviceIn(device,&format,win_formats[f][0],0, &capsA);
-        wave_in_test_deviceIn(device,&format,win_formats[f][0],
-                              WAVE_FORMAT_DIRECT, &capsA);
-        if (device != WAVE_MAPPER)
+        if (device != WAVE_MAPPER) {
+            wave_in_test_deviceIn(device,&format,win_formats[f][0],
+                                  WAVE_FORMAT_DIRECT, &capsA);
             wave_in_test_deviceIn(device,&format,win_formats[f][0],
                                   WAVE_MAPPED, &capsA);
+        }
     }
 
     /* Try a PCMWAVEFORMAT aligned next to an unaccessible page for bounds
@@ -342,11 +431,12 @@ static void wave_in_test_device(int device)
             pwfx->nBlockAlign=pwfx->nChannels*pwfx->wBitsPerSample/8;
             pwfx->nAvgBytesPerSec=pwfx->nSamplesPerSec*pwfx->nBlockAlign;
             wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,0, &capsA);
-            wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,
-                WAVE_FORMAT_DIRECT, &capsA);
-            if (device != WAVE_MAPPER)
+            if (device != WAVE_MAPPER) {
+                wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,
+                    WAVE_FORMAT_DIRECT, &capsA);
                 wave_in_test_deviceIn(device,pwfx,WAVE_FORMAT_2M08,
                                       WAVE_MAPPED, &capsA);
+            }
         }
         VirtualFree(twoPages, 2 * dwPageSize, MEM_RELEASE);
     }
