@@ -89,4 +89,17 @@
 #define IDD_TITLE		0x3742
 #define IDD_TREEVIEW		0x3741
 
+#define IDI_SHELL_DOCUMENT           1
+#define IDI_SHELL_FOLDER             4
+#define IDI_SHELL_FOLDER_OPEN        5
+#define IDI_SHELL_FLOPPY             6
+#define IDI_SHELL_DRIVE              9
+#define IDI_SHELL_NETDRIVE          10
+#define IDI_SHELL_NETDRIVE2         11
+#define IDI_SHELL_CDROM             12
+#define IDI_SHELL_RAMDISK           13
+#define IDI_SHELL_MYCOMPUTER        16
+#define IDI_SHELL_PRINTER           17
+#define IDI_SHELL_DESKTOP           35
+
 #endif
