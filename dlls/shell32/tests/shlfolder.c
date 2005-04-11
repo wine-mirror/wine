@@ -65,6 +65,7 @@ void CreateFilesFolders(void)
     CreateTestFile  (".\\testdir\\test2.txt ");
     CreateTestFile  (".\\testdir\\test3.txt ");
     CreateDirectoryA(".\\testdir\\testdir2 ", NULL);
+    CreateDirectoryA(".\\testdir\\testdir2\\subdir", NULL);
 }
 
 /* cleans after tests */
@@ -74,6 +75,7 @@ void Cleanup(void)
     DeleteFileA(".\\testdir\\test2.txt");
     DeleteFileA(".\\testdir\\test3.txt");
     RemoveDirectoryA(".\\testdir\\test.txt");
+    RemoveDirectoryA(".\\testdir\\testdir2\\subdir");
     RemoveDirectoryA(".\\testdir\\testdir2");
     RemoveDirectoryA(".\\testdir");
 }
@@ -86,7 +88,7 @@ void test_EnumObjects(IShellFolder *iFolder)
     ITEMIDLIST *newPIDL, *(idlArr [5]);
     ULONG NumPIDLs;
     int i=0, j;
-    HRESULT nResult;
+    HRESULT hr;
 
     static const WORD iResults [5][5] =
     {
@@ -97,67 +99,91 @@ void test_EnumObjects(IShellFolder *iFolder)
 	{ 1, 1, 1, 1, 0}
     };
 
-    if SUCCEEDED(IShellFolder_EnumObjects(iFolder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList))
+    /* Just test SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR for now */
+    static const ULONG attrs[5] =
     {
-	while (IEnumIDList_Next(iEnumList, 1, &newPIDL, &NumPIDLs) == S_OK)
-	{
-	    idlArr[i++] = newPIDL;
-	}
-	/* This fails on windows */
-	/* IEnumIDList_Release(iEnumList); */
-    
-	/* Sort them first in case of wrong order from system */
-	for (i=0;i<5;i++) for (j=0;j<5;j++)
-	    if ((SHORT)IShellFolder_CompareIDs(iFolder, 0, idlArr[i], idlArr[j]) < 0)
-	    {
-		newPIDL = idlArr[i];
-		idlArr[i] = idlArr[j];
-		idlArr[j] = newPIDL;
-	    }
-	    
-	for (i=0;i<5;i++) for (j=0;j<5;j++)
-	{
-	    nResult = IShellFolder_CompareIDs(iFolder, 0, idlArr[i], idlArr[j]);
-	    ok(nResult == iResults[i][j], "Got %lx expected [%d]-[%d]=%x\n", nResult, i, j, iResults[i][j]);
-	}
+        SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_FILESYSTEM,
+        SFGAO_FILESYSTEM,
+        SFGAO_FILESYSTEM,
+    };
 
-	for (i=0;i<5;i++)
-	    IMalloc_Free(ppM, idlArr[i]);
+    hr = IShellFolder_EnumObjects(iFolder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList);
+    ok(hr == S_OK, "EnumObjects failed %08lx\n", hr);
+
+    while (IEnumIDList_Next(iEnumList, 1, &newPIDL, &NumPIDLs) == S_OK)
+    {
+        idlArr[i++] = newPIDL;
     }
+
+    hr = IEnumIDList_Release(iEnumList);
+    ok(hr == S_OK, "IEnumIDList_Release failed %08lx\n", hr);
+    
+    /* Sort them first in case of wrong order from system */
+    for (i=0;i<5;i++) for (j=0;j<5;j++)
+        if ((SHORT)IShellFolder_CompareIDs(iFolder, 0, idlArr[i], idlArr[j]) < 0)
+	{
+            newPIDL = idlArr[i];
+            idlArr[i] = idlArr[j];
+            idlArr[j] = newPIDL;
+        }
+	    
+    for (i=0;i<5;i++) for (j=0;j<5;j++)
+    {
+        hr = IShellFolder_CompareIDs(iFolder, 0, idlArr[i], idlArr[j]);
+        ok(hr == iResults[i][j], "Got %lx expected [%d]-[%d]=%x\n", hr, i, j, iResults[i][j]);
+    }
+
+
+    for (i = 0; i < 5; i++)
+    {
+        SFGAOF flags;
+        flags = SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR;
+        hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
+        flags &= SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR;
+        ok(hr == S_OK, "GetAttributesOf returns %08lx\n", hr);
+        ok(flags == attrs[i], "GetAttributesOf gets attrs %08lx, expects %08lx\n", flags, attrs[i]);
+    }
+
+    for (i=0;i<5;i++)
+        IMalloc_Free(ppM, idlArr[i]);
 }
 
+    
 START_TEST(shlfolder)
 {
     ITEMIDLIST *newPIDL;
     IShellFolder *IDesktopFolder, *testIShellFolder;
     WCHAR cCurrDirW [MAX_PATH];
     static const WCHAR cTestDirW[] = {'\\','t','e','s','t','d','i','r',0};
-
+    HRESULT hr;
     
     GetCurrentDirectoryW(MAX_PATH, cCurrDirW);
     strcatW(cCurrDirW, cTestDirW);
 
-    
-    if(!SUCCEEDED(SHGetMalloc(&ppM)))
-	return;
+    OleInitialize(NULL);
+
+    hr = SHGetMalloc(&ppM);
+    ok(hr == S_OK, "SHGetMalloc failed %08lx\n", hr);
 
     CreateFilesFolders();
     
-    if(!SUCCEEDED(SHGetDesktopFolder(&IDesktopFolder)))
-        return;
+    hr = SHGetDesktopFolder(&IDesktopFolder);
+    ok(hr == S_OK, "SHGetDesktopfolder failed %08lx\n", hr);
 
-    if (SUCCEEDED(IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0)))
-    {
-	if (SUCCEEDED(IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder)))
-	{
-	    test_EnumObjects(testIShellFolder);
-	    
-	    /* This fails on windows */
-	    /* IShellFolder_Release(newIShellFolder); */
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
 
-	    IMalloc_Free(ppM, newPIDL);
-	}
-    }
+    hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
+    ok(hr == S_OK, "BindToObject failed %08lx\n", hr);
+        
+    test_EnumObjects(testIShellFolder);
+
+    hr = IShellFolder_Release(testIShellFolder);
+    ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
+
+    IMalloc_Free(ppM, newPIDL);
 
     Cleanup();
 }

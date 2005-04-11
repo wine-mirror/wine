@@ -396,7 +396,9 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 	}
     } else if (_ILGetDataPointer (pidl)) {
 	dwAttributes = _ILGetFileAttributes (pidl, NULL, 0);
-	*pdwAttributes &= ~SFGAO_FILESYSANCESTOR;
+
+        if ((SFGAO_FILESYSANCESTOR & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            *pdwAttributes &= ~SFGAO_FILESYSANCESTOR;
 
 	if ((SFGAO_FOLDER & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_DIRECTORY))
 	    *pdwAttributes &= ~(SFGAO_FOLDER | SFGAO_HASSUBFOLDER);
