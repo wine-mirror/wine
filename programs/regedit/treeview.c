@@ -26,7 +26,6 @@
 #include <commctrl.h>
 #include <stdlib.h>
 #include <tchar.h>
-#include <process.h>
 #include <stdio.h>
 #include <wine/debug.h>
 
