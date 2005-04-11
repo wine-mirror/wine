@@ -178,6 +178,8 @@ static HRESULT WINAPI BaseMemAllocator_SetProperties(IMemAllocator * iface, ALLO
             hr = VFW_E_BUFFERS_OUTSTANDING;
         else if (This->bCommitted)
             hr = VFW_E_ALREADY_COMMITTED;
+        else if (pRequest->cbAlign == 0)
+            hr = VFW_E_BADALIGN;
         else
         {
             if (!This->pProps)
