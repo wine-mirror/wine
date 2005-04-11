@@ -75,6 +75,7 @@ static void create_test_entries(void)
 static void test_enum_value(void)
 {
     DWORD res;
+    HKEY test_key;
     char value[20], data[20];
     WCHAR valueW[20], dataW[20];
     DWORD val_count, data_count, type;
@@ -82,22 +83,26 @@ static void test_enum_value(void)
     static const WCHAR testW[] = {'T','e','s','t',0};
     static const WCHAR xxxW[] = {'x','x','x','x','x','x','x','x',0};
 
+    /* create the working key for new 'Test' value */
+    res = RegCreateKeyA( hkey_main, "TestKey", &test_key );
+    ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res);
+
     /* check NULL data with zero length */
-    res = RegSetValueExA( hkey_main, "Test", 0, REG_SZ, NULL, 0 );
+    res = RegSetValueExA( test_key, "Test", 0, REG_SZ, NULL, 0 );
     if (GetVersion() & 0x80000000)
         ok( res == ERROR_INVALID_PARAMETER, "RegSetValueExA returned %ld\n", res );
     else
         ok( !res, "RegSetValueExA returned %ld\n", res );
-    res = RegSetValueExA( hkey_main, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
+    res = RegSetValueExA( test_key, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
     ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
     if (ERROR_INVALID_PARAMETER == res)
         trace ("RegSetValueExA() returned ERROR_INVALID_PARAMETER\n");
-    res = RegSetValueExA( hkey_main, "Test", 0, REG_BINARY, NULL, 0 );
+    res = RegSetValueExA( test_key, "Test", 0, REG_BINARY, NULL, 0 );
     ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
     if (ERROR_INVALID_PARAMETER == res)
         trace ("RegSetValueExA() returned ERROR_INVALID_PARAMETER\n");
 
-    res = RegSetValueExA( hkey_main, "Test", 0, REG_SZ, (BYTE *)"foobar", 7 );
+    res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %ld\n", res );
 
     /* overflow both name and data */
@@ -106,7 +111,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( hkey_main, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 2, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -120,7 +125,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( hkey_main, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     /* Win9x returns 2 as specified by MSDN but NT returns 3... */
     ok( val_count == 2 || val_count == 3, "val_count set to %ld\n", val_count );
@@ -138,7 +143,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( hkey_main, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 0, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -155,7 +160,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( hkey_main, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 20, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -169,7 +174,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( hkey_main, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
     ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res );
     ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -180,9 +185,9 @@ static void test_enum_value(void)
     /* Unicode tests */
 
     SetLastError(0);
-    res = RegSetValueExW( hkey_main, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
+    res = RegSetValueExW( test_key, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
     if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
-        goto CLEANUP;
+        return;
     ok( res == 0, "RegSetValueExW failed error %ld\n", res );
 
     /* overflow both name and data */
@@ -191,7 +196,7 @@ static void test_enum_value(void)
     type = 1234;
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
-    res = RegEnumValueW( hkey_main, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
+    res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 2, "val_count set to %ld\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
@@ -205,7 +210,7 @@ static void test_enum_value(void)
     type = 1234;
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
-    res = RegEnumValueW( hkey_main, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
+    res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 3, "val_count set to %ld\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
@@ -219,7 +224,7 @@ static void test_enum_value(void)
     type = 1234;
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
-    res = RegEnumValueW( hkey_main, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
+    res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
@@ -233,17 +238,13 @@ static void test_enum_value(void)
     type = 1234;
     memcpy( valueW, xxxW, sizeof(xxxW) );
     memcpy( dataW, xxxW, sizeof(xxxW) );
-    res = RegEnumValueW( hkey_main, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
+    res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res );
     ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %ld instead of 7*sizeof(WCHAR)\n", data_count );
     ok( type == REG_SZ, "type %ld is not REG_SZ\n", type );
     ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
-
-CLEANUP:
-    /* cleanup */
-    RegDeleteValueA( hkey_main, "Test" );
 }
 
 static void test_query_value_ex()
