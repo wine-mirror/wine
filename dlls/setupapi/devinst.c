@@ -34,6 +34,7 @@
 #include "setupapi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "cfgmgr32.h"
 #include "initguid.h"
 #include "winioctl.h"
 #include "rpc.h"
@@ -469,8 +470,24 @@ BOOL WINAPI SetupDiClassNameFromGuidExA(
         PCSTR MachineName,
         PVOID Reserved)
 {
-  FIXME("\n");
-  return FALSE;
+    WCHAR ClassNameW[MAX_CLASS_NAME_LEN];
+    LPWSTR MachineNameW = NULL;
+    BOOL ret;
+
+    if (MachineName)
+        MachineNameW = MultiByteToUnicode(MachineName, CP_ACP);
+    ret = SetupDiClassNameFromGuidExW(ClassGuid, ClassNameW, MAX_CLASS_NAME_LEN,
+     NULL, MachineNameW, Reserved);
+    if (ret)
+    {
+        int len = WideCharToMultiByte(CP_ACP, 0, ClassNameW, -1, ClassName,
+         ClassNameSize, NULL, NULL);
+
+        if (!ClassNameSize && RequiredSize)
+            *RequiredSize = len;
+    }
+    MyFree(MachineNameW);
+    return ret;
 }
 
 /***********************************************************************
