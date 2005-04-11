@@ -744,3 +744,19 @@ UINT MSI_RecordSetIStream( MSIRECORD *rec, unsigned int iField, IStream *stm )
 
     return ERROR_SUCCESS;
 }
+
+UINT MSI_RecordGetIStream( MSIRECORD *rec, unsigned int iField, IStream **pstm)
+{
+    TRACE("%p %d %p\n", rec, iField, pstm);
+
+    if( iField > rec->count )
+        return ERROR_INVALID_FIELD;
+
+    if( rec->fields[iField].type != MSIFIELD_STREAM )
+        return ERROR_INVALID_FIELD;
+
+    *pstm = rec->fields[iField].u.stream;
+    IStream_AddRef( *pstm );
+
+    return ERROR_SUCCESS;
+}

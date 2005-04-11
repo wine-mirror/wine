@@ -302,6 +302,7 @@ extern UINT ACTION_DialogBox( MSIPACKAGE*, LPCWSTR);
 
 /* record internals */
 extern UINT MSI_RecordSetIStream( MSIRECORD *, unsigned int, IStream *);
+extern UINT MSI_RecordGetIStream( MSIRECORD *, unsigned int, IStream **);
 extern const WCHAR *MSI_RecordGetString( MSIRECORD *, unsigned int );
 extern MSIRECORD *MSI_CreateRecord( unsigned int );
 extern UINT MSI_RecordSetInteger( MSIRECORD *, unsigned int, int );

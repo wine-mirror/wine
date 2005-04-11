@@ -18,6 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -28,6 +30,8 @@
 #include "msi.h"
 #include "msipriv.h"
 #include "msidefs.h"
+#include "ocidl.h"
+#include "olectl.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -55,6 +59,7 @@ struct msi_control_tag
     HWND hwnd;
     msi_handler handler;
     LPWSTR property;
+    IPicture *pic;
     WCHAR name[1];
 };
 
@@ -243,6 +248,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     dialog->control_list = control;
     control->handler = NULL;
     control->property = NULL;
+    control->pic = NULL;
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
@@ -351,12 +357,64 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+static UINT msi_load_bitmap( MSIDATABASE *db, LPCWSTR name, IPicture **pic )
+{
+    const static WCHAR query[] = {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ','B','i','n','a','r','y',' ',
+        'w','h','e','r','e',' ',
+            '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0
+    };
+    MSIQUERY *view = NULL;
+    MSIRECORD *rec = NULL;
+    IStream *stm = NULL;
+    UINT r;
+
+    r = MSI_OpenQuery( db, &view, query, name );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    MSI_ViewExecute( view, NULL );
+    MSI_ViewFetch( view, &rec );
+    MSI_ViewClose( view );
+    msiobj_release( &view->hdr );
+
+    if( !rec )
+        return ERROR_FUNCTION_FAILED;
+
+    r = MSI_RecordGetIStream( rec, 2, &stm );
+    msiobj_release( &rec->hdr );
+    if( r != ERROR_SUCCESS )
+        return r;
+
+    r = OleLoadPicture( stm, 0, TRUE, &IID_IPicture, (LPVOID*) pic );
+    IStream_Release( stm );
+    if( FAILED( r ) )
+        return ERROR_FUNCTION_FAILED;
+
+    return ERROR_SUCCESS;
+}
+
 static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    TRACE("%p %p\n", dialog, rec);
+    IPicture *pic = NULL;
+    msi_control *control;
+    OLE_HANDLE hBitmap = 0;
+    LPCWSTR text;
+    UINT r;
 
-    msi_dialog_add_control( dialog, rec, szStatic,
+    control = msi_dialog_add_control( dialog, rec, szStatic,
                             SS_BITMAP | SS_LEFT | SS_CENTERIMAGE );
+    text = MSI_RecordGetString( rec, 10 );
+    r = msi_load_bitmap( dialog->package->db, text, &pic );
+    if( r == ERROR_SUCCESS )
+    {
+        r = IPicture_get_Handle( pic, &hBitmap );
+        if( SUCCEEDED( r ) )
+            SendMessageW( control->hwnd, STM_SETIMAGE, IMAGE_BITMAP, hBitmap );
+        control->pic = pic;
+    }
+    
     return ERROR_SUCCESS;
 }
 
@@ -1062,6 +1120,8 @@ void msi_dialog_destroy( msi_dialog *dialog )
         dialog->control_list = t->next;
         /* leave dialog->hwnd - destroying parent destroys child windows */
         HeapFree( GetProcessHeap(), 0, t->property );
+        if( t->pic )
+            IPicture_Release( t->pic );
         HeapFree( GetProcessHeap(), 0, t );
     }
 
