@@ -200,9 +200,7 @@ static int mailslot_test()
     dwNext = dwMsgCount = 0;
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
-    todo_wine {
     ok( dwNext == 1, "dwNext incorrect\n");
-    }
     ok( dwMsgCount == 1, "dwMsgCount incorrect\n");
 
     buffer[0] = 'b';
@@ -213,8 +211,8 @@ static int mailslot_test()
     dwNext = dwMsgCount = 0;
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
-    todo_wine {
     ok( dwNext == 1, "dwNext incorrect\n");
+    todo_wine {
     ok( dwMsgCount == 2, "dwMsgCount incorrect\n");
     }
 
@@ -225,8 +223,8 @@ static int mailslot_test()
     dwNext = dwMsgCount = 0;
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
-    todo_wine {
     ok( dwNext == 1, "dwNext incorrect\n");
+    todo_wine {
     ok( dwMsgCount == 3, "dwMsgCount incorrect\n");
     }
 
@@ -245,8 +243,8 @@ static int mailslot_test()
     dwNext = dwMsgCount = 0;
     ok( GetMailslotInfo( hSlot, NULL, &dwNext, &dwMsgCount, NULL ),
         "getmailslotinfo failed\n");
-    todo_wine {
     ok( dwNext == 2, "dwNext incorrect\n");
+    todo_wine {
     ok( dwMsgCount == 2, "dwMsgCount incorrect\n");
     }
 

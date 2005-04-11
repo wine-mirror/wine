@@ -162,6 +162,16 @@ static int mailslot_message_count(struct mailslot *mailslot)
     return (poll( &pfd, 1, 0 ) == 1) ? 1 : 0;
 }
 
+static int mailslot_next_msg_size( struct mailslot *mailslot )
+{
+    int size, fd;
+
+    size = 0;
+    fd = get_unix_fd( mailslot->fd );
+    ioctl( fd, FIONREAD, &size );
+    return size;
+}
+
 static int mailslot_get_info( struct fd *fd )
 {
     struct mailslot *mailslot = get_fd_user( fd );
@@ -434,8 +444,6 @@ DECL_HANDLER(set_mailslot_info)
 
     if( mailslot )
     {
-        int r, fd = get_unix_fd( mailslot->fd );
-
         if( req->flags & MAILSLOT_SET_READ_TIMEOUT )
             mailslot->read_timeout = req->read_timeout;
         reply->max_msgsize = mailslot->max_msgsize;
@@ -443,11 +451,10 @@ DECL_HANDLER(set_mailslot_info)
         reply->msg_count = mailslot_message_count(mailslot);
 
         /* get the size of the next message */
-        r = recv( fd, NULL, 0, MSG_PEEK | MSG_TRUNC );
-        if( r < 0 )
-            reply->next_msgsize = MAILSLOT_NO_MESSAGE;
+        if( reply->msg_count )
+            reply->next_msgsize = mailslot_next_msg_size(mailslot);
         else
-            reply->next_msgsize = r;
+            reply->next_msgsize = MAILSLOT_NO_MESSAGE;
 
         release_object( mailslot );
     }
