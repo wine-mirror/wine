@@ -81,6 +81,7 @@ HRESULT     WINAPI OleSetContainedObject(LPUNKNOWN pUnknown, BOOL fContained);
 HRESULT     WINAPI OleQueryLinkFromData(IDataObject* pSrcDataObject);
 HRESULT     WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject);
 HRESULT     WINAPI OleRun(LPUNKNOWN pUnknown);
+HRESULT     WINAPI OleDraw(LPUNKNOWN pUnknown, DWORD dwAspect, HDC hdcDraw, LPCRECT lprcBounds);
 VOID        WINAPI ReleaseStgMedium(LPSTGMEDIUM);
 HRESULT     WINAPI OleGetClipboard(IDataObject** ppDataObj);
 HRESULT     WINAPI OleIsCurrentClipboard(LPDATAOBJECT);
