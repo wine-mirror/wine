@@ -26,7 +26,7 @@
 # define U(x)  (x)
 #endif
 
-/* FIXME: this creates an ANSI storage, need try to find conditions under which
+/* FIXME: this creates an ANSI storage, try to find conditions under which
  * Unicode translation fails
  */
 static void testProps(void)
@@ -34,6 +34,7 @@ static void testProps(void)
     static const WCHAR szDot[] = { '.',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
     static const WCHAR propName[] = { 'p','r','o','p',0 };
+    static const char val[] = "l33t auth0r";
     WCHAR filename[MAX_PATH];
     HRESULT hr;
     IStorage *storage = NULL;
@@ -58,7 +59,7 @@ static void testProps(void)
      &FMTID_SummaryInformation, NULL, PROPSETFLAG_ANSI,
      STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
      &propertyStorage);
-    ok(SUCCEEDED(hr), "QI -> IPropertyStorage failed: 0x%08lx\n", hr);
+    ok(SUCCEEDED(hr), "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
 
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 0, NULL, NULL, 0);
     ok(SUCCEEDED(hr), "WriteMultiple with 0 args failed: 0x%08lx\n", hr);
@@ -98,12 +99,20 @@ static void testProps(void)
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
     ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
 
-    /* finally, set one by name */
+    /* set one by name */
     spec.ulKind = PRSPEC_LPWSTR;
     U(spec).lpwstr = (LPOLESTR)propName;
     U(var).lVal = 2;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var,
      PID_FIRST_USABLE);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+
+    /* set a string value */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PIDSI_AUTHOR;
+    var.vt = VT_LPSTR;
+    U(var).pszVal = (LPSTR)val;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
     ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
 
     /* check reading */
@@ -127,6 +136,14 @@ static void testProps(void)
     ok(var.vt == VT_I4 && U(var).lVal == 2,
      "Didn't get expected type or value for property (got type %d, value %ld)\n",
      var.vt, U(var).lVal);
+    /* read string value */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PIDSI_AUTHOR;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_LPSTR && !lstrcmpA(U(var).pszVal, val),
+     "Didn't get expected type or value for property (got type %d, value %s)\n",
+     var.vt, U(var).pszVal);
 
     /* check deleting */
     hr = IPropertyStorage_DeleteMultiple(propertyStorage, 0, NULL);
@@ -146,6 +163,79 @@ static void testProps(void)
     /* and check that it's no longer readable */
     hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
     ok(hr == S_FALSE, "Expected S_FALSE, got 0x%08lx\n", hr);
+
+    hr = IPropertyStorage_Commit(propertyStorage, STGC_DEFAULT);
+    ok(SUCCEEDED(hr), "Commit failed: 0x%08lx\n", hr);
+
+    /* check reverting */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PID_FIRST_USABLE;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    hr = IPropertyStorage_Revert(propertyStorage);
+    ok(SUCCEEDED(hr), "Revert failed: 0x%08lx\n", hr);
+    /* now check that it's still not there */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(hr == S_FALSE, "Expected S_FALSE, got 0x%08lx\n", hr);
+    /* set an integer value again */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PID_FIRST_USABLE;
+    var.vt = VT_I4;
+    U(var).lVal = 1;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* commit it */
+    hr = IPropertyStorage_Commit(propertyStorage, STGC_DEFAULT);
+    ok(SUCCEEDED(hr), "Commit failed: 0x%08lx\n", hr);
+    /* set it to a string value */
+    var.vt = VT_LPSTR;
+    U(var).pszVal = (LPSTR)val;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* revert it */
+    hr = IPropertyStorage_Revert(propertyStorage);
+    ok(SUCCEEDED(hr), "Revert failed: 0x%08lx\n", hr);
+    /* and make sure it's still an integer */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I4 && U(var).lVal == 1,
+     "Didn't get expected type or value for property (got type %d, value %ld)\n",
+     var.vt, U(var).lVal);
+
+    IPropertyStorage_Release(propertyStorage);
+    propertyStorage = NULL;
+    IPropertySetStorage_Release(propSetStorage);
+    propSetStorage = NULL;
+    IStorage_Release(storage);
+    storage = NULL;
+
+    /* now open it again */
+    hr = StgOpenStorage(filename, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE,
+     NULL, 0, &storage);
+    ok(SUCCEEDED(hr), "StgOpenStorage failed: 0x%08lx\n", hr);
+
+    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
+    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+
+    hr = IPropertySetStorage_Open(propSetStorage, &FMTID_SummaryInformation,
+     STGM_READWRITE | STGM_SHARE_EXCLUSIVE, &propertyStorage);
+    ok(SUCCEEDED(hr), "IPropertySetStorage_Open failed: 0x%08lx\n", hr);
+
+    /* check properties again */
+    spec.ulKind = PRSPEC_LPWSTR;
+    U(spec).lpwstr = (LPOLESTR)propName;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I4 && U(var).lVal == 2,
+     "Didn't get expected type or value for property (got type %d, value %ld)\n",
+     var.vt, U(var).lVal);
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PIDSI_AUTHOR;
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_LPSTR && !lstrcmpA(U(var).pszVal, val),
+     "Didn't get expected type or value for property (got type %d, value %s)\n",
+     var.vt, U(var).pszVal);
 
     IPropertyStorage_Release(propertyStorage);
     IPropertySetStorage_Release(propSetStorage);
