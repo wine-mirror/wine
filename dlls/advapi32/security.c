@@ -2363,7 +2363,7 @@ DWORD WINAPI SetNamedSecurityInfoW(LPWSTR pObjectName,
 {
     FIXME("%s %d %ld %p %p %p %p\n", debugstr_w(pObjectName), ObjectType,
            SecurityInfo, psidOwner, psidGroup, pDacl, pSacl);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
@@ -3274,14 +3274,72 @@ DWORD WINAPI GetNamedSecurityInfoA(LPSTR pObjectName,
 /******************************************************************************
  * GetNamedSecurityInfoW [ADVAPI32.@]
  */
-DWORD WINAPI GetNamedSecurityInfoW(LPWSTR pObjectName,
-        SE_OBJECT_TYPE ObjectType, SECURITY_INFORMATION SecurityInfo,
-        PSID* ppsidOwner, PSID* ppsidGroup, PACL* ppDacl, PACL* ppSacl,
-        PSECURITY_DESCRIPTOR* ppSecurityDescriptor)
+DWORD WINAPI GetNamedSecurityInfoW( LPWSTR name, SE_OBJECT_TYPE type,
+    SECURITY_INFORMATION info, PSID* owner, PSID* group, PACL* dacl,
+    PACL* sacl, PSECURITY_DESCRIPTOR* descriptor )
 {
-    FIXME("%s %d %ld %p %p %p %p %p\n", debugstr_w(pObjectName), ObjectType, SecurityInfo,
-        ppsidOwner, ppsidGroup, ppDacl, ppSacl, ppSecurityDescriptor);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD needed, offset;
+    SECURITY_DESCRIPTOR_RELATIVE *relative;
+    BYTE *buffer;
+
+    TRACE( "%s %d %ld %p %p %p %p %p\n", debugstr_w(name), type, info, owner,
+           group, dacl, sacl, descriptor );
+
+    if (!name || !descriptor) return ERROR_INVALID_PARAMETER;
+
+    needed = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+    if (info & OWNER_SECURITY_INFORMATION)
+        needed += sizeof(sidWorld);
+    if (info & GROUP_SECURITY_INFORMATION)
+        needed += sizeof(sidWorld);
+    if (info & DACL_SECURITY_INFORMATION)
+        needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    if (info & SACL_SECURITY_INFORMATION)
+        needed += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+
+    /* must be freed by caller */
+    *descriptor = HeapAlloc( GetProcessHeap(), 0, needed );
+    if (!*descriptor) return ERROR_NOT_ENOUGH_MEMORY;
+
+    if (!InitializeSecurityDescriptor( *descriptor, SECURITY_DESCRIPTOR_REVISION ))
+    {
+        HeapFree( GetProcessHeap(), 0, *descriptor );
+        return ERROR_INVALID_SECURITY_DESCR;
+    }
+
+    relative = (SECURITY_DESCRIPTOR_RELATIVE *)*descriptor;
+    relative->Control |= SE_SELF_RELATIVE;
+    buffer = (BYTE *)relative;
+    offset = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
+
+    if (owner && (info & OWNER_SECURITY_INFORMATION))
+    {
+        memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
+        relative->Owner = offset;
+        *owner = buffer + offset;
+        offset += sizeof(sidWorld);
+    }
+    if (group && (info & GROUP_SECURITY_INFORMATION))
+    {
+        memcpy( buffer + offset, &sidWorld, sizeof(sidWorld) );
+        relative->Group = offset;
+        *group = buffer + offset;
+        offset += sizeof(sidWorld);
+    }
+    if (dacl && (info & DACL_SECURITY_INFORMATION))
+    {
+        GetWorldAccessACL( (PACL)(buffer + offset) );
+        relative->Dacl = offset;
+        *dacl = (PACL)(buffer + offset);
+        offset += WINE_SIZE_OF_WORLD_ACCESS_ACL;
+    }
+    if (sacl && (info & SACL_SECURITY_INFORMATION))
+    {
+        GetWorldAccessACL( (PACL)(buffer + offset) );
+        relative->Sacl = offset;
+        *sacl = (PACL)(buffer + offset);
+    }
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
