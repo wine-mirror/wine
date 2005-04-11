@@ -727,4 +727,58 @@ enum VARENUM {
   VT_TYPEMASK        = 0x0fff
 };
 
+typedef struct tagCSPLATFORM
+{
+    DWORD dwPlatformId;
+    DWORD dwVersionHi;
+    DWORD dwVersionLo;
+    DWORD dwProcessorArch;
+} CSPLATFORM;
+
+typedef struct tagQUERYCONTEXT
+{
+    DWORD dwContext;
+    CSPLATFORM Platform;
+    LCID Locale;
+    DWORD dwVersionHi;
+    DWORD dwVersionLo;
+} QUERYCONTEXT;
+
+typedef [v1_enum] enum tagTYSPEC 
+{
+    TYSPEC_CLSID,
+    TYSPEC_FILEEXT,
+    TYSPEC_MIMETYPE,
+    TYSPEC_PROGID,
+    TYSPEC_FILENAME,
+    TYSPEC_PACKAGENAME,
+    TYSPEC_OBJECTID
+} TYSPEC;
+
+typedef union switch(DWORD tyspec)
+{
+    case TYSPEC_CLSID:
+        CLSID clsid;
+    case TYSPEC_FILEEXT:
+        LPOLESTR pFileExt;
+    case TYSPEC_MIMETYPE:
+        LPOLESTR pMimeType;
+    case TYSPEC_PROGID:
+        LPOLESTR pProgId;
+    case TYSPEC_FILENAME:
+        LPOLESTR pFileName;
+    case TYSPEC_PACKAGENAME:
+        struct
+        {
+            LPOLESTR pPackageName;
+            GUID PolicyId;
+        } ByName;
+    case TYSPEC_OBJECTID:
+        struct
+        {
+            GUID ObjectId;
+            GUID PolicyId;
+        } ByObjectId;
+} uCLSSPEC;
+
 } /* interface IWinTypes */
