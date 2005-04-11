@@ -1151,6 +1151,7 @@ MONTHCAL_HitTest(MONTHCAL_INFO *infoPtr, LPARAM lParam)
   y = lpht->pt.y;
   retval = MCHT_NOWHERE;
 
+  ZeroMemory(&lpht->st, sizeof(lpht->st));
 
   /* Comment in for debugging...
   TRACE("%d %d wd[%d %d %d %d] d[%d %d %d %d] t[%d %d %d %d] wn[%d %d %d %d]\n", x, y,
