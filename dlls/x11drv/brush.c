@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 
-#include "gdi.h"
+#include "wine/winbase16.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 
@@ -175,34 +175,32 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
  */
 static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
-    BOOL ret = FALSE;
-    Pixmap pixmap;
-    BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    if (!bmp) return FALSE;
+    BITMAP bitmap;
+    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
 
-    if (!(pixmap = X11DRV_get_pixmap( hbitmap ))) goto done;
+    if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return FALSE;
 
     wine_tsx11_lock();
-    if ((physDev->depth == 1) && (bmp->bitmap.bmBitsPixel != 1))
+    if ((physDev->depth == 1) && (physBitmap->pixmap_depth != 1))
     {
         /* Special case: a color pattern on a monochrome DC */
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
-                                               bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 1);
+                                               bitmap.bmWidth, bitmap.bmHeight, 1);
         /* FIXME: should probably convert to monochrome instead */
-        XCopyPlane( gdi_display, pixmap, physDev->brush.pixmap,
-                    BITMAP_monoGC, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0, 1 );
+        XCopyPlane( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
+                    BITMAP_monoGC, 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0, 1 );
     }
     else
     {
         physDev->brush.pixmap = XCreatePixmap( gdi_display, root_window,
-                                               bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-                                               bmp->bitmap.bmBitsPixel );
-        XCopyArea( gdi_display, pixmap, physDev->brush.pixmap,
-                   BITMAP_GC(bmp), 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight, 0, 0 );
+                                               bitmap.bmWidth, bitmap.bmHeight,
+                                               physBitmap->pixmap_depth );
+        XCopyArea( gdi_display, physBitmap->pixmap, physDev->brush.pixmap,
+                   BITMAP_GC(physBitmap), 0, 0, bitmap.bmWidth, bitmap.bmHeight, 0, 0 );
     }
     wine_tsx11_unlock();
 
-    if (bmp->bitmap.bmBitsPixel > 1)
+    if (physBitmap->pixmap_depth > 1)
     {
 	physDev->brush.fillStyle = FillTiled;
 	physDev->brush.pixel = 0;  /* Ignored */
@@ -212,10 +210,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 	physDev->brush.fillStyle = FillOpaqueStippled;
 	physDev->brush.pixel = -1;  /* Special case (see DC_SetupGCForBrush) */
     }
-    ret = TRUE;
- done:
-    GDI_ReleaseObj( hbitmap );
-    return ret;
+    return TRUE;
 }
 
 

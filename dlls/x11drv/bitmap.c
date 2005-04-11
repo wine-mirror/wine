@@ -70,23 +70,29 @@ void X11DRV_BITMAP_Init(void)
  */
 HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
-    BITMAPOBJ *bmp;
-
-    if (!(bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
+    int depth;
 
     if(physDev->xrender)
         X11DRV_XRender_UpdateDrawable( physDev );
 
     if (hbitmap == BITMAP_stock_bitmap)
+    {
         physDev->drawable = BITMAP_stock_pixmap;
+        depth = 1;
+    }
     else
-        physDev->drawable = X11DRV_get_pixmap( hbitmap );
+    {
+        X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
+        if (!physBitmap) return 0;
+        physDev->drawable = physBitmap->pixmap;
+        depth = physBitmap->pixmap_depth;
+    }
 
       /* Change GC depth if needed */
 
-    if (physDev->depth != bmp->bitmap.bmBitsPixel)
+    if (physDev->depth != depth)
     {
-        physDev->depth = bmp->bitmap.bmBitsPixel;
+        physDev->depth = depth;
         wine_tsx11_lock();
         XFreeGC( gdi_display, physDev->gc );
         physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
@@ -95,7 +101,6 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
         XFlush( gdi_display );
         wine_tsx11_unlock();
     }
-    GDI_ReleaseObj( hbitmap );
     return hbitmap;
 }
 
@@ -136,7 +141,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
     TRACE("(%p) %dx%d %d bpp\n", hbitmap, bmp->bitmap.bmWidth,
 	  bmp->bitmap.bmHeight, bmp->bitmap.bmBitsPixel);
 
-    if (!(physBitmap = HeapAlloc( GetProcessHeap(), 0, sizeof(*physBitmap) ))) goto done;
+    if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) goto done;
 
       /* Create the pixmap */
     wine_tsx11_lock();
@@ -172,67 +177,68 @@ done:
  */
 LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
 {
-    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    BITMAP bitmap;
+    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
     LONG old_height, height;
-    Pixmap pixmap = X11DRV_get_pixmap( hbitmap );
     XImage *image;
     LPBYTE tbuf, startline;
     int	h, w;
 
-    if (!bmp) return 0;
-    TRACE("(bmp=%p, buffer=%p, count=0x%lx)\n", bmp, buffer, count);
+    if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
+
+    TRACE("(bmp=%p, buffer=%p, count=0x%lx)\n", hbitmap, buffer, count);
 
     wine_tsx11_lock();
 
     /* Hack: change the bitmap height temporarily to avoid */
     /*       getting unnecessary bitmap rows. */
 
-    old_height = bmp->bitmap.bmHeight;
-    height = bmp->bitmap.bmHeight = count / bmp->bitmap.bmWidthBytes;
+    old_height = bitmap.bmHeight;
+    height = bitmap.bmHeight = count / bitmap.bmWidthBytes;
 
-    image = XGetImage( gdi_display, pixmap, 0, 0, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
-                       AllPlanes, ZPixmap );
-    bmp->bitmap.bmHeight = old_height;
+    image = XGetImage( gdi_display, physBitmap->pixmap, 0, 0,
+                       bitmap.bmWidth, bitmap.bmHeight, AllPlanes, ZPixmap );
+    bitmap.bmHeight = old_height;
 
     /* copy XImage to 16 bit padded image buffer with real bitsperpixel */
 
     startline = buffer;
-    switch (bmp->bitmap.bmBitsPixel)
+    switch (physBitmap->pixmap_depth)
     {
     case 1:
         for (h=0;h<height;h++)
         {
 	    tbuf = startline;
             *tbuf = 0;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 if ((w%8) == 0)
                     *tbuf = 0;
                 *tbuf |= XGetPixel(image,w,h)<<(7-(w&7));
                 if ((w&7) == 7) ++tbuf;
             }
-	    startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 4:
         for (h=0;h<height;h++)
         {
 	    tbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 if (!(w & 1)) *tbuf = XGetPixel( image, w, h) << 4;
 	    	else *tbuf++ |= XGetPixel( image, w, h) & 0x0f;
             }
-	    startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 8:
         for (h=0;h<height;h++)
         {
 	    tbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
                 *tbuf++ = XGetPixel(image,w,h);
-	    startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 15:
@@ -240,21 +246,21 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
         for (h=0;h<height;h++)
         {
 	    tbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
 	    	long pixel = XGetPixel(image,w,h);
 
 		*tbuf++ = pixel & 0xff;
 		*tbuf++ = (pixel>>8) & 0xff;
             }
-	    startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 24:
         for (h=0;h<height;h++)
         {
 	    tbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
 	    	long pixel = XGetPixel(image,w,h);
 
@@ -262,7 +268,7 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
 		*tbuf++ = (pixel>> 8) & 0xff;
 		*tbuf++ = (pixel>>16) & 0xff;
 	    }
-	    startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
 	}
         break;
 
@@ -270,7 +276,7 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
         for (h=0;h<height;h++)
         {
 	    tbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
 	    	long pixel = XGetPixel(image,w,h);
 
@@ -279,15 +285,14 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
 		*tbuf++ = (pixel>>16) & 0xff;
 		*tbuf++ = (pixel>>24) & 0xff;
 	    }
-	    startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
 	}
         break;
     default:
-        FIXME("Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
+        FIXME("Unhandled bits:%d\n", physBitmap->pixmap_depth);
     }
     XDestroyImage( image );
     wine_tsx11_unlock();
-    GDI_ReleaseObj( hbitmap );
     return count;
 }
 
@@ -302,27 +307,27 @@ LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *buffer, LONG count )
  */
 LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
 {
-    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
-    Pixmap pixmap = X11DRV_get_pixmap( hbitmap );
+    BITMAP bitmap;
+    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
     LONG height;
     XImage *image;
     const BYTE *sbuf, *startline;
     int	w, h;
 
-    if (!bmp) return 0;
-    TRACE("(bmp=%p, bits=%p, count=0x%lx)\n", bmp, bits, count);
+    if (!physBitmap || !GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
 
-    height = count / bmp->bitmap.bmWidthBytes;
+    TRACE("(bmp=%p, bits=%p, count=0x%lx)\n", hbitmap, bits, count);
+
+    height = count / bitmap.bmWidthBytes;
 
     wine_tsx11_lock();
-    image = XCreateImage( gdi_display, visual, bmp->bitmap.bmBitsPixel, ZPixmap, 0, NULL,
-                          bmp->bitmap.bmWidth, height, 32, 0 );
-    if (!(image->data = (LPBYTE)malloc(image->bytes_per_line * height)))
+    image = XCreateImage( gdi_display, visual, physBitmap->pixmap_depth, ZPixmap, 0, NULL,
+                          bitmap.bmWidth, height, 32, 0 );
+    if (!(image->data = malloc(image->bytes_per_line * height)))
     {
         WARN("No memory to create image data.\n");
         XDestroyImage( image );
         wine_tsx11_unlock();
-        GDI_ReleaseObj( hbitmap );
         return 0;
     }
 
@@ -330,40 +335,40 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
 
     startline = bits;
 
-    switch (bmp->bitmap.bmBitsPixel)
+    switch (physBitmap->pixmap_depth)
     {
     case 1:
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,(sbuf[0]>>(7-(w&7))) & 1);
                 if ((w&7) == 7)
                     sbuf++;
             }
-            startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 4:
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 if (!(w & 1)) XPutPixel( image, w, h, *sbuf >> 4 );
                 else XPutPixel( image, w, h, *sbuf++ & 0xf );
             }
-            startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 8:
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
                 XPutPixel(image,w,h,*sbuf++);
-            startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 15:
@@ -371,47 +376,46 @@ LONG X11DRV_SetBitmapBits( HBITMAP hbitmap, const void *bits, LONG count )
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,sbuf[1]*256+sbuf[0]);
                 sbuf+=2;
             }
-	    startline += bmp->bitmap.bmWidthBytes;
+	    startline += bitmap.bmWidthBytes;
         }
         break;
     case 24:
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
                 sbuf += 3;
             }
-            startline += bmp->bitmap.bmWidthBytes;
+            startline += bitmap.bmWidthBytes;
         }
         break;
     case 32:
         for (h=0;h<height;h++)
         {
 	    sbuf = startline;
-            for (w=0;w<bmp->bitmap.bmWidth;w++)
+            for (w=0;w<bitmap.bmWidth;w++)
             {
                 XPutPixel(image,w,h,(sbuf[3]<<24)+(sbuf[2]<<16)+(sbuf[1]<<8)+sbuf[0]);
                 sbuf += 4;
             }
-	    startline += bmp->bitmap.bmWidthBytes;
+	    startline += bitmap.bmWidthBytes;
         }
         break;
     default:
-      FIXME("Unhandled bits:%d\n", bmp->bitmap.bmBitsPixel);
+      FIXME("Unhandled bits:%d\n", physBitmap->pixmap_depth);
 
     }
-    XPutImage( gdi_display, pixmap, BITMAP_GC(bmp),
-               image, 0, 0, 0, 0, bmp->bitmap.bmWidth, height );
+    XPutImage( gdi_display, physBitmap->pixmap, BITMAP_GC(physBitmap),
+               image, 0, 0, 0, 0, bitmap.bmWidth, height );
     XDestroyImage( image ); /* frees image->data too */
     wine_tsx11_unlock();
-    GDI_ReleaseObj( hbitmap );
     return count;
 }
 
@@ -427,7 +431,7 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
 
         if (physBitmap)
         {
-            if (bmp->dib) X11DRV_DIB_DeleteDIBSection( physBitmap, bmp );
+            if (physBitmap->dib) X11DRV_DIB_DeleteDIBSection( physBitmap, bmp );
             wine_tsx11_lock();
             if (physBitmap->pixmap) XFreePixmap( gdi_display, physBitmap->pixmap );
             wine_tsx11_unlock();
@@ -459,19 +463,27 @@ X_PHYSBITMAP *X11DRV_get_phys_bitmap( HBITMAP hbitmap )
 
 
 /***********************************************************************
- *           X11DRV_set_pixmap
+ *           X11DRV_init_phys_bitmap
  *
- * Set the pixmap associated to a bitmap, and return the previous one.
+ * Initialize the X physical bitmap info if necessary.
  */
-Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap )
+X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap )
 {
-    Pixmap ret = 0;
-    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
-
-    if (physBitmap)
+    X_PHYSBITMAP *ret = NULL;
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
+    if (bmp)
     {
-        ret = physBitmap->pixmap;
-        physBitmap->pixmap = pixmap;
+        if (!(ret = bmp->physBitmap))
+        {
+            if ((ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) )) != NULL)
+            {
+                ret->pixmap = 0;
+                ret->pixmap_depth = bmp->bitmap.bmBitsPixel;
+                ret->dib = NULL;
+                bmp->physBitmap = ret;
+            }
+        }
+        GDI_ReleaseObj( hbitmap );
     }
     return ret;
 }

@@ -83,6 +83,8 @@ typedef struct
 typedef struct
 {
     Pixmap       pixmap;
+    int          pixmap_depth;
+    struct _X11DRV_DIBSECTION *dib;
 } X_PHYSBITMAP;
 
   /* X physical font */
@@ -120,8 +122,7 @@ extern GC BITMAP_monoGC, BITMAP_colorGC;
 extern HBITMAP BITMAP_stock_bitmap;  /* default stock bitmap */
 extern Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
 
-#define BITMAP_GC(bmp) \
-  (((bmp)->bitmap.bmBitsPixel == 1) ? BITMAP_monoGC : BITMAP_colorGC)
+#define BITMAP_GC(physBitmap) (((physBitmap)->pixmap_depth == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
 /* Wine driver X11 functions */
 
@@ -213,7 +214,7 @@ extern HGLOBAL X11DRV_DIB_CreateDIBFromBitmap(HDC hdc, HBITMAP hBmp);
 extern HGLOBAL X11DRV_DIB_CreateDIBFromPixmap(Pixmap pixmap, HDC hdc);
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
 extern X_PHYSBITMAP *X11DRV_get_phys_bitmap( HBITMAP hbitmap );
-extern Pixmap X11DRV_set_pixmap( HBITMAP hbitmap, Pixmap pixmap );
+extern X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap );
 extern Pixmap X11DRV_get_pixmap( HBITMAP hbitmap );
 
 extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
@@ -260,7 +261,7 @@ extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event );
 /* exported dib functions for now */
 
 /* Additional info for DIB section objects */
-typedef struct
+typedef struct _X11DRV_DIBSECTION
 {
     /* Windows DIB section */
     DIBSECTION  dibSection;
