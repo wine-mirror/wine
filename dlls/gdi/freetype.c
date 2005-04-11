@@ -900,7 +900,7 @@ LOAD_FUNCPTR(FcPatternGet);
 }
 
 
-void load_system_fonts(void)
+static void load_system_fonts(void)
 {
     HKEY hkey;
     WCHAR data[MAX_PATH], windowsdir[MAX_PATH], pathW[MAX_PATH];
@@ -934,7 +934,7 @@ void load_system_fonts(void)
  * of no longer existing fonts.
  *
  */
-void update_reg_entries(void)
+static void update_reg_entries(void)
 {
     HKEY winkey = 0, externalkey = 0;
     LPWSTR valueW;
