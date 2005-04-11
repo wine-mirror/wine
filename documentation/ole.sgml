@@ -376,7 +376,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </para>
 
       <sect2>
-        <title>BASICS</title>
+        <title>Basics</title>
 
         <para>
           The basic idea behind DCOM is to take a COM object and make it location
@@ -488,7 +488,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
       
       <sect2>
-        <title>PROXIES AND STUBS</title>
+        <title>Proxies and Stubs</title>
 
         <para>
           Manually marshalling and unmarshalling each method call using the NDR
@@ -535,7 +535,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
       
       <sect2>
-        <title>INTERFACE MARSHALLING</title>
+        <title>Interface Marshalling</title>
 
         <para>
           Standard NDR only knows about C style function calls - they
@@ -597,7 +597,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
 
       <sect2>
-        <title>COM PROXY/STUB SYSTEM</title>
+        <title>COM Proxy/Stub System</title>
 
         <para>
           COM proxies are objects that implement both the interfaces needing to be
@@ -611,8 +611,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
           names. I'm not sure either, except that a running theme in DCOM is that
           interfaces which have nothing to do with buffers have the word Buffer
           appended to them, seemingly at random. Ignore it and <emphasis>don't let it
-            confuse you</emphasis>
-          :) This stuff is convoluted enough ...
+            confuse you</emphasis> :) This stuff is convoluted enough ...
         </para>
 
         <para>
@@ -621,8 +620,8 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
         </para>
 
         <para>
-          DCOM is theoretically an internet RFC <ulink
-                                                   url="http://www.grimes.demon.co.uk/DCOM/DCOMSpec.htm">[2]</ulink> and is
+          DCOM is theoretically an internet RFC 
+          <ulink url="http://www.grimes.demon.co.uk/DCOM/DCOMSpec.htm">[2]</ulink> and is
           specced out, but in reality the only implementation of it apart from
           ours is Microsoft's, and as a result there are lots of interfaces
           which <emphasis>can</emphasis> be used if you want to customize or
@@ -673,7 +672,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
 
       <sect2>
-        <title>RPC CHANNELS</title>
+        <title>RPC Channels</title>
 
         <para>
           Remember the RPC runtime? Well, that's not just responsible for
@@ -718,7 +717,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
 
       <sect2>
-        <title>HOW THIS ACTUALLY WORKS IN WINE</title>
+        <title>How this actually works in Wine</title>
 
         <para>
           Right now, Wine does not use the NDR marshallers or RPC to implement its
@@ -743,7 +742,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
 
       <sect2>
-        <title>TYPELIB MARSHALLER</title>
+        <title>Typelib Marshaller</title>
 
         <para>
           In fact, the reason for the PSFactoryBuffer layer of indirection is
@@ -790,19 +789,301 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
 
       <sect2>
-        <title>WRAPUP</title>
+        <title>Appartments</title>
 
         <para>
-          OK, so there are some (very) basic notes on DCOM. There's a ton of stuff
-          I have not covered:
+          Before a thread can use COM it must enter an apartment. Apartments are 
+          an abstraction of a COM objects thread safety level. There are many types
+          of apartment but the only two we care about right now are single threaded
+          apartments (STAs) and the multi-threaded apartment (MTA).
+        </para>
+
+        <para>
+          Any given process may contain at most one MTA and potentially many STAs.
+          This is because all objects in MTAs never care where they are invoked from
+          and hence can all be treated the same. Since objects in STAs do care, they
+          cannot be treated the same.
+        </para>
+
+        <para>
+          You enter an apartment by calling <function>CoInitializeEx()</function> and 
+          passing the desired thread model in as a parameter. The default if you use 
+          the deprecated <function>CoInitialize()</function> is a STA, and this is the 
+          most common type of apartment used in COM.
+        </para>
+
+        <para>
+          An object in the multi-threaded apartment may be accessed concurrently by
+          multiple threads: eg, it's supposed to be entirely thread safe. It must also
+          not care about thread-affinity, the object should react the same way no matter
+          which thread is calling it.
+        </para>
+
+        <para>
+          An object inside a STA does not have to be thread safe, and all calls upon it
+          should come from the same thread - the thread that entered the apartment in
+          the first place.
+        </para>
+
+        <para>
+          The apartment system was originally designed to deal with the disparity between
+          the Windows NT/C++ world in which threading was given a strong emphasis, and the
+          Visual Basic world in which threading was barely supported and even if it had
+          been fully supported most developers would not have used it. Visual Basic code
+          is not truly multi-threaded, instead if you start a new thread you get an entirely
+          new VM, with separate sets of global variables. Changes made in one thread do
+          <emphasis>not</emphasis> reflect in another, which pretty much violates the
+          expected semantics of multi-threading entirely but this is Visual Basic, so what
+          did you expect? If you access a VB object concurrently from multiple threads,
+          behind the scenes each VM runs in a STA and the calls are marshaled between the
+          threads using DCOM.
+        </para>
+
+        <para>
+          In the Windows 2000 release of COM, several new types of apartment were added, the
+          most important of which are RTAs (the rental threaded apartment) in which concurrent
+          access are serialised by COM using an apartment-wide lock but thread affinity is
+          not guaranteed. 
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Structure of a marshaled interface pointer</title>
+
+        <para>
+          When an interface is marshaled using <function>CoMarshalInterface()</function>,
+          the result is a serialized OBJREF structure. An OBJREF actually contains a union,
+          but we'll be assuming the variant that embeds a STDOBJREF here which is what's
+          used by the system provided standard marshaling. A STDOBJREF (standard object
+          reference) consists of the magic signature 'MEOW', then some flags, then the IID
+          of the marshaled interface. Quite what MEOW stands for is a mystery, but it's
+          definitely not "Microsoft Extended Object Wire". Next comes the STDOBJREF flags,
+          identified by their SORF_ prefix. Most of these are reserved, and their purpose
+          (if any) is unknown, but a few are defined.
+        </para>
+
+        <para>
+          After the SORF flags comes a count of the references represented by this marshaled
+          interface. Typically this will be 5 in the case of a normal marshal, but may be 0
+          for table-strong and  table-weak marshals (the difference between these is explained below).
+          The reasoning is this: In the general case, we want to know exactly when an object
+          is unmarshaled and released, so we can accurately control the lifetime of the stub
+          object. This is what happens when cPublicRefs is zero. However, in many cases, we
+          only want to unmarshal an object once. Therefore, if we strengthen the rules to say
+          when marshaling that we will only unmarshal once, then we no longer have to know when
+          it is unmarshaled. Therefore, we can give out an arbitrary number of references when
+          marshaling and basically say "don't call me, except when you die."
+        </para>
+
+        <para>
+          The most interesting part of a STDOBJREF is the OXID, OID, IPID triple. This triple
+          identifies any given marshaled interface pointer in the network. OXIDs are apartment
+          identifiers, and are supposed to be unique network-wide. How this is guaranteed is
+          currently unknown: the original algorithm Windows used was something like the current
+          UNIX time and a local counter.
+        </para>
+
+        <para>
+          OXIDs are generated and registered with the OXID resolver by performing local RPCs
+          to the RPC subsystem (rpcss.exe). In a fully security-patched Windows system they
+          appear to be randomly generated. This registration is done using the
+          <function>ILocalOxidResolver</function> interface, however the exact structure of
+          this interface is currently unknown.
+        </para>
+
+        <para>
+          OIDs are object identifiers, and identify a stub manager. The stub manager manages
+          interface stubs. For each exported COM object there are multiple interfaces and
+          therefore multiple interface stubs (<function>IRpcStubBuffer</function> implementations).
+          OIDs are apartment scoped. Each ifstub is identified by an IPID, which identifies
+          a marshaled interface pointer. IPIDs are apartment scoped.
+        </para>
+
+        <para>
+          Unmarshaling one of these streams therefore means setting up a connection to the
+          object exporter (the apartment holding the marshaled interface pointer) and being
+          able to send RPCs to the right ifstub. Each apartment has its own RPC endpoint and
+          calls can be routed to the correct interface pointer by embedding the IPID into the
+          call using RpcBindingSetObject. IRemUnknown, discussed below, uses a reserved IPID.
+          Please note that this is true only in the current implementation. The native version
+          generates an IPID as per any other object and simply notifies the SCM of this IPID.
+        </para>
+
+        <para>
+          Both standard and handler marshaled OBJREFs contains an OXID resolver endpoint which
+          is an RPC string binding in a DUALSTRINGARRAY. This is necessary because an OXID
+          alone is not enough to contact the host, as it doesn't contain any network address
+          data. Instead, the combination of the remote OXID resolver RPC endpoint and the OXID
+          itself are passed to the local OXID resolver. It then returns the apartment string binding.
+        </para>
+
+        <para>
+          This step is an optimisation: technically the OBJREF itself could contain the string
+          binding of the apartment endpoint and the OXID resolver could be bypassed, but by using
+          this DCOM can optimise out a server round-trip by having the local OXID resolver cache
+          the query results. The OXID resolver is a service in the RPC subsystem (rpcss.exe) which
+          implements a raw (non object-oriented) RPC interface called <function>IOXIDResolver</function>.
+          Despite the identical naming convention this is not a COM interface.
+        </para>
+
+        <para>
+          Unmarshaling an interface pointer stream therefore consists of
+          reading the OXID, OID and IPID from the STDOBJREF, then reading
+          one or more RPC string bindings for the remote OXID resolver.
+          Then <function>RpcBindingFromStringBinding</function> is used
+          to convert this remote string binding into an RPC binding handle
+          which can be passed to the local 
+          <function>IOXIDResolver::ResolveOxid</function> implementation
+          along with the OXID. The local OXID resolver consults its list
+          of same-machine OXIDs, then its cache of remote OXIDs, and if
+          not found does an RPC to the remote OXID resolver using the
+          binding handle passed in earlier. The result of the query is
+          stored for future reference in the cache, and finally the
+          unmarshaling application gets back the apartment string binding,
+          the IPID of that apartments <function>IRemUnknown</function>
+          implementation, and a security hint (let's ignore this for now).
+        </para>
+
+        <para>
+          Once the remote apartments string binding has been located the
+          unmarshalling process constructs an RPC Channel Buffer
+          implementation with the connection handle and the IPID of the
+          needed interface, loads and constructs the 
+          <function>IRpcProxyBuffer</function> implementation for that
+          IID and connects it to the channel. Finally the proxy is passed
+          back to the application. 
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Handling IUnknown</title>
+
+        <para>
+          There are some subtleties here with respect to IUnknown. IUnknown
+          itself is never marshaled directly: instead a version of it
+          optimised for network usage is used. IRemUnknown is similar in
+          concept to IUnknown except that it allows you to add and release
+          arbitrary numbers of references at once, and it also allows you to
+          query for multiple interfaces at once.
+        </para>
+
+        <para>
+          IRemUnknown is used for lifecycle management, and for marshaling
+          new interfaces on an object back to the client. Its definition can
+          be seen in dcom.idl - basically the IRemUnknown::RemQueryInterface
+          method takes an IPID and a list of IIDs, then returns STDOBJREFs
+          of each new marshaled interface pointer.
+        </para>
+
+        <para>
+          There is one IRemUnknown implementation per apartment, not per
+          stub manager as you might expect. This is OK because IPIDs are
+          apartment not object scoped (In fact, according to the DCOM draft
+          spec, they are machine-scoped, but this implies apartment-scoped).
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Table marshaling</title>
+
+        <para>
+          Normally once you have unmarshaled a marshaled interface pointer
+          that stream is dead, you can't unmarshal it again. Sometimes this
+          isn't what you want. In this case, table marshaling can be used. 
+          There are two types: strong and weak. In table-strong marshaling,
+          selected by a specific flag to <function>CoMarshalInterface()</function>,
+          a stream can be unmarshaled as many times as you like. Even if
+          all the proxies are released, the marshaled object reference is
+          still valid. Effectively the stream itself holds a ref on the object.
+          To release the object entirely so its server can shut down, you 
+          must use <function>CoReleaseMarshalData()</function> on the stream.
+        </para>
+
+        <para>
+          In table-weak marshaling the stream can be unmarshaled many times,
+          however the stream does not hold a ref. If you unmarshal the
+          stream twice, once those two proxies have been released remote
+          object will also be released. Attempting to unmarshal the stream
+          at this point will yield <function>CO_E_DISCONNECTED</function>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>RPC dispatch</title>
+
+        <para>
+          Exactly how RPC dispatch occurs depends on whether the exported
+          object is in a STA or the MTA. If it's in the MTA then all is
+          simple: the RPC dispatch thread can temporarily enter the MTA,
+          perform the remote call, and then leave it again. If it's in a
+          STA things get more complex, because of the requirement that only
+          one thread can ever access the object.
+        </para>
+
+        <para>
+          Instead, when entering a STA a hidden window is created implicitly
+          by COM, and the user must manually pump the message loop in order
+          to service incoming RPCs. The RPC dispatch thread performs the
+          context switch into the STA by sending a message to the apartments
+          window, which then proceeds to invoke the remote call in the right
+          thread.
+        </para>
+
+        <para>
+          RPC dispatch threads are pooled by the RPC runtime. When an incoming
+          RPC needs to be serviced, a thread is pulled from the pool and
+          invokes the call. The main RPC thread then goes back to listening
+          for new calls. It's quite likely for objects in the MTA to therefore
+          be servicing more than one call at once.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Message filtering and re-entrancy</title>
+
+        <para>
+          When an outgoing call is made from a STA, it's possible that the
+          remote server will re-enter the client, for instance to perform a
+          callback. Because of this potential re-entrancy, when waiting for
+          the reply to an RPC made inside a STA, COM will pump the message loop.
+          That's because while this thread is blocked, the incoming callback
+          will be dispatched by a thread from the RPC dispatch pool, so it
+          must be processing messages.
+        </para>
+
+        <para>
+          While COM is pumping the message loop, all incoming messages from
+          the operating system are filtered through one or more message filters.
+          These filters are themselves COM objects which can choose to discard,
+          hold or forward window messages. The default message filter drops all
+          input messages and forwards the rest. This is so that if the user
+          chooses a menu option which triggers an RPC, they then cannot choose
+          that menu option *again* and restart the function from the beginning.
+          That type of unexpected re-entrancy is extremely difficult to debug,
+          so it's disallowed.
+        </para>
+
+        <para>
+          Unfortunately other window messages are allowed through, meaning that
+          it's possible your UI will be required to repaint itself during an
+          outgoing RPC. This makes programming with STAs more complex than it
+          may appear, as you must be prepared to run all kinds of code any time
+          an outgoing call is made. In turn this breaks the idea that COM
+          should abstract object location from the programmer, because an
+          object that was originally free-threaded and is then run from a STA
+          could trigger new and untested codepaths in a program.  
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Wrapup</title>
+
+        <para>
+          Theres are still a lot of topics that have not been covered:
         </para>
         
         <itemizedlist>
           <listitem><para> Format strings/MOPs</para></listitem>
-          
-          <listitem><para> Apartments, threading models, inter-thread marshalling</para></listitem>
-          
-          <listitem><para> OXIDs/OIDs, etc, IOXIDResolver</para></listitem>
           
           <listitem><para> IRemoteActivation</para></listitem>
           
@@ -810,28 +1091,19 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
 
           <listitem><para> Marshalling IDispatch</para></listitem>
           
-          <listitem><para> Structure of marshalled interface pointers (STDOBJREFs etc)</para></listitem>
+          <listitem><para> ICallFrame</para></listitem>
+          
+          <listitem><para> Interface pointer swizzling</para></listitem>
           
           <listitem><para> Runtime class object registration (CoRegisterClassObject), ROT</para></listitem>
-          
-          <listitem><para> IRemUnknown</para></listitem>
           
           <listitem><para> Exactly how InstallShield uses DCOM</para></listitem>
         </itemizedlist>
 
-        <para>
-          Then there's a bunch of stuff I still don't understand, like ICallFrame,
-          interface pointer swizzling, exactly where and how all this stuff is
-          actually implemented and so on.
-        </para>
-
-        <para>
-          But for now that's enough.
-        </para>
       </sect2>
 
       <sect2>
-        <title>FURTHER READING</title>
+        <title>Further Reading</title>
 
         <para>
           Most of these documents assume you have knowledge only contained in
@@ -842,6 +1114,12 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
         </para>
 
         <itemizedlist>
+            <listitem><para>
+              <ulink url="http://www-csag.ucsd.edu/individual/achien/cs491-f97/projects/dcom-writeup.ps">
+                http://www-csag.ucsd.edu/individual/achien/cs491-f97/projects/dcom-writeup.ps</ulink>
+
+            </para></listitem>
+
             <listitem><para>
               <ulink url="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/cmi_n2p_459u.asp">
                 http://msdn.microsoft.com/library/default.asp?url=/library/en-us/com/htm/cmi_n2p_459u.asp</ulink>
