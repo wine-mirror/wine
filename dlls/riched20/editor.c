@@ -23,7 +23,7 @@
   
   Messages (ANSI versions not done yet)
   - EM_AUTOURLDETECT 2.0
-  - EM_CANPASTE
+  + EM_CANPASTE
   + EM_CANREDO 2.0
   + EM_CANUNDO
   - EM_CHARFROMPOS
@@ -73,7 +73,7 @@
   - EM_LINESCROLL
   - EM_PASTESPECIAL
   - EM_POSFROMCHARS
-  - EM_REDO 2.0
+  + EM_REDO 2.0
   - EM_REQUESTRESIZE
   + EM_REPLACESEL (proper style?) ANSI&Unicode
   - EM_SCROLL
@@ -102,9 +102,9 @@
   - EM_SETWORDBREAKPROCEX
   - EM_SETWORDWRAPMODE 1.0asian
   - EM_STOPGROUPTYPING 2.0
-  - EM_STREAMIN
-  - EM_STREAMOUT
-  - EM_UNDO
+  + EM_STREAMIN (can't fall back to text when the RTF isn't really RTF)
+  + EM_STREAMOUT
+  + EM_UNDO
   + WM_CHAR
   + WM_CLEAR
   + WM_COPY
@@ -166,30 +166,25 @@
 /*
  * RICHED20 TODO (incomplete):
  *
- * - font caching
+ * - messages/styles/notifications listed above 
+ * - Undo coalescing 
  * - add remaining CHARFORMAT/PARAFORMAT fields
  * - right/center align should strip spaces from the beginning
- * - more advanced navigation (Ctrl-arrows, PageUp/PageDn)
+ * - more advanced navigation (Ctrl-arrows)
  * - tabs
- * - pictures (not just smiling faces that lack API support ;-) )
- * - OLE objects
+ * - pictures/OLE objects (not just smiling faces that lack API support ;-) )
+ * - COM interface (looks like a major pain in the TODO list)
  * - calculate heights of pictures (half-done)
- * - EM_STREAMIN/EM_STREAMOUT
  * - horizontal scrolling (not even started)
- * - fix scrollbars and refresh (it sucks bigtime)
  * - hysteresis during wrapping (related to scrollbars appearing/disappearing)
- * - should remember maximum row width for wrap hysteresis
  * - find/replace
  * - how to implement EM_FORMATRANGE and EM_DISPLAYBAND ? (Mission Impossible)
- * - italic cursor with italic fonts
+ * - italic caret with italic fonts
  * - IME
  * - most notifications aren't sent at all (the most important ones are)
  * - when should EN_SELCHANGE be sent after text change ? (before/after EN_UPDATE?)
  * - WM_SETTEXT may use wrong style (but I'm 80% sure it's OK)
  * - EM_GETCHARFORMAT with SCF_SELECTION may not behave 100% like in original (but very close)
- * - bugs in end-of-text handling (the gray bar) could get me in jail ;-)
- * - determination of row size
- * - end-of-paragraph marks should be of reasonable size
  *
  * Bugs that are probably fixed, but not so easy to verify:
  * - EN_UPDATE/EN_CHANGE are handled very incorrectly (should be OK now)
@@ -690,7 +685,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   switch(msg) {
   
   UNSUPPORTED_MSG(EM_AUTOURLDETECT)
-  UNSUPPORTED_MSG(EM_CANPASTE)
   UNSUPPORTED_MSG(EM_CHARFROMPOS)
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
   UNSUPPORTED_MSG(EM_EXLIMITTEXT)
@@ -931,6 +925,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_UpdateRepaint(editor);
     return 0;
   }
+  case EM_CANPASTE:
+  {
+    UINT nRTFFormat = RegisterClipboardFormatA("Rich Text Format");
+    if (IsClipboardFormatAvailable(nRTFFormat))
+      return TRUE;
+    if (IsClipboardFormatAvailable(CF_UNICODETEXT))
+      return TRUE;
+    return FALSE;
+  }
   case WM_PASTE:
   {    
     DWORD dwFormat = 0;
@@ -939,8 +942,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     UINT nRTFFormat = RegisterClipboardFormatA("Rich Text Format");
     UINT cf = 0;
 
-    if (!OpenClipboard(hWnd))
-      return 0;
     if (IsClipboardFormatAvailable(nRTFFormat))
       cf = nRTFFormat, dwFormat = SF_RTF;
     else if (IsClipboardFormatAvailable(CF_UNICODETEXT))
@@ -948,6 +949,8 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     else
       return 0;
 
+    if (!OpenClipboard(hWnd))
+      return 0;
     gds.hData = GetClipboardData(cf);
     gds.nLength = 0;
     es.dwCookie = (DWORD)&gds;
@@ -1164,7 +1167,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (nPos != editor->nScrollPosY) {
       ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
       editor->nScrollPosY = nPos;
-      SetScrollPos(hWnd, SB_VERT, nPos, FALSE);
+      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
       UpdateWindow(hWnd);
     }
     break;
