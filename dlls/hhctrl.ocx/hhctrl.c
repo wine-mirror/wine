@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 {
-    FIXME("(%p, %s, %d, %ld): stub\n", caller, debugstr_w(filename), command, data);
+    FIXME("(%p, %s, command=%d, data=%ld): stub\n", caller, debugstr_w(filename), command, data);
 
     /* if command is HH_DISPLAY_TOPIC just display an informative message for now */
     if (command == HH_DISPLAY_TOPIC)
@@ -45,12 +45,16 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
 {
     WCHAR *wfile = NULL;
-    DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
     HWND result;
 
-    wfile = HeapAlloc( GetProcessHeap(), 0, len  * sizeof(WCHAR));
-    MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
-
+    if (filename)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
+    
+        wfile = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof(WCHAR));
+        MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
+    }
+    
     result = HtmlHelpW( caller, wfile, command, data );
 
     HeapFree( GetProcessHeap(), 0, wfile );
