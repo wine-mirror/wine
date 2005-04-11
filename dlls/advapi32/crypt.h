@@ -56,8 +56,11 @@ typedef struct tagPROVFUNCS
 	BOOL (WINAPI *pCPVerifySignature)(HCRYPTPROV hProv, HCRYPTHASH hHash, CONST BYTE *pbSignature, DWORD dwSigLen, HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags);
 } PROVFUNCS, *PPROVFUNCS;
 
+#define MAGIC_CRYPTPROV 0xA39E741F
+
 typedef struct tagCRYPTPROV
 {
+	DWORD dwMagic;
 	UINT refcount;
 	HMODULE hModule;
 	PPROVFUNCS pFuncs;

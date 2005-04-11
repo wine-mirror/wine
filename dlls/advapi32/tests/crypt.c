@@ -43,6 +43,28 @@ static BOOL (WINAPI *pCryptReleaseContext)(HCRYPTPROV, DWORD);
 static BOOL (WINAPI *pCryptSetProviderExA)(LPCSTR, DWORD, DWORD*, DWORD);
 static BOOL (WINAPI *pCryptCreateHash)(HCRYPTPROV, ALG_ID, HCRYPTKEY, DWORD, HCRYPTHASH*);
 static BOOL (WINAPI *pCryptDestroyHash)(HCRYPTHASH);
+static BOOL (WINAPI *pCryptGenRandom)(HCRYPTPROV, DWORD, BYTE*);
+static BOOL (WINAPI *pCryptContextAddRef)(HCRYPTPROV, DWORD*, DWORD dwFlags);
+static BOOL (WINAPI *pCryptGenKey)(HCRYPTPROV, ALG_ID, DWORD, HCRYPTKEY*);
+static BOOL (WINAPI *pCryptDestroyKey)(HCRYPTKEY);
+static BOOL (WINAPI *pCryptDecrypt)(HCRYPTKEY, HCRYPTHASH, BOOL, DWORD, BYTE*, DWORD*);
+static BOOL (WINAPI *pCryptDeriveKey)(HCRYPTPROV, ALG_ID, HCRYPTHASH, DWORD, HCRYPTKEY*);
+static BOOL (WINAPI *pCryptDuplicateHash)(HCRYPTHASH, DWORD*, DWORD, HCRYPTHASH*);
+static BOOL (WINAPI *pCryptDuplicateKey)(HCRYPTKEY, DWORD*, DWORD, HCRYPTKEY*);
+static BOOL (WINAPI *pCryptEncrypt)(HCRYPTKEY, HCRYPTHASH, BOOL, DWORD, BYTE*, DWORD*, DWORD);
+static BOOL (WINAPI *pCryptExportKey)(HCRYPTKEY, HCRYPTKEY, DWORD, DWORD, BYTE*, DWORD*);
+static BOOL (WINAPI *pCryptGetHashParam)(HCRYPTHASH, DWORD, BYTE*, DWORD*, DWORD);
+static BOOL (WINAPI *pCryptGetKeyParam)(HCRYPTKEY, DWORD, BYTE*, DWORD*, DWORD);
+static BOOL (WINAPI *pCryptGetProvParam)(HCRYPTPROV, DWORD, BYTE*, DWORD*, DWORD);
+static BOOL (WINAPI *pCryptGetUserKey)(HCRYPTPROV, DWORD, HCRYPTKEY*);
+static BOOL (WINAPI *pCryptHashData)(HCRYPTHASH, BYTE*, DWORD, DWORD);
+static BOOL (WINAPI *pCryptHashSessionKey)(HCRYPTHASH, HCRYPTKEY, DWORD);
+static BOOL (WINAPI *pCryptImportKey)(HCRYPTPROV, BYTE*, DWORD, HCRYPTKEY, DWORD, HCRYPTKEY*);
+static BOOL (WINAPI *pCryptSignHashW)(HCRYPTHASH, DWORD, LPCWSTR, DWORD, BYTE*, DWORD*);
+static BOOL (WINAPI *pCryptSetHashParam)(HCRYPTKEY, DWORD, BYTE*, DWORD);
+static BOOL (WINAPI *pCryptSetKeyParam)(HCRYPTKEY, DWORD, BYTE*, DWORD);
+static BOOL (WINAPI *pCryptSetProvParam)(HCRYPTPROV, DWORD, BYTE*, DWORD);
+static BOOL (WINAPI *pCryptVerifySignatureW)(HCRYPTHASH, BYTE*, DWORD, HCRYPTKEY, LPCWSTR, DWORD);
 
 static void init_function_pointers(void)
 {
@@ -50,17 +72,38 @@ static void init_function_pointers(void)
 
     if(hadvapi32)
     {
-	pCryptAcquireContextA = (void*)GetProcAddress(hadvapi32, "CryptAcquireContextA");
-	pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
-	pCryptEnumProvidersA = (void*)GetProcAddress(hadvapi32, "CryptEnumProvidersA");
-	pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
-	pCryptReleaseContext = (void*)GetProcAddress(hadvapi32, "CryptReleaseContext");
-	pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
-	pCryptCreateHash = (void*)GetProcAddress(hadvapi32, "CryptCreateHash");
-	pCryptDestroyHash = (void*)GetProcAddress(hadvapi32, "CryptDestroyHash");
+        pCryptAcquireContextA = (void*)GetProcAddress(hadvapi32, "CryptAcquireContextA");
+        pCryptEnumProviderTypesA = (void*)GetProcAddress(hadvapi32, "CryptEnumProviderTypesA");
+        pCryptEnumProvidersA = (void*)GetProcAddress(hadvapi32, "CryptEnumProvidersA");
+        pCryptGetDefaultProviderA = (void*)GetProcAddress(hadvapi32, "CryptGetDefaultProviderA");
+        pCryptReleaseContext = (void*)GetProcAddress(hadvapi32, "CryptReleaseContext");
+        pCryptSetProviderExA = (void*)GetProcAddress(hadvapi32, "CryptSetProviderExA");
+        pCryptCreateHash = (void*)GetProcAddress(hadvapi32, "CryptCreateHash");
+        pCryptDestroyHash = (void*)GetProcAddress(hadvapi32, "CryptDestroyHash");
+        pCryptGenRandom = (void*)GetProcAddress(hadvapi32, "CryptGenRandom");
+        pCryptContextAddRef = (void*)GetProcAddress(hadvapi32, "CryptContextAddRef");
+        pCryptGenKey = (void*)GetProcAddress(hadvapi32, "CryptGenKey");
+        pCryptDestroyKey = (void*)GetProcAddress(hadvapi32, "CryptDestroyKey");
+        pCryptDecrypt = (void*)GetProcAddress(hadvapi32, "CryptDecrypt");
+        pCryptDeriveKey = (void*)GetProcAddress(hadvapi32, "CryptDeriveKey");
+        pCryptDuplicateHash = (void*)GetProcAddress(hadvapi32, "CryptDuplicateHash");
+        pCryptDuplicateKey = (void*)GetProcAddress(hadvapi32, "CryptDuplicateKey");
+        pCryptEncrypt = (void*)GetProcAddress(hadvapi32, "CryptEncrypt");
+        pCryptExportKey = (void*)GetProcAddress(hadvapi32, "CryptExportKey");
+        pCryptGetHashParam = (void*)GetProcAddress(hadvapi32, "CryptGetHashParam");
+        pCryptGetKeyParam = (void*)GetProcAddress(hadvapi32, "CryptGetKeyParam");
+        pCryptGetProvParam = (void*)GetProcAddress(hadvapi32, "CryptGetProvParam");
+        pCryptGetUserKey = (void*)GetProcAddress(hadvapi32, "CryptGetUserKey");
+        pCryptHashData = (void*)GetProcAddress(hadvapi32, "CryptHashData");
+        pCryptHashSessionKey = (void*)GetProcAddress(hadvapi32, "CryptHashSessionKey");
+        pCryptImportKey = (void*)GetProcAddress(hadvapi32, "CryptImportKey");
+        pCryptSignHashW = (void*)GetProcAddress(hadvapi32, "CryptSignHashW");
+        pCryptSetHashParam = (void*)GetProcAddress(hadvapi32, "CryptSetHashParam");
+        pCryptSetKeyParam = (void*)GetProcAddress(hadvapi32, "CryptSetKeyParam");
+        pCryptSetProvParam = (void*)GetProcAddress(hadvapi32, "CryptSetProvParam");
+        pCryptVerifySignatureW = (void*)GetProcAddress(hadvapi32, "CryptVerifySignatureW");
     }
 }
-
 
 static void init_environment(void)
 {
@@ -161,15 +204,18 @@ static void test_incorrect_api_usage(void)
 {
     BOOL result;
     HCRYPTPROV hProv, hProv2;
-    HCRYPTHASH hHash;
+    HCRYPTHASH hHash, hHash2;
+    HCRYPTKEY hKey, hKey2;
+    BYTE temp;
+    DWORD dwLen, dwTemp;
 
-    /* This is to document a crash in wine due to incorrect api usage in the 
+    /* This is to document incorrect api usage in the 
      * "Uru - Ages beyond Myst Demo" installer as reported by Paul Vriens.
      *
      * The installer destroys a hash object after having released the context 
      * with which the hash was created. This is not allowed according to MSDN, 
      * since CryptReleaseContext destroys all hash and key objects belonging to 
-     * the respective context. However, while wine crashes, Windows is more 
+     * the respective context. However, while wine used to crash, Windows is more 
      * robust here and returns an ERROR_INVALID_PARAMETER code.
      */
     
@@ -182,6 +228,21 @@ static void test_incorrect_api_usage(void)
     ok (result, "%ld\n", GetLastError());
     if (!result) return;
 
+    result = pCryptGenKey(hProv, CALG_RC4, 0, &hKey);
+    ok (result, "%ld\n", GetLastError());
+    if (!result) return;
+
+    result = pCryptGenKey(hProv, CALG_RC4, 0, &hKey2);
+    ok (result, "%ld\n", GetLastError());
+    if (!result) return;
+
+    result = pCryptDestroyKey(hKey2);
+    ok (result, "%ld\n", GetLastError());
+
+    dwTemp = CRYPT_MODE_ECB;    
+    result = pCryptSetKeyParam(hKey2, KP_MODE, (BYTE*)&dwTemp, sizeof(DWORD));
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+    
     result = pCryptAcquireContextA(&hProv2, szBadKeySet, NULL, PROV_RSA_FULL, 
                                    CRYPT_DELETEKEYSET);
     ok (result, "%ld\n", GetLastError());
@@ -191,15 +252,87 @@ static void test_incorrect_api_usage(void)
     ok (result, "%ld\n", GetLastError());
     if (!result) return;
 
-    /* We have to deactivate the next call for now, since it will crash wine. 
-     */
-#if 0
-    todo_wine {
-        result = pCryptDestroyHash(hHash);
-        ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", 
-            GetLastError());
-    }
-#endif
+    result = pCryptReleaseContext(hProv, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptGenRandom(hProv, 1, &temp);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptContextAddRef(hProv, NULL, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptDecrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, &temp, &dwLen);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptEncrypt(hKey, (HCRYPTHASH)NULL, TRUE, 0, &temp, &dwLen, 1);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptDeriveKey(hProv, CALG_RC4, hHash, 0, &hKey2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptDuplicateHash(hHash, NULL, 0, &hHash2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptDuplicateKey(hKey, NULL, 0, &hKey2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptExportKey(hKey, (HCRYPTPROV)NULL, 0, 0, &temp, &dwLen);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptGenKey(hProv, CALG_RC4, 0, &hKey2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptGetHashParam(hHash, 0, &temp, &dwLen, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptGetKeyParam(hKey, 0, &temp, &dwLen, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptGetProvParam(hProv, 0, &temp, &dwLen, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+    
+    result = pCryptGetUserKey(hProv, 0, &hKey2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptHashData(hHash, &temp, 1, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptHashSessionKey(hHash, hKey, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptImportKey(hProv, &temp, 1, (HCRYPTKEY)NULL, 0, &hKey2);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    dwLen = 1;
+    result = pCryptSignHashW(hHash, 0, NULL, 0, &temp, &dwLen);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptSetKeyParam(hKey, 0, &temp, 1);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptSetHashParam(hHash, 0, &temp, 1);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptSetProvParam(hProv, 0, &temp, 1);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptVerifySignatureW(hHash, &temp, 1, hKey, NULL, 0);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+
+    result = pCryptDestroyHash(hHash);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+    
+    result = pCryptDestroyKey(hKey);
+    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 }
 
 static BOOL FindProvRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszProvName, 
