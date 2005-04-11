@@ -42,20 +42,17 @@ static const WCHAR machineW[] = { 'd','u','m','m','y',0 };
  */
 
 /* Two common places to find the standard color space profile */
-static const char profile1[] =
-"c:\\windows\\system\\color\\srgb color space profile.icm";
-static const char profile2[] =
-"c:\\windows\\system32\\spool\\drivers\\color\\srgb color space profile.icm";
+static const char profilefile[] =
+"\\color\\srgb color space profile.icm";
+static const char profilesubdir[] =
+"\\system32\\spool\\drivers";
 
-static const WCHAR profile1W[] =
-{ 'c',':','\\','w','i','n','d','o','w','s','\\', 's','y','s','t','e','m',
-  '\\','c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
+static const WCHAR profilefileW[] =
+{ '\\','c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
   's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
-static const WCHAR profile2W[] =
-{ 'c',':','\\','w','i','n','d','o','w','s','\\', 's','y','s','t','e','m','3','2',
-  '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',
-  '\\','c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
-  's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
+static const WCHAR profilesubdirW[] =
+{ '\\', 's','y','s','t','e','m','3','2','\\','s','p','o','o','l',
+  '\\','d','r','i','v','e','r','s',0 };
 
 static const unsigned char rgbheader[] =
 { 0x48, 0x0c, 0x00, 0x00, 0x6f, 0x6e, 0x69, 0x4c, 0x00, 0x00, 0x10, 0x02,
@@ -160,7 +157,6 @@ static void test_GetColorDirectoryW()
 
     ret = GetColorDirectoryW( NULL, buffer, &size );
     ok( ret && size > 0, "GetColorDirectoryW() failed (%ld)\n", GetLastError() );
-    ret = GetColorDirectoryW( NULL, buffer, &size );
 }
 
 static void test_GetColorProfileElement()
@@ -944,24 +940,36 @@ START_TEST(profile)
     UINT len;
     HANDLE handle;
     char path[MAX_PATH], file[MAX_PATH];
+    char profile1[MAX_PATH], profile2[MAX_PATH];
+    WCHAR profile1W[MAX_PATH], profile2W[MAX_PATH];
     WCHAR fileW[MAX_PATH];
 
     /* See if we can find the standard color profile */
+    GetSystemDirectoryA( profile1, sizeof(profile1) );
+    GetSystemDirectoryW( profile1W, sizeof(profile1W) / sizeof(WCHAR) );
+    strcat( profile1, profilefile );
+    lstrcatW( profile1W, profilefileW );
     handle = CreateFileA( profile1, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        standardprofile = (LPSTR)&profile1;
-        standardprofileW = (LPWSTR)&profile1W;
+        standardprofile = profile1;
+        standardprofileW = profile1W;
         CloseHandle( handle );
     }
 
+    GetWindowsDirectoryA( profile2, sizeof(profile2) );
+    GetWindowsDirectoryW( profile2W, sizeof(profile2W) / sizeof(WCHAR) );
+    strcat( profile2, profilesubdir );
+    lstrcatW( profile2W, profilesubdirW );
+    strcat( profile2, profilefile );
+    lstrcatW( profile2W, profilefileW );
     handle = CreateFileA( profile2, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        standardprofile = (LPSTR)&profile2;
-        standardprofileW = (LPWSTR)&profile2W;
+        standardprofile = profile2;
+        standardprofileW = profile2W;
         CloseHandle( handle );
     }
 

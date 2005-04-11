@@ -44,11 +44,10 @@ static void MSCMS_basename( LPCWSTR path, LPWSTR name )
     lstrcpyW( name, &path[i] );
 }
 
-static const WCHAR rgbprofile[] =
-{ 'c',':','\\','w','i','n','d','o','w','s','\\', 's','y','s','t','e','m','3','2',
-  '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',
-  '\\','c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
-  's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
+/* FIXME: Get this directory from the registry? */
+static const WCHAR colorsubdir[] = { '\\','s','y','s','t','e','m','3','2',
+    '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s',
+    '\\','c','o','l','o','r',0 };
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
@@ -109,16 +108,15 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
  */
 BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 {
-    /* FIXME: Get this directory from the registry? */
-    static const WCHAR colordir[] =
-    { 'c',':','\\','w','i','n','d','o','w','s','\\', 's','y','s','t','e','m','3','2',
-      '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r',0 };
-
+    WCHAR colordir[MAX_PATH];
     DWORD len;
 
     TRACE( "( %p, %p )\n", buffer, size );
 
     if (machine || !size) return FALSE;
+
+    GetWindowsDirectoryW( colordir, sizeof(colordir) / sizeof(WCHAR) );
+    lstrcatW( colordir, colorsubdir );
 
     len = lstrlenW( colordir ) * sizeof(WCHAR);
 
@@ -401,6 +399,9 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
  */
 BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profile, PDWORD size )
 {
+    static const WCHAR rgbprofilefile[] = { '\\','s','r','g','b',' ','c','o','l','o','r',' ',
+      's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
+    WCHAR rgbprofile[MAX_PATH];
     DWORD len;
 
     TRACE( "( 0x%08lx, %p, %p )\n", id, profile, size );
@@ -410,7 +411,11 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
     switch (id)
     {
         case 0x52474220: /* 'RGB ' */
-            len = sizeof( rgbprofile );
+            GetWindowsDirectoryW( rgbprofile, sizeof( rgbprofile ) / sizeof( WCHAR ) );
+            lstrcatW( rgbprofile, colorsubdir );
+            lstrcatW( rgbprofile, rgbprofilefile );
+
+            len = lstrlenW( rgbprofile ) * sizeof( WCHAR );
 
             if (*size < len || !profile)
             {
