@@ -528,9 +528,15 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
     DD_STRUCT_INIT(&sdesc);
 
     sdesc.dwSize = sizeof(sdesc);
-    if (src) IDirectDrawSurface7_Lock(src, NULL, &sdesc, DDLOCK_READONLY, 0);
     ddesc.dwSize = sizeof(ddesc);
-    IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
+
+    if (src == iface) {
+        IDirectDrawSurface7_Lock(iface, NULL, &ddesc, 0, 0);
+        DD_STRUCT_COPY_BYSIZE(&sdesc, &ddesc);
+    } else {
+        if (src) IDirectDrawSurface7_Lock(src, NULL, &sdesc, DDLOCK_READONLY, 0);
+        IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
+    }
 
     if ((sdesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) &&
 	(ddesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)) {
@@ -581,7 +587,8 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	 (xsrc.right > sdesc.dwWidth) || (xsrc.right < 0) ||
 	 (xsrc.right < xsrc.left) || (xsrc.bottom < xsrc.top))) {
         WARN("Application gave us bad source rectangle for Blt.\n");
-	return DDERR_INVALIDRECT;
+	ret = DDERR_INVALIDRECT;
+	goto release;
     }
     /* For the Destination rect, it can be out of bounds on the condition that a clipper
        is set for the given surface.
@@ -593,7 +600,8 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	 (xdst.right > ddesc.dwWidth) || (xdst.right < 0) ||
 	 (xdst.right < xdst.left) || (xdst.bottom < xdst.top))) {
         WARN("Application gave us bad destination rectangle for Blt without a clipper set.\n");
-	return DDERR_INVALIDRECT;
+	ret = DDERR_INVALIDRECT;
+	goto release;
     }
     
     /* Now handle negative values in the rectangles. Warning: only supported for now
@@ -958,8 +966,8 @@ error:
 
 release:
     IDirectDrawSurface7_Unlock(iface,NULL);
-    if (src) IDirectDrawSurface7_Unlock(src,NULL);
-    return DD_OK;
+    if (src && src != iface) IDirectDrawSurface7_Unlock(src,NULL);
+    return ret;
 }
 
 /* BltBatch: generic, unimplemented */
@@ -975,7 +983,7 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
     HRESULT		ret = DD_OK;
     LPBYTE		sbuf, dbuf;
     RECT		rsrc2;
-    RECT                lock_src, lock_dst;
+    RECT                lock_src, lock_dst, lock_union;
 
     if (TRACE_ON(ddraw)) {
 	TRACE("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
@@ -1043,11 +1051,28 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
     lock_dst.right = dstx + w;
     lock_dst.bottom = dsty + h;
     
+    bpp = GET_BPP(This->surface_desc);
+
     /* We need to lock the surfaces, or we won't get refreshes when done. */
-    sdesc.dwSize = sizeof(sdesc);
-    IDirectDrawSurface7_Lock(src, &lock_src, &sdesc, DDLOCK_READONLY, 0);
-    ddesc.dwSize = sizeof(ddesc);
-    IDirectDrawSurface7_Lock(iface, &lock_dst, &ddesc, DDLOCK_WRITEONLY, 0);
+    if (src == iface) {
+        int pitch;
+
+        UnionRect(&lock_union, &lock_src, &lock_dst);
+
+        /* Lock the union of the two rectangles */
+        IDirectDrawSurface7_Lock(iface, &lock_union, &ddesc, 0, 0);
+
+        pitch = This->surface_desc.u1.lPitch;
+
+        /* Since sdesc was originally copied from this surface's description, we can just reuse it */
+        sdesc.lpSurface = (BYTE *)This->surface_desc.lpSurface + lock_src.top * pitch + lock_src.left * bpp; 
+        ddesc.lpSurface = (BYTE *)This->surface_desc.lpSurface + lock_dst.top * pitch + lock_dst.left * bpp; 
+    } else {
+        sdesc.dwSize = sizeof(sdesc);
+        IDirectDrawSurface7_Lock(src, &lock_src, &sdesc, DDLOCK_READONLY, 0);
+        ddesc.dwSize = sizeof(ddesc);
+        IDirectDrawSurface7_Lock(iface, &lock_dst, &ddesc, DDLOCK_WRITEONLY, 0);
+    }
 
     /* Handle first the FOURCC surfaces... */
     if ((sdesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC) && (ddesc.u4.ddpfPixelFormat.dwFlags & DDPF_FOURCC)) {
@@ -1069,7 +1094,6 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	goto error;
     }
     
-    bpp = GET_BPP(This->surface_desc);
     sbuf = (BYTE *) sdesc.lpSurface;
     dbuf = (BYTE *) ddesc.lpSurface;
     
@@ -1141,8 +1165,13 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
     }
     
 error:
-    IDirectDrawSurface7_Unlock(iface, &lock_dst);
-    IDirectDrawSurface7_Unlock(src, &lock_src);
+    if (src == iface) {
+        IDirectDrawSurface7_Unlock(iface, &lock_union);
+    } else {
+        IDirectDrawSurface7_Unlock(iface, &lock_dst);
+        IDirectDrawSurface7_Unlock(src, &lock_src);
+    }
+
     return ret;
 }
 
