@@ -228,10 +228,13 @@ static BOOL MFDRV_DeleteDC( PHYSDEV dev )
  *  Create a new DC and associate it with a metafile. Pass a filename
  *  to create a disk-based metafile, NULL to create a memory metafile.
  *
+ * PARAMS
+ *  filename [I] Filename of disk metafile
+ *
  * RETURNS
  *  A handle to the metafile DC if successful, NULL on failure.
  */
-HDC WINAPI CreateMetaFileW( LPCWSTR filename ) /* [in] Filename of disk metafile */
+HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 {
     HDC ret;
     DC *dc;
@@ -338,10 +341,11 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
 /******************************************************************
  *	     CloseMetaFile     (GDI.126)
+ *
+ * PARAMS
+ *  hdc [I] Metafile DC to close 
  */
-HMETAFILE16 WINAPI CloseMetaFile16(
-				   HDC16 hdc /* [in] Metafile DC to close */
-)
+HMETAFILE16 WINAPI CloseMetaFile16(HDC16 hdc)
 {
     HMETAFILE16 hmf;
     METAFILEDRV_PDEVICE *physDev;
@@ -364,12 +368,13 @@ HMETAFILE16 WINAPI CloseMetaFile16(
  *  Stop recording graphics operations in metafile associated with
  *  hdc and retrieve metafile.
  *
+ * PARAMS
+ *  hdc [I] Metafile DC to close 
+ *
  * RETURNS
  *  Handle of newly created metafile on success, NULL on failure.
  */
-HMETAFILE WINAPI CloseMetaFile(
-				   HDC hdc /* [in] Metafile DC to close */
-)
+HMETAFILE WINAPI CloseMetaFile(HDC hdc)
 {
     HMETAFILE hmf;
     METAFILEDRV_PDEVICE *physDev;

@@ -2,7 +2,9 @@
  * Metafile functions
  *
  * Copyright  David W. Metcalfe, 1994
- *            Niels de Carpentier, Albrecht Kleine, Huw Davies 1996
+ * Copyright  Niels de Carpentier, 1996
+ * Copyright  Albrecht Kleine, 1996
+ * Copyright  Huw Davies, 1996
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,9 +19,9 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-
-/*
+ *
+ * NOTES
+ *
  * These functions are primarily involved with metafile playback or anything
  * that touches a HMETAFILE.
  * For recording of metafiles look in graphics/metafiledrv/
@@ -113,7 +115,7 @@ HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 					    (HGDIOBJ *)&hmf, NULL );
     if (metaObj)
     {
-    metaObj->mh = mh;
+        metaObj->mh = mh;
         GDI_ReleaseObj( hmf );
     }
     return hmf;
@@ -437,17 +439,17 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
  *  a disk file, if a filename is given, or to a new memory based
  *  metafile, if lpFileName is NULL.
  *
- * RETURNS
+ * PARAMS
+ *  hSrcMetaFile [I] handle of metafile to copy
+ *  lpFilename   [I] filename if copying to a file
  *
+ * RETURNS
  *  Handle to metafile copy on success, NULL on failure.
  *
  * BUGS
- *
  *  Copying to disk returns NULL even if successful.
  */
-HMETAFILE WINAPI CopyMetaFileW(
-		   HMETAFILE hSrcMetaFile, /* [in] handle of metafile to copy */
-		   LPCWSTR lpFilename      /* [in] filename if copying to a file */)
+HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile, LPCWSTR lpFilename )
 {
     METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
     METAHEADER *mh2 = NULL;
@@ -483,8 +485,7 @@ HMETAFILE WINAPI CopyMetaFileW(
 /******************************************************************
  *         CopyMetaFileA   (GDI32.@)
  */
-HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile,
-                                    LPCSTR lpFilename )
+HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile, LPCSTR lpFilename )
 {
     UNICODE_STRING lpFilenameW;
     HMETAFILE ret = 0;
@@ -614,11 +615,12 @@ BOOL16 WINAPI PlayMetaFile16( HDC16 hdc, HMETAFILE16 hmf )
  *
  *  Renders the metafile specified by hmf in the DC specified by
  *  hdc. Returns FALSE on failure, TRUE on success.
+ *
+ * PARAMS
+ *  hdc [I] handle of DC to render in
+ *  hmf [I] handle of metafile to render
  */
-BOOL WINAPI PlayMetaFile(
-			     HDC hdc,      /* [in] handle of DC to render in */
-			     HMETAFILE hmf /* [in] handle of metafile to render */
-)
+BOOL WINAPI PlayMetaFile( HDC hdc, HMETAFILE hmf )
 {
     METAHEADER *mh = MF_GetMetaHeader( hmf );
     return MF_PlayMetaFile( hdc, mh );
@@ -727,15 +729,8 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
  *
  * RETURNS
  *  TRUE on success, FALSE on failure.
- *
- * HISTORY
- *   Niels de carpentier, april 1996
  */
-BOOL WINAPI EnumMetaFile(
-			     HDC hdc,
-			     HMETAFILE hmf,
-			     MFENUMPROC lpEnumFunc,
-			     LPARAM lpData)
+BOOL WINAPI EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc, LPARAM lpData)
 {
     METAHEADER *mhTemp = NULL, *mh = MF_GetMetaHeader(hmf);
     METARECORD *mr;
@@ -1309,11 +1304,11 @@ break;
  *
  * Trade in a metafile object handle for a handle to the metafile memory.
  *
+ * PARAMS
+ *  hmf [I] metafile handle
  */
 
-HGLOBAL16 WINAPI GetMetaFileBits16(
-				 HMETAFILE16 hmf /* [in] metafile handle */
-				 )
+HGLOBAL16 WINAPI GetMetaFileBits16( HMETAFILE16 hmf )
 {
     TRACE("hMem out: %04x\n", hmf);
     return hmf;
@@ -1326,11 +1321,11 @@ HGLOBAL16 WINAPI GetMetaFileBits16(
  * The memory region should hold a proper metafile, otherwise
  * problems will occur when it is used. Validity of the memory is not
  * checked. The function is essentially just the identity function.
+ *
+ * PARAMS
+ *  hMem [I] handle to a memory region holding a metafile
  */
-HMETAFILE16 WINAPI SetMetaFileBits16(
-				   HGLOBAL16 hMem
-			/* [in] handle to a memory region holding a metafile */
-)
+HMETAFILE16 WINAPI SetMetaFileBits16( HGLOBAL16 hMem )
 {
     TRACE("hmf out: %04x\n", hMem);
 
@@ -1359,12 +1354,13 @@ HMETAFILE16 WINAPI SetMetaFileBitsBetter16( HMETAFILE16 hMeta )
  *         SetMetaFileBitsEx    (GDI32.@)
  *
  *  Create a metafile from raw data. No checking of the data is performed.
- *  Use _GetMetaFileBitsEx_ to get raw data from a metafile.
+ *  Use GetMetaFileBitsEx() to get raw data from a metafile.
+ *
+ * PARAMS
+ *  size   [I] size of metafile, in bytes
+ *  lpData [I] pointer to metafile data
  */
-HMETAFILE WINAPI SetMetaFileBitsEx(
-     UINT size,         /* [in] size of metafile, in bytes */
-     const BYTE *lpData /* [in] pointer to metafile data */
-    )
+HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
 {
     METAHEADER *mh = HeapAlloc( GetProcessHeap(), 0, size );
     if (!mh) return 0;
@@ -1380,11 +1376,13 @@ HMETAFILE WINAPI SetMetaFileBitsEx(
  *  Copies the data from metafile _hmf_ into the buffer _buf_.
  *  If _buf_ is zero, returns size of buffer required. Otherwise,
  *  returns number of bytes copied.
+ *
+ * PARAMS
+ *  hmf   [I] metafile
+ *  nSize [I] size of buf
+ *  buf   [O] buffer to receive raw metafile data
  */
-UINT WINAPI GetMetaFileBitsEx(
-     HMETAFILE hmf, /* [in] metafile */
-     UINT nSize,    /* [in] size of buf */
-     LPVOID buf     /* [out] buffer to receive raw metafile data */)
+UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 {
     METAHEADER *mh = MF_GetMetaHeader(hmf);
     UINT mfSize;
@@ -1437,9 +1435,7 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
  *         MF_Play_MetaCreateRegion
  *
  *  Handles META_CREATEREGION for PlayMetaFileRecord().
- */
-
-/*
+ *
  *	The layout of the record looks something like this:
  *
  *	 rdParm	meaning
@@ -1549,8 +1545,7 @@ static BOOL MF_Play_MetaExtTextOut(HDC hdc, METARECORD *mr)
         }
 	else {
 	    TRACE("%s  len: %ld\n",  sot, mr->rdSize);
-	    WARN(
-	     "Please report: ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
+	    WARN("Please report: ExtTextOut len=%ld slen=%d rdSize=%ld opt=%04x\n",
 		 len, s1, mr->rdSize, mr->rdParm[3]);
 	    dxx = NULL; /* should't happen -- but if, we continue with NULL */
 	}
@@ -1560,7 +1555,7 @@ static BOOL MF_Play_MetaExtTextOut(HDC hdc, METARECORD *mr)
                  mr->rdParm[3],              /* options */
                  &rect,                      /* rectangle */
                  sot,                        /* string */
-                 s1, dx);                   /* length, dx array */
+                 s1, dx);                    /* length, dx array */
     if (dx)
     {
         TRACE("%s  len: %ld  dx0: %d\n", sot, mr->rdSize, dx[0]);
