@@ -184,6 +184,7 @@ WINDOWS_INCLUDES = \
 	oledlg.h \
 	pktdef.h \
 	poppack.h \
+	powrprof.h \
 	prsht.h \
 	psapi.h \
 	pshpack1.h \
