@@ -1641,31 +1641,32 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpNextSize, LPDWORD lpMessageCount,
                                LPDWORD lpReadTimeout )
 {
-    BOOL r;
+    FILE_MAILSLOT_QUERY_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
 
-    TRACE("%p %p %p %p %p\n",hMailslot,
-          lpMaxMessageSize,lpNextSize,lpMessageCount,lpReadTimeout);
+    TRACE("%p %p %p %p %p\n",hMailslot, lpMaxMessageSize,
+          lpNextSize, lpMessageCount, lpReadTimeout);
 
-    SERVER_START_REQ( set_mailslot_info )
+    status = NtQueryInformationFile( hMailslot, &iosb, &info, sizeof info,
+                                     FileMailslotQueryInformation );
+
+    if( status != STATUS_SUCCESS )
     {
-        req->handle = hMailslot;
-        req->flags = 0;
-        r = !wine_server_call_err( req );
-        if( r )
-        {
-            if( lpMaxMessageSize )
-                *lpMaxMessageSize = reply->max_msgsize;
-            if( lpNextSize )
-                *lpNextSize = reply->next_msgsize;
-            if( lpMessageCount )
-                *lpMessageCount = reply->msg_count;
-            if( lpReadTimeout )
-                *lpReadTimeout = reply->read_timeout;
-        }
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
 
-    return r;
+    if( lpMaxMessageSize )
+        *lpMaxMessageSize = info.MaximumMessageSize;
+    if( lpNextSize )
+        *lpNextSize = info.NextMessageSize;
+    if( lpMessageCount )
+        *lpMessageCount = info.MessagesAvailable;
+    if( lpReadTimeout )
+        *lpReadTimeout = info.ReadTimeout.QuadPart / -10000;
+
+    return TRUE;
 }
 
 
@@ -1684,20 +1685,21 @@ BOOL WINAPI GetMailslotInfo( HANDLE hMailslot, LPDWORD lpMaxMessageSize,
  */
 BOOL WINAPI SetMailslotInfo( HANDLE hMailslot, DWORD dwReadTimeout)
 {
-    BOOL r;
+    FILE_MAILSLOT_SET_INFORMATION info;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
 
     TRACE("%p %ld\n", hMailslot, dwReadTimeout);
 
-    SERVER_START_REQ( set_mailslot_info )
+    info.ReadTimeout.QuadPart = dwReadTimeout * -10000;
+    status = NtSetInformationFile( hMailslot, &iosb, &info, sizeof info,
+                                   FileMailslotSetInformation );
+    if( status != STATUS_SUCCESS )
     {
-        req->handle = hMailslot;
-        req->flags = MAILSLOT_SET_READ_TIMEOUT;
-        req->read_timeout = dwReadTimeout;
-        r = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-
-    return r;
+    return TRUE;
 }
 
 

@@ -941,7 +941,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         0,                                             /* FilePipeInformation */
         0,                                             /* FilePipeLocalInformation */
         0,                                             /* FilePipeRemoteInformation */
-        0,                                             /* FileMailslotQueryInformation */
+        sizeof(FILE_MAILSLOT_QUERY_INFORMATION),       /* FileMailslotQueryInformation */
         0,                                             /* FileMailslotSetInformation */
         0,                                             /* FileCompressionInformation */
         0,                                             /* FileObjectIdInformation */
@@ -1093,6 +1093,27 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
             }
         }
         break;
+    case FileMailslotQueryInformation:
+        {
+            FILE_MAILSLOT_QUERY_INFORMATION *info = ptr;
+
+            SERVER_START_REQ( set_mailslot_info )
+            {
+                req->handle = hFile;
+                req->flags = 0;
+                io->u.Status = wine_server_call( req );
+                if( io->u.Status == STATUS_SUCCESS )
+                {
+                    info->MaximumMessageSize = reply->max_msgsize;
+                    info->MailslotQuota = 0;
+                    info->NextMessageSize = reply->next_msgsize;
+                    info->MessagesAvailable = reply->msg_count;
+                    info->ReadTimeout.QuadPart = reply->read_timeout * -10000;
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;
@@ -1227,6 +1248,21 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             io->u.Status = FILE_GetNtStatus();
         }
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
+    case FileMailslotSetInformation:
+        {
+            FILE_MAILSLOT_SET_INFORMATION *info = ptr;
+
+            SERVER_START_REQ( set_mailslot_info )
+            {
+                req->handle = handle;
+                req->flags = MAILSLOT_SET_READ_TIMEOUT;
+                req->read_timeout = info->ReadTimeout.QuadPart / -10000;
+                io->u.Status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
         break;
 
     default:
