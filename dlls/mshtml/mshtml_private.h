@@ -16,4 +16,21 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+typedef struct {
+    IHTMLDocument2Vtbl  *lpHTMLDocument2Vtbl;
+    IPersistMonikerVtbl *lpPersistMonikerVtbl;
+    IPersistFileVtbl    *lpPersistFileVtbl;
+    IMonikerPropVtbl    *lpMonikerPropVtbl;
+
+    ULONG ref;
+} HTMLDocument;
+
+#define HTMLDOC(x)       ((IHTMLDocument2*)     &(x)->lpHTMLDocument2Vtbl)
+#define PERSIST(x)       ((IPersist*)           &(x)->lpPersistFileVtbl)
+#define PERSISTMON(x)    ((IPersistMoniker*)    &(x)->lpPersistMonikerVtbl)
+#define PERSISTFILE(x)   ((IPersistFile*)       &(x)->lpPersistFileVtbl)
+#define MONPROP(x)       ((IMonikerProp*)       &(x)->lpMonikerPropVtbl)
+
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
+
+void HTMLDocument_Persist_Init(HTMLDocument*);

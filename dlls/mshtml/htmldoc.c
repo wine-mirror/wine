@@ -37,32 +37,37 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-typedef struct {
-    IHTMLDocument2Vtbl *lpHTMLDocument2Vtbl;
-    ULONG ref;
-} HTMLDocument;
-
-#define HTMLDOC(x)  ((IHTMLDocument2*)&(x)->lpHTMLDocument2Vtbl)
-
-
 static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID riid, void **ppvObject)
 {
     HTMLDocument *This = (HTMLDocument*)iface;
 
     *ppvObject = NULL;
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown, %s)\n", This, debugstr_guid(riid));
+        TRACE("(%p)->(IID_IUnknown, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch, %s)\n", This, debugstr_guid(riid));
+        TRACE("(%p)->(IID_IDispatch, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&IID_IHTMLDocument, riid)) {
-        TRACE("(%p)->(IID_IHTMLDocument, %s)\n", This, debugstr_guid(riid));
+        TRACE("(%p)->(IID_IHTMLDocument, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&IID_IHTMLDocument2, riid)) {
-        TRACE("(%p)->(IID_IDocument2, %s)\n", This, debugstr_guid(riid));
+        TRACE("(%p)->(IID_IDocument2, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
+    }else if(IsEqualGUID(&IID_IPersist, riid)) {
+        TRACE("(%p)->(IID_IPersist, %p)\n", This, ppvObject);
+        *ppvObject = PERSIST(This);
+    }else if(IsEqualGUID(&IID_IPersistMoniker, riid)) {
+        TRACE("(%p)->(IID_IPersistMoniker, %p)\n", This, ppvObject);
+        *ppvObject = PERSISTMON(This);
+    }else if(IsEqualGUID(&IID_IPersistFile, riid)) {
+        TRACE("(%p)->(IID_IPersistFile, %p)\n", This, ppvObject);
+        *ppvObject = PERSISTFILE(This);
+    }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
+        TRACE("(%p)->(IID_IMonikerProp, %p)\n", This, ppvObject);
+        *ppvObject = MONPROP(This);
     }
+
     if(*ppvObject) {
         IHTMLDocument2_AddRef(iface);
         return S_OK;
@@ -924,6 +929,8 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres))
         HeapFree(GetProcessHeap(), 0, ret);
+
+    HTMLDocument_Persist_Init(ret);
 
     return hres;
 }
