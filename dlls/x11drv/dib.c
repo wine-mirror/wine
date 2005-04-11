@@ -1368,11 +1368,13 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
 	if (length) {	/* encoded */
 	    c = *bits++;
 	    while (length--) {
-                if (x >= width) break;
-                XPutPixel(bmpImage, x++, y, colors[c >> 4]);
+                if (x >= (left + width)) break;
+                if( x >= left) XPutPixel(bmpImage, x, y, colors[c >> 4]);
+                x++;
                 if (!length--) break;
-                if (x >= width) break;
-                XPutPixel(bmpImage, x++, y, colors[c & 0xf]);
+                if (x >= (left + width)) break;
+                if( x >= left) XPutPixel(bmpImage, x, y, colors[c & 0xf]);
+                x++;
 	    }
 	} else {
 	    length = *bits++;
@@ -1394,9 +1396,13 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
 	    default: /* absolute */
 	        while (length--) {
 		    c = *bits++;
-                    if (x < width) XPutPixel(bmpImage, x++, y, colors[c >> 4]);
+                    if (x >= left && x < (left + width))
+                        XPutPixel(bmpImage, x, y, colors[c >> 4]);
+                    x++;
                     if (!length--) break;
-                    if (x < width) XPutPixel(bmpImage, x++, y, colors[c & 0xf]);
+                    if (x >= left && x < (left + width))
+                        XPutPixel(bmpImage, x, y, colors[c & 0xf]);
+                    x++;
 		}
 		if ((bits - begin) & 1)
 		    bits++;
@@ -1828,7 +1834,10 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
              * [Run-Length] Encoded mode
              */
             int color = colors[*pIn++];
-            while (length-- && x < dstwidth) XPutPixel(bmpImage, x++, y, color);
+            while (length-- && x < (left + dstwidth)) {
+                if( x >= left) XPutPixel(bmpImage, x, y, color);
+                x++;
+            }
         }
         else
         {
@@ -1861,12 +1870,13 @@ static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
                 while (length--)
                 {
                     int color = colors[*pIn++];
-                    if (x >= dstwidth)
+                    if (x >= (left + dstwidth))
                     {
                         pIn += length;
                         break;
                     }
-                    XPutPixel(bmpImage, x++, y, color);
+                    if( x >= left) XPutPixel(bmpImage, x, y, color);
+                    x++;
                 }
                 /*
                  * If you think for a moment you'll realise that the
