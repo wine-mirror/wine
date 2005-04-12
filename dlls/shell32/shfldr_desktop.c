@@ -543,11 +543,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
                 LPCITEMIDLIST pidl, DWORD dwFlags, LPSTRRET strRet)
 {
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
-    CHAR szPath[MAX_PATH];
-    GUID const *clsid;
     HRESULT hr = S_OK;
-
-    *szPath = '\0';
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
@@ -555,19 +551,38 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
     if (!strRet)
         return E_INVALIDARG;
 
+    strRet->uType = STRRET_CSTR;
     if (_ILIsDesktop (pidl))
     {
         if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
             (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING))
         {
+            BOOL defCharUsed;
+
             WideCharToMultiByte( CP_ACP, 0, This->sPathTarget, -1,
-                                 szPath, MAX_PATH, NULL, NULL );
+                                 strRet->u.cStr, MAX_PATH, NULL, &defCharUsed );
+            if (defCharUsed)
+            {
+                strRet->u.pOleStr = SHAlloc((lstrlenW(This->sPathTarget)+1) *
+                 sizeof(WCHAR));
+                if (!strRet->u.pOleStr)
+                    hr = E_OUTOFMEMORY;
+                else
+                {
+                    strcpyW(strRet->u.pOleStr, This->sPathTarget);
+                    strRet->uType = STRRET_WSTR;
+                }
+            }
         }
         else
-            HCR_GetClassNameA(&CLSID_ShellDesktop, szPath, MAX_PATH);
+        {
+            HCR_GetClassNameA(&CLSID_ShellDesktop, strRet->u.cStr, MAX_PATH);
+        }
     }
     else if (_ILIsPidlSimple (pidl))
     {
+        GUID const *clsid;
+
         if ((clsid = _ILGetGUIDPointer (pidl)))
         {
             if (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING)
@@ -583,7 +598,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
                  */
                 if (IsEqualIID (clsid, &CLSID_MyComputer))
                 {
-                    bWantsForParsing = 1;
+                    bWantsForParsing = TRUE;
                 }
                 else
                 {
@@ -617,43 +632,41 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
                      * Only the folder itself can know it
                      */
                     hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags,
-                                                        szPath, MAX_PATH);
+                                                        strRet->u.cStr,
+                                                        MAX_PATH);
                 }
                 else
                 {
                     /* parsing name like ::{...} */
-                    lstrcpyA (szPath, "::");
-                    SHELL32_GUIDToStringA (clsid, &szPath[2]);
+                    lstrcpyA (strRet->u.cStr, "::");
+                    SHELL32_GUIDToStringA (clsid, &strRet->u.cStr[2]);
                 }
             }
             else
             {
                 /* user friendly name */
-                HCR_GetClassNameA (clsid, szPath, MAX_PATH);
+                HCR_GetClassNameA (clsid, strRet->u.cStr, MAX_PATH);
             }
         }
         else
         {
             /* file system folder */
-            _ILSimpleGetText (pidl, szPath, MAX_PATH);
+            _ILSimpleGetText (pidl, strRet->u.cStr, MAX_PATH);
 
             if (!_ILIsFolder(pidl))
-            SHELL_FS_ProcessDisplayFilename(szPath, dwFlags);
+                SHELL_FS_ProcessDisplayFilename(strRet->u.cStr, dwFlags);
         }
     }
     else
     {
         /* a complex pidl, let the subfolder do the work */
-        hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags, szPath, MAX_PATH);
+        hr = SHELL32_GetDisplayNameOfChild (iface, pidl, dwFlags,
+         strRet->u.cStr, MAX_PATH);
     }
 
-    if (SUCCEEDED (hr))
-    {
-        strRet->uType = STRRET_CSTR;
-        lstrcpynA (strRet->u.cStr, szPath, MAX_PATH);
-    }
-
-    TRACE ("-- (%p)->(%s,0x%08lx)\n", This, szPath, hr);
+    TRACE ("-- (%p)->(%s,0x%08lx)\n", This,
+     strRet->uType == STRRET_CSTR ? strRet->u.cStr :
+     debugstr_w(strRet->u.pOleStr), hr);
     return hr;
 }
 
@@ -741,7 +754,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
 {
     IGenericSFImpl *This = (IGenericSFImpl *)iface;
 
-    HRESULT hr = E_FAIL;
+    HRESULT hr = S_OK;
 
     TRACE ("(%p)->(%p %i %p)\n", This, pidl, iColumn, psd);
 
@@ -759,6 +772,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
     }
 
     /* the data from the pidl */
+    psd->str.uType = STRRET_CSTR;
     switch (iColumn)
     {
     case 0:        /* name */
@@ -778,8 +792,6 @@ static HRESULT WINAPI ISF_Desktop_fnGetDetailsOf (IShellFolder2 * iface,
         _ILGetFileAttributes (pidl, psd->str.u.cStr, MAX_PATH);
         break;
     }
-    hr = S_OK;
-    psd->str.uType = STRRET_CSTR;
 
     return hr;
 }
