@@ -258,7 +258,14 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	  else
 	  {
 	    lstrcpynW(szIconFile, swShell32Name, cchMax);
-	    *piIndex = -IDI_SHELL_MYCOMPUTER;
+            if(IsEqualGUID(riid, &CLSID_MyComputer))
+                *piIndex = -IDI_SHELL_MY_COMPUTER;
+            else if(IsEqualGUID(riid, &CLSID_MyDocuments))
+                *piIndex = -IDI_SHELL_FOLDER;
+            else if(IsEqualGUID(riid, &CLSID_NetworkPlaces))
+                *piIndex = -IDI_SHELL_MY_NETWORK_PLACES;
+            else
+                *piIndex = -IDI_SHELL_FOLDER;
 	  }
 	}
 
