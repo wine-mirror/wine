@@ -431,7 +431,7 @@ BOOL X11DRV_DeleteBitmap( HBITMAP hbitmap )
 
         if (physBitmap)
         {
-            if (physBitmap->dib) X11DRV_DIB_DeleteDIBSection( physBitmap, bmp );
+            if (physBitmap->dib) X11DRV_DIB_DeleteDIBSection( physBitmap );
             wine_tsx11_lock();
             if (physBitmap->pixmap) XFreePixmap( gdi_display, physBitmap->pixmap );
             wine_tsx11_unlock();
@@ -477,6 +477,7 @@ X_PHYSBITMAP *X11DRV_init_phys_bitmap( HBITMAP hbitmap )
         {
             if ((ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) )) != NULL)
             {
+                ret->hbitmap = hbitmap;
                 ret->pixmap = 0;
                 ret->pixmap_depth = bmp->bitmap.bmBitsPixel;
                 ret->dib = NULL;

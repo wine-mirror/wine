@@ -50,7 +50,6 @@ typedef int Status;
 
 #define MAX_PIXELFORMATS 8
 
-struct tagBITMAPOBJ;
 struct tagCURSORICONINFO;
 struct dce;
 
@@ -82,6 +81,7 @@ typedef struct
   /* X physical bitmap */
 typedef struct
 {
+    HBITMAP      hbitmap;
     Pixmap       pixmap;
     int          pixmap_depth;
     struct _X11DRV_DIBSECTION *dib;
@@ -433,13 +433,10 @@ extern int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse,
 extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
 extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
 extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
-extern INT X11DRV_CoerceDIBSection2(HBITMAP bmp,INT,BOOL);
-extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
-extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 
 extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
                                            VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
-extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, struct tagBITMAPOBJ *bmp);
+extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap);
 void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
                                DWORD width, DWORD height);
