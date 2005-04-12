@@ -21,8 +21,12 @@ typedef struct {
     IPersistMonikerVtbl *lpPersistMonikerVtbl;
     IPersistFileVtbl    *lpPersistFileVtbl;
     IMonikerPropVtbl    *lpMonikerPropVtbl;
+    IOleObjectVtbl      *lpOleObjectVtbl;
+    IOleDocumentVtbl    *lpOleDocumentVtbl;
 
     ULONG ref;
+
+    IOleClientSite *client;
 } HTMLDocument;
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)     &(x)->lpHTMLDocument2Vtbl)
@@ -30,7 +34,10 @@ typedef struct {
 #define PERSISTMON(x)    ((IPersistMoniker*)    &(x)->lpPersistMonikerVtbl)
 #define PERSISTFILE(x)   ((IPersistFile*)       &(x)->lpPersistFileVtbl)
 #define MONPROP(x)       ((IMonikerProp*)       &(x)->lpMonikerPropVtbl)
+#define OLEOBJ(x)        ((IOleObject*)         &(x)->lpOleObjectVtbl)
+#define OLEDOC(x)        ((IOleDocument*)       &(x)->lpOleDocumentVtbl)
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
 void HTMLDocument_Persist_Init(HTMLDocument*);
+void HTMLDocument_OleObj_Init(HTMLDocument*);

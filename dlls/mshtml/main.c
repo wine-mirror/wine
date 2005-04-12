@@ -33,6 +33,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "docobj.h"
 
 #include "mshtml.h"
 #include "mshtml_private.h"

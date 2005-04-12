@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "docobj.h"
 
 #include "mshtml.h"
 #include "mshtmdid.h"
@@ -66,6 +67,12 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IMonikerProp, riid)) {
         TRACE("(%p)->(IID_IMonikerProp, %p)\n", This, ppvObject);
         *ppvObject = MONPROP(This);
+    }else if(IsEqualGUID(&IID_IOleObject, riid)) {
+        TRACE("(%p)->(IID_IOleObject, %p)\n", This, ppvObject);
+        *ppvObject = OLEOBJ(This);
+    }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
+        TRACE("(%p)->(IID_IOleDocument, %p)\n", This, ppvObject);
+        *ppvObject = OLEDOC(This);
     }
 
     if(*ppvObject) {
@@ -931,6 +938,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
         HeapFree(GetProcessHeap(), 0, ret);
 
     HTMLDocument_Persist_Init(ret);
+    HTMLDocument_OleObj_Init(ret);
 
     return hres;
 }
