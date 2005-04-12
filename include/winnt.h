@@ -3420,6 +3420,15 @@ typedef enum _SYSTEM_POWER_STATE {
 } SYSTEM_POWER_STATE,
 *PSYSTEM_POWER_STATE;
 
+typedef enum _DEVICE_POWER_STATE {
+    PowerDeviceUnspecified,
+    PowerDeviceD0,
+    PowerDeviceD1,
+    PowerDeviceD2,
+    PowerDeviceD3,
+    PowerDeviceMaximum
+} DEVICE_POWER_STATE, *PDEVICE_POWER_STATE;
+
 typedef enum _POWER_INFORMATION_LEVEL {
         SystemPowerPolicyAc,
         SystemPowerPolicyDc,
