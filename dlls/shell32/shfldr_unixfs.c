@@ -33,6 +33,8 @@
 #include "wine/debug.h"
 
 #include "shell32_main.h"
+#include "shfldr.h"
+#include "shresdef.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -62,6 +64,8 @@ static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
     int cSubDirs, cPidlLen;
     char *pSlash, *pSubDir;
 
+    TRACE("path=%s, ppidl=%p", debugstr_a(path), ppidl);
+    
     /* Fail, if no absolute path given */
     if (!ppidl || !path || path[0] != '/') return FALSE;
    
@@ -120,6 +124,8 @@ static BOOL UNIXFS_pidl_to_path(LPCITEMIDLIST pidl, PSZ *path) {
     DWORD dwPathLen;
     char *pNextDir;
 
+    TRACE("(pidl=%p, path=%p)\n", pidl, path);
+    
     *path = NULL;
 
     /* Find the UnixFolderClass root */
@@ -182,6 +188,8 @@ static BOOL UNIXFS_build_subfolder_pidls(const char *path, LPITEMIDLIST **apidl,
     DWORD cSubDirs, i;
     USHORT sLen;
 
+    TRACE("(path=%s, apidl=%p, pCount=%p)\n", path, apidl, pCount);
+    
     *apidl = NULL;
     *pCount = 0;
    
@@ -353,10 +361,20 @@ UnixFolderIcon UnixFolderIconSingleton = { &UnixFolderIcon_IExtractIconW_Vtbl };
  * Class whose heap based instances represent unix filesystem directories.
  */
 
+static shvheader GenericSFHeader[] = {
+    {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
+    {IDS_SHV_COLUMN2, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
+    {IDS_SHV_COLUMN3, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
+    {IDS_SHV_COLUMN4, SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 12},
+    {IDS_SHV_COLUMN5, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 5}
+};
+
+#define GENERICSHELLVIEWCOLUMNS 5
+
 /* UnixFolder object layout and typedef.
  */
 typedef struct _UnixFolder {
-    const IShellFolderVtbl   *lpIShellFolderVtbl;
+    const IShellFolder2Vtbl  *lpIShellFolder2Vtbl;
     const IPersistFolderVtbl *lpIPersistFolderVtbl;
     ULONG m_cRef;
     CHAR *m_pszPath;
@@ -379,17 +397,19 @@ static void UnixFolder_Destroy(UnixFolder *pUnixFolder) {
     SHFree(pUnixFolder);
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_QueryInterface(IShellFolder *iface, REFIID riid, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *iface, REFIID riid, 
     void **ppv) 
 {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder, iface);
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
         
     TRACE("(iface=%p, riid=%p, ppv=%p)\n", iface, riid, ppv);
     
     if (!ppv) return E_INVALIDARG;
     
-    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IShellFolder, riid)) {
-        *ppv = &This->lpIShellFolderVtbl;
+    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IShellFolder, riid) || 
+        IsEqualIID(&IID_IShellFolder2, riid)) 
+    {
+        *ppv = &This->lpIShellFolder2Vtbl;
     } else if (IsEqualIID(&IID_IPersistFolder, riid) || IsEqualIID(&IID_IPersist, riid)) {
         *ppv = &This->lpIPersistFolderVtbl;
     } else {
@@ -401,16 +421,16 @@ static HRESULT WINAPI UnixFolder_IShellFolder_QueryInterface(IShellFolder *iface
     return S_OK;
 }
 
-static ULONG WINAPI UnixFolder_IShellFolder_AddRef(IShellFolder *iface) {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder, iface);
+static ULONG WINAPI UnixFolder_IShellFolder2_AddRef(IShellFolder2 *iface) {
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
 
     TRACE("(iface=%p)\n", iface);
 
     return InterlockedIncrement(&This->m_cRef);
 }
 
-static ULONG WINAPI UnixFolder_IShellFolder_Release(IShellFolder *iface) {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder, iface);
+static ULONG WINAPI UnixFolder_IShellFolder2_Release(IShellFolder2 *iface) {
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     ULONG cRef;
     
     TRACE("(iface=%p)\n", iface);
@@ -423,7 +443,7 @@ static ULONG WINAPI UnixFolder_IShellFolder_Release(IShellFolder *iface) {
     return cRef;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_ParseDisplayName(IShellFolder* iface, HWND hwndOwner, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* iface, HWND hwndOwner, 
     LPBC pbcReserved, LPOLESTR lpszDisplayName, ULONG* pchEaten, LPITEMIDLIST* ppidl, 
     ULONG* pdwAttributes)
 {
@@ -448,10 +468,10 @@ static HRESULT WINAPI UnixFolder_IShellFolder_ParseDisplayName(IShellFolder* ifa
 
 static IUnknown *UnixSubFolderIterator_Construct(UnixFolder *pUnixFolder);
 
-static HRESULT WINAPI UnixFolder_IShellFolder_EnumObjects(IShellFolder* iface, HWND hwndOwner, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_EnumObjects(IShellFolder2* iface, HWND hwndOwner, 
     SHCONTF grfFlags, IEnumIDList** ppEnumIDList)
 {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder, iface);
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     IUnknown *newIterator;
     HRESULT hr;
     
@@ -465,10 +485,10 @@ static HRESULT WINAPI UnixFolder_IShellFolder_EnumObjects(IShellFolder* iface, H
     return hr;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_BindToObject(IShellFolder* iface, LPCITEMIDLIST pidl,
+static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface, LPCITEMIDLIST pidl,
     LPBC pbcReserved, REFIID riid, void** ppvOut)
 {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder, iface);
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     IPersistFolder *persistFolder;
     LPITEMIDLIST pidlSubFolder;
     HRESULT hr;
@@ -488,52 +508,89 @@ static HRESULT WINAPI UnixFolder_IShellFolder_BindToObject(IShellFolder* iface, 
     return hr;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_BindToStorage(IShellFolder* This, LPCITEMIDLIST pidl, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_BindToStorage(IShellFolder2* This, LPCITEMIDLIST pidl, 
     LPBC pbcReserved, REFIID riid, void** ppvObj)
 {
     TRACE("stub\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_CompareIDs(IShellFolder* This, LPARAM lParam, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* This, LPARAM lParam, 
     LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
     TRACE("stub\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_CreateViewObject(IShellFolder* This, HWND hwndOwner,
-    REFIID riid, void** ppvOut)
+static HRESULT WINAPI UnixFolder_IShellFolder2_CreateViewObject(IShellFolder2* iface, HWND hwndOwner,
+    REFIID riid, void** ppv)
 {
-    TRACE("stub\n");
-    return E_NOTIMPL;
+    HRESULT hr = E_INVALIDARG;
+        
+    TRACE("(iface=%p, hwndOwner=%p, riid=%p, ppv=%p) stub\n", iface, hwndOwner, riid, ppv);
+    
+    if (!ppv) return E_INVALIDARG;
+    *ppv = NULL;
+    
+    if (IsEqualIID(&IID_IShellView, riid)) {
+        LPSHELLVIEW pShellView;
+        
+        pShellView = IShellView_Constructor((IShellFolder*)iface);
+        if (pShellView) {
+            hr = IShellView_QueryInterface(pShellView, riid, ppv);
+            IShellView_Release(pShellView);
+        }
+    } 
+    
+    return hr;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_GetAttributesOf(IShellFolder* iface, UINT cidl, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT cidl, 
     LPCITEMIDLIST* apidl, SFGAOF* rgfInOut)
 {
     TRACE("(iface=%p, cidl=%u, apidl=%p, rgfInOut=%p) semi-stub\n", iface, cidl, apidl, rgfInOut);
     
-    *rgfInOut = *rgfInOut & (SFGAO_FOLDER | SFGAO_HASSUBFOLDER);
+    *rgfInOut = *rgfInOut & (SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_HASSUBFOLDER);
             
     return S_OK;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_GetUIObjectOf(IShellFolder* iface, HWND hwndOwner, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* iface, HWND hwndOwner, 
     UINT cidl, LPCITEMIDLIST* apidl, REFIID riid, UINT* prgfInOut, void** ppvOut)
 {
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
+    
     TRACE("(iface=%p, hwndOwner=%p, cidl=%d, apidl=%p, riid=%s, prgfInOut=%p, ppv=%p)\n",
         iface, hwndOwner, cidl, apidl, debugstr_guid(riid), prgfInOut, ppvOut);
 
-    if (IsEqualIID(&IID_IExtractIconW, riid)) {
+    if (IsEqualIID(&IID_IContextMenu, riid)) {
+        *ppvOut = ISvItemCm_Constructor((IShellFolder*)iface, This->m_pidlLocation, apidl, cidl);
+        return S_OK;
+    } else if (IsEqualIID(&IID_IDataObject, riid)) {
+        *ppvOut = IDataObject_Constructor(hwndOwner, This->m_pidlLocation, apidl, cidl);
+        return S_OK;
+    } else if (IsEqualIID(&IID_IExtractIconA, riid)) {
+        FIXME("IExtractIconA\n");
+        return E_FAIL;
+    } else if (IsEqualIID(&IID_IExtractIconW, riid)) {
         *ppvOut = &UnixFolderIconSingleton;
         return S_OK;
-    } 
-    
-    return E_NOTIMPL;
+    } else if (IsEqualIID(&IID_IDropTarget, riid)) {
+        FIXME("IDropTarget\n");
+        return E_FAIL;
+    } else if (IsEqualIID(&IID_IShellLinkW, riid)) {
+        FIXME("IShellLinkW\n");
+        return E_FAIL;
+    } else if (IsEqualIID(&IID_IShellLinkA, riid)) {
+        FIXME("IShellLinkA\n");
+        return E_FAIL;
+    } else {
+        FIXME("Unknown interface %s in GetUIObjectOf\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_GetDisplayNameOf(IShellFolder* iface, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* iface, 
     LPCITEMIDLIST pidl, SHGDNF uFlags, STRRET* lpName)
 {
     LPCSHITEMID pSHItem = (LPCSHITEMID)pidl;
@@ -591,48 +648,125 @@ static HRESULT WINAPI UnixFolder_IShellFolder_GetDisplayNameOf(IShellFolder* ifa
     return S_OK;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder_SetNameOf(IShellFolder* This, HWND hwnd, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* This, HWND hwnd, 
     LPCITEMIDLIST pidl, LPCOLESTR lpszName, SHGDNF uFlags, LPITEMIDLIST* ppidlOut)
 {
     TRACE("stub\n");
     return E_NOTIMPL;
 }
 
-/* VTable for UnixFolder's IShellFolder interface.
+static HRESULT WINAPI UnixFolder_IShellFolder2_EnumSearches(IShellFolder2* iface, 
+    IEnumExtraSearch **ppEnum) 
+{
+    TRACE("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultColumn(IShellFolder2* iface, 
+    DWORD dwReserved, ULONG *pSort, ULONG *pDisplay) 
+{
+    TRACE("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultColumnState(IShellFolder2* iface, 
+    UINT iColumn, SHCOLSTATEF *pcsFlags)
+{
+    TRACE("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetDefaultSearchGUID(IShellFolder2* iface, 
+    GUID *pguid)
+{
+    TRACE("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsEx(IShellFolder2* iface, 
+    LPCITEMIDLIST pidl, const SHCOLUMNID *pscid, VARIANT *pv)
+{
+    TRACE("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface, 
+    LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
+{
+    HRESULT hr = E_FAIL;
+        
+    TRACE("(iface=%p, pidl=%p, iColumn=%d, psd=%p) stub\n", iface, pidl, iColumn, psd);
+    
+    if (!psd || iColumn >= GENERICSHELLVIEWCOLUMNS)
+        return E_INVALIDARG;
+
+    if (!pidl) {
+        psd->fmt = GenericSFHeader[iColumn].fmt;
+        psd->cxChar = GenericSFHeader[iColumn].cxChar;
+        psd->str.uType = STRRET_CSTR;
+        LoadStringA(shell32_hInstance, GenericSFHeader[iColumn].colnameid, psd->str.u.cStr, MAX_PATH);
+        return S_OK;
+    } else {
+        switch (iColumn) {
+            case 0:
+                hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL|SHGDN_INFOLDER, &psd->str);
+                break;
+        }
+        psd->str.uType = STRRET_CSTR;
+    }
+    
+    return hr;
+}
+
+static HRESULT WINAPI UnixFolder_IShellFolder2_MapColumnToSCID(IShellFolder2* iface, UINT iColumn,
+    SHCOLUMNID *pscid) 
+{
+    TRACE("stub\n");
+    return E_NOTIMPL;
+}
+
+/* VTable for UnixFolder's IShellFolder2 interface.
  */
-static const IShellFolderVtbl UnixFolder_IShellFolder_Vtbl = {
-    UnixFolder_IShellFolder_QueryInterface,
-    UnixFolder_IShellFolder_AddRef,
-    UnixFolder_IShellFolder_Release,
-    UnixFolder_IShellFolder_ParseDisplayName,
-    UnixFolder_IShellFolder_EnumObjects,
-    UnixFolder_IShellFolder_BindToObject,
-    UnixFolder_IShellFolder_BindToStorage,
-    UnixFolder_IShellFolder_CompareIDs,
-    UnixFolder_IShellFolder_CreateViewObject,
-    UnixFolder_IShellFolder_GetAttributesOf,
-    UnixFolder_IShellFolder_GetUIObjectOf,
-    UnixFolder_IShellFolder_GetDisplayNameOf,
-    UnixFolder_IShellFolder_SetNameOf
+static const IShellFolder2Vtbl UnixFolder_IShellFolder2_Vtbl = {
+    UnixFolder_IShellFolder2_QueryInterface,
+    UnixFolder_IShellFolder2_AddRef,
+    UnixFolder_IShellFolder2_Release,
+    UnixFolder_IShellFolder2_ParseDisplayName,
+    UnixFolder_IShellFolder2_EnumObjects,
+    UnixFolder_IShellFolder2_BindToObject,
+    UnixFolder_IShellFolder2_BindToStorage,
+    UnixFolder_IShellFolder2_CompareIDs,
+    UnixFolder_IShellFolder2_CreateViewObject,
+    UnixFolder_IShellFolder2_GetAttributesOf,
+    UnixFolder_IShellFolder2_GetUIObjectOf,
+    UnixFolder_IShellFolder2_GetDisplayNameOf,
+    UnixFolder_IShellFolder2_SetNameOf,
+    UnixFolder_IShellFolder2_GetDefaultSearchGUID,
+    UnixFolder_IShellFolder2_EnumSearches,
+    UnixFolder_IShellFolder2_GetDefaultColumn,
+    UnixFolder_IShellFolder2_GetDefaultColumnState,
+    UnixFolder_IShellFolder2_GetDetailsEx,
+    UnixFolder_IShellFolder2_GetDetailsOf,
+    UnixFolder_IShellFolder2_MapColumnToSCID
 };
 
 static HRESULT WINAPI UnixFolder_IPersistFolder_QueryInterface(IPersistFolder* This, REFIID riid, 
     void** ppvObject)
 {
-    return UnixFolder_IShellFolder_QueryInterface(
-                (IShellFolder*)ADJUST_THIS(UnixFolder, IPersistFolder, This), riid, ppvObject);
+    return UnixFolder_IShellFolder2_QueryInterface(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder, This), riid, ppvObject);
 }
 
 static ULONG WINAPI UnixFolder_IPersistFolder_AddRef(IPersistFolder* This)
 {
-    return UnixFolder_IShellFolder_AddRef(
-                (IShellFolder*)ADJUST_THIS(UnixFolder, IPersistFolder, This));
+    return UnixFolder_IShellFolder2_AddRef(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder, This));
 }
 
 static ULONG WINAPI UnixFolder_IPersistFolder_Release(IPersistFolder* This)
 {
-    return UnixFolder_IShellFolder_Release(
-                (IShellFolder*)ADJUST_THIS(UnixFolder, IPersistFolder, This));
+    return UnixFolder_IShellFolder2_Release(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder, This));
 }
 
 static HRESULT WINAPI UnixFolder_IPersistFolder_GetClassID(IPersistFolder* This, CLSID* pClassID)
@@ -684,16 +818,16 @@ HRESULT WINAPI UnixFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *
     TRACE("(pUnkOuter=%p, riid=%p, ppv=%p)\n", pUnkOuter, riid, ppv);
 
     pUnixFolder = SHAlloc((ULONG)sizeof(UnixFolder));
-    pUnixFolder->lpIShellFolderVtbl = &UnixFolder_IShellFolder_Vtbl;
+    pUnixFolder->lpIShellFolder2Vtbl = &UnixFolder_IShellFolder2_Vtbl;
     pUnixFolder->lpIPersistFolderVtbl = &UnixFolder_IPersistFolder_Vtbl;
     pUnixFolder->m_cRef = 0;
     pUnixFolder->m_pszPath = NULL;
     pUnixFolder->m_apidlSubDirs = NULL;
     pUnixFolder->m_cSubDirs = 0;
 
-    UnixFolder_IShellFolder_AddRef(STATIC_CAST(IShellFolder, pUnixFolder));
-    hr = UnixFolder_IShellFolder_QueryInterface(STATIC_CAST(IShellFolder, pUnixFolder), riid, ppv);
-    UnixFolder_IShellFolder_Release(STATIC_CAST(IShellFolder, pUnixFolder));
+    UnixFolder_IShellFolder2_AddRef(STATIC_CAST(IShellFolder2, pUnixFolder));
+    hr = UnixFolder_IShellFolder2_QueryInterface(STATIC_CAST(IShellFolder2, pUnixFolder), riid, ppv);
+    UnixFolder_IShellFolder2_Release(STATIC_CAST(IShellFolder2, pUnixFolder));
     return hr;
 }
 
@@ -716,7 +850,7 @@ typedef struct _UnixSubFolderIterator {
 static void UnixSubFolderIterator_Destroy(UnixSubFolderIterator *iterator) {
     TRACE("(iterator=%p)\n", iterator);
         
-    UnixFolder_IShellFolder_Release((IShellFolder*)iterator->m_pUnixFolder);
+    UnixFolder_IShellFolder2_Release((IShellFolder2*)iterator->m_pUnixFolder);
     SHFree(iterator);
 }
 
@@ -769,7 +903,7 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Next(IEnumIDList* iface,
     ULONG i;
 
     TRACE("(iface=%p, celt=%ld, rgelt=%p, pceltFetched=%p)\n", iface, celt, rgelt, pceltFetched);
-    
+   
     for (i=0; (i < celt) && (This->m_cIdx < This->m_pUnixFolder->m_cSubDirs); i++, This->m_cIdx++) {
         rgelt[i] = ILClone(This->m_pUnixFolder->m_apidlSubDirs[This->m_cIdx]);
     }
@@ -837,7 +971,7 @@ static IUnknown *UnixSubFolderIterator_Construct(UnixFolder *pUnixFolder) {
     iterator->m_pUnixFolder = pUnixFolder;
 
     UnixSubFolderIterator_IEnumIDList_AddRef((IEnumIDList*)iterator);
-    UnixFolder_IShellFolder_AddRef((IShellFolder*)pUnixFolder);
+    UnixFolder_IShellFolder2_AddRef((IShellFolder2*)pUnixFolder);
     
     return (IUnknown*)iterator;
 }
