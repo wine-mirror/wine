@@ -3008,11 +3008,13 @@ HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
     switch (resvt) {
     case VT_R8:
+	if (V_R8(&rv) == 0) return DISP_E_DIVBYZERO;
 	V_VT(result) = resvt;
 	V_R8(result) = V_R8(&lv) / V_R8(&rv);
 	rc = S_OK;
 	break;
     case VT_I4:
+	if (V_I4(&rv) == 0) return DISP_E_DIVBYZERO;
 	V_VT(result) = resvt;
 	V_I4(result) = V_I4(&lv) / V_I4(&rv);
 	rc = S_OK;
