@@ -137,7 +137,7 @@ static LPWSTR deformat_environment(MSIPACKAGE* package, LPCWSTR key,
     }
     else
     {
-        ERR("Unknown environment variable\n");
+        ERR("Unknown environment variable %s\n", debugstr_w(key));
         *chunk = 0;
         value = NULL;
     }
