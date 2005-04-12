@@ -34,8 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
   /* GCs used for B&W and color bitmap operations */
 GC BITMAP_monoGC = 0, BITMAP_colorGC = 0;
-HBITMAP BITMAP_stock_bitmap = 0;   /* default stock bitmap */
-Pixmap BITMAP_stock_pixmap = 0;    /* pixmap for the default stock bitmap */
+X_PHYSBITMAP BITMAP_stock_phys_bitmap = { 0 };  /* phys bitmap for the default stock bitmap */
 
 /***********************************************************************
  *           X11DRV_BITMAP_Init
@@ -47,8 +46,9 @@ void X11DRV_BITMAP_Init(void)
       /* Create the necessary GCs */
 
     wine_tsx11_lock();
-    BITMAP_stock_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
-    BITMAP_monoGC = XCreateGC( gdi_display, BITMAP_stock_pixmap, 0, NULL );
+    BITMAP_stock_phys_bitmap.pixmap_depth = 1;
+    BITMAP_stock_phys_bitmap.pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
+    BITMAP_monoGC = XCreateGC( gdi_display, BITMAP_stock_phys_bitmap.pixmap, 0, NULL );
     XSetGraphicsExposures( gdi_display, BITMAP_monoGC, False );
     XSetSubwindowMode( gdi_display, BITMAP_monoGC, IncludeInferiors );
 
@@ -70,29 +70,22 @@ void X11DRV_BITMAP_Init(void)
  */
 HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
-    int depth;
+    X_PHYSBITMAP *physBitmap;
 
     if(physDev->xrender)
         X11DRV_XRender_UpdateDrawable( physDev );
 
-    if (hbitmap == BITMAP_stock_bitmap)
-    {
-        physDev->drawable = BITMAP_stock_pixmap;
-        depth = 1;
-    }
-    else
-    {
-        X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
-        if (!physBitmap) return 0;
-        physDev->drawable = physBitmap->pixmap;
-        depth = physBitmap->pixmap_depth;
-    }
+    if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap) physBitmap = &BITMAP_stock_phys_bitmap;
+    else if (!(physBitmap = X11DRV_get_phys_bitmap( hbitmap ))) return 0;
+
+    physDev->bitmap = physBitmap;
+    physDev->drawable = physBitmap->pixmap;
 
       /* Change GC depth if needed */
 
-    if (physDev->depth != depth)
+    if (physDev->depth != physBitmap->pixmap_depth)
     {
-        physDev->depth = depth;
+        physDev->depth = physBitmap->pixmap_depth;
         wine_tsx11_lock();
         XFreeGC( gdi_display, physDev->gc );
         physDev->gc = XCreateGC( gdi_display, physDev->drawable, 0, NULL );
@@ -132,7 +125,7 @@ BOOL X11DRV_CreateBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 	    bmp->bitmap.bmPlanes, bmp->bitmap.bmBitsPixel);
         goto done;
     }
-    if (hbitmap == BITMAP_stock_bitmap)
+    if (hbitmap == BITMAP_stock_phys_bitmap.hbitmap)
     {
         ERR( "called for stock bitmap, please report\n" );
         goto done;

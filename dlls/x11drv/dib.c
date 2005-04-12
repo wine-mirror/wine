@@ -43,6 +43,41 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 WINE_DECLARE_DEBUG_CHANNEL(x11drv);
 
+/* Additional info for DIB section objects */
+typedef struct _X11DRV_DIBSECTION
+{
+    /* Windows DIB section */
+    DIBSECTION  dibSection;
+
+    /* Mapping status */
+    int         status, p_status;
+
+    /* Color map info */
+    int         nColorMap;
+    int        *colorMap;
+
+    /* Original dib color table converted to
+       rgb values if usage was DIB_PAL_COLORS */
+    RGBQUAD    *colorTable;
+
+    /* Cached XImage */
+    XImage     *image;
+
+#ifdef HAVE_LIBXXSHM
+    /* Shared memory segment info */
+    XShmSegmentInfo shminfo;
+#endif
+
+    /* Aux buffer access function */
+    void (*copy_aux)(void*ctx, int req);
+    void *aux_ctx;
+
+    /* GDI access lock */
+    CRITICAL_SECTION lock;
+
+} X11DRV_DIBSECTION;
+
+
 static int ximageDepthTable[32];
 
 /* This structure holds the arguments for DIB_SetImageBits() */
@@ -4182,7 +4217,6 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
                                DWORD width, DWORD height)
 {
   DIBSECTION dib;
-  HBITMAP hBitmap;
   X_PHYSBITMAP *physBitmap;
   int nColorMap = 0, *colorMap = NULL, aColorMap = FALSE;
 
@@ -4190,14 +4224,8 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     xSrc, ySrc, xDest, yDest, width, height);
   /* this function is meant as an optimization for BitBlt,
    * not to be called otherwise */
-  if (GetObjectType( physDevSrc->hdc ) != OBJ_MEMDC) {
-    ERR("called for non-memory source DC!?\n");
-    return;
-  }
-
-  hBitmap = GetCurrentObject( physDevSrc->hdc, OBJ_BITMAP );
-  physBitmap = X11DRV_get_phys_bitmap( hBitmap );
-  if (!physBitmap || GetObjectW( hBitmap, sizeof(dib), &dib ) != sizeof(dib))
+  physBitmap = physDevSrc->bitmap;
+  if (!physBitmap || GetObjectW( physBitmap->hbitmap, sizeof(dib), &dib ) != sizeof(dib))
   {
     ERR("called for non-DIBSection!?\n");
     return;
@@ -4547,14 +4575,8 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
  */
 INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
 {
-    HBITMAP hbitmap;
-    X_PHYSBITMAP *physBitmap;
-
-    if (!physDev) return DIB_Status_None;
-    hbitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
-    physBitmap = X11DRV_get_phys_bitmap( hbitmap );
-    if (!physBitmap) return DIB_Status_None;
-    return X11DRV_DIB_Coerce(physBitmap, req, lossy);
+    if (!physDev || !physDev->bitmap) return DIB_Status_None;
+    return X11DRV_DIB_Coerce(physDev->bitmap, req, lossy);
 }
 
 /***********************************************************************
@@ -4562,14 +4584,8 @@ INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
  */
 INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
 {
-    HBITMAP hbitmap;
-    X_PHYSBITMAP *physBitmap;
-
-    if (!physDev) return DIB_Status_None;
-    if (GetObjectType( physDev->hdc ) != OBJ_MEMDC) return DIB_Status_None;
-    hbitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
-    if (!(physBitmap = X11DRV_get_phys_bitmap( hbitmap ))) return DIB_Status_None;
-    return X11DRV_DIB_Lock(physBitmap, req, lossy);
+    if (!physDev || !physDev->bitmap) return DIB_Status_None;
+    return X11DRV_DIB_Lock(physDev->bitmap, req, lossy);
 }
 
 /***********************************************************************
@@ -4577,14 +4593,8 @@ INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev, INT req, BOOL lossy)
  */
 void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev, BOOL commit)
 {
-    HBITMAP hbitmap;
-    X_PHYSBITMAP *physBitmap;
-
-    if (!physDev) return;
-    if (GetObjectType( physDev->hdc ) != OBJ_MEMDC) return;
-    hbitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
-    if (!(physBitmap = X11DRV_get_phys_bitmap( hbitmap ))) return;
-    X11DRV_DIB_Unlock(physBitmap, commit);
+    if (!physDev || !physDev->bitmap) return;
+    X11DRV_DIB_Unlock(physDev->bitmap, commit);
 }
 
 
@@ -4898,8 +4908,7 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
 {
     X11DRV_DIBSECTION *dib;
     UINT ret = 0;
-    HBITMAP hBitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
-    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hBitmap );
+    X_PHYSBITMAP *physBitmap = physDev->bitmap;
 
     if (!physBitmap) return 0;
     dib = physBitmap->dib;
@@ -4930,8 +4939,7 @@ UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, R
 {
     X11DRV_DIBSECTION *dib;
     UINT ret = 0;
-    HBITMAP hBitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
-    X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hBitmap );
+    X_PHYSBITMAP *physBitmap = physDev->bitmap;
 
     if (!physBitmap) return 0;
     dib = physBitmap->dib;

@@ -104,6 +104,7 @@ typedef struct
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
+    X_PHYSBITMAP *bitmap;       /* currently selected bitmap for memory DCs */
     BOOL          has_gdi_font; /* is current font a GDI font? */
     int           backgroundPixel;
     int           textPixel;
@@ -119,8 +120,7 @@ typedef struct
 
   /* GCs used for B&W and color bitmap operations */
 extern GC BITMAP_monoGC, BITMAP_colorGC;
-extern HBITMAP BITMAP_stock_bitmap;  /* default stock bitmap */
-extern Pixmap BITMAP_stock_pixmap;   /* pixmap for the default stock bitmap */
+extern X_PHYSBITMAP BITMAP_stock_phys_bitmap;  /* phys bitmap for the default stock bitmap */
 
 #define BITMAP_GC(physBitmap) (((physBitmap)->pixmap_depth == 1) ? BITMAP_monoGC : BITMAP_colorGC)
 
@@ -259,40 +259,6 @@ extern void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event );
 extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event );
 
 /* exported dib functions for now */
-
-/* Additional info for DIB section objects */
-typedef struct _X11DRV_DIBSECTION
-{
-    /* Windows DIB section */
-    DIBSECTION  dibSection;
-
-    /* Mapping status */
-    int         status, p_status;
-
-    /* Color map info */
-    int         nColorMap;
-    int        *colorMap;
-
-    /* Original dib color table converted to
-       rgb values if usage was DIB_PAL_COLORS */
-    RGBQUAD    *colorTable;
-
-    /* Cached XImage */
-    XImage     *image;
-
-#ifdef HAVE_LIBXXSHM
-    /* Shared memory segment info */
-    XShmSegmentInfo shminfo;
-#endif
-
-    /* Aux buffer access function */
-    void (*copy_aux)(void*ctx, int req);
-    void *aux_ctx;
-
-    /* GDI access lock */
-    CRITICAL_SECTION lock;
-
-} X11DRV_DIBSECTION;
 
 /* DIB Section sync state */
 enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };

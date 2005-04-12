@@ -139,12 +139,15 @@ BOOL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR de
 
     if (GetObjectType( hdc ) == OBJ_MEMDC)
     {
-        if (!BITMAP_stock_bitmap) BITMAP_stock_bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
-        physDev->drawable  = BITMAP_stock_pixmap;
+        if (!BITMAP_stock_phys_bitmap.hbitmap)
+            BITMAP_stock_phys_bitmap.hbitmap = GetCurrentObject( hdc, OBJ_BITMAP );
+        physDev->bitmap    = &BITMAP_stock_phys_bitmap;
+        physDev->drawable  = BITMAP_stock_phys_bitmap.pixmap;
         physDev->depth     = 1;
     }
     else
     {
+        physDev->bitmap    = NULL;
         physDev->drawable  = root_window;
         physDev->depth     = screen_depth;
     }

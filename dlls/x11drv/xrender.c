@@ -1033,8 +1033,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     DIBSECTION bmp;
 
     /* Do we need to disable antialiasing because of palette mode? */
-    HBITMAP hBitmap = GetCurrentObject( physDev->hdc, OBJ_BITMAP );
-    if( GetObjectW( hBitmap, sizeof(bmp), &bmp ) != sizeof(bmp) ) {
+    if( !physDev->bitmap || GetObjectW( physDev->bitmap->hbitmap, sizeof(bmp), &bmp ) != sizeof(bmp) ) {
         TRACE("bitmap is not a DIB\n");
     }
     else if (bmp.dsBmih.biBitCount <= 8) {
@@ -1622,7 +1621,6 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     XRenderPictFormat *src_format;
     Picture dst_pict, src_pict;
     Pixmap xpm;
-    HBITMAP hBitmap;
     DIBSECTION dib;
     XImage *image;
     GC gc;
@@ -1666,8 +1664,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
         return FALSE;
     }
 
-    hBitmap = GetCurrentObject( devSrc->hdc, OBJ_BITMAP );
-    if (GetObjectW( hBitmap, sizeof(dib), &dib ) != sizeof(dib))
+    if (!devSrc->bitmap || GetObjectW( devSrc->bitmap->hbitmap, sizeof(dib), &dib ) != sizeof(dib))
     {
         FIXME("not a dibsection\n");
         return FALSE;
