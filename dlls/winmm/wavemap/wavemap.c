@@ -590,6 +590,13 @@ static  DWORD	wodMapperStatus(WAVEMAPDATA* wom, DWORD flags, LPVOID ptr)
     return ret;
 }
 
+static  DWORD   wodMapperReconfigure(WAVEMAPDATA* wom, DWORD dwParam1, DWORD dwParam2)
+{
+    FIXME("(%p %08lx %08lx) stub!\n", wom, dwParam1, dwParam2);
+
+    return MMSYSERR_NOERROR;
+}
+
 /**************************************************************************
  * 				wodMessage (MSACM.@)
  */
@@ -625,6 +632,7 @@ DWORD WINAPI WAVEMAP_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_RESTART:		return wodRestart	((WAVEMAPDATA*)dwUser);
     case WODM_RESET:		return wodReset		((WAVEMAPDATA*)dwUser);
     case WODM_MAPPER_STATUS:	return wodMapperStatus  ((WAVEMAPDATA*)dwUser, dwParam1, (LPVOID)dwParam2);
+    case DRVM_MAPPER_RECONFIGURE: return wodMapperReconfigure((WAVEMAPDATA*)dwUser, dwParam1, dwParam2);
     /* known but not supported */
     case DRV_QUERYDEVICEINTERFACESIZE:
     case DRV_QUERYDEVICEINTERFACE:
@@ -1109,6 +1117,13 @@ static  DWORD	widMapperStatus(WAVEMAPDATA* wim, DWORD flags, LPVOID ptr)
     return ret;
 }
 
+static  DWORD   widMapperReconfigure(WAVEMAPDATA* wim, DWORD dwParam1, DWORD dwParam2)
+{
+    FIXME("(%p %08lx %08lx) stub!\n", wim, dwParam1, dwParam2);
+
+    return MMSYSERR_NOERROR;
+}
+
 /**************************************************************************
  * 				widMessage (MSACM.@)
  */
@@ -1139,6 +1154,7 @@ DWORD WINAPI WAVEMAP_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_START:		return widStart         ((WAVEMAPDATA*)dwUser);
     case WIDM_STOP:		return widStop          ((WAVEMAPDATA*)dwUser);
     case WIDM_MAPPER_STATUS:	return widMapperStatus  ((WAVEMAPDATA*)dwUser, dwParam1, (LPVOID)dwParam2);
+    case DRVM_MAPPER_RECONFIGURE: return widMapperReconfigure((WAVEMAPDATA*)dwUser, dwParam1, dwParam2);
     /* known but not supported */
     case DRV_QUERYDEVICEINTERFACESIZE:
     case DRV_QUERYDEVICEINTERFACE:
