@@ -48,7 +48,7 @@ static DWORD delete_key( HKEY hkey )
         if (ret) break;
     }
     if (ret != ERROR_NO_MORE_ITEMS) return ret;
-    RegDeleteKeyA( hkey, NULL );
+    RegDeleteKeyA( hkey, "" );
     return 0;
 }
 
