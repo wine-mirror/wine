@@ -2244,6 +2244,7 @@ BOOL WINAPI EnumEnhMetaFile(
                  WIDTH(emh->rclFrame) * xSrcPixSize;
         yscale = (FLOAT) HEIGHT(*lpRect) * 100.0 /
                  HEIGHT(emh->rclFrame) * ySrcPixSize;
+        TRACE("xscale = %f, yscale = %f\n", xscale, yscale);
 
         xform.eM11 = xscale;
         xform.eM12 = 0;
@@ -2527,14 +2528,12 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
 					   )
 {
     static const WCHAR szDisplayW[] = { 'D','I','S','P','L','A','Y','\0' };
-    HMETAFILE hmf = 0;
-    HENHMETAFILE ret = 0;
-    HDC hdc = 0, hdcdisp = 0;
-    METAFILEPICT mfp;
+    HMETAFILE hmf = NULL;
+    HENHMETAFILE ret = NULL;
+    HDC hdc = NULL, hdcdisp = NULL;
     RECT rc, *prcFrame = NULL;
     gdi_mf_comment *mfcomment;
     UINT mfcomment_size;
-    INT horzres, vertres;
 
     TRACE("(%d, %p, %p, %p)\n", cbBuffer, lpbBuffer, hdcRef, lpmfp);
 
@@ -2542,40 +2541,27 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
     if(!hmf)
     {
         WARN("SetMetaFileBitsEx failed\n");
-	return 0;
+        return NULL;
     }
 
     if(!hdcRef)
         hdcRef = hdcdisp = CreateDCW(szDisplayW, NULL, NULL, NULL);
 
-    if(!lpmfp) {
-        lpmfp = &mfp;
-	mfp.mm = MM_ANISOTROPIC;
-	mfp.xExt = -1;
-	mfp.yExt = -1;
-    }
+    if (lpmfp)
+        TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
     
-    TRACE("mm = %ld %ldx%ld\n", lpmfp->mm, lpmfp->xExt, lpmfp->yExt);
-
-    if((lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC) &&
-       (lpmfp->xExt > 0) && (lpmfp->yExt > 0)) {
+    if (lpmfp && (lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC))
+    {
         rc.left = rc.top = 0;
-	rc.right = lpmfp->xExt;
-	rc.bottom = lpmfp->yExt;
-	prcFrame = &rc;
+        rc.right = lpmfp->xExt;
+        rc.bottom = lpmfp->yExt;
+        prcFrame = &rc;
     }
 
-    if(!(hdc = CreateEnhMetaFileW(hdcRef, NULL, prcFrame, NULL))) {
+    if(!(hdc = CreateEnhMetaFileW(hdcRef, NULL, prcFrame, NULL)))
+    {
         ERR("CreateEnhMetaFile fails?\n");
-	goto end;
-    }
-
-    horzres = GetDeviceCaps(hdcRef, HORZRES);
-    vertres = GetDeviceCaps(hdcRef, VERTRES);
-
-    if(hdcdisp) {
-        DeleteDC(hdcdisp);
-	hdcRef = 0;
+        goto end;
     }
 
     /*
@@ -2597,17 +2583,30 @@ HENHMETAFILE WINAPI SetWinMetaFileBits(UINT cbBuffer,
         HeapFree(GetProcessHeap(), 0, mfcomment);
     }
 
-    if(lpmfp->mm != MM_TEXT)
+    if(lpmfp && lpmfp->mm != MM_TEXT)
         SetMapMode(hdc, lpmfp->mm);
 
-    /* set the initial viewport:window ratio as 1:1 */
-    SetViewportExtEx(hdc, horzres, vertres, NULL);
-    SetWindowExtEx(hdc,   horzres, vertres, NULL);
+    if (lpmfp && (lpmfp->mm == MM_ISOTROPIC || lpmfp->mm == MM_ANISOTROPIC))
+    {
+        INT horzres, vertres, horzsize, vertsize, xext, yext;
+
+        horzres = GetDeviceCaps(hdcRef, HORZRES);
+        vertres = GetDeviceCaps(hdcRef, VERTRES);
+        horzsize = GetDeviceCaps(hdcRef, HORZSIZE);
+        vertsize = GetDeviceCaps(hdcRef, VERTSIZE);
+
+        /* set the initial viewport:window ratio as 1:1 */
+        xext = lpmfp->xExt*horzres/(100*horzsize);
+        yext = lpmfp->yExt*vertres/(100*vertsize);
+        SetViewportExtEx(hdc, xext, yext, NULL);
+        SetWindowExtEx(hdc,   xext, yext, NULL);
+    }
 
     PlayMetaFile(hdc, hmf);
 
     ret = CloseEnhMetaFile(hdc);
 end:
+    if (hdcdisp) DeleteDC(hdcdisp);
     DeleteMetaFile(hmf);
     return ret;
 }

@@ -20,6 +20,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "wine/test.h"
 #include "winbase.h"
@@ -29,6 +30,10 @@
 
 static LOGFONTA orig_lf;
 static BOOL emr_processed = FALSE;
+
+/* Arbitrarily chosen values for the second co-ordinate of a metafile line */
+#define LINE_X 55.0f
+#define LINE_Y 15.0f
 
 static int CALLBACK emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     const ENHMETARECORD *emr, int n_objs, LPARAM param)
@@ -438,6 +443,125 @@ static void test_mf_PatternBrush(void)
     HeapFree (GetProcessHeap(), 0, orig_lb);
 }
 
+static INT CALLBACK EmfMmTextEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
+{
+    POINT mapping[2] = { { 0, 0 }, { 1000, 1000 } };
+    LPtoDP(hdc, mapping, 2);
+    trace("Meta record: iType = %ld, (%ld,%ld)-(%ld,%ld)\n", lpEMFR->iType, mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
+    if (lpEMFR->iType == EMR_LINETO)
+    {
+        FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
+        INT xframe = LINE_X * (float)GetDeviceCaps(hdc, HORZSIZE) * 100.0f / (float)GetDeviceCaps(hdc, HORZRES);
+        INT yframe = LINE_Y * (float)GetDeviceCaps(hdc, VERTSIZE) * 100.0f / (float)GetDeviceCaps(hdc, VERTRES);
+        INT x0 = 0;
+        INT y0 = 0;
+        INT x1;
+        INT y1;
+        xSrcPixSize = (FLOAT) GetDeviceCaps(hdc, HORZSIZE) / GetDeviceCaps(hdc, HORZRES);
+        ySrcPixSize = (FLOAT) GetDeviceCaps(hdc, VERTSIZE) / GetDeviceCaps(hdc, VERTRES);
+        xscale = (FLOAT) 1000 * 100.0 /
+                 xframe * xSrcPixSize;
+        yscale = (FLOAT) 1000 * 100.0 /
+                 yframe * ySrcPixSize;
+        x1 = (INT)floor(xscale * 100.0 + 0.5f);
+        y1 = (INT)floor(yscale * 100.0 + 0.5f);
+        ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
+            "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
+            mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
+            x0, y0, x1, y1);
+    }
+    PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
+    return TRUE;
+}
+
+static INT CALLBACK EmfMmAnisotropicEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
+{
+    POINT mapping[2] = { { 0, 0 }, { 1000, 1000 } };
+    LPtoDP(hdc, mapping, 2);
+    trace("Meta record: iType = %ld, (%ld,%ld)-(%ld,%ld)\n", lpEMFR->iType, mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
+    if (lpEMFR->iType == EMR_LINETO)
+    {
+        INT x0 = MulDiv(0, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
+        INT y0 = MulDiv(0, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
+        INT x1 = MulDiv(1000, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
+        INT y1 = MulDiv(1000, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
+        ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
+            "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
+            mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
+            x0, y0, x1, y1);
+    }
+    PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
+    return TRUE;
+}
+
+static HENHMETAFILE create_converted_emf(const METAFILEPICT *mfp)
+{
+    HDC hdcMf;
+    HMETAFILE hmf;
+    BOOL ret;
+    UINT size;
+    LPBYTE pBits;
+
+    hdcMf = CreateMetaFile(NULL);
+    ok(hdcMf != NULL, "CreateMetaFile failed with error %ld\n", GetLastError());
+    ret = LineTo(hdcMf, (INT)LINE_X, (INT)LINE_Y);
+    ok(ret, "LineTo failed with error %ld\n", GetLastError());
+    hmf = CloseMetaFile(hdcMf);
+    ok(hmf != NULL, "CloseMetaFile failed with error %ld\n", GetLastError());
+    size = GetMetaFileBitsEx(hmf, 0, NULL);
+    ok(size, "GetMetaFileBitsEx failed with error %ld\n", GetLastError());
+    pBits = HeapAlloc(GetProcessHeap(), 0, size);
+    GetMetaFileBitsEx(hmf, size, pBits);
+    DeleteMetaFile(hmf);
+    return SetWinMetaFileBits(size, pBits, NULL, mfp);
+}
+
+static void test_mf_conversions()
+{
+    trace("Testing MF->EMF conversion (MM_ANISOTROPIC)\n");
+    {
+        HDC hdcOffscreen = CreateCompatibleDC(NULL);
+        HENHMETAFILE hemf;
+        METAFILEPICT mfp;
+        RECT rect = { 0, 0, 100, 100 };
+        mfp.mm = MM_ANISOTROPIC;
+        mfp.xExt = 100;
+        mfp.yExt = 100;
+        mfp.hMF = NULL;
+        hemf = create_converted_emf(&mfp);
+        EnumEnhMetaFile(hdcOffscreen, hemf, EmfMmAnisotropicEnumProc, NULL, &rect);
+        DeleteEnhMetaFile(hemf);
+        DeleteDC(hdcOffscreen);
+    }
+
+    trace("Testing MF->EMF conversion (MM_TEXT)\n");
+    {
+        HDC hdcOffscreen = CreateCompatibleDC(NULL);
+        HENHMETAFILE hemf;
+        METAFILEPICT mfp;
+        RECT rect = { 0, 0, 100, 100 };
+        mfp.mm = MM_TEXT;
+        mfp.xExt = 0;
+        mfp.yExt = 0;
+        mfp.hMF = NULL;
+        hemf = create_converted_emf(&mfp);
+        EnumEnhMetaFile(hdcOffscreen, hemf, EmfMmTextEnumProc, NULL, &rect);
+        DeleteEnhMetaFile(hemf);
+        DeleteDC(hdcOffscreen);
+    }
+
+    trace("Testing MF->EMF conversion (NULL mfp)\n");
+    {
+        HDC hdcOffscreen = CreateCompatibleDC(NULL);
+        HENHMETAFILE hemf;
+        RECT rect = { 0, 0, 100, 100 };
+        hemf = create_converted_emf(NULL);
+        EnumEnhMetaFile(hdcOffscreen, hemf, EmfMmTextEnumProc, NULL, &rect);
+        DeleteEnhMetaFile(hemf);
+        DeleteDC(hdcOffscreen);
+    }
+}
+
 START_TEST(metafile)
 {
     /* For enhanced metafiles (enhmfdrv) */
@@ -447,4 +571,7 @@ START_TEST(metafile)
     test_mf_Blank();
     test_mf_Graphics();
     test_mf_PatternBrush();
+
+    /* For metafile conversions */
+    test_mf_conversions();
 }
