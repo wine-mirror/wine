@@ -213,6 +213,7 @@ void ME_Redo(ME_TextEditor *editor);
 void ME_EmptyUndoStack(ME_TextEditor *editor);
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, BOOL bCRLF);
 ME_DisplayItem *ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int *nItemOffset);
+void ME_StreamInFill(ME_InStream *stream);
 
 extern int me_debug;
 extern HANDLE me_heap;

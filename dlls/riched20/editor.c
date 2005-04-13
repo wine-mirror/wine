@@ -233,36 +233,40 @@ ME_TextBuffer *ME_MakeText() {
   return buf;
 }
 
-#define STREAMIN_BUFFER_SIZE 4096 /* M$ compatibility */
 
-static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream, ME_Style *style)
+static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStream *stream, ME_Style *style)
 {
-  BYTE buffer[STREAMIN_BUFFER_SIZE+1];
   WCHAR wszText[STREAMIN_BUFFER_SIZE+1];
+  WCHAR *pText;
   
   TRACE("%08lx %p\n", dwFormat, stream);
-  stream->dwError = 0;
   
   do {
-    long nDataSize = 0, nWideChars = 0;
-    stream->dwError = stream->pfnCallback(stream->dwCookie, 
-      (dwFormat & SF_UNICODE ? (BYTE *)wszText : buffer), 
-      STREAMIN_BUFFER_SIZE, &nDataSize);
-    
-    if (stream->dwError)
-      break;
-    if (!nDataSize)
-      break;
+    long nWideChars = 0;
+
+    if (!stream->dwSize)
+    {
+      ME_StreamInFill(stream);
+      if (stream->editstream->dwError)
+        break;
+      if (!stream->dwSize)
+        break;
+    }
       
     if (!(dwFormat & SF_UNICODE))
     {
       /* FIXME? this is doomed to fail on true MBCS like UTF-8, luckily they're unlikely to be used as CP_ACP */
-      nWideChars = MultiByteToWideChar(CP_ACP, 0, buffer, nDataSize, wszText, STREAMIN_BUFFER_SIZE);
+      nWideChars = MultiByteToWideChar(CP_ACP, 0, stream->buffer, stream->dwSize, wszText, STREAMIN_BUFFER_SIZE);
+      pText = wszText;
     }
     else
-      nWideChars = nDataSize>>1;
-    ME_InsertTextFromCursor(editor, 0, wszText, nWideChars, style);
-    if (nDataSize<STREAMIN_BUFFER_SIZE)
+    {
+      nWideChars = stream->dwSize >> 1;
+      pText = (WCHAR *)stream->buffer;
+    }
+    
+    ME_InsertTextFromCursor(editor, 0, pText, nWideChars, style);
+    if (stream->dwSize < STREAMIN_BUFFER_SIZE)
       break;
   } while(1);
   ME_CommitUndo(editor);
@@ -428,6 +432,16 @@ void ME_RTFReadHook(RTF_Info *info) {
   }
 }
 
+void
+ME_StreamInFill(ME_InStream *stream)
+{
+  stream->editstream->dwError = stream->editstream->pfnCallback(stream->editstream->dwCookie,
+                                                                stream->buffer,
+                                                                sizeof(stream->buffer),
+                                                                &stream->dwSize);
+  stream->dwUsed = 0;
+}
+
 static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stream)
 {
   RTF_Info parser;
@@ -435,6 +449,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   int from, to, to2, nUndoMode;
   ME_UndoItem *pUI;
   int nEventMask = editor->nEventMask;
+  ME_InStream inStream;
 
   TRACE("%p %p\n", stream, editor->hWnd);
   editor->nEventMask = 0;
@@ -457,37 +472,60 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   
   nUndoMode = editor->nUndoMode;
   editor->nUndoMode = umIgnore;
-  if (format & SF_RTF) {
-    /* setup the RTF parser */
-    memset(&parser, 0, sizeof parser);
-    RTFSetEditStream(&parser, stream);
-    parser.rtfFormat = format&(SF_TEXT|SF_RTF);
-    parser.hwndEdit = editor->hWnd;
-    parser.editor = editor;
-    parser.style = style;
-    WriterInit(&parser);
-    RTFInit(&parser);
-    RTFSetReadHook(&parser, ME_RTFReadHook);
-    BeginFile(&parser);
-  
-    /* do the parsing */
-    RTFRead(&parser);
-    RTFFlushOutputBuffer(&parser);
-    RTFDestroy(&parser);
 
-    style = parser.style;
-  }
-  else if (format & SF_TEXT)
-    ME_StreamInText(editor, format, stream, style);
-  else
-    ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
-  ME_GetSelection(editor, &to, &to2);
-  /* put the cursor at the top */
-  if (!(format & SFF_SELECTION))
-    SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
-  else
+  inStream.editstream = stream;
+  inStream.editstream->dwError = 0;
+  inStream.dwSize = 0;
+  inStream.dwUsed = 0;
+
+  if (format & SF_RTF)
   {
-    /* FIXME where to put cursor now ? */
+    /* Check if it's really RTF, and if it is not, use plain text */
+    ME_StreamInFill(&inStream);
+    if (!inStream.editstream->dwError)
+    {
+      if (strncmp(inStream.buffer, "{\\rtf1", 6) && strncmp(inStream.buffer, "{\\urtf", 6))
+      {
+        format &= ~SF_RTF;
+        format |= SF_TEXT;
+      }
+    }
+  }
+
+  if (!inStream.editstream->dwError)
+  {
+    if (format & SF_RTF) {
+      /* setup the RTF parser */
+      memset(&parser, 0, sizeof parser);
+      RTFSetEditStream(&parser, &inStream);
+      parser.rtfFormat = format&(SF_TEXT|SF_RTF);
+      parser.hwndEdit = editor->hWnd;
+      parser.editor = editor;
+      parser.style = style;
+      WriterInit(&parser);
+      RTFInit(&parser);
+      RTFSetReadHook(&parser, ME_RTFReadHook);
+      BeginFile(&parser);
+  
+      /* do the parsing */
+      RTFRead(&parser);
+      RTFFlushOutputBuffer(&parser);
+      RTFDestroy(&parser);
+
+      style = parser.style;
+    }
+    else if (format & SF_TEXT)
+      ME_StreamInText(editor, format, &inStream, style);
+    else
+      ERR("EM_STREAMIN without SF_TEXT or SF_RTF\n");
+    ME_GetSelection(editor, &to, &to2);
+    /* put the cursor at the top */
+    if (!(format & SFF_SELECTION))
+      SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
+    else
+    {
+      /* FIXME where to put cursor now ? */
+    }
   }
   
   editor->nUndoMode = nUndoMode;

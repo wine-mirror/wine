@@ -197,6 +197,18 @@ typedef struct tagME_FontTableItem {
   WCHAR *szFaceName;
 } ME_FontTableItem;
 
+
+#define STREAMIN_BUFFER_SIZE 4096 /* M$ compatibility */
+
+struct tagME_InStream {
+  EDITSTREAM *editstream;
+  DWORD dwSize;
+  DWORD dwUsed;
+  BYTE buffer[STREAMIN_BUFFER_SIZE];
+};
+typedef struct tagME_InStream ME_InStream;
+
+
 #define STREAMOUT_BUFFER_SIZE 4096
 #define STREAMOUT_FONTTBL_SIZE 8192
 #define STREAMOUT_COLORTBL_SIZE 1024

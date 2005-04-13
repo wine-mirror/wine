@@ -123,41 +123,35 @@ static inline void RTFFree(void *p)
 int _RTFGetChar(RTF_Info *info)
 {
 	int ch;
+        ME_InStream *stream = info->stream;
 
 	TRACE("\n");
 
 	/* if the last buffer wasn't full, it's EOF */
-	if (info->dwInputSize > 0 &&
-		info->dwInputSize == info->dwInputUsed &&
-		info->dwInputSize < sizeof(info->InputBuffer))
+	if (stream->dwSize > 0 && stream->dwSize == stream->dwUsed
+            && stream->dwSize < sizeof(stream->buffer))
 		return EOF;
-	if (info->dwInputSize <= info->dwInputUsed)
+	if (stream->dwSize <= stream->dwUsed)
 	{
-		long count = 0;
-		info->editstream.dwError = info->editstream.pfnCallback(info->editstream.dwCookie, 
-		info->InputBuffer, sizeof(info->InputBuffer), &count);
+                ME_StreamInFill(stream);
 		/* if error, it's EOF */
-		if (info->editstream.dwError)
+		if (stream->editstream->dwError)
 			return EOF;
 		/* if no bytes read, it's EOF */
-		if (count == 0)
+		if (stream->dwSize == 0)
 			return EOF;
-		info->dwInputSize = count;
-		info->dwInputUsed = 0;
 	}
-	ch = info->InputBuffer[info->dwInputUsed++];
+	ch = stream->buffer[stream->dwUsed++];
 	if (!ch)
 		 return EOF;
 	return ch;
 }
 
-void RTFSetEditStream(RTF_Info *info, EDITSTREAM *es)
+void RTFSetEditStream(RTF_Info *info, ME_InStream *stream)
 {
 	TRACE("\n");
 
-	info->editstream.dwCookie = es->dwCookie;
-	info->editstream.dwError  = es->dwError;
-	info->editstream.pfnCallback = es->pfnCallback;
+        info->stream = stream;
 }
 
 static void

@@ -1078,10 +1078,7 @@ struct _RTF_Info {
     char *inputName;
     char *outputName;
 
-    EDITSTREAM editstream;
-    char InputBuffer[0x1000];
-    DWORD dwInputSize;
-    DWORD dwInputUsed;
+    ME_InStream *stream;
 
     /* edit window to output to */
     HWND hwndEdit;
@@ -1155,7 +1152,7 @@ void	RTFMsg (RTF_Info *, const char *fmt, ...);
 void	RTFPanic (RTF_Info *, const char *fmt, ...);
 
 void	RTFFlushOutputBuffer( RTF_Info *info );
-void	RTFSetEditStream(RTF_Info *, EDITSTREAM *es);
+void	RTFSetEditStream(RTF_Info *info, ME_InStream *stream);
 
 void	WriterInit (RTF_Info *);
 int	BeginFile (RTF_Info *);
