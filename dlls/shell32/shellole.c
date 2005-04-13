@@ -213,7 +213,7 @@ end:
 }
 
 /*************************************************************************
- * DllGetClassObject   [SHELL32.128]
+ * DllGetClassObject   [SHELL32.@]
  */
 HRESULT WINAPI SHELL32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
@@ -646,7 +646,7 @@ HRESULT WINAPI SHCreateDefClassObject(
 }
 
 /*************************************************************************
- *  DragAcceptFiles		[SHELL32.54]
+ *  DragAcceptFiles		[SHELL32.@]
  */
 void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 {
@@ -662,7 +662,7 @@ void WINAPI DragAcceptFiles(HWND hWnd, BOOL b)
 }
 
 /*************************************************************************
- * DragFinish		[SHELL32.80]
+ * DragFinish		[SHELL32.@]
  */
 void WINAPI DragFinish(HDROP h)
 {
@@ -671,7 +671,7 @@ void WINAPI DragFinish(HDROP h)
 }
 
 /*************************************************************************
- * DragQueryPoint		[SHELL32.135]
+ * DragQueryPoint		[SHELL32.@]
  */
 BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 {
@@ -690,8 +690,8 @@ BOOL WINAPI DragQueryPoint(HDROP hDrop, POINT *p)
 }
 
 /*************************************************************************
- *  DragQueryFile 		[SHELL32.81]
- *  DragQueryFileA		[SHELL32.82]
+ *  DragQueryFile 		[SHELL32.@]
+ *  DragQueryFileA		[SHELL32.@]
  */
 UINT WINAPI DragQueryFileA(
 	HDROP hDrop,
@@ -748,7 +748,7 @@ end:
 }
 
 /*************************************************************************
- *  DragQueryFileW		[SHELL32.133]
+ *  DragQueryFileW		[SHELL32.@]
  */
 UINT WINAPI DragQueryFileW(
 	HDROP hDrop,
