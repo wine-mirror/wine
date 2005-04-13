@@ -3047,11 +3047,27 @@ BOOL WINAPI CreateProcessAsUserW(
         LPSTARTUPINFOW lpStartupInfo,
         LPPROCESS_INFORMATION lpProcessInformation )
 {
-    FIXME("%p %s %s %p %p %d 0x%08lx %p %s %p %p - stub\n", hToken, debugstr_w(lpApplicationName),
-          debugstr_w(lpCommandLine), lpProcessAttributes, lpThreadAttributes, bInheritHandles,
-          dwCreationFlags, lpEnvironment, debugstr_w(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
+    FIXME("%p %s %s %p %p %d 0x%08lx %p %s %p %p - semi- stub\n", hToken, 
+          debugstr_w(lpApplicationName), debugstr_w(lpCommandLine), lpProcessAttributes,
+          lpThreadAttributes, bInheritHandles, dwCreationFlags, lpEnvironment, 
+          debugstr_w(lpCurrentDirectory), lpStartupInfo, lpProcessInformation);
 
-    return FALSE;
+    /* We should create the process with a suspended main thread */
+    if (!CreateProcessW (lpApplicationName,
+                         lpCommandLine,
+                         lpProcessAttributes,
+                         lpThreadAttributes,
+                         bInheritHandles,
+                         dwCreationFlags, /* CREATE_SUSPENDED */
+                         lpEnvironment,
+                         lpCurrentDirectory,
+                         lpStartupInfo,
+                         lpProcessInformation))
+    {
+      return FALSE;
+    }
+
+    return TRUE;
 }
 
 /******************************************************************************
