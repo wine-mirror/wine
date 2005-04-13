@@ -515,11 +515,49 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToStorage(IShellFolder2* This
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* This, LPARAM lParam, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_CompareIDs(IShellFolder2* iface, LPARAM lParam, 
     LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 {
-    TRACE("stub\n");
-    return E_NOTIMPL;
+    BOOL isEmpty1, isEmpty2;
+    HRESULT hr = E_FAIL;
+    LPITEMIDLIST firstpidl;
+    IShellFolder2 *psf;
+    int compare;
+
+    TRACE("(iface=%p, lParam=%ld, pidl1=%p, pidl2=%p)\n", iface, lParam, pidl1, pidl2);
+    
+    isEmpty1 = !pidl1 || !pidl1->mkid.cb;
+    isEmpty2 = !pidl2 || !pidl2->mkid.cb;
+
+    if (isEmpty1 && isEmpty2) 
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
+    else if (isEmpty1)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)-1);
+    else if (isEmpty2)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
+
+    compare = CompareStringA(LOCALE_USER_DEFAULT, NORM_IGNORECASE, pidl1->mkid.abID, pidl1->mkid.cb, 
+                             pidl2->mkid.abID, pidl2->mkid.cb);
+    if ((compare == CSTR_LESS_THAN) || (compare == CSTR_GREATER_THAN)) 
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)(compare == CSTR_LESS_THAN)?-1:1);
+
+    if (pidl1->mkid.cb < pidl2->mkid.cb)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)-1);
+    else if (pidl1->mkid.cb > pidl2->mkid.cb)
+        return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (WORD)1);
+
+    firstpidl = ILCloneFirst(pidl1);
+    pidl1 = ILGetNext(pidl1);
+    pidl2 = ILGetNext(pidl2);
+    
+    hr = IShellFolder2_BindToObject(iface, firstpidl, NULL, &IID_IShellFolder, (LPVOID*)&psf);
+    if (SUCCEEDED(hr)) {
+        hr = IShellFolder_CompareIDs(psf, lParam, pidl1, pidl2);
+        IShellFolder2_Release(psf);
+    }
+
+    ILFree(firstpidl);
+    return hr;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_CreateViewObject(IShellFolder2* iface, HWND hwndOwner,
