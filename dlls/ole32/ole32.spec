@@ -212,8 +212,8 @@
 @ stdcall OleUninitialize()
 @ stub OpenOrCreateStream
 @ stdcall ProgIDFromCLSID(ptr ptr)
-@ stub PropSysAllocString
-@ stub PropSysFreeString
+@ stdcall PropSysAllocString(wstr)
+@ stdcall PropSysFreeString(wstr)
 @ stdcall PropVariantClear(ptr)
 @ stdcall PropVariantCopy(ptr ptr)
 @ stdcall ReadClassStg(ptr ptr)
