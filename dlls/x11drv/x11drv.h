@@ -409,8 +409,6 @@ extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
 extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
 extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
 
-extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
-                                           VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
 extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib);
 void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,

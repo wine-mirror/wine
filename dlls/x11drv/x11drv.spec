@@ -7,7 +7,7 @@
 @ cdecl Chord(ptr long long long long long long long long) X11DRV_Chord
 @ cdecl CreateBitmap(ptr long) X11DRV_CreateBitmap
 @ cdecl CreateDC(long ptr wstr wstr wstr ptr) X11DRV_CreateDC
-@ cdecl CreateDIBSection(ptr ptr long ptr long long long) X11DRV_DIB_CreateDIBSection
+@ cdecl CreateDIBSection(ptr long ptr long) X11DRV_CreateDIBSection
 @ cdecl DeleteBitmap(long) X11DRV_DeleteBitmap
 @ cdecl DeleteDC(ptr) X11DRV_DeleteDC
 @ cdecl DescribePixelFormat(ptr long long ptr) X11DRV_DescribePixelFormat

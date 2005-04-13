@@ -36,7 +36,7 @@
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
-#include "gdi.h"
+#include "wingdi.h"
 #include "x11drv.h"
 #include "wine/debug.h"
 
@@ -4531,217 +4531,54 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
 
 
 /***********************************************************************
- *           X11DRV_DIB_CreateDIBSection
+ *           X11DRV_CreateDIBSection   (X11DRV.@)
  */
-HBITMAP X11DRV_DIB_CreateDIBSection(
-  X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
-  VOID **bits, HANDLE section,
-  DWORD offset, DWORD ovr_pitch)
+HBITMAP X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
+                                 const BITMAPINFO *bmi, UINT usage )
 {
-  HBITMAP res = 0;
-  X_PHYSBITMAP *physBitmap = NULL;
-  DIBSECTION *dib = NULL;
-  int *colorMap = NULL;
-  int nColorMap;
-  RGBQUAD *colorTable = NULL;
+    extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, BOOL (*proc)(LPVOID, LPCVOID), LPVOID arg);
+    X_PHYSBITMAP *physBitmap;
+    DIBSECTION dib;
 
-  /* Fill BITMAP structure with DIB data */
-  INT effHeight, totalSize;
-  BITMAP bm;
-  LPVOID mapBits = NULL;
+    if (!(physBitmap = X11DRV_init_phys_bitmap( hbitmap ))) return 0;
+    physBitmap->status = DIB_Status_None;
 
-  int bitmap_type;
-  BOOL core_header;
-  LONG width, height;
-  WORD planes, bpp, compression;
-  DWORD sizeImage;
-  void* colorPtr;
+    GetObjectW( hbitmap, sizeof(dib), &dib );
 
-  if (((bitmap_type = DIB_GetBitmapInfoEx((BITMAPINFOHEADER*) bmi,
-        &width, &height, &planes, &bpp, &compression, &sizeImage)) == -1))
-  {
-      ERR("Invalid bitmap\n");
-      return 0;
-  }
-  core_header = (bitmap_type == 0);
-  
-  TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, %s\n",
-        width, height, planes, bpp, 
-        sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
-
-  effHeight = height >= 0 ? height : -height;
-  bm.bmType = 0;
-  bm.bmWidth = width;
-  bm.bmHeight = effHeight;
-  bm.bmWidthBytes = ovr_pitch ? ovr_pitch : X11DRV_DIB_GetDIBWidthBytes(bm.bmWidth, bpp);
-  bm.bmPlanes = planes;
-  bm.bmBitsPixel = bpp;
-  bm.bmBits = NULL;
-
-  /* Get storage location for DIB bits.  Only use sizeImage if it's valid and
-     we're dealing with a compressed bitmap.  Otherwise, use width * height. */
-  if (sizeImage && (compression == BI_RLE4 || compression == BI_RLE8))
-      totalSize = sizeImage;
-  else
-      totalSize = bm.bmWidthBytes * effHeight;
-
-  if (section)
-  {
-      SYSTEM_INFO SystemInfo;
-      DWORD mapOffset;
-      INT mapSize;
-
-      GetSystemInfo( &SystemInfo );
-      mapOffset = offset - (offset % SystemInfo.dwAllocationGranularity);
-      mapSize = totalSize + (offset - mapOffset);
-      mapBits = MapViewOfFile( section,
-			       FILE_MAP_ALL_ACCESS,
-			       0L,
-			       mapOffset,
-			       mapSize );
-      bm.bmBits = (char *)mapBits + (offset - mapOffset);
-  }
-  else if (ovr_pitch && offset)
-    bm.bmBits = (LPVOID) offset;
-  else {
-    offset = 0;
-    bm.bmBits = VirtualAlloc(NULL, totalSize,
-			     MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-  }
-
-  /* Create Color Map */
-  if (bm.bmBits && bm.bmBitsPixel <= 8) {
-      colorMap = X11DRV_DIB_BuildColorMap( usage == DIB_PAL_COLORS? physDev : NULL,
-                                           usage, bm.bmBitsPixel, bmi, &nColorMap );
-      colorTable = X11DRV_DIB_BuildColorTable( physDev, usage, bm.bmBitsPixel, bmi );
-  }
-  /* Allocate Memory for DIB and fill structure */
-  if (bm.bmBits)
-    dib = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dib));
-  if (dib)
+    /* create color map */
+    if (dib.dsBm.bmBitsPixel <= 8)
     {
-      dib->dsBm = bm;
-
-      if (core_header)
-      {
-          /* Convert the BITMAPCOREHEADER to a BITMAPINFOHEADER.
-             The structure is already filled with zeros */
-          dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
-          dib->dsBmih.biWidth = width;
-          dib->dsBmih.biHeight = height;
-          dib->dsBmih.biPlanes = planes;
-          dib->dsBmih.biBitCount = bpp;
-          dib->dsBmih.biCompression = compression;
-      }
-      else
-      {
-          /* Truncate extended bitmap headers (BITMAPV4HEADER etc.) */
-          dib->dsBmih = *((BITMAPINFOHEADER*) bmi);
-          dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
-      }
-
-      dib->dsBmih.biSizeImage = totalSize;
-      colorPtr = (LPBYTE) bmi + (WORD) bmi->bmiHeader.biSize;
-
-      /* Set dsBitfields values */
-       if ( usage == DIB_PAL_COLORS || bpp <= 8)
-       {
-           dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
-       }
-       else switch( bpp )
-       {
-           case 15:
-           case 16:
-               dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0x7c00;
-               dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x03e0;
-               dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x001f;
-               break;
-
-           case 24:
-           case 32:
-               dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0xff0000;
-               dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x00ff00;
-               dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x0000ff;
-               break;
-       }
-      dib->dshSection = section;
-      dib->dsOffset = offset;
-
+        physBitmap->colorMap = X11DRV_DIB_BuildColorMap( usage == DIB_PAL_COLORS ? physDev : NULL,
+                                                         usage, dib.dsBm.bmBitsPixel, bmi,
+                                                         &physBitmap->nColorMap );
+        physBitmap->colorTable = X11DRV_DIB_BuildColorTable( physDev, usage, dib.dsBm.bmBitsPixel, bmi );
     }
 
-  /* Create Device Dependent Bitmap and add DIB pointer */
-  if (dib)
-    {
-      int depth = (bpp == 1) ? 1 : GetDeviceCaps(physDev->hdc, BITSPIXEL);
-      res = CreateBitmap(width, effHeight, 1, depth, NULL);
-
-      if (res)
-      {
-          BITMAPOBJ *bmp = GDI_GetObjPtr(res, BITMAP_MAGIC);
-          if (bmp) bmp->dib = dib;
-          GDI_ReleaseObj( res );
-          physBitmap = X11DRV_init_phys_bitmap( res );
-          physBitmap->status     = DIB_Status_None;
-          physBitmap->nColorMap  = nColorMap;
-          physBitmap->colorMap   = colorMap;
-          physBitmap->colorTable = colorTable;
-      }
-    }
-
-  /* Create XImage */
-  if (dib && physBitmap)
-  {
-      wine_tsx11_lock();
+    /* create pixmap and X image */
+    wine_tsx11_lock();
+    physBitmap->pixmap_depth = (dib.dsBm.bmBitsPixel == 1) ? 1 : screen_depth;
+    physBitmap->pixmap = XCreatePixmap( gdi_display, root_window, dib.dsBm.bmWidth,
+                                        dib.dsBm.bmHeight, physBitmap->pixmap_depth );
 #ifdef HAVE_LIBXXSHM
-      if (XShmQueryExtension(gdi_display) &&
-          (physBitmap->image = X11DRV_XShmCreateImage( bm.bmWidth, effHeight,
-                                                physBitmap->pixmap_depth, &physBitmap->shminfo )) )
-      {
-	; /* Created Image */
-      } else {
-          physBitmap->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, physBitmap->pixmap_depth );
-          physBitmap->shminfo.shmid = -1;
-      }
-#else
-      physBitmap->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, physBitmap->pixmap_depth );
+    physBitmap->shminfo.shmid = -1;
+    if (!XShmQueryExtension(gdi_display) ||
+        !(physBitmap->image = X11DRV_XShmCreateImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
+                                                      physBitmap->pixmap_depth, &physBitmap->shminfo )) )
 #endif
-      wine_tsx11_unlock();
-  }
+        physBitmap->image = X11DRV_DIB_CreateXImage( dib.dsBm.bmWidth, dib.dsBm.bmHeight,
+                                                     physBitmap->pixmap_depth );
+    wine_tsx11_unlock();
+    if (!physBitmap->pixmap || !physBitmap->image) return 0;
 
-  /* Clean up in case of errors */
-  if (!res || !physBitmap || !dib || !bm.bmBits || (bm.bmBitsPixel <= 8 && !colorMap))
+      /* install fault handler */
+    InitializeCriticalSection( &physBitmap->lock );
+    if (VIRTUAL_SetFaultHandler(dib.dsBm.bmBits, X11DRV_DIB_FaultHandler, physBitmap))
     {
-      TRACE("got an error res=%p, bmp=%p, dib=%p, bm.bmBits=%p\n",
-	    res, physBitmap, dib, bm.bmBits);
-      if (bm.bmBits)
-        {
-	  if (section)
-	    UnmapViewOfFile(mapBits), bm.bmBits = NULL;
-	  else if (!offset)
-	    VirtualFree(bm.bmBits, 0L, MEM_RELEASE), bm.bmBits = NULL;
-        }
-
-      if (dib && physBitmap->image) { XDestroyImage(physBitmap->image); physBitmap->image = NULL; }
-      HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL;
-      HeapFree(GetProcessHeap(), 0, colorTable); colorTable = NULL;
-      HeapFree(GetProcessHeap(), 0, dib); dib = NULL;
-      if (res) { DeleteObject(res); res = 0; }
-    }
-  else if (bm.bmBits)
-    {
-      extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, BOOL (*proc)(LPVOID, LPCVOID), LPVOID arg);
-      /* Install fault handler, if possible */
-      InitializeCriticalSection(&physBitmap->lock);
-      if (VIRTUAL_SetFaultHandler(bm.bmBits, X11DRV_DIB_FaultHandler, physBitmap))
-        {
-          X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-          physBitmap->status = DIB_Status_AppMod;
-        }
+        X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
+        physBitmap->status = DIB_Status_AppMod;
     }
 
-  /* Return BITMAP handle and storage location */
-  if (bm.bmBits && bits) *bits = bm.bmBits;
-  return res;
+    return hbitmap;
 }
 
 /***********************************************************************

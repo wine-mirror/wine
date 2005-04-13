@@ -150,14 +150,16 @@ int DIB_BitmapInfoSize( const BITMAPINFO * info, WORD coloruse )
  * 4 for V4HEADER, 5 for V5HEADER, -1 for error.
  */
 static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
-                              LONG *height, WORD *bpp, DWORD *compr )
+                              LONG *height, WORD *planes, WORD *bpp, DWORD *compr, DWORD *size )
 {
     if (header->biSize == sizeof(BITMAPINFOHEADER))
     {
         *width  = header->biWidth;
         *height = header->biHeight;
+        *planes = header->biPlanes;
         *bpp    = header->biBitCount;
         *compr  = header->biCompression;
+        *size   = header->biSizeImage;
         return 1;
     }
     if (header->biSize == sizeof(BITMAPCOREHEADER))
@@ -165,8 +167,10 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)header;
         *width  = core->bcWidth;
         *height = core->bcHeight;
+        *planes = core->bcPlanes;
         *bpp    = core->bcBitCount;
         *compr  = 0;
+        *size   = 0;
         return 0;
     }
     if (header->biSize == sizeof(BITMAPV4HEADER))
@@ -174,8 +178,10 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         BITMAPV4HEADER *v4hdr = (BITMAPV4HEADER *)header;
         *width  = v4hdr->bV4Width;
         *height = v4hdr->bV4Height;
+        *planes = v4hdr->bV4Planes;
         *bpp    = v4hdr->bV4BitCount;
         *compr  = v4hdr->bV4V4Compression;
+        *size   = v4hdr->bV4SizeImage;
         return 4;
     }
     if (header->biSize == sizeof(BITMAPV5HEADER))
@@ -183,8 +189,10 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         BITMAPV5HEADER *v5hdr = (BITMAPV5HEADER *)header;
         *width  = v5hdr->bV5Width;
         *height = v5hdr->bV5Height;
+        *planes = v5hdr->bV5Planes;
         *bpp    = v5hdr->bV5BitCount;
         *compr  = v5hdr->bV5Compression;
+        *size   = v5hdr->bV5SizeImage;
         return 5;
     }
     ERR("(%ld): unknown/wrong size for header\n", header->biSize );
@@ -222,10 +230,10 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         HDC hdcMem;
         LONG height;
         LONG width;
-        WORD bpp;
-        DWORD compr;
+        WORD planes, bpp;
+        DWORD compr, size;
 
-        if (DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &width, &height, &bpp, &compr ) == -1)
+        if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
         {
             ERR("Invalid bitmap\n");
             return 0;
@@ -525,15 +533,15 @@ INT WINAPI GetDIBits(
     BOOL core_header;
     LONG width;
     LONG height;
-    WORD bpp;
-    DWORD compr;
+    WORD planes, bpp;
+    DWORD compr, size;
     void* colorPtr;
     RGBTRIPLE* rgbTriples;
     RGBQUAD* rgbQuads;
 
     if (!info) return 0;
 
-    bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &width, &height, &bpp, &compr);
+    bitmap_type = DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size);
     if (bitmap_type == -1)
     {
         ERR("Invalid bitmap format\n");
@@ -984,11 +992,11 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
     HBITMAP handle;
     LONG width;
     LONG height;
-    WORD bpp;
-    DWORD compr;
+    WORD planes, bpp;
+    DWORD compr, size;
     DC *dc;
 
-    if (DIB_GetBitmapInfo( header, &width, &height, &bpp, &compr ) == -1) return 0;
+    if (DIB_GetBitmapInfo( header, &width, &height, &planes, &bpp, &compr, &size ) == -1) return 0;
     
     if (width < 0)
     {
@@ -1042,28 +1050,18 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
         {
             const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
             LONG width, height;
-            WORD bpp;
-            DWORD compr;
-            BOOL core_header;
+            WORD planes, bpp;
+            DWORD compr, size;
             INT width_bytes;
-            INT size;
             WORD count, sel;
             int i;
 
-            core_header = (DIB_GetBitmapInfo(bi, &width, &height, &bpp, &compr) == 0);
+            DIB_GetBitmapInfo(bi, &width, &height, &planes, &bpp, &compr, &size);
 
             height = height >= 0 ? height : -height;
             width_bytes = DIB_GetDIBWidthBytes(width, bpp);
-            
-            if (core_header)
-            {
-                size = width_bytes * height;
-            }
-            else
-            {
-                size = (bi->biSizeImage && compr != BI_RGB) ?
-                        bi->biSizeImage : width_bytes * height;
-            }
+
+            if (!size || (compr != BI_RLE4 && compr != BI_RLE8)) size = width_bytes * height;
 
             /* calculate number of sel's needed for size with 64K steps */
             count = (size + 0xffff) / 0x10000;
@@ -1087,12 +1085,118 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
  *           DIB_CreateDIBSection
  */
 HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
-			     VOID **bits, HANDLE section,
-			     DWORD offset, DWORD ovr_pitch)
+                             VOID **bits, HANDLE section,
+                             DWORD offset, DWORD ovr_pitch)
 {
-    HBITMAP hbitmap = 0;
+    HBITMAP ret = 0;
     DC *dc;
     BOOL bDesktopDC = FALSE;
+    DIBSECTION *dib;
+    BITMAPOBJ *bmp;
+    int bitmap_type;
+    LONG width, height;
+    WORD planes, bpp;
+    DWORD compression, sizeImage;
+    const DWORD *colorPtr;
+    void *mapBits = NULL;
+
+    if (((bitmap_type = DIB_GetBitmapInfo( &bmi->bmiHeader, &width, &height,
+                                           &planes, &bpp, &compression, &sizeImage )) == -1))
+        return 0;
+
+    if (!(dib = HeapAlloc( GetProcessHeap(), 0, sizeof(*dib) ))) return 0;
+
+    TRACE("format (%ld,%ld), planes %d, bpp %d, size %ld, %s\n",
+          width, height, planes, bpp, sizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+
+    dib->dsBm.bmType       = 0;
+    dib->dsBm.bmWidth      = width;
+    dib->dsBm.bmHeight     = height >= 0 ? height : -height;
+    dib->dsBm.bmWidthBytes = ovr_pitch ? ovr_pitch : DIB_GetDIBWidthBytes(width, bpp);
+    dib->dsBm.bmPlanes     = planes;
+    dib->dsBm.bmBitsPixel  = bpp;
+    dib->dsBm.bmBits       = NULL;
+
+    if (!bitmap_type)  /* core header */
+    {
+        /* convert the BITMAPCOREHEADER to a BITMAPINFOHEADER */
+        dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
+        dib->dsBmih.biWidth = width;
+        dib->dsBmih.biHeight = height;
+        dib->dsBmih.biPlanes = planes;
+        dib->dsBmih.biBitCount = bpp;
+        dib->dsBmih.biCompression = compression;
+        dib->dsBmih.biXPelsPerMeter = 0;
+        dib->dsBmih.biYPelsPerMeter = 0;
+        dib->dsBmih.biClrUsed = 0;
+        dib->dsBmih.biClrImportant = 0;
+    }
+    else
+    {
+        /* truncate extended bitmap headers (BITMAPV4HEADER etc.) */
+        dib->dsBmih = bmi->bmiHeader;
+        dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
+    }
+
+    /* only use sizeImage if it's valid and we're dealing with a compressed bitmap */
+    if (sizeImage && (compression == BI_RLE4 || compression == BI_RLE8))
+        dib->dsBmih.biSizeImage = sizeImage;
+    else
+        dib->dsBmih.biSizeImage = dib->dsBm.bmWidthBytes * dib->dsBm.bmHeight;
+
+
+    /* set dsBitfields values */
+    colorPtr = (const DWORD *)((const char *)bmi + (WORD) bmi->bmiHeader.biSize);
+    if (usage == DIB_PAL_COLORS || bpp <= 8)
+    {
+        dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
+    }
+    else switch( bpp )
+    {
+    case 15:
+    case 16:
+        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? colorPtr[0] : 0x7c00;
+        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? colorPtr[1] : 0x03e0;
+        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? colorPtr[2] : 0x001f;
+        break;
+    case 24:
+    case 32:
+        dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? colorPtr[0] : 0xff0000;
+        dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? colorPtr[1] : 0x00ff00;
+        dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? colorPtr[2] : 0x0000ff;
+        break;
+    }
+
+    /* get storage location for DIB bits */
+
+    if (section)
+    {
+        SYSTEM_INFO SystemInfo;
+        DWORD mapOffset;
+        INT mapSize;
+
+        GetSystemInfo( &SystemInfo );
+        mapOffset = offset - (offset % SystemInfo.dwAllocationGranularity);
+        mapSize = dib->dsBmih.biSizeImage + (offset - mapOffset);
+        mapBits = MapViewOfFile( section, FILE_MAP_ALL_ACCESS, 0, mapOffset, mapSize );
+        if (mapBits) dib->dsBm.bmBits = (char *)mapBits + (offset - mapOffset);
+    }
+    else if (ovr_pitch && offset)
+        dib->dsBm.bmBits = (LPVOID) offset;
+    else
+    {
+        offset = 0;
+        dib->dsBm.bmBits = VirtualAlloc( NULL, dib->dsBmih.biSizeImage,
+                                         MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE );
+    }
+    dib->dshSection = section;
+    dib->dsOffset = offset;
+
+    if (!dib->dsBm.bmBits)
+    {
+        HeapFree( GetProcessHeap(), 0, dib );
+        return 0;
+    }
 
     /* If the reference hdc is null, take the desktop dc */
     if (hdc == 0)
@@ -1101,17 +1205,39 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
         bDesktopDC = TRUE;
     }
 
-    if ((dc = DC_GetDCPtr( hdc )))
+    if (!(dc = DC_GetDCPtr( hdc ))) goto error;
+
+    /* create Device Dependent Bitmap and add DIB pointer */
+    ret = CreateBitmap( dib->dsBm.bmWidth, dib->dsBm.bmHeight, 1,
+                        (bpp == 1) ? 1 : GetDeviceCaps(hdc, BITSPIXEL), NULL );
+
+    if (ret && ((bmp = GDI_GetObjPtr(ret, BITMAP_MAGIC))))
     {
-        if(dc->funcs->pCreateDIBSection)
-            hbitmap = dc->funcs->pCreateDIBSection(dc->physDev, bmi, usage, bits, section, offset, ovr_pitch);
-        GDI_ReleaseObj(hdc);
+        bmp->dib = dib;
+        bmp->funcs = dc->funcs;
+        GDI_ReleaseObj( ret );
+
+        if (dc->funcs->pCreateDIBSection)
+        {
+            if (!dc->funcs->pCreateDIBSection(dc->physDev, ret, bmi, usage))
+            {
+                DeleteObject( ret );
+                ret = 0;
+            }
+        }
     }
 
-    if (bDesktopDC)
-      DeleteDC(hdc);
+    GDI_ReleaseObj(hdc);
+    if (bDesktopDC) DeleteDC( hdc );
+    if (ret && bits) *bits = dib->dsBm.bmBits;
+    return ret;
 
-    return hbitmap;
+error:
+    if (bDesktopDC) DeleteDC( hdc );
+    if (section) UnmapViewOfFile( mapBits );
+    else if (!offset) VirtualFree( dib->dsBm.bmBits, 0, MEM_RELEASE );
+    HeapFree( GetProcessHeap(), 0, dib );
+    return 0;
 }
 
 /***********************************************************************
