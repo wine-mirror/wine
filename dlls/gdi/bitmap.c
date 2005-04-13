@@ -277,7 +277,6 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     bmpobj->bitmap = bm;
     bmpobj->bitmap.bmBits = NULL;
     bmpobj->funcs = NULL;
-    bmpobj->physBitmap = NULL;
     bmpobj->dib = NULL;
     bmpobj->segptr_bits = 0;
 

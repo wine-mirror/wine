@@ -65,20 +65,6 @@ typedef struct tagGDIOBJHDR
     struct hdc_list *hdcs;
 } GDIOBJHDR;
 
-/* bitmap object */
-
-typedef struct tagBITMAPOBJ
-{
-    GDIOBJHDR   header;
-    BITMAP      bitmap;
-    SIZE        size;   /* For SetBitmapDimension() */
-    const struct tagDC_FUNCS *funcs; /* DC function table */
-    void	*physBitmap; /* ptr to device specific data */
-    /* For device-independent bitmaps: */
-    DIBSECTION *dib;
-    SEGPTR      segptr_bits;  /* segptr to DIB bits */
-} BITMAPOBJ;
-
 /* palette object */
 
 #define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */

@@ -294,6 +294,19 @@ static inline INT GDI_ROUND(FLOAT val)
    return (int)floor(val + 0.5);
 }
 
+/* bitmap object */
+
+typedef struct tagBITMAPOBJ
+{
+    GDIOBJHDR           header;
+    BITMAP              bitmap;
+    SIZE                size;   /* For SetBitmapDimension() */
+    const DC_FUNCTIONS *funcs; /* DC function table */
+    /* For device-independent bitmaps: */
+    DIBSECTION         *dib;
+    SEGPTR              segptr_bits;  /* segptr to DIB bits */
+} BITMAPOBJ;
+
 /* bidi.c */
 
 /* Wine_GCPW Flags */
