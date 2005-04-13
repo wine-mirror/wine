@@ -750,7 +750,9 @@ static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData)
 
         if (lpMetaPict)
         {
-            DeleteMetaFile16(lpMetaPict->hMF);
+            /* To delete 16-bit meta file, we just need to free the associated
+               handle. See DeleteMetaFile16() in dlls/gdi/metafile.c. */
+            GlobalFree16(lpMetaPict->hMF);
             lpMetaPict->hMF = 0;
         }
 
