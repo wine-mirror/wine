@@ -138,8 +138,43 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
                                         LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
     OLEOBJ_THIS
-    FIXME("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
-    return E_NOTIMPL;
+    IOleDocumentSite *pDocSite;
+    HRESULT hres;
+
+    TRACE("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
+
+    if(iVerb != OLEIVERB_SHOW) {
+        FIXME("iVerb = %ld not supported\n", iVerb);
+        return E_NOTIMPL;
+    }
+
+    if(!pActiveSite)
+        pActiveSite = This->client;
+
+    hres = IOleClientSite_QueryInterface(pActiveSite, &IID_IOleDocumentSite, (void**)&pDocSite);
+    if(SUCCEEDED(hres)) {
+        IOleContainer *pContainer;
+        hres = IOleClientSite_GetContainer(pActiveSite, &pContainer);
+        if(SUCCEEDED(hres)) {
+            IOleContainer_LockContainer(pContainer, TRUE);
+            /* FIXME: Create new IOleDocumentView. See CreateView for more info. */
+            hres = IOleDocumentSite_ActivateMe(pDocSite, DOCVIEW(This));
+            IOleContainer_Release(pContainer);
+        }
+        IOleDocumentSite_Release(pDocSite);
+    }else {
+        hres = IOleDocumentView_UIActivate(DOCVIEW(This), TRUE);
+        if(SUCCEEDED(hres)) {
+            if(lprcPosRect) {
+                RECT rect; /* We need to pass rect as not const pointer */
+                memcpy(&rect, lprcPosRect, sizeof(RECT));
+                IOleDocumentView_SetRect(DOCVIEW(This), &rect);
+            }
+            IOleDocumentView_Show(DOCVIEW(This), TRUE);
+        }
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI OleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEnumOleVerb)
@@ -287,8 +322,32 @@ static HRESULT WINAPI OleDocument_CreateView(IOleDocument *iface, IOleInPlaceSit
                                    DWORD dwReserved, IOleDocumentView **ppView)
 {
     OLEDOC_THIS
-    FIXME("(%p)->(%p %p %ld %p)\n", This, pIPSite, pstm, dwReserved, ppView);
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %p %ld %p)\n", This, pIPSite, pstm, dwReserved, ppView);
+
+    if(!ppView)
+        return E_INVALIDARG;
+
+    /* FIXME:
+     * Windows implementation creates new IOleDocumentView when function is called for the
+     * first time and returns E_FAIL when it is called for the second time, but it doesn't matter
+     * if the application uses returned interfaces, passed to ActivateMe or returned by
+     * QueryInterface, so there is no reason to create new interface. This needs more testing.
+     */
+
+    if(pIPSite) {
+        hres = IOleDocumentView_SetInPlaceSite(DOCVIEW(This), pIPSite);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(pstm)
+        FIXME("pstm is not supported\n");
+
+    IOleDocumentView_AddRef(DOCVIEW(This));
+    *ppView = DOCVIEW(This);
+    return S_OK;
 }
 
 static HRESULT WINAPI OleDocument_GetDocMiscStatus(IOleDocument *iface, DWORD *pdwStatus)

@@ -23,10 +23,12 @@ typedef struct {
     IMonikerPropVtbl    *lpMonikerPropVtbl;
     IOleObjectVtbl      *lpOleObjectVtbl;
     IOleDocumentVtbl    *lpOleDocumentVtbl;
+    IOleDocumentViewVtbl*lpOleDocumentViewVtbl;
 
     ULONG ref;
 
     IOleClientSite *client;
+    IOleInPlaceSite *ipsite;
 } HTMLDocument;
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)     &(x)->lpHTMLDocument2Vtbl)
@@ -36,8 +38,10 @@ typedef struct {
 #define MONPROP(x)       ((IMonikerProp*)       &(x)->lpMonikerPropVtbl)
 #define OLEOBJ(x)        ((IOleObject*)         &(x)->lpOleObjectVtbl)
 #define OLEDOC(x)        ((IOleDocument*)       &(x)->lpOleDocumentVtbl)
+#define DOCVIEW(x)       ((IOleDocumentView*)   &(x)->lpOleDocumentViewVtbl)
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
 void HTMLDocument_Persist_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
+void HTMLDocument_View_Init(HTMLDocument*);

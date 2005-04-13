@@ -73,6 +73,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleDocument, riid)) {
         TRACE("(%p)->(IID_IOleDocument, %p)\n", This, ppvObject);
         *ppvObject = OLEDOC(This);
+    }else if(IsEqualGUID(&IID_IOleDocumentView, riid)) {
+        TRACE("(%p)->(IID_IOleDocumentView, %p)\n", This, ppvObject);
+        *ppvObject = DOCVIEW(This);
     }
 
     if(*ppvObject) {
@@ -99,8 +102,13 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
     TRACE("(%p) ref = %lu\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        if(This->client)
+            IOleClientSite_Release(This->client);
+        if(This->ipsite)
+            IOleInPlaceSite_Release(This->ipsite);
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -939,6 +947,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
 
     HTMLDocument_Persist_Init(ret);
     HTMLDocument_OleObj_Init(ret);
+    HTMLDocument_View_Init(ret);
 
     return hres;
 }

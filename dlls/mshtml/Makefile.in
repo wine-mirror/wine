@@ -11,7 +11,8 @@ C_SRCS = \
 	htmldoc.c \
 	main.c \
 	oleobj.c \
-	persist.c
+	persist.c \
+	view.c
 
 @MAKE_DLL_RULES@
 
