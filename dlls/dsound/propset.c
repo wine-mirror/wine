@@ -272,9 +272,10 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
+    HRESULT hr = DSERR_INVALIDPARAM;
     PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA ppd;
-    FIXME("(guidPropSet=%s,pPropData=%p,cbPropData=%ld,pcbReturned=%p) not implemented!\n",
-	debugstr_guid(guidPropSet),pPropData,cbPropData,pcbReturned);
+    TRACE("(guidPropSet=%s,pPropData=%p,cbPropData=%ld,pcbReturned=%p) not implemented!\n",
+	  debugstr_guid(guidPropSet),pPropData,cbPropData,pcbReturned);
 
     ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_A_DATA) pPropData;
 
@@ -283,20 +284,50 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingA(
 	return DSERR_INVALIDPARAM;
     }
 
-    FIXME("DeviceName=%s\n",ppd->DeviceName);
-    FIXME("DataFlow=%s\n",
-	ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "DIRECTSOUNDDEVICE_DATAFLOW_RENDER" :
-	ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ? "DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE" : "UNKNOWN");
-
-    /* FIXME: match the name to a wave device somehow. */
-    ppd->DeviceId = GUID_NULL;
-
-    if (pcbReturned) {
-	*pcbReturned = cbPropData;
-	FIXME("*pcbReturned=%ld\n", *pcbReturned);
+    if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER) {
+        ULONG wod;
+        unsigned int wodn;
+        TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
+        wodn = waveOutGetNumDevs();
+        for (wod = 0; wod < wodn; wod++) {
+            WAVEOUTCAPSA capsA;
+            MMRESULT res;
+            res = waveOutGetDevCapsA(wod, &capsA, sizeof(capsA));
+            if (res == MMSYSERR_NOERROR) {
+                if (lstrcmpA(capsA.szPname, ppd->DeviceName) == 0) {
+                    ppd->DeviceId = DSOUND_renderer_guids[wod];
+                    hr = DS_OK;
+                    TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
+                          ppd->DeviceName);
+                    break;
+                }
+            }
+        }
+    } else if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
+        ULONG wid;
+        unsigned int widn;
+        TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
+        widn = waveInGetNumDevs();
+        for (wid = 0; wid < widn; wid++) {
+            WAVEINCAPSA capsA;
+            MMRESULT res;
+            res = waveInGetDevCapsA(wid, &capsA, sizeof(capsA));
+            if (res == MMSYSERR_NOERROR) {
+                if (lstrcmpA(capsA.szPname, ppd->DeviceName) == 0) {
+                    ppd->DeviceId = DSOUND_capture_guids[wid];
+                    TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
+                          ppd->DeviceName);
+                    hr = DS_OK;
+                    break;
+                }
+            }
+        }
     }
 
-    return S_OK;
+    if (pcbReturned)
+	*pcbReturned = cbPropData;
+
+    return hr;
 }
 
 static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
@@ -305,9 +336,10 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
     ULONG cbPropData,
     PULONG pcbReturned )
 {
+    HRESULT hr = DSERR_INVALIDPARAM;
     PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA ppd;
-    FIXME("(guidPropSet=%s,pPropData=%p,cbPropData=%ld,pcbReturned=%p) not implemented!\n",
-	debugstr_guid(guidPropSet),pPropData,cbPropData,pcbReturned);
+    TRACE("(guidPropSet=%s,pPropData=%p,cbPropData=%ld,pcbReturned=%p)\n",
+	  debugstr_guid(guidPropSet),pPropData,cbPropData,pcbReturned);
 
     ppd = (PDSPROPERTY_DIRECTSOUNDDEVICE_WAVEDEVICEMAPPING_W_DATA) pPropData;
 
@@ -316,20 +348,50 @@ static HRESULT WINAPI DSPROPERTY_WaveDeviceMappingW(
 	return DSERR_INVALIDPARAM;
     }
 
-    FIXME("DeviceName=%s\n",debugstr_w(ppd->DeviceName));
-    FIXME("DataFlow=%s\n",
-	ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "DIRECTSOUNDDEVICE_DATAFLOW_RENDER" :
-	ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ? "DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE" : "UNKNOWN");
-
-    /* FIXME: match the name to a wave device somehow. */
-    ppd->DeviceId = GUID_NULL;
-
-    if (pcbReturned) {
-	*pcbReturned = cbPropData;
-	FIXME("*pcbReturned=%ld\n", *pcbReturned);
+    if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER) {
+        ULONG wod;
+        unsigned int wodn;
+        TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_RENDER\n");
+        wodn = waveOutGetNumDevs();
+        for (wod = 0; wod < wodn; wod++) {
+            WAVEOUTCAPSW capsW;
+            MMRESULT res;
+            res = waveOutGetDevCapsW(wod, &capsW, sizeof(capsW));
+            if (res == MMSYSERR_NOERROR) {
+                if (lstrcmpW(capsW.szPname, ppd->DeviceName) == 0) {
+                    ppd->DeviceId = DSOUND_renderer_guids[wod];
+                    hr = DS_OK;
+                    TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
+                          debugstr_w(ppd->DeviceName));
+                    break;
+                }
+            }
+        }
+    } else if (ppd->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE) {
+        ULONG wid;
+        unsigned int widn;
+        TRACE("DataFlow=DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE\n");
+        widn = waveInGetNumDevs();
+        for (wid = 0; wid < widn; wid++) {
+            WAVEINCAPSW capsW;
+            MMRESULT res;
+            res = waveInGetDevCapsW(wid, &capsW, sizeof(capsW));
+            if (res == MMSYSERR_NOERROR) {
+                if (lstrcmpW(capsW.szPname, ppd->DeviceName) == 0) {
+                    ppd->DeviceId = DSOUND_capture_guids[wid];
+                    hr = DS_OK;
+                    TRACE("found %s for %s\n", debugstr_guid(&ppd->DeviceId),
+                          debugstr_w(ppd->DeviceName));
+                    break;
+                }
+            }
+        }
     }
 
-    return S_OK;
+    if (pcbReturned)
+        *pcbReturned = cbPropData;
+
+    return hr;
 }
 
 static HRESULT WINAPI DSPROPERTY_Description1(
