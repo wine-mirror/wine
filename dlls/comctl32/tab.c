@@ -404,7 +404,11 @@ static BOOL TAB_InternalGetItemRect(
     }
   }
 
-  return TRUE;
+  /* Check for visibility */
+  if (lStyle & TCS_VERTICAL)
+    return (itemRect->top < clientRect.bottom) && (itemRect->bottom > clientRect.top);
+  else
+    return (itemRect->left < clientRect.right) && (itemRect->right > clientRect.left);
 }
 
 static inline BOOL
