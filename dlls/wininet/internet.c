@@ -1876,6 +1876,13 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         {
             LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW)lpwhh;
 
+            if (!lpwhh)
+            {
+                WARN("Invalid hInternet handle\n");
+                SetLastError(ERROR_INVALID_HANDLE);
+                return FALSE;
+            }
+
             if (bIsUnicode)
             {
                 INTERNET_PROXY_INFOW *pPI = (INTERNET_PROXY_INFOW *)lpBuffer;
