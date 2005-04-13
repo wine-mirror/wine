@@ -39,6 +39,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "controls.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(text);
@@ -1147,7 +1148,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     if(retval || len != -1)
 #endif
     {
-        hbsave = (HBRUSH)SelectObject(memdc, UITOOLS_GetPattern55AABrush());
+        hbsave = (HBRUSH)SelectObject(memdc, SYSCOLOR_55AABrush);
         PatBlt(memdc, 0, 0, cx, cy, 0x000A0329);
         SelectObject(memdc, hbsave);
     }

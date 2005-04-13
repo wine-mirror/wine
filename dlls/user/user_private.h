@@ -121,6 +121,7 @@ extern USER_DRIVER USER_Driver;
 
 extern HMODULE user32_module;
 extern DWORD USER16_AlertableWait;
+extern HBRUSH SYSCOLOR_55AABrush;
 
 extern BOOL CLIPBOARD_ReleaseOwner(void);
 extern BOOL FOCUS_MouseActivate( HWND hwnd );

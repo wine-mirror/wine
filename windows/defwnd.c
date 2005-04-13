@@ -166,7 +166,7 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
          * look different from the window background.
          */
         if (bk == GetSysColor(COLOR_WINDOW))
-            return UITOOLS_GetPattern55AABrush();
+            return SYSCOLOR_55AABrush;
 
 	UnrealizeObject( hb );
         return hb;

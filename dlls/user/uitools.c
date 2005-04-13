@@ -32,15 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
-static const WORD wPattern55AA[] =
-{
-    0x5555, 0xaaaa, 0x5555, 0xaaaa,
-    0x5555, 0xaaaa, 0x5555, 0xaaaa
-};
-
-static HBRUSH  hPattern55AABrush;
-static HBITMAP hPattern55AABitmap;
-
 /* These tables are used in:
  * UITOOLS_DrawDiagEdge()
  * UITOOLS_DrawRectEdge()
@@ -120,20 +111,6 @@ static const signed char LTRBInnerFlat[] = {
 
 /* last COLOR id */
 #define COLOR_MAX   COLOR_MENUBAR
-
-
-/*********************************************************************
- *	UITOOLS_GetPattern55AABrush
- */
-HBRUSH UITOOLS_GetPattern55AABrush(void)
-{
-    if (!hPattern55AABrush)
-    {
-        hPattern55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
-        hPattern55AABrush = CreatePatternBrush( hPattern55AABitmap );
-    }
-    return hPattern55AABrush;
-}
 
 
 /***********************************************************************
@@ -647,7 +624,7 @@ static void UITOOLS_DrawCheckedRect( HDC dc, LPRECT rect )
 
       FillRect(dc, rect, GetSysColorBrush(COLOR_BTNFACE));
       bg = SetBkColor(dc, RGB(255, 255, 255));
-      hbsave = SelectObject(dc, UITOOLS_GetPattern55AABrush());
+      hbsave = SelectObject(dc, SYSCOLOR_55AABrush);
       PatBlt(dc, rect->left, rect->top, rect->right-rect->left, rect->bottom-rect->top, 0x00FA0089);
       SelectObject(dc, hbsave);
       SetBkColor(dc, bg);
@@ -1858,7 +1835,7 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
     /* This state cause the image to be dithered */
     if(flags & DSS_UNION)
     {
-        hbsave = (HBRUSH)SelectObject(memdc, UITOOLS_GetPattern55AABrush());
+        hbsave = (HBRUSH)SelectObject(memdc, SYSCOLOR_55AABrush);
         if(!hbsave) goto cleanup;
         tmp = PatBlt(memdc, 0, 0, cx, cy, 0x00FA0089);
         SelectObject(memdc, hbsave);

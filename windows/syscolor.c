@@ -80,6 +80,11 @@ static COLORREF SysColors[NUM_SYS_COLORS];
 static HBRUSH SysColorBrushes[NUM_SYS_COLORS];
 static HPEN   SysColorPens[NUM_SYS_COLORS];
 
+static const WORD wPattern55AA[] =
+    { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
+
+HBRUSH SYSCOLOR_55AABrush = 0;
+
 
 /*************************************************************************
  * SYSCOLOR_MakeObjectSystem
@@ -145,6 +150,7 @@ void SYSCOLOR_Init(void)
     char buffer[100];
     BOOL bOk = FALSE, bNoReg = FALSE;
     HKEY  hKey;
+    HBITMAP h55AABitmap;
 
     /* first, try to read the values from the registry */
     if (RegCreateKeyExA(HKEY_CURRENT_USER, "Control Panel\\Colors", 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
@@ -178,6 +184,10 @@ void SYSCOLOR_Init(void)
     }
     if (!bNoReg)
       RegCloseKey(hKey);
+
+    h55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
+    SYSCOLOR_55AABrush = CreatePatternBrush( h55AABitmap );
+    SYSCOLOR_MakeObjectSystem( HBRUSH_16(SYSCOLOR_55AABrush), TRUE );
 }
 
 
@@ -316,5 +326,4 @@ HPEN SYSCOLOR_GetPen( INT index )
     /* We can assert here, because this function is internal to Wine */
     assert (0 <= index && index < NUM_SYS_COLORS);
     return SysColorPens[index];
-
 }
