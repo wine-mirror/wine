@@ -1744,14 +1744,15 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(PSN_TRANSLATEACCELERATOR, PSHNOTIFY),
     SPNFY(PSN_QUERYINITIALFOCUS, PSHNOTIFY),
     /* Header         0U-300U  to  0U-399U  */
-    SPNFY(HDN_ITEMCHANGINGA,     NMHDR),
-    SPNFY(HDN_ITEMCHANGEDA,      NMHDR),
-    SPNFY(HDN_ITEMCLICKA,        NMHDR),
-    SPNFY(HDN_ITEMDBLCLICKA,     NMHDR),
-    SPNFY(HDN_DIVIDERDBLCLICKA,  NMHDR),
-    SPNFY(HDN_BEGINTRACKA,       NMHDR),
-    SPNFY(HDN_ENDTRACKA,         NMHDR),
-    SPNFY(HDN_GETDISPINFOA,      NMHDR),
+    SPNFY(HDN_ITEMCHANGINGA,     NMHEADERA),
+    SPNFY(HDN_ITEMCHANGEDA,      NMHEADERA),
+    SPNFY(HDN_ITEMCLICKA,        NMHEADERA),
+    SPNFY(HDN_ITEMDBLCLICKA,     NMHEADERA),
+    SPNFY(HDN_DIVIDERDBLCLICKA,  NMHEADERA),
+    SPNFY(HDN_BEGINTRACKA,       NMHEADERA),
+    SPNFY(HDN_ENDTRACKA,         NMHEADERA),
+    SPNFY(HDN_TRACKA,            NMHEADERA),
+    SPNFY(HDN_GETDISPINFOA,      NMHEADERA),
     SPNFY(HDN_BEGINDRAG,         NMHDR),
     SPNFY(HDN_ENDDRAG,           NMHDR),
     SPNFY(HDN_ITEMCHANGINGW,     NMHDR),
@@ -1761,6 +1762,7 @@ static const SPY_NOTIFY spnfy_array[] = {
     SPNFY(HDN_DIVIDERDBLCLICKW,  NMHDR),
     SPNFY(HDN_BEGINTRACKW,       NMHDR),
     SPNFY(HDN_ENDTRACKW,         NMHDR),
+    SPNFY(HDN_TRACKW,            NMHDR),
     SPNFY(HDN_GETDISPINFOW,      NMHDR),
     /* Treeview       0U-400U  to  0U-499U  */
     SPNFY(TVN_SELCHANGINGA,      NMTREEVIEWA),
@@ -2399,6 +2401,8 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
 			SetLastError(save_error);
 			if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0)
 			    dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
+		    } else if ((pnmh->code >= HDN_ITEMCHANGINGA) && (pnmh->code <= HDN_ENDDRAG)) {
+			dumplen = sizeof(NMHEADERA)-sizeof(NMHDR);
 		    }
 		    if (dumplen > 0) {
 			q = (UINT *)(pnmh + 1);
