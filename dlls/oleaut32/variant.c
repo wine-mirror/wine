@@ -3,6 +3,8 @@
  *
  * Copyright 1998 Jean-Claude Cote
  * Copyright 2003 Jon Griffiths
+ * Copyright 2005 Daniel Remenak
+ *
  * The alorithm for conversion from Julian days to day/month/year is based on
  * that devised by Henry Fliegel, as implemented in PostgreSQL, which is
  * Copyright 1994-7 Regents of the University of California
@@ -4157,9 +4159,57 @@ HRESULT WINAPI VarRound(LPVARIANT pVarIn, int deci, LPVARIANT pVarOut)
     return hRet;
 }
 
+/**********************************************************************
+ *              VarIdiv [OLEAUT32.153]
+ *
+ * Converts input variants to integers and divides them. 
+ *
+ * PARAMS
+ *  left     [I] Left hand variant
+ *  right    [I] Right hand variant
+ *  result   [O] Destination for quotient
+ *
+ * RETURNS
+ *  Success: S_OK.  result contains the quotient.
+ *  Failure: An HRESULT error code indicating the error.
+ *
+ * NOTES
+ *  If either expression is null, null is returned, as per MSDN
+ */
+HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    VARIANT lv, rv;
+    HRESULT hr;
+    
+    VariantInit(&lv);
+    VariantInit(&rv);
+
+    if ((V_VT(left) == VT_NULL) || (V_VT(right) == VT_NULL)) {
+        hr = VariantChangeType(result, result, 0, VT_NULL);
+        if (FAILED(hr)) {
+            /* This should never happen */
+            FIXME("Failed to convert return value to VT_NULL.\n");
+            return hr;
+        }
+        return S_OK;
+    }
+
+    hr = VariantChangeType(&lv, left, 0, VT_I4);
+    if (FAILED(hr)) {
+	return hr;
+    }
+    hr = VariantChangeType(&rv, right, 0, VT_I4);
+    if (FAILED(hr)) {
+	return hr;
+    }
+
+    hr = VarDiv(&lv, &rv, result);
+    return hr;
+}
+
 
 /**********************************************************************
- *              VarMod [OLEAUT32.154]
+ *              VarMod [OLEAUT32.155]
  *
  * Perform the modulus operation of the right hand variant on the left
  *
