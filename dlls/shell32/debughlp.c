@@ -136,6 +136,7 @@ IID* _dbg_ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	  {
 	    case PT_SHELLEXT:
 	    case PT_GUID:
+            case PT_YAGUID:
 	      return &(pdata->u.guid.guid);
 	  }
 	}
@@ -267,6 +268,7 @@ BOOL pcheck( LPCITEMIDLIST pidl )
         case PT_DRIVE3:
         case PT_FOLDER:
         case PT_VALUE:
+        case PT_VALUEW:
         case PT_FOLDER1:
         case PT_WORKGRP:
         case PT_COMP:
@@ -316,6 +318,8 @@ static struct {
 	{&IID_IDataObject,		"IID_IDataObject"},
 	{&IID_IAutoComplete,            "IID_IAutoComplete"},
 	{&IID_IAutoComplete2,           "IID_IAutoComplete2"},
+        {&IID_IShellLinkA,              "IID_IShellLinkA"},
+        {&IID_IShellLinkW,              "IID_IShellLinkW"},
 	{NULL,NULL}};
 
 const char * shdebugstr_guid( const struct _GUID *id )

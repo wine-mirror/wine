@@ -250,7 +250,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
         HRESULT r;
         IStream *stm;
 
-        TRACE("(%p, %s)\n",This, debugstr_w(pszFileName));
+        TRACE("(%p, %s, %lx)\n",This, debugstr_w(pszFileName), dwMode);
 
         r = CreateStreamOnFile(pszFileName, dwMode, &stm);
         if( SUCCEEDED( r ) )
@@ -260,7 +260,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
             IStream_Release( stm );
             This->bDirty = FALSE;
         }
-
+        TRACE("-- returning hr %08lx\n", r);
         return r;
 }
 

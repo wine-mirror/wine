@@ -1825,7 +1825,7 @@ BOOL _ILIsSpecialFolder (LPCITEMIDLIST pidl)
 
     TRACE("(%p)\n",pidl);
 
-    return (pidl && ( (lpPData && (PT_GUID== lpPData->type || PT_SHELLEXT== lpPData->type)) ||
+    return (pidl && ( (lpPData && (PT_GUID== lpPData->type || PT_SHELLEXT== lpPData->type || PT_YAGUID == lpPData->type)) ||
               (pidl && pidl->mkid.cb == 0x00)
             ));
 }
@@ -2081,6 +2081,7 @@ IID* _ILGetGUIDPointer(LPCITEMIDLIST pidl)
     {
     case PT_SHELLEXT:
     case PT_GUID:
+    case PT_YAGUID:
         return &(pdata->u.guid.guid);
 
     default:
