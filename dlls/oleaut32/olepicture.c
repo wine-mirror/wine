@@ -1177,7 +1177,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
 
 	This->hbmMask = CreateBitmap(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, 1, 1, NULL);
 
-	hOldbitmap = SelectObject(hdc,This->desc.u.bmp.hbitmap); 
+	hOldbitmap = SelectObject(hdc,This->desc.u.bmp.hbitmap);
 	hOldbitmapmask = SelectObject(hdcMask, This->hbmMask);
 	SetBkColor(hdc, This->rgbTrans);
 	BitBlt(hdcMask, 0, 0, bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, hdc, 0, 0, SRCCOPY);
