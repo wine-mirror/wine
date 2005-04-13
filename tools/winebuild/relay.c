@@ -172,7 +172,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     else
         fprintf( outfile, "\tmovw " __ASM_NAME("CallTo16_TebSelector") ", %%fs\n" );
 
-    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
+    fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
     /* Get address of wine_ldt_copy array into %ecx */
     if ( UsePIC )
@@ -482,7 +482,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
     fprintf( outfile, "\tpushl %%ebx\n" );
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%edi\n" );
-    fprintf( outfile, "\t.byte 0x64\n\tmovl %%gs,(%d)\n", STRUCTOFFSET(TEB,gs_sel) );
+    fprintf( outfile, "\t.byte 0x64\n\tmov %%gs,(%d)\n", STRUCTOFFSET(TEB,gs_sel) );
 
     /* Setup exception frame */
     fprintf( outfile, "\t.byte 0x64\n\tpushl (%d)\n", STACKOFFSET );
@@ -636,9 +636,9 @@ static void BuildRet16Func( FILE *outfile )
 #endif
     fprintf( outfile, "\tmovw %%di,%%es\n" );
 
-    fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_TebSelector") "-" __ASM_NAME("Call16_Ret_Start") ",%%fs\n" );
+    fprintf( outfile, "\t.byte 0x2e\n\tmov " __ASM_NAME("CallTo16_TebSelector") "-" __ASM_NAME("Call16_Ret_Start") ",%%fs\n" );
 
-    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
+    fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
     /* Restore the 32-bit stack */
 
