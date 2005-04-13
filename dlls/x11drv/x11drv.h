@@ -84,7 +84,16 @@ typedef struct
     HBITMAP      hbitmap;
     Pixmap       pixmap;
     int          pixmap_depth;
-    struct _X11DRV_DIBSECTION *dib;
+    /* the following fields are only used for DIB section bitmaps */
+    int          status, p_status;  /* mapping status */
+    XImage      *image;             /* cached XImage */
+    int         *colorMap;          /* color map info */
+    int          nColorMap;
+    RGBQUAD     *colorTable;        /* original dib color table converted to rgb values if usage was DIB_PAL_COLORS */
+    CRITICAL_SECTION lock;          /* GDI access lock */
+#ifdef HAVE_LIBXXSHM
+    XShmSegmentInfo shminfo;        /* shared memory segment info */
+#endif
 } X_PHYSBITMAP;
 
   /* X physical font */
@@ -261,7 +270,7 @@ extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event );
 /* exported dib functions for now */
 
 /* DIB Section sync state */
-enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod, DIB_Status_AuxMod };
+enum { DIB_Status_None, DIB_Status_InSync, DIB_Status_GdiMod, DIB_Status_AppMod };
 
 typedef struct {
     void (*Convert_5x5_asis)(int width, int height,
@@ -402,7 +411,7 @@ extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
 
 extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
                                            VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
-extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap);
+extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib);
 void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
                                DWORD width, DWORD height);

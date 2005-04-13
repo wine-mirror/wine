@@ -43,41 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 WINE_DECLARE_DEBUG_CHANNEL(x11drv);
 
-/* Additional info for DIB section objects */
-typedef struct _X11DRV_DIBSECTION
-{
-    /* Windows DIB section */
-    DIBSECTION  dibSection;
-
-    /* Mapping status */
-    int         status, p_status;
-
-    /* Color map info */
-    int         nColorMap;
-    int        *colorMap;
-
-    /* Original dib color table converted to
-       rgb values if usage was DIB_PAL_COLORS */
-    RGBQUAD    *colorTable;
-
-    /* Cached XImage */
-    XImage     *image;
-
-#ifdef HAVE_LIBXXSHM
-    /* Shared memory segment info */
-    XShmSegmentInfo shminfo;
-#endif
-
-    /* Aux buffer access function */
-    void (*copy_aux)(void*ctx, int req);
-    void *aux_ctx;
-
-    /* GDI access lock */
-    CRITICAL_SECTION lock;
-
-} X11DRV_DIBSECTION;
-
-
 static int ximageDepthTable[32];
 
 /* This structure holds the arguments for DIB_SetImageBits() */
@@ -3961,10 +3926,10 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
                       LPVOID bits, BITMAPINFO *info, UINT coloruse )
 {
   X_PHYSBITMAP *physBitmap = X11DRV_get_phys_bitmap( hbitmap );
-  X11DRV_DIBSECTION *dib;
+  DIBSECTION dib;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   PALETTEENTRY palette[256];
-  BITMAP bitmap;
+  size_t obj_size;
   int height;
   LONG tempHeight;
   int bitmap_type;
@@ -3974,10 +3939,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   GetPaletteEntries( GetCurrentObject( physDev->hdc, OBJ_PAL ), 0, 256, palette );
 
   if (!physBitmap) return 0;
-  if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
+  if (!(obj_size = GetObjectW( hbitmap, sizeof(dib), &dib ))) return 0;
 
-  dib = physBitmap->dib;
-  
   bitmap_type = DIB_GetBitmapInfo( (BITMAPINFOHEADER*) info, &descr.infoWidth, &tempHeight, &descr.infoBpp, &descr.compression);
   descr.lines = tempHeight;
   if (bitmap_type == -1)
@@ -3989,10 +3952,9 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
 
   TRACE("%u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
-	lines, bitmap.bmWidth, bitmap.bmHeight,
-	(int)descr.infoWidth, descr.lines, startscan);
+        lines, dib.dsBm.bmWidth, dib.dsBm.bmHeight, (int)descr.infoWidth, descr.lines, startscan);
 
-  if( lines > bitmap.bmHeight ) lines = bitmap.bmHeight;
+  if( lines > dib.dsBm.bmHeight ) lines = dib.dsBm.bmHeight;
 
   height = descr.lines;
   if (height < 0) height = -height;
@@ -4005,7 +3967,7 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
    */
   if( descr.lines < 0 && lines > 0) lines = -lines;
 
-  if( startscan >= bitmap.bmHeight ) return 0;
+  if( startscan >= dib.dsBm.bmHeight ) return 0;
 
   descr.colorMap = NULL;
 
@@ -4054,8 +4016,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
   descr.depth     = physBitmap->pixmap_depth;
   descr.drawable  = physBitmap->pixmap;
   descr.gc        = BITMAP_GC(physBitmap);
-  descr.width     = bitmap.bmWidth;
-  descr.height    = bitmap.bmHeight;
+  descr.width     = dib.dsBm.bmWidth;
+  descr.height    = dib.dsBm.bmHeight;
   descr.xDest     = 0;
   descr.yDest     = 0;
   descr.xSrc      = 0;
@@ -4070,11 +4032,11 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
      descr.ySrc = startscan;
   }
 #ifdef HAVE_LIBXXSHM
-  descr.useShm = dib ? (dib->shminfo.shmid != -1) : FALSE;
+  descr.useShm = (obj_size == sizeof(DIBSECTION)) && (physBitmap->shminfo.shmid != -1);
 #else
   descr.useShm = FALSE;
 #endif
-  descr.dibpitch = dib ? (dib->dibSection.dsBm.bmWidthBytes)
+  descr.dibpitch = (obj_size == sizeof(DIBSECTION)) ? dib.dsBm.bmWidthBytes
 		       : (((descr.infoWidth * descr.infoBpp + 31) &~31) / 8);
 
   X11DRV_DIB_Lock( physBitmap, DIB_Status_GdiMod, FALSE );
@@ -4110,21 +4072,10 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
 static void X11DRV_DIB_DoProtectDIBSection( X_PHYSBITMAP *physBitmap, DWORD new_prot )
 {
     DWORD old_prot;
-    INT totalSize;
-    DIBSECTION *dib = &physBitmap->dib->dibSection;
-    INT effHeight = dib->dsBm.bmHeight >= 0? dib->dsBm.bmHeight
-                                             : -dib->dsBm.bmHeight;
+    DIBSECTION dib;
 
-    /* use the biSizeImage data as the memory size only if we're dealing with a
-       compressed image where the value is set.  Otherwise, calculate based on
-       width * height */
-    if (dib->dsBmih.biSizeImage &&
-        (dib->dsBmih.biCompression == BI_RLE4 || dib->dsBmih.biCompression == BI_RLE8))
-        totalSize = dib->dsBmih.biSizeImage;
-    else
-        totalSize = dib->dsBm.bmWidthBytes * effHeight;
-
-    VirtualProtect(dib->dsBm.bmBits, totalSize, new_prot, &old_prot);
+    GetObjectW( physBitmap->hbitmap, sizeof(dib), &dib );
+    VirtualProtect(dib.dsBm.bmBits, dib.dsBmih.biSizeImage, new_prot, &old_prot);
     TRACE("Changed protection from %ld to %ld\n", old_prot, new_prot);
 }
 
@@ -4138,21 +4089,23 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
 					DWORD xDest, DWORD yDest,
 					DWORD width, DWORD height)
 {
-  X11DRV_DIBSECTION *dib = physBitmap->dib;
+  DIBSECTION dibSection;
   X11DRV_DIB_IMAGEBITS_DESCR descr;
   int identity[2] = {0,1};
 
-  if (DIB_GetBitmapInfo( &dib->dibSection.dsBmih, &descr.infoWidth, (DWORD*) &descr.lines,
-			 &descr.infoBpp, &descr.compression ) == -1)
-    return;
+  if (!GetObjectW( physBitmap->hbitmap, sizeof(dibSection), &dibSection )) return;
 
   descr.physDev   = NULL;
   descr.palentry  = NULL;
-  descr.image     = dib->image;
+  descr.infoWidth = dibSection.dsBmih.biWidth;
+  descr.infoBpp   = dibSection.dsBmih.biBitCount;
+  descr.lines     = dibSection.dsBmih.biHeight;
+  descr.image     = physBitmap->image;
   descr.colorMap  = colorMap;
   descr.nColorMap = nColorMap;
-  descr.bits      = dib->dibSection.dsBm.bmBits;
+  descr.bits      = dibSection.dsBm.bmBits;
   descr.depth     = physBitmap->pixmap_depth;
+  descr.compression = dibSection.dsBmih.biCompression;
 
   if(descr.infoBpp == 1)
       descr.colorMap = (void*)identity;
@@ -4166,16 +4119,16 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
       break;
     case 15:
     case 16:
-      descr.rMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[0] : 0x7c00;
-      descr.gMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[1] : 0x03e0;
-      descr.bMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[2] : 0x001f;
+      descr.rMask = (descr.compression == BI_BITFIELDS) ? dibSection.dsBitfields[0] : 0x7c00;
+      descr.gMask = (descr.compression == BI_BITFIELDS) ? dibSection.dsBitfields[1] : 0x03e0;
+      descr.bMask = (descr.compression == BI_BITFIELDS) ? dibSection.dsBitfields[2] : 0x001f;
       break;
 
     case 24:
     case 32:
-      descr.rMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[0] : 0xff0000;
-      descr.gMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[1] : 0x00ff00;
-      descr.bMask = (descr.compression == BI_BITFIELDS) ? dib->dibSection.dsBitfields[2] : 0x0000ff;
+      descr.rMask = (descr.compression == BI_BITFIELDS) ? dibSection.dsBitfields[0] : 0xff0000;
+      descr.gMask = (descr.compression == BI_BITFIELDS) ? dibSection.dsBitfields[1] : 0x00ff00;
+      descr.bMask = (descr.compression == BI_BITFIELDS) ? dibSection.dsBitfields[2] : 0x0000ff;
       break;
   }
 
@@ -4191,11 +4144,11 @@ static void X11DRV_DIB_DoCopyDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB,
   descr.sizeImage = 0;
 
 #ifdef HAVE_LIBXXSHM
-  descr.useShm = (dib->shminfo.shmid != -1);
+  descr.useShm = (physBitmap->shminfo.shmid != -1);
 #else
   descr.useShm = FALSE;
 #endif
-  descr.dibpitch = dib->dibSection.dsBm.bmWidthBytes;
+  descr.dibpitch = dibSection.dsBm.bmWidthBytes;
 
   if (toDIB)
     {
@@ -4247,8 +4200,8 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
 	 * use the DIB colormap instead - this is necessary in some
 	 * cases since we need to do depth conversion in some places
 	 * where real Windows can just copy data straight over */
-	colorMap = physBitmap->dib->colorMap;
-	nColorMap = physBitmap->dib->nColorMap;
+	colorMap = physBitmap->colorMap;
+	nColorMap = physBitmap->nColorMap;
       } else {
 	colorMap = X11DRV_DIB_BuildColorMap( physDevSrc, (WORD)-1,
 					     dib.dsBm.bmBitsPixel,
@@ -4277,7 +4230,7 @@ static void X11DRV_DIB_DoUpdateDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB)
 
     GetObjectW( physBitmap->hbitmap, sizeof(bitmap), &bitmap );
     X11DRV_DIB_DoCopyDIBSection(physBitmap, toDIB,
-                                physBitmap->dib->colorMap, physBitmap->dib->nColorMap,
+                                physBitmap->colorMap, physBitmap->nColorMap,
                                 physBitmap->pixmap, 0, 0, 0, 0,
                                 bitmap.bmWidth, bitmap.bmHeight);
 }
@@ -4308,45 +4261,33 @@ static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
  */
 static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 {
-  X11DRV_DIBSECTION *dib = physBitmap->dib;
-  INT ret = DIB_Status_None;
+    INT ret = DIB_Status_None;
 
-  if (dib) {
-    EnterCriticalSection(&(dib->lock));
-    ret = dib->status;
+    if (!physBitmap->image) return ret;  /* not a DIB section */
+    EnterCriticalSection(&physBitmap->lock);
+    ret = physBitmap->status;
     switch (req) {
     case DIB_Status_GdiMod:
       /* GDI access - request to draw on pixmap */
-      switch (dib->status)
+      switch (physBitmap->status)
       {
         default:
         case DIB_Status_None:
-	  dib->p_status = DIB_Status_GdiMod;
+	  physBitmap->p_status = DIB_Status_GdiMod;
 	  X11DRV_DIB_DoUpdateDIBSection( physBitmap, FALSE );
 	  break;
 
         case DIB_Status_GdiMod:
 	  TRACE("GdiMod requested in status GdiMod\n" );
-	  dib->p_status = DIB_Status_GdiMod;
+	  physBitmap->p_status = DIB_Status_GdiMod;
 	  break;
 
         case DIB_Status_InSync:
 	  TRACE("GdiMod requested in status InSync\n" );
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_NOACCESS );
-	  dib->status = DIB_Status_GdiMod;
-	  dib->p_status = DIB_Status_InSync;
+	  physBitmap->status = DIB_Status_GdiMod;
+	  physBitmap->p_status = DIB_Status_InSync;
 	  break;
-
-	case DIB_Status_AuxMod:
-	  TRACE("GdiMod requested in status AuxMod\n" );
-	  if (lossy) dib->status = DIB_Status_GdiMod;
-	  else (*dib->copy_aux)(dib->aux_ctx, DIB_Status_GdiMod);
-	  dib->p_status = DIB_Status_AuxMod;
-	  if (dib->status != DIB_Status_AppMod) {
-	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_NOACCESS );
-	    break;
-	  }
-	  /* fall through if copy_aux() had to change to AppMod state */
 
         case DIB_Status_AppMod:
 	  TRACE("GdiMod requested in status AppMod\n" );
@@ -4356,8 +4297,8 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 	    X11DRV_DIB_DoUpdateDIBSection( physBitmap, FALSE );
 	  }
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_NOACCESS );
-	  dib->p_status = DIB_Status_AppMod;
-	  dib->status = DIB_Status_GdiMod;
+	  physBitmap->p_status = DIB_Status_AppMod;
+	  physBitmap->status = DIB_Status_GdiMod;
 	  break;
       }
       break;
@@ -4365,25 +4306,12 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
     case DIB_Status_InSync:
       /* App access - request access to read DIB surface */
       /* (typically called from signal handler) */
-      switch (dib->status)
+      switch (physBitmap->status)
       {
         default:
         case DIB_Status_None:
 	  /* shouldn't happen from signal handler */
 	  break;
-
-	case DIB_Status_AuxMod:
-	  TRACE("InSync requested in status AuxMod\n" );
-	  if (lossy) dib->status = DIB_Status_InSync;
-	  else {
-	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-	    (*dib->copy_aux)(dib->aux_ctx, DIB_Status_InSync);
-	  }
-	  if (dib->status != DIB_Status_GdiMod) {
-	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
-	    break;
-	  }
-	  /* fall through if copy_aux() had to change to GdiMod state */
 
 	case DIB_Status_GdiMod:
 	  TRACE("InSync requested in status GdiMod\n" );
@@ -4392,7 +4320,7 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 	    X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
 	  }
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
-	  dib->status = DIB_Status_InSync;
+	  physBitmap->status = DIB_Status_InSync;
 	  break;
 
         case DIB_Status_InSync:
@@ -4411,33 +4339,24 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
     case DIB_Status_AppMod:
       /* App access - request access to write DIB surface */
       /* (typically called from signal handler) */
-      switch (dib->status)
+      switch (physBitmap->status)
       {
         default:
         case DIB_Status_None:
 	  /* shouldn't happen from signal handler */
 	  break;
 
-	case DIB_Status_AuxMod:
-	  TRACE("AppMod requested in status AuxMod\n" );
-	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-	  if (lossy) dib->status = DIB_Status_AppMod;
-	  else (*dib->copy_aux)(dib->aux_ctx, DIB_Status_AppMod);
-	  if (dib->status != DIB_Status_GdiMod)
-	    break;
-	  /* fall through if copy_aux() had to change to GdiMod state */
-
 	case DIB_Status_GdiMod:
 	  TRACE("AppMod requested in status GdiMod\n" );
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
 	  if (!lossy) X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
-	  dib->status = DIB_Status_AppMod;
+	  physBitmap->status = DIB_Status_AppMod;
 	  break;
 
         case DIB_Status_InSync:
 	  TRACE("AppMod requested in status InSync\n" );
 	  X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-	  dib->status = DIB_Status_AppMod;
+	  physBitmap->status = DIB_Status_AppMod;
 	  break;
 
         case DIB_Status_AppMod:
@@ -4447,21 +4366,11 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
       }
       break;
 
-    case DIB_Status_AuxMod:
-      if (dib->status == DIB_Status_None) {
-	dib->p_status = req;
-      } else {
-	if (dib->status != DIB_Status_AuxMod)
-	  dib->p_status = dib->status;
-	dib->status = DIB_Status_AuxMod;
-      }
-      break;
       /* it is up to the caller to do the copy/conversion, probably
        * using the return value to decide where to copy from */
     }
-    LeaveCriticalSection(&(dib->lock));
-  }
-  return ret;
+    LeaveCriticalSection(&physBitmap->lock);
+    return ret;
 }
 
 /***********************************************************************
@@ -4469,17 +4378,15 @@ static INT X11DRV_DIB_Coerce(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
  */
 static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
 {
-  X11DRV_DIBSECTION *dib = physBitmap->dib;
-  INT ret = DIB_Status_None;
+    INT ret = DIB_Status_None;
 
-  if (dib) {
+    if (!physBitmap->image) return ret;  /* not a DIB section */
     TRACE("Locking %p from thread %04lx\n", physBitmap->hbitmap, GetCurrentThreadId());
-    EnterCriticalSection(&(dib->lock));
-    ret = dib->status;
+    EnterCriticalSection(&physBitmap->lock);
+    ret = physBitmap->status;
     if (req != DIB_Status_None)
       X11DRV_DIB_Coerce(physBitmap, req, lossy);
-  }
-  return ret;
+    return ret;
 }
 
 /***********************************************************************
@@ -4487,29 +4394,16 @@ static INT X11DRV_DIB_Lock(X_PHYSBITMAP *physBitmap, INT req, BOOL lossy)
  */
 static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
 {
-  X11DRV_DIBSECTION *dib = physBitmap->dib;
-
-  if (dib) {
-    switch (dib->status)
+    if (!physBitmap->image) return;  /* not a DIB section */
+    switch (physBitmap->status)
     {
       default:
       case DIB_Status_None:
 	/* in case anyone is wondering, this is the "signal handler doesn't
 	 * work" case, where we always have to be ready for app access */
 	if (commit) {
-	  switch (dib->p_status)
+	  switch (physBitmap->p_status)
 	  {
-	    case DIB_Status_AuxMod:
-	      TRACE("Unlocking and syncing from AuxMod\n" );
-	      (*dib->copy_aux)(dib->aux_ctx, DIB_Status_AppMod);
-	      if (dib->status != DIB_Status_None) {
-		dib->p_status = dib->status;
-		dib->status = DIB_Status_None;
-	      }
-	      if (dib->p_status != DIB_Status_GdiMod)
-		break;
-	      /* fall through if copy_aux() had to change to GdiMod state */
-
 	    case DIB_Status_GdiMod:
 	      TRACE("Unlocking and syncing from GdiMod\n" );
 	      X11DRV_DIB_DoUpdateDIBSection( physBitmap, TRUE );
@@ -4521,7 +4415,7 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
 	  }
 	}
 	else TRACE("Unlocking with no changes\n");
-	dib->p_status = DIB_Status_None;
+	physBitmap->p_status = DIB_Status_None;
 	break;
 
       case DIB_Status_GdiMod:
@@ -4529,10 +4423,10 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
 	/* DIB was protected in Coerce */
 	if (!commit) {
 	  /* no commit, revert to InSync if applicable */
-	  if ((dib->p_status == DIB_Status_InSync) ||
-	      (dib->p_status == DIB_Status_AppMod)) {
+	  if ((physBitmap->p_status == DIB_Status_InSync) ||
+	      (physBitmap->p_status == DIB_Status_AppMod)) {
 	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READONLY );
-	    dib->status = DIB_Status_InSync;
+	    physBitmap->status = DIB_Status_InSync;
 	  }
 	}
 	break;
@@ -4548,26 +4442,9 @@ static void X11DRV_DIB_Unlock(X_PHYSBITMAP *physBitmap, BOOL commit)
 	/* this case is ordinary only called from the signal handler,
 	 * so we don't bother to check for !commit */
 	break;
-
-      case DIB_Status_AuxMod:
-	TRACE("Unlocking in status AuxMod\n" );
-	if (commit) {
-	  /* DIB may need protection now */
-	  if ((dib->p_status == DIB_Status_InSync) ||
-	      (dib->p_status == DIB_Status_AppMod))
-	    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_NOACCESS );
-	} else {
-	  /* no commit, revert to previous state */
-	  if (dib->p_status != DIB_Status_None)
-	    dib->status = dib->p_status;
-	  /* no protections changed */
-	}
-	dib->p_status = DIB_Status_None;
-	break;
     }
-    LeaveCriticalSection(&(dib->lock));
+    LeaveCriticalSection(&physBitmap->lock);
     TRACE("Unlocked %p\n", physBitmap->hbitmap);
-  }
 }
 
 /***********************************************************************
@@ -4663,7 +4540,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 {
   HBITMAP res = 0;
   X_PHYSBITMAP *physBitmap = NULL;
-  X11DRV_DIBSECTION *dib = NULL;
+  DIBSECTION *dib = NULL;
   int *colorMap = NULL;
   int nColorMap;
   RGBQUAD *colorTable = NULL;
@@ -4740,60 +4617,56 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   }
   /* Allocate Memory for DIB and fill structure */
   if (bm.bmBits)
-    dib = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(X11DRV_DIBSECTION));
+    dib = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dib));
   if (dib)
     {
-      dib->dibSection.dsBm = bm;
+      dib->dsBm = bm;
 
       if (core_header)
       {
           /* Convert the BITMAPCOREHEADER to a BITMAPINFOHEADER.
              The structure is already filled with zeros */
-          dib->dibSection.dsBmih.biSize = sizeof(BITMAPINFOHEADER);
-          dib->dibSection.dsBmih.biWidth = width;
-          dib->dibSection.dsBmih.biHeight = height;
-          dib->dibSection.dsBmih.biPlanes = planes;
-          dib->dibSection.dsBmih.biBitCount = bpp;
-          dib->dibSection.dsBmih.biCompression = compression;
+          dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
+          dib->dsBmih.biWidth = width;
+          dib->dsBmih.biHeight = height;
+          dib->dsBmih.biPlanes = planes;
+          dib->dsBmih.biBitCount = bpp;
+          dib->dsBmih.biCompression = compression;
       }
       else
       {
           /* Truncate extended bitmap headers (BITMAPV4HEADER etc.) */
-          dib->dibSection.dsBmih = *((BITMAPINFOHEADER*) bmi);
-          dib->dibSection.dsBmih.biSize = sizeof(BITMAPINFOHEADER);
+          dib->dsBmih = *((BITMAPINFOHEADER*) bmi);
+          dib->dsBmih.biSize = sizeof(BITMAPINFOHEADER);
       }
 
-      dib->dibSection.dsBmih.biSizeImage = totalSize;
+      dib->dsBmih.biSizeImage = totalSize;
       colorPtr = (LPBYTE) bmi + (WORD) bmi->bmiHeader.biSize;
 
       /* Set dsBitfields values */
        if ( usage == DIB_PAL_COLORS || bpp <= 8)
        {
-           dib->dibSection.dsBitfields[0] = dib->dibSection.dsBitfields[1] = dib->dibSection.dsBitfields[2] = 0;
+           dib->dsBitfields[0] = dib->dsBitfields[1] = dib->dsBitfields[2] = 0;
        }
        else switch( bpp )
        {
            case 15:
            case 16:
-               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0x7c00;
-               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x03e0;
-               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x001f;
+               dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0x7c00;
+               dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x03e0;
+               dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x001f;
                break;
 
            case 24:
            case 32:
-               dib->dibSection.dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0xff0000;
-               dib->dibSection.dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x00ff00;
-               dib->dibSection.dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x0000ff;
+               dib->dsBitfields[0] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr    ) : 0xff0000;
+               dib->dsBitfields[1] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 1) : 0x00ff00;
+               dib->dsBitfields[2] = (compression == BI_BITFIELDS) ? *((const DWORD *)colorPtr + 2) : 0x0000ff;
                break;
        }
-      dib->dibSection.dshSection = section;
-      dib->dibSection.dsOffset = offset;
+      dib->dshSection = section;
+      dib->dsOffset = offset;
 
-      dib->status    = DIB_Status_None;
-      dib->nColorMap = nColorMap;
-      dib->colorMap  = colorMap;
-      dib->colorTable = colorTable;
     }
 
   /* Create Device Dependent Bitmap and add DIB pointer */
@@ -4805,10 +4678,13 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       if (res)
       {
           BITMAPOBJ *bmp = GDI_GetObjPtr(res, BITMAP_MAGIC);
-          if (bmp) bmp->dib = &dib->dibSection;
+          if (bmp) bmp->dib = dib;
           GDI_ReleaseObj( res );
           physBitmap = X11DRV_init_phys_bitmap( res );
-          physBitmap->dib = dib;
+          physBitmap->status     = DIB_Status_None;
+          physBitmap->nColorMap  = nColorMap;
+          physBitmap->colorMap   = colorMap;
+          physBitmap->colorTable = colorTable;
       }
     }
 
@@ -4818,16 +4694,16 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
       wine_tsx11_lock();
 #ifdef HAVE_LIBXXSHM
       if (XShmQueryExtension(gdi_display) &&
-          (dib->image = X11DRV_XShmCreateImage( bm.bmWidth, effHeight,
-                                                physBitmap->pixmap_depth, &dib->shminfo )) )
+          (physBitmap->image = X11DRV_XShmCreateImage( bm.bmWidth, effHeight,
+                                                physBitmap->pixmap_depth, &physBitmap->shminfo )) )
       {
 	; /* Created Image */
       } else {
-          dib->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, physBitmap->pixmap_depth );
-          dib->shminfo.shmid = -1;
+          physBitmap->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, physBitmap->pixmap_depth );
+          physBitmap->shminfo.shmid = -1;
       }
 #else
-      dib->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, physBitmap->pixmap_depth );
+      physBitmap->image = X11DRV_DIB_CreateXImage( bm.bmWidth, effHeight, physBitmap->pixmap_depth );
 #endif
       wine_tsx11_unlock();
   }
@@ -4845,7 +4721,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 	    VirtualFree(bm.bmBits, 0L, MEM_RELEASE), bm.bmBits = NULL;
         }
 
-      if (dib && dib->image) { XDestroyImage(dib->image); dib->image = NULL; }
+      if (dib && physBitmap->image) { XDestroyImage(physBitmap->image); physBitmap->image = NULL; }
       HeapFree(GetProcessHeap(), 0, colorMap); colorMap = NULL;
       HeapFree(GetProcessHeap(), 0, colorTable); colorTable = NULL;
       HeapFree(GetProcessHeap(), 0, dib); dib = NULL;
@@ -4855,11 +4731,11 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
     {
       extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, BOOL (*proc)(LPVOID, LPCVOID), LPVOID arg);
       /* Install fault handler, if possible */
-      InitializeCriticalSection(&(dib->lock));
+      InitializeCriticalSection(&physBitmap->lock);
       if (VIRTUAL_SetFaultHandler(bm.bmBits, X11DRV_DIB_FaultHandler, physBitmap))
         {
           X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-          if (dib) dib->status = DIB_Status_AppMod;
+          physBitmap->status = DIB_Status_AppMod;
         }
     }
 
@@ -4871,34 +4747,31 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
 /***********************************************************************
  *           X11DRV_DIB_DeleteDIBSection
  */
-void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap)
+void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
 {
-  X11DRV_DIBSECTION *dib = physBitmap->dib;
-
-  if (dib->dibSection.dshSection)
+  if (dib->dshSection)
       X11DRV_DIB_Coerce(physBitmap, DIB_Status_InSync, FALSE);
 
-  if (dib->image)
+  if (physBitmap->image)
   {
       wine_tsx11_lock();
 #ifdef HAVE_LIBXXSHM
-      if (dib->shminfo.shmid != -1)
+      if (physBitmap->shminfo.shmid != -1)
       {
-          XShmDetach (gdi_display, &(dib->shminfo));
-          XDestroyImage (dib->image);
-          shmdt (dib->shminfo.shmaddr);
-          dib->shminfo.shmid = -1;
+          XShmDetach( gdi_display, &(physBitmap->shminfo) );
+          XDestroyImage( physBitmap->image );
+          shmdt( physBitmap->shminfo.shmaddr );
+          physBitmap->shminfo.shmid = -1;
       }
       else
 #endif
-          XDestroyImage( dib->image );
+          XDestroyImage( physBitmap->image );
       wine_tsx11_unlock();
   }
 
-  HeapFree(GetProcessHeap(), 0, dib->colorMap);
-  HeapFree(GetProcessHeap(), 0, dib->colorTable);
-
-  DeleteCriticalSection(&(dib->lock));
+  HeapFree(GetProcessHeap(), 0, physBitmap->colorMap);
+  HeapFree(GetProcessHeap(), 0, physBitmap->colorTable);
+  DeleteCriticalSection(&physBitmap->lock);
 }
 
 /***********************************************************************
@@ -4906,25 +4779,25 @@ void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap)
  */
 UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, const RGBQUAD *colors )
 {
-    X11DRV_DIBSECTION *dib;
+    DIBSECTION dib;
     UINT ret = 0;
     X_PHYSBITMAP *physBitmap = physDev->bitmap;
 
     if (!physBitmap) return 0;
-    dib = physBitmap->dib;
+    GetObjectW( physBitmap->hbitmap, sizeof(dib), &dib );
 
-    if (dib && dib->colorMap && start < dib->nColorMap) {
+    if (physBitmap->colorMap && start < physBitmap->nColorMap) {
         UINT end = count + start;
-        if (end > dib->nColorMap) end = dib->nColorMap;
+        if (end > physBitmap->nColorMap) end = physBitmap->nColorMap;
         /*
          * Changing color table might change the mapping between
          * DIB colors and X11 colors and thus alter the visible state
          * of the bitmap object.
          */
         X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod, FALSE );
-        memcpy(dib->colorTable + start, colors, (end - start) * sizeof(RGBQUAD));
-        X11DRV_DIB_GenColorMap( physDev, dib->colorMap, DIB_RGB_COLORS,
-                                dib->dibSection.dsBm.bmBitsPixel,
+        memcpy(physBitmap->colorTable + start, colors, (end - start) * sizeof(RGBQUAD));
+        X11DRV_DIB_GenColorMap( physDev, physBitmap->colorMap, DIB_RGB_COLORS,
+                                dib.dsBm.bmBitsPixel,
                                 TRUE, colors, start, end );
         X11DRV_DIB_Unlock( physBitmap, TRUE );
         ret = end - start;
@@ -4937,16 +4810,12 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
  */
 UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, RGBQUAD *colors )
 {
-    X11DRV_DIBSECTION *dib;
     UINT ret = 0;
     X_PHYSBITMAP *physBitmap = physDev->bitmap;
 
-    if (!physBitmap) return 0;
-    dib = physBitmap->dib;
-
-    if (dib && dib->colorTable && start < dib->nColorMap) {
-        if (start + count > dib->nColorMap) count = dib->nColorMap - start;
-        memcpy(colors, dib->colorTable + start, count * sizeof(RGBQUAD));
+    if (physBitmap && physBitmap->colorTable && start < physBitmap->nColorMap) {
+        if (start + count > physBitmap->nColorMap) count = physBitmap->nColorMap - start;
+        memcpy(colors, physBitmap->colorTable + start, count * sizeof(RGBQUAD));
         ret = count;
     }
     return ret;
