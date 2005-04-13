@@ -478,7 +478,7 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
                         XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
                         XNClientWindow, win,
                         XNFocusWindow, win,
-                        0);
+                        NULL);
         wine_tsx11_unlock();
         return xic;
     }
