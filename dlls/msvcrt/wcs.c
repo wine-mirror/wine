@@ -399,6 +399,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
     LPCWSTR q, p = format;
     pf_flags flags;
 
+    TRACE("format is %s\n",debugstr_w(format));
     while (*p)
     {
         q = strchrW( p, '%' );
@@ -454,8 +455,11 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
 
         /* deal with the field width specifier */
         flags.FieldLength = 0;
-        if( *p == '*' )
+        if( *p == '*' ) 
+        {
             flags.FieldLength = va_arg( valist, int );
+            p++;
+        }
         else while( isdigit(*p) )
         {
             flags.FieldLength *= 10;
