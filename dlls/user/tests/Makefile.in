@@ -15,6 +15,7 @@ CTESTS = \
 	generated.c \
 	input.c \
 	listbox.c \
+	menu.c \
 	msg.c \
 	resource.c \
 	sysparams.c \
