@@ -160,7 +160,9 @@
 @ stub GdiGetLocalDC
 @ stub GdiGetLocalFont
 @ stdcall GdiGradientFill(long ptr long ptr long long) 
-@ stub GdiIsMetaFileDC
+@ stdcall GdiIsMetaFileDC(long)
+@ stdcall GdiIsMetaPrintDC(long)
+@ stdcall GdiIsPlayMetafileDC(long)
 @ stub GdiPlayDCScript
 @ stub GdiPlayJournal
 @ stub GdiPlayScript

@@ -2138,3 +2138,37 @@ BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
     }
     return bRet;
 }
+
+/*******************************************************************
+ *      GdiIsMetaPrintDC [GDI32.@]
+ */
+BOOL WINAPI GdiIsMetaPrintDC(HDC hdc)
+{
+    FIXME("%p\n", hdc);
+    return FALSE;
+}
+
+/*******************************************************************
+ *      GdiIsMetaFileDC [GDI32.@]
+ */
+BOOL WINAPI GdiIsMetaFileDC(HDC hdc)
+{
+    TRACE("%p\n", hdc);
+
+    switch( GetObjectType( hdc ) )
+    {
+    case OBJ_METADC:
+    case OBJ_ENHMETADC:
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/*******************************************************************
+ *      GdiIsPlayMetafileDC [GDI32.@]
+ */
+BOOL WINAPI GdiIsPlayMetafileDC(HDC hdc)
+{
+    FIXME("%p\n", hdc);
+    return FALSE;
+}
