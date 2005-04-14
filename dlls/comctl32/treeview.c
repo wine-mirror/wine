@@ -657,8 +657,6 @@ TREEVIEW_SendCustomDrawItemNotify(TREEVIEW_INFO *infoPtr, HDC hdc,
                           (WPARAM)nmcd->hdr.idFrom,
 			  (LPARAM)&nmcdhdr);
 
-    infoPtr->clrText = nmcdhdr.clrText;
-    infoPtr->clrBk = nmcdhdr.clrTextBk;
     return (BOOL)retval;
 }
 
@@ -4220,14 +4218,17 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 
 	TREEVIEW_EnsureVisible(infoPtr, infoPtr->selectedItem, FALSE);
 
+	if (prevSelect)
+	    TREEVIEW_Invalidate(infoPtr, prevSelect);
+	if (newSelect)
+	    TREEVIEW_Invalidate(infoPtr, newSelect);
+
 	TREEVIEW_SendTreeviewNotify(infoPtr,
 				    TVN_SELCHANGEDW,
 				    cause,
 				    TVIF_HANDLE | TVIF_STATE | TVIF_PARAM,
 				    prevSelect,
 				    newSelect);
-	TREEVIEW_Invalidate(infoPtr, prevSelect);
-	TREEVIEW_Invalidate(infoPtr, newSelect);
 	break;
 
     case TVGN_DROPHILITE:
@@ -5304,8 +5305,8 @@ TREEVIEW_SetFocus(TREEVIEW_INFO *infoPtr)
 			      TVC_UNKNOWN);
     }
 
-    TREEVIEW_SendSimpleNotify(infoPtr, NM_SETFOCUS);
     TREEVIEW_Invalidate(infoPtr, infoPtr->selectedItem);
+    TREEVIEW_SendSimpleNotify(infoPtr, NM_SETFOCUS);
     return 0;
 }
 
@@ -5314,8 +5315,9 @@ TREEVIEW_KillFocus(TREEVIEW_INFO *infoPtr)
 {
     TRACE("\n");
 
-    TREEVIEW_SendSimpleNotify(infoPtr, NM_KILLFOCUS);
     TREEVIEW_Invalidate(infoPtr, infoPtr->selectedItem);
+    UpdateWindow(infoPtr->hwnd);
+    TREEVIEW_SendSimpleNotify(infoPtr, NM_KILLFOCUS);
     return 0;
 }
 
