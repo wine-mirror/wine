@@ -1875,12 +1875,14 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         case INTERNET_OPTION_PROXY:
         {
             LPWININETAPPINFOW lpwai = (LPWININETAPPINFOW)lpwhh;
+            WININETAPPINFOW wai;
 
-            if (!lpwhh)
+            if (lpwai == NULL)
             {
-                WARN("Invalid hInternet handle\n");
-                SetLastError(ERROR_INVALID_HANDLE);
-                return FALSE;
+                TRACE("Getting global proxy info\n");
+                memset(&wai, 0, sizeof(WININETAPPINFOW));
+                INTERNET_ConfigureProxyFromReg( &wai );
+                lpwai = &wai;
             }
 
             if (bIsUnicode)
