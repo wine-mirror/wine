@@ -3522,6 +3522,7 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
     }
 
     if (!(item = MENU_FindItem( &hMenu, &pos, flags ))) return FALSE;
+    MENU_GetMenu(hMenu)->Height = 0; /* force size recalculate */
     return MENU_SetItemData( item, flags, id, str );
 }
 
