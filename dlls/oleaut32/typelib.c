@@ -4516,7 +4516,6 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 		DWORD *argpos, VARIANT *arg, VARTYPE vt
 ) {
     UINT arglen = _argsize(vt)*sizeof(DWORD);
-    VARTYPE	oldvt;
     VARIANT	va;
 
     if ((vt==VT_PTR) && tdesc && (tdesc->u.lptdesc->vt == VT_VARIANT)) {
@@ -4650,7 +4649,6 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	return hres;
     }
 
-    oldvt = V_VT(arg);
     VariantInit(&va);
     if (VariantChangeType(&va,arg,0,vt)==S_OK) {
 	memcpy(argpos,&V_I4(&va), arglen);
