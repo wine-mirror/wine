@@ -775,6 +775,8 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    break;
 
 	case WM_ENABLE:
+	    infoPtr->dwStyle &= ~WS_DISABLED;
+	    infoPtr->dwStyle |= (wParam ? 0 : WS_DISABLED);
 	    if (infoPtr->dwStyle & WS_DISABLED) UPDOWN_CancelMode (infoPtr);
 	    InvalidateRect (infoPtr->Self, NULL, FALSE);
 	    break;
