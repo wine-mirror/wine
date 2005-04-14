@@ -124,5 +124,6 @@
 #define IDD_EDIT_STRING			2000
 #define IDC_VALUE_NAME			2001
 #define IDC_VALUE_DATA			2002
+#define IDD_EDIT_BINARY			2003
 
 #define IDC_STATIC                      -1

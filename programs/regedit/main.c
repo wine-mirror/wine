@@ -110,6 +110,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
     /* Initialize the Windows Common Controls DLL */
     InitCommonControls();
 
+    /* register our hex editor control */
+    HexEdit_Register();
+
     nClipboardFormat = RegisterClipboardFormat(strClipboardFormat);
     /* if (nClipboardFormat == 0) {
         DWORD dwError = GetLastError();

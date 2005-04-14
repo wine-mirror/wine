@@ -18,6 +18,76 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/* English Neutral Resources */
+
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    ID_FAVORITES_ADDTOFAVORITES "Adds keys to the favourites list"
+    ID_FAVORITES_REMOVEFAVORITE "Removes keys from the favourites list"
+END
+
+IDR_REGEDIT_MENU MENU DISCARDABLE
+BEGIN
+    POPUP "&Registry"
+    BEGIN
+        MENUITEM "&Import Registry File...",    ID_REGISTRY_IMPORTREGISTRYFILE
+        MENUITEM "&Export Registry File...",    ID_REGISTRY_EXPORTREGISTRYFILE
+        MENUITEM SEPARATOR
+        MENUITEM "&Connect Network Registry...", ID_REGISTRY_CONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM "&Disconnect Network Registry...", ID_REGISTRY_DISCONNECTNETWORKREGISTRY, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Print\tCtrl+P",              ID_REGISTRY_PRINT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_REGISTRY_EXIT
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "&Modify",                     ID_EDIT_MODIFY
+        MENUITEM SEPARATOR
+        POPUP "&New"
+        BEGIN
+            MENUITEM "&Key",                        ID_EDIT_NEW_KEY
+            MENUITEM SEPARATOR
+            MENUITEM "&String Value",               ID_EDIT_NEW_STRINGVALUE
+            MENUITEM "&Binary Value",               ID_EDIT_NEW_BINARYVALUE
+            MENUITEM "&DWORD Value",                ID_EDIT_NEW_DWORDVALUE
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Delete\tDel",                ID_EDIT_DELETE
+        MENUITEM "&Rename\tF2",                 ID_EDIT_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Copy Key Name",              ID_EDIT_COPYKEYNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Find\tCtrl+F",               ID_EDIT_FIND, GRAYED
+        MENUITEM "Find Ne&xt\tF3",              ID_EDIT_FINDNEXT, GRAYED
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "Status &Bar",                 ID_VIEW_STATUSBAR
+        MENUITEM SEPARATOR
+        MENUITEM "Sp&lit",                      ID_VIEW_SPLIT
+        MENUITEM SEPARATOR
+        MENUITEM "&Refresh\tF5",                ID_VIEW_REFRESH
+    END
+    POPUP "&Favourites"
+    BEGIN
+        MENUITEM "&Add to Favourites",          ID_FAVORITES_ADDTOFAVORITES
+        , GRAYED
+        MENUITEM "&Remove Favourite",           ID_FAVORITES_REMOVEFAVORITE
+        , GRAYED
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&Help Topics\tF1",            ID_HELP_HELPTOPICS
+        MENUITEM SEPARATOR
+        MENUITEM "&About Registry Editor",      ID_HELP_ABOUT
+    END
+END
+
+/* US English Resources */
+
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 /*
@@ -130,7 +200,7 @@ END
  */
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -155,7 +225,7 @@ BEGIN
 END
 
 IDD_EDIT_DWORD DIALOG DISCARDABLE  22, 17, 210, 100
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
 CAPTION "Edit DWORD"
 FONT 8, "MS Shell Dlg"
 BEGIN
@@ -166,6 +236,19 @@ BEGIN
     GROUPBOX        "Base", IDC_DWORD_BASE, 120, 30, 85, 37, BS_GROUPBOX
     AUTORADIOBUTTON "Hexadecimal", IDC_DWORD_HEX, 130, 40, 60, 10, WS_TABSTOP
     AUTORADIOBUTTON "Decimal", IDC_DWORD_DEC, 130, 52, 60, 10, WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
+    PUSHBUTTON   "Cancel",IDCANCEL,175,80,30,11,WS_GROUP
+END
+
+IDD_EDIT_BINARY DIALOG DISCARDABLE  22, 17, 210, 100
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Edit Binary"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT           "Value name:",IDC_STATIC,5,5,119,8
+    EDITTEXT        IDC_VALUE_NAME,5,15,200,12, WS_BORDER | WS_TABSTOP | WS_DISABLED
+    LTEXT           "Value data:",IDC_STATIC,5,30,90,8
+    CONTROL         "",IDC_VALUE_DATA,"HexEdit",WS_TABSTOP,4,40,200,40
     DEFPUSHBUTTON   "OK",IDOK,140,80,30,11,WS_GROUP
     PUSHBUTTON   "Cancel",IDCANCEL,175,80,30,11,WS_GROUP
 END

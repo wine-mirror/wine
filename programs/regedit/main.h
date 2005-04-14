@@ -39,6 +39,11 @@
 
 #define WM_NOTIFY_REFLECT (WM_USER+1024)
 
+/* HexEdit Class */
+#define HEXEDIT_CLASS TEXT("HexEdit")
+#define HEM_SETDATA (WM_USER+0)
+#define HEM_GETDATA (WM_USER+1)
+
 extern HINSTANCE hInst;
 
 /******************************************************************************/
@@ -117,5 +122,9 @@ extern BOOL DeleteKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName);
 extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
 extern BOOL RenameKey(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR newName);
+
+/* hexedit.c */
+extern void HexEdit_Register(void);
+extern void HexEdit_Unregister(void);
 
 #endif /* __MAIN_H__ */

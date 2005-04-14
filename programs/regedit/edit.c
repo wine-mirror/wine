@@ -38,6 +38,14 @@ static const TCHAR* editValueName;
 static TCHAR* stringValueData;
 static BOOL isDecimal;
 
+struct edit_params
+{
+    HKEY    hKey;
+    LPCTSTR lpszValueName;
+    void   *pData;
+    LONG    cbData;
+};
+
 INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
 {
     TCHAR title[256];
@@ -142,6 +150,54 @@ INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
     return FALSE;
 }
 
+static INT_PTR CALLBACK bin_modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    struct edit_params *params;
+    LPBYTE pData;
+    LONG cbData;
+    LONG lRet;
+
+    switch(uMsg) {
+    case WM_INITDIALOG:
+        params = (struct edit_params *)lParam;
+        SetWindowLongPtr(hwndDlg, DWLP_USER, (ULONG_PTR)params);
+        if (params->lpszValueName)
+            SetDlgItemText(hwndDlg, IDC_VALUE_NAME, params->lpszValueName);
+        else
+            SetDlgItemText(hwndDlg, IDC_VALUE_NAME, g_pszDefaultValueName);
+        SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_SETDATA, (WPARAM)params->cbData, (LPARAM)params->pData);
+        return TRUE;
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case IDOK:
+            params = (struct edit_params *)GetWindowLongPtr(hwndDlg, DWLP_USER);
+            cbData = SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, 0, 0);
+            pData = HeapAlloc(GetProcessHeap(), 0, cbData);
+
+            if (pData)
+            {
+                SendDlgItemMessage(hwndDlg, IDC_VALUE_DATA, HEM_GETDATA, (WPARAM)cbData, (LPARAM)pData);
+                lRet = RegSetValueEx(params->hKey, params->lpszValueName, 0, REG_BINARY, pData, cbData);
+            }
+            else
+                lRet = ERROR_OUTOFMEMORY;
+
+            if (lRet == ERROR_SUCCESS)
+                EndDialog(hwndDlg, 1);
+            else
+            {
+                error_code_messagebox(hwndDlg, lRet);
+                EndDialog(hwndDlg, 0);
+            }
+            return TRUE;
+        case IDCANCEL:
+            EndDialog(hwndDlg, 0);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static BOOL check_value(HWND hwnd, HKEY hKey, LPCTSTR valueName)
 {
     LONG lRet = RegQueryValueEx(hKey, valueName ? valueName : _T(""), 0, NULL, 0, NULL);
@@ -231,6 +287,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     DWORD type;
     LONG lRet;
     HKEY hKey;
+    LONG len;
 
     lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_READ | KEY_SET_VALUE, &hKey);
     if (lRet != ERROR_SUCCESS) {
@@ -239,7 +296,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
     }
 
     editValueName = valueName ? valueName : g_pszDefaultValueName;
-    if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, 0))) goto done;
+    if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, &len))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
         if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
@@ -257,6 +314,14 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
 		else error_code_messagebox(hwnd, lRet);
 	    }
 	}
+    } else if ( type == REG_BINARY ) {
+        struct edit_params params;
+        params.hKey = hKey;
+        params.lpszValueName = valueName;
+        params.pData = stringValueData;
+        params.cbData = len;
+        result = DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_EDIT_BINARY), hwnd,
+            bin_modify_dlgproc, (LPARAM)&params);
     } else {
         error(hwnd, IDS_UNSUPPORTED_TYPE, type);
     }
