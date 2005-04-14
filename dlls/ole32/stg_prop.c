@@ -545,7 +545,7 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     {
         if (rgpropid[i] != PID_ILLEGAL)
         {
-            size_t len = lstrlenW(rglpwstrName[i] + 1);
+            size_t len = lstrlenW(rglpwstrName[i]) + 1;
             LPWSTR name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
             strcpyW(name, rglpwstrName[i]);
