@@ -52,6 +52,7 @@ typedef BOOL (WINAPI *fnCanUnloadNow)();
 
 static HMODULE hMozCtl;
 
+HINSTANCE hInst;
 
 /* convert a guid to a wide character string */
 static void MSHTML_guid2wstr( const GUID *guid, LPWSTR wstr )
@@ -109,6 +110,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 MESSAGE("You need to install the Mozilla ActiveX control to\n");
                 MESSAGE("use Wine's builtin MSHTML dll.\n");
             }
+            hInst = hInstDLL;
 	    break;
 	case DLL_PROCESS_DETACH:
             if(hMozCtl)

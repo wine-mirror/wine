@@ -53,7 +53,7 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
         TRACE("(%p)->(IID_IHTMLDocument, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&IID_IHTMLDocument2, riid)) {
-        TRACE("(%p)->(IID_IDocument2, %p)\n", This, ppvObject);
+        TRACE("(%p)->(IID_IHTMLDocument2, %p)\n", This, ppvObject);
         *ppvObject = HTMLDOC(This);
     }else if(IsEqualGUID(&IID_IPersist, riid)) {
         TRACE("(%p)->(IID_IPersist, %p)\n", This, ppvObject);

@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "wingdi.h"
 #include "ole2.h"
 #include "docobj.h"
 
@@ -36,6 +37,57 @@
 #include "mshtml_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
+
+static const WCHAR wszInternetExplorer_Server[] =
+    {'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','_','S','e','r','v','e','r',0};
+
+static ATOM serverwnd_class = 0;
+
+static void paint_disabled(HWND hwnd) {
+    HDC hdc;
+    PAINTSTRUCT ps;
+    HBRUSH brush;
+    RECT rect;
+    HFONT font;
+
+    font = CreateFontA(25,0,0,0,400,0,0,0,ANSI_CHARSET,0,0,DEFAULT_QUALITY,DEFAULT_PITCH,NULL);
+    brush = CreateSolidBrush(RGB(255,255,255));
+    GetClientRect(hwnd, &rect);
+
+    hdc = BeginPaint(hwnd, &ps);
+    SelectObject(hdc, font);
+    SelectObject(hdc, brush);
+    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+    DrawTextA(hdc, "HTML rendering is currently disabled.",-1, &rect,
+            DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+    EndPaint(hwnd, &ps);
+
+    DeleteObject(font);
+    DeleteObject(brush);
+}
+
+static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    if(msg == WM_PAINT)
+        paint_disabled(hwnd);
+        
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+static void register_serverwnd_class()
+{
+    static WNDCLASSEXW wndclass = {
+        sizeof(WNDCLASSEXW),
+        CS_DBLCLKS,
+        serverwnd_proc,
+        0, 0, NULL, NULL, NULL, NULL, NULL,
+        wszInternetExplorer_Server,
+        NULL,
+    };
+    wndclass.hInstance = hInst;
+    serverwnd_class = RegisterClassExW(&wndclass);
+}
+
 
 /**********************************************************
  * IOleDocumentView implementation
@@ -111,15 +163,36 @@ static HRESULT WINAPI OleDocumentView_GetDocument(IOleDocumentView *iface, IUnkn
 static HRESULT WINAPI OleDocumentView_SetRect(IOleDocumentView *iface, LPRECT prcView)
 {
     DOCVIEW_THIS
-    FIXME("(%p)->(%p)\n", This, prcView);
-    return E_NOTIMPL;
+    RECT rect;
+
+    TRACE("(%p)->(%p)\n", This, prcView);
+
+    if(!prcView)
+        return E_INVALIDARG;
+
+    if(This->hwnd) {
+        GetClientRect(This->hwnd, &rect);
+        if(memcmp(prcView, &rect, sizeof(RECT))) {
+            InvalidateRect(This->hwnd,NULL,TRUE);
+            SetWindowPos(This->hwnd, NULL, prcView->left, prcView->top, prcView->right,
+                    prcView->bottom, SWP_NOZORDER | SWP_NOACTIVATE);
+        }
+    }
+    
+    return S_OK;
 }
 
 static HRESULT WINAPI OleDocumentView_GetRect(IOleDocumentView *iface, LPRECT prcView)
 {
     DOCVIEW_THIS
-    FIXME("(%p)->(%p)\n", This, prcView);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, prcView);
+
+    if(!prcView)
+        return E_INVALIDARG;
+
+    GetClientRect(This->hwnd, prcView);
+    return S_OK;
 }
 
 static HRESULT WINAPI OleDocumentView_SetRectComplex(IOleDocumentView *iface, LPRECT prcView,
@@ -140,8 +213,88 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
 static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL fUIActivate)
 {
     DOCVIEW_THIS
-    FIXME("(%p)->(%x)\n", This, fUIActivate);
-    return E_NOTIMPL;
+    HRESULT hres;
+    IOleInPlaceUIWindow *pIPWnd;
+    IOleInPlaceFrame *pIPFrame;
+    RECT posrect, cliprect;
+    OLEINPLACEFRAMEINFO frameinfo;
+    HWND parent_hwnd, hwnd;
+
+    TRACE("(%p)->(%x)\n", This, fUIActivate);
+
+    if(!This->ipsite) {
+        FIXME("This->ipsite = NULL\n");
+        return E_FAIL;
+    }
+
+    if(fUIActivate) {
+        if(This->hwnd)
+            return S_OK;
+        if(!serverwnd_class)
+            register_serverwnd_class();
+
+        hres = IOleInPlaceSite_CanInPlaceActivate(This->ipsite);
+        if(hres != S_OK) {
+            WARN("CanInPlaceActivate returned: %08lx\n", hres);
+            return FAILED(hres) ? hres : E_FAIL;
+        }
+
+        hres = IOleInPlaceSite_GetWindowContext(This->ipsite, &pIPFrame, &pIPWnd, &posrect, &cliprect, &frameinfo);
+        if(FAILED(hres)) {
+            WARN("GetWindowContext failed: %08lx\n", hres);
+            return hres;
+        }
+        if(pIPFrame)
+            IOleInPlaceFrame_Release(pIPFrame);
+        if(pIPWnd)
+            IOleInPlaceUIWindow_Release(pIPWnd);
+        TRACE("got window context: %p %p {%ld %ld %ld %ld} {%ld %ld %ld %ld} {%d %x %p %p %d}\n",
+                pIPFrame, pIPWnd, posrect.left, posrect.top, posrect.right, posrect.bottom,
+                cliprect.left, cliprect.top, cliprect.right, cliprect.bottom,
+                frameinfo.cb, frameinfo.fMDIApp, frameinfo.hwndFrame, frameinfo.haccel, frameinfo.cAccelEntries);
+
+        hres = IOleInPlaceSite_GetWindow(This->ipsite, &parent_hwnd);
+        if(FAILED(hres)) {
+            WARN("GetWindow failed: %08lx\n", hres);
+            return hres;
+        }
+
+        hwnd = CreateWindowExW(0, wszInternetExplorer_Server, NULL,
+                WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
+                parent_hwnd, NULL, hInst, This);
+
+        hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
+        if(FAILED(hres)) {
+            WARN("OnInPlaceActivate failed: %08lx\n", hres);
+            return hres;
+        }
+
+        SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+                SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
+        SetFocus(hwnd);
+
+        /* NOTE:
+         * Windows implementation calls:
+         * RegisterWindowMessage("MSWHEEL_ROLLMSG");
+         * SetTimer(This->hwnd, TIMER_ID, 100, NULL);
+         */
+
+        hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
+        if(SUCCEEDED(hres)) {
+            /* IOleInPlaceFrame_SetActiveObject(pIPFrame, ACTOBJ(This->pDoc), wszHTMLDocument); */
+        }else {
+            FIXME("OnUIActivate failed: %08lx\n", hres);
+            DestroyWindow(hwnd);
+            return hres;
+        }
+        This->hwnd = hwnd;
+    }else {
+        FIXME("deactivating is not supported\n");
+        return E_NOTIMPL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI OleDocumentView_Open(IOleDocumentView *iface)
@@ -204,4 +357,5 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->lpOleDocumentViewVtbl = &OleDocumentViewVtbl;
 
     This->ipsite = NULL;
+    This->hwnd = NULL;
 }

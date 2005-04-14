@@ -29,6 +29,8 @@ typedef struct {
 
     IOleClientSite *client;
     IOleInPlaceSite *ipsite;
+
+    HWND hwnd;
 } HTMLDocument;
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)     &(x)->lpHTMLDocument2Vtbl)
@@ -45,3 +47,5 @@ HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 void HTMLDocument_Persist_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);
+
+extern HINSTANCE hInst;
