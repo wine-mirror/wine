@@ -1319,7 +1319,7 @@ static int WCUSER_MainLoop(struct inner_data* data)
 {
     MSG		msg;
 
-    ShowWindow(PRIVATE(data)->hWnd, SW_SHOW);
+    ShowWindow(PRIVATE(data)->hWnd, data->nCmdShow);
     for (;;)
     {
 	switch (MsgWaitForMultipleObjects(1, &data->hSynchro, FALSE, INFINITE, QS_ALLINPUT))

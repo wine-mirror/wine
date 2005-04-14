@@ -58,6 +58,7 @@ struct inner_data {
     HANDLE		hConIn;		/* console input handle */
     HANDLE		hConOut;	/* screen buffer handle: has to be changed when active sb changes */
     HANDLE		hSynchro;	/* waitable handle signalled by server when something in server has been modified */
+    INT                 nCmdShow;       /* argument of WinMain */
 
     int			(*fnMainLoop)(struct inner_data* data);
     void		(*fnPosCursor)(const struct inner_data* data);

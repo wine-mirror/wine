@@ -1130,6 +1130,11 @@ BOOL WINAPI AllocConsole(void)
         siConsole.dwFlags |= STARTF_USEFILLATTRIBUTE;
         siConsole.dwFillAttribute = siCurrent.dwFillAttribute;
     }
+    if (siCurrent.dwFlags & STARTF_USESHOWWINDOW)
+    {
+        siConsole.dwFlags |= STARTF_USESHOWWINDOW;
+        siConsole.wShowWindow = siCurrent.wShowWindow;
+    }
     /* FIXME (should pass the unicode form) */
     if (siCurrent.lpTitle)
         siConsole.lpTitle = siCurrent.lpTitle;

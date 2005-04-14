@@ -530,7 +530,8 @@ static void WINECON_Delete(struct inner_data* data)
  * active screen buffer)
  */
 static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appname,
-                                       enum init_return (*backend)(struct inner_data*))
+                                       enum init_return (*backend)(struct inner_data*),
+                                       INT nCmdShow)
 {
     struct inner_data*	data = NULL;
     DWORD		ret;
@@ -548,6 +549,7 @@ static struct inner_data* WINECON_Init(HINSTANCE hInst, DWORD pid, LPCWSTR appna
         appname = si.lpTitle;
     }
 
+    data->nCmdShow = nCmdShow;
     /* load settings */
     WINECON_RegLoad(appname, &cfg);
 
@@ -758,7 +760,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
     {
     case from_event:
         /* case of wineconsole <evt>, signal process that created us that we're up and running */
-        if (!(data = WINECON_Init(hInst, 0, NULL, wci.backend))) return 0;
+        if (!(data = WINECON_Init(hInst, 0, NULL, wci.backend, nCmdShow))) return 0;
 	ret = SetEvent(wci.event);
 	if (!ret) WINE_ERR("SetEvent failed.\n");
         break;
@@ -768,7 +770,7 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
 
             MultiByteToWideChar(CP_ACP, 0, wci.ptr, -1, buffer, sizeof(buffer) / sizeof(buffer[0]));
 
-            if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, wci.backend)))
+            if (!(data = WINECON_Init(hInst, GetCurrentProcessId(), buffer, wci.backend, nCmdShow)))
                 return 0;
             ret = WINECON_Spawn(data, buffer);
             if (!ret)
