@@ -19,6 +19,12 @@
 #ifndef _WINUSER_
 #define _WINUSER_
 
+#if !defined(_USER32_)
+#define WINUSERAPI DECLSPEC_IMPORT
+#else
+#define WINUSERAPI
+#endif
+
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
