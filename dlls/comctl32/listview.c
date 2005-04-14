@@ -40,8 +40,7 @@
  *
  * Bugs
  *   -- Expand large item in ICON mode when the cursor is flying over the icon or text.
- *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs.
- *   -- in LISTVIEW_AddGroupSelection, we would send LVN_ODSTATECHANGED 
+ *   -- Support CustomDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs).
  *   -- LVA_SNAPTOGRID not implemented
  *   -- LISTVIEW_ApproximateViewRect partially implemented
  *   -- LISTVIEW_[GS]etColumnOrderArray stubs
@@ -98,7 +97,6 @@
  *   -- LVN_HOTTRACK
  *   -- LVN_MARQUEEBEGIN
  *   -- LVN_ODFINDITEM
- *   -- LVN_ODSTATECHANGED
  *   -- LVN_SETDISPINFO
  *   -- NM_HOVER
  *
@@ -557,7 +555,7 @@ static inline const char* debugrect(const RECT *rect)
     } else return "(null)";
 }
 
-static const char * debugscrollinfo(const SCROLLINFO *pScrollInfo)
+static const char* debugscrollinfo(const SCROLLINFO *pScrollInfo)
 {
     char* buf = debug_getbuf(), *text = buf;
     int len, size = DEBUG_BUFFER_SIZE;
@@ -2967,22 +2965,35 @@ static void LISTVIEW_AddGroupSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     INT nFirst = min(infoPtr->nSelectionMark, nItem);
     INT nLast = max(infoPtr->nSelectionMark, nItem);
-    INT i;
+    NMLVODSTATECHANGE nmlv;
     LVITEMW item;
+    BOOL bOldChange;
+    INT i;
+
+    /* Temporarily disable change notification
+     * If the control is LVS_OWNERDATA, we need to send
+     * only one LVN_ODSTATECHANGED notification.
+     * See MSDN documentation for LVN_ITEMCHANGED.
+     */
+    bOldChange = infoPtr->bDoChangeNotify;
+    if (infoPtr->dwStyle & LVS_OWNERDATA) infoPtr->bDoChangeNotify = FALSE;
 
     if (nFirst == -1) nFirst = nItem;
 
     item.state = LVIS_SELECTED;
     item.stateMask = LVIS_SELECTED;
 
-    /* FIXME: this is not correct LVS_OWNERDATA
-     * setting the item states individually will generate
-     * a LVN_ITEMCHANGED notification for each one. Instead,
-     * we have to send a LVN_ODSTATECHANGED notification.
-     * See MSDN documentation for LVN_ITEMCHANGED.
-     */
     for (i = nFirst; i <= nLast; i++)
 	LISTVIEW_SetItemState(infoPtr,i,&item);
+
+    ZeroMemory(&nmlv, sizeof(nmlv));
+    nmlv.iFrom = nFirst;
+    nmlv.iTo = nLast;
+    nmlv.uNewState = 0;
+    nmlv.uOldState = item.state;
+
+    notify_hdr(infoPtr, LVN_ODSTATECHANGED, (LPNMHDR)&nmlv);
+    infoPtr->bDoChangeNotify = bOldChange;
 }
 
 
@@ -7072,7 +7083,7 @@ static BOOL LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, const LVITE
 	bResult = LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE);
 
     /*
-     *update selection mark
+     * Update selection mark
      *
      * Investigation on windows 2k showed that selection mark was updated
      * whenever a new selection was made, but if the selected item was
