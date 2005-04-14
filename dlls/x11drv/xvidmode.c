@@ -23,15 +23,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <X11/Xlib.h>
+#include "x11drv.h"
 
 #ifdef HAVE_LIBXXF86VM
-#define XMD_H
-#include "basetsd.h"
 #include <X11/extensions/xf86vmode.h>
 #endif /* HAVE_LIBXXF86VM */
 
-#include "x11drv.h"
 #include "x11ddraw.h"
 #include "xvidmode.h"
 
