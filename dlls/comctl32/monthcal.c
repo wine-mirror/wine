@@ -122,7 +122,7 @@ typedef struct
 } MONTHCAL_INFO, *LPMONTHCAL_INFO;
 
 
-/* Offsets of days in the week to the weekday of  january 1. */
+/* Offsets of days in the week to the weekday of january 1 in a leap year */
 static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 
 
@@ -187,17 +187,17 @@ void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
    Need to find out if we're on a DST place & adjust the clock accordingly.
    Above function assumes we have a valid data.
    Valid for year>1752;  1 <= d <= 31, 1 <= m <= 12.
-   0 = Monday.
+   0 = Sunday.
 */
 
-/* returns the day in the week(0 == monday, 6 == sunday) */
+/* returns the day in the week(0 == sunday, 6 == saturday) */
 /* day(1 == 1st, 2 == 2nd... etc), year is the  year value */
 static int MONTHCAL_CalculateDayOfWeek(DWORD day, DWORD month, DWORD year)
 {
   year-=(month < 3);
 
   return((year + year/4 - year/100 + year/400 +
-         DayOfWeekTable[month-1] + day - 1 ) % 7);
+         DayOfWeekTable[month-1] + day ) % 7);
 }
 
 /* From a given point, calculate the row (weekpos), column(daypos)
@@ -537,7 +537,7 @@ static void MONTHCAL_Refresh(MONTHCAL_INFO *infoPtr, HDC hdc, PAINTSTRUCT* ps)
   i = infoPtr->firstDay;
 
   for(j=0; j<7; j++) {
-    GetLocaleInfoW( LOCALE_USER_DEFAULT,LOCALE_SABBREVDAYNAME1 + (i +j)%7, buf, countof(buf));
+    GetLocaleInfoW( LOCALE_USER_DEFAULT,LOCALE_SABBREVDAYNAME1 + (i+j+6)%7, buf, countof(buf));
     DrawTextW(hdc, buf, strlenW(buf), days, DT_CENTER | DT_VCENTER | DT_SINGLELINE );
     days->left+=infoPtr->width_increment;
     days->right+=infoPtr->width_increment;
@@ -886,7 +886,7 @@ MONTHCAL_GetFirstDayOfWeek(MONTHCAL_INFO *infoPtr)
 
 
 /* sets the first day of the week that will appear in the control */
-/* 0 == Monday, 6 == Sunday */
+/* 0 == Sunday, 6 == Saturday */
 /* FIXME: this needs to be implemented properly in MONTHCAL_Refresh() */
 /* FIXME: we need more error checking here */
 static LRESULT
@@ -904,7 +904,7 @@ MONTHCAL_SetFirstDayOfWeek(MONTHCAL_INFO *infoPtr, LPARAM lParam)
     {
       GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, buf, countof(buf));
       TRACE("%s %d\n", debugstr_w(buf), strlenW(buf));
-      infoPtr->firstDay = atoiW(buf);
+      infoPtr->firstDay = (atoiW(buf)+1)%7;
     }
   return prev;
 }
@@ -1238,6 +1238,7 @@ MONTHCAL_HitTest(MONTHCAL_INFO *infoPtr, LPARAM lParam)
 	retval = MCHT_CALENDARDATE;
 	lpht->st.wMonth = infoPtr->currentMonth;
 	lpht->st.wDay   = day;
+	lpht->st.wDayOfWeek   = MONTHCAL_CalculateDayOfWeek(day,lpht->st.wMonth,lpht->st.wYear);
       }
       goto done;
     }
