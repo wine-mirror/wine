@@ -3449,6 +3449,41 @@ static void X11DRV_DIB_GetImageBits_32( int lines, BYTE *dstbits,
     }
 }
 
+static int XGetSubImageErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
+{
+    return (event->request_code == X_GetImage && event->error_code == BadMatch);
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_SetImageBits_GetSubImage
+ *
+ *  Helper for X11DRV_DIB_SetImageBits
+ */
+static void X11DRV_DIB_SetImageBits_GetSubImage(
+        const X11DRV_DIB_IMAGEBITS_DESCR *descr, XImage *bmpImage)
+{
+    /* compressed bitmaps may contain gaps in them. So make a copy
+     * of the existing pixels first */
+    RECT bmprc, rc;
+
+    SetRect( &bmprc, descr->xDest, descr->yDest,
+             descr->xDest + descr->width , descr->yDest + descr->height );
+    GetRgnBox( descr->physDev->region, &rc );
+    /* convert from dc to drawable origin */
+    OffsetRect( &rc, descr->physDev->org.x, descr->physDev->org.y);
+    /* clip visible rect with bitmap */
+    if( IntersectRect( &rc, &rc, &bmprc))
+    {
+        X11DRV_expect_error( gdi_display, XGetSubImageErrorHandler, NULL );
+        XGetSubImage( gdi_display, descr->drawable, rc.left, rc.top,
+                      rc.right - rc.left, rc.bottom - rc.top, AllPlanes,
+                      ZPixmap, bmpImage,
+                      descr->xSrc + rc.left - bmprc.left,
+                      descr->ySrc + rc.top - bmprc.top);
+        X11DRV_check_error();
+    }
+}
+
 /***********************************************************************
  *           X11DRV_DIB_SetImageBits
  *
@@ -3491,10 +3526,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	break;
     case 4:
         if (descr->compression) {
-	    XGetSubImage( gdi_display, descr->drawable, descr->xDest, descr->yDest,
-			  descr->width, descr->height, AllPlanes, ZPixmap,
-			  bmpImage, descr->xSrc, descr->ySrc );
-
+            X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
 	    X11DRV_DIB_SetImageBits_RLE4( descr->lines, descr->bits,
 					  descr->infoWidth, descr->width,
 					  descr->xSrc, (int *)(descr->colorMap),
@@ -3507,9 +3539,7 @@ static int X11DRV_DIB_SetImageBits( const X11DRV_DIB_IMAGEBITS_DESCR *descr )
 	break;
     case 8:
         if (descr->compression) {
-	    XGetSubImage( gdi_display, descr->drawable, descr->xDest, descr->yDest,
-			  descr->width, descr->height, AllPlanes, ZPixmap,
-			  bmpImage, descr->xSrc, descr->ySrc );
+            X11DRV_DIB_SetImageBits_GetSubImage( descr, bmpImage);
 	    X11DRV_DIB_SetImageBits_RLE8( descr->lines, descr->bits,
 					  descr->infoWidth, descr->width,
 					  descr->xSrc, (int *)(descr->colorMap),
