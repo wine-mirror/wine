@@ -1796,70 +1796,6 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
  * Implementation of IPropertySetStorage
  */
 
-#define BITS_PER_BYTE    8
-#define CHARMASK         0x1f
-#define BITS_IN_CHARMASK 5
-
-/* Converts rfmtid to a string and returns the resulting string.  If rfmtid
- * is a well-known FMTID, it just returns a static string.  Otherwise it
- * creates the appropriate string name in str, which must be 27 characters
- * in length, and returns str.
- * Based on the algorithm described here:
- * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
- */
-static LPCWSTR format_id_to_name(REFFMTID rfmtid, LPWSTR str)
-{
-    static const char fmtMap[] = "abcdefghijklmnopqrstuvwxyz012345";
-    static const WCHAR szSummaryInfo[] = { 5,'S','u','m','m','a','r','y',
-        'I','n','f','o','r','m','a','t','i','o','n',0 };
-    static const WCHAR szDocSummaryInfo[] = { 5,'D','o','c','u','m','e','n','t',
-        'S','u','m','m','a','r','y','I','n','f','o','r','m','a','t','i','o','n',
-        0 };
-    LPCWSTR ret;
-
-    if (IsEqualGUID(&FMTID_SummaryInformation, rfmtid))
-        ret = szSummaryInfo;
-    else if (IsEqualGUID(&FMTID_DocSummaryInformation, rfmtid))
-        ret = szDocSummaryInfo;
-    else
-    {
-        BYTE *fmtptr;
-        WCHAR *pstr = str;
-        ULONG bitsRemaining = BITS_PER_BYTE;
-
-        *pstr++ = 5;
-        for (fmtptr = (BYTE *)rfmtid; fmtptr < (BYTE *)rfmtid + sizeof(FMTID); )
-        {
-            ULONG i = *fmtptr >> (BITS_PER_BYTE - bitsRemaining);
-
-            if (bitsRemaining >= BITS_IN_CHARMASK)
-            {
-                *pstr = (WCHAR)(fmtMap[i & CHARMASK]);
-                if (bitsRemaining == BITS_PER_BYTE && *pstr >= 'a' &&
-                 *pstr <= 'z')
-                    *pstr += 'A' - 'a';
-                pstr++;
-                bitsRemaining -= BITS_IN_CHARMASK;
-                if (bitsRemaining == 0)
-                {
-                    fmtptr++;
-                    bitsRemaining = BITS_PER_BYTE;
-                }
-            }
-            else
-            {
-                if (++fmtptr < (BYTE *)rfmtid + sizeof(FMTID))
-                    i |= *fmtptr << bitsRemaining;
-                *pstr++ = (WCHAR)(fmtMap[i & CHARMASK]);
-            }
-        }
-        *pstr = 0;
-        ret = str;
-    }
-    TRACE("returning %s\n", debugstr_w(ret));
-    return ret;
-}
-
 /************************************************************************
  * IPropertySetStorage_fnQueryInterface (IUnknown)
  *
@@ -1910,8 +1846,7 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
     IPropertyStorage** ppprstg)
 {
     _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
-    WCHAR nameBuf[27];
-    LPCWSTR name = NULL;
+    WCHAR name[CCH_MAX_PROPSTG_NAME];
     IStream *stm = NULL;
     HRESULT r;
 
@@ -1941,7 +1876,9 @@ static HRESULT WINAPI IPropertySetStorage_fnCreate(
         goto end;
     }
 
-    name = format_id_to_name(rfmtid, nameBuf);
+    r = FmtIdToPropStgName(rfmtid, name);
+    if (FAILED(r))
+        goto end;
 
     r = IStorage_CreateStream( (IStorage*)This, name, grfMode, 0, 0, &stm );
     if (FAILED(r))
@@ -1965,8 +1902,7 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
 {
     _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
     IStream *stm = NULL;
-    WCHAR nameBuf[27];
-    LPCWSTR name = NULL;
+    WCHAR name[CCH_MAX_PROPSTG_NAME];
     HRESULT r;
 
     TRACE("%p %s %08lx %p\n", This, debugstr_guid(rfmtid), grfMode, ppprstg);
@@ -1985,7 +1921,9 @@ static HRESULT WINAPI IPropertySetStorage_fnOpen(
         goto end;
     }
 
-    name = format_id_to_name(rfmtid, nameBuf);
+    r = FmtIdToPropStgName(rfmtid, name);
+    if (FAILED(r))
+        goto end;
 
     r = IStorage_OpenStream((IStorage*) This, name, 0, grfMode, 0, &stm );
     if (FAILED(r))
@@ -2007,17 +1945,17 @@ static HRESULT WINAPI IPropertySetStorage_fnDelete(
 {
     _ICOM_THIS_From_IPropertySetStorage(StorageImpl, ppstg);
     IStorage *stg = NULL;
-    WCHAR nameBuf[27];
-    LPCWSTR name = NULL;
+    WCHAR name[CCH_MAX_PROPSTG_NAME];
+    HRESULT r;
 
     TRACE("%p %s\n", This, debugstr_guid(rfmtid));
 
     if (!rfmtid)
         return E_INVALIDARG;
 
-    name = format_id_to_name(rfmtid, nameBuf);
-    if (!name)
-        return STG_E_FILENOTFOUND;
+    r = FmtIdToPropStgName(rfmtid, name);
+    if (FAILED(r))
+        return r;
 
     stg = (IStorage*) This;
     return IStorage_DestroyElement(stg, name);
@@ -2068,3 +2006,172 @@ static IPropertyStorageVtbl IPropertyStorage_Vtbl =
     IPropertyStorage_fnSetClass,
     IPropertyStorage_fnStat,
 };
+
+/***********************************************************************
+ * Format ID <-> name conversion
+ */
+static const WCHAR szSummaryInfo[] = { 5,'S','u','m','m','a','r','y',
+ 'I','n','f','o','r','m','a','t','i','o','n',0 };
+static const WCHAR szDocSummaryInfo[] = { 5,'D','o','c','u','m','e','n','t',
+ 'S','u','m','m','a','r','y','I','n','f','o','r','m','a','t','i','o','n',0 };
+
+#define BITS_PER_BYTE    8
+#define CHARMASK         0x1f
+#define BITS_IN_CHARMASK 5
+#define NUM_ALPHA_CHARS  26
+
+/***********************************************************************
+ * FmtIdToPropStgName					[ole32.@]
+ * Returns the storage name of the format ID rfmtid.
+ * PARAMS
+ *  rfmtid [I] Format ID for which to return a storage name
+ *  str    [O] Storage name associated with rfmtid.
+ *
+ * RETURNS
+ *  E_INVALIDARG if rfmtid or str i NULL, S_OK otherwise.
+ *
+ * NOTES
+ * str must be at least CCH_MAX_PROPSTG_NAME characters in length.
+ * Based on the algorithm described here:
+ * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
+ */
+HRESULT WINAPI FmtIdToPropStgName(const FMTID *rfmtid, LPOLESTR str)
+{
+    static const char fmtMap[] = "abcdefghijklmnopqrstuvwxyz012345";
+
+    TRACE("%s, %p\n", debugstr_guid(rfmtid), str);
+
+    if (!rfmtid) return E_INVALIDARG;
+    if (!str) return E_INVALIDARG;
+
+    if (IsEqualGUID(&FMTID_SummaryInformation, rfmtid))
+        lstrcpyW(str, szSummaryInfo);
+    else if (IsEqualGUID(&FMTID_DocSummaryInformation, rfmtid))
+        lstrcpyW(str, szDocSummaryInfo);
+    else if (IsEqualGUID(&FMTID_UserDefinedProperties, rfmtid))
+        lstrcpyW(str, szDocSummaryInfo);
+    else
+    {
+        BYTE *fmtptr;
+        WCHAR *pstr = str;
+        ULONG bitsRemaining = BITS_PER_BYTE;
+
+        *pstr++ = 5;
+        for (fmtptr = (BYTE *)rfmtid; fmtptr < (BYTE *)rfmtid + sizeof(FMTID); )
+        {
+            ULONG i = *fmtptr >> (BITS_PER_BYTE - bitsRemaining);
+
+            if (bitsRemaining >= BITS_IN_CHARMASK)
+            {
+                *pstr = (WCHAR)(fmtMap[i & CHARMASK]);
+                if (bitsRemaining == BITS_PER_BYTE && *pstr >= 'a' &&
+                 *pstr <= 'z')
+                    *pstr += 'A' - 'a';
+                pstr++;
+                bitsRemaining -= BITS_IN_CHARMASK;
+                if (bitsRemaining == 0)
+                {
+                    fmtptr++;
+                    bitsRemaining = BITS_PER_BYTE;
+                }
+            }
+            else
+            {
+                if (++fmtptr < (BYTE *)rfmtid + sizeof(FMTID))
+                    i |= *fmtptr << bitsRemaining;
+                *pstr++ = (WCHAR)(fmtMap[i & CHARMASK]);
+                bitsRemaining += BITS_PER_BYTE - BITS_IN_CHARMASK;
+            }
+        }
+        *pstr = 0;
+    }
+    TRACE("returning %s\n", debugstr_w(str));
+    return S_OK;
+}
+
+/***********************************************************************
+ * PropStgNameToFmtId					[ole32.@]
+ * Returns the format ID corresponding to the given name.
+ * PARAMS
+ *  str    [I] Storage name to convert to a format ID.
+ *  rfmtid [O] Format ID corresponding to str.
+ *
+ * RETURNS
+ *  E_INVALIDARG if rfmtid or str is NULL or if str can't be converted to
+ *  a format ID, S_OK otherwise.
+ *
+ * NOTES
+ * Based on the algorithm described here:
+ * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
+ */
+HRESULT WINAPI PropStgNameToFmtId(const LPOLESTR str, FMTID *rfmtid)
+{
+    HRESULT hr = E_INVALIDARG;
+
+    TRACE("%s, %p\n", debugstr_w(str), rfmtid);
+
+    if (!rfmtid) return E_INVALIDARG;
+    if (!str) return E_INVALIDARG;
+
+    if (!lstrcmpiW(str, szDocSummaryInfo))
+    {
+        memcpy(rfmtid, &FMTID_DocSummaryInformation, sizeof(*rfmtid));
+        hr = S_OK;
+    }
+    else if (!lstrcmpiW(str, szSummaryInfo))
+    {
+        memcpy(rfmtid, &FMTID_SummaryInformation, sizeof(*rfmtid));
+        hr = S_OK;
+    }
+    else
+    {
+        ULONG bits;
+        BYTE *fmtptr = (BYTE *)rfmtid - 1;
+        const WCHAR *pstr = str;
+
+        memset(rfmtid, 0, sizeof(*rfmtid));
+        for (bits = 0; bits < sizeof(FMTID) * BITS_PER_BYTE;
+         bits += BITS_IN_CHARMASK)
+        {
+            ULONG bitsUsed = bits % BITS_PER_BYTE, bitsStored;
+            WCHAR wc;
+
+            if (bitsUsed == 0)
+                fmtptr++;
+            wc = *++pstr - 'A';
+            if (wc > NUM_ALPHA_CHARS)
+            {
+                wc += 'A' - 'a';
+                if (wc > NUM_ALPHA_CHARS)
+                {
+                    wc += 'a' - '0' + NUM_ALPHA_CHARS;
+                    if (wc > CHARMASK)
+                    {
+                        WARN("invalid character (%d)\n", *pstr);
+                        goto end;
+                    }
+                }
+            }
+            *fmtptr |= wc << bitsUsed;
+            bitsStored = min(BITS_PER_BYTE - bitsUsed, BITS_IN_CHARMASK);
+            if (bitsStored < BITS_IN_CHARMASK)
+            {
+                wc >>= BITS_PER_BYTE - bitsUsed;
+                if (bits + bitsStored == sizeof(FMTID) * BITS_PER_BYTE)
+                {
+                    if (wc != 0)
+                    {
+                        WARN("extra bits\n");
+                        goto end;
+                    }
+                    break;
+                }
+                fmtptr++;
+                *fmtptr |= (BYTE)wc;
+            }
+        }
+        hr = S_OK;
+    }
+end:
+    return hr;
+}

@@ -96,6 +96,7 @@
 @ stdcall -private DllUnregisterServer()
 @ stdcall DoDragDrop(ptr ptr long ptr)
 @ stub EnableHookObject
+@ stdcall FmtIdToPropStgName(ptr wstr)
 @ stdcall FreePropVariantArray(long ptr)
 @ stdcall GetClassFile(wstr ptr)
 @ stdcall GetConvertStg(ptr)
@@ -212,6 +213,7 @@
 @ stdcall OleUninitialize()
 @ stub OpenOrCreateStream
 @ stdcall ProgIDFromCLSID(ptr ptr)
+@ stdcall PropStgNameToFmtId(wstr ptr)
 @ stdcall PropSysAllocString(wstr)
 @ stdcall PropSysFreeString(wstr)
 @ stdcall PropVariantClear(ptr)
