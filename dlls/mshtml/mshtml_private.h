@@ -17,30 +17,33 @@
  */
 
 typedef struct {
-    IHTMLDocument2Vtbl  *lpHTMLDocument2Vtbl;
-    IPersistMonikerVtbl *lpPersistMonikerVtbl;
-    IPersistFileVtbl    *lpPersistFileVtbl;
-    IMonikerPropVtbl    *lpMonikerPropVtbl;
-    IOleObjectVtbl      *lpOleObjectVtbl;
-    IOleDocumentVtbl    *lpOleDocumentVtbl;
-    IOleDocumentViewVtbl*lpOleDocumentViewVtbl;
+    IHTMLDocument2Vtbl          *lpHTMLDocument2Vtbl;
+    IPersistMonikerVtbl         *lpPersistMonikerVtbl;
+    IPersistFileVtbl            *lpPersistFileVtbl;
+    IMonikerPropVtbl            *lpMonikerPropVtbl;
+    IOleObjectVtbl              *lpOleObjectVtbl;
+    IOleDocumentVtbl            *lpOleDocumentVtbl;
+    IOleDocumentViewVtbl        *lpOleDocumentViewVtbl;
+    IOleInPlaceActiveObjectVtbl *lpOleInPlaceActiveObjectVtbl;
 
     ULONG ref;
 
     IOleClientSite *client;
     IOleInPlaceSite *ipsite;
+    IOleInPlaceFrame *frame;
 
     HWND hwnd;
 } HTMLDocument;
 
-#define HTMLDOC(x)       ((IHTMLDocument2*)     &(x)->lpHTMLDocument2Vtbl)
-#define PERSIST(x)       ((IPersist*)           &(x)->lpPersistFileVtbl)
-#define PERSISTMON(x)    ((IPersistMoniker*)    &(x)->lpPersistMonikerVtbl)
-#define PERSISTFILE(x)   ((IPersistFile*)       &(x)->lpPersistFileVtbl)
-#define MONPROP(x)       ((IMonikerProp*)       &(x)->lpMonikerPropVtbl)
-#define OLEOBJ(x)        ((IOleObject*)         &(x)->lpOleObjectVtbl)
-#define OLEDOC(x)        ((IOleDocument*)       &(x)->lpOleDocumentVtbl)
-#define DOCVIEW(x)       ((IOleDocumentView*)   &(x)->lpOleDocumentViewVtbl)
+#define HTMLDOC(x)       ((IHTMLDocument2*)          &(x)->lpHTMLDocument2Vtbl)
+#define PERSIST(x)       ((IPersist*)                &(x)->lpPersistFileVtbl)
+#define PERSISTMON(x)    ((IPersistMoniker*)         &(x)->lpPersistMonikerVtbl)
+#define PERSISTFILE(x)   ((IPersistFile*)            &(x)->lpPersistFileVtbl)
+#define MONPROP(x)       ((IMonikerProp*)            &(x)->lpMonikerPropVtbl)
+#define OLEOBJ(x)        ((IOleObject*)              &(x)->lpOleObjectVtbl)
+#define OLEDOC(x)        ((IOleDocument*)            &(x)->lpOleDocumentVtbl)
+#define DOCVIEW(x)       ((IOleDocumentView*)        &(x)->lpOleDocumentViewVtbl)
+#define ACTOBJ(x)        ((IOleInPlaceActiveObject*)  &(x)->lpOleInPlaceActiveObjectVtbl)
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 

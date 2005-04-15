@@ -40,6 +40,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static const WCHAR wszInternetExplorer_Server[] =
     {'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','_','S','e','r','v','e','r',0};
+static const WCHAR wszHTML_Document[] =
+    {'H','T','M','L',' ','D','o','c','u','m','e','n','t',0};
 
 static ATOM serverwnd_class = 0;
 
@@ -206,8 +208,12 @@ static HRESULT WINAPI OleDocumentView_SetRectComplex(IOleDocumentView *iface, LP
 static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
 {
     DOCVIEW_THIS
-    FIXME("(%p)->(%x)\n", This, fShow);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%x)\n", This, fShow);
+
+    if(This->hwnd)
+        ShowWindow(This->hwnd, fShow);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL fUIActivate)
@@ -244,8 +250,6 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             WARN("GetWindowContext failed: %08lx\n", hres);
             return hres;
         }
-        if(pIPFrame)
-            IOleInPlaceFrame_Release(pIPFrame);
         if(pIPWnd)
             IOleInPlaceUIWindow_Release(pIPWnd);
         TRACE("got window context: %p %p {%ld %ld %ld %ld} {%ld %ld %ld %ld} {%d %x %p %p %d}\n",
@@ -283,16 +287,23 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
-            /* IOleInPlaceFrame_SetActiveObject(pIPFrame, ACTOBJ(This->pDoc), wszHTMLDocument); */
+            IOleInPlaceFrame_SetActiveObject(pIPFrame, ACTOBJ(This), wszHTML_Document);
         }else {
             FIXME("OnUIActivate failed: %08lx\n", hres);
             DestroyWindow(hwnd);
             return hres;
         }
+        if(This->frame)
+            IOleInPlaceFrame_Release(This->frame);
+        This->frame = pIPFrame;
         This->hwnd = hwnd;
     }else {
-        FIXME("deactivating is not supported\n");
-        return E_NOTIMPL;
+        static const WCHAR wszEmpty[] = {0};
+    
+        if(This->frame)
+            IOleInPlaceFrame_SetActiveObject(This->frame, NULL, wszEmpty);
+        if(This->ipsite)
+            IOleInPlaceSite_OnUIDeactivate(This->ipsite, FALSE);
     }
     return S_OK;
 }
@@ -307,8 +318,19 @@ static HRESULT WINAPI OleDocumentView_Open(IOleDocumentView *iface)
 static HRESULT WINAPI OleDocumentView_CloseView(IOleDocumentView *iface, DWORD dwReserved)
 {
     DOCVIEW_THIS
-    FIXME("(%p)->(%lx)\n", This, dwReserved);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%lx)\n", This, dwReserved);
+
+    if(dwReserved)
+        WARN("dwReserved = %ld\n", dwReserved);
+
+    /* NOTE:
+     * Windows implementation calls QueryInterface(IID_IOleCommandTarget),
+     * QueryInterface(IID_IOleControlSite) and KillTimer
+     */
+
+    IOleDocumentView_Show(iface, FALSE);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleDocumentView_SaveViewState(IOleDocumentView *iface, LPSTREAM pstm)
@@ -357,5 +379,6 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->lpOleDocumentViewVtbl = &OleDocumentViewVtbl;
 
     This->ipsite = NULL;
+    This->frame = NULL;
     This->hwnd = NULL;
 }
