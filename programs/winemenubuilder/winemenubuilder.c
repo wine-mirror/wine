@@ -1010,7 +1010,6 @@ int PASCAL WinMain (HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show
             {
 	        WINE_ERR( "failed to build menu item for %s\n",token);
 	        ret = 1;
-                break;
             }
         }
     }
