@@ -145,6 +145,16 @@ struct wld_link_map {
 
 
 /*
+ * The __bb_init_func is an empty function only called when file is
+ * compiled with gcc flags "-fprofile-arcs -ftest-coverage".  This
+ * function is normally provided by libc's startup files, but since we
+ * build the preloader with "-nostartfiles -nodefaultlibs", we have to
+ * provide our own (empty) version, otherwise linker fails.
+ */
+void __bb_init_func() { return; }
+
+
+/*
  * The _start function is the entry and exit point of this program
  *
  *  It calls wld_start, passing a pointer to the args it receives
