@@ -207,7 +207,9 @@ struct option
 };
 
 static const struct option option_table[] = {
-  {"-h",    NONE, 0, do_usage,    "-h           Display this help message"},
+  {"--help",NONE, 0, do_usage,    "--help       Display this help message"},
+  {"-h",    NONE, 0, do_usage,    "-h           Synonym for --help"},
+  {"-?",    NONE, 0, do_usage,    "-?           Synonym for --help"},
   {"sym",   DMGL, 0, do_demangle, "sym <sym>    Demangle C++ symbol <sym> and exit"},
   {"spec",  SPEC, 0, do_spec,     "spec <dll>   Use dll for input file and generate implementation code"},
   {"-I",    SPEC, 1, do_include,  "-I dir       Look for prototypes in 'dir' (implies -c)"},
@@ -235,9 +237,9 @@ static const struct option option_table[] = {
 void do_usage (void)
 {
     const struct option *opt;
-    printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll>]\n");
+    printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll> | emf <emf> | lnk <lnk>]\n");
     printf ("Mode options (can be put as the mode (sym/spec/dump...) is declared):\n");
-    printf ("\tWhen used in -h mode\n");
+    printf ("\tWhen used in --help mode\n");
     for (opt = option_table; opt->name; opt++)
 	if (opt->mode == NONE)
 	    printf ("\t   %s\n", opt->usage);
@@ -262,7 +264,7 @@ void do_usage (void)
 	if (opt->mode == LNK)
 	    printf ("\t   %s\n", opt->usage);
 
-    puts ("\n");
+    puts ("");
     exit (1);
 }
 
