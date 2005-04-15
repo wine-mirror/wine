@@ -314,7 +314,8 @@ static void test_incorrect_api_usage(void)
 
     dwLen = 1;
     result = pCryptSignHashW(hHash, 0, NULL, 0, &temp, &dwLen);
-    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+    ok (!result && (GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), "%ld\n", GetLastError());
 
     result = pCryptSetKeyParam(hKey, 0, &temp, 1);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
@@ -326,7 +327,8 @@ static void test_incorrect_api_usage(void)
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 
     result = pCryptVerifySignatureW(hHash, &temp, 1, hKey, NULL, 0);
-    ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+    ok (!result && (GetLastError() == ERROR_INVALID_PARAMETER ||
+        GetLastError() == ERROR_CALL_NOT_IMPLEMENTED), "%ld\n", GetLastError());
 
     result = pCryptDestroyHash(hHash);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
