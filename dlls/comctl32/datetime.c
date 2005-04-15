@@ -917,7 +917,7 @@ DATETIME_VScroll (DATETIME_INFO *infoPtr, WORD wScroll)
 	DATETIME_SendDateTimeChangeNotify (infoPtr);
     }
 
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
@@ -1010,12 +1010,10 @@ DATETIME_Size (DATETIME_INFO *infoPtr, WORD flags, INT width, INT height)
     infoPtr->rcDraw = infoPtr->rcClient;
     
     if (infoPtr->dwStyle & DTS_UPDOWN) {
-        /* the updown control seems to ignore SetWindowPos messages */
-	DestroyWindow(infoPtr->hUpdown);
-	/* hmmm... the updown control seems to ignore the width parameter */
-	infoPtr->hUpdown = CreateUpDownControl (WS_CHILD | WS_BORDER | WS_VISIBLE,
-						infoPtr->rcClient.right-14, 0, 20, infoPtr->rcClient.bottom, 
-						infoPtr->hwndSelf, 1, 0, 0, UD_MAXVAL, UD_MINVAL, 0);
+        SetWindowPos(infoPtr->hUpdown, NULL,
+            infoPtr->rcClient.right-14, 0,
+            15, infoPtr->rcClient.bottom - infoPtr->rcClient.top,
+            SWP_NOACTIVATE | SWP_NOZORDER);
     }
     else {
         /* set the size of the button that drops the calendar down */
