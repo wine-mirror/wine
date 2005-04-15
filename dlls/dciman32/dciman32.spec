@@ -2,7 +2,7 @@
 @ stdcall DCICloseProvider(long)
 @ stub    DCICreateOffscreen
 @ stub    DCICreateOverlay
-@ stub    DCICreatePrimary
+@ stdcall DCICreatePrimary(long ptr)
 @ stub    DCIDestroy
 @ stub    DCIDraw
 @ stub    DCIEndAccess

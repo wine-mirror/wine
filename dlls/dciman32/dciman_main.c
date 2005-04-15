@@ -20,12 +20,14 @@
  */
 
 #include <stdarg.h>
-#include <stdio.h>
+#include <stdio.h> 
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(dciman);
 
 /***********************************************************************
  *           DllEntryPoint (DCIMAN32.@)
@@ -54,5 +56,16 @@ DCIOpenProvider(void) {
 void WINAPI
 DCICloseProvider(HDC hdc) {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return;
+}
+
+/**************************************************************************
+ *                 DCICreatePrimary (DCIMAN32.@)
+ */
+void WINAPI 
+DCICreatePrimary(HDC hdc, LPVOID pDciSurfaceInfo)
+{
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    FIXME("%p %p\n", hdc, pDciSurfaceInfo);
     return;
 }
