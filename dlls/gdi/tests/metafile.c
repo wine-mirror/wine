@@ -562,6 +562,54 @@ static void test_mf_conversions()
     }
 }
 
+static BOOL (WINAPI *pGdiIsMetaPrintDC)(HDC);
+static BOOL (WINAPI *pGdiIsMetaFileDC)(HDC);
+static BOOL (WINAPI *pGdiIsPlayMetafileDC)(HDC);
+
+static void test_gdiis(void)
+{
+    RECT rect = {0,0,100,100};
+    HDC hdc, hemfDC, hmfDC;
+    HENHMETAFILE hemf;
+    HMODULE hgdi32;
+
+    /* resolve all the functions */
+    hgdi32 = GetModuleHandle("gdi32");
+    pGdiIsMetaPrintDC = (void*) GetProcAddress(hgdi32, "GdiIsMetaPrintDC");
+    pGdiIsMetaFileDC = (void*) GetProcAddress(hgdi32, "GdiIsMetaFileDC");
+    pGdiIsPlayMetafileDC = (void*) GetProcAddress(hgdi32, "GdiIsPlayMetafileDC");
+
+    /* they should all exist or none should exist */
+    if(!pGdiIsMetaPrintDC)
+        return;
+
+    /* try with nothing */
+    ok(!pGdiIsMetaPrintDC(NULL), "ismetaprint with NULL parameter\n");
+    ok(!pGdiIsMetaFileDC(NULL), "ismetafile with NULL parameter\n");
+    ok(!pGdiIsPlayMetafileDC(NULL), "isplaymetafile with NULL parameter\n");
+
+    /* try with a metafile */
+    hmfDC = CreateMetaFile(NULL);
+    ok(!pGdiIsMetaPrintDC(hmfDC), "ismetaprint on metafile\n");
+    ok(pGdiIsMetaFileDC(hmfDC), "ismetafile on metafile\n");
+    ok(!pGdiIsPlayMetafileDC(hmfDC), "isplaymetafile on metafile\n");
+    DeleteObject(CloseMetaFile(hmfDC));
+
+    /* try with an enhanced metafile */
+    hdc = GetDC(NULL);
+    hemfDC = CreateEnhMetaFileW(hdc, NULL, &rect, NULL);
+    ok(hemfDC != NULL, "failed to create emf\n");
+
+    ok(!pGdiIsMetaPrintDC(hemfDC), "ismetaprint on emf\n");
+    ok(pGdiIsMetaFileDC(hemfDC), "ismetafile on emf\n");
+    ok(!pGdiIsPlayMetafileDC(hemfDC), "isplaymetafile on emf\n");
+
+    hemf = CloseEnhMetaFile(hemfDC);
+    ok(hemf != NULL, "failed to close EMF\n");
+    DeleteObject(hemf);
+    ReleaseDC(NULL,hdc);
+}
+
 START_TEST(metafile)
 {
     /* For enhanced metafiles (enhmfdrv) */
@@ -574,4 +622,6 @@ START_TEST(metafile)
 
     /* For metafile conversions */
     test_mf_conversions();
+
+    test_gdiis();
 }
