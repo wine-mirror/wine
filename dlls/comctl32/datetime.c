@@ -339,10 +339,22 @@ DATETIME_ReturnTxt (DATETIME_INFO *infoPtr, int count, LPWSTR result, int result
 	    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDAYNAME1+(date.wDayOfWeek+6)%7, result, resultSize);
 	    break;
 	case ONEDIGIT12HOUR:
-	    wsprintfW (result, fmt_dW, date.wHour - (date.wHour > 12 ? 12 : 0));
+	    if (date.wHour == 0) {
+	        result[0] = '1';
+	        result[1] = '2';
+	        result[2] = 0;
+	    }
+	    else
+	        wsprintfW (result, fmt_dW, date.wHour - (date.wHour > 12 ? 12 : 0));
 	    break;
 	case TWODIGIT12HOUR:
-	    wsprintfW (result, fmt__2dW, date.wHour - (date.wHour > 12 ? 12 : 0));
+	    if (date.wHour == 0) {
+	        result[0] = '1';
+	        result[1] = '2';
+	        result[2] = 0;
+	    }
+	    else
+	        wsprintfW (result, fmt__2dW, date.wHour - (date.wHour > 12 ? 12 : 0));
 	    break;
 	case ONEDIGIT24HOUR:
 	    wsprintfW (result, fmt_dW, date.wHour);
