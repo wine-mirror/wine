@@ -357,6 +357,7 @@ static void test_reg_save_key()
     DWORD ret;
 
     ret = RegSaveKey(hkey_main, "saved_key", NULL);
+    if (ERROR_PRIVILEGE_NOT_HELD == ret) return;
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 }
 
@@ -366,6 +367,7 @@ static void test_reg_load_key()
     HKEY hkHandle;
 
     ret = RegLoadKey(HKEY_LOCAL_MACHINE, "Test", "saved_key");
+    if (ERROR_PRIVILEGE_NOT_HELD == ret) return;
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     ret = RegOpenKey(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
