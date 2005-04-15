@@ -3445,7 +3445,7 @@ TOOLBAR_GetButtonSize (HWND hwnd)
 	return MAKELONG((WORD)infoPtr->nButtonWidth,
 			(WORD)infoPtr->nButtonHeight);
     else
-	return MAKELONG(8,7);
+	return MAKELONG(23,22);
 }
 
 
