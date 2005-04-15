@@ -9,6 +9,7 @@ CTESTS = \
 	env.c \
 	error.c \
 	generated.c \
+	info.c \
 	large_int.c \
 	path.c \
 	reg.c \

@@ -574,21 +574,25 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     {
     case SystemBasicInformation:
         {
-            SYSTEM_BASIC_INFORMATION* sbi = (SYSTEM_BASIC_INFORMATION*)SystemInformation;
-            if (Length >= sizeof(*sbi))
+            SYSTEM_BASIC_INFORMATION sbi;
+
+            sbi.dwUnknown1 = 0;
+            sbi.uKeMaximumIncrement = 0;
+            sbi.uPageSize = 1024; /* FIXME */
+            sbi.uMmNumberOfPhysicalPages = 12345; /* FIXME */
+            sbi.uMmLowestPhysicalPage = 0; /* FIXME */
+            sbi.uMmHighestPhysicalPage = 12345; /* FIXME */
+            sbi.uAllocationGranularity = 65536; /* FIXME */
+            sbi.pLowestUserAddress = 0; /* FIXME */
+            sbi.pMmHighestUserAddress = (void*)~0; /* FIXME */
+            sbi.uKeActiveProcessors = 1; /* FIXME */
+            sbi.bKeNumberProcessors = 1; /* FIXME */
+            len = sizeof(sbi);
+
+            if ( Length >= len)
             {
-                sbi->dwUnknown1 = 0;
-                sbi->uKeMaximumIncrement = 0;
-                sbi->uPageSize = 1024; /* FIXME */
-                sbi->uMmNumberOfPhysicalPages = 12345; /* FIXME */
-                sbi->uMmLowestPhysicalPage = 0; /* FIXME */
-                sbi->uMmHighestPhysicalPage = 12345; /* FIXME */
-                sbi->uAllocationGranularity = 65536; /* FIXME */
-                sbi->pLowestUserAddress = 0; /* FIXME */
-                sbi->pMmHighestUserAddress = (void*)~0; /* FIXME */
-                sbi->uKeActiveProcessors = 1; /* FIXME */
-                sbi->bKeNumberProcessors = 1; /* FIXME */
-                len = sizeof(*sbi);
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sbi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
@@ -808,8 +812,14 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     default:
 	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
-        ret = STATUS_NOT_IMPLEMENTED;
+
+        /* Several Information Classes are not implemented on Windows and return 2 different values 
+         * STATUS_NOT_IMPLEMENTED or STATUS_INVALID_INFO_CLASS
+         * in 95% of the cases it's STATUS_INVALID_INFO_CLASS, so use this as the default
+        */
+        ret = STATUS_INVALID_INFO_CLASS;
     }
+
     if (ResultLength) *ResultLength = len;
 
     return ret;
