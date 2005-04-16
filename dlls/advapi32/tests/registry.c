@@ -352,6 +352,14 @@ static void test_reg_close_key()
        "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %ld\n", ret);
 }
 
+static void test_reg_delete_key()
+{
+    DWORD ret;
+
+    ret = RegDeleteKey(hkey_main, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+}
+
 static void test_reg_save_key()
 {
     DWORD ret;
@@ -385,6 +393,7 @@ START_TEST(registry)
     test_query_value_ex();
     test_reg_open_key();
     test_reg_close_key();
+    test_reg_delete_key();
     test_reg_save_key();
     test_reg_load_key();
 

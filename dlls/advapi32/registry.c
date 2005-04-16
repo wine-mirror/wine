@@ -871,9 +871,11 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
     DWORD ret;
     HKEY tmp;
 
+    if (!name) return ERROR_INVALID_PARAMETER;
+
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    if (!name || !*name)
+    if (!*name)
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
     }
@@ -905,9 +907,11 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
     DWORD ret;
     HKEY tmp;
 
+    if (!name) return ERROR_INVALID_PARAMETER;
+
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    if (!name || !*name)
+    if (!*name)
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
     }
