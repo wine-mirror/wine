@@ -128,6 +128,7 @@
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
+@ stdcall NtInitiatePowerAction (long long long long)
 @ stdcall NtListenPort(ptr ptr)
 @ stdcall NtLoadDriver(ptr)
 @ stdcall NtLoadKey(ptr ptr)
@@ -154,6 +155,7 @@
 @ stdcall NtOpenThreadToken(long long long long)
 @ stdcall NtOpenTimer(ptr long ptr)
 @ stub NtPlugPlayControl
+@ stdcall NtPowerInformation(long ptr long ptr long)
 @ stub NtPrivilegeCheck
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
@@ -995,7 +997,6 @@
 @ stub RtlClosePropertySet
 @ stub RtlCreatePropertySet
 @ stub RtlSetPropertySetClassId
-@ stdcall NtPowerInformation(long long long long long)
 @ stdcall -ret64 VerSetConditionMask(long long long long)
 
 ##################

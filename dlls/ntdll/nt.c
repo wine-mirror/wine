@@ -860,13 +860,35 @@ NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
 }
 
 /******************************************************************************
+ *  NtInitiatePowerAction                       [NTDLL.@]
+ *
+ */
+NTSTATUS WINAPI NtInitiatePowerAction(
+	IN POWER_ACTION SystemAction,
+	IN SYSTEM_POWER_STATE MinSystemState,
+	IN ULONG Flags,
+	IN BOOLEAN Asynchronous)
+{
+        FIXME("(%d,%d,0x%08lx,%d),stub\n",
+		SystemAction,MinSystemState,Flags,Asynchronous);
+        return STATUS_NOT_IMPLEMENTED;
+}
+	
+
+/******************************************************************************
  *  NtPowerInformation				[NTDLL.@]
  *
  */
-NTSTATUS WINAPI NtPowerInformation(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD x5)
+NTSTATUS WINAPI NtPowerInformation(
+	IN POWER_INFORMATION_LEVEL InformationLevel,
+	IN PVOID lpInputBuffer,
+	IN ULONG nInputBufferSize,
+	IN PVOID lpOutputBuffer,
+	IN ULONG nOutputBufferSize)
 {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4,x5);
-	return 0;
+	FIXME("(%d,%p,%ld,%p,%ld),stub\n",
+		InformationLevel,lpInputBuffer,nInputBufferSize,lpOutputBuffer,nOutputBufferSize);
+	return STATUS_NOT_IMPLEMENTED;
 }
 
 /******************************************************************************
