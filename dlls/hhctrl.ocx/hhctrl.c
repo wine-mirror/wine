@@ -30,16 +30,64 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
+static const char *command_to_string(UINT command)
+{
+#define X(x) case x: return #x
+    switch (command)
+    {
+        X( HH_DISPLAY_TOPIC );
+        X( HH_DISPLAY_TOC );
+        X( HH_DISPLAY_INDEX );
+        X( HH_DISPLAY_SEARCH );
+        X( HH_SET_WIN_TYPE );
+        X( HH_GET_WIN_TYPE );
+        X( HH_GET_WIN_HANDLE );
+        X( HH_ENUM_INFO_TYPE );
+        X( HH_SET_INFO_TYPE );
+        X( HH_SYNC );
+        X( HH_RESERVED1 );
+        X( HH_RESERVED2 );
+        X( HH_RESERVED3 );
+        X( HH_KEYWORD_LOOKUP );
+        X( HH_DISPLAY_TEXT_POPUP );
+        X( HH_HELP_CONTEXT );
+        X( HH_TP_HELP_CONTEXTMENU );
+        X( HH_TP_HELP_WM_HELP );
+        X( HH_CLOSE_ALL );
+        X( HH_ALINK_LOOKUP );
+        X( HH_GET_LAST_ERROR );
+        X( HH_ENUM_CATEGORY );
+        X( HH_ENUM_CATEGORY_IT );
+        X( HH_RESET_IT_FILTER );
+        X( HH_SET_INCLUSIVE_FILTER );
+        X( HH_SET_EXCLUSIVE_FILTER );
+        X( HH_INITIALIZE );
+        X( HH_UNINITIALIZE );
+        X( HH_PRETRANSLATEMESSAGE );
+        X( HH_SET_GLOBAL_PROPERTY );
+    default: return "???";
+    }
+#undef X
+}
+
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 {
-    FIXME("(%p, %s, command=%d, data=%ld): stub\n", caller, debugstr_w(filename), command, data);
+    FIXME("(%p, %s, command=%s, data=%ld): stub\n",
+          caller, debugstr_w( filename ),
+          command_to_string( command ), data);
 
-    /* if command is HH_DISPLAY_TOPIC just display an informative message for now */
-    if (command == HH_DISPLAY_TOPIC)
-        MessageBoxA( NULL, "HTML Help functionality is currently unimplemented.\n\n"
-                     "Try installing Internet Explorer, or using a native hhctrl.ocx with the Mozilla ActiveX control.",
-                     "Wine", MB_OK | MB_ICONEXCLAMATION );
-    return 0;
+    switch (command)
+    {
+        case HH_DISPLAY_TOPIC:
+        case HH_DISPLAY_TOC:
+        case HH_DISPLAY_SEARCH:
+        case HH_HELP_CONTEXT:
+            MessageBoxA( NULL, "HTML Help functionality is currently unimplemented.\n\n"
+                         "Try installing Internet Explorer, or using a native hhctrl.ocx with the Mozilla ActiveX control.",
+                         "Wine", MB_OK | MB_ICONEXCLAMATION );
+        default:
+            return 0;
+    }
 }
 
 HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
@@ -50,11 +98,11 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
     if (filename)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
-    
+
         wfile = HeapAlloc( GetProcessHeap(), 0, (len+1) * sizeof(WCHAR));
         MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
     }
-    
+
     result = HtmlHelpW( caller, wfile, command, data );
 
     HeapFree( GetProcessHeap(), 0, wfile );
