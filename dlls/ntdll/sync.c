@@ -822,3 +822,14 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     }
     return STATUS_SUCCESS;
 }
+
+
+/******************************************************************
+ *		NtSignalAndWaitForSingleObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWaitObject,
+                                                BOOLEAN bAlertable, PLARGE_INTEGER Timeout )
+{
+    FIXME("%p %p %d %p\n", hSignalObject, hWaitObject, bAlertable, Timeout);
+    return STATUS_SUCCESS;
+}

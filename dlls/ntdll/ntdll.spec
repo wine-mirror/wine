@@ -977,7 +977,7 @@
 @ stub NtDeleteAtom
 @ stub NtFindAtom
 @ stub NtReadFileScatter
-@ stub NtSignalAndWaitForSingleObject
+@ stdcall NtSignalAndWaitForSingleObject(long long long ptr)
 @ stub NtWriteFileGather
 @ stub RtlAddAtomToAtomTable
 @ stub RtlCreateAtomTable
