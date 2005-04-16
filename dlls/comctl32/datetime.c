@@ -266,6 +266,7 @@ DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR lpszFormat)
     }
 
     DATETIME_UseFormat (infoPtr, lpszFormat);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
     return infoPtr->nrFields;
 }
@@ -865,6 +866,83 @@ DATETIME_KeyDown (DATETIME_INFO *infoPtr, DWORD vkCode, LPARAM flags)
 	FIXME ("Callbacks not implemented yet\n");
     }
 
+    if (vkCode >= '0' && vkCode <= '9') {
+        /* this is a somewhat simplified version of what Windows does */
+	SYSTEMTIME *date = &infoPtr->date;
+	switch (infoPtr->fieldspec[fieldNum]) {
+	    case ONEDIGITYEAR:
+	    case TWODIGITYEAR:
+	        date->wYear = date->wYear - (date->wYear%100) +
+	                (date->wYear%10)*10 + (vkCode-'0');
+	        date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
+	                date->wDay,date->wMonth,date->wYear);
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+            case INVALIDFULLYEAR:
+	    case FULLYEAR:
+	        date->wYear = (date->wYear%1000)*10 + (vkCode-'0');
+	        date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
+	                date->wDay,date->wMonth,date->wYear);
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	    case ONEDIGITMONTH:
+	    case TWODIGITMONTH:
+	        if ((date->wMonth%10) > 1 || (vkCode-'0') > 2)
+	            date->wMonth = vkCode-'0';
+	        else
+	            date->wMonth = (date->wMonth%10)*10+vkCode-'0';
+	        date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
+	                date->wDay,date->wMonth,date->wYear);
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	    case ONEDIGITDAY:
+	    case TWODIGITDAY:
+	        /* probably better checking here would help */
+	        if ((date->wDay%10) >= 3 && (vkCode-'0') > 1)
+	            date->wDay = vkCode-'0';
+	        else
+	            date->wDay = (date->wDay%10)*10+vkCode-'0';
+	        date->wDayOfWeek = DATETIME_CalculateDayOfWeek(
+	                date->wDay,date->wMonth,date->wYear);
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	    case ONEDIGIT12HOUR:
+	    case TWODIGIT12HOUR:
+	        if ((date->wHour%10) > 1 || (vkCode-'0') > 2)
+	            date->wHour = vkCode-'0';
+	        else
+	            date->wHour = (date->wHour%10)*10+vkCode-'0';
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	    case ONEDIGIT24HOUR:
+	    case TWODIGIT24HOUR:
+	        if ((date->wHour%10) > 2)
+	            date->wHour = vkCode-'0';
+	        else if ((date->wHour%10) == 2 && (vkCode-'0') > 3)
+	            date->wHour = vkCode-'0';
+	        else
+	            date->wHour = (date->wHour%10)*10+vkCode-'0';
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	    case ONEDIGITMINUTE:
+	    case TWODIGITMINUTE:
+	        if ((date->wMinute%10) > 5)
+	            date->wMinute = vkCode-'0';
+	        else
+	            date->wMinute = (date->wMinute%10)*10+vkCode-'0';
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	    case ONEDIGITSECOND:
+	    case TWODIGITSECOND:
+	        if ((date->wSecond%10) > 5)
+	            date->wSecond = vkCode-'0';
+	        else
+	            date->wSecond = (date->wSecond%10)*10+vkCode-'0';
+	        DATETIME_SendDateTimeChangeNotify (infoPtr);
+	        break;
+	}
+    }
+    
     switch (vkCode) {
 	case VK_ADD:
     	case VK_UP:
@@ -905,7 +983,7 @@ DATETIME_KeyDown (DATETIME_INFO *infoPtr, DWORD vkCode, LPARAM flags)
 	    break;
     }
 
-    InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
 
     return 0;
 }
