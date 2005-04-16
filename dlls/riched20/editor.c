@@ -356,6 +356,8 @@ void ME_RTFCharAttrHook(RTF_Info *info)
   }
 }
 
+/* FIXME this function doesn't get any information about context of the RTF tag, which is very bad,
+   the same tags mean different things in different contexts */
 void ME_RTFParAttrHook(RTF_Info *info)
 {
   PARAFORMAT2 fmt;
@@ -365,8 +367,30 @@ void ME_RTFParAttrHook(RTF_Info *info)
   switch(info->rtfMinor)
   {
   case rtfParDef: /* I'm not 100% sure what does it do, but I guess it restores default paragraph attributes */
-    fmt.dwMask = PFM_ALIGNMENT;
+    fmt.dwMask = PFM_ALIGNMENT | PFM_TABSTOPS | PFM_OFFSET | PFM_STARTINDENT;
     fmt.wAlignment = PFA_LEFT;
+    fmt.cTabCount = 0;
+    fmt.dxOffset = fmt.dxStartIndent = 0;
+    break;
+  case rtfFirstIndent:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    fmt.dwMask = PFM_STARTINDENT;
+    fmt.dxStartIndent = info->rtfParam + fmt.dxOffset;
+    break;
+  case rtfLeftIndent:
+  {
+    int first, left;
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    first = fmt.dxStartIndent;
+    left = info->rtfParam;
+    fmt.dwMask = PFM_STARTINDENT|PFM_OFFSET;
+    fmt.dxStartIndent = first + left;
+    fmt.dxOffset = -first;
+    break;
+  }
+  case rtfRightIndent:
+    fmt.dwMask = PFM_RIGHTINDENT;
+    fmt.dxRightIndent = info->rtfParam;
     break;
   case rtfQuadLeft:
   case rtfQuadJust:
@@ -380,6 +404,16 @@ void ME_RTFParAttrHook(RTF_Info *info)
   case rtfQuadCenter:
     fmt.dwMask = PFM_ALIGNMENT;
     fmt.wAlignment = PFA_CENTER;
+    break;
+  case rtfTabPos:
+    ME_GetSelectionParaFormat(info->editor, &fmt);
+    if (!(fmt.dwMask & PFM_TABSTOPS))
+    {
+      fmt.dwMask |= PFM_TABSTOPS;
+      fmt.cTabCount = 0;
+    }
+    if (fmt.cTabCount < MAX_TAB_STOPS)
+      fmt.rgxTabs[fmt.cTabCount++] = info->rtfParam;
     break;
   }  
   if (fmt.dwMask) {
@@ -1160,7 +1194,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       return 0; /* FIXME really 0 ? */
     }
     wstr = LOWORD(wParam);
-    if (((unsigned)wstr)>=' ' || wstr=='\r') {
+    if (((unsigned)wstr)>=' ' || wstr=='\r' || wstr=='\t') {
       /* FIXME maybe it would make sense to call EM_REPLACESEL instead ? */
       ME_Style *style = ME_GetInsertStyle(editor, 0);
       ME_SaveTempStyle(editor);

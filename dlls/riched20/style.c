@@ -124,6 +124,7 @@ ME_Style *ME_MakeStyle(CHARFORMAT2W *style) {
   s->nSequence = -2;
   s->nRefs = 1;
   s->hFont = NULL;
+  s->tm.tmAscent = -1;
   all_refs++;
   return s;
 }

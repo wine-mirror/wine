@@ -104,11 +104,11 @@ void ME_MoveCaret(ME_TextEditor *editor)
         {
           row = ME_FindItemBack(tmp, diStartRow);
           pSizeRun = run = tmp;
-          sz = ME_GetRunSize(&c, &run->member.run, ME_StrLen(run->member.run.strText));
+          sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, ME_StrLen(run->member.run.strText));
         }
       }
       if (pCursor->nOffset && !(run->member.run.nFlags & MERF_SKIPPED)) {
-        sz = ME_GetRunSize(&c, &run->member.run, pCursor->nOffset);
+        sz = ME_GetRunSize(&c, &para->member.para, &run->member.run, pCursor->nOffset);
       }
       CreateCaret(editor->hWnd, NULL, 0, pSizeRun->member.run.nAscent+pSizeRun->member.run.nDescent);
       SetCaretPos(run->member.run.pt.x+sz.cx,
@@ -311,10 +311,30 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
     len = lstrlenW(str);
   pos = str;
   /* FIXME this sucks - no respect for unicode (what else can be a line separator in unicode?) */
-  while(pos-str < len && *pos != '\r' && *pos != '\n')
+  while(pos-str < len && *pos != '\r' && *pos != '\n' && *pos != '\t')
     pos++;
-  /* handle EOLs */
-  if (pos-str < len) {   
+  if (pos-str < len && *pos == '\t') { /* handle tabs */
+    ME_DisplayItem *pNewRun = NULL;
+    WCHAR tab = '\t';
+
+    if (pos!=str)
+      ME_InsertTextFromCursor(editor, nCursor, str, pos-str, style);
+    
+    p = &editor->pCursors[nCursor];
+    assert(style);
+    assert(p->pRun->type == diRun);
+    pNewRun = ME_MakeRun(style, ME_MakeStringN(&tab, 1), MERF_TAB); /* addrefs style */
+    ME_InsertRun(editor, ME_CharOfsFromRunOfs(editor, p->pRun, p->nOffset), pNewRun);
+    ME_DestroyDisplayItem(pNewRun);
+    ME_ReleaseStyle(style);
+
+    pos++;
+    if(pos-str < len) {
+      ME_InsertTextFromCursor(editor, nCursor, pos, len-(pos-str), style);
+    }
+    return;
+  }
+  if (pos-str < len) {   /* handle EOLs */
     ME_DisplayItem *tp, *end_run;
     ME_Paragraph *para;
     ME_Style *tmp_style;

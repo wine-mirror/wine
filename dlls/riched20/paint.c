@@ -251,7 +251,7 @@ void ME_DrawRun(ME_Context *c, int x, int y, ME_DisplayItem *rundi, ME_Paragraph
   int runofs = run->nCharOfs+para->nCharOfs;
   
   /* you can always comment it out if you need visible paragraph marks */
-  if (run->nFlags & MERF_ENDPARA) 
+  if (run->nFlags & (MERF_ENDPARA|MERF_TAB)) 
     return;
   if (run->nFlags & MERF_GRAPHICS) {
     int blfrom, blto;
@@ -311,19 +311,19 @@ void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph) {
         visible = RectVisible(c->hDC, &rcPara);
         if (visible) {
           HBRUSH hbr;
+          hbr = CreateSolidBrush(ME_GetBackColor(c->editor));
           /* left margin */
           rc.left = c->rcView.left;
           rc.right = c->rcView.left+nMargWidth;
           rc.top = y;
           rc.bottom = y+p->member.row.nHeight;
-          FillRect(c->hDC, &rc, c->hbrMargin);
+          FillRect(c->hDC, &rc, hbr/* c->hbrMargin */);
           /* right margin */
           rc.left = xe;
           rc.right = c->rcView.right;
-          FillRect(c->hDC, &rc, c->hbrMargin);
-          rc.left = c->rcView.left+para->nLeftMargin;
+          FillRect(c->hDC, &rc, hbr/* c->hbrMargin */);
+          rc.left = c->rcView.left+nMargWidth;
           rc.right = xe;
-          hbr = CreateSolidBrush(ME_GetBackColor(c->editor));
           FillRect(c->hDC, &rc, hbr);
           DeleteObject(hbr);
         }

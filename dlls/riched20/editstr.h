@@ -86,6 +86,8 @@ typedef enum {
 #define MERF_STYLEFLAGS 0x0FFF
 /* run contains non-text content, which has its own rules for wrapping, sizing etc */
 #define MERF_GRAPHICS 1
+/* run is a tab (or, in future, any kind of content whose size is dependent on run position) */
+#define MERF_TAB 2
 
 /* run is splittable (contains white spaces in the middle or end) */
 #define MERF_SPLITTABLE 0x001000
@@ -101,6 +103,11 @@ typedef enum {
 #define MERF_CALCBYWRAP 0x0F0000
 /* the "end of paragraph" run, contains 1 character */
 #define MERF_ENDPARA    0x100000
+
+/* runs with any of these flags set cannot be joined */
+#define MERF_NOJOIN (MERF_GRAPHICS|MERF_TAB|MERF_ENDPARA)
+/* runs that don't contain real text */
+#define MERF_NOTEXT (MERF_GRAPHICS|MERF_TAB|MERF_ENDPARA)
 
 /* those flags are kept when the row is split */
 #define MERF_SPLITMASK (~(0))
