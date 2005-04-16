@@ -797,7 +797,7 @@ INT16 WINAPI CombineRgn16(HRGN16 hDest, HRGN16 hSrc1, HRGN16 hSrc2, INT16 mode)
 HBITMAP16 WINAPI CreateBitmap16( INT16 width, INT16 height, UINT16 planes,
                                  UINT16 bpp, LPCVOID bits )
 {
-    return HBITMAP_16( CreateBitmap( width, height, planes, bpp, bits ) );
+    return HBITMAP_16( CreateBitmap( width, height, planes & 0xff, bpp & 0xff, bits ) );
 }
 
 
