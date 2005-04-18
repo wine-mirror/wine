@@ -886,9 +886,52 @@ NTSTATUS WINAPI NtPowerInformation(
 	IN PVOID lpOutputBuffer,
 	IN ULONG nOutputBufferSize)
 {
-	FIXME("(%d,%p,%ld,%p,%ld),stub\n",
+	TRACE("(%d,%p,%ld,%p,%ld)\n",
 		InformationLevel,lpInputBuffer,nInputBufferSize,lpOutputBuffer,nOutputBufferSize);
-	return STATUS_NOT_IMPLEMENTED;
+	switch(InformationLevel) {
+		case SystemPowerCapabilities: {
+			PSYSTEM_POWER_CAPABILITIES PowerCaps = (PSYSTEM_POWER_CAPABILITIES)lpOutputBuffer;
+			FIXME("semi-stub: SystemPowerCapabilities\n");
+			if (nOutputBufferSize < sizeof(SYSTEM_POWER_CAPABILITIES))
+				return STATUS_BUFFER_TOO_SMALL;
+			/* FIXME: These values are based off a native XP desktop, should probably use APM/ACPI to get the 'real' values */
+			PowerCaps->PowerButtonPresent = TRUE;
+			PowerCaps->SleepButtonPresent = FALSE;
+			PowerCaps->LidPresent = FALSE;
+			PowerCaps->SystemS1 = TRUE;
+			PowerCaps->SystemS2 = FALSE;
+			PowerCaps->SystemS3 = FALSE;
+			PowerCaps->SystemS4 = TRUE;
+			PowerCaps->SystemS5 = TRUE;
+			PowerCaps->HiberFilePresent = TRUE;
+			PowerCaps->FullWake = TRUE;
+			PowerCaps->VideoDimPresent = FALSE;
+			PowerCaps->ApmPresent = FALSE;
+			PowerCaps->UpsPresent = FALSE;
+			PowerCaps->ThermalControl = FALSE;
+			PowerCaps->ProcessorThrottle = FALSE;
+			PowerCaps->ProcessorMinThrottle = 100;
+			PowerCaps->ProcessorMaxThrottle = 100;
+			PowerCaps->DiskSpinDown = TRUE;
+			PowerCaps->SystemBatteriesPresent = FALSE;
+			PowerCaps->BatteriesAreShortTerm = FALSE;
+			PowerCaps->BatteryScale[0].Granularity = 0;
+			PowerCaps->BatteryScale[0].Capacity = 0;
+			PowerCaps->BatteryScale[1].Granularity = 0;
+			PowerCaps->BatteryScale[1].Capacity = 0;
+			PowerCaps->BatteryScale[2].Granularity = 0;
+			PowerCaps->BatteryScale[2].Capacity = 0;
+			PowerCaps->AcOnLineWake = PowerSystemUnspecified;
+			PowerCaps->SoftLidWake = PowerSystemUnspecified;
+			PowerCaps->RtcWake = PowerSystemSleeping1;
+			PowerCaps->MinDeviceWakeState = PowerSystemUnspecified;
+			PowerCaps->DefaultLowLatencyWake = PowerSystemUnspecified;
+			return STATUS_SUCCESS;
+		}
+		default:
+			FIXME("Unimplemented NtPowerInformation action: %d\n", InformationLevel);
+			return STATUS_NOT_IMPLEMENTED;
+	}
 }
 
 /******************************************************************************
