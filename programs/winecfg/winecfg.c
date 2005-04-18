@@ -125,7 +125,7 @@ static char *get_config_key (char *subkey, char *name, char *def)
 end:
     if (hSubKey) RegCloseKey(hSubKey);
 
-    return buffer;
+    return (char*)buffer;
 }
 
 /**

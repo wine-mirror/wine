@@ -112,9 +112,9 @@ unsigned int _mbctoupper(unsigned int c)
 unsigned char* _mbsdec(const unsigned char* start, const unsigned char* cur)
 {
   if(MSVCRT___mb_cur_max > 1)
-    return (char *)(_ismbstrail(start,cur-1) ? cur - 2 : cur -1);
+    return (unsigned char *)(_ismbstrail(start,cur-1) ? cur - 2 : cur -1);
 
-  return (char *)cur - 1; /* ASCII CP or SB char */
+  return (unsigned char *)cur - 1; /* ASCII CP or SB char */
 }
 
 /*********************************************************************

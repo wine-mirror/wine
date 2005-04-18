@@ -372,7 +372,7 @@ static	void cvtSS16imaK(PACMDRVSTREAMINSTANCE adsi,
 
     for (; nblock > 0; nblock--)
     {
-        char*   in_dst = dst;
+        unsigned char*   in_dst = dst;
 
         /* generate header */
     	sampleL = R16(src);  src += 2;
@@ -435,7 +435,7 @@ static	void cvtMM16imaK(PACMDRVSTREAMINSTANCE adsi,
 
     for (; nblock > 0; nblock--)
     {
-        char*   in_dst = dst;
+        unsigned char*   in_dst = dst;
 
         /* generate header */
         /* FIXME: what about the last effective sample from previous block ??? */
