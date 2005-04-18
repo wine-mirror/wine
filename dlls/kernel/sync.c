@@ -41,6 +41,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
@@ -1051,15 +1054,20 @@ HANDLE WINAPI CreateNamedPipeA( LPCSTR name, DWORD dwOpenMode,
 HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
                                 DWORD dwPipeMode, DWORD nMaxInstances,
                                 DWORD nOutBufferSize, DWORD nInBufferSize,
-                                DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES attr )
+                                DWORD nDefaultTimeOut, LPSECURITY_ATTRIBUTES sa )
 {
-    HANDLE ret;
+    HANDLE handle;
     UNICODE_STRING nt_name;
-    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
+    OBJECT_ATTRIBUTES attr;
+    DWORD options;
+    BOOLEAN pipe_type, read_mode, non_block;
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER timeout;
 
     TRACE("(%s, %#08lx, %#08lx, %ld, %ld, %ld, %ld, %p)\n",
           debugstr_w(name), dwOpenMode, dwPipeMode, nMaxInstances,
-          nOutBufferSize, nInBufferSize, nDefaultTimeOut, attr );
+          nOutBufferSize, nInBufferSize, nDefaultTimeOut, sa );
 
     if (!RtlDosPathNameToNtPathName_U( name, &nt_name, NULL, NULL ))
     {
@@ -1072,30 +1080,42 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
         RtlFreeUnicodeString( &nt_name );
         return INVALID_HANDLE_VALUE;
     }
-    if (nt_name.Length < sizeof(leadin) ||
-        strncmpiW( nt_name.Buffer, leadin, sizeof(leadin)/sizeof(leadin[0])))
-    {
-        SetLastError( ERROR_INVALID_NAME );
-        RtlFreeUnicodeString( &nt_name );
-        return INVALID_HANDLE_VALUE;
-    }
-    SERVER_START_REQ( create_named_pipe )
-    {
-        req->openmode = dwOpenMode;
-        req->pipemode = dwPipeMode;
-        req->maxinstances = nMaxInstances;
-        req->outsize = nOutBufferSize;
-        req->insize = nInBufferSize;
-        req->timeout = nDefaultTimeOut;
-        req->inherit = (attr && (attr->nLength>=sizeof(*attr)) && attr->bInheritHandle);
-        wine_server_add_data( req, nt_name.Buffer + 4, nt_name.Length - 4*sizeof(WCHAR) );
-        SetLastError(0);
-        if (!wine_server_call_err( req )) ret = reply->handle;
-        else ret = INVALID_HANDLE_VALUE;
-    }
-    SERVER_END_REQ;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = &nt_name;
+    attr.Attributes               = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    options = 0;
+    if (dwOpenMode & FILE_FLAG_WRITE_THROUGH) options |= FILE_WRITE_THROUGH;
+    if (!(dwOpenMode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_ALERT;
+    if ((dwOpenMode & PIPE_ACCESS_DUPLEX) == PIPE_ACCESS_DUPLEX)
+        options |= FILE_PIPE_FULL_DUPLEX;
+    else if (dwOpenMode & PIPE_ACCESS_INBOUND) options |= FILE_PIPE_INBOUND;
+    else if (dwOpenMode & PIPE_ACCESS_OUTBOUND) options |= FILE_PIPE_OUTBOUND;
+    pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) ? TRUE : FALSE;
+    read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) ? TRUE : FALSE;
+    non_block = (dwPipeMode & PIPE_NOWAIT) ? TRUE : FALSE;
+    if (nMaxInstances >= PIPE_UNLIMITED_INSTANCES) nMaxInstances = ULONG_MAX;
+
+    timeout.QuadPart = (ULONGLONG)nDefaultTimeOut * -10000;
+
+    SetLastError(0);
+        
+    status = NtCreateNamedPipeFile(&handle, 0, &attr, &iosb, 0, FILE_OVERWRITE_IF,
+                                   options, pipe_type, read_mode, non_block, 
+                                   nMaxInstances, nInBufferSize, nOutBufferSize,
+                                   &timeout);
+
     RtlFreeUnicodeString( &nt_name );
-    return ret;
+    if (status)
+    {
+        handle = INVALID_HANDLE_VALUE;
+        SetLastError( RtlNtStatusToDosError(status) );
+    }
+    return handle;
 }
 
 
@@ -1177,17 +1197,21 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
 }
 
 /***********************************************************************
- *           SYNC_CompletePipeOverlapped   (Internal)
+ *           PIPE_CompletionWait   (Internal)
  */
-static void CALLBACK SYNC_CompletePipeOverlapped (LPOVERLAPPED overlapped, DWORD result)
+static void CALLBACK PIPE_CompletionWait(void *user, PIO_STATUS_BLOCK iosb, ULONG status)
 {
-    TRACE("for %p result %08lx\n",overlapped,result);
-    if(!overlapped)
-        return;
-    overlapped->Internal = result;
-    SetEvent(overlapped->hEvent);
-}
+    LPOVERLAPPED        ovlp = (LPOVERLAPPED)user;
 
+    TRACE("for %p/%p, status=%08lx\n", ovlp, iosb, status);
+
+    if (ovlp)
+    {
+        ovlp->Internal = status;
+        SetEvent(ovlp->hEvent);
+    }
+    TRACE("done\n");
+}
 
 /***********************************************************************
  *           WaitNamedPipeA   (KERNEL32.@)
@@ -1243,7 +1267,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     {
         req->timeout = nTimeOut;
         req->overlapped = &ov;
-        req->func = SYNC_CompletePipeOverlapped;
+        req->func = PIPE_CompletionWait;
         wine_server_add_data( req, nt_name.Buffer + 4, nt_name.Length - 4*sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
     }
@@ -1265,62 +1289,49 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
 
 
 /***********************************************************************
- *           SYNC_ConnectNamedPipe   (Internal)
- */
-static BOOL SYNC_ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
-{
-    BOOL ret;
-
-    if(!overlapped)
-        return FALSE;
-
-    overlapped->Internal = STATUS_PENDING;
-
-    SERVER_START_REQ( connect_named_pipe )
-    {
-        req->handle = hPipe;
-        req->overlapped = overlapped;
-        req->func = SYNC_CompletePipeOverlapped;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
-/***********************************************************************
  *           ConnectNamedPipe   (KERNEL32.@)
  */
 BOOL WINAPI ConnectNamedPipe(HANDLE hPipe, LPOVERLAPPED overlapped)
 {
-    OVERLAPPED ov;
-    BOOL ret;
+    BOOL                ret;
+    LPOVERLAPPED        pov;
+    OVERLAPPED          ov;
 
-    TRACE("(%p,%p)\n",hPipe, overlapped);
+    TRACE("(%p,%p)\n", hPipe, overlapped);
 
-    if(overlapped)
+    if (!overlapped)
     {
-        if(SYNC_ConnectNamedPipe(hPipe,overlapped))
-            SetLastError( ERROR_IO_PENDING );
-        return FALSE;
+        memset(&ov, 0, sizeof(ov));
+        ov.hEvent = CreateEventW(NULL, 0, 0, NULL);
+        if (!ov.hEvent) return FALSE;
+        pov = &ov;
     }
+    else pov = overlapped;
+        
+    pov->Internal = STATUS_PENDING;
 
-    memset(&ov,0,sizeof(ov));
-    ov.hEvent = CreateEventW(NULL,0,0,NULL);
-    if (!ov.hEvent)
-        return FALSE;
-
-    ret=SYNC_ConnectNamedPipe(hPipe, &ov);
-    if(ret)
+    SERVER_START_REQ( connect_named_pipe )
     {
-        if (WAIT_OBJECT_0==WaitForSingleObject(ov.hEvent,INFINITE))
+        req->handle = hPipe;
+        req->overlapped = pov;
+        req->func = PIPE_CompletionWait;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        if (overlapped)
         {
-            SetLastError(RtlNtStatusToDosError(ov.Internal));
-            ret = (ov.Internal==STATUS_SUCCESS);
+            SetLastError( ERROR_IO_PENDING );
+            ret = FALSE;
+        }
+        else
+        {
+            ret = GetOverlappedResult(hPipe, &ov, NULL, TRUE);
+            CloseHandle(ov.hEvent);
         }
     }
-
-    CloseHandle(ov.hEvent);
 
     return ret;
 }
@@ -1391,10 +1402,19 @@ BOOL WINAPI GetNamedPipeInfo(
     {
         req->handle = hNamedPipe;
         ret = !wine_server_call_err( req );
-        if(lpFlags) *lpFlags = reply->flags;
-        if(lpOutputBufferSize) *lpOutputBufferSize = reply->outsize;
-        if(lpInputBufferSize) *lpInputBufferSize = reply->outsize;
-        if(lpMaxInstances) *lpMaxInstances = reply->maxinstances;
+        if (lpFlags)
+        {
+            *lpFlags = 0;
+            if (reply->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE)
+                *lpFlags |= PIPE_TYPE_MESSAGE;
+            if (reply->flags & NAMED_PIPE_MESSAGE_STREAM_READ)
+                *lpFlags |= PIPE_READMODE_MESSAGE;
+            if (reply->flags & NAMED_PIPE_NONBLOCKING_MODE)
+                *lpFlags |= PIPE_NOWAIT;
+        }
+        if (lpOutputBufferSize) *lpOutputBufferSize = reply->outsize;
+        if (lpInputBufferSize) *lpInputBufferSize = reply->outsize;
+        if (lpMaxInstances) *lpMaxInstances = reply->maxinstances;
     }
     SERVER_END_REQ;
 

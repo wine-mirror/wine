@@ -1735,19 +1735,49 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
  *
  *
  */
-NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE FileHandle, ULONG DesiredAccess,
-     POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock,
-     ULONG ShareAccess, ULONG CreateDisposition, ULONG CreateOptions,
-     ULONG NamedPipeType, ULONG ReadMode, ULONG CompletionMode,
-     ULONG MaximumInstances, ULONG InboundQuota, ULONG OutboundQuota,
-     PLARGE_INTEGER DefaultTimeout)
+NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
+                                       POBJECT_ATTRIBUTES oa, PIO_STATUS_BLOCK iosb,
+                                       ULONG sharing, ULONG dispo, ULONG options,
+                                       ULONG pipe_type, ULONG read_mode, 
+                                       ULONG completion_mode, ULONG max_inst,
+                                       ULONG inbound_quota, ULONG outbound_quota,
+                                       PLARGE_INTEGER timeout)
 {
-    FIXME("(%p %lx %p %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p): stub\n",
-          FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,
-          ShareAccess, CreateDisposition, CreateOptions, NamedPipeType,
-          ReadMode, CompletionMode, MaximumInstances, InboundQuota,
-          OutboundQuota, DefaultTimeout);
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS    status;
+    static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
+
+    TRACE("(%p %lx %p %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p): stub\n",
+          handle, access, oa, iosb, sharing, dispo, options, pipe_type,
+          read_mode, completion_mode, max_inst, inbound_quota, outbound_quota,
+          timeout);
+
+    if (oa->ObjectName->Length < sizeof(leadin) ||
+        strncmpiW( oa->ObjectName->Buffer, 
+                   leadin, sizeof(leadin)/sizeof(leadin[0]) ))
+        return STATUS_OBJECT_NAME_INVALID;
+    /* assume we only get relative timeout, and storable in a DWORD as ms */
+    if (timeout->QuadPart > 0 || (timeout->QuadPart / -10000) >> 32)
+        FIXME("Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart));
+
+    SERVER_START_REQ( create_named_pipe )
+    {
+        req->options = options; /* FIXME not used in server yet !!!! */
+        req->flags = 
+            (pipe_type) ? NAMED_PIPE_MESSAGE_STREAM_WRITE : 0 |
+            (read_mode) ? NAMED_PIPE_MESSAGE_STREAM_READ  : 0 |
+            (completion_mode) ? NAMED_PIPE_NONBLOCKING_MODE  : 0;
+        req->maxinstances = max_inst;
+        req->outsize = outbound_quota;
+        req->insize  = inbound_quota;
+        req->timeout = timeout->QuadPart / -10000;
+        req->inherit = (oa->Attributes & OBJ_INHERIT) != 0;
+        wine_server_add_data( req, oa->ObjectName->Buffer + 4, 
+                              oa->ObjectName->Length - 4 * sizeof(WCHAR) );
+        status = wine_server_call( req );
+        if (!status) *handle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
 }
 
 /******************************************************************

@@ -2328,8 +2328,8 @@ struct cancel_async_reply
 struct create_named_pipe_request
 {
     struct request_header __header;
-    unsigned int   openmode;
-    unsigned int   pipemode;
+    unsigned int   options;
+    unsigned int   flags;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
@@ -2342,6 +2342,11 @@ struct create_named_pipe_reply
     struct reply_header __header;
     obj_handle_t   handle;
 };
+
+
+#define NAMED_PIPE_MESSAGE_STREAM_WRITE 0x0001
+#define NAMED_PIPE_MESSAGE_STREAM_READ  0x0002
+#define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 
 
 
@@ -3877,6 +3882,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 166
+#define SERVER_PROTOCOL_VERSION 167
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

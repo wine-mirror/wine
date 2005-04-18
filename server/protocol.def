@@ -1647,8 +1647,8 @@ enum message_type
 
 /* Create a named pipe */
 @REQ(create_named_pipe)
-    unsigned int   openmode;
-    unsigned int   pipemode;
+    unsigned int   options;
+    unsigned int   flags;
     unsigned int   maxinstances;
     unsigned int   outsize;
     unsigned int   insize;
@@ -1658,6 +1658,11 @@ enum message_type
 @REPLY
     obj_handle_t   handle;       /* handle to the pipe */
 @END
+
+/* flags in create_named_pipe and get_named_pipe_info */
+#define NAMED_PIPE_MESSAGE_STREAM_WRITE 0x0001
+#define NAMED_PIPE_MESSAGE_STREAM_READ  0x0002
+#define NAMED_PIPE_NONBLOCKING_MODE     0x0004
 
 
 /* Open an existing named pipe */

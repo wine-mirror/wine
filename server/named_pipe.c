@@ -60,13 +60,6 @@ enum pipe_state
     ps_wait_connect
 };
 
-struct wait_info
-{
-    struct thread       *thread;
-    void                *func;
-    void                *overlapped;
-};
-
 struct named_pipe;
 
 struct pipe_server
@@ -79,7 +72,7 @@ struct pipe_server
     struct named_pipe   *pipe;
     struct timeout_user *flush_poll;
     struct event        *event;
-    struct wait_info     wait;
+    struct list          wait_q;     /* only a single one can be queued */
 };
 
 struct pipe_client
@@ -87,20 +80,12 @@ struct pipe_client
     struct object        obj;        /* object header */
     struct fd           *fd;         /* pipe file descriptor */
     struct pipe_server  *server;     /* server that this client is connected to */
-    struct wait_info     wait;
-};
-
-struct connect_wait
-{
-    struct list          entry;      /* entry in named pipe wait list */
-    struct wait_info     wait;
-    struct timeout_user *timeout_user;
 };
 
 struct named_pipe
 {
     struct object       obj;         /* object header */
-    unsigned int        pipemode;
+    unsigned int        flags;
     unsigned int        maxinstances;
     unsigned int        outsize;
     unsigned int        insize;
@@ -208,83 +193,13 @@ static void pipe_client_dump( struct object *obj, int verbose )
     fprintf( stderr, "Named pipe client server=%p\n", client->server );
 }
 
-static void notify_waiter( struct wait_info *wait, unsigned int status )
-{
-    if( wait->thread && wait->func && wait->overlapped )
-    {
-        /* queue a system APC, to notify a waiting thread */
-        thread_queue_apc( wait->thread, NULL, wait->func, APC_ASYNC,
-                          1, wait->overlapped, (void *)status, NULL );
-    }
-    if( wait->thread ) release_object( wait->thread );
-    wait->thread = NULL;
-}
-
-static void set_waiter( struct wait_info *wait, void *func, void *ov )
-{
-    wait->thread = (struct thread *) grab_object( current );
-    wait->func = func;
-    wait->overlapped = ov;
-}
-
-static void notify_connect_waiter( struct connect_wait *waiter, unsigned int status )
-{
-    notify_waiter( &waiter->wait, status );
-    list_remove( &waiter->entry );
-    free( waiter );
-}
-
-static void notify_all_connect_waiters( struct named_pipe *pipe, unsigned int status )
-{
-    struct list *ptr;
-
-    while ((ptr = list_head( &pipe->waiters )) != NULL)
-    {
-        struct connect_wait *waiter = LIST_ENTRY( ptr, struct connect_wait, entry );
-        if (waiter->timeout_user) remove_timeout_user( waiter->timeout_user );
-        notify_connect_waiter( waiter, status );
-    }
-}
-
-/* pipe connect wait timeout */
-static void connect_timeout( void *ptr )
-{
-    struct connect_wait *waiter = (struct connect_wait *)ptr;
-    notify_connect_waiter( waiter, STATUS_TIMEOUT );
-}
-
 static void named_pipe_destroy( struct object *obj)
 {
     struct named_pipe *pipe = (struct named_pipe *) obj;
 
     assert( list_empty( &pipe->servers ) );
     assert( !pipe->instances );
-    notify_all_connect_waiters( pipe, STATUS_HANDLES_CLOSED );
-}
-
-static void queue_connect_waiter( struct named_pipe *pipe, void *func,
-                                  void *overlapped, unsigned int *timeout )
-{
-    struct connect_wait *waiter;
-
-    waiter = mem_alloc( sizeof(*waiter) );
-    if( waiter )
-    {
-        struct timeval tv;
-
-        set_waiter( &waiter->wait, func, overlapped );
-        list_add_tail( &pipe->waiters, &waiter->entry );
-
-        if (timeout)
-        {
-            gettimeofday( &tv, 0 );
-            add_timeout( &tv, *timeout );
-            waiter->timeout_user = add_timeout_user( &tv, connect_timeout,
-                                                     waiter );
-        }
-        else
-            waiter->timeout_user = NULL;
-    }
+    async_terminate_queue( &pipe->waiters, STATUS_HANDLES_CLOSED );
 }
 
 static struct fd *pipe_client_get_fd( struct object *obj )
@@ -367,7 +282,7 @@ static void pipe_server_destroy( struct object *obj)
         server->client = NULL;
     }
 
-    notify_waiter( &server->wait, STATUS_HANDLES_CLOSED );
+    async_terminate_head( &server->wait_q, STATUS_HANDLES_CLOSED );
 
     assert( server->pipe->instances );
     server->pipe->instances--;
@@ -382,8 +297,6 @@ static void pipe_client_destroy( struct object *obj)
     struct pipe_server *server = client->server;
 
     assert( obj->ops == &pipe_client_ops );
-
-    notify_waiter( &client->wait, STATUS_HANDLES_CLOSED );
 
     if( server )
     {
@@ -560,7 +473,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe )
     server->state = ps_idle_server;
     server->client = NULL;
     server->flush_poll = NULL;
-    server->wait.thread = NULL;
+    list_init( &server->wait_q );
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
@@ -578,7 +491,6 @@ static struct pipe_client *create_pipe_client( struct pipe_server *server )
 
     client->fd = NULL;
     client->server = server;
-    client->wait.thread = NULL;
 
     return client;
 }
@@ -623,7 +535,7 @@ DECL_HANDLER(create_named_pipe)
         pipe->outsize = req->outsize;
         pipe->maxinstances = req->maxinstances;
         pipe->timeout = req->timeout;
-        pipe->pipemode = req->pipemode;
+        pipe->flags = req->flags;
     }
     else
     {
@@ -636,7 +548,7 @@ DECL_HANDLER(create_named_pipe)
         }
         if( ( pipe->maxinstances != req->maxinstances ) ||
             ( pipe->timeout != req->timeout ) ||
-            ( pipe->pipemode != req->pipemode ) )
+            ( pipe->flags != req->flags ) )
         {
             set_error( STATUS_ACCESS_DENIED );
             release_object( pipe );
@@ -693,8 +605,8 @@ DECL_HANDLER(open_named_pipe)
             if (client->fd && server->fd)
             {
                 if( server->state == ps_wait_open )
-                    notify_waiter( &server->wait, STATUS_SUCCESS );
-                assert( !server->wait.thread );
+                    async_terminate_head( &server->wait_q, STATUS_SUCCESS );
+                assert( list_empty( &server->wait_q ) );
                 server->state = ps_connected_server;
                 server->client = client;
                 client->server = server;
@@ -724,8 +636,9 @@ DECL_HANDLER(connect_named_pipe)
     case ps_wait_connect:
         assert( !server->fd );
         server->state = ps_wait_open;
-        set_waiter( &server->wait, req->func, req->overlapped );
-        notify_all_connect_waiters( server->pipe, STATUS_SUCCESS );
+        create_async( current, NULL, &server->wait_q,
+                      req->func, req->overlapped, NULL );
+        async_terminate_queue( &server->pipe->waiters, STATUS_SUCCESS );
         break;
     case ps_connected_server:
         assert( server->fd );
@@ -759,9 +672,8 @@ DECL_HANDLER(wait_named_pipe)
     if( server )
     {
         /* there's already a server waiting for a client to connect */
-        struct wait_info wait;
-        set_waiter( &wait, req->func, req->overlapped );
-        notify_waiter( &wait, STATUS_SUCCESS );
+        thread_queue_apc( current, NULL, req->func, APC_ASYNC_IO,
+                          1, req->overlapped, NULL, (void *)STATUS_SUCCESS );
         release_object( server );
     }
     else
@@ -773,9 +685,11 @@ DECL_HANDLER(wait_named_pipe)
             timeout = req->timeout;
 
         if (req->timeout == NMPWAIT_WAIT_FOREVER)
-            queue_connect_waiter( pipe, req->func, req->overlapped, NULL );
+            create_async( current, NULL, &pipe->waiters,
+                          req->func, req->overlapped, NULL );
         else
-            queue_connect_waiter( pipe, req->func, req->overlapped, &timeout );
+            create_async( current, &timeout, &pipe->waiters,
+                          req->func, req->overlapped, NULL );
     }
 
     release_object( pipe );
@@ -797,7 +711,6 @@ DECL_HANDLER(disconnect_named_pipe)
         assert( server->client->fd );
 
         notify_empty( server );
-        notify_waiter( &server->client->wait, STATUS_PIPE_DISCONNECTED );
 
         /* Dump the client and server fds, but keep the pointers
            around - client loses all waiting data */
@@ -832,7 +745,7 @@ DECL_HANDLER(get_named_pipe_info)
     if(!server)
         return;
 
-    reply->flags        = server->pipe->pipemode;
+    reply->flags        = server->pipe->flags;
     reply->maxinstances = server->pipe->maxinstances;
     reply->insize       = server->pipe->insize;
     reply->outsize      = server->pipe->outsize;
