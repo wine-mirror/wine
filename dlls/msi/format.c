@@ -358,11 +358,12 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
                 value = deformat_index(record,key,&chunk);  
             else
             {
-                chunk = (strlenW(key) + 2)*sizeof(WCHAR);
+                DWORD keylen = strlenW(key);
+                chunk = (keylen + 2)*sizeof(WCHAR);
                 value = HeapAlloc(GetProcessHeap(),0,chunk);
                 value[0] = '[';
-                memcpy(&value[1],key,strlenW(key)*sizeof(WCHAR));
-                value[strlenW(key)+1] = ']';
+                memcpy(&value[1],key,keylen*sizeof(WCHAR));
+                value[1+keylen] = ']';
             }
         }
         else
