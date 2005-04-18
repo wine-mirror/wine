@@ -104,15 +104,20 @@ void xprintf (const char *fmt, ...)
     free (buffer);
 }
 
+int
+goodtagchar (char c)
+{
+    return (('a'<=c && c<='z') ||
+            ('A'<=c && c<='Z') ||
+            ('0'<=c && c<='9') ||
+            c=='-' || c=='.');
+}
+
 const char *
-badtagchar (const char *tag)
+findbadtagchar (const char *tag)
 {
     while (*tag)
-        if (('a'<=*tag && *tag<='z') ||
-            ('A'<=*tag && *tag<='Z') ||
-            ('0'<=*tag && *tag<='9') ||
-            *tag=='-' || *tag=='.')
-            tag++;
+        if (goodtagchar (*tag)) tag++;
         else return tag;
     return NULL;
 }

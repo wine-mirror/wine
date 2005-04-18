@@ -29,7 +29,7 @@ CAPTION "No tag supplied"
 BEGIN
     CTEXT "Please supply a tag for your report.  You can use letters, digits, dashes and periods."
         IDC_STATIC, 10, 5, 130, 30
-    EDITTEXT IDC_TAG, 35, 30, 80, 10
+    EDITTEXT IDC_TAG, 35, 30, 80, 10, ES_AUTOHSCROLL
     DEFPUSHBUTTON "Start", IDOK, 25, 45, 40, 14
     PUSHBUTTON    "Abort", IDABORT, 85, 45, 40, 14
 END

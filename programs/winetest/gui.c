@@ -41,6 +41,8 @@ double progressScale;
  */
 int progressGroup;
 
+WNDPROC DefEditProc;
+
 char *
 renderString (va_list ap)
 {
@@ -319,21 +321,35 @@ guiAsk (va_list ap)
 }
 
 BOOL CALLBACK
+EditTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg) {
+    case WM_CHAR:
+        if (wParam == 8) break; /* backspace is OK */
+        if (GetWindowTextLengthA (hwnd) == MAXTAGLEN ||
+            !goodtagchar (wParam)) return TRUE;
+        break;
+    }
+    return CallWindowProcA (DefEditProc, hwnd, msg, wParam, lParam);
+}
+
+BOOL CALLBACK
 AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     int len;
 
     switch (msg) {
+    case WM_INITDIALOG:
+        DefEditProc = (WNDPROC)SetWindowLongPtr
+            (GetDlgItem (hwnd, IDC_TAG), GWLP_WNDPROC, (LONG_PTR)EditTagProc);
+        return TRUE;
     case WM_COMMAND:
         switch (LOWORD (wParam)) {
         case IDOK:
             len = GetWindowTextLengthA (GetDlgItem (hwnd, IDC_TAG));
-            if (len <= MAXTAGLEN) {
-                tag = xmalloc (len+1);
-                GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
-                if (!badtagchar (tag)) EndDialog (hwnd, IDOK);
-                else free (tag);
-            }
+            tag = xmalloc (len+1);
+            GetDlgItemTextA (hwnd, IDC_TAG, tag, len+1);
+            EndDialog (hwnd, IDOK);
             return TRUE;
         case IDABORT:
             EndDialog (hwnd, IDABORT);

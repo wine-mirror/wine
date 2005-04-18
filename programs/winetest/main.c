@@ -601,7 +601,7 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
             if (strlen (tag) > MAXTAGLEN)
                 report (R_FATAL, "tag is too long (maximum %d characters)",
                         MAXTAGLEN);
-            cp = badtagchar (tag);
+            cp = findbadtagchar (tag);
             if (cp) {
                 report (R_ERROR, "invalid char in tag: %c", *cp);
                 usage ();
