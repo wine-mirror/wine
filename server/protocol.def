@@ -416,7 +416,7 @@ typedef struct
     void*        arg2;
     void*        arg3;
 @END
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 
 
 /* Close a handle for the current process */

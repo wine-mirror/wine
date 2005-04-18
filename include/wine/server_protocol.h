@@ -512,7 +512,7 @@ struct get_apc_reply
     void*        arg2;
     void*        arg3;
 };
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 
 
 
@@ -3882,6 +3882,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 167
+#define SERVER_PROTOCOL_VERSION 168
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
