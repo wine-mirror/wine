@@ -159,13 +159,13 @@ DWORD _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	if (_dbg_ILIsDesktop(pidl))
 	{
 	 /* desktop */
-	  if (szOut) strncpy(szOut, "Desktop", uOutSize);
+	  if (szOut) lstrcpynA(szOut, "Desktop", uOutSize);
 	  dwReturn = strlen ("Desktop");
 	}
 	else if (( szSrc = _dbg_ILGetTextPointer(pidl) ))
 	{
 	  /* filesystem */
-	  if (szOut) strncpy(szOut, szSrc, uOutSize);
+	  if (szOut) lstrcpynA(szOut, szSrc, uOutSize);
 	  dwReturn = strlen(szSrc);
 	}
 	else if (( riid = _dbg_ILGetGUIDPointer(pidl) ))

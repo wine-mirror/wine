@@ -226,11 +226,11 @@ HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicObject_SetDescriptor (LPDIRECT
   if (pDesc->dwValidData & DMUS_OBJ_CLASS)
     memcpy (&This->pDesc->guidClass, &pDesc->guidClass, sizeof (pDesc->guidClass));		
   if (pDesc->dwValidData & DMUS_OBJ_NAME)
-    strncpyW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
+    lstrcpynW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
   if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-    strncpyW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);		
+    lstrcpynW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
   if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-    strncpyW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);		
+    lstrcpynW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
   if (pDesc->dwValidData & DMUS_OBJ_VERSION)
     memcpy (&This->pDesc->vVersion, &pDesc->vVersion, sizeof (pDesc->vVersion));				
   if (pDesc->dwValidData & DMUS_OBJ_DATE)

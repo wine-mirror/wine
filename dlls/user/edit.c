@@ -3052,7 +3052,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 		bufl = e - s;
 		buf = HeapAlloc(GetProcessHeap(), 0, (bufl + 1) * sizeof(WCHAR));
 		if (!buf) return;
-		strncpyW(buf, es->text + s, bufl);
+		memcpy(buf, es->text + s, bufl * sizeof(WCHAR));
 		buf[bufl] = 0; /* ensure 0 termination */
 		/* now delete */
 		strcpyW(es->text + s, es->text + e);
@@ -3113,7 +3113,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			if (!es->undo_insert_count && (*es->undo_text && (s == es->undo_position))) {
 				/* undo-buffer is extended to the right */
 				EDIT_MakeUndoFit(es, utl + e - s);
-				strncpyW(es->undo_text + utl, buf, e - s + 1);
+				memcpy(es->undo_text + utl, buf, (e - s)*sizeof(WCHAR));
 				(es->undo_text + utl)[e - s] = 0; /* ensure 0 termination */
 			} else if (!es->undo_insert_count && (*es->undo_text && (e == es->undo_position))) {
 				/* undo-buffer is extended to the left */
@@ -3126,7 +3126,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			} else {
 				/* new undo-buffer */
 				EDIT_MakeUndoFit(es, e - s);
-				strncpyW(es->undo_text, buf, e - s + 1);
+				memcpy(es->undo_text, buf, (e - s)*sizeof(WCHAR));
 				es->undo_text[e - s] = 0; /* ensure 0 termination */
 				es->undo_position = s;
 			}
@@ -3932,13 +3932,15 @@ static void EDIT_WM_Copy(EDITSTATE *es)
 	INT e = max(es->selection_start, es->selection_end);
 	HGLOBAL hdst;
 	LPWSTR dst;
+	DWORD len;
 
 	if (e == s) return;
 
-	hdst = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (DWORD)(e - s + 1) * sizeof(WCHAR));
+	len = e - s;
+	hdst = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, (len + 1) * sizeof(WCHAR));
 	dst = GlobalLock(hdst);
-	strncpyW(dst, es->text + s, e - s);
-	dst[e - s] = 0; /* ensure 0 termination */
+	memcpy(dst, es->text + s, len * sizeof(WCHAR));
+	dst[len] = 0; /* ensure 0 termination */
 	TRACE("%s\n", debugstr_w(dst));
 	GlobalUnlock(hdst);
 	OpenClipboard(es->hwndSelf);

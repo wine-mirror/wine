@@ -701,7 +701,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-                strncpy(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
+                lstrcpynA(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
                 strcpy(ossdev->ds_desc.szDrvname, "wineoss.drv");
                 MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name), 
                                     ossdev->out_caps.szPname, 

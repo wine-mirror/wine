@@ -387,7 +387,7 @@ static void TOOLTIPS_GetDispInfoW(HWND hwnd, TOOLTIPS_INFO *infoPtr, TTTOOL_INFO
     else if (ttnmdi.lpszText != LPSTR_TEXTCALLBACKW) {
         INT max_len = (ttnmdi.lpszText == &ttnmdi.szText[0]) ? 
                 sizeof(ttnmdi.szText)/sizeof(ttnmdi.szText[0]) : INFOTIPSIZE-1;
-        strncpyW(infoPtr->szTipText, ttnmdi.lpszText, max_len);
+        lstrcpynW(infoPtr->szTipText, ttnmdi.lpszText, max_len);
         if (ttnmdi.uFlags & TTF_DI_SETITEM) {
             INT len = max(strlenW(ttnmdi.lpszText), max_len);
             toolPtr->hinst = 0;

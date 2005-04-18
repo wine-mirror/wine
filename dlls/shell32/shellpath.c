@@ -1210,7 +1210,7 @@ static HRESULT _SHGetUserShellFolderPath(HKEY rootKey, LPCWSTR userPrefix,
             WCHAR szTemp[MAX_PATH];
 
             _SHExpandEnvironmentStrings(path, szTemp);
-            strncpyW(path, szTemp, MAX_PATH);
+            lstrcpynW(path, szTemp, MAX_PATH);
         }
         ret = RegSetValueExW(shellFolderKey, value, 0, REG_SZ, (LPBYTE)path,
          (strlenW(path) + 1) * sizeof(WCHAR));
@@ -1493,12 +1493,12 @@ static HRESULT _SHGetProfilesValue(HKEY profilesKey, LPCWSTR szValueName,
     else
     {
         /* Missing or invalid value, set a default */
-        strncpyW(szValue, szDefault, MAX_PATH);
-        szValue[MAX_PATH - 1] = '\0';
+        lstrcpynW(szValue, szDefault, MAX_PATH);
         TRACE("Setting missing value %s to %s\n", debugstr_w(szValueName),
-         debugstr_w(szValue));
+                                                  debugstr_w(szValue));
         lRet = RegSetValueExW(profilesKey, szValueName, 0, REG_EXPAND_SZ,
-         (LPBYTE)szValue, (strlenW(szValue) + 1) * sizeof(WCHAR));
+                              (LPBYTE)szValue,
+                              (strlenW(szValue) + 1) * sizeof(WCHAR));
         if (lRet)
             hr = HRESULT_FROM_WIN32(lRet);
         else

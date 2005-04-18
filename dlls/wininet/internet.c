@@ -1195,6 +1195,13 @@ static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
  *
  * Helper function for InternetCrackUrlW
  *
+ * PARAMS
+ *     lppszComponent [O] Holds the returned string
+ *     dwComponentLen [I] Holds the size of lppszComponent
+ *                    [O] Holds the length of the string in lppszComponent without '\0'
+ *     lpszStart      [I] Holds the string to copy from
+ *     len            [I] Holds the length of lpszStart without '\0'
+ *
  * RETURNS
  *    TRUE on success
  *    FALSE on failure
@@ -1217,7 +1224,7 @@ static BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen
         else
         {
             DWORD ncpylen = min((*dwComponentLen)-1, len);
-            strncpyW(*lppszComponent, lpszStart, ncpylen);
+            memcpy(*lppszComponent, lpszStart, ncpylen*sizeof(WCHAR));
             (*lppszComponent)[ncpylen] = '\0';
             *dwComponentLen = ncpylen;
         }

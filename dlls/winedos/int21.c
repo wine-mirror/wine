@@ -3434,7 +3434,7 @@ static int INT21_GetDiskSerialNumber( CONTEXT86 *context )
     *(WORD *)dataptr = 0;
     memcpy(dataptr + 2, &serial, sizeof(DWORD));
     WideCharToMultiByte(CP_OEMCP, 0, label, 11, dataptr + 6, 11, NULL, NULL);
-    strncpy(dataptr + 17, "FAT16   ", 8);
+    memcpy(dataptr + 17, "FAT16   ", 8);
     return 1;
 }
 

@@ -1538,7 +1538,7 @@ int chm_enumerate_dir(struct chmFile *h,
     curPage = h->index_head;
 
     /* initialize pathname state */
-    strncpyW(prefixRectified, prefix, CHM_MAX_PATHLEN);
+    lstrcpynW(prefixRectified, prefix, CHM_MAX_PATHLEN);
     prefixLen = strlenW(prefixRectified);
     if (prefixLen != 0)
     {

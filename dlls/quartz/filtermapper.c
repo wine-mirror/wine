@@ -732,7 +732,7 @@ static HRESULT WINAPI FilterMapper2_RegisterFilter(
 
     if (SUCCEEDED(hr))
     {
-        strncpyW(pCurrent, szClsidTemp, CHARS_IN_GUID);
+        memcpy(pCurrent, szClsidTemp, CHARS_IN_GUID * sizeof(WCHAR));
         pCurrent += CHARS_IN_GUID - 1;
         pCurrent[0] = '\\';
 

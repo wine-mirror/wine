@@ -1218,7 +1218,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 	    LPWSTR beg = wszApplicationName/*sei_tmp.lpFile*/;
 	    for(s=beg; (space=strchrW(s, ' ')); s=space+1) {
 		int idx = space-sei_tmp.lpFile;
-		strncpyW(buffer, sei_tmp.lpFile, idx);
+		memcpy(buffer, sei_tmp.lpFile, idx * sizeof(WCHAR));
 		buffer[idx] = '\0';
 
 		/*FIXME This finds directory paths if the targeted file name contains spaces. */
@@ -1296,7 +1296,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
 
         TRACE("Got URL: %s\n", debugstr_w(lpFile));
         /* Looking for ...protocol\shell\lpOperation\command */
-        strncpyW(lpstrProtocol, lpFile, iSize);
+        memcpy(lpstrProtocol, lpFile, iSize*sizeof(WCHAR));
         lpstrProtocol[iSize] = '\0';
         strcatW(lpstrProtocol, wShell);
         strcatW(lpstrProtocol, sei_tmp.lpVerb? sei_tmp.lpVerb: wszOpen);

@@ -834,7 +834,7 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
     else 
     {
         TRACE("GetFileVersionInfoA failed for %s.\n", fn);
-        strncpy(buf2, fn, buf2len); /* msvideo.dll appears to copy fn*/
+        lstrcpynA(buf2, fn, buf2len); /* msvideo.dll appears to copy fn*/
     }
     /* FIXME: language problem? */
     if (VerQueryValueA(	infobuf,
@@ -843,13 +843,15 @@ DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
                         &subblocklen
             )) 
     {
+        UINT copylen = min(subblocklen,buf1len-1);
+        memcpy(buf1, subblock, copylen);
+        buf1[copylen] = '\0';
         TRACE("VQA returned %s\n", (LPCSTR)subblock);
-        strncpy(buf1, subblock, buf1len);
     }
     else 
     {
         TRACE("VQA did not return on query \\StringFileInfo\\040904E4\\FileDescription?\n");
-        strncpy(buf1, fn, buf1len); /* msvideo.dll appears to copy fn*/
+        lstrcpynA(buf1, fn, buf1len); /* msvideo.dll appears to copy fn*/
     }
     HeapFree(GetProcessHeap(), 0, infobuf);
     return 0;

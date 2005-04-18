@@ -76,7 +76,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == hIC)
 	return FALSE;
 
-    strncpyW(szBuf, hIC->lpszProxy, sz);
+    lstrcpynW(szBuf, hIC->lpszProxy, sz);
 
     /* FIXME: perhaps it would be better to use InternetCrackUrl here */
     p = strchrW(szBuf, ':');

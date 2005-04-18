@@ -310,7 +310,7 @@ int autodetect_drives()
             return FALSE;
         }
         
-        strncpy(label, "Drive X", 8);
+        strcpy(label, "Drive X");
         label[6] = letter;
         
         WINE_TRACE("adding drive %c for %s, type %s with label %s\n", letter, ent->mnt_dir, ent->mnt_type,label);

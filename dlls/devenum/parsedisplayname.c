@@ -94,6 +94,7 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
     MediaCatMoniker * pMoniker = NULL;
     CLSID clsidDevice;
     HRESULT res = S_OK;
+    int classlen;
 
     TRACE("(%p, %s, %p, %p)\n", pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut);
 
@@ -107,12 +108,13 @@ static HRESULT WINAPI DEVENUM_IParseDisplayName_ParseDisplayName(
     /* size = pszBetween - pszDisplayName - 1 (for '\\' after CLSID)
      * + 1 (for NULL character)
      */
-    pszClass = CoTaskMemAlloc((int)(pszBetween - pszDisplayName) * sizeof(WCHAR));
+    classlen = (int)(pszBetween - pszDisplayName - 1);
+    pszClass = CoTaskMemAlloc((classlen + 1) * sizeof(WCHAR));
     if (!pszClass)
         return E_OUTOFMEMORY;
 
-    strncpyW(pszClass, pszDisplayName, (int)(pszBetween - pszDisplayName) - 1);
-    pszClass[(int)(pszBetween - pszDisplayName) - 1] = 0;
+    memcpy(pszClass, pszDisplayName, classlen * sizeof(WCHAR));
+    pszClass[classlen] = 0;
 
     TRACE("Device CLSID: %s\n", debugstr_w(pszClass));
 

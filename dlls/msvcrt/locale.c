@@ -372,7 +372,7 @@ char* MSVCRT_setlocale(int category, const char* locale)
   if (next && next != locale)
   {
     haveLang = 1;
-    strncpy(lc.search_language,locale,next-locale);
+    memcpy(lc.search_language,locale,next-locale);
     locale += next-locale+1;
   }
 
@@ -383,23 +383,23 @@ char* MSVCRT_setlocale(int category, const char* locale)
     if (next == locale)
     {
       locale++;
-      strncpy(lc.search_codepage, locale, MAX_ELEM_LEN);
+      lstrcpynA(lc.search_codepage, locale, MAX_ELEM_LEN);
     }
     else
     {
       if (haveLang)
       {
         haveCountry = 1;
-        strncpy(lc.search_country,locale,next-locale);
+        memcpy(lc.search_country,locale,next-locale);
         locale += next-locale+1;
       }
       else
       {
         haveLang = 1;
-        strncpy(lc.search_language,locale,next-locale);
+        memcpy(lc.search_language,locale,next-locale);
         locale += next-locale+1;
       }
-      strncpy(lc.search_codepage, locale, MAX_ELEM_LEN);
+      lstrcpynA(lc.search_codepage, locale, MAX_ELEM_LEN);
     }
   }
   else
@@ -407,12 +407,12 @@ char* MSVCRT_setlocale(int category, const char* locale)
     if (haveLang)
     {
       haveCountry = 1;
-      strncpy(lc.search_country, locale, MAX_ELEM_LEN);
+      lstrcpynA(lc.search_country, locale, MAX_ELEM_LEN);
     }
     else
     {
       haveLang = 1;
-      strncpy(lc.search_language, locale, MAX_ELEM_LEN);
+      lstrcpynA(lc.search_language, locale, MAX_ELEM_LEN);
     }
   }
 

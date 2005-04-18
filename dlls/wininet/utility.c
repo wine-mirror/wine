@@ -53,6 +53,7 @@ time_t ConvertTimeString(LPCWSTR asctime)
     if(!asctime || !timelen)
         return 0;
 
+    /* The atoiWs below relie on that tmpChar is \0 padded? */
     strncpyW(tmpChar, asctime, TIME_STRING_LEN);
 
     /* Assert that the string is the expected length */

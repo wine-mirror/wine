@@ -2065,7 +2065,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             if(fodInfos->unicode)
             {
               LPOPENFILENAMEW ofn = fodInfos->ofnInfos;
-	      strncpyW(ofn->lpstrFileTitle, lpstrFileTitle, ofn->nMaxFileTitle);
+	      lstrcpynW(ofn->lpstrFileTitle, lpstrFileTitle, ofn->nMaxFileTitle);
             }
             else
             {

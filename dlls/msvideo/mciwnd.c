@@ -1010,7 +1010,7 @@ end_of_mci_open:
         return mwi->lasterror;
 
     case MCIWNDM_RETURNSTRINGW:
-        strncpyW((LPWSTR)lParam, mwi->return_string, wParam);
+        lstrcpynW((LPWSTR)lParam, mwi->return_string, wParam);
         TRACE("MCIWNDM_RETURNTRINGW %s\n", debugstr_wn((LPWSTR)lParam, wParam));
         return mwi->lasterror;
 
@@ -1095,7 +1095,7 @@ end_of_mci_open:
     case MCIWNDM_GETFILENAMEW:
         TRACE("MCIWNDM_GETFILENAMEW: %s\n", debugstr_w(mwi->lpName));
         if (mwi->lpName)
-            strncpyW((LPWSTR)lParam, mwi->lpName, wParam);
+            lstrcpynW((LPWSTR)lParam, mwi->lpName, wParam);
         return 0;
 
     case MCIWNDM_GETTIMEFORMATA:

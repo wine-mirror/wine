@@ -909,7 +909,7 @@ static HRESULT Stream_WriteAdvertiseInfo( IStream* stm, LPCWSTR string, DWORD ma
     memset( &buffer, 0, sizeof buffer );
     buffer.dbh.cbSize = sizeof buffer;
     buffer.dbh.dwSignature = magic;
-    strncpyW( buffer.szwDarwinID, string, MAX_PATH );
+    lstrcpynW( buffer.szwDarwinID, string, MAX_PATH );
     WideCharToMultiByte(CP_ACP, 0, string, -1, buffer.szDarwinID, MAX_PATH, NULL, NULL );
 
     return IStream_Write( stm, &buffer, buffer.dbh.cbSize, &count );

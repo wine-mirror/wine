@@ -479,7 +479,7 @@ static BOOL UIINSERTOBJECTDLG_OnOpen(InsertObjectDlgInfo* pdlgInfo)
       WCHAR wcsFile[MAX_PATH];
 
       SendMessageA(pdlgInfo->hwndFileTB, WM_GETTEXT, (WPARAM)MAX_PATH, (LPARAM)fname);
-      strncpy(pdlgInfo->lpOleUIInsertObject->lpszFile, fname, pdlgInfo->lpOleUIInsertObject->cchFile);
+      lstrcpynA(pdlgInfo->lpOleUIInsertObject->lpszFile, fname, pdlgInfo->lpOleUIInsertObject->cchFile);
 
       RtlMultiByteToUnicodeN(wcsFile, MAX_PATH, NULL, fname, MAX_PATH); 
       if (ERROR_SUCCESS == (hres = GetClassFile(wcsFile, &pdlgInfo->lpOleUIInsertObject->clsid)))
