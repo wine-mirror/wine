@@ -35,15 +35,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 static void module_fill_module(const char* in, char* out, unsigned size)
 {
-    const char*         ptr;
+    const char          *ptr,*endptr;
     unsigned            len;
 
-    for (ptr = in + strlen(in) - 1; 
-         *ptr != '/' && *ptr != '\\' && ptr >= in; 
+    endptr = in + strlen(in);
+    for (ptr = endptr - 1;
+         ptr >= in && *ptr != '/' && *ptr != '\\';
          ptr--);
-    if (ptr < in || *ptr == '/' || *ptr == '\\') ptr++;
-    lstrcpynA(out, ptr, size);
-    len = strlen(out);
+    ptr++;
+    len = min(endptr-ptr,size-1);
+    memcpy(out, ptr, len);
+    out[len] = '\0';
     if (len > 4 && 
         (!strcasecmp(&out[len - 4], ".dll") || !strcasecmp(&out[len - 4], ".exe")))
         out[len - 4] = '\0';
