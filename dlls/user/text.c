@@ -284,8 +284,8 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
 
     if (modstr)
     {
-        strncpyW (modstr, str, *len_str);
-        *(str+*len_str) = '\0';
+        memcpy(modstr, str, *len_str * sizeof(WCHAR));
+        modstr[*len_str] = '\0';
     }
 }
 
