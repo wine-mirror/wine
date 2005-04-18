@@ -720,7 +720,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	      * Return the pszBase scheme with pszRelative. Basically
 	      * keeps the scheme and replaces the domain and following.
 	      */
-	strncpyW(preliminary, base.pszProtocol, base.cchProtocol + 1);
+        memcpy(preliminary, base.pszProtocol, (base.cchProtocol + 1)*sizeof(WCHAR));
 	work = preliminary + base.cchProtocol + 1;
 	strcpyW(work, relative.pszSuffix);
 	if (!(dwFlags & URL_PLUGGABLE_PROTOCOL) &&
@@ -733,7 +733,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	      * after the location is pszRelative. (Replace document
 	      * from root on.)
 	      */
-	strncpyW(preliminary, base.pszProtocol, base.cchProtocol+1+sizeloc);
+        memcpy(preliminary, base.pszProtocol, (base.cchProtocol+1+sizeloc)*sizeof(WCHAR));
 	work = preliminary + base.cchProtocol + 1 + sizeloc;
 	if (dwFlags & URL_PLUGGABLE_PROTOCOL)
 	    *(work++) = L'/';
@@ -744,7 +744,8 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	      * Return the pszBase without its document (if any) and
 	      * append pszRelative after its scheme.
 	      */
-	strncpyW(preliminary, base.pszProtocol, base.cchProtocol+1+base.cchSuffix);
+        memcpy(preliminary, base.pszProtocol,
+               (base.cchProtocol+1+base.cchSuffix)*sizeof(WCHAR));
 	work = preliminary + base.cchProtocol+1+base.cchSuffix - 1;
 	if (*work++ != L'/')
 	    *(work++) = L'/';
@@ -1951,7 +1952,9 @@ static LONG URL_ParseUrl(LPCWSTR pszUrl, WINE_PARSE_URL *pl)
  * PARAMS
  *  pszIn   [I]   Url to parse
  *  pszOut  [O]   Destination for part of pszIn requested
- *  pcchOut [I/O] Length of pszOut/destination for length of pszOut
+ *  pcchOut [I]   Size of pszOut
+ *          [O]   length of pszOut string EXLUDING '\0' if S_OK, otherwise
+ *                needed size of pszOut INCLUDING '\0'.
  *  dwPart  [I]   URL_PART_ enum from "shlwapi.h"
  *  dwFlags [I]   URL_ flags from "shlwapi.h"
  *
@@ -2003,7 +2006,6 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
     HRESULT ret;
     DWORD size, schsize;
     LPCWSTR addr, schaddr;
-    LPWSTR work;
 
     TRACE("(%s %p %p(%ld) %08lx %08lx)\n",
 	  debugstr_w(pszIn), pszOut, pcchOut, *pcchOut, dwPart, dwFlags);
@@ -2055,24 +2057,21 @@ HRESULT WINAPI UrlGetPartW(LPCWSTR pszIn, LPWSTR pszOut, LPDWORD pcchOut,
 	}
 
 	if (dwFlags == URL_PARTFLAG_KEEPSCHEME) {
-	    if (*pcchOut < size + schsize + 2) {
-		*pcchOut = size + schsize + 2;
+            if (*pcchOut < schsize + size + 2) {
+                *pcchOut = schsize + size + 2;
 		return E_POINTER;
 	    }
-	    strncpyW(pszOut, schaddr, schsize);
-	    work = pszOut + schsize;
-	    *work = L':';
-	    strncpyW(work+1, addr, size);
-	    *pcchOut = size + schsize + 1;
-	    work += (size + 1);
-	    *work = L'\0';
+            memcpy(pszOut, schaddr, schsize*sizeof(WCHAR));
+            pszOut[schsize] = ':';
+            memcpy(pszOut+schsize+1, addr, size*sizeof(WCHAR));
+            pszOut[schsize+1+size] = 0;
+            *pcchOut = schsize + 1 + size;
 	}
 	else {
 	    if (*pcchOut < size + 1) {*pcchOut = size+1; return E_POINTER;}
-	    strncpyW(pszOut, addr, size);
+            memcpy(pszOut, addr, size*sizeof(WCHAR));
+            pszOut[size] = 0;
 	    *pcchOut = size;
-	    work = pszOut + size;
-	    *work = L'\0';
 	}
 	TRACE("len=%ld %s\n", *pcchOut, debugstr_w(pszOut));
     }

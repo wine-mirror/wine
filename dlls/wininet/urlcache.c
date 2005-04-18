@@ -670,22 +670,25 @@ static BOOL URLCache_LocalFileNameToPathA(
     LPLONG lpBufferSize)
 {
     LONG nRequired;
-    int path_len = WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, NULL, 0, NULL, NULL);
-    int file_name_len = strlen(szLocalFileName);
-    int dir_len = DIR_LENGTH;
+    int path_len, file_name_len, dir_len;
+
     if (Directory >= pHeader->DirectoryCount)
     {
         *lpBufferSize = 0;
         return FALSE;
     }
 
-    nRequired = (path_len + dir_len + file_name_len + 1) * sizeof(WCHAR);
+    path_len = WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, NULL, 0, NULL, NULL);
+    file_name_len = strlen(szLocalFileName);
+    dir_len = DIR_LENGTH;
+
+    nRequired = (path_len + dir_len + 1 + file_name_len) * sizeof(WCHAR);
     if (nRequired < *lpBufferSize)
     {
         WideCharToMultiByte(CP_ACP, 0, pContainer->path, -1, szPath, -1, NULL, NULL);
-        strncpy(szPath, pHeader->directory_data[Directory].filename, DIR_LENGTH);
-        szPath[dir_len + path_len] = '\\';
-        strcpy(szPath + dir_len + path_len + 1, szLocalFileName);
+        memcpy(szPath+path_len, pHeader->directory_data[Directory].filename, dir_len);
+        szPath[path_len + dir_len] = '\\';
+        memcpy(szPath + path_len + dir_len + 1, szLocalFileName, file_name_len);
         *lpBufferSize = nRequired;
         return TRUE;
     }

@@ -293,9 +293,11 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
     if (hModule)
     {
-        char name[10];
+        char name[sizeof(pTask->module_name)+1];
+        size_t len;
         GetModuleName16( hModule, name, sizeof(name) );
-        strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
+        len = strlen(name) + 1;
+        memcpy(pTask->module_name, name, min(len,sizeof(pTask->module_name)));
         pTask->compat_flags = GetProfileIntA( "Compatibility", name, 0 );
     }
 

@@ -1399,24 +1399,22 @@ static BOOL unpad_data(CONST BYTE *abData, DWORD dwDataLen, BYTE *abBuffer, DWOR
 BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
                    DWORD dwFlags, PVTableProvStruc pVTable)
 {
-    DWORD dwLen;
-    CHAR szKeyContainerName[MAX_PATH] = "";
+    CHAR szKeyContainerName[MAX_PATH];
     CHAR szRegKey[MAX_PATH];
 
     TRACE("(phProv=%p, pszContainer=%s, dwFlags=%08lx, pVTable=%p)\n", phProv, 
           debugstr_a(pszContainer), dwFlags, pVTable);
 
-    if (pszContainer ? strlen(pszContainer) : 0) 
+    if (pszContainer && *pszContainer)
     {
-        strncpy(szKeyContainerName, pszContainer, MAX_PATH);
-        szKeyContainerName[MAX_PATH-1] = '\0';
+        lstrcpynA(szKeyContainerName, pszContainer, MAX_PATH);
     } 
     else
     {
-        dwLen = MAX_PATH;
+        DWORD dwLen = sizeof(szKeyContainerName);
         if (!GetUserNameA(szKeyContainerName, &dwLen)) return FALSE;
     }
-        
+
     switch (dwFlags & (CRYPT_NEWKEYSET|CRYPT_VERIFYCONTEXT|CRYPT_DELETEKEYSET)) 
     {
         case 0:

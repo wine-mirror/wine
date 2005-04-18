@@ -2774,7 +2774,7 @@ int WINAPI PathCommonPrefixW(LPCWSTR lpszFile1, LPCWSTR lpszFile2, LPWSTR achPat
  *  dx       [I]   Desired width
  *
  * RETURNS
- *  TRUE  If the path was modified.
+ *  TRUE  If the path was modified/went well.
  *  FALSE Otherwise.
  */
 BOOL WINAPI PathCompactPathA(HDC hDC, LPSTR lpszPath, UINT dx)
@@ -2810,7 +2810,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
   TRACE("(%p,%s,%d)\n", hDC, debugstr_w(lpszPath), dx);
 
   if (!lpszPath)
-    return bRet;
+    return FALSE;
 
   if (!hDC)
     hdc = hDC = GetDC(0);
@@ -2887,7 +2887,7 @@ BOOL WINAPI PathCompactPathW(HDC hDC, LPWSTR lpszPath, UINT dx)
 
     if (dwLen > MAX_PATH - 3)
       dwLen =  MAX_PATH - 3;
-    strncpyW(buff, sFile, dwLen);
+    lstrcpynW(buff, sFile, dwLen);
 
     do {
       dwLen--;

@@ -111,7 +111,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject (LPDIR
 			if (dwCount == dwIndex) {
 				HRESULT result = S_OK;
 				if (pwszAlias) {
-					strncpyW (pwszAlias, pContainedObject->wszAlias, DMUS_MAX_FILENAME);
+					lstrcpynW (pwszAlias, pContainedObject->wszAlias, DMUS_MAX_FILENAME);
 					if (strlenW (pContainedObject->wszAlias) > DMUS_MAX_FILENAME)
 						result = DMUS_S_STRING_TRUNCATED;
 				}
@@ -199,15 +199,15 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_SetDescriptor (LPDIR
 		dwNewFlags |= DMUS_OBJ_OBJECT;
 	}
 	if (pDesc->dwValidData & DMUS_OBJ_NAME) {
-		strncpyW (This->Desc.wszName, pDesc->wszName, DMUS_MAX_NAME);
+		lstrcpynW (This->Desc.wszName, pDesc->wszName, DMUS_MAX_NAME);
 		dwNewFlags |= DMUS_OBJ_NAME;
 	}
 	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) {
-		strncpyW (This->Desc.wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
+		lstrcpynW (This->Desc.wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
 		dwNewFlags |= DMUS_OBJ_CATEGORY;
 	}
 	if (pDesc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH)) {
-		strncpyW (This->Desc.wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
+		lstrcpynW (This->Desc.wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
 		dwNewFlags |= (pDesc->dwValidData & (DMUS_OBJ_FILENAME | DMUS_OBJ_FULLPATH));
 	}
 	if (pDesc->dwValidData & DMUS_OBJ_VERSION) {

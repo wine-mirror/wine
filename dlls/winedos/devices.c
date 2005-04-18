@@ -563,10 +563,11 @@ DWORD DOSDEV_FindCharDevice(char*name)
   int cnt;
 
   /* get first 8 characters */
-  strncpy(dname,name,8);
   /* if less than 8 characters, pad with spaces */
-  for (cnt=0; cnt<8; cnt++)
-    if (!dname[cnt]) dname[cnt]=' ';
+  for (cnt=0; name[cnt] && cnt<8; cnt++)
+    dname[cnt]=name[cnt];
+
+  while(cnt<8) dname[cnt++] = ' ';
 
   /* search for char devices with the right name */
   while (cur &&

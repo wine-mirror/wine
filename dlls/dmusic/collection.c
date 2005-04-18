@@ -131,6 +131,7 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument 
 	unsigned int r = 0;
 	DMUS_PRIVATE_INSTRUMENTENTRY *tmpEntry;
 	struct list *listEntry;
+       DWORD dwLen;
 		
 	TRACE("(%p, %ld, %p, %p, %ld)\n", This, dwIndex, pdwPatch, pwszName, dwNameLen);
 	LIST_FOR_EACH (listEntry, &This->Instruments) {
@@ -138,8 +139,11 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument 
 		if (r == dwIndex) {
 			ICOM_NAME_MULTI (IDirectMusicInstrumentImpl, InstrumentVtbl, tmpEntry->pInstrument, pInstrument);
 			IDirectMusicInstrument_GetPatch (tmpEntry->pInstrument, pdwPatch);
-			dwNameLen = strlenW (pInstrument->wszName);
-			strncpyW (pwszName, pInstrument->wszName, dwNameLen);
+                       if (pwszName) {
+                               dwLen = min(strlenW(pInstrument->wszName),dwNameLen-1);
+                               memcpy (pwszName, pInstrument->wszName, dwLen * sizeof(WCHAR));
+                               pwszName[dwLen] = '\0';
+                       }
 			return S_OK;
 		}
 		r++;		
@@ -190,11 +194,11 @@ HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor (LPDI
 	if (pDesc->dwValidData & DMUS_OBJ_CLASS)
 		memcpy (&This->pDesc->guidClass, &pDesc->guidClass, sizeof (pDesc->guidClass));		
 	if (pDesc->dwValidData & DMUS_OBJ_NAME)
-		strncpyW (This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
+               lstrcpynW(This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
 	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
-		strncpyW (This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);		
+               lstrcpynW(This->pDesc->wszCategory, pDesc->wszCategory, DMUS_MAX_CATEGORY);
 	if (pDesc->dwValidData & DMUS_OBJ_FILENAME)
-		strncpyW (This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);		
+               lstrcpynW(This->pDesc->wszFileName, pDesc->wszFileName, DMUS_MAX_FILENAME);
 	if (pDesc->dwValidData & DMUS_OBJ_VERSION)
 		memcpy (&This->pDesc->vVersion, &pDesc->vVersion, sizeof (pDesc->vVersion));				
 	if (pDesc->dwValidData & DMUS_OBJ_DATE)
