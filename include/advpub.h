@@ -38,6 +38,24 @@ typedef struct _StrTable {
 typedef const STRTABLE CSTRTABLE;
 typedef CSTRTABLE *LPCSTRTABLE;
 
+/* Flags for RunSetupCommand */
+#define RSC_FLAG_INF                0x00000001
+#define RSC_FLAG_SKIPDISKSPACECHECK 0x00000002
+#define RSC_FLAG_QUIET              0x00000004
+#define RSC_FLAG_NGCONV             0x00000008
+#define RSC_FLAG_UPDHLPDLLS         0x00000010
+#define RSC_FLAG_DELAYREGISTEROCX   0x00000200
+#define RSC_FLAG_SETUPAPI           0x00000400
+
+/* Flags for DelNode */
+#define ADN_DEL_IF_EMPTY            0x00000001
+#define ADN_DONT_DEL_SUBDIRS        0x00000002
+#define ADN_DONT_DEL_DIR            0x00000004
+
+HRESULT WINAPI RunSetupCommand(HWND hWnd,
+     LPCSTR szCmdName, LPCSTR szInfSection, LPCSTR szDir, LPCSTR lpszTitle,
+     HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
+HRESULT WINAPI DelNode(LPCSTR pszFileOrDirName, DWORD dwFlags);
 DWORD WINAPI NeedRebootInit(VOID);
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck);
 HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable);

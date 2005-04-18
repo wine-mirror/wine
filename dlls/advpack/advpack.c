@@ -50,11 +50,51 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
+ *		RunSetupCommand  (ADVPACK.@)
+ *
+ * Executes an install section in an INF file or a program.
+ *
+ * PARAMS
+ *   hWnd          [I] Handle to parent window, NULL for quiet mode
+ *   szCmdName     [I] Inf or EXE filename to execute
+ *   szInfSection  [I] Inf section to install, NULL for DefaultInstall
+ *   szDir         [I] Path to extracted files
+ *   szTitle       [I] Title of all dialogs
+ *   phEXE         [O] Handle of EXE to wait for
+ *   dwFlags       [I] Flags; see include/advpub.h
+ *   pvReserved    [I] Reserved
+ *
+ * RETURNS
+ *   S_OK                                 Everything OK
+ *   S_ASYNCHRONOUS                       OK, required to wait on phEXE
+ *   ERROR_SUCCESS_REBOOT_REQUIRED        Reboot required
+ *   E_INVALIDARG                         Invalid argument given
+ *   HRESULT_FROM_WIN32(ERROR_OLD_WIN_VERSION)
+ *                                        Not supported on this Windows version
+ *   E_UNEXPECTED                         Unexpected error
+ *   HRESULT_FROM_WIN32(GetLastError())   Some other error
+ *
+ * BUGS
+ *   Unimplemented
+ */
+HRESULT WINAPI RunSetupCommand( HWND hWnd, LPCSTR szCmdName,
+                                LPCSTR szInfSection, LPCSTR szDir,
+                                LPCSTR lpszTitle, HANDLE *phEXE,
+                                DWORD dwFlags, LPVOID pvReserved )
+{
+    FIXME("(%p, %s, %s, %s, %s, %p, 0x%08lx, %p): stub\n",
+           hWnd, debugstr_a(szCmdName), debugstr_a(szInfSection),
+           debugstr_a(szDir), debugstr_a(lpszTitle),
+           phEXE, dwFlags, pvReserved);
+    return E_UNEXPECTED;
+}
+
+/***********************************************************************
  *		LaunchINFSection  (ADVPACK.@)
  */
 void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 {
-    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(cmdline), show );
+    FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
 }
 
 /***********************************************************************
@@ -62,7 +102,7 @@ void WINAPI LaunchINFSection( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT sh
  */
 void WINAPI LaunchINFSectionEx( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 {
-    FIXME("%p %p %s %d\n", hWnd, hInst, debugstr_a(cmdline), show );
+    FIXME("(%p %p %s %d): stub\n", hWnd, hInst, debugstr_a(cmdline), show );
 }
 
 /* this structure very closely resembles parameters of RunSetupCommand() */
@@ -107,7 +147,7 @@ BOOL WINAPI DoInfInstall(const SETUPCOMMAND_PARAMS *setup)
  */
 DWORD WINAPI NeedRebootInit(VOID)
 {
-    FIXME("() stub!\n");
+    FIXME("(): stub\n");
     return 0;
 }
 
@@ -116,7 +156,7 @@ DWORD WINAPI NeedRebootInit(VOID)
  */
 BOOL WINAPI NeedReboot(DWORD dwRebootCheck)
 {
-    FIXME("(0x%08lx) stub!\n", dwRebootCheck);
+    FIXME("(0x%08lx): stub\n", dwRebootCheck);
     return FALSE;
 }
 
@@ -221,9 +261,34 @@ void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 }
 
 /***********************************************************************
+ *             DelNode    (ADVPACK.@)
+ *
+ * Deletes a file or directory
+ *
+ * PARAMS
+ *   pszFileOrDirName   [I] Name of file or directory to delete
+ *   dwFlags            [I] Flags; see include/advpub.h
+ *
+ * RETURNS 
+ *   Success: S_OK
+ *   Failure: E_FAIL
+ *
+ * BUGS
+ *   Unimplemented
+ */
+HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
+{
+    FIXME("(%s, 0x%08lx): stub\n", debugstr_a(pszFileOrDirName), dwFlags);
+    return E_FAIL;
+}
+
+/***********************************************************************
  *             DelNodeRunDLL32    (ADVPACK.@)
+ *
+ * BUGS
+ *   Unimplemented
  */
 void WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
 {
-    FIXME("(%s) FIXME: stub\n", cmdline);
+    FIXME("(%s): stub\n", debugstr_a(cmdline));
 }

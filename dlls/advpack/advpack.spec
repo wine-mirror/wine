@@ -1,7 +1,7 @@
 @ stub AddDelBackupEntry
 @ stub AdvInstallFile
 @ stub CloseINFEngine
-@ stub DelNode
+@ stdcall DelNode(str long)
 @ stdcall DelNodeRunDLL32(ptr ptr str long)
 @ stdcall DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
@@ -24,7 +24,7 @@
 @ stub RegSaveRestore
 @ stub RegSaveRestoreOnINF
 @ stdcall RegisterOCX(ptr ptr str long)
-@ stub RunSetupCommand
+@ stdcall RunSetupCommand(long str str str str ptr long ptr)
 @ stub SetPerUserSecValues
 @ stub TranslateInfString
 @ stub TranslateInfStringEx
