@@ -109,9 +109,9 @@ static void SYSCOLOR_MakeObjectSystem( HGDIOBJ16 handle, BOOL set)
 
         /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
         if (set)
-            *(ptr+1) &= ~OBJECT_NOSYSTEM;
+            *ptr &= ~OBJECT_NOSYSTEM;
         else
-            *(ptr+1) |= OBJECT_NOSYSTEM;
+            *ptr |= OBJECT_NOSYSTEM;
         LOCAL_Unlock( heap_sel, handle );
     }
 }
