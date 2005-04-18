@@ -135,8 +135,8 @@ static BOOL CALLBACK DIALOG_COPY_MOVE_DlgProc(HWND hDlg, UINT msg, WPARAM wParam
 	SendDlgItemMessage(hDlg, PM_TO_GROUP, CB_ADDSTRING, 0,
 			   (LPARAM) GROUP_GroupName(hGroup));
 
-      SetDlgItemText(hDlg, PM_PROGRAM,    (LPSTR)CopyMove.lpszProgramName);
-      SetDlgItemText(hDlg, PM_FROM_GROUP, (LPSTR)CopyMove.lpszFromGroupName);
+      SetDlgItemText(hDlg, PM_PROGRAM,    CopyMove.lpszProgramName);
+      SetDlgItemText(hDlg, PM_FROM_GROUP, CopyMove.lpszFromGroupName);
       break;
 
     case WM_COMMAND:
