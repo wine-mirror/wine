@@ -183,9 +183,164 @@ static void test_error_handling(void)
     }
 }
 
+static void test_local_add_atom(void)
+{
+    ATOM atom, w_atom;
+    int i;
+
+    SetLastError( 0xdeadbeef );
+    atom = AddAtomA( "foobar" );
+    ok( atom >= 0xc000, "bad atom id %x\n", atom );
+    ok( GetLastError() == 0xdeadbeef, "AddAtomA set last error\n" );
+
+    /* Verify that it can be found (or not) appropriately */
+    ok( FindAtomA( "foobar" ) == atom, "could not find atom foobar\n" );
+    ok( FindAtomA( "FOOBAR" ) == atom, "could not find atom FOOBAR\n" );
+    ok( !FindAtomA( "_foobar" ), "found _foobar\n" );
+
+    /* Add the same atom, specifying string as unicode; should
+     * find the first one, not add a new one */
+    SetLastError( 0xdeadbeef );
+    w_atom = AddAtomW( foobarW );
+    if (w_atom && GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
+        unicode_OS = TRUE;
+    else
+        trace("WARNING: Unicode atom APIs are not supported on this platform\n");
+
+    if (unicode_OS)
+    {
+        ok( w_atom == atom, "Unicode atom does not match ASCII\n" );
+        ok( GetLastError() == 0xdeadbeef, "AddAtomW set last error\n" );
+    }
+
+    /* Verify that it can be found (or not) appropriately via unicode name */
+    if (unicode_OS)
+    {
+        ok( FindAtomW( foobarW ) == atom, "could not find atom foobar\n" );
+        ok( FindAtomW( FOOBARW ) == atom, "could not find atom FOOBAR\n" );
+        ok( !FindAtomW( _foobarW ), "found _foobar\n" );
+    }
+
+    /* Test integer atoms
+     * (0x0001 .. 0xbfff) should be valid;
+     * (0xc000 .. 0xffff) should be invalid */
+
+    SetLastError( 0xdeadbeef );
+    ok( AddAtomA(0) == 0 && GetLastError() == 0xdeadbeef, "succeeded to add atom 0\n" );
+    if (unicode_OS)
+    {
+        SetLastError( 0xdeadbeef );
+        ok( AddAtomW(0) == 0 && GetLastError() == 0xdeadbeef, "succeeded to add atom 0\n" );
+    }
+
+    SetLastError( 0xdeadbeef );
+    for (i = 1; i <= 0xbfff; i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ok( AddAtomA((LPCSTR)i) == i && GetLastError() == 0xdeadbeef,
+            "failed to add atom %x\n", i );
+        if (unicode_OS)
+        {
+            SetLastError( 0xdeadbeef );
+            ok( AddAtomW((LPCWSTR)i) == i && GetLastError() == 0xdeadbeef,
+                "failed to add atom %x\n", i );
+        }
+    }
+
+    for (i = 0xc000; i <= 0xffff; i++)
+    {
+        ok( !AddAtomA((LPCSTR)i), "succeeded adding %x\n", i );
+        if (unicode_OS)
+            ok( !AddAtomW((LPCWSTR)i), "succeeded adding %x\n", i );
+    }
+}
+
+static void test_local_get_atom_name(void)
+{
+    char buf[10];
+    WCHAR bufW[10];
+    int i;
+    UINT len;
+    static const WCHAR resultW[] = {'f','o','o','b','a','r',0,'.','.','.'};
+
+    ATOM atom = AddAtomA( "foobar" );
+
+    /* Get the name of the atom we added above */
+    memset( buf, '.', sizeof(buf) );
+    len = GetAtomNameA( atom, buf, 10 );
+    ok( len == strlen("foobar"), "bad length %d\n", len );
+    ok( !memcmp( buf, "foobar\0...", 10 ), "bad buffer contents\n" );
+
+    /* Repeat, unicode-style */
+    if (unicode_OS)
+    {
+        for (i = 0; i < 10; i++) bufW[i] = '.';
+        SetLastError( 0xdeadbeef );
+        len = GetAtomNameW( atom, bufW, 10 );
+        ok( len && GetLastError() == 0xdeadbeef, "GetAtomNameW failed\n" );
+        ok( len == lstrlenW(foobarW), "bad length %d\n", len );
+        ok( !memcmp( bufW, resultW, 10*sizeof(WCHAR) ), "bad buffer contents\n" );
+    }
+
+    /* Check error code returns */
+    memset(buf, '.', 10);
+    ok( !GetAtomNameA( atom, buf,  0 ), "succeeded\n" );
+    ok( !memcmp( buf, "..........", 10 ), "should not touch buffer\n" );
+
+    if (unicode_OS)
+    {
+        static const WCHAR sampleW[10] = {'.','.','.','.','.','.','.','.','.','.'};
+
+        for (i = 0; i < 10; i++) bufW[i] = '.';
+        ok( !GetAtomNameW( atom, bufW, 0 ), "succeeded\n" );
+        ok( !memcmp( bufW, sampleW, 10 * sizeof(WCHAR) ), "should not touch buffer\n" );
+    }
+
+    /* Test integer atoms */
+    for (i = 0; i <= 0xbfff; i++)
+    {
+        memset( buf, 'a', 10 );
+        len = GetAtomNameA( (ATOM)i, buf, 10 );
+        if (i)
+        {
+            char res[20];
+            ok( (len > 1) && (len < 7), "bad length %d\n", len );
+            sprintf( res, "#%d", i );
+            memset( res + strlen(res) + 1, 'a', 10 );
+            ok( !memcmp( res, buf, 10 ), "bad buffer contents %s\n", buf );
+        }
+        else
+            ok( !len, "bad length %d\n", len );
+    }
+}
+
+static void test_local_error_handling(void)
+{
+    char buffer[260];
+    WCHAR bufferW[260];
+    int i;
+
+    memset( buffer, 'a', 256 );
+    buffer[256] = 0;
+    ok( !AddAtomA(buffer), "add succeeded\n" );
+    ok( !FindAtomA(buffer), "find succeeded\n" );
+
+    if (unicode_OS)
+    {
+        for (i = 0; i < 256; i++) bufferW[i] = 'b';
+        bufferW[256] = 0;
+        ok( !AddAtomW(bufferW), "add succeeded\n" );
+        ok( !FindAtomW(bufferW), "find succeeded\n" );
+    }
+}
+
+
 START_TEST(atom)
 {
     test_add_atom();
     test_get_atom_name();
     test_error_handling();
+    test_local_add_atom();
+    test_local_get_atom_name();
+    test_local_error_handling();
 }
