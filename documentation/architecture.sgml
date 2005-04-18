@@ -81,7 +81,7 @@
 	    </listitem>
 	    <listitem>
 	      <para>
-		WineLib executable. These are applications, written
+		Winelib executable. These are applications, written
 		using the Windows API, but compiled as a Unix
 		executable. Wine provides the tools to create such
 		executables.
@@ -101,7 +101,7 @@
 		  <entry>DOS (.COM or .EXE)</entry>
 		  <entry>Win16 (NE)</entry>
 		  <entry>Win32 (PE)</entry>
-		  <entry>WineLib</entry>
+		  <entry>Winelib</entry>
 		</row>
 	      </thead>
 	      <tbody>
@@ -188,14 +188,12 @@
 	</para>
 
         <para>
-          Wine deals with this issue by launching a separate Wine
-          process (which is in fact a Unix process) for each Win32
-	  process, but not for Win16 tasks. Win16 tasks (as well as
-	  DOS programs) are run as different intersynchronized
-	  Unix-threads in the same dedicated Wine process; this Wine
-	  process is commonly known as a <firstterm>WOW</firstterm>
-	  process (Windows on Windows), referring to a similar
-	  mechanism used by Windows NT.
+          Wine deals with this issue by launching a separate Wine process (which
+	  is in fact a Unix process) for each Win32 process, but not for Win16
+	  tasks. Win16 tasks are run as different intersynchronized Unix-threads
+	  in the same dedicated Wine process; this Wine process is commonly
+	  known as a <firstterm>WOW</firstterm> process (Windows on Windows),
+	  referring to a similar mechanism used by Windows NT.
 	</para>
 	<para>
           Synchronization between the Win16 tasks running in the WOW
@@ -206,6 +204,15 @@
           one of the waiting threads will then acquire it and let its
           task run.
         </para>
+	<para>
+	  <command>winevdm</command> is the Wine process dedicated to running the
+	  Win16 processes. Note that several instances of this process could
+	  exist, has Windows has support for different VDM (Virtual Dos
+	  Machines) in order to have Win16 processes running in different
+	  address spaces. Wine also uses the same architecture to run DOS
+	  programs (in this case, the DOS emulation is provided by a Wine only
+	  DLL called <filename>winedos</filename>.
+	</para>
       </sect2>
     </sect1>
 
@@ -251,9 +258,12 @@
 
 	<para>
 	  The windows architecture (Windows NT way) looks like the
-	  following drawing. Note the new DLL (NTDLL) which allows
-	  implementing different subsystems (as win32); kernel32 in NT
-	  architecture implements the Win32 subsystem on top of NTDLL.
+	  following drawing. Note the new DLL
+	  (<filename>NTDLL</filename>) which allows implementing
+	  different subsystems (as win32);
+	  <filename>kernel32</filename> in NT architecture
+	  implements the Win32 subsystem on top of
+	  <filename>NTDLL</filename>.
 	  <screen>
 +---------------------+                      \
 |     Windows EXE     |                       } application
@@ -371,12 +381,16 @@
 
 	<para>
 	  Wine must at least completely replace the "Big Three" DLLs
-	  (KERNEL/KERNEL32, GDI/GDI32, and USER/USER32), which all
-	  other DLLs are layered on top of. But since Wine is (for
-	  various reasons) leaning towards the NT way of implementing
-	  things, the NTDLL is another core DLL to be implemented in
-	  Wine, and many KERNEL32 and ADVAPI32 features will be
-	  implemented through the NTDLL.
+	  (<filename>KERNEL</filename>/<filename>KERNEL32</filename>,
+	  <filename>GDI</filename>/<filename>GDI32</filename>, and
+	  <filename>USER</filename>/<filename>USER32</filename>),
+	  which all other DLLs are layered on top of. But since Wine
+	  is (for various reasons) leaning towards the NT way of
+	  implementing things, the <filename>NTDLL</filename> is
+	  another core DLL to be implemented in Wine, and many
+	  <filename>KERNEL32</filename> and 
+	  <filename>ADVAPI32</filename> features will be
+	  implemented through the <filename>NTDLL</filename>.
 	</para>
 	<para>
 	  As of today, no real subsystem (apart the Win32 one) has
@@ -421,30 +435,30 @@
 	  Wine server launches, it creates a Unix socket for the
 	  current host based on (see below) your home directory's
 	  <filename>.wine</filename> subdirectory (or wherever the
-	  <constant>WINEPREFIX</constant> environment variable
-	  points to) - all Wine processes launched later connects to
-	  the Wine server using this socket. (If a Wine server was
-	  not already running, the first Wine process will start up
-	  the Wine server in auto-terminate mode (i.e. the Wine
-	  server will then terminate itself once the last Wine
-	  process has terminated).)
+	  <envar>WINEPREFIX</envar> environment variable points to)
+          - all Wine processes launched later connects to the Wine
+	  server using this socket. If a Wine server was not
+	  already running, the first Wine process will start up the
+	  Wine server in auto-terminate mode (i.e. the Wine server
+	  will then terminate itself once the last Wine process has
+	  terminated).
 	</para>
 	<para>
 	  In earlier versions of Wine the master socket mentioned
 	  above was actually created in the configuration directory;
 	  either your home directory's <filename>/wine</filename>
 	  subdirectory or wherever the
-	  <constant>WINEPREFIX</constant> environment variable
-	  points>. Since that might not be possible the socket is
-	  actually created within the <filename>/tmp</filename>
-	  directory with a name that reflects the configuration
-	  directory. This means that there can actually be several
-	  separate copies of the Wine server running; one per
-	  combination of user and configuration directory. Note that
-	  you should not have several users using the same
-	  configuration directory at the same time; they will have
-	  different copies of the Wine server running and this could
-	  well lead to problems with the registry information that
+	  <envar>WINEPREFIX</envar> environment variable points>.
+	  Since that might not be possible the socket is actually
+	  created within the <filename>/tmp</filename> directory
+	  with a name that reflects the configuration directory.
+	  This means that there can actually be several separate
+	  copies of the Wine server running; one per combination of
+	  user and configuration directory. Note that you should
+	  not have several users using the same configuration
+	  directory at the same time; they will have different
+	  copies of the Wine server running and this could well
+	  lead to problems with the registry information that
 	  they are sharing.
 	</para>
 	<para>
@@ -544,9 +558,9 @@
 		automatically registered when the shared library is
 		loaded - remember, registration call is put inside a
 		shared library constructor - using the
-		<constant>PRELOAD</constant> environment variable
-		when running a Wine process can force the
-		registration of some DLL descriptors.
+		<envar>PRELOAD</envar> environment variable when
+		running a Wine process can force the registration of
+		some DLL descriptors.
 	      </para>
 	    </listitem>
 	    <listitem>
@@ -554,8 +568,7 @@
 		If it's not registered, Wine will look for it on
 		disk, building the shared library name from the DLL
 		module name. Directory searched for are specified by
-		the <constant>WINEDLLPATH</constant> environment
-		variable.
+		the <envar>WINEDLLPATH</envar> environment variable.
 	      </para>
 	    </listitem>
 	    <listitem>
@@ -647,15 +660,19 @@
 	  A DLL descriptor is also created for every 16 bit
 	  DLL. However, this DLL normally paired with a 32 bit
 	  DLL. Either, it's the 16 bit counterpart of the 16 bit DLL
-	  (KRNL386.EXE for KERNEL32, USER for USER32...), or a 16
-	  bit DLL directly linked to a 32 bit DLL (like SYSTEM for
-	  KERNEL32, or DDEML for USER32). In those cases, the 16 bit
+	  (<filename>KRNL386.EXE</filename> for 
+	  <filename>KERNEL32</filename>, <filename>USER</filename>
+	  for <filename>USER32</filename>...), or a 16
+	  bit DLL directly linked to a 32 bit DLL (like 
+	  <filename>SYSTEM</filename> for <filename>KERNEL32</filename>,
+	  or <filename>DDEML</filename> for
+	  <filename>USER32</filename>). In those cases, the 16 bit
 	  descriptor(s) is (are) inserted in the same shared library
 	  as the the corresponding 32 bit DLL. Wine will also create
 	  symbolic links between kernel32.dll.so and system.dll.so
 	  so that loading of either
-	  <filename>kernel32.dll</filename> or
-	  <filename>system.dll</filename> will end up on the same
+	  <filename>KERNEL32.DLL</filename> or
+	  <filename>SYSTEM.DLL</filename> will end up on the same
 	  shared library.
 	</para>
       </sect2>
@@ -675,24 +692,26 @@
 
 	  <para>
 	    Native DLLs of course guarantee 100% compatibility for
-	    routines they implement. For example, using the native USER
-	    DLL would maintain a virtually perfect and Windows 95-like
-	    look for window borders, dialog controls, and so on. Using
-	    the built-in Wine version of this library, on the other
-	    hand, would produce a display that does not precisely mimic
-	    that of Windows 95.  Such subtle differences can be
-	    engendered in other important DLLs, such as the common
-	    controls library COMMCTRL or the common dialogs library
-	    COMMDLG, when built-in Wine DLLs outrank other types in load
-	    order.
+	    routines they implement. For example, using the native
+	    <filename>USER</filename> DLL would maintain a virtually
+	    perfect and Windows 95-like look for window borders,
+	    dialog controls, and so on. Using the built-in Wine
+	    version of this library, on the other hand, would produce
+	    a display that does not precisely mimic that of Windows
+	    95. Such subtle differences can be engendered in other
+	    important DLLs, such as the common controls library
+	    <filename>COMMCTRL</filename> or the common dialogs library
+	    <filename>COMMDLG</filename>, when built-in Wine DLLs
+	    outrank other types in load order.
 	  </para>
 	  <para>
 	    More significant, less aesthetically-oriented problems can
-	    result if the built-in Wine version of the SHELL DLL is
-	    loaded before the native version of this library. SHELL
+	    result if the built-in Wine version of the
+	    <filename>SHELL</filename> DLL is loaded before the native
+	    version of this library. <filename>SHELL</filename>
 	    contains routines such as those used by installer utilities
 	    to create desktop shortcuts. Some installers might fail when
-	    using Wine's built-in SHELL.
+	    using Wine's built-in <filename>SHELL</filename>.
 	  </para>
 	</sect3>
 
@@ -704,16 +723,17 @@
 	    a library tries to access features of the rest of the system
 	    that are not fully implemented in Wine, the native DLL might
 	    work much worse than the corresponding built-in one, if at
-	    all. For example, the native Windows GDI library must be
-	    paired with a Windows display driver, which of course is not
-	    present under Intel Unix and Wine.
+	    all. For example, the native Windows <filename>GDI</filename>
+	    library must be paired with a Windows display driver, which
+	    of course is not present under Intel Unix and Wine.
 	  </para>
 	  <para>
 	    Finally, occasionally built-in Wine DLLs implement more
 	    features than the corresponding native Windows DLLs.
 	    Probably the most important example of such behavior is the
-	    integration of Wine with X provided by Wine's built-in USER
-	    DLL. Should the native Windows USER library take load-order
+	    integration of Wine with X provided by Wine's built-in
+	    <filename>USER</filename> DLL. Should the native Windows
+	    <filename>USER</filename> library take load-order
 	    precedence, such features as the ability to use the
 	    clipboard or drag-and-drop between Wine windows and X
 	    windows will be lost.
@@ -820,10 +840,11 @@
 	  </para>
 
 	  <para>
-	    The EXE file itself is usually mapped at address 0x400000
-	    and up: indeed, most EXEs have their relocation records
-	    stripped which means they must be loaded at their base
-	    address and cannot be loaded at any other address.
+	    The EXE file itself is usually mapped at address
+	    <constant>0x400000</constant> and up: indeed, most EXEs have
+	    their relocation records stripped which means they must be
+	    loaded at their base address and cannot be loaded at any
+	    other address.
 	  </para>
 
 	  <para>
@@ -836,7 +857,8 @@
 	    be loaded at one address in one process, and a totally
 	    different one in another. Ensuring all the functions
 	    loaded into memory can find each other is the job of the
-	    Windows dynamic linker, which is a part of NTDLL.
+	    Windows dynamic linker, which is a part of
+	    <filename>NTDLL</filename>.
 	  </para>
 	  <para>
 	    So, we have the EXE and its DLLs mapped into memory. Two
@@ -864,16 +886,16 @@
 	    available for the application. In fact that's not so: only
 	    the lower 2 gigs are available, the upper 2 gigs are on
 	    Windows NT used by the operating system and hold the
-	    kernel (from 0x80000000). Why is the kernel mapped into
-	    every address space?  Mostly for performance: while it's
-	    possible to give the kernel its own address space too -
-	    this is what Ingo Molnars 4G/4G VM split patch does for
-	    Linux - it requires that every system call into the kernel
-	    switches address space. As that is a fairly expensive
-	    operation (requires flushing the translation lookaside
-	    buffers etc) and syscalls are made frequently it's best
-	    avoided by keeping the kernel mapped at a constant
-	    position in every processes address space.
+	    kernel (from <constant>0x80000000</constant>). Why is the
+	    kernel mapped into every address space?  Mostly for
+	    performance: while it's possible to give the kernel its own
+	    address space too - this is what Ingo Molnars 4G/4G VM
+	    split patch does for Linux - it requires that every system
+	    call into the kernel switches address space. As that is a
+	    fairly expensive operation (requires flushing the
+	    translation lookaside buffers etc) and syscalls are made
+	    frequently it's best avoided by keeping the kernel mapped
+	    at a constant position in every processes address space.
 	  </para>
 	  
 	  <para>
@@ -923,403 +945,8 @@
 	    memory allocation and stack.
 	  </para>
 	</sect3>
-
-	<sect3>
-	  <title>Implementation</title>
-	  <para>
-	    Wine (with a bit of black magic) is able to map all items
-	    at the correct locations as depicted above.
-	  </para>
-	  <para>
-	    Wine also implements the shared heap so native win9x DLLs
-	    can be used. This heap is always created at the
-	    <constant>SYSTEM_HEAP_BASE</constant> address or
-	    <constant>0x80000000</constant> and defaults to 16
-	    megabytes in size.
-	  </para>
-	  <para>
-	    There are a few other magic locations. The bottom 64k of
-	    memory is deliberately left unmapped to catch null pointer
-	    dereferences. The region from 64k to 1mb+64k are reserved
-	    for DOS compatibility and contain various DOS data
-	    structures. Finally, the address space also contains
-	    mappings for the Wine binary itself, any native libaries
-	    Wine is using, the glibc malloc arena and so on.
-	  </para>
-	</sect3>
-
-	<sect3 id="address-space">
-	  <title>Laying out the address space</title>
-
-	  <para>
-	    Up until about the start of 2004, the Linux address space
-	    very much resembled the Windows 9x layout: the kernel sat
-	    in the top gigabyte, the bottom pages were unmapped to
-	    catch null pointer dereferences, and the rest was
-	    free. The kernels mmap algorithm was predictable: it would
-	    start by mapping files at low addresses and work up from
-	    there.
-	  </para>
-
-	  <para>
-	    The development of a series of new low level patches
-	    violated many of these assumptions, and resulted in Wine
-	    needing to force the Win32 address space layout upon the
-	    system. This section looks at why and how this is done.
-	  </para>
-
-	  <para>
-	    The exec-shield patch increases security by randomizing
-	    the kernels mmap algorithms. Rather than consistently
-	    choosing the same addresses given the same sequence of
-	    requests, the kernel will now choose randomized
-	    addresses. Because the Linux dynamic linker
-	    (ld-linux.so.2) loads DSOs into memory by using mmap, this
-	    means that DSOs are no longer loaded at predictable
-	    addresses, so making it harder to attack software by using
-	    buffer overflows. It also attempts to relocate certain
-	    binaries into a special low area of memory known as the
-	    ASCII armor so making it harder to jump into them when
-	    using string based attacks.
-	  </para>
-
-	  <para>
-	    Prelink is a technology that enhances startup times by
-	    precalculating ELF global offset tables then saving the
-	    results inside the native binaries themselves. By grid
-	    fitting each DSO into the address space, the dynamic
-	    linker does not have to perform as many relocations so
-	    allowing applications that heavily rely on dynamic linkage
-	    to be loaded into memory much quicker. Complex C++
-	    applications such as Mozilla, OpenOffice and KDE can
-	    especially benefit from this technique.
-	  </para>
-
-	  <para>
-	    The 4G VM split patch was developed by Ingo Molnar. It
-	    gives the Linux kernel its own address space, thereby
-	    allowing processes to access the maximum addressable
-	    amount of memory on a 32-bit machine: 4 gigabytes. It
-	    allows people with lots of RAM to fully utilise that in
-	    any given process at the cost of performance: the reason
-	    behind giving the kernel a part of each processes address
-	    space was to avoid the overhead of switching on each
-	    syscall.
-	  </para>
-
-	  <para>
-	    Each of these changes alter the address space in a way
-	    incompatible with Windows. Prelink and exec-shield mean
-	    that the libraries Wine uses can be placed at any point in
-	    the address space: typically this meant that a library was
-	    sitting in the region that the EXE you wanted to run had
-	    to be loaded (remember that unlike DLLs, EXE files cannot
-	    be moved around in memory). The 4G VM split means that
-	    programs could receive pointers to the top gigabyte of
-	    address space which some are not prepared for (they may
-	    store extra information in the high bits of a pointer, for
-	    instance). In particular, in combination with exec-shield
-	    this one is especially deadly as it's possible the process
-	    heap could be allocated beyond ADDRESS_SPACE_LIMIT which
-	    causes Wine initialization to fail.
-	  </para>
-
-	  <para>
-	    The solution to these problems is for Wine to reserve
-	    particular parts of the address space so that areas that
-	    we don't want the system to use will be avoided. We later
-	    on (re/de)allocate those areas as needed. One problem is
-	    that some of these mappings are put in place automatically
-	    by the dynamic linker: for instance any libraries that
-	    Wine is linked to (like libc, libwine, libpthread etc)
-	    will be mapped into memory before Wine even gets
-	    control. In order to solve that, Wine overrides the
-	    default ELF initialization sequence at a low level and
-	    reserves the needed areas by using direct syscalls into
-	    the kernel (ie without linking against any other code to
-	    do it) before restarting the standard initialization and
-	    letting the dynamic linker continue. This is referred to
-	    as the preloader and is found in loader/preloader.c.
-	  </para>
-
-	  <para>
-	    Once the usual ELF boot sequence has been completed, some
-	    native libraries may well have been mapped above the 3gig
-	    limit: however, this doesn't matter as 3G is a Windows
-	    limit, not a Linux limit. We still have to prevent the
-	    system from allocating anything else above there (like the
-	    heap or other DLLs) though so Wine performs a binary
-	    search over the upper gig of address space in order to
-	    iteratively fill in the holes with MAP_NORESERVE mappings
-	    so the address space is allocated but the memory to
-	    actually back it is not. This code can be found in libs/wine/mmap.c:reserve_area.
-	  </para>
-	</sect3>
       </sect2>
 
-      <sect2>
-	<title>Processes</title>
-	<para>
-	  Let's take a closer look at the way Wine loads and run
-	  processes in memory.
-	</para>
-	<sect3>
-	  <title>Starting a process from command line</title>
-	  <para>
-	    When starting a Wine process from command line (we'll get
-	    later on to the differences between NE, PE and Winelib
-	    executables), there are a couple of things Wine need to do
-	    first. A first executable is run to check the threading
-	    model of the underlying OS (see <xref linkend="threading">
-	    for the details) and will start the real Wine loader
-	    corresponding to the choosen threading model.
-	  </para>
-	  <para>
-	    Then Wine graps a few elements from the Unix world: the
-	    environment, the program arguments. Then the
-	    <filename>ntdll.dll.so</filename> is loaded into memory
-	    using the standard shared library dynamic loader. When
-	    loaded, NTDLL will mainly first create a decent Windows
-	    environment:
-	    <itemizedlist>
-	      <listitem>
-		<para>create a PEB and a TEB</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  set up the connection to the Wine server - and
-		  eventually launching the Wine server if none runs
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>create the process heap</para>
-	      </listitem>
-	    </itemizedlist>
-	  </para>
-	  <para>
-	    Then <filename>Kernel32</filename> is loaded (but now
-	    using the Windows dynamic loading capabilities) and a Wine
-	    specific entry point is called
-	    <function>__wine_kernel_init</function>. This function
-	    will actually handle all the logic of the process loading
-	    and execution, and will never return from it's call.
-	  </para>
-	  <para>
-	    <function>__wine_kernel_init</function> will undergo the
-	    following tasks:
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  initialization of program arguments from Unix
-		  program arguments
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  lookup of executable in the file system
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  If the file is not found, then an error is printed
-		  and the Wine loader stops.
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  We'll cover the non-PE file type later on, so assume
-		  for now it's a PE file. The PE module is loaded in
-		  memory using the Windows shared library
-		  mechanism. Note that the dependencies on the module
-		  are not resolved at this point.
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  A new stack is created, which size is given in the
-		  PE header, and this stack is made the one of the
-		  running thread (which is still the only one in the
-		  process). The stack used at startup will no longer
-		  be used.
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  Which this new stack,
-		  <function>ntdll.LdrInitializeThunk</function> is
-		  called which performs the remaining initialization
-		  parts, including resolving all the DLL imports on
-		  the PE module, and doing the init of the TLS slots.
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  Control can now be passed to the
-		  <function>EntryPoint</function> of the PE module,
-		  which will let the executable run.
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	  </para>
-	</sect3>
-	<sect3>
-	  <title>Creating a child process from a running process</title>
-	  <para>
-	    The steps used are closely link to what is done in the
-	    previous case.
-	  </para>
-	  <para>
-	    There are however a few points to look at a bit more
-	    closely. The inner implementation creates the child
-	    process using the <function>fork()</function> and
-	    <function>exec()</function> calls. This means that we
-	    don't need to check again for the threading model, we can
-	    use what the parent (or the grand-parent process...)
-	    started from command line has found.
-	  </para>
-	  <para>
-	    The Win32 process creation allows to pass a lot of
-	    information between the parent and the child. This
-	    includes object handles, windows title, console
-	    parameters, environment strings... Wine makes use of both
-	    the standard Unix inheritance mechanisms (for environment
-	    for example) and the Wine server (to pass from parent to
-	    child a chunk of data containing the relevant information).
-	  </para>
-	  <para>
-	    The previously described loading mechanism will check in
-	    the Wine server if such a chunk exists, and, if so, will
-	    perform the relevant initialization.
-	  </para>
-	  <para>
-	    Some further synchronization is also put in place: a
-	    parent will wait until the child has started, or has
-	    failed. The Wine server is also used to perform those
-	    tasks.
-	  </para>
-	</sect3>
-	<sect3>
-	  <title>Starting a Winelib process</title>
-	  <para>
-	    Before going into the gory details, let's first go back to
-	    what a Winelib application is. It can be either a regular
-	    Unix executable, or a more specific Wine beast. This later
-	    form in fact creates two files for a given executable (say
-	    <filename>foo.exe</filename>). The first one, named
-	    <filename>foo</filename> will be a symbolic link to the
-	    Wine loader (<filename>wine</filename>). The second one,
-	    named <filename>foo.exe.so</filename>, is the equivalent
-	    of the <filename>.dll.so</filename> files we've already
-	    described for DLLs. As in Windows, an executable is, among
-	    other things, a module with its import and export
-	    information, as any DLL, it makes sense Wine uses the same
-	    mechanisms for loading native executables and DLLs.
-	  </para>
-	  <para>
-	    When starting a Winelib application from the command line
-	    (say with <command>foo arg1 arg2</command>), the Unix
-	    shell will execute <command>foo</command> as a Unix
-	    executable. Since this is in fact the Wine loader, Wine
-	    will fire up. However, will notice that it hasn't been
-	    started as <command>wine</command> but as
-	    <command>foo</command>, and hence, will try to load (using
-	    Unix shared library mechanism) the second file
-	    <filename>foo.exe.so</filename>. Wine will recognize a 32
-	    bit module (with its descriptor) embedded in the shared
-	    library, and once the shared library loaded, it will
-	    proceed the same path as when loading a standard native PE
-	    executable.
-	  </para>
-	  <para>
-	    Wine needs to implement this second form of executable in
-	    order to maintain the order of initialization of some
-	    elements in the executable. One particular issue is when
-	    dealing with global C++ objects. In standard Unix
-	    executable, the call of the constructor to such objects is
-	    stored in the specific section of the executable
-	    (<function>.init</function> not to name it). All
-	    constructors in this section are called before the
-	    <function>main</function> function is called. Creating a
-	    Wine executable using the first form mentionned above will
-	    let those constructors being called before Wine gets a
-	    chance to initialize itself. So, any constructor using a
-	    Windows API will fail, because Wine infrastructure isn't
-	    in place. The use of the second form for Winelib
-	    executables ensures that we do the initialization using
-	    the following steps:
-	    <itemizedlist>
-	      <listitem>
-		<para>
-		  initialize the Wine infrastructure
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  load the executable into memory
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  handle the import sections for the executable
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  call the global object constructors (if any). They
-		  now can properly call the Windows APIs
-		</para>
-	      </listitem>
-	      <listitem>
-		<para>
-		  call the executable entry point
-		</para>
-	      </listitem>
-	    </itemizedlist>
-	  </para>
-	  <para>
-	    The attentive reader would have noted that the resolution
-	    of imports for the executable is done, as for a DLL, when
-	    the executable/DLL descriptor is registered. However, this
-	    is done also by adding a specific constructor in the
-	    <function>.init</function> section. For the above describe
-	    scheme to function properly, this constructor must be the
-	    first constructor to be called, before all the other
-	    constructors, generated by the executable itself. The Wine
-	    build chain takes care of that, and also generating the
-	    executable/DLL descriptor for the Winelib executable.
-	  </para>
-	</sect3>
-	<sect3>
-	  <title>Starting a NE (Win16) process</title>
-	  <para>
-	    When Wine is requested to run a NE (Win 16 process), it
-	    will in fact hand over the execution of it to a specific
-	    executable <filename>winevdm</filename>. VDM stands for
-	    Virtual DOS Machine. This <filename>winevdm</filename>
-	    will in fact set up the correct 16 bit environment to run
-	    the executable. Any new 16 bit process created by this
-	    executable (or its children) will run into the same
-	    <filename>winevdm</filename> instance. Among one instance,
-	    several functionalities will be provided to those 16 bit
-	    processes, including the cooperative multitasking, sharing
-	    the same address space, managing the selectors for the 16
-	    bit segments needed for code, data and stack.
-	  </para>
-	  <para>
-	    Note that several <filename>winevdm</filename> instances
-	    can run in the same Wine session, but the functionalities
-	    described above are only shared among a given instance,
-	    not among all the instances. <filename>winevdm</filename>
-	    is built as Winelib application, and hence has access to
-	    any facility a 32 bit application has.
-	  </para>
-	  <para>
-	    The behaviour we just described also applies to DOS
-	    executables, which are handled the same way by
-	    <filename>winevdm</filename>.
-	  </para>
-	</sect3>
-      </sect2>
       <sect2>
 	<title>Wine drivers</title>
 	<para>
@@ -1327,11 +954,13 @@
 	  Unix. This comes mainly because (look at the generic
 	  architecture schemas) Wine doesn't implement the kernel
 	  features of Windows (kernel here really means the kernel,
-	  not the KERNEL32 DLL), but rather sets up a proxy layer on
-	  top of the Unix kernel to provide the NTDLL and KERNEL32
-	  features. This means that Wine doesn't provide the inner
-	  infrastructure to run native drivers, either from the Win9x
-	  family or from the NT family.
+	  not the <filename>KERNEL32</filename> DLL), but rather
+	  sets up a proxy layer on top of the Unix kernel to provide
+	  the <filename>NTDLL</filename> and
+	  <filename>KERNEL32</filename> features. This means that
+	  Wine doesn't provide the inner infrastructure to run
+	  native drivers, either from the Win9x family or from the 
+	  NT family.
 	</para>
 	<para>
 	  In other words, Wine will only be able to provide access to

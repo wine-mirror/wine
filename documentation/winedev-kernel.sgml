@@ -202,6 +202,361 @@ ExitProcess( entry( peb ) );
       </sect2>
     </sect1>
 
+    <sect1>
+      <title>Detailed memory management</title>
+      <para>
+	As already explained in previous chapter (see <xref linkend="arch-mem">
+	for the details), Wine creates every 32-bit Windows process in its own
+	32 address space. Wine also tries to map at the relevant addresses what
+	Windows would do. There are however a few nasty bits to look at.
+      </para>
+
+      <sect2>
+	<title>Implementation</title>
+	<para>
+	  Wine (with a bit of black magic) is able to map the main module at
+	  it's desired address (likely <constant>0x400000</constant>), to create
+	  the process heap, its stack (as a Windows executable can ask for a
+	  specific stack size), Wine simply use the initial stack of the ELF
+	  executable for its initialisation, but creates a new stack (as a Win32
+	  one) for the main thread of the executable. Wine also tries to map all
+	  native DLLs at their desired address, so that no relocation has to be
+	  performed.
+	</para>
+	<para>
+	  Wine also implements the shared heap so native win9x DLLs can be
+	  used. This heap is always created at the
+	  <constant>SYSTEM_HEAP_BASE</constant> address or
+	  <constant>0x80000000</constant> and defaults to 16 megabytes in size.
+	</para>
+	<para>
+	  There are a few other magic locations. The bottom 64k of memory is
+	  deliberately left unmapped to catch null pointer dereferences. The
+	  region from 64k to 1mb+64k are reserved for DOS compatibility and
+	  contain various DOS data structures. Finally, the address space also
+	  contains mappings for the Wine binary itself, any native libaries
+	  Wine is using, the glibc malloc arena and so on.
+	</para>
+      </sect2>
+
+      <sect2 id="address-space">
+	<title>Laying out the address space</title>
+
+	<para>
+	  Up until about the start of 2004, the Linux address space very much
+	  resembled the Windows 9x layout: the kernel sat in the top gigabyte,
+	  the bottom pages were unmapped to catch null pointer dereferences, and
+	  the rest was free. The kernels mmap algorithm was predictable: it
+	  would start by mapping files at low addresses and work up from there.
+	</para>
+
+	<para>
+	  The development of a series of new low level patches violated many of
+	  these assumptions, and resulted in Wine needing to force the Win32
+	  address space layout upon the system. This section looks at why and
+	  how this is done.
+	</para>
+
+	<para>
+	  The exec-shield patch increases security by randomizing the kernels
+	  mmap algorithms. Rather than consistently choosing the same addresses
+	  given the same sequence of requests, the kernel will now choose
+	  randomized addresses. Because the Linux dynamic linker
+	  (<filename>ld-linux.so.2</filename>) loads DSOs into memory by using
+	  mmap, this means that DSOs are no longer loaded at predictable
+	  addresses, so making it harder to attack software by using buffer
+	  overflows. It also attempts to relocate certain binaries into a
+	  special low area of memory known as the ASCII armor so making it
+	  harder to jump into them when using string based attacks.
+	</para>
+
+	<para>
+	  Prelink is a technology that enhances startup times by precalculating
+	  ELF global offset tables then saving the results inside the native
+	  binaries themselves. By grid fitting each DSO into the address space,
+	  the dynamic linker does not have to perform as many relocations so
+	  allowing applications that heavily rely on dynamic linkage to be
+	  loaded into memory much quicker. Complex C++ applications such as
+	  Mozilla, OpenOffice and KDE can especially benefit from this
+	  technique.
+	</para>
+
+	<para>
+	  The 4G VM split patch was developed by Ingo Molnar. It gives the Linux
+	  kernel its own address space, thereby allowing processes to access the
+	  maximum addressable amount of memory on a 32-bit machine: 4
+	  gigabytes. It allows people with lots of RAM to fully utilise that in
+	  any given process at the cost of performance: the reason behind giving
+	  the kernel a part of each processes address space was to avoid the
+	  overhead of switching on each syscall.
+	</para>
+
+	<para>
+	  Each of these changes alter the address space in a way incompatible
+	  with Windows. Prelink and exec-shield mean that the libraries Wine
+	  uses can be placed at any point in the address space: typically this
+	  meant that a library was sitting in the region that the EXE you wanted
+	  to run had to be loaded (remember that unlike DLLs, EXE files cannot
+	  be moved around in memory). The 4G VM split means that programs could
+	  receive pointers to the top gigabyte of address space which some are
+	  not prepared for (they may store extra information in the high bits of
+	  a pointer, for instance). In particular, in combination with
+	  exec-shield this one is especially deadly as it's possible the process
+	  heap could be allocated beyond
+	  <constant>ADDRESS_SPACE_LIMIT</constant> which causes Wine
+	  initialization to fail.
+	</para>
+
+	<para>
+	  The solution to these problems is for Wine to reserve particular parts
+	  of the address space so that areas that we don't want the system to
+	  use will be avoided. We later on (re/de)allocate those areas as
+	  needed. One problem is that some of these mappings are put in place
+	  automatically by the dynamic linker: for instance any libraries that
+	  Wine is linked to (like <filename>libc</filename>,
+	  <filename>libwine</filename>, <filename>libpthread</filename> etc)
+	  will be mapped into memory before Wine even gets control. In order to
+	  solve that, Wine overrides the default ELF initialization sequence at
+	  a low level and reserves the needed areas by using direct syscalls
+	  into the kernel (ie without linking against any other code to do it)
+	  before restarting the standard initialization and letting the dynamic
+	  linker continue. This is referred to as the preloader and is found in
+	  <filename>loader/preloader.c</filename>.
+	</para>
+
+	<para>
+	  Once the usual ELF boot sequence has been completed, some native
+	  libraries may well have been mapped above the 3gig limit: however,
+	  this doesn't matter as 3G is a Windows limit, not a Linux limit. We
+	  still have to prevent the system from allocating anything else above
+	  there (like the heap or other DLLs) though so Wine performs a binary
+	  search over the upper gig of address space in order to iteratively
+	  fill in the holes with <constant>MAP_NORESERVE</constant> mappings so
+	  the address space is allocated but the memory to actually back it is
+	  not. This code can be found in
+	  <filename>libs/wine/mmap.c</filename>:<function>reserve_area</function>.
+	</para>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Multi-processing in Wine</title>
+      <para>
+	Let's take a closer look at the way Wine loads and run processes in memory.
+      </para>
+      <sect2>
+	<title>Starting a process from command line</title>
+	<para>
+	  When starting a Wine process from command line (we'll get later on to
+	  the differences between NE, PE and Winelib executables), there are a
+	  couple of things Wine need to do first. A first executable is run to
+	  check the threading model of the underlying OS (see
+	  <xref linkend="threading"> for the details) and will start the real
+	  Wine loader corresponding to the choosen threading model.
+	</para>
+	<para>
+	  Then Wine graps a few elements from the Unix world: the environment,
+	  the program arguments. Then the <filename>ntdll.dll.so</filename> is
+	  loaded into memory using the standard shared library dynamic
+	  loader. When loaded, <filename>NTDLL</filename> will mainly first
+	  create a decent Windows environment:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		create a PEB (Process Environment Block) and a TEB (Thread
+		Environment Block).
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		set up the connection to the Wine server - and eventually
+		launching the Wine server if none runs
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>create the process heap</para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  Then <filename>Kernel32</filename> is loaded (but now using the
+	  Windows dynamic loading capabilities) and a Wine specific entry point
+	  is called <function>__wine_kernel_init</function>. This function will
+	  actually handle all the logic of the process loading and execution,
+	  and will never return from it's call.
+	</para>
+	<para>
+	  <function>__wine_kernel_init</function> will undergo the following
+	  tasks:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		initialization of program arguments from Unix program arguments
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>lookup of executable in the file system</para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		If the file is not found, then an error is printed and the Wine
+		loader stops.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		We'll cover the non-PE file type later on, so assume for now
+		it's a PE file. The PE module is loaded in memory using the
+		same mechanisms as for a native DLLs (mainly mapping the file
+		data and code sections into memory, and handling relocation if
+		needed). Note that the dependencies on the module are not
+		resolved at this point.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		A new stack is created, which size is given in the PE header,
+		and this stack is made the one of the running thread (which is
+		still the only one in the process). The stack used at startup
+		will no longer be used.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Which this new stack,
+		<function>ntdll.LdrInitializeThunk</function> is called which
+		performs the remaining initialization parts, including resolving
+		all the DLL imports on the PE module, and doing the init of the
+		TLS slots.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		Control can now be passed to the <function>EntryPoint</function>
+		of the PE module, which will let the executable run.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+      </sect2>
+      <sect2>
+	<title>Creating a child process from a running process</title>
+	<para>
+	  The steps used are closely link to what is done in the previous case.
+	</para>
+	<para>
+	  There are however a few points to look at a bit more closely. The
+	  inner implementation creates the child process using the
+	  <function>fork()</function> and <function>exec()</function>
+	  calls. This means that we don't need to check again for the threading
+	  model, we can use what the parent (or the grand-parent process...)
+	  started from command line has found.
+	</para>
+	<para>
+	  The Win32 process creation allows to pass a lot of information between
+	  the parent and the child. This includes object handles, windows title,
+	  console parameters, environment strings... Wine makes use of both the
+	  standard Unix inheritance mechanisms (for environment for example) and
+	  the Wine server (to pass from parent to child a chunk of data
+	  containing the relevant information).
+	</para>
+	<para>
+	  The previously described loading mechanism will check in the Wine
+	  server if such a chunk exists, and, if so, will perform the relevant
+	  initialization.
+	</para>
+	<para>
+	  Some further synchronization is also put in place: a parent will wait
+	  until the child has started, or has failed. The Wine server is also
+	  used to perform those tasks.
+	</para>
+      </sect2>
+      <sect2>
+	<title>Starting a Winelib process</title>
+	<para>
+	  Before going into the gory details, let's first go back to what a
+	  Winelib application is. It can be either a regular Unix executable, or
+	  a more specific Wine beast. This later form in fact creates two files
+	  for a given executable (say <filename>foo.exe</filename>). The first
+	  one, named <filename>foo</filename> will be a symbolic link to the
+	  Wine loader (<filename>wine</filename>). The second one, named
+	  <filename>foo.exe.so</filename>, is the equivalent of the
+	  <filename>.dll.so</filename> files we've already described for
+	  DLLs. As in Windows, an executable is, among other things, a module
+	  with its import and export information, as any DLL, it makes sense
+	  Wine uses the same mechanisms for loading native executables and
+	  DLLs.
+	</para>
+	<para>
+	  When starting a Winelib application from the command line (say with
+	  <command>foo arg1 arg2</command>), the Unix shell will execute
+	  <command>foo</command> as a Unix executable. Since this is in fact the
+	  Wine loader, Wine will fire up. However, will notice that it hasn't
+	  been started as <command>wine</command> but as <command>foo</command>,
+	  and hence, will try to load (using Unix shared library mechanism) the
+	  second file <filename>foo.exe.so</filename>. Wine will recognize a 32
+	  bit module (with its descriptor) embedded in the shared library, and
+	  once the shared library loaded, it will proceed the same path as when
+	  loading a standard native PE executable.
+	</para>
+	<para>
+	  Wine needs to implement this second form of executable in order to
+	  maintain the order of initialization of some elements in the
+	  executable. One particular issue is when dealing with global C++
+	  objects. In standard Unix executable, the call of the constructor to
+	  such objects is stored in the specific section of the executable
+	  (<function>.init</function> not to name it). All constructors in this
+	  section are called before the <function>main()</function> or
+	  <function>WinMain</function> function is called. Creating a Wine
+	  executable using the first form mentionned above will let those
+	  constructors being called before Wine gets a chance to initialize
+	  itself. So, any constructor using a Windows API will fail, because
+	  Wine infrastructure isn't in place. The use of the second form for
+	  Winelib executables ensures that we do the initialization using the
+	  following steps:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		initialize the Wine infrastructure
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		load the executable into memory
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		handle the import sections for the executable
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		call the global object constructors (if any). They now can
+		properly call the Windows APIs
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		call the executable entry point
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  The attentive reader would have noted that the resolution of imports
+	  for the executable is done, as for a DLL, when the executable/DLL
+	  descriptor is registered. However, this is done also by adding a
+	  specific constructor in the <function>.init</function> section. For
+	  the above describe scheme to function properly, this constructor must
+	  be the first constructor to be called, before all the other
+	  constructors, generated by the executable itself. The Wine build chain
+	  takes care of that, and also generating the executable/DLL descriptor
+	  for the Winelib executable.
+	</para>
+      </sect2>
+    </sect1>
+
     <sect1 id="threading">
       <title>Multi-threading in Wine</title>
 
@@ -314,40 +669,6 @@ if (res != ERROR_SUCCESS) return res;
       </sect2>
 
       <sect2>
-	<title>SysLevels</title>
-
-	<para>
-	  SysLevels are an undocumented Windows-internal thread-safety
-	  system. They are basically critical sections which must be taken in a
-	  particular order. The mechanism is generic but there are always three
-	  syslevels: level 1 is the Win16 mutex, level 2 is the
-	  <filename>USER</filename> mutex and level 3 is the
-	  <filename>GDI</filename> mutex.
-	</para>
-
-	<para>
-	  When entering a syslevel, the code (in
-	  <filename>dlls/kernel/syslevel.c</filename>) will check that a higher
-	  syslevel is not already held and produce an error if so. This is
-	  because it's not legal to enter level 2 while holding level 3 - first,
-	  you must leave level 3.
-	</para>
-
-	<para>
-	  Throughout the code you may see calls to
-	  <function>_ConfirmSysLevel()</function> and
-	  <function>_CheckNotSysLevel()</function>. These functions are
-	  essentially assertions about the syslevel states and can be used to
-	  check that the rules have not been accidentally violated. In
-	  particular, <function>_CheckNotSysLevel()</function> will break
-	  probably into the debugger) if the check fails. If this happens the
-	  solution is to get a backtrace and find out, by reading the source of
-	  the wine functions called along the way, how Wine got into the invalid
-	  state.
-	</para>
-      </sect2>
-
-      <sect2>
 	<title>POSIX threading vs. kernel threading</title>
 
 	<para>
@@ -393,7 +714,7 @@ if (res != ERROR_SUCCESS) return res;
 	  glibc, for instance. Worse, pthreads and pure kernel threads had
 	  strange interactions when run in the same process yet some libraries
 	  used by Wine used pthreads internally. Throw in source code porting
-	  using WineLib - where you have both UNIX and Win32 code in the same
+	  using Winelib - where you have both UNIX and Win32 code in the same
 	  process - and chaos was the result.
 	</para>
 
@@ -651,15 +972,16 @@ if (res != ERROR_SUCCESS) return res;
         <para>
           Windows exceptions typically contain more information than the Unix
 	  standard APIs provide. For instance, a
-	  <constant>STATUS_ACCESS_VIOLATION</constant> exception (0xC0000005)
-	  structure contains the faulting address, whereas a standard Unix
-	  SIGSEGV just tells the app that it crashed. Usually this information
-	  is passed as an extra parameter to the signal handler, however its
-          location and contents vary between kernels (BSD, Solaris,
-          etc). This data is provided in a <structname>SIGCONTEXT</structname>
-	  structure, and on entry to the signal handler it contains the register
-	  state of the CPU before the signal was sent. Modifying it will cause
-	  the kernel to adjust the context before restarting the thread.
+	  <constant>STATUS_ACCESS_VIOLATION</constant> exception
+	  (<constant>0xC0000005</constant>) structure contains the faulting
+	  address, whereas a standard Unix <constant>SIGSEGV</constant> just
+	  tells the app that it crashed. Usually this information is passed as
+	  an extra parameter to the signal handler, however its location and
+	  contents vary between kernels (BSD, Solaris, etc). This data is
+	  provided in a <structname>SIGCONTEXT</structname> structure, and on
+	  entry to the signal handler it contains the register state of the CPU
+	  before the signal was sent. Modifying it will cause the kernel to
+	  adjust the context before restarting the thread.
         </para>
       </sect2>
     </sect1>
@@ -1195,6 +1517,7 @@ if (res != ERROR_SUCCESS) return res;
 	  </para>
 	  <para>
 	    <note>
+	      <title>Case sensitivity vs. preservation</title>
 	      <para>
 		When we say that most systems in NT are case insensitive, this
 		has to be understood for looking up for a file, where the
@@ -2124,6 +2447,150 @@ if (res != ERROR_SUCCESS) return res;
 	    </table>
 	  </para>
 	</sect3>
+      </sect2>
+      <sect2>
+	<title>Win16 processes support</title>
+	<sect3>
+	  <title>Starting a NE (Win16) process</title>
+	  <para>
+	    Wine is also able to run 16 bit processes, but this feature is only
+	    supported on Intel IA-32 architectures.
+	  </para>
+	  <para>
+	    When Wine is requested to run a NE (Win 16 process), it will in fact
+	    hand over the execution of it to a specific executable
+	    <command>winevdm</command>. VDM stands for Virtual DOS
+	    Machine. This <command>winevdm</command> is a Winelib application,
+	    but will in fact set up the correct 16 bit environment to run the
+	    executable. We will get back later on in details to what this means.
+	  </para>
+	  <para>
+	    Any new 16 bit process created by this executable (or its children)
+	    will run into the same <command>winevdm</command> instance. Among
+	    one instance, several functionalities will be provided to those 16
+	    bit processes, including the cooperative multitasking, sharing the
+	    same address space, managing the selectors for the 16 bit segments
+	    needed for code, data and stack.
+	  </para>
+	  <para>
+	    Note that several <command>winevdm</command> instances can run in
+	    the same Wine session, but the functionalities described above are
+	    only shared among a given instance, not among all the
+	    instances. <command>winevdm</command> is built as Winelib
+	    application, and hence has access to any facility a 32 bit
+	    application has.
+	  </para>
+	  <para>
+	    Each Win16 application is implemented in
+	    <command>winevdm</command> as a Win32
+	    thread. <command>winevdm</command> then implements its own
+	    scheduling facilities (in fact, the code for this feature is in the
+	    <filename>krnl386.exe</filename> DLL). Since the required Win16
+	    scheduling is non pre-emptive, this doesn't require any underlying
+	    OS kernel support.
+	  </para>
+	</sect3>
+	<sect3>
+	  <title>SysLevels</title>
+	  <para>
+	    SysLevels are an undocumented Windows-internal thread-safety system
+	    dedicated to 16 bit applications (or 32 bit applications that call -
+	    directly or indirectly - 16 bit code). They are basically critical
+	    sections which must be taken in a particular order. The mechanism is
+	    generic but there are always three syslevels:
+	    <itemizedlist>
+	      <listitem>
+		<para>level 1 is the Win16 mutex,</para>
+	      </listitem>
+	      <listitem>
+		<para>level 2 is the <filename>USER</filename> mutex,</para>
+	      </listitem>
+	      <listitem>
+		<para>level 3 is the <filename>GDI</filename> mutex.</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+
+	  <para>
+	    When entering a syslevel, the code (in
+	    <filename>dlls/kernel/syslevel.c</filename>) will check that a
+	    higher syslevel is not already held and produce an error if so. This
+	    is because it's not legal to enter level 2 while holding level 3 -
+	    first, you must leave level 3.
+	  </para>
+
+	  <para>
+	    Throughout the code you may see calls to
+	    <function>_ConfirmSysLevel()</function> and
+	    <function>_CheckNotSysLevel()</function>. These functions are
+	    essentially assertions about the syslevel states and can be used to
+	    check that the rules have not been accidentally violated. In
+	    particular, <function>_CheckNotSysLevel()</function> will break
+	    probably into the debugger) if the check fails. If this happens the
+	    solution is to get a backtrace and find out, by reading the source
+	    of the wine functions called along the way, how Wine got into the
+	    invalid state.
+	  </para>
+	</sect3>
+	<sect3>
+	  <title>Memory management</title>
+	  <para>
+	    Every Win16 address is expressed in the form of selector:offset. The
+	    selector is an entry in the LDT, but a 16 bit entry, limiting each
+	    offset to 64 KB. Hence, the maximum available memory to a Win16
+	    process is 512 MB. Note, that the processor runs in protected mode,
+	    but using 16 bit selectors.
+	  </para>
+	  <para>
+	    Windows, for a 16 bit process, defines a few selectors to access the
+	    "real" memory (the one provided) by DOS. Basically, Wine also
+	    provides this area of memory.
+	  </para>
+	</sect3>
+      </sect2>
+      <sect2>
+	<title>DOS processes support</title>
+	<para>
+	  The behaviour we just described also applies to DOS executables, which
+	  are handled the same way by <command>winevdm</command>. This is only
+	  supported on Intel IA-32 architectures.
+	</para>
+	<para>
+	  Wine implements also most of the DOS support in a Wine specific DLL
+	  (<filename>winedos</filename>). This DLL is called under certain
+	  conditions, like:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		In <command>winevdm</command>, when trying to launch a DOS
+		application (<filename>.EXE</filename> or
+		<filename>.COM</filename>, <filename>.PIF</filename>).
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		In <filename>kernel32</filename>, when an attempt is made in the
+		binary code to call some DOS or BIOS interrupts (like Int 21h
+		for example).
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	<para>
+	  When <command>winevdm</command> runs a DOS program, this one runs in
+	  real mode (in fact in V86 mode from the IA-32 point of view).
+	</para>
+	<para>
+	  Wine also supports part of the DPMI (DOS Protected Mode Interface).
+	</para>
+	<para>
+	  Wine, when running a DOS programs, needs to map the 1 MB of virtual
+	  memory to the real memory (as seen by the DOS program). When this is
+	  not possible (like when someone else is already using this area), the
+	  DOS support is not possible. Not also that by doing so, access to
+	  linear address 0 is enabled (as it's also real mode address 0 which is
+	  valid). Hence, NULL pointer derefence faults are no longer catched.
+	</para>
       </sect2>
     </sect1>
     
