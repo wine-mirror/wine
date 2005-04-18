@@ -1966,7 +1966,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
                 memcpy(lpmfp, (LPVOID)hdata, sizeof(METAFILEPICT));
                 wiresize = *lpcbytes - sizeof(METAFILEPICT);
                 lpmfp->hMF = SetMetaFileBitsEx(wiresize,
-                    ((char *)hdata) + sizeof(METAFILEPICT));
+                    ((const char *)hdata) + sizeof(METAFILEPICT));
                 size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
                 GlobalUnlock(h);
             }
