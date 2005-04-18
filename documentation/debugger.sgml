@@ -15,8 +15,7 @@
           processes/threads from a Windows point of view.
         </para>
         <para>
-          Each Windows' thread is implemented as a Unix process (under
-          Linux using the <function>clone</function> syscall), meaning
+          Each Windows' thread is implemented as a Unix thread, meaning
           that all threads of a same Windows' process share the same
           (unix) address space.
         </para>
@@ -102,15 +101,16 @@
           </listitem>
         </itemizedlist>
         <para>
-          Wine implements most of the Windows' debugging API (the
-          part in <filename>KERNEL32.DLL</filename>, not the one in
-          <filename>IMAGEHLP.DLL</filename>), and allows any program
-          (emulated or Winelib) using that API to debug a
-          <varname>W-process</varname>.
-        </para>
-        <para>
-	  Wine also implements <filename>DBGHELP.DLL</filename> which
-	  allows to look into symbols and types from any module (if
+          Wine implements most of the Windows' debugging API. The
+	  first part of the debugging APIs (in
+	  <filename>KERNEL32.DLL</filename>) allows a W-process, called
+	  the debugger, to control the execution of another W-process,
+	  the debuggee. To control means stopping/resuming execution,
+	  enabling/disabling single stepping, setting breakpoints,
+	  reading/writing debuggee memory... Another part of the
+	  debugging APIs resides in <filename>DBGHELP.DLL</filename>
+	  (and its ancestor <filename>IMAGEHLP.DLL</filename>) and lets
+	  a debugger look into symbols and types from any module (if
 	  the module has been compiled with the proper options). 
         </para>
         <para>
@@ -138,7 +138,7 @@
         </para>
         <screen>
 winedbg telnet.exe
-winedbg "hl.exe -windowed"
+winedbg hl.exe -windowed
         </screen>
       </sect2>
 
@@ -201,7 +201,7 @@ winedbg "hl.exe -windowed"
 
         <variablelist>
           <varlistentry>
-            <term>continue:</term>
+            <term>continue</term>
             <listitem>
               <para>
                 the debugger had the ability to correct what's
@@ -211,7 +211,7 @@ winedbg "hl.exe -windowed"
             </listitem>
           </varlistentry>
           <varlistentry>
-            <term>pass:</term>
+            <term>pass</term>
             <listitem>
               <para>
                 the debugger couldn't correct the cause of the
@@ -462,7 +462,7 @@ winedbg "hl.exe -windowed"
       </sect2>
 
       <sect2>
-        <title>Disassembling programs:</title>
+        <title>Disassembling programs</title>
 
         <para>
           You may also try to disassemble the offending program to
@@ -538,7 +538,7 @@ call KERNEL.LSTRLEN
       </sect2>
 
       <sect2>
-        <title>Sample debugging session:</title>
+        <title>Sample debugging session</title>
 
         <para>
           Let's debug the infamous Word <filename>SHARE.EXE</filename>
@@ -821,7 +821,7 @@ Call KERNEL.96: FREELIBRARY(0x031f) ret=01cf:105c ds=01ff
       </sect2>
 
       <sect2>
-        <title>Some basic debugger usages:</title>
+        <title>Some basic debugger usages</title>
 
         <para>
           After starting your program with
@@ -968,7 +968,7 @@ wine -debug myprog.exe
         </para>
         <variablelist>
           <varlistentry>
-            <term>Debugger:</term>
+            <term>Debugger</term>
             <listitem>
               <para>
                 this is the command line used to launch the debugger
@@ -985,7 +985,7 @@ wine -debug myprog.exe
             </listitem>
           </varlistentry>
           <varlistentry>
-            <term>Auto:</term>
+            <term>Auto</term>
             <listitem>
               <para>
                 if this value is zero, a message box will ask the
@@ -1041,7 +1041,7 @@ wine -debug myprog.exe
           per user basis. The key is (in <emphasis>my</emphasis> registry)
         </para>
         <programlisting>
-[eric\\Software\\Wine\\WineDbg]
+[HKCU\\Software\\Wine\\WineDbg]
         </programlisting>
         <para>
           Those options can be read/written while inside
@@ -1897,7 +1897,7 @@ set $BreakAllThreadsStartup = 1
 		  </entry>
 		</row>
 		<row>
-		  <entry><command>info&nbsp;share;</command></entry>
+		  <entry><command>info&nbsp;share</command></entry>
 		  <entry>
 		    lists all the dynamic libraries loaded in the
 		    debugged program (including .so files, NE and PE
@@ -1907,7 +1907,7 @@ set $BreakAllThreadsStartup = 1
 		<row>
 		  <entry>
 		    <command>
-		      info&nbsp;share&nbsp;&lt;N&gt;;
+		      info&nbsp;share&nbsp;&lt;N&gt;
 		    </command>
 		  </entry>
 		  <entry>
@@ -1915,14 +1915,14 @@ set $BreakAllThreadsStartup = 1
 		  </entry>
 		</row>
 		<row>
-		  <entry><command>info regs;</command></entry>
+		  <entry><command>info regs</command></entry>
 		  <entry>
 		    prints the value of the CPU registers
 		  </entry>
 		</row>
 		<row>
 		  <entry>
-		    <command>info segment &lt;N&gt;;</command>
+		    <command>info segment &lt;N&gt;</command>
 		  </entry>
 		  <entry>
 		    prints information on segment &lt;N&gt; (i386
@@ -1931,20 +1931,20 @@ set $BreakAllThreadsStartup = 1
 		</row>
 		<row>
 		  <entry>
-		    <command>info&nbsp;segment;</command>
+		    <command>info&nbsp;segment</command>
 		  </entry>
 		  <entry>
 		    lists all allocated segments (i386 only)
 		  </entry>
 		</row>
 		<row>
-		  <entry><command>info&nbsp;stack;</command></entry>
+		  <entry><command>info&nbsp;stack</command></entry>
 		  <entry>
 		    prints the values on top of the stack
 		  </entry>
 		</row>
 		<row>
-		  <entry><command>info&nbsp;map;</command></entry>
+		  <entry><command>info&nbsp;map</command></entry>
 		  <entry>
 		    lists all virtual mappings used by the debugged
 		    program
@@ -1952,7 +1952,7 @@ set $BreakAllThreadsStartup = 1
 		</row>
 		<row>
 		  <entry>
-		    <command>info&nbsp;map&nbsp;&lt;N&gt;</command>
+		    <command>info&nbsp;map&nbsp;&lt;N&gt</command>
 		  </entry>
 		  <entry>
 		    lists all virtual mappings used by the program of
@@ -1961,7 +1961,7 @@ set $BreakAllThreadsStartup = 1
 		</row>
 		<row>
 		  <entry>
-		    <command>info&nbsp;wnd&nbsp;&lt;N&gt;</command>
+		    <command>info&nbsp;wnd&nbsp;&lt;N&gt</command>
 		  </entry>
 		  <entry>
 		    prints information of Window of handle &lt;N&gt;
@@ -2221,13 +2221,31 @@ kdbg -r localhost:32878 wine
         </para>
         <note>
           <para>
-            Even if latest <command>gdb</command> implements the
-            notion of threads, it won't work with Wine because the
-            thread abstraction used for implementing Windows' thread
-            is not 100% mapped onto the Linux POSIX threads
-            implementation. It means that you'll have to spawn a
-            different <command>gdb</command> session for each Windows'
-            thread you wish to debug.
+	    If you plan to used <command>gdb</command> for a
+	    multi-threaded Wine application (native or Winelib), then
+	    <command>gdb</command> will be able to handle the multiple
+	    threads directly only if:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  Wine is running on the pthread model (it won't work
+		  in the kthread one). See the Wine architecture
+		  documentation for further details.
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  <command>gdb</command> supports the multi-threading
+		  (you need gdb at least 5.0 for that).
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	    In the unfortunate case (no direct thread support in
+	    <command>gdb</command> because one of the above conditions
+	    is false), you'll have to spawn a different
+	    <command>gdb</command> session for each Windows' thread
+	    you wish to debug (which means no synchronization for
+	    debugging purposes between the various threads).
           </para>
         </note>
 
@@ -2340,24 +2358,6 @@ $ gdb wine
       </sect2>
     </sect1>
 
-
-    <sect1 id="dbg-limits">
-      <title>Limitations</title>
-
-      <itemizedlist>
-	<listitem>
-	  <para>
-	    16 bit processes are not supported (but calls to 16 bit
-	    code in 32 bit  applications are).
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>
-	    Function call in expression is no longer supported
-	  </para>
-	</listitem>
-      </itemizedlist>
-    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file
