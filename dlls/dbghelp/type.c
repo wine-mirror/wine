@@ -398,11 +398,12 @@ BOOL WINAPI SymEnumTypes(HANDLE hProcess, ULONG64 BaseOfDll,
         tmp = symt_get_name(type);
         if (tmp)
         {
-            sym_info->NameLen = strlen(tmp) + 1;
-            strncpy(sym_info->Name, tmp, min(sym_info->NameLen, sym_info->MaxNameLen));
-            sym_info->Name[sym_info->MaxNameLen - 1] = '\0';
-        }       
-        else sym_info->Name[sym_info->NameLen = 0] = '\0';
+            sym_info->NameLen = min(strlen(tmp),sym_info->MaxNameLen-1);
+            memcpy(sym_info->Name, tmp, sym_info->NameLen);
+            sym_info->Name[sym_info->NameLen] = '\0';
+        }
+        else
+           sym_info->Name[sym_info->NameLen = 0] = '\0';
         if (!EnumSymbolsCallback(sym_info, sym_info->Size, UserContext)) break;
     }
     return TRUE;
