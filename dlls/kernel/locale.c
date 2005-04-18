@@ -130,8 +130,6 @@ typedef struct {
     WCHAR lang[128];
     WCHAR country[4];
     LANGID found_lang_id[NLS_MAX_LANGUAGES];
-    WCHAR found_language[NLS_MAX_LANGUAGES][3];
-    WCHAR found_country[NLS_MAX_LANGUAGES][3];
     int n_found;
 } LANG_FIND_DATA;
 
@@ -395,8 +393,6 @@ static BOOL CALLBACK find_language_id_proc( HMODULE hModule, LPCWSTR type,
 
 found:
     l_data->found_lang_id[l_data->n_found] = LangID;
-    strncpyW(l_data->found_country[l_data->n_found], buf_country, 3);
-    strncpyW(l_data->found_language[l_data->n_found], buf_language, 3);
     l_data->n_found++;
     TRACE("Found id %04X for lang %s\n", LangID, debugstr_w(l_data->lang));
     return (l_data->n_found < NLS_MAX_LANGUAGES); /* continue search, unless we have enough */
