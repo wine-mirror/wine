@@ -1190,7 +1190,7 @@ DATETIME_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
 					  0, 0, 0, 0, infoPtr->hwndSelf, 0, 0, 0);
 
     /* initialize info structure */
-    GetSystemTime (&infoPtr->date);
+    GetLocalTime (&infoPtr->date);
     infoPtr->dateValid = TRUE;
     infoPtr->hFont = GetStockObject(DEFAULT_GUI_FONT);
 
