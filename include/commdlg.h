@@ -662,6 +662,64 @@ DECL_WINELIB_TYPE_AW(LPPAGESETUPDLG)
 #define PSD_ENABLEPAGEPAINTHOOK           0x00040000
 #define PSD_DISABLEPAGEPAINTING           0x00080000
 
+typedef struct tagPRINTPAGERANGE
+{
+    DWORD       nFromPage;
+    DWORD       nToPage;
+} PRINTPAGERANGE, *LPPRINTPAGERANGE;
+
+typedef struct tagPDEXA
+{
+    DWORD               lStructSize;
+    HWND                hwndOwner;
+    HGLOBAL             hDevMode;
+    HGLOBAL             hDevNames;
+    HDC                 hDC;
+    DWORD               Flags;
+    DWORD               Flags2;
+    DWORD               ExclusionFlags;
+    DWORD               nPageRanges;
+    DWORD               nMaxPageRanges;
+    LPPRINTPAGERANGE    lpPageRanges;
+    DWORD               nMinPage;
+    DWORD               nMaxPage;
+    DWORD               nCopies;
+    HINSTANCE           hInstance;
+    LPCSTR              lpPrintTemplateName;
+    void* /*LPUNKNOWN*/ lpCallback;
+    DWORD               nPropertyPages;
+    HPROPSHEETPAGE*     lphPropertyPages;
+    DWORD               nStartPage;
+    DWORD               dwResultAction;
+} PRINTDLGEXA, *LPPRINTDLGEXA;
+
+typedef struct tagPDEXW
+{
+    DWORD               lStructSize;
+    HWND                hwndOwner;
+    HGLOBAL             hDevMode;
+    HGLOBAL             hDevNames;
+    HDC                 hDC;
+    DWORD               Flags;
+    DWORD               Flags2;
+    DWORD               ExclusionFlags;
+    DWORD               nPageRanges;
+    DWORD               nMaxPageRanges;
+    LPPRINTPAGERANGE    lpPageRanges;
+    DWORD               nMinPage;
+    DWORD               nMaxPage;
+    DWORD               nCopies;
+    HINSTANCE           hInstance;
+    LPCWSTR             lpPrintTemplateName;
+    void* /*LPUNKNOWN*/ lpCallback;
+    DWORD               nPropertyPages;
+    HPROPSHEETPAGE*     lphPropertyPages;
+    DWORD               nStartPage;
+    DWORD               dwResultAction;
+} PRINTDLGEXW, *LPPRINTDLGEXW;
+
+DECL_WINELIB_TYPE_AW(PRINTDLGEX)
+DECL_WINELIB_TYPE_AW(LPPRINTDLGEX)
 
 BOOL  WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
 BOOL  WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
@@ -685,6 +743,9 @@ BOOL WINAPI PageSetupDlgW( LPPAGESETUPDLGW );
 BOOL  WINAPI PrintDlgA( LPPRINTDLGA printdlg);
 BOOL  WINAPI PrintDlgW( LPPRINTDLGW printdlg);
 #define PrintDlg WINELIB_NAME_AW(PrintDlg)
+HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA);
+HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW);
+#define PrintDlgEx WINELIB_NAME_AW(PrintDlgEx)
 HWND  WINAPI ReplaceTextA( LPFINDREPLACEA lpFind);
 HWND  WINAPI ReplaceTextW( LPFINDREPLACEW lpFind);
 #define ReplaceText WINELIB_NAME_AW(ReplaceText)

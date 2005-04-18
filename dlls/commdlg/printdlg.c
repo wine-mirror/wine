@@ -3021,15 +3021,16 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
 /***********************************************************************
  *	PrintDlgExA (COMDLG32.@)
  */
-HRESULT WINAPI PrintDlgExA(LPVOID lpPrintDlgExA) /* [???] FIXME: LPPRINTDLGEXA */
+HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lpPrintDlgExA)
 {
 	FIXME("stub\n");
 	return E_NOTIMPL;
 }
+
 /***********************************************************************
  *	PrintDlgExW (COMDLG32.@)
  */
-HRESULT WINAPI PrintDlgExW(LPVOID lpPrintDlgExW) /* [???] FIXME: LPPRINTDLGEXW */
+HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lpPrintDlgExW)
 {
 	FIXME("stub\n");
 	return E_NOTIMPL;
