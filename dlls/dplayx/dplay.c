@@ -1143,21 +1143,23 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                  LPVOID lpData, DWORD dwDataSize )
 {
   /* Clear out the data with this player */
-  if( ( dwFlags & DPSET_LOCAL ) &&
-      ( lpGData->dwLocalDataSize != 0 )
-    )
+  if( dwFlags & DPSET_LOCAL )
   {
-    HeapFree( GetProcessHeap(), 0, lpGData->lpLocalData );
-    lpGData->lpLocalData = NULL;
-    lpGData->dwLocalDataSize = 0;
+    if ( lpGData->dwLocalDataSize != 0 )
+    {
+      HeapFree( GetProcessHeap(), 0, lpGData->lpLocalData );
+      lpGData->lpLocalData = NULL;
+      lpGData->dwLocalDataSize = 0;
+    }
   }
-  if( ( dwFlags & DPSET_REMOTE ) &&
-      ( lpGData->dwRemoteDataSize != 0 )
-    )
+  else
   {
-    HeapFree( GetProcessHeap(), 0, lpGData->lpRemoteData );
-    lpGData->lpRemoteData = NULL;
-    lpGData->dwRemoteDataSize = 0;
+    if( lpGData->dwRemoteDataSize != 0 )
+    {
+      HeapFree( GetProcessHeap(), 0, lpGData->lpRemoteData );
+      lpGData->lpRemoteData = NULL;
+      lpGData->dwRemoteDataSize = 0;
+    }
   }
 
   /* Reallocate for new data */
@@ -1167,16 +1169,15 @@ DP_SetGroupData( lpGroupData lpGData, DWORD dwFlags,
                                   sizeof( dwDataSize ) );
     CopyMemory( lpNewData, lpData, dwDataSize );
 
-    if( dwFlags & DPSET_REMOTE )
-    {
-      lpGData->lpRemoteData     = lpNewData;
-      lpGData->dwRemoteDataSize = dwDataSize;
-    }
-
     if( dwFlags & DPSET_LOCAL )
     {
       lpGData->lpLocalData     = lpData;
       lpGData->dwLocalDataSize = dwDataSize;
+    }
+    else
+    {
+      lpGData->lpRemoteData     = lpNewData;
+      lpGData->dwRemoteDataSize = dwDataSize;
     }
   }
 
@@ -1340,21 +1341,23 @@ DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
                   LPVOID lpData, DWORD dwDataSize )
 {
   /* Clear out the data with this player */
-  if( ( dwFlags & DPSET_LOCAL ) &&
-      ( lpPData->dwLocalDataSize != 0 )
-    )
+  if( dwFlags & DPSET_LOCAL )
   {
-    HeapFree( GetProcessHeap(), 0, lpPData->lpLocalData );
-    lpPData->lpLocalData = NULL;
-    lpPData->dwLocalDataSize = 0;
+    if ( lpPData->dwLocalDataSize != 0 )
+    {
+      HeapFree( GetProcessHeap(), 0, lpPData->lpLocalData );
+      lpPData->lpLocalData = NULL;
+      lpPData->dwLocalDataSize = 0;
+    }
   }
-  if( ( dwFlags & DPSET_REMOTE ) &&
-      ( lpPData->dwRemoteDataSize != 0 )
-    )
+  else
   {
-    HeapFree( GetProcessHeap(), 0, lpPData->lpRemoteData );
-    lpPData->lpRemoteData = NULL;
-    lpPData->dwRemoteDataSize = 0;
+    if( lpPData->dwRemoteDataSize != 0 )
+    {
+      HeapFree( GetProcessHeap(), 0, lpPData->lpRemoteData );
+      lpPData->lpRemoteData = NULL;
+      lpPData->dwRemoteDataSize = 0;
+    }
   }
 
   /* Reallocate for new data */
@@ -1364,16 +1367,15 @@ DP_SetPlayerData( lpPlayerData lpPData, DWORD dwFlags,
                                   sizeof( dwDataSize ) );
     CopyMemory( lpNewData, lpData, dwDataSize );
 
-    if( dwFlags & DPSET_REMOTE )
-    {
-      lpPData->lpRemoteData     = lpNewData;
-      lpPData->dwRemoteDataSize = dwDataSize;
-    }
-
     if( dwFlags & DPSET_LOCAL )
     {
       lpPData->lpLocalData     = lpData;
       lpPData->dwLocalDataSize = dwDataSize;
+    }
+    else
+    {
+      lpPData->lpRemoteData     = lpNewData;
+      lpPData->dwRemoteDataSize = dwDataSize;
     }
   }
 
@@ -2412,21 +2414,15 @@ static HRESULT WINAPI DP_IF_GetGroupData
   }
 
   /* How much buffer is required? */
-  if( dwFlags & DPSET_REMOTE )
-  {
-    dwRequiredBufferSize = lpGData->dwRemoteDataSize;
-    lpCopyDataFrom       = lpGData->lpRemoteData;
-  }
-  else if( dwFlags & DPSET_LOCAL )
+  if( dwFlags & DPSET_LOCAL )
   {
     dwRequiredBufferSize = lpGData->dwLocalDataSize;
     lpCopyDataFrom       = lpGData->lpLocalData;
   }
   else
   {
-    ERR( "Neither local or remote data requested!?!\n" );
-    dwRequiredBufferSize = 0;
-    lpCopyDataFrom = NULL;
+    dwRequiredBufferSize = lpGData->dwRemoteDataSize;
+    lpCopyDataFrom       = lpGData->lpRemoteData;
   }
 
   /* Is the user requesting to know how big a buffer is required? */
@@ -2617,21 +2613,15 @@ static HRESULT WINAPI DP_IF_GetPlayerData
   }
 
   /* How much buffer is required? */
-  if( dwFlags & DPSET_REMOTE )
-  {
-    dwRequiredBufferSize = lpPList->lpPData->dwRemoteDataSize;
-    lpCopyDataFrom       = lpPList->lpPData->lpRemoteData;
-  }
-  else if( dwFlags & DPSET_LOCAL )
+  if( dwFlags & DPSET_LOCAL )
   {
     dwRequiredBufferSize = lpPList->lpPData->dwLocalDataSize;
     lpCopyDataFrom       = lpPList->lpPData->lpLocalData;
   }
   else
   {
-    ERR( "Neither local or remote data requested!?!\n" );
-    dwRequiredBufferSize = 0;
-    lpCopyDataFrom = NULL;
+    dwRequiredBufferSize = lpPList->lpPData->dwRemoteDataSize;
+    lpCopyDataFrom       = lpPList->lpPData->lpRemoteData;
   }
 
   /* Is the user requesting to know how big a buffer is required? */
@@ -3043,7 +3033,7 @@ static HRESULT WINAPI DP_IF_SetGroupData
     return DPERR_INVALIDOBJECT;
   }
 
-  if( dwFlags & DPSET_REMOTE )
+  if( !(dwFlags & DPSET_LOCAL) )
   {
     FIXME( "Was this group created by this interface?\n" );
     /* FIXME: If this is a remote update need to allow it but not
@@ -3056,7 +3046,7 @@ static HRESULT WINAPI DP_IF_SetGroupData
   /* FIXME: Only send a message if this group is local to the session otherwise
    * it will have been rejected above
    */
-  if( dwFlags & DPSET_REMOTE )
+  if( !(dwFlags & DPSET_LOCAL) )
   {
     FIXME( "Send msg?\n" );
   }
@@ -3141,7 +3131,7 @@ static HRESULT WINAPI DP_IF_SetPlayerData
     return DPERR_INVALIDPLAYER;
   }
 
-  if( dwFlags & DPSET_REMOTE )
+  if( !(dwFlags & DPSET_LOCAL) )
   {
     FIXME( "Was this group created by this interface?\n" );
     /* FIXME: If this is a remote update need to allow it but not
@@ -3151,7 +3141,7 @@ static HRESULT WINAPI DP_IF_SetPlayerData
 
   DP_SetPlayerData( lpPList->lpPData, dwFlags, lpData, dwDataSize );
 
-  if( dwFlags & DPSET_REMOTE )
+  if( !(dwFlags & DPSET_LOCAL) )
   {
     FIXME( "Send msg?\n" );
   }
