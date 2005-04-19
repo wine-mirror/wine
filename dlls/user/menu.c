@@ -2866,7 +2866,9 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 	}
 	else
 	{
+	    PeekMessageW( &msg, 0, msg.message, msg.message, PM_REMOVE );
 	    DispatchMessageW( &msg );
+	    continue;
 	}
 
 	if (!fEndMenu) fRemove = TRUE;
