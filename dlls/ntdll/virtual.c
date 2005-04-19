@@ -1576,7 +1576,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 {
     NTSTATUS ret;
     BYTE vprot;
-    DWORD len = attr->ObjectName ? attr->ObjectName->Length : 0;
+    DWORD len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
 
     /* Check parameters */
 
@@ -1600,7 +1600,7 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
         req->size_low    = size ? size->u.LowPart : 0;
         req->protect     = vprot;
         req->access      = access;
-        req->inherit     = (attr->Attributes & OBJ_INHERIT) != 0;
+        req->inherit     = (attr && (attr->Attributes & OBJ_INHERIT) != 0);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         ret = wine_server_call( req );
         *handle = reply->handle;
@@ -1638,7 +1638,7 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
  *             ZwMapViewOfSection   (NTDLL.@)
  */
 NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_ptr, ULONG zero_bits,
-                                    ULONG commit_size, const LARGE_INTEGER *offset, ULONG *size_ptr,
+                                    ULONG commit_size, const LARGE_INTEGER *offset_ptr, ULONG *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
     IO_STATUS_BLOCK io;
@@ -1652,9 +1652,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE shared_file;
     BOOL removable = FALSE;
+    LARGE_INTEGER offset;
+
+    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
     TRACE("handle=%p process=%p addr=%p off=%lx%08lx size=%x access=%lx\n",
-          handle, process, *addr_ptr, offset->u.HighPart, offset->u.LowPart, size, protect );
+          handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, size, protect );
 
     if (!is_current_process( process ))
     {
@@ -1664,7 +1667,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Check parameters */
 
-    if ((offset->u.LowPart & granularity_mask) ||
+    if ((offset.u.LowPart & granularity_mask) ||
         (*addr_ptr && ((UINT_PTR)*addr_ptr & granularity_mask)))
         return STATUS_INVALID_PARAMETER;
 
@@ -1715,14 +1718,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     if (size_high)
         ERR("Sizes larger than 4Gb not supported\n");
 
-    if ((offset->u.LowPart >= size_low) ||
-        (*size_ptr > size_low - offset->u.LowPart))
+    if ((offset.u.LowPart >= size_low) ||
+        (*size_ptr > size_low - offset.u.LowPart))
     {
         res = STATUS_INVALID_PARAMETER;
         goto done;
     }
-    if (*size_ptr) size = ROUND_SIZE( offset->u.LowPart, *size_ptr );
-    else size = size_low - offset->u.LowPart;
+    if (*size_ptr) size = ROUND_SIZE( offset.u.LowPart, *size_ptr );
+    else size = size_low - offset.u.LowPart;
 
     switch(protect)
     {
@@ -1771,9 +1774,9 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     /* Map the file */
 
     TRACE("handle=%p size=%x offset=%lx%08lx\n",
-          handle, size, offset->u.HighPart, offset->u.LowPart );
+          handle, size, offset.u.HighPart, offset.u.LowPart );
 
-    res = map_file_into_view( view, unix_handle, 0, size, offset->QuadPart, prot, removable );
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, prot, removable );
     if (res == STATUS_SUCCESS)
     {
         if (!removable)  /* don't keep handle open on removable media */
@@ -1787,7 +1790,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     else
     {
         ERR( "map_file_into_view %p %x %lx%08lx failed\n",
-             view->base, size, offset->u.HighPart, offset->u.LowPart );
+             view->base, size, offset.u.HighPart, offset.u.LowPart );
         delete_view( view );
     }
 
