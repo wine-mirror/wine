@@ -1036,7 +1036,7 @@ BOOL WINAPI ControlService( SC_HANDLE hService, DWORD dwControl,
     }
 
     ret = QueryServiceStatus(hService, lpServiceStatus);
-    if (ret)
+    if (!ret)
     {
         ERR("failed to query service status\n");
         SetLastError(ERROR_SERVICE_NOT_ACTIVE);
