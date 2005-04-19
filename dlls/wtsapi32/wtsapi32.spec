@@ -6,7 +6,7 @@
 @ stub WTSEnumerateServersW
 @ stdcall WTSEnumerateSessionsA(long long long ptr ptr)
 @ stdcall WTSEnumerateSessionsW(long long long ptr ptr)
-@ stub WTSFreeMemory
+@ stdcall WTSFreeMemory(ptr)
 @ stub WTSLogoffSession
 @ stub WTSOpenServerA
 @ stub WTSOpenServerW

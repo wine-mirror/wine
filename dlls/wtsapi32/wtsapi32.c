@@ -133,6 +133,15 @@ BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
 }
 
 /************************************************************
+ *                WTSFreeMemory (WTSAPI32.@)
+ */
+void WINAPI WTSFreeMemory(PVOID pMemory)
+{
+    FIXME("Stub %p\n", pMemory);
+    return;
+}
+
+/************************************************************
  *                WTSQuerySessionInformationA  (WTSAPI32.@)
  */
 BOOL WINAPI WTSQuerySessionInformationA(
