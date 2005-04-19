@@ -95,12 +95,8 @@ static void test_enum_value(void)
         ok( !res, "RegSetValueExA returned %ld\n", res );
     res = RegSetValueExA( test_key, "Test", 0, REG_EXPAND_SZ, NULL, 0 );
     ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
-    if (ERROR_INVALID_PARAMETER == res)
-        trace ("RegSetValueExA() returned ERROR_INVALID_PARAMETER\n");
     res = RegSetValueExA( test_key, "Test", 0, REG_BINARY, NULL, 0 );
     ok( ERROR_SUCCESS == res || ERROR_INVALID_PARAMETER == res, "RegSetValueExA returned %ld\n", res );
-    if (ERROR_INVALID_PARAMETER == res)
-        trace ("RegSetValueExA() returned ERROR_INVALID_PARAMETER\n");
 
     res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %ld\n", res );
@@ -274,8 +270,8 @@ static void test_reg_open_key()
     /* open same key twice */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-    ok(hkResult != hkPreserve && hkResult != NULL, 
-		"expected hkResult != hkPreserve and hkResult != NULL\n");
+    ok(hkResult != hkPreserve, "epxected hkResult != hkPreserve\n");
+    ok(hkResult != NULL, "hkResult != NULL\n");
     RegCloseKey(hkResult);
 
     /* open nonexistent key
