@@ -362,7 +362,6 @@ static void test_reg_save_key()
     DWORD ret;
 
     ret = RegSaveKey(hkey_main, "saved_key", NULL);
-    if (ERROR_PRIVILEGE_NOT_HELD == ret) return;
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 }
 
@@ -372,7 +371,6 @@ static void test_reg_load_key()
     HKEY hkHandle;
 
     ret = RegLoadKey(HKEY_LOCAL_MACHINE, "Test", "saved_key");
-    if (ERROR_PRIVILEGE_NOT_HELD == ret) return;
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
     ret = RegOpenKey(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
@@ -391,6 +389,40 @@ static void test_reg_unload_key()
     DeleteFile("saved_key");
 }
 
+static BOOL set_privileges(LPCSTR privilege, BOOL set)
+{
+    TOKEN_PRIVILEGES tp;
+    HANDLE hToken;
+    LUID luid;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken))
+        return FALSE;
+
+    if(!LookupPrivilegeValue(NULL, privilege, &luid))
+    {
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid = luid;
+    
+    if (set)
+        tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    else
+        tp.Privileges[0].Attributes = 0;
+
+    AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL);
+    if (GetLastError() != ERROR_SUCCESS)
+    {
+        CloseHandle(hToken);
+        return FALSE;
+    }
+
+    CloseHandle(hToken);
+    return TRUE;
+}
+
 START_TEST(registry)
 {
     setup_main_key();
@@ -400,9 +432,18 @@ START_TEST(registry)
     test_reg_open_key();
     test_reg_close_key();
     test_reg_delete_key();
-    test_reg_save_key();
-    test_reg_load_key();
-    test_reg_unload_key();
+
+    /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
+    if (set_privileges(SE_BACKUP_NAME, TRUE) &&
+        set_privileges(SE_RESTORE_NAME, TRUE))
+    {
+        test_reg_save_key();
+        test_reg_load_key();
+        test_reg_unload_key();
+
+        set_privileges(SE_BACKUP_NAME, FALSE);
+        set_privileges(SE_RESTORE_NAME, FALSE);
+    }
 
     /* cleanup */
     delete_key( hkey_main );
