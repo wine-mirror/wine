@@ -112,7 +112,7 @@ HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
 
     TRACE("(%p %s %p)\n", hm, pszSection, pstTable);
 
-    for(i = 0; i < pstTable->cEntries; i++)
+    if (pstTable) for(i = 0; i < pstTable->cEntries; i++)
         TRACE("%d: %s -> %s\n", i, pstTable->pse[i].pszName,
              pstTable->pse[i].pszValue);
 
@@ -138,7 +138,7 @@ HRESULT WINAPI RegInstall(HMODULE hm, LPCSTR pszSection, LPCSTRTABLE pstTable)
     WritePrivateProfileStringW(Strings, SYS_MOD_PATH, sys_mod_path, tmp_ini_path);
 
     /* Write the additional string table */
-    for(i = 0; i < pstTable->cEntries; i++) {
+    if (pstTable) for(i = 0; i < pstTable->cEntries; i++) {
         char tmp_value[MAX_PATH + 2];
         UNICODE_STRING name, value;
         tmp_value[0] = '\"';
