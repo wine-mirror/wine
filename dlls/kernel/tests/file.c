@@ -704,10 +704,12 @@ static void test_CreateFileW(void)
     ret = DeleteFileW(filename);
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
 
+#if 0  /* this test crashes on NT4.0 */
     hFile = CreateFileW(NULL, GENERIC_READ, 0, NULL,
                         CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
     ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
        "CreateFileW(NULL) returned ret=%p error=%ld\n",hFile,GetLastError());
+#endif
 
     hFile = CreateFileW(emptyW, GENERIC_READ, 0, NULL,
                         CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
