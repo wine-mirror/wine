@@ -379,11 +379,17 @@ int get_file_unix_fd( struct file *file )
 }
 
 /* extend a file beyond the current end of file */
-static int extend_file( struct file *file, off_t size )
+static int extend_file( struct file *file, file_pos_t new_size )
 {
     static const char zero;
     int unix_fd = get_file_unix_fd( file );
+    off_t size = new_size;
 
+    if (sizeof(new_size) > sizeof(size) && size != new_size)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return 0;
+    }
     /* extend the file one byte beyond the requested size and then truncate it */
     /* this should work around ftruncate implementations that can't extend files */
     if (pwrite( unix_fd, &zero, 1, size ) != -1)
@@ -396,11 +402,10 @@ static int extend_file( struct file *file, off_t size )
 }
 
 /* try to grow the file to the specified size */
-int grow_file( struct file *file, int size_high, int size_low )
+int grow_file( struct file *file, file_pos_t size )
 {
     struct stat st;
     int unix_fd = get_file_unix_fd( file );
-    off_t size = size_low + (((off_t)size_high)<<32);
 
     if (fstat( unix_fd, &st ) == -1)
     {

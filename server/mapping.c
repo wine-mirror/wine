@@ -39,8 +39,7 @@
 struct mapping
 {
     struct object   obj;             /* object header */
-    int             size_high;       /* mapping size */
-    int             size_low;        /* mapping size */
+    file_pos_t      size;            /* mapping size */
     int             protect;         /* protection flags */
     struct file    *file;            /* file mapped */
     int             header_size;     /* size of headers (for PE image mapping) */
@@ -100,13 +99,10 @@ static void init_page_size(void)
 }
 #endif  /* __i386__ */
 
-#define ROUND_ADDR(addr) \
-   ((int)(addr) & ~page_mask)
-
 #define ROUND_SIZE_MASK(addr,size,mask) \
    (((int)(size) + ((int)(addr) & (mask)) + (mask)) & ~(mask))
 
-#define ROUND_SIZE(addr,size) ROUND_SIZE_MASK( addr, size, page_mask )
+#define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
 
 
 /* find the shared PE mapping for a given mapping */
@@ -122,9 +118,9 @@ static struct file *get_shared_file( struct mapping *mapping )
 
 /* allocate and fill the temp file for a shared PE image mapping */
 static int build_shared_mapping( struct mapping *mapping, int fd,
-                                 IMAGE_SECTION_HEADER *sec, int nb_sec )
+                                 IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
-    int i, max_size, total_size;
+    unsigned int i, max_size, total_size;
     off_t shared_pos, read_pos, write_pos;
     char *buffer = NULL;
     int shared_fd;
@@ -138,7 +134,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if ((sec[i].Characteristics & IMAGE_SCN_MEM_SHARED) &&
             (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE))
         {
-            int size = ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
+            unsigned int size = ROUND_SIZE( sec[i].Misc.VirtualSize );
             if (size > max_size) max_size = size;
             total_size += size;
         }
@@ -150,7 +146,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     /* create a temp file for the mapping */
 
     if (!(mapping->shared_file = create_temp_file( GENERIC_READ|GENERIC_WRITE ))) return 0;
-    if (!grow_file( mapping->shared_file, 0, total_size )) goto error;
+    if (!grow_file( mapping->shared_file, total_size )) goto error;
     if ((shared_fd = get_file_unix_fd( mapping->shared_file )) == -1) goto error;
 
     if (!(buffer = malloc( max_size ))) goto error;
@@ -163,7 +159,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_SHARED)) continue;
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
         write_pos = shared_pos;
-        shared_pos += ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
+        shared_pos += ROUND_SIZE( sec[i].Misc.VirtualSize );
         if ((sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) &&
             !(sec[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)) continue;
         if (!sec[i].PointerToRawData || !sec[i].SizeOfRawData) continue;
@@ -235,15 +231,14 @@ static int get_image_params( struct mapping *mapping )
         shared_first = mapping;
     }
 
-    mapping->size_low    = ROUND_SIZE( 0, nt.OptionalHeader.SizeOfImage );
-    mapping->size_high   = 0;
+    mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
     mapping->base        = (void *)nt.OptionalHeader.ImageBase;
     mapping->header_size = ROUND_SIZE_MASK( mapping->base, nt.OptionalHeader.SizeOfHeaders,
                                             nt.OptionalHeader.SectionAlignment - 1 );
     mapping->protect     = VPROT_IMAGE;
 
     /* sanity check */
-    if (mapping->header_size > mapping->size_low) goto error;
+    if (mapping->header_size > mapping->size) goto error;
 
     free( sec );
     release_object( fd );
@@ -257,19 +252,18 @@ static int get_image_params( struct mapping *mapping )
 }
 
 /* get the size of the unix file associated with the mapping */
-inline static int get_file_size( struct file *file, int *size_high, int *size_low )
+inline static int get_file_size( struct file *file, file_pos_t *size )
 {
     struct stat st;
     int unix_fd = get_file_unix_fd( file );
 
     if (fstat( unix_fd, &st ) == -1) return 0;
-    *size_high = st.st_size >> 32;
-    *size_low  = st.st_size & 0xffffffff;
+    *size = st.st_size;
     return 1;
 }
 
-static struct object *create_mapping( int size_high, int size_low, int protect,
-                                      obj_handle_t handle, const WCHAR *name, size_t len )
+static struct object *create_mapping( file_pos_t size, int protect, obj_handle_t handle,
+                                      const WCHAR *name, size_t len )
 {
     struct mapping *mapping;
     int access = 0;
@@ -297,10 +291,10 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
             if (!get_image_params( mapping )) goto error;
             return &mapping->obj;
         }
-        if (!size_high && !size_low)
+        if (!size)
         {
-            if (!get_file_size( mapping->file, &size_high, &size_low )) goto error;
-            if (!size_high && !size_low)
+            if (!get_file_size( mapping->file, &size )) goto error;
+            if (!size)
             {
                 set_error( STATUS_FILE_INVALID );
                 goto error;
@@ -308,23 +302,22 @@ static struct object *create_mapping( int size_high, int size_low, int protect,
         }
         else
         {
-            if (!grow_file( mapping->file, size_high, size_low )) goto error;
+            if (!grow_file( mapping->file, size )) goto error;
         }
     }
     else  /* Anonymous mapping (no associated file) */
     {
-        if ((!size_high && !size_low) || (protect & VPROT_IMAGE))
+        if (!size || (protect & VPROT_IMAGE))
         {
             set_error( STATUS_INVALID_PARAMETER );
             mapping->file = NULL;
             goto error;
         }
         if (!(mapping->file = create_temp_file( access ))) goto error;
-        if (!grow_file( mapping->file, size_high, size_low )) goto error;
+        if (!grow_file( mapping->file, size )) goto error;
     }
-    mapping->size_high = size_high;
-    mapping->size_low  = ROUND_SIZE( 0, size_low );
-    mapping->protect   = protect;
+    mapping->size    = (size + page_mask) & ~((file_pos_t)page_mask);
+    mapping->protect = protect;
     return &mapping->obj;
 
  error:
@@ -338,8 +331,9 @@ static void mapping_dump( struct object *obj, int verbose )
     assert( obj->ops == &mapping_ops );
     fprintf( stderr, "Mapping size=%08x%08x prot=%08x file=%p header_size=%08x base=%p "
              "shared_file=%p shared_size=%08x ",
-             mapping->size_high, mapping->size_low, mapping->protect, mapping->file,
-             mapping->header_size, mapping->base, mapping->shared_file, mapping->shared_size );
+             (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
+             mapping->protect, mapping->file, mapping->header_size,
+             mapping->base, mapping->shared_file, mapping->shared_size );
     dump_object_name( &mapping->obj );
     fputc( '\n', stderr );
 }
@@ -374,10 +368,10 @@ int get_page_size(void)
 DECL_HANDLER(create_mapping)
 {
     struct object *obj;
+    file_pos_t size = ((file_pos_t)req->size_high << 32) | req->size_low;
 
     reply->handle = 0;
-    if ((obj = create_mapping( req->size_high, req->size_low,
-                               req->protect, req->file_handle,
+    if ((obj = create_mapping( size, req->protect, req->file_handle,
                                get_req_data(), get_req_data_size() )))
     {
         reply->handle = alloc_handle( current->process, obj, req->access, req->inherit );
@@ -400,8 +394,8 @@ DECL_HANDLER(get_mapping_info)
     if ((mapping = (struct mapping *)get_handle_obj( current->process, req->handle,
                                                      0, &mapping_ops )))
     {
-        reply->size_high   = mapping->size_high;
-        reply->size_low    = mapping->size_low;
+        reply->size_high   = (unsigned int)(mapping->size >> 32);
+        reply->size_low    = (unsigned int)mapping->size;
         reply->protect     = mapping->protect;
         reply->header_size = mapping->header_size;
         reply->base        = mapping->base;
