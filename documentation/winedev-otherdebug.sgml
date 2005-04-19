@@ -497,6 +497,183 @@ cvs update -PAd -D "2004-08-23 15:17:25 CDT"
 	</listitem>
       </orderedlist>
     </sect1>
+    <sect1>
+      <title>Which code has been tested?</title>
+      <para>
+        Deciding what code should be tested next can be a difficult
+        decision.  And in any given project, there is always code that
+        isn't tested where bugs could be lurking.  This section goes
+        over how to identify these sections using a tool called gcov.
+      </para>
+      <para>
+        To use gcov on wine, do the following:
+      </para>
+      <orderedlist>
+        <listitem>
+         <para>
+           In order to activate code coverage in the wine source code,
+           when running <command>make</command> set
+           <literal>CFLAGS</literal> like so <command>make
+           CFLAGS="-fprofile-arcs -ftest-coverage"</command>.  Note that
+           this can be done at any directory level.  Since compile 
+           and run time are significantly  increased by these flags, you
+           may want to only use these flags inside a given dll directory.
+         </para>
+       </listitem>
+        <listitem>
+         <para>
+           Run any application or test suite.
+         </para>
+       </listitem>
+        <listitem>
+         <para>
+           Run gcov on the file which you would like to know more
+           about code coverage.
+         </para>
+       </listitem>
+      </orderedlist>
+      <para>
+        The following is an example situation when using gcov to
+        determine the coverage of a file could be helpful.  We'll use
+        the <filename>dlls/lzexpand/lzexpand_main.c.</filename> file.
+        At one time the code in this file was not fully tested (as it
+        may still be).  For example at the time of this writing, the
+        function <function>LZOpenFileA</function> had the following
+        lines in it:
+        <screen>
+if ((mode&~0x70)!=OF_READ)
+        return fd;
+if (fd==HFILE_ERROR)
+        return HFILE_ERROR;
+cfd=LZInit(fd);
+if ((INT)cfd <= 0) return fd;
+return cfd;
+        </screen>
+        Currently there are a few tests written to test this function;
+        however, these tests don't check that everything is correct.
+        For instance, <constant>HFILE_ERROR</constant> may be the wrong
+        error code to return.  Using gcov and directed tests, we can
+        validate the correctness of this line of code.  First, we see
+        what has been tested already by running gcov on the file. 
+        To do this, do the following:
+        <screen>
+cvs checkout wine
+mkdir build
+cd build
+../wine/configure
+make depend && make CFLAGS="-fprofile-arcs -ftest-coverage"
+cd dlls/lxexpand/tests
+make test
+cd ..
+gcov ../../../wine/dlls/lzexpand/lzexpand_main.c
+  0.00% of 3 lines executed in file ../../../wine/include/wine/unicode.h
+  Creating unicode.h.gcov.
+  0.00% of 4 lines executed in file /usr/include/ctype.h
+  Creating ctype.h.gcov.
+  0.00% of 6 lines executed in file /usr/include/bits/string2.h
+  Creating string2.h.gcov.
+  100.00% of 3 lines executed in file ../../../wine/include/winbase.h
+  Creating winbase.h.gcov.
+  50.83% of 240 lines executed in file ../../../wine/dlls/lzexpand/lzexpand_main.c
+  Creating lzexpand_main.c.gcov.
+less lzexpand_main.c.gcov
+        </screen>
+        Note that there is more output, but only output of gcov is
+        shown.  The output file
+        <filename>lzexpand_main.c.gcov</filename> looks like this.
+        <screen>
+        9:  545:        if ((mode&~0x70)!=OF_READ)
+        6:  546:                return fd;
+        3:  547:        if (fd==HFILE_ERROR)
+    #####:  548:                return HFILE_ERROR;
+        3:  549:        cfd=LZInit(fd);
+        3:  550:        if ((INT)cfd <= 0) return fd;
+        3:  551:        return cfd;
+        </screen>
+        <command>gcov</command> output consists of three components:
+        the number of times a line was run, the line number, and the
+        actual text of the line.  Note: If a line is optimized out by
+        the compiler, it will appear as if it was never run.  The line
+        of code which returns <constant>HFILE_ERROR</constant> is
+        never executed (and it is highly unlikely that it is optimized
+        out), so we don't know if it is correct.  In order to validate
+        this line, there are two parts of this process.  First we must
+        write the test.  Please see <xref linkend="testing"> to
+        learn more about writing tests.  We insert the following lines
+        into a test case:
+        <screen>
+INT file;
+
+/* Check for non-existent file. */
+file = LZOpenFile("badfilename_", &amp;test, OF_READ);
+ok(file == LZERROR_BADINHANDLE, 
+   "LZOpenFile succeeded on nonexistent file\n");
+LZClose(file);
+       </screen>
+       Once we add in this test case, we now want to know if the line
+       in question is run by this test and works as expected.  You
+       should be in the same directory as you left off in the previous
+       command example.  The only difference is that we have to remove
+       the <filename>*.da</filename> files in order to start the
+       count over (if we leave the files than the number of times the
+       line is run is just added, e.g. line 545 below would be run 19 times)
+       and we remove the <filename>*.gcov</filename> files because
+       they are out of date and need to be recreated.
+      </para>
+      <screen>
+rm *.da *.gcov
+cd tests
+make
+make test
+cd ..
+gcov ../../../wine/dlls/lzexpand/lzexpand_main.c
+  0.00% of 3 lines executed in file ../../../wine/include/wine/unicode.h
+  Creating unicode.h.gcov.
+  0.00% of 4 lines executed in file /usr/include/ctype.h
+  Creating ctype.h.gcov.
+  0.00% of 6 lines executed in file /usr/include/bits/string2.h
+  Creating string2.h.gcov.
+  100.00% of 3 lines executed in file ../../../wine/include/winbase.h
+  Creating winbase.h.gcov.
+  51.67% of 240 lines executed in file ../../../wine/dlls/lzexpand/lzexpand_main.c
+  Creating lzexpand_main.c.gcov.
+less lzexpand_main.c.gcov
+      </screen>
+      <para>
+        Note that there is more output, but only output of gcov is
+        shown.  The output file
+        <filename>lzexpand_main.c.gcov</filename> looks like this.
+      </para>
+      <screen>
+       10:  545:        if ((mode&~0x70)!=OF_READ)
+        6:  546:                return fd;
+        4:  547:        if (fd==HFILE_ERROR)
+        1:  548:                return HFILE_ERROR;
+        3:  549:        cfd=LZInit(fd);
+        3:  550:        if ((INT)cfd <= 0) return fd;
+        3:  551:        return cfd;
+      </screen>
+      <para>
+        Based on gcov, we now know that
+        <constant>HFILE_ERROR</constant> is returned once.  And since
+        all of our other tests have remain unchanged, we can assume
+        that the one time it is returned is to satisfy the one case we
+        added where we check for it.  Thus we have validated a line of
+        code.  While this is a cursory example, it demostrates the
+        potential usefulness of this tool.  
+      </para>
+      <para>
+        For a further in depth description of gcov, the official gcc
+        compiler suite page for gcov is <ulink
+        url="http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Gcov.html">
+        http://gcc.gnu.org/onlinedocs/gcc-3.2.3/gcc/Gcov.html</ulink>.
+        There is also an excellent article written by Steve Best for
+        Linux Magazine which describes and illustrates this process
+        very well at
+        <ulink url="http://www.linux-mag.com/2003-07/compile_01.html">
+        http://www.linux-mag.com/2003-07/compile_01.html</ulink>. 
+      </para>
+    </sect1>
 
   </chapter>
 
