@@ -789,7 +789,7 @@ static ICOM_VTABLE(IDirect3D) d3dvt = {
       </sect2>
 
       <sect2>
-        <title>Appartments</title>
+        <title>Apartments</title>
 
         <para>
           Before a thread can use COM it must enter an apartment. Apartments are 

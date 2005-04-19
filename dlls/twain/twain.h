@@ -30,7 +30,7 @@
     version 1.7, July 1997       Added Capabilities and data structure for
                                  document imaging and digital cameras.
                                  KHL.
-    version 1.7, July 1997       Inserted Borland compatibile structure packing
+    version 1.7, July 1997       Inserted Borland compatible structure packing
                                  directives provided by Mentor.  JMH
     version 1.7, Aug 1997        Expanded file tabs to spaces.
                                  NOTE: future authors should be sure to have

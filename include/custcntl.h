@@ -58,7 +58,7 @@ typedef int (CALLBACK *LPFNCCSIZETOTEXTW)(DWORD, DWORD, HFONT, LPWSTR);
 
 #define LPFNCCSIZETOTEXT WINELIB_NAME_AW(LPFNCCSIZETOTEXT)
 
-/* Custom Control style flags sturcture */
+/* Custom Control style flags structure */
 typedef struct tagCCSTYLEFLAGA {
   DWORD flStyle;
   DWORD flStyleMask;

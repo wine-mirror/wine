@@ -1315,7 +1315,7 @@ static const str2int_t str2int[] = {
     {10, "0o1011101100",          0, STATUS_SUCCESS},
     {10, "0d1011101100",          0, STATUS_SUCCESS},
     {10, "0x1011101100",          0, STATUS_SUCCESS},
-    {10, "o12345",                0, STATUS_SUCCESS}, /* Octal altrough base is 10 */
+    {10, "o12345",                0, STATUS_SUCCESS}, /* Octal although base is 10 */
     {10, "",                      0, STATUS_SUCCESS}, /* empty string */
     {16, "1011101100",    286265600, STATUS_SUCCESS},
     {16, "-1011101100",  -286265600, STATUS_SUCCESS},

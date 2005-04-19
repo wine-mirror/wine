@@ -57,22 +57,22 @@ static void test_basic()
      * every information class
     */
 
-    /* Use a non existent info class */
-    trace("Check non existent info class\n");
+    /* Use a nonexistent info class */
+    trace("Check nonexistent info class\n");
     status = pNtQuerySystemInformation(-1, NULL, 0, NULL);
     ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status);
 
-    /* Use an existent class but with a zero-length buffer */
+    /* Use an existing class but with a zero-length buffer */
     trace("Check zero-length buffer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, NULL, 0, NULL);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
 
-    /* Use an existent class, correct length but no SystemInformation buffer */
+    /* Use an existing class, correct length but no SystemInformation buffer */
     trace("Check no SystemInformation buffer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, NULL, sizeof(*sbi), NULL);
     ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
 
-    /* Use a existent class, correct length, a pointer to a buffer but no ReturnLength pointer */
+    /* Use a existing class, correct length, a pointer to a buffer but no ReturnLength pointer */
     trace("Check no ReturnLength pointer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, sbi, sizeof(*sbi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
