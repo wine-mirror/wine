@@ -38,10 +38,10 @@ MSIHANDLE helper_createpackage()
 
     /* create an empty database */
     res = MsiOpenDatabase(szName, MSIDBOPEN_CREATE, &hdb );
-    ok( res == ERROR_SUCCESS , "Failed to create database" );
+    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
 
     res = MsiDatabaseCommit( hdb );
-    ok( res == ERROR_SUCCESS , "Failed to commit database" );
+    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
 
     /* build summmary info */
     res = MsiGetSummaryInformation(hdb, NULL, 7, &suminfo);
@@ -77,14 +77,14 @@ MSIHANDLE helper_createpackage()
     ok( res == ERROR_SUCCESS , "Failed to make summary info persist\n" );
 
     res = MsiCloseHandle( suminfo);
-    ok( res == ERROR_SUCCESS , "Failed to close suminfo" );
+    ok( res == ERROR_SUCCESS , "Failed to close suminfo\n" );
 
     sprintf(szPackage,"#%li",(DWORD)hdb);
     res = MsiOpenPackage(szPackage,&hPackage);
     ok( res == ERROR_SUCCESS , "Failed to open package\n" );
 
     res = MsiCloseHandle( hdb );
-    ok( res == ERROR_SUCCESS , "Failed to close database" );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
     return hPackage;
 }
@@ -98,7 +98,7 @@ static void test_createpackage(void)
     ok ( hPackage != 0, " Failed to create package\n");
 
     res = MsiCloseHandle( hPackage);
-    ok( res == ERROR_SUCCESS , "Failed to close package" );
+    ok( res == ERROR_SUCCESS , "Failed to close package\n" );
 }
 
 static void test_msidatabase(void)
@@ -111,13 +111,13 @@ static void test_msidatabase(void)
 
     /* create an empty database */
     res = MsiOpenDatabase(szName, MSIDBOPEN_CREATE, &hdb );
-    ok( res == ERROR_SUCCESS , "Failed to create database" );
+    ok( res == ERROR_SUCCESS , "Failed to create database\n" );
 
     res = MsiDatabaseCommit( hdb );
-    ok( res == ERROR_SUCCESS , "Failed to commit database" );
+    ok( res == ERROR_SUCCESS , "Failed to commit database\n" );
 
     res = MsiCloseHandle( hdb );
-    ok( res == ERROR_SUCCESS , "Failed to close database" );
+    ok( res == ERROR_SUCCESS , "Failed to close database\n" );
 
     res = DeleteFile( szName );
     ok( res == TRUE, "Falled to delete database\n" );
@@ -396,7 +396,7 @@ void test_msibadqueries()
     ok(r == ERROR_SUCCESS , "query 4 failed\n");
 
     r = MsiDatabaseCommit( hdb );
-    ok(r == ERROR_SUCCESS , "Failed to commit database after write");
+    ok(r == ERROR_SUCCESS , "Failed to commit database after write\n");
 
     r = try_query( hdb, "CREATE TABLE `blah` (`foo` CHAR(72) NOT NULL "
                           "PRIMARY KEY `foo`)");
@@ -406,7 +406,7 @@ void test_msibadqueries()
     ok(r == ERROR_SUCCESS , "failed to insert record in db\n");
 
     r = MsiDatabaseCommit( hdb );
-    ok(r == ERROR_SUCCESS , "Failed to commit database after write");
+    ok(r == ERROR_SUCCESS , "Failed to commit database after write\n");
 
     r = try_query( hdb, "CREATE TABLE `boo` (`foo` CHAR(72) NOT NULL "
                           "PRIMARY KEY `ba`)");

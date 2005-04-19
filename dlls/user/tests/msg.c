@@ -5245,7 +5245,7 @@ static void test_winevents(void)
     ok_sequence(WmGlobalHookSeq_2, "global hook 2", FALSE);
 
     ret = UnhookWindowsHookEx(hCBT_global_hook);
-    ok( ret, "UnhookWindowsHookEx error %ld", GetLastError());
+    ok( ret, "UnhookWindowsHookEx error %ld\n", GetLastError());
 
     PostThreadMessageA(tid, WM_QUIT, 0, 0);
     ok(WaitForSingleObject(hthread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failed\n");

@@ -52,7 +52,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
         HMODULE hdll=LoadLibraryA("shell32.dll");
         pSHSimpleIDListFromPathA=(void*)GetProcAddress(hdll, (char*)162);
         if (!pSHSimpleIDListFromPathA)
-            trace("SHSimpleIDListFromPathA not found in shell32.dll");
+            trace("SHSimpleIDListFromPathA not found in shell32.dll\n");
     }
 
     pidl=NULL;
@@ -528,7 +528,7 @@ START_TEST(shelllink)
     HRESULT r;
 
     r = CoInitialize(NULL);
-    ok(SUCCEEDED(r), "CoInitialize failed (0x%08lx)\b", r);
+    ok(SUCCEEDED(r), "CoInitialize failed (0x%08lx)\n", r);
     if (!SUCCEEDED(r))
         return;
 
