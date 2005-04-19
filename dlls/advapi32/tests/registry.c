@@ -382,7 +382,16 @@ static void test_reg_load_key()
     ret = RegOpenKey(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 
-    delete_key(hkHandle);
+    RegCloseKey(hkHandle);
+}
+
+static void test_reg_unload_key()
+{
+    DWORD ret;
+
+    ret = RegUnLoadKey(HKEY_LOCAL_MACHINE, "Test");
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+
     DeleteFile("saved_key");
 }
 
@@ -397,6 +406,7 @@ START_TEST(registry)
     test_reg_delete_key();
     test_reg_save_key();
     test_reg_load_key();
+    test_reg_unload_key();
 
     /* cleanup */
     delete_key( hkey_main );
