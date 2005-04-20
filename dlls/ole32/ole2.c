@@ -2411,7 +2411,7 @@ BSTR WINAPI PropSysAllocString(LPCOLESTR str)
  * NOTES
  *  Copy of SysFreeString.
  */
-void PropSysFreeString(LPOLESTR str)
+void WINAPI PropSysFreeString(LPOLESTR str)
 {
     DWORD* bufferPointer;
 
