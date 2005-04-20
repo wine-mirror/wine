@@ -2672,15 +2672,26 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
 
     hwnd = WIN_GetFullHandle( hwnd );
 
-    if (!peek_message( &msg, hwnd, first, last, (flags & PM_REMOVE) ? GET_MSG_REMOVE : 0 ))
+    for (;;)
     {
-        if (!(flags & PM_NOYIELD))
+        if (!peek_message( &msg, hwnd, first, last, (flags & PM_REMOVE) ? GET_MSG_REMOVE : 0 ))
         {
-            DWORD count;
-            ReleaseThunkLock(&count);
-            if (count) RestoreThunkLock(count);
+            if (!(flags & PM_NOYIELD))
+            {
+                DWORD count;
+                ReleaseThunkLock(&count);
+                NtYieldExecution();
+                if (count) RestoreThunkLock(count);
+            }
+            return FALSE;
         }
-        return FALSE;
+        if (msg.message & 0x80000000)
+        {
+            handle_internal_message( msg.hwnd, msg.message, msg.wParam, msg.lParam );
+            if (!(flags & PM_REMOVE))  /* have to remove it explicitly */
+                peek_message( &msg, msg.hwnd, msg.message, msg.message, GET_MSG_REMOVE );
+        }
+        else break;
     }
 
     if ((queue = QUEUE_Current()))
@@ -2863,9 +2874,6 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
                                                  msg->message, msg->wParam, GetTickCount() );
     }
 
-    if (msg->message & 0x80000000)
-        return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
-
     if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
     {
         if (msg->hwnd) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
@@ -2937,9 +2945,6 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
         if (msg->lParam) return CallWindowProcW( (WNDPROC)msg->lParam, msg->hwnd,
                                                  msg->message, msg->wParam, GetTickCount() );
     }
-
-    if (msg->message & 0x80000000)
-        return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
 
     if (!(wndPtr = WIN_GetPtr( msg->hwnd )))
     {
