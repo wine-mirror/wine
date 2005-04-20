@@ -268,6 +268,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
     ME_InsertTextFromCursor(editor, 0, pText, nWideChars, style);
     if (stream->dwSize < STREAMIN_BUFFER_SIZE)
       break;
+    stream->dwSize = 0;
   } while(1);
   ME_CommitUndo(editor);
   ME_Repaint(editor);
@@ -485,7 +486,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
 
-  TRACE("%p %p\n", stream, editor->hWnd);
+  TRACE("stream==%p hWnd==%p format==0x%X\n", stream, editor->hWnd, (UINT)format);
   editor->nEventMask = 0;
   
   ME_GetSelection(editor, &from, &to);
