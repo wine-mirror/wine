@@ -64,6 +64,7 @@ typedef int Status;
 #include "winuser.h"
 #include "ddrawi.h"
 #include "thread.h"
+#include "wine/list.h"
 
 #define MAX_PIXELFORMATS 8
 
@@ -111,6 +112,9 @@ typedef struct
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo shminfo;        /* shared memory segment info */
 #endif
+    struct list   entry;            /* Entry in global DIB list */
+    const BYTE   *base;             /* Base address */
+    SIZE_T        size;             /* Size in bytes */
 } X_PHYSBITMAP;
 
   /* X physical font */

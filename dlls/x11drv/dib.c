@@ -38,10 +38,24 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "x11drv.h"
+#include "excpt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 WINE_DECLARE_DEBUG_CHANNEL(x11drv);
+
+static struct list dibs_list = LIST_INIT(dibs_list);
+
+static CRITICAL_SECTION dibs_cs;
+static CRITICAL_SECTION_DEBUG dibs_cs_debug =
+{
+    0, 0, &dibs_cs,
+    { &dibs_cs_debug.ProcessLocksList, &dibs_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": dibs_cs") }
+};
+static CRITICAL_SECTION dibs_cs = { &dibs_cs_debug, -1, 0, 0, 0, 0 };
+
+static PVOID dibs_handler;
 
 static int ximageDepthTable[32];
 
@@ -4102,10 +4116,8 @@ INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, 
 static void X11DRV_DIB_DoProtectDIBSection( X_PHYSBITMAP *physBitmap, DWORD new_prot )
 {
     DWORD old_prot;
-    DIBSECTION dib;
 
-    GetObjectW( physBitmap->hbitmap, sizeof(dib), &dib );
-    VirtualProtect(dib.dsBm.bmBits, dib.dsBmih.biSizeImage, new_prot, &old_prot);
+    VirtualProtect(physBitmap->base, physBitmap->size, new_prot, &old_prot);
     TRACE("Changed protection from %ld to %ld\n", old_prot, new_prot);
 }
 
@@ -4268,22 +4280,43 @@ static void X11DRV_DIB_DoUpdateDIBSection(X_PHYSBITMAP *physBitmap, BOOL toDIB)
 /***********************************************************************
  *           X11DRV_DIB_FaultHandler
  */
-static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
+static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
 {
-  X_PHYSBITMAP *physBitmap = res;
-  INT state = X11DRV_DIB_Lock( physBitmap, DIB_Status_None, FALSE );
+    X_PHYSBITMAP *physBitmap = NULL;
+    BOOL found = FALSE;
+    const BYTE *addr;
+    struct list *ptr;
 
-  if (state != DIB_Status_InSync) {
-    /* no way to tell whether app needs read or write yet,
-     * try read first */
-    X11DRV_DIB_Coerce( physBitmap, DIB_Status_InSync, FALSE );
-  } else {
-    /* hm, apparently the app must have write access */
-    X11DRV_DIB_Coerce( physBitmap, DIB_Status_AppMod, FALSE );
-  }
-  X11DRV_DIB_Unlock( physBitmap, TRUE );
+    if (ep->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_CONTINUE_SEARCH;
 
-  return TRUE;
+    addr = (const BYTE*)ep->ExceptionRecord->ExceptionInformation[1];
+
+    EnterCriticalSection(&dibs_cs);
+    LIST_FOR_EACH( ptr, &dibs_list )
+    {
+        physBitmap = LIST_ENTRY( ptr, X_PHYSBITMAP, entry );
+        if ((physBitmap->base <= addr) && (addr < physBitmap->base + physBitmap->size))
+        {
+            found = TRUE;
+            break;
+        }
+    }
+    LeaveCriticalSection(&dibs_cs);
+
+    if (!found) return EXCEPTION_CONTINUE_SEARCH;
+
+    X11DRV_DIB_Lock( physBitmap, DIB_Status_None, FALSE );
+    if (ep->ExceptionRecord->ExceptionInformation[0]) {
+        /* the app tried to write the DIB bits */
+        X11DRV_DIB_Coerce( physBitmap, DIB_Status_AppMod, FALSE );
+    } else {
+        /* the app tried to read the DIB bits */
+        X11DRV_DIB_Coerce( physBitmap, DIB_Status_InSync, FALSE );
+    }
+    X11DRV_DIB_Unlock( physBitmap, TRUE );
+
+    return EXCEPTION_CONTINUE_EXECUTION;
 }
 
 /***********************************************************************
@@ -4566,7 +4599,6 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
 HBITMAP X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
                                  const BITMAPINFO *bmi, UINT usage )
 {
-    extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, BOOL (*proc)(LPVOID, LPCVOID), LPVOID arg);
     X_PHYSBITMAP *physBitmap;
     DIBSECTION dib;
 
@@ -4602,11 +4634,18 @@ HBITMAP X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
 
       /* install fault handler */
     InitializeCriticalSection( &physBitmap->lock );
-    if (VIRTUAL_SetFaultHandler(dib.dsBm.bmBits, X11DRV_DIB_FaultHandler, physBitmap))
-    {
-        X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
-        physBitmap->status = DIB_Status_AppMod;
-    }
+
+    physBitmap->base   = dib.dsBm.bmBits;
+    physBitmap->size   = dib.dsBmih.biSizeImage;
+    physBitmap->status = DIB_Status_AppMod;
+
+    if (!dibs_handler)
+        dibs_handler = AddVectoredExceptionHandler( TRUE, X11DRV_DIB_FaultHandler );
+    EnterCriticalSection( &dibs_cs );
+    list_add_head( &dibs_list, &physBitmap->entry );
+    LeaveCriticalSection( &dibs_cs );
+
+    X11DRV_DIB_DoProtectDIBSection( physBitmap, PAGE_READWRITE );
 
     return hbitmap;
 }
@@ -4616,6 +4655,19 @@ HBITMAP X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
  */
 void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
 {
+  BOOL last;
+
+  EnterCriticalSection( &dibs_cs );
+  list_remove( &physBitmap->entry );
+  last = list_empty( &dibs_list );
+  LeaveCriticalSection( &dibs_cs );
+
+  if (last)
+  {
+      RemoveVectoredExceptionHandler( dibs_handler );
+      dibs_handler = NULL;
+  }
+
   if (dib->dshSection)
       X11DRV_DIB_Coerce(physBitmap, DIB_Status_InSync, FALSE);
 
