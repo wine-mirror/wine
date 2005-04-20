@@ -58,7 +58,9 @@ static BOOL CALLBACK EnumDesktopProcWtoA(LPWSTR lpszDesktop, LPARAM lParam)
 }
 
 /**********************************************************************
- * SetLastErrorEx [USER32.@]  Sets the last-error code.
+ * SetLastErrorEx [USER32.@]
+ *
+ * Sets the last-error code.
  *
  * RETURNS
  *    None.
@@ -82,12 +84,18 @@ void WINAPI SetLastErrorEx(
     SetLastError( error );
 }
 
+/******************************************************************************
+ * GetAltTabInfoA [USER32.@]
+ */
 BOOL WINAPI GetAltTabInfoA(HWND hwnd, int iItem, PALTTABINFO pati, LPSTR pszItemText, UINT cchItemText)
 {
     FIXME("(%p, 0x%08x, %p, %p, 0x%08x)\n", hwnd, iItem, pati, pszItemText, cchItemText);
     return FALSE;
 }
 
+/******************************************************************************
+ * GetAltTabInfoW [USER32.@]
+ */
 BOOL WINAPI GetAltTabInfoW(HWND hwnd, int iItem, PALTTABINFO pati, LPWSTR pszItemText, UINT cchItemText)
 {
     FIXME("(%p, 0x%08x, %p, %p, 0x%08x)\n", hwnd, iItem, pati, pszItemText, cchItemText);
@@ -95,7 +103,9 @@ BOOL WINAPI GetAltTabInfoW(HWND hwnd, int iItem, PALTTABINFO pati, LPWSTR pszIte
 }
 
 /******************************************************************************
- * GetProcessWindowStation [USER32.@]  Returns handle of window station
+ * GetProcessWindowStation [USER32.@]
+ *
+ * Returns handle of window station
  *
  * NOTES
  *    Docs say the return value is HWINSTA
@@ -112,7 +122,9 @@ HWINSTA WINAPI GetProcessWindowStation(void)
 
 
 /******************************************************************************
- * GetThreadDesktop [USER32.@]  Returns handle to desktop
+ * GetThreadDesktop [USER32.@]
+ *
+ * Returns handle to desktop
  *
  * PARAMS
  *    dwThreadId [I] Thread identifier

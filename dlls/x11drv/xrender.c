@@ -1613,6 +1613,9 @@ done:
     return retv;
 }
 
+/******************************************************************************
+ * AlphaBlend         (x11drv.@)
+ */
 BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
                        X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                        BLENDFUNCTION blendfn)
@@ -1785,6 +1788,9 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
   return;
 }
 
+/******************************************************************************
+ * AlphaBlend         (x11drv.@)
+ */
 BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst, INT heightDst,
                        X11DRV_PDEVICE *devSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
                        BLENDFUNCTION blendfn)

@@ -249,7 +249,11 @@ HRESULT WINAPI MSHTML_DllCanUnloadNow(void)
     return hres;
 }
 
-/* appears to have the same prototype as WinMain */
+/***********************************************************************
+ *          RunHTMLApplication (MSHTML.@)
+ *
+ * Appears to have the same prototype as WinMain.
+ */
 INT WINAPI RunHTMLApplication( HINSTANCE hinst, HINSTANCE hPrevInst,
                                LPCSTR szCmdLine, INT nCmdShow )
 {

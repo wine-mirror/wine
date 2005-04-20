@@ -956,6 +956,9 @@ BOOL WINAPI GetICMProfileA(HDC hDC, LPDWORD lpcbName, LPSTR lpszFilename)
     return TRUE;
 }
 
+/**********************************************************************
+ * GetICMProfileW [GDI32.@]
+ **/
 BOOL WINAPI GetICMProfileW(HDC hDC, LPDWORD lpcbName, LPWSTR lpszFilename)
 {
     DWORD callerLen;

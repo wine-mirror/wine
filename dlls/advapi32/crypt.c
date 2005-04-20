@@ -1899,6 +1899,8 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 /******************************************************************************
  * SystemFunction040   (ADVAPI32.@)
  *
+ * MSDN documents this function as RtlEncryptMemory.
+ *
  * PARAMS
  *  memory [I/O] Pointer to memory to encrypt.
  *  length [I] Length of region to encrypt in bytes.
@@ -1912,7 +1914,7 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
  *  If flags are specified when encrypting, the same flag value must be given
  *  when decrypting the memory.
  */
-NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)  /* RtlEncryptMemory */
+NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)
 {
 	FIXME("(%p, %lx, %lx): stub [RtlEncryptMemory]\n", memory, length, flags);
 	return STATUS_SUCCESS;
@@ -1920,6 +1922,8 @@ NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)  /* R
 
 /******************************************************************************
  * SystemFunction041  (ADVAPI32.@)
+ *
+ * MSDN documents this function as RtlDecryptMemory.
  *
  * PARAMS
  *  memory [I/O] Pointer to memory to decrypt.
@@ -1934,7 +1938,7 @@ NTSTATUS WINAPI SystemFunction040(PVOID memory, ULONG length, ULONG flags)  /* R
  *  If flags are specified when encrypting, the same flag value must be given
  *  when decrypting the memory.
  */
-NTSTATUS WINAPI SystemFunction041(PVOID memory, ULONG length, ULONG flags)  /* RtlDecryptMemory */
+NTSTATUS WINAPI SystemFunction041(PVOID memory, ULONG length, ULONG flags)
 {
 	FIXME("(%p, %lx, %lx): stub [RtlDecryptMemory]\n", memory, length, flags);
 	return STATUS_SUCCESS;

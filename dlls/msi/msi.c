@@ -968,6 +968,9 @@ end:
     return rrc;
 }
 
+/******************************************************************
+ * MsiQueryFeatureStateA      [MSI.@]
+ */
 INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
 {
     INSTALLSTATE rc;
@@ -999,6 +1002,9 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
     return rc;
 }
 
+/******************************************************************
+ * MsiQueryFeatureStateW      [MSI.@]
+ */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
     FIXME("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
@@ -1008,6 +1014,9 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
     return INSTALLSTATE_LOCAL;
 }
 
+/******************************************************************
+ * MsiGetFileVersionA         [MSI.@]
+ */
 UINT WINAPI MsiGetFileVersionA(LPCSTR szFilePath, LPSTR lpVersionBuf,
                 DWORD* pcchVersionBuf, LPSTR lpLangBuf, DWORD* pcchLangBuf)
 {
@@ -1053,6 +1062,9 @@ end:
     return ret;
 }
 
+/******************************************************************
+ * MsiGetFileVersionW         [MSI.@]
+ */
 UINT WINAPI MsiGetFileVersionW(LPCWSTR szFilePath, LPWSTR lpVersionBuf,
                 DWORD* pcchVersionBuf, LPWSTR lpLangBuf, DWORD* pcchLangBuf)
 {
@@ -1193,7 +1205,7 @@ static IClassFactoryVtbl MsiCF_Vtbl =
 static IClassFactoryImpl Msi_CF = { &MsiCF_Vtbl };
 
 /******************************************************************
- *    	DllGetClassObject [MSI.@]
+ * DllGetClassObject          [MSI.@]
  */
 HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
@@ -1212,7 +1224,7 @@ HRESULT WINAPI MSI_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /******************************************************************
- *    	DllGetVersion [MSI.@]
+ * DllGetVersion              [MSI.@]
  */
 HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 {
@@ -1230,7 +1242,7 @@ HRESULT WINAPI MSI_DllGetVersion(DLLVERSIONINFO *pdvi)
 }
 
 /******************************************************************
- *    	DllCanUnloadNow [MSI.@]
+ * DllCanUnloadNow            [MSI.@]
  */
 BOOL WINAPI MSI_DllCanUnloadNow(void)
 {
@@ -1270,6 +1282,9 @@ INSTALLSTATE WINAPI MsiUseFeatureExW(LPCWSTR szProduct, LPCWSTR szFeature,
     return INSTALLSTATE_LOCAL;
 }
 
+/***********************************************************************
+ * MsiUseFeatureExA           [MSI.@]
+ */
 INSTALLSTATE WINAPI MsiUseFeatureExA(LPCSTR szProduct, LPCSTR szFeature,
                              DWORD dwInstallMode, DWORD dwReserved)
 {

@@ -2292,13 +2292,13 @@ HRESULT WINAPI OleCreate(
 /******************************************************************************
  *              OleSetAutoConvert        [OLE32.@]
  */
-/* FIXME: convert to Unicode */
 HRESULT WINAPI OleSetAutoConvert(REFCLSID clsidOld, REFCLSID clsidNew)
 {
     HKEY hkey = 0;
     char buf[200], szClsidNew[200];
     HRESULT res = S_OK;
 
+    /* FIXME: convert to Unicode */
     TRACE("(%s,%s)\n", debugstr_guid(clsidOld), debugstr_guid(clsidNew));
     sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
     WINE_StringFromCLSID(clsidNew, szClsidNew);

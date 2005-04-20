@@ -1233,6 +1233,9 @@ lend:
     return bSuccess;
 }
 
+/***********************************************************************
+ *           FtpGetFileSize  (WININET.@)
+ */
 DWORD WINAPI FtpGetFileSize( HINTERNET hFile, LPDWORD lpdwFileSizeHigh )
 {
     FIXME("(%p, %p)\n", hFile, lpdwFileSizeHigh);
@@ -1611,6 +1614,9 @@ lend:
     return bSuccess;
 }
 
+/***********************************************************************
+ *           FtpCommandA  (WININET.@)
+ */
 BOOL WINAPI FtpCommandA( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags,
                          LPCSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
 {
@@ -1620,6 +1626,9 @@ BOOL WINAPI FtpCommandA( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
     return TRUE;
 }
 
+/***********************************************************************
+ *           FtpCommandW  (WININET.@)
+ */
 BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags,
                          LPCWSTR lpszCommand, DWORD_PTR dwContext, HINTERNET* phFtpCommand )
 {

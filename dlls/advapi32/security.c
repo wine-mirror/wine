@@ -1673,6 +1673,9 @@ LsaQueryInformationPolicy(
 	return TRUE;
 }
 
+/******************************************************************************
+ * LsaSetInformationPolicy [ADVAPI32.@]
+ */
 NTSTATUS WINAPI
 LsaSetInformationPolicy(
     LSA_HANDLE PolicyHandle,
@@ -1937,6 +1940,9 @@ LookupAccountNameA(
     return ret;
 }
 
+/******************************************************************************
+ * LookupAccountNameW [ADVAPI32.@]
+ */
 BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSID Sid,
                                 LPDWORD cbSid, LPWSTR ReferencedDomainName,
                                 LPDWORD cchReferencedDomainName, PSID_NAME_USE peUse )

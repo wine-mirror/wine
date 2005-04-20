@@ -6402,6 +6402,10 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package)
 }
 
 /* Msi functions that seem appropriate here */
+
+/***********************************************************************
+ * MsiDoActionA       (MSI.@)
+ */
 UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
 {
     LPWSTR szwAction;
@@ -6425,6 +6429,9 @@ UINT WINAPI MsiDoActionA( MSIHANDLE hInstall, LPCSTR szAction )
     return rc;
 }
 
+/***********************************************************************
+ * MsiDoActionW       (MSI.@)
+ */
 UINT WINAPI MsiDoActionW( MSIHANDLE hInstall, LPCWSTR szAction )
 {
     MSIPACKAGE *package;
@@ -6570,6 +6577,9 @@ UINT WINAPI MsiGetSourcePathW( MSIHANDLE hInstall, LPCWSTR szFolder, LPWSTR
 }
 
 
+/***********************************************************************
+ * MsiSetTargetPathA  (MSI.@)
+ */
 UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder, 
                              LPCSTR szFolderPath)
 {
@@ -6659,6 +6669,9 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ * MsiSetTargetPathW  (MSI.@)
+ */
 UINT WINAPI MsiSetTargetPathW(MSIHANDLE hInstall, LPCWSTR szFolder, 
                              LPCWSTR szFolderPath)
 {
@@ -6713,7 +6726,9 @@ BOOL WINAPI MsiGetMode(MSIHANDLE hInstall, MSIRUNMODE iRunMode)
     return TRUE;
 }
 
-/*
+/***********************************************************************
+ * MsiSetFeatureStateA (MSI.@)
+ *
  * According to the docs, when this is called it immediately recalculates
  * all the component states as well
  */
@@ -6735,6 +6750,9 @@ UINT WINAPI MsiSetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
     return rc;
 }
 
+/***********************************************************************
+ * MsiSetFeatureStateW (MSI.@)
+ */
 UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
                                 INSTALLSTATE iState)
 {
@@ -6815,6 +6833,9 @@ piAction);
     return ret;
 }
 
+/***********************************************************************
+ * MsiGetComponentStateA (MSI.@)
+ */
 UINT WINAPI MsiGetComponentStateA(MSIHANDLE hInstall, LPSTR szComponent,
                   INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
 {
@@ -6854,6 +6875,9 @@ piAction);
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ * MsiGetComponentStateW (MSI.@)
+ */
 UINT WINAPI MsiGetComponentStateW(MSIHANDLE hInstall, LPWSTR szComponent,
                   INSTALLSTATE *piInstalled, INSTALLSTATE *piAction)
 {
