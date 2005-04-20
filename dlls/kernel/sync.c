@@ -1098,7 +1098,7 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) ? TRUE : FALSE;
     read_mode = (dwPipeMode & PIPE_READMODE_MESSAGE) ? TRUE : FALSE;
     non_block = (dwPipeMode & PIPE_NOWAIT) ? TRUE : FALSE;
-    if (nMaxInstances >= PIPE_UNLIMITED_INSTANCES) nMaxInstances = ULONG_MAX;
+    if (nMaxInstances >= PIPE_UNLIMITED_INSTANCES) nMaxInstances = ~0UL;
 
     timeout.QuadPart = (ULONGLONG)nDefaultTimeOut * -10000;
 
