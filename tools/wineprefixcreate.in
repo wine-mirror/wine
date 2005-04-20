@@ -29,8 +29,8 @@ usage()
     echo "  -h, --help                 Display this message"
     echo "      --prefix <dir>         Directory to create (default: \$WINEPREFIX or ~/.wine)"
     echo "  -q, --quiet                Don't print status messages"
-    echo "  -u, --update               Update the prefix directory if it already exists"
     echo "      --use-wine-tree <dir>  Run from the Wine source tree <dir>"
+    echo "  -w, --wait                 Wait for the wineserver to exit before returning"
     echo ""
 }
 
@@ -39,7 +39,7 @@ set -e
 dlldir="@dlldir@"
 datadir="@datadir@/wine"
 
-do_update=0
+do_wait=0
 quiet=0
 
 while [ $# -gt 0 ]
@@ -53,12 +53,12 @@ do
             WINEPREFIX="$2"
             shift 2
             ;;
-        -u|--update)
-            do_update=1
-            shift
-            ;;
         -q|--quiet)
             quiet=1
+            shift
+            ;;
+        -w|--wait)
+            do_wait=1
             shift
             ;;
         --use-wine-tree)
@@ -165,20 +165,16 @@ link_app winebrowser  "$CROOT/windows/winebrowser.exe"
 
 cp "$datadir/wine.inf" "$CROOT/windows/inf/wine.inf"
 export WINEPREFIX
-${WINELOADER:-wine} rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
+"${WINELOADER:-wine}" rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 wine.inf
 
 # Wait for the wineserver to finish
 
-if [ $do_update = 0 ]
+if [ $do_wait = 1 ]
 then
-    ${WINESERVER:-wineserver} -w
-    if [ $quiet = 0 ]
-    then
-        echo "$WINEPREFIX created successfully."
-    fi
-else
-    if [ $quiet = 0 ]
-    then
-        echo "$WINEPREFIX updated successfully."
-    fi
+    "${WINESERVER:-wineserver}" -w
+fi
+
+if [ $quiet = 0 ]
+then
+    echo "$WINEPREFIX updated successfully."
 fi
