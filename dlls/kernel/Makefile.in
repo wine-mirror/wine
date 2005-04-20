@@ -17,7 +17,6 @@ SPEC_SRCS16 = \
 	windebug.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/misc/registry.c \
 	actctx.c \
 	atom.c \
 	change.c \
@@ -44,6 +43,7 @@ C_SRCS = \
 	module.c \
 	ne_module.c \
 	ne_segment.c \
+	oldconfig.c \
 	path.c \
 	powermgnt.c \
 	process.c \
@@ -91,10 +91,7 @@ MC_SRCS = \
 
 EXTRA_OBJS   = $(ASM_SRCS:.s=.o)
 SUBDIRS      = tests
-EXTRASUBDIRS = \
-	$(TOPOBJDIR)/misc \
-	messages \
-	nls
+EXTRASUBDIRS = messages nls
 
 @MAKE_DLL_RULES@
 

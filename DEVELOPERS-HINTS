@@ -247,7 +247,6 @@ Miscellaneous:
 Note: these directories will ultimately get moved into their
 respective dlls.
 
-	misc/			- KERNEL registry 
 	windows/		- USER window management
 
 

@@ -86,7 +86,7 @@ static const WCHAR pifW[] = {'.','p','i','f',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
 extern void SHELL_LoadRegistry(void);
-extern void VOLUME_CreateDevices(void);
+extern void convert_old_config(void);
 extern void VERSION_Init( const WCHAR *appname );
 extern void LOCALE_Init(void);
 
@@ -995,11 +995,8 @@ static BOOL process_init(void)
         /* Copy the parent environment */
         if (!build_initial_environment( __wine_main_environ )) return FALSE;
 
-        /* Create device symlinks */
-        VOLUME_CreateDevices();
-
-        /* registry initialisation */
-        SHELL_LoadRegistry();
+        /* convert old configuration to new format */
+        convert_old_config();
 
         /* global boot finished, the rest is process-local */
         SERVER_START_REQ( boot_done )
