@@ -1531,7 +1531,7 @@ enum message_type
     user_handle_t   get_win;   /* window handle to get */
     unsigned int    get_first; /* first message code to get */
     unsigned int    get_last;  /* last message code to get */
-    int             get_next_hw; /* do we want the get the next hardware msg? */
+    unsigned int    hw_id;     /* id of the previous hardware message (or 0) */
 @REPLY
     int             type;      /* message type */
     user_handle_t   win;       /* window handle */
@@ -1544,6 +1544,7 @@ enum message_type
     void*           hook_proc; /* winevent hook proc address */
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
+    unsigned int    hw_id;     /* id if hardware message */
     size_t          total;     /* total size of extra data */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
@@ -1560,6 +1561,7 @@ enum message_type
 
 /* Accept the current hardware message */
 @REQ(accept_hardware_message)
+    unsigned int    hw_id;     /* id of the hardware message */
     int             remove;    /* should we remove the message? */
     user_handle_t   new_win;   /* new destination window for current message */
 @END

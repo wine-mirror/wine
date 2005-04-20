@@ -1565,10 +1565,11 @@ static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
  * Tell the server we have passed the message to the app
  * (even though we may end up dropping it later on)
  */
-static void accept_hardware_message( BOOL remove, HWND new_hwnd )
+static void accept_hardware_message( UINT hw_id, BOOL remove, HWND new_hwnd )
 {
     SERVER_START_REQ( accept_hardware_message )
     {
+        req->hw_id   = hw_id;
         req->remove  = remove;
         req->new_win = new_hwnd;
         if (wine_server_call( req ))
@@ -1583,7 +1584,8 @@ static void accept_hardware_message( BOOL remove, HWND new_hwnd )
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UINT last, BOOL remove )
+static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
+                                      UINT first, UINT last, BOOL remove )
 {
     EVENTMSG event;
 
@@ -1624,10 +1626,10 @@ static BOOL process_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UI
     {
         /* skip this message */
         HOOK_CallHooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, TRUE );
-        accept_hardware_message( TRUE, 0 );
+        accept_hardware_message( hw_id, TRUE, 0 );
         return FALSE;
     }
-    accept_hardware_message( remove, 0 );
+    accept_hardware_message( hw_id, remove, 0 );
     return TRUE;
 }
 
@@ -1637,7 +1639,7 @@ static BOOL process_keyboard_message( MSG *msg, HWND hwnd_filter, UINT first, UI
  *
  * returns TRUE if the contents of 'msg' should be passed to the application
  */
-static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
+static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, HWND hwnd_filter,
                                    UINT first, UINT last, BOOL remove )
 {
     static MSG clk_msg;
@@ -1666,7 +1668,7 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
 
     if (!WIN_IsCurrentThread( msg->hwnd ))
     {
-        accept_hardware_message( FALSE, msg->hwnd );
+        accept_hardware_message( hw_id, FALSE, msg->hwnd );
         return FALSE;
     }
 
@@ -1752,7 +1754,7 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
         hook.wHitTestCode = hittest;
         hook.dwExtraInfo  = extra_info;
         HOOK_CallHooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, TRUE );
-        accept_hardware_message( TRUE, 0 );
+        accept_hardware_message( hw_id, TRUE, 0 );
         return FALSE;
     }
 
@@ -1760,11 +1762,11 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
     {
         SendMessageW( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd,
                       MAKELONG( hittest, msg->message ));
-        accept_hardware_message( TRUE, 0 );
+        accept_hardware_message( hw_id, TRUE, 0 );
         return FALSE;
     }
 
-    accept_hardware_message( remove, 0 );
+    accept_hardware_message( hw_id, remove, 0 );
 
     if (!remove || info.hwndCapture)
     {
@@ -1838,14 +1840,14 @@ static BOOL process_mouse_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_fil
  *
  * Process a hardware message; return TRUE if message should be passed on to the app
  */
-static BOOL process_hardware_message( MSG *msg, ULONG_PTR extra_info, HWND hwnd_filter,
+static BOOL process_hardware_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, HWND hwnd_filter,
                                       UINT first, UINT last, BOOL remove )
 {
     if (is_keyboard_message( msg->message ))
-        return process_keyboard_message( msg, hwnd_filter, first, last, remove );
+        return process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
 
     if (is_mouse_message( msg->message ))
-        return process_mouse_message( msg, extra_info, hwnd_filter, first, last, remove );
+        return process_mouse_message( msg, hw_id, extra_info, hwnd_filter, first, last, remove );
 
     ERR( "unknown message type %x\n", msg->message );
     return FALSE;
@@ -1903,7 +1905,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
     ULONG_PTR extra_info = 0;
     MESSAGEQUEUE *queue = QUEUE_Current();
     struct received_message_info info, *old_info;
-    int get_next_hw = 0;  /* set when the previous message was a rejected hardware message */
+    unsigned int hw_id = 0;  /* id of previous hardware message */
 
     if (!first && !last) last = ~0;
 
@@ -1923,7 +1925,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                 req->get_win   = hwnd;
                 req->get_first = first;
                 req->get_last  = last;
-                req->get_next_hw = get_next_hw;
+                req->hw_id     = hw_id;
                 if (buffer_size) wine_server_set_reply( req, buffer, buffer_size );
                 if (!(res = wine_server_call( req )))
                 {
@@ -1938,6 +1940,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                     info.msg.pt.y    = reply->y;
                     info.hook        = reply->hook;
                     info.hook_proc   = reply->hook_proc;
+                    hw_id            = reply->hw_id;
                     extra_info       = reply->info;
                 }
                 else
@@ -1950,7 +1953,6 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
         } while (res == STATUS_BUFFER_OVERFLOW);
 
         if (res) return FALSE;
-        get_next_hw = 0;
 
         TRACE( "got type %d msg %x (%s) hwnd %p wp %x lp %lx\n",
                info.type, info.msg.message,
@@ -2015,8 +2017,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
             }
             break;
         case MSG_HARDWARE:
-            get_next_hw = 1;
-            if (!process_hardware_message( &info.msg, extra_info,
+            if (!process_hardware_message( &info.msg, hw_id, extra_info,
                                            hwnd, first, last, flags & GET_MSG_REMOVE ))
             {
                 TRACE("dropping msg %x\n", info.msg.message );

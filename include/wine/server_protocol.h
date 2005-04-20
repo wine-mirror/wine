@@ -2156,7 +2156,7 @@ struct get_message_request
     user_handle_t   get_win;
     unsigned int    get_first;
     unsigned int    get_last;
-    int             get_next_hw;
+    unsigned int    hw_id;
 };
 struct get_message_reply
 {
@@ -2172,6 +2172,7 @@ struct get_message_reply
     void*           hook_proc;
     unsigned int    time;
     unsigned int    info;
+    unsigned int    hw_id;
     size_t          total;
     /* VARARG(data,bytes); */
 };
@@ -2196,6 +2197,7 @@ struct reply_message_reply
 struct accept_hardware_message_request
 {
     struct request_header __header;
+    unsigned int    hw_id;
     int             remove;
     user_handle_t   new_win;
 };
@@ -3882,6 +3884,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 168
+#define SERVER_PROTOCOL_VERSION 169
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

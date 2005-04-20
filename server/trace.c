@@ -1872,7 +1872,7 @@ static void dump_get_message_request( const struct get_message_request *req )
     fprintf( stderr, " get_win=%p,", req->get_win );
     fprintf( stderr, " get_first=%08x,", req->get_first );
     fprintf( stderr, " get_last=%08x,", req->get_last );
-    fprintf( stderr, " get_next_hw=%d", req->get_next_hw );
+    fprintf( stderr, " hw_id=%08x", req->hw_id );
 }
 
 static void dump_get_message_reply( const struct get_message_reply *req )
@@ -1888,6 +1888,7 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " hook_proc=%p,", req->hook_proc );
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x,", req->info );
+    fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " total=%d,", req->total );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
@@ -1903,6 +1904,7 @@ static void dump_reply_message_request( const struct reply_message_request *req 
 
 static void dump_accept_hardware_message_request( const struct accept_hardware_message_request *req )
 {
+    fprintf( stderr, " hw_id=%08x,", req->hw_id );
     fprintf( stderr, " remove=%d,", req->remove );
     fprintf( stderr, " new_win=%p", req->new_win );
 }
