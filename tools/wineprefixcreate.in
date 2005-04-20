@@ -29,7 +29,7 @@ usage()
     echo "  -h, --help                 Display this message"
     echo "      --prefix <dir>         Directory to create (default: \$WINEPREFIX or ~/.wine)"
     echo "  -q, --quiet                Don't print status messages"
-    echo "      --use-wine-tree <dir>  Run from the Wine source tree <dir>"
+    echo "      --use-wine-tree <dir>  Run from the Wine build tree <dir>"
     echo "  -w, --wait                 Wait for the wineserver to exit before returning"
     echo ""
 }
@@ -74,10 +74,24 @@ do
                     LD_LIBRARY_PATH="$topdir/libs"
                 fi
                 export LD_LIBRARY_PATH
+
+                # find the source directory
+                link=`readlink "$WINELOADER"`
+                if [ -z "$link" ]
+                then
+                    topsrcdir="$topdir"
+                else
+                    link=`dirname "$link"`
+                    case "$link" in
+                        /*) topsrcdir=`cd "$link/.." && pwd` ;;
+                         *) topsrcdir=`cd "$topdir/$link/.." && pwd` ;;
+                    esac
+                fi
+
                 dlldir="$topdir/programs"
-                datadir="$topdir/tools"
+                datadir="$topsrcdir/tools"
             else
-                echo "$2 is not a valid Wine source tree"
+                echo "$2 is not a valid Wine build tree"
                 exit 1
             fi
             shift 2
