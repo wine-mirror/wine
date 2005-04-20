@@ -67,8 +67,10 @@ START_TEST(suminfo)
     const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0, hsuminfo;
     UINT r, count, type;
+    DWORD dwcount;
     INT val;
     FILETIME ft;
+    char buf[0x10];
 
     DeleteFile(msifile);
 
@@ -107,6 +109,15 @@ START_TEST(suminfo)
     ok(r == ERROR_SUCCESS, "getpropcount failed\n");
     ok(type == 0, "wrong type\n");
     ok(val == 1234, "wrong val\n");
+
+    buf[0]='x';
+    buf[1]=0;
+    dwcount = 0x10;
+    r = MsiSummaryInfoGetProperty(hsuminfo, PID_REVNUMBER, &type, &val, NULL, buf, &dwcount);
+    ok(r == ERROR_SUCCESS, "getpropcount failed\n");
+    ok(buf[0]=='x', "cleared buffer\n");
+    ok(dwcount == 0x10, "count wasn't zero\n");
+    ok(type == VT_EMPTY, "should be empty\n");
 
     r = MsiSummaryInfoSetProperty(hsuminfo, PID_TITLE, VT_LPSTR, 0, NULL, "Mike");
     ok(r == ERROR_FUNCTION_FAILED, "MsiSummaryInfoSetProperty wrong error\n");
