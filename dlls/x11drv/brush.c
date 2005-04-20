@@ -28,9 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
-#define NB_HATCH_STYLES  (HS_DIAGCROSS+1)
-
-static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
+static const char HatchBrushes[][8] =
 {
     { 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00 }, /* HS_HORIZONTAL */
     { 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08 }, /* HS_VERTICAL   */
@@ -38,7 +36,6 @@ static const char HatchBrushes[NB_HATCH_STYLES + 1][8] =
     { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 }, /* HS_BDIAGONAL  */
     { 0x08, 0x08, 0x08, 0xff, 0x08, 0x08, 0x08, 0x08 }, /* HS_CROSS      */
     { 0x81, 0x42, 0x24, 0x18, 0x18, 0x24, 0x42, 0x81 }, /* HS_DIAGCROSS  */
-    { 0xee, 0xbb, 0xee, 0xbb, 0xee, 0xbb, 0xee, 0xbb }  /* Hack for DKGRAY */
 };
 
   /* Levels of each primary for dithering */
@@ -100,15 +97,16 @@ static const int EGAmapping[TOTAL_LEVELS] =
 #define PIXEL_VALUE(r,g,b) \
     X11DRV_PALETTE_mapEGAPixel[EGAmapping[((r)*PRIMARY_LEVELS+(g))*PRIMARY_LEVELS+(b)]]
 
-  /* X image for building dithered pixmap */
-static XImage *ditherImage = NULL;
-
+static const COLORREF BLACK = RGB(0, 0, 0);
+static const COLORREF WHITE = RGB(0xff, 0xff, 0xff);
 
 /***********************************************************************
  *           BRUSH_DitherColor
  */
 static Pixmap BRUSH_DitherColor( COLORREF color )
 {
+    /* X image for building dithered pixmap */
+    static XImage *ditherImage = NULL;
     static COLORREF prevColor = 0xffffffff;
     unsigned int x, y;
     Pixmap pixmap;
@@ -116,7 +114,11 @@ static Pixmap BRUSH_DitherColor( COLORREF color )
     if (!ditherImage)
     {
         ditherImage = X11DRV_DIB_CreateXImage( MATRIX_SIZE, MATRIX_SIZE, screen_depth );
-        if (!ditherImage) return 0;
+        if (!ditherImage) 
+        {
+            ERR("Could not create dither image\n");
+            return 0;
+        }
     }
 
     wine_tsx11_lock();
@@ -143,11 +145,37 @@ static Pixmap BRUSH_DitherColor( COLORREF color )
 
     pixmap = XCreatePixmap( gdi_display, root_window, MATRIX_SIZE, MATRIX_SIZE, screen_depth );
     XPutImage( gdi_display, pixmap, BITMAP_colorGC, ditherImage, 0, 0,
-	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
+    	       0, 0, MATRIX_SIZE, MATRIX_SIZE );
     wine_tsx11_unlock();
+
     return pixmap;
 }
 
+
+/***********************************************************************
+ *           BRUSH_DitherMono
+ */
+static Pixmap BRUSH_DitherMono( COLORREF color )
+{
+    /* This makes the spray work in Win 3.11 pbrush.exe */
+    /* FIXME. Extend this basic selection of dither patterns */
+    static const char gray_dither[][2] = {{ 0x1, 0x0 }, /* DKGRAY */
+                                          { 0x2, 0x1 }, /* GRAY */
+                                          { 0x1, 0x3 }, /* LTGRAY */
+    };                                      
+    int gray = (30 * GetRValue(color) + 59 * GetGValue(color) + 11 * GetBValue(color)) / 100;
+    int idx = gray * (sizeof gray_dither/sizeof gray_dither[0] + 1)/256 - 1;
+    Pixmap pixmap;
+
+    TRACE("color=%06lx -> gray=%x\n", color, gray);
+
+    wine_tsx11_lock();
+    pixmap = XCreateBitmapFromData( gdi_display, root_window, 
+                                    gray_dither[idx],
+                                    2, 2 );
+    wine_tsx11_unlock();
+    return pixmap;
+}
 
 /***********************************************************************
  *           BRUSH_SelectSolidBrush
@@ -160,6 +188,12 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 	physDev->brush.pixmap = BRUSH_DitherColor( color );
 	physDev->brush.fillStyle = FillTiled;
 	physDev->brush.pixel = 0;
+    }
+    else if (physDev->depth == 1 && color != WHITE && color != BLACK)
+    {
+	physDev->brush.pixel = 0;
+	physDev->brush.pixmap = BRUSH_DitherMono( color );
+	physDev->brush.fillStyle = FillTiled;
     }
     else
     {

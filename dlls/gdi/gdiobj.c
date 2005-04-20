@@ -50,13 +50,9 @@ static const LOGBRUSH WhiteBrush = { BS_SOLID, RGB(255,255,255), 0 };
 static const LOGBRUSH BlackBrush = { BS_SOLID, RGB(0,0,0), 0 };
 static const LOGBRUSH NullBrush  = { BS_NULL, 0, 0 };
 
-/* FIXME: these should perhaps be BS_HATCHED, at least for 1 bitperpixel */
 static const LOGBRUSH LtGrayBrush = { BS_SOLID, RGB(192,192,192), 0 };
 static const LOGBRUSH GrayBrush   = { BS_SOLID, RGB(128,128,128), 0 };
-
-/* This is BS_HATCHED, for 1 bitperpixel. This makes the spray work in pbrush */
-/* See HatchBrushes in x11drv for the HS_DIAGCROSS+1 hack */
-static const LOGBRUSH DkGrayBrush = { BS_HATCHED, RGB(0,0,0), (HS_DIAGCROSS+1) };
+static const LOGBRUSH DkGrayBrush = { BS_SOLID, RGB(64,64,64), 0 };
 
 static const LOGPEN WhitePen = { PS_SOLID, { 0, 0 }, RGB(255,255,255) };
 static const LOGPEN BlackPen = { PS_SOLID, { 0, 0 }, RGB(0,0,0) };
