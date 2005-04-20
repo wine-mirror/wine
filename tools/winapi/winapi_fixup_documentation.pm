@@ -131,7 +131,7 @@ sub fixup_documentation($$) {
 		    my $type = $_;
 		    my $kind;
 		    if($type ne "..." && !defined($kind = $winapi->translate_argument($type))) {
-			$output->write("no translation defined: " . $type . "\n");
+			$output->write("no win*.api translation defined: " . $type . "\n");
 		    }
 
 		    # FIXME: Kludge

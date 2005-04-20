@@ -329,7 +329,6 @@ sub complete_modules($$) {
 sub global_report($) {
     my $self = shift;
 
-    my $dir2spec_file = \%{$self->{DIR2SPEC_FILE}};
     my $module2spec_file = \%{$self->{MODULE2SPEC_FILE}};
     my $used_module_dirs = \%{$self->{USED_MODULE_DIRS}};
 

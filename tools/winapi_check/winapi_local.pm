@@ -61,7 +61,7 @@ sub _check_function($$$$$$) {
     if(!defined($implemented_return_kind = $winapi->translate_argument($return_type))) {
 	$winapi->declare_argument($return_type, "unknown");
 	if($return_type ne "") {
-	    $output->write("no translation defined: " . $return_type . "\n");
+	    $output->write("no win*.api translation defined: " . $return_type . "\n");
 	}
     } elsif(!$winapi->is_allowed_kind($implemented_return_kind) ||
 	    !$winapi->is_allowed_type_in_module($return_type, $module))
@@ -182,7 +182,7 @@ sub _check_function($$$$$$) {
 		$kind = "context86";
 	    } elsif(!defined($kind = $winapi->translate_argument($type))) {
 		$winapi->declare_argument($type, "unknown");
-		$output->write("no translation defined: " . $type . "\n");
+		$output->write("no win*.api translation defined: " . $type . "\n");
 	    } elsif(!$winapi->is_allowed_kind($kind) ||
 		    !$winapi->is_allowed_type_in_module($type, $module))
 	    {
