@@ -1424,15 +1424,42 @@ static void load_init_registry_from_file( const char *filename, struct key *key 
 /* load the user registry files */
 static void load_user_registries( struct key *key_current_user )
 {
+    const char *config = wine_get_config_dir();
+    char *filename;
+
+    /* load user.reg into HKEY_CURRENT_USER */
+
+    if (!(filename = mem_alloc( strlen(config) + sizeof("/user.reg") ))) return;
+    strcpy( filename, config );
+    strcat( filename, "/user.reg" );
+    load_init_registry_from_file( filename, key_current_user );
+    free( filename );
+
+    /* start the periodic save timer */
+    set_periodic_save_timer();
+}
+
+/* registry initialisation */
+void init_registry(void)
+{
+    static const WCHAR root_name[] = { 0 };
     static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
     static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
+    static const WCHAR config_name[] =
+    { 'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
+      'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g',0 };
 
     const char *config = wine_get_config_dir();
     char *p, *filename;
     struct key *key;
     int dummy;
 
-    if (!(filename = mem_alloc( strlen(config) + 16 ))) return;
+    /* create the root key */
+    root_key = alloc_key( root_name, time(NULL) );
+    assert( root_key );
+
+    /* load the config file */
+    if (!(filename = malloc( strlen(config) + 16 ))) fatal_error( "out of memory\n" );
     strcpy( filename, config );
     p = filename + strlen(filename);
 
@@ -1456,44 +1483,14 @@ static void load_user_registries( struct key *key_current_user )
     load_init_registry_from_file( filename, key );
     release_object( key );
 
-    /* load user.reg into HKEY_CURRENT_USER */
-
-    strcpy( p, "/user.reg" );
-    load_init_registry_from_file( filename, key_current_user );
-
-    free( filename );
-
-    /* start the periodic save timer */
-    set_periodic_save_timer();
-}
-
-/* registry initialisation */
-void init_registry(void)
-{
-    static const WCHAR root_name[] = { 0 };
-    static const WCHAR config_name[] =
-    { 'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
-      'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g',0 };
-
-    const char *config = wine_get_config_dir();
-    char *filename;
-    struct key *key;
-    int dummy;
-
-    /* create the root key */
-    root_key = alloc_key( root_name, time(NULL) );
-    assert( root_key );
-
-    /* load the config file */
-    if (!(filename = malloc( strlen(config) + sizeof("/config") ))) fatal_error( "out of memory\n" );
-    strcpy( filename, config );
-    strcat( filename, "/config" );
+    /* load config into Registry\Machine\Software\Wine\Wine\Config */
 
     if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name), 0 ),
                             NULL, 0, time(NULL), &dummy )))
         fatal_error( "could not create Config registry key\n" );
 
     key->flags |= KEY_VOLATILE;
+    strcpy( p, "/config" );
     load_init_registry_from_file( filename, key );
     release_object( key );
 
