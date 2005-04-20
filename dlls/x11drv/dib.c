@@ -4284,13 +4284,13 @@ static LONG CALLBACK X11DRV_DIB_FaultHandler( PEXCEPTION_POINTERS ep )
 {
     X_PHYSBITMAP *physBitmap = NULL;
     BOOL found = FALSE;
-    const BYTE *addr;
+    BYTE *addr;
     struct list *ptr;
 
     if (ep->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION)
         return EXCEPTION_CONTINUE_SEARCH;
 
-    addr = (const BYTE*)ep->ExceptionRecord->ExceptionInformation[1];
+    addr = (BYTE *)ep->ExceptionRecord->ExceptionInformation[1];
 
     EnterCriticalSection(&dibs_cs);
     LIST_FOR_EACH( ptr, &dibs_list )

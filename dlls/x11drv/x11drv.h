@@ -113,7 +113,7 @@ typedef struct
     XShmSegmentInfo shminfo;        /* shared memory segment info */
 #endif
     struct list   entry;            /* Entry in global DIB list */
-    const BYTE   *base;             /* Base address */
+    BYTE         *base;             /* Base address */
     SIZE_T        size;             /* Size in bytes */
 } X_PHYSBITMAP;
 
