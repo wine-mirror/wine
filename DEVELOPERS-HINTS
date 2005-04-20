@@ -109,6 +109,7 @@ DLLs (under dlls/):
 	olepro32/		- 32 bit OLE 2.0 automation
 	olesvr/			- 16 bit OLE server
 	opengl32/		- OpenGL implementation (graphics)
+	powrprof/		- Power Management and Profiling
 	psapi/			- Process Status interface
 	qcap/			- DirectShow runtime
 	quartz/			- DirectShow runtime

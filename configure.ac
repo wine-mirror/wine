@@ -1628,6 +1628,7 @@ dlls/oledlg/Makefile
 dlls/olepro32/Makefile
 dlls/olesvr/Makefile
 dlls/opengl32/Makefile
+dlls/powrprof/Makefile
 dlls/psapi/Makefile
 dlls/psapi/tests/Makefile
 dlls/qcap/Makefile

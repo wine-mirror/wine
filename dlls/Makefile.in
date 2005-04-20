@@ -104,6 +104,7 @@ BASEDIRS = \
 	oledlg \
 	olepro32 \
 	olesvr \
+	powrprof \
 	psapi \
 	qcap \
 	quartz \
@@ -348,6 +349,7 @@ SYMLINKS_SO = \
 	oledlg.dll.so \
 	olepro32.dll.so \
 	olesvr32.dll.so \
+	powrprof.dll.so \
 	psapi.dll.so \
 	qcap.dll.so \
 	quartz.dll.so \
@@ -768,6 +770,9 @@ olesvr.dll.so : olesvr32.dll.so
 opengl32.dll.so: opengl32/opengl32.dll.so
 	$(RM) $@ && $(LN_S) opengl32/opengl32.dll.so $@
 
+powrprof.dll.so: powrprof/powrprof.dll.so
+	$(RM) $@ && $(LN_S) powrprof/powrprof.dll.so $@
+
 psapi.dll.so: psapi/psapi.dll.so
 	$(RM) $@ && $(LN_S) psapi/psapi.dll.so $@
 
@@ -1093,6 +1098,7 @@ IMPORT_LIBS = \
 	libolepro32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
 	libopengl32.$(IMPLIBEXT) \
+	libpowrprof.$(IMPLIBEXT) \
 	libpsapi.$(IMPLIBEXT) \
 	libqcap.$(IMPLIBEXT) \
 	libquartz.$(IMPLIBEXT) \
@@ -1576,6 +1582,11 @@ libopengl32.def: opengl32/opengl32.spec.def
 libopengl32.a: opengl32/opengl32.spec.def
 	$(DLLTOOL) -k -l $@ -d opengl32/opengl32.spec.def
 
+libpowrprof.def: powrprof/powrprof.spec.def
+	$(RM) $@ && $(LN_S) powrprof/powrprof.spec.def $@
+libpowrprof.a: powrprof/powrprof.spec.def
+	$(DLLTOOL) -k -l $@ -d powrprof/powrprof.spec.def
+
 libpsapi.def: psapi/psapi.spec.def
 	$(RM) $@ && $(LN_S) psapi/psapi.spec.def $@
 libpsapi.a: psapi/psapi.spec.def
@@ -1887,6 +1898,7 @@ oledlg/oledlg.spec.def: $(WINEBUILD)
 olepro32/olepro32.spec.def: $(WINEBUILD)
 olesvr/olesvr32.spec.def: $(WINEBUILD)
 opengl32/opengl32.spec.def: $(WINEBUILD)
+powrprof/powrprof.spec.def: $(WINEBUILD)
 psapi/psapi.spec.def: $(WINEBUILD)
 qcap/qcap.spec.def: $(WINEBUILD)
 quartz/quartz.spec.def: $(WINEBUILD)
@@ -2040,6 +2052,7 @@ oledlg/oledlg.dll.so: oledlg
 olepro32/olepro32.dll.so: olepro32
 olesvr/olesvr32.dll.so: olesvr
 opengl32/opengl32.dll.so: opengl32
+powrprof/powrprof.dll.so: powrprof
 psapi/psapi.dll.so: psapi
 qcap/qcap.dll.so: qcap
 quartz/quartz.dll.so: quartz
