@@ -36,7 +36,11 @@ extern "C" {
 #define DCIESCAPE			5
 
 /* DCI Errors */
-#define DCI_OK		0
+#define DCI_OK		                0
+#define DCI_FAIL_GENERIC               -1
+#define DCI_FAIL_UNSUPPORTEDVERSION    -2
+#define DCI_FAIL_INVALIDSURFACE        -3
+#define DCI_FAIL_UNSUPPORTED           -4
 
 
 typedef int DCIRVAL; /* DCI callback return type */
@@ -51,6 +55,26 @@ typedef struct _DCICMD {
     DWORD dwVersion;
     DWORD dwReserved;
 } DCICMD,*LPDCICMD;
+
+typedef struct _DCISURFACEINFO {
+    DWORD dwSize;
+    DWORD dwDCICaps;
+    DWORD dwCompression;
+    DWORD dwMask[3];
+    DWORD dwWidth;
+    DWORD dwHeight;
+    LONG  lStride;
+    DWORD dwBitCount;
+    ULONG_PTR dwOffSurface;
+    WORD  wSelSurface;
+    WORD  wReserved;
+    DWORD dwReserved1;
+    DWORD dwReserved2;
+    DWORD dwReserved3;
+    DCIRVAL (CALLBACK *BeginAccess)(LPVOID, LPRECT);
+    void (CALLBACK *EndAccess)(LPVOID);
+    void (CALLBACK *DestroySurface)(LPVOID);
+} DCISURFACEINFO, *LPDCISURFACEINFO;
 
 #ifdef __cplusplus
 } /* extern "C" */

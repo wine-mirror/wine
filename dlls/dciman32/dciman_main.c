@@ -25,6 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "dciman.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dciman);
@@ -47,7 +48,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 HDC WINAPI
 DCIOpenProvider(void) {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return 0;
+    return NULL;
 }
 
 /***********************************************************************
@@ -62,10 +63,10 @@ DCICloseProvider(HDC hdc) {
 /**************************************************************************
  *                 DCICreatePrimary (DCIMAN32.@)
  */
-void WINAPI 
-DCICreatePrimary(HDC hdc, LPVOID pDciSurfaceInfo)
+int WINAPI 
+DCICreatePrimary(HDC hdc, LPDCISURFACEINFO *pDciSurfaceInfo)
 {
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     FIXME("%p %p\n", hdc, pDciSurfaceInfo);
-    return;
+    return DCI_FAIL_UNSUPPORTED;
 }

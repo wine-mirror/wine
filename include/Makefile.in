@@ -76,6 +76,8 @@ WINDOWS_INCLUDES = \
 	d3dx8core.h \
 	dbghelp.h \
 	dbt.h \
+	dciddi.h \
+	dciman.h \
 	dde.h \
 	ddeml.h \
 	ddraw.h \

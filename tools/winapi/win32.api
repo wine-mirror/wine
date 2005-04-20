@@ -708,6 +708,11 @@ PSTR
 %long
 
 HDC
+int
+
+%ptr
+
+LPDCISURFACEINFO *
 
 %void
 
