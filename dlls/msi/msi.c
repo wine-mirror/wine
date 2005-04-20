@@ -35,6 +35,7 @@
 #include "wincrypt.h"
 #include "winver.h"
 #include "winuser.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -1297,11 +1298,107 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
                 DWORD Unused1, DWORD Unused2, LPWSTR lpPathBuf,
                 DWORD* pcchPathBuf)
 {
-    FIXME("%s %s %li %s %li %li %p %p\n", debugstr_w(szComponent),
+    HKEY hkey;
+    UINT rc;
+    LPWSTR info;
+    DWORD sz;
+    LPWSTR product = NULL;
+    LPWSTR component = NULL;
+    LPWSTR ptr;
+    GUID clsid;
+
+    TRACE("%s %s %li %s %li %li %p %p\n", debugstr_w(szComponent),
           debugstr_w(szQualifier), dwInstallMode, debugstr_w(szProduct),
           Unused1, Unused2, lpPathBuf, pcchPathBuf);
+   
+    rc = MSIREG_OpenUserComponentsKey(szComponent, &hkey, FALSE);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_INDEX_ABSENT;
 
-    return ERROR_INDEX_ABSENT;
+    sz = 0;
+    rc = RegQueryValueExW( hkey, szQualifier, NULL, NULL, NULL, &sz);
+    if (sz <= 0)
+    {
+        RegCloseKey(hkey);
+        return ERROR_INDEX_ABSENT;
+    }
+
+    info = HeapAlloc(GetProcessHeap(),0,sz);
+    rc = RegQueryValueExW( hkey, szQualifier, NULL, NULL, (LPBYTE)info, &sz);
+    if (rc != ERROR_SUCCESS)
+    {
+        RegCloseKey(hkey);
+        HeapFree(GetProcessHeap(),0,info);
+        return ERROR_INDEX_ABSENT;
+    }
+
+    /* find the component */
+    ptr = strchrW(&info[20],'<');
+    if (ptr)
+        ptr++;
+    else
+    {
+        RegCloseKey(hkey);
+        HeapFree(GetProcessHeap(),0,info);
+        return ERROR_INDEX_ABSENT;
+    }
+
+    if (!szProduct)
+    {
+        decode_base85_guid(info,&clsid);
+        StringFromCLSID(&clsid, &product);
+    }
+    decode_base85_guid(ptr,&clsid);
+    StringFromCLSID(&clsid, &component);
+
+    if (!szProduct)
+        rc = MsiGetComponentPathW(product, component, lpPathBuf, pcchPathBuf);
+    else
+        rc = MsiGetComponentPathW(szProduct, component, lpPathBuf, pcchPathBuf);
+   
+    RegCloseKey(hkey);
+    HeapFree(GetProcessHeap(),0,info);
+    HeapFree(GetProcessHeap(),0,product);
+    HeapFree(GetProcessHeap(),0,component);
+    return rc;
+}
+
+UINT WINAPI MsiProvideQualifiedComponentW( LPCWSTR szComponent,
+                LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR lpPathBuf,
+                DWORD* pcchPathBuf)
+{
+    return MsiProvideQualifiedComponentExW(szComponent, szQualifier, 
+                    dwInstallMode, NULL, 0, 0, lpPathBuf, pcchPathBuf);
+}
+
+UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
+                LPCSTR szQualifier, DWORD dwInstallMode, LPSTR lpPathBuf,
+                DWORD* pcchPathBuf)
+{
+    LPWSTR szwComponent, szwQualifier, lpwPathBuf;
+    DWORD pcchwPathBuf;
+    UINT rc;
+
+    TRACE("%s %s %li %p %p\n",szComponent, szQualifier,
+                    dwInstallMode, lpPathBuf, pcchPathBuf);
+
+    szwComponent= strdupAtoW( szComponent);
+    szwQualifier= strdupAtoW( szQualifier);
+
+    lpwPathBuf = HeapAlloc(GetProcessHeap(),0,*pcchPathBuf * sizeof(WCHAR));
+
+    pcchwPathBuf = *pcchPathBuf;
+
+    rc = MsiProvideQualifiedComponentW(szwComponent, szwQualifier, 
+                    dwInstallMode, lpwPathBuf, &pcchwPathBuf);
+
+    HeapFree(GetProcessHeap(),0,szwComponent);
+    HeapFree(GetProcessHeap(),0,szwQualifier);
+    *pcchPathBuf = WideCharToMultiByte(CP_ACP, 0, lpwPathBuf, pcchwPathBuf,
+                    lpPathBuf, *pcchPathBuf, NULL, NULL);
+
+    HeapFree(GetProcessHeap(),0,lpwPathBuf);
+    return rc;
 }
 
 USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,

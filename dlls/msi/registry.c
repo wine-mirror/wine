@@ -85,6 +85,13 @@ static const WCHAR szInstaller_Components_fmt[] = {
 'C','o','m','p','o','n','e','n','t','s','\\',
 '%','s',0};
 
+static const WCHAR szUser_Components_fmt[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'I','n','s','t','a','l','l','e','r','\\',
+'C','o','m','p','o','n','e','n','t','s','\\',
+'%','s',0};
+
 static const WCHAR szUninstall_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -384,6 +391,26 @@ UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
         rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,keypath,key);
     else
         rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,keypath,key);
+
+    return rc;
+}
+
+UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create)
+{
+    UINT rc;
+    WCHAR squished_cc[GUID_SIZE];
+    WCHAR keypath[0x200];
+
+    TRACE("%s\n",debugstr_w(szComponent));
+    squash_guid(szComponent,squished_cc);
+    TRACE("squished (%s)\n", debugstr_w(squished_cc));
+
+    sprintfW(keypath,szUser_Components_fmt,squished_cc);
+
+    if (create)
+        rc = RegCreateKeyW(HKEY_CURRENT_USER,keypath,key);
+    else
+        rc = RegOpenKeyW(HKEY_CURRENT_USER,keypath,key);
 
     return rc;
 }

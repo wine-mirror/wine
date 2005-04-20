@@ -99,6 +99,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package);
 static UINT ACTION_ResolveSource(MSIPACKAGE *package);
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package);
 static UINT ACTION_RegisterFonts(MSIPACKAGE *package);
+static UINT ACTION_PublishComponents(MSIPACKAGE *package);
 
  
 /*
@@ -324,7 +325,7 @@ static struct _actions StandardActions[] = {
     { szInstallServices, NULL},
     { szPatchFiles, NULL},
     { szProcessComponents, ACTION_ProcessComponents },
-    { szPublishComponents, NULL},
+    { szPublishComponents, ACTION_PublishComponents },
     { szPublishFeatures, ACTION_PublishFeatures },
     { szPublishProduct, ACTION_PublishProduct },
     { szRegisterClassInfo, ACTION_RegisterClassInfo },
@@ -6288,6 +6289,114 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
 
     RegCloseKey(hkey1);
     RegCloseKey(hkey2);
+
+    return rc;
+}
+
+static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPWSTR productid=NULL, compgroupid=NULL;
+    LPWSTR feature=NULL;
+    LPWSTR text = NULL;
+    LPWSTR qualifier = NULL;
+    LPWSTR component = NULL;
+    GUID clsid;
+    WCHAR productid_85[21];
+    WCHAR component_85[21];
+    HKEY hkey;
+    UINT rc = ERROR_SUCCESS;
+    UINT index;
+    /*
+     * I have a fair bit of confusion as to when a < is used and when a > is
+     * used. I do not think i have it right...
+     */
+    static WCHAR fmt1[] = {'%','s','%','s','<','%','s',0,0};
+    static WCHAR fmt2[] = {'%','s','%','s','>',0,0};
+    LPWSTR output = NULL;
+    DWORD sz = 0;
+
+    memset(productid_85,0,sizeof(productid_85));
+    memset(component_85,0,sizeof(component_85));
+    compgroupid = load_dynamic_stringW(rec,1);
+
+    rc = MSIREG_OpenUserComponentsKey(compgroupid, &hkey, TRUE);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+    
+    productid = load_dynamic_property(package,szProductCode,NULL);
+    CLSIDFromString(productid, &clsid);
+    
+    encode_base85_guid(&clsid,productid_85);
+
+    text = load_dynamic_stringW(rec,4);
+    qualifier = load_dynamic_stringW(rec,2);
+
+    feature = load_dynamic_stringW(rec,5);
+    component = load_dynamic_stringW(rec,3);
+  
+    index = get_loaded_component(package, component);
+    CLSIDFromString(package->components[index].ComponentId, &clsid);
+    encode_base85_guid(&clsid,component_85);
+
+    TRACE("Doing something with this... %s = %s %s %s %s\n", 
+            debugstr_w(qualifier), debugstr_w(productid_85),
+            debugstr_w(feature), debugstr_w(text), debugstr_w(component_85));
+ 
+    sz = lstrlenW(productid_85) + lstrlenW(feature);
+    if (text)
+        sz += lstrlenW(text);
+    if (component && index >= 0)
+        sz += lstrlenW(component_85);
+
+    sz+=3;
+    sz *= sizeof(WCHAR);
+           
+    output = HeapAlloc(GetProcessHeap(),0,sz);
+    memset(output,0,sz);
+
+    if (ACTION_VerifyComponentForAction(package, index, INSTALLSTATE_LOCAL))
+        sprintfW(output,fmt1,productid_85,feature,component_85);
+    else
+        sprintfW(output,fmt2,productid_85,feature);
+
+    if (text)
+        strcatW(output,text);
+
+    sz = (lstrlenW(output)+2) * sizeof(WCHAR);
+   RegSetValueExW(hkey, qualifier,0,REG_MULTI_SZ, (LPBYTE)output, sz);
+    
+end:
+    RegCloseKey(hkey);
+    HeapFree(GetProcessHeap(),0,output);
+    HeapFree(GetProcessHeap(),0,compgroupid);
+    HeapFree(GetProcessHeap(),0,component);
+    HeapFree(GetProcessHeap(),0,productid);
+    HeapFree(GetProcessHeap(),0,feature);
+    HeapFree(GetProcessHeap(),0,text);
+    HeapFree(GetProcessHeap(),0,qualifier);
+    
+    return rc;
+}
+
+/*
+ * At present I am ignorning the advertised components part of this and only
+ * focusing on the qualified component sets
+ */
+static UINT ACTION_PublishComponents(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t',0};
+    
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_PublishComponent, package);
+    msiobj_release(&view->hdr);
 
     return rc;
 }
