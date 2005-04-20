@@ -1036,4 +1036,3 @@
 @ cdecl MODULE_DllThreadAttach(ptr)
 @ cdecl MODULE_GetLoadOrderW(ptr wstr wstr)
 @ cdecl VERSION_Init(wstr)
-@ cdecl VIRTUAL_SetFaultHandler(ptr ptr ptr)

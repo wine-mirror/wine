@@ -68,8 +68,6 @@ typedef struct file_view
     void         *base;        /* Base address */
     UINT          size;        /* Size in bytes */
     HANDLE        mapping;     /* Handle to the file mapping */
-    HANDLERPROC   handlerProc; /* Fault handler */
-    LPVOID        handlerArg;  /* Fault handler argument */
     BYTE          flags;       /* Allocation flags (VFLAG_*) */
     BYTE          protect;     /* Protection for all pages at allocation time */
     BYTE          prot[1];     /* Protection byte for each page */
@@ -377,7 +375,6 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->flags   = 0;
     view->mapping = 0;
     view->protect = vprot;
-    view->handlerProc = NULL;
     memset( view->prot, vprot, size >> page_shift );
 
     /* Insert it in the linked list */
@@ -1098,25 +1095,6 @@ void virtual_init(void)
 
 
 /***********************************************************************
- *           VIRTUAL_SetFaultHandler
- */
-BOOL VIRTUAL_SetFaultHandler( LPCVOID addr, HANDLERPROC proc, LPVOID arg )
-{
-    FILE_VIEW *view;
-    BOOL ret = FALSE;
-
-    RtlEnterCriticalSection( &csVirtual );
-    if ((view = VIRTUAL_FindView( addr )))
-    {
-        view->handlerProc = proc;
-        view->handlerArg  = arg;
-        ret = TRUE;
-    }
-    RtlLeaveCriticalSection( &csVirtual );
-    return ret;
-}
-
-/***********************************************************************
  *           VIRTUAL_HandleFault
  */
 DWORD VIRTUAL_HandleFault( LPCVOID addr )
@@ -1127,28 +1105,17 @@ DWORD VIRTUAL_HandleFault( LPCVOID addr )
     RtlEnterCriticalSection( &csVirtual );
     if ((view = VIRTUAL_FindView( addr )))
     {
-        if (view->handlerProc)
+        BYTE vprot = view->prot[((const char *)addr - (const char *)view->base) >> page_shift];
+        void *page = (void *)((UINT_PTR)addr & ~page_mask);
+        char *stack = NtCurrentTeb()->Tib.StackLimit;
+        if (vprot & VPROT_GUARD)
         {
-            HANDLERPROC proc = view->handlerProc;
-            void *arg = view->handlerArg;
-            RtlLeaveCriticalSection( &csVirtual );
-            if (proc( arg, addr )) ret = 0;  /* handled */
-            return ret;
+            VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
+            ret = STATUS_GUARD_PAGE_VIOLATION;
         }
-        else
-        {
-            BYTE vprot = view->prot[((const char *)addr - (const char *)view->base) >> page_shift];
-            void *page = (void *)((UINT_PTR)addr & ~page_mask);
-            char *stack = NtCurrentTeb()->Tib.StackLimit;
-            if (vprot & VPROT_GUARD)
-            {
-                VIRTUAL_SetProt( view, page, page_mask + 1, vprot & ~VPROT_GUARD );
-                ret = STATUS_GUARD_PAGE_VIOLATION;
-            }
-            /* is it inside the stack guard page? */
-            if (((const char *)addr >= stack) && ((const char *)addr < stack + (page_mask+1)))
-                ret = STATUS_STACK_OVERFLOW;
-        }
+        /* is it inside the stack guard page? */
+        if (((const char *)addr >= stack) && ((const char *)addr < stack + (page_mask+1)))
+            ret = STATUS_STACK_OVERFLOW;
     }
     RtlLeaveCriticalSection( &csVirtual );
     return ret;

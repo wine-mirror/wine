@@ -88,8 +88,6 @@ extern NTSTATUS FILE_GetNtStatus(void);
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 
 /* virtual memory */
-typedef BOOL (*HANDLERPROC)(LPVOID, LPCVOID);
-extern BOOL VIRTUAL_SetFaultHandler(LPCVOID addr, HANDLERPROC proc, LPVOID arg);
 extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 extern void VIRTUAL_UseLargeAddressSpace(void);
