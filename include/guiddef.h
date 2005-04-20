@@ -27,6 +27,11 @@ typedef struct _GUID
 } GUID;
 #endif
 
+#ifndef __LPCGUID_DEFINED__
+#define __LPCGUID_DEFINED__
+typedef const GUID *LPCGUID;
+#endif
+
 #undef DEFINE_GUID
 
 #ifdef INITGUID
