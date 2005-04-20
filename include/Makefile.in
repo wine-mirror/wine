@@ -111,6 +111,7 @@ WINDOWS_INCLUDES = \
 	dxerr9.h \
 	dxfile.h \
 	evcode.h \
+	evntrace.h \
 	excpt.h \
 	exdispid.h \
 	fci.h \
@@ -252,6 +253,7 @@ WINDOWS_INCLUDES = \
 	wintrust.h \
 	winuser.h \
 	winver.h \
+	wmistr.h \
 	wnaspi32.h \
 	wownt32.h \
 	ws2spi.h \
