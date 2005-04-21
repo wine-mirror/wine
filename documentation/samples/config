@@ -66,6 +66,8 @@ WINE REGISTRY Version 2
 "UseXRandR" = "Y"
 ; Use the take focus protocol
 "UseTakeFocus" = "Y"
+; Use primary selection in addition to clipboard
+"UsePrimarySelection" = "N"
 ; Enable DirectX mouse grab
 "DXGrab" = "N"
 ; Create the desktop window with a double-buffered visual
@@ -137,9 +139,6 @@ WINE REGISTRY Version 2
 ;"RelayFromInclude" = "sol.exe"
 ;"SnoopExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
 ;"SpyExclude" = "WM_SIZE;WM_TIMER;"
-
-[Clipboard]
-"UsePrimary" = "0"
 
 ; List of all directories directly contain .AFM files
 [afmdirs]

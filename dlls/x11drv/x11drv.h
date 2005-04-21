@@ -536,6 +536,7 @@ extern unsigned int screen_depth;
 extern unsigned int text_caps;
 extern int use_xkb;
 extern int use_take_focus;
+extern int use_primary_selection;
 extern int managed_mode;
 
 extern BYTE key_state_table[256];

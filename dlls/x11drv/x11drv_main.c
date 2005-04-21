@@ -74,6 +74,7 @@ int usexvidmode = 0;
 int usexrandr = 1;
 int use_xkb = 1;
 int use_take_focus = 1;
+int use_primary_selection = 0;
 int managed_mode = 1;
 int client_side_with_core = 1;
 int client_side_with_render = 1;
@@ -269,6 +270,9 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "UseTakeFocus", buffer, sizeof(buffer) ))
         use_take_focus = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "UsePrimarySelection", buffer, sizeof(buffer) ))
+        use_primary_selection = IS_OPTION_TRUE( buffer[0] );
 
     screen_depth = 0;
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
