@@ -1375,7 +1375,11 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     HeapFree(GetProcessHeap(),0,info);
     HeapFree(GetProcessHeap(),0,product);
     HeapFree(GetProcessHeap(),0,component);
-    return rc;
+
+    if (rc == INSTALLSTATE_LOCAL)
+        return ERROR_SUCCESS;
+    else 
+        return ERROR_FILE_NOT_FOUND;
 }
 
 UINT WINAPI MsiProvideQualifiedComponentW( LPCWSTR szComponent,
