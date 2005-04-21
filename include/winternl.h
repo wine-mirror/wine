@@ -712,8 +712,7 @@ typedef struct _UNWIND_HISTORY_TABLE {
  */
 
 /* This is used by NtQuerySystemInformation */
-/* FIXME: Isn't THREAD_INFO and THREADINFO the same structure? */
-typedef struct {
+typedef struct _SYSTEM_THREAD_INFORMATION{
     FILETIME    ftKernelTime;
     FILETIME    ftUserTime;
     FILETIME    ftCreateTime;
@@ -726,21 +725,7 @@ typedef struct {
     DWORD       dwContextSwitches;
     DWORD       dwThreadState;
     DWORD       dwWaitReason;
-} THREADINFO, *PTHREADINFO;
-
-/* FIXME: Isn't THREAD_INFO and THREADINFO the same structure? */
-typedef struct _THREAD_INFO{
-    DWORD Unknown1[6];
-    DWORD ThreadID;
-    DWORD Unknown2[3];
-    DWORD Status;
-    DWORD WaitReason;
-    DWORD Unknown3[4];
-} THREAD_INFO, PTHREAD_INFO;
-
-/***********************************************************************
- * Types and data structures
- */
+} SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
 
 typedef struct _IO_STATUS_BLOCK {
   union {
@@ -873,7 +858,7 @@ typedef struct _PROCESS_INFO {
     ULONG    PeakPagefileUsage;
     DWORD    PrivateBytes;
     DWORD    Unknown6[4];
-    THREAD_INFO ati[ANYSIZE_ARRAY]; /* 94 size=0x40*/
+    SYSTEM_THREAD_INFORMATION ati[ANYSIZE_ARRAY]; /* 94 size=0x40*/
 } PROCESS_INFO, PPROCESS_INFO;
 
 typedef struct _RTL_HEAP_DEFINITION {
@@ -1062,7 +1047,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION {
     DWORD dwPrivateBytes;
     DWORD dwPageFileBytes;
     DWORD dwUnknown7[4];
-    THREADINFO ti[1];
+    SYSTEM_THREAD_INFORMATION ti[1];
 #else
     ULONG NextEntryOffset;
     BYTE Reserved1[52];

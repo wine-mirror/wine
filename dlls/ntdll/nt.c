@@ -701,13 +701,13 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
                     break;
                 }
-                if (Length >= len + wlen + spi->dwThreadCount * sizeof(THREAD_INFO))
+                if (Length >= len + wlen + spi->dwThreadCount * sizeof(SYSTEM_THREAD_INFORMATION))
                 {
                     int     i, j;
 
                     /* set thread info */
-                    spi->dwOffset += spi->dwThreadCount * sizeof(THREAD_INFO);
-                    len += spi->dwThreadCount * sizeof(THREAD_INFO);
+                    spi->dwOffset += spi->dwThreadCount * sizeof(SYSTEM_THREAD_INFORMATION);
+                    len += spi->dwThreadCount * sizeof(SYSTEM_THREAD_INFORMATION);
                     i = j = 0;
                     while (ret == STATUS_SUCCESS)
                     {
