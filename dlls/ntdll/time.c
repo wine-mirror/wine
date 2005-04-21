@@ -866,10 +866,12 @@ static int TIME_GetTimeZoneInfoFromReg(LPTIME_ZONE_INFORMATION tzinfo)
         RtlInitUnicodeString( &nameW, valkey );\
         if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, KpInfo,\
                     sizeof(buf), &size )) { \
-            strncpyW( tofield, (WCHAR*) KpInfo->Data, \
-                    sizeof( tofield) / sizeof(WCHAR) ); \
+            size_t len = (strlenW( (WCHAR*)KpInfo->Data ) + 1) * sizeof(WCHAR); \
+            if (len > sizeof(tofield)) len = sizeof(tofield); \
+            memcpy( tofield, KpInfo->Data, len ); \
+            tofield[(len/sizeof(WCHAR))-1] = 0; \
         }
-        
+
         GTZIFR_N( TZStandardStartW,  tzinfo->StandardDate)
         GTZIFR_N( TZDaylightStartW,  tzinfo->DaylightDate)
         GTZIFR_N( TZBiasW,          tzinfo->Bias)

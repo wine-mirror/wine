@@ -53,15 +53,12 @@ time_t ConvertTimeString(LPCWSTR asctime)
     if(!asctime || !timelen)
         return 0;
 
-    /* The atoiWs below relie on that tmpChar is \0 padded? */
-    strncpyW(tmpChar, asctime, TIME_STRING_LEN);
+    /* FIXME: the atoiWs below rely on that tmpChar is \0 padded */
+    memset( tmpChar, 0, sizeof(tmpChar) );
+    lstrcpynW(tmpChar, asctime, TIME_STRING_LEN);
 
     /* Assert that the string is the expected length */
-    if (tmpChar[TIME_STRING_LEN - 1] != '\0')
-    {
-        tmpChar[TIME_STRING_LEN - 1] = '\0';
-        FIXME("\n");
-    }
+    if (strlenW(asctime) >= TIME_STRING_LEN) FIXME("\n");
 
     /* Convert a time such as 'Mon, 15 Nov 1999 16:09:35 GMT' into a SYSTEMTIME structure
      * We assume the time is in this format

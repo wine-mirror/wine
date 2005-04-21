@@ -864,8 +864,7 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
             }
 
             len = lastpos - firstpos - 1;
-            strncpyW(lpszCurrentDirectory, &lpszResponseBuffer[firstpos+1],
-                len < *lpdwCurrentDirectory ? len : *lpdwCurrentDirectory);
+            lstrcpynW(lpszCurrentDirectory, &lpszResponseBuffer[firstpos+1], *lpdwCurrentDirectory);
             HeapFree(GetProcessHeap(), 0, lpszResponseBuffer);
             *lpdwCurrentDirectory = len;
             bSuccess = TRUE;

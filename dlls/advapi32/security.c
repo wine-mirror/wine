@@ -2669,6 +2669,7 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
     WCHAR tok[MAX_PATH];
     LPCWSTR lptoken;
     LPBYTE lpNext = NULL;
+    DWORD len;
 
     *cBytes = 0;
 
@@ -2696,7 +2697,9 @@ static BOOL ParseStringSecurityDescriptorToSecurityDescriptor(
 	if (*lptoken)
             lptoken--;
 
-	strncpyW(tok, StringSecurityDescriptor, lptoken - StringSecurityDescriptor);
+        len = lptoken - StringSecurityDescriptor;
+        memcpy( tok, StringSecurityDescriptor, len * sizeof(WCHAR) );
+        tok[len] = 0;
 
         switch (toktype)
 	{
