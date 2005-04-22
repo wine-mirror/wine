@@ -308,7 +308,7 @@ static void FillTreeView(IShellFolder * lpsf, LPITEMIDLIST  pidl, HTREEITEM hPar
 	        if (SUCCEEDED(hr))
                 {
 	            hr = IShellFolder_EnumObjects(pSFChild, hwnd, BrowseFlagsToSHCONTF(lpBrowseInfo->ulFlags), &pEnumIL);
-                    if (SUCCEEDED(hr))
+                    if (hr == S_OK)
                     {
                         if ((IEnumIDList_Skip(pEnumIL, 1) != S_OK) || FAILED(IEnumIDList_Reset(pEnumIL)))
                         {
