@@ -1958,10 +1958,15 @@ BOOL WINAPI LookupAccountNameW( LPCWSTR lpSystemName, LPCWSTR lpAccountName, PSI
  */
 BOOL WINAPI PrivilegeCheck( HANDLE ClientToken, PPRIVILEGE_SET RequiredPrivileges, LPBOOL pfResult)
 {
-	FIXME("stub %p %p %p\n", ClientToken, RequiredPrivileges, pfResult);
-	if (pfResult)
-		*pfResult=TRUE;
-        return TRUE;
+    BOOL ret;
+    BOOLEAN Result;
+
+    TRACE("%p %p %p\n", ClientToken, RequiredPrivileges, pfResult);
+
+    ret = set_ntstatus (NtPrivilegeCheck (ClientToken, RequiredPrivileges, &Result));
+    if (ret)
+        *pfResult = Result;
+    return ret;
 }
 
 /******************************************************************************
