@@ -1382,6 +1382,9 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
         return ERROR_FILE_NOT_FOUND;
 }
 
+/***********************************************************************
+ * MsiProvideQualifiedComponentW [MSI.@]
+ */
 UINT WINAPI MsiProvideQualifiedComponentW( LPCWSTR szComponent,
                 LPCWSTR szQualifier, DWORD dwInstallMode, LPWSTR lpPathBuf,
                 DWORD* pcchPathBuf)
@@ -1390,6 +1393,9 @@ UINT WINAPI MsiProvideQualifiedComponentW( LPCWSTR szComponent,
                     dwInstallMode, NULL, 0, 0, lpPathBuf, pcchPathBuf);
 }
 
+/***********************************************************************
+ * MsiProvideQualifiedComponentA [MSI.@]
+ */
 UINT WINAPI MsiProvideQualifiedComponentA( LPCSTR szComponent,
                 LPCSTR szQualifier, DWORD dwInstallMode, LPSTR lpPathBuf,
                 DWORD* pcchPathBuf)
