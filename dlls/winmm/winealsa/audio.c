@@ -2452,7 +2452,31 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 
 	avail = snd_pcm_avail_update(wwo->handle);
     }
- }
+
+    if (avail > 0)
+    {
+	const snd_pcm_channel_area_t *areas;
+	snd_pcm_uframes_t     ofs;
+	snd_pcm_uframes_t     frames;
+	int                   err;
+
+	frames = avail;
+
+	EnterCriticalSection(&pdbi->mmap_crst);
+
+	snd_pcm_mmap_begin(wwo->handle, &areas, &ofs, &frames);
+	if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
+	    FIXME("Can't access sound driver's buffer directly.\n");
+	err = snd_pcm_mmap_commit(wwo->handle, ofs, frames);
+
+	LeaveCriticalSection(&pdbi->mmap_crst);
+
+	if ( err != (snd_pcm_sframes_t) frames)
+	    ERR("mmap partially failed.\n");
+
+	avail = snd_pcm_avail_update(wwo->handle);
+    }
+}
 
 static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
 {
