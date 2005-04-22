@@ -4583,6 +4583,7 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
                 shmdt(shminfo->shmaddr);
             }
             shmctl(shminfo->shmid, IPC_RMID, 0);
+            shminfo->shmid = -1;
         }
         XFlush(gdi_display);
         XDestroyImage(image);
