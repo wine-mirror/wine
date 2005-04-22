@@ -30,6 +30,7 @@
 static HDPA (WINAPI *pDPA_Create)(int);
 static BOOL (WINAPI *pDPA_Grow)(const HDPA hdpa, INT nGrow);
 static BOOL (WINAPI *pDPA_Destroy)(const HDPA hdpa);
+static INT  (WINAPI *pDPA_Search)(HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
 static BOOL (WINAPI *pDPA_SetPtr)(const HDPA hdpa, INT i, LPVOID p);
 
 static INT CALLBACK dpa_strcmp(LPVOID pvstr1, LPVOID pvstr2, LPARAM flags)
@@ -51,11 +52,11 @@ void DPA_test()
 
   dpa_ret = pDPA_Create(0);
   ok((dpa_ret !=0), "DPA_Create failed\n");
-  int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED);
+  int_ret = pDPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED);
   ok((int_ret == -1), "DPA_Search found invalid item\n");
-  int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTBEFORE);
+  int_ret = pDPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTBEFORE);
   ok((int_ret == 0), "DPA_Search proposed bad item\n");
-  int_ret = DPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTAFTER);
+  int_ret = pDPA_Search(dpa_ret,test_str0,0, dpa_strcmp,0, DPAS_SORTED|DPAS_INSERTAFTER);
   ok((int_ret == 0), "DPA_Search proposed bad item\n");
   int_ret = pDPA_Grow(dpa_ret,0);
   ok(int_ret != 0, "DPA_Grow failed\n");
@@ -73,6 +74,7 @@ START_TEST(dpa)
     pDPA_Create=(void*)GetProcAddress(hdll,(LPCSTR)328);
     pDPA_Destroy=(void*)GetProcAddress(hdll,(LPCSTR)329);
     pDPA_Grow=(void*)GetProcAddress(hdll,(LPCSTR)330);
+    pDPA_Search=(void*)GetProcAddress(hdll,(LPCSTR)339);
     pDPA_SetPtr=(void*)GetProcAddress(hdll,(LPCSTR)335);
 
     DPA_test();
