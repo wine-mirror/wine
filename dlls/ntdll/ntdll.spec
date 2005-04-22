@@ -156,7 +156,7 @@
 @ stdcall NtOpenTimer(ptr long ptr)
 @ stub NtPlugPlayControl
 @ stdcall NtPowerInformation(long ptr long ptr long)
-@ stub NtPrivilegeCheck
+@ stdcall NtPrivilegeCheck(ptr ptr ptr)
 @ stub NtPrivilegeObjectAuditAlarm
 @ stub NtPrivilegedServiceAuditAlarm
 @ stdcall NtProtectVirtualMemory(long ptr ptr long ptr)
@@ -746,7 +746,7 @@
 @ stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
 @ stdcall ZwOpenTimer(ptr long ptr) NtOpenTimer
 @ stub ZwPlugPlayControl
-@ stub ZwPrivilegeCheck
+@ stdcall ZwPrivilegeCheck(ptr ptr ptr) NtPrivilegeCheck
 @ stub ZwPrivilegeObjectAuditAlarm
 @ stub ZwPrivilegedServiceAuditAlarm
 @ stdcall ZwProtectVirtualMemory(long ptr ptr long ptr) NtProtectVirtualMemory

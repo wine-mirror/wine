@@ -114,6 +114,7 @@ extern void thread_cancel_apc( struct thread *thread, struct object *owner, int 
 extern int thread_add_inflight_fd( struct thread *thread, int client, int server );
 extern int thread_get_inflight_fd( struct thread *thread, int client );
 extern struct thread_snapshot *thread_snap( int *count );
+extern struct token *thread_get_impersonation_token( struct thread *thread );
 
 /* ptrace functions */
 

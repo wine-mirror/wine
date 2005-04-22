@@ -48,6 +48,7 @@
 #include "request.h"
 #include "console.h"
 #include "user.h"
+#include "security.h"
 
 /* process structure */
 
@@ -284,7 +285,7 @@ struct thread *create_process( int fd )
     process->exe.namelen     = 0;
     process->exe.filename    = NULL;
     process->group_id        = 0;
-    process->token           = create_admin_token();
+    process->token           = token_create_admin();
     list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->classes );

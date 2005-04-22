@@ -767,6 +767,15 @@ struct thread_snapshot *thread_snap( int *count )
     return snapshot;
 }
 
+/* gets the current impersonation token */
+struct token *thread_get_impersonation_token( struct thread *thread )
+{
+    if (thread->token)
+        return thread->token;
+    else
+        return thread->process->token;
+}
+
 /* signal that we are finished booting on the client side */
 DECL_HANDLER(boot_done)
 {

@@ -3237,6 +3237,21 @@ struct get_token_privileges_reply
     /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
 };
 
+
+struct check_token_privileges_request
+{
+    struct request_header __header;
+    obj_handle_t  handle;
+    int           all_required;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+};
+struct check_token_privileges_reply
+{
+    struct reply_header __header;
+    int           has_privileges;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+};
+
 struct duplicate_token_request
 {
     struct request_header __header;
@@ -3490,6 +3505,7 @@ enum request
     REQ_set_global_windows,
     REQ_adjust_token_privileges,
     REQ_get_token_privileges,
+    REQ_check_token_privileges,
     REQ_duplicate_token,
     REQ_create_mailslot,
     REQ_open_mailslot,
@@ -3685,6 +3701,7 @@ union generic_request
     struct set_global_windows_request set_global_windows_request;
     struct adjust_token_privileges_request adjust_token_privileges_request;
     struct get_token_privileges_request get_token_privileges_request;
+    struct check_token_privileges_request check_token_privileges_request;
     struct duplicate_token_request duplicate_token_request;
     struct create_mailslot_request create_mailslot_request;
     struct open_mailslot_request open_mailslot_request;
@@ -3878,12 +3895,13 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
     struct adjust_token_privileges_reply adjust_token_privileges_reply;
     struct get_token_privileges_reply get_token_privileges_reply;
+    struct check_token_privileges_reply check_token_privileges_reply;
     struct duplicate_token_reply duplicate_token_reply;
     struct create_mailslot_reply create_mailslot_reply;
     struct open_mailslot_reply open_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 169
+#define SERVER_PROTOCOL_VERSION 170
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

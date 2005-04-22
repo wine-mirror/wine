@@ -287,6 +287,7 @@ DECL_HANDLER(open_token);
 DECL_HANDLER(set_global_windows);
 DECL_HANDLER(adjust_token_privileges);
 DECL_HANDLER(get_token_privileges);
+DECL_HANDLER(check_token_privileges);
 DECL_HANDLER(duplicate_token);
 DECL_HANDLER(create_mailslot);
 DECL_HANDLER(open_mailslot);
@@ -481,6 +482,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_global_windows,
     (req_handler)req_adjust_token_privileges,
     (req_handler)req_get_token_privileges,
+    (req_handler)req_check_token_privileges,
     (req_handler)req_duplicate_token,
     (req_handler)req_create_mailslot,
     (req_handler)req_open_mailslot,

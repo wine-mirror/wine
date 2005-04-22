@@ -149,10 +149,6 @@ extern void registry_close_handle( struct object *obj, obj_handle_t hkey );
 extern void init_signals(void);
 extern void close_signals(void);
 
-/* token functions */
-
-extern struct token *create_admin_token(void);
-
 /* atom functions */
 
 extern void close_atom_table(void);

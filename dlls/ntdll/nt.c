@@ -376,6 +376,34 @@ NTSTATUS WINAPI NtAdjustGroupsToken(
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/******************************************************************************
+*  NtPrivilegeCheck		[NTDLL.@]
+*  ZwPrivilegeCheck		[NTDLL.@]
+*/
+NTSTATUS WINAPI NtPrivilegeCheck(
+    HANDLE ClientToken,
+    PPRIVILEGE_SET RequiredPrivileges,
+    PBOOLEAN Result)
+{
+    NTSTATUS status;
+    SERVER_START_REQ( check_token_privileges )
+    {
+        req->handle = ClientToken;
+        req->all_required = ((RequiredPrivileges->Control & PRIVILEGE_SET_ALL_NECESSARY) ? TRUE : FALSE);
+        wine_server_add_data( req, &RequiredPrivileges->Privilege,
+            RequiredPrivileges->PrivilegeCount * sizeof(RequiredPrivileges->Privilege[0]) );
+        wine_server_set_reply( req, &RequiredPrivileges->Privilege,
+            RequiredPrivileges->PrivilegeCount * sizeof(RequiredPrivileges->Privilege[0]) );
+
+        status = wine_server_call( req );
+
+        if (status == STATUS_SUCCESS)
+            *Result = (reply->has_privileges ? TRUE : FALSE);
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
 /*
  *	Section
  */

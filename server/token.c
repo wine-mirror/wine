@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1998 Alexandre Julliard
  * Copyright (C) 2003 Mike McCormack
+ * Copyright (C) 2005 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +32,28 @@
 #include "thread.h"
 #include "process.h"
 #include "request.h"
+#include "security.h"
+
+const LUID SeIncreaseQuotaPrivilege        = {  5, 0 };
+const LUID SeSecurityPrivilege             = {  8, 0 };
+const LUID SeTakeOwnershipPrivilege        = {  9, 0 };
+const LUID SeLoadDriverPrivilege           = { 10, 0 };
+const LUID SeSystemProfilePrivilege        = { 11, 0 };
+const LUID SeSystemtimePrivilege           = { 12, 0 };
+const LUID SeProfileSingleProcessPrivilege = { 13, 0 };
+const LUID SeIncreaseBasePriorityPrivilege = { 14, 0 };
+const LUID SeCreatePagefilePrivilege       = { 15, 0 };
+const LUID SeBackupPrivilege               = { 17, 0 };
+const LUID SeRestorePrivilege              = { 18, 0 };
+const LUID SeShutdownPrivilege             = { 19, 0 };
+const LUID SeDebugPrivilege                = { 20, 0 };
+const LUID SeSystemEnvironmentPrivilege    = { 22, 0 };
+const LUID SeChangeNotifyPrivilege         = { 23, 0 };
+const LUID SeRemoteShutdownPrivilege       = { 24, 0 };
+const LUID SeUndockPrivilege               = { 25, 0 };
+const LUID SeManageVolumePrivilege         = { 28, 0 };
+const LUID SeImpersonatePrivilege          = { 29, 0 };
+const LUID SeCreateGlobalPrivilege         = { 30, 0 };
 
 struct token
 {
@@ -135,30 +158,30 @@ static struct token *create_token( const LUID_AND_ATTRIBUTES *privs, unsigned in
     return token;
 }
 
-struct token *create_admin_token( void )
+struct token *token_create_admin( void )
 {
-    static const LUID_AND_ATTRIBUTES admin_privs[] =
+    const LUID_AND_ATTRIBUTES admin_privs[] =
     {
-        { { 23, 0 }, SE_PRIVILEGE_ENABLED }, /* SeChangeNotifyPrivilege */
-        { {  8, 0 }, 0                    }, /* SeSecurityPrivilege */
-        { { 17, 0 }, 0                    }, /* SeBackupPrivilege */
-        { { 18, 0 }, 0                    }, /* SeRestorePrivilege */
-        { { 12, 0 }, 0                    }, /* SeSystemtimePrivilege */
-        { { 19, 0 }, 0                    }, /* SeShutdownPrivilege */
-        { { 24, 0 }, 0                    }, /* SeRemoteShutdownPrivilege */
-        { {  9, 0 }, 0                    }, /* SeTakeOwnershipPrivilege */
-        { { 20, 0 }, 0                    }, /* SeDebugPrivilege */
-        { { 22, 0 }, 0                    }, /* SeSystemEnvironmentPrivilege */
-        { { 11, 0 }, 0                    }, /* SeSystemProfilePrivilege */
-        { { 13, 0 }, 0                    }, /* SeProfileSingleProcessPrivilege */
-        { { 14, 0 }, 0                    }, /* SeIncreaseBasePriorityPrivilege */
-        { { 10, 0 }, 0                    }, /* SeLoadDriverPrivilege */
-        { { 15, 0 }, 0                    }, /* SeCreatePagefilePrivilege */
-        { {  5, 0 }, 0                    }, /* SeIncreaseQuotaPrivilege */
-        { { 25, 0 }, 0                    }, /* SeUndockPrivilege */
-        { { 28, 0 }, 0                    }, /* SeManageVolumePrivilege */
-        { { 29, 0 }, SE_PRIVILEGE_ENABLED }, /* SeImpersonatePrivilege */
-        { { 30, 0 }, SE_PRIVILEGE_ENABLED }, /* SeCreateGlobalPrivilege */
+        { SeChangeNotifyPrivilege        , SE_PRIVILEGE_ENABLED },
+        { SeSecurityPrivilege            , 0                    },
+        { SeBackupPrivilege              , 0                    },
+        { SeRestorePrivilege             , 0                    },
+        { SeSystemtimePrivilege          , 0                    },
+        { SeShutdownPrivilege            , 0                    },
+        { SeRemoteShutdownPrivilege      , 0                    },
+        { SeTakeOwnershipPrivilege       , 0                    },
+        { SeDebugPrivilege               , 0                    },
+        { SeSystemEnvironmentPrivilege   , 0                    },
+        { SeSystemProfilePrivilege       , 0                    },
+        { SeProfileSingleProcessPrivilege, 0                    },
+        { SeIncreaseBasePriorityPrivilege, 0                    },
+        { SeLoadDriverPrivilege          , 0                    },
+        { SeCreatePagefilePrivilege      , 0                    },
+        { SeIncreaseQuotaPrivilege       , 0                    },
+        { SeUndockPrivilege              , 0                    },
+        { SeManageVolumePrivilege        , 0                    },
+        { SeImpersonatePrivilege         , SE_PRIVILEGE_ENABLED },
+        { SeCreateGlobalPrivilege        , SE_PRIVILEGE_ENABLED },
     };
     return create_token( admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
 }
@@ -222,6 +245,35 @@ static void token_disable_privileges( struct token *token )
     struct privilege *privilege;
     LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
         privilege->enabled = FALSE;
+}
+
+int token_check_privileges( struct token *token, int all_required,
+                            const LUID_AND_ATTRIBUTES *reqprivs,
+                            unsigned int count, LUID_AND_ATTRIBUTES *usedprivs)
+{
+    int i;
+    unsigned int enabled_count = 0;
+
+    for (i = 0; i < count; i++)
+    {
+        struct privilege *privilege = 
+            token_find_privilege( token, &reqprivs[i].Luid, TRUE );
+
+        if (usedprivs)
+            usedprivs[i] = reqprivs[i];
+
+        if (privilege && privilege->enabled)
+        {
+            enabled_count++;
+            if (usedprivs)
+                usedprivs[i].Attributes |= SE_PRIVILEGE_USED_FOR_ACCESS;
+        }
+    }
+
+    if (all_required)
+        return (enabled_count == count);
+    else
+        return (enabled_count > 0);
 }
 
 /* open a security token */
@@ -358,5 +410,26 @@ DECL_HANDLER(duplicate_token)
             release_object( token );
         }
         release_object( src_token );
+    }
+}
+
+/* checks the specified privileges are held by the token */
+DECL_HANDLER(check_token_privileges)
+{
+    struct token *token;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        unsigned int count = get_req_data_size() / sizeof(LUID_AND_ATTRIBUTES);
+        if (get_reply_max_size() >= count * sizeof(LUID_AND_ATTRIBUTES))
+        {
+            LUID_AND_ATTRIBUTES *usedprivs = set_reply_data_size( count * sizeof(*usedprivs) );
+            reply->has_privileges = token_check_privileges( token, req->all_required, get_req_data(), count, usedprivs );
+        }
+        else
+            set_error( STATUS_BUFFER_OVERFLOW );
+        release_object( token );
     }
 }

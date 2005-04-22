@@ -2275,6 +2275,16 @@ enum message_type
     VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges held by or available to a token */
 @END
 
+/* Check the token has the required privileges */
+@REQ(check_token_privileges)
+    obj_handle_t  handle; /* handle to the token */
+    int           all_required; /* are all the privileges required for the check to succeed? */
+    VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges to check */
+@REPLY
+    int           has_privileges; /* does the token have the required privileges? */
+    VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges held by or available to a token */
+@END
+
 @REQ(duplicate_token)
     obj_handle_t  handle; /* handle to the token to duplicate */
     unsigned int  access; /* access rights to the new token */
