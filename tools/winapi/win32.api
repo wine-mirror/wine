@@ -196,6 +196,7 @@ _ATL_MODULEW *
 _ATL_OBJMAP_ENTRYA *
 CLSID *
 IID *
+IRegistrar *
 IStream *
 IStream **
 IUnknown *
@@ -205,6 +206,7 @@ LPVOID
 LPVOID *
 REFCLSID
 REFIID
+struct _ATL_REGMAP_ENTRY *
 void *
 
 %str

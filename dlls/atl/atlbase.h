@@ -128,6 +128,12 @@ typedef struct _ATL_INTMAP_ENTRY_TAG
     _ATL_CREATORARGFUNC* pFunc;
 } _ATL_INTMAP_ENTRY;
 
+struct _ATL_REGMAP_ENTRY
+{
+    LPCOLESTR szKey;
+    LPCOLESTR szData;
+};
+
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE h);
 HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA* pM, DWORD dwClsContext, DWORD dwFlags);
 HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID);

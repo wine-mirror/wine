@@ -32,6 +32,7 @@
 #include "objidl.h"
 #include "ole2.h"
 #include "atlbase.h"
+#include "atliface.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
@@ -169,7 +170,7 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
  *
  */
 HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW* pM, LPCOLESTR lpszRes,
-		BOOL bRegister, /* struct _ATL_REGMAP_ENTRY* */ void* pMapEntries, /* IRegistrar* */ void* pReg)
+		BOOL bRegister, struct _ATL_REGMAP_ENTRY* pMapEntries, IRegistrar* pReg)
 {
     HINSTANCE hInst = pM->m_hInst;
     /* everything inside this function below this point
