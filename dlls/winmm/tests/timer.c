@@ -142,6 +142,60 @@ static void test_timer(UINT period, UINT resolution)
           dwMin, dwMax, sum / (count - 1), sqrt(deviation / (count - 2)));
 }
 
+const char * get_priority(int priority)
+{
+    static char     tmp[32];
+#define STR(x) case x: return #x
+    switch(priority) {
+    STR(THREAD_PRIORITY_LOWEST);
+    STR(THREAD_PRIORITY_BELOW_NORMAL);
+    STR(THREAD_PRIORITY_NORMAL);
+    STR(THREAD_PRIORITY_HIGHEST);
+    STR(THREAD_PRIORITY_ABOVE_NORMAL);
+    STR(THREAD_PRIORITY_TIME_CRITICAL);
+    STR(THREAD_PRIORITY_IDLE);
+    }
+    sprintf(tmp, "UNKNOWN(%d)", priority);
+    return tmp;
+}
+
+static int priority = 0;
+static BOOL disable_boost = FALSE;
+static BOOL fired = FALSE;
+
+void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+{
+    BOOL res;
+    priority = GetThreadPriority(GetCurrentThread());
+    res = GetThreadPriorityBoost(GetCurrentThread(), &disable_boost);
+    ok(res == 0, "GetThreadPriorityBoost() failed, GetLastError() = %08lx\n", GetLastError());
+    fired = TRUE;
+}
+
+void test_priority()
+{
+    UINT id;
+
+    fired = FALSE;
+
+    id = timeSetEvent(100, 100, priorityTimeProc, 0, TIME_ONESHOT);
+    ok(id != 0, "timeSetEvent(100, 100, %p, 0, TIME_ONESHOT) returned %d, "
+       "should have returned id > 0\n", priorityTimeProc, id);
+    if (id == 0)
+        return;
+
+    Sleep(200);
+
+    ok(fired == TRUE, "Callback not called\n");
+    if (fired)
+    {
+        ok(priority == THREAD_PRIORITY_TIME_CRITICAL,
+           "thread priority is %s, should be THREAD_PRIORITY_TIME_CRITICAL\n",
+           get_priority(priority));
+        ok(disable_boost == FALSE, "disable thread boost should be FALSE\n");
+    }
+}
+
 START_TEST(timer)
 {
     test_timeGetDevCaps();
@@ -163,4 +217,6 @@ START_TEST(timer)
         test_timer(20, 10);
         test_timer(20, 20);
     }
+
+    test_priority();
 }

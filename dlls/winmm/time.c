@@ -265,6 +265,7 @@ void	TIME_MMTimeStart(void)
         TIME_hWakeEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         TIME_TimeToDie = FALSE;
 	TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, WINMM_IData, 0, NULL);
+        SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
     }
 }
 
