@@ -31,7 +31,7 @@
  * below, but it gives the best "big picture" that I've found.
  *
  * TODO: There's a lot missing in here.  Biggies:
- * - There are all sorts of restricions I don't honor, like maximum property
+ * - There are all sorts of restrictions I don't honor, like maximum property
  *   set byte size, maximum property name length
  * - Certain bogus files could result in reading past the end of a buffer.
  * - This will probably fail on big-endian machines, especially reading and
@@ -129,6 +129,22 @@ static HRESULT PropertyStorage_CreateDictionaries(
 
 static void PropertyStorage_DestroyDictionaries(
  struct tagPropertyStorage_impl *);
+
+/* Copies from propvar to prop.  If propvar's type is VT_LPSTR, copies the
+ * string using PropertyStorage_StringCopy.
+ */
+static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
+ const PROPVARIANT *propvar, LCID targetCP, LCID srcCP);
+
+/* Copies the string src, which is encoded using code page srcCP, and returns
+ * it in *dst, in the code page specified by targetCP.  The returned string is
+ * allocated using CoTaskMemAlloc.
+ * If srcCP is CP_UNICODE, src is in fact an LPCWSTR.  Similarly, if targetCP
+ * is CP_UNICODE, the returned string is in fact an LPWSTR.
+ * Returns S_OK on success, something else on failure.
+ */
+static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
+ LCID srcCP);
 
 static IPropertyStorageVtbl IPropertyStorage_Vtbl;
 
@@ -280,23 +296,144 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
              rgpspec[i].u.lpwstr);
 
             if (prop)
-                PropVariantCopy(&rgpropvar[i], prop);
+                PropertyStorage_PropVariantCopy(&rgpropvar[i], prop, GetACP(),
+                 This->codePage);
         }
         else
         {
-            PROPVARIANT *prop = PropertyStorage_FindProperty(This,
-             rgpspec[i].u.propid);
+            switch (rgpspec[i].u.propid)
+            {
+                case PID_CODEPAGE:
+                    rgpropvar[i].vt = VT_I2;
+                    rgpropvar[i].u.iVal = This->codePage;
+                    break;
+                case PID_LOCALE:
+                    rgpropvar[i].vt = VT_I4;
+                    rgpropvar[i].u.lVal = This->locale;
+                    break;
+                default:
+                {
+                    PROPVARIANT *prop = PropertyStorage_FindProperty(This,
+                     rgpspec[i].u.propid);
 
-            if (prop)
-                PropVariantCopy(&rgpropvar[i], prop);
+                    if (prop)
+                        PropertyStorage_PropVariantCopy(&rgpropvar[i], prop,
+                         GetACP(), This->codePage);
+                }
+            }
         }
     }
     LeaveCriticalSection(&This->cs);
     return hr;
 }
 
+static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
+ LCID srcCP)
+{
+    HRESULT hr = S_OK;
+    int len;
+
+    TRACE("%s, %p, %ld, %ld\n",
+     srcCP == CP_UNICODE ? debugstr_w((LPCWSTR)src) : debugstr_a(src), dst,
+     targetCP, srcCP);
+    assert(src);
+    assert(dst);
+    *dst = NULL;
+    if (targetCP == srcCP)
+    {
+        size_t len;
+
+        if (targetCP == CP_UNICODE)
+            len = (strlenW((LPCWSTR)src) + 1) * sizeof(WCHAR);
+        else
+            len = strlen(src) + 1;
+        *dst = CoTaskMemAlloc(len * sizeof(WCHAR));
+        if (!*dst)
+            hr = STG_E_INSUFFICIENTMEMORY;
+        else
+            memcpy(*dst, src, len);
+    }
+    else
+    {
+        if (targetCP == CP_UNICODE)
+        {
+            len = MultiByteToWideChar(srcCP, 0, src, -1, NULL, 0);
+            *dst = CoTaskMemAlloc(len * sizeof(WCHAR));
+            if (!*dst)
+                hr = STG_E_INSUFFICIENTMEMORY;
+            else
+                MultiByteToWideChar(srcCP, 0, src, -1, (LPWSTR)*dst, len);
+        }
+        else
+        {
+            LPWSTR wideStr;
+
+            if (srcCP == CP_UNICODE)
+                wideStr = (LPWSTR)src;
+            else
+            {
+                len = MultiByteToWideChar(srcCP, 0, src, -1, NULL, 0);
+                wideStr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                if (wideStr)
+                    MultiByteToWideChar(srcCP, 0, src, -1, wideStr, len);
+                else
+                    hr = STG_E_INSUFFICIENTMEMORY;
+            }
+            if (SUCCEEDED(hr))
+            {
+                len = WideCharToMultiByte(targetCP, 0, wideStr, -1, NULL, 0,
+                 NULL, NULL);
+                *dst = CoTaskMemAlloc(len);
+                if (!*dst)
+                    hr = STG_E_INSUFFICIENTMEMORY;
+                else
+                {
+                    BOOL defCharUsed = FALSE;
+
+                    if (WideCharToMultiByte(targetCP, 0, wideStr, -1, *dst,
+                     len, NULL, &defCharUsed) == 0 || defCharUsed)
+                    {
+                        CoTaskMemFree(*dst);
+                        *dst = NULL;
+                        hr = HRESULT_FROM_WIN32(ERROR_NO_UNICODE_TRANSLATION);
+                    }
+                }
+            }
+            if (wideStr != (LPWSTR)src)
+                HeapFree(GetProcessHeap(), 0, wideStr);
+        }
+    }
+    TRACE("returning 0x%08lx (%s)\n", hr,
+     targetCP == CP_UNICODE ? debugstr_w((LPCWSTR)*dst) : debugstr_a(*dst));
+    return hr;
+}
+
+static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
+ const PROPVARIANT *propvar, LCID targetCP, LCID srcCP)
+{
+    HRESULT hr = S_OK;
+
+    assert(prop);
+    assert(propvar);
+    if (propvar->vt == VT_LPSTR)
+    {
+        hr = PropertyStorage_StringCopy(propvar->u.pszVal, &prop->u.pszVal,
+         targetCP, srcCP);
+        if (SUCCEEDED(hr))
+            prop->vt = VT_LPSTR;
+    }
+    else
+        PropVariantCopy(prop, propvar);
+    return hr;
+}
+
+/* Stores the property with id propid and value propvar into this property
+ * storage.  lcid is ignored if propvar's type is not VT_LPSTR.  If propvar's
+ * type is VT_LPSTR, converts the string using lcid as the source code page
+ * and This->codePage as the target code page before storing.
+ */
 static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
- PROPID propid, const PROPVARIANT *propvar)
+ PROPID propid, const PROPVARIANT *propvar, LCID lcid)
 {
     HRESULT hr = S_OK;
     PROPVARIANT *prop = PropertyStorage_FindProperty(This, propid);
@@ -307,7 +444,8 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
     if (prop)
     {
         PropVariantClear(prop);
-        PropVariantCopy(prop, propvar);
+        hr = PropertyStorage_PropVariantCopy(prop, propvar, This->codePage,
+         lcid);
     }
     else
     {
@@ -315,10 +453,16 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
          sizeof(PROPVARIANT));
         if (prop)
         {
-            PropVariantCopy(prop, propvar);
-            dictionary_insert(This->propid_to_prop, (void *)propid, prop);
-            if (propid > This->highestProp)
-                This->highestProp = propid;
+            hr = PropertyStorage_PropVariantCopy(prop, propvar, This->codePage,
+             lcid);
+            if (SUCCEEDED(hr))
+            {
+                dictionary_insert(This->propid_to_prop, (void *)propid, prop);
+                if (propid > This->highestProp)
+                    This->highestProp = propid;
+            }
+            else
+                HeapFree(GetProcessHeap(), 0, prop);
         }
         else
             hr = STG_E_INSUFFICIENTMEMORY;
@@ -383,7 +527,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                     dictionary_insert(This->propid_to_name, (void *)nextId,
                      name);
                     hr = PropertyStorage_StorePropWithId(This, nextId,
-                     &rgpropvar[i]);
+                     &rgpropvar[i], GetACP());
                 }
             }
         }
@@ -419,7 +563,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                     hr = STG_E_INVALIDPARAMETER;
                 else
                     hr = PropertyStorage_StorePropWithId(This,
-                     rgpspec[i].u.propid, &rgpropvar[i]);
+                     rgpspec[i].u.propid, &rgpropvar[i], GetACP());
             }
         }
     }
@@ -541,16 +685,23 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     hr = S_OK;
     EnterCriticalSection(&This->cs);
     This->dirty = TRUE;
-    for (i = 0; i < cpropid; i++)
+    for (i = 0; SUCCEEDED(hr) && i < cpropid; i++)
     {
         if (rgpropid[i] != PID_ILLEGAL)
         {
             size_t len = lstrlenW(rglpwstrName[i]) + 1;
             LPWSTR name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
 
-            strcpyW(name, rglpwstrName[i]);
-            dictionary_insert(This->name_to_propid, name, (void *)rgpropid[i]);
-            dictionary_insert(This->propid_to_name, (void *)rgpropid[i], name);
+            if (name)
+            {
+                strcpyW(name, rglpwstrName[i]);
+                dictionary_insert(This->name_to_propid, name,
+                 (void *)rgpropid[i]);
+                dictionary_insert(This->propid_to_name, (void *)rgpropid[i],
+                 name);
+            }
+            else
+                hr = STG_E_INSUFFICIENTMEMORY;
         }
     }
     if (This->grfFlags & PROPSETFLAG_UNBUFFERED)
@@ -879,8 +1030,9 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
         {
             /* FIXME: if the host is big-endian, this'll suck */
             memcpy(prop->u.pszVal, data + sizeof(DWORD), count);
-            /* FIXME: so far so good, but this may be Unicode or DBCS depending
-             * on This->codePage.
+            /* This is stored in the code page specified in This->codePage.
+             * Don't convert it, the caller will just store it as-is.
+             * (Note the trace will be misleading if the code page is Unicode.)
              */
             TRACE("Read string value %s\n", debugstr_a(prop->u.pszVal));
         }
@@ -1160,7 +1312,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
                         break;
                     default:
                         hr = PropertyStorage_StorePropWithId(This,
-                         idOffset->propid, &prop);
+                         idOffset->propid, &prop, This->codePage);
                     }
                 }
             }
@@ -2106,12 +2258,12 @@ HRESULT WINAPI FmtIdToPropStgName(const FMTID *rfmtid, LPOLESTR str)
  */
 HRESULT WINAPI PropStgNameToFmtId(const LPOLESTR str, FMTID *rfmtid)
 {
-    HRESULT hr = E_INVALIDARG;
+    HRESULT hr = STG_E_INVALIDNAME;
 
     TRACE("%s, %p\n", debugstr_w(str), rfmtid);
 
     if (!rfmtid) return E_INVALIDARG;
-    if (!str) return E_INVALIDARG;
+    if (!str) return STG_E_INVALIDNAME;
 
     if (!lstrcmpiW(str, szDocSummaryInfo))
     {

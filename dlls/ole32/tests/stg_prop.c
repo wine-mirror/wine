@@ -211,12 +211,10 @@ static void testProps(void)
     /* revert it */
     hr = IPropertyStorage_Revert(propertyStorage);
     ok(SUCCEEDED(hr), "Revert failed: 0x%08lx\n", hr);
-    /* and make sure it's still an integer */
-    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
-    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
-    ok(var.vt == VT_I4 && U(var).lVal == 1,
-     "Didn't get expected type or value for property (got type %d, value %ld)\n",
-     var.vt, U(var).lVal);
+    /* Oddly enough, there's no guarantee that a successful revert actually
+     * implies the value wasn't saved.  Maybe transactional mode needs to be
+     * used for that?
+     */
 
     IPropertyStorage_Release(propertyStorage);
     propertyStorage = NULL;
@@ -258,6 +256,161 @@ static void testProps(void)
     IStorage_Release(storage);
 
     DeleteFileW(filename);
+}
+
+void testCodepage(void)
+{
+    static const WCHAR szDot[] = { '.',0 };
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR wval[] = { 'h','i',0 };
+    HRESULT hr;
+    IStorage *storage = NULL;
+    IPropertySetStorage *propSetStorage = NULL;
+    IPropertyStorage *propertyStorage = NULL;
+    PROPSPEC spec;
+    PROPVARIANT var;
+    WCHAR fileName[MAX_PATH];
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, fileName))
+        return;
+
+    hr = StgCreateDocfile(fileName,
+     STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
+    ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
+
+    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
+    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+
+    hr = IPropertySetStorage_Create(propSetStorage,
+     &FMTID_SummaryInformation, NULL, PROPSETFLAG_DEFAULT,
+     STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
+     &propertyStorage);
+    ok(SUCCEEDED(hr), "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
+
+    PropVariantInit(&var);
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PID_CODEPAGE;
+    /* check code page before it's been explicitly set */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I2 && U(var).iVal == 1200,
+     "Didn't get expected type or value for property\n");
+    /* Set the code page to ascii */
+    var.vt = VT_I2;
+    U(var).iVal = 1252;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* check code page */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I2 && U(var).iVal == 1252,
+     "Didn't get expected type or value for property\n");
+    /* Set code page to Unicode */
+    U(var).iVal = 1200;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* check code page */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I2 && U(var).iVal == 1200,
+     "Didn't get expected type or value for property\n");
+    /* Set a string value */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PID_FIRST_USABLE;
+    var.vt = VT_LPSTR;
+    U(var).pszVal = "hi";
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, "hi"),
+     "Didn't get expected type or value for property\n");
+    /* This seemingly non-sensical test is to show that the string is indeed
+     * interpreted according to the current system code page, not according to
+     * the property set's code page.  (If the latter were true, the whole
+     * string would be maintained.  As it is, only the first character is.)
+     */
+    U(var).pszVal = (LPSTR)wval;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, "h"),
+     "Didn't get expected type or value for property\n");
+    /* now that a property's been set, you can't change the code page */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PID_CODEPAGE;
+    var.vt = VT_I2;
+    U(var).iVal = 1200;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(hr == STG_E_INVALIDPARAMETER,
+     "Expected STG_E_INVALIDPARAMETER, got 0x%08lx\n", hr);
+
+    IPropertyStorage_Release(propertyStorage);
+    IPropertySetStorage_Release(propSetStorage);
+    IStorage_Release(storage);
+
+    DeleteFileW(fileName);
+
+    /* same tests, but with PROPSETFLAG_ANSI */
+    hr = StgCreateDocfile(fileName,
+     STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
+    ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
+
+    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
+    ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
+
+    hr = IPropertySetStorage_Create(propSetStorage,
+     &FMTID_SummaryInformation, NULL, PROPSETFLAG_ANSI,
+     STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE,
+     &propertyStorage);
+    ok(SUCCEEDED(hr), "IPropertySetStorage_Create failed: 0x%08lx\n", hr);
+
+    /* check code page before it's been explicitly set */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I2 && U(var).iVal == 1252,
+     "Didn't get expected type or value for property\n");
+    /* Set code page to Unicode */
+    U(var).iVal = 1200;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* check code page */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_I2 && U(var).iVal == 1200,
+     "Didn't get expected type or value for property\n");
+    /* This test is commented out for documentation.  It fails under Wine,
+     * and I expect it would under Windows as well, yet it succeeds.  There's
+     * obviously something about string conversion I don't understand.
+     */
+#if 0
+    static const char strVal[] = { 0x81, 0xff, 0x04, 0 };
+    /* Set code page to 950 (Traditional Chinese) */
+    U(var).iVal = 950;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* Try writing an invalid string: lead byte 0x81 is unused in Traditional
+     * Chinese.
+     */
+    spec.ulKind = PRSPEC_PROPID;
+    U(spec).propid = PID_FIRST_USABLE;
+    var.vt = VT_LPSTR;
+    U(var).pszVal = (LPSTR)strVal;
+    hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
+    ok(SUCCEEDED(hr), "WriteMultiple failed: 0x%08lx\n", hr);
+    /* Check returned string */
+    hr = IPropertyStorage_ReadMultiple(propertyStorage, 1, &spec, &var);
+    ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
+    ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, strVal),
+     "Didn't get expected type or value for property\n");
+#endif
+
+    IPropertyStorage_Release(propertyStorage);
+    IPropertySetStorage_Release(propSetStorage);
+    IStorage_Release(storage);
+
+    DeleteFileW(fileName);
 }
 
 static void testFmtId(void)
@@ -302,7 +455,8 @@ static void testFmtId(void)
     hr = pPropStgNameToFmtId(NULL, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
     hr = pPropStgNameToFmtId(NULL, &fmtid);
-    ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
+    ok(hr == STG_E_INVALIDNAME, "Expected STG_E_INVALIDNAME, got 0x%08lx\n",
+     hr);
     hr = pPropStgNameToFmtId(szDocSummaryInfo, NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got 0x%08lx\n", hr);
     /* test the known format IDs */
@@ -337,5 +491,6 @@ START_TEST(stg_prop)
 {
     init_function_pointers();
     testProps();
+    testCodepage();
     testFmtId();
 }
