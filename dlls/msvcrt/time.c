@@ -309,3 +309,22 @@ void *MSVCRT___p__daylight(void)
 {
 	return &MSVCRT___daylight;
 }
+
+/*********************************************************************
+ *		_tzname (MSVCRT.@)
+ * NOTES
+ *  Some apps (notably Mozilla) insist on writing to these, so the buffer
+ *  must be large enough.  The size is picked based on observation of
+ *  Windows XP.
+ */
+static char tzname_std[64] = ""; /* FIXME: initialize */
+static char tzname_dst[64] = ""; /* FIXME: initialize */
+char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
+
+/*********************************************************************
+ *		__p_tzname (MSVCRT.@)
+ */
+char **__p__tzname(void)
+{
+	return MSVCRT__tzname;
+}

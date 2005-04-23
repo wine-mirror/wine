@@ -122,7 +122,7 @@
 @ cdecl __p__pgmptr()
 @ stub __p__pwctype #()
 @ cdecl __p__timezone()
-@ stub __p__tzname #()
+@ cdecl __p__tzname()
 @ cdecl __p__wcmdln()
 @ cdecl __p__wenviron()
 @ cdecl __p__winmajor()
@@ -472,7 +472,7 @@
 # extern _timezone
 @ cdecl _tolower(long) MSVCRT__tolower
 @ cdecl _toupper(long) MSVCRT__toupper
-# extern _tzname
+@ extern _tzname MSVCRT__tzname
 @ cdecl _tzset() tzset
 @ cdecl _ui64toa(long long ptr long) ntdll._ui64toa
 @ cdecl _ui64tow(long long ptr long) ntdll._ui64tow
