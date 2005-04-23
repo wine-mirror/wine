@@ -258,8 +258,10 @@ static void test_incorrect_api_usage(void)
     result = pCryptGenRandom(hProv, 1, &temp);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 
+#ifdef CRASHES_ON_NT40
     result = pCryptContextAddRef(hProv, NULL, 0);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+#endif
 
     result = pCryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash2);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
@@ -275,11 +277,13 @@ static void test_incorrect_api_usage(void)
     result = pCryptDeriveKey(hProv, CALG_RC4, hHash, 0, &hKey2);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 
+#ifdef CRASHES_ON_NT40
     result = pCryptDuplicateHash(hHash, NULL, 0, &hHash2);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 
     result = pCryptDuplicateKey(hKey, NULL, 0, &hKey2);
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
+#endif
 
     dwLen = 1;
     result = pCryptExportKey(hKey, (HCRYPTPROV)NULL, 0, 0, &temp, &dwLen);
