@@ -35,6 +35,8 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "objbase.h"
+#include "winreg.h"
+#include "winternl.h"
 
 /*
  * Definitions for the file format offsets.
@@ -524,10 +526,29 @@ StgStreamImpl* StgStreamImpl_Construct(
     ULONG            ownerProperty);
 
 
-/********************************************************************************
- * The StorageUtl_ functions are miscelaneous utility functions. Most of which are
- * abstractions used to read values from file buffers without having to worry
- * about bit order
+/******************************************************************************
+ * Endian conversion macros
+ */
+#ifdef WORDS_BIGENDIAN
+
+#define htole32(x) RtlUlongByteSwap(x)
+#define htole16(x) RtlUshortByteSwap(x)
+#define le32toh(x) RtlUlongByteSwap(x)
+#define le16toh(x) RtlUshortByteSwap(x)
+
+#else
+
+#define htole32(x) (x)
+#define htole16(x) (x)
+#define le32toh(x) (x)
+#define le16toh(x) (x)
+
+#endif
+
+/******************************************************************************
+ * The StorageUtl_ functions are miscellaneous utility functions. Most of which
+ * are abstractions used to read values from file buffers without having to
+ * worry about bit order
  */
 void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value);
 void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value);

@@ -4051,27 +4051,33 @@ StorageInternalImpl* StorageInternalImpl_Construct(
 
 /******************************************************************************
 ** StorageUtl implementation
-* FIXME: these should read and write in little-endian order on all
-* architectures, but right now just assume the host is little-endian.
 */
 
 void StorageUtl_ReadWord(const BYTE* buffer, ULONG offset, WORD* value)
 {
-  memcpy(value, buffer+offset, sizeof(WORD));
+  WORD tmp;
+
+  memcpy(&tmp, buffer+offset, sizeof(WORD));
+  *value = le16toh(tmp);
 }
 
 void StorageUtl_WriteWord(BYTE* buffer, ULONG offset, WORD value)
 {
+  value = htole16(value);
   memcpy(buffer+offset, &value, sizeof(WORD));
 }
 
 void StorageUtl_ReadDWord(const BYTE* buffer, ULONG offset, DWORD* value)
 {
-  memcpy(value, buffer+offset, sizeof(DWORD));
+  DWORD tmp;
+
+  memcpy(&tmp, buffer+offset, sizeof(DWORD));
+  *value = le32toh(tmp);
 }
 
 void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value)
 {
+  value = htole32(value);
   memcpy(buffer+offset, &value, sizeof(DWORD));
 }
 
