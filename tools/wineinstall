@@ -464,9 +464,9 @@ then {
 
   if [ "$WINEINSTALLED" = 'no' ]
   then
-      tools/wineprefixcreate --update --use-wine-tree .
+      tools/wineprefixcreate --use-wine-tree .
   else
-      wineprefixcreate --update
+      wineprefixcreate
   fi
 
   # create $LCONF using the default config file $WINEINI
