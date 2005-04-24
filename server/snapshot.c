@@ -61,6 +61,7 @@ static const struct object_ops snapshot_ops =
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
     NULL,                         /* satisfied */
+    no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
     snapshot_destroy              /* destroy */
 };

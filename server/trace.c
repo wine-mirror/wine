@@ -760,6 +760,7 @@ static void dump_select_request( const struct select_request *req )
 {
     fprintf( stderr, " flags=%d,", req->flags );
     fprintf( stderr, " cookie=%p,", req->cookie );
+    fprintf( stderr, " signal=%p,", req->signal );
     fprintf( stderr, " timeout=" );
     dump_abs_time( &req->timeout );
     fprintf( stderr, "," );

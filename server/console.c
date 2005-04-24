@@ -46,6 +46,7 @@ static const struct object_ops console_input_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     no_satisfied,                     /* satisfied */
+    no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
     console_input_destroy             /* destroy */
 };
@@ -70,6 +71,7 @@ static const struct object_ops console_input_events_ops =
     remove_queue,                     /* remove_queue */
     console_input_events_signaled,    /* signaled */
     no_satisfied,                     /* satisfied */
+    no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
     console_input_events_destroy      /* destroy */
 };
@@ -105,6 +107,7 @@ static const struct object_ops screen_buffer_ops =
     NULL,                             /* remove_queue */
     NULL,                             /* signaled */
     NULL,                             /* satisfied */
+    no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
     screen_buffer_destroy             /* destroy */
 };

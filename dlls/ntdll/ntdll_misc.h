@@ -44,7 +44,7 @@ extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 extern void NTDLL_get_server_timeout( abs_time_t *when, const LARGE_INTEGER *timeout );
 extern void NTDLL_from_server_timeout( LARGE_INTEGER *timeout, const abs_time_t *when );
 extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
-                                                 const LARGE_INTEGER *timeout );
+                                                 const LARGE_INTEGER *timeout, HANDLE signal_object );
 
 /* init routines */
 extern BOOL SIGNAL_Init(void);

@@ -603,6 +603,7 @@ struct select_request
     struct request_header __header;
     int          flags;
     void*        cookie;
+    obj_handle_t signal;
     abs_time_t   timeout;
     /* VARARG(handles,handles); */
 };
@@ -3902,6 +3903,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 170
+#define SERVER_PROTOCOL_VERSION 171
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

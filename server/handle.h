@@ -38,6 +38,7 @@ extern obj_handle_t alloc_handle( struct process *process, void *obj,
 extern int close_handle( struct process *process, obj_handle_t handle, int *fd );
 extern struct object *get_handle_obj( struct process *process, obj_handle_t handle,
                                       unsigned int access, const struct object_ops *ops );
+extern unsigned int get_handle_access( struct process *process, obj_handle_t handle );
 extern int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned int access );
 extern int set_handle_info( struct process *process, obj_handle_t handle, int mask, int flags, int *fd );
 extern obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, struct process *dst,

@@ -83,6 +83,7 @@ static const struct object_ops file_ops =
     default_fd_remove_queue,      /* remove_queue */
     default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
+    no_signal,                    /* signal */
     file_get_fd,                  /* get_fd */
     file_destroy                  /* destroy */
 };

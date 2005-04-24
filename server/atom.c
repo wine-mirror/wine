@@ -70,7 +70,8 @@ static const struct object_ops atom_table_ops =
     no_add_queue,                 /* add_queue */
     NULL,                         /* remove_queue */
     NULL,                         /* signaled */
-    NULL,                         /* satified */
+    NULL,                         /* satisfied */
+    no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
     atom_table_destroy            /* destroy */
 };

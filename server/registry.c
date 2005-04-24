@@ -138,6 +138,7 @@ static const struct object_ops key_ops =
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
     NULL,                    /* satisfied */
+    no_signal,               /* signal */
     no_get_fd,               /* get_fd */
     key_destroy              /* destroy */
 };

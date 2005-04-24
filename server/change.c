@@ -71,6 +71,7 @@ static const struct object_ops change_ops =
     remove_queue,             /* remove_queue */
     change_signaled,          /* signaled */
     no_satisfied,             /* satisfied */
+    no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     change_destroy            /* destroy */
 };

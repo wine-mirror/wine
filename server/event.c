@@ -41,6 +41,7 @@ struct event
 static void event_dump( struct object *obj, int verbose );
 static int event_signaled( struct object *obj, struct thread *thread );
 static int event_satisfied( struct object *obj, struct thread *thread );
+static int event_signal( struct object *obj, unsigned int access);
 
 static const struct object_ops event_ops =
 {
@@ -50,6 +51,7 @@ static const struct object_ops event_ops =
     remove_queue,              /* remove_queue */
     event_signaled,            /* signaled */
     event_satisfied,           /* satisfied */
+    event_signal,              /* signal */
     no_get_fd,                 /* get_fd */
     no_destroy                 /* destroy */
 };
@@ -121,6 +123,20 @@ static int event_satisfied( struct object *obj, struct thread *thread )
     /* Reset if it's an auto-reset event */
     if (!event->manual_reset) event->signaled = 0;
     return 0;  /* Not abandoned */
+}
+
+static int event_signal( struct object *obj, unsigned int access )
+{
+    struct event *event = (struct event *)obj;
+    assert( obj->ops == &event_ops );
+
+    if (!(access & EVENT_MODIFY_STATE))
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    set_event( event );
+    return 1;
 }
 
 /* create an event */

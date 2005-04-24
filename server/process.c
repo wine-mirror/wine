@@ -70,6 +70,7 @@ static const struct object_ops process_ops =
     remove_queue,                /* remove_queue */
     process_signaled,            /* signaled */
     no_satisfied,                /* satisfied */
+    no_signal,                    /* signal */
     no_get_fd,                   /* get_fd */
     process_destroy              /* destroy */
 };
@@ -116,6 +117,7 @@ static const struct object_ops startup_info_ops =
     remove_queue,                  /* remove_queue */
     startup_info_signaled,         /* signaled */
     no_satisfied,                  /* satisfied */
+    no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
     startup_info_destroy           /* destroy */
 };

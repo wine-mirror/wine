@@ -59,6 +59,8 @@ struct object_ops
     int  (*signaled)(struct object *,struct thread *);
     /* wait satisfied; return 1 if abandoned */
     int  (*satisfied)(struct object *,struct thread *);
+    /* signal an object */
+    int  (*signal)(struct object *, unsigned int);
     /* return an fd object that can be used to read/write from the object */
     struct fd *(*get_fd)(struct object *);
     /* destroy on refcount == 0 */
@@ -97,6 +99,7 @@ extern void release_object( void *obj );
 extern struct object *find_object( const struct namespace *namespace, const WCHAR *name, size_t len );
 extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
+extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
 extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS

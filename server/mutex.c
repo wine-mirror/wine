@@ -44,6 +44,7 @@ static void mutex_dump( struct object *obj, int verbose );
 static int mutex_signaled( struct object *obj, struct thread *thread );
 static int mutex_satisfied( struct object *obj, struct thread *thread );
 static void mutex_destroy( struct object *obj );
+static int mutex_signal( struct object *obj, unsigned int access );
 
 static const struct object_ops mutex_ops =
 {
@@ -53,6 +54,7 @@ static const struct object_ops mutex_ops =
     remove_queue,              /* remove_queue */
     mutex_signaled,            /* signaled */
     mutex_satisfied,           /* satisfied */
+    mutex_signal,              /* signal */
     no_get_fd,                 /* get_fd */
     mutex_destroy              /* destroy */
 };
@@ -130,6 +132,25 @@ static int mutex_satisfied( struct object *obj, struct thread *thread )
     }
     if (!mutex->abandoned) return 0;
     mutex->abandoned = 0;
+    return 1;
+}
+
+static int mutex_signal( struct object *obj, unsigned int access )
+{
+    struct mutex *mutex = (struct mutex *)obj;
+    assert( obj->ops == &mutex_ops );
+
+    if (!(access & SYNCHRONIZE))  /* FIXME: MUTEX_MODIFY_STATE? */
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    if (!mutex->count || (mutex->owner != current))
+    {
+        set_error( STATUS_MUTANT_NOT_OWNED );
+        return 0;
+    }
+    if (!--mutex->count) do_release( mutex );
     return 1;
 }
 

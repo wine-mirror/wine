@@ -106,6 +106,7 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* remove_queue */
     NULL,                            /* signaled */
     NULL,                            /* satisfied */
+    no_signal,                       /* signal */
     no_get_fd,                       /* get_fd */
     handle_table_destroy             /* destroy */
 };
@@ -383,6 +384,16 @@ struct object *get_handle_obj( struct process *process, obj_handle_t handle,
         return NULL;
     }
     return grab_object( obj );
+}
+
+/* retrieve the access rights of a given handle */
+unsigned int get_handle_access( struct process *process, obj_handle_t handle )
+{
+    struct handle_entry *entry;
+
+    if (get_magic_handle( handle )) return ~0U;  /* magic handles have all access rights */
+    if (!(entry = get_handle( process, handle ))) return 0;
+    return entry->access;
 }
 
 /* retrieve the cached fd for a given handle */

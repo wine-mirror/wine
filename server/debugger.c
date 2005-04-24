@@ -72,6 +72,7 @@ static const struct object_ops debug_event_ops =
     remove_queue,                  /* remove_queue */
     debug_event_signaled,          /* signaled */
     no_satisfied,                  /* satisfied */
+    no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
     debug_event_destroy            /* destroy */
 };
@@ -88,6 +89,7 @@ static const struct object_ops debug_ctx_ops =
     remove_queue,                  /* remove_queue */
     debug_ctx_signaled,            /* signaled */
     no_satisfied,                  /* satisfied */
+    no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
     debug_ctx_destroy              /* destroy */
 };

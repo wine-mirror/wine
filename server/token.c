@@ -79,7 +79,8 @@ static const struct object_ops token_ops =
     no_add_queue,              /* add_queue */
     NULL,                      /* remove_queue */
     NULL,                      /* signaled */
-    NULL,                      /* satified */
+    NULL,                      /* satisfied */
+    no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
     token_destroy              /* destroy */
 };

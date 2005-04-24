@@ -159,6 +159,7 @@ static const struct object_ops fd_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
+    no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     fd_destroy                /* destroy */
 };
@@ -188,6 +189,7 @@ static const struct object_ops inode_ops =
     NULL,                     /* remove_queue */
     NULL,                     /* signaled */
     NULL,                     /* satisfied */
+    no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     inode_destroy             /* destroy */
 };
@@ -218,6 +220,7 @@ static const struct object_ops file_lock_ops =
     remove_queue,               /* remove_queue */
     file_lock_signaled,         /* signaled */
     no_satisfied,               /* satisfied */
+    no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
     no_destroy                  /* destroy */
 };

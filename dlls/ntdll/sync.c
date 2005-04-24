@@ -701,7 +701,7 @@ static void call_apcs( BOOL alertable )
  * Implementation of NtWaitForMultipleObjects
  */
 NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
-                                          const LARGE_INTEGER *timeout )
+                                          const LARGE_INTEGER *timeout, HANDLE signal_object )
 {
     NTSTATUS ret;
     int cookie;
@@ -713,6 +713,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
         {
             req->flags   = flags;
             req->cookie  = &cookie;
+            req->signal  = signal_object;
             NTDLL_get_server_timeout( &req->timeout, timeout );
             wine_server_add_data( req, handles, count * sizeof(HANDLE) );
             ret = wine_server_call( req );
@@ -722,6 +723,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
         if (ret != STATUS_USER_APC) break;
         call_apcs( (flags & SELECT_ALERTABLE) != 0 );
         if (flags & SELECT_ALERTABLE) break;
+        signal_object = 0;  /* don't signal it multiple times */
     }
 
     /* A test on Windows 2000 shows that Windows always yields during
@@ -748,7 +750,7 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
 
     if (wait_all) flags |= SELECT_ALL;
     if (alertable) flags |= SELECT_ALERTABLE;
-    return NTDLL_wait_for_multiple_objects( count, handles, flags, timeout );
+    return NTDLL_wait_for_multiple_objects( count, handles, flags, timeout, 0 );
 }
 
 
@@ -758,6 +760,20 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
 NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
     return NtWaitForMultipleObjects( 1, &handle, FALSE, alertable, timeout );
+}
+
+
+/******************************************************************
+ *		NtSignalAndWaitForSingleObject (NTDLL.@)
+ */
+NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWaitObject,
+                                                BOOLEAN alertable, const LARGE_INTEGER *timeout )
+{
+    UINT flags = SELECT_INTERRUPTIBLE;
+
+    if (!hSignalObject) return STATUS_INVALID_HANDLE;
+    if (alertable) flags |= SELECT_ALERTABLE;
+    return NTDLL_wait_for_multiple_objects( 1, &hWaitObject, flags, timeout, hSignalObject );
 }
 
 
@@ -785,7 +801,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
     {
         UINT flags = SELECT_INTERRUPTIBLE;
         if (alertable) flags |= SELECT_ALERTABLE;
-        return NTDLL_wait_for_multiple_objects( 0, NULL, flags, timeout );
+        return NTDLL_wait_for_multiple_objects( 0, NULL, flags, timeout, 0 );
     }
 
     if (!timeout)  /* sleep forever */
@@ -817,16 +833,5 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
             if (select( 0, NULL, NULL, NULL, &tv ) != -1) break;
         }
     }
-    return STATUS_SUCCESS;
-}
-
-
-/******************************************************************
- *		NtSignalAndWaitForSingleObject (NTDLL.@)
- */
-NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE hSignalObject, HANDLE hWaitObject,
-                                                BOOLEAN bAlertable, PLARGE_INTEGER Timeout )
-{
-    FIXME("%p %p %d %p\n", hSignalObject, hWaitObject, bAlertable, Timeout);
     return STATUS_SUCCESS;
 }

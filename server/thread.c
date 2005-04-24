@@ -92,6 +92,7 @@ static const struct object_ops thread_ops =
     remove_queue,               /* remove_queue */
     thread_signaled,            /* signaled */
     no_satisfied,               /* satisfied */
+    no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
     destroy_thread              /* destroy */
 };
@@ -516,9 +517,24 @@ static void thread_timeout( void *ptr )
     wake_thread( thread );
 }
 
+/* try signaling an event flag, a semaphore or a mutex */
+static int signal_object( obj_handle_t handle )
+{
+    struct object *obj;
+    int ret = 0;
+
+    obj = get_handle_obj( current->process, handle, 0, NULL );
+    if (obj)
+    {
+        ret = obj->ops->signal( obj, get_handle_access( current->process, handle ));
+        release_object( obj );
+    }
+    return ret;
+}
+
 /* select on a list of handles */
 static void select_on( int count, void *cookie, const obj_handle_t *handles,
-                       int flags, const abs_time_t *timeout )
+                       int flags, const abs_time_t *timeout, obj_handle_t signal_obj )
 {
     int ret, i;
     struct object *objects[MAXIMUM_WAIT_OBJECTS];
@@ -536,6 +552,18 @@ static void select_on( int count, void *cookie, const obj_handle_t *handles,
 
     if (i < count) goto done;
     if (!wait_on( count, objects, flags, timeout )) goto done;
+
+    /* signal the object */
+    if (signal_obj)
+    {
+        if (!signal_object( signal_obj ))
+        {
+            end_wait( current );
+            goto done;
+        }
+        /* check if we woke ourselves up */
+        if (!current->wait) goto done;
+    }
 
     if ((ret = check_wait( current )) != -1)
     {
@@ -962,7 +990,7 @@ DECL_HANDLER(resume_thread)
 DECL_HANDLER(select)
 {
     int count = get_req_data_size() / sizeof(int);
-    select_on( count, req->cookie, get_req_data(), req->flags, &req->timeout );
+    select_on( count, req->cookie, get_req_data(), req->flags, &req->timeout, req->signal );
 }
 
 /* queue an APC for a thread */

@@ -107,6 +107,7 @@ static const struct object_ops sock_ops =
     remove_queue,                 /* remove_queue */
     sock_signaled,                /* signaled */
     no_satisfied,                 /* satisfied */
+    no_signal,                    /* signal */
     sock_get_fd,                  /* get_fd */
     sock_destroy                  /* destroy */
 };

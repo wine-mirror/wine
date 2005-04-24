@@ -41,6 +41,7 @@ struct semaphore
 static void semaphore_dump( struct object *obj, int verbose );
 static int semaphore_signaled( struct object *obj, struct thread *thread );
 static int semaphore_satisfied( struct object *obj, struct thread *thread );
+static int semaphore_signal( struct object *obj, unsigned int access );
 
 static const struct object_ops semaphore_ops =
 {
@@ -50,6 +51,7 @@ static const struct object_ops semaphore_ops =
     remove_queue,                  /* remove_queue */
     semaphore_signaled,            /* signaled */
     semaphore_satisfied,           /* satisfied */
+    semaphore_signal,              /* signal */
     no_get_fd,                     /* get_fd */
     no_destroy                     /* destroy */
 };
@@ -77,32 +79,26 @@ static struct semaphore *create_semaphore( const WCHAR *name, size_t len,
     return sem;
 }
 
-static unsigned int release_semaphore( obj_handle_t handle, unsigned int count )
+static int release_semaphore( struct semaphore *sem, unsigned int count,
+                              unsigned int *prev )
 {
-    struct semaphore *sem;
-    unsigned int prev = 0;
-
-    if ((sem = (struct semaphore *)get_handle_obj( current->process, handle,
-                                                   SEMAPHORE_MODIFY_STATE, &semaphore_ops )))
+    if (prev) *prev = sem->count;
+    if (sem->count + count < sem->count || sem->count + count > sem->max)
     {
-        prev = sem->count;
-        if (sem->count + count < sem->count || sem->count + count > sem->max)
-        {
-            set_error( STATUS_SEMAPHORE_LIMIT_EXCEEDED );
-        }
-        else if (sem->count)
-        {
-            /* there cannot be any thread to wake up if the count is != 0 */
-            sem->count += count;
-        }
-        else
-        {
-            sem->count = count;
-            wake_up( &sem->obj, count );
-        }
-        release_object( sem );
+        set_error( STATUS_SEMAPHORE_LIMIT_EXCEEDED );
+        return 0;
     }
-    return prev;
+    else if (sem->count)
+    {
+        /* there cannot be any thread to wake up if the count is != 0 */
+        sem->count += count;
+    }
+    else
+    {
+        sem->count = count;
+        wake_up( &sem->obj, count );
+    }
+    return 1;
 }
 
 static void semaphore_dump( struct object *obj, int verbose )
@@ -130,6 +126,19 @@ static int semaphore_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* not abandoned */
 }
 
+static int semaphore_signal( struct object *obj, unsigned int access )
+{
+    struct semaphore *sem = (struct semaphore *)obj;
+    assert( obj->ops == &semaphore_ops );
+
+    if (!(access & SEMAPHORE_MODIFY_STATE))
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
+    }
+    return release_semaphore( sem, 1, NULL );
+}
+
 /* create a semaphore */
 DECL_HANDLER(create_semaphore)
 {
@@ -154,5 +163,12 @@ DECL_HANDLER(open_semaphore)
 /* release a semaphore */
 DECL_HANDLER(release_semaphore)
 {
-    reply->prev_count = release_semaphore( req->handle, req->count );
+    struct semaphore *sem;
+
+    if ((sem = (struct semaphore *)get_handle_obj( current->process, req->handle,
+                                                   SEMAPHORE_MODIFY_STATE, &semaphore_ops )))
+    {
+        release_semaphore( sem, req->count, &reply->prev_count );
+        release_object( sem );
+    }
 }

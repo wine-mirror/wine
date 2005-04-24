@@ -480,6 +480,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 @REQ(select)
     int          flags;        /* wait flags (see below) */
     void*        cookie;       /* magic cookie to return to client */
+    obj_handle_t signal;       /* object to signal (0 if none) */
     abs_time_t   timeout;      /* absolute timeout */
     VARARG(handles,handles);   /* handles to select on */
 @END

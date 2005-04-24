@@ -273,6 +273,12 @@ int no_satisfied( struct object *obj, struct thread *thread )
     return 0;  /* not abandoned */
 }
 
+int no_signal( struct object *obj, unsigned int access )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
+}
+
 struct fd *no_get_fd( struct object *obj )
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );

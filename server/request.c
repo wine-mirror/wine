@@ -93,6 +93,7 @@ static const struct object_ops master_socket_ops =
     NULL,                          /* remove_queue */
     NULL,                          /* signaled */
     NULL,                          /* satisfied */
+    no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
     master_socket_destroy          /* destroy */
 };
