@@ -284,12 +284,31 @@ BOOL WINAPI UnregisterWaitEx( HANDLE WaitHandle, HANDLE CompletionEvent )
  * Allows to atomically signal any of the synchro objects (semaphore,
  * mutex, event) and wait on another.
  */
-DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD dwMilliseconds, BOOL bAlertable )
+DWORD WINAPI SignalObjectAndWait( HANDLE hObjectToSignal, HANDLE hObjectToWaitOn,
+                                  DWORD dwMilliseconds, BOOL bAlertable )
 {
-    FIXME("(%p %p %ld %d): stub\n",  hObjectToSignal, hObjectToWaitOn, dwMilliseconds, bAlertable);
-    return WAIT_OBJECT_0;
-}
+    NTSTATUS status;
+    LARGE_INTEGER timeout, *ptimeout = NULL;
 
+    TRACE("%p %p %ld %d\n", hObjectToSignal,
+          hObjectToWaitOn, dwMilliseconds, bAlertable);
+
+    if (dwMilliseconds != INFINITE)
+    {
+        timeout.QuadPart = dwMilliseconds * (ULONGLONG)10000;
+        timeout.QuadPart = -timeout.QuadPart;
+        ptimeout = &timeout;
+    }
+
+    status = NtSignalAndWaitForSingleObject( hObjectToSignal, hObjectToWaitOn,
+                                             bAlertable, ptimeout );
+    if (HIWORD(status))
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        status = WAIT_FAILED;
+    }
+    return status;
+}
 
 /***********************************************************************
  *           InitializeCriticalSection   (KERNEL32.@)
