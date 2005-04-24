@@ -19,6 +19,7 @@ path.ok
 pipe.ok
 process.ok
 profile.ok
+sync.ok
 testlist.c
 thread.ok
 time.ok
