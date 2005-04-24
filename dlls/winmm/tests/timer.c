@@ -160,23 +160,18 @@ const char * get_priority(int priority)
 }
 
 static int priority = 0;
-static BOOL disable_boost = FALSE;
 static BOOL fired = FALSE;
 
 void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
-    BOOL res;
     priority = GetThreadPriority(GetCurrentThread());
-    res = GetThreadPriorityBoost(GetCurrentThread(), &disable_boost);
-    ok(res == 0, "GetThreadPriorityBoost() failed, GetLastError() = %08lx\n", GetLastError());
+    ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %08lx\n", GetLastError());
     fired = TRUE;
 }
 
 void test_priority()
 {
     UINT id;
-
-    fired = FALSE;
 
     id = timeSetEvent(100, 100, priorityTimeProc, 0, TIME_ONESHOT);
     ok(id != 0, "timeSetEvent(100, 100, %p, 0, TIME_ONESHOT) returned %d, "
@@ -192,7 +187,6 @@ void test_priority()
         ok(priority == THREAD_PRIORITY_TIME_CRITICAL,
            "thread priority is %s, should be THREAD_PRIORITY_TIME_CRITICAL\n",
            get_priority(priority));
-        ok(disable_boost == FALSE, "disable thread boost should be FALSE\n");
     }
 }
 
