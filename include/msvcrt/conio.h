@@ -53,7 +53,7 @@ static inline int outp(unsigned short i, int j) { return _outp(i, j); }
 static inline unsigned short outpw(unsigned short i, unsigned short j) { return _outpw(i, j); }
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ < 4)
 extern int cprintf(const char*,...) __attribute__((alias("_cprintf"),format(printf,1,2)));
 extern int cscanf(const char*,...) __attribute__((alias("_cscanf"),format(scanf,1,2)));
 #else

@@ -175,7 +175,7 @@ static inline int unlink(const char* path) { return _unlink(path); }
 #endif
 static inline int write(int fd, const void* buf, unsigned int size) { return _write(fd, buf, size); }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ < 4)
 extern int open(const char*,int,...) __attribute__((alias("_open")));
 extern int sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
 #else

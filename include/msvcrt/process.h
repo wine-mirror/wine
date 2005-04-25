@@ -125,7 +125,7 @@ static inline int spawnve(int flags, const char* name, const char* const* argv, 
 static inline int spawnvp(int flags, const char* name, const char* const* argv) { return _spawnvp(flags, name, argv); }
 static inline int spawnvpe(int flags, const char* name, const char* const* argv, const char* const* envv) { return _spawnvpe(flags, name, argv, envv); }
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && (__GNUC__ < 4)
 extern int execl(const char*,const char*,...) __attribute__((alias("_execl")));
 extern int execle(const char*,const char*,...) __attribute__((alias("_execle")));
 extern int execlp(const char*,const char*,...) __attribute__((alias("_execlp")));
