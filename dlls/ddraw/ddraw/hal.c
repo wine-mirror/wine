@@ -114,7 +114,7 @@ static BOOL WINAPI set_hal_info(LPDDHALINFO lpDDHalInfo, BOOL reset)
     if (lpDDHalInfo->lpD3DHALCallbacks)
 	memcpy(&d3d_hal_cbs1, (LPVOID)lpDDHalInfo->lpD3DHALCallbacks, sizeof(D3DHAL_CALLBACKS));
     else
-	memset(&d3d_hal_cbs1, 0, sizeof(D3DDEVICEDESC_V1));
+	memset(&d3d_hal_cbs1, 0, sizeof(D3DHAL_CALLBACKS));
     dd_gbl.lpD3DHALCallbacks	 = (ULONG_PTR)&d3d_hal_cbs1;
 
     if (lpDDHalInfo->dwFlags & DDHALINFO_GETDRIVERINFOSET) {

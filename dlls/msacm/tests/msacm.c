@@ -265,7 +265,7 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
                 rc, MMSYSERR_INVALPARAM);
 
             /* try bad structure size */
-            ZeroMemory(&aftd, sizeof(fd));
+            ZeroMemory(&aftd, sizeof(aftd));
             rc = acmFormatTagEnum(had, &aftd, FormatTagEnumProc, 0, 0);
             ok(rc == MMSYSERR_INVALPARAM,
                "acmFormatTagEnum(): rc = %08x, should be %08x\n",

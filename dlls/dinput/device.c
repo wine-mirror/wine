@@ -409,7 +409,7 @@ BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) 
 
     data = (device_enumobjects_AtoWcb_data*) lpvRef;
     
-    memset(&ddtmp, 0, sizeof(DIDEVICEINSTANCEW)); 
+    memset(&ddtmp, 0, sizeof(ddtmp));
     
     ddtmp.dwSize = sizeof(DIDEVICEINSTANCEW);
     ddtmp.guidType     = lpddi->guidType;
