@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(message);
 
 static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
-    "WM_NULL",			/* 0x00 */
+    "WM_NULL",                  /* 0x00 */
     "WM_CREATE",
     "WM_DESTROY",
     "WM_MOVE",
@@ -63,7 +63,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_GETTEXT",
     "WM_GETTEXTLENGTH",
     "WM_PAINT",
-    "WM_CLOSE",			/* 0x10 */
+    "WM_CLOSE",                 /* 0x10 */
     "WM_QUERYENDSESSION",
     "WM_QUIT",
     "WM_QUERYOPEN",
@@ -79,7 +79,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_FONTCHANGE",
     "WM_TIMECHANGE",
     "WM_CANCELMODE",
-    "WM_SETCURSOR",		/* 0x20 */
+    "WM_SETCURSOR",             /* 0x20 */
     "WM_MOUSEACTIVATE",
     "WM_CHILDACTIVATE",
     "WM_QUEUESYNC",
@@ -95,7 +95,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_DELETEITEM",
     "WM_VKEYTOITEM",
     "WM_CHARTOITEM",
-    "WM_SETFONT",		/* 0x30 */
+    "WM_SETFONT",               /* 0x30 */
     "WM_GETFONT",
     "WM_SETHOTKEY",
     "WM_GETHOTKEY",
@@ -112,11 +112,11 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "wm_activateshellwindow",
     NULL,
 
-    NULL, 		        /* 0x40 */
+    NULL,                       /* 0x40 */
     "wm_compacting", NULL, NULL,
     "WM_COMMNOTIFY", NULL,
-    "WM_WINDOWPOSCHANGING",	/* 0x0046 */
-    "WM_WINDOWPOSCHANGED",	/* 0x0047 */
+    "WM_WINDOWPOSCHANGING",     /* 0x0046 */
+    "WM_WINDOWPOSCHANGED",      /* 0x0047 */
     "WM_POWER", NULL,
     "WM_COPYDATA",
     "WM_CANCELJOURNAL", NULL, NULL,
@@ -144,14 +144,14 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_DISPLAYCHANGE",
     "WM_GETICON",
 
-    "WM_SETICON",		/* 0x0080 */
-    "WM_NCCREATE",		/* 0x0081 */
-    "WM_NCDESTROY",		/* 0x0082 */
-    "WM_NCCALCSIZE",		/* 0x0083 */
-    "WM_NCHITTEST",        	/* 0x0084 */
-    "WM_NCPAINT",          	/* 0x0085 */
-    "WM_NCACTIVATE",       	/* 0x0086 */
-    "WM_GETDLGCODE",		/* 0x0087 */
+    "WM_SETICON",               /* 0x0080 */
+    "WM_NCCREATE",              /* 0x0081 */
+    "WM_NCDESTROY",             /* 0x0082 */
+    "WM_NCCALCSIZE",            /* 0x0083 */
+    "WM_NCHITTEST",             /* 0x0084 */
+    "WM_NCPAINT",               /* 0x0085 */
+    "WM_NCACTIVATE",            /* 0x0086 */
+    "WM_GETDLGCODE",            /* 0x0087 */
     "WM_SYNCPAINT",
     "WM_SYNCTASK", NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -246,32 +246,32 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "BM_SETIMAGE",              /* 0x00f7 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    "WM_KEYDOWN",		/* 0x0100 */
-    "WM_KEYUP",			/* 0x0101 */
-    "WM_CHAR",			/* 0x0102 */
-    "WM_DEADCHAR",		/* 0x0103 */
-    "WM_SYSKEYDOWN",		/* 0x0104 */
-    "WM_SYSKEYUP",		/* 0x0105 */
-    "WM_SYSCHAR",		/* 0x0106 */
-    "WM_SYSDEADCHAR",		/* 0x0107 */
-    "WM_KEYLAST",		/* 0x0108 */
+    "WM_KEYDOWN",               /* 0x0100 */
+    "WM_KEYUP",                 /* 0x0101 */
+    "WM_CHAR",                  /* 0x0102 */
+    "WM_DEADCHAR",              /* 0x0103 */
+    "WM_SYSKEYDOWN",            /* 0x0104 */
+    "WM_SYSKEYUP",              /* 0x0105 */
+    "WM_SYSCHAR",               /* 0x0106 */
+    "WM_SYSDEADCHAR",           /* 0x0107 */
+    "WM_KEYLAST",               /* 0x0108 */
     NULL,
     "WM_CONVERTREQUEST",
     "WM_CONVERTRESULT",
     "WM_INTERIM",
-    "WM_IME_STARTCOMPOSITION",	/* 0x010d */
-    "WM_IME_ENDCOMPOSITION",	/* 0x010e */
-    "WM_IME_COMPOSITION",	/* 0x010f */
+    "WM_IME_STARTCOMPOSITION",  /* 0x010d */
+    "WM_IME_ENDCOMPOSITION",    /* 0x010e */
+    "WM_IME_COMPOSITION",       /* 0x010f */
 
-    "WM_INITDIALOG",		/* 0x0110 */
-    "WM_COMMAND",		/* 0x0111 */
-    "WM_SYSCOMMAND",       	/* 0x0112 */
-    "WM_TIMER",			/* 0x0113 */
-    "WM_HSCROLL",		/* 0x0114 */
-    "WM_VSCROLL",		/* 0x0115 */
+    "WM_INITDIALOG",            /* 0x0110 */
+    "WM_COMMAND",               /* 0x0111 */
+    "WM_SYSCOMMAND",            /* 0x0112 */
+    "WM_TIMER",                 /* 0x0113 */
+    "WM_HSCROLL",               /* 0x0114 */
+    "WM_VSCROLL",               /* 0x0115 */
     "WM_INITMENU",              /* 0x0116 */
     "WM_INITMENUPOPUP",         /* 0x0117 */
-    "WM_SYSTIMER",		/* 0x0118 */
+    "WM_SYSTIMER",              /* 0x0118 */
     NULL, NULL, NULL, NULL, NULL, NULL,
     "WM_MENUSELECT",            /* 0x011f */
 
@@ -416,26 +416,26 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    "WM_MOUSEMOVE",		/* 0x0200 */
-    "WM_LBUTTONDOWN",		/* 0x0201 */
-    "WM_LBUTTONUP",		/* 0x0202 */
-    "WM_LBUTTONDBLCLK",		/* 0x0203 */
-    "WM_RBUTTONDOWN",		/* 0x0204 */
-    "WM_RBUTTONUP",		/* 0x0205 */
-    "WM_RBUTTONDBLCLK",		/* 0x0206 */
-    "WM_MBUTTONDOWN",		/* 0x0207 */
-    "WM_MBUTTONUP",		/* 0x0208 */
-    "WM_MBUTTONDBLCLK",		/* 0x0209 */
+    "WM_MOUSEMOVE",             /* 0x0200 */
+    "WM_LBUTTONDOWN",           /* 0x0201 */
+    "WM_LBUTTONUP",             /* 0x0202 */
+    "WM_LBUTTONDBLCLK",         /* 0x0203 */
+    "WM_RBUTTONDOWN",           /* 0x0204 */
+    "WM_RBUTTONUP",             /* 0x0205 */
+    "WM_RBUTTONDBLCLK",         /* 0x0206 */
+    "WM_MBUTTONDOWN",           /* 0x0207 */
+    "WM_MBUTTONUP",             /* 0x0208 */
+    "WM_MBUTTONDBLCLK",         /* 0x0209 */
     "WM_MOUSEWHEEL",            /* 0x020A */
     "WM_XBUTTONDOWN",           /* 0x020B */
     "WM_XBUTTONUP",             /* 0x020C */
     "WM_XBUTTONDBLCLK",         /* 0x020D */
     NULL, NULL,
 
-    "WM_PARENTNOTIFY",		/* 0x0210 */
+    "WM_PARENTNOTIFY",          /* 0x0210 */
     "WM_ENTERMENULOOP",         /* 0x0211 */
     "WM_EXITMENULOOP",          /* 0x0212 */
-    "WM_NEXTMENU", 		/* 0x0213 */
+    "WM_NEXTMENU",              /* 0x0213 */
     "WM_SIZING",
     "WM_CAPTURECHANGED",
     "WM_MOVING", NULL,
@@ -462,9 +462,9 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     /* 0x0230*/
     "WM_MDISETMENU",            /* 0x0230 */
-    "WM_ENTERSIZEMOVE",		/* 0x0231 */
-    "WM_EXITSIZEMOVE",		/* 0x0232 */
-    "WM_DROPFILES", 		/* 0x0233 */
+    "WM_ENTERSIZEMOVE",         /* 0x0231 */
+    "WM_EXITSIZEMOVE",          /* 0x0232 */
+    "WM_DROPFILES",             /* 0x0233 */
     "WM_MDIREFRESHMENU", NULL, NULL, NULL,
     /* 0x0238*/
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -549,7 +549,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    "WM_CUT", 			/* 0x0300 */
+    "WM_CUT",                   /* 0x0300 */
     "WM_COPY",
     "WM_PASTE",
     "WM_CLEAR",
@@ -564,12 +564,12 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     "WM_ASKCBFORMATNAME",
     "WM_CHANGECBCHAIN",
     "WM_HSCROLLCLIPBOARD",
-    "WM_QUERYNEWPALETTE",	/* 0x030f*/
+    "WM_QUERYNEWPALETTE",       /* 0x030f*/
 
     "WM_PALETTEISCHANGING",
     "WM_PALETTECHANGED",
-    "WM_HOTKEY", 		/* 0x0312 */
-	  NULL, NULL, NULL, NULL,
+    "WM_HOTKEY",                /* 0x0312 */
+          NULL, NULL, NULL, NULL,
     "WM_PRINT",
     "WM_PRINTCLIENT",
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
@@ -668,14 +668,14 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 
     /* 0x03e0 */
     "WM_DDE_INITIATE",  /* 0x3E0 */
-    "WM_DDE_TERMINATE",	/* 0x3E1 */
-    "WM_DDE_ADVISE",	/* 0x3E2 */
-    "WM_DDE_UNADVISE",	/* 0x3E3 */
-    "WM_DDE_ACK",	/* 0x3E4 */
-    "WM_DDE_DATA",	/* 0x3E5 */
-    "WM_DDE_REQUEST",	/* 0x3E6 */
-    "WM_DDE_POKE",	/* 0x3E7 */
-    "WM_DDE_EXECUTE",	/* 0x3E8 */
+    "WM_DDE_TERMINATE", /* 0x3E1 */
+    "WM_DDE_ADVISE",    /* 0x3E2 */
+    "WM_DDE_UNADVISE",  /* 0x3E3 */
+    "WM_DDE_ACK",       /* 0x3E4 */
+    "WM_DDE_DATA",      /* 0x3E5 */
+    "WM_DDE_REQUEST",   /* 0x3E6 */
+    "WM_DDE_POKE",      /* 0x3E7 */
+    "WM_DDE_EXECUTE",   /* 0x3E8 */
     NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
 
@@ -690,7 +690,7 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 #define SPY_MAX_LVMMSGNUM   140
 static const char * const LVMMessageTypeNames[SPY_MAX_LVMMSGNUM + 1] =
 {
-    "LVM_GETBKCOLOR",		/* 1000 */
+    "LVM_GETBKCOLOR",           /* 1000 */
     "LVM_SETBKCOLOR",
     "LVM_GETIMAGELIST",
     "LVM_SETIMAGELIST",
@@ -830,14 +830,14 @@ static const char * const LVMMessageTypeNames[SPY_MAX_LVMMSGNUM + 1] =
     NULL,
     NULL,
     "LVM_SETBKIMAGEW",
-    "LVM_GETBKIMAGEW"	/* 0x108B */
+    "LVM_GETBKIMAGEW"   /* 0x108B */
 };
 
 
 #define SPY_MAX_TVMSGNUM   65
 static const char * const TVMessageTypeNames[SPY_MAX_TVMSGNUM + 1] =
 {
-    "TVM_INSERTITEMA",		/* 1100 */
+    "TVM_INSERTITEMA",          /* 1100 */
     "TVM_DELETEITEM",
     "TVM_EXPAND",
     NULL,
@@ -909,7 +909,7 @@ static const char * const TVMessageTypeNames[SPY_MAX_TVMSGNUM + 1] =
 #define SPY_MAX_HDMMSGNUM   19
 static const char * const HDMMessageTypeNames[SPY_MAX_HDMMSGNUM + 1] =
 {
-    "HDM_GETITEMCOUNT",		/* 1200 */
+    "HDM_GETITEMCOUNT",         /* 1200 */
     "HDM_INSERTITEMA",
     "HDM_DELETEITEM",
     "HDM_GETITEMA",
@@ -935,7 +935,7 @@ static const char * const HDMMessageTypeNames[SPY_MAX_HDMMSGNUM + 1] =
 #define SPY_MAX_TCMMSGNUM   62
 static const char * const TCMMessageTypeNames[SPY_MAX_TCMMSGNUM + 1] =
 {
-    NULL,		/* 1300 */
+    NULL,               /* 1300 */
     NULL,
     "TCM_SETIMAGELIST",
     "TCM_GETIMAGELIST",
@@ -1003,7 +1003,7 @@ static const char * const TCMMessageTypeNames[SPY_MAX_TCMMSGNUM + 1] =
 #define SPY_MAX_PGMMSGNUM   13
 static const char * const PGMMessageTypeNames[SPY_MAX_PGMMSGNUM + 1] =
 {
-    NULL,		/* 1400 */
+    NULL,               /* 1400 */
     "PGM_SETCHILD",
     "PGM_RECALCSIZE",
     "PGM_FORWARDMOUSE",
@@ -1023,7 +1023,7 @@ static const char * const PGMMessageTypeNames[SPY_MAX_PGMMSGNUM + 1] =
 #define SPY_MAX_CCMMSGNUM   9
 static const char * const CCMMessageTypeNames[SPY_MAX_CCMMSGNUM + 1] =
 {
-    NULL,		/* 0x2000 */
+    NULL,               /* 0x2000 */
     "CCM_SETBKCOLOR",
     "CCM_SETCOLORSCHEME",
     "CCM_GETCOLORSCHEME",
@@ -1050,262 +1050,262 @@ static const char * const WINEMessageTypeNames[SPY_MAX_WINEMSGNUM + 1] =
 #define SPY_MAX_VKKEYSNUM 255
 static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
 {
-    NULL,		/* 0x00 */
-    "VK_LBUTTON",	/* 0x01 */
-    "VK_RBUTTON",	/* 0x02 */
-    "VK_CANCEL",	/* 0x03 */
-    "VK_MBUTTON",	/* 0x04 */
-    "VK_XBUTTON1",	/* 0x05 */
-    "VK_XBUTTON2",	/* 0x06 */
-    NULL,		/* 0x07 */
-    "VK_BACK",		/* 0x08 */
-    "VK_TAB",		/* 0x09 */
-    NULL,		/* 0x0A */
-    NULL,		/* 0x0B */
-    "VK_CLEAR",		/* 0x0C */
-    "VK_RETURN",	/* 0x0D */
-    NULL,		/* 0x0E */
-    NULL,		/* 0x0F */
-    "VK_SHIFT",		/* 0x10 */
-    "VK_CONTROL",	/* 0x11 */
-    "VK_MENU",		/* 0x12 */
-    "VK_PAUSE",		/* 0x13 */
-    "VK_CAPITAL",	/* 0x14 */
-    NULL,		/* 0x15 */
-    NULL,		/* 0x16 */
-    NULL,		/* 0x17 */
-    NULL,		/* 0x18 */
-    NULL,		/* 0x19 */
-    NULL,		/* 0x1A */
-    "VK_ESCAPE",	/* 0x1B */
-    NULL,		/* 0x1C */
-    NULL,		/* 0x1D */
-    NULL,		/* 0x1E */
-    NULL,		/* 0x1F */
-    "VK_SPACE",		/* 0x20 */
-    "VK_PRIOR",		/* 0x21 */
-    "VK_NEXT",		/* 0x22 */
-    "VK_END",		/* 0x23 */
-    "VK_HOME",		/* 0x24 */
-    "VK_LEFT",		/* 0x25 */
-    "VK_UP",		/* 0x26 */
-    "VK_RIGHT",		/* 0x27 */
-    "VK_DOWN",		/* 0x28 */
-    "VK_SELECT",	/* 0x29 */
-    "VK_PRINT",		/* 0x2A */
-    "VK_EXECUTE",	/* 0x2B */
-    "VK_SNAPSHOT",	/* 0x2C */
-    "VK_INSERT",	/* 0x2D */
-    "VK_DELETE",	/* 0x2E */
-    "VK_HELP",		/* 0x2F */
-    "VK_0",		/* 0x30 */
-    "VK_1",		/* 0x31 */
-    "VK_2",		/* 0x32 */
-    "VK_3",		/* 0x33 */
-    "VK_4",		/* 0x34 */
-    "VK_5",		/* 0x35 */
-    "VK_6",		/* 0x36 */
-    "VK_7",		/* 0x37 */
-    "VK_8",		/* 0x38 */
-    "VK_9",		/* 0x39 */
-    NULL,		/* 0x3A */
-    NULL,		/* 0x3B */
-    NULL,		/* 0x3C */
-    NULL,		/* 0x3D */
-    NULL,		/* 0x3E */
-    NULL,		/* 0x3F */
-    NULL,		/* 0x40 */
-    "VK_A",		/* 0x41 */
-    "VK_B",		/* 0x42 */
-    "VK_C",		/* 0x43 */
-    "VK_D",		/* 0x44 */
-    "VK_E",		/* 0x45 */
-    "VK_F",		/* 0x46 */
-    "VK_G",		/* 0x47 */
-    "VK_H",		/* 0x48 */
-    "VK_I",		/* 0x49 */
-    "VK_J",		/* 0x4A */
-    "VK_K",		/* 0x4B */
-    "VK_L",		/* 0x4C */
-    "VK_M",		/* 0x4D */
-    "VK_N",		/* 0x4E */
-    "VK_O",		/* 0x4F */
-    "VK_P",		/* 0x50 */
-    "VK_Q",		/* 0x51 */
-    "VK_R",		/* 0x52 */
-    "VK_S",		/* 0x53 */
-    "VK_T",		/* 0x54 */
-    "VK_U",		/* 0x55 */
-    "VK_V",		/* 0x56 */
-    "VK_W",		/* 0x57 */
-    "VK_X",		/* 0x58 */
-    "VK_Y",		/* 0x59 */
-    "VK_Z",		/* 0x5A */
-    "VK_LWIN",		/* 0x5B */
-    "VK_RWIN",		/* 0x5C */
-    "VK_APPS",		/* 0x5D */
-    NULL,		/* 0x5E */
-    NULL,		/* 0x5F */
-    "VK_NUMPAD0",	/* 0x60 */
-    "VK_NUMPAD1",	/* 0x61 */
-    "VK_NUMPAD2",	/* 0x62 */
-    "VK_NUMPAD3",	/* 0x63 */
-    "VK_NUMPAD4",	/* 0x64 */
-    "VK_NUMPAD5",	/* 0x65 */
-    "VK_NUMPAD6",	/* 0x66 */
-    "VK_NUMPAD7",	/* 0x67 */
-    "VK_NUMPAD8",	/* 0x68 */
-    "VK_NUMPAD9",	/* 0x69 */
-    "VK_MULTIPLY",	/* 0x6A */
-    "VK_ADD",		/* 0x6B */
-    "VK_SEPARATOR",	/* 0x6C */
-    "VK_SUBTRACT",	/* 0x6D */
-    "VK_DECIMAL",	/* 0x6E */
-    "VK_DIVIDE",	/* 0x6F */
-    "VK_F1",		/* 0x70 */
-    "VK_F2",		/* 0x71 */
-    "VK_F3",		/* 0x72 */
-    "VK_F4",		/* 0x73 */
-    "VK_F5",		/* 0x74 */
-    "VK_F6",		/* 0x75 */
-    "VK_F7",		/* 0x76 */
-    "VK_F8",		/* 0x77 */
-    "VK_F9",		/* 0x78 */
-    "VK_F10",		/* 0x79 */
-    "VK_F11",		/* 0x7A */
-    "VK_F12",		/* 0x7B */
-    "VK_F13",		/* 0x7C */
-    "VK_F14",		/* 0x7D */
-    "VK_F15",		/* 0x7E */
-    "VK_F16",		/* 0x7F */
-    "VK_F17",		/* 0x80 */
-    "VK_F18",		/* 0x81 */
-    "VK_F19",		/* 0x82 */
-    "VK_F20",		/* 0x83 */
-    "VK_F21",		/* 0x84 */
-    "VK_F22",		/* 0x85 */
-    "VK_F23",		/* 0x86 */
-    "VK_F24",		/* 0x87 */
-    NULL,		/* 0x88 */
-    NULL,		/* 0x89 */
-    NULL,		/* 0x8A */
-    NULL,		/* 0x8B */
-    NULL,		/* 0x8C */
-    NULL,		/* 0x8D */
-    NULL,		/* 0x8E */
-    NULL,		/* 0x8F */
-    "VK_NUMLOCK",	/* 0x90 */
-    "VK_SCROLL",	/* 0x91 */
-    NULL,		/* 0x92 */
-    NULL,		/* 0x93 */
-    NULL,		/* 0x94 */
-    NULL,		/* 0x95 */
-    NULL,		/* 0x96 */
-    NULL,		/* 0x97 */
-    NULL,		/* 0x98 */
-    NULL,		/* 0x99 */
-    NULL,		/* 0x9A */
-    NULL,		/* 0x9B */
-    NULL,		/* 0x9C */
-    NULL,		/* 0x9D */
-    NULL,		/* 0x9E */
-    NULL,		/* 0x9F */
-    "VK_LSHIFT",	/* 0xA0 */
-    "VK_RSHIFT",	/* 0xA1 */
-    "VK_LCONTROL",	/* 0xA2 */
-    "VK_RCONTROL",	/* 0xA3 */
-    "VK_LMENU",		/* 0xA4 */
-    "VK_RMENU",		/* 0xA5 */
-    NULL,		/* 0xA6 */
-    NULL,		/* 0xA7 */
-    NULL,		/* 0xA8 */
-    NULL,		/* 0xA9 */
-    NULL,		/* 0xAA */
-    NULL,		/* 0xAB */
-    NULL,		/* 0xAC */
-    NULL,		/* 0xAD */
-    NULL,		/* 0xAE */
-    NULL,		/* 0xAF */
-    NULL,		/* 0xB0 */
-    NULL,		/* 0xB1 */
-    NULL,		/* 0xB2 */
-    NULL,		/* 0xB3 */
-    NULL,		/* 0xB4 */
-    NULL,		/* 0xB5 */
-    NULL,		/* 0xB6 */
-    NULL,		/* 0xB7 */
-    NULL,		/* 0xB8 */
-    NULL,		/* 0xB9 */
-    "VK_OEM_1",		/* 0xBA */
-    "VK_OEM_PLUS",	/* 0xBB */
-    "VK_OEM_COMMA",	/* 0xBC */
-    "VK_OEM_MINUS",	/* 0xBD */
-    "VK_OEM_PERIOD",	/* 0xBE */
-    "VK_OEM_2",		/* 0xBF */
-    "VK_OEM_3",		/* 0xC0 */
-    NULL,		/* 0xC1 */
-    NULL,		/* 0xC2 */
-    NULL,		/* 0xC3 */
-    NULL,		/* 0xC4 */
-    NULL,		/* 0xC5 */
-    NULL,		/* 0xC6 */
-    NULL,		/* 0xC7 */
-    NULL,		/* 0xC8 */
-    NULL,		/* 0xC9 */
-    NULL,		/* 0xCA */
-    NULL,		/* 0xCB */
-    NULL,		/* 0xCC */
-    NULL,		/* 0xCD */
-    NULL,		/* 0xCE */
-    NULL,		/* 0xCF */
-    NULL,		/* 0xD0 */
-    NULL,		/* 0xD1 */
-    NULL,		/* 0xD2 */
-    NULL,		/* 0xD3 */
-    NULL,		/* 0xD4 */
-    NULL,		/* 0xD5 */
-    NULL,		/* 0xD6 */
-    NULL,		/* 0xD7 */
-    NULL,		/* 0xD8 */
-    NULL,		/* 0xD9 */
-    NULL,		/* 0xDA */
-    "VK_OEM_4",		/* 0xDB */
-    "VK_OEM_5",		/* 0xDC */
-    "VK_OEM_6",		/* 0xDD */
-    "VK_OEM_7",		/* 0xDE */
-    "VK_OEM_8",		/* 0xDF */
-    NULL,		/* 0xE0 */
-    "VK_OEM_AX",	/* 0xE1 */
-    "VK_OEM_102",	/* 0xE2 */
-    "VK_ICO_HELP",	/* 0xE3 */
-    "VK_ICO_00",	/* 0xE4 */
-    "VK_PROCESSKEY",	/* 0xE5 */
-    NULL,		/* 0xE6 */
-    NULL,		/* 0xE7 */
-    NULL,		/* 0xE8 */
-    NULL,		/* 0xE9 */
-    NULL,		/* 0xEA */
-    NULL,		/* 0xEB */
-    NULL,		/* 0xEC */
-    NULL,		/* 0xED */
-    NULL,		/* 0xEE */
-    NULL,		/* 0xEF */
-    NULL,		/* 0xF0 */
-    NULL,		/* 0xF1 */
-    NULL,		/* 0xF2 */
-    NULL,		/* 0xF3 */
-    NULL,		/* 0xF4 */
-    NULL,		/* 0xF5 */
-    "VK_ATTN",		/* 0xF6 */
-    "VK_CRSEL",		/* 0xF7 */
-    "VK_EXSEL",		/* 0xF8 */
-    "VK_EREOF",		/* 0xF9 */
-    "VK_PLAY",		/* 0xFA */
-    "VK_ZOOM",		/* 0xFB */
-    "VK_NONAME",	/* 0xFC */
-    "VK_PA1",		/* 0xFD */
-    "VK_OEM_CLEAR",	/* 0xFE */
-    NULL		/* 0xFF */
+    NULL,               /* 0x00 */
+    "VK_LBUTTON",       /* 0x01 */
+    "VK_RBUTTON",       /* 0x02 */
+    "VK_CANCEL",        /* 0x03 */
+    "VK_MBUTTON",       /* 0x04 */
+    "VK_XBUTTON1",      /* 0x05 */
+    "VK_XBUTTON2",      /* 0x06 */
+    NULL,               /* 0x07 */
+    "VK_BACK",          /* 0x08 */
+    "VK_TAB",           /* 0x09 */
+    NULL,               /* 0x0A */
+    NULL,               /* 0x0B */
+    "VK_CLEAR",         /* 0x0C */
+    "VK_RETURN",        /* 0x0D */
+    NULL,               /* 0x0E */
+    NULL,               /* 0x0F */
+    "VK_SHIFT",         /* 0x10 */
+    "VK_CONTROL",       /* 0x11 */
+    "VK_MENU",          /* 0x12 */
+    "VK_PAUSE",         /* 0x13 */
+    "VK_CAPITAL",       /* 0x14 */
+    NULL,               /* 0x15 */
+    NULL,               /* 0x16 */
+    NULL,               /* 0x17 */
+    NULL,               /* 0x18 */
+    NULL,               /* 0x19 */
+    NULL,               /* 0x1A */
+    "VK_ESCAPE",        /* 0x1B */
+    NULL,               /* 0x1C */
+    NULL,               /* 0x1D */
+    NULL,               /* 0x1E */
+    NULL,               /* 0x1F */
+    "VK_SPACE",         /* 0x20 */
+    "VK_PRIOR",         /* 0x21 */
+    "VK_NEXT",          /* 0x22 */
+    "VK_END",           /* 0x23 */
+    "VK_HOME",          /* 0x24 */
+    "VK_LEFT",          /* 0x25 */
+    "VK_UP",            /* 0x26 */
+    "VK_RIGHT",         /* 0x27 */
+    "VK_DOWN",          /* 0x28 */
+    "VK_SELECT",        /* 0x29 */
+    "VK_PRINT",         /* 0x2A */
+    "VK_EXECUTE",       /* 0x2B */
+    "VK_SNAPSHOT",      /* 0x2C */
+    "VK_INSERT",        /* 0x2D */
+    "VK_DELETE",        /* 0x2E */
+    "VK_HELP",          /* 0x2F */
+    "VK_0",             /* 0x30 */
+    "VK_1",             /* 0x31 */
+    "VK_2",             /* 0x32 */
+    "VK_3",             /* 0x33 */
+    "VK_4",             /* 0x34 */
+    "VK_5",             /* 0x35 */
+    "VK_6",             /* 0x36 */
+    "VK_7",             /* 0x37 */
+    "VK_8",             /* 0x38 */
+    "VK_9",             /* 0x39 */
+    NULL,               /* 0x3A */
+    NULL,               /* 0x3B */
+    NULL,               /* 0x3C */
+    NULL,               /* 0x3D */
+    NULL,               /* 0x3E */
+    NULL,               /* 0x3F */
+    NULL,               /* 0x40 */
+    "VK_A",             /* 0x41 */
+    "VK_B",             /* 0x42 */
+    "VK_C",             /* 0x43 */
+    "VK_D",             /* 0x44 */
+    "VK_E",             /* 0x45 */
+    "VK_F",             /* 0x46 */
+    "VK_G",             /* 0x47 */
+    "VK_H",             /* 0x48 */
+    "VK_I",             /* 0x49 */
+    "VK_J",             /* 0x4A */
+    "VK_K",             /* 0x4B */
+    "VK_L",             /* 0x4C */
+    "VK_M",             /* 0x4D */
+    "VK_N",             /* 0x4E */
+    "VK_O",             /* 0x4F */
+    "VK_P",             /* 0x50 */
+    "VK_Q",             /* 0x51 */
+    "VK_R",             /* 0x52 */
+    "VK_S",             /* 0x53 */
+    "VK_T",             /* 0x54 */
+    "VK_U",             /* 0x55 */
+    "VK_V",             /* 0x56 */
+    "VK_W",             /* 0x57 */
+    "VK_X",             /* 0x58 */
+    "VK_Y",             /* 0x59 */
+    "VK_Z",             /* 0x5A */
+    "VK_LWIN",          /* 0x5B */
+    "VK_RWIN",          /* 0x5C */
+    "VK_APPS",          /* 0x5D */
+    NULL,               /* 0x5E */
+    NULL,               /* 0x5F */
+    "VK_NUMPAD0",       /* 0x60 */
+    "VK_NUMPAD1",       /* 0x61 */
+    "VK_NUMPAD2",       /* 0x62 */
+    "VK_NUMPAD3",       /* 0x63 */
+    "VK_NUMPAD4",       /* 0x64 */
+    "VK_NUMPAD5",       /* 0x65 */
+    "VK_NUMPAD6",       /* 0x66 */
+    "VK_NUMPAD7",       /* 0x67 */
+    "VK_NUMPAD8",       /* 0x68 */
+    "VK_NUMPAD9",       /* 0x69 */
+    "VK_MULTIPLY",      /* 0x6A */
+    "VK_ADD",           /* 0x6B */
+    "VK_SEPARATOR",     /* 0x6C */
+    "VK_SUBTRACT",      /* 0x6D */
+    "VK_DECIMAL",       /* 0x6E */
+    "VK_DIVIDE",        /* 0x6F */
+    "VK_F1",            /* 0x70 */
+    "VK_F2",            /* 0x71 */
+    "VK_F3",            /* 0x72 */
+    "VK_F4",            /* 0x73 */
+    "VK_F5",            /* 0x74 */
+    "VK_F6",            /* 0x75 */
+    "VK_F7",            /* 0x76 */
+    "VK_F8",            /* 0x77 */
+    "VK_F9",            /* 0x78 */
+    "VK_F10",           /* 0x79 */
+    "VK_F11",           /* 0x7A */
+    "VK_F12",           /* 0x7B */
+    "VK_F13",           /* 0x7C */
+    "VK_F14",           /* 0x7D */
+    "VK_F15",           /* 0x7E */
+    "VK_F16",           /* 0x7F */
+    "VK_F17",           /* 0x80 */
+    "VK_F18",           /* 0x81 */
+    "VK_F19",           /* 0x82 */
+    "VK_F20",           /* 0x83 */
+    "VK_F21",           /* 0x84 */
+    "VK_F22",           /* 0x85 */
+    "VK_F23",           /* 0x86 */
+    "VK_F24",           /* 0x87 */
+    NULL,               /* 0x88 */
+    NULL,               /* 0x89 */
+    NULL,               /* 0x8A */
+    NULL,               /* 0x8B */
+    NULL,               /* 0x8C */
+    NULL,               /* 0x8D */
+    NULL,               /* 0x8E */
+    NULL,               /* 0x8F */
+    "VK_NUMLOCK",       /* 0x90 */
+    "VK_SCROLL",        /* 0x91 */
+    NULL,               /* 0x92 */
+    NULL,               /* 0x93 */
+    NULL,               /* 0x94 */
+    NULL,               /* 0x95 */
+    NULL,               /* 0x96 */
+    NULL,               /* 0x97 */
+    NULL,               /* 0x98 */
+    NULL,               /* 0x99 */
+    NULL,               /* 0x9A */
+    NULL,               /* 0x9B */
+    NULL,               /* 0x9C */
+    NULL,               /* 0x9D */
+    NULL,               /* 0x9E */
+    NULL,               /* 0x9F */
+    "VK_LSHIFT",        /* 0xA0 */
+    "VK_RSHIFT",        /* 0xA1 */
+    "VK_LCONTROL",      /* 0xA2 */
+    "VK_RCONTROL",      /* 0xA3 */
+    "VK_LMENU",         /* 0xA4 */
+    "VK_RMENU",         /* 0xA5 */
+    NULL,               /* 0xA6 */
+    NULL,               /* 0xA7 */
+    NULL,               /* 0xA8 */
+    NULL,               /* 0xA9 */
+    NULL,               /* 0xAA */
+    NULL,               /* 0xAB */
+    NULL,               /* 0xAC */
+    NULL,               /* 0xAD */
+    NULL,               /* 0xAE */
+    NULL,               /* 0xAF */
+    NULL,               /* 0xB0 */
+    NULL,               /* 0xB1 */
+    NULL,               /* 0xB2 */
+    NULL,               /* 0xB3 */
+    NULL,               /* 0xB4 */
+    NULL,               /* 0xB5 */
+    NULL,               /* 0xB6 */
+    NULL,               /* 0xB7 */
+    NULL,               /* 0xB8 */
+    NULL,               /* 0xB9 */
+    "VK_OEM_1",         /* 0xBA */
+    "VK_OEM_PLUS",      /* 0xBB */
+    "VK_OEM_COMMA",     /* 0xBC */
+    "VK_OEM_MINUS",     /* 0xBD */
+    "VK_OEM_PERIOD",    /* 0xBE */
+    "VK_OEM_2",         /* 0xBF */
+    "VK_OEM_3",         /* 0xC0 */
+    NULL,               /* 0xC1 */
+    NULL,               /* 0xC2 */
+    NULL,               /* 0xC3 */
+    NULL,               /* 0xC4 */
+    NULL,               /* 0xC5 */
+    NULL,               /* 0xC6 */
+    NULL,               /* 0xC7 */
+    NULL,               /* 0xC8 */
+    NULL,               /* 0xC9 */
+    NULL,               /* 0xCA */
+    NULL,               /* 0xCB */
+    NULL,               /* 0xCC */
+    NULL,               /* 0xCD */
+    NULL,               /* 0xCE */
+    NULL,               /* 0xCF */
+    NULL,               /* 0xD0 */
+    NULL,               /* 0xD1 */
+    NULL,               /* 0xD2 */
+    NULL,               /* 0xD3 */
+    NULL,               /* 0xD4 */
+    NULL,               /* 0xD5 */
+    NULL,               /* 0xD6 */
+    NULL,               /* 0xD7 */
+    NULL,               /* 0xD8 */
+    NULL,               /* 0xD9 */
+    NULL,               /* 0xDA */
+    "VK_OEM_4",         /* 0xDB */
+    "VK_OEM_5",         /* 0xDC */
+    "VK_OEM_6",         /* 0xDD */
+    "VK_OEM_7",         /* 0xDE */
+    "VK_OEM_8",         /* 0xDF */
+    NULL,               /* 0xE0 */
+    "VK_OEM_AX",        /* 0xE1 */
+    "VK_OEM_102",       /* 0xE2 */
+    "VK_ICO_HELP",      /* 0xE3 */
+    "VK_ICO_00",        /* 0xE4 */
+    "VK_PROCESSKEY",    /* 0xE5 */
+    NULL,               /* 0xE6 */
+    NULL,               /* 0xE7 */
+    NULL,               /* 0xE8 */
+    NULL,               /* 0xE9 */
+    NULL,               /* 0xEA */
+    NULL,               /* 0xEB */
+    NULL,               /* 0xEC */
+    NULL,               /* 0xED */
+    NULL,               /* 0xEE */
+    NULL,               /* 0xEF */
+    NULL,               /* 0xF0 */
+    NULL,               /* 0xF1 */
+    NULL,               /* 0xF2 */
+    NULL,               /* 0xF3 */
+    NULL,               /* 0xF4 */
+    NULL,               /* 0xF5 */
+    "VK_ATTN",          /* 0xF6 */
+    "VK_CRSEL",         /* 0xF7 */
+    "VK_EXSEL",         /* 0xF8 */
+    "VK_EREOF",         /* 0xF9 */
+    "VK_PLAY",          /* 0xFA */
+    "VK_ZOOM",          /* 0xFB */
+    "VK_NONAME",        /* 0xFC */
+    "VK_PA1",           /* 0xFD */
+    "VK_OEM_CLEAR",     /* 0xFE */
+    NULL                /* 0xFF */
 };
 
 
@@ -1382,7 +1382,7 @@ static const USER_MSG toolbar_array[] = {
           USM(TB_PRESSBUTTON           ,0),
           USM(TB_HIDEBUTTON            ,0),
           USM(TB_INDETERMINATE         ,0),
-          USM(TB_MARKBUTTON	       ,0),
+          USM(TB_MARKBUTTON            ,0),
           USM(TB_ISBUTTONENABLED       ,0),
           USM(TB_ISBUTTONCHECKED       ,0),
           USM(TB_ISBUTTONPRESSED       ,0),
@@ -1498,7 +1498,7 @@ static const USER_MSG tooltips_array[] = {
           USM(TTM_GETMARGIN            ,0),
           USM(TTM_POP                  ,0),
           USM(TTM_UPDATE               ,0),
-	  USM(TTM_GETBUBBLESIZE        ,0),
+          USM(TTM_GETBUBBLESIZE        ,0),
           USM(TTM_ADDTOOLW             ,0),
           USM(TTM_DELTOOLW             ,0),
           USM(TTM_NEWTOOLRECTW         ,0),
@@ -1983,27 +1983,27 @@ static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *l
     const USER_MSG *test;
 
     while (last >= first) {
-	count = 1 + last - first;
-	if (count < 3) {
+        count = 1 + last - first;
+        if (count < 3) {
 #if DEBUG_SPY
-	    TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
-	       code, first->value, first->name, last->value, last->name, last->len);
+            TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
+               code, first->value, first->name, last->value, last->name, last->len);
 #endif
-	    if (first->value == code) return first;
-	    if (last->value == code) return last;
-	    return NULL;
-	}
-	count = count / 2;
-	test = first + count;
+            if (first->value == code) return first;
+            if (last->value == code) return last;
+            return NULL;
+        }
+        count = count / 2;
+        test = first + count;
 #if DEBUG_SPY
-	TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
-	   first, last, test, test->value, code, count);
+        TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
+           first, last, test, test->value, code, count);
 #endif
-	if (test->value == code) return test;
-	if (test->value > code)
-	    last = test - 1;
-	else
-	    first = test + 1;
+        if (test->value == code) return test;
+        if (test->value > code)
+            last = test - 1;
+        else
+            first = test + 1;
     }
     return NULL;
 }
@@ -2021,7 +2021,7 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
     sp_e->data_len = 0;
     if (!msg_name)
     {
-	INT i = 0;
+        INT i = 0;
 
         if (sp_e->msgnum >= 0xc000)
         {
@@ -2033,13 +2033,13 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
             }
         }
 #if DEBUG_SPY
-	TRACE("looking class %s\n", debugstr_w(sp_e->wnd_class));
+        TRACE("looking class %s\n", debugstr_w(sp_e->wnd_class));
 #endif
 
-	while (cc_array[i].classname &&
-	       strcmpiW(cc_array[i].classname, sp_e->wnd_class) != 0) i++;
+        while (cc_array[i].classname &&
+               strcmpiW(cc_array[i].classname, sp_e->wnd_class) != 0) i++;
 
-	if (cc_array[i].classname)
+        if (cc_array[i].classname)
         {
 #if DEBUG_SPY
             TRACE("process class %s, first %p, last %p\n",
@@ -2081,24 +2081,24 @@ static void SPY_GetWndName( SPY_INSTANCE *sp_e )
     save_error = GetLastError();
     /* special code to detect a property sheet dialog   */
     if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == (LONG)WC_DIALOGW) &&
-	(GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
-	strcpyW(sp_e->wnd_class, WC_PROPSHEETW);
+        (GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
+        strcpyW(sp_e->wnd_class, WC_PROPSHEETW);
     }
     else {
-	GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
+        GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
     }
     SetLastError(save_error);
 
     len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, sizeof(sp_e->wnd_name)/sizeof(WCHAR));
     if(!len) /* get class name */
     {
-	LPWSTR dst = sp_e->wnd_name;
-	LPWSTR src = sp_e->wnd_class;
-	int n = sizeof(sp_e->wnd_name)/sizeof(WCHAR) - 3;
-	*dst++ = '{';
-	while ((n-- > 0) && *src) *dst++ = *src++;
-	*dst++ = '}';
-	*dst = 0;
+        LPWSTR dst = sp_e->wnd_name;
+        LPWSTR src = sp_e->wnd_class;
+        int n = sizeof(sp_e->wnd_name)/sizeof(WCHAR) - 3;
+        *dst++ = '{';
+        while ((n-- > 0) && *src) *dst++ = *src++;
+        *dst++ = '}';
+        *dst = 0;
     }
 }
 
@@ -2130,9 +2130,9 @@ const char *SPY_GetVKeyName(WPARAM wParam)
     const char *vk_key_name;
 
     if(wParam <= SPY_MAX_VKKEYSNUM && VK_KeyNames[wParam])
-	vk_key_name = VK_KeyNames[wParam];
+        vk_key_name = VK_KeyNames[wParam];
     else
-	vk_key_name = "VK_???";
+        vk_key_name = "VK_???";
 
     return vk_key_name;
 }
@@ -2146,27 +2146,27 @@ static const SPY_NOTIFY *SPY_Bsearch_Notify( const SPY_NOTIFY *first, const SPY_
     const SPY_NOTIFY *test;
 
     while (last >= first) {
-	count = 1 + last - first;
-	if (count < 3) {
+        count = 1 + last - first;
+        if (count < 3) {
 #if DEBUG_SPY
-	    TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
-	       code, first->value, first->name, last->value, last->name, last->len);
+            TRACE("code=%d, f-value=%d, f-name=%s, l-value=%d, l-name=%s, l-len=%d,\n",
+               code, first->value, first->name, last->value, last->name, last->len);
 #endif
-	    if (first->value == code) return first;
-	    if (last->value == code) return last;
-	    return NULL;
-	}
-	count = count / 2;
-	test = first + count;
+            if (first->value == code) return first;
+            if (last->value == code) return last;
+            return NULL;
+        }
+        count = count / 2;
+        test = first + count;
 #if DEBUG_SPY
-	TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
-	   first, last, test, test->value, code, count);
+        TRACE("first=%p, last=%p, test=%p, t-value=%d, code=%d, count=%d\n",
+           first, last, test, test->value, code, count);
 #endif
-	if (test->value == code) return test;
-	if (test->value < code)
-	    last = test - 1;
-	else
-	    first = test + 1;
+        if (test->value == code) return test;
+        if (test->value < code)
+            last = test - 1;
+        else
+            first = test + 1;
     }
     return NULL;
 }
@@ -2179,29 +2179,29 @@ static void SPY_DumpMem (LPCSTR header, const UINT *q, INT len)
     int i;
 
     for(i=0; i<len-12; i+=16) {
-	TRACE("%s [%04x] %08x %08x %08x %08x\n",
-	      header, i, *q, *(q+1), *(q+2), *(q+3));
-	q += 4;
+        TRACE("%s [%04x] %08x %08x %08x %08x\n",
+              header, i, *q, *(q+1), *(q+2), *(q+3));
+        q += 4;
     }
     switch ((len - i + 3) & (~3)) {
     case 16:
-	TRACE("%s [%04x] %08x %08x %08x %08x\n",
-	      header, i, *q, *(q+1), *(q+2), *(q+3));
-	break;
+        TRACE("%s [%04x] %08x %08x %08x %08x\n",
+              header, i, *q, *(q+1), *(q+2), *(q+3));
+        break;
     case 12:
-	TRACE("%s [%04x] %08x %08x %08x\n",
-	      header, i, *q, *(q+1), *(q+2));
-	break;
+        TRACE("%s [%04x] %08x %08x %08x\n",
+              header, i, *q, *(q+1), *(q+2));
+        break;
     case 8:
-	TRACE("%s [%04x] %08x %08x\n",
-	      header, i, *q, *(q+1));
-	break;
+        TRACE("%s [%04x] %08x %08x\n",
+              header, i, *q, *(q+1));
+        break;
     case 4:
-	TRACE("%s [%04x] %08x\n",
-	      header, i, *q);
-	break;
+        TRACE("%s [%04x] %08x\n",
+              header, i, *q);
+        break;
     default:
-	break;
+        break;
     }
 }
 
@@ -2211,213 +2211,213 @@ static void SPY_DumpMem (LPCSTR header, const UINT *q, INT len)
 static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
 {
     switch (sp_e->msgnum)
-	{
-	case LVM_INSERTITEMW:
-	case LVM_INSERTITEMA:
-	case LVM_SETITEMW:
-	case LVM_SETITEMA:
-	    if (!enter) break;
-	    /* fall through */
-	case LVM_GETITEMW:
-	case LVM_GETITEMA:
-	    {
-		LPLVITEMA item = (LPLVITEMA) sp_e->lParam;
-		if (item) {
-		    SPY_DumpMem ("LVITEM", (UINT*)item, sizeof(LVITEMA));
-		}
-		break;
-	    }
-	case TCM_INSERTITEMW:
-	case TCM_INSERTITEMA:
-	case TCM_SETITEMW:
-	case TCM_SETITEMA:
-	    if (!enter) break;
-	    /* fall through */
-	case TCM_GETITEMW:
-	case TCM_GETITEMA:
-	    {
-		TCITEMA *item = (TCITEMA *) sp_e->lParam;
-		if (item) {
-		    SPY_DumpMem ("TCITEM", (UINT*)item, sizeof(TCITEMA));
-		}
-		break;
-	    }
-	case TCM_ADJUSTRECT:
-	case LVM_GETITEMRECT:
-	case LVM_GETSUBITEMRECT:
-	    {
-		LPRECT rc = (LPRECT) sp_e->lParam;
-		if (rc) {
-		    TRACE("lParam rect (%ld,%ld)-(%ld,%ld)\n",
-			  rc->left, rc->top, rc->right, rc->bottom);
-		}
-		break;
-	    }
-	case LVM_SETITEMPOSITION32:
-	    if (!enter) break;
-	    /* fall through */
-	case LVM_GETITEMPOSITION:
-	case LVM_GETORIGIN:
-	    {
-		LPPOINT point = (LPPOINT) sp_e->lParam;
-		if (point) {
-		    TRACE("lParam point x=%ld, y=%ld\n", point->x, point->y);
-		}
-		break;
-	    }
-	case SBM_SETRANGE:
-	    if (!enter && (sp_e->msgnum == SBM_SETRANGE)) break;
-	    TRACE("min=%d max=%d\n", (INT)sp_e->wParam, (INT)sp_e->lParam);
-	    break;
-	case SBM_GETRANGE:
-	    if ((enter && (sp_e->msgnum == SBM_GETRANGE)) ||
-		(!enter && (sp_e->msgnum == SBM_SETRANGE))) break;
-	    {
-		LPINT ptmin = (LPINT) sp_e->wParam;
-		LPINT ptmax = (LPINT) sp_e->lParam;
-		if (ptmin && ptmax)
-		    TRACE("min=%d max=%d\n", *ptmin, *ptmax);
-		else if (ptmin)
-		    TRACE("min=%d max=n/a\n", *ptmin);
-		else if (ptmax)
-		    TRACE("min=n/a max=%d\n", *ptmax);
-		break;
-	    }
-	case EM_EXSETSEL:
-	    if (enter && sp_e->lParam)
-	    {
-		CHARRANGE *cr = (CHARRANGE *) sp_e->lParam;
-		TRACE("CHARRANGE: cpMin=%ld cpMax=%ld\n", cr->cpMin, cr->cpMax);
-	    }
-	    break;
-	case EM_SETCHARFORMAT:
-	    if (enter && sp_e->lParam)
-	    {
-		CHARFORMATW *cf = (CHARFORMATW *) sp_e->lParam;
-		TRACE("CHARFORMAT: dwMask=0x%08lx dwEffects=", cf->dwMask);
-		if ((cf->dwMask & CFM_BOLD) && (cf->dwEffects & CFE_BOLD))
-		    TRACE(" CFE_BOLD");
-		if ((cf->dwMask & CFM_COLOR) && (cf->dwEffects & CFE_AUTOCOLOR))
-		    TRACE(" CFE_AUTOCOLOR");
-		if ((cf->dwMask & CFM_ITALIC) && (cf->dwEffects & CFE_ITALIC))
-		    TRACE(" CFE_ITALIC");
-		if ((cf->dwMask & CFM_PROTECTED) && (cf->dwEffects & CFE_PROTECTED))
-		    TRACE(" CFE_PROTECTED");
-		if ((cf->dwMask & CFM_STRIKEOUT) && (cf->dwEffects & CFE_STRIKEOUT))
-		    TRACE(" CFE_STRIKEOUT");
-		if ((cf->dwMask & CFM_UNDERLINE) && (cf->dwEffects & CFE_UNDERLINE))
-		    TRACE(" CFE_UNDERLINE");
-		TRACE("\n");
-		if (cf->dwMask & CFM_SIZE)
-		    TRACE("yHeight=%ld\n", cf->yHeight);
-		if (cf->dwMask & CFM_OFFSET)
-		    TRACE("yOffset=%ld\n", cf->yOffset);
-		if ((cf->dwMask & CFM_COLOR) && !(cf->dwEffects & CFE_AUTOCOLOR))
-		    TRACE("crTextColor=%lx\n", cf->crTextColor);
-		TRACE("bCharSet=%x bPitchAndFamily=%x\n", cf->bCharSet, cf->bPitchAndFamily);
-		/* FIXME: we should try to be a bit more intelligent about
-		 * whether this is in ANSI or Unicode (it could be either) */
-		if (cf->dwMask & CFM_FACE)
-		    TRACE("szFaceName=%s\n", debugstr_wn(cf->szFaceName, LF_FACESIZE));
-		/* FIXME: handle CHARFORMAT2 too */
-	    }
-	    break;
-	case WM_DRAWITEM:
-	    if (!enter) break;
-	    {
-		DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) sp_e->lParam;
-		TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
-		      lpdis->CtlType, lpdis->CtlID);
-		TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
-		      lpdis->itemID, lpdis->itemAction, lpdis->itemState);
-		TRACE("hWnd=%p hDC=%p (%ld,%ld)-(%ld,%ld) itemData=0x%08lx\n",
-		      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left,
-		      lpdis->rcItem.top, lpdis->rcItem.right,
-		      lpdis->rcItem.bottom, lpdis->itemData);
-	    }
-	    break;
-	case WM_MEASUREITEM:
-	    {
-		MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) sp_e->lParam;
-		TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
-		      lpmis->CtlType, lpmis->CtlID);
-		TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n",
-		      lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
-		TRACE("itemData=0x%08lx\n", lpmis->itemData);
-	    }
-	    break;
+        {
+        case LVM_INSERTITEMW:
+        case LVM_INSERTITEMA:
+        case LVM_SETITEMW:
+        case LVM_SETITEMA:
+            if (!enter) break;
+            /* fall through */
+        case LVM_GETITEMW:
+        case LVM_GETITEMA:
+            {
+                LPLVITEMA item = (LPLVITEMA) sp_e->lParam;
+                if (item) {
+                    SPY_DumpMem ("LVITEM", (UINT*)item, sizeof(LVITEMA));
+                }
+                break;
+            }
+        case TCM_INSERTITEMW:
+        case TCM_INSERTITEMA:
+        case TCM_SETITEMW:
+        case TCM_SETITEMA:
+            if (!enter) break;
+            /* fall through */
+        case TCM_GETITEMW:
+        case TCM_GETITEMA:
+            {
+                TCITEMA *item = (TCITEMA *) sp_e->lParam;
+                if (item) {
+                    SPY_DumpMem ("TCITEM", (UINT*)item, sizeof(TCITEMA));
+                }
+                break;
+            }
+        case TCM_ADJUSTRECT:
+        case LVM_GETITEMRECT:
+        case LVM_GETSUBITEMRECT:
+            {
+                LPRECT rc = (LPRECT) sp_e->lParam;
+                if (rc) {
+                    TRACE("lParam rect (%ld,%ld)-(%ld,%ld)\n",
+                          rc->left, rc->top, rc->right, rc->bottom);
+                }
+                break;
+            }
+        case LVM_SETITEMPOSITION32:
+            if (!enter) break;
+            /* fall through */
+        case LVM_GETITEMPOSITION:
+        case LVM_GETORIGIN:
+            {
+                LPPOINT point = (LPPOINT) sp_e->lParam;
+                if (point) {
+                    TRACE("lParam point x=%ld, y=%ld\n", point->x, point->y);
+                }
+                break;
+            }
+        case SBM_SETRANGE:
+            if (!enter && (sp_e->msgnum == SBM_SETRANGE)) break;
+            TRACE("min=%d max=%d\n", (INT)sp_e->wParam, (INT)sp_e->lParam);
+            break;
+        case SBM_GETRANGE:
+            if ((enter && (sp_e->msgnum == SBM_GETRANGE)) ||
+                (!enter && (sp_e->msgnum == SBM_SETRANGE))) break;
+            {
+                LPINT ptmin = (LPINT) sp_e->wParam;
+                LPINT ptmax = (LPINT) sp_e->lParam;
+                if (ptmin && ptmax)
+                    TRACE("min=%d max=%d\n", *ptmin, *ptmax);
+                else if (ptmin)
+                    TRACE("min=%d max=n/a\n", *ptmin);
+                else if (ptmax)
+                    TRACE("min=n/a max=%d\n", *ptmax);
+                break;
+            }
+        case EM_EXSETSEL:
+            if (enter && sp_e->lParam)
+            {
+                CHARRANGE *cr = (CHARRANGE *) sp_e->lParam;
+                TRACE("CHARRANGE: cpMin=%ld cpMax=%ld\n", cr->cpMin, cr->cpMax);
+            }
+            break;
+        case EM_SETCHARFORMAT:
+            if (enter && sp_e->lParam)
+            {
+                CHARFORMATW *cf = (CHARFORMATW *) sp_e->lParam;
+                TRACE("CHARFORMAT: dwMask=0x%08lx dwEffects=", cf->dwMask);
+                if ((cf->dwMask & CFM_BOLD) && (cf->dwEffects & CFE_BOLD))
+                    TRACE(" CFE_BOLD");
+                if ((cf->dwMask & CFM_COLOR) && (cf->dwEffects & CFE_AUTOCOLOR))
+                    TRACE(" CFE_AUTOCOLOR");
+                if ((cf->dwMask & CFM_ITALIC) && (cf->dwEffects & CFE_ITALIC))
+                    TRACE(" CFE_ITALIC");
+                if ((cf->dwMask & CFM_PROTECTED) && (cf->dwEffects & CFE_PROTECTED))
+                    TRACE(" CFE_PROTECTED");
+                if ((cf->dwMask & CFM_STRIKEOUT) && (cf->dwEffects & CFE_STRIKEOUT))
+                    TRACE(" CFE_STRIKEOUT");
+                if ((cf->dwMask & CFM_UNDERLINE) && (cf->dwEffects & CFE_UNDERLINE))
+                    TRACE(" CFE_UNDERLINE");
+                TRACE("\n");
+                if (cf->dwMask & CFM_SIZE)
+                    TRACE("yHeight=%ld\n", cf->yHeight);
+                if (cf->dwMask & CFM_OFFSET)
+                    TRACE("yOffset=%ld\n", cf->yOffset);
+                if ((cf->dwMask & CFM_COLOR) && !(cf->dwEffects & CFE_AUTOCOLOR))
+                    TRACE("crTextColor=%lx\n", cf->crTextColor);
+                TRACE("bCharSet=%x bPitchAndFamily=%x\n", cf->bCharSet, cf->bPitchAndFamily);
+                /* FIXME: we should try to be a bit more intelligent about
+                 * whether this is in ANSI or Unicode (it could be either) */
+                if (cf->dwMask & CFM_FACE)
+                    TRACE("szFaceName=%s\n", debugstr_wn(cf->szFaceName, LF_FACESIZE));
+                /* FIXME: handle CHARFORMAT2 too */
+            }
+            break;
+        case WM_DRAWITEM:
+            if (!enter) break;
+            {
+                DRAWITEMSTRUCT *lpdis = (DRAWITEMSTRUCT*) sp_e->lParam;
+                TRACE("DRAWITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
+                      lpdis->CtlType, lpdis->CtlID);
+                TRACE("itemID=0x%08x itemAction=0x%08x itemState=0x%08x\n",
+                      lpdis->itemID, lpdis->itemAction, lpdis->itemState);
+                TRACE("hWnd=%p hDC=%p (%ld,%ld)-(%ld,%ld) itemData=0x%08lx\n",
+                      lpdis->hwndItem, lpdis->hDC, lpdis->rcItem.left,
+                      lpdis->rcItem.top, lpdis->rcItem.right,
+                      lpdis->rcItem.bottom, lpdis->itemData);
+            }
+            break;
+        case WM_MEASUREITEM:
+            {
+                MEASUREITEMSTRUCT *lpmis = (MEASUREITEMSTRUCT*) sp_e->lParam;
+                TRACE("MEASUREITEMSTRUCT: CtlType=0x%08x CtlID=0x%08x\n",
+                      lpmis->CtlType, lpmis->CtlID);
+                TRACE("itemID=0x%08x itemWidth=0x%08x itemHeight=0x%08x\n",
+                      lpmis->itemID, lpmis->itemWidth, lpmis->itemHeight);
+                TRACE("itemData=0x%08lx\n", lpmis->itemData);
+            }
+            break;
         case WM_SIZE:
             if (!enter) break;
             TRACE("cx=%d cy=%d\n", LOWORD(sp_e->lParam), HIWORD(sp_e->lParam));
             break;
-	case WM_WINDOWPOSCHANGED:
-	    if (!enter) break;
-	case WM_WINDOWPOSCHANGING:
-	    {
-		WINDOWPOS *lpwp = (WINDOWPOS *)sp_e->lParam;
-		TRACE("WINDOWPOS hwnd=%p, after=%p, at (%d,%d) w=%d h=%d, flags=0x%08x\n",
-		      lpwp->hwnd, lpwp->hwndInsertAfter, lpwp->x, lpwp->y,
-		      lpwp->cx, lpwp->cy, lpwp->flags);
-	    }
-	    break;
-	case WM_STYLECHANGED:
-	    if (!enter) break;
-	case WM_STYLECHANGING:
-	    {
-		LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
-		TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
-		      ss->styleOld, ss->styleNew);
-	    }
-	    break;
-	case WM_NCCALCSIZE:
-	    {
-		RECT *rc = (RECT *)sp_e->lParam;
-		TRACE("Rect (%ld,%ld)-(%ld,%ld)\n",
-		      rc->left, rc->top, rc->right, rc->bottom);
-	    }
-	    break;
-	case WM_NOTIFY:
-	    /* if (!enter) break; */
-	    {
-		NMHDR * pnmh = (NMHDR*) sp_e->lParam;
-		UINT *q, dumplen;
-		const SPY_NOTIFY *p;
-		WCHAR from_class[60];
-		DWORD save_error;
+        case WM_WINDOWPOSCHANGED:
+            if (!enter) break;
+        case WM_WINDOWPOSCHANGING:
+            {
+                WINDOWPOS *lpwp = (WINDOWPOS *)sp_e->lParam;
+                TRACE("WINDOWPOS hwnd=%p, after=%p, at (%d,%d) w=%d h=%d, flags=0x%08x\n",
+                      lpwp->hwnd, lpwp->hwndInsertAfter, lpwp->x, lpwp->y,
+                      lpwp->cx, lpwp->cy, lpwp->flags);
+            }
+            break;
+        case WM_STYLECHANGED:
+            if (!enter) break;
+        case WM_STYLECHANGING:
+            {
+                LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
+                TRACE("STYLESTRUCT: StyleOld=0x%08lx, StyleNew=0x%08lx\n",
+                      ss->styleOld, ss->styleNew);
+            }
+            break;
+        case WM_NCCALCSIZE:
+            {
+                RECT *rc = (RECT *)sp_e->lParam;
+                TRACE("Rect (%ld,%ld)-(%ld,%ld)\n",
+                      rc->left, rc->top, rc->right, rc->bottom);
+            }
+            break;
+        case WM_NOTIFY:
+            /* if (!enter) break; */
+            {
+                NMHDR * pnmh = (NMHDR*) sp_e->lParam;
+                UINT *q, dumplen;
+                const SPY_NOTIFY *p;
+                WCHAR from_class[60];
+                DWORD save_error;
 
-		p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array,
-					pnmh->code);
-		if (p) {
-		    TRACE("NMHDR hwndFrom=%p idFrom=0x%08x code=%s<0x%08x>, extra=0x%x\n",
-			  pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
-		    dumplen = p->len;
+                p = SPY_Bsearch_Notify (&spnfy_array[0], end_spnfy_array,
+                                        pnmh->code);
+                if (p) {
+                    TRACE("NMHDR hwndFrom=%p idFrom=0x%08x code=%s<0x%08x>, extra=0x%x\n",
+                          pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
+                    dumplen = p->len;
 
-		    /* for CUSTOMDRAW, dump all the data for TOOLBARs */
-		    if (pnmh->code == NM_CUSTOMDRAW) {
-			/* save and restore error code over the next call */
-			save_error = GetLastError();
-			GetClassNameW(pnmh->hwndFrom, from_class,
-				      sizeof(from_class)/sizeof(WCHAR));
-			SetLastError(save_error);
-			if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0)
-			    dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
-		    } else if ((pnmh->code >= HDN_ITEMCHANGINGA) && (pnmh->code <= HDN_ENDDRAG)) {
-			dumplen = sizeof(NMHEADERA)-sizeof(NMHDR);
-		    }
-		    if (dumplen > 0) {
-			q = (UINT *)(pnmh + 1);
-			SPY_DumpMem ("NM extra", q, (INT)dumplen);
-		    }
-		}
-		else
-		    TRACE("NMHDR hwndFrom=%p idFrom=0x%08x code=0x%08x\n",
-			  pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
-	    }
-	default:
-	    if (sp_e->data_len > 0)
-		SPY_DumpMem ("MSG lParam", (UINT *)sp_e->lParam, sp_e->data_len);
-	    break;
-	}
+                    /* for CUSTOMDRAW, dump all the data for TOOLBARs */
+                    if (pnmh->code == NM_CUSTOMDRAW) {
+                        /* save and restore error code over the next call */
+                        save_error = GetLastError();
+                        GetClassNameW(pnmh->hwndFrom, from_class,
+                                      sizeof(from_class)/sizeof(WCHAR));
+                        SetLastError(save_error);
+                        if (strcmpW(TOOLBARCLASSNAMEW, from_class) == 0)
+                            dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
+                    } else if ((pnmh->code >= HDN_ITEMCHANGINGA) && (pnmh->code <= HDN_ENDDRAG)) {
+                        dumplen = sizeof(NMHEADERA)-sizeof(NMHDR);
+                    }
+                    if (dumplen > 0) {
+                        q = (UINT *)(pnmh + 1);
+                        SPY_DumpMem ("NM extra", q, (INT)dumplen);
+                    }
+                }
+                else
+                    TRACE("NMHDR hwndFrom=%p idFrom=0x%08x code=0x%08x\n",
+                          pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
+            }
+        default:
+            if (sp_e->data_len > 0)
+                SPY_DumpMem ("MSG lParam", (UINT *)sp_e->lParam, sp_e->data_len);
+            break;
+        }
 
 }
 /***********************************************************************
@@ -2469,21 +2469,21 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
                       sp_e.msg_name, taskName, wParam, lParam );
             else
             {   TRACE("%*s(%p) %-16s message [%04x] %s sent from %s wp=%08x lp=%08lx\n",
-			     indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
-			     sp_e.msg_name, taskName, wParam, lParam );
-		SPY_DumpStructure(&sp_e, TRUE);
-	    }
+                             indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
+                             sp_e.msg_name, taskName, wParam, lParam );
+                SPY_DumpStructure(&sp_e, TRUE);
+            }
         }
         break;
 
     case SPY_DEFWNDPROC16:
-	if( SPY_ExcludeDWP ) return;
+        if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%04x)  DefWindowProc16: %s [%04x]  wp=%04x lp=%08lx\n",
               indent, "", HWND_16(hWnd), sp_e.msg_name, msg, wParam, lParam );
         break;
 
     case SPY_DEFWNDPROC:
-	if( SPY_ExcludeDWP ) return;
+        if( SPY_ExcludeDWP ) return;
         TRACE("%*s(%p)  DefWindowProc32: %s [%04x]  wp=%08x lp=%08lx\n",
                         indent, "", hWnd, sp_e.msg_name,
                         msg, wParam, lParam );
@@ -2503,8 +2503,8 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
     int indent;
 
     if (!TRACE_ON(message) || SPY_EXCLUDE(msg) ||
-	(SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND)) )
-	return;
+        (SPY_ExcludeDWP && (iFlag == SPY_RESULT_DEFWND16 || iFlag == SPY_RESULT_DEFWND)) )
+        return;
 
     sp_e.msgnum = msg;
     sp_e.msg_hwnd   = hWnd;
@@ -2522,14 +2522,14 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
     switch(iFlag)
     {
     case SPY_RESULT_DEFWND16:
-	TRACE(" %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
+        TRACE(" %*s(%04x)  DefWindowProc16: %s [%04x] returned %08lx\n",
               indent, "", HWND_16(hWnd), sp_e.msg_name, msg, lReturn );
-	break;
+        break;
 
     case SPY_RESULT_DEFWND:
-	TRACE(" %*s(%p)  DefWindowProc32: %s [%04x] returned %08lx\n",
-			indent, "", hWnd, sp_e.msg_name, msg, lReturn );
-	break;
+        TRACE(" %*s(%p)  DefWindowProc32: %s [%04x] returned %08lx\n",
+                        indent, "", hWnd, sp_e.msg_name, msg, lReturn );
+        break;
 
     case SPY_RESULT_OK16:
         TRACE(" %*s(%04x) %-16s message [%04x] %s returned %08lx\n",
@@ -2541,7 +2541,7 @@ void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
         TRACE(" %*s(%p) %-16s message [%04x] %s returned %08lx\n",
                         indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
                         sp_e.msg_name, lReturn );
-	SPY_DumpStructure(&sp_e, FALSE);
+        SPY_DumpStructure(&sp_e, FALSE);
         break;
 
     case SPY_RESULT_INVALIDHWND16:
@@ -2609,14 +2609,14 @@ int SPY_Init(void)
     p = &spnfy_array[0];
     j = 0xffffffff;
     while (p->name) {
-	if ((UINT)p->value > (UINT)j) {
-	    ERR("Notify message array out of order\n");
-	    ERR("  between values [%08x] %s and [%08x] %s\n",
-		j, (p-1)->name, p->value, p->name);
-	    break;
-	}
-	j = p->value;
-	p++;
+        if ((UINT)p->value > (UINT)j) {
+            ERR("Notify message array out of order\n");
+            ERR("  between values [%08x] %s and [%08x] %s\n",
+                j, (p-1)->name, p->value, p->name);
+            break;
+        }
+        j = p->value;
+        p++;
     }
     p--;
     end_spnfy_array = p;
@@ -2627,23 +2627,23 @@ int SPY_Init(void)
     i = 0;
     while (cc_array[i].classname) {
 
-	j = 0x0400; /* minimum entry in array */
-	q = cc_array[i].classmsg;
-	while(q->name) {
-	    if (q->value <= j) {
-		ERR("Class message array out of order for class %s\n",
-		    debugstr_w(cc_array[i].classname));
-		ERR("  between values [%04x] %s and [%04x] %s\n",
-		    j, (q-1)->name, q->value, q->name);
-		break;
-	    }
-	    j = q->value;
-	    q++;
-	}
-	q--;
-	cc_array[i].lastmsg = (USER_MSG *)q;
+        j = 0x0400; /* minimum entry in array */
+        q = cc_array[i].classmsg;
+        while(q->name) {
+            if (q->value <= j) {
+                ERR("Class message array out of order for class %s\n",
+                    debugstr_w(cc_array[i].classname));
+                ERR("  between values [%04x] %s and [%04x] %s\n",
+                    j, (q-1)->name, q->value, q->name);
+                break;
+            }
+            j = q->value;
+            q++;
+        }
+        q--;
+        cc_array[i].lastmsg = (USER_MSG *)q;
 
-	i++;
+        i++;
     }
 
     return 1;

@@ -57,7 +57,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
-#define  CF_REGFORMATBASE 	0xC000
+#define  CF_REGFORMATBASE  0xC000
 
 typedef struct
 {
@@ -322,20 +322,20 @@ BOOL WINAPI CloseClipboard(void)
 
     if (CLIPBOARD_CloseClipboard())
     {
- 	if (bCBHasChanged)
- 	{
+        if (bCBHasChanged)
+        {
             HWND hWndViewer = GetClipboardViewer();
 
             if (USER_Driver.pEndClipboardUpdate)
                 USER_Driver.pEndClipboardUpdate();
- 
- 	    if (hWndViewer)
- 	        SendMessageW(hWndViewer, WM_DRAWCLIPBOARD, 0, 0);
- 
+
+            if (hWndViewer)
+                SendMessageW(hWndViewer, WM_DRAWCLIPBOARD, 0, 0);
+
             bCBHasChanged = FALSE;
         }
 
-	bRet = TRUE;
+        bRet = TRUE;
     }
 
     return bRet;
@@ -349,19 +349,19 @@ BOOL WINAPI CloseClipboard(void)
 BOOL WINAPI EmptyClipboard(void)
 {
     CLIPBOARDINFO cbinfo;
- 
+
     TRACE("()\n");
 
     if (!CLIPBOARD_GetClipboardInfo(&cbinfo) ||
         ~cbinfo.flags & CB_OPEN)
-    { 
+    {
         WARN("Clipboard not opened by calling task!\n");
         SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
         return FALSE;
     }
 
     /* Destroy private objects */
-    if (cbinfo.hWndOwner) 
+    if (cbinfo.hWndOwner)
         SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
 
     /* Tell the driver to acquire the selection. The current owner
@@ -369,22 +369,22 @@ BOOL WINAPI EmptyClipboard(void)
 
     /* Assign ownership of the clipboard to the current client. We do
      * this before acquiring the selection so that when we do acquire the
-     * selection and the selection loser gets notified, it can check if 
+     * selection and the selection loser gets notified, it can check if
      * it has lost the Wine clipboard ownership. If it did then it knows
      * that a WM_DESTORYCLIPBOARD has already been sent. Otherwise it
-     * lost the selection to a X app and it should send the 
+     * lost the selection to a X app and it should send the
      * WM_DESTROYCLIPBOARD itself. */
     CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
 
     /* Acquire the selection. This will notify the previous owner
-     * to clear it's cache. */ 
-    if (USER_Driver.pAcquireClipboard) 
+     * to clear it's cache. */
+    if (USER_Driver.pAcquireClipboard)
         USER_Driver.pAcquireClipboard(cbinfo.hWndOpen);
 
     /* Empty the local cache */
-    if (USER_Driver.pEmptyClipboard) 
+    if (USER_Driver.pEmptyClipboard)
         USER_Driver.pEmptyClipboard(FALSE);
- 
+
     bCBHasChanged = TRUE;
 
     return TRUE;
@@ -438,31 +438,31 @@ HWND WINAPI GetOpenClipboardWindow(void)
 HWND WINAPI SetClipboardViewer( HWND hWnd )
 {
     HWND hwndPrev = 0;
- 
+
     SERVER_START_REQ( set_clipboard_info )
     {
         req->flags = SET_CB_VIEWER;
         req->viewer = WIN_GetFullHandle(hWnd);
- 
+
         if (wine_server_call_err( req ))
- 	{
+        {
             ERR("Failed to set clipboard.\n");
- 	}
- 	else
+        }
+        else
         {
             hwndPrev = reply->old_viewer;
         }
     }
     SERVER_END_REQ;
- 
+
     TRACE("(%p): returning %p\n", hWnd, hwndPrev);
-  
+
     return hwndPrev;
 }
 
 
 /**************************************************************************
- *		GetClipboardViewer (USER32.@)
+ *              GetClipboardViewer (USER32.@)
  */
 HWND WINAPI GetClipboardViewer(void)
 {
@@ -482,7 +482,7 @@ HWND WINAPI GetClipboardViewer(void)
 
 
 /**************************************************************************
- *		ChangeClipboardChain (USER32.@)
+ *              ChangeClipboardChain (USER32.@)
  */
 BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
@@ -491,13 +491,13 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 
     if (hWndViewer)
     {
-        if (WIN_GetFullHandle(hWnd) == hWndViewer) 
+        if (WIN_GetFullHandle(hWnd) == hWndViewer)
             SetClipboardViewer(WIN_GetFullHandle(hWndNext));
-	else
+        else
             bRet = !SendMessageW(hWndViewer, WM_CHANGECBCHAIN, (WPARAM)hWnd, (LPARAM)hWndNext);
     }
     else
-	ERR("hWndViewer is lost\n");
+        ERR("hWndViewer is lost\n");
 
     return bRet;
 }

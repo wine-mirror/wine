@@ -236,7 +236,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
             }
             return 1;
         }
-	case WM_NCDESTROY:
+        case WM_NCDESTROY:
             if ((dlgInfo = (DIALOGINFO *)SetWindowLongPtrW( hwnd, DWLP_WINE_DIALOGINFO, 0 )))
             {
                 /* Free dialog heap (if created) */
@@ -249,21 +249,21 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                 if (dlgInfo->hMenu) DestroyMenu( dlgInfo->hMenu );
                 HeapFree( GetProcessHeap(), 0, dlgInfo );
             }
-	      /* Window clean-up */
-	    return DefWindowProcA( hwnd, msg, wParam, lParam );
+              /* Window clean-up */
+            return DefWindowProcA( hwnd, msg, wParam, lParam );
 
-	case WM_SHOWWINDOW:
-	    if (!wParam) DEFDLG_SaveFocus( hwnd );
-	    return DefWindowProcA( hwnd, msg, wParam, lParam );
+        case WM_SHOWWINDOW:
+            if (!wParam) DEFDLG_SaveFocus( hwnd );
+            return DefWindowProcA( hwnd, msg, wParam, lParam );
 
-	case WM_ACTIVATE:
-	    if (wParam) DEFDLG_RestoreFocus( hwnd );
-	    else DEFDLG_SaveFocus( hwnd );
-	    return 0;
+        case WM_ACTIVATE:
+            if (wParam) DEFDLG_RestoreFocus( hwnd );
+            else DEFDLG_SaveFocus( hwnd );
+            return 0;
 
-	case WM_SETFOCUS:
-	    DEFDLG_RestoreFocus( hwnd );
-	    return 0;
+        case WM_SETFOCUS:
+            DEFDLG_RestoreFocus( hwnd );
+            return 0;
 
         case DM_SETDEFID:
             if (dlgInfo && !(dlgInfo->flags & DF_END))
@@ -279,9 +279,9 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                 if ((hwndDefId = DEFDLG_FindDefButton( hwnd )))
                     return MAKELONG( GetDlgCtrlID( hwndDefId ), DC_HASDEFID);
             }
-	    return 0;
+            return 0;
 
-	case WM_NEXTDLGCTL:
+        case WM_NEXTDLGCTL:
             if (dlgInfo)
             {
                 HWND hwndDest = (HWND)wParam;
@@ -304,9 +304,9 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                         SendMessageA( GetParent(hwndFocus), CB_SHOWDROPDOWN, FALSE, 0 );
                 }
             }
-	    return DefWindowProcA( hwnd, msg, wParam, lParam );
+            return DefWindowProcA( hwnd, msg, wParam, lParam );
 
-	case WM_GETFONT:
+        case WM_GETFONT:
             return dlgInfo ? (LRESULT)dlgInfo->hUserFont : 0;
 
         case WM_CLOSE:
@@ -315,7 +315,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
             return 0;
 
         case WM_NOTIFYFORMAT:
-	    return DefWindowProcA( hwnd, msg, wParam, lParam );
+            return DefWindowProcA( hwnd, msg, wParam, lParam );
     }
     return 0;
 }
@@ -328,7 +328,7 @@ static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
     /* see SDK 3.1 */
 
     if ((msg >= WM_CTLCOLORMSGBOX && msg <= WM_CTLCOLORSTATIC) ||
-	 msg == WM_CTLCOLOR || msg == WM_COMPAREITEM ||
+         msg == WM_CTLCOLOR || msg == WM_COMPAREITEM ||
          msg == WM_VKEYTOITEM || msg == WM_CHARTOITEM ||
          msg == WM_QUERYDRAGICON || msg == WM_INITDIALOG)
         return fResult;
@@ -375,7 +375,7 @@ DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create )
 }
 
 /***********************************************************************
- *		DefDlgProc (USER.308)
+ *              DefDlgProc (USER.308)
  */
 LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
@@ -434,7 +434,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
 
 
 /***********************************************************************
- *		DefDlgProcA (USER32.@)
+ *              DefDlgProcA (USER32.@)
  */
 LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
@@ -491,7 +491,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 
 /***********************************************************************
- *		DefDlgProcW (USER32.@)
+ *              DefDlgProcW (USER32.@)
  */
 LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {

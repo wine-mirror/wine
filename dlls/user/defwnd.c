@@ -43,8 +43,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
   /* bits in the dwKeyData */
-#define KEYDATA_ALT 		0x2000
-#define KEYDATA_PREVSTATE	0x4000
+#define KEYDATA_ALT             0x2000
+#define KEYDATA_PREVSTATE       0x4000
 
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
@@ -156,7 +156,7 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
 {
     if( ctlType == CTLCOLOR_SCROLLBAR)
     {
-	HBRUSH hb = GetSysColorBrush(COLOR_SCROLLBAR);
+        HBRUSH hb = GetSysColorBrush(COLOR_SCROLLBAR);
         COLORREF bk = GetSysColor(COLOR_3DHILIGHT);
         SetTextColor( hDC, GetSysColor(COLOR_3DFACE));
         SetBkColor( hDC, bk);
@@ -168,17 +168,17 @@ HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType )
         if (bk == GetSysColor(COLOR_WINDOW))
             return SYSCOLOR_55AABrush;
 
-	UnrealizeObject( hb );
+        UnrealizeObject( hb );
         return hb;
     }
 
     SetTextColor( hDC, GetSysColor(COLOR_WINDOWTEXT));
 
     if ((ctlType == CTLCOLOR_EDIT) || (ctlType == CTLCOLOR_LISTBOX))
-	SetBkColor( hDC, GetSysColor(COLOR_WINDOW) );
+        SetBkColor( hDC, GetSysColor(COLOR_WINDOW) );
     else {
-	SetBkColor( hDC, GetSysColor(COLOR_3DFACE) );
-	return GetSysColorBrush(COLOR_3DFACE);
+        SetBkColor( hDC, GetSysColor(COLOR_3DFACE) );
+        return GetSysColorBrush(COLOR_3DFACE);
     }
     return GetSysColorBrush(COLOR_WINDOW);
 }
@@ -242,7 +242,7 @@ static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
 
     pFunc = (void*)GetProcAddress(hInstIMM,"ImmGetDefaultIMEWnd");
     if ( pFunc != NULL )
-	hwndRet = (*pFunc)( hwnd );
+        hwndRet = (*pFunc)( hwnd );
 
     return hwndRet;
 }
@@ -261,7 +261,7 @@ static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARA
 
     pFunc = (void*)GetProcAddress(hInstIMM,"ImmIsUIMessageA");
     if ( pFunc != NULL )
-	fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
+        fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
 
     return fRet;
 }
@@ -280,7 +280,7 @@ static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARA
 
     pFunc = (void*)GetProcAddress(hInstIMM,"ImmIsUIMessageW");
     if ( pFunc != NULL )
-	fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
+        fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
 
     return fRet;
 }
@@ -346,8 +346,8 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 /* release capture if we took it on WM_NCRBUTTONDOWN */
                 ReleaseCapture();
 
-	    pt.x = (short)LOWORD(lParam);
-	    pt.y = (short)HIWORD(lParam);
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
             ClientToScreen(hwnd, &pt);
             SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(pt.x, pt.y) );
         }
@@ -407,14 +407,14 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_PAINTICON:
     case WM_PAINT:
-	{
-	    PAINTSTRUCT ps;
-	    HDC hdc = BeginPaint( hwnd, &ps );
-	    if( hdc )
-	    {
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint( hwnd, &ps );
+            if( hdc )
+            {
               HICON hIcon;
-	      if (IsIconic(hwnd) && ((hIcon = (HICON)GetClassLongPtrW( hwnd, GCLP_HICON))) )
-	      {
+              if (IsIconic(hwnd) && ((hIcon = (HICON)GetClassLongPtrW( hwnd, GCLP_HICON))) )
+              {
                   RECT rc;
                   int x, y;
 
@@ -424,11 +424,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                   TRACE("Painting class icon: vis rect=(%ld,%ld - %ld,%ld)\n",
                         ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
                   DrawIcon( hdc, x, y, hIcon );
-	      }
-	      EndPaint( hwnd, &ps );
-	    }
-	    return 0;
-	}
+              }
+              EndPaint( hwnd, &ps );
+            }
+            return 0;
+        }
 
     case WM_SYNCPAINT:
         RedrawWindow ( hwnd, NULL, 0, RDW_ERASENOW | RDW_ERASE | RDW_ALLCHILDREN );
@@ -444,36 +444,36 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return 0;
 
     case WM_CLOSE:
-	DestroyWindow( hwnd );
-	return 0;
+        DestroyWindow( hwnd );
+        return 0;
 
     case WM_MOUSEACTIVATE:
         if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
-	{
-	    LONG ret = SendMessageW( GetParent(hwnd), WM_MOUSEACTIVATE, wParam, lParam );
-	    if (ret) return ret;
-	}
+        {
+            LONG ret = SendMessageW( GetParent(hwnd), WM_MOUSEACTIVATE, wParam, lParam );
+            if (ret) return ret;
+        }
 
-	/* Caption clicks are handled by the NC_HandleNCLButtonDown() */
+        /* Caption clicks are handled by the NC_HandleNCLButtonDown() */
         return (LOWORD(lParam) >= HTCLIENT) ? MA_ACTIVATE : MA_NOACTIVATE;
 
     case WM_ACTIVATE:
-	/* The default action in Windows is to set the keyboard focus to
-	 * the window, if it's being activated and not minimized */
-	if (LOWORD(wParam) != WA_INACTIVE) {
+        /* The default action in Windows is to set the keyboard focus to
+         * the window, if it's being activated and not minimized */
+        if (LOWORD(wParam) != WA_INACTIVE) {
             if (!IsIconic(hwnd)) SetFocus(hwnd);
-	}
-	break;
+        }
+        break;
 
     case WM_MOUSEWHEEL:
         if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
             return SendMessageW( GetParent(hwnd), WM_MOUSEWHEEL, wParam, lParam );
-	break;
+        break;
 
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
-	{
-	    RECT rect;
+        {
+            RECT rect;
             HDC hdc = (HDC)wParam;
             HBRUSH hbr = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND );
             if (!hbr) return 0;
@@ -486,11 +486,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             }
             else GetClipBox( hdc, &rect );
             FillRect( hdc, &rect, hbr );
-	    return 1;
-	}
+            return 1;
+        }
 
     case WM_GETDLGCODE:
-	return 0;
+        return 0;
 
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
@@ -499,14 +499,14 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
     case WM_CTLCOLORSCROLLBAR:
-	return (LRESULT)DEFWND_ControlColor( (HDC)wParam, msg - WM_CTLCOLORMSGBOX );
+        return (LRESULT)DEFWND_ControlColor( (HDC)wParam, msg - WM_CTLCOLORMSGBOX );
 
     case WM_CTLCOLOR:
-	return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
+        return (LRESULT)DEFWND_ControlColor( (HDC)wParam, HIWORD(lParam) );
 
     case WM_SETCURSOR:
         if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
-	{
+        {
             /* with the exception of the border around a resizable wnd,
              * give the parent first chance to set the cursor */
             if ((LOWORD(lParam) < HTSIZEFIRST) || (LOWORD(lParam) > HTSIZELAST))
@@ -514,68 +514,68 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                 if (SendMessageW(GetParent(hwnd), WM_SETCURSOR, wParam, lParam)) return TRUE;
             }
         }
-	NC_HandleSetCursor( hwnd, wParam, lParam );
+        NC_HandleSetCursor( hwnd, wParam, lParam );
         break;
 
     case WM_SYSCOMMAND:
         return NC_HandleSysCommand( hwnd, wParam, lParam );
 
     case WM_KEYDOWN:
-	if(wParam == VK_F10) iF10Key = VK_F10;
-	break;
+        if(wParam == VK_F10) iF10Key = VK_F10;
+        break;
 
     case WM_SYSKEYDOWN:
-	if( HIWORD(lParam) & KEYDATA_ALT )
-	{
-	    /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
-	      if( wParam == VK_MENU && !iMenuSysKey )
-		iMenuSysKey = 1;
-	      else
-		iMenuSysKey = 0;
+        if( HIWORD(lParam) & KEYDATA_ALT )
+        {
+            /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
+              if( wParam == VK_MENU && !iMenuSysKey )
+                iMenuSysKey = 1;
+              else
+                iMenuSysKey = 0;
 
-	    iF10Key = 0;
+            iF10Key = 0;
 
-	    if( wParam == VK_F4 )	/* try to close the window */
-	    {
+            if( wParam == VK_F4 )       /* try to close the window */
+            {
                 HWND top = GetAncestor( hwnd, GA_ROOT );
                 if (!(GetClassLongW( top, GCL_STYLE ) & CS_NOCLOSE))
                     PostMessageW( top, WM_SYSCOMMAND, SC_CLOSE, 0 );
-	    }
-	}
-	else if( wParam == VK_F10 )
+            }
+        }
+        else if( wParam == VK_F10 )
             iF10Key = 1;
         else if( wParam == VK_ESCAPE && (GetKeyState(VK_SHIFT) & 0x8000))
             SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, ' ' );
-	break;
+        break;
 
     case WM_KEYUP:
     case WM_SYSKEYUP:
-	/* Press and release F10 or ALT */
-	if (((wParam == VK_MENU) && iMenuSysKey) ||
+        /* Press and release F10 or ALT */
+        if (((wParam == VK_MENU) && iMenuSysKey) ||
             ((wParam == VK_F10) && iF10Key))
               SendMessageW( GetAncestor( hwnd, GA_ROOT ), WM_SYSCOMMAND, SC_KEYMENU, 0L );
-	iMenuSysKey = iF10Key = 0;
+        iMenuSysKey = iF10Key = 0;
         break;
 
     case WM_SYSCHAR:
     {
-	iMenuSysKey = 0;
+        iMenuSysKey = 0;
         if (wParam == '\r' && IsIconic(hwnd))
         {
             PostMessageW( hwnd, WM_SYSCOMMAND, SC_RESTORE, 0L );
-	    break;
+            break;
         }
-	if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
+        if ((HIWORD(lParam) & KEYDATA_ALT) && wParam)
         {
             if (wParam == '\t' || wParam == '\x1b') break;
             if (wParam == ' ' && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
                 SendMessageW( GetParent(hwnd), msg, wParam, lParam );
-	    else
+            else
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wParam );
         }
-	else /* check for Ctrl-Esc */
+        else /* check for Ctrl-Esc */
             if (wParam != '\x1b') MessageBeep(0);
-	break;
+        break;
     }
 
     case WM_SHOWWINDOW:
@@ -593,15 +593,15 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_CANCELMODE:
         iMenuSysKey = 0;
         if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)) EndMenu();
-	if (GetCapture() == hwnd) ReleaseCapture();
-	break;
+        if (GetCapture() == hwnd) ReleaseCapture();
+        break;
 
     case WM_VKEYTOITEM:
     case WM_CHARTOITEM:
-	return -1;
+        return -1;
 
     case WM_DROPOBJECT:
-	return DRAG_FILE;
+        return DRAG_FILE;
 
     case WM_QUERYDROPOBJECT:
         return (GetWindowLongA( hwnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) != 0;
@@ -634,7 +634,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_QUERYOPEN:
     case WM_QUERYENDSESSION:
-	return 1;
+        return 1;
 
     case WM_SETICON:
         {
@@ -694,7 +694,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_HELP:
         SendMessageW( GetParent(hwnd), msg, wParam, lParam );
-	break;
+        break;
     }
 
     return 0;
@@ -703,7 +703,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
 
 /***********************************************************************
- *		DefWindowProcA (USER32.@)
+ *              DefWindowProcA (USER32.@)
  *
  */
 LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
@@ -724,14 +724,14 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     switch(msg)
     {
     case WM_NCCREATE:
-	{
-	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
-	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
-	     * may have child window IDs instead of window name */
-	    if (HIWORD(cs->lpszName))
+        {
+            CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
+            /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+             * may have child window IDs instead of window name */
+            if (HIWORD(cs->lpszName))
                 DEFWND_SetTextA( hwnd, cs->lpszName );
-	    result = 1;
-	}
+            result = 1;
+        }
         break;
 
     case WM_GETTEXTLENGTH:
@@ -765,49 +765,49 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_SETTEXT:
         DEFWND_SetTextA( hwnd, (LPCSTR)lParam );
         if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
-	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
-	result = 1; /* success. FIXME: check text length */
+            NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+        result = 1; /* success. FIXME: check text length */
         break;
 
     /* for far east users (IMM32) - <hidenori@a2.ctktv.ne.jp> */
     case WM_IME_CHAR:
-	{
-	    CHAR    chChar1 = (CHAR)( (wParam>>8) & 0xff );
-	    CHAR    chChar2 = (CHAR)( wParam & 0xff );
+        {
+            CHAR    chChar1 = (CHAR)( (wParam>>8) & 0xff );
+            CHAR    chChar2 = (CHAR)( wParam & 0xff );
 
-	    if (chChar1)
-		SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar1, lParam );
-	    SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar2, lParam );
-	}
-	break;
+            if (chChar1)
+                SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar1, lParam );
+            SendMessageA( hwnd, WM_CHAR, (WPARAM)chChar2, lParam );
+        }
+        break;
     case WM_IME_KEYDOWN:
-	result = SendMessageA( hwnd, WM_KEYDOWN, wParam, lParam );
-	break;
+        result = SendMessageA( hwnd, WM_KEYDOWN, wParam, lParam );
+        break;
     case WM_IME_KEYUP:
-	result = SendMessageA( hwnd, WM_KEYUP, wParam, lParam );
-	break;
+        result = SendMessageA( hwnd, WM_KEYUP, wParam, lParam );
+        break;
 
     case WM_IME_STARTCOMPOSITION:
     case WM_IME_COMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
-	{
-	    HWND hwndIME;
+        {
+            HWND hwndIME;
 
-	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if (hwndIME)
-		result = SendMessageA( hwndIME, msg, wParam, lParam );
-	}
-	break;
+            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+            if (hwndIME)
+                result = SendMessageA( hwndIME, msg, wParam, lParam );
+        }
+        break;
     case WM_IME_SETCONTEXT:
-	{
-	    HWND hwndIME;
+        {
+            HWND hwndIME;
 
-	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if (hwndIME)
-		result = DEFWND_ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
-	}
-	break;
+            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+            if (hwndIME)
+                result = DEFWND_ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
+        }
+        break;
 
     case WM_INPUTLANGCHANGEREQUEST:
         /* notify about the switch only if it's really our current layout */
@@ -836,7 +836,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 
 /***********************************************************************
- *		DefWindowProcW (USER32.@) Calls default window message handler
+ *              DefWindowProcW (USER32.@) Calls default window message handler
  *
  * Calls default window procedure for messages not processed
  *  by application.
@@ -865,14 +865,14 @@ LRESULT WINAPI DefWindowProcW(
     switch(msg)
     {
     case WM_NCCREATE:
-	{
-	    CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
-	    /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
-	     * may have child window IDs instead of window name */
-	    if (HIWORD(cs->lpszName))
-	        DEFWND_SetTextW( hwnd, cs->lpszName );
-	    result = 1;
-	}
+        {
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
+            /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
+             * may have child window IDs instead of window name */
+            if (HIWORD(cs->lpszName))
+                DEFWND_SetTextW( hwnd, cs->lpszName );
+            result = 1;
+        }
         break;
 
     case WM_GETTEXTLENGTH:
@@ -903,36 +903,36 @@ LRESULT WINAPI DefWindowProcW(
     case WM_SETTEXT:
         DEFWND_SetTextW( hwnd, (LPCWSTR)lParam );
         if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
-	    NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
-	result = 1; /* success. FIXME: check text length */
+            NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
+        result = 1; /* success. FIXME: check text length */
         break;
 
     /* for far east users (IMM32) - <hidenori@a2.ctktv.ne.jp> */
     case WM_IME_CHAR:
-	SendMessageW( hwnd, WM_CHAR, wParam, lParam );
-	break;
+        SendMessageW( hwnd, WM_CHAR, wParam, lParam );
+        break;
     case WM_IME_SETCONTEXT:
-	{
-	    HWND hwndIME;
+        {
+            HWND hwndIME;
 
-	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if (hwndIME)
-		result = DEFWND_ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
-	}
-	break;
+            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+            if (hwndIME)
+                result = DEFWND_ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
+        }
+        break;
 
     case WM_IME_STARTCOMPOSITION:
     case WM_IME_COMPOSITION:
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
-	{
-	    HWND hwndIME;
+        {
+            HWND hwndIME;
 
-	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if (hwndIME)
-		result = SendMessageW( hwndIME, msg, wParam, lParam );
-	}
-	break;
+            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+            if (hwndIME)
+                result = SendMessageW( hwndIME, msg, wParam, lParam );
+        }
+        break;
 
     case WM_INPUTLANGCHANGEREQUEST:
         /* notify about the switch only if it's really our current layout */

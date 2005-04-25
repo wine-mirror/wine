@@ -680,13 +680,13 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case WM_CREATE:
         {
             UNICODE_STRING usBuffer;
-	    struct s
-	    { CREATESTRUCTW cs;		/* new structure */
-	      LPCWSTR lpszName;		/* allocated Name */
-	      LPCWSTR lpszClass;	/* allocated Class */
-	    };
+            struct s
+            { CREATESTRUCTW cs;         /* new structure */
+              LPCWSTR lpszName;         /* allocated Name */
+              LPCWSTR lpszClass;        /* allocated Class */
+            };
 
-	    struct s *xs = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct s));
+            struct s *xs = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct s));
             if (!xs) return -1;
             xs->cs = *(CREATESTRUCTW *)*plparam;
             if (HIWORD(xs->cs.lpszName))
@@ -748,7 +748,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
         if(!*plparam) return 0;
-	if ( WINPROC_TestLBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd ))
         {
             UNICODE_STRING usBuffer;
             RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
@@ -756,13 +756,13 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
         }
         return (*plparam ? 1 : -1);
 
-    case LB_GETTEXT:		    /* FIXME: fixed sized buffer */
+    case LB_GETTEXT:                /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
-	  { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
+          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 * sizeof(WCHAR) + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
-	  }
+          }
         }
         return 1;
 
@@ -773,7 +773,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case CB_FINDSTRING:
     case CB_SELECTSTRING:
         if(!*plparam) return 0;
-	if ( WINPROC_TestCBForStr( hwnd ))
+        if ( WINPROC_TestCBForStr( hwnd ))
         {
             UNICODE_STRING usBuffer;
             RtlCreateUnicodeStringFromAsciiz(&usBuffer,(LPCSTR)*plparam);
@@ -787,19 +787,19 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
-	  }
+          }
         }
         return 1;
 
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
-	  LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
+          LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(WCHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
-	  *((WORD *) ptr) = len;   /* Store the length */
+          *((WORD *) ptr) = len;   /* Store the length */
           *plparam = (LPARAM)ptr;
-	}
+        }
         return 1;
 
     case WM_CHARTOITEM:
@@ -874,11 +874,11 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NCCREATE:
     case WM_CREATE:
         {
-	    struct s
-	    { CREATESTRUCTW cs;		/* new structure */
-	      LPWSTR lpszName;		/* allocated Name */
-	      LPWSTR lpszClass;		/* allocated Class */
-	    };
+            struct s
+            { CREATESTRUCTW cs;         /* new structure */
+              LPWSTR lpszName;          /* allocated Name */
+              LPWSTR lpszClass;         /* allocated Class */
+            };
             struct s *xs = (struct s *)lParam;
             HeapFree( GetProcessHeap(), 0, xs->lpszName );
             HeapFree( GetProcessHeap(), 0, xs->lpszClass );
@@ -923,7 +923,7 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case LB_FINDSTRING:
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
-	if ( WINPROC_TestLBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd ))
           HeapFree( GetProcessHeap(), 0, (void *)lParam );
         break;
 
@@ -943,7 +943,7 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
     case CB_SELECTSTRING:
-	if ( WINPROC_TestCBForStr( hwnd ))
+        if ( WINPROC_TestCBForStr( hwnd ))
           HeapFree( GetProcessHeap(), 0, (void *)lParam );
         break;
 
@@ -1050,13 +1050,13 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
         }
         return (*plparam ? 1 : -1);
 
-    case LB_GETTEXT:			/* FIXME: fixed sized buffer */
+    case LB_GETTEXT:                    /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestLBForStr( hwnd ))
-	  { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
+          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
-	  }
+          }
         }
         return 1;
 
@@ -1076,25 +1076,25 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
         }
         return (*plparam ? 1 : -1);
 
-    case CB_GETLBTEXT:		/* FIXME: fixed sized buffer */
+    case CB_GETLBTEXT:          /* FIXME: fixed sized buffer */
         { if ( WINPROC_TestCBForStr( hwnd ))
-	  { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
+          { LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, 512 + sizeof(LPARAM) );
             if (!ptr) return -1;
             *ptr++ = *plparam;  /* Store previous lParam */
             *plparam = (LPARAM)ptr;
-	  }
+          }
         }
         return 1;
 
 /* Multiline edit */
     case EM_GETLINE:
         { WORD len = (WORD)*plparam;
-	  LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
+          LPARAM *ptr = HeapAlloc( GetProcessHeap(), 0, sizeof(LPARAM) + sizeof (WORD) + len*sizeof(CHAR) );
           if (!ptr) return -1;
           *ptr++ = *plparam;  /* Store previous lParam */
-	  *((WORD *) ptr) = len;   /* Store the length */
+          *((WORD *) ptr) = len;   /* Store the length */
           *plparam = (LPARAM)ptr;
-	}
+        }
         return 1;
 
     case WM_CHARTOITEM:
@@ -1186,7 +1186,7 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
     case LB_FINDSTRING:
     case LB_FINDSTRINGEXACT:
     case LB_SELECTSTRING:
-	if ( WINPROC_TestLBForStr( hwnd ))
+        if ( WINPROC_TestLBForStr( hwnd ))
           HeapFree( GetProcessHeap(), 0, (void *)lParam );
         break;
 
@@ -1205,7 +1205,7 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
     case CB_FINDSTRING:
     case CB_FINDSTRINGEXACT:
     case CB_SELECTSTRING:
-	if ( WINPROC_TestCBForStr( hwnd ))
+        if ( WINPROC_TestCBForStr( hwnd ))
           HeapFree( GetProcessHeap(), 0, (void *)lParam );
         break;
 
@@ -1237,12 +1237,12 @@ static LRESULT WINPROC_UnmapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM wParam, LPA
 
 static UINT convert_handle_16_to_32(HANDLE16 src, unsigned int flags)
 {
-    HANDLE	dst;
-    UINT	sz = GlobalSize16(src);
-    LPSTR	ptr16, ptr32;
+    HANDLE      dst;
+    UINT        sz = GlobalSize16(src);
+    LPSTR       ptr16, ptr32;
 
     if (!(dst = GlobalAlloc(flags, sz)))
-	return 0;
+        return 0;
     ptr16 = GlobalLock16(src);
     ptr32 = GlobalLock(dst);
     if (ptr16 != NULL && ptr32 != NULL) memcpy(ptr32, ptr16, sz);
@@ -1278,7 +1278,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         *plparam   = (LPARAM)WIN_Handle32( HIWORD(*plparam) );
         return 0;
     case WM_CTLCOLOR:
-    	if ( HIWORD(*plparam) > CTLCOLOR_STATIC ) return -1;
+        if ( HIWORD(*plparam) > CTLCOLOR_STATIC ) return -1;
         *pmsg32    = WM_CTLCOLORMSGBOX + HIWORD(*plparam);
         *pwparam32 = (WPARAM)HDC_32(wParam16);
         *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
@@ -1401,13 +1401,13 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         *plparam   = (LPARAM)HMENU_32(HIWORD(*plparam));
         return 0;
     case WM_MDIACTIVATE:
-	if( *plparam )
-	{
+        if( *plparam )
+        {
             *pwparam32 = (WPARAM)WIN_Handle32( HIWORD(*plparam) );
             *plparam   = (LPARAM)WIN_Handle32( LOWORD(*plparam) );
-	}
-	else /* message sent to MDI client */
-	    *pwparam32 = wParam16;
+        }
+        else /* message sent to MDI client */
+            *pwparam32 = wParam16;
         return 0;
     case WM_NCCALCSIZE:
         {
@@ -1509,7 +1509,7 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
         }
         else return 0;
     case WM_NOTIFY:
-    	*plparam = (LPARAM)MapSL(*plparam);
+        *plparam = (LPARAM)MapSL(*plparam);
         return 0;
     case WM_ACTIVATEAPP:
         /* We need this when SetActiveWindow sends a Sendmessage16() to
@@ -1535,60 +1535,60 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
-	*pwparam32 = (WPARAM)WIN_Handle32(wParam16);
-	return 0;
+        *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
+        return 0;
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
         {
-	    HANDLE16	lo16;
-	    ATOM	hi;
-	    UINT lo32 = 0;
+            HANDLE16    lo16;
+            ATOM        hi;
+            UINT lo32 = 0;
 
-	    *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
-	    lo16 = LOWORD(*plparam);
-	    hi = HIWORD(*plparam);
-	    if (lo16 && !(lo32 = convert_handle_16_to_32(lo16, GMEM_DDESHARE)))
-		return -1;
-	    *plparam = PackDDElParam(msg16, lo32, hi);
-	}
-	return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
+            *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
+            lo16 = LOWORD(*plparam);
+            hi = HIWORD(*plparam);
+            if (lo16 && !(lo32 = convert_handle_16_to_32(lo16, GMEM_DDESHARE)))
+                return -1;
+            *plparam = PackDDElParam(msg16, lo32, hi);
+        }
+        return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
     case WM_DDE_ACK:
         {
-	    UINT	lo, hi;
-	    int		flag = 0;
-	    char	buf[2];
+            UINT        lo, hi;
+            int         flag = 0;
+            char        buf[2];
 
-	    *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
+            *pwparam32 = (WPARAM)WIN_Handle32(wParam16);
 
-	    lo = LOWORD(*plparam);
-	    hi = HIWORD(*plparam);
+            lo = LOWORD(*plparam);
+            hi = HIWORD(*plparam);
 
-	    if (GlobalGetAtomNameA(hi, buf, 2) > 0) flag |= 1;
-	    if (GlobalSize16(hi) != 0) flag |= 2;
-	    switch (flag)
-	    {
-	    case 0:
-		if (hi)
-		{
-		    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
-		    hi = 0;
-		}
-		break;
-	    case 1:
-		break; /* atom, nothing to do */
-	    case 3:
-		MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
-		/* fall thru */
-	    case 2:
-		hi = convert_handle_16_to_32(hi, GMEM_DDESHARE);
-		break;
-	    }
-	    *plparam = PackDDElParam(WM_DDE_ACK, lo, hi);
-	}
-	return 0; /* FIXME don't know how to free allocated memory (handle) !! */
+            if (GlobalGetAtomNameA(hi, buf, 2) > 0) flag |= 1;
+            if (GlobalSize16(hi) != 0) flag |= 2;
+            switch (flag)
+            {
+            case 0:
+                if (hi)
+                {
+                    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
+                    hi = 0;
+                }
+                break;
+            case 1:
+                break; /* atom, nothing to do */
+            case 3:
+                MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
+                /* fall thru */
+            case 2:
+                hi = convert_handle_16_to_32(hi, GMEM_DDESHARE);
+                break;
+            }
+            *plparam = PackDDElParam(WM_DDE_ACK, lo, hi);
+        }
+        return 0; /* FIXME don't know how to free allocated memory (handle) !! */
     case WM_DDE_EXECUTE:
-	*plparam = convert_handle_16_to_32(*plparam, GMEM_DDESHARE);
+        *plparam = convert_handle_16_to_32(*plparam, GMEM_DDESHARE);
         return 0; /* FIXME don't know how to free allocated memory (handle) !! */
     default:  /* No translation needed */
         return 0;
@@ -1670,7 +1670,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
             }
             HeapFree( GetProcessHeap(), 0, nc );
         }
-	break;
+        break;
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -1902,12 +1902,12 @@ LRESULT WINPROC_UnmapMsg16To32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 static HANDLE16 convert_handle_32_to_16(UINT src, unsigned int flags)
 {
-    HANDLE16	dst;
-    UINT	sz = GlobalSize((HANDLE)src);
-    LPSTR	ptr16, ptr32;
+    HANDLE16    dst;
+    UINT        sz = GlobalSize((HANDLE)src);
+    LPSTR       ptr16, ptr32;
 
     if (!(dst = GlobalAlloc16(flags, sz)))
-	return 0;
+        return 0;
     ptr32 = GlobalLock((HANDLE)src);
     ptr16 = GlobalLock16(dst);
     if (ptr16 != NULL && ptr32 != NULL) memcpy(ptr16, ptr32, sz);
@@ -2026,11 +2026,11 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case CB_SETEXTENDEDUI:
     case CB_GETEXTENDEDUI:
     case CB_GETDROPPEDSTATE:
-	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
-	return 0;
+        *pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
+        return 0;
     case CB_GETEDITSEL:
-	*pmsg16 = CB_GETEDITSEL16;
-	return 1;
+        *pmsg16 = CB_GETEDITSEL16;
+        return 1;
 
     case LB_ADDSTRING:
     case LB_FINDSTRING:
@@ -2050,8 +2050,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case CB_SELECTSTRING:
     case CB_DIR:
         *plparam = (LPARAM)MapLS( (LPSTR)*plparam );
-	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
-	return 1;
+        *pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL);
+        return 1;
 
     case LB_GETITEMRECT:
         {
@@ -2060,7 +2060,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
             *plparam = MapLS( rect );
         }
-	*pmsg16 = LB_GETITEMRECT16;
+        *pmsg16 = LB_GETITEMRECT16;
         return 1;
     case LB_GETSELITEMS:
         {
@@ -2072,7 +2072,7 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             *items++ = *plparam;  /* Store the previous lParam */
             *plparam = MapLS( items );
         }
-	*pmsg16 = LB_GETSELITEMS16;
+        *pmsg16 = LB_GETSELITEMS16;
         return 1;
     case LB_SETTABSTOPS:
         if (wParam32)
@@ -2091,29 +2091,29 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 
     case CB_GETDROPPEDCONTROLRECT:
         {
-	    RECT16 *rect = HeapAlloc( GetProcessHeap(), 0, sizeof(RECT16) + sizeof(LPARAM) );
-	    if (!rect) return -1;
-	    *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
-	    *plparam = (LPARAM)MapLS(rect);
+            RECT16 *rect = HeapAlloc( GetProcessHeap(), 0, sizeof(RECT16) + sizeof(LPARAM) );
+            if (!rect) return -1;
+            *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
+            *plparam = (LPARAM)MapLS(rect);
         }
-	*pmsg16 = CB_GETDROPPEDCONTROLRECT16;
+        *pmsg16 = CB_GETDROPPEDCONTROLRECT16;
         return 1;
 
     case LB_GETTEXT:
-	*plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
-	*pmsg16 = LB_GETTEXT16;
-	return 1;
+        *plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
+        *pmsg16 = LB_GETTEXT16;
+        return 1;
 
     case CB_GETLBTEXT:
-	*plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
-	*pmsg16 = CB_GETLBTEXT16;
-	return 1;
+        *plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
+        *pmsg16 = CB_GETLBTEXT16;
+        return 1;
 
     case EM_SETSEL:
-	*pwparam16 = 0;
-	*plparam = MAKELONG( (INT16)(INT)wParam32, (INT16)*plparam );
-	*pmsg16 = EM_SETSEL16;
-	return 0;
+        *pwparam16 = 0;
+        *plparam = MAKELONG( (INT16)(INT)wParam32, (INT16)*plparam );
+        *pmsg16 = EM_SETSEL16;
+        return 0;
 
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
@@ -2333,8 +2333,8 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         /* else nothing to do */
         return 0;
     case WM_NOTIFY:
-	*plparam = MapLS( (NMHDR *)*plparam ); /* NMHDR is already 32-bit */
-	return 1;
+        *plparam = MapLS( (NMHDR *)*plparam ); /* NMHDR is already 32-bit */
+        return 1;
     case WM_SETTEXT:
     case WM_WININICHANGE:
     case WM_DEVMODECHANGE:
@@ -2408,57 +2408,57 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_DDE_TERMINATE:
     case WM_DDE_UNADVISE:
     case WM_DDE_REQUEST:
-	*pwparam16 = HWND_16((HWND)wParam32);
-	return 0;
+        *pwparam16 = HWND_16((HWND)wParam32);
+        return 0;
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
         {
-	    UINT lo32, hi;
-	    HANDLE16	lo16 = 0;
+            UINT lo32, hi;
+            HANDLE16    lo16 = 0;
 
-	    *pwparam16 = HWND_16((HWND)wParam32);
+            *pwparam16 = HWND_16((HWND)wParam32);
             UnpackDDElParam(msg32, *plparam, &lo32, &hi);
-	    if (lo32 && !(lo16 = convert_handle_32_to_16(lo32, GMEM_DDESHARE)))
-		return -1;
-	    *plparam = MAKELPARAM(lo16, hi);
-	}
-	return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
+            if (lo32 && !(lo16 = convert_handle_32_to_16(lo32, GMEM_DDESHARE)))
+                return -1;
+            *plparam = MAKELPARAM(lo16, hi);
+        }
+        return 0; /* FIXME don't know how to free allocated memory (handle)  !! */
     case WM_DDE_ACK:
         {
-	    UINT	lo, hi;
-	    int		flag = 0;
-	    char	buf[2];
+            UINT        lo, hi;
+            int         flag = 0;
+            char        buf[2];
 
-	    *pwparam16 = HWND_16((HWND)wParam32);
+            *pwparam16 = HWND_16((HWND)wParam32);
 
             UnpackDDElParam(msg32, *plparam, &lo, &hi);
 
-	    if (GlobalGetAtomNameA((ATOM)hi, buf, sizeof(buf)) > 0) flag |= 1;
-	    if (GlobalSize((HANDLE)hi) != 0) flag |= 2;
-	    switch (flag)
-	    {
-	    case 0:
-		if (hi)
-		{
-		    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
-		    hi = 0;
-		}
-		break;
-	    case 1:
-		break; /* atom, nothing to do */
-	    case 3:
-		MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
-		/* fall thru */
-	    case 2:
-		hi = convert_handle_32_to_16(hi, GMEM_DDESHARE);
-		break;
-	    }
-	    *plparam = MAKELPARAM(lo, hi);
-	}
-	return 0; /* FIXME don't know how to free allocated memory (handle) !! */
+            if (GlobalGetAtomNameA((ATOM)hi, buf, sizeof(buf)) > 0) flag |= 1;
+            if (GlobalSize((HANDLE)hi) != 0) flag |= 2;
+            switch (flag)
+            {
+            case 0:
+                if (hi)
+                {
+                    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
+                    hi = 0;
+                }
+                break;
+            case 1:
+                break; /* atom, nothing to do */
+            case 3:
+                MESSAGE("DDE_ACK: %x both atom and handle... choosing handle\n", hi);
+                /* fall thru */
+            case 2:
+                hi = convert_handle_32_to_16(hi, GMEM_DDESHARE);
+                break;
+            }
+            *plparam = MAKELPARAM(lo, hi);
+        }
+        return 0; /* FIXME don't know how to free allocated memory (handle) !! */
     case WM_DDE_EXECUTE:
-	*plparam = convert_handle_32_to_16(*plparam, GMEM_DDESHARE);
+        *plparam = convert_handle_32_to_16(*plparam, GMEM_DDESHARE);
         return 0; /* FIXME don't know how to free allocated memory (handle) !! */
     default:  /* No translation needed */
         return 0;
@@ -2538,11 +2538,11 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         break;
 
     case CB_GETEDITSEL:
-	if( wParam )
-	    *((PUINT)(wParam)) = LOWORD(p16->lResult);
-	if( lParam )
-	    *((PUINT)(lParam)) = HIWORD(p16->lResult);	/* FIXME: substract 1? */
-	break;
+        if( wParam )
+            *((PUINT)(wParam)) = LOWORD(p16->lResult);
+        if( lParam )
+            *((PUINT)(lParam)) = HIWORD(p16->lResult);  /* FIXME: substract 1? */
+        break;
 
     case WM_MEASUREITEM:
         {
@@ -2644,8 +2644,8 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
         }
         break;
     case WM_NOTIFY:
-	UnMapLS(p16->lParam);
-	break;
+        UnMapLS(p16->lParam);
+        break;
     case WM_GETDLGCODE:
         if (p16->lParam)
         {
@@ -2919,7 +2919,7 @@ static LRESULT WINPROC_CallProc32ATo32W( WNDPROC func, HWND hwnd,
     int unmap;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+                func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     if( (unmap = WINPROC_MapMsg32ATo32W( hwnd, msg, &wParam, &lParam )) == -1) {
         ERR_(msg)("Message translation failed. (msg=%s,wp=%08x,lp=%08lx)\n",
@@ -3017,7 +3017,7 @@ static LRESULT WINPROC_CallProc32WTo32A( WNDPROC func, HWND hwnd,
     int unmap;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+                func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     if (WINPROC_CallProc32WTo32A_fast( func, hwnd, msg, wParam, lParam, &result ))
         return result;
@@ -3088,7 +3088,7 @@ static LRESULT WINAPI WINPROC_CallProc32ATo16( WNDPROC16 func, HWND hwnd,
     MSGPARAM16 mp16;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+                func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     mp16.lParam = lParam;
     if (WINPROC_MapMsg32ATo16( hwnd, msg, wParam, &msg16, &mp16.wParam, &mp16.lParam ) == -1)
@@ -3113,7 +3113,7 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
     MSGPARAM16 mp16;
 
     TRACE_(msg)("func %p (hwnd=%p,msg=%s,wp=%08x,lp=%08lx)\n",
-	func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
+                func, hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     mp16.lParam = lParam;
     if (WINPROC_MapMsg32WTo16( hwnd, msg, wParam, &msg16, &mp16.wParam,

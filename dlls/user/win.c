@@ -752,16 +752,16 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
     }
     else
     {
-	/* neither x nor cx are default. Check the y values .
-	 * In the trace we see Outlook and Outlook Express using
-	 * cy set to CW_USEDEFAULT when opening the address book.
-	 */
-	if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16) {
-	    RECT r;
-	    FIXME("Strange use of CW_USEDEFAULT in nHeight\n");
-	    SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
-	    cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
-	}
+        /* neither x nor cx are default. Check the y values .
+         * In the trace we see Outlook and Outlook Express using
+         * cy set to CW_USEDEFAULT when opening the address book.
+         */
+        if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16) {
+            RECT r;
+            FIXME("Strange use of CW_USEDEFAULT in nHeight\n");
+            SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
+            cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
+        }
     }
 }
 
@@ -1133,7 +1133,7 @@ HWND16 WINAPI CreateWindow16( LPCSTR className, LPCSTR windowName,
                               HINSTANCE16 instance, LPVOID data )
 {
     return CreateWindowEx16( 0, className, windowName, style,
-			   x, y, width, height, parent, menu, instance, data );
+                             x, y, width, height, parent, menu, instance, data );
 }
 
 
@@ -2990,26 +2990,26 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
 
     while(1)
     {
-	while (PeekMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE ))
+        while (PeekMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE ))
         {
             if( msg.message == WM_LBUTTONUP )
-	    {
-		ReleaseCapture();
-		return 0;
+            {
+                ReleaseCapture();
+                return 0;
             }
             if( msg.message == WM_MOUSEMOVE )
-	    {
+            {
                 POINT tmp;
                 tmp.x = LOWORD(msg.lParam);
                 tmp.y = HIWORD(msg.lParam);
-		if( !PtInRect( &rect, tmp ))
+                if( !PtInRect( &rect, tmp ))
                 {
-		    ReleaseCapture();
-		    return 1;
+                    ReleaseCapture();
+                    return 1;
                 }
-	    }
+            }
         }
-	WaitMessage();
+        WaitMessage();
     }
     return 0;
 }

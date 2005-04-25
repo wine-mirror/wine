@@ -496,17 +496,19 @@ UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
 /***********************************************************************
  *		RegisterHotKey (USER32.@)
  */
-BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk) {
-	FIXME_(keyboard)("(%p,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
-	return TRUE;
+BOOL WINAPI RegisterHotKey(HWND hwnd,INT id,UINT modifiers,UINT vk)
+{
+    FIXME_(keyboard)("(%p,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
+    return TRUE;
 }
 
 /***********************************************************************
  *		UnregisterHotKey (USER32.@)
  */
-BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id) {
-	FIXME_(keyboard)("(%p,%d): stub\n",hwnd,id);
-	return TRUE;
+BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
+{
+    FIXME_(keyboard)("(%p,%d): stub\n",hwnd,id);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -639,9 +641,9 @@ static void CALLBACK TrackMouseEventProc(HWND hwndUnused, UINT uMsg, UINT_PTR id
             /* has the mouse hovered long enough? */
             if(TrackingList[i].iHoverTime <= TrackingList[i].tme.dwHoverTime)
             {
-		posClient.x = pos.x;
-		posClient.y = pos.y;
-		ScreenToClient(hwnd, &posClient);
+                posClient.x = pos.x;
+                posClient.y = pos.y;
+                ScreenToClient(hwnd, &posClient);
                 if (nonclient) {
                     PostMessageW(TrackingList[i].tme.hwndTrack, WM_NCMOUSEHOVER,
                                 get_key_state(), MAKELPARAM( posClient.x, posClient.y ));

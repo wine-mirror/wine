@@ -15,56 +15,56 @@ SPEC_SRCS16 = \
 	user.exe.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/windows/class.c \
-	$(TOPOBJDIR)/windows/clipboard.c \
-	$(TOPOBJDIR)/windows/cursoricon.c \
-	$(TOPOBJDIR)/windows/defdlg.c \
-	$(TOPOBJDIR)/windows/defwnd.c \
-	$(TOPOBJDIR)/windows/dialog.c \
 	$(TOPOBJDIR)/windows/driver.c \
-	$(TOPOBJDIR)/windows/input.c \
-	$(TOPOBJDIR)/windows/mdi.c \
-	$(TOPOBJDIR)/windows/msgbox.c \
 	$(TOPOBJDIR)/windows/multimon.c \
-	$(TOPOBJDIR)/windows/nonclient.c \
 	$(TOPOBJDIR)/windows/queue.c \
 	$(TOPOBJDIR)/windows/scroll.c \
-	$(TOPOBJDIR)/windows/spy.c \
 	$(TOPOBJDIR)/windows/syscolor.c \
 	$(TOPOBJDIR)/windows/user.c \
-	$(TOPOBJDIR)/windows/win.c \
-	$(TOPOBJDIR)/windows/winhelp.c \
-	$(TOPOBJDIR)/windows/winpos.c \
-	$(TOPOBJDIR)/windows/winproc.c \
 	button.c \
 	caret.c \
+	class.c \
+	clipboard.c \
 	combo.c \
+	cursoricon.c \
 	dde/client.c \
 	dde/ddeml16.c \
 	dde/misc.c \
 	dde/server.c \
+	defdlg.c \
+	defwnd.c \
 	desktop.c \
+	dialog.c \
 	dialog16.c \
 	edit.c \
 	exticon.c \
 	focus.c \
 	hook.c \
 	icontitle.c \
+	input.c \
 	listbox.c \
 	lstr.c \
+	mdi.c \
 	menu.c \
 	message.c \
 	misc.c \
 	msg16.c \
+	msgbox.c \
+	nonclient.c \
 	painting.c \
 	property.c \
 	resource.c \
 	scroll.c \
+	spy.c \
 	static.c \
 	sysparams.c \
 	text.c \
 	uitools.c \
 	user_main.c \
+	win.c \
+	winhelp.c \
+	winpos.c \
+	winproc.c \
 	wsprintf.c
 
 C_SRCS16 = \

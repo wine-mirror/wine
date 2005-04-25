@@ -245,11 +245,11 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
     if (GET_WORD(p) == 0xffff)  /* Is it an integer id? */
     {
         info->windowName = (LPCWSTR)(UINT)GET_WORD(p + 1);
-	p += 2;
+        p += 2;
     }
     else
     {
-	info->windowName = (LPCWSTR)p;
+        info->windowName = (LPCWSTR)p;
         p += strlenW( info->windowName ) + 1;
     }
 
@@ -419,7 +419,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     case 0xffff:
         result->menuName = (LPCWSTR)(UINT)GET_WORD( p + 1 );
         p += 2;
-	TRACE(" MENU %04x\n", LOWORD(result->menuName) );
+        TRACE(" MENU %04x\n", LOWORD(result->menuName) );
         break;
     default:
         result->menuName = (LPCWSTR)p;
@@ -439,7 +439,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     case 0xffff:
         result->className = (LPCWSTR)(UINT)GET_WORD( p + 1 );
         p += 2;
-	TRACE(" CLASS %04x\n", LOWORD(result->className) );
+        TRACE(" CLASS %04x\n", LOWORD(result->className) );
         break;
     default:
         result->className = (LPCWSTR)p;
@@ -458,7 +458,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
 
     if (result->style & DS_SETFONT)
     {
-	result->pointSize = GET_WORD(p);
+        result->pointSize = GET_WORD(p);
         p++;
         if (result->dialogEx)
         {
@@ -470,9 +470,9 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
             result->weight = FW_DONTCARE;
             result->italic = FALSE;
         }
-	result->faceName = (LPCWSTR)p;
+        result->faceName = (LPCWSTR)p;
         p += strlenW( result->faceName ) + 1;
-	TRACE(" FONT %d, %s, %d, %s\n",
+        TRACE(" FONT %d, %s, %d, %s\n",
               result->pointSize, debugstr_w( result->faceName ),
               result->weight, result->italic ? "TRUE" : "FALSE" );
     }
@@ -523,8 +523,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
            * for both +ve and -ve template.pointSize */
         HDC dc;
         int pixels;
-	dc = GetDC(0);
-	pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
+        dc = GetDC(0);
+        pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
         hUserFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
                                           template.italic, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
                                           PROOF_QUALITY, FF_DONTCARE,
@@ -634,9 +634,9 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         if (hUserFont) DeleteObject( hUserFont );
         if (hMenu) DestroyMenu( hMenu );
         if (modal && (flags & DF_OWNERENABLED)) DIALOG_EnableOwner(owner);
-	return 0;
+        return 0;
     }
-   
+
     /* moved this from the top of the method to here as DIALOGINFO structure
     will be valid only after WM_CREATE message has been handled in DefDlgProc
     All the members of the structure get filled here using temp variables */
@@ -649,7 +649,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     dlgInfo->idResult    = 0;
     dlgInfo->flags       = flags;
     dlgInfo->hDialogHeap = 0;
-    
+
     if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
 
     if (unicode) SetWindowLongPtrW( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
@@ -673,11 +673,11 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                 SetFocus( dlgInfo->hwndFocus );
         }
 
-	if (template.style & WS_VISIBLE && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
-	{
-	   ShowWindow( hwnd, SW_SHOWNORMAL );	/* SW_SHOW doesn't always work */
-	}
-	return hwnd;
+        if (template.style & WS_VISIBLE && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
+        {
+           ShowWindow( hwnd, SW_SHOWNORMAL );   /* SW_SHOW doesn't always work */
+        }
+        return hwnd;
     }
     if (modal && ownerEnabled) DIALOG_EnableOwner(owner);
     if( IsWindow(hwnd) ) DestroyWindow( hwnd );
@@ -992,21 +992,21 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
 {
     while (GetWindowLongA(hwndDlg, GWL_STYLE) & DS_CONTROL)
     {
-	WND *pParent;
-	HWND hParent = GetParent(hwndDlg);
-	if (!hParent) break;
+        WND *pParent;
+        HWND hParent = GetParent(hwndDlg);
+        if (!hParent) break;
 
-	pParent = WIN_GetPtr(hParent);
-	if (!pParent || pParent == WND_OTHER_PROCESS || pParent == WND_DESKTOP) break;
+        pParent = WIN_GetPtr(hParent);
+        if (!pParent || pParent == WND_OTHER_PROCESS || pParent == WND_DESKTOP) break;
 
-	if (!(pParent->flags & WIN_ISDIALOG))
-	{
-	    WIN_ReleasePtr(pParent);
-	    break;
-	}
-	WIN_ReleasePtr(pParent);
+        if (!(pParent->flags & WIN_ISDIALOG))
+        {
+            WIN_ReleasePtr(pParent);
+            break;
+        }
+        WIN_ReleasePtr(pParent);
 
-	hwndDlg = hParent;
+        hwndDlg = hParent;
     }
 
     return hwndDlg;
@@ -1623,12 +1623,12 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
     {
         HWND hParent = GetParent(hwndCtrl);
         while(hParent)
-	{
+        {
             if(hParent == hwndMain) break;
             retWnd = DIALOG_GetNextTabItem(hwndMain,GetParent(hParent),hParent,fPrevious );
             if(retWnd) break;
             hParent = GetParent(hParent);
-	}
+        }
         if(!retWnd)
             retWnd = DIALOG_GetNextTabItem(hwndMain,hwndMain,NULL,fPrevious );
     }
