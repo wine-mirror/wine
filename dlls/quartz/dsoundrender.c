@@ -65,7 +65,8 @@ typedef struct DSoundRenderImpl
     LPDIRECTSOUND dsound;
     LPDIRECTSOUNDBUFFER dsbuffer;
     DWORD write_pos;
-    int init;
+    BOOL init;
+    BOOL started;
 } DSoundRenderImpl;
 
 static HRESULT DSoundRender_InputPin_Construct(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
@@ -146,6 +147,7 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
     hr = IDirectSound_CreateSoundBuffer(This->dsound, &buf_desc, &This->dsbuffer, NULL);
     if (FAILED(hr)) {
         ERR("Can't create sound buffer !\n");
+        IDirectSound_Release(This->dsound);
         return hr;
     }
 
@@ -154,61 +156,62 @@ static HRESULT DSoundRender_CreateSoundBuffer(IBaseFilter * iface)
     return hr;
 }
 
-static DWORD DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, DWORD size)
+static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, DWORD size)
 {
-    HRESULT result;
+    HRESULT hr;
     LPBYTE lpbuf1 = NULL;
     LPBYTE lpbuf2 = NULL;
     DWORD dwsize1 = 0;
     DWORD dwsize2 = 0;
-    static int init_;
     DWORD size2;
     DWORD play_pos,buf_free;
 
     while (1)
     {
-        result=IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &play_pos, NULL);
-    	if (result != DS_OK) {
-          ERR("Error GetCurrentPosition: %lx\n", result);
-	  break;
-	}
-	if (This->write_pos < play_pos)
-           buf_free = play_pos-This->write_pos;
+        hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &play_pos, NULL);
+        if (hr != DS_OK)
+        {
+            ERR("Error GetCurrentPosition: %lx\n", hr);
+            break;
+        }
+        if (This->write_pos < play_pos)
+             buf_free = play_pos-This->write_pos;
         else
-           buf_free = DSBUFFERSIZE - This->write_pos + play_pos;
+             buf_free = DSBUFFERSIZE - This->write_pos + play_pos;
 
-	size2 = min(buf_free, size);
-        result = IDirectSoundBuffer_Lock(This->dsbuffer, This->write_pos, size2, &lpbuf1, &dwsize1, &lpbuf2, &dwsize2, 0);
-        if (result != DS_OK) {
-	  ERR("Unable to lock sound buffer !\n");
-          break;
+        size2 = min(buf_free, size);
+        hr = IDirectSoundBuffer_Lock(This->dsbuffer, This->write_pos, size2, &lpbuf1, &dwsize1, &lpbuf2, &dwsize2, 0);
+        if (hr != DS_OK) {
+            ERR("Unable to lock sound buffer! (%lx)\n", hr);
+            break;
         }
         /* TRACE("write_pos=%ld, size=%ld, sz1=%ld, sz2=%ld\n", This->write_pos, size2, dwsize1, dwsize2); */
 
         memcpy(lpbuf1, data, dwsize1);
-        if (dwsize2) {
+        if (dwsize2)
             memcpy(lpbuf2, data + dwsize1, dwsize2);
+
+        hr = IDirectSoundBuffer_Unlock(This->dsbuffer, lpbuf1, dwsize1, lpbuf2, dwsize2);
+        if (hr != DS_OK)
+            ERR("Unable to unlock sound buffer! (%lx)\n", hr);
+        if (!This->started)
+        {
+            hr = IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
+            if (hr == DS_OK)
+                This->started = TRUE;
+            else
+                ERR("Can't start playing! (%lx)\n", hr);
         }
+        size -= dwsize1 + dwsize2;
+        data += dwsize1 + dwsize2;
+        This->write_pos = (This->write_pos + dwsize1 + dwsize2) % DSBUFFERSIZE;
 
-        result = IDirectSoundBuffer_Unlock(This->dsbuffer, lpbuf1, dwsize1, lpbuf2, dwsize2);
-        if (result != DS_OK)
-	    ERR("Unable to unlock sound buffer !\n");
-	if (!init_)
-	{
-            result = IDirectSoundBuffer_Play(This->dsbuffer, 0, 0, DSBPLAY_LOOPING);
-            if (result != DS_OK) {
-                ERR("Can't start playing !\n");
-            }
-	}
-	size -= dwsize1 + dwsize2;
-	data += dwsize1 + dwsize2;
-	This->write_pos = (This->write_pos + dwsize1 + dwsize2) % DSBUFFERSIZE;
-
-	if (!size)
-	  break;
+        if (!size)
+            break;
         Sleep(10);
     }
-    return 0;
+
+    return hr;
 }
 
 static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
@@ -251,16 +254,19 @@ static HRESULT DSoundRender_Sample(LPVOID iface, IMediaSample * pSample)
   
     if (!This->init)
     {
-	This->init = 1;
-	hr = DSoundRender_CreateSoundBuffer(iface);
-	if (FAILED(hr))
-	{
-	    ERR("Unable to create DSound buffer\n");
-	}
+        hr = DSoundRender_CreateSoundBuffer(iface);
+        if (SUCCEEDED(hr))
+            This->init = TRUE;
+        else
+        {
+            ERR("Unable to create DSound buffer\n");
+            return hr;
+        }
     }
-    DSoundRender_SendSampleData(This, pbSrcStream, cbSrcStream);
     
-    return S_OK;
+    hr = DSoundRender_SendSampleData(This, pbSrcStream, cbSrcStream);
+
+    return hr;
 }
 
 static HRESULT DSoundRender_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
@@ -299,7 +305,8 @@ HRESULT DSoundRender_create(IUnknown * pUnkOuter, LPVOID * ppv)
     InitializeCriticalSection(&pDSoundRender->csFilter);
     pDSoundRender->state = State_Stopped;
     pDSoundRender->pClock = NULL;
-    pDSoundRender->init = 0;
+    pDSoundRender->init = FALSE;
+    pDSoundRender->started = FALSE;
     ZeroMemory(&pDSoundRender->filterInfo, sizeof(FILTER_INFO));
 
     pDSoundRender->ppPins = CoTaskMemAlloc(1 * sizeof(IPin *));
