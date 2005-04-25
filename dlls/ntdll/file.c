@@ -458,6 +458,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
+    if (!io_status) return STATUS_ACCESS_VIOLATION;
+
     io_status->Information = 0;
     io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_READ, &unix_handle, &flags );
     if (io_status->u.Status) return io_status->u.Status;
@@ -664,6 +666,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
+
+    if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     io_status->Information = 0;
     io_status->u.Status = wine_server_handle_to_fd( hFile, GENERIC_WRITE, &unix_handle, &flags );
