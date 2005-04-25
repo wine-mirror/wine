@@ -121,13 +121,15 @@ void wine_dbg_add_option( const char *name, unsigned char set, unsigned char cle
 {
     struct dll *dll = first_dll;
     struct debug_option *opt;
+    size_t len = strlen(name);
 
     if (!(opt = malloc( sizeof(*opt) ))) return;
     opt->next  = NULL;
     opt->set   = set;
     opt->clear = clear;
-    strncpy( opt->name, name, sizeof(opt->name) );
-    opt->name[sizeof(opt->name)-1] = 0;
+    if (len >= sizeof(opt->name)) len = sizeof(opt->name) - 1;
+    memcpy( opt->name, name, len );
+    opt->name[len] = 0;
     if (last_option) last_option->next = opt;
     else first_option = opt;
     last_option = opt;

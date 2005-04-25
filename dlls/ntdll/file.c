@@ -1515,9 +1515,9 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
 		mach_port_t masterPort;
 		
 		char bsdName[6]; /* disk#\0 */
-		
-		strncpy(bsdName, stfs.f_mntfromname+strlen(_PATH_DEV) , 5);
-		bsdName[5] = 0;
+                const char *name = stfs.f_mntfromname + strlen(_PATH_DEV);
+                memcpy( bsdName, name, min(strlen(name)+1,sizeof(bsdName)) );
+                bsdName[sizeof(bsdName)-1] = 0;
 
 		kernResult = IOMasterPort(MACH_PORT_NULL, &masterPort);
 

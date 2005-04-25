@@ -86,15 +86,16 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
 const char*	get_time_str(DWORD _t)
 {
     time_t 	t = (time_t)_t;
+    const char *str = ctime(&t);
+    size_t len = strlen(str);
     static char	buf[128];
-
     /* FIXME: I don't get the same values from MS' pedump running under Wine...
      * I wonder if Wine isn't broken wrt to GMT settings...
      */
-    strncpy(buf, ctime(&t), sizeof(buf));
-    buf[sizeof(buf) - 1] = '\0';
-    if (buf[strlen(buf)-1] == '\n')
-	buf[strlen(buf)-1] = '\0';
+    if (len && str[len-1] == '\n') len--;
+    if (len >= sizeof(buf)) len = sizeof(buf) - 1;
+    memcpy( buf, str, len );
+    buf[len] = 0;
     return buf;
 }
 

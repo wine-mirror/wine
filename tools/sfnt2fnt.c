@@ -163,7 +163,6 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     int num_names;
     const union cptable *cptable;
     FT_SfntName sfntname;
-    char namebuf[4096];
     TT_OS2 *os2;
     cptable = wine_cp_get_table(enc);
     if(!cptable) {
@@ -207,13 +206,12 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     num_names = FT_Get_Sfnt_Name_Count(face);
     for(i = 0; i <num_names; i++) {
         FT_Get_Sfnt_Name(face, i, &sfntname);
-        memcpy(namebuf, sfntname.string, sfntname.string_len);
-        namebuf[sfntname.string_len] = '\0';
         if(sfntname.platform_id == 1 && sfntname.encoding_id == 0 &&
            sfntname.language_id == 0 && sfntname.name_id == 0) {
-            strncpy(hdr.dfCopyright, namebuf, 60);
-            hdr.dfCopyright[59] = '\0';
-	}
+            size_t len = min( sfntname.string_len, sizeof(hdr.dfCopyright)-1 );
+            memcpy(hdr.dfCopyright, sfntname.string, len);
+            hdr.dfCopyright[len] = 0;
+        }
     }
 
     os2 = FT_Get_Sfnt_Table(face, ft_sfnt_os2);

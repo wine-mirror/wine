@@ -223,22 +223,29 @@ void _mbccpy(unsigned char* dest, const unsigned char* src)
  */
 unsigned char* _mbsncpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
 {
+  unsigned char* ret = dst;
   if(!n)
     return dst;
   if(MSVCRT___mb_cur_max > 1)
   {
-    unsigned char* ret = dst;
-    while (*src && n--)
+    while (*src && n)
     {
+      n--;
       *dst++ = *src;
       if (MSVCRT_isleadbyte(*src++))
           *dst++ = *src++;
     }
-    while(n--)
-      *dst++ = '\0';
-    return ret;
   }
-  return strncpy(dst, src, n); /* ASCII CP */
+  else
+  {
+    while (n)
+    {
+        n--;
+        if (!(*dst++ = *src++)) break;
+    }
+  }
+  while (n--) *dst++ = 0;
+  return ret;
 }
 
 /*********************************************************************
@@ -246,13 +253,14 @@ unsigned char* _mbsncpy(unsigned char* dst, const unsigned char* src, MSVCRT_siz
  */
 unsigned char* _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_size_t n)
 {
+  unsigned char* ret = dst;
   if(!n)
     return dst;
   if(MSVCRT___mb_cur_max > 1)
   {
-    unsigned char* ret = dst;
-    while (*src && (n-- > 1))
+    while (*src && (n > 1))
     {
+      n--;
       *dst++ = *src;
       if (MSVCRT_isleadbyte(*src++))
       {
@@ -268,11 +276,17 @@ unsigned char* _mbsnbcpy(unsigned char* dst, const unsigned char* src, MSVCRT_si
       *dst++ = *src;
       n--;
     }
-    while (n--)
-      *dst++ = '\0';
-    return ret;
   }
-  return strncpy(dst, src, n); /* ASCII CP */
+  else
+  {
+    while (n)
+    {
+        n--;
+        if (!(*dst++ = *src++)) break;
+    }
+  }
+  while (n--) *dst++ = 0;
+  return ret;
 }
 
 /*********************************************************************

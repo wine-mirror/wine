@@ -558,7 +558,7 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
 /***********************************************************************
  *		wine_dlopen
  */
-void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
+void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize )
 {
 #ifdef HAVE_DLOPEN
     void *ret;
@@ -566,18 +566,26 @@ void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
     dlerror(); dlerror();
     ret = dlopen( filename, flag );
     s = dlerror();
-    if (error)
+    if (error && errorsize)
     {
-        strncpy( error, s ? s : "", errorsize );
-        error[errorsize - 1] = '\0';
+        if (s)
+        {
+            size_t len = strlen(s);
+            if (len >= errorsize) len = errorsize - 1;
+            memcpy( error, s, len );
+            error[len] = 0;
+        }
+        else error[0] = 0;
     }
     dlerror();
     return ret;
 #else
     if (error)
     {
-        strncpy( error, "dlopen interface not detected by configure", errorsize );
-        error[errorsize - 1] = '\0';
+        static const char msg[] = "dlopen interface not detected by configure";
+        size_t len = min( errorsize, sizeof(msg) );
+        memcpy( error, msg, len );
+        error[len - 1] = 0;
     }
     return NULL;
 #endif
@@ -586,7 +594,7 @@ void *wine_dlopen( const char *filename, int flag, char *error, int errorsize )
 /***********************************************************************
  *		wine_dlsym
  */
-void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
+void *wine_dlsym( void *handle, const char *symbol, char *error, size_t errorsize )
 {
 #ifdef HAVE_DLOPEN
     void *ret;
@@ -594,18 +602,26 @@ void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
     dlerror(); dlerror();
     ret = dlsym( handle, symbol );
     s = dlerror();
-    if (error)
+    if (error && errorsize)
     {
-        strncpy( error, s ? s : "", errorsize );
-        error[errorsize - 1] = '\0';
+        if (s)
+        {
+            size_t len = strlen(s);
+            if (len >= errorsize) len = errorsize - 1;
+            memcpy( error, s, len );
+            error[len] = 0;
+        }
+        else error[0] = 0;
     }
     dlerror();
     return ret;
 #else
     if (error)
     {
-        strncpy( error, "dlopen interface not detected by configure", errorsize );
-        error[errorsize - 1] = '\0';
+        static const char msg[] = "dlopen interface not detected by configure";
+        size_t len = min( errorsize, sizeof(msg) );
+        memcpy( error, msg, len );
+        error[len - 1] = 0;
     }
     return NULL;
 #endif
@@ -614,7 +630,7 @@ void *wine_dlsym( void *handle, const char *symbol, char *error, int errorsize )
 /***********************************************************************
  *		wine_dlclose
  */
-int wine_dlclose( void *handle, char *error, int errorsize )
+int wine_dlclose( void *handle, char *error, size_t errorsize )
 {
 #ifdef HAVE_DLOPEN
     int ret;
@@ -622,18 +638,26 @@ int wine_dlclose( void *handle, char *error, int errorsize )
     dlerror(); dlerror();
     ret = dlclose( handle );
     s = dlerror();
-    if (error)
+    if (error && errorsize)
     {
-        strncpy( error, s ? s : "", errorsize );
-        error[errorsize - 1] = '\0';
+        if (s)
+        {
+            size_t len = strlen(s);
+            if (len >= errorsize) len = errorsize - 1;
+            memcpy( error, s, len );
+            error[len] = 0;
+        }
+        else error[0] = 0;
     }
     dlerror();
     return ret;
 #else
     if (error)
     {
-        strncpy( error, "dlopen interface not detected by configure", errorsize );
-        error[errorsize - 1] = '\0';
+        static const char msg[] = "dlopen interface not detected by configure";
+        size_t len = min( errorsize, sizeof(msg) );
+        memcpy( error, msg, len );
+        error[len - 1] = 0;
     }
     return 1;
 #endif
