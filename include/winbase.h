@@ -2065,6 +2065,10 @@ extern inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
     return strcat( dst, src );
 }
 
+/* strncpy doesn't do what you think, don't use it */
+#undef strncpy
+#define strncpy(d,s,n) error do_not_use_strncpy_use_lstrcpynA_or_memcpy_instead
+
 #endif /* !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__) */
 
 #define     lstrcat WINELIB_NAME_AW(lstrcat)
