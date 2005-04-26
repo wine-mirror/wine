@@ -432,6 +432,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
     {
         /* get the requested interface from the loaded class */
         res= IUnknown_QueryInterface(pObj,riidResult,ppvResult);
+        IUnknown_Release(pObj);
     }
 
     if (pProp)
