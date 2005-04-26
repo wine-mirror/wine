@@ -336,7 +336,7 @@ void LoadBoard( BOARD *p_board )
         if( RegQueryValueEx( hkey, key_name, NULL, (LPDWORD) &type,
                 (LPBYTE) data,
                 (LPDWORD) &size ) == ERROR_SUCCESS )
-                    strncpy( p_board->best_name[i], data, sizeof( data ) );
+                    lstrcpynA( p_board->best_name[i], data, sizeof(p_board->best_name[i]) );
         else
             LoadString( p_board->hInst, IDS_NOBODY, p_board->best_name[i], 16 );
     }

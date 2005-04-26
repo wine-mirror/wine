@@ -392,3 +392,18 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
     strcpy( dst, src );
     return dst;
 }
+
+LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+{
+    LPSTR d = dst;
+    LPCSTR s = src;
+    UINT count = n;
+
+    while ((count > 1) && *s)
+    {
+        count--;
+        *d++ = *s++;
+    }
+    if (count) *d = 0;
+    return dst;
+}

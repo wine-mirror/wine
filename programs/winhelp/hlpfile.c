@@ -1207,8 +1207,8 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
 
         if (idx < face_num)
         {
-            strncpy(hlpfile->fonts[i].LogFont.lfFaceName, ref + face_offset + idx * len, min(len, LF_FACESIZE - 1));
-            hlpfile->fonts[i].LogFont.lfFaceName[min(len, LF_FACESIZE - 1) + 1] = '\0';
+            memcpy(hlpfile->fonts[i].LogFont.lfFaceName, ref + face_offset + idx * len, min(len, LF_FACESIZE - 1));
+            hlpfile->fonts[i].LogFont.lfFaceName[min(len, LF_FACESIZE - 1)] = '\0';
         }
         else
         {
@@ -1415,9 +1415,12 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
                 unsigned flags = GET_USHORT(ptr, 4);
                 HLPFILE_WINDOWINFO* wi = &hlpfile->windows[hlpfile->numWindows - 1];
 
-                if (flags & 0x0001) strcpy(wi->type, ptr + 6); else wi->type[0] = '\0';
-                if (flags & 0x0002) strcpy(wi->name, ptr + 16); else wi->name[0] = '\0';
-                if (flags & 0x0004) strcpy(wi->caption, ptr + 25); else strncpy(wi->caption, hlpfile->lpszTitle, sizeof(wi->caption));
+                if (flags & 0x0001) strcpy(wi->type, ptr + 6);
+                else wi->type[0] = '\0';
+                if (flags & 0x0002) strcpy(wi->name, ptr + 16);
+                else wi->name[0] = '\0';
+                if (flags & 0x0004) strcpy(wi->caption, ptr + 25);
+                else lstrcpynA(wi->caption, hlpfile->lpszTitle, sizeof(wi->caption));
                 wi->origin.x = (flags & 0x0008) ? GET_USHORT(ptr, 76) : CW_USEDEFAULT;
                 wi->origin.y = (flags & 0x0010) ? GET_USHORT(ptr, 78) : CW_USEDEFAULT;
                 wi->size.cx = (flags & 0x0020) ? GET_USHORT(ptr, 80) : CW_USEDEFAULT;

@@ -153,14 +153,14 @@ void GraphCtrl_SetRange(TGraphCtrl* this, double dLower, double dUpper, int nDec
 #if 0
 void TGraphCtrl::SetXUnits(const char* string)
 {
-    strncpy(m_strXUnitsString, string, sizeof(m_strXUnitsString) - 1);
+    lstrcpynA(m_strXUnitsString, string, sizeof(m_strXUnitsString));
     /*  clear out the existing garbage, re-start with a clean plot */
     InvalidateCtrl();
 }
 
 void TGraphCtrl::SetYUnits(const char* string)
 {
-    strncpy(m_strYUnitsString, string, sizeof(m_strYUnitsString) - 1);
+    lstrcpynA(m_strYUnitsString, string, sizeof(m_strYUnitsString));
     /*  clear out the existing garbage, re-start with a clean plot */
     InvalidateCtrl();
 }
