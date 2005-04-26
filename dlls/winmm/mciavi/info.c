@@ -164,13 +164,13 @@ DWORD	MCIAVI_mciInfo(UINT wDevID, DWORD dwFlags, LPMCI_DGV_INFO_PARMSW lpParms)
 
     EnterCriticalSection(&wma->cs);
 
-    switch (dwFlags) {
-    case MCI_INFO_PRODUCT:      str = wszAviPlayer; break;
-    case MCI_INFO_FILE:         str = wma->lpFileName; break;
-    default:
+    if (dwFlags & MCI_INFO_PRODUCT)
+	str = wszAviPlayer;
+    else if (dwFlags & MCI_INFO_FILE)
+	str = wma->lpFileName;
+    else {
 	WARN("Don't know this info command (%lu)\n", dwFlags);
-        LeaveCriticalSection(&wma->cs);
-	return MCIERR_UNRECOGNIZED_COMMAND;
+	ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
     if (str) {
 	if (strlenW(str) + 1 > lpParms->dwRetSize) {
