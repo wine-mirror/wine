@@ -338,13 +338,8 @@ static struct window *create_window( struct window *parent, struct window *owner
         release_class( class );
         return NULL;
     }
+    if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
 
-    if (!(win->handle = alloc_user_handle( win, USER_WINDOW )))
-    {
-        release_class( class );
-        free( win );
-        return NULL;
-    }
     win->parent         = parent;
     win->owner          = owner ? owner->handle : 0;
     win->thread         = current;
@@ -368,13 +363,26 @@ static struct window *create_window( struct window *parent, struct window *owner
     list_init( &win->children );
     list_init( &win->unlinked );
 
+    /* if parent belongs to a different thread, attach the two threads */
+    if (parent && parent->thread && parent->thread != current)
+    {
+        if (!attach_thread_input( current, parent->thread )) goto failed;
+    }
+    else  /* otherwise just make sure that the thread has a message queue */
+    {
+        if (!current->queue && !init_thread_queue( current )) goto failed;
+    }
+
     /* put it on parent unlinked list */
     if (parent) list_add_head( &parent->unlinked, &win->entry );
 
-    /* if parent belongs to a different thread, attach the two threads */
-    if (parent && parent->thread && parent->thread != current)
-        attach_thread_input( current, parent->thread );
     return win;
+
+failed:
+    if (win->handle) free_user_handle( win->handle );
+    release_class( class );
+    free( win );
+    return NULL;
 }
 
 /* destroy all windows belonging to a given thread */

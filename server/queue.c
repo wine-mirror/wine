@@ -282,7 +282,7 @@ struct hook_table *get_queue_hooks( struct thread *thread )
 void set_queue_hooks( struct thread *thread, struct hook_table *hooks )
 {
     struct msg_queue *queue = thread->queue;
-    if (!queue) queue = create_msg_queue( thread, NULL );
+    if (!queue && !(queue = create_msg_queue( thread, NULL ))) return;
     if (queue->hooks) release_object( queue->hooks );
     queue->hooks = hooks;
 }
@@ -826,6 +826,13 @@ static int check_queue_input_window( struct msg_queue *queue, user_handle_t wind
     else set_error( STATUS_INVALID_HANDLE );
 
     return ret;
+}
+
+/* make sure the specified thread has a queue */
+int init_thread_queue( struct thread *thread )
+{
+    if (thread->queue) return 1;
+    return (create_msg_queue( thread, NULL ) != NULL);
 }
 
 /* attach two thread input data structures */

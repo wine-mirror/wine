@@ -61,6 +61,7 @@ extern struct hook_table *get_queue_hooks( struct thread *thread );
 extern void set_queue_hooks( struct thread *thread, struct hook_table *hooks );
 extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
+extern int init_thread_queue( struct thread *thread );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
 extern void post_message( user_handle_t win, unsigned int message,
                           unsigned int wparam, unsigned int lparam );
