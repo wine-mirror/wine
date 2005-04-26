@@ -2985,6 +2985,89 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
 
 
 /***********************************************************************
+ *		GetMessagePos (USER.119)
+ *		GetMessagePos (USER32.@)
+ *
+ * The GetMessagePos() function returns a long value representing a
+ * cursor position, in screen coordinates, when the last message
+ * retrieved by the GetMessage() function occurs. The x-coordinate is
+ * in the low-order word of the return value, the y-coordinate is in
+ * the high-order word. The application can use the MAKEPOINT()
+ * macro to obtain a POINT structure from the return value.
+ *
+ * For the current cursor position, use GetCursorPos().
+ *
+ * RETURNS
+ *
+ * Cursor position of last message on success, zero on failure.
+ *
+ * CONFORMANCE
+ *
+ * ECMA-234, Win32
+ *
+ */
+DWORD WINAPI GetMessagePos(void)
+{
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = QUEUE_Current())) return 0;
+    return queue->GetMessagePosVal;
+}
+
+
+/***********************************************************************
+ *		GetMessageTime (USER.120)
+ *		GetMessageTime (USER32.@)
+ *
+ * GetMessageTime() returns the message time for the last message
+ * retrieved by the function. The time is measured in milliseconds with
+ * the same offset as GetTickCount().
+ *
+ * Since the tick count wraps, this is only useful for moderately short
+ * relative time comparisons.
+ *
+ * RETURNS
+ *
+ * Time of last message on success, zero on failure.
+ */
+LONG WINAPI GetMessageTime(void)
+{
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = QUEUE_Current())) return 0;
+    return queue->GetMessageTimeVal;
+}
+
+
+/***********************************************************************
+ *		GetMessageExtraInfo (USER.288)
+ *		GetMessageExtraInfo (USER32.@)
+ */
+LPARAM WINAPI GetMessageExtraInfo(void)
+{
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = QUEUE_Current())) return 0;
+    return queue->GetMessageExtraInfoVal;
+}
+
+
+/***********************************************************************
+ *		SetMessageExtraInfo (USER32.@)
+ */
+LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
+{
+    MESSAGEQUEUE *queue;
+    LONG old_value;
+
+    if (!(queue = QUEUE_Current())) return 0;
+    old_value = queue->GetMessageExtraInfoVal;
+    queue->GetMessageExtraInfoVal = lParam;
+    return old_value;
+}
+
+
+/***********************************************************************
  *		WaitMessage (USER.112) Suspend thread pending messages
  *		WaitMessage (USER32.@) Suspend thread pending messages
  *
@@ -3314,28 +3397,6 @@ BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 
 
 /**********************************************************************
- *		AttachThreadInput (USER32.@)
- *
- * Attaches the input processing mechanism of one thread to that of
- * another thread.
- */
-BOOL WINAPI AttachThreadInput( DWORD from, DWORD to, BOOL attach )
-{
-    BOOL ret;
-
-    SERVER_START_REQ( attach_thread_input )
-    {
-        req->tid_from = from;
-        req->tid_to   = to;
-        req->attach   = attach;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/**********************************************************************
  *		GetGUIThreadInfo  (USER32.@)
  */
 BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
@@ -3367,70 +3428,6 @@ BOOL WINAPI GetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
     return ret;
 }
 
-
-/**********************************************************************
- *		GetKeyState (USER32.@)
- *
- * An application calls the GetKeyState function in response to a
- * keyboard-input message.  This function retrieves the state of the key
- * at the time the input message was generated.
- */
-SHORT WINAPI GetKeyState(INT vkey)
-{
-    SHORT retval = 0;
-
-    SERVER_START_REQ( get_key_state )
-    {
-        req->tid = GetCurrentThreadId();
-        req->key = vkey;
-        if (!wine_server_call( req )) retval = (signed char)reply->state;
-    }
-    SERVER_END_REQ;
-    TRACE("key (0x%x) -> %x\n", vkey, retval);
-    return retval;
-}
-
-
-/**********************************************************************
- *		GetKeyboardState (USER32.@)
- */
-BOOL WINAPI GetKeyboardState( LPBYTE state )
-{
-    BOOL ret;
-
-    TRACE("(%p)\n", state);
-
-    memset( state, 0, 256 );
-    SERVER_START_REQ( get_key_state )
-    {
-        req->tid = GetCurrentThreadId();
-        req->key = -1;
-        wine_server_set_reply( req, state, 256 );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/**********************************************************************
- *		SetKeyboardState (USER32.@)
- */
-BOOL WINAPI SetKeyboardState( LPBYTE state )
-{
-    BOOL ret;
-
-    TRACE("(%p)\n", state);
-
-    SERVER_START_REQ( set_key_state )
-    {
-        req->tid = GetCurrentThreadId();
-        wine_server_add_data( req, state, 256 );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
 
 /******************************************************************
  *		IsHungAppWindow (USER32.@)

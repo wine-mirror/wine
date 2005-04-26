@@ -223,6 +223,137 @@ SHORT WINAPI GetAsyncKeyState(INT nKey)
 }
 
 
+/***********************************************************************
+ *		GetQueueStatus (USER32.@)
+ */
+DWORD WINAPI GetQueueStatus( UINT flags )
+{
+    DWORD ret = 0;
+
+    /* check for pending X events */
+    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
+
+    SERVER_START_REQ( get_queue_status )
+    {
+        req->clear = 1;
+        wine_server_call( req );
+        ret = MAKELONG( reply->changed_bits & flags, reply->wake_bits & flags );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/***********************************************************************
+ *		GetInputState   (USER32.@)
+ */
+BOOL WINAPI GetInputState(void)
+{
+    DWORD ret = 0;
+
+    /* check for pending X events */
+    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
+        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_INPUT, 0 );
+
+    SERVER_START_REQ( get_queue_status )
+    {
+        req->clear = 0;
+        wine_server_call( req );
+        ret = reply->wake_bits & (QS_KEY | QS_MOUSEBUTTON);
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *		AttachThreadInput (USER32.@)
+ *
+ * Attaches the input processing mechanism of one thread to that of
+ * another thread.
+ */
+BOOL WINAPI AttachThreadInput( DWORD from, DWORD to, BOOL attach )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( attach_thread_input )
+    {
+        req->tid_from = from;
+        req->tid_to   = to;
+        req->attach   = attach;
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *		GetKeyState (USER32.@)
+ *
+ * An application calls the GetKeyState function in response to a
+ * keyboard-input message.  This function retrieves the state of the key
+ * at the time the input message was generated.
+ */
+SHORT WINAPI GetKeyState(INT vkey)
+{
+    SHORT retval = 0;
+
+    SERVER_START_REQ( get_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        req->key = vkey;
+        if (!wine_server_call( req )) retval = (signed char)reply->state;
+    }
+    SERVER_END_REQ;
+    TRACE("key (0x%x) -> %x\n", vkey, retval);
+    return retval;
+}
+
+
+/**********************************************************************
+ *		GetKeyboardState (USER32.@)
+ */
+BOOL WINAPI GetKeyboardState( LPBYTE state )
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", state);
+
+    memset( state, 0, 256 );
+    SERVER_START_REQ( get_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        req->key = -1;
+        wine_server_set_reply( req, state, 256 );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
+/**********************************************************************
+ *		SetKeyboardState (USER32.@)
+ */
+BOOL WINAPI SetKeyboardState( LPBYTE state )
+{
+    BOOL ret;
+
+    TRACE("(%p)\n", state);
+
+    SERVER_START_REQ( set_key_state )
+    {
+        req->tid = GetCurrentThreadId();
+        wine_server_add_data( req, state, 256 );
+        ret = !wine_server_call_err( req );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /**********************************************************************
  *		VkKeyScanA (USER32.@)
  *
