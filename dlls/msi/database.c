@@ -334,7 +334,7 @@ UINT WINAPI MsiDatabaseExportA( MSIHANDLE handle, LPCSTR szTable,
             goto end;
     }
 
-    r = MsiDatabaseImportW( handle, path, file );
+    r = MsiDatabaseExportW( handle, table, path, file );
 
 end:
     HeapFree( GetProcessHeap(), 0, table );

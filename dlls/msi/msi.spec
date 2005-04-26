@@ -18,8 +18,8 @@
 18 stdcall MsiDatabaseApplyTransformA(long str long)
 19 stdcall MsiDatabaseApplyTransformW(long wstr long)
 20 stdcall MsiDatabaseCommit(long)
-21 stub MsiDatabaseExportA
-22 stub MsiDatabaseExportW
+21 stdcall MsiDatabaseExportA(long str str str)
+22 stdcall MsiDatabaseExportW(long wstr wstr wstr)
 23 stdcall MsiDatabaseGenerateTransformA(long long str long long)
 24 stdcall MsiDatabaseGenerateTransformW(long long wstr long long)
 25 stdcall MsiDatabaseGetPrimaryKeysA(long str ptr)
