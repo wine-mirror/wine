@@ -473,6 +473,14 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
 {
     MSIHANDLE hProduct;
     UINT r;
+    static const WCHAR szPackageCode[] =
+        {'P','a','c','k','a','g','e','C','o','d','e',0};
+    static const WCHAR szVersionString[] =
+        {'V','e','r','s','i','o','n','S','t','r','i','n','g',0};
+    static const WCHAR szProductVersion[] =
+        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szAssignmentType[] =
+        {'A','s','s','i','g','n','m','e','n','t','T','y','p','e',0};
 
     FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szAttribute),
           szBuffer, pcchValueBuf);
@@ -481,13 +489,59 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         return ERROR_INVALID_PARAMETER;
     if (NULL == szProduct || NULL == szAttribute)
         return ERROR_INVALID_PARAMETER;
+    
+    /* check for special properties */
+    if (strcmpW(szAttribute, szPackageCode)==0)
+    {
+        HKEY hkey;
+        WCHAR squished[GUID_SIZE];
+        WCHAR package[200];
+        DWORD sz = sizeof(squished);
 
-    r = MsiOpenProductW(szProduct, &hProduct);
-    if (ERROR_SUCCESS != r)
-        return r;
+        r = MSIREG_OpenUserProductsKey(szProduct, &hkey, FALSE);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_PRODUCT;
 
-    r = MsiGetPropertyW(hProduct, szAttribute, szBuffer, pcchValueBuf);
-    MsiCloseHandle(hProduct);
+        r = RegQueryValueExW(hkey, szPackageCode, NULL, NULL, 
+                        (LPBYTE)squished, &sz);
+        if (r != ERROR_SUCCESS)
+            return ERROR_UNKNOWN_PRODUCT;
+
+        unsquash_guid(squished, package);
+        *pcchValueBuf = strlenW(package);
+        if (strlenW(package) > *pcchValueBuf)
+            return ERROR_MORE_DATA;
+        else
+            strcpyW(szBuffer, package);
+
+        r = ERROR_SUCCESS;
+    }
+    else if (strcmpW(szAttribute, szVersionString)==0)
+    {
+        r = MsiOpenProductW(szProduct, &hProduct);
+        if (ERROR_SUCCESS != r)
+            return r;
+
+        r = MsiGetPropertyW(hProduct, szProductVersion, szBuffer, pcchValueBuf);
+        MsiCloseHandle(hProduct);
+    }
+    else if (strcmpW(szAttribute, szAssignmentType)==0)
+    {
+        FIXME("0 (zero) if advertised, 1(one) if per machine.\n");
+        if (szBuffer)
+            szBuffer[0] = 1;
+        r = ERROR_SUCCESS;
+    }
+    else
+    {
+        r = MsiOpenProductW(szProduct, &hProduct);
+        if (ERROR_SUCCESS != r)
+            return r;
+
+        r = MsiGetPropertyW(hProduct, szAttribute, szBuffer, pcchValueBuf);
+        MsiCloseHandle(hProduct);
+    }
+
     return r;
 }
 
