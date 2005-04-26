@@ -2409,8 +2409,9 @@ static void test_SetParent(void)
 {
     BOOL ret;
     HWND desktop = GetDesktopWindow();
+    HMENU hMenu;
     BOOL is_win9x = GetWindowLongPtrW(desktop, GWLP_WNDPROC) == 0;
-    HWND parent, child1, child2, child3, child4;
+    HWND parent, child1, child2, child3, child4, sibling;
 
     parent = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
 			     100, 100, 200, 200, 0, 0, 0, NULL);
@@ -2476,10 +2477,19 @@ todo_wine {
         check_parents(child4, desktop, child2, child2, child2, child4, parent);
     }
 
+    hMenu = CreateMenu();
+    sibling = CreateWindowExA(0, "static", NULL, WS_OVERLAPPEDWINDOW,
+			     100, 100, 200, 200, 0, hMenu, 0, NULL);
+    assert(sibling != 0);
+
+    ok(SetParent(sibling, parent) != 0, "SetParent should not fail\n");
+    ok(GetMenu(sibling) == hMenu, "SetParent should not remove menu\n");
+
     ret = DestroyWindow(parent);
     ok( ret, "DestroyWindow() error %ld\n", GetLastError());
 
     ok(!IsWindow(parent), "parent still exists\n");
+    ok(!IsWindow(sibling), "sibling still exists\n");
     ok(!IsWindow(child1), "child1 still exists\n");
     ok(!IsWindow(child2), "child2 still exists\n");
     ok(!IsWindow(child3), "child3 still exists\n");

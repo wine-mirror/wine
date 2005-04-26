@@ -1134,11 +1134,6 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
 
         if (parent != GetDesktopWindow()) /* a child window */
         {
-            if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD))
-            {
-                HMENU menu = (HMENU)SetWindowLongPtrW( hwnd, GWLP_ID, 0 );
-                if (menu) DestroyMenu( menu );
-            }
             if (old_parent == GetDesktopWindow())
             {
                 /* destroy the old X windows */
