@@ -1828,6 +1828,18 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
    }
 }
 
+static char *strdupA(LPCSTR str)
+{
+    char *ret;
+    DWORD len;
+
+    if(!str) return NULL;
+
+    len = strlen(str);
+    ret = HeapAlloc(GetProcessHeap(), 0, len + 1);
+    memcpy(ret, str, len + 1);
+    return ret;
+}
 
 /***********************************************************************
  *           ComboWndProc_common
@@ -2054,13 +2066,24 @@ static LRESULT ComboWndProc_common( HWND hwnd, UINT message,
                         struprW((LPWSTR)lParam);
                     return SendMessageW(lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
                 }
-                else
+                else /* unlike the unicode version, the ansi version does not overwrite
+                        the string if converting case */
                 {
+                    char *string = NULL;
+                    LRESULT ret;
                     if( lphc->dwStyle & CBS_LOWERCASE )
-                        _strlwr((LPSTR)lParam);
+                    {
+                        string = strdupA((LPSTR)lParam);
+                        _strlwr(string);
+                    }
                     else if( lphc->dwStyle & CBS_UPPERCASE )
-                        _strupr((LPSTR)lParam);
-                    return SendMessageA(lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
+                    {
+                        string = strdupA((LPSTR)lParam);
+                        _strupr(string);
+                    }
+                    ret = SendMessageA(lphc->hWndLBox, LB_ADDSTRING, 0, string ? (LPARAM)string : lParam);
+                    HeapFree(GetProcessHeap(), 0, string);
+                    return ret;
                 }
 	case CB_INSERTSTRING16:
 		wParam = (INT)(INT16)wParam;
