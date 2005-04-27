@@ -93,7 +93,8 @@ extern WORD DOSMEM_BiosDataSeg;
 extern WORD DOSMEM_BiosSysSeg;
 
 /* msdos/dosmem.c */
-extern BOOL DOSMEM_Init(BOOL);
+extern BOOL DOSMEM_Init(void);
+extern BOOL DOSMEM_InitDosMem(void);
 extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern LPVOID DOSMEM_GetBlock(UINT size, WORD* p);

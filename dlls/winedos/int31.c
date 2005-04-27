@@ -968,7 +968,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
             /* check if Win16 app wants to access lower 64K of DOS memory */
             if (base < 0x10000 && DOSVM_IsWin16())
-                DOSMEM_Init(TRUE);
+                DOSMEM_InitDosMem();
 
             SetSelectorBase( sel, base );
         }

@@ -33,6 +33,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "excpt.h"
+#include "winternl.h"
 #include "wine/winbase16.h"
 
 #include "kernel_private.h"
@@ -46,6 +49,10 @@ WINE_DECLARE_DEBUG_CHANNEL(selector);
 WORD DOSMEM_0000H;        /* segment at 0:0 */
 WORD DOSMEM_BiosDataSeg;  /* BIOS data segment at 0x40:0 */
 WORD DOSMEM_BiosSysSeg;   /* BIOS ROM segment at 0xf000:0 */
+
+/* DOS memory highest address (including HMA) */
+#define DOSMEM_SIZE             0x110000
+#define DOSMEM_64KB             0x10000
 
 /* use 2 low bits of 'size' for the housekeeping */
 
@@ -74,16 +81,32 @@ typedef struct {
 #define VM_STUB(x) (0x90CF00CD|(x<<8)) /* INT x; IRET; NOP */
 #define VM_STUB_SEGMENT 0xf000         /* BIOS segment */
 
-/* DOS memory base */
+/* when looking at DOS and real mode memory, we activate in three different
+ * modes, depending the situation.
+ * 1/ By default (protected mode), the first MB of memory (actually 0x110000,
+ *    when you also look at the HMA part) is always reserved, whatever you do.
+ *    We allocated some PM selectors to this memory, even if this area is not
+ *    committed at startup
+ * 2/ if a program tries to use the memory through the selectors, we actually
+ *    commit this memory, made of: BIOS segment, but also some system 
+ *    information, usually low in memory that we map for the circumstance also
+ *    in the BIOS segment, so that we keep the low memory protected (for NULL
+ *    pointer deref catching for example). In this case, we'res still in PM
+ *    mode, accessing part of the "physicale" real mode memory.
+ * 3/ if the process enters the real mode, then we commit the full first MB of
+ *    memory (and also initialize the DOS structures in it).
+ */
+
+/* DOS memory base (linear in process address space) */
 static char *DOSMEM_dosmem;
 /* DOS system base (for interrupt vector table and BIOS data area)
  * ...should in theory (i.e. Windows) be equal to DOSMEM_dosmem (NULL),
  * but is normally set to 0xf0000 in Wine to allow trapping of NULL pointers,
  * and only relocated to NULL when absolutely necessary */
 static char *DOSMEM_sysmem;
-
-/* Start of DOS conventional memory */
-static char *DOSMEM_membase;
+/* number of bytes protected from _dosmem. 0 when DOS memory is initialized, 
+ * 64k otherwise to trap NULL pointers deref */
+static DWORD DOSMEM_protect;
 
 static void DOSMEM_InitMemory(void);
 
@@ -104,6 +127,9 @@ static char *DOSMEM_MemoryTop(void)
  */
 static dosmem_info *DOSMEM_InfoBlock(void)
 {
+    /* Start of DOS conventional memory */
+    static char *DOSMEM_membase;
+
     if (!DOSMEM_membase)
     {
         DWORD         reserve;
@@ -116,7 +142,7 @@ static dosmem_info *DOSMEM_InfoBlock(void)
          *   areas (DOS)
          */
         if (DOSMEM_dosmem != DOSMEM_sysmem)
-            reserve = 0x10000; /* 64k */
+            reserve = DOSMEM_64KB;
         else
             reserve = 0x600; /* 1.5k */
 
@@ -291,48 +317,81 @@ static void DOSMEM_InitMemory(void)
            DOSMEM_Available() );
 }
 
+static void dosmem_bios_init(void)
+{
+    static      int bios_created;
+
+    if (!bios_created)
+    {
+        DOSMEM_FillBiosSegments();
+        DOSMEM_FillIsrTable();
+        bios_created = TRUE;
+    }
+}
+
+/******************************************************************
+ *		dosmem_handler
+ *
+ * Handler to catch access to our 1MB address space reserved for real memory
+ */
+static LONG WINAPI dosmem_handler(EXCEPTION_POINTERS* except)
+{
+    if (except->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
+    {
+        DWORD   addr = except->ExceptionRecord->ExceptionInformation[1];
+        if (addr >= (ULONG_PTR)DOSMEM_sysmem &&
+            addr < (ULONG_PTR)DOSMEM_sysmem + DOSMEM_64KB)
+        {
+            VirtualProtect( DOSMEM_sysmem, DOSMEM_64KB, PAGE_EXECUTE_READWRITE, NULL );
+            dosmem_bios_init();
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+        if (addr >= (ULONG_PTR)DOSMEM_dosmem + DOSMEM_protect &&
+            addr < (ULONG_PTR)DOSMEM_dosmem + DOSMEM_SIZE)
+        {
+            VirtualProtect( DOSMEM_dosmem + DOSMEM_protect, DOSMEM_SIZE - DOSMEM_protect,
+                            PAGE_EXECUTE_READWRITE, NULL );
+            dosmem_bios_init();
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /**********************************************************************
  *		setup_dos_mem
  *
  * Setup the first megabyte for DOS memory access
  */
-static void setup_dos_mem( int dos_init )
+static void setup_dos_mem(void)
 {
     int sys_offset = 0;
     int page_size = getpagesize();
     void *addr = NULL;
 
-    if (wine_mmap_is_in_reserved_area( NULL, 0x110000 ) != 1)
+    if (wine_mmap_is_in_reserved_area( NULL, DOSMEM_SIZE ) != 1)
     {
-        addr = wine_anon_mmap( (void *)page_size, 0x110000-page_size,
+        addr = wine_anon_mmap( (void *)page_size, DOSMEM_SIZE-page_size,
                                PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
         if (addr == (void *)page_size) addr = NULL; /* we got what we wanted */
-        else munmap( addr, 0x110000 - page_size );
+        else munmap( addr, DOSMEM_SIZE - page_size );
     }
 
     if (!addr)
     {
-        /* now map from address 0 */
-        wine_anon_mmap( NULL, 0x110000, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED );
+        /* now reserve from address 0 */
+        wine_anon_mmap( NULL, DOSMEM_SIZE, 0, MAP_FIXED );
 
-        /* inform the memory manager that there is a mapping here */
-        VirtualAlloc( addr, 0x110000, MEM_RESERVE | MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
-
-        /* protect the first 64K to catch NULL pointers */
-        if (!dos_init)
-        {
-            VirtualProtect( addr, 0x10000, PAGE_NOACCESS, NULL );
-            /* move the BIOS and ISR area from 0x00000 to 0xf0000 */
-            sys_offset += 0xf0000;
-        }
+        /* inform the memory manager that there is a mapping here, but don't commit yet */
+        VirtualAlloc( NULL, DOSMEM_SIZE, MEM_RESERVE | MEM_SYSTEM, PAGE_NOACCESS );
+        sys_offset = 0xf0000;
+        DOSMEM_protect = DOSMEM_64KB;
     }
     else
     {
         ERR("Cannot use first megabyte for DOS address space, please report\n" );
-        if (dos_init) ExitProcess(1);
         /* allocate the DOS area somewhere else */
-        addr = VirtualAlloc( NULL, 0x110000, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+        addr = VirtualAlloc( NULL, DOSMEM_SIZE, MEM_RESERVE, PAGE_NOACCESS );
         if (!addr)
         {
             ERR( "Cannot allocate DOS memory\n" );
@@ -341,6 +400,7 @@ static void setup_dos_mem( int dos_init )
     }
     DOSMEM_dosmem = addr;
     DOSMEM_sysmem = (char*)addr + sys_offset;
+    RtlAddVectoredExceptionHandler(FALSE, dosmem_handler);
 }
 
 
@@ -350,34 +410,41 @@ static void setup_dos_mem( int dos_init )
  * Create the dos memory segments, and store them into the KERNEL
  * exported values.
  */
-BOOL DOSMEM_Init(BOOL dos_init)
+BOOL DOSMEM_Init(void)
 {
-    static int already_done, already_mapped;
+    setup_dos_mem();
 
-    if (!already_done)
-    {
-        setup_dos_mem( dos_init );
+    DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
+                                       DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
+    DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_sysmem + 0x400,
+                                            0x100, 0, WINE_LDT_FLAGS_DATA );
+    DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem + 0xf0000,
+                                           DOSMEM_64KB, 0, WINE_LDT_FLAGS_DATA );
 
-        DOSMEM_0000H = GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_sysmem,
-                                           0x10000, 0, WINE_LDT_FLAGS_DATA );
-        DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_sysmem + 0x400,
-                                                0x100, 0, WINE_LDT_FLAGS_DATA );
-        DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
-                                               0x10000, 0, WINE_LDT_FLAGS_DATA );
-        DOSMEM_FillBiosSegments();
-        DOSMEM_FillIsrTable();
-        already_done = 1;
-    }
-    else if (dos_init && !already_mapped)
+    return TRUE;
+}
+
+/******************************************************************
+ *		DOSMEM_InitDosMem
+ *
+ * Initialize the first MB of memory to look like a real DOS setup
+ */
+BOOL DOSMEM_InitDosMem(void)
+{
+    static int already_mapped;
+
+    if (!already_mapped)
     {
         if (DOSMEM_dosmem)
         {
             ERR( "Needs access to the first megabyte for DOS mode\n" );
             ExitProcess(1);
         }
-        MESSAGE( "Warning: unprotecting the first 64KB of memory to allow real-mode calls.\n"
+        MESSAGE( "Warning: unprotecting memory to allow real-mode calls.\n"
                  "         NULL pointer accesses will no longer be caught.\n" );
-        VirtualProtect( NULL, 0x10000, PAGE_EXECUTE_READWRITE, NULL );
+        VirtualProtect( NULL, DOSMEM_SIZE, PAGE_EXECUTE_READWRITE, NULL );
+        DOSMEM_protect = 0;
+        dosmem_bios_init();
         /* copy the BIOS and ISR area down */
         memcpy( DOSMEM_dosmem, DOSMEM_sysmem, 0x400 + 0x100 );
         DOSMEM_sysmem = DOSMEM_dosmem;
@@ -632,7 +699,7 @@ UINT DOSMEM_Available(void)
 UINT DOSMEM_MapLinearToDos(LPVOID ptr)
 {
     if (((char*)ptr >= DOSMEM_dosmem) &&
-        ((char*)ptr < DOSMEM_dosmem + 0x100000))
+        ((char*)ptr < DOSMEM_dosmem + DOSMEM_SIZE))
 	  return (UINT)ptr - (UINT)DOSMEM_dosmem;
     return (UINT)ptr;
 }
@@ -645,7 +712,7 @@ UINT DOSMEM_MapLinearToDos(LPVOID ptr)
  */
 LPVOID DOSMEM_MapDosToLinear(UINT ptr)
 {
-    if (ptr < 0x100000) return (LPVOID)(ptr + (UINT)DOSMEM_dosmem);
+    if (ptr < DOSMEM_SIZE) return (LPVOID)(ptr + (UINT)DOSMEM_dosmem);
     return (LPVOID)ptr;
 }
 
@@ -659,7 +726,7 @@ LPVOID DOSMEM_MapRealToLinear(DWORD x)
 {
    LPVOID       lin;
 
-   lin=DOSMEM_dosmem+(x&0xffff)+(((x&0xffff0000)>>16)*16);
+   lin = DOSMEM_dosmem + HIWORD(x) * 16 + LOWORD(x);
    TRACE_(selector)("(0x%08lx) returns %p.\n", x, lin );
    return lin;
 }
@@ -674,7 +741,7 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 	HMODULE16 hModule = GetModuleHandle16("KERNEL");
 	WORD	sel;
 
-	sel=GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+realsel*16, 0x10000,
+	sel=GLOBAL_CreateBlock( GMEM_FIXED, DOSMEM_dosmem+realsel*16, DOSMEM_64KB,
                                 hModule, WINE_LDT_FLAGS_DATA );
 	TRACE_(selector)("(0x%04x) returns 0x%04x.\n", realsel,sel);
 	return sel;

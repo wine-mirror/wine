@@ -1170,7 +1170,7 @@
 @ cdecl DOSMEM_Available()
 @ cdecl DOSMEM_FreeBlock(ptr)
 @ cdecl DOSMEM_GetBlock(long ptr)
-@ cdecl DOSMEM_Init(long)
+@ cdecl DOSMEM_InitDosMem(long)
 @ cdecl DOSMEM_ResizeBlock(ptr long long)
 @ cdecl LOCAL_Alloc(long long long)
 @ cdecl LOCAL_Compact(long long long)

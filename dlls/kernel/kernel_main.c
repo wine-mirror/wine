@@ -121,7 +121,7 @@ static BOOL process_attach(void)
     if (!WOWTHUNK_Init()) return FALSE;
 
     /* Initialize DOS memory */
-    if (!DOSMEM_Init(0)) return FALSE;
+    if (!DOSMEM_Init()) return FALSE;
 
     /* Setup computer name */
     COMPUTERNAME_Init();
