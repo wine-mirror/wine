@@ -122,6 +122,7 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 	WARN("Couldn't allocate thread for async command handling, sending synchonously\n");
 	return MCI_SCAStarter(&sca);
     }
+    SetThreadPriority(handle, THREAD_PRIORITY_TIME_CRITICAL);
     CloseHandle(handle);
     return 0;
 }

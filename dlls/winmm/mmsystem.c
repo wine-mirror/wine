@@ -1946,6 +1946,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl, DWORD
 		    CloseHandle(lpMMThd->hEvent);
 		ret = 2;
 	    } else {
+                SetThreadPriority(lpMMThd->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 		TRACE("Got a nice thread hndl=%p id=0x%08lx\n", lpMMThd->hThread, lpMMThd->dwThreadID);
 		ret = 0;
 	    }

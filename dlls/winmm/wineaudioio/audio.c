@@ -894,6 +894,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+        if (wwo->hThread)
+            SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	WaitForSingleObject(wwo->hEvent, INFINITE);
     } else {
 	wwo->hEvent = INVALID_HANDLE_VALUE;
@@ -1979,6 +1981,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
+    if (wwi->hThread)
+        SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
     WaitForSingleObject(wwi->hEvent, INFINITE);
 
    if (LIBAUDIOIO_NotifyClient(wDevID, WIM_OPEN, 0L, 0L) != MMSYSERR_NOERROR) {

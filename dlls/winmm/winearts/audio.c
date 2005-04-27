@@ -1208,6 +1208,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+        if (wwo->hThread)
+            SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
     } else {
@@ -1860,6 +1862,8 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
+        if (wwi->hThread)
+            SetThreadPriority(wwi->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
 	CloseHandle(wwi->hStartUpEvent);
     } else {

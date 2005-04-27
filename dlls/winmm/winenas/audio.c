@@ -956,6 +956,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
 	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+        if (wwo->hThread)
+            SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
     } else {

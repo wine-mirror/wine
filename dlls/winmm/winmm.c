@@ -1786,6 +1786,7 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
 	midiStreamClose((HMIDISTRM)hMidiOut);
 	return MMSYSERR_NOMEM;
     }
+    SetThreadPriority(lpMidiStrm->hThread, THREAD_PRIORITY_TIME_CRITICAL);
 
     /* wait for thread to have started, and for its queue to be created */
     {
@@ -2797,6 +2798,7 @@ MMRESULT WINAPI mmTaskCreate(LPTASKCALLBACK cb, HANDLE* ph, DWORD client)
         if (hEvent) CloseHandle(hEvent);
         return TASKERR_OUTOFMEMORY;
     }
+    SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
     if (ph) *ph = hEvent;
     CloseHandle(hThread);
     return 0;
