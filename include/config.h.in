@@ -38,6 +38,9 @@
 /* Define if the assembler keyword .size is accepted */
 #undef HAVE_ASM_DOT_SIZE
 
+/* Define to 1 if you have the <asm/types.h> header file. */
+#undef HAVE_ASM_TYPES_H
+
 /* Define to 1 if you have the <audio/audiolib.h> header file. */
 #undef HAVE_AUDIO_AUDIOLIB_H
 
@@ -334,6 +337,9 @@
 
 /* Define to 1 if you have the <linux/ucdrom.h> header file. */
 #undef HAVE_LINUX_UCDROM_H
+
+/* Define to 1 if you have the <linux/videodev.h> header file. */
+#undef HAVE_LINUX_VIDEODEV_H
 
 /* Define to 1 if the system has the type `long long'. */
 #undef HAVE_LONG_LONG

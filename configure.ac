@@ -167,6 +167,7 @@ dnl **** Check for header files ****
 AC_CHECK_HEADERS(\
 	arpa/inet.h \
 	arpa/nameser.h \
+	asm/types.h \
 	cups/cups.h \
 	direct.h \
 	elf.h \
@@ -1210,6 +1211,16 @@ AC_CHECK_HEADERS([resolv.h],,,
      #endif])
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
+
+dnl **** Check for v4l(2) headers ****
+
+AC_CHECK_HEADERS(linux/videodev.h,,,
+[#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_ASM_TYPES_H
+#include <asm/types.h>
+#endif])
 
 dnl **** Check for IPX headers (currently Linux only) ****
 
