@@ -264,7 +264,7 @@ void	TIME_MMTimeStart(void)
 	TIME_TimersList = NULL;
         TIME_hWakeEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         TIME_TimeToDie = FALSE;
-	TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, WINMM_IData, 0, NULL);
+	TIME_hMMTimer = CreateThread(NULL, 0, TIME_MMSysTimeThread, &WINMM_IData, 0, NULL);
         SetThreadPriority(TIME_hMMTimer, THREAD_PRIORITY_TIME_CRITICAL);
     }
 }
@@ -335,7 +335,7 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     lpNewTimer->dwUser = dwUser;
     lpNewTimer->wFlags = wFlags;
 
-    EnterCriticalSection(&WINMM_IData->cs);
+    EnterCriticalSection(&WINMM_IData.cs);
 
     if ((wFlags & TIME_KILL_SYNCHRONOUS) && !TIME_hKillEvent)
         TIME_hKillEvent = CreateEventW(NULL, TRUE, TRUE, NULL);
@@ -348,7 +348,7 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     TIME_TimersList = lpNewTimer;
     lpNewTimer->wTimerID = wNewID + 1;
 
-    LeaveCriticalSection(&WINMM_IData->cs);
+    LeaveCriticalSection(&WINMM_IData.cs);
 
     /* Wake the service thread in case there is work to be done */
     SetEvent(TIME_hWakeEvent);
@@ -379,7 +379,7 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
     LPWINE_TIMERENTRY   lpSelf = NULL, *lpTimer;
 
     TRACE("(%u)\n", wID);
-    EnterCriticalSection(&WINMM_IData->cs);
+    EnterCriticalSection(&WINMM_IData.cs);
     /* remove WINE_TIMERENTRY from list */
     for (lpTimer = &TIME_TimersList; *lpTimer; lpTimer = &(*lpTimer)->lpNext) {
 	if (wID == (*lpTimer)->wTimerID) {
@@ -389,7 +389,7 @@ MMRESULT WINAPI timeKillEvent(UINT wID)
 	    break;
 	}
     }
-    LeaveCriticalSection(&WINMM_IData->cs);
+    LeaveCriticalSection(&WINMM_IData.cs);
 
     if (!lpSelf)
     {
