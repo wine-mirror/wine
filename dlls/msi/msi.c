@@ -505,15 +505,22 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         r = RegQueryValueExW(hkey, szPackageCode, NULL, NULL, 
                         (LPBYTE)squished, &sz);
         if (r != ERROR_SUCCESS)
+        {
+            RegCloseKey(hkey);
             return ERROR_UNKNOWN_PRODUCT;
+        }
 
         unsquash_guid(squished, package);
         *pcchValueBuf = strlenW(package);
         if (strlenW(package) > *pcchValueBuf)
+        {
+            RegCloseKey(hkey);
             return ERROR_MORE_DATA;
+        }
         else
             strcpyW(szBuffer, package);
 
+        RegCloseKey(hkey);
         r = ERROR_SUCCESS;
     }
     else if (strcmpW(szAttribute, szVersionString)==0)
