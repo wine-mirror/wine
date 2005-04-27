@@ -44,7 +44,7 @@
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"
-#include "message.h"
+#include "user_private.h"
 #include "controls.h"
 #include "wine/debug.h"
 

@@ -36,7 +36,6 @@
 #include "user_private.h"
 #include "controls.h"
 #include "cursoricon.h"
-#include "message.h"
 #include "winpos.h"
 #include "winerror.h"
 #include "wine/debug.h"

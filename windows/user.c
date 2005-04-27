@@ -35,7 +35,6 @@
 #include "win.h"
 #include "controls.h"
 #include "cursoricon.h"
-#include "message.h"
 #include "local.h"
 #include "wine/debug.h"
 

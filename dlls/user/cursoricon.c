@@ -64,7 +64,6 @@
 #include "module.h"
 #include "wine/debug.h"
 #include "user_private.h"
-#include "message.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);

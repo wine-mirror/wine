@@ -32,7 +32,6 @@
 #include "win.h"
 #include "user_private.h"
 #include "wine/debug.h"
-#include "message.h"
 #include "winnls.h"
 #include "commctrl.h"
 #include "commdlg.h"

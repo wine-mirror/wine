@@ -72,7 +72,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "message.h"
 #include "win.h"
 #include "user_private.h"
 #include "wine/server.h"

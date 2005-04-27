@@ -146,6 +146,12 @@ static inline struct user_thread_info *get_user_thread_info(void)
     return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
 }
 
+/* check if hwnd is a broadcast magic handle */
+static inline BOOL is_broadcast( HWND hwnd )
+{
+    return (hwnd == HWND_BROADCAST || hwnd == HWND_TOPMOST);
+}
+
 extern HMODULE user32_module;
 extern DWORD USER16_AlertableWait;
 extern HBRUSH SYSCOLOR_55AABrush;
@@ -153,11 +159,37 @@ extern HBRUSH SYSCOLOR_55AABrush;
 extern BOOL CLIPBOARD_ReleaseOwner(void);
 extern BOOL FOCUS_MouseActivate( HWND hwnd );
 extern BOOL HOOK_IsHooked( INT id );
+extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
+                                               UINT msg, WPARAM wparam, LPARAM lparam,
+                                               UINT flags, UINT timeout, PDWORD_PTR res_ptr );
 extern void SYSCOLOR_Init(void);
 extern HPEN SYSCOLOR_GetPen( INT index );
 extern void SYSPARAMS_Init(void);
 extern void USER_CheckNotLock(void);
 extern BOOL USER_IsExitingThread( DWORD tid );
+
+/* message spy definitions */
+
+#define SPY_DISPATCHMESSAGE16     0x0100
+#define SPY_DISPATCHMESSAGE       0x0101
+#define SPY_SENDMESSAGE16         0x0102
+#define SPY_SENDMESSAGE           0x0103
+#define SPY_DEFWNDPROC16          0x0104
+#define SPY_DEFWNDPROC            0x0105
+
+#define SPY_RESULT_OK16           0x0000
+#define SPY_RESULT_OK             0x0001
+#define SPY_RESULT_INVALIDHWND16  0x0002
+#define SPY_RESULT_INVALIDHWND    0x0003
+#define SPY_RESULT_DEFWND16       0x0004
+#define SPY_RESULT_DEFWND         0x0005
+
+extern const char *SPY_GetMsgName( UINT msg, HWND hWnd );
+extern const char *SPY_GetVKeyName(WPARAM wParam);
+extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam );
+extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
+                             LRESULT lReturn, WPARAM wParam, LPARAM lParam );
+extern int SPY_Init(void);
 
 /* HANDLE16 <-> HANDLE conversions */
 #define HCURSOR_16(h32)    (LOWORD(h32))

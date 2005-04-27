@@ -34,7 +34,6 @@
 #include "dde.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
-#include "message.h"
 #include "user_private.h"
 #include "win.h"
 #include "winpos.h"
@@ -50,6 +49,7 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 #define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
 
 #define MAX_PACK_COUNT 4
+#define MAX_SENDMSG_RECURSION  64
 
 #define SYS_TIMER_RATE  55   /* min. timer rate in ms (actually 54.925)*/
 

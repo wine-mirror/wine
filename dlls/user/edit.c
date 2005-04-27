@@ -58,7 +58,6 @@
 #include "wine/unicode.h"
 #include "controls.h"
 #include "local.h"
-#include "message.h"
 #include "user_private.h"
 #include "wine/debug.h"
 

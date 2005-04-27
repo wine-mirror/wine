@@ -29,7 +29,6 @@
 #include "wine/winuser16.h"
 
 #include "controls.h"
-#include "message.h"
 #include "user_private.h"
 #include "win.h"
 #include "wine/debug.h"

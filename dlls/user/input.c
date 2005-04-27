@@ -40,7 +40,6 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "wine/server.h"
-#include "message.h"
 #include "user_private.h"
 #include "winternl.h"
 #include "wine/debug.h"
