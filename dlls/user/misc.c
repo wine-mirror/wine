@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
 
@@ -201,6 +202,29 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD dwDefaultLayout )
 }
 
 
+/***********************************************************************
+ *		CreateDesktopA (USER32.@)
+ */
+HDESK WINAPI CreateDesktopA( LPSTR lpszDesktop,LPSTR lpszDevice,LPDEVMODEA pDevmode,
+                             DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa )
+{
+    FIXME("(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n", lpszDesktop,lpszDevice,pDevmode,
+          dwFlags,dwDesiredAccess,lpsa );
+    return (HDESK)0xcafedead;
+}
+
+/***********************************************************************
+ *		CreateDesktopW (USER32.@)
+ */
+HDESK WINAPI CreateDesktopW( LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODEW pDevmode,
+                             DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa)
+{
+    FIXME("(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n",
+          debugstr_w(lpszDesktop),debugstr_w(lpszDevice),pDevmode,
+          dwFlags,dwDesiredAccess,lpsa );
+    return (HDESK)0xcafedead;
+}
+
 /******************************************************************************
  * OpenDesktopA [USER32.@]
  *
@@ -228,6 +252,15 @@ HDESK WINAPI OpenInputDesktop( DWORD dwFlags, BOOL fInherit, ACCESS_MASK dwDesir
     return 0;
 }
 
+/***********************************************************************
+ *		CloseDesktop (USER32.@)
+ */
+BOOL WINAPI CloseDesktop(HDESK hDesk)
+{
+    FIXME("(%p)\n", hDesk);
+    return TRUE;
+}
+
 /******************************************************************************
  *              EnumDesktopsA [USER32.@]
  */
@@ -253,6 +286,52 @@ BOOL WINAPI EnumDesktopsW( HWINSTA hwinsta, DESKTOPENUMPROCW lpEnumFunc,
     return FALSE;
 }
 
+/***********************************************************************
+ *		EnumDesktopWindows (USER32.@)
+ */
+BOOL WINAPI EnumDesktopWindows( HDESK hDesktop, WNDENUMPROC lpfn, LPARAM lParam )
+{
+  FIXME("(%p, %p, 0x%08lx), stub!\n", hDesktop, lpfn, lParam );
+  return TRUE;
+}
+
+/***********************************************************************
+ *		CreateWindowStationW (USER32.@)
+ */
+HWINSTA WINAPI CreateWindowStationW( LPWSTR winstation,DWORD res1,DWORD desiredaccess,
+                                     LPSECURITY_ATTRIBUTES lpsa )
+{
+    FIXME("(%s,0x%08lx,0x%08lx,%p),stub!\n",debugstr_w(winstation), res1,desiredaccess,lpsa );
+    return (HWINSTA)0xdeadcafe;
+}
+
+/***********************************************************************
+ *		CloseWindowStation (USER32.@)
+ */
+BOOL WINAPI CloseWindowStation(HWINSTA hWinSta)
+{
+    FIXME("(%p)\n", hWinSta);
+    return TRUE;
+}
+
+/***********************************************************************
+ *		SetWindowStationUser (USER32.@)
+ */
+DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2)
+{
+    FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
+    return 1;
+}
+
+/***********************************************************************
+ *		SetProcessWindowStation (USER32.@)
+ */
+BOOL WINAPI SetProcessWindowStation(HWINSTA hWinSta)
+{
+    FIXME("(%p),stub!\n",hWinSta);
+    return TRUE;
+}
+
 /******************************************************************************
  *              EnumWindowStationsA [USER32.@]
  */
@@ -273,6 +352,24 @@ BOOL WINAPI EnumWindowStationsW( WINSTAENUMPROCW lpEnumFunc, LPARAM lParam)
     return FALSE;
 }
 
+/***********************************************************************
+ *		GetUserObjectInformationA (USER32.@)
+ */
+BOOL WINAPI GetUserObjectInformationA( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+{
+    FIXME("(%p %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+    return TRUE;
+}
+
+/***********************************************************************
+ *		GetUserObjectInformationW (USER32.@)
+ */
+BOOL WINAPI GetUserObjectInformationW( HANDLE hObj, INT nIndex, LPVOID pvInfo, DWORD nLength, LPDWORD lpnLen )
+{
+    FIXME("(%p %i %p %ld %p),stub!\n", hObj, nIndex, pvInfo, nLength, lpnLen );
+    return TRUE;
+}
+
 /******************************************************************************
  *		SetUserObjectInformationA   (USER32.@)
  */
@@ -280,6 +377,26 @@ BOOL WINAPI SetUserObjectInformationA( HANDLE hObj, INT nIndex,
 				       LPVOID pvInfo, DWORD nLength )
 {
     FIXME("(%p,%d,%p,%lx): stub\n",hObj,nIndex,pvInfo,nLength);
+    return TRUE;
+}
+
+/***********************************************************************
+ *		GetUserObjectSecurity (USER32.@)
+ */
+BOOL WINAPI GetUserObjectSecurity(HANDLE hObj, PSECURITY_INFORMATION pSIRequested,
+                                  PSECURITY_DESCRIPTOR pSID, DWORD nLength, LPDWORD lpnLengthNeeded)
+{
+    FIXME("(%p %p %p len=%ld %p),stub!\n",  hObj, pSIRequested, pSID, nLength, lpnLengthNeeded);
+    return TRUE;
+}
+
+/***********************************************************************
+ *		SetUserObjectSecurity (USER32.@)
+ */
+BOOL WINAPI SetUserObjectSecurity( HANDLE hObj, PSECURITY_INFORMATION pSIRequested,
+                                   PSECURITY_DESCRIPTOR pSID )
+{
+    FIXME("(%p,%p,%p),stub!\n",hObj,pSIRequested,pSID);
     return TRUE;
 }
 
@@ -292,6 +409,31 @@ BOOL WINAPI SetThreadDesktop( HANDLE hDesktop )
     return TRUE;
 }
 
+/***********************************************************************
+ *		RegisterLogonProcess (USER32.@)
+ */
+DWORD WINAPI RegisterLogonProcess(HANDLE hprocess,BOOL x)
+{
+    FIXME("(%p,%d),stub!\n",hprocess,x);
+    return 1;
+}
+
+/***********************************************************************
+ *		SetLogonNotifyWindow (USER32.@)
+ */
+DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd)
+{
+    FIXME("(%p,%p),stub!\n",hwinsta,hwnd);
+    return 1;
+}
+
+/***********************************************************************
+ *		RegisterSystemThread (USER32.@)
+ */
+void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
+{
+    FIXME("(%08lx, %08lx)\n", flags, reserved);
+}
 
 /***********************************************************************
  *           RegisterShellHookWindow			[USER32.@]
@@ -325,6 +467,46 @@ DWORD WINAPI RegisterTasklist (DWORD x)
 
 
 /***********************************************************************
+ *		RegisterDeviceNotificationA (USER32.@)
+ *
+ * See RegisterDeviceNotificationW.
+ */
+HDEVNOTIFY WINAPI RegisterDeviceNotificationA(HANDLE hnd, LPVOID notifyfilter, DWORD flags)
+{
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hnd,notifyfilter,flags );
+    return 0;
+}
+
+/***********************************************************************
+ *		RegisterDeviceNotificationW (USER32.@)
+ *
+ * Registers a window with the system so that it will receive
+ * notifications about a device.
+ *
+ * PARAMS
+ *     hRecepient           [I] Window or service status handle that
+ *                              will receive notifications.
+ *     pNotificationFilter  [I] DEV_BROADCAST_HDR followed by some
+ *                              type-specific data.
+ *     dwFlags              [I] See notes
+ *
+ * RETURNS
+ *
+ * A handle to the device notification.
+ *
+ * NOTES
+ *
+ * The dwFlags parameter can be one of two values:
+ *| DEVICE_NOTIFY_WINDOW_HANDLE  - hRecepient is a window handle
+ *| DEVICE_NOTIFY_SERVICE_HANDLE - hRecepient is a service status handle
+ */
+HDEVNOTIFY WINAPI RegisterDeviceNotificationW(HANDLE hRecepient, LPVOID pNotificationFilter, DWORD dwFlags)
+{
+    FIXME("(hwnd=%p, filter=%p,flags=0x%08lx), STUB!\n", hRecepient,pNotificationFilter,dwFlags );
+    return 0;
+}
+
+/***********************************************************************
  *           GetAppCompatFlags   (USER32.@)
  */
 DWORD WINAPI GetAppCompatFlags( HTASK hTask )
@@ -344,6 +526,16 @@ BOOL WINAPI AlignRects(LPRECT rect, DWORD b, DWORD c, DWORD d)
         FIXME("rect: [[%ld, %ld], [%ld, %ld]]\n", rect->left, rect->top, rect->right, rect->bottom);
     /* Calls OffsetRect */
     return FALSE;
+}
+
+
+/***********************************************************************
+ *		LoadLocalFonts (USER32.@)
+ */
+VOID WINAPI LoadLocalFonts(VOID)
+{
+    /* are loaded. */
+    return;
 }
 
 

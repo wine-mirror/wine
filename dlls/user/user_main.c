@@ -40,6 +40,15 @@ USER_DRIVER USER_Driver;
 WORD USER_HeapSel = 0;  /* USER heap selector */
 HMODULE user32_module = 0;
 
+static SYSLEVEL USER_SysLevel;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &USER_SysLevel.crst,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": USER_SysLevel") }
+};
+static SYSLEVEL USER_SysLevel = { { &critsect_debug, -1, 0, 0, 0, 0 }, 2 };
+
 static HPALETTE (WINAPI *pfnGDISelectPalette)( HDC hdc, HPALETTE hpal, WORD bkgnd );
 static UINT (WINAPI *pfnGDIRealizePalette)( HDC hdc );
 static HPALETTE hPrimaryPalette;
@@ -132,6 +141,35 @@ static BOOL load_driver(void)
     GET_USER_FUNC(WindowMessage);
 
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           USER_Lock
+ */
+void USER_Lock(void)
+{
+    _EnterSysLevel( &USER_SysLevel );
+}
+
+
+/***********************************************************************
+ *           USER_Unlock
+ */
+void USER_Unlock(void)
+{
+    _LeaveSysLevel( &USER_SysLevel );
+}
+
+
+/***********************************************************************
+ *           USER_CheckNotLock
+ *
+ * Make sure that we don't hold the user lock.
+ */
+void USER_CheckNotLock(void)
+{
+    _CheckNotSysLevel( &USER_SysLevel );
 }
 
 
