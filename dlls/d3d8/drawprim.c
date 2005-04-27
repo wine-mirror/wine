@@ -1050,8 +1050,6 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
             if (This->StateBlock->textures[textureNo] != NULL) {
 
                 int    coordIdx = This->UpdateStateBlock->texture_state[textureNo][D3DTSS_TEXCOORDINDEX];
-                float *ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
-                float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
                 if (coordIdx > 7) {
                     VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
@@ -1061,7 +1059,9 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
                     continue;
                 } else {
 
+		    float* ptrToCoords = (float*) (sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                     int coordsToUse = sd->u.s.texCoords[coordIdx].dwType + 1; /* 0 == D3DVSDT_FLOAT1 etc */
+		    float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
                     /* The coords to supply depend completely on the fvf / vertex shader */
                     switch (coordsToUse) {
