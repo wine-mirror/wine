@@ -27,6 +27,7 @@
 #define NONAMELESSUNION
 
 #include "devenum_private.h"
+#include "vfw.h"
 
 #include "wine/debug.h"
 #include "mmddk.h"
@@ -117,6 +118,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 
     if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
         IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
+        IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
         IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
     {
         hbasekey = HKEY_CURRENT_USER;
@@ -142,6 +144,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     {
         if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
             IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
+            IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
             IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
         {
              HRESULT hr = DEVENUM_CreateSpecialCategories();
@@ -413,6 +416,45 @@ static HRESULT DEVENUM_CreateSpecialCategories()
                 CoTaskMemFree(pTypes);
 	    }
 	}
+        res = DEVENUM_CreateAMCategoryKey(&CLSID_VideoInputDeviceCategory);
+        if (SUCCEEDED(res))
+            for (i = 0; i < 10; i++)
+            {
+                WCHAR szDeviceName[80], szDeviceVersion[80];
+
+                if (capGetDriverDescriptionW ((WORD) i,
+                                              szDeviceName, sizeof(szDeviceName)/sizeof(WCHAR),
+                                              szDeviceVersion, sizeof(szDeviceVersion)/sizeof(WCHAR)))
+                {
+                    IMoniker * pMoniker = NULL;
+
+                    rfp2.nMediaTypes = 1;
+                    pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
+                    if (!pTypes) {
+                        IFilterMapper2_Release(pMapper);
+                        return E_OUTOFMEMORY;
+                    }
+
+                    pTypes[0].clsMajorType = &MEDIATYPE_Video;
+                    pTypes[0].clsMinorType = &MEDIASUBTYPE_RGB24;
+
+                    rfp2.lpMediaType = pTypes;
+
+                    res = IFilterMapper2_RegisterFilter(pMapper,
+                                                        &CLSID_VfwCapture,
+                                                        szDeviceName,
+                                                        &pMoniker,
+                                                        &CLSID_VideoInputDeviceCategory,
+                                                        szDeviceName,
+                                                        &rf2);
+
+                    /* FIXME: do additional stuff with IMoniker here, depending on what RegisterFilter does */
+                    if (pMoniker) IMoniker_Release(pMoniker);
+
+                    if (i == iDefaultDevice) FIXME("Default device\n");
+                    CoTaskMemFree(pTypes);
+                }
+            }
     }
 
     if (pMapper)
