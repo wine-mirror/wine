@@ -262,7 +262,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
     teb->ClientId.UniqueThread  = (HANDLE)tid;
 
-    teb->exit_code   = STILL_ACTIVE;
     teb->request_fd  = request_pipe[1];
     teb->reply_fd    = -1;
     teb->wait_fd[0]  = -1;

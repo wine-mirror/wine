@@ -26,6 +26,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "local.h"
 
 extern WORD USER_HeapSel;
@@ -118,6 +120,31 @@ typedef struct tagUSER_DRIVER {
 } USER_DRIVER;
 
 extern USER_DRIVER USER_Driver;
+
+struct received_message_info;
+struct hook16_queue_info;
+
+/* this is the structure stored in TEB->Win32ClientInfo */
+/* no attempt is made to keep the layout compatible with the Windows one */
+struct user_thread_info
+{
+    HANDLE                        server_queue;           /* 00 Handle to server-side queue */
+    DWORD                         recursion_count;        /* 04 SendMessage recursion counter */
+    HHOOK                         hook;                   /* 08 Current hook */
+    struct received_message_info *receive_info;           /* 0c Message being currently received */
+    struct hook16_queue_info     *hook16_info;            /* 10 Opaque pointer for 16-bit hook support */
+    DWORD                         GetMessageTimeVal;      /* 14 Value for GetMessageTime */
+    DWORD                         GetMessagePosVal;       /* 18 Value for GetMessagePos */
+    DWORD                         GetMessageExtraInfoVal; /* 1c Value for GetMessageExtraInfo */
+    HCURSOR                       cursor;                 /* 20 Current cursor */
+    INT                           cursor_count;           /* 24 Cursor show count */
+                                                          /* 28-7c Available for more data */
+};
+
+static inline struct user_thread_info *get_user_thread_info(void)
+{
+    return (struct user_thread_info *)NtCurrentTeb()->Win32ClientInfo;
+}
 
 extern HMODULE user32_module;
 extern DWORD USER16_AlertableWait;

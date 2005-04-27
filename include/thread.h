@@ -63,35 +63,15 @@ typedef struct _TEB
     NT_TIB       Tib;            /* 12-  00 Thread information block */
     PVOID        EnvironmentPointer; /* 12-  1c EnvironmentPointer (win95: tib flags + win16 mutex count) */
     CLIENT_ID    ClientId;       /* -2-  20 Process and thread id (win95: debug context) */
-    HQUEUE16     queue;          /* 1!-  28 Message queue (NT: DWORD ActiveRpcHandle)*/
-    WORD         pad1;           /* --n  2a */
-    PVOID        ThreadLocalStoragePointer; /* 1--  2c Pointer to TLS array */
-    PEB         *Peb;            /* 12-  30 owning process PEB */
-    DWORD        LastErrorValue; /* -2-  34 Last error code */
-    DWORD        exit_code;      /* 1--  38 Termination status */
-    WORD         teb_sel;        /* 1--  3c Selector to TEB */
-    WORD         emu_sel;        /* 1-n  3e 80387 emulator selector */
-    DWORD        unknown1;       /* --n  40 */
-    DWORD        unknown2;       /* --n  44 */
-    DWORD        unknown3;       /* --n  48 */
-    int          thread_errno;   /* --3  4c Per-thread errno (was: ring0_thread) */
-    int          thread_h_errno; /* --3  50 Per-thread h_errno (was: ptr to tdbx structure) */
-    void        *stack_base;     /* 1-n  54 Stack base (unused) */
-    void        *exit_stack;     /* 1-n  58 Exit stack */
-    void        *emu_data;       /* --n  5c Related to 80387 emulation */
-    DWORD        last_error;     /* 1--  60 Last error code */
-    HANDLE       debug_cb;       /* 1-n  64 Debugger context block */
-    DWORD        debug_thread;   /* 1-n  68 Thread debugging this one (?) */
-    void        *pcontext;       /* 1-n  6c Thread register context */
-    DWORD        cur_stack;      /* --3  70 Current stack (was: unknown) */
-    DWORD        ThunkConnect;   /* 1-n  74 */
-    DWORD        NegStackBase;   /* 1-n  78 */
-    WORD         current_ss;     /* 1-n  7c Another 16-bit stack selector */
-    WORD         pad2;           /* --n  7e */
-    void        *ss_table;       /* --n  80 Pointer to info about 16-bit stack */
-    WORD         stack_sel;      /* --3  84 16-bit stack selector */
-    HTASK16      htask16;        /* --3  86 Win16 task handle */
-    DWORD        pad4[15];       /* --n  88 */
+    PVOID        ActiveRpcHandle;              /* 028 */
+    PVOID        ThreadLocalStoragePointer;    /* 02c Pointer to TLS array */
+    PEB         *Peb;                          /* 030 owning process PEB */
+    DWORD        LastErrorValue;               /* 034 Last error code */
+    ULONG        CountOfOwnedCriticalSections; /* 038 */
+    PVOID        CsrClientThread;              /* 03c */
+    PVOID        Win32ThreadInfo;              /* 040 */
+    ULONG        Win32ClientInfo[0x1f];        /* 044 */
+    PVOID        WOW32Reserved;                /* 0c0 */
     ULONG        CurrentLocale;  /* -2-  C4 */
     DWORD        pad5[48];       /* --n  C8 */
     DWORD        delta_priority; /* 1-n 188 Priority delta */
@@ -105,7 +85,8 @@ typedef struct _TEB
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
     UINT         code_page;      /* --3 1fc Thread code page */
-    DWORD        unused[2];      /* --3 200 Was server buffer */
+    DWORD        cur_stack;      /* --3 200 Current stack */
+    DWORD        teb_sel;        /* --3 204 Selector to TEB */
     DWORD        gs_sel;         /* --3 208 %gs selector for this thread */
     int          request_fd;     /* --3 20c fd for sending server requests */
     int          reply_fd;       /* --3 210 fd for receiving server replies */
@@ -117,10 +98,12 @@ typedef struct _TEB
     DWORD        dpmi_vif;       /* --3 22c Protected mode virtual interrupt flag */
     DWORD        vm86_pending;   /* --3 230 Data for vm86 mode */
     void        *vm86_ptr;       /* --3 234 Data for vm86 mode */
+    WORD         stack_sel;      /* --3 238 16-bit stack selector */
+    HTASK16      htask16;        /* --3 23a Win16 task handle */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[623];                  /* --n 238 */
+    DWORD        pad6[622];                  /* --n 23c */
     ULONG        LastStatusValue;            /* -2- bf4 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     WCHAR        StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */

@@ -1486,14 +1486,14 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                  BOOL unicode, BOOL same_thread )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
     LRESULT result = 0;
     WNDPROC winproc;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
-    MESSAGEQUEUE *queue = QUEUE_Current();
 
-    if (queue->recursion_count > MAX_SENDMSG_RECURSION) return 0;
-    queue->recursion_count++;
+    if (thread_info->recursion_count > MAX_SENDMSG_RECURSION) return 0;
+    thread_info->recursion_count++;
 
     if (msg & 0x80000000)
     {
@@ -1529,7 +1529,7 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     cwpret.hwnd    = hwnd;
     HOOK_CallHooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, unicode );
  done:
-    queue->recursion_count--;
+    thread_info->recursion_count--;
     return result;
 }
 
@@ -1903,7 +1903,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
 {
     LRESULT result;
     ULONG_PTR extra_info = 0;
-    MESSAGEQUEUE *queue = QUEUE_Current();
+    struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info info, *old_info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
 
@@ -2023,10 +2023,10 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                 TRACE("dropping msg %x\n", info.msg.message );
                 goto next;  /* ignore it */
             }
-            queue->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
+            thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
             /* fall through */
         case MSG_POSTED:
-            queue->GetMessageExtraInfoVal = extra_info;
+            thread_info->GetMessageExtraInfoVal = extra_info;
 	    if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
 	    {
 		if (!unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
@@ -2044,12 +2044,12 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
         }
 
         /* if we get here, we have a sent message; call the window procedure */
-        old_info = queue->receive_info;
-        queue->receive_info = &info;
+        old_info = thread_info->receive_info;
+        thread_info->receive_info = &info;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
                                    info.msg.lParam, (info.type != MSG_ASCII), FALSE );
         reply_message( &info, result, TRUE );
-        queue->receive_info = old_info;
+        thread_info->receive_info = old_info;
     next:
         HeapFree( GetProcessHeap(), 0, buffer );
     }
@@ -2069,15 +2069,38 @@ inline static void process_sent_messages(void)
 
 
 /***********************************************************************
+ *           get_server_queue_handle
+ *
+ * Get a handle to the server message queue for the current thread.
+ */
+static HANDLE get_server_queue_handle(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    HANDLE ret;
+
+    if (!(ret = thread_info->server_queue))
+    {
+        SERVER_START_REQ( get_msg_queue )
+        {
+            wine_server_call( req );
+            ret = reply->handle;
+        }
+        SERVER_END_REQ;
+        thread_info->server_queue = ret;
+        if (!ret) ERR( "Cannot get server thread queue\n" );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           wait_message_reply
  *
  * Wait until a sent message gets replied to.
  */
 static void wait_message_reply( UINT flags )
 {
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Current())) return;
+    HANDLE server_queue = get_server_queue_handle();
 
     for (;;)
     {
@@ -2110,10 +2133,10 @@ static void wait_message_reply( UINT flags )
         ReleaseThunkLock( &dwlc );
 
         if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-            res = USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue,
+            res = USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &server_queue,
                                                             INFINITE, QS_ALLINPUT, 0 );
         else
-            res = WaitForSingleObject( queue->server_queue, INFINITE );
+            res = WaitForSingleObject( server_queue, INFINITE );
 
         if (dwlc) RestoreThunkLock( dwlc );
     }
@@ -2534,8 +2557,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
  */
 BOOL WINAPI ReplyMessage( LRESULT result )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
-    struct received_message_info *info = queue->receive_info;
+    struct received_message_info *info = get_user_thread_info()->receive_info;
 
     if (!info) return FALSE;
     reply_message( info, result, FALSE );
@@ -2557,8 +2579,7 @@ BOOL WINAPI InSendMessage(void)
  */
 DWORD WINAPI InSendMessageEx( LPVOID reserved )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
-    struct received_message_info *info = queue->receive_info;
+    struct received_message_info *info = get_user_thread_info()->receive_info;
 
     if (info) return info->flags;
     return ISMEX_NOSEND;
@@ -2661,7 +2682,7 @@ void WINAPI PostQuitMessage( INT exitCode )
  */
 BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
 {
-    MESSAGEQUEUE *queue;
+    struct user_thread_info *thread_info = get_user_thread_info();
     MSG msg;
 
     USER_CheckNotLock();
@@ -2694,12 +2715,9 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
         else break;
     }
 
-    if ((queue = QUEUE_Current()))
-    {
-        queue->GetMessageTimeVal = msg.time;
-        msg.pt.x = LOWORD( queue->GetMessagePosVal );
-        msg.pt.y = HIWORD( queue->GetMessagePosVal );
-    }
+    thread_info->GetMessageTimeVal = msg.time;
+    msg.pt.x = LOWORD( thread_info->GetMessagePosVal );
+    msg.pt.y = HIWORD( thread_info->GetMessagePosVal );
 
     HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg, TRUE );
 
@@ -2733,7 +2751,7 @@ BOOL WINAPI PeekMessageA( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
  */
 BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
+    HANDLE server_queue = get_server_queue_handle();
     int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
 
     if (first || last)
@@ -2769,15 +2787,15 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
         if (changed_bits & mask) continue;
         if (wake_bits & QS_SENDMESSAGE) continue;
 
-        TRACE( "(%04x) mask=%08x, bits=%08x, changed=%08x, waiting\n",
-               queue->self, mask, wake_bits, changed_bits );
+        TRACE( "(%04lx) mask=%08x, bits=%08x, changed=%08x, waiting\n",
+               GetCurrentThreadId(), mask, wake_bits, changed_bits );
 
         ReleaseThunkLock( &dwlc );
         if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &queue->server_queue, INFINITE,
+            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &server_queue, INFINITE,
                                                       QS_ALLINPUT, 0 );
         else
-            WaitForSingleObject( queue->server_queue, INFINITE );
+            WaitForSingleObject( server_queue, INFINITE );
         if (dwlc) RestoreThunkLock( dwlc );
     }
 
@@ -3008,10 +3026,7 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
  */
 DWORD WINAPI GetMessagePos(void)
 {
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Current())) return 0;
-    return queue->GetMessagePosVal;
+    return get_user_thread_info()->GetMessagePosVal;
 }
 
 
@@ -3032,10 +3047,7 @@ DWORD WINAPI GetMessagePos(void)
  */
 LONG WINAPI GetMessageTime(void)
 {
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Current())) return 0;
-    return queue->GetMessageTimeVal;
+    return get_user_thread_info()->GetMessageTimeVal;
 }
 
 
@@ -3045,10 +3057,7 @@ LONG WINAPI GetMessageTime(void)
  */
 LPARAM WINAPI GetMessageExtraInfo(void)
 {
-    MESSAGEQUEUE *queue;
-
-    if (!(queue = QUEUE_Current())) return 0;
-    return queue->GetMessageExtraInfoVal;
+    return get_user_thread_info()->GetMessageExtraInfoVal;
 }
 
 
@@ -3057,12 +3066,9 @@ LPARAM WINAPI GetMessageExtraInfo(void)
  */
 LPARAM WINAPI SetMessageExtraInfo(LPARAM lParam)
 {
-    MESSAGEQUEUE *queue;
-    LONG old_value;
-
-    if (!(queue = QUEUE_Current())) return 0;
-    old_value = queue->GetMessageExtraInfoVal;
-    queue->GetMessageExtraInfoVal = lParam;
+    struct user_thread_info *thread_info = get_user_thread_info();
+    LONG old_value = thread_info->GetMessageExtraInfoVal;
+    thread_info->GetMessageExtraInfoVal = lParam;
     return old_value;
 }
 
@@ -3088,15 +3094,12 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
 {
     HANDLE handles[MAXIMUM_WAIT_OBJECTS];
     DWORD i, ret, lock;
-    MESSAGEQUEUE *msgQueue;
 
     if (count > MAXIMUM_WAIT_OBJECTS-1)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return WAIT_FAILED;
     }
-
-    if (!(msgQueue = QUEUE_Current())) return WAIT_FAILED;
 
     /* set the queue mask */
     SERVER_START_REQ( set_queue_mask )
@@ -3110,7 +3113,7 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
 
     /* Add the thread event to the handle list */
     for (i = 0; i < count; i++) handles[i] = pHandles[i];
-    handles[count] = msgQueue->server_queue;
+    handles[count] = get_server_queue_handle();
 
     ReleaseThunkLock( &lock );
     if (USER_Driver.pMsgWaitForMultipleObjectsEx)

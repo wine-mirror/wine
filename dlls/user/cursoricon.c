@@ -1378,7 +1378,7 @@ WORD WINAPI DestroyIcon32( HGLOBAL16 handle, UINT16 flags )
 
     /* Check whether destroying active cursor */
 
-    if ( QUEUE_Current()->cursor == HICON_32(handle) )
+    if ( get_user_thread_info()->cursor == HICON_32(handle) )
     {
         WARN_(cursor)("Destroying active cursor!\n" );
         SetCursor( 0 );
@@ -1483,15 +1483,15 @@ DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
  */
 HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
+    struct user_thread_info *thread_info = get_user_thread_info();
     HCURSOR hOldCursor;
 
-    if (hCursor == queue->cursor) return hCursor;  /* No change */
+    if (hCursor == thread_info->cursor) return hCursor;  /* No change */
     TRACE_(cursor)("%p\n", hCursor );
-    hOldCursor = queue->cursor;
-    queue->cursor = hCursor;
+    hOldCursor = thread_info->cursor;
+    thread_info->cursor = hCursor;
     /* Change the cursor shape only if it is visible */
-    if (queue->cursor_count >= 0 && USER_Driver.pSetCursor)
+    if (thread_info->cursor_count >= 0 && USER_Driver.pSetCursor)
     {
         USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16(HCURSOR_16(hCursor)) );
         GlobalUnlock16(HCURSOR_16(hCursor));
@@ -1504,24 +1504,24 @@ HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
  */
 INT WINAPI ShowCursor( BOOL bShow )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
+    struct user_thread_info *thread_info = get_user_thread_info();
 
-    TRACE_(cursor)("%d, count=%d\n", bShow, queue->cursor_count );
+    TRACE_(cursor)("%d, count=%d\n", bShow, thread_info->cursor_count );
 
     if (bShow)
     {
-        if (++queue->cursor_count == 0 && USER_Driver.pSetCursor) /* Show it */
+        if (++thread_info->cursor_count == 0 && USER_Driver.pSetCursor) /* Show it */
         {
-            USER_Driver.pSetCursor((CURSORICONINFO*)GlobalLock16(HCURSOR_16(queue->cursor)));
-            GlobalUnlock16(HCURSOR_16(queue->cursor));
+            USER_Driver.pSetCursor((CURSORICONINFO*)GlobalLock16(HCURSOR_16(thread_info->cursor)));
+            GlobalUnlock16(HCURSOR_16(thread_info->cursor));
         }
     }
     else
     {
-        if (--queue->cursor_count == -1 && USER_Driver.pSetCursor) /* Hide it */
+        if (--thread_info->cursor_count == -1 && USER_Driver.pSetCursor) /* Hide it */
             USER_Driver.pSetCursor( NULL );
     }
-    return queue->cursor_count;
+    return thread_info->cursor_count;
 }
 
 /***********************************************************************
@@ -1529,7 +1529,7 @@ INT WINAPI ShowCursor( BOOL bShow )
  */
 HCURSOR WINAPI GetCursor(void)
 {
-    return QUEUE_Current()->cursor;
+    return get_user_thread_info()->cursor;
 }
 
 

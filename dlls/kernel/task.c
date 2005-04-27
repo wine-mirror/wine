@@ -1021,16 +1021,8 @@ BOOL16 WINAPI DefineHandleTable16( WORD wOffset )
  */
 HQUEUE16 WINAPI SetTaskQueue16( HTASK16 hTask, HQUEUE16 hQueue )
 {
-    HQUEUE16 hPrev;
-    TDB *pTask;
-
-    if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = TASK_GetPtr( hTask ))) return 0;
-
-    hPrev = pTask->hQueue;
-    pTask->hQueue = hQueue;
-
-    return hPrev;
+    FIXME( "stub, should not get called\n" );
+    return 0xbeef;
 }
 
 
@@ -1039,11 +1031,8 @@ HQUEUE16 WINAPI SetTaskQueue16( HTASK16 hTask, HQUEUE16 hQueue )
  */
 HQUEUE16 WINAPI GetTaskQueue16( HTASK16 hTask )
 {
-    TDB *pTask;
-
-    if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask = TASK_GetPtr( hTask ))) return 0;
-    return pTask->hQueue;
+    FIXME( "stub, should not get called\n" );
+    return 0xbeef;
 }
 
 /***********************************************************************
@@ -1051,17 +1040,8 @@ HQUEUE16 WINAPI GetTaskQueue16( HTASK16 hTask )
  */
 HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue )
 {
-    HQUEUE16 oldQueue = NtCurrentTeb()->queue;
-
-    if (thread && thread != GetCurrentThreadId())
-    {
-        FIXME( "not supported on other thread %04lx\n", thread );
-        return 0;
-    }
-    NtCurrentTeb()->queue = hQueue;
-    if ( GetTaskQueue16( NtCurrentTeb()->htask16 ) == oldQueue )
-        SetTaskQueue16( NtCurrentTeb()->htask16, hQueue );
-    return oldQueue;
+    FIXME( "stub, should not get called\n" );
+    return 0xbeef;
 }
 
 /***********************************************************************
@@ -1069,12 +1049,8 @@ HQUEUE16 WINAPI SetThreadQueue16( DWORD thread, HQUEUE16 hQueue )
  */
 HQUEUE16 WINAPI GetThreadQueue16( DWORD thread )
 {
-    if (thread && thread != GetCurrentThreadId())
-    {
-        FIXME( "not supported on other thread %04lx\n", thread );
-        return 0;
-    }
-    return NtCurrentTeb()->queue;
+    FIXME( "stub, should not get called\n" );
+    return 0xbeef;
 }
 
 /***********************************************************************
@@ -1082,10 +1058,7 @@ HQUEUE16 WINAPI GetThreadQueue16( DWORD thread )
  */
 VOID WINAPI SetFastQueue16( DWORD thread, HQUEUE16 hQueue )
 {
-    if (!thread || thread == GetCurrentThreadId())
-        NtCurrentTeb()->queue = hQueue;
-    else
-        FIXME( "not supported on other thread %04lx\n", thread );
+    FIXME( "stub, should not get called\n" );
 }
 
 /***********************************************************************
@@ -1093,10 +1066,8 @@ VOID WINAPI SetFastQueue16( DWORD thread, HQUEUE16 hQueue )
  */
 HQUEUE16 WINAPI GetFastQueue16( void )
 {
-    HQUEUE16 ret = NtCurrentTeb()->queue;
-
-    if (!ret) FIXME("(): should initialize thread-local queue, expect failure!\n" );
-    return ret;
+    FIXME( "stub, should not get called\n" );
+    return 0xbeef;
 }
 
 /***********************************************************************

@@ -17,7 +17,6 @@ SPEC_SRCS16 = \
 C_SRCS = \
 	$(TOPOBJDIR)/windows/driver.c \
 	$(TOPOBJDIR)/windows/multimon.c \
-	$(TOPOBJDIR)/windows/queue.c \
 	$(TOPOBJDIR)/windows/syscolor.c \
 	$(TOPOBJDIR)/windows/user.c \
 	button.c \

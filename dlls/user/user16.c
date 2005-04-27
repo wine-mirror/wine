@@ -1097,6 +1097,16 @@ HCURSOR16 WINAPI CreateCursor16(HINSTANCE16 hInstance,
 }
 
 
+/***********************************************************************
+ *		InitThreadInput   (USER.409)
+ */
+HQUEUE16 WINAPI InitThreadInput16( WORD unknown, WORD flags )
+{
+    /* nothing to do here */
+    return 0xbeef;
+}
+
+
 /*******************************************************************
  *         InsertMenu    (USER.410)
  */

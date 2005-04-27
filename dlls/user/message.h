@@ -27,33 +27,7 @@
 #include "winbase.h"
 #include "wine/windef16.h"
 
-struct received_message_info;
-struct hook16_queue_info;
-
-/* Message queue */
-typedef struct tagMESSAGEQUEUE
-{
-  HQUEUE16  self;                   /* Handle to self (was: reserved) */
-  HANDLE    server_queue;           /* Handle to server-side queue */
-  DWORD     recursion_count;        /* Counter to prevent infinite SendMessage recursion */
-  HHOOK     hook;                   /* Current hook */
-  struct received_message_info *receive_info; /* Info about message being currently received */
-  struct hook16_queue_info *hook16_info;      /* Opaque pointer for 16-bit hook support */
-
-  DWORD     GetMessageTimeVal;      /* Value for GetMessageTime */
-  DWORD     GetMessagePosVal;       /* Value for GetMessagePos */
-  DWORD     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
-
-  HCURSOR   cursor;                 /* current cursor */
-  INT       cursor_count;           /* cursor show count */
-} MESSAGEQUEUE;
-
-
 #define MAX_SENDMSG_RECURSION  64
-
-/* queue.c */
-extern MESSAGEQUEUE *QUEUE_Current(void);
-extern void QUEUE_DeleteMsgQueue(void);
 
 /* message.c */
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,

@@ -138,10 +138,8 @@ BOOL WINAPI GetCursorPos( POINT *pt )
  */
 BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
-
     if (!pci) return 0;
-    if (queue->cursor_count >= 0) pci->flags = CURSOR_SHOWING;
+    if (get_user_thread_info()->cursor_count >= 0) pci->flags = CURSOR_SHOWING;
     else pci->flags = 0;
     GetCursorPos(&pci->ptScreenPos);
     return 1;

@@ -239,9 +239,6 @@ static BOOL process_attach(void)
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
 
-    /* Create message queue of initial thread */
-    InitThreadInput16( 0, 0 );
-
     /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return FALSE;
 
@@ -268,7 +265,7 @@ static void thread_detach(void)
     WDML_NotifyThreadDetach();
 
     WIN_DestroyThreadWindows( GetDesktopWindow() );
-    QUEUE_DeleteMsgQueue();
+    CloseHandle( get_user_thread_info()->server_queue );
 
     exiting_thread_id = 0;
 }

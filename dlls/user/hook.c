@@ -324,7 +324,7 @@ static void *get_hook_proc( void *proc, const WCHAR *module )
  */
 LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
+    struct user_thread_info *thread_info = get_user_thread_info();
     HOOKPROC proc = NULL;
     HHOOK handle = 0;
     DWORD pid = 0, tid = 0;
@@ -334,7 +334,6 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 
     USER_CheckNotLock();
 
-    if (!queue) return 0;
     SERVER_START_REQ( start_hook_chain )
     {
         req->id = id;
@@ -380,10 +379,10 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 
         if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
         {
-            HHOOK prev = queue->hook;
-            queue->hook = handle;
+            HHOOK prev = thread_info->hook;
+            thread_info->hook = handle;
             ret = call_hook( proc, id, code, wparam, lparam, unicode, unicode_hook );
-            queue->hook = prev;
+            thread_info->hook = prev;
         }
 
     }
@@ -492,7 +491,7 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
  */
 LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam )
 {
-    MESSAGEQUEUE *queue = QUEUE_Current();
+    struct user_thread_info *thread_info = get_user_thread_info();
     HOOKPROC proc = NULL;
     WCHAR module[MAX_PATH];
     HHOOK handle = 0;
@@ -501,11 +500,9 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
     BOOL prev_unicode = FALSE, next_unicode = FALSE;
     LRESULT ret = 0;
 
-    if (!queue) return 0;
-
     SERVER_START_REQ( get_next_hook )
     {
-        req->handle = queue->hook;
+        req->handle = thread_info->hook;
         req->event = EVENT_MIN;
         wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
@@ -550,10 +547,10 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
 
         if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
         {
-            HHOOK prev = queue->hook;
-            queue->hook = handle;
+            HHOOK prev = thread_info->hook;
+            thread_info->hook = handle;
             ret = call_hook( proc, id, code, wparam, lparam, prev_unicode, next_unicode );
-            queue->hook = prev;
+            thread_info->hook = prev;
         }
     }
     return ret;

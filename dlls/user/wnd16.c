@@ -20,10 +20,10 @@
 
 #include "wine/winuser16.h"
 #include "wownt32.h"
-#include "user_private.h"
 #include "win.h"
 #include "winproc.h"
 #include "stackframe.h"
+#include "user_private.h"
 
 /* handle <--> handle16 conversions */
 #define HANDLE_16(h32)		(LOWORD(h32))
