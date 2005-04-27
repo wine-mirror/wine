@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <limits.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <pwd.h>
