@@ -2,6 +2,7 @@
  * Advpack main
  *
  * Copyright 2004 Huw D M Davies
+ * Copyright 2005 Sami Aario
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -260,8 +261,71 @@ void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
     FreeLibrary(hm);
 }
 
+static HRESULT DELNODE_recurse_dirtree(LPSTR fname, DWORD flags)
+{
+    DWORD fattrs = GetFileAttributesA(fname);
+    HRESULT ret = E_FAIL;
+
+    if (fattrs & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        HANDLE hFindFile;
+        WIN32_FIND_DATAA w32fd;
+        BOOL done = TRUE;
+        int fname_len = lstrlenA(fname);
+
+        /* Generate a path with wildcard suitable for iterating */
+        if (CharPrevA(fname, fname + fname_len) != "\\")
+        {
+            lstrcpyA(fname + fname_len, "\\");
+            ++fname_len;
+        }
+        lstrcpyA(fname + fname_len, "*");
+
+        if ((hFindFile = FindFirstFileA(fname, &w32fd)) != INVALID_HANDLE_VALUE)
+        {
+            /* Iterate through the files in the directory */
+            for (done = FALSE; !done; done = !FindNextFileA(hFindFile, &w32fd))
+            {
+                TRACE("%s\n", w32fd.cFileName);
+                if (lstrcmpA(".", w32fd.cFileName) != 0 &&
+                    lstrcmpA("..", w32fd.cFileName) != 0)
+                {
+                    lstrcpyA(fname + fname_len, w32fd.cFileName);
+                    if (DELNODE_recurse_dirtree(fname, flags) != S_OK)
+                    {
+                        break; /* Failure */
+                    }
+                }
+            }
+            FindClose(hFindFile);
+        }
+
+        /* We're done with this directory, so restore the old path without wildcard */
+        *(fname + fname_len) = '\0';
+
+        if (done)
+        {
+            TRACE("%s: directory\n", fname);
+            if (SetFileAttributesA(fname, FILE_ATTRIBUTE_NORMAL) && RemoveDirectoryA(fname))
+            {
+                ret = S_OK;
+            }
+        }
+    }
+    else
+    {
+        TRACE("%s: file\n", fname);
+        if (SetFileAttributesA(fname, FILE_ATTRIBUTE_NORMAL) && DeleteFileA(fname))
+        {
+            ret = S_OK;
+        }
+    }
+    
+    return ret;
+}
+
 /***********************************************************************
- *             DelNode    (ADVPACK.@)
+ *              DelNode    (ADVPACK.@)
  *
  * Deletes a file or directory
  *
@@ -274,12 +338,26 @@ void WINAPI RegisterOCX( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT show )
  *   Failure: E_FAIL
  *
  * BUGS
- *   Unimplemented
+ *   - Ignores flags
+ *   - Native version apparently does a lot of checking to make sure
+ *     we're not trying to delete a system directory etc.
  */
 HRESULT WINAPI DelNode( LPCSTR pszFileOrDirName, DWORD dwFlags )
 {
-    FIXME("(%s, 0x%08lx): stub\n", debugstr_a(pszFileOrDirName), dwFlags);
-    return E_FAIL;
+    CHAR fname[MAX_PATH];
+    HRESULT ret = E_FAIL;
+
+    FIXME("(%s, 0x%08lx): flags ignored\n", debugstr_a(pszFileOrDirName), dwFlags);
+    if (pszFileOrDirName && *pszFileOrDirName)
+    {
+        lstrcpyA(fname, pszFileOrDirName);
+
+        /* TODO: Should check for system directory deletion etc. here */
+
+        ret = DELNODE_recurse_dirtree(fname, dwFlags);
+    }
+
+    return ret;
 }
 
 /***********************************************************************
