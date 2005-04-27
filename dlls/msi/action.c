@@ -631,7 +631,7 @@ static void ui_progress(MSIPACKAGE *package, int a, int b, int c, int d )
     MSI_ProcessMessage(package, INSTALLMESSAGE_PROGRESS, row);
     msiobj_release(&row->hdr);
 
-    msi_dialog_check_messages(package->dialog, NULL);
+    msi_dialog_check_messages(NULL);
 }
 
 static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * record)
@@ -1421,7 +1421,7 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
     if (!handled)
         handled = ACTION_HandleDialogBox(package, action, &rc);
 
-    msi_dialog_check_messages( package->dialog, NULL );
+    msi_dialog_check_messages( NULL );
 
     if (!handled)
     {
@@ -5421,7 +5421,7 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
                   c_colon, &si, &info);
 
         if (brc)
-            msi_dialog_check_messages(package->dialog, info.hProcess);
+            msi_dialog_check_messages(info.hProcess);
  
         HeapFree(GetProcessHeap(),0,filename);
         msiobj_release(&row->hdr);

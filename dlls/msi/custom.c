@@ -372,9 +372,9 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
         /* synchronous */
         TRACE("Synchronous Execution of action %s\n",debugstr_w(Name));
         if (ProcessHandle)
-            msi_dialog_check_messages(package->dialog, ProcessHandle);
+            msi_dialog_check_messages(ProcessHandle);
         else
-            msi_dialog_check_messages(package->dialog, ThreadHandle);
+            msi_dialog_check_messages(ThreadHandle);
 
         if (!(type & 0x40))
         {
@@ -782,8 +782,7 @@ void ACTION_FinishCustomActions(MSIPACKAGE* package)
         {
             TRACE("Waiting on action %s\n",
                debugstr_w(package->RunningAction[i].name));
-            msi_dialog_check_messages(package->dialog,
-                                      package->RunningAction[i].handle);
+            msi_dialog_check_messages(package->RunningAction[i].handle);
         }
 
         HeapFree(GetProcessHeap(),0,package->RunningAction[i].name);
