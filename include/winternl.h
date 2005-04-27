@@ -140,6 +140,13 @@ typedef struct _PEB_LDR_DATA
     LIST_ENTRY          InInitializationOrderModuleList;
 } PEB_LDR_DATA, *PPEB_LDR_DATA;
 
+typedef struct _GDI_TEB_BATCH
+{
+    ULONG  Offset;
+    HANDLE HDC;
+    ULONG  Buffer[0x136];
+} GDI_TEB_BATCH;
+
 /***********************************************************************
  * PEB data structure
  */
@@ -222,19 +229,55 @@ typedef struct _TEB
     PVOID           ThreadLocalStoragePointer;  /* 02c */
     PPEB            Peb;                        /* 030 */
     ULONG           LastErrorValue;             /* 034 */
-    BYTE            __pad038[140];              /* 038 */
+    ULONG           CountOfOwnedCriticalSections;/* 038 */
+    PVOID           CsrClientThread;            /* 03c */
+    PVOID           Win32ThreadInfo;            /* 040 */
+    ULONG           Win32ClientInfo[31];        /* 044 */
+    PVOID           WOW32Reserved;              /* 0c0 */
     ULONG           CurrentLocale;              /* 0c4 */
-    BYTE            __pad0c8[1752];             /* 0c8 */
-    PVOID           Reserved2[277];             /* 7a0 */
+    ULONG           FpSoftwareStatusRegister;   /* 0c8 */
+    PVOID           SystemReserved1[54];        /* 0cc */
+    PVOID           Spare1;                     /* 1a4 */
+    LONG            ExceptionCode;              /* 1a8 */
+    BYTE            SpareBytes1[40];            /* 1ac */
+    PVOID           SystemReserved2[10];        /* 1d4 */
+    GDI_TEB_BATCH   GdiTebBatch;                /* 1fc */
+    ULONG           gdiRgn;                     /* 6dc */
+    ULONG           gdiPen;                     /* 6e0 */
+    ULONG           gdiBrush;                   /* 6e4 */
+    CLIENT_ID       RealClientId;               /* 6e8 */
+    HANDLE          GdiCachedProcessHandle;     /* 6f0 */
+    ULONG           GdiClientPID;               /* 6f4 */
+    ULONG           GdiClientTID;               /* 6f8 */
+    PVOID           GdiThreadLocaleInfo;        /* 6fc */
+    PVOID           UserReserved[5];            /* 700 */
+    PVOID           glDispachTable[280];        /* 714 */
+    ULONG           glReserved1[26];            /* b74 */
+    PVOID           glReserved2;                /* bdc */
+    PVOID           glSectionInfo;              /* be0 */
+    PVOID           glSection;                  /* be4 */
+    PVOID           glTable;                    /* be8 */
+    PVOID           glCurrentRC;                /* bec */
+    PVOID           glContext;                  /* bf0 */
     ULONG           LastStatusValue;            /* bf4 */
     UNICODE_STRING  StaticUnicodeString;        /* bf8 used by advapi32 */
     WCHAR           StaticUnicodeBuffer[261];   /* c00 used by advapi32 */
     PVOID           DeallocationStack;          /* e0c */
     PVOID           TlsSlots[64];               /* e10 */
     LIST_ENTRY      TlsLinks;                   /* f10 */
-    PVOID           Reserved4[26];              /* f18 */
+    PVOID           Vdm;                        /* f18 */
+    PVOID           ReservedForNtRpc;           /* f1c */
+    PVOID           DbgSsReserved[2];           /* f20 */
+    ULONG           HardErrorDisabled;          /* f28 */
+    PVOID           Instrumentation[16];        /* f2c */
+    PVOID           WinSockData;                /* f6c */
+    ULONG           GdiBatchCount;              /* f70 */
+    ULONG           Spare2;                     /* f74 */
+    ULONG           Spare3;                     /* f78 */
+    ULONG           Spare4;                     /* f7c */
     PVOID           ReservedForOle;             /* f80 Windows 2000 only */
-    PVOID           Reserved5[4];               /* f84 */
+    ULONG           WaitingOnLoaderLock;        /* f84 */
+    PVOID           Reserved5[3];               /* f88 */
     PVOID          *TlsExpansionSlots;          /* f94 */
 } TEB, *PTEB;
 # endif /* WINE_TEB_DEFINED */
