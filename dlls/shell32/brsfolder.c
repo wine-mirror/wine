@@ -41,6 +41,14 @@ static HWND		hwndTreeView;
 static LPBROWSEINFOW	lpBrowseInfo;
 static LPITEMIDLIST	pidlRet;
 
+typedef struct tagID
+{
+   LPSHELLFOLDER lpsfParent; /* IShellFolder of the parent */
+   LPITEMIDLIST  lpi;        /* PIDL relativ to parent */
+   LPITEMIDLIST  lpifq;      /* Fully qualified PIDL */
+   IEnumIDList*  pEnumIL;    /* Children iterator */ 
+} TV_ITEMDATA, *LPTV_ITEMDATA;
+
 static void FillTreeView(LPSHELLFOLDER lpsf, LPITEMIDLIST  lpifq, HTREEITEM hParent, IEnumIDList* lpe);
 static HTREEITEM InsertTreeViewItem(IShellFolder * lpsf, LPCITEMIDLIST pidl, LPCITEMIDLIST pidlParent, IEnumIDList* pEnumIL, HTREEITEM hParent);
 
@@ -173,14 +181,6 @@ static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq, LPTVITEMW lpTV_ITEM)
 
 	return;
 }
-
-typedef struct tagID
-{
-   LPSHELLFOLDER lpsfParent; /* IShellFolder of the parent */
-   LPITEMIDLIST  lpi;        /* PIDL relativ to parent */
-   LPITEMIDLIST  lpifq;      /* Fully qualified PIDL */
-   IEnumIDList*  pEnumIL;    /* Children iterator */ 
-} TV_ITEMDATA, *LPTV_ITEMDATA;
 
 /******************************************************************************
  * GetName [Internal]
@@ -347,177 +347,220 @@ static void BrsFolder_CheckValidSelection(HWND hWndTree, LPTV_ITEMDATA lptvid)
     LPCITEMIDLIST pidl = lptvid->lpi;
     BOOL bEnabled = TRUE;
     DWORD dwAttributes;
+    HRESULT r;
+
     if ((lpBrowseInfo->ulFlags & BIF_BROWSEFORCOMPUTER) &&
         !PIDLIsType(pidl, PT_COMP))
         bEnabled = FALSE;
     if (lpBrowseInfo->ulFlags & BIF_RETURNFSANCESTORS)
     {
         dwAttributes = SFGAO_FILESYSANCESTOR | SFGAO_FILESYSTEM;
-        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes)) ||
-            !dwAttributes)
+        r = IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1,
+                                (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes);
+        if (FAILED(r) || !dwAttributes)
             bEnabled = FALSE;
     }
     if (lpBrowseInfo->ulFlags & BIF_RETURNONLYFSDIRS)
     {
         dwAttributes = SFGAO_FOLDER | SFGAO_FILESYSTEM;
-        if (FAILED(IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1, (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes)) ||
-            (dwAttributes != (SFGAO_FOLDER | SFGAO_FILESYSTEM)))
+        r = IShellFolder_GetAttributesOf(lptvid->lpsfParent, 1,
+                                (LPCITEMIDLIST*)&lptvid->lpi, &dwAttributes);
+        if (FAILED(r) || (dwAttributes != (SFGAO_FOLDER | SFGAO_FILESYSTEM)))
             bEnabled = FALSE;
     }
     SendMessageW(hWndTree, BFFM_ENABLEOK, 0, (LPARAM)bEnabled);
 }
 
-static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
+static LRESULT BrsFolder_Treeview_Delete( NMTREEVIEWW *pnmtv )
 {
-	NMTREEVIEWW	*pnmtv   = (NMTREEVIEWW *)lpnmh;
-	LPTV_ITEMDATA	lptvid;  /* Long pointer to TreeView item data */
-	IShellFolder *	lpsf2=0;
+    LPTV_ITEMDATA lptvid = (LPTV_ITEMDATA)pnmtv->itemOld.lParam;
 
+    TRACE("TVN_DELETEITEMA/W %p\n", lptvid);
 
-	TRACE("%p %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
-
-	switch (pnmtv->hdr.idFrom)
-	{ case IDD_TREEVIEW:
-	    switch (pnmtv->hdr.code)
-	    {
-	      case TVN_DELETEITEMA:
-	      case TVN_DELETEITEMW:
-                TRACE("TVN_DELETEITEMA/W\n");
-	        lptvid=(LPTV_ITEMDATA)pnmtv->itemOld.lParam;
-	        IShellFolder_Release(lptvid->lpsfParent);
-	        if (lptvid->pEnumIL)
-	          IEnumIDList_Release(lptvid->pEnumIL);
-	        SHFree(lptvid->lpi);
-	        SHFree(lptvid->lpifq);
-	        SHFree(lptvid);
-	        break;
-
-	      case TVN_ITEMEXPANDINGA:
-	      case TVN_ITEMEXPANDINGW:
-		{
-                  TRACE("TVN_ITEMEXPANDINGA/W\n");
-		  if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
-	            break;
-
-	          lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
-	          if (SUCCEEDED(IShellFolder_BindToObject(lptvid->lpsfParent, lptvid->lpi,0,(REFIID)&IID_IShellFolder,(LPVOID *)&lpsf2)))
-	          { FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem, lptvid->pEnumIL);
-	          }
-	          /* My Computer is already sorted and trying to do a simple text
-	           * sort will only mess things up */
-	          if (!_ILIsMyComputer(lptvid->lpi))
-	            TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);
-		}
-	        break;
-	      case TVN_SELCHANGEDA:
-	      case TVN_SELCHANGEDW:
-	        lptvid=(LPTV_ITEMDATA)pnmtv->itemNew.lParam;
-		pidlRet = lptvid->lpifq;
-		if (lpBrowseInfo->lpfn)
-		   (lpBrowseInfo->lpfn)(hWnd, BFFM_SELCHANGED, (LPARAM)pidlRet, lpBrowseInfo->lParam);
-		BrsFolder_CheckValidSelection(hWnd, lptvid);
-	        break;
-
-	      default:
-	        WARN("unhandled (%d)\n", pnmtv->hdr.code);
-		break;
-	    }
-	    break;
-
-	  default:
-	    break;
-	}
-
-	return 0;
+    IShellFolder_Release(lptvid->lpsfParent);
+    if (lptvid->pEnumIL)
+        IEnumIDList_Release(lptvid->pEnumIL);
+    SHFree(lptvid->lpi);
+    SHFree(lptvid->lpifq);
+    SHFree(lptvid);
+    return 0;
 }
 
+static LRESULT BrsFolder_Treeview_Expand( NMTREEVIEWW *pnmtv )
+{
+    IShellFolder *lpsf2 = NULL;
+    LPTV_ITEMDATA lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
+    HRESULT r;
+
+    TRACE("TVN_ITEMEXPANDINGA/W\n");
+
+    if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
+        return 0;
+
+    r = IShellFolder_BindToObject( lptvid->lpsfParent, lptvid->lpi, 0,
+                                  (REFIID)&IID_IShellFolder, (LPVOID *)&lpsf2 );
+    if (SUCCEEDED(r))
+        FillTreeView( lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem, lptvid->pEnumIL);
+
+    /* My Computer is already sorted and trying to do a simple text
+     * sort will only mess things up */
+    if (!_ILIsMyComputer(lptvid->lpi))
+        TreeView_SortChildren(hwndTreeView, pnmtv->itemNew.hItem, FALSE);
+
+    return 0;
+}
+
+static HRESULT BrsFolder_Treeview_Changed( HWND hWnd, NMTREEVIEWW *pnmtv )
+{
+    LPTV_ITEMDATA lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
+
+    lptvid = (LPTV_ITEMDATA) pnmtv->itemNew.lParam;
+    pidlRet = lptvid->lpifq;
+    if (lpBrowseInfo->lpfn)
+        (lpBrowseInfo->lpfn)(hWnd, BFFM_SELCHANGED, (LPARAM)pidlRet, lpBrowseInfo->lParam);
+    BrsFolder_CheckValidSelection(hWnd, lptvid);
+    return 0;
+}
+
+static LRESULT BrsFolder_OnNotify( HWND hWnd, UINT CtlID, LPNMHDR lpnmh )
+{
+    NMTREEVIEWW *pnmtv = (NMTREEVIEWW *)lpnmh;
+
+    TRACE("%p %x %p msg=%x\n", hWnd,  CtlID, lpnmh, pnmtv->hdr.code);
+
+    if (pnmtv->hdr.idFrom != IDD_TREEVIEW)
+        return 0;
+
+    switch (pnmtv->hdr.code)
+    {
+    case TVN_DELETEITEMA:
+    case TVN_DELETEITEMW:
+        return BrsFolder_Treeview_Delete( pnmtv );
+
+    case TVN_ITEMEXPANDINGA:
+    case TVN_ITEMEXPANDINGW:
+        return BrsFolder_Treeview_Expand( pnmtv );
+
+    case TVN_SELCHANGEDA:
+    case TVN_SELCHANGEDW:
+        return BrsFolder_Treeview_Changed( hWnd, pnmtv );
+
+    default:
+        WARN("unhandled (%d)\n", pnmtv->hdr.code);
+        break;
+    }
+
+    return 0;
+}
+
+
+static BOOL BrsFolder_OnCreate( HWND hWnd, LPBROWSEINFOW lpbi )
+{
+    pidlRet = NULL;
+    lpBrowseInfo = lpbi;
+
+    if (lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS)
+	FIXME("flags %x not implemented\n", lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS);
+
+    if (lpBrowseInfo->lpszTitle)
+	SetWindowTextW( GetDlgItem(hWnd, IDD_TITLE), lpBrowseInfo->lpszTitle );
+    else
+	ShowWindow( GetDlgItem(hWnd, IDD_TITLE), SW_HIDE );
+
+    if (!(lpBrowseInfo->ulFlags & BIF_STATUSTEXT))
+	ShowWindow( GetDlgItem(hWnd, IDD_STATUS), SW_HIDE );
+
+    InitializeTreeView( hWnd, lpBrowseInfo->pidlRoot );
+
+    if (lpBrowseInfo->lpfn)
+	(lpBrowseInfo->lpfn)( hWnd, BFFM_INITIALIZED, 0, lpBrowseInfo->lParam );
+
+    return TRUE;
+}
+
+static BOOL BrsFolder_OnCommand( HWND hWnd, UINT id )
+{
+    switch (id)
+    {
+    case IDOK:
+        pdump( pidlRet );
+        if (lpBrowseInfo->pszDisplayName)
+            SHGetPathFromIDListW( pidlRet, lpBrowseInfo->pszDisplayName );
+        EndDialog(hWnd, (DWORD) ILClone(pidlRet));
+        return TRUE;
+
+    case IDCANCEL:
+        EndDialog(hWnd, 0);
+        return TRUE;
+    }
+    return FALSE;
+}
 
 /*************************************************************************
  *             BrsFolderDlgProc32  (not an exported API function)
  */
-static INT_PTR CALLBACK BrsFolderDlgProc(HWND hWnd, UINT msg, WPARAM wParam,
-				     LPARAM lParam )
+static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
+				          LPARAM lParam )
 {
-	TRACE("hwnd=%p msg=%04x 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
+    TRACE("hwnd=%p msg=%04x 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
-	switch(msg)
-	{ case WM_INITDIALOG:
-	    pidlRet = NULL;
-	    lpBrowseInfo = (LPBROWSEINFOW) lParam;
-	    if (lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS)
-	      FIXME("flags %x not implemented\n", lpBrowseInfo->ulFlags & ~SUPPORTEDFLAGS);
-	    if (lpBrowseInfo->lpszTitle) {
-	       SetWindowTextW(GetDlgItem(hWnd, IDD_TITLE), lpBrowseInfo->lpszTitle);
-	    } else {
-	       ShowWindow(GetDlgItem(hWnd, IDD_TITLE), SW_HIDE);
-	    }
-	    if (!(lpBrowseInfo->ulFlags & BIF_STATUSTEXT))
-	       ShowWindow(GetDlgItem(hWnd, IDD_STATUS), SW_HIDE);
+    if (msg == WM_INITDIALOG)
+        return BrsFolder_OnCreate( hWnd, (LPBROWSEINFOW) lParam );
 
-	    InitializeTreeView(hWnd, lpBrowseInfo->pidlRoot);
+    switch (msg)
+    {
+    case WM_NOTIFY:
+        return BrsFolder_OnNotify( hWnd, (UINT)wParam, (LPNMHDR)lParam);
 
-	    if (lpBrowseInfo->lpfn)
-	       (lpBrowseInfo->lpfn)(hWnd, BFFM_INITIALIZED, 0, lpBrowseInfo->lParam);
+    case WM_COMMAND:
+        return BrsFolder_OnCommand( hWnd, wParam );
 
-	    return TRUE;
+    case BFFM_SETSTATUSTEXTA:
+        TRACE("Set status %s\n", debugstr_a((LPSTR)lParam));
+        SetWindowTextA(GetDlgItem(hWnd, IDD_STATUS), (LPSTR)lParam);
+        break;
 
-	  case WM_NOTIFY:
-	    MsgNotify( hWnd, (UINT)wParam, (LPNMHDR)lParam);
-	    break;
+    case BFFM_SETSTATUSTEXTW:
+        TRACE("Set status %s\n", debugstr_w((LPWSTR)lParam));
+        SetWindowTextW(GetDlgItem(hWnd, IDD_STATUS), (LPWSTR)lParam);
+        break;
 
-	  case WM_COMMAND:
-	    switch (wParam)
-	    { case IDOK:
-	        pdump ( pidlRet );
-		if (lpBrowseInfo->pszDisplayName)
-	            SHGetPathFromIDListW(pidlRet, lpBrowseInfo->pszDisplayName);
-	        EndDialog(hWnd, (DWORD) ILClone(pidlRet));
-	        return TRUE;
+    case BFFM_ENABLEOK:
+        TRACE("Enable %ld\n", lParam);
+        EnableWindow(GetDlgItem(hWnd, 1), (lParam)?TRUE:FALSE);
+        break;
 
-	      case IDCANCEL:
-	        EndDialog(hWnd, 0);
-	        return TRUE;
-	    }
-	    break;
-	case BFFM_SETSTATUSTEXTA:
-	   TRACE("Set status %s\n", debugstr_a((LPSTR)lParam));
-	   SetWindowTextA(GetDlgItem(hWnd, IDD_STATUS), (LPSTR)lParam);
-	   break;
-	case BFFM_SETSTATUSTEXTW:
-	   TRACE("Set status %s\n", debugstr_w((LPWSTR)lParam));
-	   SetWindowTextW(GetDlgItem(hWnd, IDD_STATUS), (LPWSTR)lParam);
-	   break;
-	case BFFM_ENABLEOK:
-	   TRACE("Enable %ld\n", lParam);
-	   EnableWindow(GetDlgItem(hWnd, 1), (lParam)?TRUE:FALSE);
-	   break;
-	case BFFM_SETOKTEXT: /* unicode only */
-	   TRACE("Set OK text %s\n", debugstr_w((LPWSTR)wParam));
-	   SetWindowTextW(GetDlgItem(hWnd, 1), (LPWSTR)wParam);
-	   break;
-	case BFFM_SETSELECTIONA:
-	   if (wParam)
-	      FIXME("Set selection %s\n", debugstr_a((LPSTR)lParam));
-	   else
-	      FIXME("Set selection %p\n", (void*)lParam);
-	   break;
-	case BFFM_SETSELECTIONW:
-	   if (wParam)
-	      FIXME("Set selection %s\n", debugstr_w((LPWSTR)lParam));
-	   else
-	      FIXME("Set selection %p\n", (void*)lParam);
-	   break;
-	case BFFM_SETEXPANDED: /* unicode only */
-	   if (wParam)
-	      FIXME("Set expanded %s\n", debugstr_w((LPWSTR)lParam));
-	   else
-	      FIXME("Set expanded %p\n", (void*)lParam);
-	   break;
-	}
-	return FALSE;
+    case BFFM_SETOKTEXT: /* unicode only */
+        TRACE("Set OK text %s\n", debugstr_w((LPWSTR)wParam));
+        SetWindowTextW(GetDlgItem(hWnd, 1), (LPWSTR)wParam);
+        break;
+
+    case BFFM_SETSELECTIONA:
+        if (wParam)
+            FIXME("Set selection %s\n", debugstr_a((LPSTR)lParam));
+        else
+            FIXME("Set selection %p\n", (void*)lParam);
+        break;
+
+    case BFFM_SETSELECTIONW:
+        if (wParam)
+            FIXME("Set selection %s\n", debugstr_w((LPWSTR)lParam));
+        else
+            FIXME("Set selection %p\n", (void*)lParam);
+        break;
+
+    case BFFM_SETEXPANDED: /* unicode only */
+        if (wParam)
+            FIXME("Set expanded %s\n", debugstr_w((LPWSTR)lParam));
+        else
+            FIXME("Set expanded %p\n", (void*)lParam);
+        break;
+    }
+    return FALSE;
 }
 
-static const WCHAR swBrowseTempName[] = {'S','H','B','R','S','F','O','R','F','O','L','D','E','R','_','M','S','G','B','O','X',0};
+static const WCHAR swBrowseTempName[] = {
+    'S','H','B','R','S','F','O','R','F','O','L','D','E','R','_','M','S','G','B','O','X',0};
 
 /*************************************************************************
  * SHBrowseForFolderA [SHELL32.@]
