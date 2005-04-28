@@ -2397,6 +2397,15 @@ static void dump_get_thread_input_reply( const struct get_thread_input_reply *re
     dump_rectangle( &req->rect );
 }
 
+static void dump_get_last_input_time_request( const struct get_last_input_time_request *req )
+{
+}
+
+static void dump_get_last_input_time_reply( const struct get_last_input_time_reply *req )
+{
+    fprintf( stderr, " time=%08x", req->time );
+}
+
 static void dump_get_key_state_request( const struct get_key_state_request *req )
 {
     fprintf( stderr, " tid=%04x,", req->tid );
@@ -2926,6 +2935,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_request,
     (dump_func)dump_attach_thread_input_request,
     (dump_func)dump_get_thread_input_request,
+    (dump_func)dump_get_last_input_time_request,
     (dump_func)dump_get_key_state_request,
     (dump_func)dump_set_key_state_request,
     (dump_func)dump_set_foreground_window_request,
@@ -3118,6 +3128,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_window_properties_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_input_reply,
+    (dump_func)dump_get_last_input_time_reply,
     (dump_func)dump_get_key_state_reply,
     (dump_func)0,
     (dump_func)dump_set_foreground_window_reply,
@@ -3310,6 +3321,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_window_properties",
     "attach_thread_input",
     "get_thread_input",
+    "get_last_input_time",
     "get_key_state",
     "set_key_state",
     "set_foreground_window",

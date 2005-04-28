@@ -264,6 +264,32 @@ BOOL WINAPI GetInputState(void)
 }
 
 
+/******************************************************************
+ *              GetLastInputInfo (USER32.@)
+ */
+BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
+{
+    BOOL ret;
+
+    TRACE("%p\n", plii);
+
+    if (plii->cbSize != sizeof (*plii) )
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    SERVER_START_REQ( get_last_input_time )
+    {
+        ret = !wine_server_call_err( req );
+        if (ret)
+            plii->dwTime = reply->time;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+
 /**********************************************************************
  *		AttachThreadInput (USER32.@)
  *

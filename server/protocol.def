@@ -2008,6 +2008,14 @@ enum message_type
     rectangle_t    rect;          /* caret rectangle */
 @END
 
+
+/* Get the time of the last input event */
+@REQ(get_last_input_time)
+@REPLY
+    unsigned int time;
+@END
+
+
 /* Retrieve queue keyboard state for a given thread */
 @REQ(get_key_state)
     thread_id_t    tid;           /* id of thread */

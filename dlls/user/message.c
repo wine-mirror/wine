@@ -3441,12 +3441,3 @@ BOOL WINAPI IsHungAppWindow( HWND hWnd )
     DWORD dwResult; 
     return !SendMessageTimeoutA(hWnd, WM_NULL, 0, 0, SMTO_ABORTIFHUNG, 5000, &dwResult);	
 }
-
-/******************************************************************
- *		GetLastInputInfo (USER32.@)
- */
-BOOL WINAPI GetLastInputInfo(PLASTINPUTINFO plii)
-{
-    FIXME("%p\n", plii);
-    return FALSE;
-}

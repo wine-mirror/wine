@@ -167,6 +167,7 @@ static const struct object_ops thread_input_ops =
 
 /* pointer to input structure of foreground thread */
 static struct thread_input *foreground_input;
+static unsigned int last_input_time;
 
 
 /* set the caret window in a given thread input */
@@ -1154,6 +1155,8 @@ static void queue_hardware_message( struct msg_queue *queue, struct message *msg
     struct thread_input *input;
     unsigned int msg_code;
 
+    last_input_time = get_tick_count();
+
     win = find_hardware_message_window( queue ? queue->input : foreground_input, msg, &msg_code );
     if (!win || !(thread = get_window_thread(win)))
     {
@@ -2005,4 +2008,11 @@ DECL_HANDLER(set_caret_info)
         if (req->state == -1) input->caret_state = !input->caret_state;
         else input->caret_state = !!req->state;
     }
+}
+
+
+/* get the time of the last input event */
+DECL_HANDLER(get_last_input_time)
+{
+    reply->time = last_input_time;
 }

@@ -266,6 +266,7 @@ DECL_HANDLER(get_window_property);
 DECL_HANDLER(get_window_properties);
 DECL_HANDLER(attach_thread_input);
 DECL_HANDLER(get_thread_input);
+DECL_HANDLER(get_last_input_time);
 DECL_HANDLER(get_key_state);
 DECL_HANDLER(set_key_state);
 DECL_HANDLER(set_foreground_window);
@@ -461,6 +462,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_window_properties,
     (req_handler)req_attach_thread_input,
     (req_handler)req_get_thread_input,
+    (req_handler)req_get_last_input_time,
     (req_handler)req_get_key_state,
     (req_handler)req_set_key_state,
     (req_handler)req_set_foreground_window,
