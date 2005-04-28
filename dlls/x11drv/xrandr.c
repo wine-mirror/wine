@@ -204,6 +204,12 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
         FIXME("Cannot change screen BPP from %ld to %ld\n", dwBpp, dd_modes[mode].dwBPP);
     }
     mode = mode%real_xrandr_modes_count;
+
+    TRACE("Changing Resolution to %ldx%ld @%d Hz\n", 
+	  dd_modes[mode].dwWidth, 
+	  dd_modes[mode].dwHeight, 
+	  dd_modes[mode].wRefreshRate);
+
     for (i = 0; i < real_xrandr_sizes_count; i++)
     {
         if ( (dd_modes[mode].dwWidth  == real_xrandr_sizes[i].width ) && 
@@ -226,10 +232,9 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
             }
             else
             {
-                TRACE("Resizing X display to %ldx%ld\n", 
-                      dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
-                stat = pXRRSetScreenConfig (gdi_display, sc, root, 
-                                           size, rot, CurrentTime);
+                TRACE("Resizing X display to %ldx%ld <default Hz>\n", 
+		      dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
+                stat = pXRRSetScreenConfig (gdi_display, sc, root, size, rot, CurrentTime);
             }
         }
     }
@@ -270,19 +275,28 @@ void X11DRV_XRandR_Init(void)
     }
     if (ok)
     {
+        TRACE("XRandR: found %u resolutions sizes\n", real_xrandr_sizes_count);
         real_xrandr_rates = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(short *) * real_xrandr_sizes_count);
         real_xrandr_rates_count = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * real_xrandr_sizes_count);
         for (i=0; i < real_xrandr_sizes_count; i++)
         {
             real_xrandr_rates[i] = pXRRRates (gdi_display, DefaultScreen(gdi_display), i, &(real_xrandr_rates_count[i]));
+	    TRACE("- at %u: %dx%d (%d rates):", i, real_xrandr_sizes[i].width, real_xrandr_sizes[i].height, real_xrandr_rates_count[i]);
             if (real_xrandr_rates_count[i])
             {
+                int j;
                 nmodes += real_xrandr_rates_count[i];
+		for (j = 0; j < real_xrandr_rates_count[i]; ++j) {
+		  if (j > 0) TRACE(",");
+		  TRACE("  %d", real_xrandr_rates[i][j]);
+		}
             }
             else
             {
                 nmodes++;
+		TRACE(" <default>");
             }
+	    TRACE(" Hz \n");
         }
     }
     wine_tsx11_unlock();
