@@ -1065,14 +1065,30 @@ INSTALLSTATE WINAPI MsiQueryFeatureStateA(LPCSTR szProduct, LPCSTR szFeature)
 
 /******************************************************************
  * MsiQueryFeatureStateW      [MSI.@]
+ *
+ * This does not verify that the Feature is functional. So i am only going to
+ * check the existence of the key in the registry. This should tell me if it is
+ * installed.
  */
 INSTALLSTATE WINAPI MsiQueryFeatureStateW(LPCWSTR szProduct, LPCWSTR szFeature)
 {
-    FIXME("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
-    /*
-     * Iterates all the features components and the features parents components
-     */
-    return INSTALLSTATE_LOCAL;
+    UINT rc;
+    DWORD sz = 0;
+    HKEY hkey;
+
+    TRACE("%s %s\n", debugstr_w(szProduct), debugstr_w(szFeature));
+
+    rc = MSIREG_OpenFeaturesKey(szProduct, &hkey, FALSE);
+    if (rc != ERROR_SUCCESS)
+        return INSTALLSTATE_UNKNOWN;
+
+    rc = RegQueryValueExW( hkey, szFeature, NULL, NULL, NULL, &sz);
+    RegCloseKey(hkey);
+
+    if (rc == ERROR_SUCCESS)
+        return INSTALLSTATE_LOCAL;
+    else
+        return INSTALLSTATE_ABSENT;
 }
 
 /******************************************************************
