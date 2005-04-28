@@ -1704,8 +1704,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 		*  only "one" device active and further it is not possible to query things like the linkspeed.
 		*/
 		FIXME("IPX_ADDRESS\n");
-		namelen = sizeof(struct WS_sockaddr);
-		memset(&addr, 0, sizeof(struct WS_sockaddr));
+		namelen = sizeof(struct WS_sockaddr_ipx);
+		memset(&addr, 0, sizeof(struct WS_sockaddr_ipx));
 		WS_getsockname(s, (struct WS_sockaddr*)&addr, &namelen);
 
 		data = (IPX_ADDRESS_DATA*)optval;
