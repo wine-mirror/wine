@@ -1425,7 +1425,7 @@ UINT WINAPI MsiProvideQualifiedComponentExW(LPCWSTR szComponent,
     }
 
     /* find the component */
-    ptr = strchrW(&info[20],'<');
+    ptr = strchrW(&info[20],'>');
     if (ptr)
         ptr++;
     else

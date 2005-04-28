@@ -726,20 +726,136 @@ UINT WINAPI MsiEnumComponentQualifiersA( LPSTR szComponent, DWORD iIndex,
                 LPSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
                 LPSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf)
 {
-    FIXME("%s %08lx %p %p %p %p\n", debugstr_a(szComponent), iIndex,
+    LPWSTR szwComponent;
+    LPWSTR lpwQualifierBuf;
+    DWORD pcchwQualifierBuf;
+    LPWSTR lpwApplicationDataBuf;
+    DWORD pcchwApplicationDataBuf;
+    DWORD rc;
+    DWORD length;
+
+    TRACE("%s %08lx %p %p %p %p\n", debugstr_a(szComponent), iIndex,
           lpQualifierBuf, pcchQualifierBuf, lpApplicationDataBuf,
           pcchApplicationDataBuf);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    szwComponent = strdupAtoW(szComponent);
+
+    if (lpQualifierBuf)
+        lpwQualifierBuf = HeapAlloc(GetProcessHeap(),0, (*pcchQualifierBuf) * 
+                        sizeof(WCHAR));
+    else
+        lpwQualifierBuf = NULL;
+
+    if (pcchQualifierBuf)
+        pcchwQualifierBuf = *pcchQualifierBuf;
+    else
+        pcchwQualifierBuf = 0;
+
+    if (lpApplicationDataBuf)
+       lpwApplicationDataBuf = HeapAlloc(GetProcessHeap(),0 ,
+                            (*pcchApplicationDataBuf) * sizeof(WCHAR));
+    else
+        lpwApplicationDataBuf = NULL;
+
+    if (pcchApplicationDataBuf)
+        pcchwApplicationDataBuf = *pcchApplicationDataBuf;
+    else
+        pcchwApplicationDataBuf = 0;
+
+    rc = MsiEnumComponentQualifiersW( szwComponent, iIndex, lpwQualifierBuf, 
+                    &pcchwQualifierBuf, lpwApplicationDataBuf,
+                    &pcchwApplicationDataBuf);
+
+    /*
+     * A bit of wizardry to report back the length without the null.
+     * just in case the buffer is to small and is filled.
+     */
+    if (lpQualifierBuf)
+    {
+        length = WideCharToMultiByte(CP_ACP, 0, lpwQualifierBuf, -1,
+                        lpQualifierBuf, *pcchQualifierBuf, NULL, NULL); 
+
+        if (*pcchQualifierBuf == length && lpQualifierBuf[length-1])
+            *pcchQualifierBuf = length;
+        else
+            *pcchQualifierBuf = length - 1;
+    }
+    if (lpApplicationDataBuf)
+    {
+        length = WideCharToMultiByte(CP_ACP, 0,
+                        lpwApplicationDataBuf, -1, lpApplicationDataBuf,
+                        *pcchApplicationDataBuf, NULL, NULL); 
+
+        if (*pcchApplicationDataBuf == length && lpApplicationDataBuf[length-1])
+            *pcchApplicationDataBuf = length;
+        else
+            *pcchApplicationDataBuf = length - 1;
+    }
+
+    HeapFree(GetProcessHeap(),0,lpwApplicationDataBuf);
+    HeapFree(GetProcessHeap(),0,lpwQualifierBuf);
+    HeapFree(GetProcessHeap(),0,szwComponent);
+
+    return rc;
 }
 
 UINT WINAPI MsiEnumComponentQualifiersW( LPWSTR szComponent, DWORD iIndex,
                 LPWSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
                 LPWSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf )
 {
-    FIXME("%s %08lx %p %p %p %p\n", debugstr_w(szComponent), iIndex,
+    UINT rc;
+    HKEY key;
+    DWORD actual_pcchQualifierBuf = 0;
+    DWORD actual_pcchApplicationDataBuf = 0;
+    LPWSTR full_buffer = NULL;
+    DWORD full_buffer_size = 0;
+    LPWSTR ptr;
+
+    TRACE("%s %08lx %p %p %p %p\n", debugstr_w(szComponent), iIndex,
           lpQualifierBuf, pcchQualifierBuf, lpApplicationDataBuf,
           pcchApplicationDataBuf);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    if (pcchQualifierBuf)
+        actual_pcchQualifierBuf = *pcchQualifierBuf * sizeof(WCHAR);
+    if (pcchApplicationDataBuf)
+        actual_pcchApplicationDataBuf = *pcchApplicationDataBuf * sizeof(WCHAR);
+    
+    rc = MSIREG_OpenUserComponentsKey(szComponent, &key, FALSE);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_UNKNOWN_COMPONENT;
+
+    full_buffer_size = (52 * sizeof(WCHAR)) + actual_pcchApplicationDataBuf;
+    full_buffer = HeapAlloc(GetProcessHeap(),0,full_buffer_size);
+    
+    rc = RegEnumValueW(key, iIndex, lpQualifierBuf, pcchQualifierBuf, NULL, 
+                    NULL, (LPBYTE)full_buffer, &full_buffer_size);
+
+    RegCloseKey(key);
+
+    if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+    {
+        if (lpApplicationDataBuf && pcchApplicationDataBuf)
+        {
+            ptr = full_buffer;
+            /* Skip the first guid */
+            ptr += 21;
+    
+            /* Skip the name and the component guid if it exists */
+            if (strchrW(ptr,'<'))
+                ptr = strchrW(ptr,'<');
+            else 
+                ptr = strchrW(ptr,'>') + 21;
+
+            lstrcpynW(lpApplicationDataBuf,ptr,*pcchApplicationDataBuf);
+            *pcchApplicationDataBuf = strlenW(ptr);
+        }
+        if (lpQualifierBuf && pcchQualifierBuf)
+            *pcchQualifierBuf /= sizeof(WCHAR); 
+        TRACE("Providing %s and %s\n", debugstr_w(lpQualifierBuf), 
+                        debugstr_w(lpApplicationDataBuf));
+    }
+
+    return rc;
 }
 
 UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,

@@ -6310,9 +6310,12 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     /*
      * I have a fair bit of confusion as to when a < is used and when a > is
      * used. I do not think i have it right...
+     *
+     * Ok it appears that the > is used if there is a guid for the compoenent
+     * and the < is used if not.
      */
-    static WCHAR fmt1[] = {'%','s','%','s','<','%','s',0,0};
-    static WCHAR fmt2[] = {'%','s','%','s','>',0,0};
+    static WCHAR fmt1[] = {'%','s','%','s','<',0,0};
+    static WCHAR fmt2[] = {'%','s','%','s','>','%','s',0,0};
     LPWSTR output = NULL;
     DWORD sz = 0;
 
@@ -6355,10 +6358,10 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     output = HeapAlloc(GetProcessHeap(),0,sz);
     memset(output,0,sz);
 
-    if (ACTION_VerifyComponentForAction(package, index, INSTALLSTATE_LOCAL))
-        sprintfW(output,fmt1,productid_85,feature,component_85);
+    if (component && index >= 0)
+        sprintfW(output,fmt2,productid_85,feature,component_85);
     else
-        sprintfW(output,fmt2,productid_85,feature);
+        sprintfW(output,fmt1,productid_85,feature);
 
     if (text)
         strcatW(output,text);
