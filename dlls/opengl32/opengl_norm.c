@@ -1500,7 +1500,7 @@ const GLubyte * WINAPI wine_glGetString( GLenum name ) {
   const GLubyte * ret_value;
   TRACE("(%d)\n", name );
   ENTER_GL();
-  ret_value = glGetString( name );
+  ret_value = internal_glGetString( name );
   LEAVE_GL();
   return ret_value;
 }

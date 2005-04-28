@@ -1,6 +1,7 @@
 /* Window-specific OpenGL functions implementation.
  *
  * Copyright (c) 2000 Lionel Ulmer
+ * Copyright (c) 2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -69,5 +70,8 @@ BOOL WINAPI wglUseFontOutlines(HDC hdc,
 			       int format,
 			       LPGLYPHMETRICSFLOAT lpgmf) ;
 const char * WINAPI wglGetExtensionsStringARB(HDC hdc) ;
+
+BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc);
+HDC WINAPI wglGetCurrentReadDCARB(void) ;
 
 #endif /* __DLLS_OPENGL32_WGL_H */

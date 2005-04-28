@@ -60,4 +60,6 @@ typedef struct {
 extern OpenGL_extension extension_registry[];
 extern int extension_registry_size;
 
+const GLubyte* internal_glGetString(GLenum name);
+
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */

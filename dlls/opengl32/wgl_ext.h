@@ -1,6 +1,7 @@
 /* Support for window-specific OpenGL extensions.
  *
  * Copyright (c) 2004 Lionel Ulmer
+ * Copyright (c) 2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +26,7 @@
 typedef void* (*glXGetProcAddressARB_t)(const GLubyte *);
 
 /* Used to initialize the WGL extension string at DLL loading */
-void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc);
+void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc, const char* disabled_extensions);
 void wgl_ext_finalize_extensions(void);
 
 typedef struct {

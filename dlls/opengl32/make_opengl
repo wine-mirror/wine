@@ -202,6 +202,7 @@ sub GenerateThunk {
     my ($ret) = ("");
     my ($call_arg) = ("");
     my ($trace_arg) = ("");
+    my ($wine_func_ref_name) = ("");
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
@@ -250,7 +251,11 @@ sub GenerateThunk {
     if ($func_ref->[1] ne "void") {
 	$ret = $ret . "ret_value = ";
     }
-    $ret = $ret . $prefix . $func_ref->[0] . "( " . $call_arg . ");\n";
+    $wine_func_ref_name = $func_ref->[0];
+    if ( $func_ref->[0] eq "glGetString" ) {
+	$wine_func_ref_name = "internal_glGetString";
+    }
+    $ret = $ret . $prefix . $wine_func_ref_name . "( " . $call_arg . ");\n";
     if ($thread_safe) {
 	$ret = $ret . "  LEAVE_GL();\n";
     }

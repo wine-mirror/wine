@@ -31,6 +31,7 @@
 #include "winuser.h"
 #include "winerror.h"
 
+#include "gdi.h"
 #include "wgl.h"
 #include "wgl_ext.h"
 #include "opengl_ext.h"
@@ -90,11 +91,18 @@ static char *WGL_extensions = NULL;
  *
  * @TODO: use a struct to handle parameters 
  */
+BOOL query_function_make_current_read(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+				      const char* glx_version, const char *glx_extensions,
+				      const char *server_glx_extensions, const char *client_glx_extensions)
+{
+  return 0 <= strcmp("1.3", glx_version);
+}
+
 BOOL query_function_multisample(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				const char* glx_version, const char *glx_extensions,
 				const char *server_glx_extensions, const char *client_glx_extensions)
 {
-  return NULL != strstr("GLX_ARB_multisample", glx_extensions);
+  return NULL != strstr(glx_extensions, "GLX_ARB_multisample");
 }
 
 BOOL query_function_pbuffer(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
@@ -133,6 +141,19 @@ BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_v
   return bTest;
 }
 
+int (*p_glXSwapIntervalSGI)(int);
+BOOL query_function_swap_control(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
+				 const char* glx_version, const char *glx_extensions,
+				 const char *server_glx_extensions, const char *client_glx_extensions)
+{
+  BOOL bTest = (0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGI_swap_control"));
+  if (bTest) {
+    p_glXSwapIntervalSGI = proc("glXSwapIntervalSGI");
+    bTest = (NULL != p_glXSwapIntervalSGI);
+  }
+  return bTest;
+}
+
 /***********************************************************************
  *              wglGetExtensionsStringEXT(OPENGL32.@)
  */
@@ -157,10 +178,13 @@ static int swap_interval = 1;
  *              wglSwapIntervalEXT(OPENGL32.@)
  */
 BOOL WINAPI wglSwapIntervalEXT(int interval) {
-    FIXME("(%d),stub!\n", interval);
-
-    swap_interval = interval;
-    return TRUE;
+  TRACE("(%d)\n", interval);
+  swap_interval = interval;
+  if (NULL != p_glXSwapIntervalSGI) {
+    return 0 == p_glXSwapIntervalSGI(interval);
+  }
+  WARN("(): GLX_SGI_swap_control extension seems not supported \n");
+  return TRUE;
 }
 
 /***********************************************************************
@@ -226,9 +250,20 @@ typedef struct wine_glpbuffer {
 #define WGL_STENCIL_BITS_ARB			0x2023
 #define WGL_AUX_BUFFERS_ARB			0x2024
 
-#define WGL_PBUFFER_WIDTH_ARB                0x2034
-#define WGL_PBUFFER_HEIGHT_ARB               0x2035
-#define WGL_PBUFFER_LOST_ARB                 0x2036
+#define WGL_PBUFFER_WIDTH_ARB                   0x2034
+#define WGL_PBUFFER_HEIGHT_ARB                  0x2035
+#define WGL_PBUFFER_LOST_ARB                    0x2036
+#define WGL_DRAW_TO_PBUFFER_ARB		        0x202D
+#define WGL_MAX_PBUFFER_PIXELS_ARB	        0x202E
+#define WGL_MAX_PBUFFER_WIDTH_ARB		0x202F
+#define WGL_MAX_PBUFFER_HEIGHT_ARB	        0x2030
+#define WGL_PBUFFER_LARGEST_ARB                 0x2033
+
+#define WGL_TYPE_RGBA_ARB			0x202B
+#define WGL_TYPE_COLORINDEX_ARB			0x202C
+
+#define WGL_SAMPLE_BUFFERS_ARB		        0x2041
+#define WGL_SAMPLES_ARB	                        0x2042
 
 #if 0 /* not used yet */
 static unsigned ConvertAttribGLXtoWGL(const int* iWGLAttr, int* oGLXAttr) {
@@ -244,35 +279,99 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr) {
   int pop;
 
   while (0 != iWGLAttr[cur]) {
+    TRACE("pAttr[%d] = %x\n", cur, iWGLAttr[cur]);
+
     switch (iWGLAttr[cur]) {
     case WGL_COLOR_BITS_ARB:
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_BUFFER_SIZE, pop);
+      TRACE("pAttr[%d] = WGL_COLOR_BITS_ARB: %d\n", cur, pop);
+      break;
+    case WGL_BLUE_BITS_ARB:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_BLUE_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_BLUE_SIZE: %d\n", cur, pop);
+      break;
+    case WGL_RED_BITS_ARB:
+      pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = GLX_RED_SIZE: %d\n", cur, pop);
+      PUSH2(oGLXAttr, GLX_RED_SIZE, pop);
+      break;
+    case WGL_GREEN_BITS_ARB:
+      pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = GLX_GREEN_SIZE: %d\n", cur, pop);
+      PUSH2(oGLXAttr, GLX_GREEN_SIZE, pop);
       break;
     case WGL_ALPHA_BITS_ARB:
       pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = GLX_ALPHA_SIZE: %d\n", cur, pop);
       PUSH2(oGLXAttr, GLX_ALPHA_SIZE, pop);
       break;
     case WGL_DEPTH_BITS_ARB:
       pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = GLX_DEPTH_SIZE: %d\n", cur, pop);
       PUSH2(oGLXAttr, GLX_DEPTH_SIZE, pop);
       break;
     case WGL_STENCIL_BITS_ARB:
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_STENCIL_SIZE, pop);
+      TRACE("pAttr[%d] = GLX_STENCIL_SIZE: %d\n", cur, pop);
       break;
     case WGL_DOUBLE_BUFFER_ARB:
       pop = iWGLAttr[++cur];
       PUSH2(oGLXAttr, GLX_DOUBLEBUFFER, pop);
+      TRACE("pAttr[%d] = GLX_DOUBLEBUFFER: %d\n", cur, pop);
       break;
+
+    case WGL_PIXEL_TYPE_ARB:
+      pop = iWGLAttr[++cur];
+      switch (pop) {
+      case WGL_TYPE_RGBA_ARB:  pop = GLX_RGBA_BIT; break ; 
+      case WGL_TYPE_COLORINDEX_ARB: pop = GLX_COLOR_INDEX_BIT; break ;
+      default:
+	ERR("unexpected PixelType(%x)\n", pop);	
+	pop = 0;
+      }
+      PUSH2(oGLXAttr, GLX_RENDER_TYPE, pop);
+      TRACE("pAttr[%d] = GLX_RENDER_TYPE: %d\n", cur, pop);
+      break;
+
+    case WGL_SUPPORT_GDI_ARB:
     case WGL_DRAW_TO_WINDOW_ARB:
-    case WGL_SUPPORT_OPENGL_ARB:
+    case WGL_DRAW_TO_BITMAP_ARB:
+    case WGL_DRAW_TO_PBUFFER_ARB:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
+      TRACE("pAttr[%d] = GLX_RENDERABLE: %d\n", cur, pop);
+      break;
+
     case WGL_ACCELERATION_ARB:
-    /*
+    case WGL_SUPPORT_OPENGL_ARB:
+      pop = iWGLAttr[++cur];
+      /** nothing to do, if we are here, supposing support Accelerated OpenGL */
+      TRACE("pAttr[%d] = WGL_SUPPORT_OPENGL_ARB: %d\n", cur, pop);
+      break;
+
+    case WGL_PBUFFER_LARGEST_ARB:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_LARGEST_PBUFFER, pop);
+      TRACE("pAttr[%d] = GLX_LARGEST_PBUFFER: %x\n", cur, pop);
+      break;
+
     case WGL_SAMPLE_BUFFERS_ARB:
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_SAMPLE_BUFFERS_ARB, pop);
+      TRACE("pAttr[%d] = GLX_SAMPLE_BUFFERS_ARB: %x\n", cur, pop);
+      break;
+      
     case WGL_SAMPLES_ARB:
-    */
+      pop = iWGLAttr[++cur];
+      PUSH2(oGLXAttr, GLX_SAMPLES_ARB, pop);
+      TRACE("pAttr[%d] = GLX_SAMPLES_ARB: %x\n", cur, pop);
+      break;
+
     default:
+      FIXME("unsupported %x WGL Attribute\n", iWGLAttr[cur]);
       break;
     }
     ++cur;
@@ -282,24 +381,185 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr) {
 
 GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues)
 {
-    TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues);
-    return GL_TRUE;
+  Display* display = get_display( hdc );
+  UINT i;
+  GLXFBConfig* cfgs = NULL;
+  GLXFBConfig  curCfg = NULL;
+  int nCfgs = 0;
+  int hTest;
+  int tmp;
+  int curGLXAttr = 0;
+
+  TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues);
+  
+  if (0 < iLayerPlane) {
+    FIXME("unsupported iLayerPlane(%d) > 0, returns FALSE\n", iLayerPlane);
+    return GL_FALSE;
+  }
+
+  cfgs = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
+  if (NULL == cfgs) {
+    ERR("no FB Configs found for display(%p)\n", display);
+    return GL_FALSE;
+  }
+
+  for (i = 0; i < nAttributes; ++i) {
+    const int curWGLAttr = piAttributes[i];
+    TRACE("pAttr[%d] = %x\n", i, curWGLAttr);
+    
+    switch (curWGLAttr) {
+    case WGL_NUMBER_PIXEL_FORMATS_ARB:
+      piValues[i] = nCfgs; 
+      continue ;
+
+    case WGL_SUPPORT_OPENGL_ARB:
+      piValues[i] = GL_TRUE; 
+      continue ;
+
+    case WGL_ACCELERATION_ARB:
+      curGLXAttr = GLX_CONFIG_CAVEAT;
+      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
+      curCfg = cfgs[iPixelFormat - 1];
+      hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
+      if (hTest) goto get_error;
+      switch (tmp) {
+      case GLX_NONE: piValues[i] = GL_TRUE; break;
+      case GLX_SLOW_CONFIG: piValues[i] = GL_FALSE; break;
+      case GLX_NON_CONFORMANT_CONFIG: piValues[i] = GL_TRUE; break; /** really GL_TRUE ? */
+      default:
+	ERR("unexpected Config Caveat(%x)\n", tmp);
+	piValues[i] = GL_FALSE;
+      }
+      continue ;
+
+    case WGL_TRANSPARENT_ARB:
+      curGLXAttr = GLX_TRANSPARENT_TYPE;
+      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
+      curCfg = cfgs[iPixelFormat - 1];
+      hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
+      if (hTest) goto get_error;
+      piValues[i] = GL_FALSE;
+      if (GLX_NONE != tmp) piValues[i] = GL_TRUE;
+      continue ;
+
+    case WGL_PIXEL_TYPE_ARB:
+      curGLXAttr = GLX_RENDER_TYPE;
+      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
+      curCfg = cfgs[iPixelFormat - 1];
+      hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
+      if (hTest) goto get_error;
+      switch (tmp) {
+      case GLX_RGBA_BIT: piValues[i] = WGL_TYPE_RGBA_ARB; break;
+      case GLX_COLOR_INDEX_BIT: piValues[i] = WGL_TYPE_COLORINDEX_ARB; break ;
+      default:
+	ERR("unexpected RenderType(%x)\n", tmp);
+	piValues[i] = WGL_TYPE_RGBA_ARB;
+      }
+      continue ;
+      
+    case WGL_COLOR_BITS_ARB:
+      curGLXAttr = GLX_BUFFER_SIZE;
+      break;
+    case WGL_BLUE_BITS_ARB:
+      curGLXAttr = GLX_BLUE_SIZE;
+      break;
+    case WGL_RED_BITS_ARB:
+      curGLXAttr = GLX_RED_SIZE;
+      break;
+    case WGL_GREEN_BITS_ARB:
+      curGLXAttr = GLX_GREEN_SIZE;
+      break;
+    case WGL_ALPHA_BITS_ARB:
+      curGLXAttr = GLX_ALPHA_SIZE;
+      break;
+    case WGL_DEPTH_BITS_ARB:
+      curGLXAttr = GLX_DEPTH_SIZE;
+      break;
+    case WGL_STENCIL_BITS_ARB:
+      curGLXAttr = GLX_STENCIL_SIZE;
+      break;
+    case WGL_DOUBLE_BUFFER_ARB:
+      curGLXAttr = GLX_DOUBLEBUFFER;
+      break;
+    case WGL_STEREO_ARB:
+      curGLXAttr = GLX_STEREO;
+      break;
+    case WGL_AUX_BUFFERS_ARB:
+      curGLXAttr = GLX_AUX_BUFFERS;
+      break;
+
+    case WGL_SUPPORT_GDI_ARB:
+    case WGL_DRAW_TO_WINDOW_ARB:
+    case WGL_DRAW_TO_BITMAP_ARB:
+    case WGL_DRAW_TO_PBUFFER_ARB:
+      curGLXAttr = GLX_X_RENDERABLE;
+      break;
+
+    case WGL_PBUFFER_LARGEST_ARB:
+      curGLXAttr = GLX_LARGEST_PBUFFER;
+      break;
+
+    case WGL_SAMPLE_BUFFERS_ARB:
+      curGLXAttr = GLX_SAMPLE_BUFFERS_ARB;
+      break;
+      
+    case WGL_SAMPLES_ARB:
+      curGLXAttr = GLX_SAMPLES_ARB;
+      break;
+
+    default:
+      FIXME("unsupported %x WGL Attribute\n", curWGLAttr);
+    }
+    
+    if (0 != curGLXAttr) {
+      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
+      curCfg = cfgs[iPixelFormat - 1];
+      hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, piValues + i);
+      if (hTest) goto get_error;
+    } else { 
+      piValues[i] = GL_FALSE; 
+    }
+  }
+  
+  return GL_TRUE;
+
+get_error:
+  ERR("(%p): unexpected failure on GetFBConfigAttrib(%x) returns FALSE\n", hdc, curGLXAttr);
+  XFree(cfgs);
+  return GL_FALSE;
+
+pix_error:
+  ERR("(%p): unexpected iPixelFormat(%d) vs nFormats(%d), returns FALSE\n", hdc, iPixelFormat, nCfgs);
+  XFree(cfgs);
+  return GL_FALSE;
 }
 
 GLboolean WINAPI wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
 {
-    TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
-    return GL_TRUE;
+    FIXME("(%p, %d, %d, %d, %p, %p): stub\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
+    return GL_FALSE;
 }
-
+/**
+ * http://publib.boulder.ibm.com/infocenter/pseries/index.jsp?topic=/com.ibm.aix.doc/libs/openglrf/glXChooseFBConfig.htm
+ */
 GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)
 {
   Display* display = get_display( hdc );
+  int gl_test = 0;
+  int attribs[256];
+  unsigned nAttribs = 0;
+
   GLXFBConfig* cfgs = NULL;
   int nCfgs = 0;
-  int attribs[256];
-  unsigned nAttribs;
   UINT it;
+  int fmt_id;
+
+  GLXFBConfig* cfgs_fmt = NULL;
+  int nCfgs_fmt = 0;
+  UINT it_fmt;
+  int tmp_fmt_id;
+
+  int pfmt_it = 0;
 
   TRACE("(%p, %p, %p, %d, %p, %p): hackish\n", hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
   if (NULL != pfAttribFList) {
@@ -310,10 +570,47 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
   PUSH1(attribs, None);
 
   cfgs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &nCfgs);
-  for (it = 0; it < nMaxFormats && it < nCfgs; ++it) {
-    piFormats[it] = it;
+  if (NULL == cfgs) {
+    WARN("Compatible Pixel Format not found\n");
+    return GL_FALSE;
   }
-  *nNumFormats = it;
+
+  cfgs_fmt = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs_fmt);
+  if (NULL == cfgs_fmt) {
+    ERR("Failed to get All FB Configs\n");
+    XFree(cfgs);
+    return GL_FALSE;
+  }
+
+  for (it = 0; it < nMaxFormats && it < nCfgs; ++it) {
+    gl_test = glXGetFBConfigAttrib(display, cfgs[it], GLX_FBCONFIG_ID, &fmt_id);
+    if (gl_test) {
+      ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+      continue ;
+    }
+    for (it_fmt = 0; it_fmt < nCfgs_fmt; ++it_fmt) {
+      gl_test = glXGetFBConfigAttrib(display, cfgs_fmt[it_fmt], GLX_FBCONFIG_ID, &tmp_fmt_id);
+      if (gl_test) {
+	ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+	continue ;
+      }
+      if (fmt_id == tmp_fmt_id) {
+	piFormats[pfmt_it] = it_fmt + 1;
+	++pfmt_it;
+	break ;
+      }
+    }
+    if (it_fmt == nCfgs_fmt) {
+      ERR("Failed to get valid fmt for %d. Try next.\n", it);
+      continue ;
+    }
+    TRACE("at %d/%d found FBCONFIG_ID(%d/%d)\n", it + 1, nCfgs, piFormats[it], nCfgs_fmt);
+  }
+  
+  *nNumFormats = pfmt_it;
+  /** free list */
+  XFree(cfgs);
+  XFree(cfgs_fmt);
   return GL_TRUE;
 }
 
@@ -325,9 +622,34 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
   GLXFBConfig* cfgs = NULL;
   int nCfgs = 0;
   int attribs[256];
-  unsigned nAttribs;
+  unsigned nAttribs = 0;
 
   TRACE("(%p, %d, %d, %d, %p)\n", hdc, iPixelFormat, iWidth, iHeight, piAttribList);
+
+  if (0 >= iPixelFormat) {
+    ERR("(%p): unexpected iPixelFormat(%d) <= 0, returns NULL\n", hdc, iPixelFormat);
+    return NULL; /* unespected error */
+  }
+
+  /*nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs);*/
+  /*
+  nAttribs = 0;
+  PUSH2(attribs, GLX_FBCONFIG_ID, iPixelFormat);
+  PUSH1(attribs, None);
+  cfgs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &nCfgs);
+  iPixelFormat = 0;
+  */
+  cfgs = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
+
+  if (NULL == cfgs || 0 == nCfgs) {
+    ERR("(%p): Cannot get FB Configs for iPixelFormat(%d), returns NULL\n", hdc, iPixelFormat);
+    return NULL; /* unespected error */
+  }
+  if (nCfgs < iPixelFormat) {
+    ERR("(%p): unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, iPixelFormat, nCfgs);
+    XFree(cfgs);
+    return NULL; /* unespected error */
+  }
 
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLPBuffer));
   object->hdc = hdc;
@@ -337,20 +659,18 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
   object->pixelFormat = iPixelFormat;
 
   nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs);
-  PUSH1(attribs, None);
-
-  cfgs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &nCfgs);
-  if (nCfgs < iPixelFormat) return NULL; /* unespected error */
-
-  --nAttribs; /** append more to attribs now we have fbConfig */
   PUSH2(attribs, GLX_PBUFFER_WIDTH,  iWidth);
-  PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight);
+  PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight); 
   PUSH1(attribs, None);
 
-  object->drawable = glXCreatePbuffer(display, cfgs[iPixelFormat], attribs);
+  object->drawable = glXCreatePbuffer(display, cfgs[iPixelFormat - 1], attribs);
   TRACE("drawable as %p\n", (void*) object->drawable);
 
   TRACE("->(%p)\n", object);
+
+  /** free list */
+  XFree(cfgs);
+
   return (HPBUFFERARB) object;
 }
 
@@ -397,7 +717,12 @@ GLboolean WINAPI wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *p
     glXQueryDrawable(object->display, object->drawable, GLX_HEIGHT, piValue);
     break;
 
+  case WGL_PBUFFER_LOST_ARB:
+    FIXME("unsupported WGL_PBUFFER_LOST_ARB (need glXSelectEvent/GLX_DAMAGED work)\n");
+    break;
+
   default:
+    FIXME("unexpected attribute %x\n", iAttribute);
     break;
   }
 
@@ -431,14 +756,16 @@ static const struct {
 			   const char *glx_version, const char *glx_extensions,
 			   const char *server_glx_extensions, const char *client_glx_extensions);
 } extension_list[] = {
-  { "WGL_ARB_multisample", query_function_multisample },
-  { "WGL_ARB_pbuffer", query_function_pbuffer },
-  { "WGL_ARB_pixel_format" , query_function_pixel_format },
-  { "WGL_ARB_render_texture", query_function_render_texture }
+  { "WGL_ARB_make_current_read", query_function_make_current_read },
+  { "WGL_ARB_multisample",       query_function_multisample },
+  { "WGL_ARB_pbuffer",           query_function_pbuffer },
+  { "WGL_ARB_pixel_format" ,     query_function_pixel_format },
+  { "WGL_ARB_render_texture",    query_function_render_texture },
+  { "WGL_EXT_swap_control",      query_function_swap_control }
 };
 
 /* Used to initialize the WGL extension string at DLL loading */
-void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc)
+void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddressARB_t proc, const char* disabled_extensions)
 {
     int size = strlen(WGL_extensions_base);
     const char *glx_extensions = glXQueryExtensionsString(display, screen);
@@ -456,7 +783,9 @@ void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddre
     TRACE("Client GLX exts : %s.\n", debugstr_a(client_glx_extensions));
 
     for (i = 0; i < (sizeof(extension_list) / sizeof(extension_list[0])); i++) {
-	if (extension_list[i].query_function(proc, gl_version, gl_extensions, 
+        if (strstr(disabled_extensions, extension_list[i].name)) continue ; /* disabled by config, next */
+	if (extension_list[i].query_function(proc, 
+					     gl_version, gl_extensions, 
 					     glx_version, glx_extensions,
 					     server_glx_extensions, client_glx_extensions)) {
 	    size += strlen(extension_list[i].name) + 1;
@@ -470,7 +799,9 @@ void wgl_ext_initialize_extensions(Display *display, int screen, glXGetProcAddre
     } else {
 	strcpy(WGL_extensions, WGL_extensions_base);
 	for (i = 0; i < (sizeof(extension_list) / sizeof(extension_list[0])); i++) {
-	    if (extension_list[i].query_function(proc, gl_version, gl_extensions, 
+	    if (strstr(disabled_extensions, extension_list[i].name)) continue ; /* disabled by config, next */
+	    if (extension_list[i].query_function(proc, 
+						 gl_version, gl_extensions, 
 						 glx_version, glx_extensions,
 						 server_glx_extensions, client_glx_extensions)) {
 		strcat(WGL_extensions, " ");
@@ -493,18 +824,22 @@ void wgl_ext_finalize_extensions(void)
  * Putting this at the end to prevent having to write the prototypes :-) 
  *
  * @WARNING: this list must be ordered by name
+ *
+ * @TODO: real handle caps on providing some func_init functions (third param, ex: to check extentions)
  */
 WGL_extension wgl_extension_registry[] = {
     { "wglBindTexImageARB", (void *) wglBindTexImageARB, NULL, NULL},
     { "wglChoosePixelFormatARB", (void *) wglChoosePixelFormatARB, NULL, NULL},
     { "wglCreatePbufferARB", (void *) wglCreatePbufferARB, NULL, NULL},
     { "wglDestroyPbufferARB", (void *) wglDestroyPbufferARB, NULL, NULL},
+    { "wglGetCurrentReadDCARB", (void *) wglGetCurrentReadDCARB, NULL, NULL},
     { "wglGetExtensionsStringARB", (void *) wglGetExtensionsStringARB, NULL, NULL},
     { "wglGetExtensionsStringEXT", (void *) wglGetExtensionsStringEXT, NULL, NULL},
     { "wglGetPbufferDCARB", (void *) wglGetPbufferDCARB, NULL, NULL},
     { "wglGetPixelFormatAttribfvARB", (void *) wglGetPixelFormatAttribfvARB, NULL, NULL},
     { "wglGetPixelFormatAttribivARB", (void *) wglGetPixelFormatAttribivARB, NULL, NULL},
     { "wglGetSwapIntervalEXT", (void *) wglGetSwapIntervalEXT, NULL, NULL},
+    { "wglMakeContextCurrentARB", (void *) wglMakeContextCurrentARB, NULL, NULL },
     { "wglQueryPbufferARB", (void *) wglQueryPbufferARB, NULL, NULL},
     { "wglReleasePbufferDCARB", (void *) wglReleasePbufferDCARB, NULL, NULL},
     { "wglReleaseTexImageARB", (void *) wglReleaseTexImageARB, NULL, NULL},

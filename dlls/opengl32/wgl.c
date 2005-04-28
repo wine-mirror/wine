@@ -1,6 +1,7 @@
 /* Window-specific OpenGL functions implementation.
  *
  * Copyright (c) 1999 Lionel Ulmer
+ * Copyright (c) 2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,6 +29,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winreg.h"
 
 #include "wgl.h"
 #include "wgl_ext.h"
@@ -55,6 +57,9 @@ static Display *default_display;  /* display to use for default context */
 static HMODULE opengl32_handle;
 
 static glXGetProcAddressARB_t p_glXGetProcAddressARB = NULL;
+
+static char  internal_gl_disabled_extensions[512];
+static char* internal_gl_extensions = NULL;
 
 typedef struct wine_glcontext {
   HDC hdc;
@@ -125,6 +130,17 @@ inline static Drawable get_drawable( HDC hdc )
     return drawable;
 }
 
+/** for use of wglGetCurrentReadDCARB */
+inline static HDC get_hdc_from_Drawable(GLXDrawable d)
+{
+  Wine_GLContext *ret;
+  for (ret = context_list; ret; ret = ret->next) {  
+    if (d == get_drawable( ret->hdc )) {
+      return ret->hdc;
+    }
+  }
+  return NULL;
+}
 
 /* retrieve the X drawable to use on a given DC */
 inline static Font get_font( HDC hdc )
@@ -439,6 +455,55 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 }
 
 /***********************************************************************
+ *		wglMakeContextCurrentARB (OPENGL32.@)
+ */
+BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
+{
+  BOOL ret;
+  TRACE("(%p,%p,%p)\n", hDrawDC, hReadDC, hglrc);
+
+  ENTER_GL();
+  if (hglrc == NULL) {
+      ret = glXMakeCurrent(default_display, None, NULL);
+  } else {
+    Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
+    Drawable d_draw = get_drawable( hDrawDC );
+    Drawable d_read = get_drawable( hReadDC );
+
+    if (ctx->ctx == NULL) {
+      ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
+      TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+    }
+    ret = glXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
+  }
+  LEAVE_GL();
+  
+  TRACE(" returning %s\n", (ret ? "True" : "False"));
+  return ret;
+}
+
+/***********************************************************************
+ *		wglGetCurrentReadDCARB (OPENGL32.@)
+ */
+HDC WINAPI wglGetCurrentReadDCARB(void) 
+{
+  GLXDrawable gl_d;
+  HDC ret;
+
+  TRACE("()\n");
+
+  ENTER_GL();
+  gl_d = glXGetCurrentReadDrawable();
+  ret = get_hdc_from_Drawable(gl_d);
+  LEAVE_GL();
+
+  TRACE(" returning %p (GL drawable %lu)\n", ret, gl_d);
+  return ret;
+}
+
+
+
+/***********************************************************************
  *		wglRealizeLayerPalette (OPENGL32.@)
  */
 BOOL WINAPI wglRealizeLayerPalette(HDC hdc,
@@ -688,6 +753,52 @@ BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
   return FALSE;
 }
 
+const GLubyte * internal_glGetString(GLenum name) {
+  const char* GL_Extensions = NULL;
+  
+  if (GL_EXTENSIONS != name) {
+    return glGetString(name);
+  }
+
+  if (NULL == internal_gl_extensions) {
+    GL_Extensions = glGetString(GL_EXTENSIONS);
+
+    TRACE("GL_EXTENSIONS reported:\n");  
+    if (NULL == GL_Extensions) {
+      ERR("GL_EXTENSIONS returns NULL\n");      
+      return NULL;
+    } else {
+      size_t len = strlen(GL_Extensions);
+      internal_gl_extensions = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+
+      while (*GL_Extensions != 0x00) {
+	const char* Start = GL_Extensions;
+	char        ThisExtn[256];
+	 
+	memset(ThisExtn, 0x00, sizeof(ThisExtn));
+	while (*GL_Extensions != ' ' && *GL_Extensions != 0x00) {
+	  GL_Extensions++;
+	}
+	memcpy(ThisExtn, Start, (GL_Extensions - Start));
+	TRACE("- %s:", ThisExtn);
+	
+	/* test if supported API is disabled by config */
+	if (NULL == strstr(internal_gl_disabled_extensions, ThisExtn)) {
+	  strcat(internal_gl_extensions, " ");
+	  strcat(internal_gl_extensions, ThisExtn);	  
+	  TRACE(" active\n");
+	} else {
+	  TRACE(" deactived (by config)\n");
+	}
+
+	if (*GL_Extensions == ' ') GL_Extensions++;
+      }
+    }
+  }
+  return internal_gl_extensions;
+}
+
+
 /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient and
    include all dependencies
 */
@@ -708,6 +819,8 @@ static BOOL process_attach(void)
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
   HMODULE mod = GetModuleHandleA( "x11drv.dll" );
   void *opengl_handle;
+  DWORD size = sizeof(internal_gl_disabled_extensions);
+  HKEY hkey = 0;
 
   if (!root || !mod)
   {
@@ -760,8 +873,16 @@ static BOOL process_attach(void)
 	   TRACE("could not find glXGetProcAddressARB in libGL.\n");
   }
 
+  internal_gl_disabled_extensions[0] = 0;
+  if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\OpenGL", &hkey)) {
+    if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, internal_gl_disabled_extensions, &size)) {
+      TRACE("found DisabledExtensions=\"%s\"\n", internal_gl_disabled_extensions);
+    }
+    RegCloseKey(hkey);
+  }
+
   /* Initialize also the list of supported WGL extensions. */
-  wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB);
+  wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB, internal_gl_disabled_extensions);
   
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
@@ -778,6 +899,9 @@ static void process_detach(void)
 
   /* Do not leak memory... */
   wgl_ext_finalize_extensions();
+  if (NULL != internal_gl_extensions) {
+    HeapFree(GetProcessHeap(), 0, internal_gl_extensions);
+  }
 }
 
 /***********************************************************************
