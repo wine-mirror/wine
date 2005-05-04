@@ -3367,6 +3367,48 @@ static BOOL pane_command(Pane* pane, UINT cmd)
 }
 
 
+static IContextMenu2* s_pctxmenu2 = NULL;
+static IContextMenu3* s_pctxmenu3 = NULL;
+
+static void CtxMenu_reset()
+{
+	s_pctxmenu2 = NULL;
+	s_pctxmenu3 = NULL;
+}
+
+IContextMenu* CtxMenu_query_interfaces(IContextMenu* pcm1)
+{
+	IContextMenu* pcm = NULL;
+
+	CtxMenu_reset();
+
+	if ((*pcm1->lpVtbl->QueryInterface)(pcm1, &IID_IContextMenu3, (void**)&pcm) == NOERROR)
+		s_pctxmenu3 = (LPCONTEXTMENU3)pcm;
+	else if ((*pcm1->lpVtbl->QueryInterface)(pcm1, &IID_IContextMenu2, (void**)&pcm) == NOERROR)
+		s_pctxmenu2 = (LPCONTEXTMENU2)pcm;
+
+	if (pcm) {
+		(*pcm1->lpVtbl->Release)(pcm1);
+		return pcm;
+	} else
+		return pcm1;
+}
+
+static BOOL CtxMenu_HandleMenuMsg(UINT nmsg, WPARAM wparam, LPARAM lparam)
+{
+	if (s_pctxmenu3) {
+		if (SUCCEEDED((*s_pctxmenu3->lpVtbl->HandleMenuMsg)(s_pctxmenu3, nmsg, wparam, lparam)))
+			return TRUE;
+	}
+
+	if (s_pctxmenu2)
+		if (SUCCEEDED((*s_pctxmenu2->lpVtbl->HandleMenuMsg)(s_pctxmenu2, nmsg, wparam, lparam)))
+			return TRUE;
+
+	return FALSE;
+}
+
+
 static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParent, int cidl, LPCITEMIDLIST* apidl, int x, int y)
 {
 	IContextMenu* pcm;
@@ -3377,11 +3419,15 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 	if (SUCCEEDED(hr)) {
 		HMENU hmenu = CreatePopupMenu();
 
+		pcm = CtxMenu_query_interfaces(pcm);
+
 		if (hmenu) {
 			hr = (*pcm->lpVtbl->QueryContextMenu)(pcm, hmenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, CMF_NORMAL);
 
 			if (SUCCEEDED(hr)) {
 				UINT idCmd = TrackPopupMenu(hmenu, TPM_LEFTALIGN|TPM_RETURNCMD|TPM_RIGHTBUTTON, x, y, 0, hwndParent, NULL);
+
+				CtxMenu_reset();
 
 				if (idCmd) {
 				  CMINVOKECOMMANDINFO cmi;
@@ -3422,8 +3468,10 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 			if (dis->CtlID == IDW_TREE_LEFT)
 				draw_item(&child->left, dis, entry, -1);
-			else
+			else if (dis->CtlID == IDW_TREE_RIGHT)
 				draw_item(&child->right, dis, entry, -1);
+			else
+				goto draw_menu_item;
 
 			return TRUE;}
 
@@ -3702,6 +3750,31 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 			}
 			break;}
 #endif
+
+		  case WM_MEASUREITEM:
+		  draw_menu_item:
+			if (!wparam)	/* Is the message menu-related? */
+				if (CtxMenu_HandleMenuMsg(nmsg, wparam, lparam))
+					return TRUE;
+
+			break;
+
+		  case WM_INITMENUPOPUP:
+			if (CtxMenu_HandleMenuMsg(nmsg, wparam, lparam))
+				return 0;
+
+			break;
+
+		  case WM_MENUCHAR:	/* only supported by IContextMenu3 */
+		   if (s_pctxmenu3) {
+			   LRESULT lResult = 0;
+
+			   (*s_pctxmenu3->lpVtbl->HandleMenuMsg2)(s_pctxmenu3, nmsg, wparam, lparam, &lResult);
+
+			   return lResult;
+		   }
+
+		   break;
 
 		case WM_SIZE:
 			if (wparam != SIZE_MINIMIZED)
