@@ -256,6 +256,16 @@ static void on_selection_change(HWND dialog, HWND listview)
   set_window_title(dialog);
 }
 
+static BOOL list_contains_file(HWND listview, char *filename)
+{
+  LVFINDINFO find_info = { LVFI_STRING, filename, 0, {0, 0}, 0 };
+  int index;
+
+  index = ListView_FindItem(listview, -1, &find_info);
+
+  return (index != -1);
+}
+
 static void on_add_app_click(HWND dialog)
 {
   char filetitle[MAX_PATH];
@@ -280,6 +290,10 @@ static void on_add_app_click(HWND dialog)
       char* new_app;
       
       new_app = strdupA(filetitle);
+
+      if (list_contains_file(listview, new_app))
+          return;
+      
       WINE_TRACE("adding %s\n", new_app);
       
       add_listview_item(listview, new_app, new_app);
