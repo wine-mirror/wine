@@ -18,10 +18,10 @@
 
 #define WINE_FILENAME_STR "kernel32.dll"
 
-/* these values come from Windows 2000 SP4 */
-#define WINE_FILEVERSION 5,0,2195,6688
-#define WINE_FILEVERSION_STR "5.00.2195.6688"
-#define WINE_PRODUCTVERSION 5,0,2195,6688
-#define WINE_PRODUCTVERSION_STR "5.00.2195.6688"
+/* these values come from Windows XP SP2 */
+#define WINE_FILEVERSION 5,1,2600,2180
+#define WINE_FILEVERSION_STR "5.01.2600.2180"
+#define WINE_PRODUCTVERSION 5,1,2600,2180
+#define WINE_PRODUCTVERSION_STR "5.01.2600.2180"
 
 #include "wine/wine_common_ver.rc"
