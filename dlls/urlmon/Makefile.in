@@ -10,6 +10,7 @@ C_SRCS = \
 	regsvr.c \
 	sec_mgr.c \
 	umon.c \
+	umstream.c \
 	urlmon_main.c
 
 SUBDIRS = tests

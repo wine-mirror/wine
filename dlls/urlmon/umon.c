@@ -61,6 +61,10 @@ typedef struct URLMonikerImpl{
     HWND hwndCallback;
     IBindCtx *pBC;
     HINTERNET hinternet, hconnect, hrequest;
+    HANDLE hCacheFile;
+    IUMCacheStream *pstrCache;
+    IBindStatusCallback *pbscb;
+    DWORD total_read, expected_size;
 } URLMonikerImpl;
 
 /*******************************************************************************
@@ -126,11 +130,119 @@ static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
     if (!refCount) {
         HeapFree(GetProcessHeap(),0,This->URLName);
         HeapFree(GetProcessHeap(),0,This);
+	if (This->hCacheFile)
+	    CloseHandle(This->hCacheFile);
+	if (This->pstrCache)
+	{
+	    UMCloseCacheFileStream(This->pstrCache);
+	    IStream_Release((IStream *)This->pstrCache);
+	}
+	if (This->pbscb)
+		IBindStatusCallback_Release(This->pbscb);
     }
 
     URLMON_UnlockModule();
 
     return refCount;
+}
+
+static void URLMonikerImpl_CloseCacheDownload(URLMonikerImpl *This)
+{
+    CloseHandle(This->hCacheFile);
+    This->hCacheFile = 0;
+    UMCloseCacheFileStream(This->pstrCache);
+    IStream_Release((IStream *)This->pstrCache);
+    This->pstrCache = 0;
+}
+
+static HRESULT URLMonikerImpl_MoreCacheData(URLMonikerImpl *This, char *buf, DWORD dwBytes)
+{
+    DWORD written;
+
+    if (WriteFile(This->hCacheFile, buf, dwBytes, &written, NULL) && written == dwBytes)
+    {
+	HRESULT hr;
+
+	This->total_read += written;
+        hr = IBindStatusCallback_OnProgress(This->pbscb,
+					    This->total_read + written,
+					    This->expected_size,
+					    (This->total_read == written) ?
+					        BINDSTATUS_BEGINDOWNLOADDATA :
+					        BINDSTATUS_DOWNLOADINGDATA,
+					    NULL);
+	if (!hr)
+	{
+	    STGMEDIUM stg;
+	    FORMATETC fmt;
+
+            fmt.cfFormat = 0;
+            fmt.ptd = NULL;
+            fmt.dwAspect = 0;
+            fmt.lindex = -1;
+            fmt.tymed = TYMED_ISTREAM;
+
+	    stg.tymed = TYMED_ISTREAM;
+	    stg.u.pstm = (IStream *)This->pstrCache;
+	    stg.pUnkForRelease = NULL;
+
+            hr = IBindStatusCallback_OnDataAvailable(This->pbscb,
+			    			     (This->total_read == written) ?
+							 BSCF_FIRSTDATANOTIFICATION :
+						         BSCF_INTERMEDIATEDATANOTIFICATION,
+						     This->total_read + written,
+                                                     &fmt,
+						     &stg);
+	}
+	if (written < dwBytes)
+	    return STG_E_MEDIUMFULL;
+	else
+	    return hr;
+    }
+    return HRESULT_FROM_WIN32(GetLastError());
+}
+
+static void URLMonikerImpl_FinishedDownload(URLMonikerImpl *This, HRESULT hr)
+{
+    STGMEDIUM stg;
+    FORMATETC fmt;
+
+    fmt.ptd = NULL;
+    fmt.dwAspect = 0;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_ISTREAM;
+
+    stg.tymed = TYMED_ISTREAM;
+    stg.u.pstm = (IStream *)This->pstrCache;
+    stg.pUnkForRelease = NULL;
+
+    IBindStatusCallback_OnProgress(This->pbscb, This->total_read, This->expected_size, BINDSTATUS_ENDDOWNLOADDATA, NULL);
+    IBindStatusCallback_OnDataAvailable(This->pbscb, BSCF_LASTDATANOTIFICATION, This->total_read, &fmt, &stg);
+    if (hr)
+    {
+	WCHAR *pwchError = 0;
+
+        FormatMessageW (FORMAT_MESSAGE_FROM_SYSTEM |
+	                 FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                        NULL, (DWORD) hr,
+		        0, (LPWSTR) &pwchError,
+		        0, NULL);
+	if (!pwchError)
+	{
+	    static WCHAR achFormat[] = { '%', '0', '8', 'x', 0 };
+
+	    pwchError =(WCHAR *) LocalAlloc(LMEM_FIXED, sizeof(WCHAR) * 9);
+	    wsprintfW(pwchError, achFormat, hr);
+	}
+        IBindStatusCallback_OnStopBinding(This->pbscb, hr, pwchError);
+	LocalFree(pwchError);
+    }
+    else
+    {
+        IBindStatusCallback_OnStopBinding(This->pbscb, hr, NULL);
+    }
+    IBindStatusCallback_Release(This->pbscb);
+    This->pbscb = 0;
 }
 
 /******************************************************************************
@@ -310,6 +422,8 @@ static void CALLBACK URLMON_InternetCallback(HINTERNET hinet, /*DWORD_PTR*/ DWOR
     return;
 }
 #endif
+
+
 /******************************************************************************
  *        URLMoniker_BindToStorage
  ******************************************************************************/
@@ -321,12 +435,10 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 {
     URLMonikerImpl *This = (URLMonikerImpl *)iface;
     HRESULT hres;
-    IBindStatusCallback *pbscb;
     BINDINFO bi;
     DWORD bindf;
-    IStream *pstr;
+    WCHAR szFileName[MAX_PATH + 1];
 
-    FIXME("(%p)->(%p,%p,%s,%p): stub\n",This,pbc,pmkToLeft,debugstr_guid(riid),ppvObject);
     if(pmkToLeft) {
 	FIXME("pmkToLeft != NULL\n");
 	return E_NOTIMPL;
@@ -336,122 +448,277 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 	return E_NOTIMPL;
     }
 
-    /* FIXME This is a bad hack (tm).  We should clearly download to a temporary file.
-       We also need to implement IStream ourselves so that IStream_Read can return
-       E_PENDING */
-
-    hres = CreateStreamOnHGlobal(0, TRUE, &pstr);
+    hres = UMCreateStreamOnCacheFile(This->URLName, 0, szFileName, &This->hCacheFile, &This->pstrCache);
 
     if(SUCCEEDED(hres)) {
-        TRACE("Created dummy stream...\n");
+        TRACE("Created stream...\n");
 
-        hres = IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown**)&pbscb);
+        *ppvObject = (void *) This->pstrCache;
+        IStream_AddRef((IStream *) This->pstrCache);
+
+        hres = IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown**)&This->pbscb);
         if(SUCCEEDED(hres)) {
             TRACE("Got IBindStatusCallback...\n");
 
             memset(&bi, 0, sizeof(bi));
             bi.cbSize = sizeof(bi);
             bindf = 0;
-            hres = IBindStatusCallback_GetBindInfo(pbscb, &bindf, &bi);
+            hres = IBindStatusCallback_GetBindInfo(This->pbscb, &bindf, &bi);
             if(SUCCEEDED(hres)) {
+                WCHAR *urlcopy, *tmpwc;
                 URL_COMPONENTSW url;
-                WCHAR *host, *path;
-                DWORD len, lensz = sizeof(len), total_read = 0;
-                LARGE_INTEGER last_read_pos;
-                FORMATETC fmt;
-                STGMEDIUM stg;
+                WCHAR *host, *path, *user, *pass;
+                DWORD lensz = sizeof(This->expected_size);
+                DWORD dwService = 0;
+                BOOL bSuccess;
 
                 TRACE("got bindinfo. bindf = %08lx extrainfo = %s bindinfof = %08lx bindverb = %08lx iid %s\n",
                       bindf, debugstr_w(bi.szExtraInfo), bi.grfBindInfoF, bi.dwBindVerb, debugstr_guid(&bi.iid));
-                hres = IBindStatusCallback_OnStartBinding(pbscb, 0, (IBinding*)&This->lpvtbl2);
+                hres = IBindStatusCallback_OnStartBinding(This->pbscb, 0, (IBinding*)&This->lpvtbl2);
                 TRACE("OnStartBinding rets %08lx\n", hres);
 
-#if 0
-		if(!registered_wndclass) {
-                    WNDCLASSA urlmon_wndclass = {0, URLMON_WndProc,0, 0, URLMON_hInstance, 0, 0, 0, NULL, "URLMON_Callback_Window_Class"};
-		    RegisterClassA(&urlmon_wndclass);
-		    registered_wndclass = TRUE;
-		}
+                /* This class will accept URLs with the backslash in them. But InternetCrackURL will not - it
+                 * requires forward slashes (this is the behaviour of Microsoft's INETAPI). So we need to make
+                 * a copy of the URL here and change the backslash to a forward slash everywhere it appears -
+                 * but only before any '#' or '?', after which backslash should be left alone.
+                 */
+                urlcopy = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * (lstrlenW(This->URLName) + 1));
+                lstrcpyW(urlcopy, This->URLName);
+                for (tmpwc = urlcopy; *tmpwc && *tmpwc != '#' && *tmpwc != '?'; ++tmpwc)
+                    if (*tmpwc == '\\')
+                            *tmpwc = '/';
 
-		This->hwndCallback = CreateWindowA("URLMON_Callback_Window_Class", NULL, 0, 0, 0, 0, 0, 0, 0,
-						   URLMON_hInstance, NULL);
+#if 0
+                if(!registered_wndclass) {
+                    WNDCLASSA urlmon_wndclass = {0, URLMON_WndProc,0, 0, URLMON_hInstance, 0, 0, 0, NULL, "URLMON_Callback_Window_Class"};
+                    RegisterClassA(&urlmon_wndclass);
+                    registered_wndclass = TRUE;
+                }
+
+                This->hwndCallback = CreateWindowA("URLMON_Callback_Window_Class", NULL, 0, 0, 0, 0, 0, 0, 0,
+                                                   URLMON_hInstance, NULL);
 
 #endif
+                This->expected_size = 0;
+                This->total_read = 0;
+
                 memset(&url, 0, sizeof(url));
                 url.dwStructSize = sizeof(url);
-                url.dwSchemeLength = url.dwHostNameLength = url.dwUrlPathLength = 1;
-                InternetCrackUrlW(This->URLName, 0, 0, &url);
+                url.dwSchemeLength = url.dwHostNameLength = url.dwUrlPathLength = url.dwUserNameLength = url.dwPasswordLength = 1;
+                InternetCrackUrlW(urlcopy, 0, 0, &url);
                 host = HeapAlloc(GetProcessHeap(), 0, (url.dwHostNameLength + 1) * sizeof(WCHAR));
                 memcpy(host, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
                 host[url.dwHostNameLength] = '\0';
                 path = HeapAlloc(GetProcessHeap(), 0, (url.dwUrlPathLength + 1) * sizeof(WCHAR));
                 memcpy(path, url.lpszUrlPath, url.dwUrlPathLength * sizeof(WCHAR));
                 path[url.dwUrlPathLength] = '\0';
-
-                This->hinternet = InternetOpenA("User Agent", 0, NULL, NULL, 0 /*INTERNET_FLAG_ASYNC*/);
-/*              InternetSetStatusCallback(This->hinternet, URLMON_InternetCallback);*/
-
-                This->hconnect = InternetConnectW(This->hinternet, host, INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
-                                                  INTERNET_SERVICE_HTTP, 0, (DWORD)This);
-                This->hrequest = HttpOpenRequestW(This->hconnect, NULL, path, NULL, NULL, NULL, 0, (DWORD)This);
-
-                hres = IBindStatusCallback_OnProgress(pbscb, 0, 0, 0x22, NULL);
-                hres = IBindStatusCallback_OnProgress(pbscb, 0, 0, BINDSTATUS_FINDINGRESOURCE, NULL);
-                hres = IBindStatusCallback_OnProgress(pbscb, 0, 0, BINDSTATUS_CONNECTING, NULL);
-                hres = IBindStatusCallback_OnProgress(pbscb, 0, 0, BINDSTATUS_SENDINGREQUEST, NULL);
-                hres = E_OUTOFMEMORY; /* FIXME */
-                if(HttpSendRequestW(This->hrequest, NULL, 0, NULL, 0)) {
-                    len = 0;
-                    HttpQueryInfoW(This->hrequest, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, &len, &lensz, NULL);
-
-                    TRACE("res = %ld gle = %08lx url len = %ld\n", hres, GetLastError(), len);
-
-                    last_read_pos.u.LowPart = last_read_pos.u.HighPart = 0;
-                    fmt.cfFormat = 0;
-                    fmt.ptd = NULL;
-                    fmt.dwAspect = 0;
-                    fmt.lindex = -1;
-                    fmt.tymed = TYMED_ISTREAM;
-                    stg.tymed = TYMED_ISTREAM;
-                    stg.u.pstm = pstr;
-                    stg.pUnkForRelease = NULL;
-
-                    while(1) {
-                        char buf[4096];
-                        DWORD bufread;
-                        DWORD written;
-                        if(InternetReadFile(This->hrequest, buf, sizeof(buf), &bufread)) {
-                            TRACE("read %ld bytes %s...\n", bufread, debugstr_an(buf, 10));
-                            if(bufread == 0) break;
-                            IStream_Write(pstr, buf, bufread, &written);
-                            total_read += bufread;
-                            IStream_Seek(pstr, last_read_pos, STREAM_SEEK_SET, NULL);
-                            hres = IBindStatusCallback_OnProgress(pbscb, total_read, len, (total_read == bufread) ?
-                                                                  BINDSTATUS_BEGINDOWNLOADDATA :
-                                                                  BINDSTATUS_DOWNLOADINGDATA, NULL);
-                            hres = IBindStatusCallback_OnDataAvailable(pbscb,
-                                                                       (total_read == bufread) ? BSCF_FIRSTDATANOTIFICATION :
-                                                                       BSCF_INTERMEDIATEDATANOTIFICATION,
-                                                                       total_read, &fmt, &stg);
-                            last_read_pos.u.LowPart += bufread; /* FIXME */
-                        } else
-                            break;
-		    }
-                    hres = IBindStatusCallback_OnProgress(pbscb, total_read, len, BINDSTATUS_ENDDOWNLOADDATA, NULL);
-                    hres = IBindStatusCallback_OnDataAvailable(pbscb, BSCF_LASTDATANOTIFICATION, total_read, &fmt, &stg);
-                    TRACE("OnDataAvail rets %08lx\n", hres);
-                    hres = IBindStatusCallback_OnStopBinding(pbscb, S_OK, NULL);
-                    TRACE("OnStop rets %08lx\n", hres);
-                    hres = S_OK;
+                if (url.dwUserNameLength)
+                {
+                    user = HeapAlloc(GetProcessHeap(), 0, ((url.dwUserNameLength + 1) * sizeof(WCHAR)));
+                    memcpy(user, url.lpszUserName, url.dwUserNameLength * sizeof(WCHAR));
+                    user[url.dwUserNameLength] = 0;
                 }
-                InternetCloseHandle(This->hrequest);
-                InternetCloseHandle(This->hconnect);
-                InternetCloseHandle(This->hinternet);
-                IBindStatusCallback_Release(pbscb);
+                else
+                {
+                    user = 0;
+                }
+                if (url.dwPasswordLength)
+                {
+                    pass = HeapAlloc(GetProcessHeap(), 0, ((url.dwPasswordLength + 1) * sizeof(WCHAR)));
+                    memcpy(pass, url.lpszPassword, url.dwPasswordLength * sizeof(WCHAR));
+                    pass[url.dwPasswordLength] = 0;
+                }
+                else
+                {
+                    pass = 0;
+                }
+
+                switch ((DWORD) url.nScheme)
+                {
+                case INTERNET_SCHEME_FTP:
+                case INTERNET_SCHEME_GOPHER:
+                case INTERNET_SCHEME_HTTP:
+                case INTERNET_SCHEME_HTTPS:
+
+                    This->hinternet = InternetOpenA("User Agent", 0, NULL, NULL, 0 /*INTERNET_FLAG_ASYNC*/);
+/*                  InternetSetStatusCallback(This->hinternet, URLMON_InternetCallback);*/
+                    if (!This->hinternet)
+                    {
+                            hres = HRESULT_FROM_WIN32(GetLastError());
+                            break;
+                    }
+
+                    switch ((DWORD) url.nScheme)
+                    {
+                    case INTERNET_SCHEME_FTP:
+                        if (!url.nPort)
+                            url.nPort = INTERNET_DEFAULT_FTP_PORT;
+                        dwService = INTERNET_SERVICE_FTP;
+                        break;
+    
+                    case INTERNET_SCHEME_GOPHER:
+                        if (!url.nPort)
+                            url.nPort = INTERNET_DEFAULT_GOPHER_PORT;
+                        dwService = INTERNET_SERVICE_GOPHER;
+                        break;
+
+                    case INTERNET_SCHEME_HTTP:
+                        if (!url.nPort)
+                            url.nPort = INTERNET_DEFAULT_HTTP_PORT;
+                        dwService = INTERNET_SERVICE_HTTP;
+                        break;
+
+                    case INTERNET_SCHEME_HTTPS:
+                        if (!url.nPort)
+                            url.nPort = INTERNET_DEFAULT_HTTPS_PORT;
+                        dwService = INTERNET_SERVICE_HTTP;
+                        break;
+                    }
+
+                    This->hconnect = InternetConnectW(This->hinternet, host, url.nPort, user, pass,
+                                                      dwService, 0, (DWORD)This);
+                    if (!This->hconnect)
+                    {
+                            hres = HRESULT_FROM_WIN32(GetLastError());
+                            CloseHandle(This->hinternet);
+                            break;
+                    }
+
+                    hres = IBindStatusCallback_OnProgress(This->pbscb, 0, 0, 0x22, NULL);
+                    hres = IBindStatusCallback_OnProgress(This->pbscb, 0, 0, BINDSTATUS_FINDINGRESOURCE, NULL);
+                    hres = IBindStatusCallback_OnProgress(This->pbscb, 0, 0, BINDSTATUS_CONNECTING, NULL);
+                    hres = IBindStatusCallback_OnProgress(This->pbscb, 0, 0, BINDSTATUS_SENDINGREQUEST, NULL);
+
+                    bSuccess = FALSE;
+
+                    switch (dwService)
+                    {
+                    case INTERNET_SERVICE_GOPHER:
+                        This->hrequest = GopherOpenFileW(This->hconnect,
+                                                         path,
+                                                         0,
+                                                         INTERNET_FLAG_RELOAD,
+                                                         0);
+                        if (This->hrequest)
+                                bSuccess = TRUE;
+                        else
+                                hres = HRESULT_FROM_WIN32(GetLastError());
+                        break;
+
+                    case INTERNET_SERVICE_FTP:
+                        This->hrequest = FtpOpenFileW(This->hconnect,
+                                                      path,
+                                                      GENERIC_READ,
+                                                      FTP_TRANSFER_TYPE_BINARY |
+                                                       INTERNET_FLAG_TRANSFER_BINARY |
+                                                       INTERNET_FLAG_RELOAD,
+                                                      0);
+                        if (This->hrequest)
+                                bSuccess = TRUE;
+                        else
+                                hres = HRESULT_FROM_WIN32(GetLastError());
+                        break;
+
+                    case INTERNET_SERVICE_HTTP:
+                        This->hrequest = HttpOpenRequestW(This->hconnect, NULL, path, NULL, NULL, NULL, 0, (DWORD)This);
+                        if (!This->hrequest)
+                        {
+                                hres = HRESULT_FROM_WIN32(GetLastError());
+                        }
+                        else if (!HttpSendRequestW(This->hrequest, NULL, 0, NULL, 0))
+                        {
+                                hres = HRESULT_FROM_WIN32(GetLastError());
+                                InternetCloseHandle(This->hrequest);
+                        }
+                        else
+                        {
+                                HttpQueryInfoW(This->hrequest,
+                                               HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER,
+                                               &This->expected_size,
+                                               &lensz,
+                                               NULL);
+                                bSuccess = TRUE;
+                        }
+                        break;
+                    }
+                    if(bSuccess)
+                    {
+                        TRACE("res = %ld gle = %08lx url len = %ld\n", hres, GetLastError(), This->expected_size);
+
+                        IBindStatusCallback_OnProgress(This->pbscb, 0, 0, BINDSTATUS_CACHEFILENAMEAVAILABLE, szFileName);
+
+                        while(1) {
+                            char buf[4096];
+                            DWORD bufread;
+                            if(InternetReadFile(This->hrequest, buf, sizeof(buf), &bufread)) {
+                                TRACE("read %ld bytes %s...\n", bufread, debugstr_an(buf, 10));
+                                if(bufread == 0) break;
+                                hres = URLMonikerImpl_MoreCacheData(This, buf, bufread);
+                            } else
+                                break;
+                            break;
+                        }
+                        InternetCloseHandle(This->hrequest);
+                            hres = S_OK;
+                    }
+            
+                    InternetCloseHandle(This->hconnect);
+                    InternetCloseHandle(This->hinternet);
+                    break;
+
+                case INTERNET_SCHEME_FILE:
+                    path = This->URLName + 5; /* Skip the "file:" part */
+                    if ((path[0] != '/' && path[0] != '\\') ||
+                        (path[1] != '/' && path[1] != '\\'))
+                    {
+                        hres = E_FAIL;
+                    }
+                    else
+                    {
+                        HANDLE h;
+
+                        path += 2;
+                        if (path[0] == '/' || path[0] == '\\')
+                            ++path;
+                        h = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+                        if (h == (HANDLE) HFILE_ERROR)
+                        {
+                            hres = HRESULT_FROM_WIN32(GetLastError());
+                        }
+                        else
+                        {
+                            char buf[4096];
+                            DWORD bufread;
+
+                            IBindStatusCallback_OnProgress(This->pbscb, 0, 0, BINDSTATUS_CACHEFILENAMEAVAILABLE, szFileName);
+
+                            while (ReadFile(h, buf, sizeof(buf), &bufread, NULL) && bufread > 0)
+                                hres = URLMonikerImpl_MoreCacheData(This, buf, bufread);
+
+                            CloseHandle(h);
+                            hres = S_OK;
+                        }
+                    }
+                        
+                    break;
+
+                default:
+                    FIXME("Unsupported URI scheme");
+                    break;
+                }
+                URLMonikerImpl_CloseCacheDownload(This);
+                URLMonikerImpl_FinishedDownload(This, hres);
+
+                if (user)
+                    HeapFree(GetProcessHeap(), 0, user);
+                if (pass)
+                    HeapFree(GetProcessHeap(), 0, pass);
+                HeapFree(GetProcessHeap(), 0, path);
+                HeapFree(GetProcessHeap(), 0, host);
+                HeapFree(GetProcessHeap(), 0, urlcopy);
             }
         }
     }
-    *ppvObject = (VOID*)pstr;
     return hres;
 }
 
