@@ -798,6 +798,44 @@ interface IAMStreamConfig : IUnknown
 }
 
 
+typedef enum tagVideoProcAmpProperty
+{
+    VideoProcAmp_Brightness,
+    VideoProcAmp_Contrast,
+    VideoProcAmp_Hue,
+    VideoProcAmp_Saturation,
+    VideoProcAmp_Sharpness,
+    VideoProcAmp_Gamma,
+    VideoProcAmp_ColorEnable,
+    VideoProcAmp_WhiteBalance,
+    VideoProcAmp_BacklightCompensation,
+    VideoProcAmp_Gain
+} VideoProcAmpProperty;
+
+typedef enum tagVideoProcAmpFlags
+{
+    VideoProcAmp_Flags_Auto   = 0x0001,
+    VideoProcAmp_Flags_Manual = 0x0002,
+} VideoProcAmpFlags;
+
+/*****************************************************************************
+ * IAMVideoProcAmp interface
+ */
+[
+    object,
+    uuid(c6e13360-30ac-11d0-a18c-00a0c9118956),
+    pointer_default(unique)
+]
+interface IAMVideoProcAmp : IUnknown
+{
+    HRESULT GetRange( [in] long Property, [out] long *pMin, [out] long *pMax,
+                     [out] long *pSteppingDelta, [out] long *pDefault,
+                     [out] long *pCapsFlags);
+    HRESULT Set( [in] long Property, [in] long lValue, [in] long Flags);
+    HRESULT Get( [in] long Property, [out] long *lValue, [out] long *Flags);
+}
+
+
 [
         object,
         uuid(56a868aa-0ad4-11ce-b03a-0020af0ba770),
