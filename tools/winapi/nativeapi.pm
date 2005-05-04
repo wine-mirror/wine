@@ -29,7 +29,7 @@ require Exporter;
 
 use vars qw($nativeapi);
 
-use config qw(file_type $current_dir $wine_dir $winapi_check_dir);
+use config qw(file_type $current_dir $wine_dir $winapi_dir);
 use options qw($options);
 use output qw($output);
 
@@ -46,7 +46,7 @@ sub new($) {
     my $conditional_headers = \%{$self->{CONDITIONAL_HEADERS}};
     my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
 
-    my $api_file = "$winapi_check_dir/nativeapi.dat";
+    my $api_file = "$winapi_dir/nativeapi.dat";
     my $configure_ac_file = "$wine_dir/configure.ac";
     my $config_h_in_file = "$wine_dir/include/config.h.in";
 

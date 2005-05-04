@@ -29,7 +29,7 @@ use config qw(
     file_skip files_skip
     file_normalize
     get_spec_files
-    $current_dir $wine_dir $winapi_dir $winapi_check_dir
+    $current_dir $wine_dir $winapi_dir
 );
 use output qw($output);
 use winapi_fixup_options qw($options);

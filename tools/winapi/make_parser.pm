@@ -20,7 +20,7 @@ package make_parser;
 
 use strict;
 
-use setup qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
+use setup qw($current_dir $wine_dir $winapi_dir);
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 require Exporter;

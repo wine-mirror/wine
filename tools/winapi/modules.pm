@@ -34,7 +34,6 @@ use config qw(
     file_directory
     get_c_files get_spec_files
     $current_dir $wine_dir
-    $winapi_check_dir
 );
 use options qw($options);
 use output qw($output);

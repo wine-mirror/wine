@@ -20,7 +20,7 @@ package config;
 
 use strict;
 
-use setup qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
+use setup qw($current_dir $wine_dir $winapi_dir);
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 require Exporter;
@@ -37,10 +37,10 @@ require Exporter;
     get_spec_files
 );
 @EXPORT_OK = qw(
-    $current_dir $wine_dir $winapi_dir $winapi_check_dir
+    $current_dir $wine_dir $winapi_dir
 );
 
-use vars qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
+use vars qw($current_dir $wine_dir $winapi_dir);
 
 use output qw($output);
 

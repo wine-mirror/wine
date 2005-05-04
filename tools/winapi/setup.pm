@@ -26,15 +26,15 @@ BEGIN {
 
     @ISA = qw(Exporter);
     @EXPORT = qw();
-    @EXPORT_OK = qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
+    @EXPORT_OK = qw($current_dir $wine_dir $winapi_dir);
 
-    use vars qw($current_dir $wine_dir $winapi_dir $winapi_check_dir);
+    use vars qw($current_dir $wine_dir $winapi_dir);
 
     my $tool = $0;
     $tool =~ s%^(?:.*?/)?([^/]+)$%$1%;
 
     if(defined($current_dir) && defined($wine_dir) &&
-       defined($winapi_dir) && defined($winapi_check_dir))
+       defined($winapi_dir))
     {
 	# Nothing
     } elsif($0 =~ m%^(.*?)/?tools/([^/]+)/[^/]+$%) {
@@ -77,10 +77,7 @@ BEGIN {
 	$winapi_dir = "$wine_dir/tools/winapi";
 	$winapi_dir =~ s%^\./%%;
 
-	$winapi_check_dir = "$wine_dir/tools/winapi";
-	$winapi_check_dir =~ s%^\./%%;
-
-	push @INC, ($winapi_dir, $winapi_check_dir);
+	push @INC, $winapi_dir;
     } else {
 	print STDERR "$tool: You must run this tool in the main Wine directory or a sub directory\n";
 	exit 1;
