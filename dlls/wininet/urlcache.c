@@ -61,6 +61,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define ALLOCATION_TABLE_OFFSET 0x250
 #define ALLOCATION_TABLE_SIZE   (0x1000 - ALLOCATION_TABLE_OFFSET)
 #define HASHTABLE_NUM_ENTRIES   (HASHTABLE_SIZE / HASHTABLE_BLOCKSIZE)
+#define NEWFILE_NUM_BLOCKS	0xd80
+#define NEWFILE_SIZE		(NEWFILE_NUM_BLOCKS * BLOCKSIZE + ENTRY_START_OFFSET)
 
 #define DWORD_SIG(a,b,c,d)  (a | (b << 8) | (c << 16) | (d << 24))
 #define URL_SIGNATURE   DWORD_SIG('U','R','L',' ')
@@ -143,12 +145,12 @@ typedef struct _URLCACHE_HEADER
     DWORD dwFileSize;
     DWORD dwOffsetFirstHashTable;
     DWORD dwIndexCapacityInBlocks;
-    DWORD dwBlocksInUse; /* is this right? */
+    DWORD dwBlocksInUse;
     DWORD dwUnknown1;
     DWORD dwCacheLimitLow; /* disk space limit for cache */
     DWORD dwCacheLimitHigh; /* disk space limit for cache */
-    DWORD dwUnknown4; /* current disk space usage for cache? */
-    DWORD dwUnknown5; /* current disk space usage for cache? */
+    DWORD dwUnknown4; /* current disk space usage for cache */
+    DWORD dwUnknown5; /* current disk space usage for cache */
     DWORD dwUnknown6; /* possibly a flag? */
     DWORD dwUnknown7;
     BYTE DirectoryCount; /* number of directory_data's */
@@ -177,6 +179,7 @@ typedef struct _URLCACHECONTAINER
 /* List of all containers available */
 static struct list UrlContainers = LIST_INIT(UrlContainers);
 
+static BOOL URLCache_FindFirstFreeEntry(URLCACHE_HEADER * pHeader, DWORD dwBlocksNeeded, CACHEFILE_ENTRY ** ppEntry);
 
 /***********************************************************************
  *           URLCache_PathToObjectName (Internal)
@@ -223,22 +226,237 @@ static BOOL URLCacheContainer_OpenIndex(URLCACHECONTAINER * pContainer)
     strcpyW(wszFilePath, pContainer->path);
     strcatW(wszFilePath, wszIndex);
 
-    hFile = CreateFileW(wszFilePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    hFile = CreateFileW(wszFilePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        FIXME("need to create cache index file\n");
+	/* Maybe the directory wasn't there? Try to create it */
+	if (CreateDirectoryW(pContainer->path, 0))
+            hFile = CreateFileW(wszFilePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, 0, NULL);
+    }
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        TRACE("Could not open or create cache index file \"%s\"\n", debugstr_w(wszFilePath));
         return FALSE;
     }
+
+    /* At this stage we need the mutex because we may be about to create the
+     * file.
+     */
+    WaitForSingleObject(pContainer->hMutex, INFINITE);
 
     dwFileSize = GetFileSize(hFile, NULL);
     if (dwFileSize == INVALID_FILE_SIZE)
+    {
+	ReleaseMutex(pContainer->hMutex);
         return FALSE;
+    }
 
     if (dwFileSize == 0)
     {
-        FIXME("need to create cache index file\n");
-        return FALSE;
+        static CHAR const szCacheContent[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Cache\\Content";
+	HKEY	key;
+	char	achZeroes[0x1000];
+	DWORD	dwOffset;
+	DWORD dwError = 0;
+
+	/* Write zeroes to the entire file so we can safely map it without
+	 * fear of getting a SEGV because the disk is full.
+	 */
+	memset(achZeroes, 0, sizeof(achZeroes));
+	for (dwOffset = 0; dwOffset < NEWFILE_SIZE; dwOffset += sizeof(achZeroes))
+	{
+	    DWORD dwWrite = sizeof(achZeroes);
+	    DWORD dwWritten;
+
+	    if (NEWFILE_SIZE - dwOffset < dwWrite)
+		dwWrite = NEWFILE_SIZE - dwOffset;
+	    if (!WriteFile(hFile, achZeroes, dwWrite, &dwWritten, 0) ||
+		dwWritten != dwWrite)
+	    {
+		/* If we fail to write, we need to return the error that
+		 * cause the problem and also make sure the file is no
+		 * longer there, if possible.
+		 */
+		dwError = GetLastError();
+
+		break;
+	    }
+	}
+
+	if (!dwError)
+	{
+	    HANDLE hMapping = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, NEWFILE_SIZE, NULL);
+
+	    if (hMapping)
+	    {
+		URLCACHE_HEADER *pHeader = MapViewOfFile(hMapping, FILE_MAP_WRITE, 0, 0, NEWFILE_SIZE);
+
+		if (pHeader)
+		{
+		    WCHAR *pwchDir;
+		    WCHAR wszDirPath[MAX_PATH];
+		    FILETIME ft;
+		    int i, j;
+		    HASH_CACHEFILE_ENTRY *pPrevHash = 0;
+
+		    dwFileSize = NEWFILE_SIZE;
+		
+		    /* First set some constants and defaults in the header */
+		    strcpy(pHeader->szSignature, "WINE URLCache Ver 0.2005001");
+		    pHeader->dwFileSize = dwFileSize;
+		    pHeader->dwIndexCapacityInBlocks = NEWFILE_NUM_BLOCKS;
+		    /* 127MB - taken from default for Windows 2000 */
+		    pHeader->dwCacheLimitHigh = 0;
+		    pHeader->dwCacheLimitLow = 0x07ff5400;
+		    /* Copied from a Windows 2000 cache index */
+		    pHeader->DirectoryCount = 4;
+		
+		    /* If the registry has a cache size set, use the registry value */
+		    if (RegOpenKeyA(HKEY_CURRENT_USER, szCacheContent, &key) == ERROR_SUCCESS)
+		    {
+		        DWORD dw;
+		        DWORD len = sizeof(dw);
+		        DWORD keytype;
+		
+		        if (RegQueryValueExA(key, "CacheLimit", NULL, &keytype,
+					     (BYTE *) &dw, &len) == ERROR_SUCCESS &&
+			    keytype == REG_DWORD)
+			{
+			    pHeader->dwCacheLimitHigh = (dw >> 22);
+			    pHeader->dwCacheLimitLow = dw << 10;
+			}
+			RegCloseKey(key);
+		    }
+		
+		    /* Now create the hash table entries. Windows would create
+		     * these as needed, but WINE doesn't do that yet, so create
+		     * four and hope it's enough.
+		     */
+
+		    for (i = 0; i < 4; ++i)
+		    {
+			HASH_CACHEFILE_ENTRY *pHash;
+			DWORD dwOffset;
+
+		        /* Request 0x20 blocks - no need to check for failure here because
+			 * we started with an empty file
+			 */
+			URLCache_FindFirstFreeEntry(pHeader, 0x20, (CACHEFILE_ENTRY **) &pHash);
+
+			dwOffset = (BYTE *) pHash - (BYTE *) pHeader;
+
+			if (pPrevHash)
+			    pPrevHash->dwAddressNext = dwOffset;
+			else
+			    pHeader->dwOffsetFirstHashTable = dwOffset;
+			pHash->CacheFileEntry.dwSignature = HASH_SIGNATURE;
+			pHash->CacheFileEntry.dwBlocksUsed = 0x20;
+			pHash->dwHashTableNumber = i;
+			for (j = 0; j < HASHTABLE_SIZE; ++j)
+			{
+			    pHash->HashTable[j].dwOffsetEntry = 0;
+			    pHash->HashTable[j].dwHashKey = HASHTABLE_FREE;
+			}
+			pPrevHash = pHash;
+		    }
+
+		    /* Last step - create the directories */
+	
+		    strcpyW(wszDirPath, pContainer->path);
+		    pwchDir = wszDirPath + strlenW(wszDirPath);
+		    pwchDir[8] = 0;
+	
+		    GetSystemTimeAsFileTime(&ft);
+	
+		    for (i = 0; !dwError && i < pHeader->DirectoryCount; ++i)
+		    {
+			/* The following values were copied from a Windows index.
+			 * I don't know what the values are supposed to mean but
+			 * have made them the same in the hope that this will
+			 * be better for compatibility
+			 */
+			pHeader->directory_data[i].dwUnknown = (i > 1) ? 0xfe : 0xff;
+			for (j = 0;; ++j)
+			{
+			    int k;
+			    ULONGLONG n = ft.dwHighDateTime;
+	
+			    /* Generate a file name to attempt to create.
+			     * This algorithm will create what will appear
+			     * to be random and unrelated directory names
+			     * of up to 9 characters in length.
+			     */
+			    n <<= 32;
+			    n += ft.dwLowDateTime;
+			    n ^= ((ULONGLONG) i << 56) | ((ULONGLONG) j << 48);
+	
+			    for (k = 0; k < 8; ++k)
+			    {
+				int r = (n % 36);
+	
+				/* Dividing by a prime greater than 36 helps
+				 * with the appearance of randomness
+				 */
+				n /= 37;
+	
+				if (r < 10)
+				    pwchDir[k] = '0' + r;
+				else
+				    pwchDir[k] = 'A' + (r - 10);
+			    }
+	
+			    if (CreateDirectoryW(wszDirPath, 0))
+			    {
+				int k;
+	
+				/* The following is OK because we generated an
+				 * 8 character directory name made from characters
+				 * [A-Z0-9], which are equivalent for all code
+				 * pages and for UTF-16
+				 */
+				for (k = 0; k < 8; ++k)
+				    pHeader->directory_data[i].filename[k] = pwchDir[k];
+				break;
+			    }
+			    else if (j >= 255)
+			    {
+				/* Give up. The most likely cause of this
+				 * is a full disk, but whatever the cause
+				 * is, it should be more than apparent that
+				 * we won't succeed.
+				 */
+				dwError = GetLastError();
+				break;
+			    }
+			}
+		    }
+		
+		    UnmapViewOfFile(pHeader);
+		}
+		else
+		{
+		    dwError = GetLastError();
+		}
+		CloseHandle(hMapping);
+	    }
+	    else
+	    {
+		dwError = GetLastError();
+	    }
+	}
+
+	if (dwError)
+	{
+	    CloseHandle(hFile);
+	    DeleteFileW(wszFilePath);
+	    ReleaseMutex(pContainer->hMutex);
+	    SetLastError(dwError);
+	    return FALSE;
+	}
+
     }
+
+    ReleaseMutex(pContainer->hMutex);
 
     wsprintfW(wszFilePath, wszMappingFormat, pContainer->path, wszIndex, dwFileSize);
     URLCache_PathToObjectName(wszFilePath, '_');
