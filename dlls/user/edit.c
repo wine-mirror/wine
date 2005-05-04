@@ -910,10 +910,6 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
   		result = EDIT_WM_MButtonDown(es);
 		break;
 
-	case WM_MOUSEACTIVATE:
-		result = MA_ACTIVATE;
-		break;
-
 	case WM_MOUSEMOVE:
 		result = EDIT_WM_MouseMove(es, (short)LOWORD(lParam), (short)HIWORD(lParam));
 		break;
