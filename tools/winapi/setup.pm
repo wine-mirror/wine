@@ -77,7 +77,7 @@ BEGIN {
 	$winapi_dir = "$wine_dir/tools/winapi";
 	$winapi_dir =~ s%^\./%%;
 
-	$winapi_check_dir = "$wine_dir/tools/winapi_check";
+	$winapi_check_dir = "$wine_dir/tools/winapi";
 	$winapi_check_dir =~ s%^\./%%;
 
 	push @INC, ($winapi_dir, $winapi_check_dir);
