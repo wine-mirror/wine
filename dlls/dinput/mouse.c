@@ -685,7 +685,9 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 ) {
     SysMouseImpl *This = (SysMouseImpl *)iface;
-    
+
+    if(This->acquired == 0) return DIERR_NOTACQUIRED;
+
     EnterCriticalSection(&(This->crit));
     TRACE("(this=%p,0x%08lx,%p): \n",This,len,ptr);
     
