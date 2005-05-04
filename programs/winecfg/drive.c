@@ -357,6 +357,9 @@ void apply_drive_changes()
         }
         else if(foundDrive && !drives[i].in_use)
         {
+            HKEY hKey;
+            char driveValue[256];
+
             /* remove this drive */
             if(!DefineDosDevice(DDD_REMOVE_DEFINITION, devicename, drives[i].unixpath))
             {
@@ -368,6 +371,18 @@ void apply_drive_changes()
             {
                 WINE_TRACE("removed devicename of '%s', targetpath of '%s'\n",
                            devicename, drives[i].unixpath);
+            }
+
+            retval = RegOpenKey(HKEY_LOCAL_MACHINE, "Software\\Wine\\Drives", &hKey);
+            if (retval != ERROR_SUCCESS)
+            {
+                WINE_TRACE("Unable to open '%s'\n", "Software\\Wine\\Drives");
+            }
+            else
+            {
+                snprintf(driveValue, sizeof(driveValue), "%c:", toupper(drives[i].letter));    
+
+                retval = RegDeleteValue(hKey, driveValue);
             }
         }
         else if(drives[i].in_use) /* foundDrive must be false from the above check */
