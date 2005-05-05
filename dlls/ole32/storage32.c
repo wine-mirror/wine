@@ -5585,7 +5585,33 @@ HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD st
 {
     TRACE("(%s, %lx, %lx, %lx, %p, %p, %p, %p)\n", debugstr_w(pwcsName),
           grfMode, stgfmt, grfAttrs, pStgOptions, reserved, riid, ppObjectOpen);
-    return STG_E_UNIMPLEMENTEDFUNCTION;
+
+    if (stgfmt != STGFMT_FILE && grfAttrs != 0)
+    {
+        ERR("grfAttrs must be 0 if stgfmt != STGFMT_FILE\n");
+        return STG_E_INVALIDPARAMETER;  
+    }
+
+    if (stgfmt != STGFMT_FILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
+    {
+        ERR("grfAttrs must be 0 or FILE_FLAG_NO_BUFFERING if stgfmt == STGFMT_FILE\n");
+        return STG_E_INVALIDPARAMETER;  
+    }
+
+    if (stgfmt == STGFMT_FILE)
+    {
+        ERR("Cannot use STGFMT_FILE - this is NTFS only\n");  
+        return STG_E_INVALIDPARAMETER;
+    }
+
+    if (stgfmt == STGFMT_STORAGE || stgfmt == STGFMT_DOCFILE)
+    {
+        FIXME("Stub: calling StgCreateDocfile, but ignoring pStgOptions and grfAttrs\n");
+        return StgCreateDocfile(pwcsName, grfMode, 0, (IStorage **)ppObjectOpen); 
+    }
+
+    ERR("Invalid stgfmt argument\n");
+    return STG_E_INVALIDPARAMETER;
 }
 
 /******************************************************************************

@@ -463,6 +463,11 @@ HRESULT WINAPI MonikerRelativePathTo(LPMONIKER pmkSrc, LPMONIKER pmkDest, LPMONI
 #define STGM_NOSNAPSHOT		0x00200000
 #define STGM_DIRECT_SWMR	0x00400000
 
+#define STGFMT_STORAGE		0
+#define STGFMT_FILE 		3
+#define STGFMT_ANY 		4
+#define STGFMT_DOCFILE 	5
+
 typedef struct tagSTGOPTIONS
 {
     USHORT usVersion;
