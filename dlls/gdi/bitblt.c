@@ -295,7 +295,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 
     /* delete all temp objects */
     DeleteObject(hBitmap1);
-    DeleteObject(hBitmap1);
+    DeleteObject(hBitmap2);
     DeleteObject(hbrMask);
 
     DeleteDC(hDC1);
