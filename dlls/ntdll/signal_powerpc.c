@@ -133,7 +133,7 @@ typedef struct ucontext SIGCONTEXT;
 /* Float Registers access */
 # define FLOAT_sig(reg_num, context)		FLOATREG_sig(fpregs[reg_num], context)
 
-# define FPSCR_sig(context)			((double)FLOATREG_sig(fpscr, context))
+# define FPSCR_sig(context)			FLOATREG_sig(fpscr, context)
 
 /* Exception Registers access */
 # define DAR_sig(context)			EXCEPREG_sig(dar, context)     /* Fault registers for coredump */
@@ -584,7 +584,7 @@ static HANDLER_DEF(usr1_handler)
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     timeout.QuadPart = 0;
-    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout );
+    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout, 0 );
 }
 
 
