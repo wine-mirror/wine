@@ -690,6 +690,9 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 
     EnterCriticalSection(&(This->crit));
     TRACE("(this=%p,0x%08lx,%p): \n",This,len,ptr);
+    TRACE("(X: %ld - Y: %ld - Z: %ld  L: %02x M: %02x R: %02x)\n",
+	  This->m_state.lX, This->m_state.lY, This->m_state.lZ,
+	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
     
     /* Copy the current mouse state */
     fill_DataFormat(ptr, &(This->m_state), This->wine_df);
@@ -716,15 +719,11 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     
     LeaveCriticalSection(&(This->crit));
     
-    TRACE("(X: %ld - Y: %ld - Z: %ld  L: %02x M: %02x R: %02x)\n",
-	  This->m_state.lX, This->m_state.lY, This->m_state.lZ,
-	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
-    
     return DI_OK;
 }
 
 /******************************************************************************
-  *     GetDeviceState : gets buffered input data.
+  *     GetDeviceData : gets buffered input data.
   */
 static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 						  DWORD dodsize,
@@ -734,9 +733,11 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 ) {
     SysMouseImpl *This = (SysMouseImpl *)iface;
     DWORD len;
-    int nqtail;
+    int nqtail = 0;
     
-    TRACE("(%p)->(dods=%ld,entries=%ld,fl=0x%08lx)\n",This,dodsize,*entries,flags);
+    TRACE("(%p)->(dods=%ld,dod=%p,entries=%p (%ld)%s,fl=0x%08lx%s)\n",This,dodsize,dod,
+	  entries, *entries,*entries == INFINITE ? " (INFINITE)" : "",
+	  flags, (flags & DIGDD_PEEK) ? " (DIGDD_PEEK)": "" );
     
     if (This->acquired == 0) {
 	WARN(" application tries to get data from an unacquired device !\n");
@@ -744,18 +745,23 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     }
     
     EnterCriticalSection(&(This->crit));
-    
+
     len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0)
 	+ (This->queue_head - This->queue_tail);
-    if (len > *entries) len = *entries;
+    if ((*entries != INFINITE) && (len > *entries)) len = *entries;
     
     if (dod == NULL) {
-	if (len)
-	    TRACE("Application discarding %ld event(s).\n", len);
-	
 	*entries = len;
-	nqtail = This->queue_tail + len;
-	while (nqtail >= This->queue_len) nqtail -= This->queue_len;
+	
+	if (!(flags & DIGDD_PEEK)) {
+	    if (len)
+		TRACE("Application discarding %ld event(s).\n", len);
+	    
+	    nqtail = This->queue_tail + len;
+	    while (nqtail >= This->queue_len) nqtail -= This->queue_len;
+	} else {
+	    TRACE("Telling application that %ld event(s) are in the queue.\n", len);
+	}
     } else {
 	if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
 	    ERR("Wrong structure size !\n");
