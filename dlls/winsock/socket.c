@@ -1328,7 +1328,7 @@ static int WS2_register_async_shutdown( SOCKET s, int fd, enum ws2_mode mode )
     DWORD dwflags = 0;
     int len = 0;
     LPWSAOVERLAPPED ovl = HeapAlloc(GetProcessHeap(), 0, sizeof( WSAOVERLAPPED ));
-    IO_STATUS_BLOCK *iosb;
+    IO_STATUS_BLOCK *iosb = NULL;
 
     TRACE("s %d fd %d mode %d\n", s, fd, mode);
     if (!ovl)
