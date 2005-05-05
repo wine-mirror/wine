@@ -532,7 +532,7 @@ static void build(struct options* opts)
     if (!opts->shared)
     {
         strarray_add(spec_args, "-F");
-        strarray_add(spec_args, strmake("%s.exe", output_name));
+        strarray_add(spec_args, output_name);
         strarray_add(spec_args, "--subsystem");
         strarray_add(spec_args, opts->gui_app ? "windows" : "console");
     }
