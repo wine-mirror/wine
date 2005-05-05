@@ -2360,7 +2360,7 @@ MSVCRT_FILE* MSVCRT_fopen(const char *path, const char *mode)
   }
 
   TRACE(":got (%p)\n",file);
-  if (!file)
+  if (fd >= 0 && !file)
     _close(fd);
   UNLOCK_FILES();
   return file;
