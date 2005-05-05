@@ -80,7 +80,10 @@ void _dump_EnumObjects_flags(DWORD dwFlags) {
 	    FE(DIDFT_NODATA),	    
 	    FE(DIDFT_FFACTUATOR),
 	    FE(DIDFT_FFEFFECTTRIGGER),
-	    FE(DIDFT_OUTPUT)
+	    FE(DIDFT_OUTPUT),
+	    FE(DIDFT_VENDORDEFINED),
+	    FE(DIDFT_ALIAS),
+	    FE(DIDFT_OPTIONAL)
 #undef FE
 	};
 	type = (dwFlags & 0xFF0000FF);
@@ -315,8 +318,12 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		(/* Then check if it accepts any instance id, and if not, if it matches Wine's
 		  * instance id.
 		  */
-		 ((asked_format->rgodf[j].dwType & 0x00FFFF00) == DIDFT_ANYINSTANCE) ||
-		 (wine_format->rgodf[i].dwType & asked_format->rgodf[j].dwType))) {
+		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == 0xFFFF) ||
+		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == 0x00FF) || /* This is mentionned in no DX docs, but it works fine - tested on WinXP */
+		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == DIDFT_GETINSTANCE(wine_format->rgodf[i].dwType)))
+		&&
+		( /* Then if the asked type matches the one Wine provides */
+		 wine_format->rgodf[i].dwType & asked_format->rgodf[j].dwType)) {
 		
 		done[j] = 1;
 		
