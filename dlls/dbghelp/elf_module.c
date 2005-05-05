@@ -1409,7 +1409,7 @@ struct module*  elf_load_module(struct process* pcs, const char* name, DWORD add
     return NULL;
 }
 
-BOOL elf_load_debug_info(struct module* module)
+BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
 {
     return FALSE;
 }
