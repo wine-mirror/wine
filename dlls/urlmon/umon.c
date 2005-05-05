@@ -656,7 +656,6 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
                                 hres = URLMonikerImpl_MoreCacheData(This, buf, bufread);
                             } else
                                 break;
-                            break;
                         }
                         InternetCloseHandle(This->hrequest);
                             hres = S_OK;
