@@ -41,7 +41,8 @@
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) ;
+HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj);
+HRESULT FilterGraphNoThread_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT FilterMapper2_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 HRESULT AsyncReader_create(IUnknown * pUnkOuter, LPVOID * ppv);
 HRESULT StdMemAllocator_create(IUnknown * pUnkOuter, LPVOID * ppv);

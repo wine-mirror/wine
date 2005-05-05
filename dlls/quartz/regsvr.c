@@ -850,6 +850,12 @@ static struct regsvr_coclass const coclass_list[] = {
 	"quartz.dll",
 	"Both"
     },
+    {   &CLSID_FilterGraphNoThread,
+	"Filter Graph",
+	NULL,
+	"quartz.dll",
+	"Both"
+    },
     {   &CLSID_FilterMapper,
 	"Filter Mapper",
 	NULL,

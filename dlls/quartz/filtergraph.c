@@ -3039,7 +3039,8 @@ static IMediaEventSinkVtbl IMediaEventSink_VTable =
 };
 
 /* This is the only function that actually creates a FilterGraph class... */
-HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
+HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
     IFilterGraphImpl *fimpl;
     HRESULT hr;
 
@@ -3083,4 +3084,10 @@ HRESULT FILTERGRAPH_create(IUnknown *pUnkOuter, LPVOID *ppObj) {
 
     *ppObj = fimpl;
     return S_OK;
+}
+
+HRESULT FilterGraphNoThread_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+{
+    FIXME("CLSID_FilterGraphNoThread partially implemented - Forwarding to CLSID_FilterGraph\n");
+    return FilterGraph_create(pUnkOuter, ppObj);
 }
