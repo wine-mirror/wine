@@ -749,56 +749,43 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
 {
     _ICOM_THIS_From_IShellFolder2 (IGenericSFImpl, iface)
 
-    CHAR szPath[MAX_PATH];
+    HRESULT hr = S_OK;
     int len = 0;
-    BOOL bSimplePidl;
-
-    *szPath = '\0';
 
     TRACE ("(%p)->(pidl=%p,0x%08lx,%p)\n", This, pidl, dwFlags, strRet);
     pdump (pidl);
 
     if (!pidl || !strRet)
         return E_INVALIDARG;
-
-    bSimplePidl = _ILIsPidlSimple (pidl);
-
-    /* take names of special folders only if its only this folder */
-    if (_ILIsSpecialFolder (pidl)) {
-        if (bSimplePidl) {
-            _ILSimpleGetText (pidl, szPath, MAX_PATH); /* append my own path */
-        } else {
-            FIXME ("special pidl\n");
-        }
-    } else {
-        if (!(dwFlags & SHGDN_INFOLDER) && (dwFlags & SHGDN_FORPARSING) &&
-         This->sPathTarget) {
-            /* get path to root */
-            lstrcpyA (szPath, This->sPathTarget);
-            PathAddBackslashA (szPath);
-            len = lstrlenA (szPath);
-        }
-        /* append my own path */
-        _ILSimpleGetText (pidl, szPath + len, MAX_PATH - len);
-
-        if (!_ILIsFolder(pidl))
-            SHELL_FS_ProcessDisplayFilename(szPath, dwFlags);
-    }
-
-    /* go deeper if needed */
-    if ((dwFlags & SHGDN_FORPARSING) && !bSimplePidl) {
-        PathAddBackslashA (szPath);
-        len = lstrlenA (szPath);
-
-        if (!SUCCEEDED(SHELL32_GetDisplayNameOfChild (iface, pidl,
-         dwFlags | SHGDN_INFOLDER, szPath + len, MAX_PATH - len)))
-            return E_OUTOFMEMORY;
-    }
+    
     strRet->uType = STRRET_CSTR;
-    lstrcpynA (strRet->u.cStr, szPath, MAX_PATH);
+    if (_ILIsDesktop(pidl)) { /* empty pidl */
+        if ((GET_SHGDN_FOR(dwFlags) == SHGDN_FORPARSING) &&
+            (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER)) 
+        {
+            if (This->sPathTarget)
+                lstrcpynA(strRet->u.cStr, This->sPathTarget, MAX_PATH);
+        } else {
+            /* pidl has to contain exactly one non null SHITEMID */
+            hr = E_INVALIDARG;
+        }
+    } else if (_ILIsPidlSimple(pidl)) {
+        if ((GET_SHGDN_FOR(dwFlags) == SHGDN_FORPARSING) &&
+            (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER) && 
+            This->sPathTarget) 
+        {
+            lstrcpynA(strRet->u.cStr, This->sPathTarget, MAX_PATH);
+            PathAddBackslashA(strRet->u.cStr);
+            len = lstrlenA(strRet->u.cStr);
+        }
+        _ILSimpleGetText(pidl, strRet->u.cStr + len, MAX_PATH - len);
+        if (!_ILIsFolder(pidl)) SHELL_FS_ProcessDisplayFilename(strRet->u.cStr, dwFlags);
+    } else {
+        hr = SHELL32_GetDisplayNameOfChild(iface, pidl, dwFlags, strRet->u.cStr, MAX_PATH);
+    }
 
-    TRACE ("-- (%p)->(%s)\n", This, szPath);
-    return S_OK;
+    TRACE ("-- (%p)->(%s)\n", This, strRet->u.cStr);
+    return hr;
 }
 
 /**************************************************************************
