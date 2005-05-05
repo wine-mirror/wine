@@ -1298,6 +1298,16 @@ INT WINPROC_MapMsg16To32A( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pms
             *plparam = (LPARAM)cis;
         }
         return 1;
+    case WM_COPYDATA:
+        {
+            PCOPYDATASTRUCT16 pcds16 =  MapSL(*plparam);
+            PCOPYDATASTRUCT pcds = HeapAlloc ( GetProcessHeap(), 0, sizeof(*pcds));
+            pcds->dwData = pcds16->dwData;
+            pcds->cbData = pcds16->cbData;
+            pcds->lpData = MapSL( pcds16->lpData);
+            *plparam = (LPARAM)pcds;
+        }
+        return 1;
     case WM_DELETEITEM:
         {
             DELETEITEMSTRUCT16* dis16 = MapSL(*plparam);
@@ -1608,6 +1618,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
     case WM_COMPAREITEM:
     case WM_DELETEITEM:
     case WM_DRAWITEM:
+    case WM_COPYDATA:
         HeapFree( GetProcessHeap(), 0, (LPVOID)lParam );
         break;
     case WM_MEASUREITEM:
@@ -2124,6 +2135,16 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_VSCROLL:
         *plparam = MAKELPARAM( HIWORD(wParam32), (HWND16)*plparam );
         return 0;
+    case WM_COPYDATA:
+        {
+            PCOPYDATASTRUCT pcds32 = (PCOPYDATASTRUCT) *plparam;
+            PCOPYDATASTRUCT16 pcds = HeapAlloc( GetProcessHeap(), 0, sizeof( *pcds));
+            pcds->dwData = pcds32->dwData;
+            pcds->cbData = pcds32->cbData;
+            pcds->lpData = MapLS( pcds32->lpData);
+            *plparam = MapLS( pcds );
+        }
+        return 1;
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
@@ -2508,6 +2529,14 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
             void *ptr = MapSL( p16->lParam );
             UnMapLS( p16->lParam );
             HeapFree( GetProcessHeap(), 0, ptr );
+        }
+        break;
+    case WM_COPYDATA:
+        {
+            PCOPYDATASTRUCT16 pcds = MapSL( p16->lParam );
+            UnMapLS( p16->lParam );
+            UnMapLS( pcds->lpData );
+            HeapFree( GetProcessHeap(), 0, pcds );
         }
         break;
     case CB_GETDROPPEDCONTROLRECT:

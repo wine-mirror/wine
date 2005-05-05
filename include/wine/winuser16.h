@@ -555,6 +555,13 @@ typedef struct
     LONG       l;
 } DRAGINFO16, *LPDRAGINFO16;
 
+/* undocumented */
+typedef struct tagCOPYDATASTRUCT16 {
+    DWORD dwData;
+    DWORD cbData;
+    SEGPTR lpData;
+} COPYDATASTRUCT16, *PCOPYDATASTRUCT16;
+
 #define DRAGOBJ_PROGRAM    0x0001
 #define DRAGOBJ_DATA       0x0002
 #define DRAGOBJ_DIRECTORY  0x0004
