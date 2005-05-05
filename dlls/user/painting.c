@@ -231,14 +231,14 @@ static HRGN send_ncpaint( HWND hwnd, HWND *child, UINT *flags )
  *           send_erase
  *
  * Send a WM_ERASEBKGND message if needed, and optionally return the DC for painting.
- * If a DC is requested, the region is selected into it.
+ * If a DC is requested, the region is selected into it. In all cases the region is deleted.
  * Helper for erase_now and BeginPaint.
  */
 static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
                         RECT *clip_rect, HDC *hdc_ret )
 {
     BOOL need_erase = FALSE;
-    HDC hdc;
+    HDC hdc = 0;
     RECT dummy;
 
     if (!clip_rect) clip_rect = &dummy;
@@ -267,6 +267,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
 
         if (hdc_ret) *hdc_ret = hdc;
     }
+    if (!hdc) DeleteObject( client_rgn );
     return need_erase;
 }
 
@@ -291,7 +292,6 @@ static void erase_now( HWND hwnd, UINT rdw_flags )
 
         if (!(hrgn = send_ncpaint( hwnd, &child, &flags ))) break;
         send_erase( child, flags, hrgn, NULL, NULL );
-        DeleteObject( hrgn );
 
         if (!flags) break;  /* nothing more to do */
         if (rdw_flags & RDW_NOCHILDREN) break;
@@ -345,10 +345,8 @@ static void update_now( HWND hwnd, UINT rdw_flags )
 
             TRACE( "%p not repainted properly, erasing\n", child );
             if ((hrgn = send_ncpaint( child, NULL, &erase_flags )))
-            {
                 send_erase( child, erase_flags, hrgn, NULL, NULL );
-                DeleteObject( hrgn );
-            }
+
             prev = 0;
         }
         else
@@ -415,7 +413,6 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
     if (!(hrgn = send_ncpaint( hwnd, NULL, &flags ))) return 0;
 
     lps->fErase = send_erase( hwnd, flags, hrgn, &lps->rcPaint, &lps->hdc );
-    if (!lps->hdc) DeleteObject( hrgn );
 
     TRACE("hdc = %p box = (%ld,%ld - %ld,%ld), fErase = %d\n",
           lps->hdc, lps->rcPaint.left, lps->rcPaint.top, lps->rcPaint.right, lps->rcPaint.bottom,
@@ -657,13 +654,13 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
     if ((update_rgn = send_ncpaint( hwnd, NULL, &flags )))
     {
         POINT offset;
+
+        retval = CombineRgn( hrgn, update_rgn, 0, RGN_COPY );
         send_erase( hwnd, flags, update_rgn, NULL, NULL );
         /* map region to client coordinates */
         offset.x = offset.y = 0;
         ScreenToClient( hwnd, &offset );
-        OffsetRgn( update_rgn, offset.x, offset.y );
-        retval = CombineRgn( hrgn, update_rgn, 0, RGN_COPY );
-        DeleteObject( update_rgn );
+        OffsetRgn( hrgn, offset.x, offset.y );
     }
     return retval;
 }
@@ -674,7 +671,6 @@ INT WINAPI GetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
  */
 BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
 {
-    HDC hdc;
     UINT flags = UPDATE_NOCHILDREN;
     HRGN update_rgn;
 
@@ -685,16 +681,14 @@ BOOL WINAPI GetUpdateRect( HWND hwnd, LPRECT rect, BOOL erase )
     if (rect)
     {
         if (GetRgnBox( update_rgn, rect ) != NULLREGION)
+        {
+            HDC hdc = GetDCEx( hwnd, 0, DCX_USESTYLE );
             MapWindowPoints( 0, hwnd, (LPPOINT)rect, 2 );
+            DPtoLP( hdc, (LPPOINT)rect, 2 );
+            ReleaseDC( hwnd, hdc );
+        }
     }
-
-    send_erase( hwnd, flags, update_rgn, NULL, &hdc );
-    if (hdc)
-    {
-        if (rect) DPtoLP( hdc, (LPPOINT)rect, 2 );
-        ReleaseDC( hwnd, hdc );
-    }
-    else DeleteObject( update_rgn );
+    send_erase( hwnd, flags, update_rgn, NULL, NULL );
 
     /* check if we still have an update region */
     flags = UPDATE_PAINT | UPDATE_NOCHILDREN;
