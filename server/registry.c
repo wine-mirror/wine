@@ -44,6 +44,7 @@
 #include "handle.h"
 #include "request.h"
 #include "unicode.h"
+#include "security.h"
 
 #include "winbase.h"
 #include "winreg.h"
@@ -1685,7 +1686,7 @@ DECL_HANDLER(create_key)
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     reply->hkey = 0;
     if (!(name = copy_req_path( req->namelen, !req->parent ))) return;
-    if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
+    if ((parent = get_hkey_obj( req->parent, KEY_CREATE_SUB_KEY )))
     {
         int flags = (req->options & REG_OPTION_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
 
@@ -1720,7 +1721,8 @@ DECL_HANDLER(open_key)
 
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     reply->hkey = 0;
-    if ((parent = get_hkey_obj( req->parent, 0 /*FIXME*/ )))
+    /* NOTE: no access rights are required to open the parent key, only the child key */
+    if ((parent = get_hkey_obj( req->parent, 0 )))
     {
         WCHAR *name = copy_path( get_req_data(), get_req_data_size(), !req->parent );
         if (name && (key = open_key( parent, name )))
@@ -1737,7 +1739,7 @@ DECL_HANDLER(delete_key)
 {
     struct key *key;
 
-    if ((key = get_hkey_obj( req->hkey, 0 /*FIXME*/ )))
+    if ((key = get_hkey_obj( req->hkey, DELETE )))
     {
         delete_key( key, 0);
         release_object( key );
@@ -1833,8 +1835,22 @@ DECL_HANDLER(delete_key_value)
 DECL_HANDLER(load_registry)
 {
     struct key *key, *parent;
+    struct token *token = thread_get_impersonation_token( current );
 
-    if ((parent = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
+    const LUID_AND_ATTRIBUTES privs[] =
+    {
+        { SeBackupPrivilege,  0 },
+        { SeRestorePrivilege, 0 },
+    };
+
+    if (!token || !token_check_privileges( token, TRUE, privs,
+                                           sizeof(privs)/sizeof(privs[0]), NULL ))
+    {
+        set_error( STATUS_PRIVILEGE_NOT_HELD );
+        return;
+    }
+
+    if ((parent = get_hkey_obj( req->hkey, 0 )))
     {
         int dummy;
         WCHAR *name = copy_path( get_req_data(), get_req_data_size(), !req->hkey );
@@ -1850,6 +1866,20 @@ DECL_HANDLER(load_registry)
 DECL_HANDLER(unload_registry)
 {
     struct key *key;
+    struct token *token = thread_get_impersonation_token( current );
+
+    const LUID_AND_ATTRIBUTES privs[] =
+    {
+        { SeBackupPrivilege,  0 },
+        { SeRestorePrivilege, 0 },
+    };
+
+    if (!token || !token_check_privileges( token, TRUE, privs,
+                                           sizeof(privs)/sizeof(privs[0]), NULL ))
+    {
+        set_error( STATUS_PRIVILEGE_NOT_HELD );
+        return;
+    }
 
     if ((key = get_hkey_obj( req->hkey, 0 )))
     {
@@ -1863,7 +1893,13 @@ DECL_HANDLER(save_registry)
 {
     struct key *key;
 
-    if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS )))
+    if (!thread_single_check_privilege( current, &SeBackupPrivilege ))
+    {
+        set_error( STATUS_PRIVILEGE_NOT_HELD );
+        return;
+    }
+
+    if ((key = get_hkey_obj( req->hkey, 0 )))
     {
         save_registry( key, req->file );
         release_object( key );
