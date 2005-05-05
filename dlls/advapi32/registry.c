@@ -875,11 +875,7 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    if (!*name)
-    {
-        ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
-    }
-    else if (!(ret = RegOpenKeyExW( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
+    if (!(ret = RegOpenKeyExW( hkey, name, 0, DELETE, &tmp )))
     {
         ret = RtlNtStatusToDosError( NtDeleteKey( tmp ) );
         RegCloseKey( tmp );
@@ -898,6 +894,11 @@ DWORD WINAPI RegDeleteKeyW( HKEY hkey, LPCWSTR name )
  *  hkey   [I] Handle to parent key containing the key to delete
  *  name   [I] Name of the key user hkey to delete
  *
+ * NOTES
+ *
+ * MSDN is wrong when it says that hkey must be opened with the DELETE access
+ * right. In reality, it opens a new handle with DELETE access.
+ *
  * RETURNS
  *  Success: ERROR_SUCCESS
  *  Failure: Error code
@@ -911,11 +912,7 @@ DWORD WINAPI RegDeleteKeyA( HKEY hkey, LPCSTR name )
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    if (!*name)
-    {
-        ret = RtlNtStatusToDosError( NtDeleteKey( hkey ) );
-    }
-    else if (!(ret = RegOpenKeyExA( hkey, name, 0, KEY_ENUMERATE_SUB_KEYS, &tmp )))
+    if (!(ret = RegOpenKeyExA( hkey, name, 0, DELETE, &tmp )))
     {
         if (!is_version_nt()) /* win95 does recursive key deletes */
         {
