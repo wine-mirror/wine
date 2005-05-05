@@ -199,11 +199,11 @@ static BOOL MZ_InitMemory(void)
     return TRUE;
 }
 
-static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
+static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, WORD par_env_seg )
 {
   IMAGE_DOS_HEADER mz_header;
   DWORD image_start,image_size,min_size,max_size,avail;
-  BYTE*psp_start,*load_start,*oldenv;
+  BYTE*psp_start,*load_start,*oldenv = 0;
   int x, old_com=0, alloc;
   SEGPTR reloc;
   WORD env_seg, load_seg, rel_seg, oldpsp_seg;
@@ -211,15 +211,19 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 
   if (DOSVM_psp) {
     /* DOS process already running, inherit from it */
-    PDB16* par_psp = (PDB16*)((DWORD)DOSVM_psp << 4);
+    PDB16* par_psp;
     alloc=0;
-    oldenv = (LPBYTE)((DWORD)par_psp->environment << 4);
     oldpsp_seg = DOSVM_psp;
+    if( !par_env_seg) {  
+        par_psp = (PDB16*)((DWORD)DOSVM_psp << 4);
+        oldenv = (LPBYTE)((DWORD)par_psp->environment << 4);
+    }
   } else {
     /* allocate new DOS process, inheriting from Wine environment */
     alloc=1;
-    oldenv = GetEnvironmentStringsA();
     oldpsp_seg = 0;
+    if( !par_env_seg)
+        oldenv = GetEnvironmentStringsA();
   }
 
  SetFilePointer(hFile,0,NULL,FILE_BEGIN);
@@ -261,7 +265,12 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
     load_start=(LPBYTE)((DWORD)load_seg<<4);
   } else {
     /* allocate environment block */
-    env_seg=MZ_InitEnvironment(oldenv, filename);
+    if( par_env_seg)
+        env_seg = par_env_seg;
+    else
+        env_seg=MZ_InitEnvironment(oldenv, filename);
+    if( alloc && oldenv)
+        FreeEnvironmentStringsA( oldenv);
 
     /* allocate memory for the executable */
     TRACE("Allocating DOS memory (min=%ld, max=%ld)\n",min_size,max_size);
@@ -415,7 +424,7 @@ void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
         }
     }
 
-    if (MZ_DoLoadImage( hFile, filename, NULL )) 
+    if (MZ_DoLoadImage( hFile, filename, NULL, 0 )) 
         MZ_Launch( dos_cmdtail, dos_length );
 }
 
@@ -512,7 +521,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       PDB16 *psp = (PDB16 *)psp_start;
       psp->saveStack = (DWORD)MAKESEGPTR(context->SegSs, LOWORD(context->Esp));
     }
-    ret = MZ_DoLoadImage( hFile, filename, NULL );
+    ret = MZ_DoLoadImage( hFile, filename, NULL, ((ExecBlock *)paramblk)->env_seg );
     if (ret) {
       /* MZ_LoadImage created a new PSP and loaded new values into it,
        * let's work on the new values now */
@@ -558,7 +567,7 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
   case 3: /* load overlay */
     {
       OverlayBlock *blk = (OverlayBlock *)paramblk;
-      ret = MZ_DoLoadImage( hFile, filename, blk );
+      ret = MZ_DoLoadImage( hFile, filename, blk, 0);
     }
     break;
   default:
