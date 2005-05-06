@@ -3040,7 +3040,7 @@ typedef struct _TOKEN_PRIVILEGES {
 
 typedef struct _TOKEN_OWNER {
   PSID Owner;
-} TOKEN_OWNER;
+} TOKEN_OWNER, *PTOKEN_OWNER;
 
 /*
  * TOKEN_PRIMARY_GROUP

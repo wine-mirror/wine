@@ -666,6 +666,8 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 
 
 LONG     WINAPI AddTagToGroupOrderList(PCWSTR lpGroupName, DWORD dwUnknown2, DWORD dwUnknown3);
+DWORD    WINAPI CaptureAndConvertAnsiArg(PCSTR lpSrc, PWSTR *lpDst);
+DWORD    WINAPI CaptureStringArg(PCWSTR lpSrc, PWSTR *lpDst);
 BOOL     WINAPI DelayedMove(PCWSTR lpExistingFileName, PCWSTR lpNewFileName);
 BOOL     WINAPI DoesUserHavePrivilege(PCWSTR lpPrivilegeName);
 PWSTR    WINAPI DuplicateString(PCWSTR lpSrc);
@@ -679,7 +681,9 @@ PWSTR    WINAPI MultiByteToUnicode(PCSTR lpMultiByteStr, UINT uCodePage);
 VOID     WINAPI MyFree(PVOID lpMem);
 PVOID    WINAPI MyMalloc(DWORD dwSize);
 PVOID    WINAPI MyRealloc(PVOID lpSrc, DWORD dwSize);
+DWORD    WINAPI OpenAndMapForRead(PCWSTR, PDWORD, PHANDLE, PHANDLE, PVOID *);
 LONG     WINAPI QueryRegistryValue(HKEY, PCWSTR, PBYTE *, PDWORD, PDWORD);
+DWORD    WINAPI RetreiveFileSecurity(PCWSTR, PSECURITY_DESCRIPTOR *);
 BOOL     WINAPI SetupCloseFileQueue( HSPFILEQ );
 void     WINAPI SetupCloseInfFile( HINF hinf );
 BOOL     WINAPI SetupCommitFileQueueA( HWND, HSPFILEQ, PSP_FILE_CALLBACK_A, PVOID );
@@ -818,7 +822,11 @@ BOOL     WINAPI SetupSetFileQueueAlternatePlatformW( HSPFILEQ, PSP_ALTPLATFORM_I
 #define         SetupSetFileQueueAlternatePlatform WINELIB_NAME_AW(SetupSetFileQueueAlternatePlatform)
 BOOL     WINAPI SetupSetFileQueueFlags( HSPFILEQ, DWORD, DWORD );
 void     WINAPI SetupTermDefaultQueueCallback( PVOID );
+DWORD    WINAPI StampFileSecurity(PCWSTR, PSECURITY_DESCRIPTOR);
+DWORD    WINAPI TakeOwnershipOfFile(PCWSTR);
 PSTR     WINAPI UnicodeToMultiByte(PCWSTR lpUnicodeStr, UINT uCodePage);
+BOOL     WINAPI UnmapAndCloseFile(HANDLE, HANDLE, PVOID);
+
 
 #undef DECL_WINELIB_SETUPAPI_TYPE_AW
 
