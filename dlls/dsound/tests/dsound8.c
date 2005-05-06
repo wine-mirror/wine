@@ -108,15 +108,20 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
            "IDirectSound8_Initialize() failed: %s\n",DXGetErrorString8(rc));
         if (rc==DSERR_NODRIVER) {
             trace("  No Driver\n");
-            return;
+            goto EXIT;
         } else if (rc==E_FAIL) {
             trace("  No Device\n");
-            return;
+            goto EXIT;
         } else if (rc==DSERR_ALLOCATED) {
             trace("  Already In Use\n");
-            return;
+            goto EXIT;
         }
     }
+
+    rc=IDirectSound8_Initialize(dso,lpGuid);
+    ok(rc==DSERR_ALREADYINITIALIZED, "IDirectSound8_Initialize() "
+       "should have returned DSERR_ALREADYINITIALIZED: %s\n",
+       DXGetErrorString8(rc));
 
     /* DSOUND: Error: Invalid caps buffer */
     rc=IDirectSound8_GetCaps(dso,0);
@@ -177,6 +182,7 @@ static void IDirectSound8_test(LPDIRECTSOUND8 dso, BOOL initialized,
     ok(rc==DS_OK||rc==E_NOTIMPL,"IDirectSound8_VerifyCertification() failed: %s\n",
        DXGetErrorString8(rc));
 
+EXIT:
     ref=IDirectSound8_Release(dso);
     ok(ref==0,"IDirectSound8_Release() has %d references, should have 0\n",ref);
 }
