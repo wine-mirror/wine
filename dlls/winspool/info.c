@@ -157,12 +157,12 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     if (force								||
 	!GetProfileStringA("windows","device","*",qbuf,sizeof(qbuf))	||
 	!strcmp(qbuf,"*")						||
-	!strstr(qbuf,"WINEPS")
+	!strstr(qbuf,"WINEPS.DRV")
     ) {
-    	char *buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS,LPR:")+1);
+    	char *buf = HeapAlloc(GetProcessHeap(),0,strlen(name)+strlen(devname)+strlen(",WINEPS.DRV,LPR:")+1);
         HKEY hkey;
 
-	sprintf(buf,"%s,WINEPS,LPR:%s",devname,name);
+	sprintf(buf,"%s,WINEPS.DRV,LPR:%s",devname,name);
 	WriteProfileStringA("windows","device",buf);
         if(RegCreateKeyW(HKEY_CURRENT_USER, user_default_reg_key, &hkey) == ERROR_SUCCESS) {
             RegSetValueExA(hkey, "Device", 0, REG_SZ, buf, strlen(buf) + 1);
@@ -209,8 +209,8 @@ static BOOL CUPS_LoadPrinters(void)
     for (i=0;i<nrofdests;i++) {
         port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(dests[i].name)+1);
         sprintf(port,"LPR:%s",dests[i].name);
-	devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
-	sprintf(devline,"WINEPS,%s",port);
+	devline=HeapAlloc(GetProcessHeap(),0,sizeof("WINEPS.DRV,")+strlen(port));
+	sprintf(devline,"WINEPS.DRV,%s",port);
 	WriteProfileStringA("devices",dests[i].name,devline);
         if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
             RegSetValueExA(hkey, dests[i].name, 0, REG_SZ, devline, strlen(devline) + 1);
@@ -319,8 +319,8 @@ PRINTCAP_ParseEntry(char *pent,BOOL isfirst) {
     port = HeapAlloc(GetProcessHeap(),0,strlen("LPR:")+strlen(name)+1);
     sprintf(port,"LPR:%s",name);
 
-    devline=HeapAlloc(GetProcessHeap(),0,strlen("WINEPS,")+strlen(port)+1);
-    sprintf(devline,"WINEPS,%s",port);
+    devline=HeapAlloc(GetProcessHeap(),0,sizeof("WINEPS.DRV,")+strlen(port));
+    sprintf(devline,"WINEPS.DRV,%s",port);
     WriteProfileStringA("devices",devname,devline);
     if(RegCreateKeyW(HKEY_CURRENT_USER, user_printers_reg_key, &hkey) == ERROR_SUCCESS) {
         RegSetValueExA(hkey, devname, 0, REG_SZ, devline, strlen(devline) + 1);
@@ -1747,7 +1747,7 @@ static void WINSPOOL_GetDefaultDevMode(
 
 	/* fill default DEVMODE - should be read from ppd... */
 	ZeroMemory( &dm, sizeof(dm) );
-	strcpy(dm.dmDeviceName,"wineps");
+	strcpy(dm.dmDeviceName,"wineps.drv");
 	dm.dmSpecVersion = DM_SPECVERSION;
 	dm.dmDriverVersion = 1;
 	dm.dmSize = sizeof(DEVMODEA);

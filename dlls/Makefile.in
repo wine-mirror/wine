@@ -394,7 +394,7 @@ SYMLINKS_SO = \
 	winemp3.acm.so \
 	winenas.drv.so \
 	wineoss.drv.so \
-	wineps.dll.so \
+	wineps.drv.so \
 	winetty.drv.so \
 	wininet.dll.so \
 	winmm.dll.so \
@@ -936,11 +936,11 @@ winenas.drv.so: winmm/winenas/winenas.drv.so
 wineoss.drv.so: winmm/wineoss/wineoss.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv.so $@
 
-wineps.dll.so: wineps/wineps.dll.so
-	$(RM) $@ && $(LN_S) wineps/wineps.dll.so $@
+wineps.drv.so: wineps/wineps.drv.so
+	$(RM) $@ && $(LN_S) wineps/wineps.drv.so $@
 
-wineps16.drv.so : wineps.dll.so
-	$(RM) $@ && $(LN_S) wineps.dll.so $@
+wineps16.drv.so : wineps.drv.so
+	$(RM) $@ && $(LN_S) wineps.drv.so $@
 
 winetty.drv.so: ttydrv/winetty.drv.so
 	$(RM) $@ && $(LN_S) ttydrv/winetty.drv.so $@
@@ -1133,7 +1133,6 @@ IMPORT_LIBS = \
 	libw32skrnl.$(IMPLIBEXT) \
 	libwined3d.$(IMPLIBEXT) \
 	libwinedos.$(IMPLIBEXT) \
-	libwineps.$(IMPLIBEXT) \
 	libwininet.$(IMPLIBEXT) \
 	libwinmm.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
@@ -1743,11 +1742,6 @@ libwinedos.def: winedos/winedos.spec.def
 libwinedos.a: winedos/winedos.spec.def
 	$(DLLTOOL) -k -l $@ -d winedos/winedos.spec.def
 
-libwineps.def: wineps/wineps.spec.def
-	$(RM) $@ && $(LN_S) wineps/wineps.spec.def $@
-libwineps.a: wineps/wineps.spec.def
-	$(DLLTOOL) -k -l $@ -d wineps/wineps.spec.def
-
 libwininet.def: wininet/wininet.spec.def
 	$(RM) $@ && $(LN_S) wininet/wininet.spec.def $@
 libwininet.a: wininet/wininet.spec.def
@@ -1921,7 +1915,6 @@ version/version.spec.def: $(WINEBUILD)
 win32s/w32skrnl.spec.def: $(WINEBUILD)
 wined3d/wined3d.spec.def: $(WINEBUILD)
 winedos/winedos.spec.def: $(WINEBUILD)
-wineps/wineps.spec.def: $(WINEBUILD)
 wininet/wininet.spec.def: $(WINEBUILD)
 winmm/winmm.spec.def: $(WINEBUILD)
 winnls/winnls32.spec.def: $(WINEBUILD)
@@ -2087,7 +2080,7 @@ winmm/winejack/winejack.drv.so: winmm/winejack
 msacm/winemp3/winemp3.acm.so: msacm/winemp3
 winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
-wineps/wineps.dll.so: wineps
+wineps/wineps.drv.so: wineps
 ttydrv/winetty.drv.so: ttydrv
 x11drv/winex11.drv.so: x11drv
 wininet/wininet.dll.so: wininet
