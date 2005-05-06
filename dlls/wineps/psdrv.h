@@ -381,6 +381,7 @@ extern INT16 WINAPI PSDRV_ExtDeviceMode16(HWND16 hwnd, HANDLE16 hDriver,
 		    LPDEVMODEA lpdmOutput, LPSTR lpszDevice, LPSTR lpszPort,
 		    LPDEVMODEA lpdmInput, LPSTR lpszProfile, WORD fwMode);
 
+extern HINSTANCE PSDRV_hInstance;
 extern HANDLE PSDRV_Heap;
 extern char *PSDRV_ANSIVector[256];
 
@@ -393,8 +394,6 @@ extern const AFM *PSDRV_FindAFMinList(FONTFAMILY *head, LPCSTR name);
 extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm,
     	BOOL *p_added);
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
-
-extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);
 
 extern INT PSDRV_XWStoDS( PSDRV_PDEVICE *physDev, INT width );
 extern INT PSDRV_YWStoDS( PSDRV_PDEVICE *physDev, INT height );

@@ -349,7 +349,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
 
   /* If DM_PROMPT is set, present modal dialog box */
   if(dwMode & DM_PROMPT) {
-    HINSTANCE hinstComctl32, hinstWineps32 = LoadLibraryA("WINEPS");
+    HINSTANCE hinstComctl32;
     HPROPSHEETPAGE hpsp[1];
     PROPSHEETPAGEW psp;
     PROPSHEETHEADERW psh;
@@ -371,7 +371,7 @@ INT PSDRV_ExtDeviceMode(LPSTR lpszDriver, HWND hwnd, LPDEVMODEA lpdmOutput,
     di->pi = pi;
     di->dlgdm = dlgdm;
     psp.dwSize = sizeof(psp);
-    psp.hInstance = hinstWineps32;
+    psp.hInstance = PSDRV_hInstance;
     psp.u.pszTemplate = PAPERW;
     psp.u2.pszIcon = NULL;
     psp.pfnDlgProc = PSDRV_PaperDlgProc;

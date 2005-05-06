@@ -101,6 +101,7 @@ static PSDRV_DEVMODEA DefaultDevmode =
   }
 };
 
+HINSTANCE PSDRV_hInstance = 0;
 HANDLE PSDRV_Heap = 0;
 
 static HFONT PSDRV_DefaultFont = 0;
@@ -122,6 +123,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason) {
 
 	case DLL_PROCESS_ATTACH:
+            PSDRV_hInstance = hinst;
             DisableThreadLibraryCalls(hinst);
 
 	    PSDRV_Heap = HeapCreate(0, 0x10000, 0);
