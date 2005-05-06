@@ -487,45 +487,11 @@ void  output_install_script (void)
         "{G;s/$/dlls\\/%s\\/Makefile/;}' configure.ac >t.tmp\n"
     "mv -f t.tmp configure.ac\n"
     "echo Patched configure.ac\n\n"
-    "sed '/^SYMLINKS =/{G;s/$/"
-        "\\^%s.dll$(DLLEXT) \\\\/;}' dlls/Makefile.in| tr ^ \\\\t >t.tmp\n"
-    "sed '/BASEDIRS =/{G;s/$/\\^%s \\\\/;}' t.tmp | tr ^ \\\\t >t.tmp2\n"
-    "sed '/Map symlink name /{G;s/$/^\\$(RM) \\$\\@ \\&\\& \\$\\"
-        "(LN_S\\) %s\\/%s.dll\\$(DLLEXT) \\$\\@/;}' t.tmp2 | tr ^ \\\\t"
-        " > t.tmp\n"
-    "sed '/Map symlink name /{G;s/$/%s.dll\\$(DLLEXT): "
-        "%s\\/%s.dll\\$(DLLEXT)/;}' t.tmp > t.tmp2\n"
-    "sed '/all dependencies/"
-        "{G;s/$/%s\\/__install__: %s.dll$(DLLEXT)/;}' t.tmp2 > t.tmp\n"
-    "sed '/dll dependencies/{G;s/$/%s: user32.dll\\$(DLLEXT) "
-        "kernel32.dll\\$(DLLEXT) ntdll.dll\\$(DLLEXT) advapi32.dll"
-        "\\$(DLLEXT)/;}' t.tmp > t.tmp2\n"
-    "sed '/^IMPORT_LIBS =/{G;s/$/\\^lib%s \\\\/;}' t.tmp2| tr ^ \\\\t >t.tmp\n"
-    "sed '/^x11drv\\/x11drv.spec.def\\: $(WINEBUILD)/"
-        "{G;s/$/%s\\/%s.spec.def: $(WINEBUILD)/;}' t.tmp >t.tmp2\n"
-    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/"
-        "{G;s/$/lib%s.def: %s\\/%s.spec.def/;}' t.tmp2 >t.tmp\n"
-    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/{G;s/$/\\^$(RM) $@ && $(LN_S) "
-        "%s\\/%s.spec.def $@/;}' t.tmp| tr ^ \\\\t >t.tmp2\n"
-    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/"
-        "{G;s/$/lib%s.a: %s\\/%s.spec.def/;}' t.tmp2 >t.tmp\n"
-    "sed '/^$(DLLTOOL) -k -l $@ -d x11drv/"
-        "{G;s/$/\\^$(DLLTOOL) -k -l $@ -d %s\\/%s.spec.def/;}' t.tmp| tr ^ \\\\t >t.tmp2\n"
-    "sed '/Map library name /{G;s/$/%s\\/%s.dll\\$(DLLEXT): %s/;}' t.tmp2 >t.tmp\n"
-    "mv -f t.tmp dlls/Makefile.in\n"
-    "rm -f t.tmp2\n"
-    "echo Patched dlls/Makefile.in\n\n"
+    "cd $1/dlls && ./make_dlls\n\n"
     "echo Run \\'autoconf\\', \\'./configure\\' then \\'make\\' to rebuild Wine\n\n",
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
            OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME,
-           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
+           OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME, OUTPUT_DLL_NAME);
 
   fclose (install_file);
   snprintf (cmd, sizeof (cmd), "chmod a+x %s_install", OUTPUT_DLL_NAME);
