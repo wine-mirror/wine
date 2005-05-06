@@ -49,7 +49,6 @@ static void Copy_PinInfo(PIN_INFO * pDest, const PIN_INFO * pSrc)
     strcpyW(pDest->achName, pSrc->achName);
     pDest->dir = pSrc->dir;
     pDest->pFilter = pSrc->pFilter;
-    IBaseFilter_AddRef(pDest->pFilter);
 }
 
 /* Function called as a helper to IPin_Connect */
@@ -311,6 +310,7 @@ HRESULT WINAPI IPinImpl_QueryPinInfo(IPin * iface, PIN_INFO * pInfo)
     TRACE("(%p/%p)->(%p)\n", This, iface, pInfo);
 
     Copy_PinInfo(pInfo, &This->pinInfo);
+    IBaseFilter_AddRef(pInfo->pFilter);
 
     return S_OK;
 }

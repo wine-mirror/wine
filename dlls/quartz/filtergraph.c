@@ -245,6 +245,9 @@ static ULONG Filtergraph_Release(IFilterGraphImpl *This) {
     TRACE("(%p)->(): new ref = %ld\n", This, ref);
     
     if (ref == 0) {
+        int i;
+        for (i = 0; i < This->nFilters; i++)
+           IBaseFilter_Release(This->ppFiltersInGraph[i]);
 	IFilterMapper2_Release(This->pFilterMapper2);
 	CloseHandle(This->hEventCompletion);
 	EventsQueue_Destroy(&This->evqueue);
@@ -556,8 +559,7 @@ static HRESULT GetInternalConnections(IBaseFilter* pfilter, IPin* pinputpin, IPi
             IPin_QueryDirection(ppin, &pindir);
             if (pindir == PINDIR_OUTPUT)
                 i++;
-            else
-                IPin_Release(ppin);
+            IPin_Release(ppin);
         }
         *pppins = CoTaskMemAlloc(sizeof(IPin*)*i);
         /* Retrieve output pins */
@@ -605,10 +607,8 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
 
     /* Try direct connection first */
-    TRACE("Try direct connection first\n");
     hr = IPin_Connect(ppinOut, ppinIn, NULL);
     if (SUCCEEDED(hr)) {
-        TRACE("Direct connection successful\n");
         return S_OK;
     }
     TRACE("Direct connection failed, trying to insert other filters\n");
@@ -648,7 +648,7 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
         VARIANT var;
         GUID clsid;
         IPin** ppins;
-        IPin* ppinfilter;
+        IPin* ppinfilter = NULL;
         IBaseFilter* pfilter = NULL;
 
         hr = GetFilterInfo(pMoniker, &clsid, &var);
@@ -677,6 +677,7 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
             ERR("Enumpins (%lx)\n", hr);
             goto error;
         }
+
         hr = IEnumPins_Next(penumpins, 1, &ppinfilter, &pin);
         if (FAILED(hr)) {
             ERR("Next (%lx)\n", hr);
@@ -703,17 +704,22 @@ static HRESULT WINAPI Graphbuilder_Connect(IGraphBuilder *iface,
             TRACE("pins to consider: %ld\n", nb);
             for(i = 0; i < nb; i++) {
                 TRACE("Processing pin %d\n", i);
-                hr = IGraphBuilder_Connect(iface, ppins[0], ppinIn);
+                hr = IGraphBuilder_Connect(iface, ppins[i], ppinIn);
                 if (FAILED(hr)) {
-                    TRACE("Cannot render pin %p (%lx)\n", ppinfilter, hr);
-                    return hr;
+                   TRACE("Cannot render pin %p (%lx)\n", ppinfilter, hr);
                 }
+                IPin_Release(ppins[i]);
+                if (SUCCEEDED(hr)) break;
             }
+            while (++i < nb) IPin_Release(ppins[i]);
             CoTaskMemFree(ppins);
+            IBaseFilter_Release(pfilter);
+            IPin_Release(ppinfilter);
+            break;
         }
-        break;
 
 error:
+        if (ppinfilter) IPin_Release(ppinfilter);
         if (pfilter) {
             IGraphBuilder_RemoveFilter(iface, pfilter);
             IBaseFilter_Release(pfilter);
@@ -1167,7 +1173,9 @@ static HRESULT WINAPI Mediacontrol_Invoke(IMediaControl *iface,
     return S_OK;
 }
 
-static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, REFERENCE_TIME tStart)
+typedef HRESULT(WINAPI *fnFoundFilter)(IBaseFilter *);
+
+static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, fnFoundFilter FoundFilter)
 {
     HRESULT hr;
     IPin* pInputPin;
@@ -1176,7 +1184,8 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, REFERENC
     ULONG i;
     PIN_INFO PinInfo;
 
-    TRACE("%p %p %lld\n", pGraph, pOutputPin, tStart);
+    TRACE("%p %p\n", pGraph, pOutputPin);
+    PinInfo.pFilter = NULL;
 
     hr = IPin_ConnectedTo(pOutputPin, &pInputPin);
 
@@ -1201,20 +1210,33 @@ static HRESULT ExploreGraph(IFilterGraphImpl* pGraph, IPin* pOutputPin, REFERENC
                 /* Explore the graph downstream from this pin
 		 * FIXME: We should prevent exploring from a pin more than once. This can happens when
 		 * several input pins are connected to the same output (a MUX for instance). */
-                ExploreGraph(pGraph, ppPins[i], tStart);
+                ExploreGraph(pGraph, ppPins[i], FoundFilter);
+                IPin_Release(ppPins[i]);
             }
 
             CoTaskMemFree(ppPins);
         }
-        TRACE("Run filter %p\n", PinInfo.pFilter);
-        IBaseFilter_Run(PinInfo.pFilter, tStart);
+        TRACE("Doing stuff with filter %p\n", PinInfo.pFilter);
+        FoundFilter(PinInfo.pFilter);
     }
 
+    if (PinInfo.pFilter) IBaseFilter_Release(PinInfo.pFilter);
     return hr;
 }
 
-/*** IMediaControl methods ***/
-static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
+static HRESULT WINAPI SendRun(IBaseFilter *pFilter) {
+   return IBaseFilter_Run(pFilter, 0);
+}
+
+static HRESULT WINAPI SendPause(IBaseFilter *pFilter) {
+   return IBaseFilter_Pause(pFilter);
+}
+
+static HRESULT WINAPI SendStop(IBaseFilter *pFilter) {
+   return IBaseFilter_Stop(pFilter);
+}
+
+static HRESULT SendFilterMessage(IMediaControl *iface, fnFoundFilter FoundFilter) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
     int i;
     IBaseFilter* pfilter;
@@ -1223,19 +1245,10 @@ static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
     IPin* pPin;
     LONG dummy;
     PIN_DIRECTION dir;
-
     TRACE("(%p/%p)->()\n", This, iface);
 
-    EnterCriticalSection(&This->cs);
-
-    if (This->state == State_Running)
-    {
-        LeaveCriticalSection(&This->cs);
-        return S_OK;
-    }
-
-    /* Explorer the graph from source filters to renderers, determine renderers number and
-     * run filters from renderers to source filters */
+    /* Explorer the graph from source filters to renderers, determine renderers
+     * number and run filters from renderers to source filters */
     This->nRenderers = 0;  
     ResetEvent(This->hEventCompletion);
 
@@ -1253,6 +1266,7 @@ static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
         while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
         {
             IPin_QueryDirection(pPin, &dir);
+            IPin_Release(pPin);
             if (dir == PINDIR_INPUT)
             {
                 source = FALSE;
@@ -1266,34 +1280,56 @@ static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
             while(IEnumPins_Next(pEnum, 1, &pPin, &dummy) == S_OK)
             {
                 /* Explore the graph downstream from this pin */
-                ExploreGraph(This, pPin, 0);
+                ExploreGraph(This, pPin, FoundFilter);
+                IPin_Release(pPin);
             }
-            IBaseFilter_Run(pfilter, 0);
+            FoundFilter(pfilter);
         }
         IEnumPins_Release(pEnum);
     }
 
-    This->state = State_Running;
+    return S_FALSE;
+}
 
+/*** IMediaControl methods ***/
+static HRESULT WINAPI Mediacontrol_Run(IMediaControl *iface) {
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    if (This->state == State_Running) return S_OK;
+
+    EnterCriticalSection(&This->cs);
+    SendFilterMessage(iface, SendRun);
+    This->state = State_Running;
     LeaveCriticalSection(&This->cs);
-    
     return S_FALSE;
 }
 
 static HRESULT WINAPI Mediacontrol_Pause(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
 
-    TRACE("(%p/%p)->(): stub !!!\n", This, iface);
+    if (This->state == State_Paused) return S_OK;
 
-    return S_OK;
+    EnterCriticalSection(&This->cs);
+    SendFilterMessage(iface, SendPause);
+    This->state = State_Paused;
+    LeaveCriticalSection(&This->cs);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI Mediacontrol_Stop(IMediaControl *iface) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IMediaControl_vtbl, iface);
+    TRACE("(%p/%p)->()\n", This, iface);
 
-    TRACE("(%p/%p)->(): stub !!!\n", This, iface);
+    if (This->state == State_Stopped) return S_OK;
 
-    return S_OK;
+    EnterCriticalSection(&This->cs);
+    if (This->state == State_Running) SendFilterMessage(iface, SendPause);
+    SendFilterMessage(iface, SendStop);
+    This->state = State_Stopped;
+    LeaveCriticalSection(&This->cs);
+    return S_FALSE;
 }
 
 static HRESULT WINAPI Mediacontrol_GetState(IMediaControl *iface,
