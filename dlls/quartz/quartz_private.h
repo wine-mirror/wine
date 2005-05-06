@@ -77,6 +77,7 @@ extern const char * qzdebugstr_guid(const GUID * id);
 extern const char * qzdebugstr_State(FILTER_STATE state);
 
 HRESULT CopyMediaType(AM_MEDIA_TYPE * pDest, const AM_MEDIA_TYPE *pSrc);
+void FreeMediaType(AM_MEDIA_TYPE * pmt);
 void DeleteMediaType(AM_MEDIA_TYPE * pmt);
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards);
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
