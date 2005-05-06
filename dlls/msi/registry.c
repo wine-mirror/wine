@@ -722,6 +722,10 @@ UINT WINAPI MsiEnumClientsW(LPCWSTR szComponent, DWORD index, LPWSTR szProduct)
     return r;
 }
 
+/*************************************************************************
+ *  MsiEnumComponentQualifiersA [MSI.@]
+ *
+ */
 UINT WINAPI MsiEnumComponentQualifiersA( LPSTR szComponent, DWORD iIndex,
                 LPSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
                 LPSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf)
@@ -768,7 +772,7 @@ UINT WINAPI MsiEnumComponentQualifiersA( LPSTR szComponent, DWORD iIndex,
 
     /*
      * A bit of wizardry to report back the length without the null.
-     * just in case the buffer is to small and is filled.
+     * just in case the buffer is too small and is filled.
      */
     if (lpQualifierBuf)
     {
@@ -799,6 +803,10 @@ UINT WINAPI MsiEnumComponentQualifiersA( LPSTR szComponent, DWORD iIndex,
     return rc;
 }
 
+/*************************************************************************
+ *  MsiEnumComponentQualifiersW [MSI.@]
+ *
+ */
 UINT WINAPI MsiEnumComponentQualifiersW( LPWSTR szComponent, DWORD iIndex,
                 LPWSTR lpQualifierBuf, DWORD* pcchQualifierBuf,
                 LPWSTR lpApplicationDataBuf, DWORD* pcchApplicationDataBuf )
@@ -858,6 +866,10 @@ UINT WINAPI MsiEnumComponentQualifiersW( LPWSTR szComponent, DWORD iIndex,
     return rc;
 }
 
+/*************************************************************************
+ *  MsiEnumRelatedProductsW   [MSI.@]
+ *
+ */
 UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,
                                     DWORD iProductIndex, LPWSTR lpProductBuf)
 {
@@ -885,6 +897,10 @@ UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,
     return r;
 }
 
+/*************************************************************************
+ *  MsiEnumRelatedProductsA   [MSI.@]
+ *
+ */
 UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
                                     DWORD iProductIndex, LPSTR lpProductBuf)
 {

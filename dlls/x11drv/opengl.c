@@ -272,10 +272,11 @@ choose_exit:
   return ret;
 }
 
-/* X11DRV_DescribePixelFormat
-
-     Get the pixel-format descriptor associated to the given id
-*/
+/**
+ * X11DRV_DescribePixelFormat
+ *
+ * Get the pixel-format descriptor associated to the given id
+ */
 int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
 			       int iPixelFormat,
 			       UINT nBytes,
@@ -403,20 +404,22 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   return ret;
 }
 
-/* X11DRV_GetPixelFormat
-
-     Get the pixel-format id used by this DC
-*/
+/**
+ * X11DRV_GetPixelFormat
+ *
+ * Get the pixel-format id used by this DC
+ */
 int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
   TRACE("(%p): returns %d\n", physDev, physDev->current_pf);
 
   return physDev->current_pf;
 }
 
-/* X11DRV_SetPixelFormat
-
-     Set the pixel-format id used by this DC
-*/
+/**
+ * X11DRV_SetPixelFormat
+ *
+ * Set the pixel-format id used by this DC
+ */
 BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
@@ -427,10 +430,11 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   return TRUE;
 }
 
-/* X11DRV_SwapBuffers
-
-     Swap the buffers of this DC
-*/
+/**
+ * X11DRV_SwapBuffers
+ *
+ * Swap the buffers of this DC
+ */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   if (opengl_handle == NULL) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
