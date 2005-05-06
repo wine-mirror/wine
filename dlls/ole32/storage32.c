@@ -5632,6 +5632,45 @@ HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved,
 }
 
 /******************************************************************************
+ *              StgOpenStorageEx      [OLE32.@]
+ */
+HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgfmt, DWORD grfAttrs, STGOPTIONS* pStgOptions, void* reserved, REFIID riid, void** ppObjectOpen)
+{
+    TRACE("(%s, %lx, %lx, %lx, %p, %p, %p, %p)\n", debugstr_w(pwcsName),
+          grfMode, stgfmt, grfAttrs, pStgOptions, reserved, riid, ppObjectOpen);
+
+    if (stgfmt != STGFMT_DOCFILE && grfAttrs != 0)
+    {
+        ERR("grfAttrs must be 0 if stgfmt != STGFMT_DOCFILE\n");
+        return STG_E_INVALIDPARAMETER;  
+    }
+
+    if (stgfmt != STGFMT_DOCFILE && grfAttrs != 0 && grfAttrs != FILE_FLAG_NO_BUFFERING)
+    {
+        ERR("grfAttrs must be 0 or FILE_FLAG_NO_BUFFERING if stgfmt == STGFMT_DOCFILE\n");
+        return STG_E_INVALIDPARAMETER;  
+    }
+
+    if (stgfmt == STGFMT_FILE)
+    {
+        ERR("Cannot use STGFMT_FILE - this is NTFS only\n");  
+        return STG_E_INVALIDPARAMETER;
+    }
+
+    if (stgfmt == STGFMT_STORAGE || stgfmt == STGFMT_DOCFILE || stgfmt == STGFMT_ANY)
+    {
+        if (stgfmt == STGFMT_ANY) 
+            WARN("STGFMT_ANY assuming storage\n");
+        FIXME("Stub: calling StgOpenStorage, but ignoring pStgOptions and grfAttrs\n");
+        return StgOpenStorage(pwcsName, NULL, grfMode, (SNB)NULL, 0, (IStorage **)ppObjectOpen); 
+    }
+
+    ERR("Invalid stgfmt argument\n");
+    return STG_E_INVALIDPARAMETER;
+}
+
+
+/******************************************************************************
  *              StgOpenStorage        [OLE32.@]
  */
 HRESULT WINAPI StgOpenStorage(

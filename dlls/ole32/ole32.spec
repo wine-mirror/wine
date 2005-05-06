@@ -247,7 +247,7 @@
 @ stub STGMEDIUM_UserUnmarshal
 @ stub StgOpenAsyncDocfileOnIFillLockBytes
 @ stdcall StgOpenStorage(wstr ptr long ptr long ptr)
-@ stub StgOpenStorageEx
+@ stdcall StgOpenStorageEx(wstr long long long ptr ptr ptr ptr)
 @ stdcall StgOpenStorageOnILockBytes(ptr ptr long long long ptr)
 @ stdcall StgSetTimes(wstr ptr ptr ptr )
 @ stdcall StringFromCLSID(ptr ptr)
