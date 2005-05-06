@@ -99,7 +99,9 @@
 # define HAVE_IPX
 #endif
 #ifdef HAVE_IPX_LINUX
-# include <asm/types.h>
+# ifdef HAVE_ASM_TYPES_H
+#  include <asm/types.h>
+# endif
 # include <linux/ipx.h>
 # define HAVE_IPX
 #endif

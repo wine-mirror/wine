@@ -25,7 +25,9 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #include <signal.h>
 
 #include "windef.h"

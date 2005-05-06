@@ -18,12 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
 #include <dirent.h>
-#include <sys/stat.h>
-#include <pwd.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef HAVE_PWD_H
+# include <pwd.h>
+#endif
 #include <grp.h>
 
 #define COBJMACROS

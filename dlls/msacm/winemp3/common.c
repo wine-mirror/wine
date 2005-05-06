@@ -16,12 +16,15 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <signal.h>
 
 #include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #include <fcntl.h>
 
 #include "mpg123.h"

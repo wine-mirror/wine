@@ -22,7 +22,7 @@
 #include "wine/port.h"
 
 #include <fcntl.h>
-#include <memory.h>
+#include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>

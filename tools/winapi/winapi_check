@@ -583,8 +583,7 @@ foreach my $file (@c_files) {
 			    }
 			}
 		    } elsif($preprocessor->is_def($macro)) {
-			$output->write("$file: #$directive $argument: is protected, " .
-				       "but is not a conditional include\n");
+			$output->write("$file: #$directive $argument: is protected, but there is no check for it in configure.ac\n");
 		    }
 		}
 

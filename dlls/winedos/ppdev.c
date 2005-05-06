@@ -27,7 +27,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
 #ifdef HAVE_SYS_IOCTL_H

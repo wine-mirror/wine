@@ -65,7 +65,9 @@
 #endif
 #include <errno.h>
 #include <ctype.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #ifdef HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif

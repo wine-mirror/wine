@@ -110,6 +110,14 @@ sub new($) {
 	    foreach my $name (split(/\s+/, $headers)) {
 		$$conditional_headers{$name}++;
 	    }
+	} elsif(/AC_HEADER_STAT\(\)/) {
+            # This checks for a bunch of standard headers
+            # There's stdlib.h, string.h and sys/types.h too but we don't
+            # want to force ifdefs for those at this point.
+	    foreach my $name ("sys/stat.h", "memory.h", "strings.h",
+                              "inttypes.h", "stdint.h", "unistd.h") {
+		$$conditional_headers{$name}++;
+	    }
 	} elsif(/AC_CHECK_FUNCS\(\s*([^,\)]*)(?:,|\))?/) {
 	    my $funcs = $1;
 	    $funcs =~ s/^\s*\[\s*(.*?)\s*\]\s*$/$1/;

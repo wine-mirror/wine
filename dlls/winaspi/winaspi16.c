@@ -23,7 +23,6 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <memory.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
