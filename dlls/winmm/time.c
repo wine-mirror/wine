@@ -434,7 +434,7 @@ MMRESULT WINAPI timeBeginPeriod(UINT wPeriod)
 
     if (wPeriod > MMSYSTIME_MININTERVAL)
     {
-        FIXME("Stub; we set our timer resolution at minimum\n");
+        WARN("Stub; we set our timer resolution at minimum\n");
     }
 
     return 0;
@@ -450,7 +450,7 @@ MMRESULT WINAPI timeEndPeriod(UINT wPeriod)
 
     if (wPeriod > MMSYSTIME_MININTERVAL)
     {
-        FIXME("Stub; we set our timer resolution at minimum\n");
+        WARN("Stub; we set our timer resolution at minimum\n");
     }
     return 0;
 }
