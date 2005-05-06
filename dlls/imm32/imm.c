@@ -140,7 +140,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
             DisableThreadLibraryCalls(hInstDLL);
             hImeInst = hInstDLL;
             IMM_RegisterMessages();
-            x11drv = GetModuleHandleA("x11drv.dll");
+            x11drv = GetModuleHandleA("winex11.drv");
             if (x11drv) pX11DRV_ForceXIMReset = (void *)GetProcAddress( x11drv, "ForceXIMReset");
             break;
         case DLL_PROCESS_DETACH:

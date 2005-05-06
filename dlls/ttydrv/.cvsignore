@@ -1,3 +1,2 @@
 Makefile
-ttydrv.dll.dbg.c
-ttydrv.spec.def
+winetty.drv.dbg.c

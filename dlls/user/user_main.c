@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
@@ -63,14 +64,14 @@ extern void WDML_NotifyThreadDetach(void);
 /* load the graphics driver */
 static BOOL load_driver(void)
 {
-    char buffer[MAX_PATH], *name, *next;
+    char buffer[MAX_PATH], libname[32], *name, *next;
     HKEY hkey;
 
-    strcpy( buffer, "x11drv,ttydrv" );  /* default value */
-    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", &hkey ))
+    strcpy( buffer, "x11,tty" );  /* default value */
+    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drivers", &hkey ))
     {
         DWORD type, count = sizeof(buffer);
-        RegQueryValueExA( hkey, "GraphicsDriver", 0, &type, buffer, &count );
+        RegQueryValueExA( hkey, "Graphics", 0, &type, buffer, &count );
         RegCloseKey( hkey );
     }
 
@@ -80,13 +81,14 @@ static BOOL load_driver(void)
         next = strchr( name, ',' );
         if (next) *next++ = 0;
 
-        if ((graphics_driver = LoadLibraryA( name )) != 0) break;
+        snprintf( libname, sizeof(libname), "wine%s.drv", name );
+        if ((graphics_driver = LoadLibraryA( libname )) != 0) break;
         name = next;
     }
     if (!graphics_driver)
     {
         MESSAGE( "wine: Could not load graphics driver '%s'.\n", buffer );
-        if (!strcasecmp( buffer, "x11drv" ))
+        if (!strcasecmp( buffer, "x11" ))
             MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
         ExitProcess(1);
     }

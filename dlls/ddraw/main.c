@@ -654,7 +654,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 
         DisableThreadLibraryCalls(hInstDLL);
 
-        mod = GetModuleHandleA( "x11drv.dll" );
+        mod = GetModuleHandleA( "winex11.drv" );
         if (mod)
         {
             wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );

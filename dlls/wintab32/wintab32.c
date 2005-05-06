@@ -74,7 +74,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpReserved)
         case DLL_PROCESS_ATTACH:
             TRACE("Initialization\n");
             InitializeCriticalSection(&csTablet);
-            hx11drv = GetModuleHandleA("x11drv.dll");
+            hx11drv = GetModuleHandleA("winex11.drv");
             if (hx11drv)
             {
                 pLoadTabletInfo = (void *)GetProcAddress(hx11drv, "LoadTabletInfo");

@@ -817,7 +817,7 @@ static BOOL process_attach(void)
   HDC hdc;
   XVisualInfo *vis = NULL;
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
-  HMODULE mod = GetModuleHandleA( "x11drv.dll" );
+  HMODULE mod = GetModuleHandleA( "winex11.drv" );
   void *opengl_handle;
   DWORD size = sizeof(internal_gl_disabled_extensions);
   HKEY hkey = 0;

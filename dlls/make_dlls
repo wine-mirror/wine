@@ -187,6 +187,9 @@ symlinks.so: \$(SYMLINKS_SO)
 
 symlinks: \$(BUILDSUBDIRS)
 
+x11drv.dll.so: winex11.drv.so
+	\$(RM) \$@ && \$(LN_S) winex11.drv.so \$@
+
 EOF
 
 ################################################################

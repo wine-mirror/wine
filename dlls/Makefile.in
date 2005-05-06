@@ -371,7 +371,6 @@ SYMLINKS_SO = \
 	stdole32.tlb.so \
 	sti.dll.so \
 	tapi32.dll.so \
-	ttydrv.dll.so \
 	twain_32.dll.so \
 	unicows.dll.so \
 	url.dll.so \
@@ -396,6 +395,7 @@ SYMLINKS_SO = \
 	winenas.drv.so \
 	wineoss.drv.so \
 	wineps.dll.so \
+	winetty.drv.so \
 	wininet.dll.so \
 	winmm.dll.so \
 	winnls32.dll.so \
@@ -417,6 +417,9 @@ all: symlinks$(DLLEXT)
 symlinks.so: $(SYMLINKS_SO)
 
 symlinks: $(BUILDSUBDIRS)
+
+x11drv.dll.so: winex11.drv.so
+	$(RM) $@ && $(LN_S) winex11.drv.so $@
 
 
 # Map symlink name to the corresponding library
@@ -845,9 +848,6 @@ sti.dll.so: sti/sti.dll.so
 tapi32.dll.so: tapi32/tapi32.dll.so
 	$(RM) $@ && $(LN_S) tapi32/tapi32.dll.so $@
 
-ttydrv.dll.so: ttydrv/ttydrv.dll.so
-	$(RM) $@ && $(LN_S) ttydrv/ttydrv.dll.so $@
-
 twain_32.dll.so: twain/twain_32.dll.so
 	$(RM) $@ && $(LN_S) twain/twain_32.dll.so $@
 
@@ -942,6 +942,12 @@ wineps.dll.so: wineps/wineps.dll.so
 wineps16.drv.so : wineps.dll.so
 	$(RM) $@ && $(LN_S) wineps.dll.so $@
 
+winetty.drv.so: ttydrv/winetty.drv.so
+	$(RM) $@ && $(LN_S) ttydrv/winetty.drv.so $@
+
+winex11.drv.so: x11drv/winex11.drv.so
+	$(RM) $@ && $(LN_S) x11drv/winex11.drv.so $@
+
 wininet.dll.so: wininet/wininet.dll.so
 	$(RM) $@ && $(LN_S) wininet/wininet.dll.so $@
 
@@ -989,9 +995,6 @@ wsock32.dll.so: wsock32/wsock32.dll.so
 
 wtsapi32.dll.so: wtsapi32/wtsapi32.dll.so
 	$(RM) $@ && $(LN_S) wtsapi32/wtsapi32.dll.so $@
-
-x11drv.dll.so: x11drv/x11drv.dll.so
-	$(RM) $@ && $(LN_S) x11drv/x11drv.dll.so $@
 
 libdxerr8.a: dxerr8/libdxerr8.a
 	$(RM) $@ && $(LN_S) dxerr8/libdxerr8.a $@
@@ -1119,7 +1122,6 @@ IMPORT_LIBS = \
 	libsnmpapi.$(IMPLIBEXT) \
 	libsti.$(IMPLIBEXT) \
 	libtapi32.$(IMPLIBEXT) \
-	libttydrv.$(IMPLIBEXT) \
 	libtwain_32.$(IMPLIBEXT) \
 	libunicows.$(IMPLIBEXT) \
 	liburl.$(IMPLIBEXT) \
@@ -1143,7 +1145,6 @@ IMPORT_LIBS = \
 	libws2_32.$(IMPLIBEXT) \
 	libwsock32.$(IMPLIBEXT) \
 	libwtsapi32.$(IMPLIBEXT) \
-	libx11drv.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
 	libdxguid.a \
@@ -1687,11 +1688,6 @@ libtapi32.def: tapi32/tapi32.spec.def
 libtapi32.a: tapi32/tapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d tapi32/tapi32.spec.def
 
-libttydrv.def: ttydrv/ttydrv.spec.def
-	$(RM) $@ && $(LN_S) ttydrv/ttydrv.spec.def $@
-libttydrv.a: ttydrv/ttydrv.spec.def
-	$(DLLTOOL) -k -l $@ -d ttydrv/ttydrv.spec.def
-
 libtwain_32.def: twain/twain_32.spec.def
 	$(RM) $@ && $(LN_S) twain/twain_32.spec.def $@
 libtwain_32.a: twain/twain_32.spec.def
@@ -1807,11 +1803,6 @@ libwtsapi32.def: wtsapi32/wtsapi32.spec.def
 libwtsapi32.a: wtsapi32/wtsapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d wtsapi32/wtsapi32.spec.def
 
-libx11drv.def: x11drv/x11drv.spec.def
-	$(RM) $@ && $(LN_S) x11drv/x11drv.spec.def $@
-libx11drv.a: x11drv/x11drv.spec.def
-	$(DLLTOOL) -k -l $@ -d x11drv/x11drv.spec.def
-
 advapi32/advapi32.spec.def: $(WINEBUILD)
 advpack/advpack.spec.def: $(WINEBUILD)
 amstream/amstream.spec.def: $(WINEBUILD)
@@ -1919,7 +1910,6 @@ shlwapi/shlwapi.spec.def: $(WINEBUILD)
 snmpapi/snmpapi.spec.def: $(WINEBUILD)
 sti/sti.spec.def: $(WINEBUILD)
 tapi32/tapi32.spec.def: $(WINEBUILD)
-ttydrv/ttydrv.spec.def: $(WINEBUILD)
 twain/twain_32.spec.def: $(WINEBUILD)
 unicows/unicows.spec.def: $(WINEBUILD)
 url/url.spec.def: $(WINEBUILD)
@@ -1943,7 +1933,6 @@ wow32/wow32.spec.def: $(WINEBUILD)
 winsock/ws2_32.spec.def: $(WINEBUILD)
 wsock32/wsock32.spec.def: $(WINEBUILD)
 wtsapi32/wtsapi32.spec.def: $(WINEBUILD)
-x11drv/x11drv.spec.def: $(WINEBUILD)
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__): $(IMPORT_LIBS)
@@ -2074,7 +2063,6 @@ snmpapi/snmpapi.dll.so: snmpapi
 stdole32.tlb/stdole32.tlb.so: stdole32.tlb
 sti/sti.dll.so: sti
 tapi32/tapi32.dll.so: tapi32
-ttydrv/ttydrv.dll.so: ttydrv
 twain/twain_32.dll.so: twain
 unicows/unicows.dll.so: unicows
 url/url.dll.so: url
@@ -2100,6 +2088,8 @@ msacm/winemp3/winemp3.acm.so: msacm/winemp3
 winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
 wineps/wineps.dll.so: wineps
+ttydrv/winetty.drv.so: ttydrv
+x11drv/winex11.drv.so: x11drv
 wininet/wininet.dll.so: wininet
 winmm/winmm.dll.so: winmm
 winnls/winnls32.dll.so: winnls
@@ -2111,7 +2101,6 @@ wow32/wow32.dll.so: wow32
 winsock/ws2_32.dll.so: winsock
 wsock32/wsock32.dll.so: wsock32
 wtsapi32/wtsapi32.dll.so: wtsapi32
-x11drv/x11drv.dll.so: x11drv
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid
