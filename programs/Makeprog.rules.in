@@ -13,9 +13,9 @@ DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
 DEFS        = $(DLLDEFS) $(EXTRADEFS)
 ALL_OBJS    = $(OBJS) $(MODULE).dbg.o
-ALL_LIBS    = $(IMPORTS:%=-l%) $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
+ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
+ALL_LIBS    = $(ALL_IMPORTS:%=-l%) $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 BASEMODULE  = $(MODULE:.exe=)
-TESTIMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 RUNTESTFLAGS= -q -P wine -T $(TOPOBJDIR)
 
 @MAKE_RULES@
@@ -25,7 +25,7 @@ all: $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 # Rules for .so main module
 
 $(MODULE).so: $(ALL_OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(ALL_OBJS) $(RC_SRCS:.rc=.res) -o $@ -L$(DLLDIR) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild $(APPMODE) $(ALL_OBJS) $(RC_SRCS:.rc=.res) -o $@ -L$(DLLDIR) $(ALL_LIBS) $(DELAYIMPORTS:%=-Wb,-d%)
 
 $(BASEMODULE): $(WINEWRAPPER)
 	$(RM) $@ && $(LN_S) $(WINEWRAPPER) $@
@@ -33,7 +33,7 @@ $(BASEMODULE): $(WINEWRAPPER)
 # Rules for .exe main module
 
 $(MODULE): $(ALL_OBJS) $(RCOBJS) Makefile.in
-	$(CC) $(APPMODE) $(ALL_OBJS) $(RCOBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(ALL_LIBS)
+	$(CC) $(APPMODE) $(ALL_OBJS) $(RCOBJS) -o $@ $(ALL_LIBS)
 
 # Rules for testing
 

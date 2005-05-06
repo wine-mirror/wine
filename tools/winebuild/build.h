@@ -148,6 +148,7 @@ extern void *xmalloc (size_t size);
 extern void *xrealloc (void *ptr, size_t size);
 extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
+extern int strendswith(const char* str, const char* end);
 extern void fatal_error( const char *msg, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void fatal_perror( const char *msg, ... )
@@ -167,7 +168,8 @@ extern void free_dll_spec( DLLSPEC *spec );
 extern const char *make_c_identifier( const char *str );
 extern int get_alignment(int alignBoundary);
 
-extern void add_import_dll( const char *name, int delay );
+extern void add_import_dll( const char *name, const char *filename );
+extern void add_delayed_import( const char *name );
 extern void add_ignore_symbol( const char *name );
 extern void read_undef_symbols( char **argv );
 extern int resolve_imports( DLLSPEC *spec );
