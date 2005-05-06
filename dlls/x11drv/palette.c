@@ -322,7 +322,7 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
     int i;
 
     if((COLOR_sysPal = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*palette_size)) == NULL) {
-        WARN("Can not allocate system palette\n");
+        WARN("Unable to allocate the system palette\n");
         return FALSE;
     }
 
@@ -578,7 +578,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 
    COLOR_sysPal = HeapAlloc(GetProcessHeap(),0,sizeof(PALETTEENTRY)*256);
    if(COLOR_sysPal == NULL) {
-       ERR("Can not allocate system palette!\n");
+       ERR("Unable to allocate the system palette!\n");
        HeapFree(GetProcessHeap(), 0, pixDynMapping);
        return FALSE;
    }
@@ -1095,7 +1095,7 @@ static UINT X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNu
                            sizeof(int)*palPtr->logpalette.palNumEntries);
 
     if(mapping == NULL) {
-        ERR("Can not allocate new mapping -- memory exausted!\n");
+        ERR("Unable to allocate new mapping -- memory exhausted!\n");
         return 0;
     }
     palPtr->mapping = mapping;

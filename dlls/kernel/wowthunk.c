@@ -776,7 +776,7 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
         return 0;
     }
 
-    /* if the file can not be found, call LoadLibraryExA anyway, since it might be
+    /* if the file cannot be found, call LoadLibraryExA anyway, since it might be
        a builtin module. This case is handled in MODULE_LoadLibraryExA */
 
     if ((p = strrchr( lpszLibFile, '.' )) && !strchr( p, '\\' ))  /* got an extension */

@@ -1435,7 +1435,7 @@ ln -s /c c:
             <filename>c:\AnApp</filename> directories as well as have
             read access to the entire FAT filesystem.  On this system
             the FAT filesystem has default permissions which should not
-            be changed for security reasons or can not be changed due to
+            be changed for security reasons or cannot be changed due to
             lack of root access.  On this system a shadow directory
             might be set up in the following manner:
           </para>

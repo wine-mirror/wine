@@ -80,7 +80,7 @@
       <para>
         First you must legally get MFC source code on your computer. The MFC
         source code comes as a part of Visual Studio. The license for
-        Visual Studio implies it is a single product that can not
+        Visual Studio implies it is a single product that cannot
         be broken up into its components. So the cleanest way to get MFC on
         your system is to buy Visual Studio and install it on a dual boot
         Linux box.

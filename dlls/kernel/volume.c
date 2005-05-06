@@ -1192,7 +1192,7 @@ UINT WINAPI GetLogicalDriveStringsW( UINT len, LPWSTR buffer )
  *   DRIVE_UNKNOWN     unable to find out anything about the drive
  *   DRIVE_NO_ROOT_DIR nonexistent root dir
  *   DRIVE_REMOVABLE   the disk can be removed from the machine
- *   DRIVE_FIXED       the disk can not be removed from the machine
+ *   DRIVE_FIXED       the disk cannot be removed from the machine
  *   DRIVE_REMOTE      network disk
  *   DRIVE_CDROM       CDROM drive
  *   DRIVE_RAMDISK     virtual disk in RAM

@@ -1580,12 +1580,12 @@ BOOL WINAPI WriteProfileSectionW( LPCWSTR section, LPCWSTR keys_n_values)
  * Win95:
  * - if the buffer is 0 or 1 character long then it is as if it was of
  *   infinite length.
- * - otherwise, if the buffer is to small only the section names that fit
+ * - otherwise, if the buffer is too small only the section names that fit
  *   are returned.
- * - note that this means if the buffer was to small to return even just
+ * - note that this means if the buffer was too small to return even just
  *   the first section name then a single '\0' will be returned.
  * - the return value is the number of characters written in the buffer,
- *   except if the buffer was too smal in which case len-2 is returned
+ *   except if the buffer was too small in which case len-2 is returned
  *
  * Win2000:
  * - if the buffer is 0, 1 or 2 characters long then it is filled with

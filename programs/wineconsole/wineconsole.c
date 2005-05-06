@@ -246,7 +246,7 @@ int	WINECON_GrabChanges(struct inner_data* data)
 	    continue;
 	}
 
-	if (ev_found != -1 &&  /* Only 2 cases where they can NOT merge */
+	if (ev_found != -1 &&  /* Only 2 cases where they CANNOT merge */
 	    !(evts[i       ].u.update.bottom + 1 < evts[ev_found].u.update.top ||
 	      evts[ev_found].u.update.bottom + 1 < evts[i       ].u.update.top))
 	{

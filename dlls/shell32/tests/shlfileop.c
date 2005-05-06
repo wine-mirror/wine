@@ -388,7 +388,7 @@ void test_move(void)
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    ok(SHFileOperationA(&shfo), "Can not move many files\n");
+    ok(SHFileOperationA(&shfo), "Cannot move many files\n");
     ok(file_exists(".\\test1.txt"), "The file is not moved. Many files are specified\n");
     ok(file_exists(".\\test4.txt"), "The directory is not moved. Many files are specified\n");
 

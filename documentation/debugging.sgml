@@ -59,7 +59,7 @@ MESSAGE( "Could not create graphics driver '%s'\n", buffer );
               <para>
                 These are warning messages. You should report a
                 warning when something unwanted happens, and the
-		function can not deal with the condition. This
+		function cannot deal with the condition. This
 		is seldomly used since proper functions can usually
 		report failures back to the caller. Think twice before
 		making the message a warning.

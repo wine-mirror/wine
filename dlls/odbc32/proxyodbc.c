@@ -658,7 +658,7 @@ SQLRETURN WINAPI SQLAllocHandle(SQLSMALLINT HandleType, SQLHANDLE InputHandle, S
         if (!gProxyHandle.bFunctionReady || gProxyHandle.dmHandle == NULL)
         {
             if (gProxyHandle.nErrorType == ERROR_LIBRARY_NOT_FOUND)
-                WARN("ProxyODBC: Can not load ODBC driver manager library.\n");
+                WARN("ProxyODBC: Cannot load ODBC driver manager library.\n");
 
             if (HandleType == SQL_HANDLE_ENV)
                 *OutputHandle = SQL_NULL_HENV;
@@ -716,7 +716,7 @@ SQLRETURN WINAPI SQLAllocHandleStd( SQLSMALLINT HandleType,
         if (!gProxyHandle.bFunctionReady || gProxyHandle.dmHandle == NULL)
         {
             if (gProxyHandle.nErrorType == ERROR_LIBRARY_NOT_FOUND)
-                WARN("ProxyODBC: Can not load ODBC driver manager library.\n");
+                WARN("ProxyODBC: Cannot load ODBC driver manager library.\n");
 
             if (HandleType == SQL_HANDLE_ENV)
                 *OutputHandle = SQL_NULL_HENV;

@@ -53,7 +53,7 @@ void* xmalloc(size_t size)
     void* p;
 
     if ((p = malloc (size)) == NULL)
-	error("Can not malloc %d bytes.", size);
+	error("Could not malloc %d bytes.", size);
 
     return p;
 }
@@ -62,7 +62,7 @@ void *xrealloc(void* p, size_t size)
 {
     void* p2 = realloc (p, size);
     if (size && !p2)
-	error("Can not realloc %d bytes.", size);
+	error("Could not realloc %d bytes.", size);
 
     return p2;
 }
@@ -195,7 +195,7 @@ void create_file(const char* name, int mode, const char* fmt, ...)
     if (verbose) printf("Creating file %s\n", name);
     va_start(ap, fmt);
     if ( !(file = fopen(name, "w")) )
-	error ("Can not create %s.", name);
+	error("Unable to open %s for writing.", name);
     vfprintf(file, fmt, ap);
     va_end(ap);
     fclose(file);

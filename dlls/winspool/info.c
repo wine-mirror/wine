@@ -3343,7 +3343,7 @@ BOOL WINAPI GetDefaultPrinterW(LPWSTR name, LPDWORD namesize)
 
     /* make the buffer big enough for the stuff from the profile/registry,
      * the content must fit into the local buffer to compute the correct
-     * size even if the extern buffer is to small or not given.
+     * size even if the extern buffer is too small or not given.
      * (20 for ,driver,port) */
     insize = *namesize;
     len = max(100, (insize + 20));

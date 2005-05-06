@@ -12,7 +12,7 @@
 	that is needed.
       </para>
       <para>
-        To be more clear, I will detail one step after another what
+        For clarity, I will detail one step after another what
         the <command>configure</command> script checks.
       </para>
       <para>

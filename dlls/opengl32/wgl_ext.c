@@ -825,7 +825,7 @@ void wgl_ext_finalize_extensions(void)
  *
  * @WARNING: this list must be ordered by name
  *
- * @TODO: real handle caps on providing some func_init functions (third param, ex: to check extentions)
+ * @TODO: real handle caps on providing some func_init functions (third param, ex: to check extensions)
  */
 WGL_extension wgl_extension_registry[] = {
     { "wglBindTexImageARB", (void *) wglBindTexImageARB, NULL, NULL},

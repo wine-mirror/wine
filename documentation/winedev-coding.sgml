@@ -300,7 +300,7 @@ code
 	There <emphasis>are</emphasis> exceptions to the "avoid
 	<symbol>#ifdef MyOS</symbol>" rule. Wine, for example, needs
 	the internals of the signal stack -- that cannot easily be
-	described in terms of features. Moreover, you can not use
+	described in terms of features. Moreover, you cannot use
 	<filename>autoconf</filename>'s <symbol>HAVE_*</symbol>
 	symbols in Wine's headers, as these may be used by Winelib
 	users who may not be using a <filename>configure</filename>

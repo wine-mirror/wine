@@ -8617,7 +8617,7 @@ static LRESULT LISTVIEW_SetRedraw(LISTVIEW_INFO *infoPtr, BOOL bRedraw)
 {
     TRACE("infoPtr->bRedraw=%d, bRedraw=%d\n", infoPtr->bRedraw, bRedraw);
 
-    /* we can not use straight equality here because _any_ non-zero value is TRUE */
+    /* we cannot use straight equality here because _any_ non-zero value is TRUE */
     if ((infoPtr->bRedraw && bRedraw) || (!infoPtr->bRedraw && !bRedraw)) return 0;
 
     infoPtr->bRedraw = bRedraw;

@@ -323,7 +323,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     int oldStretchMode;
 
     if(widthDest < 0 || heightDest < 0 || widthSrc < 0 || heightSrc < 0) {
-        TRACE("Can not mirror\n");
+        TRACE("Cannot mirror\n");
         return FALSE;
     }
 

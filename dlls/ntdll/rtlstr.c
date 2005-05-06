@@ -1288,7 +1288,7 @@ DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. src is appended to dest.
- *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is too small
  *                  to hold the concatenated string.
  *
  * NOTES
@@ -1318,7 +1318,7 @@ NTSTATUS WINAPI RtlAppendAsciizToString(
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. src is appended to dest.
- *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is too small
  *                  to hold the concatenated string.
  *
  * NOTES
@@ -1348,7 +1348,7 @@ NTSTATUS WINAPI RtlAppendStringToString(
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. src is appended to dest.
- *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is too small
  *                  to hold the concatenated string.
  *
  * NOTES
@@ -1387,7 +1387,7 @@ NTSTATUS WINAPI RtlAppendUnicodeToString(
  *
  * RETURNS
  *  Success: STATUS_SUCCESS. src is appended to dest.
- *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is to small
+ *  Failure: STATUS_BUFFER_TOO_SMALL, if the buffer of dest is too small
  *                  to hold the concatenated string.
  *
  * NOTES

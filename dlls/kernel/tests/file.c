@@ -1277,7 +1277,7 @@ static void test_MapFile()
     ok( hmap == NULL, "mapping should fail\n");
     /* GetLastError() varies between win9x and WinNT and also depends on the filesystem */
 
-    /* On XP you can now map again, on Win 95 you can not. */
+    /* On XP you can now map again, on Win 95 you cannot. */
 
     ok( CloseHandle( handle ), "can't close file handle\n");
     ok( DeleteFileA( filename ), "DeleteFile failed after map\n" );

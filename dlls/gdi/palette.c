@@ -124,7 +124,7 @@ HPALETTE PALETTE_Init(void)
     if (palObj)
     {
         if (!(palObj->mapping = HeapAlloc( GetProcessHeap(), 0, sizeof(int) * NB_RESERVED_COLORS )))
-            ERR("Can not create palette mapping -- out of memory!\n");
+            ERR("Cannot create palette mapping -- out of memory!\n");
         GDI_ReleaseObj( hpalette );
     }
     return hpalette;
@@ -401,7 +401,7 @@ BOOL WINAPI ResizePalette(
         int *newMap = HeapReAlloc(GetProcessHeap(), 0, mapping, cEntries * sizeof(int) );
 	if(newMap == NULL)
         {
-            ERR("Can not resize mapping -- out of memory!\n");
+            ERR("Cannot resize mapping -- out of memory!\n");
             GDI_ReleaseObj( hPal );
             return FALSE;
         }
