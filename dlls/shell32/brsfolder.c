@@ -521,6 +521,7 @@ static BOOL BrsFolder_OnCommand( browse_info *info, UINT id )
     switch (id)
     {
     case IDOK:
+        info->pidlRet = ILClone(info->pidlRet); /* The original pidl will be free'd. */
         pdump( info->pidlRet );
         if (lpBrowseInfo->pszDisplayName)
             SHGetPathFromIDListW( info->pidlRet, lpBrowseInfo->pszDisplayName );
@@ -663,8 +664,6 @@ LPITEMIDLIST WINAPI SHBrowseForFolderW (LPBROWSEINFOW lpbi)
 {
     browse_info info;
     DWORD r;
-
-    ERR("%p\n", lpbi);
 
     info.hWnd = 0;
     info.pidlRet = NULL;
