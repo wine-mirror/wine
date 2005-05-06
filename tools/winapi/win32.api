@@ -209,7 +209,6 @@ LPVOID *
 REFCLSID
 REFIID
 struct _ATL_REGMAP_ENTRY *
-void *
 
 %str
 
@@ -4004,6 +4003,7 @@ IMoniker **
 IServiceProvider *
 IUnknown *
 LPBC
+LPBINDCTX
 LPBINDSTATUSCALLBACK
 LPWSTR *
 LPUNKNOWN

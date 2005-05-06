@@ -348,7 +348,7 @@ HRESULT WINAPI FaultInIEFeature( HWND hwnd, uCLSSPEC * pClassSpec,
 HRESULT WINAPI CoGetClassObjectFromURL( REFCLSID rclsid, LPCWSTR szCodeURL, DWORD dwFileVersionMS,
                                         DWORD dwFileVersionLS, LPCWSTR szContentType,
                                         LPBINDCTX pBindCtx, DWORD dwClsContext, LPVOID pvReserved,
-                                        REFIID riid, VOID **ppv )
+                                        REFIID riid, LPVOID *ppv )
 {
     FIXME("(%s %s %ld %ld %s %p %ld %p %s %p) Stub!\n", debugstr_guid(rclsid), debugstr_w(szCodeURL),
 	dwFileVersionMS, dwFileVersionLS, debugstr_w(szContentType), pBindCtx, dwClsContext, pvReserved,
