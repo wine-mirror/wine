@@ -57,8 +57,10 @@
 #endif
 #include "windef.h"
 #include "winbase.h"
+#include "wine/unicode.h"
 #include "wingdi.h"
 #include "winerror.h"
+#include "winuser.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -198,16 +200,16 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
-        position = position / (format->Format.wBitsPerSample / 8 * format->Format.nChannels);
-        position += (format->Format.nSamplesPerSec / lpTime->u.smpte.fps) - 1; /* round up */
-        lpTime->u.smpte.sec = position / format->Format.nSamplesPerSec;
-        position -= lpTime->u.smpte.sec * format->Format.nSamplesPerSec;
+        position = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
+        position += (format->wf.nSamplesPerSec / lpTime->u.smpte.fps) - 1; /* round up */
+        lpTime->u.smpte.sec = position / format->wf.nSamplesPerSec;
+        position -= lpTime->u.smpte.sec * format->wf.nSamplesPerSec;
         lpTime->u.smpte.min = lpTime->u.smpte.sec / 60;
         lpTime->u.smpte.sec -= 60 * lpTime->u.smpte.min;
         lpTime->u.smpte.hour = lpTime->u.smpte.min / 60;
         lpTime->u.smpte.min -= 60 * lpTime->u.smpte.hour;
         lpTime->u.smpte.fps = 30;
-        lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->Format.nSamplesPerSec;
+        lpTime->u.smpte.frame = position * lpTime->u.smpte.fps / format->wf.nSamplesPerSec;
         TRACE("TIME_SMPTE=%02u:%02u:%02u:%02u\n",
               lpTime->u.smpte.hour, lpTime->u.smpte.min,
               lpTime->u.smpte.sec, lpTime->u.smpte.frame);
@@ -248,15 +250,15 @@ LONG LIBAUDIOIO_WaveInit(void)
     static const WCHAR ini_out[] = {'A','u','d','i','o','I','O',' ','W','a','v','e','O','u','t',' ','D','r','i','v','e','r',0};
     static const WCHAR ini_in [] = {'A','u','d','i','o','I','O',' ','W','a','v','e','I','n',' ',' ','D','r','i','v','e','r',0};
 
-    TRACE("Init ENTERED rate = %d\n",spec[PLAYBACK].rate);
-    spec[RECORD].channels=spec[PLAYBACK].channels=2;
-    spec[RECORD].max_blocks=spec[PLAYBACK].max_blocks=16;
-    spec[RECORD].rate=spec[PLAYBACK].rate=44100;
-    spec[RECORD].encoding=spec[PLAYBACK].encoding= ENCODE_PCM;
-    spec[RECORD].precision=spec[PLAYBACK].precision=16 ;
-    spec[RECORD].endian=spec[PLAYBACK].endian=ENDIAN_INTEL;
-    spec[RECORD].disable_threads=spec[PLAYBACK].disable_threads=1;
-    spec[RECORD].type=spec[PLAYBACK].type=TYPE_SIGNED; /* in 16 bit mode this is what typical PC hardware expects */
+    TRACE("Init ENTERED (%d) (%d) rate = %d\n",CLIENT_PLAYBACK,CLIENT_RECORD,spec[CLIENT_PLAYBACK].rate);
+    spec[CLIENT_RECORD].channels=spec[CLIENT_PLAYBACK].channels=2;
+    spec[CLIENT_RECORD].max_blocks=spec[CLIENT_PLAYBACK].max_blocks=16;
+    spec[CLIENT_RECORD].rate=spec[CLIENT_PLAYBACK].rate=44100;
+    spec[CLIENT_RECORD].encoding=spec[CLIENT_PLAYBACK].encoding= ENCODE_PCM;
+    spec[CLIENT_RECORD].precision=spec[CLIENT_PLAYBACK].precision=16 ;
+    spec[CLIENT_RECORD].endian=spec[CLIENT_PLAYBACK].endian=ENDIAN_INTEL;
+    spec[CLIENT_RECORD].disable_threads=spec[CLIENT_PLAYBACK].disable_threads=1;
+    spec[CLIENT_RECORD].type=spec[CLIENT_PLAYBACK].type=TYPE_SIGNED; /* in 16 bit mode this is what typical PC hardware expects */
 
     mode = O_WRONLY|O_NDELAY;
 
@@ -284,17 +286,17 @@ LONG LIBAUDIOIO_WaveInit(void)
      * So we don't need to read  back and compare.
      */
 
-    bytespersmpl = spec[PLAYBACK].precision/8;
+    bytespersmpl = spec[CLIENT_PLAYBACK].precision/8;
 
-    WOutDev[0].caps.wChannels = spec[PLAYBACK].channels;
+    WOutDev[0].caps.wChannels = spec[CLIENT_PLAYBACK].channels;
 
 
 /* Fixme: Libaudioio 0.2 doesn't support balance yet (Libaudioio 0.3 does so this must be fixed later)*/
 
 /*    if (WOutDev[0].caps.wChannels > 1) WOutDev[0].caps.dwSupport |= WAVECAPS_LRVOLUME;*/
-    TRACE("Init sammplerate= %d\n",spec[PLAYBACK].rate);
+    TRACE("Init sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
 
-    smplrate = spec[PLAYBACK].rate;
+    smplrate = spec[CLIENT_PLAYBACK].rate;
 /*
  * We have set up the data format to be 16 bit signed in intel format
  * For Big Endian machines libaudioio will convert the data to bigendian for us
@@ -336,12 +338,12 @@ LONG LIBAUDIOIO_WaveInit(void)
     WInDev[0].caps.wPid = 0x0001; 	/* Product ID */
     strcpyW(WInDev[0].caps.szPname, ini_in);
     WInDev[0].caps.dwFormats = 0x00000000;
-    WInDev[0].caps.wChannels = spec[RECORD].channels;
+    WInDev[0].caps.wChannels = spec[CLIENT_RECORD].channels;
 
     WInDev[0].bTriggerSupport = TRUE;    /* Maybe :-) */
 
-    bytespersmpl = spec[RECORD].precision/8;
-    smplrate = spec[RECORD].rate;
+    bytespersmpl = spec[CLIENT_RECORD].precision/8;
+    smplrate = spec[CLIENT_RECORD].rate;
 
 	    WInDev[0].caps.dwFormats |= WAVE_FORMAT_4M16;
 	    if (WInDev[0].caps.wChannels > 1)
@@ -419,7 +421,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
     LPBYTE		lpData;
     int			count;
 
-TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[PLAYBACK].rate);
+TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
     for (;;) {
 
 
@@ -526,7 +528,7 @@ TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[PLAYBACK].rate);
 
 int wodPlayer_Message(WINE_WAVEOUT *wwo, int msg, DWORD param)
 {
-    TRACE("wodPlayerMessage sammplerate= %d  msg=%d\n",spec[PLAYBACK].rate,msg);
+    TRACE("wodPlayerMessage sammplerate= %d  msg=%d\n",spec[CLIENT_PLAYBACK].rate,msg);
     EnterCriticalSection(&wwo->msg_crst);
     if ((wwo->msg_tosave == wwo->msg_toget) /* buffer overflow ? */
     &&  (wwo->messages[wwo->msg_toget].msg))
@@ -690,19 +692,24 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	TRACE("imhere[2] (q=%p p=%p) tc = %08lx\n", wwo->lpQueuePtr,
 	      wwo->lpPlayPtr, GetTickCount());
 	had_msg = FALSE;
+	    	TRACE("Looking for message\n");
 	while (wodPlayer_RetrieveMessage(wwo, &msg, &param)) {
 	    had_msg = TRUE;
+	    	TRACE("Processing message\n");
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
+	    	TRACE("WINE_WM_PAUSING\n");
 		wodPlayer_Reset(wwo, uDevID, FALSE);
 		wwo->state = WINE_WS_PAUSED;
 		SetEvent(wwo->hEvent);
 		break;
 	    case WINE_WM_RESTARTING:
+	    	TRACE("WINE_WM_RESTARTING\n");
 		wwo->state = WINE_WS_PLAYING;
 		SetEvent(wwo->hEvent);
 		break;
 	    case WINE_WM_HEADER:
+	    	TRACE("WINE_WM_HEADER\n");
 		lpWaveHdr = (LPWAVEHDR)param;
 
 		/* insert buffer at the end of queue */
@@ -716,10 +723,12 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 		    wwo->state = WINE_WS_PLAYING;
 		break;
 	    case WINE_WM_RESETTING:
+	    	TRACE("WINE_WM_RESETTING\n");	    
 		wodPlayer_Reset(wwo, uDevID, TRUE);
 		SetEvent(wwo->hEvent);
 		break;
 	    case WINE_WM_CLOSING:
+	    	TRACE("WINE_WM_CLOSING\n");	    
 		/* sanity check: this should not happen since the device must have been reset before */
 		if (wwo->lpQueuePtr || wwo->lpPlayPtr) ERR("out of sync\n");
 		wwo->hThread = 0;
@@ -732,6 +741,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 		break;
 	    }
 	    if (wwo->state == WINE_WS_PLAYING) {
+	    	TRACE("Writing Fragment\n");
 		wodPlayer_WriteFragments(wwo);
 	    }
 	    wodPlayer_Notify(wwo, uDevID, FALSE);
@@ -740,6 +750,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	if (!had_msg) { /* if we've received a msg we've just done this so we
 			   won't repeat it */
 	    if (wwo->state == WINE_WS_PLAYING) {
+	    	TRACE("Writing Fragment (entry 2)\n");
 		wodPlayer_WriteFragments(wwo);
 	    }
 	    wodPlayer_Notify(wwo, uDevID, FALSE);
@@ -818,7 +829,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (access(SOUND_DEV, 0) != 0)
 	return MMSYSERR_NOTENABLED;
 
-	audio = AudioIOOpenX( O_WRONLY|O_NDELAY,&spec[PLAYBACK],&spec[PLAYBACK]);
+	audio = AudioIOOpenX( O_WRONLY|O_NDELAY,&spec[CLIENT_PLAYBACK],&spec[CLIENT_PLAYBACK]);
 
     if (audio == -1) {
 	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
@@ -861,17 +872,17 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
 
     /*Set the sample rate*/
-    spec[PLAYBACK].rate=sample_rate;
+    spec[CLIENT_PLAYBACK].rate=sample_rate;
 
     /*And the size and signedness*/
-    spec[PLAYBACK].precision=(wwo->format.wBitsPerSample );
-    if (spec[PLAYBACK].precision==16) spec[PLAYBACK].type=TYPE_SIGNED; else spec[PLAYBACK].type=TYPE_UNSIGNED;
-    spec[PLAYBACK].channels=(wwo->format.wf.nChannels);
-    spec[PLAYBACK].encoding=ENCODE_PCM;
-    spec[PLAYBACK].endian=ENDIAN_INTEL;
-    spec[PLAYBACK].max_blocks=16;  /*FIXME This is the libaudioio equivalent to fragments, it controls latency*/
+    spec[CLIENT_PLAYBACK].precision=(wwo->format.wBitsPerSample );
+    if (spec[CLIENT_PLAYBACK].precision==16) spec[CLIENT_PLAYBACK].type=TYPE_SIGNED; else spec[CLIENT_PLAYBACK].type=TYPE_UNSIGNED;
+    spec[CLIENT_PLAYBACK].channels=(wwo->format.wf.nChannels);
+    spec[CLIENT_PLAYBACK].encoding=ENCODE_PCM;
+    spec[CLIENT_PLAYBACK].endian=ENDIAN_INTEL;
+    spec[CLIENT_PLAYBACK].max_blocks=16;  /*FIXME This is the libaudioio equivalent to fragments, it controls latency*/
 
-	audio = AudioIOOpenX( O_WRONLY|O_NDELAY,&spec[PLAYBACK],&spec[PLAYBACK]);
+	audio = AudioIOOpenX( O_WRONLY|O_NDELAY,&spec[CLIENT_PLAYBACK],&spec[CLIENT_PLAYBACK]);
 
     if (audio == -1) {
 	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
@@ -892,6 +903,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     InitializeCriticalSection(&wwo->msg_crst);
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
+    	TRACE("Starting wodPlayer Thread\n");
 	wwo->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
         if (wwo->hThread)
@@ -1927,7 +1939,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     if (access(SOUND_DEV,0) != 0) return MMSYSERR_NOTENABLED;
-    audio = AudioIOOpenX( O_RDONLY|O_NDELAY, &spec[RECORD],&spec[RECORD]);
+    audio = AudioIOOpenX( O_RDONLY|O_NDELAY, &spec[CLIENT_RECORD],&spec[CLIENT_RECORD]);
     if (audio == -1) {
 	WARN("can't open sound device %s (%s)!\n", SOUND_DEV, strerror(errno));
 	return MMSYSERR_ALLOCATED;
@@ -1954,10 +1966,10 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    wwi->format.wf.nChannels;
     }
 
-    spec[RECORD].rate=sample_rate = wwi->format.wf.nSamplesPerSec;
-    dsp_stereo = ((spec[RECORD].channels=wwi->format.wf.nChannels) > 1) ? TRUE : FALSE;
-    spec[RECORD].precision= wwi->format.wBitsPerSample;
-    spec[RECORD].type=(spec[RECORD].precision==16)?TYPE_SIGNED:TYPE_UNSIGNED;
+    spec[CLIENT_RECORD].rate=sample_rate = wwi->format.wf.nSamplesPerSec;
+    dsp_stereo = ((spec[CLIENT_RECORD].channels=wwi->format.wf.nChannels) > 1) ? TRUE : FALSE;
+    spec[CLIENT_RECORD].precision= wwi->format.wBitsPerSample;
+    spec[CLIENT_RECORD].type=(spec[CLIENT_RECORD].precision==16)?TYPE_SIGNED:TYPE_UNSIGNED;
 
     /* This is actually hand tuned to work so that my SB Live:
      * - does not skip
