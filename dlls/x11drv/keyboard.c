@@ -1061,11 +1061,13 @@ static const WORD nonchar_key_scan[256] =
 static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 {
     KeySym keysym = 0;
+    Status status;
+    char buf[24];
 
     if (xic)
-        XmbLookupString(xic, e, NULL, 0, &keysym, NULL);
+        XmbLookupString(xic, e, buf, sizeof(buf), &keysym, &status);
     else
-        XLookupString(e, NULL, 0, &keysym, NULL);
+        XLookupString(e, buf, sizeof(buf), &keysym, NULL);
 
     if ((keysym >= 0xFFAE) && (keysym <= 0xFFB9) && (keysym != 0xFFAF)
 	&& (e->state & NumLockMask))
@@ -2280,6 +2282,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
     char lpChar[10];
     HWND focus;
     XIC xic;
+    Status status;
 
     if (scanCode & 0x8000)
     {
@@ -2366,7 +2369,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		e.type, e.window, e.state, e.keycode);
 
     if (xic)
-        ret = XmbLookupString(xic, &e, lpChar, sizeof(lpChar), &keysym, NULL);
+        ret = XmbLookupString(xic, &e, lpChar, sizeof(lpChar), &keysym, &status);
     else
         ret = XLookupString(&e, lpChar, sizeof(lpChar), &keysym, NULL);
     wine_tsx11_unlock();
