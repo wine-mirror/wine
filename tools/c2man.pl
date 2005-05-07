@@ -42,6 +42,7 @@ my $FLAG_64PAIR     = 64; # The 64 bit version of a matching 32 bit function
 # Options
 my $opt_output_directory = "man3w"; # All default options are for nroff (man pages)
 my $opt_manual_section = "3w";
+my $opt_source_dir = "";
 my $opt_wine_root_dir = "";
 my $opt_output_format = "";         # '' = nroff, 'h' = html, 's' = sgml
 my $opt_output_empty = 0;           # Non-zero = Create 'empty' comments (for every implemented function)
@@ -120,7 +121,10 @@ sub process_spec_file($)
 
   # We allow opening to fail just to cater for the peculiarities of
   # the Wine build system. This doesn't hurt, in any case
-  open(SPEC_FILE, "<$spec_name") || return;
+  open(SPEC_FILE, "<$spec_name")
+  || (($opt_source_dir ne "")
+      && open(SPEC_FILE, "<$opt_source_dir/$spec_name"))
+  || return;
 
   while(<SPEC_FILE>)
   {
@@ -236,7 +240,10 @@ sub process_source_file($)
   {
     print "Processing ".$source_file."\n";
   }
-  open(SOURCE_FILE,"<$source_file") || die "couldn't open ".$source_file."\n";
+  open(SOURCE_FILE,"<$source_file")
+  || (($opt_source_dir ne "")
+      && open(SOURCE_FILE,"<$opt_source_dir/$source_file"))
+  || die "couldn't open ".$source_file."\n";
 
   # Add this source file to the list of source files
   $source_files{$source_file} = [$source_details];
@@ -2115,6 +2122,9 @@ sub usage()
         "Options:\n",
         " -Th      : Output HTML instead of a man page\n",
         " -Ts      : Output SGML (Docbook source) instead of a man page\n",
+        " -C <dir> : Source directory, to find source files if they are not found in the\n",
+        "            current directory. Default is \"",$opt_source_dir,"\"\n",
+        " -R <dir> : Root of build directory, default is \"",$opt_wine_root_dir,"\"\n",
         " -o <dir> : Create output in <dir>, default is \"",$opt_output_directory,"\"\n",
         " -s <sect>: Set manual section to <sect>, default is ",$opt_manual_section,"\n",
         " -e       : Output \"FIXME\" documentation from empty comments.\n",
@@ -2156,6 +2166,10 @@ while(defined($_ = shift @ARGV))
                      }
                      last;
                    };
+      s/^C// && do {
+                     if ($_ ne "") { $opt_source_dir = $_; }
+                     last;
+                   };
       s/^R// && do { if ($_ =~ /^\//) { $opt_wine_root_dir = $_; }
                      else { $opt_wine_root_dir = `cd $pwd/$_ && pwd`; }
                      $opt_wine_root_dir =~ s/\n//;
@@ -2181,8 +2195,9 @@ if ($opt_verbose > 3)
 {
   print "Output dir:'".$opt_output_directory."'\n";
   print "Section   :'".$opt_manual_section."'\n";
-  print "Format  :'".$opt_output_format."'\n";
-  print "Root    :'".$opt_wine_root_dir."'\n";
+  print "Format    :'".$opt_output_format."'\n";
+  print "Source dir:'".$opt_source_dir."'\n";
+  print "Root      :'".$opt_wine_root_dir."'\n";
   print "Spec files:'@opt_spec_file_list'\n";
   print "Includes  :'@opt_header_file_list'\n";
   print "Sources   :'@opt_source_file_list'\n";
