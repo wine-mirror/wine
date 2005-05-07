@@ -37,6 +37,8 @@
 #define SIGNAL_STACK_SIZE  0  /* we don't need a signal stack on non-i386 */
 #endif
 
+extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
+
 /* debug helper */
 extern LPCSTR debugstr_us( const UNICODE_STRING *str );
 extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);

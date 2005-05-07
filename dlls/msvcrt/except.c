@@ -276,8 +276,8 @@ typedef void (*MSVCRT_unwind_function)(const void*);
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
-DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp, _MSVCRT__setjmp, 4, 0 );
-void _MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp, CONTEXT86* context)
+DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp, 4, 0 );
+void WINAPI __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp, CONTEXT86* context)
 {
     TRACE("(%p)\n",jmp);
     jmp->Ebp = context->Ebp;
@@ -298,8 +298,8 @@ void _MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp, CONTEXT86* context)
 /*******************************************************************
  *		_setjmp3 (MSVCRT.@)
  */
-DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp3, _MSVCRT__setjmp3, 8, 0 );
-void _MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
+DEFINE_REGS_ENTRYPOINT( MSVCRT__setjmp3, 8, 0 );
+void WINAPI __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, CONTEXT86* context)
 {
     TRACE("(%p,%d)\n",jmp,nb_args);
     jmp->Ebp = context->Ebp;
@@ -335,8 +335,8 @@ void _MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, CONTEXT86* 
 /*********************************************************************
  *		longjmp (MSVCRT.@)
  */
-DEFINE_REGS_ENTRYPOINT( MSVCRT_longjmp, _MSVCRT_longjmp, 8, 0 );
-void _MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
+DEFINE_REGS_ENTRYPOINT( MSVCRT_longjmp, 8, 0 );
+void WINAPI __regs_MSVCRT_longjmp(struct MSVCRT___JUMP_BUFFER *jmp, int retval, CONTEXT86* context)
 {
     unsigned long cur_frame = 0;
 

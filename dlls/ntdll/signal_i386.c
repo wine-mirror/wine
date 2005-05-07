@@ -450,7 +450,6 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
-extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 extern void DECLSPEC_NORETURN __wine_call_from_32_restore_regs( CONTEXT context );
 
 
@@ -616,7 +615,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
 
             vcontext.EFlags &= ~VIP_MASK;
             NtCurrentTeb()->vm86_pending = 0;
-            EXC_RtlRaiseException( rec, &vcontext );
+            __regs_RtlRaiseException( rec, &vcontext );
 
             restore_vm86_context( &vcontext, vm86 );
             check_pending = TRUE;
@@ -884,7 +883,7 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         }
         break;
     }
-    EXC_RtlRaiseException( rec, context );
+    __regs_RtlRaiseException( rec, context );
 }
 
 
@@ -920,7 +919,7 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
     dr6 = context->Dr6;
     dr7 = context->Dr7;
 
-    EXC_RtlRaiseException( rec, context );
+    __regs_RtlRaiseException( rec, context );
 
     if (dr0 != context->Dr0 || dr1 != context->Dr1 || dr2 != context->Dr2 ||
         dr3 != context->Dr3 || dr6 != context->Dr6 || dr7 != context->Dr7)
@@ -937,7 +936,7 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
  */
 static void WINAPI raise_fpu_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    EXC_RtlRaiseException( rec, context );
+    __regs_RtlRaiseException( rec, context );
     restore_fpu( context );
 }
 
@@ -967,7 +966,7 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
     {
         /* Executing DPMI code and virtual interrupts are enabled. */
         NtCurrentTeb()->vm86_pending = 0;
-        EXC_RtlRaiseException( rec, context );
+        __regs_RtlRaiseException( rec, context );
     }
 }
 
@@ -1114,7 +1113,7 @@ static HANDLER_DEF(int_handler)
     init_handler( HANDLER_CONTEXT );
     if (!dispatch_signal(SIGINT))
     {
-        EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, EXC_RtlRaiseException );
+        EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, __regs_RtlRaiseException );
         rec->ExceptionCode = CONTROL_C_EXIT;
     }
 }
@@ -1126,7 +1125,7 @@ static HANDLER_DEF(int_handler)
  */
 static HANDLER_DEF(abrt_handler)
 {
-    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, EXC_RtlRaiseException );
+    EXCEPTION_RECORD *rec = setup_exception( HANDLER_CONTEXT, __regs_RtlRaiseException );
     rec->ExceptionCode  = EXCEPTION_WINE_ASSERTION;
     rec->ExceptionFlags = EH_NONCONTINUABLE;
 }
@@ -1336,7 +1335,7 @@ void __wine_enter_vm86( CONTEXT *context )
             ERR( "unhandled result from vm86 mode %x\n", res );
             continue;
         }
-        EXC_RtlRaiseException( &rec, context );
+        __regs_RtlRaiseException( &rec, context );
     }
 }
 

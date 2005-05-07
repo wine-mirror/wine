@@ -51,8 +51,6 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
-extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-
 /***********************************************************************
  *           dispatch_signal
  */
@@ -173,7 +171,7 @@ static void segv_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionInformation[0] = 0;  /* FIXME: read/write access ? */
     rec.ExceptionInformation[1] = (ULONG_PTR)info->si_addr;
 
-    EXC_RtlRaiseException( &rec, &context );
+    __regs_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -198,7 +196,7 @@ static void bus_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     else
         rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
 
-    EXC_RtlRaiseException( &rec, &context );
+    __regs_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -237,7 +235,7 @@ static void ill_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionFlags   = EXCEPTION_CONTINUABLE;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context );
+    __regs_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -268,7 +266,7 @@ static void trap_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context );
+    __regs_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
 }
 
@@ -318,7 +316,7 @@ static void fpe_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context );
+    __regs_RtlRaiseException( &rec, &context );
     restore_context( &context, ucontext );
     restore_fpu( &context, ucontext );
 }
@@ -342,7 +340,7 @@ static void int_handler( int signal, siginfo_t *info, ucontext_t *ucontext )
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = (LPVOID)context.pc;
         rec.NumberParameters = 0;
-        EXC_RtlRaiseException( &rec, &context );
+        __regs_RtlRaiseException( &rec, &context );
         restore_context( &context, ucontext );
     }
 }
@@ -363,7 +361,7 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.pc;
     rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    __regs_RtlRaiseException( &rec, &context ); /* Should never return.. */
     restore_context( &context, HANDLER_CONTEXT );
 }
 

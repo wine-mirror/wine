@@ -224,7 +224,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 /***********************************************************************
  *		RtlRaiseException (NTDLL.@)
  */
-void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
+void WINAPI __regs_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch, *nested_frame;
     EXCEPTION_RECORD newrec;
@@ -313,13 +313,13 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
 /**********************************************************************/
 
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlRaiseException, EXC_RtlRaiseException, 4, 4 );
+DEFINE_REGS_ENTRYPOINT( RtlRaiseException, 4, 4 );
 #else
 void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 {
     CONTEXT context;
     memset( &context, 0, sizeof(context) );
-    EXC_RtlRaiseException( rec, &context );
+    __regs_RtlRaiseException( rec, &context );
 }
 #endif
 
@@ -327,8 +327,8 @@ void WINAPI RtlRaiseException( EXCEPTION_RECORD *rec )
 /*******************************************************************
  *		RtlUnwind (NTDLL.@)
  */
-void WINAPI EXC_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID unusedEip,
-                           PEXCEPTION_RECORD pRecord, PVOID returnEax, CONTEXT *context )
+void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID unusedEip,
+                              PEXCEPTION_RECORD pRecord, PVOID returnEax, CONTEXT *context )
 {
     EXCEPTION_RECORD record, newrec;
     EXCEPTION_REGISTRATION_RECORD *frame, *dispatch;
@@ -400,14 +400,14 @@ void WINAPI EXC_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID unuse
 /**********************************************************************/
 
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( RtlUnwind, EXC_RtlUnwind, 16, 16 );
+DEFINE_REGS_ENTRYPOINT( RtlUnwind, 16, 16 );
 #else
 void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
                        PEXCEPTION_RECORD pRecord, PVOID returnEax )
 {
     CONTEXT context;
     memset( &context, 0, sizeof(context) );
-    EXC_RtlUnwind( pEndFrame, unusedEip, pRecord, returnEax, &context );
+    __regs_RtlUnwind( pEndFrame, unusedEip, pRecord, returnEax, &context );
 }
 #endif
 
@@ -415,21 +415,21 @@ void WINAPI RtlUnwind( PVOID pEndFrame, PVOID unusedEip,
 /*******************************************************************
  *		NtRaiseException (NTDLL.@)
  */
-void WINAPI EXC_NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx,
+void WINAPI __regs_NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx,
                                   BOOL first, CONTEXT *context )
 {
-    EXC_RtlRaiseException( rec, ctx );
+    __regs_RtlRaiseException( rec, ctx );
     *context = *ctx;
 }
 
 #ifdef DEFINE_REGS_ENTRYPOINT
-DEFINE_REGS_ENTRYPOINT( NtRaiseException, EXC_NtRaiseException, 12, 12 );
+DEFINE_REGS_ENTRYPOINT( NtRaiseException, 12, 12 );
 #else
 void WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *ctx, BOOL first )
 {
     CONTEXT context;
     memset( &context, 0, sizeof(context) );
-    EXC_NtRaiseException( rec, ctx, first, &context );
+    __regs_NtRaiseException( rec, ctx, first, &context );
 }
 #endif
 

@@ -165,8 +165,6 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
-extern void WINAPI EXC_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
-
 /***********************************************************************
  *           dispatch_signal
  */
@@ -382,7 +380,7 @@ static void do_segv( CONTEXT *context, int trap, int err, int code, void * addr 
 	}
     	break;
     }
-    EXC_RtlRaiseException( &rec, context );
+    __regs_RtlRaiseException( &rec, context );
 }
 
 /**********************************************************************
@@ -414,7 +412,7 @@ static void do_trap( CONTEXT *context, int code, void * addr )
     default:FIXME("Unhandled SIGTRAP/%x\n", code);
 		break;
     }
-    EXC_RtlRaiseException( &rec, context );
+    __regs_RtlRaiseException( &rec, context );
 }
 
 /**********************************************************************
@@ -473,7 +471,7 @@ static void do_fpe( CONTEXT *context, int code, void * addr )
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = addr;
     rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, context );
+    __regs_RtlRaiseException( &rec, context );
 }
 
 /**********************************************************************
@@ -535,7 +533,7 @@ static HANDLER_DEF(int_handler)
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = (LPVOID)context.Iar;
         rec.NumberParameters = 0;
-        EXC_RtlRaiseException( &rec, &context );
+        __regs_RtlRaiseException( &rec, &context );
         restore_context( &context, HANDLER_CONTEXT );
     }
 }
@@ -557,7 +555,7 @@ static HANDLER_DEF(abrt_handler)
     rec.ExceptionRecord  = NULL;
     rec.ExceptionAddress = (LPVOID)context.Iar;
     rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, &context ); /* Should never return.. */
+    __regs_RtlRaiseException( &rec, &context ); /* Should never return.. */
     restore_context( &context, HANDLER_CONTEXT );
 }
 

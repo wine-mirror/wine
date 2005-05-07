@@ -378,11 +378,11 @@ BOOLEAN WINAPI RtlGetNtProductType(LPDWORD type)
  * Glorified "enter xxxx".
  */
 #ifdef __i386__
-void WINAPI NTDLL_chkstk( CONTEXT86 *context )
+void WINAPI __regs__chkstk( CONTEXT86 *context )
 {
     context->Esp -= context->Eax;
 }
-DEFINE_REGS_ENTRYPOINT( _chkstk, NTDLL_chkstk, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( _chkstk, 0, 0 );
 #endif
 
 /**************************************************************************
@@ -391,11 +391,11 @@ DEFINE_REGS_ENTRYPOINT( _chkstk, NTDLL_chkstk, 0, 0 );
  * Glorified "enter xxxx".
  */
 #ifdef __i386__
-void WINAPI NTDLL_alloca_probe( CONTEXT86 *context )
+void WINAPI __regs__alloca_probe( CONTEXT86 *context )
 {
     context->Esp -= context->Eax;
 }
-DEFINE_REGS_ENTRYPOINT( _alloca_probe, NTDLL_alloca_probe, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( _alloca_probe, 0, 0 );
 #endif
 
 
