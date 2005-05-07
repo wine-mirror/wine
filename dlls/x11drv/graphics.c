@@ -1017,11 +1017,8 @@ X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn )
 BOOL
 X11DRV_Polyline( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
-    INT oldwidth;
-    register int i;
+    int i;
     XPoint *points;
-
-    if((oldwidth = physDev->pen.width) == 0) physDev->pen.width = 1;
 
     if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * count )))
     {
@@ -1047,7 +1044,6 @@ X11DRV_Polyline( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
     }
 
     HeapFree( GetProcessHeap(), 0, points );
-    physDev->pen.width = oldwidth;
     return TRUE;
 }
 
