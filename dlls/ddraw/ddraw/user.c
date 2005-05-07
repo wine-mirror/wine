@@ -502,11 +502,16 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
     LONG pitch;
 
     TRACE("(%p)->(%ldx%ldx%ld,%ld Hz,%08lx)\n",This,dwWidth,dwHeight,dwBPP,dwRefreshRate,dwFlags);
-    devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFREQUENCY;
+    devmode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
     devmode.dmBitsPerPel = dwBPP;
     devmode.dmPelsWidth  = dwWidth;
     devmode.dmPelsHeight = dwHeight;
-    devmode.dmDisplayFrequency = dwRefreshRate; 
+    /* '0' means default frequency */
+    if (dwRefreshRate != 0) 
+    {
+	devmode.dmFields |= DM_DISPLAYFREQUENCY;
+	devmode.dmDisplayFrequency = dwRefreshRate;
+    }
     if (ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL) != DISP_CHANGE_SUCCESSFUL)
 	return DDERR_INVALIDMODE;
 
