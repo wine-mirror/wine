@@ -43,6 +43,8 @@ int futimes(int fd, const struct timeval tv[2])
         return utime( buffer, &ut );
     }
     else return utime( buffer, NULL );
+#elif defined(HAVE_FUTIMESAT)
+    return futimesat( fd, NULL, tv );
 #else
     errno = ENOSYS;
     return -1;

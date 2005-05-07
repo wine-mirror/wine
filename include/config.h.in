@@ -158,6 +158,9 @@
 /* Define to 1 if you have the `futimes' function. */
 #undef HAVE_FUTIMES
 
+/* Define to 1 if you have the `futimesat' function. */
+#undef HAVE_FUTIMESAT
+
 /* Define to 1 if you have the `gethostbyname' function. */
 #undef HAVE_GETHOSTBYNAME
 
