@@ -144,4 +144,5 @@ BEGIN
     IDS_TAB_GENERAL         "Allgemein"
     IDS_TAB_DLLS            "Bibliotheken"
     IDS_TAB_DRIVES          "Laufwerke"
+    IDS_CHOOSE_PATH         "Bitte wählen Sie ein Unix-Verzeichnis für das Laufwerk."
 END

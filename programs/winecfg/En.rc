@@ -146,4 +146,5 @@ BEGIN
     IDS_TAB_GENERAL         "General"
     IDS_TAB_DLLS            "Libraries"
     IDS_TAB_DRIVES          "Drives"
+    IDS_CHOOSE_PATH         "Select the unix directory to be mapped, please."
 END

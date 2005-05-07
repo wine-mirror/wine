@@ -27,6 +27,7 @@
 #define IDS_TAB_GENERAL                 2
 #define IDS_TAB_DLLS                    3
 #define IDS_TAB_DRIVES                  4
+#define IDS_CHOOSE_PATH                 5
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
 #define IDD_ABOUTCFG                    107

@@ -521,12 +521,13 @@ static void browse_for_folder(HWND dialog)
 {
     static WCHAR wszUnixRootDisplayName[] = 
         { ':',':','{','C','C','7','0','2','E','B','2','-','7','D','C','5','-','1','1','D','9','-',
-          'C','6','8','7','-','0','0','0','4','2','3','8','A','0','1','C','D','}','\\','/', 0 };
+          'C','6','8','7','-','0','0','0','4','2','3','8','A','0','1','C','D','}', 0 };
+    char pszChoosePath[256];
     BROWSEINFOA bi = {
         dialog,
         NULL,
         NULL,
-        "Select the unix directory to be mapped, please.",
+        pszChoosePath,
         0,
         NULL,
         0,
@@ -535,6 +536,8 @@ static void browse_for_folder(HWND dialog)
     IShellFolder *pDesktop;
     LPITEMIDLIST pidlUnixRoot, pidlSelectedPath;
     HRESULT hr;
+   
+    LoadString(GetModuleHandle(NULL), IDS_CHOOSE_PATH, pszChoosePath, 256);
     
     hr = SHGetDesktopFolder(&pDesktop);
     if (!SUCCEEDED(hr)) return;
@@ -548,7 +551,6 @@ static void browse_for_folder(HWND dialog)
 
     bi.pidlRoot = pidlUnixRoot;
     pidlSelectedPath = SHBrowseForFolderA(&bi);
-    
     SHFree(pidlUnixRoot);
     
     if (pidlSelectedPath) {
