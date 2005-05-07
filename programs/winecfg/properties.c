@@ -39,11 +39,6 @@ static VERSION_DESC sWinVersions[] = {
     {"", ""}
 };
 
-static VERSION_DESC sDOSVersions[] = {
-    {"6.22", "MS-DOS 6.22"},
-    {"", ""}
-};
-
 static DLL_DESC sDLLType[] = {
     {"oleaut32", DLL_BUILTIN},
     {"ole32", DLL_BUILTIN},
@@ -80,14 +75,6 @@ static AUDIO_DRIVER sAudioDrivers[] = {
 VERSION_DESC* getWinVersions(void)
 {
     return sWinVersions;
-}
-
-
-/*****************************************************************************
- */
-VERSION_DESC* getDOSVersions(void)
-{
-    return sDOSVersions;
 }
 
 

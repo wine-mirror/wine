@@ -42,7 +42,6 @@
 #define IDC_APPLYBTN                    1002
 #define IDC_WINEVER                     1011
 #define IDC_WINVER                      1012
-#define IDC_DOSVER                      1014
 #define IDC_SYSCOLORS                   1017
 #define IDC_PRIVATEMAP                  1018
 #define IDC_PERFECTGRAPH                1019

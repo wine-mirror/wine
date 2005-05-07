@@ -37,16 +37,13 @@ static void update_comboboxes(HWND dialog)
   int i;
   const VERSION_DESC *pVer = NULL;
 
-  char *winver, *dosver;
+  char *winver;
   
   /* retrieve the registry values */
   winver = get(keypath("Version"), "Windows", "");
-  dosver = get(keypath("Version"), "DOS", "");
 
-  /* empty winver/dosver means use automatic mode (ie the builtin dll linkage heuristics)  */
-  
+  /* empty winver means use automatic mode (ie the builtin dll linkage heuristics)  */
   WINE_TRACE("winver is %s\n", *winver != '\0' ? winver : "null (automatic mode)");
-  WINE_TRACE("dosver is %s\n", *dosver != '\0' ? dosver : "null (automatic mode)");
 
   /* normalize the version strings */
   if (*winver != '\0')
@@ -69,29 +66,7 @@ static void update_comboboxes(HWND dialog)
     SendDlgItemMessage (dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
   }
 
-  if (*dosver != '\0')
-  {
-    if ((pVer = getDOSVersions ()))
-    {
-      for (i = 0; *pVer->szVersion || *pVer->szDescription; i++, pVer++)
-      {
-	if (!strcasecmp (pVer->szVersion, dosver))
-	{
-	  SendDlgItemMessage (dialog, IDC_DOSVER, CB_SETCURSEL,
-			      (WPARAM) (i + 1), 0);
-	  WINE_TRACE("match with %s\n", pVer->szVersion);
-	}
-      }
-    }
-  }
-  else
-  {
-    WINE_TRACE("setting dosver combobox to automatic/default\n");
-    SendDlgItemMessage (dialog, IDC_DOSVER, CB_SETCURSEL, 0, 0);
-  }
-  
   HeapFree(GetProcessHeap(), 0, winver);
-  HeapFree(GetProcessHeap(), 0, dosver);
 }
 
 void
@@ -100,20 +75,16 @@ init_comboboxes (HWND dialog)
   int i;
   const VERSION_DESC *ver = NULL;
 
-  
   SendDlgItemMessage(dialog, IDC_WINVER, CB_RESETCONTENT, 0, 0);
-  SendDlgItemMessage(dialog, IDC_DOSVER, CB_RESETCONTENT, 0, 0);  
-  
+
   /* add the default entries (automatic) which correspond to no setting  */
   if (current_app)
   {
       SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");
-      SendDlgItemMessage(dialog, IDC_DOSVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");      
   }
   else
   {
       SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Automatically detect required version");
-      SendDlgItemMessage(dialog, IDC_DOSVER, CB_ADDSTRING, 0, (LPARAM) "Automatically detect required version");
   }
 
   if ((ver = getWinVersions ()))
@@ -121,14 +92,6 @@ init_comboboxes (HWND dialog)
     for (i = 0; *ver->szVersion || *ver->szDescription; i++, ver++)
     {
       SendDlgItemMessage (dialog, IDC_WINVER, CB_ADDSTRING,
-			  0, (LPARAM) ver->szDescription);
-    }
-  }
-  if ((ver = getDOSVersions ()))
-  {
-    for (i = 0; *ver->szVersion || *ver->szDescription ; i++, ver++)
-    {
-      SendDlgItemMessage (dialog, IDC_DOSVER, CB_ADDSTRING,
 			  0, (LPARAM) ver->szDescription);
     }
   }
@@ -345,26 +308,6 @@ static void on_winver_change(HWND dialog)
     SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
 }
 
-static void on_dosver_change(HWND dialog)
-{
-    int selection = SendDlgItemMessage(dialog, IDC_DOSVER, CB_GETCURSEL, 0, 0);
-    VERSION_DESC *ver = getDOSVersions();
-
-    if (selection == 0)
-    {
-        WINE_TRACE("automatic/default selected so removing current setting\n");
-        set(keypath("Version"), "DOS", NULL);
-    }
-    else
-    {
-        WINE_TRACE("setting Version\\DOS key to value '%s'\n", ver[selection - 1].szVersion);
-        set(keypath("Version"), "DOS", ver[selection - 1].szVersion);
-    }
-
-    /* enable the apply button  */
-    SendMessage(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
-}
-
 INT_PTR CALLBACK
 AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -400,9 +343,6 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           {
             case IDC_WINVER:
               on_winver_change(hDlg);
-              break;
-            case IDC_DOSVER:
-              on_dosver_change(hDlg);
               break;
           }
         case BN_CLICKED:

@@ -44,13 +44,11 @@ BEGIN
     LTEXT           "Wine can mimic different Windows versions for each application.",
                     IDC_STATIC,15,20,227,20
     CONTROL         "Applications",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,40,230,140
-    PUSHBUTTON	    "&Add application...",IDC_APP_ADDAPP, 90,184,75,14
-    PUSHBUTTON	    "&Remove application",IDC_APP_REMOVEAPP, 170,184,75,14
-    LTEXT           "&Windows Version:",IDC_STATIC,17,204,58,8
-    COMBOBOX        IDC_WINVER,83,202,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
-    LTEXT           "&DOS Version:",IDC_STATIC,17,223,57,8
-    COMBOBOX        IDC_DOSVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    15,40,230,160
+    PUSHBUTTON	    "&Add application...",IDC_APP_ADDAPP, 90,204,75,14
+    PUSHBUTTON	    "&Remove application",IDC_APP_REMOVEAPP, 170,204,75,14
+    LTEXT           "&Windows Version:",IDC_STATIC,17,226,58,8
+    COMBOBOX        IDC_WINVER,83,224,163,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
 END
 
 IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
