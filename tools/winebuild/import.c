@@ -504,7 +504,7 @@ static int add_extra_symbol( const char **extras, int *count, const char *name, 
 static void add_extra_undef_symbols( const DLLSPEC *spec )
 {
     const char *extras[10];
-    int i, count = 0, nb_stubs = 0, nb_regs = 0;
+    int i, count = 0, nb_stubs = 0;
     int kernel_imports = 0, ntdll_imports = 0;
 
     sort_symbols( undef_symbols, nb_undef_symbols );
@@ -513,7 +513,6 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
     {
         ORDDEF *odp = &spec->entry_points[i];
         if (odp->type == TYPE_STUB) nb_stubs++;
-        if (odp->flags & FLAG_REGISTER) nb_regs++;
     }
 
     /* add symbols that will be contained in the spec file itself */
@@ -536,8 +535,6 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
         kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
         kernel_imports += add_extra_symbol( extras, &count, "RaiseException", spec );
     }
-    if (nb_regs)
-        ntdll_imports += add_extra_symbol( extras, &count, "__wine_call_from_32_regs", spec );
     if (nb_stubs)
         ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException", spec );
 
