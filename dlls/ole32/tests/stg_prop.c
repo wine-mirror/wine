@@ -278,7 +278,8 @@ void testCodepage(void)
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
     ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
 
-    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
+    if(!pStgCreatePropSetStg) return;
+    hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
     ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
@@ -357,7 +358,7 @@ void testCodepage(void)
      STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE, 0, &storage);
     ok(SUCCEEDED(hr), "StgCreateDocfile failed: 0x%08lx\n", hr);
 
-    hr = StgCreatePropSetStg(storage, 0, &propSetStorage);
+    hr = pStgCreatePropSetStg(storage, 0, &propSetStorage);
     ok(SUCCEEDED(hr), "StgCreatePropSetStg failed: 0x%08lx\n", hr);
 
     hr = IPropertySetStorage_Create(propSetStorage,
