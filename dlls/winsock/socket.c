@@ -146,6 +146,10 @@
 # define sipx_node       sipx_addr.x_host.c_host
 #endif  /* __FreeBSD__ */
 
+#ifndef INADDR_NONE
+#define INADDR_NONE ~0UL
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 /* critical section to protect some non-rentrant net function */
