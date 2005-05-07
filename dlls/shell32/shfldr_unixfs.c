@@ -172,17 +172,20 @@ static char* UNIXFS_build_shitemid(char *name, struct stat *pStat, void *buffer)
 static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
     LPITEMIDLIST pidl;
     struct stat fileStat;
-    int cSubDirs, cPidlLen;
-    char *pSlash, swap;
+    int cSubDirs, cPidlLen, res;
+    char *pSlash;
 
     TRACE("path=%s, ppidl=%p", debugstr_a(path), ppidl);
     
     /* Fail, if no absolute path given */
     if (!ppidl || !path || path[0] != '/') return FALSE;
-   
+
+    /* Skip the '/' prefix */
+    path++;
+    
     /* Count the number of sub-directories in the path */
     cSubDirs = 0;
-    pSlash = path;
+    pSlash = strchr(path, '/');
     while (pSlash) {
         cSubDirs++;
         pSlash = strchr(pSlash+1, '/');
@@ -195,26 +198,19 @@ static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
     if (!pidl) return FALSE;
 
     /* Concatenate the SHITEMIDs of the sub-directories. */
-    pSlash = path; /* First character of path is guaranteed to be '/' */
     while (*path) {
+        pSlash = strchr(path, '/');
         if (pSlash) {
-            /* For the stat call, we temporarily replace the char
-             * after the next '/' with a '\0'. */
-            swap = pSlash[1];
-            pSlash[1] = '\0';
-            if (stat(path, &fileStat)) {
-                pSlash[1] = swap;
-                return FALSE;
-            }
-            pSlash[1] = swap;
+            *pSlash = '\0';
+            res = stat(path, &fileStat);
+            *pSlash = '/';
+            if (res) return FALSE;
         } else {
-            /* We are at the last item in path. */
             if (stat(path, &fileStat)) return FALSE;
         }
                 
         path = UNIXFS_build_shitemid(path, &fileStat, pidl);
         pidl = ILGetNext(pidl);
-        pSlash = strchr(path, '/');
     }
     pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
    
@@ -250,12 +246,10 @@ static BOOL UNIXFS_pidl_to_path(LPCITEMIDLIST pidl, PSZ *path) {
         if (pData->type == PT_GUID && IsEqualIID(&CLSID_UnixFolder, &pData->u.guid.guid)) break;
         current = ILGetNext(current);
     }
-    if (!current->mkid.cb) return FALSE;
-    root = ILGetNext(current);
-
+    root = current = ILGetNext(current);
+    
     /* Determine the path's length bytes */
-    dwPathLen = 1; /* For the terminating '\0' */
-    current = root;
+    dwPathLen = 2; /* For the '/' prefix and the terminating '\0' */
     while (current->mkid.cb) {
         dwPathLen += NAME_LEN_FROM_LPSHITEMID(current) + 1; /* For the '/' */
         current = ILGetNext(current);
@@ -268,6 +262,7 @@ static BOOL UNIXFS_pidl_to_path(LPCITEMIDLIST pidl, PSZ *path) {
         return FALSE;
     }
     current = root;
+    *pNextDir++ = '/';
     while (current->mkid.cb) {
         memcpy(pNextDir, _ILGetTextPointer(current), NAME_LEN_FROM_LPSHITEMID(current));
         pNextDir += NAME_LEN_FROM_LPSHITEMID(current);
@@ -311,29 +306,7 @@ static BOOL UNIXFS_build_subfolder_pidls(const char *path, LPITEMIDLIST **apidl,
     
     *apidl = NULL;
     *pCount = 0;
-   
-    /* Special case for 'My UNIX Filesystem' shell folder:
-     * The unix root directory is the only child of 'My UNIX Filesystem'. 
-     */
-    if (!strlen(path)) {
-        LPSHITEMID pid;
-        
-        if (stat("/", &fileStat)) return FALSE;
-        pid = (LPSHITEMID)SHAlloc(SHITEMID_LEN_FROM_NAME_LEN(0)+sizeof(USHORT));
-        UNIXFS_build_shitemid("", &fileStat, pid);
-        memset(((PBYTE)pid)+pid->cb, 0, sizeof(USHORT));
-        
-        *apidl = SHAlloc(sizeof(LPITEMIDLIST));
-        if (!apidl) {
-            WARN("SHAlloc failed!\n");
-            return FALSE;
-        }
-        (*apidl)[0] = (LPITEMIDLIST)pid;
-        *pCount = 1;
-    
-        return TRUE;
-    }
-    
+  
     dir = opendir(path);
     if (!dir) {
         WARN("Failed to open directory '%s'.\n", path);
@@ -774,54 +747,34 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* iface, 
     LPCITEMIDLIST pidl, SHGDNF uFlags, STRRET* lpName)
 {
-    char *pszFileName;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
+    HRESULT hr = S_OK;    
 
     TRACE("(iface=%p, pidl=%p, uFlags=%lx, lpName=%p)\n", iface, pidl, uFlags, lpName);
-   
-    lpName->uType = STRRET_CSTR;
-    if (!pidl->mkid.cb) {
-        strcpy(lpName->u.cStr, "");
-        return S_OK;
-    }
-
-    pszFileName = _ILGetTextPointer(pidl);
     
-    if ((uFlags & SHGDN_FORPARSING) && !(uFlags & SHGDN_INFOLDER)) {
-        STRRET strSubfolderName;
-        IShellFolder *pSubFolder;
-        HRESULT hr;
-        LPITEMIDLIST pidlFirst;
+    if ((GET_SHGDN_FOR(uFlags) == SHGDN_FORPARSING) &&
+        (GET_SHGDN_RELATION(uFlags) != SHGDN_INFOLDER))
+    {
+        if (!pidl->mkid.cb) {
+            lpName->uType = STRRET_CSTR;
+            strcpy(lpName->u.cStr, This->m_pszPath);
+        } else {
+            IShellFolder *pSubFolder;
+            USHORT emptyIDL = 0;
 
-        pidlFirst = ILCloneFirst(pidl);
-        if (!pidlFirst) {
-            WARN("ILCloneFirst failed!\n");
-            return E_FAIL;
+            hr = IShellFolder_BindToObject(iface, pidl, NULL, &IID_IShellFolder, (void**)&pSubFolder);
+            if (!SUCCEEDED(hr)) return hr;
+       
+            hr = IShellFolder_GetDisplayNameOf(pSubFolder, (LPITEMIDLIST)&emptyIDL, uFlags, lpName);
+            IShellFolder_Release(pSubFolder);
         }
-
-        hr = IShellFolder_BindToObject(iface, pidlFirst, NULL, &IID_IShellFolder, 
-                                       (void**)&pSubFolder);
-        if (!SUCCEEDED(hr)) {
-            WARN("BindToObject failed!\n");
-            ILFree(pidlFirst);
-            return hr;
-        }
-
-        ILFree(pidlFirst);
-        
-        hr = IShellFolder_GetDisplayNameOf(pSubFolder, ILGetNext(pidl), uFlags, &strSubfolderName);
-        if (!SUCCEEDED(hr)) {
-            WARN("GetDisplayNameOf failed!\n");
-            return hr;
-        }
-        
-        snprintf(lpName->u.cStr, MAX_PATH, "%s/%s", pszFileName, strSubfolderName.u.cStr);
-
-        IShellFolder_Release(pSubFolder);
     } else {
-        strcpy(lpName->u.cStr, *pszFileName ? pszFileName : "/");
+        char *pszFileName = _ILGetTextPointer(pidl);
+        lpName->uType = STRRET_CSTR;
+        strcpy(lpName->u.cStr, pszFileName ? pszFileName : "");
     }
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* This, HWND hwnd, 
