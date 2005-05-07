@@ -206,10 +206,12 @@ BOOL DoCloseFile(void)
 
 void DoOpenFile(LPCWSTR szFileName)
 {
+    static const WCHAR dotlog[] = { '.','L','O','G',0 };
     HANDLE hFile;
     LPSTR pTemp;
     DWORD size;
     DWORD dwNumRead;
+    WCHAR log[5];
 
     /* Close any files and prompt to save changes */
     if (!DoCloseFile())
@@ -266,6 +268,18 @@ void DoOpenFile(LPCWSTR szFileName)
     SendMessage(Globals.hEdit, EM_SETMODIFY, FALSE, 0);
     SendMessage(Globals.hEdit, EM_EMPTYUNDOBUFFER, 0, 0);
     SetFocus(Globals.hEdit);
+    
+    /*  If the file starts with .LOG, add a time/date at the end and set cursor after
+     *  See http://support.microsoft.com/?kbid=260563
+     */
+    if (GetWindowTextW(Globals.hEdit, log, sizeof(log)/sizeof(log[0])) && !lstrcmp(log, dotlog))
+    {
+	static const WCHAR lfW[] = { '\r','\n',0 };
+	SendMessage(Globals.hEdit, EM_SETSEL, GetWindowTextLength(Globals.hEdit), -1);
+	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
+	DIALOG_EditTimeDate();
+	SendMessage(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)lfW);
+    }
 
     SetFileName(szFileName);
     UpdateWindowCaption();
