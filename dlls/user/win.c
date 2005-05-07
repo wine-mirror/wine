@@ -307,13 +307,14 @@ WND *WIN_GetPtr( HWND hwnd )
     USER_Lock();
     if ((ptr = user_handles[index]))
     {
-        if (ptr->dwMagic == WND_MAGIC && (!HIWORD(hwnd) || hwnd == ptr->hwndSelf))
+        if (ptr->dwMagic == WND_MAGIC &&
+            (hwnd == ptr->hwndSelf || !HIWORD(hwnd) || HIWORD(hwnd) == 0xffff))
             return ptr;
         ptr = NULL;
     }
     else if (index == USER_HANDLE_TO_INDEX(hwndDesktop))
     {
-        if (!HIWORD(hwnd) || hwnd == GetDesktopWindow()) ptr = WND_DESKTOP;
+        if (hwnd == GetDesktopWindow() || !HIWORD(hwnd) || HIWORD(hwnd) == 0xffff) ptr = WND_DESKTOP;
         else ptr = NULL;
     }
     else ptr = WND_OTHER_PROCESS;

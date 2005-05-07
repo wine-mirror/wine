@@ -35,12 +35,14 @@ static int allocated_handles;
 
 static struct user_handle *handle_to_entry( user_handle_t handle )
 {
+    unsigned short generation;
     int index = (((unsigned int)handle & 0xffff) - FIRST_USER_HANDLE) >> 1;
     if (index < 0 || index >= nb_handles) return NULL;
     if (!handles[index].type) return NULL;
-    if (((unsigned int)handle >> 16) && ((unsigned int)handle >> 16 != handles[index].generation))
-        return NULL;
-    return &handles[index];
+    generation = (unsigned int)handle >> 16;
+    if (generation == handles[index].generation || !generation || generation == 0xffff)
+        return &handles[index];
+    return NULL;
 }
 
 inline static user_handle_t entry_to_handle( struct user_handle *ptr )
