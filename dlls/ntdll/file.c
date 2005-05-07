@@ -1566,6 +1566,37 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
 			    CFRelease(properties);
 		    }
 		}
+#elif defined(sun)
+                /* Use dkio to work out device types */
+                {
+# include <sys/dkio.h>
+# include <sys/vtoc.h>
+                    struct dk_cinfo dkinf;
+                    int retval = ioctl(fd, DKIOCINFO, &dkinf);
+                    if(retval==-1){
+                        WARN("Unable to get disk device type information - assuming a disk like device\n");
+                        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                    }
+                    switch (dkinf.dki_ctype)
+                    {
+                    case DKC_CDROM:
+                        info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+                        info->Characteristics |= FILE_REMOVABLE_MEDIA|FILE_READ_ONLY_DEVICE;
+                        break;
+                    case DKC_NCRFLOPPY:
+                    case DKC_SMSFLOPPY:
+                    case DKC_INTEL82072:
+                    case DKC_INTEL82077:
+                        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                        info->Characteristics |= FILE_REMOVABLE_MEDIA;
+                        break;
+                    case DKC_MD:
+                        info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+                        break;
+                    default:
+                        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+                    }
+                }
 #else
                 static int warned;
                 if (!warned++) FIXME( "device info not properly supported on this platform\n" );
