@@ -980,7 +980,7 @@ BOOL WINAPI LocalUnlock(
  *
  *       The SEGPTR is used by the caller!
  */
-void AllocMappedBuffer( CONTEXT86 *context )
+void WINAPI __regs_AllocMappedBuffer( CONTEXT86 *context )
 {
     HGLOBAL handle = GlobalAlloc(0, context->Edi + 8);
     DWORD *buffer = (DWORD *)GlobalLock(handle);
@@ -1004,7 +1004,9 @@ void AllocMappedBuffer( CONTEXT86 *context )
         context->Edi = (DWORD)(buffer + 2);
     }
 }
-
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( AllocMappedBuffer, 0, 0 );
+#endif
 
 /**********************************************************************
  * 		FreeMappedBuffer	(KERNEL32.39)
@@ -1013,7 +1015,7 @@ void AllocMappedBuffer( CONTEXT86 *context )
  *
  * Input: EDI register: pointer to buffer
  */
-void FreeMappedBuffer( CONTEXT86 *context )
+void WINAPI __regs_FreeMappedBuffer( CONTEXT86 *context )
 {
     if (context->Edi)
     {
@@ -1025,6 +1027,9 @@ void FreeMappedBuffer( CONTEXT86 *context )
         GlobalFree((HGLOBAL)buffer[0]);
     }
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( FreeMappedBuffer, 0, 0 );
+#endif
 
 /***********************************************************************
  *           GlobalMemoryStatusEx   (KERNEL32.@)

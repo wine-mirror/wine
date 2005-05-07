@@ -278,7 +278,7 @@ done:
  *		VxDCall7 (KERNEL32.8)
  *		VxDCall8 (KERNEL32.9)
  */
-void VxDCall( DWORD service, CONTEXT86 *context )
+void WINAPI __regs_VxDCall( DWORD service, CONTEXT86 *context )
 {
     int i;
     VxDCallProc proc = NULL;
@@ -304,6 +304,9 @@ void VxDCall( DWORD service, CONTEXT86 *context )
         context->Eax = 0xffffffff; /* FIXME */
     }
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( VxDCall, 4, 4 );
+#endif
 
 
 /***********************************************************************

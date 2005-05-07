@@ -2263,32 +2263,44 @@ HMODULE WINAPI MapHModuleSL(HMODULE16 hmod)
  *		MapHInstLS			(KERNEL32.@)
  *		MapHInstLS			(KERNEL.472)
  */
-void MapHInstLS( CONTEXT86 *context )
+void WINAPI __regs_MapHInstLS( CONTEXT86 *context )
 {
     context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( MapHInstLS, 0, 0 );
+#endif
 
 /***************************************************************************
  *		MapHInstSL			(KERNEL32.@)
  *		MapHInstSL			(KERNEL.473)
  */
-void MapHInstSL( CONTEXT86 *context )
+void WINAPI __regs_MapHInstSL( CONTEXT86 *context )
 {
     context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( MapHInstSL, 0, 0 );
+#endif
 
 /***************************************************************************
  *		MapHInstLS_PN			(KERNEL32.@)
  */
-void MapHInstLS_PN( CONTEXT86 *context )
+void WINAPI __regs_MapHInstLS_PN( CONTEXT86 *context )
 {
     if (context->Eax) context->Eax = MapHModuleLS( (HMODULE)context->Eax );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( MapHInstLS_PN, 0, 0 );
+#endif
 
 /***************************************************************************
  *		MapHInstSL_PN			(KERNEL32.@)
  */
-void MapHInstSL_PN( CONTEXT86 *context )
+void WINAPI __regs_MapHInstSL_PN( CONTEXT86 *context )
 {
     if (context->Eax) context->Eax = (DWORD)MapHModuleSL( context->Eax );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( MapHInstSL_PN, 0, 0 );
+#endif

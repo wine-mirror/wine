@@ -564,11 +564,13 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
 /***********************************************************************
  *           UnMapSLFixArray   (KERNEL32.@)
  */
-
-void UnMapSLFixArray( SEGPTR sptr[], INT length, CONTEXT86 *context )
+void WINAPI __regs_UnMapSLFixArray( SEGPTR sptr[], INT length, CONTEXT86 *context )
 {
     /* Must not change EAX, hence defined as 'register' function */
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( UnMapSLFixArray, 8, 8 );
+#endif
 
 /***********************************************************************
  *           GetThreadSelectorEntry   (KERNEL32.@)
@@ -637,77 +639,12 @@ BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldten
 }
 
 
-/**********************************************************************
- * 		SMapLS*		(KERNEL32)
- * These functions map linear pointers at [EBP+xxx] to segmented pointers
- * and return them.
- * Win95 uses some kind of alias structs, which it stores in [EBP+x] to
- * unravel them at SUnMapLS. We just store the segmented pointer there.
- */
-static void x_SMapLS_IP_EBP_x(CONTEXT86 *context,int argoff)
-{
-    DWORD	val,ptr;
-
-    val =*(DWORD*)(context->Ebp + argoff);
-    if (val<0x10000) {
-	ptr=val;
-        *(DWORD*)(context->Ebp + argoff) = 0;
-    } else {
-    	ptr = MapLS((LPVOID)val);
-        *(DWORD*)(context->Ebp + argoff) = ptr;
-    }
-    context->Eax = ptr;
-}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_8 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_8 (CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context, 8);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_12 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_12(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,12);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_16 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_16(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,16);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_20 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_20(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,20);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_24 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_24(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,24);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_28 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_28(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,28);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_32 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_32(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,32);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_36 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_36(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,36);}
-
-/***********************************************************************
- *		SMapLS_IP_EBP_40 (KERNEL32.@)
- */
-void SMapLS_IP_EBP_40(CONTEXT86 *context) {x_SMapLS_IP_EBP_x(context,40);}
+#ifdef DEFINE_REGS_ENTRYPOINT
 
 /***********************************************************************
  *		SMapLS (KERNEL32.@)
  */
-void SMapLS( CONTEXT86 *context )
+void WINAPI __regs_SMapLS( CONTEXT86 *context )
 {
     if (HIWORD(context->Eax))
     {
@@ -717,67 +654,87 @@ void SMapLS( CONTEXT86 *context )
         context->Edx = 0;
     }
 }
+DEFINE_REGS_ENTRYPOINT( SMapLS, 0, 0 );
 
 /***********************************************************************
  *		SUnMapLS (KERNEL32.@)
  */
-
-void SUnMapLS( CONTEXT86 *context )
+void WINAPI __regs_SUnMapLS( CONTEXT86 *context )
 {
     if (HIWORD(context->Eax)) UnMapLS( (SEGPTR)context->Eax );
 }
+DEFINE_REGS_ENTRYPOINT( SUnMapLS, 0, 0 );
 
-inline static void x_SUnMapLS_IP_EBP_x(CONTEXT86 *context,int argoff)
-{
-    SEGPTR *ptr = (SEGPTR *)(context->Ebp + argoff);
-    if (*ptr)
-    {
-        UnMapLS( *ptr );
-        *ptr = 0;
-    }
-}
+
+/***********************************************************************
+ *		SMapLS_IP_EBP_8 (KERNEL32.@)
+ *		SMapLS_IP_EBP_12 (KERNEL32.@)
+ *		SMapLS_IP_EBP_16 (KERNEL32.@)
+ *		SMapLS_IP_EBP_20 (KERNEL32.@)
+ *		SMapLS_IP_EBP_24 (KERNEL32.@)
+ *		SMapLS_IP_EBP_28 (KERNEL32.@)
+ *		SMapLS_IP_EBP_32 (KERNEL32.@)
+ *		SMapLS_IP_EBP_36 (KERNEL32.@)
+ *		SMapLS_IP_EBP_40 (KERNEL32.@)
+ *
+ * These functions map linear pointers at [EBP+xxx] to segmented pointers
+ * and return them.
+ * Win95 uses some kind of alias structs, which it stores in [EBP+x] to
+ * unravel them at SUnMapLS. We just store the segmented pointer there.
+ */
+#define DEFINE_SMapLS(n) \
+void WINAPI __regs_SMapLS_IP_EBP_ ## n (CONTEXT86 *context) \
+{ \
+    SEGPTR *ptr = (SEGPTR *)(context->Ebp + n); \
+    if (!HIWORD(*ptr)) \
+    { \
+        context->Eax = *ptr; \
+        *ptr = 0; \
+    } \
+    else *ptr = context->Eax = MapLS((LPVOID)*ptr); \
+} \
+DEFINE_REGS_ENTRYPOINT( SMapLS_IP_EBP_ ## n, 0, 0 )
+
+DEFINE_SMapLS(8);
+DEFINE_SMapLS(12);
+DEFINE_SMapLS(16);
+DEFINE_SMapLS(20);
+DEFINE_SMapLS(24);
+DEFINE_SMapLS(28);
+DEFINE_SMapLS(32);
+DEFINE_SMapLS(36);
+DEFINE_SMapLS(40);
+
 
 /***********************************************************************
  *		SUnMapLS_IP_EBP_8 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_8 (CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context, 8); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_12 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_12(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,12); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_16 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_16(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,16); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_20 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_20(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,20); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_24 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_24(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,24); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_28 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_28(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,28); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_32 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_32(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,32); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_36 (KERNEL32.@)
- */
-void SUnMapLS_IP_EBP_36(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,36); }
-
-/***********************************************************************
  *		SUnMapLS_IP_EBP_40 (KERNEL32.@)
  */
-void SUnMapLS_IP_EBP_40(CONTEXT86 *context) { x_SUnMapLS_IP_EBP_x(context,40); }
+
+#define DEFINE_SUnMapLS(n) \
+void WINAPI __regs_SUnMapLS_IP_EBP_ ## n (CONTEXT86 *context) \
+{ \
+    SEGPTR *ptr = (SEGPTR *)(context->Ebp + n); \
+    UnMapLS( *ptr ); \
+    *ptr = 0; \
+} \
+DEFINE_REGS_ENTRYPOINT( SUnMapLS_IP_EBP_ ## n, 0, 0 )
+
+DEFINE_SUnMapLS(8);
+DEFINE_SUnMapLS(12);
+DEFINE_SUnMapLS(16);
+DEFINE_SUnMapLS(20);
+DEFINE_SUnMapLS(24);
+DEFINE_SUnMapLS(28);
+DEFINE_SUnMapLS(32);
+DEFINE_SUnMapLS(36);
+DEFINE_SUnMapLS(40);
+
+#endif  /* DEFINE_REGS_ENTRYPOINT */

@@ -21,6 +21,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -185,30 +186,39 @@ void WINAPI LogApiThk( LPSTR func )
  *
  * NOTE: needs to preserve all registers!
  */
-void LogApiThkLSF( LPSTR func, CONTEXT86 *context )
+void WINAPI __regs_LogApiThkLSF( LPSTR func, CONTEXT86 *context )
 {
     TRACE( "%s\n", debugstr_a(func) );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( LogApiThkLSF, 4, 4 );
+#endif
 
 /***********************************************************************
  *           LogApiThkSL    (KERNEL32.44)
  *
  * NOTE: needs to preserve all registers!
  */
-void LogApiThkSL( LPSTR func, CONTEXT86 *context )
+void WINAPI __regs_LogApiThkSL( LPSTR func, CONTEXT86 *context )
 {
     TRACE( "%s\n", debugstr_a(func) );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( LogApiThkSL, 4, 4 );
+#endif
 
 /***********************************************************************
  *           LogCBThkSL    (KERNEL32.47)
  *
  * NOTE: needs to preserve all registers!
  */
-void LogCBThkSL( LPSTR func, CONTEXT86 *context )
+void WINAPI __regs_LogCBThkSL( LPSTR func, CONTEXT86 *context )
 {
     TRACE( "%s\n", debugstr_a(func) );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( LogCBThkSL, 4, 4 );
+#endif
 
 /***********************************************************************
  * Generates a FT_Prolog call.
@@ -438,7 +448,7 @@ UINT WINAPI ThunkConnect32(
  * FIXME: DDJ talks of certain register usage rules; I'm not sure
  * whether we cover this 100%.
  */
-void QT_Thunk( CONTEXT86 *context )
+void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
 {
     CONTEXT86 context16;
     DWORD argsize;
@@ -476,6 +486,9 @@ void QT_Thunk( CONTEXT86 *context )
     context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( QT_Thunk, 0, 0 );
+#endif
 
 
 /**********************************************************************
@@ -521,7 +534,7 @@ void QT_Thunk( CONTEXT86 *context )
  *  ESP is EBP-64 after return.
  *
  */
-void FT_Prolog( CONTEXT86 *context )
+void WINAPI __regs_FT_Prolog( CONTEXT86 *context )
 {
     /* Build stack frame */
     stack32_push(context, context->Ebp);
@@ -541,6 +554,9 @@ void FT_Prolog( CONTEXT86 *context )
     *(DWORD *)(context->Ebp - 48) = context->Eax;
     *(DWORD *)(context->Ebp - 52) = context->Edx;
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( FT_Prolog, 0, 0 );
+#endif
 
 /**********************************************************************
  * 		FT_Thunk			(KERNEL32.@)
@@ -562,7 +578,7 @@ void FT_Prolog( CONTEXT86 *context )
  *        of arguments, so that the single DWORD bitmap is no longer
  *        sufficient ...
  */
-void FT_Thunk( CONTEXT86 *context )
+void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
 {
     DWORD mapESPrelative = *(DWORD *)(context->Ebp - 20);
     DWORD callTarget     = *(DWORD *)(context->Ebp - 52);
@@ -607,9 +623,26 @@ void FT_Thunk( CONTEXT86 *context )
     /* Copy modified buffers back to 32-bit stack */
     memcpy( oldstack, newstack, argsize );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0, 0 );
+#endif
 
-/**********************************************************************
- * 		FT_ExitNN		(KERNEL32.218 - 232)
+/***********************************************************************
+ *		FT_Exit0 (KERNEL32.@)
+ *		FT_Exit4 (KERNEL32.@)
+ *		FT_Exit8 (KERNEL32.@)
+ *		FT_Exit12 (KERNEL32.@)
+ *		FT_Exit16 (KERNEL32.@)
+ *		FT_Exit20 (KERNEL32.@)
+ *		FT_Exit24 (KERNEL32.@)
+ *		FT_Exit28 (KERNEL32.@)
+ *		FT_Exit32 (KERNEL32.@)
+ *		FT_Exit36 (KERNEL32.@)
+ *		FT_Exit40 (KERNEL32.@)
+ *		FT_Exit44 (KERNEL32.@)
+ *		FT_Exit48 (KERNEL32.@)
+ *		FT_Exit52 (KERNEL32.@)
+ *		FT_Exit56 (KERNEL32.@)
  *
  * One of the FT_ExitNN functions is called at the end of the thunk code.
  * It removes the stack frame created by FT_Prolog, moves the function
@@ -619,7 +652,7 @@ void FT_Thunk( CONTEXT86 *context )
  * and perform a return to the CALLER of the thunk code (while removing
  * the given number of arguments from the caller's stack).
  */
-static void FT_Exit(CONTEXT86 *context, int nPopArgs)
+static inline void FT_Exit(CONTEXT86 *context)
 {
     /* Return value is in EBX */
     context->Eax = context->Ebx;
@@ -635,84 +668,36 @@ static void FT_Exit(CONTEXT86 *context, int nPopArgs)
 
     /* Pop return address to CALLER of thunk code */
     context->Eip = stack32_pop(context);
-    /* Remove arguments */
-    context->Esp += nPopArgs;
 }
 
-/***********************************************************************
- *		FT_Exit0 (KERNEL32.@)
- */
-void FT_Exit0(CONTEXT86 *context) { FT_Exit(context,  0); }
+#ifdef DEFINE_REGS_ENTRYPOINT
 
-/***********************************************************************
- *		FT_Exit4 (KERNEL32.@)
- */
-void FT_Exit4(CONTEXT86 *context) { FT_Exit(context,  4); }
+#define DEFINE_FT_Exit(n) \
+void WINAPI __regs_FT_Exit ## n(CONTEXT86 *context) \
+{ \
+    FT_Exit(context); \
+    context->Esp += n; \
+} \
+DEFINE_REGS_ENTRYPOINT( FT_Exit ## n, 0, 0 )
 
-/***********************************************************************
- *		FT_Exit8 (KERNEL32.@)
- */
-void FT_Exit8(CONTEXT86 *context) { FT_Exit(context,  8); }
+DEFINE_FT_Exit(0);
+DEFINE_FT_Exit(4);
+DEFINE_FT_Exit(8);
+DEFINE_FT_Exit(12);
+DEFINE_FT_Exit(16);
+DEFINE_FT_Exit(20);
+DEFINE_FT_Exit(24);
+DEFINE_FT_Exit(28);
+DEFINE_FT_Exit(32);
+DEFINE_FT_Exit(36);
+DEFINE_FT_Exit(40);
+DEFINE_FT_Exit(44);
+DEFINE_FT_Exit(48);
+DEFINE_FT_Exit(52);
+DEFINE_FT_Exit(56);
 
-/***********************************************************************
- *		FT_Exit12 (KERNEL32.@)
- */
-void FT_Exit12(CONTEXT86 *context) { FT_Exit(context, 12); }
+#endif /* DEFINE_REGS_ENTRYPOINT */
 
-/***********************************************************************
- *		FT_Exit16 (KERNEL32.@)
- */
-void FT_Exit16(CONTEXT86 *context) { FT_Exit(context, 16); }
-
-/***********************************************************************
- *		FT_Exit20 (KERNEL32.@)
- */
-void FT_Exit20(CONTEXT86 *context) { FT_Exit(context, 20); }
-
-/***********************************************************************
- *		FT_Exit24 (KERNEL32.@)
- */
-void FT_Exit24(CONTEXT86 *context) { FT_Exit(context, 24); }
-
-/***********************************************************************
- *		FT_Exit28 (KERNEL32.@)
- */
-void FT_Exit28(CONTEXT86 *context) { FT_Exit(context, 28); }
-
-/***********************************************************************
- *		FT_Exit32 (KERNEL32.@)
- */
-void FT_Exit32(CONTEXT86 *context) { FT_Exit(context, 32); }
-
-/***********************************************************************
- *		FT_Exit36 (KERNEL32.@)
- */
-void FT_Exit36(CONTEXT86 *context) { FT_Exit(context, 36); }
-
-/***********************************************************************
- *		FT_Exit40 (KERNEL32.@)
- */
-void FT_Exit40(CONTEXT86 *context) { FT_Exit(context, 40); }
-
-/***********************************************************************
- *		FT_Exit44 (KERNEL32.@)
- */
-void FT_Exit44(CONTEXT86 *context) { FT_Exit(context, 44); }
-
-/***********************************************************************
- *		FT_Exit48 (KERNEL32.@)
- */
-void FT_Exit48(CONTEXT86 *context) { FT_Exit(context, 48); }
-
-/***********************************************************************
- *		FT_Exit52 (KERNEL32.@)
- */
-void FT_Exit52(CONTEXT86 *context) { FT_Exit(context, 52); }
-
-/***********************************************************************
- *		FT_Exit56 (KERNEL32.@)
- */
-void FT_Exit56(CONTEXT86 *context) { FT_Exit(context, 56); }
 
 /***********************************************************************
  * 		ThunkInitLS 	(KERNEL32.43)
@@ -780,7 +765,7 @@ DWORD WINAPI ThunkInitLS(
  * in the BL register by the called 16-bit routine.
  *
  */
-void Common32ThkLS( CONTEXT86 *context )
+void WINAPI __regs_Common32ThkLS( CONTEXT86 *context )
 {
     CONTEXT86 context16;
     DWORD argsize;
@@ -811,6 +796,9 @@ void Common32ThkLS( CONTEXT86 *context )
     /* Clean up caller's stack frame */
     context->Esp += LOBYTE(context16.Ebx);
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( Common32ThkLS, 0, 0 );
+#endif
 
 /***********************************************************************
  *		OT_32ThkLSF	(KERNEL32.40)
@@ -839,7 +827,7 @@ void Common32ThkLS( CONTEXT86 *context )
  * (Note that this function seems only to be used for
  *  OLECLI32 -> OLECLI and OLESVR32 -> OLESVR thunking.)
  */
-void OT_32ThkLSF( CONTEXT86 *context )
+void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
 {
     CONTEXT86 context16;
     DWORD argsize;
@@ -866,6 +854,9 @@ void OT_32ThkLSF( CONTEXT86 *context )
     context->Esp +=   LOWORD(context16.Esp) -
                         ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( OT_32ThkLSF, 0, 0 );
+#endif
 
 /***********************************************************************
  *		ThunkInitLSF		(KERNEL32.41)
@@ -948,7 +939,7 @@ LPVOID WINAPI ThunkInitLSF(
  * Note: The two DWORD arguments get popped off the stack.
  *
  */
-void FT_PrologPrime( CONTEXT86 *context )
+void WINAPI __regs_FT_PrologPrime( CONTEXT86 *context )
 {
     DWORD  targetTableOffset;
     LPBYTE relayCode;
@@ -965,6 +956,9 @@ void FT_PrologPrime( CONTEXT86 *context )
     /* Jump to the call stub just created */
     context->Eip = (DWORD)relayCode;
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( FT_PrologPrime, 0, 0 );
+#endif
 
 /***********************************************************************
  *		QT_ThunkPrime			(KERNEL32.90)
@@ -977,7 +971,7 @@ void FT_PrologPrime( CONTEXT86 *context )
  *         EAX    start of relay code
  *
  */
-void QT_ThunkPrime( CONTEXT86 *context )
+void WINAPI __regs_QT_ThunkPrime( CONTEXT86 *context )
 {
     DWORD  targetTableOffset;
     LPBYTE relayCode;
@@ -994,6 +988,9 @@ void QT_ThunkPrime( CONTEXT86 *context )
     /* Jump to the call stub just created */
     context->Eip = (DWORD)relayCode;
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( QT_ThunkPrime, 0, 0 );
+#endif
 
 /***********************************************************************
  *		ThunkInitSL (KERNEL32.46)
@@ -1118,7 +1115,7 @@ DWORD WINAPIV SSCall(
 /**********************************************************************
  *           W32S_BackTo32                      (KERNEL32.51)
  */
-void W32S_BackTo32( CONTEXT86 *context )
+void WINAPI __regs_W32S_BackTo32( CONTEXT86 *context )
 {
     LPDWORD stack = (LPDWORD)context->Esp;
     FARPROC proc = (FARPROC)context->Eip;
@@ -1128,6 +1125,9 @@ void W32S_BackTo32( CONTEXT86 *context )
 
     context->Eip = stack32_pop(context);
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( W32S_BackTo32, 0, 0 );
+#endif
 
 /**********************************************************************
  *			AllocSLCallback		(KERNEL32.@)
@@ -1241,7 +1241,7 @@ BOOL16 WINAPI IsPeFormat16(
 /***********************************************************************
  *           K32Thk1632Prolog			(KERNEL32.@)
  */
-void K32Thk1632Prolog( CONTEXT86 *context )
+void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
 {
    LPBYTE code = (LPBYTE)context->Eip - 5;
 
@@ -1298,11 +1298,14 @@ void K32Thk1632Prolog( CONTEXT86 *context )
        been called.  Thus we re-use it to hold the Win16Lock count */
    ReleaseThunkLock(&CURRENT_STACK16->entry_point);
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( K32Thk1632Prolog, 0, 0 );
+#endif
 
 /***********************************************************************
  *           K32Thk1632Epilog			(KERNEL32.@)
  */
-void K32Thk1632Epilog( CONTEXT86 *context )
+void WINAPI __regs_K32Thk1632Epilog( CONTEXT86 *context )
 {
    LPBYTE code = (LPBYTE)context->Eip - 13;
 
@@ -1332,6 +1335,9 @@ void K32Thk1632Epilog( CONTEXT86 *context )
                    context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
    }
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( K32Thk1632Epilog, 0, 0 );
+#endif
 
 /*********************************************************************
  *                   PK16FNF [KERNEL32.91]
@@ -2101,7 +2107,7 @@ LPVOID WINAPI GetPK16SysVar(void)
 /**********************************************************************
  *           CommonUnimpStub    (KERNEL32.17)
  */
-void CommonUnimpStub( CONTEXT86 *context )
+void WINAPI __regs_CommonUnimpStub( CONTEXT86 *context )
 {
     FIXME("generic stub: %s\n", ((LPSTR)context->Eax ? (LPSTR)context->Eax : "?"));
 
@@ -2116,6 +2122,9 @@ void CommonUnimpStub( CONTEXT86 *context )
 
     context->Esp += (context->Ecx & 0x0f) * 4;
 }
+#ifdef DEFINE_REGS_ENTRYPOINT
+DEFINE_REGS_ENTRYPOINT( CommonUnimpStub, 0, 0 );
+#endif
 
 /**********************************************************************
  *           HouseCleanLogicallyDeadHandles    (KERNEL32.33)
