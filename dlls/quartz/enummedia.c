@@ -99,7 +99,8 @@ HRESULT IEnumMediaTypesImpl_Construct(const ENUMMEDIADETAILS * pDetails, IEnumMe
     pEnumMediaTypes->enumMediaDetails.pMediaTypes = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE) * pDetails->cMediaTypes);
     for (i = 0; i < pDetails->cMediaTypes; i++)
         if (FAILED(CopyMediaType(&pEnumMediaTypes->enumMediaDetails.pMediaTypes[i], &pDetails->pMediaTypes[i]))) {
-           while (--i > 0) CoTaskMemFree(pEnumMediaTypes->enumMediaDetails.pMediaTypes[i].pbFormat);
+           while (i--)
+              CoTaskMemFree(pEnumMediaTypes->enumMediaDetails.pMediaTypes[i].pbFormat);
            CoTaskMemFree(pEnumMediaTypes->enumMediaDetails.pMediaTypes);
            return E_OUTOFMEMORY;
         }
@@ -174,7 +175,7 @@ static HRESULT WINAPI IEnumMediaTypesImpl_Next(IEnumMediaTypes * iface, ULONG cM
         *ppMediaTypes = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE) * cFetched);
         for (i = 0; i < cFetched; i++)
             if (FAILED(CopyMediaType(&(*ppMediaTypes)[i], &This->enumMediaDetails.pMediaTypes[This->uIndex + i]))) {
-                while (--i)
+                while (i--)
                     CoTaskMemFree((*ppMediaTypes)[i].pbFormat);
                 CoTaskMemFree(*ppMediaTypes);
                 *ppMediaTypes = NULL;
