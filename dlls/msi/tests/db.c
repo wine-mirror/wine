@@ -189,6 +189,8 @@ void test_msiinsert(void)
     ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
     r = MsiCloseHandle(hview);
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    r = MsiCloseHandle(hrec);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 
     r = MsiDatabaseCommit(hdb);
     ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
