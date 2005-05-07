@@ -36,6 +36,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "wine/exception.h"
 #include "build.h"
 
 struct import
@@ -533,10 +534,11 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
     {
         kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA", spec );
         kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "RaiseException", spec );
     }
     if (nb_regs)
         ntdll_imports += add_extra_symbol( extras, &count, "__wine_call_from_32_regs", spec );
-    if (nb_delayed || nb_stubs)
+    if (nb_stubs)
         ntdll_imports += add_extra_symbol( extras, &count, "RtlRaiseException", spec );
 
     /* make sure we import the dlls that contain these functions */
@@ -902,21 +904,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     }
     fprintf( outfile, "  }\n};\n\n" );
 
-    /* check if there's some stub defined. if so, exception struct
-     *  is already defined, so don't emit it twice
-     */
-    for (i = 0; i < spec->nb_entry_points; i++) if (spec->entry_points[i].type == TYPE_STUB) break;
-
-    if (i == spec->nb_entry_points) {
-       fprintf( outfile, "struct exc_record {\n" );
-       fprintf( outfile, "  unsigned int code, flags;\n" );
-       fprintf( outfile, "  void *rec, *addr;\n" );
-       fprintf( outfile, "  unsigned int params;\n" );
-       fprintf( outfile, "  const void *info[15];\n" );
-       fprintf( outfile, "};\n\n" );
-       fprintf( outfile, "extern void __stdcall RtlRaiseException( struct exc_record * );\n" );
-    }
-
+    fprintf( outfile, "extern void __stdcall RaiseException(unsigned int, unsigned int, unsigned int, const void *args[]);\n" );
     fprintf( outfile, "extern void * __stdcall LoadLibraryA(const char*);\n");
     fprintf( outfile, "extern void * __stdcall GetProcAddress(void *, const char*);\n");
     fprintf( outfile, "\n" );
@@ -934,20 +922,12 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "    /* patch IAT with final value */\n" );
     fprintf( outfile, "    return *pIAT = fn;\n" );
     fprintf( outfile, "  else {\n");
-    fprintf( outfile, "    struct exc_record rec;\n" );
-    fprintf( outfile, "    rec.code    = 0x80000100;\n" );
-    fprintf( outfile, "    rec.flags   = 1;\n" );
-    fprintf( outfile, "    rec.rec     = 0;\n" );
-    fprintf( outfile, "    rec.params  = 2;\n" );
-    fprintf( outfile, "    rec.info[0] = imd->szName;\n" );
-    fprintf( outfile, "    rec.info[1] = *pINT;\n" );
-    fprintf( outfile, "#ifdef __GNUC__\n" );
-    fprintf( outfile, "    rec.addr = __builtin_return_address(1);\n" );
-    fprintf( outfile, "#else\n" );
-    fprintf( outfile, "    rec.addr = 0;\n" );
-    fprintf( outfile, "#endif\n" );
-    fprintf( outfile, "    for (;;) RtlRaiseException( &rec );\n" );
-    fprintf( outfile, "    return 0; /* shouldn't go here */\n" );
+    fprintf( outfile, "    const void *args[2];\n" );
+    fprintf( outfile, "    args[0] = imd->szName;\n" );
+    fprintf( outfile, "    args[1] = *pINT;\n" );
+    fprintf( outfile, "    RaiseException( 0x%08x, %d, 2, args );\n",
+             EXCEPTION_WINE_STUB, EH_NONCONTINUABLE );
+    fprintf( outfile, "    return 0;\n" );
     fprintf( outfile, "  }\n}\n\n" );
 
     fprintf( outfile, "#ifndef __GNUC__\n" );
