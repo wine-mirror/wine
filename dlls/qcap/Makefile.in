@@ -3,8 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = qcap.dll
+IMPORTS   = ole32 oleaut32 user32 advapi32 kernel32
+EXTRALIBS = -lstrmiids -luuid $(LIBUNICODE)
 
-C_SRCS = qcap_main.c
+C_SRCS = \
+	dllsetup.c \
+	qcap_main.c
 
 RC_SRCS = version.rc
 

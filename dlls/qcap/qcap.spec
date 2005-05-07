@@ -1,4 +1,4 @@
-@ stub DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow() QCAP_DllCanUnloadNow
 @ stdcall -private DllGetClassObject(ptr ptr ptr) QCAP_DllGetClassObject
 @ stdcall -private DllRegisterServer() QCAP_DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllUnregisterServer() QCAP_DllUnregisterServer
