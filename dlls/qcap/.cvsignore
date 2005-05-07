@@ -1,4 +1,4 @@
 Makefile
+libqcap.def
 qcap.dll.dbg.c
-qcap.spec.def
 version.res

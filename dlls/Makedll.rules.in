@@ -12,14 +12,15 @@
 DLLDEFS     = @DLLDEFS@
 DLLFLAGS    = @DLLFLAGS@
 DLLEXT      = @DLLEXT@
+IMPLIBEXT   = @IMPLIBEXT@
 DEFS        = -D__WINESRC__ $(DLLDEFS) $(EXTRADEFS)
-MAINSPEC    = $(MODULE:%.dll=%).spec
-SPEC_DEF    = $(MAINSPEC).def
+BASEMODULE  = $(MODULE:%.dll=%)
+MAINSPEC    = $(BASEMODULE).spec
+SPEC_DEF    = lib$(BASEMODULE).def
 WIN16_FILES = $(SPEC_SRCS16:.spec=.spec.o) $(C_SRCS16:.c=.o) $(EXTRA_OBJS16)
 ALL_OBJS    = @WIN16_FILES@ $(OBJS) $(MODULE).dbg.o $(RC_SRCS:.rc=.res)
 ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
-IMPORTLIBS  = $(ALL_IMPORTS:%=$(DLLDIR)/lib%.$(IMPLIBEXT))
 
 all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
@@ -27,15 +28,19 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
 # Rules for .so files
 
-$(MODULE).so: $(MAINSPEC) $(ALL_OBJS) $(IMPORTLIBS) Makefile.in
+$(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
 	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) -o $@ -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+
+$(SPEC_DEF): $(MAINSPEC)
+	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
 
 # Rules for .dll files
 
-$(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) $(IMPORTLIBS) Makefile.in
+$(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
 	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(ALL_LIBS)
 
-$(SPEC_DEF): $(WINEBUILD)
+lib$(BASEMODULE).a: $(SPEC_DEF)
+	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
 
 # Rules for checking that no imports are missing
 
@@ -56,7 +61,7 @@ crosstest:: $(SUBDIRS:%=%/__crosstest__)
 
 # Rule to explicitly generate the .spec.c for debugging
 
-$(MAINSPEC).c: $(MAINSPEC) $(ALL_OBJS) $(IMPORTLIBS) $(WINEBUILD)
+$(MAINSPEC).c: $(MAINSPEC) $(ALL_OBJS)
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) --dll -o $@ --export $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(ALL_OBJS) -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-d%)
 
 # Rules for auto documentation
@@ -99,6 +104,9 @@ uninstall:: $(ALL_SPECS16:%=_uninstall_/%)
 
 # Misc. rules
 
-$(SPEC_SRCS16:.spec=.spec.c): $(WINEBUILD)
+clean::
+	$(RM) $(SPEC_DEF)
+
+$(SPEC_DEF) $(SPEC_SRCS16:.spec=.spec.c): $(WINEBUILD)
 
 # End of global dll rules

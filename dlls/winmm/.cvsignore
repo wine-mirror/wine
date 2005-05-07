@@ -1,6 +1,6 @@
 Makefile
+libwinmm.def
 mmsystem.spec.c
 sound.spec.c
 winmm.dll.dbg.c
-winmm.spec.def
 winmm_res.res

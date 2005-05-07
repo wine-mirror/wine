@@ -1,3 +1,3 @@
 Makefile
+libpowrprof.def
 powrprof.dll.dbg.c
-powrprof.spec.def

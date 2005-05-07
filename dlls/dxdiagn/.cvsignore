@@ -1,4 +1,4 @@
 Makefile
 dxdiagn.dll.dbg.c
-dxdiagn.spec.def
+libdxdiagn.def
 version.res

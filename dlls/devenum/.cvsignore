@@ -1,4 +1,4 @@
 Makefile
 devenum.dll.dbg.c
 devenum.res
-devenum.spec.def
+libdevenum.def

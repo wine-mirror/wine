@@ -1,4 +1,4 @@
 Makefile
 dmime.dll.dbg.c
-dmime.spec.def
+libdmime.def
 version.res

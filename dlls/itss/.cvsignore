@@ -1,4 +1,4 @@
 Makefile
 itss.dll.dbg.c
 itss.h
-itss.spec.def
+libitss.def

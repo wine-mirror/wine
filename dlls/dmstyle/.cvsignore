@@ -1,4 +1,4 @@
 Makefile
 dmstyle.dll.dbg.c
-dmstyle.spec.def
+libdmstyle.def
 version.res

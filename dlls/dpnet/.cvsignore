@@ -1,4 +1,4 @@
 Makefile
 dpnet.dll.dbg.c
-dpnet.spec.def
+libdpnet.def
 version.res

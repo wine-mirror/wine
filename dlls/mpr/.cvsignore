@@ -1,4 +1,4 @@
 Makefile
+libmpr.def
 mpr.dll.dbg.c
 mpr.res
-mpr.spec.def

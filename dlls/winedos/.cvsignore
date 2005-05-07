@@ -1,5 +1,5 @@
 Makefile
+libwinedos.def
 winedos.dll.dbg.c
-winedos.spec.def
 winedos16.spec.c
 wprocs.spec.c

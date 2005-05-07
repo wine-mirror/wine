@@ -1,4 +1,4 @@
 Makefile
+libmscms.def
 mscms.dll.dbg.c
-mscms.spec.def
 version.res

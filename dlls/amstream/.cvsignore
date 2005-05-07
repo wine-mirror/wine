@@ -1,4 +1,4 @@
 Makefile
 amstream.dll.dbg.c
-amstream.spec.def
+libamstream.def
 version.res

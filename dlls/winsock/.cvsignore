@@ -1,5 +1,5 @@
 Makefile
+libws2_32.def
 version.res
 winsock.spec.c
 ws2_32.dll.dbg.c
-ws2_32.spec.def

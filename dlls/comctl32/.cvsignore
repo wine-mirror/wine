@@ -1,7 +1,6 @@
 Makefile
 comctl32.dll
 comctl32.dll.dbg.c
-comctl32.spec.def
 idb_hist_large.bmp
 idb_hist_small.bmp
 idb_std_large.bmp
@@ -17,4 +16,5 @@ idi_tt_error_sm.ico
 idi_tt_info_sm.ico
 idi_tt_warn_sm.ico
 idt_check.bmp
+libcomctl32.def
 rsrc.res

@@ -1,4 +1,4 @@
 Makefile
 dmscript.dll.dbg.c
-dmscript.spec.def
+libdmscript.def
 version.res

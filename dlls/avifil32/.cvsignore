@@ -1,5 +1,5 @@
 Makefile
 avifil32.dll.dbg.c
-avifil32.spec.def
 avifile.spec.c
+libavifil32.def
 rsrc.res

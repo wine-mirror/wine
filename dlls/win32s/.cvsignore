@@ -1,5 +1,5 @@
 Makefile
+libw32skrnl.def
 w32skrnl.dll.dbg.c
-w32skrnl.spec.def
 w32sys.spec.c
 win32s16.spec.c

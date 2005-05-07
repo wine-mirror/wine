@@ -1,4 +1,4 @@
 Makefile
+libopengl32.def
 opengl32.dll.dbg.c
-opengl32.spec.def
 version.res

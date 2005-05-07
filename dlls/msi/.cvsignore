@@ -1,8 +1,8 @@
 Makefile
 cond.tab.c
 cond.tab.h
+libmsi.def
 msi.dll.dbg.c
 msi.res
-msi.spec.def
 sql.tab.c
 sql.tab.h

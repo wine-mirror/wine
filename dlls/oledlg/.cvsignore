@@ -1,4 +1,4 @@
 Makefile
+liboledlg.def
 oledlg.dll.dbg.c
-oledlg.spec.def
 rsrc.res

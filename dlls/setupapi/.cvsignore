@@ -1,5 +1,5 @@
 Makefile
+libsetupapi.def
 setupapi.dll.dbg.c
 setupapi.res
-setupapi.spec.def
 setupx.spec.c

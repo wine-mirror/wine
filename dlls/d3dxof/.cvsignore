@@ -1,4 +1,4 @@
 Makefile
 d3dxof.dll.dbg.c
-d3dxof.spec.def
+libd3dxof.def
 version.res

@@ -1,4 +1,4 @@
 Makefile
 dsound.dll.dbg.c
-dsound.spec.def
+libdsound.def
 version.res

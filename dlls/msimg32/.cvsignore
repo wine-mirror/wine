@@ -1,3 +1,3 @@
 Makefile
+libmsimg32.def
 msimg32.dll.dbg.c
-msimg32.spec.def

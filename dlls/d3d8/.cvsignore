@@ -1,4 +1,4 @@
 Makefile
 d3d8.dll.dbg.c
-d3d8.spec.def
+libd3d8.def
 version.res

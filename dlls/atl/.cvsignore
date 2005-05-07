@@ -1,5 +1,5 @@
 Makefile
 atl.dll.dbg.c
-atl.spec.def
 atliface.h
+libatl.def
 rsrc.res

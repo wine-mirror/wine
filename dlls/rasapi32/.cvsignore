@@ -1,4 +1,4 @@
 Makefile
+librasapi32.def
 rasapi16.spec.c
 rasapi32.dll.dbg.c
-rasapi32.spec.def

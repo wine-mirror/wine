@@ -1,4 +1,4 @@
 Makefile
 cabinet.dll.dbg.c
 cabinet.res
-cabinet.spec.def
+libcabinet.def

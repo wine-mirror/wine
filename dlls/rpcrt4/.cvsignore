@@ -1,3 +1,3 @@
 Makefile
+librpcrt4.def
 rpcrt4.dll.dbg.c
-rpcrt4.spec.def

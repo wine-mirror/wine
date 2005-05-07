@@ -1,4 +1,4 @@
 Makefile
 dinput.dll.dbg.c
-dinput.spec.def
+libdinput.def
 version.res

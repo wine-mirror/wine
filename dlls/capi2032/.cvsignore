@@ -1,3 +1,3 @@
 Makefile
 capi2032.dll.dbg.c
-capi2032.spec.def
+libcapi2032.def

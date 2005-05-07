@@ -1,4 +1,4 @@
 Makefile
+libntdll.def
 ntdll.dll.dbg.c
-ntdll.spec.def
 relay32.s

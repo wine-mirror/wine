@@ -7,6 +7,7 @@ drive.ico
 floppy.ico
 folder.ico
 folder_open.ico
+libshell32.def
 mycomputer.ico
 netdrive.ico
 netdrive2.ico
@@ -14,6 +15,5 @@ printer.ico
 ramdisk.ico
 shell.spec.c
 shell32.dll.dbg.c
-shell32.spec.def
 shres.res
 version16.res

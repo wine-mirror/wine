@@ -1,3 +1,3 @@
 Makefile
 glut32.dll.dbg.c
-glut32.spec.def
+libglut32.def

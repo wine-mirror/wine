@@ -1,4 +1,4 @@
 Makefile
 imm.spec.c
 imm32.dll.dbg.c
-imm32.spec.def
+libimm32.def

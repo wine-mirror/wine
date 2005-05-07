@@ -251,19 +251,15 @@ foreach my $mod (sort @implibs)
     my $spec = $mod;
     $spec =~ s/\.dll$//;
     $def =~ s/\.(dll|drv)$//;
-    printf NEWMAKE "lib%s.def: %s/%s.spec.def\n", $def, $dir, $spec;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s.spec.def \$@\n", $dir, $spec;
-    printf NEWMAKE "lib%s.a: %s/%s.spec.def\n", $def, $dir, $spec;
-    printf NEWMAKE "\t\$(DLLTOOL) -k -l \$@ -d %s/%s.spec.def\n\n", $dir, $spec;
+    printf NEWMAKE "lib%s.def: %s/lib%s.def\n", $def, $dir, $spec;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/lib%s.def \$@\n", $dir, $spec;
+    printf NEWMAKE "lib%s.a: %s/lib%s.a\n", $def, $dir, $spec;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/lib%s.a \$@\n", $dir, $spec;
+    printf NEWMAKE "%s/lib%s.def: %s/%s.spec \$(WINEBUILD)\n", $dir, $spec, $dir, $spec;
+    printf NEWMAKE "\t\$(WINEBUILD) -w --def -o \$@ --export \$(SRCDIR)/%s/%s.spec\n", $dir, $spec;
+    printf NEWMAKE "%s/lib%s.a: %s/lib%s.def\n", $dir, $spec, $dir, $spec;
+    printf NEWMAKE "\t\$(DLLTOOL) -k -l \$@ -d %s/lib%s.def\n\n", $dir, $spec;
 }
-foreach my $mod (sort @implibs)
-{
-    my $dir = $directories{$mod};
-    my $spec = $mod;
-    $spec =~ s/\.dll$//;
-    printf NEWMAKE "%s/%s.spec.def: \$(WINEBUILD)\n", $dir, $spec;
-}
-
 
 print NEWMAKE <<EOF;
 

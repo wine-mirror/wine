@@ -2,8 +2,8 @@ Makefile
 comm.drv.spec.c
 kernel.res
 kernel32.dll.dbg.c
-kernel32.spec.def
 krnl386.exe.spec.c
+libkernel32.def
 relay16asm.s
 stress.spec.c
 system.drv.spec.c

@@ -1,4 +1,4 @@
 Makefile
 dplay.dll.dbg.c
-dplay.spec.def
+libdplay.def
 version.res

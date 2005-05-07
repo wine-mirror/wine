@@ -1,4 +1,4 @@
 Makefile
+libmsdmo.def
 msdmo.dll.dbg.c
-msdmo.spec.def
 rsrc.res
