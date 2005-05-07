@@ -119,7 +119,7 @@ static CFactoryTemplate const g_cTemplates[] = {
         &CLSID_FileWriter,
         QCAP_createFileWriter,
         NULL
-    },{
+    },*/{
         wCaptGraphBuilder,
         &CLSID_CaptureGraphBuilder,
         QCAP_createCaptureGraphBuilder2,
@@ -129,7 +129,7 @@ static CFactoryTemplate const g_cTemplates[] = {
         &CLSID_CaptureGraphBuilder2,
         QCAP_createCaptureGraphBuilder2,
         NULL
-    },{
+    }/*,{
         wInfPinTeeFilter, 
         &CLSID_InfinitePinTeeFilter, 
         QCAP_createInfinitePinTeeFilter,
