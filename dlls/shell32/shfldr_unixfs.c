@@ -30,6 +30,7 @@
 # include <pwd.h>
 #endif
 #include <grp.h>
+#include <limits.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -314,7 +315,7 @@ static BOOL UNIXFS_build_subfolder_pidls(const char *path, LPITEMIDLIST **apidl,
     }
 
     /* Allocate space for fully qualified paths */
-    pszFQPath = SHAlloc(strlen(path) + NAME_MAX);
+    pszFQPath = SHAlloc(strlen(path) + PATH_MAX);
     if (!pszFQPath) {
         WARN("SHAlloc failed!\n");
         return FALSE;
