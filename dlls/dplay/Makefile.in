@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dplay.dll
+IMPORTLIB = libdplay.$(IMPLIBEXT)
 IMPORTS   = dplayx
 
 C_SRCS = dplay_main.c

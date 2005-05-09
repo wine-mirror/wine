@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wintrust.dll
+IMPORTLIB = libwintrust.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
 C_SRCS = wintrust_main.c

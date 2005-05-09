@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ntdll.dll
+IMPORTLIB = libntdll.$(IMPLIBEXT)
 EXTRALIBS = $(LIBUNICODE) @IOKITLIB@
 
 C_SRCS = \

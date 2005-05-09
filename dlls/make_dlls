@@ -308,18 +308,15 @@ doc-sgml: \$(SUBDIRS:%=%/__doc_sgml__)
 
 # Misc rules
 
-install install-dev:: \$(IMPORT_LIBS)
-	\$(MKINSTALLDIRS) \$(dlldir)
-	for f in \$(IMPORT_LIBS); do \$(INSTALL_DATA) \$\$f \$(dlldir)/\$\$f; done
+install-lib:: \$(INSTALLSUBDIRS:%=%/__install-lib__)
 
-install install-lib:: \$(INSTALLSUBDIRS:%=%/__install__)
+install-dev:: \$(INSTALLSUBDIRS:%=%/__install-dev__)
 
 uninstall::
-	-cd \$(dlldir) && \$(RM) \$(IMPORT_LIBS)
 	-rmdir \$(dlldir)
 
 clean::
-	\$(RM) \$(IMPORT_LIBS) \$(SYMLINKS)
+	\$(RM) \$(IMPORT_LIBS)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 

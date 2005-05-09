@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = winspool.drv
+IMPORTLIB = libwinspool.$(IMPLIBEXT)
 IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
 
 C_SRCS = \
@@ -13,5 +14,8 @@ C_SRCS = \
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@
+
+$(IMPORTLIB): lib$(BASEMODULE).$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) lib$(BASEMODULE).$(IMPLIBEXT) $@
 
 ### Dependencies:

@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt40.dll
+IMPORTLIB = libmsvcrt40.$(IMPLIBEXT)
 IMPORTS   = msvcrt
 
 C_SRCS = msvcrt40.c

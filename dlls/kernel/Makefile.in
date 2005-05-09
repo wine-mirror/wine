@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = kernel32.dll
+IMPORTLIB = libkernel32.$(IMPLIBEXT)
 IMPORTS   = ntdll
 EXTRALIBS = $(LIBUNICODE) @COREFOUNDATIONLIB@
 

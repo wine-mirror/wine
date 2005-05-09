@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = oleacc.dll
+IMPORTLIB = liboleacc.$(IMPLIBEXT)
 
 C_SRCS = \
 	main.c

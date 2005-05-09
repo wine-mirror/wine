@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = odbc32.dll
+IMPORTLIB = libodbc32.$(IMPLIBEXT)
 IMPORTS   = advapi32 kernel32
 
 C_SRCS = \

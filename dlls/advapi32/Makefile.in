@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = advapi32.dll
+IMPORTLIB = libadvapi32.$(IMPLIBEXT)
 IMPORTS   = kernel32 ntdll
 EXTRALIBS = $(LIBUNICODE)
 

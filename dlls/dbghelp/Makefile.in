@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dbghelp.dll
+IMPORTLIB = libdbghelp.$(IMPLIBEXT)
 IMPORTS   = psapi kernel32 ntdll
 
 C_SRCS = \

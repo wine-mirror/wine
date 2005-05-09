@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msvcrt20.dll
+IMPORTLIB = libmsvcrt20.$(IMPLIBEXT)
 IMPORTS   = msvcrt
 EXTRALIBS = $(LIBUNICODE)
 

@@ -4,6 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = netapi32.dll
+IMPORTLIB = libnetapi32.$(IMPLIBEXT)
 IMPORTS   = iphlpapi ws2_32 advapi32 kernel32
 
 C_SRCS = \

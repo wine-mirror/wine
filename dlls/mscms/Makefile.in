@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = mscms.dll
+IMPORTLIB = libmscms.$(IMPLIBEXT)
 IMPORTS   = kernel32 ntdll
 
 C_SRCS = \

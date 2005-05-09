@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = msacm32.dll
+IMPORTLIB = libmsacm32.$(IMPLIBEXT)
 IMPORTS   = winmm user32 advapi32 kernel32
 EXTRALIBS = $(LIBUNICODE)
 

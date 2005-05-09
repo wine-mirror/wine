@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = snmpapi.dll
+IMPORTLIB = libsnmpapi.$(IMPLIBEXT)
 IMPORTS   = kernel32
 
 C_SRCS = \

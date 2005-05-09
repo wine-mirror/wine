@@ -3,6 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = url.dll
+IMPORTLIB = liburl.$(IMPLIBEXT)
 
 C_SRCS = url_main.c
 
