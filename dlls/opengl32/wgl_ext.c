@@ -250,6 +250,10 @@ typedef struct wine_glpbuffer {
 #define WGL_STENCIL_BITS_ARB			0x2023
 #define WGL_AUX_BUFFERS_ARB			0x2024
 
+#define WGL_NO_ACCELERATION_ARB			0x2025
+#define WGL_GENERIC_ACCELERATION_ARB		0x2026
+#define WGL_FULL_ACCELERATION_ARB		0x2027
+
 #define WGL_PBUFFER_WIDTH_ARB                   0x2034
 #define WGL_PBUFFER_HEIGHT_ARB                  0x2035
 #define WGL_PBUFFER_LOST_ARB                    0x2036
@@ -423,12 +427,12 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
       hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
       if (hTest) goto get_error;
       switch (tmp) {
-      case GLX_NONE: piValues[i] = GL_TRUE; break;
-      case GLX_SLOW_CONFIG: piValues[i] = GL_FALSE; break;
-      case GLX_NON_CONFORMANT_CONFIG: piValues[i] = GL_TRUE; break; /** really GL_TRUE ? */
+      case GLX_NONE: piValues[i] = WGL_FULL_ACCELERATION_ARB; break;
+      case GLX_SLOW_CONFIG: piValues[i] = WGL_NO_ACCELERATION_ARB; break;
+      case GLX_NON_CONFORMANT_CONFIG: piValues[i] = WGL_FULL_ACCELERATION_ARB; break;
       default:
 	ERR("unexpected Config Caveat(%x)\n", tmp);
-	piValues[i] = GL_FALSE;
+	piValues[i] = WGL_NO_ACCELERATION_ARB;
       }
       continue ;
 
