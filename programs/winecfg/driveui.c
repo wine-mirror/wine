@@ -53,6 +53,46 @@ static struct drive* current_drive;
 static void get_etched_rect(HWND dialog, RECT *rect);
 static void update_controls(HWND dialog);
 
+/**** listview helper functions ****/
+
+/* clears the item at index in the listview */
+static void lv_clear_curr_select(HWND dialog, int index)
+{
+    ListView_SetItemState(GetDlgItem(dialog, IDC_LIST_DRIVES), index, 0, LVIS_SELECTED);
+}
+
+/* selects the item at index in the listview */
+static void lv_set_curr_select(HWND dialog, int index)
+{
+    /* no more than one item can be selected in our listview */
+    lv_clear_curr_select(dialog, -1);
+    ListView_SetItemState(GetDlgItem(dialog, IDC_LIST_DRIVES), index, LVIS_SELECTED, LVIS_SELECTED);
+}
+
+/* returns the currently selected item in the listview */
+static int lv_get_curr_select(HWND dialog)
+{
+    return SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
+}
+
+/* sets the item in the listview at item->iIndex */
+static void lv_set_item(HWND dialog, LVITEM *item)
+{
+    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_SETITEM, 0, (LPARAM) item);
+}
+
+/* inserts an item into the listview */
+static void lv_insert_item(HWND dialog, LVITEM *item)
+{
+    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTITEM, 0, (LPARAM) item);
+}
+
+/* retrieve the item at index item->iIndex */
+static void lv_get_item(HWND dialog, LVITEM *item)
+{
+    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_GETITEM, 0, (LPARAM) item);
+}
+
 static void set_advanced(HWND dialog)
 {
     int state;
@@ -204,16 +244,16 @@ int fill_drives_list(HWND dialog)
 
     updating_ui = TRUE;
 
-    prevsel = SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_GETCURSEL, 0, 0);
+    prevsel = lv_get_curr_select(dialog); 
 
     /* Clear the listbox */
-    SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_RESETCONTENT, 0, 0);
+    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_DELETEALLITEMS, 0, 0);
 
     for(i = 0; i < 26; i++)
     {
-        char *title = 0;
+        LVITEM item;
+        char *letter = 0;
         int len;
-        int index;
 
         /* skip over any unused drives */
         if (!drives[i].in_use)
@@ -222,24 +262,40 @@ int fill_drives_list(HWND dialog)
         if (drives[i].letter == 'C')
             drivec_present = TRUE;
 
-        len = snprintf(title, 0, "%c:    %s", 'A' + i,
-                       drives[i].unixpath);
+        len = snprintf(letter, 0, "%c:", 'A' + i);
         len++; /* add a byte for the trailing null */
 
-        title = HeapAlloc(GetProcessHeap(), 0, len);
+        letter = HeapAlloc(GetProcessHeap(), 0, len);
+        snprintf(letter, len, "%c:", 'A' + i);
 
-        /* the %s in the item label will be replaced by the drive letter, so -1, then
-           -2 for the second %s which will be expanded to the label, finally + 1 for terminating #0 */
-        snprintf(title, len, "%c:    %s", 'A' + i,
-                 drives[i].unixpath);
+        memset(&item, 0, sizeof(item));
+        item.mask = LVIF_TEXT;
+        item.iItem = count;
+        item.iSubItem = 0;
+        item.pszText = letter;
+        item.cchTextMax = lstrlen(item.pszText);
 
-        WINE_TRACE("title is '%s'\n", title);
+        lv_insert_item(dialog, &item);
 
+        item.iSubItem = 1;
+        item.pszText = drives[i].unixpath;
+        item.cchTextMax = lstrlen(item.pszText);
+
+        lv_set_item(dialog, &item);
+
+        item.mask = LVIF_PARAM;
+        item.iSubItem = 0;
+        item.lParam = (LPARAM) &drives[i];
+        
+        lv_set_item(dialog, &item);
+
+#if 0
         /* the first SendMessage call adds the string and returns the index, the second associates that index with it */
-        index = SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_ADDSTRING ,(WPARAM) -1, (LPARAM) title);
+        index = SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_ADDSTRING ,(WPARAM) -1, (LPARAM) letter);
         SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_SETITEMDATA, index, (LPARAM) &drives[i]);
+#endif
 
-        HeapFree(GetProcessHeap(), 0, title);
+        HeapFree(GetProcessHeap(), 0, letter);
         count++;
     }
 
@@ -251,7 +307,7 @@ int fill_drives_list(HWND dialog)
     else
         ShowWindow(GetDlgItem(dialog, IDS_DRIVE_NO_C), SW_HIDE);
 
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETCURSEL, prevsel == -1 ? 0 : prevsel, 0);
+    lv_set_curr_select(dialog, prevsel == -1 ? 0 : prevsel);
 
     updating_ui = FALSE;
     return count;
@@ -295,7 +351,7 @@ void on_add_click(HWND dialog)
         if ('A' + i == new) break;
         if ((1 << i) & mask) c++;
     }
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETCURSEL, c, 0);
+    lv_set_curr_select(dialog, c);
 
     SetFocus(GetDlgItem(dialog, IDC_LIST_DRIVES));
 
@@ -304,13 +360,27 @@ void on_add_click(HWND dialog)
 
 void on_remove_click(HWND dialog)
 {
-    int item;
+    int itemIndex;
     struct drive *drive;
+    LVITEM item;
 
-    item = SendDlgItemMessage(dialog, IDC_LIST_DRIVES,  LB_GETCURSEL, 0, 0);
-    if (item == -1) return; /* no selection */
+    itemIndex = lv_get_curr_select(dialog);
+    if (itemIndex == -1) return; /* no selection */
 
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_PARAM;
+    item.iItem = itemIndex;
+    item.iSubItem = 0;
+
+    lv_get_item(dialog, &item);
+
+    drive = (struct drive *) item.lParam;
+
+    WINE_ERR("unixpath: %s\n", drive->unixpath);
+
+#if 0
     drive = (struct drive *) SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_GETITEMDATA, item, 0);
+#endif
 
     if (drive->letter == 'C')
     {
@@ -322,9 +392,9 @@ void on_remove_click(HWND dialog)
 
     fill_drives_list(dialog);
 
-    item = item - 1;
-    if (item < 0) item = 0;
-    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETCURSEL, item, 0);   /* previous item */
+    itemIndex = itemIndex - 1;
+    if (itemIndex < 0) itemIndex = 0;
+    lv_set_curr_select(dialog, itemIndex);   /* previous item */
 
     SetFocus(GetDlgItem(dialog, IDC_LIST_DRIVES));
 
@@ -339,17 +409,25 @@ static void update_controls(HWND dialog)
     char *serial;
     char *device;
     int i, selection = -1;
+    LVITEM item;
 
     updating_ui = TRUE;
 
-    i = SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_GETCURSEL, 0, 0);
+    i = lv_get_curr_select(dialog);
     if (i == -1)
     {
         /* no selection? let's select something for the user. this will re-enter */
-        SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_SETCURSEL, 0, 0);
+        lv_set_curr_select(dialog, i);
         return;
     }
-    current_drive = (struct drive *) SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_GETITEMDATA, i, 0);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = LVIF_PARAM;
+    item.iItem = i;
+    item.iSubItem = 0;
+
+    lv_get_item(dialog, &item);
+    current_drive = (struct drive *) item.lParam;
 
     WINE_TRACE("Updating sheet for drive %c\n", current_drive->letter);
 
@@ -579,6 +657,30 @@ static void browse_for_folder(HWND dialog)
     }
 }
 
+static void init_listview_columns(HWND dialog)
+{
+    LVCOLUMN listColumn;
+    RECT viewRect;
+    int width;
+
+    GetClientRect(GetDlgItem(dialog, IDC_LIST_DRIVES), &viewRect);
+    width = (viewRect.right - viewRect.left) / 6 - 5;
+
+    listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
+    listColumn.pszText = "Letter";
+    listColumn.cchTextMax = lstrlen(listColumn.pszText);
+    listColumn.cx = width;
+
+    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 0, (LPARAM) &listColumn);
+
+    listColumn.cx = viewRect.right - viewRect.left - width;
+    listColumn.pszText = "Drive Mapping";
+    listColumn.cchTextMax = lstrlen(listColumn.pszText);
+
+    SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 1, (LPARAM) &listColumn);
+}
+
+
 INT_PTR CALLBACK
 DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -588,6 +690,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg)
     {
         case WM_INITDIALOG:
+            init_listview_columns(dialog);
             load_drives();
 
             if (!drives[2].in_use)
@@ -616,12 +719,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
 
             switch (LOWORD(wParam))
             {
-                case IDC_LIST_DRIVES:
-                    if (HIWORD(wParam) == LBN_SELCHANGE)
-                        update_controls(dialog);
-
-                    break;
-
                 case IDC_BUTTON_ADD:
                     if (HIWORD(wParam) != BN_CLICKED) break;
                     on_add_click(dialog);
@@ -702,6 +799,9 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_NOTIFY:
             switch (((LPNMHDR)lParam)->code)
             {
+                case LVN_ITEMACTIVATE:
+                    update_controls(dialog);
+                    break;
                 case PSN_KILLACTIVE:
                     WINE_TRACE("PSN_KILLACTIVE\n");
                     SetWindowLongPtr(dialog, DWLP_MSGRESULT, FALSE);
