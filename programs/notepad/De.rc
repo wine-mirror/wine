@@ -25,12 +25,12 @@ LANGUAGE LANG_GERMAN, SUBLANG_DEFAULT
 MAIN_MENU MENU
 {
  POPUP "&Datei" {
-  MENUITEM "&Neu...",           CMD_NEW
-  MENUITEM "Ö&ffnen...",        CMD_OPEN
-  MENUITEM "&Speichern",        CMD_SAVE
+  MENUITEM "&Neu...\tStrg+N",           CMD_NEW
+  MENUITEM "Ö&ffnen...\tStrg+O",        CMD_OPEN
+  MENUITEM "&Speichern\tStrg+S",        CMD_SAVE
   MENUITEM "Speichern &unter...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Drucken",          CMD_PRINT
+  MENUITEM "&Drucken\tStrg+P",          CMD_PRINT
   MENUITEM "Seite ein&richten...",      CMD_PAGE_SETUP
   MENUITEM "Drucker&einrichtung...",    CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -44,14 +44,14 @@ POPUP "&Bearbeiten" {
   MENUITEM "&Einfügen\tStrg+V",         CMD_PASTE
   MENUITEM "&Löschen\tEntf",    CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Alles &markieren",  CMD_SELECT_ALL
+  MENUITEM "Alles &markieren\tStrg+A",  CMD_SELECT_ALL
   MENUITEM "&Uhrzeit/Datum\tF5",        CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "&Zeilenumbruch",    CMD_WRAP
   MENUITEM "&Schriftarten...",	CMD_FONT
  }
 POPUP "&Suchen" {
-  MENUITEM "Suchen...", CMD_SEARCH
+  MENUITEM "Suchen...\tStrg+F", CMD_SEARCH
   MENUITEM "&Weitersuchen\tF3", CMD_SEARCH_NEXT
  }
 POPUP "&Hilfe" {
