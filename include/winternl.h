@@ -949,6 +949,22 @@ typedef struct {
 #define CPU_FEATURE_DS     0x00020000   /* Debug Store */
 #define CPU_FEATURE_HTT    0x00040000   /* Hyper Threading Technology */
 
+/* System Information Class 0x10 */
+
+typedef struct _SYSTEM_HANDLE_ENTRY {
+    ULONG  OwnerPid;
+    BYTE   ObjectType;
+    BYTE   HandleFlags;
+    USHORT HandleValue;
+    PVOID  ObjectPointer;
+    ULONG  AccessMask;
+} SYSTEM_HANDLE_ENTRY, *PSYSTEM_HANDLE_ENTRY;
+
+typedef struct _SYSTEM_HANDLE_INFORMATION {
+    ULONG               Count;
+    SYSTEM_HANDLE_ENTRY Handle[1];
+} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
+
 /* System Information Class 0x15 */
 typedef struct {
     ULONG CurrentSize;
@@ -1004,17 +1020,6 @@ typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION {
 	BOOLEAN  DebuggerEnabled;
 	BOOLEAN  DebuggerNotPresent;
 } SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
-
-/* System Information Class 0x10 */
-typedef struct {
-    USHORT dwPID;
-    USHORT dwCreatorBackTraceIndex;
-    BYTE bObjectType;
-    BYTE bHandleAttributes;
-    USHORT usHandleOffset;
-    DWORD dwKeObject;
-    ULONG ulGrantedAccess;
-} HANDLEINFO, *PHANDLEINFO; /* FIXME: SYSTEM_HANDLE_INFORMATION? */
 
 typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
     BYTE Reserved1[312];
