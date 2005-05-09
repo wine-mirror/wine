@@ -519,15 +519,20 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                     LPWSTR name = HeapAlloc(GetProcessHeap(), 0,
                      len * sizeof(WCHAR));
 
-                    strcpyW(name, rgpspec[i].u.lpwstr);
-                    TRACE("Adding prop name %s, propid %ld\n", debugstr_w(name),
-                     nextId);
-                    dictionary_insert(This->name_to_propid, name,
-                     (void *)nextId);
-                    dictionary_insert(This->propid_to_name, (void *)nextId,
-                     name);
-                    hr = PropertyStorage_StorePropWithId(This, nextId,
-                     &rgpropvar[i], GetACP());
+                    if (name)
+                    {
+                        strcpyW(name, rgpspec[i].u.lpwstr);
+                        TRACE("Adding prop name %s, propid %ld\n",
+                         debugstr_w(name), nextId);
+                        dictionary_insert(This->name_to_propid, name,
+                         (void *)nextId);
+                        dictionary_insert(This->propid_to_name, (void *)nextId,
+                         name);
+                        hr = PropertyStorage_StorePropWithId(This, nextId,
+                         &rgpropvar[i], GetACP());
+                    }
+                    else
+                        hr = STG_E_INSUFFICIENTMEMORY;
                 }
             }
         }
@@ -949,8 +954,7 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
                 hr = HRESULT_FROM_WIN32(GetLastError());
             else
             {
-                name = HeapAlloc(GetProcessHeap(), 0,
-                 len * sizeof(WCHAR));
+                name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
                 if (name)
                     MultiByteToWideChar(This->codePage, 0, ptr, cbEntry, name,
                      len);
@@ -1875,7 +1879,7 @@ static HRESULT PropertyStorage_BaseConstruct(IStream *stm,
     assert(pps);
     assert(rfmtid);
     *pps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof **pps);
-    if (!pps)
+    if (!*pps)
         return E_OUTOFMEMORY;
 
     (*pps)->vtbl = &IPropertyStorage_Vtbl;
@@ -1886,6 +1890,13 @@ static HRESULT PropertyStorage_BaseConstruct(IStream *stm,
     (*pps)->grfMode = grfMode;
 
     hr = PropertyStorage_CreateDictionaries(*pps);
+    if (FAILED(hr))
+    {
+        IStream_Release(stm);
+        DeleteCriticalSection(&(*pps)->cs);
+        HeapFree(GetProcessHeap(), 0, *pps);
+        *pps = NULL;
+    }
 
     return hr;
 }
