@@ -363,6 +363,15 @@ static const char* compile_to_object(struct options* opts, const char* file, con
     return copts.output_name;
 }
 
+/* check if there is a static lib associated to a given dll */
+static char *find_static_lib( const char *dll )
+{
+    char *lib = strmake("%s.a", dll);
+    if (get_file_type(lib) == file_arh) return lib;
+    free( lib );
+    return NULL;
+}
+
 static void build(struct options* opts)
 {
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
@@ -469,7 +478,7 @@ static void build(struct options* opts)
 	}
 	else if (file[1] == 'l')
 	{
-	    char* fullname = 0;
+	    char *static_lib, *fullname = 0;
 	    switch(get_lib_type(lib_dirs, file + 2, &fullname))
 	    {
 	    	case file_arh:
@@ -477,6 +486,11 @@ static void build(struct options* opts)
 		    break;
 	        case file_dll:
 		    strarray_add(files, strmake("-d%s", file + 2));
+                    if ((static_lib = find_static_lib(fullname)))
+                    {
+                        strarray_add(files, strmake("-a%s",static_lib));
+                        free(static_lib);
+                    }
 		    break;
 	        case file_so:
 		    strarray_add(files, strmake("-s%s", file + 2));
