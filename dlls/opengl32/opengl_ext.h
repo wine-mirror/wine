@@ -40,6 +40,14 @@
 #define WINAPI      __stdcall
 #define APIENTRY    WINAPI
 
+/* For compatibility with old Mesa headers */
+#ifndef GLX_SAMPLE_BUFFERS_ARB
+# define GLX_SAMPLE_BUFFERS_ARB             100000
+#endif
+#ifndef GLX_SAMPLES_ARB
+# define GLX_SAMPLES_ARB                    100001
+#endif
+
 /* X11 locking */
 
 extern void (*wine_tsx11_lock_ptr)(void);
