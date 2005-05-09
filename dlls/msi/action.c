@@ -656,12 +656,14 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
         if (rc != ERROR_SUCCESS)
         {
             MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
             return;
         }
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
         {
             MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
             return;
         }
 
@@ -1713,6 +1715,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
                   c_indx);
             package->features[index].Components[cnt] = c_indx;
             package->features[index].ComponentCount ++;
+            msiobj_release( &row2->hdr );
             continue;
         }
 

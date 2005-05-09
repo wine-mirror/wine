@@ -1235,6 +1235,7 @@ void msi_dialog_destroy( msi_dialog *dialog )
     if( dialog->hwnd )
         DestroyWindow( dialog->hwnd );
 
+    msiobj_release( &dialog->package->hdr );
     dialog->package = NULL;
     HeapFree( GetProcessHeap(), 0, dialog );
 }
