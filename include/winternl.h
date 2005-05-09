@@ -876,34 +876,6 @@ typedef struct _PROCESS_BASIC_INFORMATION {
 #endif
 } PROCESS_BASIC_INFORMATION, *PPROCESS_BASIC_INFORMATION;
 
-typedef struct _PROCESS_INFO {
-    DWORD    Offset;             /* 00 offset to next PROCESS_INFO ok*/
-    DWORD    ThreadCount;        /* 04 number of ThreadInfo member ok */
-    DWORD    Unknown1[6];
-    FILETIME CreationTime;       /* 20 */
-    DWORD    Unknown2[5];
-    PWCHAR   ProcessName;        /* 3c ok */
-    DWORD    BasePriority;
-    DWORD    ProcessID;          /* 44 ok*/
-    DWORD    ParentProcessID;
-    DWORD    HandleCount;
-    DWORD    Unknown3[2];        /* 50 */
-    ULONG    PeakVirtualSize;
-    ULONG    VirtualSize;
-    ULONG    PageFaultCount;
-    ULONG    PeakWorkingSetSize;
-    ULONG    WorkingSetSize;
-    ULONG    QuotaPeakPagedPoolUsage;
-    ULONG    QuotaPagedPoolUsage;
-    ULONG    QuotaPeakNonPagedPoolUsage;
-    ULONG    QuotaNonPagedPoolUsage;
-    ULONG    PagefileUsage;
-    ULONG    PeakPagefileUsage;
-    DWORD    PrivateBytes;
-    DWORD    Unknown6[4];
-    SYSTEM_THREAD_INFORMATION ati[ANYSIZE_ARRAY]; /* 94 size=0x40*/
-} PROCESS_INFO, PPROCESS_INFO;
-
 typedef struct _RTL_HEAP_DEFINITION {
     ULONG Length; /* = sizeof(RTL_HEAP_DEFINITION) */
 
