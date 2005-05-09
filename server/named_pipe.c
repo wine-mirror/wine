@@ -601,7 +601,7 @@ DECL_HANDLER(open_named_pipe)
         {
             assert( !client->fd );
             assert( !server->fd );
-            client->fd = create_anonymous_fd( &pipe_server_fd_ops,
+            client->fd = create_anonymous_fd( &pipe_client_fd_ops,
                                             fds[1], &client->obj );
             server->fd = create_anonymous_fd( &pipe_server_fd_ops,
                                             fds[0], &server->obj );
