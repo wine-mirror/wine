@@ -657,13 +657,8 @@ void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb)
 {
 	TRACE("(%p)\n",dsb);
 	EnterCriticalSection(&dsb->lock);
-	if (dsb->state == STATE_PLAYING) {
-#if 0 /* this may not be quite reliable yet */
-		dsb->need_remix = TRUE;
-#else
+	if (dsb->state == STATE_PLAYING)
 		dsb->dsound->need_remix = TRUE;
-#endif
-	}
 	LeaveCriticalSection(&dsb->lock);
 }
 
@@ -671,8 +666,7 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 {
 	DWORD len, slen;
 	/* determine this buffer's write position */
-	DWORD buf_writepos = DSOUND_CalcPlayPosition(dsb, dsb->state & dsb->dsound->state, writepos,
-						     writepos, dsb->primary_mixpos, dsb->buf_mixpos);
+	DWORD buf_writepos = DSOUND_CalcPlayPosition(dsb, writepos, writepos);
 	/* determine how much already-mixed data exists */
 	DWORD buf_done =
 		((dsb->buf_mixpos < buf_writepos) ? dsb->buflen : 0) +
@@ -805,6 +799,7 @@ post_mix:
 		dsb->last_playpos = 0;
 		dsb->buf_mixpos = 0;
 		dsb->leadin = FALSE;
+		dsb->need_remix = FALSE;
 		DSOUND_CheckEvent(dsb, buf_left);
 	}
 

@@ -469,8 +469,7 @@ HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWO
 
 /* buffer.c */
 
-DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
-			      DWORD state, DWORD pplay, DWORD pwrite, DWORD pmix, DWORD bmix);
+DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD pwrite);
 
 /* mixer.c */
 

@@ -394,27 +394,15 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
     return ref;
 }
 
-DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
-			      DWORD state, DWORD pplay, DWORD pwrite, DWORD pmix, DWORD bmix)
+DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD pwrite)
 {
-	DWORD bplay;
-
-	TRACE("primary playpos=%ld, mixpos=%ld\n", pplay, pmix);
-	TRACE("this mixpos=%ld, time=%ld\n", bmix, GetTickCount());
+	DWORD bplay = This->buf_mixpos;
+	DWORD pmix = This->primary_mixpos;
+	TRACE("(%p, pplay=%lu, pwrite=%lu)\n", This, pplay, pwrite);
 
 	/* the actual primary play position (pplay) is always behind last mixed (pmix),
 	 * unless the computer is too slow or something */
 	/* we need to know how far away we are from there */
-#if 0 /* we'll never fill the primary entirely */
-	if (pmix == pplay) {
-		if ((state == STATE_PLAYING) || (state == STATE_STOPPING)) {
-			/* wow, the software mixer is really doing well,
-			 * seems the entire primary buffer is filled! */
-			pmix += This->dsound->buflen;
-		}
-		/* else: the primary buffer is not playing, so probably empty */
-	}
-#endif
 	if (pmix < pplay) pmix += This->dsound->buflen; /* wraparound */
 	pmix -= pplay;
 	/* detect buffer underrun */
@@ -433,10 +421,9 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This,
 	pmix *= This->pwfx->nBlockAlign;
 	TRACE("this back-offset=%ld\n", pmix);
 	/* subtract from our last mixed position */
-	bplay = bmix;
 	while (bplay < pmix) bplay += This->buflen; /* wraparound */
 	bplay -= pmix;
-	if (This->leadin && ((bplay < This->startpos) || (bplay > bmix))) {
+	if (This->leadin && ((bplay < This->startpos) || (bplay > This->buf_mixpos))) {
 		/* seems we haven't started playing yet */
 		TRACE("this still in lead-in phase\n");
 		bplay = This->startpos;
@@ -462,28 +449,17 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 			/* we haven't been merged into the primary buffer (yet) */
 			*playpos = This->buf_mixpos;
 		} else if (playpos) {
-			DWORD pplay, pwrite, lplay, splay, pstate;
+			DWORD pplay, pwrite;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
 			EnterCriticalSection(&(This->dsound->mixlock));
 			if (DSOUND_PrimaryGetPosition(This->dsound, &pplay, &pwrite) != DS_OK)
 				WARN("DSOUND_PrimaryGetPosition failed\n");
 			/* detect HEL mode underrun */
-			pstate = This->dsound->state;
-			if (!(This->dsound->hwbuf || This->dsound->pwqueue)) {
+			if (!(This->dsound->hwbuf || This->dsound->pwqueue))
 				TRACE("detected an underrun\n");
-				/* pplay = ? */
-				if (pstate == STATE_PLAYING)
-					pstate = STATE_STARTING;
-				else if (pstate == STATE_STOPPING)
-					pstate = STATE_STOPPED;
-			}
-			/* get data for ourselves while we still have the lock */
-			pstate &= This->state;
-			lplay = This->primary_mixpos;
-			splay = This->buf_mixpos;
 			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || This->dsound->hwbuf) {
 				/* calculate play position using this */
-				*playpos = DSOUND_CalcPlayPosition(This, pstate, pplay, pwrite, lplay, splay);
+				*playpos = DSOUND_CalcPlayPosition(This, pplay, pwrite);
 			} else {
 				/* (unless the app isn't using GETCURRENTPOSITION2) */
 				/* don't know exactly how this should be handled...
@@ -493,7 +469,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				DWORD wp;
 				wp = (This->dsound->pwplay + ds_hel_margin) * This->dsound->fraglen;
 				wp %= This->dsound->buflen;
-				*playpos = DSOUND_CalcPlayPosition(This, pstate, wp, pwrite, lplay, splay);
+				*playpos = DSOUND_CalcPlayPosition(This, wp, pwrite);
 			}
 			LeaveCriticalSection(&(This->dsound->mixlock));
 		}
