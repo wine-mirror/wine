@@ -604,9 +604,9 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
       This->org_coords = point;
     }
     This->m_state.lZ = 0;
-    This->m_state.rgbButtons[0] = ((GetKeyState(VK_LBUTTON) & 0x80) ? 0xFF : 0x00);
-    This->m_state.rgbButtons[1] = ((GetKeyState(VK_RBUTTON) & 0x80) ? 0xFF : 0x00);
-    This->m_state.rgbButtons[2] = ((GetKeyState(VK_MBUTTON) & 0x80) ? 0xFF : 0x00);
+    This->m_state.rgbButtons[0] = GetKeyState(VK_LBUTTON) & 0x80;
+    This->m_state.rgbButtons[1] = GetKeyState(VK_RBUTTON) & 0x80;
+    This->m_state.rgbButtons[2] = GetKeyState(VK_MBUTTON) & 0x80;
     
     /* Install our mouse hook */
     if (This->dwCoopLevel & DISCL_EXCLUSIVE)
@@ -770,12 +770,19 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 	}
 	
 	if (len)
-	    TRACE("Application retrieving %ld event(s).\n", len);
+	    TRACE("Application retrieving %ld event(s):\n", len);
 	
 	*entries = 0;
 	nqtail = This->queue_tail;
 	while (len) {
 	    /* Copy the buffered data into the application queue */
+	    TRACE(" - queuing Offs:%2ld Data:%5ld TS:%8ld Seq:%8ld at address %p from queue tail %4d\n",
+		  (This->data_queue)->dwOfs,
+		  (This->data_queue)->dwData,
+		  (This->data_queue)->dwTimeStamp,
+		  (This->data_queue)->dwSequence,
+		  (char *)dod + *entries * dodsize,
+		  nqtail);
 	    memcpy((char *)dod + *entries * dodsize, This->data_queue + nqtail, dodsize);
 	    /* Advance position */
 	    nqtail++;
