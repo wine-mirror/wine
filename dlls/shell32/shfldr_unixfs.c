@@ -143,7 +143,9 @@ static char* UNIXFS_build_shitemid(char *name, struct stat *pStat, void *buffer)
     fileTime.dwLowDateTime = time.u.LowPart;
     fileTime.dwHighDateTime = time.u.HighPart;
     FileTimeToDosDateTime(&fileTime, &pIDLData->u.file.uFileDate, &pIDLData->u.file.uFileTime);
-    pIDLData->u.file.uFileAttribs = 0;
+    pIDLData->u.file.uFileAttribs = 
+        (S_ISDIR(pStat->st_mode) ? FILE_ATTRIBUTE_DIRECTORY : 0) |
+        (name[0] == '.' ? FILE_ATTRIBUTE_HIDDEN : 0);
     memcpy(pIDLData->u.file.szNames, name, cNameLen);
 
     pStatStruct = LPSTATSTRUCT_FROM_LPSHITEMID(buffer);
@@ -158,35 +160,41 @@ static char* UNIXFS_build_shitemid(char *name, struct stat *pStat, void *buffer)
  * UNIXFS_path_to_pidl [Internal]
  *
  * PARAMS
- *  path  [I] An absolute unix path 
+ *  base  [I] Path prefix. May be NULL if "path" parameter is absolute
+ *  path  [I] An absolute unix path or a path relativ to "base"
  *  ppidl [O] The corresponding ITEMIDLIST. Release with SHFree/ILFree
  *  
  * RETURNS
  *  Success: TRUE
- *  Failure: FALSE, invalid params, path not absolute or out of memory
- *
- * NOTES
- *  'path' has to be an absolute unix filesystem path starting and
- *  ending with a slash ('/'). Currently, only directories (no files)
- *  are accepted.
+ *  Failure: FALSE, invalid params or out of memory
  */
-static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
+static BOOL UNIXFS_path_to_pidl(const char *base, const char *path, LPITEMIDLIST *ppidl) {
     LPITEMIDLIST pidl;
     struct stat fileStat;
     int cSubDirs, cPidlLen, res;
-    char *pSlash, *pCompletePath = path;
+    char *pSlash, *pCompletePath, *pNextPathElement;
 
     TRACE("path=%s, ppidl=%p", debugstr_a(path), ppidl);
     
-    /* Fail, if no absolute path given */
-    if (!ppidl || !path || path[0] != '/') return FALSE;
+    /* Fail, if base + path is not an absolute path */
+    if (!ppidl || !path || (path[0] != '/' && (!base || base[0] != '/'))) return FALSE;
 
-    /* Skip the '/' prefix */
-    path++;
+    /* Build an absolute path and let pNextPathElement point to the interesting relativ path. */
+    if (path[0] != '/') {
+        pCompletePath = SHAlloc(strlen(base)+strlen(path)+1);
+        if (!pCompletePath) return FALSE;
+        sprintf(pCompletePath, "%s%s", base, path);
+        pNextPathElement = pCompletePath + strlen(base);
+    } else {
+        pCompletePath = SHAlloc(strlen(path)+1);
+        if (!pCompletePath) return FALSE;
+        memcpy(pCompletePath, path, strlen(path)+1);
+        pNextPathElement = pCompletePath + 1;
+    }
     
     /* Count the number of sub-directories in the path */
-    cSubDirs = 0;
-    pSlash = strchr(path, '/');
+    cSubDirs = 1; /* Path may not be terminated with '/', thus start with 1 */
+    pSlash = strchr(pNextPathElement, '/');
     while (pSlash) {
         cSubDirs++;
         pSlash = strchr(pSlash+1, '/');
@@ -194,27 +202,39 @@ static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
    
     /* Allocate enough memory to hold the path. The -cSubDirs is for the '/' 
      * characters, which are not stored in the ITEMIDLIST. */
-    cPidlLen = strlen(path) - cSubDirs + cSubDirs * SHITEMID_LEN_FROM_NAME_LEN(0) + sizeof(USHORT);
+    cPidlLen = strlen(pCompletePath) - cSubDirs + cSubDirs * SHITEMID_LEN_FROM_NAME_LEN(0) + sizeof(USHORT);
     *ppidl = pidl = (LPITEMIDLIST)SHAlloc(cPidlLen);
-    if (!pidl) return FALSE;
+    if (!pidl) {
+        SHFree(pCompletePath);
+        return FALSE;
+    }
 
     /* Concatenate the SHITEMIDs of the sub-directories. */
-    while (*path) {
-        pSlash = strchr(path, '/');
+    while (*pNextPathElement) {
+        pSlash = strchr(pNextPathElement, '/');
         if (pSlash) {
             *pSlash = '\0';
             res = stat(pCompletePath, &fileStat);
             *pSlash = '/';
-            if (res) return FALSE;
+            if (res) {
+                SHFree(pCompletePath);
+                SHFree(pidl);
+                return FALSE;
+            }
         } else {
-            if (stat(pCompletePath, &fileStat)) return FALSE;
+            if (stat(pCompletePath, &fileStat)) {
+                SHFree(pCompletePath);
+                SHFree(pidl);
+                return FALSE;
+            }
         }
                 
-        path = UNIXFS_build_shitemid(path, &fileStat, pidl);
+        pNextPathElement = UNIXFS_build_shitemid(pNextPathElement, &fileStat, pidl);
         pidl = ILGetNext(pidl);
     }
     pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
-  
+ 
+    SHFree(pCompletePath);
     return TRUE;
 }
 
@@ -543,6 +563,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     LPBC pbcReserved, LPOLESTR lpszDisplayName, ULONG* pchEaten, LPITEMIDLIST* ppidl, 
     ULONG* pdwAttributes)
 {
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     int cPathLen;
     char *pszAnsiPath;
     BOOL result;
@@ -555,11 +576,13 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     pszAnsiPath = (char*)SHAlloc(cPathLen+1);
     WideCharToMultiByte(CP_ACP, 0, lpszDisplayName, -1, pszAnsiPath, cPathLen+1, NULL, NULL);
 
-    result = UNIXFS_path_to_pidl(pszAnsiPath, ppidl);
+    result = UNIXFS_path_to_pidl(This->m_pszPath, pszAnsiPath, ppidl);
     if (result && pdwAttributes) 
         SHELL32_GetItemAttributes((IShellFolder*)iface, *ppidl, pdwAttributes);        
 
     SHFree(pszAnsiPath);
+   
+    if (!result) TRACE("FAILED!\n");
     
     return result ? S_OK : E_FAIL;
 }
