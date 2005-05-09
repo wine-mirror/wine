@@ -1222,8 +1222,8 @@ BOOL        WINAPI ClearEventLogW(HANDLE,LPCWSTR);
 #define     ClearEventLog WINELIB_NAME_AW(ClearEventLog)
 BOOL        WINAPI CloseEventLog(HANDLE);
 BOOL        WINAPI CloseHandle(HANDLE);
-BOOL        WINAPI CommConfigDialogA(LPCSTR,HANDLE,LPCOMMCONFIG);
-BOOL        WINAPI CommConfigDialogW(LPCWSTR,HANDLE,LPCOMMCONFIG);
+BOOL        WINAPI CommConfigDialogA(LPCSTR,HWND,LPCOMMCONFIG);
+BOOL        WINAPI CommConfigDialogW(LPCWSTR,HWND,LPCOMMCONFIG);
 #define     CommConfigDialog WINELIB_NAME_AW(CommConfigDialog)
 BOOL        WINAPI ConnectNamedPipe(HANDLE,LPOVERLAPPED);
 BOOL        WINAPI ContinueDebugEvent(DWORD,DWORD,DWORD);

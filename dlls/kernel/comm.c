@@ -2124,7 +2124,7 @@ static WCHAR lpszSerialUI[] = {
  */
 BOOL WINAPI CommConfigDialogA(
     LPCSTR lpszDevice,         /* [in] name of communications device */
-    HANDLE hWnd,               /* [in] parent window for the dialog */
+    HWND hWnd,                 /* [in] parent window for the dialog */
     LPCOMMCONFIG lpCommConfig) /* [out] pointer to struct to fill */
 {
     FARPROC lpfnCommDialog;
@@ -2154,7 +2154,7 @@ BOOL WINAPI CommConfigDialogA(
  */
 BOOL WINAPI CommConfigDialogW(
     LPCWSTR lpszDevice,        /* [in] name of communications device */
-    HANDLE hWnd,               /* [in] parent window for the dialog */
+    HWND hWnd,                 /* [in] parent window for the dialog */
     LPCOMMCONFIG lpCommConfig) /* [out] pointer to struct to fill */
 {
     FARPROC lpfnCommDialog;
