@@ -132,7 +132,7 @@ copy_icon()
 
 # Debian/Mandrake
 
-which update-menus > /dev/null 2>&1
+type update-menus > /dev/null 2>&1
 if [ $? = 0 -a $mode = "menu" ]
 then
   iconname="`basename "$link"`.xpm"
@@ -158,7 +158,7 @@ fi
 if [ -d "$HOME/.kde" ]
 then
   kdeversion=0
-  if which kde-config >/dev/null 2>&1
+  if type kde-config >/dev/null 2>&1
   then
     kdeversion=`kde-config -v | grep KDE: | sed -n "s/^KDE: \([^.]*\)\..*$/\1/p"`
   fi
@@ -180,7 +180,7 @@ then
       kde_entry > "$HOME/.kde/share/applnk/Wine/$link.kdelnk"
 
       # KDE 1.x kludge.  Wake up KDE, if we can find kpanel running
-      which kwmcom >/dev/null 2>/dev/null && \
+      type kwmcom >/dev/null 2>/dev/null && \
         ps u -C kpanel >/dev/null 2>/dev/null && \
           kwmcom kpanel:restart
 
@@ -188,7 +188,7 @@ then
     then
       kde_entry > "$HOME/Desktop/$link.kdelnk"
       #   KDE 1.x kludge:  wake up KDE, if we can find kfm running...
-      which kfmclient >/dev/null 2>/dev/null && \
+      type kfmclient >/dev/null 2>/dev/null && \
         ps u -C kfm >/dev/null 2>/dev/null  && \
           kfmclient refreshDesktop
     fi
