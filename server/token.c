@@ -65,8 +65,8 @@ struct privilege
 {
     struct list entry;
     LUID        luid;
-    int         enabled  : 1; /* is the privilege currently enabled? */
-    int         def      : 1; /* is the privilege enabled by default? */
+    unsigned    enabled  : 1; /* is the privilege currently enabled? */
+    unsigned    def      : 1; /* is the privilege enabled by default? */
 };
 
 static void token_dump( struct object *obj, int verbose );
