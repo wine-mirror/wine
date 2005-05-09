@@ -1038,8 +1038,12 @@ static ULONG ws2_queue_async(struct ws2_async* wsa, IO_STATUS_BLOCK* iosb)
     if ( status ) iosb->u.Status = status;
     if ( iosb->u.Status != STATUS_PENDING )
     {
-        (apc)( wsa, iosb, iosb->u.Status );
-        return iosb->u.Status;
+        /* Note: we get here a non zero status when we couldn't queue the async
+         * in the server. Therefore, we simply terminate the async.
+         */
+        status = iosb->u.Status;
+        ws2_async_terminate(wsa, iosb);
+        return status;
     }
     NtCurrentTeb()->num_async_io++;
     return STATUS_SUCCESS;
@@ -1349,7 +1353,7 @@ static int WS2_register_async_shutdown( SOCKET s, int fd, enum ws2_mode mode )
     if ( !wsa )
         goto out_close;
 
-    /* Hack: this will cause ws2_async_cleanup() to free the overlapped structure */
+    /* Hack: this will cause ws2_async_terminate() to free the overlapped structure */
     wsa->user_overlapped = NULL;
     if ( (ret = ws2_queue_async( wsa, iosb )) )
     {
@@ -1363,7 +1367,6 @@ static int WS2_register_async_shutdown( SOCKET s, int fd, enum ws2_mode mode )
 out_close:
     WSACloseEvent( ovl->hEvent );
 out_free:
-    HeapFree( GetProcessHeap(), 0, iosb );
     HeapFree( GetProcessHeap(), 0, ovl );
 out:
     return err;
