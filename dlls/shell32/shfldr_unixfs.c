@@ -174,7 +174,7 @@ static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
     LPITEMIDLIST pidl;
     struct stat fileStat;
     int cSubDirs, cPidlLen, res;
-    char *pSlash;
+    char *pSlash, *pCompletePath = path;
 
     TRACE("path=%s, ppidl=%p", debugstr_a(path), ppidl);
     
@@ -203,18 +203,18 @@ static BOOL UNIXFS_path_to_pidl(char *path, LPITEMIDLIST *ppidl) {
         pSlash = strchr(path, '/');
         if (pSlash) {
             *pSlash = '\0';
-            res = stat(path, &fileStat);
+            res = stat(pCompletePath, &fileStat);
             *pSlash = '/';
             if (res) return FALSE;
         } else {
-            if (stat(path, &fileStat)) return FALSE;
+            if (stat(pCompletePath, &fileStat)) return FALSE;
         }
                 
         path = UNIXFS_build_shitemid(path, &fileStat, pidl);
         pidl = ILGetNext(pidl);
     }
     pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
-   
+  
     return TRUE;
 }
 
@@ -556,6 +556,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     WideCharToMultiByte(CP_ACP, 0, lpszDisplayName, -1, pszAnsiPath, cPathLen+1, NULL, NULL);
 
     result = UNIXFS_path_to_pidl(pszAnsiPath, ppidl);
+    if (result && pdwAttributes) 
+        SHELL32_GetItemAttributes((IShellFolder*)iface, *ppidl, pdwAttributes);        
 
     SHFree(pszAnsiPath);
     
