@@ -289,12 +289,6 @@ int fill_drives_list(HWND dialog)
         
         lv_set_item(dialog, &item);
 
-#if 0
-        /* the first SendMessage call adds the string and returns the index, the second associates that index with it */
-        index = SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_ADDSTRING ,(WPARAM) -1, (LPARAM) letter);
-        SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_SETITEMDATA, index, (LPARAM) &drives[i]);
-#endif
-
         HeapFree(GetProcessHeap(), 0, letter);
         count++;
     }
@@ -377,10 +371,6 @@ void on_remove_click(HWND dialog)
     drive = (struct drive *) item.lParam;
 
     WINE_ERR("unixpath: %s\n", drive->unixpath);
-
-#if 0
-    drive = (struct drive *) SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LB_GETITEMDATA, item, 0);
-#endif
 
     if (drive->letter == 'C')
     {
