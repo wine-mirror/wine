@@ -22,10 +22,8 @@ exécutez :
 
 Pour exécuter les programmes, tapez "wine [options] programme". Pour des
 informationS complémentaires et des résolutions de problèmes, lisez le
-reste de ce fichier, les pages "man" de Wine, les fichiers dans le
-répertoire de documentation des sources de Wine (voir "DOCUMENTATION"),
-et surtout les nombreuses informations que vous trouverez sur
-http://www.winehq.org.
+reste de ce fichier, les pages "man" de Wine, et surtout les nombreuses 
+informations que vous trouverez sur http://www.winehq.org.
 
 3. CONFIGURATION NÉCESSAIRE
 
@@ -96,9 +94,6 @@ Librairies optionnelles :
   Si vous voulez un support d'impression à l'aide de CUPS, SVP installez à la
   fois les packages cups et cups-devel.
 
-Pour la configuration nécessaire si vous avez l'intention de construire la
-documentation vous-même voyez la section "DOCUMENTATION".
-
 4. COMPILATION
 
 Au cas où vous choisissez de ne pas utiliser wineinstall, exécuter les com-
@@ -137,17 +132,7 @@ N'oubliez pas de désinsatller toutes les installations précédantes de wine.
 Essayez soit "dpkg -r wine", "rpm -e wine" ou "make uninstall" avant
 d'installer.
 
-Si vou désirez lire la documentation fournie avec les sources de Wine, voyez la
-section "DOCUMENTATION".
-
-Wine a besoin d'un fichier de configuration nommé "config" dans votre répertoire
-~/.wine. Le format de ce fichier est expliqué dans la page man du fichier de
-configuration (documentation/wine.conf.man).
-Le fichier documentation/samples/config contient un exemple de fichier de
-configuration qui doit être adapté et copié vers la localisation mentionnée
-ci-dessus.
-
-Naviguez dans la section Support à http://www.winehq.org/ pour plus d'astuces
+Naviguez dans la section Support à http://www.winehq.org/ pour pd'astuces
 de configuration.
 
 En cas d'erreur de chargement de librairie (par exemple
@@ -192,20 +177,7 @@ particulières telle (!$!$!$!$.pfr) peut du moins être partiellement
 fixée en utilisant la méthode décrite par
 http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
-7. DOCUMENTATION
-
-Certaines documentations (divers Guides Wine etc) peuvent être trouvées dans
-le répertoire documentation/ (à part ceux disponibles également sur WineHQ)
-
-Si vou voulez construire les fichier SGML ici, vous pouvez exécuter la
-commande "make doc" dans le répertoire documentation/.
-Pour le faire vous aurrez besoin des outils du package sgml (pour db2html,
-db2ps, db2pdf) nommés :
-Debian:		docbook-utils
-Mandrake:	sgml-tools-A.B.C-DDmdk
-SuSE:		docbktls-A.BB.C-DD
-
-8. OPTENIR PLUS D'INFORMATIONS
+7. OPTENIR PLUS D'INFORMATIONS
 
 WWW:	Baucoup d'informations à propos de Wine sont disponibles sur WineHQ à
 	http://www.winehq.org/ : divers Guides Wine, base de donnée

@@ -20,9 +20,8 @@ do Wine source (que contém este ficheiro),corre:
 
 Corre os programas conforme as "wine [options] program". Para mais 
 informações e resoçução de problemas. Lê o resto deste ficheiro, a Wine 
-man page, os ficheiros incluidos na directoria de documentação  do Wine 
-source (ver "DOCUMENTATION"), e especialmente a abundância de informação 
-encontrada em http://www.winehq.org.
+man page, e especialmente a abundância de informação  encontrada em 
+http://www.winehq.org.
 
 3.REQUERIMENTOS
 
@@ -93,9 +92,6 @@ Bibliotecas de suporte opcionais:
 Se desejares suporte de impressão do CUPS, por favor instala os pacotes
 cups e cups-devel.
 
-Para os requesitos no caso de tu quereres contruir a documentação, ve a 
-secção "DOCUMENTAÇÃO".
-
 4.COMPILAÇÃO
 
 No caso de escolheres não usar wineinstall, corre os seguintes comandos 
@@ -134,14 +130,7 @@ instalação do Wine.
 Tenta outro "dpkg -r wine" ou "rpm -e wine" ou "make uninstall" antes de 
 installar.
 
-O Wine requer um ficheiro de configuração chamado "config" na directoria 
--/.wine. O formato deste ficheiro é explicado no ficheiro config man 
-page (documentation/wine.conf.man).
-O ficheiro documentation/samples/config contém um exemplo de ficheiro de 
-configuraçao o qual tem que ser adaptado e copiado para a localização 
-mencionada em cima.
-
-Ver http://www.winehq.org/support/ para mais informação sobre a 
+Ver http://www.winehq.org/support/ para informação sobre a 
 configuraçao.
 
 No caso da livraria carregar erros (e.g. "Error while loading shared 
@@ -193,20 +182,7 @@ maneira. Este caso particular de corrupeçao (!$!$!$!$.pfr) podem ao
 menos parcialmente podem ser corrigidos usando
 http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
-7.DOCUMENTAÇÃO
-
-Alguma documentação (vários giuas de Wineetc.) podem ser encontrados na 
-directoria documentation/ (aparte de também estar disponível em WineHQ).
-
-Se quiseres lá processar ficheiros SGML, então podes correr "make doc" 
-na directoria documentation/
-Fazer isto requer que os pacotes das ferramentas sgml (para db2html, 
-db2ps, db2pdf) chamados:
-Debian:		docbook-utils
-Mandrake: 		sgml-tools-A.B.C-DDmdk
-SuSE:		docbktls-A.BB.C-DD
-
-8.ARRANJAR MAIS INFORMAÇÃO
+7.ARRANJAR MAIS INFORMAÇÃO
 
 www:	Uma grande quantidade de informação acerca do Wine está disponivel 
         pelo WineHQ em http://www.winehq.org/ : varios guias Wine, base de  

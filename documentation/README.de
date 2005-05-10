@@ -23,9 +23,8 @@ diese Datei enthält) das folgende Kommando auf:
 
 Starten Sie Programme mit "wine [Optionen] Programm". Weitere 
 Informationen und Problemlösungen entnehmen Sie bitte dem Rest dieser
-Datei, der Man-Page von Wine, den Dateien im Dokumentations-Verzeichnis
-des Wine-Quelltextes (siehe "DOKUMENTATION") und insbesondere der
-Vielzahl an Informationen, die Sie auf http://www.winehq.org finden.
+Datei, der Man-Page von Wine und insbesondere der Vielzahl an 
+Informationen, die Sie auf http://www.winehq.org finden.
 
 3. VORAUSSETZUNGEN
 
@@ -94,9 +93,6 @@ Optionale Support-Libraries:
   Wenn Sie CUPS Drucker-Unterstützung haben wollen, installieren Sie bitte
   die Pakete cups und cups-devel.
 
-Die Voraussetzungen für das selbständige Durchführen des Builds der
-Dokumentation entnehmen Sie bitte dem Abschnitt "DOKUMENTATION".
-
 4. KOMPILIEREN
 
 Wenn Sie sich dafür entscheiden, wineinstall nicht zu benutzen, führen Sie
@@ -136,17 +132,7 @@ Vergessen Sie nicht, erst alle früheren Wine-Installationen zu entfernen.
 Führen Sie vor der Installation entweder "dpkg -r wine", "rpm -e wine" oder
 "make uninstall" aus.
 
-Wenn Sie die mit dem Wine-Quelltext gelieferte Dokumentation lesen wollen,
-schauen Sie sich bitte den Abschnitt "DOKUMENTATION" an.
-
-Wine benötigt eine Konfigurations-Datei namens "config" in Ihrem
-~/.wine-Verzeichnis. Das Format dieser Datei wird in der Man-Page der
-Konfigurations-Datei erklärt (documentation/wine.conf.man).
-Die Datei documentation/samples/config enthält eine beispielhafte
-Konfigurations-Datei, die angepasst und an die oben erwähnte Stelle
-kopiert werden muss.
-
-Weitere Konfigurations-Hinweise finden Sie im Support-Bereich
+Die Konfigurations-Hinweise finden Sie im Support-Bereich
 von http://www.winehq.org.
 
 Im Falle von Library-Ladefehlern (z.B. "Error while loading shared libraries:
@@ -189,19 +175,7 @@ der Messenger sind nicht sicher, da sie unter Umständen den Explorer aufrufen.
 Diese spezielle Beschädigung (!$!$!$!$.pfr) kann zumindest teilweise durch
 http://home.nexgo.de/andi.mohr/download/decorrupt_explorer behoben werden.
 
-7. DOKUMENTATION
-
-Im Verzeichnis documentation/ befindet sich einiges an Dokumentation (verschiedene
-Wine-Guides usw.). Sie sind auch im WineHQ verfügbar.
-
-Wenn Sie die SGML-Dateien dort verarbeiten möchten, können Sie das Kommando
-"make doc" im Verzeichnis documentation/ ausführen.
-Dafür wird das Paket "sgml tools" vorausgesetzt (für db2html, db2ps, db2pdf):
-Debian:		docbook-utils
-Mandrake:	sgml-tools-A.B.C-DDmdk
-SuSE:		docbktls-A.BB.C-DD
-
-8. WEITERFÜHRENDE INFORMATIONEN
+7. WEITERFÜHRENDE INFORMATIONEN
 
 WWW:	Eine große Anzahl an Informationen findet sich im WineHQ unter
 	http://www.winehq.org/ : Verschiedene Wine Guides, Applikations-Datenbank,

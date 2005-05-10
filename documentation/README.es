@@ -20,9 +20,8 @@ Wine (el cual contiene este fichero), ejecute:
 
 Ejecute programas con "wine [opciones] programa". Para más información y
 resolución de problemas, lea el resto de este fichero, la página de manual de
-Wine, los ficheros en el directorio de documentación del código fuente de Wine
-(vea "DOCUMENTACIÓN") y, específicamente, la numerosa información que se
-encuentra en http://www.winehq.org.
+Wine  y, específicamente, la numerosa información que se encuentra en 
+http://www.winehq.org.
 
 3. REQUISITOS
 
@@ -92,9 +91,6 @@ Librerías de soporte adicionales:
   Si desea soporte de impresión CUPS, por favor instale los paquetes cups y
   cups-devel.
 
-Para los requisitos en el caso de que pretenda construir usted mismo la
-documentación, vea la sección "DOCUMENTACIÓN".
-
 4. COMPILACIÓN
 
 En el caso de que elija no utilizar wineinstall, ejecute los siguientes
@@ -131,17 +127,7 @@ cuantos ficheros necesarios.
 No olvide desinstalar antes cualquier instalación anterior de Wine conflictiva.
 Intente "dpkg -r wine" o "rpm -e wine" o "make uninstall" antes de instalar.
 
-Si desea leer la documentación que proporcionada con el código de Wine, vea la
-sección "DOCUMENTACIÓN".
-
-Wine requiere un fichero de configuración llamado "config" en su directorio
-~/.wine. El formato de este fichero se explica en la página de manual del
-fichero de configuración (documentation/wine.conf.man).
-El fichero documentation/samples/config contiene un ejemplo de fichero de
-configuración que tiene que adaptarse y copiarse a la localización mencionada
-arriba.
-
-Vea la zona de Soporte en http://www.winehq.org/ para más consejos de
+Vea la zona de Soporte en http://www.winehq.org/ para consejos de
 configuración.
 
 En el caso de que tenga problemas de carga de librerías (p. ej. "Error while
@@ -183,21 +169,7 @@ como p. ej. Messenger son seguras, ya que lanzan de algún modo Explorer. Esta
 corrupción particular (!$!$!$!$.pfr) puede corregirse al menos parcialmente
 utilizando http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
-7. DOCUMENTACIÓN
-
-Alguna documentación (varias guías de Wine, etc.) puede encontrarse en el
-directorio documentation/ (aparte de que también está disponible en WineHQ).
-
-Si desea procesar los ficheros SGML de allí, puede ejecutar "make doc"
-en el directorio documentation/.
-Para hacerlo requiere el paquete de herramientas sgml (para db2html, db2ps,
-db2pdf) de nombre:
-Doing so requires the... (BORRAR)
-Debian:         docbook-utils
-Mandrake:       sgml-tools-A.B.C-DDmdk
-SuSE:           docbktls-A.BB.C-DD
-
-8. OBTENIENDO MÁS INFORMACIÓN
+7. OBTENIENDO MÁS INFORMACIÓN
 
 WWW:    Una gran cantidad de información sobre Wine está disponible en WineHQ
         en http://www.winehq.org/ : varias guías de Wine, base de datos de
