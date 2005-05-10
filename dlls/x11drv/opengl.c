@@ -203,7 +203,15 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   if (ppfd->iPixelType == PFD_TYPE_RGBA) {
     ADD2(GLX_RENDER_TYPE, GLX_RGBA_BIT);
     ADD2(GLX_BUFFER_SIZE, ppfd->cColorBits);
-    TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, ppfd->cDepthBits);
+    if (32 == ppfd->cDepthBits) {
+      /**
+       * for 32 bpp depth buffers force to use 24.
+       * needed as some drivers don't support 32bpp
+       */
+      TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, 24);
+    } else {
+      TEST_AND_ADD2(ppfd->cDepthBits, GLX_DEPTH_SIZE, ppfd->cDepthBits);
+    }
     TEST_AND_ADD2(ppfd->cAlphaBits, GLX_ALPHA_SIZE, ppfd->cAlphaBits);
   }
   TEST_AND_ADD2(ppfd->cStencilBits, GLX_STENCIL_SIZE, ppfd->cStencilBits);
