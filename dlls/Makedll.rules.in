@@ -23,6 +23,7 @@ ALL_LIBS    = $(LIBWINE) $(EXTRALIBS) $(LIBPORT) $(LDFLAGS) $(LIBS)
 ALL_IMPORTS = $(DELAYIMPORTS) $(IMPORTS)
 IMPLIB_OBJS = $(IMPLIB_SRCS:.c=.o)
 STATICIMPLIB= $(IMPORTLIB:.def=.def.a)
+DLL_LDPATH  = -L$(DLLDIR) $(ALL_IMPORTS:%=-L$(DLLDIR)/%)
 
 all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 
@@ -31,12 +32,12 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MODULE).so: $(MAINSPEC) $(ALL_OBJS) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) -o $@ -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -shared $(SRCDIR)/$(MAINSPEC) $(ALL_OBJS) $(SUBSYSTEM:%=-Wb,--subsystem,%) -o $@ $(DLL_LDPATH) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) $(ALL_LIBS)
 
 # Rules for .dll files
 
 $(MODULE): $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(SPEC_DEF) Makefile.in
-	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(ALL_LIBS)
+	$(DLLWRAP) -k --def $(SPEC_DEF) -o $@ $(RCOBJS) $(OBJS) $(MODULE).dbg.o $(DLL_LDPATH) $(ALL_IMPORTS:%=-l%) $(ALL_LIBS)
 
 # Rules for import libraries
 
@@ -79,7 +80,7 @@ crosstest:: $(SUBDIRS:%=%/__crosstest__)
 # Rule to explicitly generate the .spec.c for debugging
 
 $(MAINSPEC).c: $(MAINSPEC) $(ALL_OBJS)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) --dll -o $@ --export $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(ALL_OBJS) -L$(DLLDIR) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-d%)
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) --dll -o $@ --export $(SRCDIR)/$(MAINSPEC) $(SUBSYSTEM:%=--subsystem %) $(ALL_OBJS) $(DLL_LDPATH) $(ALL_IMPORTS:%=-l%) $(DELAYIMPORTS:%=-d%)
 
 # Rules for auto documentation
 

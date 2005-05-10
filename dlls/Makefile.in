@@ -1014,1305 +1014,607 @@ libuuid.a: uuid/libuuid.a
 
 # Import libraries
 
-IMPORT_LIBS = \
-	libadvapi32.$(IMPLIBEXT) \
-	libadvpack.$(IMPLIBEXT) \
-	libamstream.$(IMPLIBEXT) \
-	libatl.$(IMPLIBEXT) \
-	libavicap32.$(IMPLIBEXT) \
-	libavifil32.$(IMPLIBEXT) \
-	libcabinet.$(IMPLIBEXT) \
-	libcapi2032.$(IMPLIBEXT) \
-	libcards.$(IMPLIBEXT) \
-	libcfgmgr32.$(IMPLIBEXT) \
-	libcomcat.$(IMPLIBEXT) \
-	libcomctl32.$(IMPLIBEXT) \
+STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
+
+IMPORT_SYMLINKS = \
 	libcomdlg32.$(IMPLIBEXT) \
-	libcrtdll.$(IMPLIBEXT) \
-	libcrypt32.$(IMPLIBEXT) \
-	libcryptdll.$(IMPLIBEXT) \
 	libctl3d32.$(IMPLIBEXT) \
-	libd3d8.$(IMPLIBEXT) \
-	libd3d9.$(IMPLIBEXT) \
-	libd3dim.$(IMPLIBEXT) \
-	libd3drm.$(IMPLIBEXT) \
-	libd3dx8.$(IMPLIBEXT) \
-	libd3dxof.$(IMPLIBEXT) \
-	libdbghelp.$(IMPLIBEXT) \
-	libdciman32.$(IMPLIBEXT) \
-	libddraw.$(IMPLIBEXT) \
-	libdevenum.$(IMPLIBEXT) \
-	libdinput.$(IMPLIBEXT) \
-	libdinput8.$(IMPLIBEXT) \
-	libdmband.$(IMPLIBEXT) \
-	libdmcompos.$(IMPLIBEXT) \
-	libdmime.$(IMPLIBEXT) \
-	libdmloader.$(IMPLIBEXT) \
-	libdmscript.$(IMPLIBEXT) \
-	libdmstyle.$(IMPLIBEXT) \
-	libdmsynth.$(IMPLIBEXT) \
-	libdmusic.$(IMPLIBEXT) \
-	libdmusic32.$(IMPLIBEXT) \
-	libdplay.$(IMPLIBEXT) \
-	libdplayx.$(IMPLIBEXT) \
-	libdpnet.$(IMPLIBEXT) \
-	libdpnhpast.$(IMPLIBEXT) \
-	libdsound.$(IMPLIBEXT) \
-	libdswave.$(IMPLIBEXT) \
-	libdxdiagn.$(IMPLIBEXT) \
 	libgdi32.$(IMPLIBEXT) \
-	libglu32.$(IMPLIBEXT) \
-	libglut32.$(IMPLIBEXT) \
-	libiccvid.$(IMPLIBEXT) \
-	libicmp.$(IMPLIBEXT) \
-	libimagehlp.$(IMPLIBEXT) \
-	libimm32.$(IMPLIBEXT) \
-	libiphlpapi.$(IMPLIBEXT) \
-	libitss.$(IMPLIBEXT) \
 	libkernel32.$(IMPLIBEXT) \
 	liblz32.$(IMPLIBEXT) \
-	libmapi32.$(IMPLIBEXT) \
-	libmlang.$(IMPLIBEXT) \
-	libmpr.$(IMPLIBEXT) \
 	libmsacm32.$(IMPLIBEXT) \
-	libmscms.$(IMPLIBEXT) \
-	libmsdmo.$(IMPLIBEXT) \
-	libmshtml.$(IMPLIBEXT) \
-	libmsi.$(IMPLIBEXT) \
-	libmsimg32.$(IMPLIBEXT) \
-	libmsnet32.$(IMPLIBEXT) \
-	libmsrle32.$(IMPLIBEXT) \
-	libmsvcrt.$(IMPLIBEXT) \
-	libmsvcrt20.$(IMPLIBEXT) \
-	libmsvcrt40.$(IMPLIBEXT) \
-	libmsvcrtd.$(IMPLIBEXT) \
 	libmsvfw32.$(IMPLIBEXT) \
-	libmsvidc32.$(IMPLIBEXT) \
-	libmswsock.$(IMPLIBEXT) \
-	libnetapi32.$(IMPLIBEXT) \
-	libnewdev.$(IMPLIBEXT) \
 	libntdll.$(IMPLIBEXT) \
-	libodbc32.$(IMPLIBEXT) \
-	libole32.$(IMPLIBEXT) \
-	liboleacc.$(IMPLIBEXT) \
-	liboleaut32.$(IMPLIBEXT) \
 	libolecli32.$(IMPLIBEXT) \
-	liboledlg.$(IMPLIBEXT) \
-	libolepro32.$(IMPLIBEXT) \
 	libolesvr32.$(IMPLIBEXT) \
-	libopengl32.$(IMPLIBEXT) \
-	libpowrprof.$(IMPLIBEXT) \
-	libpsapi.$(IMPLIBEXT) \
-	libqcap.$(IMPLIBEXT) \
-	libquartz.$(IMPLIBEXT) \
-	librasapi32.$(IMPLIBEXT) \
-	libriched20.$(IMPLIBEXT) \
 	libriched32.$(IMPLIBEXT) \
-	librpcrt4.$(IMPLIBEXT) \
-	librsabase.$(IMPLIBEXT) \
-	librsaenh.$(IMPLIBEXT) \
-	libsecur32.$(IMPLIBEXT) \
-	libsensapi.$(IMPLIBEXT) \
-	libserialui.$(IMPLIBEXT) \
-	libsetupapi.$(IMPLIBEXT) \
-	libshdocvw.$(IMPLIBEXT) \
-	libshell32.$(IMPLIBEXT) \
-	libshfolder.$(IMPLIBEXT) \
-	libshlwapi.$(IMPLIBEXT) \
-	libsnmpapi.$(IMPLIBEXT) \
-	libsti.$(IMPLIBEXT) \
-	libtapi32.$(IMPLIBEXT) \
 	libtwain_32.$(IMPLIBEXT) \
-	libunicows.$(IMPLIBEXT) \
-	liburl.$(IMPLIBEXT) \
-	liburlmon.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
-	libuxtheme.$(IMPLIBEXT) \
-	libvdmdbg.$(IMPLIBEXT) \
-	libversion.$(IMPLIBEXT) \
 	libw32skrnl.$(IMPLIBEXT) \
-	libwined3d.$(IMPLIBEXT) \
-	libwinedos.$(IMPLIBEXT) \
-	libwininet.$(IMPLIBEXT) \
-	libwinmm.$(IMPLIBEXT) \
 	libwinnls32.$(IMPLIBEXT) \
-	libwinspool.$(IMPLIBEXT) \
-	libwintab32.$(IMPLIBEXT) \
-	libwintrust.$(IMPLIBEXT) \
 	libwnaspi32.$(IMPLIBEXT) \
-	libwow32.$(IMPLIBEXT) \
 	libws2_32.$(IMPLIBEXT) \
-	libwsock32.$(IMPLIBEXT) \
-	libwtsapi32.$(IMPLIBEXT) \
 	libdxerr8.a \
 	libdxerr9.a \
 	libdxguid.a \
 	libstrmiids.a \
 	libuuid.a
 
+IMPORT_LIBS = \
+	$(IMPORT_SYMLINKS) \
+	advapi32/libadvapi32.$(IMPLIBEXT) \
+	advpack/libadvpack.$(IMPLIBEXT) \
+	amstream/libamstream.$(IMPLIBEXT) \
+	atl/libatl.$(IMPLIBEXT) \
+	avicap32/libavicap32.$(IMPLIBEXT) \
+	avifil32/libavifil32.$(IMPLIBEXT) \
+	cabinet/libcabinet.$(IMPLIBEXT) \
+	capi2032/libcapi2032.$(IMPLIBEXT) \
+	cards/libcards.$(IMPLIBEXT) \
+	cfgmgr32/libcfgmgr32.$(IMPLIBEXT) \
+	comcat/libcomcat.$(IMPLIBEXT) \
+	comctl32/libcomctl32.$(IMPLIBEXT) \
+	commdlg/libcomdlg32.$(IMPLIBEXT) \
+	crtdll/libcrtdll.$(IMPLIBEXT) \
+	crypt32/libcrypt32.$(IMPLIBEXT) \
+	cryptdll/libcryptdll.$(IMPLIBEXT) \
+	ctl3d/libctl3d32.$(IMPLIBEXT) \
+	d3d8/libd3d8.$(IMPLIBEXT) \
+	d3d9/libd3d9.$(IMPLIBEXT) \
+	d3dim/libd3dim.$(IMPLIBEXT) \
+	d3drm/libd3drm.$(IMPLIBEXT) \
+	d3dx8/libd3dx8.$(IMPLIBEXT) \
+	d3dxof/libd3dxof.$(IMPLIBEXT) \
+	dbghelp/libdbghelp.$(IMPLIBEXT) \
+	dciman32/libdciman32.$(IMPLIBEXT) \
+	ddraw/libddraw.$(IMPLIBEXT) \
+	devenum/libdevenum.$(IMPLIBEXT) \
+	dinput/libdinput.$(IMPLIBEXT) \
+	dinput/libdinput.$(STATIC_IMPLIBEXT) \
+	dinput8/libdinput8.$(IMPLIBEXT) \
+	dmband/libdmband.$(IMPLIBEXT) \
+	dmcompos/libdmcompos.$(IMPLIBEXT) \
+	dmime/libdmime.$(IMPLIBEXT) \
+	dmloader/libdmloader.$(IMPLIBEXT) \
+	dmscript/libdmscript.$(IMPLIBEXT) \
+	dmstyle/libdmstyle.$(IMPLIBEXT) \
+	dmsynth/libdmsynth.$(IMPLIBEXT) \
+	dmusic/libdmusic.$(IMPLIBEXT) \
+	dmusic32/libdmusic32.$(IMPLIBEXT) \
+	dplay/libdplay.$(IMPLIBEXT) \
+	dplayx/libdplayx.$(IMPLIBEXT) \
+	dpnet/libdpnet.$(IMPLIBEXT) \
+	dpnhpast/libdpnhpast.$(IMPLIBEXT) \
+	dsound/libdsound.$(IMPLIBEXT) \
+	dswave/libdswave.$(IMPLIBEXT) \
+	dxdiagn/libdxdiagn.$(IMPLIBEXT) \
+	gdi/libgdi32.$(IMPLIBEXT) \
+	glu32/libglu32.$(IMPLIBEXT) \
+	glut32/libglut32.$(IMPLIBEXT) \
+	iccvid/libiccvid.$(IMPLIBEXT) \
+	icmp/libicmp.$(IMPLIBEXT) \
+	imagehlp/libimagehlp.$(IMPLIBEXT) \
+	imm32/libimm32.$(IMPLIBEXT) \
+	iphlpapi/libiphlpapi.$(IMPLIBEXT) \
+	itss/libitss.$(IMPLIBEXT) \
+	kernel/libkernel32.$(IMPLIBEXT) \
+	lzexpand/liblz32.$(IMPLIBEXT) \
+	mapi32/libmapi32.$(IMPLIBEXT) \
+	mlang/libmlang.$(IMPLIBEXT) \
+	mpr/libmpr.$(IMPLIBEXT) \
+	msacm/libmsacm32.$(IMPLIBEXT) \
+	mscms/libmscms.$(IMPLIBEXT) \
+	msdmo/libmsdmo.$(IMPLIBEXT) \
+	mshtml/libmshtml.$(IMPLIBEXT) \
+	msi/libmsi.$(IMPLIBEXT) \
+	msimg32/libmsimg32.$(IMPLIBEXT) \
+	msnet32/libmsnet32.$(IMPLIBEXT) \
+	msrle32/libmsrle32.$(IMPLIBEXT) \
+	msvcrt/libmsvcrt.$(IMPLIBEXT) \
+	msvcrt20/libmsvcrt20.$(IMPLIBEXT) \
+	msvcrt40/libmsvcrt40.$(IMPLIBEXT) \
+	msvcrtd/libmsvcrtd.$(IMPLIBEXT) \
+	msvideo/libmsvfw32.$(IMPLIBEXT) \
+	msvidc32/libmsvidc32.$(IMPLIBEXT) \
+	mswsock/libmswsock.$(IMPLIBEXT) \
+	netapi32/libnetapi32.$(IMPLIBEXT) \
+	newdev/libnewdev.$(IMPLIBEXT) \
+	ntdll/libntdll.$(IMPLIBEXT) \
+	odbc32/libodbc32.$(IMPLIBEXT) \
+	ole32/libole32.$(IMPLIBEXT) \
+	oleacc/liboleacc.$(IMPLIBEXT) \
+	oleaut32/liboleaut32.$(IMPLIBEXT) \
+	olecli/libolecli32.$(IMPLIBEXT) \
+	oledlg/liboledlg.$(IMPLIBEXT) \
+	olepro32/libolepro32.$(IMPLIBEXT) \
+	olesvr/libolesvr32.$(IMPLIBEXT) \
+	opengl32/libopengl32.$(IMPLIBEXT) \
+	powrprof/libpowrprof.$(IMPLIBEXT) \
+	psapi/libpsapi.$(IMPLIBEXT) \
+	qcap/libqcap.$(IMPLIBEXT) \
+	quartz/libquartz.$(IMPLIBEXT) \
+	rasapi32/librasapi32.$(IMPLIBEXT) \
+	riched20/libriched20.$(IMPLIBEXT) \
+	richedit/libriched32.$(IMPLIBEXT) \
+	rpcrt4/librpcrt4.$(IMPLIBEXT) \
+	rsabase/librsabase.$(IMPLIBEXT) \
+	rsaenh/librsaenh.$(IMPLIBEXT) \
+	secur32/libsecur32.$(IMPLIBEXT) \
+	sensapi/libsensapi.$(IMPLIBEXT) \
+	serialui/libserialui.$(IMPLIBEXT) \
+	setupapi/libsetupapi.$(IMPLIBEXT) \
+	shdocvw/libshdocvw.$(IMPLIBEXT) \
+	shell32/libshell32.$(IMPLIBEXT) \
+	shfolder/libshfolder.$(IMPLIBEXT) \
+	shlwapi/libshlwapi.$(IMPLIBEXT) \
+	snmpapi/libsnmpapi.$(IMPLIBEXT) \
+	sti/libsti.$(IMPLIBEXT) \
+	tapi32/libtapi32.$(IMPLIBEXT) \
+	twain/libtwain_32.$(IMPLIBEXT) \
+	unicows/libunicows.$(IMPLIBEXT) \
+	url/liburl.$(IMPLIBEXT) \
+	urlmon/liburlmon.$(IMPLIBEXT) \
+	user/libuser32.$(IMPLIBEXT) \
+	uxtheme/libuxtheme.$(IMPLIBEXT) \
+	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
+	version/libversion.$(IMPLIBEXT) \
+	win32s/libw32skrnl.$(IMPLIBEXT) \
+	wined3d/libwined3d.$(IMPLIBEXT) \
+	winedos/libwinedos.$(IMPLIBEXT) \
+	wininet/libwininet.$(IMPLIBEXT) \
+	winmm/libwinmm.$(IMPLIBEXT) \
+	winnls/libwinnls32.$(IMPLIBEXT) \
+	winspool/libwinspool.$(IMPLIBEXT) \
+	wintab32/libwintab32.$(IMPLIBEXT) \
+	wintrust/libwintrust.$(IMPLIBEXT) \
+	winaspi/libwnaspi32.$(IMPLIBEXT) \
+	wow32/libwow32.$(IMPLIBEXT) \
+	winsock/libws2_32.$(IMPLIBEXT) \
+	wsock32/libwsock32.$(IMPLIBEXT) \
+	wtsapi32/libwtsapi32.$(IMPLIBEXT)
+
 implib: $(IMPORT_LIBS)
 
-libadvapi32.def: advapi32/libadvapi32.def
-	$(RM) $@ && $(LN_S) advapi32/libadvapi32.def $@
-libadvapi32.a: advapi32/libadvapi32.a
-	$(RM) $@ && $(LN_S) advapi32/libadvapi32.a $@
-advapi32/libadvapi32.def: advapi32/advapi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/advapi32/advapi32.spec
-advapi32/libadvapi32.a: advapi32/libadvapi32.def
-	$(DLLTOOL) -k -l $@ -d advapi32/libadvapi32.def
-
-libadvpack.def: advpack/libadvpack.def
-	$(RM) $@ && $(LN_S) advpack/libadvpack.def $@
-libadvpack.a: advpack/libadvpack.a
-	$(RM) $@ && $(LN_S) advpack/libadvpack.a $@
-advpack/libadvpack.def: advpack/advpack.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/advpack/advpack.spec
-advpack/libadvpack.a: advpack/libadvpack.def
-	$(DLLTOOL) -k -l $@ -d advpack/libadvpack.def
-
-libamstream.def: amstream/libamstream.def
-	$(RM) $@ && $(LN_S) amstream/libamstream.def $@
-libamstream.a: amstream/libamstream.a
-	$(RM) $@ && $(LN_S) amstream/libamstream.a $@
-amstream/libamstream.def: amstream/amstream.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/amstream/amstream.spec
-amstream/libamstream.a: amstream/libamstream.def
-	$(DLLTOOL) -k -l $@ -d amstream/libamstream.def
-
-libatl.def: atl/libatl.def
-	$(RM) $@ && $(LN_S) atl/libatl.def $@
-libatl.a: atl/libatl.a
-	$(RM) $@ && $(LN_S) atl/libatl.a $@
-atl/libatl.def: atl/atl.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/atl/atl.spec
-atl/libatl.a: atl/libatl.def
-	$(DLLTOOL) -k -l $@ -d atl/libatl.def
-
-libavicap32.def: avicap32/libavicap32.def
-	$(RM) $@ && $(LN_S) avicap32/libavicap32.def $@
-libavicap32.a: avicap32/libavicap32.a
-	$(RM) $@ && $(LN_S) avicap32/libavicap32.a $@
-avicap32/libavicap32.def: avicap32/avicap32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/avicap32/avicap32.spec
-avicap32/libavicap32.a: avicap32/libavicap32.def
-	$(DLLTOOL) -k -l $@ -d avicap32/libavicap32.def
-
-libavifil32.def: avifil32/libavifil32.def
-	$(RM) $@ && $(LN_S) avifil32/libavifil32.def $@
-libavifil32.a: avifil32/libavifil32.a
-	$(RM) $@ && $(LN_S) avifil32/libavifil32.a $@
-avifil32/libavifil32.def: avifil32/avifil32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/avifil32/avifil32.spec
-avifil32/libavifil32.a: avifil32/libavifil32.def
-	$(DLLTOOL) -k -l $@ -d avifil32/libavifil32.def
-
-libcabinet.def: cabinet/libcabinet.def
-	$(RM) $@ && $(LN_S) cabinet/libcabinet.def $@
-libcabinet.a: cabinet/libcabinet.a
-	$(RM) $@ && $(LN_S) cabinet/libcabinet.a $@
-cabinet/libcabinet.def: cabinet/cabinet.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/cabinet/cabinet.spec
-cabinet/libcabinet.a: cabinet/libcabinet.def
-	$(DLLTOOL) -k -l $@ -d cabinet/libcabinet.def
-
-libcapi2032.def: capi2032/libcapi2032.def
-	$(RM) $@ && $(LN_S) capi2032/libcapi2032.def $@
-libcapi2032.a: capi2032/libcapi2032.a
-	$(RM) $@ && $(LN_S) capi2032/libcapi2032.a $@
-capi2032/libcapi2032.def: capi2032/capi2032.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/capi2032/capi2032.spec
-capi2032/libcapi2032.a: capi2032/libcapi2032.def
-	$(DLLTOOL) -k -l $@ -d capi2032/libcapi2032.def
-
-libcards.def: cards/libcards.def
-	$(RM) $@ && $(LN_S) cards/libcards.def $@
-libcards.a: cards/libcards.a
-	$(RM) $@ && $(LN_S) cards/libcards.a $@
-cards/libcards.def: cards/cards.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/cards/cards.spec
-cards/libcards.a: cards/libcards.def
-	$(DLLTOOL) -k -l $@ -d cards/libcards.def
-
-libcfgmgr32.def: cfgmgr32/libcfgmgr32.def
-	$(RM) $@ && $(LN_S) cfgmgr32/libcfgmgr32.def $@
-libcfgmgr32.a: cfgmgr32/libcfgmgr32.a
-	$(RM) $@ && $(LN_S) cfgmgr32/libcfgmgr32.a $@
-cfgmgr32/libcfgmgr32.def: cfgmgr32/cfgmgr32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/cfgmgr32/cfgmgr32.spec
-cfgmgr32/libcfgmgr32.a: cfgmgr32/libcfgmgr32.def
-	$(DLLTOOL) -k -l $@ -d cfgmgr32/libcfgmgr32.def
-
-libcomcat.def: comcat/libcomcat.def
-	$(RM) $@ && $(LN_S) comcat/libcomcat.def $@
-libcomcat.a: comcat/libcomcat.a
-	$(RM) $@ && $(LN_S) comcat/libcomcat.a $@
-comcat/libcomcat.def: comcat/comcat.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/comcat/comcat.spec
-comcat/libcomcat.a: comcat/libcomcat.def
-	$(DLLTOOL) -k -l $@ -d comcat/libcomcat.def
-
-libcomctl32.def: comctl32/libcomctl32.def
-	$(RM) $@ && $(LN_S) comctl32/libcomctl32.def $@
-libcomctl32.a: comctl32/libcomctl32.a
-	$(RM) $@ && $(LN_S) comctl32/libcomctl32.a $@
-comctl32/libcomctl32.def: comctl32/comctl32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/comctl32/comctl32.spec
-comctl32/libcomctl32.a: comctl32/libcomctl32.def
-	$(DLLTOOL) -k -l $@ -d comctl32/libcomctl32.def
-
-libcomdlg32.def: commdlg/libcomdlg32.def
-	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.def $@
-libcomdlg32.a: commdlg/libcomdlg32.a
-	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.a $@
-commdlg/libcomdlg32.def: commdlg/comdlg32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/commdlg/comdlg32.spec
-commdlg/libcomdlg32.a: commdlg/libcomdlg32.def
-	$(DLLTOOL) -k -l $@ -d commdlg/libcomdlg32.def
-
-libcrtdll.def: crtdll/libcrtdll.def
-	$(RM) $@ && $(LN_S) crtdll/libcrtdll.def $@
-libcrtdll.a: crtdll/libcrtdll.a
-	$(RM) $@ && $(LN_S) crtdll/libcrtdll.a $@
-crtdll/libcrtdll.def: crtdll/crtdll.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/crtdll/crtdll.spec
-crtdll/libcrtdll.a: crtdll/libcrtdll.def
-	$(DLLTOOL) -k -l $@ -d crtdll/libcrtdll.def
-
-libcrypt32.def: crypt32/libcrypt32.def
-	$(RM) $@ && $(LN_S) crypt32/libcrypt32.def $@
-libcrypt32.a: crypt32/libcrypt32.a
-	$(RM) $@ && $(LN_S) crypt32/libcrypt32.a $@
-crypt32/libcrypt32.def: crypt32/crypt32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/crypt32/crypt32.spec
-crypt32/libcrypt32.a: crypt32/libcrypt32.def
-	$(DLLTOOL) -k -l $@ -d crypt32/libcrypt32.def
-
-libcryptdll.def: cryptdll/libcryptdll.def
-	$(RM) $@ && $(LN_S) cryptdll/libcryptdll.def $@
-libcryptdll.a: cryptdll/libcryptdll.a
-	$(RM) $@ && $(LN_S) cryptdll/libcryptdll.a $@
-cryptdll/libcryptdll.def: cryptdll/cryptdll.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/cryptdll/cryptdll.spec
-cryptdll/libcryptdll.a: cryptdll/libcryptdll.def
-	$(DLLTOOL) -k -l $@ -d cryptdll/libcryptdll.def
-
-libctl3d32.def: ctl3d/libctl3d32.def
-	$(RM) $@ && $(LN_S) ctl3d/libctl3d32.def $@
-libctl3d32.a: ctl3d/libctl3d32.a
-	$(RM) $@ && $(LN_S) ctl3d/libctl3d32.a $@
-ctl3d/libctl3d32.def: ctl3d/ctl3d32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/ctl3d/ctl3d32.spec
-ctl3d/libctl3d32.a: ctl3d/libctl3d32.def
-	$(DLLTOOL) -k -l $@ -d ctl3d/libctl3d32.def
-
-libd3d8.def: d3d8/libd3d8.def
-	$(RM) $@ && $(LN_S) d3d8/libd3d8.def $@
-libd3d8.a: d3d8/libd3d8.a
-	$(RM) $@ && $(LN_S) d3d8/libd3d8.a $@
-d3d8/libd3d8.def: d3d8/d3d8.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/d3d8/d3d8.spec
-d3d8/libd3d8.a: d3d8/libd3d8.def
-	$(DLLTOOL) -k -l $@ -d d3d8/libd3d8.def
-
-libd3d9.def: d3d9/libd3d9.def
-	$(RM) $@ && $(LN_S) d3d9/libd3d9.def $@
-libd3d9.a: d3d9/libd3d9.a
-	$(RM) $@ && $(LN_S) d3d9/libd3d9.a $@
-d3d9/libd3d9.def: d3d9/d3d9.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/d3d9/d3d9.spec
-d3d9/libd3d9.a: d3d9/libd3d9.def
-	$(DLLTOOL) -k -l $@ -d d3d9/libd3d9.def
-
-libd3dim.def: d3dim/libd3dim.def
-	$(RM) $@ && $(LN_S) d3dim/libd3dim.def $@
-libd3dim.a: d3dim/libd3dim.a
-	$(RM) $@ && $(LN_S) d3dim/libd3dim.a $@
-d3dim/libd3dim.def: d3dim/d3dim.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/d3dim/d3dim.spec
-d3dim/libd3dim.a: d3dim/libd3dim.def
-	$(DLLTOOL) -k -l $@ -d d3dim/libd3dim.def
-
-libd3drm.def: d3drm/libd3drm.def
-	$(RM) $@ && $(LN_S) d3drm/libd3drm.def $@
-libd3drm.a: d3drm/libd3drm.a
-	$(RM) $@ && $(LN_S) d3drm/libd3drm.a $@
-d3drm/libd3drm.def: d3drm/d3drm.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/d3drm/d3drm.spec
-d3drm/libd3drm.a: d3drm/libd3drm.def
-	$(DLLTOOL) -k -l $@ -d d3drm/libd3drm.def
-
-libd3dx8.def: d3dx8/libd3dx8.def
-	$(RM) $@ && $(LN_S) d3dx8/libd3dx8.def $@
-libd3dx8.a: d3dx8/libd3dx8.a
-	$(RM) $@ && $(LN_S) d3dx8/libd3dx8.a $@
-d3dx8/libd3dx8.def: d3dx8/d3dx8.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/d3dx8/d3dx8.spec
-d3dx8/libd3dx8.a: d3dx8/libd3dx8.def
-	$(DLLTOOL) -k -l $@ -d d3dx8/libd3dx8.def
-
-libd3dxof.def: d3dxof/libd3dxof.def
-	$(RM) $@ && $(LN_S) d3dxof/libd3dxof.def $@
-libd3dxof.a: d3dxof/libd3dxof.a
-	$(RM) $@ && $(LN_S) d3dxof/libd3dxof.a $@
-d3dxof/libd3dxof.def: d3dxof/d3dxof.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/d3dxof/d3dxof.spec
-d3dxof/libd3dxof.a: d3dxof/libd3dxof.def
-	$(DLLTOOL) -k -l $@ -d d3dxof/libd3dxof.def
-
-libdbghelp.def: dbghelp/libdbghelp.def
-	$(RM) $@ && $(LN_S) dbghelp/libdbghelp.def $@
-libdbghelp.a: dbghelp/libdbghelp.a
-	$(RM) $@ && $(LN_S) dbghelp/libdbghelp.a $@
-dbghelp/libdbghelp.def: dbghelp/dbghelp.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dbghelp/dbghelp.spec
-dbghelp/libdbghelp.a: dbghelp/libdbghelp.def
-	$(DLLTOOL) -k -l $@ -d dbghelp/libdbghelp.def
-
-libdciman32.def: dciman32/libdciman32.def
-	$(RM) $@ && $(LN_S) dciman32/libdciman32.def $@
-libdciman32.a: dciman32/libdciman32.a
-	$(RM) $@ && $(LN_S) dciman32/libdciman32.a $@
-dciman32/libdciman32.def: dciman32/dciman32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dciman32/dciman32.spec
-dciman32/libdciman32.a: dciman32/libdciman32.def
-	$(DLLTOOL) -k -l $@ -d dciman32/libdciman32.def
-
-libddraw.def: ddraw/libddraw.def
-	$(RM) $@ && $(LN_S) ddraw/libddraw.def $@
-libddraw.a: ddraw/libddraw.a
-	$(RM) $@ && $(LN_S) ddraw/libddraw.a $@
-ddraw/libddraw.def: ddraw/ddraw.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/ddraw/ddraw.spec
-ddraw/libddraw.a: ddraw/libddraw.def
-	$(DLLTOOL) -k -l $@ -d ddraw/libddraw.def
-
-libdevenum.def: devenum/libdevenum.def
-	$(RM) $@ && $(LN_S) devenum/libdevenum.def $@
-libdevenum.a: devenum/libdevenum.a
-	$(RM) $@ && $(LN_S) devenum/libdevenum.a $@
-devenum/libdevenum.def: devenum/devenum.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/devenum/devenum.spec
-devenum/libdevenum.a: devenum/libdevenum.def
-	$(DLLTOOL) -k -l $@ -d devenum/libdevenum.def
-
-libdinput.def: dinput/libdinput.def
-	$(RM) $@ && $(LN_S) dinput/libdinput.def $@
-libdinput.a: dinput/libdinput.a
-	$(RM) $@ && $(LN_S) dinput/libdinput.a $@
-dinput/libdinput.def: dinput/dinput.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dinput/dinput.spec
-dinput/libdinput.a: dinput/libdinput.def
-	$(DLLTOOL) -k -l $@ -d dinput/libdinput.def
-
-libdinput8.def: dinput8/libdinput8.def
-	$(RM) $@ && $(LN_S) dinput8/libdinput8.def $@
-libdinput8.a: dinput8/libdinput8.a
-	$(RM) $@ && $(LN_S) dinput8/libdinput8.a $@
-dinput8/libdinput8.def: dinput8/dinput8.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dinput8/dinput8.spec
-dinput8/libdinput8.a: dinput8/libdinput8.def
-	$(DLLTOOL) -k -l $@ -d dinput8/libdinput8.def
-
-libdmband.def: dmband/libdmband.def
-	$(RM) $@ && $(LN_S) dmband/libdmband.def $@
-libdmband.a: dmband/libdmband.a
-	$(RM) $@ && $(LN_S) dmband/libdmband.a $@
-dmband/libdmband.def: dmband/dmband.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmband/dmband.spec
-dmband/libdmband.a: dmband/libdmband.def
-	$(DLLTOOL) -k -l $@ -d dmband/libdmband.def
-
-libdmcompos.def: dmcompos/libdmcompos.def
-	$(RM) $@ && $(LN_S) dmcompos/libdmcompos.def $@
-libdmcompos.a: dmcompos/libdmcompos.a
-	$(RM) $@ && $(LN_S) dmcompos/libdmcompos.a $@
-dmcompos/libdmcompos.def: dmcompos/dmcompos.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmcompos/dmcompos.spec
-dmcompos/libdmcompos.a: dmcompos/libdmcompos.def
-	$(DLLTOOL) -k -l $@ -d dmcompos/libdmcompos.def
-
-libdmime.def: dmime/libdmime.def
-	$(RM) $@ && $(LN_S) dmime/libdmime.def $@
-libdmime.a: dmime/libdmime.a
-	$(RM) $@ && $(LN_S) dmime/libdmime.a $@
-dmime/libdmime.def: dmime/dmime.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmime/dmime.spec
-dmime/libdmime.a: dmime/libdmime.def
-	$(DLLTOOL) -k -l $@ -d dmime/libdmime.def
-
-libdmloader.def: dmloader/libdmloader.def
-	$(RM) $@ && $(LN_S) dmloader/libdmloader.def $@
-libdmloader.a: dmloader/libdmloader.a
-	$(RM) $@ && $(LN_S) dmloader/libdmloader.a $@
-dmloader/libdmloader.def: dmloader/dmloader.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmloader/dmloader.spec
-dmloader/libdmloader.a: dmloader/libdmloader.def
-	$(DLLTOOL) -k -l $@ -d dmloader/libdmloader.def
-
-libdmscript.def: dmscript/libdmscript.def
-	$(RM) $@ && $(LN_S) dmscript/libdmscript.def $@
-libdmscript.a: dmscript/libdmscript.a
-	$(RM) $@ && $(LN_S) dmscript/libdmscript.a $@
-dmscript/libdmscript.def: dmscript/dmscript.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmscript/dmscript.spec
-dmscript/libdmscript.a: dmscript/libdmscript.def
-	$(DLLTOOL) -k -l $@ -d dmscript/libdmscript.def
-
-libdmstyle.def: dmstyle/libdmstyle.def
-	$(RM) $@ && $(LN_S) dmstyle/libdmstyle.def $@
-libdmstyle.a: dmstyle/libdmstyle.a
-	$(RM) $@ && $(LN_S) dmstyle/libdmstyle.a $@
-dmstyle/libdmstyle.def: dmstyle/dmstyle.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmstyle/dmstyle.spec
-dmstyle/libdmstyle.a: dmstyle/libdmstyle.def
-	$(DLLTOOL) -k -l $@ -d dmstyle/libdmstyle.def
-
-libdmsynth.def: dmsynth/libdmsynth.def
-	$(RM) $@ && $(LN_S) dmsynth/libdmsynth.def $@
-libdmsynth.a: dmsynth/libdmsynth.a
-	$(RM) $@ && $(LN_S) dmsynth/libdmsynth.a $@
-dmsynth/libdmsynth.def: dmsynth/dmsynth.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmsynth/dmsynth.spec
-dmsynth/libdmsynth.a: dmsynth/libdmsynth.def
-	$(DLLTOOL) -k -l $@ -d dmsynth/libdmsynth.def
-
-libdmusic.def: dmusic/libdmusic.def
-	$(RM) $@ && $(LN_S) dmusic/libdmusic.def $@
-libdmusic.a: dmusic/libdmusic.a
-	$(RM) $@ && $(LN_S) dmusic/libdmusic.a $@
-dmusic/libdmusic.def: dmusic/dmusic.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmusic/dmusic.spec
-dmusic/libdmusic.a: dmusic/libdmusic.def
-	$(DLLTOOL) -k -l $@ -d dmusic/libdmusic.def
-
-libdmusic32.def: dmusic32/libdmusic32.def
-	$(RM) $@ && $(LN_S) dmusic32/libdmusic32.def $@
-libdmusic32.a: dmusic32/libdmusic32.a
-	$(RM) $@ && $(LN_S) dmusic32/libdmusic32.a $@
-dmusic32/libdmusic32.def: dmusic32/dmusic32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dmusic32/dmusic32.spec
-dmusic32/libdmusic32.a: dmusic32/libdmusic32.def
-	$(DLLTOOL) -k -l $@ -d dmusic32/libdmusic32.def
-
-libdplay.def: dplay/libdplay.def
-	$(RM) $@ && $(LN_S) dplay/libdplay.def $@
-libdplay.a: dplay/libdplay.a
-	$(RM) $@ && $(LN_S) dplay/libdplay.a $@
-dplay/libdplay.def: dplay/dplay.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dplay/dplay.spec
-dplay/libdplay.a: dplay/libdplay.def
-	$(DLLTOOL) -k -l $@ -d dplay/libdplay.def
-
-libdplayx.def: dplayx/libdplayx.def
-	$(RM) $@ && $(LN_S) dplayx/libdplayx.def $@
-libdplayx.a: dplayx/libdplayx.a
-	$(RM) $@ && $(LN_S) dplayx/libdplayx.a $@
-dplayx/libdplayx.def: dplayx/dplayx.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dplayx/dplayx.spec
-dplayx/libdplayx.a: dplayx/libdplayx.def
-	$(DLLTOOL) -k -l $@ -d dplayx/libdplayx.def
-
-libdpnet.def: dpnet/libdpnet.def
-	$(RM) $@ && $(LN_S) dpnet/libdpnet.def $@
-libdpnet.a: dpnet/libdpnet.a
-	$(RM) $@ && $(LN_S) dpnet/libdpnet.a $@
-dpnet/libdpnet.def: dpnet/dpnet.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dpnet/dpnet.spec
-dpnet/libdpnet.a: dpnet/libdpnet.def
-	$(DLLTOOL) -k -l $@ -d dpnet/libdpnet.def
-
-libdpnhpast.def: dpnhpast/libdpnhpast.def
-	$(RM) $@ && $(LN_S) dpnhpast/libdpnhpast.def $@
-libdpnhpast.a: dpnhpast/libdpnhpast.a
-	$(RM) $@ && $(LN_S) dpnhpast/libdpnhpast.a $@
-dpnhpast/libdpnhpast.def: dpnhpast/dpnhpast.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dpnhpast/dpnhpast.spec
-dpnhpast/libdpnhpast.a: dpnhpast/libdpnhpast.def
-	$(DLLTOOL) -k -l $@ -d dpnhpast/libdpnhpast.def
-
-libdsound.def: dsound/libdsound.def
-	$(RM) $@ && $(LN_S) dsound/libdsound.def $@
-libdsound.a: dsound/libdsound.a
-	$(RM) $@ && $(LN_S) dsound/libdsound.a $@
-dsound/libdsound.def: dsound/dsound.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dsound/dsound.spec
-dsound/libdsound.a: dsound/libdsound.def
-	$(DLLTOOL) -k -l $@ -d dsound/libdsound.def
-
-libdswave.def: dswave/libdswave.def
-	$(RM) $@ && $(LN_S) dswave/libdswave.def $@
-libdswave.a: dswave/libdswave.a
-	$(RM) $@ && $(LN_S) dswave/libdswave.a $@
-dswave/libdswave.def: dswave/dswave.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dswave/dswave.spec
-dswave/libdswave.a: dswave/libdswave.def
-	$(DLLTOOL) -k -l $@ -d dswave/libdswave.def
-
-libdxdiagn.def: dxdiagn/libdxdiagn.def
-	$(RM) $@ && $(LN_S) dxdiagn/libdxdiagn.def $@
-libdxdiagn.a: dxdiagn/libdxdiagn.a
-	$(RM) $@ && $(LN_S) dxdiagn/libdxdiagn.a $@
-dxdiagn/libdxdiagn.def: dxdiagn/dxdiagn.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/dxdiagn/dxdiagn.spec
-dxdiagn/libdxdiagn.a: dxdiagn/libdxdiagn.def
-	$(DLLTOOL) -k -l $@ -d dxdiagn/libdxdiagn.def
-
-libgdi32.def: gdi/libgdi32.def
-	$(RM) $@ && $(LN_S) gdi/libgdi32.def $@
-libgdi32.a: gdi/libgdi32.a
-	$(RM) $@ && $(LN_S) gdi/libgdi32.a $@
-gdi/libgdi32.def: gdi/gdi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/gdi/gdi32.spec
-gdi/libgdi32.a: gdi/libgdi32.def
-	$(DLLTOOL) -k -l $@ -d gdi/libgdi32.def
-
-libglu32.def: glu32/libglu32.def
-	$(RM) $@ && $(LN_S) glu32/libglu32.def $@
-libglu32.a: glu32/libglu32.a
-	$(RM) $@ && $(LN_S) glu32/libglu32.a $@
-glu32/libglu32.def: glu32/glu32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/glu32/glu32.spec
-glu32/libglu32.a: glu32/libglu32.def
-	$(DLLTOOL) -k -l $@ -d glu32/libglu32.def
-
-libglut32.def: glut32/libglut32.def
-	$(RM) $@ && $(LN_S) glut32/libglut32.def $@
-libglut32.a: glut32/libglut32.a
-	$(RM) $@ && $(LN_S) glut32/libglut32.a $@
-glut32/libglut32.def: glut32/glut32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/glut32/glut32.spec
-glut32/libglut32.a: glut32/libglut32.def
-	$(DLLTOOL) -k -l $@ -d glut32/libglut32.def
-
-libiccvid.def: iccvid/libiccvid.def
-	$(RM) $@ && $(LN_S) iccvid/libiccvid.def $@
-libiccvid.a: iccvid/libiccvid.a
-	$(RM) $@ && $(LN_S) iccvid/libiccvid.a $@
-iccvid/libiccvid.def: iccvid/iccvid.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/iccvid/iccvid.spec
-iccvid/libiccvid.a: iccvid/libiccvid.def
-	$(DLLTOOL) -k -l $@ -d iccvid/libiccvid.def
-
-libicmp.def: icmp/libicmp.def
-	$(RM) $@ && $(LN_S) icmp/libicmp.def $@
-libicmp.a: icmp/libicmp.a
-	$(RM) $@ && $(LN_S) icmp/libicmp.a $@
-icmp/libicmp.def: icmp/icmp.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/icmp/icmp.spec
-icmp/libicmp.a: icmp/libicmp.def
-	$(DLLTOOL) -k -l $@ -d icmp/libicmp.def
-
-libimagehlp.def: imagehlp/libimagehlp.def
-	$(RM) $@ && $(LN_S) imagehlp/libimagehlp.def $@
-libimagehlp.a: imagehlp/libimagehlp.a
-	$(RM) $@ && $(LN_S) imagehlp/libimagehlp.a $@
-imagehlp/libimagehlp.def: imagehlp/imagehlp.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/imagehlp/imagehlp.spec
-imagehlp/libimagehlp.a: imagehlp/libimagehlp.def
-	$(DLLTOOL) -k -l $@ -d imagehlp/libimagehlp.def
-
-libimm32.def: imm32/libimm32.def
-	$(RM) $@ && $(LN_S) imm32/libimm32.def $@
-libimm32.a: imm32/libimm32.a
-	$(RM) $@ && $(LN_S) imm32/libimm32.a $@
-imm32/libimm32.def: imm32/imm32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/imm32/imm32.spec
-imm32/libimm32.a: imm32/libimm32.def
-	$(DLLTOOL) -k -l $@ -d imm32/libimm32.def
-
-libiphlpapi.def: iphlpapi/libiphlpapi.def
-	$(RM) $@ && $(LN_S) iphlpapi/libiphlpapi.def $@
-libiphlpapi.a: iphlpapi/libiphlpapi.a
-	$(RM) $@ && $(LN_S) iphlpapi/libiphlpapi.a $@
-iphlpapi/libiphlpapi.def: iphlpapi/iphlpapi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/iphlpapi/iphlpapi.spec
-iphlpapi/libiphlpapi.a: iphlpapi/libiphlpapi.def
-	$(DLLTOOL) -k -l $@ -d iphlpapi/libiphlpapi.def
-
-libitss.def: itss/libitss.def
-	$(RM) $@ && $(LN_S) itss/libitss.def $@
-libitss.a: itss/libitss.a
-	$(RM) $@ && $(LN_S) itss/libitss.a $@
-itss/libitss.def: itss/itss.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/itss/itss.spec
-itss/libitss.a: itss/libitss.def
-	$(DLLTOOL) -k -l $@ -d itss/libitss.def
-
-libkernel32.def: kernel/libkernel32.def
-	$(RM) $@ && $(LN_S) kernel/libkernel32.def $@
-libkernel32.a: kernel/libkernel32.a
-	$(RM) $@ && $(LN_S) kernel/libkernel32.a $@
-kernel/libkernel32.def: kernel/kernel32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/kernel/kernel32.spec
-kernel/libkernel32.a: kernel/libkernel32.def
-	$(DLLTOOL) -k -l $@ -d kernel/libkernel32.def
-
-liblz32.def: lzexpand/liblz32.def
-	$(RM) $@ && $(LN_S) lzexpand/liblz32.def $@
-liblz32.a: lzexpand/liblz32.a
-	$(RM) $@ && $(LN_S) lzexpand/liblz32.a $@
-lzexpand/liblz32.def: lzexpand/lz32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/lzexpand/lz32.spec
-lzexpand/liblz32.a: lzexpand/liblz32.def
-	$(DLLTOOL) -k -l $@ -d lzexpand/liblz32.def
-
-libmapi32.def: mapi32/libmapi32.def
-	$(RM) $@ && $(LN_S) mapi32/libmapi32.def $@
-libmapi32.a: mapi32/libmapi32.a
-	$(RM) $@ && $(LN_S) mapi32/libmapi32.a $@
-mapi32/libmapi32.def: mapi32/mapi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/mapi32/mapi32.spec
-mapi32/libmapi32.a: mapi32/libmapi32.def
-	$(DLLTOOL) -k -l $@ -d mapi32/libmapi32.def
-
-libmlang.def: mlang/libmlang.def
-	$(RM) $@ && $(LN_S) mlang/libmlang.def $@
-libmlang.a: mlang/libmlang.a
-	$(RM) $@ && $(LN_S) mlang/libmlang.a $@
-mlang/libmlang.def: mlang/mlang.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/mlang/mlang.spec
-mlang/libmlang.a: mlang/libmlang.def
-	$(DLLTOOL) -k -l $@ -d mlang/libmlang.def
-
-libmpr.def: mpr/libmpr.def
-	$(RM) $@ && $(LN_S) mpr/libmpr.def $@
-libmpr.a: mpr/libmpr.a
-	$(RM) $@ && $(LN_S) mpr/libmpr.a $@
-mpr/libmpr.def: mpr/mpr.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/mpr/mpr.spec
-mpr/libmpr.a: mpr/libmpr.def
-	$(DLLTOOL) -k -l $@ -d mpr/libmpr.def
-
-libmsacm32.def: msacm/libmsacm32.def
-	$(RM) $@ && $(LN_S) msacm/libmsacm32.def $@
-libmsacm32.a: msacm/libmsacm32.a
-	$(RM) $@ && $(LN_S) msacm/libmsacm32.a $@
-msacm/libmsacm32.def: msacm/msacm32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msacm/msacm32.spec
-msacm/libmsacm32.a: msacm/libmsacm32.def
-	$(DLLTOOL) -k -l $@ -d msacm/libmsacm32.def
-
-libmscms.def: mscms/libmscms.def
-	$(RM) $@ && $(LN_S) mscms/libmscms.def $@
-libmscms.a: mscms/libmscms.a
-	$(RM) $@ && $(LN_S) mscms/libmscms.a $@
-mscms/libmscms.def: mscms/mscms.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/mscms/mscms.spec
-mscms/libmscms.a: mscms/libmscms.def
-	$(DLLTOOL) -k -l $@ -d mscms/libmscms.def
-
-libmsdmo.def: msdmo/libmsdmo.def
-	$(RM) $@ && $(LN_S) msdmo/libmsdmo.def $@
-libmsdmo.a: msdmo/libmsdmo.a
-	$(RM) $@ && $(LN_S) msdmo/libmsdmo.a $@
-msdmo/libmsdmo.def: msdmo/msdmo.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msdmo/msdmo.spec
-msdmo/libmsdmo.a: msdmo/libmsdmo.def
-	$(DLLTOOL) -k -l $@ -d msdmo/libmsdmo.def
-
-libmshtml.def: mshtml/libmshtml.def
-	$(RM) $@ && $(LN_S) mshtml/libmshtml.def $@
-libmshtml.a: mshtml/libmshtml.a
-	$(RM) $@ && $(LN_S) mshtml/libmshtml.a $@
-mshtml/libmshtml.def: mshtml/mshtml.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/mshtml/mshtml.spec
-mshtml/libmshtml.a: mshtml/libmshtml.def
-	$(DLLTOOL) -k -l $@ -d mshtml/libmshtml.def
-
-libmsi.def: msi/libmsi.def
-	$(RM) $@ && $(LN_S) msi/libmsi.def $@
-libmsi.a: msi/libmsi.a
-	$(RM) $@ && $(LN_S) msi/libmsi.a $@
-msi/libmsi.def: msi/msi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msi/msi.spec
-msi/libmsi.a: msi/libmsi.def
-	$(DLLTOOL) -k -l $@ -d msi/libmsi.def
-
-libmsimg32.def: msimg32/libmsimg32.def
-	$(RM) $@ && $(LN_S) msimg32/libmsimg32.def $@
-libmsimg32.a: msimg32/libmsimg32.a
-	$(RM) $@ && $(LN_S) msimg32/libmsimg32.a $@
-msimg32/libmsimg32.def: msimg32/msimg32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msimg32/msimg32.spec
-msimg32/libmsimg32.a: msimg32/libmsimg32.def
-	$(DLLTOOL) -k -l $@ -d msimg32/libmsimg32.def
-
-libmsnet32.def: msnet32/libmsnet32.def
-	$(RM) $@ && $(LN_S) msnet32/libmsnet32.def $@
-libmsnet32.a: msnet32/libmsnet32.a
-	$(RM) $@ && $(LN_S) msnet32/libmsnet32.a $@
-msnet32/libmsnet32.def: msnet32/msnet32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msnet32/msnet32.spec
-msnet32/libmsnet32.a: msnet32/libmsnet32.def
-	$(DLLTOOL) -k -l $@ -d msnet32/libmsnet32.def
-
-libmsrle32.def: msrle32/libmsrle32.def
-	$(RM) $@ && $(LN_S) msrle32/libmsrle32.def $@
-libmsrle32.a: msrle32/libmsrle32.a
-	$(RM) $@ && $(LN_S) msrle32/libmsrle32.a $@
-msrle32/libmsrle32.def: msrle32/msrle32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msrle32/msrle32.spec
-msrle32/libmsrle32.a: msrle32/libmsrle32.def
-	$(DLLTOOL) -k -l $@ -d msrle32/libmsrle32.def
-
-libmsvcrt.def: msvcrt/libmsvcrt.def
-	$(RM) $@ && $(LN_S) msvcrt/libmsvcrt.def $@
-libmsvcrt.a: msvcrt/libmsvcrt.a
-	$(RM) $@ && $(LN_S) msvcrt/libmsvcrt.a $@
-msvcrt/libmsvcrt.def: msvcrt/msvcrt.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msvcrt/msvcrt.spec
-msvcrt/libmsvcrt.a: msvcrt/libmsvcrt.def
-	$(DLLTOOL) -k -l $@ -d msvcrt/libmsvcrt.def
-
-libmsvcrt20.def: msvcrt20/libmsvcrt20.def
-	$(RM) $@ && $(LN_S) msvcrt20/libmsvcrt20.def $@
-libmsvcrt20.a: msvcrt20/libmsvcrt20.a
-	$(RM) $@ && $(LN_S) msvcrt20/libmsvcrt20.a $@
-msvcrt20/libmsvcrt20.def: msvcrt20/msvcrt20.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msvcrt20/msvcrt20.spec
-msvcrt20/libmsvcrt20.a: msvcrt20/libmsvcrt20.def
-	$(DLLTOOL) -k -l $@ -d msvcrt20/libmsvcrt20.def
-
-libmsvcrt40.def: msvcrt40/libmsvcrt40.def
-	$(RM) $@ && $(LN_S) msvcrt40/libmsvcrt40.def $@
-libmsvcrt40.a: msvcrt40/libmsvcrt40.a
-	$(RM) $@ && $(LN_S) msvcrt40/libmsvcrt40.a $@
-msvcrt40/libmsvcrt40.def: msvcrt40/msvcrt40.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msvcrt40/msvcrt40.spec
-msvcrt40/libmsvcrt40.a: msvcrt40/libmsvcrt40.def
-	$(DLLTOOL) -k -l $@ -d msvcrt40/libmsvcrt40.def
-
-libmsvcrtd.def: msvcrtd/libmsvcrtd.def
-	$(RM) $@ && $(LN_S) msvcrtd/libmsvcrtd.def $@
-libmsvcrtd.a: msvcrtd/libmsvcrtd.a
-	$(RM) $@ && $(LN_S) msvcrtd/libmsvcrtd.a $@
-msvcrtd/libmsvcrtd.def: msvcrtd/msvcrtd.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msvcrtd/msvcrtd.spec
-msvcrtd/libmsvcrtd.a: msvcrtd/libmsvcrtd.def
-	$(DLLTOOL) -k -l $@ -d msvcrtd/libmsvcrtd.def
-
-libmsvfw32.def: msvideo/libmsvfw32.def
-	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.def $@
-libmsvfw32.a: msvideo/libmsvfw32.a
-	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.a $@
-msvideo/libmsvfw32.def: msvideo/msvfw32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msvideo/msvfw32.spec
-msvideo/libmsvfw32.a: msvideo/libmsvfw32.def
-	$(DLLTOOL) -k -l $@ -d msvideo/libmsvfw32.def
-
-libmsvidc32.def: msvidc32/libmsvidc32.def
-	$(RM) $@ && $(LN_S) msvidc32/libmsvidc32.def $@
-libmsvidc32.a: msvidc32/libmsvidc32.a
-	$(RM) $@ && $(LN_S) msvidc32/libmsvidc32.a $@
-msvidc32/libmsvidc32.def: msvidc32/msvidc32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/msvidc32/msvidc32.spec
-msvidc32/libmsvidc32.a: msvidc32/libmsvidc32.def
-	$(DLLTOOL) -k -l $@ -d msvidc32/libmsvidc32.def
-
-libmswsock.def: mswsock/libmswsock.def
-	$(RM) $@ && $(LN_S) mswsock/libmswsock.def $@
-libmswsock.a: mswsock/libmswsock.a
-	$(RM) $@ && $(LN_S) mswsock/libmswsock.a $@
-mswsock/libmswsock.def: mswsock/mswsock.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/mswsock/mswsock.spec
-mswsock/libmswsock.a: mswsock/libmswsock.def
-	$(DLLTOOL) -k -l $@ -d mswsock/libmswsock.def
-
-libnetapi32.def: netapi32/libnetapi32.def
-	$(RM) $@ && $(LN_S) netapi32/libnetapi32.def $@
-libnetapi32.a: netapi32/libnetapi32.a
-	$(RM) $@ && $(LN_S) netapi32/libnetapi32.a $@
-netapi32/libnetapi32.def: netapi32/netapi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/netapi32/netapi32.spec
-netapi32/libnetapi32.a: netapi32/libnetapi32.def
-	$(DLLTOOL) -k -l $@ -d netapi32/libnetapi32.def
-
-libnewdev.def: newdev/libnewdev.def
-	$(RM) $@ && $(LN_S) newdev/libnewdev.def $@
-libnewdev.a: newdev/libnewdev.a
-	$(RM) $@ && $(LN_S) newdev/libnewdev.a $@
-newdev/libnewdev.def: newdev/newdev.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/newdev/newdev.spec
-newdev/libnewdev.a: newdev/libnewdev.def
-	$(DLLTOOL) -k -l $@ -d newdev/libnewdev.def
-
-libntdll.def: ntdll/libntdll.def
-	$(RM) $@ && $(LN_S) ntdll/libntdll.def $@
-libntdll.a: ntdll/libntdll.a
-	$(RM) $@ && $(LN_S) ntdll/libntdll.a $@
-ntdll/libntdll.def: ntdll/ntdll.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/ntdll/ntdll.spec
-ntdll/libntdll.a: ntdll/libntdll.def
-	$(DLLTOOL) -k -l $@ -d ntdll/libntdll.def
-
-libodbc32.def: odbc32/libodbc32.def
-	$(RM) $@ && $(LN_S) odbc32/libodbc32.def $@
-libodbc32.a: odbc32/libodbc32.a
-	$(RM) $@ && $(LN_S) odbc32/libodbc32.a $@
-odbc32/libodbc32.def: odbc32/odbc32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/odbc32/odbc32.spec
-odbc32/libodbc32.a: odbc32/libodbc32.def
-	$(DLLTOOL) -k -l $@ -d odbc32/libodbc32.def
-
-libole32.def: ole32/libole32.def
-	$(RM) $@ && $(LN_S) ole32/libole32.def $@
-libole32.a: ole32/libole32.a
-	$(RM) $@ && $(LN_S) ole32/libole32.a $@
-ole32/libole32.def: ole32/ole32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/ole32/ole32.spec
-ole32/libole32.a: ole32/libole32.def
-	$(DLLTOOL) -k -l $@ -d ole32/libole32.def
-
-liboleacc.def: oleacc/liboleacc.def
-	$(RM) $@ && $(LN_S) oleacc/liboleacc.def $@
-liboleacc.a: oleacc/liboleacc.a
-	$(RM) $@ && $(LN_S) oleacc/liboleacc.a $@
-oleacc/liboleacc.def: oleacc/oleacc.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/oleacc/oleacc.spec
-oleacc/liboleacc.a: oleacc/liboleacc.def
-	$(DLLTOOL) -k -l $@ -d oleacc/liboleacc.def
-
-liboleaut32.def: oleaut32/liboleaut32.def
-	$(RM) $@ && $(LN_S) oleaut32/liboleaut32.def $@
-liboleaut32.a: oleaut32/liboleaut32.a
-	$(RM) $@ && $(LN_S) oleaut32/liboleaut32.a $@
-oleaut32/liboleaut32.def: oleaut32/oleaut32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/oleaut32/oleaut32.spec
-oleaut32/liboleaut32.a: oleaut32/liboleaut32.def
-	$(DLLTOOL) -k -l $@ -d oleaut32/liboleaut32.def
-
-libolecli32.def: olecli/libolecli32.def
-	$(RM) $@ && $(LN_S) olecli/libolecli32.def $@
-libolecli32.a: olecli/libolecli32.a
-	$(RM) $@ && $(LN_S) olecli/libolecli32.a $@
-olecli/libolecli32.def: olecli/olecli32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/olecli/olecli32.spec
-olecli/libolecli32.a: olecli/libolecli32.def
-	$(DLLTOOL) -k -l $@ -d olecli/libolecli32.def
-
-liboledlg.def: oledlg/liboledlg.def
-	$(RM) $@ && $(LN_S) oledlg/liboledlg.def $@
-liboledlg.a: oledlg/liboledlg.a
-	$(RM) $@ && $(LN_S) oledlg/liboledlg.a $@
-oledlg/liboledlg.def: oledlg/oledlg.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/oledlg/oledlg.spec
-oledlg/liboledlg.a: oledlg/liboledlg.def
-	$(DLLTOOL) -k -l $@ -d oledlg/liboledlg.def
-
-libolepro32.def: olepro32/libolepro32.def
-	$(RM) $@ && $(LN_S) olepro32/libolepro32.def $@
-libolepro32.a: olepro32/libolepro32.a
-	$(RM) $@ && $(LN_S) olepro32/libolepro32.a $@
-olepro32/libolepro32.def: olepro32/olepro32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/olepro32/olepro32.spec
-olepro32/libolepro32.a: olepro32/libolepro32.def
-	$(DLLTOOL) -k -l $@ -d olepro32/libolepro32.def
-
-libolesvr32.def: olesvr/libolesvr32.def
-	$(RM) $@ && $(LN_S) olesvr/libolesvr32.def $@
-libolesvr32.a: olesvr/libolesvr32.a
-	$(RM) $@ && $(LN_S) olesvr/libolesvr32.a $@
-olesvr/libolesvr32.def: olesvr/olesvr32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/olesvr/olesvr32.spec
-olesvr/libolesvr32.a: olesvr/libolesvr32.def
-	$(DLLTOOL) -k -l $@ -d olesvr/libolesvr32.def
-
-libopengl32.def: opengl32/libopengl32.def
-	$(RM) $@ && $(LN_S) opengl32/libopengl32.def $@
-libopengl32.a: opengl32/libopengl32.a
-	$(RM) $@ && $(LN_S) opengl32/libopengl32.a $@
-opengl32/libopengl32.def: opengl32/opengl32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/opengl32/opengl32.spec
-opengl32/libopengl32.a: opengl32/libopengl32.def
-	$(DLLTOOL) -k -l $@ -d opengl32/libopengl32.def
-
-libpowrprof.def: powrprof/libpowrprof.def
-	$(RM) $@ && $(LN_S) powrprof/libpowrprof.def $@
-libpowrprof.a: powrprof/libpowrprof.a
-	$(RM) $@ && $(LN_S) powrprof/libpowrprof.a $@
-powrprof/libpowrprof.def: powrprof/powrprof.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/powrprof/powrprof.spec
-powrprof/libpowrprof.a: powrprof/libpowrprof.def
-	$(DLLTOOL) -k -l $@ -d powrprof/libpowrprof.def
-
-libpsapi.def: psapi/libpsapi.def
-	$(RM) $@ && $(LN_S) psapi/libpsapi.def $@
-libpsapi.a: psapi/libpsapi.a
-	$(RM) $@ && $(LN_S) psapi/libpsapi.a $@
-psapi/libpsapi.def: psapi/psapi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/psapi/psapi.spec
-psapi/libpsapi.a: psapi/libpsapi.def
-	$(DLLTOOL) -k -l $@ -d psapi/libpsapi.def
-
-libqcap.def: qcap/libqcap.def
-	$(RM) $@ && $(LN_S) qcap/libqcap.def $@
-libqcap.a: qcap/libqcap.a
-	$(RM) $@ && $(LN_S) qcap/libqcap.a $@
-qcap/libqcap.def: qcap/qcap.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/qcap/qcap.spec
-qcap/libqcap.a: qcap/libqcap.def
-	$(DLLTOOL) -k -l $@ -d qcap/libqcap.def
-
-libquartz.def: quartz/libquartz.def
-	$(RM) $@ && $(LN_S) quartz/libquartz.def $@
-libquartz.a: quartz/libquartz.a
-	$(RM) $@ && $(LN_S) quartz/libquartz.a $@
-quartz/libquartz.def: quartz/quartz.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/quartz/quartz.spec
-quartz/libquartz.a: quartz/libquartz.def
-	$(DLLTOOL) -k -l $@ -d quartz/libquartz.def
-
-librasapi32.def: rasapi32/librasapi32.def
-	$(RM) $@ && $(LN_S) rasapi32/librasapi32.def $@
-librasapi32.a: rasapi32/librasapi32.a
-	$(RM) $@ && $(LN_S) rasapi32/librasapi32.a $@
-rasapi32/librasapi32.def: rasapi32/rasapi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/rasapi32/rasapi32.spec
-rasapi32/librasapi32.a: rasapi32/librasapi32.def
-	$(DLLTOOL) -k -l $@ -d rasapi32/librasapi32.def
-
-libriched20.def: riched20/libriched20.def
-	$(RM) $@ && $(LN_S) riched20/libriched20.def $@
-libriched20.a: riched20/libriched20.a
-	$(RM) $@ && $(LN_S) riched20/libriched20.a $@
-riched20/libriched20.def: riched20/riched20.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/riched20/riched20.spec
-riched20/libriched20.a: riched20/libriched20.def
-	$(DLLTOOL) -k -l $@ -d riched20/libriched20.def
-
-libriched32.def: richedit/libriched32.def
-	$(RM) $@ && $(LN_S) richedit/libriched32.def $@
-libriched32.a: richedit/libriched32.a
-	$(RM) $@ && $(LN_S) richedit/libriched32.a $@
-richedit/libriched32.def: richedit/riched32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/richedit/riched32.spec
-richedit/libriched32.a: richedit/libriched32.def
-	$(DLLTOOL) -k -l $@ -d richedit/libriched32.def
-
-librpcrt4.def: rpcrt4/librpcrt4.def
-	$(RM) $@ && $(LN_S) rpcrt4/librpcrt4.def $@
-librpcrt4.a: rpcrt4/librpcrt4.a
-	$(RM) $@ && $(LN_S) rpcrt4/librpcrt4.a $@
-rpcrt4/librpcrt4.def: rpcrt4/rpcrt4.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/rpcrt4/rpcrt4.spec
-rpcrt4/librpcrt4.a: rpcrt4/librpcrt4.def
-	$(DLLTOOL) -k -l $@ -d rpcrt4/librpcrt4.def
-
-librsabase.def: rsabase/librsabase.def
-	$(RM) $@ && $(LN_S) rsabase/librsabase.def $@
-librsabase.a: rsabase/librsabase.a
-	$(RM) $@ && $(LN_S) rsabase/librsabase.a $@
-rsabase/librsabase.def: rsabase/rsabase.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/rsabase/rsabase.spec
-rsabase/librsabase.a: rsabase/librsabase.def
-	$(DLLTOOL) -k -l $@ -d rsabase/librsabase.def
-
-librsaenh.def: rsaenh/librsaenh.def
-	$(RM) $@ && $(LN_S) rsaenh/librsaenh.def $@
-librsaenh.a: rsaenh/librsaenh.a
-	$(RM) $@ && $(LN_S) rsaenh/librsaenh.a $@
-rsaenh/librsaenh.def: rsaenh/rsaenh.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/rsaenh/rsaenh.spec
-rsaenh/librsaenh.a: rsaenh/librsaenh.def
-	$(DLLTOOL) -k -l $@ -d rsaenh/librsaenh.def
-
-libsecur32.def: secur32/libsecur32.def
-	$(RM) $@ && $(LN_S) secur32/libsecur32.def $@
-libsecur32.a: secur32/libsecur32.a
-	$(RM) $@ && $(LN_S) secur32/libsecur32.a $@
-secur32/libsecur32.def: secur32/secur32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/secur32/secur32.spec
-secur32/libsecur32.a: secur32/libsecur32.def
-	$(DLLTOOL) -k -l $@ -d secur32/libsecur32.def
-
-libsensapi.def: sensapi/libsensapi.def
-	$(RM) $@ && $(LN_S) sensapi/libsensapi.def $@
-libsensapi.a: sensapi/libsensapi.a
-	$(RM) $@ && $(LN_S) sensapi/libsensapi.a $@
-sensapi/libsensapi.def: sensapi/sensapi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/sensapi/sensapi.spec
-sensapi/libsensapi.a: sensapi/libsensapi.def
-	$(DLLTOOL) -k -l $@ -d sensapi/libsensapi.def
-
-libserialui.def: serialui/libserialui.def
-	$(RM) $@ && $(LN_S) serialui/libserialui.def $@
-libserialui.a: serialui/libserialui.a
-	$(RM) $@ && $(LN_S) serialui/libserialui.a $@
-serialui/libserialui.def: serialui/serialui.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/serialui/serialui.spec
-serialui/libserialui.a: serialui/libserialui.def
-	$(DLLTOOL) -k -l $@ -d serialui/libserialui.def
-
-libsetupapi.def: setupapi/libsetupapi.def
-	$(RM) $@ && $(LN_S) setupapi/libsetupapi.def $@
-libsetupapi.a: setupapi/libsetupapi.a
-	$(RM) $@ && $(LN_S) setupapi/libsetupapi.a $@
-setupapi/libsetupapi.def: setupapi/setupapi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/setupapi/setupapi.spec
-setupapi/libsetupapi.a: setupapi/libsetupapi.def
-	$(DLLTOOL) -k -l $@ -d setupapi/libsetupapi.def
-
-libshdocvw.def: shdocvw/libshdocvw.def
-	$(RM) $@ && $(LN_S) shdocvw/libshdocvw.def $@
-libshdocvw.a: shdocvw/libshdocvw.a
-	$(RM) $@ && $(LN_S) shdocvw/libshdocvw.a $@
-shdocvw/libshdocvw.def: shdocvw/shdocvw.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/shdocvw/shdocvw.spec
-shdocvw/libshdocvw.a: shdocvw/libshdocvw.def
-	$(DLLTOOL) -k -l $@ -d shdocvw/libshdocvw.def
-
-libshell32.def: shell32/libshell32.def
-	$(RM) $@ && $(LN_S) shell32/libshell32.def $@
-libshell32.a: shell32/libshell32.a
-	$(RM) $@ && $(LN_S) shell32/libshell32.a $@
-shell32/libshell32.def: shell32/shell32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/shell32/shell32.spec
-shell32/libshell32.a: shell32/libshell32.def
-	$(DLLTOOL) -k -l $@ -d shell32/libshell32.def
-
-libshfolder.def: shfolder/libshfolder.def
-	$(RM) $@ && $(LN_S) shfolder/libshfolder.def $@
-libshfolder.a: shfolder/libshfolder.a
-	$(RM) $@ && $(LN_S) shfolder/libshfolder.a $@
-shfolder/libshfolder.def: shfolder/shfolder.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/shfolder/shfolder.spec
-shfolder/libshfolder.a: shfolder/libshfolder.def
-	$(DLLTOOL) -k -l $@ -d shfolder/libshfolder.def
-
-libshlwapi.def: shlwapi/libshlwapi.def
-	$(RM) $@ && $(LN_S) shlwapi/libshlwapi.def $@
-libshlwapi.a: shlwapi/libshlwapi.a
-	$(RM) $@ && $(LN_S) shlwapi/libshlwapi.a $@
-shlwapi/libshlwapi.def: shlwapi/shlwapi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/shlwapi/shlwapi.spec
-shlwapi/libshlwapi.a: shlwapi/libshlwapi.def
-	$(DLLTOOL) -k -l $@ -d shlwapi/libshlwapi.def
-
-libsnmpapi.def: snmpapi/libsnmpapi.def
-	$(RM) $@ && $(LN_S) snmpapi/libsnmpapi.def $@
-libsnmpapi.a: snmpapi/libsnmpapi.a
-	$(RM) $@ && $(LN_S) snmpapi/libsnmpapi.a $@
-snmpapi/libsnmpapi.def: snmpapi/snmpapi.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/snmpapi/snmpapi.spec
-snmpapi/libsnmpapi.a: snmpapi/libsnmpapi.def
-	$(DLLTOOL) -k -l $@ -d snmpapi/libsnmpapi.def
-
-libsti.def: sti/libsti.def
-	$(RM) $@ && $(LN_S) sti/libsti.def $@
-libsti.a: sti/libsti.a
-	$(RM) $@ && $(LN_S) sti/libsti.a $@
-sti/libsti.def: sti/sti.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/sti/sti.spec
-sti/libsti.a: sti/libsti.def
-	$(DLLTOOL) -k -l $@ -d sti/libsti.def
-
-libtapi32.def: tapi32/libtapi32.def
-	$(RM) $@ && $(LN_S) tapi32/libtapi32.def $@
-libtapi32.a: tapi32/libtapi32.a
-	$(RM) $@ && $(LN_S) tapi32/libtapi32.a $@
-tapi32/libtapi32.def: tapi32/tapi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/tapi32/tapi32.spec
-tapi32/libtapi32.a: tapi32/libtapi32.def
-	$(DLLTOOL) -k -l $@ -d tapi32/libtapi32.def
-
-libtwain_32.def: twain/libtwain_32.def
-	$(RM) $@ && $(LN_S) twain/libtwain_32.def $@
-libtwain_32.a: twain/libtwain_32.a
-	$(RM) $@ && $(LN_S) twain/libtwain_32.a $@
-twain/libtwain_32.def: twain/twain_32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/twain/twain_32.spec
-twain/libtwain_32.a: twain/libtwain_32.def
-	$(DLLTOOL) -k -l $@ -d twain/libtwain_32.def
-
-libunicows.def: unicows/libunicows.def
-	$(RM) $@ && $(LN_S) unicows/libunicows.def $@
-libunicows.a: unicows/libunicows.a
-	$(RM) $@ && $(LN_S) unicows/libunicows.a $@
-unicows/libunicows.def: unicows/unicows.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/unicows/unicows.spec
-unicows/libunicows.a: unicows/libunicows.def
-	$(DLLTOOL) -k -l $@ -d unicows/libunicows.def
-
-liburl.def: url/liburl.def
-	$(RM) $@ && $(LN_S) url/liburl.def $@
-liburl.a: url/liburl.a
-	$(RM) $@ && $(LN_S) url/liburl.a $@
-url/liburl.def: url/url.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/url/url.spec
-url/liburl.a: url/liburl.def
-	$(DLLTOOL) -k -l $@ -d url/liburl.def
-
-liburlmon.def: urlmon/liburlmon.def
-	$(RM) $@ && $(LN_S) urlmon/liburlmon.def $@
-liburlmon.a: urlmon/liburlmon.a
-	$(RM) $@ && $(LN_S) urlmon/liburlmon.a $@
-urlmon/liburlmon.def: urlmon/urlmon.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/urlmon/urlmon.spec
-urlmon/liburlmon.a: urlmon/liburlmon.def
-	$(DLLTOOL) -k -l $@ -d urlmon/liburlmon.def
-
-libuser32.def: user/libuser32.def
-	$(RM) $@ && $(LN_S) user/libuser32.def $@
-libuser32.a: user/libuser32.a
-	$(RM) $@ && $(LN_S) user/libuser32.a $@
-user/libuser32.def: user/user32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/user/user32.spec
-user/libuser32.a: user/libuser32.def
-	$(DLLTOOL) -k -l $@ -d user/libuser32.def
-
-libuxtheme.def: uxtheme/libuxtheme.def
-	$(RM) $@ && $(LN_S) uxtheme/libuxtheme.def $@
-libuxtheme.a: uxtheme/libuxtheme.a
-	$(RM) $@ && $(LN_S) uxtheme/libuxtheme.a $@
-uxtheme/libuxtheme.def: uxtheme/uxtheme.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/uxtheme/uxtheme.spec
-uxtheme/libuxtheme.a: uxtheme/libuxtheme.def
-	$(DLLTOOL) -k -l $@ -d uxtheme/libuxtheme.def
-
-libvdmdbg.def: vdmdbg/libvdmdbg.def
-	$(RM) $@ && $(LN_S) vdmdbg/libvdmdbg.def $@
-libvdmdbg.a: vdmdbg/libvdmdbg.a
-	$(RM) $@ && $(LN_S) vdmdbg/libvdmdbg.a $@
-vdmdbg/libvdmdbg.def: vdmdbg/vdmdbg.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/vdmdbg/vdmdbg.spec
-vdmdbg/libvdmdbg.a: vdmdbg/libvdmdbg.def
-	$(DLLTOOL) -k -l $@ -d vdmdbg/libvdmdbg.def
-
-libversion.def: version/libversion.def
-	$(RM) $@ && $(LN_S) version/libversion.def $@
-libversion.a: version/libversion.a
-	$(RM) $@ && $(LN_S) version/libversion.a $@
-version/libversion.def: version/version.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/version/version.spec
-version/libversion.a: version/libversion.def
-	$(DLLTOOL) -k -l $@ -d version/libversion.def
-
-libw32skrnl.def: win32s/libw32skrnl.def
-	$(RM) $@ && $(LN_S) win32s/libw32skrnl.def $@
-libw32skrnl.a: win32s/libw32skrnl.a
-	$(RM) $@ && $(LN_S) win32s/libw32skrnl.a $@
-win32s/libw32skrnl.def: win32s/w32skrnl.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/win32s/w32skrnl.spec
-win32s/libw32skrnl.a: win32s/libw32skrnl.def
-	$(DLLTOOL) -k -l $@ -d win32s/libw32skrnl.def
-
-libwined3d.def: wined3d/libwined3d.def
-	$(RM) $@ && $(LN_S) wined3d/libwined3d.def $@
-libwined3d.a: wined3d/libwined3d.a
-	$(RM) $@ && $(LN_S) wined3d/libwined3d.a $@
-wined3d/libwined3d.def: wined3d/wined3d.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wined3d/wined3d.spec
-wined3d/libwined3d.a: wined3d/libwined3d.def
-	$(DLLTOOL) -k -l $@ -d wined3d/libwined3d.def
-
-libwinedos.def: winedos/libwinedos.def
-	$(RM) $@ && $(LN_S) winedos/libwinedos.def $@
-libwinedos.a: winedos/libwinedos.a
-	$(RM) $@ && $(LN_S) winedos/libwinedos.a $@
-winedos/libwinedos.def: winedos/winedos.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/winedos/winedos.spec
-winedos/libwinedos.a: winedos/libwinedos.def
-	$(DLLTOOL) -k -l $@ -d winedos/libwinedos.def
-
-libwininet.def: wininet/libwininet.def
-	$(RM) $@ && $(LN_S) wininet/libwininet.def $@
-libwininet.a: wininet/libwininet.a
-	$(RM) $@ && $(LN_S) wininet/libwininet.a $@
-wininet/libwininet.def: wininet/wininet.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wininet/wininet.spec
-wininet/libwininet.a: wininet/libwininet.def
-	$(DLLTOOL) -k -l $@ -d wininet/libwininet.def
-
-libwinmm.def: winmm/libwinmm.def
-	$(RM) $@ && $(LN_S) winmm/libwinmm.def $@
-libwinmm.a: winmm/libwinmm.a
-	$(RM) $@ && $(LN_S) winmm/libwinmm.a $@
-winmm/libwinmm.def: winmm/winmm.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/winmm/winmm.spec
-winmm/libwinmm.a: winmm/libwinmm.def
-	$(DLLTOOL) -k -l $@ -d winmm/libwinmm.def
-
-libwinnls32.def: winnls/libwinnls32.def
-	$(RM) $@ && $(LN_S) winnls/libwinnls32.def $@
-libwinnls32.a: winnls/libwinnls32.a
-	$(RM) $@ && $(LN_S) winnls/libwinnls32.a $@
-winnls/libwinnls32.def: winnls/winnls32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/winnls/winnls32.spec
-winnls/libwinnls32.a: winnls/libwinnls32.def
-	$(DLLTOOL) -k -l $@ -d winnls/libwinnls32.def
-
-libwinspool.def: winspool/libwinspool.drv.def
-	$(RM) $@ && $(LN_S) winspool/libwinspool.drv.def $@
-libwinspool.a: winspool/libwinspool.drv.a
-	$(RM) $@ && $(LN_S) winspool/libwinspool.drv.a $@
-winspool/libwinspool.drv.def: winspool/winspool.drv.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/winspool/winspool.drv.spec
-winspool/libwinspool.drv.a: winspool/libwinspool.drv.def
-	$(DLLTOOL) -k -l $@ -d winspool/libwinspool.drv.def
-
-libwintab32.def: wintab32/libwintab32.def
-	$(RM) $@ && $(LN_S) wintab32/libwintab32.def $@
-libwintab32.a: wintab32/libwintab32.a
-	$(RM) $@ && $(LN_S) wintab32/libwintab32.a $@
-wintab32/libwintab32.def: wintab32/wintab32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wintab32/wintab32.spec
-wintab32/libwintab32.a: wintab32/libwintab32.def
-	$(DLLTOOL) -k -l $@ -d wintab32/libwintab32.def
-
-libwintrust.def: wintrust/libwintrust.def
-	$(RM) $@ && $(LN_S) wintrust/libwintrust.def $@
-libwintrust.a: wintrust/libwintrust.a
-	$(RM) $@ && $(LN_S) wintrust/libwintrust.a $@
-wintrust/libwintrust.def: wintrust/wintrust.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wintrust/wintrust.spec
-wintrust/libwintrust.a: wintrust/libwintrust.def
-	$(DLLTOOL) -k -l $@ -d wintrust/libwintrust.def
-
-libwnaspi32.def: winaspi/libwnaspi32.def
-	$(RM) $@ && $(LN_S) winaspi/libwnaspi32.def $@
-libwnaspi32.a: winaspi/libwnaspi32.a
-	$(RM) $@ && $(LN_S) winaspi/libwnaspi32.a $@
-winaspi/libwnaspi32.def: winaspi/wnaspi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/winaspi/wnaspi32.spec
-winaspi/libwnaspi32.a: winaspi/libwnaspi32.def
-	$(DLLTOOL) -k -l $@ -d winaspi/libwnaspi32.def
-
-libwow32.def: wow32/libwow32.def
-	$(RM) $@ && $(LN_S) wow32/libwow32.def $@
-libwow32.a: wow32/libwow32.a
-	$(RM) $@ && $(LN_S) wow32/libwow32.a $@
-wow32/libwow32.def: wow32/wow32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wow32/wow32.spec
-wow32/libwow32.a: wow32/libwow32.def
-	$(DLLTOOL) -k -l $@ -d wow32/libwow32.def
-
-libws2_32.def: winsock/libws2_32.def
-	$(RM) $@ && $(LN_S) winsock/libws2_32.def $@
-libws2_32.a: winsock/libws2_32.a
-	$(RM) $@ && $(LN_S) winsock/libws2_32.a $@
-winsock/libws2_32.def: winsock/ws2_32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/winsock/ws2_32.spec
-winsock/libws2_32.a: winsock/libws2_32.def
-	$(DLLTOOL) -k -l $@ -d winsock/libws2_32.def
-
-libwsock32.def: wsock32/libwsock32.def
-	$(RM) $@ && $(LN_S) wsock32/libwsock32.def $@
-libwsock32.a: wsock32/libwsock32.a
-	$(RM) $@ && $(LN_S) wsock32/libwsock32.a $@
-wsock32/libwsock32.def: wsock32/wsock32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wsock32/wsock32.spec
-wsock32/libwsock32.a: wsock32/libwsock32.def
-	$(DLLTOOL) -k -l $@ -d wsock32/libwsock32.def
-
-libwtsapi32.def: wtsapi32/libwtsapi32.def
-	$(RM) $@ && $(LN_S) wtsapi32/libwtsapi32.def $@
-libwtsapi32.a: wtsapi32/libwtsapi32.a
-	$(RM) $@ && $(LN_S) wtsapi32/libwtsapi32.a $@
-wtsapi32/libwtsapi32.def: wtsapi32/wtsapi32.spec $(WINEBUILD)
-	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/wtsapi32/wtsapi32.spec
-wtsapi32/libwtsapi32.a: wtsapi32/libwtsapi32.def
-	$(DLLTOOL) -k -l $@ -d wtsapi32/libwtsapi32.def
+advapi32/libadvapi32.$(IMPLIBEXT): advapi32/advapi32.spec $(WINEBUILD)
+	@cd advapi32 && $(MAKE) libadvapi32.$(IMPLIBEXT)
 
+advpack/libadvpack.$(IMPLIBEXT): advpack/advpack.spec $(WINEBUILD)
+	@cd advpack && $(MAKE) libadvpack.$(IMPLIBEXT)
+
+amstream/libamstream.$(IMPLIBEXT): amstream/amstream.spec $(WINEBUILD)
+	@cd amstream && $(MAKE) libamstream.$(IMPLIBEXT)
+
+atl/libatl.$(IMPLIBEXT): atl/atl.spec $(WINEBUILD)
+	@cd atl && $(MAKE) libatl.$(IMPLIBEXT)
+
+avicap32/libavicap32.$(IMPLIBEXT): avicap32/avicap32.spec $(WINEBUILD)
+	@cd avicap32 && $(MAKE) libavicap32.$(IMPLIBEXT)
+
+avifil32/libavifil32.$(IMPLIBEXT): avifil32/avifil32.spec $(WINEBUILD)
+	@cd avifil32 && $(MAKE) libavifil32.$(IMPLIBEXT)
+
+cabinet/libcabinet.$(IMPLIBEXT): cabinet/cabinet.spec $(WINEBUILD)
+	@cd cabinet && $(MAKE) libcabinet.$(IMPLIBEXT)
+
+capi2032/libcapi2032.$(IMPLIBEXT): capi2032/capi2032.spec $(WINEBUILD)
+	@cd capi2032 && $(MAKE) libcapi2032.$(IMPLIBEXT)
+
+cards/libcards.$(IMPLIBEXT): cards/cards.spec $(WINEBUILD)
+	@cd cards && $(MAKE) libcards.$(IMPLIBEXT)
+
+cfgmgr32/libcfgmgr32.$(IMPLIBEXT): cfgmgr32/cfgmgr32.spec $(WINEBUILD)
+	@cd cfgmgr32 && $(MAKE) libcfgmgr32.$(IMPLIBEXT)
+
+comcat/libcomcat.$(IMPLIBEXT): comcat/comcat.spec $(WINEBUILD)
+	@cd comcat && $(MAKE) libcomcat.$(IMPLIBEXT)
+
+comctl32/libcomctl32.$(IMPLIBEXT): comctl32/comctl32.spec $(WINEBUILD)
+	@cd comctl32 && $(MAKE) libcomctl32.$(IMPLIBEXT)
+
+commdlg/libcomdlg32.$(IMPLIBEXT): commdlg/comdlg32.spec $(WINEBUILD)
+	@cd commdlg && $(MAKE) libcomdlg32.$(IMPLIBEXT)
+
+crtdll/libcrtdll.$(IMPLIBEXT): crtdll/crtdll.spec $(WINEBUILD)
+	@cd crtdll && $(MAKE) libcrtdll.$(IMPLIBEXT)
+
+crypt32/libcrypt32.$(IMPLIBEXT): crypt32/crypt32.spec $(WINEBUILD)
+	@cd crypt32 && $(MAKE) libcrypt32.$(IMPLIBEXT)
+
+cryptdll/libcryptdll.$(IMPLIBEXT): cryptdll/cryptdll.spec $(WINEBUILD)
+	@cd cryptdll && $(MAKE) libcryptdll.$(IMPLIBEXT)
+
+ctl3d/libctl3d32.$(IMPLIBEXT): ctl3d/ctl3d32.spec $(WINEBUILD)
+	@cd ctl3d && $(MAKE) libctl3d32.$(IMPLIBEXT)
+
+d3d8/libd3d8.$(IMPLIBEXT): d3d8/d3d8.spec $(WINEBUILD)
+	@cd d3d8 && $(MAKE) libd3d8.$(IMPLIBEXT)
+
+d3d9/libd3d9.$(IMPLIBEXT): d3d9/d3d9.spec $(WINEBUILD)
+	@cd d3d9 && $(MAKE) libd3d9.$(IMPLIBEXT)
+
+d3dim/libd3dim.$(IMPLIBEXT): d3dim/d3dim.spec $(WINEBUILD)
+	@cd d3dim && $(MAKE) libd3dim.$(IMPLIBEXT)
+
+d3drm/libd3drm.$(IMPLIBEXT): d3drm/d3drm.spec $(WINEBUILD)
+	@cd d3drm && $(MAKE) libd3drm.$(IMPLIBEXT)
+
+d3dx8/libd3dx8.$(IMPLIBEXT): d3dx8/d3dx8.spec $(WINEBUILD)
+	@cd d3dx8 && $(MAKE) libd3dx8.$(IMPLIBEXT)
+
+d3dxof/libd3dxof.$(IMPLIBEXT): d3dxof/d3dxof.spec $(WINEBUILD)
+	@cd d3dxof && $(MAKE) libd3dxof.$(IMPLIBEXT)
+
+dbghelp/libdbghelp.$(IMPLIBEXT): dbghelp/dbghelp.spec $(WINEBUILD)
+	@cd dbghelp && $(MAKE) libdbghelp.$(IMPLIBEXT)
+
+dciman32/libdciman32.$(IMPLIBEXT): dciman32/dciman32.spec $(WINEBUILD)
+	@cd dciman32 && $(MAKE) libdciman32.$(IMPLIBEXT)
+
+ddraw/libddraw.$(IMPLIBEXT): ddraw/ddraw.spec $(WINEBUILD)
+	@cd ddraw && $(MAKE) libddraw.$(IMPLIBEXT)
+
+devenum/libdevenum.$(IMPLIBEXT): devenum/devenum.spec $(WINEBUILD)
+	@cd devenum && $(MAKE) libdevenum.$(IMPLIBEXT)
+
+dinput/libdinput.$(IMPLIBEXT): dinput/dinput.spec $(WINEBUILD)
+	@cd dinput && $(MAKE) libdinput.$(IMPLIBEXT)
+
+dinput/libdinput.$(STATIC_IMPLIBEXT): dummy
+	@cd dinput && $(MAKE) libdinput.$(STATIC_IMPLIBEXT)
+
+dinput8/libdinput8.$(IMPLIBEXT): dinput8/dinput8.spec $(WINEBUILD)
+	@cd dinput8 && $(MAKE) libdinput8.$(IMPLIBEXT)
+
+dmband/libdmband.$(IMPLIBEXT): dmband/dmband.spec $(WINEBUILD)
+	@cd dmband && $(MAKE) libdmband.$(IMPLIBEXT)
+
+dmcompos/libdmcompos.$(IMPLIBEXT): dmcompos/dmcompos.spec $(WINEBUILD)
+	@cd dmcompos && $(MAKE) libdmcompos.$(IMPLIBEXT)
+
+dmime/libdmime.$(IMPLIBEXT): dmime/dmime.spec $(WINEBUILD)
+	@cd dmime && $(MAKE) libdmime.$(IMPLIBEXT)
+
+dmloader/libdmloader.$(IMPLIBEXT): dmloader/dmloader.spec $(WINEBUILD)
+	@cd dmloader && $(MAKE) libdmloader.$(IMPLIBEXT)
+
+dmscript/libdmscript.$(IMPLIBEXT): dmscript/dmscript.spec $(WINEBUILD)
+	@cd dmscript && $(MAKE) libdmscript.$(IMPLIBEXT)
+
+dmstyle/libdmstyle.$(IMPLIBEXT): dmstyle/dmstyle.spec $(WINEBUILD)
+	@cd dmstyle && $(MAKE) libdmstyle.$(IMPLIBEXT)
+
+dmsynth/libdmsynth.$(IMPLIBEXT): dmsynth/dmsynth.spec $(WINEBUILD)
+	@cd dmsynth && $(MAKE) libdmsynth.$(IMPLIBEXT)
+
+dmusic/libdmusic.$(IMPLIBEXT): dmusic/dmusic.spec $(WINEBUILD)
+	@cd dmusic && $(MAKE) libdmusic.$(IMPLIBEXT)
+
+dmusic32/libdmusic32.$(IMPLIBEXT): dmusic32/dmusic32.spec $(WINEBUILD)
+	@cd dmusic32 && $(MAKE) libdmusic32.$(IMPLIBEXT)
+
+dplay/libdplay.$(IMPLIBEXT): dplay/dplay.spec $(WINEBUILD)
+	@cd dplay && $(MAKE) libdplay.$(IMPLIBEXT)
+
+dplayx/libdplayx.$(IMPLIBEXT): dplayx/dplayx.spec $(WINEBUILD)
+	@cd dplayx && $(MAKE) libdplayx.$(IMPLIBEXT)
+
+dpnet/libdpnet.$(IMPLIBEXT): dpnet/dpnet.spec $(WINEBUILD)
+	@cd dpnet && $(MAKE) libdpnet.$(IMPLIBEXT)
+
+dpnhpast/libdpnhpast.$(IMPLIBEXT): dpnhpast/dpnhpast.spec $(WINEBUILD)
+	@cd dpnhpast && $(MAKE) libdpnhpast.$(IMPLIBEXT)
+
+dsound/libdsound.$(IMPLIBEXT): dsound/dsound.spec $(WINEBUILD)
+	@cd dsound && $(MAKE) libdsound.$(IMPLIBEXT)
+
+dswave/libdswave.$(IMPLIBEXT): dswave/dswave.spec $(WINEBUILD)
+	@cd dswave && $(MAKE) libdswave.$(IMPLIBEXT)
+
+dxdiagn/libdxdiagn.$(IMPLIBEXT): dxdiagn/dxdiagn.spec $(WINEBUILD)
+	@cd dxdiagn && $(MAKE) libdxdiagn.$(IMPLIBEXT)
+
+gdi/libgdi32.$(IMPLIBEXT): gdi/gdi32.spec $(WINEBUILD)
+	@cd gdi && $(MAKE) libgdi32.$(IMPLIBEXT)
+
+glu32/libglu32.$(IMPLIBEXT): glu32/glu32.spec $(WINEBUILD)
+	@cd glu32 && $(MAKE) libglu32.$(IMPLIBEXT)
+
+glut32/libglut32.$(IMPLIBEXT): glut32/glut32.spec $(WINEBUILD)
+	@cd glut32 && $(MAKE) libglut32.$(IMPLIBEXT)
+
+iccvid/libiccvid.$(IMPLIBEXT): iccvid/iccvid.spec $(WINEBUILD)
+	@cd iccvid && $(MAKE) libiccvid.$(IMPLIBEXT)
+
+icmp/libicmp.$(IMPLIBEXT): icmp/icmp.spec $(WINEBUILD)
+	@cd icmp && $(MAKE) libicmp.$(IMPLIBEXT)
+
+imagehlp/libimagehlp.$(IMPLIBEXT): imagehlp/imagehlp.spec $(WINEBUILD)
+	@cd imagehlp && $(MAKE) libimagehlp.$(IMPLIBEXT)
+
+imm32/libimm32.$(IMPLIBEXT): imm32/imm32.spec $(WINEBUILD)
+	@cd imm32 && $(MAKE) libimm32.$(IMPLIBEXT)
+
+iphlpapi/libiphlpapi.$(IMPLIBEXT): iphlpapi/iphlpapi.spec $(WINEBUILD)
+	@cd iphlpapi && $(MAKE) libiphlpapi.$(IMPLIBEXT)
+
+itss/libitss.$(IMPLIBEXT): itss/itss.spec $(WINEBUILD)
+	@cd itss && $(MAKE) libitss.$(IMPLIBEXT)
+
+kernel/libkernel32.$(IMPLIBEXT): kernel/kernel32.spec $(WINEBUILD)
+	@cd kernel && $(MAKE) libkernel32.$(IMPLIBEXT)
+
+lzexpand/liblz32.$(IMPLIBEXT): lzexpand/lz32.spec $(WINEBUILD)
+	@cd lzexpand && $(MAKE) liblz32.$(IMPLIBEXT)
+
+mapi32/libmapi32.$(IMPLIBEXT): mapi32/mapi32.spec $(WINEBUILD)
+	@cd mapi32 && $(MAKE) libmapi32.$(IMPLIBEXT)
+
+mlang/libmlang.$(IMPLIBEXT): mlang/mlang.spec $(WINEBUILD)
+	@cd mlang && $(MAKE) libmlang.$(IMPLIBEXT)
+
+mpr/libmpr.$(IMPLIBEXT): mpr/mpr.spec $(WINEBUILD)
+	@cd mpr && $(MAKE) libmpr.$(IMPLIBEXT)
+
+msacm/libmsacm32.$(IMPLIBEXT): msacm/msacm32.spec $(WINEBUILD)
+	@cd msacm && $(MAKE) libmsacm32.$(IMPLIBEXT)
+
+mscms/libmscms.$(IMPLIBEXT): mscms/mscms.spec $(WINEBUILD)
+	@cd mscms && $(MAKE) libmscms.$(IMPLIBEXT)
+
+msdmo/libmsdmo.$(IMPLIBEXT): msdmo/msdmo.spec $(WINEBUILD)
+	@cd msdmo && $(MAKE) libmsdmo.$(IMPLIBEXT)
+
+mshtml/libmshtml.$(IMPLIBEXT): mshtml/mshtml.spec $(WINEBUILD)
+	@cd mshtml && $(MAKE) libmshtml.$(IMPLIBEXT)
+
+msi/libmsi.$(IMPLIBEXT): msi/msi.spec $(WINEBUILD)
+	@cd msi && $(MAKE) libmsi.$(IMPLIBEXT)
+
+msimg32/libmsimg32.$(IMPLIBEXT): msimg32/msimg32.spec $(WINEBUILD)
+	@cd msimg32 && $(MAKE) libmsimg32.$(IMPLIBEXT)
+
+msnet32/libmsnet32.$(IMPLIBEXT): msnet32/msnet32.spec $(WINEBUILD)
+	@cd msnet32 && $(MAKE) libmsnet32.$(IMPLIBEXT)
+
+msrle32/libmsrle32.$(IMPLIBEXT): msrle32/msrle32.spec $(WINEBUILD)
+	@cd msrle32 && $(MAKE) libmsrle32.$(IMPLIBEXT)
+
+msvcrt/libmsvcrt.$(IMPLIBEXT): msvcrt/msvcrt.spec $(WINEBUILD)
+	@cd msvcrt && $(MAKE) libmsvcrt.$(IMPLIBEXT)
+
+msvcrt20/libmsvcrt20.$(IMPLIBEXT): msvcrt20/msvcrt20.spec $(WINEBUILD)
+	@cd msvcrt20 && $(MAKE) libmsvcrt20.$(IMPLIBEXT)
+
+msvcrt40/libmsvcrt40.$(IMPLIBEXT): msvcrt40/msvcrt40.spec $(WINEBUILD)
+	@cd msvcrt40 && $(MAKE) libmsvcrt40.$(IMPLIBEXT)
+
+msvcrtd/libmsvcrtd.$(IMPLIBEXT): msvcrtd/msvcrtd.spec $(WINEBUILD)
+	@cd msvcrtd && $(MAKE) libmsvcrtd.$(IMPLIBEXT)
+
+msvideo/libmsvfw32.$(IMPLIBEXT): msvideo/msvfw32.spec $(WINEBUILD)
+	@cd msvideo && $(MAKE) libmsvfw32.$(IMPLIBEXT)
+
+msvidc32/libmsvidc32.$(IMPLIBEXT): msvidc32/msvidc32.spec $(WINEBUILD)
+	@cd msvidc32 && $(MAKE) libmsvidc32.$(IMPLIBEXT)
+
+mswsock/libmswsock.$(IMPLIBEXT): mswsock/mswsock.spec $(WINEBUILD)
+	@cd mswsock && $(MAKE) libmswsock.$(IMPLIBEXT)
+
+netapi32/libnetapi32.$(IMPLIBEXT): netapi32/netapi32.spec $(WINEBUILD)
+	@cd netapi32 && $(MAKE) libnetapi32.$(IMPLIBEXT)
+
+newdev/libnewdev.$(IMPLIBEXT): newdev/newdev.spec $(WINEBUILD)
+	@cd newdev && $(MAKE) libnewdev.$(IMPLIBEXT)
+
+ntdll/libntdll.$(IMPLIBEXT): ntdll/ntdll.spec $(WINEBUILD)
+	@cd ntdll && $(MAKE) libntdll.$(IMPLIBEXT)
+
+odbc32/libodbc32.$(IMPLIBEXT): odbc32/odbc32.spec $(WINEBUILD)
+	@cd odbc32 && $(MAKE) libodbc32.$(IMPLIBEXT)
+
+ole32/libole32.$(IMPLIBEXT): ole32/ole32.spec $(WINEBUILD)
+	@cd ole32 && $(MAKE) libole32.$(IMPLIBEXT)
+
+oleacc/liboleacc.$(IMPLIBEXT): oleacc/oleacc.spec $(WINEBUILD)
+	@cd oleacc && $(MAKE) liboleacc.$(IMPLIBEXT)
+
+oleaut32/liboleaut32.$(IMPLIBEXT): oleaut32/oleaut32.spec $(WINEBUILD)
+	@cd oleaut32 && $(MAKE) liboleaut32.$(IMPLIBEXT)
+
+olecli/libolecli32.$(IMPLIBEXT): olecli/olecli32.spec $(WINEBUILD)
+	@cd olecli && $(MAKE) libolecli32.$(IMPLIBEXT)
+
+oledlg/liboledlg.$(IMPLIBEXT): oledlg/oledlg.spec $(WINEBUILD)
+	@cd oledlg && $(MAKE) liboledlg.$(IMPLIBEXT)
+
+olepro32/libolepro32.$(IMPLIBEXT): olepro32/olepro32.spec $(WINEBUILD)
+	@cd olepro32 && $(MAKE) libolepro32.$(IMPLIBEXT)
+
+olesvr/libolesvr32.$(IMPLIBEXT): olesvr/olesvr32.spec $(WINEBUILD)
+	@cd olesvr && $(MAKE) libolesvr32.$(IMPLIBEXT)
+
+opengl32/libopengl32.$(IMPLIBEXT): opengl32/opengl32.spec $(WINEBUILD)
+	@cd opengl32 && $(MAKE) libopengl32.$(IMPLIBEXT)
+
+powrprof/libpowrprof.$(IMPLIBEXT): powrprof/powrprof.spec $(WINEBUILD)
+	@cd powrprof && $(MAKE) libpowrprof.$(IMPLIBEXT)
+
+psapi/libpsapi.$(IMPLIBEXT): psapi/psapi.spec $(WINEBUILD)
+	@cd psapi && $(MAKE) libpsapi.$(IMPLIBEXT)
+
+qcap/libqcap.$(IMPLIBEXT): qcap/qcap.spec $(WINEBUILD)
+	@cd qcap && $(MAKE) libqcap.$(IMPLIBEXT)
+
+quartz/libquartz.$(IMPLIBEXT): quartz/quartz.spec $(WINEBUILD)
+	@cd quartz && $(MAKE) libquartz.$(IMPLIBEXT)
+
+rasapi32/librasapi32.$(IMPLIBEXT): rasapi32/rasapi32.spec $(WINEBUILD)
+	@cd rasapi32 && $(MAKE) librasapi32.$(IMPLIBEXT)
+
+riched20/libriched20.$(IMPLIBEXT): riched20/riched20.spec $(WINEBUILD)
+	@cd riched20 && $(MAKE) libriched20.$(IMPLIBEXT)
+
+richedit/libriched32.$(IMPLIBEXT): richedit/riched32.spec $(WINEBUILD)
+	@cd richedit && $(MAKE) libriched32.$(IMPLIBEXT)
+
+rpcrt4/librpcrt4.$(IMPLIBEXT): rpcrt4/rpcrt4.spec $(WINEBUILD)
+	@cd rpcrt4 && $(MAKE) librpcrt4.$(IMPLIBEXT)
+
+rsabase/librsabase.$(IMPLIBEXT): rsabase/rsabase.spec $(WINEBUILD)
+	@cd rsabase && $(MAKE) librsabase.$(IMPLIBEXT)
+
+rsaenh/librsaenh.$(IMPLIBEXT): rsaenh/rsaenh.spec $(WINEBUILD)
+	@cd rsaenh && $(MAKE) librsaenh.$(IMPLIBEXT)
+
+secur32/libsecur32.$(IMPLIBEXT): secur32/secur32.spec $(WINEBUILD)
+	@cd secur32 && $(MAKE) libsecur32.$(IMPLIBEXT)
+
+sensapi/libsensapi.$(IMPLIBEXT): sensapi/sensapi.spec $(WINEBUILD)
+	@cd sensapi && $(MAKE) libsensapi.$(IMPLIBEXT)
+
+serialui/libserialui.$(IMPLIBEXT): serialui/serialui.spec $(WINEBUILD)
+	@cd serialui && $(MAKE) libserialui.$(IMPLIBEXT)
+
+setupapi/libsetupapi.$(IMPLIBEXT): setupapi/setupapi.spec $(WINEBUILD)
+	@cd setupapi && $(MAKE) libsetupapi.$(IMPLIBEXT)
+
+shdocvw/libshdocvw.$(IMPLIBEXT): shdocvw/shdocvw.spec $(WINEBUILD)
+	@cd shdocvw && $(MAKE) libshdocvw.$(IMPLIBEXT)
+
+shell32/libshell32.$(IMPLIBEXT): shell32/shell32.spec $(WINEBUILD)
+	@cd shell32 && $(MAKE) libshell32.$(IMPLIBEXT)
+
+shfolder/libshfolder.$(IMPLIBEXT): shfolder/shfolder.spec $(WINEBUILD)
+	@cd shfolder && $(MAKE) libshfolder.$(IMPLIBEXT)
+
+shlwapi/libshlwapi.$(IMPLIBEXT): shlwapi/shlwapi.spec $(WINEBUILD)
+	@cd shlwapi && $(MAKE) libshlwapi.$(IMPLIBEXT)
+
+snmpapi/libsnmpapi.$(IMPLIBEXT): snmpapi/snmpapi.spec $(WINEBUILD)
+	@cd snmpapi && $(MAKE) libsnmpapi.$(IMPLIBEXT)
+
+sti/libsti.$(IMPLIBEXT): sti/sti.spec $(WINEBUILD)
+	@cd sti && $(MAKE) libsti.$(IMPLIBEXT)
+
+tapi32/libtapi32.$(IMPLIBEXT): tapi32/tapi32.spec $(WINEBUILD)
+	@cd tapi32 && $(MAKE) libtapi32.$(IMPLIBEXT)
+
+twain/libtwain_32.$(IMPLIBEXT): twain/twain_32.spec $(WINEBUILD)
+	@cd twain && $(MAKE) libtwain_32.$(IMPLIBEXT)
+
+unicows/libunicows.$(IMPLIBEXT): unicows/unicows.spec $(WINEBUILD)
+	@cd unicows && $(MAKE) libunicows.$(IMPLIBEXT)
+
+url/liburl.$(IMPLIBEXT): url/url.spec $(WINEBUILD)
+	@cd url && $(MAKE) liburl.$(IMPLIBEXT)
+
+urlmon/liburlmon.$(IMPLIBEXT): urlmon/urlmon.spec $(WINEBUILD)
+	@cd urlmon && $(MAKE) liburlmon.$(IMPLIBEXT)
+
+user/libuser32.$(IMPLIBEXT): user/user32.spec $(WINEBUILD)
+	@cd user && $(MAKE) libuser32.$(IMPLIBEXT)
+
+uxtheme/libuxtheme.$(IMPLIBEXT): uxtheme/uxtheme.spec $(WINEBUILD)
+	@cd uxtheme && $(MAKE) libuxtheme.$(IMPLIBEXT)
+
+vdmdbg/libvdmdbg.$(IMPLIBEXT): vdmdbg/vdmdbg.spec $(WINEBUILD)
+	@cd vdmdbg && $(MAKE) libvdmdbg.$(IMPLIBEXT)
+
+version/libversion.$(IMPLIBEXT): version/version.spec $(WINEBUILD)
+	@cd version && $(MAKE) libversion.$(IMPLIBEXT)
+
+win32s/libw32skrnl.$(IMPLIBEXT): win32s/w32skrnl.spec $(WINEBUILD)
+	@cd win32s && $(MAKE) libw32skrnl.$(IMPLIBEXT)
+
+wined3d/libwined3d.$(IMPLIBEXT): wined3d/wined3d.spec $(WINEBUILD)
+	@cd wined3d && $(MAKE) libwined3d.$(IMPLIBEXT)
+
+winedos/libwinedos.$(IMPLIBEXT): winedos/winedos.spec $(WINEBUILD)
+	@cd winedos && $(MAKE) libwinedos.$(IMPLIBEXT)
+
+wininet/libwininet.$(IMPLIBEXT): wininet/wininet.spec $(WINEBUILD)
+	@cd wininet && $(MAKE) libwininet.$(IMPLIBEXT)
+
+winmm/libwinmm.$(IMPLIBEXT): winmm/winmm.spec $(WINEBUILD)
+	@cd winmm && $(MAKE) libwinmm.$(IMPLIBEXT)
+
+winnls/libwinnls32.$(IMPLIBEXT): winnls/winnls32.spec $(WINEBUILD)
+	@cd winnls && $(MAKE) libwinnls32.$(IMPLIBEXT)
+
+winspool/libwinspool.$(IMPLIBEXT): winspool/winspool.drv.spec $(WINEBUILD)
+	@cd winspool && $(MAKE) libwinspool.$(IMPLIBEXT)
+
+wintab32/libwintab32.$(IMPLIBEXT): wintab32/wintab32.spec $(WINEBUILD)
+	@cd wintab32 && $(MAKE) libwintab32.$(IMPLIBEXT)
+
+wintrust/libwintrust.$(IMPLIBEXT): wintrust/wintrust.spec $(WINEBUILD)
+	@cd wintrust && $(MAKE) libwintrust.$(IMPLIBEXT)
+
+winaspi/libwnaspi32.$(IMPLIBEXT): winaspi/wnaspi32.spec $(WINEBUILD)
+	@cd winaspi && $(MAKE) libwnaspi32.$(IMPLIBEXT)
+
+wow32/libwow32.$(IMPLIBEXT): wow32/wow32.spec $(WINEBUILD)
+	@cd wow32 && $(MAKE) libwow32.$(IMPLIBEXT)
+
+winsock/libws2_32.$(IMPLIBEXT): winsock/ws2_32.spec $(WINEBUILD)
+	@cd winsock && $(MAKE) libws2_32.$(IMPLIBEXT)
+
+wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
+	@cd wsock32 && $(MAKE) libwsock32.$(IMPLIBEXT)
+
+wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
+	@cd wtsapi32 && $(MAKE) libwtsapi32.$(IMPLIBEXT)
+
+libcomdlg32.$(IMPLIBEXT): commdlg/libcomdlg32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) commdlg/libcomdlg32.$(IMPLIBEXT) $@
+
+libctl3d32.$(IMPLIBEXT): ctl3d/libctl3d32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) ctl3d/libctl3d32.$(IMPLIBEXT) $@
+
+libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) gdi/libgdi32.$(IMPLIBEXT) $@
+
+libkernel32.$(IMPLIBEXT): kernel/libkernel32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) kernel/libkernel32.$(IMPLIBEXT) $@
+
+liblz32.$(IMPLIBEXT): lzexpand/liblz32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) lzexpand/liblz32.$(IMPLIBEXT) $@
+
+libmsacm32.$(IMPLIBEXT): msacm/libmsacm32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) msacm/libmsacm32.$(IMPLIBEXT) $@
+
+libmsvfw32.$(IMPLIBEXT): msvideo/libmsvfw32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(IMPLIBEXT) $@
+
+libntdll.$(IMPLIBEXT): ntdll/libntdll.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) ntdll/libntdll.$(IMPLIBEXT) $@
+
+libolecli32.$(IMPLIBEXT): olecli/libolecli32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) olecli/libolecli32.$(IMPLIBEXT) $@
+
+libolesvr32.$(IMPLIBEXT): olesvr/libolesvr32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) olesvr/libolesvr32.$(IMPLIBEXT) $@
+
+libriched32.$(IMPLIBEXT): richedit/libriched32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) richedit/libriched32.$(IMPLIBEXT) $@
+
+libtwain_32.$(IMPLIBEXT): twain/libtwain_32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) twain/libtwain_32.$(IMPLIBEXT) $@
+
+libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
+
+libw32skrnl.$(IMPLIBEXT): win32s/libw32skrnl.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) win32s/libw32skrnl.$(IMPLIBEXT) $@
+
+libwinnls32.$(IMPLIBEXT): winnls/libwinnls32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) winnls/libwinnls32.$(IMPLIBEXT) $@
+
+libwnaspi32.$(IMPLIBEXT): winaspi/libwnaspi32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) winaspi/libwnaspi32.$(IMPLIBEXT) $@
+
+libws2_32.$(IMPLIBEXT): winsock/libws2_32.$(IMPLIBEXT)
+	$(RM) $@ && $(LN_S) winsock/libws2_32.$(IMPLIBEXT) $@
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
 $(INSTALLSUBDIRS:%=%/__install__): $(IMPORT_LIBS)
@@ -2516,7 +1818,7 @@ uninstall::
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) $(IMPORT_LIBS)
+	$(RM) $(IMPORT_SYMLINKS)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

@@ -23,6 +23,7 @@ C_SRCS       = $(CTESTS)
 EXTRA_SRCS   = $(TESTLIST)
 EXTRA_OBJS   = $(TESTLIST:.c=.o)
 ALL_LIBS     = $(IMPORTS:%=-l%) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
+DLL_LDPATH  = -L$(DLLDIR) $(IMPORTS:%=-L$(DLLDIR)/%)
 
 CROSSTEST    = $(TESTDLL:%.dll=%)_crosstest.exe
 CROSSOBJS    = $(C_SRCS:.c=.cross.o) $(RC_SRCS:.rc=.res.cross.o) $(TESTLIST:.c=.cross.o)
@@ -36,7 +37,7 @@ all: $(TESTPROGRAM)
 # Rules for .so main module
 
 $(MODULE).so: $(OBJS) $(RC_SRCS:.rc=.res) Makefile.in
-	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mconsole $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) -L$(DLLDIR) -L$(LIBDIR) $(ALL_LIBS)
+	$(WINEGCC) -B$(TOOLSDIR)/tools/winebuild -mconsole $(OBJS) $(RC_SRCS:.rc=.res) -o $@ $(LIBPORT) $(DLL_LDPATH) -L$(LIBDIR) $(ALL_LIBS)
 
 # Rules for .exe main module
 

@@ -25,7 +25,9 @@ use strict;
 my $makefiles = `find . -name Makefile.in -print`;
 
 my %directories = ();
-my %implib_dirs = ();
+my %importlibs = ();
+my %static_implibs = ();
+my %staticlib_dirs = ();
 my %altnames = ();
 
 # list of special dlls that can be switched on or off by configure
@@ -63,12 +65,22 @@ foreach my $i (split(/\s/,$makefiles))
             $module = $1;
             if ($module =~ /^lib.*\.a$/)
             {
-                ($implib_dirs{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
+                ($staticlib_dirs{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
             }
             else
             {
                 ($directories{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
             }
+            next;
+        }
+        if (/^IMPORTLIB\s*=\s*([a-zA-Z0-9_.]+)\.\$\(IMPLIBEXT\)/)
+        {
+            $importlibs{$module} = $1;
+            next;
+        }
+        if (/^IMPLIB_SRCS\s*=/)
+        {
+            $static_implibs{$module} = 1;
             next;
         }
         if (/^SPEC_SRCS16\s*=\s*(.*)/)
@@ -128,7 +140,7 @@ foreach my $dir (sort values %directories)
 }
 
 printf NEWMAKE "\n\nSUBDIRS = \\\n\t\$(BASEDIRS)";
-foreach my $dir (sort (keys %special_dlls, values %implib_dirs))
+foreach my $dir (sort (keys %special_dlls, values %staticlib_dirs))
 {
     printf NEWMAKE " \\\n\t%s", $dir;
 }
@@ -155,7 +167,7 @@ foreach my $mod (sort keys %directories)
         $targets16{sprintf("%s.so",$i)} = 1;
     }
 }
-foreach my $mod (sort keys %implib_dirs) { $targets{$mod} = 1; }
+foreach my $mod (sort keys %staticlib_dirs) { $targets{$mod} = 1; }
 
 print NEWMAKE <<EOF;
 
@@ -218,51 +230,68 @@ foreach my $mod (sort keys %directories)
         printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s.so \$@\n\n", $mod;
     }
 }
-foreach my $mod (sort keys %implib_dirs)
+foreach my $mod (sort keys %staticlib_dirs)
 {
-    printf NEWMAKE "%s: %s/%s\n", $mod, $implib_dirs{$mod}, $mod;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $implib_dirs{$mod}, $mod;
+    printf NEWMAKE "%s: %s/%s\n", $mod, $staticlib_dirs{$mod}, $mod;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $staticlib_dirs{$mod}, $mod;
 }
 
 ################################################################
 # output the import libraries rules
 
-my @implibs = grep /\.dll$/, keys %directories;
-push @implibs, "winspool.drv";
+print NEWMAKE "\n# Import libraries\n\n";
+print NEWMAKE "STATIC_IMPLIBEXT = \$(IMPLIBEXT:def=def.a)\n\n";
 
-print NEWMAKE "\n# Import libraries\n\nIMPORT_LIBS =";
-foreach my $mod (sort @implibs)
+my @lib_symlinks = ("ntdll.dll");
+foreach my $mod (sort keys %importlibs)
 {
-    my $def = $mod;
-    $def =~ s/\.(dll|drv)$//;
-    printf NEWMAKE " \\\n\tlib%s.\$(IMPLIBEXT)", $def;
+    my $dir = $directories{$mod};
+    my $lib = $importlibs{$mod};
+    if ($lib ne "lib" . $dir) { push @lib_symlinks, $mod; }
 }
-foreach my $mod (sort keys %implib_dirs)
+print NEWMAKE "IMPORT_SYMLINKS =";
+foreach my $mod (sort @lib_symlinks)
+{
+    printf NEWMAKE " \\\n\t%s.\$(IMPLIBEXT)", $importlibs{$mod};
+}
+foreach my $mod (sort keys %staticlib_dirs)
 {
     printf NEWMAKE " \\\n\t%s", $mod;
+}
+
+print NEWMAKE "\n\nIMPORT_LIBS = \\\n\t\$(IMPORT_SYMLINKS)";
+foreach my $mod (sort keys %importlibs)
+{
+    my $dir = $directories{$mod};
+    my $def = $mod;
+    $def =~ s/\.(dll|drv)$//;
+    printf NEWMAKE " \\\n\t%s/lib%s.\$(IMPLIBEXT)", $dir, $def;
+    printf NEWMAKE " \\\n\t%s/lib%s.\$(STATIC_IMPLIBEXT)", $dir, $def if $static_implibs{$mod};
 }
 print NEWMAKE "\n\n";
 print NEWMAKE "implib: \$(IMPORT_LIBS)\n\n";
 
-foreach my $mod (sort @implibs)
+foreach my $mod (sort keys %importlibs)
 {
     my $dir = $directories{$mod};
-    my $def = $mod;
+    my $lib = $importlibs{$mod};
     my $spec = $mod;
     $spec =~ s/\.dll$//;
-    $def =~ s/\.(dll|drv)$//;
-    printf NEWMAKE "lib%s.def: %s/lib%s.def\n", $def, $dir, $spec;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/lib%s.def \$@\n", $dir, $spec;
-    printf NEWMAKE "lib%s.a: %s/lib%s.a\n", $def, $dir, $spec;
-    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/lib%s.a \$@\n", $dir, $spec;
-    printf NEWMAKE "%s/lib%s.def: %s/%s.spec \$(WINEBUILD)\n", $dir, $spec, $dir, $spec;
-    printf NEWMAKE "\t\$(WINEBUILD) -w --def -o \$@ --export \$(SRCDIR)/%s/%s.spec\n", $dir, $spec;
-    printf NEWMAKE "%s/lib%s.a: %s/lib%s.def\n", $dir, $spec, $dir, $spec;
-    printf NEWMAKE "\t\$(DLLTOOL) -k -l \$@ -d %s/lib%s.def\n\n", $dir, $spec;
+    printf NEWMAKE "%s/%s.\$(IMPLIBEXT): %s/%s.spec \$(WINEBUILD)\n", $dir, $lib, $dir, $spec;
+    printf NEWMAKE "\t\@cd %s && \$(MAKE) %s.\$(IMPLIBEXT)\n\n", $dir, $lib;
+    next unless $static_implibs{$mod};
+    printf NEWMAKE "%s/%s.\$(STATIC_IMPLIBEXT): dummy\n", $dir, $lib, $dir, $spec;
+    printf NEWMAKE "\t\@cd %s && \$(MAKE) %s.\$(STATIC_IMPLIBEXT)\n\n", $dir, $lib;
+}
+foreach my $mod (sort @lib_symlinks)
+{
+    my $dir = $directories{$mod};
+    my $lib = $importlibs{$mod} . ".\$(IMPLIBEXT)";
+    printf NEWMAKE "%s: %s/%s\n", $lib, $dir, $lib;
+    printf NEWMAKE "\t\$(RM) \$@ && \$(LN_S) %s/%s \$@\n\n", $dir, $lib;
 }
 
 print NEWMAKE <<EOF;
-
 \$(BUILDSUBDIRS): \$(IMPORT_LIBS)
 \$(INSTALLSUBDIRS:%=%/__install__): \$(IMPORT_LIBS)
 
@@ -277,9 +306,9 @@ foreach my $mod (sort keys %directories)
 {
     printf NEWMAKE "%s/%s.so: %s\n", $directories{$mod}, $mod, $directories{$mod};
 }
-foreach my $mod (sort keys %implib_dirs)
+foreach my $mod (sort keys %staticlib_dirs)
 {
-    printf NEWMAKE "%s/%s: %s\n", $implib_dirs{$mod}, $mod, $implib_dirs{$mod};
+    printf NEWMAKE "%s/%s: %s\n", $staticlib_dirs{$mod}, $mod, $staticlib_dirs{$mod};
 }
 
 ################################################################
@@ -316,7 +345,7 @@ uninstall::
 	-rmdir \$(dlldir)
 
 clean::
-	\$(RM) \$(IMPORT_LIBS)
+	\$(RM) \$(IMPORT_SYMLINKS)
 
 check test:: \$(BUILDSUBDIRS:%=%/__test__)
 
