@@ -40,7 +40,6 @@
 #include "wine/winbase16.h"
 #include "ntstatus.h"
 #include "toolhelp.h"
-#include "miscemu.h"
 #include "stackframe.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
@@ -77,6 +76,23 @@ static int globalArenaSize;
 #define VALID_HANDLE(handle) (((handle)>>__AHSHIFT)<globalArenaSize)
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
 
+static inline void*     DOSMEM_AllocBlock(UINT size, UINT16* pseg)
+{
+    if (!winedos.AllocDosBlock) load_winedos();
+    return winedos.AllocDosBlock ? winedos.AllocDosBlock(size, pseg) : NULL;
+}
+
+static inline BOOL      DOSMEM_FreeBlock(void* ptr)
+{
+    if (!winedos.FreeDosBlock) load_winedos();
+    return winedos.FreeDosBlock ? winedos.FreeDosBlock( ptr ) : FALSE;
+}
+
+static inline UINT      DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
+{
+    if (!winedos.ResizeDosBlock) load_winedos();
+    return winedos.ResizeDosBlock ? winedos.ResizeDosBlock(ptr, size, TRUE) : 0;
+}
 
 /***********************************************************************
  *           GLOBAL_GetArena
@@ -336,7 +352,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
             newptr = 0;
         else
         {
-            newptr = DOSMEM_GetBlock( size, 0 );
+            newptr = DOSMEM_AllocBlock( size, 0 );
             if (newptr)
             {
                 memcpy( newptr, ptr, oldsize );
@@ -757,7 +773,7 @@ DWORD WINAPI GlobalDOSAlloc16(
              DWORD size /* [in] Number of bytes to be allocated */
 ) {
    UINT16    uParagraph;
-   LPVOID    lpBlock = DOSMEM_GetBlock( size, &uParagraph );
+   LPVOID    lpBlock = DOSMEM_AllocBlock( size, &uParagraph );
 
    if( lpBlock )
    {

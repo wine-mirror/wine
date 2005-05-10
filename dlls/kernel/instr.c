@@ -30,7 +30,6 @@
 #include "wine/winuser16.h"
 #include "excpt.h"
 #include "module.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 #include "kernel_private.h"
 #include "thread.h"
@@ -67,34 +66,6 @@ inline static void *get_stack( CONTEXT86 *context )
     return wine_ldt_get_ptr( context->SegSs, context->Esp );
 }
 
-
-static void (WINAPI *DOS_EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
-static void (WINAPI *DOS_CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
-static DWORD (WINAPI *DOS_inport)( int port, int size );
-static void (WINAPI *DOS_outport)( int port, int size, DWORD val );
-
-
-static void init_winedos(void)
-{
-    static HMODULE module;
-
-    if (module) return;
-    module = LoadLibraryA( "winedos.dll" );
-    if (!module)
-    {
-        ERR("could not load winedos.dll, DOS subsystem unavailable\n");
-        module = (HMODULE)1;  /* don't try again */
-        return;
-    }
-#define GET_ADDR(func)  DOS_##func = (void *)GetProcAddress(module, #func);
-    GET_ADDR(inport);
-    GET_ADDR(outport);
-    GET_ADDR(EmulateInterruptPM);
-    GET_ADDR(CallBuiltinHandler);
-#undef GET_ADDR
-}
-
-
 /***********************************************************************
  *           INSTR_ReplaceSelector
  *
@@ -112,7 +83,11 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
     {
         static WORD sys_timer = 0;
         if (!sys_timer)
-            sys_timer = CreateSystemTimer( 55, DOSMEM_Tick );
+        {
+            if (!winedos.BiosTick) load_winedos();
+            if (winedos.BiosTick)
+                sys_timer = CreateSystemTimer( 55, winedos.BiosTick );
+        }
         *sel = DOSMEM_BiosDataSeg;
         return TRUE;
     }
@@ -367,8 +342,8 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
 {
     DWORD res = ~0U;
 
-    if (!DOS_inport) init_winedos();
-    if (DOS_inport) res = DOS_inport( port, size );
+    if (!winedos.inport) load_winedos();
+    if (winedos.inport) res = winedos.inport( port, size );
 
     if (TRACE_ON(io))
     {
@@ -399,8 +374,8 @@ static DWORD INSTR_inport( WORD port, int size, CONTEXT86 *context )
  */
 static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 {
-    if (!DOS_outport) init_winedos();
-    if (DOS_outport) DOS_outport( port, size, val );
+    if (!winedos.outport) load_winedos();
+    if (winedos.outport) winedos.outport( port, size, val );
 
     if (TRACE_ON(io))
     {
@@ -733,11 +708,11 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 
         case 0xcd: /* int <XX> */
             if (wine_ldt_is_system(context->SegCs)) break;  /* don't emulate it in 32-bit code */
-            if (!DOS_EmulateInterruptPM) init_winedos();
-            if (DOS_EmulateInterruptPM)
+            if (!winedos.EmulateInterruptPM) load_winedos();
+            if (winedos.EmulateInterruptPM)
             {
                 context->Eip += prefixlen + 2;
-                DOS_EmulateInterruptPM( context, instr[1] );
+                winedos.EmulateInterruptPM( context, instr[1] );
                 return ExceptionContinueExecution;
             }
             break;  /* Unable to emulate it */
@@ -839,8 +814,8 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
  */
 void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum )
 {
-    if (!DOS_CallBuiltinHandler) init_winedos();
-    if (DOS_CallBuiltinHandler) DOS_CallBuiltinHandler( context, intnum );
+    if (!winedos.CallBuiltinHandler) load_winedos();
+    if (winedos.CallBuiltinHandler) winedos.CallBuiltinHandler( context, intnum );
 }
 
 

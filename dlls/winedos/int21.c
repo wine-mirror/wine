@@ -4904,7 +4904,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
                 selector = LOWORD( rv );
             }
             else
-                DOSMEM_GetBlock( bytes, &selector );
+                DOSMEM_AllocBlock( bytes, &selector );
 
             if (selector)
             {
@@ -4934,7 +4934,7 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
                     context->SegEs = 0;
             }
             else
-                ok = DOSMEM_FreeBlock( (void*)((DWORD)context->SegEs << 4) );
+                ok = DOSMEM_FreeBlock( PTR_REAL_TO_LIN(context->SegEs, 0) );
 
             if (!ok)
             {

@@ -1167,11 +1167,6 @@
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl DOSMEM_AllocSelector(long)
-@ cdecl DOSMEM_Available()
-@ cdecl DOSMEM_FreeBlock(ptr)
-@ cdecl DOSMEM_GetBlock(long ptr)
-@ cdecl DOSMEM_InitDosMem(long)
-@ cdecl DOSMEM_ResizeBlock(ptr long long)
 @ cdecl LOCAL_Alloc(long long long)
 @ cdecl LOCAL_Compact(long long long)
 @ cdecl LOCAL_CountFree(long)

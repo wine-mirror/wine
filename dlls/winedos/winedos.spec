@@ -6,3 +6,11 @@
 # I/O functions
 @ stdcall inport(long long) DOSVM_inport
 @ stdcall outport(long long long) DOSVM_outport
+
+# DOS memory functions
+@ cdecl FreeDosBlock(ptr) DOSMEM_FreeBlock
+@ cdecl AllocDosBlock(long ptr) DOSMEM_AllocBlock
+@ cdecl ResizeDosBlock(ptr long long) DOSMEM_ResizeBlock
+
+# BIOS functions
+@ cdecl BiosTick(long)

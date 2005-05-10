@@ -90,5 +90,30 @@ typedef struct
     WORD stackbottom; /* Bottom of the stack */
 } INSTANCEDATA;
 #include "poppack.h"
+extern WORD DOSMEM_0000H;
+extern WORD DOSMEM_BiosDataSeg;
+extern WORD DOSMEM_BiosSysSeg;
+
+/* msdos/dosmem.c */
+extern BOOL   DOSMEM_Init(void);
+extern WORD   DOSMEM_AllocSelector(WORD);
+extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
+extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
+extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
+extern void   load_winedos(void);
+
+extern struct winedos_exports
+{
+    /* for global16.c */
+    void*    (*AllocDosBlock)(UINT size, UINT16* pseg);
+    BOOL     (*FreeDosBlock)(void* ptr);
+    UINT     (*ResizeDosBlock)(void *ptr, UINT size, BOOL exact);
+    /* for instr.c */
+    void (WINAPI *EmulateInterruptPM)( CONTEXT86 *context, BYTE intnum );
+    void (WINAPI *CallBuiltinHandler)( CONTEXT86 *context, BYTE intnum );
+    DWORD (WINAPI *inport)( int port, int size );
+    void (WINAPI *outport)( int port, int size, DWORD val );
+    void (* BiosTick)(WORD timer);
+} winedos;
 
 #endif

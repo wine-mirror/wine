@@ -14,6 +14,7 @@ C_SRCS = \
 	dma.c \
 	dosaspi.c \
 	dosconf.c \
+	dosmem.c \
 	dosvm.c \
 	fpu.c \
 	himem.c \

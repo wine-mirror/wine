@@ -169,7 +169,7 @@ static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
   while (env[sz++]) sz+=strlen(env+sz)+1;
  } else sz++;
  /* allocate it */
- envblk=DOSMEM_GetBlock(sz+sizeof(WORD)+strlen(name)+1,&seg);
+ envblk=DOSMEM_AllocBlock(sz+sizeof(WORD)+strlen(name)+1,&seg);
  /* fill it */
  if (env) {
   memcpy(envblk,env,sz);
@@ -195,7 +195,7 @@ static BOOL MZ_InitMemory(void)
 {
     /* initialize the memory */
     TRACE("Initializing DOS memory structures\n");
-    DOSMEM_InitDosMem();
+    DOSMEM_MapDosLayout();
     DOSDEV_InstallDOSDevices();
 
     return TRUE;
@@ -283,7 +283,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
       goto load_error;
     }
     if (avail>max_size) avail=max_size;
-    psp_start=DOSMEM_GetBlock(avail,&DOSVM_psp);
+    psp_start=DOSMEM_AllocBlock(avail,&DOSVM_psp);
     if (!psp_start) {
       ERR("error allocating DOS memory\n");
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);

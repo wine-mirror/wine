@@ -470,7 +470,7 @@ callrmproc_again:
     if (!already) {
         if (!context->SegSs) {
             alloc = 1; /* allocate default stack */
-            stack16 = addr = DOSMEM_GetBlock( 64, (UINT16 *)&(context->SegSs) );
+            stack16 = addr = DOSMEM_AllocBlock( 64, (UINT16 *)&(context->SegSs) );
             context->Esp = 64-2;
             stack16 += 32-1;
             if (!addr) {
@@ -649,7 +649,7 @@ static RMCB *DPMI_AllocRMCB( void )
 
     if (NewRMCB)
     {
-	LPVOID RMCBmem = DOSMEM_GetBlock(4, &uParagraph);
+	LPVOID RMCBmem = DOSMEM_AllocBlock(4, &uParagraph);
 	LPBYTE p = RMCBmem;
 
 	*p++ = 0xcd; /* RMCB: */
@@ -968,7 +968,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT86 *context )
 
             /* check if Win16 app wants to access lower 64K of DOS memory */
             if (base < 0x10000 && DOSVM_IsWin16())
-                DOSMEM_InitDosMem();
+                DOSMEM_MapDosLayout();
 
             SetSelectorBase( sel, base );
         }
