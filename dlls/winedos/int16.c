@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "miscemu.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 

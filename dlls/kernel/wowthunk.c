@@ -32,7 +32,6 @@
 #include "excpt.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "miscemu.h"
 #include "module.h"
 #include "stackframe.h"
 #include "kernel_private.h"

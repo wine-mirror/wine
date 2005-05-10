@@ -28,7 +28,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "wincon.h"
-#include "miscemu.h"
 #include "dosexe.h"
 #include "vga.h"
 #include "ddraw.h"

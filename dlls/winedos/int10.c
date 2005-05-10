@@ -23,7 +23,6 @@
 
 #include <stdlib.h>
 
-#include "miscemu.h"
 #include "vga.h"
 #include "wine/debug.h"
 #include "dosexe.h"

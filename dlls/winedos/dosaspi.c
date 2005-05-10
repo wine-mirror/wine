@@ -25,7 +25,6 @@
 #include "wine/windef16.h"
 #include "wine/winaspi.h"
 #include "wine/debug.h"
-#include "miscemu.h" /* DOSMEM_* */
 #include "dosexe.h"
 #include "winerror.h"
 

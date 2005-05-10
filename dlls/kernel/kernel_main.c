@@ -38,7 +38,6 @@
 
 #include "wine/winbase16.h"
 #include "wine/library.h"
-#include "miscemu.h"
 #include "module.h"
 #include "thread.h"
 #include "stackframe.h"

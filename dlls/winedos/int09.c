@@ -26,7 +26,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 #include "dosexe.h"
 

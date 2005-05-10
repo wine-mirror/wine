@@ -25,7 +25,6 @@
 
 #include "winerror.h"
 #include "wine/winbase16.h"
-#include "miscemu.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 #include "kernel_private.h"

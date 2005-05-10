@@ -44,7 +44,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "miscemu.h"
 
 #include "wine/debug.h"
 

@@ -28,7 +28,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "wine/winbase16.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 #include "ntstatus.h"
 #include "winioctl.h"

@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "winbase.h"
 
-#include "miscemu.h"
 #include "dosexe.h"
 
 /**********************************************************************

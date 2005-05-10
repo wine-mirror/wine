@@ -21,7 +21,6 @@
 #include <assert.h>
 #include "wine/winbase16.h"
 #include "dosexe.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);

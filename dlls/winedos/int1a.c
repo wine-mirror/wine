@@ -19,7 +19,6 @@
  */
 
 #include "config.h"
-#include "miscemu.h"
 #include "wine/debug.h"
 #include "dosexe.h"
 
