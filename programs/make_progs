@@ -29,6 +29,7 @@ my %directories = ();
 # Programs that we want to install in the bin directory too
 my %bin_install =
 (
+  "msiexec" => 1,
   "notepad" => 1,
   "progman" => 1,
   "regedit" => 1,

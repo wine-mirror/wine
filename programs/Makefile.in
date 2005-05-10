@@ -70,6 +70,7 @@ INSTALLSUBDIRS = \
 
 # Programs to install in bin directory
 INSTALLPROGS = \
+	msiexec \
 	notepad \
 	progman \
 	regedit \
