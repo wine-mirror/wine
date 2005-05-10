@@ -789,9 +789,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_NOTIFY:
             switch (((LPNMHDR)lParam)->code)
             {
-                case LVN_ITEMACTIVATE:
-                    update_controls(dialog);
-                    break;
                 case PSN_KILLACTIVE:
                     WINE_TRACE("PSN_KILLACTIVE\n");
                     SetWindowLongPtr(dialog, DWLP_MSGRESULT, FALSE);
@@ -801,6 +798,13 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     SetWindowLongPtr(dialog, DWLP_MSGRESULT, PSNRET_NOERROR);
                     break;
                 case PSN_SETACTIVE:
+                    break;
+            }
+
+            switch (((LPNMITEMACTIVATE)lParam)->hdr.code)
+            {
+                case NM_CLICK:
+                    update_controls(dialog);
                     break;
             }
             break;
