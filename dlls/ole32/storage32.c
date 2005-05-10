@@ -2379,7 +2379,7 @@ void StorageImpl_Destroy(StorageBaseImpl* iface)
   BlockChainStream_Destroy(This->smallBlockDepotChain);
 
   BIGBLOCKFILE_Destructor(This->bigBlockFile);
-  return;
+  HeapFree(GetProcessHeap(), 0, This);
 }
 
 /******************************************************************************
