@@ -790,7 +790,21 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
+    case SystemHandleInformation:
+        {
+            SYSTEM_HANDLE_INFORMATION shi;
 
+            memset(&shi, 0, sizeof(shi));
+            len = sizeof(shi);
+
+            if ( Length >= len)
+            {
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &shi, len);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
     case SystemCacheInformation:
         {
             SYSTEM_CACHE_INFORMATION* sci = (SYSTEM_CACHE_INFORMATION*)SystemInformation;
@@ -798,6 +812,19 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             {
                 memset(sci, 0, sizeof(*sci)); /* FIXME */
                 len = sizeof(*sci);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemKernelDebuggerInformation:
+        {
+            PSYSTEM_KERNEL_DEBUGGER_INFORMATION pkdi;
+            if( Length >= sizeof(*pkdi))
+            {
+                pkdi = SystemInformation;
+                pkdi->DebuggerEnabled = FALSE;
+                pkdi->DebuggerNotPresent = TRUE;
+                len = sizeof(*pkdi);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
@@ -822,21 +849,6 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
 	break;
-
-    case SystemKernelDebuggerInformation:
-        {
-            PSYSTEM_KERNEL_DEBUGGER_INFORMATION pkdi;
-            if( Length >= sizeof(*pkdi))
-            {
-                pkdi = SystemInformation;
-                pkdi->DebuggerEnabled = FALSE;
-                pkdi->DebuggerNotPresent = TRUE;
-                len = sizeof(*pkdi);
-            }
-            else ret = STATUS_INFO_LENGTH_MISMATCH;
-        }
-        break;
-
     default:
 	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
