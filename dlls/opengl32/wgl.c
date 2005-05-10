@@ -769,7 +769,7 @@ const GLubyte * internal_glGetString(GLenum name) {
       return NULL;
     } else {
       size_t len = strlen(GL_Extensions);
-      internal_gl_extensions = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+      internal_gl_extensions = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len + 2);
 
       while (*GL_Extensions != 0x00) {
 	const char* Start = GL_Extensions;
@@ -785,7 +785,7 @@ const GLubyte * internal_glGetString(GLenum name) {
 	/* test if supported API is disabled by config */
 	if (NULL == strstr(internal_gl_disabled_extensions, ThisExtn)) {
 	  strcat(internal_gl_extensions, " ");
-	  strcat(internal_gl_extensions, ThisExtn);	  
+	  strcat(internal_gl_extensions, ThisExtn);
 	  TRACE(" active\n");
 	} else {
 	  TRACE(" deactived (by config)\n");
