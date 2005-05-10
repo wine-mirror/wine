@@ -142,6 +142,9 @@ typedef struct
   /* Height of a separator item */
 #define SEPARATOR_HEIGHT 5
 
+  /* Space between 2 columns */
+#define MENU_COL_SPACE 4
+
   /* (other menu->FocusedItem values give the position of the focused item) */
 #define NO_SELECTED_ITEM  0xffff
 
@@ -1026,6 +1029,8 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     {
 	lpitem = &lppop->items[start];
 	orgX = maxX;
+        if( lpitem->fType & MF_MENUBREAK)
+            orgX += MENU_COL_SPACE; 
 	orgY = 3;
 
 	maxTab = maxTabWidth = 0;
