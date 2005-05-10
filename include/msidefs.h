@@ -103,6 +103,22 @@ enum msidbComponentAttributes
     msidbComponentAttributes64bit = 0x00000100
 };
 
+enum msidbRegistryRoot
+{
+    msidbRegistryRootClassesRoot = 0,
+    msidbRegistryRootCurrentUser = 1,
+    msidbRegistryRootLocalMachine = 2,
+    msidbRegistryRootUsers = 3,
+};
+
+enum msidbLocatorType
+{
+    msidbLocatorTypeDirectory = 0x000,
+    msidbLocatorTypeFileName = 0x001,
+    msidbLocatorTypeRawValue = 0x002,
+    msidbLocatorType64bit = 0x010,
+};
+
 /*
  * Windows SDK braindamage alert
  *
