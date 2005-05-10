@@ -713,6 +713,16 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 
     TRACE("(%p,%p)\n",This,df);
 
+    if (df == NULL) {
+        WARN("invalid pointer\n");
+        return E_POINTER;
+    }
+
+    if (df->dwSize != sizeof(*df)) {
+        WARN("invalid argument\n");
+        return DIERR_INVALIDPARAM;
+    }
+
     if (This->acquired) {
         WARN("acquired\n");
         return DIERR_ACQUIRED;
@@ -1113,6 +1123,11 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
 
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
 
+    if (ph == NULL) {
+        WARN("invalid pointer\n");
+        return E_POINTER;
+    }
+
     if (TRACE_ON(dinput))
         _dump_DIPROPHEADER(ph);
 
@@ -1214,10 +1229,16 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 
     if (lpDIDevCaps == NULL) {
         WARN("invalid parameter: lpDIDevCaps = NULL\n");
-        return DIERR_INVALIDPARAM;
+        return E_POINTER;
     }
 
     size = lpDIDevCaps->dwSize;
+
+    if (!(size == sizeof(DIDEVCAPS) || size == sizeof(DIDEVCAPS_DX3))) {
+        WARN("invalid parameter\n");
+        return DIERR_INVALIDPARAM;
+    }
+
     CopyMemory(lpDIDevCaps, &This->devcaps, size);
     lpDIDevCaps->dwSize = size;
 

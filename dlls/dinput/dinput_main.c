@@ -331,6 +331,16 @@ static HRESULT WINAPI IDirectInputAImpl_CreateDevice(
 
 	TRACE("(this=%p,%s,%p,%p)\n",This,debugstr_guid(rguid),pdev,punk);
 
+	if (pdev == NULL) {
+		WARN("invalid pointer: pdev == NULL\n");
+		return E_POINTER;
+	}
+
+	if (rguid == NULL) {
+		WARN("invalid pointer: rguid == NULL\n");
+		return E_POINTER;
+	}
+
 	/* Loop on all the devices to see if anyone matches the given GUID */
 	for (i = 0; i < NB_DINPUT_DEVICES; i++) {
 	  HRESULT ret;

@@ -313,6 +313,7 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		 * the GUID of the Wine object.
 		 */
 		((asked_format->rgodf[j].pguid == NULL) ||
+		 (wine_format->rgodf[i].pguid == NULL) ||
 		 (IsEqualGUID(wine_format->rgodf[i].pguid, asked_format->rgodf[j].pguid)))
 		&&
 		(/* Then check if it accepts any instance id, and if not, if it matches Wine's
@@ -336,19 +337,19 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		TRACE("       * dwType: %08lx\n", asked_format->rgodf[j].dwType);
 		TRACE("         "); _dump_EnumObjects_flags(asked_format->rgodf[j].dwType); TRACE("\n");
 		
-		TRACE("   - Wine  (%d) :\n", j);
+		TRACE("   - Wine  (%d) :\n", i);
 		TRACE("       * GUID: %s ('%s')\n",
-		      debugstr_guid(wine_format->rgodf[j].pguid),
-		      _dump_dinput_GUID(wine_format->rgodf[j].pguid));
-		TRACE("       * Offset: %3ld\n", wine_format->rgodf[j].dwOfs);
-		TRACE("       * dwType: %08lx\n", wine_format->rgodf[j].dwType);
-		TRACE("         "); _dump_EnumObjects_flags(wine_format->rgodf[j].dwType); TRACE("\n");
+		      debugstr_guid(wine_format->rgodf[i].pguid),
+		      _dump_dinput_GUID(wine_format->rgodf[i].pguid));
+		TRACE("       * Offset: %3ld\n", wine_format->rgodf[i].dwOfs);
+		TRACE("       * dwType: %08lx\n", wine_format->rgodf[i].dwType);
+		TRACE("         "); _dump_EnumObjects_flags(wine_format->rgodf[i].dwType); TRACE("\n");
 		
 		if (wine_format->rgodf[i].dwType & DIDFT_BUTTON)
 		    dt[index].size = sizeof(BYTE);
 		else
 		    dt[index].size = sizeof(DWORD);
-		dt[index].offset_in  = wine_format ->rgodf[i].dwOfs;
+		dt[index].offset_in = wine_format->rgodf[i].dwOfs;
                 if (asked_format->rgodf[j].dwOfs < next) {
                     WARN("bad format: dwOfs=%ld, changing to %ld\n", asked_format->rgodf[j].dwOfs, next);
 		    dt[index].offset_out = next;
