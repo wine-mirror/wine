@@ -555,6 +555,10 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
  * parameter may be NULL if the error description is not required.
  */
 
+#ifndef RTLD_FIRST
+#define RTLD_FIRST 0
+#endif
+
 /***********************************************************************
  *		wine_dlopen
  */
@@ -564,7 +568,7 @@ void *wine_dlopen( const char *filename, int flag, char *error, size_t errorsize
     void *ret;
     const char *s;
     dlerror(); dlerror();
-    ret = dlopen( filename, flag );
+    ret = dlopen( filename, flag | RTLD_FIRST );
     s = dlerror();
     if (error && errorsize)
     {
