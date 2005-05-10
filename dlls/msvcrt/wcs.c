@@ -430,7 +430,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         /* output a single % character */
         if( *p == '%' )
         {
-            r = pf_output_stringW(out, p, 1);
+            r = pf_output_stringW(out, p++, 1);
             if( r<0 )
                 return r;
             continue;
