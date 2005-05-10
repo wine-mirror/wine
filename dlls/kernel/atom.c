@@ -48,6 +48,31 @@ WINE_DEFAULT_DEBUG_CHANNEL(atom);
 
 #define MAX_ATOM_LEN 255
 
+static struct atom_table* get_local_table(DWORD entries)
+{
+    static struct atom_table*   local_table;
+
+    if (!local_table)
+    {
+        NTSTATUS                status;
+        struct atom_table*      table;
+
+        SERVER_START_REQ( init_atom_table )
+        {
+            req->entries = entries;
+            status = wine_server_call( req );
+            table = reply->table;
+        }
+        SERVER_END_REQ;
+
+        if (status)
+            SetLastError( RtlNtStatusToDosError( status ) );
+        else if (InterlockedCompareExchangePointer((void*)&local_table, table, NULL) != NULL)
+            NtClose((HANDLE)table);
+    }
+    return local_table;
+}
+
 /***********************************************************************
  *           ATOM_IsIntAtomA
  */
@@ -116,18 +141,11 @@ static BOOL ATOM_IsIntAtomW(LPCWSTR atomstr,WORD *atomid)
  */
 BOOL WINAPI InitAtomTable( DWORD entries )
 {
-    BOOL ret;
-    SERVER_START_REQ( init_atom_table )
-    {
-        req->entries = entries;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return get_local_table( entries ) ? TRUE : FALSE;
 }
 
 
-static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
+static ATOM ATOM_AddAtomA( LPCSTR str, struct atom_table* table )
 {
     ATOM atom = 0;
     if (!ATOM_IsIntAtomA( str, &atom ))
@@ -143,12 +161,12 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
         SERVER_START_REQ( add_atom )
         {
             wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
-            req->local = local;
+            req->table = table;
             if (!wine_server_call_err(req)) atom = reply->atom;
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_a(str), atom );
+    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_a(str), atom );
     return atom;
 }
 
@@ -165,7 +183,7 @@ static ATOM ATOM_AddAtomA( LPCSTR str, BOOL local )
  */
 ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
 {
-    return ATOM_AddAtomA( str, FALSE );
+    return ATOM_AddAtomA( str, NULL );
 }
 
 
@@ -181,11 +199,11 @@ ATOM WINAPI GlobalAddAtomA( LPCSTR str /* [in] String to add */ )
  */
 ATOM WINAPI AddAtomA( LPCSTR str /* [in] String to add */ )
 {
-    return ATOM_AddAtomA( str, TRUE );
+    return ATOM_AddAtomA( str, get_local_table(0) );
 }
 
 
-static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
+static ATOM ATOM_AddAtomW( LPCWSTR str, struct atom_table* table )
 {
     ATOM atom = 0;
     if (!ATOM_IsIntAtomW( str, &atom ))
@@ -198,13 +216,13 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
         }
         SERVER_START_REQ( add_atom )
         {
-            req->local = local;
+            req->table = table;
             wine_server_add_data( req, str, len * sizeof(WCHAR) );
             if (!wine_server_call_err(req)) atom = reply->atom;
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_w(str), atom );
+    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_w(str), atom );
     return atom;
 }
 
@@ -216,7 +234,7 @@ static ATOM ATOM_AddAtomW( LPCWSTR str, BOOL local )
  */
 ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
 {
-    return ATOM_AddAtomW( str, FALSE );
+    return ATOM_AddAtomW( str, NULL );
 }
 
 
@@ -227,19 +245,19 @@ ATOM WINAPI GlobalAddAtomW( LPCWSTR str )
  */
 ATOM WINAPI AddAtomW( LPCWSTR str )
 {
-    return ATOM_AddAtomW( str, TRUE );
+    return ATOM_AddAtomW( str, get_local_table(0) );
 }
 
 
-static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
+static ATOM ATOM_DeleteAtom( ATOM atom, struct atom_table* table )
 {
-    TRACE( "(%s) %x\n", local ? "local" : "global", atom );
+    TRACE( "(%s) %x\n", table ? "local" : "global", atom );
     if (atom >= MAXINTATOM)
     {
         SERVER_START_REQ( delete_atom )
         {
             req->atom = atom;
-            req->local = local;
+            req->table = table;
             wine_server_call_err( req );
         }
         SERVER_END_REQ;
@@ -260,7 +278,7 @@ static ATOM ATOM_DeleteAtom( ATOM atom,  BOOL local)
  */
 ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    return ATOM_DeleteAtom( atom, FALSE);
+    return ATOM_DeleteAtom( atom, NULL);
 }
 
 
@@ -276,11 +294,11 @@ ATOM WINAPI GlobalDeleteAtom( ATOM atom /* [in] Atom to delete */ )
  */
 ATOM WINAPI DeleteAtom( ATOM atom /* [in] Atom to delete */ )
 {
-    return ATOM_DeleteAtom( atom, TRUE );
+    return ATOM_DeleteAtom( atom, get_local_table(0) );
 }
 
 
-static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
+static ATOM ATOM_FindAtomA( LPCSTR str, struct atom_table* table )
 {
     ATOM atom = 0;
     if (!ATOM_IsIntAtomA( str, &atom ))
@@ -295,13 +313,13 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
         }
         SERVER_START_REQ( find_atom )
         {
-            req->local = local;
+            req->table = table;
             wine_server_add_data( req, buffer, len * sizeof(WCHAR) );
             if (!wine_server_call_err(req)) atom = reply->atom;
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_a(str), atom );
+    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_a(str), atom );
     return atom;
 }
 
@@ -317,7 +335,7 @@ static ATOM ATOM_FindAtomA( LPCSTR str, BOOL local )
  */
 ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for */ )
 {
-    return ATOM_FindAtomA( str, FALSE );
+    return ATOM_FindAtomA( str, NULL );
 }
 
 /***********************************************************************
@@ -331,11 +349,11 @@ ATOM WINAPI GlobalFindAtomA( LPCSTR str /* [in] Pointer to string to search for 
  */
 ATOM WINAPI FindAtomA( LPCSTR str /* [in] Pointer to string to find */ )
 {
-    return ATOM_FindAtomA( str, TRUE );
+    return ATOM_FindAtomA( str, get_local_table(0) );
 }
 
 
-static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
+static ATOM ATOM_FindAtomW( LPCWSTR str, struct atom_table* table )
 {
     ATOM atom = 0;
     if (!ATOM_IsIntAtomW( str, &atom ))
@@ -349,12 +367,12 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
         SERVER_START_REQ( find_atom )
         {
             wine_server_add_data( req, str, len * sizeof(WCHAR) );
-            req->local = local;
+            req->table = table;
             if (!wine_server_call_err( req )) atom = reply->atom;
         }
         SERVER_END_REQ;
     }
-    TRACE( "(%s) %s -> %x\n", local ? "local" : "global", debugstr_w(str), atom );
+    TRACE( "(%s) %s -> %x\n", table ? "local" : "global", debugstr_w(str), atom );
     return atom;
 }
 
@@ -366,7 +384,7 @@ static ATOM ATOM_FindAtomW( LPCWSTR str, BOOL local )
  */
 ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
 {
-    return ATOM_FindAtomW( str, FALSE );
+    return ATOM_FindAtomW( str, NULL );
 }
 
 
@@ -377,11 +395,11 @@ ATOM WINAPI GlobalFindAtomW( LPCWSTR str )
  */
 ATOM WINAPI FindAtomW( LPCWSTR str )
 {
-    return ATOM_FindAtomW( str, TRUE );
+    return ATOM_FindAtomW( str, get_local_table(0) );
 }
 
 
-static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
+static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, struct atom_table* table )
 {
     INT len;
 
@@ -406,10 +424,10 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
         WCHAR full_name[MAX_ATOM_LEN];
 
         len = 0;
-        SERVER_START_REQ( get_atom_name )
+        SERVER_START_REQ( get_atom_information )
         {
             req->atom = atom;
-            req->local = local;
+            req->table = table;
             wine_server_set_reply( req, full_name, sizeof(full_name) );
             if (!wine_server_call_err( req ))
             {
@@ -429,7 +447,7 @@ static UINT ATOM_GetAtomNameA( ATOM atom, LPSTR buffer, INT count, BOOL local )
         buffer[count-1] = 0;
         return 0;
     }
-    TRACE( "(%s) %x -> %s\n", local ? "local" : "global", atom, debugstr_a(buffer) );
+    TRACE( "(%s) %x -> %s\n", table ? "local" : "global", atom, debugstr_a(buffer) );
     return len;
 }
 
@@ -448,7 +466,7 @@ UINT WINAPI GlobalGetAtomNameA(
               LPSTR buffer, /* [out] Pointer to buffer for atom string */
               INT count )   /* [in]  Size of buffer */
 {
-    return ATOM_GetAtomNameA( atom, buffer, count, FALSE );
+    return ATOM_GetAtomNameA( atom, buffer, count, NULL );
 }
 
 
@@ -466,11 +484,11 @@ UINT WINAPI GetAtomNameA(
               LPSTR buffer, /* [out] Pointer to string for atom string */
               INT count)    /* [in]  Size of buffer */
 {
-    return ATOM_GetAtomNameA( atom, buffer, count, TRUE );
+    return ATOM_GetAtomNameA( atom, buffer, count, get_local_table(0) );
 }
 
 
-static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
+static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, struct atom_table* table )
 {
     INT len;
 
@@ -496,10 +514,10 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
         WCHAR full_name[MAX_ATOM_LEN];
 
         len = 0;
-        SERVER_START_REQ( get_atom_name )
+        SERVER_START_REQ( get_atom_information )
         {
             req->atom = atom;
-            req->local = local;
+            req->table = table;
             wine_server_set_reply( req, full_name, sizeof(full_name) );
             if (!wine_server_call_err( req ))
             {
@@ -512,7 +530,7 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
         SERVER_END_REQ;
         if (!len) return 0;
     }
-    TRACE( "(%s) %x -> %s\n", local ? "local" : "global", atom, debugstr_w(buffer) );
+    TRACE( "(%s) %x -> %s\n", table ? "local" : "global", atom, debugstr_w(buffer) );
     return len;
 }
 
@@ -524,7 +542,7 @@ static UINT ATOM_GetAtomNameW( ATOM atom, LPWSTR buffer, INT count, BOOL local )
  */
 UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {
-    return ATOM_GetAtomNameW( atom, buffer, count, FALSE);
+    return ATOM_GetAtomNameW( atom, buffer, count, NULL);
 }
 
 
@@ -535,5 +553,5 @@ UINT WINAPI GlobalGetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
  */
 UINT WINAPI GetAtomNameW( ATOM atom, LPWSTR buffer, INT count )
 {
-    return ATOM_GetAtomNameW( atom, buffer, count, TRUE );
+    return ATOM_GetAtomNameW( atom, buffer, count, get_local_table(0) );
 }

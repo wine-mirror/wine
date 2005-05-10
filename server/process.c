@@ -278,7 +278,6 @@ struct thread *create_process( int fd )
     process->startup_info    = NULL;
     process->idle_event      = NULL;
     process->queue           = NULL;
-    process->atom_table      = NULL;
     process->peb             = NULL;
     process->ldt_copy        = NULL;
     process->exe.file        = NULL;
@@ -422,7 +421,6 @@ static void process_destroy( struct object *obj )
     list_remove( &process->entry );
     if (process->idle_event) release_object( process->idle_event );
     if (process->queue) release_object( process->queue );
-    if (process->atom_table) release_object( process->atom_table );
     if (process->exe.file) release_object( process->exe.file );
     if (process->exe.filename) free( process->exe.filename );
     if (process->id) free_ptid( process->id );

@@ -1758,7 +1758,7 @@ static void dump_get_selector_entry_reply( const struct get_selector_entry_reply
 
 static void dump_add_atom_request( const struct add_atom_request *req )
 {
-    fprintf( stderr, " local=%d,", req->local );
+    fprintf( stderr, " table=%p,", req->table );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1770,13 +1770,13 @@ static void dump_add_atom_reply( const struct add_atom_reply *req )
 
 static void dump_delete_atom_request( const struct delete_atom_request *req )
 {
-    fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " local=%d", req->local );
+    fprintf( stderr, " table=%p,", req->table );
+    fprintf( stderr, " atom=%04x", req->atom );
 }
 
 static void dump_find_atom_request( const struct find_atom_request *req )
 {
-    fprintf( stderr, " local=%d,", req->local );
+    fprintf( stderr, " table=%p,", req->table );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -1786,22 +1786,41 @@ static void dump_find_atom_reply( const struct find_atom_reply *req )
     fprintf( stderr, " atom=%04x", req->atom );
 }
 
-static void dump_get_atom_name_request( const struct get_atom_name_request *req )
+static void dump_get_atom_information_request( const struct get_atom_information_request *req )
 {
-    fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " local=%d", req->local );
+    fprintf( stderr, " table=%p,", req->table );
+    fprintf( stderr, " atom=%04x", req->atom );
 }
 
-static void dump_get_atom_name_reply( const struct get_atom_name_reply *req )
+static void dump_get_atom_information_reply( const struct get_atom_information_reply *req )
 {
     fprintf( stderr, " count=%d,", req->count );
+    fprintf( stderr, " pinned=%d,", req->pinned );
     fprintf( stderr, " name=" );
     dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_set_atom_information_request( const struct set_atom_information_request *req )
+{
+    fprintf( stderr, " table=%p,", req->table );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " pinned=%d", req->pinned );
+}
+
+static void dump_empty_atom_table_request( const struct empty_atom_table_request *req )
+{
+    fprintf( stderr, " table=%p,", req->table );
+    fprintf( stderr, " if_pinned=%d", req->if_pinned );
 }
 
 static void dump_init_atom_table_request( const struct init_atom_table_request *req )
 {
     fprintf( stderr, " entries=%d", req->entries );
+}
+
+static void dump_init_atom_table_reply( const struct init_atom_table_reply *req )
+{
+    fprintf( stderr, " table=%p", req->table );
 }
 
 static void dump_get_msg_queue_request( const struct get_msg_queue_request *req )
@@ -2885,7 +2904,9 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_add_atom_request,
     (dump_func)dump_delete_atom_request,
     (dump_func)dump_find_atom_request,
-    (dump_func)dump_get_atom_name_request,
+    (dump_func)dump_get_atom_information_request,
+    (dump_func)dump_set_atom_information_request,
+    (dump_func)dump_empty_atom_table_request,
     (dump_func)dump_init_atom_table_request,
     (dump_func)dump_get_msg_queue_request,
     (dump_func)dump_set_queue_mask_request,
@@ -3078,8 +3099,10 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_add_atom_reply,
     (dump_func)0,
     (dump_func)dump_find_atom_reply,
-    (dump_func)dump_get_atom_name_reply,
+    (dump_func)dump_get_atom_information_reply,
     (dump_func)0,
+    (dump_func)0,
+    (dump_func)dump_init_atom_table_reply,
     (dump_func)dump_get_msg_queue_reply,
     (dump_func)dump_set_queue_mask_reply,
     (dump_func)dump_get_queue_status_reply,
@@ -3271,7 +3294,9 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "add_atom",
     "delete_atom",
     "find_atom",
-    "get_atom_name",
+    "get_atom_information",
+    "set_atom_information",
+    "empty_atom_table",
     "init_atom_table",
     "get_msg_queue",
     "set_queue_mask",

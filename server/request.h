@@ -216,7 +216,9 @@ DECL_HANDLER(get_selector_entry);
 DECL_HANDLER(add_atom);
 DECL_HANDLER(delete_atom);
 DECL_HANDLER(find_atom);
-DECL_HANDLER(get_atom_name);
+DECL_HANDLER(get_atom_information);
+DECL_HANDLER(set_atom_information);
+DECL_HANDLER(empty_atom_table);
 DECL_HANDLER(init_atom_table);
 DECL_HANDLER(get_msg_queue);
 DECL_HANDLER(set_queue_mask);
@@ -412,7 +414,9 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_add_atom,
     (req_handler)req_delete_atom,
     (req_handler)req_find_atom,
-    (req_handler)req_get_atom_name,
+    (req_handler)req_get_atom_information,
+    (req_handler)req_set_atom_information,
+    (req_handler)req_empty_atom_table,
     (req_handler)req_init_atom_table,
     (req_handler)req_get_msg_queue,
     (req_handler)req_set_queue_mask,

@@ -1990,7 +1990,7 @@ struct get_selector_entry_reply
 struct add_atom_request
 {
     struct request_header __header;
-    int           local;
+    obj_handle_t  table;
     /* VARARG(name,unicode_str); */
 };
 struct add_atom_reply
@@ -2004,8 +2004,8 @@ struct add_atom_reply
 struct delete_atom_request
 {
     struct request_header __header;
+    obj_handle_t  table;
     atom_t        atom;
-    int           local;
 };
 struct delete_atom_reply
 {
@@ -2017,7 +2017,7 @@ struct delete_atom_reply
 struct find_atom_request
 {
     struct request_header __header;
-    int          local;
+    obj_handle_t table;
     /* VARARG(name,unicode_str); */
 };
 struct find_atom_reply
@@ -2028,17 +2028,45 @@ struct find_atom_reply
 
 
 
-struct get_atom_name_request
+struct get_atom_information_request
 {
     struct request_header __header;
+    obj_handle_t table;
     atom_t       atom;
-    int          local;
 };
-struct get_atom_name_reply
+struct get_atom_information_reply
 {
     struct reply_header __header;
     int          count;
+    int          pinned;
     /* VARARG(name,unicode_str); */
+};
+
+
+
+struct set_atom_information_request
+{
+    struct request_header __header;
+    obj_handle_t table;
+    atom_t       atom;
+    int          pinned;
+};
+struct set_atom_information_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct empty_atom_table_request
+{
+    struct request_header __header;
+    obj_handle_t table;
+    int          if_pinned;
+};
+struct empty_atom_table_reply
+{
+    struct reply_header __header;
 };
 
 
@@ -2051,6 +2079,7 @@ struct init_atom_table_request
 struct init_atom_table_reply
 {
     struct reply_header __header;
+    obj_handle_t table;
 };
 
 
@@ -3448,7 +3477,9 @@ enum request
     REQ_add_atom,
     REQ_delete_atom,
     REQ_find_atom,
-    REQ_get_atom_name,
+    REQ_get_atom_information,
+    REQ_set_atom_information,
+    REQ_empty_atom_table,
     REQ_init_atom_table,
     REQ_get_msg_queue,
     REQ_set_queue_mask,
@@ -3645,7 +3676,9 @@ union generic_request
     struct add_atom_request add_atom_request;
     struct delete_atom_request delete_atom_request;
     struct find_atom_request find_atom_request;
-    struct get_atom_name_request get_atom_name_request;
+    struct get_atom_information_request get_atom_information_request;
+    struct set_atom_information_request set_atom_information_request;
+    struct empty_atom_table_request empty_atom_table_request;
     struct init_atom_table_request init_atom_table_request;
     struct get_msg_queue_request get_msg_queue_request;
     struct set_queue_mask_request set_queue_mask_request;
@@ -3840,7 +3873,9 @@ union generic_reply
     struct add_atom_reply add_atom_reply;
     struct delete_atom_reply delete_atom_reply;
     struct find_atom_reply find_atom_reply;
-    struct get_atom_name_reply get_atom_name_reply;
+    struct get_atom_information_reply get_atom_information_reply;
+    struct set_atom_information_reply set_atom_information_reply;
+    struct empty_atom_table_reply empty_atom_table_reply;
     struct init_atom_table_reply init_atom_table_reply;
     struct get_msg_queue_reply get_msg_queue_reply;
     struct set_queue_mask_reply set_queue_mask_reply;
@@ -3919,6 +3954,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 172
+#define SERVER_PROTOCOL_VERSION 173
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

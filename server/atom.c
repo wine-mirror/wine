@@ -31,6 +31,7 @@
 #include "request.h"
 #include "object.h"
 #include "process.h"
+#include "handle.h"
 
 #define HASH_SIZE     37
 #define MIN_HASH_SIZE 4
@@ -45,6 +46,7 @@ struct atom_entry
     struct atom_entry *next;   /* hash table list */
     struct atom_entry *prev;   /* hash table list */
     int                count;  /* reference count */
+    int                pinned; /* whether the atom is pinned or not */
     int                hash;   /* string hash */
     atom_t             atom;   /* atom handle */
     WCHAR              str[1]; /* atom string */
@@ -185,8 +187,9 @@ static void atom_table_dump( struct object *obj, int verbose )
     {
         struct atom_entry *entry = table->handles[i];
         if (!entry) continue;
-        fprintf( stderr, "  %04x: ref=%d hash=%d \"", entry->atom, entry->count, entry->hash );
-        dump_strW( entry->str, strlenW(entry->str), stderr, "\"\"");
+        fprintf( stderr, "  %04x: ref=%d pinned=%c hash=%d \"", 
+                 entry->atom, entry->count, entry->pinned ? 'Y' : 'N', entry->hash );
+        dump_strW( entry->str, strlenW( entry->str ), stderr, "\"\"");
         fprintf( stderr, "\"\n" );
     }
 }
@@ -249,6 +252,7 @@ static atom_t add_atom( struct atom_table *table, const WCHAR *str )
             if ((entry->next = table->entries[hash])) entry->next->prev = entry;
             table->entries[hash] = entry;
             entry->count = 1;
+            entry->pinned = 0;
             entry->hash  = hash;
             strcpyW( entry->str, str );
         }
@@ -302,53 +306,128 @@ void release_global_atom( atom_t atom )
     if (atom >= MIN_STR_ATOM) delete_atom( global_table, atom );
 }
 
+static struct atom_table* get_table( obj_handle_t h )
+{
+    struct atom_table *table;
+
+    if (h)
+    {
+        table = (struct atom_table*)get_handle_obj( current->process, h,
+                                                    0, &atom_table_ops );
+    }
+    else
+    {
+        if (!global_table && !(global_table = create_table( HASH_SIZE )))
+            return NULL;
+        table = (struct atom_table*)grab_object( global_table );
+    }
+    return table;
+}
+
 /* add a global atom */
 DECL_HANDLER(add_atom)
 {
-    struct atom_table **table_ptr = req->local ? &current->process->atom_table : &global_table;
-
-    if (!*table_ptr) *table_ptr = create_table(0);
-    if (*table_ptr)
+    struct atom_table *table = get_table( req->table );
+    if (table)
     {
         const WCHAR *name = copy_request_name();
-        if (name) reply->atom = add_atom( *table_ptr, name );
+        if (name) reply->atom = add_atom( table, name );
+        release_object( table );
     }
 }
 
 /* delete a global atom */
 DECL_HANDLER(delete_atom)
 {
-    delete_atom( req->local ? current->process->atom_table : global_table, req->atom );
+    struct atom_table *table = get_table( req->table );
+    if (table)
+    {
+        delete_atom( table, req->atom );
+        release_object( table );
+    }
 }
 
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
-    const WCHAR *name = copy_request_name();
-    if (name)
-        reply->atom = find_atom( req->local ? current->process->atom_table : global_table, name );
-}
-
-/* get global atom name */
-DECL_HANDLER(get_atom_name)
-{
-    struct atom_entry *entry;
-    size_t len = 0;
-
-    reply->count = -1;
-    if ((entry = get_atom_entry( req->local ? current->process->atom_table : global_table,
-                                 req->atom )))
+    struct atom_table *table = get_table( req->table );
+    if (table)
     {
-        reply->count = entry->count;
-        len = strlenW( entry->str ) * sizeof(WCHAR);
-        if (len <= get_reply_max_size()) set_reply_data( entry->str, len );
-        else set_error( STATUS_BUFFER_OVERFLOW );
+        const WCHAR *name = copy_request_name();
+        if (name)
+            reply->atom = find_atom( table, name );
+        release_object( table );
     }
 }
 
-/* init the process atom table */
+/* get global atom name */
+DECL_HANDLER(get_atom_information)
+{
+    struct atom_table *table = get_table( req->table );
+    if (table)
+    {
+        struct atom_entry *entry;
+
+        if ((entry = get_atom_entry( table, req->atom )))
+        {
+            size_t len = strlenW( entry->str ) * sizeof(WCHAR);
+            if (len <= get_reply_max_size()) set_reply_data( entry->str, len );
+            else set_error( STATUS_BUFFER_OVERFLOW );
+            reply->count = entry->count;
+            reply->pinned = entry->pinned;
+        }
+        else reply->count = -1;
+        release_object( table );
+    }
+}
+
+/* set global atom name */
+DECL_HANDLER(set_atom_information)
+{
+    struct atom_table *table = get_table( req->table );
+    if (table)
+    {
+        struct atom_entry *entry;
+
+        if ((entry = get_atom_entry( table, req->atom )))
+        {
+            if (req->pinned) entry->pinned = 1;
+        }
+        release_object( table );
+    }
+}
+
+/* init a (local) atom table */
 DECL_HANDLER(init_atom_table)
 {
-    if (!current->process->atom_table)
-        current->process->atom_table = create_table( req->entries );
+    struct atom_table* table;
+
+    table = create_table( req->entries );
+    reply->table = alloc_handle( current->process, table, 0, FALSE);
+    release_object( table );
+}
+
+/* set global atom name */
+DECL_HANDLER(empty_atom_table)
+{
+    struct atom_table *table = get_table( req->table );
+    if (table)
+    {
+        int i;
+        struct atom_entry *entry;
+
+        for (i = 0; i <= table->last; i++)
+        {
+            entry = table->handles[i];
+            if (entry && (!entry->pinned || req->if_pinned))
+            {
+                if (entry->next) entry->next->prev = entry->prev;
+                if (entry->prev) entry->prev->next = entry->next;
+                else table->entries[entry->hash] = entry->next;
+                table->handles[i] = NULL;
+                free( entry );
+            }
+        }
+        release_object( table );
+    }
 }

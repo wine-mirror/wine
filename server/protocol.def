@@ -1418,7 +1418,7 @@ enum char_info_mode
 
 /* Add an atom */
 @REQ(add_atom)
-    int           local;       /* is atom in local process table? */
+    obj_handle_t  table;       /* which table to add atom to */
     VARARG(name,unicode_str);  /* atom name */
 @REPLY
     atom_t        atom;        /* resulting atom */
@@ -1427,33 +1427,51 @@ enum char_info_mode
 
 /* Delete an atom */
 @REQ(delete_atom)
+    obj_handle_t  table;       /* which table to delete atom from */
     atom_t        atom;        /* atom handle */
-    int           local;       /* is atom in local process table? */
 @END
 
 
 /* Find an atom */
 @REQ(find_atom)
-    int          local;        /* is atom in local process table? */
+    obj_handle_t table;        /* which table to find atom from */
     VARARG(name,unicode_str);  /* atom name */
 @REPLY
     atom_t       atom;         /* atom handle */
 @END
 
 
-/* Get an atom name */
-@REQ(get_atom_name)
+/* Get information about an atom */
+@REQ(get_atom_information)
+    obj_handle_t table;        /* which table to find atom from */
     atom_t       atom;         /* atom handle */
-    int          local;        /* is atom in local process table? */
 @REPLY
     int          count;        /* atom lock count */
+    int          pinned;       /* whether the atom has been pinned */
     VARARG(name,unicode_str);  /* atom name */
 @END
 
 
-/* Init the process atom table */
+/* Set information about an atom */
+@REQ(set_atom_information)
+    obj_handle_t table;        /* which table to find atom from */
+    atom_t       atom;         /* atom handle */
+    int          pinned;       /* whether to bump atom information */
+@END
+
+
+/* Empty an atom table */
+@REQ(empty_atom_table)
+    obj_handle_t table;        /* which table to find atom from */
+    int          if_pinned;    /* whether to delete pinned atoms */
+@END
+
+
+/* Init an atom table */
 @REQ(init_atom_table)
-    int          entries;      /* number of entries */
+    int          entries;      /* number of entries (only for local) */
+@REPLY
+    obj_handle_t table;        /* handle to the atom table */
 @END
 
 
