@@ -1,8 +1,0 @@
-<!doctype Article PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-
-<!entity faq SYSTEM "faq.sgml">
-]>
-
-<article class="faq" id="index">
-&faq;
-</article>

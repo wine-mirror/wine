@@ -19,10 +19,8 @@ of the Wine source (which contains this file), run:
 ./tools/wineinstall
 
 Run programs as "wine [options] program".  For more information and
-problem resolution, read the rest of this file, the Wine man page,
-the files in the documentation directory of the Wine source
-(see "DOCUMENTATION"), and especially the wealth of information
-found at http://www.winehq.org.
+problem resolution, read the rest of this file, the Wine man page, and
+especially the wealth of information found at http://www.winehq.org.
 
 3. REQUIREMENTS
 
@@ -90,9 +88,6 @@ Optional support libraries:
   If you want CUPS printing support, please install both cups and cups-devel
   packages.
 
-For requirements in case you intend to build the documentation yourself,
-see "DOCUMENTATION" section.
-
 4. COMPILATION
 
 In case you chose to not use wineinstall, run the following commands
@@ -129,17 +124,8 @@ Don't forget to uninstall any conflicting previous Wine installation
 first.  Try either "dpkg -r wine" or "rpm -e wine" or "make uninstall"
 before installing.
 
-If you want to read the documentation supplied with the Wine source,
-see the "DOCUMENTATION" section.
-
-Wine requires a configuration file named named "config" in your
-~/.wine directory. The format of this file is explained in the config file
-man page (documentation/wine.conf.man).
-The file documentation/samples/config contains an example configuration file
-which has to be adapted and copied to the location mentioned above.
-
-See the Support area at http://www.winehq.org/ for further
-configuration hints.
+See the Support area at http://www.winehq.org/ for configuration
+hints.
 
 In case of library loading errors
 (e.g. "Error while loading shared libraries: libntdll.so"), make sure
@@ -180,19 +166,7 @@ as they launch Explorer somehow. This particular corruption (!$!$!$!$.pfr)
 can at least partially be fixed by using
 http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
 
-7. DOCUMENTATION
-
-Some documentation (various Wine Guides etc.) can be found in the
-documentation/ directory (apart from also being available on WineHQ).
-
-If you want to process the SGML files in there, then you can run "make doc"
-in the documentation/ directory.
-Doing so requires the sgml tools package (for db2html, db2ps, db2pdf) named:
-Debian:		docbook-utils
-Mandrake:	sgml-tools-A.B.C-DDmdk
-SuSE:		docbktls-A.BB.C-DD
-
-8. GETTING MORE INFORMATION
+7. GETTING MORE INFORMATION
 
 WWW:	A great deal of information about Wine is available from WineHQ at
 	http://www.winehq.org/ : various Wine Guides, application database,

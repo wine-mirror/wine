@@ -123,10 +123,6 @@ AC_SUBST(LINT)
 AC_SUBST(LINTFLAGS)
 
 dnl Check for various programs
-AC_CHECK_PROGS(DB2HTML, docbook2html db2html, false)
-AC_CHECK_PROGS(DB2PDF, docbook2pdf db2pdf, false)
-AC_CHECK_PROGS(DB2PS, docbook2ps db2ps, false)
-AC_CHECK_PROGS(DB2TXT, docbook2txt db2txt, false)
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
 
 dnl **** Check for some libraries ****

@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT FONTFORGE LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPELIBS FREETYPEINCL FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDLIBWINEFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS WINE_BINARIES MAIN_BINARY LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL DLLDEFS build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX CPPBIN ac_ct_CPPBIN TOOLSDIR CPP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS LEX LEXLIB LEX_OUTPUT_ROOT XLEX BISON AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN EGREP LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS FONTFORGE LIBPTHREAD XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS GLUT_LIBS GLUT32FILES NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPELIBS FREETYPEINCL FONTSSUBDIRS ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLLFLAGS LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS LDLIBWINEFLAGS COREFOUNDATIONLIB IOKITLIB CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS SOCKETLIBS WINE_BINARIES MAIN_BINARY LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -5589,170 +5589,6 @@ then
   fi
 
 
-
-for ac_prog in docbook2html db2html
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_DB2HTML+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$DB2HTML"; then
-  ac_cv_prog_DB2HTML="$DB2HTML" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DB2HTML="$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-DB2HTML=$ac_cv_prog_DB2HTML
-if test -n "$DB2HTML"; then
-  echo "$as_me:$LINENO: result: $DB2HTML" >&5
-echo "${ECHO_T}$DB2HTML" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$DB2HTML" && break
-done
-test -n "$DB2HTML" || DB2HTML="false"
-
-for ac_prog in docbook2pdf db2pdf
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_DB2PDF+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$DB2PDF"; then
-  ac_cv_prog_DB2PDF="$DB2PDF" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DB2PDF="$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-DB2PDF=$ac_cv_prog_DB2PDF
-if test -n "$DB2PDF"; then
-  echo "$as_me:$LINENO: result: $DB2PDF" >&5
-echo "${ECHO_T}$DB2PDF" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$DB2PDF" && break
-done
-test -n "$DB2PDF" || DB2PDF="false"
-
-for ac_prog in docbook2ps db2ps
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_DB2PS+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$DB2PS"; then
-  ac_cv_prog_DB2PS="$DB2PS" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DB2PS="$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-DB2PS=$ac_cv_prog_DB2PS
-if test -n "$DB2PS"; then
-  echo "$as_me:$LINENO: result: $DB2PS" >&5
-echo "${ECHO_T}$DB2PS" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$DB2PS" && break
-done
-test -n "$DB2PS" || DB2PS="false"
-
-for ac_prog in docbook2txt db2txt
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_DB2TXT+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$DB2TXT"; then
-  ac_cv_prog_DB2TXT="$DB2TXT" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DB2TXT="$ac_prog"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-DB2TXT=$ac_cv_prog_DB2TXT
-if test -n "$DB2TXT"; then
-  echo "$as_me:$LINENO: result: $DB2TXT" >&5
-echo "${ECHO_T}$DB2TXT" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  test -n "$DB2TXT" && break
-done
-test -n "$DB2TXT" || DB2TXT="false"
 
 for ac_prog in fontforge
 do
@@ -21068,10 +20904,6 @@ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
 s,@INSTALL_DATA@,$INSTALL_DATA,;t t
 s,@LINT@,$LINT,;t t
 s,@LINTFLAGS@,$LINTFLAGS,;t t
-s,@DB2HTML@,$DB2HTML,;t t
-s,@DB2PDF@,$DB2PDF,;t t
-s,@DB2PS@,$DB2PS,;t t
-s,@DB2TXT@,$DB2TXT,;t t
 s,@FONTFORGE@,$FONTFORGE,;t t
 s,@LIBPTHREAD@,$LIBPTHREAD,;t t
 s,@XLIB@,$XLIB,;t t

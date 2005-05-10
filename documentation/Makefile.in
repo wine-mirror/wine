@@ -3,109 +3,17 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-DB2HTML   = @DB2HTML@
-DB2PDF    = @DB2PDF@
-DB2PS     = @DB2PS@
-DB2TXT    = @DB2TXT@
 
 EXTRASUBDIRS = samples
 
-WINE_USER_SRCS = \
-	bugs.sgml \
-	configuring.sgml \
-	fonts.sgml \
-	getting.sgml \
-	glossary.sgml \
-	introduction.sgml \
-	printing.sgml \
-	registry.sgml \
-	running.sgml
-
-WINE_DEVEL_SRCS = \
-	address-space.sgml \
-	architecture.sgml \
-	ddraw.sgml \
-	debugger.sgml \
-	debugging.sgml \
-	documentation.sgml \
-	multimedia.sgml \
-	ole.sgml \
-	opengl.sgml \
-	patches.sgml \
-	testing.sgml \
-	winedev-coding.sgml \
-	winedev-graphical.sgml \
-	winedev-kernel.sgml \
-	winedev-otherdebug.sgml \
-	winedev-windowing.sgml
-
-WINELIB_USER_SRCS = \
-	winelib-bindlls.sgml \
-	winelib-intro.sgml \
-	winelib-mfc.sgml \
-	winelib-porting.sgml \
-	winelib-toolkit.sgml
-
-WINE_FAQ_SRCS = \
-	faq.sgml
-
 MAN_TARGETS = wine.man
-
-ALLBOOKS = \
-	wine-devel \
-	wine-user \
-	winelib-user
 
 all: $(MAN_TARGETS)
 
 @MAKE_RULES@
 
-everything: $(MAN_TARGETS) doc
-doc: html pdf ps txt
-html: $(ALLBOOKS:%=%.html) wine-faq.html
-pdf: $(ALLBOOKS:%=%.pdf)
-ps: $(ALLBOOKS:%=%.ps)
-txt: $(ALLBOOKS:%=%.txt)
-
-.PHONY: everything doc html pdf ps dist
-
-.SUFFIXES: .sgml .html .pdf .ps .txt
-
-.sgml.html:
-	$(DB2HTML) -u $<
-
-.sgml.pdf:
-	$(DB2PDF) $<
-
-.sgml.ps:
-	$(DB2PS) $<
-
-.sgml.txt:
-	$(DB2TXT) $<
-
-wine-devel.pdf wine-devel.ps wine-devel.html wine-devel.txt: $(WINE_DEVEL_SRCS)
-wine-user.pdf wine-user.ps wine-user.html wine-user.txt: $(WINE_USER_SRCS)
-wine-faq.pdf wine-faq.ps wine-faq.html wine-faq.txt: $(WINE_FAQ_SRCS)
-winelib-user.pdf winelib-user.ps winelib-user.html winelib-user.txt: $(WINELIB_USER_SRCS)
-
 wine.man: wine.man.in
 	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || ($(RM) $@ && false)
-
-# Rules for distribution tarballs of formatted docs
-
-dist: wine-doc-ps.tar.gz wine-doc-pdf.tar.gz wine-doc-html.tar.gz wine-doc-txt.tar.gz wine-faq.txt
-
-wine-doc-ps.tar.gz: $(ALLBOOKS:%=%.ps)
-	tar cf - $(ALLBOOKS:%=%.ps) | gzip -9 > $@ || ($(RM) $@ && false)
-
-wine-doc-pdf.tar.gz: $(ALLBOOKS:%=%.pdf)
-	tar cf - $(ALLBOOKS:%=%.pdf) | gzip -9 > $@ || ($(RM) $@ && false)
-
-wine-doc-html.tar.gz: $(ALLBOOKS:%=%.html)
-	tar cf - $(ALLBOOKS:%=%.html) | gzip -9 > $@ || ($(RM) $@ && false)
-
-wine-doc-txt.tar.gz: $(ALLBOOKS:%=%.txt)
-	tar cf - $(ALLBOOKS:%=%.txt) | gzip -9 > $@ || ($(RM) $@ && false)
 
 install:: $(MAN_TARGETS)
 	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext) $(mandir)/man$(conf_manext) $(mandir)/man$(api_manext)
@@ -120,8 +28,7 @@ install-api-man::
 	for i in $(SRCDIR)/man$(api_manext)/*; do $(INSTALL_DATA) $$i $(mandir)/man$(api_manext); done
 
 clean::
-	$(RM) *.aux *.dvi *.out *.tex *.log wine-doc-*.tar.gz wine-faq.html wine-faq.txt $(MAN_TARGETS)
-	$(RM) $(ALLBOOKS:%=%.ps) $(ALLBOOKS:%=%.pdf) $(ALLBOOKS:%=%.html) $(ALLBOOKS:%=%.txt)
-	$(RM) -r html api-guide man$(api_manext) *.junk DBTOHTML_OUTPUT_DIR*
+	$(RM) $(MAN_TARGETS)
+	$(RM) -r html api-guide man$(api_manext)
 
 ### Dependencies:
