@@ -576,10 +576,12 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
 
     HRESULT hr = S_OK;
 
-    TRACE ("(%p)->(cidl=%d apidl=%p mask=0x%08lx)\n", This, cidl, apidl,
-     *rgfInOut);
+    TRACE ("(%p)->(cidl=%d apidl=%p mask=%p (0x%08lx))\n", This, cidl, apidl,
+     rgfInOut, rgfInOut ? *rgfInOut : 0);
 
-    if ((!cidl) || (!apidl) || (!rgfInOut))
+    if (!rgfInOut)
+        return E_INVALIDARG;
+    if (cidl && !apidl)
         return E_INVALIDARG;
 
     if (*rgfInOut == 0)
@@ -591,6 +593,8 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
         apidl++;
         cidl--;
     }
+    /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
+    *rgfInOut &= ~SFGAO_VALIDATE;
 
     TRACE ("-- result=0x%08lx\n", *rgfInOut);
 
