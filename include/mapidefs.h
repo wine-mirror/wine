@@ -58,8 +58,13 @@ typedef CY CURRENCY;
 #define _FILETIME_
 typedef struct _FILETIME
 {
+#ifdef WORDS_BIGENDIAN
+    DWORD dwHighDateTime;
+    DWORD dwLowDateTime;
+#else
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
+#endif
 } FILETIME, *PFILETIME, *LPFILETIME;
 #endif
 
