@@ -66,6 +66,7 @@
 @ stdcall NtAcceptConnectPort(ptr long ptr long long ptr)
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr)
 @ stub NtAccessCheckAndAuditAlarm
+@ stdcall NtAddAtom(ptr long ptr)
 @ stdcall NtAdjustGroupsToken(long long ptr long ptr ptr)
 @ stdcall NtAdjustPrivilegesToken(long long long long long long)
 @ stub NtAlertResumeThread
@@ -103,6 +104,7 @@
 @ stub NtCreateToken
 @ stdcall NtCurrentTeb()
 @ stdcall NtDelayExecution(long ptr)
+@ stdcall NtDeleteAtom(long)
 @ stdcall NtDeleteFile(ptr)
 @ stdcall NtDeleteKey(long)
 @ stdcall NtDeleteValueKey(long ptr)
@@ -114,6 +116,7 @@
 @ stdcall NtEnumerateKey (long long long long long long)
 @ stdcall NtEnumerateValueKey (long long long long long long)
 @ stub NtExtendSection
+@ stdcall NtFindAtom(ptr long ptr)
 @ stdcall NtFlushBuffersFile(long ptr)
 @ stdcall NtFlushInstructionCache(long ptr long)
 @ stdcall NtFlushKey(long)
@@ -169,6 +172,7 @@
 @ stub NtQueryEaFile
 @ stdcall NtQueryEvent(long long ptr long ptr)
 @ stdcall NtQueryFullAttributesFile(ptr ptr)
+@ stdcall NtQueryInformationAtom(long long ptr ptr)
 @ stdcall NtQueryInformationFile(long ptr ptr long long)
 @ stub NtQueryInformationPort
 @ stdcall NtQueryInformationProcess(long long ptr long ptr)
@@ -292,6 +296,7 @@
 @ stdcall RtlAddAccessDeniedAceEx(ptr long long long ptr)
 @ stdcall RtlAddAce(ptr long long ptr long)
 @ stub RtlAddActionToRXact
+@ stdcall RtlAddAtomToAtomTable(ptr wstr ptr)
 @ stub RtlAddAttributeActionToRXact
 @ stub RtlAddAuditAccessAce
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
@@ -341,6 +346,7 @@
 @ stdcall RtlCopyUnicodeString(ptr ptr)
 @ stdcall RtlCreateAcl(ptr long long)
 @ stub RtlCreateAndSetSD
+@ stdcall RtlCreateAtomTable(long ptr)
 @ stdcall RtlCreateEnvironment(long ptr)
 @ stdcall RtlCreateHeap(long ptr long long ptr ptr)
 @ stdcall RtlCreateProcessParameters(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
@@ -364,7 +370,7 @@
 @ stub RtlDefaultNpAcl
 @ stub RtlDelete
 @ stdcall RtlDeleteAce(ptr long)
-@ stub RtlDeleteAtomFromAtomTable
+@ stdcall RtlDeleteAtomFromAtomTable(ptr long)
 @ stdcall RtlDeleteCriticalSection(ptr)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteElementGenericTableAvl
@@ -374,6 +380,7 @@
 @ stdcall RtlDeleteRegistryValue(long ptr ptr)
 @ stdcall RtlDeleteResource(ptr)
 @ stdcall RtlDeleteSecurityObject(long)
+@ stdcall RtlDestroyAtomTable(ptr)
 @ stdcall RtlDestroyEnvironment(ptr)
 @ stdcall RtlDestroyHandleTable(ptr)
 @ stdcall RtlDestroyHeap(long)
@@ -387,6 +394,7 @@
 @ stdcall RtlDowncaseUnicodeString(ptr ptr long)
 @ stdcall RtlDumpResource(ptr)
 @ stdcall RtlDuplicateUnicodeString(long ptr ptr)
+@ stdcall RtlEmptyAtomTable(ptr long)
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
 @ stdcall RtlEnlargedUnsignedDivide(long long long ptr)
 @ stdcall -ret64 RtlEnlargedUnsignedMultiply(long long)
@@ -507,6 +515,7 @@
 @ stdcall RtlLengthSid(ptr)
 @ stdcall RtlLocalTimeToSystemTime(ptr ptr)
 @ stdcall RtlLockHeap(long)
+@ stdcall RtlLookupAtomInAtomTable(ptr wstr ptr)
 @ stub RtlLookupElementGenericTable
 @ stdcall RtlMakeSelfRelativeSD(ptr ptr ptr)
 @ stdcall RtlMapGenericMask(long ptr)
@@ -527,10 +536,11 @@
 @ stdcall RtlOemToUnicodeN(ptr long ptr ptr long)
 @ stdcall RtlOpenCurrentUser(long ptr)
 @ stub RtlPcToFileHeader
+@ stdcall RtlPinAtomInAtomTable(ptr long)
 @ stdcall RtlPrefixString(ptr ptr long)
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
 @ stub RtlProtectHeap
-@ stub RtlQueryAtomInAtomTable
+@ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr)
 @ stub RtlQueryDepthSList
 @ stdcall RtlQueryEnvironmentVariable_U(ptr ptr ptr)
 @ stub RtlQueryHeapInformation
@@ -660,6 +670,7 @@
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub ZwAccessCheckAndAuditAlarm
+@ stdcall ZwAddAtom(ptr long ptr) NtAddAtom
 @ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustGroupsToken
 @ stdcall ZwAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
 @ stub ZwAlertResumeThread
@@ -696,6 +707,7 @@
 @ stdcall ZwCreateTimer(ptr long ptr long) NtCreateTimer
 @ stub ZwCreateToken
 @ stdcall ZwDelayExecution(long ptr) NtDelayExecution
+@ stdcall ZwDeleteAtom(long) NtDeleteAtom
 @ stdcall ZwDeleteFile(ptr) NtDeleteFile
 @ stdcall ZwDeleteKey(long) NtDeleteKey
 @ stdcall ZwDeleteValueKey(long ptr) NtDeleteValueKey
@@ -707,6 +719,7 @@
 @ stdcall ZwEnumerateKey(long long long ptr long ptr) NtEnumerateKey
 @ stdcall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 @ stub ZwExtendSection
+@ stdcall ZwFindAtom(ptr long ptr) NtFindAtom
 @ stdcall ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
 @ stdcall ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
 @ stdcall ZwFlushKey(long) NtFlushKey
@@ -758,6 +771,7 @@
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
 @ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
+@ stdcall ZwQueryInformationAtom(long long ptr ptr) NtQueryInformationAtom
 @ stdcall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 @ stub ZwQueryInformationPort
 @ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
@@ -973,15 +987,9 @@
 @ cdecl wcstol(wstr ptr long) NTDLL_wcstol
 @ cdecl wcstombs(ptr ptr long) NTDLL_wcstombs
 @ cdecl wcstoul(wstr ptr long) NTDLL_wcstoul
-@ stub NtAddAtom
-@ stub NtDeleteAtom
-@ stub NtFindAtom
 @ stub NtReadFileScatter
 @ stdcall NtSignalAndWaitForSingleObject(long long long ptr)
 @ stub NtWriteFileGather
-@ stub RtlAddAtomToAtomTable
-@ stub RtlCreateAtomTable
-@ stub RtlLookupAtomInAtomTable
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ stub RtlEnumerateProperties
 @ stub RtlSetPropertyClassId

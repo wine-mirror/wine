@@ -8,6 +8,7 @@ IMPORTLIB = libntdll.$(IMPLIBEXT)
 EXTRALIBS = $(LIBUNICODE) @IOKITLIB@
 
 C_SRCS = \
+	atom.c \
 	cdrom.c \
 	critsection.c \
 	debugbuffer.c \
