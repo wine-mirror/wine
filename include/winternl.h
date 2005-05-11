@@ -898,6 +898,7 @@ typedef struct _RTL_RWLOCK {
 } RTL_RWLOCK, *LPRTL_RWLOCK;
 
 /* System Information Class 0x00 */
+
 typedef struct _SYSTEM_BASIC_INFORMATION {
 #ifdef __WINESRC__
     DWORD dwUnknown1;
@@ -920,14 +921,15 @@ typedef struct _SYSTEM_BASIC_INFORMATION {
 #endif
 } SYSTEM_BASIC_INFORMATION, *PSYSTEM_BASIC_INFORMATION;
 
-/* CPU Information Class 0x01 */
-typedef struct {
+/* System Information Class 0x01 */
+
+typedef struct _SYSTEM_CPU_INFORMATION {
     WORD Architecture;
     WORD Level;
     WORD Revision;       /* combination of CPU model and stepping */
     WORD Reserved;       /* always zero */
     DWORD FeatureSet;    /* see bit flags below */
-} SYSTEM_CPU_INFORMATION;
+} SYSTEM_CPU_INFORMATION, *PSYSTEM_CPU_INFORMATION;
 
 /* definitions of bits in the Feature set for the x86 processors */
 #define CPU_FEATURE_VME    0x00000005   /* Virtual 86 Mode Extensions */
@@ -949,6 +951,52 @@ typedef struct {
 #define CPU_FEATURE_DS     0x00020000   /* Debug Store */
 #define CPU_FEATURE_HTT    0x00040000   /* Hyper Threading Technology */
 
+/* System Information Class 0x02 */
+
+typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
+    BYTE Reserved1[312];
+} SYSTEM_PERFORMANCE_INFORMATION, *PSYSTEM_PERFORMANCE_INFORMATION;
+
+/* System Information Class 0x03 */
+
+typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
+#ifdef __WINESRC__
+    LARGE_INTEGER liKeBootTime;
+    LARGE_INTEGER liKeSystemTime;
+    LARGE_INTEGER liExpTimeZoneBias;
+    ULONG uCurrentTimeZoneId;
+    DWORD dwReserved;
+#else
+    BYTE Reserved1[48];
+#endif
+} SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION; /* was SYSTEM_TIME_INFORMATION */
+
+/* System Information Class 0x08 */
+
+typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
+#ifdef __WINESRC__
+    LARGE_INTEGER liIdleTime;
+    DWORD dwSpare[10];
+#else
+    LARGE_INTEGER IdleTime;
+    LARGE_INTEGER KernelTime;
+    LARGE_INTEGER UserTime;
+    LARGE_INTEGER Reserved1[2];
+    ULONG Reserved2;
+#endif
+} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
+
+/* System Information Class 0x0b */
+
+typedef struct _SYSTEM_DRIVER_INFORMATION {
+    PVOID pvAddress;
+    DWORD dwUnknown1;
+    DWORD dwUnknown2;
+    DWORD dwEntryIndex;
+    DWORD dwUnknown3;
+    char szName[MAX_PATH + 1];
+} SYSTEM_DRIVER_INFORMATION, *PSYSTEM_DRIVER_INFORMATION;
+
 /* System Information Class 0x10 */
 
 typedef struct _SYSTEM_HANDLE_ENTRY {
@@ -966,14 +1014,21 @@ typedef struct _SYSTEM_HANDLE_INFORMATION {
 } SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
 
 /* System Information Class 0x15 */
-typedef struct {
+
+typedef struct _SYSTEM_CACHE_INFORMATION {
     ULONG CurrentSize;
     ULONG PeakSize;
     ULONG PageFaultCount;
     ULONG MinimumWorkingSet;
     ULONG MaximumWorkingSet;
     ULONG unused[4];
-} SYSTEM_CACHE_INFORMATION;
+} SYSTEM_CACHE_INFORMATION, *PSYSTEM_CACHE_INFORMATION;
+
+/* System Information Class 0x17 */
+
+typedef struct _SYSTEM_INTERRUPT_INFORMATION {
+    BYTE Reserved1[24];
+} SYSTEM_INTERRUPT_INFORMATION, *PSYSTEM_INTERRUPT_INFORMATION;
 
 typedef struct _SYSTEM_CONFIGURATION_INFO {
     union {
@@ -994,16 +1049,6 @@ typedef struct _SYSTEM_CONFIGURATION_INFO {
     WORD  ProcessorRevision;
 } SYSTEM_CONFIGURATION_INFO, *PSYSTEM_CONFIGURATION_INFO;
 
-/* System Information Class 0x0b */
-typedef struct {
-    PVOID pvAddress;
-    DWORD dwUnknown1;
-    DWORD dwUnknown2;
-    DWORD dwEntryIndex;
-    DWORD dwUnknown3;
-    char szName[MAX_PATH + 1];
-} SYSTEM_DRIVER_INFORMATION;
-
 typedef struct _SYSTEM_EXCEPTION_INFORMATION {
     BYTE Reserved1[16];
 } SYSTEM_EXCEPTION_INFORMATION, *PSYSTEM_EXCEPTION_INFORMATION;
@@ -1012,32 +1057,10 @@ typedef struct _SYSTEM_LOOKASIDE_INFORMATION {
     BYTE Reserved1[32];
 } SYSTEM_LOOKASIDE_INFORMATION, *PSYSTEM_LOOKASIDE_INFORMATION;
 
-typedef struct _SYSTEM_INTERRUPT_INFORMATION {
-    BYTE Reserved1[24];
-} SYSTEM_INTERRUPT_INFORMATION, *PSYSTEM_INTERRUPT_INFORMATION;
-
 typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION {
 	BOOLEAN  DebuggerEnabled;
 	BOOLEAN  DebuggerNotPresent;
 } SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
-
-typedef struct _SYSTEM_PERFORMANCE_INFORMATION {
-    BYTE Reserved1[312];
-} SYSTEM_PERFORMANCE_INFORMATION, *PSYSTEM_PERFORMANCE_INFORMATION;
-
-/* System Information Class 0x02 */
-typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
-#ifdef __WINESRC__
-    LARGE_INTEGER liIdleTime;
-    DWORD dwSpare[10];
-#else
-    LARGE_INTEGER IdleTime;
-    LARGE_INTEGER KernelTime;
-    LARGE_INTEGER UserTime;
-    LARGE_INTEGER Reserved1[2];
-    ULONG Reserved2;
-#endif
-} SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION, *PSYSTEM_PROCESSOR_PERFORMANCE_INFORMATION;
 
 /* System Information Class 0x05 */
 typedef struct _SYSTEM_PROCESS_INFORMATION {
@@ -1093,19 +1116,6 @@ typedef struct _SYSTEM_TIME_ADJUSTMENT {
     ULONG   TimeAdjustment;
     BOOLEAN TimeAdjustmentDisabled;
 } SYSTEM_TIME_ADJUSTMENT, *PSYSTEM_TIME_ADJUSTMENT;
-
-/* System Information Class 0x03 */
-typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
-#ifdef __WINESRC__
-    LARGE_INTEGER liKeBootTime;
-    LARGE_INTEGER liKeSystemTime;
-    LARGE_INTEGER liExpTimeZoneBias;
-    ULONG uCurrentTimeZoneId;
-    DWORD dwReserved;
-#else
-    BYTE Reserved1[48];
-#endif
-} SYSTEM_TIMEOFDAY_INFORMATION, *PSYSTEM_TIMEOFDAY_INFORMATION; /* was SYSTEM_TIME_INFORMATION */
 
 typedef struct _TIME_FIELDS
 {   CSHORT Year;
