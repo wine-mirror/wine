@@ -141,7 +141,7 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
 
     /* figure out how much space we need to allocate */
     va_start(va, fmt);
-    sz = strlenW(fmt) + 1;
+    sz = lstrlenW(fmt) + 1;
     p = fmt;
     while (*p)
     {
@@ -152,7 +152,7 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
         switch (*p)
         {
         case 's':  /* a string */
-            sz += strlenW(va_arg(va,LPCWSTR));
+            sz += lstrlenW(va_arg(va,LPCWSTR));
             break;
         case 'd':
         case 'i':  /* an integer -2147483648 seems to be longest */

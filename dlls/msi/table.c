@@ -35,8 +35,6 @@
 #include "msipriv.h"
 #include "winnls.h"
 
-#include "wine/unicode.h"
-
 #include "query.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -98,7 +96,7 @@ static LPWSTR encode_streamname(BOOL bTable, LPCWSTR in)
     LPWSTR out, p;
 
     if( !bTable )
-        count = strlenW( in )+2;
+        count = lstrlenW( in )+2;
     out = HeapAlloc( GetProcessHeap(), 0, count*sizeof(WCHAR) );
     p = out;
 
@@ -1117,11 +1115,11 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     if( !sval )
         return ERROR_INVALID_PARAMETER;
 
-    len = strlenW( tv->name ) + 2 + strlenW( sval );
+    len = lstrlenW( tv->name ) + 2 + lstrlenW( sval );
     full_name = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
-    strcpyW( full_name, tv->name );
-    strcatW( full_name, szDot );
-    strcatW( full_name, sval );
+    lstrcpyW( full_name, tv->name );
+    lstrcatW( full_name, szDot );
+    lstrcatW( full_name, sval );
 
     r = db_get_raw_stream( tv->db, full_name, stm );
     if( r )
