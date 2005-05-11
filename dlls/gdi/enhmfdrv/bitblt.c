@@ -94,7 +94,8 @@ static BOOL EMFDRV_BitBlockTransfer(
     else
         return FALSE;
 
-    GetObjectW(hBitmap, sizeof(BITMAP), &BM);
+    if(sizeof(BITMAP) != GetObjectW(hBitmap, sizeof(BITMAP), &BM))
+        return FALSE;
 
     nBPP = BM.bmPlanes * BM.bmBitsPixel;
     if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
