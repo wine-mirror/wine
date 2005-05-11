@@ -417,8 +417,8 @@
 @ stdcall GetFileType(long)
 @ stdcall GetFullPathNameA(str long ptr ptr)
 @ stdcall GetFullPathNameW(wstr long ptr ptr)
-@ stub GetGeoInfoA
-@ stub GetGeoInfoW
+@ stdcall GetGeoInfoA(long long ptr long long)
+@ stdcall GetGeoInfoW(long long ptr long long)
 @ stdcall GetHandleContext(long)
 @ stdcall GetHandleInformation(long ptr)
 @ stub GetLSCallbackTarget

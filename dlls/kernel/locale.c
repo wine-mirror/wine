@@ -3230,3 +3230,17 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
     pUILangEnumProc( value, lParam );
     return(TRUE);
 }
+
+INT WINAPI GetGeoInfoW(GEOID GeoId, GEOTYPE GeoType, LPWSTR lpGeoData, 
+                int cchData, LANGID language)
+{
+    FIXME("%ld %ld %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
+    return 0;
+}
+
+INT WINAPI GetGeoInfoA(GEOID GeoId, GEOTYPE GeoType, LPSTR lpGeoData, 
+                int cchData, LANGID language)
+{
+    FIXME("%ld %ld %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
+    return 0;
+}
