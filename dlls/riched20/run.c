@@ -466,8 +466,6 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, ME_Paragraph *para, ME_Run *run, int nLe
    * in practice
    */
   ME_GetTextExtent(c, run->strText->szData, nLen, run->style, &size);
-  assert(run->style->tm.tmAscent>0);
-  assert(run->style->tm.tmDescent>0);
   *pAscent = run->style->tm.tmAscent;
   *pDescent = run->style->tm.tmDescent;
   size.cy = *pAscent + *pDescent;
