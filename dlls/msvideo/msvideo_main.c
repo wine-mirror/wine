@@ -1132,7 +1132,7 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
 }
 
 /***********************************************************************
- *      ICSeqCompressFrameEnd   [MSVFW32.@]
+ *      ICSeqCompressFrameStart [MSVFW32.@]
  */
 BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 {
