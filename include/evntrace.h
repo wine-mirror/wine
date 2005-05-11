@@ -76,12 +76,12 @@ typedef struct _EVENT_TRACE_HEADER
         {
             ULONG ClientContext;
             ULONG Flags;
-        };
+        } DUMMYSTRUCTNAME1;
         struct
         {
             ULONG KernelTime;
             ULONG UserTime;
-        };
+        } DUMMYSTRUCTNAME2;
     } DUMMYUNIONNAME3;
 } EVENT_TRACE_HEADER, *PEVENT_TRACE_HEADER;
 
@@ -128,7 +128,7 @@ typedef struct _TRACE_LOGFILE_HEADER
             ULONG PointerSize;
             ULONG EventsLost;
             ULONG CpuSpeedInMHZ;
-        };
+        } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME1;
     LPWSTR LoggerName;
     LPWSTR LogFileName;
