@@ -1972,16 +1972,17 @@ enum message_type
 /* Set a window property */
 @REQ(set_window_property)
     user_handle_t  window;        /* handle to the window */
-    atom_t         atom;          /* property atom (high-word set if it was a string) */
-    int            string;        /* was atom a string originally? */
+    atom_t         atom;          /* property atom (if no name specified) */
     obj_handle_t   handle;        /* handle to store */
+    VARARG(name,unicode_str);     /* property name */
 @END
 
 
 /* Remove a window property */
 @REQ(remove_window_property)
     user_handle_t  window;        /* handle to the window */
-    atom_t         atom;          /* property atom */
+    atom_t         atom;          /* property atom (if no name specified) */
+    VARARG(name,unicode_str);     /* property name */
 @REPLY
     obj_handle_t   handle;        /* handle stored in property */
 @END
@@ -1990,7 +1991,8 @@ enum message_type
 /* Get a window property */
 @REQ(get_window_property)
     user_handle_t  window;        /* handle to the window */
-    atom_t         atom;          /* property atom */
+    atom_t         atom;          /* property atom (if no name specified) */
+    VARARG(name,unicode_str);     /* property name */
 @REPLY
     obj_handle_t   handle;        /* handle stored in property */
 @END

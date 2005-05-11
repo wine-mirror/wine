@@ -1764,8 +1764,18 @@ DECL_HANDLER(set_window_property)
 {
     struct window *win = get_window( req->window );
 
-    if (win) set_property( win, req->atom, req->handle,
-                           req->string ? PROP_TYPE_STRING : PROP_TYPE_ATOM );
+    if (!win) return;
+
+    if (get_req_data_size())
+    {
+        atom_t atom = add_global_atom( get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+        if (atom)
+        {
+            set_property( win, atom, req->handle, PROP_TYPE_STRING );
+            release_global_atom( atom );
+        }
+    }
+    else set_property( win, req->atom, req->handle, PROP_TYPE_ATOM );
 }
 
 
@@ -1774,7 +1784,13 @@ DECL_HANDLER(remove_window_property)
 {
     struct window *win = get_window( req->window );
     reply->handle = 0;
-    if (win) reply->handle = remove_property( win, req->atom );
+    if (win)
+    {
+        atom_t atom = req->atom;
+        if (get_req_data_size()) atom = find_global_atom( get_req_data(),
+                                                          get_req_data_size() / sizeof(WCHAR) );
+        if (atom) reply->handle = remove_property( win, atom );
+    }
 }
 
 
@@ -1783,7 +1799,13 @@ DECL_HANDLER(get_window_property)
 {
     struct window *win = get_window( req->window );
     reply->handle = 0;
-    if (win) reply->handle = get_property( win, req->atom );
+    if (win)
+    {
+        atom_t atom = req->atom;
+        if (get_req_data_size()) atom = find_global_atom( get_req_data(),
+                                                          get_req_data_size() / sizeof(WCHAR) );
+        if (atom) reply->handle = get_property( win, atom );
+    }
 }
 
 

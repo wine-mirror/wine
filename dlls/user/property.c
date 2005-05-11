@@ -28,6 +28,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wownt32.h"
+#include "wine/unicode.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
 
@@ -117,20 +118,11 @@ INT WINAPI EnumPropsW( HWND hwnd, PROPENUMPROCW func )
  */
 HANDLE WINAPI GetPropA( HWND hwnd, LPCSTR str )
 {
-    ATOM atom;
-    HANDLE ret = 0;
+    WCHAR buffer[ATOM_BUFFER_SIZE];
 
-    if (!HIWORD(str)) atom = LOWORD(str);
-    else if (!(atom = GlobalFindAtomA( str ))) return 0;
-
-    SERVER_START_REQ( get_window_property )
-    {
-        req->window = hwnd;
-        req->atom = atom;
-        if (!wine_server_call_err( req )) ret = reply->handle;
-    }
-    SERVER_END_REQ;
-    return ret;
+    if (!HIWORD(str)) return GetPropW( hwnd, (LPCWSTR)str );
+    if (!MultiByteToWideChar( CP_ACP, 0, str, -1, buffer, ATOM_BUFFER_SIZE )) return 0;
+    return GetPropW( hwnd, buffer );
 }
 
 
@@ -139,16 +131,13 @@ HANDLE WINAPI GetPropA( HWND hwnd, LPCSTR str )
  */
 HANDLE WINAPI GetPropW( HWND hwnd, LPCWSTR str )
 {
-    ATOM atom;
     HANDLE ret = 0;
-
-    if (!HIWORD(str)) atom = LOWORD(str);
-    else if (!(atom = GlobalFindAtomW( str ))) return 0;
 
     SERVER_START_REQ( get_window_property )
     {
         req->window = hwnd;
-        req->atom = atom;
+        if (!HIWORD(str)) req->atom = LOWORD(str);
+        else wine_server_add_data( req, str, strlenW(str) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
@@ -161,24 +150,11 @@ HANDLE WINAPI GetPropW( HWND hwnd, LPCWSTR str )
  */
 BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
 {
-    ATOM atom;
-    BOOL ret;
+    WCHAR buffer[ATOM_BUFFER_SIZE];
 
-    if (!HIWORD(str)) atom = LOWORD(str);
-    else if (!(atom = GlobalAddAtomA( str ))) return FALSE;
-
-    SERVER_START_REQ( set_window_property )
-    {
-        req->window = hwnd;
-        req->atom   = atom;
-        req->string = (HIWORD(str) != 0);
-        req->handle = handle;
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    if (HIWORD(str)) GlobalDeleteAtom( atom );
-    return ret;
+    if (!HIWORD(str)) return SetPropW( hwnd, (LPCWSTR)str, handle );
+    if (!MultiByteToWideChar( CP_ACP, 0, str, -1, buffer, ATOM_BUFFER_SIZE )) return FALSE;
+    return SetPropW( hwnd, buffer, handle );
 }
 
 
@@ -187,23 +163,17 @@ BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
  */
 BOOL WINAPI SetPropW( HWND hwnd, LPCWSTR str, HANDLE handle )
 {
-    ATOM atom;
     BOOL ret;
-
-    if (!HIWORD(str)) atom = LOWORD(str);
-    else if (!(atom = GlobalAddAtomW( str ))) return FALSE;
 
     SERVER_START_REQ( set_window_property )
     {
         req->window = hwnd;
-        req->atom   = atom;
-        req->string = (HIWORD(str) != 0);
         req->handle = handle;
+        if (!HIWORD(str)) req->atom = LOWORD(str);
+        else wine_server_add_data( req, str, strlenW(str) * sizeof(WCHAR) );
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
-
-    if (HIWORD(str)) GlobalDeleteAtom( atom );
     return ret;
 }
 
@@ -213,17 +183,11 @@ BOOL WINAPI SetPropW( HWND hwnd, LPCWSTR str, HANDLE handle )
  */
 HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
 {
-    ATOM atom;
-    HANDLE ret = 0;
+    WCHAR buffer[ATOM_BUFFER_SIZE];
 
-    if (!HIWORD(str)) return RemovePropW( hwnd, MAKEINTATOMW(LOWORD(str)) );
-
-    if ((atom = GlobalAddAtomA( str )))
-    {
-        ret = RemovePropW( hwnd, MAKEINTATOMW(atom) );
-        GlobalDeleteAtom( atom );
-    }
-    return ret;
+    if (!HIWORD(str)) return RemovePropW( hwnd, (LPCWSTR)str );
+    if (!MultiByteToWideChar( CP_ACP, 0, str, -1, buffer, ATOM_BUFFER_SIZE )) return 0;
+    return RemovePropW( hwnd, buffer );
 }
 
 
@@ -232,21 +196,17 @@ HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
  */
 HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
 {
-    ATOM atom;
     HANDLE ret = 0;
-
-    if (!HIWORD(str)) atom = LOWORD(str);
-    else if (!(atom = GlobalAddAtomW( str ))) return 0;
 
     SERVER_START_REQ( remove_window_property )
     {
         req->window = hwnd;
-        req->atom   = atom;
+        if (!HIWORD(str)) req->atom = LOWORD(str);
+        else wine_server_add_data( req, str, strlenW(str) * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) ret = reply->handle;
     }
     SERVER_END_REQ;
 
-    if (HIWORD(str)) GlobalDeleteAtom( atom );
     return ret;
 }
 

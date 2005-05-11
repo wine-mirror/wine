@@ -2807,8 +2807,8 @@ struct set_window_property_request
     struct request_header __header;
     user_handle_t  window;
     atom_t         atom;
-    int            string;
     obj_handle_t   handle;
+    /* VARARG(name,unicode_str); */
 };
 struct set_window_property_reply
 {
@@ -2822,6 +2822,7 @@ struct remove_window_property_request
     struct request_header __header;
     user_handle_t  window;
     atom_t         atom;
+    /* VARARG(name,unicode_str); */
 };
 struct remove_window_property_reply
 {
@@ -2836,6 +2837,7 @@ struct get_window_property_request
     struct request_header __header;
     user_handle_t  window;
     atom_t         atom;
+    /* VARARG(name,unicode_str); */
 };
 struct get_window_property_reply
 {
@@ -3958,6 +3960,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 174
+#define SERVER_PROTOCOL_VERSION 175
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

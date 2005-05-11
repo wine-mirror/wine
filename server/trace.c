@@ -2354,14 +2354,17 @@ static void dump_set_window_property_request( const struct set_window_property_r
 {
     fprintf( stderr, " window=%p,", req->window );
     fprintf( stderr, " atom=%04x,", req->atom );
-    fprintf( stderr, " string=%d,", req->string );
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_remove_window_property_request( const struct remove_window_property_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
-    fprintf( stderr, " atom=%04x", req->atom );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_remove_window_property_reply( const struct remove_window_property_reply *req )
@@ -2372,7 +2375,9 @@ static void dump_remove_window_property_reply( const struct remove_window_proper
 static void dump_get_window_property_request( const struct get_window_property_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
-    fprintf( stderr, " atom=%04x", req->atom );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_get_window_property_reply( const struct get_window_property_reply *req )
