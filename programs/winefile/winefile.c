@@ -1,7 +1,7 @@
 /*
  * Winefile
  *
- * Copyright 2000, 2003, 2004 Martin Fuchs
+ * Copyright 2000, 2003, 2004, 2005 Martin Fuchs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2307,12 +2307,12 @@ static void calc_single_width(Pane* pane, int col)
 
 /* insert listbox entries after index idx */
 
-static void insert_entries(Pane* pane, Entry* dir, int idx)
+static int insert_entries(Pane* pane, Entry* dir, int idx)
 {
 	Entry* entry = dir;
 
 	if (!entry)
-		return;
+		return idx;
 
 	ShowWindow(pane->hwnd, SW_HIDE);
 
@@ -2337,13 +2337,13 @@ static void insert_entries(Pane* pane, Entry* dir, int idx)
 
 		ListBox_InsertItemData(pane->hwnd, idx, entry);
 
-		if (pane->treePane && entry->expanded) {
-			insert_entries(pane, entry->down, idx);
-			idx = ListBox_GetCount(pane->hwnd)-1;
-		}
+		if (pane->treePane && entry->expanded)
+			idx = insert_entries(pane, entry->down, idx);
 	}
 
 	ShowWindow(pane->hwnd, SW_SHOW);
+
+	return idx;
 }
 
 
