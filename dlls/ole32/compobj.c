@@ -2426,6 +2426,25 @@ ULONG WINAPI CoReleaseServerProcess(void)
 }
 
 /***********************************************************************
+ *           CoIsHandlerConnected [OLE32.@]
+ *
+ * Determines whether a proxy is connected to a remote stub.
+ *
+ * PARAMS
+ *  pUnk [I] Pointer to object that may or may not be connected.
+ *
+ * RETURNS
+ *  TRUE if pUnk is not a proxy or if pUnk is connected to a remote stub, or
+ *  FALSE otherwise.
+ */
+BOOL WINAPI CoIsHandlerConnected(IUnknown *pUnk)
+{
+    FIXME("%p\n", pUnk);
+
+    return TRUE;
+}
+ 
+/***********************************************************************
  *           CoQueryProxyBlanket [OLE32.@]
  *
  * Retrieves the security settings being used by a proxy.
