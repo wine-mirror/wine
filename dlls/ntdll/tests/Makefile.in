@@ -6,6 +6,7 @@ TESTDLL   = ntdll.dll
 IMPORTS   = kernel32
 
 CTESTS = \
+	atom.c \
 	env.c \
 	error.c \
 	generated.c \
