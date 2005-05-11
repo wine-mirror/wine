@@ -57,6 +57,8 @@ LPVOID gUIContext = NULL;
 WCHAR gszLogFile[MAX_PATH];
 HINSTANCE msi_hInstance;
 
+static const WCHAR installerW[] = {'\\','I','n','s','t','a','l','l','e','r',0};
+
 UINT WINAPI MsiOpenProductA(LPCSTR szProduct, MSIHANDLE *phProduct)
 {
     UINT r;
@@ -1539,8 +1541,24 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
 
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
 {
-    FIXME("%ld\n", dwReserved);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    WCHAR path[MAX_PATH];
+
+    if(dwReserved) {
+        FIXME("Don't know how to handle argument %ld\n", dwReserved);
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+   if(!GetWindowsDirectoryW(path, MAX_PATH)) {
+        FIXME("GetWindowsDirectory failed unexpected! Error %ld\n",
+              GetLastError());
+        return ERROR_CALL_NOT_IMPLEMENTED;
+   }
+
+   strcatW(path, installerW);
+
+   CreateDirectoryW(path, NULL);
+
+   return 0;
 }
 
 UINT WINAPI MsiGetShortcutTargetA( LPCSTR szShortcutTarget,
