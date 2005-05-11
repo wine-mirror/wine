@@ -778,7 +778,7 @@
 @ stub ZwQuerySystemEnvironmentValue
 @ stdcall ZwQuerySystemInformation(long long long long) NtQuerySystemInformation
 @ stdcall ZwQuerySystemTime(ptr) NtQuerySystemTime
-@ stub ZwQueryTimer
+@ stdcall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
 @ stdcall ZwQueryTimerResolution(long long long) NtQueryTimerResolution
 @ stdcall ZwQueryValueKey(long ptr long ptr long ptr) NtQueryValueKey
 @ stdcall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
