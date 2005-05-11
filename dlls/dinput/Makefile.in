@@ -21,6 +21,8 @@ IMPLIB_SRCS = data_formats.c
 
 RC_SRCS = version.rc
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

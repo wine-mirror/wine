@@ -23,6 +23,7 @@ TESTBINS = \
 	advapi32_test.exe$(DLLEXT) \
 	comctl32_test.exe$(DLLEXT) \
 	ddraw_test.exe$(DLLEXT) \
+	dinput_test.exe$(DLLEXT) \
 	dsound_test.exe$(DLLEXT) \
 	gdi32_test.exe$(DLLEXT) \
 	iphlpapi_test.exe$(DLLEXT) \
@@ -95,6 +96,8 @@ comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ddraw_test.exe$(DLLEXT): $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ddraw/tests/ddraw_test.exe$(DLLEXT) $@ && $(STRIP) $@
+dinput_test.exe$(DLLEXT): $(DLLDIR)/dinput/tests/dinput_test.exe$(DLLEXT)
+	cp $(DLLDIR)/dinput/tests/dinput_test.exe$(DLLEXT) $@ && $(STRIP) $@
 dsound_test.exe$(DLLEXT): $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe$(DLLEXT): $(DLLDIR)/gdi/tests/gdi32_test.exe$(DLLEXT)

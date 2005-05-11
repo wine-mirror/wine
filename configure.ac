@@ -1550,6 +1550,7 @@ dlls/ddraw/Makefile
 dlls/ddraw/tests/Makefile
 dlls/devenum/Makefile
 dlls/dinput/Makefile
+dlls/dinput/tests/Makefile
 dlls/dinput8/Makefile
 dlls/dmband/Makefile
 dlls/dmcompos/Makefile
