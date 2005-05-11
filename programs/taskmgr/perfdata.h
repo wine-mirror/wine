@@ -332,9 +332,6 @@ struct _SYSTEM_PROCESSORTIME_INFO
 
 #define Li2Double(x) ((double)((x).QuadPart))
 
-#define BELOW_NORMAL_PRIORITY_CLASS 0x00004000
-#define ABOVE_NORMAL_PRIORITY_CLASS 0x00008000
-
 #define GR_GDIOBJECTS     0       /* Count of GDI objects */
 #define GR_USEROBJECTS    1       /* Count of USER objects */
 
