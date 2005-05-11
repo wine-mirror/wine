@@ -138,7 +138,8 @@ struct user_thread_info
     DWORD                         GetMessageExtraInfoVal; /* 1c Value for GetMessageExtraInfo */
     HCURSOR                       cursor;                 /* 20 Current cursor */
     INT                           cursor_count;           /* 24 Cursor show count */
-                                                          /* 28-7c Available for more data */
+    UINT                          active_hooks;           /* 28 Bitmap of active hooks */
+                                                          /* 2c-7c Available for more data */
 };
 
 static inline struct user_thread_info *get_user_thread_info(void)

@@ -2203,6 +2203,7 @@ struct get_message_reply
     unsigned int    time;
     unsigned int    info;
     unsigned int    hw_id;
+    unsigned int    active_hooks;
     size_t          total;
     /* VARARG(data,bytes); */
 };
@@ -3044,6 +3045,7 @@ struct set_hook_reply
 {
     struct reply_header __header;
     user_handle_t  handle;
+    unsigned int   active_hooks;
 };
 
 
@@ -3058,6 +3060,7 @@ struct remove_hook_request
 struct remove_hook_reply
 {
     struct reply_header __header;
+    unsigned int   active_hooks;
 };
 
 
@@ -3079,6 +3082,7 @@ struct start_hook_chain_reply
     thread_id_t    tid;
     void*          proc;
     int            unicode;
+    unsigned int   active_hooks;
     /* VARARG(module,unicode_str); */
 };
 
@@ -3954,6 +3958,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 173
+#define SERVER_PROTOCOL_VERSION 174
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

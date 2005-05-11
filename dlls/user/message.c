@@ -1942,6 +1942,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
                     info.hook_proc   = reply->hook_proc;
                     hw_id            = reply->hw_id;
                     extra_info       = reply->info;
+                    thread_info->active_hooks = reply->active_hooks;
                 }
                 else
                 {

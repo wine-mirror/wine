@@ -53,6 +53,7 @@ extern void cleanup_clipboard_thread( struct thread *thread );
 
 extern void close_global_hooks(void);
 extern void remove_thread_hooks( struct thread *thread );
+extern unsigned int get_active_hooks(void);
 
 /* queue functions */
 

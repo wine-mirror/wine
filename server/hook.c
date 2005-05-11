@@ -172,6 +172,19 @@ inline static struct hook *get_first_hook( struct hook_table *table, int index )
     return elem ? HOOK_ENTRY( elem ) : NULL;
 }
 
+/* check if a given hook should run in the current thread */
+inline static int run_hook_in_current_thread( struct hook *hook )
+{
+    if ((!hook->process || hook->process == current->process) &&
+        (!(hook->flags & WINEVENT_SKIPOWNPROCESS) || hook->process != current->process))
+    {
+        if ((!hook->thread || hook->thread == current) &&
+            (!(hook->flags & WINEVENT_SKIPOWNTHREAD) || hook->thread != current))
+            return 1;
+    }
+    return 0;
+}
+
 /* find the first non-deleted hook in the chain */
 inline static struct hook *get_first_valid_hook( struct hook_table *table, int index,
                                                  int event, user_handle_t win,
@@ -181,22 +194,17 @@ inline static struct hook *get_first_valid_hook( struct hook_table *table, int i
 
     while (hook)
     {
-        if ((!hook->process || hook->process == current->process) &&
-            (!(hook->flags & WINEVENT_SKIPOWNPROCESS) || hook->process != current->process))
+        if (hook->proc && run_hook_in_current_thread( hook ))
         {
-            if ((!hook->thread || hook->thread == current) &&
-                (!(hook->flags & WINEVENT_SKIPOWNTHREAD) || hook->thread != current))
+            if (event >= hook->event_min && event <= hook->event_max)
             {
-                if (hook->proc && event >= hook->event_min && event <= hook->event_max)
-                {
-                    if (hook->flags & WINEVENT_INCONTEXT) return hook;
+                if (hook->flags & WINEVENT_INCONTEXT) return hook;
 
-                    /* only winevent hooks may be out of context */
-                    assert(hook->index + WH_MINHOOK == WH_WINEVENT);
-                    post_win_event( hook->owner, event, win, object_id, child_id,
-                                    hook->proc, hook->module, hook->module_size,
-                                    hook->handle );
-                }
+                /* only winevent hooks may be out of context */
+                assert(hook->index + WH_MINHOOK == WH_WINEVENT);
+                post_win_event( hook->owner, event, win, object_id, child_id,
+                                hook->proc, hook->module, hook->module_size,
+                                hook->handle );
             }
         }
         hook = HOOK_ENTRY( list_next( &table->hooks[index], &hook->chain ) );
@@ -213,22 +221,17 @@ static struct hook *get_next_hook( struct hook *hook, int event, user_handle_t w
 
     while ((hook = HOOK_ENTRY( list_next( &table->hooks[index], &hook->chain ) )))
     {
-        if ((!hook->process || hook->process == current->process) &&
-            (!(hook->flags & WINEVENT_SKIPOWNPROCESS) || hook->process != current->process))
+        if (hook->proc && run_hook_in_current_thread( hook ))
         {
-            if ((!hook->thread || hook->thread == current) &&
-                (!(hook->flags & WINEVENT_SKIPOWNTHREAD) || hook->thread != current))
+            if (event >= hook->event_min && event <= hook->event_max)
             {
-                if (hook->proc && event >= hook->event_min && event <= hook->event_max)
-                {
-                    if (hook->flags & WINEVENT_INCONTEXT) return hook;
+                if (hook->flags & WINEVENT_INCONTEXT) return hook;
 
-                    /* only winevent hooks may be out of context */
-                    assert(hook->index + WH_MINHOOK == WH_WINEVENT);
-                    post_win_event( hook->owner, event, win, object_id, child_id,
-                                    hook->proc, hook->module, hook->module_size,
-                                    hook->handle );
-                }
+                /* only winevent hooks may be out of context */
+                assert(hook->index + WH_MINHOOK == WH_WINEVENT);
+                post_win_event( hook->owner, event, win, object_id, child_id,
+                                hook->proc, hook->module, hook->module_size,
+                                hook->handle );
             }
         }
     }
@@ -314,6 +317,35 @@ void remove_thread_hooks( struct thread *thread )
     }
 }
 
+/* get a bitmap of active hooks in a hook table */
+static int is_hook_active( struct hook_table *table, int index )
+{
+    struct hook *hook = get_first_hook( table, index );
+
+    while (hook)
+    {
+        if (hook->proc && run_hook_in_current_thread( hook )) return 1;
+        hook = HOOK_ENTRY( list_next( &table->hooks[index], &hook->chain ) );
+    }
+    return 0;
+}
+
+/* get a bitmap of all active hooks for the current thread */
+unsigned int get_active_hooks(void)
+{
+    struct hook_table *table = get_queue_hooks( current );
+    unsigned int ret = 1 << 31;  /* set high bit to indicate that the bitmap is valid */
+    int id;
+
+    for (id = WH_MINHOOK; id <= WH_WINEVENT; id++)
+    {
+        if ((table && is_hook_active( table, id - WH_MINHOOK )) ||
+            (global_hooks && is_hook_active( global_hooks, id - WH_MINHOOK )))
+            ret |= 1 << (id - WH_MINHOOK);
+    }
+    return ret;
+}
+
 /* set a window hook */
 DECL_HANDLER(set_hook)
 {
@@ -388,6 +420,7 @@ DECL_HANDLER(set_hook)
         hook->module      = module;
         hook->module_size = module_size;
         reply->handle = hook->handle;
+        reply->active_hooks = get_active_hooks();
     }
     else if (module) free( module );
 
@@ -423,6 +456,7 @@ DECL_HANDLER(remove_hook)
         }
     }
     remove_hook( hook );
+    reply->active_hooks = get_active_hooks();
 }
 
 
@@ -438,11 +472,15 @@ DECL_HANDLER(start_hook_chain)
         return;
     }
 
-    if (!table || !(hook = get_first_valid_hook( table, req->id - WH_MINHOOK, req->event, req->window, req->object_id, req->child_id )))
+    reply->active_hooks = get_active_hooks();
+
+    if (!table || !(hook = get_first_valid_hook( table, req->id - WH_MINHOOK, req->event,
+                                                 req->window, req->object_id, req->child_id )))
     {
         /* try global table */
         if (!(table = global_hooks) ||
-            !(hook = get_first_valid_hook( global_hooks, req->id - WH_MINHOOK, req->event, req->window, req->object_id, req->child_id )))
+            !(hook = get_first_valid_hook( global_hooks, req->id - WH_MINHOOK, req->event,
+                                           req->window, req->object_id, req->child_id )))
             return;  /* no hook set */
     }
 

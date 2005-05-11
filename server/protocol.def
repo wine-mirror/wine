@@ -1564,6 +1564,7 @@ enum message_type
     unsigned int    time;      /* message time */
     unsigned int    info;      /* extra info (callback argument for MSG_CALLBACK_RESULT) */
     unsigned int    hw_id;     /* id if hardware message */
+    unsigned int    active_hooks; /* active hooks bitmap */
     size_t          total;     /* total size of extra data */
     VARARG(data,bytes);        /* message data for sent messages */
 @END
@@ -2129,6 +2130,7 @@ enum message_type
     VARARG(module,unicode_str);    /* module name */
 @REPLY
     user_handle_t  handle;         /* handle to the hook */
+    unsigned int   active_hooks;   /* active hooks bitmap */
 @END
 
 
@@ -2137,6 +2139,8 @@ enum message_type
     user_handle_t  handle;         /* handle to the hook */
     int            id;             /* id of the hook if handle is 0 */
     void*          proc;           /* hook procedure if handle is 0 */
+@REPLY
+    unsigned int   active_hooks;   /* active hooks bitmap */
 @END
 
 
@@ -2153,6 +2157,7 @@ enum message_type
     thread_id_t    tid;            /* thread id for low-level keyboard/mouse hooks */
     void*          proc;           /* hook procedure */
     int            unicode;        /* is it a unicode hook? */
+    unsigned int   active_hooks;   /* active hooks bitmap */
     VARARG(module,unicode_str);    /* module name */
 @END
 

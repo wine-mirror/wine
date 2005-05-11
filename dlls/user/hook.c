@@ -189,7 +189,11 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
         }
         else req->proc = proc;
 
-        if (!wine_server_call_err( req )) handle = reply->handle;
+        if (!wine_server_call_err( req ))
+        {
+            handle = reply->handle;
+            get_user_thread_info()->active_hooks = reply->active_hooks;
+        }
     }
     SERVER_END_REQ;
 
@@ -333,6 +337,12 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 
     USER_CheckNotLock();
 
+    if (!HOOK_IsHooked( id ))
+    {
+        TRACE( "skipping hook %s mask %x\n", hook_names[id-WH_MINHOOK], thread_info->active_hooks );
+        return 0;
+    }
+
     SERVER_START_REQ( start_hook_chain )
     {
         req->id = id;
@@ -346,6 +356,7 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
             pid          = reply->pid;
             tid          = reply->tid;
             unicode_hook = reply->unicode;
+            thread_info->active_hooks = reply->active_hooks;
         }
     }
     SERVER_END_REQ;
@@ -402,7 +413,10 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
  */
 BOOL HOOK_IsHooked( INT id )
 {
-    return TRUE;  /* FIXME */
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (!thread_info->active_hooks) return TRUE;
+    return (thread_info->active_hooks & (1 << (id - WH_MINHOOK))) != 0;
 }
 
 
@@ -456,6 +470,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
         req->id   = id;
         req->proc = proc;
         ret = !wine_server_call_err( req );
+        if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
     }
     SERVER_END_REQ;
     if (!ret && GetLastError() == ERROR_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
@@ -478,6 +493,7 @@ BOOL WINAPI UnhookWindowsHookEx( HHOOK hhook )
         req->handle = hhook;
         req->id     = 0;
         ret = !wine_server_call_err( req );
+        if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
     }
     SERVER_END_REQ;
     if (!ret && GetLastError() == ERROR_INVALID_HANDLE) SetLastError( ERROR_INVALID_HOOK_HANDLE );
@@ -643,7 +659,11 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
         }
         else req->proc = proc;
 
-        if (!wine_server_call_err( req )) handle = reply->handle;
+        if (!wine_server_call_err( req ))
+        {
+            handle = reply->handle;
+            get_user_thread_info()->active_hooks = reply->active_hooks;
+        }
     }
     SERVER_END_REQ;
 
@@ -675,6 +695,7 @@ BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
         req->handle = hEventHook;
         req->id     = WH_WINEVENT;
         ret = !wine_server_call_err( req );
+        if (ret) get_user_thread_info()->active_hooks = reply->active_hooks;
     }
     SERVER_END_REQ;
     return ret;
@@ -683,7 +704,14 @@ BOOL WINAPI UnhookWinEvent(HWINEVENTHOOK hEventHook)
 inline static BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object_id,
                                    LONG child_id, struct hook_info *info)
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
     BOOL ret;
+
+    if (!HOOK_IsHooked( id ))
+    {
+        TRACE( "skipping hook %s mask %x\n", hook_names[id-WH_MINHOOK], thread_info->active_hooks );
+        return FALSE;
+    }
 
     SERVER_START_REQ( start_hook_chain )
     {
@@ -700,6 +728,7 @@ inline static BOOL find_first_hook(DWORD id, DWORD event, HWND hwnd, LONG object
             info->handle    = reply->handle;
             info->proc      = reply->proc;
             info->tid       = reply->tid;
+            thread_info->active_hooks = reply->active_hooks;
         }
     }
     SERVER_END_REQ;

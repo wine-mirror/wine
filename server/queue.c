@@ -1572,6 +1572,8 @@ DECL_HANDLER(get_message)
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
 
+    reply->active_hooks = get_active_hooks();
+
     if (!queue) return;
     gettimeofday( &queue->last_get_msg, NULL );
 

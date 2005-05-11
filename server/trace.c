@@ -1909,6 +1909,7 @@ static void dump_get_message_reply( const struct get_message_reply *req )
     fprintf( stderr, " time=%08x,", req->time );
     fprintf( stderr, " info=%08x,", req->info );
     fprintf( stderr, " hw_id=%08x,", req->hw_id );
+    fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
     fprintf( stderr, " total=%d,", req->total );
     fprintf( stderr, " data=" );
     dump_varargs_bytes( cur_size );
@@ -2542,7 +2543,8 @@ static void dump_set_hook_request( const struct set_hook_request *req )
 
 static void dump_set_hook_reply( const struct set_hook_reply *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " active_hooks=%08x", req->active_hooks );
 }
 
 static void dump_remove_hook_request( const struct remove_hook_request *req )
@@ -2550,6 +2552,11 @@ static void dump_remove_hook_request( const struct remove_hook_request *req )
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " proc=%p", req->proc );
+}
+
+static void dump_remove_hook_reply( const struct remove_hook_reply *req )
+{
+    fprintf( stderr, " active_hooks=%08x", req->active_hooks );
 }
 
 static void dump_start_hook_chain_request( const struct start_hook_chain_request *req )
@@ -2568,6 +2575,7 @@ static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *re
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " unicode=%d,", req->unicode );
+    fprintf( stderr, " active_hooks=%08x,", req->active_hooks );
     fprintf( stderr, " module=" );
     dump_varargs_unicode_str( cur_size );
 }
@@ -3161,7 +3169,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_caret_window_reply,
     (dump_func)dump_set_caret_info_reply,
     (dump_func)dump_set_hook_reply,
-    (dump_func)0,
+    (dump_func)dump_remove_hook_reply,
     (dump_func)dump_start_hook_chain_reply,
     (dump_func)0,
     (dump_func)dump_get_next_hook_reply,
