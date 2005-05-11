@@ -72,44 +72,14 @@ typedef struct RunningObjectTableImpl{
 
 static RunningObjectTableImpl* runningObjectTableInstance = NULL;
 
-/* IRunningObjectTable prototype functions : */
-/* IUnknown functions*/
-static HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,REFIID riid,void** ppvObject);
-static ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface);
-static ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface);
-/* IRunningObjectTable functions */
-static HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,IUnknown* punkObject,IMoniker* pmkObjectName,DWORD* pdwRegister);
-static HRESULT WINAPI RunningObjectTableImpl_Revoke(IRunningObjectTable* iface, DWORD dwRegister);
-static HRESULT WINAPI RunningObjectTableImpl_IsRunning(IRunningObjectTable* iface, IMoniker* pmkObjectName);
-static HRESULT WINAPI RunningObjectTableImpl_GetObject(IRunningObjectTable* iface, IMoniker* pmkObjectName,IUnknown** ppunkObject);
-static HRESULT WINAPI RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface, DWORD dwRegister,FILETIME* pfiletime);
-static HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface, IMoniker* pmkObjectName,FILETIME* pfiletime);
-static HRESULT WINAPI RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface, IEnumMoniker** ppenumMoniker);
-/* Local functions*/
-HRESULT WINAPI RunningObjectTableImpl_Initialize(void);
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void);
-HRESULT WINAPI RunningObjectTableImpl_Destroy(void);
-HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* This,DWORD identReg,IMoniker* pmk,DWORD *indx);
-
-/* Virtual function table for the IRunningObjectTable class. */
-static IRunningObjectTableVtbl VT_RunningObjectTableImpl =
-{
-    RunningObjectTableImpl_QueryInterface,
-    RunningObjectTableImpl_AddRef,
-    RunningObjectTableImpl_Release,
-    RunningObjectTableImpl_Register,
-    RunningObjectTableImpl_Revoke,
-    RunningObjectTableImpl_IsRunning,
-    RunningObjectTableImpl_GetObject,
-    RunningObjectTableImpl_NoteChangeTime,
-    RunningObjectTableImpl_GetTimeOfLastChange,
-    RunningObjectTableImpl_EnumRunning
-};
+static HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl*,DWORD,IMoniker*,DWORD *);
 
 /***********************************************************************
  *        RunningObjectTable_QueryInterface
  */
-HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,REFIID riid,void** ppvObject)
+static HRESULT WINAPI
+RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
+                                      REFIID riid,void** ppvObject)
 {
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
 
@@ -124,16 +94,14 @@ HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
 
     *ppvObject = 0;
 
-    if (IsEqualIID(&IID_IUnknown, riid))
+    if (IsEqualIID(&IID_IUnknown, riid) ||
+        IsEqualIID(&IID_IRunningObjectTable, riid))
         *ppvObject = (IRunningObjectTable*)This;
-    else
-        if (IsEqualIID(&IID_IRunningObjectTable, riid))
-            *ppvObject = (IRunningObjectTable*)This;
 
     if ((*ppvObject)==0)
         return E_NOINTERFACE;
 
-    RunningObjectTableImpl_AddRef(iface);
+    IRunningObjectTable_AddRef(iface);
 
     return S_OK;
 }
@@ -141,7 +109,8 @@ HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
 /***********************************************************************
  *        RunningObjectTable_AddRef
  */
-ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
+static ULONG WINAPI
+RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
 {
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
 
@@ -153,7 +122,8 @@ ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
 /***********************************************************************
  *        RunningObjectTable_Initialize
  */
-HRESULT WINAPI RunningObjectTableImpl_Destroy(void)
+static HRESULT WINAPI
+RunningObjectTableImpl_Destroy(void)
 {
     TRACE("()\n");
 
@@ -173,7 +143,8 @@ HRESULT WINAPI RunningObjectTableImpl_Destroy(void)
 /***********************************************************************
  *        RunningObjectTable_Release
  */
-ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface)
+static ULONG WINAPI
+RunningObjectTableImpl_Release(IRunningObjectTable* iface)
 {
     DWORD i;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
@@ -207,71 +178,27 @@ ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface)
 }
 
 /***********************************************************************
- *        RunningObjectTable_Initialize
- */
-HRESULT WINAPI RunningObjectTableImpl_Initialize()
-{
-    TRACE("()\n");
-
-    /* create the unique instance of the RunningObjectTableImpl structure */
-    runningObjectTableInstance = HeapAlloc(GetProcessHeap(), 0, sizeof(RunningObjectTableImpl));
-
-    if (runningObjectTableInstance == 0)
-        return E_OUTOFMEMORY;
-
-    /* initialize the virtual table function */
-    runningObjectTableInstance->lpVtbl = &VT_RunningObjectTableImpl;
-
-    /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
-    /* the ROT referred many times not in the same time (all the objects in the ROT will  */
-    /* be removed every time the ROT is removed ) */
-    runningObjectTableInstance->ref = 1;
-
-    /* allocate space memory for the table which contains all the running objects */
-    runningObjectTableInstance->runObjTab = HeapAlloc(GetProcessHeap(), 0, sizeof(RunObject[BLOCK_TAB_SIZE]));
-
-    if (runningObjectTableInstance->runObjTab == NULL)
-        return E_OUTOFMEMORY;
-
-    runningObjectTableInstance->runObjTabSize=BLOCK_TAB_SIZE;
-    runningObjectTableInstance->runObjTabRegister=1;
-    runningObjectTableInstance->runObjTabLastIndx=0;
-
-    return S_OK;
-}
-
-/***********************************************************************
- *        RunningObjectTable_UnInitialize
- */
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize()
-{
-    TRACE("()\n");
-
-    if (runningObjectTableInstance==NULL)
-        return E_POINTER;
-
-    RunningObjectTableImpl_Release((IRunningObjectTable*)runningObjectTableInstance);
-
-    RunningObjectTableImpl_Destroy();
-
-    return S_OK;
-}
-
-/***********************************************************************
  *        RunningObjectTable_Register
+ *
+ * PARAMS
+ * grfFlags       [in] Registration options 
+ * punkObject     [in] the object being registered
+ * pmkObjectName  [in] the moniker of the object being registered
+ * pdwRegister    [in] the value identifying the registration
  */
-HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
-                                               DWORD grfFlags,           /* Registration options */
-                                               IUnknown *punkObject,     /* Pointer to the object being registered */
-                                               IMoniker *pmkObjectName,  /* Pointer to the moniker of the object being registered */
-                                               DWORD *pdwRegister)       /* Pointer to the value identifying the  registration */
+static HRESULT WINAPI
+RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
+               IUnknown *punkObject, IMoniker *pmkObjectName, DWORD *pdwRegister)
 {
     HRESULT res=S_OK;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
 
     TRACE("(%p,%ld,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
 
-    /* there's only two types of register : strong and or weak registration (only one must be passed on parameter) */
+    /*
+     * there's only two types of register : strong and or weak registration
+     * (only one must be passed on parameter)
+     */
     if ( ( (grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) || !(grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (!(grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) ||  (grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (grfFlags) )
@@ -324,9 +251,12 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
 
 /***********************************************************************
  *        RunningObjectTable_Revoke
+ *
+ * PARAMS
+ *  dwRegister [in] Value identifying registration to be revoked
  */
-HRESULT WINAPI RunningObjectTableImpl_Revoke(  IRunningObjectTable* iface,
-                                               DWORD dwRegister)  /* Value identifying registration to be revoked*/
+static HRESULT WINAPI
+RunningObjectTableImpl_Revoke( IRunningObjectTable* iface, DWORD dwRegister) 
 {
 
     DWORD index,j;
@@ -359,9 +289,12 @@ HRESULT WINAPI RunningObjectTableImpl_Revoke(  IRunningObjectTable* iface,
 
 /***********************************************************************
  *        RunningObjectTable_IsRunning
+ *
+ * PARAMS
+ *  pmkObjectName [in]  moniker of the object whose status is desired 
  */
-HRESULT WINAPI RunningObjectTableImpl_IsRunning(  IRunningObjectTable* iface,
-                                                  IMoniker *pmkObjectName)  /* Pointer to the moniker of the object whose status is desired */
+static HRESULT WINAPI
+RunningObjectTableImpl_IsRunning( IRunningObjectTable* iface, IMoniker *pmkObjectName)
 {
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
 
@@ -372,10 +305,14 @@ HRESULT WINAPI RunningObjectTableImpl_IsRunning(  IRunningObjectTable* iface,
 
 /***********************************************************************
  *        RunningObjectTable_GetObject
+ *
+ * PARAMS
+ * pmkObjectName [in] Pointer to the moniker on the object 
+ * ppunkObject   [out] variable that receives the IUnknown interface pointer
  */
-HRESULT WINAPI RunningObjectTableImpl_GetObject(  IRunningObjectTable* iface,
-                                                  IMoniker *pmkObjectName,/* Pointer to the moniker on the object */
-                                                  IUnknown **ppunkObject) /* Address of output variable that receives the IUnknown interface pointer */
+static HRESULT WINAPI
+RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
+                     IMoniker *pmkObjectName, IUnknown **ppunkObject)
 {
     DWORD index;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
@@ -402,10 +339,14 @@ HRESULT WINAPI RunningObjectTableImpl_GetObject(  IRunningObjectTable* iface,
 
 /***********************************************************************
  *        RunningObjectTable_NoteChangeTime
+ *
+ * PARAMS
+ *  dwRegister [in] Value identifying registration being updated
+ *  pfiletime  [in] Pointer to structure containing object's last change time
  */
-HRESULT WINAPI RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
-                                                     DWORD dwRegister,  /* Value identifying registration being updated */
-                                                     FILETIME *pfiletime) /* Pointer to structure containing object's last change time */
+static HRESULT WINAPI
+RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
+                                      DWORD dwRegister, FILETIME *pfiletime)
 {
     DWORD index=-1;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
@@ -424,10 +365,14 @@ HRESULT WINAPI RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
 
 /***********************************************************************
  *        RunningObjectTable_GetTimeOfLastChange
+ *
+ * PARAMS
+ *  pmkObjectName  [in]  moniker of the object whose status is desired 
+ *  pfiletime      [out] structure that receives object's last change time
  */
-HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
-                                                          IMoniker *pmkObjectName,  /* Pointer to moniker on the object whose status is desired */
-                                                          FILETIME *pfiletime)       /* Pointer to structure that receives object's last change time */
+static HRESULT WINAPI
+RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
+                            IMoniker *pmkObjectName, FILETIME *pfiletime)
 {
     DWORD index=-1;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
@@ -448,9 +393,13 @@ HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* i
 
 /***********************************************************************
  *        RunningObjectTable_EnumRunning
+ *
+ * PARAMS
+ *  ppenumMoniker  [out]  receives the IEnumMoniker interface pointer 
  */
-HRESULT WINAPI RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
-                                                  IEnumMoniker **ppenumMoniker) /* Address of output variable that receives the IEnumMoniker interface pointer */
+static HRESULT WINAPI
+RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
+                                   IEnumMoniker **ppenumMoniker)
 {
     FIXME("(%p,%p) needs the IEnumMoniker implementation  \n",iface,ppenumMoniker);
     return E_NOTIMPL;
@@ -459,10 +408,9 @@ HRESULT WINAPI RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
 /***********************************************************************
  *        GetObjectIndex
  */
-HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* This,
-                                                     DWORD identReg,
-                                                     IMoniker* pmk,
-                                                     DWORD *indx)
+static HRESULT WINAPI
+RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* This,
+               DWORD identReg, IMoniker* pmk, DWORD *indx)
 {
 
     DWORD i;
@@ -486,16 +434,18 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
 /******************************************************************************
  *		GetRunningObjectTable (OLE2.30)
  */
-HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
+HRESULT WINAPI
+GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
-	FIXME("(%ld,%p),stub!\n",reserved,pprot);
+    FIXME("(%ld,%p),stub!\n",reserved,pprot);
     return E_NOTIMPL;
 }
 
 /***********************************************************************
  *           GetRunningObjectTable (OLE32.@)
  */
-HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
+HRESULT WINAPI
+GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
     IID riid=IID_IRunningObjectTable;
     HRESULT res;
@@ -508,7 +458,7 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot
     if(runningObjectTableInstance==NULL)
         return CO_E_NOTINITIALIZED;
 
-    res = RunningObjectTableImpl_QueryInterface((IRunningObjectTable*)runningObjectTableInstance,&riid,(void**)pprot);
+    res = IRunningObjectTable_QueryInterface((IRunningObjectTable*)runningObjectTableInstance,&riid,(void**)pprot);
 
     return res;
 }
@@ -518,16 +468,16 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot
  */
 HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 {
-  IRunnableObject	*runable;
-  IRunnableObject *This = (IRunnableObject *)pUnknown;
-  LRESULT		ret;
+    IRunnableObject *runable;
+    IRunnableObject *This = (IRunnableObject *)pUnknown;
+    LRESULT ret;
 
-  ret = IRunnableObject_QueryInterface(This,&IID_IRunnableObject,(LPVOID*)&runable);
-  if (ret)
-	return 0; /* Appears to return no error. */
-  ret  = IRunnableObject_Run(runable,NULL);
-  IRunnableObject_Release(runable);
-  return ret;
+    ret = IRunnableObject_QueryInterface(This,&IID_IRunnableObject,(LPVOID*)&runable);
+    if (ret)
+        return 0; /* Appears to return no error. */
+    ret = IRunnableObject_Run(runable,NULL);
+    IRunnableObject_Release(runable);
+    return ret;
 }
 
 /******************************************************************************
@@ -537,8 +487,9 @@ HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
 				LPDWORD pchEaten, LPMONIKER *ppmk)
 {
     FIXME("(%p, %s, %p, %p): stub.\n", pbc, debugstr_w(szUserName), pchEaten, *ppmk);
+
     if (!(IsValidInterface((LPUNKNOWN) pbc)))
-	return E_INVALIDARG;
+        return E_INVALIDARG;
 
     return MK_E_SYNTAX;
 }
@@ -546,10 +497,76 @@ HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName,
 /******************************************************************************
  *              CreateClassMoniker        [OLE32.@]
  */
- HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker ** ppmk)
- {
-     FIXME("%s\n", debugstr_guid( rclsid ));
-     if( ppmk )
-         *ppmk = NULL;
-     return E_NOTIMPL;
- }
+HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker ** ppmk)
+{
+    FIXME("%s\n", debugstr_guid( rclsid ));
+    if( ppmk )
+        *ppmk = NULL;
+    return E_NOTIMPL;
+}
+
+/* Virtual function table for the IRunningObjectTable class. */
+static IRunningObjectTableVtbl VT_RunningObjectTableImpl =
+{
+    RunningObjectTableImpl_QueryInterface,
+    RunningObjectTableImpl_AddRef,
+    RunningObjectTableImpl_Release,
+    RunningObjectTableImpl_Register,
+    RunningObjectTableImpl_Revoke,
+    RunningObjectTableImpl_IsRunning,
+    RunningObjectTableImpl_GetObject,
+    RunningObjectTableImpl_NoteChangeTime,
+    RunningObjectTableImpl_GetTimeOfLastChange,
+    RunningObjectTableImpl_EnumRunning
+};
+
+/***********************************************************************
+ *        RunningObjectTable_Initialize
+ */
+HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
+{
+    TRACE("\n");
+
+    /* create the unique instance of the RunningObjectTableImpl structure */
+    runningObjectTableInstance = HeapAlloc(GetProcessHeap(), 0, sizeof(RunningObjectTableImpl));
+
+    if (runningObjectTableInstance == 0)
+        return E_OUTOFMEMORY;
+
+    /* initialize the virtual table function */
+    runningObjectTableInstance->lpVtbl = &VT_RunningObjectTableImpl;
+
+    /* the initial reference is set to "1" ! because if set to "0" it will be not practis when */
+    /* the ROT referred many times not in the same time (all the objects in the ROT will  */
+    /* be removed every time the ROT is removed ) */
+    runningObjectTableInstance->ref = 1;
+
+    /* allocate space memory for the table which contains all the running objects */
+    runningObjectTableInstance->runObjTab = HeapAlloc(GetProcessHeap(), 0, sizeof(RunObject[BLOCK_TAB_SIZE]));
+
+    if (runningObjectTableInstance->runObjTab == NULL)
+        return E_OUTOFMEMORY;
+
+    runningObjectTableInstance->runObjTabSize=BLOCK_TAB_SIZE;
+    runningObjectTableInstance->runObjTabRegister=1;
+    runningObjectTableInstance->runObjTabLastIndx=0;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *        RunningObjectTable_UnInitialize
+ */
+HRESULT WINAPI RunningObjectTableImpl_UnInitialize()
+{
+    TRACE("\n");
+
+    if (runningObjectTableInstance==NULL)
+        return E_POINTER;
+
+    RunningObjectTableImpl_Release((IRunningObjectTable*)runningObjectTableInstance);
+
+    RunningObjectTableImpl_Destroy();
+
+    return S_OK;
+}
