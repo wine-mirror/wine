@@ -269,6 +269,11 @@ static void test_sprintf( void )
     r = sprintf(buffer, format, 0x100+'X');
     ok(!strcmp(buffer,"xXx"), "failed\n");
     ok( r==3, "return count wrong\n");
+
+    format = "%%0";
+    r = sprintf(buffer, format);
+    ok(!strcmp(buffer,"%0"), "failed: \"%s\"\n", buffer);
+    ok( r==2, "return count wrong\n");
 }
 
 static void test_swprintf( void )
