@@ -271,6 +271,8 @@
 @ stdcall RegisterEventSourceW(ptr ptr)
 @ stdcall RegisterServiceCtrlHandlerA (ptr ptr)
 @ stdcall RegisterServiceCtrlHandlerW (ptr ptr)
+@ stdcall RegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr)
+@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
 @ stdcall ReportEventA (long long long long ptr long long str ptr)
 @ stdcall ReportEventW (long long long long ptr long long wstr ptr)
 @ stdcall RevertToSelf()

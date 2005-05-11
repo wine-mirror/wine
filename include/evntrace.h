@@ -46,11 +46,11 @@ typedef struct _EVENT_TRACE_HEADER
     union
     {
         USHORT FieldTypeFlags;
-        struct 
+        struct
         {
             UCHAR HeaderType;
             UCHAR MarkerFlags;
-        };
+        } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
     union
     {

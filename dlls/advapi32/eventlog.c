@@ -27,6 +27,8 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "wmistr.h"
+#include "evntrace.h"
 
 #include "wine/debug.h"
 
@@ -435,4 +437,26 @@ BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dw
         }
     }
     return TRUE;
+}
+
+ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
+                PVOID RequestContext, LPCGUID ControlGuid, ULONG GuidCount,
+                PTRACE_GUID_REGISTRATION TraceGuidReg, LPCWSTR MofImagePath,
+                LPCWSTR MofResourceName, PTRACEHANDLE RegistrationHandle )
+{
+    FIXME("%p %p %p %lu %p %s %s %p\n", RequestAddress, RequestContext,
+          ControlGuid, GuidCount, TraceGuidReg, debugstr_w(MofImagePath),
+          debugstr_w(MofResourceName), RegistrationHandle);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+ULONG WINAPI RegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
+                PVOID RequestContext, LPCGUID ControlGuid, ULONG GuidCount,
+                PTRACE_GUID_REGISTRATION TraceGuidReg, LPCSTR MofImagePath,
+                LPCSTR MofResourceName, PTRACEHANDLE RegistrationHandle )
+{
+    FIXME("%p %p %p %lu %p %s %s %p\n", RequestAddress, RequestContext,
+          ControlGuid, GuidCount, TraceGuidReg, debugstr_a(MofImagePath),
+          debugstr_a(MofResourceName), RegistrationHandle);
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }
