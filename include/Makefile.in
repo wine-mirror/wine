@@ -204,7 +204,9 @@ WINDOWS_INCLUDES = \
 	rpcndr.h \
 	rpcnterr.h \
 	rpcproxy.h \
+	schannel.h \
 	schemadef.h \
+	schnlsp.h \
 	sddl.h \
 	secext.h \
 	sensapi.h \
