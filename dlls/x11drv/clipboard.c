@@ -373,9 +373,9 @@ static void intern_atoms(void)
 
     for (format = ClipFormats, i = 0; format; format = format->NextFormat) {
         if (!format->drvData) {
-            len = WideCharToMultiByte(CP_UNIXCP, 0, format->Name, -1, NULL, -1, 0, 0);
-            names[i] = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-            WideCharToMultiByte(CP_UNIXCP, 0, format->Name, -1, names[i++], len, 0, 0);
+            len = WideCharToMultiByte(CP_UNIXCP, 0, format->Name, -1, NULL, 0, NULL, NULL);
+            names[i] = HeapAlloc(GetProcessHeap(), 0, len);
+            WideCharToMultiByte(CP_UNIXCP, 0, format->Name, -1, names[i++], len, NULL, NULL);
         }
     }
 
