@@ -123,20 +123,28 @@ BOOL query_function_pixel_format(glXGetProcAddressARB_t proc, const char *gl_ver
 }
 
 /** GLX_ARB_render_texture */
+/**
+ * http://oss.sgi.com/projects/ogl-sample/registry/ARB/wgl_render_texture.txt
+ * ~/tmp/ogl/ogl_offscreen_rendering_3
+ */
 Bool (*p_glXBindTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
 Bool (*p_glXReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buffer);
 Bool (*p_glXDrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
-
+int  use_render_texture_emulation = 0;
 BOOL query_function_render_texture(glXGetProcAddressARB_t proc, const char *gl_version, const char *gl_extensions, 
 				   const char* glx_version, const char *glx_extensions,
 				   const char *server_glx_extensions, const char *client_glx_extensions)
 {
-  BOOL bTest = (0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer") || NULL != strstr(glx_extensions, "GLX_ARB_render_texture"));
+  BOOL bTest = (0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer"));
   if (bTest) {
-    p_glXBindTexImageARB = proc("glXBindTexImageARB");
-    p_glXReleaseTexImageARB = proc("glXReleaseTexImageARB");
-    p_glXDrawableAttribARB = proc("glXDrawableAttribARB");
-    bTest = (NULL != p_glXBindTexImageARB && NULL != p_glXReleaseTexImageARB && NULL != p_glXDrawableAttribARB);
+    if (NULL != strstr(glx_extensions, "GLX_ARB_render_texture")) {
+      p_glXBindTexImageARB = proc("glXBindTexImageARB");
+      p_glXReleaseTexImageARB = proc("glXReleaseTexImageARB");
+      p_glXDrawableAttribARB = proc("glXDrawableAttribARB");
+      bTest = (NULL != p_glXBindTexImageARB && NULL != p_glXReleaseTexImageARB && NULL != p_glXDrawableAttribARB);
+    } else {
+      use_render_texture_emulation = 0;
+    }
   }
   return bTest;
 }
@@ -203,6 +211,12 @@ typedef struct wine_glpbuffer {
   int        height;
   int*       attribList;
   HDC        hdc;
+
+  int        use_render_texture;
+  GLuint     texture_target;
+  GLuint     texture_bind_target;
+  GLuint     texture;
+  int        texture_level;
 } Wine_GLPBuffer;
 
 #define PUSH1(attribs,att)        attribs[nAttribs++] = (att); 
@@ -269,6 +283,51 @@ typedef struct wine_glpbuffer {
 #define WGL_SAMPLE_BUFFERS_ARB		        0x2041
 #define WGL_SAMPLES_ARB	                        0x2042
 
+/**
+ * WGL_render_texture 
+ */
+/** GetPixelFormat/ChoosePixelFormat */
+#define WGL_BIND_TO_TEXTURE_RGB_ARB             0x2070
+#define WGL_BIND_TO_TEXTURE_RGBA_ARB            0x2071
+/** CreatePbuffer / QueryPbuffer */
+#define WGL_TEXTURE_FORMAT_ARB                  0x2072
+#define WGL_TEXTURE_TARGET_ARB                  0x2073
+#define WGL_MIPMAP_TEXTURE_ARB                  0x2074
+/** CreatePbuffer / QueryPbuffer */
+#define WGL_TEXTURE_RGB_ARB                     0x2075
+#define WGL_TEXTURE_RGBA_ARB                    0x2076
+#define WGL_NO_TEXTURE_ARB                      0x2077
+/** CreatePbuffer / QueryPbuffer */
+#define WGL_TEXTURE_CUBE_MAP_ARB                0x2078
+#define WGL_TEXTURE_1D_ARB                      0x2079
+#define WGL_TEXTURE_2D_ARB                      0x207A
+#define WGL_NO_TEXTURE_ARB                      0x2077
+/** SetPbufferAttribARB/QueryPbufferARB parameters */
+#define WGL_MIPMAP_LEVEL_ARB                    0x207B
+#define WGL_CUBE_MAP_FACE_ARB                   0x207C
+/** SetPbufferAttribARB/QueryPbufferARB attribs */
+#define WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB     0x207D
+#define WGL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB     0x207E
+#define WGL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB     0x207F
+#define WGL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB     0x2080
+#define WGL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB     0x2081 
+#define WGL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB     0x2082
+/** BindTexImageARB/ReleaseTexImageARB */
+#define WGL_FRONT_LEFT_ARB                  0x2083
+#define WGL_FRONT_RIGHT_ARB                 0x2084
+#define WGL_BACK_LEFT_ARB                   0x2085
+#define WGL_BACK_RIGHT_ARB                  0x2086
+#define WGL_AUX0_ARB                        0x2087 
+#define WGL_AUX1_ARB                        0x2088 
+#define WGL_AUX2_ARB                        0x2089 
+#define WGL_AUX3_ARB                        0x208A 
+#define WGL_AUX4_ARB                        0x208B 
+#define WGL_AUX5_ARB                        0x208C 
+#define WGL_AUX6_ARB                        0x208D
+#define WGL_AUX7_ARB                        0x208E 
+#define WGL_AUX8_ARB                        0x208F 
+#define WGL_AUX9_ARB                        0x2090
+
 #if 0 /* not used yet */
 static unsigned ConvertAttribGLXtoWGL(const int* iWGLAttr, int* oGLXAttr) {
   unsigned nAttribs = 0;
@@ -277,7 +336,7 @@ static unsigned ConvertAttribGLXtoWGL(const int* iWGLAttr, int* oGLXAttr) {
 }
 #endif
 
-static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr) {
+static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuffer* pbuf) {
   unsigned nAttribs = 0;
   unsigned cur = 0; 
   int pop;
@@ -373,6 +432,19 @@ static unsigned ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr) {
       PUSH2(oGLXAttr, GLX_SAMPLES_ARB, pop);
       TRACE("pAttr[%d] = GLX_SAMPLES_ARB: %x\n", cur, pop);
       break;
+
+    case WGL_TEXTURE_FORMAT_ARB:
+    case WGL_TEXTURE_TARGET_ARB:
+    case WGL_MIPMAP_TEXTURE_ARB:
+      TRACE("WGL_render_texture Attributes: %x as %x\n", iWGLAttr[cur], iWGLAttr[cur + 1]);
+      if (NULL == pbuf) {
+	ERR("trying to use GLX_Pbuffer Attributes without Pbuffer (was %x)\n", iWGLAttr[cur]);
+      }
+      if (!use_render_texture_emulation) {
+	ERR("trying to use WGL_render_texture Attributes without support (was %x)\n", iWGLAttr[cur]);
+      }
+      pop = iWGLAttr[++cur];
+      break ;
 
     default:
       FIXME("unsupported %x WGL Attribute\n", iWGLAttr[cur]);
@@ -511,6 +583,24 @@ GLboolean WINAPI wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLa
       curGLXAttr = GLX_SAMPLES_ARB;
       break;
 
+    case WGL_BIND_TO_TEXTURE_RGB_ARB: 
+    case WGL_BIND_TO_TEXTURE_RGBA_ARB:
+      if (!use_render_texture_emulation) {
+	piValues[i] = GL_FALSE;
+	continue ;	
+      }
+      curGLXAttr = GLX_RENDER_TYPE;
+      if (nCfgs < iPixelFormat || 0 >= iPixelFormat) goto pix_error;
+      curCfg = cfgs[iPixelFormat - 1];
+      hTest = glXGetFBConfigAttrib(display, curCfg, curGLXAttr, &tmp);
+      if (hTest) goto get_error;
+      if (GLX_COLOR_INDEX_BIT == tmp) {
+	piValues[i] = GL_FALSE;  
+	continue ;
+      }
+      curGLXAttr = GLX_X_RENDERABLE;
+      break;
+
     default:
       FIXME("unsupported %x WGL Attribute\n", curWGLAttr);
     }
@@ -570,7 +660,7 @@ GLboolean WINAPI wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, cons
     FIXME("unused pfAttribFList\n");
   }
 
-  nAttribs = ConvertAttribWGLtoGLX(piAttribIList, attribs);
+  nAttribs = ConvertAttribWGLtoGLX(piAttribIList, attribs, NULL);
   PUSH1(attribs, None);
 
   cfgs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &nCfgs);
@@ -632,59 +722,152 @@ HPBUFFERARB WINAPI wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, in
 
   if (0 >= iPixelFormat) {
     ERR("(%p): unexpected iPixelFormat(%d) <= 0, returns NULL\n", hdc, iPixelFormat);
+    SetLastError(ERROR_INVALID_PIXEL_FORMAT);
     return NULL; /* unespected error */
   }
 
-  /*nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs);*/
-  /*
-  nAttribs = 0;
-  PUSH2(attribs, GLX_FBCONFIG_ID, iPixelFormat);
-  PUSH1(attribs, None);
-  cfgs = glXChooseFBConfig(display, DefaultScreen(display), attribs, &nCfgs);
-  iPixelFormat = 0;
-  */
   cfgs = glXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
 
   if (NULL == cfgs || 0 == nCfgs) {
     ERR("(%p): Cannot get FB Configs for iPixelFormat(%d), returns NULL\n", hdc, iPixelFormat);
+    SetLastError(ERROR_INVALID_PIXEL_FORMAT);
     return NULL; /* unespected error */
   }
   if (nCfgs < iPixelFormat) {
     ERR("(%p): unexpected iPixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, iPixelFormat, nCfgs);
-    XFree(cfgs);
-    return NULL; /* unespected error */
+    SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+    goto create_failed; /* unespected error */
   }
 
   object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Wine_GLPBuffer));
+  if (NULL == object) {
+    SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+    goto create_failed; /* unespected error */
+  }
   object->hdc = hdc;
   object->display = display;
   object->width = iWidth;
   object->height = iHeight;
   object->pixelFormat = iPixelFormat;
 
-  nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs);
+  nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs, object);
   PUSH2(attribs, GLX_PBUFFER_WIDTH,  iWidth);
   PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight); 
   PUSH1(attribs, None);
 
-  object->drawable = glXCreatePbuffer(display, cfgs[iPixelFormat - 1], attribs);
-  TRACE("drawable as %p\n", (void*) object->drawable);
+  while (0 != *piAttribList) {
+    int attr_v;
+    switch (*piAttribList) {
+    case WGL_TEXTURE_FORMAT_ARB: {
+      if (!use_render_texture_emulation) {
+	SetLastError(ERROR_INVALID_DATA);	  
+	goto create_failed;
+      }
+      ++piAttribList;
+      attr_v = *piAttribList;
+      TRACE("WGL_render_texture Attribute: WGL_TEXTURE_FORMAT_ARB as %x\n", attr_v);
+      switch (attr_v) {
+      case WGL_TEXTURE_RGB_ARB:
+      case WGL_TEXTURE_RGBA_ARB:
+      case WGL_NO_TEXTURE_ARB:
+	break;
+      default:
+	SetLastError(ERROR_INVALID_DATA);	  
+	goto create_failed;
+      }
+      break;
+    }
+    
+    case WGL_TEXTURE_TARGET_ARB: {
+      if (!use_render_texture_emulation) {
+	SetLastError(ERROR_INVALID_DATA);	  
+	goto create_failed;
+      }
+      ++piAttribList;
+      attr_v = *piAttribList;
+      TRACE("WGL_render_texture Attribute: WGL_TEXTURE_TARGET_ARB as %x\n", attr_v);
+      switch (attr_v) {
+      case WGL_TEXTURE_CUBE_MAP_ARB: {
+	if (iWidth != iHeight) {
+	  SetLastError(ERROR_INVALID_DATA);	  
+	  goto create_failed;
+	}
+	object->texture_target = GL_TEXTURE_CUBE_MAP;
+	object->texture_bind_target = GL_TEXTURE_CUBE_MAP;
+	break;
+      }
+      case WGL_TEXTURE_1D_ARB: {
+	if (1 != iHeight) {
+	  SetLastError(ERROR_INVALID_DATA);	  
+	  goto create_failed;
+	}
+	object->texture_target = GL_TEXTURE_1D;
+	object->texture_bind_target = GL_TEXTURE_1D;
+	break;
+      }
+      case WGL_TEXTURE_2D_ARB: {
+	object->texture_target = GL_TEXTURE_2D;
+	object->texture_bind_target = GL_TEXTURE_2D;
+	break;
+      }
+      case WGL_NO_TEXTURE_ARB:
+	break;
+      default:
+	SetLastError(ERROR_INVALID_DATA);	  
+	goto create_failed;
+      }
+      break;
+    }
 
+    case WGL_MIPMAP_TEXTURE_ARB: {
+      if (!use_render_texture_emulation) {
+	SetLastError(ERROR_INVALID_DATA);	  
+	goto create_failed;
+      }
+      ++piAttribList;
+      attr_v = *piAttribList;
+      TRACE("WGL_render_texture Attribute: WGL_MIPMAP_TEXTURE_ARB as %x\n", attr_v);
+      if (0 != attr_v) {
+	SetLastError(ERROR_INVALID_DATA);	  
+	goto create_failed;	
+      }
+      break ;
+    }
+
+    }
+    ++piAttribList;
+  }
+
+  object->drawable = glXCreatePbuffer(display, cfgs[iPixelFormat - 1], attribs);
+  TRACE("new Pbuffer drawable as %p\n", (void*) object->drawable);
+  if (!object->drawable) {
+    SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+    goto create_failed; /* unespected error */
+  }
   TRACE("->(%p)\n", object);
 
   /** free list */
   XFree(cfgs);
-
   return (HPBUFFERARB) object;
+
+create_failed:
+  if (NULL != cfgs) XFree(cfgs);
+  if (NULL != object) HeapFree(GetProcessHeap(), 0, object);
+  TRACE("->(FAILED)\n");
+  return (HPBUFFERARB) NULL;
 }
 
 HDC WINAPI wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   HDC hDC;
+  if (NULL == object) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return NULL;
+  }
   hDC = CreateCompatibleDC(object->hdc);
   set_drawable(hDC, object->drawable); /* works ?? */
-  TRACE("(%p)\n", hPbuffer);
+  TRACE("(%p)->(%p)\n", hPbuffer, hDC);
   return hDC;
 }
 
@@ -699,20 +882,23 @@ GLboolean WINAPI wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p)\n", hPbuffer);
-
+  if (NULL == object) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
   glXDestroyPbuffer(object->display, object->drawable);
   HeapFree(GetProcessHeap(), 0, object);
-
   return GL_TRUE;
 }
 
 GLboolean WINAPI wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *piValue)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
-  TRACE("(%p, %d, %p)\n", hPbuffer, iAttribute, piValue);
-
-  /*glXQueryDrawable(object->display, object->drawable);*/
-
+  TRACE("(%p, 0x%x, %p)\n", hPbuffer, iAttribute, piValue);
+  if (NULL == object) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
   switch (iAttribute) {
   case WGL_PBUFFER_WIDTH_ARB:
     glXQueryDrawable(object->display, object->drawable, GLX_WIDTH, piValue);
@@ -723,6 +909,20 @@ GLboolean WINAPI wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *p
 
   case WGL_PBUFFER_LOST_ARB:
     FIXME("unsupported WGL_PBUFFER_LOST_ARB (need glXSelectEvent/GLX_DAMAGED work)\n");
+    break;
+
+  case WGL_TEXTURE_FORMAT_ARB:
+  case WGL_TEXTURE_TARGET_ARB:
+  case WGL_MIPMAP_TEXTURE_ARB:
+    if (!object->use_render_texture) {
+      SetLastError(ERROR_INVALID_HANDLE);
+      return GL_FALSE;
+    }
+    if (!use_render_texture_emulation) {
+      SetLastError(ERROR_INVALID_DATA);      
+      return GL_FALSE; /** how to FIX ? */
+    }
+    FIXME("unsupported WGL_ARB_render_texture attribute query for 0x%x\n", iAttribute);
     break;
 
   default:
@@ -737,21 +937,72 @@ GLboolean WINAPI wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p, %d)\n", hPbuffer, iBuffer);
-  return p_glXBindTexImageARB(object->display, object->drawable, iBuffer);
+  if (NULL == object) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
+  if (!object->use_render_texture) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
+  if (1 == use_render_texture_emulation) {
+    return GL_TRUE;
+  }
+  if (NULL != p_glXBindTexImageARB) {
+    return p_glXBindTexImageARB(object->display, object->drawable, iBuffer);
+  }
+  return GL_FALSE;
 }
 
 GLboolean WINAPI wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   TRACE("(%p, %d)\n", hPbuffer, iBuffer);
-  return p_glXReleaseTexImageARB(object->display, object->drawable, iBuffer);
+  if (NULL == object) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
+  if (!object->use_render_texture) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
+  if (1 == use_render_texture_emulation) {
+    GLuint prev_binded_tex;
+    glGetIntegerv(object->texture_target, &prev_binded_tex);
+    glBindTexture(object->texture_target, object->texture);
+    if (GL_TEXTURE_1D == object->texture_target) {
+      glCopyTexSubImage1D(object->texture_bind_target, object->texture_level, 0, 0, 0, object->width);
+    } else {
+      glCopyTexSubImage2D(object->texture_bind_target, object->texture_level, 0, 0, 0, 0, object->width, object->height);
+    }
+    glBindTexture(object->texture_target, prev_binded_tex);
+    return GL_TRUE;
+  }
+  if (NULL != p_glXReleaseTexImageARB) {
+    return p_glXReleaseTexImageARB(object->display, object->drawable, iBuffer);
+  }
+  return GL_FALSE;
 }
 
 GLboolean WINAPI wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
 {
   Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
   WARN("(%p, %p): alpha-testing, report any problem\n", hPbuffer, piAttribList);
-  return p_glXDrawableAttribARB(object->display, object->drawable, piAttribList);
+  if (NULL == object) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
+  if (!object->use_render_texture) {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return GL_FALSE;
+  }
+  if (1 == use_render_texture_emulation) {
+    return GL_TRUE;
+  }
+  if (NULL != p_glXDrawableAttribARB) {
+    return p_glXDrawableAttribARB(object->display, object->drawable, piAttribList); 
+  }
+  return GL_FALSE;
 }
 
 static const struct {

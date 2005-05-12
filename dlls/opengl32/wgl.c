@@ -445,8 +445,9 @@ BOOL WINAPI wglMakeCurrent(HDC hdc,
 
       if (ctx->ctx == NULL) {
 	ctx->ctx = glXCreateContext(ctx->display, ctx->vis, NULL, True);
-	TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
+	TRACE(" created a delayed OpenGL context (%p) for %p\n", ctx->ctx, ctx->vis);
       }
+      TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
       ret = glXMakeCurrent(ctx->display, drawable, ctx->ctx);
   }
   LEAVE_GL();
