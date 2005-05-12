@@ -773,9 +773,13 @@ int MSVCRT__fcloseall(void)
 void msvcrt_free_io(void)
 {
     MSVCRT__fcloseall();
-    _close(0);
-    _close(1);
-    _close(2);
+    /* The Win32 _fcloseall() function explicitly doesn't close stdin,
+     * stdout, and stderr (unlike GNU), so we need to fclose() them here
+     * or they won't get flushed.
+     */
+    MSVCRT_fclose(&MSVCRT__iob[0]);
+    MSVCRT_fclose(&MSVCRT__iob[1]);
+    MSVCRT_fclose(&MSVCRT__iob[2]);
     DeleteCriticalSection(&MSVCRT_file_cs);
 }
 
