@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+#include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -457,8 +458,8 @@ static void _makeFnTableW(PSecurityFunctionTableW fnTableW,
     }
 }
 
-static void _copyPackageInfo(PSecPkgInfoW info, PSecPkgInfoA inInfoA,
- PSecPkgInfoW inInfoW)
+static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
+ const SecPkgInfoW *inInfoW)
 {
     if (info && (inInfoA || inInfoW))
     {
@@ -477,6 +478,64 @@ static void _copyPackageInfo(PSecPkgInfoW info, PSecPkgInfoA inInfoA,
             info->Comment = SECUR32_AllocWideFromMultiByte(inInfoA->Comment);
         }
     }
+}
+
+SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
+ PSecurityFunctionTableW fnTableW, PWSTR moduleName)
+{
+    SecureProvider *ret;
+
+    EnterCriticalSection(&cs);
+    providerTable = _resizeProviderTable(providerTable,
+     providerTable ? providerTable->numProviders + 1 : 1);
+    if (providerTable)
+    {
+        ret = &providerTable->table[providerTable->numProviders++];
+        ret->lib = NULL;
+        if (fnTableA || fnTableW)
+        {
+            _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
+            _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
+            ret->loaded = TRUE;
+        }
+        else
+        {
+            ret->moduleName = SECUR32_strdupW(moduleName);
+            ret->loaded = FALSE;
+        }
+    }
+    else
+        ret = NULL;
+    LeaveCriticalSection(&cs);
+    return ret;
+}
+
+void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
+ const SecPkgInfoA *infoA, const SecPkgInfoW *infoW)
+{
+    assert(provider);
+    assert(infoA || infoW);
+
+    EnterCriticalSection(&cs);
+    packageTable = _resizePackageTable(packageTable,
+     packageTable ? packageTable->numPackages + toAdd : toAdd);
+    if (packageTable)
+    {
+        ULONG i;
+
+        for (i = 0; i < toAdd; i++)
+        {
+            SecurePackage *package =
+             &packageTable->table[packageTable->numPackages + i];
+
+            package->provider = provider;
+            _copyPackageInfo(&package->infoW,
+             infoA ? &infoA[i] : NULL,
+             infoW ? &infoW[i] : NULL);
+        }
+        packageTable->numPackages += toAdd;
+    }
+    LeaveCriticalSection(&cs);
 }
 
 static void _tryLoadProvider(PWSTR moduleName)
@@ -514,33 +573,11 @@ static void _tryLoadProvider(PWSTR moduleName)
                 ret = fnTableA->EnumerateSecurityPackagesA(&toAdd, &infoA);
             if (ret == SEC_E_OK && toAdd > 0 && (infoW || infoA))
             {
-                providerTable = _resizeProviderTable(providerTable,
-                 providerTable ? providerTable->numProviders + 1 : 1);
-                packageTable = _resizePackageTable(packageTable,
-                 packageTable ? packageTable->numPackages + toAdd : toAdd);
-                if (providerTable && packageTable)
-                {
-                    ULONG i;
-                    SecureProvider *provider =
-                     &providerTable->table[providerTable->numProviders];
+                SecureProvider *provider = SECUR32_addProvider(NULL, NULL,
+                 moduleName);
 
-                    EnterCriticalSection(&cs);
-                    provider->moduleName = SECUR32_strdupW(moduleName);
-                    provider->lib = NULL;
-                    for (i = 0; i < toAdd; i++)
-                    {
-                        SecurePackage *package =
-                         &packageTable->table[packageTable->numPackages + i];
-
-                        package->provider = provider;
-                        _copyPackageInfo(&package->infoW,
-                         infoA ? &infoA[i] : NULL,
-                         infoW ? &infoW[i] : NULL);
-                    }
-                    packageTable->numPackages += toAdd;
-                    providerTable->numProviders++;
-                    LeaveCriticalSection(&cs);
-                }
+                if (provider)
+                    SECUR32_addPackages(provider, toAdd, infoA, infoW);
                 if (infoW)
                     fnTableW->FreeContextBuffer(infoW);
                 else
@@ -569,6 +606,9 @@ static void SECUR32_initializeProviders(void)
 
     TRACE("\n");
     InitializeCriticalSection(&cs);
+    /* First load built-in providers */
+    SECUR32_initSchannelSP();
+    /* Now load providers from registry */
     apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, securityProvidersKeyW, 0,
      KEY_READ, &key);
     if (apiRet == ERROR_SUCCESS)
@@ -605,7 +645,7 @@ static void SECUR32_initializeProviders(void)
 
 SecurePackage *SECUR32_findPackageW(PWSTR packageName)
 {
-    SecurePackage *ret;
+    SecurePackage *ret = NULL;
 
     if (packageTable && packageName)
     {
@@ -614,7 +654,7 @@ SecurePackage *SECUR32_findPackageW(PWSTR packageName)
         for (i = 0, ret = NULL; !ret && i < packageTable->numPackages; i++)
             if (!lstrcmpiW(packageTable->table[i].infoW.Name, packageName))
                 ret = &packageTable->table[i];
-        if (ret && ret->provider && !ret->provider->lib)
+        if (ret && ret->provider && !ret->provider->loaded)
         {
             ret->provider->lib = LoadLibraryW(ret->provider->moduleName);
             if (ret->provider->lib)
@@ -634,13 +674,12 @@ SecurePackage *SECUR32_findPackageW(PWSTR packageName)
                     fnTableW = pInitSecurityInterfaceW();
                 _makeFnTableA(&ret->provider->fnTableA, fnTableA, fnTableW);
                 _makeFnTableW(&ret->provider->fnTableW, fnTableA, fnTableW);
+                ret->provider->loaded = TRUE;
             }
             else
                 ret = NULL;
         }
     }
-    else
-        ret = NULL;
     return ret;
 }
 

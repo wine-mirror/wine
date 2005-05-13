@@ -34,6 +34,7 @@
 
 typedef struct _SecureProvider
 {
+    BOOL                    loaded;
     PWSTR                   moduleName;
     HMODULE                 lib;
     SecurityFunctionTableA  fnTableA;
@@ -45,6 +46,21 @@ typedef struct _SecurePackage
     SecPkgInfoW     infoW;
     SecureProvider *provider;
 } SecurePackage;
+
+/* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
+ * is non-NULL, assumes the provider is built-in (and is thus already loaded.)
+ * Otherwise moduleName must not be NULL.
+ * Returns a pointer to the stored provider entry, for use adding packages.
+ */
+SecureProvider *SECUR32_addProvider(PSecurityFunctionTableA fnTableA,
+ PSecurityFunctionTableW fnTableW, PWSTR moduleName);
+
+/* Allocates space for and adds toAdd packages with the given provider.
+ * provider must not be NULL, and either infoA or infoW may be NULL, but not
+ * both.
+ */
+void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
+ const SecPkgInfoA *infoA, const SecPkgInfoW *infoW);
 
 /* Tries to find the package named packageName.  If it finds it, implicitly
  * loads the package if it isn't already loaded.
@@ -60,5 +76,8 @@ SecurePackage *SECUR32_findPackageA(PSTR packageName);
 PWSTR SECUR32_strdupW(PCWSTR str);
 PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str);
 PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str);
+
+/* Initialization functions for built-in providers */
+void SECUR32_initSchannelSP(void);
 
 #endif /* ndef __SECUR32_PRIV_H__ */
