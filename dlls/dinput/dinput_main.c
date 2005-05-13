@@ -95,6 +95,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This->lpVtbl = &ddi7avt;
 	  This->ref = 1;
 	  This->version = 1;
+	  This->dwVersion = dwVersion; 
 	  *ppDI = This;
 
 	  return DI_OK;
@@ -107,6 +108,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This->lpVtbl = &ddi7wvt;
 	  This->ref = 1;
 	  This->version = 1;
+	  This->dwVersion = dwVersion; 
 	  *ppDI = This;
 
 	  return DI_OK;
@@ -117,6 +119,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This->lpVtbl = &ddi8avt;
 	  This->ref = 1;
 	  This->version = 8;
+	  This->dwVersion = dwVersion; 
 	  *ppDI = This;
 
 	  return DI_OK;
@@ -127,6 +130,7 @@ HRESULT WINAPI DirectInputCreateEx(
 	  This->lpVtbl = &ddi8wvt;
 	  This->ref = 1;
 	  This->version = 8;
+	  This->dwVersion = dwVersion; 
 	  *ppDI = This;
 
 	  return DI_OK;
@@ -145,6 +149,7 @@ HRESULT WINAPI DirectInputCreateA(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7avt;
 	This->ref = 1;
+	This->dwVersion = dwVersion; 
 	if (dwVersion >= 0x0800) {
 	    This->version = 8;
 	} else {
@@ -166,6 +171,7 @@ HRESULT WINAPI DirectInputCreateW(HINSTANCE hinst, DWORD dwVersion, LPDIRECTINPU
 	This = HeapAlloc(GetProcessHeap(),0,sizeof(IDirectInputImpl));
 	This->lpVtbl = &ddi7wvt;
 	This->ref = 1;
+	This->dwVersion = dwVersion; 
 	if (dwVersion >= 0x0800) {
 	    This->version = 8;
 	} else {
@@ -227,7 +233,11 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
-    
+
+    /* joysticks are not supported in version 0x0300 */
+    if ((dwDevType == DIDEVTYPE_JOYSTICK) && (This->dwVersion <= 0x0300))
+        return E_INVALIDARG;
+
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceA) continue;
         for (j = 0, r = -1; r != 0; j++) {
@@ -257,7 +267,11 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
 	  This, dwDevType, _dump_DIDEVTYPE_value(dwDevType),
 	  lpCallback, pvRef, dwFlags);
     TRACE(" flags: "); _dump_EnumDevices_dwFlags(dwFlags); TRACE("\n");
-    
+
+    /* joysticks are not supported in version 0x0300 */
+    if ((dwDevType == DIDEVTYPE_JOYSTICK) && (This->dwVersion <= 0x0300))
+        return E_INVALIDARG;
+
     for (i = 0; i < NB_DINPUT_DEVICES; i++) {
         if (!dinput_devices[i]->enum_deviceW) continue;
         for (j = 0, r = -1; r != 0; j++) {

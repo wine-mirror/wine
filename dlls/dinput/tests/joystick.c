@@ -35,6 +35,11 @@
 
 #define numObjects(x) (sizeof(x) / sizeof(x[0]))
 
+typedef struct tagUserData {
+    LPDIRECTINPUT pDI;
+    DWORD version;
+} UserData;
+
 static const DIOBJECTDATAFORMAT dfDIJoystickTest[] = {
   { &GUID_XAxis,DIJOFS_X,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE,0},
   { &GUID_YAxis,DIJOFS_Y,DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE,0},
@@ -103,8 +108,8 @@ static BOOL CALLBACK EnumAxes(
         diprg.lMax              = +1000;
 
         hr = IDirectInputDevice_SetProperty(info->pJoystick, DIPROP_RANGE, NULL);
-        ok(hr==E_POINTER,"IDirectInputDevice_SetProperty() should have returned "
-           "E_POINTER, returned: %s\n", DXGetErrorString8(hr));
+        ok(hr==E_INVALIDARG,"IDirectInputDevice_SetProperty() should have returned "
+           "E_INVALIDARG, returned: %s\n", DXGetErrorString8(hr));
 
         hr = IDirectInputDevice_SetProperty(info->pJoystick, DIPROP_RANGE, &diprg.diph);
         ok(hr==DI_OK,"IDirectInputDevice_SetProperty() failed: %s\n", DXGetErrorString8(hr));
@@ -123,7 +128,7 @@ static BOOL CALLBACK EnumJoysticks(
     LPVOID pvRef)
 {
     HRESULT hr;
-    LPDIRECTINPUT pDI = (LPDIRECTINPUT)pvRef;
+    UserData * data = (UserData *)pvRef;
     LPDIRECTINPUTDEVICE pJoystick;
     DIDATAFORMAT format;
     DIDEVCAPS caps;
@@ -132,19 +137,20 @@ static BOOL CALLBACK EnumJoysticks(
     int i, count;
     ULONG ref;
 
-    hr = IDirectInput_CreateDevice(pDI, &lpddi->guidInstance, NULL, NULL);
+    hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, NULL, NULL);
     ok(hr==E_POINTER,"IDirectInput_CreateDevice() should have returned "
        "E_POINTER, returned: %s\n", DXGetErrorString8(hr));
 
-    hr = IDirectInput_CreateDevice(pDI, NULL, &pJoystick, NULL);
+    hr = IDirectInput_CreateDevice(data->pDI, NULL, &pJoystick, NULL);
     ok(hr==E_POINTER,"IDirectInput_CreateDevice() should have returned "
        "E_POINTER, returned: %s\n", DXGetErrorString8(hr));
 
-    hr = IDirectInput_CreateDevice(pDI, NULL, NULL, NULL);
+    hr = IDirectInput_CreateDevice(data->pDI, NULL, NULL, NULL);
     ok(hr==E_POINTER,"IDirectInput_CreateDevice() should have returned "
        "E_POINTER, returned: %s\n", DXGetErrorString8(hr));
 
-    hr = IDirectInput_CreateDevice(pDI, &lpddi->guidInstance, &pJoystick, NULL);
+    hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance,
+                                   &pJoystick, NULL);
     ok(hr==DI_OK,"IDirectInput_CreateDevice() failed: %s\n",
        DXGetErrorString8(hr));
     if (hr!=DI_OK)
@@ -260,22 +266,34 @@ DONE:
     return DIENUM_CONTINUE;
 }
 
-static void joystick_tests()
+static void joystick_tests(DWORD version)
 {
     HRESULT hr;
     LPDIRECTINPUT pDI;
     ULONG ref;
 
-    hr = DirectInputCreate(GetModuleHandle(NULL), DIRECTINPUT_VERSION, &pDI, NULL);
-    ok(hr==DI_OK, "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
-    if (hr!=DI_OK)
-        return;
-
-    hr = IDirectInput_EnumDevices(pDI, DIDEVTYPE_JOYSTICK, EnumJoysticks, pDI, DIEDFL_ALLDEVICES);
-    ok(hr==DI_OK,"IDirectInput_EnumDevices() failed: %s\n", DXGetErrorString8(hr));
-
-    ref = IDirectInput_Release(pDI);
-    ok(ref==0,"IDirectInput_Release() reference count = %ld\n", ref);
+    trace("-- Testing Direct Input Version 0x%04lx --\n", version);
+    hr = DirectInputCreate(GetModuleHandle(NULL), version, &pDI, NULL);
+    ok(hr==DI_OK||hr==DIERR_OLDDIRECTINPUTVERSION,
+       "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
+    if (hr==DI_OK && pDI!=0) {
+        UserData data;
+        data.pDI = pDI;
+        data.version = version;
+        hr = IDirectInput_EnumDevices(pDI, DIDEVTYPE_JOYSTICK, EnumJoysticks,
+                                      &data, DIEDFL_ALLDEVICES);
+        if (version == 0x0300) {
+            trace("  Joysticks Not Supported\n");
+            ok(hr==E_INVALIDARG,"IDirectInput_EnumDevices() should have "
+               "returned E_INVALIDARG, returned: %s\n", DXGetErrorString8(hr));
+        } else {
+            ok(hr==DI_OK,"IDirectInput_EnumDevices() failed: %s\n",
+               DXGetErrorString8(hr));
+        }
+        ref = IDirectInput_Release(pDI);
+        ok(ref==0,"IDirectInput_Release() reference count = %ld\n", ref);
+    } else if (hr==DIERR_OLDDIRECTINPUTVERSION)
+        trace("  Version Not Supported\n");
 }
 
 START_TEST(joystick)
@@ -284,7 +302,9 @@ START_TEST(joystick)
 
     trace("DLL Version: %s\n", get_file_version("dinput.dll"));
 
-    joystick_tests();
+    joystick_tests(0x0700);
+    joystick_tests(0x0500);
+    joystick_tests(0x0300);
 
     CoUninitialize();
 }

@@ -36,6 +36,7 @@ struct IDirectInputImpl
    DWORD evsequence;
 
    int version;
+   DWORD dwVersion;
 };
 
 /* Function called by all devices that Wine supports */

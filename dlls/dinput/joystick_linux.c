@@ -1125,7 +1125,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
 
     if (ph == NULL) {
         WARN("invalid pointer\n");
-        return E_POINTER;
+        return E_INVALIDARG;
     }
 
     if (TRACE_ON(dinput))
