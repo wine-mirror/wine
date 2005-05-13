@@ -790,6 +790,21 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
+    case SystemDriverInformation:
+        {
+            SYSTEM_DRIVER_INFORMATION sdi;
+
+            memset(&sdi, 0, sizeof(sdi));
+            len = sizeof(sdi);
+
+            if ( Length >= len)
+            {
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sdi, len);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
     case SystemHandleInformation:
         {
             SYSTEM_HANDLE_INFORMATION shi;
@@ -812,6 +827,21 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             {
                 memset(sci, 0, sizeof(*sci)); /* FIXME */
                 len = sizeof(*sci);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case SystemInterruptInformation:
+        {
+            SYSTEM_INTERRUPT_INFORMATION sii;
+
+            memset(&sii, 0, sizeof(sii));
+            len = sizeof(sii);
+
+            if ( Length >= len)
+            {
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sii, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
