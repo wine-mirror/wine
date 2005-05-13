@@ -139,14 +139,16 @@ static WND *free_window_handle( HWND hwnd )
         {
             req->handle = hwnd;
             if (!wine_server_call_err( req ))
+            {
                 user_handles[index] = NULL;
+                ptr->dwMagic = 0;
+            }
             else
                 ptr = NULL;
         }
         SERVER_END_REQ;
     }
     USER_Unlock();
-    ptr->dwMagic = 0;
     HeapFree( GetProcessHeap(), 0, ptr );
     return ptr;
 }
