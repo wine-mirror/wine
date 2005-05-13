@@ -239,6 +239,11 @@ struct StorageBaseImpl
    * virtual Destructor method.
    */
   void (*v_destructor)(StorageBaseImpl*);
+
+  /*
+   * flags that this storage was opened or created with
+   */
+  DWORD openFlags;
 };
 
 
@@ -399,6 +404,7 @@ struct StorageInternalImpl
  */
 StorageInternalImpl* StorageInternalImpl_Construct(
 	    StorageImpl* ancestorStorage,
+            DWORD          openFlags,
 	    ULONG          rootTropertyIndex);
 
 void StorageInternalImpl_Destroy(

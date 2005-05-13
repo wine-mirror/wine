@@ -421,6 +421,25 @@ void test_open_storage(void)
         ok(r == 0, "wrong ref count\n");
     }
 
+    /* now try write to a storage file we opened read-only */ 
+    r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE | STGM_READ, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed\n");
+    if(stg)
+    { 
+        const static WCHAR stmname[] =  { 'w','i','n','e','t','e','s','t',0};
+        IStream *stm = NULL;
+        IStorage *stg2 = NULL;
+
+        r = IStorage_CreateStream( stg, stmname, STGM_WRITE | STGM_SHARE_EXCLUSIVE,
+                                   0, 0, &stm );
+        ok(r == STG_E_ACCESSDENIED, "CreateStream should fail\n");
+        r = IStorage_CreateStorage( stg, stmname, STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stg2);
+        ok(r == STG_E_ACCESSDENIED, "CreateStream should fail\n");
+
+        r = IStorage_Release(stg);
+        ok(r == 0, "wrong ref count\n");
+    }
+
     r = DeleteFileW(filename);
     ok(r, "file didn't exist\n");
 }

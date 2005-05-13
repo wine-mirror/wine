@@ -296,6 +296,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
   HRESULT           res = STG_E_UNKNOWN;
+  DWORD             parent_grfMode;
 
   TRACE("(%p, %s, %p, %lx, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
@@ -331,6 +332,16 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
         (grfMode & STGM_TRANSACTED) )
   {
     res = STG_E_INVALIDFUNCTION;
+    goto end;
+  }
+
+  /*
+   * Check that we're compatible with the parent's storage mode
+   */
+  parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
+  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+  {
+    res = STG_E_ACCESSDENIED;
     goto end;
   }
 
@@ -412,6 +423,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   StgProperty            currentProperty;
   ULONG                  foundPropertyIndex;
   HRESULT                res = STG_E_UNKNOWN;
+  DWORD                  parent_grfMode;
 
   TRACE("(%p, %s, %p, %lx, %p, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), pstgPriority,
@@ -454,6 +466,16 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   }
 
   /*
+   * Check that we're compatible with the parent's storage mode
+   */
+  parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
+  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+  {
+    res = STG_E_ACCESSDENIED;
+    goto end;
+  }
+
+  /*
    * Initialize the out parameter
    */
   *ppstg = NULL;
@@ -489,6 +511,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
      */
     newStorage = StorageInternalImpl_Construct(
                    This->ancestorStorage,
+                   grfMode,
                    foundPropertyIndex);
 
     if (newStorage != 0)
@@ -804,6 +827,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   StgStreamImpl*    newStream;
   StgProperty       currentProperty, newStreamProperty;
   ULONG             foundPropertyIndex, newPropertyIndex;
+  DWORD             parent_grfMode;
 
   TRACE("(%p, %s, %lx, %ld, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -836,6 +860,13 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   if ((grfMode & STGM_DELETEONRELEASE) ||
       (grfMode & STGM_TRANSACTED))
     return STG_E_INVALIDFUNCTION;
+
+  /*
+   * Check that we're compatible with the parent's storage mode
+   */
+  parent_grfMode = STGM_ACCESS_MODE( This->ancestorStorage->base.openFlags );
+  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+    return STG_E_ACCESSDENIED;
 
   /*
    * Initialize the out parameter
@@ -1005,6 +1036,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   ULONG            foundPropertyIndex;
   ULONG            newPropertyIndex;
   HRESULT          hr;
+  DWORD            parent_grfMode;
 
   TRACE("(%p, %s, %lx, %ld, %ld, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
@@ -1025,6 +1057,13 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   if ( FAILED( validateSTGM(grfMode) ) ||
        (grfMode & STGM_DELETEONRELEASE) )
     return STG_E_INVALIDFLAG;
+
+  /*
+   * Check that we're compatible with the parent's storage mode
+   */
+  parent_grfMode = STGM_ACCESS_MODE( This->base.ancestorStorage->base.openFlags );
+  if ( STGM_ACCESS_MODE( grfMode ) > STGM_ACCESS_MODE( parent_grfMode ) )
+    return STG_E_ACCESSDENIED;
 
   /*
    * Initialize the out parameter
@@ -2186,6 +2225,7 @@ HRESULT StorageImpl_Construct(
   This->base.lpVtbl = &Storage32Impl_Vtbl;
   This->base.pssVtbl = &IPropertySetStorage_Vtbl;
   This->base.v_destructor = &StorageImpl_Destroy;
+  This->base.openFlags = openFlags;
 
   /*
    * This is the top-level storage so initialize the ancestor pointer
@@ -4013,7 +4053,8 @@ static IStorageVtbl Storage32InternalImpl_Vtbl =
 
 StorageInternalImpl* StorageInternalImpl_Construct(
   StorageImpl* ancestorStorage,
-  ULONG          rootPropertyIndex)
+  DWORD        openFlags,
+  ULONG        rootPropertyIndex)
 {
   StorageInternalImpl* newStorage;
 
@@ -4031,6 +4072,7 @@ StorageInternalImpl* StorageInternalImpl_Construct(
      */
     newStorage->base.lpVtbl = &Storage32InternalImpl_Vtbl;
     newStorage->base.v_destructor = &StorageInternalImpl_Destroy;
+    newStorage->base.openFlags = openFlags;
 
     /*
      * Keep the ancestor storage pointer and nail a reference to it.
