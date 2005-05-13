@@ -32,22 +32,6 @@
  *   in that string is parsed an stored.
  */
 
-#include "config.h"
-#include "wine/port.h"
-
-#include <ctype.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-#include <errno.h>
-#include <limits.h>
-#ifdef HAVE_SYS_WAIT_H
-# include <sys/wait.h>
-#endif
-
 #define COBJMACROS
 
 #include "wine/debug.h"
