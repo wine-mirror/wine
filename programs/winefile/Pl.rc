@@ -29,7 +29,7 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 IDM_WINEFILE MENU FIXED IMPURE
 {
 	POPUP "&Plik"  {
-		MENUITEM "&Otwórz\tEnter" ,			101
+		MENUITEM "&Otwórz\tEnter" ,			ID_ACTIVATE
 		MENUITEM "&Przenieœ...\tF7" , 			ID_FILE_MOVE
 		MENUITEM "&Kopiuj...\tF8" ,			107
 		MENUITEM "W s&chowku...\tF9" ,		118

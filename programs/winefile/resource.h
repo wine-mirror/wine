@@ -96,9 +96,7 @@
 #define IDS_COL_SEC     1218
 
 /* range for drive bar command ids: 0x9000..0x90FF */
-#ifdef __WINE__
 #define	ID_DRIVE_UNIX_FS				0x9000
-#endif
 #define	ID_DRIVE_SHELL_NS			0x9001
 
 #define	ID_DRIVE_FIRST				0x9002
