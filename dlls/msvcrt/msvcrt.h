@@ -125,6 +125,8 @@ extern void msvcrt_init_console(void);
 extern void msvcrt_free_console(void);
 extern void msvcrt_init_args(void);
 extern void msvcrt_free_args(void);
+extern void msvcrt_init_signals(void);
+extern void msvcrt_free_signals(void);
 
 extern unsigned msvcrt_create_io_inherit_block(STARTUPINFOA*);
 

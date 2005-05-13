@@ -51,6 +51,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_io();
     msvcrt_init_console();
     msvcrt_init_args();
+    msvcrt_init_signals();
     MSVCRT_setlocale(0, "C");
     TRACE("finished process init\n");
     break;
@@ -61,6 +62,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_free_io();
     msvcrt_free_console();
     msvcrt_free_args();
+    msvcrt_free_signals();
     if (!msvcrt_free_tls())
       return FALSE;
     TRACE("finished process free\n");

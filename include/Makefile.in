@@ -291,6 +291,7 @@ MSVCRT_INCLUDES = \
 	msvcrt/search.h \
 	msvcrt/setjmp.h \
 	msvcrt/share.h \
+	msvcrt/signal.h \
 	msvcrt/stddef.h \
 	msvcrt/stdio.h \
 	msvcrt/stdlib.h \
