@@ -47,6 +47,9 @@
 #ifndef GLX_SAMPLES_ARB
 # define GLX_SAMPLES_ARB                    100001
 #endif
+#ifndef GL_TEXTURE_CUBE_MAP
+# define GL_TEXTURE_CUBE_MAP 0x8513
+#endif
 
 /* X11 locking */
 
