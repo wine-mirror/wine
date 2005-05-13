@@ -293,7 +293,7 @@ foreach my $mod (sort @lib_symlinks)
 
 print NEWMAKE <<EOF;
 \$(BUILDSUBDIRS): \$(IMPORT_LIBS)
-\$(INSTALLSUBDIRS:%=%/__install__): \$(IMPORT_LIBS)
+\$(INSTALLSUBDIRS:%=%/__install__) \$(INSTALLSUBDIRS:%=%/__install-lib__): \$(IMPORT_LIBS)
 
 EOF
 

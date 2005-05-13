@@ -1617,7 +1617,7 @@ libws2_32.$(IMPLIBEXT): winsock/libws2_32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winsock/libws2_32.$(IMPLIBEXT) $@
 
 $(BUILDSUBDIRS): $(IMPORT_LIBS)
-$(INSTALLSUBDIRS:%=%/__install__): $(IMPORT_LIBS)
+$(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPORT_LIBS)
 
 # Map library name to the corresponding directory
 
