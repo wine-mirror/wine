@@ -567,7 +567,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
     int cPathLen;
-    char *pszAnsiPath;
+    char *pszAnsiPath, *pBackslash;
     BOOL result;
 
     TRACE("(iface=%p, hwndOwner=%p, pbcReserved=%p, lpszDisplayName=%s, pchEaten=%p, ppidl=%p, "
@@ -578,18 +578,21 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     pszAnsiPath = (char*)SHAlloc(cPathLen+1);
     WideCharToMultiByte(CP_ACP, 0, lpszDisplayName, -1, pszAnsiPath, cPathLen+1, NULL, NULL);
 
+    for (pBackslash = strchr(pszAnsiPath, '\\'); pBackslash; pBackslash = strchr(pBackslash, '\\'))
+        *pBackslash = '/';
+    
     result = UNIXFS_path_to_pidl(This->m_pszPath, pszAnsiPath, ppidl);
-    if (result && pdwAttributes)
+    if (result && pdwAttributes && *pdwAttributes)
     {
-	/* need to traverse to the last element for the attribute */
-	LPCITEMIDLIST pidl, last_pidl;
-	pidl = last_pidl = *ppidl;
-	while(pidl && pidl->mkid.cb)
-	{
-	    last_pidl = pidl;
-	    pidl = ILGetNext(pidl);
-	}
-	SHELL32_GetItemAttributes((IShellFolder*)iface, last_pidl, pdwAttributes);
+        /* need to traverse to the last element for the attribute */
+        LPCITEMIDLIST pidl, last_pidl;
+        pidl = last_pidl = *ppidl;
+        while(pidl && pidl->mkid.cb)
+        {
+            last_pidl = pidl;
+            pidl = ILGetNext(pidl);
+        }
+        SHELL32_GetItemAttributes((IShellFolder*)iface, last_pidl, pdwAttributes);
     }
 
     SHFree(pszAnsiPath);
