@@ -15,5 +15,6 @@ printer.ico
 ramdisk.ico
 shell.spec.c
 shell32.dll.dbg.c
+shortcut.ico
 shres.res
 version16.res

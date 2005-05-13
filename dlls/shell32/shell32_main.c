@@ -506,7 +506,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
             lstrcpynW(sTemp, szFullPath, MAX_PATH);
 
             if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                psfi->iIcon = SIC_GetIconIndex(swShell32Name, -IDI_SHELL_FOLDER);
+                psfi->iIcon = SIC_GetIconIndex(swShell32Name, -IDI_SHELL_FOLDER, 0);
             else
             {
                 static const WCHAR p1W[] = {'%','1',0};
@@ -522,7 +522,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 
                     if (flags & SHGFI_SYSICONINDEX) 
                     {
-                        psfi->iIcon = SIC_GetIconIndex(sTemp,dwNr);
+                        psfi->iIcon = SIC_GetIconIndex(sTemp,dwNr,0);
                         if (psfi->iIcon == -1)
                             psfi->iIcon = 0;
                     }

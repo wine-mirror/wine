@@ -110,6 +110,7 @@
 #define IDI_SHELL_COMPUTERS_NEAR_ME 19
 #define IDI_SHELL_SEARCH            23
 #define IDI_SHELL_HELP              24
+#define IDI_SHELL_SHORTCUT          30
 #define IDI_SHELL_EMPTY_RECYCLE_BIN 32
 #define IDI_SHELL_FULL_RECYCLE_BIN  33
 #define IDI_SHELL_DESKTOP           35
