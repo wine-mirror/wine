@@ -1107,13 +1107,16 @@ static void release_hardware_message( struct msg_queue *queue, unsigned int hw_i
         struct thread *owner = get_window_thread( new_win );
         if (owner)
         {
-            msg->win = new_win;
-            set_queue_bits( owner->queue, get_hardware_msg_bit( msg ));
+            if (owner->queue->input == input)
+            {
+                msg->win = new_win;
+                set_queue_bits( owner->queue, get_hardware_msg_bit( msg ));
+                remove = 0;
+            }
             release_object( owner );
         }
-        if (!remove) return;  /* don't release the message */
     }
-    else if (remove)
+    if (remove)
     {
         update_input_key_state( input, msg );
         list_remove( &msg->entry );
