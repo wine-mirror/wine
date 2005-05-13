@@ -1779,7 +1779,13 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
+    WCHAR buffer[3];
+    DWORD sz = 3;
 
+    MSI_GetPropertyW(package, szCosting, buffer, &sz);
+    if (buffer[0]=='1')
+        return ERROR_SUCCESS;
+    
     MSI_SetPropertyW(package, szCosting, szZero);
     MSI_SetPropertyW(package, cszRootDrive , c_colon);
 
@@ -2205,17 +2211,25 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
     {
         MSICOMPONENT* component = &package->components[feature->Components[i]];
 
+        TRACE("MODIFYING(%i): Component %s (Installed %i, Action %i, Request %i)\n",
+            newstate, debugstr_w(component->Component), component->Installed, 
+            component->Action, component->ActionRequest);
+        
         if (!component->Enabled)
             continue;
         else
         {
             if (newstate == INSTALLSTATE_LOCAL)
+            {
                 component->ActionRequest = INSTALLSTATE_LOCAL;
+                component->Action = INSTALLSTATE_LOCAL;
+            }
             else 
             {
                 int j,k;
 
                 component->ActionRequest = newstate;
+                component->Action = newstate;
 
                 /*if any other feature wants is local we need to set it local*/
                 for (j = 0; 
@@ -2229,12 +2243,19 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                         {
                             if (package->features[j].ActionRequest == 
                                 INSTALLSTATE_LOCAL)
+                            {
+                                TRACE("Saved by %s\n", debugstr_w(package->features[j].Feature));
                                 component->ActionRequest = INSTALLSTATE_LOCAL;
+                                component->Action = INSTALLSTATE_LOCAL;
+                            }
                             break;
                         }
                 }
             }
         }
+        TRACE("Result (%i): Component %s (Installed %i, Action %i, Request %i)\n",
+            newstate, debugstr_w(component->Component), component->Installed, 
+            component->Action, component->ActionRequest);
     } 
 }
 
@@ -2348,10 +2369,26 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
             BOOL feature_state = ((package->features[i].Level > 0) &&
                              (package->features[i].Level <= install_level));
 
-            if (feature_state)
+            if ((feature_state) && 
+               (package->features[i].Action == INSTALLSTATE_UNKNOWN))
             {
-                package->features[i].ActionRequest = INSTALLSTATE_LOCAL;
-                package->features[i].Action = INSTALLSTATE_LOCAL;
+                if (package->features[i].Attributes & 
+                                msidbFeatureAttributesFavorSource)
+                {
+                    package->features[i].ActionRequest = INSTALLSTATE_SOURCE;
+                    package->features[i].Action = INSTALLSTATE_SOURCE;
+                }
+                else if (package->features[i].Attributes &
+                                msidbFeatureAttributesFavorAdvertise)
+                {
+                    package->features[i].ActionRequest =INSTALLSTATE_ADVERTISED;
+                    package->features[i].Action =INSTALLSTATE_ADVERTISED;
+                }
+                else
+                {
+                    package->features[i].ActionRequest = INSTALLSTATE_LOCAL;
+                    package->features[i].Action = INSTALLSTATE_LOCAL;
+                }
             }
         }
     }
@@ -2383,6 +2420,27 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
                 {
                     component->Action = INSTALLSTATE_LOCAL;
                     component->ActionRequest = INSTALLSTATE_LOCAL;
+                }
+                else if (feature->ActionRequest == INSTALLSTATE_SOURCE)
+                {
+                    if ((component->Action == INSTALLSTATE_UNKNOWN) ||
+                        (component->Action == INSTALLSTATE_ABSENT) ||
+                        (component->Action == INSTALLSTATE_ADVERTISED))
+                           
+                    {
+                        component->Action = INSTALLSTATE_SOURCE;
+                        component->ActionRequest = INSTALLSTATE_SOURCE;
+                    }
+                }
+                else if (feature->ActionRequest == INSTALLSTATE_ADVERTISED)
+                {
+                    if ((component->Action == INSTALLSTATE_UNKNOWN) ||
+                        (component->Action == INSTALLSTATE_ABSENT))
+                           
+                    {
+                        component->Action = INSTALLSTATE_ADVERTISED;
+                        component->ActionRequest = INSTALLSTATE_ADVERTISED;
+                    }
                 }
                 else if (feature->ActionRequest == INSTALLSTATE_ABSENT)
                 {
@@ -2432,6 +2490,12 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     MSIQUERY * view;
     DWORD i;
     LPWSTR level;
+    DWORD sz = 3;
+    WCHAR buffer[3];
+
+    MSI_GetPropertyW(package, szCosting, buffer, &sz);
+    if (buffer[0]=='1')
+        return ERROR_SUCCESS;
 
     TRACE("Building Directory properties\n");
 
@@ -3633,6 +3697,14 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
         total += package->files[i].FileSize;
     ui_progress(package,0,total,0,0);
 
+    for(i = 0; i < package->loaded_features; i++)
+    {
+        MSIFEATURE* feature = &package->features[i];
+        TRACE("Feature: %s; Installed: %i; Action %i; Request %i\n",
+            debugstr_w(feature->Feature), feature->Installed, feature->Action,
+            feature->ActionRequest);
+    }
+    
     return ERROR_SUCCESS;
 }
 
@@ -3945,9 +4017,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             MSIRECORD * uirow;
 
             squash_guid(package->components[i].ComponentId,squished_cc);
-            rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
-            if (rc != ERROR_SUCCESS)
-                continue;
            
             keypath = resolve_keypath(package,i);
             package->components[i].FullKeypath = keypath;
@@ -3966,6 +4035,10 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             if (ACTION_VerifyComponentForAction(package, i,
                                     INSTALLSTATE_LOCAL))
             {
+                rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
+                if (rc != ERROR_SUCCESS)
+                    continue;
+
                 if (keypath)
                 {
                     RegSetValueExW(hkey2,squished_pc,0,REG_SZ,(LPVOID)keypath,
@@ -4000,6 +4073,11 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                                     INSTALLSTATE_ABSENT))
             {
                 DWORD res;
+
+                rc = RegOpenKeyW(hkey,squished_cc,&hkey2);
+                if (rc != ERROR_SUCCESS)
+                    continue;
+
                 RegDeleteValueW(hkey2,squished_pc);
 
                 /* if the key is empty delete it */
@@ -5464,9 +5542,12 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         GUID clsid;
         int j;
         INT size;
+        BOOL absent = FALSE;
 
-        if (!ACTION_VerifyFeatureForAction(package,i,INSTALLSTATE_LOCAL))
-            continue;
+        if (!ACTION_VerifyFeatureForAction(package,i,INSTALLSTATE_LOCAL) &&
+            !ACTION_VerifyFeatureForAction(package,i,INSTALLSTATE_SOURCE) &&
+            !ACTION_VerifyFeatureForAction(package,i,INSTALLSTATE_ADVERTISED))
+            absent = TRUE;
 
         size = package->features[i].ComponentCount*21;
         size +=1;
@@ -5501,9 +5582,23 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
                        (LPSTR)data,size);
         HeapFree(GetProcessHeap(),0,data);
 
-        size = strlenW(package->features[i].Feature_Parent)*sizeof(WCHAR);
-        RegSetValueExW(hukey,package->features[i].Feature,0,REG_SZ,
+        if (!absent)
+        {
+            size = strlenW(package->features[i].Feature_Parent)*sizeof(WCHAR);
+            RegSetValueExW(hukey,package->features[i].Feature,0,REG_SZ,
                        (LPSTR)package->features[i].Feature_Parent,size);
+        }
+        else
+        {
+            size = (strlenW(package->features[i].Feature_Parent)+2)*
+                    sizeof(WCHAR);
+            data = HeapAlloc(GetProcessHeap(),0,size);
+            data[0] = 0x6;
+            strcpyW(&data[1],package->features[i].Feature_Parent);
+            RegSetValueExW(hukey,package->features[i].Feature,0,REG_SZ,
+                       (LPSTR)data,size);
+            HeapFree(GetProcessHeap(),0,data);
+        }
     }
 
 end:
@@ -6061,7 +6156,7 @@ end:
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 {
     UINT rc;
-    rc = ACTION_ProcessExecSequence(package,TRUE);
+    rc = ACTION_ProcessExecSequence(package,FALSE);
     return rc;
 }
 
@@ -6321,6 +6416,23 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     static WCHAR fmt2[] = {'%','s','%','s','>','%','s',0,0};
     LPWSTR output = NULL;
     DWORD sz = 0;
+    INT component_index;
+
+    component = load_dynamic_stringW(rec,3);
+    component_index = get_loaded_component(package,component);
+
+    if (!ACTION_VerifyComponentForAction(package, component_index,
+                            INSTALLSTATE_LOCAL) && 
+       !ACTION_VerifyComponentForAction(package, component_index,
+                            INSTALLSTATE_SOURCE) &&
+       !ACTION_VerifyComponentForAction(package, component_index,
+                            INSTALLSTATE_ADVERTISED))
+    {
+        TRACE("Skipping: Component %s not scheduled for install\n",
+                        debugstr_w(component));
+        HeapFree(GetProcessHeap(),0,component);
+        return ERROR_SUCCESS;
+    }
 
     memset(productid_85,0,sizeof(productid_85));
     memset(component_85,0,sizeof(component_85));
@@ -6339,7 +6451,6 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     qualifier = load_dynamic_stringW(rec,2);
 
     feature = load_dynamic_stringW(rec,5);
-    component = load_dynamic_stringW(rec,3);
   
     index = get_loaded_component(package, component);
     CLSIDFromString(package->components[index].ComponentId, &clsid);
@@ -6756,6 +6867,35 @@ UINT WINAPI MsiSetFeatureStateA(MSIHANDLE hInstall, LPCSTR szFeature,
     return rc;
 }
 
+
+
+UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
+                                INSTALLSTATE iState)
+{
+    INT index, i;
+    UINT rc = ERROR_SUCCESS;
+
+    TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
+
+    index = get_loaded_feature(package,szFeature);
+    if (index < 0)
+        return ERROR_UNKNOWN_FEATURE;
+
+    package->features[index].ActionRequest= iState;
+    package->features[index].Action= iState;
+
+    ACTION_UpdateComponentStates(package,szFeature);
+
+    /* update all the features that are children of this feature */
+    for (i = 0; i < package->loaded_features; i++)
+    {
+        if (strcmpW(szFeature, package->features[i].Feature_Parent) == 0)
+            MSI_SetFeatureStateW(package, package->features[i].Feature, iState);
+    }
+    
+    return rc;
+}
+
 /***********************************************************************
  * MsiSetFeatureStateW (MSI.@)
  */
@@ -6763,7 +6903,6 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
                                 INSTALLSTATE iState)
 {
     MSIPACKAGE* package;
-    INT index;
     UINT rc = ERROR_SUCCESS;
 
     TRACE(" %s to %i\n",debugstr_w(szFeature), iState);
@@ -6772,17 +6911,8 @@ UINT WINAPI MsiSetFeatureStateW(MSIHANDLE hInstall, LPCWSTR szFeature,
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    index = get_loaded_feature(package,szFeature);
-    if (index < 0)
-    {
-        rc = ERROR_UNKNOWN_FEATURE;
-        goto end;
-    }
+    rc = MSI_SetFeatureStateW(package,szFeature,iState);
 
-    package->features[index].ActionRequest= iState;
-    ACTION_UpdateComponentStates(package,szFeature);
-
-end:
     msiobj_release( &package->hdr );
     return rc;
 }
