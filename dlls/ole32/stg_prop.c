@@ -30,12 +30,10 @@
  * It's a little bit out of date, and more definitive references are given
  * below, but it gives the best "big picture" that I've found.
  *
- * TODO: There's a lot missing in here.  Biggies:
- * - There are all sorts of restrictions I don't honor, like maximum property
- *   set byte size, maximum property name length
+ * TODO:
+ * - There are some restrictions I don't honor, like maximum property set
+ *   size and maximum property name length.
  * - Certain bogus files could result in reading past the end of a buffer.
- * - This will probably fail on big-endian machines, especially reading and
- *   writing strings.
  * - Mac-generated files won't be read correctly, even if they're little
  *   endian, because I disregard whether the generator was a Mac.  This means
  *   strings will probably be munged (as I don't understand Mac scripts.)
@@ -470,6 +468,33 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
     return hr;
 }
 
+/* Adds the name srcName to the name dictionaries, mapped to property ID id.
+ * Doesn't validate id.
+ */
+static HRESULT PropertyStorage_StoreNameWithIdW(PropertyStorage_impl *This,
+ LPCWSTR srcName, PROPID id)
+{
+    size_t len;
+    LPWSTR name;
+    HRESULT hr;
+
+    assert(srcName);
+
+    len = strlenW(srcName) + 1;
+    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (name)
+    {
+        strcpyW(name, srcName);
+        TRACE("Adding prop name %s, propid %ld\n", debugstr_w(name), id);
+        dictionary_insert(This->name_to_propid, name, (void *)id);
+        dictionary_insert(This->propid_to_name, (void *)id, name);
+        hr = S_OK;
+    }
+    else
+        hr = STG_E_INSUFFICIENTMEMORY;
+    return hr;
+}
+
 /************************************************************************
  * IPropertyStorage_fnWriteMultiple (IPropertyStorage)
  */
@@ -515,24 +540,12 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                 else
                 {
                     PROPID nextId = max(propidNameFirst, This->highestProp + 1);
-                    size_t len = strlenW(rgpspec[i].u.lpwstr) + 1;
-                    LPWSTR name = HeapAlloc(GetProcessHeap(), 0,
-                     len * sizeof(WCHAR));
 
-                    if (name)
-                    {
-                        strcpyW(name, rgpspec[i].u.lpwstr);
-                        TRACE("Adding prop name %s, propid %ld\n",
-                         debugstr_w(name), nextId);
-                        dictionary_insert(This->name_to_propid, name,
-                         (void *)nextId);
-                        dictionary_insert(This->propid_to_name, (void *)nextId,
-                         name);
+                    hr = PropertyStorage_StoreNameWithIdW(This,
+                     rgpspec[i].u.lpwstr, nextId);
+                    if (SUCCEEDED(hr))
                         hr = PropertyStorage_StorePropWithId(This, nextId,
                          &rgpropvar[i], GetACP());
-                    }
-                    else
-                        hr = STG_E_INSUFFICIENTMEMORY;
                 }
             }
         }
@@ -548,7 +561,13 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                 /* Can only set the code page if nothing else has been set */
                 if (dictionary_num_entries(This->propid_to_prop) == 0 &&
                  rgpropvar[i].vt == VT_I2)
+                {
                     This->codePage = rgpropvar[i].u.iVal;
+                    if (This->codePage == CP_UNICODE)
+                        This->grfFlags &= ~PROPSETFLAG_ANSI;
+                    else
+                        This->grfFlags |= PROPSETFLAG_ANSI;
+                }
                 else
                     hr = STG_E_INVALIDPARAMETER;
                 break;
@@ -693,21 +712,8 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     for (i = 0; SUCCEEDED(hr) && i < cpropid; i++)
     {
         if (rgpropid[i] != PID_ILLEGAL)
-        {
-            size_t len = lstrlenW(rglpwstrName[i]) + 1;
-            LPWSTR name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-
-            if (name)
-            {
-                strcpyW(name, rglpwstrName[i]);
-                dictionary_insert(This->name_to_propid, name,
-                 (void *)rgpropid[i]);
-                dictionary_insert(This->propid_to_name, (void *)rgpropid[i],
-                 name);
-            }
-            else
-                hr = STG_E_INSUFFICIENTMEMORY;
-        }
+            hr = PropertyStorage_StoreNameWithIdW(This, rglpwstrName[i],
+             rgpropid[i]);
     }
     if (This->grfFlags & PROPSETFLAG_UNBUFFERED)
         IPropertyStorage_Commit(iface, STGC_DEFAULT);
@@ -886,8 +892,7 @@ static int PropertyStorage_PropNameCompare(const void *a, const void *b,
 
     TRACE("(%s, %s)\n", debugstr_w(a), debugstr_w(b));
     /* FIXME: this assumes property names are always Unicode, but they
-     * might be ANSI, depending on whether This->grfFlags & PROPSETFLAG_ANSI
-     * is true.
+     * might be ANSI, depending on whether This->codePage is CP_UNICODE.
      */
     if (This->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
         return strcmpW((LPCWSTR)a, (LPCWSTR)b);
@@ -897,7 +902,7 @@ static int PropertyStorage_PropNameCompare(const void *a, const void *b,
 
 static void PropertyStorage_PropNameDestroy(void *k, void *d, void *extra)
 {
-    HeapFree(GetProcessHeap(), 0, k);
+    CoTaskMemFree(k);
 }
 
 static int PropertyStorage_PropCompare(const void *a, const void *b,
@@ -913,12 +918,30 @@ static void PropertyStorage_PropertyDestroy(void *k, void *d, void *extra)
     HeapFree(GetProcessHeap(), 0, d);
 }
 
+#ifdef WORDS_BIGENDIAN
+/* Swaps each character in str to or from little endian; assumes the conversion
+ * is symmetric, that is, that le16toh is equivalent to htole16.
+ */
+static void PropertyStorage_ByteSwapString(LPWSTR str, size_t len)
+{
+    DWORD i;
+
+    /* Swap characters to host order.
+     * FIXME: alignment?
+     */
+    for (i = 0; i < len; i++)
+        str[i] = le16toh(str[i]);
+}
+#else
+#define PropertyStorage_ByteSwapString(s, l)
+#endif
+
 /* Reads the dictionary from the memory buffer beginning at ptr.  Interprets
  * the entries according to the values of This->codePage and This->locale.
  * FIXME: there isn't any checking whether the read property extends past the
  * end of the buffer.
  * FIXME: this always stores dictionary entries as Unicode, but it should store
- * them as ANSI if (This->grfFlags & PROPSETFLAG_ANSI) is true.
+ * them as ANSI if This->codePage is not CP_UNICODE.
  */
 static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
  BYTE *ptr)
@@ -943,32 +966,21 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
         ptr += sizeof(PROPID);
         StorageUtl_ReadDWord(ptr, 0, &cbEntry);
         ptr += sizeof(DWORD);
-        /* FIXME: if host is big-endian, this'll suck to convert */
         TRACE("Reading entry with ID 0x%08lx, %ld bytes\n", propid, cbEntry);
         if (This->codePage != CP_UNICODE)
         {
-            int len = MultiByteToWideChar(This->codePage, 0, ptr, cbEntry,
-             NULL, 0);
-
-            if (!len)
-                hr = HRESULT_FROM_WIN32(GetLastError());
-            else
-            {
-                name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                if (name)
-                    MultiByteToWideChar(This->codePage, 0, ptr, cbEntry, name,
-                     len);
-                else
-                    hr = STG_E_INSUFFICIENTMEMORY;
-            }
+            /* Make sure the source string is NULL-terminated */
+            ptr[cbEntry - 1] = '\0';
+            hr = PropertyStorage_StringCopy(ptr, (LPSTR *)&name, CP_UNICODE,
+             This->codePage);
         }
         else
         {
-            name = HeapAlloc(GetProcessHeap(), 0, cbEntry);
-            if (name)
-                lstrcpyW(name, (LPWSTR)ptr);
-            else
-                hr = STG_E_INSUFFICIENTMEMORY;
+            /* Make sure the source string is NULL-terminated */
+            *((LPWSTR)ptr + cbEntry / sizeof(WCHAR)) = '\0';
+            PropertyStorage_ByteSwapString(ptr, cbEntry / sizeof(WCHAR));
+            hr = PropertyStorage_StringCopy(ptr, (LPSTR *)&name, CP_UNICODE,
+             This->codePage);
             /* Unicode entries are padded to DWORD boundaries */
             if (cbEntry % sizeof(DWORD))
                 ptr += sizeof(DWORD) - (cbEntry % sizeof(DWORD));
@@ -1032,12 +1044,13 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
         prop->u.pszVal = CoTaskMemAlloc(count);
         if (prop->u.pszVal)
         {
-            /* FIXME: if the host is big-endian, this'll suck */
             memcpy(prop->u.pszVal, data + sizeof(DWORD), count);
             /* This is stored in the code page specified in This->codePage.
              * Don't convert it, the caller will just store it as-is.
              * (Note the trace will be misleading if the code page is Unicode.)
+             * But make sure it's NULL-terminated:
              */
+            prop->u.pszVal[count - 1] = '\0';
             TRACE("Read string value %s\n", debugstr_a(prop->u.pszVal));
         }
         else
@@ -1052,9 +1065,11 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
         prop->u.pwszVal = CoTaskMemAlloc(count * sizeof(WCHAR));
         if (prop->u.pwszVal)
         {
-            /* FIXME: if the host is big-endian, gotta swap every char */
             memcpy(prop->u.pwszVal, data + sizeof(DWORD),
              count * sizeof(WCHAR));
+            /* make sure string is NULL-terminated */
+            prop->u.pwszVal[count - 1] = '\0';
+            PropertyStorage_ByteSwapString(prop->u.pwszVal, count);
             TRACE("Read string value %s\n", debugstr_w(prop->u.pwszVal));
         }
         else
@@ -1062,8 +1077,8 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
         break;
     }
     case VT_FILETIME:
-        /* FIXME: endianness */
-        memcpy(&prop->u.filetime, data, sizeof(FILETIME));
+        StorageUtl_ReadULargeInteger(data, 0,
+         (ULARGE_INTEGER *)&prop->u.filetime);
         break;
     default:
         FIXME("unsupported type %d\n", prop->vt);
@@ -1430,8 +1445,12 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
         if (FAILED(c->hr))
             goto end;
         c->bytesWritten += sizeof(DWORD);
-        /* FIXME: endian-convert every char (yuck) */
+        /* Rather than allocate a copy, I'll swap the string to little-endian
+         * in-place, write it, then swap it back.
+         */
+        PropertyStorage_ByteSwapString(key, keyLen);
         c->hr = IStream_Write(This->stm, key, keyLen, &count);
+        PropertyStorage_ByteSwapString(key, keyLen);
         if (FAILED(c->hr))
             goto end;
         c->bytesWritten += keyLen;
@@ -1456,7 +1475,6 @@ static BOOL PropertyStorage_DictionaryWriter(const void *key,
             c->hr = STG_E_INSUFFICIENTMEMORY;
             goto end;
         }
-        /* FIXME: endian-convert multibyte chars?  Ick! */
         WideCharToMultiByte(This->codePage, 0, (LPWSTR)key, -1, buf, len,
          NULL, NULL);
         StorageUtl_WriteDWord((LPBYTE)&dwLen, 0, len);
@@ -1636,6 +1654,16 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         hr = IStream_Write(This->stm, var->u.pwszVal, len * sizeof(WCHAR),
          &count);
         bytesWritten = count + sizeof(DWORD);
+        break;
+    }
+    case VT_FILETIME:
+    {
+        FILETIME temp;
+
+        StorageUtl_WriteULargeInteger((BYTE *)&temp, 0,
+         (ULARGE_INTEGER *)&var->u.filetime);
+        hr = IStream_Write(This->stm, &temp, sizeof(FILETIME), &count);
+        bytesWritten = count;
         break;
     }
     default:

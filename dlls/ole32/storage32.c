@@ -4123,6 +4123,34 @@ void StorageUtl_WriteDWord(BYTE* buffer, ULONG offset, DWORD value)
   memcpy(buffer+offset, &value, sizeof(DWORD));
 }
 
+void StorageUtl_ReadULargeInteger(const BYTE* buffer, ULONG offset,
+ ULARGE_INTEGER* value)
+{
+#ifdef WORDS_BIGENDIAN
+    ULARGE_INTEGER tmp;
+
+    memcpy(&tmp, buffer + offset, sizeof(ULARGE_INTEGER));
+    value->LowPart = htole32(tmp.HighPart);
+    value->HighPart = htole32(tmp.LowPart);
+#else
+    memcpy(value, buffer + offset, sizeof(ULARGE_INTEGER));
+#endif
+}
+
+void StorageUtl_WriteULargeInteger(BYTE* buffer, ULONG offset,
+ const ULARGE_INTEGER *value)
+{
+#ifdef WORDS_BIGENDIAN
+    ULARGE_INTEGER tmp;
+
+    tmp.LowPart = htole32(value->HighPart);
+    tmp.HighPart = htole32(value->LowPart);
+    memcpy(buffer + offset, &tmp, sizeof(ULARGE_INTEGER));
+#else
+    memcpy(buffer + offset, value, sizeof(ULARGE_INTEGER));
+#endif
+}
+
 void StorageUtl_ReadGUID(const BYTE* buffer, ULONG offset, GUID* value)
 {
   StorageUtl_ReadDWord(buffer, offset,   &(value->Data1));
