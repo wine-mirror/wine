@@ -739,6 +739,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	    midiCloseSeq();
 	    return MMSYSERR_ERROR;
 	}
+        SetThreadPriority(hThread, THREAD_PRIORITY_TIME_CRITICAL);
 	TRACE("Created thread for midi-in\n");
     }
 
