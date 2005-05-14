@@ -74,6 +74,26 @@ static RunningObjectTableImpl* runningObjectTableInstance = NULL;
 
 static HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl*,DWORD,IMoniker*,DWORD *);
 
+/* define the EnumMonikerImpl structure */
+typedef struct EnumMonikerImpl{
+
+    IEnumMonikerVtbl *lpVtbl;
+    ULONG      ref;
+
+    RunObject* TabMoniker;    /* pointer to the first object in the table       */
+    DWORD      TabSize;       /* current table size                             */
+    DWORD      TabLastIndx;   /* last used index element in the table.          */
+    DWORD      TabCurrentPos;    /* enum position in the list			*/
+
+} EnumMonikerImpl;
+
+
+/* IEnumMoniker Local functions*/
+static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(RunObject* runObjTab,
+                                                 ULONG TabSize,
+						 ULONG TabLastIndx,
+                                                 ULONG TabCurrentPos,
+                                                 IEnumMoniker ** ppenumMoniker);
 /***********************************************************************
  *        RunningObjectTable_QueryInterface
  */
@@ -401,8 +421,18 @@ static HRESULT WINAPI
 RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
                                    IEnumMoniker **ppenumMoniker)
 {
-    FIXME("(%p,%p) needs the IEnumMoniker implementation  \n",iface,ppenumMoniker);
-    return E_NOTIMPL;
+    /* create the unique instance of the EnumMonkikerImpl structure 
+     * and copy the Monikers referenced in the ROT so that they can be 
+     * enumerated by the Enum interface
+     */
+    HRESULT rc = 0;
+    RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+
+    rc=EnumMonikerImpl_CreateEnumROTMoniker(This->runObjTab, 
+					 This->runObjTabSize,
+					 This->runObjTabLastIndx, 0, 
+					 ppenumMoniker);
+    return rc;
 }
 
 /***********************************************************************
@@ -567,6 +597,210 @@ HRESULT WINAPI RunningObjectTableImpl_UnInitialize()
     RunningObjectTableImpl_Release((IRunningObjectTable*)runningObjectTableInstance);
 
     RunningObjectTableImpl_Destroy();
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *        EnumMoniker_QueryInterface
+ */
+static HRESULT WINAPI EnumMonikerImpl_QueryInterface(IEnumMoniker* iface,REFIID riid,void** ppvObject)
+{
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+
+    TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
+
+    /* validate arguments */
+    if (ppvObject == NULL)
+        return E_INVALIDARG;
+
+    *ppvObject = NULL;
+
+    if (IsEqualIID(&IID_IUnknown, riid))
+        *ppvObject = (IEnumMoniker*)This;
+    else
+        if (IsEqualIID(&IID_IEnumMoniker, riid))
+            *ppvObject = (IEnumMoniker*)This;
+
+    if ((*ppvObject)==NULL)
+        return E_NOINTERFACE;
+
+    IEnumMoniker_AddRef(iface);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *        EnumMoniker_AddRef
+ */
+static ULONG   WINAPI EnumMonikerImpl_AddRef(IEnumMoniker* iface)
+{
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+
+    TRACE("(%p)\n",This);
+
+    return InterlockedIncrement(&This->ref);
+}
+
+/***********************************************************************
+ *        EnumMoniker_release
+ */
+static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
+{
+    DWORD i;
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+    ULONG ref;
+
+    TRACE("(%p)\n",This);
+
+    ref = InterlockedDecrement(&This->ref);
+
+    /* unitialize rot structure if there's no more reference to it*/
+    if (ref == 0) {
+
+        /* release all registered objects in Moniker list */
+        for(i=0; i < This->TabLastIndx ;i++)
+        {
+            IMoniker_Release(This->TabMoniker[i].pmkObj);
+        }
+
+        /* there're no more elements in the table */
+
+	TRACE("(%p) Deleting\n",This);
+	HeapFree (GetProcessHeap(), 0, This->TabMoniker); /* free Moniker list */
+	HeapFree (GetProcessHeap(), 0, This);		  /* free Enum Instance */
+	
+    }
+
+    return ref;
+}
+/***********************************************************************
+ *        EnmumMoniker_Next
+ */
+static HRESULT   WINAPI EnumMonikerImpl_Next(IEnumMoniker* iface, ULONG celt, IMoniker** rgelt, ULONG * pceltFetched)
+{
+    ULONG i;
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+    TRACE("(%p) TabCurrentPos %ld Tablastindx %ld\n",This, This->TabCurrentPos, This->TabLastIndx);
+
+    /* retrieve the requested number of moniker from the current position */
+    for(i=0; (This->TabCurrentPos < This->TabLastIndx) && (i < celt); i++)
+	rgelt[i]=(IMoniker*)This->TabMoniker[This->TabCurrentPos++].pmkObj;
+
+    if (pceltFetched!=NULL)
+        *pceltFetched= i;
+
+    if (i==celt)
+        return S_OK;
+    else
+        return S_FALSE;
+
+}
+
+/***********************************************************************
+ *        EnmumMoniker_Skip
+ */
+static HRESULT   WINAPI EnumMonikerImpl_Skip(IEnumMoniker* iface, ULONG celt)
+{
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+
+    TRACE("(%p)\n",This);
+
+    if  (This->TabCurrentPos+celt >= This->TabLastIndx)
+	return S_FALSE;
+
+    This->TabCurrentPos+=celt;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *        EnmumMoniker_Reset
+ */
+static HRESULT   WINAPI EnumMonikerImpl_Reset(IEnumMoniker* iface)
+{
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+
+    This->TabCurrentPos = 0;	/* set back to start of list */
+
+    TRACE("(%p)\n",This);
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *        EnmumMoniker_Clone
+ */
+static HRESULT   WINAPI EnumMonikerImpl_Clone(IEnumMoniker* iface, IEnumMoniker ** ppenum)
+{
+    EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+
+    TRACE("(%p)\n",This);
+    /* copy the enum structure */ 
+    return EnumMonikerImpl_CreateEnumROTMoniker(This->TabMoniker, This->TabSize,
+					 This->TabLastIndx, This->TabCurrentPos,
+					 ppenum);
+}
+
+/* Virtual function table for the IEnumMoniker class. */
+static IEnumMonikerVtbl VT_EnumMonikerImpl =
+{
+    EnumMonikerImpl_QueryInterface,
+    EnumMonikerImpl_AddRef,
+    EnumMonikerImpl_Release,
+    EnumMonikerImpl_Next,
+    EnumMonikerImpl_Skip,
+    EnumMonikerImpl_Reset,
+    EnumMonikerImpl_Clone
+};
+
+/***********************************************************************
+ *        EnumMonikerImpl_CreateEnumROTMoniker
+ *        Used by EnumRunning to create the structure and EnumClone
+ *	  to copy the structure
+ */
+HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(RunObject* TabMoniker,
+                                                 ULONG TabSize,
+						 ULONG TabLastIndx,
+                                                 ULONG TabCurrentPos,
+                                                 IEnumMoniker ** ppenumMoniker)
+{
+    int i;
+    EnumMonikerImpl* This = NULL;
+
+    if (TabCurrentPos > TabSize)
+	return E_INVALIDARG;
+
+    if (ppenumMoniker == NULL)
+        return E_INVALIDARG;
+
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumMonikerImpl));
+
+    if (!ppenumMoniker) return E_OUTOFMEMORY;
+
+    TRACE("(%p)\n", This);
+
+    /* initialize the virtual table function */
+    This->lpVtbl = &VT_EnumMonikerImpl;
+
+    /* the initial reference is set to "1" */
+    This->ref = 1;			/* set the ref count to one         */
+    This->TabCurrentPos=0;		/* Set the list start posn to start */
+    This->TabSize=TabSize; 		/* Need the same size table as ROT */
+    This->TabLastIndx=TabLastIndx; 	/* end element */
+    This->TabMoniker=HeapAlloc(GetProcessHeap(),0,This->TabSize*sizeof(RunObject));
+
+    if (This->TabMoniker==NULL) {
+        HeapFree(GetProcessHeap(), 0, This);
+        return E_OUTOFMEMORY;
+    }
+    for (i=0; i < This->TabLastIndx; i++){
+
+        This->TabMoniker[i]=TabMoniker[i];
+        IMoniker_AddRef(TabMoniker[i].pmkObj);
+    }
+
+    *ppenumMoniker =  (IEnumMoniker*)This;
 
     return S_OK;
 }

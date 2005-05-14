@@ -36,12 +36,32 @@ static void test_MkParseDisplayName()
 {
     IBindCtx * pbc = NULL;
     HRESULT hr;
-    IMoniker * pmk = NULL;
+    IMoniker * pmk  = NULL;
+    IMoniker * pmk1 = NULL;
+    IMoniker * pmk2 = NULL;
+    IMoniker * ppmk = NULL;
+    IMoniker * spMoniker;
     ULONG eaten;
+    int	       monCnt;
     IUnknown * object = NULL;
+
+    IUnknown *lpEM1;
+
+    IEnumMoniker *spEM1  = NULL;
+    IEnumMoniker *spEM2  = NULL;
+    IEnumMoniker *spEM3  = NULL;
+
+    DWORD pdwReg1=0;
+    DWORD grflags=0;
+    DWORD pdwReg2=0;
+    IRunningObjectTable * pprot=NULL;
+
     /* CLSID of My Computer */
     static const WCHAR wszDisplayName[] = {'c','l','s','i','d',':',
         '2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D',':',0};
+    static const WCHAR wszFileName1[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','1','.','d','o','c',0};
+    static const WCHAR wszFileName2[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','2','.','d','o','c',0};
+    WCHAR * szDisplayn;
 
     hr = CreateBindCtx(0, &pbc);
     ok_ole_success(hr, CreateBindCtx);
@@ -57,6 +77,103 @@ static void test_MkParseDisplayName()
         IUnknown_Release(object);
     }
     IBindCtx_Release(pbc);
+
+    /* Test the EnumMoniker interface */
+    hr = CreateBindCtx(0, &pbc);
+    ok_ole_success(hr, CreateBindCtx);
+
+    hr = CreateFileMoniker(wszFileName1, &pmk1);
+    ok(hr==0, "CreateFileMoniker for file hr=%08lx\n", hr);
+    hr = CreateFileMoniker(wszFileName2, &pmk2);
+    ok(hr==0, "CreateFileMoniker for file hr=%08lx\n", hr);
+    hr = IBindCtx_GetRunningObjectTable(pbc, &pprot);
+    ok(hr==0, "IBindCtx_GetRunningObjectTable hr=%08lx\n", hr);
+
+    /* Check EnumMoniker before registering */
+    hr = IRunningObjectTable_EnumRunning(pprot, &spEM1);
+    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08lx\n", hr);
+    hr = IEnumMoniker_QueryInterface(spEM1, &IID_IUnknown, (void*) &lpEM1);
+    /* Register a couple of Monikers and check is ok */
+    ok(hr==0, "IEnumMoniker_QueryInterface hr %08lx %p\n", hr, lpEM1);
+    hr = MK_E_NOOBJECT;
+    monCnt = 0;
+    while ((IEnumMoniker_Next(spEM1, 1, &spMoniker, NULL)==S_OK) &&
+           (ppmk ==NULL))
+    {
+        monCnt++;
+        szDisplayn=NULL;
+        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL,
+                                   (LPOLESTR*) &szDisplayn);
+                                          /* szDisplayn needs to be freed by
+                                           * IMalloc_Free hence the use of
+                                           * CoGetMalloc                      */
+        if (SUCCEEDED(hr))
+        {
+            CoTaskMemFree(szDisplayn);
+        }
+    }
+    ok(monCnt==0, "Number of monikers should be equal to 0 not %i\n", monCnt);      grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
+    hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk1, &pdwReg1);
+    ok(hr==0, "IRunningObjectTable_Register hr=%08lx %p %08lx %p %p %ld\n",
+        hr, pprot, grflags, lpEM1, pmk1, pdwReg1);
+
+    grflags=0;
+    grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
+    hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk2, &pdwReg2);
+    ok(hr==0, "IRunningObjectTable_Register hr=%08lx %p %08lx %p %p %ld\n", hr,
+       pprot, grflags, lpEM1, pmk2, pdwReg2);
+
+    hr = IRunningObjectTable_EnumRunning(pprot, &spEM2);
+    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08lx\n", hr);
+
+    monCnt=0;
+    while ((IEnumMoniker_Next(spEM2, 1, &spMoniker, NULL)==S_OK) &&
+           (ppmk ==NULL))
+    {
+        WCHAR *szDisplayn=NULL;
+        monCnt++;
+        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL,
+                                   (LPOLESTR*) &szDisplayn);
+                                          /* szDisplayn needs to be freed by
+                                           * IMalloc_Free hence the use of
+                                           * CoGetMalloc                      */
+        if (SUCCEEDED(hr))
+        {
+            CoTaskMemFree(szDisplayn);
+        }
+    }
+    ok(monCnt==2, "Number of monikers should be equal to 2 not %i\n", monCnt);
+
+    IEnumMoniker_Clone(spEM2, &spEM3);
+    monCnt=0;
+    while ((IEnumMoniker_Next(spEM3, 1, &spMoniker, NULL)==S_OK) &&
+           (ppmk ==NULL))
+    {
+        WCHAR *szDisplayn=NULL;
+        monCnt++;
+        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL,
+                                   (LPOLESTR*) &szDisplayn);
+                                          /* szDisplayn needs to be freed by
+                                           * IMalloc_Free hence the use of
+                                           * CoGetMalloc                      */
+        if (SUCCEEDED(hr))
+        {
+            CoTaskMemFree(szDisplayn);
+        }
+    }
+    ok(monCnt==2, "Number of monikers should be equal to 2 not %i\n", monCnt);
+    IRunningObjectTable_Revoke(pprot,pdwReg1);
+    IRunningObjectTable_Revoke(pprot,pdwReg2);
+    IEnumMoniker_Release(spEM1);
+    IEnumMoniker_Release(spEM1);
+    IEnumMoniker_Release(spEM2);
+    IEnumMoniker_Release(spEM3);
+    IMoniker_Release(pmk1);
+    IMoniker_Release(pmk2);
+    IRunningObjectTable_Release(pprot);
+
+    IBindCtx_Release(pbc);
+    /* Finished testing EnumMoniker */
 }
 
 static const BYTE expected_moniker_data[] =
