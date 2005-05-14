@@ -54,7 +54,7 @@ static NTSTATUS is_integral_atom( LPCWSTR atomstr, size_t len, RTL_ATOM* pAtom )
     if (HIWORD( atomstr ))
     {
         const WCHAR* ptr = atomstr;
-        if (!len) return STATUS_INVALID_PARAMETER;
+        if (!len) return STATUS_OBJECT_NAME_INVALID;
 
         if (*ptr++ == '#')
         {
@@ -70,7 +70,7 @@ static NTSTATUS is_integral_atom( LPCWSTR atomstr, size_t len, RTL_ATOM* pAtom )
     }
     else atom = LOWORD( atomstr );
 done:
-    if (atom >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
+    if (!atom || atom >= MAXINTATOM) return STATUS_INVALID_PARAMETER;
     *pAtom = atom;
     return STATUS_SUCCESS;
 }
@@ -140,11 +140,11 @@ NTSTATUS WINAPI RtlQueryAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom, UL
     {
         if (*len > wlen)
         {
-            *len = wlen;
             memcpy( name, full_name, wlen );
             name[wlen / sizeof(WCHAR)] = 0;
         }
         else status = STATUS_BUFFER_TOO_SMALL;
+        *len = wlen;
     }
 
     TRACE( "%p %x -> %s (%lu)\n",
@@ -196,7 +196,7 @@ NTSTATUS WINAPI RtlAddAtomToAtomTable( RTL_ATOM_TABLE table, const WCHAR* name, 
     if (!table) status = STATUS_INVALID_PARAMETER;
     else
     {
-        size_t len = strlenW(name);
+        size_t len = HIWORD(name) ? strlenW(name) : 0;
         status = is_integral_atom( name, len, atom );
         if (status == STATUS_MORE_ENTRIES)
         {
@@ -226,7 +226,7 @@ NTSTATUS WINAPI RtlLookupAtomInAtomTable( RTL_ATOM_TABLE table, const WCHAR* nam
     if (!table) status = STATUS_INVALID_PARAMETER;
     else
     {
-        size_t len = strlenW(name);
+        size_t len = HIWORD(name) ? strlenW(name) : 0;
         status = is_integral_atom( name, len, atom );
         if (status == STATUS_MORE_ENTRIES)
         {
@@ -271,19 +271,19 @@ NTSTATUS WINAPI RtlEmptyAtomTable( RTL_ATOM_TABLE table, BOOLEAN delete_pinned )
  */
 NTSTATUS WINAPI RtlPinAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom )
 {
-    NTSTATUS    status = STATUS_INVALID_PARAMETER;
+    NTSTATUS status;
 
-    if (table && atom >= MAXINTATOM)
+    if (!table) return STATUS_INVALID_PARAMETER;
+    if (atom < MAXINTATOM) return STATUS_SUCCESS;
+
+    SERVER_START_REQ( set_atom_information )
     {
-        SERVER_START_REQ( set_atom_information )
-        {
-            req->table = table;
-            req->atom = atom;
-            req->pinned = TRUE;
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
+        req->table = table;
+        req->atom = atom;
+        req->pinned = TRUE;
+        status = wine_server_call( req );
     }
+    SERVER_END_REQ;
 
     return status;
 }

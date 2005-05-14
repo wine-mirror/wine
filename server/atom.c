@@ -253,10 +253,12 @@ static atom_t add_atom( struct atom_table *table, const WCHAR *str, size_t len )
 }
 
 /* delete an atom from the table */
-static void delete_atom( struct atom_table *table, atom_t atom )
+static void delete_atom( struct atom_table *table, atom_t atom, int if_pinned )
 {
     struct atom_entry *entry = get_atom_entry( table, atom );
-    if (entry && !--entry->count)
+    if (!entry) return;
+    if (entry->pinned && !if_pinned) set_error( STATUS_WAS_LOCKED );
+    else if (!--entry->count)
     {
         if (entry->next) entry->next->prev = entry->prev;
         if (entry->prev) entry->prev->next = entry->next;
@@ -328,7 +330,7 @@ int grab_global_atom( atom_t atom )
 /* decrement the ref count of a global atom; used for window properties */
 void release_global_atom( atom_t atom )
 {
-    if (atom >= MIN_STR_ATOM) delete_atom( global_table, atom );
+    if (atom >= MIN_STR_ATOM) delete_atom( global_table, atom, 1 );
 }
 
 /* add a global atom */
@@ -348,7 +350,7 @@ DECL_HANDLER(delete_atom)
     struct atom_table *table = get_table( req->table );
     if (table)
     {
-        delete_atom( table, req->atom );
+        delete_atom( table, req->atom, 0 );
         release_object( table );
     }
 }
@@ -376,7 +378,7 @@ DECL_HANDLER(get_atom_information)
         {
             size_t len = entry->len * sizeof(WCHAR);
             if (len <= get_reply_max_size()) set_reply_data( entry->str, len );
-            else set_error( STATUS_BUFFER_OVERFLOW );
+            else if (get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
             reply->count = entry->count;
             reply->pinned = entry->pinned;
         }
