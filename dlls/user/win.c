@@ -2223,6 +2223,8 @@ INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
 {
     WCHAR *buffer;
 
+    if (!lpString) return 0;
+
     if (WIN_IsCurrentProcess( hwnd ))
         return (INT)SendMessageA( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
 
@@ -2266,6 +2268,8 @@ INT WINAPI InternalGetWindowText(HWND hwnd,LPWSTR lpString,INT nMaxCount )
  */
 INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
 {
+    if (!lpString) return 0;
+
     if (WIN_IsCurrentProcess( hwnd ))
         return (INT)SendMessageW( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
 

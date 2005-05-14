@@ -2771,6 +2771,15 @@ void test_scroll()
     DestroyWindow( hwnd);
 }
 
+static void test_params()
+{
+    INT rc;
+
+    /* Just a param check */
+    SetLastError(0xdeadbeef);
+    rc = GetWindowText(hwndMain2, NULL, 1024);
+    ok( rc==0, "GetWindowText: rc=%d err=%ld\n",rc,GetLastError());
+}
 
 START_TEST(win)
 {
@@ -2809,6 +2818,8 @@ START_TEST(win)
                                 0, 0, 0, NULL);
     assert( hwndMain );
     assert( hwndMain2 );
+
+    test_params();
 
     test_capture_1();
     test_capture_2();
