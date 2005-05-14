@@ -10,6 +10,7 @@ EXTRALIBS = -lstrmiids -luuid $(LIBUNICODE)
 C_SRCS = \
 	capturegraph.c \
 	dllsetup.c \
+	enummedia.c \
 	qcap_main.c
 
 RC_SRCS = version.rc
