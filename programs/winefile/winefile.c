@@ -3386,7 +3386,7 @@ static BOOL pane_command(Pane* pane, UINT cmd)
 			break;
 
 #ifndef _NO_EXTENSIONS
-		case ID_PREFERED_SIZES: {
+		case ID_PREFERRED_SIZES: {
 			calc_widths(pane, TRUE);
 			set_header(pane);
 			InvalidateRect(pane->hwnd, 0, TRUE);
@@ -4066,8 +4066,8 @@ void show_frame(HWND hwndParent, int cmdshow)
 			{2, ID_WINDOW_TILE_HORZ, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
 			{3, ID_WINDOW_TILE_VERT, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
 /*TODO
-			{4, ID_... , TBSTATE_ENABLED, BTNS_BUTTON},
-			{5, ID_... , TBSTATE_ENABLED, BTNS_BUTTON},
+			{4, ID_... , TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
+			{5, ID_... , TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0},
 */		};
 
 		Globals.htoolbar = CreateToolbarEx(Globals.hMainWnd, WS_CHILD|WS_VISIBLE,
