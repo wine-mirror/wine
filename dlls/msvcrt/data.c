@@ -56,7 +56,6 @@ char **_environ = 0;
 MSVCRT_wchar_t **_wenviron = 0;
 char **MSVCRT___initenv = 0;
 MSVCRT_wchar_t **MSVCRT___winitenv = 0;
-int MSVCRT_timezone;
 int MSVCRT_app_type;
 char* MSVCRT__pgmptr = 0;
 WCHAR* MSVCRT__wpgmptr = 0;
@@ -231,11 +230,6 @@ char*** __p___initenv(void) { return &MSVCRT___initenv; }
  */
 MSVCRT_wchar_t*** __p___winitenv(void) { return &MSVCRT___winitenv; }
 
-/*********************************************************************
- *		__p__timezone (MSVCRT.@)
- */
-int* __p__timezone(void) { return &MSVCRT_timezone; }
-
 /* INTERNAL: Create a wide string from an ascii string */
 static MSVCRT_wchar_t *wstrdupa(const char *str)
 {
@@ -280,7 +274,6 @@ void msvcrt_init_args(void)
   MSVCRT__HUGE = HUGE_VAL;
   MSVCRT___setlc_active = 0;
   MSVCRT___unguarded_readlc_active = 0;
-  MSVCRT_timezone = 0;
   MSVCRT__fmode = MSVCRT__O_TEXT;
   
   MSVCRT___initenv= msvcrt_SnapshotOfEnvironmentA(NULL);

@@ -300,14 +300,27 @@ MSVCRT_time_t MSVCRT_time(MSVCRT_time_t* buf)
 /*********************************************************************
  *		_daylight (MSVCRT.@)
  */
-int MSVCRT___daylight = 1; /* FIXME: assume daylight */
+int MSVCRT___daylight = 0;
 
 /*********************************************************************
  *		__p_daylight (MSVCRT.@)
  */
-void *MSVCRT___p__daylight(void)
+int *MSVCRT___p__daylight(void)
 {
 	return &MSVCRT___daylight;
+}
+
+/*********************************************************************
+ *		_timezone (MSVCRT.@)
+ */
+long MSVCRT___timezone = 0;
+
+/*********************************************************************
+ *		__p_timezone (MSVCRT.@)
+ */
+long *MSVCRT___p__timezone(void)
+{
+	return &MSVCRT___timezone;
 }
 
 /*********************************************************************
@@ -317,8 +330,8 @@ void *MSVCRT___p__daylight(void)
  *  must be large enough.  The size is picked based on observation of
  *  Windows XP.
  */
-static char tzname_std[64] = ""; /* FIXME: initialize */
-static char tzname_dst[64] = ""; /* FIXME: initialize */
+static char tzname_std[64] = "";
+static char tzname_dst[64] = "";
 char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
 
 /*********************************************************************
@@ -327,4 +340,18 @@ char *MSVCRT__tzname[2] = { tzname_std, tzname_dst };
 char **__p__tzname(void)
 {
 	return MSVCRT__tzname;
+}
+
+/*********************************************************************
+ *		_tzset (MSVCRT.@)
+ */
+void MSVCRT__tzset(void)
+{
+    tzset();
+    MSVCRT___daylight = daylight;
+    MSVCRT___timezone = timezone;
+    lstrcpynA(tzname_std, tzname[0], sizeof(tzname_std));
+    tzname_std[sizeof(tzname_std) - 1] = '\0';
+    lstrcpynA(tzname_dst, tzname[1], sizeof(tzname_dst));
+    tzname_dst[sizeof(tzname_dst) - 1] = '\0';
 }
