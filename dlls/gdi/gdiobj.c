@@ -1459,7 +1459,7 @@ DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
     case 0x0002:  /* LocalFree */
         return LOCAL_Free( GDI_HeapSel, wParam1 );
     case 0x0003:  /* LocalCompact */
-        return LOCAL_Compact( GDI_HeapSel, wParam3, 0 );
+        return LOCAL_Compact( GDI_HeapSel, wParam3 );
     case 0x0103:  /* LocalHeap */
         return GDI_HeapSel;
     default:

@@ -23,22 +23,133 @@
 
 #include <windef.h>
 #include <wine/windef16.h>
+#include <wine/winbase16.h>
+#include <stackframe.h>
 
   /* These function are equivalent to the Local* API functions, */
   /* excepted that they need DS as the first parameter. This    */
   /* allows managing several heaps from the emulation library.  */
+static inline HLOCAL16 LOCAL_Alloc( HANDLE16 ds, UINT16 flags, WORD size )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    HLOCAL16 ret;
 
-extern HLOCAL16 LOCAL_Alloc( HANDLE16 ds, UINT16 flags, WORD size );
-extern HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle,
-                               WORD size, UINT16 flags );
-extern HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle );
-extern HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr );
-extern UINT16 LOCAL_Size( HANDLE16 ds, HLOCAL16 handle );
-extern UINT16 LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle );
-extern UINT16 LOCAL_HeapSize( HANDLE16 ds );
-extern UINT16 LOCAL_CountFree( HANDLE16 ds );
-extern void *LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle );
-extern BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle );
-extern WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags );
+    CURRENT_DS = ds;
+    ret = LocalAlloc16 (flags, size);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline  HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, UINT16 flags )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    HLOCAL16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalReAlloc16 (handle, size, flags);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    HLOCAL16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalFree16 (handle);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+static inline HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    HLOCAL16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalHandle16 (addr);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline UINT16 LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    UINT16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalSize16 (handle);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline UINT16 LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    UINT16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalFlags16 (handle);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+
+static inline UINT16 LOCAL_HeapSize( HANDLE16 ds )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    UINT16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalHeapSize16 ();
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline UINT16 LOCAL_CountFree( HANDLE16 ds )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    UINT16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalCountFree16 ();
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline void *LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    SEGPTR ret;
+
+    CURRENT_DS = ds;
+    ret = LocalLock16 (handle);
+    CURRENT_DS = oldDS;
+
+    return MapSL(ret);
+}
+
+static inline BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    BOOL16 ret;
+
+    CURRENT_DS = ds;
+    ret = LocalUnlock16 (handle);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
+static inline WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree )
+{
+    HANDLE16 oldDS = CURRENT_DS;
+    WORD ret;
+
+    CURRENT_DS = ds;
+    ret = LocalCompact16 (minfree);
+    CURRENT_DS = oldDS;
+    return ret;
+}
+
 
 #endif  /* __WINE_LOCAL_H */

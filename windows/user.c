@@ -553,7 +553,7 @@ DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPa
     case USUD_LOCALFREE:
         return LOCAL_Free(USER_HeapSel, wParam1);
     case USUD_LOCALCOMPACT:
-        return LOCAL_Compact(USER_HeapSel, wParam3, 0);
+        return LOCAL_Compact(USER_HeapSel, wParam3);
     case USUD_LOCALHEAP:
         return USER_HeapSel;
     case USUD_FIRSTCLASS:

@@ -726,9 +726,9 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 
 
 /***********************************************************************
- *           LOCAL_Compact
+ *           local_compact
  */
-WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
+static UINT16 local_compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
 {
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALHEAPINFO *pInfo;
@@ -845,7 +845,7 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
         }
         table = *(WORD *)pEntry;
     }
-    return LOCAL_Compact(ds, 0xffff, LMEM_NODISCARD);
+    return local_compact(ds, 0xffff, LMEM_NODISCARD);
 }
 
 
@@ -931,7 +931,7 @@ notify_done:
     arena = LOCAL_FindFreeBlock( ds, size );
     if (arena == 0) {
 	/* no space: try to make some */
-	LOCAL_Compact( ds, size, flags );
+	local_compact( ds, size, flags );
 	arena = LOCAL_FindFreeBlock( ds, size );
     }
     if (arena == 0) {
@@ -1117,12 +1117,11 @@ static void LOCAL_FreeHandleEntry( HANDLE16 ds, HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LOCAL_Free
- *
- * Implementation of LocalFree().
+ *           LocalFree   (KERNEL.7)
  */
-HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
+HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
 {
+    HANDLE16 ds = CURRENT_DS;
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
 
     TRACE("%04x ds=%04x\n", handle, ds );
@@ -1150,15 +1149,13 @@ HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LOCAL_Alloc
- *
- * Implementation of LocalAlloc().
- *
+ *           LocalAlloc   (KERNEL.5)
  */
-HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
+HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
 {
+    HANDLE16 ds = CURRENT_DS;
+    HLOCAL16 handle = 0;
     char *ptr;
-    HLOCAL16 handle;
 
     TRACE("%04x %d ds=%04x\n", flags, size, ds );
 
@@ -1171,7 +1168,7 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 	if(size)
 	{
 	    if (!(hmem = LOCAL_GetBlock( ds, size + MOVEABLE_PREFIX, flags )))
-		return 0;
+		goto exit;
         }
 	else /* We just need to allocate a discarded handle */
 	    hmem = 0;
@@ -1180,7 +1177,7 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
 	    WARN("Couldn't get handle.\n");
 	    if(hmem)
 		LOCAL_FreeArena( ds, ARENA_HEADER(hmem) );
-	    return 0;
+	    goto exit;
 	}
 	ptr = MapSL( MAKESEGPTR( ds, 0 ) );
 	plhe = (LOCALHANDLEENTRY *)(ptr + handle);
@@ -1199,21 +1196,21 @@ HLOCAL16 LOCAL_Alloc( HANDLE16 ds, WORD flags, WORD size )
     }
     else /* FIXED */
     {
-	if(!size)
-	    return 0;
-	handle = LOCAL_GetBlock( ds, size, flags );
+	if(size) handle = LOCAL_GetBlock( ds, size, flags );
     }
+
+exit:
+    CURRENT_STACK16->ecx = handle;  /* must be returned in cx too */
     return handle;
 }
 
 
 /***********************************************************************
- *           LOCAL_ReAlloc
- *
- * Implementation of LocalReAlloc().
+ *           LocalReAlloc   (KERNEL.6)
  */
-HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
+HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 {
+    HANDLE16 ds = CURRENT_DS;
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena, *pNext;
@@ -1433,20 +1430,11 @@ static HLOCAL16 LOCAL_InternalLock( LPSTR heap, HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LOCAL_Lock
+ *           LocalUnlock   (KERNEL.9)
  */
-void *LOCAL_Lock( HANDLE16 ds, HLOCAL16 handle )
+BOOL16 WINAPI LocalUnlock16( HLOCAL16 handle )
 {
-    char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
-    return handle ? ptr + LOCAL_InternalLock( ptr, handle ) : NULL;
-}
-
-
-/***********************************************************************
- *           LOCAL_Unlock
- */
-BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
-{
+    HANDLE16 ds = CURRENT_DS;
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
 
     TRACE("%04x\n", handle );
@@ -1463,12 +1451,11 @@ BOOL16 LOCAL_Unlock( HANDLE16 ds, HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LOCAL_Size
- *
- * Implementation of LocalSize().
+ *           LocalSize   (KERNEL.10)
  */
-WORD LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
+UINT16 WINAPI LocalSize16( HLOCAL16 handle )
 {
+    HANDLE16 ds = CURRENT_DS;
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALARENA *pArena;
 
@@ -1489,12 +1476,11 @@ WORD LOCAL_Size( HANDLE16 ds, HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LOCAL_Flags
- *
- * Implementation of LocalFlags().
+ *           LocalFlags   (KERNEL.12)
  */
-WORD LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle )
+UINT16 WINAPI LocalFlags16( HLOCAL16 handle )
 {
+    HANDLE16 ds = CURRENT_DS;
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
 
     if (HANDLE_MOVEABLE(handle))
@@ -1514,25 +1500,22 @@ WORD LOCAL_Flags( HANDLE16 ds, HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LOCAL_HeapSize
- *
- * Implementation of LocalHeapSize().
+ *           LocalHeapSize   (KERNEL.162)
  */
-WORD LOCAL_HeapSize( HANDLE16 ds )
+WORD WINAPI LocalHeapSize16(void)
 {
+    HANDLE16 ds = CURRENT_DS;
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
-    if (!pInfo) return 0;
-    return pInfo->last - pInfo->first;
+    return pInfo ? pInfo->last - pInfo->first : 0;
 }
 
 
 /***********************************************************************
- *           LOCAL_CountFree
- *
- * Implementation of LocalCountFree().
+ *           LocalCountFree   (KERNEL.161)
  */
-WORD LOCAL_CountFree( HANDLE16 ds )
+WORD WINAPI LocalCountFree16(void)
 {
+    HANDLE16 ds = CURRENT_DS;
     WORD arena, total;
     LOCALARENA *pArena;
     LOCALHEAPINFO *pInfo;
@@ -1561,12 +1544,11 @@ WORD LOCAL_CountFree( HANDLE16 ds )
 
 
 /***********************************************************************
- *           LOCAL_Handle
- *
- * Implementation of LocalHandle().
+ *           LocalHandle   (KERNEL.11)
  */
-HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
+HLOCAL16 WINAPI LocalHandle16( WORD addr )
 {
+    HANDLE16 ds = CURRENT_DS;
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALHEAPINFO *pInfo;
     WORD table;
@@ -1594,33 +1576,6 @@ HLOCAL16 LOCAL_Handle( HANDLE16 ds, WORD addr )
 }
 
 
-/***********************************************************************
- *           LocalAlloc   (KERNEL.5)
- */
-HLOCAL16 WINAPI LocalAlloc16( UINT16 flags, WORD size )
-{
-    HLOCAL16 ret = LOCAL_Alloc( CURRENT_DS, flags, size );
-    CURRENT_STACK16->ecx = ret;  /* must be returned in cx too */
-    return ret;
-}
-
-
-/***********************************************************************
- *           LocalReAlloc   (KERNEL.6)
- */
-HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
-{
-    return LOCAL_ReAlloc( CURRENT_DS, handle, size, flags );
-}
-
-
-/***********************************************************************
- *           LocalFree   (KERNEL.7)
- */
-HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
-{
-    return LOCAL_Free( CURRENT_DS, handle );
-}
 
 
 /***********************************************************************
@@ -1637,48 +1592,12 @@ SEGPTR WINAPI LocalLock16( HLOCAL16 handle )
 
 
 /***********************************************************************
- *           LocalUnlock   (KERNEL.9)
- */
-BOOL16 WINAPI LocalUnlock16( HLOCAL16 handle )
-{
-    return LOCAL_Unlock( CURRENT_DS, handle );
-}
-
-
-/***********************************************************************
- *           LocalSize   (KERNEL.10)
- */
-UINT16 WINAPI LocalSize16( HLOCAL16 handle )
-{
-    return LOCAL_Size( CURRENT_DS, handle );
-}
-
-
-/***********************************************************************
- *           LocalHandle   (KERNEL.11)
- */
-HLOCAL16 WINAPI LocalHandle16( WORD addr )
-{
-    return LOCAL_Handle( CURRENT_DS, addr );
-}
-
-
-/***********************************************************************
- *           LocalFlags   (KERNEL.12)
- */
-UINT16 WINAPI LocalFlags16( HLOCAL16 handle )
-{
-    return LOCAL_Flags( CURRENT_DS, handle );
-}
-
-
-/***********************************************************************
  *           LocalCompact   (KERNEL.13)
  */
 UINT16 WINAPI LocalCompact16( UINT16 minfree )
 {
     TRACE("%04x\n", minfree );
-    return LOCAL_Compact( CURRENT_DS, minfree, 0 );
+    return local_compact( CURRENT_DS, minfree, 0 );
 }
 
 
@@ -1742,25 +1661,6 @@ DWORD WINAPI GetHeapSpaces16( HMODULE16 module )
     ds =
     GlobalHandleToSel16((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
     return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
-}
-
-
-/***********************************************************************
- *           LocalCountFree   (KERNEL.161)
- */
-WORD WINAPI LocalCountFree16(void)
-{
-    return LOCAL_CountFree( CURRENT_DS );
-}
-
-
-/***********************************************************************
- *           LocalHeapSize   (KERNEL.162)
- */
-WORD WINAPI LocalHeapSize16(void)
-{
-    TRACE("(void)\n" );
-    return LOCAL_HeapSize( CURRENT_DS );
 }
 
 
