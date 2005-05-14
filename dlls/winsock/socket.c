@@ -222,7 +222,6 @@ struct per_thread_data
     int pe_len;
 };
 
-static DWORD tls_index = TLS_OUT_OF_INDEXES; /* TLS index for per-thread data */
 static INT num_startup;          /* reference counter */
 static FARPROC blocking_hook = WSA_DefaultBlockingHook;
 
@@ -405,19 +404,19 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
 
 static struct per_thread_data *get_per_thread_data(void)
 {
-    struct per_thread_data * ptb = TlsGetValue( tls_index );
+    struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
     /* lazy initialization */
     if (!ptb)
     {
         ptb = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ptb) );
-        TlsSetValue( tls_index, ptb );
+        NtCurrentTeb()->WinSockData = ptb;
     }
     return ptb;
 }
 
 static void free_per_thread_data(void)
 {
-    struct per_thread_data * ptb = TlsGetValue( tls_index );
+    struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
 
     if (!ptb) return;
 
@@ -430,6 +429,7 @@ static void free_per_thread_data(void)
     ptb->pe_buffer = NULL;
 
     HeapFree( GetProcessHeap(), 0, ptb );
+    NtCurrentTeb()->WinSockData = NULL;
 }
 
 /***********************************************************************
@@ -440,11 +440,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
     TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        tls_index = TlsAlloc();
         break;
     case DLL_PROCESS_DETACH:
         free_per_thread_data();
-        TlsFree( tls_index );
         num_startup = 0;
         break;
     case DLL_THREAD_DETACH:

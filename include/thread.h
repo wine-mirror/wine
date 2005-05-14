@@ -110,12 +110,20 @@ typedef struct _TEB
     PVOID        DeallocationStack;          /* -2- e0c Base of the stack */
     LPVOID       TlsSlots[64];               /* -2- e10 Thread local storage */
     LIST_ENTRY   TlsLinks;                   /* -2- f10 */
-    DWORD        pad8[1];                    /* --n f18 */
-    PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */
-    DWORD        pad9[24];                   /* --n f20 */
-    PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
-    PVOID        pad10[4];                   /* --n f84 */
-    PVOID       *TlsExpansionSlots;          /* -2- f94 */
+    PVOID        Vdm;                        /* f18 */
+    PVOID        ReservedForNtRpc;           /* f1c */
+    PVOID        DbgSsReserved[2];           /* f20 */
+    ULONG        HardErrorDisabled;          /* f28 */
+    PVOID        Instrumentation[16];        /* f2c */
+    PVOID        WinSockData;                /* f6c */
+    ULONG        GdiBatchCount;              /* f70 */
+    ULONG        Spare2;                     /* f74 */
+    ULONG        Spare3;                     /* f78 */
+    ULONG        Spare4;                     /* f7c */
+    PVOID        ReservedForOle;             /* f80 */
+    ULONG        WaitingOnLoaderLock;        /* f84 */
+    PVOID        Reserved5[3];               /* f88 */
+    PVOID       *TlsExpansionSlots;          /* f94 */
 } TEB;
 #endif /* WINE_TEB_DEFINED */
 
