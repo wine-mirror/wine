@@ -1430,8 +1430,8 @@ BOOL WINAPI FlattenPath(HDC hdc)
 
 static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 {
-    INT i;
-    POINT ptLastMove = {0,0};
+    INT i, nLinePts, nAlloc;
+    POINT *pLinePts;
     POINT ptViewportOrg, ptWindowOrg;
     SIZE szViewportExt, szWindowExt;
     DWORD mapMode, graphicsMode;
@@ -1461,19 +1461,37 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     ModifyWorldTransform(dc->hSelf, &xform, MWT_IDENTITY);
     SetGraphicsMode(dc->hSelf, graphicsMode);
 
+    /* Allocate enough memory for the worst case without beziers (one PT_MOVETO
+     * and the rest PT_LINETO with PT_CLOSEFIGURE at the end) plus some buffer 
+     * space in case we get one to keep the number of reallocations small. */
+    nAlloc = pPath->numEntriesUsed + 1 + 300; 
+    pLinePts = HeapAlloc(GetProcessHeap(), 0, nAlloc * sizeof(POINT));
+    nLinePts = 0;
+    
     for(i = 0; i < pPath->numEntriesUsed; i++) {
+        if((i == 0 || (pPath->pFlags[i-1] & PT_CLOSEFIGURE)) &&
+	   (pPath->pFlags[i] != PT_MOVETO))
+	{
+	    ERR("Expected PT_MOVETO %s, got path flag %d\n", 
+	        i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
+		(INT)pPath->pFlags[i]);
+	    ret = FALSE;
+	    goto end;
+	}
         switch(pPath->pFlags[i]) {
 	case PT_MOVETO:
 	    TRACE("Got PT_MOVETO (%ld, %ld)\n",
 		  pPath->pPoints[i].x, pPath->pPoints[i].y);
-	    MoveToEx(dc->hSelf, pPath->pPoints[i].x, pPath->pPoints[i].y, NULL);
-	    ptLastMove = pPath->pPoints[i];
+	    if(nLinePts >= 2)
+	        Polyline(dc->hSelf, pLinePts, nLinePts);
+	    nLinePts = 0;
+	    pLinePts[nLinePts++] = pPath->pPoints[i];
 	    break;
 	case PT_LINETO:
 	case (PT_LINETO | PT_CLOSEFIGURE):
 	    TRACE("Got PT_LINETO (%ld, %ld)\n",
 		  pPath->pPoints[i].x, pPath->pPoints[i].y);
-	    LineTo(dc->hSelf, pPath->pPoints[i].x, pPath->pPoints[i].y);
+	    pLinePts[nLinePts++] = pPath->pPoints[i];
 	    break;
 	case PT_BEZIERTO:
 	    TRACE("Got PT_BEZIERTO\n");
@@ -1482,9 +1500,25 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	        ERR("Path didn't contain 3 successive PT_BEZIERTOs\n");
 		ret = FALSE;
 		goto end;
+	    } else {
+	        INT nBzrPts, nMinAlloc;
+	        POINT *pBzrPts = GDI_Bezier(&pPath->pPoints[i-1], 4, &nBzrPts);
+		/* Make sure we have allocated enough memory for the lines of 
+		 * this bezier and the rest of the path, assuming we won't get
+		 * another one (since we won't reallocate again then). */
+		nMinAlloc = nLinePts + (pPath->numEntriesUsed - i) + nBzrPts;
+		if(nAlloc < nMinAlloc)
+		{
+		    nAlloc = nMinAlloc * 2;
+		    pLinePts = HeapReAlloc(GetProcessHeap(), 0, pLinePts,
+		                           nAlloc * sizeof(POINT));
+		}
+		memcpy(&pLinePts[nLinePts], &pBzrPts[1],
+		       (nBzrPts - 1) * sizeof(POINT));
+		nLinePts += nBzrPts - 1;
+		HeapFree(GetProcessHeap(), 0, pBzrPts);
+		i += 2;
 	    }
-	    PolyBezierTo(dc->hSelf, &pPath->pPoints[i], 3);
-	    i += 2;
 	    break;
 	default:
 	    ERR("Got path flag %d\n", (INT)pPath->pFlags[i]);
@@ -1492,10 +1526,13 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	    goto end;
 	}
 	if(pPath->pFlags[i] & PT_CLOSEFIGURE)
-	    LineTo(dc->hSelf, ptLastMove.x, ptLastMove.y);
+	    pLinePts[nLinePts++] = pLinePts[0];
     }
+    if(nLinePts >= 2)
+        Polyline(dc->hSelf, pLinePts, nLinePts);
 
  end:
+    HeapFree(GetProcessHeap(), 0, pLinePts);
 
     /* Restore the old mapping mode */
     SetMapMode(dc->hSelf, mapMode);
