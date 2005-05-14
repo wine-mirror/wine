@@ -1436,6 +1436,8 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     SIZE szViewportExt, szWindowExt;
     DWORD mapMode, graphicsMode;
     XFORM xform;
+    HGDIOBJ hOldPen;
+    HPEN hNewPen;
     BOOL ret = TRUE;
 
     if(dc->funcs->pStrokePath)
@@ -1444,6 +1446,28 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     if(pPath->state != PATH_Closed)
         return FALSE;
 
+    /* Convert pen width to DP for MWT_IDENTITY */
+    hOldPen = GetCurrentObject(dc->hSelf, OBJ_PEN);
+    if(GetObjectType(hOldPen) == OBJ_EXTPEN) {
+	POINT ptPenWidth;
+	EXTLOGPEN elp;
+	LOGBRUSH lb;
+	GetObjectW(hOldPen, sizeof(EXTLOGPEN), &elp);
+	ptPenWidth.x = elp.elpWidth;
+	LPtoDP(dc->hSelf, &ptPenWidth, 1);
+	lb.lbStyle = elp.elpBrushStyle;
+	lb.lbColor = elp.elpColor;
+	lb.lbHatch = elp.elpHatch;
+	hNewPen = ExtCreatePen(elp.elpPenStyle, ptPenWidth.x, &lb,
+	                       elp.elpNumEntries, elp.elpStyleEntry);
+    } else /* OBJ_PEN */ {
+	LOGPEN lp;
+	GetObjectW(hOldPen, sizeof(LOGPEN), &lp);
+	LPtoDP(dc->hSelf, &lp.lopnWidth, 1);
+	hNewPen = CreatePenIndirect(&lp);
+    }
+    SelectObject(dc->hSelf, hNewPen);
+    
     /* Save the mapping mode info */
     mapMode=GetMapMode(dc->hSelf);
     GetViewportExtEx(dc->hSelf, &szViewportExt);
@@ -1559,6 +1583,11 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
         DPtoLP(dc->hSelf, &pt, 1);
         MoveToEx(dc->hSelf, pt.x, pt.y, NULL);
     }
+
+    /* Restore old pen */
+    DeleteObject(hNewPen);
+    SelectObject(dc->hSelf, hOldPen);
+
     return ret;
 }
 
