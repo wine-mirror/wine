@@ -1401,7 +1401,7 @@ DWORD NE_StartTask(void)
             sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
         sp &= ~1;
         sp -= sizeof(STACK16FRAME);
-        NtCurrentTeb()->cur_stack = MAKESEGPTR( GlobalHandleToSel16(hInstance), sp );
+        NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( GlobalHandleToSel16(hInstance), sp );
 
         /* Registers at initialization must be:
          * ax   zero
@@ -1431,8 +1431,8 @@ DWORD NE_StartTask(void)
 
         TRACE("Starting main program: cs:ip=%04lx:%04lx ds=%04lx ss:sp=%04x:%04x\n",
               context.SegCs, context.Eip, context.SegDs,
-              SELECTOROF(NtCurrentTeb()->cur_stack),
-              OFFSETOF(NtCurrentTeb()->cur_stack) );
+              SELECTOROF(NtCurrentTeb()->WOW32Reserved),
+              OFFSETOF(NtCurrentTeb()->WOW32Reserved) );
 
         WOWCallback16Ex( 0, WCB16_REGS, 0, NULL, (DWORD *)&context );
         ExitThread( LOWORD(context.Eax) );

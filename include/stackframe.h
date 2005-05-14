@@ -22,9 +22,14 @@
 #define __WINE_STACKFRAME_H
 
 #include <string.h>
+#include <stdarg.h>
 
-#include <thread.h>
+#include <windef.h>
+#include <winbase.h>
 #include <winnt.h>
+#include <winreg.h>
+#include <winternl.h>
+#include <thread.h>
 #include <wine/winbase16.h>
 
 #include <pshpack1.h>
@@ -68,7 +73,7 @@ typedef struct _STACK16FRAME
 
 #include <poppack.h>
 
-#define CURRENT_STACK16      ((STACK16FRAME*)MapSL(NtCurrentTeb()->cur_stack))
+#define CURRENT_STACK16      ((STACK16FRAME*)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))
 #define CURRENT_DS           (CURRENT_STACK16->ds)
 
 /* Push bytes on the 16-bit stack of a thread;
@@ -78,8 +83,8 @@ static inline SEGPTR stack16_push( int size )
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame - size, frame, sizeof(*frame) );
-    NtCurrentTeb()->cur_stack -= size;
-    return (SEGPTR)(NtCurrentTeb()->cur_stack + sizeof(*frame));
+    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved - size;
+    return (SEGPTR)((char *)NtCurrentTeb()->WOW32Reserved + sizeof(*frame));
 }
 
 /* Pop bytes from the 16-bit stack of a thread */
@@ -87,7 +92,7 @@ static inline void stack16_pop( int size )
 {
     STACK16FRAME *frame = CURRENT_STACK16;
     memmove( (char*)frame + size, frame, sizeof(*frame) );
-    NtCurrentTeb()->cur_stack += size;
+    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved + size;
 }
 
 #endif /* __WINE_STACKFRAME_H */

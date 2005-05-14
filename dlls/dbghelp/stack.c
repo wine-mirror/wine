@@ -130,7 +130,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         if (NtQueryInformationThread(hThread, ThreadBasicInformation, &info,    
                                      sizeof(info), NULL) != STATUS_SUCCESS)
             goto done_err;
-        curr_switch = (unsigned long)info.TebBaseAddress + FIELD_OFFSET(TEB, cur_stack);
+        curr_switch = (unsigned long)info.TebBaseAddress + FIELD_OFFSET(TEB, WOW32Reserved);
         if (!f_read_mem(hProcess, (void*)curr_switch, &next_switch, 
                         sizeof(next_switch), NULL))
         {

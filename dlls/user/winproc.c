@@ -435,21 +435,19 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     LRESULT ret;
     WORD args[5];
     DWORD offset = 0;
-    TEB *teb = NtCurrentTeb();
 
     USER_CheckNotLock();
 
     /* Window procedures want ax = hInstance, ds = es = ss */
 
     memset(&context, 0, sizeof(context));
-    context.SegDs = context.SegEs = SELECTOROF(teb->cur_stack);
+    context.SegDs = context.SegEs = SELECTOROF(NtCurrentTeb()->WOW32Reserved);
     context.SegFs = wine_get_fs();
     context.SegGs = wine_get_gs();
     if (!(context.Eax = GetWindowWord( HWND_32(hwnd), GWLP_HINSTANCE ))) context.Eax = context.SegDs;
     context.SegCs = SELECTOROF(proc);
     context.Eip   = OFFSETOF(proc);
-    context.Ebp   = OFFSETOF(teb->cur_stack)
-                        + (WORD)&((STACK16FRAME*)0)->bp;
+    context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     if (lParam)
     {

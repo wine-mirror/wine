@@ -461,8 +461,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
     context16.Eip   = LOWORD(context->Edx);
     /* point EBP to the STACK16FRAME on the stack
      * for the call_to_16 to set up the register content on calling */
-    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
-                           + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     /*
      * used to be (problematic):
@@ -484,7 +483,7 @@ void WINAPI __regs_QT_Thunk( CONTEXT86 *context )
      * the number of parameters that the Win16 function
      * accepted (that it popped from the corresponding Win16 stack) */
     context->Esp +=   LOWORD(context16.Esp) -
-                        ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
+                        ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( QT_Thunk, 0, 0 );
@@ -594,8 +593,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
     context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(callTarget);
     context16.Eip   = LOWORD(callTarget);
-    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
-                           + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize  = context->Ebp-context->Esp-0x40;
     if (argsize > sizeof(newstack)) argsize = sizeof(newstack);
@@ -607,8 +605,8 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
 	if (mapESPrelative & (1 << i))
 	{
 	    SEGPTR *arg = (SEGPTR *)newstack[i];
-	    *arg = MAKESEGPTR(SELECTOROF(NtCurrentTeb()->cur_stack),
-                              OFFSETOF(NtCurrentTeb()->cur_stack) - argsize
+	    *arg = MAKESEGPTR(SELECTOROF(NtCurrentTeb()->WOW32Reserved),
+                              OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize
                               + (*(LPBYTE *)arg - oldstack));
 	}
 
@@ -618,7 +616,7 @@ void WINAPI __regs_FT_Thunk( CONTEXT86 *context )
     context->Ecx = context16.Ecx;
 
     context->Esp +=   LOWORD(context16.Esp) -
-                        ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
+                        ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 
     /* Copy modified buffers back to 32-bit stack */
     memcpy( oldstack, newstack, argsize );
@@ -777,8 +775,7 @@ void WINAPI __regs_Common32ThkLS( CONTEXT86 *context )
     context16.Edi   = LOWORD(context->Ecx);
     context16.SegCs = HIWORD(context->Eax);
     context16.Eip   = LOWORD(context->Eax);
-    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
-                           + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = HIWORD(context->Edx) * 4;
 
@@ -838,8 +835,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
     context16.SegGs = wine_get_gs();
     context16.SegCs = HIWORD(context->Edx);
     context16.Eip   = LOWORD(context->Edx);
-    context16.Ebp   = OFFSETOF( NtCurrentTeb()->cur_stack )
-                           + (WORD)&((STACK16FRAME*)0)->bp;
+    context16.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     argsize = 2 * *(WORD *)context->Esp + 2;
 
@@ -852,7 +848,7 @@ void WINAPI __regs_OT_32ThkLSF( CONTEXT86 *context )
             (LPBYTE)CURRENT_STACK16 - argsize, argsize );
 
     context->Esp +=   LOWORD(context16.Esp) -
-                        ( OFFSETOF( NtCurrentTeb()->cur_stack ) - argsize );
+                        ( OFFSETOF(NtCurrentTeb()->WOW32Reserved) - argsize );
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( OT_32ThkLSF, 0, 0 );
@@ -1274,24 +1270,24 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
 
       DWORD argSize = context->Ebp - context->Esp;
       char *stack16 = (char *)context->Esp - 4;
-      char *stack32 = (char *)NtCurrentTeb()->cur_stack - argSize;
+      char *stack32 = (char *)NtCurrentTeb()->WOW32Reserved - argSize;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
 
-      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
+      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
-      frame16->frame32 = (STACK32FRAME *)NtCurrentTeb()->cur_stack;
+      frame16->frame32 = NtCurrentTeb()->WOW32Reserved;
       frame16->ebp = context->Ebp;
 
       memcpy(stack32, stack16, argSize);
-      NtCurrentTeb()->cur_stack = MAKESEGPTR(stackSel, (DWORD)frame16 - stackBase);
+      NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(stackSel, (DWORD)frame16 - stackBase);
 
       context->Esp = (DWORD)stack32 + 4;
       context->Ebp = context->Esp + argSize;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
+      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
    }
 
     /* entry_point is never used again once the entry point has
@@ -1316,23 +1312,23 @@ void WINAPI __regs_K32Thk1632Epilog( CONTEXT86 *context )
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
    {
-      STACK16FRAME *frame16 = MapSL(NtCurrentTeb()->cur_stack);
+      STACK16FRAME *frame16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
       char *stack16 = (char *)(frame16 + 1);
       DWORD argSize = frame16->ebp - (DWORD)stack16;
       char *stack32 = (char *)frame16->frame32 - argSize;
 
       DWORD nArgsPopped = context->Esp - (DWORD)stack32;
 
-      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
+      TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
 
-      NtCurrentTeb()->cur_stack = (DWORD)frame16->frame32;
+      NtCurrentTeb()->WOW32Reserved = frame16->frame32;
 
       context->Esp = (DWORD)stack16 + nArgsPopped;
       context->Ebp = frame16->ebp;
 
-      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %08lx\n",
-                   context->Ebp, context->Esp, NtCurrentTeb()->cur_stack);
+      TRACE("after  SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
+            context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
    }
 }
 #ifdef DEFINE_REGS_ENTRYPOINT
@@ -2214,7 +2210,7 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
     frame32 = pFrame->frame32;
     while (frame32 && frame32->frame16)
     {
-        if (OFFSETOF(frame32->frame16) < OFFSETOF(NtCurrentTeb()->cur_stack))
+        if (OFFSETOF(frame32->frame16) < OFFSETOF(NtCurrentTeb()->WOW32Reserved))
             break;  /* Something strange is going on */
         if (OFFSETOF(frame32->frame16) > lpbuf[2])
         {

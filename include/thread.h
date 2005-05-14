@@ -84,8 +84,8 @@ typedef struct _TEB
     DWORD        unknown6[5];    /* --n 1e8 Unknown */
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
-    UINT         code_page;      /* --3 1fc Thread code page */
-    DWORD        cur_stack;      /* --3 200 Current stack */
+    DWORD        unused_1fc;     /* --3 1fc */
+    UINT         code_page;      /* --3 200 Thread code page */
     DWORD        teb_sel;        /* --3 204 Selector to TEB */
     DWORD        gs_sel;         /* --3 208 %gs selector for this thread */
     int          request_fd;     /* --3 20c fd for sending server requests */

@@ -167,16 +167,16 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     {
  	/* Implement self-loading segments */
  	SELFLOADHEADER *selfloadheader;
-        DWORD oldstack;
+        void *oldstack;
         HANDLE hFile32;
         HFILE16 hFile16;
         WORD args[3];
         DWORD ret;
 
  	selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg),0) );
- 	oldstack = NtCurrentTeb()->cur_stack;
- 	NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
-                                               0xff00 - sizeof(STACK16FRAME));
+        oldstack = NtCurrentTeb()->WOW32Reserved;
+        NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(pModule->self_loading_sel,
+                                                           0xff00 - sizeof(STACK16FRAME));
 
 	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=%p,segnum=%d\n",
 		pModule->self,hf,segnum );
@@ -190,7 +190,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         pSeg->hSeg = LOWORD(ret);
 	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
         _lclose16( hFile16 );
- 	NtCurrentTeb()->cur_stack = oldstack;
+        NtCurrentTeb()->WOW32Reserved = oldstack;
     }
     else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
         ReadFile(hf, mem, size, &res, NULL);
@@ -468,7 +468,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         /* Handle self-loading modules */
         SELFLOADHEADER *selfloadheader;
         HMODULE16 mod = GetModuleHandle16("KERNEL");
-        DWORD oldstack;
+        void *oldstack;
         WORD args[2];
 
         TRACE_(module)("%.*s is a self-loading module!\n",
@@ -482,9 +482,9 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         sel = GlobalAlloc16( GMEM_ZEROINIT, 0xFF00 );
         pModule->self_loading_sel = SEL(sel);
         FarSetOwner16( sel, pModule->self );
-        oldstack = NtCurrentTeb()->cur_stack;
-        NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
-                                               0xff00 - sizeof(STACK16FRAME) );
+        oldstack = NtCurrentTeb()->WOW32Reserved;
+        NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(pModule->self_loading_sel,
+                                                           0xff00 - sizeof(STACK16FRAME) );
 
         hf = NE_OpenFile(pModule);
         hFile16 = Win32HandleToDosFileHandle( hf );
@@ -495,7 +495,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         WOWCallback16Ex( (DWORD)selfloadheader->BootApp, WCB16_PASCAL, sizeof(args), args, NULL );
 	TRACE_(dll)("Return from CallBootAppProc\n");
         _lclose16(hFile16);
-        NtCurrentTeb()->cur_stack = oldstack;
+        NtCurrentTeb()->WOW32Reserved = oldstack;
 
         for (i = 2; i <= pModule->seg_count; i++)
             if (!NE_LoadSegment( pModule, i )) return FALSE;
@@ -693,7 +693,7 @@ static BOOL NE_InitDLL( NE_MODULE *pModule )
     context.SegGs = wine_get_gs();
     context.SegCs = SEL(pSegTable[pModule->cs-1].hSeg);
     context.Eip = pModule->ip;
-    context.Ebp = OFFSETOF(NtCurrentTeb()->cur_stack) + (WORD)&((STACK16FRAME*)0)->bp;
+    context.Ebp = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
     pModule->cs = 0;  /* Don't initialize it twice */
     TRACE_(dll)("Calling LibMain for %.*s, cs:ip=%04lx:%04lx ds=%04lx di=%04x cx=%04x\n",
@@ -797,9 +797,8 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
         context.SegFs = wine_get_fs();
         context.SegGs = wine_get_gs();
         context.SegCs = HIWORD(entryPoint);
-        context.Eip = LOWORD(entryPoint);
-        context.Ebp =  OFFSETOF( NtCurrentTeb()->cur_stack )
-                             + (WORD)&((STACK16FRAME*)0)->bp;
+        context.Eip   = LOWORD(entryPoint);
+        context.Ebp   = OFFSETOF(NtCurrentTeb()->WOW32Reserved) + (WORD)&((STACK16FRAME*)0)->bp;
 
         args[7] = HIWORD(dwReason);
         args[6] = LOWORD(dwReason);

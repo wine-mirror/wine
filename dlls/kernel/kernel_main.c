@@ -86,8 +86,8 @@ static void thread_attach(void)
     /* allocate the 16-bit stack (FIXME: should be done lazily) */
     HGLOBAL16 hstack = K32WOWGlobalAlloc16( GMEM_FIXED, 0x10000 );
     NtCurrentTeb()->stack_sel = GlobalHandleToSel16( hstack );
-    NtCurrentTeb()->cur_stack = MAKESEGPTR( NtCurrentTeb()->stack_sel,
-                                            0x10000 - sizeof(STACK16FRAME) );
+    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( NtCurrentTeb()->stack_sel,
+                                                        0x10000 - sizeof(STACK16FRAME) );
 }
 
 
@@ -98,7 +98,7 @@ static void thread_detach(void)
 {
     /* free the 16-bit stack */
     K32WOWGlobalFree16( NtCurrentTeb()->stack_sel );
-    NtCurrentTeb()->cur_stack = 0;
+    NtCurrentTeb()->WOW32Reserved = 0;
     if (NtCurrentTeb()->Tib.SubSystemTib) TASK_ExitTask();
 }
 

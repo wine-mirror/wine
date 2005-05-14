@@ -661,7 +661,7 @@ static void *init_handler( const SIGCONTEXT *sigcontext )
          * are checked.
          */
         wine_set_gs( teb->gs_sel );
-        stack = (void *)teb->cur_stack;
+        stack = teb->WOW32Reserved;
     }
 #ifdef __HAVE_VM86
     else if ((void *)EIP_sig(sigcontext) == vm86_return)  /* vm86 mode */

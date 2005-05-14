@@ -133,7 +133,7 @@ typedef struct
 #define STACK32OFFSET(reg)  STRUCTOFFSET(STACK32FRAME,reg)
 
   /* Offset of the stack pointer relative to %fs:(0) */
-#define STACKOFFSET (STRUCTOFFSET(TEB,cur_stack))
+#define STACKOFFSET (STRUCTOFFSET(TEB,WOW32Reserved))
 
 
 #define MAX_ORDINALS  65535

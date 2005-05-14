@@ -265,7 +265,7 @@ static DWORD call16_handler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_RE
     {
         /* unwinding: restore the stack pointer in the TEB, and leave the Win16 mutex */
         STACK32FRAME *frame32 = (STACK32FRAME *)((char *)frame - offsetof(STACK32FRAME,frame));
-        NtCurrentTeb()->cur_stack = frame32->frame16;
+        NtCurrentTeb()->WOW32Reserved = (void *)frame32->frame16;
         _LeaveWin16Lock();
     }
     else if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
@@ -619,7 +619,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
                     context->SegCs, LOWORD(context->Eip), context->SegDs );
             while (count) DPRINTF( ",%04x", wstack[--count] );
             DPRINTF(") ss:sp=%04x:%04x",
-                    SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
+                    SELECTOROF(NtCurrentTeb()->WOW32Reserved), OFFSETOF(NtCurrentTeb()->WOW32Reserved) );
             DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x si=%04x di=%04x bp=%04x es=%04x fs=%04x\n",
                     (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
                     (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
@@ -674,8 +674,8 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
         if (TRACE_ON(relay))
         {
             DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x ",
-                    GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->cur_stack),
-                    OFFSETOF(NtCurrentTeb()->cur_stack));
+                    GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->WOW32Reserved),
+                    OFFSETOF(NtCurrentTeb()->WOW32Reserved));
             DPRINTF(" ax=%04x bx=%04x cx=%04x dx=%04x bp=%04x sp=%04x\n",
                     (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
                     (WORD)context->Edx, (WORD)context->Ebp, (WORD)context->Esp );
@@ -693,10 +693,10 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
 
             DPRINTF("%04lx:CallTo16(func=%04x:%04x,ds=%04x",
                     GetCurrentThreadId(), HIWORD(vpfn16), LOWORD(vpfn16),
-                    SELECTOROF(NtCurrentTeb()->cur_stack) );
+                    SELECTOROF(NtCurrentTeb()->WOW32Reserved) );
             while (count) DPRINTF( ",%04x", wstack[--count] );
             DPRINTF(") ss:sp=%04x:%04x\n",
-                    SELECTOROF(NtCurrentTeb()->cur_stack), OFFSETOF(NtCurrentTeb()->cur_stack) );
+                    SELECTOROF(NtCurrentTeb()->WOW32Reserved), OFFSETOF(NtCurrentTeb()->WOW32Reserved) );
             SYSLEVEL_CheckNotLevel( 2 );
         }
 
@@ -719,8 +719,8 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
         if (TRACE_ON(relay))
         {
             DPRINTF("%04lx:RetFrom16() ss:sp=%04x:%04x retval=%08lx\n",
-                    GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->cur_stack),
-                    OFFSETOF(NtCurrentTeb()->cur_stack), ret);
+                    GetCurrentThreadId(), SELECTOROF(NtCurrentTeb()->WOW32Reserved),
+                    OFFSETOF(NtCurrentTeb()->WOW32Reserved), ret);
             SYSLEVEL_CheckNotLevel( 2 );
         }
     }
