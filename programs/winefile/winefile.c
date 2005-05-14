@@ -2348,6 +2348,40 @@ static int insert_entries(Pane* pane, Entry* dir, int idx)
 }
 
 
+static void format_bytes(LPTSTR buffer, LONGLONG bytes)
+{
+	const static TCHAR sFmtGB[] = {'%', '.', '1', 'f', ' ', 'G', 'B', '\0'};
+	const static TCHAR sFmtMB[] = {'%', '.', '1', 'f', ' ', 'M', 'B', '\0'};
+	const static TCHAR sFmtkB[] = {'%', '.', '1', 'f', ' ', 'k', 'B', '\0'};
+
+	float fBytes = (float)bytes;
+
+	if (bytes >= 1073741824)	/* 1 GB */
+		_stprintf(buffer, sFmtGB, fBytes/1073741824.f+.5f);
+	else if (bytes >= 1048576)	/* 1 MB */
+		_stprintf(buffer, sFmtMB, fBytes/1048576.f+.5f);
+	else if (bytes >= 1024)		/* 1 kB */
+		_stprintf(buffer, sFmtkB, fBytes/1024.f+.5f);
+	else
+		_stprintf(buffer, sLongNumFmt, bytes);
+}
+
+static void set_space_status()
+{
+	ULARGE_INTEGER ulFreeBytesToCaller, ulTotalBytes, ulFreeBytes;
+	TCHAR fmt[64], b1[64], b2[64], buffer[BUFFER_LEN];
+
+	if (GetDiskFreeSpaceEx(NULL, &ulFreeBytesToCaller, &ulTotalBytes, &ulFreeBytes)) {
+		format_bytes(b1, ulFreeBytesToCaller.QuadPart);
+		format_bytes(b2, ulTotalBytes.QuadPart);
+		_stprintf(buffer, RS(fmt,IDS_FREE_SPACE_FMT), b1, b2);
+	} else
+		_tcscpy(buffer, sQMarks);
+
+	SendMessage(Globals.hstatusbar, SB_SETTEXT, 0, (LPARAM)buffer);
+}
+
+
 static WNDPROC g_orgTreeWndProc;
 
 static void create_tree_window(HWND parent, Pane* pane, int id, int id_header)
@@ -3202,7 +3236,8 @@ static void set_curdir(ChildWnd* child, Entry* entry, HWND hwnd)
 		SetWindowText(child->hwnd, path);
 
 	if (path[0])
-		SetCurrentDirectory(path);
+		if (SetCurrentDirectory(path))
+			set_space_status();
 }
 
 
@@ -3620,6 +3655,8 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 		case WM_SETFOCUS:
 			SetCurrentDirectory(child->path);
+			if (SetCurrentDirectory(child->path))
+				set_space_status();
 			SetFocus(child->focus_pane? child->right.hwnd: child->left.hwnd);
 			break;
 
