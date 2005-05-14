@@ -208,6 +208,42 @@ static char *get_default_lpt_device( int num )
  *
  * Parse mount entries looking for a given device. Helper for get_default_drive_device.
  */
+
+#ifdef sun
+#include <sys/vfstab.h>
+static char *parse_vfstab_entries( FILE *f, dev_t dev, ino_t ino)
+{
+
+    struct vfstab vfs_entry;
+    struct vfstab *entry=&vfs_entry;
+    struct stat st;
+    char *device;
+
+    while (! getvfsent( f, entry ))
+    {
+        /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
+        if (!strcmp( entry->vfs_fstype, "nfs" ) ||
+            !strcmp( entry->vfs_fstype, "smbfs" ) ||
+            !strcmp( entry->vfs_fstype, "ncpfs" )) continue;
+
+        if (stat( entry->vfs_mountp, &st ) == -1) continue;
+        if (st.st_dev != dev || st.st_ino != ino) continue;
+        if (!strcmp( entry->vfs_fstype, "fd" ))
+        {
+            if ((device = strstr( entry->vfs_mntopts, "dev=" )))
+            {
+                char *p = strchr( device + 4, ',' );
+                if (p) *p = 0;
+                return device + 4;
+            }
+        }
+        else
+            return entry->vfs_special;
+    }
+    return NULL;
+}
+#endif
+
 #ifdef linux
 static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 {
@@ -235,6 +271,42 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
         }
         else
             return entry->mnt_fsname;
+    }
+    return NULL;
+}
+#endif
+
+#ifdef sun
+#include <sys/mnttab.h>
+static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
+{
+
+    volatile struct mnttab mntentry;
+    struct mnttab *entry=&mntentry;
+    struct stat st;
+    char *device;
+
+
+    while (( ! getmntent( f , entry) ))
+    {
+        /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
+        if (!strcmp( entry->mnt_fstype, "nfs" ) ||
+            !strcmp( entry->mnt_fstype, "smbfs" ) ||
+            !strcmp( entry->mnt_fstype, "ncpfs" )) continue;
+
+        if (stat( entry->mnt_mountp, &st ) == -1) continue;
+        if (st.st_dev != dev || st.st_ino != ino) continue;
+        if (!strcmp( entry->mnt_fstype, "fd" ))
+        {
+            if ((device = strstr( entry->mnt_mntopts, "dev=" )))
+            {
+                char *p = strchr( device + 4, ',' );
+                if (p) *p = 0;
+                return device + 4;
+            }
+        }
+        else
+            return entry->mnt_special;
     }
     return NULL;
 }
@@ -284,6 +356,43 @@ static char *get_default_drive_device( const char *root )
         if (ret) strcpy( ret, device );
     }
     RtlLeaveCriticalSection( &dir_section );
+
+#elif defined( sun )
+    FILE *f;
+    char *device = NULL;
+    int fd, res = -1;
+    struct stat st;
+
+    /* try to open it first to force it to get mounted */
+    if ((fd = open( root, O_RDONLY )) != -1)
+    {
+        res = fstat( fd, &st );
+        close( fd );
+    }
+    /* now try normal stat just in case */
+    if (res == -1) res = stat( root, &st );
+    if (res == -1) return NULL;
+
+    RtlEnterCriticalSection( &dir_section );
+
+    if ((f = fopen( "/etc/mnttab", "r" )))
+    {
+        device = parse_mount_entries( f, st.st_dev, st.st_ino);
+        fclose( f );
+    }
+    /* look through fstab too in case it's not mounted (for instance if it's an audio CD) */
+    if (!device && (f = fopen( "/etc/vfstab", "r" )))
+    {
+        device = parse_vfstab_entries( f, st.st_dev, st.st_ino );
+        fclose( f );
+    }
+    if (device)
+    {
+        ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
+        if (ret) strcpy( ret, device );
+    }
+    RtlLeaveCriticalSection( &dir_section );
+
 #elif defined(__APPLE__)
     struct statfs *mntStat;
     struct stat st;
