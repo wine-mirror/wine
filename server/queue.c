@@ -1245,11 +1245,11 @@ static int get_hardware_message( struct thread *thread, int hw_id, user_handle_t
     while (ptr)
     {
         struct message *msg = LIST_ENTRY( ptr, struct message, entry );
+        ptr = list_next( &input->msg_list, ptr );
         win = find_hardware_message_window( input, msg, &msg_code );
         if (!win || !(win_thread = get_window_thread( win )))
         {
             /* no window at all, remove it */
-            ptr = list_next( &input->msg_list, ptr );
             update_input_key_state( input, msg );
             list_remove( &msg->entry );
             free_message( msg );
@@ -1257,11 +1257,20 @@ static int get_hardware_message( struct thread *thread, int hw_id, user_handle_t
         }
         if (win_thread != thread)
         {
-            /* wake the other thread */
-            set_queue_bits( win_thread->queue, get_hardware_msg_bit(msg) );
+            if (win_thread->queue->input == input)
+            {
+                /* wake the other thread */
+                set_queue_bits( win_thread->queue, get_hardware_msg_bit(msg) );
+                got_one = 1;
+            }
+            else
+            {
+                /* for another thread input, drop it */
+                update_input_key_state( input, msg );
+                list_remove( &msg->entry );
+                free_message( msg );
+            }
             release_object( win_thread );
-            got_one = 1;
-            ptr = list_next( &input->msg_list, ptr );
             continue;
         }
         release_object( win_thread );
@@ -1271,7 +1280,6 @@ static int get_hardware_message( struct thread *thread, int hw_id, user_handle_t
         if (got_one || !check_hw_message_filter( win, msg_code, filter_win, first, last ))
         {
             clear_bits &= ~get_hardware_msg_bit( msg );
-            ptr = list_next( &input->msg_list, ptr );
             continue;
         }
         /* now we can return it */
