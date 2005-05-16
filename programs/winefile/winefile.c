@@ -1970,6 +1970,13 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					}
 					break;}
 
+				case ID_FORMAT_DISK: {
+					UINT sem_org = SetErrorMode(0); /* Get the current Error Mode settings. */
+					SetErrorMode(sem_org & ~SEM_FAILCRITICALERRORS); /* Force O/S to handle */
+					SHFormatDrive(hwnd, 0 /* A: */, SHFMT_ID_DEFAULT, 0);
+					SetErrorMode(sem_org); /* Put it back the way it was. */
+					break;}
+
 				case ID_HELP:
 					WinHelp(hwnd, RS(b1,IDS_WINEFILE), HELP_INDEX, 0);
 					break;

@@ -59,7 +59,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "&Kopírovat disk..." ,			201
 		MENUITEM "&Pojmenovat disk..." ,			202
 		MENUITEM SEPARATOR
-		MENUITEM "&Formátovat disk..." ,			203
+		MENUITEM "&Formátovat disk..." ,			ID_FORMAT_DISK
 #ifdef _WIN95
 		MENUITEM "Vytvoøit systé&mový disk...", -1	/*@@ */
 #endif

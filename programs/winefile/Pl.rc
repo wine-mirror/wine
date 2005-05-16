@@ -59,7 +59,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "&Kopiuj dusk..." ,			201
 		MENUITEM "&Etykieta dysku..." ,			202
 		MENUITEM SEPARATOR
-		MENUITEM "&Formatuj dysk..." ,			203
+		MENUITEM "&Formatuj dysk..." ,			ID_FORMAT_DISK
 #ifdef _WIN95
 		MENUITEM "&Stwórz dysk systemowy...", -1	/*@@ */
 #endif

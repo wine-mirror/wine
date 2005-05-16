@@ -41,6 +41,7 @@
 #define	ID_EXECUTE					105
 #define ID_FILE_MOVE					106
 #define	ID_FILE_EXIT					115
+#define	ID_FORMAT_DISK					203
 #define	ID_VIEW_NAME					401
 #define	ID_VIEW_ALL_ATTRIBUTES				402
 #define	ID_VIEW_SELECTED_ATTRIBUTES			403
