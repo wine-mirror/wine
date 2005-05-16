@@ -2727,6 +2727,8 @@ typedef struct tagCBTACTIVATESTRUCT
 
 /* defines below are for all win versions (_WIN32_WINNT >= 0x0400) ||
  *                                        (_WIN32_WINDOWS > 0x0400) */
+#define SPI_GETSNAPTODEFBUTTON    95
+#define SPI_SETSNAPTODEFBUTTON    96
 #define SPI_GETMOUSEHOVERWIDTH    98
 #define SPI_SETMOUSEHOVERWIDTH    99
 #define SPI_GETMOUSEHOVERHEIGHT   100
@@ -2765,8 +2767,16 @@ typedef struct tagCBTACTIVATESTRUCT
 #define SPI_SETACTIVEWNDTRKZORDER      0x100D
 #define SPI_GETHOTTRACKING             0x100E
 #define SPI_SETHOTTRACKING             0x100F
+#define SPI_GETMENUFADE                0x1012
+#define SPI_SETMENUFADE                0x1013
 #define SPI_GETSELECTIONFADE           0x1014
 #define SPI_SETSELECTIONFADE           0x1015
+#define SPI_GETTOOLTIPANIMATION        0x1016
+#define SPI_SETTOOLTIPANIMATION        0x1017
+#define SPI_GETTOOLTIPFADE             0x1018
+#define SPI_SETTOOLTIPFADE             0x1019
+#define SPI_GETCURSORSHADOW            0x101A
+#define SPI_SETCURSORSHADOW            0x101B
 #define SPI_GETDROPSHADOW              0x1024
 #define SPI_SETDROPSHADOW              0x1025
 #define SPI_GETFOREGROUNDLOCKTIMEOUT   0x2000
