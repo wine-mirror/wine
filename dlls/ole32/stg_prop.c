@@ -31,14 +31,13 @@
  * below, but it gives the best "big picture" that I've found.
  *
  * TODO:
- * - There are some restrictions I don't honor, like maximum property set
- *   size and maximum property name length.
+ * - I don't honor the maximum property set size.
  * - Certain bogus files could result in reading past the end of a buffer.
  * - Mac-generated files won't be read correctly, even if they're little
  *   endian, because I disregard whether the generator was a Mac.  This means
  *   strings will probably be munged (as I don't understand Mac scripts.)
  * - Not all PROPVARIANT types are supported.
- * There are lots more unimplemented features, see FIXMEs below.
+ * - IPropertyStorage::Enum is unimplemented
  */
 
 #include <assert.h>
@@ -77,6 +76,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 #define PROPSETHDR_OSVER_KIND_WIN32     2
 
 #define CP_UNICODE 1200
+
+#define MAX_VERSION_0_PROP_NAME_LENGTH 256
 
 /* The format version (and what it implies) is described here:
  * http://msdn.microsoft.com/library/en-us/stg/stg/format_version.asp
@@ -158,6 +159,7 @@ typedef struct tagPropertyStorage_impl
     BOOL  dirty;
     FMTID fmtid;
     CLSID clsid;
+    WORD  format;
     DWORD originatorOS;
     DWORD grfFlags;
     DWORD grfMode;
@@ -342,6 +344,7 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     return hr;
 }
 
+/* FIXME: the arguments are in a screwy order here, bub. */
 static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
  LCID srcCP)
 {
@@ -446,6 +449,8 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
  * storage.  lcid is ignored if propvar's type is not VT_LPSTR.  If propvar's
  * type is VT_LPSTR, converts the string using lcid as the source code page
  * and This->codePage as the target code page before storing.
+ * As a side effect, may change This->format to 1 if the type of propvar is
+ * a version 1-only property.
  */
 static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
  PROPID propid, const PROPVARIANT *propvar, LCID lcid)
@@ -455,6 +460,17 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
 
     assert(This);
     assert(propvar);
+    if (propvar->vt & VT_BYREF || propvar->vt & VT_ARRAY)
+        This->format = 1;
+    switch (propvar->vt)
+    {
+    case VT_DECIMAL:
+    case VT_I1:
+    case VT_INT:
+    case VT_UINT:
+    case VT_VECTOR|VT_I1:
+        This->format = 1;
+    }
     TRACE("Setting 0x%08lx to type %d\n", propid, propvar->vt);
     if (prop)
     {
@@ -486,26 +502,38 @@ static HRESULT PropertyStorage_StorePropWithId(PropertyStorage_impl *This,
 }
 
 /* Adds the name srcName to the name dictionaries, mapped to property ID id.
+ * srcName is encoded in code page cp, and is converted to This->codePage.
+ * If cp is CP_UNICODE, srcName is actually a unicode string.
+ * As a side effect, may change This->format to 1 if srcName is too long for
+ * a version 0 property storage.
  * Doesn't validate id.
  */
-static HRESULT PropertyStorage_StoreNameWithIdW(PropertyStorage_impl *This,
- LPCWSTR srcName, PROPID id)
+static HRESULT PropertyStorage_StoreNameWithId(PropertyStorage_impl *This,
+ LPCSTR srcName, LCID cp, PROPID id)
 {
     LPSTR name;
     HRESULT hr;
 
     assert(srcName);
 
-    hr = PropertyStorage_StringCopy((LPCSTR)srcName, &name, This->codePage,
-     CP_UNICODE);
+    hr = PropertyStorage_StringCopy((LPCSTR)srcName, &name, This->codePage, cp);
     if (SUCCEEDED(hr))
     {
+        if (This->codePage == CP_UNICODE)
+        {
+            if (lstrlenW((LPWSTR)name) >= MAX_VERSION_0_PROP_NAME_LENGTH)
+                This->format = 1;
+        }
+        else
+        {
+            if (strlen(name) >= MAX_VERSION_0_PROP_NAME_LENGTH)
+                This->format = 1;
+        }
         TRACE("Adding prop name %s, propid %ld\n",
          This->codePage == CP_UNICODE ? debugstr_w((LPCWSTR)name) :
          debugstr_a(name), id);
         dictionary_insert(This->name_to_propid, name, (void *)id);
         dictionary_insert(This->propid_to_name, (void *)id, name);
-        hr = S_OK;
     }
     return hr;
 }
@@ -556,8 +584,8 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                 {
                     PROPID nextId = max(propidNameFirst, This->highestProp + 1);
 
-                    hr = PropertyStorage_StoreNameWithIdW(This,
-                     rgpspec[i].u.lpwstr, nextId);
+                    hr = PropertyStorage_StoreNameWithId(This,
+                     (LPCSTR)rgpspec[i].u.lpwstr, CP_UNICODE, nextId);
                     if (SUCCEEDED(hr))
                         hr = PropertyStorage_StorePropWithId(This, nextId,
                          &rgpropvar[i], GetACP());
@@ -727,8 +755,8 @@ static HRESULT WINAPI IPropertyStorage_fnWritePropertyNames(
     for (i = 0; SUCCEEDED(hr) && i < cpropid; i++)
     {
         if (rgpropid[i] != PID_ILLEGAL)
-            hr = PropertyStorage_StoreNameWithIdW(This, rglpwstrName[i],
-             rgpropid[i]);
+            hr = PropertyStorage_StoreNameWithId(This, (LPCSTR)rglpwstrName[i],
+             CP_UNICODE, rgpropid[i]);
     }
     if (This->grfFlags & PROPSETFLAG_UNBUFFERED)
         IPropertyStorage_Commit(iface, STGC_DEFAULT);
@@ -981,38 +1009,23 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
     {
         PROPID propid;
         DWORD cbEntry;
-        LPSTR name = NULL;
 
         StorageUtl_ReadDWord(ptr, 0, &propid);
         ptr += sizeof(PROPID);
         StorageUtl_ReadDWord(ptr, 0, &cbEntry);
         ptr += sizeof(DWORD);
         TRACE("Reading entry with ID 0x%08lx, %ld bytes\n", propid, cbEntry);
+        /* Make sure the source string is NULL-terminated */
         if (This->codePage != CP_UNICODE)
-        {
-            /* Make sure the source string is NULL-terminated */
             ptr[cbEntry - 1] = '\0';
-            hr = PropertyStorage_StringCopy(ptr, &name, This->codePage,
-             This->codePage);
-        }
         else
-        {
-            /* Make sure the source string is NULL-terminated */
             *((LPWSTR)ptr + cbEntry / sizeof(WCHAR)) = '\0';
-            PropertyStorage_ByteSwapString(ptr, cbEntry / sizeof(WCHAR));
-            hr = PropertyStorage_StringCopy(ptr, &name, This->codePage,
-             This->codePage);
+        hr = PropertyStorage_StoreNameWithId(This, ptr, This->codePage, propid);
+        if (This->codePage == CP_UNICODE)
+        {
             /* Unicode entries are padded to DWORD boundaries */
             if (cbEntry % sizeof(DWORD))
                 ptr += sizeof(DWORD) - (cbEntry % sizeof(DWORD));
-        }
-        if (name)
-        {
-            dictionary_insert(This->name_to_propid, name, (void *)propid);
-            dictionary_insert(This->propid_to_name, (void *)propid, name);
-            TRACE("Property %s maps to id %ld\n",
-             This->codePage == CP_UNICODE ? debugstr_w((LPCWSTR)name) :
-             debugstr_a(name), propid);
         }
         ptr += sizeof(DWORD) + cbEntry;
     }
@@ -1022,7 +1035,8 @@ static HRESULT PropertyStorage_ReadDictionary(PropertyStorage_impl *This,
 /* FIXME: there isn't any checking whether the read property extends past the
  * end of the buffer.
  */
-static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
+static HRESULT PropertyStorage_ReadProperty(PropertyStorage_impl *This,
+ PROPVARIANT *prop, const BYTE *data)
 {
     HRESULT hr = S_OK;
 
@@ -1051,10 +1065,12 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
         StorageUtl_ReadWord(data, 0, &prop->u.uiVal);
         TRACE("Read ushort %d\n", prop->u.uiVal);
         break;
+    case VT_INT:
     case VT_I4:
         StorageUtl_ReadDWord(data, 0, &prop->u.lVal);
         TRACE("Read long %ld\n", prop->u.lVal);
         break;
+    case VT_UINT:
     case VT_UI4:
         StorageUtl_ReadDWord(data, 0, &prop->u.ulVal);
         TRACE("Read ulong %ld\n", prop->u.ulVal);
@@ -1064,20 +1080,37 @@ static HRESULT PropertyStorage_ReadProperty(PROPVARIANT *prop, const BYTE *data)
         DWORD count;
        
         StorageUtl_ReadDWord(data, 0, &count);
-        prop->u.pszVal = CoTaskMemAlloc(count);
-        if (prop->u.pszVal)
+        if (This->codePage == CP_UNICODE && count / 2)
         {
-            memcpy(prop->u.pszVal, data + sizeof(DWORD), count);
-            /* This is stored in the code page specified in This->codePage.
-             * Don't convert it, the caller will just store it as-is.
-             * (Note the trace will be misleading if the code page is Unicode.)
-             * But make sure it's NULL-terminated:
-             */
-            prop->u.pszVal[count - 1] = '\0';
-            TRACE("Read string value %s\n", debugstr_a(prop->u.pszVal));
+            WARN("Unicode string has odd number of bytes\n");
+            hr = STG_E_INVALIDHEADER;
         }
         else
-            hr = STG_E_INSUFFICIENTMEMORY;
+        {
+            prop->u.pszVal = CoTaskMemAlloc(count);
+            if (prop->u.pszVal)
+            {
+                memcpy(prop->u.pszVal, data + sizeof(DWORD), count);
+                /* This is stored in the code page specified in This->codePage.
+                 * Don't convert it, the caller will just store it as-is.
+                 */
+                if (This->codePage == CP_UNICODE)
+                {
+                    /* Make sure it's NULL-terminated */
+                    prop->u.pszVal[count / sizeof(WCHAR) - 1] = '\0';
+                    TRACE("Read string value %s\n",
+                     debugstr_w(prop->u.pwszVal));
+                }
+                else
+                {
+                    /* Make sure it's NULL-terminated */
+                    prop->u.pszVal[count - 1] = '\0';
+                    TRACE("Read string value %s\n", debugstr_a(prop->u.pszVal));
+                }
+            }
+            else
+                hr = STG_E_INSUFFICIENTMEMORY;
+        }
         break;
     }
     case VT_LPWSTR:
@@ -1262,6 +1295,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
         hr = STG_E_INVALIDHEADER;
         goto end;
     }
+    This->format = hdr.wFormat;
     memcpy(&This->clsid, &hdr.clsid, sizeof(This->clsid));
     This->originatorOS = hdr.dwOSVer;
     if (PROPSETHDR_OSVER_KIND(hdr.dwOSVer) == PROPSETHDR_OSVER_KIND_MAC)
@@ -1333,7 +1367,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
             {
                 PROPVARIANT prop;
 
-                if (SUCCEEDED(PropertyStorage_ReadProperty(&prop,
+                if (SUCCEEDED(PropertyStorage_ReadProperty(This, &prop,
                  buf + idOffset->dwOffset - sizeof(PROPERTYSECTIONHEADER))))
                 {
                     TRACE("Read property with ID 0x%08lx, type %d\n",
@@ -1351,6 +1385,8 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
                     case PID_BEHAVIOR:
                         if (prop.vt == VT_I4 && prop.u.lVal)
                             This->grfFlags |= PROPSETFLAG_CASE_SENSITIVE;
+                        /* The format should already be 1, but just in case */
+                        This->format = 1;
                         break;
                     default:
                         hr = PropertyStorage_StorePropWithId(This,
@@ -1398,11 +1434,7 @@ static void PropertyStorage_MakeHeader(PropertyStorage_impl *This,
     assert(hdr);
     StorageUtl_WriteWord((BYTE *)&hdr->wByteOrder, 0,
      PROPSETHDR_BYTEORDER_MAGIC);
-    /* FIXME: should be able to write format 0 property sets too, depending
-     * on whether I have too long string names or if case-sensitivity is set.
-     * For now always write format 1.
-     */
-    StorageUtl_WriteWord((BYTE *)&hdr->wFormat, 0, 1);
+    StorageUtl_WriteWord((BYTE *)&hdr->wFormat, 0, This->format);
     StorageUtl_WriteDWord((BYTE *)&hdr->dwOSVer, 0, This->originatorOS);
     StorageUtl_WriteGUID((BYTE *)&hdr->clsid, 0, &This->clsid);
     StorageUtl_WriteDWord((BYTE *)&hdr->reserved, 0, 1);
@@ -1971,7 +2003,10 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm,
     hr = PropertyStorage_BaseConstruct(stm, rfmtid, grfMode, &ps);
     if (SUCCEEDED(hr))
     {
+        ps->format = 0;
         ps->grfFlags = grfFlags;
+        if (ps->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
+            ps->format = 1;
         /* default to Unicode unless told not to, as specified here:
          * http://msdn.microsoft.com/library/en-us/stg/stg/names_in_istorage.asp
          */
