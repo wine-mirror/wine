@@ -34,6 +34,8 @@
 #include "request.h"
 #include "security.h"
 
+#define MAX_SUBAUTH_COUNT 1
+
 const LUID SeIncreaseQuotaPrivilege        = {  5, 0 };
 const LUID SeSecurityPrivilege             = {  8, 0 };
 const LUID SeTakeOwnershipPrivilege        = {  9, 0 };
@@ -59,6 +61,7 @@ struct token
 {
     struct object  obj;             /* object header */
     struct list    privileges;      /* privileges available to the token */
+    SID           *user;            /* SID of user this token represents */
 };
 
 struct privilege
@@ -91,6 +94,25 @@ static void token_dump( struct object *obj, int verbose )
     fprintf( stderr, "Security token\n" );
 }
 
+static SID *security_sid_alloc( const SID_IDENTIFIER_AUTHORITY *idauthority, int subauthcount, const unsigned int subauth[] )
+{
+    int i;
+    SID *sid = mem_alloc( FIELD_OFFSET(SID, SubAuthority[subauthcount]) );
+    if (!sid) return NULL;
+    sid->Revision = MAX_ACL_REVISION;
+    sid->SubAuthorityCount = subauthcount;
+    sid->IdentifierAuthority = *idauthority;
+    for (i = 0; i < subauthcount; i++)
+        sid->SubAuthority[i] = subauth[i];
+    return sid;
+}
+
+static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
+{
+    return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
+        !memcmp( sid1, sid2, FIELD_OFFSET(SID, SubAuthority[sid1->SubAuthorityCount]) ));
+}
+
 static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
 {
     return (luid1->LowPart == luid2->LowPart && luid1->HighPart == luid2->HighPart);
@@ -116,7 +138,7 @@ static struct privilege *privilege_add( struct token *token, const LUID *luid, i
     return privilege;
 }
 
-static void privilege_remove( struct privilege *privilege )
+static inline void privilege_remove( struct privilege *privilege )
 {
     list_remove( &privilege->entry );
     free( privilege );
@@ -130,6 +152,8 @@ static void token_destroy( struct object *obj )
     assert( obj->ops == &token_ops );
     token = (struct token *)obj;
 
+    free( token->user );
+
     LIST_FOR_EACH_SAFE( cursor, cursor_next, &token->privileges )
     {
         struct privilege *privilege = LIST_ENTRY( cursor, struct privilege, entry );
@@ -137,13 +161,21 @@ static void token_destroy( struct object *obj )
     }
 }
 
-static struct token *create_token( const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
+static struct token *create_token( const SID *user, const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
     {
         int i;
         list_init( &token->privileges );
+        /* copy user */
+        token->user = memdup( user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+        if (!token->user)
+        {
+            release_object( token );
+            return NULL;
+        }
+        /* copy privileges */
         for (i = 0; i < priv_count; i++)
         {
             /* note: we don't check uniqueness: the caller must make sure
@@ -159,8 +191,16 @@ static struct token *create_token( const LUID_AND_ATTRIBUTES *privs, unsigned in
     return token;
 }
 
+struct sid_data
+{
+    SID_IDENTIFIER_AUTHORITY idauth;
+    int count;
+    unsigned int subauth[MAX_SUBAUTH_COUNT];
+};
+
 struct token *token_create_admin( void )
 {
+    struct token *token;
     const LUID_AND_ATTRIBUTES admin_privs[] =
     {
         { SeChangeNotifyPrivilege        , SE_PRIVILEGE_ENABLED },
@@ -184,7 +224,18 @@ struct token *token_create_admin( void )
         { SeImpersonatePrivilege         , SE_PRIVILEGE_ENABLED },
         { SeCreateGlobalPrivilege        , SE_PRIVILEGE_ENABLED },
     };
-    return create_token( admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
+    static const struct sid_data well_known_sid_data[] =
+    {
+        { { SECURITY_NT_AUTHORITY }, 1, { SECURITY_LOCAL_SYSTEM_RID } }, /* LOCAL_SYSTEM */
+    };
+    SID *local_system_sid = security_sid_alloc(
+        &well_known_sid_data[0].idauth,
+        well_known_sid_data[0].count,
+        well_known_sid_data[0].subauth );
+    if (!local_system_sid) return NULL;
+    token = create_token( local_system_sid, admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
+    free( local_system_sid );
+    return token;
 }
 
 static struct privilege *token_find_privilege( struct token *token, const LUID *luid, int enabled_only)
@@ -396,7 +447,7 @@ DECL_HANDLER(duplicate_token)
                                                      &token_ops )))
     {
         /* FIXME: use req->primary and req->impersonation_level */
-        struct token *token = create_token( NULL, 0 );
+        struct token *token = create_token( src_token->user, NULL, 0 );
         if (token)
         {
             struct privilege *privilege;
