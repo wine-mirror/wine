@@ -20,8 +20,8 @@
  */
 #include "dosexe.h"
 #include "thread.h"
+#include "wine/winbase16.h"
 #include "wine/debug.h"
-#include "builtin16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);
 

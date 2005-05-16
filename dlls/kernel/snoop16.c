@@ -33,7 +33,6 @@
 #include "kernel_private.h"
 #include "module.h"
 #include "stackframe.h"
-#include "builtin16.h"
 #include "toolhelp.h"
 #include "wine/debug.h"
 

@@ -37,7 +37,6 @@
 #include "wownt32.h"
 #include "module.h"
 #include "toolhelp.h"
-#include "builtin16.h"
 #include "stackframe.h"
 #include "excpt.h"
 #include "wine/exception.h"
