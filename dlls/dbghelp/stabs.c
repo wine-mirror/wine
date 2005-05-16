@@ -73,9 +73,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_stabs);
 #define N_LCSYM		0x28
 #define N_MAIN		0x2a
 #define N_ROSYM		0x2c
+#define N_BNSYM		0x2e
 #define N_OPT		0x3c
 #define N_RSYM		0x40
 #define N_SLINE		0x44
+#define N_ENSYM		0x4e
 #define N_SO		0x64
 #define N_LSYM		0x80
 #define N_BINCL		0x82
@@ -1509,6 +1511,10 @@ BOOL stabs_parse(struct module* module, unsigned long load_offset,
             break;
         case N_MAIN:
             /* Always ignore these. GCC doesn't even generate them. */
+            break;
+        case N_BNSYM:
+        case N_ENSYM:
+            /* Always ignore these, they seem to be used only on Darwin. */
             break;
         default:
             ERR("Unknown stab type 0x%02x\n", stab_ptr->n_type);
