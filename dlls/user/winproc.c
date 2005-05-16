@@ -31,7 +31,6 @@
 #include "wownt32.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "stackframe.h"
 #include "controls.h"
 #include "win.h"
 #include "winproc.h"
@@ -432,9 +431,17 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
                                              LPARAM lParam )
 {
     CONTEXT86 context;
-    LRESULT ret;
-    WORD args[5];
-    DWORD offset = 0;
+    size_t size = 0;
+    struct
+    {
+        WORD params[5];
+        union
+        {
+            CREATESTRUCT16 cs16;
+            DRAWITEMSTRUCT16 dis16;
+            COMPAREITEMSTRUCT16 cis16;
+        } u;
+    } args;
 
     USER_CheckNotLock();
 
@@ -461,30 +468,26 @@ static LRESULT WINAPI WINPROC_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
         {
           case WM_CREATE:
           case WM_NCCREATE:
-            offset = sizeof(CREATESTRUCT16); break;
+            size = sizeof(CREATESTRUCT16); break;
           case WM_DRAWITEM:
-            offset = sizeof(DRAWITEMSTRUCT16); break;
+            size = sizeof(DRAWITEMSTRUCT16); break;
           case WM_COMPAREITEM:
-            offset = sizeof(COMPAREITEMSTRUCT16); break;
+            size = sizeof(COMPAREITEMSTRUCT16); break;
         }
-        if (offset)
+        if (size)
         {
-            void *s = MapSL(lParam);
-            lParam = stack16_push( offset );
-            memcpy( MapSL(lParam), s, offset );
+            memcpy( &args.u, MapSL(lParam), size );
+            lParam = (SEGPTR)NtCurrentTeb()->WOW32Reserved - size;
         }
     }
 
-    args[4] = hwnd;
-    args[3] = msg;
-    args[2] = wParam;
-    args[1] = HIWORD(lParam);
-    args[0] = LOWORD(lParam);
-    WOWCallback16Ex( 0, WCB16_REGS, sizeof(args), args, (DWORD *)&context );
-    ret = MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
-
-    if (offset) stack16_pop( offset );
-    return ret;
+    args.params[4] = hwnd;
+    args.params[3] = msg;
+    args.params[2] = wParam;
+    args.params[1] = HIWORD(lParam);
+    args.params[0] = LOWORD(lParam);
+    WOWCallback16Ex( 0, WCB16_REGS, sizeof(args.params) + size, &args, (DWORD *)&context );
+    return MAKELONG( LOWORD(context.Eax), LOWORD(context.Edx) );
 }
 
 

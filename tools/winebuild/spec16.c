@@ -29,7 +29,7 @@
 #include <ctype.h>
 
 #include "wine/exception.h"
-#include "stackframe.h"
+#include "wine/winbase16.h"
 #include "module.h"
 
 #include "build.h"

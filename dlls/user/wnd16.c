@@ -22,7 +22,6 @@
 #include "wownt32.h"
 #include "win.h"
 #include "winproc.h"
-#include "stackframe.h"
 #include "user_private.h"
 
 /* handle <--> handle16 conversions */
@@ -357,7 +356,8 @@ HWND16 WINAPI GetParent16( HWND16 hwnd )
  */
 BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 {
-    CURRENT_STACK16->es = USER_HeapSel;
+    STACK16FRAME *frame = MapSL( (SEGPTR)NtCurrentTeb()->WOW32Reserved );
+    frame->es = USER_HeapSel;
     /* don't use WIN_Handle32 here, we don't care about the full handle */
     return IsWindow( HWND_32(hwnd) );
 }

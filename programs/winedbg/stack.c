@@ -25,8 +25,8 @@
 #include <stdlib.h>
 
 #include "debugger.h"
-#include "stackframe.h"
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "wine/debug.h"
 #include "tlhelp32.h"
 
