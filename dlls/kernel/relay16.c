@@ -30,7 +30,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "module.h"
-#include "stackframe.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/library.h"

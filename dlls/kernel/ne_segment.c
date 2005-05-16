@@ -38,7 +38,6 @@
 #include "wine/library.h"
 #include "kernel_private.h"
 #include "module.h"
-#include "stackframe.h"
 #include "toolhelp.h"
 #include "wine/debug.h"
 

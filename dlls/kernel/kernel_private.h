@@ -21,6 +21,9 @@
 #ifndef __WINE_KERNEL_PRIVATE_H
 #define __WINE_KERNEL_PRIVATE_H
 
+#include "wine/winbase16.h"
+#include "thread.h"
+
 HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
 BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
@@ -42,6 +45,26 @@ static inline HANDLE console_handle_map(HANDLE h)
 static inline HANDLE console_handle_unmap(HANDLE h)
 {
     return h != INVALID_HANDLE_VALUE ? (HANDLE)((DWORD)h ^ 3) : INVALID_HANDLE_VALUE;
+}
+
+#define CURRENT_STACK16 ((STACK16FRAME*)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))
+#define CURRENT_DS      (CURRENT_STACK16->ds)
+
+/* push bytes on the 16-bit stack of a thread; return a segptr to the first pushed byte */
+static inline SEGPTR stack16_push( int size )
+{
+    STACK16FRAME *frame = CURRENT_STACK16;
+    memmove( (char*)frame - size, frame, sizeof(*frame) );
+    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved - size;
+    return (SEGPTR)((char *)NtCurrentTeb()->WOW32Reserved + sizeof(*frame));
+}
+
+/* pop bytes from the 16-bit stack of a thread */
+static inline void stack16_pop( int size )
+{
+    STACK16FRAME *frame = CURRENT_STACK16;
+    memmove( (char*)frame + size, frame, sizeof(*frame) );
+    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved + size;
 }
 
 extern HMODULE kernel32_handle;

@@ -40,7 +40,6 @@
 #include "module.h"
 #include "winternl.h"
 #include "wine/server.h"
-#include "stackframe.h"
 #include "thread.h"
 #include "toolhelp.h"
 #include "kernel_private.h"

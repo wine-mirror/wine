@@ -40,7 +40,6 @@
 #include "wine/winbase16.h"
 #include "ntstatus.h"
 #include "toolhelp.h"
-#include "stackframe.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
 #include "winerror.h"

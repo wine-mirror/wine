@@ -25,7 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "stackframe.h"
+#include "wine/winbase16.h"
 #include "wine/debug.h"
 
 

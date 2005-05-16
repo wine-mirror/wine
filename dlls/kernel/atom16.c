@@ -42,7 +42,6 @@
 #include "wine/unicode.h"
 #include "wine/winbase16.h"
 #include "kernel_private.h"
-#include "stackframe.h"
 
 #include "wine/debug.h"
 

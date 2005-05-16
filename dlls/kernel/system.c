@@ -28,7 +28,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wownt32.h"
-#include "stackframe.h"
+#include "kernel_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(system);

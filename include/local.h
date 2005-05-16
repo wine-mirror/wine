@@ -24,7 +24,10 @@
 #include <windef.h>
 #include <wine/windef16.h>
 #include <wine/winbase16.h>
-#include <stackframe.h>
+#include <winreg.h>
+#include <winternl.h>
+
+#define CURRENT_DS (((STACK16FRAME*)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))->ds)
 
   /* These function are equivalent to the Local* API functions, */
   /* excepted that they need DS as the first parameter. This    */

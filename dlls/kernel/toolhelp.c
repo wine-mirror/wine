@@ -32,6 +32,7 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winerror.h"
+#include "thread.h"
 #include "local.h"
 #include "tlhelp32.h"
 #include "toolhelp.h"
