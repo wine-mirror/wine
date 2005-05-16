@@ -517,7 +517,8 @@ void ME_CalcRunExtent(ME_Context *c, ME_Paragraph *para, ME_Run *run)
   int nEnd = ME_StrVLen(run->strText);
   SIZE size = ME_GetRunSizeCommon(c, para, run, nEnd, &run->nAscent, &run->nDescent);
   run->nWidth = size.cx;
-  assert(size.cx);
+  if (!size.cx)
+    WARN("size.cx == 0\n");
 }
 
 void ME_MustBeWrapped(ME_Context *c, ME_DisplayItem *para)
