@@ -595,15 +595,47 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 	IN PVOID ApcContext OPTIONAL,
 	OUT PIO_STATUS_BLOCK IoStatusBlock,
 	IN ULONG CompletionFilter,
-	IN BOOLEAN Asynchroneous,
+	IN BOOLEAN Asynchronous,
 	OUT PVOID ChangeBuffer,
 	IN ULONG Length,
 	IN BOOLEAN WatchSubtree)
 {
-	FIXME("(%p,%p,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x) stub!\n",
-	KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
-	Asynchroneous, ChangeBuffer, Length, WatchSubtree);
-	return STATUS_SUCCESS;
+    NTSTATUS ret;
+
+    TRACE("(%p,%p,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x)\n",
+        KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
+        Asynchronous, ChangeBuffer, Length, WatchSubtree);
+
+    if (ApcRoutine || ApcContext || ChangeBuffer || Length)
+        FIXME("Unimplemented optional parameter\n");
+
+    if (!Asynchronous)
+    {
+        OBJECT_ATTRIBUTES attr;
+        InitializeObjectAttributes( &attr, NULL, 0, NULL, NULL );
+        ret = NtCreateEvent( &Event, EVENT_ALL_ACCESS, &attr, FALSE, FALSE );
+        if (ret != STATUS_SUCCESS)
+            return ret;
+    }
+
+    SERVER_START_REQ( set_registry_notification )
+    {
+        req->hkey    = KeyHandle;
+        req->event   = Event;
+        req->subtree = WatchSubtree;
+        req->filter  = CompletionFilter;
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+ 
+    if (!Asynchronous)
+    {
+        if (ret == STATUS_SUCCESS)
+            NtWaitForSingleObject( Event, FALSE, NULL );
+        NtClose( Event );
+    }
+
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************

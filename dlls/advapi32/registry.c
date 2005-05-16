@@ -35,10 +35,10 @@
 #include "winreg.h"
 #include "winerror.h"
 #include "ntstatus.h"
-#include "wine/unicode.h"
-#include "wine/server.h"
-#include "wine/debug.h"
 #include "winternl.h"
+
+#include "wine/unicode.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
@@ -2032,32 +2032,23 @@ LONG WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
                                      DWORD fdwNotifyFilter, HANDLE hEvent,
                                      BOOL fAsync )
 {
-    LONG ret;
+    NTSTATUS status;
+    IO_STATUS_BLOCK iosb;
 
-    TRACE("(%p,%i,%ld,%p,%i)\n",hkey,fWatchSubTree,fdwNotifyFilter,
-          hEvent,fAsync);
+    hkey = get_special_root_hkey( hkey );
+    if (!hkey) return ERROR_INVALID_HANDLE;
 
-    if( !fAsync )
-        hEvent = CreateEventW(NULL, 0, 0, NULL);
+    TRACE("(%p,%i,%ld,%p,%i)\n", hkey, fWatchSubTree, fdwNotifyFilter,
+          hEvent, fAsync);
 
-    SERVER_START_REQ( set_registry_notification )
-    {
-        req->hkey    = hkey;
-        req->event   = hEvent;
-        req->subtree = fWatchSubTree;
-        req->filter  = fdwNotifyFilter;
-        ret = RtlNtStatusToDosError( wine_server_call(req) );
-    }
-    SERVER_END_REQ;
- 
-    if( !fAsync )
-    {
-        if( ret == ERROR_SUCCESS )
-            WaitForSingleObject( hEvent, INFINITE );
-        CloseHandle( hEvent );
-    }
+    status = NtNotifyChangeKey( hkey, hEvent, NULL, NULL, &iosb,
+                                fdwNotifyFilter, fWatchSubTree, NULL, 0,
+                                fAsync );
 
-    return ret;
+    if (status && status != STATUS_TIMEOUT)
+        return RtlNtStatusToDosError( status );
+
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************************
