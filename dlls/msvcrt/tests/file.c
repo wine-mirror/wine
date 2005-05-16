@@ -58,6 +58,7 @@ static void test_fileops( void )
     WCHAR wbuffer[256];
     int fd;
     FILE *file;
+    fpos_t pos;
 
     fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
     write (fd, outbuffer, sizeof (outbuffer));
@@ -75,6 +76,15 @@ static void test_fileops( void )
     ok(fgets(buffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
     ok(strlen(buffer) == 1,"fgets dropped chars\n");
     ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars\n");
+
+    rewind(file);
+    ok(fgetpos(file,&pos) == 0, "fgetpos failed unexpected\n");
+    ok(pos == 0, "Unexpected result of fgetpos 0x%Lx\n", pos);
+    pos = (ULONGLONG)sizeof (outbuffer);
+    ok(fsetpos(file, &pos) == 0, "fsetpos failed unexpected\n");
+    ok(fgetpos(file,&pos) == 0, "fgetpos failed unexpected\n");
+    ok(pos == (ULONGLONG)sizeof (outbuffer), "Unexpected result of fgetpos 0x%Lx\n", pos);
+
     fclose (file);
     fd = open ("fdopen.tst", O_RDONLY | O_TEXT);
     file = fdopen (fd, "rt"); /* open in TEXT mode */

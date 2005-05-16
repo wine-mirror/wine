@@ -2570,7 +2570,7 @@ int MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
   }
 
-  return _lseeki64(file->_file,*pos,SEEK_SET);
+  return (_lseeki64(file->_file,*pos,SEEK_SET) == -1) ? -1 : 0;
 }
 
 /*********************************************************************
