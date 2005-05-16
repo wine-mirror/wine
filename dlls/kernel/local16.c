@@ -35,7 +35,6 @@
 #include <string.h>
 #include "wine/winbase16.h"
 #include "wownt32.h"
-#include "local.h"
 #include "module.h"
 #include "stackframe.h"
 #include "toolhelp.h"
@@ -1655,12 +1654,14 @@ UINT16 WINAPI LocalShrink16( HGLOBAL16 handle, UINT16 newsize )
 DWORD WINAPI GetHeapSpaces16( HMODULE16 module )
 {
     NE_MODULE *pModule;
-    WORD ds;
+    WORD oldDS = CURRENT_DS;
+    DWORD spaces;
 
     if (!(pModule = NE_GetPtr( module ))) return 0;
-    ds =
-    GlobalHandleToSel16((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
-    return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
+    CURRENT_DS = GlobalHandleToSel16((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
+    spaces = MAKELONG( LocalCountFree16(), LocalHeapSize16() );
+    CURRENT_DS = oldDS;
+    return spaces;
 }
 
 
