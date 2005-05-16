@@ -299,7 +299,7 @@ extern BOOL WINAPI K32WOWCallback16Ex(	DWORD vpfn16, DWORD dwFlags,
  * RETURNS
  *	the allocated segmented pointer and a HRESULT
  */
-HRESULT
+static HRESULT
 _xmalloc16(DWORD size, SEGPTR *ptr) {
   LPMALLOC16 mllc;
   DWORD args[2];
