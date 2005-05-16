@@ -1917,6 +1917,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     UINT rc;
     MSIQUERY * view;
     LPWSTR ptargetdir, targetdir, parent, srcdir;
+    LPWSTR shortname = NULL;
     MSIRECORD * row = 0;
     INT index = -1;
     DWORD i;
@@ -1982,15 +1983,16 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     /* for now only pick long filename versions */
     if (strchrW(targetdir,'|'))
     {
+        shortname = targetdir;
         targetdir = strchrW(targetdir,'|'); 
         *targetdir = 0;
         targetdir ++;
     }
+    /* for the sourcedir pick the short filename */
     if (srcdir && strchrW(srcdir,'|'))
     {
-        srcdir= strchrW(srcdir,'|'); 
-        *srcdir= 0;
-        srcdir ++;
+        LPWSTR p = strchrW(srcdir,'|'); 
+        *p = 0;
     }
 
     /* now check for root dirs */
@@ -2009,9 +2011,12 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 
     if (srcdir)
         package->folders[index].SourceDefault = strdupW(srcdir);
+    else if (shortname)
+        package->folders[index].SourceDefault = strdupW(shortname);
     else if (targetdir)
         package->folders[index].SourceDefault = strdupW(targetdir);
     HeapFree(GetProcessHeap(), 0, ptargetdir);
+        TRACE("   SourceDefault = %s\n",debugstr_w(package->folders[index].SourceDefault));
 
     parent = load_dynamic_stringW(row,2);
     if (parent) 
@@ -2115,6 +2120,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     else if (source && package->folders[i].ResolvedSource)
     {
         path = strdupW(package->folders[i].ResolvedSource);
+        TRACE("   (source)already resolved to %s\n",debugstr_w(path));
         return path;
     }
     else if (!source && package->folders[i].Property)
@@ -2146,6 +2152,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         else 
         {
             path = build_directory_name(3, p, package->folders[i].SourceDefault, NULL);
+            TRACE("   (source)resolved into %s\n",debugstr_w(path));
             package->folders[i].ResolvedSource = strdupW(path);
         }
         HeapFree(GetProcessHeap(),0,p);
@@ -2952,8 +2959,8 @@ static BOOL extract_a_cabinet_file(MSIPACKAGE* package, const WCHAR* source,
     return ret;
 }
 
-static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence, 
-                                 WCHAR* path, WCHAR* file)
+static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path, 
+                                 MSIFILE* file)
 {
     UINT rc;
     MSIQUERY * view;
@@ -2971,14 +2978,21 @@ static UINT ready_media_for_file(MSIPACKAGE *package, UINT sequence,
     INT seq;
     static UINT last_sequence = 0; 
 
-    if (sequence <= last_sequence)
+    if (file->Attributes & msidbFileAttributesNoncompressed)
     {
-        TRACE("Media already ready (%u, %u)\n",sequence,last_sequence);
-        /*extract_a_cabinet_file(package, source,path,file); */
+        sz = MAX_PATH;
+        MSI_GetPropertyW(package, cszSourceDir, path, &sz);
         return ERROR_SUCCESS;
     }
 
-    sprintfW(Query,ExecSeqQuery,sequence);
+    if (file->Sequence <= last_sequence)
+    {
+        TRACE("Media already ready (%u, %u)\n",file->Sequence,last_sequence);
+        /*extract_a_cabinet_file(package, source,path,file->File); */
+        return ERROR_SUCCESS;
+    }
+
+    sprintfW(Query,ExecSeqQuery,file->Sequence);
 
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
@@ -3106,12 +3120,10 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if ((file->State == 1) || (file->State == 2))
         {
             LPWSTR p;
-            INT len;
             MSICOMPONENT* comp = NULL;
 
             TRACE("Installing %s\n",debugstr_w(file->File));
-            rc = ready_media_for_file(package,file->Sequence,path_to_source,
-                            file->File);
+            rc = ready_media_for_file(package, path_to_source, file);
             /* 
              * WARNING!
              * our file table could change here because a new temp file
@@ -3136,11 +3148,18 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             HeapFree(GetProcessHeap(),0,file->TargetPath);
 
             file->TargetPath = build_directory_name(2, p, file->FileName);
+            HeapFree(GetProcessHeap(),0,p);
 
-            len = strlenW(path_to_source) + strlenW(file->File) + 2;
-            file->SourcePath = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-            strcpyW(file->SourcePath, path_to_source);
-            strcatW(file->SourcePath, file->File);
+            if (file->Attributes & msidbFileAttributesNoncompressed)
+            {
+                p = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
+                file->SourcePath = build_directory_name(2, p, file->File);
+                HeapFree(GetProcessHeap(),0,p);
+            }
+            else
+                file->SourcePath = build_directory_name(2, path_to_source, 
+                            file->File);
+
 
             TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
                   debugstr_w(file->TargetPath));
@@ -3156,16 +3175,23 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             msiobj_release( &uirow->hdr );
             ui_progress(package,2,file->FileSize,0,0);
 
-            if (!MoveFileW(file->SourcePath,file->TargetPath))
+            
+            if (file->Attributes & msidbFileAttributesNoncompressed)
+                rc = CopyFileW(file->SourcePath,file->TargetPath,FALSE);
+            else
+                rc = MoveFileW(file->SourcePath, file->TargetPath);
+
+            if (!rc)
             {
                 rc = GetLastError();
-                ERR("Unable to move file (%s -> %s) (error %d)\n",
+                ERR("Unable to move/copy file (%s -> %s) (error %d)\n",
                      debugstr_w(file->SourcePath), debugstr_w(file->TargetPath),
                       rc);
                 if (rc == ERROR_ALREADY_EXISTS && file->State == 2)
                 {
                     CopyFileW(file->SourcePath,file->TargetPath,FALSE);
-                    DeleteFileW(file->SourcePath);
+                    if (!(file->Attributes & msidbFileAttributesNoncompressed))
+                        DeleteFileW(file->SourcePath);
                     rc = 0;
                 }
                 else if (rc == ERROR_FILE_NOT_FOUND)
@@ -3173,14 +3199,17 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
                     ERR("Source File Not Found!  Continuing\n");
                     rc = 0;
                 }
-                else
+                else if (file->Attributes & msidbFileAttributesVital)
                 {
-                    ERR("Ignoring Error and continuing...\n");
+                    ERR("Ignoring Error and continuing (nonvital file)...\n");
                     rc = 0;
                 }
             }
             else
+            {
                 file->State = 4;
+                rc = ERROR_SUCCESS;
+            }
         }
     }
 
@@ -3372,21 +3401,35 @@ static LPSTR parse_value(MSIPACKAGE *package, WCHAR *value, DWORD *type,
         {
             LPWSTR ptr;
             CHAR byte[5];
-            LPWSTR deformated;
+            LPWSTR deformated = NULL;
             int count;
 
             deformat_string(package, &value[2], &deformated);
 
             /* binary value type */
-            ptr = deformated; 
-            *type=REG_BINARY;
-            *size = strlenW(ptr)/2;
+            ptr = deformated;
+            *type = REG_BINARY;
+            if (strlenW(ptr)%2)
+                *size = (strlenW(ptr)/2)+1;
+            else
+                *size = strlenW(ptr)/2;
+
             data = HeapAlloc(GetProcessHeap(),0,*size);
-          
+
             byte[0] = '0'; 
             byte[1] = 'x'; 
             byte[4] = 0; 
             count = 0;
+            /* if uneven pad with a zero in front */
+            if (strlenW(ptr)%2)
+            {
+                byte[2]= '0';
+                byte[3]= *ptr;
+                ptr++;
+                data[count] = (BYTE)strtol(byte,NULL,0);
+                count ++;
+                TRACE("Uneven byte count\n");
+            }
             while (*ptr)
             {
                 byte[2]= *ptr;

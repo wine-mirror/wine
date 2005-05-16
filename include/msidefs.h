@@ -23,6 +23,17 @@
 extern "C" {
 #endif
 
+enum msidbFileAttributes {
+    msidbFileAttributesReadOnly = 0x00000001,
+    msidbFileAttributesHidden = 0x00000002,
+    msidbFileAttributesSystem = 0x00000004,
+    msidbFileAttributesVital = 0x00000200,
+    msidbFileAttributesChecksum = 0x00000400,
+    msidbFileAttributesPatchAdded = 0x00001000,
+    msidbFileAttributesNoncompressed = 0x00002000,
+    msidbFileAttributesCompressed = 0x00004000
+};
+        
 enum msidbDialogAttributes {
     msidbDialogAttributesVisible = 0x00000001,
     msidbDialogAttributesModal = 0x00000002,
