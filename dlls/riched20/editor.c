@@ -761,6 +761,33 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   FREE_OBJ(editor);
 }
 
+static WCHAR wszClassName[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
+static WCHAR wszClassName50[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("\n");
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+      DisableThreadLibraryCalls(hinstDLL);
+      me_heap = HeapCreate (0, 0x10000, 0);
+      ME_RegisterEditorClass(hinstDLL);
+      break;
+
+    case DLL_PROCESS_DETACH:
+      UnregisterClassW(wszClassName, 0);
+      UnregisterClassW(wszClassName50, 0);
+      UnregisterClassA("RichEdit20A", 0);
+      UnregisterClassA("RichEdit50A", 0);
+      HeapDestroy (me_heap);
+      me_heap = NULL;
+      break;
+    }
+    return TRUE;
+}
+
+
 #define UNSUPPORTED_MSG(e) \
   case e: \
     FIXME(#e ": stub\n"); \
@@ -1417,9 +1444,6 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int nStart, int nChars, in
   return nWritten;  
 }
 
-static WCHAR wszClassName[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '2', '0', 'W', 0};
-static WCHAR wszClassName50[] = {'R', 'i', 'c', 'h', 'E', 'd', 'i', 't', '5', '0', 'W', 0};
-
 void ME_RegisterEditorClass(HINSTANCE hInstance)
 {
   BOOL bResult;
@@ -1458,30 +1482,6 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   bResult = RegisterClassA(&wcA);  
   assert(bResult);
 }
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("\n");
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-      DisableThreadLibraryCalls(hinstDLL);
-      me_heap = HeapCreate (0, 0x10000, 0);
-      ME_RegisterEditorClass(hinstDLL);
-      break;
-
-    case DLL_PROCESS_DETACH:
-      UnregisterClassW(wszClassName, 0);
-      UnregisterClassW(wszClassName50, 0);
-      UnregisterClassA("RichEdit20A", 0);
-      UnregisterClassA("RichEdit50A", 0);
-      HeapDestroy (me_heap);
-      me_heap = NULL;
-      break;
-    }
-    return TRUE;
-}
-
 /******************************************************************
  *        CreateTextServices (RICHED20.4)
  *

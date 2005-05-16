@@ -439,6 +439,10 @@ BOOL WINAPI ReportEventW( HANDLE hEventLog, WORD wType, WORD wCategory, DWORD dw
     return TRUE;
 }
 
+/******************************************************************************
+ * RegisterTraceGuidsW [ADVAPI32.@]
+ *
+ */
 ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
                 PVOID RequestContext, LPCGUID ControlGuid, ULONG GuidCount,
                 PTRACE_GUID_REGISTRATION TraceGuidReg, LPCWSTR MofImagePath,
@@ -450,6 +454,10 @@ ULONG WINAPI RegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+/******************************************************************************
+ * RegisterTraceGuidsA [ADVAPI32.@]
+ *
+ */
 ULONG WINAPI RegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
                 PVOID RequestContext, LPCGUID ControlGuid, ULONG GuidCount,
                 PTRACE_GUID_REGISTRATION TraceGuidReg, LPCSTR MofImagePath,
