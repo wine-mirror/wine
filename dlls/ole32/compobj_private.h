@@ -254,4 +254,6 @@ static inline APARTMENT* COM_CurrentApt(void)
 # define DEBUG_CLEAR_CRITSEC_NAME(cs)
 #endif
 
+extern HINSTANCE OLE32_hInstance; /* FIXME: make static */
+
 #endif /* __WINE_OLE_COMPOBJ_H */
