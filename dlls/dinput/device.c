@@ -757,8 +757,6 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumCreatedEffectObjects(
 {
     FIXME("(this=%p,%p,%p,0x%08lx): stub!\n",
 	  iface, lpCallback, lpvRef, dwFlags);
-    if (lpCallback)
-	lpCallback(NULL, lpvRef);
     return DI_OK;
 }
 
