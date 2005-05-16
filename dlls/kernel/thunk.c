@@ -34,6 +34,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wownt32.h"

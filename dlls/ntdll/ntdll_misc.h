@@ -27,7 +27,6 @@
 #include "winreg.h"
 #include "ntstatus.h"
 #include "winternl.h"
-#include "thread.h"
 #include "wine/server.h"
 
 /* The per-thread signal stack size */

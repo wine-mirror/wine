@@ -27,10 +27,10 @@
 #include <sys/types.h>
 #include "windef.h"
 #include "winbase.h"
+#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
-#include "thread.h"
 #include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/debug.h"

@@ -35,13 +35,13 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"  /* for RT_STRINGW */
+#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "winnls.h"
 #include "winerror.h"
 #include "winver.h"
-#include "thread.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
 

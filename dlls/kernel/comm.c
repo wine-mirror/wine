@@ -94,9 +94,9 @@
 #include "winbase.h"
 #include "winerror.h"
 
+#include "thread.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
-#include "thread.h"
 
 #include "wine/debug.h"
 

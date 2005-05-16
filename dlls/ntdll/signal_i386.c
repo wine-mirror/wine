@@ -53,8 +53,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
-#include "winternl.h"
+#include "thread.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"
 

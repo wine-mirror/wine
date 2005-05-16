@@ -213,10 +213,6 @@ typedef struct _PEB
 /***********************************************************************
  * TEB data structure
  */
-#if defined(_NTSYSTEM_) || defined(_KERNEL32_)  /* hack, should go away */
-# define WINE_NO_TEB
-#endif
-
 #ifndef WINE_NO_TEB  /* don't define TEB if included from thread.h */
 # ifndef WINE_TEB_DEFINED
 # define WINE_TEB_DEFINED

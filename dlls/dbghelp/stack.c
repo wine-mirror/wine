@@ -30,7 +30,6 @@
 #include "dbghelp_private.h"
 #include "winreg.h"
 #include "ntstatus.h"
-#include "thread.h" /* FIXME: must be included before winternl.h */
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/debug.h"

@@ -30,6 +30,7 @@
 #include "winerror.h"
 #include "wownt32.h"
 #include "excpt.h"
+#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "module.h"
