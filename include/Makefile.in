@@ -20,6 +20,7 @@ IDL_SRCS = \
 	mmstream.idl \
 	mshtmhst.idl \
 	mshtml.idl \
+	msxml.idl \
 	oaidl.idl \
 	objidl.idl \
 	ocidl.idl \
@@ -170,6 +171,7 @@ WINDOWS_INCLUDES = \
 	msiquery.h \
 	mssip.h \
 	mswsock.h \
+	msxmldid.h \
 	nb30.h \
 	npapi.h \
 	nspapi.h \

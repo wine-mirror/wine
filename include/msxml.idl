@@ -1,0 +1,154 @@
+/*
+ * Copyright (C) 2005 Mike McCormack
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include "msxmldid.h"
+
+import "unknwn.idl";
+import "wtypes.idl";
+import "objidl.idl";
+import "oaidl.idl";
+
+[
+local,
+object,
+odl,
+dual,
+oleautomation,
+uuid(65725580-9b5d-11d0-9bfe-00c04fc99c8e)
+]
+interface IXMLElementCollection : IDispatch
+{
+    [propput, id(DISPID_XMLELEMENTCOLLECTION_LENGTH)]
+    HRESULT length( [in] long v );
+
+    [propget, id(DISPID_XMLELEMENTCOLLECTION_LENGTH)]
+    HRESULT length( [retval, out] long *p );
+
+    [propget, id(DISPID_XMLELEMENTCOLLECTION_NEWENUM)]
+    HRESULT _newEnum( [retval, out] IUnknown ** ppUnk );
+
+    [id(DISPID_XMLELEMENTCOLLECTION_ITEM)]
+    HRESULT item(
+            [optional, in] VARIANT var1,
+            [optional, in] VARIANT var2,
+            [retval, out] IDispatch ** ppDisp );
+};
+
+[
+local,
+object
+]
+interface IXMLElement : IDispatch
+{
+    [propget, id(DISPID_XMLELEMENT_TAGNAME)]
+    HRESULT tagName( [retval, out] BSTR *p);
+
+    [propput, id(DISPID_XMLELEMENT_TAGNAME)]
+    HRESULT tagName( [in] BSTR p );
+
+    [propget, id(DISPID_XMLELEMENT_PARENT)]
+    HRESULT parent( [retval, out] IXMLElement **parent );
+
+    [id(DISPID_XMLELEMENT_SETATTRIBUTE)]
+    HRESULT setAttribute(
+            [in] BSTR strPropertyName,
+            [in] VARIANT PropertyValue );
+
+    [id(DISPID_XMLELEMENT_GETATTRIBUTE)]
+    HRESULT getAttribute(
+            [in] BSTR strPropertyName,
+            [retval, out] VARIANT *PropertyValue );
+
+    [id(DISPID_XMLELEMENT_REMOVEATTRIBUTE)]
+    HRESULT removeAttribute(
+            [in] BSTR strPropertyName );
+
+    [propget, id(DISPID_XMLELEMENT_CHILDREN)]
+    HRESULT children( [retval, out] IXMLElementCollection **p );
+
+    [propget, id(DISPID_XMLELEMENT_TYPE)]
+    HRESULT type( [retval, out] long *p );
+
+    [propget, id(DISPID_XMLELEMENT_TEXT)]
+    HRESULT text( [retval, out] BSTR *p );
+
+    [propput, id(DISPID_XMLELEMENT_TEXT)]
+    HRESULT text( [in] BSTR p );
+
+    [id(DISPID_XMLELEMENT_ADDCHILD)]
+    HRESULT addChild(
+            [in] IXMLElement *pChildElem,
+            [in] long lIndex,
+            [in] long lreserved );
+
+    [id(DISPID_XMLELEMENT_REMOVECHILD)]
+    HRESULT removeChild(
+            [in] IXMLElement *pChildElem );
+};
+
+[
+local,
+object
+]
+interface IXMLDocument : IDispatch
+{
+    [propget, id(DISPID_XMLDOCUMENT_ROOT)]
+    HRESULT root( [retval, out] IXMLElement **p );
+
+    [propget, id(DISPID_XMLDOCUMENT_FILESIZE)]
+    HRESULT fileSize( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_FILEMODIFIEDDATE)]
+    HRESULT fileModifiedDate( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_FILEUPDATEDDATE)]
+    HRESULT fileUpdatedDate( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_URL)]
+    HRESULT URL( [retval, out] BSTR *p );
+
+    [propput, id(DISPID_XMLDOCUMENT_URL)]
+    HRESULT URL( [in] BSTR p );
+
+    [propget, id(DISPID_XMLDOCUMENT_MIMETYPE)]
+    HRESULT mimeType( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_READYSTATE)]
+    HRESULT readyState( [retval, out] long *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_CHARSET)]
+    HRESULT charset( [retval, out] BSTR *p );
+
+    [propput, id(DISPID_XMLDOCUMENT_CHARSET)]
+    HRESULT charset( [in] BSTR p );
+
+    [propget, id(DISPID_XMLDOCUMENT_VERSION)]
+    HRESULT version( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_DOCTYPE)]
+    HRESULT doctype( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLDOCUMENT_DTDURL)]
+    HRESULT dtdURl( [retval, out] BSTR *p );
+
+    [id(DISPID_XMLDOCUMENT_CREATEELEMENT)]
+    HRESULT createElement(
+            [in] VARIANT vType,
+            [optional, in] VARIANT var1,
+            [retval, out] IXMLElement **ppElem );
+};

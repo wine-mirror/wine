@@ -15,6 +15,7 @@ mlang.h
 mmstream.h
 mshtmhst.h
 mshtml.h
+msxml.h
 oaidl.h
 objidl.h
 ocidl.h
