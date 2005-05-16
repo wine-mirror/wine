@@ -121,7 +121,18 @@ static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
                dc->xformWorld2Vport.eDy;
 }
 
-
+/* Performs a world-to-viewport transformation on the specified width.
+ */
+static inline void INTERNAL_WSTODS(DC *dc, LONG *width)
+{
+    POINT pt[2];
+    pt[0].x = pt[0].y = 0;
+    pt[1].x = *width;
+    pt[1].y = 0;
+    LPtoDP(dc->hSelf, pt, 2);
+    *width = pt[1].x - pt[0].x;
+}
+ 
 /***********************************************************************
  *           BeginPath    (GDI32.@)
  */
@@ -1446,24 +1457,28 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     if(pPath->state != PATH_Closed)
         return FALSE;
 
-    /* Convert pen width to DP for MWT_IDENTITY */
+    /* Convert pen properties from logical to device units for MWT_IDENTITY */
     hOldPen = GetCurrentObject(dc->hSelf, OBJ_PEN);
     if(GetObjectType(hOldPen) == OBJ_EXTPEN) {
-	POINT ptPenWidth;
 	EXTLOGPEN elp;
 	LOGBRUSH lb;
 	GetObjectW(hOldPen, sizeof(EXTLOGPEN), &elp);
-	ptPenWidth.x = elp.elpWidth;
-	LPtoDP(dc->hSelf, &ptPenWidth, 1);
+	if(elp.elpPenStyle & PS_GEOMETRIC) {
+	    INTERNAL_WSTODS(dc, &elp.elpWidth);
+	    if(elp.elpPenStyle & PS_USERSTYLE)
+		for(i = 0; i < elp.elpNumEntries; i++)
+		    INTERNAL_WSTODS(dc, &elp.elpStyleEntry[i]);
+	}
 	lb.lbStyle = elp.elpBrushStyle;
 	lb.lbColor = elp.elpColor;
 	lb.lbHatch = elp.elpHatch;
-	hNewPen = ExtCreatePen(elp.elpPenStyle, ptPenWidth.x, &lb,
+	hNewPen = ExtCreatePen(elp.elpPenStyle, elp.elpWidth, &lb,
 	                       elp.elpNumEntries, elp.elpStyleEntry);
     } else /* OBJ_PEN */ {
 	LOGPEN lp;
 	GetObjectW(hOldPen, sizeof(LOGPEN), &lp);
-	LPtoDP(dc->hSelf, &lp.lopnWidth, 1);
+	if(lp.lopnWidth.x > 0)
+	    INTERNAL_WSTODS(dc, &lp.lopnWidth.x);
 	hNewPen = CreatePenIndirect(&lp);
     }
     SelectObject(dc->hSelf, hNewPen);
@@ -1494,8 +1509,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     
     for(i = 0; i < pPath->numEntriesUsed; i++) {
         if((i == 0 || (pPath->pFlags[i-1] & PT_CLOSEFIGURE)) &&
-	   (pPath->pFlags[i] != PT_MOVETO))
-	{
+	   (pPath->pFlags[i] != PT_MOVETO)) {
 	    ERR("Expected PT_MOVETO %s, got path flag %d\n", 
 	        i == 0 ? "as first point" : "after PT_CLOSEFIGURE",
 		(INT)pPath->pFlags[i]);
