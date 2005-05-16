@@ -190,7 +190,7 @@
 @ stdcall GetFullPathNameW(wstr long ptr ptr)
 @ stdcall GetGlyphOutlineW(long long long ptr long ptr ptr)
 @ stdcall GetICMProfileW(long ptr wstr)
-@ stdcall GetJobW(long long ptr long ptr)
+@ stdcall GetJobW(long long long ptr long ptr)
 @ stdcall GetKerningPairsW(long long ptr)
 @ stdcall GetKeyNameTextW(long ptr long)
 @ stdcall GetKeyboardLayoutNameW(ptr)

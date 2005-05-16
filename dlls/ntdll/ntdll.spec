@@ -167,12 +167,12 @@
 @ stdcall NtQueryAttributesFile(ptr ptr)
 @ stdcall NtQueryDefaultLocale(long ptr)
 @ stdcall NtQueryDefaultUILanguage(ptr)
-@ stdcall NtQueryDirectoryFile(long long  ptr ptr ptr ptr long long long ptr long)
+@ stdcall NtQueryDirectoryFile(long long ptr ptr ptr ptr long long long ptr long)
 @ stdcall NtQueryDirectoryObject(long ptr long long long ptr ptr)
 @ stub NtQueryEaFile
 @ stdcall NtQueryEvent(long long ptr long ptr)
 @ stdcall NtQueryFullAttributesFile(ptr ptr)
-@ stdcall NtQueryInformationAtom(long long ptr ptr)
+@ stdcall NtQueryInformationAtom(long long ptr long ptr)
 @ stdcall NtQueryInformationFile(long ptr ptr long long)
 @ stub NtQueryInformationPort
 @ stdcall NtQueryInformationProcess(long long ptr long ptr)
@@ -771,7 +771,7 @@
 @ stdcall ZwQueryDirectoryObject(long ptr long long long ptr ptr) NtQueryDirectoryObject
 @ stub ZwQueryEaFile
 @ stdcall ZwQueryEvent(long long ptr long ptr) NtQueryEvent
-@ stdcall ZwQueryInformationAtom(long long ptr ptr) NtQueryInformationAtom
+@ stdcall ZwQueryInformationAtom(long long ptr long ptr) NtQueryInformationAtom
 @ stdcall ZwQueryInformationFile(long ptr ptr long long) NtQueryInformationFile
 @ stub ZwQueryInformationPort
 @ stdcall ZwQueryInformationProcess(long long ptr long ptr) NtQueryInformationProcess
