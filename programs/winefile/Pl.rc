@@ -64,8 +64,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "&Stwórz dysk systemowy...", -1	/*@@ */
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "&Pod³¹cz Dysk Sieciowy" ,			252
-		MENUITEM "&Od³¹cz Dysk Sieciowy" ,		253
+		MENUITEM "&Pod³¹cz Dysk Sieciowy" ,			ID_CONNECT_NETWORK_DRIVE
+		MENUITEM "&Od³¹cz Dysk Sieciowy" ,		ID_DISCONNECT_NETWORK_DRIVE
 		MENUITEM SEPARATOR
 		MENUITEM "Udostêpnij jako..." ,			254
 		MENUITEM "&Nie udostêpniaj..." ,			255

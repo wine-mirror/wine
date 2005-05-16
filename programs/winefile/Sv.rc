@@ -59,13 +59,13 @@ IDM_WINEFILE MENU FIXED IMPURE
         MENUITEM "&Kopiera disk...",               201
         MENUITEM "&Namnge disk...",              202
         MENUITEM SEPARATOR
-        MENUITEM "&Formatera disk...",             203
+        MENUITEM "&Formatera disk...",             ID_FORMAT_DISK
 #ifdef _WIN95
 		MENUITEM "&Skapa systemdisk...", -1	/*TODO*/
 #endif
 		MENUITEM SEPARATOR
-        MENUITEM "Anslut &Nätverksenhet",      252
-        MENUITEM "&Koppla ifrån Nätverksenhet",   253
+        MENUITEM "Anslut &Nätverksenhet",      ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "&Koppla ifrån Nätverksenhet",   ID_DISCONNECT_NETWORK_DRIVE
         MENUITEM SEPARATOR
         MENUITEM "Dela ut...",                 254
         MENUITEM "&Ta bort utdelning...",            255

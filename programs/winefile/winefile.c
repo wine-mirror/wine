@@ -170,6 +170,7 @@ extern void WineWarranty(HWND hwnd);
 static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd);
 static void set_curdir(ChildWnd* child, Entry* entry, int idx, HWND hwnd);
 static void refresh_child(ChildWnd* child);
+static void refresh_drives();
 static void get_path(Entry* dir, PTSTR path);
 
 LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam);
@@ -226,6 +227,18 @@ static void display_error(HWND hwnd, DWORD error)
 
 	LocalFree(msg);
 }
+
+
+/* display network error message using WNetGetLastError() */
+static void display_network_error(HWND hwnd)
+{
+	TCHAR msg[BUFFER_LEN], provider[BUFFER_LEN], b2[BUFFER_LEN];
+	DWORD error;
+
+	if (WNetGetLastError(&error, msg, BUFFER_LEN, provider, BUFFER_LEN) == NO_ERROR)
+		MessageBox(hwnd, msg, RS(b2,IDS_WINEFILE), MB_OK);
+}
+
 
 /* allocate and initialise a directory entry */
 static Entry* alloc_entry()
@@ -1880,6 +1893,10 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 						free(child);
 					break;}
 
+				case ID_REFRESH:
+					refresh_drives();
+					break;
+
 				case ID_WINDOW_CASCADE:
 					SendMessage(Globals.hmdiclient, WM_MDICASCADE, 0, 0);
 					break;
@@ -1967,6 +1984,30 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 						if ((int)hinst <= 32)
 							display_error(hwnd, GetLastError());
+					}
+					break;}
+
+				case ID_CONNECT_NETWORK_DRIVE: {
+					DWORD ret = WNetConnectionDialog(hwnd, RESOURCETYPE_DISK);
+					if (ret == NO_ERROR)
+						refresh_drives();
+					else if (ret != (DWORD)-1) {
+						if (ret == ERROR_EXTENDED_ERROR)
+							display_network_error(hwnd);
+						else
+							display_error(hwnd, ret);
+					}
+					break;}
+
+				case ID_DISCONNECT_NETWORK_DRIVE: {
+					DWORD ret = WNetDisconnectDialog(hwnd, RESOURCETYPE_DISK);
+					if (ret == NO_ERROR)
+						refresh_drives();
+					else if (ret != (DWORD)-1) {
+						if (ret == ERROR_EXTENDED_ERROR)
+							display_network_error(hwnd);
+						else
+							display_error(hwnd, ret);
 					}
 					break;}
 
@@ -3289,6 +3330,87 @@ static void refresh_child(ChildWnd* child)
 }
 
 
+static void create_drive_bar()
+{
+	TBBUTTON drivebarBtn = {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0};
+	TCHAR b1[BUFFER_LEN];
+	int btn = 1;
+	PTSTR p;
+
+	GetLogicalDriveStrings(BUFFER_LEN, Globals.drives);
+
+	Globals.hdrivebar = CreateToolbarEx(Globals.hMainWnd, WS_CHILD|WS_VISIBLE|CCS_NOMOVEY|TBSTYLE_LIST,
+				IDW_DRIVEBAR, 2, Globals.hInstance, IDB_DRIVEBAR, &drivebarBtn,
+				1, 16, 13, 16, 13, sizeof(TBBUTTON));
+
+#ifndef _NO_EXTENSIONS
+#ifdef __WINE__
+	/* insert unix file system button */
+	b1[0] = '/';
+	b1[1] = '\0';
+	b1[2] = '\0';
+	SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
+
+	drivebarBtn.idCommand = ID_DRIVE_UNIX_FS;
+	SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
+	drivebarBtn.iString++;
+#endif
+#ifdef _SHELL_FOLDERS
+	/* insert shell namespace button */
+	load_string(b1, IDS_SHELL);
+	b1[lstrlen(b1)+1] = '\0';
+	SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
+
+	drivebarBtn.idCommand = ID_DRIVE_SHELL_NS;
+	SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
+	drivebarBtn.iString++;
+#endif
+
+	/* register windows drive root strings */
+	SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)Globals.drives);
+#endif
+
+	drivebarBtn.idCommand = ID_DRIVE_FIRST;
+
+	for(p=Globals.drives; *p; ) {
+#ifdef _NO_EXTENSIONS
+		/* insert drive letter */
+		TCHAR b[3] = {tolower(*p)};
+		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b);
+#endif
+		switch(GetDriveType(p)) {
+			case DRIVE_REMOVABLE:	drivebarBtn.iBitmap = 1;	break;
+			case DRIVE_CDROM:		drivebarBtn.iBitmap = 3;	break;
+			case DRIVE_REMOTE:		drivebarBtn.iBitmap = 4;	break;
+			case DRIVE_RAMDISK:		drivebarBtn.iBitmap = 5;	break;
+			default:/*DRIVE_FIXED*/	drivebarBtn.iBitmap = 2;
+		}
+
+		SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
+		drivebarBtn.idCommand++;
+		drivebarBtn.iString++;
+
+		while(*p++);
+	}
+}
+
+static void refresh_drives()
+{
+	RECT rect;
+
+	/* destroy drive bar */
+	DestroyWindow(Globals.hdrivebar);
+	Globals.hdrivebar = 0;
+
+	/* re-create drive bar */
+	create_drive_bar();
+
+	/* update window layout */
+	GetClientRect(Globals.hMainWnd, &rect);
+	SendMessage(Globals.hMainWnd, WM_SIZE, 0, MAKELONG(rect.right, rect.bottom));
+}
+
+
 BOOL launch_file(HWND hwnd, LPCTSTR cmd, UINT nCmdShow)
 {
 	HINSTANCE hinst = ShellExecute(hwnd, NULL/*operation*/, cmd, NULL/*parameters*/, NULL/*dir*/, nCmdShow);
@@ -3737,6 +3859,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					break;}
 
 				case ID_REFRESH:
+					refresh_drives();
 					refresh_child(child);
 					break;
 
@@ -4074,70 +4197,9 @@ void show_frame(HWND hwndParent, int cmdshow)
 					Globals.hMainWnd, 0, Globals.hInstance, &ccs);
 
 
-	{
-		TBBUTTON drivebarBtn = {0, 0, TBSTATE_ENABLED, BTNS_SEP, {0, 0}, 0, 0};
-		int btn = 1;
-		PTSTR p;
+	CheckMenuItem(Globals.hMenuOptions, ID_VIEW_DRIVE_BAR, MF_BYCOMMAND|MF_CHECKED);
 
-		Globals.hdrivebar = CreateToolbarEx(Globals.hMainWnd, WS_CHILD|WS_VISIBLE|CCS_NOMOVEY|TBSTYLE_LIST,
-					IDW_DRIVEBAR, 2, Globals.hInstance, IDB_DRIVEBAR, &drivebarBtn,
-					1, 16, 13, 16, 13, sizeof(TBBUTTON));
-		CheckMenuItem(Globals.hMenuOptions, ID_VIEW_DRIVE_BAR, MF_BYCOMMAND|MF_CHECKED);
-
-		GetLogicalDriveStrings(BUFFER_LEN, Globals.drives);
-
-		drivebarBtn.fsStyle = BTNS_BUTTON;
-
-#ifndef _NO_EXTENSIONS
-#ifdef __WINE__
-		/* insert unix file system button */
-		b1[0] = '/';
-		b1[1] = '\0';
-		b1[2] = '\0';
-		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
-
-		drivebarBtn.idCommand = ID_DRIVE_UNIX_FS;
-		SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
-		drivebarBtn.iString++;
-#endif
-#ifdef _SHELL_FOLDERS
-		/* insert shell namespace button */
-		load_string(b1, IDS_SHELL);
-		b1[lstrlen(b1)+1] = '\0';
-		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b1);
-
-		drivebarBtn.idCommand = ID_DRIVE_SHELL_NS;
-		SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
-		drivebarBtn.iString++;
-#endif
-
-		/* register windows drive root strings */
-		SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)Globals.drives);
-#endif
-
-		drivebarBtn.idCommand = ID_DRIVE_FIRST;
-
-		for(p=Globals.drives; *p; ) {
-#ifdef _NO_EXTENSIONS
-		  /* insert drive letter */
-			TCHAR b[3] = {tolower(*p)};
-			SendMessage(Globals.hdrivebar, TB_ADDSTRING, 0, (LPARAM)b);
-#endif
-			switch(GetDriveType(p)) {
-				case DRIVE_REMOVABLE:	drivebarBtn.iBitmap = 1;	break;
-				case DRIVE_CDROM:		drivebarBtn.iBitmap = 3;	break;
-				case DRIVE_REMOTE:		drivebarBtn.iBitmap = 4;	break;
-				case DRIVE_RAMDISK:		drivebarBtn.iBitmap = 5;	break;
-				default:/*DRIVE_FIXED*/	drivebarBtn.iBitmap = 2;
-			}
-
-			SendMessage(Globals.hdrivebar, TB_INSERTBUTTON, btn++, (LPARAM)&drivebarBtn);
-			drivebarBtn.idCommand++;
-			drivebarBtn.iString++;
-
-			while(*p++);
-		}
-	}
+	create_drive_bar();
 
 	{
 		TBBUTTON toolbarBtns[] = {

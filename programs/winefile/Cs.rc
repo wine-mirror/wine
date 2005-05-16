@@ -64,8 +64,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Vytvoøit systé&mový disk...", -1	/*@@ */
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "Pøipojit sí»ový &disk" ,			252
-		MENUITEM "&Odpojit sí»ový disk" ,		253
+		MENUITEM "Pøipojit sí»ový &disk" ,			ID_CONNECT_NETWORK_DRIVE
+		MENUITEM "&Odpojit sí»ový disk" ,		ID_DISCONNECT_NETWORK_DRIVE
 		MENUITEM SEPARATOR
 		MENUITEM "Sdílet jako..." ,			254
 		MENUITEM "Odst&ranit sdílení..." ,			255
