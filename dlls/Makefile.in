@@ -97,6 +97,7 @@ BASEDIRS = \
 	newdev \
 	ntdll \
 	odbc32 \
+	odbccp32 \
 	ole32 \
 	oleacc \
 	oleaut32 \
@@ -342,6 +343,7 @@ SYMLINKS_SO = \
 	newdev.dll.so \
 	ntdll.dll.so \
 	odbc32.dll.so \
+	odbccp32.dll.so \
 	ole32.dll.so \
 	oleacc.dll.so \
 	oleaut32.dll.so \
@@ -735,6 +737,9 @@ ntdll.dll.so: ntdll/ntdll.dll.so
 odbc32.dll.so: odbc32/odbc32.dll.so
 	$(RM) $@ && $(LN_S) odbc32/odbc32.dll.so $@
 
+odbccp32.dll.so: odbccp32/odbccp32.dll.so
+	$(RM) $@ && $(LN_S) odbccp32/odbccp32.dll.so $@
+
 ole32.dll.so: ole32/ole32.dll.so
 	$(RM) $@ && $(LN_S) ole32/ole32.dll.so $@
 
@@ -1121,6 +1126,7 @@ IMPORT_LIBS = \
 	newdev/libnewdev.$(IMPLIBEXT) \
 	ntdll/libntdll.$(IMPLIBEXT) \
 	odbc32/libodbc32.$(IMPLIBEXT) \
+	odbccp32/libodbccp32.$(IMPLIBEXT) \
 	ole32/libole32.$(IMPLIBEXT) \
 	oleacc/liboleacc.$(IMPLIBEXT) \
 	oleaut32/liboleaut32.$(IMPLIBEXT) \
@@ -1411,6 +1417,9 @@ ntdll/libntdll.$(IMPLIBEXT): ntdll/ntdll.spec $(WINEBUILD)
 
 odbc32/libodbc32.$(IMPLIBEXT): odbc32/odbc32.spec $(WINEBUILD)
 	@cd odbc32 && $(MAKE) libodbc32.$(IMPLIBEXT)
+
+odbccp32/libodbccp32.$(IMPLIBEXT): odbccp32/odbccp32.spec $(WINEBUILD)
+	@cd odbccp32 && $(MAKE) libodbccp32.$(IMPLIBEXT)
 
 ole32/libole32.$(IMPLIBEXT): ole32/ole32.spec $(WINEBUILD)
 	@cd ole32 && $(MAKE) libole32.$(IMPLIBEXT)
@@ -1715,6 +1724,7 @@ netapi32/netapi32.dll.so: netapi32
 newdev/newdev.dll.so: newdev
 ntdll/ntdll.dll.so: ntdll
 odbc32/odbc32.dll.so: odbc32
+odbccp32/odbccp32.dll.so: odbccp32
 ole32/ole32.dll.so: ole32
 oleacc/oleacc.dll.so: oleacc
 oleaut32/oleaut32.dll.so: oleaut32

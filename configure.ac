@@ -1627,6 +1627,7 @@ dlls/newdev/Makefile
 dlls/ntdll/Makefile
 dlls/ntdll/tests/Makefile
 dlls/odbc32/Makefile
+dlls/odbccp32/Makefile
 dlls/ole32/Makefile
 dlls/ole32/tests/Makefile
 dlls/oleacc/Makefile
