@@ -1280,7 +1280,7 @@ HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
 	    if (HANDLE_FIXED(handle))
 	    {
                 TRACE("Freeing fixed block.\n");
-                return LOCAL_Free( ds, handle );
+                return LocalFree16( handle );
             }
 	    else /* Moveable block */
 	    {
@@ -1303,7 +1303,7 @@ HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
             if (pEntry->lock == 0)
             {
 		/* Frees block */
-		return LOCAL_Free( ds, handle );
+		return LocalFree16( handle );
 	    }
         }
         return 0;
