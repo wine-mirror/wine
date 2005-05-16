@@ -31,7 +31,7 @@
 #include "wine/winbase16.h"
 #include "wine/library.h"
 #include "kernel_private.h"
-#include "module.h"
+#include "kernel16_private.h"
 #include "toolhelp.h"
 #include "wine/debug.h"
 

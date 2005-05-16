@@ -21,9 +21,6 @@
 #ifndef __WINE_KERNEL_PRIVATE_H
 #define __WINE_KERNEL_PRIVATE_H
 
-#include "wine/winbase16.h"
-#include "thread.h"
-
 HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
 BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
@@ -47,26 +44,6 @@ static inline HANDLE console_handle_unmap(HANDLE h)
     return h != INVALID_HANDLE_VALUE ? (HANDLE)((DWORD)h ^ 3) : INVALID_HANDLE_VALUE;
 }
 
-#define CURRENT_STACK16 ((STACK16FRAME*)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))
-#define CURRENT_DS      (CURRENT_STACK16->ds)
-
-/* push bytes on the 16-bit stack of a thread; return a segptr to the first pushed byte */
-static inline SEGPTR stack16_push( int size )
-{
-    STACK16FRAME *frame = CURRENT_STACK16;
-    memmove( (char*)frame - size, frame, sizeof(*frame) );
-    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved - size;
-    return (SEGPTR)((char *)NtCurrentTeb()->WOW32Reserved + sizeof(*frame));
-}
-
-/* pop bytes from the 16-bit stack of a thread */
-static inline void stack16_pop( int size )
-{
-    STACK16FRAME *frame = CURRENT_STACK16;
-    memmove( (char*)frame + size, frame, sizeof(*frame) );
-    NtCurrentTeb()->WOW32Reserved = (char *)NtCurrentTeb()->WOW32Reserved + size;
-}
-
 extern HMODULE kernel32_handle;
 
 /* Size of per-process table of DOS handles */
@@ -88,36 +65,32 @@ extern DWORD FILE_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen );
 extern DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context );
 extern void INSTR_CallBuiltinHandler( CONTEXT86 *context, BYTE intnum );
 
+/* return values for MODULE_GetBinaryType */
+enum binary_type
+{
+    BINARY_UNKNOWN,
+    BINARY_PE_EXE,
+    BINARY_PE_DLL,
+    BINARY_WIN16,
+    BINARY_OS216,
+    BINARY_DOS,
+    BINARY_UNIX_EXE,
+    BINARY_UNIX_LIB
+};
+
+/* module.c */
 extern WCHAR *MODULE_get_dll_load_path( LPCWSTR module );
+extern enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end );
 
 extern BOOL NLS_IsUnicodeOnlyLcid(LCID);
 
-extern WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags );
-extern WORD SELECTOR_ReallocBlock( WORD sel, const void *base, DWORD size );
-extern void SELECTOR_FreeBlock( WORD sel );
-#define IS_SELECTOR_32BIT(sel) \
-   (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
-
 extern HANDLE VXD_Open( LPCWSTR filename, DWORD access, LPSECURITY_ATTRIBUTES sa );
 
-/* this structure is always located at offset 0 of the DGROUP segment */
-#include "pshpack1.h"
-typedef struct
-{
-    WORD null;        /* Always 0 */
-    DWORD old_ss_sp;  /* Stack pointer; used by SwitchTaskTo() */
-    WORD heap;        /* Pointer to the local heap information (if any) */
-    WORD atomtable;   /* Pointer to the local atom table (if any) */
-    WORD stacktop;    /* Top of the stack */
-    WORD stackmin;    /* Lowest stack address used so far */
-    WORD stackbottom; /* Bottom of the stack */
-} INSTANCEDATA;
-#include "poppack.h"
 extern WORD DOSMEM_0000H;
 extern WORD DOSMEM_BiosDataSeg;
 extern WORD DOSMEM_BiosSysSeg;
 
-/* msdos/dosmem.c */
+/* dosmem.c */
 extern BOOL   DOSMEM_Init(void);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */

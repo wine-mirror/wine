@@ -42,8 +42,8 @@
 
 #include "wine/debug.h"
 #include "wine/library.h"
-#include "module.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
 

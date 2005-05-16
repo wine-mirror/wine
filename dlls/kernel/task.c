@@ -38,11 +38,11 @@
 
 #include "wine/winbase16.h"
 #include "thread.h"
-#include "module.h"
 #include "winternl.h"
 #include "wine/server.h"
 #include "toolhelp.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 
 #include "wine/debug.h"
 

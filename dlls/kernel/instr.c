@@ -30,9 +30,9 @@
 #include "wine/winuser16.h"
 #include "excpt.h"
 #include "thread.h"
-#include "module.h"
 #include "wine/debug.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(int);

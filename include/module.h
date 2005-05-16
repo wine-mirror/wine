@@ -100,35 +100,7 @@ typedef struct
                          /* of segment in memory */
 } SEGTABLEENTRY;
 
-
-  /* THHOOK Kernel Data Structure */
-typedef struct _THHOOK
-{
-    HANDLE16   hGlobalHeap;         /* 00 (handle BURGERMASTER) */
-    WORD       pGlobalHeap;         /* 02 (selector BURGERMASTER) */
-    HMODULE16  hExeHead;            /* 04 hFirstModule */
-    HMODULE16  hExeSweep;           /* 06 (unused) */
-    HANDLE16   TopPDB;              /* 08 (handle of KERNEL PDB) */
-    HANDLE16   HeadPDB;             /* 0A (first PDB in list) */
-    HANDLE16   TopSizePDB;          /* 0C (unused) */
-    HTASK16    HeadTDB;             /* 0E hFirstTask */
-    HTASK16    CurTDB;              /* 10 hCurrentTask */
-    HTASK16    LoadTDB;             /* 12 (unused) */
-    HTASK16    LockTDB;             /* 14 hLockedTask */
-} THHOOK;
-
-extern THHOOK *pThhook;
-
 #include <poppack.h>
-
-/* Resource types */
-
-#define NE_SEG_TABLE(pModule) \
-    ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->seg_table))
-
-#define NE_MODULE_NAME(pModule) \
-    (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
-
 
 enum loadorder_type
 {
@@ -138,53 +110,11 @@ enum loadorder_type
     LOADORDER_NTYPES
 };
 
-/* return values for MODULE_GetBinaryType */
-enum binary_type
-{
-    BINARY_UNKNOWN,
-    BINARY_PE_EXE,
-    BINARY_PE_DLL,
-    BINARY_WIN16,
-    BINARY_OS216,
-    BINARY_DOS,
-    BINARY_UNIX_EXE,
-    BINARY_UNIX_LIB
-};
-
 /* module.c */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
-extern enum binary_type MODULE_GetBinaryType( HANDLE hfile, void **res_start, void **res_end );
-
-/* ne_module.c */
-extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
-extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
-extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
-extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
-extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
-extern HANDLE NE_OpenFile( NE_MODULE *pModule );
-extern DWORD NE_StartTask(void);
 
 /* resource16.c */
 extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
-
-/* ne_segment.c */
-extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
-extern BOOL NE_LoadAllSegments( NE_MODULE *pModule );
-extern BOOL NE_CreateSegment( NE_MODULE *pModule, int segnum );
-extern BOOL NE_CreateAllSegments( NE_MODULE *pModule );
-extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule );
-extern void NE_InitializeDLLs( HMODULE16 hModule );
-extern void NE_DllProcessAttach( HMODULE16 hModule );
-extern void NE_CallUserSignalProc( HMODULE16 hModule, UINT16 code );
-
-/* task.c */
-extern void TASK_CreateMainTask(void);
-extern HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,
-                               LPCSTR cmdline, BYTE len, HANDLE *hThread );
-extern void TASK_ExitTask(void);
-extern HTASK16 TASK_GetTaskFromThread( DWORD thread );
-extern TDB *TASK_GetCurrent(void);
-extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
 /* loadorder.c */
 extern void MODULE_GetLoadOrderW( enum loadorder_type plo[], const WCHAR *app_name,

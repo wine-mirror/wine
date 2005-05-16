@@ -39,10 +39,10 @@
 
 #include "wine/winbase16.h"
 #include "wine/library.h"
-#include "module.h"
 #include "wincon.h"
 #include "toolhelp.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 #include "console_private.h"
 
 extern void LOCALE_InitRegistry(void);

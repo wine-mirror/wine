@@ -26,6 +26,7 @@
 #include "wine/server.h"
 #include "ntstatus.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(debugstr);

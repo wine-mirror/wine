@@ -41,6 +41,7 @@
 #include "ntstatus.h"
 #include "toolhelp.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 #include "wine/debug.h"
 #include "winerror.h"
 

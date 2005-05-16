@@ -35,10 +35,10 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "wownt32.h"
-#include "module.h"
 #include "toolhelp.h"
 #include "excpt.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 
