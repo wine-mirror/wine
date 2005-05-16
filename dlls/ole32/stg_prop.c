@@ -37,6 +37,8 @@
  *   endian, because I disregard whether the generator was a Mac.  This means
  *   strings will probably be munged (as I don't understand Mac scripts.)
  * - Not all PROPVARIANT types are supported.
+ * - User defined properties are not supported, see comment in
+ *   PropertyStorage_ReadFromStream
  * - IPropertyStorage::Enum is unimplemented
  */
 
@@ -142,8 +144,8 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
  * is CP_UNICODE, the returned string is in fact an LPWSTR.
  * Returns S_OK on success, something else on failure.
  */
-static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
- LCID srcCP);
+static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
+ LCID targetCP);
 
 static IPropertyStorageVtbl IPropertyStorage_Vtbl;
 
@@ -259,8 +261,8 @@ static PROPVARIANT *PropertyStorage_FindPropertyByName(
     else
     {
         LPSTR ansiName;
-        HRESULT hr = PropertyStorage_StringCopy((LPCSTR)name, &ansiName,
-         This->codePage, CP_UNICODE);
+        HRESULT hr = PropertyStorage_StringCopy((LPCSTR)name, CP_UNICODE,
+         &ansiName, This->codePage);
 
         if (SUCCEEDED(hr))
         {
@@ -344,24 +346,23 @@ static HRESULT WINAPI IPropertyStorage_fnReadMultiple(
     return hr;
 }
 
-/* FIXME: the arguments are in a screwy order here, bub. */
-static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
- LCID srcCP)
+static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
+ LCID dstCP)
 {
     HRESULT hr = S_OK;
     int len;
 
     TRACE("%s, %p, %ld, %ld\n",
      srcCP == CP_UNICODE ? debugstr_w((LPCWSTR)src) : debugstr_a(src), dst,
-     targetCP, srcCP);
+     dstCP, srcCP);
     assert(src);
     assert(dst);
     *dst = NULL;
-    if (targetCP == srcCP)
+    if (dstCP == srcCP)
     {
         size_t len;
 
-        if (targetCP == CP_UNICODE)
+        if (dstCP == CP_UNICODE)
             len = (strlenW((LPCWSTR)src) + 1) * sizeof(WCHAR);
         else
             len = strlen(src) + 1;
@@ -373,7 +374,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
     }
     else
     {
-        if (targetCP == CP_UNICODE)
+        if (dstCP == CP_UNICODE)
         {
             len = MultiByteToWideChar(srcCP, 0, src, -1, NULL, 0);
             *dst = CoTaskMemAlloc(len * sizeof(WCHAR));
@@ -399,7 +400,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
             }
             if (SUCCEEDED(hr))
             {
-                len = WideCharToMultiByte(targetCP, 0, wideStr, -1, NULL, 0,
+                len = WideCharToMultiByte(dstCP, 0, wideStr, -1, NULL, 0,
                  NULL, NULL);
                 *dst = CoTaskMemAlloc(len);
                 if (!*dst)
@@ -408,8 +409,8 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
                 {
                     BOOL defCharUsed = FALSE;
 
-                    if (WideCharToMultiByte(targetCP, 0, wideStr, -1, *dst,
-                     len, NULL, &defCharUsed) == 0 || defCharUsed)
+                    if (WideCharToMultiByte(dstCP, 0, wideStr, -1, *dst, len,
+                     NULL, &defCharUsed) == 0 || defCharUsed)
                     {
                         CoTaskMemFree(*dst);
                         *dst = NULL;
@@ -422,7 +423,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LPSTR *dst, LCID targetCP,
         }
     }
     TRACE("returning 0x%08lx (%s)\n", hr,
-     targetCP == CP_UNICODE ? debugstr_w((LPCWSTR)*dst) : debugstr_a(*dst));
+     dstCP == CP_UNICODE ? debugstr_w((LPCWSTR)*dst) : debugstr_a(*dst));
     return hr;
 }
 
@@ -435,8 +436,8 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
     assert(propvar);
     if (propvar->vt == VT_LPSTR)
     {
-        hr = PropertyStorage_StringCopy(propvar->u.pszVal, &prop->u.pszVal,
-         targetCP, srcCP);
+        hr = PropertyStorage_StringCopy(propvar->u.pszVal, srcCP,
+         &prop->u.pszVal, targetCP);
         if (SUCCEEDED(hr))
             prop->vt = VT_LPSTR;
     }
@@ -516,7 +517,7 @@ static HRESULT PropertyStorage_StoreNameWithId(PropertyStorage_impl *This,
 
     assert(srcName);
 
-    hr = PropertyStorage_StringCopy((LPCSTR)srcName, &name, This->codePage, cp);
+    hr = PropertyStorage_StringCopy((LPCSTR)srcName, cp, &name, This->codePage);
     if (SUCCEEDED(hr))
     {
         if (This->codePage == CP_UNICODE)
