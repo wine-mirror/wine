@@ -63,6 +63,11 @@ int          WINAPI RestartDialogEx(HWND,LPCWSTR,DWORD,DWORD);
 #define SHFMT_CANCEL    0xFFFFFFFEL  /* Last format was canceled */
 #define SHFMT_NOFORMAT  0xFFFFFFFDL  /* Drive is not formatable */
 
+/* SHFormatDrive flags */
+#define SHFMT_ID_DEFAULT	0xFFFF
+#define SHFMT_OPT_FULL		1
+#define SHFMT_OPT_SYSONLY	2
+
 /* SHObjectProperties flags */
 #define SHOP_PRINTERNAME 0x01
 #define SHOP_FILEPATH    0x02
