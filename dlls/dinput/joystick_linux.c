@@ -148,7 +148,7 @@ static void _dump_DIDEVCAPS(LPDIDEVCAPS lpDIDevCaps)
     }
 }
 
-static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version, int id)
+static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
     int fd = -1;
     char dev[32];
@@ -159,8 +159,8 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
     }
 
     if ((dwDevType == 0) ||
-	((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
-	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 8))) {
+	((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
+	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
         /* check whether we have a joystick */
         sprintf(dev, "%s%d", JOYDEV, id);
         if ((fd = open(dev,O_RDONLY)) < 0) {
@@ -173,7 +173,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_Joystick_GUID;
         /* we only support traditional joysticks for now */
-        if (version >= 8)
+        if (version >= 0x0800)
             lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
         else
             lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
@@ -196,7 +196,7 @@ static BOOL joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
     return FALSE;
 }
 
-static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version, int id)
+static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     int fd = -1;
     char name[MAX_PATH];
@@ -209,8 +209,8 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
     }
 
     if ((dwDevType == 0) ||
-	((dwDevType == DIDEVTYPE_JOYSTICK) && (version < 8)) ||
-	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 8))) {
+	((dwDevType == DIDEVTYPE_JOYSTICK) && (version > 0x0300 && version < 0x0800)) ||
+	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
         /* check whether we have a joystick */
         sprintf(dev, "%s%d", JOYDEV, id);
         if ((fd = open(dev,O_RDONLY)) < 0) {
@@ -223,7 +223,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
         lpddi->guidInstance.Data3 = id;
         lpddi->guidProduct = DInput_Wine_Joystick_GUID;
         /* we only support traditional joysticks for now */
-        if (version >= 8)
+        if (version >= 0x0800)
             lpddi->dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
         else
             lpddi->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
@@ -557,7 +557,7 @@ static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput,
 
     newDevice->devcaps.dwSize = sizeof(newDevice->devcaps);
     newDevice->devcaps.dwFlags = DIDC_ATTACHED;
-    if (newDevice->dinput->version >= 8)
+    if (newDevice->dinput->dwVersion >= 0x0800)
         newDevice->devcaps.dwDevType = DI8DEVTYPE_JOYSTICK | (DI8DEVTYPEJOYSTICK_STANDARD << 8);
     else
         newDevice->devcaps.dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
@@ -1124,8 +1124,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
     TRACE("(%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
 
     if (ph == NULL) {
-        WARN("invalid pointer\n");
-        return E_INVALIDARG;
+        WARN("invalid parameter: ph == NULL\n");
+        return DIERR_INVALIDPARAM;
     }
 
     if (TRACE_ON(dinput))
@@ -1228,7 +1228,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     TRACE("%p->(%p)\n",iface,lpDIDevCaps);
 
     if (lpDIDevCaps == NULL) {
-        WARN("invalid parameter: lpDIDevCaps = NULL\n");
+        WARN("invalid pointer\n");
         return E_POINTER;
     }
 
@@ -1575,6 +1575,11 @@ HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
     JoystickImpl *This = (JoystickImpl *)iface;
 
     TRACE("(%p,%p)\n", iface, pdidi);
+
+    if (pdidi == NULL) {
+        WARN("invalid pointer\n");
+        return E_POINTER;
+    }
 
     if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3A)) &&
         (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA))) {

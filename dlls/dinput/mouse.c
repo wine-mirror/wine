@@ -155,7 +155,7 @@ static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 *
     {0x8d, 0x4a, 0x23, 0x90, 0x3f, 0xb6, 0xbd, 0xf7}
 };
 
-static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, int version) {
+static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version) {
     DWORD dwSize;
     DIDEVICEINSTANCEA ddi;
     
@@ -169,7 +169,7 @@ static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, int version)
     ddi.dwSize = dwSize;
     ddi.guidInstance = GUID_SysMouse;/* DInput's GUID */
     ddi.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
-    if (version >= 8)
+    if (version >= 0x0800)
         ddi.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
     else
         ddi.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
@@ -179,7 +179,7 @@ static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, int version)
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
 
-static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int version) {
+static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD version) {
     DWORD dwSize;
     DIDEVICEINSTANCEW ddi;
     
@@ -193,7 +193,7 @@ static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int version)
     ddi.dwSize = dwSize;
     ddi.guidInstance = GUID_SysMouse;/* DInput's GUID */
     ddi.guidProduct = DInput_Wine_Mouse_GUID; /* Vendor's GUID */
-    if (version >= 8)
+    if (version >= 0x0800)
         ddi.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
     else
         ddi.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
@@ -203,14 +203,14 @@ static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int version)
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
 
-static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version, int id)
+static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
     if (id != 0)
         return FALSE;
 
     if ((dwDevType == 0) ||
-	((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
-	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 8))) {
+	((dwDevType == DIDEVTYPE_MOUSE) && (version < 0x0800)) ||
+	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 0x0800))) {
 	TRACE("Enumerating the mouse device\n");
 	
 	fill_mouse_dideviceinstanceA(lpddi, version);
@@ -221,14 +221,14 @@ static BOOL mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
     return FALSE;
 }
 
-static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version, int id)
+static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     if (id != 0)
         return FALSE;
 
     if ((dwDevType == 0) ||
-	((dwDevType == DIDEVTYPE_MOUSE) && (version < 8)) ||
-	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 8))) {
+	((dwDevType == DIDEVTYPE_MOUSE) && (version < 0x0800)) ||
+	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 0x0800))) {
 	TRACE("Enumerating the mouse device\n");
 	
 	fill_mouse_dideviceinstanceW(lpddi, version);
@@ -945,7 +945,7 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
 
     devcaps.dwSize = lpDIDevCaps->dwSize;
     devcaps.dwFlags = DIDC_ATTACHED;
-    if (This->dinput->version >= 8)
+    if (This->dinput->dwVersion >= 0x0800)
 	devcaps.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
     else
 	devcaps.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
@@ -1071,7 +1071,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
 	return DI_OK;
     }
 
-    fill_mouse_dideviceinstanceA(pdidi, This->dinput->version);
+    fill_mouse_dideviceinstanceA(pdidi, This->dinput->dwVersion);
     
     return DI_OK;
 }
@@ -1086,7 +1086,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, L
 	return DI_OK;
     }
 
-    fill_mouse_dideviceinstanceW(pdidi, This->dinput->version);
+    fill_mouse_dideviceinstanceW(pdidi, This->dinput->dwVersion);
     
     return DI_OK;
 }

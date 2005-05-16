@@ -154,7 +154,7 @@ static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a9644
   {0x8c, 0x73, 0x71, 0xdf, 0x54, 0xa9, 0x64, 0x41}
 };
 
-static void fill_keyboard_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, int version) {
+static void fill_keyboard_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version) {
     DWORD dwSize;
     DIDEVICEINSTANCEA ddi;
     
@@ -168,7 +168,7 @@ static void fill_keyboard_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, int versi
     ddi.dwSize = dwSize;
     ddi.guidInstance = GUID_SysKeyboard;/* DInput's GUID */
     ddi.guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
-    if (version >= 8)
+    if (version >= 0x0800)
         ddi.dwDevType = DI8DEVTYPE_KEYBOARD | (DI8DEVTYPEKEYBOARD_UNKNOWN << 8);
     else
         ddi.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
@@ -178,7 +178,7 @@ static void fill_keyboard_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, int versi
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
 
-static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int version) {
+static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD version) {
     DWORD dwSize;
     DIDEVICEINSTANCEW ddi;
     
@@ -192,7 +192,7 @@ static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int versi
     ddi.dwSize = dwSize;
     ddi.guidInstance = GUID_SysKeyboard;/* DInput's GUID */
     ddi.guidProduct = DInput_Wine_Keyboard_GUID; /* Vendor's GUID */
-    if (version >= 8)
+    if (version >= 0x0800)
         ddi.dwDevType = DI8DEVTYPE_KEYBOARD | (DI8DEVTYPEKEYBOARD_UNKNOWN << 8);
     else
         ddi.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
@@ -202,14 +202,14 @@ static void fill_keyboard_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, int versi
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
  
-static BOOL keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, int version, int id)
+static BOOL keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
   if (id != 0)
     return FALSE;
 
   if ((dwDevType == 0) ||
-      ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 8)) ||
-      (((dwDevType == DI8DEVCLASS_KEYBOARD) || (dwDevType == DI8DEVTYPE_KEYBOARD)) && (version >= 8))) {
+      ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||
+      (((dwDevType == DI8DEVCLASS_KEYBOARD) || (dwDevType == DI8DEVTYPE_KEYBOARD)) && (version >= 0x0800))) {
     TRACE("Enumerating the Keyboard device\n");
  
     fill_keyboard_dideviceinstanceA(lpddi, version);
@@ -220,14 +220,14 @@ static BOOL keyboarddev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
   return FALSE;
 }
 
-static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, int version, int id)
+static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
   if (id != 0)
     return FALSE;
 
   if ((dwDevType == 0) ||
-      ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 8)) ||
-      (((dwDevType == DI8DEVCLASS_KEYBOARD) || (dwDevType == DI8DEVTYPE_KEYBOARD)) && (version >= 8))) {
+      ((dwDevType == DIDEVTYPE_KEYBOARD) && (version < 0x0800)) ||
+      (((dwDevType == DI8DEVCLASS_KEYBOARD) || (dwDevType == DI8DEVTYPE_KEYBOARD)) && (version >= 0x0800))) {
     TRACE("Enumerating the Keyboard device\n");
 
     fill_keyboard_dideviceinstanceW(lpddi, version);
@@ -622,7 +622,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(
     
     devcaps.dwSize = lpDIDevCaps->dwSize;
     devcaps.dwFlags = DIDC_ATTACHED;
-    if (This->dinput->version >= 8)
+    if (This->dinput->dwVersion >= 0x0800)
 	devcaps.dwDevType = DI8DEVTYPE_KEYBOARD | (DI8DEVTYPEKEYBOARD_UNKNOWN << 8);
     else
 	devcaps.dwDevType = DIDEVTYPE_KEYBOARD | (DIDEVTYPEKEYBOARD_UNKNOWN << 8);
@@ -727,7 +727,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
 	return DI_OK;
     }
 
-    fill_keyboard_dideviceinstanceA(pdidi, This->dinput->version);
+    fill_keyboard_dideviceinstanceA(pdidi, This->dinput->dwVersion);
     
     return DI_OK;
 }
@@ -742,7 +742,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
 	return DI_OK;
     }
 
-    fill_keyboard_dideviceinstanceW(pdidi, This->dinput->version);
+    fill_keyboard_dideviceinstanceW(pdidi, This->dinput->dwVersion);
     
     return DI_OK;
 }

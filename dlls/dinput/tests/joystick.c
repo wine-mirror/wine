@@ -80,9 +80,9 @@ HWND get_hwnd()
 typedef struct tagJoystickInfo
 {
     LPDIRECTINPUTDEVICE pJoystick;
-    int axis;
-    int pov;
-    int button;
+    DWORD axis;
+    DWORD pov;
+    DWORD button;
 } JoystickInfo;
 
 static BOOL CALLBACK EnumAxes(
@@ -136,7 +136,12 @@ static BOOL CALLBACK EnumJoysticks(
     JoystickInfo info;
     int i, count;
     ULONG ref;
+    DIDEVICEINSTANCE inst;
+    DIDEVICEINSTANCE_DX3 inst3;
+    HWND hWnd = get_hwnd();
 
+    ok(data->version > 0x0300, "Joysticks not supported in version 0x%04lx\n", data->version);
+ 
     hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, NULL, NULL);
     ok(hr==E_POINTER,"IDirectInput_CreateDevice() should have returned "
        "E_POINTER, returned: %s\n", DXGetErrorString8(hr));
@@ -187,8 +192,8 @@ static BOOL CALLBACK EnumJoysticks(
     if (hr != DI_OK)
         goto RELEASE;
 
-    hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, get_hwnd(),
-                                                DISCL_EXCLUSIVE | DISCL_FOREGROUND);
+    hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, hWnd,
+                                                DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
     ok(hr==DI_OK,"IDirectInputDevice_SetCooperativeLevel() failed: %s\n",
        DXGetErrorString8(hr));
 
@@ -213,13 +218,36 @@ static BOOL CALLBACK EnumJoysticks(
     info.pJoystick = pJoystick;
 
     /* enumerate objects */
-    hr = IDirectInputDevice_EnumObjects(pJoystick,  EnumAxes, (VOID*)&info, DIDFT_ALL);
+    hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, (VOID*)&info, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %s\n",
        DXGetErrorString8(hr));
 
     ok(caps.dwAxes == info.axis, "Number of enumerated axes doesn't match capabilities\n");
     ok(caps.dwButtons == info.button, "Number of enumerated buttons doesn't match capabilities\n");
-    ok(caps.dwPOVs == info.pov, "Number of enumerated buttons doesn't match capabilities\n");
+    ok(caps.dwPOVs == info.pov, "Number of enumerated POVs doesn't match capabilities\n");
+
+    hr = IDirectInputDevice_GetDeviceInfo(pJoystick, 0);
+    ok(hr==E_POINTER, "IDirectInputDevice_GetDeviceInfo() "
+       "should have returned E_POINTER, returned: %s\n",
+       DXGetErrorString8(hr));
+
+    ZeroMemory(&inst, sizeof(inst));
+    ZeroMemory(&inst3, sizeof(inst3));
+
+    hr = IDirectInputDevice_GetDeviceInfo(pJoystick, &inst);
+    ok(hr==DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceInfo() "
+       "should have returned DIERR_INVALIDPARAM, returned: %s\n",
+       DXGetErrorString8(hr));
+
+    inst.dwSize = sizeof(inst);
+    hr = IDirectInputDevice_GetDeviceInfo(pJoystick, &inst);
+    ok(hr==DI_OK,"IDirectInputDevice_GetDeviceInfo() failed: %s\n",
+       DXGetErrorString8(hr));
+
+    inst3.dwSize = sizeof(inst3);
+    hr = IDirectInputDevice_GetDeviceInfo(pJoystick, (LPDIDEVICEINSTANCE)&inst3);
+    ok(hr==DI_OK,"IDirectInputDevice_GetDeviceInfo() failed: %s\n",
+       DXGetErrorString8(hr));
 
     hr = IDirectInputDevice_Acquire(pJoystick);
     ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %s\n",
@@ -271,9 +299,10 @@ static void joystick_tests(DWORD version)
     HRESULT hr;
     LPDIRECTINPUT pDI;
     ULONG ref;
+    HINSTANCE hInstance = GetModuleHandle(NULL);
 
     trace("-- Testing Direct Input Version 0x%04lx --\n", version);
-    hr = DirectInputCreate(GetModuleHandle(NULL), version, &pDI, NULL);
+    hr = DirectInputCreate(hInstance, version, &pDI, NULL);
     ok(hr==DI_OK||hr==DIERR_OLDDIRECTINPUTVERSION,
        "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
     if (hr==DI_OK && pDI!=0) {
@@ -282,14 +311,8 @@ static void joystick_tests(DWORD version)
         data.version = version;
         hr = IDirectInput_EnumDevices(pDI, DIDEVTYPE_JOYSTICK, EnumJoysticks,
                                       &data, DIEDFL_ALLDEVICES);
-        if (version == 0x0300) {
-            trace("  Joysticks Not Supported\n");
-            ok(hr==E_INVALIDARG,"IDirectInput_EnumDevices() should have "
-               "returned E_INVALIDARG, returned: %s\n", DXGetErrorString8(hr));
-        } else {
-            ok(hr==DI_OK,"IDirectInput_EnumDevices() failed: %s\n",
-               DXGetErrorString8(hr));
-        }
+        ok(hr==DI_OK,"IDirectInput_EnumDevices() failed: %s\n",
+           DXGetErrorString8(hr));
         ref = IDirectInput_Release(pDI);
         ok(ref==0,"IDirectInput_Release() reference count = %ld\n", ref);
     } else if (hr==DIERR_OLDDIRECTINPUTVERSION)
