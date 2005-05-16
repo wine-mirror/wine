@@ -1929,6 +1929,7 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     CRYPTKEY *pCryptKey;
     BYTE *in, out[RSAENH_MAX_BLOCK_SIZE], o[RSAENH_MAX_BLOCK_SIZE];
     DWORD i, j, k;
+    DWORD dwMax;
 
     TRACE("(hProv=%08lx, hKey=%08lx, hHash=%08lx, Final=%d, dwFlags=%08lx, pbData=%p, "
           "pdwDataLen=%p)\n", hProv, hKey, hHash, Final, dwFlags, pbData, pdwDataLen);
@@ -1959,7 +1960,9 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         SetLastError(NTE_BAD_DATA);
         return FALSE;
     }
-    
+
+    dwMax=*pdwDataLen;
+
     if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_BLOCK) {
         for (i=0, in=pbData; i<*pdwDataLen; i+=pCryptKey->dwBlockLen, in+=pCryptKey->dwBlockLen) {
             switch (pCryptKey->dwMode) {
@@ -2012,7 +2015,8 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     if (Final) setup_key(pCryptKey);
 
     if (is_valid_handle(&handle_table, hHash, RSAENH_MAGIC_HASH)) {
-        if (!RSAENH_CPHashData(hProv, hHash, pbData, *pdwDataLen, 0)) return FALSE;
+        if (*pdwDataLen>dwMax ||
+            !RSAENH_CPHashData(hProv, hHash, pbData, *pdwDataLen, 0)) return FALSE;
     }
     
     return TRUE;
