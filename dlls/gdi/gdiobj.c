@@ -553,10 +553,6 @@ static HFONT create_stock_font( char const *fontName, const LOGFONTW *font, HKEY
 }
 
 
-#define TRACE_SEC(handle,text) \
-   TRACE("(%p): " text " %ld\n", (handle), GDI_level.crst.RecursionCount)
-
-
 /***********************************************************************
  *           inc_ref_count
  *
@@ -740,7 +736,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_
     obj->funcs   = funcs;
     obj->hdcs    = NULL;
 
-    TRACE_SEC( *handle, "enter" );
+    TRACE("(%p): enter %ld\n", *handle, GDI_level.crst.RecursionCount);
     return obj;
 
 error:
@@ -784,7 +780,7 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
         }
         else ERR( "Invalid handle %p\n", handle );
     }
-    TRACE_SEC( handle, "leave" );
+    TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
     return NULL;
 }
@@ -815,7 +811,7 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
         }
         else ERR( "Invalid handle %p\n", handle );
     }
-    TRACE_SEC( handle, "leave" );
+    TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
     return TRUE;
 }
@@ -864,7 +860,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
         _LeaveSysLevel( &GDI_level );
         WARN( "Invalid handle %p\n", handle );
     }
-    else TRACE_SEC( handle, "enter" );
+    else TRACE("(%p): enter %ld\n", handle, GDI_level.crst.RecursionCount);
 
     return ptr;
 }
@@ -877,7 +873,7 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
     if ((UINT_PTR)handle & 2) LOCAL_Unlock( GDI_HeapSel, LOWORD(handle) );
-    TRACE_SEC( handle, "leave" );
+    TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
 }
 
