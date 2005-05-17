@@ -273,7 +273,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, LPCSTR cmdline, BYT
 
     pTask->hSelf = hTask;
 
-    pTask->version       = pModule ? pModule->expected_version : 0x0400;
+    pTask->version       = pModule ? pModule->ne_expver : 0x0400;
     pTask->hModule       = hModule;
     pTask->hParent       = GetCurrentTask();
     pTask->magic         = TDB_MAGIC;
@@ -856,7 +856,7 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
     hInstance = GlobalHandle16(hInstanceSelector);
 
     /* no thunking for DLLs */
-    if (NE_GetPtr(FarGetOwner16(hInstance))->flags & NE_FFLAGS_LIBMODULE)
+    if (NE_GetPtr(FarGetOwner16(hInstance))->ne_flags & NE_FFLAGS_LIBMODULE)
 	return func;
 
     thunkaddr = TASK_AllocThunk();
@@ -916,10 +916,10 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
 
     /* Try pair of module handle / segment number */
     pModule = (NE_MODULE *) GlobalLock16( HIWORD( proc ) );
-    if ( pModule && pModule->magic == IMAGE_OS2_SIGNATURE )
+    if ( pModule && pModule->ne_magic == IMAGE_OS2_SIGNATURE )
     {
         segNr = LOWORD( proc );
-        if ( segNr && segNr <= pModule->seg_count )
+        if ( segNr && segNr <= pModule->ne_cseg )
             pSeg = NE_SEG_TABLE( pModule ) + segNr-1;
     }
 
@@ -938,11 +938,11 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
         pSeg = pModule? NE_SEG_TABLE( pModule ) : NULL;
 
         if ( pModule )
-            for ( segNr = 1; segNr <= pModule->seg_count; segNr++, pSeg++ )
+            for ( segNr = 1; segNr <= pModule->ne_cseg; segNr++, pSeg++ )
                 if ( GlobalHandleToSel16(pSeg->hSeg) == selector )
                     break;
 
-        if ( pModule && segNr > pModule->seg_count )
+        if ( pModule && segNr > pModule->ne_cseg )
             pSeg = NULL;
     }
 
@@ -992,10 +992,10 @@ BOOL16 WINAPI GetCodeInfo16( FARPROC16 proc, SEGINFO *segInfo )
     segInfo->flags      = pSeg->flags;
     segInfo->cbAlloc    = pSeg->minsize;
     segInfo->h          = pSeg->hSeg;
-    segInfo->alignShift = pModule->alignment;
+    segInfo->alignShift = pModule->ne_align;
 
-    if ( segNr == pModule->dgroup )
-        segInfo->cbAlloc += pModule->heap_size + pModule->stack_size;
+    if ( segNr == pModule->ne_autodata )
+        segInfo->cbAlloc += pModule->ne_heap + pModule->ne_stack;
 
     /* Return module handle in %es */
 
@@ -1377,7 +1377,7 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
       /* Check for module handle */
 
     if (!(ptr = GlobalLock16( handle ))) return 0;
-    if (((NE_MODULE *)ptr)->magic == IMAGE_OS2_SIGNATURE) return handle;
+    if (((NE_MODULE *)ptr)->ne_magic == IMAGE_OS2_SIGNATURE) return handle;
 
       /* Search for this handle inside all tasks */
 
@@ -1396,7 +1396,7 @@ static inline HMODULE16 GetExePtrHelper( HANDLE16 handle, HTASK16 *hTask )
 
     owner = FarGetOwner16( handle );
     if (!(ptr = GlobalLock16( owner ))) return 0;
-    if (((NE_MODULE *)ptr)->magic == IMAGE_OS2_SIGNATURE) return owner;
+    if (((NE_MODULE *)ptr)->ne_magic == IMAGE_OS2_SIGNATURE) return owner;
 
       /* Search for the owner inside all tasks */
 

@@ -72,7 +72,7 @@ typedef struct _HRSRC_MAP
  */
 static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HRSRC hRsrc32, WORD type )
 {
-    HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
+    HRSRC_MAP *map = pModule->rsrc32_map;
     HRSRC_ELEM *newElem;
     int i;
 
@@ -84,7 +84,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HRSRC hRsrc32, WORD type )
             ERR("Cannot allocate HRSRC map\n" );
             return 0;
         }
-        pModule->hRsrcMap = map;
+        pModule->rsrc32_map = map;
     }
 
     /* Check whether HRSRC32 already in map */
@@ -125,7 +125,7 @@ static HRSRC16 MapHRsrc32To16( NE_MODULE *pModule, HRSRC hRsrc32, WORD type )
  */
 static HRSRC MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
 {
-    HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
+    HRSRC_MAP *map = pModule->rsrc32_map;
     if ( !map || !hRsrc16 || hRsrc16 > map->nUsed ) return 0;
 
     return map->elem[hRsrc16-1].hRsrc;
@@ -136,7 +136,7 @@ static HRSRC MapHRsrc16To32( NE_MODULE *pModule, HRSRC16 hRsrc16 )
  */
 static WORD MapHRsrc16ToType( NE_MODULE *pModule, HRSRC16 hRsrc16 )
 {
-    HRSRC_MAP *map = (HRSRC_MAP *)pModule->hRsrcMap;
+    HRSRC_MAP *map = pModule->rsrc32_map;
     if ( !map || !hRsrc16 || hRsrc16 > map->nUsed ) return 0;
 
     return map->elem[hRsrc16-1].type;
@@ -184,7 +184,7 @@ static inline FARPROC16 get_default_res_handler(void)
  */
 static DWORD NE_FindNameTableId( NE_MODULE *pModule, LPCSTR typeId, LPCSTR resId )
 {
-    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->ne_rsrctab + 2);
     NE_NAMEINFO *pNameInfo;
     HGLOBAL16 handle;
     WORD *p;
@@ -332,10 +332,10 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 {
     HANDLE fd;
     NE_MODULE* pModule = NE_GetPtr( hModule );
-    if (pModule && (pModule->flags & NE_FFLAGS_BUILTIN))
+    if (pModule && (pModule->ne_flags & NE_FFLAGS_BUILTIN))
     {
         HGLOBAL16 handle;
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
         NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 
         if ( hMemObj )
@@ -347,7 +347,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
         {
             /* NOTE: hRsrcMap points to start of built-in resource data */
             memcpy( GlobalLock16( handle ),
-                    (char *)pModule->hRsrcMap + (pNameInfo->offset << sizeShift),
+                    (char *)pModule->rsrc32_map + (pNameInfo->offset << sizeShift),
                     pNameInfo->length << sizeShift );
         }
         return handle;
@@ -355,7 +355,7 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
     if (pModule && (fd = NE_OpenFile( pModule )) != INVALID_HANDLE_VALUE)
     {
         HGLOBAL16 handle;
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
         NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
 
         TRACE("loading, pos=%d, len=%d\n",
@@ -390,9 +390,9 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId, FARPROC
     FARPROC16 prevHandler = NULL;
     NE_MODULE *pModule = NE_GetPtr( hModule );
 
-    if (!pModule || !pModule->res_table) return NULL;
+    if (!pModule || !pModule->ne_rsrctab) return NULL;
 
-    pResTab = (LPBYTE)pModule + pModule->res_table;
+    pResTab = (LPBYTE)pModule + pModule->ne_rsrctab;
     pTypeInfo = (NE_TYPEINFO *)(pResTab + 2);
 
     TRACE("module=%04x type=%s\n", hModule, debugstr_a(typeId) );
@@ -892,11 +892,11 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
     HGLOBAL16 ret;
 
     NE_MODULE *pModule = NE_GetPtr( hModule );
-    if (!pModule || !pModule->res_table || !hRsrc) return 0;
+    if (!pModule || !pModule->ne_rsrctab || !hRsrc) return 0;
 
     TRACE("module=%04x res=%04x size=%ld\n", hModule, hRsrc, size );
 
-    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+    sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
     pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
     if (size < (DWORD)pNameInfo->length << sizeShift)
         size = (DWORD)pNameInfo->length << sizeShift;
@@ -934,13 +934,13 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
     HFILE16 fd;
     NE_MODULE *pModule = NE_GetPtr( hModule );
 
-    if (!pModule || !pModule->res_table || !hRsrc) return -1;
+    if (!pModule || !pModule->ne_rsrctab || !hRsrc) return -1;
 
     TRACE("module=%04x res=%04x\n", pModule->self, hRsrc );
 
     if ((fd = _lopen16( NE_MODULE_NAME(pModule), OF_READ )) != HFILE_ERROR16)
     {
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
         NE_NAMEINFO *pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
         _llseek16( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
     }
@@ -969,7 +969,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
 
     TRACE("module=%04x name=%s type=%s\n", pModule->self, debugstr_a(name), debugstr_a(type) );
 
-    if (!pModule->res_table) return 0;
+    if (!pModule->ne_rsrctab) return 0;
 
     type = get_res_name( type );
     name = get_res_name( name );
@@ -983,7 +983,7 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, LPCSTR name, LPCSTR type )
             name = (LPCSTR)(ULONG_PTR)HIWORD(id);
         }
     }
-    pResTab = (LPBYTE)pModule + pModule->res_table;
+    pResTab = (LPBYTE)pModule + pModule->ne_rsrctab;
     pTypeInfo = (NE_TYPEINFO *)( pResTab + 2 );
 
     for (;;)
@@ -1025,7 +1025,7 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
     /* first, verify hRsrc (just an offset from pModule to the needed pNameInfo) */
 
-    d = pModule->res_table + 2;
+    d = pModule->ne_rsrctab + 2;
     pTypeInfo = (NE_TYPEINFO *)((char *)pModule + d);
     while( hRsrc > d )
     {
@@ -1111,9 +1111,9 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 
     if (!hRsrc) return 0;
     if (!(pModule = get_module( hModule ))) return 0;
-    if (pModule->res_table)
+    if (pModule->ne_rsrctab)
     {
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
         NE_NAMEINFO *pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
         return (DWORD)pNameInfo->length << sizeShift;
     }
@@ -1141,9 +1141,9 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 
     /* Try NE resource first */
 
-    if (pModule && pModule->res_table)
+    if (pModule && pModule->ne_rsrctab)
     {
-        NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+        NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->ne_rsrctab + 2);
         while (pTypeInfo->type_id)
         {
             WORD count;

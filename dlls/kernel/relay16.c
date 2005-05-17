@@ -239,7 +239,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
 
     max_offset = 0;
     *pOrd = 0;
-    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->entry_table);
+    bundle = (ET_BUNDLE *)((BYTE *)pModule + pModule->ne_enttab);
     do
     {
         entry = (ET_ENTRY *)((BYTE *)bundle+6);
@@ -260,7 +260,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
     /* Search for the name in the resident names table */
     /* (built-in modules have no non-resident table)   */
 
-    p = (BYTE *)pModule + pModule->name_table;
+    p = (BYTE *)pModule + pModule->ne_restab;
     memcpy( module, p + 1, *p );
     module[*p] = 0;
 

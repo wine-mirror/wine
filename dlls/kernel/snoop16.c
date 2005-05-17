@@ -193,7 +193,7 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 	fun->origfun	= origfun;
 	if (fun->name)
 		return (FARPROC16)(SEGPTR)MAKELONG(((char*)fun-(char*)dll->funs),dll->funhandle);
-	cpnt = (unsigned char *)pModule + pModule->name_table;
+	cpnt = (unsigned char *)pModule + pModule->ne_restab;
 	while (*cpnt) {
 		cpnt += *cpnt + 1 + sizeof(WORD);
 		if (*(WORD*)(cpnt+*cpnt+1) == ordinal) {

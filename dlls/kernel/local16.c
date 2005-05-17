@@ -1657,7 +1657,7 @@ DWORD WINAPI GetHeapSpaces16( HMODULE16 module )
     DWORD spaces;
 
     if (!(pModule = NE_GetPtr( module ))) return 0;
-    CURRENT_DS = GlobalHandleToSel16((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
+    CURRENT_DS = GlobalHandleToSel16((NE_SEG_TABLE( pModule ) + pModule->ne_autodata - 1)->hSeg);
     spaces = MAKELONG( LocalCountFree16(), LocalHeapSize16() );
     CURRENT_DS = oldDS;
     return spaces;
