@@ -1124,7 +1124,7 @@ static struct regsvr_filter const filter_list[] = {
 /***********************************************************************
  *		DllRegisterServer (QUARTZ.@)
  */
-HRESULT WINAPI QUARTZ_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hr;
 
@@ -1145,7 +1145,7 @@ HRESULT WINAPI QUARTZ_DllRegisterServer(void)
 /***********************************************************************
  *		DllUnregisterServer (QUARTZ.@)
  */
-HRESULT WINAPI QUARTZ_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
     HRESULT hr;
 

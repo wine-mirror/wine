@@ -66,7 +66,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 /***********************************************************************
  *		DllGetClassObject (DEVENUM.@)
  */
-HRESULT WINAPI DEVENUM_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
 
@@ -85,7 +85,7 @@ HRESULT WINAPI DEVENUM_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *pp
 /***********************************************************************
  *		DllCanUnloadNow (DEVENUM.@)
  */
-HRESULT WINAPI DEVENUM_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_refs != 0 ? S_FALSE : S_OK;
 }
@@ -93,7 +93,7 @@ HRESULT WINAPI DEVENUM_DllCanUnloadNow(void)
 /***********************************************************************
  *		DllRegisterServer (DEVENUM.@)
  */
-HRESULT WINAPI DEVENUM_DllRegisterServer(void)
+HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT res;
     HKEY hkeyClsid = NULL;
@@ -289,7 +289,7 @@ HRESULT WINAPI DEVENUM_DllRegisterServer(void)
 /***********************************************************************
  *		DllUnregisterServer (DEVENUM.@)
  */
-HRESULT WINAPI DEVENUM_DllUnregisterServer(void)
+HRESULT WINAPI DllUnregisterServer(void)
 {
 	FIXME("stub!\n");
 	return E_FAIL;

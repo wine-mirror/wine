@@ -162,7 +162,7 @@ static IClassFactoryVtbl DSCF_Vtbl =
  *    Failure: CLASS_E_CLASSNOTAVAILABLE, E_OUTOFMEMORY, E_INVALIDARG,
  *             E_UNEXPECTED
  */
-DWORD WINAPI QUARTZ_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     unsigned int i;
     IClassFactoryImpl *factory;
@@ -200,7 +200,7 @@ DWORD WINAPI QUARTZ_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 /***********************************************************************
  *              DllCanUnloadNow (QUARTZ.@)
  */
-HRESULT WINAPI QUARTZ_DllCanUnloadNow()
+HRESULT WINAPI DllCanUnloadNow()
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
 }

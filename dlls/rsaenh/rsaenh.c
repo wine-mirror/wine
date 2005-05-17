@@ -3572,7 +3572,7 @@ static const WCHAR szDefaultKeys[2][65] = {
  *       Microsoft Strong Cryptographpic Provider
  *   - HKLM\Software\Microsoft\Cryptography\Defaults\Provider Types\Type 001
  */
-HRESULT WINAPI RSAENH_DllRegisterServer()
+HRESULT WINAPI DllRegisterServer()
 {
     HKEY key;
     DWORD dp;
@@ -3649,7 +3649,7 @@ HRESULT WINAPI RSAENH_DllRegisterServer()
  * NOTES
  *  For the relevant keys see DllRegisterServer.
  */
-HRESULT WINAPI RSAENH_DllUnregisterServer()
+HRESULT WINAPI DllUnregisterServer()
 {
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[0]);
     RegDeleteKeyW(HKEY_LOCAL_MACHINE, szProviderKeys[1]);

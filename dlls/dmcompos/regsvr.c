@@ -531,7 +531,8 @@ static struct regsvr_interface const interface_list[] = {
 /***********************************************************************
  *		DllRegisterServer (DMCOMPOS.3)
  */
-HRESULT WINAPI DMCOMPOS_DllRegisterServer(void) {
+HRESULT WINAPI DllRegisterServer(void)
+{
     HRESULT hr;
 
     TRACE("\n");
@@ -545,7 +546,8 @@ HRESULT WINAPI DMCOMPOS_DllRegisterServer(void) {
 /***********************************************************************
  *		DllUnregisterServer (DMCOMPOS.4)
  */
-HRESULT WINAPI DMCOMPOS_DllUnregisterServer(void) {
+HRESULT WINAPI DllUnregisterServer(void)
+{
     HRESULT hr;
 
     TRACE("\n");
