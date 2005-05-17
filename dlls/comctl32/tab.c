@@ -1727,12 +1727,12 @@ TAB_DrawItemInterior
       else
         drawRect->bottom-=center_offset_h;
 
-      center_offset_v = ((drawRect->right - drawRect->left) - ((rcText.bottom - rcText.top) + infoPtr->uVItemPadding)) / 2;
+      center_offset_v = ((drawRect->right - drawRect->left) - (rcText.bottom - rcText.top) + infoPtr->uVItemPadding) / 2;
     }
     else
     {
       drawRect->left += center_offset_h;
-      center_offset_v = ((drawRect->bottom - drawRect->top) - ((rcText.bottom - rcText.top) + infoPtr->uVItemPadding)) / 2;
+      center_offset_v = ((drawRect->bottom - drawRect->top) - (rcText.bottom - rcText.top) + infoPtr->uVItemPadding) / 2;
     }
 
     if (center_offset_v < 0)
