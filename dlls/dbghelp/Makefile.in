@@ -9,6 +9,7 @@ IMPORTS   = psapi kernel32 ntdll
 C_SRCS = \
 	coff.c \
 	dbghelp.c \
+	dwarf.c \
 	elf_module.c \
 	image.c \
 	memory.c \

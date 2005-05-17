@@ -776,7 +776,9 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     BOOL                ret = FALSE;
     const char*	        shstrtab;
     int	       	        i;
-    int                 symtab_sect, dynsym_sect, stab_sect, stabstr_sect, debug_sect, debuglink_sect;
+    int                 symtab_sect, dynsym_sect, stab_sect, stabstr_sect;
+    int                 debug_sect, debug_str_sect, debug_abbrev_sect, debug_line_sect;
+    int                 debuglink_sect;
     struct thunk_area   thunks[] = 
     {
         {"__wine_spec_import_thunks",           THUNK_ORDINAL_NOTYPE, 0, 0},    /* inter DLL calls */
@@ -806,8 +808,9 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     shstrtab = elf_map_section(fmap, fmap->elfhdr.e_shstrndx);
     if (shstrtab == NO_MAP) return FALSE;
 
-    symtab_sect = dynsym_sect = stab_sect = stabstr_sect =
-        debug_sect = debuglink_sect = -1;
+    symtab_sect = dynsym_sect = stab_sect = stabstr_sect = -1;
+    debug_sect = debug_str_sect = debug_abbrev_sect = debug_line_sect = -1;
+    debuglink_sect = -1;
 
     for (i = 0; i < fmap->elfhdr.e_shnum; i++)
     {
@@ -817,6 +820,12 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
 	    stabstr_sect = i;
 	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".debug_info") == 0)
 	    debug_sect = i;
+	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".debug_str") == 0)
+	    debug_str_sect = i;
+	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".debug_abbrev") == 0)
+	    debug_abbrev_sect = i;
+	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".debug_line") == 0)
+	    debug_line_sect = i;
 	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".gnu_debuglink") == 0)
 	    debuglink_sect = i;
 	if ((strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".symtab") == 0) &&
@@ -874,8 +883,31 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         else if (debug_sect != -1)
         {
             /* Dwarf 2 debug information */
-            FIXME("Unsupported Dwarf2 information for %s\n",
-                  module->module.ModuleName);
+            const char* dw2_debug;
+            const char* dw2_debug_abbrev;
+            const char* dw2_debug_str;
+
+            FIXME("Alpha-support for Dwarf2 information for %s\n", module->module.ModuleName);
+
+            dw2_debug = elf_map_section(fmap, debug_sect);
+            dw2_debug_abbrev = elf_map_section(fmap, debug_abbrev_sect);
+            dw2_debug_str = elf_map_section(fmap, debug_str_sect);
+            if (dw2_debug != NO_MAP && NO_MAP != dw2_debug_abbrev && dw2_debug_str != NO_MAP)
+            {
+                /* OK, now just parse dwarf2 debug infos. */
+                ret = dwarf2_parse(module, module->elf_info->elf_addr,
+				   dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
+				   dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
+				   dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size);
+            }
+            elf_unmap_section(fmap, debug_sect);
+            elf_unmap_section(fmap, debug_abbrev_sect);
+            elf_unmap_section(fmap, debug_str_sect);
+            if (!ret)
+            {
+                WARN("Couldn't correctly read stabs\n");
+                return FALSE;
+            }
         }
         else if (debuglink_sect != -1)
         {
