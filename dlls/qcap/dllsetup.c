@@ -359,6 +359,7 @@ void SetupInitializeServers(const CFactoryTemplate * pList, int num,
 
     for (i = 0; i < num; i++, pList++)
     {
-        pList->m_lpfnInit(bLoading, pList->m_ClsID);
+        if (pList->m_lpfnInit)
+            pList->m_lpfnInit(bLoading, pList->m_ClsID);
     }
 }
