@@ -57,7 +57,6 @@
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
 #include "controls.h"
-#include "local.h"
 #include "user_private.h"
 #include "wine/debug.h"
 
@@ -431,14 +430,9 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	
 	if (!es && msg != WM_NCCREATE)
 		return DefWindowProcT(hwnd, msg, wParam, lParam, unicode);
-	else if (msg == WM_NCCREATE)
-		return EDIT_WM_NCCreate(hwnd, (LPCREATESTRUCTW)lParam, unicode);
-	else if (msg == WM_DESTROY)
-		return EDIT_WM_Destroy(es);
 
+	if (es && (msg != WM_DESTROY)) EDIT_LockBuffer(es);
 
-	if (es) EDIT_LockBuffer(es);
-	
 	switch (msg) {
 	case EM_GETSEL16:
 		wParam = 0;
@@ -763,6 +757,15 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
         /* End of the EM_ messages which were in numerical order; what order
          * are these in?  vaguely alphabetical?
          */
+
+	case WM_NCCREATE:
+		result = EDIT_WM_NCCreate(hwnd, (LPCREATESTRUCTW)lParam, unicode);
+		break;
+
+	case WM_DESTROY:
+		result = EDIT_WM_Destroy(es);
+		es = NULL;
+		break;
 
 	case WM_GETDLGCODE:
 		result = DLGC_HASSETSEL | DLGC_WANTCHARS | DLGC_WANTARROWS;
@@ -1569,7 +1572,7 @@ static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
  *
  *	EDIT_LockBuffer
  *
- *	This acts as a LOCAL_Lock(), but it locks only once.  This way
+ *	This acts as a LocalLock16(), but it locks only once.  This way
  *	you can call it whenever you like, without unlocking.
  *
  *	Initially the edit control allocates a HLOCAL32 buffer 
@@ -1583,7 +1586,10 @@ static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
+	STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
 	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+	HANDLE16 oldDS = stack16->ds;
+
 	if (!es->text) {
 	    CHAR *textA = NULL;
 	    UINT countA = 0;
@@ -1600,7 +1606,9 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 		else if(es->hloc16)
 		{
 		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
-		    textA = LOCAL_Lock(hInstance, es->hloc16);
+		    stack16->ds = hInstance;
+		    textA = MapSL(LocalLock16(es->hloc16));
+		    stack16->ds = oldDS;
 		    countA = strlen(textA) + 1;
 		    _16bit = TRUE;
 		}
@@ -1638,7 +1646,11 @@ static void EDIT_LockBuffer(EDITSTATE *es)
 	    {
 		MultiByteToWideChar(CP_ACP, 0, textA, countA, es->text, es->buffer_size + 1);
 		if(_16bit)
-		    LOCAL_Unlock(hInstance, es->hloc16);
+		{
+		    stack16->ds = hInstance;
+		    LocalUnlock16(es->hloc16);
+		    stack16->ds = oldDS;
+		}
 		else
 		    LocalUnlock(es->hloc32A);
 	    }
@@ -2282,7 +2294,6 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
  */
 static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 {
-	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 
 	/* Edit window might be already destroyed */
 	if(!IsWindow(es->hwndSelf))
@@ -2303,9 +2314,10 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 	if (force || (es->lock_count == 1)) {
 	    if (es->hloc32W) {
 		CHAR *textA = NULL;
-		BOOL _16bit = FALSE;
 		UINT countA = 0;
 		UINT countW = strlenW(es->text) + 1;
+		STACK16FRAME* stack16 = NULL;
+	        HANDLE16 oldDS = 0;
 
 		if(es->hloc32A)
 		{
@@ -2333,37 +2345,43 @@ static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 		else if(es->hloc16)
 		{
 		    UINT countA_new = WideCharToMultiByte(CP_ACP, 0, es->text, countW, NULL, 0, NULL, NULL);
+
 		    TRACE("Synchronizing with 16-bit ANSI buffer\n");
 		    TRACE("%d WCHARs translated to %d bytes\n", countW, countA_new);
-		    countA = LOCAL_Size(hInstance, es->hloc16);
+
+		    stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+		    oldDS = stack16->ds;
+		    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+
+		    countA = LocalSize16(es->hloc16);
 		    if(countA_new > countA)
 		    {
 			HLOCAL16 hloc16_new;
 			UINT alloc_size = ROUND_TO_GROW(countA_new);
 			TRACE("Resizing 16-bit ANSI buffer from %d to %d bytes\n", countA, alloc_size);
-			hloc16_new = LOCAL_ReAlloc(hInstance, es->hloc16, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
+			hloc16_new = LocalReAlloc16(es->hloc16, alloc_size, LMEM_MOVEABLE | LMEM_ZEROINIT);
 			if(hloc16_new)
 			{
 			    es->hloc16 = hloc16_new;
-			    countA = LOCAL_Size(hInstance, hloc16_new);
+			    countA = LocalSize16(hloc16_new);
 			    TRACE("Real new size %d bytes\n", countA);
 			}
 			else
 			    WARN("FAILED! Will synchronize partially\n");
 		    }
-		    textA = LOCAL_Lock(hInstance, es->hloc16);
-		    _16bit = TRUE;
+		    textA = MapSL(LocalLock16(es->hloc16));
 		}
 
 		if(textA)
 		{
 		    WideCharToMultiByte(CP_ACP, 0, es->text, countW, textA, countA, NULL, NULL);
-		    if(_16bit)
-			LOCAL_Unlock(hInstance, es->hloc16);
+		    if(stack16)
+			LocalUnlock16(es->hloc16);
 		    else
 			LocalUnlock(es->hloc32A);
 		}
 
+		if (stack16) stack16->ds = oldDS;
 		LocalUnlock(es->hloc32W);
 		es->text = NULL;
 	    }
@@ -2592,9 +2610,10 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
  */
 static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 {
-	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 	CHAR *textA;
 	UINT countA, alloc_size;
+	STACK16FRAME* stack16;
+	HANDLE16 oldDS;
 
 	if (!(es->style & ES_MULTILINE))
 		return 0;
@@ -2602,11 +2621,15 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 	if (es->hloc16)
 		return es->hloc16;
 
-	if (!LOCAL_HeapSize(hInstance)) {
-		if (!LocalInit16(hInstance, 0,
-				GlobalSize16(hInstance))) {
+	stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+	oldDS = stack16->ds;
+	stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+
+	if (!LocalHeapSize16()) {
+
+		if (!LocalInit16(stack16->ds, 0, GlobalSize16(stack16->ds))) {
 			ERR("could not initialize local heap\n");
-			return 0;
+			goto done;
 		}
 		TRACE("local heap initialized\n");
 	}
@@ -2615,22 +2638,25 @@ static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 	alloc_size = ROUND_TO_GROW(countA);
 
 	TRACE("Allocating 16-bit ANSI alias buffer\n");
-	if (!(es->hloc16 = LOCAL_Alloc(hInstance, LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
+	if (!(es->hloc16 = LocalAlloc16(LMEM_MOVEABLE | LMEM_ZEROINIT, alloc_size))) {
 		ERR("could not allocate new 16 bit buffer\n");
-		return 0;
+		goto done;
 	}
 
-	if (!(textA = (LPSTR)LOCAL_Lock(hInstance, es->hloc16))) {
+	if (!(textA = MapSL(LocalLock16( es->hloc16)))) {
 		ERR("could not lock new 16 bit buffer\n");
-		LOCAL_Free(hInstance, es->hloc16);
+		LocalFree16(es->hloc16);
 		es->hloc16 = 0;
-		return 0;
+		goto done;
 	}
 
 	WideCharToMultiByte(CP_ACP, 0, es->text, -1, textA, countA, NULL, NULL);
-	LOCAL_Unlock(hInstance, es->hloc16);
+	LocalUnlock16(es->hloc16);
 
-	TRACE("Returning %04X, LocalSize() = %d\n", es->hloc16, LOCAL_Size(hInstance, es->hloc16));
+	TRACE("Returning %04X, LocalSize() = %d\n", es->hloc16, LocalSize16(es->hloc16));
+
+done:
+	stack16->ds = oldDS;
 	return es->hloc16;
 }
 
@@ -3324,8 +3350,6 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
  */
 static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 {
-	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-
 	if (!(es->style & ES_MULTILINE))
 		return;
 
@@ -3338,8 +3362,13 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 
 	if(es->hloc16)
 	{
-	    LOCAL_Free(hInstance, es->hloc16);
-	    es->hloc16 = (HLOCAL16)NULL;
+	    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+	    HANDLE16 oldDS = stack16->ds;
+	
+	    stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+	    LocalFree16(es->hloc16);
+	    stack16->ds = oldDS;
+	    es->hloc16 = 0;
 	}
 
 	if(es->is_unicode)
@@ -3404,7 +3433,9 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
  */
 static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 {
+	STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
 	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+	HANDLE16 oldDS = stack16->ds;
 	INT countW, countA;
 	HLOCAL hloc32W_new;
 	WCHAR *textW;
@@ -3426,8 +3457,9 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 	    es->hloc32A = NULL;
 	}
 
-	countA = LOCAL_Size(hInstance, hloc);
-	textA = LOCAL_Lock(hInstance, hloc);
+	stack16->ds = hInstance;
+	countA = LocalSize16(hloc);
+	textA = MapSL(LocalLock16(hloc));
 	countW = MultiByteToWideChar(CP_ACP, 0, textA, countA, NULL, 0);
 	if(!(hloc32W_new = LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT, countW * sizeof(WCHAR))))
 	{
@@ -3437,7 +3469,8 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 	textW = LocalLock(hloc32W_new);
 	MultiByteToWideChar(CP_ACP, 0, textA, countA, textW, countW);
 	LocalUnlock(hloc32W_new);
-	LOCAL_Unlock(hInstance, hloc);
+	LocalUnlock16(hloc);
+	stack16->ds = oldDS;
 
 	if(es->hloc32W)
 	    LocalFree(es->hloc32W);
@@ -4006,9 +4039,13 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 		LocalFree(es->hloc32A);
 	}
 	if (es->hloc16) {
-		HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
-		while (LOCAL_Unlock(hInstance, es->hloc16)) ;
-		LOCAL_Free(hInstance, es->hloc16);
+		STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+		HANDLE16 oldDS = stack16->ds;
+
+		stack16->ds = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
+		while (LocalUnlock16(es->hloc16)) ;
+		LocalFree16(es->hloc16);
+		stack16->ds = oldDS;
 	}
 
 	pc = es->first_line_def;
