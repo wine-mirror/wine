@@ -113,16 +113,15 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
                           int max_data_offset, DLLSPEC *spec )
 {
     int i;
-    char *buffer;
-    NE_MODULE *pModule;
+    char *buffer, *pstr;
+    IMAGE_OS2_HEADER *pModule;
     SEGTABLEENTRY *pSegment;
     OFSTRUCT *pFileInfo;
-    BYTE *pstr;
     ET_BUNDLE *bundle = 0;
     ET_ENTRY entry;
 
     /*   Module layout:
-     * NE_MODULE       Module
+     * IMAGE_OS2_HEADER Module
      * OFSTRUCT        File information
      * SEGTABLEENTRY   Segment 1 (code)
      * SEGTABLEENTRY   Segment 2 (data)
@@ -135,51 +134,26 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     buffer = xmalloc( 0x10000 );
     memset( buffer, 0, 0x10000 );
 
-    pModule = (NE_MODULE *)buffer;
-    pModule->magic = IMAGE_OS2_SIGNATURE;
-    pModule->count = 1;
-    pModule->next = 0;
-    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
-    pModule->dgroup = 2;
-    pModule->heap_size = spec->heap_size;
-    pModule->stack_size = 0;
-    pModule->ip = 0;
-    pModule->cs = 0;
-    pModule->sp = 0;
-    pModule->ss = 0;
-    pModule->seg_count = 2;
-    pModule->modref_count = 0;
-    pModule->nrname_size = 0;
-    pModule->modref_table = 0;
-    pModule->nrname_fpos = 0;
-    pModule->moveable_entries = 0;
-    pModule->alignment = 0;
-    pModule->truetype = 0;
-    pModule->os_flags = NE_OSFLAGS_WINDOWS;
-    pModule->misc_flags = 0;
-    pModule->dlls_to_init  = 0;
-    pModule->nrname_handle = 0;
-    pModule->min_swap_area = 0;
-    pModule->expected_version = 0;
-    pModule->module32 = 0;
-    pModule->self = 0;
-    pModule->self_loading_sel = 0;
+    pModule = (IMAGE_OS2_HEADER *)buffer;
+    pModule->ne_magic     = IMAGE_OS2_SIGNATURE;
+    pModule->ne_flags     = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
+    pModule->ne_autodata  = 2;
+    pModule->ne_heap      = spec->heap_size;
+    pModule->ne_cseg      = 2;
+    pModule->ne_exetyp    = NE_OSFLAGS_WINDOWS;
 
       /* File information */
 
     pFileInfo = (OFSTRUCT *)(pModule + 1);
-    pModule->fileinfo = (int)pFileInfo - (int)pModule;
-    memset( pFileInfo, 0, sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName) );
     pFileInfo->cBytes = sizeof(*pFileInfo) - sizeof(pFileInfo->szPathName)
                         + strlen(spec->file_name);
     strcpy( pFileInfo->szPathName, spec->file_name );
-    pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
+    /* note: we allocate the whole OFSTRUCT so that the loader has some extra space to play with */
 
       /* Segment table */
 
-    pstr = (char *)(((long)pstr + 3) & ~3);
-    pSegment = (SEGTABLEENTRY *)pstr;
-    pModule->seg_table = (int)pSegment - (int)pModule;
+    pSegment = (SEGTABLEENTRY *)(pFileInfo + 1);
+    pModule->ne_segtab = (char *)pSegment - buffer;
     pSegment->filepos = 0;
     pSegment->size = max_code_offset;
     pSegment->flags = 0;
@@ -187,7 +161,6 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pSegment->hSeg = 0;
     pSegment++;
 
-    pModule->dgroup_entry = (int)pSegment - (int)pModule;
     pSegment->filepos = 0;
     pSegment->size = max_data_offset;
     pSegment->flags = NE_SEGFLAGS_DATA;
@@ -199,20 +172,20 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 
     pstr = (char *)pSegment;
     pstr = (char *)(((long)pstr + 3) & ~3);
-    pModule->res_table = (int)pstr - (int)pModule;
+    pModule->ne_rsrctab = pstr - buffer;
     pstr += output_res16_directory( pstr, spec );
 
       /* Imported names table */
 
     pstr = (char *)(((long)pstr + 3) & ~3);
-    pModule->import_table = (int)pstr - (int)pModule;
+    pModule->ne_imptab = pstr - buffer;
     *pstr++ = 0;
     *pstr++ = 0;
 
       /* Resident names table */
 
     pstr = (char *)(((long)pstr + 3) & ~3);
-    pModule->name_table = (int)pstr - (int)pModule;
+    pModule->ne_restab = pstr - buffer;
     /* First entry is module name */
     *pstr = strlen( spec->dll_name );
     strcpy( pstr + 1, spec->dll_name );
@@ -238,7 +211,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
       /* Entry table */
 
     pstr = (char *)(((long)pstr + 3) & ~3);
-    pModule->entry_table = (int)pstr - (int)pModule;
+    pModule->ne_enttab = pstr - buffer;
     for (i = 1; i <= spec->limit; i++)
     {
         int selector = 0;
@@ -276,7 +249,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
         {
             pstr = (char *)(((long)pstr + 1) & ~1);
             if ( bundle )
-                bundle->next = (char *)pstr - (char *)pModule;
+                bundle->next = pstr - buffer;
 
             bundle = (ET_BUNDLE *)pstr;
             bundle->first = i-1;
@@ -298,8 +271,9 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
       /* Dump the module content */
 
     pstr = (char *)(((long)pstr + 3) & ~3);
-    dump_bytes( outfile, (char *)pModule, (int)pstr - (int)pModule, "Module", 0 );
-    return (int)pstr - (int)pModule;
+    dump_bytes( outfile, buffer, pstr - buffer, "Module", 0 );
+    free( buffer );
+    return pstr - buffer;
 }
 
 

@@ -160,9 +160,9 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
         const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
         if (descr)
         {
-            NE_MODULE *pModule = (NE_MODULE *)descr->module_start;
-            OFSTRUCT *pOfs = (OFSTRUCT *)((LPBYTE)pModule + pModule->fileinfo);
-            BYTE *name_table = (BYTE *)pModule + pModule->name_table;
+            IMAGE_OS2_HEADER *pModule = descr->module_start;
+            OFSTRUCT *pOfs = (OFSTRUCT *)(pModule + 1);
+            BYTE *name_table = (BYTE *)pModule + pModule->ne_restab;
 
             /* check the dll file name */
             if (!NE_strcasecmp( pOfs->szPathName, dllname )) return descr;
@@ -1097,7 +1097,9 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
  */
 static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
 {
+    IMAGE_OS2_HEADER *header;
     NE_MODULE *pModule;
+    OFSTRUCT *ofs;
     int minsize;
     SEGTABLEENTRY *pSegTable;
     HMODULE16 hModule;
@@ -1107,7 +1109,19 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
     if (!hModule) return ERROR_NOT_ENOUGH_MEMORY;
     FarSetOwner16( hModule, hModule );
 
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
+    header = GlobalLock16( hModule );
+    pModule = (NE_MODULE *)header;
+    ofs = (OFSTRUCT *)(header + 1);
+    /* move the fileinfo structure a bit further to make space for the Wine-specific fields */
+    if (sizeof(*header) + sizeof(*ofs) < sizeof(*pModule) + ofs->cBytes + 1)
+    {
+        FIXME( "module name %s too long\n", debugstr_a(ofs->szPathName) );
+        return ERROR_NOT_ENOUGH_MEMORY;
+    }
+    memmove( pModule + 1, ofs, ofs->cBytes + 1 );
+
+    pModule->count = 1;
+    pModule->fileinfo = sizeof(*pModule);
     pModule->self = hModule;
     /* NOTE: (Ab)use the hRsrcMap parameter for resource data pointer */
     pModule->hRsrcMap = (void *)descr->rsrc;
@@ -1130,6 +1144,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
     pSegTable->hSeg = GlobalAlloc16( GMEM_FIXED, minsize );
     if (!pSegTable->hSeg) return ERROR_NOT_ENOUGH_MEMORY;
     FarSetOwner16( pSegTable->hSeg, hModule );
+    pModule->dgroup_entry = (char *)pSegTable - (char *)pModule;
     if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
                                     descr->data_start, pSegTable->minsize);
     if (pModule->heap_size)

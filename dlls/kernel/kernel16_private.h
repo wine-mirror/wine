@@ -28,6 +28,49 @@
 
 #include "pshpack1.h"
 
+/* In-memory module structure. See 'Windows Internals' p. 219 */
+typedef struct _NE_MODULE
+{
+    WORD      magic;            /* 00 'NE' signature */
+    WORD      count;            /* 02 Usage count */
+    WORD      entry_table;      /* 04 Near ptr to entry table */
+    HMODULE16 next;             /* 06 Selector to next module */
+    WORD      dgroup_entry;     /* 08 Near ptr to segment entry for DGROUP */
+    WORD      fileinfo;         /* 0a Near ptr to file info (OFSTRUCT) */
+    WORD      flags;            /* 0c Module flags */
+    WORD      dgroup;           /* 0e Logical segment for DGROUP */
+    WORD      heap_size;        /* 10 Initial heap size */
+    WORD      stack_size;       /* 12 Initial stack size */
+    WORD      ip;               /* 14 Initial ip */
+    WORD      cs;               /* 16 Initial cs (logical segment) */
+    WORD      sp;               /* 18 Initial stack pointer */
+    WORD      ss;               /* 1a Initial ss (logical segment) */
+    WORD      seg_count;        /* 1c Number of segments in segment table */
+    WORD      modref_count;     /* 1e Number of module references */
+    WORD      nrname_size;      /* 20 Size of non-resident names table */
+    WORD      seg_table;        /* 22 Near ptr to segment table */
+    WORD      res_table;        /* 24 Near ptr to resource table */
+    WORD      name_table;       /* 26 Near ptr to resident names table */
+    WORD      modref_table;     /* 28 Near ptr to module reference table */
+    WORD      import_table;     /* 2a Near ptr to imported names table */
+    DWORD     nrname_fpos;      /* 2c File offset of non-resident names table */
+    WORD      moveable_entries; /* 30 Number of moveable entries in entry table*/
+    WORD      alignment;        /* 32 Alignment shift count */
+    WORD      truetype;         /* 34 Set to 2 if TrueType font */
+    BYTE      os_flags;         /* 36 Operating system flags */
+    BYTE      misc_flags;       /* 37 Misc. flags */
+    HANDLE16  dlls_to_init;     /* 38 List of DLLs to initialize */
+    HANDLE16  nrname_handle;    /* 3a Handle to non-resident name table */
+    WORD      min_swap_area;    /* 3c Min. swap area size */
+    WORD      expected_version; /* 3e Expected Windows version */
+    /* From here, these are extra fields not present in normal Windows */
+    HMODULE   module32;         /* 40 PE module handle for Win32 modules */
+    HMODULE16 self;             /* 44 Handle for this module */
+    WORD      self_loading_sel; /* 46 Selector used for self-loading apps. */
+    LPVOID    hRsrcMap;         /* 48 HRSRC 16->32 map (for 32-bit modules) */
+    HANDLE    fd;               /* 4c handle to the binary file */
+} NE_MODULE;
+
 /* this structure is always located at offset 0 of the DGROUP segment */
 typedef struct
 {
