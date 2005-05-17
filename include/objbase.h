@@ -416,6 +416,13 @@ INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv);
 HRESULT WINAPI DllCanUnloadNow(void);
 
+/* shouldn't be here, but is nice for type checking */
+#ifdef __WINESRC__
+HRESULT WINAPI DllRegisterServer(void);
+HRESULT WINAPI DllUnregisterServer(void);
+#endif
+
+
 /*****************************************************************************
  *	Data Object
  */
