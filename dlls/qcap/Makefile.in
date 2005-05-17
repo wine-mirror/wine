@@ -11,6 +11,7 @@ C_SRCS = \
 	capturegraph.c \
 	dllsetup.c \
 	enummedia.c \
+	enumpins.c \
 	qcap_main.c
 
 RC_SRCS = version.rc
