@@ -480,7 +480,8 @@ ULONG WINAPI RtlRemoveVectoredExceptionHandler( PVOID handler )
     RtlEnterCriticalSection( &vectored_handlers_section );
     LIST_FOR_EACH( ptr, &vectored_handlers )
     {
-        if (ptr == &((VECTORED_HANDLER *)handler)->entry)
+        VECTORED_HANDLER *curr_handler = LIST_ENTRY( ptr, VECTORED_HANDLER, entry );
+        if (curr_handler == handler)
         {
             list_remove( ptr );
             ret = TRUE;
