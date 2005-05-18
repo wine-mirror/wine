@@ -70,12 +70,10 @@ struct ne_segment_table_entry_s
 
 typedef struct
 {
-    void       *module_start;      /* 32-bit address of the module data */
-    int         module_size;       /* Size of the module data */
-    void       *code_start;        /* 32-bit address of DLL code */
-    void       *data_start;        /* 32-bit address of DLL data */
-    const char *owner;             /* 32-bit dll that contains this dll */
-    const void *rsrc;              /* resources data */
+    const char *file_name;    /* module file name */
+    const void *module;       /* module header */
+    void       *code_start;   /* 32-bit address of DLL code */
+    const void *rsrc;         /* resources data */
 } BUILTIN16_DESCRIPTOR;
 
 /* Table of all built-in DLLs */
@@ -157,12 +155,11 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
         const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
         if (descr)
         {
-            IMAGE_OS2_HEADER *pModule = descr->module_start;
-            OFSTRUCT *pOfs = (OFSTRUCT *)(pModule + 1);
+            const IMAGE_OS2_HEADER *pModule = descr->module;
             BYTE *name_table = (BYTE *)pModule + pModule->ne_restab;
 
             /* check the dll file name */
-            if (!NE_strcasecmp( pOfs->szPathName, dllname )) return descr;
+            if (!NE_strcasecmp( descr->file_name, dllname )) return descr;
             /* check the dll module name (without extension) */
             if (!NE_strncasecmp( dllname, name_table+1, *name_table ) &&
                 !strcmp( dllname + *name_table, ".dll" ))
@@ -1077,32 +1074,23 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
  */
 static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
 {
-    IMAGE_OS2_HEADER *header;
     NE_MODULE *pModule;
-    OFSTRUCT *ofs;
-    int minsize;
-    SEGTABLEENTRY *pSegTable;
     HMODULE16 hModule;
+    SEGTABLEENTRY *pSegTable;
+    const IMAGE_DOS_HEADER *mz_header;
+    const IMAGE_OS2_HEADER *ne_header;
+    unsigned int fastload_offset, fastload_length;
 
-    hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
-                                  descr->module_size, 0, WINE_LDT_FLAGS_DATA );
-    if (!hModule) return ERROR_NOT_ENOUGH_MEMORY;
-    FarSetOwner16( hModule, hModule );
-
-    header = GlobalLock16( hModule );
-    pModule = (NE_MODULE *)header;
-    ofs = (OFSTRUCT *)(header + 1);
-    /* move the fileinfo structure a bit further to make space for the Wine-specific fields */
-    if (sizeof(*header) + sizeof(*ofs) < sizeof(*pModule) + ofs->cBytes + 1)
-    {
-        FIXME( "module name %s too long\n", debugstr_a(ofs->szPathName) );
-        return ERROR_NOT_ENOUGH_MEMORY;
-    }
-    memmove( pModule + 1, ofs, ofs->cBytes + 1 );
-
+    mz_header = descr->module;
+    ne_header = (const IMAGE_OS2_HEADER *)((const BYTE *)mz_header + mz_header->e_lfanew);
+    fastload_offset = ne_header->ne_pretthunks << ne_header->ne_align;
+    fastload_length = ne_header->ne_psegrefbytes << ne_header->ne_align;
+    hModule = build_module( mz_header, ne_header, 0, descr->file_name,
+                            descr->module, fastload_offset, fastload_length );
+    if (hModule < 32) return hModule;
+    pModule = GlobalLock16( hModule );
+    pModule->ne_flags |= NE_FFLAGS_BUILTIN;
     pModule->count = 1;
-    pModule->fileinfo = sizeof(*pModule);
-    pModule->self = hModule;
     /* NOTE: (Ab)use the rsrc32_map parameter for resource data pointer */
     pModule->rsrc32_map = (void *)descr->rsrc;
 
@@ -1114,26 +1102,26 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
                                           WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT );
     if (!pSegTable->hSeg) return ERROR_NOT_ENOUGH_MEMORY;
     patch_code_segment( descr->code_start );
+    pSegTable->flags |= NE_SEGFLAGS_ALLOCATED | NE_SEGFLAGS_LOADED;
     pSegTable++;
 
     /* Allocate the data segment */
 
-    minsize = pSegTable->minsize ? pSegTable->minsize : 0x10000;
-    minsize += pModule->ne_heap;
-    if (minsize > 0x10000) minsize = 0x10000;
-    pSegTable->hSeg = GlobalAlloc16( GMEM_FIXED, minsize );
-    if (!pSegTable->hSeg) return ERROR_NOT_ENOUGH_MEMORY;
-    FarSetOwner16( pSegTable->hSeg, hModule );
+    if (!NE_CreateSegment( pModule, 2 )) return ERROR_NOT_ENOUGH_MEMORY;
     pModule->dgroup_entry = (char *)pSegTable - (char *)pModule;
-    if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
-                                    descr->data_start, pSegTable->minsize);
+    memcpy( GlobalLock16( pSegTable->hSeg ),
+            (const char *)descr->module + (pSegTable->filepos << pModule->ne_align),
+            pSegTable->minsize);
+    pSegTable->flags |= NE_SEGFLAGS_LOADED;
+
     if (pModule->ne_heap)
-        LocalInit16( GlobalHandleToSel16(pSegTable->hSeg), pSegTable->minsize, minsize );
+    {
+        unsigned int size = pSegTable->minsize + pModule->ne_heap;
+        if (size > 0xfffe) size = 0xfffe;
+        LocalInit16( GlobalHandleToSel16(pSegTable->hSeg), pSegTable->minsize, size );
+    }
 
     NE_InitResourceHandler( hModule );
-
-    NE_RegisterModule( pModule );
-
     return hModule;
 }
 

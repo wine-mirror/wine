@@ -21,6 +21,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -293,20 +294,34 @@ int output_res16_data( FILE *outfile, DLLSPEC *spec )
 }
 
 /* output the resource definitions */
-int output_res16_directory( unsigned char *buffer, DLLSPEC *spec )
+unsigned int output_res16_directory( unsigned char **ret_buf, DLLSPEC *spec )
 {
     int offset, res_offset = 0;
-    unsigned int i, j;
+    unsigned int i, j, total_size;
     struct res_tree *tree;
     const struct res_type *type;
     const struct resource *res;
-    unsigned char *start = buffer;
+    unsigned char *buffer;
 
     tree = build_resource_tree( spec );
+
+    /* first compute total size */
 
     offset = 4;  /* alignment + terminator */
     offset += tree->nb_types * 8;  /* typeinfo structures */
     offset += spec->nb_resources * 12;  /* nameinfo structures */
+
+    total_size = offset;
+
+    for (i = 0, type = tree->types; i < tree->nb_types; i++, type++)
+    {
+        if (type->type->str) total_size += strlen(type->type->str) + 1;
+        for (j = 0, res = type->res; j < type->nb_names; j++, res++)
+            if (res->name.str) total_size += strlen(res->name.str) + 1;
+    }
+    total_size++;  /* final terminator */
+    if (total_size & 1) total_size++;
+    *ret_buf = buffer = xmalloc( total_size );
 
     put_word( &buffer, ALIGNMENT );
 
@@ -356,8 +371,9 @@ int output_res16_directory( unsigned char *buffer, DLLSPEC *spec )
         }
     }
     put_byte( &buffer, 0 );  /* names terminator */
-    if ((buffer - start) & 1) put_byte( &buffer, 0 );  /* align on word boundary */
+    if ((buffer - *ret_buf) & 1) put_byte( &buffer, 0 );  /* align on word boundary */
+    assert( buffer - *ret_buf == total_size );
 
     free_resource_tree( tree );
-    return buffer - start;
+    return total_size;
 }
