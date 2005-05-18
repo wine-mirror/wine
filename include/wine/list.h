@@ -54,10 +54,10 @@ struct list
  *
  * And to iterate over it:
  *
- *   struct list *cursor;
- *   LIST_FOR_EACH( cursor, &global_gadgets )
+ *   struct gadget *gadget;
+ *   LIST_FOR_EACH_ENTRY( gadget, &global_gadgets, struct gadget, entry )
  *   {
- *       struct gadget *gadget = LIST_ENTRY( cursor, struct gadget, entry );
+ *       ...
  *   }
  *
  */
