@@ -1089,6 +1089,15 @@ BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags );
 
 BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext );
 
+/* crypt32.dll functions */
+BOOL WINAPI CryptProtectData( DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
+ DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
+ CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut );
+
+BOOL WINAPI CryptUnprotectData( DATA_BLOB* pDataIn, LPWSTR* ppszDataDescr,
+ DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
+ CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut );
+
 #ifdef __cplusplus
 }
 #endif
