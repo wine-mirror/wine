@@ -46,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
+WINE_DECLARE_DEBUG_CHANNEL(imports);
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
@@ -541,7 +542,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
                     name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer),
                     thunk_list->u1.Function );
             }
-            TRACE("--- Ordinal %s.%d = %p\n", name, ordinal, thunk_list->u1.Function );
+            TRACE_(imports)("--- Ordinal %s.%d = %p\n", name, ordinal, thunk_list->u1.Function );
         }
         else  /* import by name */
         {
@@ -556,7 +557,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
                     name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer),
                     thunk_list->u1.Function );
             }
-            TRACE("--- %s %s.%d = %p\n", pe_name->Name, name, pe_name->Hint, thunk_list->u1.Function);
+            TRACE_(imports)("--- %s %s.%d = %p\n", pe_name->Name, name, pe_name->Hint, thunk_list->u1.Function);
         }
         import_list++;
         thunk_list++;
