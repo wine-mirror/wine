@@ -8288,6 +8288,11 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
             notify_listview(infoPtr, LVN_COLUMNCLICK, &nmlv);
         }
 	break;
+
+	case HDN_DIVIDERDBLCLICKW:
+	case HDN_DIVIDERDBLCLICKA:
+            LISTVIEW_SetColumnWidth(infoPtr, lpnmh->iItem, LVSCW_AUTOSIZE);
+            break;
     }
 
     return 0;
