@@ -61,7 +61,6 @@
 #include "wine/winuser16.h"
 #include "wine/exception.h"
 #include "cursoricon.h"
-#include "module.h"
 #include "wine/debug.h"
 #include "user_private.h"
 
@@ -1654,53 +1653,6 @@ HGLOBAL16 WINAPI LoadCursorIconHandler16( HGLOBAL16 hResource, HMODULE16 hModule
     FIXME_(cursor)("(%04x,%04x,%04x): old 2.x resources are not supported!\n",
           hResource, hModule, hRsrc);
     return (HGLOBAL16)0;
-}
-
-/**********************************************************************
- *              LoadDIBIconHandler (USER.357)
- *
- * RT_ICON resource loader, installed by USER_SignalProc when module
- * is initialized.
- */
-HGLOBAL16 WINAPI LoadDIBIconHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
-{
-    /* If hResource is zero we must allocate a new memory block, if it's
-     * non-zero but GlobalLock() returns NULL then it was discarded and
-     * we have to recommit some memory, otherwise we just need to check
-     * the block size. See LoadProc() in 16-bit SDK for more.
-     */
-
-     hMemObj = NE_DefResourceHandler( hMemObj, hModule, hRsrc );
-     if( hMemObj )
-     {
-         LPBYTE bits = (LPBYTE)GlobalLock16( hMemObj );
-         hMemObj = HICON_16(CURSORICON_CreateFromResource(
-                                hModule, hMemObj, bits,
-                                SizeofResource16(hModule, hRsrc), TRUE, 0x00030000,
-                                GetSystemMetrics(SM_CXICON),
-                                GetSystemMetrics(SM_CYICON), LR_DEFAULTCOLOR));
-     }
-     return hMemObj;
-}
-
-/**********************************************************************
- *		LoadDIBCursorHandler (USER.356)
- *
- * RT_CURSOR resource loader. Same as above.
- */
-HGLOBAL16 WINAPI LoadDIBCursorHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
-{
-    hMemObj = NE_DefResourceHandler( hMemObj, hModule, hRsrc );
-    if( hMemObj )
-    {
-        LPBYTE bits = (LPBYTE)GlobalLock16( hMemObj );
-        hMemObj = HICON_16(CURSORICON_CreateFromResource(
-                                hModule, hMemObj, bits,
-                                SizeofResource16(hModule, hRsrc), FALSE, 0x00030000,
-                                GetSystemMetrics(SM_CXCURSOR),
-                                GetSystemMetrics(SM_CYCURSOR), LR_MONOCHROME));
-    }
-    return hMemObj;
 }
 
 /**********************************************************************

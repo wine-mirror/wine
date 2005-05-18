@@ -69,9 +69,6 @@ enum loadorder_type
 /* module.c */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );
 
-/* resource16.c */
-extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
-
 /* loadorder.c */
 extern void MODULE_GetLoadOrderW( enum loadorder_type plo[], const WCHAR *app_name,
                                   const WCHAR *path );

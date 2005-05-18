@@ -1177,4 +1177,3 @@
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl DOSMEM_AllocSelector(long)
-@ stdcall NE_DefResourceHandler(long long long)

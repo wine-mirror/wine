@@ -944,6 +944,35 @@ BOOL16 WINAPI IsUserIdle16(void)
 
 
 /**********************************************************************
+ *              LoadDIBIconHandler (USER.357)
+ *
+ * RT_ICON resource loader, installed by USER_SignalProc when module
+ * is initialized.
+ */
+HGLOBAL16 WINAPI LoadDIBIconHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
+{
+    /* If hResource is zero we must allocate a new memory block, if it's
+     * non-zero but GlobalLock() returns NULL then it was discarded and
+     * we have to recommit some memory, otherwise we just need to check
+     * the block size. See LoadProc() in 16-bit SDK for more.
+     */
+    FIXME( "%x %x %x: stub, not supported anymore\n", hMemObj, hModule, hRsrc );
+    return 0;
+}
+
+/**********************************************************************
+ *		LoadDIBCursorHandler (USER.356)
+ *
+ * RT_CURSOR resource loader. Same as above.
+ */
+HGLOBAL16 WINAPI LoadDIBCursorHandler16( HGLOBAL16 hMemObj, HMODULE16 hModule, HRSRC16 hRsrc )
+{
+    FIXME( "%x %x %x: stub, not supported anymore\n", hMemObj, hModule, hRsrc );
+    return 0;
+}
+
+
+/**********************************************************************
  *		IsMenu    (USER.358)
  */
 BOOL16 WINAPI IsMenu16( HMENU16 hmenu )
