@@ -59,9 +59,6 @@ typedef struct FileMonikerImpl{
 
 } FileMonikerImpl;
 
-/* IROTData prototype function */
-static HRESULT WINAPI FileMonikerROTDataImpl_GetComparaisonData(IROTData* iface,BYTE* pbData,ULONG cbMax,ULONG* pcbData);
-
 /* Local function used by filemoniker implementation */
 static HRESULT WINAPI FileMonikerImpl_Construct(FileMonikerImpl* iface, LPCOLESTR lpszPathName);
 static HRESULT WINAPI FileMonikerImpl_Destroy(FileMonikerImpl* iface);
@@ -1165,11 +1162,27 @@ FileMonikerROTDataImpl_Release(IROTData* iface)
  *        FileMonikerIROTData_GetComparaisonData
  */
 static HRESULT WINAPI
-FileMonikerROTDataImpl_GetComparaisonData(IROTData* iface, BYTE* pbData,
+FileMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
                                           ULONG cbMax, ULONG* pcbData)
 {
-    FIXME("(),stub!\n");
-    return E_NOTIMPL;
+    ICOM_THIS_From_IROTData(IMoniker, iface);
+    FileMonikerImpl *This1 = (FileMonikerImpl *)This;
+    int len = (strlenW(This1->filePathName)+1);
+    int i;
+    LPWSTR pszFileName;
+
+    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+
+    *pcbData = sizeof(CLSID) + len * sizeof(WCHAR);
+    if (cbMax < *pcbData)
+        return E_OUTOFMEMORY;
+
+    memcpy(pbData, &CLSID_FileMoniker, sizeof(CLSID));
+    pszFileName = (LPWSTR)(pbData+sizeof(CLSID));
+    for (i = 0; i < len; i++)
+        pszFileName[i] = toupperW(This1->filePathName[i]);
+
+    return S_OK;
 }
 
 /*
@@ -1209,7 +1222,7 @@ static IROTDataVtbl VT_ROTDataImpl =
     FileMonikerROTDataImpl_QueryInterface,
     FileMonikerROTDataImpl_AddRef,
     FileMonikerROTDataImpl_Release,
-    FileMonikerROTDataImpl_GetComparaisonData
+    FileMonikerROTDataImpl_GetComparisonData
 };
 
 /******************************************************************************

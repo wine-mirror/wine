@@ -107,7 +107,7 @@ static ULONG   WINAPI ItemMonikerROTDataImpl_AddRef(IROTData* iface);
 static ULONG   WINAPI ItemMonikerROTDataImpl_Release(IROTData* iface);
 
 /* IROTData prototype function */
-static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparaisonData(IROTData* iface,BYTE* pbData,ULONG cbMax,ULONG* pcbData);
+static HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,BYTE* pbData,ULONG cbMax,ULONG* pcbData);
 
 /********************************************************************************/
 /* Virtual function table for the ItemMonikerImpl class which  include IPersist,*/
@@ -146,7 +146,7 @@ static IROTDataVtbl VT_ROTDataImpl =
     ItemMonikerROTDataImpl_QueryInterface,
     ItemMonikerROTDataImpl_AddRef,
     ItemMonikerROTDataImpl_Release,
-    ItemMonikerROTDataImpl_GetComparaisonData
+    ItemMonikerROTDataImpl_GetComparisonData
 };
 
 /*******************************************************************************
@@ -952,13 +952,35 @@ ULONG   WINAPI ItemMonikerROTDataImpl_Release(IROTData* iface)
 /******************************************************************************
  *        ItemMonikerIROTData_GetComparaisonData
  ******************************************************************************/
-HRESULT WINAPI ItemMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
+HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,
                                                          BYTE* pbData,
                                                          ULONG cbMax,
                                                          ULONG* pcbData)
 {
-    FIXME("(),stub!\n");
-    return E_NOTIMPL;
+    ICOM_THIS_From_IROTData(IMoniker, iface);
+    ItemMonikerImpl *This1 = (ItemMonikerImpl *)This;
+    int len = (strlenW(This1->itemName)+1);
+    int i;
+    LPWSTR pszItemName;
+    LPWSTR pszItemDelimiter;
+
+    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+
+    *pcbData = sizeof(CLSID) + sizeof(WCHAR) + len * sizeof(WCHAR);
+    if (cbMax < *pcbData)
+        return E_OUTOFMEMORY;
+
+    /* write CLSID */
+    memcpy(pbData, &CLSID_ItemMoniker, sizeof(CLSID));
+    /* write delimiter */
+    pszItemDelimiter = (LPWSTR)(pbData+sizeof(CLSID));
+    *pszItemDelimiter = *This1->itemDelimiter;
+    /* write name */
+    pszItemName = pszItemDelimiter + 1;
+    for (i = 0; i < len; i++)
+        pszItemName[i] = toupperW(This1->itemName[i]);
+
+    return S_OK;
 }
 
 /******************************************************************************
