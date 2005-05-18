@@ -24,39 +24,6 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
-#include <winreg.h>
-#include <wine/windef16.h>
-#include <wine/winbase16.h>
-#include <winternl.h>
-
-#include <pshpack1.h>
-
-typedef struct {
-    BYTE type;
-    BYTE flags;
-    BYTE segnum;
-    WORD offs;
-} ET_ENTRY;
-
-typedef struct {
-    WORD first; /* ordinal */
-    WORD last; /* ordinal */
-    WORD next; /* bundle */
-} ET_BUNDLE;
-
-
-  /* In-memory segment table */
-typedef struct
-{
-    WORD      filepos;   /* Position in file, in sectors */
-    WORD      size;      /* Segment size on disk */
-    WORD      flags;     /* Segment flags */
-    WORD      minsize;   /* Min. size of segment in memory */
-    HANDLE16  hSeg;      /* Selector or handle (selector - 1) */
-                         /* of segment in memory */
-} SEGTABLEENTRY;
-
-#include <poppack.h>
 
 enum loadorder_type
 {

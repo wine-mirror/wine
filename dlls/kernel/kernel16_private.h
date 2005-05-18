@@ -24,7 +24,6 @@
 #include "wine/winbase16.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "module.h"
 
 #include "pshpack1.h"
 
@@ -68,6 +67,32 @@ typedef struct _NE_MODULE
     LPVOID    rsrc32_map;       /* 48 HRSRC 16->32 map (for 32-bit modules) */
     HANDLE    fd;               /* 4c handle to the binary file */
 } NE_MODULE;
+
+typedef struct
+{
+    BYTE type;
+    BYTE flags;
+    BYTE segnum;
+    WORD offs;
+} ET_ENTRY;
+
+typedef struct
+{
+    WORD first; /* ordinal */
+    WORD last;  /* ordinal */
+    WORD next;  /* bundle */
+} ET_BUNDLE;
+
+
+  /* In-memory segment table */
+typedef struct
+{
+    WORD      filepos;   /* Position in file, in sectors */
+    WORD      size;      /* Segment size on disk */
+    WORD      flags;     /* Segment flags */
+    WORD      minsize;   /* Min. size of segment in memory */
+    HANDLE16  hSeg;      /* Selector or handle (selector - 1) of segment in memory */
+} SEGTABLEENTRY;
 
 /* this structure is always located at offset 0 of the DGROUP segment */
 typedef struct
