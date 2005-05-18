@@ -2744,6 +2744,7 @@ static UINT writeout_cabinet_stream(MSIPACKAGE *package, WCHAR* stream_name,
 
     if (the_file == INVALID_HANDLE_VALUE)
     {
+        ERR("Unable to create file %s\n",debugstr_w(source));
         rc = ERROR_FUNCTION_FAILED;
         goto end;
     }
@@ -2846,7 +2847,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         LPWSTR tracknametmp;
         static const WCHAR tmpprefix[] = {'C','A','B','T','M','P','_',0};
        
-        if (data->file_name && strcmp(data->file_name,pfdin->psz1))
+        if (data->file_name && lstrcmpiA(data->file_name,pfdin->psz1))
                 return 0;
         
         file = cabinet_alloc((len+1)*sizeof(char));
@@ -3189,7 +3190,10 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
                       rc);
                 if (rc == ERROR_ALREADY_EXISTS && file->State == 2)
                 {
-                    CopyFileW(file->SourcePath,file->TargetPath,FALSE);
+                    if (!CopyFileW(file->SourcePath,file->TargetPath,FALSE))
+                        ERR("Unable to copy file (%s -> %s) (error %ld)\n",
+                            debugstr_w(file->SourcePath), 
+                            debugstr_w(file->TargetPath), GetLastError());
                     if (!(file->Attributes & msidbFileAttributesNoncompressed))
                         DeleteFileW(file->SourcePath);
                     rc = 0;
@@ -5767,7 +5771,10 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     snprintfW(path,sizeof(path)/sizeof(path[0]),installerPathFmt,windir);
     create_full_pathW(path);
     TRACE("Copying to local package %s\n",debugstr_w(packagefile));
-    CopyFileW(package->PackagePath,packagefile,FALSE);
+    if (!CopyFileW(package->PackagePath,packagefile,FALSE))
+        ERR("Unable to copy package (%s -> %s) (error %ld)\n",
+            debugstr_w(package->PackagePath), debugstr_w(packagefile),
+            GetLastError());
     size = strlenW(packagefile)*sizeof(WCHAR);
     RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
     
@@ -6329,6 +6336,8 @@ static LPWSTR load_ttfname_from(LPCWSTR filename)
         }
         CloseHandle(handle);
     }
+    else
+        ERR("Unable to open font file %s\n", debugstr_w(filename));
 
     TRACE("Returning fontname %s\n",debugstr_w(ret));
     return ret;
@@ -6798,7 +6807,7 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     HeapFree(GetProcessHeap(),0,folder->Property);
     folder->Property = build_directory_name(2, szFolderPath, NULL);
 
-    if (strcmpiW(path, folder->Property) == 0)
+    if (lstrcmpiW(path, folder->Property) == 0)
     {
         /*
          *  Resolved Target has not really changed, so just 
