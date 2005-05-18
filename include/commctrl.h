@@ -3160,8 +3160,8 @@ static const WCHAR WC_LISTVIEWW[] = { 'S','y','s',
 #define LVN_GETINFOTIPW         (LVN_FIRST-58)
 #define LVN_GETINFOTIP          WINELIB_NAME_AW(LVN_GETINFOTIP)
 
-#define LVA_ALIGNLEFT           0x0000
-#define LVA_DEFAULT             0x0001
+#define LVA_DEFAULT             0x0000
+#define LVA_ALIGNLEFT           0x0001
 #define LVA_ALIGNTOP            0x0002
 #define LVA_SNAPTOGRID          0x0005
 
