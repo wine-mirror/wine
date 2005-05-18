@@ -33,6 +33,9 @@
 #ifdef HAVE_SYS_TIMES_H
 # include <sys/times.h>
 #endif
+#ifdef HAVE_MACHINE_LIMITS_H
+#include <machine/limits.h>
+#endif
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT

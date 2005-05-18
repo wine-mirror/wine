@@ -31,6 +31,9 @@
 #ifdef HAVE_MACHINE_CPU_H
 # include <machine/cpu.h>
 #endif
+#ifdef HAVE_MACH_MACHINE_H
+# include <mach/machine.h>
+#endif
 
 #include <ctype.h>
 #include <string.h>

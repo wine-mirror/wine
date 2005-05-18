@@ -188,7 +188,9 @@ AC_CHECK_HEADERS(\
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
+	mach/machine.h \
 	machine/cpu.h \
+	machine/limits.h \
 	mntent.h \
 	netdb.h \
 	netinet/in.h \
