@@ -381,6 +381,13 @@ inline static void reduce_to_longfilename(WCHAR* filename)
         memmove(filename, p+1, (strlenW(p+1)+1)*sizeof(WCHAR));
 }
 
+inline static void reduce_to_shortfilename(WCHAR* filename)
+{
+    LPWSTR p = strchrW(filename,'|');
+    if (p)
+        *p = 0;
+}
+
 WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index)
 {
     UINT rc;
@@ -599,6 +606,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     {
         HeapFree(GetProcessHeap(),0,package->files[i].File);
         HeapFree(GetProcessHeap(),0,package->files[i].FileName);
+        HeapFree(GetProcessHeap(),0,package->files[i].ShortName);
         HeapFree(GetProcessHeap(),0,package->files[i].Version);
         HeapFree(GetProcessHeap(),0,package->files[i].Language);
         HeapFree(GetProcessHeap(),0,package->files[i].SourcePath);
@@ -1609,7 +1617,7 @@ static int load_component(MSIPACKAGE* package, MSIRECORD * row)
     sz = 96;       
     MSI_RecordGetStringW(row,6,package->components[index].KeyPath,&sz);
 
-    package->components[index].Installed = INSTALLSTATE_UNKNOWN;
+    package->components[index].Installed = INSTALLSTATE_ABSENT;
     package->components[index].Action = INSTALLSTATE_UNKNOWN;
     package->components[index].ActionRequest = INSTALLSTATE_UNKNOWN;
 
@@ -1676,7 +1684,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 
     package->features[index].Attributes= MSI_RecordGetInteger(row,8);
 
-    package->features[index].Installed = INSTALLSTATE_UNKNOWN;
+    package->features[index].Installed = INSTALLSTATE_ABSENT;
     package->features[index].Action = INSTALLSTATE_UNKNOWN;
     package->features[index].ActionRequest = INSTALLSTATE_UNKNOWN;
 
@@ -1848,8 +1856,10 @@ static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
     HeapFree(GetProcessHeap(), 0, buffer);
 
     package->files[index].FileName = load_dynamic_stringW(row,3);
-
     reduce_to_longfilename(package->files[index].FileName);
+
+    package->files[index].ShortName = load_dynamic_stringW(row,3);
+    reduce_to_shortfilename(package->files[index].ShortName);
     
     package->files[index].FileSize = MSI_RecordGetInteger(row,4);
     package->files[index].Version = load_dynamic_stringW(row, 5);
@@ -2981,8 +2991,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
 
     if (file->Attributes & msidbFileAttributesNoncompressed)
     {
-        sz = MAX_PATH;
-        MSI_GetPropertyW(package, cszSourceDir, path, &sz);
+        TRACE("Uncompressed File, no media to ready.\n");
         return ERROR_SUCCESS;
     }
 
@@ -3154,7 +3163,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
             if (file->Attributes & msidbFileAttributesNoncompressed)
             {
                 p = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
-                file->SourcePath = build_directory_name(2, p, file->File);
+                file->SourcePath = build_directory_name(2, p, file->ShortName);
                 HeapFree(GetProcessHeap(),0,p);
             }
             else
