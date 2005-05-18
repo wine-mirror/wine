@@ -153,6 +153,11 @@ extern void SELECTOR_FreeBlock( WORD sel );
 #define IS_SELECTOR_32BIT(sel) \
    (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 
+/* snoop16.c */
+extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR);
+extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);
+extern int SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
+
 /* task.c */
 extern void TASK_CreateMainTask(void);
 extern HTASK16 TASK_SpawnTask( NE_MODULE *pModule, WORD cmdShow,

@@ -41,8 +41,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
 #include "pshpack1.h"
 
-extern int SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
-
 void WINAPI SNOOP16_Entry(FARPROC proc, LPBYTE args, CONTEXT86 *context);
 void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context);
 
@@ -102,13 +100,13 @@ static	SNOOP16_RELAY		*snr;
 static	HANDLE16		xsnr = 0;
 
 void
-SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
+SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 	SNOOP16_DLL	**dll = &(firstdll);
 	char		*s;
 
 	if (!TRACE_ON(snoop)) return;
 
-        TRACE("hmod=%x, name=%s\n", pModule->self, name);
+        TRACE("hmod=%x, name=%s\n", hModule, name);
 
 	if (!snr) {
 		xsnr=GLOBAL_Alloc(GMEM_ZEROINIT,2*sizeof(*snr),0,WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT);
@@ -134,7 +132,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 		snr[1].lret     = 0xcb66;
 	}
 	while (*dll) {
-		if ((*dll)->hmod == pModule->self)
+		if ((*dll)->hmod == hModule)
                 {
                     /* another dll, loaded at the same address */
                     GlobalUnlock16((*dll)->funhandle);
@@ -150,7 +148,7 @@ SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
 		*dll = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SNOOP16_DLL)+strlen(name));	
 
 	(*dll)->next	= NULL;
-	(*dll)->hmod	= pModule->self;
+	(*dll)->hmod	= hModule;
 	if ((s=strrchr(name,'\\')))
 		name = s+1;
 	strcpy( (*dll)->name, name );
@@ -346,7 +344,7 @@ void WINAPI SNOOP16_Return(FARPROC proc, LPBYTE args, CONTEXT86 *context) {
 	ret->origreturn = NULL; /* mark as empty */
 }
 #else	/* !__i386__ */
-void SNOOP16_RegisterDLL(NE_MODULE *pModule,LPCSTR name) {
+void SNOOP16_RegisterDLL(HMODULE16 hModule,LPCSTR name) {
 	if (!TRACE_ON(snoop)) return;
 	FIXME("snooping works only on i386 for now.\n");
 }
