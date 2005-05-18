@@ -210,11 +210,14 @@ void VIRTUAL_Dump(void)
  *
  * Find the view containing a given address. The csVirtual section must be held by caller.
  *
+ * PARAMS
+ *      addr  [I] Address
+ *
  * RETURNS
  *	View: Success
  *	NULL: Failure
  */
-static struct file_view *VIRTUAL_FindView( const void *addr ) /* [in] Address */
+static struct file_view *VIRTUAL_FindView( const void *addr )
 {
     struct list *ptr;
 
@@ -470,10 +473,13 @@ static void VIRTUAL_GetWin32Prot(
  *
  * Build page protections from Win32 flags.
  *
+ * PARAMS
+ *      protect [I] Win32 protection flags
+ *
  * RETURNS
  *	Value of page protection flags
  */
-static BYTE VIRTUAL_GetProt( DWORD protect )  /* [in] Win32 protection flags */
+static BYTE VIRTUAL_GetProt( DWORD protect )
 {
     BYTE vprot;
 
