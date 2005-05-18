@@ -473,10 +473,27 @@ static HRESULT WINAPI Graphbuilder_ConnectDirect(IGraphBuilder *iface,
 static HRESULT WINAPI Graphbuilder_Reconnect(IGraphBuilder *iface,
 					     IPin *ppin) {
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
+    IPin *pConnectedTo = NULL;
+    HRESULT hr;
+    PIN_DIRECTION pindir;
 
-    TRACE("(%p/%p)->(%p): stub !!!\n", This, iface, ppin);
-
-    return S_OK;
+    IPin_QueryDirection(ppin, &pindir);
+    hr = IPin_ConnectedTo(ppin, &pConnectedTo);
+    if (FAILED(hr)) {
+        TRACE("Querying connected to failed: %lx\n", hr);
+        return hr; 
+    }
+    IPin_Disconnect(ppin);
+    IPin_Disconnect(pConnectedTo);
+    if (pindir == PINDIR_INPUT)
+        hr = IPin_Connect(pConnectedTo, ppin, NULL);
+    else
+        hr = IPin_Connect(ppin, pConnectedTo, NULL);
+    IPin_Release(pConnectedTo);
+    if (FAILED(hr))
+        ERR("Reconnecting pins failed, pins are not connected now..\n");
+    TRACE("(%p->%p) -- %p %p -> %lx\n", iface, This, ppin, pConnectedTo, hr);
+    return hr;
 }
 
 static HRESULT WINAPI Graphbuilder_Disconnect(IGraphBuilder *iface,
