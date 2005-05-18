@@ -1763,6 +1763,100 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
     msiobj_release(&view->hdr);
 }
 
+static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
+{
+    DWORD index = package->loaded_files;
+    DWORD i;
+    LPWSTR buffer;
+
+    /* fill in the data */
+
+    package->loaded_files++;
+    if (package->loaded_files== 1)
+        package->files = HeapAlloc(GetProcessHeap(),0,sizeof(MSIFILE));
+    else
+        package->files = HeapReAlloc(GetProcessHeap(),0,
+            package->files , package->loaded_files * sizeof(MSIFILE));
+
+    memset(&package->files[index],0,sizeof(MSIFILE));
+ 
+    package->files[index].File = load_dynamic_stringW(row, 1);
+    buffer = load_dynamic_stringW(row, 2);
+
+    package->files[index].ComponentIndex = -1;
+    for (i = 0; i < package->loaded_components; i++)
+        if (strcmpW(package->components[i].Component,buffer)==0)
+        {
+            package->files[index].ComponentIndex = i;
+            break;
+        }
+    if (package->files[index].ComponentIndex == -1)
+        ERR("Unfound Component %s\n",debugstr_w(buffer));
+    HeapFree(GetProcessHeap(), 0, buffer);
+
+    package->files[index].FileName = load_dynamic_stringW(row,3);
+    reduce_to_longfilename(package->files[index].FileName);
+
+    package->files[index].ShortName = load_dynamic_stringW(row,3);
+    reduce_to_shortfilename(package->files[index].ShortName);
+    
+    package->files[index].FileSize = MSI_RecordGetInteger(row,4);
+    package->files[index].Version = load_dynamic_stringW(row, 5);
+    package->files[index].Language = load_dynamic_stringW(row, 6);
+    package->files[index].Attributes= MSI_RecordGetInteger(row,7);
+    package->files[index].Sequence= MSI_RecordGetInteger(row,8);
+
+    package->files[index].Temporary = FALSE;
+    package->files[index].State = 0;
+
+    TRACE("File Loaded (%s)\n",debugstr_w(package->files[index].File));  
+ 
+    return ERROR_SUCCESS;
+}
+
+static UINT load_all_files(MSIPACKAGE *package)
+{
+    MSIQUERY * view;
+    MSIRECORD * row;
+    UINT rc;
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         'F','i','l','e',' ', 'O','R','D','E','R',' ','B','Y',' ',
+         'S','e','q','u','e','n','c','e', 0};
+
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+   
+    rc = MSI_ViewExecute(view, 0);
+    if (rc != ERROR_SUCCESS)
+    {
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+        return ERROR_SUCCESS;
+    }
+
+    while (1)
+    {
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            break;
+        }
+        load_file(package,row);
+        msiobj_release(&row->hdr);
+    }
+    MSI_ViewClose(view);
+    msiobj_release(&view->hdr);
+
+    return ERROR_SUCCESS;
+}
+
+
 /*
  * I am not doing any of the costing functionality yet. 
  * Mostly looking at doing the Component and Feature loading
@@ -1821,101 +1915,16 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
 
-    return ERROR_SUCCESS;
-}
+    load_all_files(package);
 
-static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
-{
-    DWORD index = package->loaded_files;
-    DWORD i;
-    LPWSTR buffer;
-
-    /* fill in the data */
-
-    package->loaded_files++;
-    if (package->loaded_files== 1)
-        package->files = HeapAlloc(GetProcessHeap(),0,sizeof(MSIFILE));
-    else
-        package->files = HeapReAlloc(GetProcessHeap(),0,
-            package->files , package->loaded_files * sizeof(MSIFILE));
-
-    memset(&package->files[index],0,sizeof(MSIFILE));
- 
-    package->files[index].File = load_dynamic_stringW(row, 1);
-    buffer = load_dynamic_stringW(row, 2);
-
-    package->files[index].ComponentIndex = -1;
-    for (i = 0; i < package->loaded_components; i++)
-        if (strcmpW(package->components[i].Component,buffer)==0)
-        {
-            package->files[index].ComponentIndex = i;
-            break;
-        }
-    if (package->files[index].ComponentIndex == -1)
-        ERR("Unfound Component %s\n",debugstr_w(buffer));
-    HeapFree(GetProcessHeap(), 0, buffer);
-
-    package->files[index].FileName = load_dynamic_stringW(row,3);
-    reduce_to_longfilename(package->files[index].FileName);
-
-    package->files[index].ShortName = load_dynamic_stringW(row,3);
-    reduce_to_shortfilename(package->files[index].ShortName);
-    
-    package->files[index].FileSize = MSI_RecordGetInteger(row,4);
-    package->files[index].Version = load_dynamic_stringW(row, 5);
-    package->files[index].Language = load_dynamic_stringW(row, 6);
-    package->files[index].Attributes= MSI_RecordGetInteger(row,7);
-    package->files[index].Sequence= MSI_RecordGetInteger(row,8);
-
-    package->files[index].Temporary = FALSE;
-    package->files[index].State = 0;
-
-    TRACE("File Loaded (%s)\n",debugstr_w(package->files[index].File));  
- 
     return ERROR_SUCCESS;
 }
 
 static UINT ACTION_FileCost(MSIPACKAGE *package)
 {
-    MSIQUERY * view;
-    MSIRECORD * row;
-    UINT rc;
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'F','i','l','e',' ', 'O','R','D','E','R',' ','B','Y',' ',
-         'S','e','q','u','e','n','c','e', 0};
-
-    if (!package)
-        return ERROR_INVALID_HANDLE;
-
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-   
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return ERROR_SUCCESS;
-    }
-
-    while (1)
-    {
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-        load_file(package,row);
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
-
     return ERROR_SUCCESS;
 }
+
 
 static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 {
@@ -4080,8 +4089,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             /* do the refcounting */
             ACTION_RefCountComponent( package, i);
 
-            TRACE("Component %s, Keypath=%s, RefCount=%i\n", 
-                            debugstr_w(package->components[i].Component), 
+            TRACE("Component %s (%s), Keypath=%s, RefCount=%i\n", 
+                            debugstr_w(package->components[i].Component),
+                            debugstr_w(squished_cc),
                             debugstr_w(package->components[i].FullKeypath), 
                             package->components[i].RefCount);
             /*
@@ -5498,7 +5508,8 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
          'S','e','l','f','R','e','g',0};
 
     static const WCHAR ExeStr[] =
-        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','/','s',' ',0};
+        {'r','e','g','s','v','r','3','2','.','e','x','e',' ','\"',0};
+    static const WCHAR close[] =  {'\"',0};
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
     BOOL brc;
@@ -5552,6 +5563,7 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
         filename = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
         strcpyW(filename,ExeStr);
         strcatW(filename,package->files[index].TargetPath);
+        strcatW(filename,close);
 
         TRACE("Registering %s\n",debugstr_w(filename));
         brc = CreateProcessW(NULL, filename, NULL, NULL, FALSE, 0, NULL,
@@ -5617,14 +5629,18 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         {
             WCHAR buf[21];
             memset(buf,0,sizeof(buf));
-            TRACE("From %s\n",debugstr_w(package->components
+            if (package->components
+                [package->features[i].Components[j]].ComponentId[0]!=0)
+            {
+                TRACE("From %s\n",debugstr_w(package->components
                             [package->features[i].Components[j]].ComponentId));
-            CLSIDFromString(package->components
+                CLSIDFromString(package->components
                             [package->features[i].Components[j]].ComponentId,
                             &clsid);
-            encode_base85_guid(&clsid,buf);
-            TRACE("to %s\n",debugstr_w(buf));
-            strcatW(data,buf);
+                encode_base85_guid(&clsid,buf);
+                TRACE("to %s\n",debugstr_w(buf));
+                strcatW(data,buf);
+            }
         }
         if (package->features[i].Feature_Parent[0])
         {
