@@ -12,6 +12,7 @@ C_SRCS = \
 	dllsetup.c \
 	enummedia.c \
 	enumpins.c \
+	pin.c \
 	qcap_main.c
 
 RC_SRCS = version.rc
