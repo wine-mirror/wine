@@ -307,6 +307,18 @@ int fill_drives_list(HWND dialog)
     return count;
 }
 
+void on_options_click(HWND dialog)
+{
+    if (IsDlgButtonChecked(dialog, IDC_SHOW_DIRSYM_LINK) == BST_CHECKED)
+        set("wine", "ShowDirSymLinks", "Y");
+    else
+        set("wine", "ShowDIrSymLinks", "N");
+
+    if (IsDlgButtonChecked(dialog, IDC_SHOW_DOT_FILES) == BST_CHECKED)
+        set("wine", "ShowDotFiles", "Y");
+    else
+        set("wine", "ShowDotFiles", "N");
+}
 
 void on_add_click(HWND dialog)
 {
@@ -670,6 +682,14 @@ static void init_listview_columns(HWND dialog)
     SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 1, (LPARAM) &listColumn);
 }
 
+static void load_drive_options(HWND dialog)
+{
+    if (!strcmp(get("wine", "ShowDirSymLinks", "N"), "Y"))
+        CheckDlgButton(dialog, IDC_SHOW_DIRSYM_LINK, BST_CHECKED);
+
+    if (!strcmp(get("wine", "ShowDotFiles", "N"), "Y"))
+        CheckDlgButton(dialog, IDC_SHOW_DOT_FILES, BST_CHECKED);
+}
 
 INT_PTR CALLBACK
 DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -682,6 +702,7 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
         case WM_INITDIALOG:
             init_listview_columns(dialog);
             load_drives();
+            load_drive_options(dialog);
 
             if (!drives[2].in_use)
                 MessageBox(dialog, "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n", "", MB_OK | MB_ICONEXCLAMATION);
@@ -701,10 +722,23 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
             break;
 
         case WM_COMMAND:
-            if (HIWORD(wParam) == EN_CHANGE)
+            switch (HIWORD(wParam))
             {
-                on_edit_changed(dialog, LOWORD(wParam));
-                break;
+                case EN_CHANGE:
+                    on_edit_changed(dialog, LOWORD(wParam));
+                    break;
+
+                case BN_CLICKED:
+                    SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
+
+                    switch (LOWORD(wParam))
+                    {
+                        case IDC_SHOW_DIRSYM_LINK:
+                        case IDC_SHOW_DOT_FILES:
+                            on_options_click(dialog);
+                        break;
+                    }
+                    break;
             }
 
             switch (LOWORD(wParam))
