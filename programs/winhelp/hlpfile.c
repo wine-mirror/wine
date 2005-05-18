@@ -1790,18 +1790,18 @@ static void HLPFILE_UncompressRLE(const BYTE* src, const BYTE* end, BYTE** dst, 
     while (src < end)
     {
         ch = *src++;
-        if (!(ch & 0x7F)) continue;
         if (ch & 0x80)
         {
             ch &= 0x7F;
-            if ((*dst) + ch < sdst)
+            if ((*dst) + ch <= sdst)
                 memcpy(*dst, src, ch);
             src += ch;
         }
         else
         {
-            if ((*dst) + ch < sdst)
-                memset(*dst, (char)*src++, ch);
+            if ((*dst) + ch <= sdst)
+                memset(*dst, (char)*src, ch);
+            src++;
         }
         *dst += ch;
     }
