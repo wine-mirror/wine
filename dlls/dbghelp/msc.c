@@ -1763,8 +1763,14 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
 
 static BOOL CALLBACK pdb_match(char* file, void* user)
 {
-    /* accept first file */
-    return FALSE;
+    /* accept first file that exists */
+    HANDLE h = CreateFileA(file, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    TRACE("match with %s returns %x\n", file, h);
+    if (INVALID_HANDLE_VALUE != h) {
+        CloseHandle(h);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static HANDLE open_pdb_file(const struct process* pcs, const char* filename)
@@ -1781,6 +1787,7 @@ static HANDLE open_pdb_file(const struct process* pcs, const char* filename)
     {
         h = CreateFileA(dbg_file_path, GENERIC_READ, FILE_SHARE_READ, NULL, 
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        TRACE("with %s returns %x\n", dbg_file_path, h);
     }
     return (h == INVALID_HANDLE_VALUE) ? NULL : h;
 }

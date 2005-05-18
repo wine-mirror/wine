@@ -342,7 +342,10 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, LPSTR searchPath, LPSTR full_path
             strcpy(tmp, searchPath);
             searchPath = NULL;
         }
-        if (do_search(filename, tmp, FALSE, sffip_cb, &s)) return TRUE;
+        if (do_search(filename, tmp, FALSE, sffip_cb, &s)) {
+            strcpy(buffer, tmp);
+            return TRUE;
+        }
     }
     return FALSE;
 }
