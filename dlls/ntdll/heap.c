@@ -37,7 +37,6 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "wine/winbase16.h"
 #include "winerror.h"
 #include "winnt.h"
 #include "thread.h"

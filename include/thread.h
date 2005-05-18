@@ -27,12 +27,8 @@
 #include <winreg.h>
 #define WINE_NO_TEB
 #include <winternl.h>
-#include <wine/windef16.h>
 
-struct _SECURITY_ATTRIBUTES;
 struct tagSYSLEVEL;
-struct server_buffer_info;
-struct fiber_data;
 
 struct debug_info
 {
@@ -99,7 +95,7 @@ typedef struct _TEB
     DWORD        vm86_pending;   /* --3 230 Data for vm86 mode */
     void        *vm86_ptr;       /* --3 234 Data for vm86 mode */
     WORD         stack_sel;      /* --3 238 16-bit stack selector */
-    HTASK16      htask16;        /* --3 23a Win16 task handle */
+    WORD         htask16;        /* --3 23a Win16 task handle */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
