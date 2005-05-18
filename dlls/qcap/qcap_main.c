@@ -195,7 +195,7 @@ HRESULT WINAPI QCAP_DllCanUnloadNow(void)
 {
     TRACE("\n");
 
-    if (objects_ref == 0 || server_locks == 0)
+    if (objects_ref == 0 && server_locks == 0)
         return S_OK;
     return S_FALSE;	
 }

@@ -58,6 +58,7 @@ HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** pp
     pEnumPins->uIndex = 0;
     CopyMemory(&pEnumPins->enumPinDetails, pDetails, sizeof(ENUMPINDETAILS));
     *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
+    ObjectRefCount(TRUE);
     return S_OK;
 }
 
@@ -103,10 +104,9 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
     if (!refCount)
     {
         CoTaskMemFree(This);
-        return 0;
+        ObjectRefCount(FALSE);
     }
-    else
-        return refCount;
+    return refCount;
 }
 
 static HRESULT WINAPI IEnumPinsImpl_Next(IEnumPins * iface, ULONG cPins, IPin ** ppPins, ULONG * pcFetched)
