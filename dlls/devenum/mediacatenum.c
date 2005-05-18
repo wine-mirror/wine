@@ -25,6 +25,7 @@
 #include "devenum_private.h"
 #include "vfwmsgs.h"
 #include "oleauto.h"
+#include "ocidl.h"
 
 #include "wine/debug.h"
 
@@ -431,7 +432,18 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_BindToObject(
     if (pObj!=NULL)
     {
         /* get the requested interface from the loaded class */
-        res= IUnknown_QueryInterface(pObj,riidResult,ppvResult);
+        res = S_OK;
+        if (pProp) {
+           HRESULT res2;
+           LPVOID ppv = NULL;
+           res2 = IUnknown_QueryInterface(pObj, &IID_IPersistPropertyBag, &ppv);
+           if (SUCCEEDED(res2)) {
+              res = IPersistPropertyBag_Load((IPersistPropertyBag *) ppv, pProp, NULL);
+              IPersistPropertyBag_Release((IPersistPropertyBag *) ppv);
+           }
+        }
+        if (SUCCEEDED(res))
+           res= IUnknown_QueryInterface(pObj,riidResult,ppvResult);
         IUnknown_Release(pObj);
     }
 
