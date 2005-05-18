@@ -224,6 +224,7 @@ typedef struct tagLISTVIEW_INFO
   HIMAGELIST himlState;
   BOOL bLButtonDown;
   BOOL bRButtonDown;
+  POINT ptClickPos;         /* point where the user clicked */ 
   BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
   INT nItemHeight;
   INT nItemWidth;
@@ -393,6 +394,7 @@ static INT LISTVIEW_GetTopIndex(LISTVIEW_INFO *);
 static BOOL LISTVIEW_EnsureVisible(LISTVIEW_INFO *, INT, BOOL);
 static HWND CreateEditLabelT(LISTVIEW_INFO *, LPCWSTR, DWORD, INT, INT, INT, INT, BOOL);
 static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *, INT, HIMAGELIST);
+static INT LISTVIEW_HitTest(LISTVIEW_INFO *, LPLVHITTESTINFO, BOOL, BOOL);
 
 /******** Text handling functions *************************************/
 
@@ -3183,7 +3185,29 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, INT x, I
  */
 static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
-  TRACKMOUSEEVENT trackinfo;
+    TRACKMOUSEEVENT trackinfo;
+    LVHITTESTINFO lvHitTestInfo;
+    INT nItem;
+
+    if (infoPtr->bLButtonDown)
+    {
+        lvHitTestInfo.pt = infoPtr->ptClickPos;
+        nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
+
+        if (DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
+        {
+            NMLISTVIEW nmlv;
+
+            ZeroMemory(&nmlv, sizeof(nmlv));
+            nmlv.iItem = nItem;
+            nmlv.ptAction.x = infoPtr->ptClickPos.x;
+            nmlv.ptAction.y = infoPtr->ptClickPos.y;
+
+            notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
+
+            return 0;
+        }
+    } 
 
   /* see if we are supposed to be tracking mouse hovering */
   if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT) {
@@ -7901,68 +7925,6 @@ static LRESULT LISTVIEW_KillFocus(LISTVIEW_INFO *infoPtr)
     return 0;
 }
 
-
-/***
- * DESCRIPTION:
- * Track mouse/dragging
- *
- * PARAMETER(S):
- * [I] infoPtr : valid pointer to the listview structure
- * [I] pt : mouse coordinate
- *
- * RETURN:
- * Zero
- */
-static LRESULT LISTVIEW_TrackMouse(LISTVIEW_INFO *infoPtr, POINT pt)
-{
-    INT cxDrag = GetSystemMetrics(SM_CXDRAG);
-    INT cyDrag = GetSystemMetrics(SM_CYDRAG);
-    RECT r;
-    MSG msg;
-
-    TRACE("\n");
-
-    r.top = pt.y - cyDrag;
-    r.left = pt.x - cxDrag;
-    r.bottom = pt.y + cyDrag;
-    r.right = pt.x + cxDrag;
-
-    SetCapture(infoPtr->hwndSelf);
-
-    while (1)
-    {
-	if (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE | PM_NOYIELD))
-	{
-	    if (msg.message == WM_MOUSEMOVE)
-	    {
-		pt.x = (short)LOWORD(msg.lParam);
-		pt.y = (short)HIWORD(msg.lParam);
-		if (PtInRect(&r, pt))
-		    continue;
-		else
-		{
-		    ReleaseCapture();
-		    return 1;
-		}
-	    }
-	    else if (msg.message >= WM_LBUTTONDOWN &&
-		     msg.message <= WM_RBUTTONDBLCLK)
-	    {
-		break;
-	    }
-
-	    DispatchMessageW(&msg);
-	}
-
-	if (GetCapture() != infoPtr->hwndSelf)
-	    return 0;
-    }
-
-    ReleaseCapture();
-    return 0;
-}
-
-
 /***
  * DESCRIPTION:
  * Processes double click messages (left mouse button).
@@ -8023,8 +7985,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
 
   if (!infoPtr->bFocus) SetFocus(infoPtr->hwndSelf);
 
-  /* set left button down flag */
+  /* set left button down flag and record the click position */
   infoPtr->bLButtonDown = TRUE;
+  infoPtr->ptClickPos = pt;
 
   lvHitTestInfo.pt.x = x;
   lvHitTestInfo.pt.y = y;
@@ -8045,19 +8008,6 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
             lvitem.stateMask = LVIS_STATEIMAGEMASK;
             LISTVIEW_SetItemState(infoPtr, nItem, &lvitem);
         }
-        return 0;
-    }
-    if (LISTVIEW_TrackMouse(infoPtr, lvHitTestInfo.pt))
-    {
-        NMLISTVIEW nmlv;
-
-	ZeroMemory(&nmlv, sizeof(nmlv));
-        nmlv.iItem = nItem;
-        nmlv.ptAction.x = lvHitTestInfo.pt.x;
-        nmlv.ptAction.y = lvHitTestInfo.pt.y;
-
-        notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
-
         return 0;
     }
 
