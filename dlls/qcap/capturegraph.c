@@ -47,9 +47,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(quartz);
-
-static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
+WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 /***********************************************************************
 *   ICaptureGraphBuilder & ICaptureGraphBuilder2 implementation
@@ -104,6 +102,7 @@ IUnknown * CALLBACK QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter,
         pCapture->mygraph = NULL;
         InitializeCriticalSection(&pCapture->csFilter);
         *phr = S_OK;
+        ObjectRefCount(TRUE);
     }
     return (IUnknown *)pCapture;
 }
@@ -163,10 +162,9 @@ fnCaptureGraphBuilder2_Release(ICaptureGraphBuilder2 * iface)
         if (This->mygraph != NULL)
             IGraphBuilder_Release((IGraphBuilder *)This->mygraph);
         CoTaskMemFree(This);
-        return 0;
+        ObjectRefCount(FALSE);
     }
-    else
-        return ref;
+    return ref;
 }
 
 static HRESULT WINAPI
@@ -181,7 +179,7 @@ fnCaptureGraphBuilder2_SetFilterGraph(ICaptureGraphBuilder2 * iface,
 
     TRACE("(%p/%p)->(%p)\n", This, iface, pfg);
 
-    if (!This->mygraph)
+    if (This->mygraph)
         return E_UNEXPECTED;
 
     if (!pfg)
@@ -364,7 +362,7 @@ fnCaptureGraphBuilder_QueryInterface(ICaptureGraphBuilder * iface,
                                      REFIID riid, LPVOID * ppv)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return IUnknown_QueryInterface(_ICaptureGraphBuilder2_(This), riid, ppv);
 }
 
@@ -372,7 +370,7 @@ static ULONG WINAPI
 fnCaptureGraphBuilder_AddRef(ICaptureGraphBuilder * iface)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return IUnknown_AddRef(_ICaptureGraphBuilder2_(This));
 }
 
@@ -380,7 +378,7 @@ static ULONG WINAPI
 fnCaptureGraphBuilder_Release(ICaptureGraphBuilder * iface)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return IUnknown_Release(_ICaptureGraphBuilder2_(This));
 }
 
@@ -389,7 +387,7 @@ fnCaptureGraphBuilder_SetFiltergraph(ICaptureGraphBuilder * iface,
                                      IGraphBuilder *pfg)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_SetFiltergraph(_ICaptureGraphBuilder2_(This), pfg);
 }
 
@@ -398,7 +396,7 @@ fnCaptureGraphBuilder_GetFiltergraph(ICaptureGraphBuilder * iface,
                                      IGraphBuilder **pfg)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_GetFiltergraph(_ICaptureGraphBuilder2_(This), pfg);
 }
 
@@ -408,7 +406,7 @@ fnCaptureGraphBuilder_SetOutputFileName(ICaptureGraphBuilder * iface,
                                         IBaseFilter **ppf, IFileSinkFilter **ppSink)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_SetOutputFileName(_ICaptureGraphBuilder2_(This),
                                                    pType, lpstrFile, ppf, ppSink);
 }
@@ -419,7 +417,7 @@ fnCaptureGraphBuilder_FindInterface(ICaptureGraphBuilder * iface,
                                     REFIID riid, void **ppint)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_FindInterface(_ICaptureGraphBuilder2_(This),
                                                pCategory, NULL, pf, riid, ppint);
 }
@@ -430,7 +428,7 @@ fnCaptureGraphBuilder_RenderStream(ICaptureGraphBuilder * iface,
                                    IBaseFilter *pfCompressor, IBaseFilter *pfRenderer)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_RenderStream(_ICaptureGraphBuilder2_(This),
                                               pCategory, NULL, pSource,
                                               pfCompressor, pfRenderer);
@@ -443,7 +441,7 @@ fnCaptureGraphBuilder_ControlStream(ICaptureGraphBuilder * iface,
                                     WORD wStartCookie, WORD wStopCookie)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_ControlStream(_ICaptureGraphBuilder2_(This),
                                                pCategory, NULL, pFilter, pstart, 
                                                pstop, wStartCookie, wStopCookie);
@@ -454,7 +452,7 @@ fnCaptureGraphBuilder_AllocCapFile(ICaptureGraphBuilder * iface,
                                    LPCOLESTR lpstr, DWORDLONG dwlSize)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_AllocCapFile(_ICaptureGraphBuilder2_(This),
                                               lpstr, dwlSize);
 }
@@ -466,7 +464,7 @@ fnCaptureGraphBuilder_CopyCaptureFile(ICaptureGraphBuilder * iface,
                                       IAMCopyCaptureFileProgress *pCallback)
 {
     _ICOM_THIS_From_ICaptureGraphBuilder(CaptureGraphImpl, iface);
-
+    TRACE("%p --> Forwarding to v2 (%p)\n", iface, This);
     return ICaptureGraphBuilder2_CopyCaptureFile(_ICaptureGraphBuilder2_(This),
                                                  lpwstrOld, lpwstrNew,
                                                  fAllowEscAbort, pCallback);
