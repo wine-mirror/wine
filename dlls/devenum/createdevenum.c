@@ -30,6 +30,7 @@
 #include "vfw.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 #include "mmddk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(devenum);
@@ -420,13 +421,17 @@ static HRESULT DEVENUM_CreateSpecialCategories()
         if (SUCCEEDED(res))
             for (i = 0; i < 10; i++)
             {
-                WCHAR szDeviceName[80], szDeviceVersion[80];
+                WCHAR szDeviceName[32], szDeviceVersion[32], szDevicePath[10];
 
                 if (capGetDriverDescriptionW ((WORD) i,
                                               szDeviceName, sizeof(szDeviceName)/sizeof(WCHAR),
                                               szDeviceVersion, sizeof(szDeviceVersion)/sizeof(WCHAR)))
                 {
                     IMoniker * pMoniker = NULL;
+                    IPropertyBag * pPropBag = NULL;
+                    WCHAR dprintf[] = { 'v','i','d','e','o','%','d',0 };
+                    snprintfW(szDevicePath, sizeof(szDevicePath)/sizeof(WCHAR), dprintf, i);
+                    /* The above code prevents 1 device with a different ID overwriting another */
 
                     rfp2.nMediaTypes = 1;
                     pTypes = CoTaskMemAlloc(rfp2.nMediaTypes * sizeof(REGPINTYPES));
@@ -436,7 +441,7 @@ static HRESULT DEVENUM_CreateSpecialCategories()
                     }
 
                     pTypes[0].clsMajorType = &MEDIATYPE_Video;
-                    pTypes[0].clsMinorType = &MEDIASUBTYPE_RGB24;
+                    pTypes[0].clsMinorType = &MEDIASUBTYPE_None;
 
                     rfp2.lpMediaType = pTypes;
 
@@ -445,11 +450,19 @@ static HRESULT DEVENUM_CreateSpecialCategories()
                                                         szDeviceName,
                                                         &pMoniker,
                                                         &CLSID_VideoInputDeviceCategory,
-                                                        szDeviceName,
+                                                        szDevicePath,
                                                         &rf2);
 
-                    /* FIXME: do additional stuff with IMoniker here, depending on what RegisterFilter does */
-                    if (pMoniker) IMoniker_Release(pMoniker);
+                    if (pMoniker) {
+                       OLECHAR wszVfwIndex[] = { 'V','F','W','I','n','d','e','x',0 };
+                       VARIANT var;
+                       V_VT(&var) = VT_I4;
+                       V_UNION(&var, ulVal) = (ULONG)i;
+                       res = IMoniker_BindToStorage(pMoniker, NULL, NULL, &IID_IPropertyBag, (LPVOID)&pPropBag);
+                       if (SUCCEEDED(res))
+                          res = IPropertyBag_Write(pPropBag, wszVfwIndex, &var);
+                       IMoniker_Release(pMoniker);
+                    }
 
                     if (i == iDefaultDevice) FIXME("Default device\n");
                     CoTaskMemFree(pTypes);

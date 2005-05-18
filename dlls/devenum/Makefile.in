@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = devenum.dll
 IMPORTLIB = libdevenum.$(IMPLIBEXT)
 IMPORTS   = ole32 oleaut32 avicap32 winmm user32 advapi32 kernel32
-EXTRALIBS = -lstrmiids -luuid
+EXTRALIBS = -lstrmiids -luuid $(LIBUNICODE)
 
 C_SRCS = \
 	createdevenum.c \
