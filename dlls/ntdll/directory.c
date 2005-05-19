@@ -276,6 +276,27 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
 }
 #endif
 
+#ifdef __FreeBSD__
+#include <fstab.h>
+static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
+{
+    struct fstab *entry;
+    struct stat st;
+
+    while ((entry = getfsent()))
+    {
+        /* don't even bother stat'ing network mounts, there's no meaningful device anyway */
+        if (!strcmp( entry->fs_vfstype, "nfs" ) ||
+            !strcmp( entry->fs_vfstype, "smbfs" ) ||
+            !strcmp( entry->fs_vfstype, "ncpfs" )) continue;
+
+        if (stat( entry->fs_file, &st ) == -1) continue;
+        if (st.st_dev != dev || st.st_ino != ino) continue;
+        return entry->fs_spec;
+    }
+}
+#endif
+
 #ifdef sun
 #include <sys/mnttab.h>
 static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
@@ -350,6 +371,34 @@ static char *get_default_drive_device( const char *root )
         device = parse_mount_entries( f, st.st_dev, st.st_ino );
         endmntent( f );
     }
+    if (device)
+    {
+        ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
+        if (ret) strcpy( ret, device );
+    }
+    RtlLeaveCriticalSection( &dir_section );
+
+#elif defined( __FreeBSD__ )
+    char *device = NULL;
+    int fd, res = -1;
+    struct stat st;
+
+    /* try to open it first to force it to get mounted */
+    if ((fd = open( root, O_RDONLY )) != -1)
+    {
+        res = fstat( fd, &st );
+        close( fd );
+    }
+    /* now try normal stat just in case */
+    if (res == -1) res = stat( root, &st );
+    if (res == -1) return NULL;
+
+    RtlEnterCriticalSection( &dir_section );
+
+    /* The FreeBSD parse_mount_entries doesn't require a file argument, so just
+     * pass NULL.  Leave the argument in for symmetry.
+     */
+    device = parse_mount_entries( NULL, st.st_dev, st.st_ino );
     if (device)
     {
         ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
