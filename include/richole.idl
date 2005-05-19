@@ -88,6 +88,8 @@ cpp_quote("#endif /* __RICHEDIT_CHARRANGE_DEFINED */");
 ]
 interface IRichEditOle : IUnknown
 {
+    typedef [unique] IRichEditOle *LPRICHEDITOLE;
+
     HRESULT GetClientSite(LPOLECLIENTSITE *lplpolesite);
     HRESULT GetObjectCount();
     HRESULT GetLinkCount();
@@ -116,6 +118,8 @@ interface IRichEditOle : IUnknown
 ]
 interface IRichEditOleCallback : IUnknown
 {
+    typedef [unique] IRichEditOleCallback *LPRICHEDITOLECALLBACK;
+
     HRESULT GetNewStorage(LPSTORAGE *lplpstg);
     HRESULT GetInPlaceContext(LPOLEINPLACEFRAME *lplpFrame, LPOLEINPLACEUIWINDOW *lplpDoc, LPOLEINPLACEFRAMEINFO lpFrameInfo);
     HRESULT ShowContainerUI(BOOL fShow);
