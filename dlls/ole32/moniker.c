@@ -804,3 +804,170 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(RunObject* TabMoniker,
 
     return S_OK;
 }
+
+
+/* Shared implementation of moniker marshaler based on saving and loading of
+ * monikers */
+
+#define ICOM_THIS_From_IMoniker(class, name) class* This = (class*)(((char*)name)-FIELD_OFFSET(class, lpVtblMarshal))
+
+typedef struct MonikerMarshal
+{
+    const IUnknownVtbl *lpVtbl;
+    const IMarshalVtbl *lpVtblMarshal;
+    
+    ULONG ref;
+    IMoniker *moniker;
+} MonikerMarshal;
+
+static HRESULT WINAPI MonikerMarshalInner_QueryInterface(IUnknown *iface, REFIID riid, LPVOID *ppv)
+{
+    MonikerMarshal *This = (MonikerMarshal *)iface;
+    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+    *ppv = NULL;
+    if (IsEqualIID(&IID_IUnknown, riid) || IsEqualIID(&IID_IMarshal, riid))
+    {
+        *ppv = &This->lpVtblMarshal;
+        IUnknown_AddRef((IUnknown *)&This->lpVtblMarshal);
+        return S_OK;
+    }
+    FIXME("No interface for %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MonikerMarshalInner_AddRef(IUnknown *iface)
+{
+    MonikerMarshal *This = (MonikerMarshal *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI MonikerMarshalInner_Release(IUnknown *iface)
+{
+    MonikerMarshal *This = (MonikerMarshal *)iface;
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref) HeapFree(GetProcessHeap(), 0, This);
+    return ref;
+}
+
+static const IUnknownVtbl VT_MonikerMarshalInner =
+{
+    MonikerMarshalInner_QueryInterface,
+    MonikerMarshalInner_AddRef,
+    MonikerMarshalInner_Release
+};
+
+static HRESULT WINAPI MonikerMarshal_QueryInterface(IMarshal *iface, REFIID riid, LPVOID *ppv)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+    return IMoniker_QueryInterface(This->moniker, riid, ppv);
+}
+
+static ULONG WINAPI MonikerMarshal_AddRef(IMarshal *iface)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+    return IMoniker_AddRef(This->moniker);
+}
+
+static ULONG WINAPI MonikerMarshal_Release(IMarshal *iface)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+    return IMoniker_Release(This->moniker);
+}
+
+static HRESULT WINAPI MonikerMarshal_GetUnmarshalClass(
+  LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
+  void* pvDestContext, DWORD mshlflags, CLSID* pCid)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+
+    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags, pCid);
+
+    return IMoniker_GetClassID(This->moniker, pCid);
+}
+
+static HRESULT WINAPI MonikerMarshal_GetMarshalSizeMax(
+  LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
+  void* pvDestContext, DWORD mshlflags, DWORD* pSize)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+    HRESULT hr;
+    ULARGE_INTEGER size;
+
+    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags, pSize);
+
+    hr = IMoniker_GetSizeMax(This->moniker, &size);
+    if (hr == S_OK)
+        *pSize = (DWORD)size.QuadPart;
+    return hr;
+}
+
+static HRESULT WINAPI MonikerMarshal_MarshalInterface(LPMARSHAL iface, IStream *pStm, 
+    REFIID riid, void* pv, DWORD dwDestContext,
+    void* pvDestContext, DWORD mshlflags)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+
+    TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStm, debugstr_guid(riid), pv,
+        dwDestContext, pvDestContext, mshlflags);
+
+    return IMoniker_Save(This->moniker, pStm, FALSE);
+}
+
+static HRESULT WINAPI MonikerMarshal_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv)
+{
+    ICOM_THIS_From_IMoniker(MonikerMarshal, iface);
+    HRESULT hr;
+
+    TRACE("(%p, %s, %p)\n", pStm, debugstr_guid(riid), ppv);
+
+    hr = IMoniker_Load(This->moniker, pStm);
+    if (hr == S_OK)
+        hr = IMoniker_QueryInterface(This->moniker, riid, ppv);
+    return hr;
+}
+
+static HRESULT WINAPI MonikerMarshal_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm)
+{
+    TRACE("()\n");
+    /* can't release a state-based marshal as nothing on server side to
+     * release */
+    return S_OK;
+}
+
+static HRESULT WINAPI MonikerMarshal_DisconnectObject(LPMARSHAL iface, DWORD dwReserved)
+{
+    TRACE("()\n");
+    /* can't disconnect a state-based marshal as nothing on server side to
+     * disconnect from */
+    return S_OK;
+}
+
+static const IMarshalVtbl VT_MonikerMarshal =
+{
+    MonikerMarshal_QueryInterface,
+    MonikerMarshal_AddRef,
+    MonikerMarshal_Release,
+    MonikerMarshal_GetUnmarshalClass,
+    MonikerMarshal_GetMarshalSizeMax,
+    MonikerMarshal_MarshalInterface,
+    MonikerMarshal_UnmarshalInterface,
+    MonikerMarshal_ReleaseMarshalData,
+    MonikerMarshal_DisconnectObject
+};
+
+HRESULT MonikerMarshal_Create(IMoniker *inner, IUnknown **outer)
+{
+    MonikerMarshal *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->lpVtbl = &VT_MonikerMarshalInner;
+    This->lpVtblMarshal = &VT_MonikerMarshal;
+    This->ref = 1;
+    This->moniker = inner;
+
+    *outer = (IUnknown *)&This->lpVtbl;
+    return S_OK;
+}

@@ -57,6 +57,7 @@ typedef struct FileMonikerImpl{
 
     LPOLESTR filePathName; /* path string identified by this filemoniker */
 
+    IUnknown *pMarshal; /* custom marshaler */
 } FileMonikerImpl;
 
 /* Local function used by filemoniker implementation */
@@ -90,6 +91,15 @@ FileMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
 
     else if (IsEqualIID(&IID_IROTData, riid))
         *ppvObject = (IROTData*)&(This->lpvtbl2);
+    else if (IsEqualIID(&IID_IMarshal, riid))
+    {
+        HRESULT hr = S_OK;
+        if (!This->pMarshal)
+            hr = MonikerMarshal_Create(iface, &This->pMarshal);
+        if (hr != S_OK)
+            return hr;
+        return IUnknown_QueryInterface(This->pMarshal, riid, ppvObject);
+    }
 
     /* Check that we obtained an interface.*/
     if ((*ppvObject)==0)
@@ -386,6 +396,7 @@ HRESULT WINAPI FileMonikerImpl_Destroy(FileMonikerImpl* This)
 {
     TRACE("(%p)\n",This);
 
+    if (This->pMarshal) IUnknown_Release(This->pMarshal);
     HeapFree(GetProcessHeap(),0,This->filePathName);
     HeapFree(GetProcessHeap(),0,This);
 
@@ -1244,6 +1255,7 @@ FileMonikerImpl_Construct(FileMonikerImpl* This, LPCOLESTR lpszPathName)
     This->lpvtbl1      = &VT_FileMonikerImpl;
     This->lpvtbl2      = &VT_ROTDataImpl;
     This->ref          = 0;
+    This->pMarshal     = NULL;
 
     This->filePathName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr+1));
 
@@ -1328,4 +1340,76 @@ HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER * ppmk)
         HeapFree(GetProcessHeap(),0,newFileMoniker);
 
     return hr;
+}
+
+static HRESULT WINAPI FileMonikerCF_QueryInterface(LPCLASSFACTORY iface,
+                                                  REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI FileMonikerCF_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap based object */
+}
+
+static ULONG WINAPI FileMonikerCF_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap based object */
+}
+
+static HRESULT WINAPI FileMonikerCF_CreateInstance(LPCLASSFACTORY iface,
+    LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv)
+{
+    FileMonikerImpl* newFileMoniker;
+    HRESULT  hr;
+    static const WCHAR wszEmpty[] = { 0 };
+
+    TRACE("(%p, %s, %p)\n", pUnk, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnk)
+        return CLASS_E_NOAGGREGATION;
+
+    newFileMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(FileMonikerImpl));
+    if (!newFileMoniker)
+        return E_OUTOFMEMORY;
+
+    hr = FileMonikerImpl_Construct(newFileMoniker, wszEmpty);
+
+    if (SUCCEEDED(hr))
+	hr = FileMonikerImpl_QueryInterface((IMoniker*)newFileMoniker, riid, ppv);
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(),0,newFileMoniker);
+
+    return hr;
+}
+
+static HRESULT WINAPI FileMonikerCF_LockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl FileMonikerCFVtbl =
+{
+    FileMonikerCF_QueryInterface,
+    FileMonikerCF_AddRef,
+    FileMonikerCF_Release,
+    FileMonikerCF_CreateInstance,
+    FileMonikerCF_LockServer
+};
+static const IClassFactoryVtbl *FileMonikerCF = &FileMonikerCFVtbl;
+
+HRESULT FileMonikerCF_Create(REFIID riid, LPVOID *ppv)
+{
+    return IClassFactory_QueryInterface((IClassFactory *)&FileMonikerCF, riid, ppv);
 }

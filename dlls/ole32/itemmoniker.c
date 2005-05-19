@@ -58,6 +58,7 @@ typedef struct ItemMonikerImpl{
 
     LPOLESTR itemDelimiter; /* Delimiter string */
 
+    IUnknown *pMarshal; /* custom marshaler */
 } ItemMonikerImpl;
 
 /********************************************************************************/
@@ -175,6 +176,15 @@ HRESULT WINAPI ItemMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void**
 
     else if (IsEqualIID(&IID_IROTData, riid))
         *ppvObject = (IROTData*)&(This->lpvtbl2);
+    else if (IsEqualIID(&IID_IMarshal, riid))
+    {
+        HRESULT hr = S_OK;
+        if (!This->pMarshal)
+            hr = MonikerMarshal_Create(iface, &This->pMarshal);
+        if (hr != S_OK)
+            return hr;
+        return IUnknown_QueryInterface(This->pMarshal, riid, ppvObject);
+    }
 
   /* Check that we obtained an interface.*/
     if ((*ppvObject)==0)
@@ -391,6 +401,7 @@ HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDe
     This->lpvtbl1      = &VT_ItemMonikerImpl;
     This->lpvtbl2      = &VT_ROTDataImpl;
     This->ref          = 0;
+    This->pMarshal     = NULL;
 
     This->itemName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr1+1));
     if (!This->itemName)
@@ -419,6 +430,7 @@ HRESULT WINAPI ItemMonikerImpl_Destroy(ItemMonikerImpl* This)
 {
     TRACE("(%p)\n",This);
 
+    if (This->pMarshal) IUnknown_Release(This->pMarshal);
     HeapFree(GetProcessHeap(),0,This->itemName);
     HeapFree(GetProcessHeap(),0,This->itemDelimiter);
     HeapFree(GetProcessHeap(),0,This);
@@ -1007,4 +1019,76 @@ HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim,LPCOLESTR  lpszItem, LPMONI
     }
 
     return ItemMonikerImpl_QueryInterface((IMoniker*)newItemMoniker,&IID_IMoniker,(void**)ppmk);
+}
+
+static HRESULT WINAPI ItemMonikerCF_QueryInterface(LPCLASSFACTORY iface,
+                                                  REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ItemMonikerCF_AddRef(LPCLASSFACTORY iface)
+{
+    return 2; /* non-heap based object */
+}
+
+static ULONG WINAPI ItemMonikerCF_Release(LPCLASSFACTORY iface)
+{
+    return 1; /* non-heap based object */
+}
+
+static HRESULT WINAPI ItemMonikerCF_CreateInstance(LPCLASSFACTORY iface,
+    LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv)
+{
+    ItemMonikerImpl* newItemMoniker;
+    HRESULT  hr;
+    static const WCHAR wszEmpty[] = { 0 };
+
+    TRACE("(%p, %s, %p)\n", pUnk, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if (pUnk)
+        return CLASS_E_NOAGGREGATION;
+
+    newItemMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(ItemMonikerImpl));
+    if (!newItemMoniker)
+        return E_OUTOFMEMORY;
+
+    hr = ItemMonikerImpl_Construct(newItemMoniker, wszEmpty, wszEmpty);
+
+    if (SUCCEEDED(hr))
+	hr = ItemMonikerImpl_QueryInterface((IMoniker*)newItemMoniker, riid, ppv);
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(),0,newItemMoniker);
+
+    return hr;
+}
+
+static HRESULT WINAPI ItemMonikerCF_LockServer(LPCLASSFACTORY iface, BOOL fLock)
+{
+    FIXME("(%d), stub!\n",fLock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ItemMonikerCFVtbl =
+{
+    ItemMonikerCF_QueryInterface,
+    ItemMonikerCF_AddRef,
+    ItemMonikerCF_Release,
+    ItemMonikerCF_CreateInstance,
+    ItemMonikerCF_LockServer
+};
+static const IClassFactoryVtbl *ItemMonikerCF = &ItemMonikerCFVtbl;
+
+HRESULT ItemMonikerCF_Create(REFIID riid, LPVOID *ppv)
+{
+    return IClassFactory_QueryInterface((IClassFactory *)&ItemMonikerCF, riid, ppv);
 }
