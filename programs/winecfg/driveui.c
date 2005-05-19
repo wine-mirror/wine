@@ -96,19 +96,18 @@ static void lv_get_item(HWND dialog, LVITEM *item)
 static void set_advanced(HWND dialog)
 {
     int state;
-    char *text;
+    char text[256];
     RECT rect;
 
-    /* FIXME: internationalization  */
     if (advanced)
     {
         state = SW_NORMAL;
-        text = "&Hide Advanced";
+        LoadString(GetModuleHandle(NULL), IDS_SHOW_ADVANCED, text, 256);
     }
     else
     {
         state = SW_HIDE;
-        text = "&Show Advanced";
+        LoadString(GetModuleHandle(NULL), IDS_HIDE_ADVANCED, text, 256);
     }
 
     ShowWindow(GetDlgItem(dialog, IDC_RADIO_AUTODETECT), state);
