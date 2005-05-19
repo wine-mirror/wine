@@ -749,7 +749,7 @@ static UINT MSI_GetPropertyRow(MSIPACKAGE *package, LPCWSTR szName, MSIRECORD **
     static const WCHAR select[]=
     {'s','e','l','e','c','t',' ','V','a','l','u','e',' ','f','r','o','m',' '
      ,'_','P','r','o','p','e','r','t','y',' ','w','h','e','r','e',' '
-     ,'_','P','r','o','p','e','r','t','y','=','`','%','s','`',0};
+     ,'_','P','r','o','p','e','r','t','y','=','\'','%','s','\'',0};
     LPWSTR query;
 
     if (!szName)

@@ -359,10 +359,8 @@ void test_msibadqueries()
     r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY)");
     ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2i return code\n");
 
-    todo_wine {
     r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY 'b')");
     ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2j return code\n");
-    }
 
     r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b')");
     ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2k return code\n");
@@ -385,10 +383,8 @@ void test_msibadqueries()
     r = try_query( hdb, "CREATE TABLE `a` (`` CHAR(72) NOT NULL PRIMARY KEY `b`)");
     ok(r == ERROR_BAD_QUERY_SYNTAX , "invalid query 2p return code\n");
 
-    todo_wine {
     r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b`)");
     ok(r == ERROR_SUCCESS , "valid query 2z failed\n");
-    }
 
     r = try_query( hdb, "CREATE TABLE `a` (`b` CHAR(72) NOT NULL PRIMARY KEY `b`)");
     ok(r == ERROR_BAD_QUERY_SYNTAX , "created same table again\n");

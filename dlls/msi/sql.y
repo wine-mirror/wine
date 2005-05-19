@@ -127,7 +127,7 @@ static struct expr * EXPR_wildcard();
 %nonassoc END_OF_FILE ILLEGAL SPACE UNCLOSED_STRING COMMENT FUNCTION
           COLUMN AGG_FUNCTION.
 
-%type <string> column table string_or_id
+%type <string> column table id
 %type <column_list> selcollist
 %type <query> from unorderedsel oneselect onequery onecreate oneinsert
 %type <query> oneupdate onedelete
@@ -583,29 +583,25 @@ column_val:
     ;
 
 column:
-    table TK_DOT string_or_id
+    table TK_DOT id
         {
             $$ = $3;  /* FIXME */
         }
-  | string_or_id
+  | id
         {
             $$ = $1;
         }
     ;
 
 table:
-    string_or_id
+    id
         {
             $$ = $1;
         }
     ;
 
-string_or_id:
+id:
     TK_ID
-        {
-            $$ = SQL_getstring( &$1 );
-        }
-  | TK_STRING
         {
             $$ = SQL_getstring( &$1 );
         }
