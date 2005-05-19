@@ -32,7 +32,7 @@
 #include "winuser.h"
 #include "wownt32.h"
 #include "winreg.h"
-#include "local.h"
+#include "winternl.h"
 #include "gdi.h" /* sic */
 #include "wine/debug.h"
 
@@ -105,14 +105,19 @@ static void SYSCOLOR_MakeObjectSystem( HGDIOBJ16 handle, BOOL set)
     if (!heap_sel) heap_sel = LoadLibrary16( "gdi" );
     if (heap_sel >= 32)
     {
-        ptr = (LPWORD)LOCAL_Lock(heap_sel, handle);
+        STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+        HANDLE16 oldDS = stack16->ds;
+
+        stack16->ds = heap_sel;
+        ptr = MapSL(LocalLock16(handle));
 
         /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
         if (set)
             *ptr &= ~OBJECT_NOSYSTEM;
         else
             *ptr |= OBJECT_NOSYSTEM;
-        LOCAL_Unlock( heap_sel, handle );
+        LocalUnlock16( handle );
+        stack16->ds = oldDS;
     }
 }
 

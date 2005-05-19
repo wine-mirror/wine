@@ -28,9 +28,46 @@
 #include "winuser.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "local.h"
+#include "wine/windef16.h"
+#include "wine/winbase16.h"
 
 extern WORD USER_HeapSel;
+
+static inline HLOCAL16 LOCAL_Alloc( HANDLE16 ds, UINT16 flags, WORD size )
+{
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
+    HLOCAL16 ret;
+
+    stack16->ds = ds;
+    ret = LocalAlloc16 (flags, size);
+    stack16->ds = oldDS;
+    return ret;
+}
+
+static inline  HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, UINT16 flags )
+{
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
+    HLOCAL16 ret;
+
+    stack16->ds = ds;
+    ret = LocalReAlloc16 (handle, size, flags);
+    stack16->ds = oldDS;
+    return ret;
+}
+
+static inline HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
+{
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
+    HLOCAL16 ret;
+
+    stack16->ds = ds;
+    ret = LocalFree16 (handle);
+    stack16->ds = oldDS;
+    return ret;
+}
 
 #define USER_HEAP_ALLOC(size) \
             ((HANDLE)(ULONG_PTR)LOCAL_Alloc( USER_HeapSel, LMEM_FIXED, (size) ))

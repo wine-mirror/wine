@@ -35,7 +35,6 @@
 #include "win.h"
 #include "controls.h"
 #include "cursoricon.h"
-#include "local.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(user);
@@ -73,6 +72,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
  */
 WORD WINAPI GetFreeSystemResources16( WORD resType )
 {
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
     HINSTANCE16 gdi_inst;
     WORD gdi_heap;
     int userPercent, gdiPercent;
@@ -83,22 +84,25 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
     switch(resType)
     {
     case GFSR_USERRESOURCES:
-        userPercent = (int)LOCAL_CountFree( USER_HeapSel ) * 100 /
-                               LOCAL_HeapSize( USER_HeapSel );
+        stack16->ds = USER_HeapSel;
+        userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
         gdiPercent  = 100;
+        stack16->ds = oldDS;
         break;
 
     case GFSR_GDIRESOURCES:
-        gdiPercent  = (int)LOCAL_CountFree( gdi_inst ) * 100 /
-                               LOCAL_HeapSize( gdi_inst );
+        stack16->ds = gdi_inst;
+        gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
         userPercent = 100;
+        stack16->ds = oldDS;
         break;
 
     case GFSR_SYSTEMRESOURCES:
-        userPercent = (int)LOCAL_CountFree( USER_HeapSel ) * 100 /
-                               LOCAL_HeapSize( USER_HeapSel );
-        gdiPercent  = (int)LOCAL_CountFree( gdi_inst ) * 100 /
-                               LOCAL_HeapSize( gdi_inst );
+        stack16->ds = USER_HeapSel;
+        userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
+        stack16->ds = gdi_inst;
+        gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
+        stack16->ds = oldDS;
         break;
 
     default:
@@ -546,23 +550,33 @@ BOOL WINAPI EnumDisplayDevicesW(
  */
 DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
 {
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
+    DWORD ret = (DWORD)-1;
+
+    stack16->ds = USER_HeapSel;
     switch (wReqType)
     {
     case USUD_LOCALALLOC:
-        return LOCAL_Alloc(USER_HeapSel, wParam1, wParam3);
+        ret = LocalAlloc16(wParam1, wParam3);
+        break;
     case USUD_LOCALFREE:
-        return LOCAL_Free(USER_HeapSel, wParam1);
+        ret = LocalFree16(wParam1);
+        break;
     case USUD_LOCALCOMPACT:
-        return LOCAL_Compact(USER_HeapSel, wParam3);
+        ret = LocalCompact16(wParam3);
+        break;
     case USUD_LOCALHEAP:
-        return USER_HeapSel;
+        ret = USER_HeapSel;
+        break;
     case USUD_FIRSTCLASS:
         FIXME("return a pointer to the first window class.\n");
-        return (DWORD)-1;
+        break;
     default:
         WARN("wReqType %04x (unknown)\n", wReqType);
-        return (DWORD)-1;
     }
+    stack16->ds = oldDS;
+    return ret;
 }
 
 /***********************************************************************
