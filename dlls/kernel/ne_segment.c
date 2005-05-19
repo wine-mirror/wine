@@ -116,162 +116,58 @@ static const char *NE_GetRelocAddrName( BYTE addr_type, int additive )
 
 
 /***********************************************************************
- *           NE_LoadSegment
+ *           NE_OpenFile
  */
-BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
+static HFILE16 NE_OpenFile( NE_MODULE *pModule )
 {
-    SEGTABLEENTRY *pSegTable, *pSeg;
-    HMODULE16 *pModuleTable;
-    WORD count, i, offset, next_offset;
+    char *name = NE_MODULE_NAME( pModule );
+    HANDLE handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
+                                 NULL, OPEN_EXISTING, 0, 0 );
+
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        ERR( "Can't open file '%s' for module %04x\n", name, pModule->self );
+        return HFILE_ERROR;
+    }
+    return Win32HandleToDosFileHandle( handle );
+}
+
+
+/***********************************************************************
+ *           apply_relocations
+ *
+ * Apply relocations to a segment. Helper for NE_LoadSegment.
+ */
+static inline BOOL apply_relocations( NE_MODULE *pModule, const struct relocation_entry_s *rep,
+                                      int count, int segnum )
+{
+    BYTE *func_name;
+    char buffer[256];
+    int i, ordinal;
+    WORD offset, *sp;
     HMODULE16 module;
     FARPROC16 address = 0;
-    HANDLE hf;
-    DWORD res;
-    struct relocation_entry_s *rep, *reloc_entries;
-    BYTE *func_name;
-    int size;
-    char* mem;
-
-    char buffer[256];
-    int ordinal, additive;
-    unsigned short *sp;
-
-    pSegTable = NE_SEG_TABLE( pModule );
-    pSeg = pSegTable + segnum - 1;
-
-    if (pSeg->flags & NE_SEGFLAGS_LOADED)
-    {
-	/* self-loader ? -> already loaded it */
-	if (pModule->ne_flags & NE_FFLAGS_SELFLOAD)
-	    return TRUE;
-
-	/* leave, except for DGROUP, as this may be the second instance */
-	if (segnum != pModule->ne_autodata)
-            return TRUE;
-    }
-
-    if (!pSeg->filepos) return TRUE;  /* No file image, just return */
-
-    pModuleTable = (HMODULE16 *)((char *)pModule + pModule->ne_modtab);
-
-    hf = NE_OpenFile( pModule );
-    TRACE_(module)("Loading segment %d, hSeg=%04x, flags=%04x\n",
-                    segnum, pSeg->hSeg, pSeg->flags );
-    SetFilePointer( hf, pSeg->filepos << pModule->ne_align, NULL, SEEK_SET );
-    if (pSeg->size) size = pSeg->size;
-    else size = pSeg->minsize ? pSeg->minsize : 0x10000;
-    mem = GlobalLock16(pSeg->hSeg);
-    if (pModule->ne_flags & NE_FFLAGS_SELFLOAD && segnum > 1)
-    {
- 	/* Implement self-loading segments */
- 	SELFLOADHEADER *selfloadheader;
-        void *oldstack;
-        HANDLE hFile32;
-        HFILE16 hFile16;
-        WORD args[3];
-        DWORD ret;
-
- 	selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg),0) );
-        oldstack = NtCurrentTeb()->WOW32Reserved;
-        NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(pModule->self_loading_sel,
-                                                           0xff00 - sizeof(STACK16FRAME));
-
-	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=%p,segnum=%d\n",
-		pModule->self,hf,segnum );
-        DuplicateHandle( GetCurrentProcess(), hf, GetCurrentProcess(), &hFile32,
-                         0, FALSE, DUPLICATE_SAME_ACCESS );
-        hFile16 = Win32HandleToDosFileHandle( hFile32 );
-        args[2] = pModule->self;
-        args[1] = hFile16;
-        args[0] = segnum;
-        WOWCallback16Ex( (DWORD)selfloadheader->LoadAppSeg, WCB16_PASCAL, sizeof(args), args, &ret );
-        pSeg->hSeg = LOWORD(ret);
-	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
-        _lclose16( hFile16 );
-        NtCurrentTeb()->WOW32Reserved = oldstack;
-    }
-    else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
-        ReadFile(hf, mem, size, &res, NULL);
-    else {
-      /*
-	 The following bit of code for "iterated segments" was written without
-	 any documentation on the format of these segments. It seems to work,
-	 but may be missing something. If you have any doc please either send
-	 it to me or fix the code yourself. gfm@werple.mira.net.au
-      */
-      char* buff = HeapAlloc(GetProcessHeap(), 0, size);
-      char* curr = buff;
-
-      if(buff == NULL) {
-          WARN_(dll)("Memory exhausted!\n");
-          goto fail;
-      }
-
-      ReadFile(hf, buff, size, &res, NULL);
-      while(curr < buff + size) {
-	unsigned int rept = ((short*)curr)[0];
-	unsigned int len =  ((short*)curr)[1];
-
-	curr += 2*sizeof(short);
-	for(; rept > 0; rept--) {
-	  char* bytes = curr;
-	  unsigned int byte;
-	  for(byte = 0; byte < len; byte++)
-	    *mem++ = *bytes++;
-	}
-	curr += len;
-      }
-      HeapFree(GetProcessHeap(), 0, buff);
-    }
-
-    pSeg->flags |= NE_SEGFLAGS_LOADED;
-
-    /* Perform exported function prolog fixups */
-    NE_FixupSegmentPrologs( pModule, segnum );
-
-    if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
-        goto succeed;  /* No relocation data, we are done */
-
-    ReadFile(hf, &count, sizeof(count), &res, NULL);
-    if (!count) goto succeed;
-
-    TRACE("Fixups for %.*s, segment %d, hSeg %04x\n",
-          *((BYTE *)pModule + pModule->ne_restab),
-          (char *)pModule + pModule->ne_restab + 1,
-          segnum, pSeg->hSeg );
-
-    reloc_entries = HeapAlloc(GetProcessHeap(), 0, count * sizeof(struct relocation_entry_s));
-    if(reloc_entries == NULL) {
-        WARN("Not enough memory for relocation entries!\n");
-        goto fail;
-    }
-    if (!ReadFile( hf, reloc_entries, count * sizeof(struct relocation_entry_s), &res, NULL) ||
-        (res != count * sizeof(struct relocation_entry_s)))
-    {
-        WARN("Unable to read relocation information\n" );
-        goto fail;
-    }
+    HMODULE16 *pModuleTable = (HMODULE16 *)((char *)pModule + pModule->ne_modtab);
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+    SEGTABLEENTRY *pSeg = pSegTable + segnum - 1;
 
     /*
      * Go through the relocation table one entry at a time.
      */
-    rep = reloc_entries;
     for (i = 0; i < count; i++, rep++)
     {
-	/*
-	 * Get the target address corresponding to this entry.
-	 */
+        /*
+         * Get the target address corresponding to this entry.
+         */
 
-	/* If additive, there is no target chain list. Instead, add source
-	   and target */
-	additive = rep->relocation_type & NE_RELFLAG_ADDITIVE;
-	rep->relocation_type &= 0x3;
-
-	switch (rep->relocation_type)
-	{
-	  case NE_RELTYPE_ORDINAL:
+        /* If additive, there is no target chain list. Instead, add source
+           and target */
+        int additive = rep->relocation_type & NE_RELFLAG_ADDITIVE;
+        switch (rep->relocation_type & 3)
+        {
+        case NE_RELTYPE_ORDINAL:
             module = pModuleTable[rep->target1-1];
-	    ordinal = rep->target2;
+            ordinal = rep->target2;
             address = NE_GetEntryPoint( module, ordinal );
             if (!address)
             {
@@ -300,9 +196,9 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                        ordinal, HIWORD(address), LOWORD(address),
                        NE_GetRelocAddrName( rep->address_type, additive ) );
             }
-	    break;
+            break;
 
-	  case NE_RELTYPE_NAME:
+        case NE_RELTYPE_NAME:
             module = pModuleTable[rep->target1-1];
             func_name = (char *)pModule + pModule->ne_imptab + rep->target2;
             memcpy( buffer, func_name+1, *func_name );
@@ -321,51 +217,51 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             if (!address) address = (FARPROC16) 0xdeadbeef;
             if (TRACE_ON(fixup))
             {
-	        NE_MODULE *pTarget = NE_GetPtr( module );
+                NE_MODULE *pTarget = NE_GetPtr( module );
                 TRACE("%d: %.*s.%s=%04x:%04x %s\n", i + 1,
                        *((BYTE *)pTarget + pTarget->ne_restab),
                        (char *)pTarget + pTarget->ne_restab + 1,
                        func_name, HIWORD(address), LOWORD(address),
                        NE_GetRelocAddrName( rep->address_type, additive ) );
             }
-	    break;
+            break;
 
-	  case NE_RELTYPE_INTERNAL:
-	    if ((rep->target1 & 0xff) == 0xff)
-	    {
-		address  = NE_GetEntryPoint( pModule->self, rep->target2 );
-	    }
-	    else
-	    {
+        case NE_RELTYPE_INTERNAL:
+            if ((rep->target1 & 0xff) == 0xff)
+            {
+                address  = NE_GetEntryPoint( pModule->self, rep->target2 );
+            }
+            else
+            {
                 address = (FARPROC16)MAKESEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
-	    }
+            }
 
-	    TRACE("%d: %04x:%04x %s\n",
-                   i + 1, HIWORD(address), LOWORD(address),
-                   NE_GetRelocAddrName( rep->address_type, additive ) );
-	    break;
+            TRACE("%d: %04x:%04x %s\n",
+                  i + 1, HIWORD(address), LOWORD(address),
+                  NE_GetRelocAddrName( rep->address_type, additive ) );
+            break;
 
-	  case NE_RELTYPE_OSFIXUP:
-	    /* Relocation type 7:
-	     *
-	     *    These appear to be used as fixups for the Windows
-	     * floating point emulator.  Let's just ignore them and
-	     * try to use the hardware floating point.  Linux should
-	     * successfully emulate the coprocessor if it doesn't
-	     * exist.
-	     */
-	    TRACE("%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
-                   i + 1, rep->relocation_type, rep->offset,
-                   rep->target1, rep->target2,
-                   NE_GetRelocAddrName( rep->address_type, additive ) );
-	    continue;
-	}
+        case NE_RELTYPE_OSFIXUP:
+            /* Relocation type 7:
+             *
+             *    These appear to be used as fixups for the Windows
+             * floating point emulator.  Let's just ignore them and
+             * try to use the hardware floating point.  Linux should
+             * successfully emulate the coprocessor if it doesn't
+             * exist.
+             */
+            TRACE("%d: TYPE %d, OFFSET %04x, TARGET %04x %04x %s\n",
+                  i + 1, rep->relocation_type, rep->offset,
+                  rep->target1, rep->target2,
+                  NE_GetRelocAddrName( rep->address_type, additive ) );
+            continue;
+        }
 
-	offset  = rep->offset;
+        offset  = rep->offset;
 
         /* Apparently, high bit of address_type is sometimes set; */
         /* we ignore it for now */
-	if (rep->address_type > NE_RADDR_OFFSET32)
+        if (rep->address_type > NE_RADDR_OFFSET32)
         {
             char module[10];
             GetModuleName16( pModule->self, module, sizeof(module) );
@@ -383,17 +279,17 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                 *(BYTE *)sp += LOBYTE((int)address);
                 break;
             case NE_RADDR_OFFSET16:
-		*sp += LOWORD(address);
+                *sp += LOWORD(address);
                 break;
             case NE_RADDR_POINTER32:
-		*sp += LOWORD(address);
-		*(sp+1) = HIWORD(address);
+                *sp += LOWORD(address);
+                *(sp+1) = HIWORD(address);
                 break;
             case NE_RADDR_SELECTOR:
-		/* Borland creates additive records with offset zero. Strange, but OK */
+                /* Borland creates additive records with offset zero. Strange, but OK */
                 if (*sp)
                     ERR("Additive selector to %04x.Please report\n",*sp);
-		else
+                else
                     *sp = HIWORD(address);
                 break;
             default:
@@ -404,6 +300,8 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         {
             do
             {
+                WORD next_offset;
+
                 sp = MapSL( MAKESEGPTR( SEL(pSeg->hSeg), offset ) );
                 next_offset = *sp;
                 TRACE("    %04x:%04x\n", offset, *sp );
@@ -430,11 +328,6 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
             } while (offset != 0xffff);
         }
     }
-
-    HeapFree(GetProcessHeap(), 0, reloc_entries);
-
-succeed:
-    CloseHandle(hf);
     return TRUE;
 
 unknown:
@@ -442,11 +335,122 @@ unknown:
          "TYPE %d,  OFFSET %04x,  TARGET %04x %04x\n",
          i + 1, rep->address_type, rep->relocation_type,
          rep->offset, rep->target1, rep->target2);
-    HeapFree(GetProcessHeap(), 0, reloc_entries);
-
-fail:
-    CloseHandle(hf);
     return FALSE;
+}
+
+
+/***********************************************************************
+ *           NE_LoadSegment
+ */
+BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
+{
+    WORD count;
+    DWORD pos;
+    const struct relocation_entry_s *rep;
+    int size;
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+    SEGTABLEENTRY *pSeg = pSegTable + segnum - 1;
+
+    if (pSeg->flags & NE_SEGFLAGS_LOADED)
+    {
+	/* self-loader ? -> already loaded it */
+	if (pModule->ne_flags & NE_FFLAGS_SELFLOAD)
+	    return TRUE;
+
+	/* leave, except for DGROUP, as this may be the second instance */
+	if (segnum != pModule->ne_autodata)
+            return TRUE;
+    }
+
+    if (!pSeg->filepos) return TRUE;  /* No file image, just return */
+
+    TRACE_(module)("Loading segment %d, hSeg=%04x, flags=%04x\n",
+                    segnum, pSeg->hSeg, pSeg->flags );
+    pos = pSeg->filepos << pModule->ne_align;
+    if (pSeg->size) size = pSeg->size;
+    else size = pSeg->minsize ? pSeg->minsize : 0x10000;
+
+    if (pModule->ne_flags & NE_FFLAGS_SELFLOAD && segnum > 1)
+    {
+ 	/* Implement self-loading segments */
+ 	SELFLOADHEADER *selfloadheader;
+        void *oldstack;
+        HFILE16 hFile16;
+        WORD args[3];
+        DWORD ret;
+
+ 	selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg),0) );
+        oldstack = NtCurrentTeb()->WOW32Reserved;
+        NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(pModule->self_loading_sel,
+                                                           0xff00 - sizeof(STACK16FRAME));
+
+        hFile16 = NE_OpenFile( pModule );
+        TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=%x,segnum=%d\n",
+                    pModule->self,hFile16,segnum );
+        args[2] = pModule->self;
+        args[1] = hFile16;
+        args[0] = segnum;
+        WOWCallback16Ex( (DWORD)selfloadheader->LoadAppSeg, WCB16_PASCAL, sizeof(args), args, &ret );
+        pSeg->hSeg = LOWORD(ret);
+	TRACE_(dll)("Ret CallLoadAppSegProc: hSeg = 0x%04x\n", pSeg->hSeg);
+        _lclose16( hFile16 );
+        NtCurrentTeb()->WOW32Reserved = oldstack;
+    }
+    else if (!(pSeg->flags & NE_SEGFLAGS_ITERATED))
+    {
+        void *mem = GlobalLock16(pSeg->hSeg);
+        if (!NE_READ_DATA( pModule, mem, pos, size ))
+            return FALSE;
+        pos += size;
+    }
+    else
+    {
+        /*
+          The following bit of code for "iterated segments" was written without
+          any documentation on the format of these segments. It seems to work,
+          but may be missing something.
+        */
+        const char *buff = NE_GET_DATA( pModule, pos, size );
+        const char* curr = buff;
+        char *mem = GlobalLock16(pSeg->hSeg);
+
+        pos += size;
+        if (buff == NULL) return FALSE;
+
+        while(curr < buff + size) {
+            unsigned int rept = ((short*)curr)[0];
+            unsigned int len =  ((short*)curr)[1];
+
+            curr += 2*sizeof(short);
+            while (rept--)
+            {
+                memcpy( mem, curr, len );
+                mem += len;
+            }
+            curr += len;
+        }
+    }
+
+    pSeg->flags |= NE_SEGFLAGS_LOADED;
+
+    /* Perform exported function prolog fixups */
+    NE_FixupSegmentPrologs( pModule, segnum );
+
+    if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
+        return TRUE;  /* No relocation data, we are done */
+
+    if (!NE_READ_DATA( pModule, &count, pos, sizeof(count) ) || !count) return TRUE;
+    pos += sizeof(count);
+
+    TRACE("Fixups for %.*s, segment %d, hSeg %04x\n",
+          *((BYTE *)pModule + pModule->ne_restab),
+          (char *)pModule + pModule->ne_restab + 1,
+          segnum, pSeg->hSeg );
+
+    if (!(rep = NE_GET_DATA( pModule, pos, count * sizeof(struct relocation_entry_s) )))
+        return FALSE;
+
+    return apply_relocations( pModule, rep, count, segnum );
 }
 
 
@@ -460,7 +464,6 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 
     if (pModule->ne_flags & NE_FFLAGS_SELFLOAD)
     {
-        HANDLE hf;
         HFILE16 hFile16;
         HGLOBAL16 sel;
         /* Handle self-loading modules */
@@ -484,8 +487,7 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
         NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR(pModule->self_loading_sel,
                                                            0xff00 - sizeof(STACK16FRAME) );
 
-        hf = NE_OpenFile(pModule);
-        hFile16 = Win32HandleToDosFileHandle( hf );
+        hFile16 = NE_OpenFile(pModule);
         TRACE_(dll)("CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",
               pModule->self,hFile16);
         args[1] = pModule->self;

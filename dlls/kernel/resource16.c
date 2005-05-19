@@ -330,53 +330,42 @@ static NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeI
 HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
                                         HRSRC16 hRsrc )
 {
-    HANDLE fd;
+    HGLOBAL16 handle;
+    WORD sizeShift;
+    NE_NAMEINFO* pNameInfo;
     NE_MODULE* pModule = NE_GetPtr( hModule );
-    if (pModule && (pModule->ne_flags & NE_FFLAGS_BUILTIN))
+
+    if (!pModule) return 0;
+
+    sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
+    pNameInfo = (NE_NAMEINFO *)((char *)pModule + hRsrc);
+
+    if ( hMemObj )
+        handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
+    else
+        handle = AllocResource16( hModule, hRsrc, 0 );
+
+    if (handle)
     {
-        HGLOBAL16 handle;
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
-        NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-
-        if ( hMemObj )
-            handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
-        else
-            handle = AllocResource16( hModule, hRsrc, 0 );
-
-        if ( handle )
+        if (pModule->ne_flags & NE_FFLAGS_BUILTIN)
         {
             /* NOTE: hRsrcMap points to start of built-in resource data */
             memcpy( GlobalLock16( handle ),
                     (char *)pModule->rsrc32_map + (pNameInfo->offset << sizeShift),
                     pNameInfo->length << sizeShift );
         }
-        return handle;
-    }
-    if (pModule && (fd = NE_OpenFile( pModule )) != INVALID_HANDLE_VALUE)
-    {
-        HGLOBAL16 handle;
-        WORD sizeShift = *(WORD *)((char *)pModule + pModule->ne_rsrctab);
-        NE_NAMEINFO* pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
-
-        TRACE("loading, pos=%d, len=%d\n",
-                     (int)pNameInfo->offset << sizeShift,
-                     (int)pNameInfo->length << sizeShift );
-        if( hMemObj )
-            handle = GlobalReAlloc16( hMemObj, pNameInfo->length << sizeShift, 0 );
         else
-            handle = AllocResource16( hModule, hRsrc, 0 );
-
-        if( handle )
         {
-            DWORD res;
-            SetFilePointer( fd, (int)pNameInfo->offset << sizeShift, NULL, SEEK_SET );
-            ReadFile( fd, GlobalLock16( handle ), (int)pNameInfo->length << sizeShift,
-                      &res, NULL );
+            if (!NE_READ_DATA( pModule, GlobalLock16( handle ),
+                               (int)pNameInfo->offset << sizeShift,
+                               (int)pNameInfo->length << sizeShift ))
+            {
+                GlobalFree16( handle );
+                handle = 0;
+            }
         }
-        CloseHandle(fd);
-        return handle;
     }
-    return (HGLOBAL16)0;
+    return handle;
 }
 
 

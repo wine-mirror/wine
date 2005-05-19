@@ -565,46 +565,6 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
 
 
 /***********************************************************************
- *           NE_OpenFile
- */
-HANDLE NE_OpenFile( NE_MODULE *pModule )
-{
-    HANDLE handle;
-    char *name = NE_MODULE_NAME( pModule );
-
-    TRACE("(%p)\n", pModule );
-
-    if (pModule->fd)
-    {
-        if (!DuplicateHandle( GetCurrentProcess(), pModule->fd,
-                              GetCurrentProcess(), &handle, 0, FALSE,
-                              DUPLICATE_SAME_ACCESS )) handle = INVALID_HANDLE_VALUE;
-    }
-    else
-    {
-        handle = CreateFileA( name, GENERIC_READ, FILE_SHARE_READ,
-                              NULL, OPEN_EXISTING, 0, 0 );
-    }
-    if (handle == INVALID_HANDLE_VALUE)
-        ERR( "Can't open file '%s' for module %04x\n", name, pModule->self );
-
-    TRACE("opened '%s' -> %p\n", name, handle);
-    return handle;
-}
-
-
-/* wrapper for SetFilePointer and ReadFile */
-static BOOL read_data( HANDLE handle, LONG offset, void *buffer, DWORD size )
-{
-    DWORD result;
-
-    if (SetFilePointer( handle, offset, NULL, SEEK_SET ) == INVALID_SET_FILE_POINTER) return FALSE;
-    if (!ReadFile( handle, buffer, size, &result, NULL )) return FALSE;
-    return (result == size);
-}
-
-
-/***********************************************************************
  *           build_bundle_data
  *
  * Build the entry table bundle data from the on-disk format. Helper for build_module.
@@ -676,24 +636,39 @@ static void *build_bundle_data( NE_MODULE *pModule, void *dest, const BYTE *tabl
  *
  * Build the in-memory module from the on-disk data.
  */
-static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS2_HEADER *ne_header,
-                               HANDLE handle, LPCSTR path, const void *fastload,
-                               unsigned int fastload_offset, unsigned int fastload_length )
+static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR path )
 {
+    const IMAGE_DOS_HEADER *mz_header = mapping;
+    const IMAGE_OS2_HEADER *ne_header;
+    const struct ne_segment_table_entry_s *pSeg;
+    const void *ptr;
     int i;
     size_t size;
     HMODULE16 hModule;
     NE_MODULE *pModule;
-    BYTE *buffer, *pData, *ptr;
+    BYTE *buffer, *pData, *end;
     OFSTRUCT *ofs;
-    struct ne_segment_table_entry_s *pSeg;
 
-  /* Read a block from either the file or the fast-load area. */
-#define READ(offset,size,buffer) \
-       ((fastload && ((offset) >= fastload_offset) && \
-         ((offset)+(size) <= fastload_offset+fastload_length)) ? \
-        (memcpy( buffer, (const char *)fastload+(offset)-fastload_offset, (size) ), TRUE) : \
-        (handle && read_data( handle, (offset), (buffer), (size))))
+    if (mapping_size < sizeof(*mz_header)) return ERROR_BAD_FORMAT;
+    if (mz_header->e_magic != IMAGE_DOS_SIGNATURE) return ERROR_BAD_FORMAT;
+    ne_header = (const IMAGE_OS2_HEADER *)((const char *)mapping + mz_header->e_lfanew);
+    if (mz_header->e_lfanew + sizeof(*ne_header) > mapping_size) return ERROR_BAD_FORMAT;
+    if (ne_header->ne_magic == IMAGE_NT_SIGNATURE) return 21;  /* win32 exe */
+    if (ne_header->ne_magic == IMAGE_OS2_SIGNATURE_LX)
+    {
+        MESSAGE("Sorry, %s is an OS/2 linear executable (LX) file!\n", path);
+        return 12;
+    }
+    if (ne_header->ne_magic != IMAGE_OS2_SIGNATURE) return ERROR_BAD_FORMAT;
+
+    /* We now have a valid NE header */
+
+    /* check to be able to fall back to loading OS/2 programs as DOS
+     * FIXME: should this check be reversed in order to be less strict?
+     * (only fail for OS/2 ne_exetyp 0x01 here?) */
+    if ((ne_header->ne_exetyp != 0x02 /* Windows */)
+        && (ne_header->ne_exetyp != 0x04) /* Windows 386 */)
+        return ERROR_BAD_FORMAT;
 
     size = sizeof(NE_MODULE) +
              /* segment table */
@@ -724,28 +699,23 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
     /* check programs for default minimal stack size */
     if (!(pModule->ne_flags & NE_FFLAGS_LIBMODULE) && (pModule->ne_stack < 0x1400))
         pModule->ne_stack = 0x1400;
-    pModule->module32 = 0;
-    pModule->self = hModule;
-    pModule->self_loading_sel = 0;
+
+    pModule->self         = hModule;
+    pModule->mapping      = mapping;
+    pModule->mapping_size = mapping_size;
+
     pData = (BYTE *)(pModule + 1);
 
     /* Clear internal Wine flags in case they are set in the EXE file */
 
     pModule->ne_flags &= ~(NE_FFLAGS_BUILTIN | NE_FFLAGS_WIN32);
 
-    /* allocate temporary buffer for segment and entry tables */
-
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
-                              max( ne_header->ne_cseg * sizeof(*pSeg), ne_header->ne_cbenttab ) )))
-        goto failed;
-
     /* Get the segment table */
 
     pModule->ne_segtab = pData - (BYTE *)pModule;
-    if (!READ( mz_header->e_lfanew + ne_header->ne_segtab,
-               ne_header->ne_cseg * sizeof(struct ne_segment_table_entry_s), buffer ))
+    if (!(pSeg = NE_GET_DATA( pModule, mz_header->e_lfanew + ne_header->ne_segtab,
+                              ne_header->ne_cseg * sizeof(struct ne_segment_table_entry_s) )))
         goto failed;
-    pSeg = (struct ne_segment_table_entry_s *)buffer;
     for (i = ne_header->ne_cseg; i > 0; i--, pSeg++)
     {
         memcpy( pData, pSeg, sizeof(*pSeg) );
@@ -757,8 +727,8 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
     if (ne_header->ne_rsrctab < ne_header->ne_restab)
     {
         pModule->ne_rsrctab = pData - (BYTE *)pModule;
-        if (!READ( mz_header->e_lfanew + ne_header->ne_rsrctab,
-                   ne_header->ne_restab - ne_header->ne_rsrctab, pData )) goto failed;
+        if (!NE_READ_DATA( pModule, pData, mz_header->e_lfanew + ne_header->ne_rsrctab,
+                           ne_header->ne_restab - ne_header->ne_rsrctab )) goto failed;
         pData += ne_header->ne_restab - ne_header->ne_rsrctab;
     }
     else pModule->ne_rsrctab = 0;  /* No resource table */
@@ -766,8 +736,8 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
     /* Get the resident names table */
 
     pModule->ne_restab = pData - (BYTE *)pModule;
-    if (!READ( mz_header->e_lfanew + ne_header->ne_restab,
-               ne_header->ne_modtab - ne_header->ne_restab, pData )) goto failed;
+    if (!NE_READ_DATA( pModule, pData, mz_header->e_lfanew + ne_header->ne_restab,
+                       ne_header->ne_modtab - ne_header->ne_restab )) goto failed;
     pData += ne_header->ne_modtab - ne_header->ne_restab;
 
     /* Get the module references table */
@@ -775,8 +745,8 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
     if (ne_header->ne_cmod > 0)
     {
         pModule->ne_modtab = pData - (BYTE *)pModule;
-        if (!READ( mz_header->e_lfanew + ne_header->ne_modtab,
-                   ne_header->ne_cmod * sizeof(WORD), pData )) goto failed;
+        if (!NE_READ_DATA( pModule, pData, mz_header->e_lfanew + ne_header->ne_modtab,
+                           ne_header->ne_cmod * sizeof(WORD) )) goto failed;
         pData += ne_header->ne_cmod * sizeof(WORD);
     }
     else pModule->ne_modtab = 0;  /* No module references */
@@ -784,23 +754,21 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
     /* Get the imported names table */
 
     pModule->ne_imptab = pData - (BYTE *)pModule;
-    if (!READ( mz_header->e_lfanew + ne_header->ne_imptab,
-               ne_header->ne_enttab - ne_header->ne_imptab,
-               pData )) goto failed;
+    if (!NE_READ_DATA( pModule, pData, mz_header->e_lfanew + ne_header->ne_imptab,
+                       ne_header->ne_enttab - ne_header->ne_imptab )) goto failed;
     pData += ne_header->ne_enttab - ne_header->ne_imptab;
 
     /* Load entry table, convert it to the optimized version used by Windows */
 
     pModule->ne_enttab = pData - (BYTE *)pModule;
-    if (!READ( mz_header->e_lfanew + ne_header->ne_enttab,
-               ne_header->ne_cbenttab, buffer )) goto failed;
-
-    ptr = build_bundle_data( pModule, pData, buffer );
+    if (!(ptr = NE_GET_DATA( pModule, mz_header->e_lfanew + ne_header->ne_enttab,
+                             ne_header->ne_cbenttab ))) goto failed;
+    end = build_bundle_data( pModule, pData, ptr );
 
     pData += ne_header->ne_cbenttab + sizeof(ET_BUNDLE) +
         2 * (ne_header->ne_cbenttab - ne_header->ne_cmovent*6);
 
-    if (ptr > pData)
+    if (end > pData)
     {
         FIXME( "not enough space for entry table for %s\n", debugstr_a(path) );
         goto failed;
@@ -823,8 +791,8 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
         pModule->nrname_handle = GlobalAlloc16( 0, ne_header->ne_cbnrestab );
         if (!pModule->nrname_handle) goto failed;
         FarSetOwner16( pModule->nrname_handle, hModule );
-        ptr = GlobalLock16( pModule->nrname_handle );
-        if (!read_data( handle, ne_header->ne_nrestab, ptr, ne_header->ne_cbnrestab ))
+        buffer = GlobalLock16( pModule->nrname_handle );
+        if (!NE_READ_DATA( pModule, buffer, ne_header->ne_nrestab, ne_header->ne_cbnrestab ))
         {
             GlobalFree16( pModule->nrname_handle );
             goto failed;
@@ -847,92 +815,12 @@ static HMODULE16 build_module( const IMAGE_DOS_HEADER *mz_header, const IMAGE_OS
     }
     else pModule->dlls_to_init = 0;
 
-    HeapFree( GetProcessHeap(), 0, buffer );
     NE_RegisterModule( pModule );
-
-    if (handle)
-    {
-        UINT drive_type = GetDriveTypeA( path );
-        /* keep the file handle open if not on a removable media */
-        if (drive_type != DRIVE_REMOVABLE && drive_type != DRIVE_CDROM)
-            DuplicateHandle( GetCurrentProcess(), handle,
-                             GetCurrentProcess(), &pModule->fd, 0, FALSE,
-                             DUPLICATE_SAME_ACCESS );
-    }
-
     return hModule;
 
 failed:
-    HeapFree( GetProcessHeap(), 0, buffer );
     GlobalFree16( hModule );
     return ERROR_BAD_FORMAT;
-#undef READ
-}
-
-
-/***********************************************************************
- *           NE_LoadExeHeader
- */
-static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
-{
-    IMAGE_DOS_HEADER mz_header;
-    IMAGE_OS2_HEADER ne_header;
-    HMODULE16 hModule;
-    char *fastload = NULL;
-    unsigned int fastload_offset = 0, fastload_length = 0;
-
-    if (!read_data( handle, 0, &mz_header, sizeof(mz_header)) ||
-        (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
-        return ERROR_BAD_FORMAT;
-
-    if (!read_data( handle, mz_header.e_lfanew, &ne_header, sizeof(ne_header) ))
-        return ERROR_BAD_FORMAT;
-
-    if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
-    if (ne_header.ne_magic == IMAGE_OS2_SIGNATURE_LX) {
-        MESSAGE("Sorry, this is an OS/2 linear executable (LX) file!\n");
-        return (HMODULE16)12;
-    }
-    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return ERROR_BAD_FORMAT;
-
-    /* We now have a valid NE header */
-
-    /* check to be able to fall back to loading OS/2 programs as DOS
-     * FIXME: should this check be reversed in order to be less strict?
-     * (only fail for OS/2 ne_exetyp 0x01 here?) */
-    if ((ne_header.ne_exetyp != 0x02 /* Windows */)
-        && (ne_header.ne_exetyp != 0x04) /* Windows 386 */)
-        return ERROR_BAD_FORMAT;
-
-    /* Read the fast-load area */
-
-    if (ne_header.ne_flagsothers & NE_AFLAGS_FASTLOAD)
-    {
-        fastload_offset=ne_header.ne_pretthunks << ne_header.ne_align;
-        fastload_length=ne_header.ne_psegrefbytes << ne_header.ne_align;
-        TRACE("Using fast-load area offset=%x len=%d\n",
-                        fastload_offset, fastload_length );
-        if ((fastload = HeapAlloc( GetProcessHeap(), 0, fastload_length )) != NULL)
-        {
-            if (!read_data( handle, fastload_offset, fastload, fastload_length))
-            {
-                HeapFree( GetProcessHeap(), 0, fastload );
-                WARN("Error reading fast-load area!\n");
-                fastload = NULL;
-            }
-        }
-    }
-
-    hModule = build_module( &mz_header, &ne_header, handle, path,
-                            fastload, fastload_offset, fastload_length );
-    HeapFree( GetProcessHeap(), 0, fastload );
-
-    if (hModule >= 32)
-    {
-        SNOOP16_RegisterDLL( hModule, path );
-        NE_InitResourceHandler( hModule );
-    }
-    return hModule;
 }
 
 
@@ -992,7 +880,7 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
  *
  * Load first instance of NE module from file.
  *
- * pModule must point to a module structure prepared by NE_LoadExeHeader.
+ * pModule must point to a module structure prepared by build_module_data.
  * This routine must never be called twice on a module.
  *
  */
@@ -1042,14 +930,33 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
     HINSTANCE16 hInstance;
     HFILE16 hFile;
     OFSTRUCT ofs;
+    HANDLE mapping;
+    void *ptr;
+    MEMORY_BASIC_INFORMATION info;
 
     /* Open file */
     if ((hFile = OpenFile16( name, &ofs, OF_READ|OF_SHARE_DENY_WRITE )) == HFILE_ERROR16)
         return ERROR_FILE_NOT_FOUND;
 
-    hModule = NE_LoadExeHeader( DosFileHandleToWin32Handle(hFile), ofs.szPathName );
+    mapping = CreateFileMappingW( DosFileHandleToWin32Handle(hFile), NULL, PAGE_WRITECOPY, 0, 0, NULL );
     _lclose16( hFile );
-    if (hModule < 32) return hModule;
+    if (!mapping) return ERROR_BAD_FORMAT;
+
+    ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 0 );
+    CloseHandle( mapping );
+    if (!ptr) return ERROR_BAD_FORMAT;
+
+    VirtualQuery( ptr, &info, sizeof(info) );
+    hModule = build_module( ptr, info.RegionSize, ofs.szPathName );
+
+    if (hModule < 32)
+    {
+        UnmapViewOfFile( ptr );
+        return hModule;
+    }
+
+    SNOOP16_RegisterDLL( hModule, ofs.szPathName );
+    NE_InitResourceHandler( hModule );
 
     pModule = NE_GetPtr( hModule );
 
@@ -1079,14 +986,12 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
     SEGTABLEENTRY *pSegTable;
     const IMAGE_DOS_HEADER *mz_header;
     const IMAGE_OS2_HEADER *ne_header;
-    unsigned int fastload_offset, fastload_length;
+    SIZE_T mapping_size;
 
     mz_header = descr->module;
     ne_header = (const IMAGE_OS2_HEADER *)((const BYTE *)mz_header + mz_header->e_lfanew);
-    fastload_offset = ne_header->ne_pretthunks << ne_header->ne_align;
-    fastload_length = ne_header->ne_psegrefbytes << ne_header->ne_align;
-    hModule = build_module( mz_header, ne_header, 0, descr->file_name,
-                            descr->module, fastload_offset, fastload_length );
+    mapping_size = ne_header->ne_psegrefbytes << ne_header->ne_align;
+    hModule = build_module( descr->module, mapping_size, descr->file_name );
     if (hModule < 32) return hModule;
     pModule = GlobalLock16( hModule );
     pModule->ne_flags |= NE_FFLAGS_BUILTIN;
@@ -1502,7 +1407,7 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     /* Clear magic number just in case */
 
     pModule->ne_magic = pModule->self = 0;
-    if (pModule->fd) CloseHandle( pModule->fd );
+    if (!(pModule->ne_flags & NE_FFLAGS_BUILTIN)) UnmapViewOfFile( (void *)pModule->mapping );
 
       /* Remove it from the linked list */
 

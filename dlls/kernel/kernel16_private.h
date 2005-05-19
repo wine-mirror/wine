@@ -61,11 +61,12 @@ typedef struct _NE_MODULE
     WORD      ne_swaparea;      /* 3c Min. swap area size */
     WORD      ne_expver;        /* 3e Expected Windows version */
     /* From here, these are extra fields not present in normal Windows */
-    HMODULE   module32;         /* 40 PE module handle for Win32 modules */
-    HMODULE16 self;             /* 44 Handle for this module */
-    WORD      self_loading_sel; /* 46 Selector used for self-loading apps. */
-    LPVOID    rsrc32_map;       /* 48 HRSRC 16->32 map (for 32-bit modules) */
-    HANDLE    fd;               /* 4c handle to the binary file */
+    HMODULE   module32;         /* PE module handle for Win32 modules */
+    HMODULE16 self;             /* Handle for this module */
+    WORD      self_loading_sel; /* Selector used for self-loading apps. */
+    LPVOID    rsrc32_map;       /* HRSRC 16->32 map (for 32-bit modules) */
+    LPCVOID   mapping;          /* mapping of the binary file */
+    SIZE_T    mapping_size;     /* size of the file mapping */
 } NE_MODULE;
 
 typedef struct
@@ -132,6 +133,14 @@ extern THHOOK *pThhook;
 #define NE_MODULE_NAME(pModule) \
     (((OFSTRUCT *)((char*)(pModule) + (pModule)->fileinfo))->szPathName)
 
+#define NE_GET_DATA(pModule,offset,size) \
+    ((const void *)(((offset)+(size) <= pModule->mapping_size) ? \
+                    (const char *)pModule->mapping + (offset) : NULL))
+
+#define NE_READ_DATA(pModule,buffer,offset,size) \
+    (((offset)+(size) <= pModule->mapping_size) ? \
+     (memcpy( buffer, (const char *)pModule->mapping + (offset), (size) ), TRUE) : FALSE)
+
 #define CURRENT_STACK16 ((STACK16FRAME*)MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved))
 #define CURRENT_DS      (CURRENT_STACK16->ds)
 
@@ -158,7 +167,6 @@ extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
 extern FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop );
 extern BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset );
-extern HANDLE NE_OpenFile( NE_MODULE *pModule );
 extern DWORD NE_StartTask(void);
 
 /* ne_segment.c */
