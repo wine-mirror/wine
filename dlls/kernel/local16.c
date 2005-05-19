@@ -724,9 +724,9 @@ static WORD LOCAL_GetFreeSpace(WORD ds, WORD countdiscard)
 
 
 /***********************************************************************
- *           local_compact
+ *           LOCAL_Compact
  */
-static UINT16 local_compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
+static UINT16 LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
 {
     char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
     LOCALHEAPINFO *pInfo;
@@ -843,7 +843,7 @@ static UINT16 local_compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
         }
         table = *(WORD *)pEntry;
     }
-    return local_compact(ds, 0xffff, LMEM_NODISCARD);
+    return LOCAL_Compact(ds, 0xffff, LMEM_NODISCARD);
 }
 
 
@@ -929,7 +929,7 @@ notify_done:
     arena = LOCAL_FindFreeBlock( ds, size );
     if (arena == 0) {
 	/* no space: try to make some */
-	local_compact( ds, size, flags );
+	LOCAL_Compact( ds, size, flags );
 	arena = LOCAL_FindFreeBlock( ds, size );
     }
     if (arena == 0) {
@@ -1595,7 +1595,7 @@ SEGPTR WINAPI LocalLock16( HLOCAL16 handle )
 UINT16 WINAPI LocalCompact16( UINT16 minfree )
 {
     TRACE("%04x\n", minfree );
-    return local_compact( CURRENT_DS, minfree, 0 );
+    return LOCAL_Compact( CURRENT_DS, minfree, 0 );
 }
 
 
