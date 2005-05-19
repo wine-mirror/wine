@@ -6391,16 +6391,22 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     HKEY hkey1;
     HKEY hkey2;
 
+    TRACE("%p\n", package);
+
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
-        return rc;
+    {
+        TRACE("MSI_DatabaseOpenViewW failed: %d\n", rc);
+        return ERROR_SUCCESS;
+    }
 
     rc = MSI_ViewExecute(view, 0);
     if (rc != ERROR_SUCCESS)
     {
         MSI_ViewClose(view);
         msiobj_release(&view->hdr);
-        return rc;
+        TRACE("MSI_ViewExecute returned %d\n", rc);
+        return ERROR_SUCCESS;
     }
 
     RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont1,&hkey1);
@@ -6465,6 +6471,7 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     RegCloseKey(hkey1);
     RegCloseKey(hkey2);
 
+    TRACE("returning %d\n", rc);
     return rc;
 }
 
