@@ -489,14 +489,14 @@ static void DOSMEM_InitMemory(char* addr)
  *
  * When WineDOS is loaded, initializes the current DOS memory layout.
  */
-void DOSMEM_InitDosMemory(void)
+BOOL DOSMEM_InitDosMemory(void)
 {
     HMODULE16           hModule;
     unsigned short      sel;
     LDT_ENTRY           entry;
     DWORD               reserve;
 
-    hModule = GetModuleHandle16("KERNEL");
+    if (!(hModule = GetModuleHandle16("KERNEL"))) return FALSE;
     /* KERNEL.194: __F000H */
     sel = LOWORD(GetProcAddress16(hModule, (LPCSTR)(ULONG_PTR)194));
     wine_ldt_get_entry(sel, &entry);
@@ -528,6 +528,7 @@ void DOSMEM_InitDosMemory(void)
      * Set DOS memory base and initialize conventional memory.
      */
     DOSMEM_InitMemory(DOSMEM_dosmem + reserve);
+    return TRUE;
 }
 
 /******************************************************************

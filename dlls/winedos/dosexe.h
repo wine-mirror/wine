@@ -288,7 +288,7 @@ extern void WINAPI DOSVM_ASPIHandler(CONTEXT86*);
 extern DOSCONF *DOSCONF_GetConfig( void );
 
 /* dosmem.c */
-extern void DOSMEM_InitDosMemory(void);
+extern BOOL DOSMEM_InitDosMemory(void);
 extern BOOL DOSMEM_MapDosLayout(void);
 extern WORD   DOSMEM_AllocSelector(WORD); /* FIXME: to be removed */
 extern LPVOID DOSMEM_AllocBlock(UINT size, WORD* p);
