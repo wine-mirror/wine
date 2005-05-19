@@ -616,25 +616,12 @@ static void output_stub_funcs( FILE *outfile, const DLLSPEC *spec )
         fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
         fprintf( outfile, "#endif\n" );
         fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
-        fprintf( outfile, "  struct exc_record {\n" );
-        fprintf( outfile, "    unsigned int code, flags;\n" );
-        fprintf( outfile, "    void *rec, *addr;\n" );
-        fprintf( outfile, "    unsigned int params;\n" );
-        fprintf( outfile, "    const void *info[15];\n" );
-        fprintf( outfile, "  } rec;\n\n" );
-        fprintf( outfile, "  extern void __stdcall RtlRaiseException( struct exc_record * );\n\n" );
-        fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
-        fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
-        fprintf( outfile, "  rec.rec     = 0;\n" );
-        fprintf( outfile, "  rec.params  = 2;\n" );
-        fprintf( outfile, "  rec.info[0] = \"%s\";\n", spec->file_name );
-        fprintf( outfile, "  rec.info[1] = func;\n" );
-        fprintf( outfile, "#ifdef __GNUC__\n" );
-        fprintf( outfile, "  rec.addr = __builtin_return_address(1);\n" );
-        fprintf( outfile, "#else\n" );
-        fprintf( outfile, "  rec.addr = 0;\n" );
-        fprintf( outfile, "#endif\n" );
-        fprintf( outfile, "  for (;;) RtlRaiseException( &rec );\n}\n\n" );
+        fprintf( outfile, "  extern void __stdcall RaiseException( unsigned int, unsigned int, unsigned int, const void ** );\n" );
+        fprintf( outfile, "  const void *args[2];\n" );
+        fprintf( outfile, "  args[0] = \"%s\";\n", spec->file_name );
+        fprintf( outfile, "  args[1] = func;\n" );
+        fprintf( outfile, "  for (;;) RaiseException( 0x%08x, %d, 2, args );\n}\n\n",
+                 EXCEPTION_WINE_STUB, EH_NONCONTINUABLE );
         break;
     }
     for (i = 0; i <= spec->limit; i++)
