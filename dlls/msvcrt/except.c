@@ -97,15 +97,6 @@ static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
 
 
 /*********************************************************************
- *		_XcptFilter (MSVCRT.@)
- */
-int _XcptFilter(int ex, PEXCEPTION_POINTERS ptr)
-{
-  FIXME("(%d,%p)semi-stub\n", ex, ptr);
-  return UnhandledExceptionFilter(ptr);
-}
-
-/*********************************************************************
  *		_EH_prolog (MSVCRT.@)
  */
 #ifdef __i386__
@@ -200,6 +191,7 @@ int _except_handler3(PEXCEPTION_RECORD rec,
   {
     /* Unwinding the current frame */
      _local_unwind2(frame, TRYLEVEL_END);
+    TRACE("unwound current frame, returning ExceptionContinueSearch\n");
     return ExceptionContinueSearch;
   }
   else
@@ -249,6 +241,7 @@ int _except_handler3(PEXCEPTION_RECORD rec,
         rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
         frame->handler, context, dispatcher);
 #endif
+  TRACE("reached TRYLEVEL_END, returning ExceptionContinueSearch\n");
   return ExceptionContinueSearch;
 }
 
@@ -428,6 +421,9 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
 {
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
 
+    if (!except || !except->ExceptionRecord)
+        return EXCEPTION_CONTINUE_SEARCH;
+
     switch (except->ExceptionRecord->ExceptionCode)
     {
     case EXCEPTION_ACCESS_VIOLATION:
@@ -527,4 +523,14 @@ __sighandler_t MSVCRT_signal(int sig, __sighandler_t func)
         ret = SIG_ERR;
     }
     return ret;
+}
+
+/*********************************************************************
+ *		_XcptFilter (MSVCRT.@)
+ */
+int _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
+{
+    TRACE("(%ld,%p)\n", ex, ptr);
+    /* I assume ptr->ExceptionRecord->ExceptionCode is the same as ex */
+    return msvcrt_exception_filter(ptr);
 }
