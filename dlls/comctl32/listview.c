@@ -3186,27 +3186,22 @@ static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, INT x, I
 static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, INT y)
 {
     TRACKMOUSEEVENT trackinfo;
-    LVHITTESTINFO lvHitTestInfo;
-    INT nItem;
 
-    if (infoPtr->bLButtonDown)
+    if (infoPtr->bLButtonDown && DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
     {
+        LVHITTESTINFO lvHitTestInfo;
+        NMLISTVIEW nmlv;
+
         lvHitTestInfo.pt = infoPtr->ptClickPos;
-        nItem = LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
+        LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, TRUE);
 
-        if (DragDetect(infoPtr->hwndSelf, infoPtr->ptClickPos))
-        {
-            NMLISTVIEW nmlv;
+        ZeroMemory(&nmlv, sizeof(nmlv));
+        nmlv.iItem = lvHitTestInfo.iItem;
+        nmlv.ptAction = infoPtr->ptClickPos;
 
-            ZeroMemory(&nmlv, sizeof(nmlv));
-            nmlv.iItem = nItem;
-            nmlv.ptAction.x = infoPtr->ptClickPos.x;
-            nmlv.ptAction.y = infoPtr->ptClickPos.y;
+        notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
 
-            notify_listview(infoPtr, LVN_BEGINDRAG, &nmlv);
-
-            return 0;
-        }
+        return 0;
     } 
 
   /* see if we are supposed to be tracking mouse hovering */
