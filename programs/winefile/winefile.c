@@ -3953,17 +3953,17 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 #ifdef _SHELL_FOLDERS
 		case WM_CONTEXTMENU: {
+			POINT pt, pt_clnt;
 			Pane* pane;
 			int idx;
 
 			 /* first select the current item in the listbox */
 			HWND hpanel = (HWND) wparam;
-			POINT pt;
-			pt.x = (short)LOWORD(lparam);
-			pt.y = (short)HIWORD(lparam);
-			ScreenToClient(hpanel, &pt);
-			SendMessage(hpanel, WM_LBUTTONDOWN, 0, MAKELONG(pt.x, pt.y));
-			SendMessage(hpanel, WM_LBUTTONUP, 0, MAKELONG(pt.x, pt.y));
+			pt_clnt.x = pt.x = (short)LOWORD(lparam);
+			pt_clnt.y = pt.y = (short)HIWORD(lparam);
+			ScreenToClient(hpanel, &pt_clnt);
+			SendMessage(hpanel, WM_LBUTTONDOWN, 0, MAKELONG(pt_clnt.x, pt_clnt.y));
+			SendMessage(hpanel, WM_LBUTTONUP, 0, MAKELONG(pt_clnt.x, pt_clnt.y));
 
 			 /* now create the popup menu using shell namespace and IContextMenu */
 			pane = GetFocus()==child->left.hwnd? &child->left: &child->right;
