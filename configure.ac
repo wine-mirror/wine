@@ -21,14 +21,6 @@ AC_ARG_WITH(opengl,    AC_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(curses,    AC_HELP_STRING([--without-curses],[do not use curses]))
 AC_ARG_WITH(wine-tools,AC_HELP_STRING([--with-wine-tools=<dir>],[use Wine tools from directory <dir>]))
 
-AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
-AC_SUBST(WIN16_INSTALL,"\$(WIN16_INSTALL)")
-if test "x$enable_win16" = "xno"
-then
-  WIN16_FILES=""
-  WIN16_INSTALL=""
-fi
-
 AC_SUBST(DLLDEFS,"")
 if test "x$enable_debug" = "xno"
 then
@@ -38,8 +30,6 @@ if test "x$enable_trace" = "xno" -o "x$enable_debug" = "xno"
 then
   DLLDEFS="$DLLDEFS -DWINE_NO_TRACE_MSGS"
 fi
-
-dnl **** Check for some programs ****
 
 AC_CANONICAL_HOST
 case $host in
@@ -53,6 +43,26 @@ case $host in
     fi
     ;;
 esac
+
+dnl enable_win16 defaults to yes on x86, to no on other CPUs
+case $host_cpu in
+  *i[[3456789]]86*)
+    if test "x$enable_win16" != "xno" 
+    then
+      enable_win16="yes"
+    fi
+    ;;
+esac
+   
+AC_SUBST(WIN16_FILES,"\$(WIN16_FILES)")
+AC_SUBST(WIN16_INSTALL,"\$(WIN16_INSTALL)")
+if test "x$enable_win16" != "xyes"
+then
+  WIN16_FILES=""
+  WIN16_INSTALL=""
+fi
+
+dnl **** Check for some programs ****
 
 AC_PROG_MAKE_SET
 AC_PROG_CC
