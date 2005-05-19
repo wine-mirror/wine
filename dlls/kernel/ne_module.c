@@ -70,17 +70,22 @@ struct ne_segment_table_entry_s
 
 typedef struct
 {
-    const char *file_name;    /* module file name */
     const void *module;       /* module header */
     void       *code_start;   /* 32-bit address of DLL code */
     const void *rsrc;         /* resources data */
 } BUILTIN16_DESCRIPTOR;
 
+struct builtin_dll
+{
+    const BUILTIN16_DESCRIPTOR *descr;      /* module descriptor */
+    const char                 *file_name;  /* module file name */
+};
+
 /* Table of all built-in DLLs */
 
 #define MAX_DLLS 50
 
-static const BUILTIN16_DESCRIPTOR *builtin_dlls[MAX_DLLS];
+static struct builtin_dll builtin_dlls[MAX_DLLS];
 
 static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only );
 static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep );
@@ -147,23 +152,31 @@ static int NE_strncasecmp( const char *str1, const char *str2, int len )
  *
  * Find a descriptor in the list
  */
-static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
+static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname, const char **file_name )
 {
     int i;
+    const IMAGE_DOS_HEADER *mz_header;
+    const IMAGE_OS2_HEADER *ne_header;
+    BYTE *name_table;
+
     for (i = 0; i < MAX_DLLS; i++)
     {
-        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i];
+        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i].descr;
         if (descr)
         {
-            const IMAGE_OS2_HEADER *pModule = descr->module;
-            BYTE *name_table = (BYTE *)pModule + pModule->ne_restab;
+            mz_header = descr->module;
+            ne_header = (const IMAGE_OS2_HEADER *)((const char *)mz_header + mz_header->e_lfanew);
+            name_table = (BYTE *)ne_header + ne_header->ne_restab;
 
             /* check the dll file name */
-            if (!NE_strcasecmp( descr->file_name, dllname )) return descr;
+            if (!NE_strcasecmp( builtin_dlls[i].file_name, dllname ) ||
             /* check the dll module name (without extension) */
-            if (!NE_strncasecmp( dllname, name_table+1, *name_table ) &&
-                !strcmp( dllname + *name_table, ".dll" ))
-                return descr;
+                (!NE_strncasecmp( dllname, name_table+1, *name_table ) &&
+                 !strcmp( dllname + *name_table, ".dll" )))
+            {
+                *file_name = builtin_dlls[i].file_name;
+                return builtin_dlls[i].descr;
+            }
         }
     }
     return NULL;
@@ -171,18 +184,19 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname )
 
 
 /***********************************************************************
- *           __wine_register_dll_16 (KERNEL32.@)
+ *           __wine_dll_register_16 (KERNEL32.@)
  *
  * Register a built-in DLL descriptor.
  */
-void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr )
+void __wine_dll_register_16( const BUILTIN16_DESCRIPTOR *descr, const char *file_name )
 {
     int i;
 
     for (i = 0; i < MAX_DLLS; i++)
     {
-        if (builtin_dlls[i]) continue;
-        builtin_dlls[i] = descr;
+        if (builtin_dlls[i].descr) continue;
+        builtin_dlls[i].descr = descr;
+        builtin_dlls[i].file_name = file_name;
         break;
     }
     assert( i < MAX_DLLS );
@@ -190,18 +204,18 @@ void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr )
 
 
 /***********************************************************************
- *           __wine_unregister_dll_16 (KERNEL32.@)
+ *           __wine_dll_unregister_16 (KERNEL32.@)
  *
  * Unregister a built-in DLL descriptor.
  */
-void __wine_unregister_dll_16( const BUILTIN16_DESCRIPTOR *descr )
+void __wine_dll_unregister_16( const BUILTIN16_DESCRIPTOR *descr )
 {
     int i;
 
     for (i = 0; i < MAX_DLLS; i++)
     {
-        if (builtin_dlls[i] != descr) continue;
-        builtin_dlls[i] = NULL;
+        if (builtin_dlls[i].descr != descr) continue;
+        builtin_dlls[i].descr = NULL;
         break;
     }
 }
@@ -979,7 +993,7 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
  *
  * Load a built-in Win16 module. Helper function for NE_LoadBuiltinModule.
  */
-static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
+static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr, const char *file_name )
 {
     NE_MODULE *pModule;
     HMODULE16 hModule;
@@ -991,7 +1005,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr )
     mz_header = descr->module;
     ne_header = (const IMAGE_OS2_HEADER *)((const BYTE *)mz_header + mz_header->e_lfanew);
     mapping_size = ne_header->ne_psegrefbytes << ne_header->ne_align;
-    hModule = build_module( descr->module, mapping_size, descr->file_name );
+    hModule = build_module( descr->module, mapping_size, file_name );
     if (hModule < 32) return hModule;
     pModule = GlobalLock16( hModule );
     pModule->ne_flags |= NE_FFLAGS_BUILTIN;
@@ -1044,6 +1058,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     HMODULE16 hModule;
     NE_MODULE *pModule;
     const BUILTIN16_DESCRIPTOR *descr = NULL;
+    const char *file_name = NULL;
     char dllname[20], owner[20], *p;
     const char *basename;
     int owner_exists;
@@ -1067,7 +1082,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
             HMODULE mod32 = LoadLibraryA( owner );
             if (mod32)
             {
-                if (!(descr = find_dll_descr( dllname )))
+                if (!(descr = find_dll_descr( dllname, &file_name )))
                 {
                     FreeLibrary( mod32 );
                     owner_exists = 0;
@@ -1094,8 +1109,8 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     if (descr)
     {
         TRACE("Trying built-in '%s'\n", libname);
-        hinst = NE_DoLoadBuiltinModule( descr );
-        if (hinst > 32) TRACE_(loaddll)("Loaded module %s : builtin\n", debugstr_a(libname));
+        hinst = NE_DoLoadBuiltinModule( descr, file_name );
+        if (hinst > 32) TRACE_(loaddll)("Loaded module %s : builtin\n", debugstr_a(file_name));
     }
     else
     {

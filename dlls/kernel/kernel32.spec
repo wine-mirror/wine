@@ -1161,8 +1161,8 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # 16-bit relays
-@ cdecl __wine_register_dll_16(ptr)
-@ cdecl __wine_unregister_dll_16(ptr)
+@ cdecl __wine_dll_register_16(ptr str)
+@ cdecl __wine_dll_unregister_16(ptr)
 @ varargs __wine_call_from_16_word()
 @ varargs __wine_call_from_16_long()
 @ varargs __wine_call_from_16_regs()

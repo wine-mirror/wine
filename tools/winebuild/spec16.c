@@ -898,12 +898,10 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "#include \"poppack.h\"\n\n" );
 
     fprintf( outfile, "static const struct dll_descriptor\n{\n" );
-    fprintf( outfile, "    const char *file_name;\n" );
     fprintf( outfile, "    const struct module_data *module;\n" );
     fprintf( outfile, "    struct code_segment *code_start;\n" );
     fprintf( outfile, "    const unsigned char *rsrc;\n" );
     fprintf( outfile, "} descriptor =\n{\n" );
-    fprintf( outfile, "    \"%s\",\n", spec->file_name );
     fprintf( outfile, "    &module,\n" );
     fprintf( outfile, "    &code_segment,\n" );
     fprintf( outfile, "    %s\n", res_size ? "resource_data" : "0" );
@@ -918,13 +916,13 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile,
              "void %s(void)\n"
              "{\n"
-             "    extern void __wine_register_dll_16( const struct dll_descriptor *descr );\n"
-             "    __wine_register_dll_16( &descriptor );\n"
-             "}\n", constructor );
+             "    extern void __wine_dll_register_16( const struct dll_descriptor *descr, const char *file_name );\n"
+             "    __wine_dll_register_16( &descriptor, \"%s\" );\n"
+             "}\n", constructor, spec->file_name );
     fprintf( outfile,
              "void %s(void)\n"
              "{\n"
-             "    extern void __wine_unregister_dll_16( const struct dll_descriptor *descr );\n"
-             "    __wine_unregister_dll_16( &descriptor );\n"
+             "    extern void __wine_dll_unregister_16( const struct dll_descriptor *descr );\n"
+             "    __wine_dll_unregister_16( &descriptor );\n"
              "}\n", destructor );
 }
