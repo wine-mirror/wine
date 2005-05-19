@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winevdm);
 
-extern void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline );
+static void (WINAPI *wine_load_dos_exe)( LPCSTR filename, LPCSTR cmdline );
 
 
 /*** PIF file structures ***/
@@ -384,6 +384,7 @@ int main( int argc, char *argv[] )
     STARTUPINFOA info;
     char *cmdline, *appname, **first_arg;
     char *p;
+    HMODULE winedos;
 
     if (!argv[1]) usage();
 
@@ -396,11 +397,18 @@ int main( int argc, char *argv[] )
     {
         if (!SearchPathA( NULL, argv[1], ".exe", sizeof(buffer), buffer, NULL ))
         {
-            WINE_MESSAGE( "winevdm: can't exec '%s': file not found\n", argv[1] );
+            WINE_MESSAGE( "winevdm: unable to exec '%s': file not found\n", argv[1] );
             ExitProcess(1);
         }
         appname = buffer;
         first_arg = argv + 1;
+    }
+
+    if (!(winedos = LoadLibraryA( "winedos.dll" )) ||
+        !(wine_load_dos_exe = (void *)GetProcAddress( winedos, "wine_load_dos_exe" )))
+    {
+        WINE_MESSAGE( "winevdm: unable to exec '%s': 16-bit support missing\n", argv[1] );
+        ExitProcess(1);
     }
 
     if (*first_arg) first_arg++;  /* skip program name */
