@@ -127,9 +127,10 @@ static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
             if (name->id & 0x8000) printf( "  %d", (name->id & ~0x8000) );
             else printf( "  %.*s", *((const unsigned char *)res_ptr + name->id),
                          (const char *)res_ptr + name->id + 1 );
-            if (info->type_id & 0x8000) printf( " %s\n", get_resource_type(info->type_id) );
-            else printf( " %.*s\n", *((const unsigned char *)res_ptr + info->type_id),
+            if (info->type_id & 0x8000) printf( " %s", get_resource_type(info->type_id) );
+            else printf( " %.*s", *((const unsigned char *)res_ptr + info->type_id),
                          (const char *)res_ptr + info->type_id + 1 );
+            printf(" flags %04x length %04x\n", name->flags, name->length << size_shift);
             dump_data( (const unsigned char *)base + (name->offset << size_shift),
                        name->length << size_shift, "    " );
         }
