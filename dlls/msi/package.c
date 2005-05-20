@@ -73,7 +73,7 @@ static UINT clone_properties(MSIDATABASE *db)
        'Y',' ','K','E','Y',' ','`','_','P','r','o','p','e','r','t','y','`',')',0};
     static const WCHAR Query[] = {
        'S','E','L','E','C','T',' ','*',' ',
-       'f','r','o','m',' ','P','r','o','p','e','r','t','y',0};
+       'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
     static const WCHAR Insert[] = {
        'I','N','S','E','R','T',' ','i','n','t','o',' ',
        '`','_','P','r','o','p','e','r','t','y','`',' ',
@@ -747,9 +747,10 @@ static UINT MSI_GetPropertyRow(MSIPACKAGE *package, LPCWSTR szName, MSIRECORD **
     MSIQUERY *view;
     UINT rc, sz;
     static const WCHAR select[]=
-    {'s','e','l','e','c','t',' ','V','a','l','u','e',' ','f','r','o','m',' '
-     ,'_','P','r','o','p','e','r','t','y',' ','w','h','e','r','e',' '
-     ,'_','P','r','o','p','e','r','t','y','=','\'','%','s','\'',0};
+    {'S','E','L','E','C','T',' ','`','V','a','l','u','e','`',' ',
+     'F','R','O','M',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
+     ' ','W','H','E','R','E',' ' ,'`','_','P','r','o','p','e','r','t','y','`',
+     '=','\'','%','s','\'',0};
     LPWSTR query;
 
     if (!szName)
