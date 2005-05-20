@@ -20,7 +20,6 @@
  */
 
 #include <stdarg.h>
-#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -29,11 +28,40 @@
 
 #include "wine/test.h"
 
+
+static void check_font(const char* test, const LOGFONTA* lf, HFONT hfont)
+{
+    LOGFONTA getobj_lf;
+    int ret, minlen = 0;
+
+    if (!hfont)
+        return;
+
+    ret = GetObject(hfont, sizeof(getobj_lf), &getobj_lf);
+    /* NT4 tries to be clever and only returns the minimum length */
+    while (lf->lfFaceName[minlen] && minlen < LF_FACESIZE-1)
+        minlen++;
+    minlen += FIELD_OFFSET(LOGFONTA, lfFaceName) + 1;
+    ok(ret == sizeof(LOGFONTA) || ret == minlen,
+       "%s: GetObject returned %d expected %d or %d\n", test, ret, sizeof(LOGFONTA), minlen);
+    ok(!memcmp(&lf, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "%s: fonts don't match\n", test);
+    ok(!lstrcmpA(lf->lfFaceName, getobj_lf.lfFaceName),
+       "%s: font names don't match: %s != %s\n", test, lf->lfFaceName, getobj_lf.lfFaceName);
+}
+
+static HFONT create_font(const char* test, const LOGFONTA* lf)
+{
+    HFONT hfont = CreateFontIndirectA(lf);
+    ok(hfont != 0, "%s: CreateFontIndirect failed\n", test);
+    if (hfont)
+        check_font(test, lf, hfont);
+    return hfont;
+}
+
 static void test_logfont(void)
 {
-    LOGFONTA lf, lfout;
+    LOGFONTA lf;
     HFONT hfont;
-    int ret;
 
     memset(&lf, 0, sizeof lf);
 
@@ -43,35 +71,17 @@ static void test_logfont(void)
     lf.lfHeight = 16;
     lf.lfWidth = 16;
     lf.lfQuality = DEFAULT_QUALITY;
+
     lstrcpyA(lf.lfFaceName, "Arial");
-
-    hfont = CreateFontIndirectA(&lf);
-    ok(hfont != 0, "CreateFontIndirect failed\n");
-
-    ret = GetObjectA(hfont, sizeof(lfout), &lfout);
-    ok(ret == sizeof(lfout),
-       "GetObject returned %d expected %d\n", ret, sizeof(lfout));
-
-    ok(!memcmp(&lfout, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "fonts don't match\n");
-    ok(!lstrcmpA(lfout.lfFaceName, lf.lfFaceName),
-       "font names don't match: %s != %s\n", lfout.lfFaceName, lf.lfFaceName);
-
+    hfont = create_font("Arial", &lf);
     DeleteObject(hfont);
 
     memset(&lf, 'A', sizeof(lf));
     hfont = CreateFontIndirectA(&lf);
     ok(hfont != 0, "CreateFontIndirectA with strange LOGFONT failed\n");
-
-    ok(GetObjectA(hfont, sizeof(lfout), NULL) == sizeof(lfout),
-       "GetObjectA with NULL failed\n");
-
-    ok(GetObjectA(hfont, sizeof(lfout), &lfout) == sizeof(lfout),
-       "GetObjectA failed\n");
-    ok(!memcmp(&lfout, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "fonts don't match\n");
+    
     lf.lfFaceName[LF_FACESIZE - 1] = 0;
-    ok(!lstrcmpA(lfout.lfFaceName, lf.lfFaceName),
-       "font names don't match: %s != %s\n", lfout.lfFaceName, lf.lfFaceName);
-
+    check_font("AAA...", &lf, hfont);
     DeleteObject(hfont);
 }
 
@@ -96,6 +106,9 @@ static void test_font_metrics(HDC hdc, HFONT hfont, const char *test_str,
     TEXTMETRICA tm;
     SIZE size;
     INT width;
+
+    if (!hfont)
+        return;
 
     old_hfont = SelectObject(hdc, hfont);
 
@@ -123,7 +136,7 @@ static void test_bitmap_font(void)
 {
     static const char test_str[11] = "Test String";
     HDC hdc;
-    LOGFONTA bitmap_lf, lf;
+    LOGFONTA bitmap_lf;
     HFONT hfont, old_hfont;
     TEXTMETRICA tm_orig;
     SIZE size_orig;
@@ -143,8 +156,7 @@ static void test_bitmap_font(void)
     trace("found bitmap font %s, height %ld\n", bitmap_lf.lfFaceName, bitmap_lf.lfHeight);
 
     height_orig = bitmap_lf.lfHeight;
-    hfont = CreateFontIndirectA(&bitmap_lf);
-    assert(hfont);
+    hfont = create_font("bitmap", &bitmap_lf);
 
     old_hfont = SelectObject(hdc, hfont);
     ok(GetTextMetricsA(hdc, &tm_orig), "GetTextMetricsA failed\n");
@@ -156,16 +168,7 @@ static void test_bitmap_font(void)
     /* test fractional scaling */
     for (i = 1; i < height_orig; i++)
     {
-	bitmap_lf.lfHeight = i;
-	hfont = CreateFontIndirectA(&bitmap_lf);
-	assert(hfont);
-
-	ret = GetObject(hfont, sizeof(lf), &lf);
-	ok(ret == sizeof(lf), "GetObject failed: %d\n", ret);
-	ok(!memcmp(&bitmap_lf, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "fonts don't match\n");
-	ok(!lstrcmpA(bitmap_lf.lfFaceName, lf.lfFaceName),
-	   "font names don't match: %s != %s\n", bitmap_lf.lfFaceName, lf.lfFaceName);
-
+	hfont = create_font("fractional", &bitmap_lf);
 	test_font_metrics(hdc, hfont, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, 1);
 	DeleteObject(hfont);
     }
@@ -173,14 +176,7 @@ static void test_bitmap_font(void)
     /* test integer scaling 3x2 */
     bitmap_lf.lfHeight = height_orig * 2;
     bitmap_lf.lfWidth *= 3;
-    hfont = CreateFontIndirectA(&bitmap_lf);
-    assert(hfont);
-
-    ret = GetObject(hfont, sizeof(lf), &lf);
-    ok(ret == sizeof(lf), "GetObject failed: %d\n", ret);
-    ok(!memcmp(&bitmap_lf, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "fonts don't match\n");
-    ok(!lstrcmpA(bitmap_lf.lfFaceName, lf.lfFaceName),
-       "font names don't match: %s != %s\n", bitmap_lf.lfFaceName, lf.lfFaceName);
+    hfont = create_font("3x2", &bitmap_lf);
 todo_wine
 {
     test_font_metrics(hdc, hfont, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 2);
@@ -190,14 +186,8 @@ todo_wine
     /* test integer scaling 3x3 */
     bitmap_lf.lfHeight = height_orig * 3;
     bitmap_lf.lfWidth = 0;
-    hfont = CreateFontIndirectA(&bitmap_lf);
-    assert(hfont);
+    hfont = create_font("3x3", &bitmap_lf);
 
-    ret = GetObject(hfont, sizeof(lf), &lf);
-    ok(ret == sizeof(lf), "GetObject failed: %d\n", ret);
-    ok(!memcmp(&bitmap_lf, &lf, FIELD_OFFSET(LOGFONTA, lfFaceName)), "fonts don't match\n");
-    ok(!lstrcmpA(bitmap_lf.lfFaceName, lf.lfFaceName),
-       "font names don't match: %s != %s\n", bitmap_lf.lfFaceName, lf.lfFaceName);
 todo_wine
 {
     test_font_metrics(hdc, hfont, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
