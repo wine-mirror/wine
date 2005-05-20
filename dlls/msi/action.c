@@ -646,8 +646,9 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
 {
     static const WCHAR Query_t[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'A','c','t','i','o', 'n','T','e','x','t',' ','W','H','E','R','E',' ',
-         'A','c','t','i','o','n',' ','=', ' ','\'','%','s','\'',0};
+         '`','A','c','t','i','o', 'n','T','e','x','t','`',' ',
+         'W','H','E','R','E',' ', '`','A','c','t','i','o','n','`',' ','=', 
+         ' ','\'','%','s','\'',0};
     WCHAR message[1024];
     UINT rc;
     MSIQUERY * view;
@@ -716,8 +717,9 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
         {'H','H','\'',':','\'','m','m','\'',':','\'','s','s',0};
     static const WCHAR Query_t[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'A','c','t','i','o', 'n','T','e','x','t',' ','W','H','E','R','E', ' ',
-         'A','c','t','i','o','n',' ','=', ' ','\'','%','s','\'',0};
+         '`','A','c','t','i','o', 'n','T','e','x','t','`',' ',
+         'W','H','E','R','E', ' ','`','A','c','t','i','o','n','`',' ','=', 
+         ' ','\'','%','s','\'',0};
     WCHAR message[1024];
     WCHAR timet[0x100];
     UINT rc;
@@ -1016,14 +1018,14 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-         'S','e','q','u','e','n','c','e',' ', 'W','H','E','R','E',' ',
-         'S','e','q','u','e','n','c','e',' ', '=',' ','%','i',0};
+         '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+         'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
+         '`','S','e','q','u','e','n','c','e','`',' ', '=',' ','%','i',0};
 
     static const WCHAR UISeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-	 'I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
-	 ' ', 'W','H','E','R','E',' ', 'S','e','q','u','e','n','c','e',
+     '`','I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
+     '`', ' ', 'W','H','E','R','E',' ','`','S','e','q','u','e','n','c','e','`',
 	 ' ', '=',' ','%','i',0};
 
     if (UI)
@@ -1101,18 +1103,19 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     UINT rc;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
-         'S','e','q','u','e','n','c','e',' ', 'W','H','E','R','E',' ',
-         'S','e','q','u','e','n','c','e',' ', '>',' ','%','i',' ',
+         '`','I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+         'S','e','q','u','e','n','c','e','`',' ', 'W','H','E','R','E',' ',
+         '`','S','e','q','u','e','n','c','e','`',' ', '>',' ','%','i',' ',
          'O','R','D','E','R',' ', 'B','Y',' ',
-         'S','e','q','u','e','n','c','e',0 };
+         '`','S','e','q','u','e','n','c','e','`',0 };
     MSIRECORD * row = 0;
     static const WCHAR IVQuery[] =
-        {'S','E','L','E','C','T',' ','S','e','q','u','e','n','c','e',' ',
-         'F','R','O','M',' ','I','n','s','t','a','l','l',
-         'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e',' ',
-         'W','H','E','R','E',' ','A','c','t','i','o','n',' ','=',' ','`',
-         'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e','`', 0};
+        {'S','E','L','E','C','T',' ','`','S','e','q','u','e','n','c','e','`',
+         ' ', 'F','R','O','M',' ','`','I','n','s','t','a','l','l',
+         'E','x','e','c','u','t','e','S','e','q','u','e','n','c','e','`',' ',
+         'W','H','E','R','E',' ','`','A','c','t','i','o','n','`',' ','=',
+         ' ','\'', 'I','n','s','t','a','l','l',
+         'V','a','l','i','d','a','t','e','\'', 0};
     INT seq = 0;
 
 
@@ -1236,10 +1239,12 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
     UINT rc;
     static const WCHAR ExecSeqQuery [] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'I','n','s','t','a','l','l','U','I','S','e','q','u','e','n','c','e',
-         ' ','W','H','E','R','E',' ', 'S','e','q','u','e','n','c','e',' ',
+         '`','I','n','s','t','a','l','l',
+         'U','I','S','e','q','u','e','n','c','e','`',
+         ' ','W','H','E','R','E',' ', 
+         '`','S','e','q','u','e','n','c','e','`',' ',
          '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
-         'S','e','q','u','e','n','c','e',0};
+         '`','S','e','q','u','e','n','c','e','`',0};
     
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     
@@ -1504,9 +1509,10 @@ static BOOL create_full_pathW(const WCHAR *path)
 static UINT ACTION_CreateFolders(MSIPACKAGE *package)
 {
     static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','D','i','r','e','c','t','o','r','y','_',
+        {'S','E','L','E','C','T',' ',
+         '`','D','i','r','e','c','t','o','r','y','_','`',
          ' ','F','R','O','M',' ',
-         'C','r','e','a','t','e','F','o','l','d','e','r',0 };
+         '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0 };
     UINT rc;
     MSIQUERY *view;
     MSIFOLDER *folder;
@@ -1631,14 +1637,18 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
     int index = package->loaded_features;
     DWORD sz;
     static const WCHAR Query1[] = 
-        {'S','E','L','E','C','T',' ','C','o','m','p','o','n','e','n','t','_',
-         ' ','F','R','O','M',' ','F','e','a','t','u','r','e',
-         'C','o','m','p','o','n','e','n','t','s',' ','W','H','E','R','E',' ',
-         'F','e', 'a','t','u','r','e','_','=','\'','%','s','\'',0};
+        {'S','E','L','E','C','T',' ',
+         '`','C','o','m','p','o','n','e','n','t','_','`',
+         ' ','F','R','O','M',' ','`','F','e','a','t','u','r','e',
+         'C','o','m','p','o','n','e','n','t','s','`',' ',
+         'W','H','E','R','E',' ',
+         '`','F','e', 'a','t','u','r','e','_','`',' ','=','\'','%','s','\'',0};
     static const WCHAR Query2[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
-         'C','o','m','p','o','n','e','n','t',' ','W','H','E','R','E',' ', 
-         'C','o','m','p','o','n','e','n','t','=','\'','%','s','\'',0};
+         '`','C','o','m','p','o','n','e','n','t','`',' ',
+         'W','H','E','R','E',' ', 
+         '`','C','o','m','p','o','n','e','n','t','`',' ',
+         '=','\'','%','s','\'',0};
     MSIQUERY * view;
     MSIQUERY * view2;
     MSIRECORD * row2;
@@ -1821,8 +1831,8 @@ static UINT load_all_files(MSIPACKAGE *package)
     UINT rc;
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'F','i','l','e',' ', 'O','R','D','E','R',' ','B','Y',' ',
-         'S','e','q','u','e','n','c','e', 0};
+         '`','F','i','l','e','`',' ', 'O','R','D','E','R',' ','B','Y',' ',
+         '`','S','e','q','u','e','n','c','e','`', 0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -1877,7 +1887,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     UINT rc;
     static const WCHAR Query_all[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'F','e','a','t','u','r','e',0};
+         '`','F','e','a','t','u','r','e','`',0};
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szZero[] = { '0', 0 };
@@ -1930,8 +1940,9 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 {
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'D','i','r','e','c', 't','o','r','y',' ','W','H','E','R','E',' ','`',
-         'D','i','r','e','c','t', 'o','r','y','`',' ','=',' ','`','%','s','`',
+         '`','D','i','r','e','c', 't','o','r','y','`',' ',
+         'W','H','E','R','E',' ', '`', 'D','i','r','e','c','t', 'o','r','y','`',
+         ' ','=',' ','\'','%','s','\'',
          0};
     UINT rc;
     MSIQUERY * view;
@@ -2503,10 +2514,10 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'D','i','r','e','c','t','o','r','y',0};
+         '`','D','i','r','e','c','t','o','r','y','`',0};
     static const WCHAR ConditionQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'C','o','n','d','i','t','i','o','n',0};
+         '`','C','o','n','d','i','t','i','o','n','`',0};
     static const WCHAR szCosting[] =
         {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
     static const WCHAR szlevel[] =
@@ -2988,10 +2999,10 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
     static WCHAR source[MAX_PATH];
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'M','e','d','i','a',' ','W','H','E','R','E',' ',
-         'L','a','s','t','S','e','q','u','e','n','c','e',' ','>','=',' ','%',
-         'i',' ','O','R','D','E','R',' ','B','Y',' ',
-         'L','a','s','t','S','e','q','u','e','n','c','e',0};
+         '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+         '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
+         ' ','%', 'i',' ','O','R','D','E','R',' ','B','Y',' ',
+         '`','L','a','s','t','S','e','q','u','e','n','c','e','`',0};
     WCHAR Query[1024];
     WCHAR cab[0x100];
     DWORD sz=0x100;
@@ -3270,7 +3281,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'D','u','p','l','i','c','a','t','e','F','i','l','e',0};
+         '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3528,7 +3539,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'R','e','g','i','s','t','r','y',0 };
+         '`','R','e','g','i','s','t','r','y','`',0 };
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -3571,6 +3582,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         MSIRECORD * uirow;
         LPWSTR uikey;
         INT   root;
+        BOOL check_first = FALSE;
 
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -3616,6 +3628,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             {
                 HeapFree(GetProcessHeap(),0,name);
                 name = NULL;
+                check_first = TRUE;
             }
         }
 
@@ -3678,8 +3691,28 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 
         deformat_string(package, name, &deformated);
 
-        TRACE("Setting value %s\n",debugstr_w(deformated));
-        RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+        if (!check_first)
+        {
+            TRACE("Setting value %s of %s\n",debugstr_w(deformated),
+                            debugstr_w(uikey));
+            RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+        }
+        else
+        {
+            DWORD sz = 0;
+            rc = RegQueryValueExW(hkey, deformated, NULL, NULL, NULL, &sz);
+            if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+            {
+                TRACE("value %s of %s checked already exists\n",
+                                debugstr_w(deformated), debugstr_w(uikey));
+            }
+            else
+            {
+                TRACE("Checked and setting value %s of %s\n",
+                                debugstr_w(deformated), debugstr_w(uikey));
+                RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+            }
+        }
 
         uirow = MSI_CreateRecord(3);
         MSI_RecordSetStringW(uirow,2,deformated);
@@ -3722,7 +3755,7 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     DWORD total = 0;
     static const WCHAR q1[]=
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'R','e','g','i','s','t','r','y',0};
+         '`','R','e','g','i','s','t','r','y','`',0};
     UINT rc;
     MSIQUERY * view;
     MSIRECORD * row = 0;
@@ -3780,7 +3813,7 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n',0};
+         '`','L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','`',0};
     static const WCHAR title[]=
         {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
 
@@ -3849,8 +3882,9 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         LPWSTR key,deformated,buffer,name,deformated_name;
         static const WCHAR ExecSeqQuery[] =
             {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-             'R','e','g','i','s','t','r','y',' ','W','H','E','R','E',' ',
-             'R','e','g','i','s','t','r','y',' ','=',' ' ,'`','%','s','`',0 };
+             '`','R','e','g','i','s','t','r','y','`',' ',
+             'W','H','E','R','E',' ', '`','R','e','g','i','s','t','r','y','`',
+             ' ','=',' ' ,'\'','%','s','\'',0 };
         static const WCHAR fmt[]={'%','0','2','i',':','\\','%','s','\\',0};
         static const WCHAR fmt2[]=
             {'%','0','2','i',':','\\','%','s','\\','%','s',0};
@@ -4236,7 +4270,7 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'T','y','p','e','L','i','b',0};
+         '`','T','y','p','e','L','i','b','`',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4365,8 +4399,8 @@ static UINT register_appid(MSIPACKAGE *package, LPCWSTR clsid, LPCWSTR app )
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'A','p','p','I' ,'d',' ','w','h','e','r','e',' ',
-         'A','p','p','I','d','=','`','%','s','`',0};
+         '`','A','p','p','I' ,'d','`',' ','W','H','E','R','E',' ',
+         '`','A','p','p','I','d','`',' ','=','\'','%','s','\'',0};
     HKEY hkey2,hkey3;
     LPWSTR buffer=0;
 
@@ -4495,7 +4529,7 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'C','l','a','s','s',0};
+         '`','C','l','a','s','s','`',0};
     static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
     static const WCHAR szProgID[] = { 'P','r','o','g','I','D',0 };
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
@@ -4810,8 +4844,8 @@ static UINT register_parent_progid(MSIPACKAGE *package, LPCWSTR parent,
     MSIRECORD * row = 0;
     static const WCHAR Query_t[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'P','r','o','g' ,'I','d',' ','W','H','E','R','E',' ',
-         'P','r','o','g','I','d',' ','=',' ','`' ,'%','s','`',0};
+         '`','P','r','o','g' ,'I','d','`',' ','W','H','E','R','E',' ',
+         '`','P','r','o','g','I','d','`',' ','=',' ','\'' ,'%','s','\'',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4924,7 +4958,7 @@ static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         'P','r','o','g','I','d',0};
+         '`','P','r','o','g','I','d','`',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4999,8 +5033,8 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
     MSIQUERY * view;
     MSIRECORD * row = 0;
     static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ','f','r','o','m',' ',
-         'S','h','o','r','t','c','u','t',0};
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','S','h','o','r','t','c','u','t','`',0};
     IShellLinkW *sl;
     IPersistFile *pf;
     HRESULT res;
@@ -5202,7 +5236,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR Query[]=
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'I','c','o','n',0};
+         '`','I','c','o','n','`',0};
     DWORD sz;
     /* for registry stuff */
     LPWSTR productcode;
@@ -5363,7 +5397,7 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'I','n','i','F','i','l','e',0};
+         '`','I','n','i','F','i','l','e','`',0};
     static const WCHAR szWindowsFolder[] =
           {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
 
@@ -5505,7 +5539,7 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'S','e','l','f','R','e','g',0};
+         '`','S','e','l','f','R','e','g','`',0};
 
     static const WCHAR ExeStr[] =
         {'r','e','g','s','v','r','3','2','.','e','x','e',' ','\"',0};
@@ -5967,7 +6001,7 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'E','x','t','e','n','s','i','o','n',0};
+         '`','E','x','t','e','n','s','i','o','n','`',0};
     static const WCHAR szContentType[] = 
         {'C','o','n','t','e','n','t',' ','T','y','p','e',0 };
     HKEY hkey;
@@ -6090,7 +6124,7 @@ static UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'M','I','M','E',0};
+         '`','M','I','M','E','`',0};
     static const WCHAR szExten[] = 
         {'E','x','t','e','n','s','i','o','n',0 };
     HKEY hkey;
@@ -6375,7 +6409,7 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'F','o','n','t',0};
+         '`','F','o','n','t','`',0};
     static const WCHAR regfont1[] =
         {'S','o','f','t','w','a','r','e','\\',
          'M','i','c','r','o','s','o','f','t','\\',
@@ -6590,7 +6624,8 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package)
     MSIQUERY * view;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         'P','u','b','l','i','s','h','C','o','m','p','o','n','e','n','t',0};
+         '`','P','u','b','l','i','s','h',
+         'C','o','m','p','o','n','e','n','t','`',0};
     
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
