@@ -78,13 +78,19 @@ static CRITICAL_SECTION SHELL32_SicCS = { &critsect_debug, -1, 0, 0, 0, 0 };
  *  Callback for DPA_Search
  */
 static INT CALLBACK SIC_CompareEntries( LPVOID p1, LPVOID p2, LPARAM lparam)
-{	TRACE("%p %p %8lx\n", p1, p2, lparam);
+{	LPSIC_ENTRY e1 = (LPSIC_ENTRY)p1, e2 = (LPSIC_ENTRY)p2;
+	
+	TRACE("%p %p %8lx\n", p1, p2, lparam);
 
-	if (((LPSIC_ENTRY)p1)->dwSourceIndex != ((LPSIC_ENTRY)p2)->dwSourceIndex ||
-	    ((LPSIC_ENTRY)p1)->dwFlags != ((LPSIC_ENTRY)p2)->dwFlags) /* first the faster one*/
+	/* Icons in the cache are keyed by the name of the file they are
+	 * loaded from, their resource index and the fact if they have a shortcut
+	 * icon overlay or not. 
+	 */
+	if (e1->dwSourceIndex != e2->dwSourceIndex || /* first the faster one */
+	    (e1->dwFlags & GIL_FORSHORTCUT) != (e2->dwFlags & GIL_FORSHORTCUT)) 
 	  return 1;
 
-	if (strcmpiW(((LPSIC_ENTRY)p1)->sSourceFile,((LPSIC_ENTRY)p2)->sSourceFile))
+	if (strcmpiW(e1->sSourceFile,e2->sSourceFile))
 	  return 1;
 
 	return 0;
