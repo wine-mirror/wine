@@ -9,6 +9,7 @@ IMPORTS   = advapi32 kernel32
 
 C_SRCS = \
 	cert.c \
+	encode.c \
 	protectdata.c \
 	main.c
 

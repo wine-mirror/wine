@@ -85,10 +85,12 @@
 @ stub CryptCloseAsyncHandle
 @ stub CryptCreateAsyncHandle
 @ stub CryptDecodeMessage
-@ stub CryptDecodeObject
+@ stdcall CryptDecodeObject(long str ptr long long ptr ptr)
+@ stdcall CryptDecodeObjectEx(long str ptr long long ptr ptr ptr)
 @ stub CryptDecryptAndVerifyMessageSignature
 @ stub CryptDecryptMessage
-@ stub CryptEncodeObject
+@ stdcall CryptEncodeObject(long str ptr ptr ptr)
+@ stdcall CryptEncodeObjectEx(long str ptr long ptr ptr)
 @ stub CryptEncryptMessage
 @ stub CryptEnumOIDFunction
 @ stub CryptEnumOIDInfo
@@ -151,7 +153,7 @@
 @ stub CryptSignMessageWithKey
 @ stdcall CryptUnprotectData(ptr ptr ptr ptr ptr long ptr)
 @ stub CryptUnregisterDefaultOIDFunction
-@ stub CryptUnregisterOIDFunction
+@ stdcall CryptUnregisterOIDFunction(long str str)
 @ stub CryptUnregisterOIDInfo
 @ stub CryptVerifyCertificateSignature
 @ stub CryptVerifyDetachedMessageHash
