@@ -102,3 +102,696 @@ struct protect_data_t
     DATA_BLOB   cipher;
     DATA_BLOB   fingerprint;
 };
+
+/* this is used to check if an incoming structure was built by Wine */
+static const char * crypt_magic_str = "Wine Crypt32 ok";
+
+/* debugging tool to print strings of hex chars */
+static const char *
+hex_str(unsigned char *p, int n)
+{
+    const char * ptr;
+    char report[80];
+    int r=-1;
+    report[0]='\0';
+    ptr = wine_dbg_sprintf("%s","");
+    while (--n >= 0)
+    {
+        if (r++ % 20 == 19)
+        {
+            ptr = wine_dbg_sprintf("%s%s",ptr,report);
+            report[0]='\0';
+        }
+        sprintf(report+strlen(report),"%s%02x", r ? "," : "", *p++);
+    }
+    return wine_dbg_sprintf("%s%s",ptr,report);
+}
+
+#define TRACE_DATA_BLOB(blob) do { \
+    TRACE("%s cbData: %u\n", #blob ,(unsigned int)((blob)->cbData)); \
+    TRACE("%s pbData @ 0x%x:%s\n", #blob ,(unsigned int)((blob)->pbData), \
+          hex_str((blob)->pbData, (blob)->cbData)); \
+} while (0)
+
+static
+void serialize_dword(DWORD value,BYTE ** ptr)
+{
+    /*TRACE("called\n");*/
+
+    memcpy(*ptr,&value,sizeof(DWORD));
+    *ptr+=sizeof(DWORD);
+}
+
+static
+void serialize_string(BYTE * str,BYTE ** ptr,DWORD len, DWORD width,
+                      BOOL prepend_len)
+{
+    /*TRACE("called %ux%u\n",(unsigned int)len,(unsigned int)width);*/
+
+    if (prepend_len)
+    {
+        serialize_dword(len,ptr);
+    }
+    memcpy(*ptr,str,len*width);
+    *ptr+=len*width;
+}
+
+static
+BOOL unserialize_dword(BYTE * ptr, DWORD *index, DWORD size, DWORD * value)
+{
+    /*TRACE("called\n");*/
+
+    if (!ptr || !index || !value) return FALSE;
+
+    if (*index+sizeof(DWORD)>size)
+    {
+        return FALSE;
+    }
+
+    memcpy(value,&(ptr[*index]),sizeof(DWORD));
+    *index+=sizeof(DWORD);
+
+    return TRUE;
+}
+
+static
+BOOL unserialize_string(BYTE * ptr, DWORD *index, DWORD size,
+                        DWORD len, DWORD width, BOOL inline_len,
+                        BYTE ** data, DWORD * stored)
+{
+    /*TRACE("called\n");*/
+
+    if (!ptr || !data) return FALSE;
+
+    if (inline_len) {
+        if (!unserialize_dword(ptr,index,size,&len))
+            return FALSE;
+    }
+
+    if (*index+len*width>size)
+    {
+        return FALSE;
+    }
+
+    if (!(*data = HeapAlloc( GetProcessHeap(), 0, len*width)))
+    {
+        return FALSE;
+    }
+
+    memcpy(*data,&(ptr[*index]),len*width);
+    if (stored)
+    {
+        *stored = len;
+    }
+    *index+=len*width;
+
+    return TRUE;
+}
+
+static
+BOOL serialize(struct protect_data_t * pInfo, DATA_BLOB * pSerial)
+{
+    BYTE * ptr;
+    DWORD dwStrLen;
+    DWORD dwStruct;
+
+    TRACE("called\n");
+
+    if (!pInfo || !pInfo->szDataDescr || !pSerial ||
+        !pInfo->info0.pbData || !pInfo->info1.pbData ||
+        !pInfo->data0.pbData || !pInfo->salt.pbData ||
+        !pInfo->cipher.pbData || !pInfo->fingerprint.pbData)
+    {
+        return FALSE;
+    }
+
+    if (pInfo->info0.cbData!=16)
+    {
+        ERR("protect_data_t info0 not 16 bytes long\n");
+    }
+
+    if (pInfo->info1.cbData!=16)
+    {
+        ERR("protect_data_t info1 not 16 bytes long\n");
+    }
+
+    dwStrLen=lstrlenW(pInfo->szDataDescr);
+
+    pSerial->cbData=0;
+    pSerial->cbData+=sizeof(DWORD)*8; /* 8 raw DWORDs */
+    pSerial->cbData+=sizeof(DWORD)*4; /* 4 BLOBs with size */
+    pSerial->cbData+=pInfo->info0.cbData;
+    pSerial->cbData+=pInfo->info1.cbData;
+    pSerial->cbData+=(dwStrLen+1)*sizeof(WCHAR) + 4; /* str, null, size */
+    pSerial->cbData+=pInfo->data0.cbData;
+    pSerial->cbData+=pInfo->salt.cbData;
+    pSerial->cbData+=pInfo->cipher.cbData;
+    pSerial->cbData+=pInfo->fingerprint.cbData;
+
+    /* save the actual structure size */
+    dwStruct = pSerial->cbData;
+    /* There may be a 256 byte minimum, but I can't prove it. */
+    /*if (pSerial->cbData<256) pSerial->cbData=256;*/
+
+    pSerial->pbData=LocalAlloc(LPTR,pSerial->cbData);
+    if (!pSerial->pbData) return FALSE;
+
+    ptr=pSerial->pbData;
+
+    /* count0 */
+    serialize_dword(pInfo->count0,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    
+    /* info0 */
+    serialize_string(pInfo->info0.pbData,&ptr,
+                     pInfo->info0.cbData,sizeof(BYTE),FALSE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* count1 */
+    serialize_dword(pInfo->count1,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* info1 */
+    serialize_string(pInfo->info1.pbData,&ptr,
+                     pInfo->info1.cbData,sizeof(BYTE),FALSE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* null0 */
+    serialize_dword(pInfo->null0,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    
+    /* szDataDescr */
+    serialize_string((BYTE*)pInfo->szDataDescr,&ptr,
+                     (dwStrLen+1)*sizeof(WCHAR),sizeof(BYTE),TRUE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* unknown0 */
+    serialize_dword(pInfo->unknown0,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    /* unknown1 */
+    serialize_dword(pInfo->unknown1,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    
+    /* data0 */
+    serialize_string(pInfo->data0.pbData,&ptr,
+                     pInfo->data0.cbData,sizeof(BYTE),TRUE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* null1 */
+    serialize_dword(pInfo->null1,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    
+    /* unknown2 */
+    serialize_dword(pInfo->unknown2,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    /* unknown3 */
+    serialize_dword(pInfo->unknown3,&ptr);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+    
+    /* salt */
+    serialize_string(pInfo->salt.pbData,&ptr,
+                     pInfo->salt.cbData,sizeof(BYTE),TRUE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* cipher */
+    serialize_string(pInfo->cipher.pbData,&ptr,
+                     pInfo->cipher.cbData,sizeof(BYTE),TRUE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    /* fingerprint */
+    serialize_string(pInfo->fingerprint.pbData,&ptr,
+                     pInfo->fingerprint.cbData,sizeof(BYTE),TRUE);
+    /*TRACE("used %u\n",ptr-pSerial->pbData);*/
+
+    if (ptr - pSerial->pbData != dwStruct)
+    {
+        ERR("struct size changed!? %u != expected %u\n",
+            ptr - pSerial->pbData, (unsigned int)dwStruct);
+        LocalFree(pSerial->pbData);
+        pSerial->pbData=NULL;
+        pSerial->cbData=0;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static
+BOOL unserialize(DATA_BLOB * pSerial, struct protect_data_t * pInfo)
+{
+    BYTE * ptr;
+    DWORD index;
+    DWORD size;
+    BOOL status=TRUE;
+
+    TRACE("called\n");
+
+    if (!pInfo || !pSerial || !pSerial->pbData)
+        return FALSE;
+
+    index=0;
+    ptr=pSerial->pbData;
+    size=pSerial->cbData;
+
+    /* count0 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->count0))
+    {
+        ERR("reading count0 failed!\n");
+        return FALSE;
+    }
+    
+    /* info0 */
+    if (!unserialize_string(ptr,&index,size,16,sizeof(BYTE),FALSE,
+                            &pInfo->info0.pbData, &pInfo->info0.cbData))
+    {
+        ERR("reading info0 failed!\n");
+        return FALSE;
+    }
+
+    /* count1 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->count1))
+    {
+        ERR("reading count1 failed!\n");
+        return FALSE;
+    }
+
+    /* info1 */
+    if (!unserialize_string(ptr,&index,size,16,sizeof(BYTE),FALSE,
+                            &pInfo->info1.pbData, &pInfo->info1.cbData))
+    {
+        ERR("reading info1 failed!\n");
+        return FALSE;
+    }
+
+    /* null0 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->null0))
+    {
+        ERR("reading null0 failed!\n");
+        return FALSE;
+    }
+    
+    /* szDataDescr */
+    if (!unserialize_string(ptr,&index,size,0,sizeof(BYTE),TRUE,
+                            (BYTE**)&pInfo->szDataDescr, NULL))
+    {
+        ERR("reading szDataDescr failed!\n");
+        return FALSE;
+    }
+
+    /* unknown0 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown0))
+    {
+        ERR("reading unknown0 failed!\n");
+        return FALSE;
+    }
+    
+    /* unknown1 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown1))
+    {
+        ERR("reading unknown1 failed!\n");
+        return FALSE;
+    }
+    
+    /* data0 */
+    if (!unserialize_string(ptr,&index,size,0,sizeof(BYTE),TRUE,
+                            &pInfo->data0.pbData, &pInfo->data0.cbData))
+    {
+        ERR("reading data0 failed!\n");
+        return FALSE;
+    }
+
+    /* null1 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->null1))
+    {
+        ERR("reading null1 failed!\n");
+        return FALSE;
+    }
+    
+    /* unknown2 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown2))
+    {
+        ERR("reading unknown2 failed!\n");
+        return FALSE;
+    }
+    
+    /* unknown3 */
+    if (!unserialize_dword(ptr,&index,size,&pInfo->unknown3))
+    {
+        ERR("reading unknown3 failed!\n");
+        return FALSE;
+    }
+    
+    /* salt */
+    if (!unserialize_string(ptr,&index,size,0,sizeof(BYTE),TRUE,
+                            &pInfo->salt.pbData, &pInfo->salt.cbData))
+    {
+        ERR("reading salt failed!\n");
+        return FALSE;
+    }
+
+    /* cipher */
+    if (!unserialize_string(ptr,&index,size,0,sizeof(BYTE),TRUE,
+                            &pInfo->cipher.pbData, &pInfo->cipher.cbData))
+    {
+        ERR("reading cipher failed!\n");
+        return FALSE;
+    }
+
+    /* fingerprint */
+    if (!unserialize_string(ptr,&index,size,0,sizeof(BYTE),TRUE,
+                            &pInfo->fingerprint.pbData, &pInfo->fingerprint.cbData))
+    {
+        ERR("reading fingerprint failed!\n");
+        return FALSE;
+    }
+
+    /* allow structure size to be too big (since some applications
+     * will pad this up to 256 bytes, it seems) */
+    if (index>size)
+    {
+        /* this is an impossible-to-reach test, but if the padding
+         * issue is ever understood, this may become more useful */
+        ERR("loaded corrupt structure! (used %u expected %u)\n",
+                (unsigned int)index, (unsigned int)size);
+        status=FALSE;
+    }
+
+    return status;
+}
+
+/* perform sanity checks */
+static
+BOOL valid_protect_data(struct protect_data_t * pInfo)
+{
+    BOOL status=TRUE;
+
+    TRACE("called\n");
+
+    if (pInfo->count0 != 0x0001)
+    {
+        ERR("count0 != 0x0001 !\n");
+        status=FALSE;
+    }
+    if (pInfo->count1 != 0x0001)
+    {
+        ERR("count0 != 0x0001 !\n");
+        status=FALSE;
+    }
+    if (pInfo->null0 != 0x0000)
+    {
+        ERR("null0 != 0x0000 !\n");
+        status=FALSE;
+    }
+    if (pInfo->null1 != 0x0000)
+    {
+        ERR("null1 != 0x0000 !\n");
+        status=FALSE;
+    }
+    /* since we have no idea what info0 is used for, and it seems
+     * rather constant, we can test for a Wine-specific magic string
+     * there to be reasonably sure we're using data created by the Wine
+     * implementation of CryptProtectData.
+     */
+    if (pInfo->info0.cbData!=strlen(crypt_magic_str)+1 ||
+        strcmp(pInfo->info0.pbData,crypt_magic_str) != 0)
+    {
+        ERR("info0 magic value not matched !\n");
+        status=FALSE;
+    }
+
+    if (!status)
+    {
+        ERR("unrecognized CryptProtectData block\n");
+    }
+
+    return status;
+}
+
+static
+void free_protect_data(struct protect_data_t * pInfo)
+{
+    TRACE("called\n");
+
+    if (!pInfo) return;
+
+    if (pInfo->info0.pbData)
+        HeapFree( GetProcessHeap(), 0, pInfo->info0.pbData);
+    if (pInfo->info1.pbData)
+        HeapFree( GetProcessHeap(), 0, pInfo->info1.pbData);
+    if (pInfo->szDataDescr)
+        HeapFree( GetProcessHeap(), 0, pInfo->szDataDescr);
+    if (pInfo->data0.pbData)
+        HeapFree( GetProcessHeap(), 0, pInfo->data0.pbData);
+    if (pInfo->salt.pbData)
+        HeapFree( GetProcessHeap(), 0, pInfo->salt.pbData);
+    if (pInfo->cipher.pbData)
+        HeapFree( GetProcessHeap(), 0, pInfo->cipher.pbData);
+    if (pInfo->fingerprint.pbData)
+        HeapFree( GetProcessHeap(), 0, pInfo->fingerprint.pbData);
+}
+
+/* copies a string into a data blob */
+static
+BYTE * convert_str_to_blob(char* str, DATA_BLOB* blob)
+{
+    if (!str || !blob) return NULL;
+
+    blob->cbData=strlen(str)+1;
+    if (!(blob->pbData=HeapAlloc(GetProcessHeap(),0,blob->cbData)))
+    {
+        blob->cbData=0;
+    }
+    else {
+        strcpy(blob->pbData, str);
+    }
+
+    return blob->pbData;
+}
+
+/*
+ * Populates everything except "cipher" and "fingerprint".
+ */
+static
+BOOL fill_protect_data(struct protect_data_t * pInfo, LPCWSTR szDataDescr,
+                       HCRYPTPROV hProv)
+{
+    DWORD dwStrLen;
+
+    TRACE("called\n");
+
+    if (!pInfo) return FALSE;
+
+    dwStrLen=lstrlenW(szDataDescr);
+
+    memset(pInfo,0,sizeof(*pInfo));
+
+    pInfo->count0=0x0001;
+
+    convert_str_to_blob((char*)crypt_magic_str,&pInfo->info0);
+
+    pInfo->count1=0x0001;
+
+    convert_str_to_blob((char*)crypt_magic_str,&pInfo->info1);
+
+    pInfo->null0=0x0000;
+
+    if ((pInfo->szDataDescr=HeapAlloc( GetProcessHeap(), 0, (dwStrLen+1)*sizeof(WCHAR))))
+    {
+        memcpy(pInfo->szDataDescr,szDataDescr,(dwStrLen+1)*sizeof(WCHAR));
+    }
+
+    pInfo->unknown0=0x0000;
+    pInfo->unknown1=0x0000;
+
+    convert_str_to_blob((char*)crypt_magic_str,&pInfo->data0);
+
+    pInfo->null1=0x0000;
+    pInfo->unknown2=0x0000;
+    pInfo->unknown3=0x0000;
+
+    /* allocate memory to hold a salt */
+    pInfo->salt.cbData=CRYPT32_PROTECTDATA_SALT_LEN;
+    if ((pInfo->salt.pbData=HeapAlloc( GetProcessHeap(),0,pInfo->salt.cbData)))
+    {
+        /* generate random salt */
+        if (!CryptGenRandom(hProv, pInfo->salt.cbData, pInfo->salt.pbData))
+        {
+            ERR("CryptGenRandom\n");
+            free_protect_data(pInfo);
+            return FALSE;
+        }
+    }
+
+    /* debug: show our salt */
+    TRACE_DATA_BLOB(&pInfo->salt);
+
+    pInfo->cipher.cbData=0;
+    pInfo->cipher.pbData=NULL;
+
+    pInfo->fingerprint.cbData=0;
+    pInfo->fingerprint.pbData=NULL;
+
+    /* check all the allocations at once */
+    if (!pInfo->info0.pbData ||
+        !pInfo->info1.pbData ||
+        !pInfo->szDataDescr  ||
+        !pInfo->data0.pbData ||
+        !pInfo->salt.pbData
+        )
+    {
+        ERR("could not allocate protect_data structures\n");
+        free_protect_data(pInfo);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static
+BOOL convert_hash_to_blob(HCRYPTHASH hHash, DATA_BLOB * blob)
+{
+    DWORD dwSize;
+
+    TRACE("called\n");
+
+    if (!blob) return FALSE;
+
+    dwSize=sizeof(DWORD);
+    if (!CryptGetHashParam(hHash, HP_HASHSIZE, (BYTE*)&blob->cbData,
+                           &dwSize, 0))
+    {
+        ERR("failed to get hash size\n");
+        return FALSE;
+    }
+
+    if (!(blob->pbData=HeapAlloc( GetProcessHeap(), 0, blob->cbData)))
+    {
+        ERR("failed to allocate blob memory\n");
+        return FALSE;
+    }
+
+    dwSize=blob->cbData;
+    if (!CryptGetHashParam(hHash, HP_HASHVAL, blob->pbData, &dwSize, 0))
+    {
+        ERR("failed to get hash value\n");
+        HeapFree( GetProcessHeap(), 0, blob->pbData);
+        blob->pbData=NULL;
+        blob->cbData=0;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/* test that a given hash matches an exported-to-blob hash value */
+static
+BOOL hash_matches_blob(HCRYPTHASH hHash, DATA_BLOB * two)
+{
+    BOOL rc = FALSE;
+    DATA_BLOB one;
+
+    if (!two || !two->pbData) return FALSE;
+
+    if (!convert_hash_to_blob(hHash,&one)) {
+        return FALSE;
+    }
+
+    if ( one.cbData == two->cbData &&
+         memcmp( one.pbData, two->pbData, one.cbData ) == 0 )
+    {
+        rc = TRUE;
+    }
+
+    HeapFree( GetProcessHeap(), 0, one.pbData );
+    return rc;
+}
+
+/* create an encryption key from a given salt and optional entropy */
+static
+BOOL load_encryption_key(HCRYPTPROV hProv, DATA_BLOB * salt,
+                         DATA_BLOB * pOptionalEntropy, HCRYPTKEY * phKey)
+{
+    BOOL rc = TRUE;
+    HCRYPTHASH hSaltHash;
+    char * szUsername = NULL;
+    DWORD dwUsernameLen;
+    DWORD dwError;
+
+    /* create hash for salt */
+    if (!salt || !phKey ||
+        !CryptCreateHash(hProv,CRYPT32_PROTECTDATA_HASH_CALG,0,0,&hSaltHash))
+    {
+        ERR("CryptCreateHash\n");
+        return FALSE;
+    }
+
+    /* This should be the "logon credentials" instead of username */
+    dwError=GetLastError();
+    dwUsernameLen = 0;
+    if (!GetUserNameA(NULL,&dwUsernameLen) &&
+        GetLastError()==ERROR_MORE_DATA && dwUsernameLen &&
+        (szUsername = HeapAlloc( GetProcessHeap(), 0, dwUsernameLen)))
+    {
+        szUsername[0]='\0';
+        GetUserNameA( szUsername, &dwUsernameLen );
+    }
+    SetLastError(dwError);
+
+    /* salt the hash with:
+     * - the user id
+     * - an "internal secret"
+     * - randomness (from the salt)
+     * - user-supplied entropy
+     */
+    if ((szUsername && !CryptHashData(hSaltHash,szUsername,dwUsernameLen,0)) ||
+        !CryptHashData(hSaltHash,CRYPT32_PROTECTDATA_SECRET,
+                                 strlen(CRYPT32_PROTECTDATA_SECRET),0) ||
+        !CryptHashData(hSaltHash,salt->pbData,salt->cbData,0) ||
+        (pOptionalEntropy && !CryptHashData(hSaltHash,
+                                            pOptionalEntropy->pbData,
+                                            pOptionalEntropy->cbData,0)))
+    {
+        ERR("CryptHashData\n");
+        rc = FALSE;
+    }
+
+    /* produce a symmetric key */
+    if (rc && !CryptDeriveKey(hProv,CRYPT32_PROTECTDATA_KEY_CALG,
+                              hSaltHash,CRYPT_EXPORTABLE,phKey))
+    {
+        ERR("CryptDeriveKey\n");
+        rc = FALSE;
+    }
+
+    /* clean up */
+    CryptDestroyHash(hSaltHash);
+    if (szUsername) HeapFree( GetProcessHeap(), 0, szUsername );
+
+    return rc;
+}
+
+/* debugging tool to print the structures of a ProtectData call */
+static void
+report(DATA_BLOB* pDataIn, DATA_BLOB* pOptionalEntropy,
+       CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags)
+{
+    TRACE("pPromptStruct: 0x%x\n",(unsigned int)pPromptStruct);
+    if (pPromptStruct)
+    {
+        TRACE("  cbSize: 0x%x\n",(unsigned int)pPromptStruct->cbSize);
+        TRACE("  dwPromptFlags: 0x%x\n",(unsigned int)pPromptStruct->dwPromptFlags);
+        TRACE("  hwndApp: 0x%x\n",(unsigned int)pPromptStruct->hwndApp);
+        TRACE("  szPrompt: 0x%x %s\n",
+              (unsigned int)pPromptStruct->szPrompt,
+              pPromptStruct->szPrompt ? debugstr_w(pPromptStruct->szPrompt)
+              : "");
+    }
+    TRACE("dwFlags: 0x%04x\n",(unsigned int)dwFlags);
+    TRACE_DATA_BLOB(pDataIn);
+    if (pOptionalEntropy)
+    {
+        TRACE_DATA_BLOB(pOptionalEntropy);
+        TRACE("  %s\n",debugstr_an(pOptionalEntropy->pbData,pOptionalEntropy->cbData));
+    }
+
+}
