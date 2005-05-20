@@ -3143,6 +3143,22 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
   return bResult;
 }
 
+static BOOL LISTVIEW_GetItemAtPt(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, POINT pt)
+{
+    LVHITTESTINFO lvHitTestInfo;
+
+    ZeroMemory(&lvHitTestInfo, sizeof(lvHitTestInfo));
+    lvHitTestInfo.pt.x = pt.x;
+    lvHitTestInfo.pt.y = pt.y;
+
+    LISTVIEW_HitTest(infoPtr, &lvHitTestInfo, TRUE, FALSE);
+
+    lpLVItem->mask = LVIF_PARAM;
+    lpLVItem->iItem = lvHitTestInfo.iItem;
+    lpLVItem->iSubItem = 0;
+
+    return LISTVIEW_GetItemT(infoPtr, lpLVItem, TRUE);
+}
 
 /***
  * DESCRIPTION:
@@ -3164,9 +3180,17 @@ static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem)
  */
 static LRESULT LISTVIEW_MouseHover(LISTVIEW_INFO *infoPtr, WORD fwKyes, INT x, INT y)
 {
-    if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)
-	/* FIXME: select the item!!! */
-	/*LISTVIEW_GetItemAtPt(infoPtr, pt)*/;
+    if (infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)
+    {
+        LVITEMW item;
+        POINT pt;
+
+        pt.x = x;
+        pt.y = y;
+
+        if (LISTVIEW_GetItemAtPt(infoPtr, &item, pt))
+            LISTVIEW_SetSelection(infoPtr, item.iItem);
+    }
 
     return 0;
 }
