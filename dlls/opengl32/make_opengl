@@ -1,4 +1,5 @@
 #!/usr/bin/perl -w
+use strict;
 
 # This script is called thus :
 #
@@ -10,9 +11,10 @@
 #       CVS_ROOT/projects/ogl-sample/main/doc/registry/specs.
 #       You can find them on the web at the following URL :
 #         http://oss.sgi.com/cgi-bin/cvsweb.cgi/projects/ogl-sample/main/doc/registry/specs/
+#       You will need gl.tm and gl.spec.
 #
 #     - opengl_version is the OpenGL version emulated by the library
-#       (can be 1.0 to 1.2).
+#       (can be 1.0 to 1.5).
 #
 # This script generates the three following files :
 #
@@ -54,21 +56,21 @@
 #
 # Files to generate
 #
-$spec_file = "opengl32.spec";
-$norm_file = "opengl_norm.c";
-$ext_file  = "opengl_ext.c";
+my $spec_file = "opengl32.spec";
+my $norm_file = "opengl_norm.c";
+my $ext_file  = "opengl_ext.c";
 
 # Set to 0 for removing the ENTER / LEAVE GL calls
-$gen_thread_safe = 1;
+my $gen_thread_safe = 1;
 # Prefix used for the local variables
-$ext_prefix = "func_";
+my $ext_prefix = "func_";
 # If set to 1, generate TRACEs for each OpenGL function
-$gen_traces = 1;
+my $gen_traces = 1;
 
 #
 # List of categories to put in the 'opengl_norm.c' file
 #
-%cat_1_0 = ( "display-list" => 1,
+my %cat_1_0 = ( "display-list" => 1,
 	     "drawing" => 1,
 	     "drawing-control" => 1,
 	     "feedback" => 1,
@@ -79,24 +81,24 @@ $gen_traces = 1;
 	     "pixel-rw" => 1,
 	     "state-req" => 1,
 	     "xform" => 1 );
-%cat_1_1 = ( %cat_1_0,
+my %cat_1_1 = ( %cat_1_0,
 	     "1_1" => 1 );
-%cat_1_2 = ( %cat_1_1,
+my %cat_1_2 = ( %cat_1_1,
 	     "VERSION_1_2" => 1 );
-%cat_1_3 = ( %cat_1_2,
+my %cat_1_3 = ( %cat_1_2,
 	     "VERSION_1_3" => 1 );
-%cat_1_4 = ( %cat_1_3,
+my %cat_1_4 = ( %cat_1_3,
 	     "VERSION_1_4" => 1 );
-%cat_1_5 = ( %cat_1_4,
+my %cat_1_5 = ( %cat_1_4,
 	     "VERSION_1_5" => 1 );
 
-%norm_categories = ();
+my %norm_categories = ();
 
 #
 # This hash table gives the conversion between OpenGL types and what
 # is used by the TRACE printfs
 #
-%debug_conv =
+my %debug_conv =
     ("GLbitfield" => "%d",
      "GLboolean" => "%d",
      "GLbyte" => "%d",
@@ -126,7 +128,7 @@ $gen_traces = 1;
 # This hash table gives the conversion between OpenGL types and what
 # is used in the .spec file
 #
-%arg_conv =
+my %arg_conv =
     ("GLbitfield" => [ "long", 4 ],
      "GLboolean" => [ "long", 4 ],
      "GLbyte" => [ "long", 4 ],
@@ -155,10 +157,11 @@ $gen_traces = 1;
 #
 # Used to convert some types
 #
-sub ConvertType {
+sub ConvertType($)
+{
     my ($type) = @_;
 
-    %hash = ( "GLstring" => "const GLubyte *",
+    my %hash = ( "GLstring" => "const GLubyte *",
 	      "GLintptrARB" => "ptrdiff_t",
 	      "GLsizeiptrARB" => "ptrdiff_t",
 	      "GLintptr" => "ptrdiff_t",
@@ -167,9 +170,9 @@ sub ConvertType {
 	      "GLcharARB" => "char",
 	      "GLhalfNV" => "unsigned short" );
 
-    foreach $org (reverse(sort(keys %hash))) {
+    foreach my $org (reverse sort keys %hash) {
 	if ($type =~ /$org/) {
-	    ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
+	    my ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
 	    return "$before$hash{$org}$after";
 	}
     }
@@ -179,15 +182,16 @@ sub ConvertType {
 #
 # Used to convert some variable names
 #
-sub ConvertVarName {
+sub ConvertVarName($)
+{
     my ($type) = @_;
 
-    %hash = ( "near" => "nearParam",
-	      "far"  => "farParam" );
+    my %hash = ( "near" => "nearParam",
+                 "far"  => "farParam" );
 
-    foreach $org (keys %hash) {
+    foreach my $org (keys %hash) {
 	if ($type =~ /$org/) {
-	    ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
+	    my ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
 	    return "$before$hash{$org}$after";
 	}
     }
@@ -197,57 +201,58 @@ sub ConvertVarName {
 #
 # This functions generates the thunk for a given function.
 #
-sub GenerateThunk {
+sub GenerateThunk($$$$)
+{
     my ($func_ref, $comment, $prefix, $thread_safe) = @_;
-    my ($ret) = ("");
-    my ($call_arg) = ("");
-    my ($trace_arg) = ("");
-    my ($wine_func_ref_name) = ("");
+    my $ret = "";
+    my $call_arg = "";
+    my $trace_arg = "";
+    my $wine_func_ref_name = "";
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
     if ($comment eq 1) {
-	$ret = $ret . "/***********************************************************************\n";
-	$ret = $ret . " *              " . $func_ref->[0] . " (OPENGL32.@)\n";
-	$ret = $ret . " */\n";
+	$ret = "$ret/***********************************************************************\n";
+	$ret = "$ret *              $func_ref->[0] (OPENGL32.\@)\n";
+	$ret = "$ret */\n";
     }
-    $ret = $ret . ConvertType($func_ref->[1]) . " WINAPI wine_" . $func_ref->[0] . "( ";
-    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+    $ret = $ret . ConvertType($func_ref->[1]) . " WINAPI wine_$func_ref->[0]( ";
+    for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
 	## Quick debug code :-)
 	## print $func_ref->[2]->[$i]->[1] . "\n";
-	$type = $func_ref->[2]->[$i]->[0];
-	$name = ConvertVarName($func_ref->[2]->[$i]->[1]);
+	my $type = $func_ref->[2]->[$i]->[0];
+	my $name = ConvertVarName($func_ref->[2]->[$i]->[1]);
 	$ret = $ret . ConvertType($type) . " $name";
-	$call_arg = $call_arg . "$name";
+	$call_arg = "$call_arg$name";
 	if ($type =~ /\*/) {
-	    $trace_arg = $trace_arg . "%p";
+	    $trace_arg = "$trace_arg\%p";
 	} else {
-	    $trace_arg = $trace_arg . $debug_conv{$type};
+	    $trace_arg = "$trace_arg$debug_conv{$type}";
 	}
 	if ($i != $#{@{$func_ref->[2]}}) {
-	    $ret = $ret . ", ";
-	    $call_arg = $call_arg . ", ";
-	    $trace_arg = $trace_arg . ", ";
+	    $ret = "$ret, ";
+	    $call_arg = "$call_arg, ";
+	    $trace_arg = "$trace_arg, ";
 	} else {
-	    $ret = $ret . " ";
-	    $call_arg = $call_arg . " ";
+	    $ret = "$ret ";
+	    $call_arg = "$call_arg ";
 	}
     }
-    $ret = $ret . ") {\n";
+    $ret = "$ret) {\n";
     if ($func_ref->[1] ne "void") {
-	$ret = $ret . "  " . ConvertType($func_ref->[1]) . " ret_value;\n";
+	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
     }
     if ($gen_traces) {
-	$ret = $ret . "  TRACE(\"(" . $trace_arg . ")\\n\"";
+	$ret = "$ret  TRACE(\"($trace_arg)\\n\"";
 	if ($trace_arg ne "") {
-	    $ret = $ret . ", " . $call_arg;
+	    $ret = "$ret, $call_arg";
 	}
-	$ret = $ret . ");\n";
+	$ret = "$ret);\n";
     }
     if ($thread_safe) {
-	$ret = $ret . "  ENTER_GL();\n";
+	$ret = "$ret  ENTER_GL();\n";
     }
-    $ret = $ret . "  ";
+    $ret = "$ret  ";
     if ($func_ref->[1] ne "void") {
 	$ret = $ret . "ret_value = ";
     }
@@ -255,27 +260,29 @@ sub GenerateThunk {
     if ( $func_ref->[0] eq "glGetString" ) {
 	$wine_func_ref_name = "internal_glGetString";
     }
-    $ret = $ret . $prefix . $wine_func_ref_name . "( " . $call_arg . ");\n";
+    $ret = "$ret$prefix$wine_func_ref_name( $call_arg);\n";
     if ($thread_safe) {
-	$ret = $ret . "  LEAVE_GL();\n";
+	$ret = "$ret  LEAVE_GL();\n";
     }
     if ($func_ref->[1] ne "void") {
-	$ret = $ret . "  return ret_value;\n"
+	$ret = "$ret  return ret_value;\n"
     }
-    $ret = $ret . "}\n";
+    $ret = "$ret}\n";
 
     # Return this string....
-    $ret;
+    return $ret;
 }
 
 #
 # Extract and checks the number of arguments
 #
-if ($#ARGV != 1) {
-    die "Usage : make_opengl OpenGL_registry_location OpenGL_version.\n";
+if (@ARGV != 2) {
+    my $name0=$0;
+    $name0=~s%^.*/%%;
+    die "Usage: $name0 OpenGL_registry_location OpenGL_version\n";
 }
-$registry_path = shift @ARGV;
-$version       = shift @ARGV;
+my $registry_path = shift @ARGV;
+my $version       = shift @ARGV;
 if ($version eq "1.0") {
     %norm_categories = %cat_1_0;
 } elsif ($version eq "1.1") {
@@ -295,17 +302,17 @@ if ($version eq "1.0") {
 #
 # Open the registry files
 #
-open(TYPES,    $registry_path . "/gl.tm")   || die "Could not open 'gl.tm'. Please check your path the the registry files.\n";
-open(REGISTRY, $registry_path . "/gl.spec") || die "Could not open 'gl.spec'. Please check your path the the registry files.\n";
+open(TYPES,    "$registry_path/gl.tm")   || die "Could not open 'gl.tm'. Please check your path the the registry files.\n";
+open(REGISTRY, "$registry_path/gl.spec") || die "Could not open 'gl.spec'. Please check your path the the registry files.\n";
 
 #
 # First, create a mapping between the pseudo types used in the spec file
 # and OpenGL types using the 'gl.tm' file.
 #
-%pseudo_to_opengl = ();
-while ($line = <TYPES>) {
+my %pseudo_to_opengl = ();
+while (my $line = <TYPES>) {
     if ($line !~ /\w*\#/) {
-	($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
+	my ($pseudo, $opengl) = ($line =~ /(\w*),\*,\*,\s*(.*),\*,\*/);
 	$pseudo_to_opengl{$pseudo} = $opengl;
     }
 }
@@ -355,13 +362,14 @@ $pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
 #     [ "GLfloat", "ymove" ],
 #     [ "GLubyte *", "bitmap"] ] ];
 #
-%norm_functions = ();
+my %norm_functions = ();
 
 #
 # This stores various extensions NOT part of the GL extension registry but still
 # implemented by most OpenGL libraries out there...
 #
-%ext_functions  =
+
+my %ext_functions  =
     ( "glDeleteBufferRegion" => [ "glDeleteBufferRegion", "void", [ [ "GLenum", "region" ] ], "glDeleteBufferRegion" ],
       "glReadBufferRegion" => [ "glReadBufferRegion", "void", [ [ "GLenum", "region" ],
 								[ "GLint", "x" ],
@@ -485,11 +493,12 @@ $pseudo_to_opengl{"IglooParameterSGIX"} = "GLint";
       "glDeleteObjectBufferATI" => [ "glDeleteObjectBufferATI", "void", [ [ "GLuint", "buffer" ] ], "glDeleteObjectBufferATI" ]
       );
 
-
-while ($line = <REGISTRY>) {
+my @arg_names;
+my %arg_types;
+while (my $line = <REGISTRY>) {
     if ($line =~ /^\w*\(.*\)/) {
 	# Get the function name (NOTE: the 'gl' prefix needs to be added later)
-	($funcname, $args) = ($line =~ /^(\w*)\((.*)\)/);
+	my ($funcname, $args) = ($line =~ /^(\w*)\((.*)\)/);
 	# and the argument names
 	@arg_names = split /\s*,\s*/, $args;
 
@@ -498,8 +507,8 @@ while ($line = <REGISTRY>) {
 	#  - the argument types
 	#  - the category the function belongs
 	%arg_types = ();
-	$category = "";
-	$ret_type = "";
+	my $category = "";
+	my $ret_type = "";
 	while (1) {
 	    $line = <REGISTRY>;
 	    unless (defined($line)) {
@@ -518,8 +527,8 @@ while ($line = <REGISTRY>) {
 	    } elsif ($line =~ /^\t*category/) {
 		($category) = ($line =~ /^\t*category\s*([\w-]*)/);
 	    } elsif ($line =~ /^\t*param/) {
-		($name, $base_type, $ext) = ($line =~ /\t*param\s*(\w*)\s*(\w*) (.*)/);
-		$ptr = 0;
+		my ($name, $base_type, $ext) = ($line =~ /\t*param\s*(\w*)\s*(\w*) (.*)/);
+		my $ptr = 0;
 		unless (defined($name)) {
 		    chomp $line;
 		    die "Broken spec file line $line in function $funcname\n";
@@ -536,13 +545,13 @@ while ($line = <REGISTRY>) {
 		    die "Unsupported type : $line in function $funcname\n";
 		}
 		# Get the 'real' type and append a '*' in case of a pointer
-		$type = $pseudo_to_opengl{$base_type};
+		my $type = $pseudo_to_opengl{$base_type};
 		unless (defined($type)) {
 		    chomp $line;
 		    die "Unsupported return type in function $funcname for type $base_type (line $line)\n";
 		}
 		if ($ptr) {
-		    $type = $type . "*";
+		    $type = "$type*";
 		}
 
 		$arg_types{$name} = $type;
@@ -550,8 +559,8 @@ while ($line = <REGISTRY>) {
 	}
 
 	# Now, build the argument reference
-	$arg_ref = [ ];
-	for ($i = 0; $i <= $#arg_names; $i++) {
+	my $arg_ref = [ ];
+	for (my $i = 0; $i <= $#arg_names; $i++) {
 	    unless (defined($arg_types{$arg_names[$i]})) {
 		print "@arg_names\n";
 		foreach (sort keys %arg_types) {
@@ -562,16 +571,16 @@ while ($line = <REGISTRY>) {
 
 	    push @$arg_ref, [ $arg_types{$arg_names[$i]}, $arg_names[$i] ];
 	}
-	$func_ref = [ "gl" . $funcname,
-		      $ret_type,
-		      $arg_ref,
-		      "gl" . $funcname ];
+	my $func_ref = [ "gl$funcname",
+                         $ret_type,
+                         $arg_ref,
+                         "gl$funcname" ];
 
 	# Now, put in one or the other hash table
 	if ($norm_categories{$category}) {
-	    $norm_functions{"gl" . $funcname} = $func_ref;
+	    $norm_functions{"gl$funcname"} = $func_ref;
 	} else {
-	    $ext_functions{"gl" . $funcname} = $func_ref;
+	    $ext_functions{"gl$funcname"} = $func_ref;
 	}
     }
 }
@@ -585,7 +594,7 @@ close(REGISTRY);
 #
 # Now, generate the output files. First, the spec file.
 #
-open(SPEC, ">" . $spec_file);
+open(SPEC, ">$spec_file");
 
 print SPEC "@  stdcall wglCreateContext(long)
 @  stdcall wglCreateLayerContext(long long)
@@ -616,10 +625,10 @@ print SPEC "@  stdcall wglCreateContext(long)
 ";
 
 foreach (sort keys %norm_functions) {
-    $func_name = $norm_functions{$_}->[0];
+    my $func_name = $norm_functions{$_}->[0];
     print SPEC "@  stdcall $func_name( ";
-    for ($i = 0; $i <= $#{@{$norm_functions{$_}->[2]}}; $i++) {
-	$type = $norm_functions{$_}->[2]->[$i]->[0];
+    for (my $i = 0; $i <= $#{@{$norm_functions{$_}->[2]}}; $i++) {
+	my $type = $norm_functions{$_}->[2]->[$i]->[0];
 	if ($type =~ /\*/) {
 	    print SPEC "ptr ";
 	} elsif (defined($arg_conv{$type})) {
@@ -635,7 +644,7 @@ close(SPEC);
 #
 # After the spec file, the opengl_norm.c file
 #
-open(NORM, ">" . $norm_file);
+open(NORM, ">$norm_file");
 print NORM "
 /* Auto-generated file... Do not edit ! */
 
@@ -646,7 +655,7 @@ print NORM "
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 ";
 foreach (sort keys %norm_functions) {
-    $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe);
+    my $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe);
 
     print NORM "\n$string";
 }
@@ -655,7 +664,7 @@ close(NORM);
 #
 # Finally, more complex, the opengl_ext.c file
 #
-open(EXT, ">" . $ext_file);
+open(EXT, ">$ext_file");
 print EXT "
 /* Auto-generated file... Do not edit ! */
 
@@ -669,10 +678,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 # First, generate the function pointers
 foreach (sort keys %ext_functions) {
-    $func_ref = $ext_functions{$_};
-    print EXT ConvertType($func_ref->[1]) . " (*" . $ext_prefix . $func_ref->[0] . ")( ";
-    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
-	$type = ConvertType($func_ref->[2]->[$i]->[0]);
+    my $func_ref = $ext_functions{$_};
+    print EXT ConvertType($func_ref->[1]), " (*$ext_prefix$func_ref->[0])( ";
+    for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";
 	if ($i != $#{@{$func_ref->[2]}}) {
 	    print EXT ", ";
@@ -686,10 +695,10 @@ foreach (sort keys %ext_functions) {
 # Then, the function prototypes
 print EXT "\n\n/* The function prototypes */\n";
 foreach (sort keys %ext_functions) {
-    $func_ref = $ext_functions{$_};
-    print EXT ConvertType($func_ref->[1]) . " WINAPI " . "wine_" . $func_ref->[0] . "( ";
-    for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
-	$type = ConvertType($func_ref->[2]->[$i]->[0]);
+    my $func_ref = $ext_functions{$_};
+    print EXT ConvertType($func_ref->[1]), " WINAPI wine_$func_ref->[0]( ";
+    for (my $i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
+	my $type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";
 	if ($i != $#{@{$func_ref->[2]}}) {
 	    print EXT ", ";
@@ -702,13 +711,13 @@ foreach (sort keys %ext_functions) {
 
 # Then the table giving the string <-> function correspondance */
 print EXT "\n\n/* The table giving the correspondance between names and functions */\n";
-@tmp = keys %ext_functions;
-print EXT "int extension_registry_size = " . ($#tmp + 1) . ";\n";
-print EXT "OpenGL_extension extension_registry[" . ($#tmp + 1) . "] = {\n";
-$i = 0;
+my @tmp = keys %ext_functions;
+print EXT "int extension_registry_size = ", ($#tmp + 1), ";\n";
+print EXT "OpenGL_extension extension_registry[", ($#tmp + 1), "] = {\n";
+my $i = 0;
 foreach (sort keys %ext_functions) {
-    $func_ref = $ext_functions{$_};
-    print EXT "  { \"" . $func_ref->[0] . "\", \"" . $func_ref->[3] . "\", (void *) wine_" . $func_ref->[0] . ", (void **) (&" . $ext_prefix . $func_ref->[0] . ") }";
+    my $func_ref = $ext_functions{$_};
+    print EXT "  { \"$func_ref->[0]\", \"$func_ref->[3]\", (void *) wine_$func_ref->[0], (void **) (&$ext_prefix$func_ref->[0]) }";
     if ($i != $#tmp) {
 	print EXT ",";
     }
@@ -720,7 +729,7 @@ print EXT "};\n";
 # And, finally, the thunks themselves....
 print EXT "\n/* The thunks themselves....*/";
 foreach (sort keys %ext_functions) {
-    $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
+    my $string = GenerateThunk($ext_functions{$_}, 0, $ext_prefix, $gen_thread_safe);
 
     print EXT "\n$string";
 }
