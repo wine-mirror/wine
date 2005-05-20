@@ -3433,32 +3433,19 @@ typedef struct tagLVFINDINFOW
 
 /* Groups relates structures */
 
-typedef struct LVGROUPA
-{
-	UINT cbSize;
-	UINT mask;
-	LPSTR pszHeader;
-	int cchHeader;
-	int iGroupId;
-	UINT stateMask;
-	UINT state;
-	UINT uAlign;
-} LVGROUPA, *PLVGROUPA;
-
-typedef struct LVGROUPW
+typedef struct LVGROUP
 {
 	UINT cbSize;
 	UINT mask;
 	LPWSTR pszHeader;
 	int cchHeader;
+	LPWSTR pszFooter;
+	int cchFooter;
 	int iGroupId;
 	UINT stateMask;
 	UINT state;
 	UINT uAlign;
-} LVGROUPW, *PLVGROUPW;
-
-#define LVGROUP WINELIB_NAME_AW(LVGROUP)
-#define PLVGROUP WINELIB_NAME_AW(PLVGROUP)
+} LVGROUP, *PLVGROUP;
 
 typedef struct LVGROUPMETRICS
 {
@@ -3478,22 +3465,12 @@ typedef struct LVGROUPMETRICS
 
 typedef INT (*PFNLVGROUPCOMPARE)(INT, INT, VOID*);
 
-typedef struct LVINSERTGROUPSORTEDA
+typedef struct LVINSERTGROUPSORTED
 {
 	PFNLVGROUPCOMPARE pfnGroupCompare;
 	LPVOID *pvData;
-	LVGROUPA lvGroup;
-} LVINSERTGROUPSORTEDA, *PLVINSERTGROUPSORTEDA;
-
-typedef struct LVINSERTGROUPSORTEDW
-{
-	PFNLVGROUPCOMPARE pfnGroupCompare;
-	LPVOID *pvData;
-	LVGROUPW lvGroup;
-} LVINSERTGROUPSORTEDW, *PLVINSERTGROUPSORTEDW;
-
-#define LVINSERTGROUPSORTED WINELIB_NAME_AW(LVINSERTGROUPSORTED)
-#define PLVINSERTGROUPSORTED WINELIB_NAME_AW(PLVINSERTGROUPSORTED)
+	LVGROUP lvGroup;
+} LVINSERTGROUPSORTED, *PLVINSERTGROUPSORTED;
 
 /* Tile related structures */
 
