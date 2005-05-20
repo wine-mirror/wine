@@ -1272,7 +1272,7 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
         SetLastError( ERROR_INVALID_HANDLE );
     else
     {
-        GDI_ReleaseObj( (GDIOBJHDR *)dc );
+        GDI_ReleaseObj( hdc );
 
         header = GDI_GetObjPtr( hObj, MAGIC_DONTCARE );
         if (header)
