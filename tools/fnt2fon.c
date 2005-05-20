@@ -18,12 +18,33 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#include <fcntl.h>
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
 
-unsigned char MZ_hdr[] = {'M',  'Z',  0x0d, 0x01, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00,
+#include "wine/winbase16.h"
+#include "wine/wingdi16.h"
+
+#include "pshpack1.h"
+struct _fnt_header
+{
+    short dfVersion;
+    long dfSize;
+    char dfCopyright[60];
+    FONTINFO16 fi;
+};
+#include "poppack.h"
+
+static const BYTE MZ_hdr[] = {'M',  'Z',  0x0d, 0x01, 0x01, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00,
                  0xb8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00,
@@ -33,16 +54,6 @@ unsigned char MZ_hdr[] = {'M',  'Z',  0x0d, 0x01, 0x01, 0x00, 0x00, 0x00, 0x04, 
                  'm',  'o',  'd',  'e',  0x0d, 0x0a, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-unsigned char NE_hdr[] = {'N',  'E',  0x05, 0x01, 0xff, 0xff, 0x02, 0x00, 0x5c, 0x35, 0xe4, 0x41, 0x00, 0x83, 0x00, 0x00,
-                 /* entry table tbd, 2 bytes long.  */
-                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                 0xff, 0xff, 0x40, 0x00, 0x40, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00,
-                 /* tbd bytes in non-resident name table, off of seg table 0x40, off of resource table 0x40, off of
-                    resident name table (tbd) etc */
-                 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04
-};
-
-
 static void usage(char **argv)
 {
     fprintf(stderr, "%s fntfiles output.fon\n", argv[0]);
@@ -51,22 +62,25 @@ static void usage(char **argv)
 
 int main(int argc, char **argv)
 {
-    int num_files, i, j;
+    int i, j;
     FILE *fp, *ofp;
     long off;
     char name[200];
     int c;
     char *cp;
-    short pt, ver, dpi[2];
+    short pt, ver, dpi[2], align, num_files;
     int resource_table_len, non_resident_name_len, resident_name_len;
     unsigned short resource_table_off, resident_name_off, module_ref_off, non_resident_name_off, fontdir_off, font_off;
     char resident_name[200] = "";
-    int fontdir_len = 2, fontdir_len_shift;
+    int fontdir_len = 2;
     char non_resident_name[200] = "";
     int *file_lens, nread;
-    int first_res = 0x0050, pad, res;
-    char fnt_header[0x100];
+    unsigned short first_res = 0x0050, pad, res;
+    struct _fnt_header *fnt_header;
     char buf[0x1000];
+    IMAGE_OS2_HEADER NE_hdr;
+    NE_TYPEINFO rc_type;
+    NE_NAMEINFO rc_name;
 
     if(argc < 3) {
         usage(argv);
@@ -76,7 +90,7 @@ int main(int argc, char **argv)
     num_files = argc - 2;
     file_lens = malloc(num_files * sizeof(int));
     for(i = 0; i < num_files; i++) {
-        fp = fopen(argv[i+1], "r");
+        fp = fopen(argv[i+1], "rb");
         if(!fp) {
             fprintf(stderr, "Can't open %s\n", argv[i+1]);
             usage(argv);
@@ -115,101 +129,116 @@ int main(int argc, char **argv)
     non_resident_name_len = strlen(non_resident_name) + 4;
 
     /* shift count + fontdir entry + num_files of font + nul type + \007FONTDIR */
-    resource_table_len = 2 + 20 + 8 + 12 * num_files + 2 + 8;
-    resource_table_off = NE_hdr[0x24];
-    resource_table_off |= (NE_hdr[0x25] << 8);
+    resource_table_len = sizeof(align) + sizeof("FONTDIR") +
+                         sizeof(NE_TYPEINFO) + sizeof(NE_NAMEINFO) +
+                         sizeof(NE_TYPEINFO) + sizeof(NE_NAMEINFO) * num_files +
+                         sizeof(NE_TYPEINFO);
+    resource_table_off = sizeof(NE_hdr);
     resident_name_off = resource_table_off + resource_table_len;
-    NE_hdr[0x20] = non_resident_name_len & 0xff;
-    NE_hdr[0x21] = (non_resident_name_len >> 8) & 0xff;
-    NE_hdr[0x26] = resident_name_off & 0xff;
-    NE_hdr[0x27] = (resident_name_off >> 8) & 0xff;
     resident_name_len = strlen(resident_name) + 4;
     module_ref_off = resident_name_off + resident_name_len;
-    NE_hdr[0x28] = module_ref_off & 0xff;
-    NE_hdr[0x29] = (module_ref_off >> 8) & 0xff;
-    NE_hdr[0x2a] = NE_hdr[0x28];
-    NE_hdr[0x2b] = NE_hdr[0x29];
-    NE_hdr[0x04] = NE_hdr[0x28];
-    NE_hdr[0x05] = NE_hdr[0x29];
-    non_resident_name_off = 0x80 + module_ref_off + 2;
-    NE_hdr[0x2c] = non_resident_name_off & 0xff;
-    NE_hdr[0x2d] = (non_resident_name_off >> 8) & 0xff;
+    non_resident_name_off = sizeof(MZ_hdr) + module_ref_off + sizeof(align);
+
+    memset(&NE_hdr, 0, sizeof(NE_hdr));
+    NE_hdr.ne_magic = 0x454e;
+    NE_hdr.ne_ver = 5;
+    NE_hdr.ne_rev = 1;
+    NE_hdr.ne_flags = NE_FFLAGS_LIBMODULE | NE_FFLAGS_GUI;
+    NE_hdr.ne_cbnrestab = non_resident_name_len;
+    NE_hdr.ne_segtab = sizeof(NE_hdr);
+    NE_hdr.ne_rsrctab = sizeof(NE_hdr);
+    NE_hdr.ne_restab = resident_name_off;
+    NE_hdr.ne_modtab = module_ref_off;
+    NE_hdr.ne_imptab = module_ref_off;
+    NE_hdr.ne_enttab = NE_hdr.ne_modtab;
+    NE_hdr.ne_nrestab = non_resident_name_off;
+    NE_hdr.ne_align = 4;
+    NE_hdr.ne_exetyp = NE_OSFLAGS_WINDOWS;
+    NE_hdr.ne_expver = 0x400;
 
     fontdir_off = (non_resident_name_off + non_resident_name_len + 15) & ~0xf;
     font_off = (fontdir_off + fontdir_len + 15) & ~0x0f;
-    ofp = fopen(argv[argc - 1], "w");
+
+    ofp = fopen(argv[argc - 1], "wb");
+
     fwrite(MZ_hdr, sizeof(MZ_hdr), 1, ofp);
-    fwrite(NE_hdr, sizeof(NE_hdr), 1, ofp);
-    fputc(0x04, ofp);
-    fputc(0x00, ofp); /* shift of 4 */
-    fputc(0x07, ofp);
-    fputc(0x80, ofp); /* type 0x8007 */
-    fputc(0x01, ofp);
-    fputc(0x00, ofp); /* 1 off */
-    fputc(0x00, ofp);    fputc(0x00, ofp);    fputc(0x00, ofp);    fputc(0x00, ofp);
-    fontdir_off >>= 4;
-    fputc(fontdir_off & 0xff, ofp);
-    fputc((fontdir_off >> 8) & 0xff, ofp);
-    fontdir_len_shift = (fontdir_len + 15) >> 4;
-    fputc(fontdir_len_shift & 0xff, ofp);
-    fputc((fontdir_len_shift >> 8) & 0xff, ofp);
-    fputc(0x50, ofp);
-    fputc(0x0c, ofp);
-    fputc(0x7c, ofp);
-    fputc(0x00, ofp);
-    fputc(0x00, ofp);    fputc(0x00, ofp);
-    fputc(0x00, ofp);    fputc(0x00, ofp);
-    fputc(0x08, ofp);
-    fputc(0x80, ofp); /* type 0x8008 */
-    fputc(num_files & 0xff, ofp);
-    fputc((num_files >> 8) & 0xff, ofp); /* num_files off */
-    fputc(0x00, ofp);    fputc(0x00, ofp);    fputc(0x00, ofp);    fputc(0x00, ofp);
+    fwrite(&NE_hdr, sizeof(NE_hdr), 1, ofp);
+
+    align = 4;
+    fwrite(&align, sizeof(align), 1, ofp);
+
+    rc_type.type_id = NE_RSCTYPE_FONTDIR;
+    rc_type.count = 1;
+    rc_type.resloader = 0;
+    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+
+    rc_name.offset = fontdir_off >> 4;
+    rc_name.length = (fontdir_len + 15) >> 4;
+    rc_name.flags = NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_PRELOAD;
+    rc_name.id = resident_name_off - sizeof("FONTDIR") - NE_hdr.ne_rsrctab;
+    rc_name.handle = 0;
+    rc_name.usage = 0;
+    fwrite(&rc_name, sizeof(rc_name), 1, ofp);
+
+    rc_type.type_id = NE_RSCTYPE_FONT;
+    rc_type.count = num_files;
+    rc_type.resloader = 0;
+    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+
     for(res = first_res | 0x8000, i = 0; i < num_files; i++, res++) {
         int len = (file_lens[i] + 15) & ~0xf;
-        fputc((font_off >> 4) & 0xff, ofp);
-        fputc((font_off >> 12) & 0xff, ofp);
-        fputc((len >> 4) & 0xff, ofp);
-        fputc((len >> 12) & 0xff, ofp);
+
+        rc_name.offset = font_off >> 4;
+        rc_name.length = len >> 4;
+        rc_name.flags = NE_SEGFLAGS_MOVEABLE | NE_SEGFLAGS_SHAREABLE | NE_SEGFLAGS_DISCARDABLE;
+        rc_name.id = res;
+        rc_name.handle = 0;
+        rc_name.usage = 0;
+        fwrite(&rc_name, sizeof(rc_name), 1, ofp);
+
         font_off += len;
-        fputc(0x30, ofp);
-        fputc(0x1c, ofp);
-        fputc(res & 0xff, ofp);
-        fputc((res >> 8) & 0xff, ofp);
-        fputc(0x00, ofp);    fputc(0x00, ofp);
-        fputc(0x00, ofp);    fputc(0x00, ofp);
     }
-    fputc(0x00, ofp);    fputc(0x00, ofp); /* nul type */
+
+    /* empty type info */
+    memset(&rc_type, 0, sizeof(rc_type));
+    fwrite(&rc_type, sizeof(rc_type), 1, ofp);
+
     fputc(strlen("FONTDIR"), ofp);
     fwrite("FONTDIR", strlen("FONTDIR"), 1, ofp);
     fputc(strlen(resident_name), ofp);
     fwrite(resident_name, strlen(resident_name), 1, ofp);
+
     fputc(0x00, ofp);    fputc(0x00, ofp);
     fputc(0x00, ofp);
     fputc(0x00, ofp);    fputc(0x00, ofp);
+
     fputc(strlen(non_resident_name), ofp);
     fwrite(non_resident_name, strlen(non_resident_name), 1, ofp);
-    fputc(0x00, ofp);    fputc(0x00, ofp);
+    fputc(0x00, ofp); /* terminator */
+
+    /* empty ne_modtab and ne_imptab */
     fputc(0x00, ofp);
-    pad = (non_resident_name_off + non_resident_name_len) & 0xf;
+    fputc(0x00, ofp);
+
+    pad = ftell(ofp) & 0xf;
     if(pad != 0)
         pad = 0x10 - pad;
     for(i = 0; i < pad; i++)
         fputc(0x00, ofp);
 
     /* FONTDIR resource */
-    fputc(num_files & 0xff, ofp);
-    fputc((num_files >> 8) & 0xff, ofp);
+    fwrite(&num_files, sizeof(num_files), 1, ofp);
     
     for(res = first_res, i = 0; i < num_files; i++, res++) {
-        fp = fopen(argv[i+1], "r");
-        fputc(res & 0xff, ofp);
-        fputc((res >> 8) & 0xff, ofp);
-        fread(fnt_header, 0x72, 1, fp);
-        fwrite(fnt_header, 0x72, 1, ofp);
-        
-        fseek(fp, 0x69, SEEK_SET);
-        fread(&off, sizeof(long), 1, fp);
-        fseek(fp, off, SEEK_SET);
+        fp = fopen(argv[i+1], "rb");
+
+        fwrite(&res, sizeof(res), 1, ofp);
+        fread(buf, 0x72, 1, fp);
+        fwrite(buf, 0x72, 1, ofp);
+
+        fnt_header = (struct _fnt_header *)buf;
+        fseek(fp, fnt_header->fi.dfFace, SEEK_SET);
+
         cp = name;
         while((c = fgetc(fp)) != 0 && c != EOF)
             *cp++ = c;
@@ -224,7 +253,8 @@ int main(int argc, char **argv)
         fputc(0x00, ofp);
 
     for(res = first_res, i = 0; i < num_files; i++, res++) {
-        fp = fopen(argv[i+1], "r");
+        fp = fopen(argv[i+1], "rb");
+
         while(1) {
             nread = read(fileno(fp), buf, sizeof(buf));
             if(!nread) break;
