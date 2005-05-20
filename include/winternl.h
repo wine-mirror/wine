@@ -582,7 +582,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemProcessorPerformanceInformation = 8,
     Unknown9,
     Unknown10,
-    SystemDriverInformation = 11,
+    SystemModuleInformation = 11,
     Unknown12,
     Unknown13,
     Unknown14,

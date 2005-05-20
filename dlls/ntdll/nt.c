@@ -790,7 +790,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
-    case SystemDriverInformation:
+    case SystemModuleInformation:
         {
             SYSTEM_DRIVER_INFORMATION sdi;
 
