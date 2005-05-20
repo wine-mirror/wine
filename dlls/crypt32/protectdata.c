@@ -795,3 +795,171 @@ report(DATA_BLOB* pDataIn, DATA_BLOB* pOptionalEntropy,
     }
 
 }
+
+
+/***************************************************************************
+ * CryptProtectData     [CRYPT32.@]
+ *
+ * Generate Cipher data from given Plain and Entropy data.
+ *
+ * PARAMS
+ *  pDataIn          [I] Plain data to be enciphered
+ *  szDataDescr      [I] Optional Unicode string describing the Plain data
+ *  pOptionalEntropy [I] Optional entropy data to adjust cipher, can be NULL
+ *  pvReserved       [I] Reserved, must be NULL
+ *  pPromptStruct    [I] Structure describing if/how to prompt during ciphering
+ *  dwFlags          [I] Flags describing options to the ciphering
+ *  pDataOut         [O] Resulting Cipher data, for calls to CryptUnprotectData
+ *
+ * RETURNS
+ *  TRUE  If a Cipher was generated.
+ *  FALSE If something failed and no Cipher is available.
+ *
+ * FIXME
+ *  The true Windows encryption and keying mechanisms are unknown.
+ *
+ *  dwFlags and pPromptStruct are currently ignored.
+ *
+ * NOTES
+ *  Memory allocated in pDataOut must be freed with LocalFree.
+ *
+ */
+BOOL WINAPI CryptProtectData(DATA_BLOB* pDataIn,
+                             LPCWSTR szDataDescr,
+                             DATA_BLOB* pOptionalEntropy,
+                             PVOID pvReserved,
+                             CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct,
+                             DWORD dwFlags,
+                             DATA_BLOB* pDataOut)
+{
+    BOOL rc = FALSE;
+
+    HCRYPTPROV hProv;
+    struct protect_data_t protect_data;
+    HCRYPTHASH hHash;
+    HCRYPTKEY hKey;
+    DWORD dwLength;
+
+    TRACE("called\n");
+
+    SetLastError(ERROR_SUCCESS);
+
+    if (!pDataIn || !pDataOut)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        goto finished;
+    }
+
+    /* debug: show our arguments */
+    report(pDataIn,pOptionalEntropy,pPromptStruct,dwFlags);
+    TRACE("\tszDataDescr: 0x%x %s\n",(unsigned int)szDataDescr,
+          szDataDescr ? debugstr_w(szDataDescr) : "");
+
+    /* Windows appears to create an empty szDataDescr instead of maintaining
+     * a NULL */
+    if (!szDataDescr)
+        szDataDescr=(WCHAR[]){'\0'};
+
+    /* get crypt context */
+    if (!CryptAcquireContextW(&hProv,NULL,NULL,CRYPT32_PROTECTDATA_PROV,0))
+    {
+        ERR("CryptAcquireContextW failed\n");
+        goto finished;
+    }
+
+    /* populate our structure */
+    if (!fill_protect_data(&protect_data,szDataDescr,hProv))
+    {
+        ERR("fill_protect_data\n");
+        goto free_context;
+    }
+
+    /* load key */
+    if (!load_encryption_key(hProv,&protect_data.salt,pOptionalEntropy,&hKey))
+    {
+        goto free_protect_data;
+    }
+
+    /* create a hash for the encryption validation */
+    if (!CryptCreateHash(hProv,CRYPT32_PROTECTDATA_HASH_CALG,0,0,&hHash))
+    {
+        ERR("CryptCreateHash\n");
+        goto free_key;
+    }
+
+    /* calculate storage required */
+    dwLength=pDataIn->cbData;
+    if (CryptEncrypt(hKey, 0, TRUE, 0, pDataIn->pbData, &dwLength, 0) ||
+        GetLastError()!=ERROR_MORE_DATA)
+    {
+        ERR("CryptEncrypt\n");
+        goto free_hash;
+    }
+    TRACE("required encrypted storage: %u\n",(unsigned int)dwLength);
+
+    /* copy plain text into cipher area for CryptEncrypt call */
+    protect_data.cipher.cbData=dwLength;
+    if (!(protect_data.cipher.pbData=HeapAlloc( GetProcessHeap(), 0,
+                                                protect_data.cipher.cbData)))
+    {
+        ERR("HeapAlloc\n");
+        goto free_hash;
+    }
+    memcpy(protect_data.cipher.pbData,pDataIn->pbData,pDataIn->cbData);
+
+    /* encrypt! */
+    dwLength=pDataIn->cbData;
+    if (!CryptEncrypt(hKey, hHash, TRUE, 0, protect_data.cipher.pbData,
+                      &dwLength, protect_data.cipher.cbData))
+    {
+        ERR("CryptEncrypt %u\n",(unsigned int)GetLastError());
+        goto free_hash;
+    }
+    protect_data.cipher.cbData=dwLength;
+
+    /* debug: show the cipher */
+    TRACE_DATA_BLOB(&protect_data.cipher);
+
+    /* attach our fingerprint */
+    if (!convert_hash_to_blob(hHash, &protect_data.fingerprint))
+    {
+        ERR("convert_hash_to_blob\n");
+        goto free_hash;
+    }
+
+    /* serialize into an opaque blob */
+    if (!serialize(&protect_data, pDataOut))
+    {
+        ERR("serialize\n");
+        goto free_hash;
+    }
+
+    /* success! */
+    rc=TRUE;
+
+free_hash:
+    CryptDestroyHash(hHash);
+free_key:
+    CryptDestroyKey(hKey);
+free_protect_data:
+    free_protect_data(&protect_data);
+free_context:
+    CryptReleaseContext(hProv,0);
+finished:
+    /* If some error occured, and no error code was set, force one. */
+    if (!rc && GetLastError()==ERROR_SUCCESS)
+    {
+        SetLastError(ERROR_INVALID_DATA);
+    }
+
+    if (rc)
+    {
+        SetLastError(ERROR_SUCCESS);
+
+        TRACE_DATA_BLOB(pDataOut);
+    }
+
+    TRACE("returning %s\n", rc ? "ok" : "FAIL");
+
+    return rc;
+}
