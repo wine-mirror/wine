@@ -72,7 +72,6 @@ typedef struct
 {
     const void *module;       /* module header */
     void       *code_start;   /* 32-bit address of DLL code */
-    const void *rsrc;         /* resources data */
 } BUILTIN16_DESCRIPTOR;
 
 struct builtin_dll
@@ -1010,8 +1009,6 @@ static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr, cons
     pModule = GlobalLock16( hModule );
     pModule->ne_flags |= NE_FFLAGS_BUILTIN;
     pModule->count = 1;
-    /* NOTE: (Ab)use the rsrc32_map parameter for resource data pointer */
-    pModule->rsrc32_map = (void *)descr->rsrc;
 
     /* Allocate the code segment */
 

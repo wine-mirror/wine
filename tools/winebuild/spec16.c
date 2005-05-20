@@ -203,11 +203,14 @@ static void output_bytes( FILE *outfile, const void *buffer, unsigned int size )
 static void output_module_data( FILE *outfile, int max_code_offset, const void *data_segment,
                                 unsigned int data_size, DLLSPEC *spec )
 {
-    unsigned char *res_buffer, *et_buffer;
+    unsigned char *resdir_buffer, *resdata_buffer, *et_buffer;
     unsigned char string[256];
     int i;
-    unsigned int segtable_offset, resdir_offset, impnames_offset, resnames_offset, et_offset, data_offset;
-    unsigned int resnames_size, resdir_size, et_size;
+    unsigned int ne_offset, segtable_offset, impnames_offset, data_offset;
+    unsigned int resnames_offset, resnames_size;
+    unsigned int resdir_size, resdir_offset;
+    unsigned int resdata_size, resdata_offset, resdata_align;
+    unsigned int et_size, et_offset;
 
     /* DOS header */
 
@@ -236,6 +239,7 @@ static void output_module_data( FILE *outfile, int max_code_offset, const void *
 
     /* NE header */
 
+    ne_offset = 64;
     fprintf( outfile, "  struct\n  {\n" );
     fprintf( outfile, "    unsigned short  ne_magic;\n" );
     fprintf( outfile, "    unsigned char   ne_ver;\n" );
@@ -282,7 +286,7 @@ static void output_module_data( FILE *outfile, int max_code_offset, const void *
     /* resource directory */
 
     resdir_offset = segtable_offset + 2 * 8;
-    resdir_size = output_res16_directory( &res_buffer, spec );
+    resdir_size = get_res16_directory_size( spec );
     fprintf( outfile, "  unsigned char resdir[%d];\n", resdir_size );
 
     /* resident names table */
@@ -321,6 +325,18 @@ static void output_module_data( FILE *outfile, int max_code_offset, const void *
     fprintf( outfile, "  unsigned char data_segment[%d];\n", data_size );
     if (data_offset + data_size >= 0x10000)
         fatal_error( "Not supported yet: 16-bit module data larger than 64K\n" );
+
+    /* resource data */
+
+    resdata_offset = ne_offset + data_offset + data_size;
+    for (resdata_align = 0; resdata_align < 16; resdata_align++)
+    {
+        unsigned int size = get_res16_data_size( spec, resdata_offset, resdata_align );
+        if ((resdata_offset + size) >> resdata_align <= 0xffff) break;
+    }
+    output_res16_directory( &resdir_buffer, spec, resdata_offset, resdata_align );
+    resdata_size = output_res16_data( &resdata_buffer, spec, resdata_offset, resdata_align );
+    if (resdata_size) fprintf( outfile, "  unsigned char resources[%d];\n", resdata_size );
 
     /* DOS header */
 
@@ -375,8 +391,8 @@ static void output_module_data( FILE *outfile, int max_code_offset, const void *
 
     /* resource directory */
 
-    output_bytes( outfile, res_buffer, resdir_size );
-    free( res_buffer );
+    output_bytes( outfile, resdir_buffer, resdir_size );
+    free( resdir_buffer );
 
     /* resident names table */
 
@@ -404,6 +420,14 @@ static void output_module_data( FILE *outfile, int max_code_offset, const void *
     /* data_segment */
 
     output_bytes( outfile, data_segment, data_size );
+
+    /* resource data */
+
+    if (resdata_size)
+    {
+        output_bytes( outfile, resdata_buffer, resdata_size );
+        free( resdata_buffer );
+    }
 
     fprintf( outfile, "};\n" );
 }
@@ -647,7 +671,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
 {
     ORDDEF **type, **typelist;
     int i, nFuncs, nTypes;
-    int code_offset, data_offset, res_size;
+    int code_offset, data_offset;
     unsigned char *data;
     char constructor[100], destructor[100];
 #ifdef __i386__
@@ -878,7 +902,6 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     /* Build the module */
 
     output_module_data( outfile, code_offset, data, data_offset, spec );
-    res_size = output_res16_data( outfile, spec );
 
     /* Output the DLL descriptor */
 
@@ -890,8 +913,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    const unsigned char *rsrc;\n" );
     fprintf( outfile, "} descriptor =\n{\n" );
     fprintf( outfile, "    &module,\n" );
-    fprintf( outfile, "    &code_segment,\n" );
-    fprintf( outfile, "    %s\n", res_size ? "resource_data" : "0" );
+    fprintf( outfile, "    &code_segment\n" );
     fprintf( outfile, "};\n" );
 
     /* Output the DLL constructor */

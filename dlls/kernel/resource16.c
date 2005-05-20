@@ -347,22 +347,12 @@ HGLOBAL16 WINAPI NE_DefResourceHandler( HGLOBAL16 hMemObj, HMODULE16 hModule,
 
     if (handle)
     {
-        if (pModule->ne_flags & NE_FFLAGS_BUILTIN)
+        if (!NE_READ_DATA( pModule, GlobalLock16( handle ),
+                           (int)pNameInfo->offset << sizeShift,
+                           (int)pNameInfo->length << sizeShift ))
         {
-            /* NOTE: hRsrcMap points to start of built-in resource data */
-            memcpy( GlobalLock16( handle ),
-                    (char *)pModule->rsrc32_map + (pNameInfo->offset << sizeShift),
-                    pNameInfo->length << sizeShift );
-        }
-        else
-        {
-            if (!NE_READ_DATA( pModule, GlobalLock16( handle ),
-                               (int)pNameInfo->offset << sizeShift,
-                               (int)pNameInfo->length << sizeShift ))
-            {
-                GlobalFree16( handle );
-                handle = 0;
-            }
+            GlobalFree16( handle );
+            handle = 0;
         }
     }
     return handle;

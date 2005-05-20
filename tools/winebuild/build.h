@@ -177,8 +177,13 @@ extern int output_imports( FILE *outfile, DLLSPEC *spec );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( FILE *outfile, DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
-extern int output_res16_data( FILE *outfile, DLLSPEC *spec );
-extern unsigned int output_res16_directory( unsigned char **ret_buf, DLLSPEC *spec );
+extern unsigned int get_res16_data_size( DLLSPEC *spec, unsigned int res_offset,
+                                         unsigned int alignment );
+extern unsigned int output_res16_data( unsigned char **ret_buf, DLLSPEC *spec,
+                                       unsigned int res_offset, unsigned int alignment );
+extern unsigned int get_res16_directory_size( DLLSPEC *spec );
+extern unsigned int output_res16_directory( unsigned char **ret_buf, DLLSPEC *spec,
+                                            unsigned int res_offset, unsigned int alignment );
 extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
 
 extern void BuildRelays16( FILE *outfile );
