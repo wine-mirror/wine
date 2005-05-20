@@ -252,7 +252,7 @@ UINT WINAPI MsiApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szInstallPackage,
 UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
                         INSTALLSTATE eInstallState, LPCWSTR szCommandLine)
 {
-    MSIHANDLE handle;
+    MSIHANDLE handle = -1;
     MSIPACKAGE* package;
     UINT rc;
     HKEY hkey=0,hkey1=0;
@@ -330,6 +330,8 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     HeapFree(GetProcessHeap(),0,commandline);
 end:
     RegCloseKey(hkey);
+    if (handle != -1)
+        MsiCloseHandle(handle);
 
     return rc;
 }
@@ -420,11 +422,38 @@ UINT WINAPI MsiGetProductCodeA(LPCSTR szComponent, LPSTR szBuffer)
 
 UINT WINAPI MsiGetProductCodeW(LPCWSTR szComponent, LPWSTR szBuffer)
 {
-    FIXME("%s %p\n",debugstr_w(szComponent), szBuffer);
+    UINT rc;
+    HKEY hkey;
+    WCHAR szSquished[GUID_SIZE];
+    DWORD sz = GUID_SIZE;
+    static const WCHAR szPermKey[] =
+        { '0','0','0','0','0','0','0','0','0','0','0','0',
+          '0','0','0','0','0','0','0', '0','0','0','0','0',
+          '0','0','0','0','0','0','0','0',0};
+
+    TRACE("%s %p\n",debugstr_w(szComponent), szBuffer);
 
     if (NULL == szComponent)
         return ERROR_INVALID_PARAMETER;
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    rc = MSIREG_OpenComponentsKey( szComponent, &hkey, FALSE);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_UNKNOWN_COMPONENT;
+
+    rc = RegEnumValueW(hkey, 0, szSquished, &sz, NULL, NULL, NULL, NULL);
+    if (rc == ERROR_SUCCESS && strcmpW(szSquished,szPermKey)==0)
+    {
+        sz = GUID_SIZE;
+        rc = RegEnumValueW(hkey, 1, szSquished, &sz, NULL, NULL, NULL, NULL);
+    }
+
+    RegCloseKey(hkey);
+
+    if (rc != ERROR_SUCCESS)
+        return ERROR_INSTALL_FAILURE;
+
+    unsquash_guid(szSquished, szBuffer);
+    return ERROR_SUCCESS;
 }
 
 UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
@@ -1509,11 +1538,73 @@ USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
                 DWORD* pcchUserNameBuf, LPWSTR lpOrgNameBuf,
                 DWORD* pcchOrgNameBuf, LPWSTR lpSerialBuf, DWORD* pcchSerialBuf)
 {
-    FIXME("%s %p %p %p %p %p %p\n",debugstr_w(szProduct), lpUserNameBuf,
+    HKEY hkey;
+    DWORD sz;
+    UINT rc = ERROR_SUCCESS,rc2 = ERROR_SUCCESS;
+    static const WCHAR szOwner[] = {'R','e','g','O','w','n','e','r',0};
+    static const WCHAR szCompany[] = {'R','e','g','C','o','m','p','a','n','y',0};
+    static const WCHAR szSerial[] = {'P','r','o','d','u','c','t','I','D',0};
+
+    TRACE("%s %p %p %p %p %p %p\n",debugstr_w(szProduct), lpUserNameBuf,
           pcchUserNameBuf, lpOrgNameBuf, pcchOrgNameBuf, lpSerialBuf,
           pcchSerialBuf);
 
-    return USERINFOSTATE_UNKNOWN;
+    rc = MSIREG_OpenUninstallKey(szProduct, &hkey, FALSE);
+    if (rc != ERROR_SUCCESS)
+        return USERINFOSTATE_UNKNOWN;
+
+    if (lpUserNameBuf)
+    {
+        sz = *lpUserNameBuf * sizeof(WCHAR);
+        rc = RegQueryValueExW( hkey, szOwner, NULL, NULL, (LPBYTE)lpUserNameBuf,
+                               &sz);
+    }
+    if (!lpUserNameBuf && pcchUserNameBuf)
+    {
+        sz = 0;
+        rc = RegQueryValueExW( hkey, szOwner, NULL, NULL, NULL, &sz);
+    }
+
+    if (pcchUserNameBuf)
+        *pcchUserNameBuf = sz / sizeof(WCHAR);
+
+    if (lpOrgNameBuf)
+    {
+        sz = *pcchOrgNameBuf * sizeof(WCHAR);
+        rc2 = RegQueryValueExW( hkey, szCompany, NULL, NULL, 
+                               (LPBYTE)lpOrgNameBuf, &sz);
+    }
+    if (!lpOrgNameBuf && pcchOrgNameBuf)
+    {
+        sz = 0;
+        rc2 = RegQueryValueExW( hkey, szCompany, NULL, NULL, NULL, &sz);
+    }
+
+    if (pcchOrgNameBuf)
+        *pcchOrgNameBuf = sz / sizeof(WCHAR);
+
+    if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA && 
+        rc2 != ERROR_SUCCESS && rc2 != ERROR_MORE_DATA)
+    {
+        RegCloseKey(hkey);
+        return USERINFOSTATE_ABSENT;
+    }
+
+    if (lpSerialBuf)
+    {
+        sz = *pcchSerialBuf * sizeof(WCHAR);
+        RegQueryValueExW( hkey, szSerial, NULL, NULL, (LPBYTE)lpSerialBuf,
+                               &sz);
+    }
+    if (!lpSerialBuf && pcchSerialBuf)
+    {
+        sz = 0;
+        rc = RegQueryValueExW( hkey, szSerial, NULL, NULL, NULL, &sz);
+    }
+    if (pcchSerialBuf)
+        *pcchSerialBuf = sz / sizeof(WCHAR);
+    
+    return USERINFOSTATE_PRESENT;
 }
 
 USERINFOSTATE WINAPI MsiGetUserInfoA(LPCSTR szProduct, LPSTR lpUserNameBuf,
@@ -1529,14 +1620,38 @@ USERINFOSTATE WINAPI MsiGetUserInfoA(LPCSTR szProduct, LPSTR lpUserNameBuf,
 
 UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
 {
-    FIXME("%s\n",debugstr_w(szProduct));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIHANDLE handle;
+    UINT rc;
+    static const WCHAR szFirstRun[] = {'F','i','r','s','t','R','u','n',0};
+
+    TRACE("(%s)\n",debugstr_w(szProduct));
+
+    rc = MsiOpenProductW(szProduct,&handle);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_INVALID_PARAMETER;
+
+    rc = MsiDoActionW(handle, szFirstRun);
+    MsiCloseHandle(handle);
+
+    return rc;
 }
 
 UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
 {
-    FIXME("%s\n",debugstr_a(szProduct));
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    MSIHANDLE handle;
+    UINT rc;
+    static const WCHAR szFirstRun[] = {'F','i','r','s','t','R','u','n',0};
+
+    TRACE("(%s)\n",debugstr_a(szProduct));
+
+    rc = MsiOpenProductA(szProduct,&handle);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_INVALID_PARAMETER;
+
+    rc = MsiDoActionW(handle, szFirstRun);
+    MsiCloseHandle(handle);
+
+    return rc;
 }
 
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory(DWORD dwReserved)
