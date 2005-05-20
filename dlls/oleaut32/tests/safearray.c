@@ -57,10 +57,15 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 
 /* Have IRecordInfo data type? */
 #define HAVE_OLEAUT32_RECORD  HAVE_FUNC(SafeArraySetRecordInfo)
+/* Have R8 data type? */
+#define HAVE_OLEAUT32_R8      HAVE_FUNC(VarR8FromI1)
 /* Have I8/UI8 data type? */
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
 /* Have the decimal type? */
 #define HAVE_OLEAUT32_DECIMAL HAVE_FUNC(VarDecAdd)
+/* Have INT_PTR/UINT_PTR type? */
+BOOL HAVE_OLEAUT32_INT_PTR;
+
 /* very old version? */
 #define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))
 
@@ -169,6 +174,8 @@ static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
     case VT_R4:
     case VT_ERROR:    return sizeof(LONG);
     case VT_R8:
+      if (HAVE_OLEAUT32_R8)
+        return sizeof(LONG64);
     case VT_I8:
     case VT_UI8:
       if (HAVE_OLEAUT32_I8)
@@ -177,7 +184,10 @@ static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
     case VT_INT:
     case VT_UINT:     return sizeof(INT);
     case VT_INT_PTR:
-    case VT_UINT_PTR: return sizeof(UINT_PTR);
+    case VT_UINT_PTR: 
+      if (HAVE_OLEAUT32_INT_PTR)
+        return sizeof(UINT_PTR);
+      break;
     case VT_CY:       return sizeof(CY);
     case VT_DATE:     return sizeof(DATE);
     case VT_BSTR:     return sizeof(BSTR);
@@ -190,6 +200,26 @@ static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
       break;
   }
   return 0;
+}
+
+static void check_for_VT_INT_PTR(void)
+{
+    /* Set a global flag if VT_INT_PTR is supported */
+
+    SAFEARRAY* a;
+    SAFEARRAYBOUND bound;
+    bound.cElements	= 0;
+    bound.lLbound	= 0;
+    a = SafeArrayCreate(VT_INT_PTR, 1, &bound);
+    if (a) {
+        trace("VT_INT_PTR is supported\n");
+        HAVE_OLEAUT32_INT_PTR = TRUE;
+        SafeArrayDestroy(a);
+    }
+    else {
+        trace("VT_INT_PTR is not supported\n");
+        HAVE_OLEAUT32_INT_PTR = FALSE;
+    }        
 }
 
 #define VARTYPE_NOT_SUPPORTED 0
@@ -674,8 +704,7 @@ static void test_SafeArrayCreateLockDestroy(void)
 
       if (dwLen)
         ok(sa || (IS_ANCIENT && (vt == VT_DECIMAL || vt == VT_I1 || vt == VT_UI2 ||
-           vt == VT_UI4 || vt == VT_INT || vt == VT_UINT || vt == VT_UINT_PTR ||
-           vt == VT_INT_PTR)),
+           vt == VT_UI4 || vt == VT_INT || vt == VT_UINT)),
            "VARTYPE %d (@%d dimensions) failed\n", vt, dimension);
       else
         ok(sa == NULL || vt == VT_R8,
@@ -778,11 +807,7 @@ static void test_VectorCreateLockDestroy(void)
       sa = pSafeArrayCreateVector(vt, 0, element);
 
       if (dwLen)
-      {
-        /* win2000 has a bug where U/INT_PTR aren't accepted */
-        ok(sa != NULL || vt == VT_INT_PTR || vt == VT_UINT_PTR,
-           "VARTYPE %d (@%d elements) failed\n", vt, element);
-      }
+        ok(sa != NULL, "VARTYPE %d (@%d elements) failed\n", vt, element);
       else
         ok(sa == NULL, "VARTYPE %d (@%d elements) succeeded!\n", vt, element);
 
@@ -1586,6 +1611,7 @@ START_TEST(safearray)
     GETPTR(SafeArrayCreateEx);
     GETPTR(SafeArrayCreateVector);
 
+    check_for_VT_INT_PTR();
     test_safearray();
     test_SafeArrayAllocDestroyDescriptor();
     test_SafeArrayCreateLockDestroy();
