@@ -6250,6 +6250,8 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
             size = strlenW(buffer)*sizeof(WCHAR);
             RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
         }
+        else
+            RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,NULL,0);
         i++;
     }
 
