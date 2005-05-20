@@ -35,9 +35,10 @@
 #include FT_TRUETYPE_TABLES_H
 
 #include "wine/unicode.h"
+#include "wine/wingdi16.h"
 #include "wingdi.h"
 
-#pragma pack(1)
+#include "pshpack1.h"
 
 typedef struct
 {
@@ -46,49 +47,12 @@ typedef struct
     char dfCopyright[60];
 } FNT_HEADER;
 
-typedef struct
-{
-    INT16 dfType;
-    INT16 dfPoints;
-    INT16 dfVertRes;
-    INT16 dfHorizRes;
-    INT16 dfAscent;
-    INT16 dfInternalLeading;
-    INT16 dfExternalLeading;
-    CHAR  dfItalic;
-    CHAR  dfUnderline;
-    CHAR  dfStrikeOut;
-    INT16 dfWeight;
-    BYTE  dfCharSet;
-    INT16 dfPixWidth;
-    INT16 dfPixHeight;
-    CHAR  dfPitchAndFamily;
-    INT16 dfAvgWidth;
-    INT16 dfMaxWidth;
-    CHAR  dfFirstChar;
-    CHAR  dfLastChar;
-    CHAR  dfDefaultChar;
-    CHAR  dfBreakChar;
-    INT16 dfWidthBytes;
-    LONG  dfDevice;
-    LONG  dfFace;
-    LONG  dfBitsPointer;
-    LONG  dfBitsOffset;
-    CHAR  dfReserved;
-    /* Fields, introduced for Windows 3.x fonts */
-    LONG  dfFlags;
-    INT16 dfAspace;
-    INT16 dfBspace;
-    INT16 dfCspace;
-    LONG  dfColorPointer;
-    LONG  dfReserved1[4];
-} FONTINFO16, *LPFONTINFO16;
-
 typedef struct {
     WORD width;
     DWORD offset;
 } CHAR_TABLE_ENTRY;
 
+#include "poppack.h"
 
 void usage(char **argv)
 {
@@ -195,9 +159,12 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
 
     first_char = FT_Get_First_Char(face, &gi);
     if(first_char == 0xd) /* fontforge's first glyph is 0xd, we'll catch this and skip it */
-        first_char = FT_Get_Next_Char(face, first_char, &gi);
+        first_char = 32; /* FT_Get_Next_Char for some reason returns too high
+                            number in this case */
 
     dfCharTable = malloc((255 + 3) * sizeof(*dfCharTable));
+    memset(dfCharTable, 0, (255 + 3) * sizeof(*dfCharTable));
+
     memset(&fi, 0, sizeof(fi));
     fi.dfFirstChar = first_char;
     fi.dfLastChar = 0xff;
