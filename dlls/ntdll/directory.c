@@ -294,6 +294,7 @@ static char *parse_mount_entries( FILE *f, dev_t dev, ino_t ino )
         if (st.st_dev != dev || st.st_ino != ino) continue;
         return entry->fs_spec;
     }
+    return NULL;
 }
 #endif
 
