@@ -894,6 +894,15 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 /* CryptHashSessionKey */
 #define CRYPT_LITTLE_ENDIAN     0x00000001
 
+/* Crypt{Protect,Unprotect}Data PROMPTSTRUCT flags */
+#define CRYPTPROTECT_PROMPT_ON_PROTECT    0x0001
+#define CRYPTPROTECT_PROMPT_ON_UNPROTECT  0x0002
+/* Crypt{Protect,Unprotect}Data flags */
+#define CRYPTPROTECT_UI_FORBIDDEN       0x0001
+#define CRYPTPROTECT_LOCAL_MACHINE      0x0004
+#define CRYPTPROTECT_AUDIT              0x0010
+#define CRYPTPROTECT_VERIFY_PROTECTION  0x0040
+
 /* Blob Types */
 #define SIMPLEBLOB              0x1
 #define PUBLICKEYBLOB           0x6
