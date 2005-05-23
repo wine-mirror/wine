@@ -193,13 +193,13 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
  */
 void VIRTUAL_Dump(void)
 {
-    struct list *ptr;
+    struct file_view *view;
 
     DPRINTF( "\nDump of all virtual memory views:\n\n" );
     RtlEnterCriticalSection(&csVirtual);
-    LIST_FOR_EACH( ptr, &views_list )
+    LIST_FOR_EACH_ENTRY( view, &views_list, FILE_VIEW, entry )
     {
-        VIRTUAL_DumpView( LIST_ENTRY( ptr, struct file_view, entry ) );
+        VIRTUAL_DumpView( view );
     }
     RtlLeaveCriticalSection(&csVirtual);
 }
@@ -219,11 +219,10 @@ void VIRTUAL_Dump(void)
  */
 static struct file_view *VIRTUAL_FindView( const void *addr )
 {
-    struct list *ptr;
+    struct file_view *view;
 
-    LIST_FOR_EACH( ptr, &views_list )
+    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
     {
-        struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
         if (view->base > addr) break;
         if ((const char*)view->base + view->size > (const char*)addr) return view;
     }
@@ -239,11 +238,10 @@ static struct file_view *VIRTUAL_FindView( const void *addr )
  */
 static struct file_view *find_view_range( const void *addr, size_t size )
 {
-    struct list *ptr;
+    struct file_view *view;
 
-    LIST_FOR_EACH( ptr, &views_list )
+    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
     {
-        struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
         if ((const char *)view->base >= (const char *)addr + size) break;
         if ((const char *)view->base + view->size > (const char *)addr) return view;
     }
@@ -283,11 +281,10 @@ static void add_reserved_area( void *addr, size_t size )
  */
 static void remove_reserved_area( void *addr, size_t size )
 {
-    struct list *ptr;
+    struct file_view *view;
 
-    LIST_FOR_EACH( ptr, &views_list )
+    LIST_FOR_EACH_ENTRY( view, &views_list, struct file_view, entry )
     {
-        struct file_view *view = LIST_ENTRY( ptr, struct file_view, entry );
         if ((char *)view->base >= (char *)addr + size) break;
         if ((char *)view->base + view->size <= (char *)addr) continue;
         /* now we have an overlapping view */
