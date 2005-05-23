@@ -114,8 +114,8 @@ UINT SELECT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
 
 UINT DISTINCT_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 
-UINT ORDER_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
-UINT ORDER_AddColumn( MSIVIEW *group, LPWSTR name );
+UINT ORDER_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
+                       string_list *columns );
 
 UINT WHERE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table,
                        struct expr *cond );

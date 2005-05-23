@@ -54,8 +54,6 @@ static int SQL_lex( void *SQL_lval, SQL_input *info);
 
 static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in, 
                                string_list *columns );
-static MSIVIEW *do_order_by( MSIDATABASE *db, MSIVIEW *in, 
-                             string_list *columns );
 
 static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
                                  string_list *keys);
@@ -330,12 +328,13 @@ oneselect:
         {
             SQL_input* sql = (SQL_input*) info;
 
-            if( !$1 )
-                YYABORT;
+            $$ = NULL;
             if( $4 )
-                $$ = do_order_by( sql->db, $1, $4 );
+                ORDER_CreateView( sql->db, &$$, $1, $4 );
             else
                 $$ = $1;
+            if( !$$ )
+                YYABORT;
         }
   | unorderedsel
     ;
@@ -687,25 +686,6 @@ static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in,
     delete_string_list( columns );
     if( !view )
         ERR("Error creating select query\n");
-    return view;
-}
-
-static MSIVIEW *do_order_by( MSIDATABASE *db, MSIVIEW *in, 
-                             string_list *columns )
-{
-    MSIVIEW *view = NULL;
-
-    ORDER_CreateView( db, &view, in );
-    if( view )
-    {
-        string_list *x = columns;
-
-        for( x = columns; x ; x = x->next )
-            ORDER_AddColumn( view, x->string );
-    }
-    else
-        ERR("Error creating select query\n");
-    delete_string_list( columns );
     return view;
 }
 
