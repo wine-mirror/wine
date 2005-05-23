@@ -1267,7 +1267,7 @@ int main(int argc, char** argv)
 
     dbg_init_console();
 
-    SymSetOptions(SymGetOptions() |     
+    SymSetOptions((SymGetOptions() & ~(SYMOPT_UNDNAME)) |
                   SYMOPT_LOAD_LINES | SYMOPT_DEFERRED_LOADS | SYMOPT_AUTO_PUBLICS);
 
     retv = dbg_main_loop();

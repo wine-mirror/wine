@@ -264,6 +264,7 @@ extern int              input_fetch_entire_line(const char* pfx, char** line, si
   /* debug.l */
 extern void             lexeme_flush(void);
 extern char*            lexeme_alloc(const char*);
+extern char*            lexeme_alloc_size(int);
 
   /* display.c */
 extern int              display_print(void);
@@ -332,7 +333,7 @@ extern void             source_nuke_path(void);
 extern void             stack_info(void);
 extern void             stack_backtrace(DWORD threadID, BOOL noisy);
 extern int              stack_set_frame(int newframe);
-extern int              stack_get_frame(SYMBOL_INFO* sym, IMAGEHLP_STACK_FRAME* ihsf);
+extern BOOL             stack_get_frame(SYMBOL_INFO* sym, IMAGEHLP_STACK_FRAME* ihsf);
 
   /* symbol.c */
 extern enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno, struct dbg_lvalue* addr, BOOL bp_disp);

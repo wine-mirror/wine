@@ -80,7 +80,7 @@ int stack_set_frame(int newframe)
     return TRUE;
 }
 
-int stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
+BOOL stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
 {
     DWORD64     disp;
     /*

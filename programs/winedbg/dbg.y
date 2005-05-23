@@ -160,12 +160,10 @@ pathname:
 
 identifier:
       tIDENTIFIER               { $$ = $1; }
-    | tIDENTIFIER '!' tIDENTIFIER { char* ptr = HeapAlloc(GetProcessHeap(), 0, strlen($1) + 1 + strlen($3) + 1);
-                                    sprintf(ptr, "%s!%s", $1, $3); $$ = lexeme_alloc(ptr);
-                                    HeapFree(GetProcessHeap(), 0, ptr); }
-    | identifier ':' ':' tIDENTIFIER { char* ptr = HeapAlloc(GetProcessHeap(), 0, strlen($1) + 2 + strlen($4) + 1);
-                                       sprintf(ptr, "%s::%s", $1, $4); $$ = lexeme_alloc(ptr);
-                                       HeapFree(GetProcessHeap(), 0, ptr); }
+    | tPATH '!' tIDENTIFIER     { $$ = lexeme_alloc_size(strlen($1) + 1 + strlen($3) + 1);
+                                  sprintf($$, "%s!%s", $1, $3); }
+    | identifier ':' ':' tIDENTIFIER { $$ = lexeme_alloc_size(strlen($1) + 2 + strlen($4) + 1);
+                                       sprintf($$, "%s::%s", $1, $4); }
     ;
 
 list_arg:
@@ -303,10 +301,10 @@ type_expr:
     | tDOUBLE			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_real; }
     | tLONG tDOUBLE		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_long_real; }
     | type_expr '*'		{ $$ = $1; $$.deref_count++; }
-    | tCLASS identifier	        { $$.type = type_expr_udt_class; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
-    | tSTRUCT identifier	{ $$.type = type_expr_udt_struct; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
-    | tUNION identifier	        { $$.type = type_expr_udt_union; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
-    | tENUM identifier	        { $$.type = type_expr_enumeration; $$.deref_count = 0; $$.u.name = lexeme_alloc($2); }
+    | tCLASS identifier         { $$.type = type_expr_udt_class; $$.deref_count = 0; $$.u.name = $2; }
+    | tSTRUCT identifier        { $$.type = type_expr_udt_struct; $$.deref_count = 0; $$.u.name = $2; }
+    | tUNION identifier         { $$.type = type_expr_udt_union; $$.deref_count = 0; $$.u.name = $2; }
+    | tENUM identifier          { $$.type = type_expr_enumeration; $$.deref_count = 0; $$.u.name = $2; }
     ;
 
 expr_lvalue:

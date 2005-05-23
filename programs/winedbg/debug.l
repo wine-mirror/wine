@@ -126,7 +126,7 @@ STRING     \"[^\n"]+\"
 
 <FORMAT_EXPECTED>"/"{FORMAT}          	{ yylval.integer = (1 << 8) | yytext[1]; return tFORMAT; }
 
-{STRING} 				{ yylval.string = lexeme_alloc(yytext); return tSTRING; }
+{STRING} 				{ yylval.string = lexeme_alloc(yytext + 1); yylval.string[strlen(yylval.string) - 1] = '\0'; return tSTRING; }
 <ASTRING_EXPECTED>[^\n]+                { char* p = yytext; while (*p == ' ' || *p == '\t') p++;
                                           yylval.string = lexeme_alloc(p); return tSTRING; }
 
@@ -224,7 +224,7 @@ static char** local_lexemes /* = NULL */;
 static int next_lexeme /* = 0 */;
 static int alloc_lexeme /* = 0 */;
 
-char* lexeme_alloc(const char* lexeme)
+char* lexeme_alloc_size(int size)
 {
     assert(0 <= next_lexeme && next_lexeme < alloc_lexeme + 1);
     if (next_lexeme >= alloc_lexeme)
@@ -233,7 +233,13 @@ char* lexeme_alloc(const char* lexeme)
         local_lexemes = dbg_heap_realloc(local_lexemes, alloc_lexeme * sizeof(local_lexemes[0]));
         assert(local_lexemes);
     }
-    return local_lexemes[next_lexeme++] = strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(lexeme) + 1), lexeme);
+    return local_lexemes[next_lexeme++] = HeapAlloc(GetProcessHeap(), 0, size + 1);
+}
+
+char* lexeme_alloc(const char* lexeme)
+{
+    char*       ptr = lexeme_alloc_size(strlen(lexeme) + 1);
+    return strcpy(ptr, lexeme);
 }
 
 void lexeme_flush(void)

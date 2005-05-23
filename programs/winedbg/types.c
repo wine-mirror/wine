@@ -114,7 +114,7 @@ BOOL types_deref(const struct dbg_lvalue* lvalue, struct dbg_lvalue* result)
      */
     if (!types_get_info(&lvalue->type, TI_GET_SYMTAG, &tag) ||
         tag != SymTagPointerType ||
-        memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset) ||
+        !memory_read_value(lvalue, sizeof(result->addr.Offset), &result->addr.Offset) ||
         !types_get_info(&lvalue->type, TI_GET_TYPE, &result->type.id))
         return FALSE;
     result->type.module = lvalue->type.module;
@@ -305,7 +305,6 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
         case SymTagPointerType:
             type.module = sym->ModBase;
             type.id = sym->TypeIndex;
-            types_get_info(&type, TI_GET_TYPE, &type_id);
             if (types_get_info(&type, TI_GET_TYPE, &type_id) && type_id == user->u.typeid)
             {
                 user->result = sym->TypeIndex;

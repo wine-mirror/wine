@@ -190,13 +190,11 @@ struct expr* expr_alloc_uconstant(unsigned int value)
 struct expr* expr_alloc_string(const char* str)
 {
     struct expr*        ex;
-    char*               pnt;
 
     ex = expr_alloc();
 
     ex->type          = EXPR_TYPE_STRING;
-    ex->un.string.str = str + 1;
-    if ((pnt = strrchr(ex->un.string.str, '"'))) *pnt = '\0';
+    ex->un.string.str = str;
     return ex;
 }
 
