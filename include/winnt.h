@@ -684,24 +684,24 @@ typedef struct _LDT_ENTRY {
     WORD	LimitLow;
     WORD	BaseLow;
     union {
-	struct {
-	    BYTE	BaseMid;
-	    BYTE	Flags1;/*Declare as bytes to avoid alignment problems */
-	    BYTE	Flags2;
-	    BYTE	BaseHi;
-	} Bytes;
-	struct {
-	    unsigned	BaseMid		: 8;
-	    unsigned	Type		: 5;
-	    unsigned	Dpl		: 2;
-	    unsigned	Pres		: 1;
-	    unsigned	LimitHi		: 4;
-	    unsigned	Sys		: 1;
-	    unsigned	Reserved_0	: 1;
-	    unsigned	Default_Big	: 1;
-	    unsigned	Granularity	: 1;
-	    unsigned	BaseHi		: 8;
-	} Bits;
+        struct {
+            BYTE    BaseMid;
+            BYTE    Flags1;
+            BYTE    Flags2;
+            BYTE    BaseHi;
+        } Bytes;
+        struct {
+            unsigned    BaseMid: 8;
+            unsigned    Type : 5;
+            unsigned    Dpl : 2;
+            unsigned    Pres : 1;
+            unsigned    LimitHi : 4;
+            unsigned    Sys : 1;
+            unsigned    Reserved_0 : 1;
+            unsigned    Default_Big : 1;
+            unsigned    Granularity : 1;
+            unsigned    BaseHi : 8;
+        } Bits;
     } HighWord;
 } LDT_ENTRY, *PLDT_ENTRY;
 
