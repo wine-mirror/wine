@@ -36,6 +36,7 @@
 #include "winver.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "action.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
@@ -1604,6 +1605,7 @@ USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
     if (pcchSerialBuf)
         *pcchSerialBuf = sz / sizeof(WCHAR);
     
+    RegCloseKey(hkey);
     return USERINFOSTATE_PRESENT;
 }
 
@@ -1622,6 +1624,7 @@ UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
 {
     MSIHANDLE handle;
     UINT rc;
+    MSIPACKAGE *package;
     static const WCHAR szFirstRun[] = {'F','i','r','s','t','R','u','n',0};
 
     TRACE("(%s)\n",debugstr_w(szProduct));
@@ -1630,7 +1633,10 @@ UINT WINAPI MsiCollectUserInfoW(LPCWSTR szProduct)
     if (rc != ERROR_SUCCESS)
         return ERROR_INVALID_PARAMETER;
 
-    rc = MsiDoActionW(handle, szFirstRun);
+    package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
+    rc = ACTION_PerformUIAction(package, szFirstRun);
+    msiobj_release( &package->hdr );
+
     MsiCloseHandle(handle);
 
     return rc;
@@ -1640,6 +1646,7 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
 {
     MSIHANDLE handle;
     UINT rc;
+    MSIPACKAGE *package;
     static const WCHAR szFirstRun[] = {'F','i','r','s','t','R','u','n',0};
 
     TRACE("(%s)\n",debugstr_a(szProduct));
@@ -1648,7 +1655,10 @@ UINT WINAPI MsiCollectUserInfoA(LPCSTR szProduct)
     if (rc != ERROR_SUCCESS)
         return ERROR_INVALID_PARAMETER;
 
-    rc = MsiDoActionW(handle, szFirstRun);
+    package = msihandle2msiinfo(handle, MSIHANDLETYPE_PACKAGE);
+    rc = ACTION_PerformUIAction(package, szFirstRun);
+    msiobj_release( &package->hdr );
+
     MsiCloseHandle(handle);
 
     return rc;
