@@ -112,3 +112,12 @@ void MSVCRT__swab(char* src, char* dst, int len)
     }
   }
 }
+/*********************************************************************
+ *		_stricoll (MSVCRT.@)
+ */
+INT MSVCRT__stricoll( const char* str1, const char* str2 )
+{
+  /* FIXME: handle collates */
+  TRACE("str1 %s str2 %s\n", debugstr_a(str1), debugstr_a(str2));
+  return lstrcmpiA( str1, str2 );
+}

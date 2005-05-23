@@ -453,7 +453,7 @@
 @ cdecl _strdup(str)
 @ cdecl _strerror(long)
 @ cdecl _stricmp(str str) strcasecmp
-@ stub _stricoll #(str str)
+@ cdecl _stricoll(str str) MSVCRT__stricoll
 @ cdecl _strlwr(str) ntdll._strlwr
 @ stub _strncoll #(str str long)
 @ cdecl _strnicmp(str str long) strncasecmp
