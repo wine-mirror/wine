@@ -1002,6 +1002,11 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm)
     hres = IStream_Read(pStm, &stdobjref, sizeof(stdobjref), &res);
     if (hres) return hres;
 
+    TRACE("oxid = %s, oid = %s, ipid = %s\n",
+        wine_dbgstr_longlong(stdobjref.oxid),
+        wine_dbgstr_longlong(stdobjref.oid),
+        wine_dbgstr_guid(&stdobjref.ipid));
+
     if (!(apt = apartment_findfromoxid(stdobjref.oxid, TRUE)))
     {
         WARN("Could not map OXID %s to apartment object\n",
@@ -1163,7 +1168,7 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, 
     }
     else if (objref.flags & OBJREF_CUSTOM)
     {
-        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.size) - 
+        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.pData) - 
                                    FIELD_OFFSET(OBJREF, u_objref.u_custom);
         TRACE("Using custom unmarshaling\n");
         /* read constant sized OR_CUSTOM data from stream */
@@ -1240,7 +1245,7 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
 
     /* if custom marshaling, add on size of custom header */
     if (!IsEqualCLSID(&marshaler_clsid, &CLSID_DfMarshal))
-        *pulSize += FIELD_OFFSET(OBJREF, u_objref.u_custom.size) - 
+        *pulSize += FIELD_OFFSET(OBJREF, u_objref.u_custom.pData) - 
                     FIELD_OFFSET(OBJREF, u_objref.u_custom);
 
     IMarshal_Release(pMarshal);
@@ -1287,7 +1292,6 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     HRESULT	hr;
     CLSID marshaler_clsid;
     OBJREF objref;
-    IStream * pMarshalStream = NULL;
     LPMARSHAL pMarshal;
 
     TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStream, debugstr_guid(riid), pUnk,
@@ -1320,33 +1324,43 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     {
         TRACE("Using standard marshaling\n");
         objref.flags = OBJREF_STANDARD;
-        pMarshalStream = pStream;
+
+        /* write the common OBJREF header to the stream */
+        hr = IStream_Write(pStream, &objref, FIELD_OFFSET(OBJREF, u_objref), NULL);
+        if (hr)
+        {
+            ERR("Failed to write OBJREF header to stream, 0x%08lx\n", hr);
+            goto cleanup;
+        }
     }
     else
     {
         TRACE("Using custom marshaling\n");
         objref.flags = OBJREF_CUSTOM;
-        /* we do custom marshaling into a memory stream so that we know what
-         * size to write into the OR_CUSTOM header */
-        hr = CreateStreamOnHGlobal(NULL, TRUE, &pMarshalStream);
+        objref.u_objref.u_custom.clsid = marshaler_clsid;
+        objref.u_objref.u_custom.cbExtension = 0;
+        objref.u_objref.u_custom.size = 0;
+        hr = IMarshal_GetMarshalSizeMax(pMarshal, riid, pUnk, dwDestContext,
+                                        pvDestContext, mshlFlags,
+                                        &objref.u_objref.u_custom.size);
         if (hr)
         {
-            ERR("CreateStreamOnHGLOBAL failed with 0x%08lx\n", hr);
+            ERR("Failed to get max size of marshal data, error 0x%08lx\n", hr);
+            goto cleanup;
+        }
+        /* write constant sized common header and OR_CUSTOM data into stream */
+        hr = IStream_Write(pStream, &objref,
+                          FIELD_OFFSET(OBJREF, u_objref.u_custom.pData), NULL);
+        if (hr)
+        {
+            ERR("Failed to write OR_CUSTOM header to stream with 0x%08lx\n", hr);
             goto cleanup;
         }
     }
 
-    /* write the common OBJREF header to the stream */
-    hr = IStream_Write(pStream, &objref, FIELD_OFFSET(OBJREF, u_objref), NULL);
-    if (hr)
-    {
-        ERR("Failed to write OBJREF header to stream, 0x%08lx\n", hr);
-        goto cleanup;
-    }
-
     TRACE("Calling IMarshal::MarshalInterace\n");
     /* call helper object to do the actual marshaling */
-    hr = IMarshal_MarshalInterface(pMarshal, pMarshalStream, riid, pUnk, dwDestContext,
+    hr = IMarshal_MarshalInterface(pMarshal, pStream, riid, pUnk, dwDestContext,
                                    pvDestContext, mshlFlags);
 
     if (hr)
@@ -1355,51 +1369,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
         goto cleanup;
     }
 
-    if (objref.flags & OBJREF_CUSTOM)
-    {
-        ULONG custom_header_size = FIELD_OFFSET(OBJREF, u_objref.u_custom.pData) - 
-                                   FIELD_OFFSET(OBJREF, u_objref.u_custom);
-        HGLOBAL hGlobal;
-        LPVOID data;
-        hr = GetHGlobalFromStream(pMarshalStream, &hGlobal);
-        if (hr)
-        {
-            ERR("Couldn't get HGLOBAL from stream\n");
-            hr = E_UNEXPECTED;
-            goto cleanup;
-        }
-        objref.u_objref.u_custom.clsid = marshaler_clsid;
-        objref.u_objref.u_custom.cbExtension = 0;
-        objref.u_objref.u_custom.size = GlobalSize(hGlobal);
-        /* write constant sized OR_CUSTOM data into stream */
-        hr = IStream_Write(pStream, &objref.u_objref.u_custom,
-                          custom_header_size, NULL);
-        if (hr)
-        {
-            ERR("Failed to write OR_CUSTOM header to stream with 0x%08lx\n", hr);
-            goto cleanup;
-        }
-
-        data = GlobalLock(hGlobal);
-        if (!data)
-        {
-            ERR("GlobalLock failed\n");
-            hr = E_UNEXPECTED;
-            goto cleanup;
-        }
-        /* write custom marshal data */
-        hr = IStream_Write(pStream, data, objref.u_objref.u_custom.size, NULL);
-        if (hr)
-        {
-            ERR("Failed to write custom marshal data with 0x%08lx\n", hr);
-            goto cleanup;
-        }
-        GlobalUnlock(hGlobal);
-    }
-
 cleanup:
-    if (pMarshalStream && (objref.flags & OBJREF_CUSTOM))
-        IStream_Release(pMarshalStream);
     IMarshal_Release(pMarshal);
 
     TRACE("completed with hr 0x%08lx\n", hr);
