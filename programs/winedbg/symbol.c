@@ -576,7 +576,11 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
         types_get_info(&type, TI_GET_OFFSET, &v);
         v += ((IMAGEHLP_STACK_FRAME*)ctx)->FrameOffset;
 
-        dbg_read_memory_verbose((void*)v, &val, sizeof(val));
+        if (!dbg_read_memory((void*)v, &val, sizeof(val)))
+        {
+            dbg_printf(" %s (%s) *** cannot read value at 0x%08lx\n", sym->Name, explain, v);
+            return TRUE;
+        }
     }
     dbg_printf(" %s = 0x%8.8lx (%s)\n", sym->Name, val, explain);
 

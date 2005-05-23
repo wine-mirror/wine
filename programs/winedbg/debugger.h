@@ -308,7 +308,6 @@ extern void             info_wine_dbg_channel(BOOL add, const char* chnl, const 
 extern BOOL             memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result);
 extern BOOL             memory_write_value(const struct dbg_lvalue* val, DWORD size, void* value);
 extern void             memory_examine(const struct dbg_lvalue *lvalue, int count, char format);
-extern void             memory_report_invalid_addr(const void* addr);
 extern void*            memory_to_linear_addr(const ADDRESS* address);
 extern BOOL             memory_get_current_pc(ADDRESS* address);
 extern BOOL             memory_get_current_stack(ADDRESS* address);
@@ -391,20 +390,6 @@ static inline BOOL dbg_write_memory(void* addr, const void* buffer, size_t len)
 {
     DWORD wlen;
     return WriteProcessMemory(dbg_curr_process->handle, addr, buffer, len, &wlen) && len == wlen;
-}
-
-static inline BOOL dbg_read_memory_verbose(const void* addr, void* buffer, size_t len)
-{
-    if (dbg_read_memory(addr, buffer, len)) return TRUE;
-    memory_report_invalid_addr(addr);
-    return FALSE;
-}
-
-static inline BOOL dbg_write_memory_verbose(void* addr, const void* buffer, size_t len)
-{
-    if (dbg_write_memory(addr, buffer, len)) return TRUE;
-    memory_report_invalid_addr(addr);
-    return FALSE;
 }
 
 static inline void* dbg_heap_realloc(void* buffer, size_t size)

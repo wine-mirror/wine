@@ -73,7 +73,7 @@ BOOL memory_get_current_frame(ADDRESS* addr)
                             be_cpu_addr_frame, addr);
 }
 
-void	memory_report_invalid_addr(const void* addr)
+static void	memory_report_invalid_addr(const void* addr)
 {
     ADDRESS     address;
 
@@ -92,15 +92,21 @@ void	memory_report_invalid_addr(const void* addr)
  */
 BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result)
 {
+    BOOL ret = FALSE;
+
     if (lvalue->cookie == DLV_TARGET)
     {
-        if (!dbg_read_memory_verbose(memory_to_linear_addr(&lvalue->addr), result, size))
-            return FALSE;
+        void*   linear = memory_to_linear_addr(&lvalue->addr);
+        if (!(ret = dbg_read_memory(linear, result, size)))
+            memory_report_invalid_addr(linear);
     }
     else
     {
-        if (!lvalue->addr.Offset) return FALSE;
-        memcpy(result, (void*)lvalue->addr.Offset, size);
+        if (lvalue->addr.Offset)
+        {
+            memcpy(result, (void*)lvalue->addr.Offset, size);
+            ret = TRUE;
+        }
     }
     return TRUE;
 }
@@ -114,7 +120,6 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
 {
     BOOL        ret = TRUE;
     DWORD       os;
-    DWORD       linear = (DWORD)memory_to_linear_addr(&lvalue->addr);
 
     os = ~size;
     types_get_info(&lvalue->type, TI_GET_LENGTH, &os);
@@ -123,7 +128,9 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     /* FIXME: only works on little endian systems */
     if (lvalue->cookie == DLV_TARGET)
     {
-        ret = dbg_write_memory_verbose((void*)linear, value, size);
+        void*       linear = memory_to_linear_addr(&lvalue->addr);
+        if (!(ret = dbg_write_memory(linear, value, size)))
+            memory_report_invalid_addr(linear);
     }
     else 
     {
@@ -179,7 +186,11 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
         while (count--)
         {
             GUID guid;
-            if (!dbg_read_memory_verbose(linear, &guid, sizeof(guid))) break;
+            if (!dbg_read_memory(linear, &guid, sizeof(guid)))
+            {
+                memory_report_invalid_addr(linear);
+                break;
+            }
             dbg_printf("{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
                        guid.Data1, guid.Data2, guid.Data3,
                        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
@@ -197,8 +208,8 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
 #define DO_DUMP2(_t,_l,_f,_vv) {                                        \
             _t _v;                                                      \
             for (i = 0; i < count; i++) {                               \
-                if (!dbg_read_memory_verbose(linear, &_v,               \
-                                             sizeof(_t))) break;        \
+                if (!dbg_read_memory(linear, &_v, sizeof(_t)))          \
+                { memory_report_invalid_addr(linear); break; }          \
                 dbg_printf(_f, (_vv));                                  \
                 addr.Offset += sizeof(_t);                              \
                 linear = (char*)linear + sizeof(_t);                    \
@@ -535,8 +546,10 @@ static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
         type.id = sym_info->TypeIndex;
         types_get_info(&type, TI_GET_OFFSET, &offset);
         addr += offset;
-        dbg_read_memory_verbose((char*)addr, &val, sizeof(val));
-        sprintf(se->tmp + strlen(se->tmp), "%s=0x%x", sym_info->Name, val);
+        if (dbg_read_memory((char*)addr, &val, sizeof(val)))
+            sprintf(se->tmp + strlen(se->tmp), "%s=0x%x", sym_info->Name, val);
+        else
+            sprintf(se->tmp + strlen(se->tmp), "%s=<\?\?\?>", sym_info->Name);
     }
     return TRUE;
 }
