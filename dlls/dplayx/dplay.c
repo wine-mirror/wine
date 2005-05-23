@@ -5155,8 +5155,7 @@ HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP,
 }
 
 /***************************************************************************
- *  DirectPlayEnumerate  [DPLAYX.9]
- *  DirectPlayEnumerateA [DPLAYX.2]
+ *  DirectPlayEnumerateAW
  *
  *  The pointer to the structure lpContext will be filled with the
  *  appropriate data for each service offered by the OS. These services are
@@ -5176,125 +5175,169 @@ HRESULT DP_SetSPPlayerData( IDirectPlay2Impl* lpDP,
  * supply service providers to use specialized hardware, protocols, communications
  * media, and network resources.
  *
- * TODO: Allocate string buffer space from the heap (length from reg)
- *       Pass real device driver numbers...
- *       Get the GUID properly...
  */
-HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
-                                     LPVOID lpContext )
+static HRESULT DirectPlayEnumerateAW(LPDPENUMDPCALLBACKA lpEnumCallbackA,
+                                     LPDPENUMDPCALLBACKW lpEnumCallbackW,
+                                     LPVOID lpContext)
 {
+    HKEY   hkResult;
+    static const WCHAR searchSubKey[] = {
+	'S', 'O', 'F', 'T', 'W', 'A', 'R', 'E', '\\',
+	'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', '\\',
+	'D', 'i', 'r', 'e', 'c', 't', 'P', 'l', 'a', 'y', '\\',
+	'S', 'e', 'r', 'v', 'i', 'c', 'e', ' ', 'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', 's', 0 };
+    static const WCHAR guidKey[] = { 'G', 'u', 'i', 'd', 0 };
+    static const WCHAR descW[] = { 'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 'W', 0 };
+    
+    DWORD  dwIndex;
+    FILETIME filetime;
 
-  HKEY   hkResult;
-  LPCSTR searchSubKey    = "SOFTWARE\\Microsoft\\DirectPlay\\Service Providers";
-  DWORD  dwIndex;
-  DWORD  sizeOfSubKeyName=50;
-  char   subKeyName[51];
-  FILETIME filetime;
+    char  *descriptionA = NULL;
+    DWORD max_sizeOfDescriptionA = 0;
+    WCHAR *descriptionW = NULL;
+    DWORD max_sizeOfDescriptionW = 0;
+    
+    if (!lpEnumCallbackA && !lpEnumCallbackW)
+    {
+	return DPERR_INVALIDPARAMS;
+    }
+    
+    /* Need to loop over the service providers in the registry */
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, searchSubKey,
+		      0, KEY_READ, &hkResult) != ERROR_SUCCESS)
+    {
+	/* Hmmm. Does this mean that there are no service providers? */
+	ERR(": no service provider key in the registry - check your Wine installation !!!\n");
+	return DPERR_GENERIC;
+    }
+    
+    /* Traverse all the service providers we have available */
+    dwIndex = 0;
+    while (1)
+    {
+	WCHAR subKeyName[255]; /* 255 is the maximum key size according to MSDN */
+	DWORD sizeOfSubKeyName = sizeof(subKeyName) / sizeof(WCHAR);
+	HKEY  hkServiceProvider;
+	GUID  serviceProviderGUID;
+	WCHAR guidKeyContent[(2 * 16) + 1 + 6 /* This corresponds to '{....-..-..-..-......}' */ ];
+	DWORD sizeOfGuidKeyContent = sizeof(guidKeyContent);
+	LONG  ret_value;
+	
+	ret_value = RegEnumKeyExW(hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
+				  NULL, NULL, NULL, &filetime);
+	if (ret_value == ERROR_NO_MORE_ITEMS)
+	    break;
+	else if (ret_value != ERROR_SUCCESS)
+	{
+	    ERR(": could not enumerate on service provider key.\n");
+	    return DPERR_EXCEPTION;
+	}
+	TRACE(" this time through sub-key %s.\n", debugstr_w(subKeyName));
+	
+	/* Open the key for this service provider */
+	if (RegOpenKeyExW(hkResult, subKeyName, 0, KEY_READ, &hkServiceProvider) != ERROR_SUCCESS)
+	{
+	    ERR(": could not open registry key for service provider %s.\n", debugstr_w(subKeyName));
+	    continue;
+	}
+	
+	/* Get the GUID from the registry */
+	if (RegQueryValueExW(hkServiceProvider, guidKey,
+			     NULL, NULL, (LPBYTE) guidKeyContent, &sizeOfGuidKeyContent) != ERROR_SUCCESS)
+	{
+	    ERR(": missing GUID registry data member for service provider %s.\n", debugstr_w(subKeyName));
+	    continue;
+	}
+	if (sizeOfGuidKeyContent != sizeof(guidKeyContent))
+	{
+	    ERR(": invalid format for the GUID registry data member for service provider %s (%s).\n", debugstr_w(subKeyName), debugstr_w(guidKeyContent));
+	    continue;
+	}
+	CLSIDFromString(guidKeyContent, &serviceProviderGUID );
+	
+	/* The enumeration will return FALSE if we are not to continue.
+	 *
+	 * Note: on my windows box, major / minor version is 6 / 0 for all service providers
+	 *       and have no relations to any of the two dwReserved1 and dwReserved2 keys.
+	 *       I think that it simply means that they are in-line with DirectX 6.0
+	 */
+	if (lpEnumCallbackA)
+	{
+	    DWORD sizeOfDescription = 0;
+	    
+	    /* Note that this the the A case of this function, so use the A variant to get the description string */
+	    if (RegQueryValueExA(hkServiceProvider, "DescriptionA",
+				 NULL, NULL, NULL, &sizeOfDescription) != ERROR_SUCCESS)
+	    {
+		ERR(": missing 'DescriptionA' registry data member for service provider %s.\n", debugstr_w(subKeyName));
+		continue;
+	    }
+	    if (sizeOfDescription > max_sizeOfDescriptionA)
+	    {
+		HeapFree(GetProcessHeap(), 0, descriptionA);
+		max_sizeOfDescriptionA = sizeOfDescription;
+		descriptionA = HeapAlloc(GetProcessHeap(), 0, max_sizeOfDescriptionA);
+	    }
+	    descriptionA = HeapAlloc(GetProcessHeap(), 0, sizeOfDescription);
+	    RegQueryValueExA(hkServiceProvider, "DescriptionA",
+			     NULL, NULL, (LPBYTE) descriptionA, &sizeOfDescription);
+	    
+	    if (!lpEnumCallbackA(&serviceProviderGUID, descriptionA, 6, 0, lpContext))
+		goto end;
+	}
+	else
+	{
+	    DWORD sizeOfDescription = 0;
+	    
+	    if (RegQueryValueExW(hkServiceProvider, descW,
+				 NULL, NULL, NULL, &sizeOfDescription) != ERROR_SUCCESS)
+	    {
+		ERR(": missing 'DescriptionW' registry data member for service provider %s.\n", debugstr_w(subKeyName));
+		continue;
+	    }
+	    if (sizeOfDescription > max_sizeOfDescriptionW)
+	    {
+		HeapFree(GetProcessHeap(), 0, descriptionW);
+		max_sizeOfDescriptionW = sizeOfDescription;
+		descriptionW = HeapAlloc(GetProcessHeap(), 0, max_sizeOfDescriptionW);
+	    }
+	    descriptionW = HeapAlloc(GetProcessHeap(), 0, sizeOfDescription);
+	    RegQueryValueExW(hkServiceProvider, descW,
+			     NULL, NULL, (LPBYTE) descriptionW, &sizeOfDescription);
 
-  TRACE(": lpEnumCallback=%p lpContext=%p\n", lpEnumCallback, lpContext );
-
-  if( !lpEnumCallback || !*lpEnumCallback )
-  {
-     return DPERR_INVALIDPARAMS;
+	    if (!lpEnumCallbackW(&serviceProviderGUID, descriptionW, 6, 0, lpContext))
+		goto end;
+	}
+      
+      dwIndex++;
   }
 
-  /* Need to loop over the service providers in the registry */
-  if( RegOpenKeyExA( HKEY_LOCAL_MACHINE, searchSubKey,
-                       0, KEY_READ, &hkResult ) != ERROR_SUCCESS )
-  {
-    /* Hmmm. Does this mean that there are no service providers? */
-    ERR(": no service providers?\n");
-    return DPERR_NOSERVICEPROVIDER;
-  }
+ end:
+    HeapFree(GetProcessHeap(), 0, descriptionA);
+    HeapFree(GetProcessHeap(), 0, descriptionW);
+    
+    return DP_OK;
+}
 
-  /* Traverse all the service providers we have available */
-  for( dwIndex=0;
-       RegEnumKeyExA( hkResult, dwIndex, subKeyName, &sizeOfSubKeyName,
-                      NULL, NULL, NULL, &filetime ) != ERROR_NO_MORE_ITEMS;
-       ++dwIndex, sizeOfSubKeyName=50 )
-  {
-    LPCSTR   majVerDataSubKey = "dwReserved1";
-    LPCSTR   minVerDataSubKey = "dwReserved2";
-    LPCSTR   guidDataSubKey   = "Guid";
-    HKEY     hkServiceProvider;
-    GUID     serviceProviderGUID;
-    DWORD    returnTypeGUID, returnTypeReserved, sizeOfReturnBuffer = 50;
-    char     returnBuffer[51];
-    WCHAR    buff[51];
-    DWORD    majVersionNum , minVersionNum = 0;
-
-    TRACE(" this time through: %s\n", subKeyName );
-
-    /* Get a handle for this particular service provider */
-    if( RegOpenKeyExA( hkResult, subKeyName, 0, KEY_READ,
-                         &hkServiceProvider ) != ERROR_SUCCESS )
-    {
-      ERR(": what the heck is going on?\n" );
-      continue;
-    }
-
-    /* Get the GUID, Device major number and device minor number
-     * from the registry.
-     */
-    if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnTypeGUID, returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-    {
-      ERR(": missing GUID registry data members\n" );
-      continue;
-    }
-
-    /* FIXME: Check return types to ensure we're interpreting data right */
-    MultiByteToWideChar( CP_ACP, 0, returnBuffer, -1, buff, sizeof(buff)/sizeof(WCHAR) );
-    CLSIDFromString( buff, &serviceProviderGUID );
-
-    /* FIXME: Need to know which of dwReserved1 and dwReserved2 are maj and min */
-
-    sizeOfReturnBuffer = 50;
-    if( RegQueryValueExA( hkServiceProvider, majVerDataSubKey,
-                            NULL, &returnTypeReserved, returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-    {
-      ERR(": missing dwReserved1 registry data members\n") ;
-      continue;
-    }
-    memcpy( &majVersionNum, returnBuffer, sizeof(majVersionNum) );
-
-    sizeOfReturnBuffer = 50;
-    if( RegQueryValueExA( hkServiceProvider, minVerDataSubKey,
-                            NULL, &returnTypeReserved, returnBuffer,
-                            &sizeOfReturnBuffer ) != ERROR_SUCCESS )
-    {
-      ERR(": missing dwReserved2 registry data members\n") ;
-      continue;
-    }
-    memcpy( &minVersionNum, returnBuffer, sizeof(minVersionNum) );
-
-
-    /* The enumeration will return FALSE if we are not to continue */
-    if( !lpEnumCallback( &serviceProviderGUID , subKeyName,
-                         majVersionNum, minVersionNum, lpContext ) )
-    {
-      WARN("lpEnumCallback returning FALSE\n" );
-      break;
-    }
-  }
-
-  return DP_OK;
-
+/***************************************************************************
+ *  DirectPlayEnumerate  [DPLAYX.9]
+ *  DirectPlayEnumerateA [DPLAYX.2]
+ */
+HRESULT WINAPI DirectPlayEnumerateA(LPDPENUMDPCALLBACKA lpEnumCallback, LPVOID lpContext )
+{
+    TRACE("(%p,%p)\n", lpEnumCallback, lpContext);
+    
+    return DirectPlayEnumerateAW(lpEnumCallback, NULL, lpContext);
 }
 
 /***************************************************************************
  *  DirectPlayEnumerateW [DPLAYX.3]
- *
  */
-HRESULT WINAPI DirectPlayEnumerateW( LPDPENUMDPCALLBACKW lpEnumCallback, LPVOID lpContext )
+HRESULT WINAPI DirectPlayEnumerateW(LPDPENUMDPCALLBACKW lpEnumCallback, LPVOID lpContext )
 {
-
-  FIXME(":stub\n");
-
-  return DPERR_OUTOFMEMORY;
-
+    TRACE("(%p,%p)\n", lpEnumCallback, lpContext);
+    
+    return DirectPlayEnumerateAW(NULL, lpEnumCallback, lpContext);
 }
 
 typedef struct tagCreateEnum
