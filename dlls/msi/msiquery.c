@@ -41,10 +41,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 void MSI_CloseView( MSIOBJECTHDR *arg )
 {
     MSIQUERY *query = (MSIQUERY*) arg;
+    struct list *ptr, *t;
 
     if( query->view && query->view->ops->delete )
         query->view->ops->delete( query->view );
     msiobj_release( &query->db->hdr );
+
+    LIST_FOR_EACH_SAFE( ptr, t, &query->mem )
+    {
+        HeapFree( GetProcessHeap(), 0, ptr );
+    }
 }
 
 UINT VIEW_find_column( MSIVIEW *table, LPCWSTR name, UINT *n )
@@ -120,8 +126,9 @@ UINT MSI_DatabaseOpenViewW(MSIDATABASE *db,
     query->row = 0;
     query->db = db;
     query->view = NULL;
+    list_init( &query->mem );
 
-    r = MSI_ParseSQL( db, szQuery, &query->view );
+    r = MSI_ParseSQL( db, szQuery, &query->view, &query->mem );
     if( r == ERROR_SUCCESS )
     {
         msiobj_addref( &query->hdr );

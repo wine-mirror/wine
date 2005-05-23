@@ -30,6 +30,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "query.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -46,20 +47,22 @@ typedef struct tag_SQL_input
     LPCWSTR command;
     DWORD n, len;
     MSIVIEW **view;  /* view structure for the resulting query */
+    struct list *mem;
 } SQL_input;
 
-static LPWSTR SQL_getstring( struct sql_str *str );
-static INT SQL_getint( SQL_input *sql );
-static int SQL_lex( void *SQL_lval, SQL_input *info);
+static LPWSTR SQL_getstring( void *info, struct sql_str *str );
+static INT SQL_getint( void *info );
+static int SQL_lex( void *SQL_lval, SQL_input *info );
 
-static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
-                                 string_list *keys);
+static void *parser_alloc( void *info, unsigned int sz );
 
-static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r );
-static struct expr * EXPR_column( LPWSTR );
-static struct expr * EXPR_ival( struct sql_str *, int sign);
-static struct expr * EXPR_sval( struct sql_str *);
-static struct expr * EXPR_wildcard();
+static BOOL SQL_MarkPrimaryKeys( create_col_info *cols, string_list *keys);
+
+static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct expr *r );
+static struct expr * EXPR_column( void *info, LPWSTR column );
+static struct expr * EXPR_ival( void *info, struct sql_str *, int sign );
+static struct expr * EXPR_sval( void *info, struct sql_str * );
+static struct expr * EXPR_wildcard( void *info );
 
 %}
 
@@ -435,70 +438,72 @@ expr:
     TK_LP expr TK_RP
         {
             $$ = $2;
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_EQ column_val
         {
-            $$ = EXPR_complex( $1, OP_EQ, $3 );
+            $$ = EXPR_complex( info, $1, OP_EQ, $3 );
             if( !$$ )
                 YYABORT;
         }
   | expr TK_AND expr
         {
-            $$ = EXPR_complex( $1, OP_AND, $3 );
+            $$ = EXPR_complex( info, $1, OP_AND, $3 );
             if( !$$ )
                 YYABORT;
         }
   | expr TK_OR expr
         {
-            $$ = EXPR_complex( $1, OP_OR, $3 );
+            $$ = EXPR_complex( info, $1, OP_OR, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_EQ val
         {
-            $$ = EXPR_complex( $1, OP_EQ, $3 );
+            $$ = EXPR_complex( info, $1, OP_EQ, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_GT val
         {
-            $$ = EXPR_complex( $1, OP_GT, $3 );
+            $$ = EXPR_complex( info, $1, OP_GT, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_LT val
         {
-            $$ = EXPR_complex( $1, OP_LT, $3 );
+            $$ = EXPR_complex( info, $1, OP_LT, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_LE val
         {
-            $$ = EXPR_complex( $1, OP_LE, $3 );
+            $$ = EXPR_complex( info, $1, OP_LE, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_GE val
         {
-            $$ = EXPR_complex( $1, OP_GE, $3 );
+            $$ = EXPR_complex( info, $1, OP_GE, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_NE val
         {
-            $$ = EXPR_complex( $1, OP_NE, $3 );
+            $$ = EXPR_complex( info, $1, OP_NE, $3 );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_IS TK_NULL
         {
-            $$ = EXPR_complex( $1, OP_ISNULL, NULL );
+            $$ = EXPR_complex( info, $1, OP_ISNULL, NULL );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_IS TK_NOT TK_NULL
         {
-            $$ = EXPR_complex( $1, OP_NOTNULL, NULL );
+            $$ = EXPR_complex( info, $1, OP_NOTNULL, NULL );
             if( !$$ )
                 YYABORT;
         }
@@ -514,24 +519,22 @@ constlist:
         {
             value_list *vals;
 
-            vals = HeapAlloc( GetProcessHeap(), 0, sizeof *vals );
-            if( vals )
-            {
-                vals->val = $1;
-                vals->next = NULL;
-            }
+            vals = parser_alloc( info, sizeof *vals );
+            if( !vals )
+                YYABORT;
+            vals->val = $1;
+            vals->next = NULL;
             $$ = vals;
         }
   | const_val TK_COMMA constlist
         {
             value_list *vals;
 
-            vals = HeapAlloc( GetProcessHeap(), 0, sizeof *vals );
-            if( vals )
-            {
-                vals->val = $1;
-                vals->next = $3;
-            }
+            vals = parser_alloc( info, sizeof *vals );
+            if( !vals )
+                YYABORT;
+            vals->val = $1;
+            vals->next = $3;
             $$ = vals;
         }
     ;
@@ -565,26 +568,26 @@ column_assignment:
 const_val:
     TK_INTEGER
         {
-            $$ = EXPR_ival( &$1, 1 );
+            $$ = EXPR_ival( info, &$1, 1 );
         }
   | TK_MINUS  TK_INTEGER
         {
-            $$ = EXPR_ival( &$2, -1 );
+            $$ = EXPR_ival( info, &$2, -1 );
         }
   | TK_STRING
         {
-            $$ = EXPR_sval( &$1 );
+            $$ = EXPR_sval( info, &$1 );
         }
   | TK_WILDCARD
         {
-            $$ = EXPR_wildcard();
+            $$ = EXPR_wildcard( info );
         }
     ;
 
 column_val:
     column 
         {
-            $$ = EXPR_column( $1 );
+            $$ = EXPR_column( info, $1 );
         }
     ;
 
@@ -609,13 +612,25 @@ table:
 id:
     TK_ID
         {
-            $$ = SQL_getstring( &$1 );
+            $$ = SQL_getstring( info, &$1 );
+            if( !$$ )
+                YYABORT;
         }
     ;
 
 %%
 
-int SQL_lex( void *SQL_lval, SQL_input *sql)
+static void *parser_alloc( void *info, unsigned int sz )
+{
+    SQL_input* sql = (SQL_input*) info;
+    struct list *mem;
+
+    mem = HeapAlloc( GetProcessHeap(), 0, sizeof (struct list) + sz );
+    list_add_tail( sql->mem, mem );
+    return &mem[1];
+}
+
+int SQL_lex( void *SQL_lval, SQL_input *sql )
 {
     int token;
     struct sql_str * str = SQL_lval;
@@ -640,7 +655,7 @@ int SQL_lex( void *SQL_lval, SQL_input *sql)
     return token;
 }
 
-LPWSTR SQL_getstring( struct sql_str *strdata)
+LPWSTR SQL_getstring( void *info, struct sql_str *strdata )
 {
     LPCWSTR p = strdata->data;
     UINT len = strdata->len;
@@ -653,30 +668,31 @@ LPWSTR SQL_getstring( struct sql_str *strdata)
         p++;
         len -= 2;
     }
-    str = HeapAlloc( GetProcessHeap(), 0, (len + 1)*sizeof(WCHAR));
-    if(!str )
+    str = parser_alloc( info, (len + 1)*sizeof(WCHAR) );
+    if( !str )
         return str;
-    memcpy(str, p, len*sizeof(WCHAR) );
+    memcpy( str, p, len*sizeof(WCHAR) );
     str[len]=0;
 
     return str;
 }
 
-INT SQL_getint( SQL_input *sql )
+INT SQL_getint( void *info )
 {
+    SQL_input* sql = (SQL_input*) info;
     LPCWSTR p = &sql->command[sql->n];
 
     return atoiW( p );
 }
 
-int SQL_error(const char *str)
+int SQL_error( const char *str )
 {
     return 0;
 }
 
-static struct expr * EXPR_wildcard()
+static struct expr * EXPR_wildcard( void *info )
 {
-    struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
+    struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
     {
         e->type = EXPR_WILDCARD;
@@ -684,9 +700,9 @@ static struct expr * EXPR_wildcard()
     return e;
 }
 
-static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r )
+static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct expr *r )
 {
-    struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
+    struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
     {
         e->type = EXPR_COMPLEX;
@@ -697,20 +713,20 @@ static struct expr * EXPR_complex( struct expr *l, UINT op, struct expr *r )
     return e;
 }
 
-static struct expr * EXPR_column( LPWSTR str )
+static struct expr * EXPR_column( void *info, LPWSTR column )
 {
-    struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
+    struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
     {
         e->type = EXPR_COLUMN;
-        e->u.sval = str;
+        e->u.sval = column;
     }
     return e;
 }
 
-static struct expr * EXPR_ival( struct sql_str *str , int sign)
+static struct expr * EXPR_ival( void *info, struct sql_str *str, int sign )
 {
-    struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
+    struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
     {
         e->type = EXPR_IVAL;
@@ -719,55 +735,18 @@ static struct expr * EXPR_ival( struct sql_str *str , int sign)
     return e;
 }
 
-static struct expr * EXPR_sval( struct sql_str *str )
+static struct expr * EXPR_sval( void *info, struct sql_str *str )
 {
-    struct expr *e = HeapAlloc( GetProcessHeap(), 0, sizeof *e );
+    struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
     {
         e->type = EXPR_SVAL;
-        e->u.sval = SQL_getstring( str );
+        e->u.sval = SQL_getstring( info, str );
     }
     return e;
 }
 
-void delete_expr( struct expr *e )
-{
-    if( !e )
-        return;
-    if( e->type == EXPR_COMPLEX )
-    {
-        delete_expr( e->u.expr.left );
-        delete_expr( e->u.expr.right );
-    }
-    else if( e->type == EXPR_SVAL )
-        HeapFree( GetProcessHeap(), 0, e->u.sval );
-    HeapFree( GetProcessHeap(), 0, e );
-}
-
-void delete_string_list( string_list *sl )
-{
-    while( sl )
-    {
-        string_list *t = sl->next;
-        HeapFree( GetProcessHeap(), 0, sl->string );
-        HeapFree( GetProcessHeap(), 0, sl );
-        sl = t;
-    }
-}
-
-void delete_value_list( value_list *vl )
-{
-    while( vl )
-    {
-        value_list *t = vl->next;
-        delete_expr( vl->val );
-        HeapFree( GetProcessHeap(), 0, vl );
-        vl = t;
-    }
-}
-
-static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
-                                 string_list *keys )
+static BOOL SQL_MarkPrimaryKeys( create_col_info *cols, string_list *keys)
 {
     string_list *k;
     BOOL found = TRUE;
@@ -789,7 +768,8 @@ static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
     return found;
 }
 
-UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )
+UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
+                   struct list *mem )
 {
     SQL_input sql;
     int r;
@@ -801,6 +781,7 @@ UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview )
     sql.n = 0;
     sql.len = 0;
     sql.view = phview;
+    sql.mem = mem;
 
     r = SQL_parse(&sql);
 

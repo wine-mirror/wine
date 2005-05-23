@@ -30,6 +30,7 @@
 #include "objbase.h"
 #include "objidl.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 
 #define MSI_DATASIZEMASK 0x00ff
 #define MSITYPE_VALID    0x0100
@@ -77,6 +78,7 @@ typedef struct tagMSIQUERY
     MSIVIEW *view;
     UINT row;
     MSIDATABASE *db;
+    struct list mem;
 } MSIQUERY;
 
 /* maybe we can use a Variant instead of doing it ourselves? */

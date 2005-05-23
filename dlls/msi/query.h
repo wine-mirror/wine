@@ -30,6 +30,7 @@
 #include "msi.h"
 #include "msiquery.h"
 #include "msipriv.h"
+#include "wine/list.h"
 
 
 #define OP_EQ       1
@@ -105,7 +106,8 @@ typedef struct _column_assignment
 } column_assignment;
 
 
-UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phView);
+UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
+                   struct list *mem );
 
 UINT TABLE_CreateView( MSIDATABASE *db, LPCWSTR name, MSIVIEW **view );
 
@@ -130,10 +132,6 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPWSTR table,
                         column_assignment *list, struct expr *expr );
 
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
-
-void delete_expr( struct expr *e );
-void delete_string_list( string_list *sl );
-void delete_value_list( value_list *vl );
 
 int sqliteGetToken(const WCHAR *z, int *tokenType);
 
