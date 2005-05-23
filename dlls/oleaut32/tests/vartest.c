@@ -83,12 +83,37 @@ static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
  * because the rounding errors depend on the exact algorithm.
  */
 #define EQ_DOUBLE(a,b)     (fabs((a)-(b))<1e-14)
+#define EQ_FLOAT(a,b)      (fabs((a)-(b))<1e-7)
 
 #define SKIPTESTS(a)  if((a > VT_CLSID+10) && (a < VT_BSTR_BLOB-10)) continue;
 
 /* Allow our test macros to work for VT_NULL and VT_EMPTY too */
 #define V_EMPTY(v) V_I4(v)
 #define V_NULL(v) V_I4(v)
+
+/* Size constraints for overflow tests */
+#define I1_MAX   0x7f
+#define I1_MIN   ((-I1_MAX)-1)
+#define UI1_MAX  0xff
+#define UI1_MIN  0
+#define I2_MAX   0x7fff
+#define I2_MIN   ((-I2_MAX)-1)
+#define UI2_MAX  0xffff
+#define UI2_MIN  0
+#define I4_MAX   0x7fffffff
+#define I4_MIN   ((-I4_MAX)-1)
+#define UI4_MAX  0xffffffff
+#define UI4_MIN  0
+#define I8_MAX   (((LONGLONG)I4_MAX << 32) | UI4_MAX)
+#define I8_MIN   ((-I8_MAX)-1)
+#define UI8_MAX  (((ULONGLONG)UI4_MAX << 32) | UI4_MAX)
+#define UI8_MIN  0
+#define DATE_MAX 2958465
+#define DATE_MIN -657434
+#define R4_MAX FLT_MAX
+#define R4_MIN FLT_MIN
+#define R8_MAX DBL_MAX
+#define R8_MIN DBL_MIN
 
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
@@ -4480,6 +4505,191 @@ static void test_VarEqv(void)
     }
 }
 
+static HRESULT (WINAPI *pVarMul)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarMulI4 = "VarMul(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
+static const char *szVarMulR8 = "VarMul(%d,%d): expected 0x0,%d,%f, got 0x%lX,%d,%f\n";
+
+#define VARMUL(vt1,val1,vt2,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarMul(&left,&right,&result); \
+        if (VT_##rvt == VT_R4 || VT_##rvt == VT_R8) { \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && \
+        EQ_FLOAT(V_##rvt(&result), rval), \
+        szVarMulR8, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (double)(rval), hres, V_VT(&result), (double)V_##rvt(&result)); \
+        } else { \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        szVarMulI4, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); }
+
+static void test_VarMul(void)
+{
+    static const WCHAR sz12[] = {'1','2','\0'};
+    VARIANT left, right, result, cy, dec;
+    VARTYPE i;
+    BSTR lbstr, rbstr;
+    HRESULT hres;
+    double r;
+
+    CHECKPTR(VarMul);
+
+    lbstr = SysAllocString(sz12);
+    rbstr = SysAllocString(sz12);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+
+            SKIPTESTS(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+
+                SKIPTESTS(rightvt);
+
+                if (leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                    leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = lbstr;
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                if (rightvt == VT_BSTR)
+                    V_BSTR(&right) = rbstr;
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_UNKNOWN;
+
+                /* Don't ask me why but native VarMul cannot handle:
+                   VT_I1, VT_UI2, VT_UI4, VT_INT, VT_UINT and VT_UI8.
+                   Tested with DCOM98, Win2k, WinXP */
+                if (ExtraFlags[i] & VT_ARRAY || ExtraFlags[i] & VT_BYREF ||
+                    !IsValidVariantClearVT(leftvt, ExtraFlags[i]) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i]) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR ||
+                    leftvt == VT_I1 || rightvt == VT_I1 ||
+                    leftvt == VT_UI2 || rightvt == VT_UI2 ||
+                    leftvt == VT_UI4 || rightvt == VT_UI4 ||
+                    leftvt == VT_UI8 || rightvt == VT_UI8 ||
+                    leftvt == VT_INT || rightvt == VT_INT ||
+                    leftvt == VT_UINT || rightvt == VT_UINT) {
+                    bFail = TRUE;
+                }
+
+                if (leftvt == VT_NULL || rightvt == VT_NULL)
+                    resvt = VT_NULL;
+                else if (leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+                    resvt = VT_DECIMAL;
+                else if (leftvt == VT_R8 || rightvt == VT_R8 ||
+                         leftvt == VT_BSTR || rightvt == VT_BSTR ||
+                         leftvt == VT_DATE || rightvt == VT_DATE)
+                    resvt = VT_R8;
+                else if (leftvt == VT_R4 || rightvt == VT_R4) {
+                    if (leftvt == VT_I4 || rightvt == VT_I4 ||
+                        leftvt == VT_I8 || rightvt == VT_I8 ||
+                        leftvt == VT_CY || rightvt == VT_CY)
+                        resvt = VT_R8;
+                    else
+                        resvt = VT_R4;
+                } else if (leftvt == VT_CY || rightvt == VT_CY)
+                    resvt = VT_CY;
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                    resvt = VT_I8;
+                else if (leftvt == VT_I4 || rightvt == VT_I4)
+                    resvt = VT_I4;
+                else if (leftvt == VT_I2 || rightvt == VT_I2 ||
+                         leftvt == VT_BOOL || rightvt == VT_BOOL ||
+                         (leftvt == VT_EMPTY && rightvt == VT_EMPTY))
+                    resvt = VT_I2;
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+                    resvt = VT_UI1;
+
+                hres = pVarMul(&left, &right, &result);
+                if (bFail) {
+                    ok(hres == DISP_E_TYPEMISMATCH || hres == DISP_E_BADVARTYPE,
+                       "VarMul: %d|0x%X, %d|0x%X: Expected failure, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], hres,
+                       V_VT(&result));
+                } else {
+                    ok(hres == S_OK && V_VT(&result) == resvt,
+                       "VarMul: %d|0x%X, %d|0x%X: expected S_OK, vt %d, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], resvt, hres,
+                       V_VT(&result));
+                }
+            }
+        }
+    }
+
+    /* Test returned values */
+    VARMUL(I4,4,I4,2,I4,8);
+    VARMUL(I2,4,I2,2,I2,8);
+    VARMUL(I2,-13,I4,5,I4,-65);
+    VARMUL(I4,-13,I4,5,I4,-65);
+    VARMUL(I2,7,R4,0.5,R4,3.5);
+    VARMUL(R4,0.5,I4,5,R8,2.5);
+    VARMUL(R8,7.1,BOOL,0,R8,0);
+    VARMUL(BSTR,lbstr,I2,4,R8,48);
+    VARMUL(BSTR,lbstr,BOOL,1,R8,12);
+    VARMUL(BSTR,lbstr,R4,0.1,R8,1.2);
+    VARMUL(R4,0.2,BSTR,rbstr,R8,2.4);
+    VARMUL(DATE,2.25,I4,7,R8,15.75);
+
+    VARMUL(UI1, UI1_MAX, UI1, UI1_MAX, I4, UI1_MAX * UI1_MAX);
+    VARMUL(I2, I2_MAX, I2, I2_MAX, I4, I2_MAX * I2_MAX);
+    VARMUL(I2, I2_MAX, I2, I2_MIN, I4, I2_MAX * I2_MIN);
+    VARMUL(I2, I2_MIN, I2, I2_MIN, I4, I2_MIN * I2_MIN);
+if (HAVE_OLEAUT32_I8) {
+    VARMUL(I4, I4_MAX, I4, I4_MAX, I8, (long long)I4_MAX * I4_MAX);
+    VARMUL(I4, I4_MAX, I4, I4_MIN, I8, (long long)I4_MAX * I4_MIN);
+    VARMUL(I4, I4_MIN, I4, I4_MIN, I8, (long long)I4_MIN * I4_MIN);
+} else {
+    VARMUL(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX * I4_MAX);
+    VARMUL(I4, I4_MAX, I4, I4_MIN, R8, (double)I4_MAX * I4_MIN);
+    VARMUL(I4, I4_MIN, I4, I4_MIN, R8, (double)I4_MIN * I4_MIN);
+}
+    VARMUL(R4, R4_MAX, R4, R4_MAX, R8, (double)R4_MAX * R4_MAX);
+    VARMUL(R4, R4_MAX, R4, R4_MIN, R4, R4_MAX * R4_MIN);
+    VARMUL(R4, R4_MIN, R4, R4_MIN, R4, R4_MIN * R4_MIN);
+    VARMUL(R8, R8_MAX, R8, R8_MIN, R8, R8_MAX * R8_MIN);
+    VARMUL(R8, R8_MIN, R8, R8_MIN, R8, R8_MIN * R8_MIN);
+
+    /* Manuly test some VT_CY and VT_DECIMAL variants */
+    V_VT(&cy) = VT_CY;
+    hres = VarCyFromI4(4711, &V_CY(&cy));
+    ok(hres == S_OK, "VarCyFromI4 failed!\n");
+    V_VT(&dec) = VT_DECIMAL;
+    hres = VarDecFromR8(-4.2, &V_DECIMAL(&dec));
+    ok(hres == S_OK, "VarDecFromR4 failed!\n");
+    memset(&left, 0, sizeof(left));
+    memset(&right, 0, sizeof(right));
+    V_VT(&left) = VT_I4;
+    V_I4(&left) = -11;
+    V_VT(&right) = VT_UI1;
+    V_UI1(&right) = 9;
+
+    hres = VarMul(&cy, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_CY, "VarMul: expected coerced type VT_CY, got %s!\n'", vtstr(V_VT(&result)));
+    hres = VarR8FromCy(V_CY(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 42399), "VarMul: CY value %f, expected %f\n", r, (double)42399);
+
+    hres = VarMul(&left, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarMul: expected coerced type VT_DECIMAL, got %s!\n'", vtstr(V_VT(&result)));
+    hres = VarR8FromDec(&V_DECIMAL(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 46.2), "VarMul: DECIMAL value %f, expected %f\n", r, (double)46.2);
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -4509,4 +4719,5 @@ START_TEST(vartest)
   test_VarXor();
   test_VarOr();
   test_VarEqv();
+  test_VarMul();
 }
