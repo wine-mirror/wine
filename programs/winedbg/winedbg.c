@@ -80,7 +80,6 @@ DWORD		        dbg_curr_pid;
 CONTEXT                 dbg_context;
 int 		        dbg_curr_frame = 0;
 BOOL    	        dbg_interactiveP = FALSE;
-static unsigned         dbg_in_exception = FALSE;
 static char*	        dbg_last_cmd_line = NULL;
 
 static struct dbg_process*      dbg_process_list = NULL;
@@ -364,6 +363,7 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->exec_count = 0;
     t->step_over_bp.enabled = FALSE;
     t->step_over_bp.refcount = 0;
+    t->in_exception = FALSE;
 
     snprintf(t->name, sizeof(t->name), "0x%08lx", tid);
 
@@ -449,7 +449,7 @@ BOOL dbg_detach_debuggee(void)
      */
     be_cpu->single_step(&dbg_context, FALSE);
     SetThreadContext(dbg_curr_thread->handle, &dbg_context);
-    if (dbg_in_exception)
+    if (dbg_curr_thread->in_exception)
         ContinueDebugEvent(dbg_curr_pid, dbg_curr_tid, DBG_CONTINUE);
     if (!DebugActiveProcessStop(dbg_curr_pid)) return FALSE;
     dbg_del_process(dbg_curr_process);
@@ -476,14 +476,15 @@ static unsigned dbg_fetch_context(void)
     return TRUE;
 }
 
-static unsigned dbg_exception_prolog(BOOL is_debug, DWORD code)
+static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
 {
     ADDRESS     addr;
     BOOL        is_break;
 
-    dbg_in_exception = TRUE;
     memory_get_current_pc(&addr);
     break_suspend_execution();
+    dbg_curr_thread->excpt_record = *rec;
+    dbg_curr_thread->in_exception = TRUE;
 
     if (!is_debug)
     {
@@ -507,7 +508,7 @@ static unsigned dbg_exception_prolog(BOOL is_debug, DWORD code)
      */
     stack_backtrace(dbg_curr_tid, FALSE);
     if (is_debug &&
-	break_should_continue(&addr, code, &dbg_curr_thread->exec_count, &is_break))
+	break_should_continue(&addr, rec->ExceptionCode, &dbg_curr_thread->exec_count, &is_break))
 	return FALSE;
 
     if (addr.Mode != dbg_curr_thread->addr_mode)
@@ -559,10 +560,10 @@ static void dbg_exception_epilog(void)
      */
     if (dbg_curr_thread->exec_mode == dbg_exec_cont)
 	dbg_curr_thread->exec_count = 0;
-    dbg_in_exception = FALSE;
+    dbg_curr_thread->in_exception = FALSE;
 }
 
-static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance)
+static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance)
 {
     BOOL                is_debug = FALSE;
     THREADNAME_INFO*    pThreadName;
@@ -712,12 +713,12 @@ static DWORD dbg_handle_exception(EXCEPTION_RECORD* rec, BOOL first_chance)
 
     if (dbg_action_mode == automatic_mode)
     {
-        dbg_exception_prolog(is_debug, rec->ExceptionCode);
+        dbg_exception_prolog(is_debug, rec);
         dbg_exception_epilog();
         return 0;  /* terminate execution */
     }
 
-    if (dbg_exception_prolog(is_debug, rec->ExceptionCode))
+    if (dbg_exception_prolog(is_debug, rec))
     {
 	dbg_interactiveP = TRUE;
         return 0;
@@ -941,7 +942,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
 
 static void dbg_resume_debuggee(DWORD cont)
 {
-    if (dbg_in_exception)
+    if (dbg_curr_thread->in_exception)
     {
         ADDRESS         addr;
 

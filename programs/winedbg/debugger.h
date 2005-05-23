@@ -168,6 +168,8 @@ struct dbg_thread
     char                        name[9];
     struct dbg_thread*   	next;
     struct dbg_thread*   	prev;
+    BOOL                        in_exception;   /* TRUE if thread stopped with an exception */
+    EXCEPTION_RECORD            excpt_record;   /* only valid when in_exception is TRUE */
 };
 
 struct dbg_delayed_bp
@@ -342,6 +344,9 @@ extern BOOL             symbol_get_line(const char* filename, const char* func, 
 extern void             symbol_info(const char* str);
 extern int              symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
+
+  /* tgt_minidump.c */
+extern void             minidump_write(const char*, const EXCEPTION_RECORD*);
 
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);

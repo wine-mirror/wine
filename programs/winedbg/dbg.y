@@ -57,7 +57,8 @@ int yyerror(const char*);
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
 %token <string> tPATH tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
 %token <integer> tNUM tFORMAT
-%token tSYMBOLFILE tRUN tATTACH tDETACH tNOPROCESS tMAINTENANCE tTYPE
+%token tSYMBOLFILE tRUN tATTACH tDETACH tMAINTENANCE tTYPE tMINIDUMP
+%token tNOPROCESS
 
 %token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED
 %token tSTRUCT tUNION tENUM
@@ -138,6 +139,7 @@ command:
     | tWHATIS expr_lvalue       { types_print_type(&$2.type, FALSE); dbg_printf("\n"); }
     | tATTACH tNUM     		{ dbg_attach_debuggee($2, FALSE, TRUE); }
     | tDETACH                   { dbg_detach_debuggee(); }
+    | tMINIDUMP pathname        { minidump_write($2, (dbg_curr_thread && dbg_curr_thread->in_exception) ? &dbg_curr_thread->excpt_record : NULL);}
     | run_command
     | list_command
     | disassemble_command
