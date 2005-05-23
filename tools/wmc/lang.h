@@ -27,8 +27,8 @@ typedef struct language {
 	unsigned	id;
 	unsigned	doscp;
 	unsigned	wincp;
-	char		*name;
-	char		*country;
+	const char	*name;
+	const char	*country;
 } language_t;
 
 void show_languages(void);

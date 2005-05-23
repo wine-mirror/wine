@@ -225,7 +225,7 @@ void mdmp_dump(void)
         case SystemInfoStream:
         {
             MINIDUMP_SYSTEM_INFO*       msi = (MINIDUMP_SYSTEM_INFO*)stream;
-            char*                       str;
+            const char*                 str;
             char                        tmp[128];
 
             printf("System Information:\n");

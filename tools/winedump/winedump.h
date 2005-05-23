@@ -131,7 +131,7 @@ typedef struct __globals
   char *directory;         /* -I */
   const char *forward_dll; /* -f */
   const char *dll_name;    /* -o */
-  char *uc_dll_name;       /* -o */
+  const char *uc_dll_name;       /* -o */
 
   /* Option arguments: dump mode */
   const char *dumpsect;    /* -j */

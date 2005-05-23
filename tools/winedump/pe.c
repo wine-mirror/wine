@@ -113,7 +113,7 @@ static const char*	DirectoryNames[16] = {
 
 static	void	dump_pe_header(void)
 {
-    char			*str;
+    const char			*str;
     IMAGE_FILE_HEADER		*fileHeader;
     IMAGE_OPTIONAL_HEADER	*optionalHeader;
     unsigned			i;
@@ -931,7 +931,7 @@ static	void	do_grab_sym( enum FileSig sig, void* pmt )
     DWORD*			pName;
     DWORD*			pFunc;
     WORD*			pOrdl;
-    char*			ptr;
+    const char*			ptr;
     DWORD*			map;
 
     PE_nt_headers = pmt;

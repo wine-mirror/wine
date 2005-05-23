@@ -470,7 +470,7 @@ static void write_rcinline(FILE *fp)
 			{
 				char *cptr;
 				int l = blk->msgs[j]->len;
-				char *comma = j == blk->nmsg-1  && i == lbp->nblk-1 ? "" : ",";
+				const char *comma = j == blk->nmsg-1  && i == lbp->nblk-1 ? "" : ",";
 				cptr = make_string(blk->msgs[j]->msg, l, unicodeout ? 0 : blk->msgs[j]->cp);
 				fprintf(fp, "\n /* Msg 0x%08x */ 0x%04x, 0x000%c,\n",
 					blk->idlo + j,

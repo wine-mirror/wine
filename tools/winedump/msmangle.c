@@ -69,7 +69,8 @@ int symbol_demangle (parsed_symbol *sym)
   int is_static = 0, is_const = 0;
   char *function_name = NULL;
   char *class_name = NULL;
-  char *name, *const_status;
+  char *name;
+  const char *const_status;
   static unsigned int hash = 0; /* In case of overloaded functions */
   unsigned int data_flags = 0;
 
@@ -673,7 +674,7 @@ static char *get_constraints_convention_2 (char **str, compound_type *ct)
  */
 static char *get_type_string (const char c, const int constraints)
 {
-  char *type_string;
+  const char *type_string;
 
   if (constraints & CT_EXTENDED)
   {

@@ -226,7 +226,7 @@ static int dump_pidl(int fd)
     return 0;
 }
 
-static void print_unicode_string(unsigned short *str)
+static void print_unicode_string(const unsigned short *str)
 {
     while(*str)
     {
@@ -236,7 +236,7 @@ static void print_unicode_string(unsigned short *str)
     printf("\n");
 }
 
-static int dump_string(int fd, char *what, int unicode)
+static int dump_string(int fd, const char *what, int unicode)
 {
     lnk_string *data;
 
@@ -300,7 +300,7 @@ static int dump_location(int fd)
     return 0;
 }
 
-static int dump_advertise_info(int fd, char *type)
+static int dump_advertise_info(int fd, const char *type)
 {
     LINK_ADVERTISEINFO *avt;
 
