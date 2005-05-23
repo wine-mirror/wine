@@ -155,21 +155,26 @@ onequery:
 
 oneinsert:
     TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP
-    {
-        SQL_input *sql = (SQL_input*) info;
-        MSIVIEW *insert = NULL; 
+        {
+            SQL_input *sql = (SQL_input*) info;
+            MSIVIEW *insert = NULL; 
+            UINT r;
 
-        INSERT_CreateView( sql->db, &insert, $3, $5, $9, FALSE ); 
-        $$ = insert;
-    }
+            r = INSERT_CreateView( sql->db, &insert, $3, $5, $9, FALSE ); 
+            if( !insert )
+                YYABORT;
+            $$ = insert;
+        }
   | TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP TK_TEMP
-    {
-        SQL_input *sql = (SQL_input*) info;
-        MSIVIEW *insert = NULL; 
+        {
+            SQL_input *sql = (SQL_input*) info;
+            MSIVIEW *insert = NULL; 
 
-        INSERT_CreateView( sql->db, &insert, $3, $5, $9, TRUE ); 
-        $$ = insert;
-    }
+            INSERT_CreateView( sql->db, &insert, $3, $5, $9, TRUE ); 
+            if( !insert )
+                YYABORT;
+            $$ = insert;
+        }
     ;
 
 onecreate:
@@ -181,6 +186,8 @@ onecreate:
             if( !$5 )
                 YYABORT;
             CREATE_CreateView( sql->db, &create, $3, $5, FALSE );
+            if( !create )
+                YYABORT;
             $$ = create;
         }
   | TK_CREATE TK_TABLE table TK_LP table_def TK_RP TK_HOLD
@@ -191,6 +198,8 @@ onecreate:
             if( !$5 )
                 YYABORT;
             CREATE_CreateView( sql->db, &create, $3, $5, TRUE );
+            if( !create )
+                YYABORT;
             $$ = create;
         }
     ;
@@ -202,6 +211,8 @@ oneupdate:
             MSIVIEW *update = NULL; 
 
             UPDATE_CreateView( sql->db, &update, $2, &$4, $6 );
+            if( !update )
+                YYABORT;
             $$ = update;
         }
     ;
@@ -213,6 +224,8 @@ onedelete:
             MSIVIEW *delete = NULL; 
 
             DELETE_CreateView( sql->db, &delete, $2 );
+            if( !delete )
+                YYABORT;
             $$ = delete;
         }
     ;
@@ -569,18 +582,26 @@ const_val:
     TK_INTEGER
         {
             $$ = EXPR_ival( info, &$1, 1 );
+            if( !$$ )
+                YYABORT;
         }
   | TK_MINUS  TK_INTEGER
         {
             $$ = EXPR_ival( info, &$2, -1 );
+            if( !$$ )
+                YYABORT;
         }
   | TK_STRING
         {
             $$ = EXPR_sval( info, &$1 );
+            if( !$$ )
+                YYABORT;
         }
   | TK_WILDCARD
         {
             $$ = EXPR_wildcard( info );
+            if( !$$ )
+                YYABORT;
         }
     ;
 
@@ -588,6 +609,8 @@ column_val:
     column 
         {
             $$ = EXPR_column( info, $1 );
+            if( !$$ )
+                YYABORT;
         }
     ;
 
