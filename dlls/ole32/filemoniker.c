@@ -198,31 +198,46 @@ FileMonikerImpl_Load(IMoniker* iface,IStream* pStm)
     /* first WORD is non significative */
     res=IStream_Read(pStm,&wbuffer,sizeof(WORD),&bread);
     if (bread!=sizeof(WORD) || wbuffer!=0)
+    {
+        ERR("Couldn't read 0 word\n");
         return E_FAIL;
+    }
 
     /* read filePath string length (plus one) */
     res=IStream_Read(pStm,&length,sizeof(DWORD),&bread);
     if (bread != sizeof(DWORD))
+    {
+        ERR("Couldn't read file string length\n");
         return E_FAIL;
+    }
 
     /* read filePath string */
     filePathA=HeapAlloc(GetProcessHeap(),0,length);
     res=IStream_Read(pStm,filePathA,length,&bread);
     HeapFree(GetProcessHeap(),0,filePathA);
     if (bread != length)
+    {
+        ERR("Couldn't read file path string\n");
         return E_FAIL;
+    }
 
     /* read the first constant */
     IStream_Read(pStm,&dwbuffer,sizeof(DWORD),&bread);
     if (bread != sizeof(DWORD) || dwbuffer != 0xDEADFFFF)
+    {
+        ERR("Couldn't read 0xDEADFFFF constant\n");
         return E_FAIL;
+    }
 
     length--;
 
     for(i=0;i<10;i++){
         res=IStream_Read(pStm,&wbuffer,sizeof(WORD),&bread);
         if (bread!=sizeof(WORD) || wbuffer!=0)
+        {
+            ERR("Couldn't read 0 padding\n");
             return E_FAIL;
+        }
     }
 
     if (length>8)
@@ -364,7 +379,7 @@ FileMonikerImpl_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize)
 
     TRACE("(%p,%p)\n",iface,pcbSize);
 
-    if (pcbSize!=NULL)
+    if (!pcbSize)
         return E_POINTER;
 
     /* for more details see FileMonikerImpl_Save coments */

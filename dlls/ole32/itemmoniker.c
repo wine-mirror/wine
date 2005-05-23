@@ -369,17 +369,16 @@ HRESULT WINAPI ItemMonikerImpl_GetSizeMax(IMoniker* iface,
 
     TRACE("(%p,%p)\n",iface,pcbSize);
 
-    if (pcbSize!=NULL)
+    if (!pcbSize)
         return E_POINTER;
 
     /* for more details see ItemMonikerImpl_Save coments */
 
     pcbSize->u.LowPart =  sizeof(DWORD) + /* DWORD which contains delimiter length */
-                        delimiterLength + /* item delimiter string */
+                        delimiterLength*4 + /* item delimiter string */
                         sizeof(DWORD) + /* DWORD which contains item name length */
-                        nameLength + /* item name string */
-                        34; /* this constant was added ! because when I tested this function it usually */
-                            /*  returns 34 bytes more than the number of bytes used by IMoniker::Save function */
+                        nameLength*4 + /* item name string */
+                        18; /* strange, but true */
     pcbSize->u.HighPart=0;
 
     return S_OK;
