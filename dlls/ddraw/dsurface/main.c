@@ -1000,6 +1000,8 @@ Main_DirectDrawSurface_GetPrivateData(LPDIRECTDRAWSURFACE7 iface,
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
     PrivateData* data;
 
+    TRACE("(%p)->(%p), size = %ld\n", This, pBuffer, *pcbBufferSize);
+
     data = find_private_data(This, tag);
     if (data == NULL) return DDERR_NOTFOUND;
 
@@ -1370,6 +1372,8 @@ Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
     PrivateData* data;
     IDirectDrawSurfaceImpl *This = (IDirectDrawSurfaceImpl *)iface;
 
+    TRACE("(%p)->(%p), size=%ld\n", This, pData, cbSize);
+
     data = find_private_data(This, tag);
     if (data == NULL)
     {
@@ -1394,6 +1398,9 @@ Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
 		HeapFree(GetProcessHeap(), 0, data);
 		return DDERR_OUTOFMEMORY;
 	    }
+
+            data->size = cbSize;
+            memcpy(data->ptr.data, pData, data->size);
 	}
 
 	/* link it in */
@@ -1412,6 +1419,7 @@ Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
 	 * guarantee SetPrivateData working when using LPUNKNOWN or data
 	 * that is no larger than the old data. */
 
+        FIXME("Replacing existing private data not implemented yet.\n");
 	return E_FAIL;
     }
 }
