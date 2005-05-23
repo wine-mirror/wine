@@ -27,6 +27,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "crypt.h"
 #include "winnls.h"
@@ -1891,6 +1895,39 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 	return result;
 }
 
+/******************************************************************************
+ * SystemFunction036   (ADVAPI32.@)
+ *
+ * MSDN documents this function as RtlGenRandom and declares it in ntsecapi.h
+ *
+ * PARAMS
+ *  pbBufer [O] Pointer to memory to receive random bytes.
+ *  dwLen   [I] Number of random bytes to fetch.
+ */
+
+BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen)
+{
+    int dev_random;
+
+    /* FIXME: /dev/urandom does not provide random numbers of a sufficient
+     * quality for cryptographic applications. /dev/random is much better,  
+     * but it blocks if the kernel has not yet collected enough entropy for
+     * the request, which will suspend the calling thread for an indefinite
+     * amount of time. */
+    dev_random = open("/dev/urandom", O_RDONLY);
+    if (dev_random != -1)
+    {
+        if (read(dev_random, pbBuffer, dwLen) == (ssize_t)dwLen)
+        {
+            close(dev_random);
+            return TRUE;
+        }
+        close(dev_random);
+    }
+    SetLastError(NTE_FAIL);
+    return FALSE;
+}    
+    
 /*
    These functions have nearly identical prototypes to CryptProtectMemory and CryptUnprotectMemory,
    in crypt32.dll.

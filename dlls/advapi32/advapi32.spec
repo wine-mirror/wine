@@ -343,7 +343,7 @@
 @ stub SystemFunction033
 @ stub SystemFunction034
 @ stub SystemFunction035
-@ stub SystemFunction036
+@ stdcall SystemFunction036(ptr long) # RtlGenRandom
 @ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
 @ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
 @ stub TraceEvent
