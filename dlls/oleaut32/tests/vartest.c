@@ -78,9 +78,6 @@ static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
 #define HAVE_OLEAUT32_I8      HAVE_FUNC(VarI8FromI1)
 /* Is this an ancient version with support for only I2/I4/R4/R8/DATE? */
 #define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))
-/* Is vt a type unavailable to ancient versions? */
-#define IS_MODERN_VTYPE(vt) (vt==VT_VARIANT||vt==VT_DECIMAL|| \
-    vt==VT_I1||vt==VT_UI2||vt==VT_UI4||vt == VT_INT||vt == VT_UINT)
 
 /* When comparing floating point values we cannot expect an exact match
  * because the rounding errors depend on the exact algorithm.
@@ -1178,7 +1175,10 @@ static void test_VarNumFromParseNum(void)
   SETRGB(4, 0xf); SETRGB(5, 0xf); SETRGB(6, 0xf); SETRGB(7, 0xf);
   SETRGB(8, 0xf); SETRGB(9, 0xf); SETRGB(10, 0xf); SETRGB(11, 0xf);
   SETRGB(12, 0xf); SETRGB(13, 0xf); SETRGB(14, 0xf); SETRGB(15, 0xf);
-  CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x7fffffff,0xffffffff);
+  if (HAVE_OLEAUT32_I8)
+  {
+    CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x7fffffff,0xffffffff);
+  }
 
   /* Assume the above pattern holds for numbers without hi-bit set, test (preservation of) hi-bit */
   /* 0x82 */
@@ -1198,7 +1198,10 @@ static void test_VarNumFromParseNum(void)
   SETRGB(4, 0); SETRGB(5, 0); SETRGB(6, 0); SETRGB(7, 0);
   SETRGB(8, 0); SETRGB(9, 0); SETRGB(10, 0); SETRGB(11, 0);
   SETRGB(12, 0); SETRGB(13, 0); SETRGB(14, 0); SETRGB(15, 2);
-  CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x80000000,0x00000002);
+  if (HAVE_OLEAUT32_I8)
+  {
+    CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I8(0x80000000,0x00000002);
+  }
 
   /* Test (preservation of) hi-bit with STRICT type requesting */
   /* 0x82 */
@@ -1218,8 +1221,10 @@ static void test_VarNumFromParseNum(void)
   SETRGB(4, 0); SETRGB(5, 0); SETRGB(6, 0); SETRGB(7, 0);
   SETRGB(8, 0); SETRGB(9, 0); SETRGB(10, 0); SETRGB(11, 0);
   SETRGB(12, 0); SETRGB(13, 0); SETRGB(14, 0); SETRGB(15, 2);
-  CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x80000000,0x00000002);
-
+  if (HAVE_OLEAUT32_I8)
+  {
+    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x80000000,0x00000002);
+  }
   /* Assume the above pattern holds for numbers with hi-bit set */
 
   /* Negative numbers overflow if we have only unsigned outputs */
@@ -2002,7 +2007,6 @@ static void test_VarMod(void)
   VARMOD(I1,UI4,100,10,I4,0,S_OK);
   VARMOD(I1,R4,100,10,I4,0,S_OK);
   VARMOD(I1,R8,100,10,I4,0,S_OK);
-  VARMOD(I1,I8,100,10,I8,0,S_OK);
 
   VARMOD(UI1,BOOL,100,10,I2,0,S_OK);
   VARMOD(UI1,I1,100,10,I4,0,S_OK);
@@ -2013,7 +2017,6 @@ static void test_VarMod(void)
   VARMOD(UI1,UI4,100,10,I4,0,S_OK);
   VARMOD(UI1,R4,100,10,I4,0,S_OK);
   VARMOD(UI1,R8,100,10,I4,0,S_OK);
-  VARMOD(UI1,I8,100,10,I8,0,S_OK);
 
   VARMOD(I2,BOOL,100,10,I2,0,S_OK);
   VARMOD(I2,I1,100,10,I4,0,S_OK);
@@ -2024,7 +2027,6 @@ static void test_VarMod(void)
   VARMOD(I2,UI4,100,10,I4,0,S_OK);
   VARMOD(I2,R4,100,10,I4,0,S_OK);
   VARMOD(I2,R8,100,10,I4,0,S_OK);
-  VARMOD(I2,I8,100,10,I8,0,S_OK);
 
   VARMOD(I4,BOOL,100,10,I4,0,S_OK);
   VARMOD(I4,I1,100,10,I4,0,S_OK);
@@ -2035,8 +2037,6 @@ static void test_VarMod(void)
   VARMOD(I4,UI4,100,10,I4,0,S_OK);
   VARMOD(I4,R4,100,10,I4,0,S_OK);
   VARMOD(I4,R8,100,10,I4,0,S_OK);
-  VARMOD(I4,I8,100,10,I8,0,S_OK);
-
   VARMOD(UI4,BOOL,100,10,I4,0,S_OK);
   VARMOD(UI4,I1,100,10,I4,0,S_OK);
   VARMOD(UI4,UI1,100,10,I4,0,S_OK);
@@ -2046,8 +2046,6 @@ static void test_VarMod(void)
   VARMOD(UI4,UI4,100,10,I4,0,S_OK);
   VARMOD(UI4,R4,100,10,I4,0,S_OK);
   VARMOD(UI4,R8,100,10,I4,0,S_OK);
-  VARMOD(UI4,I8,100,10,I8,0,S_OK);
-
   VARMOD(R4,BOOL,100,10,I4,0,S_OK);
   VARMOD(R4,I1,100,10,I4,0,S_OK);
   VARMOD(R4,UI1,100,10,I4,0,S_OK);
@@ -2057,8 +2055,6 @@ static void test_VarMod(void)
   VARMOD(R4,UI4,100,10,I4,0,S_OK);
   VARMOD(R4,R4,100,10,I4,0,S_OK);
   VARMOD(R4,R8,100,10,I4,0,S_OK);
-  VARMOD(R4,I8,100,10,I8,0,S_OK);
-
   VARMOD(R8,BOOL,100,10,I4,0,S_OK);
   VARMOD(R8,I1,100,10,I4,0,S_OK);
   VARMOD(R8,UI1,100,10,I4,0,S_OK);
@@ -2068,18 +2064,6 @@ static void test_VarMod(void)
   VARMOD(R8,UI4,100,10,I4,0,S_OK);
   VARMOD(R8,R4,100,10,I4,0,S_OK);
   VARMOD(R8,R8,100,10,I4,0,S_OK);
-  VARMOD(R8,I8,100,10,I8,0,S_OK);
-
-  VARMOD(I8,BOOL,100,10,I8,0,S_OK);
-  VARMOD(I8,I1,100,10,I8,0,S_OK);
-  VARMOD(I8,UI1,100,10,I8,0,S_OK);
-  VARMOD(I8,I2,100,10,I8,0,S_OK);
-  VARMOD(I8,UI2,100,10,I8,0,S_OK);
-  VARMOD(I8,I4,100,10,I8,0,S_OK);
-  VARMOD(I8,UI4,100,10,I8,0,S_OK);
-  VARMOD(I8,R4,100,10,I8,0,S_OK);
-  VARMOD(I8,R8,100,10,I8,0,S_OK);
-  VARMOD(I8,I8,100,10,I8,0,S_OK);
 
   VARMOD(INT,INT,100,10,I4,0,S_OK);
   VARMOD(INT,UINT,100,10,I4,0,S_OK);
@@ -2093,7 +2077,6 @@ static void test_VarMod(void)
   VARMOD(BOOL,UI4,100,10,I4,0,S_OK);
   VARMOD(BOOL,R4,100,10,I4,0,S_OK);
   VARMOD(BOOL,R8,100,10,I4,0,S_OK);
-  VARMOD(BOOL,I8,100,10,I8,0,S_OK);
   VARMOD(BOOL,DATE,100,10,I4,0,S_OK);
 
   VARMOD(DATE,BOOL,100,10,I4,0,S_OK);
@@ -2105,7 +2088,6 @@ static void test_VarMod(void)
   VARMOD(DATE,UI4,100,10,I4,0,S_OK);
   VARMOD(DATE,R4,100,10,I4,0,S_OK);
   VARMOD(DATE,R8,100,10,I4,0,S_OK);
-  VARMOD(DATE,I8,100,10,I8,0,S_OK);
   VARMOD(DATE,DATE,100,10,I4,0,S_OK);
 
   strNum0 = SysAllocString(szNum0);
@@ -2116,8 +2098,33 @@ static void test_VarMod(void)
   VARMOD(BSTR,I4,strNum0,10,I4,5,S_OK);
   VARMOD(BSTR,R4,strNum0,10,I4,5,S_OK);
   VARMOD(BSTR,R8,strNum0,10,I4,5,S_OK);
-  VARMOD(BSTR,I8,strNum0,10,I8,5,S_OK);
   VARMOD(I4,BSTR,125,strNum1,I4,5,S_OK);
+
+  if (HAVE_OLEAUT32_I8)
+  {
+    VARMOD(BOOL,I8,100,10,I8,0,S_OK);
+    VARMOD(I1,I8,100,10,I8,0,S_OK);
+    VARMOD(UI1,I8,100,10,I8,0,S_OK);
+    VARMOD(I2,I8,100,10,I8,0,S_OK);
+    VARMOD(I4,I8,100,10,I8,0,S_OK);
+    VARMOD(UI4,I8,100,10,I8,0,S_OK);
+    VARMOD(R4,I8,100,10,I8,0,S_OK);
+    VARMOD(R8,I8,100,10,I8,0,S_OK);
+    VARMOD(DATE,I8,100,10,I8,0,S_OK);
+
+    VARMOD(I8,BOOL,100,10,I8,0,S_OK);
+    VARMOD(I8,I1,100,10,I8,0,S_OK);
+    VARMOD(I8,UI1,100,10,I8,0,S_OK);
+    VARMOD(I8,I2,100,10,I8,0,S_OK);
+    VARMOD(I8,UI2,100,10,I8,0,S_OK);
+    VARMOD(I8,I4,100,10,I8,0,S_OK);
+    VARMOD(I8,UI4,100,10,I8,0,S_OK);
+    VARMOD(I8,R4,100,10,I8,0,S_OK);
+    VARMOD(I8,R8,100,10,I8,0,S_OK);
+    VARMOD(I8,I8,100,10,I8,0,S_OK);
+
+    VARMOD(BSTR,I8,strNum0,10,I8,5,S_OK);
+  }
 
   /* test all combinations of types */
   for(l = 0; l < VT_BSTR_BLOB; l++)
@@ -2236,7 +2243,7 @@ static void test_VarMod(void)
 	hexpected = DISP_E_TYPEMISMATCH;
       } else if((l == VT_NULL) && (r == VT_DECIMAL))
       {
-	hexpected = E_INVALIDARG;
+	hexpected = DISP_E_OVERFLOW;
       } else if((l == VT_UNKNOWN) || ((r == VT_UNKNOWN) && lFound && lValid))
       {
 	hexpected = DISP_E_TYPEMISMATCH;
@@ -2245,7 +2252,7 @@ static void test_VarMod(void)
 	hexpected = S_OK;
       } else if((l == VT_DECIMAL) || ((r == VT_DECIMAL) && lFound && lValid))
       {
-	hexpected = E_INVALIDARG;
+	hexpected = DISP_E_OVERFLOW;
       } else if(l == VT_RECORD)
       {
 	hexpected = DISP_E_TYPEMISMATCH;
@@ -2310,9 +2317,12 @@ static void test_VarMod(void)
       else
 	V_I4(&v2) = 10000;
 
-      hres = pVarMod(&v1,&v2,&vDst);
-      ok(hres == hexpected,
-	 "VarMod: expected 0x%lx, got 0x%lX for l type of %d, r type of %d,\n", hexpected, hres, l, r);
+      if ((l != VT_I8 && l != VT_UI8 && r != VT_I8 && r != VT_UI8) || HAVE_OLEAUT32_I8)
+      {
+        hres = pVarMod(&v1,&v2,&vDst);
+        ok(hres == hexpected,
+           "VarMod: expected 0x%lx, got 0x%lX for l type of %d, r type of %d,\n", hexpected, hres, l, r);
+      }
     }
   }
 
@@ -2383,11 +2393,14 @@ static void test_VarMod(void)
 
   /* test some invalid types */
   /*TODO: not testing VT_DISPATCH */
-  VARMOD2(I8,INT,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  if (HAVE_OLEAUT32_I8)
+  {
+    VARMOD2(I8,INT,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
+  }
   VARMOD2(ERROR,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
   VARMOD2(VARIANT,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
   VARMOD2(UNKNOWN,I4,100,10,EMPTY,0,DISP_E_TYPEMISMATCH);
-  VARMOD2(DECIMAL,I4,100,10,EMPTY,0,E_INVALIDARG);
+  VARMOD2(DECIMAL,I4,100,10,EMPTY,0,DISP_E_OVERFLOW);
   VARMOD2(VOID,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
   VARMOD2(HRESULT,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
   VARMOD2(PTR,I4,100,10,EMPTY,0,DISP_E_BADVARTYPE);
