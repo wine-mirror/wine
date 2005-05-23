@@ -114,7 +114,8 @@ int main(int argc, char **argv)
         *cp = '\0';
         fprintf(stderr, "%s %d pts %dx%d dpi\n", name, pt, dpi[0], dpi[1]);
         fclose(fp);
-        fontdir_len += 0x74 + strlen(name) + 1; /* FIXME does the fontdir entry for version 3 fonts differ from 2? */
+        /* fontdir entries for version 3 fonts are the same as for version 2 */
+        fontdir_len += 0x74 + strlen(name) + 1;
         if(i == 0) {
             sprintf(non_resident_name, "FONTRES 100,%d,%d : %s %d", dpi[0], dpi[1], name, pt);
             strcpy(resident_name, name);
@@ -234,10 +235,11 @@ int main(int argc, char **argv)
 
         fwrite(&res, sizeof(res), 1, ofp);
         fread(buf, 0x72, 1, fp);
-        fwrite(buf, 0x72, 1, ofp);
 
         fnt_header = (struct _fnt_header *)buf;
         fseek(fp, fnt_header->fi.dfFace, SEEK_SET);
+        fnt_header->fi.dfBitsOffset = 0;
+        fwrite(buf, 0x72, 1, ofp);
 
         cp = name;
         while((c = fgetc(fp)) != 0 && c != EOF)
@@ -246,7 +248,8 @@ int main(int argc, char **argv)
         fwrite(name, strlen(name) + 1, 1, ofp);
         fclose(fp);
     }
-    pad = fontdir_len & 0xf;
+
+    pad = ftell(ofp) & 0xf;
     if(pad != 0)
         pad = 0x10 - pad;
     for(i = 0; i < pad; i++)
