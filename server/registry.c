@@ -320,11 +320,13 @@ static void key_destroy( struct object *obj )
         free( key->values[i].name );
         if (key->values[i].data) free( key->values[i].data );
     }
+    if (key->values) free( key->values );
     for (i = 0; i <= key->last_subkey; i++)
     {
         key->subkeys[i]->parent = NULL;
         release_object( key->subkeys[i] );
     }
+    if (key->subkeys) free( key->subkeys );
     /* unconditionally notify everything waiting on this key */
     while ((ptr = list_head( &key->notify_list )))
     {
@@ -1671,7 +1673,11 @@ void close_registry(void)
 
     if (save_timeout_user) remove_timeout_user( save_timeout_user );
     save_timeout_user = NULL;
-    for (i = 0; i < save_branch_count; i++) release_object( save_branch_info[i].key );
+    for (i = 0; i < save_branch_count; i++)
+    {
+        release_object( save_branch_info[i].key );
+        free( save_branch_info[i].path );
+    }
     release_object( root_key );
 }
 

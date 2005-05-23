@@ -838,7 +838,11 @@ static void set_update_region( struct window *win, struct region *region )
     }
     else
     {
-        if (win->update_region) inc_window_paint_count( win, -1 );
+        if (win->update_region)
+        {
+            inc_window_paint_count( win, -1 );
+            free_region( win->update_region );
+        }
         win->paint_flags &= ~(PAINT_ERASE | PAINT_NONCLIENT);
         win->update_region = NULL;
         if (region) free_region( region );
