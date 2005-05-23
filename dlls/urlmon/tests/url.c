@@ -93,11 +93,18 @@ static ULONG WINAPI statusclb_Release(IBindStatusCallback *iface)
 static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD dwReserved, IBinding *pib)
 {
     statusclb *This = (statusclb*)iface;
+    HRESULT hres;
+    IMoniker *mon;
 
     This->pbind = pib;
     ok(pib != NULL, "pib should not be NULL\n");
     if(pib)
         IBinding_AddRef(pib);
+
+    hres = IBinding_QueryInterface(pib, &IID_IMoniker, (void**)&mon);
+    ok(hres == E_NOINTERFACE, "IBinding should not have IMoniker interface\n");
+    if(SUCCEEDED(hres))
+        IMoniker_Release(mon);
 
     return S_OK;
 }
@@ -242,6 +249,7 @@ static void test_BindToStorage()
     MSG msg;
     IBindStatusCallback *previousclb, *sclb = statusclb_create();
     IUnknown *unk = (IUnknown*)0x00ff00ff;
+    IBinding *bind;
 
     hres = CreateAsyncBindCtx(0, sclb, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08lx\n\n", hres);
@@ -263,6 +271,11 @@ static void test_BindToStorage()
         IBindCtx_Release(bctx);
         return;
     }
+
+    hres = IMoniker_QueryInterface(mon, &IID_IBinding, (void**)&bind);
+    ok(hres == E_NOINTERFACE, "IMoniker should not have IBinding interface\n");
+    if(SUCCEEDED(hres))
+        IBinding_Release(bind);
 
     hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
     ok(SUCCEEDED(hres), "GetDisplayName failed %08lx\n", hres);
