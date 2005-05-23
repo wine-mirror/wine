@@ -204,47 +204,6 @@ typedef struct _STACK16FRAME
     WORD          cs;             /* 2e */
 } STACK16FRAME;
 
-#ifdef __i386__
-
-typedef struct
-{
-    WORD   pushw_bp;               /* pushw %bp */
-    BYTE   pushl;                  /* pushl $target */
-    void (*target)();
-    WORD   call;                   /* call CALLFROM16 */
-    short  callfrom16;
-} ENTRYPOINT16;
-
-typedef struct
-{
-    BYTE   pushl;                  /* pushl $relay */
-    void  *relay;
-    BYTE   lcall;                  /* lcall __FLATCS__:glue */
-    void  *glue;
-    WORD   flatcs;
-    WORD   lret;                   /* lret $nArgs */
-    WORD   nArgs;
-    DWORD  arg_types[2];           /* type of each argument */
-} CALLFROM16;
-
-#else  /* __i386__ */
-
-typedef struct
-{
-    void (*target)();
-    WORD   call;                   /* call CALLFROM16 */
-    short  callfrom16;
-} ENTRYPOINT16;
-
-typedef struct
-{
-    WORD   lret;                   /* lret $nArgs */
-    WORD   nArgs;
-    DWORD  arg_types[2];           /* type of each argument */
-} CALLFROM16;
-
-#endif
-
 /* argument type flags for relay debugging */
 enum arg_types
 {

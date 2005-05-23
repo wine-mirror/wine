@@ -68,16 +68,10 @@ struct ne_segment_table_entry_s
 
 #define hFirstModule (pThhook->hExeHead)
 
-typedef struct
-{
-    const void *module;       /* module header */
-    void       *code_start;   /* 32-bit address of DLL code */
-} BUILTIN16_DESCRIPTOR;
-
 struct builtin_dll
 {
-    const BUILTIN16_DESCRIPTOR *descr;      /* module descriptor */
-    const char                 *file_name;  /* module file name */
+    const IMAGE_DOS_HEADER *header;      /* module headers */
+    const char             *file_name;   /* module file name */
 };
 
 /* Table of all built-in DLLs */
@@ -104,15 +98,24 @@ static WINE_EXCEPTION_FILTER(page_fault)
 
 
 /* patch all the flat cs references of the code segment if necessary */
-inline static void patch_code_segment( void *code_segment )
+inline static void patch_code_segment( NE_MODULE *pModule )
 {
 #ifdef __i386__
-    CALLFROM16 *call = code_segment;
-    if (call->flatcs == wine_get_cs()) return;  /* nothing to patch */
-    while (call->pushl == 0x68)
+    int i;
+    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule );
+
+    for (i = 0; i < pModule->ne_cseg; i++, pSeg++)
     {
-        call->flatcs = wine_get_cs();
-        call++;
+        if (!(pSeg->flags & NE_SEGFLAGS_DATA))  /* found the code segment */
+        {
+            CALLFROM16 *call = GlobalLock16( pSeg->hSeg );
+            if (call->flatcs == wine_get_cs()) return;  /* nothing to patch */
+            while (call->pushl == 0x68)
+            {
+                call->flatcs = wine_get_cs();
+                call++;
+            }
+        }
     }
 #endif
 }
@@ -151,7 +154,7 @@ static int NE_strncasecmp( const char *str1, const char *str2, int len )
  *
  * Find a descriptor in the list
  */
-static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname, const char **file_name )
+static const IMAGE_DOS_HEADER *find_dll_descr( const char *dllname, const char **file_name )
 {
     int i;
     const IMAGE_DOS_HEADER *mz_header;
@@ -160,10 +163,9 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname, const ch
 
     for (i = 0; i < MAX_DLLS; i++)
     {
-        const BUILTIN16_DESCRIPTOR *descr = builtin_dlls[i].descr;
-        if (descr)
+        mz_header = builtin_dlls[i].header;
+        if (mz_header)
         {
-            mz_header = descr->module;
             ne_header = (const IMAGE_OS2_HEADER *)((const char *)mz_header + mz_header->e_lfanew);
             name_table = (BYTE *)ne_header + ne_header->ne_restab;
 
@@ -174,7 +176,7 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname, const ch
                  !strcmp( dllname + *name_table, ".dll" )))
             {
                 *file_name = builtin_dlls[i].file_name;
-                return builtin_dlls[i].descr;
+                return builtin_dlls[i].header;
             }
         }
     }
@@ -187,14 +189,14 @@ static const BUILTIN16_DESCRIPTOR *find_dll_descr( const char *dllname, const ch
  *
  * Register a built-in DLL descriptor.
  */
-void __wine_dll_register_16( const BUILTIN16_DESCRIPTOR *descr, const char *file_name )
+void __wine_dll_register_16( const IMAGE_DOS_HEADER *header, const char *file_name )
 {
     int i;
 
     for (i = 0; i < MAX_DLLS; i++)
     {
-        if (builtin_dlls[i].descr) continue;
-        builtin_dlls[i].descr = descr;
+        if (builtin_dlls[i].header) continue;
+        builtin_dlls[i].header = header;
         builtin_dlls[i].file_name = file_name;
         break;
     }
@@ -207,14 +209,14 @@ void __wine_dll_register_16( const BUILTIN16_DESCRIPTOR *descr, const char *file
  *
  * Unregister a built-in DLL descriptor.
  */
-void __wine_dll_unregister_16( const BUILTIN16_DESCRIPTOR *descr )
+void __wine_dll_unregister_16( const IMAGE_DOS_HEADER *header )
 {
     int i;
 
     for (i = 0; i < MAX_DLLS; i++)
     {
-        if (builtin_dlls[i].descr != descr) continue;
-        builtin_dlls[i].descr = NULL;
+        if (builtin_dlls[i].header != header) continue;
+        builtin_dlls[i].header = NULL;
         break;
     }
 }
@@ -893,9 +895,8 @@ static BOOL NE_LoadDLLs( NE_MODULE *pModule )
  *
  * Load first instance of NE module from file.
  *
- * pModule must point to a module structure prepared by build_module_data.
+ * pModule must point to a module structure prepared by build_module.
  * This routine must never be called twice on a module.
- *
  */
 static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
 {
@@ -992,53 +993,42 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
  *
  * Load a built-in Win16 module. Helper function for NE_LoadBuiltinModule.
  */
-static HMODULE16 NE_DoLoadBuiltinModule( const BUILTIN16_DESCRIPTOR *descr, const char *file_name )
+static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, const char *file_name )
 {
     NE_MODULE *pModule;
     HMODULE16 hModule;
-    SEGTABLEENTRY *pSegTable;
-    const IMAGE_DOS_HEADER *mz_header;
+    HINSTANCE16 hInstance;
+    OSVERSIONINFOW versionInfo;
     const IMAGE_OS2_HEADER *ne_header;
-    SIZE_T mapping_size;
+    SIZE_T mapping_size = ~0UL;  /* assume builtins don't contain invalid offsets... */
 
-    mz_header = descr->module;
     ne_header = (const IMAGE_OS2_HEADER *)((const BYTE *)mz_header + mz_header->e_lfanew);
-    mapping_size = ne_header->ne_psegrefbytes << ne_header->ne_align;
-    hModule = build_module( descr->module, mapping_size, file_name );
+    hModule = build_module( mz_header, mapping_size, file_name );
     if (hModule < 32) return hModule;
     pModule = GlobalLock16( hModule );
     pModule->ne_flags |= NE_FFLAGS_BUILTIN;
-    pModule->count = 1;
 
-    /* Allocate the code segment */
+    /* fake the expected version the module should have according to the current Windows version */
+    versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
+    if (GetVersionExW( &versionInfo ))
+        pModule->ne_expver = MAKEWORD( versionInfo.dwMinorVersion, versionInfo.dwMajorVersion );
 
-    pSegTable = NE_SEG_TABLE( pModule );
-    pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
-                                          pSegTable->minsize, hModule,
-                                          WINE_LDT_FLAGS_CODE|WINE_LDT_FLAGS_32BIT );
-    if (!pSegTable->hSeg) return ERROR_NOT_ENOUGH_MEMORY;
-    patch_code_segment( descr->code_start );
-    pSegTable->flags |= NE_SEGFLAGS_ALLOCATED | NE_SEGFLAGS_LOADED;
-    pSegTable++;
+    hInstance = NE_DoLoadModule( pModule );
+    if (hInstance < 32) NE_FreeModule( hModule, 0 );
 
-    /* Allocate the data segment */
-
-    if (!NE_CreateSegment( pModule, 2 )) return ERROR_NOT_ENOUGH_MEMORY;
-    pModule->dgroup_entry = (char *)pSegTable - (char *)pModule;
-    memcpy( GlobalLock16( pSegTable->hSeg ),
-            (const char *)descr->module + (pSegTable->filepos << pModule->ne_align),
-            pSegTable->minsize);
-    pSegTable->flags |= NE_SEGFLAGS_LOADED;
+    NE_InitResourceHandler( hModule );
 
     if (pModule->ne_heap)
     {
-        unsigned int size = pSegTable->minsize + pModule->ne_heap;
+        SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->ne_autodata - 1;
+        unsigned int size = pSeg->minsize + pModule->ne_heap;
         if (size > 0xfffe) size = 0xfffe;
-        LocalInit16( GlobalHandleToSel16(pSegTable->hSeg), pSegTable->minsize, size );
+        LocalInit16( GlobalHandleToSel16(pSeg->hSeg), pSeg->minsize, size );
     }
 
-    NE_InitResourceHandler( hModule );
-    return hModule;
+    patch_code_segment( pModule );
+
+    return hInstance;
 }
 
 
@@ -1053,8 +1043,9 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 {
     HINSTANCE16 hinst = 2;
     HMODULE16 hModule;
+    HMODULE mod32 = 0;
     NE_MODULE *pModule;
-    const BUILTIN16_DESCRIPTOR *descr = NULL;
+    const IMAGE_DOS_HEADER *descr = NULL;
     const char *file_name = NULL;
     char dllname[20], owner[20], *p;
     const char *basename;
@@ -1076,7 +1067,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
 
         if (wine_dll_get_owner( dllname, owner, sizeof(owner), &owner_exists ) != -1)
         {
-            HMODULE mod32 = LoadLibraryA( owner );
+            mod32 = LoadLibraryA( owner );
             if (mod32)
             {
                 if (!(descr = find_dll_descr( dllname, &file_name )))
@@ -1091,6 +1082,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                     TRACE( "module %s already loaded by owner\n", libname );
                     pModule = NE_GetPtr( hModule );
                     if (pModule) pModule->count++;
+                    FreeLibrary( mod32 );
                     return hModule;
                 }
             }
@@ -1626,22 +1618,6 @@ WORD WINAPI GetExpWinVer16( HMODULE16 hModule )
 {
     NE_MODULE *pModule = NE_GetPtr( hModule );
     if ( !pModule ) return 0;
-
-    /*
-     * For built-in modules, fake the expected version the module should
-     * have according to the Windows version emulated by Wine
-     */
-    if ( !pModule->ne_expver )
-    {
-        OSVERSIONINFOA versionInfo;
-        versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
-
-        if ( GetVersionExA( &versionInfo ) )
-            pModule->ne_expver =
-                     (versionInfo.dwMajorVersion & 0xff) << 8
-                   | (versionInfo.dwMinorVersion & 0xff);
-    }
-
     return pModule->ne_expver;
 }
 

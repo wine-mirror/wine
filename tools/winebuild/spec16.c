@@ -75,34 +75,6 @@ static void output_file_header( FILE *outfile )
 
 
 /*******************************************************************
- *         StoreVariableCode
- *
- * Store a list of ints into a byte array.
- */
-static int StoreVariableCode( unsigned char *buffer, int size, ORDDEF *odp )
-{
-    int i;
-
-    switch(size)
-    {
-    case 1:
-        for (i = 0; i < odp->u.var.n_values; i++)
-            buffer[i] = odp->u.var.values[i];
-        break;
-    case 2:
-        for (i = 0; i < odp->u.var.n_values; i++)
-            ((unsigned short *)buffer)[i] = odp->u.var.values[i];
-        break;
-    case 4:
-        for (i = 0; i < odp->u.var.n_values; i++)
-            ((unsigned int *)buffer)[i] = odp->u.var.values[i];
-        break;
-    }
-    return odp->u.var.n_values * size;
-}
-
-
-/*******************************************************************
  *         output_entry_table
  */
 static int output_entry_table( unsigned char **ret_buff, DLLSPEC *spec )
@@ -192,244 +164,6 @@ static void output_bytes( FILE *outfile, const void *buffer, unsigned int size )
         if (i < size - 1) fprintf( outfile, "," );
     }
     fprintf( outfile, "\n  },\n" );
-}
-
-
-/*******************************************************************
- *         output_module_data
- *
- * Output the 16-bit NE module structure.
- */
-static void output_module_data( FILE *outfile, int max_code_offset, const void *data_segment,
-                                unsigned int data_size, DLLSPEC *spec )
-{
-    unsigned char *resdir_buffer, *resdata_buffer, *et_buffer;
-    unsigned char string[256];
-    int i;
-    unsigned int ne_offset, segtable_offset, impnames_offset, data_offset;
-    unsigned int resnames_offset, resnames_size;
-    unsigned int resdir_size, resdir_offset;
-    unsigned int resdata_size, resdata_offset, resdata_align;
-    unsigned int et_size, et_offset;
-
-    /* DOS header */
-
-    fprintf( outfile, "static const struct module_data\n{\n" );
-    fprintf( outfile, "  struct\n  {\n" );
-    fprintf( outfile, "    unsigned short e_magic;\n" );
-    fprintf( outfile, "    unsigned short e_cblp;\n" );
-    fprintf( outfile, "    unsigned short e_cp;\n" );
-    fprintf( outfile, "    unsigned short e_crlc;\n" );
-    fprintf( outfile, "    unsigned short e_cparhdr;\n" );
-    fprintf( outfile, "    unsigned short e_minalloc;\n" );
-    fprintf( outfile, "    unsigned short e_maxalloc;\n" );
-    fprintf( outfile, "    unsigned short e_ss;\n" );
-    fprintf( outfile, "    unsigned short e_sp;\n" );
-    fprintf( outfile, "    unsigned short e_csum;\n" );
-    fprintf( outfile, "    unsigned short e_ip;\n" );
-    fprintf( outfile, "    unsigned short e_cs;\n" );
-    fprintf( outfile, "    unsigned short e_lfarlc;\n" );
-    fprintf( outfile, "    unsigned short e_ovno;\n" );
-    fprintf( outfile, "    unsigned short e_res[4];\n" );
-    fprintf( outfile, "    unsigned short e_oemid;\n" );
-    fprintf( outfile, "    unsigned short e_oeminfo;\n" );
-    fprintf( outfile, "    unsigned short e_res2[10];\n" );
-    fprintf( outfile, "    unsigned int   e_lfanew;\n" );
-    fprintf( outfile, "  } dos_header;\n" );
-
-    /* NE header */
-
-    ne_offset = 64;
-    fprintf( outfile, "  struct\n  {\n" );
-    fprintf( outfile, "    unsigned short  ne_magic;\n" );
-    fprintf( outfile, "    unsigned char   ne_ver;\n" );
-    fprintf( outfile, "    unsigned char   ne_rev;\n" );
-    fprintf( outfile, "    unsigned short  ne_enttab;\n" );
-    fprintf( outfile, "    unsigned short  ne_cbenttab;\n" );
-    fprintf( outfile, "    int             ne_crc;\n" );
-    fprintf( outfile, "    unsigned short  ne_flags;\n" );
-    fprintf( outfile, "    unsigned short  ne_autodata;\n" );
-    fprintf( outfile, "    unsigned short  ne_heap;\n" );
-    fprintf( outfile, "    unsigned short  ne_stack;\n" );
-    fprintf( outfile, "    unsigned int    ne_csip;\n" );
-    fprintf( outfile, "    unsigned int    ne_sssp;\n" );
-    fprintf( outfile, "    unsigned short  ne_cseg;\n" );
-    fprintf( outfile, "    unsigned short  ne_cmod;\n" );
-    fprintf( outfile, "    unsigned short  ne_cbnrestab;\n" );
-    fprintf( outfile, "    unsigned short  ne_segtab;\n" );
-    fprintf( outfile, "    unsigned short  ne_rsrctab;\n" );
-    fprintf( outfile, "    unsigned short  ne_restab;\n" );
-    fprintf( outfile, "    unsigned short  ne_modtab;\n" );
-    fprintf( outfile, "    unsigned short  ne_imptab;\n" );
-    fprintf( outfile, "    unsigned int    ne_nrestab;\n" );
-    fprintf( outfile, "    unsigned short  ne_cmovent;\n" );
-    fprintf( outfile, "    unsigned short  ne_align;\n" );
-    fprintf( outfile, "    unsigned short  ne_cres;\n" );
-    fprintf( outfile, "    unsigned char   ne_exetyp;\n" );
-    fprintf( outfile, "    unsigned char   ne_flagsothers;\n" );
-    fprintf( outfile, "    unsigned short  ne_pretthunks;\n" );
-    fprintf( outfile, "    unsigned short  ne_psegrefbytes;\n" );
-    fprintf( outfile, "    unsigned short  ne_swaparea;\n" );
-    fprintf( outfile, "    unsigned short  ne_expver;\n" );
-    fprintf( outfile, "  } os2_header;\n" );
-
-    /* segment table */
-
-    segtable_offset = 64;
-    fprintf( outfile, "  struct\n  {\n" );
-    fprintf( outfile, "    unsigned short filepos;\n" );
-    fprintf( outfile, "    unsigned short size;\n" );
-    fprintf( outfile, "    unsigned short flags;\n" );
-    fprintf( outfile, "    unsigned short minsize;\n" );
-    fprintf( outfile, "  } segtable[2];\n" );
-
-    /* resource directory */
-
-    resdir_offset = segtable_offset + 2 * 8;
-    resdir_size = get_res16_directory_size( spec );
-    fprintf( outfile, "  unsigned char resdir[%d];\n", resdir_size );
-
-    /* resident names table */
-
-    resnames_offset = resdir_offset + resdir_size;
-    fprintf( outfile, "  struct\n  {\n" );
-    fprintf( outfile, "    struct { unsigned char len; char name[%d]; unsigned short ord; } name_0;\n",
-             strlen( spec->dll_name ) );
-    resnames_size = 3 + strlen( spec->dll_name );
-    for (i = 1; i <= spec->limit; i++)
-    {
-        ORDDEF *odp = spec->ordinals[i];
-        if (!odp || !odp->name[0]) continue;
-        fprintf( outfile, "    struct { unsigned char len; char name[%d]; unsigned short ord; } name_%d;\n",
-                 strlen(odp->name), i );
-        resnames_size += 3 + strlen( odp->name );
-    }
-    fprintf( outfile, "    unsigned char name_last[%d];\n", 2 - (resnames_size & 1) );
-    resnames_size = (resnames_size + 2) & ~1;
-    fprintf( outfile, "  } resnames;\n" );
-
-    /* imported names table */
-
-    impnames_offset = resnames_offset + resnames_size;
-    fprintf( outfile, "  unsigned char impnames[2];\n" );
-
-    /* entry table */
-
-    et_offset = impnames_offset + 2;
-    et_size = output_entry_table( &et_buffer, spec );
-    fprintf( outfile, "  unsigned char entry_table[%d];\n", et_size );
-
-    /* data segment */
-
-    data_offset = et_offset + et_size;
-    fprintf( outfile, "  unsigned char data_segment[%d];\n", data_size );
-    if (data_offset + data_size >= 0x10000)
-        fatal_error( "Not supported yet: 16-bit module data larger than 64K\n" );
-
-    /* resource data */
-
-    resdata_offset = ne_offset + data_offset + data_size;
-    for (resdata_align = 0; resdata_align < 16; resdata_align++)
-    {
-        unsigned int size = get_res16_data_size( spec, resdata_offset, resdata_align );
-        if ((resdata_offset + size) >> resdata_align <= 0xffff) break;
-    }
-    output_res16_directory( &resdir_buffer, spec, resdata_offset, resdata_align );
-    resdata_size = output_res16_data( &resdata_buffer, spec, resdata_offset, resdata_align );
-    if (resdata_size) fprintf( outfile, "  unsigned char resources[%d];\n", resdata_size );
-
-    /* DOS header */
-
-    fprintf( outfile, "} module =\n{\n  {\n" );
-    fprintf( outfile, "    0x%04x,\n", IMAGE_DOS_SIGNATURE );  /* e_magic */
-    fprintf( outfile, "    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n" );
-    fprintf( outfile, "    { 0, 0, 0, 0, }, 0, 0,\n" );
-    fprintf( outfile, "    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },\n" );
-    fprintf( outfile, "    sizeof(module.dos_header)\n" );  /* e_lfanew */
-
-    /* NE header */
-
-    fprintf( outfile, "  },\n  {\n" );
-    fprintf( outfile, "    0x%04x,\n", IMAGE_OS2_SIGNATURE ); /* ne_magic */
-    fprintf( outfile, "    0, 0,\n" );
-    fprintf( outfile, "    %d,\n", et_offset );               /* ne_enttab */
-    fprintf( outfile, "    sizeof(module.entry_table),\n" );  /* ne_cbenttab */
-    fprintf( outfile, "    0,\n" );                           /* ne_crc */
-    fprintf( outfile, "    0x%04x,\n",                        /* ne_flags */
-             NE_FFLAGS_SINGLEDATA | NE_FFLAGS_LIBMODULE );
-    fprintf( outfile, "    2,\n" );                           /* ne_autodata */
-    fprintf( outfile, "    %d,\n", spec->heap_size );         /* ne_heap */
-    fprintf( outfile, "    0, 0, 0,\n" );
-    fprintf( outfile, "    2,\n" );                           /* ne_cseg */
-    fprintf( outfile, "    0,\n" );                           /* ne_cmod */
-    fprintf( outfile, "    0,\n" );                           /* ne_cbnrestab */
-    fprintf( outfile, "    %d,\n", segtable_offset );         /* ne_segtab */
-    fprintf( outfile, "    %d,\n", resdir_offset );           /* ne_rsrctab */
-    fprintf( outfile, "    %d,\n", resnames_offset );         /* ne_restab */
-    fprintf( outfile, "    %d,\n", impnames_offset );         /* ne_modtab */
-    fprintf( outfile, "    %d,\n", impnames_offset );         /* ne_imptab */
-    fprintf( outfile, "    0,\n" );                           /* ne_nrestab */
-    fprintf( outfile, "    0,\n" );                           /* ne_cmovent */
-    fprintf( outfile, "    0,\n" );                           /* ne_align */
-    fprintf( outfile, "    0,\n" );                           /* ne_cres */
-    fprintf( outfile, "    0x%04x,\n", NE_OSFLAGS_WINDOWS );  /* ne_exetyp */
-    fprintf( outfile, "    0x%04x,\n", NE_AFLAGS_FASTLOAD );  /* ne_flagsothers */
-    fprintf( outfile, "    0,\n" );                           /* ne_pretthunks */
-    fprintf( outfile, "    sizeof(module),\n" );              /* ne_psegrefbytes */
-    fprintf( outfile, "    0,\n" );                           /* ne_swaparea */
-    fprintf( outfile, "    0\n" );                            /* ne_expver */
-    fprintf( outfile, "  },\n" );
-
-    /* segment table */
-
-    fprintf( outfile, "  {\n" );
-    fprintf( outfile, "    { 0, %d, 0x%04x, %d },\n",
-             max_code_offset, NE_SEGFLAGS_32BIT, max_code_offset );
-    fprintf( outfile, "    { %d, %d, 0x%04x, %d },\n",
-             data_offset, data_size, NE_SEGFLAGS_DATA, data_size );
-    fprintf( outfile, "  },\n" );
-
-    /* resource directory */
-
-    output_bytes( outfile, resdir_buffer, resdir_size );
-    free( resdir_buffer );
-
-    /* resident names table */
-
-    fprintf( outfile, "  {\n" );
-    strcpy( string, spec->dll_name );
-    fprintf( outfile, "    { %d, \"%s\", 0 },\n", strlen(string), strupper(string) );
-    for (i = 1; i <= spec->limit; i++)
-    {
-        ORDDEF *odp = spec->ordinals[i];
-        if (!odp || !odp->name[0]) continue;
-        strcpy( string, odp->name );
-        fprintf( outfile, "    { %d, \"%s\", %d },\n", strlen(string), strupper(string), i );
-    }
-    fprintf( outfile, "    { 0 }\n  },\n" );
-
-    /* imported names table */
-
-    fprintf( outfile, "  { 0, 0 },\n" );
-
-    /* entry table */
-
-    output_bytes( outfile, et_buffer, et_size );
-    free( et_buffer );
-
-    /* data_segment */
-
-    output_bytes( outfile, data_segment, data_size );
-
-    /* resource data */
-
-    if (resdata_size)
-    {
-        output_bytes( outfile, resdata_buffer, resdata_size );
-        free( resdata_buffer );
-    }
-
-    fprintf( outfile, "};\n" );
 }
 
 
@@ -671,8 +405,17 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
 {
     ORDDEF **type, **typelist;
     int i, nFuncs, nTypes;
-    int code_offset, data_offset;
-    unsigned char *data;
+    unsigned char *resdir_buffer, *resdata_buffer, *et_buffer, *data_buffer;
+    unsigned char string[256];
+    unsigned int ne_offset, segtable_offset, impnames_offset;
+    unsigned int entrypoint_size, callfrom_size;
+    unsigned int code_size, code_offset;
+    unsigned int data_size, data_offset;
+    unsigned int resnames_size, resnames_offset;
+    unsigned int resdir_size, resdir_offset;
+    unsigned int resdata_size, resdata_offset, resdata_align;
+    unsigned int et_size, et_offset;
+
     char constructor[100], destructor[100];
 #ifdef __i386__
     unsigned short code_selector = get_cs();
@@ -686,9 +429,9 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "extern void __wine_call_from_16_regs();\n" );
     fprintf( outfile, "extern void __wine_call_from_16_thunk();\n" );
 
-    data = (unsigned char *)xmalloc( 0x10000 );
-    memset( data, 0, 16 );
-    data_offset = 16;
+    data_buffer = xmalloc( 0x10000 );
+    memset( data_buffer, 0, 16 );
+    data_size = 16;
 
     if (!spec->dll_name)  /* set default name from file name */
     {
@@ -741,28 +484,160 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     }
 #endif
 
-    /* Output the DLL functions prototypes */
+    /* compute code and data sizes, set offsets, and output prototypes */
+
+#ifdef __i386__
+    entrypoint_size = 2 + 5 + 4;    /* pushw bp + pushl target + call */
+    callfrom_size = 5 + 7 + 4 + 8;  /* pushl relay + lcall cs:glue + lret n + args */
+#else
+    entrypoint_size = 4 + 4;  /* target + call */
+    callfrom_size = 4 + 8;    /* lret n + args */
+#endif
+    code_size = nTypes * callfrom_size;
 
     for (i = 0; i <= spec->limit; i++)
     {
         ORDDEF *odp = spec->ordinals[i];
         if (!odp) continue;
-        switch(odp->type)
+        switch (odp->type)
         {
+        case TYPE_ABS:
+            odp->offset = LOWORD(odp->u.abs.value);
+            break;
+        case TYPE_VARIABLE:
+            odp->offset = data_size;
+            memcpy( data_buffer + data_size, odp->u.var.values, odp->u.var.n_values * sizeof(int) );
+            data_size += odp->u.var.n_values * sizeof(int);
+            break;
         case TYPE_CDECL:
         case TYPE_PASCAL:
         case TYPE_VARARGS:
             fprintf( outfile, "extern void %s();\n", odp->link_name );
+            /* fall through */
+        case TYPE_STUB:
+            odp->offset = code_size;
+            code_size += entrypoint_size;
             break;
         default:
+            assert(0);
             break;
         }
     }
+    data_buffer = xrealloc( data_buffer, data_size );  /* free unneeded data */
 
-    /* Output code segment */
+    /* Output the module structure */
+
+    /* DOS header */
 
     fprintf( outfile, "\n#include \"pshpack1.h\"\n" );
-    fprintf( outfile, "\nstatic struct code_segment\n{\n" );
+    fprintf( outfile, "static const struct module_data\n{\n" );
+    fprintf( outfile, "  struct\n  {\n" );
+    fprintf( outfile, "    unsigned short e_magic;\n" );
+    fprintf( outfile, "    unsigned short e_cblp;\n" );
+    fprintf( outfile, "    unsigned short e_cp;\n" );
+    fprintf( outfile, "    unsigned short e_crlc;\n" );
+    fprintf( outfile, "    unsigned short e_cparhdr;\n" );
+    fprintf( outfile, "    unsigned short e_minalloc;\n" );
+    fprintf( outfile, "    unsigned short e_maxalloc;\n" );
+    fprintf( outfile, "    unsigned short e_ss;\n" );
+    fprintf( outfile, "    unsigned short e_sp;\n" );
+    fprintf( outfile, "    unsigned short e_csum;\n" );
+    fprintf( outfile, "    unsigned short e_ip;\n" );
+    fprintf( outfile, "    unsigned short e_cs;\n" );
+    fprintf( outfile, "    unsigned short e_lfarlc;\n" );
+    fprintf( outfile, "    unsigned short e_ovno;\n" );
+    fprintf( outfile, "    unsigned short e_res[4];\n" );
+    fprintf( outfile, "    unsigned short e_oemid;\n" );
+    fprintf( outfile, "    unsigned short e_oeminfo;\n" );
+    fprintf( outfile, "    unsigned short e_res2[10];\n" );
+    fprintf( outfile, "    unsigned int   e_lfanew;\n" );
+    fprintf( outfile, "  } dos_header;\n" );
+
+    /* NE header */
+
+    ne_offset = 64;
+    fprintf( outfile, "  struct\n  {\n" );
+    fprintf( outfile, "    unsigned short  ne_magic;\n" );
+    fprintf( outfile, "    unsigned char   ne_ver;\n" );
+    fprintf( outfile, "    unsigned char   ne_rev;\n" );
+    fprintf( outfile, "    unsigned short  ne_enttab;\n" );
+    fprintf( outfile, "    unsigned short  ne_cbenttab;\n" );
+    fprintf( outfile, "    int             ne_crc;\n" );
+    fprintf( outfile, "    unsigned short  ne_flags;\n" );
+    fprintf( outfile, "    unsigned short  ne_autodata;\n" );
+    fprintf( outfile, "    unsigned short  ne_heap;\n" );
+    fprintf( outfile, "    unsigned short  ne_stack;\n" );
+    fprintf( outfile, "    unsigned int    ne_csip;\n" );
+    fprintf( outfile, "    unsigned int    ne_sssp;\n" );
+    fprintf( outfile, "    unsigned short  ne_cseg;\n" );
+    fprintf( outfile, "    unsigned short  ne_cmod;\n" );
+    fprintf( outfile, "    unsigned short  ne_cbnrestab;\n" );
+    fprintf( outfile, "    unsigned short  ne_segtab;\n" );
+    fprintf( outfile, "    unsigned short  ne_rsrctab;\n" );
+    fprintf( outfile, "    unsigned short  ne_restab;\n" );
+    fprintf( outfile, "    unsigned short  ne_modtab;\n" );
+    fprintf( outfile, "    unsigned short  ne_imptab;\n" );
+    fprintf( outfile, "    unsigned int    ne_nrestab;\n" );
+    fprintf( outfile, "    unsigned short  ne_cmovent;\n" );
+    fprintf( outfile, "    unsigned short  ne_align;\n" );
+    fprintf( outfile, "    unsigned short  ne_cres;\n" );
+    fprintf( outfile, "    unsigned char   ne_exetyp;\n" );
+    fprintf( outfile, "    unsigned char   ne_flagsothers;\n" );
+    fprintf( outfile, "    unsigned short  ne_pretthunks;\n" );
+    fprintf( outfile, "    unsigned short  ne_psegrefbytes;\n" );
+    fprintf( outfile, "    unsigned short  ne_swaparea;\n" );
+    fprintf( outfile, "    unsigned short  ne_expver;\n" );
+    fprintf( outfile, "  } os2_header;\n" );
+
+    /* segment table */
+
+    segtable_offset = 64;
+    fprintf( outfile, "  struct\n  {\n" );
+    fprintf( outfile, "    unsigned short filepos;\n" );
+    fprintf( outfile, "    unsigned short size;\n" );
+    fprintf( outfile, "    unsigned short flags;\n" );
+    fprintf( outfile, "    unsigned short minsize;\n" );
+    fprintf( outfile, "  } segtable[2];\n" );
+
+    /* resource directory */
+
+    resdir_offset = segtable_offset + 2 * 8;
+    resdir_size = get_res16_directory_size( spec );
+    fprintf( outfile, "  unsigned char resdir[%d];\n", resdir_size );
+
+    /* resident names table */
+
+    resnames_offset = resdir_offset + resdir_size;
+    fprintf( outfile, "  struct\n  {\n" );
+    fprintf( outfile, "    struct { unsigned char len; char name[%d]; unsigned short ord; } name_0;\n",
+             strlen( spec->dll_name ) );
+    resnames_size = 3 + strlen( spec->dll_name );
+    for (i = 1; i <= spec->limit; i++)
+    {
+        ORDDEF *odp = spec->ordinals[i];
+        if (!odp || !odp->name[0]) continue;
+        fprintf( outfile, "    struct { unsigned char len; char name[%d]; unsigned short ord; } name_%d;\n",
+                 strlen(odp->name), i );
+        resnames_size += 3 + strlen( odp->name );
+    }
+    fprintf( outfile, "    unsigned char name_last[%d];\n", 2 - (resnames_size & 1) );
+    resnames_size = (resnames_size + 2) & ~1;
+    fprintf( outfile, "  } resnames;\n" );
+
+    /* imported names table */
+
+    impnames_offset = resnames_offset + resnames_size;
+    fprintf( outfile, "  unsigned char impnames[2];\n" );
+
+    /* entry table */
+
+    et_offset = impnames_offset + 2;
+    et_size = output_entry_table( &et_buffer, spec );
+    fprintf( outfile, "  unsigned char entry_table[%d];\n", et_size );
+
+    /* code segment */
+
+    code_offset = et_offset + et_size;
     fprintf( outfile, "  struct {\n" );
 #ifdef __i386__
     fprintf( outfile, "    unsigned char pushl;\n" );      /* pushl $relay */
@@ -784,10 +659,110 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    unsigned short call;\n" );      /* call CALLFROM16 */
     fprintf( outfile, "    short callfrom16;\n" );
     fprintf( outfile, "  } entry[%d];\n", nFuncs );
-    fprintf( outfile, "} code_segment =\n{\n  {\n" );
 
-    code_offset = 0;
+    /* data segment */
 
+    data_offset = code_offset + code_size;
+    fprintf( outfile, "  unsigned char data_segment[%d];\n", data_size );
+    if (data_offset + data_size >= 0x10000)
+        fatal_error( "Not supported yet: 16-bit module data larger than 64K\n" );
+
+    /* resource data */
+
+    resdata_offset = ne_offset + data_offset + data_size;
+    for (resdata_align = 0; resdata_align < 16; resdata_align++)
+    {
+        unsigned int size = get_res16_data_size( spec, resdata_offset, resdata_align );
+        if ((resdata_offset + size) >> resdata_align <= 0xffff) break;
+    }
+    output_res16_directory( &resdir_buffer, spec, resdata_offset, resdata_align );
+    resdata_size = output_res16_data( &resdata_buffer, spec, resdata_offset, resdata_align );
+    if (resdata_size) fprintf( outfile, "  unsigned char resources[%d];\n", resdata_size );
+
+    /* Output the module data */
+
+    /* DOS header */
+
+    fprintf( outfile, "} module =\n{\n  {\n" );
+    fprintf( outfile, "    0x%04x,\n", IMAGE_DOS_SIGNATURE );  /* e_magic */
+    fprintf( outfile, "    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,\n" );
+    fprintf( outfile, "    { 0, 0, 0, 0, }, 0, 0,\n" );
+    fprintf( outfile, "    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },\n" );
+    fprintf( outfile, "    sizeof(module.dos_header)\n" );  /* e_lfanew */
+
+    /* NE header */
+
+    fprintf( outfile, "  },\n  {\n" );
+    fprintf( outfile, "    0x%04x,\n", IMAGE_OS2_SIGNATURE ); /* ne_magic */
+    fprintf( outfile, "    0, 0,\n" );
+    fprintf( outfile, "    %d,\n", et_offset );               /* ne_enttab */
+    fprintf( outfile, "    sizeof(module.entry_table),\n" );  /* ne_cbenttab */
+    fprintf( outfile, "    0,\n" );                           /* ne_crc */
+    fprintf( outfile, "    0x%04x,\n",                        /* ne_flags */
+             NE_FFLAGS_SINGLEDATA | NE_FFLAGS_LIBMODULE );
+    fprintf( outfile, "    2,\n" );                           /* ne_autodata */
+    fprintf( outfile, "    %d,\n", spec->heap_size );         /* ne_heap */
+    fprintf( outfile, "    0, 0, 0,\n" );
+    fprintf( outfile, "    2,\n" );                           /* ne_cseg */
+    fprintf( outfile, "    0,\n" );                           /* ne_cmod */
+    fprintf( outfile, "    0,\n" );                           /* ne_cbnrestab */
+    fprintf( outfile, "    %d,\n", segtable_offset );         /* ne_segtab */
+    fprintf( outfile, "    %d,\n", resdir_offset );           /* ne_rsrctab */
+    fprintf( outfile, "    %d,\n", resnames_offset );         /* ne_restab */
+    fprintf( outfile, "    %d,\n", impnames_offset );         /* ne_modtab */
+    fprintf( outfile, "    %d,\n", impnames_offset );         /* ne_imptab */
+    fprintf( outfile, "    0,\n" );                           /* ne_nrestab */
+    fprintf( outfile, "    0,\n" );                           /* ne_cmovent */
+    fprintf( outfile, "    0,\n" );                           /* ne_align */
+    fprintf( outfile, "    0,\n" );                           /* ne_cres */
+    fprintf( outfile, "    0x%04x,\n", NE_OSFLAGS_WINDOWS );  /* ne_exetyp */
+    fprintf( outfile, "    0x%04x,\n", NE_AFLAGS_FASTLOAD );  /* ne_flagsothers */
+    fprintf( outfile, "    0,\n" );                           /* ne_pretthunks */
+    fprintf( outfile, "    0,\n" );                           /* ne_psegrefbytes */
+    fprintf( outfile, "    0,\n" );                           /* ne_swaparea */
+    fprintf( outfile, "    0\n" );                            /* ne_expver */
+    fprintf( outfile, "  },\n" );
+
+    /* segment table */
+
+    fprintf( outfile, "  {\n" );
+    fprintf( outfile, "    { %d, %d, 0x%04x, %d },\n",
+             ne_offset + code_offset, code_size, NE_SEGFLAGS_32BIT, code_size );
+    fprintf( outfile, "    { %d, %d, 0x%04x, %d },\n",
+             ne_offset + data_offset, data_size, NE_SEGFLAGS_DATA, data_size );
+    fprintf( outfile, "  },\n" );
+
+    /* resource directory */
+
+    output_bytes( outfile, resdir_buffer, resdir_size );
+    free( resdir_buffer );
+
+    /* resident names table */
+
+    fprintf( outfile, "  {\n" );
+    strcpy( string, spec->dll_name );
+    fprintf( outfile, "    { %d, \"%s\", 0 },\n", strlen(string), strupper(string) );
+    for (i = 1; i <= spec->limit; i++)
+    {
+        ORDDEF *odp = spec->ordinals[i];
+        if (!odp || !odp->name[0]) continue;
+        strcpy( string, odp->name );
+        fprintf( outfile, "    { %d, \"%s\", %d },\n", strlen(string), strupper(string), i );
+    }
+    fprintf( outfile, "    { 0 }\n  },\n" );
+
+    /* imported names table */
+
+    fprintf( outfile, "  { 0, 0 },\n" );
+
+    /* entry table */
+
+    output_bytes( outfile, et_buffer, et_size );
+    free( et_buffer );
+
+    /* code segment */
+
+    fprintf( outfile, "  {\n" );
     for ( i = 0; i < nTypes; i++ )
     {
         char profile[101], *arg;
@@ -849,7 +824,6 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
             fprintf( outfile, "     { 0xcb66, 0x9090, { 0x%08x, 0x%08x } },\n",
                      arg_types[0], arg_types[1] );
 #endif
-        code_offset += sizeof(CALLFROM16);
     }
     fprintf( outfile, "  },\n  {\n" );
 
@@ -859,15 +833,6 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
         if (!odp) continue;
         switch (odp->type)
         {
-          case TYPE_ABS:
-            odp->offset = LOWORD(odp->u.abs.value);
-            break;
-
-          case TYPE_VARIABLE:
-            odp->offset = data_offset;
-            data_offset += StoreVariableCode( data + data_offset, 4, odp);
-            break;
-
           case TYPE_CDECL:
           case TYPE_PASCAL:
           case TYPE_VARARGS:
@@ -876,45 +841,38 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
             assert( type );
 
             fprintf( outfile, "    /* %s.%d */ ", spec->dll_name, i );
+            fprintf( outfile,
 #ifdef __i386__
-            fprintf( outfile, "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s */ },\n",
+                     "{ 0x5566, 0x68, %s, 0xe866, %d  /* %s */ },\n",
 #else
-            fprintf( outfile, "{ %s, 0xe866, %d, /* %s */ },\n",
+                     "{ %s, 0xe866, %d, /* %s */ },\n",
 #endif
                      odp->link_name,
-                     (type-typelist)*sizeof(CALLFROM16) -
-                     (code_offset + sizeof(ENTRYPOINT16)),
+                     (type - typelist) * callfrom_size - (odp->offset + entrypoint_size),
                      get_function_name( odp ) );
-
-            odp->offset = code_offset;
-            code_offset += sizeof(ENTRYPOINT16);
             break;
-
-          default:
-            fprintf(stderr,"build: function type %d not available for Win16\n",
-                    odp->type);
-            exit(1);
+        default:
+            break;
         }
     }
+    fprintf( outfile, "  },\n" );
 
-    fprintf( outfile, "    }\n};\n" );
 
-    /* Build the module */
+    /* data_segment */
 
-    output_module_data( outfile, code_offset, data, data_offset, spec );
+    output_bytes( outfile, data_buffer, data_size );
+    free( data_buffer );
 
-    /* Output the DLL descriptor */
+    /* resource data */
 
-    fprintf( outfile, "#include \"poppack.h\"\n\n" );
+    if (resdata_size)
+    {
+        output_bytes( outfile, resdata_buffer, resdata_size );
+        free( resdata_buffer );
+    }
 
-    fprintf( outfile, "static const struct dll_descriptor\n{\n" );
-    fprintf( outfile, "    const struct module_data *module;\n" );
-    fprintf( outfile, "    struct code_segment *code_start;\n" );
-    fprintf( outfile, "    const unsigned char *rsrc;\n" );
-    fprintf( outfile, "} descriptor =\n{\n" );
-    fprintf( outfile, "    &module,\n" );
-    fprintf( outfile, "    &code_segment\n" );
     fprintf( outfile, "};\n" );
+    fprintf( outfile, "#include \"poppack.h\"\n\n" );
 
     /* Output the DLL constructor */
 
@@ -925,13 +883,13 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile,
              "void %s(void)\n"
              "{\n"
-             "    extern void __wine_dll_register_16( const struct dll_descriptor *descr, const char *file_name );\n"
-             "    __wine_dll_register_16( &descriptor, \"%s\" );\n"
+             "    extern void __wine_dll_register_16( const struct module_data *, const char * );\n"
+             "    __wine_dll_register_16( &module, \"%s\" );\n"
              "}\n", constructor, spec->file_name );
     fprintf( outfile,
              "void %s(void)\n"
              "{\n"
-             "    extern void __wine_dll_unregister_16( const struct dll_descriptor *descr );\n"
-             "    __wine_dll_unregister_16( &descriptor );\n"
+             "    extern void __wine_dll_unregister_16( const struct module_data * );\n"
+             "    __wine_dll_unregister_16( &module );\n"
              "}\n", destructor );
 }
