@@ -181,6 +181,8 @@ LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 /* globals */
 WINEFILE_GLOBALS Globals;
 
+static int last_split;
+
 /* some common string constants */
 const static TCHAR sEmpty[] = {'\0'};
 const static TCHAR sSpace[] = {' ', '\0'};
@@ -3679,8 +3681,6 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 
 LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
-	static int last_split;
-
 	ChildWnd* child = (ChildWnd*) GetWindowLong(hwnd, GWL_USERDATA);
 	ASSERT(child);
 
@@ -3918,6 +3918,14 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 				case ID_VIEW_SORT_DATE:
 					set_sort_order(child, SORT_DATE);
 					break;
+
+				case ID_VIEW_SPLIT: {
+					last_split = child->split_pos;
+#ifdef _NO_EXTENSIONS
+					draw_splitbar(hwnd, last_split);
+#endif
+					SetCapture(hwnd);
+					break;}
 
 				default:
 					return pane_command(pane, LOWORD(wparam));
