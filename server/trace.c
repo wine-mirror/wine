@@ -424,6 +424,118 @@ static void dump_varargs_LUID_AND_ATTRIBUTES( size_t size )
     remove_data( size );
 }
 
+static void dump_inline_sid( const SID *sid, size_t size )
+{
+    DWORD i;
+
+    /* security check */
+    if ((size < sizeof(SID)) ||
+      (FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]) > size))
+        return;
+
+    fputc( '{', stderr );
+    fprintf( stderr, "S-%u-%lu", sid->Revision, MAKELONG(
+        MAKEWORD( sid->IdentifierAuthority.Value[5],
+                  sid->IdentifierAuthority.Value[4] ),
+        MAKEWORD( sid->IdentifierAuthority.Value[3],
+                  sid->IdentifierAuthority.Value[2] ) ) );
+    for (i = 0; i < sid->SubAuthorityCount; i++)
+        fprintf( stderr, "-%lu", sid->SubAuthority[i] );
+    fputc( '}', stderr );
+}
+
+static void dump_inline_acl( const ACL *acl, size_t size )
+{
+    const ACE_HEADER *ace;
+    ULONG i;
+    fputc( '{', stderr );
+
+    if (size)
+    {
+        if (size < sizeof(ACL))
+            return;
+        size -= sizeof(ACL);
+        ace = (const ACE_HEADER *)(acl + 1);
+        for (i = 0; i < acl->AceCount; i++)
+        {
+            const SID *sid = NULL;
+    
+            if (size < sizeof(ACE_HEADER))
+                return;
+            if (size < ace->AceSize)
+                return;
+            size -= ace->AceSize;
+            fprintf( stderr, "{AceType=" );
+            switch (ace->AceType)
+            {
+            case ACCESS_DENIED_ACE_TYPE:
+                sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
+                fprintf( stderr, "ACCESS_DENIED_ACE_TYPE" );
+                break;
+            case ACCESS_ALLOWED_ACE_TYPE:
+                sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
+                fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE" );
+                break;
+            case SYSTEM_AUDIT_ACE_TYPE:
+                sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
+                fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE" );
+                break;
+            case SYSTEM_ALARM_ACE_TYPE:
+                sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
+                fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE" );
+                break;
+            default:
+                fprintf( stderr, "unknown<%d>", ace->AceType );
+                break;
+            }
+            fprintf( stderr, ",AceFlags=%x,Sid=", ace->AceFlags );
+            if (sid)
+                dump_inline_sid( sid, size );
+            ace = (const ACE_HEADER *)((const char *)ace + ace->AceSize);
+            fputc( '}', stderr );
+        }
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_inline_security_descriptor( const struct security_descriptor *sd, size_t size )
+{
+    fputc( '{', stderr );
+    if (size >= sizeof(struct security_descriptor))
+    {
+        size_t offset = sizeof(struct security_descriptor);
+        fprintf( stderr, "control=%08x", sd->control );
+        fprintf( stderr, ",owner=" );
+        if ((sd->owner_len > FIELD_OFFSET(SID, SubAuthority[255])) || (offset + sd->owner_len > size))
+            return;
+        dump_inline_sid( (const SID *)((const char *)sd + offset), sd->owner_len );
+        offset += sd->owner_len;
+        fprintf( stderr, ",group=" );
+        if ((sd->group_len > FIELD_OFFSET(SID, SubAuthority[255])) || (offset + sd->group_len > size))
+            return;
+        dump_inline_sid( (const SID *)((const char *)sd + offset), sd->group_len );
+        offset += sd->group_len;
+        fprintf( stderr, ",sacl=" );
+        if ((sd->sacl_len >= MAX_ACL_LEN) || (offset + sd->sacl_len > size))
+            return;
+        dump_inline_acl( (const ACL *)((const char *)sd + offset), sd->sacl_len );
+        offset += sd->sacl_len;
+        fprintf( stderr, ",dacl=" );
+        if ((sd->dacl_len >= MAX_ACL_LEN) || (offset + sd->dacl_len > size))
+            return;
+        dump_inline_acl( (const ACL *)((const char *)sd + offset), sd->dacl_len );
+        offset += sd->dacl_len;
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_varargs_security_descriptor( size_t size )
+{
+    const struct security_descriptor *sd = cur_data;
+    dump_inline_security_descriptor( sd, size );
+    remove_data( size );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */

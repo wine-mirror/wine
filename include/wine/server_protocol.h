@@ -162,6 +162,21 @@ typedef struct
     unsigned short attr;
 } char_info_t;
 
+#define MAX_ACL_LEN 65535
+
+struct security_descriptor
+{
+    unsigned int control;
+    size_t owner_len;
+    size_t group_len;
+    size_t sacl_len;
+    size_t dacl_len;
+
+
+
+
+};
+
 
 
 
