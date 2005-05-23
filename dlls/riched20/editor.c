@@ -79,7 +79,7 @@
   - EM_LINEFROMCHAR
   - EM_LINEINDEX
   - EM_LINELENGTH
-  - EM_LINESCROLL
+  + EM_LINESCROLL
   - EM_PASTESPECIAL
   - EM_POSFROMCHARS
   + EM_REDO 2.0
@@ -843,7 +843,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_LINEFROMCHAR)
   UNSUPPORTED_MSG(EM_LINEINDEX)
   UNSUPPORTED_MSG(EM_LINELENGTH)
-  UNSUPPORTED_MSG(EM_LINESCROLL)
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
 /*  UNSUPPORTED_MSG(EM_POSFROMCHARS) missing in Wine headers */
   UNSUPPORTED_MSG(EM_REQUESTRESIZE)
@@ -1018,6 +1017,22 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_GETPARAFORMAT:
     ME_GetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
     return 0;
+  case EM_LINESCROLL:
+  {
+    int nPos = editor->nScrollPosY, nEnd= editor->nTotalLength - editor->sizeWindow.cy;
+    nPos += 8 * lParam; /* FIXME follow the original */
+    if (nPos>=nEnd)
+      nPos = nEnd;
+    if (nPos<0)
+      nPos = 0;
+    if (nPos != editor->nScrollPosY) {
+      ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
+      editor->nScrollPosY = nPos;
+      SetScrollPos(hWnd, SB_VERT, nPos, TRUE);
+      UpdateWindow(hWnd);
+    }
+    return TRUE; /* Should return false if a single line richedit control */
+  }
   case WM_CLEAR:
   {
     int from, to;
@@ -1314,16 +1329,15 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case WM_MOUSEWHEEL:
   {
-    int gcWheelDelta = 0, nPos = editor->nScrollPosY;
+    int gcWheelDelta = 0, nPos = editor->nScrollPosY, nEnd = editor->nTotalLength - editor->sizeWindow.cy; 
     UINT pulScrollLines;
-
     SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
     gcWheelDelta -= GET_WHEEL_DELTA_WPARAM(wParam);
     if (abs(gcWheelDelta) >= WHEEL_DELTA && pulScrollLines)
-      nPos += pulScrollLines * (gcWheelDelta / WHEEL_DELTA) * 8;
-    if(nPos>=editor->nTotalLength)
-      nPos = editor->nTotalLength - 1;
-    if (nPos<0) 
+      nPos += pulScrollLines * (gcWheelDelta / WHEEL_DELTA) * 8; /* FIXME follow the original */
+    if (nPos>=nEnd)
+      nPos = nEnd;
+    if (nPos<0)
       nPos = 0;
     if (nPos != editor->nScrollPosY) {
       ScrollWindow(hWnd, 0, editor->nScrollPosY-nPos, NULL, NULL);
