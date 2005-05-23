@@ -36,6 +36,7 @@
 #include "tlhelp32.h"
 #include "toolhelp.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(toolhelp);
@@ -406,20 +407,20 @@ BOOL WINAPI Process32NextW(HANDLE hSnapshot, LPPROCESSENTRY32W lppe)
 
 
 /***********************************************************************
- *		TOOLHELP_Module32Next
+ *		TOOLHELP_Module32NextW
  *
  * Implementation of Module32First/Next
  */
-static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
+static BOOL TOOLHELP_Module32NextW( HANDLE handle, LPMODULEENTRY32W lpme, BOOL first )
 {
     BOOL ret;
     WCHAR exe[MAX_PATH];
     DWORD len;
 
-    if (lpme->dwSize < sizeof (MODULEENTRY32))
+    if (lpme->dwSize < sizeof (MODULEENTRY32W))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32), lpme->dwSize);
+        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32W), lpme->dwSize);
         return FALSE;
     }
     SERVER_START_REQ( next_module )
@@ -429,7 +430,7 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
         wine_server_set_reply( req, exe, sizeof(exe) );
         if ((ret = !wine_server_call_err( req )))
         {
-            const char* ptr;
+            const WCHAR* ptr;
             lpme->th32ModuleID   = 1; /* toolhelp internal id, never used */
             lpme->th32ProcessID  = reply->pid;
             lpme->GlblcntUsage   = 0xFFFF; /* FIXME */
@@ -437,16 +438,58 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
             lpme->modBaseAddr    = reply->base;
             lpme->modBaseSize    = reply->size;
             lpme->hModule        = reply->base;
-            len = WideCharToMultiByte( CP_ACP, 0, exe, wine_server_reply_size(reply) / sizeof(WCHAR),
-                                       lpme->szExePath, sizeof(lpme->szExePath) - 1, NULL, NULL );
+            len = wine_server_reply_size(reply) / sizeof(WCHAR);
+            memcpy(lpme->szExePath, exe, wine_server_reply_size(reply));
             lpme->szExePath[len] = 0;
-            if ((ptr = strrchr(lpme->szExePath, '\\'))) ptr++;
+            if ((ptr = strrchrW(lpme->szExePath, '\\'))) ptr++;
             else ptr = lpme->szExePath;
-            lstrcpynA( lpme->szModule, ptr, sizeof(lpme->szModule) );
+            lstrcpynW( lpme->szModule, ptr, sizeof(lpme->szModule)/sizeof(lpme->szModule[0]));
         }
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/***********************************************************************
+ *		TOOLHELP_Module32NextA
+ *
+ * Implementation of Module32First/Next
+ */
+static BOOL TOOLHELP_Module32NextA( HANDLE handle, LPMODULEENTRY32 lpme, BOOL first )
+{
+    BOOL ret;
+    MODULEENTRY32W mew;
+    
+    if (lpme->dwSize < sizeof (MODULEENTRY32))
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(MODULEENTRY32), lpme->dwSize);
+        return FALSE;
+    }
+    
+    mew.dwSize = sizeof(mew);
+    if ((ret = TOOLHELP_Module32NextW( handle, &mew, first )))
+    {
+        lpme->th32ModuleID  = mew.th32ModuleID;
+        lpme->th32ProcessID = mew.th32ProcessID;
+        lpme->GlblcntUsage  = mew.GlblcntUsage;
+        lpme->ProccntUsage  = mew.ProccntUsage;
+        lpme->modBaseAddr   = mew.modBaseAddr;
+        lpme->hModule       = mew.hModule;
+        WideCharToMultiByte( CP_ACP, 0, mew.szModule, -1, lpme->szModule, sizeof(lpme->szModule), NULL, NULL );
+        WideCharToMultiByte( CP_ACP, 0, mew.szExePath, -1, lpme->szExePath, sizeof(lpme->szExePath), NULL, NULL );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *		Module32FirstW   (KERNEL32.@)
+ *
+ * Return info about the "first" module in a toolhelp32 snapshot
+ */
+BOOL WINAPI Module32FirstW(HANDLE hSnapshot, LPMODULEENTRY32W lpme)
+{
+    return TOOLHELP_Module32NextW( hSnapshot, lpme, TRUE );
 }
 
 /***********************************************************************
@@ -456,7 +499,17 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
  */
 BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 {
-    return TOOLHELP_Module32Next( hSnapshot, lpme, TRUE );
+    return TOOLHELP_Module32NextA( hSnapshot, lpme, TRUE );
+}
+
+/***********************************************************************
+ *		Module32NextW   (KERNEL32.@)
+ *
+ * Return info about the "next" module in a toolhelp32 snapshot
+ */
+BOOL WINAPI Module32NextW(HANDLE hSnapshot, LPMODULEENTRY32W lpme)
+{
+    return TOOLHELP_Module32NextW( hSnapshot, lpme, FALSE );
 }
 
 /***********************************************************************
@@ -466,7 +519,7 @@ BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
  */
 BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY32 lpme)
 {
-    return TOOLHELP_Module32Next( hSnapshot, lpme, FALSE );
+    return TOOLHELP_Module32NextA( hSnapshot, lpme, FALSE );
 }
 
 /************************************************************************
