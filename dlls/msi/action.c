@@ -3691,6 +3691,10 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 
         deformat_string(package, name, &deformated);
 
+        /* get the double nulls to terminate SZ_MULTI */
+        if (type == REG_MULTI_SZ)
+            size +=sizeof(WCHAR);
+
         if (!check_first)
         {
             TRACE("Setting value %s of %s\n",debugstr_w(deformated),
@@ -4586,8 +4590,10 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             continue;
         }
 
-        if (!ACTION_VerifyComponentForAction(package, index,
-                                INSTALLSTATE_LOCAL))
+        if ((!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_LOCAL)) &&
+            (!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_ADVERTISED)))
         {
             TRACE("Skipping class reg due to disabled component\n");
             msiobj_release(&row->hdr);
@@ -6050,8 +6056,10 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
             continue;
         }
 
-        if (!ACTION_VerifyComponentForAction(package, index,
-                                INSTALLSTATE_LOCAL))
+        if ((!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_LOCAL)) &&
+            (!ACTION_VerifyComponentForAction(package, index,
+                                INSTALLSTATE_ADVERTISED)))
         {
             TRACE("Skipping extension reg due to disabled component\n");
             msiobj_release(&row->hdr);
