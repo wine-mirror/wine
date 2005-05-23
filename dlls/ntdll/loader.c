@@ -1357,6 +1357,8 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     if (TRACE_ON(snoop)) SNOOP_SetupDLL( module );
 
+    TRACE_(loaddll)( " Loaded module %s : native\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
+
     *pwm = wm;
     return STATUS_SUCCESS;
 }
@@ -1423,6 +1425,8 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, DWORD flags, 
          * for the same module, so return an error. */
         return STATUS_INVALID_IMAGE_FORMAT;
     }
+
+    TRACE_(loaddll)( "Loaded module %s : builtin\n", debugstr_w(info.wm->ldr.FullDllName.Buffer) );
 
     info.wm->ldr.SectionHandle = handle;
     if (strcmpiW( info.wm->ldr.BaseDllName.Buffer, name ))
@@ -1621,9 +1625,6 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
             /* Initialize DLL just loaded */
             TRACE("Loaded module %s (%s) at %p\n",
                   debugstr_w(filename), filetype, (*pwm)->ldr.BaseAddress);
-            if (!TRACE_ON(module))
-                TRACE_(loaddll)("Loaded module %s : %s\n",
-                                debugstr_w((*pwm)->ldr.FullDllName.Buffer), filetype);
             /* Set the ldr.LoadCount here so that an attach failure will */
             /* decrement the dependencies through the MODULE_FreeLibrary call. */
             (*pwm)->ldr.LoadCount = 1;
