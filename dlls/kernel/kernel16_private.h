@@ -62,6 +62,7 @@ typedef struct _NE_MODULE
     WORD      ne_expver;        /* 3e Expected Windows version */
     /* From here, these are extra fields not present in normal Windows */
     HMODULE   module32;         /* PE module handle for Win32 modules */
+    HMODULE   owner32;          /* PE module containing this one for 16-bit builtins */
     HMODULE16 self;             /* Handle for this module */
     WORD      self_loading_sel; /* Selector used for self-loading apps. */
     LPVOID    rsrc32_map;       /* HRSRC 16->32 map (for 32-bit modules) */

@@ -993,7 +993,8 @@ static HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL lib_only )
  *
  * Load a built-in Win16 module. Helper function for NE_LoadBuiltinModule.
  */
-static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, const char *file_name )
+static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, const char *file_name,
+                                         HMODULE owner32 )
 {
     NE_MODULE *pModule;
     HMODULE16 hModule;
@@ -1007,6 +1008,7 @@ static HMODULE16 NE_DoLoadBuiltinModule( const IMAGE_DOS_HEADER *mz_header, cons
     if (hModule < 32) return hModule;
     pModule = GlobalLock16( hModule );
     pModule->ne_flags |= NE_FFLAGS_BUILTIN;
+    pModule->owner32 = owner32;
 
     /* fake the expected version the module should have according to the current Windows version */
     versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
@@ -1098,7 +1100,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     if (descr)
     {
         TRACE("Trying built-in '%s'\n", libname);
-        hinst = NE_DoLoadBuiltinModule( descr, file_name );
+        hinst = NE_DoLoadBuiltinModule( descr, file_name, mod32 );
         if (hinst > 32) TRACE_(loaddll)("Loaded module %s : builtin\n", debugstr_a(file_name));
     }
     else
@@ -1393,9 +1395,6 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
     if (((INT16)(--pModule->count)) > 0 ) return TRUE;
     else pModule->count = 0;
 
-    if (pModule->ne_flags & NE_FFLAGS_BUILTIN)
-        return FALSE;  /* Can't free built-in module */
-
     if (call_wep && !(pModule->ne_flags & NE_FFLAGS_WIN32))
     {
         /* Free the objects owned by the DLL module */
@@ -1407,11 +1406,14 @@ static BOOL16 NE_FreeModule( HMODULE16 hModule, BOOL call_wep )
             call_wep = FALSE;  /* We are freeing a task -> no more WEPs */
     }
 
+    TRACE_(loaddll)("Unloaded module %s : %s\n", debugstr_a(NE_MODULE_NAME(pModule)),
+                    (pModule->ne_flags & NE_FFLAGS_BUILTIN) ? "builtin" : "native");
 
     /* Clear magic number just in case */
 
     pModule->ne_magic = pModule->self = 0;
-    if (!(pModule->ne_flags & NE_FFLAGS_BUILTIN)) UnmapViewOfFile( (void *)pModule->mapping );
+    if (pModule->owner32) FreeLibrary( pModule->owner32 );
+    else if (pModule->mapping) UnmapViewOfFile( (void *)pModule->mapping );
 
       /* Remove it from the linked list */
 
@@ -2052,7 +2054,7 @@ static HMODULE16 create_dummy_module( HMODULE module32 )
     pModule->ne_rsrctab = pModule->ne_imptab = pModule->ne_enttab = (char *)pStr - (char *)pModule;
 
     NE_RegisterModule( pModule );
-    LoadLibraryA( filename );  /* increment the ref count of the 32-bit module */
+    pModule->owner32 = LoadLibraryA( filename );  /* increment the ref count of the 32-bit module */
     return hModule;
 }
 
