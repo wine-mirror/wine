@@ -567,7 +567,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 *iface,
             clsid = _ILGetGUIDPointer (pidl);
             if (clsid)
             {
-                if (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING)
+                if (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING)
                 {
                     static const WCHAR clsidW[] =
                      { 'C','L','S','I','D','\\',0 };

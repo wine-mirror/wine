@@ -793,7 +793,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
 
     TRACE("(iface=%p, pidl=%p, uFlags=%lx, lpName=%p)\n", iface, pidl, uFlags, lpName);
     
-    if ((GET_SHGDN_FOR(uFlags) == SHGDN_FORPARSING) &&
+    if ((GET_SHGDN_FOR(uFlags) & SHGDN_FORPARSING) &&
         (GET_SHGDN_RELATION(uFlags) != SHGDN_INFOLDER))
     {
         if (!pidl->mkid.cb) {

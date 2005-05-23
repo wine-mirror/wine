@@ -764,7 +764,7 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
     
     strRet->uType = STRRET_CSTR;
     if (_ILIsDesktop(pidl)) { /* empty pidl */
-        if ((GET_SHGDN_FOR(dwFlags) == SHGDN_FORPARSING) &&
+        if ((GET_SHGDN_FOR(dwFlags) & SHGDN_FORPARSING) &&
             (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER)) 
         {
             if (This->sPathTarget)
@@ -774,7 +774,7 @@ IShellFolder_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl,
             hr = E_INVALIDARG;
         }
     } else if (_ILIsPidlSimple(pidl)) {
-        if ((GET_SHGDN_FOR(dwFlags) == SHGDN_FORPARSING) &&
+        if ((GET_SHGDN_FOR(dwFlags) & SHGDN_FORPARSING) &&
             (GET_SHGDN_RELATION(dwFlags) != SHGDN_INFOLDER) && 
             This->sPathTarget) 
         {

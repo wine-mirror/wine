@@ -559,7 +559,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
     if (_ILIsDesktop (pidl))
     {
         if ((GET_SHGDN_RELATION (dwFlags) == SHGDN_NORMAL) &&
-            (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING))
+            (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING))
         {
             BOOL defCharUsed;
 
@@ -589,7 +589,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
 
         if ((clsid = _ILGetGUIDPointer (pidl)))
         {
-            if (GET_SHGDN_FOR (dwFlags) == SHGDN_FORPARSING)
+            if (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING)
             {
                 int bWantsForParsing;
 
