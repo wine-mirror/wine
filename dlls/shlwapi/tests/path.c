@@ -61,6 +61,9 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
     {"http://www.winehq.org/tests/..#example", 0, S_OK, "http://www.winehq.org/#example"},
     {"http://www.winehq.org/tests/../#example", 0, S_OK, "http://www.winehq.org/#example"},
     {"http://www.winehq.org/tests/../#example", URL_DONT_SIMPLIFY, S_OK, "http://www.winehq.org/tests/../#example"},
+    {"http://www.winehq.org/tests/foo bar", URL_ESCAPE_SPACES_ONLY| URL_DONT_ESCAPE_EXTRA_INFO , S_OK, "http://www.winehq.org/tests/foo%20bar"},
+    {"http://www.winehq.org/tests/foo%20bar", URL_UNESCAPE , S_OK, "http://www.winehq.org/tests/foo bar"},
+    {"file:///c:/tests/foo%20bar", URL_UNESCAPE , S_OK, "file:///c:/tests/foo bar"},
 };
 
 typedef struct _TEST_URL_ESCAPE {
@@ -185,6 +188,7 @@ struct {
     {"c:\\foo\\bar", "file:///c:/foo/bar", S_OK},
     {"c:foo\\bar", "file:///c:foo/bar", S_OK},
     {"c:\\foo/b a%r", "file:///c:/foo/b%20a%25r", S_OK},
+    {"c:\\foo\\foo bar", "file:///c:/foo/foo%20bar", S_OK},
 #if 0
     /* The following test fails on native shlwapi as distributed with Win95/98.
      * Wine matches the behaviour of later versions.
@@ -219,6 +223,7 @@ struct {
     {"file:c|/foo/bar", "c:\\foo\\bar", S_OK},
     {"file:cx|/foo/bar", "cx|\\foo\\bar", S_OK},
     {"file:////c:/foo/bar", "c:\\foo\\bar", S_OK},
+/*    {"file:////c:/foo/foo%20bar", "c:\\foo\\foo%20bar", S_OK},*/
 
     {"c:\\foo\\bar", NULL, E_INVALIDARG},
     {"foo/bar", NULL, E_INVALIDARG},
@@ -387,10 +392,12 @@ static void test_url_canonicalize(const char *szUrl, DWORD dwFlags, HRESULT dwEx
     DWORD dwSize;
     
     dwSize = INTERNET_MAX_URL_LENGTH;
+    ok(UrlCanonicalizeA(szUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer\n");
     ok(UrlCanonicalizeA(szUrl, szReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeA didn't return 0x%08lx\n", dwExpectReturn);
-    ok(strcmp(szReturnUrl,szExpectUrl)==0, "Expected %s, but got %s\n", szExpectUrl, szReturnUrl);
+    ok(strcmp(szReturnUrl,szExpectUrl)==0, "UrlCanonicalizeA dwFlags 0x%08lx Expected %s, but got %s\n", dwFlags, szExpectUrl, szReturnUrl);
 
     dwSize = INTERNET_MAX_URL_LENGTH;
+    ok(UrlCanonicalizeW(wszUrl, NULL, &dwSize, dwFlags) != dwExpectReturn, "Unexpected return for NULL buffer\n");
     ok(UrlCanonicalizeW(wszUrl, wszReturnUrl, &dwSize, dwFlags) == dwExpectReturn, "UrlCanonicalizeW didn't return 0x%08lx\n", dwExpectReturn);
     wszConvertedUrl = GetWideString(szReturnUrl);
     ok(strcmpW(wszReturnUrl, wszConvertedUrl)==0, "Strings didn't match between ascii and unicode UrlCanonicalize!\n");
