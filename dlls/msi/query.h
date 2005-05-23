@@ -50,7 +50,6 @@
 #define EXPR_SVAL     5
 #define EXPR_UVAL     6
 #define EXPR_STRCMP   7
-#define EXPR_UTF8     8
 #define EXPR_WILDCARD 9
 #define EXPR_COL_NUMBER_STRING 10
 
@@ -83,7 +82,6 @@ struct expr
         LPWSTR sval;
         LPWSTR column;
         UINT col_number;
-        char *utf8;
     } u;
 };
 

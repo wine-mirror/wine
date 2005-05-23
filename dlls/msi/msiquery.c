@@ -47,7 +47,7 @@ void MSI_CloseView( MSIOBJECTHDR *arg )
     msiobj_release( &query->db->hdr );
 }
 
-UINT VIEW_find_column( MSIVIEW *table, LPWSTR name, UINT *n )
+UINT VIEW_find_column( MSIVIEW *table, LPCWSTR name, UINT *n )
 {
     LPWSTR col_name;
     UINT i, count, r;

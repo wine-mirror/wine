@@ -129,8 +129,8 @@ static struct expr * EXPR_wildcard();
 
 %type <string> column table id
 %type <column_list> selcollist
-%type <query> from unorderedsel oneselect onequery onecreate oneinsert
-%type <query> oneupdate onedelete
+%type <query> query from unorderedsel
+%type <query> oneupdate onedelete oneselect onequery onecreate oneinsert
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
 %type <column_info> column_def table_def
@@ -139,32 +139,20 @@ static struct expr * EXPR_wildcard();
 
 %%
 
+query:
+    onequery
+    {
+        SQL_input* sql = (SQL_input*) info;
+        *sql->view = $1;
+    }
+    ;
+
 onequery:
     oneselect
-    {
-        SQL_input* sql = (SQL_input*) info;
-        *sql->view = $1;
-    }
   | onecreate
-    {
-        SQL_input* sql = (SQL_input*) info;
-        *sql->view = $1;
-    }
   | oneinsert
-    {
-        SQL_input* sql = (SQL_input*) info;
-        *sql->view = $1;
-    }
   | oneupdate
-    {
-        SQL_input* sql = (SQL_input*) info;
-        *sql->view = $1;
-    }
   | onedelete
-    {
-        SQL_input* sql = (SQL_input*) info;
-        *sql->view = $1;
-    }
     ;
 
 oneinsert:
@@ -455,46 +443,68 @@ expr:
   | column_val TK_EQ column_val
         {
             $$ = EXPR_complex( $1, OP_EQ, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | expr TK_AND expr
         {
             $$ = EXPR_complex( $1, OP_AND, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | expr TK_OR expr
         {
             $$ = EXPR_complex( $1, OP_OR, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_EQ val
         {
             $$ = EXPR_complex( $1, OP_EQ, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_GT val
         {
             $$ = EXPR_complex( $1, OP_GT, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_LT val
         {
             $$ = EXPR_complex( $1, OP_LT, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_LE val
         {
             $$ = EXPR_complex( $1, OP_LE, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_GE val
         {
             $$ = EXPR_complex( $1, OP_GE, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_NE val
         {
             $$ = EXPR_complex( $1, OP_NE, $3 );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_IS TK_NULL
         {
             $$ = EXPR_complex( $1, OP_ISNULL, NULL );
+            if( !$$ )
+                YYABORT;
         }
   | column_val TK_IS TK_NOT TK_NULL
         {
             $$ = EXPR_complex( $1, OP_NOTNULL, NULL );
+            if( !$$ )
+                YYABORT;
         }
     ;
 
@@ -764,8 +774,6 @@ void delete_expr( struct expr *e )
         delete_expr( e->u.expr.left );
         delete_expr( e->u.expr.right );
     }
-    else if( e->type == EXPR_UTF8 )
-        HeapFree( GetProcessHeap(), 0, e->u.utf8 );
     else if( e->type == EXPR_SVAL )
         HeapFree( GetProcessHeap(), 0, e->u.sval );
     HeapFree( GetProcessHeap(), 0, e );
