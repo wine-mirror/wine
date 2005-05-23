@@ -52,9 +52,6 @@ static LPWSTR SQL_getstring( struct sql_str *str );
 static INT SQL_getint( SQL_input *sql );
 static int SQL_lex( void *SQL_lval, SQL_input *info);
 
-static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in, 
-                               string_list *columns );
-
 static BOOL SQL_MarkPrimaryKeys( create_col_info *cols,
                                  string_list *keys);
 
@@ -127,7 +124,7 @@ static struct expr * EXPR_wildcard();
 
 %type <string> column table id
 %type <column_list> selcollist
-%type <query> query from unorderedsel
+%type <query> query from unorderedsel selectfrom
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
@@ -340,34 +337,34 @@ oneselect:
     ;
 
 unorderedsel:
-    TK_SELECT selcollist from 
+    TK_SELECT selectfrom
         {
-            SQL_input* sql = (SQL_input*) info;
-            if( !$3 )
-                YYABORT;
-            if( $2 )
-            {
-                $$ = do_one_select( sql->db, $3, $2 );
-                if( !$$ )
-                    YYABORT;
-            }
-            else
-                $$ = $3;
+            $$ = $2;
         }
-  | TK_SELECT TK_DISTINCT selcollist from 
+  | TK_SELECT TK_DISTINCT selectfrom
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *view = $4;
 
-            if( !view )
+            $$ = NULL;
+            DISTINCT_CreateView( sql->db, &$$, $3 );
+            if( !$$ )
                 YYABORT;
-            if( $3 )
-            {
-                view = do_one_select( sql->db, view, $3 );
-                if( !view )
-                    YYABORT;
-            }
-            DISTINCT_CreateView( sql->db, & $$, view );
+        }
+    ;
+
+selectfrom:
+    selcollist from 
+        {
+            SQL_input* sql = (SQL_input*) info;
+
+            $$ = NULL;
+            if( $1 )
+                SELECT_CreateView( sql->db, &$$, $2, $1 );
+            else
+                $$ = $2;
+
+            if( !$$ )
+                YYABORT;
         }
     ;
 
@@ -675,18 +672,6 @@ INT SQL_getint( SQL_input *sql )
 int SQL_error(const char *str)
 {
     return 0;
-}
-
-static MSIVIEW *do_one_select( MSIDATABASE *db, MSIVIEW *in, 
-                               string_list *columns )
-{
-    MSIVIEW *view = NULL;
-
-    SELECT_CreateView( db, &view, in, columns );
-    delete_string_list( columns );
-    if( !view )
-        ERR("Error creating select query\n");
-    return view;
 }
 
 static struct expr * EXPR_wildcard()
