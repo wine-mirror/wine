@@ -56,6 +56,12 @@ static const char* wine_dbgstr_addr(const ADDRESS* addr)
     }
 }
 
+static BOOL CALLBACK read_mem(HANDLE hProcess, DWORD addr, void* buffer,
+                              DWORD size, LPDWORD nread)
+{
+    return ReadProcessMemory(hProcess, (void*)addr, buffer, size, nread);
+}
+
 /* indexes in Reserved array */
 #define __CurrentMode     0
 #define __CurrentSwitch   1
@@ -97,7 +103,8 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
 
-    if (!f_read_mem) f_read_mem = ReadProcessMemory;
+    /* sigh... MS isn't even consistent in the func prototypes */
+    if (!f_read_mem) f_read_mem = read_mem;
     if (!f_xlat_adr) f_xlat_adr = addr_to_linear;
 
     TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08lx nSwitch=%08lx\n",
@@ -123,53 +130,58 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         curr_mode = (frame->AddrPC.Mode == AddrModeFlat) ? 
             stm_32bit : stm_16bit;
 
-        /* cur_switch holds address of curr_stack's field in TEB in debuggee
+        /* cur_switch holds address of WOW32Reserved field in TEB in debuggee
          * address space
          */
         if (NtQueryInformationThread(hThread, ThreadBasicInformation, &info,    
-                                     sizeof(info), NULL) != STATUS_SUCCESS)
-            goto done_err;
-        curr_switch = (unsigned long)info.TebBaseAddress + FIELD_OFFSET(TEB, WOW32Reserved);
-        if (!f_read_mem(hProcess, (void*)curr_switch, &next_switch, 
+                                     sizeof(info), NULL) == STATUS_SUCCESS)
+        {
+            curr_switch = (unsigned long)info.TebBaseAddress + FIELD_OFFSET(TEB, WOW32Reserved);
+            if (!f_read_mem(hProcess, curr_switch, &next_switch,
                         sizeof(next_switch), NULL))
-        {
-            WARN("Can't read TEB:cur_stack\n");
-            goto done_err;
-        }
-        if (curr_mode == stm_16bit)
-        {
-            if (!f_read_mem(hProcess, (void*)next_switch, &frame32, 
-                            sizeof(frame32), NULL))
             {
-                WARN("Bad stack frame 0x%08lx\n", next_switch);
+                WARN("Can't read TEB:WOW32Reserved\n");
                 goto done_err;
             }
-            curr_switch = (DWORD)frame32.frame16;
-            tmp.Mode    = AddrMode1616;
-            tmp.Segment = SELECTOROF(curr_switch);
-            tmp.Offset  = OFFSETOF(curr_switch);
-            if (!f_read_mem(hProcess, (void*)f_xlat_adr(hProcess, hThread, &tmp),
-                            &ch, sizeof(ch), NULL))
-                curr_switch = 0xFFFFFFFF;
-            frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrMode1616;
+            if (curr_mode == stm_16bit)
+            {
+                if (!f_read_mem(hProcess, next_switch, &frame32,
+                                sizeof(frame32), NULL))
+                {
+                    WARN("Bad stack frame 0x%08lx\n", next_switch);
+                    goto done_err;
+                }
+                curr_switch = (DWORD)frame32.frame16;
+                tmp.Mode    = AddrMode1616;
+                tmp.Segment = SELECTOROF(curr_switch);
+                tmp.Offset  = OFFSETOF(curr_switch);
+                if (!f_read_mem(hProcess, f_xlat_adr(hProcess, hThread, &tmp),
+                                &ch, sizeof(ch), NULL))
+                    curr_switch = 0xFFFFFFFF;
+            }
+            else
+            {
+                tmp.Mode    = AddrMode1616;
+                tmp.Segment = SELECTOROF(next_switch);
+                tmp.Offset  = OFFSETOF(next_switch);
+                p = f_xlat_adr(hProcess, hThread, &tmp);
+                if (!f_read_mem(hProcess, p, &frame16, sizeof(frame16), NULL))
+                {
+                    WARN("Bad stack frame 0x%08lx\n", p);
+                    goto done_err;
+                }
+                curr_switch = (DWORD)frame16.frame32;
+
+                if (!f_read_mem(hProcess, curr_switch, &ch, sizeof(ch), NULL))
+                    curr_switch = 0xFFFFFFFF;
+            }
         }
         else
-        {
-            tmp.Mode    = AddrMode1616;
-            tmp.Segment = SELECTOROF(next_switch);
-            tmp.Offset  = OFFSETOF(next_switch);
-            p = f_xlat_adr(hProcess, hThread, &tmp);
-            if (!f_read_mem(hProcess, (void*)p, &frame16, sizeof(frame16), NULL))
-            {
-                WARN("Bad stack frame 0x%08lx\n", p);
-                goto done_err;
-            }
-            curr_switch = (DWORD)frame16.frame32;
-
-            if (!f_read_mem(hProcess, (void*)curr_switch, &ch, sizeof(ch), NULL))
-                curr_switch = 0xFFFFFFFF;
-            frame->AddrReturn.Mode = frame->AddrStack.Mode = AddrModeFlat;
-        }
+            /* FIXME: this will allow to work when we're not attached to a live target, 
+             * but the 16 <=> 32 switch facility won't be available.
+             */
+            curr_switch = 0;
+        frame->AddrReturn.Mode = frame->AddrStack.Mode = (curr_mode == stm_16bit) ? AddrMode1616 : AddrModeFlat;
         /* don't set up AddrStack on first call. Either the caller has set it up, or
          * we will get it in the next frame
          */
@@ -185,7 +197,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         else
         {
             assert(curr_mode == stm_16bit);
-            do_switch = OFFSETOF(curr_switch) && 
+            do_switch = curr_switch && 
                 frame->AddrFrame.Segment == SELECTOROF(curr_switch) &&
                 frame->AddrFrame.Offset >= OFFSETOF(curr_switch);
         }
@@ -194,7 +206,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         {
             if (curr_mode == stm_16bit)
             {
-                if (!f_read_mem(hProcess, (void*)next_switch, &frame32, 
+                if (!f_read_mem(hProcess, next_switch, &frame32, 
                                 sizeof(frame32), NULL))
                 {
                     WARN("Bad stack frame 0x%08lx\n", next_switch);
@@ -219,15 +231,15 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                 tmp.Offset  = OFFSETOF(next_switch);
                 p = f_xlat_adr(hProcess, hThread, &tmp);
 
-                if (!f_read_mem(hProcess, (void*)p, &frame16, sizeof(frame16), NULL))
+                if (!f_read_mem(hProcess, p, &frame16, sizeof(frame16), NULL))
                 {
                     WARN("Bad stack frame 0x%08lx\n", p);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame16.frame32;
                 curr_mode = stm_32bit;
-                if (!f_read_mem(hProcess, (void*)curr_switch, &ch, sizeof(ch), NULL))
-                    curr_switch = 0xFFFFFFFF;
+                if (!f_read_mem(hProcess, curr_switch, &ch, sizeof(ch), NULL))
+                    curr_switch = 0;
             }
             else
             {
@@ -236,7 +248,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                 tmp.Offset  = OFFSETOF(next_switch);
                 p = f_xlat_adr(hProcess, hThread, &tmp);
 
-                if (!f_read_mem(hProcess, (void*)p, &frame16, sizeof(frame16), NULL))
+                if (!f_read_mem(hProcess, p, &frame16, sizeof(frame16), NULL))
                 {
                     WARN("Bad stack frame 0x%08lx\n", p);
                     goto done_err;
@@ -272,8 +284,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                 frame->AddrReturn.Segment = frame16.cs;
 
                 next_switch = curr_switch;
-                if (!f_read_mem(hProcess, (void*)next_switch, &frame32, sizeof(frame32),
-                                NULL))
+                if (!f_read_mem(hProcess, next_switch, &frame32, sizeof(frame32), NULL))
                 {
                     WARN("Bad stack frame 0x%08lx\n", next_switch);
                     goto done_err;
@@ -283,9 +294,9 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                 tmp.Segment = SELECTOROF(curr_switch);
                 tmp.Offset  = OFFSETOF(curr_switch);
 
-                if (!f_read_mem(hProcess, (void*)f_xlat_adr(hProcess, hThread, &tmp),
+                if (!f_read_mem(hProcess, f_xlat_adr(hProcess, hThread, &tmp),
                                 &ch, sizeof(ch), NULL))
-                    curr_switch = 0xFFFFFFFF;
+                    curr_switch = 0;
                 curr_mode = stm_16bit;
             }
         }
@@ -297,7 +308,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(WORD);
                 /* "pop up" previous BP value */
                 if (!f_read_mem(hProcess, 
-                                (void*)f_xlat_adr(hProcess, hThread, &frame->AddrFrame),
+                                f_xlat_adr(hProcess, hThread, &frame->AddrFrame),
                                 &val, sizeof(WORD), NULL))
                     goto done_err;
                 frame->AddrFrame.Offset = val;
@@ -306,7 +317,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
             {
                 frame->AddrStack.Offset = frame->AddrFrame.Offset + 2 * sizeof(DWORD);
                 /* "pop up" previous EBP value */
-                if (!f_read_mem(hProcess, (void*)frame->AddrFrame.Offset, 
+                if (!f_read_mem(hProcess, frame->AddrFrame.Offset, 
                                 &frame->AddrFrame.Offset, sizeof(DWORD), NULL))
                     goto done_err;
             }
@@ -318,11 +329,11 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         int     i;
 
         p = f_xlat_adr(hProcess, hThread, &frame->AddrFrame);
-        if (!f_read_mem(hProcess, (void*)(p + sizeof(WORD)), &val, sizeof(WORD), NULL))
+        if (!f_read_mem(hProcess, p + sizeof(WORD), &val, sizeof(WORD), NULL))
             goto done_err;
         frame->AddrReturn.Offset = val;
         /* get potential cs if a far call was used */
-        if (!f_read_mem(hProcess, (void*)(p + 2 * sizeof(WORD)), 
+        if (!f_read_mem(hProcess, p + 2 * sizeof(WORD), 
                         &val, sizeof(WORD), NULL))
             goto done_err;
         if (frame->AddrFrame.Offset & 1)
@@ -353,7 +364,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
          */
         for (i = 0; i < sizeof(frame->Params) / sizeof(frame->Params[0]); i++)
         {
-            f_read_mem(hProcess, (void*)(p + (2 + i) * sizeof(WORD)), 
+            f_read_mem(hProcess, p + (2 + i) * sizeof(WORD), 
                        &val, sizeof(val), NULL);
             frame->Params[i] = val;
         }
@@ -361,11 +372,14 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     else
     {
         if (!f_read_mem(hProcess, 
-                        (void*)(frame->AddrFrame.Offset + sizeof(DWORD)),
+                        frame->AddrFrame.Offset + sizeof(DWORD),
                         &frame->AddrReturn.Offset, sizeof(DWORD), NULL))
+        {
+            WARN("Cannot read new frame offset %08lx\n", frame->AddrFrame.Offset + sizeof(DWORD));
             goto done_err;
+        }
         f_read_mem(hProcess, 
-                   (void*)(frame->AddrFrame.Offset + 2 * sizeof(DWORD)), 
+                   frame->AddrFrame.Offset + 2 * sizeof(DWORD), 
                    frame->Params, sizeof(frame->Params), NULL);
     }
 
