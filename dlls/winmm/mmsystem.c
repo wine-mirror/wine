@@ -59,7 +59,7 @@ static LRESULT          MMIO_Callback16(SEGPTR, LPMMIOINFO, UINT, LPARAM, LPARAM
  */
 
 /**************************************************************************
- * 			DllEntryPoint (MMSYSTEM.2046)
+ * 			DllEntryPoint (MMSYSTEM.4)
  *
  * MMSYSTEM DLL entry point
  *
@@ -74,7 +74,7 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 	/* need to load WinMM in order to:
 	 * - initiate correctly shared variables (WINMM_Init())
 	 */
-        if (!GetModuleHandleA("WINMM.DLL") && !LoadLibraryA("WINMM.DLL"))
+        if (!GetModuleHandleA("WINMM.DLL"))
         {
             ERR("Could not load sibling WinMM.dll\n");
             return FALSE;
@@ -114,7 +114,7 @@ BOOL WINAPI MMSYSTEM_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 int WINAPI MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
                         WORD cbHeapSize, LPSTR lpCmdLine)
 {
-    FIXME("STUB: Unloading MMSystem DLL ... hInst=%04X \n", hInstance);
+    TRACE("STUB: Unloading MMSystem DLL ... hInst=%04X \n", hInstance);
     return TRUE;
 }
 

@@ -34,7 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 
 /**************************************************************************
- *		DllEntryPoint (MSACM.255)
+ *		DllEntryPoint (MSACM.3)
  *
  * MSACM DLL entry point
  *
@@ -42,25 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msacm);
 BOOL WINAPI MSACM_DllEntryPoint(DWORD fdwReason, HINSTANCE16 hinstDLL, WORD ds,
 				WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
 {
-    static HANDLE	hndl;
-
-    TRACE("0x%x 0x%lx\n", hinstDLL, fdwReason);
-
-    switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
-        if (!hndl && !(hndl = LoadLibraryA("MSACM32.DLL"))) {
-	    ERR("Could not load sibling MsAcm32.dll\n");
-	    return FALSE;
-	}
-	break;
-    case DLL_PROCESS_DETACH:
-	FreeLibrary(hndl);
-	hndl = 0;
-	break;
-    case DLL_THREAD_ATTACH:
-    case DLL_THREAD_DETACH:
-	break;
-    }
     return TRUE;
 }
 

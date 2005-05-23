@@ -884,7 +884,7 @@ static  LRESULT CALLBACK IC_CallTo16(HDRVR hdrv, HIC hic, UINT msg, LPARAM lp1, 
 }
 
 /**************************************************************************
- *                      DllEntryPoint (MSVIDEO.300)
+ *                      DllEntryPoint (MSVIDEO.3)
  *
  * MSVIDEO DLL entry point
  *

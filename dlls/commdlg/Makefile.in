@@ -23,7 +23,6 @@ C_SRCS16 = \
 	filedlg16.c \
 	finddlg.c \
 	fontdlg16.c \
-	generic.c \
 	printdlg16.c
 
 SPEC_SRCS16 = commdlg.spec

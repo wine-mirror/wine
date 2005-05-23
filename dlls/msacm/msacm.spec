@@ -1,6 +1,7 @@
-  1 stub     WEP
+# 1 stub     WEP
   2 stub     DRIVERPROC
-  3 stub     ___EXPORTEDSTUB
+  3 pascal   DllEntryPoint(long word word word long word) MSACM_DllEntryPoint
+  4 stub     ___EXPORTEDSTUB
   7 pascal   acmGetVersion() acmGetVersion16
   8 pascal -ret16 acmMetrics(word word ptr) acmMetrics16
  10 pascal -ret16 acmDriverEnum(ptr long long) acmDriverEnum16
@@ -37,4 +38,3 @@
 201 stub     ACMCLOSECONVERSION
 202 stub     ACMCONVERT
 203 stub     ACMCHOOSEFORMAT
-255 pascal   DllEntryPoint(long word word word long word) MSACM_DllEntryPoint

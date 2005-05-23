@@ -70,9 +70,6 @@ static HHOOK	SHELL_hHook = 0;
 static UINT	uMsgWndCreated = 0;
 static UINT	uMsgWndDestroyed = 0;
 static UINT	uMsgShellActivate = 0;
-HINSTANCE16	SHELL_hInstance = 0;
-HINSTANCE SHELL_hInstance32;
-static int SHELL_Attach = 0;
 
 /***********************************************************************
  * DllEntryPoint [SHELL.101]
@@ -87,33 +84,6 @@ static int SHELL_Attach = 0;
 BOOL WINAPI SHELL_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst,
 				WORD ds, WORD HeapSize, DWORD res1, WORD res2)
 {
-    TRACE("(%08lx, %04x, %04x, %04x, %08lx, %04x)\n",
-          Reason, hInst, ds, HeapSize, res1, res2);
-
-    switch(Reason)
-    {
-    case DLL_PROCESS_ATTACH:
-	if (SHELL_Attach++) break;
-	SHELL_hInstance = hInst;
-	if(!SHELL_hInstance32)
-	{
-	    if(!(SHELL_hInstance32 = LoadLibraryA("shell32.dll")))
-	    {
-		ERR("Could not load sibling shell32.dll\n");
-		return FALSE;
-	    }
-	}
-	break;
-
-    case DLL_PROCESS_DETACH:
-	if(!--SHELL_Attach)
-	{
-	    SHELL_hInstance = 0;
-	    if(SHELL_hInstance32)
-		FreeLibrary(SHELL_hInstance32);
-	}
-	break;
-    }
     return TRUE;
 }
 
