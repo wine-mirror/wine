@@ -1,7 +1,8 @@
 /*
- * DDK definitions for scsi media access
+ * Definitions for scsi media access
  *
  * Copyright (C) 2002 Laurent Pinchart
+ * Copyright 2005 Ivan Leo Puoti
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -92,6 +93,27 @@ typedef struct _IO_SCSI_CAPABILITIES {
     BOOLEAN     AdapterScansDown;
     BOOLEAN     AdapterUsesPio;
 } IO_SCSI_CAPABILITIES, *PIO_SCSI_CAPABILITIES;
+
+typedef struct _SCSI_BUS_DATA {
+    UCHAR NumberOfLogicalUnits;
+    UCHAR InitiatorBusId;
+    ULONG InquiryDataOffset;
+} SCSI_BUS_DATA, *PSCSI_BUS_DATA;
+
+typedef struct _SCSI_ADAPTER_BUS_INFO {
+    UCHAR NumberOfBuses;
+    SCSI_BUS_DATA BusData[1];
+} SCSI_ADAPTER_BUS_INFO, *PSCSI_ADAPTER_BUS_INFO;
+
+typedef struct _SCSI_INQUIRY_DATA {
+    UCHAR PathId;
+    UCHAR TargetId;
+    UCHAR Lun;
+    BOOLEAN DeviceClaimed;
+    ULONG InquiryDataLength;
+    ULONG NextInquiryDataOffset;
+    UCHAR InquiryData[1];
+} SCSI_INQUIRY_DATA, *PSCSI_INQUIRY_DATA;
 
 #ifdef __cplusplus
 }
