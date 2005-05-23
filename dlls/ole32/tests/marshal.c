@@ -1540,6 +1540,33 @@ static void test_out_of_process_com()
 }
 #endif
 
+static void test_ROT()
+{
+    static const WCHAR wszFileName[] = {'B','E','2','0','E','2','F','5','-',
+        '1','9','0','3','-','4','A','A','E','-','B','1','A','F','-',
+        '2','0','4','6','E','5','8','6','C','9','2','5',0};
+    HRESULT hr;
+    IMoniker *pMoniker = NULL;
+    IRunningObjectTable *pROT = NULL;
+    DWORD dwCookie;
+
+    cLocks = 0;
+
+    hr = CreateFileMoniker(wszFileName, &pMoniker);
+    ok_ole_success(hr, CreateClassMoniker);
+    hr = GetRunningObjectTable(0, &pROT);
+    ok_ole_success(hr, GetRunningObjectTable);
+    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    ok_ole_success(hr, IRunningObjectTable_Register);
+
+    ok_more_than_one_lock();
+
+    hr = IRunningObjectTable_Revoke(pROT, dwCookie);
+    ok_ole_success(hr, IRunningObjectTable_Revoke);
+
+    ok_no_locks();
+}
+
 START_TEST(marshal)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -1575,10 +1602,13 @@ START_TEST(marshal)
     test_bad_marshal_stream();
     test_proxy_interfaces();
     test_stubbuffer(&IID_IClassFactory);
-    /* FIXME: test GIT */
     test_message_reentrancy();
 
 /*    test_out_of_process_com(); */
+
+    test_ROT();
+    /* FIXME: test GIT */
+
     CoUninitialize();
     return;
 

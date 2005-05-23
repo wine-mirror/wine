@@ -3,6 +3,7 @@
  *
  *	Copyright 1998	Marcus Meissner
  *      Copyright 1999  Noomen Hamza
+ *      Copyright 2005  Robert Shearman (for CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,9 +23,6 @@
  * - IRunningObjectTable should work interprocess, but currently doesn't.
  *   Native (on Win2k at least) uses an undocumented RPC interface, IROT, to
  *   communicate with RPCSS which contains the table of marshalled data.
- * - IRunningObjectTable should use marshalling instead of simple ref
- *   counting as there is the possibility of using the running object table
- *   to access objects in other apartments.
  */
 
 #include <assert.h>
@@ -38,62 +36,129 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "wtypes.h"
-#include "wine/debug.h"
 #include "ole2.h"
+
+#include "wine/list.h"
+#include "wine/debug.h"
 
 #include "compobj_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define  BLOCK_TAB_SIZE 20 /* represent the first size table and it's increment block size */
-
 /* define the structure of the running object table elements */
-typedef struct RunObject{
-
-    IUnknown*  pObj; /* points on a running object*/
-    IMoniker*  pmkObj; /* points on a moniker who identifies this object */
-    FILETIME   lastModifObj;
-    DWORD      identRegObj; /* registration key relative to this object */
-    DWORD      regTypeObj; /* registration type : strong or weak */
-}RunObject;
+struct rot_entry
+{
+    struct list        entry;
+    MInterfacePointer* object; /* marshaled running object*/
+    MInterfacePointer* moniker; /* marshaled moniker that identifies this object */
+    MInterfacePointer* moniker_data; /* moniker comparison data that identifies this object */
+    DWORD              cookie; /* cookie identifying this object */
+    FILETIME           last_modified;
+};
 
 /* define the RunningObjectTableImpl structure */
-typedef struct RunningObjectTableImpl{
+typedef struct RunningObjectTableImpl
+{
+    const IRunningObjectTableVtbl *lpVtbl;
+    ULONG ref;
 
-    IRunningObjectTableVtbl *lpVtbl;
-    ULONG      ref;
-
-    RunObject* runObjTab;            /* pointer to the first object in the table       */
-    DWORD      runObjTabSize;       /* current table size                            */
-    DWORD      runObjTabLastIndx;  /* first free index element in the table.        */
-    DWORD      runObjTabRegister; /* registration key of the next registered object */
-
+    struct list rot; /* list of ROT entries */
+    CRITICAL_SECTION lock;
 } RunningObjectTableImpl;
 
 static RunningObjectTableImpl* runningObjectTableInstance = NULL;
 
-static HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl*,DWORD,IMoniker*,DWORD *);
+
+
+static inline HRESULT WINAPI
+IrotRegister(DWORD *cookie)
+{
+    static DWORD last_cookie = 1;
+    *cookie = InterlockedIncrement(&last_cookie);
+    return S_OK;
+}
 
 /* define the EnumMonikerImpl structure */
-typedef struct EnumMonikerImpl{
-
-    IEnumMonikerVtbl *lpVtbl;
+typedef struct EnumMonikerImpl
+{
+    const IEnumMonikerVtbl *lpVtbl;
     ULONG      ref;
 
-    RunObject* TabMoniker;    /* pointer to the first object in the table       */
-    DWORD      TabSize;       /* current table size                             */
-    DWORD      TabLastIndx;   /* last used index element in the table.          */
-    DWORD      TabCurrentPos;    /* enum position in the list			*/
-
+    MInterfacePointer **monikers;
+    ULONG moniker_count;
+    ULONG pos;
 } EnumMonikerImpl;
 
 
 /* IEnumMoniker Local functions*/
-static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(RunObject* runObjTab,
-                                                 ULONG TabSize,
-						 ULONG TabLastIndx,
-                                                 ULONG TabCurrentPos,
-                                                 IEnumMoniker ** ppenumMoniker);
+static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(MInterfacePointer **monikers,
+    ULONG moniker_count, ULONG pos, IEnumMoniker **ppenumMoniker);
+
+static HRESULT create_stream_on_mip_ro(const MInterfacePointer *mip, IStream **stream)
+{
+    HGLOBAL hglobal = GlobalAlloc(0, mip->ulCntData);
+    void *pv = GlobalLock(hglobal);
+    memcpy(pv, mip->abData, mip->ulCntData);
+    GlobalUnlock(hglobal);
+    return CreateStreamOnHGlobal(hglobal, TRUE, stream);
+}
+
+static inline void rot_entry_delete(struct rot_entry *rot_entry)
+{
+    /* FIXME: revoke entry from rpcss's copy of the ROT */
+    if (rot_entry->object)
+    {
+        IStream *stream;
+        HRESULT hr;
+        hr = create_stream_on_mip_ro(rot_entry->object, &stream);
+        if (hr == S_OK)
+        {
+            CoReleaseMarshalData(stream);
+            IUnknown_Release(stream);
+        }
+    }
+    if (rot_entry->moniker)
+    {
+        IStream *stream;
+        HRESULT hr;
+        hr = create_stream_on_mip_ro(rot_entry->moniker, &stream);
+        if (hr == S_OK)
+        {
+            CoReleaseMarshalData(stream);
+            IUnknown_Release(stream);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, rot_entry->object);
+    HeapFree(GetProcessHeap(), 0, rot_entry->moniker);
+    HeapFree(GetProcessHeap(), 0, rot_entry->moniker_data);
+    HeapFree(GetProcessHeap(), 0, rot_entry);
+}
+
+/* moniker_data must be freed with HeapFree when no longer in use */
+static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer **moniker_data)
+{
+    HRESULT hr;
+    IROTData *pROTData = NULL;
+    ULONG size = 0;
+    hr = IMoniker_QueryInterface(pMoniker, &IID_IROTData, (void *)&pROTData);
+    if (hr != S_OK)
+    {
+        ERR("Failed to query moniker for IROTData interface, hr = 0x%08lx\n", hr);
+        return hr;
+    }
+    IROTData_GetComparisonData(pROTData, NULL, 0, &size);
+    *moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MInterfacePointer, abData[size]));
+    (*moniker_data)->ulCntData = size;
+    hr = IROTData_GetComparisonData(pROTData, (*moniker_data)->abData, size, &size);
+    if (hr != S_OK)
+    {
+        ERR("Failed to copy comparison data into buffer, hr = 0x%08lx\n", hr);
+        HeapFree(GetProcessHeap(), 0, *moniker_data);
+        return hr;
+    }
+    return S_OK;
+}
+
 /***********************************************************************
  *        RunningObjectTable_QueryInterface
  */
@@ -106,8 +171,6 @@ RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
     TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
 
     /* validate arguments */
-    if (This==0)
-        return CO_E_NOTINITIALIZED;
 
     if (ppvObject==0)
         return E_INVALIDARG;
@@ -145,13 +208,20 @@ RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
 static HRESULT WINAPI
 RunningObjectTableImpl_Destroy(void)
 {
+    struct list *cursor, *cursor2;
+
     TRACE("()\n");
 
     if (runningObjectTableInstance==NULL)
         return E_INVALIDARG;
 
     /* free the ROT table memory */
-    HeapFree(GetProcessHeap(),0,runningObjectTableInstance->runObjTab);
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &runningObjectTableInstance->rot)
+    {
+        struct rot_entry *rot_entry = LIST_ENTRY(cursor, struct rot_entry, entry);
+        list_remove(&rot_entry->entry);
+        rot_entry_delete(rot_entry);
+    }
 
     /* free the ROT structure memory */
     HeapFree(GetProcessHeap(),0,runningObjectTableInstance);
@@ -166,7 +236,6 @@ RunningObjectTableImpl_Destroy(void)
 static ULONG WINAPI
 RunningObjectTableImpl_Release(IRunningObjectTable* iface)
 {
-    DWORD i;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
     ULONG ref;
 
@@ -174,24 +243,19 @@ RunningObjectTableImpl_Release(IRunningObjectTable* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* unitialize ROT structure if there's no more reference to it*/
-    if (ref == 0) {
-
-        /* release all registered objects */
-        for(i=0;i<This->runObjTabLastIndx;i++)
+    /* uninitialize ROT structure if there's no more references to it */
+    if (ref == 0)
+    {
+        struct list *cursor, *cursor2;
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &This->rot)
         {
-            if (( This->runObjTab[i].regTypeObj &  ROTFLAGS_REGISTRATIONKEEPSALIVE) != 0)
-                IUnknown_Release(This->runObjTab[i].pObj);
-
-            IMoniker_Release(This->runObjTab[i].pmkObj);
+            struct rot_entry *rot_entry = LIST_ENTRY(cursor, struct rot_entry, entry);
+            list_remove(&rot_entry->entry);
+            rot_entry_delete(rot_entry);
         }
-       /*  RunningObjectTable data structure will be not destroyed here ! the destruction will be done only
-        *  when RunningObjectTableImpl_UnInitialize function is called
-        */
-
-        /* there's no more elements in the table */
-        This->runObjTabRegister=0;
-        This->runObjTabLastIndx=0;
+        /*  RunningObjectTable data structure will be not destroyed here ! the destruction will be done only
+         *  when RunningObjectTableImpl_UnInitialize function is called
+         */
     }
 
     return ref;
@@ -210,8 +274,11 @@ static HRESULT WINAPI
 RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
                IUnknown *punkObject, IMoniker *pmkObjectName, DWORD *pdwRegister)
 {
-    HRESULT res=S_OK;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    struct rot_entry *rot_entry;
+    HRESULT hr = S_OK;
+    IStream *pStream = NULL;
+    DWORD mshlflags;
 
     TRACE("(%p,%ld,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
 
@@ -222,51 +289,107 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
     if ( ( (grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) || !(grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (!(grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) ||  (grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (grfFlags) )
+    {
+        ERR("Invalid combination of ROTFLAGS: %lx\n", grfFlags);
         return E_INVALIDARG;
+    }
 
     if (punkObject==NULL || pmkObjectName==NULL || pdwRegister==NULL)
         return E_INVALIDARG;
 
-    /* verify if the object to be registered was registered before */
-    if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,NULL)==S_OK)
-        res = MK_S_MONIKERALREADYREGISTERED;
+    rot_entry = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rot_entry));
+    if (!rot_entry)
+        return E_OUTOFMEMORY;
 
-    /* put the new registered object in the first free element in the table */
-    This->runObjTab[This->runObjTabLastIndx].pObj = punkObject;
-    This->runObjTab[This->runObjTabLastIndx].pmkObj = pmkObjectName;
-    This->runObjTab[This->runObjTabLastIndx].regTypeObj = grfFlags;
-    This->runObjTab[This->runObjTabLastIndx].identRegObj = This->runObjTabRegister;
-    CoFileTimeNow(&(This->runObjTab[This->runObjTabLastIndx].lastModifObj));
+    CoFileTimeNow(&rot_entry->last_modified);
+
+    /* marshal object */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    if (hr != S_OK)
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
+    mshlflags = (grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) ? MSHLFLAGS_TABLESTRONG : MSHLFLAGS_TABLEWEAK;
+    hr = CoMarshalInterface(pStream, &IID_IUnknown, punkObject, MSHCTX_LOCAL | MSHCTX_NOSHAREDMEM, NULL, mshlflags);
+    /* FIXME: a cleaner way would be to create an IStream class that writes
+     * directly to an MInterfacePointer */
+    if (hr == S_OK)
+    {
+        HGLOBAL hglobal;
+        hr = GetHGlobalFromStream(pStream, &hglobal);
+        if (hr == S_OK)
+        {
+            SIZE_T size = GlobalSize(hglobal);
+            const void *pv = GlobalLock(hglobal);
+            rot_entry->object = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MInterfacePointer, abData[size]));
+            rot_entry->object->ulCntData = size;
+            memcpy(&rot_entry->object->abData, pv, size);
+            GlobalUnlock(hglobal);
+        }
+    }
+    IStream_Release(pStream);
+    if (hr != S_OK)
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
+
+    hr = get_moniker_comparison_data(pmkObjectName, &rot_entry->moniker_data);
+    if (hr != S_OK)
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    if (hr != S_OK)
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
+    /* marshal moniker */
+    hr = CoMarshalInterface(pStream, &IID_IMoniker, (IUnknown *)pmkObjectName, MSHCTX_LOCAL | MSHCTX_NOSHAREDMEM, NULL, MSHLFLAGS_TABLESTRONG);
+    /* FIXME: a cleaner way would be to create an IStream class that writes
+     * directly to an MInterfacePointer */
+    if (hr == S_OK)
+    {
+        HGLOBAL hglobal;
+        hr = GetHGlobalFromStream(pStream, &hglobal);
+        if (hr == S_OK)
+        {
+            SIZE_T size = GlobalSize(hglobal);
+            const void *pv = GlobalLock(hglobal);
+            rot_entry->moniker = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MInterfacePointer, abData[size]));
+            rot_entry->moniker->ulCntData = size;
+            memcpy(&rot_entry->moniker->abData, pv, size);
+            GlobalUnlock(hglobal);
+        }
+    }
+    IStream_Release(pStream);
+    if (hr != S_OK)
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
+
+    /* FIXME: not the right signature of IrotRegister function */
+    hr = IrotRegister(&rot_entry->cookie);
+    if (hr != S_OK)
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
 
     /* gives a registration identifier to the registered object*/
-    (*pdwRegister)= This->runObjTabRegister;
+    *pdwRegister = rot_entry->cookie;
 
-    if (This->runObjTabRegister == 0xFFFFFFFF){
+    EnterCriticalSection(&This->lock);
+    /* FIXME: see if object was registered before and return MK_S_MONIKERALREADYREGISTERED */
+    list_add_tail(&This->rot, &rot_entry->entry);
+    LeaveCriticalSection(&This->lock);
 
-        FIXME("runObjTabRegister: %ld is out of data limite \n",This->runObjTabRegister);
-	return E_FAIL;
-    }
-    This->runObjTabRegister++;
-    This->runObjTabLastIndx++;
-
-    if (This->runObjTabLastIndx == This->runObjTabSize){ /* table is full ! so it must be resized */
-
-        This->runObjTabSize+=BLOCK_TAB_SIZE; /* newsize table */
-        This->runObjTab=HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->runObjTab,
-                        This->runObjTabSize * sizeof(RunObject));
-        if (!This->runObjTab)
-            return E_OUTOFMEMORY;
-    }
-    /* add a reference to the object in the strong registration case */
-    if ((grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) !=0 ) {
-        TRACE("strong registration, reffing %p\n", punkObject);
-        /* this is wrong; we should always add a reference to the object */
-        IUnknown_AddRef(punkObject);
-    }
-    
-    IMoniker_AddRef(pmkObjectName);
-
-    return res;
+    return hr;
 }
 
 /***********************************************************************
@@ -278,33 +401,26 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
 static HRESULT WINAPI
 RunningObjectTableImpl_Revoke( IRunningObjectTable* iface, DWORD dwRegister) 
 {
-
-    DWORD index,j;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    struct rot_entry *rot_entry;
 
     TRACE("(%p,%ld)\n",This,dwRegister);
 
-    /* verify if the object to be revoked was registered before or not */
-    if (RunningObjectTableImpl_GetObjectIndex(This,dwRegister,NULL,&index)==S_FALSE)
+    EnterCriticalSection(&This->lock);
+    LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+    {
+        if (rot_entry->cookie == dwRegister)
+        {
+            list_remove(&rot_entry->entry);
+            LeaveCriticalSection(&This->lock);
 
-        return E_INVALIDARG;
-
-    /* release the object if it was registered with a strong registrantion option */
-    if ((This->runObjTab[index].regTypeObj & ROTFLAGS_REGISTRATIONKEEPSALIVE)!=0) {
-        TRACE("releasing %p\n", This->runObjTab[index].pObj);
-        /* this is also wrong; we should always release the object (see above) */
-        IUnknown_Release(This->runObjTab[index].pObj);
+            rot_entry_delete(rot_entry);
+            return S_OK;
+        }
     }
-    
-    IMoniker_Release(This->runObjTab[index].pmkObj);
+    LeaveCriticalSection(&This->lock);
 
-    /* remove the object from the table */
-    for(j=index; j<This->runObjTabLastIndx-1; j++)
-        This->runObjTab[j]= This->runObjTab[j+1];
-
-    This->runObjTabLastIndx--;
-
-    return S_OK;
+    return E_INVALIDARG;
 }
 
 /***********************************************************************
@@ -317,10 +433,34 @@ static HRESULT WINAPI
 RunningObjectTableImpl_IsRunning( IRunningObjectTable* iface, IMoniker *pmkObjectName)
 {
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    MInterfacePointer *moniker_data;
+    HRESULT hr;
+    struct rot_entry *rot_entry;
 
     TRACE("(%p,%p)\n",This,pmkObjectName);
 
-    return RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,NULL);
+    hr = get_moniker_comparison_data(pmkObjectName, &moniker_data);
+    if (hr != S_OK)
+        return hr;
+
+    hr = S_FALSE;
+    EnterCriticalSection(&This->lock);
+    LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+    {
+        if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
+            !memcmp(moniker_data, rot_entry->moniker_data, moniker_data->ulCntData))
+        {
+            hr = S_OK;
+            break;
+        }
+    }
+    LeaveCriticalSection(&This->lock);
+
+    /* FIXME: call IrotIsRunning */
+
+    HeapFree(GetProcessHeap(), 0, moniker_data);
+
+    return hr;
 }
 
 /***********************************************************************
@@ -334,27 +474,51 @@ static HRESULT WINAPI
 RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
                      IMoniker *pmkObjectName, IUnknown **ppunkObject)
 {
-    DWORD index;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    MInterfacePointer *moniker_data;
+    HRESULT hr;
+    struct rot_entry *rot_entry;
 
     TRACE("(%p,%p,%p)\n",This,pmkObjectName,ppunkObject);
 
-    if (ppunkObject==NULL)
+    if (ppunkObject == NULL)
         return E_POINTER;
 
-    *ppunkObject=0;
+    *ppunkObject = NULL;
 
-    /* verify if the object was registered before or not */
-    if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,&index)==S_FALSE) {
-        WARN("Moniker unavailable - needs to work interprocess?\n");
-        return MK_E_UNAVAILABLE;
+    hr = get_moniker_comparison_data(pmkObjectName, &moniker_data);
+    if (hr != S_OK)
+        return hr;
+
+    EnterCriticalSection(&This->lock);
+    LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+    {
+        if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
+            !memcmp(moniker_data, rot_entry->moniker_data, moniker_data->ulCntData))
+        {
+            IStream *pStream;
+            hr = create_stream_on_mip_ro(rot_entry->object, &pStream);
+            if (hr == S_OK)
+            {
+                hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)ppunkObject);
+                IStream_Release(pStream);
+            }
+
+            LeaveCriticalSection(&This->lock);
+            HeapFree(GetProcessHeap(), 0, moniker_data);
+
+            return hr;
+        }
     }
+    LeaveCriticalSection(&This->lock);
 
-    /* add a reference to the object then set output object argument */
-    IUnknown_AddRef(This->runObjTab[index].pObj);
-    *ppunkObject=This->runObjTab[index].pObj;
+    /* FIXME: call IrotGetObject */
+    WARN("Moniker unavailable - app may require interprocess running object table\n");
+    hr = MK_E_UNAVAILABLE;
 
-    return S_OK;
+    HeapFree(GetProcessHeap(), 0, moniker_data);
+
+    return hr;
 }
 
 /***********************************************************************
@@ -368,19 +532,26 @@ static HRESULT WINAPI
 RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
                                       DWORD dwRegister, FILETIME *pfiletime)
 {
-    DWORD index=-1;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    struct rot_entry *rot_entry;
 
     TRACE("(%p,%ld,%p)\n",This,dwRegister,pfiletime);
 
-    /* verify if the object to be changed was registered before or not */
-    if (RunningObjectTableImpl_GetObjectIndex(This,dwRegister,NULL,&index)==S_FALSE)
-        return E_INVALIDARG;
+    EnterCriticalSection(&This->lock);
+    LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+    {
+        if (rot_entry->cookie == dwRegister)
+        {
+            rot_entry->last_modified = *pfiletime;
+            LeaveCriticalSection(&This->lock);
+            return S_OK;
+        }
+    }
+    LeaveCriticalSection(&This->lock);
 
-    /* set the new value of the last time change */
-    This->runObjTab[index].lastModifObj= (*pfiletime);
+    /* FIXME: call IrotNoteChangeTime */
 
-    return S_OK;
+    return E_INVALIDARG;
 }
 
 /***********************************************************************
@@ -394,21 +565,39 @@ static HRESULT WINAPI
 RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
                             IMoniker *pmkObjectName, FILETIME *pfiletime)
 {
-    DWORD index=-1;
+    HRESULT hr = MK_E_UNAVAILABLE;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    MInterfacePointer *moniker_data;
+    struct rot_entry *rot_entry;
 
     TRACE("(%p,%p,%p)\n",This,pmkObjectName,pfiletime);
 
     if (pmkObjectName==NULL || pfiletime==NULL)
         return E_INVALIDARG;
 
-    /* verify if the object was registered before or not */
-    if (RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,&index)==S_FALSE)
-        return MK_E_UNAVAILABLE;
+    hr = get_moniker_comparison_data(pmkObjectName, &moniker_data);
+    if (hr != S_OK)
+        return hr;
 
-    (*pfiletime)= This->runObjTab[index].lastModifObj;
+    hr = MK_E_UNAVAILABLE;
 
-    return S_OK;
+    EnterCriticalSection(&This->lock);
+    LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
+    {
+        if ((rot_entry->moniker_data->ulCntData == moniker_data->ulCntData) &&
+            !memcmp(moniker_data, rot_entry->moniker_data, moniker_data->ulCntData))
+        {
+            *pfiletime = rot_entry->last_modified;
+            hr = S_OK;
+            break;
+        }
+    }
+    LeaveCriticalSection(&This->lock);
+
+    /* FIXME: if (hr != S_OK) call IrotGetTimeOfLastChange */
+
+    HeapFree(GetProcessHeap(), 0, moniker_data);
+    return hr;
 }
 
 /***********************************************************************
@@ -421,44 +610,35 @@ static HRESULT WINAPI
 RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
                                    IEnumMoniker **ppenumMoniker)
 {
-    /* create the unique instance of the EnumMonkikerImpl structure 
-     * and copy the Monikers referenced in the ROT so that they can be 
-     * enumerated by the Enum interface
-     */
-    HRESULT rc = 0;
+    HRESULT hr;
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
+    MInterfacePointer **monikers;
+    ULONG moniker_count = 0;
+    const struct rot_entry *rot_entry;
+    ULONG i = 0;
 
-    rc=EnumMonikerImpl_CreateEnumROTMoniker(This->runObjTab, 
-					 This->runObjTabSize,
-					 This->runObjTabLastIndx, 0, 
-					 ppenumMoniker);
-    return rc;
-}
+    EnterCriticalSection(&This->lock);
 
-/***********************************************************************
- *        GetObjectIndex
- */
-static HRESULT WINAPI
-RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* This,
-               DWORD identReg, IMoniker* pmk, DWORD *indx)
-{
+    LIST_FOR_EACH_ENTRY( rot_entry, &This->rot, const struct rot_entry, entry )
+        moniker_count++;
 
-    DWORD i;
+    monikers = HeapAlloc(GetProcessHeap(), 0, moniker_count * sizeof(*monikers));
 
-    TRACE("(%p,%ld,%p,%p)\n",This,identReg,pmk,indx);
+    LIST_FOR_EACH_ENTRY( rot_entry, &This->rot, const struct rot_entry, entry )
+    {
+        SIZE_T size = FIELD_OFFSET(MInterfacePointer, abData[rot_entry->moniker->ulCntData]);
+        monikers[i] = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(monikers[i], rot_entry->moniker, size);
+        i++;
+    }
 
-    if (pmk!=NULL)
-        /* search object identified by a moniker */
-        for(i=0 ; (i < This->runObjTabLastIndx) &&(!IMoniker_IsEqual(This->runObjTab[i].pmkObj,pmk)==S_OK);i++);
-    else
-        /* search object identified by a register identifier */
-        for(i=0;((i<This->runObjTabLastIndx)&&(This->runObjTab[i].identRegObj!=identReg));i++);
+    LeaveCriticalSection(&This->lock);
+    
+    /* FIXME: call IrotEnumRunning and append data */
 
-    if (i==This->runObjTabLastIndx)  return S_FALSE;
+    hr = EnumMonikerImpl_CreateEnumROTMoniker(monikers, moniker_count, 0, ppenumMoniker);
 
-    if (indx != NULL)  *indx=i;
-
-    return S_OK;
+    return hr;
 }
 
 /******************************************************************************
@@ -560,7 +740,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
     /* create the unique instance of the RunningObjectTableImpl structure */
     runningObjectTableInstance = HeapAlloc(GetProcessHeap(), 0, sizeof(RunningObjectTableImpl));
 
-    if (runningObjectTableInstance == 0)
+    if (!runningObjectTableInstance)
         return E_OUTOFMEMORY;
 
     /* initialize the virtual table function */
@@ -571,15 +751,8 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
     /* be removed every time the ROT is removed ) */
     runningObjectTableInstance->ref = 1;
 
-    /* allocate space memory for the table which contains all the running objects */
-    runningObjectTableInstance->runObjTab = HeapAlloc(GetProcessHeap(), 0, sizeof(RunObject[BLOCK_TAB_SIZE]));
-
-    if (runningObjectTableInstance->runObjTab == NULL)
-        return E_OUTOFMEMORY;
-
-    runningObjectTableInstance->runObjTabSize=BLOCK_TAB_SIZE;
-    runningObjectTableInstance->runObjTabRegister=1;
-    runningObjectTableInstance->runObjTabLastIndx=0;
+    list_init(&runningObjectTableInstance->rot);
+    InitializeCriticalSection(&runningObjectTableInstance->lock);
 
     return S_OK;
 }
@@ -647,7 +820,6 @@ static ULONG   WINAPI EnumMonikerImpl_AddRef(IEnumMoniker* iface)
  */
 static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
 {
-    DWORD i;
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     ULONG ref;
 
@@ -656,20 +828,16 @@ static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
     ref = InterlockedDecrement(&This->ref);
 
     /* unitialize rot structure if there's no more reference to it*/
-    if (ref == 0) {
+    if (ref == 0)
+    {
+        ULONG i;
 
-        /* release all registered objects in Moniker list */
-        for(i=0; i < This->TabLastIndx ;i++)
-        {
-            IMoniker_Release(This->TabMoniker[i].pmkObj);
-        }
+        TRACE("(%p) Deleting\n",This);
 
-        /* there're no more elements in the table */
-
-	TRACE("(%p) Deleting\n",This);
-	HeapFree (GetProcessHeap(), 0, This->TabMoniker); /* free Moniker list */
-	HeapFree (GetProcessHeap(), 0, This);		  /* free Enum Instance */
-	
+        for (i = 0; i < This->moniker_count; i++)
+            HeapFree(GetProcessHeap(), 0, This->monikers[i]);
+        HeapFree(GetProcessHeap(), 0, This->monikers);
+        HeapFree(GetProcessHeap(), 0, This);
     }
 
     return ref;
@@ -681,16 +849,28 @@ static HRESULT   WINAPI EnumMonikerImpl_Next(IEnumMoniker* iface, ULONG celt, IM
 {
     ULONG i;
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
-    TRACE("(%p) TabCurrentPos %ld Tablastindx %ld\n",This, This->TabCurrentPos, This->TabLastIndx);
+    HRESULT hr = S_OK;
+
+    TRACE("(%p) TabCurrentPos %ld Tablastindx %ld\n", This, This->pos, This->moniker_count);
 
     /* retrieve the requested number of moniker from the current position */
-    for(i=0; (This->TabCurrentPos < This->TabLastIndx) && (i < celt); i++)
-	rgelt[i]=(IMoniker*)This->TabMoniker[This->TabCurrentPos++].pmkObj;
+    for(i = 0; (This->pos < This->moniker_count) && (i < celt); i++)
+    {
+        IStream *stream;
+        hr = create_stream_on_mip_ro(This->monikers[This->pos++], &stream);
+        if (hr != S_OK) break;
+        hr = CoUnmarshalInterface(stream, &IID_IMoniker, (void **)&rgelt[i]);
+        IStream_Release(stream);
+        if (hr != S_OK) break;
+    }
 
-    if (pceltFetched!=NULL)
+    if (pceltFetched != NULL)
         *pceltFetched= i;
 
-    if (i==celt)
+    if (hr != S_OK)
+        return hr;
+
+    if (i == celt)
         return S_OK;
     else
         return S_FALSE;
@@ -706,10 +886,10 @@ static HRESULT   WINAPI EnumMonikerImpl_Skip(IEnumMoniker* iface, ULONG celt)
 
     TRACE("(%p)\n",This);
 
-    if  (This->TabCurrentPos+celt >= This->TabLastIndx)
-	return S_FALSE;
+    if  (This->pos + celt >= This->moniker_count)
+        return S_FALSE;
 
-    This->TabCurrentPos+=celt;
+    This->pos += celt;
 
     return S_OK;
 }
@@ -721,7 +901,7 @@ static HRESULT   WINAPI EnumMonikerImpl_Reset(IEnumMoniker* iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
 
-    This->TabCurrentPos = 0;	/* set back to start of list */
+    This->pos = 0;	/* set back to start of list */
 
     TRACE("(%p)\n",This);
 
@@ -734,16 +914,25 @@ static HRESULT   WINAPI EnumMonikerImpl_Reset(IEnumMoniker* iface)
 static HRESULT   WINAPI EnumMonikerImpl_Clone(IEnumMoniker* iface, IEnumMoniker ** ppenum)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
+    MInterfacePointer **monikers = HeapAlloc(GetProcessHeap(), 0, sizeof(*monikers)*This->moniker_count);
+    ULONG i;
 
     TRACE("(%p)\n",This);
+
+    for (i = 0; i < This->moniker_count; i++)
+    {
+        SIZE_T size = FIELD_OFFSET(MInterfacePointer, abData[This->monikers[i]->ulCntData]);
+        monikers[i] = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(monikers[i], This->monikers[i], size);
+    }
+
     /* copy the enum structure */ 
-    return EnumMonikerImpl_CreateEnumROTMoniker(This->TabMoniker, This->TabSize,
-					 This->TabLastIndx, This->TabCurrentPos,
-					 ppenum);
+    return EnumMonikerImpl_CreateEnumROTMoniker(monikers, This->moniker_count,
+        This->pos, ppenum);
 }
 
 /* Virtual function table for the IEnumMoniker class. */
-static IEnumMonikerVtbl VT_EnumMonikerImpl =
+static const IEnumMonikerVtbl VT_EnumMonikerImpl =
 {
     EnumMonikerImpl_QueryInterface,
     EnumMonikerImpl_AddRef,
@@ -759,24 +948,18 @@ static IEnumMonikerVtbl VT_EnumMonikerImpl =
  *        Used by EnumRunning to create the structure and EnumClone
  *	  to copy the structure
  */
-HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(RunObject* TabMoniker,
-                                                 ULONG TabSize,
-						 ULONG TabLastIndx,
-                                                 ULONG TabCurrentPos,
-                                                 IEnumMoniker ** ppenumMoniker)
+static HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(MInterfacePointer **monikers,
+                                                 ULONG moniker_count,
+                                                 ULONG current_pos,
+                                                 IEnumMoniker **ppenumMoniker)
 {
-    int i;
     EnumMonikerImpl* This = NULL;
 
-    if (TabCurrentPos > TabSize)
-	return E_INVALIDARG;
-
-    if (ppenumMoniker == NULL)
+    if (!ppenumMoniker)
         return E_INVALIDARG;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumMonikerImpl));
-
-    if (!ppenumMoniker) return E_OUTOFMEMORY;
+    if (!This) return E_OUTOFMEMORY;
 
     TRACE("(%p)\n", This);
 
@@ -785,20 +968,9 @@ HRESULT WINAPI EnumMonikerImpl_CreateEnumROTMoniker(RunObject* TabMoniker,
 
     /* the initial reference is set to "1" */
     This->ref = 1;			/* set the ref count to one         */
-    This->TabCurrentPos=0;		/* Set the list start posn to start */
-    This->TabSize=TabSize; 		/* Need the same size table as ROT */
-    This->TabLastIndx=TabLastIndx; 	/* end element */
-    This->TabMoniker=HeapAlloc(GetProcessHeap(),0,This->TabSize*sizeof(RunObject));
-
-    if (This->TabMoniker==NULL) {
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
-    }
-    for (i=0; i < This->TabLastIndx; i++){
-
-        This->TabMoniker[i]=TabMoniker[i];
-        IMoniker_AddRef(TabMoniker[i].pmkObj);
-    }
+    This->pos = 0;		/* Set the list start posn to start */
+    This->moniker_count = moniker_count; /* Need the same size table as ROT */
+    This->monikers = monikers;
 
     *ppenumMoniker =  (IEnumMoniker*)This;
 
