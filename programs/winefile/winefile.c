@@ -317,6 +317,15 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 
 	if (hFind != INVALID_HANDLE_VALUE) {
 		do {
+#ifdef _NO_EXTENSIONS
+			/* hide directory entry "." */
+			if (w32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				LPCTSTR name = w32fd.cFileName;
+
+				if (name[0]=='.' && name[1]=='\0')
+					continue;
+			}
+#endif
 			entry = alloc_entry();
 
 			if (!first_entry)
@@ -332,15 +341,7 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 			entry->scanned = FALSE;
 			entry->level = level;
 
-#ifdef _NO_EXTENSIONS
-			/* hide directory entry "." */
-			if (entry->data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-				LPCTSTR name = entry->data.cFileName;
-
-				if (name[0]=='.' && name[1]=='\0')
-					continue;
-			}
-#else
+#ifndef _NO_EXTENSIONS
 			entry->etype = ET_WINDOWS;
 			entry->bhfi_valid = FALSE;
 
@@ -358,9 +359,10 @@ static void read_directory_win(Entry* dir, LPCTSTR path)
 #endif
 
 			last = entry;
-		} while(FindNextFile(hFind, &entry->data));
+		} while(FindNextFile(hFind, &w32fd));
 
-		last->next = NULL;
+		if (last)
+			last->next = NULL;
 
 		FindClose(hFind);
 	}
@@ -526,7 +528,8 @@ static void read_directory_unix(Entry* dir, LPCTSTR path)
 			last = entry;
 		}
 
-		last->next = NULL;
+		if (last)
+			last->next = NULL;
 
 		closedir(pdir);
 	}
@@ -3335,7 +3338,9 @@ static void refresh_child(ChildWnd* child)
 static void create_drive_bar()
 {
 	TBBUTTON drivebarBtn = {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0, 0}, 0, 0};
+#ifndef _NO_EXTENSIONS
 	TCHAR b1[BUFFER_LEN];
+#endif
 	int btn = 1;
 	PTSTR p;
 

@@ -38,6 +38,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include <shellapi.h>
+#include <shlobj.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <tchar.h>
@@ -102,9 +103,6 @@ enum IMAGE {
 
 #ifndef _NO_EXTENSIONS
 #define	_SHELL_FOLDERS
-
-#include <objbase.h>
-#include <shlobj.h>
 #endif
 
 
