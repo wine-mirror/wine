@@ -284,7 +284,8 @@ LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
         }
         /* we have a valid mode */
         TRACE("Requested display settings match mode %ld (%s)\n", i, handler_name);
-        pSetCurrentMode(i);
+        if (!(flags & CDS_TEST))
+            pSetCurrentMode(i);
         return DISP_CHANGE_SUCCESSFUL;
     }
 
