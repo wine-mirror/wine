@@ -3,7 +3,7 @@
 # but the app doesn't really need to know, it should never need to
 # dereference the interface pointer itself (if we're lucky)...
 
-1   stub     WEP
+#1   stub     WEP
 2   stub     DLLGETCLASSOBJECT
 3   stub     DLLCANUNLOADNOW
 4   stub     ___EXPORTEDSTUB

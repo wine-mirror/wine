@@ -5,7 +5,7 @@
 5   pascal -ret16 AnsiToOem(str ptr) AnsiToOem16
 6   pascal -ret16 OemToAnsi(str ptr) OemToAnsi16
 7   pascal -ret16 SetSpeed(word) SetSpeed16
-8   stub WEP
+#8   stub WEP
 9   stub INQUIREEX
 10  stub TOASCIIEX
 11  stub VKKEYSCANEX

@@ -1,4 +1,4 @@
-1 stub WEP
+#1 stub WEP
 2 pascal -ret16 BootTask() BootTask16
 3 stub CREATEPROCESS
 4 stub WAITFORDEBUGEVENT
