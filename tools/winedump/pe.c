@@ -829,7 +829,7 @@ static void dump_dir_resource(void)
                 data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->u2.OffsetToData);
                 if (e1->u1.s1.NameIsString)
                 {
-                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
+                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
                 }
                 else switch(e1->u1.s2.Id)
                 {
@@ -842,7 +842,7 @@ static void dump_dir_resource(void)
                                         e2->u1.s2.Id, "    " );
                     break;
                 default:
-                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "        " );
+                    dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
                     break;
                 }
             }

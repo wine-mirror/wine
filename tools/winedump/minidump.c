@@ -106,9 +106,9 @@ void mdmp_dump(void)
                 printf("    Stack: 0x%llx-0x%llx\n", 
                        mt->Stack.StartOfMemoryRange, 
                        mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize);
-                dump_mdmp_data(&mt->Stack.Memory, "      ");
+                dump_mdmp_data(&mt->Stack.Memory, "    ");
                 printf("    ThreadContext:\n");
-                dump_mdmp_data(&mt->ThreadContext, "      ");
+                dump_mdmp_data(&mt->ThreadContext, "    ");
             }
         }
         break;
@@ -197,9 +197,9 @@ void mdmp_dump(void)
                 printf("      dwFileDate: %lx%08lx\n",
                        mm->VersionInfo.dwFileDateMS, mm->VersionInfo.dwFileDateLS);
                 printf("    CvRecord: <%lu>\n", mm->CvRecord.DataSize);
-                dump_mdmp_data(&mm->CvRecord, "      ");
+                dump_mdmp_data(&mm->CvRecord, "    ");
                 printf("    MiscRecord: <%lu>\n", mm->MiscRecord.DataSize);
-                dump_mdmp_data(&mm->MiscRecord, "      ");
+                dump_mdmp_data(&mm->MiscRecord, "    ");
                 printf("    Reserved0: %llu\n", mm->Reserved0);
                 printf("    Reserved1: %llu\n", mm->Reserved1);
             }
@@ -218,7 +218,7 @@ void mdmp_dump(void)
                 printf("    Range: 0x%llx-0x%llx\n",
                        mmd->StartOfMemoryRange, 
                        mmd->StartOfMemoryRange + mmd->Memory.DataSize);
-                dump_mdmp_data(&mmd->Memory, "      ");
+                dump_mdmp_data(&mmd->Memory, "    ");
             }   
         }
         break;
@@ -365,7 +365,7 @@ void mdmp_dump(void)
             printf("NIY %ld\n", dir->StreamType);
             printf("  RVA: %lu\n", dir->Location.Rva);
             printf("  Size: %lu\n", dir->Location.DataSize);
-            dump_mdmp_data(&dir->Location, "  ");
+            dump_mdmp_data(&dir->Location, "    ");
             break;
         }
     }

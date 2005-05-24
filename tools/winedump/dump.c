@@ -57,7 +57,7 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
 {
     unsigned int i, j;
 
-    printf( "%s", prefix );
+    printf( "%s%08x: ", prefix, 0 );
     if (!ptr)
     {
         printf("NULL\n");
@@ -71,7 +71,7 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
             printf( " " );
             for (j = 0; j < 16; j++)
                 printf( "%c", isprint(ptr[i-15+j]) ? ptr[i-15+j] : '.' );
-            if (i < size-1) printf( "\n%s", prefix );
+            if (i < size-1) printf( "\n%s%08x: ", prefix, i + 1 );
         }
     }
     if (i % 16)
