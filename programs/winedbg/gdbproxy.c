@@ -126,7 +126,8 @@ static inline unsigned char hex_to0(int x)
 static int hex_to_int(const char* src, size_t len){
     unsigned int returnval = 0;
     while (len--){
-        returnval=hex_from0(src[0]);
+        returnval|=hex_from0(src[0]);
+        src++;
         if(len) returnval<<=4;
     }
     return returnval;
