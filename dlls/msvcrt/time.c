@@ -348,8 +348,26 @@ char **__p__tzname(void)
 void MSVCRT__tzset(void)
 {
     tzset();
+#if defined(HAVE_TIMEZONE) && defined(HAVE_DAYLIGHT)
     MSVCRT___daylight = daylight;
     MSVCRT___timezone = timezone;
+#else
+    {
+        static const time_t seconds_in_year = (365 * 24 + 6) * 3600;
+        time_t t;
+        struct tm *tmp;
+        long zone_january, zone_july;
+
+        t = (time((time_t *)0) / seconds_in_year) * seconds_in_year;
+        tmp = localtime(&t);
+        zone_january = -tmp->tm_gmtoff;
+        t += seconds_in_year / 2;
+        tmp = localtime(&t);
+        zone_july = -tmp->tm_gmtoff;
+        MSVCRT___daylight = (zone_january != zone_july);
+        MSVCRT___timezone = max(zone_january, zone_july);
+    }
+#endif
     lstrcpynA(tzname_std, tzname[0], sizeof(tzname_std));
     tzname_std[sizeof(tzname_std) - 1] = '\0';
     lstrcpynA(tzname_dst, tzname[1], sizeof(tzname_dst));

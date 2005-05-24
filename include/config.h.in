@@ -71,6 +71,9 @@
 /* Define to 1 if you have the <curses.h> header file. */
 #undef HAVE_CURSES_H
 
+/* Define if you have the daylight variable */
+#undef HAVE_DAYLIGHT
+
 /* Define to 1 if you have the <direct.h> header file. */
 #undef HAVE_DIRECT_H
 
@@ -739,6 +742,9 @@
 
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM
+
+/* Define if you have the timezone variable */
+#undef HAVE_TIMEZONE
 
 /* Define to 1 if you have the <ucontext.h> header file. */
 #undef HAVE_UCONTEXT_H
