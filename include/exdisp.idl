@@ -342,3 +342,12 @@ interface IShellWindows : IDispatch
     HRESULT OnCreated( [in] long lCookie, [in] IUnknown *punk );
     HRESULT ProcessAttachDetach( [in] VARIANT_BOOL fAttach );
 }
+
+[
+    uuid(9ba05972-f6a8-11cf-a442-00a0c90a8f39)
+]
+coclass ShellWindows
+{
+    [default] interface IShellWindows;
+    [default, source] dispinterface DShellWindowsEvents;
+}
