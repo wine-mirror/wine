@@ -532,6 +532,7 @@ static void add_extra_undef_symbols( const DLLSPEC *spec )
     if (nb_delayed)
     {
         kernel_imports += add_extra_symbol( extras, &count, "LoadLibraryA", spec );
+        kernel_imports += add_extra_symbol( extras, &count, "FreeLibrary", spec );
         kernel_imports += add_extra_symbol( extras, &count, "GetProcAddress", spec );
         kernel_imports += add_extra_symbol( extras, &count, "RaiseException", spec );
     }
@@ -839,10 +840,10 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 
     if (!nb_delayed) goto done;
 
+    fprintf( outfile, "static void *__wine_delay_imp_hmod[%d];\n", nb_delayed );
     for (i = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "static void *__wine_delay_imp_%d_hmod;\n", i);
         for (j = 0; j < dll_imports[i]->nb_imports; j++)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
@@ -869,7 +870,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     for (i = j = 0; i < nb_imports; i++)
     {
         if (!dll_imports[i]->delay) continue;
-        fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_%d_hmod, &delay_imports.IAT[%d], &delay_imports.INT[%d], 0, 0, 0 },\n",
+        fprintf( outfile, "    { 0, \"%s\", &__wine_delay_imp_hmod[%d], &delay_imports.IAT[%d], &delay_imports.INT[%d], 0, 0, 0 },\n",
                  dll_imports[i]->spec->file_name, i, j, j );
         j += dll_imports[i]->nb_imports;
     }
@@ -1140,8 +1141,8 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 /* output the import and delayed import tables of a Win32 module
  * returns number of DLLs exported in 'immediate' mode
  */
-int output_imports( FILE *outfile, DLLSPEC *spec )
+int output_imports( FILE *outfile, DLLSPEC *spec, int *nb_delayed )
 {
-   output_delayed_imports( outfile, spec );
-   return output_immediate_imports( outfile );
+    *nb_delayed = output_delayed_imports( outfile, spec );
+    return output_immediate_imports( outfile );
 }

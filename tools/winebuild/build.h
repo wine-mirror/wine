@@ -173,7 +173,7 @@ extern void add_delayed_import( const char *name );
 extern void add_ignore_symbol( const char *name );
 extern void read_undef_symbols( char **argv );
 extern int resolve_imports( DLLSPEC *spec );
-extern int output_imports( FILE *outfile, DLLSPEC *spec );
+extern int output_imports( FILE *outfile, DLLSPEC *spec, int *nb_delayed );
 extern int load_res32_file( const char *name, DLLSPEC *spec );
 extern void output_resources( FILE *outfile, DLLSPEC *spec );
 extern void load_res16_file( const char *name, DLLSPEC *spec );
