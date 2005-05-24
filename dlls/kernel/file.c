@@ -451,6 +451,16 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
                          buffer, bytesToWrite, poffset, NULL);
 
+    /* FIXME: NtWriteFile does not always cause page faults, generate them now */
+    if (status == STATUS_INVALID_USER_BUFFER && !IsBadReadPtr( buffer, bytesToWrite ))
+    {
+        status = NtWriteFile(hFile, hEvent, NULL, NULL, piosb,
+                             buffer, bytesToWrite, poffset, NULL);
+        if (status != STATUS_INVALID_USER_BUFFER)
+            FIXME("Could not access memory (%p,%ld) at first, now OK. Protected by DIBSection code?\n",
+                  buffer, bytesToWrite);
+    }
+
     if (status != STATUS_PENDING && bytesWritten)
         *bytesWritten = piosb->Information;
 
