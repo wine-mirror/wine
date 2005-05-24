@@ -1548,6 +1548,7 @@ dlls/comctl32/tests/Makefile
 dlls/commdlg/Makefile
 dlls/crtdll/Makefile
 dlls/crypt32/Makefile
+dlls/crypt32/tests/Makefile
 dlls/cryptdll/Makefile
 dlls/ctl3d/Makefile
 dlls/d3d8/Makefile

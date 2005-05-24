@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = crypt32.dll
+IMPORTS   = crypt32
+
+CTESTS = \
+	protectdata.c
+
+@MAKE_TEST_RULES@
+
+### Dependencies:

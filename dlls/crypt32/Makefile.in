@@ -13,6 +13,8 @@ C_SRCS = \
 	protectdata.c \
 	main.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
