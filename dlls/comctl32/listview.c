@@ -24,13 +24,24 @@
  * NOTES
  *
  * This code was audited for completeness against the documented features
- * of Comctl32.dll version 6.0 on Oct. 21, 2002, by Dimitrie O. Paun.
+ * of Comctl32.dll version 6.0 on May. 20, 2005, by James Hawkins.
  * 
  * Unless otherwise noted, we believe this code to be complete, as per
  * the specification mentioned above.
  * If you discover missing features, or bugs, please note them below.
  * 
  * TODO:
+ *
+ * Default Message Processing
+ *   -- EN_KILLFOCUS should be handled in WM_COMMAND
+ *   -- WM_CREATE: create the icon and small icon image lists at this point only if
+ *      the LVS_SHAREIMAGELISTS style is not specified.
+ *   -- WM_ERASEBKGND: forward this message to the parent window if the bkgnd
+ *      color is CLR_NONE.
+ *   -- WM_WINDOWPOSCHANGED: arrange the list items if the current view is icon
+ *      or small icon and the LVS_AUTOARRANGE style is specified.
+ *   -- WM_TIMER
+ *   -- WM_WININICHANGE
  *
  * Features
  *   -- Hot item handling, mouse hovering
@@ -74,6 +85,8 @@
  *   -- LVS_NOLABELWRAP
  *   -- LVS_NOSCROLL (see Q137520)
  *   -- LVS_SORTASCENDING, LVS_SORTDESCENDING
+ *   -- LVS_ALIGNTOP
+ *   -- LVS_TYPESTYLEMASK
  *
  * Extended Styles
  *   -- LVS_EX_BORDERSELECT
@@ -99,6 +112,7 @@
  *   -- LVN_ODFINDITEM
  *   -- LVN_SETDISPINFO
  *   -- NM_HOVER
+ *   -- LVN_BEGINRDRAG
  *
  * Messages:
  *   -- LVM_CANCELEDITLABEL
@@ -129,6 +143,20 @@
  *   -- LVM_SETTILEWIDTH
  *   -- LVM_SORTGROUPS
  *   -- LVM_SORTITEMSEX
+ *
+ * Macros:
+ *   -- ListView_GetCheckSate, ListView_SetCheckState
+ *   -- ListView_GetHoverTime, ListView_SetHoverTime
+ *   -- ListView_GetISearchString
+ *   -- ListView_GetNumberOfWorkAreas
+ *   -- ListView_GetOrigin
+ *   -- ListView_GetTextBkColor
+ *   -- ListView_GetUnicodeFormat, ListView_SetUnicodeFormat
+ *   -- ListView_GetWorkAreas, ListView_SetWorkAreas
+ *   -- ListView_SortItemsEx
+ *
+ * Functions:
+ *   -- LVGroupComparE
  *
  * Known differences in message stream from native control (not known if
  * these differences cause problems):
