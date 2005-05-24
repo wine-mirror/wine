@@ -71,14 +71,15 @@ C_SRCS = \
 	virtual.c \
 	volume.c \
 	vxd.c \
-	win87em.c \
 	windebug.c \
 	wowthunk.c
 
 C_SRCS16 = \
 	atom16.c \
 	error16.c \
-	registry16.c
+	registry16.c \
+	toolhelp16.c \
+	win87em.c
 
 ASM_SRCS = relay16asm.s
 
