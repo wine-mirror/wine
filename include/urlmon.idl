@@ -20,7 +20,7 @@
 import "objidl.idl";
 import "oleidl.idl";
 import "servprov.idl";
-/*import "msxml.idl";*/
+import "msxml.idl";
 
 interface IInternetProtocolSink;
 
@@ -1012,6 +1012,61 @@ interface IInternetZoneManager : IUnknown
         [in] DWORD dwReserved);
 }
 
+typedef struct _tagSOFTDISTINFO
+{
+    ULONG cbSize;
+    DWORD dwFlags;
+    DWORD dwAdState;
+    LPWSTR szTitle;
+    LPWSTR szAbstract;
+    LPWSTR szHREF;
+    DWORD dwInstalledVersionMS;
+    DWORD dwInstalledVersionLS;
+    DWORD dwUpdateVersionMS;
+    DWORD dwUpdateVersionLS;
+    DWORD dwAdvertisedVersionMS;
+    DWORD dwAdvertisedVersionLS;
+    DWORD dwReserved;
+} SOFTDISTINFO, *LPSOFTDISTINFO;
+
+typedef struct _tagCODEBASEHOLD
+{
+    DWORD cbSize;
+    LPWSTR szDistUnit;
+    LPWSTR szCodeBase;
+    DWORD dwVersionMS;
+    DWORD dwVersionLS;
+    DWORD dwStyle;
+} CODEBASEHOLD, *LPCODEBASEHOLD;
+
+[
+    local,
+    object,
+    uuid(b15b8dc1-c7e1-11d0-8680-00aa00bdcb71),
+    pointer_default(unique)
+]
+interface ISoftDistExt : IUnknown
+{
+    HRESULT ProcessSoftDist(
+        [in] LPCWSTR szCDFURL,
+        [in] IXMLElement *pSoftDistElement,
+        [in, out] LPSOFTDISTINFO lpsdi );
+
+    HRESULT GetFirstCodeBase(
+        [in] LPWSTR *szCodeBase,
+        [in] LPDWORD dwMaxSize );
+
+    HRESULT GetNextCodeBase(
+        [in] LPWSTR *szCodeBase,
+        [in] LPDWORD dwMaxSize );
+
+    HRESULT AsyncInstallDistributionUnit(
+        [in] IBindCtx *pbc,
+        [in] LPVOID lpReserved,
+        [in] DWORD flags,
+        [in] LPCODEBASEHOLD lpcbh);
+}
+
 cpp_quote("DEFINE_GUID(CLSID_InternetSecurityManager, 0x7b8a2d94, 0x0ac9, 0x11d1, 0x89, 0x6c, 0x00, 0xc0, 0x4f, 0xB6, 0xbf, 0xc4);")
 cpp_quote("DEFINE_GUID(CLSID_InternetZoneManager, 0x7B8A2D95, 0x0AC9, 0x11D1, 0x89, 0x6C, 0x00, 0xC0, 0x4F, 0xB6, 0xBF, 0xC4);")
 cpp_quote("DEFINE_GUID(IID_IAsyncMoniker, 0x79EAC9D3, 0xBAF9, 0x11CE, 0x8C, 0x82, 0x00, 0xAA, 0x00, 0x4B, 0xA9, 0x0B);")
@@ -1054,9 +1109,11 @@ cpp_quote("HRESULT WINAPI CoInternetGetSession(DWORD,IInternetSession**,DWORD);"
 cpp_quote("HRESULT WINAPI MkParseDisplayNameEx(IBindCtx*,LPCWSTR,ULONG*,IMoniker**);")
 cpp_quote("HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);")
 cpp_quote("HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);")
+cpp_quote("HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx*,DWORD,IBindStatusCallback*,IEnumFORMATETC*,IBindCtx**,DWORD);");
 cpp_quote("HRESULT WINAPI CoInternetCombineUrl(LPCWSTR,LPCWSTR,DWORD,LPWSTR,DWORD,DWORD*,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCompareUrl(LPCWSTR,LPCWSTR,DWORD);");
 cpp_quote("HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider*, IInternetZoneManager**, DWORD);");
+cpp_quote("HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi);");
 
 cpp_quote("#define OInetCombineUrl CoInternetCombineUrl")
 cpp_quote("#define OInetCompareUrl CoInternetCompareUrl")
