@@ -7559,6 +7559,25 @@ fail:
 
 /***
  * DESCRIPTION:
+ * Enables the listview control.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ * [I] bEnable : specifies whether to enable or disable the window
+ *
+ * RETURN:
+ *   SUCCESS : TRUE
+ *   FAILURE : FALSE
+ */
+static BOOL LISTVIEW_Enable(LISTVIEW_INFO *infoPtr, BOOL bEnable)
+{
+    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    return TRUE;
+}
+
+/***
+ * DESCRIPTION:
  * Erases the background of the listview control.
  *
  * PARAMETER(S):
@@ -9191,6 +9210,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_CREATE:
     return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
+
+  case WM_ENABLE:
+    return LISTVIEW_Enable(infoPtr, (BOOL)wParam);
 
   case WM_ERASEBKGND:
     return LISTVIEW_EraseBkgnd(infoPtr, (HDC)wParam);
