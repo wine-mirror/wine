@@ -1041,6 +1041,7 @@ static void ConvertUrlComponentValue(LPSTR* lppszComponent, LPDWORD dwComponentL
                                      LPWSTR lpwszComponent, DWORD dwwComponentLen,
                                      LPCSTR lpszStart, LPCWSTR lpwszStart)
 {
+    TRACE("%p %p %p %ld %p %p\n", lppszComponent, dwComponentLen, lpwszComponent, dwwComponentLen, lpszStart, lpwszStart);
     if (*dwComponentLen != 0)
     {
         DWORD nASCIILength=WideCharToMultiByte(CP_ACP,0,lpwszComponent,dwwComponentLen,NULL,0,NULL,NULL);
@@ -1080,6 +1081,7 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
   URL_COMPONENTSW UCW;
   WCHAR* lpwszUrl;
 
+  TRACE("(%s %lu %lx %p)\n", debugstr_a(lpszUrl), dwUrlLength, dwFlags, lpUrlComponents);
   if(dwUrlLength<=0)
       dwUrlLength=-1;
   nLength=MultiByteToWideChar(CP_ACP,0,lpszUrl,dwUrlLength,NULL,0);
@@ -1093,17 +1095,17 @@ BOOL WINAPI InternetCrackUrlA(LPCSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
 
   memset(&UCW,0,sizeof(UCW));
   if(lpUrlComponents->dwHostNameLength!=0)
-      UCW.dwHostNameLength=1;
+      UCW.dwHostNameLength= lpUrlComponents->dwHostNameLength;
   if(lpUrlComponents->dwUserNameLength!=0)
-      UCW.dwUserNameLength=1;
+      UCW.dwUserNameLength=lpUrlComponents->dwUserNameLength;
   if(lpUrlComponents->dwPasswordLength!=0)
-      UCW.dwPasswordLength=1;
+      UCW.dwPasswordLength=lpUrlComponents->dwPasswordLength;
   if(lpUrlComponents->dwUrlPathLength!=0)
-      UCW.dwUrlPathLength=1;
+      UCW.dwUrlPathLength=lpUrlComponents->dwUrlPathLength;
   if(lpUrlComponents->dwSchemeLength!=0)
-      UCW.dwSchemeLength=1;
+      UCW.dwSchemeLength=lpUrlComponents->dwSchemeLength;
   if(lpUrlComponents->dwExtraInfoLength!=0)
-      UCW.dwExtraInfoLength=1;
+      UCW.dwExtraInfoLength=lpUrlComponents->dwExtraInfoLength;
   if(!InternetCrackUrlW(lpwszUrl,nLength,dwFlags,&UCW))
   {
       HeapFree(GetProcessHeap(), 0, lpwszUrl);
@@ -1163,7 +1165,7 @@ static INTERNET_SCHEME GetInternetSchemeW(LPCWSTR lpszScheme, DWORD nMaxCmp)
     static const WCHAR lpszMailto[]={'m','a','i','l','t','o',0};
     static const WCHAR lpszRes[]={'r','e','s',0};
     WCHAR* tempBuffer=NULL;
-    TRACE("\n");
+    TRACE("%s %ld\n",debugstr_wn(lpszScheme, nMaxCmp), nMaxCmp);
     if(lpszScheme==NULL)
         return INTERNET_SCHEME_UNKNOWN;
 
@@ -1236,7 +1238,7 @@ static BOOL SetUrlComponentValueW(LPWSTR* lppszComponent, LPDWORD dwComponentLen
 /***********************************************************************
  *           InternetCrackUrlW   (WININET.@)
  */
-BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
+BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWORD dwFlags,
                               LPURL_COMPONENTSW lpUC)
 {
   /*
@@ -1246,15 +1248,26 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
    */
     LPCWSTR lpszParam    = NULL;
     BOOL  bIsAbsolute = FALSE;
-    LPCWSTR lpszap = lpszUrl;
+    LPCWSTR lpszap, lpszUrl = lpszUrl_orig;
     LPCWSTR lpszcp = NULL;
+    LPWSTR  lpszUrl_decode = NULL;
+    DWORD dwUrlLength = dwUrlLength_orig;
     const WCHAR lpszSeparators[3]={';','?',0};
     const WCHAR lpszSlash[2]={'/',0};
     if(dwUrlLength==0)
         dwUrlLength=strlenW(lpszUrl);
 
     TRACE("(%s %lu %lx %p)\n", debugstr_w(lpszUrl), dwUrlLength, dwFlags, lpUC);
-
+    if (dwFlags & ICU_DECODE)
+    {
+	lpszUrl_decode=HeapAlloc( GetProcessHeap(), 0,  dwUrlLength * sizeof (WCHAR) );
+	if( InternetCanonicalizeUrlW(lpszUrl_orig, lpszUrl_decode, &dwUrlLength, dwFlags))
+	{
+	    lpszUrl =  lpszUrl_decode;
+	}
+    }
+    lpszap = lpszUrl;
+    
     /* Determine if the URI is absolute. */
     while (*lpszap != '\0')
     {
@@ -1442,7 +1455,6 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
             else
                 len = dwUrlLength-(lpszcp-lpszUrl);
         }
-
         SetUrlComponentValueW(&lpUC->lpszUrlPath, &lpUC->dwUrlPathLength,
                                    lpszcp, len);
     }
@@ -1451,11 +1463,14 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl, DWORD dwUrlLength, DWORD dwFlags,
         lpUC->dwUrlPathLength = 0;
     }
 
-    TRACE("%s: host(%s) path(%s) extra(%s)\n", debugstr_wn(lpszUrl,dwUrlLength),
+    TRACE("%s: scheme(%s) host(%s) path(%s) extra(%s)\n", debugstr_wn(lpszUrl,dwUrlLength),
+             debugstr_wn(lpUC->lpszScheme,lpUC->dwSchemeLength),
              debugstr_wn(lpUC->lpszHostName,lpUC->dwHostNameLength),
              debugstr_wn(lpUC->lpszUrlPath,lpUC->dwUrlPathLength),
              debugstr_wn(lpUC->lpszExtraInfo,lpUC->dwExtraInfoLength));
 
+    if (lpszUrl_decode)
+	 HeapFree(GetProcessHeap(), 0, lpszUrl_decode );
     return TRUE;
 }
 
@@ -1490,15 +1505,27 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 	LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     HRESULT hr;
-    TRACE("%s %p %p %08lx\n",debugstr_a(lpszUrl), lpszBuffer,
-	  lpdwBufferLength, dwFlags);
+    DWORD dwURLFlags= 0x80000000; /* Don't know what this means */
+    if(dwFlags & ICU_DECODE)
+    {
+	dwURLFlags |= URL_UNESCAPE;
+	dwFlags &= ~ICU_DECODE;
+    }
+
+    if(dwFlags & ICU_ESCAPE)
+    {
+	dwURLFlags |= URL_UNESCAPE;
+	dwFlags &= ~ICU_ESCAPE;
+    }
+    if(dwFlags)
+	FIXME("Unhandled flags 0x%08lx\n", dwFlags);
+    TRACE("%s %p %p %08lx\n", debugstr_a(lpszUrl), lpszBuffer,
+        lpdwBufferLength, dwURLFlags);
 
     /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
     dwFlags ^= ICU_NO_ENCODE;
 
-    dwFlags |= 0x80000000; /* Don't know what this means */
-
-    hr = UrlCanonicalizeA(lpszUrl, lpszBuffer, lpdwBufferLength, dwFlags);
+    hr = UrlCanonicalizeA(lpszUrl, lpszBuffer, lpdwBufferLength, dwURLFlags);
 
     return (hr == S_OK) ? TRUE : FALSE;
 }
@@ -1517,15 +1544,27 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
     LPDWORD lpdwBufferLength, DWORD dwFlags)
 {
     HRESULT hr;
+    DWORD dwURLFlags= 0x80000000; /* Don't know what this means */
+    if(dwFlags & ICU_DECODE)
+    {
+	dwURLFlags |= URL_UNESCAPE;
+	dwFlags &= ~ICU_DECODE;
+    }
+
+    if(dwFlags & ICU_ESCAPE)
+    {
+	dwURLFlags |= URL_UNESCAPE;
+	dwFlags &= ~ICU_ESCAPE;
+    }
+    if(dwFlags)
+	FIXME("Unhandled flags 0x%08lx\n", dwFlags);
     TRACE("%s %p %p %08lx\n", debugstr_w(lpszUrl), lpszBuffer,
-        lpdwBufferLength, dwFlags);
+        lpdwBufferLength, dwURLFlags);
 
     /* Flip this bit to correspond to URL_ESCAPE_UNSAFE */
     dwFlags ^= ICU_NO_ENCODE;
 
-    dwFlags |= 0x80000000; /* Don't know what this means */
-
-    hr = UrlCanonicalizeW(lpszUrl, lpszBuffer, lpdwBufferLength, dwFlags);
+    hr = UrlCanonicalizeW(lpszUrl, lpszBuffer, lpdwBufferLength, dwURLFlags);
 
     return (hr == S_OK) ? TRUE : FALSE;
 }

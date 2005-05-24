@@ -15,6 +15,7 @@
 #define TEST_URL2_PATH "/myscript.php"
 #define TEST_URL2_PATHEXTRA "/myscript.php?arg=1"
 #define TEST_URL2_EXTRA "?arg=1"
+#define TEST_URL3 "file:///C:/Program%20Files/Atmel/AVR%20Tools/STK500/STK500.xml"
 
 int goon = 0;
 
@@ -310,8 +311,21 @@ void InternetCrackUrl_test(void)
   ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %ld\n", strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
   ok(!strncmp(urlComponents.lpszHostName,TEST_URL2_SERVER,strlen(TEST_URL2_SERVER)),"lpszHostName should be %s but is %s\n", TEST_URL2_SERVER, urlComponents.lpszHostName);
 
-
-
+  /*3. Check for %20 */
+  ZeroMemory(&urlComponents, sizeof(urlComponents));
+  urlComponents.dwStructSize = sizeof(urlComponents);
+  urlComponents.lpszScheme = protocol;
+  urlComponents.dwSchemeLength = 32;
+  urlComponents.lpszHostName = hostName;
+  urlComponents.dwHostNameLength = 1024;
+  urlComponents.lpszUserName = userName;
+  urlComponents.dwUserNameLength = 1024;
+  urlComponents.lpszPassword = password;
+  urlComponents.dwPasswordLength = 1024;
+  urlComponents.lpszUrlPath = path;
+  urlComponents.dwUrlPathLength = 2048;
+  urlComponents.lpszExtraInfo = extra;
+  ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
 }
 
 void InternetCrackUrlW_test(void)
