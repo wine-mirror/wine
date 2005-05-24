@@ -987,6 +987,13 @@ interface IInternetZoneManager : IUnknown
         [in] DWORD cbPolicy,
         [in] URLZONEREG urlZoneReg);
 
+    HRESULT PromptAction(
+        [in] DWORD dwAction,
+        [in] HWND hwndParent,
+        [in] LPCWSTR pwszUrl,
+        [in] LPCWSTR pwszText,
+        [in] DWORD dwPromptFlags );
+
     HRESULT LogAction(
         [in] DWORD dwAction,
         [in] LPCWSTR pwszUrl,
