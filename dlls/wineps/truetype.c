@@ -425,7 +425,7 @@ static BOOL BuildTrueTypeAFM(FT_Face face)
 {
     AFM     	*afm;
     AFMMETRICS	*metrics;
-    LPSTR   	font_name, full_name, family_name, encoding_scheme;
+    LPSTR   	font_name, full_name, family_name, encoding_scheme = NULL;
     FT_CharMap	charmap;
     BOOL    	retval, added;
 

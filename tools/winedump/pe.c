@@ -292,7 +292,7 @@ static	void	dump_sections(void* addr, unsigned num_sect)
 
 static	void	dump_dir_exported_functions(void)
 {
-    unsigned int size;
+    unsigned int size = 0;
     IMAGE_EXPORT_DIRECTORY	*exportDir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
     unsigned int		i;
     DWORD*			pFunc;

@@ -1289,7 +1289,7 @@ static Int64 _chm_decompress_region(struct chmFile *h,
     UInt64 nBlock, nOffset;
     UInt64 nLen;
     UInt64 gotLen;
-    UChar *ubuffer;
+    UChar *ubuffer = NULL;
 
         if (len <= 0)
                 return (Int64)0;

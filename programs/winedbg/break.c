@@ -711,7 +711,7 @@ static	BOOL should_stop(int bpnum)
 BOOL break_should_continue(ADDRESS* addr, DWORD code, int* count, BOOL* is_break)
 {
     int 	        bpnum;
-    DWORD	        oldval;
+    DWORD	        oldval = 0;
     int 	        wpnum;
     enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
 

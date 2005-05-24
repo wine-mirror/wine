@@ -103,7 +103,7 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
 static BYTE *INSTR_GetOperandAddr( CONTEXT86 *context, BYTE *instr,
                                    int long_addr, int segprefix, int *len )
 {
-    int mod, rm, base, index = 0, ss = 0, seg = 0, off;
+    int mod, rm, base = 0, index = 0, ss = 0, seg = 0, off;
     LDT_ENTRY entry;
 
 #define GET_VAL(val,type) \

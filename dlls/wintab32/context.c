@@ -548,7 +548,7 @@ BOOL WINAPI WTPacket(HCTX hCtx, UINT wSerial, LPVOID lpPkt)
 {
     int rc = 0;
     LPOPENCONTEXT context;
-    LPWTPACKET    wtp;
+    LPWTPACKET wtp = NULL;
 
     TRACE("(%p, %d, %p)\n", hCtx, wSerial, lpPkt);
 
