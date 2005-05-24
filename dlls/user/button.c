@@ -48,9 +48,9 @@
  *  - BCN_HOTITEMCHANGE
  *  - BN_DISABLE
  *  - BN_PUSHED/BN_HILITE
- *  - BN_KILLFOCUS
+ *  + BN_KILLFOCUS: is it OK?
  *  - BN_PAINT
- *  - BN_SETFOCUS
+ *  + BN_SETFOCUS: is it OK?
  *  - BN_UNPUSHED/BN_UNHILITE
  *  - NM_CUSTOMDRAW
  *
@@ -74,6 +74,9 @@
 #include "wine/winuser16.h"
 #include "controls.h"
 #include "user_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(button);
 
 /* GetWindowLong offsets for window extra information */
 #define STATE_GWL_OFFSET  0
@@ -92,6 +95,14 @@
 #define BUTTON_BTNPRESSED      0x40
 #define BUTTON_UNKNOWN2        0x20
 #define BUTTON_UNKNOWN3        0x10
+
+#define BUTTON_NOTIFY_PARENT(hWnd, code) \
+    do { /* Notify parent which has created this button control */ \
+        TRACE("notification " #code " sent to hwnd=%p\n", GetParent(hWnd)); \
+        SendMessageW(GetParent(hWnd), WM_COMMAND, \
+                     MAKEWPARAM(GetWindowLongPtrW((hWnd),GWLP_ID), (code)), \
+                     (LPARAM)(hWnd)); \
+    } while(0)
 
 static UINT BUTTON_CalcLabelRect( HWND hwnd, HDC hdc, RECT *rc );
 static void PB_Paint( HWND hwnd, HDC hDC, UINT action );
@@ -294,9 +305,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
            btn_type == BS_USERBUTTON ||
            btn_type == BS_OWNERDRAW)
         {
-            SendMessageW( GetParent(hWnd), WM_COMMAND,
-                          MAKEWPARAM( GetWindowLongPtrW(hWnd,GWLP_ID), BN_DOUBLECLICKED ),
-                          (LPARAM)hWnd);
+            BUTTON_NOTIFY_PARENT(hWnd, BN_DOUBLECLICKED);
             break;
         }
         /* fall through */
@@ -340,12 +349,12 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
                                 (state & BUTTON_3STATE) ? 0 : ((state & 3) + 1), 0 );
                 break;
             }
-            SendMessageW( GetParent(hWnd), WM_COMMAND,
-                          MAKEWPARAM( GetWindowLongPtrW(hWnd,GWLP_ID), BN_CLICKED ), (LPARAM)hWnd);
+            BUTTON_NOTIFY_PARENT(hWnd, BN_CLICKED);
         }
         break;
 
     case WM_CAPTURECHANGED:
+        TRACE("WM_CAPTURECHANGED %p\n", hWnd);
         state = get_button_state( hWnd );
         if (state & BUTTON_BTNPRESSED)
         {
@@ -405,17 +414,24 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         return (LRESULT)get_button_font( hWnd );
 
     case WM_SETFOCUS:
+        TRACE("WM_SETFOCUS %p\n",hWnd);
         set_button_state( hWnd, get_button_state(hWnd) | BUTTON_HASFOCUS );
         paint_button( hWnd, btn_type, ODA_FOCUS );
+        if (style & BS_NOTIFY)
+            BUTTON_NOTIFY_PARENT(hWnd, BN_SETFOCUS);
         break;
 
     case WM_KILLFOCUS:
+        TRACE("WM_KILLFOCUS %p\n",hWnd);
         state = get_button_state( hWnd );
         set_button_state( hWnd, state & ~BUTTON_HASFOCUS );
 	paint_button( hWnd, btn_type, ODA_FOCUS );
 
         if ((state & BUTTON_BTNPRESSED) && GetCapture() == hWnd)
             ReleaseCapture();
+        if (style & BS_NOTIFY)
+            BUTTON_NOTIFY_PARENT(hWnd, BN_KILLFOCUS);
+
         break;
 
     case WM_SYSCOLORCHANGE:
