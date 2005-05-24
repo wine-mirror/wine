@@ -1139,6 +1139,11 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
                 /* destroy the old X windows */
                 destroy_whole_window( display, data );
                 destroy_icon_window( display, data );
+                if (data->managed)
+                {
+                    data->managed = FALSE;
+                    RemovePropA( data->hwnd, managed_atom );
+                }
             }
         }
         else  /* new top level window */
