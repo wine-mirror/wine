@@ -398,6 +398,7 @@ HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
     srcSize.x = rcSrc.right-rcSrc.left;
     srcSize.y = rcSrc.bottom-rcSrc.top;
 
+    GetThemeBool(hTheme, iPartId, iStateId, TMT_UNIFORMSIZING, &uniformsizing);
     if(uniformsizing) {
         /* Scale height and width equally */
         int widthDiff = abs(srcSize.x-dstSize.x);
