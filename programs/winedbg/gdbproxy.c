@@ -606,13 +606,63 @@ static void    resume_debuggee_thread(struct gdb_context* gdbctx, unsigned long 
         fprintf(stderr, "Cannot find last thread\n");
 }
 
+static BOOL	check_for_interrupt(struct gdb_context* gdbctx)
+{
+	struct pollfd       pollfd;
+	int ret;
+	char pkt;
+				
+	pollfd.fd = gdbctx->sock;
+	pollfd.events = POLLIN;
+	pollfd.revents = 0;
+				
+	if ((ret = poll(&pollfd, 1, 0)) == 1) {
+		ret = read(gdbctx->sock, &pkt, 1);
+		if (ret != 1) {
+			if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR) {
+				fprintf(stderr, "read failed\n");
+			}
+			return FALSE;
+		}
+		if (pkt != '\003') {
+			if (gdbctx->trace & GDBPXY_TRC_COMMAND_ERROR) {
+				fprintf(stderr, "Unexpected break packet (%c/0x%X)\n", pkt, pkt);				
+			}
+			return FALSE;
+		}
+		return TRUE;
+	} else if (ret == -1) {
+		fprintf(stderr, "poll failed\n");
+	}
+	return FALSE;
+}
+
 static void    wait_for_debuggee(struct gdb_context* gdbctx)
 {
     DEBUG_EVENT         de;
 
     gdbctx->in_trap = FALSE;
-    while (WaitForDebugEvent(&de, INFINITE))
+    for (;;)
     {
+		if (!WaitForDebugEvent(&de, 10))
+		{
+			if (GetLastError() == ERROR_SEM_TIMEOUT)
+			{
+				if (check_for_interrupt(gdbctx)) {
+					if (!DebugBreakProcess(gdbctx->process->handle)) {
+						if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR) {
+							fprintf(stderr, "Failed to break into debugee\n");
+						}
+						break;
+					}
+					WaitForDebugEvent(&de, INFINITE);	
+				} else {
+					continue;
+				} 
+			} else {
+				break;
+			} 
+		}
         handle_debug_event(gdbctx, &de);
         assert(!gdbctx->process ||
                gdbctx->process->pid == 0 ||
