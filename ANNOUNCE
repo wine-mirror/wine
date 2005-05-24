@@ -1,14 +1,14 @@
-This is release 20050419 of Wine, a free implementation of Windows on
+This is release 20050524 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-WHAT'S NEW with Wine-20050419: (see ChangeLog for details)
-        - Mailslot support.
-        - Support for side mouse buttons (X buttons).
-        - More Richedit improvements.
-        - Loading of Windows registry files disabled for now.
-        - Many code cleanups.
+WHAT'S NEW with Wine-20050524: (see ChangeLog for details)
+        - Many MSI improvements.
+        - More features in the file manager.
+        - Better compatibility for Winelib import libraries.
+        - SGML documentation moved out of the source tree.
+        - Header files cleanups.
         - Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -17,8 +17,8 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20050419.tar.gz
-  http://prdownloads.sourceforge.net/wine/Wine-20050419.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20050524.tar.gz
+  http://prdownloads.sourceforge.net/wine/Wine-20050524.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 These locations also hold pre-built documentation packages in various
