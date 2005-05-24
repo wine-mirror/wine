@@ -127,7 +127,7 @@ static struct expr * EXPR_wildcard( void *info );
 
 %type <string> column table id
 %type <column_list> selcollist
-%type <query> query from unorderedsel selectfrom
+%type <query> query from fromtable unorderedsel selectfrom
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
@@ -418,32 +418,29 @@ selcollist:
     ;
 
 from:
-    TK_FROM table
+    fromtable
+  | fromtable TK_WHERE expr
         { 
             SQL_input* sql = (SQL_input*) info;
             UINT r;
 
             $$ = NULL;
-            TRACE("From table: %s\n",debugstr_w($2));
-            r = TABLE_CreateView( sql->db, $2, & $$ );
-            if( r != ERROR_SUCCESS )
+            r = WHERE_CreateView( sql->db, &$$, $1, $3 );
+            if( r != ERROR_SUCCESS || !$$ )
                 YYABORT;
         }
-  | TK_FROM table TK_WHERE expr
-        { 
+    ;
+
+fromtable:
+    TK_FROM table
+        {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *view = NULL;
             UINT r;
 
             $$ = NULL;
-            TRACE("From table: %s\n",debugstr_w($2));
-            r = TABLE_CreateView( sql->db, $2, &view );
-            if( r != ERROR_SUCCESS )
+            r = TABLE_CreateView( sql->db, $2, &$$ );
+            if( r != ERROR_SUCCESS || !$$ )
                 YYABORT;
-            r = WHERE_CreateView( sql->db, &view, view, $4 );
-            if( r != ERROR_SUCCESS )
-                YYABORT;
-            $$ = view;
         }
     ;
 
