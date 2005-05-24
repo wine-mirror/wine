@@ -398,7 +398,7 @@ LONG NC_HandleNCCalcSize( HWND hwnd, RECT *winRect )
             winRect->top +=
                 MENU_GetMenuBarHeight( hwnd,
                                        winRect->right - winRect->left,
-                                       -tmpRect.left, -tmpRect.top ) + 1;
+                                       -tmpRect.left, -tmpRect.top );
         }
 
         if( exStyle & WS_EX_CLIENTEDGE)

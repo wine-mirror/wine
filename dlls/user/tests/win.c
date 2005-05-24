@@ -55,6 +55,11 @@ static HWND hwndMessage;
 static HWND hwndMain, hwndMain2;
 static HHOOK hhook;
 
+static const char* szAWRClass = "Winsize";
+static HMENU hmenu;
+
+#define COUNTOF(arr) (sizeof(arr)/sizeof(arr[0]))
+
 /* check the values returned by the various parent/owner functions on a given window */
 static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_parent,
                            HWND gw_owner, HWND ga_root, HWND ga_root_owner )
@@ -645,11 +650,27 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     ok(info->wCreatorVersion == 0x0400, "wrong wCreatorVersion %04x\n", info->wCreatorVersion);
 }
 
+static void FixedAdjustWindowRectEx(RECT* rc, LONG style, BOOL menu, LONG exstyle)
+{
+    AdjustWindowRectEx(rc, style, menu, exstyle);
+    /* AdjustWindowRectEx does not include scroll bars */
+    if (style & WS_VSCROLL)
+    {
+        if(exstyle & WS_EX_LEFTSCROLLBAR)
+            rc->left  -= GetSystemMetrics(SM_CXVSCROLL);
+        else
+            rc->right += GetSystemMetrics(SM_CXVSCROLL);
+    }
+    if (style & WS_HSCROLL)
+	rc->bottom += GetSystemMetrics(SM_CYHSCROLL);
+}
+
 static void test_nonclient_area(HWND hwnd)
 {
     DWORD style, exstyle;
     RECT rc_window, rc_client, rc;
     BOOL menu;
+    BOOL is_win9x = GetWindowLongW(hwnd, GWL_WNDPROC) == 0;
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
@@ -666,25 +687,27 @@ static void test_nonclient_area(HWND hwnd)
 
     CopyRect(&rc, &rc_client);
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
-    AdjustWindowRectEx(&rc, style, menu, exstyle);
+    FixedAdjustWindowRectEx(&rc, style, menu, exstyle);
+
     trace("calc window: (%ld,%ld)-(%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
-#if 0 /* Uncomment this once the test succeeds in all cases */
-    ok(EqualRect(&rc, &rc_window), "window rect does not match\n");
-#endif
+    ok(EqualRect(&rc, &rc_window), "window rect does not match: style:exstyle=0x%08lx:0x%08lx, menu=%d\n", style, exstyle, menu);
+
 
     CopyRect(&rc, &rc_window);
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     trace("calc client: (%ld,%ld)-(%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
-#if 0 /* Uncomment this once the test succeeds in all cases */
-    ok(EqualRect(&rc, &rc_client), "client rect does not match\n");
-#endif
+    ok(EqualRect(&rc, &rc_client), "client rect does not match: style:exstyle=0x%08lx:0x%08lx, menu=%d\n", style, exstyle, menu);
+
+    /* Win9x doesn't like WM_NCCALCSIZE with synthetic data and crashes */;
+    if (is_win9x)
+	return;
 
     /* and now test AdjustWindowRectEx and WM_NCCALCSIZE on synthetic data */
     SetRect(&rc_client, 0, 0, 250, 150);
     CopyRect(&rc_window, &rc_client);
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc_window, 2);
-    AdjustWindowRectEx(&rc_window, style, menu, exstyle);
+    FixedAdjustWindowRectEx(&rc_window, style, menu, exstyle);
     trace("calc window: (%ld,%ld)-(%ld,%ld)\n",
 	rc_window.left, rc_window.top, rc_window.right, rc_window.bottom);
 
@@ -692,9 +715,7 @@ static void test_nonclient_area(HWND hwnd)
     DefWindowProcA(hwnd, WM_NCCALCSIZE, 0, (LPARAM)&rc);
     MapWindowPoints(0, hwnd, (LPPOINT)&rc, 2);
     trace("calc client: (%ld,%ld)-(%ld,%ld)\n", rc.left, rc.top, rc.right, rc.bottom);
-#if 0 /* Uncomment this once the test succeeds in all cases */
-    ok(EqualRect(&rc, &rc_client), "client rect does not match\n");
-#endif
+    ok(EqualRect(&rc, &rc_client), "synthetic rect does not match: style:exstyle=0x%08lx:0x%08lx, menu=%d\n", style, exstyle, menu);
 }
 
 static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam) 
@@ -717,12 +738,6 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     /* on HCBT_DESTROYWND window state is undefined */
     if (nCode != HCBT_DESTROYWND && IsWindow((HWND)wParam))
     {
-	BOOL is_win9x = GetWindowLongPtrW((HWND)wParam, GWLP_WNDPROC) == 0;
-	if (is_win9x && nCode == HCBT_CREATEWND)
-	    /* Win9x doesn't like WM_NCCALCSIZE with synthetic data and crashes */;
-	else
-	    test_nonclient_area((HWND)wParam);
-
 	if (pGetWindowInfo)
 	{
 	    WINDOWINFO info;
@@ -1755,7 +1770,10 @@ static void test_SetMenu(HWND parent)
     assert(hMenu);
 
     ok(SetMenu(parent, hMenu), "SetMenu on a top level window should not fail\n");
-    test_nonclient_area(parent);
+#if 0
+    /* fails on (at least) Wine, NT4, XP SP2 */
+    test_nonclient_area(parent); 
+#endif
     ret = GetMenu(parent);
     ok(ret == hMenu, "unexpected menu id %p\n", ret);
     /* test whether we can destroy a menu assigned to a window */
@@ -1782,7 +1800,10 @@ static void test_SetMenu(HWND parent)
     ok(ret == 0, "unexpected menu id %p\n", ret);
 
     ok(SetMenu(parent, hMenu), "SetMenu on a top level window should not fail\n");
+#if 0
+    /* fails on (at least) Wine, NT4, XP SP2 */
     test_nonclient_area(parent);
+#endif
     ret = GetMenu(parent);
     ok(ret == hMenu, "unexpected menu id %p\n", ret);
 
@@ -2781,6 +2802,121 @@ static void test_params()
     ok( rc==0, "GetWindowText: rc=%d err=%ld\n",rc,GetLastError());
 }
 
+static void test_AWRwindow(LPCSTR class, LONG style, LONG exStyle, BOOL menu)
+{
+    HWND hwnd = 0;
+
+    hwnd = CreateWindowEx(exStyle, class, class, style,
+			  110, 100,
+			  225, 200,
+			  0,
+			  menu ? hmenu : 0,
+			  0, 0);
+    if (!hwnd) {
+	trace("Failed to create window class=%s, style=0x%08lx, exStyle=0x%08lx\n", class, style, exStyle);
+        return;
+    }
+    ShowWindow(hwnd, SW_SHOW);
+
+    test_nonclient_area(hwnd);
+
+    SetMenu(hwnd, 0);
+    DestroyWindow(hwnd);
+}
+
+static BOOL AWR_init(void)
+{
+    WNDCLASS class;
+
+    class.style         = CS_HREDRAW | CS_VREDRAW;
+    class.lpfnWndProc     = DefWindowProcA;
+    class.cbClsExtra    = 0;
+    class.cbWndExtra    = 0;
+    class.hInstance     = 0;
+    class.hIcon         = LoadIcon (0, IDI_APPLICATION);
+    class.hCursor       = LoadCursor (0, IDC_ARROW);
+    class.hbrBackground = 0;
+    class.lpszMenuName  = 0;
+    class.lpszClassName = szAWRClass;
+    
+    if (!RegisterClass (&class)) {
+	ok(FALSE, "RegisterClass failed\n");
+	return FALSE;
+    }
+
+    hmenu = CreateMenu();
+    if (!hmenu)
+	return FALSE;
+    ok(hmenu != 0, "Failed to create menu\n");
+    ok(AppendMenu(hmenu, MF_STRING, 1, "Test!"), "Failed to create menu item\n");
+    
+    return TRUE;
+}
+
+
+static void test_AWR_window_size(BOOL menu)
+{
+    LONG styles[] = {
+	WS_POPUP,
+	WS_MAXIMIZE, WS_BORDER, WS_DLGFRAME, 
+	WS_SYSMENU, 
+	WS_THICKFRAME,
+	WS_MINIMIZEBOX, WS_MAXIMIZEBOX,
+	WS_HSCROLL, WS_VSCROLL
+    };
+    LONG exStyles[] = {
+	WS_EX_CLIENTEDGE,
+	WS_EX_TOOLWINDOW, WS_EX_WINDOWEDGE,
+	WS_EX_APPWINDOW,
+#if 0
+	/* These styles have problems on (at least) WinXP (SP2) and Wine */
+	WS_EX_DLGMODALFRAME, 
+	WS_EX_STATICEDGE, 
+#endif
+    };
+
+    int i;    
+
+    /* A exhaustive check of all the styles takes too long
+     * so just do a (hopefully representative) sample
+     */
+    for (i = 0; i < COUNTOF(styles); ++i)
+        test_AWRwindow(szAWRClass, styles[i], 0, menu);
+    for (i = 0; i < COUNTOF(exStyles); ++i) {
+        test_AWRwindow(szAWRClass, WS_POPUP, exStyles[i], menu);
+        test_AWRwindow(szAWRClass, WS_THICKFRAME, exStyles[i], menu);
+    }
+}
+#undef COUNTOF
+
+#define SHOWSYSMETRIC(SM) trace(#SM "=%d\n", GetSystemMetrics(SM))
+
+static void test_AdjustWindowRect()
+{
+    if (!AWR_init())
+	return;
+    
+    SHOWSYSMETRIC(SM_CYCAPTION);
+    SHOWSYSMETRIC(SM_CYSMCAPTION);
+    SHOWSYSMETRIC(SM_CYMENU);
+    SHOWSYSMETRIC(SM_CXEDGE);
+    SHOWSYSMETRIC(SM_CYEDGE);
+    SHOWSYSMETRIC(SM_CXVSCROLL);
+    SHOWSYSMETRIC(SM_CYHSCROLL);
+    SHOWSYSMETRIC(SM_CXFRAME);
+    SHOWSYSMETRIC(SM_CYFRAME);
+    SHOWSYSMETRIC(SM_CXDLGFRAME);
+    SHOWSYSMETRIC(SM_CYDLGFRAME);
+    SHOWSYSMETRIC(SM_CXBORDER);
+    SHOWSYSMETRIC(SM_CYBORDER);  
+
+    test_AWR_window_size(FALSE);
+    test_AWR_window_size(TRUE);
+
+    DestroyMenu(hmenu);
+}
+#undef SHOWSYSMETRIC
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2811,6 +2947,8 @@ START_TEST(win)
                                WS_MAXIMIZEBOX | WS_POPUP,
                                100, 100, 200, 200,
                                0, 0, 0, NULL);
+    test_nonclient_area(hwndMain);
+
     hwndMain2 = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window 2",
                                 WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                 WS_MAXIMIZEBOX | WS_POPUP,
@@ -2846,5 +2984,6 @@ START_TEST(win)
 
     UnhookWindowsHookEx(hhook);
 
+    test_AdjustWindowRect();
     test_window_styles();
 }
