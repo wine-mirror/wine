@@ -169,13 +169,13 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     {
     case 'u':
         if (count == 1) count = 256;
-        memory_get_string(dbg_curr_process->handle, linear, 
+        memory_get_string(dbg_curr_process, linear, 
                           TRUE, TRUE, buffer, min(count, sizeof(buffer)));
         dbg_printf("%s\n", buffer);
         return;
     case 's':
         if (count == 1) count = 256;
-        memory_get_string(dbg_curr_process->handle, linear,
+        memory_get_string(dbg_curr_process, linear,
                           TRUE, FALSE, buffer, min(count, sizeof(buffer)));
         dbg_printf("%s\n", buffer);
         return;
@@ -233,8 +233,8 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     }
 }
 
-BOOL memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode, 
-                       char* buffer, int size)
+BOOL memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee,
+                       BOOL unicode, char* buffer, int size)
 {
     DWORD       sz;
     WCHAR*      buffW;
@@ -243,10 +243,10 @@ BOOL memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode,
     if (!addr) return FALSE;
     if (in_debuggee)
     {
-        if (!unicode) return ReadProcessMemory(hp, addr, buffer, size, &sz);
+        if (!unicode) return pcs->process_io->read(pcs->handle, addr, buffer, size, &sz);
 
         buffW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
-        ReadProcessMemory(hp, addr, buffW, size * sizeof(WCHAR), &sz);
+        pcs->process_io->read(pcs->handle, addr, buffW, size * sizeof(WCHAR), &sz);
         WideCharToMultiByte(CP_ACP, 0, buffW, sz / sizeof(WCHAR), buffer, size, 
                             NULL, NULL);
         HeapFree(GetProcessHeap(), 0, buffW);
@@ -258,16 +258,16 @@ BOOL memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode,
     return TRUE;
 }
 
-BOOL memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffer, int size)
+BOOL memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, char* buffer, int size)
 {
     void*       ad;
     DWORD	sz;
 
     buffer[0] = 0;
     if (addr && 
-        ReadProcessMemory(hp, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
+        pcs->process_io->read(pcs->handle, addr, &ad, sizeof(ad), &sz) && sz == sizeof(ad) && ad)
     {
-        return memory_get_string(hp, ad, TRUE, unicode, buffer, size);
+        return memory_get_string(pcs, ad, TRUE, unicode, buffer, size);
     }
     return FALSE;
 }
@@ -337,7 +337,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
             char    buffer[1024];
 
-            memory_get_string(dbg_curr_process->handle, val_ptr, 
+            memory_get_string(dbg_curr_process, val_ptr, 
                               lvalue->cookie == DLV_TARGET,
                               size == 2, buffer, sizeof(buffer));
             dbg_printf("\"%s\"", buffer);

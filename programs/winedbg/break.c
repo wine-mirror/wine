@@ -53,12 +53,14 @@ void  break_set_xpoints(BOOL set)
         addr = (void*)memory_to_linear_addr(&bp[i].addr);
 
         if (set)
-            ret = be_cpu->insert_Xpoint(dbg_curr_process->handle, &dbg_context, 
-                                        bp[i].xpoint_type, addr,
+            ret = be_cpu->insert_Xpoint(dbg_curr_process->handle,
+                                        dbg_curr_process->process_io,
+                                        &dbg_context, bp[i].xpoint_type, addr,
                                         &bp[i].info, size);
         else
-            ret = be_cpu->remove_Xpoint(dbg_curr_process->handle, &dbg_context, 
-                                        bp[i].xpoint_type, addr,
+            ret = be_cpu->remove_Xpoint(dbg_curr_process->handle, 
+                                        dbg_curr_process->process_io,
+                                        &dbg_context, bp[i].xpoint_type, addr,
                                         bp[i].info, size);
         if (!ret)
         {

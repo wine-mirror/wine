@@ -239,8 +239,11 @@ struct dbg_process*     dbg_get_process(DWORD pid)
     return p;
 }
 
-struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h, const char* imageName)
+struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h)
 {
+    /* FIXME: temporary */
+    extern struct be_process_io be_process_active_io;
+
     struct dbg_process*	p;
 
     if ((p = dbg_get_process(pid)))
@@ -252,7 +255,7 @@ struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h, const char* imageName)
         else
         {
             p->handle = h;
-            p->imageName = imageName ? strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(imageName) + 1), imageName) : NULL;
+            p->imageName = NULL;
         }
         return p;
     }
@@ -260,7 +263,8 @@ struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h, const char* imageName)
     if (!(p = HeapAlloc(GetProcessHeap(), 0, sizeof(struct dbg_process)))) return NULL;
     p->handle = h;
     p->pid = pid;
-    p->imageName = imageName ? strcpy(HeapAlloc(GetProcessHeap(), 0, strlen(imageName) + 1), imageName) : NULL;
+    p->process_io = &be_process_active_io;
+    p->imageName = NULL;
     p->threads = NULL;
     p->continue_on_first_exception = FALSE;
     p->next_bp = 1;  /* breakpoint 0 is reserved for step-over */
@@ -273,6 +277,16 @@ struct dbg_process*	dbg_add_process(DWORD pid, HANDLE h, const char* imageName)
     if (dbg_process_list) dbg_process_list->prev = p;
     dbg_process_list = p;
     return p;
+}
+
+void dbg_set_process_name(struct dbg_process* p, const char* imageName)
+{
+    assert(p->imageName == NULL);
+    if (imageName)
+    {
+        char* tmp = HeapAlloc(GetProcessHeap(), 0, strlen(imageName) + 1);
+        if (tmp) p->imageName = strcpy(tmp, imageName);
+    }
 }
 
 void dbg_del_process(struct dbg_process* p)
@@ -418,7 +432,7 @@ BOOL dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe)
 {
     DEBUG_EVENT         de;
 
-    if (!(dbg_curr_process = dbg_add_process(pid, 0, NULL))) return FALSE;
+    if (!(dbg_curr_process = dbg_add_process(pid, 0))) return FALSE;
 
     if (!DebugActiveProcess(pid)) 
     {
@@ -660,11 +674,11 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
         case EXCEPTION_WINE_STUB:
         {
             char dll[32], name[64];
-            memory_get_string(dbg_curr_process->handle,
+            memory_get_string(dbg_curr_process,
                               (void*)rec->ExceptionInformation[0], TRUE, FALSE,
                               dll, sizeof(dll));
             if (HIWORD(rec->ExceptionInformation[1]))
-                memory_get_string(dbg_curr_process->handle,
+                memory_get_string(dbg_curr_process,
                                   (void*)rec->ExceptionInformation[1], TRUE, FALSE,
                                   name, sizeof(name));
             else
@@ -772,25 +786,27 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         break;
 
     case CREATE_PROCESS_DEBUG_EVENT:
-        memory_get_string_indirect(de->u.CreateProcessInfo.hProcess,
+        dbg_curr_process = dbg_add_process(de->dwProcessId,
+                                           de->u.CreateProcessInfo.hProcess);
+        if (dbg_curr_process == NULL)
+        {
+            WINE_ERR("Couldn't create process\n");
+            break;
+        }
+        memory_get_string_indirect(dbg_curr_process,
                                    de->u.CreateProcessInfo.lpImageName,
                                    de->u.CreateProcessInfo.fUnicode,
                                    buffer, sizeof(buffer));
+        if (!buffer[0]) strcpy(buffer, "<Debugged Process>");
+
         WINE_TRACE("%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
                    de->dwProcessId, de->dwThreadId,
                    buffer, de->u.CreateProcessInfo.lpImageName,
                    (unsigned long)(void*)de->u.CreateProcessInfo.lpStartAddress,
                    de->u.CreateProcessInfo.dwDebugInfoFileOffset,
                    de->u.CreateProcessInfo.nDebugInfoSize);
+        dbg_set_process_name(dbg_curr_process, buffer);
 
-        dbg_curr_process = dbg_add_process(de->dwProcessId,
-                                           de->u.CreateProcessInfo.hProcess,
-                                           buffer[0] ? buffer : "<Debugged Process>");
-        if (dbg_curr_process == NULL)
-        {
-            WINE_ERR("Couldn't create process\n");
-            break;
-        }
         if (!SymInitialize(dbg_curr_process->handle, NULL, TRUE))
             dbg_printf("Couldn't initiate DbgHelp\n");
 
@@ -878,7 +894,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             WINE_ERR("Unknown thread\n");
             break;
         }
-        memory_get_string_indirect(dbg_curr_process->handle, 
+        memory_get_string_indirect(dbg_curr_process, 
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
                                    buffer, sizeof(buffer));
@@ -918,7 +934,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             break;
         }
 
-        memory_get_string(dbg_curr_process->handle,
+        memory_get_string(dbg_curr_process,
                           de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, buffer, sizeof(buffer));
         WINE_TRACE("%08lx:%08lx: output debug string (%s)\n",
@@ -1057,7 +1073,7 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
         return TRUE;
     }
     dbg_curr_pid = info.dwProcessId;
-    if (!(dbg_curr_process = dbg_add_process(dbg_curr_pid, 0, NULL))) return FALSE;
+    if (!(dbg_curr_process = dbg_add_process(dbg_curr_pid, 0))) return FALSE;
 
     return TRUE;
 }

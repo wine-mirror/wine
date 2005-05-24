@@ -443,10 +443,14 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     switch (de->dwDebugEventCode)
     {
     case CREATE_PROCESS_DEBUG_EVENT:
-        memory_get_string_indirect(de->u.CreateProcessInfo.hProcess,
+        gdbctx->process = dbg_add_process(de->dwProcessId,
+                                          de->u.CreateProcessInfo.hProcess);
+        if (!gdbctx->process) break;
+        memory_get_string_indirect(gdbctx->process,
                                    de->u.CreateProcessInfo.lpImageName,
                                    de->u.CreateProcessInfo.fUnicode,
                                    buffer, sizeof(buffer));
+        dbg_set_process_name(gdbctx->process, buffer);
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
             fprintf(stderr, "%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
@@ -456,9 +460,6 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                     de->u.CreateProcessInfo.dwDebugInfoFileOffset,
                     de->u.CreateProcessInfo.nDebugInfoSize);
 
-        gdbctx->process = dbg_add_process(de->dwProcessId,
-                                          de->u.CreateProcessInfo.hProcess,
-                                          buffer);
         /* de->u.CreateProcessInfo.lpStartAddress; */
         if (!SymInitialize(gdbctx->process->handle, NULL, TRUE))
             fprintf(stderr, "Couldn't initiate DbgHelp\n");
@@ -476,7 +477,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case LOAD_DLL_DEBUG_EVENT:
         assert(dbg_curr_thread);
-        memory_get_string_indirect(gdbctx->process->handle,
+        memory_get_string_indirect(gdbctx->process,
                                    de->u.LoadDll.lpImageName,
                                    de->u.LoadDll.fUnicode,
                                    buffer, sizeof(buffer));
@@ -547,7 +548,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case OUTPUT_DEBUG_STRING_EVENT:
         assert(dbg_curr_thread);
-        memory_get_string(gdbctx->process->handle,
+        memory_get_string(gdbctx->process,
                           de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, buffer, sizeof(buffer));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
@@ -1263,7 +1264,7 @@ static enum packet_return packet_read_memory(struct gdb_context* gdbctx)
     for (nread = 0; nread < len; nread += r, addr += r)
     {
         blk_len = min(sizeof(buffer), len - nread);
-        if (!ReadProcessMemory(gdbctx->process->handle, addr, buffer, blk_len, &r) ||
+        if (!gdbctx->process->process_io->read(gdbctx->process->handle, addr, buffer, blk_len, &r) ||
             r == 0)
         {
             /* fail at first address, return error */
@@ -1316,16 +1317,12 @@ static enum packet_return packet_write_memory(struct gdb_context* gdbctx)
     {
         blk_len = min(sizeof(buffer), len);
         hex_from(buffer, ptr, blk_len);
-        {
-            BOOL ret;
-
-            ret = WriteProcessMemory(gdbctx->process->handle, addr, buffer, blk_len, &w);
-            if (!ret || w != blk_len)
-                break;
-        }
-        addr += w;
-        len -= w;
-        ptr += w;
+        if (!gdbctx->process->process_io->write(gdbctx->process->handle, addr, buffer, blk_len, &w) ||
+            w != blk_len)
+            break;
+        addr += blk_len;
+        len -= blk_len;
+        ptr += blk_len;
     }
     return packet_ok; /* FIXME: error while writing ? */
 }
@@ -1789,7 +1786,8 @@ static enum packet_return packet_remove_breakpoint(struct gdb_context* gdbctx)
     {
         if (xpt->addr == addr && xpt->type == t)
         {
-            if (be_cpu->remove_Xpoint(gdbctx->process->handle, &gdbctx->context, 
+            if (be_cpu->remove_Xpoint(gdbctx->process->handle,
+                                      gdbctx->process->process_io, &gdbctx->context,
                                       t, xpt->addr, xpt->val, len))
             {
                 xpt->type = -1;
@@ -1835,7 +1833,8 @@ static enum packet_return packet_set_breakpoint(struct gdb_context* gdbctx)
     {
         if (xpt->type == -1)
         {
-            if (be_cpu->insert_Xpoint(gdbctx->process->handle, &gdbctx->context, 
+            if (be_cpu->insert_Xpoint(gdbctx->process->handle,
+                                      gdbctx->process->process_io, &gdbctx->context, 
                                       t, addr, &xpt->val, len))
             {
                 xpt->addr = addr;

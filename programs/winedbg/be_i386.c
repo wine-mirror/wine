@@ -304,7 +304,7 @@ static unsigned be_i386_is_break_insn(const void* insn)
 {
     BYTE        c;
 
-    if (!dbg_read_memory(insn, &c, 1)) return FALSE;
+    if (!dbg_read_memory(insn, &c, sizeof(c))) return FALSE;
     return c == 0xCC;
 }
 
@@ -313,9 +313,10 @@ static unsigned be_i386_is_func_call(const void* insn, ADDRESS* callee)
     BYTE        ch;
     int         delta;
 
-    dbg_read_memory(insn, &ch, sizeof(ch));
-    if (ch == 0xe8)
+    if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+    switch (ch)
     {
+    case 0xe8:
 	dbg_read_memory((const char*)insn + 1, &delta, sizeof(delta));
 	
         callee->Mode = AddrModeFlat;
@@ -324,8 +325,19 @@ static unsigned be_i386_is_func_call(const void* insn, ADDRESS* callee)
         callee->Offset += delta;
 
         return TRUE;
+    case 0xff:
+        if (!dbg_read_memory((const char*)insn + 1, &ch, sizeof(ch)))
+            return FALSE;
+        ch &= 0x38;
+        if (ch != 0x10 && ch != 0x18) return FALSE;
+        /* fall through */
+    case 0x9c:
+    case 0xCD:
+        WINE_FIXME("Unsupported yet call insn (0x%02x) at %p\n", ch, insn);
+        /* fall through */
+    default:
+        return FALSE;
     }
-    return FALSE;
 }
 
 #define DR7_CONTROL_SHIFT	16
@@ -380,9 +392,9 @@ static inline int be_i386_get_unused_DR(CONTEXT* ctx, unsigned long** r)
     return -1;
 }
 
-static unsigned be_i386_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
-                                      enum be_xpoint_type type, void* addr,
-                                      unsigned long* val, unsigned size)
+static unsigned be_i386_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio, 
+                                      CONTEXT* ctx, enum be_xpoint_type type, 
+                                      void* addr, unsigned long* val, unsigned size)
 {
     unsigned char       ch;
     unsigned long       sz;
@@ -394,10 +406,10 @@ static unsigned be_i386_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     {
     case be_xpoint_break:
         if (size != 0) return 0;
-        if (!ReadProcessMemory(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        if (!pio->read(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
         *val = ch;
         ch = 0xcc;
-        if (!WriteProcessMemory(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        if (!pio->write(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
         break;
     case be_xpoint_watch_exec:
         bits = DR7_RW_EXECUTE;
@@ -431,9 +443,9 @@ static unsigned be_i386_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     return 1;
 }
 
-static unsigned be_i386_remove_Xpoint(HANDLE hProcess, CONTEXT* ctx, 
-                                      enum be_xpoint_type type, void* addr, 
-                                      unsigned long val, unsigned size)
+static unsigned be_i386_remove_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+                                      CONTEXT* ctx, enum be_xpoint_type type, 
+                                      void* addr, unsigned long val, unsigned size)
 {
     unsigned long       sz;
     unsigned char       ch;
@@ -442,12 +454,12 @@ static unsigned be_i386_remove_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     {
     case be_xpoint_break:
         if (size != 0) return 0;
-        if (!ReadProcessMemory(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        if (!pio->read(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
         if (ch != (unsigned char)0xCC)
             WINE_FIXME("Cannot get back %02x instead of 0xCC at %08lx\n",
                        ch, (unsigned long)addr);
         ch = (unsigned char)val;
-        if (!WriteProcessMemory(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
+        if (!pio->write(hProcess, addr, &ch, 1, &sz) || sz != 1) return 0;
         break;
     case be_xpoint_watch_exec:
     case be_xpoint_watch_read:

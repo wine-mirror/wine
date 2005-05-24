@@ -21,6 +21,7 @@ C_SRCS = \
 	source.c \
 	symbol.c \
 	stack.c \
+	tgt_active.c \
 	tgt_minidump.c \
 	types.c \
 	winedbg.c

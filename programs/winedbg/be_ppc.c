@@ -24,7 +24,7 @@
 #if defined(__powerpc__)
 
 static unsigned be_ppc_get_addr(HANDLE hThread, const CONTEXT* ctx, 
-                                 enum be_cpu_addr bca, ADDRESS* addr)
+                                enum be_cpu_addr bca, ADDRESS* addr)
 {
     switch (bca)
     {
@@ -44,7 +44,7 @@ static void be_ppc_single_step(CONTEXT* ctx, unsigned enable)
 # define MSR_SE (1<<10)
 #endif 
     if (enable) ctx->Msr |= MSR_SE;
-    else ctx->Msr &= MSR_SE;
+    else ctx->Msr &= ~MSR_SE;
 }
 
 static void be_ppc_print_context(HANDLE hThread, const CONTEXT* ctx)
@@ -95,9 +95,9 @@ static void be_ppc_disasm_one_insn(ADDRESS* addr, int display)
     dbg_printf("Disasm NIY\n");
 }
 
-static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
-                                     enum be_xpoint_type type, void* addr,
-                                     unsigned long* val, unsigned size)
+static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+                                     CONTEXT* ctx, enum be_xpoint_type type,
+                                     void* addr, unsigned long* val, unsigned size)
 {
     unsigned long       xbp;
     unsigned long       sz;
@@ -106,9 +106,9 @@ static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     {
     case be_xpoint_break:
         if (!size) return 0;
-        if (!ReadProcessMemory(hProcess, addr, val, 4, &sz) || sz != 4) return 0;
+        if (!pio->read(hProcess, addr, val, 4, &sz) || sz != 4) return 0;
         xbp = 0x7d821008; /* 7d 82 10 08 ... in big endian */
-        if (!WriteProcessMemory(hProcess, addr, &xbp, 4, &sz) || sz != 4) return 0;
+        if (!pio->write(hProcess, addr, &xbp, 4, &sz) || sz != 4) return 0;
         break;
     default:
         dbg_printf("Unknown/unsupported bp type %c\n", type);
@@ -117,9 +117,9 @@ static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     return 1;
 }
 
-static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, CONTEXT* ctx, 
-                                     enum be_xpoint_type type, void* addr, 
-                                     unsigned long val, unsigned size)
+static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+                                     CONTEXT* ctx, enum be_xpoint_type type,
+                                     void* addr, unsigned long val, unsigned size)
 {
     unsigned long       sz;
 
@@ -127,7 +127,7 @@ static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     {
     case be_xpoint_break:
         if (!size) return 0;
-        if (!WriteProcessMemory(hProcess, addr, &val, 4, &sz) || sz != 4) return 0;
+        if (!pio->write(hProcess, addr, &val, 4, &sz) || sz == 4) return 0;
         break;
     default:
         dbg_printf("Unknown/unsupported bp type %c\n", type);

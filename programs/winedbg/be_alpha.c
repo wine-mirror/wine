@@ -82,9 +82,9 @@ static void be_alpha_disasm_one_insn(ADDRESS* addr, int display)
     dbg_printf("Disasm NIY\n");
 }
 
-static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
-                                     enum be_xpoint_type type, void* addr,
-                                     unsigned long* val, unsigned size)
+static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, struct be_process_io* pio,
+                                       CONTEXT* ctx, enum be_xpoint_type type,
+                                       void* addr, unsigned long* val, unsigned size)
 {
     unsigned long       xbp;
     unsigned long       sz;
@@ -93,9 +93,9 @@ static unsigned be_alpha_insert_Xpoint(HANDLE hProcess, CONTEXT* ctx,
     {
     case be_xpoint_break:
         if (!size) return 0;
-        if (!ReadProcessMemory(hProcess, addr, val, 4, &sz) || sz != 4) return 0;
+        if (!pio->read(hProcess, addr, val, 4, &sz) || sz != 4) return 0;
         xbp = 0x7d821008; /* 7d 82 10 08 ... in big endian */
-        if (!WriteProcessMemory(hProcess, addr, &xbp, 4, &sz) || sz != 4) return 0;
+        if (!pio->write(hProcess, addr, &xbp, 4, &sz) || sz != 4) return 0;
         break;
     default:
         dbg_printf("Unknown/unsupported bp type %c\n", type);
@@ -130,14 +130,14 @@ static int be_alpha_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 }
 
 static int be_alpha_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                unsigned ext_sign, long long int* ret)
+                                  unsigned ext_sign, long long int* ret)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
 static int be_alpha_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, 
-                              long double* ret)
+                                long double* ret)
 {
     dbg_printf("not done\n");
     return FALSE;

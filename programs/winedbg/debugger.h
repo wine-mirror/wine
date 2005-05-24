@@ -191,6 +191,7 @@ struct dbg_process
 {
     HANDLE			handle;
     DWORD			pid;
+    struct be_process_io*       process_io;
     const char*			imageName;
     struct dbg_thread*  	threads;
     unsigned			continue_on_first_exception;
@@ -200,6 +201,13 @@ struct dbg_process
     int				num_delayed_bp;
     struct dbg_process* 	next;
     struct dbg_process* 	prev;
+};
+
+/* describes the way the debugger interacts with a given process */
+struct be_process_io
+{
+    BOOL        (WINAPI *read)(HANDLE, const void*, void*, DWORD, DWORD*);
+    BOOL        (WINAPI *write)(HANDLE, void*, const void*, DWORD, DWORD*);
 };
 
 extern	struct dbg_process*	dbg_curr_process;
@@ -314,8 +322,8 @@ extern void*            memory_to_linear_addr(const ADDRESS* address);
 extern BOOL             memory_get_current_pc(ADDRESS* address);
 extern BOOL             memory_get_current_stack(ADDRESS* address);
 extern BOOL             memory_get_current_frame(ADDRESS* address);
-extern BOOL             memory_get_string(HANDLE hp, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
-extern BOOL             memory_get_string_indirect(HANDLE hp, void* addr, BOOL unicode, char* buffer, int size);
+extern BOOL             memory_get_string(struct dbg_process* pcs, void* addr, BOOL in_debuggee, BOOL unicode, char* buffer, int size);
+extern BOOL             memory_get_string_indirect(struct dbg_process* pcs, void* addr, BOOL unicode, char* buffer, int size);
 extern void             memory_disassemble(const struct dbg_lvalue*, const struct dbg_lvalue*, int instruction_count);
 extern BOOL             memory_disasm_one_insn(ADDRESS* addr);
 extern void             print_bare_address(const ADDRESS* addr);
@@ -373,7 +381,8 @@ extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe, BOOL wfe);
 extern BOOL             dbg_detach_debuggee(void);
 extern BOOL             dbg_interrupt_debuggee(void);
 extern void             dbg_run_debuggee(const char* args);
-extern struct dbg_process* dbg_add_process(DWORD pid, HANDLE h, const char* imageName);
+extern struct dbg_process* dbg_add_process(DWORD pid, HANDLE h);
+extern void             dbg_set_process_name(struct dbg_process* p, const char* name);
 extern struct dbg_process* dbg_get_process(DWORD pid);
 extern void             dbg_del_process(struct dbg_process* p);
 struct dbg_thread*	dbg_add_thread(struct dbg_process* p, DWORD tid, HANDLE h, void* teb);

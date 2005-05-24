@@ -454,7 +454,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
              */
             /* FIXME should check basic type here (should be a char!!!!)... */
             len = min(count, sizeof(buffer));
-            memory_get_string(dbg_curr_process->handle,
+            memory_get_string(dbg_curr_process,
                               memory_to_linear_addr(&lvalue->addr),
                               lvalue->cookie == DLV_TARGET, TRUE, buffer, len);
             dbg_printf("\"%s%s\"", buffer, (len < count) ? "..." : "");
