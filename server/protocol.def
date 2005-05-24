@@ -2344,6 +2344,20 @@ enum message_type
     obj_handle_t  new_handle; /* duplicated handle */
 @END
 
+@REQ(access_check)
+    obj_handle_t    handle; /* handle to the token */
+    unsigned int    desired_access; /* desired access to the object */
+    unsigned int    mapping_read; /* mapping from generic read to specific rights */
+    unsigned int    mapping_write; /* mapping from generic write to specific rights */
+    unsigned int    mapping_execute; /* mapping from generic execute to specific rights */
+    unsigned int    mapping_all; /* mapping from generic all to specific rights */
+    VARARG(sd,security_descriptor); /* security descriptor to check */
+@REPLY
+    unsigned int    access_granted; /* access rights actually granted */
+    unsigned int    access_status; /* was access granted? */
+    unsigned int    privileges_len; /* length needed to store privileges */
+    VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges used during access check */
+@END
 
 /* Create a mailslot */
 @REQ(create_mailslot)

@@ -61,6 +61,7 @@ struct token
 {
     struct object  obj;             /* object header */
     struct list    privileges;      /* privileges available to the token */
+    struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
 };
 
@@ -70,6 +71,19 @@ struct privilege
     LUID        luid;
     unsigned    enabled  : 1; /* is the privilege currently enabled? */
     unsigned    def      : 1; /* is the privilege enabled by default? */
+};
+
+struct sid_and_attributes
+{
+    struct list entry;
+    int         enabled  : 1; /* is the sid currently enabled? */
+    int         def      : 1; /* is the sid enabled by default? */
+    int         logon    : 1; /* is this a logon sid? */
+    int         mandatory: 1; /* is this sid always enabled? */
+    int         owner    : 1; /* can this sid be an owner of an object? */
+    int         resource : 1; /* is this a domain-local group? */
+    int         deny_only: 1; /* is this a sid that should be use for denying only? */
+    SID         sid;
 };
 
 static void token_dump( struct object *obj, int verbose );
@@ -92,6 +106,7 @@ static const struct object_ops token_ops =
 static void token_dump( struct object *obj, int verbose )
 {
     fprintf( stderr, "Security token\n" );
+    /* FIXME: dump token members */
 }
 
 static SID *security_sid_alloc( const SID_IDENTIFIER_AUTHORITY *idauthority, int subauthcount, const unsigned int subauth[] )
@@ -111,6 +126,165 @@ static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
 {
     return ((sid1->SubAuthorityCount == sid2->SubAuthorityCount) &&
         !memcmp( sid1, sid2, FIELD_OFFSET(SID, SubAuthority[sid1->SubAuthorityCount]) ));
+}
+
+static const ACE_HEADER *ace_next( const ACE_HEADER *ace )
+{
+    return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
+}
+
+static int acl_is_valid( const ACL *acl, size_t size )
+{
+    ULONG i;
+    const ACE_HEADER *ace;
+
+    if (size < sizeof(ACL))
+        return FALSE;
+
+    size = min(size, MAX_ACL_LEN);
+
+    size -= sizeof(ACL);
+
+    ace = (const ACE_HEADER *)(acl + 1);
+    for (i = 0; i < acl->AceCount; i++)
+    {
+        const SID *sid;
+
+        if (size < sizeof(ACE_HEADER))
+            return FALSE;
+        if (size < ace->AceSize)
+            return FALSE;
+        size -= ace->AceSize;
+        switch (ace->AceType)
+        {
+        case ACCESS_DENIED_ACE_TYPE:
+            sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
+            break;
+        case ACCESS_ALLOWED_ACE_TYPE:
+            sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
+            break;
+        case SYSTEM_AUDIT_ACE_TYPE:
+            sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
+            break;
+        case SYSTEM_ALARM_ACE_TYPE:
+            sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
+            break;
+        default:
+            return FALSE;
+        }
+        if (size < sizeof(SID) ||
+            size < FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]))
+            return FALSE;
+        ace = ace_next( ace );
+    }
+    return TRUE;
+}
+
+/* gets the discretionary access control list from a security descriptor */
+static inline const ACL *sd_get_dacl( const struct security_descriptor *sd, int *present )
+{
+    *present = (sd->control & SE_DACL_PRESENT ? TRUE : FALSE);
+
+    if (sd->dacl_len)
+        return (const ACL *)((const char *)(sd + 1) +
+            sd->owner_len + sd->group_len + sd->sacl_len);
+    else
+        return NULL;
+}
+
+/* gets the system access control list from a security descriptor */
+static inline const ACL *sd_get_sacl( const struct security_descriptor *sd, int *present )
+{
+    *present = (sd->control & SE_SACL_PRESENT ? TRUE : FALSE);
+
+    if (sd->sacl_len)
+        return (const ACL *)((const char *)(sd + 1) +
+            sd->owner_len + sd->group_len);
+    else
+        return NULL;
+}
+
+/* gets the owner from a security descriptor */
+static inline const SID *sd_get_owner( const struct security_descriptor *sd )
+{
+    if (sd->owner_len)
+        return (const SID *)(sd + 1);
+    else
+        return NULL;
+}
+
+/* gets the primary group from a security descriptor */
+static inline const SID *sd_get_group( const struct security_descriptor *sd )
+{
+    if (sd->group_len)
+        return (const SID *)((const char *)(sd + 1) + sd->owner_len);
+    else
+        return NULL;
+}
+
+/* checks whether all members of a security descriptor fit inside the size
+ * of memory specified */
+static int sd_is_valid( const struct security_descriptor *sd, size_t size )
+{
+    size_t offset = sizeof(struct security_descriptor);
+    const SID *group;
+    const SID *owner;
+    const ACL *sacl;
+    const ACL *dacl;
+    int dummy;
+
+    if (size < offset)
+        return FALSE;
+
+    if ((sd->owner_len >= FIELD_OFFSET(SID, SubAuthority[255])) ||
+        (offset + sd->owner_len > size))
+        return FALSE;
+    owner = sd_get_owner( sd );
+    if (owner)
+    {
+        size_t needed_size = FIELD_OFFSET(SID, SubAuthority[owner->SubAuthorityCount]);
+        if ((sd->owner_len < sizeof(SID)) || (needed_size > sd->owner_len))
+            return FALSE;
+    }
+    offset += sd->owner_len;
+
+    if ((sd->group_len >= FIELD_OFFSET(SID, SubAuthority[255])) ||
+        (offset + sd->group_len > size))
+        return FALSE;
+    group = sd_get_group( sd );
+    if (group)
+    {
+        size_t needed_size = FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]);
+        if ((sd->owner_len < sizeof(SID)) || (needed_size > sd->owner_len))
+            return FALSE;
+    }
+    offset += sd->group_len;
+
+    if ((sd->sacl_len >= MAX_ACL_LEN) || (offset + sd->sacl_len > size))
+        return FALSE;
+    sacl = sd_get_sacl( sd, &dummy );
+    if (sacl && !acl_is_valid( sacl, sd->sacl_len ))
+        return FALSE;
+    offset += sd->sacl_len;
+
+    if ((sd->dacl_len >= MAX_ACL_LEN) || (offset + sd->dacl_len > size))
+        return FALSE;
+    dacl = sd_get_dacl( sd, &dummy );
+    if (dacl && !acl_is_valid( dacl, sd->dacl_len ))
+        return FALSE;
+    offset += sd->dacl_len;
+
+    return TRUE;
+}
+
+/* maps from generic rights to specific rights as given by a mapping */
+static inline void map_generic_mask(unsigned int *mask, const GENERIC_MAPPING *mapping)
+{
+    if (*mask & GENERIC_READ) *mask |= mapping->GenericRead;
+    if (*mask & GENERIC_WRITE) *mask |= mapping->GenericWrite;
+    if (*mask & GENERIC_EXECUTE) *mask |= mapping->GenericExecute;
+    if (*mask & GENERIC_ALL) *mask |= mapping->GenericAll;
+    *mask &= 0x0FFFFFFF;
 }
 
 static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
@@ -159,6 +333,13 @@ static void token_destroy( struct object *obj )
         struct privilege *privilege = LIST_ENTRY( cursor, struct privilege, entry );
         privilege_remove( privilege );
     }
+
+    LIST_FOR_EACH_SAFE( cursor, cursor_next, &token->groups )
+    {
+        struct sid_and_attributes *group = LIST_ENTRY( cursor, struct sid_and_attributes, entry );
+        list_remove( &group->entry );
+        free( group );
+    }
 }
 
 static struct token *create_token( const SID *user, const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
@@ -168,6 +349,7 @@ static struct token *create_token( const SID *user, const LUID_AND_ATTRIBUTES *p
     {
         int i;
         list_init( &token->privileges );
+        list_init( &token->groups );
         /* copy user */
         token->user = memdup( user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
         if (!token->user)
@@ -175,6 +357,9 @@ static struct token *create_token( const SID *user, const LUID_AND_ATTRIBUTES *p
             release_object( token );
             return NULL;
         }
+
+        /* FIXME: copy groups */
+
         /* copy privileges */
         for (i = 0; i < priv_count; i++)
         {
@@ -326,6 +511,202 @@ int token_check_privileges( struct token *token, int all_required,
         return (enabled_count == count);
     else
         return (enabled_count > 0);
+}
+
+static int token_sid_present( struct token *token, const SID *sid, int deny )
+{
+    struct sid_and_attributes *group;
+
+    if (security_equal_sid( token->user, sid )) return TRUE;
+
+    LIST_FOR_EACH_ENTRY( group, &token->groups, struct sid_and_attributes, entry )
+    {
+        if (!group->enabled) continue;
+        if (group->deny_only && !deny) continue;
+
+        if (security_equal_sid( &group->sid, sid )) return TRUE;
+    }
+
+    return FALSE;
+}
+
+/* checks access to a security descriptor. sd must have been validated by caller.
+ * it returns STATUS_SUCCESS if access was granted to the object, or an error
+ * status code if not, giving the reason. errors not relating to giving access
+ * to the object are returned in the status parameter. granted_access and
+ * status always have a valid value stored in them on return. */
+static unsigned int token_access_check( struct token *token,
+                                 const struct security_descriptor *sd,
+                                 unsigned int desired_access,
+                                 LUID_AND_ATTRIBUTES *privs,
+                                 unsigned int *priv_count,
+                                 const GENERIC_MAPPING *mapping,
+                                 unsigned int *granted_access,
+                                 unsigned int *status )
+{
+    unsigned int current_access = 0;
+    unsigned int denied_access = 0;
+    ULONG i;
+    const ACL *dacl;
+    int dacl_present;
+    const ACE_HEADER *ace;
+    const SID *owner;
+
+    /* assume success, but no access rights */
+    *status = STATUS_SUCCESS;
+    *granted_access = 0;
+
+    /* fail if desired_access contains generic rights */
+    if (desired_access & (GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE|GENERIC_ALL))
+    {
+        *priv_count = 0;
+        *status = STATUS_GENERIC_NOT_MAPPED;
+        return STATUS_ACCESS_DENIED;
+    }
+
+    dacl = sd_get_dacl( sd, &dacl_present );
+    owner = sd_get_owner( sd );
+    if (!owner || !sd_get_group( sd ))
+    {
+        *priv_count = 0;
+        *status = STATUS_INVALID_SECURITY_DESCR;
+        return STATUS_ACCESS_DENIED;
+    }
+
+    /* 1: Grant desired access if the object is unprotected */
+    if (!dacl_present)
+    {
+        *priv_count = 0;
+        *granted_access = desired_access;
+        return STATUS_SUCCESS;
+    }
+    if (!dacl)
+    {
+        *priv_count = 0;
+        return STATUS_ACCESS_DENIED;
+    }
+
+    /* 2: Check if caller wants access to system security part. Note: access
+     * is only granted if specifically asked for */
+    if (desired_access & ACCESS_SYSTEM_SECURITY)
+    {
+        const LUID_AND_ATTRIBUTES security_priv = { SeSecurityPrivilege, 0 };
+        LUID_AND_ATTRIBUTES retpriv = security_priv;
+        if (token_check_privileges( token, TRUE, &security_priv, 1, &retpriv ))
+        {
+            if (priv_count)
+            {
+                /* assumes that there will only be one privilege to return */
+                if (*priv_count >= 1)
+                {
+                    *priv_count = 1;
+                    *privs = retpriv;
+                }
+                else
+                {
+                    *priv_count = 1;
+                    return STATUS_BUFFER_TOO_SMALL;
+                }
+            }
+            current_access |= ACCESS_SYSTEM_SECURITY;
+            if (desired_access == current_access)
+            {
+                *granted_access = current_access;
+                return STATUS_SUCCESS;
+            }
+        }
+        else
+        {
+            *priv_count = 0;
+            return STATUS_PRIVILEGE_NOT_HELD;
+        }
+    }
+    else if (priv_count) *priv_count = 0;
+
+    /* 3: Check whether the token is the owner */
+    /* NOTE: SeTakeOwnershipPrivilege is not checked for here - it is instead
+     * checked when a "set owner" call is made, overriding the access rights
+     * determined here. */
+    if (token_sid_present( token, owner, FALSE ))
+    {
+        current_access |= (READ_CONTROL | WRITE_DAC);
+        if (desired_access == current_access)
+        {
+            *granted_access = current_access;
+            return STATUS_SUCCESS;
+        }
+    }
+
+    /* 4: Grant rights according to the DACL */
+    ace = (const ACE_HEADER *)(dacl + 1);
+    for (i = 0; i < dacl->AceCount; i++)
+    {
+        const ACCESS_ALLOWED_ACE *aa_ace;
+        const ACCESS_DENIED_ACE *ad_ace;
+        const SID *sid;
+        switch (ace->AceType)
+        {
+        case ACCESS_DENIED_ACE_TYPE:
+            ad_ace = (const ACCESS_DENIED_ACE *)ace;
+            sid = (const SID *)&ad_ace->SidStart;
+            if (token_sid_present( token, sid, TRUE ))
+            {
+                unsigned int access = ad_ace->Mask;
+                map_generic_mask(&access, mapping);
+                if (desired_access & MAXIMUM_ALLOWED)
+                    denied_access |= access;
+                else
+                {
+                    denied_access |= (access & ~current_access);
+                    if (desired_access & access)
+                    {
+                        *granted_access = 0;
+                        return STATUS_SUCCESS;
+                    }
+                }
+            }
+            break;
+        case ACCESS_ALLOWED_ACE_TYPE:
+            aa_ace = (const ACCESS_ALLOWED_ACE *)ace;
+            sid = (const SID *)&aa_ace->SidStart;
+            if (token_sid_present( token, sid, FALSE ))
+            {
+                unsigned int access = aa_ace->Mask;
+                map_generic_mask(&access, mapping);
+                if (desired_access & MAXIMUM_ALLOWED)
+                    current_access |= access;
+                else
+                    current_access |= (access & ~denied_access);
+            }
+            break;
+        }
+
+        /* don't bother carrying on checking if we've already got all of
+            * rights we need */
+        if (desired_access == *granted_access)
+            break;
+
+        ace = ace_next( ace );
+    }
+
+    if (desired_access & MAXIMUM_ALLOWED)
+    {
+        *granted_access = current_access & ~denied_access;
+        if (*granted_access)
+            return STATUS_SUCCESS;
+        else
+            return STATUS_ACCESS_DENIED;
+    }
+    else
+    {
+        if ((current_access & desired_access) == desired_access)
+        {
+            *granted_access = current_access & desired_access;
+            return STATUS_SUCCESS;
+        }
+        else
+            return STATUS_ACCESS_DENIED;
+    }
 }
 
 /* open a security token */
@@ -482,6 +863,58 @@ DECL_HANDLER(check_token_privileges)
         }
         else
             set_error( STATUS_BUFFER_OVERFLOW );
+        release_object( token );
+    }
+}
+
+/* checks that a user represented by a token is allowed to access an object
+ * represented by a security descriptor */
+DECL_HANDLER(access_check)
+{
+    size_t sd_size = get_req_data_size();
+    const struct security_descriptor *sd = get_req_data();
+    struct token *token;
+
+    if (!sd_is_valid( sd, sd_size ))
+    {
+        set_error( STATUS_ACCESS_VIOLATION );
+        return;
+    }
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        GENERIC_MAPPING mapping;
+        unsigned int status;
+        LUID_AND_ATTRIBUTES priv;
+        unsigned int priv_count = 1;
+
+        memset(&priv, 0, sizeof(priv));
+
+        /* FIXME: check token is an impersonation token, if not return
+         * STATUS_NO_IMPERSONATION_TOKEN */
+
+        mapping.GenericRead = req->mapping_read;
+        mapping.GenericWrite = req->mapping_write;
+        mapping.GenericExecute = req->mapping_execute;
+        mapping.GenericAll = req->mapping_all;
+
+        reply->access_status = token_access_check(
+            token, sd, req->desired_access, &priv, &priv_count, &mapping,
+            &reply->access_granted, &status );
+
+        reply->privileges_len = priv_count*sizeof(LUID_AND_ATTRIBUTES);
+
+        if ((priv_count > 0) && (reply->privileges_len <= get_reply_max_size()))
+        {
+            LUID_AND_ATTRIBUTES *privs = set_reply_data_size( priv_count * sizeof(*privs) );
+            memcpy( privs, &priv, sizeof(priv) );
+        }
+
+        if (status != STATUS_SUCCESS)
+            set_error( status );
+
         release_object( token );
     }
 }

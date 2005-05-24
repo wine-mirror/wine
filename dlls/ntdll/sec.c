@@ -1153,23 +1153,85 @@ RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 /******************************************************************************
  *  NtAccessCheck		[NTDLL.@]
  *  ZwAccessCheck		[NTDLL.@]
+ *
+ * Checks that a user represented by a token is allowed to access an object
+ * represented by a security descriptor.
+ *
+ * PARAMS
+ *  SecurityDescriptor [I] The security descriptor of the object to check.
+ *  ClientToken        [I] Token of the user accessing the object.
+ *  DesiredAccess      [I] The desired access to the object.
+ *  GenericMapping     [I] Mapping used to transform access rights in the SD to their specific forms.
+ *  PrivilegeSet       [I/O] Privileges used during the access check.
+ *  ReturnLength       [O] Number of bytes stored into PrivilegeSet.
+ *  GrantedAccess      [O] The actual access rights granted.
+ *  AccessStatus       [O] The status of the access check.
+ *
+ * RETURNS
+ *  NTSTATUS code.
+ *
+ * NOTES
+ *  DesiredAccess may be MAXIMUM_ALLOWED, in which case the function determines
+ *  the maximum access rights allowed by the SD and returns them in
+ *  GrantedAccess.
+ *  The SecurityDescriptor must have a valid owner and groups present,
+ *  otherwise the function will fail.
  */
 NTSTATUS WINAPI
 NtAccessCheck(
-	IN PSECURITY_DESCRIPTOR SecurityDescriptor,
-	IN HANDLE ClientToken,
-	IN ACCESS_MASK DesiredAccess,
-	IN PGENERIC_MAPPING GenericMapping,
-	OUT PPRIVILEGE_SET PrivilegeSet,
-	OUT PULONG ReturnLength,
-	OUT PULONG GrantedAccess,
-	OUT NTSTATUS *AccessStatus)
+    PSECURITY_DESCRIPTOR SecurityDescriptor,
+    HANDLE ClientToken,
+    ACCESS_MASK DesiredAccess,
+    PGENERIC_MAPPING GenericMapping,
+    PPRIVILEGE_SET PrivilegeSet,
+    PULONG ReturnLength,
+    PULONG GrantedAccess,
+    NTSTATUS *AccessStatus)
 {
-	FIXME("(%p, %p, %08lx, %p, %p, %p, %p, %p), stub\n",
-          SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
-          PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
-	*AccessStatus = STATUS_SUCCESS;
-	return STATUS_SUCCESS;
+    NTSTATUS status;
+
+    TRACE("(%p, %p, %08lx, %p, %p, %p, %p, %p), stub\n",
+        SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
+        PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
+
+    SERVER_START_REQ( access_check )
+    {
+        struct security_descriptor sd;
+        const SECURITY_DESCRIPTOR * RealSD = (const SECURITY_DESCRIPTOR *)SecurityDescriptor;
+
+        req->handle = ClientToken;
+        req->desired_access = DesiredAccess;
+        req->mapping_read = GenericMapping->GenericRead;
+        req->mapping_write = GenericMapping->GenericWrite;
+        req->mapping_execute = GenericMapping->GenericExecute;
+        req->mapping_all = GenericMapping->GenericAll;
+
+        /* marshal security descriptor */
+        sd.control = RealSD->Control;
+        sd.owner_len = RtlLengthSid( RealSD->Owner );
+        sd.group_len = RtlLengthSid( RealSD->Group );
+        sd.sacl_len = (RealSD->Sacl ? RealSD->Sacl->AclSize : 0);
+        sd.dacl_len = (RealSD->Dacl ? RealSD->Dacl->AclSize : 0);
+        wine_server_add_data( req, &sd, sizeof(sd) );
+        wine_server_add_data( req, RealSD->Owner, sd.owner_len );
+        wine_server_add_data( req, RealSD->Group, sd.group_len );
+        wine_server_add_data( req, RealSD->Sacl, sd.sacl_len );
+        wine_server_add_data( req, RealSD->Dacl, sd.dacl_len );
+
+        wine_server_set_reply( req, &PrivilegeSet->Privilege, *ReturnLength - FIELD_OFFSET( PRIVILEGE_SET, Privilege ) );
+
+        status = wine_server_call( req );
+
+        *ReturnLength = FIELD_OFFSET( PRIVILEGE_SET, Privilege ) + reply->privileges_len;
+        PrivilegeSet->PrivilegeCount = reply->privileges_len / sizeof(LUID_AND_ATTRIBUTES);
+
+        if (status == STATUS_SUCCESS)
+            *AccessStatus = reply->access_status;
+        *GrantedAccess = reply->access_granted;
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /******************************************************************************

@@ -3331,6 +3331,25 @@ struct duplicate_token_reply
     obj_handle_t  new_handle;
 };
 
+struct access_check_request
+{
+    struct request_header __header;
+    obj_handle_t    handle;
+    unsigned int    desired_access;
+    unsigned int    mapping_read;
+    unsigned int    mapping_write;
+    unsigned int    mapping_execute;
+    unsigned int    mapping_all;
+    /* VARARG(sd,security_descriptor); */
+};
+struct access_check_reply
+{
+    struct reply_header __header;
+    unsigned int    access_granted;
+    unsigned int    access_status;
+    unsigned int    privileges_len;
+    /* VARARG(privileges,LUID_AND_ATTRIBUTES); */
+};
 
 
 struct create_mailslot_request
@@ -3574,6 +3593,7 @@ enum request
     REQ_get_token_privileges,
     REQ_check_token_privileges,
     REQ_duplicate_token,
+    REQ_access_check,
     REQ_create_mailslot,
     REQ_open_mailslot,
     REQ_set_mailslot_info,
@@ -3773,6 +3793,7 @@ union generic_request
     struct get_token_privileges_request get_token_privileges_request;
     struct check_token_privileges_request check_token_privileges_request;
     struct duplicate_token_request duplicate_token_request;
+    struct access_check_request access_check_request;
     struct create_mailslot_request create_mailslot_request;
     struct open_mailslot_request open_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
@@ -3970,11 +3991,12 @@ union generic_reply
     struct get_token_privileges_reply get_token_privileges_reply;
     struct check_token_privileges_reply check_token_privileges_reply;
     struct duplicate_token_reply duplicate_token_reply;
+    struct access_check_reply access_check_reply;
     struct create_mailslot_reply create_mailslot_reply;
     struct open_mailslot_reply open_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 175
+#define SERVER_PROTOCOL_VERSION 176
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2872,6 +2872,27 @@ static void dump_duplicate_token_reply( const struct duplicate_token_reply *req 
     fprintf( stderr, " new_handle=%p", req->new_handle );
 }
 
+static void dump_access_check_request( const struct access_check_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " desired_access=%08x,", req->desired_access );
+    fprintf( stderr, " mapping_read=%08x,", req->mapping_read );
+    fprintf( stderr, " mapping_write=%08x,", req->mapping_write );
+    fprintf( stderr, " mapping_execute=%08x,", req->mapping_execute );
+    fprintf( stderr, " mapping_all=%08x,", req->mapping_all );
+    fprintf( stderr, " sd=" );
+    dump_varargs_security_descriptor( cur_size );
+}
+
+static void dump_access_check_reply( const struct access_check_reply *req )
+{
+    fprintf( stderr, " access_granted=%08x,", req->access_granted );
+    fprintf( stderr, " access_status=%08x,", req->access_status );
+    fprintf( stderr, " privileges_len=%08x,", req->privileges_len );
+    fprintf( stderr, " privileges=" );
+    dump_varargs_LUID_AND_ATTRIBUTES( cur_size );
+}
+
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
@@ -3105,6 +3126,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_token_privileges_request,
     (dump_func)dump_check_token_privileges_request,
     (dump_func)dump_duplicate_token_request,
+    (dump_func)dump_access_check_request,
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_open_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
@@ -3300,6 +3322,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_token_privileges_reply,
     (dump_func)dump_check_token_privileges_reply,
     (dump_func)dump_duplicate_token_reply,
+    (dump_func)dump_access_check_reply,
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_open_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
@@ -3495,6 +3518,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_token_privileges",
     "check_token_privileges",
     "duplicate_token",
+    "access_check",
     "create_mailslot",
     "open_mailslot",
     "set_mailslot_info",
