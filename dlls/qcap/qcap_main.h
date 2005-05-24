@@ -56,4 +56,23 @@ void DeleteMediaType(AM_MEDIA_TYPE * pmt);
 BOOL CompareMediaTypes(const AM_MEDIA_TYPE * pmt1, const AM_MEDIA_TYPE * pmt2, BOOL bWildcards); 
 void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt);
 
+enum YUV_Format {
+    /* Last 2 numbers give the skip info, the smaller they are the better
+     * Planar:
+     *      HSKIP : VSKIP */
+    YUVP_421, /*  2 : 1 */
+    YUVP_422, /*  2 : 2 */
+    YUVP_441, /*  4 : 1 */
+    YUVP_444, /*  4 : 4 */
+    ENDPLANAR, /* No format, just last planar item so we can check on it */
+
+    /* Non-planar */
+    YUYV, /* Order: YUYV (Guess why it's named like that) */
+    UYVY, /* Order: UYVY (Looks like someone got bored and swapped the Y's) */
+    UYYVYY, /* YUV411 linux style, perhaps YUV420 is YYUYYV? */
+};
+
+void YUV_Init(void);
+void YUV_To_RGB24(enum YUV_Format format, unsigned char *target, const unsigned char *source, int width, int height);
+
 #endif /* _QCAP_MAIN_H_DEFINED */

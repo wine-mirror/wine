@@ -13,7 +13,8 @@ C_SRCS = \
 	enummedia.c \
 	enumpins.c \
 	pin.c \
-	qcap_main.c
+	qcap_main.c \
+	yuv.c
 
 RC_SRCS = version.rc
 
