@@ -143,7 +143,7 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
 
     TRACE("(%p)->(%ld %p %p %ld %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
 
-    if(iVerb != OLEIVERB_SHOW) {
+    if(iVerb != OLEIVERB_SHOW && iVerb != OLEIVERB_UIACTIVATE) {
         FIXME("iVerb = %ld not supported\n", iVerb);
         return E_NOTIMPL;
     }
