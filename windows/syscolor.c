@@ -27,13 +27,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
 #include "winuser.h"
-#include "wownt32.h"
 #include "winreg.h"
 #include "winternl.h"
-#include "gdi.h" /* sic */
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(syscolor);
@@ -85,41 +81,7 @@ static const WORD wPattern55AA[] =
 
 HBRUSH SYSCOLOR_55AABrush = 0;
 
-
-/*************************************************************************
- * SYSCOLOR_MakeObjectSystem
- *
- * OK, now for a very ugly hack.
- * USER somehow has to tell GDI that its system brushes and pens are
- * non-deletable.
- * We don't want to export a function from GDI doing this for us,
- * so we just do that ourselves by "wildly flipping some bits in memory".
- * For a description of the GDI object magics and their flags,
- * see "Undocumented Windows" (wrong about the OBJECT_NOSYSTEM flag, though).
- */
-static void SYSCOLOR_MakeObjectSystem( HGDIOBJ16 handle, BOOL set)
-{
-    static WORD heap_sel = 0;
-    LPWORD ptr;
-
-    if (!heap_sel) heap_sel = LoadLibrary16( "gdi" );
-    if (heap_sel >= 32)
-    {
-        STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-        HANDLE16 oldDS = stack16->ds;
-
-        stack16->ds = heap_sel;
-        ptr = MapSL(LocalLock16(handle));
-
-        /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
-        if (set)
-            *ptr &= ~OBJECT_NOSYSTEM;
-        else
-            *ptr |= OBJECT_NOSYSTEM;
-        LocalUnlock16( handle );
-        stack16->ds = oldDS;
-    }
-}
+extern void __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set );
 
 /*************************************************************************
  *             SYSCOLOR_SetColor
@@ -130,19 +92,19 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
     SysColors[index] = color;
     if (SysColorBrushes[index])
     {
-	SYSCOLOR_MakeObjectSystem( HBRUSH_16(SysColorBrushes[index]), FALSE);
+	__wine_make_gdi_object_system( SysColorBrushes[index], FALSE);
 	DeleteObject( SysColorBrushes[index] );
     }
     SysColorBrushes[index] = CreateSolidBrush( color );
-    SYSCOLOR_MakeObjectSystem( HBRUSH_16(SysColorBrushes[index]), TRUE);
+    __wine_make_gdi_object_system( SysColorBrushes[index], TRUE);
 
     if (SysColorPens[index])
     {
-        SYSCOLOR_MakeObjectSystem( HPEN_16(SysColorPens[index]), FALSE);
+        __wine_make_gdi_object_system( SysColorPens[index], FALSE);
 	DeleteObject( SysColorPens[index] );
     }
     SysColorPens[index] = CreatePen( PS_SOLID, 1, color );
-    SYSCOLOR_MakeObjectSystem( HPEN_16(SysColorPens[index]), TRUE);
+    __wine_make_gdi_object_system( SysColorPens[index], TRUE);
 }
 
 
@@ -192,7 +154,7 @@ void SYSCOLOR_Init(void)
 
     h55AABitmap = CreateBitmap( 8, 8, 1, 1, wPattern55AA );
     SYSCOLOR_55AABrush = CreatePatternBrush( h55AABitmap );
-    SYSCOLOR_MakeObjectSystem( HBRUSH_16(SYSCOLOR_55AABrush), TRUE );
+    __wine_make_gdi_object_system( SYSCOLOR_55AABrush, TRUE );
 }
 
 

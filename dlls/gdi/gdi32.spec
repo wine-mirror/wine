@@ -432,6 +432,15 @@
 @ stdcall WriteSpool16(long ptr long)
 
 ################################################################
+# Wine internal extensions
+#
+# All functions must be prefixed with '__wine_' (for internal functions)
+# or 'wine_' (for user-visible functions) to avoid namespace conflicts.
+
+# GDI objects
+@ cdecl __wine_make_gdi_object_system(long long)
+
+################################################################
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl DIB_CreateDIBSection(long ptr long ptr long long long)

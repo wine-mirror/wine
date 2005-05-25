@@ -445,6 +445,26 @@ static const struct DefaultFontInfo default_fonts[] =
 };
 
 
+/*************************************************************************
+ * __wine_make_gdi_object_system    (GDI32.@)
+ *
+ * USER has to tell GDI that its system brushes and pens are non-deletable.
+ * For a description of the GDI object magics and their flags,
+ * see "Undocumented Windows" (wrong about the OBJECT_NOSYSTEM flag, though).
+ */
+void __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
+{
+    GDIOBJHDR *ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
+
+    /* touch the "system" bit of the wMagic field of a GDIOBJHDR */
+    if (set)
+        ptr->wMagic &= ~OBJECT_NOSYSTEM;
+    else
+        ptr->wMagic |= OBJECT_NOSYSTEM;
+
+    GDI_ReleaseObj( handle );
+}
+
 /******************************************************************************
  *      get_default_fonts
  */
@@ -604,7 +624,6 @@ BOOL GDI_Init(void)
 {
     HINSTANCE16 instance;
     HKEY hkey;
-    GDIOBJHDR *ptr;
     LOGFONTW default_gui_font;
     const struct DefaultFontInfo* deffonts;
     int i;
@@ -659,9 +678,7 @@ BOOL GDI_Init(void)
             ERR( "could not create stock object %d\n", i );
             return FALSE;
         }
-        ptr = GDI_GetObjPtr( stock_objects[i], MAGIC_DONTCARE );
-        ptr->wMagic &= ~OBJECT_NOSYSTEM;
-        GDI_ReleaseObj( stock_objects[i] );
+        __wine_make_gdi_object_system( stock_objects[i], TRUE );
     }
 
     if (hkey) RegCloseKey( hkey );
