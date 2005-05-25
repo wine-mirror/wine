@@ -125,6 +125,15 @@ BOOL16 WINAPI ExitWindows16( DWORD dwReturnCode, UINT16 wReserved )
 
 
 /***********************************************************************
+ *		GetTimerResolution (USER.14)
+ */
+LONG WINAPI GetTimerResolution16(void)
+{
+    return (1000);
+}
+
+
+/***********************************************************************
  *		ClipCursor (USER.16)
  */
 BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
@@ -844,6 +853,15 @@ ATOM WINAPI GlobalFindAtom16(LPCSTR lpString)
 UINT16 WINAPI GlobalGetAtomName16(ATOM nAtom, LPSTR lpBuffer, INT16 nSize)
 {
   return GlobalGetAtomNameA(nAtom, lpBuffer, nSize);
+}
+
+
+/***********************************************************************
+ *		ControlPanelInfo (USER.273)
+ */
+void WINAPI ControlPanelInfo16( INT16 nInfoType, WORD wData, LPSTR lpBuffer )
+{
+    FIXME("(%d, %04x, %p): stub.\n", nInfoType, wData, lpBuffer);
 }
 
 

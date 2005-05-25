@@ -200,7 +200,6 @@ extern BOOL HOOK_IsHooked( INT id );
 extern LRESULT MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
                                                UINT msg, WPARAM wparam, LPARAM lparam,
                                                UINT flags, UINT timeout, PDWORD_PTR res_ptr );
-extern void SYSCOLOR_Init(void);
 extern HPEN SYSCOLOR_GetPen( INT index );
 extern void SYSPARAMS_Init(void);
 extern void USER_CheckNotLock(void);
