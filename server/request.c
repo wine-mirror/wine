@@ -813,7 +813,7 @@ void close_master_socket(void)
 
     if (master_socket_timeout)
     {
-        gettimeofday( &when, 0 );
+        gettimeofday( &when, NULL );
         add_timeout( &when, master_socket_timeout * 1000 );
         master_socket->timeout = add_timeout_user( &when, close_socket_timeout, NULL );
     }

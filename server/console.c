@@ -371,7 +371,7 @@ void inherit_console(struct thread *parent_thread, struct process *process, obj_
 
 static struct console_input* console_input_get( obj_handle_t handle, unsigned access )
 {
-    struct console_input*	console = 0;
+    struct console_input*	console = NULL;
 
     if (handle)
 	console = (struct console_input *)get_handle_obj( current->process, handle,

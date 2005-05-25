@@ -1181,7 +1181,7 @@ DECL_HANDLER(get_dll_info)
         if (dll)
         {
             reply->size = dll->size;
-            reply->entry_point = 0; /* FIXME */
+            reply->entry_point = NULL; /* FIXME */
             if (dll->filename)
             {
                 size_t len = min( dll->namelen, get_reply_max_size() );

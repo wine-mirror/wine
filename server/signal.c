@@ -181,25 +181,25 @@ static void sigint_callback(void)
 }
 
 /* SIGHUP handler */
-static void do_sighup()
+static void do_sighup( int signum )
 {
     do_signal( handler_sighup );
 }
 
 /* SIGTERM handler */
-static void do_sigterm()
+static void do_sigterm( int signum )
 {
     do_signal( handler_sigterm );
 }
 
 /* SIGINT handler */
-static void do_sigint()
+static void do_sigint( int signum )
 {
     do_signal( handler_sigint );
 }
 
 /* SIGCHLD handler */
-static void do_sigchld()
+static void do_sigchld( int signum )
 {
     do_signal( handler_sigchld );
 }

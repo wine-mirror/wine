@@ -364,7 +364,7 @@ static void check_flushed( void *arg )
     {
         struct timeval tv;
 
-        gettimeofday( &tv, 0 );
+        gettimeofday( &tv, NULL );
         add_timeout( &tv, 100 );
         server->flush_poll = add_timeout_user( &tv, check_flushed, server );
     }
@@ -402,7 +402,7 @@ static int pipe_server_flush( struct fd *fd, struct event **event )
         server->event = create_event( NULL, 0, 0, 0 );
         if( !server->event )
             return 0;
-        gettimeofday( &tv, 0 );
+        gettimeofday( &tv, NULL );
         add_timeout( &tv, 100 );
         server->flush_poll = add_timeout_user( &tv, check_flushed, server );
         *event = server->event;

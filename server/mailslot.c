@@ -365,7 +365,7 @@ static struct mail_writer *create_mail_writer( struct mailslot *mailslot, unsign
            !((sharing & FILE_SHARE_WRITE) && (writer->sharing & FILE_SHARE_WRITE)))
         {
             set_error( STATUS_SHARING_VIOLATION );
-            return 0;
+            return NULL;
         }
     }
 

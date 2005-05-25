@@ -111,7 +111,7 @@ static inline rectangle_t *add_rect( struct region *reg )
         if (!new_rect)
         {
             set_error( STATUS_NO_MEMORY );
-            return 0;
+            return NULL;
         }
         reg->rects = new_rect;
         reg->size *= 2;

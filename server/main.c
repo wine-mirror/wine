@@ -111,7 +111,7 @@ static void parse_args( int argc, char *argv[] )
     }
 }
 
-static void sigterm_handler()
+static void sigterm_handler( int signum )
 {
     exit(1);  /* make sure atexit functions get called */
 }

@@ -1042,7 +1042,7 @@ struct async *create_async(struct thread *thread, int* timeout, struct list *que
     {
         struct timeval when;
 
-        gettimeofday( &when, 0 );
+        gettimeofday( &when, NULL );
         add_timeout( &when, *timeout );
         async->timeout = add_timeout_user( &when, async_callback, async );
     }

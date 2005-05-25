@@ -529,7 +529,7 @@ static void sock_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
     }
     else
     {
-        if (!create_async( current, 0, queue, apc, user, iosb ))
+        if (!create_async( current, NULL, queue, apc, user, iosb ))
             return;
     }
 
@@ -674,7 +674,7 @@ static struct sock *accept_socket( obj_handle_t handle )
         acceptsock->wparam  = 0;
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
         acceptsock->flags = sock->flags;
-        acceptsock->deferred = 0;
+        acceptsock->deferred = NULL;
         if (!(acceptsock->fd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj )))
         {
             release_object( acceptsock );

@@ -452,7 +452,7 @@ static void make_clean( struct key *key )
 }
 
 /* go through all the notifications and send them if necessary */
-void check_notify( struct key *key, unsigned int change, int not_subtree )
+static void check_notify( struct key *key, unsigned int change, int not_subtree )
 {
     struct list *ptr, *next;
 
@@ -1644,10 +1644,10 @@ static void set_periodic_save_timer(void)
 {
     struct timeval next;
 
-    gettimeofday( &next, 0 );
+    gettimeofday( &next, NULL );
     add_timeout( &next, save_period );
     if (save_timeout_user) remove_timeout_user( save_timeout_user );
-    save_timeout_user = add_timeout_user( &next, periodic_save, 0 );
+    save_timeout_user = add_timeout_user( &next, periodic_save, NULL );
 }
 
 /* save the modified registry branches to disk */

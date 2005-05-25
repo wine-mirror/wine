@@ -531,7 +531,7 @@ static struct message_result *alloc_message_result( struct msg_queue *send_queue
         if (timeout != -1)
         {
             struct timeval when;
-            gettimeofday( &when, 0 );
+            gettimeofday( &when, NULL );
             add_timeout( &when, timeout );
             result->timeout = add_timeout_user( &when, result_timeout, result );
         }
@@ -960,7 +960,7 @@ static void restart_timer( struct msg_queue *queue, struct timer *timer )
     struct timeval now;
 
     list_remove( &timer->entry );
-    gettimeofday( &now, 0 );
+    gettimeofday( &now, NULL );
     while (!time_before( &now, &timer->when )) add_timeout( &timer->when, timer->rate );
     link_timer( queue, timer );
     set_next_timer( queue );
@@ -993,7 +993,7 @@ static struct timer *set_timer( struct msg_queue *queue, unsigned int rate )
     if (timer)
     {
         timer->rate  = max( rate, 1 );
-        gettimeofday( &timer->when, 0 );
+        gettimeofday( &timer->when, NULL );
         add_timeout( &timer->when, rate );
         link_timer( queue, timer );
         /* check if we replaced the next timer */

@@ -297,7 +297,7 @@ static void file_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
         return;
     }
 
-    if (!create_async( current, 0, queue, apc, user, iosb ))
+    if (!create_async( current, NULL, queue, apc, user, iosb ))
         return;
 
     /* Check if the new pending request can be served immediately */
