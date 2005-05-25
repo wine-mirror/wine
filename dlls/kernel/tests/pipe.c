@@ -26,26 +26,10 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winsock.h>
-
-#ifndef STANDALONE
-#include "wine/test.h"
-#else
-#include <assert.h>
-#define START_TEST(name) main(int argc, char **argv)
-#define ok(condition, msg) \
-	do { \
-		if(!(condition)) \
-		{ \
-			fprintf(stderr,"failed at %d\n",__LINE__); \
-			exit(0); \
-		} \
-	} while(0)
-
-#define todo_wine
-#endif
-
 #include <wtypes.h>
 #include <winerror.h>
+
+#include "wine/test.h"
 
 #define PIPENAME "\\\\.\\PiPe\\tests_pipe.c"
 

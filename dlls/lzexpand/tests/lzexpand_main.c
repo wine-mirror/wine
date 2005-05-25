@@ -22,30 +22,10 @@
 #include <windef.h>
 #include <winbase.h>
 #include <stdlib.h>
-
-#ifndef STANDALONE
-#include "wine/test.h"
-#define ok2 ok
-#else
-/* To build outside Wine tree, compile with cl -DSTANDALONE -D_X86_ lzexpand_main.c lz32.lib */
-#include <assert.h>
-#include <stdio.h>
-#define START_TEST(name) main(int argc, char **argv)
-#define ok(condition, msg)       \
-	do { if(!(condition)) {  \
-		fprintf(stderr,"failed at %d, msg:" msg "\n",__LINE__); \
-		exit(1);         \
-	} } while(0)
-#define ok2(condition, msg, arg) \
-        do { if(!(condition)) {  \
-		fprintf(stderr,"failed at %d, msg:" msg "\n",__LINE__, arg); \
-		exit(1);         \
-	} } while(0)
-#define todo_wine
-#endif
-
 #include <winerror.h>
 #include <lzexpand.h>
+
+#include "wine/test.h"
 
 static char filename_[] = "testfile.xx_";
 #if 0
@@ -91,7 +71,7 @@ static void test_lzopenfile(void)
   ok(file >= 0, "LZOpenFile failed on creation\n");
   LZClose(file);
   retval = GetFileAttributes(filename_);
-  ok2(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
+  ok(retval != INVALID_FILE_ATTRIBUTES, "GetFileAttributes: error %ld\n", 
      GetLastError());
 
   /* Check various opening options. */
@@ -146,7 +126,7 @@ static void test_lzread(void)
   file = CreateFile(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
   ok(file != INVALID_HANDLE_VALUE, "Could not create test file\n");
   retok = WriteFile(file, compressed_file, compressed_file_size, &ret, 0);
-  ok2( retok, "WriteFile: error %ld\n", GetLastError());
+  ok( retok, "WriteFile: error %ld\n", GetLastError());
   ok(ret == compressed_file_size, "Wrote wrong number of bytes with WriteFile?\n");
   CloseHandle(file);
 
@@ -169,7 +149,7 @@ static void test_lzread(void)
   LZClose(cfile);
 
   ret = DeleteFile(filename_);
-  ok2(ret, "DeleteFile: error %ld\n", GetLastError());
+  ok(ret, "DeleteFile: error %ld\n", GetLastError());
 }
 
 static void test_lzcopy(void)
@@ -182,17 +162,17 @@ static void test_lzcopy(void)
 
   /* Create the compressed file. */
   file = CreateFile(filename_, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0);
-  ok2(file != INVALID_HANDLE_VALUE, 
+  ok(file != INVALID_HANDLE_VALUE, 
      "CreateFile: error %ld\n", GetLastError());
   retok = WriteFile(file, compressed_file, compressed_file_size, &ret, 0);
-  ok2( retok, "WriteFile error %ld\n", GetLastError());
+  ok( retok, "WriteFile error %ld\n", GetLastError());
   ok(ret == compressed_file_size, "Wrote wrong number of bytes\n");
   CloseHandle(file);
 
   source = LZOpenFile(filename_, &stest, OF_READ);
   ok(source >= 0, "LZOpenFile failed on compressed file\n");
   dest = LZOpenFile(filename2, &dtest, OF_CREATE);
-  ok2(dest >= 0, "LZOpenFile failed on creating new file %d\n", dest);
+  ok(dest >= 0, "LZOpenFile failed on creating new file %d\n", dest);
 
   ret = LZCopy(source, dest);
   ok(ret > 0, "LZCopy error\n");
@@ -202,20 +182,20 @@ static void test_lzcopy(void)
 
   file = CreateFile(filename2, GENERIC_READ, 0, NULL, OPEN_EXISTING,
 		    0, 0);
-  ok2(file != INVALID_HANDLE_VALUE,
+  ok(file != INVALID_HANDLE_VALUE,
      "CreateFile: error %ld\n", GetLastError());
 
   retok = ReadFile(file, buf, uncompressed_data_size*2, &ret, 0);
-  ok2( retok && ret == uncompressed_data_size, "ReadFile: error %ld\n", GetLastError());
+  ok( retok && ret == uncompressed_data_size, "ReadFile: error %ld\n", GetLastError());
   /* Compare what we read with what we think we should read. */
   ok(!memcmp(buf, uncompressed_data, uncompressed_data_size),
      "buffer contents mismatch\n");
   CloseHandle(file);
 
   ret = DeleteFile(filename_);
-  ok2(ret, "DeleteFile: error %ld\n", GetLastError());
+  ok(ret, "DeleteFile: error %ld\n", GetLastError());
   ret = DeleteFile(filename2);
-  ok2(ret, "DeleteFile: error %ld\n", GetLastError());
+  ok(ret, "DeleteFile: error %ld\n", GetLastError());
 }
 
 START_TEST(lzexpand_main)

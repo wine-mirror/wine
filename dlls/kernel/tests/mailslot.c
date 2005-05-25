@@ -25,15 +25,7 @@
 #include <windef.h>
 #include <winbase.h>
 
-#ifndef STANDALONE
 #include "wine/test.h"
-#else
-#define START_TEST(name) main(int argc, char **argv)
-
-#define ok(cond,str) do{ if(!(cond)) printf("line %d: %s\n",__LINE__,str); }while (0)
-#define todo_wine
-
-#endif
 
 static const char szmspath[] = "\\\\.\\mailslot\\wine_mailslot_test";
 
