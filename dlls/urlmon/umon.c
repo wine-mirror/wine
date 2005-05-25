@@ -1735,3 +1735,12 @@ HRESULT WINAPI HlinkNavigateString( IUnknown *pUnk, LPCWSTR szTarget )
     return HlinkSimpleNavigateToString( 
                szTarget, NULL, NULL, pUnk, NULL, NULL, 0, 0 );
 }
+
+/***********************************************************************
+ *           GetSoftwareUpdateInfo (URLMON.@)
+ */
+HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi )
+{
+    FIXME("%s %p\n", debugstr_w(szDistUnit), psdi );
+    return E_FAIL;
+}
