@@ -5736,7 +5736,7 @@ static INT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
      * so it's worth optimizing */
     if (uFlags & LVNI_FOCUSED)
     {
-	if (!(LISTVIEW_GetItemState(infoPtr, infoPtr->nFocusedItem, uMask) & uMask) == uMask) return -1;
+	if ((LISTVIEW_GetItemState(infoPtr, infoPtr->nFocusedItem, uMask) & uMask) != uMask) return -1;
 	return (infoPtr->nFocusedItem == nItem) ? -1 : infoPtr->nFocusedItem;
     }
     
