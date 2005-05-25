@@ -122,18 +122,13 @@ int main( int argc, const char** argv )
              "#include <stdio.h>\n"
              "#include <stdlib.h>\n"
              "#include \"windef.h\"\n"
-             "#include \"winbase.h\"\n"
-            "\n" );
+             "#include \"winbase.h\"\n\n"
+             "#define STANDALONE\n"
+             "#include \"wine/test.h\"\n\n" );
 
     for (i = 0; i < count; i++) fprintf( out, "extern void func_%s(void);\n", tests[i] );
 
     fprintf( out,
-             "\n"
-             "struct test\n"
-             "{\n"
-             "    const char *name;\n"
-             "    void (*func)(void);\n"
-             "};\n"
              "\n"
              "static const struct test winetest_testlist[] =\n"
              "{\n" );
@@ -142,10 +137,7 @@ int main( int argc, const char** argv )
 
     fprintf( out,
              "    { 0, 0 }\n"
-             "};\n"
-             "\n"
-             "#define WINETEST_WANT_MAIN\n"
-             "#include \"wine/test.h\"\n" );
+             "};\n" );
 
     if (output_file && fclose( out ))
         fatal_perror( "error writing to %s", output_file );

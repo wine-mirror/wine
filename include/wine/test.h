@@ -39,7 +39,14 @@ extern int winetest_loop_todo(void);
 extern void winetest_end_todo( const char* platform );
 extern int winetest_get_mainargs( char*** pargv );
 
+#ifdef STANDALONE
+#define START_TEST(name) \
+  static void func_##name(void); \
+  static const struct test winetest_testlist[] = { { #name, func_##name }, { 0, 0 } }; \
+  static void func_##name(void)
+#else
 #define START_TEST(name) void func_##name(void)
+#endif
 
 #ifdef __GNUC__
 
@@ -72,7 +79,17 @@ extern void winetest_trace( const char *msg, ... );
  * different includes or flags if needed.
  */
 
-#ifdef WINETEST_WANT_MAIN
+#ifdef STANDALONE
+
+#include <stdio.h>
+
+struct test
+{
+    const char *name;
+    void (*func)(void);
+};
+
+static const struct test winetest_testlist[];
 
 /* debug level */
 int winetest_debug = 1;
@@ -322,11 +339,15 @@ int main( int argc, char **argv )
     if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
     if ((p = getenv( "WINETEST_INTERACTIVE" ))) winetest_interactive = atoi(p);
     if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) report_success = atoi(p);
-    if (!argv[1]) usage( argv[0] );
-
+    if (!argv[1])
+    {
+        if (winetest_testlist[0].name && !winetest_testlist[1].name)  /* only one test */
+            return run_test( winetest_testlist[0].name );
+        usage( argv[0] );
+    }
     return run_test(argv[1]);
 }
 
-#endif  /* WINETEST_WANT_MAIN */
+#endif  /* STANDALONE */
 
 #endif  /* __WINE_TEST_H */
