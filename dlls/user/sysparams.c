@@ -2970,3 +2970,128 @@ HPEN SYSCOLOR_GetPen( INT index )
     assert (0 <= index && index < NUM_SYS_COLORS);
     return SysColorPens[index];
 }
+
+
+/***********************************************************************
+ *		ChangeDisplaySettingsA (USER32.@)
+ */
+LONG WINAPI ChangeDisplaySettingsA( LPDEVMODEA devmode, DWORD flags )
+{
+    return ChangeDisplaySettingsExA(NULL,devmode,NULL,flags,NULL);
+}
+
+
+/***********************************************************************
+ *		ChangeDisplaySettingsW (USER32.@)
+ */
+LONG WINAPI ChangeDisplaySettingsW( LPDEVMODEW devmode, DWORD flags )
+{
+    return ChangeDisplaySettingsExW(NULL,devmode,NULL,flags,NULL);
+}
+
+
+/***********************************************************************
+ *		ChangeDisplaySettingsExA (USER32.@)
+ */
+LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND hwnd,
+                                      DWORD flags, LPVOID lparam )
+{
+    DEVMODEW devmodeW;
+    LONG ret;
+    UNICODE_STRING nameW;
+
+    if (devname) RtlCreateUnicodeStringFromAsciiz(&nameW, devname);
+    else nameW.Buffer = NULL;
+
+    if (devmode)
+    {
+        devmodeW.dmBitsPerPel       = devmode->dmBitsPerPel;
+        devmodeW.dmPelsHeight       = devmode->dmPelsHeight;
+        devmodeW.dmPelsWidth        = devmode->dmPelsWidth;
+        devmodeW.dmDisplayFlags     = devmode->dmDisplayFlags;
+        devmodeW.dmDisplayFrequency = devmode->dmDisplayFrequency;
+        devmodeW.dmFields           = devmode->dmFields;
+        ret = ChangeDisplaySettingsExW(nameW.Buffer, &devmodeW, hwnd, flags, lparam);
+    }
+    else
+    {
+        ret = ChangeDisplaySettingsExW(nameW.Buffer, NULL, hwnd, flags, lparam);
+    }
+
+    if (devname) RtlFreeUnicodeString(&nameW);
+    return ret;
+}
+
+
+/***********************************************************************
+ *		ChangeDisplaySettingsExW (USER32.@)
+ */
+LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
+                                      DWORD flags, LPVOID lparam )
+{
+    /* Pass the request on to the driver */
+    if (!USER_Driver.pChangeDisplaySettingsExW) return DISP_CHANGE_FAILED;
+    return USER_Driver.pChangeDisplaySettingsExW( devname, devmode, hwnd, flags, lparam );
+}
+
+
+/***********************************************************************
+ *		EnumDisplaySettingsW (USER32.@)
+ *
+ * RETURNS
+ *	TRUE if nth setting exists found (described in the LPDEVMODEW struct)
+ *	FALSE if we do not have the nth setting
+ */
+BOOL WINAPI EnumDisplaySettingsW( LPCWSTR name, DWORD n, LPDEVMODEW devmode )
+{
+    return EnumDisplaySettingsExW(name, n, devmode, 0);
+}
+
+
+/***********************************************************************
+ *		EnumDisplaySettingsA (USER32.@)
+ */
+BOOL WINAPI EnumDisplaySettingsA(LPCSTR name,DWORD n,LPDEVMODEA devmode)
+{
+    return EnumDisplaySettingsExA(name, n, devmode, 0);
+}
+
+
+/***********************************************************************
+ *		EnumDisplaySettingsExA (USER32.@)
+ */
+BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
+                                   LPDEVMODEA lpDevMode, DWORD dwFlags)
+{
+    DEVMODEW devmodeW;
+    BOOL ret;
+    UNICODE_STRING nameW;
+
+    if (lpszDeviceName) RtlCreateUnicodeStringFromAsciiz(&nameW, lpszDeviceName);
+    else nameW.Buffer = NULL;
+
+    ret = EnumDisplaySettingsExW(nameW.Buffer,iModeNum,&devmodeW,dwFlags);
+    if (ret)
+    {
+        lpDevMode->dmBitsPerPel       = devmodeW.dmBitsPerPel;
+        lpDevMode->dmPelsHeight       = devmodeW.dmPelsHeight;
+        lpDevMode->dmPelsWidth        = devmodeW.dmPelsWidth;
+        lpDevMode->dmDisplayFlags     = devmodeW.dmDisplayFlags;
+        lpDevMode->dmDisplayFrequency = devmodeW.dmDisplayFrequency;
+        lpDevMode->dmFields           = devmodeW.dmFields;
+    }
+    if (lpszDeviceName) RtlFreeUnicodeString(&nameW);
+    return ret;
+}
+
+
+/***********************************************************************
+ *		EnumDisplaySettingsExW (USER32.@)
+ */
+BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
+                                   LPDEVMODEW lpDevMode, DWORD dwFlags)
+{
+    /* Pass the request on to the driver */
+    if (!USER_Driver.pEnumDisplaySettingsExW) return FALSE;
+    return USER_Driver.pEnumDisplaySettingsExW(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
+}

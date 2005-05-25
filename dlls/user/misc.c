@@ -22,6 +22,7 @@
 #include <stdarg.h>
 
 #include "windef.h"
+#include "wine/windef16.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -30,6 +31,109 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
+
+/* USER signal proc flags and codes */
+/* See UserSignalProc for comments */
+#define USIG_FLAGS_WIN32          0x0001
+#define USIG_FLAGS_GUI            0x0002
+#define USIG_FLAGS_FEEDBACK       0x0004
+#define USIG_FLAGS_FAULT          0x0008
+
+#define USIG_DLL_UNLOAD_WIN16     0x0001
+#define USIG_DLL_UNLOAD_WIN32     0x0002
+#define USIG_FAULT_DIALOG_PUSH    0x0003
+#define USIG_FAULT_DIALOG_POP     0x0004
+#define USIG_DLL_UNLOAD_ORPHANS   0x0005
+#define USIG_THREAD_INIT          0x0010
+#define USIG_THREAD_EXIT          0x0020
+#define USIG_PROCESS_CREATE       0x0100
+#define USIG_PROCESS_INIT         0x0200
+#define USIG_PROCESS_EXIT         0x0300
+#define USIG_PROCESS_DESTROY      0x0400
+#define USIG_PROCESS_RUNNING      0x0500
+#define USIG_PROCESS_LOADED       0x0600
+
+
+/***********************************************************************
+ *		SignalProc32 (USER.391)
+ *		UserSignalProc (USER32.@)
+ *
+ * The exact meaning of the USER signals is undocumented, but this
+ * should cover the basic idea:
+ *
+ * USIG_DLL_UNLOAD_WIN16
+ *     This is sent when a 16-bit module is unloaded.
+ *
+ * USIG_DLL_UNLOAD_WIN32
+ *     This is sent when a 32-bit module is unloaded.
+ *
+ * USIG_DLL_UNLOAD_ORPHANS
+ *     This is sent after the last Win3.1 module is unloaded,
+ *     to allow removal of orphaned menus.
+ *
+ * USIG_FAULT_DIALOG_PUSH
+ * USIG_FAULT_DIALOG_POP
+ *     These are called to allow USER to prepare for displaying a
+ *     fault dialog, even though the fault might have happened while
+ *     inside a USER critical section.
+ *
+ * USIG_THREAD_INIT
+ *     This is called from the context of a new thread, as soon as it
+ *     has started to run.
+ *
+ * USIG_THREAD_EXIT
+ *     This is called, still in its context, just before a thread is
+ *     about to terminate.
+ *
+ * USIG_PROCESS_CREATE
+ *     This is called, in the parent process context, after a new process
+ *     has been created.
+ *
+ * USIG_PROCESS_INIT
+ *     This is called in the new process context, just after the main thread
+ *     has started execution (after the main thread's USIG_THREAD_INIT has
+ *     been sent).
+ *
+ * USIG_PROCESS_LOADED
+ *     This is called after the executable file has been loaded into the
+ *     new process context.
+ *
+ * USIG_PROCESS_RUNNING
+ *     This is called immediately before the main entry point is called.
+ *
+ * USIG_PROCESS_EXIT
+ *     This is called in the context of a process that is about to
+ *     terminate (but before the last thread's USIG_THREAD_EXIT has
+ *     been sent).
+ *
+ * USIG_PROCESS_DESTROY
+ *     This is called after a process has terminated.
+ *
+ *
+ * The meaning of the dwFlags bits is as follows:
+ *
+ * USIG_FLAGS_WIN32
+ *     Current process is 32-bit.
+ *
+ * USIG_FLAGS_GUI
+ *     Current process is a (Win32) GUI process.
+ *
+ * USIG_FLAGS_FEEDBACK
+ *     Current process needs 'feedback' (determined from the STARTUPINFO
+ *     flags STARTF_FORCEONFEEDBACK / STARTF_FORCEOFFFEEDBACK).
+ *
+ * USIG_FLAGS_FAULT
+ *     The signal is being sent due to a fault.
+ */
+WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
+                            DWORD dwFlags, HMODULE16 hModule )
+{
+    FIXME("(%04x, %08lx, %04lx, %04x)\n",
+          uCode, dwThreadOrProcessID, dwFlags, hModule );
+    /* FIXME: Should chain to GdiSignalProc now. */
+    return 0;
+}
+
 
 /* callback to allow EnumDesktopsA to use EnumDesktopsW */
 typedef struct {
@@ -425,6 +529,44 @@ DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd)
 {
     FIXME("(%p,%p),stub!\n",hwinsta,hwnd);
     return 1;
+}
+
+/***********************************************************************
+ *		EnumDisplayDevicesA (USER32.@)
+ */
+BOOL WINAPI EnumDisplayDevicesA( LPVOID unused, DWORD i, LPDISPLAY_DEVICEA lpDisplayDevice,
+                                 DWORD dwFlags )
+{
+    if (i)
+        return FALSE;
+    FIXME("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
+    strcpy(lpDisplayDevice->DeviceName,"X11");
+    strcpy(lpDisplayDevice->DeviceString,"X 11 Windowing System");
+    lpDisplayDevice->StateFlags =
+        DISPLAY_DEVICE_ATTACHED_TO_DESKTOP |
+        DISPLAY_DEVICE_PRIMARY_DEVICE |
+        DISPLAY_DEVICE_VGA_COMPATIBLE;
+    return TRUE;
+}
+
+/***********************************************************************
+ *		EnumDisplayDevicesW (USER32.@)
+ */
+BOOL WINAPI EnumDisplayDevicesW( LPVOID unused, DWORD i, LPDISPLAY_DEVICEW lpDisplayDevice,
+                                 DWORD dwFlags )
+{
+    if (i)
+        return FALSE;
+    FIXME("(%p,%ld,%p,0x%08lx), stub!\n",unused,i,lpDisplayDevice,dwFlags);
+    MultiByteToWideChar( CP_ACP, 0, "X11", -1, lpDisplayDevice->DeviceName,
+                         sizeof(lpDisplayDevice->DeviceName)/sizeof(WCHAR) );
+    MultiByteToWideChar( CP_ACP, 0, "X11 Windowing System", -1, lpDisplayDevice->DeviceString,
+                         sizeof(lpDisplayDevice->DeviceString)/sizeof(WCHAR) );
+    lpDisplayDevice->StateFlags =
+        DISPLAY_DEVICE_ATTACHED_TO_DESKTOP |
+        DISPLAY_DEVICE_PRIMARY_DEVICE |
+        DISPLAY_DEVICE_VGA_COMPATIBLE;
+    return TRUE;
 }
 
 /***********************************************************************

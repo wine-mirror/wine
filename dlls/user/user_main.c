@@ -26,8 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
-#include "wine/winbase16.h"
-#include "wine/winuser16.h"
+#include "tlhelp32.h"
 
 #include "controls.h"
 #include "user_private.h"
@@ -341,4 +340,188 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         break;
     }
     return ret;
+}
+
+
+/***********************************************************************
+ *           USER_GetProcessHandleList(Internal)
+ */
+static HANDLE *USER_GetProcessHandleList(void)
+{
+    DWORD count, i, n;
+    HANDLE *list;
+    PROCESSENTRY32 pe;
+    HANDLE hSnapshot;
+    BOOL r;
+
+    hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
+    if (!hSnapshot)
+    {
+        ERR("cannot create snapshot\n");
+        return FALSE;
+    }
+
+    /* count the number of processes plus one */
+    for (count=0; ;count++)
+    {
+        pe.dwSize = sizeof pe;
+        if (count)
+            r = Process32Next( hSnapshot, &pe );
+        else
+            r = Process32First( hSnapshot, &pe );
+        if (!r)
+            break;
+    }
+
+    /* allocate memory make a list of the process handles */
+    list = HeapAlloc( GetProcessHeap(), 0, (count+1)*sizeof(HANDLE) );
+    n=0;
+    for (i=0; i<count; i++)
+    {
+        pe.dwSize = sizeof pe;
+        if (i)
+            r = Process32Next( hSnapshot, &pe );
+        else
+            r = Process32First( hSnapshot, &pe );
+        if (!r)
+            break;
+
+        /* don't kill ourselves */
+        if (GetCurrentProcessId() == pe.th32ProcessID )
+            continue;
+
+        /* open the process so we don't can track it */
+        list[n] = OpenProcess( PROCESS_QUERY_INFORMATION|
+                                  PROCESS_TERMINATE,
+                                  FALSE, pe.th32ProcessID );
+
+        /* check it didn't terminate already */
+        if( list[n] )
+            n++;
+    }
+    list[n]=0;
+    CloseHandle( hSnapshot );
+
+    if (!r)
+        ERR("Error enumerating processes\n");
+
+    TRACE("return %lu processes\n", n);
+
+    return list;
+}
+
+
+/***********************************************************************
+ *		USER_KillProcesses (Internal)
+ */
+static DWORD USER_KillProcesses(void)
+{
+    DWORD n, r, i;
+    HANDLE *handles;
+    const DWORD dwShutdownTimeout = 10000;
+
+    TRACE("terminating other processes\n");
+
+    /* kill it and add it to our list of object to wait on */
+    handles = USER_GetProcessHandleList();
+    for (n=0; handles && handles[n]; n++)
+        TerminateProcess( handles[n], 0 );
+
+    /* wait for processes to exit */
+    for (i=0; i<n; i+=MAXIMUM_WAIT_OBJECTS)
+    {
+        int n_objs = ((n-i)>MAXIMUM_WAIT_OBJECTS) ? MAXIMUM_WAIT_OBJECTS : (n-i);
+        r = WaitForMultipleObjects( n_objs, &handles[i], TRUE, dwShutdownTimeout );
+        if (r==WAIT_TIMEOUT)
+            ERR("wait failed!\n");
+    }
+
+    /* close the handles */
+    for (i=0; i<n; i++)
+        CloseHandle( handles[i] );
+
+    HeapFree( GetProcessHeap(), 0, handles );
+
+    return n;
+}
+
+
+/***********************************************************************
+ *		USER_DoShutdown (Internal)
+ */
+static void USER_DoShutdown(void)
+{
+    DWORD i, n;
+    const DWORD nRetries = 10;
+
+    for (i=0; i<nRetries; i++)
+    {
+        n = USER_KillProcesses();
+        TRACE("Killed %ld processes, attempt %ld\n", n, i);
+        if(!n)
+            break;
+    }
+}
+
+
+/***********************************************************************
+ *		ExitWindowsEx (USER32.@)
+ */
+BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
+{
+    int i;
+    BOOL result = FALSE;
+    HWND *list, *phwnd;
+
+    /* We have to build a list of all windows first, as in EnumWindows */
+    TRACE("(%x,%lx)\n", flags, reserved);
+
+    list = WIN_ListChildren( GetDesktopWindow() );
+    if (list)
+    {
+        /* Send a WM_QUERYENDSESSION message to every window */
+
+        for (i = 0; list[i]; i++)
+        {
+            /* Make sure that the window still exists */
+            if (!IsWindow( list[i] )) continue;
+            if (!SendMessageW( list[i], WM_QUERYENDSESSION, 0, 0 )) break;
+        }
+        result = !list[i];
+
+        /* Now notify all windows that got a WM_QUERYENDSESSION of the result */
+
+        for (phwnd = list; i > 0; i--, phwnd++)
+        {
+            if (!IsWindow( *phwnd )) continue;
+            SendMessageW( *phwnd, WM_ENDSESSION, result, 0 );
+        }
+        HeapFree( GetProcessHeap(), 0, list );
+
+        if ( !(result || (flags & EWX_FORCE) ))
+            return FALSE;
+    }
+
+    /* USER_DoShutdown will kill all processes except the current process */
+    USER_DoShutdown();
+
+    if (flags & EWX_REBOOT)
+    {
+        WCHAR winebootW[] = { 'w','i','n','e','b','o','o','t',0 };
+        PROCESS_INFORMATION pi;
+        STARTUPINFOW si;
+
+        memset( &si, 0, sizeof si );
+        si.cb = sizeof si;
+        if (CreateProcessW( NULL, winebootW, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
+        {
+            CloseHandle( pi.hProcess );
+            CloseHandle( pi.hThread );
+        }
+        else
+            MESSAGE("wine: Failed to start wineboot\n");
+    }
+
+    if (result) ExitProcess(0);
+    return TRUE;
 }

@@ -1555,6 +1555,17 @@ BOOL WINAPI GetClipCursor( RECT *rect )
     return FALSE;
 }
 
+
+/***********************************************************************
+ *		SetSystemCursor (USER32.@)
+ */
+BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
+{
+    FIXME("(%p,%08lx),stub!\n",  hcur, id);
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		LookupIconIdFromDirectoryEx (USER.364)
  *
