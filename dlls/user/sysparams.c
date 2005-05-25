@@ -565,16 +565,18 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
  *
  * Convert a dimension value that was obtained from the registry.  These are
  * quoted as being "twips" values if negative and pixels if positive.
+ * One inch is 1440 twips. So to convert, divide by 1440 to get inches and
+ * multiply that by the dots-per-inch to get the size in pixels. 
  * See for example
  *   MSDN Library - April 2001 -> Resource Kits ->
  *       Windows 2000 Resource Kit Reference ->
  *       Technical Reference to the Windows 2000 Registry ->
  *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
  */
-inline static int SYSPARAMS_Twips2Pixels(int x)
+inline static int SYSPARAMS_Twips2Pixels(int x, int dpi)
 {
     if (x < 0)
-        x = (-x+7)/15;
+        x = (-x*dpi+720)/1440;
     return x;
 }
 
@@ -587,7 +589,7 @@ inline static int SYSPARAMS_Twips2Pixels(int x)
  * Of course this function belongs somewhere more usable but here will do
  * for now.
  */
-static int SYSPARAMS_GetRegistryMetric( HKEY hkey, LPCWSTR lpValName, int default_value )
+static int SYSPARAMS_GetRegistryMetric( HKEY hkey, LPCWSTR lpValName, int default_value, int dpi)
 {
     int value = default_value;
     if (hkey)
@@ -607,7 +609,7 @@ static int SYSPARAMS_GetRegistryMetric( HKEY hkey, LPCWSTR lpValName, int defaul
                 value = atoiW(buffer);
         }
     }
-    return SYSPARAMS_Twips2Pixels(value);
+    return SYSPARAMS_Twips2Pixels(value, dpi);
 }
 
 
@@ -660,27 +662,27 @@ void SYSPARAMS_Init(void)
     WCHAR buf[10];
     INT border;
     CPINFO cpinfo;
-    int i, r, g, b;
+    int i, r, g, b, dpi;
     char buffer[100];
     HBITMAP h55AABitmap;
 
 
     display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
     assert( display_dc );
+    dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
 
     if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
                        0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
 
-    sysMetrics[SM_CXVSCROLL] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_SCROLLWIDTH_VALNAME, 16 );
+    sysMetrics[SM_CXVSCROLL] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_SCROLLWIDTH_VALNAME, 16 , dpi);
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
 
     /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
      * but on my computer that controls the CYV/CXH values. */
-    sysMetrics[SM_CYCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18)
+    sysMetrics[SM_CYCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18, dpi)
                                  + 1; /* for the separator? */
 
-    sysMetrics[SM_CYMENU] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_MENUHEIGHT_VALNAME, 18) + 1;
-
+    sysMetrics[SM_CYMENU] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_MENUHEIGHT_VALNAME, 18, dpi) + 1;
 
     sysMetrics[SM_CXDLGFRAME] = 3;
     sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
@@ -698,12 +700,12 @@ void SYSPARAMS_Init(void)
 
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
-    sysMetrics[SM_CXICON] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
+    sysMetrics[SM_CXICON] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_ICONSIZE_VALNAME, 32 , dpi);
     sysMetrics[SM_CYICON] = sysMetrics[SM_CXICON];
     sysMetrics[SM_CYKANJIWINDOW] = 0;
     sysMetrics[SM_MOUSEPRESENT] = 1;
-    sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CXVSCROLL]);
-    sysMetrics[SM_CXHSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CYHSCROLL]);
+    sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CXVSCROLL], dpi);
+    sysMetrics[SM_CXHSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CYHSCROLL], dpi);
     sysMetrics[SM_DEBUG] = 0;
 
     sysMetrics[SM_SWAPBUTTON] = 0;
@@ -720,7 +722,7 @@ void SYSPARAMS_Init(void)
     sysMetrics[SM_CXMIN] = 112;
     sysMetrics[SM_CYMIN] = 27;
 
-    sysMetrics[SM_CXSIZE] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_CAPTIONWIDTH_VALNAME, sysMetrics[SM_CYCAPTION] - 1);
+    sysMetrics[SM_CXSIZE] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_CAPTIONWIDTH_VALNAME, sysMetrics[SM_CYCAPTION] - 1, dpi);
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CYCAPTION] - 1;
     sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
     sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
@@ -756,10 +758,10 @@ void SYSPARAMS_Init(void)
     sysMetrics[SM_CYMINSPACING] = 24;
     sysMetrics[SM_CXSMICON] = 16;
     sysMetrics[SM_CYSMICON] = 16;
-    sysMetrics[SM_CYSMCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15) + 1;
-    sysMetrics[SM_CXSMSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13);
+    sysMetrics[SM_CYSMCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15, dpi) + 1;
+    sysMetrics[SM_CXSMSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13, dpi);
     sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CYSMCAPTION] - 1;
-    sysMetrics[SM_CXMENUSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_MENUWIDTH_VALNAME, sysMetrics[SM_CYMENU] - 1);
+    sysMetrics[SM_CXMENUSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_MENUWIDTH_VALNAME, sysMetrics[SM_CYMENU] - 1, dpi);
     sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
 
     /* FIXME: What do these mean? */
@@ -972,9 +974,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         if (!spi_loaded[spi_idx])
         {
             WCHAR buf[10];
+            int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
 
             if (SYSPARAMS_Load( SPI_SETBORDER_REGKEY, SPI_SETBORDER_VALNAME, buf, sizeof(buf) ))
-                border = SYSPARAMS_Twips2Pixels( atoiW(buf) );
+                border = SYSPARAMS_Twips2Pixels( atoiW(buf) , dpi);
 
             spi_loaded[spi_idx] = TRUE;
             sysMetrics[SM_CXFRAME] = border + sysMetrics[SM_CXDLGFRAME];
@@ -1055,11 +1058,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             {
                 WCHAR buf[10];
 		int val;
+                int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
 
                 if (SYSPARAMS_Load( SPI_ICONHORIZONTALSPACING_REGKEY,
                                     SPI_ICONHORIZONTALSPACING_VALNAME, buf, sizeof(buf) ))
                 {
-                    val = SYSPARAMS_Twips2Pixels( atoiW(buf) );
+                    val = SYSPARAMS_Twips2Pixels( atoiW(buf), dpi);
                     sysMetrics[SM_CXICONSPACING] = val;
                 }
                 spi_loaded[spi_idx] = TRUE;
@@ -1250,11 +1254,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             {
                 WCHAR buf[10];
 		int val;
+                int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
 
                 if (SYSPARAMS_Load( SPI_ICONVERTICALSPACING_REGKEY,
                                     SPI_ICONVERTICALSPACING_VALNAME, buf, sizeof(buf) ))
                 {
-                    val = SYSPARAMS_Twips2Pixels( atoiW(buf) );
+                    val = SYSPARAMS_Twips2Pixels( atoiW(buf), dpi);
                     sysMetrics[SM_CYICONSPACING] = val;
                 }
                 spi_loaded[spi_idx] = TRUE;
