@@ -123,6 +123,7 @@ WINDOWS_INCLUDES = \
 	htmlhelp.h \
 	icm.h \
 	icmpapi.h \
+	idispids.h \
 	imagehlp.h \
 	imm.h \
 	initguid.h \
@@ -269,6 +270,7 @@ WINDOWS_INCLUDES = \
 	wsnwlink.h \
 	wtsapi32.h \
 	xcmc.h \
+	xmldomdid.h \
 	zmouse.h
 
 MSVCRT_INCLUDES = \
