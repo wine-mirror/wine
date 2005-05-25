@@ -459,30 +459,35 @@ static void dump_inline_acl( const ACL *acl, size_t size )
         for (i = 0; i < acl->AceCount; i++)
         {
             const SID *sid = NULL;
-    
+
             if (size < sizeof(ACE_HEADER))
                 return;
             if (size < ace->AceSize)
                 return;
             size -= ace->AceSize;
+            if (i != 0) fputc( ',', stderr );
             fprintf( stderr, "{AceType=" );
             switch (ace->AceType)
             {
             case ACCESS_DENIED_ACE_TYPE:
                 sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
-                fprintf( stderr, "ACCESS_DENIED_ACE_TYPE" );
+                fprintf( stderr, "ACCESS_DENIED_ACE_TYPE,Mask=%lx",
+                         ((const ACCESS_DENIED_ACE *)ace)->Mask );
                 break;
             case ACCESS_ALLOWED_ACE_TYPE:
                 sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
-                fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE" );
+                fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE,Mask=%lx",
+                         ((const ACCESS_ALLOWED_ACE *)ace)->Mask );
                 break;
             case SYSTEM_AUDIT_ACE_TYPE:
                 sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
-                fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE" );
+                fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE,Mask=%lx",
+                         ((const SYSTEM_AUDIT_ACE *)ace)->Mask );
                 break;
             case SYSTEM_ALARM_ACE_TYPE:
                 sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
-                fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE" );
+                fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE,Mask=%lx",
+                         ((const SYSTEM_ALARM_ACE *)ace)->Mask );
                 break;
             default:
                 fprintf( stderr, "unknown<%d>", ace->AceType );
