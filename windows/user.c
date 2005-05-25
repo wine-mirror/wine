@@ -22,18 +22,15 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include "wine/winbase16.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/winuser16.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "tlhelp32.h"
 #include "user_private.h"
 #include "win.h"
-#include "controls.h"
 #include "cursoricon.h"
 #include "wine/debug.h"
 
@@ -59,60 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 #define USIG_PROCESS_DESTROY      0x0400
 #define USIG_PROCESS_RUNNING      0x0500
 #define USIG_PROCESS_LOADED       0x0600
-
-/* UserSeeUserDo parameters */
-#define USUD_LOCALALLOC        0x0001
-#define USUD_LOCALFREE         0x0002
-#define USUD_LOCALCOMPACT      0x0003
-#define USUD_LOCALHEAP         0x0004
-#define USUD_FIRSTCLASS        0x0005
-
-/***********************************************************************
- *		GetFreeSystemResources (USER.284)
- */
-WORD WINAPI GetFreeSystemResources16( WORD resType )
-{
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
-    HINSTANCE16 gdi_inst;
-    WORD gdi_heap;
-    int userPercent, gdiPercent;
-
-    if ((gdi_inst = LoadLibrary16( "GDI" )) < 32) return 0;
-    gdi_heap = gdi_inst | 7;
-
-    switch(resType)
-    {
-    case GFSR_USERRESOURCES:
-        stack16->ds = USER_HeapSel;
-        userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-        gdiPercent  = 100;
-        stack16->ds = oldDS;
-        break;
-
-    case GFSR_GDIRESOURCES:
-        stack16->ds = gdi_inst;
-        gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-        userPercent = 100;
-        stack16->ds = oldDS;
-        break;
-
-    case GFSR_SYSTEMRESOURCES:
-        stack16->ds = USER_HeapSel;
-        userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-        stack16->ds = gdi_inst;
-        gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
-        stack16->ds = oldDS;
-        break;
-
-    default:
-        userPercent = gdiPercent = 0;
-        break;
-    }
-    FreeLibrary16( gdi_inst );
-    TRACE("<- userPercent %d, gdiPercent %d\n", userPercent, gdiPercent);
-    return (WORD)min( userPercent, gdiPercent );
-}
 
 
 /***********************************************************************
@@ -543,40 +486,6 @@ BOOL WINAPI EnumDisplayDevicesW(
 			DISPLAY_DEVICE_PRIMARY_DEVICE		|
 			DISPLAY_DEVICE_VGA_COMPATIBLE;
 	return TRUE;
-}
-
-/***********************************************************************
- *		UserSeeUserDo (USER.216)
- */
-DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
-{
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
-    DWORD ret = (DWORD)-1;
-
-    stack16->ds = USER_HeapSel;
-    switch (wReqType)
-    {
-    case USUD_LOCALALLOC:
-        ret = LocalAlloc16(wParam1, wParam3);
-        break;
-    case USUD_LOCALFREE:
-        ret = LocalFree16(wParam1);
-        break;
-    case USUD_LOCALCOMPACT:
-        ret = LocalCompact16(wParam3);
-        break;
-    case USUD_LOCALHEAP:
-        ret = USER_HeapSel;
-        break;
-    case USUD_FIRSTCLASS:
-        FIXME("return a pointer to the first window class.\n");
-        break;
-    default:
-        WARN("wReqType %04x (unknown)\n", wReqType);
-    }
-    stack16->ds = oldDS;
-    return ret;
 }
 
 /***********************************************************************

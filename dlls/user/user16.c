@@ -46,6 +46,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(user);
 #define IS_MENU_STRING_ITEM(flags) \
     (((flags) & (MF_STRING | MF_BITMAP | MF_OWNERDRAW | MF_SEPARATOR)) == MF_STRING)
 
+/* UserSeeUserDo parameters */
+#define USUD_LOCALALLOC        0x0001
+#define USUD_LOCALFREE         0x0002
+#define USUD_LOCALCOMPACT      0x0003
+#define USUD_LOCALHEAP         0x0004
+#define USUD_FIRSTCLASS        0x0005
+
 WORD WINAPI DestroyIcon32(HGLOBAL16, UINT16);
 
 
@@ -710,6 +717,41 @@ DWORD WINAPI GetTabbedTextExtent16( HDC16 hdc, LPCSTR lpstr, INT16 count,
 }
 
 
+/***********************************************************************
+ *		UserSeeUserDo (USER.216)
+ */
+DWORD WINAPI UserSeeUserDo16(WORD wReqType, WORD wParam1, WORD wParam2, WORD wParam3)
+{
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
+    DWORD ret = (DWORD)-1;
+
+    stack16->ds = USER_HeapSel;
+    switch (wReqType)
+    {
+    case USUD_LOCALALLOC:
+        ret = LocalAlloc16(wParam1, wParam3);
+        break;
+    case USUD_LOCALFREE:
+        ret = LocalFree16(wParam1);
+        break;
+    case USUD_LOCALCOMPACT:
+        ret = LocalCompact16(wParam3);
+        break;
+    case USUD_LOCALHEAP:
+        ret = USER_HeapSel;
+        break;
+    case USUD_FIRSTCLASS:
+        FIXME("return a pointer to the first window class.\n");
+        break;
+    default:
+        WARN("wReqType %04x (unknown)\n", wReqType);
+    }
+    stack16->ds = oldDS;
+    return ret;
+}
+
+
 /*************************************************************************
  *		ScrollDC (USER.221)
  */
@@ -888,6 +930,54 @@ HPALETTE16 WINAPI SelectPalette16( HDC16 hdc, HPALETTE16 hpal, BOOL16 bForceBack
 UINT16 WINAPI RealizePalette16( HDC16 hdc )
 {
     return UserRealizePalette( HDC_32(hdc) );
+}
+
+
+/***********************************************************************
+ *		GetFreeSystemResources (USER.284)
+ */
+WORD WINAPI GetFreeSystemResources16( WORD resType )
+{
+    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
+    HANDLE16 oldDS = stack16->ds;
+    HINSTANCE16 gdi_inst;
+    WORD gdi_heap;
+    int userPercent, gdiPercent;
+
+    if ((gdi_inst = LoadLibrary16( "GDI" )) < 32) return 0;
+    gdi_heap = gdi_inst | 7;
+
+    switch(resType)
+    {
+    case GFSR_USERRESOURCES:
+        stack16->ds = USER_HeapSel;
+        userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
+        gdiPercent  = 100;
+        stack16->ds = oldDS;
+        break;
+
+    case GFSR_GDIRESOURCES:
+        stack16->ds = gdi_inst;
+        gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
+        userPercent = 100;
+        stack16->ds = oldDS;
+        break;
+
+    case GFSR_SYSTEMRESOURCES:
+        stack16->ds = USER_HeapSel;
+        userPercent = (int)LocalCountFree16() * 100 / LocalHeapSize16();
+        stack16->ds = gdi_inst;
+        gdiPercent  = (int)LocalCountFree16() * 100 / LocalHeapSize16();
+        stack16->ds = oldDS;
+        break;
+
+    default:
+        userPercent = gdiPercent = 0;
+        break;
+    }
+    FreeLibrary16( gdi_inst );
+    TRACE("<- userPercent %d, gdiPercent %d\n", userPercent, gdiPercent);
+    return (WORD)min( userPercent, gdiPercent );
 }
 
 
