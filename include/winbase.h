@@ -350,7 +350,7 @@ typedef struct _PROCESS_HEAP_ENTRY
 
 #define EV_RXCHAR    0x0001
 #define EV_RXFLAG    0x0002
-#define EV_TXEMPT    0x0004
+#define EV_TXEMPTY   0x0004
 #define EV_CTS       0x0008
 #define EV_DSR       0x0010
 #define EV_RLSD      0x0020
