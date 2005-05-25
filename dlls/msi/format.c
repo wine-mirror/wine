@@ -101,7 +101,8 @@ static LPWSTR deformat_component(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
     return value;
 }
 
-static LPWSTR deformat_file(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
+static LPWSTR deformat_file(MSIPACKAGE* package, LPCWSTR key, DWORD* sz, 
+                            BOOL shortname)
 {
     LPWSTR value = NULL;
     INT index;
@@ -114,8 +115,32 @@ static LPWSTR deformat_file(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
     index = get_loaded_file(package,key);
     if (index >=0)
     {
-        value = strdupW(package->files[index].TargetPath);
-        *sz = (strlenW(value)) * sizeof(WCHAR);
+        if (!shortname)
+        {
+            value = strdupW(package->files[index].TargetPath);
+            *sz = (strlenW(value)) * sizeof(WCHAR);
+        }
+        else
+        {
+            DWORD size = 0;
+            size = GetShortPathNameW(package->files[index].TargetPath, NULL, 0);
+
+            if (size > 0)
+            {
+                *sz = (size-1) * sizeof (WCHAR);
+                size ++;
+                value = HeapAlloc(GetProcessHeap(),0,size * sizeof(WCHAR));
+                GetShortPathNameW(package->files[index].TargetPath, value, 
+                                  size);
+            }
+            else
+            {
+                ERR("Unable to get ShortPath size (%s)\n", 
+                                debugstr_w(package->files[index].TargetPath));
+                value = NULL;
+                *sz = 0;
+            }
+        }
     }
 
     return value;
@@ -378,8 +403,10 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
                     value = deformat_component(package,&key[1],&chunk);
                 break;
                 case '#':
+                    value = deformat_file(package,&key[1], &chunk, FALSE);
+                break;
                 case '!': /* should be short path */
-                    value = deformat_file(package,&key[1], &chunk);
+                    value = deformat_file(package,&key[1], &chunk, TRUE);
                 break;
                 case '\\':
                     value = deformat_escape(&key[1],&chunk);
