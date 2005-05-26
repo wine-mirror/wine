@@ -1164,6 +1164,24 @@ static void set_window_pos( struct window *win, struct window *previous,
         goto done;
     }
 
+    /* crop update region to the new window rect */
+
+    if (win->update_region &&
+        (window_rect->right - window_rect->left < old_window_rect.right - old_window_rect.left ||
+         window_rect->bottom - window_rect->top < old_window_rect.bottom - old_window_rect.top))
+    {
+        struct region *tmp = create_empty_region();
+        if (tmp)
+        {
+            set_region_rect( tmp, window_rect );
+            offset_region( tmp, -window_rect->left, -window_rect->top );
+            if (intersect_region( tmp, win->update_region, tmp ))
+                set_update_region( win, tmp );
+            else
+                free_region( tmp );
+        }
+    }
+
     if (swp_flags & SWP_NOREDRAW) goto done;  /* do not repaint anything */
 
     /* expose the whole non-client area if it changed in any way */
