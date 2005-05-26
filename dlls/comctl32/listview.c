@@ -4560,6 +4560,17 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, LPWSTR pszText, BOOL 
     if (!notify_dispinfoT(infoPtr, LVN_ENDLABELEDITW, &dispInfo, isW)) return FALSE;
     if (!pszText) return TRUE;
 
+    if (!(infoPtr->dwStyle & LVS_OWNERDATA))
+    {
+        HDPA hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, infoPtr->nEditLabelItem);
+        ITEM_INFO* lpItem = (ITEM_INFO *)DPA_GetPtr(hdpaSubItems, 0);
+        if (lpItem && lpItem->hdr.pszText == LPSTR_TEXTCALLBACKW)
+        {
+            LISTVIEW_InvalidateItem(infoPtr, infoPtr->nEditLabelItem);
+            return TRUE;
+        }
+    }
+
     ZeroMemory(&dispInfo, sizeof(dispInfo));
     dispInfo.item.mask = LVIF_TEXT;
     dispInfo.item.iItem = infoPtr->nEditLabelItem;
