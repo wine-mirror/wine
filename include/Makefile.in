@@ -36,7 +36,8 @@ IDL_SRCS = \
 	strmif.idl \
 	unknwn.idl \
 	urlmon.idl \
-	wtypes.idl
+	wtypes.idl \
+	xmldom.idl
 
 IDL_INCLUDES = \
 	$(IDL_SRCS) \

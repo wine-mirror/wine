@@ -32,3 +32,4 @@ strmif.h
 unknwn.h
 urlmon.h
 wtypes.h
+xmldom.h
