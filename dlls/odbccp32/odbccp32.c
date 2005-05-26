@@ -33,6 +33,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
+BOOL WINAPI ODBCCPlApplet( LONG i, LONG j, LONG * p1, LONG * p2)
+{
+    FIXME( "( %ld %ld %p %p) : stub!\n", i, j, p1, p2);
+    return FALSE;
+}
+
 static LPWSTR SQLInstall_strdup_multi(LPCSTR str)
 {
     LPCSTR p;

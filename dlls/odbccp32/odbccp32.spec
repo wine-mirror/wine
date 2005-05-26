@@ -1,4 +1,4 @@
-@ stub ODBCCPlApplet
+@ stdcall ODBCCPlApplet( long long ptr ptr)
 @ stdcall SQLConfigDataSource(ptr long wstr wstr)
 @ stdcall SQLConfigDataSourceW(ptr long str str)
 @ stdcall SQLConfigDriver(ptr long str str ptr long ptr)
