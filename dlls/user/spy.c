@@ -2008,6 +2008,28 @@ static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *l
 }
 
 /***********************************************************************
+ *           SPY_GetClassName
+ *
+ *  Sets the value of "wnd_class" member of the instance structure.
+ */
+static void SPY_GetClassName( SPY_INSTANCE *sp_e )
+{
+    DWORD save_error;
+
+    /* save and restore error code over the next call */
+    save_error = GetLastError();
+    /* special code to detect a property sheet dialog   */
+    if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == (LONG)WC_DIALOGW) &&
+        (GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
+        strcpyW(sp_e->wnd_class, WC_PROPSHEETW);
+    }
+    else {
+        GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
+    }
+    SetLastError(save_error);
+}
+
+/***********************************************************************
  *           SPY_GetMsgStuff
  *
  *  Get message name and other information for dumping
@@ -2031,6 +2053,8 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
                 return;
             }
         }
+        if (!sp_e->wnd_class[0]) SPY_GetClassName(sp_e);
+
 #if DEBUG_SPY
         TRACE("looking class %s\n", debugstr_w(sp_e->wnd_class));
 #endif
@@ -2073,20 +2097,9 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
  */
 static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 {
-    DWORD save_error;
     INT len;
 
-    /* save and restore error code over the next call */
-    save_error = GetLastError();
-    /* special code to detect a property sheet dialog   */
-    if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == (LONG)WC_DIALOGW) &&
-        (GetPropW(sp_e->msg_hwnd, PropSheetInfoStr))) {
-        strcpyW(sp_e->wnd_class, WC_PROPSHEETW);
-    }
-    else {
-        GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, sizeof(sp_e->wnd_class)/sizeof(WCHAR));
-    }
-    SetLastError(save_error);
+    SPY_GetClassName( sp_e );
 
     len = InternalGetWindowText(sp_e->msg_hwnd, sp_e->wnd_name, sizeof(sp_e->wnd_name)/sizeof(WCHAR));
     if(!len) /* get class name */
@@ -2116,7 +2129,7 @@ const char *SPY_GetMsgName( UINT msg, HWND hWnd )
     ext_sp_e.msg_hwnd   = hWnd;
     ext_sp_e.lParam = 0;
     ext_sp_e.wParam = 0;
-    SPY_GetWndName(&ext_sp_e);
+    ext_sp_e.wnd_class[0] = 0;
     SPY_GetMsgStuff(&ext_sp_e);
     return wine_dbg_sprintf("%s", ext_sp_e.msg_name);
 }
