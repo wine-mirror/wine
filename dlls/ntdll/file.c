@@ -627,6 +627,8 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
         }
         if (iosb->u.Status == STATUS_PENDING)
             fileio_queue_async(fileio, iosb, FALSE);
+        else
+            fileio_terminate(fileio, iosb);
         break;
     default:
         iosb->u.Status = status;
