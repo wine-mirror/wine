@@ -197,6 +197,12 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
    return TRUE;
 }
 
+BOOLEAN WINAPI IsAdminOverrideActive(PADMINISTRATOR_POWER_POLICY p)
+{
+   FIXME("( %p) stub!\n", p);
+   return FALSE;
+}
+
 BOOLEAN WINAPI IsPwrHibernateAllowed(VOID)
 {
    /* FIXME: See note #2 */

@@ -6,6 +6,7 @@
 @ stdcall GetCurrentPowerPolicies (ptr ptr)
 @ stdcall GetPwrCapabilities (ptr)
 @ stdcall GetPwrDiskSpindownRange (ptr ptr)
+@ stdcall IsAdminOverrideActive (ptr)
 @ stdcall IsPwrHibernateAllowed ()
 @ stdcall IsPwrShutdownAllowed ()
 @ stdcall IsPwrSuspendAllowed ()
