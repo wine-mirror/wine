@@ -146,6 +146,7 @@ typedef struct tagMSIPROGID
     LPWSTR IconPath;
     /* not in the table, set during instalation */
     BOOL InstallMe;
+    INT CurVerIndex;
 } MSIPROGID;
 
 typedef struct tagMSIVERB

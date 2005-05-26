@@ -1334,6 +1334,16 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
                 break;
             }
 
+            sz=0x100;
+            rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Error is %x\n",rc);
+                msiobj_release(&row->hdr);
+                break;
+            }
+
+
             /* check conditions */
             if (!MSI_RecordIsNull(row,2))
             {
@@ -1348,20 +1358,13 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
                     {
                         HeapFree(GetProcessHeap(),0,cond);
                         msiobj_release(&row->hdr);
+                        TRACE("Skipping action: %s (condition is false)\n",
+                                    debugstr_w(buffer));
                         continue; 
                     }
                     else
                         HeapFree(GetProcessHeap(),0,cond);
                 }
-            }
-
-            sz=0x100;
-            rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Error is %x\n",rc);
-                msiobj_release(&row->hdr);
-                break;
             }
 
             rc = ACTION_PerformUIAction(package,buffer);
@@ -4602,6 +4605,20 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
         HeapFree(GetProcessHeap(),0,buffer);
     }
 
+    package->progids[index].CurVerIndex = -1;
+
+    /* if we have a parent then we may be that parents CurVer */
+    if (package->progids[index].ParentIndex >= 0)
+    {
+        int pindex = package->progids[index].ParentIndex;
+        while (package->progids[pindex].ParentIndex>= 0)
+            pindex = package->progids[pindex].ParentIndex;
+
+        FIXME("BAD BAD need to determing if we are really the CurVer\n");
+
+        package->progids[index].CurVerIndex = pindex;
+    }
+    
     return index;
 }
 
@@ -5655,6 +5672,8 @@ static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid,
         static const WCHAR szCLSID[] = { 'C','L','S','I','D',0 };
         static const WCHAR szDefaultIcon[] =
             {'D','e','f','a','u','l','t','I','c','o','n',0};
+        static const WCHAR szCurVer[] =
+            {'C','u','r','V','e','r',0};
 
         /* check if already registered */
         RegCreateKeyExW(HKEY_CLASSES_ROOT, progid->ProgID, 0, NULL, 0,
@@ -5691,6 +5710,17 @@ static UINT register_progid(MSIPACKAGE *package, MSIPROGID* progid,
             RegCreateKeyW(hkey,szDefaultIcon,&hkey2);
             RegSetValueExW(hkey2,NULL,0,REG_SZ,(LPVOID)progid->IconPath,
                            (strlenW(progid->IconPath)+1) * sizeof(WCHAR));
+            RegCloseKey(hkey2);
+        }
+
+        /* write out the current version */
+        if (progid->CurVerIndex >= 0)
+        {
+            RegCreateKeyW(hkey,szCurVer,&hkey2);
+            RegSetValueExW(hkey2,NULL,0,REG_SZ,
+                (LPVOID)package->progids[progid->CurVerIndex].ProgID,
+                (strlenW(package->progids[progid->CurVerIndex].ProgID)+1) * 
+                sizeof(WCHAR));
             RegCloseKey(hkey2);
         }
 
