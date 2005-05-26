@@ -197,6 +197,19 @@ typedef struct tagMSIPACKAGE
     LPWSTR ActionFormat;
     LPWSTR LastAction;
 
+    struct tagMSICLASS *classes;
+    UINT loaded_classes;
+    struct tagMSIEXTENSION *extensions;
+    UINT loaded_extensions;
+    struct tagMSIPROGID *progids;
+    UINT loaded_progids;
+    struct tagMSIVERB *verbs;
+    UINT loaded_verbs;
+    struct tagMSIMIME *mimes;
+    UINT loaded_mimes;
+    struct tagMSIAPPID *appids;
+    UINT loaded_appids;
+    
     LPWSTR *DeferredAction;
     UINT DeferredActionCount;
 

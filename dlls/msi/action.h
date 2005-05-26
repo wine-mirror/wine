@@ -18,15 +18,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define IDENTIFIER_SIZE 96
+
 typedef struct tagMSIFEATURE
 {
-    WCHAR Feature[96];
-    WCHAR Feature_Parent[96];
+    WCHAR Feature[IDENTIFIER_SIZE];
+    WCHAR Feature_Parent[IDENTIFIER_SIZE];
     WCHAR Title[0x100];
     WCHAR Description[0x100];
     INT Display;
     INT Level;
-    WCHAR Directory[96];
+    WCHAR Directory[IDENTIFIER_SIZE];
     INT Attributes;
     
     INSTALLSTATE Installed;
@@ -40,12 +42,12 @@ typedef struct tagMSIFEATURE
 
 typedef struct tagMSICOMPONENT
 {
-    WCHAR Component[96];
-    WCHAR ComponentId[96];
-    WCHAR Directory[96];
+    WCHAR Component[IDENTIFIER_SIZE];
+    WCHAR ComponentId[IDENTIFIER_SIZE];
+    WCHAR Directory[IDENTIFIER_SIZE];
     INT Attributes;
     WCHAR Condition[0x100];
-    WCHAR KeyPath[96];
+    WCHAR KeyPath[IDENTIFIER_SIZE];
 
     INSTALLSTATE Installed;
     INSTALLSTATE ActionRequest;
@@ -56,6 +58,7 @@ typedef struct tagMSICOMPONENT
     INT  RefCount;
 
     LPWSTR FullKeypath;
+    LPWSTR AdvertiseString;
 } MSICOMPONENT;
 
 typedef struct tagMSIFOLDER
@@ -99,6 +102,81 @@ typedef struct tagMSIFILE
     LPWSTR  TargetPath;
     BOOL    Temporary; 
 }MSIFILE;
+
+typedef struct tagMSICLASS
+{
+    WCHAR CLSID[IDENTIFIER_SIZE];     /* Primary Key */
+    WCHAR Context[IDENTIFIER_SIZE];   /* Primary Key */
+    INT ComponentIndex;               /* Primary Key */
+    INT ProgIDIndex;
+    LPWSTR ProgIDText;
+    LPWSTR Description;
+    INT AppIDIndex;
+    LPWSTR FileTypeMask;
+    LPWSTR IconPath;
+    LPWSTR DefInprocHandler;
+    LPWSTR DefInprocHandler32;
+    LPWSTR Argument;
+    INT FeatureIndex;
+    INT Attributes;
+    /* not in the table, set during instalation */
+    BOOL Installed;
+} MSICLASS;
+
+typedef struct tagMSIEXTENSION
+{
+    WCHAR Extension[256];  /* Primary Key */
+    INT ComponentIndex;    /* Primary Key */
+    INT ProgIDIndex;
+    LPWSTR ProgIDText;
+    INT MIMEIndex;
+    INT FeatureIndex;
+    /* not in the table, set during instalation */
+    BOOL Installed;
+    INT VerbCount;
+    INT Verbs[100]; /* yes hard coded limit, but relisticly 100 verbs??? */
+} MSIEXTENSION;
+
+typedef struct tagMSIPROGID
+{
+    LPWSTR ProgID;  /* Primary Key */
+    INT ParentIndex;
+    INT ClassIndex;
+    LPWSTR Description;
+    LPWSTR IconPath;
+    /* not in the table, set during instalation */
+    BOOL InstallMe;
+} MSIPROGID;
+
+typedef struct tagMSIVERB
+{
+    INT ExtensionIndex;
+    LPWSTR Verb;
+    INT Sequence;
+    LPWSTR Command;
+    LPWSTR Argument;
+} MSIVERB;
+
+typedef struct tagMSIMIME
+{
+    LPWSTR ContentType;  /* Primary Key */
+    INT ExtensionIndex;
+    WCHAR CLSID[IDENTIFIER_SIZE];
+    INT ClassIndex;
+    /* not in the table, set during instalation */
+    BOOL InstallMe;
+} MSIMIME;
+
+typedef struct tagMSIAPPID
+{
+    WCHAR AppID[IDENTIFIER_SIZE]; /* Primary key */
+    LPWSTR RemoteServerName;
+    LPWSTR LocalServer;
+    LPWSTR ServiceParameters;
+    LPWSTR DllSurrogate;
+    BOOL ActivateAtStorage;
+    BOOL RunAsInteractiveUser;
+} MSIAPPID;
 
 
 UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action);
