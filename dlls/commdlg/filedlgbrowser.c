@@ -140,11 +140,25 @@ static void COMDLG32_DumpSBSPFlags(UINT uflags)
 
 static void COMDLG32_UpdateCurrentDir(FileOpenDlgInfos *fodInfos)
 {
-    char lpstrPath[MAX_PATH];
-    if(SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath)) {
-        SetCurrentDirectoryA(lpstrPath);
-        TRACE("new current folder %s\n", lpstrPath);
+    LPSHELLFOLDER psfDesktop;
+    STRRET strret;
+    HRESULT res;
+
+    res = SHGetDesktopFolder(&psfDesktop);
+    if (FAILED(res))
+        return;
+    
+    res = IShellFolder_GetDisplayNameOf(psfDesktop, fodInfos->ShellInfos.pidlAbsCurrent,
+                                        SHGDN_FORPARSING, &strret);
+    if (SUCCEEDED(res)) {
+        WCHAR wszCurrentDir[MAX_PATH];
+        
+        res = StrRetToBufW(&strret, fodInfos->ShellInfos.pidlAbsCurrent, wszCurrentDir, MAX_PATH);
+        if (SUCCEEDED(res))
+            SetCurrentDirectoryW(wszCurrentDir);
     }
+    
+    IShellFolder_Release(psfDesktop);
 }
 
 /* copied from shell32 to avoid linking to it */

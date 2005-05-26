@@ -511,6 +511,27 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   return ret;
 }
 
+/******************************************************************************
+ * COMDLG32_GetDisplayNameOf [internal]
+ *
+ * Helper function to get the display name for a pidl.
+ */
+static BOOL COMDLG32_GetDisplayNameOf(LPCITEMIDLIST pidl, LPWSTR pwszPath) {
+    LPSHELLFOLDER psfDesktop;
+    STRRET strret;
+        
+    if (FAILED(SHGetDesktopFolder(&psfDesktop)))
+        return FALSE;
+
+    if (FAILED(IShellFolder_GetDisplayNameOf(psfDesktop, pidl, SHGDN_FORPARSING, &strret))) {
+        IShellFolder_Release(psfDesktop);
+        return FALSE;
+    }
+
+    IShellFolder_Release(psfDesktop);
+    return SUCCEEDED(StrRetToBufW(&strret, pidl, pwszPath, MAX_PATH));
+}
+
 /***********************************************************************
  *      ArrangeCtrlPositions [internal]
  *
@@ -841,7 +862,7 @@ HRESULT FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
         return -1;
 
     /* get path and filenames */
-    SHGetPathFromIDListW(fodInfos->ShellInfos.pidlAbsCurrent,lpstrCurrentDir);
+    COMDLG32_GetDisplayNameOf(fodInfos->ShellInfos.pidlAbsCurrent, lpstrCurrentDir);
     n = FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed, ' ');
 
     TRACE("path >%s< filespec >%s< %d files\n",
@@ -925,6 +946,7 @@ HRESULT FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPVOID buffer)
 HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
+    WCHAR lpstrPath[MAX_PATH];
     if(!fodInfos) return -1;
 
     switch(uMsg)
@@ -934,22 +956,16 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
 
         case CDM_GETFOLDERPATH:
             TRACE("CDM_GETFOLDERPATH:\n");
-            if( fodInfos->unicode )
+            COMDLG32_GetDisplayNameOf(fodInfos->ShellInfos.pidlAbsCurrent, lpstrPath);
+            if (lParam) 
             {
-                WCHAR lpstrPath[MAX_PATH], *bufW = (LPWSTR)lParam;
-	        SHGetPathFromIDListW(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
-                if (bufW)
-                    lstrcpynW(bufW,lpstrPath,(int)wParam);
-                return strlenW(lpstrPath);
-            }
-            else
-            {
-                char lpstrPath[MAX_PATH], *bufA = (LPSTR)lParam;
-	        SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,lpstrPath);
-                if (bufA)
-                    lstrcpynA(bufA,lpstrPath,(int)wParam);
-                return strlen(lpstrPath);
-            }
+                if (fodInfos->unicode)
+                    lstrcpynW((LPWSTR)lParam, lpstrPath, (int)wParam);
+                else
+                    WideCharToMultiByte(CP_ACP, 0, lpstrPath, -1, 
+                                        (LPSTR)lParam, (int)wParam, NULL, NULL);
+            }        
+            return strlenW(lpstrPath);
 
         case CDM_GETSPEC:
             return FILEDLG95_Handle_GetFileSpec(hwnd, (UINT)wParam, (LPSTR)lParam);
@@ -1597,7 +1613,7 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
      ofn->lpstrFile[0] = '\0';
   }
 
-  SHGetPathFromIDListW( fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathSpec );
+  COMDLG32_GetDisplayNameOf( fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathSpec );
 
   if ( !(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE) &&
       ( fodInfos->ofnInfos->Flags & OFN_FILEMUSTEXIST) &&
@@ -1742,14 +1758,10 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 */
 
   /* Get the current directory name */
-  if (!SHGetPathFromIDListW(fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathAndFile))
+  if (!COMDLG32_GetDisplayNameOf(fodInfos->ShellInfos.pidlAbsCurrent, lpstrPathAndFile))
   {
-    /* we are in a special folder, default to desktop */
-    if(FAILED(COMDLG32_SHGetFolderPathW(hwnd, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, 0, 0, lpstrPathAndFile)))
-    {
-      /* last fallback */
-      GetCurrentDirectoryW(MAX_PATH, lpstrPathAndFile);
-    }
+    /* last fallback */
+    GetCurrentDirectoryW(MAX_PATH, lpstrPathAndFile);
   }
   PathAddBackslashW(lpstrPathAndFile);
 
