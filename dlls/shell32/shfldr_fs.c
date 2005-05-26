@@ -76,8 +76,6 @@ typedef struct {
 
     LPITEMIDLIST pidlRoot; /* absolute pidl */
 
-    int dwAttributes;      /* attributes returned by GetAttributesOf FIXME: use it */
-
     UINT cfShellIDList;    /* clipboardformat for IDropTarget */
     BOOL fAcceptFmt;       /* flag for pending Drop */
 } IGenericSFImpl;
@@ -587,11 +585,21 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
     if (*rgfInOut == 0)
         *rgfInOut = ~0;
 
-    while (cidl > 0 && *apidl) {
-        pdump (*apidl);
-        SHELL32_GetItemAttributes (_IShellFolder_ (This), *apidl, rgfInOut);
-        apidl++;
-        cidl--;
+    if(cidl == 0){
+        IShellFolder *psfParent = NULL;
+        LPCITEMIDLIST rpidl = NULL;
+
+        hr = SHBindToParent(This->pidlRoot, &IID_IShellFolder, (LPVOID*)&psfParent, (LPCITEMIDLIST*)&rpidl);
+        if(SUCCEEDED(hr))
+            SHELL32_GetItemAttributes (psfParent, rpidl, rgfInOut);
+    }
+    else {
+        while (cidl > 0 && *apidl) {
+            pdump (*apidl);
+            SHELL32_GetItemAttributes (_IShellFolder_ (This), *apidl, rgfInOut);
+            apidl++;
+            cidl--;
+        }
     }
     /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
     *rgfInOut &= ~SFGAO_VALIDATE;

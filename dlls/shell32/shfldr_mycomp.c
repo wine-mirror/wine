@@ -61,7 +61,6 @@ typedef struct {
 
     /* both paths are parsible from the desktop */
     LPITEMIDLIST pidlRoot;    /* absolute pidl */
-    int dwAttributes;        /* attributes returned by GetAttributesOf FIXME: use it */
 } IGenericSFImpl;
 
 static struct IShellFolder2Vtbl vt_ShellFolder2;
@@ -438,13 +437,21 @@ static HRESULT WINAPI ISF_MyComputer_fnGetAttributesOf (IShellFolder2 * iface,
 
     if (*rgfInOut == 0)
         *rgfInOut = ~0;
+    
+    if(cidl == 0){
+        IShellFolder *psfParent = NULL;
+        LPCITEMIDLIST rpidl = NULL;
 
-    while (cidl > 0 && *apidl)
-    {
-        pdump (*apidl);
-        SHELL32_GetItemAttributes (_IShellFolder_ (This), *apidl, rgfInOut);
-        apidl++;
-        cidl--;
+        hr = SHBindToParent(This->pidlRoot, &IID_IShellFolder, (LPVOID*)&psfParent, (LPCITEMIDLIST*)&rpidl);
+        if(SUCCEEDED(hr))
+            SHELL32_GetItemAttributes (psfParent, rpidl, rgfInOut);
+    } else {
+        while (cidl > 0 && *apidl) {
+            pdump (*apidl);
+            SHELL32_GetItemAttributes (_IShellFolder_ (This), *apidl, rgfInOut);
+            apidl++;
+            cidl--;
+        }
     }
     /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
     *rgfInOut &= ~SFGAO_VALIDATE;
