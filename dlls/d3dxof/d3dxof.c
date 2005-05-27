@@ -34,13 +34,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
-static struct IDirectXFileVtbl IDirectXFile_Vtbl;
-static struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;
-static struct IDirectXFileDataVtbl IDirectXFileData_Vtbl;
-static struct IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl;
-static struct IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl;
-static struct IDirectXFileObjectVtbl IDirectXFileObject_Vtbl;
-static struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
+static const struct IDirectXFileVtbl IDirectXFile_Vtbl;
+static const struct IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl;
+static const struct IDirectXFileDataVtbl IDirectXFileData_Vtbl;
+static const struct IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl;
+static const struct IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl;
+static const struct IDirectXFileObjectVtbl IDirectXFileObject_Vtbl;
+static const struct IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl;
 
 HRESULT IDirectXFileImpl_Create(IUnknown* pUnkOuter, LPVOID* ppObj)
 {
@@ -142,7 +142,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   return S_FALSE;
 }
 
-static IDirectXFileVtbl IDirectXFile_Vtbl =
+static const IDirectXFileVtbl IDirectXFile_Vtbl =
 {
   IDirectXFileImpl_QueryInterface,
   IDirectXFileImpl_AddRef,
@@ -259,7 +259,7 @@ static HRESULT WINAPI IDirectXFileBinaryImpl_Read(IDirectXFileBinary* iface, LPV
   return S_FALSE;
 }
 
-static IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl =
+static const IDirectXFileBinaryVtbl IDirectXFileBinary_Vtbl =
 {
     IDirectXFileBinaryImpl_QueryInterface,
     IDirectXFileBinaryImpl_AddRef,
@@ -405,7 +405,7 @@ static HRESULT WINAPI IDirectXFileDataImpl_AddBinaryObject(IDirectXFileData* ifa
   return S_FALSE;
 }
 
-static IDirectXFileDataVtbl IDirectXFileData_Vtbl =
+static const IDirectXFileDataVtbl IDirectXFileData_Vtbl =
 {
     IDirectXFileDataImpl_QueryInterface,
     IDirectXFileDataImpl_AddRef,
@@ -508,7 +508,7 @@ static HRESULT WINAPI IDirectXFileDataReferenceImpl_Resolve(IDirectXFileDataRefe
   return S_FALSE;
 }
 
-static IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
+static const IDirectXFileDataReferenceVtbl IDirectXFileDataReference_Vtbl =
 {
     IDirectXFileDataReferenceImpl_QueryInterface,
     IDirectXFileDataReferenceImpl_AddRef,
@@ -612,7 +612,7 @@ static HRESULT WINAPI IDirectXFileEnumObjectImpl_GetDataObjectByName(IDirectXFil
   return S_FALSE;
 }
 
-static IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl =
+static const IDirectXFileEnumObjectVtbl IDirectXFileEnumObject_Vtbl =
 {
     IDirectXFileEnumObjectImpl_QueryInterface,
     IDirectXFileEnumObjectImpl_AddRef,
@@ -699,7 +699,7 @@ static HRESULT WINAPI IDirectXFileObjectImpl_GetId(IDirectXFileObject* iface, LP
   return S_FALSE;
 }
 
-static IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
+static const IDirectXFileObjectVtbl IDirectXFileObject_Vtbl =
 {
     IDirectXFileObjectImpl_QueryInterface,
     IDirectXFileObjectImpl_AddRef,
@@ -793,7 +793,7 @@ static HRESULT WINAPI IDirectXFileSaveObjectImpl_SaveData(IDirectXFileSaveObject
   return S_FALSE;
 }
 
-static IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl =
+static const IDirectXFileSaveObjectVtbl IDirectXFileSaveObject_Vtbl =
 {
     IDirectXFileSaveObjectImpl_QueryInterface,
     IDirectXFileSaveObjectImpl_AddRef,

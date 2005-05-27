@@ -77,7 +77,7 @@ HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDE
 }
 
 
-IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
+const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
 {
     IDirect3DVertexDeclaration9Impl_QueryInterface,
     IDirect3DVertexDeclaration9Impl_AddRef,

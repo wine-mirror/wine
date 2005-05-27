@@ -82,7 +82,7 @@ HRESULT WINAPI IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOCK9 iface) {
 }
 
 
-IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
+const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl =
 {
     IDirect3DStateBlock9Impl_QueryInterface,
     IDirect3DStateBlock9Impl_AddRef,

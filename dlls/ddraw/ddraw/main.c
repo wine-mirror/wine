@@ -55,6 +55,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
@@ -74,9 +77,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-extern IDirectDrawVtbl DDRAW_IDirectDraw_VTable;
-extern IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable;
-extern IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable;
+extern const IDirectDrawVtbl DDRAW_IDirectDraw_VTable;
+extern const IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable;
+extern const IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable;
 
 static void DDRAW_UnsubclassWindow(IDirectDrawImpl* This);
 
@@ -1437,7 +1440,7 @@ void Uninit_DirectDraw_final_release(IDirectDrawImpl *This)
     Main_DirectDraw_final_release(This);
 }
 
-static IDirectDraw7Vtbl Uninit_DirectDraw_VTable;
+static const IDirectDraw7Vtbl Uninit_DirectDraw_VTable;
 
 /* Not called from the vtable. */
 HRESULT Uninit_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex)
@@ -1677,7 +1680,7 @@ Uninit_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface, DWORD dwFlags,
     return DDERR_NOTINITIALIZED;
 }
 
-static IDirectDraw7Vtbl Uninit_DirectDraw_VTable =
+static const IDirectDraw7Vtbl Uninit_DirectDraw_VTable =
 {
     Main_DirectDraw_QueryInterface,
     Main_DirectDraw_AddRef,

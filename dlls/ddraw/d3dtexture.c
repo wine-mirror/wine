@@ -25,6 +25,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -823,7 +826,7 @@ Thunk_IDirect3DTextureImpl_1_Load(LPDIRECT3DTEXTURE iface,
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DTexture2Vtbl VTABLE_IDirect3DTexture2 =
+static const IDirect3DTexture2Vtbl VTABLE_IDirect3DTexture2 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DTextureImpl_2_AddRef,
@@ -844,7 +847,7 @@ IDirect3DTexture2Vtbl VTABLE_IDirect3DTexture2 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DTextureVtbl VTABLE_IDirect3DTexture =
+static const IDirect3DTextureVtbl VTABLE_IDirect3DTexture =
 {
     XCAST(QueryInterface) Thunk_IDirect3DTextureImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DTextureImpl_1_AddRef,

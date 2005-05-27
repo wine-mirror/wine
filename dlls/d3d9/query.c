@@ -104,7 +104,7 @@ HRESULT WINAPI IDirect3DQuery9Impl_GetData(LPDIRECT3DQUERY9 iface, void* pData, 
 }
 
 
-IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
+const IDirect3DQuery9Vtbl Direct3DQuery9_Vtbl =
 {
     IDirect3DQuery9Impl_QueryInterface,
     IDirect3DQuery9Impl_AddRef,

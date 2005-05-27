@@ -40,19 +40,19 @@ static HRESULT WINAPI COMCAT_IUnknown_QueryInterface(
     if (This == NULL || ppvObj == NULL) return E_POINTER;
 
     if (IsEqualGUID(riid, &IID_IUnknown)) {
-	*ppvObj = (LPVOID)&This->unkVtbl;
+	*ppvObj = &This->unkVtbl;
 	COMCAT_IUnknown_AddRef(iface);
 	return S_OK;
     }
 
     if (IsEqualGUID(riid, &IID_ICatRegister)) {
-	*ppvObj = (LPVOID)&This->regVtbl;
+	*ppvObj = &This->regVtbl;
 	COMCAT_IUnknown_AddRef(iface);
 	return S_OK;
     }
 
     if (IsEqualGUID(riid, &IID_ICatInformation)) {
-	*ppvObj = (LPVOID)&This->infVtbl;
+	*ppvObj = &This->infVtbl;
 	COMCAT_IUnknown_AddRef(iface);
 	return S_OK;
     }
@@ -101,7 +101,7 @@ static ULONG WINAPI COMCAT_IUnknown_Release(LPUNKNOWN iface)
 /**********************************************************************
  * COMCAT_IUnknown_Vtbl
  */
-static IUnknownVtbl COMCAT_IUnknown_Vtbl =
+static const IUnknownVtbl COMCAT_IUnknown_Vtbl =
 {
     COMCAT_IUnknown_QueryInterface,
     COMCAT_IUnknown_AddRef,
@@ -111,7 +111,7 @@ static IUnknownVtbl COMCAT_IUnknown_Vtbl =
 /**********************************************************************
  * static ComCatMgr instance
  */
-ComCatMgrImpl COMCAT_ComCatMgr =
+const ComCatMgrImpl COMCAT_ComCatMgr =
 {
     &COMCAT_IUnknown_Vtbl,
     &COMCAT_ICatRegister_Vtbl,

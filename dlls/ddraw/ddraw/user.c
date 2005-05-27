@@ -25,6 +25,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -42,7 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static IDirectDraw7Vtbl User_DirectDraw_VTable;
+static const IDirectDraw7Vtbl User_DirectDraw_VTable;
 
 static const DDDEVICEIDENTIFIER2 user_device =
 {
@@ -531,7 +534,7 @@ User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
 /* TestCooperativeLevel: generic? */
 /* WaitForVerticalBlank: ??? */
 
-static IDirectDraw7Vtbl User_DirectDraw_VTable =
+static const IDirectDraw7Vtbl User_DirectDraw_VTable =
 {
     Main_DirectDraw_QueryInterface,
     Main_DirectDraw_AddRef,

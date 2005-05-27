@@ -261,7 +261,7 @@ HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3DVOLUMET
 }
 
 
-IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl =
+const IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl =
 {
     IDirect3DVolumeTexture8Impl_QueryInterface,
     IDirect3DVolumeTexture8Impl_AddRef,

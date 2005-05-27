@@ -468,7 +468,7 @@ unlock_end:
 }
 
 
-IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
+const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl =
 {
     IDirect3DSurface8Impl_QueryInterface,
     IDirect3DSurface8Impl_AddRef,

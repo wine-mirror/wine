@@ -135,7 +135,7 @@ HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER
     return D3D_OK;
 }
 
-IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
+const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
 {
     IDirect3DVertexBuffer8Impl_QueryInterface,
     IDirect3DVertexBuffer8Impl_AddRef,

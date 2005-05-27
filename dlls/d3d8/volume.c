@@ -192,7 +192,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
 }
 
 
-IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
+const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
 {
     IDirect3DVolume8Impl_QueryInterface,
     IDirect3DVolume8Impl_AddRef,

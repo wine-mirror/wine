@@ -25,6 +25,8 @@
 #include <assert.h>
 #include <string.h>
 
+#define CONST_VTABLE
+
 #include "ddraw_private.h"
 #include "dpalette/main.h"
 #include "ddraw/main.h"
@@ -36,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 /* For unsigned x. 0 is not a power of 2. */
 #define IS_POW_2(x) (((x) & ((x) - 1)) == 0)
 
-static IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable;
+static const IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable;
 
 /******************************************************************************
  *			IDirectDrawPalette
@@ -271,7 +273,7 @@ Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
     }
 }
 
-static IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable =
+static const IDirectDrawPaletteVtbl DDRAW_Main_Palette_VTable =
 {
     Main_DirectDrawPalette_QueryInterface,
     Main_DirectDrawPalette_AddRef,

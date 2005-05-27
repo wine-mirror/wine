@@ -30,6 +30,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -46,7 +49,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable;
+static const IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable;
 
 #ifdef HAVE_OPENGL
 static void zbuffer_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
@@ -259,7 +262,7 @@ FakeZBuffer_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 }
 
 
-static IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable=
+static const IDirectDrawSurface7Vtbl FakeZBuffer_IDirectDrawSurface7_VTable=
 {
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,

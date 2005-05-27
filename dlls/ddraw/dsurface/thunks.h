@@ -19,6 +19,6 @@
 #ifndef DDRAW_DSURFACE_THUNKS_H_INCLUDED
 #define DDRAW_DSURFACE_THUNKS_H_INCLUDED
 
-extern IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable;
+extern const IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable;
 
 #endif

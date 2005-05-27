@@ -24,6 +24,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -215,7 +218,7 @@ GL_IDirect3DLightImpl_1_Release(LPDIRECT3DLIGHT iface)
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DLightVtbl VTABLE_IDirect3DLight =
+static const IDirect3DLightVtbl VTABLE_IDirect3DLight =
 {
     XCAST(QueryInterface) Main_IDirect3DLightImpl_1_QueryInterface,
     XCAST(AddRef) Main_IDirect3DLightImpl_1_AddRef,

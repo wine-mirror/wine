@@ -204,7 +204,7 @@ HRESULT WINAPI IDirect3DSurface9Impl_ReleaseDC(LPDIRECT3DSURFACE9 iface, HDC hdc
 }
 
 
-IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
+const IDirect3DSurface9Vtbl Direct3DSurface9_Vtbl =
 {
     IDirect3DSurface9Impl_QueryInterface,
     IDirect3DSurface9Impl_AddRef,

@@ -26,6 +26,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -654,7 +657,7 @@ Main_IDirect3DExecuteBufferImpl_1_Optimize(LPDIRECT3DEXECUTEBUFFER iface,
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DExecuteBufferVtbl VTABLE_IDirect3DExecuteBuffer =
+static const IDirect3DExecuteBufferVtbl VTABLE_IDirect3DExecuteBuffer =
 {
     XCAST(QueryInterface) Main_IDirect3DExecuteBufferImpl_1_QueryInterface,
     XCAST(AddRef) Main_IDirect3DExecuteBufferImpl_1_AddRef,

@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#define CONST_VTABLE
+
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
@@ -45,7 +47,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static IDirectDraw7Vtbl HAL_DirectDraw_VTable;
+static const IDirectDraw7Vtbl HAL_DirectDraw_VTable;
 
 static DDVERSIONDATA hal_version;
 static DD32BITDRIVERDATA hal_driverdata;
@@ -553,7 +555,7 @@ HAL_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 }
 
 
-static IDirectDraw7Vtbl HAL_DirectDraw_VTable =
+static const IDirectDraw7Vtbl HAL_DirectDraw_VTable =
 {
     Main_DirectDraw_QueryInterface,
     Main_DirectDraw_AddRef,

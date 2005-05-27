@@ -50,7 +50,7 @@ static ULONG   WINAPI IClassFactory_fnRelease(LPCLASSFACTORY iface);
 static HRESULT WINAPI IClassFactory_fnCreateInstance(LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj);
 static HRESULT WINAPI IClassFactory_fnLockServer(LPCLASSFACTORY iface,BOOL dolock);
 
-static IClassFactoryVtbl iclassfact = {
+static const IClassFactoryVtbl iclassfact = {
   IClassFactory_fnQueryInterface,
   IClassFactory_fnAddRef,
   IClassFactory_fnRelease,
@@ -61,7 +61,7 @@ static IClassFactoryVtbl iclassfact = {
 typedef struct
 {
   /* IUnknown fields */
-  IClassFactoryVtbl *lpVtbl;
+  const IClassFactoryVtbl *lpVtbl;
   DWORD	 dwRef;
 
   CLSID  clsid;

@@ -137,7 +137,7 @@ static HRESULT WINAPI XFCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl XFCF_Vtbl =
+static const IClassFactoryVtbl XFCF_Vtbl =
 {
     XFCF_QueryInterface,
     XFCF_AddRef,

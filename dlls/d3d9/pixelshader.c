@@ -76,7 +76,7 @@ HRESULT WINAPI IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 ifac
 }
 
 
-IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl =
+const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl =
 {
     IDirect3DPixelShader9Impl_QueryInterface,
     IDirect3DPixelShader9Impl_AddRef,

@@ -24,6 +24,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -483,7 +486,7 @@ Main_IDirect3DViewportImpl_3_Clear2(LPDIRECT3DVIEWPORT3 iface,
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DViewport3Vtbl VTABLE_IDirect3DViewport3 =
+static const IDirect3DViewport3Vtbl VTABLE_IDirect3DViewport3 =
 {
     XCAST(QueryInterface) Main_IDirect3DViewportImpl_3_2_1_QueryInterface,
     XCAST(AddRef) Main_IDirect3DViewportImpl_3_2_1_AddRef,

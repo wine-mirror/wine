@@ -118,7 +118,7 @@ D3DRESOURCETYPE WINAPI IDirect3DResource9Impl_GetType(LPDIRECT3DRESOURCE9 iface)
 }
 
 
-IDirect3DResource9Vtbl Direct3DResource9_Vtbl =
+const IDirect3DResource9Vtbl Direct3DResource9_Vtbl =
 {
     IDirect3DResource9Impl_QueryInterface,
     IDirect3DResource9Impl_AddRef,

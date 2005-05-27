@@ -19,6 +19,8 @@
 #include "config.h"
 #include <stdarg.h>
 
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -390,7 +392,7 @@ IDirectDrawSurface3Impl_SetSurfaceDesc(LPDIRECTDRAWSURFACE3 This,
 					      dwFlags);
 }
 
-IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable =
+const IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable =
 {
     IDirectDrawSurface3Impl_QueryInterface,
     IDirectDrawSurface3Impl_AddRef,

@@ -235,7 +235,7 @@ HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTURE8 ifa
 }
 
 
-IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl =
+const IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl =
 {
     IDirect3DTexture8Impl_QueryInterface,
     IDirect3DTexture8Impl_AddRef,

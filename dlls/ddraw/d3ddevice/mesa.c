@@ -29,6 +29,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -2573,7 +2576,7 @@ GL_IDirect3DDeviceImpl_7_SetViewport(LPDIRECT3DDEVICE7 iface,
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DDevice7Vtbl VTABLE_IDirect3DDevice7 =
+static const IDirect3DDevice7Vtbl VTABLE_IDirect3DDevice7 =
 {
     XCAST(QueryInterface) Main_IDirect3DDeviceImpl_7_3T_2T_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DDeviceImpl_7_3T_2T_1T_AddRef,
@@ -2637,7 +2640,7 @@ IDirect3DDevice7Vtbl VTABLE_IDirect3DDevice7 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DDevice3Vtbl VTABLE_IDirect3DDevice3 =
+static const IDirect3DDevice3Vtbl VTABLE_IDirect3DDevice3 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_3_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DDeviceImpl_3_AddRef,
@@ -2694,7 +2697,7 @@ IDirect3DDevice3Vtbl VTABLE_IDirect3DDevice3 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DDevice2Vtbl VTABLE_IDirect3DDevice2 =
+static const IDirect3DDevice2Vtbl VTABLE_IDirect3DDevice2 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DDeviceImpl_2_AddRef,
@@ -2742,7 +2745,7 @@ IDirect3DDevice2Vtbl VTABLE_IDirect3DDevice2 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DDeviceVtbl VTABLE_IDirect3DDevice =
+static const IDirect3DDeviceVtbl VTABLE_IDirect3DDevice =
 {
     XCAST(QueryInterface) Thunk_IDirect3DDeviceImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DDeviceImpl_1_AddRef,

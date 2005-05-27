@@ -134,7 +134,7 @@ static HRESULT WINAPI COMCAT_IClassFactory_LockServer(
 /**********************************************************************
  * IClassFactory_Vtbl
  */
-static IClassFactoryVtbl IClassFactory_Vtbl =
+static const IClassFactoryVtbl IClassFactory_Vtbl =
 {
     COMCAT_IClassFactory_QueryInterface,
     COMCAT_IClassFactory_AddRef,

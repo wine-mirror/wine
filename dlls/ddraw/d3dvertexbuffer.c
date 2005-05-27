@@ -21,6 +21,8 @@
 #include "config.h"
 #include <stdarg.h>
 
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -475,7 +477,7 @@ GL_IDirect3DVertexBufferImpl_7_ProcessVerticesStrided(LPDIRECT3DVERTEXBUFFER7 if
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DVertexBuffer7Vtbl VTABLE_IDirect3DVertexBuffer7 =
+static const IDirect3DVertexBuffer7Vtbl VTABLE_IDirect3DVertexBuffer7 =
 {
     XCAST(QueryInterface) Main_IDirect3DVertexBufferImpl_7_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DVertexBufferImpl_7_1T_AddRef,
@@ -499,7 +501,7 @@ IDirect3DVertexBuffer7Vtbl VTABLE_IDirect3DVertexBuffer7 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DVertexBufferVtbl VTABLE_IDirect3DVertexBuffer =
+static const IDirect3DVertexBufferVtbl VTABLE_IDirect3DVertexBuffer =
 {
     XCAST(QueryInterface) Thunk_IDirect3DVertexBufferImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DVertexBufferImpl_1_AddRef,

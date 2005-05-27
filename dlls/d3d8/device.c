@@ -4349,7 +4349,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 iface, U
 }
 
 
-IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
+const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl =
 {
     IDirect3DDevice8Impl_QueryInterface,
     IDirect3DDevice8Impl_AddRef,

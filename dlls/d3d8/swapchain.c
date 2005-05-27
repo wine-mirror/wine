@@ -91,7 +91,7 @@ HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8 iface,
     return D3D_OK;
 }
 
-IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
+const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl =
 {
     IDirect3DSwapChain8Impl_QueryInterface,
     IDirect3DSwapChain8Impl_AddRef,

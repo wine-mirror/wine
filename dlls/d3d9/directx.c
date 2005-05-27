@@ -229,7 +229,7 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
     return IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D9CB_CreateRenderTarget);
 }
 
-IDirect3D9Vtbl Direct3D9_Vtbl =
+const IDirect3D9Vtbl Direct3D9_Vtbl =
 {
     IDirect3D9Impl_QueryInterface,
     IDirect3D9Impl_AddRef,

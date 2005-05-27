@@ -54,7 +54,7 @@ static HRESULT WINAPI ACMStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,
 static HRESULT WINAPI ACMStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
 static HRESULT WINAPI ACMStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
-struct IAVIStreamVtbl iacmst = {
+static const struct IAVIStreamVtbl iacmst = {
   ACMStream_fnQueryInterface,
   ACMStream_fnAddRef,
   ACMStream_fnRelease,
@@ -73,7 +73,7 @@ struct IAVIStreamVtbl iacmst = {
 
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
-  IAVIStreamVtbl *lpVtbl;
+  const IAVIStreamVtbl *lpVtbl;
   DWORD		  ref;
 
   /* IAVIStream stuff */

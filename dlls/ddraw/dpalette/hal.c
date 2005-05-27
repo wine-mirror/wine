@@ -24,6 +24,8 @@
 #include <assert.h>
 #include <string.h>
 
+#define CONST_VTABLE
+
 #include "ddraw_private.h"
 #include "dpalette/main.h"
 #include "dpalette/hal.h"
@@ -31,7 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable;
+static const IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable;
 
 /******************************************************************************
  *			IDirectDrawPalette
@@ -125,7 +127,7 @@ void HAL_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This)
     Main_DirectDrawPalette_final_release(This);
 }
 
-static IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable =
+static const IDirectDrawPaletteVtbl DDRAW_HAL_Palette_VTable =
 {
     Main_DirectDrawPalette_QueryInterface,
     Main_DirectDrawPalette_AddRef,

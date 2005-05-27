@@ -78,7 +78,7 @@ typedef struct rep_list_str {
 } rep_list;
 
 typedef struct {
-    IRegistrarVtbl *lpVtbl;
+    const IRegistrarVtbl *lpVtbl;
     ULONG ref;
     rep_list *rep;
 } Registrar;
@@ -644,7 +644,7 @@ static HRESULT WINAPI Registrar_ResourceUnregister(IRegistrar* iface, LPCOLESTR 
     return resource_register(This, resFileName, (LPOLESTR)nID, szType, FALSE);
 }
 
-static IRegistrarVtbl RegistrarVtbl = {
+static const IRegistrarVtbl RegistrarVtbl = {
     Registrar_QueryInterface,
     Registrar_AddRef,
     Registrar_Release,

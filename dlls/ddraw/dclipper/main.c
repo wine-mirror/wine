@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -42,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  *			DirectDrawCreateClipper (DDRAW.@)
  */
 
-static IDirectDrawClipperVtbl DDRAW_Clipper_VTable;
+static const IDirectDrawClipperVtbl DDRAW_Clipper_VTable;
 
 HRESULT WINAPI DirectDrawCreateClipper(
     DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, LPUNKNOWN pUnkOuter
@@ -271,7 +273,7 @@ HRESULT WINAPI Main_DirectDrawClipper_IsClipListChanged(
     return DD_OK;
 }
 
-static IDirectDrawClipperVtbl DDRAW_Clipper_VTable =
+static const IDirectDrawClipperVtbl DDRAW_Clipper_VTable =
 {
     Main_DirectDrawClipper_QueryInterface,
     Main_DirectDrawClipper_AddRef,

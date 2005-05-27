@@ -24,6 +24,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -332,7 +335,7 @@ static void activate(IDirect3DMaterialImpl* This) {
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DMaterial3Vtbl VTABLE_IDirect3DMaterial3 =
+static const IDirect3DMaterial3Vtbl VTABLE_IDirect3DMaterial3 =
 {
     XCAST(QueryInterface) Main_IDirect3DMaterialImpl_3_2T_1T_QueryInterface,
     XCAST(AddRef) Main_IDirect3DMaterialImpl_3_2T_1T_AddRef,
@@ -353,7 +356,7 @@ IDirect3DMaterial3Vtbl VTABLE_IDirect3DMaterial3 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DMaterial2Vtbl VTABLE_IDirect3DMaterial2 =
+static const IDirect3DMaterial2Vtbl VTABLE_IDirect3DMaterial2 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DMaterialImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DMaterialImpl_2_AddRef,
@@ -374,7 +377,7 @@ IDirect3DMaterial2Vtbl VTABLE_IDirect3DMaterial2 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DMaterialVtbl VTABLE_IDirect3DMaterial =
+static const IDirect3DMaterialVtbl VTABLE_IDirect3DMaterial =
 {
     XCAST(QueryInterface) Thunk_IDirect3DMaterialImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DMaterialImpl_1_AddRef,

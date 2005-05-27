@@ -130,7 +130,7 @@ DWORD    WINAPI        IDirect3DBaseTexture8Impl_GetLevelCount(LPDIRECT3DBASETEX
     return This->levels;
 }
 
-IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
+static const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl =
 {
     IDirect3DBaseTexture8Impl_QueryInterface,
     IDirect3DBaseTexture8Impl_AddRef,

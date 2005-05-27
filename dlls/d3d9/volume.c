@@ -139,7 +139,7 @@ HRESULT WINAPI IDirect3DVolume9Impl_UnlockBox(LPDIRECT3DVOLUME9 iface) {
     return IWineD3DVolume_UnlockBox(This->wineD3DVolume);
 }
 
-IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
+const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
 {
     IDirect3DVolume9Impl_QueryInterface,
     IDirect3DVolume9Impl_AddRef,

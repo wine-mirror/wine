@@ -39,7 +39,7 @@ typedef struct {
     ULONG ref;
 } IAMMultiMediaStreamImpl;
 
-static struct IAMMultiMediaStreamVtbl AM_Vtbl;
+static const struct IAMMultiMediaStreamVtbl AM_Vtbl;
 
 HRESULT AM_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 {
@@ -247,7 +247,7 @@ static HRESULT WINAPI IAMMultiMediaStreamImpl_Render(IAMMultiMediaStream* iface,
   return E_NOTIMPL;
 }
 
-static IAMMultiMediaStreamVtbl AM_Vtbl =
+static const IAMMultiMediaStreamVtbl AM_Vtbl =
 {
     IAMMultiMediaStreamImpl_QueryInterface,
     IAMMultiMediaStreamImpl_AddRef,

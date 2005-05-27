@@ -46,7 +46,7 @@ extern DWORD dll_ref;
 typedef struct
 {
     /* IUnknown fields */
-    IClassFactoryVtbl *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
     DWORD ref;
 } ClassFactoryImpl;
 
@@ -58,15 +58,15 @@ extern ClassFactoryImpl COMCAT_ClassFactory;
 typedef struct
 {
     /* IUnknown fields */
-    IUnknownVtbl *unkVtbl;
-    ICatRegisterVtbl *regVtbl;
-    ICatInformationVtbl *infVtbl;
+    const IUnknownVtbl *unkVtbl;
+    const ICatRegisterVtbl *regVtbl;
+    const ICatInformationVtbl *infVtbl;
     DWORD ref;
 } ComCatMgrImpl;
 
-extern ComCatMgrImpl COMCAT_ComCatMgr;
-extern ICatRegisterVtbl COMCAT_ICatRegister_Vtbl;
-extern ICatInformationVtbl COMCAT_ICatInformation_Vtbl;
+extern const ComCatMgrImpl COMCAT_ComCatMgr;
+extern const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl;
+extern const ICatInformationVtbl COMCAT_ICatInformation_Vtbl;
 
 /**********************************************************************
  * Global string constant declarations

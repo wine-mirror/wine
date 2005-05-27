@@ -828,7 +828,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     return D3D_OK;
 }
 
-IDirect3D8Vtbl Direct3D8_Vtbl =
+const IDirect3D8Vtbl Direct3D8_Vtbl =
 {
     IDirect3D8Impl_QueryInterface,
     IDirect3D8Impl_AddRef,

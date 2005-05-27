@@ -141,7 +141,7 @@ static HRESULT WINAPI AMCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl DSCF_Vtbl =
+static const IClassFactoryVtbl DSCF_Vtbl =
 {
     AMCF_QueryInterface,
     AMCF_AddRef,

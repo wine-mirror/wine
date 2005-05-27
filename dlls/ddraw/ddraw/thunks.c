@@ -17,6 +17,8 @@
  */
 #include <stdarg.h>
 
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -942,7 +944,7 @@ IDirectDraw4Impl_GetDeviceIdentifier(LPDIRECTDRAW4 This,
     return hr;
 }
 
-IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
+const IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
 {
     IDirectDrawImpl_QueryInterface,
     IDirectDrawImpl_AddRef,
@@ -969,7 +971,7 @@ IDirectDrawVtbl DDRAW_IDirectDraw_VTable =
     IDirectDrawImpl_WaitForVerticalBlank,
 };
 
-IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
+const IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
 {
     IDirectDraw2Impl_QueryInterface,
     IDirectDraw2Impl_AddRef,
@@ -997,7 +999,7 @@ IDirectDraw2Vtbl DDRAW_IDirectDraw2_VTable =
     IDirectDraw2Impl_GetAvailableVidMem
 };
 
-IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable =
+const IDirectDraw4Vtbl DDRAW_IDirectDraw4_VTable =
 {
     IDirectDraw4Impl_QueryInterface,
     IDirectDraw4Impl_AddRef,

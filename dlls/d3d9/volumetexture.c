@@ -204,7 +204,7 @@ HRESULT WINAPI IDirect3DVolumeTexture9Impl_AddDirtyBox(LPDIRECT3DVOLUMETEXTURE9 
 }
 
 
-IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
+const IDirect3DVolumeTexture9Vtbl Direct3DVolumeTexture9_Vtbl =
 {
     IDirect3DVolumeTexture9Impl_QueryInterface,
     IDirect3DVolumeTexture9Impl_AddRef,

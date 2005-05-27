@@ -274,7 +274,7 @@ struct PLIGHTINFOEL {
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3D8Vtbl Direct3D8_Vtbl;
+extern const IDirect3D8Vtbl Direct3D8_Vtbl;
 
 /*****************************************************************************
  * IDirect3D implementation structure
@@ -282,7 +282,7 @@ extern IDirect3D8Vtbl Direct3D8_Vtbl;
 struct IDirect3D8Impl
 {
     /* IUnknown fields */
-    IDirect3D8Vtbl         *lpVtbl;
+    const IDirect3D8Vtbl   *lpVtbl;
     DWORD                   ref;
 
     /* The WineD3D device */
@@ -327,7 +327,7 @@ extern HRESULT  WINAPI  IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adap
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl;
+extern const IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DDevice8 implementation structure
@@ -335,7 +335,7 @@ extern IDirect3DDevice8Vtbl Direct3DDevice8_Vtbl;
 struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
-    IDirect3DDevice8Vtbl         *lpVtbl;
+    const IDirect3DDevice8Vtbl   *lpVtbl;
     DWORD                         ref;
 
     /* IDirect3DDevice8 fields */
@@ -522,7 +522,7 @@ extern HRESULT WINAPI   IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 ifac
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl;
+extern const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVolume8 implementation structure
@@ -530,7 +530,7 @@ extern IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl;
 struct IDirect3DVolume8Impl
 {
     /* IUnknown fields */
-    IDirect3DVolume8Vtbl   *lpVtbl;
+    const IDirect3DVolume8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DVolume8 fields */
@@ -576,7 +576,7 @@ extern HRESULT WINAPI IDirect3DVolume8Impl_AddDirtyBox(LPDIRECT3DVOLUME8 iface, 
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl;
+extern const IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DSwapChain8 implementation structure
@@ -584,7 +584,7 @@ extern IDirect3DSwapChain8Vtbl Direct3DSwapChain8_Vtbl;
 struct IDirect3DSwapChain8Impl
 {
     /* IUnknown fields */
-    IDirect3DSwapChain8Vtbl *lpVtbl;
+    const IDirect3DSwapChain8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DSwapChain8 fields */
@@ -615,7 +615,7 @@ extern HRESULT WINAPI IDirect3DSwapChain8Impl_GetBackBuffer(LPDIRECT3DSWAPCHAIN8
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl;
+extern const IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DSurface8 implementation structure
@@ -623,7 +623,7 @@ extern IDirect3DSurface8Vtbl Direct3DSurface8_Vtbl;
 struct IDirect3DSurface8Impl
 {
     /* IUnknown fields */
-    IDirect3DSurface8Vtbl  *lpVtbl;
+    const IDirect3DSurface8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DSurface8 fields */
@@ -675,7 +675,7 @@ extern HRESULT WINAPI IDirect3DSurface8Impl_AddDirtyRect(LPDIRECT3DSURFACE8 ifac
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DResource8Vtbl Direct3DResource8_Vtbl;
+extern const IDirect3DResource8Vtbl Direct3DResource8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DResource8 implementation structure
@@ -683,7 +683,7 @@ extern IDirect3DResource8Vtbl Direct3DResource8_Vtbl;
 struct IDirect3DResource8Impl
 {
     /* IUnknown fields */
-    IDirect3DResource8Vtbl *lpVtbl;
+    const IDirect3DResource8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -717,7 +717,7 @@ extern D3DPOOL WINAPI         IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl;
+extern const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVertexBuffer8 implementation structure
@@ -725,7 +725,7 @@ extern IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl;
 struct IDirect3DVertexBuffer8Impl
 {
     /* IUnknown fields */
-    IDirect3DVertexBuffer8Vtbl *lpVtbl;
+    const IDirect3DVertexBuffer8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -765,7 +765,7 @@ extern HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTE
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DIndexBuffer8Vtbl Direct3DIndexBuffer8_Vtbl;
+extern const IDirect3DIndexBuffer8Vtbl Direct3DIndexBuffer8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DIndexBuffer8 implementation structure
@@ -773,7 +773,7 @@ extern IDirect3DIndexBuffer8Vtbl Direct3DIndexBuffer8_Vtbl;
 struct IDirect3DIndexBuffer8Impl
 {
     /* IUnknown fields */
-    IDirect3DIndexBuffer8Vtbl *lpVtbl;
+    const IDirect3DIndexBuffer8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -813,7 +813,7 @@ extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXB
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl;
+extern const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DBaseTexture8 implementation structure
@@ -821,7 +821,7 @@ extern IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl;
 struct IDirect3DBaseTexture8Impl
 {
     /* IUnknown fields */
-    IDirect3DBaseTexture8Vtbl *lpVtbl;
+    const IDirect3DBaseTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -870,7 +870,7 @@ extern BOOL     WINAPI        IDirect3DBaseTexture8Impl_SetDirty(LPDIRECT3DBASET
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl;
+extern const IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DCubeTexture8 implementation structure
@@ -878,7 +878,7 @@ extern IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl;
 struct IDirect3DCubeTexture8Impl
 {
     /* IUnknown fields */
-    IDirect3DCubeTexture8Vtbl *lpVtbl;
+    const IDirect3DCubeTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -932,7 +932,7 @@ extern HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DC
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl;
+extern const IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DTexture8 implementation structure
@@ -940,7 +940,7 @@ extern IDirect3DTexture8Vtbl Direct3DTexture8_Vtbl;
 struct IDirect3DTexture8Impl
 {
     /* IUnknown fields */
-    IDirect3DTexture8Vtbl  *lpVtbl;
+    const IDirect3DTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResourc8 fields */
@@ -995,7 +995,7 @@ extern HRESULT  WINAPI        IDirect3DTexture8Impl_AddDirtyRect(LPDIRECT3DTEXTU
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl;
+extern const IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl;
 
 /*****************************************************************************
  * IDirect3DVolumeTexture8 implementation structure
@@ -1003,7 +1003,7 @@ extern IDirect3DVolumeTexture8Vtbl Direct3DVolumeTexture8_Vtbl;
 struct IDirect3DVolumeTexture8Impl
 {
     /* IUnknown fields */
-    IDirect3DVolumeTexture8Vtbl *lpVtbl;
+    const IDirect3DVolumeTexture8Vtbl *lpVtbl;
     DWORD                   ref;
 
     /* IDirect3DResource8 fields */
@@ -1084,14 +1084,14 @@ typedef struct SAVEDSTATES {
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;*/
+/*extern const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;*/
 
 /*****************************************************************************
  * IDirect3DStateBlock implementation structure
  */
 struct  IDirect3DStateBlockImpl {
   /* IUnknown fields */
-  /*IDirect3DStateBlock9Vtbl *lpVtbl;*/
+  /*const IDirect3DStateBlock9Vtbl *lpVtbl;*/
   DWORD  ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
@@ -1173,14 +1173,14 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern IDirect3DVertexShaderDeclaration9Vtbl Direct3DVertexShaderDeclaration9_Vtbl;*/
+/*extern const IDirect3DVertexShaderDeclaration9Vtbl Direct3DVertexShaderDeclaration9_Vtbl;*/
 
 /*****************************************************************************
  * IDirect3DVertexShaderDeclaration implementation structure
  */
 struct IDirect3DVertexShaderDeclarationImpl {
   /* IUnknown fields */
-  /*IDirect3DVertexShaderDeclaration9Vtbl *lpVtbl;*/
+  /*const IDirect3DVertexShaderDeclaration9Vtbl *lpVtbl;*/
   DWORD  ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
@@ -1210,13 +1210,13 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;*/
+/*extern const IDirect3DVertexShader9Vtbl Direct3DVertexShader9_Vtbl;*/
 
 /*****************************************************************************
  * IDirect3DVertexShader implementation structure
  */
 struct IDirect3DVertexShaderImpl {
-  /*IDirect3DVertexShader9Vtbl *lpVtbl;*/
+  /*const IDirect3DVertexShader9Vtbl *lpVtbl;*/
   DWORD ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
@@ -1259,13 +1259,13 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDe
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-/*extern IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;*/
+/*extern const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;*/
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
 struct IDirect3DPixelShaderImpl { 
-  /*IDirect3DPixelShader9Vtbl *lpVtbl;*/
+  /*const IDirect3DPixelShader9Vtbl *lpVtbl;*/
   DWORD ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */

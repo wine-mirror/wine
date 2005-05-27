@@ -23,6 +23,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#define CONST_VTABLE
+
 #include "wine/debug.h"
 #include "ddraw_private.h"
 #include "dsurface/main.h"
@@ -70,7 +72,7 @@ DirectDrawGammaControl_SetGammaRamp(LPDIRECTDRAWGAMMACONTROL iface, DWORD dwFlag
     return This->set_gamma_ramp(This, dwFlags, lpGammaRamp);
 }
 
-IDirectDrawGammaControlVtbl DDRAW_IDDGC_VTable =
+const IDirectDrawGammaControlVtbl DDRAW_IDDGC_VTable =
 {
     DirectDrawGammaControl_QueryInterface,
     DirectDrawGammaControl_AddRef,

@@ -47,9 +47,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 typedef struct
 {
 
-    IShellBrowserVtbl   * lpVtbl;
-    ICommDlgBrowserVtbl * lpVtblCommDlgBrowser;
-    IServiceProviderVtbl* lpVtblServiceProvider;
+    const IShellBrowserVtbl *lpVtbl;
+    const ICommDlgBrowserVtbl *lpVtblCommDlgBrowser;
+    const IServiceProviderVtbl *lpVtblServiceProvider;
     DWORD ref;                                  /* Reference counter */
     HWND hwndOwner;                             /* Owner dialog of the interface */
 
@@ -58,9 +58,9 @@ typedef struct
 /**************************************************************************
 *   vtable
 */
-static IShellBrowserVtbl IShellBrowserImpl_Vtbl;
-static ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl;
-static IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl;
+static const IShellBrowserVtbl IShellBrowserImpl_Vtbl;
+static const ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl;
+static const IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl;
 
 /**************************************************************************
 *   Local Prototypes
@@ -689,7 +689,7 @@ HRESULT WINAPI IShellBrowserImpl_TranslateAcceleratorSB(IShellBrowser *iface,
     return E_NOTIMPL;
 }
 
-static IShellBrowserVtbl IShellBrowserImpl_Vtbl =
+static const IShellBrowserVtbl IShellBrowserImpl_Vtbl =
 {
         /* IUnknown */
         IShellBrowserImpl_QueryInterface,
@@ -914,7 +914,7 @@ HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IS
     return S_OK;
 }
 
-static ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl =
+static const ICommDlgBrowserVtbl IShellBrowserImpl_ICommDlgBrowser_Vtbl =
 {
         /* IUnknown */
         IShellBrowserImpl_ICommDlgBrowser_QueryInterface,
@@ -1003,7 +1003,7 @@ HRESULT WINAPI IShellBrowserImpl_IServiceProvider_QueryService(
 
 }
 
-static IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl =
+static const IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl =
 {
         /* IUnknown */
         IShellBrowserImpl_IServiceProvider_QueryInterface,

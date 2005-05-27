@@ -236,7 +236,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumImplCategoriesOfClass(
     LPENUMCATID *ppenumCATID)
 {
 /*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
-    WCHAR postfix[24] = { '\\', 'I', 'm', 'p', 'l', 'e', 'm', 'e',
+    static const WCHAR postfix[24] = { '\\', 'I', 'm', 'p', 'l', 'e', 'm', 'e',
 			  'n', 't', 'e', 'd', ' ', 'C', 'a', 't',
 			  'e', 'g', 'o', 'r', 'i', 'e', 's', 0 };
 
@@ -259,7 +259,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
     LPENUMCATID *ppenumCATID)
 {
 /*     ICOM_THIS_MULTI(ComCatMgrImpl, infVtbl, iface); */
-    WCHAR postfix[21] = { '\\', 'R', 'e', 'q', 'u', 'i', 'r', 'e',
+    static const WCHAR postfix[21] = { '\\', 'R', 'e', 'q', 'u', 'i', 'r', 'e',
 			  'd', ' ', 'C', 'a', 't', 'e', 'g', 'o',
 			  'r', 'i', 'e', 's', 0 };
 
@@ -276,7 +276,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_EnumReqCategoriesOfClass(
 /**********************************************************************
  * COMCAT_ICatInformation_Vtbl
  */
-ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
+const ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
 {
     COMCAT_ICatInformation_QueryInterface,
     COMCAT_ICatInformation_AddRef,
@@ -297,7 +297,7 @@ ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
  */
 typedef struct
 {
-    IEnumCATEGORYINFOVtbl *lpVtbl;
+    const IEnumCATEGORYINFOVtbl *lpVtbl;
     DWORD ref;
     LCID  lcid;
     HKEY  key;
@@ -451,7 +451,7 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Clone(
     return S_OK;
 }
 
-IEnumCATEGORYINFOVtbl COMCAT_IEnumCATEGORYINFO_Vtbl =
+static const IEnumCATEGORYINFOVtbl COMCAT_IEnumCATEGORYINFO_Vtbl =
 {
     COMCAT_IEnumCATEGORYINFO_QueryInterface,
     COMCAT_IEnumCATEGORYINFO_AddRef,
@@ -601,9 +601,9 @@ static HRESULT COMCAT_IsClassOfCategories(
  */
 typedef struct
 {
-    IEnumGUIDVtbl *lpVtbl;
+    const IEnumGUIDVtbl *lpVtbl;
     DWORD ref;
-    struct class_categories const *categories;
+    const struct class_categories *categories;
     HKEY  key;
     DWORD next_index;
 } CLSID_IEnumGUIDImpl;
@@ -759,7 +759,7 @@ static HRESULT WINAPI COMCAT_CLSID_IEnumGUID_Clone(
     return S_OK;
 }
 
-IEnumGUIDVtbl COMCAT_CLSID_IEnumGUID_Vtbl =
+static const IEnumGUIDVtbl COMCAT_CLSID_IEnumGUID_Vtbl =
 {
     COMCAT_CLSID_IEnumGUID_QueryInterface,
     COMCAT_CLSID_IEnumGUID_AddRef,
@@ -777,7 +777,7 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
     if (This) {
-	WCHAR keyname[6] = { 'C', 'L', 'S', 'I', 'D', 0 };
+	static const WCHAR keyname[] = { 'C', 'L', 'S', 'I', 'D', 0 };
 
 	This->lpVtbl = &COMCAT_CLSID_IEnumGUID_Vtbl;
 	This->categories = categories;
@@ -794,7 +794,7 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
  */
 typedef struct
 {
-    IEnumGUIDVtbl *lpVtbl;
+    const IEnumGUIDVtbl *lpVtbl;
     DWORD ref;
     WCHAR keyname[68];
     HKEY  key;
@@ -934,7 +934,7 @@ static HRESULT WINAPI COMCAT_CATID_IEnumGUID_Clone(
     return S_OK;
 }
 
-IEnumGUIDVtbl COMCAT_CATID_IEnumGUID_Vtbl =
+static const IEnumGUIDVtbl COMCAT_CATID_IEnumGUID_Vtbl =
 {
     COMCAT_CATID_IEnumGUID_QueryInterface,
     COMCAT_CATID_IEnumGUID_AddRef,

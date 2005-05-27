@@ -50,7 +50,7 @@ static HRESULT WINAPI ITmpFile_fnReadData(IAVIFile*iface,DWORD ckid,LPVOID lpDat
 static HRESULT WINAPI ITmpFile_fnEndRecord(IAVIFile*iface);
 static HRESULT WINAPI ITmpFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG lParam);
 
-struct IAVIFileVtbl itmpft = {
+static const struct IAVIFileVtbl itmpft = {
   ITmpFile_fnQueryInterface,
   ITmpFile_fnAddRef,
   ITmpFile_fnRelease,
@@ -65,7 +65,7 @@ struct IAVIFileVtbl itmpft = {
 
 typedef struct _ITmpFileImpl {
   /* IUnknown stuff */
-  IAVIFileVtbl *lpVtbl;
+  const IAVIFileVtbl *lpVtbl;
   DWORD         ref;
 
   /* IAVIFile stuff */

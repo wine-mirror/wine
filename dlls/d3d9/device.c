@@ -775,7 +775,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_DeletePatch(LPDIRECT3DDEVICE9 iface, UINT 
     return IWineD3DDevice_DeletePatch(This->WineD3DDevice, Handle);
 }
 
-IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
+const IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
 {
     IDirect3DDevice9Impl_QueryInterface,
     IDirect3DDevice9Impl_AddRef,

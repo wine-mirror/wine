@@ -111,7 +111,7 @@ HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWAPCHAIN9
 }
 
 
-IDirect3DSwapChain9Vtbl Direct3DSwapChain9_Vtbl =
+const IDirect3DSwapChain9Vtbl Direct3DSwapChain9_Vtbl =
 {
     IDirect3DSwapChain9Impl_QueryInterface,
     IDirect3DSwapChain9Impl_AddRef,

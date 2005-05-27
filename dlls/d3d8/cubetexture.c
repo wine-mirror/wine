@@ -279,7 +279,7 @@ HRESULT  WINAPI        IDirect3DCubeTexture8Impl_AddDirtyRect(LPDIRECT3DCUBETEXT
 }
 
 
-IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl =
+const IDirect3DCubeTexture8Vtbl Direct3DCubeTexture8_Vtbl =
 {
     IDirect3DCubeTexture8Impl_QueryInterface,
     IDirect3DCubeTexture8Impl_AddRef,

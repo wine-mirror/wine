@@ -185,7 +185,7 @@ HRESULT WINAPI IDirect3DTexture9Impl_AddDirtyRect(LPDIRECT3DTEXTURE9 iface, CONS
     return IWineD3DTexture_AddDirtyRect(This->wineD3DTexture, pDirtyRect);
 }
 
-IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
+const IDirect3DTexture9Vtbl Direct3DTexture9_Vtbl =
 {
     IDirect3DTexture9Impl_QueryInterface,
     IDirect3DTexture9Impl_AddRef,

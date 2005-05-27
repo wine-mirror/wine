@@ -54,7 +54,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
 					    LPVOID lpBits, INT x, INT y,
 					    INT dx, INT dy);
 
-struct IGetFrameVtbl igetframeVtbl = {
+static const struct IGetFrameVtbl igetframeVtbl = {
   IGetFrame_fnQueryInterface,
   IGetFrame_fnAddRef,
   IGetFrame_fnRelease,
@@ -66,7 +66,7 @@ struct IGetFrameVtbl igetframeVtbl = {
 
 typedef struct _IGetFrameImpl {
   /* IUnknown stuff */
-  IGetFrameVtbl     *lpVtbl;
+  const IGetFrameVtbl *lpVtbl;
   DWORD              ref;
 
   /* IGetFrame stuff */

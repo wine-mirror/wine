@@ -132,7 +132,7 @@ D3DPOOL WINAPI IDirect3DResource8Impl_GetPool(LPDIRECT3DRESOURCE8 iface) {
     }
 }
 
-IDirect3DResource8Vtbl Direct3DResource8_Vtbl =
+const IDirect3DResource8Vtbl Direct3DResource8_Vtbl =
 {
     IDirect3DResource8Impl_QueryInterface,
     IDirect3DResource8Impl_AddRef,

@@ -149,7 +149,7 @@ void WINAPI IDirect3DBaseTexture9Impl_GenerateMipSubLevels(LPDIRECT3DBASETEXTURE
     return IWineD3DBaseTexture_GenerateMipSubLevels(This->wineD3DBaseTexture);
 }
 
-IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl =
+const IDirect3DBaseTexture9Vtbl Direct3DBaseTexture9_Vtbl =
 {
     IDirect3DBaseTexture9Impl_QueryInterface,
     IDirect3DBaseTexture9Impl_AddRef,

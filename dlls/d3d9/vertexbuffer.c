@@ -132,7 +132,7 @@ HRESULT WINAPI IDirect3DVertexBuffer9Impl_GetDesc(LPDIRECT3DVERTEXBUFFER9 iface,
     return IWineD3DVertexBuffer_GetDesc(This->wineD3DVertexBuffer, pDesc);
 }
 
-IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
+const IDirect3DVertexBuffer9Vtbl Direct3DVertexBuffer9_Vtbl =
 {
     IDirect3DVertexBuffer9Impl_QueryInterface,
     IDirect3DVertexBuffer9Impl_AddRef,

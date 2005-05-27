@@ -69,7 +69,7 @@ static HRESULT WINAPI IAVIFile_fnReadData(IAVIFile*iface,DWORD ckid,LPVOID lpDat
 static HRESULT WINAPI IAVIFile_fnEndRecord(IAVIFile*iface);
 static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG lParam);
 
-struct IAVIFileVtbl iavift = {
+static const struct IAVIFileVtbl iavift = {
   IAVIFile_fnQueryInterface,
   IAVIFile_fnAddRef,
   IAVIFile_fnRelease,
@@ -92,7 +92,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile*iface,LPCOLESTR pszFileNa
 static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile*iface,LPCOLESTR pszFileName);
 static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile*iface,LPOLESTR*ppszFileName);
 
-struct IPersistFileVtbl ipersistft = {
+static const struct IPersistFileVtbl ipersistft = {
   IPersistFile_fnQueryInterface,
   IPersistFile_fnAddRef,
   IPersistFile_fnRelease,
@@ -119,7 +119,7 @@ static HRESULT WINAPI IAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp
 static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
 static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
-struct IAVIStreamVtbl iavist = {
+static const struct IAVIStreamVtbl iavist = {
   IAVIStream_fnQueryInterface,
   IAVIStream_fnAddRef,
   IAVIStream_fnRelease,
@@ -140,7 +140,7 @@ typedef struct _IAVIFileImpl IAVIFileImpl;
 
 typedef struct _IPersistFileImpl {
   /* IUnknown stuff */
-  IPersistFileVtbl *lpVtbl;
+  const IPersistFileVtbl *lpVtbl;
 
   /* IPersistFile stuff */
   IAVIFileImpl     *paf;
@@ -148,7 +148,7 @@ typedef struct _IPersistFileImpl {
 
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
-  IAVIStreamVtbl   *lpVtbl;
+  const IAVIStreamVtbl *lpVtbl;
   DWORD		    ref;
 
   /* IAVIStream stuff */
@@ -177,7 +177,7 @@ typedef struct _IAVIStreamImpl {
 
 struct _IAVIFileImpl {
   /* IUnknown stuff */
-  IAVIFileVtbl     *lpVtbl;
+  const IAVIFileVtbl     *lpVtbl;
   DWORD		    ref;
 
   /* IAVIFile stuff... */

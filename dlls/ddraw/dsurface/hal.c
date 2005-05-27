@@ -24,6 +24,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "wine/debug.h"
 #include "ddraw_private.h"
 #include "ddraw/user.h"
@@ -35,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-static IDirectDrawSurface7Vtbl HAL_IDirectDrawSurface7_VTable;
+static const IDirectDrawSurface7Vtbl HAL_IDirectDrawSurface7_VTable;
 
 static HRESULT HAL_DirectDrawSurface_create_surface(IDirectDrawSurfaceImpl* This,
 						    IDirectDrawImpl* pDD)
@@ -362,7 +365,7 @@ HWND HAL_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This)
     return 0;
 }
 
-static IDirectDrawSurface7Vtbl HAL_IDirectDrawSurface7_VTable =
+static const IDirectDrawSurface7Vtbl HAL_IDirectDrawSurface7_VTable =
 {
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,

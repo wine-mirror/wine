@@ -80,7 +80,7 @@ static HRESULT WINAPI IAVIEditStream_fnClone(IAVIEditStream*iface,
 static HRESULT WINAPI IAVIEditStream_fnSetInfo(IAVIEditStream*iface,
                                                LPAVISTREAMINFOW asi,LONG size);
 
-struct IAVIEditStreamVtbl ieditstream = {
+static const struct IAVIEditStreamVtbl ieditstream = {
   IAVIEditStream_fnQueryInterface,
   IAVIEditStream_fnAddRef,
   IAVIEditStream_fnRelease,
@@ -115,7 +115,7 @@ static HRESULT WINAPI IEditAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,
                                                  LPVOID lp,LONG size);
 static HRESULT WINAPI IEditAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
 
-struct IAVIStreamVtbl ieditstast = {
+static const struct IAVIStreamVtbl ieditstast = {
   IEditAVIStream_fnQueryInterface,
   IEditAVIStream_fnAddRef,
   IEditAVIStream_fnRelease,
@@ -137,7 +137,7 @@ static ULONG   WINAPI IEditStreamInternal_fnAddRef(IEditStreamInternal*iface);
 static ULONG   WINAPI IEditStreamInternal_fnRelease(IEditStreamInternal*iface);
 static HRESULT WINAPI IEditStreamInternal_fnGetEditStreamImpl(IEditStreamInternal*iface,LPVOID*ppimpl);
 
-struct IEditStreamInternalVtbl ieditstreaminternal = {
+static const struct IEditStreamInternalVtbl ieditstreaminternal = {
   IEditStreamInternal_fnQueryInterface,
   IEditStreamInternal_fnAddRef,
   IEditStreamInternal_fnRelease,
@@ -148,7 +148,7 @@ typedef struct _IAVIEditStreamImpl IAVIEditStreamImpl;
 
 typedef struct _IEditAVIStreamImpl {
   /* IUnknown stuff */
-  IAVIStreamVtbl *lpVtbl;
+  const IAVIStreamVtbl *lpVtbl;
 
   /* IAVIStream stuff */
   IAVIEditStreamImpl *pae;
@@ -156,7 +156,7 @@ typedef struct _IEditAVIStreamImpl {
 
 typedef struct _IEditStreamInternalImpl {
   /* IUnknown stuff */
-  IEditStreamInternalVtbl *lpVtbl;
+  const IEditStreamInternalVtbl *lpVtbl;
 
   /* IEditStreamInternal stuff */
   IAVIEditStreamImpl *pae;
@@ -164,7 +164,7 @@ typedef struct _IEditStreamInternalImpl {
 
 struct _IAVIEditStreamImpl {
   /* IUnknown stuff */
-  IAVIEditStreamVtbl *lpVtbl;
+  const IAVIEditStreamVtbl *lpVtbl;
   DWORD  ref;
 
   /* IAVIEditStream stuff */

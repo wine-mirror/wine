@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define CONST_VTABLE
+
 #include "winerror.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
@@ -52,7 +54,7 @@ static void User_copy_to_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc);
 
 static HWND get_display_window(IDirectDrawSurfaceImpl* This, LPPOINT pt);
 
-static IDirectDrawSurface7Vtbl User_IDirectDrawSurface7_VTable;
+static const IDirectDrawSurface7Vtbl User_IDirectDrawSurface7_VTable;
 
 HRESULT
 User_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
@@ -625,7 +627,7 @@ static void User_copy_from_screen(IDirectDrawSurfaceImpl* This, LPCRECT rc)
 }
 #endif
 
-static IDirectDrawSurface7Vtbl User_IDirectDrawSurface7_VTable =
+static const IDirectDrawSurface7Vtbl User_IDirectDrawSurface7_VTable =
 {
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,

@@ -30,6 +30,9 @@
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
+#define CONST_VTABLE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -318,7 +321,7 @@ static void light_released(IDirectDrawImpl *This, GLenum light_num)
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3D7Vtbl VTABLE_IDirect3D7 =
+static const IDirect3D7Vtbl VTABLE_IDirect3D7 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DImpl_7_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_7_AddRef,
@@ -341,7 +344,7 @@ IDirect3D7Vtbl VTABLE_IDirect3D7 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3D3Vtbl VTABLE_IDirect3D3 =
+static const IDirect3D3Vtbl VTABLE_IDirect3D3 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DImpl_3_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_3_AddRef,
@@ -368,7 +371,7 @@ IDirect3D3Vtbl VTABLE_IDirect3D3 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3D2Vtbl VTABLE_IDirect3D2 =
+static const IDirect3D2Vtbl VTABLE_IDirect3D2 =
 {
     XCAST(QueryInterface) Thunk_IDirect3DImpl_2_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_2_AddRef,
@@ -392,7 +395,7 @@ IDirect3D2Vtbl VTABLE_IDirect3D2 =
 # define XCAST(fun)     (void*)
 #endif
 
-IDirect3DVtbl VTABLE_IDirect3D =
+static const IDirect3DVtbl VTABLE_IDirect3D =
 {
     XCAST(QueryInterface) Thunk_IDirect3DImpl_1_QueryInterface,
     XCAST(AddRef) Thunk_IDirect3DImpl_1_AddRef,
