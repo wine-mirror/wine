@@ -89,12 +89,12 @@ static CFactoryTemplate const g_cTemplates[] = {
         &CLSID_AVICompressor, 
         QCAP_createAVICompressor,
         NULL
-    },{
+    },*/{
         wVFWCaptFilter,
-        &CLSID_VFWCaptureFilter,
+        &CLSID_VfwCapture,
         QCAP_createVFWCaptureFilter,
         NULL
-    },{
+    },/*{
         wVFWCaptFilterProp,
         &CLSID_VFWCaptureFilterPropertyPage,
         QCAP_createVFWCaptureFilterPropertyPage,
