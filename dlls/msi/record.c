@@ -410,6 +410,17 @@ UINT WINAPI MsiRecordGetStringW(MSIHANDLE handle, unsigned int iField,
     return ret;
 }
 
+static UINT msi_get_stream_size( IStream *stm )
+{
+    STATSTG stat;
+    HRESULT r;
+
+    r = IStream_Stat( stm, &stat, STATFLAG_NONAME );
+    if( FAILED(r) )
+        return 0;
+    return stat.cbSize.QuadPart;
+}
+
 UINT MSI_RecordDataSize(MSIRECORD *rec, unsigned int iField)
 {
     TRACE("%p %d\n", rec, iField);
@@ -425,6 +436,8 @@ UINT MSI_RecordDataSize(MSIRECORD *rec, unsigned int iField)
         return lstrlenW( rec->fields[iField].u.szwVal );
     case MSIFIELD_NULL:
         break;
+    case MSIFIELD_STREAM:
+        return msi_get_stream_size( rec->fields[iField].u.stream );
     }
     return 0;
 }

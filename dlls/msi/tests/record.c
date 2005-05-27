@@ -220,6 +220,10 @@ void test_msirecord(void)
     r = MsiRecordReadStream(h, 0, buf, &sz);
     ok(r == ERROR_INVALID_DATATYPE, "read non-stream type\n");
     ok(sz == sizeof buf, "set sz\n");
+    r = MsiRecordDataSize( h, -1);
+    ok(r == 0,"MsiRecordDataSize returned wrong size\n");
+    r = MsiRecordDataSize( h, 0);
+    ok(r == 4,"MsiRecordDataSize returned wrong size\n");
 
     /* same record, now close it */
     r = MsiCloseHandle(h);
@@ -279,6 +283,8 @@ void test_msirecord(void)
     r = MsiRecordReadStream(h, 1, NULL, &sz);
     ok(r == ERROR_SUCCESS, "bytes left wrong after reset\n");
     ok(sz==26,"couldn't get size of stream\n");
+    r = MsiRecordDataSize(h,1);
+    ok(r == 26,"MsiRecordDataSize returned wrong size\n");
 
     /* now close the stream record */
     r = MsiCloseHandle(h);
