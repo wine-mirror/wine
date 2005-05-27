@@ -179,8 +179,23 @@ typedef struct tagMSIAPPID
     BOOL RunAsInteractiveUser;
 } MSIAPPID;
 
+enum SCRIPTS {
+        INSTALL_SCRIPT = 0,
+        COMMIT_SCRIPT = 1,
+        ROLLBACK_SCRIPT = 2,
+        TOTAL_SCRIPTS = 3
+};
 
-UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action);
+typedef struct tagMSISCRIPT
+{
+    LPWSTR  *Actions[TOTAL_SCRIPTS];
+    UINT    ActionCount[TOTAL_SCRIPTS];
+    BOOL    ExecuteSequenceRun;
+    BOOL    CurrentlyScripting;
+}MSISCRIPT;
+
+
+UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force);
 UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action);
 void ACTION_FinishCustomActions( MSIPACKAGE* package);
 UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
@@ -196,6 +211,7 @@ int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component );
 int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
 int get_loaded_file(MSIPACKAGE* package, LPCWSTR file);
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
+UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
 
 /* control event stuff */
 VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,

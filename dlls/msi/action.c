@@ -676,13 +676,18 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     if (package->appids && package->loaded_appids > 0)
         HeapFree(GetProcessHeap(),0,package->appids);
 
-    for (i = 0; i < package->DeferredActionCount; i++)
-        HeapFree(GetProcessHeap(),0,package->DeferredAction[i]);
-    HeapFree(GetProcessHeap(),0,package->DeferredAction);
-
-    for (i = 0; i < package->CommitActionCount; i++)
-        HeapFree(GetProcessHeap(),0,package->CommitAction[i]);
-    HeapFree(GetProcessHeap(),0,package->CommitAction);
+    if (package->script)
+    {
+        for (i = 0; i < TOTAL_SCRIPTS; i++)
+        {
+            int j;
+            for (j = 0; j < package->script->ActionCount[i]; j++)
+                HeapFree(GetProcessHeap(),0,package->script->Actions[i][j]);
+        
+            HeapFree(GetProcessHeap(),0,package->script->Actions[i]);
+        }
+        HeapFree(GetProcessHeap(),0,package->script);
+    }
 
     HeapFree(GetProcessHeap(),0,package->PackagePath);
 
@@ -963,7 +968,9 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
 
     MSI_SetPropertyW(package, szAction, szInstall);
-    package->ExecuteSequenceRun = FALSE;
+
+    package->script = HeapAlloc(GetProcessHeap(),0,sizeof(MSISCRIPT));
+    memset(package->script,0,sizeof(MSISCRIPT));
 
     if (szPackagePath)   
     {
@@ -1073,15 +1080,17 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
         rc = ERROR_SUCCESS;
     }
 
+    package->script->CurrentlyScripting= FALSE;
+
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
         ACTION_PerformActionSequence(package,-1,ui);
     else if (rc == ERROR_INSTALL_USEREXIT) 
         ACTION_PerformActionSequence(package,-2,ui);
-    else if (rc == ERROR_FUNCTION_FAILED) 
-        ACTION_PerformActionSequence(package,-3,ui);
     else if (rc == ERROR_INSTALL_SUSPEND) 
         ACTION_PerformActionSequence(package,-4,ui);
+    else  /* failed */
+        ACTION_PerformActionSequence(package,-3,ui);
 
     /* finish up running custom actions */
     ACTION_FinishCustomActions(package);
@@ -1165,7 +1174,7 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
         if (UI)
             rc = ACTION_PerformUIAction(package,buffer);
         else
-            rc = ACTION_PerformAction(package,buffer);
+            rc = ACTION_PerformAction(package,buffer, FALSE);
         msiobj_release(&row->hdr);
 end:
         MSI_ViewClose(view);
@@ -1199,13 +1208,13 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     INT seq = 0;
 
 
-    if (package->ExecuteSequenceRun)
+    if (package->script->ExecuteSequenceRun)
     {
         TRACE("Execute Sequence already Run\n");
         return ERROR_SUCCESS;
     }
 
-    package->ExecuteSequenceRun = TRUE;
+    package->script->ExecuteSequenceRun = TRUE;
     
     /* get the sequence number */
     if (UIran)
@@ -1289,7 +1298,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
                 break;
             }
 
-            rc = ACTION_PerformAction(package,buffer);
+            rc = ACTION_PerformAction(package,buffer, FALSE);
 
             if (rc == ERROR_FUNCTION_NOT_CALLED)
                 rc = ERROR_SUCCESS;
@@ -1413,29 +1422,49 @@ end:
 /********************************************************
  * ACTION helper functions and functions that perform the actions
  *******************************************************/
-BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, UINT* rc)
+static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, 
+                                        UINT* rc, BOOL force )
 {
     BOOL ret = FALSE; 
-
+    BOOL run = force;
     int i;
+
+    if (!run && !package->script->CurrentlyScripting)
+        run = TRUE;
+   
+    if (!run)
+    {
+        if (strcmpW(action,szInstallFinalize) == 0 ||
+            strcmpW(action,szInstallExecute) == 0 ||
+            strcmpW(action,szInstallExecuteAgain) == 0) 
+                run = TRUE;
+    }
+    
     i = 0;
     while (StandardActions[i].action != NULL)
     {
         if (strcmpW(StandardActions[i].action, action)==0)
         {
             ce_actiontext(package, action);
-            ui_actioninfo(package, action, TRUE, 0);
-            ui_actionstart(package, action);
-            if (StandardActions[i].handler)
+            if (!run)
             {
-                *rc = StandardActions[i].handler(package);
+                ui_actioninfo(package, action, TRUE, 0);
+                *rc = schedule_action(package,INSTALL_SCRIPT,action);
+                ui_actioninfo(package, action, FALSE, *rc);
             }
             else
             {
-                FIXME("UNHANDLED Standard Action %s\n",debugstr_w(action));
-                *rc = ERROR_SUCCESS;
+                ui_actionstart(package, action);
+                if (StandardActions[i].handler)
+                {
+                    *rc = StandardActions[i].handler(package);
+                }
+                else
+                {
+                    FIXME("UNHANDLED Standard Action %s\n",debugstr_w(action));
+                    *rc = ERROR_SUCCESS;
+                }
             }
-            ui_actioninfo(package, action, FALSE, *rc);
             ret = TRUE;
             break;
         }
@@ -1456,12 +1485,13 @@ BOOL ACTION_HandleDialogBox(MSIPACKAGE *package, LPCWSTR dialog, UINT* rc)
     return ret;
 }
 
-BOOL ACTION_HandleCustomAction(MSIPACKAGE* package, LPCWSTR action, UINT* rc)
+BOOL ACTION_HandleCustomAction(MSIPACKAGE* package, LPCWSTR action, UINT* rc, 
+                               BOOL force )
 {
     BOOL ret=FALSE;
     UINT arc;
 
-    arc = ACTION_CustomAction(package,action,FALSE);
+    arc = ACTION_CustomAction(package,action, force);
 
     if (arc != ERROR_CALL_NOT_IMPLEMENTED)
     {
@@ -1479,17 +1509,17 @@ BOOL ACTION_HandleCustomAction(MSIPACKAGE* package, LPCWSTR action, UINT* rc)
  * But until I get write access to the database that is hard, so I am going to
  * hack it to see if I can get something to run.
  */
-UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action)
+UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force)
 {
     UINT rc = ERROR_SUCCESS; 
     BOOL handled;
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
 
-    handled = ACTION_HandleStandardAction(package, action, &rc);
+    handled = ACTION_HandleStandardAction(package, action, &rc, force);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc);
+        handled = ACTION_HandleCustomAction(package, action, &rc, force);
 
     if (!handled)
     {
@@ -1508,10 +1538,10 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
 
     TRACE("Performing action (%s)\n",debugstr_w(action));
 
-    handled = ACTION_HandleStandardAction(package, action, &rc);
+    handled = ACTION_HandleStandardAction(package, action, &rc,TRUE);
 
     if (!handled)
-        handled = ACTION_HandleCustomAction(package, action, &rc);
+        handled = ACTION_HandleCustomAction(package, action, &rc, FALSE);
 
     if (!handled)
         handled = ACTION_HandleDialogBox(package, action, &rc);
@@ -2008,6 +2038,57 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     load_all_files(package);
 
     return ERROR_SUCCESS;
+}
+
+UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
+{
+    UINT count;
+    LPWSTR *newbuf = NULL;
+    if (script >= TOTAL_SCRIPTS)
+    {
+        FIXME("Unknown script requested %i\n",script);
+        return ERROR_FUNCTION_FAILED;
+    }
+    TRACE("Scheduling Action %s in script %i\n",debugstr_w(action), script);
+    
+    count = package->script->ActionCount[script];
+    package->script->ActionCount[script]++;
+    if (count != 0)
+        newbuf = HeapReAlloc(GetProcessHeap(),0,
+                        package->script->Actions[script],
+                        package->script->ActionCount[script]* sizeof(LPWSTR));
+    else
+        newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
+
+    newbuf[count] = strdupW(action);
+    package->script->Actions[script] = newbuf;
+
+   return ERROR_SUCCESS;
+}
+
+UINT execute_script(MSIPACKAGE *package, UINT script )
+{
+    int i;
+    UINT rc = ERROR_SUCCESS;
+
+    TRACE("Executing Script %i\n",script);
+
+    for (i = 0; i < package->script->ActionCount[script]; i++)
+    {
+        LPWSTR action;
+        action = package->script->Actions[script][i];
+        ui_actionstart(package, action);
+        TRACE("Executing Action (%s)\n",debugstr_w(action));
+        rc = ACTION_PerformAction(package, action, TRUE);
+        HeapFree(GetProcessHeap(),0,package->script->Actions[script][i]);
+        if (rc != ERROR_SUCCESS)
+            break;
+    }
+    HeapFree(GetProcessHeap(),0,package->script->Actions[script]);
+
+    package->script->ActionCount[script] = 0;
+    package->script->Actions[script] = NULL;
+    return rc;
 }
 
 static UINT ACTION_FileCost(MSIPACKAGE *package)
@@ -3829,6 +3910,8 @@ next:
 
 static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
 {
+    package->script->CurrentlyScripting = TRUE;
+
     return ERROR_SUCCESS;
 }
 
@@ -6634,52 +6717,35 @@ end:
 
 static UINT ACTION_InstallExecute(MSIPACKAGE *package)
 {
-    int i;
+    UINT rc;
+
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    for (i = 0; i < package->DeferredActionCount; i++)
-    {
-        LPWSTR action;
-        action = package->DeferredAction[i];
-        ui_actionstart(package, action);
-        TRACE("Executing Action (%s)\n",debugstr_w(action));
-        ACTION_CustomAction(package,action,TRUE);
-        HeapFree(GetProcessHeap(),0,package->DeferredAction[i]);
-    }
-    HeapFree(GetProcessHeap(),0,package->DeferredAction);
+    rc = execute_script(package,INSTALL_SCRIPT);
 
-    package->DeferredActionCount = 0;
-    package->DeferredAction = NULL;
-
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 {
-    int i;
+    UINT rc;
+
     if (!package)
         return ERROR_INVALID_HANDLE;
 
+    /* turn off scheduleing */
+    package->script->CurrentlyScripting= FALSE;
+
     /* first do the same as an InstallExecute */
-    ACTION_InstallExecute(package);
+    rc = ACTION_InstallExecute(package);
+    if (rc != ERROR_SUCCESS)
+        return rc;
 
     /* then handle Commit Actions */
-    for (i = 0; i < package->CommitActionCount; i++)
-    {
-        LPWSTR action;
-        action = package->CommitAction[i];
-        ui_actionstart(package, action);
-        TRACE("Executing Commit Action (%s)\n",debugstr_w(action));
-        ACTION_CustomAction(package,action,TRUE);
-        HeapFree(GetProcessHeap(),0,package->CommitAction[i]);
-    }
-    HeapFree(GetProcessHeap(),0,package->CommitAction);
+    rc = execute_script(package,COMMIT_SCRIPT);
 
-    package->CommitActionCount = 0;
-    package->CommitAction = NULL;
-
-    return ERROR_SUCCESS;
+    return rc;
 }
 
 static UINT ACTION_ForceReboot(MSIPACKAGE *package)

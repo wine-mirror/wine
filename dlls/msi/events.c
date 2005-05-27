@@ -163,7 +163,7 @@ static VOID ControlEvent_SpawnWaitDialog(MSIPACKAGE* package, LPCWSTR argument,
 static VOID ControlEvent_DoAction(MSIPACKAGE* package, LPCWSTR argument, 
                                   msi_dialog* dialog)
 {
-    ACTION_PerformAction(package,argument);
+    ACTION_PerformAction(package,argument,TRUE);
 }
 
 static VOID ControlEvent_AddLocal(MSIPACKAGE* package, LPCWSTR argument, 

@@ -123,6 +123,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         if (type & 0x100)
         {
             FIXME("Rollback only action... rollbacks not supported yet\n");
+            schedule_action(package, ROLLBACK_SCRIPT, action);
             HeapFree(GetProcessHeap(),0,source);
             HeapFree(GetProcessHeap(),0,target);
             msiobj_release(&row->hdr);
@@ -132,37 +133,15 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         }
         if (!execute)
         {
-            LPWSTR *newbuf = NULL;
-            INT count;
             if (type & 0x200)
             {
                 TRACE("Deferring Commit Action!\n");
-                count = package->CommitActionCount;
-                package->CommitActionCount++;
-                if (count != 0)
-                    newbuf = HeapReAlloc(GetProcessHeap(),0,
-                        package->CommitAction,
-                        package->CommitActionCount * sizeof(LPWSTR));
-                else
-                    newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
-
-                newbuf[count] = strdupW(action);
-                package->CommitAction = newbuf;
+                schedule_action(package, COMMIT_SCRIPT, action);
             }
             else
             {
                 TRACE("Deferring Action!\n");
-                count = package->DeferredActionCount;
-                package->DeferredActionCount++;
-                if (count != 0)
-                    newbuf = HeapReAlloc(GetProcessHeap(),0,
-                        package->DeferredAction,
-                        package->DeferredActionCount * sizeof(LPWSTR));
-                else
-                    newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
-
-                newbuf[count] = strdupW(action);
-                package->DeferredAction = newbuf;
+                schedule_action(package, INSTALL_SCRIPT, action);
             }
 
             HeapFree(GetProcessHeap(),0,source);

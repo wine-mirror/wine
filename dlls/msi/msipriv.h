@@ -210,11 +210,7 @@ typedef struct tagMSIPACKAGE
     struct tagMSIAPPID *appids;
     UINT loaded_appids;
     
-    LPWSTR *DeferredAction;
-    UINT DeferredActionCount;
-
-    LPWSTR *CommitAction;
-    UINT CommitActionCount;
+    struct tagMSISCRIPT *script;
 
     struct tagMSIRUNNINGACTION *RunningAction;
     UINT RunningActionCount;
@@ -224,8 +220,7 @@ typedef struct tagMSIPACKAGE
     UINT CurrentInstallState;
     msi_dialog *dialog;
     LPWSTR next_dialog;
-
-    BOOL ExecuteSequenceRun;
+    
     struct _subscriptions *EventSubscriptions;
 } MSIPACKAGE;
 
