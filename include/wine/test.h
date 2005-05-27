@@ -285,6 +285,16 @@ static const struct test *find_test( const char *name )
 }
 
 
+/* Display list of valid tests */
+static void list_tests(void)
+{
+    const struct test *test;
+
+    fprintf( stdout, "Valid test names:\n" );
+    for (test = winetest_testlist; test->name; test++) fprintf( stdout, "    %s\n", test->name );
+}
+
+
 /* Run a named test, and return exit status */
 static int run_test( const char *name )
 {
@@ -316,11 +326,8 @@ static int run_test( const char *name )
 /* Display usage and exit */
 static void usage( const char *argv0 )
 {
-    const struct test *test;
-
-    fprintf( stdout, "Usage: %s test_name\n", argv0 );
-    fprintf( stdout, "\nValid test names:\n" );
-    for (test = winetest_testlist; test->name; test++) fprintf( stdout, "    %s\n", test->name );
+    fprintf( stdout, "Usage: %s test_name\n\n", argv0 );
+    list_tests();
     exit_process(1);
 }
 
@@ -344,6 +351,11 @@ int main( int argc, char **argv )
         if (winetest_testlist[0].name && !winetest_testlist[1].name)  /* only one test */
             return run_test( winetest_testlist[0].name );
         usage( argv[0] );
+    }
+    if (!strcmp( argv[1], "--list" ))
+    {
+        list_tests();
+        return 0;
     }
     return run_test(argv[1]);
 }

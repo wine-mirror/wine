@@ -348,7 +348,7 @@ run_ex (char *cmd, const char *out, DWORD ms)
 void
 get_subtests (const char *tempdir, struct wine_test *test, int id)
 {
-    char *subname;
+    char *subname, *cmd;
     FILE *subfile;
     size_t total;
     char buffer[8192], *index;
@@ -361,7 +361,9 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
     if (!subname) report (R_FATAL, "Can't name subtests file.");
 
     extract_test (test, tempdir, id);
-    run_ex (test->exename, subname, 5000);
+    cmd = strmake (NULL, "%s --list", test->exename);
+    run_ex (cmd, subname, 5000);
+    free (cmd);
 
     subfile = fopen (subname, "r");
     if (!subfile) {
