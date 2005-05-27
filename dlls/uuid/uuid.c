@@ -58,6 +58,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "mshtml.h"
 #include "mshtmhst.h"
 #include "richole.h"
+#include "xmldom.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 
