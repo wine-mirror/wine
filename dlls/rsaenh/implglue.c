@@ -47,6 +47,8 @@ VOID WINAPI MD5Final( MD5_CTX *ctx );
 VOID WINAPI A_SHAInit(PSHA_CTX Context);
 VOID WINAPI A_SHAUpdate(PSHA_CTX Context, PCHAR Buffer, UINT BufferSize);
 VOID WINAPI A_SHAFinal(PSHA_CTX Context, PULONG Result);
+/* Function prototype copied from dlls/advapi32/crypt.c */
+BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen);
         
 BOOL init_hash_impl(ALG_ID aiAlgid, HASH_CONTEXT *pHashContext) 
 {
@@ -337,25 +339,7 @@ BOOL encrypt_stream_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, BYTE *stream,
 
 BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen)
 {
-    int dev_random;
-
-    /* FIXME: /dev/urandom does not provide random numbers of a sufficient
-     * quality for cryptographic applications. /dev/random is much better,  
-     * but it blocks if the kernel has not yet collected enough entropy for
-     * the request, which will suspend the calling thread for an indefinite
-     * amount of time. */
-    dev_random = open("/dev/urandom", O_RDONLY);
-    if (dev_random != -1)
-    {
-        if (read(dev_random, pbBuffer, dwLen) == (ssize_t)dwLen)
-        {
-            close(dev_random);
-            return TRUE;
-        }
-        close(dev_random);
-    }
-    SetLastError(NTE_FAIL);
-    return FALSE;
+    return SystemFunction036(pbBuffer, dwLen);
 }
 
 BOOL export_public_key_impl(BYTE *pbDest, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,DWORD *pdwPubExp)
