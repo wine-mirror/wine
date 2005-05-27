@@ -88,8 +88,8 @@ static const BYTE lpGrayMask[] = { 0xAA, 0xA0,
  * Computes the size of the "outside" parts of the window based on the
  * parameters of the client area.
  *
- + PARAMS
- *     LPRECT16  rect
+ * PARAMS
+ *     LPRECT  rect
  *     DWORD  style
  *     BOOL  menu
  *     DWORD  exStyle
@@ -144,8 +144,8 @@ NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
  * Computes the size of the "inside" part of the window based on the
  * parameters of the client area.
  *
- + PARAMS
- *     LPRECT16 rect
+ * PARAMS
+ *     LPRECT   rect
  *     DWORD    style
  *     DWORD    exStyle
  *

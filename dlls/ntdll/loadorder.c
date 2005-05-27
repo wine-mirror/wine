@@ -473,10 +473,8 @@ static BOOL get_registry_value( HKEY hkey, const WCHAR *module, enum loadorder_t
 /***************************************************************************
  *	MODULE_GetLoadOrderW	(internal)
  *
- * Locate the loadorder of a module.
- * Any path is stripped from the path-argument and so are the extension
- * '.dll' and '.exe'. A lookup in the table can yield an override for
- * the specific dll. Otherwise the default load order is returned.
+ * Return the loadorder of a module.
+ * The system directory and '.dll' extension is stripped from the path.
  */
 void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_name,
                           const WCHAR *path )

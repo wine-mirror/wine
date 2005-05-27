@@ -1105,13 +1105,6 @@ static BOOL CALLBACK gray_string_callbackW( HDC hdc, LPARAM param, INT len )
 
 /***********************************************************************
  *           TEXT_GrayString
- *
- * FIXME: The call to 16-bit code only works because the wine GDI is a 16-bit
- * heap and we can guarantee that the handles fit in an INT16. We have to
- * rethink the strategy once the migration to NT handles is complete.
- * We are going to get a lot of code-duplication once this migration is
- * completed...
- *
  */
 static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, INT len,
                             INT x, INT y, INT cx, INT cy )

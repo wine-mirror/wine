@@ -346,10 +346,6 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
 
 /**************************************************************************
  *		MessageBoxA (USER32.@)
- *
- * NOTES
- *   The WARN is here to help debug erroneous MessageBoxes
- *   Use: WINEDEBUG=warn+dialog,+relay
  */
 INT WINAPI MessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type)
 {
