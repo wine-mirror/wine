@@ -226,6 +226,7 @@ typedef struct tagMSIPACKAGE
     LPWSTR next_dialog;
 
     BOOL ExecuteSequenceRun;
+    struct _subscriptions *EventSubscriptions;
 } MSIPACKAGE;
 
 typedef struct tagMSIPREVIEW

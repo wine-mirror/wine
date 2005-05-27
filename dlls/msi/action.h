@@ -196,3 +196,8 @@ int get_loaded_component(MSIPACKAGE* package, LPCWSTR Component );
 int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
 int get_loaded_file(MSIPACKAGE* package, LPCWSTR file);
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
+
+/* control event stuff */
+VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
+                                      MSIRECORD *data);
+VOID ControlEvent_CleanupSubscriptions(MSIPACKAGE *package);

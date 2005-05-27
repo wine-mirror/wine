@@ -685,6 +685,21 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     HeapFree(GetProcessHeap(),0,package->CommitAction);
 
     HeapFree(GetProcessHeap(),0,package->PackagePath);
+
+    /* cleanup control event subscriptions */
+    ControlEvent_CleanupSubscriptions(package);
+}
+
+static void ce_actiontext(MSIPACKAGE* package, LPCWSTR action)
+{
+    static const WCHAR szActionText[] = 
+        {'A','c','t','i','o','n','T','e','x','t',0};
+    MSIRECORD *row;
+
+    row = MSI_CreateRecord(1);
+    MSI_RecordSetStringW(row,1,action);
+    ControlEvent_FireSubscribedEvent(package,szActionText, row);
+    msiobj_release(&row->hdr);
 }
 
 static void ui_progress(MSIPACKAGE *package, int a, int b, int c, int d )
@@ -714,6 +729,8 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
     MSIQUERY * view;
     MSIRECORD * row = 0;
     DWORD size;
+    static const WCHAR szActionData[] = 
+        {'A','c','t','i','o','n','D','a','t','a',0};
 
     if (!package->LastAction || strcmpW(package->LastAction,action))
     {
@@ -764,6 +781,9 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
     MSI_RecordSetStringW(row,1,message);
  
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONDATA, row);
+
+    ControlEvent_FireSubscribedEvent(package,szActionData, row);
+
     msiobj_release(&row->hdr);
 }
 
@@ -1403,6 +1423,7 @@ BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action, UINT* rc)
     {
         if (strcmpW(StandardActions[i].action, action)==0)
         {
+            ce_actiontext(package, action);
             ui_actioninfo(package, action, TRUE, 0);
             ui_actionstart(package, action);
             if (StandardActions[i].handler)
@@ -1427,15 +1448,11 @@ BOOL ACTION_HandleDialogBox(MSIPACKAGE *package, LPCWSTR dialog, UINT* rc)
 {
     BOOL ret = FALSE;
 
-    /*
-     * for the UI when we get that working
-     *
     if (ACTION_DialogBox(package,dialog) == ERROR_SUCCESS)
     {
         *rc = package->CurrentInstallState;
         ret = TRUE;
     }
-    */
     return ret;
 }
 
