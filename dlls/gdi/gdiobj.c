@@ -76,8 +76,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static SYSLEVEL GDI_level = { { &critsect_debug, -1, 0, 0, 0, 0 }, 3 };
 
-static WORD GDI_HeapSel;
-
 inline static BOOL get_bool(char *buffer)
 {
     return (buffer[0] == 'y' || buffer[0] == 'Y' ||
@@ -622,7 +620,6 @@ inline static void dec_ref_count( HGDIOBJ handle )
  */
 BOOL GDI_Init(void)
 {
-    HINSTANCE16 instance;
     HKEY hkey;
     LOGFONTW default_gui_font;
     const struct DefaultFontInfo* deffonts;
@@ -630,9 +627,6 @@ BOOL GDI_Init(void)
 
     if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
         hkey = 0;
-
-    /* create GDI heap */
-    if ((instance = LoadLibrary16( "GDI.EXE" )) >= 32) GDI_HeapSel = instance | 7;
 
     /* create stock objects */
     stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
@@ -727,34 +721,9 @@ inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
 void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle, const struct gdi_obj_funcs *funcs )
 {
     GDIOBJHDR *obj = NULL;
-    HLOCAL16 hlocal;
 
     _EnterSysLevel( &GDI_level );
-    switch(magic)
-    {
-    case PEN_MAGIC:
-    case BRUSH_MAGIC:
-        if (GDI_HeapSel)
-        {
-            STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-            HANDLE16 oldDS = stack16->ds;
-
-            stack16->ds = GDI_HeapSel;
-            if ((hlocal = LocalAlloc16( LMEM_MOVEABLE, size )))
-            {
-                assert( hlocal & 2 );
-                obj = MapSL(LocalLock16( hlocal ));
-                *handle = (HGDIOBJ)(ULONG_PTR)hlocal;
-            }
-            stack16->ds = oldDS;
-            if (!hlocal) goto error;
-            break;
-        }
-        /* fall through */
-    default:
-        if (!(obj = alloc_large_heap( size, handle ))) goto error;
-        break;
-    }
+    if (!(obj = alloc_large_heap( size, handle ))) goto error;
 
     obj->wMagic  = magic|OBJECT_NOSYSTEM;
     obj->dwCount = 0;
@@ -779,34 +748,16 @@ error:
  */
 void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 {
-    HGDIOBJ new_handle;
     void *new_ptr = NULL;
+    int i;
 
-    if ((UINT_PTR)handle & 2)  /* GDI heap handle */
+    i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
+    if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
     {
-        STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-        HANDLE16 oldDS = stack16->ds;
-        HLOCAL16 h = LOWORD(handle);
-
-        stack16->ds = GDI_HeapSel;
-        LocalUnlock16( h );
-        if ((new_handle = (HGDIOBJ)(ULONG_PTR)LocalReAlloc16( h, size, LMEM_MOVEABLE )))
-        {
-            assert( new_handle == handle );  /* moveable handle cannot change */
-            new_ptr = MapSL(LocalLock16( h ));
-        }
-        stack16->ds = oldDS;
+        new_ptr = HeapReAlloc( GetProcessHeap(), 0, large_handles[i], size );
+        if (new_ptr) large_handles[i] = new_ptr;
     }
-    else
-    {
-        int i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
-        if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
-        {
-            new_ptr = HeapReAlloc( GetProcessHeap(), 0, large_handles[i], size );
-            if (new_ptr) large_handles[i] = new_ptr;
-        }
-        else ERR( "Invalid handle %p\n", handle );
-    }
+    else ERR( "Invalid handle %p\n", handle );
     if (!new_ptr)
     {
         TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
@@ -822,30 +773,17 @@ void *GDI_ReallocObject( WORD size, HGDIOBJ handle, void *object )
 BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
 {
     GDIOBJHDR *object = ptr;
+    int i;
 
     object->wMagic = 0;  /* Mark it as invalid */
     object->funcs  = NULL;
-    if ((UINT_PTR)handle & 2)  /* GDI heap handle */
+    i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
+    if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
     {
-        STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-        HANDLE16 oldDS = stack16->ds;
-        HLOCAL16 h = LOWORD(handle);
-
-        stack16->ds = GDI_HeapSel;
-        LocalUnlock16( h );
-        LocalFree16( h );
-        stack16->ds = oldDS;
+        HeapFree( GetProcessHeap(), 0, large_handles[i] );
+        large_handles[i] = NULL;
     }
-    else  /* large heap handle */
-    {
-        int i = ((ULONG_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
-        if (i >= 0 && i < MAX_LARGE_HANDLES && large_handles[i])
-        {
-            HeapFree( GetProcessHeap(), 0, large_handles[i] );
-            large_handles[i] = NULL;
-        }
-        else ERR( "Invalid handle %p\n", handle );
-    }
+    else ERR( "Invalid handle %p\n", handle );
     TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
     return TRUE;
@@ -862,37 +800,15 @@ BOOL GDI_FreeObject( HGDIOBJ handle, void *ptr )
 void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
 {
     GDIOBJHDR *ptr = NULL;
+    int i;
 
     _EnterSysLevel( &GDI_level );
 
-    if ((UINT_PTR)handle & 2)  /* GDI heap handle */
+    i = ((UINT_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
+    if (i >= 0 && i < MAX_LARGE_HANDLES)
     {
-        STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-        HANDLE16 oldDS = stack16->ds;
-        HLOCAL16 h = LOWORD(handle);
-
-        stack16->ds = GDI_HeapSel;
-        ptr = MapSL(LocalLock16( h ));
-        if (ptr)
-        {
-            if (((magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ||
-                (GDIMAGIC(ptr->wMagic) < FIRST_MAGIC) ||
-                (GDIMAGIC(ptr->wMagic) > LAST_MAGIC))
-            {
-                LocalUnlock16( h );
-                ptr = NULL;
-            }
-        }
-        stack16->ds = oldDS;
-    }
-    else  /* large heap handle */
-    {
-        int i = ((UINT_PTR)handle >> 2) - FIRST_LARGE_HANDLE;
-        if (i >= 0 && i < MAX_LARGE_HANDLES)
-        {
-            ptr = large_handles[i];
-            if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
-        }
+        ptr = large_handles[i];
+        if (ptr && (magic != MAGIC_DONTCARE) && (GDIMAGIC(ptr->wMagic) != magic)) ptr = NULL;
     }
 
     if (!ptr)
@@ -912,15 +828,6 @@ void *GDI_GetObjPtr( HGDIOBJ handle, WORD magic )
  */
 void GDI_ReleaseObj( HGDIOBJ handle )
 {
-    if ((UINT_PTR)handle & 2)
-    {
-        STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-        HANDLE16 oldDS = stack16->ds;
-
-        stack16->ds = GDI_HeapSel;
-        LocalUnlock16( LOWORD(handle) );
-        stack16->ds = oldDS;
-    }
     TRACE("(%p): leave %ld\n", handle, GDI_level.crst.RecursionCount);
     _LeaveSysLevel( &GDI_level );
 }
@@ -1496,30 +1403,29 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
 DWORD WINAPI GdiSeeGdiDo16( WORD wReqType, WORD wParam1, WORD wParam2,
                           WORD wParam3 )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
     DWORD ret = ~0UL;
 
-    stack16->ds = GDI_HeapSel;
     switch (wReqType)
     {
     case 0x0001:  /* LocalAlloc */
-        ret = LocalAlloc16( wParam1, wParam3 );
+        WARN("LocalAlloc16(%x, %x): ignoring\n", wParam1, wParam3);
+        ret = 0;
         break;
     case 0x0002:  /* LocalFree */
-        ret = LocalFree16( wParam1 );
+        WARN("LocalFree16(%x): ignoring\n", wParam1);
+        ret = 0;
         break;
     case 0x0003:  /* LocalCompact */
-        ret = LocalCompact16( wParam3 );
+        WARN("LocalCompact16(%x): ignoring\n", wParam3);
+        ret = 65000; /* lie about the amount of free space */
         break;
     case 0x0103:  /* LocalHeap */
-        ret = GDI_HeapSel;
+        WARN("LocalHeap16(): ignoring\n");
         break;
     default:
         WARN("(wReqType=%04x): Unknown\n", wReqType);
         break;
     }
-    stack16->ds = oldDS;
     return ret;
 }
 
@@ -1561,15 +1467,7 @@ void WINAPI FinalGdiInit16( HBRUSH16 hPattern /* [in] fill pattern of desktop */
  */
 WORD WINAPI GdiFreeResources16( DWORD reserve )
 {
-    STACK16FRAME* stack16 = MapSL((SEGPTR)NtCurrentTeb()->WOW32Reserved);
-    HANDLE16 oldDS = stack16->ds;
-    WORD ret;
-
-    stack16->ds = GDI_HeapSel;
-    ret = (WORD)( (int)LocalCountFree16() * 100 / (int)LocalHeapSize16() );
-    stack16->ds = oldDS;
-
-    return ret;
+    return 90; /* lie about it, it shouldn't matter */
 }
 
 
