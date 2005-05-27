@@ -857,8 +857,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
 /******************************************************************************
  * destroy_key_container [Internal]
  *
- * Destructor for key containers. The user's signature and key exchange private
- * keys are stored in the registry _IN_PLAINTEXT_.
+ * Destructor for key containers.
  * 
  * PARAMS
  *  pObjectHdr [I] Pointer to the key container to be destroyed.
@@ -866,6 +865,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
 static void destroy_key_container(OBJECTHDR *pObjectHdr)
 {
     KEYCONTAINER *pKeyContainer = (KEYCONTAINER*)pObjectHdr;
+    DATA_BLOB blobIn, blobOut;
     CRYPTKEY *pKey;
     CHAR szRSABase[MAX_PATH];
     HKEY hKey, hRootKey;
@@ -899,7 +899,18 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
                         if (RSAENH_CPExportKey(pKey->hProv, pKeyContainer->hKeyExchangeKeyPair, 0,
                                                PRIVATEKEYBLOB, 0, pbKey, &dwLen))
                         {
-                            RegSetValueExA(hKey, "KeyExchangeKeyPair", 0, REG_BINARY, pbKey, dwLen);
+                            blobIn.pbData = pbKey;
+                            blobIn.cbData = dwLen;
+                                    
+                            if (CryptProtectData(&blobIn, NULL, NULL, NULL, NULL, 
+                                 (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET) ? 
+                                   CRYPTPROTECT_LOCAL_MACHINE : 0, 
+                                 &blobOut)) 
+                            {
+                                RegSetValueExA(hKey, "KeyExchangeKeyPair", 0, REG_BINARY,
+                                               blobOut.pbData, blobOut.cbData);
+                                HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                            }
                         }
                         HeapFree(GetProcessHeap(), 0, pbKey);
                     }
@@ -920,7 +931,18 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
                         if (RSAENH_CPExportKey(pKey->hProv, pKeyContainer->hSignatureKeyPair, 0, 
                                                PRIVATEKEYBLOB, 0, pbKey, &dwLen))
                         {
-                            RegSetValueExA(hKey, "SignatureKeyPair", 0, REG_BINARY, pbKey, dwLen);
+                            blobIn.pbData = pbKey;
+                            blobIn.cbData = dwLen;
+                                    
+                            if (CryptProtectData(&blobIn, NULL, NULL, NULL, NULL, 
+                                 (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET) ? 
+                                   CRYPTPROTECT_LOCAL_MACHINE : 0, 
+                                 &blobOut)) 
+                            {
+                                RegSetValueExA(hKey, "SignatureKeyPair", 0, REG_BINARY, 
+                                               blobOut.pbData, blobOut.cbData);
+                                HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                            }
                         }
                         HeapFree(GetProcessHeap(), 0, pbKey);
                     }
@@ -1021,6 +1043,7 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
     DWORD dwValueType, dwLen;
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;
+    DATA_BLOB blobIn, blobOut;
     
     sprintf(szRSABase, RSAENH_REGKEY, pszContainerName);
 
@@ -1052,8 +1075,16 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
                 if (RegQueryValueExA(hKey, "KeyExchangeKeyPair", 0, &dwValueType, pbKey, &dwLen) ==
                     ERROR_SUCCESS)
                 {
-                    RSAENH_CPImportKey(hKeyContainer, pbKey, dwLen, 0, 0, 
-                                       &pKeyContainer->hKeyExchangeKeyPair);
+                    blobIn.pbData = pbKey;
+                    blobIn.cbData = dwLen;
+
+                    if (CryptUnprotectData(&blobIn, NULL, NULL, NULL, NULL, 
+                         (dwFlags & CRYPT_MACHINE_KEYSET) ? CRYPTPROTECT_LOCAL_MACHINE : 0, &blobOut))
+                    {
+                        RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
+                                           &pKeyContainer->hKeyExchangeKeyPair);
+                        HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                    }
                 }
                 HeapFree(GetProcessHeap(), 0, pbKey);
             }
@@ -1068,8 +1099,16 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
                 if (RegQueryValueExA(hKey, "SignatureKeyPair", 0, &dwValueType, pbKey, &dwLen) == 
                     ERROR_SUCCESS)
                 {
-                    RSAENH_CPImportKey(hKeyContainer, pbKey, dwLen, 0, 0, 
-                                       &pKeyContainer->hSignatureKeyPair);
+                    blobIn.pbData = pbKey;
+                    blobIn.cbData = dwLen;
+
+                    if (CryptUnprotectData(&blobIn, NULL, NULL, NULL, NULL, 
+                         (dwFlags & CRYPT_MACHINE_KEYSET) ? CRYPTPROTECT_LOCAL_MACHINE : 0, &blobOut))
+                    {
+                        RSAENH_CPImportKey(hKeyContainer, blobOut.pbData, blobOut.cbData, 0, 0,
+                                           &pKeyContainer->hSignatureKeyPair);
+                        HeapFree(GetProcessHeap(), 0, blobOut.pbData);
+                    }
                 }
                 HeapFree(GetProcessHeap(), 0, pbKey);
             }
