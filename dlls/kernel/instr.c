@@ -2,6 +2,8 @@
  * Emulation of privileged instructions
  *
  * Copyright 1995 Alexandre Julliard
+ * Copyright 2005 Ivan Leo Puoti
+ * Copyright 2005 Laurent Pinchart
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -537,15 +539,35 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
             case 0x21: /* mov drX, eax */
                 switch (instr[2])
                 {
+                case 0xc8: /* mov dr1, eax */
+                    context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
+                    NtGetContextThread( GetCurrentThread(), context );
+                    TRACE("mov dr1,eax at 0x%08lx\n",context->Eip);
+                    context->Eax = context->Dr1;
+                    context->Eip += prefixlen+3;
+                    return ExceptionContinueExecution;
                 case 0xf8: /* mov dr7, eax */
                     TRACE("mov dr7,eax at 0x%08lx\n",context->Eip);
                     context->Eax = 0x400;
                     context->Eip += prefixlen+3;
                     return ExceptionContinueExecution;
-                default: /* fallthrough to illegal instruction */
-                    ERR("Unknown DR register, eip+2 is %02x\n", instr[2]);
-                    break;
                 }
+                ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
+                /* fallthrough to illegal instruction */
+                break;
+            case 0x23: /* mov eax drX */
+                switch (instr[2])
+                {
+                case 0xc8: /* mov eax, dr1 */
+                    context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
+                    NtGetContextThread( GetCurrentThread(), context );
+                    context->Dr1 = context->Eax;
+                    context->Eip += prefixlen+3;
+                    context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
+                    NtSetContextThread( GetCurrentThread(), context );
+                    return ExceptionContinueExecution;
+                }
+                ERR("Unsupported DR register, eip+2 is %02x\n", instr[2]);
                 /* fallthrough to illegal instruction */
                 break;
             case 0xa1: /* pop fs */
