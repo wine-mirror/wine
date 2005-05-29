@@ -811,11 +811,6 @@ extern HRESULT  WINAPI        IDirect3DIndexBuffer8Impl_GetDesc(LPDIRECT3DINDEXB
 /* --------------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern const IDirect3DBaseTexture8Vtbl Direct3DBaseTexture8_Vtbl;
-
-/*****************************************************************************
  * IDirect3DBaseTexture8 implementation structure
  */
 struct IDirect3DBaseTexture8Impl
