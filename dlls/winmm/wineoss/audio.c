@@ -179,21 +179,43 @@ static const char * getMessage(UINT msg)
     return unknown;
 }
 
-static DWORD wdDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+static DWORD wodDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].interface_name, -1,
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].ossdev->interface_name, -1,
                                     NULL, 0 ) * sizeof(WCHAR);
     return MMSYSERR_NOERROR;
 }
 
-static DWORD wdDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].interface_name, -1,
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].ossdev->interface_name, -1,
                                         NULL, 0 ) * sizeof(WCHAR))
     {
-        MultiByteToWideChar(CP_ACP, 0, OSS_Devices[wDevID].interface_name, -1,
+        MultiByteToWideChar(CP_ACP, 0, WOutDev[wDevID].ossdev->interface_name, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+	return MMSYSERR_NOERROR;
+    }
+
+    return MMSYSERR_INVALPARAM;
+}
+
+static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].ossdev->interface_name, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
+}
+
+static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].ossdev->interface_name, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].ossdev->interface_name, -1,
                             dwParam1, dwParam2 / sizeof(WCHAR));
 	return MMSYSERR_NOERROR;
     }
@@ -706,7 +728,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
                 MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name), 
                                     ossdev->out_caps.szPname, 
                                     sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));
-                TRACE("%s\n", ossdev->ds_desc.szDesc);
+                TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
                  * implement it properly, and there are probably similar issues
@@ -716,7 +738,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
             }
             close(mixer);
         } else {
-            ERR("%s: %s\n", ossdev->mixer_name , strerror( errno ));
+            ERR("open(%s) failed (%s)\n", ossdev->mixer_name , strerror(errno));
             OSS_CloseDevice(ossdev);
             return FALSE;
         }
@@ -855,7 +877,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
                 MultiByteToWideChar(CP_ACP, 0, info.name, -1, 
                                     ossdev->in_caps.szPname, 
                                     sizeof(ossdev->in_caps.szPname) / sizeof(WCHAR));
-                TRACE("%s\n", ossdev->ds_desc.szDesc);
+                TRACE("%s: %s\n", ossdev->mixer_name, ossdev->ds_desc.szDesc);
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
                  * implement it properly, and there are probably similar issues
@@ -865,7 +887,7 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
             }
             close(mixer);
         } else {
-            ERR("%s: %s\n", ossdev->mixer_name, strerror(errno));
+            ERR("open(%s) failed (%s)\n", ossdev->mixer_name, strerror(errno));
             OSS_CloseDevice(ossdev);
             return FALSE;
         }
@@ -967,7 +989,6 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 
     ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
     TRACE("%s\n", ossdev->ds_desc.szDesc);
-
 
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
         ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
@@ -1111,6 +1132,18 @@ LONG OSS_WaveInit(void)
     for (i = 0; i < MAX_WAVEDRV; i++)
         if (*OSS_Devices[i].dev_name!='\0')
             OSS_WaveFullDuplexInit(&OSS_Devices[i]);
+
+    TRACE("%d wave out devices\n", numOutDev);
+    for (i = 0; i < numOutDev; i++) {
+        TRACE("%d: %s, %s, %s\n", i, WOutDev[i].ossdev->dev_name,
+              WOutDev[i].ossdev->mixer_name, WOutDev[i].ossdev->interface_name);
+    }
+
+    TRACE("%d wave in devices\n", numInDev);
+    for (i = 0; i < numInDev; i++) {
+        TRACE("%d: %s, %s, %s\n", i, WInDev[i].ossdev->dev_name,
+              WInDev[i].ossdev->mixer_name, WInDev[i].ossdev->interface_name);
+    }
 
     return 0;
 }
@@ -2224,7 +2257,7 @@ DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
         return MMSYSERR_INVALPARAM;
     }
     if ((mixer = open(WOutDev[wDevID].ossdev->mixer_name, O_WRONLY|O_NDELAY)) < 0) {
-        WARN("mixer device not available !\n");
+        WARN("open(%s) failed (%s)\n", WOutDev[wDevID].ossdev->mixer_name, strerror(errno));
         return MMSYSERR_NOTENABLED;
     }
     if (ioctl(mixer, SOUND_MIXER_WRITE_PCM, &volume) == -1) {
@@ -2277,8 +2310,8 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_RESTART:		return wodRestart	(wDevID);
     case WODM_RESET:		return wodReset		(wDevID);
 
-    case DRV_QUERYDEVICEINTERFACESIZE: return wdDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
-    case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
+    case DRV_QUERYDEVICEINTERFACESIZE: return wodDevInterfaceSize      (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return wodDevInterface          (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return wodDsCreate	(wDevID, (PIDSDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return wodDsDesc	(wDevID, (PDSDRIVERDESC)dwParam1);
     default:
@@ -2987,8 +3020,8 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_RESET:		return widReset      (wDevID);
     case WIDM_START:		return widStart      (wDevID);
     case WIDM_STOP:		return widStop       (wDevID);
-    case DRV_QUERYDEVICEINTERFACESIZE: return wdDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
-    case DRV_QUERYDEVICEINTERFACE:     return wdDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
+    case DRV_QUERYDEVICEINTERFACESIZE: return widDevInterfaceSize      (wDevID, (LPDWORD)dwParam1);
+    case DRV_QUERYDEVICEINTERFACE:     return widDevInterface          (wDevID, (PWCHAR)dwParam1, dwParam2);
     case DRV_QUERYDSOUNDIFACE:	return widDsCreate   (wDevID, (PIDSCDRIVER*)dwParam1);
     case DRV_QUERYDSOUNDDESC:	return widDsDesc     (wDevID, (PDSDRIVERDESC)dwParam1);
     default:
