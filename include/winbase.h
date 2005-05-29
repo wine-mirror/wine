@@ -1621,6 +1621,7 @@ void        WINAPI RaiseException(DWORD,DWORD,DWORD,const ULONG_PTR *);
 BOOL        WINAPI ReadEventLogA(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 BOOL        WINAPI ReadEventLogW(HANDLE,DWORD,DWORD,LPVOID,DWORD,DWORD *,DWORD *);
 #define     ReadEventLog WINELIB_NAME_AW(ReadEventLog)
+BOOL        WINAPI ReadDirectoryChangesW(HANDLE,LPVOID,DWORD,BOOL,DWORD,LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
 BOOL        WINAPI ReadFile(HANDLE,LPVOID,DWORD,LPDWORD,LPOVERLAPPED);
 BOOL        WINAPI ReadFileEx(HANDLE,LPVOID,DWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
 HANDLE      WINAPI RegisterEventSourceA(LPCSTR,LPCSTR);
@@ -1985,8 +1986,6 @@ BOOL        WINAPI WriteProfileStringW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define     WriteProfileString WINELIB_NAME_AW(WriteProfileString)
 #define     Yield()
 
-#if defined(WINE_NO_INLINE_STRING) || !defined(__WINESRC__)
-
 LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
 LPSTR       WINAPI lstrcpyA(LPSTR,LPCSTR);
@@ -1996,7 +1995,7 @@ LPWSTR      WINAPI lstrcpynW(LPWSTR,LPCWSTR,INT);
 INT         WINAPI lstrlenA(LPCSTR);
 INT         WINAPI lstrlenW(LPCWSTR);
 
-#else /* !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__) */
+#if !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__)
 
 /* string functions without the exception handler */
 
