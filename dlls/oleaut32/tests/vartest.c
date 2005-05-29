@@ -4643,6 +4643,7 @@ static void test_VarMul(void)
     VARMUL(BSTR,lbstr,I2,4,R8,48);
     VARMUL(BSTR,lbstr,BOOL,1,R8,12);
     VARMUL(BSTR,lbstr,R4,0.1,R8,1.2);
+    VARMUL(BSTR,lbstr,BSTR,rbstr,R8,144);
     VARMUL(R4,0.2,BSTR,rbstr,R8,2.4);
     VARMUL(DATE,2.25,I4,7,R8,15.75);
 
@@ -4690,6 +4691,208 @@ if (HAVE_OLEAUT32_I8) {
     ok(hres == S_OK && EQ_DOUBLE(r, 46.2), "VarMul: DECIMAL value %f, expected %f\n", r, (double)46.2);
 }
 
+static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
+
+static const char *szVarAddI4 = "VarAdd(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
+static const char *szVarAddR8 = "VarAdd(%d,%d): expected 0x0,%d,%f, got 0x%lX,%d,%f\n";
+
+#define VARADD(vt1,val1,vt2,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarAdd(&left,&right,&result); \
+        if (VT_##rvt == VT_R4 || VT_##rvt == VT_R8 || VT_##rvt == VT_DATE) { \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && \
+        EQ_FLOAT(V_##rvt(&result), rval), \
+        szVarAddR8, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (double)(rval), hres, V_VT(&result), (double)V_##rvt(&result)); \
+        } else { \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        szVarAddI4, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); }
+
+static void test_VarAdd(void)
+{
+    static const WCHAR sz12[] = {'1','2','\0'};
+    VARIANT left, right, result, cy, dec;
+    VARTYPE i;
+    BSTR lbstr, rbstr;
+    HRESULT hres;
+    double r;
+
+    CHECKPTR(VarAdd);
+
+    lbstr = SysAllocString(sz12);
+    rbstr = SysAllocString(sz12);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+
+            SKIPTESTS(leftvt);
+
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+
+                SKIPTESTS(rightvt);
+
+                if (leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                if (leftvt == VT_BSTR)
+                    V_BSTR(&left) = lbstr;
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                if (rightvt == VT_BSTR)
+                    V_BSTR(&right) = rbstr;
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_ERROR;
+
+                /* Don't ask me why but native VarAdd cannot handle:
+                   VT_I1, VT_UI2, VT_UI4, VT_INT, VT_UINT and VT_UI8.
+                   Tested with DCOM98, Win2k, WinXP */
+                if (ExtraFlags[i] & VT_ARRAY || ExtraFlags[i] & VT_BYREF ||
+                    !IsValidVariantClearVT(leftvt, ExtraFlags[i]) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i]) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR ||
+                    leftvt == VT_I1 || rightvt == VT_I1 ||
+                    leftvt == VT_UI2 || rightvt == VT_UI2 ||
+                    leftvt == VT_UI4 || rightvt == VT_UI4 ||
+                    leftvt == VT_UI8 || rightvt == VT_UI8 ||
+                    leftvt == VT_INT || rightvt == VT_INT ||
+                    leftvt == VT_UINT || rightvt == VT_UINT) {
+                    bFail = TRUE;
+                }
+
+                if (leftvt == VT_NULL || rightvt == VT_NULL)
+                    resvt = VT_NULL;
+                else if (leftvt == VT_DISPATCH || rightvt == VT_DISPATCH)
+                    bFail = TRUE;
+                else if (leftvt == VT_DECIMAL || rightvt == VT_DECIMAL)
+                    resvt = VT_DECIMAL;
+                else if (leftvt == VT_DATE || rightvt == VT_DATE)
+                    resvt = VT_DATE;
+                else if (leftvt == VT_CY || rightvt == VT_CY)
+                    resvt = VT_CY;
+                else if (leftvt == VT_R8 || rightvt == VT_R8)
+                    resvt = VT_R8;
+                else if (leftvt == VT_BSTR || rightvt == VT_BSTR) {
+                    if ((leftvt == VT_BSTR && rightvt == VT_BSTR) ||
+                         leftvt == VT_EMPTY || rightvt == VT_EMPTY)
+                        resvt = VT_BSTR;
+                    else
+                        resvt = VT_R8;
+                } else if (leftvt == VT_R4 || rightvt == VT_R4) {
+                    if (leftvt == VT_I4 || rightvt == VT_I4 ||
+                        leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_R8;
+                    else
+                        resvt = VT_R4;
+                }
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                    resvt = VT_I8;
+                else if (leftvt == VT_I4 || rightvt == VT_I4)
+                    resvt = VT_I4;
+                else if (leftvt == VT_I2 || rightvt == VT_I2 ||
+                         leftvt == VT_BOOL || rightvt == VT_BOOL ||
+                         (leftvt == VT_EMPTY && rightvt == VT_EMPTY))
+                    resvt = VT_I2;
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+                    resvt = VT_UI1;
+
+                hres = pVarAdd(&left, &right, &result);
+                if (bFail) {
+                    ok(hres == DISP_E_TYPEMISMATCH || hres == DISP_E_BADVARTYPE,
+                       "VarAdd: %d|0x%X, %d|0x%X: Expected failure, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], hres,
+                       V_VT(&result));
+                } else {
+                    ok(hres == S_OK && V_VT(&result) == resvt,
+                       "VarAdd: %d|0x%X, %d|0x%X: expected S_OK, vt %d, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], resvt, hres,
+                       V_VT(&result));
+                }
+            }
+        }
+    }
+
+    /* Test returned values */
+    VARADD(I4,4,I4,2,I4,6);
+    VARADD(I2,4,I2,2,I2,6);
+    VARADD(I2,-13,I4,5,I4,-8);
+    VARADD(I4,-13,I4,5,I4,-8);
+    VARADD(I2,7,R4,0.5,R4,7.5);
+    VARADD(R4,0.5,I4,5,R8,5.5);
+    VARADD(R8,7.1,BOOL,0,R8,7.1);
+    VARADD(BSTR,lbstr,I2,4,R8,16);
+    VARADD(BSTR,lbstr,BOOL,1,R8,13);
+    VARADD(BSTR,lbstr,R4,0.1,R8,12.1);
+    VARADD(R4,0.2,BSTR,rbstr,R8,12.2);
+    VARADD(DATE,2.25,I4,7,DATE,9.25);
+    VARADD(DATE,1.25,R4,-1.7,DATE,-0.45);
+
+    VARADD(UI1, UI1_MAX, UI1, UI1_MAX, I2, UI1_MAX + UI1_MAX);
+    VARADD(I2, I2_MAX, I2, I2_MAX, I4, I2_MAX + I2_MAX);
+    VARADD(I2, I2_MAX, I2, I2_MIN, I2, I2_MAX + I2_MIN);
+    VARADD(I2, I2_MIN, I2, I2_MIN, I4, I2_MIN + I2_MIN);
+    VARADD(I4, I4_MAX, I4, I4_MIN, I4, I4_MAX + I4_MIN);
+    if (HAVE_OLEAUT32_I8) {
+        VARADD(I4, I4_MAX, I4, I4_MAX, I8, (long long)I4_MAX + I4_MAX);
+        VARADD(I4, I4_MIN, I4, I4_MIN, I8, (long long)I4_MIN + I4_MIN);
+    } else {
+        VARADD(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX + I4_MAX);
+        VARADD(I4, I4_MIN, I4, I4_MIN, R8, (double)I4_MIN + I4_MIN);
+    }
+    VARADD(R4, R4_MAX, R4, R4_MAX, R8, (double)R4_MAX + R4_MAX);
+    VARADD(R4, R4_MAX, R4, R4_MIN, R4, R4_MAX + R4_MIN);
+    VARADD(R4, R4_MIN, R4, R4_MIN, R4, R4_MIN + R4_MIN);
+    VARADD(R8, R8_MAX, R8, R8_MIN, R8, R8_MAX + R8_MIN);
+    VARADD(R8, R8_MIN, R8, R8_MIN, R8, R8_MIN + R8_MIN);
+
+    /* Manualy test BSTR + BSTR */
+    V_VT(&left) = VT_BSTR;
+    V_BSTR(&left) = lbstr;
+    V_VT(&right) = VT_BSTR;
+    V_BSTR(&right) = rbstr;
+    hres = VarAdd(&left, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_BSTR, "VarAdd: expected coerced type VT_BSTR, got %s!\n'", vtstr(V_VT(&result)));
+    hres = VarR8FromStr(V_BSTR(&result), 0, 0, &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 1212), "VarAdd: BSTR value %f, expected %f\n", r, (double)1212);
+
+    /* Manuly test some VT_CY and VT_DECIMAL variants */
+    V_VT(&cy) = VT_CY;
+    hres = VarCyFromI4(4711, &V_CY(&cy));
+    ok(hres == S_OK, "VarCyFromI4 failed!\n");
+    V_VT(&dec) = VT_DECIMAL;
+    hres = VarDecFromR8(-4.2, &V_DECIMAL(&dec));
+    ok(hres == S_OK, "VarDecFromR4 failed!\n");
+    memset(&left, 0, sizeof(left));
+    memset(&right, 0, sizeof(right));
+    V_VT(&left) = VT_I4;
+    V_I4(&left) = -11;
+    V_VT(&right) = VT_UI1;
+    V_UI1(&right) = 9;
+
+    hres = VarAdd(&cy, &right, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_CY, "VarAdd: expected coerced type VT_CY, got %s!\n'", vtstr(V_VT(&result)));
+    hres = VarR8FromCy(V_CY(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, 4720), "VarAdd: CY value %f, expected %f\n", r, (double)4720);
+
+    hres = VarAdd(&left, &dec, &result);
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarAdd: expected coerced type VT_DECIMAL, got %s!\n'", vtstr(V_VT(&result)));
+    hres = VarR8FromDec(&V_DECIMAL(&result), &r);
+    ok(hres == S_OK && EQ_DOUBLE(r, -15.2), "VarAdd: DECIMAL value %f, expected %f\n", r, (double)-15.2);
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -4720,4 +4923,5 @@ START_TEST(vartest)
   test_VarOr();
   test_VarEqv();
   test_VarMul();
+  test_VarAdd();
 }
