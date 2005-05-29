@@ -47,12 +47,13 @@ static void test_msidatabase(void)
     ok( res == TRUE, "Falled to delete database\n" );
 }
 
-void test_msiinsert(void)
+static void test_msiinsert(void)
 {
     const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0, hview = 0, hrec = 0;
     UINT r;
-    char *query, buf[80];
+    const char *query;
+    char buf[80];
     DWORD sz;
 
     DeleteFile(msifile);
@@ -129,10 +130,10 @@ void test_msiinsert(void)
 typedef UINT (WINAPI *fnMsiDecomposeDescriptorA)(LPCSTR, LPCSTR, LPSTR, LPSTR, DWORD *);
 fnMsiDecomposeDescriptorA MsiDecomposeDescriptorA;
 
-void test_msidecomposedesc(void)
+static void test_msidecomposedesc(void)
 {
     char prod[MAX_FEATURE_CHARS+1], comp[MAX_FEATURE_CHARS+1], feature[MAX_FEATURE_CHARS+1];
-    char *desc;
+    const char *desc;
     UINT r;
     DWORD len;
     HMODULE hmod;
@@ -177,7 +178,7 @@ void test_msidecomposedesc(void)
     ok(len == (strlen(desc) - strlen("extra")), "length wrong\n");
 }
 
-static UINT try_query_param( MSIHANDLE hdb, LPSTR szQuery, MSIHANDLE hrec )
+static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
 {
     MSIHANDLE htab = 0;
     UINT res;
@@ -202,12 +203,12 @@ static UINT try_query_param( MSIHANDLE hdb, LPSTR szQuery, MSIHANDLE hrec )
     return res;
 }
 
-static UINT try_query( MSIHANDLE hdb, LPSTR szQuery )
+static UINT try_query( MSIHANDLE hdb, LPCSTR szQuery )
 {
     return try_query_param( hdb, szQuery, 0 );
 }
 
-static UINT try_insert_query( MSIHANDLE hdb, LPSTR szQuery )
+static UINT try_insert_query( MSIHANDLE hdb, LPCSTR szQuery )
 {
     MSIHANDLE hrec = 0;
     UINT r;
@@ -221,7 +222,7 @@ static UINT try_insert_query( MSIHANDLE hdb, LPSTR szQuery )
     return r;
 }
 
-void test_msibadqueries()
+static void test_msibadqueries()
 {
     const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0;

@@ -45,7 +45,7 @@ static BOOL create_temp_file(char *name)
     return r;
 }
 
-void test_msirecord(void)
+static void test_msirecord(void)
 {
     DWORD r, sz;
     INT i;

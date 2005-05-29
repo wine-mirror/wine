@@ -421,7 +421,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         /* not formatted */
         *data = HeapAlloc(GetProcessHeap(),0,(len*sizeof(WCHAR)));
         memcpy(*data,ptr,len*sizeof(WCHAR));
-        TRACE("Returning %s\n",debugstr_w(*data));
+        TRACE("Returning %s\n",debugstr_wn(*data,len));
         return len;
     }
   
