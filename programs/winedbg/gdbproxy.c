@@ -123,12 +123,13 @@ static inline unsigned char hex_to0(int x)
     return "0123456789abcdef"[x];
 }
 
-static int hex_to_int(const char* src, size_t len){
+static int hex_to_int(const char* src, size_t len)
+{
     unsigned int returnval = 0;
-    while (len--){
-        returnval|=hex_from0(src[0]);
-        src++;
-        if(len) returnval<<=4;
+    while (len--)
+    {
+        returnval <<= 4;
+        returnval |= hex_from0(*src++);
     }
     return returnval;
 }
@@ -978,7 +979,8 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     assert(strncmp(gdbctx->in_packet, "Cont", 4) == 0);
 
     /* Query */
-    if(gdbctx->in_packet[4] == '?'){
+    if (gdbctx->in_packet[4] == '?')
+    {
         /*
           Reply:
           `vCont[;action]...'
@@ -988,7 +990,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
         */
         packet_reply_open(gdbctx);
         packet_reply_add(gdbctx, "vCont", 5);
-        /* add all the supported actions to the reply (all of them for now)*/
+        /* add all the supported actions to the reply (all of them for now) */
         packet_reply_add(gdbctx, ";c", 2);
         packet_reply_add(gdbctx, ";C", 2);
         packet_reply_add(gdbctx, ";s", 2);
@@ -1004,22 +1006,29 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
     fprintf(stderr, "no, but can we find a default packet %.*s %d\n", gdbctx->in_packet_len, gdbctx->in_packet,  gdbctx->in_packet_len);
 #endif
 
-    /* go through the packet and identify where all the actions start att */
-    for(i = 4; i < gdbctx->in_packet_len - 1; i++){
-        if(gdbctx->in_packet[i] == ';'){
+    /* go through the packet and identify where all the actions start at */
+    for (i = 4; i < gdbctx->in_packet_len - 1; i++)
+    {
+        if (gdbctx->in_packet[i] == ';')
+        {
             threadIndex[actions] = 0;
             actionIndex[actions++] = i;
-        }else if(gdbctx->in_packet[i] == ':'){
+        }
+        else if (gdbctx->in_packet[i] == ':')
+        {
             threadIndex[actions - 1] = i;
         }
     }
 
     /* now look up the default action */
-    for(i = 0 ; i < actions; i++){
-        if(threadIndex[i] == 0){
-            if(defaultAction != -1){
-                    fprintf(stderr,"Too many default actions specified\n");
-                    return packet_error;
+    for (i = 0 ; i < actions; i++)
+    {
+        if (threadIndex[i] == 0)
+        {
+            if (defaultAction != -1)
+            {
+                fprintf(stderr,"Too many default actions specified\n");
+                return packet_error;
             }
             defaultAction = i;
         }
@@ -1033,7 +1042,8 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
         threadIDs[threadCount++] = thd->tid;
         /* check to see if we have more threads than I counted on, and tell the user what to do
          * (their running winedbg, so I'm sure they can fix the problem from the error message!) */
-        if(threadCount == 100){
+        if (threadCount == 100)
+        {
             fprintf(stderr, "Wow, that's a lot of threads, change threadIDs in wine/programms/winedgb/gdbproxy.c to be higher\n");
             break;
         }
@@ -1048,20 +1058,24 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
                 gdbctx->exec_thread->tid, dbg_curr_thread->tid);
 
     /* deal with the threaded stuff first */
-    for( i = 0; i < actions ; i++){
-
-        if(threadIndex[i] != 0){
-
+    for (i = 0; i < actions ; i++)
+    {
+        if (threadIndex[i] != 0)
+        {
             int j, idLength = 0;
-            if(i < actions - 1){
+            if (i < actions - 1)
+            {
                 idLength = (actionIndex[i+1] - threadIndex[i]) - 1;
-            } else{
+            }
+            else
+            {
                 idLength = (gdbctx->in_packet_len - threadIndex[i]) - 1;
             }
 
-            threadID = hex_to_int( gdbctx->in_packet + threadIndex[i] + 1 , idLength);
+            threadID = hex_to_int(gdbctx->in_packet + threadIndex[i] + 1 , idLength);
             /* process the action */
-            switch(gdbctx->in_packet[actionIndex[i] + 1]){
+            switch (gdbctx->in_packet[actionIndex[i] + 1])
+            {
             case 's': /* step */
                 be_cpu->single_step(&gdbctx->context, TRUE);
                 /* fall through*/
@@ -1081,8 +1095,10 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
                 resume_debuggee_thread(gdbctx, DBG_EXCEPTION_NOT_HANDLED, threadID);
                 break;
             }
-            for(j = 0 ; j< threadCount; j++){
-                if(threadIDs[j] == threadID){
+            for (j = 0 ; j < threadCount; j++)
+            {
+                if (threadIDs[j] == threadID)
+                {
                     threadIDs[j] = 0;
                     break;
                 }
@@ -1090,15 +1106,19 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
         }
     } /* for i=0 ; i< actions */
 
-     /* now we have manage the default action */
-    if(defaultAction >=0){
-        for(i = 0 ; i< threadCount; i++){
+    /* now we have manage the default action */
+    if (defaultAction >= 0)
+    {
+        for (i = 0 ; i< threadCount; i++)
+        {
             /* check to see if we've already done something to the thread*/
-            if(threadIDs[i] != 0){
+            if (threadIDs[i] != 0)
+            {
                 /* if not apply the default action*/
                 threadID = threadIDs[i];
                 /* process the action (yes this is almost identical to the one above!) */
-                switch(gdbctx->in_packet[actionIndex[defaultAction] + 1]){
+                switch (gdbctx->in_packet[actionIndex[defaultAction] + 1])
+                {
                 case 's': /* step */
                     be_cpu->single_step(&gdbctx->context, TRUE);
                     /* fall through */
