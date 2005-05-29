@@ -159,6 +159,7 @@ typedef struct {
     snd_pcm_t*                  handle;                 /* handle to ALSA playback device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
 
+    char*                       mixer;                  /* mixer device name: hw:# */
     snd_hctl_t *                hctl;                    /* control handle for the playback volume */
 
     snd_pcm_sframes_t           (*write)(snd_pcm_t *, const void *, snd_pcm_uframes_t );
@@ -800,6 +801,7 @@ LONG ALSA_WaveInit(void)
     for (i = 0; i < MAX_WAVEOUTDRV; i++)
     {
         char device[64];
+        char mixer[16];
         char * regdev;
         WCHAR nameW[64];
 	snd_pcm_format_mask_t * fmask;
@@ -908,7 +910,12 @@ LONG ALSA_WaveInit(void)
 
         /* Get a high level control handle for volume operations */
         /* FIXME:  This is never freed! (there are other things done in this function similarly not freed) */
-        if (snd_hctl_open(&wwo->hctl, wwo->device, 0) >= 0)
+        sprintf(mixer, "hw:%d", i);
+        wwo->mixer = HeapAlloc(GetProcessHeap(), 0, strlen(mixer));
+        strcpy(wwo->mixer, mixer);
+        TRACE("using mixer device \"%s\"\n", wwo->mixer);
+
+        if (snd_hctl_open(&wwo->hctl, wwo->mixer, 0) >= 0)
             snd_hctl_load(wwo->hctl);
         else
             wwo->hctl = NULL;
