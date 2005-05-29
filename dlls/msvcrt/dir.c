@@ -202,7 +202,7 @@ int _chdrive(int newdrive)
  * NOTES
  *  See FindClose.
  */
-int _findclose(long hand)
+int MSVCRT__findclose(long hand)
 {
   TRACE(":handle %ld\n",hand);
   if (!FindClose((HANDLE)hand))

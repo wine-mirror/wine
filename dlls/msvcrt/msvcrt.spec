@@ -225,7 +225,7 @@
 @ cdecl _filelength(long)
 @ cdecl -ret64 _filelengthi64(long)
 @ cdecl _fileno(ptr) MSVCRT__fileno
-@ cdecl _findclose(long)
+@ cdecl _findclose(long) MSVCRT__findclose
 @ cdecl _findfirst(str ptr) MSVCRT__findfirst
 @ cdecl _findfirsti64(str ptr) MSVCRT__findfirsti64
 @ cdecl _findnext(long ptr) MSVCRT__findnext
