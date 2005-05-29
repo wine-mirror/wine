@@ -289,7 +289,7 @@ HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
     /* next, register/unregister all filters */
     if (SUCCEEDED(hr))
     {
-        hr = CoInitialize((LPVOID)NULL);
+        hr = CoInitialize(NULL);
 
         TRACE("Getting IFilterMapper2\r\n");
         hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
