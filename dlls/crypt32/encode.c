@@ -26,6 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+static const WCHAR szDllName[] = { 'D','l','l',0 };
+
 static char *CRYPT_GetKeyName(DWORD dwEncodingType, LPCSTR pszFuncName,
  LPCSTR pszOID)
 {
@@ -65,17 +67,14 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
                   LPCSTR pszOID, LPCWSTR pwszDll, LPCSTR pszOverrideFuncName)
 {
     LONG r;
-    static const WCHAR szDllName[] = { 'D','l','l',0 };
     HKEY hKey;
     LPSTR szKey;
 
     TRACE("%lx %s %s %s %s\n", dwEncodingType, pszFuncName, pszOID,
           debugstr_w(pwszDll), pszOverrideFuncName);
 
-    /* MSDN states dwEncodingType is a mask, but it isn't really treated as
-     * such.  Values 65536 or greater are ignored.
-     */
-    if (dwEncodingType >= PKCS_7_ASN_ENCODING)
+    /* This only registers functions for encoding certs, not messages */
+    if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
         return TRUE;
 
     /* I'm not matching MS bug for bug here, because I doubt any app depends on
@@ -122,7 +121,7 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     TRACE("%lx %s %s\n", dwEncodingType, pszFuncName, pszOID);
 
-    if (dwEncodingType >= PKCS_7_ASN_ENCODING)
+    if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
         return TRUE;
 
     if (!pszFuncName || !pszOID)
@@ -138,44 +137,231 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     return rc ? FALSE : TRUE;
 }
 
+/* Gets the registered function named szFuncName for dwCertEncodingType and
+ * lpszStructType, or NULL if one could not be found.  *lib will be set to the
+ * handle of the module it's in, or NULL if no module was loaded.  If the
+ * return value is NULL, *lib will also be NULL, to simplify error handling.
+ */
+static void *CRYPT_GetFunc(DWORD dwCertEncodingType, LPCSTR lpszStructType,
+ LPCSTR szFuncName, HMODULE *lib)
+{
+    void *ret = NULL;
+    char *szKey = CRYPT_GetKeyName(dwCertEncodingType, szFuncName,
+     lpszStructType);
+    const char *funcName;
+    long r;
+    HKEY hKey;
+    DWORD type, size = 0;
+
+    *lib = NULL;
+    r = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
+    HeapFree(GetProcessHeap(), 0, szKey);
+    if(r != ERROR_SUCCESS)
+        return NULL;
+
+    RegQueryValueExA(hKey, "FuncName", NULL, &type, NULL, &size);
+    if (GetLastError() == ERROR_MORE_DATA && type == REG_SZ)
+    {
+        funcName = HeapAlloc(GetProcessHeap(), 0, size);
+        RegQueryValueExA(hKey, "FuncName", NULL, &type, (LPBYTE)funcName,
+         &size);
+    }
+    else
+        funcName = szFuncName;
+    RegQueryValueExW(hKey, szDllName, NULL, &type, NULL, &size);
+    if (GetLastError() == ERROR_MORE_DATA && type == REG_SZ)
+    {
+        LPWSTR dllName = HeapAlloc(GetProcessHeap(), 0, size);
+
+        RegQueryValueExW(hKey, szDllName, NULL, &type, (LPBYTE)dllName,
+         &size);
+        *lib = LoadLibraryW(dllName);
+        if (*lib)
+        {
+             ret = GetProcAddress(*lib, funcName);
+             if (!ret)
+             {
+                 /* Unload the library, the caller doesn't want to unload it
+                  * when the return value is NULL.
+                  */
+                 FreeLibrary(*lib);
+                 *lib = NULL;
+             }
+        }
+        HeapFree(GetProcessHeap(), 0, dllName);
+    }
+    if (funcName != szFuncName)
+        HeapFree(GetProcessHeap(), 0, (char *)funcName);
+    return ret;
+}
+
+typedef BOOL (WINAPI *CryptEncodeObjectFunc)(DWORD, LPCSTR, const void *,
+ BYTE *, DWORD *);
+
 BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    FIXME("(0x%08lx, %s, %p, %p, %p): stub\n",
+    BOOL ret = FALSE;
+    HMODULE lib;
+    CryptEncodeObjectFunc pCryptEncodeObject;
+
+    TRACE("(0x%08lx, %s, %p, %p, %p)\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
      "(integer value)", pvStructInfo, pbEncoded, pcbEncoded);
-    return FALSE;
+
+    if (!pbEncoded && !pcbEncoded)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* Try registered DLL first.. */
+    pCryptEncodeObject =
+     (CryptEncodeObjectFunc)CRYPT_GetFunc(dwCertEncodingType,
+     lpszStructType, "CryptEncodeObject", &lib);
+    if (pCryptEncodeObject)
+    {
+        ret = pCryptEncodeObject(dwCertEncodingType, lpszStructType,
+         pvStructInfo, pbEncoded, pcbEncoded);
+        FreeLibrary(lib);
+    }
+    else
+    {
+        /* If not, use CryptEncodeObjectEx */
+        ret = CryptEncodeObjectEx(dwCertEncodingType, lpszStructType,
+         pvStructInfo, 0, NULL, pbEncoded, pcbEncoded);
+    }
+    return ret;
 }
+
+typedef BOOL (WINAPI *CryptEncodeObjectExFunc)(DWORD, LPCSTR, const void *,
+ DWORD, PCRYPT_ENCODE_PARA, BYTE *, DWORD *);
 
 BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
+    BOOL ret = FALSE, encoded = FALSE;
+
     FIXME("(0x%08lx, %s, %p, 0x%08lx, %p, %p, %p): stub\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
      "(integer value)", pvStructInfo, dwFlags, pEncodePara, pbEncoded,
      pcbEncoded);
-    return FALSE;
+
+    if (!pbEncoded && !pcbEncoded)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!HIWORD(lpszStructType))
+    {
+        switch (LOWORD(lpszStructType))
+        {
+        default:
+            FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
+        }
+    }
+    if (!encoded)
+    {
+        HMODULE lib;
+        CryptEncodeObjectExFunc pCryptEncodeObjectEx =
+         (CryptEncodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
+         lpszStructType, "CryptEncodeObjectEx", &lib);
+
+        if (pCryptEncodeObjectEx)
+        {
+            ret = pCryptEncodeObjectEx(dwCertEncodingType, lpszStructType,
+             pvStructInfo, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+            FreeLibrary(lib);
+        }
+    }
+    return ret;
 }
+
+typedef BOOL (WINAPI *CryptDecodeObjectFunc)(DWORD, LPCSTR, const BYTE *,
+ DWORD, DWORD, void *, DWORD *);
 
 BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo,
  DWORD *pcbStructInfo)
 {
-    FIXME("(0x%08lx, %s, %p, %ld, 0x%08lx, %p, %p): stub\n",
+    BOOL ret = FALSE;
+    HMODULE lib;
+    CryptDecodeObjectFunc pCryptDecodeObject;
+
+    TRACE("(0x%08lx, %s, %p, %ld, 0x%08lx, %p, %p)\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
      "(integer value)", pbEncoded, cbEncoded, dwFlags, pvStructInfo,
      pcbStructInfo);
-    return FALSE;
+
+    if (!pvStructInfo && !pcbStructInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    /* Try registered DLL first.. */
+    pCryptDecodeObject =
+     (CryptDecodeObjectFunc)CRYPT_GetFunc(dwCertEncodingType,
+     lpszStructType, "CryptDecodeObject", &lib);
+    if (pCryptDecodeObject)
+    {
+        ret = pCryptDecodeObject(dwCertEncodingType, lpszStructType,
+         pbEncoded, cbEncoded, dwFlags, pvStructInfo, pcbStructInfo);
+        FreeLibrary(lib);
+    }
+    else
+    {
+        /* If not, use CryptDecodeObjectEx */
+        ret = CryptDecodeObjectEx(dwCertEncodingType, lpszStructType, pbEncoded,
+         cbEncoded, dwFlags, NULL, pvStructInfo, pcbStructInfo);
+    }
+    return ret;
 }
+
+typedef BOOL (WINAPI *CryptDecodeObjectExFunc)(DWORD, LPCSTR, const BYTE *,
+ DWORD, DWORD, PCRYPT_DECODE_PARA, void *, DWORD *);
 
 BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
+    BOOL ret = FALSE, decoded = FALSE;
+
     FIXME("(0x%08lx, %s, %p, %ld, 0x%08lx, %p, %p, %p): stub\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
      "(integer value)", pbEncoded, cbEncoded, dwFlags, pDecodePara,
      pvStructInfo, pcbStructInfo);
-    return FALSE;
+
+    if (!pvStructInfo && !pcbStructInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!HIWORD(lpszStructType))
+    {
+        switch (LOWORD(lpszStructType))
+        {
+        default:
+            FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
+        }
+    }
+    if (!decoded)
+    {
+        HMODULE lib;
+        CryptDecodeObjectExFunc pCryptDecodeObjectEx =
+         (CryptDecodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
+         lpszStructType, "CryptDecodeObjectEx", &lib);
+
+        if (pCryptDecodeObjectEx)
+        {
+            ret = pCryptDecodeObjectEx(dwCertEncodingType, lpszStructType,
+             pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
+             pcbStructInfo);
+            FreeLibrary(lib);
+        }
+    }
+    return ret;
 }
