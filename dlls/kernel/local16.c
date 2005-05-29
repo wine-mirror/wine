@@ -961,8 +961,7 @@ notify_done:
 
       /* Make a block out of the free arena */
     pArena = ARENA_PTR( ptr, arena );
-    TRACE("size = %04x, arena %04x size %04x\n",
-                  size, arena, pArena->size );
+    TRACE("size = %04x, arena %04x size %04x\n", size, arena, pArena->size );
     LOCAL_RemoveFreeBlock( ptr, arena );
     LOCAL_ShrinkArena( ds, arena, size );
 
@@ -1055,8 +1054,7 @@ static HLOCAL16 LOCAL_GetNewHandleEntry( HANDLE16 ds )
 
     pEntry->lock = 0;
     pEntry->flags = 0;
-    TRACE("(%04x): %04x\n",
-                   ds, ((char *)pEntry - ptr) );
+    TRACE("(%04x): %04x\n", ds, ((char *)pEntry - ptr) );
     return (HLOCAL16)((char *)pEntry - ptr);
 }
 
@@ -1107,8 +1105,7 @@ static void LOCAL_FreeHandleEntry( HANDLE16 ds, HLOCAL16 handle )
 
     /* Remove the table from the linked list and free it */
 
-    TRACE("(%04x): freeing table %04x\n",
-                   ds, table);
+    TRACE("(%04x): freeing table %04x\n", ds, table);
     *pTable = *(WORD *)pEntry;
     LOCAL_FreeArena( ds, ARENA_HEADER( table ) );
 }
@@ -1135,8 +1132,7 @@ HLOCAL16 WINAPI LocalFree16( HLOCAL16 handle )
         LOCALHANDLEENTRY *pEntry = (LOCALHANDLEENTRY *)(ptr + handle);
         if (pEntry->flags != (LMEM_DISCARDED >> 8))
         {
-            TRACE("real block at %04x\n",
-			   pEntry->addr );
+            TRACE("real block at %04x\n", pEntry->addr );
             if (LOCAL_FreeArena( ds, ARENA_HEADER(pEntry->addr - MOVEABLE_PREFIX) ))
                 return handle; /* couldn't free it */
         }
@@ -1222,8 +1218,7 @@ HLOCAL16 WINAPI LocalReAlloc16( HLOCAL16 handle, WORD size, UINT16 flags )
      ((LOCALHANDLEENTRY *)(ptr + handle))->lock == 0xff) /* An unused handle */
 	return 0;
 
-    TRACE("%04x %d %04x ds=%04x\n",
-                   handle, size, flags, ds );
+    TRACE("%04x %d %04x ds=%04x\n", handle, size, flags, ds );
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
 
     if (HANDLE_FIXED( handle ))
@@ -1421,8 +1416,7 @@ static HLOCAL16 LOCAL_InternalLock( LPSTR heap, HLOCAL16 handle )
         if (pEntry->lock < 0xfe) pEntry->lock++;
         handle = pEntry->addr;
     }
-    TRACE("%04x returning %04x\n",
-		   old_handle, handle );
+    TRACE("%04x returning %04x\n", old_handle, handle );
     return handle;
 }
 
