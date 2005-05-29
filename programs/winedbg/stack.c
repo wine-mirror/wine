@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "debugger.h"
 #include "winbase.h"
@@ -100,96 +101,16 @@ BOOL stack_get_frame(SYMBOL_INFO* symbol, IMAGEHLP_STACK_FRAME* ihsf)
     return TRUE;
 }
 
-void stack_backtrace(DWORD tid, BOOL noisy)
+/******************************************************************
+ *		backtrace
+ *
+ * Do a backtrace on the the current thread
+ */
+static unsigned backtrace(BOOL with_frames, BOOL noisy)
 {
-    STACKFRAME                  sf;
-    CONTEXT                     saved_dbg_context;
-    struct dbg_thread*          thread;
-    unsigned                    nf;
+    STACKFRAME  sf;
+    unsigned    nf = 0;
 
-    if (tid == -1)  /* backtrace every thread in every process except the debugger itself, invoking via "bt all" */
-    {
-        THREADENTRY32 entry;
-        HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-        
-        if (snapshot == INVALID_HANDLE_VALUE)
-        {
-            dbg_printf("unable to create toolhelp snapshot\n");
-            return;
-        }
-        
-        entry.dwSize = sizeof(entry);
-        
-        if (!Thread32First(snapshot, &entry))
-        {
-            CloseHandle(snapshot);
-            return;
-        }
-        
-        do
-        {
-            if (entry.th32OwnerProcessID == GetCurrentProcessId()) continue;
-            if (dbg_curr_process) dbg_detach_debuggee();
-
-            dbg_printf("\n");
-            if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE))
-            {
-                dbg_printf("\nwarning: could not attach to 0x%lx\n", entry.th32OwnerProcessID);
-                continue;
-            }
-
-            dbg_printf("Backtracing for thread 0x%lx in process 0x%lx (%s):\n", entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
-            
-            stack_backtrace(entry.th32ThreadID, TRUE);
-        }
-        while (Thread32Next(snapshot, &entry));
-
-        if (dbg_curr_process) dbg_detach_debuggee();
-        CloseHandle(snapshot);
-        return;
-    }
-
-    if (!dbg_curr_process) 
-    {
-        dbg_printf("You must be attached to a process to run this command.\n");
-        return;
-    }
-    
-    saved_dbg_context = dbg_context; /* as we may modify dbg_context... */
-    if (tid == dbg_curr_tid)
-    {
-        thread = dbg_curr_thread;
-        HeapFree(GetProcessHeap(), 0, frames);
-        frames = NULL;
-    }
-    else
-    {
-         thread = dbg_get_thread(dbg_curr_process, tid);
-         if (!thread)
-         {
-              dbg_printf("Unknown thread id (0x%08lx) in current process\n", tid);
-              return;
-         }
-         memset(&dbg_context, 0, sizeof(dbg_context));
-         dbg_context.ContextFlags = CONTEXT_FULL;
-         if (SuspendThread(thread->handle) != -1)
-         {
-             if (!GetThreadContext(thread->handle, &dbg_context))
-             {
-                 dbg_printf("Can't get context for thread 0x%lx in current process\n",
-                            tid);
-                 ResumeThread(thread->handle);
-                 return;
-             }
-         }
-         else
-         {
-             dbg_printf("Can't suspend thread 0x%lx in current process\n", tid);
-             return;
-         }
-    }
-
-    nf = 0;
     memset(&sf, 0, sizeof(sf));
     memory_get_current_frame(&sf.AddrFrame);
     memory_get_current_pc(&sf.AddrPC);
@@ -203,10 +124,10 @@ void stack_backtrace(DWORD tid, BOOL noisy)
 
     if (noisy) dbg_printf("Backtrace:\n");
     while (StackWalk(IMAGE_FILE_MACHINE_I386, dbg_curr_process->handle, 
-                     thread->handle, &sf, &dbg_context, NULL, SymFunctionTableAccess,
-                     SymGetModuleBase, NULL))
+                     dbg_curr_thread->handle, &sf, &dbg_context, NULL,
+                     SymFunctionTableAccess, SymGetModuleBase, NULL))
     {
-        if (tid == dbg_curr_tid)
+        if (with_frames)
         {
             frames = dbg_heap_realloc(frames, 
                                       (nf + 1) * sizeof(IMAGEHLP_STACK_FRAME));
@@ -217,7 +138,7 @@ void stack_backtrace(DWORD tid, BOOL noisy)
         if (noisy)
         {
             dbg_printf("%s%d ", 
-                       (tid == dbg_curr_tid && nf == dbg_curr_frame ? "=>" : "  "),
+                       (with_frames && nf == dbg_curr_frame ? "=>" : "  "),
                        nf + 1);
             print_addr_and_args(&sf.AddrPC, &sf.AddrFrame);
             dbg_printf(" (");
@@ -229,14 +150,120 @@ void stack_backtrace(DWORD tid, BOOL noisy)
         if (nf > 200)
             break;
     }
+    return nf;
+}
 
-    dbg_context = saved_dbg_context;
+/******************************************************************
+ *		backtrace_tid
+ *
+ * Do a backtrace on a thread from its process and its identifier
+ * (preserves current thread and context information)
+ */
+static void backtrace_tid(struct dbg_process* pcs, DWORD tid, BOOL noisy)
+{
+    struct dbg_thread*  thread = dbg_curr_thread;
+
+    if (!(dbg_curr_thread = dbg_get_thread(pcs, tid)))
+        dbg_printf("Unknown thread id (0x%lx) in process (0x%lx)\n", tid, pcs->pid);
+    else
+    {
+        CONTEXT saved_ctx = dbg_context;
+
+        dbg_curr_tid = dbg_curr_thread->tid;
+        memset(&dbg_context, 0, sizeof(dbg_context));
+        dbg_context.ContextFlags = CONTEXT_FULL;
+        if (SuspendThread(dbg_curr_thread->handle) != -1)
+        {
+            if (!GetThreadContext(dbg_curr_thread->handle, &dbg_context))
+            {
+                dbg_printf("Can't get context for thread 0x%lx in current process\n",
+                           tid);
+            }
+            else backtrace(FALSE, noisy);
+            ResumeThread(dbg_curr_thread->handle);
+        }
+        else dbg_printf("Can't suspend thread 0x%lx in current process\n", tid);
+        dbg_context = saved_ctx;
+    }
+    dbg_curr_thread = thread;
+    dbg_curr_tid = thread ? thread->tid : 0;
+}
+
+/******************************************************************
+ *		backtrace_all
+ *
+ * Do a backtrace on every running thread in the system (except the debugger)
+ * (preserves current process information)
+ */
+static void backtrace_all(void)
+{
+    THREADENTRY32       entry;
+    HANDLE              snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+
+    if (snapshot == INVALID_HANDLE_VALUE)
+    {
+        dbg_printf("Unable to create toolhelp snapshot\n");
+        return;
+    }
+
+    entry.dwSize = sizeof(entry);
+    if (Thread32First(snapshot, &entry))
+    {
+        struct dbg_process* cp = dbg_curr_process;
+        DWORD               cpid = dbg_curr_pid;
+        do
+        {
+            if (entry.th32OwnerProcessID == GetCurrentProcessId()) continue;
+            if (dbg_curr_process && dbg_curr_pid != cpid)
+                dbg_detach_debuggee();
+
+            if (entry.th32OwnerProcessID == cpid)
+                dbg_curr_process = cp;
+            else if (entry.th32OwnerProcessID != dbg_curr_pid)
+            {
+                if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE))
+                {
+                    dbg_printf("\nwarning: could not attach to 0x%lx\n",
+                               entry.th32OwnerProcessID);
+                    continue;
+                }
+                dbg_curr_pid = dbg_curr_process->pid;
+            }
+
+            dbg_printf("\nBacktracing for thread 0x%lx in process 0x%lx (%s):\n",
+                       entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
+            backtrace_tid(dbg_curr_process, entry.th32ThreadID, TRUE);
+        }
+        while (Thread32Next(snapshot, &entry));
+
+        if (dbg_curr_process && dbg_curr_pid != cpid)
+            dbg_detach_debuggee();
+        dbg_curr_process = cp;      dbg_curr_pid = cpid;
+    }
+    CloseHandle(snapshot);
+}
+
+void stack_backtrace(DWORD tid, BOOL noisy)
+{
+    /* backtrace every thread in every process except the debugger itself,
+     * invoking via "bt all"
+     */
+    if (tid == -1) return backtrace_all();
+
+    if (!dbg_curr_process) 
+    {
+        dbg_printf("You must be attached to a process to run this command.\n");
+        return;
+    }
+    
     if (tid == dbg_curr_tid)
     {
-        nframe = nf;
+        HeapFree(GetProcessHeap(), 0, frames);
+        frames = NULL;
+        nframe = backtrace(TRUE, noisy);
     }
     else
     {
-        ResumeThread(thread->handle);
+        backtrace_tid(dbg_curr_process, tid, noisy);
     }
 }
