@@ -255,7 +255,7 @@ MSIVIEWOPS insert_ops =
 };
 
 UINT INSERT_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
-                        string_list *columns, value_list *values, BOOL temp )
+                        column_info *columns, value_list *values, BOOL temp )
 {
     MSIINSERTVIEW *iv = NULL;
     UINT r;
