@@ -2405,3 +2405,57 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
   }
   return hRet;
 }
+
+/**********************************************************************
+ *              VarMonthName [OLEAUT32.129]
+ *
+ * Print the specified month as localized name.
+ *
+ * PARAMS
+ *  iMonth    [I] month number 1..12
+ *  fAbbrev   [I] 0 - full name, !0 - abbreviated name
+ *  dwFlags   [I] flag stuff. only VAR_CALENDAR_HIJRI possible.
+ *  pbstrOut  [O] Destination for month name
+ *
+ * RETURNS
+ *  Success: S_OK. pbstrOut contains the name.
+ *  Failure: E_INVALIDARG, if any parameter is invalid.
+ *           E_OUTOFMEMORY, if enough memory cannot be allocated.
+ */
+HRESULT WINAPI VarMonthName(INT iMonth, INT fAbbrev, ULONG dwFlags, BSTR *pbstrOut)
+{
+  DWORD localeValue;
+  INT size;
+  WCHAR *str;
+
+  if ((iMonth < 1)  || (iMonth > 12))
+    return E_INVALIDARG;
+
+  if (dwFlags)
+    FIXME("Does not support dwFlags 0x%lx, ignoring.\n", dwFlags);
+
+  if (fAbbrev)
+	localeValue = LOCALE_SABBREVMONTHNAME1 + iMonth - 1;
+  else
+	localeValue = LOCALE_SMONTHNAME1 + iMonth - 1;
+
+  size = GetLocaleInfoW(LOCALE_USER_DEFAULT,localeValue, NULL, 0);
+  if (!size) {
+    FIXME("GetLocaleInfo 0x%lx failed.\n", localeValue);
+    return E_INVALIDARG;
+  }
+  str = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*size);
+  if (!str)
+    return E_OUTOFMEMORY;
+  size = GetLocaleInfoW(LOCALE_USER_DEFAULT,localeValue, str, size);
+  if (!size) {
+    FIXME("GetLocaleInfo of 0x%lx failed in 2nd stage?!\n", localeValue);
+    HeapFree(GetProcessHeap(),0,str);
+    return E_INVALIDARG;
+  }
+  *pbstrOut = SysAllocString(str);
+  HeapFree(GetProcessHeap(),0,str);
+  if (!*pbstrOut)
+    return E_OUTOFMEMORY;
+  return S_OK;
+}
