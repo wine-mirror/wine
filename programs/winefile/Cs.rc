@@ -98,7 +98,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Tøídit dle Velikost&i" , 		406
 		MENUITEM "Tøídit dle &data" , 		407
 		MENUITEM SEPARATOR
-		MENUITEM "Tøídit dle  &..." ,			409
+		MENUITEM "Tøídit dle  &..." ,			ID_VIEW_FILTER
 	}
 
 	POPUP "&Nastavení"  {
