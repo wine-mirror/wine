@@ -9440,7 +9440,7 @@ static LRESULT LISTVIEW_Command(LISTVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lP
             if(hFont != 0)
                 SelectObject(hdc, hOldFont);
 
-	    ReleaseDC(infoPtr->hwndSelf, hdc);
+	    ReleaseDC(infoPtr->hwndEdit, hdc);
 
 	    break;
 	}
