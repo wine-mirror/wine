@@ -955,6 +955,13 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define sz_CERT_STORE_PROV_LDAP              sz_CERT_STORE_PROV_LDAP_W
 
 /* types for CertOpenStore dwEncodingType */
+#define CERT_ENCODING_TYPE_MASK 0x0000ffff
+#define CMSG_ENCODING_TYPE_MASK 0xffff0000
+#define GET_CERT_ENCODING_TYPE(x) ((x) & CERT_ENCODING_TYPE_MASK)
+#define GET_CMSG_ENCODING_TYPE(x) ((x) & CMSG_ENCODING_TYPE_MASK)
+
+#define CRYPT_ASN_ENCODING  0x00000001
+#define CRYPT_NDR_ENCODING  0x00000002
 #define X509_ASN_ENCODING   0x00000001
 #define X509_NDR_ENCODING   0x00000002
 #define PKCS_7_ASN_ENCODING 0x00010000
