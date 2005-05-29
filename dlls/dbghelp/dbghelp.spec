@@ -70,7 +70,7 @@
 @ stdcall SymGetTypeInfo(ptr long long long long ptr)
 @ stdcall SymInitialize(long str long)
 @ stdcall SymLoadModule(long long str str long long)
-@ stub SymLoadModule64
+@ stdcall SymLoadModule64(long long str str long long long)
 @ stub SymLoadModuleEx
 @ stdcall SymMatchFileName(str str ptr ptr)
 @ stub SymMatchString

@@ -374,6 +374,17 @@ done:
     return module->module.BaseOfImage;
 }
 
+/***********************************************************************
+ *                     SymLoadModule64 (DBGHELP.@)
+ */
+DWORD WINAPI SymLoadModule64(HANDLE hProcess, HANDLE hFile, char* ImageName,
+                             char* ModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll)
+{
+    FIXME("SymLoadModule should probably reference SymLoadModule64 instead of this way\n");
+
+    return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, SizeOfDll);
+}
+
 /******************************************************************
  *		module_remove
  *
