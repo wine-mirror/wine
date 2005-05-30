@@ -306,6 +306,7 @@ typedef struct tagLISTVIEW_INFO
   INT nSearchParamLength;
   WCHAR szSearchParam[ MAX_PATH ];
   BOOL bIsDrawing;
+  INT nMeasureItemHeight;
 } LISTVIEW_INFO;
 
 /*
@@ -2452,6 +2453,8 @@ static INT LISTVIEW_CalculateItemHeight(LISTVIEW_INFO *infoPtr)
 	    nItemHeight = max(nItemHeight, infoPtr->iconSize.cy);
 	if (infoPtr->himlState || infoPtr->himlSmall)
 	    nItemHeight += HEIGHT_PADDING;
+    if (infoPtr->nMeasureItemHeight > 0)
+        nItemHeight = infoPtr->nMeasureItemHeight;
     }
 
     return max(nItemHeight, 1);
@@ -7507,6 +7510,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
   infoPtr->dwHoverTime = -1; /* default system hover time */
+  infoPtr->nMeasureItemHeight = 0;
 
   /* get default font (icon title) */
   SystemParametersInfoW(SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
@@ -9321,8 +9325,24 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_WINDOWPOSCHANGED:
       if (!(((WINDOWPOS *)lParam)->flags & SWP_NOSIZE)) 
       {
+      UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
 	  SetWindowPos(infoPtr->hwndSelf, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOACTIVATE |
 		       SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
+
+      if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
+      {
+          MEASUREITEMSTRUCT mis;
+          mis.CtlType = ODT_LISTVIEW;
+          mis.CtlID = GetWindowLongPtrW(infoPtr->hwndSelf, GWLP_ID);
+          mis.itemID = -1;
+          mis.itemWidth = 0;
+          mis.itemData = 0;
+          mis.itemHeight= infoPtr->nItemHeight;
+          SendMessageW(infoPtr->hwndNotify, WM_MEASUREITEM, mis.CtlID, (LPARAM)&mis);
+          if (infoPtr->nItemHeight != max(mis.itemHeight, 1))
+              infoPtr->nMeasureItemHeight = infoPtr->nItemHeight = max(mis.itemHeight, 1);
+      }
+
 	  LISTVIEW_UpdateSize(infoPtr);
 	  LISTVIEW_UpdateScroll(infoPtr);
       }
