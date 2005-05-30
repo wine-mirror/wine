@@ -66,11 +66,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_JOYSTICK_BUTTON_BASE 8
 
 typedef struct JoystickImpl JoystickImpl;
-static IDirectInputDevice8AVtbl JoystickAvt;
-static IDirectInputDevice8WVtbl JoystickWvt;
+static const IDirectInputDevice8AVtbl JoystickAvt;
+static const IDirectInputDevice8WVtbl JoystickWvt;
 struct JoystickImpl
 {
-        LPVOID                          lpVtbl;
+        const void                     *lpVtbl;
         DWORD                           ref;
         GUID                            guid;
 
@@ -240,7 +240,7 @@ static BOOL joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTAN
   return TRUE;
 }
 
-static JoystickImpl *alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput)
+static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput)
 {
   JoystickImpl* newDevice;
   int i;
@@ -1008,7 +1008,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
   return DI_OK;
 }
 
-static IDirectInputDevice8AVtbl JoystickAvt =
+static const IDirectInputDevice8AVtbl JoystickAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
@@ -1050,7 +1050,7 @@ static IDirectInputDevice8AVtbl JoystickAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInputDevice8WVtbl JoystickWvt =
+static const IDirectInputDevice8WVtbl JoystickWvt =
 {
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,

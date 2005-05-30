@@ -82,7 +82,7 @@ HRESULT WINAPI IDirectMusicLoaderCF_LockServer (LPCLASSFACTORY iface, BOOL doloc
 	return S_OK;
 }
 
-IClassFactoryVtbl DirectMusicLoaderCF_Vtbl = {
+static const IClassFactoryVtbl DirectMusicLoaderCF_Vtbl = {
 	IDirectMusicLoaderCF_QueryInterface,
 	IDirectMusicLoaderCF_AddRef,
 	IDirectMusicLoaderCF_Release,
@@ -169,7 +169,7 @@ HRESULT WINAPI IDirectMusicContainerCF_LockServer (LPCLASSFACTORY iface, BOOL do
 	return S_OK;
 }
 
-IClassFactoryVtbl DirectMusicContainerCF_Vtbl = {
+static const IClassFactoryVtbl DirectMusicContainerCF_Vtbl = {
 	IDirectMusicContainerCF_QueryInterface,
 	IDirectMusicContainerCF_AddRef,
 	IDirectMusicContainerCF_Release,

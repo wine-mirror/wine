@@ -26,7 +26,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 LONG DMIME_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -69,7 +69,7 @@ static HRESULT WINAPI PerformanceCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 	return S_OK;
 }
 
-static IClassFactoryVtbl PerformanceCF_Vtbl = {
+static const IClassFactoryVtbl PerformanceCF_Vtbl = {
 	PerformanceCF_QueryInterface,
 	PerformanceCF_AddRef,
 	PerformanceCF_Release,
@@ -119,7 +119,7 @@ static HRESULT WINAPI SegmentCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl SegmentCF_Vtbl = {
+static const IClassFactoryVtbl SegmentCF_Vtbl = {
 	SegmentCF_QueryInterface,
 	SegmentCF_AddRef,
 	SegmentCF_Release,
@@ -169,7 +169,7 @@ static HRESULT WINAPI SegmentStateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 	return S_OK;
 }
 
-static IClassFactoryVtbl SegmentStateCF_Vtbl = {
+static const IClassFactoryVtbl SegmentStateCF_Vtbl = {
 	SegmentStateCF_QueryInterface,
 	SegmentStateCF_AddRef,
 	SegmentStateCF_Release,
@@ -219,7 +219,7 @@ static HRESULT WINAPI GraphCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl GraphCF_Vtbl = {
+static const IClassFactoryVtbl GraphCF_Vtbl = {
 	GraphCF_QueryInterface,
 	GraphCF_AddRef,
 	GraphCF_Release,
@@ -269,7 +269,7 @@ static HRESULT WINAPI TempoTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static IClassFactoryVtbl TempoTrackCF_Vtbl = {
+static const IClassFactoryVtbl TempoTrackCF_Vtbl = {
 	TempoTrackCF_QueryInterface,
 	TempoTrackCF_AddRef,
 	TempoTrackCF_Release,
@@ -319,7 +319,7 @@ static HRESULT WINAPI SeqTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl SeqTrackCF_Vtbl = {
+static const IClassFactoryVtbl SeqTrackCF_Vtbl = {
 	SeqTrackCF_QueryInterface,
 	SeqTrackCF_AddRef,
 	SeqTrackCF_Release,
@@ -368,7 +368,7 @@ static HRESULT WINAPI SysExTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static IClassFactoryVtbl SysExTrackCF_Vtbl = {
+static const IClassFactoryVtbl SysExTrackCF_Vtbl = {
 	SysExTrackCF_QueryInterface,
 	SysExTrackCF_AddRef,
 	SysExTrackCF_Release,
@@ -418,7 +418,7 @@ static HRESULT WINAPI TimeSigTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 	return S_OK;
 }
 
-static IClassFactoryVtbl TimeSigTrackCF_Vtbl = {
+static const IClassFactoryVtbl TimeSigTrackCF_Vtbl = {
 	TimeSigTrackCF_QueryInterface,
 	TimeSigTrackCF_AddRef,
 	TimeSigTrackCF_Release,
@@ -468,7 +468,7 @@ static HRESULT WINAPI ParamControlTrackCF_LockServer(LPCLASSFACTORY iface,BOOL d
 	return S_OK;
 }
 
-static IClassFactoryVtbl ParamControlTrackCF_Vtbl = {
+static const IClassFactoryVtbl ParamControlTrackCF_Vtbl = {
 	ParamControlTrackCF_QueryInterface,
 	ParamControlTrackCF_AddRef,
 	ParamControlTrackCF_Release,
@@ -518,7 +518,7 @@ static HRESULT WINAPI MarkerTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 	return S_OK;
 }
 
-static IClassFactoryVtbl MarkerTrackCF_Vtbl = {
+static const IClassFactoryVtbl MarkerTrackCF_Vtbl = {
 	MarkerTrackCF_QueryInterface,
 	MarkerTrackCF_AddRef,
 	MarkerTrackCF_Release,
@@ -568,7 +568,7 @@ static HRESULT WINAPI LyricsTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 	return S_OK;
 }
 
-static IClassFactoryVtbl LyricsTrackCF_Vtbl = {
+static const IClassFactoryVtbl LyricsTrackCF_Vtbl = {
 	LyricsTrackCF_QueryInterface,
 	LyricsTrackCF_AddRef,
 	LyricsTrackCF_Release,
@@ -619,7 +619,7 @@ static HRESULT WINAPI SegTriggerTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dol
 	return S_OK;
 }
 
-static IClassFactoryVtbl SegTriggerTrackCF_Vtbl = {
+static const IClassFactoryVtbl SegTriggerTrackCF_Vtbl = {
 	SegTriggerTrackCF_QueryInterface,
 	SegTriggerTrackCF_AddRef,
 	SegTriggerTrackCF_Release,
@@ -669,7 +669,7 @@ static HRESULT WINAPI AudioPathCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl AudioPathCF_Vtbl = {
+static const IClassFactoryVtbl AudioPathCF_Vtbl = {
 	AudioPathCF_QueryInterface,
 	AudioPathCF_AddRef,
 	AudioPathCF_Release,
@@ -719,7 +719,7 @@ static HRESULT WINAPI WaveTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl WaveTrackCF_Vtbl = {
+static const IClassFactoryVtbl WaveTrackCF_Vtbl = {
 	WaveTrackCF_QueryInterface,
 	WaveTrackCF_AddRef,
 	WaveTrackCF_Release,

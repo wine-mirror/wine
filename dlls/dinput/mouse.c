@@ -95,8 +95,8 @@ static const DIDATAFORMAT Wine_InternalMouseFormat = {
     (LPDIOBJECTDATAFORMAT) Wine_InternalMouseObjectFormat
 };
 
-static IDirectInputDevice8AVtbl SysMouseAvt;
-static IDirectInputDevice8WVtbl SysMouseWvt;
+static const IDirectInputDevice8AVtbl SysMouseAvt;
+static const IDirectInputDevice8WVtbl SysMouseWvt;
 
 typedef struct SysMouseImpl SysMouseImpl;
 
@@ -108,7 +108,7 @@ typedef enum {
 
 struct SysMouseImpl
 {
-    LPVOID                          lpVtbl;
+    const void                     *lpVtbl;
     DWORD                           ref;
     GUID                            guid;
     
@@ -239,7 +239,7 @@ static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
     return FALSE;
 }
 
-static SysMouseImpl *alloc_device(REFGUID rguid, LPVOID mvt, IDirectInputImpl *dinput)
+static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputImpl *dinput)
 {
     int offset_array[WINE_INTERNALMOUSE_NUM_OBJS] = {
 	FIELD_OFFSET(Wine_InternalMouseData, lX),
@@ -1092,7 +1092,7 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, L
 }
 
 
-static IDirectInputDevice8AVtbl SysMouseAvt =
+static const IDirectInputDevice8AVtbl SysMouseAvt =
 {
     IDirectInputDevice2AImpl_QueryInterface,
     IDirectInputDevice2AImpl_AddRef,
@@ -1134,7 +1134,7 @@ static IDirectInputDevice8AVtbl SysMouseAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInputDevice8WVtbl SysMouseWvt =
+static const IDirectInputDevice8WVtbl SysMouseWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
     XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,

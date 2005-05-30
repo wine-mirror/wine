@@ -171,7 +171,7 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
 /**********************************************************************
  * ICreateDevEnum_Vtbl
  */
-static ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
+static const ICreateDevEnumVtbl ICreateDevEnum_Vtbl =
 {
     DEVENUM_ICreateDevEnum_QueryInterface,
     DEVENUM_ICreateDevEnum_AddRef,

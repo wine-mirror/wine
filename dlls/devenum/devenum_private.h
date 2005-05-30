@@ -53,22 +53,22 @@ static inline void DEVENUM_UnlockModule(void) { InterlockedDecrement(&dll_refs);
  */
 typedef struct
 {
-    IClassFactoryVtbl *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } ClassFactoryImpl;
 
 typedef struct
 {
-    ICreateDevEnumVtbl *lpVtbl;
+    const ICreateDevEnumVtbl *lpVtbl;
 } CreateDevEnumImpl;
 
 typedef struct
 {
-    IParseDisplayNameVtbl *lpVtbl;
+    const IParseDisplayNameVtbl *lpVtbl;
 } ParseDisplayNameImpl;
 
 typedef struct
 {
-    IEnumMonikerVtbl *lpVtbl;
+    const IEnumMonikerVtbl *lpVtbl;
     DWORD ref;
     DWORD index;
     HKEY hkey;
@@ -76,8 +76,7 @@ typedef struct
 
 typedef struct
 {
-    IMonikerVtbl *lpVtbl;
-
+    const IMonikerVtbl *lpVtbl;
     ULONG ref;
     HKEY hkey;
 } MediaCatMoniker;

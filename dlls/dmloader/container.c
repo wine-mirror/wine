@@ -127,7 +127,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_EnumObject (LPDIR
 	return S_FALSE;
 }
 
-IDirectMusicContainerVtbl DirectMusicContainer_Container_Vtbl = {
+static const IDirectMusicContainerVtbl DirectMusicContainer_Container_Vtbl = {
 	IDirectMusicContainerImpl_IDirectMusicContainer_QueryInterface,
 	IDirectMusicContainerImpl_IDirectMusicContainer_AddRef,
 	IDirectMusicContainerImpl_IDirectMusicContainer_Release,
@@ -397,7 +397,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IDirectMusicObject_ParseDescriptor (LPD
 	return S_OK;	
 }
 
-IDirectMusicObjectVtbl DirectMusicContainer_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicContainer_Object_Vtbl = {
 	IDirectMusicContainerImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicContainerImpl_IDirectMusicObject_AddRef,
 	IDirectMusicContainerImpl_IDirectMusicObject_Release,
@@ -868,7 +868,7 @@ HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetSizeMax (LPPERSISTSTR
 	return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicContainer_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicContainer_PersistStream_Vtbl = {
 	IDirectMusicContainerImpl_IPersistStream_QueryInterface,
 	IDirectMusicContainerImpl_IPersistStream_AddRef,
 	IDirectMusicContainerImpl_IPersistStream_Release,

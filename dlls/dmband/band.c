@@ -22,7 +22,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-const GUID IID_IDirectMusicBandPRIVATE = {0xda54db81,0x837d,0x11d1,{0x86,0xbc,0x00,0xc0,0x4f,0xbf,0x8f,0xef}};
+static const GUID IID_IDirectMusicBandPRIVATE = {0xda54db81,0x837d,0x11d1,{0x86,0xbc,0x00,0xc0,0x4f,0xbf,0x8f,0xef}};
 
 /*****************************************************************************
  * IDirectMusicBandImpl implementation
@@ -80,7 +80,7 @@ ULONG WINAPI IDirectMusicBandImpl_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-IUnknownVtbl DirectMusicBand_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicBand_Unknown_Vtbl = {
 	IDirectMusicBandImpl_IUnknown_QueryInterface,
 	IDirectMusicBandImpl_IUnknown_AddRef,
 	IDirectMusicBandImpl_IUnknown_Release
@@ -120,7 +120,7 @@ HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicBand_Unload (LPDIRECTMUSICBAND i
 	return S_OK;
 }
 
-IDirectMusicBandVtbl DirectMusicBand_Band_Vtbl = {
+static const IDirectMusicBandVtbl DirectMusicBand_Band_Vtbl = {
 	IDirectMusicBandImpl_IDirectMusicBand_QueryInterface,
 	IDirectMusicBandImpl_IDirectMusicBand_AddRef,
 	IDirectMusicBandImpl_IDirectMusicBand_Release,
@@ -334,7 +334,7 @@ HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicObject_ParseDescriptor (LPDIRECT
 	return S_OK;
 }
 
-IDirectMusicObjectVtbl DirectMusicBand_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicBand_Object_Vtbl = {
   IDirectMusicBandImpl_IDirectMusicObject_QueryInterface,
   IDirectMusicBandImpl_IDirectMusicObject_AddRef,
   IDirectMusicBandImpl_IDirectMusicObject_Release,
@@ -674,7 +674,7 @@ HRESULT WINAPI IDirectMusicBandImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM i
   return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicBand_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicBand_PersistStream_Vtbl = {
   IDirectMusicBandImpl_IPersistStream_QueryInterface,
   IDirectMusicBandImpl_IPersistStream_AddRef,
   IDirectMusicBandImpl_IPersistStream_Release,

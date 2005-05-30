@@ -40,13 +40,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #define WINE_DINPUT_KEYBOARD_MAX_KEYS 256
 
-static IDirectInputDevice8AVtbl SysKeyboardAvt;
-static IDirectInputDevice8WVtbl SysKeyboardWvt;
+static const IDirectInputDevice8AVtbl SysKeyboardAvt;
+static const IDirectInputDevice8WVtbl SysKeyboardWvt;
 
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
-        LPVOID                          lpVtbl;
+        const void                     *lpVtbl;
         DWORD                           ref;
         GUID                            guid;
 
@@ -238,7 +238,7 @@ static BOOL keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
   return FALSE;
 }
 
-static SysKeyboardImpl *alloc_device(REFGUID rguid, LPVOID kvt, IDirectInputImpl *dinput)
+static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInputImpl *dinput)
 {
     SysKeyboardImpl* newDevice;
     DWORD kbd_users;
@@ -747,7 +747,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
     return DI_OK;
 }
 
-static IDirectInputDevice8AVtbl SysKeyboardAvt =
+static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
@@ -789,7 +789,7 @@ static IDirectInputDevice8AVtbl SysKeyboardAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInputDevice8WVtbl SysKeyboardWvt =
+static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 {
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,

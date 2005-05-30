@@ -80,7 +80,7 @@ ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_Release (LPUNKNOWN iface) {
   return ref;
 }
 
-IUnknownVtbl DirectMusicAudioPath_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicAudioPath_Unknown_Vtbl = {
 	IDirectMusicAudioPathImpl_IUnknown_QueryInterface,
 	IDirectMusicAudioPathImpl_IUnknown_AddRef,
 	IDirectMusicAudioPathImpl_IUnknown_Release
@@ -218,7 +218,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_ConvertPChannel (
   return S_OK;
 }
 
-IDirectMusicAudioPathVtbl DirectMusicAudioPath_AudioPath_Vtbl = {
+static const IDirectMusicAudioPathVtbl DirectMusicAudioPath_AudioPath_Vtbl = {
   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_QueryInterface,
   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_AddRef,
   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Release,
@@ -434,7 +434,7 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_ParseDescriptor (LPD
 	return S_OK;
 }
 
-IDirectMusicObjectVtbl DirectMusicAudioPath_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicAudioPath_Object_Vtbl = {
 	IDirectMusicAudioPathImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicAudioPathImpl_IDirectMusicObject_AddRef,
 	IDirectMusicAudioPathImpl_IDirectMusicObject_Release,

@@ -126,7 +126,7 @@ static HRESULT WINAPI DEVENUM_IClassFactory_LockServer(
 /**********************************************************************
  * IClassFactory_Vtbl
  */
-static IClassFactoryVtbl IClassFactory_Vtbl =
+static const IClassFactoryVtbl IClassFactory_Vtbl =
 {
     DEVENUM_IClassFactory_QueryInterface,
     DEVENUM_IClassFactory_AddRef,

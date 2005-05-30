@@ -80,7 +80,7 @@ ULONG WINAPI IDirectMusicSegment8Impl_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-IUnknownVtbl DirectMusicSegment8_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicSegment8_Unknown_Vtbl = {
   IDirectMusicSegment8Impl_IUnknown_QueryInterface,
   IDirectMusicSegment8Impl_IUnknown_AddRef,
   IDirectMusicSegment8Impl_IUnknown_Release
@@ -480,7 +480,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Unload (LPDIRECTMUS
 	return S_OK;
 }
 
-IDirectMusicSegment8Vtbl DirectMusicSegment8_Segment_Vtbl = {
+static const IDirectMusicSegment8Vtbl DirectMusicSegment8_Segment_Vtbl = {
 	IDirectMusicSegment8Impl_IDirectMusicSegment8_QueryInterface,
 	IDirectMusicSegment8Impl_IDirectMusicSegment8_AddRef,
 	IDirectMusicSegment8Impl_IDirectMusicSegment8_Release,
@@ -743,7 +743,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescriptor (LPDI
 	return S_OK;
 }
 
-IDirectMusicObjectVtbl DirectMusicSegment8_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicSegment8_Object_Vtbl = {
   IDirectMusicSegment8Impl_IDirectMusicObject_QueryInterface,
   IDirectMusicSegment8Impl_IDirectMusicObject_AddRef,
   IDirectMusicSegment8Impl_IDirectMusicObject_Release,
@@ -1275,7 +1275,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_GetSizeMax (LPPERSISTSTRE
   return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicSegment8_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicSegment8_PersistStream_Vtbl = {
   IDirectMusicSegment8Impl_IPersistStream_QueryInterface,
   IDirectMusicSegment8Impl_IPersistStream_AddRef,
   IDirectMusicSegment8Impl_IPersistStream_Release,

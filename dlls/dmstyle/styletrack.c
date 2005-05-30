@@ -75,7 +75,7 @@ ULONG WINAPI IDirectMusicStyleTrack_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-IUnknownVtbl DirectMusicStyleTrack_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicStyleTrack_Unknown_Vtbl = {
 	IDirectMusicStyleTrack_IUnknown_QueryInterface,
 	IDirectMusicStyleTrack_IUnknown_AddRef,
 	IDirectMusicStyleTrack_IUnknown_Release
@@ -201,7 +201,7 @@ HRESULT WINAPI IDirectMusicStyleTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK
 	return S_OK;
 }
 
-IDirectMusicTrack8Vtbl DirectMusicStyleTrack_Track_Vtbl = {
+static const IDirectMusicTrack8Vtbl DirectMusicStyleTrack_Track_Vtbl = {
 	IDirectMusicStyleTrack_IDirectMusicTrack_QueryInterface,
 	IDirectMusicStyleTrack_IDirectMusicTrack_AddRef,
 	IDirectMusicStyleTrack_IDirectMusicTrack_Release,
@@ -443,7 +443,7 @@ HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM
   return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicStyleTrack_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicStyleTrack_PersistStream_Vtbl = {
   IDirectMusicStyleTrack_IPersistStream_QueryInterface,
   IDirectMusicStyleTrack_IPersistStream_AddRef,
   IDirectMusicStyleTrack_IPersistStream_Release,

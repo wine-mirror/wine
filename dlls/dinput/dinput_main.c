@@ -46,10 +46,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static IDirectInput7AVtbl ddi7avt;
-static IDirectInput7WVtbl ddi7wvt;
-static IDirectInput8AVtbl ddi8avt;
-static IDirectInput8WVtbl ddi8wvt;
+static const IDirectInput7AVtbl ddi7avt;
+static const IDirectInput7WVtbl ddi7wvt;
+static const IDirectInput8AVtbl ddi8avt;
+static const IDirectInput8WVtbl ddi8wvt;
 
 static const struct dinput_device *dinput_devices[] =
 {
@@ -535,7 +535,7 @@ static HRESULT WINAPI IDirectInput8WImpl_ConfigureDevices(
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInput7AVtbl ddi7avt = {
+static const IDirectInput7AVtbl ddi7avt = {
 	XCAST(QueryInterface)IDirectInputAImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -555,7 +555,7 @@ static IDirectInput7AVtbl ddi7avt = {
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInput7WVtbl ddi7wvt = {
+static const IDirectInput7WVtbl ddi7wvt = {
 	XCAST(QueryInterface)IDirectInputWImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -575,7 +575,7 @@ static IDirectInput7WVtbl ddi7wvt = {
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInput8AVtbl ddi8avt = {
+static const IDirectInput8AVtbl ddi8avt = {
 	XCAST(QueryInterface)IDirectInput8AImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -595,7 +595,7 @@ static IDirectInput8AVtbl ddi8avt = {
 #else
 # define XCAST(fun)	(void*)
 #endif
-static IDirectInput8WVtbl ddi8wvt = {
+static const IDirectInput8WVtbl ddi8wvt = {
 	XCAST(QueryInterface)IDirectInput8WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputAImpl_AddRef,
 	XCAST(Release)IDirectInputAImpl_Release,
@@ -616,7 +616,7 @@ static IDirectInput8WVtbl ddi8wvt = {
 typedef struct
 {
     /* IUnknown fields */
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl    *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 
@@ -666,7 +666,7 @@ static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl DICF_Vtbl = {
+static const IClassFactoryVtbl DICF_Vtbl = {
 	DICF_QueryInterface,
 	DICF_AddRef,
 	DICF_Release,

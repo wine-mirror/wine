@@ -927,7 +927,7 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_GetParamEx (LPDIRECTMUSICPERFORMANCE
 	return S_OK;
 }
 
-IDirectMusicPerformance8Vtbl DirectMusicPerformance8_Vtbl = {
+static const IDirectMusicPerformance8Vtbl DirectMusicPerformance8_Vtbl = {
 	IDirectMusicPerformance8Impl_QueryInterface,
 	IDirectMusicPerformance8Impl_AddRef,
 	IDirectMusicPerformance8Impl_Release,

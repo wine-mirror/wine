@@ -24,7 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 LONG DMSCRIPT_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -69,7 +69,7 @@ static HRESULT WINAPI ScriptAutoImplSegmentCF_LockServer(LPCLASSFACTORY iface,BO
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptAutoImplSegmentCF_Vtbl = {
+static const IClassFactoryVtbl ScriptAutoImplSegmentCF_Vtbl = {
 	ScriptAutoImplSegmentCF_QueryInterface,
 	ScriptAutoImplSegmentCF_AddRef,
 	ScriptAutoImplSegmentCF_Release,
@@ -118,7 +118,7 @@ static HRESULT WINAPI ScriptTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptTrackCF_Vtbl = {
+static const IClassFactoryVtbl ScriptTrackCF_Vtbl = {
 	ScriptTrackCF_QueryInterface,
 	ScriptTrackCF_AddRef,
 	ScriptTrackCF_Release,
@@ -170,7 +170,7 @@ static HRESULT WINAPI AudioVBScriptCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static IClassFactoryVtbl AudioVBScriptCF_Vtbl = {
+static const IClassFactoryVtbl AudioVBScriptCF_Vtbl = {
 	AudioVBScriptCF_QueryInterface,
 	AudioVBScriptCF_AddRef,
 	AudioVBScriptCF_Release,
@@ -220,7 +220,7 @@ static HRESULT WINAPI ScriptCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptCF_Vtbl = {
+static const IClassFactoryVtbl ScriptCF_Vtbl = {
 	ScriptCF_QueryInterface,
 	ScriptCF_AddRef,
 	ScriptCF_Release,
@@ -272,7 +272,7 @@ static HRESULT WINAPI ScriptAutoImplPerformanceCF_LockServer(LPCLASSFACTORY ifac
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptAutoImplPerformanceCF_Vtbl = {
+static const IClassFactoryVtbl ScriptAutoImplPerformanceCF_Vtbl = {
 	ScriptAutoImplPerformanceCF_QueryInterface,
 	ScriptAutoImplPerformanceCF_AddRef,
 	ScriptAutoImplPerformanceCF_Release,
@@ -324,7 +324,7 @@ static HRESULT WINAPI ScriptSourceCodeLoaderCF_LockServer(LPCLASSFACTORY iface,B
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptSourceCodeLoaderCF_Vtbl = {
+static const IClassFactoryVtbl ScriptSourceCodeLoaderCF_Vtbl = {
 	ScriptSourceCodeLoaderCF_QueryInterface,
 	ScriptSourceCodeLoaderCF_AddRef,
 	ScriptSourceCodeLoaderCF_Release,
@@ -376,7 +376,7 @@ static HRESULT WINAPI ScriptAutoImplSegmentStateCF_LockServer(LPCLASSFACTORY ifa
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptAutoImplSegmentStateCF_Vtbl = {
+static const IClassFactoryVtbl ScriptAutoImplSegmentStateCF_Vtbl = {
 	ScriptAutoImplSegmentStateCF_QueryInterface,
 	ScriptAutoImplSegmentStateCF_AddRef,
 	ScriptAutoImplSegmentStateCF_Release,
@@ -428,7 +428,7 @@ static HRESULT WINAPI ScriptAutoImplAudioPathConfigCF_LockServer(LPCLASSFACTORY 
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptAutoImplAudioPathConfigCF_Vtbl = {
+static const IClassFactoryVtbl ScriptAutoImplAudioPathConfigCF_Vtbl = {
 	ScriptAutoImplAudioPathConfigCF_QueryInterface,
 	ScriptAutoImplAudioPathConfigCF_AddRef,
 	ScriptAutoImplAudioPathConfigCF_Release,
@@ -480,7 +480,7 @@ static HRESULT WINAPI ScriptAutoImplAudioPathCF_LockServer(LPCLASSFACTORY iface,
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptAutoImplAudioPathCF_Vtbl = {
+static const IClassFactoryVtbl ScriptAutoImplAudioPathCF_Vtbl = {
 	ScriptAutoImplAudioPathCF_QueryInterface,
 	ScriptAutoImplAudioPathCF_AddRef,
 	ScriptAutoImplAudioPathCF_Release,
@@ -532,7 +532,7 @@ static HRESULT WINAPI ScriptAutoImplSongCF_LockServer(LPCLASSFACTORY iface,BOOL 
 	return S_OK;
 }
 
-static IClassFactoryVtbl ScriptAutoImplSongCF_Vtbl = {
+static const IClassFactoryVtbl ScriptAutoImplSongCF_Vtbl = {
 	ScriptAutoImplSongCF_QueryInterface,
 	ScriptAutoImplSongCF_AddRef,
 	ScriptAutoImplSongCF_Release,

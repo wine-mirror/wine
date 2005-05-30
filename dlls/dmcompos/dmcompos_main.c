@@ -24,7 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 LONG DMCOMPOS_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -67,7 +67,7 @@ static HRESULT WINAPI ChordMapCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl ChordMapCF_Vtbl = {
+static const IClassFactoryVtbl ChordMapCF_Vtbl = {
 	ChordMapCF_QueryInterface,
 	ChordMapCF_AddRef,
 	ChordMapCF_Release,
@@ -117,7 +117,7 @@ static HRESULT WINAPI ComposerCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl ComposerCF_Vtbl = {
+static const IClassFactoryVtbl ComposerCF_Vtbl = {
 	ComposerCF_QueryInterface,
 	ComposerCF_AddRef,
 	ComposerCF_Release,
@@ -167,7 +167,7 @@ static HRESULT WINAPI ChordMapTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static IClassFactoryVtbl ChordMapTrackCF_Vtbl = {
+static const IClassFactoryVtbl ChordMapTrackCF_Vtbl = {
 	ChordMapTrackCF_QueryInterface,
 	ChordMapTrackCF_AddRef,
 	ChordMapTrackCF_Release,
@@ -219,7 +219,7 @@ static HRESULT WINAPI TemplateCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl TemplateCF_Vtbl = {
+static const IClassFactoryVtbl TemplateCF_Vtbl = {
 	TemplateCF_QueryInterface,
 	TemplateCF_AddRef,
 	TemplateCF_Release,
@@ -269,7 +269,7 @@ static HRESULT WINAPI SignPostTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static IClassFactoryVtbl SignPostTrackCF_Vtbl = {
+static const IClassFactoryVtbl SignPostTrackCF_Vtbl = {
 	SignPostTrackCF_QueryInterface,
 	SignPostTrackCF_AddRef,
 	SignPostTrackCF_Release,

@@ -84,11 +84,11 @@ typedef struct {
 } POV;
 
 typedef struct JoystickImpl JoystickImpl;
-static IDirectInputDevice8AVtbl JoystickAvt;
-static IDirectInputDevice8WVtbl JoystickWvt;
+static const IDirectInputDevice8AVtbl JoystickAvt;
+static const IDirectInputDevice8WVtbl JoystickWvt;
 struct JoystickImpl
 {
-        LPVOID                          lpVtbl;
+        const void                     *lpVtbl;
         DWORD                           ref;
         GUID                            guid;
 	char				dev[32];
@@ -437,7 +437,7 @@ void calculate_ids(JoystickImpl* device)
     }
 }
 
-static HRESULT alloc_device(REFGUID rguid, LPVOID jvt, IDirectInputImpl *dinput, LPDIRECTINPUTDEVICEA* pdev)
+static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput, LPDIRECTINPUTDEVICEA* pdev)
 {
     DWORD i;
     JoystickImpl* newDevice;
@@ -1640,7 +1640,7 @@ HRESULT WINAPI JoystickWImpl_GetDeviceInfo(
     return DI_OK;
 }
 
-static IDirectInputDevice8AVtbl JoystickAvt =
+static const IDirectInputDevice8AVtbl JoystickAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
 	IDirectInputDevice2AImpl_AddRef,
@@ -1682,7 +1682,7 @@ static IDirectInputDevice8AVtbl JoystickAvt =
 # define XCAST(fun)	(void*)
 #endif
 
-static IDirectInputDevice8WVtbl SysJoystickWvt =
+static const IDirectInputDevice8WVtbl SysJoystickWvt =
 {
 	IDirectInputDevice2WImpl_QueryInterface,
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,

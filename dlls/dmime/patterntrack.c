@@ -81,7 +81,7 @@ HRESULT WINAPI IDirectMusicPatternTrackImpl_SetPatternByName (LPDIRECTMUSICPATTE
 	return S_OK;
 }
 
-IDirectMusicPatternTrackVtbl DirectMusicPatternTrack_Vtbl = {
+static const IDirectMusicPatternTrackVtbl DirectMusicPatternTrack_Vtbl = {
 	IDirectMusicPatternTrackImpl_QueryInterface,
 	IDirectMusicPatternTrackImpl_AddRef,
 	IDirectMusicPatternTrackImpl_Release,

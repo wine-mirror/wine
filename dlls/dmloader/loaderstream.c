@@ -230,7 +230,7 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Stat (LPSTREAM iface, STATST
     return E_NOTIMPL;
 }
 
-IStreamVtbl DirectMusicLoaderFileStream_Stream_Vtbl = {
+static const IStreamVtbl DirectMusicLoaderFileStream_Stream_Vtbl = {
 	IDirectMusicLoaderFileStream_IStream_QueryInterface,
 	IDirectMusicLoaderFileStream_IStream_AddRef,
 	IDirectMusicLoaderFileStream_IStream_Release,
@@ -273,7 +273,7 @@ HRESULT WINAPI IDirectMusicLoaderFileStream_IDirectMusicGetLoader_GetLoader (LPD
 	return S_OK;
 }
 
-IDirectMusicGetLoaderVtbl DirectMusicLoaderFileStream_GetLoader_Vtbl = {
+static const IDirectMusicGetLoaderVtbl DirectMusicLoaderFileStream_GetLoader_Vtbl = {
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_AddRef,
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_Release,
@@ -496,7 +496,7 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Stat (LPSTREAM iface, ST
     return E_NOTIMPL;
 }
 
-IStreamVtbl DirectMusicLoaderResourceStream_Stream_Vtbl = {
+static const IStreamVtbl DirectMusicLoaderResourceStream_Stream_Vtbl = {
 	IDirectMusicLoaderResourceStream_IStream_QueryInterface,
 	IDirectMusicLoaderResourceStream_IStream_AddRef,
 	IDirectMusicLoaderResourceStream_IStream_Release,
@@ -539,7 +539,7 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_GetLoader 
 	return S_OK;
 }
 
-IDirectMusicGetLoaderVtbl DirectMusicLoaderResourceStream_GetLoader_Vtbl = {
+static const IDirectMusicGetLoaderVtbl DirectMusicLoaderResourceStream_GetLoader_Vtbl = {
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_AddRef,
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_Release,
@@ -754,7 +754,7 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_IStream_Stat (LPSTREAM iface, STA
 	return IStream_Stat (This->pStream, pstatstg, grfStatFlag);
 }
 
-IStreamVtbl DirectMusicLoaderGenericStream_Stream_Vtbl = {
+static const IStreamVtbl DirectMusicLoaderGenericStream_Stream_Vtbl = {
 	IDirectMusicLoaderGenericStream_IStream_QueryInterface,
 	IDirectMusicLoaderGenericStream_IStream_AddRef,
 	IDirectMusicLoaderGenericStream_IStream_Release,
@@ -797,7 +797,7 @@ HRESULT WINAPI IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_GetLoader (
 	return S_OK;
 }
 
-IDirectMusicGetLoaderVtbl DirectMusicLoaderGenericStream_GetLoader_Vtbl = {
+static const IDirectMusicGetLoaderVtbl DirectMusicLoaderGenericStream_GetLoader_Vtbl = {
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_QueryInterface,
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_AddRef,
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_Release,

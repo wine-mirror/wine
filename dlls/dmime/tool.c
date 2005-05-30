@@ -105,7 +105,7 @@ HRESULT WINAPI IDirectMusicTool8Impl_Clone (LPDIRECTMUSICTOOL8 iface, IDirectMus
 	return S_OK;
 }
 
-IDirectMusicTool8Vtbl DirectMusicTool8_Vtbl = {
+static const IDirectMusicTool8Vtbl DirectMusicTool8_Vtbl = {
 	IDirectMusicTool8Impl_QueryInterface,
 	IDirectMusicTool8Impl_AddRef,
 	IDirectMusicTool8Impl_Release,

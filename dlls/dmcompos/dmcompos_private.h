@@ -51,24 +51,6 @@ typedef struct IDirectMusicChordMapTrack IDirectMusicChordMapTrack;
 typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
 	
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern IUnknownVtbl             DirectMusicChordMap_Unknown_Vtbl;
-extern IDirectMusicChordMapVtbl DirectMusicChordMap_ChordMap_Vtbl;
-extern IDirectMusicObjectVtbl   DirectMusicChordMap_Object_Vtbl;
-extern IPersistStreamVtbl       DirectMusicChordMap_PersistStream_Vtbl;
-
-extern IDirectMusicComposerVtbl DirectMusicComposer_Vtbl;
-
-extern IUnknownVtbl             DirectMusicChordMapTrack_Unknown_Vtbl;
-extern IDirectMusicTrack8Vtbl   DirectMusicChordMapTrack_Track_Vtbl;
-extern IPersistStreamVtbl       DirectMusicChordMapTrack_PersistStream_Vtbl;
-
-extern IUnknownVtbl             DirectMusicSignPostTrack_Unknown_Vtbl;
-extern IDirectMusicTrack8Vtbl   DirectMusicSignPostTrack_Track_Vtbl;
-extern IPersistStreamVtbl       DirectMusicSignPostTrack_PersistStream_Vtbl;
-
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter);
@@ -81,10 +63,10 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSignPostTrack (LPCGUID lpcGUID, LP
  */
 struct IDirectMusicChordMapImpl {
   /* IUnknown fields */
-  IUnknownVtbl *UnknownVtbl;
-  IDirectMusicChordMapVtbl *ChordMapVtbl;
-  IDirectMusicObjectVtbl *ObjectVtbl;
-  IPersistStreamVtbl *PersistStreamVtbl;
+  const IUnknownVtbl *UnknownVtbl;
+  const IDirectMusicChordMapVtbl *ChordMapVtbl;
+  const IDirectMusicObjectVtbl *ObjectVtbl;
+  const IPersistStreamVtbl *PersistStreamVtbl;
   DWORD ref;
 
   /* IDirectMusicChordMapImpl fields */
@@ -93,53 +75,27 @@ struct IDirectMusicChordMapImpl {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface);
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IUnknown_Release (LPUNKNOWN iface);
 /* IDirectMusicChordMap: */
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_QueryInterface (LPDIRECTMUSICCHORDMAP iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef (LPDIRECTMUSICCHORDMAP iface);
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IDirectMusicChordMap_Release (LPDIRECTMUSICCHORDMAP iface);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_GetScale (LPDIRECTMUSICCHORDMAP iface, DWORD* pdwScale);
 /* IDirectMusicObject: */
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc);
 /* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
 extern ULONG WINAPI   IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-extern ULONG WINAPI   IDirectMusicChordMapImpl_IPersistStream_Release (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
-extern HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
 /*****************************************************************************
  * IDirectMusicComposerImpl implementation structure
  */
 struct IDirectMusicComposerImpl {
   /* IUnknown fields */
-  IDirectMusicComposerVtbl *lpVtbl;
+  const IDirectMusicComposerVtbl *lpVtbl;
   DWORD ref;
 
   /* IDirectMusicComposerImpl fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface);
-extern ULONG WINAPI   IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface);
-/* IDirectMusicComposer: */
-extern HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromTemplate (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, IDirectMusicSegment* pTemplate, WORD wActivity, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment);
-extern HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, WORD wNumMeasures, WORD wShape, WORD wActivity, BOOL fIntro, BOOL fEnd, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment);
-extern HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pFromSeg, IDirectMusicSegment* pToSeg, MUSIC_TIME mtTime, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg);
-extern HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicPerformance* pPerformance, IDirectMusicSegment* pToSeg, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg, IDirectMusicSegmentState** ppToSegState, IDirectMusicSegmentState** ppTransSegState);
-extern HRESULT WINAPI IDirectMusicComposerImpl_ComposeTemplateFromShape (LPDIRECTMUSICCOMPOSER iface, WORD wNumMeasures, WORD wShape, BOOL fIntro, BOOL fEnd, WORD wEndLength, IDirectMusicSegment** ppTemplate);
-extern HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pSegment, BOOL fTrackScale, IDirectMusicChordMap* pChordMap);
 
 
 /*****************************************************************************
@@ -147,9 +103,9 @@ extern HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMP
  */
 struct IDirectMusicChordMapTrack {
   /* IUnknown fields */
-  IUnknownVtbl *UnknownVtbl;
-  IDirectMusicTrack8Vtbl *TrackVtbl;
-  IPersistStreamVtbl *PersistStreamVtbl;
+  const IUnknownVtbl *UnknownVtbl;
+  const IDirectMusicTrack8Vtbl *TrackVtbl;
+  const IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicChordMapTrack fields */
@@ -157,47 +113,20 @@ struct IDirectMusicChordMapTrack {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicChordMapTrack_IUnknown_AddRef (LPUNKNOWN iface);
-extern ULONG WINAPI   IDirectMusicChordMapTrack_IUnknown_Release (LPUNKNOWN iface);
 /* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicChordMapTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-extern ULONG WINAPI   IDirectMusicChordMapTrack_IDirectMusicTrack_Release (LPDIRECTMUSICTRACK8 iface);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Init (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegment* pSegment);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegmentState* pSegmentState, IDirectMusicPerformance* pPerformance, void** ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_EndPlay (LPDIRECTMUSICTRACK8 iface, void* pStateData);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_PlayEx (LPDIRECTMUSICTRACK8 iface, void* pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack);
 /* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
 extern ULONG WINAPI   IDirectMusicChordMapTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-extern ULONG WINAPI   IDirectMusicChordMapTrack_IPersistStream_Release (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
-extern HRESULT WINAPI IDirectMusicChordMapTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
-
 
 /*****************************************************************************
  * IDirectMusicSignPostTrack implementation structure
  */
 struct IDirectMusicSignPostTrack {
   /* IUnknown fields */
-  IUnknownVtbl *UnknownVtbl;
-  IDirectMusicTrack8Vtbl *TrackVtbl;
-  IPersistStreamVtbl *PersistStreamVtbl;
+  const IUnknownVtbl *UnknownVtbl;
+  const IDirectMusicTrack8Vtbl *TrackVtbl;
+  const IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicSignPostTrack fields */
@@ -205,37 +134,11 @@ struct IDirectMusicSignPostTrack {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicSignPostTrack_IUnknown_AddRef (LPUNKNOWN iface);
-extern ULONG WINAPI   IDirectMusicSignPostTrack_IUnknown_Release (LPUNKNOWN iface);
 /* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicSignPostTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-extern ULONG WINAPI   IDirectMusicSignPostTrack_IDirectMusicTrack_Release (LPDIRECTMUSICTRACK8 iface);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Init (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegment* pSegment);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_InitPlay (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegmentState* pSegmentState, IDirectMusicPerformance* pPerformance, void** ppStateData, DWORD dwVirtualTrackID, DWORD dwFlags);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_EndPlay (LPDIRECTMUSICTRACK8 iface, void* pStateData);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Play (LPDIRECTMUSICTRACK8 iface, void* pStateData, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, MUSIC_TIME mtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_GetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_SetParam (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, MUSIC_TIME mtTime, void* pParam);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_PlayEx (LPDIRECTMUSICTRACK8 iface, void* pStateData, REFERENCE_TIME rtStart, REFERENCE_TIME rtEnd, REFERENCE_TIME rtOffset, DWORD dwFlags, IDirectMusicPerformance* pPerf, IDirectMusicSegmentState* pSegSt, DWORD dwVirtualID);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_GetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, REFERENCE_TIME* prtNext, void* pParam, void* pStateData, DWORD dwFlags);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_SetParamEx (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType, REFERENCE_TIME rtTime, void* pParam, void* pStateData, DWORD dwFlags);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack);
 /* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
 extern ULONG WINAPI   IDirectMusicSignPostTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-extern ULONG WINAPI   IDirectMusicSignPostTrack_IPersistStream_Release (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
-extern HRESULT WINAPI IDirectMusicSignPostTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmcompos.dll

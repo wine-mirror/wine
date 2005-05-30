@@ -24,7 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 LONG DMSTYLE_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -70,7 +70,7 @@ static HRESULT WINAPI SectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl SectionCF_Vtbl = {
+static const IClassFactoryVtbl SectionCF_Vtbl = {
 	SectionCF_QueryInterface,
 	SectionCF_AddRef,
 	SectionCF_Release,
@@ -120,7 +120,7 @@ static HRESULT WINAPI StyleCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl StyleCF_Vtbl = {
+static const IClassFactoryVtbl StyleCF_Vtbl = {
 	StyleCF_QueryInterface,
 	StyleCF_AddRef,
 	StyleCF_Release,
@@ -170,7 +170,7 @@ static HRESULT WINAPI ChordTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static IClassFactoryVtbl ChordTrackCF_Vtbl = {
+static const IClassFactoryVtbl ChordTrackCF_Vtbl = {
 	ChordTrackCF_QueryInterface,
 	ChordTrackCF_AddRef,
 	ChordTrackCF_Release,
@@ -220,7 +220,7 @@ static HRESULT WINAPI CommandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock
 	return S_OK;
 }
 
-static IClassFactoryVtbl CommandTrackCF_Vtbl = {
+static const IClassFactoryVtbl CommandTrackCF_Vtbl = {
 	CommandTrackCF_QueryInterface,
 	CommandTrackCF_AddRef,
 	CommandTrackCF_Release,
@@ -270,7 +270,7 @@ static HRESULT WINAPI StyleTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static IClassFactoryVtbl StyleTrackCF_Vtbl = {
+static const IClassFactoryVtbl StyleTrackCF_Vtbl = {
 	StyleTrackCF_QueryInterface,
 	StyleTrackCF_AddRef,
 	StyleTrackCF_Release,
@@ -320,7 +320,7 @@ static HRESULT WINAPI MotifTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static IClassFactoryVtbl MotifTrackCF_Vtbl = {
+static const IClassFactoryVtbl MotifTrackCF_Vtbl = {
 	MotifTrackCF_QueryInterface,
 	MotifTrackCF_AddRef,
 	MotifTrackCF_Release,
@@ -370,7 +370,7 @@ static HRESULT WINAPI AuditionTrackCF_LockServer(LPCLASSFACTORY iface,BOOL doloc
 	return S_OK;
 }
 
-static IClassFactoryVtbl AuditionTrackCF_Vtbl = {
+static const IClassFactoryVtbl AuditionTrackCF_Vtbl = {
 	AuditionTrackCF_QueryInterface,
 	AuditionTrackCF_AddRef,
 	AuditionTrackCF_Release,
@@ -420,7 +420,7 @@ static HRESULT WINAPI MuteTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl MuteTrackCF_Vtbl = {
+static const IClassFactoryVtbl MuteTrackCF_Vtbl = {
 	MuteTrackCF_QueryInterface,
 	MuteTrackCF_AddRef,
 	MuteTrackCF_Release,

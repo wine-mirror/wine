@@ -91,7 +91,7 @@ ULONG WINAPI IDirectMusicScriptImpl_IUnknown_Release (LPUNKNOWN iface) {
   return ref;
 }
 
-IUnknownVtbl DirectMusicScript_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicScript_Unknown_Vtbl = {
   IDirectMusicScriptImpl_IUnknown_QueryInterface,
   IDirectMusicScriptImpl_IUnknown_AddRef,
   IDirectMusicScriptImpl_IUnknown_Release
@@ -176,7 +176,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicScript_EnumVariable (LPDIRECTM
   return S_OK;
 }
 
-IDirectMusicScriptVtbl DirectMusicScript_Script_Vtbl = {
+static const IDirectMusicScriptVtbl DirectMusicScript_Script_Vtbl = {
   IDirectMusicScriptImpl_IDirectMusicScript_QueryInterface,
   IDirectMusicScriptImpl_IDirectMusicScript_AddRef,
   IDirectMusicScriptImpl_IDirectMusicScript_Release,
@@ -398,7 +398,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicObject_ParseDescriptor (LPDIRE
 	return S_OK;
 }
 
-IDirectMusicObjectVtbl DirectMusicScript_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicScript_Object_Vtbl = {
   IDirectMusicScriptImpl_IDirectMusicObject_QueryInterface,
   IDirectMusicScriptImpl_IDirectMusicObject_AddRef,
   IDirectMusicScriptImpl_IDirectMusicObject_Release,
@@ -672,7 +672,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM
   return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicScript_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicScript_PersistStream_Vtbl = {
   IDirectMusicScriptImpl_IPersistStream_QueryInterface,
   IDirectMusicScriptImpl_IPersistStream_AddRef,
   IDirectMusicScriptImpl_IPersistStream_Release,

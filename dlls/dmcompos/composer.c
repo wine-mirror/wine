@@ -99,7 +99,7 @@ HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMPOSER if
 	return S_OK;
 }
 
-IDirectMusicComposerVtbl DirectMusicComposer_Vtbl = {
+static const IDirectMusicComposerVtbl DirectMusicComposer_Vtbl = {
 	IDirectMusicComposerImpl_QueryInterface,
 	IDirectMusicComposerImpl_AddRef,
 	IDirectMusicComposerImpl_Release,

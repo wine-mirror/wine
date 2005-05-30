@@ -40,7 +40,7 @@ static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface);
 
 typedef struct
 {
-    IPropertyBagVtbl *lpVtbl;
+    const IPropertyBagVtbl *lpVtbl;
     DWORD ref;
     HKEY hkey;
 } RegPropBagImpl;
@@ -262,7 +262,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Write(
     return res;
 }
 
-static IPropertyBagVtbl IPropertyBag_Vtbl =
+static const IPropertyBagVtbl IPropertyBag_Vtbl =
 {
     DEVENUM_IPropertyBag_QueryInterface,
     DEVENUM_IPropertyBag_AddRef,
@@ -655,7 +655,7 @@ static HRESULT WINAPI DEVENUM_IMediaCatMoniker_IsSystemMoniker(
     return S_FALSE;
 }
 
-static IMonikerVtbl IMoniker_Vtbl =
+static const IMonikerVtbl IMoniker_Vtbl =
 {
     DEVENUM_IMediaCatMoniker_QueryInterface,
     DEVENUM_IMediaCatMoniker_AddRef,
@@ -833,7 +833,7 @@ static HRESULT WINAPI DEVENUM_IEnumMoniker_Clone(LPENUMMONIKER iface, IEnumMonik
 /**********************************************************************
  * IEnumMoniker_Vtbl
  */
-static IEnumMonikerVtbl IEnumMoniker_Vtbl =
+static const IEnumMonikerVtbl IEnumMoniker_Vtbl =
 {
     DEVENUM_IEnumMoniker_QueryInterface,
     DEVENUM_IEnumMoniker_AddRef,

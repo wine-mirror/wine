@@ -83,7 +83,7 @@ ULONG WINAPI IDirectMusicStyle8Impl_IUnknown_Release (LPUNKNOWN iface) {
 	return ref;
 }
 
-IUnknownVtbl DirectMusicStyle8_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicStyle8_Unknown_Vtbl = {
 	IDirectMusicStyle8Impl_IUnknown_QueryInterface,
 	IDirectMusicStyle8Impl_IUnknown_AddRef,
 	IDirectMusicStyle8Impl_IUnknown_Release
@@ -178,7 +178,7 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumPattern (LPDIRECTMU
 	return S_OK;
 }
 
-IDirectMusicStyle8Vtbl DirectMusicStyle8_Style_Vtbl = {
+static const IDirectMusicStyle8Vtbl DirectMusicStyle8_Style_Vtbl = {
 	IDirectMusicStyle8Impl_IDirectMusicStyle8_QueryInterface,
 	IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef,
 	IDirectMusicStyle8Impl_IDirectMusicStyle8_Release,
@@ -402,7 +402,7 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_ParseDescriptor (LPDIRE
 	return S_OK;
 }
 
-IDirectMusicObjectVtbl DirectMusicStyle8_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicStyle8_Object_Vtbl = {
   IDirectMusicStyle8Impl_IDirectMusicObject_QueryInterface,
   IDirectMusicStyle8Impl_IDirectMusicObject_AddRef,
   IDirectMusicStyle8Impl_IDirectMusicObject_Release,
@@ -1065,7 +1065,7 @@ HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_GetSizeMax (LPPERSISTSTREAM
 
 }
 
-IPersistStreamVtbl DirectMusicStyle8_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicStyle8_PersistStream_Vtbl = {
   IDirectMusicStyle8Impl_IPersistStream_QueryInterface,
   IDirectMusicStyle8Impl_IPersistStream_AddRef,
   IDirectMusicStyle8Impl_IPersistStream_Release,

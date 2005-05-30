@@ -106,7 +106,7 @@ HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGME
 	return S_OK;
 }
 
-IDirectMusicSegmentState8Vtbl DirectMusicSegmentState8_Vtbl = {
+static const IDirectMusicSegmentState8Vtbl DirectMusicSegmentState8_Vtbl = {
 	IDirectMusicSegmentState8Impl_QueryInterface,
 	IDirectMusicSegmentState8Impl_AddRef,
 	IDirectMusicSegmentState8Impl_Release,

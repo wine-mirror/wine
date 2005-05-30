@@ -24,7 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 LONG DMBAND_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -68,7 +68,7 @@ static HRESULT WINAPI BandCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl BandCF_Vtbl = {
+static const IClassFactoryVtbl BandCF_Vtbl = {
 	BandCF_QueryInterface,
 	BandCF_AddRef,
 	BandCF_Release,
@@ -120,7 +120,7 @@ static HRESULT WINAPI BandTrackCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl BandTrackCF_Vtbl = {
+static const IClassFactoryVtbl BandTrackCF_Vtbl = {
 	BandTrackCF_QueryInterface,
 	BandTrackCF_AddRef,
 	BandTrackCF_Release,
