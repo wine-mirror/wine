@@ -817,7 +817,7 @@ INSTALLSTATE WINAPI MsiLocateComponentA(LPCSTR szComponent, LPSTR lpPathBuf,
     return INSTALLSTATE_UNKNOWN;
 }
 
-INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPSTR lpPathBuf,
+INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPWSTR lpPathBuf,
                 DWORD *pcchBuf)
 {
     FIXME("%s %p %08lx\n", debugstr_w(szComponent), lpPathBuf, *pcchBuf);

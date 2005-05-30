@@ -189,14 +189,32 @@ UINT WINAPI MsiSummaryInfoGetPropertyA(MSIHANDLE,UINT,UINT*,INT*,FILETIME*,LPSTR
 UINT WINAPI MsiSummaryInfoGetPropertyW(MSIHANDLE,UINT,UINT*,INT*,FILETIME*,LPWSTR,DWORD*);
 #define     MsiSummaryInfoGetProperty WINELIB_NAME_AW(MsiSummaryInfoGetProperty)
 
-UINT WINAPI MsiSummaryInfoSetPropertyA(MSIHANDLE, UINT, UINT, INT, FILETIME*, LPSTR);
-UINT WINAPI MsiSummaryInfoSetPropertyW(MSIHANDLE, UINT, UINT, INT, FILETIME*, LPWSTR);
+UINT WINAPI MsiSummaryInfoSetPropertyA(MSIHANDLE, UINT, UINT, INT, FILETIME*, LPCSTR);
+UINT WINAPI MsiSummaryInfoSetPropertyW(MSIHANDLE, UINT, UINT, INT, FILETIME*, LPCWSTR);
 #define     MsiSummaryInfoSetProperty WINELIB_NAME_AW(MsiSummaryInfoSetProperty)
+
+UINT WINAPI MsiDatabaseExportA(MSIHANDLE, LPCSTR, LPCSTR, LPCSTR);
+UINT WINAPI MsiDatabaseExportW(MSIHANDLE, LPCWSTR, LPCWSTR, LPCWSTR);
+#define     MsiDatabaseExport WINELIB_NAME_AW(MsiDatabaseExport)
+
+UINT WINAPI MsiDatabaseImportA(MSIHANDLE, LPCSTR, LPCSTR);
+UINT WINAPI MsiDatabaseImportW(MSIHANDLE, LPCWSTR, LPCWSTR);
+#define     MsiDatabaseImport WINELIB_NAME_AW(MsiDatabaseImport)
+
+UINT WINAPI MsiOpenDatabaseW(LPCWSTR, LPCWSTR, MSIHANDLE*);
+UINT WINAPI MsiOpenDatabaseA(LPCSTR, LPCSTR, MSIHANDLE*);
+#define     MsiOpenDatabase WINELIB_NAME_AW(MsiOpenDatabase)
+
+UINT WINAPI MsiDatabaseIsTablePersistentA(MSIHANDLE, LPSTR);
+UINT WINAPI MsiDatabaseIsTablePersistentW(MSIHANDLE, LPWSTR);
+#define     MsiDatabaseIsTablePersistent WINELIB_NAME_AW(MsiDatabaseIsTablePersistent)
 
 UINT WINAPI MsiSummaryInfoPersist(MSIHANDLE);
 UINT WINAPI MsiSummaryInfoGetPropertyCount(MSIHANDLE,UINT*);
 
 UINT WINAPI MsiEnableUIPreview(MSIHANDLE, MSIHANDLE*);
 BOOL WINAPI MsiGetMode(MSIHANDLE, MSIRUNMODE);
+
+UINT WINAPI MsiViewModify(MSIHANDLE, MSIMODIFY, MSIHANDLE);
 
 #endif /* __WINE_MSIQUERY_H */
