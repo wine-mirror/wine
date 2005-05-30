@@ -430,12 +430,31 @@ create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
 	ddsd.dwFlags |= DDSD_PITCH;
     }
 
-    /* Check also for the MIPMAP / MIPMAPCOUNT flags.
-       As checked on Windows, this is the right behaviour. No mipmaps seem to be generated. */
-    if (((ddsd.dwFlags & DDSD_MIPMAPCOUNT) == 0) &&
-	((ddsd.ddsCaps.dwCaps & DDSCAPS_MIPMAP) != 0)) {
+    if((ddsd.ddsCaps.dwCaps & DDSCAPS_MIPMAP) &&
+        !(ddsd.dwFlags & DDSD_MIPMAPCOUNT))
+    {
+        if(ddsd.ddsCaps.dwCaps & DDSCAPS_COMPLEX)
+        {
+            /* Undocumented feature: if DDSCAPS_MIPMAP and DDSCAPS_COMPLEX are
+             * both set, but mipmap count isn't given, as many mipmap levels
+             * as necessary are created to get down to a size where either
+             * the width or the height of the texture is 1.
+             *
+             * This is needed by Anarchy Online. */
+            DWORD min = ddsd.dwWidth < ddsd.dwHeight ?
+                        ddsd.dwWidth : ddsd.dwHeight;
+            ddsd.u2.dwMipMapCount = 0;
+            while( min )
+            {
+                ddsd.u2.dwMipMapCount++;
+                min >>= 1;
+            }
+        }
+        else
+            /* Create a single mipmap. */
+            ddsd.u2.dwMipMapCount = 1;
+ 
         ddsd.dwFlags |= DDSD_MIPMAPCOUNT;
-	ddsd.u2.dwMipMapCount = 1;
     }
     
     ddsd.dwFlags |= DDSD_PIXELFORMAT;
