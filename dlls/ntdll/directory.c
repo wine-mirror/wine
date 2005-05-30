@@ -831,8 +831,11 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
     {
         off_t old_pos = lseek( fd, 0, SEEK_CUR );
 
+        /* Set d_reclen to 65535 to work around an AFS kernel bug */
+        de[0].d_reclen = 65535;
         res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
         if (res == -1 && errno != ENOENT) return -1;  /* VFAT ioctl probably not supported */
+        if (!res && de[0].d_reclen == 65535) return -1;  /* AFS bug */
 
         while (res != -1)
         {
@@ -859,8 +862,11 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
     }
     else  /* we'll only return full entries, no need to worry about overflow */
     {
+        /* Set d_reclen to 65535 to work around an AFS kernel bug */
+        de[0].d_reclen = 65535;
         res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
         if (res == -1 && errno != ENOENT) return -1;  /* VFAT ioctl probably not supported */
+        if (!res && de[0].d_reclen == 65535) return -1;  /* AFS bug */
 
         while (res != -1)
         {
@@ -1161,7 +1167,10 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         {
             KERNEL_DIRENT de[2];
 
-            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1)
+            /* Set d_reclen to 65535 to work around an AFS kernel bug */
+            de[0].d_reclen = 65535;
+            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1 &&
+                de[0].d_reclen != 65535)
             {
                 unix_name[pos - 1] = '/';
                 for (;;)
