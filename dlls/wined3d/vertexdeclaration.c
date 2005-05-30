@@ -470,7 +470,7 @@ HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl* This
 
   {
     D3DVERTEXELEMENT9* pIt = object->pDeclaration9;
-    TRACE("dumping of D3D9 Convertion:\n");
+    TRACE("dumping of D3D9 Conversion:\n");
     while (0xFF != pIt->Stream) {
       IWineD3DVertexDeclarationImpl_ParseToken9(pIt);
       ++pIt;

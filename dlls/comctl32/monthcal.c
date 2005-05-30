@@ -212,7 +212,7 @@ static int MONTHCAL_CalcDayFromPos(MONTHCAL_INFO *infoPtr, int x, int y,
   GetClientRect(infoPtr->hwndSelf, &rcClient);
 
   /* if the point is outside the x bounds of the window put
-  it at the boundry */
+  it at the boundary */
   if (x > rcClient.right)
     x = rcClient.right;
 

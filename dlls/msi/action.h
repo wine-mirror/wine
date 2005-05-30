@@ -119,7 +119,7 @@ typedef struct tagMSICLASS
     LPWSTR Argument;
     INT FeatureIndex;
     INT Attributes;
-    /* not in the table, set during instalation */
+    /* not in the table, set during installation */
     BOOL Installed;
 } MSICLASS;
 
@@ -131,10 +131,10 @@ typedef struct tagMSIEXTENSION
     LPWSTR ProgIDText;
     INT MIMEIndex;
     INT FeatureIndex;
-    /* not in the table, set during instalation */
+    /* not in the table, set during installation */
     BOOL Installed;
     INT VerbCount;
-    INT Verbs[100]; /* yes hard coded limit, but relisticly 100 verbs??? */
+    INT Verbs[100]; /* yes hard coded limit, but realistically 100 verbs??? */
 } MSIEXTENSION;
 
 typedef struct tagMSIPROGID
@@ -144,7 +144,7 @@ typedef struct tagMSIPROGID
     INT ClassIndex;
     LPWSTR Description;
     LPWSTR IconPath;
-    /* not in the table, set during instalation */
+    /* not in the table, set during installation */
     BOOL InstallMe;
     INT CurVerIndex;
 } MSIPROGID;
@@ -164,7 +164,7 @@ typedef struct tagMSIMIME
     INT ExtensionIndex;
     WCHAR CLSID[IDENTIFIER_SIZE];
     INT ClassIndex;
-    /* not in the table, set during instalation */
+    /* not in the table, set during installation */
     BOOL InstallMe;
 } MSIMIME;
 

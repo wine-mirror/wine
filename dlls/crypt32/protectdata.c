@@ -946,7 +946,7 @@ free_protect_data:
 free_context:
     CryptReleaseContext(hProv,0);
 finished:
-    /* If some error occured, and no error code was set, force one. */
+    /* If some error occurred, and no error code was set, force one. */
     if (!rc && GetLastError()==ERROR_SUCCESS)
     {
         SetLastError(ERROR_INVALID_DATA);
@@ -1112,7 +1112,7 @@ free_context:
 free_protect_data:
     free_protect_data(&protect_data);
 finished:
-    /* If some error occured, and no error code was set, force one. */
+    /* If some error occurred, and no error code was set, force one. */
     if (!rc && GetLastError()==ERROR_SUCCESS)
     {
         SetLastError(ERROR_INVALID_DATA);

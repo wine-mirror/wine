@@ -634,7 +634,7 @@ foreach (sort keys %norm_functions) {
 	} elsif (defined($arg_conv{$type})) {
 	    print SPEC "$@$arg_conv{$type}[0] ";
 	} else {
-	    die "No convertion for GL type $type...\n";
+	    die "No conversion for GL type $type...\n";
 	}
     }
     print SPEC ") wine_$func_name\n";
