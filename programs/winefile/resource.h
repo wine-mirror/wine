@@ -41,6 +41,8 @@
 #define	ID_ACTIVATE					101
 #define	ID_EXECUTE					105
 #define ID_FILE_MOVE					106
+#define	ID_FILE_COPY					107
+#define	ID_FILE_DELETE					108
 #define	ID_FILE_EXIT					115
 #define	ID_FORMAT_DISK					203
 #define	ID_CONNECT_NETWORK_DRIVE			252

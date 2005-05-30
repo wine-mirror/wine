@@ -3747,6 +3747,55 @@ static void update_view_menu(ChildWnd* child)
 }
 
 
+static BOOL is_directory(LPCTSTR target)
+{
+	/*TODO correctly handle UNIX paths */
+	DWORD target_attr = GetFileAttributes(target);
+
+	if (target_attr == INVALID_FILE_ATTRIBUTES)
+		return FALSE;
+
+	return target_attr&FILE_ATTRIBUTE_DIRECTORY? TRUE: FALSE;
+}
+	
+static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
+{
+	TCHAR path[MAX_PATH];
+	int len;
+
+	get_path(pane->cur, path);
+
+	if (DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_SELECT_DESTINATION), pane->hwnd, DestinationDlgProc, (LPARAM)path) != IDOK)
+		return FALSE;
+
+	get_path(pane->cur, source);
+
+	/* convert relative targets to absolute paths */
+	if (path[0]!='/' && path[1]!=':') {
+		get_path(pane->cur->up, target);
+		len = lstrlen(target);
+
+		if (target[len-1]!='\\' && target[len-1]!='/')
+			target[len++] = '/';
+
+		lstrcpy(target+len, path);
+	} else
+		lstrcpy(target, path);
+
+	/* If the target already exists as directory, create a new target below this. */
+	if (is_directory(path)) {
+		TCHAR fname[_MAX_FNAME], ext[_MAX_EXT];
+		const static TCHAR sAppend[] = {'%','s','/','%','s','%','s','\0'};
+
+		_tsplitpath(source, NULL, NULL, fname, ext);
+
+		wsprintf(target, sAppend, path, fname, ext);
+	}
+
+	return TRUE;
+}
+
+
 static IContextMenu2* s_pctxmenu2 = NULL;
 static IContextMenu3* s_pctxmenu3 = NULL;
 
@@ -4023,39 +4072,43 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 					break;
 
 				case ID_FILE_MOVE: {
-					TCHAR new_name[BUFFER_LEN], old_name[BUFFER_LEN];
-					int len, ret;
+					TCHAR source[BUFFER_LEN], target[BUFFER_LEN];
 
-					get_path(pane->cur, new_name);
+					if (prompt_target(pane, source, target)) {
+						SHFILEOPSTRUCT shfo = {hwnd, FO_MOVE, source, target};
 
-					ret = DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_SELECT_DESTINATION), hwnd, DestinationDlgProc, (LPARAM)new_name);
-					if (ret != IDOK)
-						break;
+						source[lstrlen(source)+1] = '\0';
+						target[lstrlen(target)+1] = '\0';
 
-					if (new_name[0]!='/' && new_name[1]!=':') {
-						get_path(pane->cur->up, old_name);
-						len = lstrlen(old_name);
-
-						if (old_name[len-1]!='\\' && old_name[len-1]!='/')
-							old_name[len++] = '/';
-
-						lstrcpy(old_name+len, new_name);
-						lstrcpy(new_name, old_name);
-					}
-
-					get_path(pane->cur, old_name);
-
-					if (MoveFileEx(old_name, new_name, MOVEFILE_COPY_ALLOWED)) {
-						if (pane->treePane) {
-							pane->root->scanned = FALSE;
-							pane->cur = pane->root;
-							activate_entry(child, pane, hwnd);
-						}
-						else
+						if (!SHFileOperation(&shfo))
 							refresh_child(child);
 					}
-					else
-						display_error(hwnd, GetLastError());
+					break;}
+
+				case ID_FILE_COPY: {
+					TCHAR source[BUFFER_LEN], target[BUFFER_LEN];
+
+					if (prompt_target(pane, source, target)) {
+						SHFILEOPSTRUCT shfo = {hwnd, FO_COPY, source, target};
+
+						source[lstrlen(source)+1] = '\0';
+						target[lstrlen(target)+1] = '\0';
+
+						if (!SHFileOperation(&shfo))
+							refresh_child(child);
+					}
+					break;}
+
+				case ID_FILE_DELETE: {
+					TCHAR path[BUFFER_LEN];
+					SHFILEOPSTRUCT shfo = {hwnd, FO_DELETE, path};
+
+					get_path(pane->cur, path);
+
+					path[lstrlen(path)+1] = '\0';
+
+					if (!SHFileOperation(&shfo))
+						refresh_child(child);
 					break;}
 
 				case ID_VIEW_SORT_NAME:
