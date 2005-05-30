@@ -4518,7 +4518,10 @@ static LRESULT EDIT_WM_MouseMove(EDITSTATE *es, INT x, INT y)
 	BOOL after_wrap;
 	INT prex, prey;
 
-	if (GetCapture() != es->hwndSelf)
+        /* If the mouse has been captured by process other than the edit control itself,
+         * the windows edit controls will not select the strings with mouse move.
+         */
+        if (!es->bCaptureState || GetCapture() != es->hwndSelf)
 		return 0;
 
 	/*
