@@ -276,7 +276,7 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
         return FALSE;
 
     if (wf->wFormatTag == WAVE_FORMAT_PCM) {
-        if (wf->nChannels==1||wf->nChannels==2) {
+        if (wf->nChannels >= 1 && wf->nChannels <= MAX_CHANNELS) {
             if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
                 return TRUE;
         }
@@ -284,7 +284,7 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
         WAVEFORMATEXTENSIBLE * wfex = (WAVEFORMATEXTENSIBLE *)wf;
 
         if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
-            if (wf->nChannels==1||wf->nChannels==2) {
+            if (wf->nChannels >=1 && wf->nChannels <= MAX_CHANNELS) {
                 if (wf->wBitsPerSample==wfex->Samples.wValidBitsPerSample) {
                     if (wf->wBitsPerSample==8||wf->wBitsPerSample==16)
                         return TRUE;
@@ -356,7 +356,7 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
 	}
     }
 
-    /* First size and stereo then samplerate */
+    /* First size and channels then samplerate */
     if (ossdev->format>=0)
     {
         val = ossdev->format;
@@ -367,12 +367,12 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int strict_format)
                 goto error;
         }
     }
-    if (ossdev->stereo>=0)
+    if (ossdev->channels>=0)
     {
-        val = ossdev->stereo;
-        rc = ioctl(fd, SNDCTL_DSP_STEREO, &ossdev->stereo);
-        if (rc != 0 || val != ossdev->stereo) {
-            TRACE("Can't set stereo to %u (returned %d)\n", val, ossdev->stereo);
+        val = ossdev->channels;
+        rc = ioctl(fd, SNDCTL_DSP_CHANNELS, &ossdev->channels);
+        if (rc != 0 || val != ossdev->channels) {
+            TRACE("Can't set channels to %u (returned %d)\n", val, ossdev->channels);
             if (strict_format)
                 goto error;
         }
@@ -440,11 +440,11 @@ error2:
  */
 DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
                             int* frag, int strict_format,
-                            int sample_rate, int stereo, int fmt)
+                            int sample_rate, int channels, int fmt)
 {
     DWORD       ret;
     DWORD open_access;
-    TRACE("(%p,%u,%p,%d,%d,%d,%x)\n",ossdev,req_access,frag,strict_format,sample_rate,stereo,fmt);
+    TRACE("(%p,%u,%p,%d,%d,%d,%x)\n",ossdev,req_access,frag,strict_format,sample_rate,channels,fmt);
 
     if (ossdev->full_duplex && (req_access == O_RDONLY || req_access == O_WRONLY))
     {
@@ -464,7 +464,7 @@ DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
 
         ossdev->audio_fragment = (frag) ? *frag : 0;
         ossdev->sample_rate = sample_rate;
-        ossdev->stereo = stereo;
+        ossdev->channels = channels;
         ossdev->format = fmt;
         ossdev->open_access = open_access;
         ossdev->owner_tid = GetCurrentThreadId();
@@ -495,16 +495,16 @@ DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
 
 	/* check if the audio parameters are the same */
         if (ossdev->sample_rate != sample_rate ||
-            ossdev->stereo != stereo ||
+            ossdev->channels != channels ||
             ossdev->format != fmt)
         {
 	    /* This is not a fatal error because MSACM might do the remapping */
             WARN("FullDuplex: mismatch in PCM parameters for input and output\n"
                  "OSS doesn't allow us different parameters\n"
-                 "audio_frag(%x/%x) sample_rate(%d/%d) stereo(%d/%d) fmt(%d/%d)\n",
+                 "audio_frag(%x/%x) sample_rate(%d/%d) channels(%d/%d) fmt(%d/%d)\n",
                  ossdev->audio_fragment, frag ? *frag : 0,
                  ossdev->sample_rate, sample_rate,
-                 ossdev->stereo, stereo,
+                 ossdev->channels, channels,
                  ossdev->format, fmt);
             return WAVERR_BADFORMAT;
         }
@@ -783,28 +783,29 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 	else if (f == 1)
 	    ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARY16BIT;
 
-        for (c=0;c<2;c++) {
+        for (c = 1; c <= MAX_CHANNELS; c++) {
             arg=c;
-            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_CHANNELS, &arg);
             if (rc!=0 || arg!=c) {
-                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
+                TRACE("DSP_CHANNELS: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
             }
-	    if (c == 0) {
+	    if (c == 1) {
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
-	    } else if (c==1) {
-                ossdev->out_caps.wChannels=2;
+	    } else if (c == 2) {
+                ossdev->out_caps.wChannels = 2;
                 ossdev->out_caps.dwSupport|=WAVECAPS_LRVOLUME;
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
-            }
+            } else
+                ossdev->out_caps.wChannels = c;
 
             for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
                 arg=win_std_rates[r];
                 rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
                 TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
-                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
-                if (rc==0 && arg!=0 && NEAR_MATCH(arg,win_std_rates[r]))
-                    ossdev->out_caps.dwFormats|=win_std_formats[f][c][r];
+                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c);
+                if (rc==0 && arg!=0 && NEAR_MATCH(arg,win_std_rates[r]) && c < 3)
+                    ossdev->out_caps.dwFormats|=win_std_formats[f][c-1][r];
             }
         }
     }
@@ -847,8 +848,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
 #endif
     }
     OSS_CloseDevice(ossdev);
-    TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
-          ossdev->out_caps.dwFormats, ossdev->out_caps.dwSupport);
+    TRACE("out wChannels = %d, dwFormats = %08lX, dwSupport = %08lX\n",
+          ossdev->out_caps.wChannels, ossdev->out_caps.dwFormats,
+          ossdev->out_caps.dwSupport);
     return TRUE;
 }
 
@@ -920,25 +922,25 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
             continue;
         }
 
-        for (c=0;c<2;c++) {
+        for (c = 1; c <= MAX_CHANNELS; c++) {
             arg=c;
-            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_CHANNELS, &arg);
             if (rc!=0 || arg!=c) {
-                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
+                TRACE("DSP_CHANNELS: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
             }
-            if (c==1) {
-                ossdev->in_caps.wChannels=2;
-    		ossdev->dsc_caps.dwChannels=2;
+            if (c > 1) {
+                ossdev->in_caps.wChannels = c;
+    		ossdev->dsc_caps.dwChannels = c;
             }
 
             for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
                 arg=win_std_rates[r];
                 rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
-                TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
-                if (rc==0 && NEAR_MATCH(arg,win_std_rates[r]))
-                    ossdev->in_caps.dwFormats|=win_std_formats[f][c][r];
-		    ossdev->dsc_caps.dwFormats|=win_std_formats[f][c][r];
+                TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",rc,arg,win_std_rates[r],win_std_oss_fmts[f],c);
+                if (rc==0 && NEAR_MATCH(arg,win_std_rates[r]) && c < 3)
+                    ossdev->in_caps.dwFormats|=win_std_formats[f][c-1][r];
+		    ossdev->dsc_caps.dwFormats|=win_std_formats[f][c-1][r];
             }
         }
     }
@@ -957,8 +959,8 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
 	    ossdev->in_caps_support |= WAVECAPS_SAMPLEACCURATE;
     }
     OSS_CloseDevice(ossdev);
-    TRACE("in dwFormats = %08lX, in_caps_support = %08lX\n",
-        ossdev->in_caps.dwFormats, ossdev->in_caps_support);
+    TRACE("in wChannels = %d, dwFormats = %08lX, in_caps_support = %08lX\n",
+        ossdev->in_caps.wChannels, ossdev->in_caps.dwFormats, ossdev->in_caps_support);
     return TRUE;
 }
 
@@ -1012,28 +1014,29 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
             continue;
         }
 
-        for (c=0;c<2;c++) {
+        for (c = 1; c <= MAX_CHANNELS; c++) {
             arg=c;
-            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_CHANNELS, &arg);
             if (rc!=0 || arg!=c) {
-                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
+                TRACE("DSP_CHANNELS: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
             }
-	    if (c == 0) {
+	    if (c == 1) {
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
-	    } else if (c==1) {
-                ossdev->duplex_out_caps.wChannels=2;
+	    } else if (c == 2) {
+                ossdev->duplex_out_caps.wChannels = 2;
                 ossdev->duplex_out_caps.dwSupport|=WAVECAPS_LRVOLUME;
 		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
-            }
+            } else
+                ossdev->duplex_out_caps.wChannels = c;
 
             for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
                 arg=win_std_rates[r];
                 rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
                 TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
-                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
-                if (rc==0 && arg!=0 && NEAR_MATCH(arg,win_std_rates[r]))
-                    ossdev->duplex_out_caps.dwFormats|=win_std_formats[f][c][r];
+                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c);
+                if (rc==0 && arg!=0 && NEAR_MATCH(arg,win_std_rates[r]) && c < 3)
+                    ossdev->duplex_out_caps.dwFormats|=win_std_formats[f][c-1][r];
             }
         }
     }
@@ -1049,8 +1052,10 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
 	}
     }
     OSS_CloseDevice(ossdev);
-    TRACE("duplex dwFormats = %08lX, dwSupport = %08lX\n",
-          ossdev->duplex_out_caps.dwFormats, ossdev->duplex_out_caps.dwSupport);
+    TRACE("duplex wChannels = %d, dwFormats = %08lX, dwSupport = %08lX\n",
+          ossdev->duplex_out_caps.wChannels,
+          ossdev->duplex_out_caps.dwFormats,
+          ossdev->duplex_out_caps.dwSupport);
 }
 
 static char* StrDup(const char* str, const char* def)
@@ -1932,12 +1937,12 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                          &audio_fragment,
                          (dwFlags & WAVE_DIRECTSOUND) ? 0 : 1,
                          lpDesc->lpFormat->nSamplesPerSec,
-                         (lpDesc->lpFormat->nChannels > 1) ? 1 : 0,
+                         lpDesc->lpFormat->nChannels,
                          (lpDesc->lpFormat->wBitsPerSample == 16)
                              ? AFMT_S16_LE : AFMT_U8);
     if ((ret==MMSYSERR_NOERROR) && (dwFlags & WAVE_DIRECTSOUND)) {
         lpDesc->lpFormat->nSamplesPerSec=wwo->ossdev->sample_rate;
-        lpDesc->lpFormat->nChannels=(wwo->ossdev->stereo ? 2 : 1);
+        lpDesc->lpFormat->nChannels=wwo->ossdev->channels;
         lpDesc->lpFormat->wBitsPerSample=(wwo->ossdev->format == AFMT_U8 ? 8 : 16);
         lpDesc->lpFormat->nBlockAlign=lpDesc->lpFormat->nChannels*lpDesc->lpFormat->wBitsPerSample/8;
         lpDesc->lpFormat->nAvgBytesPerSec=lpDesc->lpFormat->nSamplesPerSec*lpDesc->lpFormat->nBlockAlign;
@@ -1971,8 +1976,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("got %d %d byte fragments (%d ms/fragment)\n", info.fragstotal,
         info.fragsize, (info.fragsize * 1000) / (wwo->ossdev->sample_rate *
-        (wwo->ossdev->stereo ? 2 : 1) *
-        (wwo->ossdev->format == AFMT_U8 ? 1 : 2)));
+        wwo->ossdev->channels * (wwo->ossdev->format == AFMT_U8 ? 1 : 2)));
 
     /* Check that fragsize is correct per our settings above */
     if ((info.fragsize > 1024) && (LOWORD(audio_fragment) <= 10)) {
@@ -2804,7 +2808,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     ret = OSS_OpenDevice(wwi->ossdev, O_RDONLY, &audio_fragment,
                          1,
                          lpDesc->lpFormat->nSamplesPerSec,
-                         (lpDesc->lpFormat->nChannels > 1) ? 1 : 0,
+                         lpDesc->lpFormat->nChannels,
                          (lpDesc->lpFormat->wBitsPerSample == 16)
                          ? AFMT_S16_LE : AFMT_U8);
     if (ret != 0) return ret;
@@ -2839,8 +2843,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     TRACE("got %d %d byte fragments (%d ms/fragment)\n", info.fragstotal,
         info.fragsize, (info.fragsize * 1000) / (wwi->ossdev->sample_rate *
-        (wwi->ossdev->stereo ? 2 : 1) *
-        (wwi->ossdev->format == AFMT_U8 ? 1 : 2)));
+        wwi->ossdev->channels * (wwi->ossdev->format == AFMT_U8 ? 1 : 2)));
 
     wwi->dwFragmentSize = info.fragsize;
 

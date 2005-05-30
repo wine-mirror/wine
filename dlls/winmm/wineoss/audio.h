@@ -27,6 +27,7 @@
 #define USE_PIPE_SYNC
 
 #define MAX_WAVEDRV 	(6)
+#define MAX_CHANNELS	6
 
 /* states of the playing device */
 #define	WINE_WS_PLAYING		0
@@ -92,7 +93,7 @@ typedef struct tagOSS_DEVICE {
     int                         fd;
     DWORD                       owner_tid;
     int                         sample_rate;
-    int                         stereo;
+    int                         channels;
     int                         format;
     unsigned                    audio_fragment;
     BOOL                        full_duplex;
