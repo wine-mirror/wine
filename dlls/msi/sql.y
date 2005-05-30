@@ -74,7 +74,6 @@ static struct expr * EXPR_wildcard( void *info );
     struct sql_str str;
     LPWSTR string;
     column_info *column_list;
-    value_list *val_list;
     MSIVIEW *query;
     struct expr *expr;
     USHORT column_type;
@@ -126,12 +125,11 @@ static struct expr * EXPR_wildcard( void *info );
 
 %type <string> table id
 %type <column_list> selcollist column column_and_type column_def table_def
-%type <column_list> column_assignment update_assign_list
+%type <column_list> column_assignment update_assign_list constlist
 %type <query> query from fromtable selectfrom unorderedsel
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
-%type <val_list> constlist
 
 %%
 
@@ -498,25 +496,18 @@ val:
 constlist:
     const_val
         {
-            value_list *vals;
-
-            vals = parser_alloc( info, sizeof *vals );
-            if( !vals )
+            $$ = parser_alloc_column( info, NULL, NULL );
+            if( !$$ )
                 YYABORT;
-            vals->val = $1;
-            vals->next = NULL;
-            $$ = vals;
+            $$->val = $1;
         }
   | const_val TK_COMMA constlist
         {
-            value_list *vals;
-
-            vals = parser_alloc( info, sizeof *vals );
-            if( !vals )
+            $$ = parser_alloc_column( info, NULL, NULL );
+            if( !$$ )
                 YYABORT;
-            vals->val = $1;
-            vals->next = $3;
-            $$ = vals;
+            $$->val = $1;
+            $$->next = $3;
         }
     ;
 
