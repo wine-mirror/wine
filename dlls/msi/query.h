@@ -89,12 +89,6 @@ struct expr
     } u;
 };
 
-typedef struct _value_list
-{
-    struct expr *val;
-    struct _value_list *next;
-} value_list;
-
 UINT MSI_ParseSQL( MSIDATABASE *db, LPCWSTR command, MSIVIEW **phview,
                    struct list *mem );
 
