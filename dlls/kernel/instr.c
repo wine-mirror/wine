@@ -68,6 +68,29 @@ inline static void *get_stack( CONTEXT86 *context )
     return wine_ldt_get_ptr( context->SegSs, context->Esp );
 }
 
+#include "pshpack1.h"
+struct idtr
+{
+    WORD  limit;
+    BYTE *base;
+};
+#include "poppack.h"
+
+static LDT_ENTRY idt[256];
+
+inline static struct idtr get_idtr(void)
+{
+    struct idtr ret;
+#if defined(__i386__) && defined(__GNUC__)
+    __asm__( "sidtl %0" : "=m" (ret) );
+#else
+    ret.base = (BYTE *)idt;
+    ret.limit = sizeof(idt) - 1;
+#endif
+    return ret;
+}
+
+
 /***********************************************************************
  *           INSTR_ReplaceSelector
  *
@@ -96,6 +119,46 @@ static BOOL INSTR_ReplaceSelector( CONTEXT86 *context, WORD *sel )
     return FALSE;  /* Can't replace selector, crashdump */
 }
 
+
+/* store an operand into a register */
+static void store_reg( CONTEXT86 *context, BYTE regmodrm, const BYTE *addr, int long_op )
+{
+    switch((regmodrm >> 3) & 7)
+    {
+    case 0:
+        if (long_op) context->Eax = *(DWORD *)addr;
+        else SET_LOWORD(context->Eax,*(WORD *)addr);
+        break;
+    case 1:
+        if (long_op) context->Ecx = *(DWORD *)addr;
+        else SET_LOWORD(context->Ecx,*(WORD *)addr);
+        break;
+    case 2:
+        if (long_op) context->Edx = *(DWORD *)addr;
+        else SET_LOWORD(context->Edx,*(WORD *)addr);
+        break;
+    case 3:
+        if (long_op) context->Ebx = *(DWORD *)addr;
+        else SET_LOWORD(context->Ebx,*(WORD *)addr);
+        break;
+    case 4:
+        if (long_op) context->Esp = *(DWORD *)addr;
+        else SET_LOWORD(context->Esp,*(WORD *)addr);
+        break;
+    case 5:
+        if (long_op) context->Ebp = *(DWORD *)addr;
+        else SET_LOWORD(context->Ebp,*(WORD *)addr);
+        break;
+    case 6:
+        if (long_op) context->Esi = *(DWORD *)addr;
+        else SET_LOWORD(context->Esi,*(WORD *)addr);
+        break;
+    case 7:
+        if (long_op) context->Edi = *(DWORD *)addr;
+        else SET_LOWORD(context->Edi,*(WORD *)addr);
+        break;
+    }
+}
 
 /***********************************************************************
  *           INSTR_GetOperandAddr
@@ -278,41 +341,7 @@ static BOOL INSTR_EmulateLDS( CONTEXT86 *context, BYTE *instr, int long_op,
 
     /* Now store the offset in the correct register */
 
-    switch((*regmodrm >> 3) & 7)
-    {
-    case 0:
-        if (long_op) context->Eax = *(DWORD *)addr;
-        else SET_LOWORD(context->Eax,*(WORD *)addr);
-        break;
-    case 1:
-        if (long_op) context->Ecx = *(DWORD *)addr;
-        else SET_LOWORD(context->Ecx,*(WORD *)addr);
-        break;
-    case 2:
-        if (long_op) context->Edx = *(DWORD *)addr;
-        else SET_LOWORD(context->Edx,*(WORD *)addr);
-        break;
-    case 3:
-        if (long_op) context->Ebx = *(DWORD *)addr;
-        else SET_LOWORD(context->Ebx,*(WORD *)addr);
-        break;
-    case 4:
-        if (long_op) context->Esp = *(DWORD *)addr;
-        else SET_LOWORD(context->Esp,*(WORD *)addr);
-        break;
-    case 5:
-        if (long_op) context->Ebp = *(DWORD *)addr;
-        else SET_LOWORD(context->Ebp,*(WORD *)addr);
-        break;
-    case 6:
-        if (long_op) context->Esi = *(DWORD *)addr;
-        else SET_LOWORD(context->Esi,*(WORD *)addr);
-        break;
-    case 7:
-        if (long_op) context->Edi = *(DWORD *)addr;
-        else SET_LOWORD(context->Edi,*(WORD *)addr);
-        break;
-    }
+    store_reg( context, *regmodrm, addr, long_op );
 
     /* Store the correct segment in the segment register */
 
@@ -675,6 +704,24 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
               context->Eip += prefixlen + 1;
 	    }
             return ExceptionContinueExecution;
+
+        case 0x8b: /* mov Ev, Gv */
+            {
+                BYTE *addr = INSTR_GetOperandAddr(context, instr + 1, long_addr,
+                                                  segprefix, &len);
+                struct idtr idtr = get_idtr();
+                unsigned int offset = addr - idtr.base;
+
+                if (offset <= idtr.limit + 1 - (long_op ? 4 : 2))
+                {
+                    idt[1].LimitLow = 0x100; /* FIXME */
+                    idt[3].LimitLow = 0x500; /* FIXME */
+                    store_reg( context, instr[1], (BYTE *)&idt + offset, long_op );
+                    context->Eip += prefixlen + len + 1;
+                    return ExceptionContinueExecution;
+                }
+            }
+            break;  /* Unable to emulate it */
 
         case 0x8e: /* mov XX,segment_reg */
             {
