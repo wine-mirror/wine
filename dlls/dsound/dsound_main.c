@@ -68,7 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 #define DS_SND_QUEUE_MAX 28 /* max number of fragments to prebuffer */
 #define DS_SND_QUEUE_MIN 12 /* min number of fragments to prebuffer */
 
-IDirectSoundImpl*	DSOUND_renderer = NULL;
+DirectSoundDevice*	DSOUND_renderer[MAXWAVEDRIVERS];
 GUID                    DSOUND_renderer_guids[MAXWAVEDRIVERS];
 GUID                    DSOUND_capture_guids[MAXWAVEDRIVERS];
 
@@ -460,10 +460,10 @@ static HRESULT WINAPI DSCF_CreateInstance(
 	*ppobj = NULL;
 
 	if ( IsEqualIID( &IID_IDirectSound, riid ) )
-		return DSOUND_Create(0,(LPDIRECTSOUND*)ppobj,pOuter);
+		return DSOUND_Create((LPDIRECTSOUND*)ppobj,pOuter);
 
 	if ( IsEqualIID( &IID_IDirectSound8, riid ) )
-		return DSOUND_Create8(0,(LPDIRECTSOUND8*)ppobj,pOuter);
+		return DSOUND_Create8((LPDIRECTSOUND8*)ppobj,pOuter);
 
 	WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
 	return E_NOINTERFACE;
@@ -664,6 +664,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
     case DLL_PROCESS_ATTACH:
         TRACE("DLL_PROCESS_ATTACH\n");
         for (i = 0; i < MAXWAVEDRIVERS; i++) {
+            DSOUND_renderer[i] = NULL;
             INIT_GUID(DSOUND_renderer_guids[i], 0xbd6dd71a, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
             INIT_GUID(DSOUND_capture_guids[i],  0xbd6dd71b, 0x3deb, 0x11d1, 0xb1, 0x71, 0x00, 0xc0, 0x4f, 0xc2, 0x00, 0x00 + i);
         }

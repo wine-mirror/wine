@@ -63,6 +63,7 @@ typedef struct IKsPrivatePropertySetImpl     IKsPrivatePropertySetImpl;
 typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
 typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
 typedef struct IClassFactoryImpl             IClassFactoryImpl;
+typedef struct DirectSoundDevice             DirectSoundDevice;
 
 /*****************************************************************************
  * IDirectSound implementation structure
@@ -72,7 +73,17 @@ struct IDirectSoundImpl
     /* IUnknown fields */
     IDirectSound8Vtbl          *lpVtbl;
     DWORD                       ref;
-    /* IDirectSoundImpl fields */
+
+    DirectSoundDevice          *device;
+    LPUNKNOWN                   pUnknown;
+    LPDIRECTSOUND               pDS;
+    LPDIRECTSOUND8              pDS8;
+};
+
+struct DirectSoundDevice
+{
+    DWORD                       ref;
+
     GUID                        guid;
     PIDSDRIVER                  driver;
     DSDRIVERDESC                drvdesc;
@@ -94,7 +105,6 @@ struct IDirectSoundImpl
     PrimaryBufferImpl*          primary;
     DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
-    BOOL                        initialized;
     LPBYTE                      tmp_buffer;
     DWORD                       tmp_buffer_len;
 
@@ -102,10 +112,6 @@ struct IDirectSoundImpl
     IDirectSound3DListenerImpl*	listener;
     DS3DLISTENER                ds3dl;
     BOOL                        ds3dl_need_recalc;
-
-    LPUNKNOWN                   pUnknown;
-    LPDIRECTSOUND               pDS;
-    LPDIRECTSOUND8              pDS8;
 };
 
 /* reference counted buffer memory for duplicated buffer memory */
@@ -116,16 +122,13 @@ typedef struct BufferMemory
 } BufferMemory;
 
 HRESULT WINAPI IDirectSoundImpl_Create(
-    LPCGUID lpcGUID,
     LPDIRECTSOUND8 * ppds);
 
 HRESULT WINAPI DSOUND_Create(
-    LPCGUID lpcGUID,
     LPDIRECTSOUND *ppDS,
     IUnknown *pUnkOuter);
 
 HRESULT WINAPI DSOUND_Create8(
-    LPCGUID lpcGUID,
     LPDIRECTSOUND8 *ppDS,
     IUnknown *pUnkOuter);
 
@@ -461,11 +464,11 @@ HRESULT DSOUND_RemoveBuffer(IDirectSoundImpl * pDS, IDirectSoundBufferImpl * pDS
 
 /* primary.c */
 
-HRESULT DSOUND_PrimaryCreate(IDirectSoundImpl *This);
-HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This);
-HRESULT DSOUND_PrimaryPlay(IDirectSoundImpl *This);
-HRESULT DSOUND_PrimaryStop(IDirectSoundImpl *This);
-HRESULT DSOUND_PrimaryGetPosition(IDirectSoundImpl *This, LPDWORD playpos, LPDWORD writepos);
+HRESULT DSOUND_PrimaryCreate(DirectSoundDevice *device);
+HRESULT DSOUND_PrimaryDestroy(DirectSoundDevice *device);
+HRESULT DSOUND_PrimaryPlay(DirectSoundDevice *device);
+HRESULT DSOUND_PrimaryStop(DirectSoundDevice *device);
+HRESULT DSOUND_PrimaryGetPosition(DirectSoundDevice *device, LPDWORD playpos, LPDWORD writepos);
 
 /* buffer.c */
 
@@ -476,8 +479,8 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len);
 void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb);
 void DSOUND_MixCancelAt(IDirectSoundBufferImpl *dsb, DWORD buf_writepos);
-void DSOUND_WaveQueue(IDirectSoundImpl *dsound, DWORD mixq);
-void DSOUND_PerformMix(IDirectSoundImpl *dsound);
+void DSOUND_WaveQueue(DirectSoundDevice *device, DWORD mixq);
+void DSOUND_PerformMix(DirectSoundDevice *device);
 void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2);
 
@@ -493,7 +496,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
 #define DSOUND_FREQSHIFT (14)
 
-extern IDirectSoundImpl* DSOUND_renderer;
+extern DirectSoundDevice* DSOUND_renderer[MAXWAVEDRIVERS];
 extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
 extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
 

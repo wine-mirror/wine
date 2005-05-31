@@ -276,7 +276,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFrequency(
 	oldFreq = This->freq;
 	This->freq = freq;
 	if (freq != oldFreq) {
-		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->dsound->pwfx->nSamplesPerSec;
+		This->freqAdjust = (freq << DSOUND_FREQSHIFT) / This->dsound->device->pwfx->nSamplesPerSec;
 		This->nAvgBytesPerSec = freq * This->pwfx->nBlockAlign;
 		DSOUND_RecalcFormat(This);
 		if (!This->hwbuf)
@@ -370,7 +370,7 @@ static ULONG WINAPI IDirectSoundBufferImpl_Release(LPDIRECTSOUNDBUFFER8 iface)
 
 	if (This->hwbuf) {
 		IDsDriverBuffer_Release(This->hwbuf);
-		if (This->dsound->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
+		if (This->dsound->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
 			This->buffer->ref--;
 			if (This->buffer->ref==0) {
 				HeapFree(GetProcessHeap(),0,This->buffer->memory);
@@ -403,17 +403,17 @@ DWORD DSOUND_CalcPlayPosition(IDirectSoundBufferImpl *This, DWORD pplay, DWORD p
 	/* the actual primary play position (pplay) is always behind last mixed (pmix),
 	 * unless the computer is too slow or something */
 	/* we need to know how far away we are from there */
-	if (pmix < pplay) pmix += This->dsound->buflen; /* wraparound */
+	if (pmix < pplay) pmix += This->dsound->device->buflen; /* wraparound */
 	pmix -= pplay;
 	/* detect buffer underrun */
-	if (pwrite < pplay) pwrite += This->dsound->buflen; /* wraparound */
+	if (pwrite < pplay) pwrite += This->dsound->device->buflen; /* wraparound */
 	pwrite -= pplay;
-	if (pmix > (ds_snd_queue_max * This->dsound->fraglen + pwrite + This->dsound->writelead)) {
+	if (pmix > (ds_snd_queue_max * This->dsound->device->fraglen + pwrite + This->dsound->device->writelead)) {
 		WARN("detected an underrun: primary queue was %ld\n",pmix);
 		pmix = 0;
 	}
 	/* divide the offset by its sample size */
-	pmix /= This->dsound->pwfx->nBlockAlign;
+	pmix /= This->dsound->device->pwfx->nBlockAlign;
 	TRACE("primary back-samples=%ld\n",pmix);
 	/* adjust for our frequency */
 	pmix = (pmix * This->freqAdjust) >> DSOUND_FREQSHIFT;
@@ -451,13 +451,13 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 		} else if (playpos) {
 			DWORD pplay, pwrite;
 			/* let's get this exact; first, recursively call GetPosition on the primary */
-			EnterCriticalSection(&(This->dsound->mixlock));
-			if (DSOUND_PrimaryGetPosition(This->dsound, &pplay, &pwrite) != DS_OK)
+			EnterCriticalSection(&(This->dsound->device->mixlock));
+			if (DSOUND_PrimaryGetPosition(This->dsound->device, &pplay, &pwrite) != DS_OK)
 				WARN("DSOUND_PrimaryGetPosition failed\n");
 			/* detect HEL mode underrun */
-			if (!(This->dsound->hwbuf || This->dsound->pwqueue))
+			if (!(This->dsound->device->hwbuf || This->dsound->device->pwqueue))
 				TRACE("detected an underrun\n");
-			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || This->dsound->hwbuf) {
+			if ((This->dsbd.dwFlags & DSBCAPS_GETCURRENTPOSITION2) || This->dsound->device->hwbuf) {
 				/* calculate play position using this */
 				*playpos = DSOUND_CalcPlayPosition(This, pplay, pwrite);
 			} else {
@@ -467,11 +467,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetCurrentPosition(
 				 * behind write cursor, hmm... */
 				/* let's just do what might work for Half-Life */
 				DWORD wp;
-				wp = (This->dsound->pwplay + ds_hel_margin) * This->dsound->fraglen;
-				wp %= This->dsound->buflen;
+				wp = (This->dsound->device->pwplay + ds_hel_margin) * This->dsound->device->fraglen;
+				wp %= This->dsound->device->buflen;
 				*playpos = DSOUND_CalcPlayPosition(This, wp, pwrite);
 			}
-			LeaveCriticalSection(&(This->dsound->mixlock));
+			LeaveCriticalSection(&(This->dsound->device->mixlock));
 		}
 		if (writepos)
                     *writepos = This->buf_mixpos;
@@ -594,7 +594,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	else
 		This->probably_valid_to = writecursor;
 
-	if (!(This->dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
+	if (!(This->dsound->device->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
 		hres = IDsDriverBuffer_Lock(This->hwbuf,
 				     lplpaudioptr1, audiobytes1,
 				     lplpaudioptr2, audiobytes2,
@@ -747,7 +747,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	if (!(This->dsound->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
+	if (!(This->dsound->device->drvdesc.dwFlags & DSDDESC_DONTNEEDSECONDARYLOCK) && This->hwbuf) {
 		hres = IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
 		if (hres != DS_OK)
 			WARN("IDsDriverBuffer_Unlock failed\n");
@@ -1055,8 +1055,8 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	if (wfex->wBitsPerSample==16) capf |= DSCAPS_SECONDARY16BIT;
 	else capf |= DSCAPS_SECONDARY8BIT;
 
-	use_hw = (ds->drvcaps.dwFlags & capf) == capf;
-	TRACE("use_hw = 0x%08x, capf = 0x%08lx, ds->drvcaps.dwFlags = 0x%08lx\n", use_hw, capf, ds->drvcaps.dwFlags);
+	use_hw = (ds->device->drvcaps.dwFlags & capf) == capf;
+	TRACE("use_hw = 0x%08x, capf = 0x%08lx, ds->drvcaps.dwFlags = 0x%08lx\n", use_hw, capf, ds->device->drvcaps.dwFlags);
 
 	/* FIXME: check hardware sample rate mixing capabilities */
 	/* FIXME: check app hints for software/hardware buffer (STATIC, LOCHARDWARE, etc) */
@@ -1074,7 +1074,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	}
 
 	/* Allocate system memory for buffer if applicable */
-	if ((ds->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) || !use_hw) {
+	if ((ds->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) || !use_hw) {
 		dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
 		if (dsb->buffer->memory == NULL) {
 			WARN("out of memory\n");
@@ -1090,14 +1090,14 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 
 	/* Allocate the hardware buffer */
 	if (use_hw) {
-		err = IDsDriver_CreateSoundBuffer(ds->driver,wfex,dsbd->dwFlags,0,
+		err = IDsDriver_CreateSoundBuffer(ds->device->driver,wfex,dsbd->dwFlags,0,
 						  &(dsb->buflen),&(dsb->buffer->memory),
 						  (LPVOID*)&(dsb->hwbuf));
                 /* fall back to software buffer on failure */
 		if (err != DS_OK) {
 			TRACE("IDsDriver_CreateSoundBuffer failed, falling back to software buffer\n");
 			use_hw = 0;
-			if (ds->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
+			if (ds->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
 				dsb->buffer->memory = HeapAlloc(GetProcessHeap(),0,dsb->buflen);
 				if (dsb->buffer->memory == NULL) {
 					WARN("out of memory\n");
@@ -1124,7 +1124,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	dsb->state = STATE_STOPPED;
 
 	dsb->freqAdjust = (dsb->freq << DSOUND_FREQSHIFT) /
-		ds->pwfx->nSamplesPerSec;
+		ds->device->pwfx->nSamplesPerSec;
 	dsb->nAvgBytesPerSec = dsb->freq *
 		dsbd->lpwfxFormat->nBlockAlign;
 
