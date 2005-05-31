@@ -2917,6 +2917,67 @@ static void test_AdjustWindowRect()
 }
 #undef SHOWSYSMETRIC
 
+
+/* Global variables to trigger exit from loop */
+static int redrawComplete, WMPAINT_count;
+
+static LRESULT WINAPI redraw_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case WM_PAINT:
+        trace("doing WM_PAINT %d\n", WMPAINT_count);
+        WMPAINT_count++;
+        if (WMPAINT_count > 10 && redrawComplete == 0) {
+            PAINTSTRUCT ps;
+            BeginPaint(hwnd, &ps);
+            EndPaint(hwnd, &ps);
+            return 1;
+        }
+        return 0;
+        break;
+    }
+    return DefWindowProc(hwnd, msg, wparam, lparam);
+}
+
+/* Ensure we exit from RedrawNow regardless of invalidated area */
+static void test_redrawnow() {
+
+   WNDCLASSA cls;
+   HWND hwndMain;
+
+   cls.style = CS_DBLCLKS;
+   cls.lpfnWndProc = redraw_window_procA;
+   cls.cbClsExtra = 0;
+   cls.cbWndExtra = 0;
+   cls.hInstance = GetModuleHandleA(0);
+   cls.hIcon = 0;
+   cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+   cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+   cls.lpszMenuName = NULL;
+   cls.lpszClassName = "RedrawWindowClass";
+
+   if(!RegisterClassA(&cls)) {
+       trace("Register failed %ld\n", GetLastError());
+       return;
+   }
+
+   hwndMain = CreateWindowA("RedrawWindowClass", "Main Window", WS_OVERLAPPEDWINDOW,
+                            CW_USEDEFAULT, 0, 100, 100, NULL, NULL, 0, NULL);
+
+   ok( WMPAINT_count == 0, "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
+   ShowWindow(hwndMain, SW_SHOW);
+   ok( WMPAINT_count == 0, "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
+   RedrawWindow(hwndMain, NULL,NULL,RDW_UPDATENOW | RDW_ALLCHILDREN);
+   ok( WMPAINT_count == 1, "Multiple unexpected WM_PAINT calls %d\n", WMPAINT_count);
+   redrawComplete = TRUE;
+   ok( WMPAINT_count < 10, "RedrawWindow (RDW_UPDATENOW) never completed (%d)\n", WMPAINT_count);
+
+   /* clean up */
+   DestroyWindow( hwndMain);
+}
+
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -2986,4 +3047,5 @@ START_TEST(win)
 
     test_AdjustWindowRect();
     test_window_styles();
+    test_redrawnow();
 }
