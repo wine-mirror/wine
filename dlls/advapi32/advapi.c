@@ -30,6 +30,7 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
+#include "winternl.h"
 #include "winerror.h"
 
 #include "wine/library.h"
@@ -131,6 +132,23 @@ BOOL WINAPI GetCurrentHwProfileW(LPHW_PROFILE_INFOW pInfo)
        FIXME("(%p)\n", pInfo);
        return FALSE;
 }
+
+
+/**************************************************************************
+ *	IsTextUnicode (ADVAPI32.@)
+ *
+ * Attempt to guess whether a text buffer is Unicode.
+ *
+ * PARAMS
+ *  buf   [I] Text buffer to test
+ *  len   [I] Length of buf
+ *  flags [O] Destination for test results
+ */
+BOOL WINAPI IsTextUnicode( LPCVOID buf, INT len, LPINT flags )
+{
+    return RtlIsTextUnicode( buf, len, flags );
+}
+
 
 /******************************************************************************
  * AbortSystemShutdownA [ADVAPI32.@]

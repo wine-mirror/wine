@@ -160,7 +160,7 @@
 @ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
 @ stub InstallApplication
 @ stub IsProcessRestricted
-@ stdcall IsTextUnicode(ptr long ptr) ntdll.RtlIsTextUnicode
+@ stdcall IsTextUnicode(ptr long ptr)
 @ stdcall IsTokenRestricted(long)
 @ stdcall IsValidAcl(ptr)
 @ stdcall IsValidSecurityDescriptor(ptr)

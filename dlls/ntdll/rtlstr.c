@@ -1495,13 +1495,6 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
 /*
         MISC
 */
-/* Tests that we currently implement */
-#define ITU_IMPLEMENTED_TESTS \
-    (IS_TEXT_UNICODE_SIGNATURE | \
-     IS_TEXT_UNICODE_REVERSE_SIGNATURE | \
-     IS_TEXT_UNICODE_ODD_LENGTH | \
-     IS_TEXT_UNICODE_STATISTICS | \
-     IS_TEXT_UNICODE_NULL_BYTES)
 
 /**************************************************************************
  *	RtlIsTextUnicode (NTDLL.@)
@@ -1514,59 +1507,60 @@ NTSTATUS WINAPI RtlFindCharInUnicodeString(
  *  pf  [O] Destination for test results
  *
  * RETURNS
- *  The length of the string if all tests were passed, 0 otherwise.
+ *  TRUE if the buffer is likely Unicode, FALSE otherwise.
  *
  * FIXME
  *  Should implement more tests.
  */
-DWORD WINAPI RtlIsTextUnicode(
-	LPVOID buf,
-	DWORD len,
-	DWORD *pf)
+BOOLEAN WINAPI RtlIsTextUnicode( LPCVOID buf, INT len, INT *pf )
 {
-	LPWSTR s = buf;
-	DWORD flags = -1, out_flags = 0;
+    const WCHAR *s = buf;
+    int i;
+    unsigned int flags = ~0U, out_flags = 0;
 
-	if (!len)
-		goto out;
-	if (pf)
-		flags = *pf;
-	/*
-	 * Apply various tests to the text string. According to the
-	 * docs, each test "passed" sets the corresponding flag in
-	 * the output flags. But some of the tests are mutually
-	 * exclusive, so I don't see how you could pass all tests ...
-	 */
+    if (len < sizeof(WCHAR))
+    {
+        /* FIXME: MSDN documents IS_TEXT_UNICODE_BUFFER_TOO_SMALL but there is no such thing... */
+        if (pf) *pf = 0;
+        return FALSE;
+    }
+    if (pf)
+        flags = *pf;
+    /*
+     * Apply various tests to the text string. According to the
+     * docs, each test "passed" sets the corresponding flag in
+     * the output flags. But some of the tests are mutually
+     * exclusive, so I don't see how you could pass all tests ...
+     */
 
-	/* Check for an odd length ... pass if even. */
-	if ((flags & IS_TEXT_UNICODE_ODD_LENGTH) && (len & 1))
-		out_flags |= IS_TEXT_UNICODE_ODD_LENGTH;
+    /* Check for an odd length ... pass if even. */
+    if (len & 1) out_flags |= IS_TEXT_UNICODE_ODD_LENGTH;
 
-	/* Check for the special byte order unicode marks. */
-	if ((flags & IS_TEXT_UNICODE_SIGNATURE) && *s == 0xFEFF)
-		out_flags |= IS_TEXT_UNICODE_SIGNATURE;
+    len /= sizeof(WCHAR);
+    /* Windows only checks the first 256 characters */
+    if (len > 256) len = 256;
 
-    if ((flags & IS_TEXT_UNICODE_REVERSE_SIGNATURE) && *s == 0xFFFE)
-        out_flags |= IS_TEXT_UNICODE_REVERSE_SIGNATURE;
+    /* Check for the special byte order unicode marks. */
+    if (*s == 0xFEFF) out_flags |= IS_TEXT_UNICODE_SIGNATURE;
+    if (*s == 0xFFFE) out_flags |= IS_TEXT_UNICODE_REVERSE_SIGNATURE;
 
     /* apply some statistical analysis */
     if (flags & IS_TEXT_UNICODE_STATISTICS)
     {
-        DWORD i, stats = 0;
+        int stats = 0;
         /* FIXME: checks only for ASCII characters in the unicode stream */
-        for (i = 0; i < len / sizeof(WCHAR); i++)
+        for (i = 0; i < len; i++)
         {
             if (s[i] <= 255) stats++;
         }
-        if (stats > len / sizeof(WCHAR) / 2)
+        if (stats > len / 2)
             out_flags |= IS_TEXT_UNICODE_STATISTICS;
     }
 
     /* Check for unicode NULL chars */
     if (flags & IS_TEXT_UNICODE_NULL_BYTES)
     {
-        DWORD i;
-        for (i = 0; i < len / sizeof(WCHAR); i++)
+        for (i = 0; i < len; i++)
         {
             if (!s[i])
             {
@@ -1576,16 +1570,19 @@ DWORD WINAPI RtlIsTextUnicode(
         }
     }
 
-	/*
-	 * Check whether the string passed all of the tests.
-	 */
-	flags &= ITU_IMPLEMENTED_TESTS;
-	if ((out_flags & flags) != flags)
-		len = 0;
-out:
-	if (pf)
-		*pf = out_flags;
-	return len;
+    if (pf)
+    {
+        out_flags &= *pf;
+        *pf = out_flags;
+    }
+    /* check for flags that indicate it's definitely not valid Unicode */
+    if (out_flags & (IS_TEXT_UNICODE_REVERSE_MASK | IS_TEXT_UNICODE_NOT_UNICODE_MASK)) return FALSE;
+    /* now check for invalid ASCII, and assume Unicode if so */
+    if (out_flags & IS_TEXT_UNICODE_NOT_ASCII_MASK) return TRUE;
+    /* now check for Unicode flags */
+    if (out_flags & IS_TEXT_UNICODE_UNICODE_MASK) return TRUE;
+    /* no flags set */
+    return FALSE;
 }
 
 

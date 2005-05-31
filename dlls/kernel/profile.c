@@ -282,15 +282,15 @@ static inline int PROFILE_isspaceW(WCHAR c)
 
 static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len)
 {
-    DWORD flags = IS_TEXT_UNICODE_SIGNATURE |
-                  IS_TEXT_UNICODE_REVERSE_SIGNATURE |
-                  IS_TEXT_UNICODE_ODD_LENGTH;
+    int flags = IS_TEXT_UNICODE_SIGNATURE |
+                IS_TEXT_UNICODE_REVERSE_SIGNATURE |
+                IS_TEXT_UNICODE_ODD_LENGTH;
     if (*len >= sizeof(bom_utf8) && !memcmp(buffer, bom_utf8, sizeof(bom_utf8)))
     {
         *len = sizeof(bom_utf8);
         return ENCODING_UTF8;
     }
-    RtlIsTextUnicode((void *)buffer, *len, &flags);
+    RtlIsTextUnicode(buffer, *len, &flags);
     if (flags & IS_TEXT_UNICODE_SIGNATURE)
     {
         *len = sizeof(WCHAR);

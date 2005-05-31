@@ -1520,7 +1520,7 @@ BOOL        WINAPI InitializeCriticalSectionAndSpinCount(CRITICAL_SECTION *,DWOR
 BOOL        WINAPI InitializeSecurityDescriptor(PSECURITY_DESCRIPTOR,DWORD);
 BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 BOOL        WINAPI IsSystemResumeAutomatic(void);
-BOOL        WINAPI IsTextUnicode(CONST LPVOID lpBuffer, int cb, LPINT lpi);
+BOOL        WINAPI IsTextUnicode(LPCVOID,INT,LPINT);
 BOOL        WINAPI IsTokenRestricted(HANDLE);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
