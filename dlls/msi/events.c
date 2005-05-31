@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 typedef void (*EVENTHANDLER)(MSIPACKAGE*,LPCWSTR,msi_dialog *);
 
 struct _events {
-    LPSTR event;
+    LPCSTR event;
     EVENTHANDLER handler;
 };
 

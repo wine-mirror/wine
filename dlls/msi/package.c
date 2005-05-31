@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
  */
 #define LPCTSTR LPCWSTR
 
-void MSI_FreePackage( MSIOBJECTHDR *arg)
+static void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package= (MSIPACKAGE*) arg;
 

@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msi);
 #define MSIFIELD_WSTR   3
 #define MSIFIELD_STREAM 4
 
-void MSI_FreeField( MSIFIELD *field )
+static void MSI_FreeField( MSIFIELD *field )
 {
     switch( field->type )
     {
@@ -62,7 +62,7 @@ void MSI_FreeField( MSIFIELD *field )
     }
 }
 
-void MSI_CloseRecord( MSIOBJECTHDR *arg )
+static void MSI_CloseRecord( MSIOBJECTHDR *arg )
 {
     MSIRECORD *rec = (MSIRECORD *) arg;
     UINT i;
@@ -546,7 +546,7 @@ UINT WINAPI MsiRecordSetStringW( MSIHANDLE handle, unsigned int iField, LPCWSTR 
 }
 
 /* read the data in a file into an IStream */
-UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
+static UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
 {
     DWORD sz, szHighWord = 0, read;
     HANDLE handle;

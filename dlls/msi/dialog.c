@@ -117,7 +117,7 @@ static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 static DWORD uiThreadId;
 static HWND hMsiHiddenWindow;
 
-INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
+static INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
 {
     return (dialog->scale * val + 5) / 10;
 }

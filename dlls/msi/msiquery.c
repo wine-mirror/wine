@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-void MSI_CloseView( MSIOBJECTHDR *arg )
+static void MSI_CloseView( MSIOBJECTHDR *arg )
 {
     MSIQUERY *query = (MSIQUERY*) arg;
     struct list *ptr, *t;

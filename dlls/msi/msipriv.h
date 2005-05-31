@@ -66,7 +66,7 @@ typedef struct tagMSIDATABASE
     MSIOBJECTHDR hdr;
     IStorage *storage;
     string_table *strings;
-    LPWSTR mode;
+    LPCWSTR mode;
     MSITABLE *first_table, *last_table;
 } MSIDATABASE;
 
@@ -318,12 +318,16 @@ extern const WCHAR *MSI_RecordGetString( MSIRECORD *, unsigned int );
 extern MSIRECORD *MSI_CreateRecord( unsigned int );
 extern UINT MSI_RecordSetInteger( MSIRECORD *, unsigned int, int );
 extern UINT MSI_RecordSetStringW( MSIRECORD *, unsigned int, LPCWSTR );
+extern UINT MSI_RecordSetStringA( MSIRECORD *, unsigned int, LPCSTR );
 extern BOOL MSI_RecordIsNull( MSIRECORD *, unsigned int );
 extern UINT MSI_RecordGetStringW( MSIRECORD * , unsigned int, LPWSTR, DWORD *);
 extern UINT MSI_RecordGetStringA( MSIRECORD *, unsigned int, LPSTR, DWORD *);
 extern int MSI_RecordGetInteger( MSIRECORD *, unsigned int );
 extern UINT MSI_RecordReadStream( MSIRECORD *, unsigned int, char *, DWORD *);
 extern unsigned int MSI_RecordGetFieldCount( MSIRECORD *rec );
+extern UINT MSI_RecordSetStreamW( MSIRECORD *, unsigned int, LPCWSTR );
+extern UINT MSI_RecordSetStreamA( MSIRECORD *, unsigned int, LPCSTR );
+extern UINT MSI_RecordDataSize( MSIRECORD *, unsigned int );
 
 /* stream internals */
 extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
@@ -334,8 +338,11 @@ extern void enum_stream_names( IStorage *stg );
 extern UINT MSI_OpenDatabaseW( LPCWSTR, LPCWSTR, MSIDATABASE ** );
 extern UINT MSI_DatabaseOpenViewW(MSIDATABASE *, LPCWSTR, MSIQUERY ** );
 extern UINT MSI_OpenQuery( MSIDATABASE *, MSIQUERY **, LPCWSTR, ... );
-typedef UINT (*record_func)( MSIRECORD *rec, LPVOID param );
+typedef UINT (*record_func)( MSIRECORD *, LPVOID );
 extern UINT MSI_IterateRecords( MSIQUERY *, DWORD *, record_func, LPVOID );
+extern UINT MSI_DatabaseImport( MSIDATABASE *, LPCWSTR, LPCWSTR );
+extern UINT MSI_DatabaseExport( MSIDATABASE *, LPCWSTR, LPCWSTR, LPCWSTR );
+extern UINT MSI_DatabaseGetPrimaryKeys( MSIDATABASE *, LPCWSTR, MSIRECORD ** );
 
 /* view internals */
 extern UINT MSI_ViewExecute( MSIQUERY*, MSIRECORD * );
@@ -349,6 +356,7 @@ extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern INT MSI_ProcessMessage( MSIPACKAGE *, INSTALLMESSAGE, MSIRECORD * );
 extern UINT MSI_GetPropertyW( MSIPACKAGE *, LPCWSTR, LPWSTR, DWORD * );
+extern UINT MSI_GetPropertyA(MSIPACKAGE *, LPCSTR, LPSTR, DWORD* );
 extern MSICONDITION MSI_EvaluateConditionW( MSIPACKAGE *, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_GetComponentStateW( MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE * );
