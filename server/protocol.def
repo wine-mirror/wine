@@ -1953,6 +1953,7 @@ enum message_type
 /* Get the window update region */
 @REQ(get_update_region)
     user_handle_t  window;        /* handle to the window */
+    user_handle_t  from_child;    /* child to start searching from */
     unsigned int   flags;         /* update flags (see below) */
 @REPLY
     user_handle_t  child;         /* child to repaint (or window itself) */

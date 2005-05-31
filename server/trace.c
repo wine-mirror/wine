@@ -2440,6 +2440,7 @@ static void dump_set_window_region_request( const struct set_window_region_reque
 static void dump_get_update_region_request( const struct get_update_region_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " from_child=%p,", req->from_child );
     fprintf( stderr, " flags=%08x", req->flags );
 }
 

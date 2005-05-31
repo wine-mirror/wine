@@ -2770,6 +2770,7 @@ struct get_update_region_request
 {
     struct request_header __header;
     user_handle_t  window;
+    user_handle_t  from_child;
     unsigned int   flags;
 };
 struct get_update_region_reply
@@ -3997,6 +3998,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 176
+#define SERVER_PROTOCOL_VERSION 177
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

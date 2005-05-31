@@ -99,8 +99,9 @@ static HRGN get_update_region( HWND hwnd, UINT *flags, HWND *child )
 
         SERVER_START_REQ( get_update_region )
         {
-            req->window = hwnd;
-            req->flags  = *flags;
+            req->window     = hwnd;
+            req->from_child = child ? *child : 0;
+            req->flags      = *flags;
             wine_server_set_reply( req, data->Buffer, size );
             if (!(status = wine_server_call( req )))
             {
@@ -135,8 +136,9 @@ static BOOL get_update_flags( HWND hwnd, HWND *child, UINT *flags )
 
     SERVER_START_REQ( get_update_region )
     {
-        req->window = hwnd;
-        req->flags  = *flags | UPDATE_NOREGION;
+        req->window     = hwnd;
+        req->from_child = child ? *child : 0;
+        req->flags      = *flags | UPDATE_NOREGION;
         if ((ret = !wine_server_call_err( req )))
         {
             if (child) *child = reply->child;
@@ -279,7 +281,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
  */
 static void erase_now( HWND hwnd, UINT rdw_flags )
 {
-    HWND child;
+    HWND child = 0;
     HRGN hrgn;
 
     /* loop while we find a child to repaint */
@@ -319,7 +321,7 @@ static void erase_now( HWND hwnd, UINT rdw_flags )
  */
 static void update_now( HWND hwnd, UINT rdw_flags )
 {
-    HWND prev = 0, child;
+    HWND child = 0;
 
     /* desktop window never gets WM_PAINT, only WM_ERASEBKGND */
     if (hwnd == GetDesktopWindow()) erase_now( hwnd, rdw_flags | RDW_NOCHILDREN );
@@ -335,22 +337,7 @@ static void update_now( HWND hwnd, UINT rdw_flags )
         if (!get_update_flags( hwnd, &child, &flags )) break;
         if (!flags) break;  /* nothing more to do */
 
-        if (child == prev)  /* same window again, didn't get repainted properly */
-        {
-            UINT erase_flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_NOCHILDREN;
-            HRGN hrgn;
-
-            TRACE( "%p not repainted properly, erasing\n", child );
-            if ((hrgn = send_ncpaint( child, NULL, &erase_flags )))
-                send_erase( child, erase_flags, hrgn, NULL, NULL );
-
-            prev = 0;
-        }
-        else
-        {
-            prev = child;
-            SendMessageW( child, WM_PAINT, 0, 0 );
-        }
+        SendMessageW( child, WM_PAINT, 0, 0 );
         if (rdw_flags & RDW_NOCHILDREN) break;
     }
 }

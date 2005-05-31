@@ -1046,33 +1046,108 @@ static unsigned int get_update_flags( struct window *win, unsigned int flags )
 
 
 /* iterate through the children of the given window until we find one with some update flags */
-static unsigned int get_child_update_flags( struct window *win, unsigned int flags,
-                                            struct window **child )
+static unsigned int get_child_update_flags( struct window *win, struct window *from_child,
+                                            unsigned int flags, struct window **child )
 {
     struct window *ptr;
     unsigned int ret = 0;
 
+    /* first make sure we want to iterate children at all */
+
+    if (win->style & WS_MINIMIZE) return 0;
+
+    /* note: the WS_CLIPCHILDREN test is the opposite of the invalidation case,
+     * here we only want to repaint children of windows that clip them, others
+     * need to wait for WM_PAINT to be done in the parent first.
+     */
+    if (!(flags & UPDATE_ALLCHILDREN) && !(win->style & WS_CLIPCHILDREN)) return 0;
+
     LIST_FOR_EACH_ENTRY( ptr, &win->children, struct window, entry )
     {
+        if (from_child)  /* skip all children until from_child is found */
+        {
+            if (ptr == from_child) from_child = NULL;
+            continue;
+        }
         if (!(ptr->style & WS_VISIBLE)) continue;
         if ((ret = get_update_flags( ptr, flags )) != 0)
         {
             *child = ptr;
             break;
         }
-        if (ptr->style & WS_MINIMIZE) continue;
-
-        /* Note: the WS_CLIPCHILDREN test is the opposite of the invalidation case,
-         * here we only want to repaint children of windows that clip them, others
-         * need to wait for WM_PAINT to be done in the parent first.
-         */
-        if (!(flags & UPDATE_NOCHILDREN) &&
-            ((flags & UPDATE_ALLCHILDREN) || (ptr->style & WS_CLIPCHILDREN)))
-        {
-            if ((ret = get_child_update_flags( ptr, flags, child ))) break;
-        }
+        if ((ret = get_child_update_flags( ptr, NULL, flags, child ))) break;
     }
     return ret;
+}
+
+/* iterate through children and siblings of the given window until we find one with some update flags */
+static unsigned int get_window_update_flags( struct window *win, struct window *from_child,
+                                             unsigned int flags, struct window **child )
+{
+    unsigned int ret;
+    struct window *ptr, *from_sibling = NULL;
+
+    /* if some parent is not visible start from the next sibling */
+
+    if (!is_visible( win )) return 0;
+    for (ptr = from_child; ptr && ptr != top_window; ptr = ptr->parent)
+    {
+        if (!(ptr->style & WS_VISIBLE) || (ptr->style & WS_MINIMIZE)) from_sibling = ptr;
+        if (ptr == win) break;
+    }
+
+    /* non-client painting must be delayed if one of the parents is going to
+     * be repainted and doesn't clip children */
+
+    if ((flags & UPDATE_NONCLIENT) && !(flags & (UPDATE_PAINT|UPDATE_INTERNALPAINT)))
+    {
+        for (ptr = win->parent; ptr && ptr != top_window; ptr = ptr->parent)
+        {
+            if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr ))
+                return 0;
+        }
+        if (from_child && !(flags & UPDATE_ALLCHILDREN))
+        {
+            for (ptr = from_sibling ? from_sibling : from_child;
+                 ptr && ptr != top_window; ptr = ptr->parent)
+            {
+                if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr )) from_sibling = ptr;
+                if (ptr == win) break;
+            }
+        }
+    }
+
+
+    /* check window itself (only if not restarting from a child) */
+
+    if (!from_child)
+    {
+        if ((ret = get_update_flags( win, flags )))
+        {
+            *child = win;
+            return ret;
+        }
+        from_child = win;
+    }
+
+    /* now check children */
+
+    if (flags & UPDATE_NOCHILDREN) return 0;
+    if (!from_sibling)
+    {
+        if ((ret = get_child_update_flags( from_child, NULL, flags, child ))) return ret;
+        from_sibling = from_child;
+    }
+
+    /* then check siblings and parent siblings */
+
+    while (from_sibling->parent && from_sibling != win)
+    {
+        if ((ret = get_child_update_flags( from_sibling->parent, from_sibling, flags, child )))
+            return ret;
+        from_sibling = from_sibling->parent;
+    }
+    return 0;
 }
 
 
@@ -1667,35 +1742,29 @@ DECL_HANDLER(get_update_region)
 {
     rectangle_t *data;
     unsigned int flags = req->flags;
+    struct window *from_child = NULL;
     struct window *win = get_window( req->window );
 
     reply->flags = 0;
-    if (!win || !is_visible( win )) return;
+    if (!win) return;
 
-    if ((flags & UPDATE_NONCLIENT) && !(flags & (UPDATE_PAINT|UPDATE_INTERNALPAINT)))
+    if (req->from_child)
     {
-        /* non-client painting must be delayed if one of the parents is going to
-         * be repainted and doesn't clip children */
         struct window *ptr;
 
-        for (ptr = win->parent; ptr && ptr != top_window; ptr = ptr->parent)
+        if (!(from_child = get_window( req->from_child ))) return;
+
+        /* make sure from_child is a child of win */
+        ptr = from_child;
+        while (ptr && ptr != win) ptr = ptr->parent;
+        if (!ptr)
         {
-            if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr ))
-                return;
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
         }
     }
 
-    if (!(reply->flags = get_update_flags( win, flags )))
-    {
-        /* if window doesn't need any repaint, check the children */
-        if (!(flags & UPDATE_NOCHILDREN) &&
-            ((flags & UPDATE_ALLCHILDREN) || (win->style & WS_CLIPCHILDREN)) &&
-            !(win->style & WS_MINIMIZE))
-        {
-            reply->flags = get_child_update_flags( win, flags, &win );
-        }
-    }
-
+    reply->flags = get_window_update_flags( win, from_child, flags, &win );
     reply->child = win->handle;
 
     if (flags & UPDATE_NOREGION) return;
