@@ -831,6 +831,27 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
     return status;
 }
 
+/******************************************************************************
+ * RtlGetControlSecurityDescriptor (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
+    PSECURITY_DESCRIPTOR  pSecurityDescriptor,
+    PSECURITY_DESCRIPTOR_CONTROL pControl,
+    LPDWORD lpdwRevision)
+{
+    SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+
+    TRACE("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
+
+    if ( !lpsd  || !pControl || !lpdwRevision )
+            return STATUS_INVALID_PARAMETER;
+
+    *lpdwRevision = lpsd->Revision;
+    *pControl = lpsd->Control;
+
+    return STATUS_SUCCESS;
+}
+
 
 /**************************************************************************
  *                 RtlAbsoluteToSelfRelativeSD [NTDLL.@]
@@ -1197,7 +1218,13 @@ NtAccessCheck(
     SERVER_START_REQ( access_check )
     {
         struct security_descriptor sd;
-        const SECURITY_DESCRIPTOR * RealSD = (const SECURITY_DESCRIPTOR *)SecurityDescriptor;
+        PSID owner;
+        PSID group;
+        PACL sacl;
+        PACL dacl;
+        BOOLEAN defaulted, present;
+        DWORD revision;
+        SECURITY_DESCRIPTOR_CONTROL control;
 
         req->handle = ClientToken;
         req->desired_access = DesiredAccess;
@@ -1207,16 +1234,22 @@ NtAccessCheck(
         req->mapping_all = GenericMapping->GenericAll;
 
         /* marshal security descriptor */
-        sd.control = RealSD->Control;
-        sd.owner_len = RtlLengthSid( RealSD->Owner );
-        sd.group_len = RtlLengthSid( RealSD->Group );
-        sd.sacl_len = (RealSD->Sacl ? RealSD->Sacl->AclSize : 0);
-        sd.dacl_len = (RealSD->Dacl ? RealSD->Dacl->AclSize : 0);
+        RtlGetControlSecurityDescriptor( SecurityDescriptor, &control, &revision );
+        sd.control = control & ~SE_SELF_RELATIVE;
+        RtlGetOwnerSecurityDescriptor( SecurityDescriptor, &owner, &defaulted );
+        sd.owner_len = RtlLengthSid( owner );
+        RtlGetGroupSecurityDescriptor( SecurityDescriptor, &group, &defaulted );
+        sd.group_len = RtlLengthSid( group );
+        RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
+        sd.sacl_len = (present ? sacl->AclSize : 0);
+        RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
+        sd.dacl_len = (present ? dacl->AclSize : 0);
+
         wine_server_add_data( req, &sd, sizeof(sd) );
-        wine_server_add_data( req, RealSD->Owner, sd.owner_len );
-        wine_server_add_data( req, RealSD->Group, sd.group_len );
-        wine_server_add_data( req, RealSD->Sacl, sd.sacl_len );
-        wine_server_add_data( req, RealSD->Dacl, sd.dacl_len );
+        wine_server_add_data( req, owner, sd.owner_len );
+        wine_server_add_data( req, group, sd.group_len );
+        wine_server_add_data( req, sacl, sd.sacl_len );
+        wine_server_add_data( req, dacl, sd.dacl_len );
 
         wine_server_set_reply( req, &PrivilegeSet->Privilege, *ReturnLength - FIELD_OFFSET( PRIVILEGE_SET, Privilege ) );
 
@@ -1244,19 +1277,6 @@ NtSetSecurityObject(
         IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
 	FIXME("%p 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
-	return STATUS_SUCCESS;
-}
-
-/******************************************************************************
- * RtlGetControlSecurityDescriptor (NTDLL.@)
- */
-
-NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
-	PSECURITY_DESCRIPTOR  pSecurityDescriptor,
-	PSECURITY_DESCRIPTOR_CONTROL pControl,
-	LPDWORD lpdwRevision)
-{
-	FIXME("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
 	return STATUS_SUCCESS;
 }
 
