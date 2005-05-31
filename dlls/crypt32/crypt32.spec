@@ -143,7 +143,7 @@
 @ stdcall CryptSIPRemoveProvider(ptr)
 @ stdcall CryptSIPRetrieveSubjectGuid(wstr long ptr)
 @ stub CryptSetAsyncParam
-@ stub CryptSetOIDFunctionValue
+@ stdcall CryptSetOIDFunctionValue(long str str wstr long ptr long)
 @ stub CryptSetProviderU
 @ stub CryptSignAndEncodeCertificate
 @ stub CryptSignAndEncryptMessage

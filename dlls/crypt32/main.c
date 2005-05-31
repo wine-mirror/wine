@@ -183,16 +183,6 @@ BOOL WINAPI CryptSIPLoad
     return FALSE;
 }
 
-BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
-                                     LPCSTR pszOID, LPCWSTR pwszValueName,
-                                     DWORD *pdwValueType, BYTE *pbValueData,
-                                     DWORD *pcbValueData)
-{
-    FIXME("(%lx,%s,%s,%s,%p,%p,%p) stub!\n", dwEncodingType, pszFuncName, pszOID,
-          debugstr_w(pwszValueName), pdwValueType, pbValueData, pcbValueData);
-    return FALSE;
-}
-
 BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
                                      LPCSTR pszFuncName, DWORD dwIndex,
 				     LPCWSTR pwszDll)

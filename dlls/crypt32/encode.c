@@ -132,8 +132,83 @@ BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
 
     szKey = CRYPT_GetKeyName(dwEncodingType, pszFuncName, pszOID);
     rc = RegDeleteKeyA(HKEY_LOCAL_MACHINE, szKey);
-    if (!rc)
+    HeapFree(GetProcessHeap(), 0, szKey);
+    if (rc)
         SetLastError(rc);
+    return rc ? FALSE : TRUE;
+}
+
+BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
+ LPCSTR pszOID, LPCWSTR pwszValueName, DWORD *pdwValueType, BYTE *pbValueData,
+ DWORD *pcbValueData)
+{
+    LPSTR szKey;
+    LONG rc;
+    HKEY hKey;
+
+    TRACE("%lx %s %s %s %p %p %p\n", dwEncodingType, debugstr_a(pszFuncName),
+     debugstr_a(pszOID), debugstr_w(pwszValueName), pdwValueType, pbValueData,
+     pcbValueData);
+
+    if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
+        return TRUE;
+
+    if (!pszFuncName || !pszOID || !pwszValueName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    szKey = CRYPT_GetKeyName(dwEncodingType, pszFuncName, pszOID);
+    rc = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
+    HeapFree(GetProcessHeap(), 0, szKey);
+    if (rc)
+        SetLastError(rc);
+    else
+    {
+        rc = RegQueryValueExW(hKey, pwszValueName, NULL, pdwValueType,
+         pbValueData, pcbValueData);
+        if (rc)
+            SetLastError(rc);
+        RegCloseKey(hKey);
+    }
+    return rc ? FALSE : TRUE;
+}
+
+BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
+ LPCSTR pszOID, LPCWSTR pwszValueName, DWORD dwValueType,
+ const BYTE *pbValueData, DWORD cbValueData)
+{
+    LPSTR szKey;
+    LONG rc;
+    HKEY hKey;
+
+    TRACE("%lx %s %s %s %ld %p %ld\n", dwEncodingType, debugstr_a(pszFuncName),
+     debugstr_a(pszOID), debugstr_w(pwszValueName), dwValueType, pbValueData,
+     cbValueData);
+
+    if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
+        return TRUE;
+
+    if (!pszFuncName || !pszOID || !pwszValueName)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    szKey = CRYPT_GetKeyName(dwEncodingType, pszFuncName, pszOID);
+    rc = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
+    HeapFree(GetProcessHeap(), 0, szKey);
+    if (rc)
+        SetLastError(rc);
+    else
+    {
+        rc = RegSetValueExW(hKey, pwszValueName, 0, dwValueType, pbValueData,
+         cbValueData);
+        if (rc)
+            SetLastError(rc);
+        RegCloseKey(hKey);
+    }
     return rc ? FALSE : TRUE;
 }
 
