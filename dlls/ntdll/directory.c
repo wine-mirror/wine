@@ -762,11 +762,16 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG *pos, ULON
 
     if (*pos + total_len > max_length) total_len = max_length - *pos;
 
+    info->FileAttributes = 0;
     if (lstat( long_name, &st ) == -1) return NULL;
     if (S_ISLNK( st.st_mode ))
     {
         if (stat( long_name, &st ) == -1) return NULL;
-        if (S_ISDIR( st.st_mode ) && !show_dir_symlinks) return NULL;
+        if (S_ISDIR( st.st_mode ))
+        {
+            if (!show_dir_symlinks) return NULL;
+            info->FileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
+        }
     }
 
     info->NextEntryOffset = total_len;
@@ -780,13 +785,13 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG *pos, ULON
     if (S_ISDIR(st.st_mode))
     {
         info->EndOfFile.QuadPart = info->AllocationSize.QuadPart = 0;
-        info->FileAttributes = FILE_ATTRIBUTE_DIRECTORY;
+        info->FileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
     }
     else
     {
         info->EndOfFile.QuadPart = st.st_size;
         info->AllocationSize.QuadPart = (ULONGLONG)st.st_blocks * 512;
-        info->FileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+        info->FileAttributes |= FILE_ATTRIBUTE_ARCHIVE;
     }
 
     if (!(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
