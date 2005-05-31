@@ -852,7 +852,9 @@ static DWORD parse_buffer( struct inf_file *file, const WCHAR *buffer, const WCH
     struct parser parser;
     const WCHAR *pos = buffer;
 
-    parser.start       = buffer;
+    if (*pos == 0xfeff) pos++;  /* skip Unicode BOM signature */
+
+    parser.start       = pos;
     parser.end         = end;
     parser.file        = file;
     parser.line        = NULL;
