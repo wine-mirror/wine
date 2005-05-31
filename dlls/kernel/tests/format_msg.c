@@ -25,7 +25,7 @@
 
 /* #define ok(cond,failstr) if(!(cond)) {printf("line %d : %s\n",__LINE__,failstr);exit(1);} */
 
-DWORD doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
+static DWORD doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
            LPSTR out, DWORD outsize, ... )
 {
     va_list list;
@@ -38,7 +38,7 @@ DWORD doit(DWORD flags, LPCVOID src, DWORD msg_id, DWORD lang_id,
     return r;
 }
 
-void test_message_from_string(void)
+static void test_message_from_string(void)
 {
     CHAR out[0x100] = {0};
     DWORD r;

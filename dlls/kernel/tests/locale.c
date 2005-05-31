@@ -104,7 +104,7 @@ static void InitFunctionPointers(void)
            (label), (received), (expected))
 
 #define BUFFER_SIZE    128
-char GlobalBuffer[BUFFER_SIZE]; /* Buffer used by callback function */
+static char GlobalBuffer[BUFFER_SIZE]; /* Buffer used by callback function */
 #define COUNTOF(x) (sizeof(x)/sizeof(x)[0])
 
 #define EXPECT_LEN(len) ok(ret == (len), "Expected Len %d, got %d\n", (len), ret)
@@ -759,7 +759,7 @@ static BOOL CALLBACK EnumTimeFormatsProc(char * lpTimeFormatString)
   return FALSE;
 }
 
-void test_EnumTimeFormats()
+static void test_EnumTimeFormats()
 {
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
@@ -957,7 +957,7 @@ static void test_CompareStringA()
     ok(ret == 2, "aLu\\0ZkUtZ vs aLu\\0ZkUtZ\\0A expected 2, got %d\n", ret);
 }
 
-void test_LCMapStringA(void)
+static void test_LCMapStringA(void)
 {
     int ret, ret2;
     char buf[256], buf2[256];
@@ -1126,7 +1126,7 @@ void test_LCMapStringA(void)
        "unexpected error code %ld\n", GetLastError());
 }
 
-void test_LCMapStringW(void)
+static void test_LCMapStringW(void)
 {
     int ret, ret2;
     WCHAR buf[256], buf2[256];

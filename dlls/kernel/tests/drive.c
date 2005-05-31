@@ -25,7 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 
-void test_GetDriveTypeA(void)
+static void test_GetDriveTypeA(void)
 {
     char drive[] = "?:\\";
     DWORD logical_drives;
@@ -48,7 +48,7 @@ void test_GetDriveTypeA(void)
     }
 }
 
-void test_GetDriveTypeW(void)
+static void test_GetDriveTypeW(void)
 {
     WCHAR drive[] = {'?',':','\\',0};
     DWORD logical_drives;
@@ -76,7 +76,7 @@ void test_GetDriveTypeW(void)
     }
 }
 
-void test_GetDiskFreeSpaceA(void)
+static void test_GetDiskFreeSpaceA(void)
 {
     BOOL ret;
     DWORD sectors_per_cluster, bytes_per_sector, free_clusters, total_clusters;
@@ -122,7 +122,7 @@ void test_GetDiskFreeSpaceA(void)
     }
 }
 
-void test_GetDiskFreeSpaceW(void)
+static void test_GetDiskFreeSpaceW(void)
 {
     BOOL ret;
     DWORD sectors_per_cluster, bytes_per_sector, free_clusters, total_clusters;

@@ -66,8 +66,9 @@ typedef struct {
          for wine.  It is not very pretty, but it sure beats duplicating this
          function lots of times
 */
-static void test_ValidPathA(CHAR *curdir, CHAR *subdir, CHAR *filename,
-                         CHAR *shortstr, SLpassfail *passfail, CHAR *errstr) {
+static void test_ValidPathA(const CHAR *curdir, const CHAR *subdir, const CHAR *filename,
+                         CHAR *shortstr, SLpassfail *passfail, const CHAR *errstr)
+{
   CHAR tmpstr[MAX_PATH],
        fullpath[MAX_PATH],      /*full path to the file (not short/long) */
        subpath[MAX_PATH],       /*relative path to the file */
@@ -208,8 +209,8 @@ static void test_SplitShortPathA(CHAR *path,CHAR *dir,CHAR *eight,CHAR *three) {
 }
 
 /* Check that GetShortPathNameA returns a valid 8.3 path */
-static void test_LongtoShortA(CHAR *teststr,CHAR *goodstr,
-                              CHAR *ext,CHAR *errstr) {
+static void test_LongtoShortA(CHAR *teststr,const CHAR *goodstr,
+                              const CHAR *ext,const CHAR *errstr) {
   CHAR dir[MAX_PATH],eight[MAX_PATH],three[MAX_PATH];
 
   test_SplitShortPathA(teststr,dir,eight,three);
@@ -263,7 +264,7 @@ static void test_FunnyChars(CHAR *curdir,CHAR *curdir_short,CHAR *filename, INT 
 
 /* Routine to test that SetCurrentDirectory behaves as expected. */
 static void test_setdir(CHAR *olddir,CHAR *newdir,
-                        CHAR *cmprstr, INT pass,CHAR *errstr)
+                        CHAR *cmprstr, INT pass, const CHAR *errstr)
 {
   CHAR tmppath[MAX_PATH], *dirptr;
   DWORD val,len,chklen;
