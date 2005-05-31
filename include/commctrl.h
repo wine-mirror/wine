@@ -2780,7 +2780,7 @@ typedef struct tagTVKEYDOWN
   _TVi.hItem = hti; \
   _TVi.stateMask = _mask; \
   _TVi.state = data; \
-  SNDMSG((hwndTV), TVM_SETITEM, 0, (LPARAM)(TV_ITEM *)&_TVi); \
+  SNDMSG((hwndTV), TVM_SETITEM, 0, (LPARAM)&_TVi); \
 }
 
 #define TreeView_GetItemState(hwndTV, hti, mask) \
