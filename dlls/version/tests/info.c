@@ -45,6 +45,7 @@
 
 static void test_info_size(void)
 {   DWORD hdl, retval;
+    char mypath[MAX_PATH] = "";
 
     SetLastError(MY_LAST_ERROR);
     retval = GetFileVersionInfoSizeA( NULL, NULL);
@@ -111,6 +112,46 @@ static void test_info_size(void)
 	(MY_LAST_ERROR == GetLastError()),
 	"Last error wrong! ERROR_FILE_NOT_FOUND/ERROR_RESOURCE_DATA_NOT_FOUND "
 	"(XP)/0x%08lx (NT4) expected, got 0x%08lx\n", MY_LAST_ERROR, GetLastError());
+
+    /* test a currently loaded executable */
+    if(GetModuleFileNameA(NULL, mypath, MAX_PATH)) {
+	hdl = 0x55555555;
+	SetLastError(MY_LAST_ERROR);
+	retval = GetFileVersionInfoSizeA( mypath, &hdl);
+	ok( retval,
+	    "GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08lx\n",
+	    retval);
+	ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
+	    "Last error wrong! NO_ERROR/0x%08lx (NT4)  expected, got 0x%08lx\n",
+	    MY_LAST_ERROR, GetLastError());
+	ok( hdl == 0L,
+	    "Handle wrong! 0L expected, got 0x%08lx\n", hdl);
+    }
+    else
+	trace("skipping GetModuleFileNameA(NULL,..) failed\n");
+
+    /* test a not loaded executable */
+    if(GetSystemDirectoryA(mypath, MAX_PATH)) {
+	lstrcatA(mypath, "\\regsvr32.exe");
+
+	if(INVALID_FILE_ATTRIBUTES == GetFileAttributesA(mypath))
+	    trace("GetFileAttributesA(%s) failed\n", mypath);
+	else {
+	    hdl = 0x55555555;
+	    SetLastError(MY_LAST_ERROR);
+	    retval = GetFileVersionInfoSizeA( mypath, &hdl);
+	    ok( retval,
+		"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08lx\n",
+		retval);
+	    ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
+		"Last error wrong! NO_ERROR/0x%08lx (NT4)  expected, got 0x%08lx\n",
+		MY_LAST_ERROR, GetLastError());
+	    ok( hdl == 0L,
+		"Handle wrong! 0L expected, got 0x%08lx\n", hdl);
+	}
+    }
+    else
+	trace("skipping GetModuleFileNameA(NULL,..) failed\n");
 }
 
 static void VersionDwordLong2String(DWORDLONG Version, LPSTR lpszVerString)

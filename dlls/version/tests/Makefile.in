@@ -8,6 +8,8 @@ IMPORTS   = version
 CTESTS = \
 	info.c
 
+RC_SRCS = version.rc
+
 @MAKE_TEST_RULES@
 
 ### Dependencies:

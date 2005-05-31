@@ -1,3 +1,4 @@
 Makefile
 info.ok
 testlist.c
+version.res
