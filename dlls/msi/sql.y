@@ -32,7 +32,6 @@
 #include "query.h"
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 #define YYLEX_PARAM info
 #define YYPARSE_PARAM info
@@ -61,7 +60,7 @@ static BOOL SQL_MarkPrimaryKeys( column_info *cols, column_info *keys);
 
 static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct expr *r );
 static struct expr * EXPR_column( void *info, column_info *column );
-static struct expr * EXPR_ival( void *info, struct sql_str *, int sign );
+static struct expr * EXPR_ival( void *info, int val );
 static struct expr * EXPR_sval( void *info, struct sql_str * );
 static struct expr * EXPR_wildcard( void *info );
 
@@ -77,6 +76,7 @@ static struct expr * EXPR_wildcard( void *info );
     MSIVIEW *query;
     struct expr *expr;
     USHORT column_type;
+    int integer;
 }
 
 %token TK_ABORT TK_AFTER TK_AGG_FUNCTION TK_ALL TK_AND TK_AS TK_ASC
@@ -130,6 +130,7 @@ static struct expr * EXPR_wildcard( void *info );
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
+%type <integer> number
 
 %%
 
@@ -316,13 +317,11 @@ data_type:
     ;
 
 data_count:
-    TK_INTEGER
+    number
         {
-            SQL_input* sql = (SQL_input*) info;
-            int val = SQL_getint(sql);
-            if( ( val > 255 ) || ( val < 0 ) )
+            if( ( $1 > 255 ) || ( $1 < 0 ) )
                 YYABORT;
-            $$ = val;
+            $$ = $1;
         }
     ;
 
@@ -529,15 +528,15 @@ column_assignment:
     ;
 
 const_val:
-    TK_INTEGER
+    number
         {
-            $$ = EXPR_ival( info, &$1, 1 );
+            $$ = EXPR_ival( info, $1 );
             if( !$$ )
                 YYABORT;
         }
-  | TK_MINUS  TK_INTEGER
+  | TK_MINUS number
         {
-            $$ = EXPR_ival( info, &$2, -1 );
+            $$ = EXPR_ival( info, -$2 );
             if( !$$ )
                 YYABORT;
         }
@@ -592,6 +591,13 @@ id:
             $$ = SQL_getstring( info, &$1 );
             if( !$$ )
                 YYABORT;
+        }
+    ;
+
+number:
+    TK_INTEGER
+        {
+            $$ = SQL_getint( info );
         }
     ;
 
@@ -675,8 +681,19 @@ INT SQL_getint( void *info )
 {
     SQL_input* sql = (SQL_input*) info;
     LPCWSTR p = &sql->command[sql->n];
+    INT i, r = 0;
 
-    return atoiW( p );
+    for( i=0; i<sql->len; i++ )
+    {
+        if( '0' > p[i] || '9' < p[i] )
+        {
+            ERR("should only be numbers here!\n");
+            break;
+        }
+        r = (p[i]-'0') + r*10;
+    }
+
+    return r;
 }
 
 int SQL_error( const char *str )
@@ -718,13 +735,13 @@ static struct expr * EXPR_column( void *info, column_info *column )
     return e;
 }
 
-static struct expr * EXPR_ival( void *info, struct sql_str *str, int sign )
+static struct expr * EXPR_ival( void *info, int val )
 {
     struct expr *e = parser_alloc( info, sizeof *e );
     if( e )
     {
         e->type = EXPR_IVAL;
-        e->u.ival = atoiW( str->data ) * sign;
+        e->u.ival = val;
     }
     return e;
 }
