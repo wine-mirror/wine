@@ -24,8 +24,8 @@ OPENGLFILES = \
 
 C_SRCS = \
 	@OPENGLFILES@ \
-	convert.c \
 	dclipper/main.c \
+	ddraw_utils.c \
 	ddraw/hal.c \
 	ddraw/main.c \
 	ddraw/thunks.c \
@@ -40,10 +40,8 @@ C_SRCS = \
 	dsurface/thunks.c \
 	dsurface/user.c \
 	dsurface/wndproc.c \
-	helper.c \
 	main.c \
-	regsvr.c \
-	struct_convert.c
+	regsvr.c
 
 RC_SRCS = version.rc
 
