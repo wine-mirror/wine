@@ -225,7 +225,7 @@ HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT iface, CO
   return DPN_OK; 
 }
 
-IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl =
+static const IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl =
 {
     IDirectPlay8ClientImpl_QueryInterface,
     IDirectPlay8ClientImpl_AddRef,

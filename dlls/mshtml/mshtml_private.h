@@ -17,14 +17,14 @@
  */
 
 typedef struct {
-    IHTMLDocument2Vtbl          *lpHTMLDocument2Vtbl;
-    IPersistMonikerVtbl         *lpPersistMonikerVtbl;
-    IPersistFileVtbl            *lpPersistFileVtbl;
-    IMonikerPropVtbl            *lpMonikerPropVtbl;
-    IOleObjectVtbl              *lpOleObjectVtbl;
-    IOleDocumentVtbl            *lpOleDocumentVtbl;
-    IOleDocumentViewVtbl        *lpOleDocumentViewVtbl;
-    IOleInPlaceActiveObjectVtbl *lpOleInPlaceActiveObjectVtbl;
+    const IHTMLDocument2Vtbl          *lpHTMLDocument2Vtbl;
+    const IPersistMonikerVtbl         *lpPersistMonikerVtbl;
+    const IPersistFileVtbl            *lpPersistFileVtbl;
+    const IMonikerPropVtbl            *lpMonikerPropVtbl;
+    const IOleObjectVtbl              *lpOleObjectVtbl;
+    const IOleDocumentVtbl            *lpOleDocumentVtbl;
+    const IOleDocumentViewVtbl        *lpOleDocumentViewVtbl;
+    const IOleInPlaceActiveObjectVtbl *lpOleInPlaceActiveObjectVtbl;
 
     ULONG ref;
 

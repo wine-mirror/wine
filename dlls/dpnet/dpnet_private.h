@@ -40,55 +40,22 @@ typedef struct IDirectPlay8AddressImpl IDirectPlay8AddressImpl;
 /* ------------------ */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl;
-
-/*****************************************************************************
  * IDirectPlay8Client implementation structure
  */
 struct IDirectPlay8ClientImpl
 {
   /* IUnknown fields */
-  IDirectPlay8ClientVtbl *lpVtbl;
+  const IDirectPlay8ClientVtbl *lpVtbl;
   DWORD         ref;
   /* IDirectPlay8Client fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectPlay8ClientImpl_QueryInterface(PDIRECTPLAY8CLIENT iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI IDirectPlay8ClientImpl_AddRef(PDIRECTPLAY8CLIENT iface);
-extern ULONG WINAPI IDirectPlay8ClientImpl_Release(PDIRECTPLAY8CLIENT iface);
-
-/* IDirectPlay8Client: */
-extern HRESULT WINAPI IDirectPlay8ClientImpl_Initialize(PDIRECTPLAY8CLIENT iface,  PVOID CONST pvUserContext, CONST PFNDPNMESSAGEHANDLER pfn, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_EnumServiceProviders(PDIRECTPLAY8CLIENT iface,  CONST GUID * CONST pguidServiceProvider, CONST GUID * CONST pguidApplication, DPN_SERVICE_PROVIDER_INFO * CONST pSPInfoBuffer, PDWORD CONST pcbEnumData, PDWORD CONST pcReturned, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_EnumHosts(PDIRECTPLAY8CLIENT iface,  PDPN_APPLICATION_DESC CONST pApplicationDesc,IDirectPlay8Address * CONST pAddrHost,IDirectPlay8Address * CONST pDeviceInfo, PVOID CONST pUserEnumData, CONST DWORD dwUserEnumDataSize, CONST DWORD dwEnumCount, CONST DWORD dwRetryInterval, CONST DWORD dwTimeOut, PVOID CONST pvUserContext, DPNHANDLE * CONST pAsyncHandle, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_CancelAsyncOperation(PDIRECTPLAY8CLIENT iface,  CONST DPNHANDLE hAsyncHandle, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_Connect(PDIRECTPLAY8CLIENT iface,  CONST DPN_APPLICATION_DESC * CONST pdnAppDesc,IDirectPlay8Address * CONST pHostAddr,IDirectPlay8Address * CONST pDeviceInfo, CONST DPN_SECURITY_DESC * CONST pdnSecurity, CONST DPN_SECURITY_CREDENTIALS * CONST pdnCredentials, CONST void * CONST pvUserConnectData, CONST DWORD dwUserConnectDataSize,void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_Send(PDIRECTPLAY8CLIENT iface,  CONST DPN_BUFFER_DESC * CONST prgBufferDesc, CONST DWORD cBufferDesc, CONST DWORD dwTimeOut, void * CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetSendQueueInfo(PDIRECTPLAY8CLIENT iface,  DWORD * CONST pdwNumMsgs, DWORD * CONST pdwNumBytes, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetApplicationDesc(PDIRECTPLAY8CLIENT iface,  DPN_APPLICATION_DESC * CONST pAppDescBuffer, DWORD * CONST pcbDataSize, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(PDIRECTPLAY8CLIENT iface,  CONST DPN_PLAYER_INFO * CONST pdpnPlayerInfo, PVOID CONST pvAsyncContext, DPNHANDLE * CONST phAsyncHandle, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetServerInfo(PDIRECTPLAY8CLIENT iface,  DPN_PLAYER_INFO * CONST pdpnPlayerInfo, DWORD * CONST pdwSize, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetServerAddress(PDIRECTPLAY8CLIENT iface,  IDirectPlay8Address ** CONST pAddress, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_Close(PDIRECTPLAY8CLIENT iface,  CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_ReturnBuffer(PDIRECTPLAY8CLIENT iface,  CONST DPNHANDLE hBufferHandle, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetCaps(PDIRECTPLAY8CLIENT iface,  DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_SetCaps(PDIRECTPLAY8CLIENT iface,  CONST DPN_CAPS * CONST pdpCaps, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_SetSPCaps(PDIRECTPLAY8CLIENT iface,  CONST GUID * CONST pguidSP, CONST DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags ) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetSPCaps(PDIRECTPLAY8CLIENT iface,  CONST GUID * CONST pguidSP, DPN_SP_CAPS * CONST pdpspCaps, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_GetConnectionInfo(PDIRECTPLAY8CLIENT iface,  DPN_CONNECTION_INFO * CONST pdpConnectionInfo, CONST DWORD dwFlags) ;
-extern HRESULT WINAPI IDirectPlay8ClientImpl_RegisterLobby(PDIRECTPLAY8CLIENT iface, CONST DPNHANDLE dpnHandle, struct IDirectPlay8LobbiedApplication * CONST pIDP8LobbiedApplication, CONST DWORD dwFlags) ;
 
 /* ------------------- */
 /* IDirectPlay8Address */
 /* ------------------- */
-
-/*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl;
 
 /*****************************************************************************
  * IDirectPlay8Address implementation structure
@@ -96,11 +63,11 @@ extern IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl;
 struct IDirectPlay8AddressImpl
 {
   /* IUnknown fields */
-  IDirectPlay8AddressVtbl *lpVtbl;
+  const IDirectPlay8AddressVtbl *lpVtbl;
   DWORD         ref;
   /* IDirectPlay8Address fields */
   GUID SP_guid;
-  WCHAR* url;
+  const WCHAR *url;
 };
 
 /* IUnknown: */

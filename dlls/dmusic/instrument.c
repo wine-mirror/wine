@@ -22,7 +22,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-const GUID IID_IDirectMusicInstrumentPRIVATE = {0xbcb20080,0xa40c,0x11d1,{0x86,0xbc,0x00,0xc0,0x4f,0xbf,0x8f,0xef}};
+static const GUID IID_IDirectMusicInstrumentPRIVATE = {0xbcb20080,0xa40c,0x11d1,{0x86,0xbc,0x00,0xc0,0x4f,0xbf,0x8f,0xef}};
 
 /* IDirectMusicInstrument IUnknown part: */
 HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
@@ -78,7 +78,7 @@ ULONG WINAPI IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface) {
 	return refCount;
 }
 
-IUnknownVtbl DirectMusicInstrument_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicInstrument_Unknown_Vtbl = {
 	IDirectMusicInstrumentImpl_IUnknown_QueryInterface,
 	IDirectMusicInstrumentImpl_IUnknown_AddRef,
 	IDirectMusicInstrumentImpl_IUnknown_Release
@@ -114,7 +114,7 @@ HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_SetPatch (LPDIR
 	return S_OK;
 }
 
-IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl = {
+static const IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl = {
 	IDirectMusicInstrumentImpl_IDirectMusicInstrument_QueryInterface,
 	IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef,
 	IDirectMusicInstrumentImpl_IDirectMusicInstrument_Release,

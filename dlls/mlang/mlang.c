@@ -736,7 +736,7 @@ static HRESULT WINAPI MLANGCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl MLANGCF_Vtbl =
+static const IClassFactoryVtbl MLANGCF_Vtbl =
 {
     MLANGCF_QueryInterface,
     MLANGCF_AddRef,
@@ -790,9 +790,9 @@ HRESULT WINAPI MLANG_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
 typedef struct tagMLang_impl
 {
-    IMLangFontLinkVtbl *vtbl_IMLangFontLink;
-    IMultiLanguageVtbl *vtbl_IMultiLanguage;
-    IMultiLanguage2Vtbl *vtbl_IMultiLanguage2;
+    const IMLangFontLinkVtbl *vtbl_IMLangFontLink;
+    const IMultiLanguageVtbl *vtbl_IMultiLanguage;
+    const IMultiLanguage2Vtbl *vtbl_IMultiLanguage2;
     DWORD ref;
     DWORD total_cp, total_scripts;
 } MLang_impl;
@@ -857,7 +857,7 @@ static HRESULT WINAPI MLang_QueryInterface(
 
 typedef struct tagEnumCodePage_impl
 {
-    IEnumCodePageVtbl *vtbl_IEnumCodePage;
+    const IEnumCodePageVtbl *vtbl_IEnumCodePage;
     DWORD ref;
     MIMECPINFO *cpinfo;
     DWORD total, pos;
@@ -982,7 +982,7 @@ static  HRESULT WINAPI fnIEnumCodePage_Skip(
     return S_OK;
 }
 
-static IEnumCodePageVtbl IEnumCodePage_vtbl =
+static const IEnumCodePageVtbl IEnumCodePage_vtbl =
 {
     fnIEnumCodePage_QueryInterface,
     fnIEnumCodePage_AddRef,
@@ -1043,7 +1043,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
 
 typedef struct tagEnumScript_impl
 {
-    IEnumScriptVtbl *vtbl_IEnumScript;
+    const IEnumScriptVtbl *vtbl_IEnumScript;
     DWORD ref;
     SCRIPTINFO *script_info;
     DWORD total, pos;
@@ -1151,7 +1151,7 @@ static  HRESULT WINAPI fnIEnumScript_Skip(
     return S_OK;
 }
 
-static IEnumScriptVtbl IEnumScript_vtbl =
+static const IEnumScriptVtbl IEnumScript_vtbl =
 {
     fnIEnumScript_QueryInterface,
     fnIEnumScript_AddRef,
@@ -1302,7 +1302,7 @@ static HRESULT WINAPI fnIMLangFontLink_ResetFontMapping(
 }
 
 
-static IMLangFontLinkVtbl IMLangFontLink_vtbl =
+static const IMLangFontLinkVtbl IMLangFontLink_vtbl =
 {
     fnIMLangFontLink_QueryInterface,
     fnIMLangFontLink_AddRef,
@@ -1486,7 +1486,7 @@ static HRESULT WINAPI fnIMultiLanguage_CreateConvertCharset(
     return E_NOTIMPL;
 }
 
-static IMultiLanguageVtbl IMultiLanguage_vtbl =
+static const IMultiLanguageVtbl IMultiLanguage_vtbl =
 {
     fnIMultiLanguage_QueryInterface,
     fnIMultiLanguage_AddRef,
@@ -1928,7 +1928,7 @@ static HRESULT WINAPI fnIMultiLanguage2_ValidateCodePageEx(
     return S_FALSE;
 }
 
-static IMultiLanguage2Vtbl IMultiLanguage2_vtbl =
+static const IMultiLanguage2Vtbl IMultiLanguage2_vtbl =
 {
     fnIMultiLanguage2_QueryInterface,
     fnIMultiLanguage2_AddRef,

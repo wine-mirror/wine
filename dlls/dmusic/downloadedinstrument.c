@@ -65,7 +65,7 @@ ULONG WINAPI IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOAD
 /* IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstrument part: */
 /* none at this time */
 
-IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl = {
+static const IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl = {
 	IDirectMusicDownloadedInstrumentImpl_QueryInterface,
 	IDirectMusicDownloadedInstrumentImpl_AddRef,
 	IDirectMusicDownloadedInstrumentImpl_Release

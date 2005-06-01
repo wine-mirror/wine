@@ -77,13 +77,13 @@ static BOOL CALLBACK cbRemoveGroupOrPlayer( DPID dpId, DWORD dwPlayerType,
 static void DP_DeleteGroup( IDirectPlay2Impl* This, DPID dpid );
 
 /* Forward declarations of virtual tables */
-static IDirectPlay2Vtbl directPlay2AVT;
-static IDirectPlay3Vtbl directPlay3AVT;
-static IDirectPlay4Vtbl directPlay4AVT;
+static const IDirectPlay2Vtbl directPlay2AVT;
+static const IDirectPlay3Vtbl directPlay3AVT;
+static const IDirectPlay4Vtbl directPlay4AVT;
 
-static IDirectPlay2Vtbl directPlay2WVT;
-static IDirectPlay3Vtbl directPlay3WVT;
-static IDirectPlay4Vtbl directPlay4WVT;
+static const IDirectPlay2Vtbl directPlay2WVT;
+static const IDirectPlay3Vtbl directPlay3WVT;
+static const IDirectPlay4Vtbl directPlay4WVT;
 
 /* Helper methods for player/group interfaces */
 static HRESULT WINAPI DP_IF_DeletePlayerFromGroup
@@ -4780,7 +4780,7 @@ static HRESULT WINAPI DirectPlay4WImpl_CancelPriority
 # define XCAST(fun)     (void*)
 #endif
 
-static IDirectPlay2Vtbl directPlay2WVT =
+static const IDirectPlay2Vtbl directPlay2WVT =
 {
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
@@ -4825,7 +4825,7 @@ static IDirectPlay2Vtbl directPlay2WVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static IDirectPlay2Vtbl directPlay2AVT =
+static const IDirectPlay2Vtbl directPlay2AVT =
 {
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
@@ -4871,7 +4871,7 @@ static IDirectPlay2Vtbl directPlay2AVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static IDirectPlay3Vtbl directPlay3AVT =
+static const IDirectPlay3Vtbl directPlay3AVT =
 {
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
@@ -4931,7 +4931,7 @@ static IDirectPlay3Vtbl directPlay3AVT =
 #else
 # define XCAST(fun)     (void*)
 #endif
-static IDirectPlay3Vtbl directPlay3WVT =
+static const IDirectPlay3Vtbl directPlay3WVT =
 {
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
@@ -4991,7 +4991,7 @@ static IDirectPlay3Vtbl directPlay3WVT =
 #else
 # define XCAST(fun)     (void*)
 #endif
-static IDirectPlay4Vtbl directPlay4WVT =
+static const IDirectPlay4Vtbl directPlay4WVT =
 {
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,
@@ -5059,7 +5059,7 @@ static IDirectPlay4Vtbl directPlay4WVT =
 #else
 # define XCAST(fun)     (void*)
 #endif
-static IDirectPlay4Vtbl directPlay4AVT =
+static const IDirectPlay4Vtbl directPlay4AVT =
 {
   XCAST(QueryInterface)DP_QueryInterface,
   XCAST(AddRef)DP_AddRef,

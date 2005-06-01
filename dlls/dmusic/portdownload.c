@@ -98,7 +98,7 @@ HRESULT WINAPI IDirectMusicPortDownloadImpl_Unload (LPDIRECTMUSICPORTDOWNLOAD if
 	return S_OK;
 }
 
-IDirectMusicPortDownloadVtbl DirectMusicPortDownload_Vtbl = {
+static const IDirectMusicPortDownloadVtbl DirectMusicPortDownload_Vtbl = {
 	IDirectMusicPortDownloadImpl_QueryInterface,
 	IDirectMusicPortDownloadImpl_AddRef,
 	IDirectMusicPortDownloadImpl_Release,

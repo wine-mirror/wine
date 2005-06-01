@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 LONG DMUSIC_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -68,7 +68,7 @@ static HRESULT WINAPI DirectMusicCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
 	return S_OK;
 }
 
-static IClassFactoryVtbl DirectMusicCF_Vtbl = {
+static const IClassFactoryVtbl DirectMusicCF_Vtbl = {
 	DirectMusicCF_QueryInterface,
 	DirectMusicCF_AddRef,
 	DirectMusicCF_Release,
@@ -117,7 +117,7 @@ static HRESULT WINAPI CollectionCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) 
 	return S_OK;
 }
 
-static IClassFactoryVtbl CollectionCF_Vtbl = {
+static const IClassFactoryVtbl CollectionCF_Vtbl = {
 	CollectionCF_QueryInterface,
 	CollectionCF_AddRef,
 	CollectionCF_Release,

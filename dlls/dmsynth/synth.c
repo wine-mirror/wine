@@ -202,7 +202,7 @@ HRESULT WINAPI IDirectMusicSynth8Impl_AssignChannelToBuses (LPDIRECTMUSICSYNTH8 
 	return S_OK;
 }
 
-IDirectMusicSynth8Vtbl DirectMusicSynth8_Vtbl = {
+static const IDirectMusicSynth8Vtbl DirectMusicSynth8_Vtbl = {
 	IDirectMusicSynth8Impl_QueryInterface,
 	IDirectMusicSynth8Impl_AddRef,
 	IDirectMusicSynth8Impl_Release,

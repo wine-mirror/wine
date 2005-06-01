@@ -69,7 +69,7 @@ HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, 
 	return S_OK;
 }
 
-IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl = {
+static const IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl = {
 	IDirectMusicDownloadImpl_QueryInterface,
 	IDirectMusicDownloadImpl_AddRef,
 	IDirectMusicDownloadImpl_Release,

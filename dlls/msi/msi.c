@@ -1264,7 +1264,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 typedef struct tagIClassFactoryImpl
 {
-    IClassFactoryVtbl *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,
@@ -1302,7 +1302,7 @@ static HRESULT WINAPI MsiCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl MsiCF_Vtbl =
+static const IClassFactoryVtbl MsiCF_Vtbl =
 {
     MsiCF_QueryInterface,
     MsiCF_AddRef,

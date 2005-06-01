@@ -184,7 +184,7 @@ static HRESULT WINAPI IKsBufferPropertySetImpl_QuerySupport(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static IKsPropertySetVtbl iksbvt = {
+static const IKsPropertySetVtbl iksbvt = {
     IKsBufferPropertySetImpl_QueryInterface,
     IKsBufferPropertySetImpl_AddRef,
     IKsBufferPropertySetImpl_Release,
@@ -1476,7 +1476,7 @@ static HRESULT WINAPI IKsPrivatePropertySetImpl_QuerySupport(
     return E_PROP_ID_UNSUPPORTED;
 }
 
-static IKsPropertySetVtbl ikspvt = {
+static const IKsPropertySetVtbl ikspvt = {
     IKsPrivatePropertySetImpl_QueryInterface,
     IKsPrivatePropertySetImpl_AddRef,
     IKsPrivatePropertySetImpl_Release,

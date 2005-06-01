@@ -111,7 +111,7 @@ HRESULT WINAPI IDirectMusicSynthSinkImpl_GetDesiredBufferSize (LPDIRECTMUSICSYNT
 	return S_OK;
 }
 
-IDirectMusicSynthSinkVtbl DirectMusicSynthSink_Vtbl = {
+static const IDirectMusicSynthSinkVtbl DirectMusicSynthSink_Vtbl = {
 	IDirectMusicSynthSinkImpl_QueryInterface,
 	IDirectMusicSynthSinkImpl_AddRef,
 	IDirectMusicSynthSinkImpl_Release,

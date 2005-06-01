@@ -215,19 +215,19 @@ typedef struct tagDirectPlay4Data
 
 struct IDirectPlay2Impl
 {
-  IDirectPlay2Vtbl *lpVtbl;
+  const IDirectPlay2Vtbl *lpVtbl;
   DP_IMPL_FIELDS
 };
 
 struct IDirectPlay3Impl
 {
-  IDirectPlay3Vtbl *lpVtbl;
+  const IDirectPlay3Vtbl *lpVtbl;
   DP_IMPL_FIELDS
 };
 
 struct IDirectPlay4Impl
 {
-  IDirectPlay4Vtbl *lpVtbl;
+  const IDirectPlay4Vtbl *lpVtbl;
   DP_IMPL_FIELDS
 };
 

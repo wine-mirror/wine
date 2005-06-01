@@ -677,7 +677,7 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 	return DS_OK;
 }
 
-static IDirectSound3DBufferVtbl ds3dbvt =
+static const IDirectSound3DBufferVtbl ds3dbvt =
 {
 	/* IUnknown methods */
 	IDirectSound3DBufferImpl_QueryInterface,
@@ -1046,7 +1046,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 	return DS_OK;
 }
 
-static IDirectSound3DListenerVtbl ds3dlvt =
+static const IDirectSound3DListenerVtbl ds3dlvt =
 {
 	/* IUnknown methods */
 	IDirectSound3DListenerImpl_QueryInterface,

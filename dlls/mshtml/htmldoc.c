@@ -816,7 +816,7 @@ static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR 
     return E_NOTIMPL;
 }
 
-static IHTMLDocument2Vtbl HTMLDocumentVtbl = {
+static const IHTMLDocument2Vtbl HTMLDocumentVtbl = {
     HTMLDocument_QueryInterface,
     HTMLDocument_AddRef,
     HTMLDocument_Release,

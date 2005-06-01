@@ -355,7 +355,7 @@ static HRESULT WINAPI OleDocumentView_Clone(IOleDocumentView *iface, IOleInPlace
     return E_NOTIMPL;
 }
 
-static IOleDocumentViewVtbl OleDocumentViewVtbl = {
+static const IOleDocumentViewVtbl OleDocumentViewVtbl = {
     OleDocumentView_QueryInterface,
     OleDocumentView_AddRef,
     OleDocumentView_Release,

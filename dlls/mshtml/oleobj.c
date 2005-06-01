@@ -266,7 +266,7 @@ static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *pL
     return E_NOTIMPL;
 }
 
-static IOleObjectVtbl OleObjectVtbl = {
+static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_QueryInterface,
     OleObject_AddRef,
     OleObject_Release,
@@ -365,7 +365,7 @@ static HRESULT WINAPI OleDocument_EnumViews(IOleDocument *iface, IEnumOleDocumen
     return E_NOTIMPL;
 }
 
-static IOleDocumentVtbl OleDocumentVtbl = {
+static const IOleDocumentVtbl OleDocumentVtbl = {
     OleDocument_QueryInterface,
     OleDocument_AddRef,
     OleDocument_Release,
@@ -454,7 +454,7 @@ static HRESULT WINAPI OleInPlaceActiveObject_EnableModeless(IOleInPlaceActiveObj
     return E_NOTIMPL;
 }
 
-static IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
+static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
     OleInPlaceActiveObject_QueryInterface,
     OleInPlaceActiveObject_AddRef,
     OleInPlaceActiveObject_Release,

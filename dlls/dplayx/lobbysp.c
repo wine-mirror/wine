@@ -55,14 +55,13 @@ typedef struct tagDPLobbySPData
 
 struct IDPLobbySPImpl
 {
-  IDPLobbySPVtbl *lpVtbl;
+  const IDPLobbySPVtbl *lpVtbl;
   DPLSP_IMPL_FIELDS
 };
 
 /* Forward declaration of virtual tables */
-static IDPLobbySPVtbl dpLobbySPVT;
+static const IDPLobbySPVtbl dpLobbySPVT;
 
-extern
 HRESULT DPLSP_CreateInterface( REFIID riid, LPVOID* ppvObj, IDirectPlay2Impl* dp )
 {
   TRACE( " for %s\n", debugstr_guid( riid ) );
@@ -436,7 +435,7 @@ HRESULT WINAPI IDPLobbySPImpl_StartSession
 }
 
 
-static struct IDPLobbySPVtbl dpLobbySPVT =
+static const IDPLobbySPVtbl dpLobbySPVT =
 {
 
   DPLSP_QueryInterface,

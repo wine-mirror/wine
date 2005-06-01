@@ -69,7 +69,7 @@ HRESULT WINAPI IDirectMusicThruImpl_ThruChannel (LPDIRECTMUSICTHRU iface, DWORD 
 	return S_OK;
 }
 
-IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
+static const IDirectMusicThruVtbl DirectMusicThru_Vtbl = {
 	IDirectMusicThruImpl_QueryInterface,
 	IDirectMusicThruImpl_AddRef,
 	IDirectMusicThruImpl_Release,

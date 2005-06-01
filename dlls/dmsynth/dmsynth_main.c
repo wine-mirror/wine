@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmsynth);
 LONG DMSYNTH_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -68,7 +68,7 @@ static HRESULT WINAPI SynthCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl SynthCF_Vtbl = {
+static const IClassFactoryVtbl SynthCF_Vtbl = {
 	SynthCF_QueryInterface,
 	SynthCF_AddRef,
 	SynthCF_Release,
@@ -117,7 +117,7 @@ static HRESULT WINAPI SynthSinkCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl SynthSinkCF_Vtbl = {
+static const IClassFactoryVtbl SynthSinkCF_Vtbl = {
 	SynthSinkCF_QueryInterface,
 	SynthSinkCF_AddRef,
 	SynthSinkCF_Release,

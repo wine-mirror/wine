@@ -41,7 +41,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
  * DXDiag ClassFactory
  */
 typedef struct {
-  IClassFactoryVtbl *lpVtbl;
+  const IClassFactoryVtbl *lpVtbl;
   REFCLSID   rclsid;
   HRESULT   (*pfnCreateInstanceFactory)(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 } IClassFactoryImpl;
@@ -84,7 +84,7 @@ static HRESULT WINAPI DXDiagCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
   return S_OK;
 }
 
-static IClassFactoryVtbl DXDiagCF_Vtbl = {
+static const IClassFactoryVtbl DXDiagCF_Vtbl = {
   DXDiagCF_QueryInterface,
   DXDiagCF_AddRef,
   DXDiagCF_Release,

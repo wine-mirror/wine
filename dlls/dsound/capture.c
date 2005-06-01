@@ -64,9 +64,9 @@ static HRESULT WINAPI IDirectSoundFullDuplexImpl_Initialize(
     LPLPDIRECTSOUNDCAPTUREBUFFER8 lplpDirectSoundCaptureBuffer8,
     LPLPDIRECTSOUNDBUFFER8 lplpDirectSoundBuffer8 );
 
-static IDirectSoundCaptureVtbl dscvt;
-static IDirectSoundCaptureBuffer8Vtbl dscbvt;
-static IDirectSoundFullDuplexVtbl dsfdvt;
+static const IDirectSoundCaptureVtbl dscvt;
+static const IDirectSoundCaptureBuffer8Vtbl dscbvt;
+static const IDirectSoundFullDuplexVtbl dsfdvt;
 
 static IDirectSoundCaptureImpl*       dsound_capture = NULL;
 
@@ -580,7 +580,7 @@ IDirectSoundCaptureImpl_Initialize(
     return err;
 }
 
-static IDirectSoundCaptureVtbl dscvt =
+static const IDirectSoundCaptureVtbl dscvt =
 {
     /* IUnknown methods */
     IDirectSoundCaptureImpl_QueryInterface,
@@ -858,7 +858,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-IDirectSoundNotifyVtbl dscnvt =
+static const IDirectSoundNotifyVtbl dscnvt =
 {
     IDirectSoundCaptureNotifyImpl_QueryInterface,
     IDirectSoundCaptureNotifyImpl_AddRef,
@@ -1533,7 +1533,7 @@ IDirectSoundCaptureBufferImpl_GetFXStatus(
     return DS_OK;
 }
 
-static IDirectSoundCaptureBuffer8Vtbl dscbvt =
+static const IDirectSoundCaptureBuffer8Vtbl dscbvt =
 {
     /* IUnknown methods */
     IDirectSoundCaptureBufferImpl_QueryInterface,
@@ -1622,7 +1622,7 @@ DSCCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl DSCCF_Vtbl =
+static const IClassFactoryVtbl DSCCF_Vtbl =
 {
     DSCCF_QueryInterface,
     DSCCF_AddRef,
@@ -1770,7 +1770,7 @@ IDirectSoundFullDuplexImpl_Initialize(
     return E_FAIL;
 }
 
-static IDirectSoundFullDuplexVtbl dsfdvt =
+static const IDirectSoundFullDuplexVtbl dsfdvt =
 {
     /* IUnknown methods */
     IDirectSoundFullDuplexImpl_QueryInterface,
@@ -1849,7 +1849,7 @@ DSFDCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl DSFDCF_Vtbl =
+static const IClassFactoryVtbl DSFDCF_Vtbl =
 {
     DSFDCF_QueryInterface,
     DSFDCF_AddRef,

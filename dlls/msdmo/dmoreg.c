@@ -79,7 +79,7 @@ static const WCHAR szCat2Fmt[] =
 
 typedef struct
 {
-    IEnumDMOVtbl               *lpVtbl;
+    const IEnumDMOVtbl         *lpVtbl;
     DWORD			ref;
     DWORD			index;
     const GUID*                 guidCategory;
@@ -91,10 +91,10 @@ typedef struct
     HKEY                        hkey;
 } IEnumDMOImpl;
 
-const GUID IID_IEnumDMO = { 0x2c3cd98a, 0x2bfa, 0x4a53,
+static const GUID IID_IEnumDMO = { 0x2c3cd98a, 0x2bfa, 0x4a53,
     { 0x9c, 0x27, 0x52, 0x49, 0xba, 0x64, 0xba, 0x0f}};
 
-static struct IEnumDMOVtbl edmovt;
+static const IEnumDMOVtbl edmovt;
 
 static LPWSTR GUIDToString(LPWSTR lpwstr, REFGUID lpcguid)
 {
@@ -642,7 +642,7 @@ HRESULT WINAPI DMOEnum(
 }
 
 
-static IEnumDMOVtbl edmovt =
+static const IEnumDMOVtbl edmovt =
 {
 	IEnumDMO_fnQueryInterface,
 	IEnumDMO_fnAddRef,

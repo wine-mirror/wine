@@ -158,7 +158,7 @@ static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl ITSSCF_Vtbl =
+static const IClassFactoryVtbl ITSSCF_Vtbl =
 {
     ITSSCF_QueryInterface,
     ITSSCF_AddRef,
@@ -215,7 +215,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 /*****************************************************************************/
 
 typedef struct {
-    IITStorageVtbl *vtbl_IITStorage;
+    const IITStorageVtbl *vtbl_IITStorage;
     DWORD ref;
 } ITStorageImpl;
 
@@ -378,7 +378,7 @@ HRESULT WINAPI ITStorageImpl_Compact(
     return E_NOTIMPL;
 }
 
-static IITStorageVtbl ITStorageImpl_Vtbl =
+static const IITStorageVtbl ITStorageImpl_Vtbl =
 {
     ITStorageImpl_QueryInterface,
     ITStorageImpl_AddRef,

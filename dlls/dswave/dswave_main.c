@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dswave);
 LONG DSWAVE_refCount = 0;
 
 typedef struct {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
 /******************************************************************

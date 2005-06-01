@@ -41,16 +41,11 @@ typedef struct IDxDiagContainerImpl IDxDiagContainerImpl;
 /* ---------------- */
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern IDxDiagProviderVtbl DxDiagProvider_Vtbl;
-
-/*****************************************************************************
  * IDxDiagProvider implementation structure
  */
 struct IDxDiagProviderImpl {
   /* IUnknown fields */
-  IDxDiagProviderVtbl *lpVtbl;
+  const IDxDiagProviderVtbl *lpVtbl;
   DWORD       ref;
   /* IDxDiagProvider fields */
   BOOL        init;
@@ -85,16 +80,11 @@ typedef struct IDxDiagContainerImpl_Property {
 
 
 /*****************************************************************************
- * Predeclare the interface implementation structures
- */
-extern IDxDiagContainerVtbl DxDiagContainer_Vtbl;
-
-/*****************************************************************************
  * IDxDiagContainer implementation structure
  */
 struct IDxDiagContainerImpl {
   /* IUnknown fields */
-  IDxDiagContainerVtbl *lpVtbl;
+  const IDxDiagContainerVtbl *lpVtbl;
   DWORD       ref;
   /* IDxDiagContainer fields */
   IDxDiagContainerImpl_Property* properties;  
@@ -106,15 +96,6 @@ struct IDxDiagContainerImpl {
 /* IUnknown: */
 extern HRESULT WINAPI IDxDiagContainerImpl_QueryInterface(PDXDIAGCONTAINER iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI IDxDiagContainerImpl_AddRef(PDXDIAGCONTAINER iface);
-extern ULONG WINAPI IDxDiagContainerImpl_Release(PDXDIAGCONTAINER iface);
-
-/* IDxDiagContainer: */
-extern HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfChildContainers(PDXDIAGCONTAINER iface,  DWORD* pdwCount);
-extern HRESULT WINAPI IDxDiagContainerImpl_EnumChildContainerNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszContainer, DWORD cchContainer);
-extern HRESULT WINAPI IDxDiagContainerImpl_GetChildContainer(PDXDIAGCONTAINER iface, LPCWSTR pwszContainer, IDxDiagContainer** ppInstance);
-extern HRESULT WINAPI IDxDiagContainerImpl_GetNumberOfProps(PDXDIAGCONTAINER iface, DWORD* pdwCount);
-extern HRESULT WINAPI IDxDiagContainerImpl_EnumPropNames(PDXDIAGCONTAINER iface, DWORD dwIndex, LPWSTR pwszPropName, DWORD cchPropName);
-extern HRESULT WINAPI IDxDiagContainerImpl_GetProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pvarProp);
 
 /** Internal */
 extern HRESULT WINAPI IDxDiagContainerImpl_AddProp(PDXDIAGCONTAINER iface, LPCWSTR pwszPropName, VARIANT* pVarProp);

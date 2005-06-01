@@ -105,7 +105,7 @@ HRESULT WINAPI IDxDiagProviderImpl_GetRootContainer(PDXDIAGPROVIDER iface, IDxDi
   return IDxDiagContainerImpl_QueryInterface((PDXDIAGCONTAINER)This->pRootContainer, &IID_IDxDiagContainer, (void**) ppInstance);
 }
 
-IDxDiagProviderVtbl DxDiagProvider_Vtbl =
+static const IDxDiagProviderVtbl DxDiagProvider_Vtbl =
 {
     IDxDiagProviderImpl_QueryInterface,
     IDxDiagProviderImpl_AddRef,

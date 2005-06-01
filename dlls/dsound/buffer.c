@@ -124,7 +124,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(
 	return S_OK;
 }
 
-IDirectSoundNotifyVtbl dsnvt =
+static const IDirectSoundNotifyVtbl dsnvt =
 {
     IDirectSoundNotifyImpl_QueryInterface,
     IDirectSoundNotifyImpl_AddRef,
@@ -954,7 +954,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
 	return E_NOINTERFACE;
 }
 
-static IDirectSoundBuffer8Vtbl dsbvt =
+static const IDirectSoundBuffer8Vtbl dsbvt =
 {
 	IDirectSoundBufferImpl_QueryInterface,
 	IDirectSoundBufferImpl_AddRef,
@@ -1449,7 +1449,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetObjectInPath(
 	return IDirectSoundBufferImpl_GetObjectInPath((LPDIRECTSOUNDBUFFER8)This->dsb,rguidObject,dwIndex,rguidInterface,ppObject);
 }
 
-static IDirectSoundBuffer8Vtbl sbvt =
+static const IDirectSoundBuffer8Vtbl sbvt =
 {
 	SecondaryBufferImpl_QueryInterface,
 	SecondaryBufferImpl_AddRef,

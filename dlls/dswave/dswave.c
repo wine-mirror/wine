@@ -24,7 +24,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 										 
 /* an interface that is, according to my tests, obtained by loader after loading object; is it acting
    as some sort of bridge between object and loader? */
-const GUID IID_IDirectMusicWavePRIVATE = {0x69e934e4,0x97f1,0x4f1d,{0x88,0xe8,0xf2,0xac,0x88,0x67,0x13,0x27}};
+static const GUID IID_IDirectMusicWavePRIVATE = {0x69e934e4,0x97f1,0x4f1d,{0x88,0xe8,0xf2,0xac,0x88,0x67,0x13,0x27}};
 
 /*****************************************************************************
  * IDirectMusicWaveImpl implementation
@@ -88,7 +88,7 @@ ULONG WINAPI IDirectMusicWaveImpl_IUnknown_Release (LPUNKNOWN iface) {
 	return refCount;
 }
 
-IUnknownVtbl DirectMusicWave_Unknown_Vtbl = {
+static const IUnknownVtbl DirectMusicWave_Unknown_Vtbl = {
 	IDirectMusicWaveImpl_IUnknown_QueryInterface,
 	IDirectMusicWaveImpl_IUnknown_AddRef,
 	IDirectMusicWaveImpl_IUnknown_Release
@@ -278,7 +278,7 @@ HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicSegment8_Unload (LPDIRECTMUSICSE
 	return S_OK;
 }
 
-IDirectMusicSegment8Vtbl DirectMusicSegment8_Segment_Vtbl = {
+static const IDirectMusicSegment8Vtbl DirectMusicSegment8_Segment_Vtbl = {
 	IDirectMusicWaveImpl_IDirectMusicSegment8_QueryInterface,
 	IDirectMusicWaveImpl_IDirectMusicSegment8_AddRef,
 	IDirectMusicWaveImpl_IDirectMusicSegment8_Release,
@@ -517,7 +517,7 @@ HRESULT WINAPI IDirectMusicWaveImpl_IDirectMusicObject_ParseDescriptor (LPDIRECT
 	return S_OK;	
 }
 
-IDirectMusicObjectVtbl DirectMusicWave_Object_Vtbl = {
+static const IDirectMusicObjectVtbl DirectMusicWave_Object_Vtbl = {
 	IDirectMusicWaveImpl_IDirectMusicObject_QueryInterface,
 	IDirectMusicWaveImpl_IDirectMusicObject_AddRef,
 	IDirectMusicWaveImpl_IDirectMusicObject_Release,
@@ -705,7 +705,7 @@ HRESULT WINAPI IDirectMusicWaveImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM i
 	return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicWave_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicWave_PersistStream_Vtbl = {
 	IDirectMusicWaveImpl_IPersistStream_QueryInterface,
 	IDirectMusicWaveImpl_IPersistStream_AddRef,
 	IDirectMusicWaveImpl_IPersistStream_Release,

@@ -51,7 +51,7 @@ extern ULONG dll_count;
 
 typedef struct _ITSS_IStorageImpl
 {
-    IStorageVtbl *vtbl_IStorage;
+    const IStorageVtbl *vtbl_IStorage;
     DWORD ref;
     struct chmFile *chmfile;
     WCHAR dir[1];
@@ -65,14 +65,14 @@ struct enum_info
 
 typedef struct _IEnumSTATSTG_Impl
 {
-    IEnumSTATSTGVtbl *vtbl_IEnumSTATSTG;
+    const IEnumSTATSTGVtbl *vtbl_IEnumSTATSTG;
     DWORD ref;
     struct enum_info *first, *last, *current;
 } IEnumSTATSTG_Impl;
 
 typedef struct _IStream_Impl
 {
-    IStreamVtbl *vtbl_IStream;
+    const IStreamVtbl *vtbl_IStream;
     DWORD ref;
     ITSS_IStorageImpl *stg;
     ULONGLONG addr;
@@ -233,7 +233,7 @@ static HRESULT WINAPI ITSS_IEnumSTATSTG_Clone(
     return E_NOTIMPL;
 }
 
-struct IEnumSTATSTGVtbl IEnumSTATSTG_vtbl =
+static const IEnumSTATSTGVtbl IEnumSTATSTG_vtbl =
 {
     ITSS_IEnumSTATSTG_QueryInterface,
     ITSS_IEnumSTATSTG_AddRef,
@@ -535,7 +535,7 @@ HRESULT WINAPI ITSS_IStorageImpl_Stat(
     return E_NOTIMPL;
 }
 
-static IStorageVtbl ITSS_IStorageImpl_Vtbl =
+static const IStorageVtbl ITSS_IStorageImpl_Vtbl =
 {
     ITSS_IStorageImpl_QueryInterface,
     ITSS_IStorageImpl_AddRef,
@@ -795,7 +795,7 @@ static HRESULT WINAPI ITSS_IStream_Clone(
     return E_NOTIMPL;
 }
 
-struct IStreamVtbl ITSS_IStream_vtbl =
+static const IStreamVtbl ITSS_IStream_vtbl =
 {
     ITSS_IStream_QueryInterface,
     ITSS_IStream_AddRef,

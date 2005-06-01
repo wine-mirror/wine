@@ -140,7 +140,7 @@ HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, D
 	return S_OK;
 }
 
-IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl = {
+static const IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl = {
 	IDirectMusicBufferImpl_QueryInterface,
 	IDirectMusicBufferImpl_AddRef,
 	IDirectMusicBufferImpl_Release,

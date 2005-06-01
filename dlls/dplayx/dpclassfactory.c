@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 typedef struct
 {
     /* IUnknown fields */
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl    *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 
@@ -89,7 +89,7 @@ static HRESULT WINAPI DP_and_DPL_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
         return S_OK;
 }
 
-static IClassFactoryVtbl DP_and_DPL_Vtbl = {
+static const IClassFactoryVtbl DP_and_DPL_Vtbl = {
         DP_and_DPL_QueryInterface,
         DP_and_DPL_AddRef,
         DP_and_DPL_Release,

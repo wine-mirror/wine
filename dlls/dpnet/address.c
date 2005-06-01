@@ -212,7 +212,7 @@ HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromDirectPlay4Address(PDIRECTPLAY8A
   return DPN_OK; 
 }
 
-IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl =
+static const IDirectPlay8AddressVtbl DirectPlay8Address_Vtbl =
 {
     IDirectPlay8AddressImpl_QueryInterface,
     IDirectPlay8AddressImpl_AddRef,

@@ -1004,7 +1004,7 @@ static HRESULT WINAPI PrimaryBufferImpl_QueryInterface(
 	return E_NOINTERFACE;
 }
 
-static IDirectSoundBuffer8Vtbl dspbvt =
+static const IDirectSoundBuffer8Vtbl dspbvt =
 {
 	PrimaryBufferImpl_QueryInterface,
 	PrimaryBufferImpl_AddRef,

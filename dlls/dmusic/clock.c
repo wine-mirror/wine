@@ -88,7 +88,7 @@ HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdv
 	return S_OK;
 }
 
-IReferenceClockVtbl ReferenceClock_Vtbl = {
+static const IReferenceClockVtbl ReferenceClock_Vtbl = {
 	IReferenceClockImpl_QueryInterface,
 	IReferenceClockImpl_AddRef,
 	IReferenceClockImpl_Release,

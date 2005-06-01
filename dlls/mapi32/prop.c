@@ -1397,7 +1397,7 @@ typedef struct
  /* The main property data collection structure */
 typedef struct
 {
-    IPropDataVtbl   *lpVtbl;
+    const IPropDataVtbl   *lpVtbl;
     LONG             lRef;        /* Reference count */
     ALLOCATEBUFFER  *lpAlloc;     /* Memory allocation routine */
     ALLOCATEMORE    *lpMore;      /* Linked memory allocation routine */
@@ -2472,7 +2472,7 @@ IPropData_fnHrAddObjProps(LPPROPDATA iface, LPSPropTagArray lpTags,
 #endif
 }
 
-static struct IPropDataVtbl IPropDataImpl_vtbl =
+static const IPropDataVtbl IPropDataImpl_vtbl =
 {
     IPropData_fnQueryInterface,
     IPropData_fnAddRef,

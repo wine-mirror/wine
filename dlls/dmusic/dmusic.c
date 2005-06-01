@@ -240,7 +240,7 @@ HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock (LPDIRECTMUSIC8 iface, I
 	return S_OK;
 }
 
-IDirectMusic8Vtbl DirectMusic8_Vtbl = {
+static const IDirectMusic8Vtbl DirectMusic8_Vtbl = {
 	IDirectMusic8Impl_QueryInterface,
 	IDirectMusic8Impl_AddRef,
 	IDirectMusic8Impl_Release,

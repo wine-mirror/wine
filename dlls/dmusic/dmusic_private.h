@@ -59,22 +59,7 @@ typedef struct IDirectMusicInstrumentImpl IDirectMusicInstrumentImpl;
 /*****************************************************************************
  * Predeclare the interface implementation structures
  */
-extern IDirectMusic8Vtbl DirectMusic8_Vtbl;
-extern IDirectMusicBufferVtbl DirectMusicBuffer_Vtbl;
-extern IDirectMusicDownloadedInstrumentVtbl DirectMusicDownloadedInstrument_Vtbl;
-extern IDirectMusicDownloadVtbl DirectMusicDownload_Vtbl;
-extern IDirectMusicPortDownloadVtbl DirectMusicPortDownload_Vtbl;
-extern IDirectMusicPortVtbl DirectMusicPort_Vtbl;
-extern IDirectMusicThruVtbl DirectMusicThru_Vtbl;
-extern IReferenceClockVtbl ReferenceClock_Vtbl;
-
-extern IUnknownVtbl               DirectMusicCollection_Unknown_Vtbl;
-extern IDirectMusicCollectionVtbl DirectMusicCollection_Collection_Vtbl;
-extern IDirectMusicObjectVtbl     DirectMusicCollection_Object_Vtbl;
-extern IPersistStreamVtbl         DirectMusicCollection_PersistStream_Vtbl;
-
-extern IUnknownVtbl               DirectMusicInstrument_Unknown_Vtbl;
-extern IDirectMusicInstrumentVtbl DirectMusicInstrument_Instrument_Vtbl;
+extern const IDirectMusicPortVtbl DirectMusicPort_Vtbl;
 
 /*****************************************************************************
  * Some stuff to make my life easier :=)
@@ -109,7 +94,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, L
  */
 struct IDirectMusic8Impl {
   /* IUnknown fields */
-  IDirectMusic8Vtbl *lpVtbl;
+  const IDirectMusic8Vtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicImpl fields */
@@ -119,120 +104,72 @@ struct IDirectMusic8Impl {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusic8Impl_QueryInterface (LPDIRECTMUSIC8 iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface);
-extern ULONG WINAPI   IDirectMusic8Impl_Release (LPDIRECTMUSIC8 iface);
-/* IDirectMusic: */
-extern HRESULT WINAPI IDirectMusic8Impl_EnumPort (LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps);
-extern HRESULT WINAPI IDirectMusic8Impl_CreateMusicBuffer (LPDIRECTMUSIC8 iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rclsidPort, LPDMUS_PORTPARAMS pPortParams, LPDIRECTMUSICPORT* ppPort, LPUNKNOWN pUnkOuter);
-extern HRESULT WINAPI IDirectMusic8Impl_EnumMasterClock (LPDIRECTMUSIC8 iface, DWORD dwIndex, LPDMUS_CLOCKINFO lpClockInfo);
-extern HRESULT WINAPI IDirectMusic8Impl_GetMasterClock (LPDIRECTMUSIC8 iface, LPGUID pguidClock, IReferenceClock** ppReferenceClock);
-extern HRESULT WINAPI IDirectMusic8Impl_SetMasterClock (LPDIRECTMUSIC8 iface, REFGUID rguidClock);
-extern HRESULT WINAPI IDirectMusic8Impl_Activate (LPDIRECTMUSIC8 iface, BOOL fEnable);
-extern HRESULT WINAPI IDirectMusic8Impl_GetDefaultPort (LPDIRECTMUSIC8 iface, LPGUID pguidPort);
-extern HRESULT WINAPI IDirectMusic8Impl_SetDirectSound (LPDIRECTMUSIC8 iface, LPDIRECTSOUND pDirectSound, HWND hWnd);
-/* IDirectMusic8: */
-extern HRESULT WINAPI IDirectMusic8Impl_SetExternalMasterClock (LPDIRECTMUSIC8 iface, IReferenceClock* pClock);
 
 /*****************************************************************************
  * IDirectMusicBufferImpl implementation structure
  */
 struct IDirectMusicBufferImpl {
   /* IUnknown fields */
-  IDirectMusicBufferVtbl *lpVtbl;
+  const IDirectMusicBufferVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicBufferImpl fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicBufferImpl_QueryInterface (LPDIRECTMUSICBUFFER iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface);
-extern ULONG WINAPI   IDirectMusicBufferImpl_Release (LPDIRECTMUSICBUFFER iface);
-/* IDirectMusicBufferImpl: */
-extern HRESULT WINAPI IDirectMusicBufferImpl_Flush (LPDIRECTMUSICBUFFER iface);
-extern HRESULT WINAPI IDirectMusicBufferImpl_TotalTime (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prtTime);
-extern HRESULT WINAPI IDirectMusicBufferImpl_PackStructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD dwChannelMessage);
-extern HRESULT WINAPI IDirectMusicBufferImpl_PackUnstructured (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt, DWORD dwChannelGroup, DWORD cb, LPBYTE lpb);
-extern HRESULT WINAPI IDirectMusicBufferImpl_ResetReadPtr (LPDIRECTMUSICBUFFER iface);
-extern HRESULT WINAPI IDirectMusicBufferImpl_GetNextEvent (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt, LPDWORD pdwChannelGroup, LPDWORD pdwLength, LPBYTE* ppData);
-extern HRESULT WINAPI IDirectMusicBufferImpl_GetRawBufferPtr (LPDIRECTMUSICBUFFER iface, LPBYTE* ppData);
-extern HRESULT WINAPI IDirectMusicBufferImpl_GetStartTime (LPDIRECTMUSICBUFFER iface, LPREFERENCE_TIME prt);
-extern HRESULT WINAPI IDirectMusicBufferImpl_GetUsedBytes (LPDIRECTMUSICBUFFER iface, LPDWORD pcb);
-extern HRESULT WINAPI IDirectMusicBufferImpl_GetMaxBytes (LPDIRECTMUSICBUFFER iface, LPDWORD pcb);
-extern HRESULT WINAPI IDirectMusicBufferImpl_GetBufferFormat (LPDIRECTMUSICBUFFER iface, LPGUID pGuidFormat);
-extern HRESULT WINAPI IDirectMusicBufferImpl_SetStartTime (LPDIRECTMUSICBUFFER iface, REFERENCE_TIME rt);
-extern HRESULT WINAPI IDirectMusicBufferImpl_SetUsedBytes (LPDIRECTMUSICBUFFER iface, DWORD cb);
-
 
 /*****************************************************************************
  * IDirectMusicDownloadedInstrumentImpl implementation structure
  */
 struct IDirectMusicDownloadedInstrumentImpl {
   /* IUnknown fields */
-  IDirectMusicDownloadedInstrumentVtbl *lpVtbl;
+  const IDirectMusicDownloadedInstrumentVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicDownloadedInstrumentImpl fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicDownloadedInstrumentImpl_QueryInterface (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface);
-extern ULONG WINAPI   IDirectMusicDownloadedInstrumentImpl_Release (LPDIRECTMUSICDOWNLOADEDINSTRUMENT iface);
 /* IDirectMusicDownloadedInstrumentImpl: */
 /* none yet */
-
 
 /*****************************************************************************
  * IDirectMusicDownloadImpl implementation structure
  */
 struct IDirectMusicDownloadImpl {
   /* IUnknown fields */
-  IDirectMusicDownloadVtbl *lpVtbl;
+  const IDirectMusicDownloadVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicDownloadImpl fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicDownloadImpl_QueryInterface (LPDIRECTMUSICDOWNLOAD iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD iface);
-extern ULONG WINAPI   IDirectMusicDownloadImpl_Release (LPDIRECTMUSICDOWNLOAD iface);
-/* IDirectMusicImpl: */
-extern HRESULT WINAPI IDirectMusicDownloadImpl_GetBuffer (LPDIRECTMUSICDOWNLOAD iface, void** ppvBuffer, DWORD* pdwSize);
-
 
 /*****************************************************************************
  * IDirectMusicPortDownloadImpl implementation structure
  */
 struct IDirectMusicPortDownloadImpl {
   /* IUnknown fields */
-  IDirectMusicPortDownloadVtbl *lpVtbl;
+  const IDirectMusicPortDownloadVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicPortDownloadImpl fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_QueryInterface (LPDIRECTMUSICPORTDOWNLOAD iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicPortDownloadImpl_AddRef (LPDIRECTMUSICPORTDOWNLOAD iface);
-extern ULONG WINAPI   IDirectMusicPortDownloadImpl_Release (LPDIRECTMUSICPORTDOWNLOAD iface);
-/* IDirectMusicPortDownloadImpl: */
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_GetBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwDLId, IDirectMusicDownload** ppIDMDownload);
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_AllocateBuffer (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD dwSize, IDirectMusicDownload** ppIDMDownload);
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_GetDLId (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* pdwStartDLId, DWORD dwCount);
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_GetAppend (LPDIRECTMUSICPORTDOWNLOAD iface, DWORD* pdwAppend);
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_Download (LPDIRECTMUSICPORTDOWNLOAD iface, IDirectMusicDownload* pIDMDownload);
-extern HRESULT WINAPI IDirectMusicPortDownloadImpl_Unload (LPDIRECTMUSICPORTDOWNLOAD iface, IDirectMusicDownload* pIDMDownload);
 
 /*****************************************************************************
  * IDirectMusicPortImpl implementation structure
  */
 struct IDirectMusicPortImpl {
   /* IUnknown fields */
-  IDirectMusicPortVtbl *lpVtbl;
+  const IDirectMusicPortVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicPortImpl fields */
@@ -246,52 +183,28 @@ struct IDirectMusicPortImpl {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicPortImpl_QueryInterface (LPDIRECTMUSICPORT iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface);
-extern ULONG WINAPI   IDirectMusicPortImpl_Release (LPDIRECTMUSICPORT iface);
-/* IDirectMusicPortImpl: */
-extern HRESULT WINAPI IDirectMusicPortImpl_PlayBuffer (LPDIRECTMUSICPORT iface, LPDIRECTMUSICBUFFER pBuffer);
-extern HRESULT WINAPI IDirectMusicPortImpl_SetReadNotificationHandle (LPDIRECTMUSICPORT iface, HANDLE hEvent);
-extern HRESULT WINAPI IDirectMusicPortImpl_Read (LPDIRECTMUSICPORT iface, LPDIRECTMUSICBUFFER pBuffer);
-extern HRESULT WINAPI IDirectMusicPortImpl_DownloadInstrument (LPDIRECTMUSICPORT iface, IDirectMusicInstrument* pInstrument, IDirectMusicDownloadedInstrument** ppDownloadedInstrument, DMUS_NOTERANGE* pNoteRanges, DWORD dwNumNoteRanges);
-extern HRESULT WINAPI IDirectMusicPortImpl_UnloadInstrument (LPDIRECTMUSICPORT iface, IDirectMusicDownloadedInstrument *pDownloadedInstrument);
-extern HRESULT WINAPI IDirectMusicPortImpl_GetLatencyClock (LPDIRECTMUSICPORT iface, IReferenceClock** ppClock);
-extern HRESULT WINAPI IDirectMusicPortImpl_GetRunningStats (LPDIRECTMUSICPORT iface, LPDMUS_SYNTHSTATS pStats);
-extern HRESULT WINAPI IDirectMusicPortImpl_Compact (LPDIRECTMUSICPORT iface);
-extern HRESULT WINAPI IDirectMusicPortImpl_GetCaps (LPDIRECTMUSICPORT iface, LPDMUS_PORTCAPS pPortCaps);
-extern HRESULT WINAPI IDirectMusicPortImpl_DeviceIoControl (LPDIRECTMUSICPORT iface, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
-extern HRESULT WINAPI IDirectMusicPortImpl_SetNumChannelGroups (LPDIRECTMUSICPORT iface, DWORD dwChannelGroups);
-extern HRESULT WINAPI IDirectMusicPortImpl_GetNumChannelGroups (LPDIRECTMUSICPORT iface, LPDWORD pdwChannelGroups);
-extern HRESULT WINAPI IDirectMusicPortImpl_Activate (LPDIRECTMUSICPORT iface, BOOL fActive);
-extern HRESULT WINAPI IDirectMusicPortImpl_SetChannelPriority (LPDIRECTMUSICPORT iface, DWORD dwChannelGroup, DWORD dwChannel, DWORD dwPriority);
-extern HRESULT WINAPI IDirectMusicPortImpl_GetChannelPriority (LPDIRECTMUSICPORT iface, DWORD dwChannelGroup, DWORD dwChannel, LPDWORD pdwPriority);
-extern HRESULT WINAPI IDirectMusicPortImpl_SetDirectSound (LPDIRECTMUSICPORT iface, LPDIRECTSOUND pDirectSound, LPDIRECTSOUNDBUFFER pDirectSoundBuffer);
-extern HRESULT WINAPI IDirectMusicPortImpl_GetFormat (LPDIRECTMUSICPORT iface, LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSize, LPDWORD pdwBufferSize);
 
 /*****************************************************************************
  * IDirectMusicThruImpl implementation structure
  */
 struct IDirectMusicThruImpl {
   /* IUnknown fields */
-  IDirectMusicThruVtbl *lpVtbl;
+  const IDirectMusicThruVtbl *lpVtbl;
   DWORD          ref;
 
   /* IDirectMusicThruImpl fields */
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicThruImpl_QueryInterface (LPDIRECTMUSICTHRU iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicThruImpl_AddRef (LPDIRECTMUSICTHRU iface);
-extern ULONG WINAPI   IDirectMusicThruImpl_Release (LPDIRECTMUSICTHRU iface);
-/* IDirectMusicPortDownloadImpl: */
-extern HRESULT WINAPI ThruChannel (LPDIRECTMUSICTHRU iface, DWORD dwSourceChannelGroup, DWORD dwSourceChannel, DWORD dwDestinationChannelGroup, DWORD dwDestinationChannel, LPDIRECTMUSICPORT pDestinationPort);
 
 /*****************************************************************************
  * IReferenceClockImpl implementation structure
  */
 struct IReferenceClockImpl {
   /* IUnknown fields */
-  IReferenceClockVtbl *lpVtbl;
+  const IReferenceClockVtbl *lpVtbl;
   DWORD          ref;
 
   /* IReferenceClockImpl fields */
@@ -300,15 +213,7 @@ struct IReferenceClockImpl {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IReferenceClockImpl_QueryInterface (IReferenceClock *iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IReferenceClockImpl_AddRef (IReferenceClock *iface);
-extern ULONG WINAPI   IReferenceClockImpl_Release (IReferenceClock *iface);
-/* IReferenceClock: */
-extern HRESULT WINAPI IReferenceClockImpl_GetTime (IReferenceClock *iface, REFERENCE_TIME* pTime);
-extern HRESULT WINAPI IReferenceClockImpl_AdviseTime (IReferenceClock *iface, REFERENCE_TIME baseTime, REFERENCE_TIME streamTime, HANDLE hEvent, DWORD* pdwAdviseCookie);
-extern HRESULT WINAPI IReferenceClockImpl_AdvisePeriodic (IReferenceClock *iface, REFERENCE_TIME startTime, REFERENCE_TIME periodTime, HANDLE hSemaphore, DWORD* pdwAdviseCookie);
-extern HRESULT WINAPI IReferenceClockImpl_Unadvise (IReferenceClock *iface, DWORD dwAdviseCookie);
-
 
 typedef struct _DMUS_PRIVATE_INSTRUMENT_ENTRY {
 	struct list entry; /* for listing elements */
@@ -324,10 +229,10 @@ typedef struct _DMUS_PRIVATE_POOLCUE {
  */
 struct IDirectMusicCollectionImpl {
   /* IUnknown fields */
-  IUnknownVtbl *UnknownVtbl;
-  IDirectMusicCollectionVtbl *CollectionVtbl;
-  IDirectMusicObjectVtbl *ObjectVtbl;
-  IPersistStreamVtbl *PersistStreamVtbl;
+  const IUnknownVtbl *UnknownVtbl;
+  const IDirectMusicCollectionVtbl *CollectionVtbl;
+  const IDirectMusicObjectVtbl *ObjectVtbl;
+  const IPersistStreamVtbl *PersistStreamVtbl;
   DWORD          ref;
 
   /* IDirectMusicCollectionImpl fields */
@@ -345,40 +250,21 @@ struct IDirectMusicCollectionImpl {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicCollectionImpl_IUnknown_AddRef (LPUNKNOWN iface);
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IUnknown_Release (LPUNKNOWN iface);
 /* IDirectMusicCollection: */
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface (LPDIRECTMUSICCOLLECTION iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef (LPDIRECTMUSICCOLLECTION iface);
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IDirectMusicCollection_Release (LPDIRECTMUSICCOLLECTION iface);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwPatch, IDirectMusicInstrument** ppInstrument);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument (LPDIRECTMUSICCOLLECTION iface, DWORD dwIndex, DWORD* pdwPatch, LPWSTR pwszName, DWORD dwNameLen);
 /* IDirectMusicObject: */
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicCollectionImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc);
 /* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
 extern ULONG WINAPI   IDirectMusicCollectionImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-extern ULONG WINAPI   IDirectMusicCollectionImpl_IPersistStream_Release (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty);
-extern HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize);
-
 
 /*****************************************************************************
  * IDirectMusicInstrumentImpl implementation structure
  */
 struct IDirectMusicInstrumentImpl {
   /* IUnknown fields */
-  IUnknownVtbl *UnknownVtbl;
-  IDirectMusicInstrumentVtbl *InstrumentVtbl;
+  const IUnknownVtbl *UnknownVtbl;
+  const IDirectMusicInstrumentVtbl *InstrumentVtbl;
   DWORD          ref;
 
   /* IDirectMusicInstrumentImpl fields */
@@ -390,15 +276,9 @@ struct IDirectMusicInstrumentImpl {
 };
 
 /* IUnknown: */
-extern HRESULT WINAPI IDirectMusicInstrumentImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicInstrumentImpl_IUnknown_AddRef (LPUNKNOWN iface);
-extern ULONG WINAPI   IDirectMusicInstrumentImpl_IUnknown_Release (LPUNKNOWN iface);
 /* IDirectMusicInstrumentImpl: */
-extern HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_QueryInterface (LPDIRECTMUSICINSTRUMENT iface, REFIID riid, LPVOID *ppobj);
 extern ULONG WINAPI   IDirectMusicInstrumentImpl_IDirectMusicInstrument_AddRef (LPDIRECTMUSICINSTRUMENT iface);
-extern ULONG WINAPI   IDirectMusicInstrumentImpl_IDirectMusicInstrument_Release (LPDIRECTMUSICINSTRUMENT iface);
-extern HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_GetPatch (LPDIRECTMUSICINSTRUMENT iface, DWORD* pdwPatch);
-extern HRESULT WINAPI IDirectMusicInstrumentImpl_IDirectMusicInstrument_SetPatch (LPDIRECTMUSICINSTRUMENT iface, DWORD dwPatch);
 /* custom :) */
 extern HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTRUMENT iface, LPSTREAM pStm);
 

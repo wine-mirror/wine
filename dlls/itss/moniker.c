@@ -49,7 +49,7 @@ extern ULONG dll_count;
 /*****************************************************************************/
 
 typedef struct {
-    IMonikerVtbl *vtbl_ITS_IMoniker;
+    const IMonikerVtbl *vtbl_ITS_IMoniker;
     DWORD ref;
     LPWSTR szHtml;
     WCHAR szFile[1];
@@ -322,7 +322,7 @@ static HRESULT WINAPI ITS_IMonikerImpl_IsSystemMoniker(
     return E_NOTIMPL;
 }
 
-static IMonikerVtbl ITS_IMonikerImpl_Vtbl =
+static const IMonikerVtbl ITS_IMonikerImpl_Vtbl =
 {
     ITS_IMonikerImpl_QueryInterface,
     ITS_IMonikerImpl_AddRef,
@@ -377,7 +377,7 @@ static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPWSTR name, DWORD n )
 /*****************************************************************************/
 
 typedef struct {
-    IParseDisplayNameVtbl *vtbl_ITS_IParseDisplayName;
+    const IParseDisplayNameVtbl *vtbl_ITS_IParseDisplayName;
     DWORD ref;
 } ITS_IParseDisplayNameImpl;
 
@@ -459,7 +459,7 @@ static HRESULT WINAPI ITS_IParseDisplayNameImpl_ParseDisplayName(
               &pszDisplayName[prefix_len], n-prefix_len );
 }
 
-static IParseDisplayNameVtbl ITS_IParseDisplayNameImpl_Vtbl =
+static const IParseDisplayNameVtbl ITS_IParseDisplayNameImpl_Vtbl =
 {
     ITS_IParseDisplayNameImpl_QueryInterface,
     ITS_IParseDisplayNameImpl_AddRef,

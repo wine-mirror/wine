@@ -118,34 +118,30 @@ typedef struct tagDirectPlayLobby3Data
 
 struct IDirectPlayLobbyImpl
 {
-    IDirectPlayLobbyVtbl *lpVtbl;
+    const IDirectPlayLobbyVtbl *lpVtbl;
     DPL_IMPL_FIELDS
 };
 
 struct IDirectPlayLobby2Impl
 {
-    IDirectPlayLobby2Vtbl *lpVtbl;
+    const IDirectPlayLobby2Vtbl *lpVtbl;
     DPL_IMPL_FIELDS
 };
 
 struct IDirectPlayLobby3Impl
 {
-    IDirectPlayLobby3Vtbl *lpVtbl;
+    const IDirectPlayLobby3Vtbl *lpVtbl;
     DPL_IMPL_FIELDS
 };
 
-
 /* Forward declarations of virtual tables */
-static IDirectPlayLobbyVtbl  directPlayLobbyWVT;
-static IDirectPlayLobby2Vtbl directPlayLobby2WVT;
-static IDirectPlayLobby3Vtbl directPlayLobby3WVT;
+static const IDirectPlayLobbyVtbl  directPlayLobbyWVT;
+static const IDirectPlayLobby2Vtbl directPlayLobby2WVT;
+static const IDirectPlayLobby3Vtbl directPlayLobby3WVT;
 
-static IDirectPlayLobbyVtbl  directPlayLobbyAVT;
-static IDirectPlayLobby2Vtbl directPlayLobby2AVT;
-static IDirectPlayLobby3Vtbl directPlayLobby3AVT;
-
-
-
+static const IDirectPlayLobbyVtbl  directPlayLobbyAVT;
+static const IDirectPlayLobby2Vtbl directPlayLobby2AVT;
+static const IDirectPlayLobby3Vtbl directPlayLobby3AVT;
 
 static BOOL DPL_CreateIUnknown( LPVOID lpDPL )
 {
@@ -1758,7 +1754,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_WaitForConnectionSettings
 
 /* Direct Play Lobby 1 (ascii) Virtual Table for methods */
 /* All lobby 1 methods are exactly the same except QueryInterface */
-static struct IDirectPlayLobbyVtbl directPlayLobbyAVT =
+static const IDirectPlayLobbyVtbl directPlayLobbyAVT =
 {
 
   XCAST(QueryInterface)DPL_QueryInterface,
@@ -1788,7 +1784,7 @@ static struct IDirectPlayLobbyVtbl directPlayLobbyAVT =
 #endif
 
 /* Direct Play Lobby 1 (unicode) Virtual Table for methods */
-static IDirectPlayLobbyVtbl directPlayLobbyWVT =
+static const IDirectPlayLobbyVtbl directPlayLobbyWVT =
 {
 
   XCAST(QueryInterface)DPL_QueryInterface,
@@ -1817,7 +1813,7 @@ static IDirectPlayLobbyVtbl directPlayLobbyWVT =
 #endif
 
 /* Direct Play Lobby 2 (ascii) Virtual Table for methods */
-static IDirectPlayLobby2Vtbl directPlayLobby2AVT =
+static const IDirectPlayLobby2Vtbl directPlayLobby2AVT =
 {
 
   XCAST(QueryInterface)DPL_QueryInterface,
@@ -1848,7 +1844,7 @@ static IDirectPlayLobby2Vtbl directPlayLobby2AVT =
 #endif
 
 /* Direct Play Lobby 2 (unicode) Virtual Table for methods */
-static IDirectPlayLobby2Vtbl directPlayLobby2WVT =
+static const IDirectPlayLobby2Vtbl directPlayLobby2WVT =
 {
 
   XCAST(QueryInterface)DPL_QueryInterface,
@@ -1880,7 +1876,7 @@ static IDirectPlayLobby2Vtbl directPlayLobby2WVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static IDirectPlayLobby3Vtbl directPlayLobby3AVT =
+static const IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 {
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,
@@ -1916,7 +1912,7 @@ static IDirectPlayLobby3Vtbl directPlayLobby3AVT =
 # define XCAST(fun)     (void*)
 #endif
 
-static IDirectPlayLobby3Vtbl directPlayLobby3WVT =
+static const IDirectPlayLobby3Vtbl directPlayLobby3WVT =
 {
   XCAST(QueryInterface)DPL_QueryInterface,
   XCAST(AddRef)DPL_AddRef,

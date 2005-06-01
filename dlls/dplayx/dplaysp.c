@@ -68,12 +68,12 @@ typedef struct tagDirectPlaySPData
 
 struct IDirectPlaySPImpl
 {
-  IDirectPlaySPVtbl *lpVtbl;
+  const IDirectPlaySPVtbl *lpVtbl;
   DPSP_IMPL_FIELDS
 };
 
 /* Forward declaration of virtual tables */
-static IDirectPlaySPVtbl directPlaySPVT;
+static const IDirectPlaySPVtbl directPlaySPVT;
 
 /* This structure is passed to the DP object for safe keeping */
 typedef struct tagDP_SPPLAYERDATA
@@ -922,8 +922,7 @@ static VOID WINAPI IDirectPlaySPImpl_SendComplete
          This, unknownA, unknownB );
 }
 
-
-static struct IDirectPlaySPVtbl directPlaySPVT =
+static const IDirectPlaySPVtbl directPlaySPVT =
 {
 
   DPSP_QueryInterface,

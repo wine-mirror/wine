@@ -101,7 +101,7 @@ static HRESULT WINAPI PersistMoniker_GetCurMoniker(IPersistMoniker *iface, IMoni
     return E_NOTIMPL;
 }
 
-static IPersistMonikerVtbl PersistMonikerVtbl = {
+static const IPersistMonikerVtbl PersistMonikerVtbl = {
     PersistMoniker_QueryInterface,
     PersistMoniker_AddRef,
     PersistMoniker_Release,
@@ -144,7 +144,7 @@ static HRESULT WINAPI MonikerProp_PutProperty(IMonikerProp *iface, MONIKERPROPER
     return E_NOTIMPL;
 }
 
-static IMonikerPropVtbl MonikerPropVtbl = {
+static const IMonikerPropVtbl MonikerPropVtbl = {
     MonikerProp_QueryInterface,
     MonikerProp_AddRef,
     MonikerProp_Release,
@@ -217,7 +217,7 @@ static HRESULT WINAPI PersistFile_GetCurFile(IPersistFile *iface, LPOLESTR *pszF
     return E_NOTIMPL;
 }
 
-static IPersistFileVtbl PersistFileVtbl = {
+static const IPersistFileVtbl PersistFileVtbl = {
     PersistFile_QueryInterface,
     PersistFile_AddRef,
     PersistFile_Release,

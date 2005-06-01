@@ -65,7 +65,7 @@ HRESULT WINAPI DirectPlay8Create(REFGUID lpGUID, LPVOID *ppvInt, LPUNKNOWN punkO
 typedef struct
 {
   /* IUnknown fields */
-  IClassFactoryVtbl *lpVtbl;
+  const IClassFactoryVtbl *lpVtbl;
   DWORD      ref; 
   REFCLSID   rclsid;
   HRESULT   (*pfnCreateInstanceFactory)(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
@@ -102,7 +102,7 @@ static HRESULT WINAPI DICF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
   return S_OK;
 }
 
-static IClassFactoryVtbl DICF_Vtbl = {
+static const IClassFactoryVtbl DICF_Vtbl = {
   DICF_QueryInterface,
   DICF_AddRef,
   DICF_Release,

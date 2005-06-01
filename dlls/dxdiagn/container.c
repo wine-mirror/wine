@@ -257,8 +257,7 @@ HRESULT WINAPI IDxDiagContainerImpl_AddChildContainer(PDXDIAGCONTAINER iface, LP
   return S_OK;
 }
 
-
-IDxDiagContainerVtbl DxDiagContainer_Vtbl =
+static const IDxDiagContainerVtbl DxDiagContainer_Vtbl =
 {
     IDxDiagContainerImpl_QueryInterface,
     IDxDiagContainerImpl_AddRef,
