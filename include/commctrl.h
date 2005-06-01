@@ -647,10 +647,7 @@ typedef struct tagTRACKMOUSEEVENT {
 
 #endif
 
-BOOL
-WINAPI
-_TrackMouseEvent(
-    LPTRACKMOUSEEVENT lpEventTrack);
+BOOL WINAPI _TrackMouseEvent(LPTRACKMOUSEEVENT lpEventTrack);
 
 /* Flat Scrollbar control */
 
@@ -4844,7 +4841,7 @@ typedef struct tagLHITTESTINFO
 typedef struct tagNMLINK
 {
   NMHDR hdr;
-  LITEM item ;
+  LITEM item;
 } NMLINK, *PNMLINK;
 
 #ifdef __cplusplus
