@@ -1273,6 +1273,8 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define IDNO                7
 #define IDCLOSE             8
 #define IDHELP              9
+#define IDTRYAGAIN         10
+#define IDCONTINUE         11
 
 /****** Window classes ******/
 
