@@ -29,7 +29,7 @@
 #include "msiquery.h"
 #include "objbase.h"
 #include "objidl.h"
-#include "wine/unicode.h"
+#include "winnls.h"
 #include "wine/list.h"
 
 #define MSI_DATASIZEMASK 0x00ff
@@ -381,6 +381,7 @@ extern UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL cr
 extern UINT MSIREG_OpenComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenProductsKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenUserFeaturesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
+extern UINT MSIREG_OpenUserComponentsKey(LPCWSTR szComponent, HKEY* key, BOOL create);
 extern UINT MSIREG_OpenUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 
 /* msi dialog interface */
@@ -432,8 +433,8 @@ inline static LPWSTR strdupW( LPCWSTR src )
 {
     LPWSTR dest;
     if (!src) return NULL;
-    dest = HeapAlloc(GetProcessHeap(), 0, (strlenW(src)+1)*sizeof(WCHAR));
-    strcpyW(dest, src);
+    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src)+1)*sizeof(WCHAR));
+    lstrcpyW(dest, src);
     return dest;
 }
 
