@@ -379,7 +379,7 @@ Thunk_IDirect3DImpl_2_CreateMaterial(LPDIRECT3D2 iface,
 
 HRESULT WINAPI
 Thunk_IDirect3DImpl_2_CreateViewport(LPDIRECT3D2 iface,
-				     LPDIRECT3DVIEWPORT* lplpD3DViewport2,
+				     LPDIRECT3DVIEWPORT2* lplpD3DViewport2,
 				     IUnknown* pUnkOuter)
 {
     TRACE("(%p)->(%p,%p) thunking to IDirect3D3 interface.\n", iface, lplpD3DViewport2, pUnkOuter);

@@ -34,7 +34,6 @@
 #include "wine/debug.h"
 
 #include "d3d_private.h"
-#include "main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

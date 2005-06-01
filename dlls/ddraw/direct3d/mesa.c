@@ -43,7 +43,6 @@
 #include "ddraw_private.h"
 #include "d3d_private.h"
 #include "mesa_private.h"
-#include "main.h"
 
 #include "wine/debug.h"
 
