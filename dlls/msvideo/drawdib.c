@@ -49,7 +49,7 @@ typedef struct tagWINE_HDD {
     struct tagWINE_HDD* next;
 } WINE_HDD;
 
-int num_colours(LPBITMAPINFOHEADER lpbi)
+static int num_colours(const LPBITMAPINFOHEADER lpbi)
 {
 	if(lpbi->biClrUsed)
 		return lpbi->biClrUsed;
@@ -252,11 +252,15 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
         whdd->hMemDC = CreateCompatibleDC(hdc);
         TRACE("Creating: %ld, %p\n", whdd->lpbiOut->biSize, whdd->lpvbits);
         whdd->hDib = CreateDIBSection(whdd->hMemDC, (BITMAPINFO *)whdd->lpbiOut, DIB_RGB_COLORS, &(whdd->lpvbits), 0, 0);
-        if (!whdd->hDib) 
+        if (whdd->hDib) 
         {
+            TRACE("Created: %p,%p\n", whdd->hDib, whdd->lpvbits);
+        }
+        else
+        {
+            ret = FALSE;
             TRACE("Error: %ld\n", GetLastError());
         }
-        TRACE("Created: %p,%p\n", whdd->hDib, whdd->lpvbits);
         whdd->hOldDib = SelectObject(whdd->hMemDC, whdd->hDib);
     }
 
@@ -302,6 +306,8 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
     whdd = MSVIDEO_GetHddPtr(hdd);
     if (!whdd) return FALSE;
 
+    TRACE("whdd=%p\n", whdd);
+
     if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME | DDF_UPDATE | DDF_DONTDRAW | DDF_BACKGROUNDPAL))
         FIXME("wFlags == 0x%08lx not handled\n", (DWORD)wFlags);
 
@@ -332,9 +338,11 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 
     if (!(wFlags & DDF_UPDATE)) 
     {
+        DWORD biSizeImage = lpbi->biSizeImage;
+
         /* biSizeImage may be set to 0 for BI_RGB (uncompressed) bitmaps */
-        if ((lpbi->biCompression == BI_RGB) && (lpbi->biSizeImage == 0))
-            lpbi->biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
+        if ((lpbi->biCompression == BI_RGB) && (biSizeImage == 0))
+            biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
 
         if (lpbi->biCompression) 
         {
@@ -349,7 +357,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
         }
         else
         {
-            memcpy(whdd->lpvbits, lpBits, lpbi->biSizeImage);
+            memcpy(whdd->lpvbits, lpBits, biSizeImage);
         }
     }
     if (!(wFlags & DDF_DONTDRAW) && whdd->hpal)
