@@ -62,6 +62,7 @@ struct msi_control_tag
     HWND hwnd;
     msi_handler handler;
     LPWSTR property;
+    LPWSTR value;
     IPicture *pic;
     WCHAR name[1];
 };
@@ -259,6 +260,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     dialog->control_list = control;
     control->handler = NULL;
     control->property = NULL;
+    control->value = NULL;
     control->pic = NULL;
 
     x = MSI_RecordGetInteger( rec, 4 );
@@ -330,6 +332,56 @@ static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
+{
+    const static WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','C','h','e','c','k','B','o','x',' ','`',
+        'W','H','E','R','E',' ',
+        '`','P','r','o','p','e','r','t','y','`',' ','=',' ',
+        '\'','%','s','\'',0
+    };
+    MSIQUERY *view = NULL;
+    MSIRECORD *rec = NULL;
+    LPCWSTR val = NULL;
+    LPWSTR ret = NULL;
+    UINT r;
+
+    /* find if there is a value associated with the checkbox */
+    r = MSI_OpenQuery( dialog->package->db, &view, query, prop);
+    if( r != ERROR_SUCCESS )
+        return ret;
+    MSI_ViewExecute( view, NULL );
+    MSI_ViewFetch( view, &rec );
+    MSI_ViewClose( view );
+    msiobj_release( &view->hdr );
+    if (!rec)
+        return ret;
+
+    val = MSI_RecordGetString( rec, 2 );
+    if (val)
+    {
+        deformat_string( dialog->package, val, &ret );
+        if( ret && !ret[0] )
+        {
+            HeapFree( GetProcessHeap(), 0, ret );
+            ret = NULL;
+        }
+    }
+    msiobj_release( &rec->hdr );
+    if (ret)
+        return ret;
+
+    ret = load_dynamic_property(dialog->package, prop, NULL);
+    if( ret && !ret[0] )
+    {
+        HeapFree( GetProcessHeap(), 0, ret );
+        ret = NULL;
+    }
+
+    return ret;
+}
+
 static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
@@ -342,7 +394,12 @@ static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
     control->handler = msi_dialog_checkbox_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
+    {
         control->property = strdupW( prop );
+        control->value = msi_get_checkbox_value( dialog, prop );
+        TRACE("control %s value %s\n", debugstr_w(control->property),
+              debugstr_w(control->value));
+    }
     msi_dialog_checkbox_sync_state( dialog, control );
 
     return ERROR_SUCCESS;
@@ -914,17 +971,29 @@ static UINT msi_dialog_get_checkbox_state( msi_dialog *dialog,
     DWORD sz = 2;
 
     MSI_GetPropertyW( dialog->package, control->property, state, &sz );
-    return atoiW( state ) ? 1 : 0;
+    return state[0] ? 1 : 0;
 }
 
 static void msi_dialog_set_checkbox_state( msi_dialog *dialog,
                 msi_control *control, UINT state )
 {
-    WCHAR szState[2] = { '0', 0 };
+    static const WCHAR szState[] = { '1', 0 };
+    LPCWSTR val;
 
-    if( state )
-        szState[0]++;
-    MSI_SetPropertyW( dialog->package, control->property, szState );
+    /* if uncheck then the property is set to NULL */
+    if (!state)
+    {
+        MSI_SetPropertyW( dialog->package, control->property, NULL );
+        return;
+    }
+
+    /* check for a custom state */
+    if (control->value && control->value[0])
+        val = control->value;
+    else
+        val = szState;
+
+    MSI_SetPropertyW( dialog->package, control->property, val );
 }
 
 static void msi_dialog_checkbox_sync_state( msi_dialog *dialog,
@@ -1217,6 +1286,7 @@ void msi_dialog_destroy( msi_dialog *dialog )
         dialog->control_list = t->next;
         /* leave dialog->hwnd - destroying parent destroys child windows */
         HeapFree( GetProcessHeap(), 0, t->property );
+        HeapFree( GetProcessHeap(), 0, t->value );
         if( t->pic )
             IPicture_Release( t->pic );
         HeapFree( GetProcessHeap(), 0, t );
