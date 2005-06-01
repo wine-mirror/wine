@@ -192,38 +192,55 @@ static WCHAR *get_lcid_subkey( LCID lcid, SYSKIND syskind, WCHAR *buffer )
     return buffer;
 }
 
+int TLB_ReadTypeLib(LPCWSTR file, INT index, ITypeLib2 **ppTypelib);
+
 
 /****************************************************************************
  *		QueryPathOfRegTypeLib	[OLEAUT32.164]
+ *
+ * Gets the path to a registered type library.
+ *
+ * PARAMS
+ *  guid [I] referenced guid
+ *  wMaj [I] major version
+ *  wMin [I] minor version
+ *  lcid [I] locale id
+ *  path [O] path of typelib
+ *
  * RETURNS
- *	path of typelib
+ *  Success: S_OK.
+ *  Failure: If the type library is not registered then TYPE_E_LIBNOTREGISTERED
+ *  or TYPE_E_REGISTRYACCESS if the type library registration key couldn't be
+ *  opened.
  */
-HRESULT WINAPI
-QueryPathOfRegTypeLib(
-	REFGUID guid,	/* [in] referenced guid */
-	WORD wMaj,	/* [in] major version */
-	WORD wMin,	/* [in] minor version */
-	LCID lcid,	/* [in] locale id */
-	LPBSTR path )	/* [out] path of typelib */
+HRESULT WINAPI QueryPathOfRegTypeLib(
+	REFGUID guid,
+	WORD wMaj,
+	WORD wMin,
+	LCID lcid,
+	LPBSTR path )
 {
-    HRESULT hr = E_FAIL;
+    HRESULT hr = TYPE_E_LIBNOTREGISTERED;
     LCID myLCID = lcid;
     HKEY hkey;
     WCHAR buffer[60];
     WCHAR Path[MAX_PATH];
+    LONG res;
 
-    if ( !HIWORD(guid) )
-    {
-        FIXME("(guid %p,%d,%d,0x%04lx,%p),stub!\n", guid, wMaj, wMin, lcid, path);
-        return E_FAIL;
-    }
+    TRACE_(typelib)("(%s, %x.%x, 0x%lx, %p)\n", debugstr_guid(guid), wMaj, wMin, lcid, path);
 
     get_typelib_key( guid, wMaj, wMin, buffer );
 
-    if (RegOpenKeyW( HKEY_CLASSES_ROOT, buffer, &hkey ) != ERROR_SUCCESS)
+    res = RegOpenKeyExW( HKEY_CLASSES_ROOT, buffer, 0, KEY_READ, &hkey );
+    if (res == ERROR_FILE_NOT_FOUND)
     {
         TRACE_(typelib)("%s not found\n", debugstr_w(buffer));
-        return E_FAIL;
+        return TYPE_E_LIBNOTREGISTERED;
+    }
+    else if (res != ERROR_SUCCESS)
+    {
+        TRACE_(typelib)("failed to open %s for read access\n", debugstr_w(buffer));
+        return TYPE_E_REGISTRYACCESS;
     }
 
     while (hr != S_OK)
@@ -258,6 +275,7 @@ QueryPathOfRegTypeLib(
         }
     }
     RegCloseKey( hkey );
+    TRACE_(typelib)("-- 0x%08lx\n", hr);
     return hr;
 }
 
@@ -274,22 +292,24 @@ HRESULT WINAPI CreateTypeLib(
     FIXME("(%d,%s,%p), stub!\n",syskind,debugstr_w(szFile),ppctlib);
     return E_FAIL;
 }
+
 /******************************************************************************
  *		LoadTypeLib	[OLEAUT32.161]
- * Loads and registers a type library
- * NOTES
- *    Docs: OLECHAR FAR* szFile
- *    Docs: iTypeLib FAR* FAR* pptLib
+ *
+ * Loads a type library
+ *
+ * PARAMS
+ *  szFile [I] Name of file to load from.
+ *  pptLib [O] Pointer that receives ITypeLib object on success.
  *
  * RETURNS
  *    Success: S_OK
  *    Failure: Status
+ *
+ * SEE
+ *  LoadTypeLibEx, LoadRegTypeLib, CreateTypeLib.
  */
-int TLB_ReadTypeLib(LPCWSTR file, INT index, ITypeLib2 **ppTypelib);
-
-HRESULT WINAPI LoadTypeLib(
-    const OLECHAR *szFile,/* [in] Name of file to load from */
-    ITypeLib * *pptLib)   /* [out] Pointer to pointer to loaded type library */
+HRESULT WINAPI LoadTypeLib(const OLECHAR *szFile, ITypeLib * *pptLib)
 {
     TRACE("(%s,%p)\n",debugstr_w(szFile), pptLib);
     return LoadTypeLibEx(szFile, REGKIND_DEFAULT, pptLib);
@@ -297,6 +317,7 @@ HRESULT WINAPI LoadTypeLib(
 
 /******************************************************************************
  *		LoadTypeLibEx	[OLEAUT32.183]
+ *
  * Loads and optionally registers a type library
  *
  * RETURNS
@@ -368,13 +389,27 @@ HRESULT WINAPI LoadTypeLibEx(
 
 /******************************************************************************
  *		LoadRegTypeLib	[OLEAUT32.162]
+ *
+ * Loads a registered type library.
+ *
+ * PARAMS
+ *  rguid     [I] GUID of the registered type library.
+ *  wVerMajor [I] major version.
+ *  wVerMinor [I] minor version.
+ *  lcid      [I] locale ID.
+ *  ppTLib    [O] pointer that receives an ITypeLib object on success.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: Any HRESULT code returned from QueryPathOfRegTypeLib or
+ *  LoadTypeLib.
  */
 HRESULT WINAPI LoadRegTypeLib(
-	REFGUID rguid,		/* [in] referenced guid */
-	WORD wVerMajor,		/* [in] major version */
-	WORD wVerMinor,		/* [in] minor version */
-	LCID lcid,		/* [in] locale id */
-	ITypeLib **ppTLib)	/* [out] path of typelib */
+	REFGUID rguid,
+	WORD wVerMajor,
+	WORD wVerMinor,
+	LCID lcid,
+	ITypeLib **ppTLib)
 {
     BSTR bstr=NULL;
     HRESULT res=QueryPathOfRegTypeLib( rguid, wVerMajor, wVerMinor, lcid, &bstr);
@@ -5061,7 +5096,6 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo(
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
     HRESULT result = E_FAIL;
-
 
     if (hRefType == -1 &&
 	(((ITypeInfoImpl*) This)->TypeAttr.typekind   == TKIND_DISPATCH) &&
