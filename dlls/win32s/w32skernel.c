@@ -24,8 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wine/windef16.h"
-#include "thread.h"
+#include "wine/winbase16.h"
 
 /***********************************************************************
  *		_kGetWin32sDirectory@0 (W32SKRNL.14)
@@ -47,7 +46,7 @@ LPSTR WINAPI GetWin32sDirectory(void)
  */
 SEGPTR WINAPI _GetThunkBuff(void)
 {
-	return (SEGPTR)NULL;
+    return 0;
 }
 
 
@@ -56,5 +55,5 @@ SEGPTR WINAPI _GetThunkBuff(void)
  */
 HTASK16 WINAPI GetCurrentTask32(void)
 {
-    return NtCurrentTeb()->htask16;
+    return GetCurrentTask();
 }
