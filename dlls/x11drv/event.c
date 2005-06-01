@@ -276,7 +276,7 @@ DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 {
     HANDLE new_handles[MAXIMUM_WAIT_OBJECTS+1];  /* FIXME! */
     DWORD i, ret;
-    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+    struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
 
     if (!data || data->process_event_count)
         return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,

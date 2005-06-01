@@ -68,7 +68,7 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
     HWND hwnd;
     Atom atom = x11drv_atom(WM_DELETE_WINDOW);
 
-    NtCurrentTeb()->driver_data = driver_data;
+    TlsSetValue( thread_data_tls_index, driver_data );
     display = thread_display();
     hwnd = GetDesktopWindow();
 
@@ -94,15 +94,15 @@ static DWORD CALLBACK desktop_thread( LPVOID driver_data )
  */
 void X11DRV_create_desktop_thread(void)
 {
-    HANDLE handle = CreateThread( NULL, 0, desktop_thread, NtCurrentTeb()->driver_data,
-                                  0, &desktop_tid );
+    HANDLE handle = CreateThread( NULL, 0, desktop_thread,
+                                  TlsGetValue( thread_data_tls_index ), 0, &desktop_tid );
     if (!handle)
     {
         MESSAGE( "Could not create desktop thread\n" );
         ExitProcess(1);
     }
     /* we transferred our driver data to the new thread */
-    NtCurrentTeb()->driver_data = NULL;
+    TlsSetValue( thread_data_tls_index, NULL );
     CloseHandle( handle );
 }
 

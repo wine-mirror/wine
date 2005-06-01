@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "x11drv.h"
 #include "x11font.h"
 #include "ddrawi.h"

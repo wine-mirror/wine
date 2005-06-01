@@ -81,6 +81,7 @@ int client_side_with_render = 1;
 int client_side_antialias_with_core = 1;
 int client_side_antialias_with_render = 1;
 int using_wine_desktop = 0;
+DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
 static BOOL synchronous;  /* run in synchronous mode? */
 static BOOL desktop_dbl_buf = TRUE;
@@ -315,6 +316,8 @@ static BOOL process_attach(void)
 
     setup_options();
 
+    if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
+
     /* Open display */
 
     if (!(display = XOpenDisplay( NULL ))) return FALSE;
@@ -393,7 +396,7 @@ static BOOL process_attach(void)
  */
 static void thread_detach(void)
 {
-    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+    struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
 
     if (data)
     {
@@ -427,6 +430,7 @@ static void process_detach(void)
     X11DRV_GDI_Finalize();
 
     DeleteCriticalSection( &X11DRV_CritSection );
+    TlsFree( thread_data_tls_index );
 }
 
 
@@ -479,7 +483,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     data->grab_window = None;
     data->last_focus = 0;
     data->selection_wnd = 0;
-    NtCurrentTeb()->driver_data = data;
+    TlsSetValue( thread_data_tls_index, data );
     if (desktop_tid) AttachThreadInput( GetCurrentThreadId(), desktop_tid, TRUE );
     return data;
 }

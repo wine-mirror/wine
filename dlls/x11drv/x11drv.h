@@ -63,7 +63,6 @@ typedef int Status;
 #include "wingdi.h"
 #include "winuser.h"
 #include "ddrawi.h"
-#include "thread.h"
 #include "wine/list.h"
 
 #define MAX_PIXELFORMATS 8
@@ -517,10 +516,11 @@ struct x11drv_thread_data
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
+extern DWORD thread_data_tls_index;
 
 inline static struct x11drv_thread_data *x11drv_thread_data(void)
 {
-    struct x11drv_thread_data *data = NtCurrentTeb()->driver_data;
+    struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
     if (!data) data = x11drv_init_thread_data();
     return data;
 }
