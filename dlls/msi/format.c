@@ -31,20 +31,11 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/msifo
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "wine/debug.h"
-#include "fdi.h"
 #include "msi.h"
-#include "msiquery.h"
-#include "msvcrt/fcntl.h"
-#include "objbase.h"
-#include "objidl.h"
 #include "msipriv.h"
 #include "winnls.h"
-#include "winuser.h"
-#include "shlobj.h"
 #include "wine/unicode.h"
-#include "winver.h"
 #include "action.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -55,7 +46,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
                                      BOOL* in_group);
 
 
-LPWSTR build_default_format(MSIRECORD* record)
+static LPWSTR build_default_format(MSIRECORD* record)
 {
     int i;  
     int count;
@@ -328,7 +319,7 @@ static BOOL find_next_outermost_key(LPCWSTR source, DWORD len_remaining,
     return TRUE;
 }
 
-LPWSTR deformat_group(MSIPACKAGE* package, LPWSTR group, DWORD len, 
+static LPWSTR deformat_group(MSIPACKAGE* package, LPWSTR group, DWORD len, 
                       MSIRECORD* record, DWORD* size)
 {
     LPWSTR value;
