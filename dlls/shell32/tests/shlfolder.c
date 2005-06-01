@@ -41,7 +41,7 @@
 IMalloc *ppM;
 
 /* creates a file with the specified name for tests */
-void CreateTestFile(CHAR *name)
+void CreateTestFile(const CHAR *name)
 {
     HANDLE file;
     DWORD written;

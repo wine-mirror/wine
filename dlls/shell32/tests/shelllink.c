@@ -90,7 +90,7 @@ static void test_get_set()
     char mypath[MAX_PATH];
     char buffer[INFOTIPSIZE];
     LPITEMIDLIST pidl, tmp_pidl;
-    char * str;
+    const char * str;
     int i;
     WORD w;
 
@@ -270,13 +270,13 @@ static void test_get_set()
 
 typedef struct
 {
-    char* description;
-    char* workdir;
-    char* path;
+    const char* description;
+    const char* workdir;
+    const char* path;
     LPITEMIDLIST pidl;
-    char* arguments;
+    const char* arguments;
     int   showcmd;
-    char* icon;
+    const char* icon;
     int   icon_id;
     WORD  hotkey;
 } lnk_desc_t;

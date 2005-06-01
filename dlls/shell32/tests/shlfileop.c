@@ -44,7 +44,7 @@ static void InitFunctionPointers(void)
 }
 
 /* creates a file with the specified name for tests */
-void createTestFile(CHAR *name)
+void createTestFile(const CHAR *name)
 {
     HANDLE file;
     DWORD written;
@@ -56,7 +56,7 @@ void createTestFile(CHAR *name)
     CloseHandle(file);
 }
 
-BOOL file_exists(CHAR *name)
+BOOL file_exists(const CHAR *name)
 {
     return GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES;
 }
@@ -95,7 +95,7 @@ void clean_after_shfo_tests(void)
  files - string with file names, separated by null characters. Ends on a double
  null characters
 */
-void set_curr_dir_path(CHAR *buf, CHAR* files)
+void set_curr_dir_path(CHAR *buf, const CHAR* files)
 {
     buf[0] = 0;
     while (files[0])
