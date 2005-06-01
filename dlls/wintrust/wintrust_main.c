@@ -57,7 +57,26 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
-    FIXME("(hwnd %p ActionId %p ActionData %p): stub (nothing will be verified)\n",
-            hwnd, ActionID,  ActionData);
+    FIXME("%p %p %p\n", hwnd, ActionID,  ActionData);
     return ERROR_SUCCESS;
+}
+
+/***********************************************************************
+ *		WintrustAddActionID (WINTRUST.@)
+ */
+BOOL WINAPI WintrustAddActionID( GUID* pgActionID, DWORD fdwFlags,
+                                 CRYPT_REGISTER_ACTIONID* psProvInfo)
+{
+    FIXME("%p %lx %p\n", pgActionID, fdwFlags, psProvInfo);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		WintrustAddActionID (WINTRUST.@)
+ */
+void WINAPI WintrustGetRegPolicyFlags( DWORD* pdwPolicyFlags )
+{
+    FIXME("%p\n", pdwPolicyFlags);
+    *pdwPolicyFlags = 0;
 }
