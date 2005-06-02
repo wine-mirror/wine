@@ -730,8 +730,6 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
          'W','H','E','R','E',' ', '`','A','c','t','i','o','n','`',' ','=', 
          ' ','\'','%','s','\'',0};
     WCHAR message[1024];
-    UINT rc;
-    MSIQUERY * view;
     MSIRECORD * row = 0;
     DWORD size;
     static const WCHAR szActionData[] = 
@@ -739,30 +737,13 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
 
     if (!package->LastAction || strcmpW(package->LastAction,action))
     {
-        rc = MSI_OpenQuery(package->db, &view, Query_t, action);
-        if (rc != ERROR_SUCCESS)
+        row = MSI_QueryGetRecord(package->db, Query_t, action);
+        if (!row)
             return;
-
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return;
-        }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return;
-        }
 
         if (MSI_RecordIsNull(row,3))
         {
             msiobj_release(&row->hdr);
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
             return;
         }
 
@@ -774,8 +755,6 @@ static void ui_actiondata(MSIPACKAGE *package, LPCWSTR action, MSIRECORD * recor
         package->LastAction = strdupW(action);
 
         msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
     }
 
     MSI_RecordSetStringW(record,0,package->ActionFormat);
@@ -807,35 +786,17 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
          ' ','\'','%','s','\'',0};
     WCHAR message[1024];
     WCHAR timet[0x100];
-    UINT rc;
-    MSIQUERY * view;
     MSIRECORD * row = 0;
     WCHAR *ActionText=NULL;
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
-    rc = MSI_OpenQuery(package->db, &view, Query_t, action);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord( package->db, Query_t, action );
+    if (!row)
         return;
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return;
-    }
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return;
-    }
 
     ActionText = load_dynamic_stringW(row,2);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     sprintfW(message,template_s,timet,action,ActionText);
 
@@ -1100,8 +1061,7 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
 
 static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 {
-    MSIQUERY * view;
-    UINT rc;
+    UINT rc = ERROR_SUCCESS;
     WCHAR buffer[0x100];
     DWORD sz = 0x100;
     MSIRECORD * row = 0;
@@ -1118,29 +1078,13 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 	 ' ', '=',' ','%','i',0};
 
     if (UI)
-        rc = MSI_OpenQuery(package->db, &view, UISeqQuery, seq);
+        row = MSI_QueryGetRecord(package->db, UISeqQuery, seq);
     else
-        rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
+        row = MSI_QueryGetRecord(package->db, ExecSeqQuery, seq);
 
-    if (rc == ERROR_SUCCESS)
+    if (row)
     {
-        rc = MSI_ViewExecute(view, 0);
-
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            goto end;
-        }
-       
         TRACE("Running the actions\n"); 
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
 
         /* check conditions */
         if (!MSI_RecordIsNull(row,2))
@@ -1154,7 +1098,6 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
                 if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
                 {
                     HeapFree(GetProcessHeap(),0,cond);
-                    msiobj_release(&row->hdr);
                     goto end;
                 }
                 else
@@ -1175,10 +1118,8 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
             rc = ACTION_PerformUIAction(package,buffer);
         else
             rc = ACTION_PerformAction(package,buffer, FALSE);
-        msiobj_release(&row->hdr);
 end:
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
+        msiobj_release(&row->hdr);
     }
     else
         rc = ERROR_SUCCESS;
@@ -1219,27 +1160,11 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     /* get the sequence number */
     if (UIran)
     {
-        rc = MSI_DatabaseOpenViewW(package->db, IVQuery, &view);
-        if (rc != ERROR_SUCCESS)
-            return rc;
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
+        row = MSI_QueryGetRecord(package->db, IVQuery);
+        if( !row )
+            return ERROR_FUNCTION_FAILED;
         seq = MSI_RecordGetInteger(row,1);
         msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
     }
 
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
@@ -2105,8 +2030,6 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
          'W','H','E','R','E',' ', '`', 'D','i','r','e','c','t', 'o','r','y','`',
          ' ','=',' ','\'','%','s','\'',
          0};
-    UINT rc;
-    MSIQUERY * view;
     LPWSTR ptargetdir, targetdir, parent, srcdir;
     LPWSTR shortname = NULL;
     MSIRECORD * row = 0;
@@ -2139,25 +2062,9 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
 
     package->folders[index].Directory = strdupW(dir);
 
-    rc = MSI_OpenQuery(package->db, &view, Query, dir);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord(package->db, Query, dir);
+    if (!row)
         return -1;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
 
     ptargetdir = targetdir = load_dynamic_stringW(row,3);
 
@@ -2226,8 +2133,6 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     package->folders[index].Property = load_dynamic_property(package, dir,NULL);
 
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
     TRACE(" %s retuning on index %i\n",debugstr_w(dir),index);
     return index;
 }
@@ -3154,8 +3059,7 @@ static BOOL extract_a_cabinet_file(MSIPACKAGE* package, const WCHAR* source,
 static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path, 
                                  MSIFILE* file)
 {
-    UINT rc;
-    MSIQUERY * view;
+    UINT rc = ERROR_SUCCESS;
     MSIRECORD * row = 0;
     static WCHAR source[MAX_PATH];
     static const WCHAR ExecSeqQuery[] =
@@ -3164,7 +3068,6 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
          '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
          ' ','%', 'i',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','L','a','s','t','S','e','q','u','e','n','c','e','`',0};
-    WCHAR Query[1024];
     WCHAR cab[0x100];
     DWORD sz=0x100;
     INT seq;
@@ -3183,27 +3086,10 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
         return ERROR_SUCCESS;
     }
 
-    sprintfW(Query,ExecSeqQuery,file->Sequence);
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, file->Sequence);
+    if (!row)
+        return ERROR_FUNCTION_FAILED;
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
     seq = MSI_RecordGetInteger(row,2);
     last_sequence = seq;
 
@@ -3247,8 +3133,6 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
         strcpyW(path,source);
     }
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
     return rc;
 }
 
@@ -4043,9 +3927,8 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
     }
     if (cmp->Attributes & msidbComponentAttributesRegistryKeyPath)
     {
-        MSIQUERY * view;
         MSIRECORD * row = 0;
-        UINT rc,root,len;
+        UINT root,len;
         LPWSTR key,deformated,buffer,name,deformated_name;
         static const WCHAR ExecSeqQuery[] =
             {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -4056,26 +3939,9 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         static const WCHAR fmt2[]=
             {'%','0','2','i',':','\\','%','s','\\','%','s',0};
 
-        rc = MSI_OpenQuery(package->db,&view,ExecSeqQuery,cmp->KeyPath);
-
-        if (rc!=ERROR_SUCCESS)
+        row = MSI_QueryGetRecord(package->db, ExecSeqQuery,cmp->KeyPath);
+        if (!row)
             return NULL;
-
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return NULL;
-        }
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return NULL;
-        }
 
         root = MSI_RecordGetInteger(row,2);
         key = load_dynamic_stringW(row, 3);
@@ -4099,8 +3965,6 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         HeapFree(GetProcessHeap(),0,name);
         HeapFree(GetProcessHeap(),0,deformated_name);
         msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
 
         return buffer;
     }
@@ -4596,7 +4460,6 @@ static INT load_appid(MSIPACKAGE* package, MSIRECORD *row)
 static INT load_given_appid(MSIPACKAGE *package, LPCWSTR appid)
 {
     INT rc;
-    MSIQUERY *view;
     MSIRECORD *row;
     INT i;
     static const WCHAR ExecSeqQuery[] =
@@ -4615,30 +4478,12 @@ static INT load_given_appid(MSIPACKAGE *package, LPCWSTR appid)
             return i;
         }
     
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, appid);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, appid);
+    if (!row)
         return -1;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
 
     rc = load_appid(package, row);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     return rc;
 }
@@ -4725,7 +4570,6 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
 static INT load_given_progid(MSIPACKAGE *package, LPCWSTR progid)
 {
     INT rc;
-    MSIQUERY *view;
     MSIRECORD *row;
     INT i;
     static const WCHAR ExecSeqQuery[] =
@@ -4744,30 +4588,12 @@ static INT load_given_progid(MSIPACKAGE *package, LPCWSTR progid)
             return i;
         }
     
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, progid);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, progid);
+    if(!row)
         return -1;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
 
     rc = load_progid(package, row);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     return rc;
 }
@@ -4893,7 +4719,6 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
 static INT load_given_class(MSIPACKAGE *package, LPCWSTR classid)
 {
     INT rc;
-    MSIQUERY *view;
     MSIRECORD *row;
     INT i;
     static const WCHAR ExecSeqQuery[] =
@@ -4913,30 +4738,12 @@ static INT load_given_class(MSIPACKAGE *package, LPCWSTR classid)
             return i;
         }
     
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, classid);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, classid);
+    if (!row)
         return -1;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
 
     rc = load_class(package, row);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     return rc;
 }
@@ -4980,7 +4787,6 @@ static INT load_mime(MSIPACKAGE* package, MSIRECORD *row)
 static INT load_given_mime(MSIPACKAGE *package, LPCWSTR mime)
 {
     INT rc;
-    MSIQUERY *view;
     MSIRECORD *row;
     INT i;
     static const WCHAR ExecSeqQuery[] =
@@ -5000,30 +4806,12 @@ static INT load_given_mime(MSIPACKAGE *package, LPCWSTR mime)
             return i;
         }
     
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, mime);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, mime);
+    if (!row)
         return -1;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
 
     rc = load_mime(package, row);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     return rc;
 }
@@ -5079,7 +4867,6 @@ static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
 static INT load_given_extension(MSIPACKAGE *package, LPCWSTR extension)
 {
     INT rc;
-    MSIQUERY *view;
     MSIRECORD *row;
     INT i;
     static const WCHAR ExecSeqQuery[] =
@@ -5101,30 +4888,12 @@ static INT load_given_extension(MSIPACKAGE *package, LPCWSTR extension)
             return i;
         }
     
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, extension);
-    if (rc != ERROR_SUCCESS)
+    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, extension);
+    if (!row)
         return -1;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return -1;
-    }
 
     rc = load_extension(package, row);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
 
     return rc;
 }

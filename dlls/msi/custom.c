@@ -77,7 +77,6 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
 UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
 {
     UINT rc = ERROR_SUCCESS;
-    MSIQUERY * view;
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
     {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -89,25 +88,9 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     LPWSTR target;
     WCHAR *deformated=NULL;
 
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, action);
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    rc = MSI_ViewFetch(view,&row);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
+    row = MSI_QueryGetRecord( package->db, ExecSeqQuery, action );
+    if (!row)
         return ERROR_CALL_NOT_IMPLEMENTED;
-    }
 
     type = MSI_RecordGetInteger(row,2);
 
@@ -127,8 +110,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
             HeapFree(GetProcessHeap(),0,source);
             HeapFree(GetProcessHeap(),0,target);
             msiobj_release(&row->hdr);
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
             return ERROR_SUCCESS;
         }
         if (!execute)
@@ -147,8 +128,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
             HeapFree(GetProcessHeap(),0,source);
             HeapFree(GetProcessHeap(),0,target);
             msiobj_release(&row->hdr);
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
             return ERROR_SUCCESS;
         }
         else
@@ -202,8 +181,6 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
     HeapFree(GetProcessHeap(),0,source);
     HeapFree(GetProcessHeap(),0,target);
     msiobj_release(&row->hdr);
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
     return rc;
 }
 
@@ -228,7 +205,6 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
     {
         /* write out the file */
         UINT rc;
-        MSIQUERY * view;
         MSIRECORD * row = 0;
         static const WCHAR fmt[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -246,25 +222,9 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         if (the_file == INVALID_HANDLE_VALUE)
             return ERROR_FUNCTION_FAILED;
 
-        rc = MSI_OpenQuery(package->db, &view, fmt, source);
-        if (rc != ERROR_SUCCESS)
-            return rc;
-
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
+        row = MSI_QueryGetRecord(package->db, fmt, source);
+        if (!row)
+            return ERROR_FUNCTION_FAILED;
 
         do 
         {
@@ -284,8 +244,6 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         CloseHandle(the_file);
 
         msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
     }
 
     return ERROR_SUCCESS;
@@ -615,37 +573,23 @@ static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
       'W','H','E','R','E',' ','`','E','r','r','o','r','`',' ','=',' ',
       '\'','%','s','\'',0
     };
-    MSIQUERY *view = NULL;
     MSIRECORD *row = 0;
-    UINT r;
     LPWSTR deformated = NULL;
 
     deformat_string( package, target, &deformated );
 
     /* first try treat the error as a number */
-    r = MSI_OpenQuery( package->db, &view, query, deformated );
-    if( r == ERROR_SUCCESS )
+    row = MSI_QueryGetRecord( package->db, query, deformated );
+    if( row )
     {
-        r = MSI_ViewExecute( view, 0 );
-        if( r == ERROR_SUCCESS )
-        {
-            r = MSI_ViewFetch( view, &row );
-            if( r == ERROR_SUCCESS )
-            {
-                LPCWSTR error = MSI_RecordGetString( row, 1 );
-                MessageBoxW( NULL, error, NULL, MB_OK );
-                msiobj_release( &row->hdr );
-            }
-        }
-        MSI_ViewClose( view );
-        msiobj_release( &view->hdr );
+        LPCWSTR error = MSI_RecordGetString( row, 1 );
+        MessageBoxW( NULL, error, NULL, MB_OK );
+        msiobj_release( &row->hdr );
     }
-
-    if (r != ERROR_SUCCESS )
-    {
+    else
         MessageBoxW( NULL, deformated, NULL, MB_OK );
-        HeapFree( GetProcessHeap(), 0, deformated );
-    }
+
+    HeapFree( GetProcessHeap(), 0, deformated );
 
     return ERROR_FUNCTION_FAILED;
 }
