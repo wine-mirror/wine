@@ -7789,6 +7789,11 @@ UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE* package, LPCWSTR szFeature,
     if (index < 0)
         return ERROR_UNKNOWN_FEATURE;
 
+    if (iState == INSTALLSTATE_ADVERTISED && 
+        package->features[index].Attributes & 
+            msidbFeatureAttributesDisallowAdvertise)
+        return ERROR_FUNCTION_FAILED;
+
     package->features[index].ActionRequest= iState;
     package->features[index].Action= iState;
 
