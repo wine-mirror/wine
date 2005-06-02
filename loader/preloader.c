@@ -860,8 +860,8 @@ static int is_in_preload_range( const ElfW(auxv_t) *av, int type )
     {
         for (i = 0; preload_info[i].size; i++)
         {
-            if ((char *)av->a_un.a_ptr >= (char *)preload_info[i].addr &&
-                (char *)av->a_un.a_ptr < (char *)preload_info[i].addr + preload_info[i].size)
+            if ((char *)av->a_un.a_val >= (char *)preload_info[i].addr &&
+                (char *)av->a_un.a_val < (char *)preload_info[i].addr + preload_info[i].size)
                 return 1;
         }
     }
