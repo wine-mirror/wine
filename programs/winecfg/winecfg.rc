@@ -27,7 +27,7 @@
 #include "winresrc.h"
 #include "resource.h"
 
-/* #include "De.rc" */
+#include "De.rc"
 /* #include "Fr.rc" */
 #include "En.rc"
 /* #include "Cs.rc" */
