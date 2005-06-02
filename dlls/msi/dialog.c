@@ -341,20 +341,12 @@ static LPWSTR msi_get_checkbox_value( msi_dialog *dialog, LPCWSTR prop )
         '`','P','r','o','p','e','r','t','y','`',' ','=',' ',
         '\'','%','s','\'',0
     };
-    MSIQUERY *view = NULL;
     MSIRECORD *rec = NULL;
     LPCWSTR val = NULL;
     LPWSTR ret = NULL;
-    UINT r;
 
     /* find if there is a value associated with the checkbox */
-    r = MSI_OpenQuery( dialog->package->db, &view, query, prop);
-    if( r != ERROR_SUCCESS )
-        return ret;
-    MSI_ViewExecute( view, NULL );
-    MSI_ViewFetch( view, &rec );
-    MSI_ViewClose( view );
-    msiobj_release( &view->hdr );
+    rec = MSI_QueryGetRecord( dialog->package->db, query, prop );
     if (!rec)
         return ret;
 
@@ -802,22 +794,13 @@ static MSIRECORD *msi_get_dialog_record( msi_dialog *dialog )
         'W','H','E','R','E',' ',
            '`','D','i','a','l','o','g','`',' ','=',' ','\'','%','s','\'',0};
     MSIPACKAGE *package = dialog->package;
-    MSIQUERY *view = NULL;
     MSIRECORD *rec = NULL;
-    UINT r;
 
     TRACE("%p %s\n", dialog, debugstr_w(dialog->name) );
 
-    r = MSI_OpenQuery( package->db, &view, query, dialog->name );
-    if( r != ERROR_SUCCESS )
-    {
+    rec = MSI_QueryGetRecord( package->db, query, dialog->name );
+    if( !rec )
         ERR("query failed for dialog %s\n", debugstr_w(dialog->name));
-        return NULL;
-    }
-    MSI_ViewExecute( view, NULL );
-    MSI_ViewFetch( view, &rec );
-    MSI_ViewClose( view );
-    msiobj_release( &view->hdr );
 
     return rec;
 }

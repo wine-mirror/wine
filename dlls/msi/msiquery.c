@@ -139,7 +139,8 @@ UINT MSI_DatabaseOpenViewW(MSIDATABASE *db,
     return r;
 }
 
-UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
+static UINT MSI_OpenQueryV( MSIDATABASE *db, MSIQUERY **view,
+                             LPCWSTR fmt, va_list args )
 {
     LPWSTR szQuery;
     LPCWSTR p;
@@ -147,7 +148,7 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
     va_list va;
 
     /* figure out how much space we need to allocate */
-    va_start(va, fmt);
+    va = args;
     sz = lstrlenW(fmt) + 1;
     p = fmt;
     while (*p)
@@ -173,18 +174,28 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
         }
         p++;
     }
-    va_end(va);
 
     /* construct the string */
     szQuery = HeapAlloc(GetProcessHeap(), 0, sz*sizeof(WCHAR));
-    va_start(va, fmt);
+    va = args;
     vsnprintfW(szQuery, sz, fmt, va);
-    va_end(va);
 
     /* perform the query */
     rc = MSI_DatabaseOpenViewW(db, szQuery, view);
     HeapFree(GetProcessHeap(), 0, szQuery);
     return rc;
+}
+
+UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
+{
+    UINT r;
+    va_list va;
+
+    va_start(va, fmt);
+    r = MSI_OpenQueryV( db, view, fmt, va );
+    va_end(va);
+
+    return r;
 }
 
 UINT MSI_IterateRecords( MSIQUERY *view, DWORD *count,
@@ -221,6 +232,28 @@ UINT MSI_IterateRecords( MSIQUERY *view, DWORD *count,
         r = ERROR_SUCCESS;
 
     return r;
+}
+
+/* return a single record from a query */
+MSIRECORD *MSI_QueryGetRecord( MSIDATABASE *db, LPCWSTR fmt, ... )
+{
+    MSIRECORD *rec = NULL;
+    MSIQUERY *view = NULL;
+    UINT r;
+    va_list va;
+
+    va_start(va, fmt);
+    r = MSI_OpenQueryV( db, &view, fmt, va );
+    va_end(va);
+
+    if( r == ERROR_SUCCESS )
+    {
+        MSI_ViewExecute( view, NULL );
+        MSI_ViewFetch( view, &rec );
+        MSI_ViewClose( view );
+        msiobj_release( &view->hdr );
+    }
+    return rec;
 }
 
 UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE hdb,
