@@ -22,6 +22,7 @@
 #include "winbase.h"
 #include "wincrypt.h"
 #include "winreg.h"
+#include "snmp.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
@@ -77,15 +78,18 @@ BOOL WINAPI CryptRegisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
     if (!GET_CERT_ENCODING_TYPE(dwEncodingType))
         return TRUE;
 
+    /* Native does nothing pwszDll is NULL */
+    if (!pwszDll)
+        return TRUE;
+
     /* I'm not matching MS bug for bug here, because I doubt any app depends on
      * it:
-     * - native does nothing if pwszDll is NULL
      * - native "succeeds" if pszFuncName is NULL, but the nonsensical entry
      *   it creates would never be used
      * - native returns an HRESULT rather than a Win32 error if pszOID is NULL.
-     * Instead I disallow all of these with ERROR_INVALID_PARAMETER.
+     * Instead I disallow both of these with ERROR_INVALID_PARAMETER.
      */
-    if (!pszFuncName || !pszOID || !pwszDll)
+    if (!pszFuncName || !pszOID)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -309,6 +313,89 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
+static BOOL CRYPT_EncodeInt(DWORD dwCertEncodingType, const void *pvStructInfo,
+ DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
+ DWORD *pcbEncoded)
+{
+    INT val, i;
+    BYTE significantBytes, padByte = 0, bytesNeeded;
+    BOOL neg = FALSE, pad = FALSE;
+
+    if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING &&
+     (dwCertEncodingType & CMSG_ENCODING_TYPE_MASK) != PKCS_7_ASN_ENCODING)
+    {
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        return FALSE;
+    }
+    if (!pvStructInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    memcpy(&val, pvStructInfo, sizeof(val));
+    /* Count the number of significant bytes.  Temporarily swap sign for
+     * negatives so I count the minimum number of bytes.
+     */
+    if (val < 0)
+    {
+        neg = TRUE;
+        val = -val;
+    }
+    for (significantBytes = sizeof(val); !(val & 0xff000000);
+     val <<= 8, significantBytes--)
+        ;
+    if (neg)
+    {
+        val = -val;
+        if ((val & 0xff000000) < 0x80000000)
+        {
+            padByte = 0xff;
+            pad = TRUE;
+        }
+    }
+    else if ((val & 0xff000000) > 0x7f000000)
+    {
+        padByte = 0;
+        pad = TRUE;
+    }
+    bytesNeeded = 2 + significantBytes;
+    if (pad)
+        bytesNeeded++;
+    if (!pbEncoded || bytesNeeded > *pcbEncoded)
+    {
+        *pcbEncoded = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+    if (!pbEncoded)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
+    {
+        if (pEncodePara && pEncodePara->pfnAlloc)
+            *(BYTE **)pbEncoded = pEncodePara->pfnAlloc(bytesNeeded);
+        else
+            *(BYTE **)pbEncoded = LocalAlloc(0, bytesNeeded);
+        if (!*(BYTE **)pbEncoded)
+            return FALSE;
+        pbEncoded = *(BYTE **)pbEncoded;
+    }
+    *pbEncoded++ = ASN_INTEGER;
+    if (pad)
+    {
+        *pbEncoded++ = significantBytes + 1;
+        *pbEncoded++ = padByte;
+    }
+    else
+        *pbEncoded++ = significantBytes;
+    for (i = 0; i < significantBytes; i++, val <<= 8)
+        *(pbEncoded + i) = (BYTE)((val & 0xff000000) >> 24);
+    return TRUE;
+}
+
 typedef BOOL (WINAPI *CryptEncodeObjectExFunc)(DWORD, LPCSTR, const void *,
  DWORD, PCRYPT_ENCODE_PARA, BYTE *, DWORD *);
 
@@ -318,7 +405,7 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 {
     BOOL ret = FALSE, encoded = FALSE;
 
-    FIXME("(0x%08lx, %s, %p, 0x%08lx, %p, %p, %p): stub\n",
+    TRACE("(0x%08lx, %s, %p, 0x%08lx, %p, %p, %p): semi-stub\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
      "(integer value)", pvStructInfo, dwFlags, pEncodePara, pbEncoded,
      pcbEncoded);
@@ -333,6 +420,10 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     {
         switch (LOWORD(lpszStructType))
         {
+        case (WORD)X509_INTEGER:
+            ret = CRYPT_EncodeInt(dwCertEncodingType, pvStructInfo, dwFlags,
+             pEncodePara, pbEncoded, pcbEncoded);
+            break;
         default:
             FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
         }

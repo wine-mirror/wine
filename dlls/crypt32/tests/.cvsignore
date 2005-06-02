@@ -1,3 +1,4 @@
 Makefile
+encode.ok
 protectdata.ok
 testlist.c
