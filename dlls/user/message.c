@@ -1727,8 +1727,11 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
                (abs(msg->pt.y - clk_msg.pt.y) < GetSystemMetrics(SM_CYDOUBLECLK)/2))
            {
                message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
-               clk_msg.message = 0;  /* clear the double click conditions */
-               update = FALSE;
+               if (update)
+               {
+                   clk_msg.message = 0;  /* clear the double click conditions */
+                   update = FALSE;
+               }
            }
         }
         if (message < first || message > last) return FALSE;
