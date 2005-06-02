@@ -33,6 +33,31 @@
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
 #define COUNTOF(x) (sizeof(x) / sizeof(x[0]))
 
+static const WCHAR wszFileName1[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','1','.','d','o','c',0};
+static const WCHAR wszFileName2[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','2','.','d','o','c',0};
+
+static int count_moniker_matches(IBindCtx * pbc, IEnumMoniker * spEM)
+{
+    IMoniker * spMoniker;
+    int monCnt=0, matchCnt=0;
+
+    while ((IEnumMoniker_Next(spEM, 1, &spMoniker, NULL)==S_OK))
+    {
+        HRESULT hr;
+        WCHAR * szDisplayn;
+        monCnt++;
+        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL, &szDisplayn);
+        if (SUCCEEDED(hr))
+        {
+            if (!lstrcmpW(szDisplayn, wszFileName1) || !lstrcmpW(szDisplayn, wszFileName2))
+                matchCnt++;
+            CoTaskMemFree(szDisplayn);
+        }
+    }
+    trace("Total number of monikers is %i\n", monCnt);
+    return matchCnt;
+}
+
 static void test_MkParseDisplayName()
 {
     IBindCtx * pbc = NULL;
@@ -40,10 +65,8 @@ static void test_MkParseDisplayName()
     IMoniker * pmk  = NULL;
     IMoniker * pmk1 = NULL;
     IMoniker * pmk2 = NULL;
-    IMoniker * ppmk = NULL;
-    IMoniker * spMoniker;
     ULONG eaten;
-    int	       monCnt;
+    int matchCnt;
     IUnknown * object = NULL;
 
     IUnknown *lpEM1;
@@ -60,9 +83,6 @@ static void test_MkParseDisplayName()
     /* CLSID of My Computer */
     static const WCHAR wszDisplayName[] = {'c','l','s','i','d',':',
         '2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D',':',0};
-    static const WCHAR wszFileName1[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','1','.','d','o','c',0};
-    static const WCHAR wszFileName2[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','2','.','d','o','c',0};
-    WCHAR * szDisplayn;
 
     hr = CreateBindCtx(0, &pbc);
     ok_ole_success(hr, CreateBindCtx);
@@ -97,27 +117,16 @@ static void test_MkParseDisplayName()
     /* Register a couple of Monikers and check is ok */
     ok(hr==0, "IEnumMoniker_QueryInterface hr %08lx %p\n", hr, lpEM1);
     hr = MK_E_NOOBJECT;
-    monCnt = 0;
-    while ((IEnumMoniker_Next(spEM1, 1, &spMoniker, NULL)==S_OK) &&
-           (ppmk ==NULL))
-    {
-        monCnt++;
-        szDisplayn=NULL;
-        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL,
-                                   (LPOLESTR*) &szDisplayn);
-                                          /* szDisplayn needs to be freed by
-                                           * IMalloc_Free hence the use of
-                                           * CoGetMalloc                      */
-        if (SUCCEEDED(hr))
-        {
-            CoTaskMemFree(szDisplayn);
-        }
-    }
-    ok(monCnt==0, "Number of monikers should be equal to 0 not %i\n", monCnt);      grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
+    
+    matchCnt = count_moniker_matches(pbc, spEM1);
+    trace("Number of matches is %i\n", matchCnt);
+
+    grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk1, &pdwReg1);
     ok(hr==0, "IRunningObjectTable_Register hr=%08lx %p %08lx %p %p %ld\n",
         hr, pprot, grflags, lpEM1, pmk1, pdwReg1);
 
+    trace("IROT::Register\n");
     grflags=0;
     grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk2, &pdwReg2);
@@ -127,42 +136,20 @@ static void test_MkParseDisplayName()
     hr = IRunningObjectTable_EnumRunning(pprot, &spEM2);
     ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08lx\n", hr);
 
-    monCnt=0;
-    while ((IEnumMoniker_Next(spEM2, 1, &spMoniker, NULL)==S_OK) &&
-           (ppmk ==NULL))
-    {
-        WCHAR *szDisplayn=NULL;
-        monCnt++;
-        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL,
-                                   (LPOLESTR*) &szDisplayn);
-                                          /* szDisplayn needs to be freed by
-                                           * IMalloc_Free hence the use of
-                                           * CoGetMalloc                      */
-        if (SUCCEEDED(hr))
-        {
-            CoTaskMemFree(szDisplayn);
-        }
-    }
-    ok(monCnt==2, "Number of monikers should be equal to 2 not %i\n", monCnt);
+    matchCnt = count_moniker_matches(pbc, spEM2);
+    ok(matchCnt==2, "Number of matches should be equal to 2 not %i\n", matchCnt);
 
+    trace("IEnumMoniker::Clone\n");
     IEnumMoniker_Clone(spEM2, &spEM3);
-    monCnt=0;
-    while ((IEnumMoniker_Next(spEM3, 1, &spMoniker, NULL)==S_OK) &&
-           (ppmk ==NULL))
-    {
-        WCHAR *szDisplayn=NULL;
-        monCnt++;
-        hr=IMoniker_GetDisplayName(spMoniker, pbc, NULL,
-                                   (LPOLESTR*) &szDisplayn);
-                                          /* szDisplayn needs to be freed by
-                                           * IMalloc_Free hence the use of
-                                           * CoGetMalloc                      */
-        if (SUCCEEDED(hr))
-        {
-            CoTaskMemFree(szDisplayn);
-        }
-    }
-    ok(monCnt==2, "Number of monikers should be equal to 2 not %i\n", monCnt);
+
+    matchCnt = count_moniker_matches(pbc, spEM3);
+    ok(matchCnt==0, "Number of matches should be equal to 0 not %i\n", matchCnt);
+    trace("IEnumMoniker::Reset\n");
+    IEnumMoniker_Reset(spEM3);
+
+    matchCnt = count_moniker_matches(pbc, spEM3);
+    ok(matchCnt==2, "Number of matches should be equal to 2 not %i\n", matchCnt);
+
     IRunningObjectTable_Revoke(pprot,pdwReg1);
     IRunningObjectTable_Revoke(pprot,pdwReg2);
     IEnumMoniker_Release(spEM1);
@@ -174,7 +161,6 @@ static void test_MkParseDisplayName()
     IRunningObjectTable_Release(pprot);
 
     IBindCtx_Release(pbc);
-    /* Finished testing EnumMoniker */
 }
 
 static const BYTE expected_moniker_data[] =
