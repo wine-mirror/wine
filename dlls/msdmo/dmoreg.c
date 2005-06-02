@@ -26,10 +26,10 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "objbase.h"
-#include "dmo.h"
-
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "initguid.h"
+#include "dmo.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msdmo);
 
@@ -90,9 +90,6 @@ typedef struct
     DMO_PARTIAL_MEDIATYPE       *pOutTypes;
     HKEY                        hkey;
 } IEnumDMOImpl;
-
-static const GUID IID_IEnumDMO = { 0x2c3cd98a, 0x2bfa, 0x4a53,
-    { 0x9c, 0x27, 0x52, 0x49, 0xba, 0x64, 0xba, 0x0f}};
 
 static const IEnumDMOVtbl edmovt;
 
