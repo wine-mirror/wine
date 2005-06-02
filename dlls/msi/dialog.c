@@ -425,20 +425,11 @@ static UINT msi_load_bitmap( MSIDATABASE *db, LPCWSTR name, IPicture **pic )
         'w','h','e','r','e',' ',
             '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0
     };
-    MSIQUERY *view = NULL;
     MSIRECORD *rec = NULL;
     IStream *stm = NULL;
     UINT r;
 
-    r = MSI_OpenQuery( db, &view, query, name );
-    if( r != ERROR_SUCCESS )
-        return r;
-
-    MSI_ViewExecute( view, NULL );
-    MSI_ViewFetch( view, &rec );
-    MSI_ViewClose( view );
-    msiobj_release( &view->hdr );
-
+    rec = MSI_QueryGetRecord( db, query, name );
     if( !rec )
         return ERROR_FUNCTION_FAILED;
 
