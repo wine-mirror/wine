@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
+#define COUNTOF(x) (sizeof(x) / sizeof(x[0]))
 
 static void test_MkParseDisplayName()
 {
@@ -256,12 +257,76 @@ static void test_class_moniker()
     if (moniker) IMoniker_Release(moniker);
 }
 
+static void test_file_moniker(WCHAR* path)
+{
+    IStream *stream;
+    IMoniker *moniker1 = NULL, *moniker2 = NULL;
+    HRESULT hr;
+
+    hr = CreateFileMoniker(path, &moniker1);
+    ok_ole_success(hr, CreateFileMoniker); 
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+
+    /* Marshal */
+    hr = CoMarshalInterface(stream, &IID_IMoniker, (IUnknown *)moniker1, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+    
+    /* Rewind */
+    hr = IStream_Seek(stream, llZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+
+    /* Unmarshal */
+    hr = CoUnmarshalInterface(stream, &IID_IMoniker, (void**)&moniker2);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    hr = IMoniker_IsEqual(moniker1, moniker2);
+    ok_ole_success(hr, IsEqual);
+
+    IStream_Release(stream);
+    if (moniker1) 
+        IMoniker_Release(moniker1);
+    if (moniker2) 
+        IMoniker_Release(moniker2);
+}
+
+static void test_file_monikers(void)
+{
+    static WCHAR wszFile[][30] = {
+        {'\\', 'w','i','n','d','o','w','s','\\','s','y','s','t','e','m','\\','t','e','s','t','1','.','d','o','c',0},
+        {'\\', 'a','b','c','d','e','f','g','\\','h','i','j','k','l','\\','m','n','o','p','q','r','s','t','u','.','m','n','o',0},
+        /* These map to themselves in Windows-1252 & 932 (Shift-JIS) */
+        {0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7, 0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf, 0xd0, 0},
+        /* U+2020 = DAGGER     = 0x86 (1252) = 0x813f (932)
+         * U+20AC = EURO SIGN  = 0x80 (1252) =  undef (932)
+         * U+0100 .. = Latin extended-A
+         */ 
+        {0x20ac, 0x2020, 0x100, 0x101, 0x102, 0x103, 0x104, 0x105, 0x106, 0x107, 0x108, 0x109, 0x10a, 0x10b, 0x10c,  0},
+        };
+
+    int i; 
+
+    trace("ACP is %u\n", GetACP());
+
+    for (i = 0; i < COUNTOF(wszFile); ++i)
+    {
+        int j ;
+        for (j = lstrlenW(wszFile[i]); j > 0; --j)
+        {
+            wszFile[i][j] = 0;
+            test_file_moniker(wszFile[i]);
+        }
+    }
+}
+
 START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     test_MkParseDisplayName();
     test_class_moniker();
+    test_file_monikers();
+
     /* FIXME: test moniker creation funcs and parsing other moniker formats */
 
     CoUninitialize();
