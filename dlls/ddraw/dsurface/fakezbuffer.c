@@ -44,8 +44,6 @@
 #include "ddcomimpl.h"
 #include "ddraw_private.h"
 #include "d3d_private.h"
-#include "dsurface/main.h"
-#include "dsurface/fakezbuffer.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

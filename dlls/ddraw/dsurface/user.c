@@ -28,10 +28,6 @@
 #include "winerror.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
-#include "dsurface/main.h"
-#include "dsurface/dib.h"
-#include "dsurface/user.h"
-#include "dsurface/wndproc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

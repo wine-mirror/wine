@@ -33,8 +33,6 @@
 #include "winerror.h"
 
 #include "ddraw_private.h"
-#include "dclipper/main.h"
-#include "ddraw/main.h"
 
 #include "wine/debug.h"
 

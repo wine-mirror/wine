@@ -68,12 +68,6 @@
 
 #include "ddraw_private.h"
 #include "mesa_private.h" /* To have the D3D creation function */
-#include "ddraw/main.h"
-#include "dclipper/main.h"
-#include "dpalette/main.h"
-#include "dsurface/main.h"
-#include "dsurface/dib.h"
-#include "dsurface/fakezbuffer.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

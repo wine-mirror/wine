@@ -33,9 +33,6 @@
 #include "mesa_private.h"
 #include "wine/debug.h"
 #include "ddraw_private.h"
-#include "dsurface/main.h"
-#include "ddraw/main.h"
-#include "dsurface/thunks.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_flip);

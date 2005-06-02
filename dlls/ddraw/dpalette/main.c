@@ -28,8 +28,6 @@
 #define CONST_VTABLE
 
 #include "ddraw_private.h"
-#include "dpalette/main.h"
-#include "ddraw/main.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

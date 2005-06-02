@@ -26,7 +26,6 @@
 #include "winerror.h"
 
 #include "ddraw_private.h"
-#include "dsurface/wndproc.h"
 
 #include "wine/debug.h"
 

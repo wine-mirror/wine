@@ -27,8 +27,7 @@
 #include "ddraw.h"
 #include "winerror.h"
 
-#include "dsurface/main.h"
-#include "dsurface/thunks.h"
+#include "ddraw_private.h"
 #include "ddcomimpl.h"
 
 #define CONVERT(pdds) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl,	\

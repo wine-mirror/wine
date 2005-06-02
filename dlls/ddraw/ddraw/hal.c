@@ -34,16 +34,6 @@
 #include "d3dhal.h"
 
 #include "ddraw_private.h"
-#include "ddraw/main.h"
-#include "ddraw/user.h"
-#include "ddraw/hal.h"
-#include "dclipper/main.h"
-#include "dpalette/main.h"
-#include "dpalette/hal.h"
-#include "dsurface/main.h"
-#include "dsurface/dib.h"
-#include "dsurface/user.h"
-#include "dsurface/hal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

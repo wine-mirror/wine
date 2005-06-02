@@ -29,12 +29,6 @@
 
 #include "wine/debug.h"
 #include "ddraw_private.h"
-#include "ddraw/user.h"
-#include "ddraw/hal.h"
-#include "dsurface/main.h"
-#include "dsurface/dib.h"
-#include "dsurface/user.h"
-#include "dsurface/hal.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

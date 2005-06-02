@@ -440,4 +440,698 @@ typedef struct
 extern void DDRAW_dump_flags_(DWORD flags, const flag_info* names, size_t num_names, int newline);
 extern void DDRAW_dump_members(DWORD flags, const void* data, const member_info* mems, size_t num_mems);
 
+void DirectDrawSurface_RegisterClass(void);
+void DirectDrawSurface_UnregisterClass(void);
+
+extern const IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable;
+
+/*****************************************************************************
+ * IDirectDrawClipper declarations
+ */
+HRESULT WINAPI DirectDrawCreateClipper(DWORD dwFlags,
+				       LPDIRECTDRAWCLIPPER* ppClipper,
+				       LPUNKNOWN pUnkOuter);
+HRESULT DDRAW_CreateClipper(IUnknown* pUnkOuter, REFIID riid, LPVOID* ppObj);
+void Main_DirectDrawClipper_ForceDestroy(IDirectDrawClipperImpl* This);
+
+HRESULT WINAPI
+Main_DirectDrawClipper_SetHwnd(LPDIRECTDRAWCLIPPER iface, DWORD dwFlags,
+			       HWND hWnd);
+ULONG WINAPI Main_DirectDrawClipper_Release(LPDIRECTDRAWCLIPPER iface);
+HRESULT WINAPI
+Main_DirectDrawClipper_GetClipList(LPDIRECTDRAWCLIPPER iface, LPRECT lpRect,
+				   LPRGNDATA lpClipList, LPDWORD lpdwSize);
+HRESULT WINAPI
+Main_DirectDrawClipper_SetClipList(LPDIRECTDRAWCLIPPER iface,LPRGNDATA lprgn,
+				   DWORD dwFlag);
+HRESULT WINAPI
+Main_DirectDrawClipper_QueryInterface(LPDIRECTDRAWCLIPPER iface, REFIID riid,
+				      LPVOID* ppvObj);
+ULONG WINAPI Main_DirectDrawClipper_AddRef( LPDIRECTDRAWCLIPPER iface );
+HRESULT WINAPI
+Main_DirectDrawClipper_GetHWnd(LPDIRECTDRAWCLIPPER iface, HWND* hWndPtr);
+HRESULT WINAPI
+Main_DirectDrawClipper_Initialize(LPDIRECTDRAWCLIPPER iface, LPDIRECTDRAW lpDD,
+				  DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawClipper_IsClipListChanged(LPDIRECTDRAWCLIPPER iface,
+					 BOOL* lpbChanged);
+
+/*****************************************************************************
+ * IDirectDrawPalette MAIN declarations
+ */
+HRESULT Main_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
+					 IDirectDrawImpl* pDD, DWORD dwFlags);
+void Main_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This);
+
+HRESULT Main_DirectDrawPalette_Create(IDirectDrawImpl* pDD, DWORD dwFlags,
+				      LPDIRECTDRAWPALETTE* ppPalette,
+				      LPUNKNOWN pUnkOuter);
+void Main_DirectDrawPalette_ForceDestroy(IDirectDrawPaletteImpl* This);
+
+DWORD Main_DirectDrawPalette_Size(DWORD dwFlags);
+
+HRESULT WINAPI
+Main_DirectDrawPalette_GetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
+				  DWORD dwStart, DWORD dwCount,
+				  LPPALETTEENTRY palent);
+HRESULT WINAPI
+Main_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
+				  DWORD dwStart, DWORD dwCount,
+				  LPPALETTEENTRY palent);
+ULONG WINAPI
+Main_DirectDrawPalette_Release(LPDIRECTDRAWPALETTE iface);
+ULONG WINAPI Main_DirectDrawPalette_AddRef(LPDIRECTDRAWPALETTE iface);
+HRESULT WINAPI
+Main_DirectDrawPalette_Initialize(LPDIRECTDRAWPALETTE iface,
+				  LPDIRECTDRAW ddraw, DWORD dwFlags,
+				  LPPALETTEENTRY palent);
+HRESULT WINAPI
+Main_DirectDrawPalette_GetCaps(LPDIRECTDRAWPALETTE iface, LPDWORD lpdwCaps);
+HRESULT WINAPI
+Main_DirectDrawPalette_QueryInterface(LPDIRECTDRAWPALETTE iface,
+				      REFIID refiid, LPVOID *obj);
+
+/*****************************************************************************
+ * IDirectDrawPalette HAL declarations
+ */
+HRESULT HAL_DirectDrawPalette_Construct(IDirectDrawPaletteImpl* This,
+					 IDirectDrawImpl* pDD, DWORD dwFlags);
+void HAL_DirectDrawPalette_final_release(IDirectDrawPaletteImpl* This);
+
+HRESULT HAL_DirectDrawPalette_Create(IDirectDrawImpl* pDD, DWORD dwFlags,
+				     LPDIRECTDRAWPALETTE* ppPalette,
+				     LPUNKNOWN pUnkOuter);
+
+HRESULT WINAPI
+HAL_DirectDrawPalette_SetEntries(LPDIRECTDRAWPALETTE iface, DWORD dwFlags,
+				 DWORD dwStart, DWORD dwCount,
+				 LPPALETTEENTRY palent);
+
+/*****************************************************************************
+ * IDirectDraw MAIN declarations
+ */
+/* internal virtual functions */
+void Main_DirectDraw_final_release(IDirectDrawImpl* This);
+HRESULT Main_create_offscreen(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
+			      LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter);
+HRESULT Main_create_texture(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
+			    LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter,
+			    DWORD dwMipMapLevel);
+HRESULT Main_create_zbuffer(IDirectDrawImpl* This, const DDSURFACEDESC2 *pDDSD,
+			    LPDIRECTDRAWSURFACE7* ppSurf, LPUNKNOWN pOuter);
+
+/* internal functions */
+HRESULT Main_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
+void Main_DirectDraw_AddSurface(IDirectDrawImpl* This,
+				IDirectDrawSurfaceImpl* surface);
+void Main_DirectDraw_RemoveSurface(IDirectDrawImpl* This,
+				   IDirectDrawSurfaceImpl* surface);
+void Main_DirectDraw_AddClipper(IDirectDrawImpl* This,
+				IDirectDrawClipperImpl* clipper);
+void Main_DirectDraw_RemoveClipper(IDirectDrawImpl* This,
+				   IDirectDrawClipperImpl* clipper);
+void Main_DirectDraw_AddPalette(IDirectDrawImpl* This,
+				IDirectDrawPaletteImpl* palette);
+void Main_DirectDraw_RemovePalette(IDirectDrawImpl* This,
+				   IDirectDrawPaletteImpl* palette);
+
+/* interface functions */
+ULONG WINAPI Main_DirectDraw_AddRef(LPDIRECTDRAW7 iface);
+ULONG WINAPI Main_DirectDraw_Release(LPDIRECTDRAW7 iface);
+HRESULT WINAPI Main_DirectDraw_QueryInterface(LPDIRECTDRAW7 iface,
+					      REFIID refiid,LPVOID *obj);
+HRESULT WINAPI Main_DirectDraw_Compact(LPDIRECTDRAW7 iface);
+HRESULT WINAPI Main_DirectDraw_CreateClipper(LPDIRECTDRAW7 iface,
+					     DWORD dwFlags,
+					     LPDIRECTDRAWCLIPPER *ppClipper,
+					     IUnknown *pUnkOuter);
+HRESULT WINAPI
+Main_DirectDraw_CreatePalette(LPDIRECTDRAW7 iface, DWORD dwFlags,
+			      LPPALETTEENTRY palent,
+			      LPDIRECTDRAWPALETTE* ppPalette,
+			      LPUNKNOWN pUnknown);
+HRESULT WINAPI
+Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
+			      LPDIRECTDRAWSURFACE7 *ppSurf,
+			      IUnknown *pUnkOuter);
+HRESULT WINAPI
+Main_DirectDraw_DuplicateSurface(LPDIRECTDRAW7 iface, LPDIRECTDRAWSURFACE7 src,
+				 LPDIRECTDRAWSURFACE7* dst);
+HRESULT WINAPI
+Main_DirectDraw_EnumSurfaces(LPDIRECTDRAW7 iface, DWORD dwFlags,
+			     LPDDSURFACEDESC2 lpDDSD2, LPVOID context,
+			     LPDDENUMSURFACESCALLBACK7 callback);
+HRESULT WINAPI
+Main_DirectDraw_EvaluateMode(LPDIRECTDRAW7 iface,DWORD a,DWORD* b);
+HRESULT WINAPI Main_DirectDraw_FlipToGDISurface(LPDIRECTDRAW7 iface);
+HRESULT WINAPI
+Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
+			LPDDCAPS pHELCaps);
+HRESULT WINAPI
+Main_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
+			       LPDWORD pCodes);
+HRESULT WINAPI
+Main_DirectDraw_GetGDISurface(LPDIRECTDRAW7 iface,
+			      LPDIRECTDRAWSURFACE7 *lplpGDIDDSSurface);
+HRESULT WINAPI
+Main_DirectDraw_GetMonitorFrequency(LPDIRECTDRAW7 iface,LPDWORD freq);
+HRESULT WINAPI
+Main_DirectDraw_GetScanLine(LPDIRECTDRAW7 iface, LPDWORD lpdwScanLine);
+HRESULT WINAPI
+Main_DirectDraw_GetSurfaceFromDC(LPDIRECTDRAW7 iface, HDC hdc,
+				 LPDIRECTDRAWSURFACE7 *lpDDS);
+HRESULT WINAPI
+Main_DirectDraw_GetVerticalBlankStatus(LPDIRECTDRAW7 iface, LPBOOL status);
+HRESULT WINAPI
+Main_DirectDraw_Initialize(LPDIRECTDRAW7 iface, LPGUID lpGuid);
+HRESULT WINAPI Main_DirectDraw_RestoreAllSurfaces(LPDIRECTDRAW7 iface);
+HRESULT WINAPI
+Main_DirectDraw_SetCooperativeLevel(LPDIRECTDRAW7 iface, HWND hwnd,
+				    DWORD cooplevel);
+HRESULT WINAPI
+Main_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
+			       DWORD dwHeight, LONG lPitch,
+			       DWORD dwRefreshRate, DWORD dwFlags,
+			       const DDPIXELFORMAT* pixelformat);
+HRESULT WINAPI Main_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface);
+HRESULT WINAPI
+Main_DirectDraw_WaitForVerticalBlank(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				     HANDLE h);
+HRESULT WINAPI
+Main_DirectDraw_GetDisplayMode(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD);
+HRESULT WINAPI
+Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface,LPDDSCAPS2 ddscaps,
+				   LPDWORD total, LPDWORD free);
+HRESULT WINAPI Main_DirectDraw_TestCooperativeLevel(LPDIRECTDRAW7 iface);
+HRESULT WINAPI
+Main_DirectDraw_StartModeTest(LPDIRECTDRAW7 iface, LPSIZE pModes,
+			      DWORD dwNumModes, DWORD dwFlags);
+
+/*****************************************************************************
+ * IDirectDraw USER object declarations
+ */
+#define USER_DDRAW_PRIV(ddraw) ((User_DirectDrawImpl*)((ddraw)->private))
+#define USER_DDRAW_PRIV_VAR(name,ddraw) \
+	User_DirectDrawImpl* name = USER_DDRAW_PRIV(ddraw)
+
+typedef struct
+{
+    int empty;
+    /* empty */
+} User_DirectDrawImpl_Part;
+
+typedef struct
+{
+    User_DirectDrawImpl_Part user;
+} User_DirectDrawImpl;
+
+void User_DirectDraw_final_release(IDirectDrawImpl* This);
+HRESULT User_DirectDraw_create_primary(IDirectDrawImpl* This,
+				       const DDSURFACEDESC2* pDDSD,
+				       LPDIRECTDRAWSURFACE7* ppSurf,
+				       LPUNKNOWN pOuter);
+HRESULT User_DirectDraw_create_backbuffer(IDirectDrawImpl* This,
+					  const DDSURFACEDESC2* pDDSD,
+					  LPDIRECTDRAWSURFACE7* ppSurf,
+					  LPUNKNOWN pOuter,
+					  IDirectDrawSurfaceImpl* primary);
+HRESULT User_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
+HRESULT User_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
+			       IUnknown* pUnkOuter, BOOL ex);
+
+HRESULT WINAPI
+User_DirectDraw_EnumDisplayModes(LPDIRECTDRAW7 iface, DWORD dwFlags,
+				 LPDDSURFACEDESC2 pDDSD, LPVOID context,
+				 LPDDENUMMODESCALLBACK2 callback);
+HRESULT WINAPI
+User_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
+				    LPDDDEVICEIDENTIFIER2 pDDDI,
+				    DWORD dwFlags);
+HRESULT WINAPI
+User_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
+			       DWORD dwHeight, DWORD dwBPP,
+			       DWORD dwRefreshRate, DWORD dwFlags);
+
+/*****************************************************************************
+ * IDirectDraw HAL declarations
+ */
+#define HAL_DDRAW_PRIV(ddraw) \
+	((HAL_DirectDrawImpl*)((ddraw)->private))
+#define HAL_DDRAW_PRIV_VAR(name,ddraw) \
+	HAL_DirectDrawImpl* name = HAL_DDRAW_PRIV(ddraw)
+
+typedef struct
+{
+    DWORD next_vofs;
+} HAL_DirectDrawImpl_Part;
+
+typedef struct
+{
+    User_DirectDrawImpl_Part user;
+    HAL_DirectDrawImpl_Part hal;
+} HAL_DirectDrawImpl;
+
+void HAL_DirectDraw_final_release(IDirectDrawImpl* This);
+HRESULT HAL_DirectDraw_create_primary(IDirectDrawImpl* This,
+				      const DDSURFACEDESC2* pDDSD,
+				      LPDIRECTDRAWSURFACE7* ppSurf,
+				      LPUNKNOWN pOuter);
+HRESULT HAL_DirectDraw_create_backbuffer(IDirectDrawImpl* This,
+					 const DDSURFACEDESC2* pDDSD,
+					 LPDIRECTDRAWSURFACE7* ppSurf,
+					 LPUNKNOWN pOuter,
+					 IDirectDrawSurfaceImpl* primary);
+HRESULT HAL_DirectDraw_create_texture(IDirectDrawImpl* This,
+				      const DDSURFACEDESC2* pDDSD,
+				      LPDIRECTDRAWSURFACE7* ppSurf,
+				      LPUNKNOWN pOuter,
+				      DWORD dwMipMapLevel);
+
+HRESULT HAL_DirectDraw_Construct(IDirectDrawImpl *This, BOOL ex);
+HRESULT HAL_DirectDraw_Create(const GUID* pGUID, LPDIRECTDRAW7* pIface,
+				   IUnknown* pUnkOuter, BOOL ex);
+
+HRESULT WINAPI
+HAL_DirectDraw_GetDeviceIdentifier(LPDIRECTDRAW7 iface,
+					LPDDDEVICEIDENTIFIER2 pDDDI,
+					DWORD dwFlags);
+HRESULT WINAPI
+HAL_DirectDraw_SetDisplayMode(LPDIRECTDRAW7 iface, DWORD dwWidth,
+				   DWORD dwHeight, DWORD dwBPP,
+				   DWORD dwRefreshRate, DWORD dwFlags);
+HRESULT WINAPI HAL_DirectDraw_RestoreDisplayMode(LPDIRECTDRAW7 iface);
+
+/*****************************************************************************
+ * IDirectDrawSurface MAIN declarations
+ */
+/* Support for IDirectDrawSurface7::Set/Get/FreePrivateData. I don't think
+ * anybody uses it for much so a good implementation is optional. */
+typedef struct PrivateData
+{
+    struct PrivateData* next;
+    struct PrivateData* prev;
+
+    GUID tag;
+    DWORD flags; /* DDSPD_* */
+    DWORD uniqueness_value;
+
+    union
+    {
+	LPVOID data;
+	LPUNKNOWN object;
+    } ptr;
+
+    DWORD size;
+} PrivateData;
+
+extern const IDirectDrawGammaControlVtbl DDRAW_IDDGC_VTable;
+
+/* Non-interface functions */
+HRESULT Main_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
+					 IDirectDrawImpl* pDD,
+					 const DDSURFACEDESC2* pDDSD);
+void Main_DirectDrawSurface_ForceDestroy(IDirectDrawSurfaceImpl* This);
+
+void Main_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
+HRESULT Main_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This);
+BOOL Main_DirectDrawSurface_attach(IDirectDrawSurfaceImpl *This,
+				   IDirectDrawSurfaceImpl *to);
+BOOL Main_DirectDrawSurface_detach(IDirectDrawSurfaceImpl *This);
+void Main_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
+					LPCRECT pRect, DWORD dwFlags);
+void Main_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
+					  LPCRECT pRect);
+void Main_DirectDrawSurface_lose_surface(IDirectDrawSurfaceImpl* This);
+void Main_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
+					IDirectDrawPaletteImpl* pal);
+void Main_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
+					   IDirectDrawPaletteImpl* pal,
+					   DWORD dwStart, DWORD dwCount,
+			                   LPPALETTEENTRY palent);
+HWND Main_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
+
+HRESULT Main_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp);
+HRESULT Main_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp);
+
+BOOL Main_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags);
+
+#define CHECK_LOST(This)					\
+	do {							\
+		if (This->lost) return DDERR_SURFACELOST;	\
+	} while (0)
+
+#define CHECK_TEXTURE(This)					\
+	do {							\
+		if (!(This->surface_desc.ddsCaps.dwCaps2	\
+		      & DDSCAPS2_TEXTUREMANAGE))		\
+			return DDERR_INVALIDOBJECT;		\
+	} while (0)
+
+#define LOCK_OBJECT(This) do { } while (0)
+#define UNLOCK_OBJECT(This) do { } while (0)
+
+/* IDirectDrawSurface7 (partial) implementation */
+ULONG WINAPI Main_DirectDrawSurface_AddRef(LPDIRECTDRAWSURFACE7 iface);
+ULONG WINAPI Main_DirectDrawSurface_Release(LPDIRECTDRAWSURFACE7 iface);
+HRESULT WINAPI
+Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
+				      LPVOID* ppObj);
+HRESULT WINAPI
+Main_DirectDrawSurface_AddAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
+					  LPDIRECTDRAWSURFACE7 pAttach);
+HRESULT WINAPI
+Main_DirectDrawSurface_AddOverlayDirtyRect(LPDIRECTDRAWSURFACE7 iface,
+					   LPRECT pRect);
+HRESULT WINAPI
+Main_DirectDrawSurface_BltBatch(LPDIRECTDRAWSURFACE7 iface,
+				LPDDBLTBATCH pBatch, DWORD dwCount,
+				DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_ChangeUniquenessValue(LPDIRECTDRAWSURFACE7 iface);
+HRESULT WINAPI
+Main_DirectDrawSurface_DeleteAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
+					     DWORD dwFlags,
+					     LPDIRECTDRAWSURFACE7 pAttach);
+HRESULT WINAPI
+Main_DirectDrawSurface_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE7 iface,
+					    LPVOID context,
+					    LPDDENUMSURFACESCALLBACK7 cb);
+HRESULT WINAPI
+Main_DirectDrawSurface_EnumOverlayZOrders(LPDIRECTDRAWSURFACE7 iface,
+					  DWORD dwFlags, LPVOID context,
+					  LPDDENUMSURFACESCALLBACK7 cb);
+HRESULT WINAPI
+Main_DirectDrawSurface_Flip(LPDIRECTDRAWSURFACE7 iface,
+			    LPDIRECTDRAWSURFACE7 override, DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_FreePrivateData(LPDIRECTDRAWSURFACE7 iface,
+				       REFGUID tag);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetAttachedSurface(LPDIRECTDRAWSURFACE7 iface,
+					  LPDDSCAPS2 pCaps,
+					  LPDIRECTDRAWSURFACE7* ppSurface);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetBltStatus(LPDIRECTDRAWSURFACE7 iface,
+				    DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetCaps(LPDIRECTDRAWSURFACE7 iface,
+			       LPDDSCAPS2 pCaps);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetClipper(LPDIRECTDRAWSURFACE7 iface,
+				  LPDIRECTDRAWCLIPPER* ppClipper);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetColorKey(LPDIRECTDRAWSURFACE7 iface,
+				   DWORD dwFlags, LPDDCOLORKEY pCKey);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetDC(LPDIRECTDRAWSURFACE7 iface, HDC *phDC);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetDDInterface(LPDIRECTDRAWSURFACE7 iface,
+				      LPVOID* pDD);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetFlipStatus(LPDIRECTDRAWSURFACE7 iface,
+				     DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetLOD(LPDIRECTDRAWSURFACE7 iface,
+			      LPDWORD pdwMaxLOD);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetOverlayPosition(LPDIRECTDRAWSURFACE7 iface,
+					  LPLONG pX, LPLONG pY);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetPalette(LPDIRECTDRAWSURFACE7 iface,
+				  LPDIRECTDRAWPALETTE* ppPalette);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetPixelFormat(LPDIRECTDRAWSURFACE7 iface,
+				      LPDDPIXELFORMAT pDDPixelFormat);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetPriority(LPDIRECTDRAWSURFACE7 iface,
+				   LPDWORD pdwPriority);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetPrivateData(LPDIRECTDRAWSURFACE7 iface, REFGUID tag,
+				      LPVOID pBuffer, LPDWORD pcbBufferSize);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
+				      LPDDSURFACEDESC2 pDDSD);
+HRESULT WINAPI
+Main_DirectDrawSurface_GetUniquenessValue(LPDIRECTDRAWSURFACE7 iface,
+					  LPDWORD pValue);
+HRESULT WINAPI
+Main_DirectDrawSurface_Initialize(LPDIRECTDRAWSURFACE7 iface,
+				  LPDIRECTDRAW pDD, LPDDSURFACEDESC2 pDDSD);
+HRESULT WINAPI
+Main_DirectDrawSurface_IsLost(LPDIRECTDRAWSURFACE7 iface);
+HRESULT WINAPI
+Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
+			    LPDDSURFACEDESC2 pDDSD, DWORD flags, HANDLE h);
+HRESULT WINAPI
+Main_DirectDrawSurface_PageLock(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_PageUnlock(LPDIRECTDRAWSURFACE7 iface, DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_ReleaseDC(LPDIRECTDRAWSURFACE7 iface, HDC hDC);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetClipper(LPDIRECTDRAWSURFACE7 iface,
+				  LPDIRECTDRAWCLIPPER pDDClipper);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetColorKey(LPDIRECTDRAWSURFACE7 iface,
+				   DWORD dwFlags, LPDDCOLORKEY pCKey);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetLOD(LPDIRECTDRAWSURFACE7 iface, DWORD dwMaxLOD);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetOverlayPosition(LPDIRECTDRAWSURFACE7 iface,
+					  LONG X, LONG Y);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetPalette(LPDIRECTDRAWSURFACE7 iface,
+				  LPDIRECTDRAWPALETTE pPalette);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetPriority(LPDIRECTDRAWSURFACE7 iface,
+				   DWORD dwPriority);
+HRESULT WINAPI
+Main_DirectDrawSurface_SetPrivateData(LPDIRECTDRAWSURFACE7 iface,
+				      REFGUID tag, LPVOID pData,
+				      DWORD cbSize, DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_Unlock(LPDIRECTDRAWSURFACE7 iface, LPRECT pRect);
+HRESULT WINAPI
+Main_DirectDrawSurface_UpdateOverlay(LPDIRECTDRAWSURFACE7 iface,
+				     LPRECT pSrcRect,
+				     LPDIRECTDRAWSURFACE7 pDstSurface,
+				     LPRECT pDstRect, DWORD dwFlags,
+				     LPDDOVERLAYFX pFX);
+HRESULT WINAPI
+Main_DirectDrawSurface_UpdateOverlayDisplay(LPDIRECTDRAWSURFACE7 iface,
+					    DWORD dwFlags);
+HRESULT WINAPI
+Main_DirectDrawSurface_UpdateOverlayZOrder(LPDIRECTDRAWSURFACE7 iface,
+					   DWORD dwFlags,
+					   LPDIRECTDRAWSURFACE7 pDDSRef);
+
+/*****************************************************************************
+ * IDirectDrawSurface DIB declarations
+ */
+#define DIB_PRIV(surf) ((DIB_DirectDrawSurfaceImpl*)((surf)->private))
+
+#define DIB_PRIV_VAR(name, surf) \
+	DIB_DirectDrawSurfaceImpl* name = DIB_PRIV(surf)
+
+struct DIB_DirectDrawSurfaceImpl_Part
+{
+    HBITMAP DIBsection;
+    void* bitmap_data;
+    HGDIOBJ holdbitmap;
+    BOOL client_memory;
+    DWORD d3d_data[4]; /* room for Direct3D driver data */
+};
+
+typedef struct
+{
+    struct DIB_DirectDrawSurfaceImpl_Part dib;
+} DIB_DirectDrawSurfaceImpl;
+
+HRESULT
+DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
+				IDirectDrawImpl *pDD,
+				const DDSURFACEDESC2 *pDDSD);
+HRESULT
+DIB_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
+			     const DDSURFACEDESC2 *pDDSD,
+			     LPDIRECTDRAWSURFACE7 *ppSurf,
+			     IUnknown *pUnkOuter);
+
+void DIB_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
+BOOL DIB_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				     IDirectDrawSurfaceImpl* back,
+				     DWORD dwFlags);
+
+void DIB_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
+				       IDirectDrawPaletteImpl* pal);
+void DIB_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
+					  IDirectDrawPaletteImpl* pal,
+					  DWORD dwStart, DWORD dwCount,
+					  LPPALETTEENTRY palent);
+
+HRESULT DIB_DirectDrawSurface_get_dc(IDirectDrawSurfaceImpl* This, HDC* phDC);
+HRESULT DIB_DirectDrawSurface_release_dc(IDirectDrawSurfaceImpl* This,HDC hDC);
+
+HRESULT DIB_DirectDrawSurface_alloc_dc(IDirectDrawSurfaceImpl* This,HDC* phDC);
+HRESULT DIB_DirectDrawSurface_free_dc(IDirectDrawSurfaceImpl* This, HDC hDC);
+
+HRESULT WINAPI
+DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT prcDest,
+			  LPDIRECTDRAWSURFACE7 pSrcSurf, LPRECT prcSrc,
+			  DWORD dwFlags, LPDDBLTFX pBltFx);
+HRESULT WINAPI
+DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dwX,
+			      DWORD dwY, LPDIRECTDRAWSURFACE7 pSrcSurf,
+			      LPRECT prcSrc, DWORD dwTrans);
+HRESULT WINAPI DIB_DirectDrawSurface_Restore(LPDIRECTDRAWSURFACE7 iface);
+HRESULT WINAPI
+DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
+				     LPDDSURFACEDESC2 pDDSD, DWORD dwFlags);
+
+/*****************************************************************************
+ * IDirectDrawSurface USER declarations
+ */
+#define USER_PRIV(surf) ((User_DirectDrawSurfaceImpl*)((surf)->private))
+
+#define USER_PRIV_VAR(name,surf) \
+	User_DirectDrawSurfaceImpl* name = USER_PRIV(surf)
+
+struct User_DirectDrawSurfaceImpl_Part
+{
+    HWND window;
+    HDC cached_dc;
+    HANDLE update_thread, update_event, refresh_event;
+    volatile int wait_count, in_refresh;
+    CRITICAL_SECTION crit;
+};
+
+typedef struct
+{
+    struct DIB_DirectDrawSurfaceImpl_Part dib;
+    struct User_DirectDrawSurfaceImpl_Part user;
+} User_DirectDrawSurfaceImpl;
+
+HRESULT User_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
+					 IDirectDrawImpl* pDD,
+					 const DDSURFACEDESC2* pDDSD);
+
+HRESULT User_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
+				      const DDSURFACEDESC2 *pDDSD,
+				      LPDIRECTDRAWSURFACE7 *ppSurf,
+				      IUnknown *pUnkOuter);
+
+void User_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
+
+void User_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
+					LPCRECT pRect, DWORD dwFlags);
+void User_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
+					  LPCRECT pRect);
+void User_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
+					IDirectDrawPaletteImpl* pal);
+void User_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
+					   IDirectDrawPaletteImpl* pal,
+					   DWORD dwStart, DWORD dwCount,
+					   LPPALETTEENTRY palent);
+HRESULT User_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
+						 LPDIRECTDRAWSURFACE7* ppDup);
+BOOL User_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				      IDirectDrawSurfaceImpl* back,
+				      DWORD dwFlags);
+void User_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This,
+					DWORD dwFlags);
+HWND User_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
+
+HRESULT User_DirectDrawSurface_get_dc(IDirectDrawSurfaceImpl* This, HDC* phDC);
+HRESULT User_DirectDrawSurface_release_dc(IDirectDrawSurfaceImpl* This,
+					  HDC hDC);
+
+HRESULT User_DirectDrawSurface_get_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp);
+HRESULT User_DirectDrawSurface_set_gamma_ramp(IDirectDrawSurfaceImpl* This,
+					      DWORD dwFlags,
+					      LPDDGAMMARAMP lpGammaRamp);
+
+/*****************************************************************************
+ * IDirectDrawSurface HAL declarations
+ */
+#define HAL_PRIV(surf) ((HAL_DirectDrawSurfaceImpl*)((surf)->private))
+
+#define HAL_PRIV_VAR(name,surf) \
+	HAL_DirectDrawSurfaceImpl* name = HAL_PRIV(surf)
+
+struct HAL_DirectDrawSurfaceImpl_Part
+{
+    DWORD need_late;
+    LPVOID fb_addr;
+    DWORD fb_pitch, fb_vofs;
+};
+
+typedef struct
+{
+    struct DIB_DirectDrawSurfaceImpl_Part dib;
+    struct User_DirectDrawSurfaceImpl_Part user;
+    struct HAL_DirectDrawSurfaceImpl_Part hal;
+} HAL_DirectDrawSurfaceImpl;
+
+HRESULT HAL_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
+					IDirectDrawImpl* pDD,
+					const DDSURFACEDESC2* pDDSD);
+
+HRESULT HAL_DirectDrawSurface_Create(IDirectDrawImpl *pDD,
+				     const DDSURFACEDESC2 *pDDSD,
+				     LPDIRECTDRAWSURFACE7 *ppSurf,
+				     IUnknown *pUnkOuter);
+
+void HAL_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
+HRESULT HAL_DirectDrawSurface_late_allocate(IDirectDrawSurfaceImpl* This);
+
+void HAL_DirectDrawSurface_set_palette(IDirectDrawSurfaceImpl* This,
+				       IDirectDrawPaletteImpl* pal);
+void HAL_DirectDrawSurface_update_palette(IDirectDrawSurfaceImpl* This,
+					  IDirectDrawPaletteImpl* pal,
+					  DWORD dwStart, DWORD dwCount,
+					  LPPALETTEENTRY palent);
+HRESULT HAL_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
+						LPDIRECTDRAWSURFACE7* ppDup);
+void HAL_DirectDrawSurface_lock_update(IDirectDrawSurfaceImpl* This,
+				       LPCRECT pRect, DWORD dwFlags);
+void HAL_DirectDrawSurface_unlock_update(IDirectDrawSurfaceImpl* This,
+					 LPCRECT pRect);
+BOOL HAL_DirectDrawSurface_flip_data(IDirectDrawSurfaceImpl* front,
+				     IDirectDrawSurfaceImpl* back,
+				     DWORD dwFlags);
+void HAL_DirectDrawSurface_flip_update(IDirectDrawSurfaceImpl* This,
+				       DWORD dwFlags);
+HWND HAL_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This);
+
+/*****************************************************************************
+ * IDirectDrawSurface FAKEZBUFFER declarations
+ */
+typedef struct
+{
+    BOOLEAN in_memory;
+} FakeZBuffer_DirectDrawSurfaceImpl;
+
+HRESULT FakeZBuffer_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl* This,
+						IDirectDrawImpl* pDD,
+						const DDSURFACEDESC2* pDDSD);
+
+HRESULT FakeZBuffer_DirectDrawSurface_Create(IDirectDrawImpl* pDD,
+					     const DDSURFACEDESC2* pDDSD,
+					     LPDIRECTDRAWSURFACE7* ppSurf,
+					     IUnknown* pUnkOuter);
+
+void FakeZBuffer_DirectDrawSurface_final_release(IDirectDrawSurfaceImpl* This);
+
+HRESULT FakeZBuffer_DirectDrawSurface_duplicate_surface(IDirectDrawSurfaceImpl* This,
+							LPDIRECTDRAWSURFACE7* ppDup);
+
 #endif /* __WINE_DLLS_DDRAW_DDRAW_PRIVATE_H */
