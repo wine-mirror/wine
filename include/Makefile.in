@@ -220,6 +220,7 @@ WINDOWS_INCLUDES = \
 	shlobj.h \
 	shlwapi.h \
 	sipbase.h \
+	snmp.h \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
