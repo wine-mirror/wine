@@ -41,6 +41,9 @@
 #ifndef PT_GUID
 #define PT_GUID       0x1f /* no path */
 #endif
+#ifndef PT_DRIVE 
+#define PT_DRIVE      0x23 /* has path */
+#endif
 #ifndef PT_DRIVE2
 #define PT_DRIVE2     0x25 /* has path */
 #endif
@@ -496,6 +499,7 @@ static void testShellValues(const struct shellExpectedValues testEntries[],
         switch (type)
         {
             case PT_FOLDER:
+            case PT_DRIVE:
             case PT_DRIVE2:
             case PT_IESPECIAL2:
                 testSHGetFolderPath(optional, testEntries[i].folder);
@@ -577,14 +581,17 @@ static void testPersonal(void)
 {
     BYTE type;
 
+    /* The pidl may be a real folder, or a virtual directory, or a drive if the
+     * home directory is set to the root directory of a drive.
+     */
     type = testSHGetFolderLocation(FALSE, CSIDL_PERSONAL);
-    ok(type == PT_FOLDER || type == PT_GUID,
+    ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
      "CSIDL_PERSONAL returned invalid type 0x%02x, "
      "expected PT_FOLDER or PT_GUID\n", type);
     if (type == PT_FOLDER)
         testSHGetFolderPath(FALSE, CSIDL_PERSONAL);
     type = testSHGetSpecialFolderLocation(FALSE, CSIDL_PERSONAL);
-    ok(type == PT_FOLDER || type == PT_GUID,
+    ok(type == PT_FOLDER || type == PT_GUID || type == PT_DRIVE,
      "CSIDL_PERSONAL returned invalid type 0x%02x, "
      "expected PT_FOLDER or PT_GUID\n", type);
     if (type == PT_FOLDER)
