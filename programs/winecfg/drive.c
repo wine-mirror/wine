@@ -83,7 +83,7 @@ long drive_available_mask(char letter)
   return result;
 }
 
-BOOL add_drive(char letter, char *targetpath, char *label, char *serial, unsigned int type)
+BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type)
 {
     int driveIndex = letter_to_index(letter);
 
@@ -396,7 +396,7 @@ void apply_drive_changes()
             HANDLE hFile;
 
             HKEY hKey;
-            char *typeText;
+            const char *typeText;
             char driveValue[256];
 
             /* define this drive */

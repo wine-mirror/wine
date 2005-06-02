@@ -611,9 +611,9 @@ static LPSTR escape(LPCWSTR arg)
     return narg;
 }
 
-static int fork_and_wait( char *linker, char *link_name, char *path,
-                          int desktop, char *args, char *icon_name,
-                          char *workdir, char *description )
+static int fork_and_wait( const char *linker, const char *link_name, const char *path,
+                          int desktop, const char *args, const char *icon_name,
+                          const char *workdir, const char *description )
 {
     int pos = 0;
     const char *argv[20];

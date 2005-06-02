@@ -50,7 +50,7 @@ static DEV_NODES sDeviceNodes[] = {
   {"",0}
 };
 
-static char *ignored_fstypes[] = {
+static const char *ignored_fstypes[] = {
     "devpts",
     "tmpfs",
     "proc",
@@ -61,7 +61,7 @@ static char *ignored_fstypes[] = {
     NULL
 };
 
-static char *ignored_mnt_dirs[] = {
+static const char *ignored_mnt_dirs[] = {
     "/boot",
     NULL
 };
@@ -82,7 +82,7 @@ static int try_dev_node(char *dev)
 
 static BOOL should_ignore_fstype(char *type)
 {
-    char **s;
+    const char **s;
     
     for (s = ignored_fstypes; *s; s++)
         if (!strcmp(*s, type)) return TRUE;
@@ -92,7 +92,7 @@ static BOOL should_ignore_fstype(char *type)
 
 static BOOL should_ignore_mnt_dir(char *dir)
 {
-    char **s;
+    const char **s;
 
     for (s = ignored_mnt_dirs; *s; s++)
         if (!strcmp(*s, dir)) return TRUE;

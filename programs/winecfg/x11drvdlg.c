@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 int updating_ui;
 
-void update_gui_for_desktop_mode(HWND dialog) {
+static void update_gui_for_desktop_mode(HWND dialog) {
     WINE_TRACE("\n");
 
     updating_ui = TRUE;
@@ -161,7 +161,7 @@ static void set_from_desktop_edits(HWND dialog) {
     HeapFree(GetProcessHeap(), 0, new);
 }
 
-void on_enable_desktop_clicked(HWND dialog) {
+static void on_enable_desktop_clicked(HWND dialog) {
     WINE_TRACE("\n");
     
     if (IsDlgButtonChecked(dialog, IDC_ENABLE_DESKTOP) == BST_CHECKED) {

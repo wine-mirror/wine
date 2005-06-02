@@ -26,34 +26,24 @@
 
 /* Event object to signal successful window creation to main thread.
  */
-HANDLE initEvent;
+static HANDLE initEvent;
 
 /* Dialog handle
  */
-HWND dialog;
+static HWND dialog;
 
 /* Progress data for the text* functions and for scaling.
  */
-unsigned int progressMax, progressCurr;
-double progressScale;
+static unsigned int progressMax, progressCurr;
+static double progressScale;
 
 /* Progress group counter for the gui* functions.
  */
-int progressGroup;
+static int progressGroup;
 
-WNDPROC DefEditProc;
+static WNDPROC DefEditProc;
 
-char *
-renderString (va_list ap)
-{
-    const char *fmt = va_arg (ap, char*);
-    static char buffer[128];
-
-    vsnprintf (buffer, sizeof buffer, fmt, ap);
-    return buffer;
-}
-
-int
+static int
 MBdefault (int uType)
 {
     static const int matrix[][4] = {{IDOK,    0,        0,        0},
@@ -69,7 +59,7 @@ MBdefault (int uType)
 }
 
 /* report (R_STATUS, fmt, ...) */
-int
+static int
 textStatus (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -80,7 +70,7 @@ textStatus (va_list ap)
     return 0;
 }
 
-int
+static int
 guiStatus (va_list ap)
 {
     size_t len;
@@ -93,7 +83,7 @@ guiStatus (va_list ap)
 }
 
 /* report (R_PROGRESS, barnum, steps) */
-int
+static int
 textProgress (va_list ap)
 {
     progressGroup = va_arg (ap, int);
@@ -102,7 +92,7 @@ textProgress (va_list ap)
     return 0;
 }
 
-int
+static int
 guiProgress (va_list ap)
 {
     unsigned int max;
@@ -123,7 +113,7 @@ guiProgress (va_list ap)
 }
 
 /* report (R_STEP, fmt, ...) */
-int
+static int
 textStep (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -135,7 +125,7 @@ textStep (va_list ap)
     return 0;
 }
 
-int
+static int
 guiStep (va_list ap)
 {
     const int pgID = IDC_ST0 + progressGroup * 2;
@@ -150,7 +140,7 @@ guiStep (va_list ap)
 }
 
 /* report (R_DELTA, inc, fmt, ...) */
-int
+static int
 textDelta (va_list ap)
 {
     const int inc = va_arg (ap, int);
@@ -163,7 +153,7 @@ textDelta (va_list ap)
     return 0;
 }
 
-int
+static int
 guiDelta (va_list ap)
 {
     const int inc = va_arg (ap, int);
@@ -179,7 +169,7 @@ guiDelta (va_list ap)
 }
 
 /* report (R_TAG) */
-int
+static int
 textTag (va_list ap)
 {
     fputs ("Tag: ", stderr);
@@ -188,7 +178,7 @@ textTag (va_list ap)
     return 0;
 }
 
-int
+static int
 guiTag (va_list ap)
 {
     SetDlgItemText (dialog, IDC_TAG, tag);
@@ -196,7 +186,7 @@ guiTag (va_list ap)
 }
 
 /* report (R_DIR, fmt, ...) */
-int
+static int
 textDir (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -208,7 +198,7 @@ textDir (va_list ap)
     return 0;
 }
 
-int
+static int
 guiDir (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -219,7 +209,7 @@ guiDir (va_list ap)
 }
 
 /* report (R_OUT, fmt, ...) */
-int
+static int
 textOut (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -231,7 +221,7 @@ textOut (va_list ap)
     return 0;
 }
 
-int
+static int
 guiOut (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -242,7 +232,7 @@ guiOut (va_list ap)
 }
 
 /* report (R_WARNING, fmt, ...) */
-int
+static int
 textWarning (va_list ap)
 {
     fputs ("Warning: ", stderr);
@@ -250,7 +240,7 @@ textWarning (va_list ap)
     return 0;
 }
 
-int
+static int
 guiWarning (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -261,7 +251,7 @@ guiWarning (va_list ap)
 }
 
 /* report (R_ERROR, fmt, ...) */
-int
+static int
 textError (va_list ap)
 {
     fputs ("Error: ", stderr);
@@ -269,7 +259,7 @@ textError (va_list ap)
     return 0;
 }
 
-int
+static int
 guiError (va_list ap)
 {
     char *str = vstrmake (NULL, ap);
@@ -280,14 +270,14 @@ guiError (va_list ap)
 }
 
 /* report (R_FATAL, fmt, ...) */
-int
+static int
 textFatal (va_list ap)
 {
     textError (ap);
     exit (1);
 }
 
-int
+static int
 guiFatal (va_list ap)
 {
     guiError (ap);
@@ -295,7 +285,7 @@ guiFatal (va_list ap)
 }
 
 /* report (R_ASK, type, fmt, ...) */
-int
+static int
 textAsk (va_list ap)
 {
     int uType = va_arg (ap, int);
@@ -308,7 +298,7 @@ textAsk (va_list ap)
     return ret;
 }
 
-int
+static int
 guiAsk (va_list ap)
 {
     int uType = va_arg (ap, int);
@@ -320,7 +310,7 @@ guiAsk (va_list ap)
     return ret;
 }
 
-BOOL CALLBACK
+static BOOL CALLBACK
 EditTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
@@ -333,7 +323,7 @@ EditTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return CallWindowProcA (DefEditProc, hwnd, msg, wParam, lParam);
 }
 
-BOOL CALLBACK
+static BOOL CALLBACK
 AskTagProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     int len;
@@ -368,25 +358,25 @@ guiAskTag (void)
 }
 
 /* Quiet functions */
-int
+static int
 qNoOp (va_list ap)
 {
     return 0;
 }
 
-int
+static int
 qFatal (va_list ap)
 {
     exit (1);
 }
 
-int
+static int
 qAsk (va_list ap)
 {
     return MBdefault (va_arg (ap, int));
 }
 
-BOOL CALLBACK
+static BOOL CALLBACK
 AboutProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
@@ -400,7 +390,7 @@ AboutProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-BOOL CALLBACK
+static BOOL CALLBACK
 DlgProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {
@@ -435,8 +425,8 @@ DlgProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-DWORD WINAPI
-DlgThreadProc ()
+static DWORD WINAPI
+DlgThreadProc (LPVOID param)
 {
     int ret;
 

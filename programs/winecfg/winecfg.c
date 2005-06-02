@@ -55,7 +55,7 @@ void set_window_title(HWND dialog)
     /* update the window title  */
     if (current_app)
     {
-        char *template = "Wine Configuration for %s";
+        const char *template = "Wine Configuration for %s";
         newtitle = HeapAlloc(GetProcessHeap(), 0, strlen(template) + strlen(current_app) + 1);
         sprintf(newtitle, template, current_app);
     }
@@ -81,7 +81,7 @@ void set_window_title(HWND dialog)
  * not. Caller is responsible for releasing the result.
  *
  */
-static char *get_config_key (char *subkey, char *name, char *def)
+static char *get_config_key (const char *subkey, const char *name, const char *def)
 {
     LPBYTE buffer = NULL;
     DWORD len;
@@ -139,7 +139,7 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-int set_config_key(const char *subkey, const char *name, const char *value) {
+static int set_config_key(const char *subkey, const char *name, const char *value) {
     DWORD res = 1;
     HKEY key = NULL;
 
@@ -236,7 +236,7 @@ static void free_setting(struct setting *setting)
  * If already in the list, the contents as given there will be
  * returned. You are expected to HeapFree the result.
  */
-char *get(char *path, char *name, char *def)
+char *get(const char *path, const char *name, const char *def)
 {
     struct list *cursor;
     struct setting *s;
@@ -277,7 +277,7 @@ char *get(char *path, char *name, char *def)
  *
  * These values will be copied when necessary.
  */
-void set(char *path, char *name, char *value)
+void set(const char *path, const char *name, const char *value)
 {
     struct list *cursor;
     struct setting *s;
@@ -440,7 +440,7 @@ char **enumerate_values(char *path)
  * returns true if the given key/value pair exists in the registry or
  * has been written to.
  */
-BOOL exists(char *path, char *name)
+BOOL exists(const char *path, const char *name)
 {
     char *val = get(path, name, NULL);
 
@@ -487,7 +487,7 @@ void apply(void)
 char *current_app = NULL; /* the app we are currently editing, or NULL if editing global */
 
 /* returns a registry key path suitable for passing to addTransaction  */
-char *keypath(char *section)
+char *keypath(const char *section)
 {
     static char *result = NULL;
 

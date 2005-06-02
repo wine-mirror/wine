@@ -48,9 +48,9 @@ extern char *current_app; /* NULL means editing global settings  */
    be copied, so release them too when necessary.
  */
 
-void set(char *path, char *name, char *value);
-char *get(char *path, char *name, char *def);
-BOOL exists(char *path, char *name);
+void set(const char *path, const char *name, const char *value);
+char *get(const char *path, const char *name, const char *def);
+BOOL exists(const char *path, const char *name);
 void apply(void);
 char **enumerate_values(char *path);
 
@@ -59,7 +59,7 @@ char **enumerate_values(char *path);
  
    no explicit free is needed of the string returned by this function
  */
-char *keypath(char *section); 
+char *keypath(const char *section); 
 
 int initialize(void);
 extern HKEY config_key;
@@ -93,7 +93,7 @@ struct drive
 #define DRIVE_MASK_BIT(B) 1 << (toupper(B) - 'A')
 
 long drive_available_mask(char letter);
-BOOL add_drive(char letter, char *targetpath, char *label, char *serial, unsigned int type);
+BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type);
 void delete_drive(struct drive *pDrive);
 void apply_drive_changes();
 extern struct drive drives[26]; /* one for each drive letter */
@@ -106,7 +106,7 @@ BOOL gui_mode;
 void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
 
 /* returns a string in the win32 heap  */
-static inline char *strdupA(char *s)
+static inline char *strdupA(const char *s)
 {
     char *r = HeapAlloc(GetProcessHeap(), 0, strlen(s)+1);
     return strcpy(r, s);
@@ -121,7 +121,7 @@ static inline char *get_text(HWND dialog, WORD id)
     return result;
 }
 
-static inline void set_text(HWND dialog, WORD id, char *text)
+static inline void set_text(HWND dialog, WORD id, const char *text)
 {
     SetWindowText(GetDlgItem(dialog, id), text);
 }

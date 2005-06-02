@@ -46,7 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-void CALLBACK
+static void CALLBACK
 PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
 {
     switch (uMsg)
@@ -65,7 +65,7 @@ PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
     }
 }
 
-INT_PTR CALLBACK
+static INT_PTR CALLBACK
 AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
@@ -88,7 +88,7 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 #define NUM_PROPERTY_PAGES 6
 
-INT_PTR
+static INT_PTR
 doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 {
     PROPSHEETPAGE psp[NUM_PROPERTY_PAGES];
@@ -202,7 +202,7 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
  *              no option at all. Has to be reworked, if more options are to
  *              be supported.
  */
-BOOL
+static BOOL
 ProcessCmdLine(LPSTR lpCmdLine)
 {
     if ((lpCmdLine[0] == '/' || lpCmdLine[0] == '-') && 

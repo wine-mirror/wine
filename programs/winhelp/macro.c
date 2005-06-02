@@ -33,10 +33,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(winhelp);
 /*               Macro table                      */
 /**************************************************/
 struct MacroDesc {
-    char*       name;
-    char*       alias;
+    const char* name;
+    const char* alias;
     BOOL        isBool;
-    char*       arguments;
+    const char* arguments;
     FARPROC     fn;
 };
 

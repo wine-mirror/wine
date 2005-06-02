@@ -143,14 +143,15 @@ static const struct drive_typemap type_pairs[] = {
 
 #define DRIVE_TYPE_DEFAULT 1
 
-void fill_drive_droplist(long mask, char curletter, HWND dialog)
+static void fill_drive_droplist(long mask, char curletter, HWND dialog)
 {
     int i;
     int selection;
     int count;
     int next_letter;
-    char sName[4] = "A:";
+    char sName[4];
 
+    strcpy(sName, "A:");
     for (i = 0, count = 0, selection = -1, next_letter = -1; i <= 'Z'-'A'; ++i)
     {
         if (mask & DRIVE_MASK_BIT('A' + i))
@@ -184,7 +185,7 @@ void fill_drive_droplist(long mask, char curletter, HWND dialog)
 }
 
 
-void enable_labelserial_box(HWND dialog, int mode)
+static void enable_labelserial_box(HWND dialog, int mode)
 {
     WINE_TRACE("mode=%d\n", mode);
 
@@ -232,7 +233,7 @@ void enable_labelserial_box(HWND dialog, int mode)
     }
 }
 
-int fill_drives_list(HWND dialog)
+static int fill_drives_list(HWND dialog)
 {
     int count = 0;
     BOOL drivec_present = FALSE;
@@ -306,7 +307,7 @@ int fill_drives_list(HWND dialog)
     return count;
 }
 
-void on_options_click(HWND dialog)
+static void on_options_click(HWND dialog)
 {
     if (IsDlgButtonChecked(dialog, IDC_SHOW_DIRSYM_LINK) == BST_CHECKED)
         set("wine", "ShowDirSymLinks", "Y");
@@ -319,7 +320,7 @@ void on_options_click(HWND dialog)
         set("wine", "ShowDotFiles", "N");
 }
 
-void on_add_click(HWND dialog)
+static void on_add_click(HWND dialog)
 {
     /* we should allocate a drive letter automatically. We also need
        some way to let the user choose the mapping point, for now we
@@ -363,7 +364,7 @@ void on_add_click(HWND dialog)
     update_controls(dialog);
 }
 
-void on_remove_click(HWND dialog)
+static void on_remove_click(HWND dialog)
 {
     int itemIndex;
     struct drive *drive;
@@ -408,7 +409,7 @@ static void update_controls(HWND dialog)
     unsigned int type;
     char *label;
     char *serial;
-    char *device;
+    const char *device;
     int i, selection = -1;
     LVITEM item;
 
@@ -501,7 +502,7 @@ static void update_controls(HWND dialog)
     return;
 }
 
-void on_edit_changed(HWND dialog, WORD id)
+static void on_edit_changed(HWND dialog, WORD id)
 {
     if (updating_ui) return;
 
@@ -668,14 +669,14 @@ static void init_listview_columns(HWND dialog)
     width = (viewRect.right - viewRect.left) / 6 - 5;
 
     listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
-    listColumn.pszText = "Letter";
+    listColumn.pszText = (char*) "Letter";
     listColumn.cchTextMax = lstrlen(listColumn.pszText);
     listColumn.cx = width;
 
     SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 0, (LPARAM) &listColumn);
 
     listColumn.cx = viewRect.right - viewRect.left - width;
-    listColumn.pszText = "Drive Mapping";
+    listColumn.pszText = (char*) "Drive Mapping";
     listColumn.cchTextMax = lstrlen(listColumn.pszText);
 
     SendDlgItemMessage(dialog, IDC_LIST_DRIVES, LVM_INSERTCOLUMN, 1, (LPARAM) &listColumn);

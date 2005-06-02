@@ -44,7 +44,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 /* Select the correct entry in the combobox based on drivername */
-void selectAudioDriver(HWND hDlg, char *drivername)
+static void selectAudioDriver(HWND hDlg, const char *drivername)
 {
   int i;
   const AUDIO_DRIVER *pAudioDrv = NULL;
@@ -64,7 +64,7 @@ void selectAudioDriver(HWND hDlg, char *drivername)
   }
 }
 
-void initAudioDlg (HWND hDlg)
+static void initAudioDlg (HWND hDlg)
 {
     char *curAudioDriver = get("Winmm", "Drivers", "winealsa.drv");
     const AUDIO_DRIVER *pAudioDrv = NULL;
@@ -82,14 +82,14 @@ void initAudioDlg (HWND hDlg)
     }
 }
 
-char *audioAutoDetect(void)
+static const char *audioAutoDetect(void)
 {
   struct stat buf;
   const char *argv_new[4];
   int fd;
 
-  char *driversFound[10];
-  char *name[10];
+  const char *driversFound[10];
+  const char *name[10];
   int numFound = 0;
 
   argv_new[0] = "/bin/sh";

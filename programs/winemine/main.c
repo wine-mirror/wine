@@ -447,7 +447,7 @@ void SetDifficulty( BOARD *p_board, DIFFICULTY difficulty )
     }
 }
 
-void ShiftBetween(LONG* x, LONG* y, LONG a, LONG b)
+static void ShiftBetween(LONG* x, LONG* y, LONG a, LONG b)
 {
     if (*x < a) {
 	*y += a - *x;
@@ -458,7 +458,8 @@ void ShiftBetween(LONG* x, LONG* y, LONG a, LONG b)
 	*y = b;
     }
 }
-void MoveOnScreen(RECT* rect)
+
+static void MoveOnScreen(RECT* rect)
 {
     HMONITOR hMonitor;
     MONITORINFO mi;

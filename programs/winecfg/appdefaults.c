@@ -69,7 +69,7 @@ static void update_comboboxes(HWND dialog)
   HeapFree(GetProcessHeap(), 0, winver);
 }
 
-void
+static void
 init_comboboxes (HWND dialog)
 {
   int i;
@@ -97,14 +97,14 @@ init_comboboxes (HWND dialog)
   }
 }
 
-static void add_listview_item(HWND listview, char *text, void *association)
+static void add_listview_item(HWND listview, const char *text, void *association)
 {
   LVITEM item;
 
   ZeroMemory(&item, sizeof(LVITEM));
 
   item.mask = LVIF_TEXT | LVIF_PARAM;
-  item.pszText = text;
+  item.pszText = (char*) text;
   item.cchTextMax = strlen(text);
   item.lParam = (LPARAM) association;
   item.iItem = ListView_GetItemCount(listview);

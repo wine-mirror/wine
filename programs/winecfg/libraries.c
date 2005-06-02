@@ -77,7 +77,7 @@ static enum dllmode string_to_mode(char *in)
 }
 
 /* Convert a dllmode to a registry string. */
-static char* mode_to_string(enum dllmode mode)
+static const char* mode_to_string(enum dllmode mode)
 {
     switch( mode )
     {
@@ -91,7 +91,7 @@ static char* mode_to_string(enum dllmode mode)
 }
 
 /* Convert a dllmode to a pretty string for display. TODO: use translations. */
-static char* mode_to_label(enum dllmode mode)
+static const char* mode_to_label(enum dllmode mode)
 {
     WINE_FIXME("translate me");
     return mode_to_string(mode);
@@ -197,7 +197,8 @@ static void load_library_settings(HWND dialog)
     for (p = overrides; *p != NULL; p++)
     {
         int index;
-        char *str, *value, *label;
+        char *str, *value;
+        const char *label;
         struct dll *dll;
 
         value = get(keypath("DllOverrides"), *p, NULL);
@@ -259,7 +260,7 @@ static void set_dllmode(HWND dialog, DWORD id)
     enum dllmode mode;
     struct dll *dll;
     int sel;
-    char *str;
+    const char *str;
 
     mode = id_to_mode(id);
 
