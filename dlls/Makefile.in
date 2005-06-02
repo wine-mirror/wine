@@ -1828,7 +1828,7 @@ uninstall::
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) $(IMPORT_SYMLINKS)
+	$(RM) $(IMPORT_SYMLINKS) *.$(IMPLIBEXT)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 
