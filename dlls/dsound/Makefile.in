@@ -12,6 +12,7 @@ C_SRCS = \
 	capture.c \
 	dsound.c \
 	dsound_main.c \
+	duplex.c \
 	mixer.c \
 	primary.c \
 	propset.c \
