@@ -5288,7 +5288,10 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     static const WCHAR szVIProgID[] = { 'V','e','r','s','i','o','n','I','n','d','e','p','e','n','d','e','n','t','P','r','o','g','I','D',0 };
     static const WCHAR szAppID[] = { 'A','p','p','I','D',0 };
     static const WCHAR szSpace[] = {' ',0};
+    static const WCHAR szInprocServer32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
+    static const WCHAR szFileType_fmt[] = {'F','i','l','e','T','y','p','e','\\','%','s','\\','%','i',0};
     HKEY hkey,hkey2,hkey3;
+    BOOL install_on_demand = FALSE;
     int i;
 
     if (!package)
@@ -5299,6 +5302,11 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;
 
+    /* install_on_demand should be set if OLE supports install on demand OLE
+     * servers. For now i am defaulting to FALSE because i do not know how to
+     * check, and i am told our builtin OLE does not support it
+     */
+    
     for (i = 0; i < package->loaded_classes; i++)
     {
         INT index,f_index;
@@ -5319,8 +5327,8 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
          */
         if ((!ACTION_VerifyFeatureForAction(package, f_index,
                                 INSTALLSTATE_LOCAL)) &&
-            (!ACTION_VerifyFeatureForAction(package, f_index,
-                                INSTALLSTATE_ADVERTISED)))
+             !(install_on_demand && ACTION_VerifyFeatureForAction(package,
+                             f_index, INSTALLSTATE_ADVERTISED)))
         {
             TRACE("Skipping class %s reg due to disabled feature %s\n", 
                             debugstr_w(package->classes[i].CLSID), 
@@ -5347,16 +5355,43 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         index = get_loaded_file(package,package->components[index].KeyPath);
 
 
-        /* the context server is a short path name */
-        sz = 0;
-        sz = GetShortPathNameW(package->files[index].TargetPath, NULL, 0);
-        if (sz == 0)
+        /* the context server is a short path name 
+         * except for if it is InprocServer32... 
+         */
+        if (strcmpiW(package->classes[i].Context,szInprocServer32)!=0)
         {
-            ERR("Unable to find short path for CLSID COM Server\n");
+            sz = 0;
+            sz = GetShortPathNameW(package->files[index].TargetPath, NULL, 0);
+            if (sz == 0)
+            {
+                ERR("Unable to find short path for CLSID COM Server\n");
+                argument = NULL;
+            }
+            else
+            {
+                size = sz * sizeof(WCHAR);
+
+                if (package->classes[i].Argument)
+                {
+                    size += strlenW(package->classes[i].Argument) * 
+                            sizeof(WCHAR);
+                    size += sizeof(WCHAR);
+                }
+
+                argument = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
+                GetShortPathNameW(package->files[index].TargetPath, argument, 
+                                sz);
+
+                if (package->classes[i].Argument)
+                {
+                    strcatW(argument,szSpace);
+                    strcatW(argument,package->classes[i].Argument);
+                }
+            }
         }
         else
         {
-             size = sz * sizeof(WCHAR);
+            size = lstrlenW(package->files[index].TargetPath) * sizeof(WCHAR);
 
             if (package->classes[i].Argument)
             {
@@ -5365,14 +5400,17 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             }
 
             argument = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
-            GetShortPathNameW(package->files[index].TargetPath, argument, sz);
+            strcpyW(argument, package->files[index].TargetPath);
 
             if (package->classes[i].Argument)
             {
                 strcatW(argument,szSpace);
                 strcatW(argument,package->classes[i].Argument);
             }
+        }
 
+        if (argument)
+        {
             RegSetValueExW(hkey3,NULL,0,REG_SZ, (LPVOID)argument, size);
             HeapFree(GetProcessHeap(),0,argument);
         }
@@ -5420,11 +5458,6 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
                             package->classes[i].Description);
         }
 
-        if (package->classes[i].FileTypeMask)
-        {
-            FIXME("Process field 7\n");
-        }
-
         if (package->classes[i].IconPath)
         {
             static const WCHAR szDefaultIcon[] = 
@@ -5469,6 +5502,39 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         
         RegCloseKey(hkey2);
 
+        /* if there is a FileTypeMask, register the FileType */
+        if (package->classes[i].FileTypeMask)
+        {
+            LPWSTR ptr, ptr2;
+            LPWSTR keyname;
+            INT index = 0;
+            ptr = package->classes[i].FileTypeMask;
+            while (ptr && *ptr)
+            {
+                ptr2 = strchrW(ptr,';');
+                if (ptr2)
+                    *ptr2 = 0;
+                keyname = HeapAlloc(GetProcessHeap(),0,(strlenW(szFileType_fmt)+
+                                        strlenW(package->classes[i].CLSID) + 4)
+                                * sizeof(WCHAR));
+                sprintfW(keyname,szFileType_fmt, package->classes[i].CLSID, 
+                        index);
+
+                RegCreateKeyW(HKEY_CLASSES_ROOT,keyname,&hkey2);
+                RegSetValueExW(hkey2,NULL,0,REG_SZ, (LPVOID)ptr,
+                        strlenW(ptr)*sizeof(WCHAR));
+                RegCloseKey(hkey2);
+                HeapFree(GetProcessHeap(), 0, keyname);
+
+                if (ptr2)
+                    ptr = ptr2+1;
+                else
+                    ptr = NULL;
+
+                index ++;
+            }
+        }
+        
         uirow = MSI_CreateRecord(1);
 
         MSI_RecordSetStringW(uirow,1,package->classes[i].CLSID);
