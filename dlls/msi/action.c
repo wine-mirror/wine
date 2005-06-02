@@ -4259,8 +4259,13 @@ BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType,
     sz = strlenW(tl_struct->source)+4;
     sz *= sizeof(WCHAR);
 
-    tl_struct->path = HeapAlloc(GetProcessHeap(),0,sz);
-    sprintfW(tl_struct->path,fmt,tl_struct->source, lpszName);
+    if ((INT)lpszName == 1)
+        tl_struct->path = strdupW(tl_struct->source);
+    else
+    {
+        tl_struct->path = HeapAlloc(GetProcessHeap(),0,sz);
+        sprintfW(tl_struct->path,fmt,tl_struct->source, lpszName);
+    }
 
     TRACE("trying %s\n", debugstr_w(tl_struct->path));
     res = LoadTypeLib(tl_struct->path,&tl_struct->ptLib);
