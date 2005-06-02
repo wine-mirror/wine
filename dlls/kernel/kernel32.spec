@@ -526,8 +526,8 @@
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long)
 @ stub GetVolumeNameForVolumeMountPointA
 @ stdcall GetVolumeNameForVolumeMountPointW(wstr long long)
-@ stub GetVolumePathNameA
-@ stub GetVolumePathNameW
+@ stdcall GetVolumePathNameA(str ptr long)
+@ stdcall GetVolumePathNameW(wstr ptr long)
 @ stdcall GetWindowsDirectoryA(ptr long)
 @ stdcall GetWindowsDirectoryW(ptr long)
 @ stub GetWriteWatch

@@ -1357,3 +1357,23 @@ BOOL WINAPI GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_sectors,
     if (root && !(rootW = FILE_name_AtoW( root, FALSE ))) return FALSE;
     return GetDiskFreeSpaceW( rootW, cluster_sectors, sector_bytes, free_clusters, total_clusters );
 }
+
+/***********************************************************************
+ *           GetVolumePathNameA   (KERNEL32.@)
+ */
+BOOL WINAPI GetVolumePathNameA(LPCSTR filename, LPSTR volumepathname, DWORD buflen)
+{
+    FIXME("(%s, %p, %ld), stub!\n", debugstr_a(filename), volumepathname, buflen);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GetVolumePathNameW   (KERNEL32.@)
+ */
+BOOL WINAPI GetVolumePathNameW(LPCWSTR filename, LPWSTR volumepathname, DWORD buflen)
+{
+    FIXME("(%s, %p, %ld), stub!\n", debugstr_w(filename), volumepathname, buflen);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
