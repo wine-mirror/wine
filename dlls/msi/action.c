@@ -1193,6 +1193,15 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
                 break;
             }
 
+            sz=0x100;
+            rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Error is %x\n",rc);
+                msiobj_release(&row->hdr);
+                break;
+            }
+
             /* check conditions */
             if (!MSI_RecordIsNull(row,2))
             {
@@ -1207,20 +1216,13 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
                     {
                         HeapFree(GetProcessHeap(),0,cond);
                         msiobj_release(&row->hdr);
+                        TRACE("Skipping action: %s (condition is false)\n",
+                                    debugstr_w(buffer));
                         continue; 
                     }
                     else
                         HeapFree(GetProcessHeap(),0,cond);
                 }
-            }
-
-            sz=0x100;
-            rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Error is %x\n",rc);
-                msiobj_release(&row->hdr);
-                break;
             }
 
             rc = ACTION_PerformAction(package,buffer, FALSE);
