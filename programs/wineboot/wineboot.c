@@ -375,7 +375,8 @@ static DWORD runCmd(LPWSTR cmdline, LPCWSTR dir, BOOL wait, BOOL minimized)
 
     if( !CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, dir, &si, &info) )
     {
-        WINE_ERR("Failed to run command (%ld)\n", GetLastError() );
+        WINE_ERR("Failed to run command %s (%ld)\n", wine_dbgstr_w(cmdline),
+                 GetLastError() );
 
         return INVALID_RUNCMD_RETURN;
     }
