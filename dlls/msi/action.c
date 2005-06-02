@@ -4558,9 +4558,11 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
     }
 
     package->progids[index].CurVerIndex = -1;
+    package->progids[index].VersionIndIndex = -1;
 
     /* if we have a parent then we may be that parents CurVer */
-    if (package->progids[index].ParentIndex >= 0)
+    if (package->progids[index].ParentIndex >= 0 && 
+        package->progids[index].ParentIndex != index)
     {
         int pindex = package->progids[index].ParentIndex;
         while (package->progids[pindex].ParentIndex>= 0)
@@ -4569,6 +4571,7 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
         FIXME("BAD BAD need to determing if we are really the CurVer\n");
 
         package->progids[index].CurVerIndex = pindex;
+        package->progids[pindex].VersionIndIndex = index;
     }
     
     return index;
@@ -5441,16 +5444,17 @@ static UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
             RegCloseKey(hkey3);
 
             if (package->classes[i].ProgIDIndex >= 0 &&
-                package->progids[package->classes[i].ProgIDIndex].ParentIndex 
-                            >= 0)
+                package->progids[package->classes[i].ProgIDIndex].
+                                VersionIndIndex >= 0)
             {
-                progid = package->progids[package->progids[
-                        package->classes[i].ProgIDIndex].ParentIndex].ProgID;
-
+                LPWSTR viprogid = strdupW(package->progids[package->progids[
+                        package->classes[i].ProgIDIndex].VersionIndIndex].
+                        ProgID);
                 RegCreateKeyW(hkey2,szVIProgID,&hkey3);
-                RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)progid,
-                            (strlenW(progid)+1) *sizeof(WCHAR));
+                RegSetValueExW(hkey3,NULL,0,REG_SZ,(LPVOID)viprogid,
+                            (strlenW(viprogid)+1) *sizeof(WCHAR));
                 RegCloseKey(hkey3);
+                HeapFree(GetProcessHeap(), 0, viprogid);
             }
         }
 

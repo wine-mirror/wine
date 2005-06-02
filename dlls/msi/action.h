@@ -147,6 +147,7 @@ typedef struct tagMSIPROGID
     /* not in the table, set during installation */
     BOOL InstallMe;
     INT CurVerIndex;
+    INT VersionIndIndex;
 } MSIPROGID;
 
 typedef struct tagMSIVERB
