@@ -906,7 +906,7 @@ static void test_CompareStringA()
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "/m", -1, "'o", -1 );
     ok(ret == 3, "/m vs 'o expected 3, got %d\n", ret);
 
-#if 0 /* this requires collation table patch to make it MS compatible */
+    if (0) { /* this requires collation table patch to make it MS compatible */
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0, "'o", -1, "-o", -1 );
     ok(ret == 1, "'o vs -o expected 1, got %d\n", ret);
 
@@ -942,7 +942,7 @@ static void test_CompareStringA()
 
     ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, SORT_STRINGSORT, "-m", -1, "`o", -1 );
     ok(ret == 1, "-m vs `o expected 1, got %d\n", ret);
-#endif
+    }
 
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, "aLuZkUtZ", 8, "aLuZkUtZ", 9);
     ok(ret == 2, "aLuZkUtZ vs aLuZkUtZ\\0 expected 2, got %d\n", ret);
@@ -1285,7 +1285,7 @@ static void test_LCMapStringW(void)
        "unexpected error code %ld\n", GetLastError());
 }
 
-#if 0 /* this requires collation table patch to make it MS compatible */
+/* this requires collation table patch to make it MS compatible */
 const char *strings_sorted[] =
 {
 "'",
@@ -1410,7 +1410,6 @@ static void test_sorting(void)
            "qsort using sort keys failed for element %d\n", i);
     }
 }
-#endif
 
 static void test_FoldStringA(void)
 {
@@ -2046,24 +2045,28 @@ static void test_SetLocaleInfoA(void)
   EXPECT_FLAGS;
 }
 
-static BOOL CALLBACK luilocale_proc1A(LPSTR value, LONG_PTR lParam) {
+static BOOL CALLBACK luilocale_proc1A(LPSTR value, LONG_PTR lParam)
+{
   trace("%s %08lx\n", value, lParam);
   return(TRUE);
 }
 
-static BOOL CALLBACK luilocale_proc2A(LPSTR value, LONG_PTR lParam) {
+static BOOL CALLBACK luilocale_proc2A(LPSTR value, LONG_PTR lParam)
+{
   ok(!enumCount, "callback called again unexpected\n");
   enumCount++;
   return(FALSE);
 }
 
-static BOOL CALLBACK luilocale_proc3A(LPSTR value, LONG_PTR lParam) {
+static BOOL CALLBACK luilocale_proc3A(LPSTR value, LONG_PTR lParam)
+{
   ok(0,"callback called unexpected\n");
   return(FALSE);
 }
 
 static void test_EnumUILanguageA(void)
-{ BOOL ret;
+{
+  BOOL ret;
   if (!pEnumUILanguagesA) {
     trace("EnumUILanguagesA is not available on Win9x\n");
     return;
@@ -2095,9 +2098,8 @@ START_TEST(locale)
 {
   InitFunctionPointers();
 
-#if 0
-  test_EnumTimeFormats();
-#endif
+  if (0) test_EnumTimeFormats();
+
   test_GetLocaleInfoA();
   test_GetTimeFormatA();
   test_GetDateFormatA();
@@ -2113,8 +2115,8 @@ START_TEST(locale)
   test_EnumSystemLanguageGroupsA();
   test_EnumLanguageGroupLocalesA();
   test_SetLocaleInfoA();
-#if 0 /* this requires collation table patch to make it MS compatible */
-  test_sorting();
-#endif
   test_EnumUILanguageA();
+
+  /* this requires collation table patch to make it MS compatible */
+  if (0) test_sorting();
 }
