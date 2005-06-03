@@ -24,14 +24,12 @@ OPENGLFILES = \
 
 C_SRCS = \
 	@OPENGLFILES@ \
-	dclipper/main.c \
+	clipper.c \
 	ddraw_utils.c \
 	ddraw/hal.c \
 	ddraw/main.c \
 	ddraw/thunks.c \
 	ddraw/user.c \
-	dpalette/hal.c \
-	dpalette/main.c \
 	dsurface/dib.c \
 	dsurface/fakezbuffer.c \
 	dsurface/gamma.c \
@@ -41,6 +39,8 @@ C_SRCS = \
 	dsurface/user.c \
 	dsurface/wndproc.c \
 	main.c \
+	palette_hal.c \
+	palette_main.c \
 	regsvr.c
 
 RC_SRCS = version.rc
@@ -49,10 +49,8 @@ SUBDIRS = tests
 
 EXTRASUBDIRS = \
 	d3ddevice \
-	dclipper \
 	ddraw \
 	direct3d \
-	dpalette \
 	dsurface
 
 @MAKE_DLL_RULES@
