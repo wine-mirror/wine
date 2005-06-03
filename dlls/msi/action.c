@@ -6841,12 +6841,18 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
     HKEY hkey;
     INT i;
     MSIRECORD *uirow;
+    BOOL install_on_demand = TRUE;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
 
     load_classes_and_such(package);
 
+    /* We need to set install_on_demand based on if the shell handles advertised
+     * shortcuts and the like. Because Mike McCormack is working on this i am
+     * going to default to TRUE
+     */
+    
     for (i = 0; i < package->loaded_extensions; i++)
     {
         WCHAR extension[257];
@@ -6864,8 +6870,8 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
          */
         if ((!ACTION_VerifyFeatureForAction(package, f_index,
                                 INSTALLSTATE_LOCAL)) &&
-            (!ACTION_VerifyFeatureForAction(package, f_index,
-                                INSTALLSTATE_ADVERTISED)))
+             !(install_on_demand && ACTION_VerifyFeatureForAction(package,
+                             f_index, INSTALLSTATE_ADVERTISED)))
         {
             TRACE("Skipping extension  %s reg due to disabled feature %s\n",
                             debugstr_w(package->extensions[i].Extension),
@@ -6879,7 +6885,11 @@ static UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
 
         package->extensions[i].Installed = TRUE;
 
-        if (package->extensions[i].ProgIDIndex >= 0)
+        /* this is only registered if the extension has at least 1 verb
+         * according to MSDN
+         */
+        if (package->extensions[i].ProgIDIndex >= 0 &&
+                package->extensions[i].VerbCount > 0)
            mark_progid_for_install(package, package->extensions[i].ProgIDIndex);
 
         if (package->extensions[i].MIMEIndex >= 0)
