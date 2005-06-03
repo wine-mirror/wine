@@ -696,28 +696,24 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                         wlen = wine_server_reply_size(reply) + sizeof(WCHAR);
                         if (Length >= len + sizeof(*spi))
                         {
+                            /* ftCreationTime, ftUserTime, ftCreateTime;
+                             * vmCounters, ioCounters
+                             */
+ 
                             memset(spi, 0, sizeof(*spi));
+
                             spi->dwOffset = sizeof(*spi);
                             spi->dwThreadCount = reply->threads;
-                            memset(&spi->ftCreationTime, 0, sizeof(spi->ftCreationTime));
+
                             /* spi->pszProcessName will be set later on */
+
                             spi->dwBasePriority = reply->priority;
                             spi->dwProcessID = (DWORD)reply->pid;
                             spi->dwParentProcessID = (DWORD)reply->ppid;
                             spi->dwHandleCount = reply->handles;
-                            spi->dwVirtualBytesPeak = 0; /* FIXME */
-                            spi->dwVirtualBytes = 0; /* FIXME */
-                            spi->dwPageFaults = 0; /* FIXME */
-                            spi->dwWorkingSetPeak = 0; /* FIXME */
-                            spi->dwWorkingSet = 0; /* FIXME */
-                            spi->dwUnknown5 = 0; /* FIXME */
-                            spi->dwPagedPool = 0; /* FIXME */
-                            spi->dwUnknown6 = 0; /* FIXME */
-                            spi->dwNonPagedPool = 0; /* FIXME */
-                            spi->dwPageFileBytesPeak = 0; /* FIXME */
-                            spi->dwPrivateBytes = 0; /* FIXME */
-                            spi->dwPageFileBytes = 0; /* FIXME */
+
                             /* spi->ti will be set later on */
+
                             len += sizeof(*spi) - sizeof(spi->ti);
                         }
                         else ret = STATUS_INFO_LENGTH_MISMATCH;

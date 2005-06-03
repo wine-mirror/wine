@@ -1059,13 +1059,30 @@ typedef struct _SYSTEM_KERNEL_DEBUGGER_INFORMATION {
 } SYSTEM_KERNEL_DEBUGGER_INFORMATION, *PSYSTEM_KERNEL_DEBUGGER_INFORMATION;
 
 /* System Information Class 0x05 */
+
+typedef struct _VM_COUNTERS_ {
+    SIZE_T PeakVirtualSize;
+    SIZE_T VirtualSize;
+    ULONG  PageFaultCount;
+    SIZE_T PeakWorkingSetSize;
+    SIZE_T WorkingSetSize;
+    SIZE_T QuotaPeakPagedPoolUsage;
+    SIZE_T QuotaPagedPoolUsage;
+    SIZE_T QuotaPeakNonPagedPoolUsage;
+    SIZE_T QuotaNonPagedPoolUsage;
+    SIZE_T PagefileUsage;
+    SIZE_T PeakPagefileUsage;
+} VM_COUNTERS, *PVM_COUNTERS;
+
 typedef struct _SYSTEM_PROCESS_INFORMATION {
 #ifdef __WINESRC__
     DWORD dwOffset;
     DWORD dwThreadCount;
     DWORD dwUnknown1[6];
     FILETIME ftCreationTime;
-    DWORD dwUnknown2[5];
+    FILETIME ftUserTime;
+    FILETIME ftKernelTime;
+    DWORD dwUnknown2;
     WCHAR *pszProcessName;
     DWORD dwBasePriority;
     DWORD dwProcessID;
@@ -1073,19 +1090,8 @@ typedef struct _SYSTEM_PROCESS_INFORMATION {
     DWORD dwHandleCount;
     DWORD dwUnknown3;
     DWORD dwUnknown4;
-    DWORD dwVirtualBytesPeak;
-    DWORD dwVirtualBytes;
-    DWORD dwPageFaults;
-    DWORD dwWorkingSetPeak;
-    DWORD dwWorkingSet;
-    DWORD dwUnknown5;
-    DWORD dwPagedPool;
-    DWORD dwUnknown6;
-    DWORD dwNonPagedPool;
-    DWORD dwPageFileBytesPeak;
-    DWORD dwPrivateBytes;
-    DWORD dwPageFileBytes;
-    DWORD dwUnknown7[4];
+    VM_COUNTERS vmCounters;
+    IO_COUNTERS ioCounters;
     SYSTEM_THREAD_INFORMATION ti[1];
 #else
     ULONG NextEntryOffset;
@@ -1129,20 +1135,6 @@ typedef struct _WINSTATIONINFORMATIONW {
   ULONG LogonId;
   BYTE Reserved3[1140];
 } WINSTATIONINFORMATIONW, *PWINSTATIONINFORMATIONW;
-
-typedef struct _VM_COUNTERS_ {
-    SIZE_T PeakVirtualSize;
-    SIZE_T VirtualSize;
-    ULONG  PageFaultCount;
-    SIZE_T PeakWorkingSetSize;
-    SIZE_T WorkingSetSize;
-    SIZE_T QuotaPeakPagedPoolUsage;
-    SIZE_T QuotaPagedPoolUsage;
-    SIZE_T QuotaPeakNonPagedPoolUsage;
-    SIZE_T QuotaNonPagedPoolUsage;
-    SIZE_T PagefileUsage;
-    SIZE_T PeakPagefileUsage;
-} VM_COUNTERS, *PVM_COUNTERS;
 
 typedef BOOLEAN (WINAPI * PWINSTATIONQUERYINFORMATIONW)(HANDLE,ULONG,WINSTATIONINFOCLASS,PVOID,ULONG,PULONG);
 
