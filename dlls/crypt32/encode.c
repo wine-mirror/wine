@@ -313,20 +313,14 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
-static BOOL CRYPT_EncodeInt(DWORD dwCertEncodingType, const void *pvStructInfo,
- DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded,
- DWORD *pcbEncoded)
+static BOOL WINAPI CRYPT_AsnEncodeInt(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
     INT val, i;
     BYTE significantBytes, padByte = 0, bytesNeeded;
     BOOL neg = FALSE, pad = FALSE;
 
-    if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) != X509_ASN_ENCODING &&
-     (dwCertEncodingType & CMSG_ENCODING_TYPE_MASK) != PKCS_7_ASN_ENCODING)
-    {
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        return FALSE;
-    }
     if (!pvStructInfo)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
@@ -403,7 +397,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
  BYTE *pbEncoded, DWORD *pcbEncoded)
 {
-    BOOL ret = FALSE, encoded = FALSE;
+    BOOL ret = FALSE;
+    HMODULE lib = NULL;
+    CryptEncodeObjectExFunc encodeFunc = NULL;
 
     TRACE("(0x%08lx, %s, %p, 0x%08lx, %p, %p, %p): semi-stub\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
@@ -418,30 +414,30 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 
     if (!HIWORD(lpszStructType))
     {
-        switch (LOWORD(lpszStructType))
+        if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) == X509_ASN_ENCODING
+         || (dwCertEncodingType & CMSG_ENCODING_TYPE_MASK) ==
+         PKCS_7_ASN_ENCODING)
         {
-        case (WORD)X509_INTEGER:
-            ret = CRYPT_EncodeInt(dwCertEncodingType, pvStructInfo, dwFlags,
-             pEncodePara, pbEncoded, pcbEncoded);
-            break;
-        default:
-            FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
+            switch (LOWORD(lpszStructType))
+            {
+            case (WORD)X509_INTEGER:
+                encodeFunc = CRYPT_AsnEncodeInt;
+                break;
+            default:
+                FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
+            }
         }
     }
-    if (!encoded)
-    {
-        HMODULE lib;
-        CryptEncodeObjectExFunc pCryptEncodeObjectEx =
-         (CryptEncodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
+    if (!encodeFunc)
+        encodeFunc = (CryptEncodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
          lpszStructType, "CryptEncodeObjectEx", &lib);
-
-        if (pCryptEncodeObjectEx)
-        {
-            ret = pCryptEncodeObjectEx(dwCertEncodingType, lpszStructType,
-             pvStructInfo, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
-            FreeLibrary(lib);
-        }
-    }
+    if (encodeFunc)
+        ret = encodeFunc(dwCertEncodingType, lpszStructType, pvStructInfo,
+         dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    else
+        SetLastError(ERROR_FILE_NOT_FOUND);
+    if (lib)
+        FreeLibrary(lib);
     return ret;
 }
 
@@ -493,7 +489,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
-    BOOL ret = FALSE, decoded = FALSE;
+    BOOL ret = FALSE;
+    HMODULE lib = NULL;
+    CryptDecodeObjectExFunc decodeFunc = NULL;
 
     FIXME("(0x%08lx, %s, %p, %ld, 0x%08lx, %p, %p, %p): stub\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
@@ -508,26 +506,26 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 
     if (!HIWORD(lpszStructType))
     {
-        switch (LOWORD(lpszStructType))
+        if ((dwCertEncodingType & CERT_ENCODING_TYPE_MASK) == X509_ASN_ENCODING
+         || (dwCertEncodingType & CMSG_ENCODING_TYPE_MASK) ==
+         PKCS_7_ASN_ENCODING)
         {
-        default:
-            FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
+            switch (LOWORD(lpszStructType))
+            {
+            default:
+                FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
+            }
         }
     }
-    if (!decoded)
-    {
-        HMODULE lib;
-        CryptDecodeObjectExFunc pCryptDecodeObjectEx =
-         (CryptDecodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
+    if (!decodeFunc)
+        decodeFunc = (CryptDecodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
          lpszStructType, "CryptDecodeObjectEx", &lib);
-
-        if (pCryptDecodeObjectEx)
-        {
-            ret = pCryptDecodeObjectEx(dwCertEncodingType, lpszStructType,
-             pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
-             pcbStructInfo);
-            FreeLibrary(lib);
-        }
-    }
+    if (decodeFunc)
+        ret = decodeFunc(dwCertEncodingType, lpszStructType, pbEncoded,
+         cbEncoded, dwFlags, pDecodePara, pvStructInfo, pcbStructInfo);
+    else
+        SetLastError(ERROR_FILE_NOT_FOUND);
+    if (lib)
+        FreeLibrary(lib);
     return ret;
 }
