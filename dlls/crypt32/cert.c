@@ -1,6 +1,6 @@
 /*
  * Copyright 2002 Mike McCormack for CodeWeavers
- * Copyright (C) 2004 Juan Lang
+ * Copyright 2004,2005 Juan Lang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,9 +54,13 @@ HCERTSTORE WINAPI CertOpenStore( LPCSTR lpszStoreProvider,
     FIXME("%s %08lx %08lx %08lx %p stub\n", debugstr_a(lpszStoreProvider),
           dwMsgAndCertEncodingType, hCryptProv, dwFlags, pvPara);
 
-    if( lpszStoreProvider == (LPCSTR) 0x0009 )
+    if( lpszStoreProvider == CERT_STORE_PROV_SYSTEM_A )
     {
         FIXME("pvPara = %s\n", debugstr_a( (LPCSTR) pvPara ) );
+    }
+    else if ( lpszStoreProvider == CERT_STORE_PROV_SYSTEM_W )
+    {
+        FIXME("pvPara = %s\n", debugstr_w( (LPCWSTR) pvPara ) );
     }
 
     hcs = HeapAlloc( GetProcessHeap(), 0, sizeof (WINECRYPT_CERTSTORE) );
@@ -71,15 +75,17 @@ HCERTSTORE WINAPI CertOpenStore( LPCSTR lpszStoreProvider,
 HCERTSTORE WINAPI CertOpenSystemStoreA(HCRYPTPROV hProv,
  LPCSTR szSubSystemProtocol)
 {
-    FIXME("(%ld, %s), stub\n", hProv, debugstr_a(szSubSystemProtocol));
-    return (HCERTSTORE)1;
+    return CertOpenStore( CERT_STORE_PROV_SYSTEM_A, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_SYSTEM_STORE_LOCAL_MACHINE |
+     CERT_SYSTEM_STORE_USERS, szSubSystemProtocol );
 }
 
 HCERTSTORE WINAPI CertOpenSystemStoreW(HCRYPTPROV hProv,
  LPCWSTR szSubSystemProtocol)
 {
-    FIXME("(%ld, %s), stub\n", hProv, debugstr_w(szSubSystemProtocol));
-    return (HCERTSTORE)1;
+    return CertOpenStore( CERT_STORE_PROV_SYSTEM_W, 0, 0,
+     CERT_SYSTEM_STORE_CURRENT_USER | CERT_SYSTEM_STORE_LOCAL_MACHINE |
+     CERT_SYSTEM_STORE_USERS, szSubSystemProtocol );
 }
 
 PCCERT_CONTEXT WINAPI CertEnumCertificatesInStore(HCERTSTORE hCertStore, PCCERT_CONTEXT pPrev)
@@ -142,10 +148,16 @@ BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext)
 
 BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags )
 {
+    WINECRYPT_CERTSTORE *hcs = (WINECRYPT_CERTSTORE *) hCertStore;
+
     FIXME("%p %08lx\n", hCertStore, dwFlags );
     if( ! hCertStore )
         return FALSE;
 
+    if ( hcs->dwMagic != WINE_CRYPTCERTSTORE_MAGIC )
+        return FALSE;
+
+    hcs->dwMagic = 0;
     HeapFree( GetProcessHeap(), 0, hCertStore );
 
     return TRUE;
