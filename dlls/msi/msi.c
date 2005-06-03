@@ -462,6 +462,7 @@ UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
 {
     LPWSTR szwProduct = NULL, szwAttribute = NULL, szwBuffer = NULL;
     UINT r = ERROR_OUTOFMEMORY;
+    DWORD pcchwValueBuf = 0;
 
     TRACE("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szAttribute),
           szBuffer, pcchValueBuf);
@@ -483,14 +484,17 @@ UINT WINAPI MsiGetProductInfoA(LPCSTR szProduct, LPCSTR szAttribute,
     if( szBuffer )
     {
         szwBuffer = HeapAlloc( GetProcessHeap(), 0, (*pcchValueBuf) * sizeof(WCHAR) );
+        pcchwValueBuf = *pcchValueBuf;
         if( !szwBuffer )     
             goto end;
     }
 
-    r = MsiGetProductInfoW( szwProduct, szwAttribute, szwBuffer, pcchValueBuf );
+    r = MsiGetProductInfoW( szwProduct, szwAttribute, szwBuffer, 
+                            &pcchwValueBuf );
 
     if( ERROR_SUCCESS == r )
-        WideCharToMultiByte(CP_ACP, 0, szwBuffer, -1, szBuffer, *pcchValueBuf, NULL, NULL);
+        *pcchValueBuf = WideCharToMultiByte(CP_ACP, 0, szwBuffer, pcchwValueBuf,
+                        szBuffer, *pcchValueBuf, NULL, NULL);
 
 end:
     HeapFree( GetProcessHeap(), 0, szwProduct );
@@ -569,6 +573,8 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         FIXME("0 (zero) if advertised, 1(one) if per machine.\n");
         if (szBuffer)
             szBuffer[0] = 1;
+        if (pcchValueBuf)
+            *pcchValueBuf = 1;
         r = ERROR_SUCCESS;
     }
     else
