@@ -5690,6 +5690,9 @@ static UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
         WCHAR clsid[0x1000];
 
         /* check if this progid is to be installed */
+        package->progids[i].InstallMe =  ((package->progids[i].InstallMe) ||
+              (package->progids[i].ClassIndex >= 0 &&
+              package->classes[package->progids[i].ClassIndex].Installed));
 
         if (!package->progids[i].InstallMe)
         {
