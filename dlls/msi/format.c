@@ -403,7 +403,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         return 0;
     }
 
-    TRACE("Starting with %s\n",debugstr_w(ptr));
+    TRACE("Starting with %s\n",debugstr_wn(ptr,len));
 
     /* scan for special characters... fast exit */
     if ((!scanW(ptr,'[',len) || (scanW(ptr,'[',len) && !scanW(ptr,']',len))) && 
@@ -435,8 +435,8 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         {
             LPBYTE nd2;
 
-            TRACE("after value %s .. %s\n",debugstr_w((LPWSTR)newdata),
-                                       debugstr_w(mark));
+            TRACE("after value %s \n",debugstr_wn((LPWSTR)newdata,
+                                    size/sizeof(WCHAR)));
             chunk = (len - (progress - ptr)) * sizeof(WCHAR);
             TRACE("after chunk is %li + %li\n",size,chunk);
             if (size)
@@ -477,7 +477,8 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
             key = value;
         }
 
-        TRACE("Current %s .. %s\n",debugstr_w((LPWSTR)newdata),debugstr_w(key));
+        TRACE("Current %s .. %s\n",debugstr_wn((LPWSTR)newdata, 
+                                size/sizeof(WCHAR)),debugstr_w(key));
 
         if (!package)
         {
@@ -566,7 +567,8 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         progress = mark2+1;
     }
 
-    TRACE("after everything %s\n",debugstr_w((LPWSTR)newdata));
+    TRACE("after everything %s\n",debugstr_wn((LPWSTR)newdata, 
+                            size/sizeof(WCHAR)));
 
     *data = (LPWSTR)newdata;
     return size / sizeof(WCHAR);
