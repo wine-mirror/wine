@@ -276,7 +276,8 @@ typedef struct tagLISTVIEW_INFO
   HFONT hDefaultFont;
   HFONT hFont;
   INT ntmHeight;		/* Some cached metrics of the font used */
-  INT ntmAveCharWidth;		/* by the listview to draw items */
+  INT ntmMaxCharWidth;		/* by the listview to draw items */
+  INT nEllipsisWidth;
   BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
   BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
   BOOL bFocus;
@@ -2492,12 +2493,17 @@ static void LISTVIEW_SaveTextMetrics(LISTVIEW_INFO *infoPtr)
     HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
     HFONT hOldFont = SelectObject(hdc, hFont);
     TEXTMETRICW tm;
+    SIZE sz;
 
     if (GetTextMetricsW(hdc, &tm))
     {
 	infoPtr->ntmHeight = tm.tmHeight;
-	infoPtr->ntmAveCharWidth = tm.tmAveCharWidth;
+	infoPtr->ntmMaxCharWidth = tm.tmMaxCharWidth;
     }
+
+    if (GetTextExtentPoint32A(hdc, "...", 3, &sz))
+	infoPtr->nEllipsisWidth = sz.cx;
+	
     SelectObject(hdc, hOldFont);
     ReleaseDC(infoPtr->hwndSelf, hdc);
     
@@ -4269,6 +4275,7 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
 {
     COLUMN_INFO *lpColumnInfo;
     RECT rcOld, rcCol;
+    POINT ptOrigin;
     INT nCol;
    
     if (nColumn < 0 || DPA_GetPtrCount(infoPtr->hdpaColumns) < 1) return;
@@ -4295,10 +4302,11 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     infoPtr->nItemWidth += dx;
 
     LISTVIEW_UpdateScroll(infoPtr);
+    LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
 
     /* scroll to cover the deleted column, and invalidate for redraw */
     rcOld = infoPtr->rcList;
-    rcOld.left = rcCol.left;
+    rcOld.left = ptOrigin.x + rcCol.left + dx;
     ScrollWindowEx(infoPtr->hwndSelf, dx, 0, &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
     
     /* we can restore focus now */
@@ -8286,21 +8294,27 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 	    dx = cxy - (lpColumnInfo->rcHeader.right - lpColumnInfo->rcHeader.left);
 	    if (dx != 0)
 	    {
-		RECT rcCol = lpColumnInfo->rcHeader;
-
 		lpColumnInfo->rcHeader.right += dx;
 		LISTVIEW_ScrollColumns(infoPtr, lpnmh->iItem + 1, dx);
 		LISTVIEW_UpdateItemSize(infoPtr);
 		if (uView == LVS_REPORT && is_redrawing(infoPtr))
 		{
-		    /* this trick works for left aligned columns only */
-		    if ((lpColumnInfo->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_LEFT)
-		    {
-			rcCol.right = min (rcCol.right, lpColumnInfo->rcHeader.right);
-			rcCol.left = max (rcCol.left, rcCol.right - 3 * infoPtr->ntmAveCharWidth);
-		    }
+		    POINT ptOrigin;
+		    RECT rcCol = lpColumnInfo->rcHeader;
+		    
+		    LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
+		    OffsetRect(&rcCol, ptOrigin.x, 0);
+		    
 		    rcCol.top = infoPtr->rcList.top;
 		    rcCol.bottom = infoPtr->rcList.bottom;
+
+		    /* resizing left-aligned columns leaves most of the left side untouched */
+		    if ((lpColumnInfo->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_LEFT)
+		    {
+			INT nMaxDirty = infoPtr->nEllipsisWidth + infoPtr->ntmMaxCharWidth + dx;
+			rcCol.left = max (rcCol.left, rcCol.right - nMaxDirty);
+		    }
+		    
 		    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
 		}
 	    }
