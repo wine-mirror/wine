@@ -796,15 +796,31 @@ static MSIRECORD *msi_get_dialog_record( msi_dialog *dialog )
     return rec;
 }
 
+static void msi_dialog_adjust_dialog_size( msi_dialog *dialog, LPSIZE sz )
+{
+    RECT rect;
+    LONG style;
+
+    /* turn the client size into the window rectangle */
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = msi_dialog_scale_unit( dialog, sz->cx );
+    rect.bottom = msi_dialog_scale_unit( dialog, sz->cy );
+    style = GetWindowLongPtrW( dialog->hwnd, GWL_STYLE );
+    AdjustWindowRect( &rect, style, FALSE );
+    sz->cx = rect.right - rect.left;
+    sz->cy = rect.bottom - rect.top;
+}
+
 static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
 {
     static const WCHAR df[] = {
         'D','e','f','a','u','l','t','U','I','F','o','n','t',0 };
     msi_dialog *dialog = (msi_dialog*) cs->lpCreateParams;
     MSIRECORD *rec = NULL;
-    DWORD width, height;
     LPCWSTR text;
     LPWSTR title = NULL;
+    SIZE size;
 
     TRACE("%p %p\n", dialog, dialog->package);
 
@@ -820,19 +836,18 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
 
     dialog->scale = msi_dialog_get_sans_serif_height(dialog->hwnd);
 
-    width = MSI_RecordGetInteger( rec, 4 );
-    height = MSI_RecordGetInteger( rec, 5 );
+    size.cx = MSI_RecordGetInteger( rec, 4 );
+    size.cy = MSI_RecordGetInteger( rec, 5 );
+    msi_dialog_adjust_dialog_size( dialog, &size );
+
     dialog->attributes = MSI_RecordGetInteger( rec, 6 );
     text = MSI_RecordGetString( rec, 7 );
-
-    width = msi_dialog_scale_unit( dialog, width );
-    height = msi_dialog_scale_unit( dialog, height ) + 25; /* FIXME */
 
     dialog->default_font = load_dynamic_property( dialog->package, df, NULL );
 
     deformat_string( dialog->package, text, &title );
     SetWindowTextW( hwnd, title );
-    SetWindowPos( hwnd, 0, 0, 0, width, height,
+    SetWindowPos( hwnd, 0, 0, 0, size.cx, size.cy,
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW );
 
     HeapFree( GetProcessHeap(), 0, title );
