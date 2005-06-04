@@ -67,7 +67,7 @@ typedef struct VfwCapture
     const struct IPersistPropertyBagVtbl * IPersistPropertyBag_vtbl;
 
     BOOL init;
-    Capture *myCap;
+    Capture *driver_info;
     ULONG refCount;
     FILTER_INFO filterInfo;
     FILTER_STATE state;
@@ -80,38 +80,10 @@ typedef struct VfwCapture
 typedef struct VfwPinImpl
 {
     OutputPin pin;
-    Capture *myCap;
+    Capture *driver_info;
     IKsPropertySetVtbl * KSP_VT;
 } VfwPinImpl;
 
-static const Video_Init Constructors[] =
-{
-    /* V4l_Init, */
-    NULL
-};
-
-static HRESULT Capture_Initialise(Capture **dimi, IPin *pOut, USHORT card)
-{
-    HRESULT r = E_FAIL;
-    Capture *driver;
-    int i;
-
-    TRACE("%p %p %hu\n", dimi, pOut, card);
-
-    driver = CoTaskMemAlloc( sizeof(Capture) );
-    if (!driver)
-        return E_OUTOFMEMORY;
-
-    for( i=0; FAILED(r) && Constructors[i]; i++ )
-        r = Constructors[i]( driver, pOut, card );
-
-    if( SUCCEEDED(r) )
-        *dimi = driver;
-    else
-        CoTaskMemFree( driver );
-
-    return r;
-}
 
 IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr)
 {
@@ -181,7 +153,8 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
     {
         FIXME("Capture system not initialised when looking for %s, "
               "trying it on primary device now\n", debugstr_guid(riid));
-        if (FAILED(Capture_Initialise(&This->myCap, (IPin *)This->pOutputPin, 0)))
+        This->driver_info = qcap_driver_init( This->pOutputPin, 0 );
+        if (!This->driver_info)
         {
             ERR("VfwCapture initialisation failed\n");
             return E_UNEXPECTED;
@@ -225,8 +198,8 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
         if (This->init)
         {
             if (This->state != State_Stopped)
-                INVOKE(This->myCap, Stop, &This->state);
-            INVOKENP(This->myCap, Destroy);
+                qcap_driver_stop(This->driver_info, &This->state);
+            qcap_driver_destroy(This->driver_info);
         }
         pin = (IPinImpl*) This->pOutputPin;
         if (pin->pConnectedTo != NULL)
@@ -259,7 +232,7 @@ static HRESULT WINAPI VfwCapture_Stop(IBaseFilter * iface)
     VfwCapture *This = (VfwCapture *)iface;
 
     TRACE("()\n");
-    return INVOKE(This->myCap, Stop, &This->state);
+    return qcap_driver_stop(This->driver_info, &This->state);
 }
 
 static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
@@ -267,14 +240,14 @@ static HRESULT WINAPI VfwCapture_Pause(IBaseFilter * iface)
     VfwCapture *This = (VfwCapture *)iface;
 
     TRACE("()\n");
-    return INVOKE(This->myCap, Pause, &This->state);
+    return qcap_driver_pause(This->driver_info, &This->state);
 }
 
 static HRESULT WINAPI VfwCapture_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 {
     VfwCapture *This = (VfwCapture *)iface;
     TRACE("(%lx%08lx)\n", (ULONG)(tStart >> 32), (ULONG)tStart);
-    return INVOKE(This->myCap, Run, &This->state);
+    return qcap_driver_run(This->driver_info, &This->state);
 }
 
 static HRESULT WINAPI
@@ -444,7 +417,7 @@ AMStreamConfig_SetFormat(IAMStreamConfig *iface, AM_MEDIA_TYPE *pmt)
             return VFW_E_INVALIDMEDIATYPE;
     }
 
-    hr = INVOKE(This->myCap, SetFormat, pmt);
+    hr = qcap_driver_set_format(This->driver_info, pmt);
     if (SUCCEEDED(hr) && This->filterInfo.pGraph && pin->pConnectedTo )
     {
         hr = IFilterGraph_Reconnect(This->filterInfo.pGraph, This->pOutputPin);
@@ -461,7 +434,7 @@ AMStreamConfig_GetFormat( IAMStreamConfig *iface, AM_MEDIA_TYPE **pmt )
     ICOM_THIS_MULTI(VfwCapture, IAMStreamConfig_vtbl, iface);
 
     TRACE("%p -> (%p)\n", iface, pmt);
-    return INVOKE(This->myCap, GetFormat, pmt);
+    return qcap_driver_get_format(This->driver_info, pmt);
 }
 
 static HRESULT WINAPI
@@ -527,7 +500,7 @@ AMVideoProcAmp_GetRange( IAMVideoProcAmp * iface, long Property, long *pMin,
 {
     ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
 
-    return INVOKE( This->myCap, GetPropRange, Property, pMin, pMax,
+    return qcap_driver_get_prop_range( This->driver_info, Property, pMin, pMax,
                    pSteppingDelta, pDefault, pCapsFlags );
 }
 
@@ -537,7 +510,7 @@ AMVideoProcAmp_Set( IAMVideoProcAmp * iface, long Property, long lValue,
 {
     ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
 
-    return INVOKE(This->myCap, Set_Prop, Property, lValue, Flags);
+    return qcap_driver_set_prop(This->driver_info, Property, lValue, Flags);
 }
 
 static HRESULT WINAPI
@@ -546,7 +519,7 @@ AMVideoProcAmp_Get( IAMVideoProcAmp * iface, long Property, long *lValue,
 {
     ICOM_THIS_MULTI(VfwCapture, IAMVideoProcAmp_vtbl, iface);
 
-    return INVOKE(This->myCap, Get_Prop, Property, lValue, Flags);
+    return qcap_driver_get_prop(This->driver_info, Property, lValue, Flags);
 }
 
 static const IAMVideoProcAmpVtbl IAMVideoProcAmp_VTable =
@@ -637,12 +610,17 @@ PPB_Load( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
     {
         VfwPinImpl *pin;
 
-        hr = Capture_Initialise(&This->myCap, This->pOutputPin,
-               (USHORT)var.__VARIANT_NAME_1.__VARIANT_NAME_2.__VARIANT_NAME_3.ulVal);
-        pin = (VfwPinImpl *)This->pOutputPin;
-        pin->myCap = This->myCap;
-        if (SUCCEEDED(hr))
+        This->driver_info = qcap_driver_init( This->pOutputPin,
+               var.__VARIANT_NAME_1.__VARIANT_NAME_2.__VARIANT_NAME_3.ulVal );
+        if (This->driver_info)
+        {
+            pin = (VfwPinImpl *)This->pOutputPin;
+            pin->driver_info = This->driver_info;
             This->init = TRUE;
+            hr = S_OK;
+        }
+        else
+            hr = E_FAIL;
     }
 
     return hr;
@@ -848,7 +826,7 @@ VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 
     VfwPinImpl *This = (VfwPinImpl *)iface;
     emd.cMediaTypes = 1;
-    hr = INVOKE(This->myCap, GetFormat, &pmt);
+    hr = qcap_driver_get_format(This->driver_info, &pmt);
     emd.pMediaTypes = pmt;
     if (SUCCEEDED(hr))
         hr = IEnumMediaTypesImpl_Construct(&emd, ppEnum);

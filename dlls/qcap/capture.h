@@ -23,29 +23,18 @@
 #ifndef __QCAP_CAPTURE_H__
 #define __QCAP_CAPTURE_H__
 
-typedef HRESULT (* Video_Destroy)(void *pBox);
-typedef HRESULT (* Video_SetMediaType)(void *pBox, AM_MEDIA_TYPE * mT);
-typedef HRESULT (* Video_GetMediaType)(void *pBox, AM_MEDIA_TYPE ** mT);
-typedef HRESULT (* Video_GetPropRange)(void *pBox, long Property, long *pMin, long *pMax, long *pSteppingDelta, long *pDefault, long *pCapsFlags);
-typedef HRESULT (* Video_GetProp)(void *pBox, long Property, long *lValue, long *Flags);
-typedef HRESULT (* Video_SetProp)(void *pBox, long Property, long lValue, long Flags);
-typedef HRESULT (* Video_Control)(void *pBox, FILTER_STATE *state);
+struct _Capture;
+typedef struct _Capture Capture;
 
-typedef struct capturefunctions {
-    Video_Destroy Destroy;
-    Video_SetMediaType SetFormat;
-    Video_GetMediaType GetFormat;
-    Video_GetPropRange GetPropRange;
-    Video_GetProp Get_Prop;
-    Video_SetProp Set_Prop;
-    Video_Control Run, Pause, Stop;
-    void *pMine;
-} Capture;
-
-typedef HRESULT (* Video_Init)(Capture *pBox, IPin *pOut, USHORT card);
-HRESULT V4l_Init(Capture *pBox, IPin *pOut, USHORT card);
-
-#define INVOKE(from, func, para...) from->func(from->pMine, para)
-#define INVOKENP(from, func) from->func(from->pMine)
+Capture *qcap_driver_init(IPin*,USHORT);
+HRESULT qcap_driver_destroy(Capture*);
+HRESULT qcap_driver_set_format(Capture*,AM_MEDIA_TYPE*);
+HRESULT qcap_driver_get_format(Capture*,AM_MEDIA_TYPE**);
+HRESULT qcap_driver_get_prop_range(Capture*,long,long*,long*,long*,long*,long*);
+HRESULT qcap_driver_get_prop(Capture*,long,long*,long*);
+HRESULT qcap_driver_set_prop(Capture*,long,long,long);
+HRESULT qcap_driver_run(Capture*,FILTER_STATE*);
+HRESULT qcap_driver_pause(Capture*,FILTER_STATE*);
+HRESULT qcap_driver_stop(Capture*,FILTER_STATE*);
 
 #endif /* __QCAP_CAPTURE_H__ */
