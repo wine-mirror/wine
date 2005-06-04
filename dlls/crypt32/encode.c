@@ -482,6 +482,77 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
+static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    int val, i;
+    BOOL ret;
+
+    if (!pbEncoded || !cbEncoded)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!pvStructInfo)
+    {
+        *pcbStructInfo = sizeof(int);
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+    if (pbEncoded[0] != ASN_INTEGER)
+    {
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+    if (pbEncoded[1] == 0)
+    {
+        SetLastError(CRYPT_E_ASN1_CORRUPT);
+        return FALSE;
+    }
+    if (pbEncoded[1] > sizeof(int))
+    {
+        SetLastError(CRYPT_E_ASN1_LARGE);
+        return FALSE;
+    }
+    if (pbEncoded[2] & 0x80)
+    {
+        /* initialize to a negative value to sign-extend */
+        val = -1;
+    }
+    else
+        val = 0;
+    for (i = 0; i < pbEncoded[1]; i++)
+    {
+        val <<= 8;
+        val |= pbEncoded[2 + i];
+    }
+    if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
+    {
+        if (pDecodePara && pDecodePara->pfnAlloc)
+            *(BYTE **)pvStructInfo = pDecodePara->pfnAlloc(sizeof(int));
+        else
+            *(BYTE **)pvStructInfo = LocalAlloc(0, sizeof(int));
+        if (!*(BYTE **)pvStructInfo)
+            return FALSE;
+        memcpy(*(BYTE **)pvStructInfo, &val, sizeof(int));
+        ret = TRUE;
+    }
+    else if (*pcbStructInfo < sizeof(int))
+    {
+        *pcbStructInfo = sizeof(int);
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    else
+    {
+        *pcbStructInfo = sizeof(int);
+        memcpy(pvStructInfo, &val, sizeof(int));
+        ret = TRUE;
+    }
+    return ret;
+}
+
 typedef BOOL (WINAPI *CryptDecodeObjectExFunc)(DWORD, LPCSTR, const BYTE *,
  DWORD, DWORD, PCRYPT_DECODE_PARA, void *, DWORD *);
 
@@ -493,7 +564,7 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     HMODULE lib = NULL;
     CryptDecodeObjectExFunc decodeFunc = NULL;
 
-    FIXME("(0x%08lx, %s, %p, %ld, 0x%08lx, %p, %p, %p): stub\n",
+    TRACE("(0x%08lx, %s, %p, %ld, 0x%08lx, %p, %p, %p): semi-stub\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
      "(integer value)", pbEncoded, cbEncoded, dwFlags, pDecodePara,
      pvStructInfo, pcbStructInfo);
@@ -512,6 +583,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         {
             switch (LOWORD(lpszStructType))
             {
+            case (WORD)X509_INTEGER:
+                decodeFunc = CRYPT_AsnDecodeInt;
+                break;
             default:
                 FIXME("%d: unimplemented\n", LOWORD(lpszStructType));
             }

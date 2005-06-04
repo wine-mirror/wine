@@ -32,17 +32,18 @@ struct encodedInt
     BYTE encoded[6];
 };
 
+static const struct encodedInt ints[] = {
+ { 1,          { 2, 1, 1 } },
+ { 127,        { 2, 1, 0x7f } },
+ { 128,        { 2, 2, 0x00, 0x80 } },
+ { 256,        { 2, 2, 0x01, 0x00 } },
+ { -128,       { 2, 1, 0x80 } },
+ { -129,       { 2, 2, 0xff, 0x7f } },
+ { 0xbaddf00d, { 2, 4, 0xba, 0xdd, 0xf0, 0x0d } },
+};
+
 static void test_encodeint(void)
 {
-    static const struct encodedInt ints[] = {
-     { 1,          { 2, 1, 1 } },
-     { 127,        { 2, 1, 0x7f } },
-     { 128,        { 2, 2, 0x00, 0x80 } },
-     { 256,        { 2, 2, 0x01, 0x00 } },
-     { -128,       { 2, 1, 0x80 } },
-     { -129,       { 2, 2, 0xff, 0x7f } },
-     { 0xbaddf00d, { 2, 4, 0xba, 0xdd, 0xf0, 0x0d } },
-    };
     DWORD bufSize = 0;
     int i;
     BOOL ret;
@@ -80,6 +81,66 @@ static void test_encodeint(void)
         ok(!memcmp(buf + 1, ints[i].encoded + 1, ints[i].encoded[1] + 1),
          "Encoded value of 0x%08x didn't match expected\n", ints[i].val);
         LocalFree(buf);
+    }
+}
+
+static void test_decodeint(void)
+{
+    static const char bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
+    static const char testStr[] = { 16, 4, 't', 'e', 's', 't' };
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+    int i;
+    BOOL ret;
+
+    /* CryptDecodeObjectEx with NULL bufSize crashes..
+    ret = CryptDecodeObjectEx(3, X509_INTEGER, &ints[0].encoded, 
+     ints[0].encoded[1] + 2, 0, NULL, NULL, NULL);
+     */
+    /* check bogus encoding */
+    ret = CryptDecodeObjectEx(3, X509_INTEGER, (BYTE *)&ints[0].encoded, 
+     ints[0].encoded[1] + 2, 0, NULL, NULL, &bufSize);
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+     "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
+    /* check with NULL integer buffer.  Windows XP returns an apparently random
+     * error code (0x01c567df).
+     */
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_INTEGER, NULL, 0, 0,
+     NULL, NULL, &bufSize);
+    ok(!ret, "Expected failure, got success\n");
+    /* check with a valid, but too large, integer */
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+     X509_INTEGER, bigInt, bigInt[1] + 2, CRYPT_ENCODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_LARGE,
+     "Expected CRYPT_E_ASN1_LARGE, got %ld\n", GetLastError());
+    /* check with a DER-encoded string */
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+     X509_INTEGER, testStr, testStr[1] + 2, CRYPT_ENCODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+     "Expected CRYPT_E_ASN1_BADTAG, got %ld\n", GetLastError());
+    for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
+    {
+        /* WinXP succeeds rather than failing with ERROR_MORE_DATA */
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_INTEGER,
+         (BYTE *)&ints[i].encoded, ints[i].encoded[1] + 2, 0, NULL, NULL,
+         &bufSize);
+        ok(ret || GetLastError() == ERROR_MORE_DATA,
+         "Expected success or ERROR_MORE_DATA, got %ld\n", GetLastError());
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+         X509_INTEGER, (BYTE *)&ints[i].encoded, ints[i].encoded[1] + 2,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %ld\n", GetLastError());
+        ok(bufSize == sizeof(int), "Expected size %d, got %ld\n", sizeof(int),
+         bufSize);
+        ok(buf != NULL, "Expected allocated buffer\n");
+        if (buf)
+        {
+            ok(!memcmp(buf, &ints[i].val, bufSize), "Expected %d, got %d\n",
+             ints[i].val, *(int *)buf);
+            LocalFree(buf);
+        }
     }
 }
 
@@ -140,5 +201,6 @@ static void test_registerOIDFunction(void)
 START_TEST(encode)
 {
     test_encodeint();
+    test_decodeint();
     test_registerOIDFunction();
 }
