@@ -947,12 +947,15 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
 {
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
     WCHAR lpstrPath[MAX_PATH];
-    if(!fodInfos) return -1;
+    HRESULT retval;
+
+    if(!fodInfos) return FALSE;
 
     switch(uMsg)
     {
         case CDM_GETFILEPATH:
-            return FILEDLG95_Handle_GetFilePath(hwnd, (UINT)wParam, (LPVOID)lParam);
+            retval = FILEDLG95_Handle_GetFilePath(hwnd, (UINT)wParam, (LPVOID)lParam);
+            break;
 
         case CDM_GETFOLDERPATH:
             TRACE("CDM_GETFOLDERPATH:\n");
@@ -965,10 +968,12 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
                     WideCharToMultiByte(CP_ACP, 0, lpstrPath, -1, 
                                         (LPSTR)lParam, (int)wParam, NULL, NULL);
             }        
-            return strlenW(lpstrPath);
+            retval = strlenW(lpstrPath);
+            break;
 
         case CDM_GETSPEC:
-            return FILEDLG95_Handle_GetFileSpec(hwnd, (UINT)wParam, (LPSTR)lParam);
+            retval = FILEDLG95_Handle_GetFileSpec(hwnd, (UINT)wParam, (LPSTR)lParam);
+            break;
 
         case CDM_SETCONTROLTEXT:
             TRACE("CDM_SETCONTROLTEXT:\n");
@@ -979,13 +984,19 @@ HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam
                 else
 	            SetDlgItemTextA( hwnd, (UINT) wParam, (LPSTR) lParam );
             }
-	    return TRUE;
+            retval = TRUE;
+            break;
 
         case CDM_HIDECONTROL:
         case CDM_SETDEFEXT:
             FIXME("CDM_HIDECONTROL,CDM_SETCONTROLTEXT,CDM_SETDEFEXT not implemented\n");
-            return -1;
+            retval =  -1;
+            break;
+
+        default:
+            return FALSE;
     }
+    SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, retval);
     return TRUE;
 }
 
