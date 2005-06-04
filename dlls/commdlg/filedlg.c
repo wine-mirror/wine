@@ -2220,6 +2220,7 @@ static BOOL FILEDLG95_SHELL_UpFolder(HWND hwnd)
                                           NULL,
                                           SBSP_PARENT)))
   {
+    SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
     return TRUE;
   }
   return FALSE;
@@ -2241,6 +2242,7 @@ static BOOL FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd)
 
   SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidl);
   hres = IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidl, SBSP_ABSOLUTE);
+  SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
   COMDLG32_SHFree(pidl);
   return SUCCEEDED(hres);
 }
@@ -2692,6 +2694,7 @@ static BOOL FILEDLG95_LOOKIN_OnCommand(HWND hwnd, WORD wNotifyCode)
                                               tmpFolder->pidlItem,
                                               SBSP_ABSOLUTE)))
       {
+        SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
         return TRUE;
       }
       break;
@@ -3363,8 +3366,8 @@ static BOOL BrowseSelectedFolder(HWND hwnd)
                                    ' ','n','o','t',' ','e','x','i','s','t',0};
                MessageBoxW( hwnd, notexist, fodInfos->title, MB_OK | MB_ICONEXCLAMATION );
           }
-
-         bBrowseSelFolder = TRUE;
+          bBrowseSelFolder = TRUE;
+          SendCustomDlgNotificationMessage(hwnd,CDN_FOLDERCHANGE);
       }
       COMDLG32_SHFree( pidlSelection );
   }
