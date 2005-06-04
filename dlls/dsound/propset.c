@@ -688,7 +688,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                         if (err == DS_OK && drv)
                             ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                         else
-                            WARN("waveOutMessage(DRV_QUERYDSOUNDIFACE) failed\n");
+                            WARN("waveInMessage(DRV_QUERYDSOUNDIFACE) failed\n");
                         break;
 		    } else {
                         WARN("no memory\n");
@@ -784,7 +784,7 @@ static HRESULT WINAPI DSPROPERTY_DescriptionA(
                             if (err == DS_OK && drv)
                                 ppd->Type = DIRECTSOUNDDEVICE_TYPE_VXD;
                             else
-                                WARN("waveOutMessage(DRV_QUERYDSOUNDIFACE) failed\n");
+                                WARN("waveInMessage(DRV_QUERYDSOUNDIFACE) failed\n");
                             found = TRUE;
                             break;
                         } else {
@@ -1508,7 +1508,7 @@ HRESULT WINAPI IKsPrivatePropertySetImpl_Create(
     IKsPrivatePropertySetImpl *iks;
 
     iks = HeapAlloc(GetProcessHeap(),0,sizeof(*iks));
-    iks->ref = 0;
+    iks->ref = 1;
     iks->lpVtbl = &ikspvt;
 
     *piks = iks;

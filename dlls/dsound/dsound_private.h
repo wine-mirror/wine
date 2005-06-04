@@ -64,6 +64,7 @@ typedef struct PrimaryBufferImpl             PrimaryBufferImpl;
 typedef struct SecondaryBufferImpl           SecondaryBufferImpl;
 typedef struct IClassFactoryImpl             IClassFactoryImpl;
 typedef struct DirectSoundDevice             DirectSoundDevice;
+typedef struct DirectSoundCaptureDevice      DirectSoundCaptureDevice;
 
 /*****************************************************************************
  * IDirectSound implementation structure
@@ -280,9 +281,14 @@ struct IDirectSoundCaptureImpl
     const IDirectSoundCaptureVtbl     *lpVtbl;
     DWORD                              ref;
 
+    DirectSoundCaptureDevice          *device;
+};
+
+struct DirectSoundCaptureDevice
+{
     /* IDirectSoundCaptureImpl fields */
     GUID                               guid;
-    BOOL                               initialized;
+    DWORD                              ref;
 
     /* DirectSound driver stuff */
     PIDSCDRIVER                        driver;
@@ -307,6 +313,17 @@ struct IDirectSoundCaptureImpl
     int                                index;
     CRITICAL_SECTION                   lock;
 };
+
+HRESULT WINAPI IDirectSoundCaptureImpl_Create(
+    LPDIRECTSOUNDCAPTURE8 * ppds);
+
+HRESULT WINAPI DSOUND_CaptureCreate(
+    LPDIRECTSOUNDCAPTURE *ppDSC,
+    IUnknown *pUnkOuter);
+
+HRESULT WINAPI DSOUND_CaptureCreate8(
+    LPDIRECTSOUNDCAPTURE8 *ppDSC8,
+    IUnknown *pUnkOuter);
 
 /*****************************************************************************
  * IDirectSoundCaptureBuffer implementation structure
@@ -498,6 +515,8 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb);
 
 extern DirectSoundDevice* DSOUND_renderer[MAXWAVEDRIVERS];
 extern GUID DSOUND_renderer_guids[MAXWAVEDRIVERS];
+
+extern DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
 extern GUID DSOUND_capture_guids[MAXWAVEDRIVERS];
 
 extern HRESULT mmErr(UINT err);

@@ -1,7 +1,7 @@
 1 stdcall DirectSoundCreate(ptr ptr ptr)
 2 stdcall DirectSoundEnumerateA(ptr ptr)
 3 stdcall DirectSoundEnumerateW(ptr ptr)
-6 stdcall DirectSoundCaptureCreate(ptr ptr ptr) DirectSoundCaptureCreate8
+6 stdcall DirectSoundCaptureCreate(ptr ptr ptr)
 7 stdcall DirectSoundCaptureEnumerateA(ptr ptr)
 8 stdcall DirectSoundCaptureEnumerateW(ptr ptr)
 9 stdcall GetDeviceID(ptr ptr)
