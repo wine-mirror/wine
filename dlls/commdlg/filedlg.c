@@ -1712,9 +1712,8 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
  *
  * If the function succeeds, the return value is nonzero.
  */
-#define ONOPEN_BROWSE 1
-#define ONOPEN_OPEN   2
-#define ONOPEN_SEARCH 3
+#define ONOPEN_OPEN   1
+#define ONOPEN_SEARCH 2
 static void FILEDLG95_OnOpenMessage(HWND hwnd, int idCaption, int idText)
 {
   WCHAR strMsgTitle[MAX_PATH];
@@ -1741,15 +1740,15 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
   TRACE("hwnd=%p\n", hwnd);
 
+  if(BrowseSelectedFolder(hwnd))
+      return FALSE;
+
   /* get the files from the edit control */
   nFileCount = FILEDLG95_FILENAME_GetFileNames(hwnd, &lpstrFileList, &sizeUsed, '\0');
 
   /* try if the user selected a folder in the shellview */
   if(nFileCount == 0)
-  {
-      BrowseSelectedFolder(hwnd);
       return FALSE;
-  }
 
   if(nFileCount > 1)
   {
@@ -1810,7 +1809,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
     lpstrPathAndFile: cleaned up path
  */
 
-  nOpenAction = ONOPEN_BROWSE;
+  nOpenAction = ONOPEN_OPEN;
 
   /* don't apply any checks with OFN_NOVALIDATE */
   {
@@ -1943,6 +1942,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
         int iPos;
         LPWSTR lpszTemp = PathFindFileNameW(lpstrPathAndFile);
         DWORD len;
+	IPersistFolder2 * ppf2;
 
         /* replace the current filter */
         if(fodInfos->ShellInfos.lpstrCurrentFilter)
@@ -1954,12 +1954,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
         /* set the filter cb to the extension when possible */
         if(-1 < (iPos = FILEDLG95_FILETYPE_SearchExt(fodInfos->DlgInfos.hwndFileTypeCB, lpszTemp)))
         CBSetCurSel(fodInfos->DlgInfos.hwndFileTypeCB, iPos);
-      }
-      /* fall through */
-    case ONOPEN_BROWSE:   /* browse to the highest folder we could bind to */
-      TRACE("ONOPEN_BROWSE\n");
-      {
-	IPersistFolder2 * ppf2;
+
         if(SUCCEEDED(IShellFolder_QueryInterface( lpsf, &IID_IPersistFolder2, (LPVOID*)&ppf2)))
         {
           LPITEMIDLIST pidlCurrent;
@@ -1969,10 +1964,11 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	  {
 	    IShellBrowser_BrowseObject(fodInfos->Shell.FOIShellBrowser, pidlCurrent, SBSP_ABSOLUTE);
 	  }
-	  else if( nOpenAction == ONOPEN_SEARCH )
+	  else
 	  {
             IShellView_Refresh(fodInfos->Shell.FOIShellView);
 	  }
+          SendCustomDlgNotificationMessage(hwnd, CDN_FOLDERCHANGE);
           COMDLG32_SHFree(pidlCurrent);
         }
       }
@@ -1990,47 +1986,50 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	  fodInfos->ofnInfos->Flags &= ~OFN_READONLY;
 
         /* Attach the file extension with file name*/
-        ext = PathFindExtensionW(lpstrPathAndFile);
-        if (! *ext)
+
+        if(!PathIsDirectoryW(lpstrPathAndFile))
         {
-            /* if no extension is specified with file name, then */
-            /* attach the extension from file filter or default one */
+            if((ext = PathFindExtensionW(lpstrPathAndFile)) == NULL)
+            {
+                /* if no extension is specified with file name, then */
+                /* attach the extension from file filter or default one */
             
-            WCHAR *filterExt = NULL;
-            LPWSTR lpstrFilter = NULL;
-            static const WCHAR szwDot[] = {'.',0};
-            int PathLength = strlenW(lpstrPathAndFile);
+                WCHAR *filterExt = NULL;
+                LPWSTR lpstrFilter = NULL;
+                static const WCHAR szwDot[] = {'.',0};
+                int PathLength = strlenW(lpstrPathAndFile);
 
-            /* Attach the dot*/
-            strcatW(lpstrPathAndFile, szwDot);
+                /* Attach the dot*/
+                strcatW(lpstrPathAndFile, szwDot);
     
-            /*Get the file extension from file type filter*/
-            lpstrFilter = (LPWSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,
-                                             fodInfos->ofnInfos->nFilterIndex-1);
+                /*Get the file extension from file type filter*/
+                lpstrFilter = (LPWSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,
+                                                        fodInfos->ofnInfos->nFilterIndex-1);
 
-            if (lpstrFilter != (LPWSTR)CB_ERR)  /* control is not empty */
-                filterExt = PathFindExtensionW(lpstrFilter);
+                if (lpstrFilter != (LPWSTR)CB_ERR)  /* control is not empty */
+                    filterExt = PathFindExtensionW(lpstrFilter);
 
-            if ( filterExt && *filterExt ) /* attach the file extension from file type filter*/
-                strcatW(lpstrPathAndFile, filterExt + 1);
-            else if ( fodInfos->defext ) /* attach the default file extension*/
-                strcatW(lpstrPathAndFile, fodInfos->defext);
+                if ( filterExt && *filterExt ) /* attach the file extension from file type filter*/
+                    strcatW(lpstrPathAndFile, filterExt + 1);
+                else if ( fodInfos->defext ) /* attach the default file extension*/
+                    strcatW(lpstrPathAndFile, fodInfos->defext);
 
-            /* In Open dialog: if file does not exist try without extension */
-            if (!(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG) && !PathFileExistsW(lpstrPathAndFile))
-                  lpstrPathAndFile[PathLength] = '\0';
+                /* In Open dialog: if file does not exist try without extension */
+                if (!(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG) && !PathFileExistsW(lpstrPathAndFile))
+                    lpstrPathAndFile[PathLength] = '\0';
+            }
+        
+            if (fodInfos->defext) /* add default extension */
+            {
+                /* Set/clear the output OFN_EXTENSIONDIFFERENT flag */
+                if (*ext)
+                    ext++;
+                if (!lstrcmpiW(fodInfos->defext, ext))
+                    fodInfos->ofnInfos->Flags &= ~OFN_EXTENSIONDIFFERENT;
+                else
+                    fodInfos->ofnInfos->Flags |= OFN_EXTENSIONDIFFERENT;
+            }
         }
-
-	if (fodInfos->defext) /* add default extension */
-	{
-	  /* Set/clear the output OFN_EXTENSIONDIFFERENT flag */
-	  if (*ext)
-	    ext++;
-	  if (!lstrcmpiW(fodInfos->defext, ext))
-	    fodInfos->ofnInfos->Flags &= ~OFN_EXTENSIONDIFFERENT;
-	  else
-	    fodInfos->ofnInfos->Flags |= OFN_EXTENSIONDIFFERENT;
-	}
 
 	/* In Save dialog: check if the file already exists */
 	if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG
