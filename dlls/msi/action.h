@@ -218,3 +218,5 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
 VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
                                       MSIRECORD *data);
 VOID ControlEvent_CleanupSubscriptions(MSIPACKAGE *package);
+VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
+                                   LPCWSTR control, LPCWSTR attribute);
