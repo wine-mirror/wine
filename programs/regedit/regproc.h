@@ -40,8 +40,8 @@ BOOL export_registry_key(CHAR *file_name, CHAR *reg_key_name);
 BOOL import_registry_file(LPTSTR filename);
 void delete_registry_key(CHAR *reg_key_name);
 
-void setAppName(CHAR *name);
-CHAR *getAppName();
+void setAppName(const CHAR *name);
+const CHAR *getAppName();
 
 void processRegLines(FILE *in, CommandAPI command);
 
@@ -71,3 +71,5 @@ HRESULT setValue(LPSTR val_name, LPSTR val_data);
  * api queryValue prototypes
  */
 void    processQueryValue(LPSTR cmdline);
+
+extern BOOL ProcessCmdLine(LPSTR lpCmdLine);

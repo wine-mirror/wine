@@ -60,7 +60,7 @@ static struct wine_test *wine_tests;
 static struct rev_info *rev_infos = NULL;
 static const char whitespace[] = " \t\r\n";
 
-static int running_under_wine ()
+static int running_under_wine (void)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
 
@@ -68,7 +68,7 @@ static int running_under_wine ()
     return (GetProcAddress(module, "wine_server_call") != NULL);
 }
 
-static int running_on_visible_desktop ()
+static int running_on_visible_desktop (void)
 {
     HWND desktop;
     HMODULE huser32 = GetModuleHandle("user32.dll");
@@ -92,7 +92,7 @@ static int running_on_visible_desktop ()
     return IsWindowVisible(desktop);
 }
 
-void print_version ()
+static void print_version (void)
 {
     OSVERSIONINFOEX ver;
     BOOL ext;
@@ -125,7 +125,7 @@ static inline int is_dot_dir(const char* x)
     return ((x[0] == '.') && ((x[1] == 0) || ((x[1] == '.') && (x[2] == 0))));
 }
 
-void remove_dir (const char *dir)
+static void remove_dir (const char *dir)
 {
     HANDLE  hFind;
     WIN32_FIND_DATA wfd;
@@ -156,7 +156,7 @@ void remove_dir (const char *dir)
                 dir, GetLastError ());
 }
 
-const char* get_test_source_file(const char* test, const char* subtest)
+static const char* get_test_source_file(const char* test, const char* subtest)
 {
     static const char* special_dirs[][2] = {
 	{ "gdi32", "gdi"}, { "kernel32", "kernel" },
@@ -178,7 +178,7 @@ const char* get_test_source_file(const char* test, const char* subtest)
     return buffer;
 }
 
-const char* get_file_rev(const char* file)
+static const char* get_file_rev(const char* file)
 {
     const struct rev_info* rev;
  
@@ -189,7 +189,7 @@ const char* get_file_rev(const char* file)
     return "-";
 }
 
-void extract_rev_infos ()
+static void extract_rev_infos (void)
 {
     char revinfo[256], *p;
     int size = 0, i;
@@ -215,7 +215,7 @@ void extract_rev_infos ()
     }
 }
 
-void* extract_rcdata (int id, int type, DWORD* size)
+static void* extract_rcdata (int id, int type, DWORD* size)
 {
     HRSRC rsrc;
     HGLOBAL hdl;
@@ -230,7 +230,7 @@ void* extract_rcdata (int id, int type, DWORD* size)
 }
 
 /* Fills in the name and exename fields */
-void
+static void
 extract_test (struct wine_test *test, const char *dir, int id)
 {
     BYTE* code;
@@ -268,7 +268,7 @@ extract_test (struct wine_test *test, const char *dir, int id)
    Return the exit status, -2 if can't create process or the return
    value of WaitForSingleObject.
  */
-int
+static int
 run_ex (char *cmd, const char *out, DWORD ms)
 {
     STARTUPINFO si;
@@ -345,7 +345,7 @@ run_ex (char *cmd, const char *out, DWORD ms)
     return status;
 }
 
-void
+static void
 get_subtests (const char *tempdir, struct wine_test *test, int id)
 {
     char *subname, *cmd;
@@ -410,7 +410,7 @@ get_subtests (const char *tempdir, struct wine_test *test, int id)
     free (subname);
 }
 
-void
+static void
 run_test (struct wine_test* test, const char* subtest)
 {
     int status;
@@ -424,7 +424,7 @@ run_test (struct wine_test* test, const char* subtest)
     xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
 }
 
-BOOL CALLBACK
+static BOOL CALLBACK
 EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
                   LPTSTR lpszName, LONG_PTR lParam)
 {
@@ -432,7 +432,7 @@ EnumTestFileProc (HMODULE hModule, LPCTSTR lpszType,
     return TRUE;
 }
 
-char *
+static char *
 run_tests (char *logname)
 {
     int nr_of_files = 0, nr_of_tests = 0, i;
@@ -542,8 +542,8 @@ run_tests (char *logname)
     return logname;
 }
 
-void
-usage ()
+static void
+usage (void)
 {
     fprintf (stderr, "\
 Usage: winetest [OPTION]...\n\n\

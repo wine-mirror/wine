@@ -58,7 +58,7 @@ typedef HRESULT (*DLLINSTALL)           (BOOL,LPCWSTR);
 
 int Silent = 0;
 
-int Usage()
+static int Usage(void)
 {
     printf("regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname ...\n");
     printf("\t[/u]  unregister server\n");
@@ -78,7 +78,7 @@ int Usage()
  * procName - name of the procedure to load from dll
  * pDllHanlde - output variable receives handle of the loaded dll.
  */
-VOID *LoadProc(char* strDll, char* procName, HMODULE* DllHandle)
+static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHandle)
 {
     VOID* (*proc)(void);
 
@@ -101,7 +101,7 @@ VOID *LoadProc(char* strDll, char* procName, HMODULE* DllHandle)
     return proc;
 }
 
-int RegisterDll(char* strDll)
+static int RegisterDll(const char* strDll)
 {
     HRESULT hr;
     DLLREGISTER pfRegister;
@@ -125,7 +125,7 @@ int RegisterDll(char* strDll)
     return 0;
 }
 
-int UnregisterDll(char* strDll)
+static int UnregisterDll(char* strDll)
 {
     HRESULT hr;
     DLLUNREGISTER pfUnregister;
@@ -148,7 +148,7 @@ int UnregisterDll(char* strDll)
     return 0;
 }
 
-int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
+static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
 {
     HRESULT hr;
     DLLINSTALL pfInstall;

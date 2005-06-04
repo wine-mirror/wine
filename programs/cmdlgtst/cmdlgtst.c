@@ -101,13 +101,14 @@ static COLORREF txtColor = RGB(0, 0, 0); /* settable if one enables CF_EFFECTS *
 
 /* Utility routines. */
 
-void nyi(HWND hWnd)
+static void nyi(HWND hWnd)
 {
 	/* "Hi there!  I'm not yet implemented!" */
 	MessageBox(hWnd, "Not yet implemented!", "NYI", MB_ICONEXCLAMATION | MB_OK);
 }
 
-UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
+#if 0
+static UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
 {
 	/*
 	 * If the user specifies something that needs an awfully stupid hook function,
@@ -123,6 +124,7 @@ UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
 
 	return 0;
 }
+#endif
 
 /*
  * Initialization code.  This code simply shoves in predefined
@@ -131,7 +133,7 @@ UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
  * if Microsoft decides to change the field ordering, I'd be screwed.
  */
 
-void mwi_Print(HWND hWnd)
+static void mwi_Print(HWND hWnd)
 {
 	pd.lStructSize = sizeof(PRINTDLG);
 	pd.hwndOwner = hWnd;
@@ -151,7 +153,7 @@ void mwi_Print(HWND hWnd)
 	pd.hSetupTemplate = 0;
 }
 
-void mwi_Color(HWND hWnd)
+static void mwi_Color(HWND hWnd)
 {
 	int i;
 
@@ -171,7 +173,7 @@ void mwi_Color(HWND hWnd)
 	cc.lpTemplateName = 0;
 }
 
-void mwi_Font(HWND hWnd)
+static void mwi_Font(HWND hWnd)
 {
 	cf.lStructSize = sizeof(CHOOSEFONT);
 	cf.hwndOwner = hWnd;
@@ -191,7 +193,7 @@ void mwi_Font(HWND hWnd)
 	cf_lf.lfHeight = -18; /* this can be positive or negative, but negative is usually used. */
 }
 
-void mwi_File(HWND hWnd)
+static void mwi_File(HWND hWnd)
 {
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = hWnd;
@@ -217,7 +219,7 @@ void mwi_File(HWND hWnd)
 	ofn_result[0] = '\0';
 }
 
-void mwi_FindReplace(HWND hWnd)
+static void mwi_FindReplace(HWND hWnd)
 {
 	frS.lStructSize = sizeof(FINDREPLACE);
 	frS.hwndOwner = hWnd;
@@ -236,7 +238,7 @@ void mwi_FindReplace(HWND hWnd)
 	findMessageId = RegisterWindowMessage(FINDMSGSTRING);
 }
 
-void mwi_InitAll(HWND hWnd)
+static void mwi_InitAll(HWND hWnd)
 {
 	mwi_Print(hWnd);
 	mwi_Font(hWnd);
@@ -254,7 +256,7 @@ void mwi_InitAll(HWND hWnd)
  * there might be a problem.
  */
 
-void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
+static void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	RECT rect;
@@ -322,7 +324,7 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
  * consult cderr.h to see what was returned.
  */
 
-void mw_checkError(HWND hWnd, BOOL explicitcancel)
+static void mw_checkError(HWND hWnd, BOOL explicitcancel)
 {
 	DWORD errval = CommDlgExtendedError();
 	if(errval) {
@@ -343,7 +345,7 @@ void mw_checkError(HWND hWnd, BOOL explicitcancel)
  * various values specified in the dialog.
  */
 
-void mw_ColorSetup(HWND hWnd)
+static void mw_ColorSetup(HWND hWnd)
 {
 	if(ChooseColor(&cc)) {
 		RECT rect;
@@ -355,7 +357,7 @@ void mw_ColorSetup(HWND hWnd)
 	else mw_checkError(hWnd, FALSE);
 }
 
-void mw_FontSetup(HWND hWnd)
+static void mw_FontSetup(HWND hWnd)
 {
 	if(ChooseFont(&cf)) {
 		RECT rect;
@@ -366,7 +368,7 @@ void mw_FontSetup(HWND hWnd)
 	else mw_checkError(hWnd, FALSE);
 }
 
-void mw_FindSetup(HWND hWnd)
+static void mw_FindSetup(HWND hWnd)
 {
 	if(findDialogBox == 0) {
 		findDialogBox = FindText(&frS);
@@ -374,7 +376,7 @@ void mw_FindSetup(HWND hWnd)
 	}
 }
 
-void mw_ReplaceSetup(HWND hWnd)
+static void mw_ReplaceSetup(HWND hWnd)
 {
 	if(findDialogBox == 0) {
 		findDialogBox = ReplaceText(&frS);
@@ -382,7 +384,7 @@ void mw_ReplaceSetup(HWND hWnd)
 	}
 }
 
-void mw_OpenSetup(HWND hWnd)
+static void mw_OpenSetup(HWND hWnd)
 {
 	if(GetOpenFileName(&ofn)) {
 		RECT rect;
@@ -392,7 +394,7 @@ void mw_OpenSetup(HWND hWnd)
 	else mw_checkError(hWnd,FALSE);
 }
 
-void mw_SaveSetup(HWND hWnd)
+static void mw_SaveSetup(HWND hWnd)
 {
 	if(GetSaveFileName(&ofn)) {
 		RECT rect;
@@ -407,12 +409,12 @@ void mw_SaveSetup(HWND hWnd)
  * exist at all, or is it merely a subdialog of Print?
  */
 
-void mw_PSetupSetup(HWND hWnd)
+static void mw_PSetupSetup(HWND hWnd)
 {
 	nyi(hWnd);
 }
 
-void mw_PrintSetup(HWND hWnd)
+static void mw_PrintSetup(HWND hWnd)
 {
 	if(PrintDlg(&pd)) {
 		/*
@@ -453,7 +455,7 @@ void mw_PrintSetup(HWND hWnd)
  * In particular, we have to set things properly, and get the flags back.
  */
 
-void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long flags)
+static void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long flags)
 {
 	int i;
 
@@ -463,7 +465,7 @@ void mwcd_SetFlags(HWND hWnd, struct FlagTableEntry *table, unsigned long flags)
 	}
 }
 
-unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
+static unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
 {
 	int i;
 	unsigned long l = 0;
@@ -484,7 +486,7 @@ unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
  * not the handlers.  I'll fix that later; this works as of right now.
  */
 
-BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+static BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 					 struct FlagTableEntry * table, unsigned long * flags)
 {
 	(void) lParam;
@@ -523,7 +525,7 @@ BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	}
 }
 
-BOOL CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_CC_RGBINIT, CC_RGBINIT},
@@ -539,7 +541,7 @@ BOOL CALLBACK mwcd_ColorSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &cc.Flags);
 }
 
-BOOL CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_CF_APPLY, CF_APPLY},
@@ -570,7 +572,7 @@ BOOL CALLBACK mwcd_FontSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &cf.Flags);
 }
 
-BOOL CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 
 	static struct FlagTableEntry flagTable[] = {
@@ -597,7 +599,7 @@ BOOL CALLBACK mwcd_FindSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &frS.Flags);
 }
 
-BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_PD_ALLPAGES, PD_ALLPAGES},
@@ -628,7 +630,7 @@ BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &pd.Flags);
 }
 
-BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
 		{I_OFN_ALLOWMULTISELECT, OFN_ALLOWMULTISELECT},
@@ -654,7 +656,7 @@ BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &ofn.Flags);
 }
 
-BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	(void) wParam;
 	(void) lParam;
@@ -673,31 +675,31 @@ BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  * the CommDlg structures initialized by the mwi_xxx() routines.
  */
 
-void mwc_ColorSetup(HWND hWnd)
+static void mwc_ColorSetup(HWND hWnd)
 {
 	int r = DialogBox(g_hInstance, "Color_Flags_Dialog", hWnd, (DLGPROC) mwcd_ColorSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Color_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
-void mwc_FontSetup(HWND hWnd)
+static void mwc_FontSetup(HWND hWnd)
 {
 	int r = DialogBox(g_hInstance, "Font_Flags_Dialog", hWnd, (DLGPROC) mwcd_FontSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Font_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
-void mwc_FindReplaceSetup(HWND hWnd)
+static void mwc_FindReplaceSetup(HWND hWnd)
 {
 	int r = DialogBox(g_hInstance, "Find_Flags_Dialog", hWnd, (DLGPROC) mwcd_FindSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Find_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
-void mwc_PrintSetup(HWND hWnd)
+static void mwc_PrintSetup(HWND hWnd)
 {
 	int r = DialogBox(g_hInstance, "Print_Flags_Dialog", hWnd, (DLGPROC) mwcd_PrintSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Print_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
-void mwc_FileSetup(HWND hWnd)
+static void mwc_FileSetup(HWND hWnd)
 {
 	int r = DialogBox(g_hInstance, "File_Flags_Dialog", hWnd, (DLGPROC) mwcd_FileSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening File_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
@@ -710,7 +712,7 @@ void mwc_FileSetup(HWND hWnd)
  * dangling from Windows like a loose muffler.  Sigh.
  */
 
-LRESULT CALLBACK EXPORT mainWindowDispatcher(
+static LRESULT CALLBACK EXPORT mainWindowDispatcher(
 	HWND hWnd,
 	UINT uMsg,
 	WPARAM wParam,
@@ -834,7 +836,7 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 
 /* Class registration.  One might call this a Windowsism. */
 
-int registerMainWindowClass(HINSTANCE hInstance)
+static int registerMainWindowClass(HINSTANCE hInstance)
 {
 	WNDCLASS wndClass;
 
@@ -862,7 +864,7 @@ int registerMainWindowClass(HINSTANCE hInstance)
  * can get messy; at least here we don't have to worry about that).
  */
 
-HWND createMainWindow(HINSTANCE hInstance, int show)
+static HWND createMainWindow(HINSTANCE hInstance, int show)
 {
 	HWND hWnd;
 
@@ -888,7 +890,7 @@ HWND createMainWindow(HINSTANCE hInstance, int show)
 	return hWnd;
 }
 
-int messageLoop(HINSTANCE hInstance, HWND hWnd)
+static int messageLoop(HINSTANCE hInstance, HWND hWnd)
 {
 	MSG msg;
 

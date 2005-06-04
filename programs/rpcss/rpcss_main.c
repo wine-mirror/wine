@@ -155,12 +155,12 @@ void RPCSS_SetLazyTimeRemaining(long seconds)
 #undef ULARGEINT_TO_FILETIME
 #undef TEN_MIL
 
-BOOL RPCSS_work(void)
+static BOOL RPCSS_work(void)
 {
   return RPCSS_NPDoWork();
 }
 
-BOOL RPCSS_Empty(void)
+static BOOL RPCSS_Empty(void)
 {
   BOOL rslt = TRUE;
 
@@ -177,7 +177,7 @@ BOOL RPCSS_ReadyToDie(void)
   return ( empty && (ltr <= 0) && (stc == 0) );
 }
 
-BOOL RPCSS_Initialize(void)
+static BOOL RPCSS_Initialize(void)
 {
   WINE_TRACE("\n");
 
@@ -201,7 +201,7 @@ BOOL RPCSS_Initialize(void)
 
 /* returns false if we discover at the last moment that we
    aren't ready to terminate */
-BOOL RPCSS_Shutdown(void)
+static BOOL RPCSS_Shutdown(void)
 {
   if (!RPCSS_UnBecomePipeServer())
     return FALSE;
@@ -214,7 +214,7 @@ BOOL RPCSS_Shutdown(void)
   return TRUE;
 }
 
-void RPCSS_MainLoop(void)
+static void RPCSS_MainLoop(void)
 {
   BOOL did_something_new;
 
@@ -234,7 +234,7 @@ void RPCSS_MainLoop(void)
   }
 }
 
-BOOL RPCSS_ProcessArgs( int argc, char **argv )
+static BOOL RPCSS_ProcessArgs( int argc, char **argv )
 {
   int i;
   char *c,*c1;
@@ -280,7 +280,7 @@ BOOL RPCSS_ProcessArgs( int argc, char **argv )
   return TRUE;
 }
 
-void RPCSS_Usage(void)
+static void RPCSS_Usage(void)
 {
   printf("\nWine RPCSS\n");
   printf("\nsyntax: rpcss [-t timeout]\n\n");

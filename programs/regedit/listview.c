@@ -58,7 +58,7 @@ static HKEY g_currentRootKey;
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
 static int column_alignment[MAX_LIST_COLUMNS] = { LVCFMT_LEFT, LVCFMT_LEFT, LVCFMT_LEFT };
 
-LPTSTR get_item_text(HWND hwndLV, int item)
+static LPTSTR get_item_text(HWND hwndLV, int item)
 {
     LPTSTR newStr, curStr;
     unsigned int maxLen = 128;

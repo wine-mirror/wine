@@ -61,7 +61,7 @@ static void resize_frame_rect(HWND hWnd, PRECT prect)
     MoveWindow(g_pChildWnd->hWnd, prect->left, prect->top, prect->right, prect->bottom, TRUE);
 }
 
-void resize_frame_client(HWND hWnd)
+static void resize_frame_client(HWND hWnd)
 {
     RECT rect;
 
@@ -183,7 +183,7 @@ static BOOL CheckCommDlgError(HWND hWnd)
     return TRUE;
 }
 
-UINT_PTR CALLBACK ImportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
+static UINT_PTR CALLBACK ImportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
     OPENFILENAME* pOpenFileName;
     OFNOTIFY* pOfNotify;
@@ -319,7 +319,7 @@ static BOOL ExportRegistryFile(HWND hWnd)
     return TRUE;
 }
 
-BOOL PrintRegistryHive(HWND hWnd, LPTSTR path)
+static BOOL PrintRegistryHive(HWND hWnd, LPCTSTR path)
 {
 #if 1
     PRINTDLG pd;
@@ -384,7 +384,7 @@ BOOL PrintRegistryHive(HWND hWnd, LPTSTR path)
     return TRUE;
 }
 
-BOOL CopyKeyName(HWND hWnd, LPTSTR keyName)
+static BOOL CopyKeyName(HWND hWnd, LPCTSTR keyName)
 {
     BOOL result;
 

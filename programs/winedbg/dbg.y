@@ -461,8 +461,11 @@ int      input_fetch_entire_line(const char* pfx, char** line, size_t* alloc, BO
     size_t      len;
     
     if (arg_command) {
+         /* we only run one command before exiting */
+        const char q[] = "quit\n";
         *line = arg_command;
-        arg_command = "quit\n"; /* we only run one command before exiting */
+        arg_command = HeapAlloc(GetProcessHeap(), 0, sizeof q);
+        lstrcpyA(arg_command, q);
         return 1;
     }
 

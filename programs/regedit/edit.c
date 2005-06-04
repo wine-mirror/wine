@@ -46,7 +46,7 @@ struct edit_params
     LONG    cbData;
 };
 
-INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
+static INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
 {
     TCHAR title[256];
     TCHAR errfmt[1024];
@@ -63,7 +63,7 @@ INT vmessagebox(HWND hwnd, INT buttons, INT titleId, INT resId, va_list ap)
     return MessageBox(hwnd, errstr, title, buttons);
 }
 
-INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
+static INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
 {
     va_list ap;
     INT result;
@@ -75,7 +75,7 @@ INT messagebox(HWND hwnd, INT buttons, INT titleId, INT resId, ...)
     return result;
 }
 
-void error(HWND hwnd, INT resId, ...)
+static void error(HWND hwnd, INT resId, ...)
 {
     va_list ap;
 
@@ -101,7 +101,7 @@ static void error_code_messagebox(HWND hwnd, DWORD error_code)
         LocalFree(lpMsgBuf);
 }
 
-BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
+static BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
 {
     TCHAR buf[128];
     DWORD val;
@@ -112,7 +112,7 @@ BOOL change_dword_base(HWND hwndDlg, BOOL toHex)
     return SetDlgItemText(hwndDlg, IDC_VALUE_DATA, buf);    
 }
 
-INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TCHAR* valueData;
     HWND hwndValue;

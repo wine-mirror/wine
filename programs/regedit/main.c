@@ -66,7 +66,7 @@ TCHAR szChildClass[MAX_LOADSTRING];
  *        create and display the main program window.
  */
 
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
     WNDCLASSEX wcFrame = {
                              sizeof(WNDCLASSEX),
@@ -142,12 +142,12 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 /******************************************************************************/
 
-void ExitInstance(void)
+static void ExitInstance(void)
 {
     DestroyMenu(hMenuFrame);
 }
 
-BOOL TranslateChildTabMessage(MSG *msg)
+static BOOL TranslateChildTabMessage(MSG *msg)
 {
     if (msg->message != WM_KEYDOWN) return FALSE;
     if (msg->wParam != VK_TAB) return FALSE;

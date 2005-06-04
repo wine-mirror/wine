@@ -24,7 +24,7 @@
 
 #include "winetest.h"
 
-SOCKET
+static SOCKET
 open_http (const char *server)
 {
     WSADATA wsad;
@@ -61,7 +61,7 @@ open_http (const char *server)
     return INVALID_SOCKET;
 }
 
-int
+static int
 close_http (SOCKET s)
 {
     int ret;
@@ -70,7 +70,7 @@ close_http (SOCKET s)
     return (WSACleanup () || ret);
 }
 
-int
+static int
 send_buf (SOCKET s, const char *buf, size_t length)
 {
     int sent;
@@ -84,7 +84,7 @@ send_buf (SOCKET s, const char *buf, size_t length)
     return 0;
 }
 
-int
+static int
 send_str (SOCKET s, ...)
 {
     va_list ap;

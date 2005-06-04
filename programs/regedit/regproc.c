@@ -43,9 +43,9 @@ static HKEY  currentKeyClass  = 0;
 static HKEY  currentKeyHandle = 0;
 static BOOL  bTheKeyIsOpen    = FALSE;
 
-static CHAR *app_name = "UNKNOWN";
+static const CHAR *app_name = "UNKNOWN";
 
-static CHAR *reg_class_names[] = {
+static const CHAR *reg_class_names[] = {
                                      "HKEY_LOCAL_MACHINE", "HKEY_USERS", "HKEY_CLASSES_ROOT",
                                      "HKEY_CURRENT_CONFIG", "HKEY_CURRENT_USER", "HKEY_DYN_DATA"
                                  };
@@ -343,7 +343,7 @@ LPSTR getArg( LPSTR arg)
 /******************************************************************************
  * Replaces escape sequences with the characters.
  */
-void REGPROC_unescape_string(LPSTR str)
+static void REGPROC_unescape_string(LPSTR str)
 {
     int str_idx = 0;            /* current character under analysis */
     int val_idx = 0;            /* the last character of the unescaped string */
@@ -1044,7 +1044,7 @@ void doUnregisterDLL(LPSTR stdInput)
  * Print the message for GetLastError
  */
 
-void REGPROC_print_error()
+static void REGPROC_print_error(void)
 {
     LPVOID lpMsgBuf;
     DWORD error_code;
@@ -1073,7 +1073,7 @@ void REGPROC_print_error()
  * required_len - length of the string to place to the buffer in characters.
  *   The length does not include the terminating null character.
  */
-void REGPROC_resize_char_buffer(CHAR **buffer, DWORD *len, DWORD required_len)
+static void REGPROC_resize_char_buffer(CHAR **buffer, DWORD *len, DWORD required_len)
 {
     required_len++;
     if (required_len > *len) {
@@ -1089,7 +1089,7 @@ void REGPROC_resize_char_buffer(CHAR **buffer, DWORD *len, DWORD required_len)
 /******************************************************************************
  * Prints string str to file
  */
-void REGPROC_export_string(FILE *file, CHAR *str)
+static void REGPROC_export_string(FILE *file, CHAR *str)
 {
     size_t len = strlen(str);
     size_t i;
@@ -1130,7 +1130,7 @@ void REGPROC_export_string(FILE *file, CHAR *str)
  *      Is resized if necessary.
  * val_size - size of the buffer for storing values in bytes.
  */
-void export_hkey(FILE *file, HKEY key,
+static void export_hkey(FILE *file, HKEY key,
                  CHAR **reg_key_name_buf, DWORD *reg_key_name_len,
                  CHAR **val_name_buf, DWORD *val_name_len,
                  BYTE **val_buf, DWORD *val_size)
@@ -1214,7 +1214,7 @@ void export_hkey(FILE *file, HKEY key,
                 /* falls through */
             case REG_BINARY: {
                     DWORD i1;
-                    CHAR *hex_prefix;
+                    const CHAR *hex_prefix;
                     CHAR buf[20];
                     int cur_pos;
 
@@ -1284,7 +1284,7 @@ void export_hkey(FILE *file, HKEY key,
 /******************************************************************************
  * Open file for export.
  */
-FILE *REGPROC_open_export_file(CHAR *file_name)
+static FILE *REGPROC_open_export_file(CHAR *file_name)
 {
     FILE *file = fopen(file_name, "w");
     if (!file) {
@@ -1405,7 +1405,7 @@ BOOL import_registry_file(LPTSTR filename)
 /******************************************************************************
  * Recursive function which removes the registry key with all subkeys.
  */
-void delete_branch(HKEY key,
+static void delete_branch(HKEY key,
                    CHAR **reg_key_name_buf, DWORD *reg_key_name_len)
 {
     HKEY branch_key;
@@ -1492,12 +1492,12 @@ void delete_registry_key(CHAR *reg_key_name)
  * Sets the application name. Then application name is used in the error
  * reporting.
  */
-void setAppName(CHAR *name)
+void setAppName(const CHAR *name)
 {
     app_name = name;
 }
 
-CHAR *getAppName()
+const CHAR *getAppName(void)
 {
     return app_name;
 }

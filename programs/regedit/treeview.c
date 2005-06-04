@@ -136,7 +136,7 @@ static HTREEITEM AddEntryToTree(HWND hwndTV, HTREEITEM hParent, LPTSTR label, HK
     return TreeView_InsertItem(hwndTV, &tvins);
 }
 
-BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
+static BOOL RefreshTreeItem(HWND hwndTV, HTREEITEM hItem)
 {
     HKEY hRoot, hKey, hSubKey;
     HTREEITEM childItem;

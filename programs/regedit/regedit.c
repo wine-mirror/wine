@@ -23,7 +23,7 @@
 #include <windows.h>
 #include "regproc.h"
 
-static char *usage =
+static const char *usage =
     "Usage:\n"
     "    regedit filename\n"
     "    regedit /E filename [regpath]\n"
@@ -68,7 +68,7 @@ BOOL PerformRegAction(REGEDIT_ACTION action, LPSTR s);
  *   chu - the switch character in upper-case.
  *   s - the command line string where s points to the switch character.
  */
-void error_unknown_switch(char chu, char *s)
+static void error_unknown_switch(char chu, char *s)
 {
     if (isalpha(chu)) {
         fprintf(stderr,"%s: Undefined switch /%c!\n", getAppName(), chu);
