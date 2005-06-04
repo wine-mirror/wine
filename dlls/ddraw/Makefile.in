@@ -25,11 +25,11 @@ OPENGLFILES = \
 C_SRCS = \
 	@OPENGLFILES@ \
 	clipper.c \
+	ddraw_hal.c \
+	ddraw_main.c \
+	ddraw_thunks.c \
+	ddraw_user.c \
 	ddraw_utils.c \
-	ddraw/hal.c \
-	ddraw/main.c \
-	ddraw/thunks.c \
-	ddraw/user.c \
 	dsurface/dib.c \
 	dsurface/fakezbuffer.c \
 	dsurface/gamma.c \
@@ -49,7 +49,6 @@ SUBDIRS = tests
 
 EXTRASUBDIRS = \
 	d3ddevice \
-	ddraw \
 	direct3d \
 	dsurface
 

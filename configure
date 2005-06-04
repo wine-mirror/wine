@@ -20051,8 +20051,6 @@ esac
 
           ac_config_commands="$ac_config_commands dlls/ddraw/d3ddevice"
 
-          ac_config_commands="$ac_config_commands dlls/ddraw/ddraw"
-
           ac_config_commands="$ac_config_commands dlls/ddraw/direct3d"
 
           ac_config_commands="$ac_config_commands dlls/ddraw/dsurface"
@@ -20883,7 +20881,6 @@ do
   "tools/wmc/Makefile" ) CONFIG_FILES="$CONFIG_FILES tools/wmc/Makefile" ;;
   "tools/wrc/Makefile" ) CONFIG_FILES="$CONFIG_FILES tools/wrc/Makefile" ;;
   "dlls/ddraw/d3ddevice" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/d3ddevice" ;;
-  "dlls/ddraw/ddraw" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/ddraw" ;;
   "dlls/ddraw/direct3d" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/direct3d" ;;
   "dlls/ddraw/dsurface" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/ddraw/dsurface" ;;
   "dlls/gdi/enhmfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/enhmfdrv" ;;
@@ -21678,8 +21675,6 @@ echo "$as_me: executing $ac_dest commands" >&6;}
   case $ac_dest in
     dlls/ddraw/d3ddevice ) test -d "dlls/ddraw/d3ddevice" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/d3ddevice" >&5
 echo "$as_me: creating dlls/ddraw/d3ddevice" >&6;} && mkdir "dlls/ddraw/d3ddevice") ;;
-    dlls/ddraw/ddraw ) test -d "dlls/ddraw/ddraw" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/ddraw" >&5
-echo "$as_me: creating dlls/ddraw/ddraw" >&6;} && mkdir "dlls/ddraw/ddraw") ;;
     dlls/ddraw/direct3d ) test -d "dlls/ddraw/direct3d" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/direct3d" >&5
 echo "$as_me: creating dlls/ddraw/direct3d" >&6;} && mkdir "dlls/ddraw/direct3d") ;;
     dlls/ddraw/dsurface ) test -d "dlls/ddraw/dsurface" || ({ echo "$as_me:$LINENO: creating dlls/ddraw/dsurface" >&5
