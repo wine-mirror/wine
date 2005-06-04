@@ -422,7 +422,9 @@ static ULONG WINAPI VideoRenderer_Release(IBaseFilter * iface)
     if (!refCount)
     {
         DeleteCriticalSection(&This->csFilter);
-        IReferenceClock_Release(This->pClock);
+
+        if (This->pClock)
+            IReferenceClock_Release(This->pClock);
         
         IPin_Release(This->ppPins[0]);
         
