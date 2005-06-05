@@ -1200,6 +1200,9 @@ static void load_builtin_callback( void *module, const char *filename )
         builtin_load_info->status = STATUS_INVALID_IMAGE_FORMAT;
         return;
     }
+    addr = module;
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
+                             MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
     if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
         /* if we already have an executable, ignore this one */
@@ -1233,9 +1236,6 @@ static void load_builtin_callback( void *module, const char *filename )
         return;
     }
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
-    addr = module;
-    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
-                             MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
 
     /* fixup imports */
 
