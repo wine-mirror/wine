@@ -79,7 +79,7 @@ THHOOK *pThhook = &DefaultThhook;
 
 static UINT16 nTaskCount = 0;
 
-static HTASK16 initial_task;
+static HTASK16 initial_task, main_task;
 
 /***********************************************************************
  *	     TASK_InstallTHHook
@@ -419,11 +419,10 @@ void TASK_CreateMainTask(void)
     pTask->hPrevInstance = 0;
     pTask->teb           = NtCurrentTeb();
 
-    NtCurrentTeb()->htask16 = pTask->hSelf;
-
     /* Add the task to the linked list */
     /* (no need to get the win16 lock, we are the only thread at this point) */
     TASK_LinkTask( pTask->hSelf );
+    main_task = pTask->hSelf;
 }
 
 
@@ -1177,7 +1176,9 @@ void WINAPI GetTaskQueueES16(void)
  */
 HTASK16 WINAPI GetCurrentTask(void)
 {
-    return NtCurrentTeb()->htask16;
+    HTASK16 ret = NtCurrentTeb()->htask16;
+    if (!ret) ret = main_task;
+    return ret;
 }
 
 /***********************************************************************

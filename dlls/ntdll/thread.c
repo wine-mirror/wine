@@ -266,7 +266,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->reply_fd    = -1;
     teb->wait_fd[0]  = -1;
     teb->wait_fd[1]  = -1;
-    teb->htask16     = NtCurrentTeb()->htask16;
 
     info->pthread_info.teb_base = teb;
     NtAllocateVirtualMemory( NtCurrentProcess(), &info->pthread_info.teb_base, 0, &size,
