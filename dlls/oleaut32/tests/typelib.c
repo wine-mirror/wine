@@ -58,9 +58,6 @@ void ref_count_test(LPCWSTR type_lib)
 
 START_TEST(typelib)
 {
-    static const WCHAR type_lib_olepro32[] = {'o','l','e','p','r','o','3','2','.','d','l','l',0};
     static const WCHAR type_lib_stdole32[] = {'s','t','d','o','l','e','3','2','.','t','l','b',0};
-
-    ref_count_test(type_lib_olepro32);
     ref_count_test(type_lib_stdole32);
 }
