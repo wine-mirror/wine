@@ -324,6 +324,12 @@ static const char * getFormat(WORD wFormatTag)
     return unknown;
 }
 
+/* Allow 1% deviation for sample rates (some ES137x cards) */
+static BOOL NearMatch(int rate1, int rate2)
+{
+    return (((100 * (rate1 - rate2)) / rate1) == 0);
+}
+
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              WAVEFORMATPCMEX* format)
 {
@@ -1928,7 +1934,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
-    if (rate != wwo->format.Format.nSamplesPerSec) {
+    if (!NearMatch(rate, wwo->format.Format.nSamplesPerSec)) {
         if (dwFlags & WAVE_DIRECTSOUND) {
             WARN("changed sample rate from %ld Hz to %d Hz\n", wwo->format.Format.nSamplesPerSec, rate);
             wwo->format.Format.nSamplesPerSec = rate;
@@ -3411,7 +3417,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
-    if (rate != wwi->format.Format.nSamplesPerSec) {
+    if (!NearMatch(rate, wwi->format.Format.nSamplesPerSec)) {
 	WARN("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwi->format.Format.nSamplesPerSec, rate);
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
