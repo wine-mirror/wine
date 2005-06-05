@@ -43,6 +43,17 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN* catAdmin,
 }
 
 /***********************************************************************
+ *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD* pcbHash,
+                                                BYTE* pbHash, DWORD dwFlags )
+{
+    FIXME("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		CryptCATAdminReleaseContext (WINTRUST.@)
  */
 BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )

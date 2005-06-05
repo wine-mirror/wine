@@ -2,7 +2,7 @@
 @ stub CatalogCompactHashDatabase
 @ stdcall CryptCATAdminAcquireContext(long ptr long)
 @ stub CryptCATAdminAddCatalog
-@ stub CryptCATAdminCalcHashFromFileHandle
+@ stdcall CryptCATAdminCalcHashFromFileHandle(long ptr ptr long)
 @ stub CryptCATAdminEnumCatalogFromHash
 @ stub CryptCATAdminPauseServiceForBackup
 @ stdcall CryptCATAdminReleaseContext(long long)
