@@ -825,7 +825,7 @@ static int output_immediate_imports( FILE *outfile )
         pos += 4;
     }
     output_function_size( outfile, import_thunks );
-    fprintf( outfile, "    \".text\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
+    fprintf( outfile, "    \".data\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
  done:
     return nb_imm;

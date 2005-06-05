@@ -298,8 +298,7 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
         }
     }
 
-    fprintf( outfile, "    \"\\t.text\\n\"\n" );
-    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
+    fprintf( outfile, "    \"\\t.data\\n\"\n" );
     fprintf( outfile, ");\n\n" );
 
     return total_size;
