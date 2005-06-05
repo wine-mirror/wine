@@ -1,5 +1,5 @@
 /*
- * Copyright 2000, 2003, 2004 Martin Fuchs
+ * Copyright 2000, 2003, 2004, 2005 Martin Fuchs
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,25 +28,33 @@
 #define NOIMAGE
 #define NOTAPE
 
-#ifdef UNICODE
-#define	_UNICODE
-#include <wchar.h>
-#endif
-
+#define NONAMELESSUNION
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include <commdlg.h>
-#include <shellapi.h>
-#include <shlobj.h>
+
+#ifdef UNICODE
+#define	_UNICODE
+#include <wchar.h>
+#endif
+#include <tchar.h>
+
 #include <stdlib.h>
 #include <stdio.h>
-#include <tchar.h>
 #include <ctype.h>
+#include <locale.h>
 
-#ifdef _MSC_VER
+#ifndef __WINE__
 #include <malloc.h>	/* for alloca() */
 #endif
+
+#include <shellapi.h>	/* for ShellExecute() */
+#include <shlobj.h>		/* for SHFormatDrive() */
+
+#ifndef _NO_EXTENSIONS
+#define	_SHELL_FOLDERS
+#endif /* _NO_EXTENSIONS */
 
 #ifndef FILE_ATTRIBUTE_NOT_CONTENT_INDEXED
 #define FILE_ATTRIBUTE_ENCRYPTED            0x00000040
@@ -72,9 +80,9 @@ enum IMAGE {
 };
 
 #define	IMAGE_WIDTH			16
-#define	IMAGE_HEIGHT			13
+#define	IMAGE_HEIGHT		13
 #define	SPLIT_WIDTH			5
-#define TREE_LINE_DX			3
+#define TREE_LINE_DX		3
 
 #define IDW_STATUSBAR		0x100
 #define IDW_TOOLBAR			0x101
@@ -101,17 +109,12 @@ enum IMAGE {
 #define	Frame_CalcFrameClient(hwnd, prt) ((BOOL)SNDMSG(hwnd, FRM_CALC_CLIENT, 0, (LPARAM)(PRECT)prt))
 
 
-#ifndef _NO_EXTENSIONS
-#define	_SHELL_FOLDERS
-#endif
-
-
 typedef struct
 {
   HANDLE	hInstance;
   HACCEL	haccel;
-  ATOM			hframeClass;
-  HWND			hwndParent;
+  ATOM		hframeClass;
+  HWND		hwndParent;
 
   HWND		hMainWnd;
   HMENU		hMenuFrame;

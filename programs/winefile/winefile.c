@@ -23,9 +23,6 @@
 #include "wine/port.h"
 #endif
 
-#include <locale.h>
-
-#define NONAMELESSUNION
 #include "winefile.h"
 #include "resource.h"
 
