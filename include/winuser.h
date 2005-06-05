@@ -3022,11 +3022,11 @@ typedef struct {
     DWORD dwTimeout;
 } FLASHWINFO, *PFLASHWINFO;
 
-/* WM_SHOWWINDOW wParam codes */
+/* WM_SHOWWINDOW lParam codes */
 #define SW_PARENTCLOSING    1
-#define SW_OTHERMAXIMIZED   2
+#define SW_OTHERZOOM        2
 #define SW_PARENTOPENING    3
-#define SW_OTHERRESTORED    4
+#define SW_OTHERUNZOOM      4
 
 /* SetLayeredWindowAttributes() flags */
 #define LWA_COLORKEY        0x00000001
