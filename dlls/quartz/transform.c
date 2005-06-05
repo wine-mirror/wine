@@ -275,7 +275,9 @@ static ULONG WINAPI TransformFilter_Release(IBaseFilter * iface)
         ULONG i;
 
         DeleteCriticalSection(&This->csFilter);
-        IReferenceClock_Release(This->pClock);
+
+        if (This->pClock)
+            IReferenceClock_Release(This->pClock);
 
         for (i = 0; i < 2; i++)
             IPin_Release(This->ppPins[i]);

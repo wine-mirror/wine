@@ -821,7 +821,7 @@ static HRESULT FileAsyncReaderPin_ConnectSpecific(IPin * iface, IPin * pReceiveP
     {
         IPin_Release(This->pin.pConnectedTo);
         This->pin.pConnectedTo = NULL;
-        DeleteMediaType(&This->pin.mtCurrent);
+        FreeMediaType(&This->pin.mtCurrent);
     }
 
     TRACE(" -- %lx\n", hr);

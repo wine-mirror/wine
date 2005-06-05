@@ -107,7 +107,7 @@ static HRESULT OutputPin_ConnectSpecific(IPin * iface, IPin * pReceivePin, const
     {
         IPin_Release(This->pin.pConnectedTo);
         This->pin.pConnectedTo = NULL;
-        DeleteMediaType(&This->pin.mtCurrent);
+        FreeMediaType(&This->pin.mtCurrent);
     }
 
     TRACE(" -- %lx\n", hr);
@@ -154,6 +154,7 @@ HRESULT InputPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID 
     pPinImpl->pin.pUserData = pUserData;
     pPinImpl->pin.pCritSec = pCritSec;
     Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
+    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
 
     /* Input pin attributes */
     pPinImpl->fnSampleProc = pSampleProc;
@@ -177,6 +178,7 @@ HRESULT OutputPin_Init(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES * props, 
     pPinImpl->pin.pUserData = pUserData;
     pPinImpl->pin.pCritSec = pCritSec;
     Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
+    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
 
     /* Output pin attributes */
     pPinImpl->pMemInputPin = NULL;
@@ -410,7 +412,7 @@ ULONG WINAPI InputPin_Release(IPin * iface)
     
     if (!refCount)
     {
-        DeleteMediaType(&This->pin.mtCurrent);
+        FreeMediaType(&This->pin.mtCurrent);
         if (This->pAllocator)
             IMemAllocator_Release(This->pAllocator);
         CoTaskMemFree(This);
@@ -665,11 +667,11 @@ ULONG WINAPI OutputPin_Release(IPin * iface)
     OutputPin *This = (OutputPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
     
-    TRACE("(%p/%p)->()\n", This, iface);
+    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
     
     if (!refCount)
     {
-        DeleteMediaType(&This->pin.mtCurrent);
+        FreeMediaType(&This->pin.mtCurrent);
         CoTaskMemFree(This);
         return 0;
     }
@@ -1015,6 +1017,7 @@ HRESULT PullPin_Init(const PIN_INFO * pPinInfo, SAMPLEPROC pSampleProc, LPVOID p
     pPinImpl->pin.pUserData = pUserData;
     pPinImpl->pin.pCritSec = pCritSec;
     Copy_PinInfo(&pPinImpl->pin.pinInfo, pPinInfo);
+    ZeroMemory(&pPinImpl->pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
 
     /* Input pin attributes */
     pPinImpl->fnSampleProc = pSampleProc;

@@ -211,7 +211,7 @@ static HRESULT ACMWrapper_ConnectInput(TransformFilterImpl* pTransformFilter, co
         }
 	else
 	    FIXME("acmStreamOpen returned %d\n", res);
-	DeleteMediaType(outpmt);
+        FreeMediaType(outpmt);
         TRACE("Unable to find a suitable ACM decompressor\n");
     }
 

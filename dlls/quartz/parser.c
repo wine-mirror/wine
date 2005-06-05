@@ -596,13 +596,13 @@ static ULONG WINAPI Parser_OutputPin_Release(IPin * iface)
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     
-    TRACE("()\n");
+    TRACE("(%p)->() Release from %ld\n", iface, refCount + 1);
     
     if (!refCount)
     {
-        DeleteMediaType(This->pmt);
+        FreeMediaType(This->pmt);
         CoTaskMemFree(This->pmt);
-        DeleteMediaType(&This->pin.pin.mtCurrent);
+        FreeMediaType(&This->pin.pin.mtCurrent);
         CoTaskMemFree(This);
         return 0;
     }
