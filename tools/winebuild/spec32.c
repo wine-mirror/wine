@@ -778,8 +778,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "      { %s, %s },\n",  /* IMAGE_DIRECTORY_ENTRY_IMPORT */
              nr_imports ? "&imports" : "0", nr_imports ? "sizeof(imports)" : "0" );
     fprintf( outfile, "      { %s, %s },\n",   /* IMAGE_DIRECTORY_ENTRY_RESOURCE */
-             spec->nb_resources ? "&resources" : "0",
-             spec->nb_resources ? "sizeof(resources)" : "0" );
+             spec->nb_resources ? "&__wine_spec_resources" : "0",
+             spec->nb_resources ? "sizeof(__wine_spec_resources)" : "0" );
     fprintf( outfile, "    }\n  }\n};\n\n" );
 
     /* Output the DLL constructor */
