@@ -91,7 +91,6 @@ HRESULT WINAPI IDirectSoundCaptureImpl_Create(
 }
 
 HRESULT WINAPI DSOUND_CaptureCreate(
-    
     LPDIRECTSOUNDCAPTURE *ppDSC,
     IUnknown *pUnkOuter)
 {
@@ -254,7 +253,7 @@ static HRESULT DirectSoundCaptureDevice_Create(
 {
     DirectSoundCaptureDevice * device;
     TRACE("(%p)\n", ppDevice);
-                                                                                
+
     /* Allocate memory */
     device = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DirectSoundCaptureDevice));
 
@@ -457,7 +456,7 @@ IDirectSoundCaptureImpl_QueryInterface(
     REFIID riid,
     LPVOID* ppobj )
 {
-    DirectSoundCaptureDevice *This = ((IDirectSoundCaptureImpl *)iface)->device;
+    IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE( "(%p,%s,%p)\n", This, debugstr_guid(riid), ppobj );
 
     if (ppobj == NULL) {
@@ -467,16 +466,18 @@ IDirectSoundCaptureImpl_QueryInterface(
 
     *ppobj = NULL;
 
-    if (This->driver) {
-	HRESULT	hres;
-        hres = IDsCaptureDriver_QueryInterface(This->driver, riid, ppobj);
-	if (hres != DS_OK)
-	    WARN("IDsCaptureDriver_QueryInterface failed\n");
-	return hres;
+    if (IsEqualIID(riid, &IID_IUnknown)) {
+        IDirectSoundCapture_AddRef((LPDIRECTSOUNDCAPTURE)This);
+        *ppobj = This;
+        return DS_OK;
+    } else if (IsEqualIID(riid, &IID_IDirectSoundCapture)) {
+        IDirectSoundCapture_AddRef((LPDIRECTSOUNDCAPTURE)This);
+        *ppobj = This;
+        return DS_OK;
     }
 
     WARN("unsupported riid: %s\n", debugstr_guid(riid));
-    return E_FAIL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI
@@ -492,7 +493,6 @@ static ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device)
 {
     ULONG ref;
-
     TRACE("(%p) ref was %lu\n", device, device->ref);
 
     device->ref--;
@@ -506,7 +506,7 @@ static ULONG DirectSoundCaptureDevice_Release(
         if (device->driver) {
             IDsCaptureDriver_Close(device->driver);
             IDsCaptureDriver_Release(device->driver);
-	}
+        }
 
         HeapFree(GetProcessHeap(), 0, device->pwfx);
         device->lock.DebugInfo->Spare[1] = 0;
@@ -590,6 +590,11 @@ IDirectSoundCaptureImpl_GetCaps(
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     TRACE("(%p,%p)\n",This,lpDSCCaps);
 
+    if (This->device == NULL) {
+	WARN("not initialized\n");
+	return DSERR_UNINITIALIZED;
+    }
+
     if (lpDSCCaps== NULL) {
 	WARN("invalid parameter: lpDSCCaps== NULL\n");
 	return DSERR_INVALIDPARAM;
@@ -599,11 +604,6 @@ IDirectSoundCaptureImpl_GetCaps(
 	WARN("invalid parameter: lpDSCCaps->dwSize = %ld < %d\n",
 	    lpDSCCaps->dwSize, sizeof(*lpDSCCaps));
 	return DSERR_INVALIDPARAM;
-    }
-
-    if ( !(This->device) ) {
-	WARN("not initialized\n");
-	return DSERR_UNINITIALIZED;
     }
 
     lpDSCCaps->dwFlags = This->device->drvcaps.dwFlags;
@@ -677,7 +677,7 @@ IDirectSoundCaptureImpl_Initialize(
         WARN("DirectSoundCaptureDevice_Create failed\n");
         return err;
     }
- 
+
     This->device = device;
     device->guid = devGUID;
 
@@ -1771,10 +1771,7 @@ DSCCF_CreateInstance(
     *ppobj = NULL;
 
     if ( IsEqualGUID( &IID_IDirectSoundCapture, riid ) )
-	return DSOUND_CaptureCreate((LPDIRECTSOUNDCAPTURE*)ppobj,pOuter);
-
-    if ( IsEqualGUID( &IID_IDirectSoundCapture8, riid ) )
-	return DSOUND_CaptureCreate8((LPDIRECTSOUNDCAPTURE8*)ppobj,pOuter);
+	return DSOUND_CaptureCreate8((LPDIRECTSOUNDCAPTURE*)ppobj,pOuter);
 
     WARN("(%p,%p,%s,%p) Interface not found!\n",This,pOuter,debugstr_guid(riid),ppobj);	
     return E_NOINTERFACE;
