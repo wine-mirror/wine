@@ -30,18 +30,18 @@ C_SRCS = \
 	ddraw_thunks.c \
 	ddraw_user.c \
 	ddraw_utils.c \
-	dsurface/dib.c \
-	dsurface/fakezbuffer.c \
-	dsurface/gamma.c \
-	dsurface/hal.c \
-	dsurface/main.c \
-	dsurface/thunks.c \
-	dsurface/user.c \
-	dsurface/wndproc.c \
 	main.c \
 	palette_hal.c \
 	palette_main.c \
-	regsvr.c
+	regsvr.c \
+	surface_dib.c \
+	surface_fakezbuffer.c \
+	surface_gamma.c \
+	surface_hal.c \
+	surface_main.c \
+	surface_thunks.c \
+	surface_user.c \
+	surface_wndproc.c
 
 RC_SRCS = version.rc
 
@@ -49,8 +49,7 @@ SUBDIRS = tests
 
 EXTRASUBDIRS = \
 	d3ddevice \
-	direct3d \
-	dsurface
+	direct3d
 
 @MAKE_DLL_RULES@
 

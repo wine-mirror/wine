@@ -1509,7 +1509,6 @@ AH_TOP([#define __WINE_CONFIG_H])
 
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/d3ddevice)
 WINE_CONFIG_EXTRA_DIR(dlls/ddraw/direct3d)
-WINE_CONFIG_EXTRA_DIR(dlls/ddraw/dsurface)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel/messages)
