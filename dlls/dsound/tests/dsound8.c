@@ -454,10 +454,12 @@ static HRESULT test_primary8(LPGUID lpGuid)
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_CTRLVOLUME;
     rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok(rc==DS_OK && primary!=NULL,
+    ok((rc==DS_OK && primary!=NULL) || (rc==DSERR_CONTROLUNAVAIL),
        "IDirectSound8_CreateSoundBuffer() failed to create a primary buffer: "
        "%s\n",DXGetErrorString8(rc));
-    if (rc==DS_OK && primary!=NULL) {
+    if (rc==DSERR_CONTROLUNAVAIL)
+        trace("  No Primary\n");
+    else if (rc==DS_OK && primary!=NULL) {
         LONG vol;
 
         /* Try to create a second primary buffer */

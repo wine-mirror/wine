@@ -674,11 +674,12 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
     else
         bufdesc.dwFlags|=(DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok(rc==DS_OK && primary!=NULL,"IDirectSound_CreateSoundBuffer() "
-       "failed to create a %sprimary buffer: %s\n",has_3d?"3D ":"",
-        DXGetErrorString8(rc));
-
-    if (rc==DS_OK && primary!=NULL) {
+    ok((rc==DS_OK && primary!=NULL) || (rc==DSERR_CONTROLUNAVAIL),
+       "IDirectSound_CreateSoundBuffer() failed to create a %sprimary buffer: "
+       "%s\n",has_3d?"3D ":"", DXGetErrorString8(rc));
+    if (rc==DSERR_CONTROLUNAVAIL)
+        trace("  No Primary\n");
+    else if (rc==DS_OK && primary!=NULL) {
         rc=IDirectSoundBuffer_GetFormat(primary,&wfx1,sizeof(wfx1),NULL);
         ok(rc==DS_OK,"IDirectSoundBuffer8_Getformat() failed: %s\n",
            DXGetErrorString8(rc));
@@ -953,9 +954,12 @@ static HRESULT test_primary(LPGUID lpGuid)
     bufdesc.dwSize=sizeof(bufdesc);
     bufdesc.dwFlags=DSBCAPS_PRIMARYBUFFER|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN;
     rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&primary,NULL);
-    ok(rc==DS_OK && primary!=NULL,"IDirectSound_CreateSoundBuffer() failed "
-       "to create a primary buffer: %s\n",DXGetErrorString8(rc));
-    if (rc==DS_OK && primary!=NULL) {
+    ok((rc==DS_OK && primary!=NULL) || (rc==DSERR_CONTROLUNAVAIL),
+       "IDirectSound_CreateSoundBuffer() failed to create a primary buffer: "
+       "%s\n",DXGetErrorString8(rc));
+    if (rc==DSERR_CONTROLUNAVAIL)
+        trace("  No Primary\n");
+    else if (rc==DS_OK && primary!=NULL) {
         test_buffer(dso,primary,1,TRUE,0,TRUE,0,winetest_interactive &&
                     !(dscaps.dwFlags & DSCAPS_EMULDRIVER),1.0,0,NULL,0,0,
                     FALSE,0);
