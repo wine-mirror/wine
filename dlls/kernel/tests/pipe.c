@@ -731,19 +731,49 @@ static int test_DisconnectNamedPipe(void)
 
     return 0;
 }
+static void test_CreatePipe(void)
+{
+    SECURITY_ATTRIBUTES pipe_attr;
+    HANDLE piperead, pipewrite;
+    DWORD written;
+    DWORD read;
+    char readbuf[32];
+
+    pipe_attr.nLength = sizeof(SECURITY_ATTRIBUTES); 
+    pipe_attr.bInheritHandle = TRUE; 
+    pipe_attr.lpSecurityDescriptor = NULL; 
+    ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, 0) != 0, "CreatePipe failed\n");
+    ok(WriteFile(pipewrite,PIPENAME,sizeof(PIPENAME), &written, NULL), "Write to anonymous pipe failed\n");
+    ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %ld bytes instead of %d\n", written,sizeof(PIPENAME));
+    ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from non empty pipe failed\n");
+    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes instead of %d\n", read, sizeof(PIPENAME));
+
+    /* Now write another chunk*/
+    ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, 0) != 0, "CreatePipe failed\n");
+    ok(WriteFile(pipewrite,PIPENAME,sizeof(PIPENAME), &written, NULL), "Write to anonymous pipe failed\n");
+    ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %ld bytes instead of %d\n", written,sizeof(PIPENAME));
+    /* and close the write end, read should still succeed*/
+    ok(CloseHandle(pipewrite), "CloseHandle for the Write Pipe failed\n");
+    ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from broken pipe withe with pending data failed\n");
+    ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %ld bytes instead of %d\n", read, sizeof(PIPENAME));
+    /* But now we need to get informed that the pipe is closed */
+    todo_wine ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
+}
 
 START_TEST(pipe)
 {
-    trace("test 1 of 4:\n");
+    trace("test 1 of 6:\n");
     if (test_DisconnectNamedPipe())
         return;
-    trace("test 2 of 4:\n");
+    trace("test 2 of 6:\n");
     test_CreateNamedPipe_instances_must_match();
-    trace("test 3 of 4:\n");
+    trace("test 3 of 6:\n");
     test_NamedPipe_2();
-    trace("test 4 of 4:\n");
+    trace("test 4 of 6:\n");
     test_CreateNamedPipe(PIPE_TYPE_BYTE);
-    trace("all tests done\n");
+    trace("test 5 of 6\n");
     test_CreateNamedPipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
+    trace("test 6 of 6\n");
+    test_CreatePipe();
     trace("all tests done\n");
 }
