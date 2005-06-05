@@ -601,6 +601,12 @@ static void proxy_manager_disconnect(struct proxy_manager * This)
     TRACE("oxid = %s, oid = %s\n", wine_dbgstr_longlong(This->oxid),
         wine_dbgstr_longlong(This->oid));
 
+    /* SORFP_NOLIFTIMEMGMT proxies (for IRemUnknown) shouldn't be
+     * disconnected - it won't do anything anyway, except cause
+     * problems for other objects that depend on this proxy always
+     * working */
+    if (This->sorflags & SORFP_NOLIFETIMEMGMT) return;
+
     EnterCriticalSection(&This->cs);
 
     LIST_FOR_EACH(cursor, &This->interfaces)
