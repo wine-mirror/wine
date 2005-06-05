@@ -1951,20 +1951,31 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                     if (lpwai->lpszProxy)
                     {
                         pPI->lpszProxy = (LPWSTR)((LPBYTE)lpBuffer +
-                         sizeof(INTERNET_PROXY_INFOW));
+                                                  sizeof(INTERNET_PROXY_INFOW));
                         lstrcpyW((LPWSTR)pPI->lpszProxy, lpwai->lpszProxy);
                     }
                     else
-                        pPI->lpszProxy = NULL;
+                    {
+                        pPI->lpszProxy = (LPWSTR)((LPBYTE)lpBuffer +
+                                                  sizeof(INTERNET_PROXY_INFOW));
+                        *((LPWSTR)(pPI->lpszProxy)) = 0;
+                    }
+
                     if (lpwai->lpszProxyBypass)
                     {
                         pPI->lpszProxyBypass = (LPWSTR)((LPBYTE)lpBuffer +
-                         sizeof(INTERNET_PROXY_INFOW) + proxyBytesRequired);
+                                                        sizeof(INTERNET_PROXY_INFOW) +
+                                                        proxyBytesRequired);
                         lstrcpyW((LPWSTR)pPI->lpszProxyBypass,
                          lpwai->lpszProxyBypass);
                     }
                     else
-                        pPI->lpszProxyBypass = NULL;
+                    {
+                        pPI->lpszProxyBypass = (LPWSTR)((LPBYTE)lpBuffer +
+                                                        sizeof(INTERNET_PROXY_INFOW) +
+                                                        proxyBytesRequired);
+                        *((LPWSTR)(pPI->lpszProxyBypass)) = 0;
+                    }
                     bSuccess = TRUE;
                 }
                 *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOW) +
@@ -1987,16 +1998,20 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                 else
                 {
                     pPI->dwAccessType = lpwai->dwAccessType;
-                    FIXME("INTERNET_OPTION_PROXY: Stub\n");
                     if (lpwai->lpszProxy)
                     {
                         pPI->lpszProxy = (LPSTR)((LPBYTE)lpBuffer +
-                         sizeof(INTERNET_PROXY_INFOA));
+                                                 sizeof(INTERNET_PROXY_INFOA));
                         WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxy, -1,
                          (LPSTR)pPI->lpszProxy, proxyBytesRequired, NULL, NULL);
                     }
                     else
-                        pPI->lpszProxy = NULL;
+                    {
+                        pPI->lpszProxy = (LPSTR)((LPBYTE)lpBuffer +
+                                                 sizeof(INTERNET_PROXY_INFOA));
+                        *((LPSTR)(pPI->lpszProxy)) = '\0';
+                    }
+                    
                     if (lpwai->lpszProxyBypass)
                     {
                         pPI->lpszProxyBypass = (LPSTR)((LPBYTE)lpBuffer +
@@ -2007,7 +2022,12 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                          NULL, NULL);
                     }
                     else
-                        pPI->lpszProxyBypass = NULL;
+                    {
+                        pPI->lpszProxyBypass = (LPSTR)((LPBYTE)lpBuffer +
+                                                       sizeof(INTERNET_PROXY_INFOA) +
+                                                       proxyBytesRequired);
+                        *((LPSTR)(pPI->lpszProxyBypass)) = '\0';
+                    }
                     bSuccess = TRUE;
                 }
                 *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOA) +
