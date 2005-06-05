@@ -24,7 +24,6 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdarg.h>
-#include <signal.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIMES_H
 #include <sys/times.h>
@@ -238,45 +237,8 @@ void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
     }
     else
     {
-        struct wine_pthread_thread_info info;
-        sigset_t block_set;
-        ULONG size;
-
         LdrShutdownThread();
-        RtlAcquirePebLock();
-        RemoveEntryList( &NtCurrentTeb()->TlsLinks );
-        RtlReleasePebLock();
-
-        info.stack_base  = NtCurrentTeb()->DeallocationStack;
-        info.teb_base    = NtCurrentTeb();
-        info.teb_sel     = wine_get_fs();
-        info.exit_status = code;
-
-        size = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
-        info.stack_size = size;
-
-        size = 0;
-        NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base, &size, MEM_RELEASE | MEM_SYSTEM );
-        info.teb_size = size;
-
-        /* block the async signals */
-        sigemptyset( &block_set );
-        sigaddset( &block_set, SIGALRM );
-        sigaddset( &block_set, SIGIO );
-        sigaddset( &block_set, SIGINT );
-        sigaddset( &block_set, SIGHUP );
-        sigaddset( &block_set, SIGUSR1 );
-        sigaddset( &block_set, SIGUSR2 );
-        sigaddset( &block_set, SIGTERM );
-        sigprocmask( SIG_BLOCK, &block_set, NULL );
-
-        close( NtCurrentTeb()->wait_fd[0] );
-        close( NtCurrentTeb()->wait_fd[1] );
-        close( NtCurrentTeb()->reply_fd );
-        close( NtCurrentTeb()->request_fd );
-
-        wine_pthread_exit_thread( &info );
+        wine_server_exit_thread( code );
     }
 }
 

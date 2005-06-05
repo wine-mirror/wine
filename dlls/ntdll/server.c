@@ -119,6 +119,40 @@ static void fatal_perror( const char *err, ... )
 
 
 /***********************************************************************
+ *           wine_server_exit_thread  (NTDLL.@)
+ */
+void wine_server_exit_thread( int status )
+{
+    struct wine_pthread_thread_info info;
+    ULONG size;
+
+    RtlAcquirePebLock();
+    RemoveEntryList( &NtCurrentTeb()->TlsLinks );
+    RtlReleasePebLock();
+
+    info.stack_base  = NtCurrentTeb()->DeallocationStack;
+    info.teb_base    = NtCurrentTeb();
+    info.teb_sel     = wine_get_fs();
+    info.exit_status = status;
+
+    size = 0;
+    NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
+    info.stack_size = size;
+
+    size = 0;
+    NtFreeVirtualMemory( GetCurrentProcess(), &info.teb_base, &size, MEM_RELEASE | MEM_SYSTEM );
+    info.teb_size = size;
+
+    sigprocmask( SIG_BLOCK, &block_set, NULL );
+    close( NtCurrentTeb()->wait_fd[0] );
+    close( NtCurrentTeb()->wait_fd[1] );
+    close( NtCurrentTeb()->reply_fd );
+    close( NtCurrentTeb()->request_fd );
+    wine_pthread_exit_thread( &info );
+}
+
+
+/***********************************************************************
  *           server_abort_thread
  */
 void server_abort_thread( int status )
