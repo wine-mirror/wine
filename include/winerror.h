@@ -2175,7 +2175,12 @@
 #define CRYPT_E_ASN1_NYI                                   _HRESULT_TYPEDEF_(0x80093134L)
 #define CRYPT_E_ASN1_EXTENDED                              _HRESULT_TYPEDEF_(0x80093201L)
 #define CRYPT_E_ASN1_NOEOD                                 _HRESULT_TYPEDEF_(0x80093202L)
+
 #define TRUST_E_CERT_SIGNATURE                             _HRESULT_TYPEDEF_(0x80096004L)
+#define TRUST_E_PROVIDER_UNKNOWN                           _HRESULT_TYPEDEF_(0x800B0001L)
+#define TRUST_E_ACTION_UNKNOWN                             _HRESULT_TYPEDEF_(0x800B0002L)
+#define TRUST_E_SUBJECT_FORM_UNKNOWN                       _HRESULT_TYPEDEF_(0x800B0003L)
+#define TRUST_E_SUBJECT_NOT_TRUSTED                        _HRESULT_TYPEDEF_(0x800B0004L)
 
 /* Smart card management error codes */
 #define SCARD_E_NO_SMARTCARD                               _HRESULT_TYPEDEF_(0x8010000CL)
