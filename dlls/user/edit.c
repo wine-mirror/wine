@@ -3100,7 +3100,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 		EDIT_BuildLineDefs_ML(es, st, st + strl,
 				strl - abs(es->selection_end - es->selection_start), hrgn);
 		/* if text is too long undo all changes */
-		if (!(es->style & ES_AUTOVSCROLL) && (es->line_count > vlc)) {
+		if (honor_limit && !(es->style & ES_AUTOVSCROLL) && (es->line_count > vlc)) {
 			if (strl)
 				strcpyW(es->text + e, es->text + e + strl);
 			if (e != s)
@@ -3118,7 +3118,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 		INT fw = es->format_rect.right - es->format_rect.left;
 		EDIT_CalcLineWidth_SL(es);
 		/* remove chars that don't fit */
-		if (!(es->style & ES_AUTOHSCROLL) && (es->text_width > fw)) {
+		if (honor_limit && !(es->style & ES_AUTOHSCROLL) && (es->text_width > fw)) {
 			while ((es->text_width > fw) && s + strl >= s) {
 				strcpyW(es->text + s + strl - 1, es->text + s + strl);
 				strl--;
@@ -4860,8 +4860,8 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
      */
     if( !((es->style & ES_MULTILINE) || es->hwndListBox))
     {
-	EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
         EDIT_NOTIFY_PARENT(es, EN_UPDATE, "EN_UPDATE");
+        EDIT_NOTIFY_PARENT(es, EN_CHANGE, "EN_CHANGE");
     }
     EDIT_EM_ScrollCaret(es);
     EDIT_UpdateScrollInfo(es);    

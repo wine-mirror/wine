@@ -32,6 +32,12 @@
 #define ID_EDITTEST2 99
 #define MAXLEN 200
 
+struct edit_notify {
+    int en_change, en_maxtext, en_update;
+};
+
+static struct edit_notify notifications;
+
 static char szEditTest2Name[] = "Edit Test 2 window class";
 static HINSTANCE hinst;
 static HWND hwndET2;
@@ -359,6 +365,290 @@ static BOOL RegisterWindowClasses (void)
     return TRUE;
 }
 
+static void zero_notify(void)
+{
+    notifications.en_change = 0;
+    notifications.en_maxtext = 0;
+    notifications.en_update = 0;
+}
+
+#define test_notify(enchange, enmaxtext, enupdate) \
+    ok(notifications.en_change == enchange, "expected %d EN_CHANGE notifications, " \
+    "got %d\n", enchange, notifications.en_change); \
+    ok(notifications.en_maxtext == enmaxtext, "expected %d EN_MAXTEXT notifications, " \
+    "got %d\n", enmaxtext, notifications.en_maxtext); \
+    ok(notifications.en_update == enupdate, "expected %d EN_UPDATE notifications, " \
+    "got %d\n", enupdate, notifications.en_update)
+
+
+static LRESULT CALLBACK edit3_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg) {
+        case WM_COMMAND:
+            switch (HIWORD(wParam)) {
+                case EN_MAXTEXT:
+                    notifications.en_maxtext++;
+                    break;
+                case EN_UPDATE:
+                    notifications.en_update++;
+                    break;
+                case EN_CHANGE:
+                    notifications.en_change++;
+                    break;
+            }
+            break;
+    }
+    return DefWindowProcA(hWnd, msg, wParam, lParam);
+}
+
+
+/* Test behaviour of WM_SETTEXT, WM_REPLACESEL and notificatisons sent in response
+ * to these messages.
+ */
+static void test_edit_control_3(void)
+{
+    WNDCLASSA cls;
+    HWND hWnd;
+    HWND hParent;
+    int len;
+    static const char *str = "this is a long string.";
+    static const char *str2 = "this is a long string.\r\nthis is a long string.\r\nthis is a long string.\r\nthis is a long string.";
+
+    trace("EDIT: Test notifications\n");
+
+    cls.style = 0;
+    cls.lpfnWndProc = edit3_wnd_procA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "ParentWindowClass";
+
+    assert(RegisterClassA(&cls));
+
+    hParent = CreateWindowExA(0,
+              "ParentWindowClass",
+              NULL,
+              0,
+              CW_USEDEFAULT, CW_USEDEFAULT, 10, 10,
+              NULL, NULL, NULL, NULL);
+    assert(hParent);
+
+    trace("EDIT: Single line, no ES_AUTOHSCROLL\n");
+    hWnd = CreateWindowExA(0,
+              "EDIT",
+              NULL,
+              0,
+              10, 10, 50, 50,
+              hParent, NULL, NULL, NULL);
+    assert(hWnd);
+
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) > len, "text should have been truncated\n");
+    test_notify(1, 1, 1);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)"a");
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(1 == len, "wrong text length, expected 1, got %d\n", len);
+    test_notify(1, 0, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    SendMessageA(hWnd, EM_SETLIMITTEXT, 5, 0);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(5 == len, "text should have been truncated to limit, expected 5, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    DestroyWindow(hWnd);
+
+    trace("EDIT: Single line, ES_AUTOHSCROLL\n");
+    hWnd = CreateWindowExA(0,
+              "EDIT",
+              NULL,
+              ES_AUTOHSCROLL,
+              10, 10, 50, 50,
+              hParent, NULL, NULL, NULL);
+    assert(hWnd);
+
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    SendMessageA(hWnd, EM_SETLIMITTEXT, 5, 0);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(5 == len, "text should have been truncated to limit, expected 5, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    DestroyWindow(hWnd);
+
+    trace("EDIT: Multline, no ES_AUTOHSCROLL, no ES_AUTOVSCROLL\n");
+    hWnd = CreateWindowExA(0,
+              "EDIT",
+              NULL,
+              ES_MULTILINE,
+              10, 10, 50, 50,
+              hParent, NULL, NULL, NULL);
+    assert(hWnd);
+
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(0 == len, "text should have been truncated, expected 0, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)"a");
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(1 == SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0), "wrong text length, expected 1, got %d\n", len);
+    test_notify(1, 0, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(0, 0, 0);
+
+    SendMessageA(hWnd, EM_SETLIMITTEXT, 5, 0);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(5 == len, "text should have been truncated to limit, expected 5, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
+    test_notify(0, 0, 0);
+
+    DestroyWindow(hWnd);
+
+    trace("EDIT: Multline, ES_AUTOHSCROLL, no ES_AUTOVSCROLL\n");
+    hWnd = CreateWindowExA(0,
+              "EDIT",
+              NULL,
+              ES_MULTILINE | ES_AUTOHSCROLL,
+              10, 10, 50, 50,
+              hParent, NULL, NULL, NULL);
+    assert(hWnd);
+
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(0 == len, "text should have been truncated, expected 0, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)"a");
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(1 == SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0), "wrong text length, expected 1, got %d\n", len);
+    test_notify(1, 0, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
+    test_notify(0, 0, 0);
+
+    SendMessageA(hWnd, EM_SETLIMITTEXT, 5, 0);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(5 == len, "text should have been truncated to limit, expected 5, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
+    test_notify(0, 0, 0);
+
+    DestroyWindow(hWnd);
+
+    trace("EDIT: Multline, ES_AUTOHSCROLL and ES_AUTOVSCROLL\n");
+    hWnd = CreateWindowExA(0,
+              "EDIT",
+              NULL,
+              ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL,
+              10, 10, 50, 50,
+              hParent, NULL, NULL, NULL);
+    assert(hWnd);
+
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
+    test_notify(1, 0, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
+    test_notify(0, 0, 0);
+
+    SendMessageA(hWnd, EM_SETLIMITTEXT, 5, 0);
+
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)"");
+    zero_notify();
+    SendMessageA(hWnd, EM_REPLACESEL, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(5 == len, "text should have been truncated to limit, expected 5, got %d\n", len);
+    test_notify(1, 1, 1);
+
+    zero_notify();
+    SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)str2);
+    len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
+    ok(lstrlenA(str2) == len, "text shouldn't have been truncated\n");
+    test_notify(0, 0, 0);
+
+    DestroyWindow(hWnd);
+}
+
 START_TEST(edit)
 {
     hinst = GetModuleHandleA (NULL);
@@ -367,4 +657,5 @@ START_TEST(edit)
 
     test_edit_control_1();
     test_edit_control_2();
+    test_edit_control_3();
 }
