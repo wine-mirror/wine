@@ -1837,7 +1837,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int err; \
     if ( (err = (f) ) < 0) \
     { \
-	ERR(txt ": %s\n", snd_strerror(err)); \
+	WARN(txt ": %s\n", snd_strerror(err)); \
 	snd_pcm_close(pcm); \
 	return e; \
     } \
@@ -1867,7 +1867,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
             wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
             WARN("changed number of channels from %d to %d\n", lpDesc->lpFormat->nChannels, wwo->format.Format.nChannels);
         }
-        EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels ), MMSYSERR_INVALPARAM, "unable to set required channels" );
+        EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels ), WAVERR_BADFORMAT, "unable to set required channels" );
     }
 
     if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_PCM) ||
@@ -1917,14 +1917,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                 WARN("changed bits per sample from %d to %d\n", lpDesc->lpFormat->wBitsPerSample, wwo->format.Format.wBitsPerSample);
             }
         }
-        EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format" );
+        EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), WAVERR_BADFORMAT, "unable to set required format" );
     }
 
     rate = wwo->format.Format.nSamplesPerSec;
     dir=0;
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
     if (err < 0) {
-	ERR("Rate %ld Hz not available for playback: %s\n", wwo->format.Format.nSamplesPerSec, snd_strerror(rate));
+	WARN("Rate %ld Hz not available for playback: %s\n", wwo->format.Format.nSamplesPerSec, snd_strerror(rate));
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
@@ -1935,7 +1935,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
             /* recalculate bytes per second */
             wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
         } else {
-            ERR("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
+            WARN("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
             snd_pcm_close(pcm);
             return WAVERR_BADFORMAT;
         }
@@ -3355,7 +3355,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int err; \
     if ( (err = (f) ) < 0) \
     { \
-	ERR(txt ": %s\n", snd_strerror(err)); \
+	WARN(txt ": %s\n", snd_strerror(err)); \
 	snd_pcm_close(pcm); \
 	return e; \
     } \
@@ -3371,7 +3371,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     else
 	wwi->read = snd_pcm_mmap_readi;
 
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwi->format.Format.nChannels), MMSYSERR_INVALPARAM, "unable to set required channels");
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwi->format.Format.nChannels), WAVERR_BADFORMAT, "unable to set required channels");
 
     if ((wwi->format.Format.wFormatTag == WAVE_FORMAT_PCM) ||
         ((wwi->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
@@ -3401,18 +3401,18 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return WAVERR_BADFORMAT;
     }
 
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format");
+    EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), WAVERR_BADFORMAT, "unable to set required format");
 
     rate = wwi->format.Format.nSamplesPerSec;
     dir = 0;
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
     if (err < 0) {
-	ERR("Rate %ld Hz not available for playback: %s\n", wwi->format.Format.nSamplesPerSec, snd_strerror(rate));
+	WARN("Rate %ld Hz not available for playback: %s\n", wwi->format.Format.nSamplesPerSec, snd_strerror(rate));
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
     if (rate != wwi->format.Format.nSamplesPerSec) {
-	ERR("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwi->format.Format.nSamplesPerSec, rate);
+	WARN("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwi->format.Format.nSamplesPerSec, rate);
 	snd_pcm_close(pcm);
         return WAVERR_BADFORMAT;
     }
