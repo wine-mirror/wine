@@ -1479,8 +1479,10 @@ BOOL WINAPI SetNamedPipeHandleState(
     HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount,
     LPDWORD lpCollectDataTimeout)
 {
-    FIXME("%p %p %p %p\n",
-          hNamedPipe, lpMode, lpMaxCollectionCount, lpCollectDataTimeout);
+    /* should be a fixme, but this function is called a lot by the RPC
+     * runtime, and it slows down InstallShield a fair bit. */
+    WARN("stub: %p %p/%ld %p %p\n",
+          hNamedPipe, lpMode, lpMode ? *lpMode : 0, lpMaxCollectionCount, lpCollectDataTimeout);
     return FALSE;
 }
 
