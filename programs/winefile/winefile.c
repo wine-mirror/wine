@@ -3838,6 +3838,7 @@ static BOOL CtxMenu_HandleMenuMsg(UINT nmsg, WPARAM wparam, LPARAM lparam)
 static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParent, int cidl, LPCITEMIDLIST* apidl, int x, int y)
 {
 	IContextMenu* pcm;
+	BOOL executed = FALSE;
 
 	HRESULT hr = (*shell_folder->lpVtbl->GetUIObjectOf)(shell_folder, hwndParent, cidl, apidl, &IID_IContextMenu, NULL, (LPVOID*)&pcm);
 /*	HRESULT hr = CDefFolderMenu_Create2(dir?dir->_pidl:DesktopFolder(), hwndParent, 1, &pidl, shell_folder, NULL, 0, NULL, &pcm); */
@@ -3869,6 +3870,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 				  cmi.hIcon = 0;
 
 				  hr = (*pcm->lpVtbl->InvokeCommand)(pcm, &cmi);
+					executed = TRUE;
 				}
 			}
 		}
@@ -3876,7 +3878,7 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 		(*pcm->lpVtbl->Release)(pcm);
 	}
 
-	return hr;
+	return FAILED(hr)? hr: executed? S_OK: S_FALSE;
 }
 
 
@@ -4207,7 +4209,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 
 					 /* get and use the parent folder to display correct context menu in all cases */
 					if (SUCCEEDED(SHBindToParent(pidl_abs, &IID_IShellFolder, (LPVOID*)&parentFolder, &pidlLast))) {
-						if (SUCCEEDED(ShellFolderContextMenu(parentFolder, hwnd, 1, &pidlLast, pt.x, pt.y)))
+						if (ShellFolderContextMenu(parentFolder, hwnd, 1, &pidlLast, pt.x, pt.y) == S_OK)
 							refresh_child(child);
 
 						(*parentFolder->lpVtbl->Release)(parentFolder);
