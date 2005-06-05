@@ -295,7 +295,8 @@ static ULONG WINAPI IRpcProxyBufferImpl_Release(LPRPCPROXYBUFFER iface) {
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref) {
-	IRpcChannelBuffer_Release(This->chanbuf);This->chanbuf = NULL;
+	IRpcChannelBuffer_Release(This->chanbuf);
+	This->chanbuf = NULL;
 	HeapFree(GetProcessHeap(),0,This);
     }
     return ref;
@@ -845,13 +846,14 @@ static HRESULT WINAPI RURpcProxyBufferImpl_QueryInterface(LPRPCPROXYBUFFER iface
 
 static ULONG WINAPI RURpcProxyBufferImpl_AddRef(LPRPCPROXYBUFFER iface) {
     ICOM_THIS_MULTI(RemUnkProxy,lpvtbl_proxy,iface);
+    TRACE("%p, %ld\n", iface, This->refs + 1);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI RURpcProxyBufferImpl_Release(LPRPCPROXYBUFFER iface) {
     ICOM_THIS_MULTI(RemUnkProxy,lpvtbl_proxy,iface);
     ULONG ref = InterlockedDecrement(&This->refs);
-
+    TRACE("%p, %ld\n", iface, ref);
     if (!ref) {
 	IRpcChannelBuffer_Release(This->chan);This->chan = NULL;
 	HeapFree(GetProcessHeap(),0,This);
@@ -862,12 +864,14 @@ static ULONG WINAPI RURpcProxyBufferImpl_Release(LPRPCPROXYBUFFER iface) {
 static HRESULT WINAPI RURpcProxyBufferImpl_Connect(LPRPCPROXYBUFFER iface,IRpcChannelBuffer* pRpcChannelBuffer) {
     ICOM_THIS_MULTI(RemUnkProxy,lpvtbl_proxy,iface);
 
+    TRACE("%p, %p\n", iface, pRpcChannelBuffer);
     This->chan = pRpcChannelBuffer;
     IRpcChannelBuffer_AddRef(This->chan);
     return S_OK;
 }
 static void WINAPI RURpcProxyBufferImpl_Disconnect(LPRPCPROXYBUFFER iface) {
     ICOM_THIS_MULTI(RemUnkProxy,lpvtbl_proxy,iface);
+    TRACE("%p, %p\n", iface, This->chan);
     if (This->chan) {
 	IRpcChannelBuffer_Release(This->chan);
 	This->chan = NULL;
