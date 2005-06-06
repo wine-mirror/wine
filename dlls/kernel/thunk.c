@@ -34,7 +34,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wownt32.h"
@@ -1265,19 +1264,19 @@ void WINAPI __regs_K32Thk1632Prolog( CONTEXT86 *context )
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
    {
-      WORD  stackSel  = NtCurrentTeb()->stack_sel;
-      DWORD stackBase = GetSelectorBase(stackSel);
-
       DWORD argSize = context->Ebp - context->Esp;
       char *stack16 = (char *)context->Esp - 4;
-      char *stack32 = (char *)NtCurrentTeb()->WOW32Reserved - argSize;
       STACK16FRAME *frame16 = (STACK16FRAME *)stack16 - 1;
+      STACK32FRAME *frame32 = (STACK32FRAME *)NtCurrentTeb()->WOW32Reserved;
+      char *stack32 = (char *)frame32 - argSize;
+      WORD  stackSel  = SELECTOROF(frame32->frame16);
+      DWORD stackBase = GetSelectorBase(stackSel);
 
       TRACE("before SYSTHUNK hack: EBP: %08lx ESP: %08lx cur_stack: %p\n",
             context->Ebp, context->Esp, NtCurrentTeb()->WOW32Reserved);
 
       memset(frame16, '\0', sizeof(STACK16FRAME));
-      frame16->frame32 = NtCurrentTeb()->WOW32Reserved;
+      frame16->frame32 = frame32;
       frame16->ebp = context->Ebp;
 
       memcpy(stack32, stack16, argSize);
