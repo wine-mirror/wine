@@ -458,7 +458,7 @@ static DWORD CALLBACK task_start( LPVOID p )
     TDB *pTask = (TDB *)p;
     DWORD ret;
 
-    NtCurrentTeb()->htask16 = pTask->hSelf;
+    kernel_get_thread_data()->htask16 = pTask->hSelf;
     NtCurrentTeb()->Tib.SubSystemTib = allocate_win16_tib( pTask );
 
     _EnterWin16Lock();
@@ -1176,7 +1176,7 @@ void WINAPI GetTaskQueueES16(void)
  */
 HTASK16 WINAPI GetCurrentTask(void)
 {
-    HTASK16 ret = NtCurrentTeb()->htask16;
+    HTASK16 ret = kernel_get_thread_data()->htask16;
     if (!ret) ret = main_task;
     return ret;
 }

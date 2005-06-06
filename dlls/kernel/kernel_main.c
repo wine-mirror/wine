@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
-#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 
@@ -84,8 +83,8 @@ static void thread_attach(void)
 {
     /* allocate the 16-bit stack (FIXME: should be done lazily) */
     HGLOBAL16 hstack = K32WOWGlobalAlloc16( GMEM_FIXED, 0x10000 );
-    NtCurrentTeb()->stack_sel = GlobalHandleToSel16( hstack );
-    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( NtCurrentTeb()->stack_sel,
+    kernel_get_thread_data()->stack_sel = GlobalHandleToSel16( hstack );
+    NtCurrentTeb()->WOW32Reserved = (void *)MAKESEGPTR( kernel_get_thread_data()->stack_sel,
                                                         0x10000 - sizeof(STACK16FRAME) );
 }
 
@@ -96,7 +95,7 @@ static void thread_attach(void)
 static void thread_detach(void)
 {
     /* free the 16-bit stack */
-    K32WOWGlobalFree16( NtCurrentTeb()->stack_sel );
+    K32WOWGlobalFree16( kernel_get_thread_data()->stack_sel );
     NtCurrentTeb()->WOW32Reserved = 0;
     if (NtCurrentTeb()->Tib.SubSystemTib) TASK_ExitTask();
 }

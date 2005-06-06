@@ -35,7 +35,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"  /* for RT_STRINGW */
-#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
@@ -203,7 +202,7 @@ static const union cptable *get_codepage_table( unsigned int codepage )
     case CP_UTF8:
         break;
     case CP_THREAD_ACP:
-        if (!(codepage = NtCurrentTeb()->code_page)) return ansi_cptable;
+        if (!(codepage = kernel_get_thread_data()->code_page)) return ansi_cptable;
         /* fall through */
     default:
         if (codepage == ansi_cptable->info.codepage) return ansi_cptable;
@@ -1713,7 +1712,7 @@ BOOL WINAPI SetThreadLocale( LCID lcid )
         }
 
         NtCurrentTeb()->CurrentLocale = lcid;
-        NtCurrentTeb()->code_page = get_lcid_codepage( lcid );
+        kernel_get_thread_data()->code_page = get_lcid_codepage( lcid );
     }
     return TRUE;
 }

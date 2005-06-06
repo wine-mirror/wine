@@ -38,6 +38,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "kernel_private.h"
 #include "wine/library.h"
 #include "wine/unicode.h"

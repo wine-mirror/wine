@@ -21,6 +21,24 @@
 #ifndef __WINE_KERNEL_PRIVATE_H
 #define __WINE_KERNEL_PRIVATE_H
 
+struct tagSYSLEVEL;
+
+struct kernel_thread_data
+{
+    UINT                code_page;      /* thread code page */
+    WORD                stack_sel;      /* 16-bit stack selector */
+    WORD                htask16;        /* Win16 task handle */
+    DWORD               sys_count[4];   /* syslevel mutex entry counters */
+    struct tagSYSLEVEL *sys_mutex[4];   /* syslevel mutex pointers */
+    void               *pthread_data;   /* private data for pthread emulation */
+    void               *pad[43];        /* change this if you add fields! */
+};
+
+static inline struct kernel_thread_data *kernel_get_thread_data(void)
+{
+    return (struct kernel_thread_data *)NtCurrentTeb()->SystemReserved1;
+}
+
 HANDLE  WINAPI OpenConsoleW(LPCWSTR, DWORD, BOOL, DWORD);
 BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 HANDLE  WINAPI DuplicateConsoleHandle(HANDLE, DWORD, BOOL, DWORD);
@@ -97,6 +115,9 @@ extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT);   /* linear DOS to Wine */
 extern UINT   DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 extern void   load_winedos(void);
+
+/* thread.c */
+extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
 extern struct winedos_exports
 {

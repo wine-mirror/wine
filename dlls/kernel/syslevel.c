@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include "windef.h"
 #include "winbase.h"
-#include "thread.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
@@ -93,26 +92,26 @@ VOID WINAPI _CreateSysLevel(SYSLEVEL *lock, INT level)
  */
 VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
 {
-    TEB *teb = NtCurrentTeb();
+    struct kernel_thread_data *thread_data = kernel_get_thread_data();
     int i;
 
     TRACE("(%p, level %d): thread %lx count before %ld\n",
-          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
+          lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
     for ( i = 3; i > lock->level; i-- )
-        if ( teb->sys_count[i] > 0 )
+        if ( thread_data->sys_count[i] > 0 )
         {
             ERR("(%p, level %d): Holding %p, level %d. Expect deadlock!\n",
-                        lock, lock->level, teb->sys_mutex[i], i );
+                        lock, lock->level, thread_data->sys_mutex[i], i );
         }
 
     RtlEnterCriticalSection( &lock->crst );
 
-    teb->sys_count[lock->level]++;
-    teb->sys_mutex[lock->level] = lock;
+    thread_data->sys_count[lock->level]++;
+    thread_data->sys_mutex[lock->level] = lock;
 
     TRACE("(%p, level %d): thread %lx count after  %ld\n",
-          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
+          lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
 #ifdef __i386__
     if (lock == &Win16Mutex) CallTo16_TebSelector = wine_get_fs();
@@ -125,27 +124,27 @@ VOID WINAPI _EnterSysLevel(SYSLEVEL *lock)
  */
 VOID WINAPI _LeaveSysLevel(SYSLEVEL *lock)
 {
-    TEB *teb = NtCurrentTeb();
+    struct kernel_thread_data *thread_data = kernel_get_thread_data();
 
     TRACE("(%p, level %d): thread %lx count before %ld\n",
-          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
+          lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 
-    if ( teb->sys_count[lock->level] <= 0 || teb->sys_mutex[lock->level] != lock )
+    if ( thread_data->sys_count[lock->level] <= 0 || thread_data->sys_mutex[lock->level] != lock )
     {
         ERR("(%p, level %d): Invalid state: count %ld mutex %p.\n",
-                    lock, lock->level, teb->sys_count[lock->level],
-                    teb->sys_mutex[lock->level] );
+                    lock, lock->level, thread_data->sys_count[lock->level],
+                    thread_data->sys_mutex[lock->level] );
     }
     else
     {
-        if ( --teb->sys_count[lock->level] == 0 )
-            teb->sys_mutex[lock->level] = NULL;
+        if ( --thread_data->sys_count[lock->level] == 0 )
+            thread_data->sys_mutex[lock->level] = NULL;
     }
 
     RtlLeaveCriticalSection( &lock->crst );
 
     TRACE("(%p, level %d): thread %lx count after  %ld\n",
-          lock, lock->level, GetCurrentThreadId(), teb->sys_count[lock->level] );
+          lock, lock->level, GetCurrentThreadId(), thread_data->sys_count[lock->level] );
 }
 
 /************************************************************************
@@ -236,7 +235,7 @@ VOID SYSLEVEL_CheckNotLevel( INT level )
     INT i;
 
     for ( i = 3; i >= level; i-- )
-        if ( NtCurrentTeb()->sys_count[i] > 0 )
+        if ( kernel_get_thread_data()->sys_count[i] > 0 )
         {
             ERR("(%d): Holding lock of level %d!\n",
                        level, i );

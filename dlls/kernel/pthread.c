@@ -45,8 +45,9 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "thread.h"
+#include "winreg.h"
 #include "winternl.h"
+#include "kernel_private.h"
 #include "wine/pthread.h"
 
 #define P_OUTPUT(stuff) write(2,stuff,strlen(stuff))
@@ -531,12 +532,12 @@ static void wine_pthread_exit(void *retval, char *currentframe)
 
 static void *wine_get_thread_data(void)
 {
-    return NtCurrentTeb()->pthread_data;
+    return kernel_get_thread_data()->pthread_data;
 }
 
 static void wine_set_thread_data( void *data )
 {
-    NtCurrentTeb()->pthread_data = data;
+    kernel_get_thread_data()->pthread_data = data;
 }
 
 static const struct wine_pthread_functions functions =
