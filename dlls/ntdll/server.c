@@ -54,7 +54,6 @@
 #endif
 
 #include "ntstatus.h"
-#include "thread.h"
 #include "wine/library.h"
 #include "wine/pthread.h"
 #include "wine/server.h"
@@ -144,10 +143,10 @@ void wine_server_exit_thread( int status )
     info.teb_size = size;
 
     sigprocmask( SIG_BLOCK, &block_set, NULL );
-    close( NtCurrentTeb()->wait_fd[0] );
-    close( NtCurrentTeb()->wait_fd[1] );
-    close( NtCurrentTeb()->reply_fd );
-    close( NtCurrentTeb()->request_fd );
+    close( ntdll_get_thread_data()->wait_fd[0] );
+    close( ntdll_get_thread_data()->wait_fd[1] );
+    close( ntdll_get_thread_data()->reply_fd );
+    close( ntdll_get_thread_data()->request_fd );
     wine_pthread_exit_thread( &info );
 }
 
@@ -158,10 +157,10 @@ void wine_server_exit_thread( int status )
 void server_abort_thread( int status )
 {
     sigprocmask( SIG_BLOCK, &block_set, NULL );
-    close( NtCurrentTeb()->wait_fd[0] );
-    close( NtCurrentTeb()->wait_fd[1] );
-    close( NtCurrentTeb()->reply_fd );
-    close( NtCurrentTeb()->request_fd );
+    close( ntdll_get_thread_data()->wait_fd[0] );
+    close( ntdll_get_thread_data()->wait_fd[1] );
+    close( ntdll_get_thread_data()->reply_fd );
+    close( ntdll_get_thread_data()->request_fd );
     wine_pthread_abort_thread( status );
 }
 
@@ -204,7 +203,7 @@ static void send_request( const struct __server_request_info *req )
 
     if (!req->u.req.request_header.request_size)
     {
-        if ((ret = write( NtCurrentTeb()->request_fd, &req->u.req,
+        if ((ret = write( ntdll_get_thread_data()->request_fd, &req->u.req,
                           sizeof(req->u.req) )) == sizeof(req->u.req)) return;
 
     }
@@ -219,7 +218,7 @@ static void send_request( const struct __server_request_info *req )
             vec[i+1].iov_base = (void *)req->data[i].ptr;
             vec[i+1].iov_len = req->data[i].size;
         }
-        if ((ret = writev( NtCurrentTeb()->request_fd, vec, i+1 )) ==
+        if ((ret = writev( ntdll_get_thread_data()->request_fd, vec, i+1 )) ==
             req->u.req.request_header.request_size + sizeof(req->u.req)) return;
     }
 
@@ -240,7 +239,7 @@ static void read_reply_data( void *buffer, size_t size )
 
     for (;;)
     {
-        if ((ret = read( NtCurrentTeb()->reply_fd, buffer, size )) > 0)
+        if ((ret = read( ntdll_get_thread_data()->reply_fd, buffer, size )) > 0)
         {
             if (!(size -= ret)) return;
             buffer = (char *)buffer + ret;
@@ -866,7 +865,7 @@ void server_init_process(void)
     sigaddset( &block_set, SIGCHLD );
 
     /* receive the first thread request fd on the main socket */
-    NtCurrentTeb()->request_fd = receive_fd( &dummy_handle );
+    ntdll_get_thread_data()->request_fd = receive_fd( &dummy_handle );
 }
 
 
@@ -877,7 +876,6 @@ void server_init_process(void)
  */
 void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
 {
-    TEB *teb = NtCurrentTeb();
     int version, ret;
     int reply_pipe[2];
     struct sigaction sig_act;
@@ -896,28 +894,28 @@ void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
 
     /* create the server->client communication pipes */
     if (pipe( reply_pipe ) == -1) server_protocol_perror( "pipe" );
-    if (pipe( teb->wait_fd ) == -1) server_protocol_perror( "pipe" );
+    if (pipe( ntdll_get_thread_data()->wait_fd ) == -1) server_protocol_perror( "pipe" );
     wine_server_send_fd( reply_pipe[1] );
-    wine_server_send_fd( teb->wait_fd[1] );
-    teb->reply_fd = reply_pipe[0];
+    wine_server_send_fd( ntdll_get_thread_data()->wait_fd[1] );
+    ntdll_get_thread_data()->reply_fd = reply_pipe[0];
     close( reply_pipe[1] );
 
     /* set close on exec flag */
-    fcntl( teb->reply_fd, F_SETFD, 1 );
-    fcntl( teb->wait_fd[0], F_SETFD, 1 );
-    fcntl( teb->wait_fd[1], F_SETFD, 1 );
+    fcntl( ntdll_get_thread_data()->reply_fd, F_SETFD, 1 );
+    fcntl( ntdll_get_thread_data()->wait_fd[0], F_SETFD, 1 );
+    fcntl( ntdll_get_thread_data()->wait_fd[1], F_SETFD, 1 );
 
     SERVER_START_REQ( init_thread )
     {
         req->unix_pid    = unix_pid;
         req->unix_tid    = unix_tid;
-        req->teb         = teb;
+        req->teb         = NtCurrentTeb();
         req->entry       = entry_point;
         req->reply_fd    = reply_pipe[1];
-        req->wait_fd     = teb->wait_fd[1];
+        req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         ret = wine_server_call( req );
-        teb->ClientId.UniqueProcess = (HANDLE)reply->pid;
-        teb->ClientId.UniqueThread  = (HANDLE)reply->tid;
+        NtCurrentTeb()->ClientId.UniqueProcess = (HANDLE)reply->pid;
+        NtCurrentTeb()->ClientId.UniqueThread  = (HANDLE)reply->tid;
         version  = reply->version;
     }
     SERVER_END_REQ;

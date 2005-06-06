@@ -59,11 +59,13 @@ static LIST_ENTRY tls_links;
 static TEB *alloc_teb( ULONG *size )
 {
     TEB *teb;
+    struct ntdll_thread_data *thread_data;
 
     *size = SIGNAL_STACK_SIZE + sizeof(TEB);
     teb = wine_anon_mmap( NULL, *size, PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
     if (teb == (TEB *)-1) return NULL;
-    if (!(teb->teb_sel = wine_ldt_alloc_fs()))
+    thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    if (!(thread_data->teb_sel = wine_ldt_alloc_fs()))
     {
         munmap( teb, *size );
         return NULL;
@@ -85,9 +87,10 @@ static inline void free_teb( TEB *teb )
 {
     ULONG size = 0;
     void *addr = teb;
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
 
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
-    wine_ldt_free_fs( teb->teb_sel );
+    wine_ldt_free_fs( thread_data->teb_sel );
     munmap( teb, SIGNAL_STACK_SIZE + sizeof(TEB) );
 }
 
@@ -104,6 +107,7 @@ void thread_init(void)
     TEB *teb;
     void *addr;
     ULONG size;
+    struct ntdll_thread_data *thread_data;
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
 
@@ -121,18 +125,19 @@ void thread_init(void)
     InitializeListHead( &tls_links );
 
     teb = alloc_teb( &size );
-    teb->request_fd    = -1;
-    teb->reply_fd      = -1;
-    teb->wait_fd[0]    = -1;
-    teb->wait_fd[1]    = -1;
-    teb->debug_info    = &debug_info;
+    thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    thread_data->request_fd = -1;
+    thread_data->reply_fd   = -1;
+    thread_data->wait_fd[0] = -1;
+    thread_data->wait_fd[1] = -1;
+    thread_data->debug_info = &debug_info;
     InsertHeadList( &tls_links, &teb->TlsLinks );
 
     thread_info.stack_base = NULL;
     thread_info.stack_size = 0;
     thread_info.teb_base   = teb;
     thread_info.teb_size   = size;
-    thread_info.teb_sel    = teb->teb_sel;
+    thread_info.teb_sel    = thread_data->teb_sel;
     wine_pthread_init_current_teb( &thread_info );
     wine_pthread_init_thread( &thread_info );
 
@@ -167,6 +172,7 @@ void thread_init(void)
 static void start_thread( struct wine_pthread_thread_info *info )
 {
     TEB *teb = info->teb_base;
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
     struct startup_info *startup_info = (struct startup_info *)info;
     PRTL_THREAD_START_ROUTINE func = startup_info->entry_point;
     void *arg = startup_info->entry_arg;
@@ -175,7 +181,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
 
     debug_info.str_pos = debug_info.strings;
     debug_info.out_pos = debug_info.output;
-    teb->debug_info = &debug_info;
+    thread_data->debug_info = &debug_info;
 
     wine_pthread_init_current_teb( info );
     SIGNAL_Init();
@@ -214,6 +220,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
+    struct ntdll_thread_data *thread_data;
     struct startup_info *info = NULL;
     HANDLE handle = 0;
     TEB *teb = NULL;
@@ -262,16 +269,17 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     teb->ClientId.UniqueProcess = (HANDLE)GetCurrentProcessId();
     teb->ClientId.UniqueThread  = (HANDLE)tid;
 
-    teb->request_fd  = request_pipe[1];
-    teb->reply_fd    = -1;
-    teb->wait_fd[0]  = -1;
-    teb->wait_fd[1]  = -1;
+    thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
+    thread_data->request_fd  = request_pipe[1];
+    thread_data->reply_fd    = -1;
+    thread_data->wait_fd[0]  = -1;
+    thread_data->wait_fd[1]  = -1;
 
     info->pthread_info.teb_base = teb;
     NtAllocateVirtualMemory( NtCurrentProcess(), &info->pthread_info.teb_base, 0, &size,
                              MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
     info->pthread_info.teb_size = size;
-    info->pthread_info.teb_sel  = teb->teb_sel;
+    info->pthread_info.teb_sel  = thread_data->teb_sel;
 
     if (!stack_reserve || !stack_commit)
     {

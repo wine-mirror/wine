@@ -228,15 +228,15 @@ typedef struct _TEB
     ULONG           CountOfOwnedCriticalSections;/* 038 */
     PVOID           CsrClientThread;            /* 03c */
     PVOID           Win32ThreadInfo;            /* 040 */
-    ULONG           Win32ClientInfo[31];        /* 044 */
+    ULONG           Win32ClientInfo[31];        /* 044 used for user32 private data in Wine */
     PVOID           WOW32Reserved;              /* 0c0 */
     ULONG           CurrentLocale;              /* 0c4 */
     ULONG           FpSoftwareStatusRegister;   /* 0c8 */
-    PVOID           SystemReserved1[54];        /* 0cc */
+    PVOID           SystemReserved1[54];        /* 0cc used for kernel32 private data in Wine */
     PVOID           Spare1;                     /* 1a4 */
     LONG            ExceptionCode;              /* 1a8 */
     BYTE            SpareBytes1[40];            /* 1ac */
-    PVOID           SystemReserved2[10];        /* 1d4 */
+    PVOID           SystemReserved2[10];        /* 1d4 used for ntdll private data in Wine */
     GDI_TEB_BATCH   GdiTebBatch;                /* 1fc */
     ULONG           gdiRgn;                     /* 6dc */
     ULONG           gdiPen;                     /* 6e0 */
@@ -271,7 +271,7 @@ typedef struct _TEB
     ULONG           Spare2;                     /* f74 */
     ULONG           Spare3;                     /* f78 */
     ULONG           Spare4;                     /* f7c */
-    PVOID           ReservedForOle;             /* f80 Windows 2000 only */
+    PVOID           ReservedForOle;             /* f80 */
     ULONG           WaitingOnLoaderLock;        /* f84 */
     PVOID           Reserved5[3];               /* f88 */
     PVOID          *TlsExpansionSlots;          /* f94 */

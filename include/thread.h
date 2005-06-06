@@ -28,30 +28,6 @@
 #define WINE_NO_TEB
 #include <winternl.h>
 
-struct tagSYSLEVEL;
-
-struct debug_info
-{
-    char *str_pos;       /* current position in strings buffer */
-    char *out_pos;       /* current position in output buffer */
-    char  strings[1024]; /* buffer for temporary strings */
-    char  output[1024];  /* current output line */
-};
-
-/* Thread exception block
-
-  flags in the comment:
-  1-- win95 field
-  d-- win95 debug version
-  -2- nt field
-  --3 wine special
-  --n wine unused
-  !-- or -!- likely or observed  collision
-  more problems (collected from mailing list):
-  psapi.dll 0x10/0x30 (expects nt fields)
-  ie4       0x40
-  PESHiELD  0x23/0x30 (win95)
-*/
 #ifndef WINE_TEB_DEFINED
 #define WINE_TEB_DEFINED
 typedef struct _TEB
@@ -68,44 +44,45 @@ typedef struct _TEB
     PVOID        Win32ThreadInfo;              /* 040 */
     ULONG        Win32ClientInfo[0x1f];        /* 044 */
     PVOID        WOW32Reserved;                /* 0c0 */
-    ULONG        CurrentLocale;  /* -2-  C4 */
-    DWORD        pad5[48];       /* --n  C8 */
-    DWORD        delta_priority; /* 1-n 188 Priority delta */
-    DWORD        unknown4[7];    /* d-n 18c Unknown */
-    void        *create_data;    /* d-n 1a8 Pointer to creation structure */
-    DWORD        suspend_count;  /* d-n 1ac SuspendThread() counter */
-    DWORD        unknown5[6];    /* --n 1b0 Unknown */
-    DWORD        sys_count[4];   /* --3 1c8 Syslevel mutex entry counters */
-    struct tagSYSLEVEL *sys_mutex[4];   /* --3 1d8 Syslevel mutex pointers */
-    DWORD        unknown6[5];    /* --n 1e8 Unknown */
+    ULONG        CurrentLocale;                /* 0c4 */
+    ULONG        FpSoftwareStatusRegister;     /* 0c8 */
+    PVOID        SystemReserved1[54];          /* 0cc */
+    PVOID        Spare1;                       /* 1a4 */
+    LONG         ExceptionCode;                /* 1a8 */
+    BYTE         SpareBytes1[40];              /* 1ac */
+    PVOID        SystemReserved2[10];          /* 1d4 */
 
-    /* The following are Wine-specific fields (NT: GDI stuff) */
-    DWORD        unused_1fc;     /* --3 1fc */
-    UINT         code_page;      /* --3 200 Thread code page */
-    DWORD        teb_sel;        /* --3 204 Selector to TEB */
-    DWORD        gs_sel;         /* --3 208 %gs selector for this thread */
-    int          request_fd;     /* --3 20c fd for sending server requests */
-    int          reply_fd;       /* --3 210 fd for receiving server replies */
-    int          wait_fd[2];     /* --3 214 fd for sleeping server requests */
-    struct debug_info *debug_info;        /* --3 21c Info for debugstr functions */
-    void        *pthread_data;   /* --3 220 Data for pthread emulation */
-    DWORD        num_async_io;   /* --3 224 number of pending async I/O in the server */
-    void        *driver_data;    /* --3 228 Graphics driver private data */
-    DWORD        dpmi_vif;       /* --3 22c Protected mode virtual interrupt flag */
-    DWORD        vm86_pending;   /* --3 230 Data for vm86 mode */
-    void        *vm86_ptr;       /* --3 234 Data for vm86 mode */
-    WORD         stack_sel;      /* --3 238 16-bit stack selector */
-    WORD         htask16;        /* --3 23a Win16 task handle */
+    /* The following are Wine-specific fields (NT: GdiTebBatch) */
+    DWORD        gs_sel;              /* 1fc %gs selector for this thread */
+    DWORD        num_async_io;        /* 200 number of pending async I/O in the server */
+    DWORD        dpmi_vif;            /* 204 protected mode virtual interrupt flag */
+    DWORD        vm86_pending;        /* 208 data for vm86 mode */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
+    DWORD        pad6[308];           /* 20c */
 
-    /* the following are nt specific fields */
-    DWORD        pad6[622];                  /* --n 23c */
-    ULONG        LastStatusValue;            /* -2- bf4 */
-    UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
-    WCHAR        StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
-    PVOID        DeallocationStack;          /* -2- e0c Base of the stack */
-    LPVOID       TlsSlots[64];               /* -2- e10 Thread local storage */
-    LIST_ENTRY   TlsLinks;                   /* -2- f10 */
+    ULONG        gdiRgn;                     /* 6dc */
+    ULONG        gdiPen;                     /* 6e0 */
+    ULONG        gdiBrush;                   /* 6e4 */
+    CLIENT_ID    RealClientId;               /* 6e8 */
+    HANDLE       GdiCachedProcessHandle;     /* 6f0 */
+    ULONG        GdiClientPID;               /* 6f4 */
+    ULONG        GdiClientTID;               /* 6f8 */
+    PVOID        GdiThreadLocaleInfo;        /* 6fc */
+    PVOID        UserReserved[5];            /* 700 */
+    PVOID        glDispachTable[280];        /* 714 */
+    ULONG        glReserved1[26];            /* b74 */
+    PVOID        glReserved2;                /* bdc */
+    PVOID        glSectionInfo;              /* be0 */
+    PVOID        glSection;                  /* be4 */
+    PVOID        glTable;                    /* be8 */
+    PVOID        glCurrentRC;                /* bec */
+    PVOID        glContext;                  /* bf0 */
+    ULONG        LastStatusValue;            /* bf4 */
+    UNICODE_STRING StaticUnicodeString;      /* bf8 */
+    WCHAR        StaticUnicodeBuffer[261];   /* c00 */
+    PVOID        DeallocationStack;          /* e0c */
+    PVOID        TlsSlots[64];               /* e10 */
+    LIST_ENTRY   TlsLinks;                   /* f10 */
     PVOID        Vdm;                        /* f18 */
     PVOID        ReservedForNtRpc;           /* f1c */
     PVOID        DbgSsReserved[2];           /* f20 */
@@ -136,8 +113,5 @@ typedef struct
     CURDIR          curdir;     /* current directory */
     WCHAR           curdir_buffer[MAX_PATH];
 } WIN16_SUBSYSTEM_TIB;
-
-/* scheduler/thread.c */
-extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
 #endif  /* __WINE_THREAD_H */

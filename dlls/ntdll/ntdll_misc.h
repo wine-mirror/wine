@@ -100,4 +100,29 @@ extern int ntdll_umbstowcs(DWORD flags, const char* src, int srclen, WCHAR* dst,
 extern int ntdll_wcstoumbs(DWORD flags, const WCHAR* src, int srclen, char* dst, int dstlen,
                            const char* defchar, int *used );
 
+struct debug_info
+{
+    char *str_pos;       /* current position in strings buffer */
+    char *out_pos;       /* current position in output buffer */
+    char  strings[1024]; /* buffer for temporary strings */
+    char  output[1024];  /* current output line */
+};
+
+struct ntdll_thread_data
+{
+    DWORD              teb_sel;       /* selector to TEB */
+    struct debug_info *debug_info;    /* info for debugstr functions */
+    int                request_fd;    /* fd for sending server requests */
+    int                reply_fd;      /* fd for receiving server replies */
+    int                wait_fd[2];    /* fd for sleeping server requests */
+    void              *vm86_ptr;      /* data for vm86 mode */
+
+    void              *pad[3];        /* change this if you add fields! */
+};
+
+static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
+{
+    return (struct ntdll_thread_data *)NtCurrentTeb()->SystemReserved2;
+}
+
 #endif

@@ -35,9 +35,9 @@
 #include "wine/library.h"
 #include "wine/unicode.h"
 #include "ntstatus.h"
-#include "thread.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "ntdll_misc.h"
@@ -57,7 +57,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 /* get the debug info pointer for the current thread */
 static inline struct debug_info *get_info(void)
 {
-    return NtCurrentTeb()->debug_info;
+    return ntdll_get_thread_data()->debug_info;
 }
 
 /* allocate some tmp space for a string */
@@ -74,7 +74,7 @@ static void *gimme1(int n)
 /* release extra space that we requested in gimme1() */
 static inline void release( void *ptr )
 {
-    struct debug_info *info = NtCurrentTeb()->debug_info;
+    struct debug_info *info = get_info();
     info->str_pos = ptr;
 }
 

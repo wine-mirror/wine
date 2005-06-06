@@ -616,7 +616,7 @@ static int wait_reply( void *cookie )
     for (;;)
     {
         int ret;
-        ret = read( NtCurrentTeb()->wait_fd[0], &reply, sizeof(reply) );
+        ret = read( ntdll_get_thread_data()->wait_fd[0], &reply, sizeof(reply) );
         if (ret == sizeof(reply))
         {
             if (!reply.cookie) break;  /* thread got killed */
@@ -626,7 +626,7 @@ static int wait_reply( void *cookie )
             /* and now put the wrong one back in the pipe */
             for (;;)
             {
-                ret = write( NtCurrentTeb()->wait_fd[1], &reply, sizeof(reply) );
+                ret = write( ntdll_get_thread_data()->wait_fd[1], &reply, sizeof(reply) );
                 if (ret == sizeof(reply)) break;
                 if (ret >= 0) server_protocol_error( "partial wakeup write %d\n", ret );
                 if (errno == EINTR) continue;

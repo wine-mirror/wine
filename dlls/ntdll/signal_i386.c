@@ -584,7 +584,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
 {
     BOOL check_pending = TRUE;
     struct vm86plus_struct *vm86 =
-        (struct vm86plus_struct*)(NtCurrentTeb()->vm86_ptr);
+        (struct vm86plus_struct*)(ntdll_get_thread_data()->vm86_ptr);
 
     /*
      * In order to prevent a race when SIGUSR2 occurs while
@@ -594,7 +594,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
     while (check_pending && NtCurrentTeb()->vm86_pending)
     {
         check_pending = FALSE;
-        NtCurrentTeb()->vm86_ptr = NULL;
+        ntdll_get_thread_data()->vm86_ptr = NULL;
             
         /*
          * If VIF is set, throw exception.
@@ -620,7 +620,7 @@ static void merge_vm86_pending_flags( EXCEPTION_RECORD *rec )
             check_pending = TRUE;
         }
 
-        NtCurrentTeb()->vm86_ptr = vm86;
+        ntdll_get_thread_data()->vm86_ptr = vm86;
     }
 
     /*
@@ -645,8 +645,9 @@ static void *init_handler( const SIGCONTEXT *sigcontext )
 {
     void *stack = (void *)ESP_sig(sigcontext);
     TEB *teb = get_current_teb();
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
 
-    wine_set_fs( teb->teb_sel );
+    wine_set_fs( thread_data->teb_sel );
 
     /* now restore a proper %gs for the fault handler */
     if (!wine_ldt_is_system(CS_sig(sigcontext)) ||
@@ -949,7 +950,7 @@ static void WINAPI raise_vm86_sti_exception( EXCEPTION_RECORD *rec, CONTEXT *con
     /* merge_vm86_pending_flags merges the vm86_pending flag in safely */
     NtCurrentTeb()->vm86_pending |= VIP_MASK;
 
-    if (NtCurrentTeb()->vm86_ptr)
+    if (ntdll_get_thread_data()->vm86_ptr)
     {
         if (((char*)context->Eip >= (char*)vm86_return) &&
             ((char*)context->Eip <= (char*)vm86_return_end) &&
@@ -1268,7 +1269,6 @@ BOOL SIGNAL_Init(void)
 void __wine_enter_vm86( CONTEXT *context )
 {
     EXCEPTION_RECORD rec;
-    TEB *teb = NtCurrentTeb();
     int res;
     struct vm86plus_struct vm86;
 
@@ -1277,10 +1277,10 @@ void __wine_enter_vm86( CONTEXT *context )
     {
         restore_vm86_context( context, &vm86 );
 
-        teb->vm86_ptr = &vm86;
+        ntdll_get_thread_data()->vm86_ptr = &vm86;
         merge_vm86_pending_flags( &rec );
 
-        res = vm86_enter( &teb->vm86_ptr ); /* uses and clears teb->vm86_ptr */
+        res = vm86_enter( &ntdll_get_thread_data()->vm86_ptr ); /* uses and clears teb->vm86_ptr */
         if (res < 0)
         {
             errno = -res;
@@ -1323,7 +1323,7 @@ void __wine_enter_vm86( CONTEXT *context )
         case VM86_STI: /* sti/popf/iret instruction enabled virtual interrupts */
             context->EFlags |= VIF_MASK;
             context->EFlags &= ~VIP_MASK;
-            teb->vm86_pending = 0;
+            NtCurrentTeb()->vm86_pending = 0;
             rec.ExceptionCode = EXCEPTION_VM86_STI;
             break;
         case VM86_PICRETURN: /* return due to pending PIC request */
