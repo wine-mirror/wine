@@ -20,16 +20,46 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * NOTES
+ *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on May. 20, 2005, by James Hawkins.
+ *
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ *
  * TODO:
  *
  *  Styles:
+ *   TCS_MULTISELECT
+ *   TCS_RIGHT
+ *   TCS_RIGHTJUSTIFY
+ *   TCS_SCROLLOPPOSITE
+ *   TCS_SINGLELINE
  *   TCIF_RTLREADING
+ *
+ *  Extended Styles:
+ *   TCS_EX_FLATSEPARATORS
+ *   TCS_EX_REGISTERDROP
+ *
+ *  States:
+ *   TCIS_BUTTONPRESSED
+ *
+ *  Notifications:
+ *   NM_RELEASEDCAPTURE
+ *   TCN_FOCUSCHANGE
+ *   TCN_GETOBJECT
+ *   TCN_KEYDOWN
  *
  *  Messages:
  *   TCM_REMOVEIMAGE
  *   TCM_DESELECTALL
  *   TCM_GETEXTENDEDSTYLE
  *   TCM_SETEXTENDEDSTYLE
+ *
+ *  Macros:
+ *   TabCtrl_AdjustRect
  *
  */
 
