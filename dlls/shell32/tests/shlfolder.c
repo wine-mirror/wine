@@ -150,6 +150,70 @@ void test_EnumObjects(IShellFolder *iFolder)
         IMalloc_Free(ppM, idlArr[i]);
 }
 
+void test_BindToObject()
+{
+    HRESULT hr;
+    UINT cChars;
+    IShellFolder *psfDesktop, *psfChild, *psfMyComputer, *psfSystemDir;
+    SHITEMID emptyitem = { 0, { 0 } };
+    LPITEMIDLIST pidlMyComputer, pidlSystemDir, pidlEmpty = (LPITEMIDLIST)&emptyitem;
+    WCHAR wszSystemDir[MAX_PATH];
+    WCHAR wszMyComputer[] = { 
+        ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
+        'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
+
+    /* The following tests shows that BindToObject should fail with E_INVALIDARG if called
+     * with an empty pidl. This is tested for Desktop, MyComputer and the FS ShellFolder
+     */
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+    
+    hr = IShellFolder_BindToObject(psfDesktop, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
+    ok (hr == E_INVALIDARG, "Desktop's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
+
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
+    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+    
+    hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
+    ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08lx\n", hr);
+    IShellFolder_Release(psfDesktop);
+    ILFree(pidlMyComputer);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
+    ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
+
+    cChars = GetSystemDirectoryW(wszSystemDir, MAX_PATH);
+    ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryW failed! LastError: %08lx\n", GetLastError());
+    if (cChars == 0 || cChars >= MAX_PATH) {
+        IShellFolder_Release(psfMyComputer);
+        return;
+    }
+    
+    hr = IShellFolder_ParseDisplayName(psfMyComputer, NULL, NULL, wszSystemDir, NULL, &pidlSystemDir, NULL);
+    ok (SUCCEEDED(hr), "MyComputers's ParseDisplayName failed to parse the SystemDirectory! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfMyComputer);
+        return;
+    }
+
+    hr = IShellFolder_BindToObject(psfMyComputer, pidlSystemDir, NULL, &IID_IShellFolder, (LPVOID*)&psfSystemDir);
+    ok (SUCCEEDED(hr), "MyComputer failed to bind to a FileSystem ShellFolder! hr = %08lx\n", hr);
+    IShellFolder_Release(psfMyComputer);
+    ILFree(pidlSystemDir);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_BindToObject(psfSystemDir, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
+    ok (hr == E_INVALIDARG, 
+        "FileSystem ShellFolder's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
+    
+    IShellFolder_Release(psfSystemDir);
+}
     
 START_TEST(shlfolder)
 {
@@ -179,6 +243,7 @@ START_TEST(shlfolder)
     ok(hr == S_OK, "BindToObject failed %08lx\n", hr);
         
     test_EnumObjects(testIShellFolder);
+    test_BindToObject();
 
     hr = IShellFolder_Release(testIShellFolder);
     ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);

@@ -239,10 +239,21 @@ HRESULT SHELL32_CoCreateInitSF (LPCITEMIDLIST pidlRoot,	LPCSTR pathRoot,
 }
 
 /***********************************************************************
- *	SHELL32_BindToChild
+ *	SHELL32_BindToChild [Internal]
  *
  * Common code for IShellFolder_BindToObject.
- * Creates a shell folder by binding to a root pidl.
+ * 
+ * PARAMS
+ *  pidlRoot     [I] The parent shell folder's absolute pidl.
+ *  pathRoot     [I] Absolute dos path of the parent shell folder.
+ *  pidlComplete [I] PIDL of the child. Relative to pidlRoot.
+ *  riid         [I] GUID of the interface, which ppvOut shall be bound to.
+ *  ppvOut       [O] A reference to the child's interface (riid).
+ *
+ * NOTES
+ *  pidlComplete has to contain at least one non empty SHITEMID.
+ *  This function makes special assumptions on the shell namespace, which
+ *  means you probably can't use it for your IShellFolder implementation.
  */
 HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
 			     LPCSTR pathRoot, LPCITEMIDLIST pidlComplete, REFIID riid, LPVOID * ppvOut)
@@ -252,7 +263,7 @@ HRESULT SHELL32_BindToChild (LPCITEMIDLIST pidlRoot,
     HRESULT hr;
     LPITEMIDLIST pidlChild;
 
-    if (!pidlRoot || !ppvOut)
+    if (!pidlRoot || !ppvOut || !pidlComplete || !pidlComplete->mkid.cb)
 	return E_INVALIDARG;
 
     *ppvOut = NULL;

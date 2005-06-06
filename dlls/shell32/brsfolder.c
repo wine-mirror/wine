@@ -428,8 +428,14 @@ static LRESULT BrsFolder_Treeview_Expand( browse_info *info, NMTREEVIEWW *pnmtv 
     if ((pnmtv->itemNew.state & TVIS_EXPANDEDONCE))
         return 0;
 
-    r = IShellFolder_BindToObject( lptvid->lpsfParent, lptvid->lpi, 0,
-                                  (REFIID)&IID_IShellFolder, (LPVOID *)&lpsf2 );
+    if (lptvid->lpi && lptvid->lpi->mkid.cb) {
+        r = IShellFolder_BindToObject( lptvid->lpsfParent, lptvid->lpi, 0,
+                                      (REFIID)&IID_IShellFolder, (LPVOID *)&lpsf2 );
+    } else {
+        lpsf2 = lptvid->lpsfParent;
+        r = IShellFolder_AddRef(lpsf2);
+    }
+
     if (SUCCEEDED(r))
         FillTreeView( info, lpsf2, lptvid->lpifq, pnmtv->itemNew.hItem, lptvid->pEnumIL);
 
