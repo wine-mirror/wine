@@ -269,7 +269,7 @@ HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface,
 }
 
 
-IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
+const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
 {
     /* IUnknown */
     IWineD3DCubeTextureImpl_QueryInterface,

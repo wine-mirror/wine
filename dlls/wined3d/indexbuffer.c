@@ -126,7 +126,7 @@ HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *ifac
     return D3D_OK;
 }
 
-IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =
+const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =
 {
     IWineD3DIndexBufferImpl_QueryInterface,
     IWineD3DIndexBufferImpl_AddRef,

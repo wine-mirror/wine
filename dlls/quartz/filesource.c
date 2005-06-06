@@ -39,8 +39,8 @@ static const WCHAR wszOutputPinName[] = { 'O','u','t','p','u','t',0 };
 
 typedef struct AsyncReader
 {
-    const struct IBaseFilterVtbl * lpVtbl;
-    const struct IFileSourceFilterVtbl * lpVtblFSF;
+    const IBaseFilterVtbl * lpVtbl;
+    const IFileSourceFilterVtbl * lpVtblFSF;
 
     ULONG refCount;
     FILTER_INFO filterInfo;
@@ -52,9 +52,9 @@ typedef struct AsyncReader
     AM_MEDIA_TYPE * pmt;
 } AsyncReader;
 
-static const struct IBaseFilterVtbl AsyncReader_Vtbl;
-static const struct IFileSourceFilterVtbl FileSource_Vtbl;
-static const struct IAsyncReaderVtbl FileAsyncReader_Vtbl;
+static const IBaseFilterVtbl AsyncReader_Vtbl;
+static const IFileSourceFilterVtbl FileSource_Vtbl;
+static const IAsyncReaderVtbl FileAsyncReader_Vtbl;
 
 static HRESULT FileAsyncReader_Construct(HANDLE hFile, IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec, IPin ** ppPin);
 

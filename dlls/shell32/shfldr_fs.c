@@ -60,12 +60,12 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    IUnknownVtbl        *lpVtbl;
+    const IUnknownVtbl        *lpVtbl;
     DWORD                ref;
-    IShellFolder2Vtbl   *lpvtblShellFolder;
-    IPersistFolder3Vtbl *lpvtblPersistFolder3;
-    IDropTargetVtbl     *lpvtblDropTarget;
-    ISFHelperVtbl       *lpvtblSFHelper;
+    const IShellFolder2Vtbl   *lpvtblShellFolder;
+    const IPersistFolder3Vtbl *lpvtblPersistFolder3;
+    const IDropTargetVtbl     *lpvtblDropTarget;
+    const ISFHelperVtbl       *lpvtblSFHelper;
 
     IUnknown *pUnkOuter; /* used for aggregation */
 
@@ -80,11 +80,11 @@ typedef struct {
     BOOL fAcceptFmt;       /* flag for pending Drop */
 } IGenericSFImpl;
 
-static struct IUnknownVtbl unkvt;
-static struct IShellFolder2Vtbl sfvt;
-static struct IPersistFolder3Vtbl vt_FSFldr_PersistFolder3; /* IPersistFolder3 for a FS_Folder */
-static struct IDropTargetVtbl dtvt;
-static struct ISFHelperVtbl shvt;
+static const IUnknownVtbl unkvt;
+static const IShellFolder2Vtbl sfvt;
+static const IPersistFolder3Vtbl vt_FSFldr_PersistFolder3; /* IPersistFolder3 for a FS_Folder */
+static const IDropTargetVtbl dtvt;
+static const ISFHelperVtbl shvt;
 
 #define _IShellFolder2_Offset ((int)(&(((IGenericSFImpl*)0)->lpvtblShellFolder)))
 #define _ICOM_THIS_From_IShellFolder2(class, name) class* This = (class*)(((char*)name)-_IShellFolder2_Offset);
@@ -197,7 +197,7 @@ static ULONG WINAPI IUnknown_fnRelease (IUnknown * iface)
     return refCount;
 }
 
-static IUnknownVtbl unkvt =
+static const IUnknownVtbl unkvt =
 {
       IUnknown_fnQueryInterface,
       IUnknown_fnAddRef,
@@ -980,7 +980,7 @@ IShellFolder_fnMapColumnToSCID (IShellFolder2 * iface, UINT column,
     return E_NOTIMPL;
 }
 
-static IShellFolder2Vtbl sfvt =
+static const IShellFolder2Vtbl sfvt =
 {
     IShellFolder_fnQueryInterface,
     IShellFolder_fnAddRef,
@@ -1232,7 +1232,7 @@ ISFHelper_fnCopyItems (ISFHelper * iface, IShellFolder * pSFFrom, UINT cidl,
     return S_OK;
 }
 
-static ISFHelperVtbl shvt =
+static const ISFHelperVtbl shvt =
 {
     ISFHelper_fnQueryInterface,
     ISFHelper_fnAddRef,
@@ -1420,7 +1420,7 @@ IFSFldr_PersistFolder3_GetFolderTargetInfo (IPersistFolder3 * iface,
     return E_NOTIMPL;
 }
 
-static IPersistFolder3Vtbl vt_FSFldr_PersistFolder3 =
+static const IPersistFolder3Vtbl vt_FSFldr_PersistFolder3 =
 {
     IFSFldr_PersistFolder3_QueryInterface,
     IFSFldr_PersistFolder3_AddRef,
@@ -1542,7 +1542,7 @@ ISFDropTarget_Drop (IDropTarget * iface, IDataObject * pDataObject,
     return E_NOTIMPL;
 }
 
-static struct IDropTargetVtbl dtvt = {
+static const IDropTargetVtbl dtvt = {
     ISFDropTarget_QueryInterface,
     ISFDropTarget_AddRef,
     ISFDropTarget_Release,

@@ -101,7 +101,7 @@ static ULONG WINAPI Test_IUnknown_Release(LPUNKNOWN iface)
     return 1; /* non-heap-based object */
 }
 
-static IUnknownVtbl TestUnknown_Vtbl =
+static const IUnknownVtbl TestUnknown_Vtbl =
 {
     Test_IUnknown_QueryInterface,
     Test_IUnknown_AddRef,
@@ -159,7 +159,7 @@ static HRESULT WINAPI Test_IClassFactory_LockServer(
     return S_OK;
 }
 
-static IClassFactoryVtbl TestClassFactory_Vtbl =
+static const IClassFactoryVtbl TestClassFactory_Vtbl =
 {
     Test_IClassFactory_QueryInterface,
     Test_IClassFactory_AddRef,
@@ -1035,7 +1035,7 @@ static DWORD WINAPI MessageFilter_MessagePending(
     return PENDINGMSG_WAITNOPROCESS;
 }
 
-static IMessageFilterVtbl MessageFilter_Vtbl =
+static const IMessageFilterVtbl MessageFilter_Vtbl =
 {
     MessageFilter_QueryInterface,
     MessageFilter_AddRef,
@@ -1217,7 +1217,7 @@ static HRESULT WINAPI TestRE_IClassFactory_CreateInstance(
     return S_FALSE;
 }
 
-static IClassFactoryVtbl TestREClassFactory_Vtbl =
+static const IClassFactoryVtbl TestREClassFactory_Vtbl =
 {
     Test_IClassFactory_QueryInterface,
     Test_IClassFactory_AddRef,
@@ -1327,7 +1327,7 @@ static HRESULT WINAPI TestRE_IClassFactory_CreateInstance(
     return S_FALSE;
 }
 
-static IClassFactoryVtbl TestREClassFactory_Vtbl =
+static const IClassFactoryVtbl TestREClassFactory_Vtbl =
 {
     Test_IClassFactory_QueryInterface,
     Test_IClassFactory_AddRef,
@@ -1453,7 +1453,7 @@ static HRESULT WINAPI TestOOP_IClassFactory_LockServer(
     return S_OK;
 }
 
-static IClassFactoryVtbl TestClassFactoryOOP_Vtbl =
+static const IClassFactoryVtbl TestClassFactoryOOP_Vtbl =
 {
     TestOOP_IClassFactory_QueryInterface,
     TestOOP_IClassFactory_AddRef,

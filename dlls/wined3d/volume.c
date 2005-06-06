@@ -270,7 +270,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_l
     
 }
 
-IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
+const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
 {
     /* IUnknown */
     IWineD3DVolumeImpl_QueryInterface,

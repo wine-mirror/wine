@@ -60,7 +60,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 */
 
 typedef struct {
-    IShellFolder2Vtbl *lpVtbl;
+    const IShellFolder2Vtbl *lpVtbl;
     DWORD ref;
 
     CLSID *pclsid;
@@ -814,7 +814,7 @@ static HRESULT WINAPI ISF_Desktop_fnMapColumnToSCID (
     return E_NOTIMPL;
 }
 
-static IShellFolder2Vtbl vt_MCFldr_ShellFolder2 =
+static const IShellFolder2Vtbl vt_MCFldr_ShellFolder2 =
 {
     ISF_Desktop_fnQueryInterface,
     ISF_Desktop_fnAddRef,

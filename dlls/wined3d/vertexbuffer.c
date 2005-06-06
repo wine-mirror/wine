@@ -128,7 +128,7 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *if
     return D3D_OK;
 }
 
-IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
+const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
 {
     IWineD3DVertexBufferImpl_QueryInterface,
     IWineD3DVertexBufferImpl_AddRef,

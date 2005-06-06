@@ -79,7 +79,7 @@ static HMODULE LoadCOM(void)
  * (which also implements the MInterfacePointer structure) */
 typedef struct RpcStreamImpl
 {
-  IStreamVtbl *lpVtbl;
+  const IStreamVtbl *lpVtbl;
   DWORD RefCount;
   PMIDL_STUB_MESSAGE pMsg;
   LPDWORD size;
@@ -182,7 +182,7 @@ static HRESULT WINAPI RpcStream_SetSize(LPSTREAM iface,
   return S_OK;
 }
 
-static IStreamVtbl RpcStream_Vtbl =
+static const IStreamVtbl RpcStream_Vtbl =
 {
   RpcStream_QueryInterface,
   RpcStream_AddRef,

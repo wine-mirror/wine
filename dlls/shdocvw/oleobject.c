@@ -407,7 +407,7 @@ static HRESULT WINAPI WBOOBJ_SetColorScheme(LPOLEOBJECT iface,
  * IOleObject virtual function table for IE Web Browser component
  */
 
-static IOleObjectVtbl WBOOBJ_Vtbl =
+static const IOleObjectVtbl WBOOBJ_Vtbl =
 {
     WBOOBJ_QueryInterface,
     WBOOBJ_AddRef,
@@ -522,7 +522,7 @@ static HRESULT WINAPI WBOIPO_ReactivateAndUndo(LPOLEINPLACEOBJECT iface)
  * IOleInPlaceObject virtual function table for IE Web Browser component
  */
 
-static IOleInPlaceObjectVtbl WBOIPO_Vtbl =
+static const IOleInPlaceObjectVtbl WBOIPO_Vtbl =
 {
     WBOIPO_QueryInterface,
     WBOIPO_AddRef,
@@ -535,7 +535,7 @@ static IOleInPlaceObjectVtbl WBOIPO_Vtbl =
     WBOIPO_ReactivateAndUndo
 };
 
-IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = {&WBOIPO_Vtbl};
+static IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject = {&WBOIPO_Vtbl};
 
 
 /**********************************************************************
@@ -594,7 +594,7 @@ static HRESULT WINAPI WBOC_FreezeEvents(LPOLECONTROL iface, BOOL bFreeze)
  * IOleControl virtual function table for IE Web Browser component
  */
 
-static IOleControlVtbl WBOC_Vtbl =
+static const IOleControlVtbl WBOC_Vtbl =
 {
     WBOC_QueryInterface,
     WBOC_AddRef,
@@ -605,4 +605,4 @@ static IOleControlVtbl WBOC_Vtbl =
     WBOC_FreezeEvents
 };
 
-IOleControlImpl SHDOCVW_OleControl = {&WBOC_Vtbl};
+static IOleControlImpl SHDOCVW_OleControl = {&WBOC_Vtbl};

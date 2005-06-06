@@ -39,7 +39,7 @@ struct SystemClockAdviseEntry {
 };
 
 typedef struct SystemClockImpl {
-  IReferenceClockVtbl *lpVtbl;
+  const IReferenceClockVtbl *lpVtbl;
   ULONG ref;
 
   /** IReferenceClock */
@@ -191,8 +191,6 @@ static BOOL SystemClockPostMessageToAdviseThread(SystemClockImpl* This, UINT iMs
   }
   return PostThreadMessageA(This->adviseThreadId, iMsg, 0, 0);
 }
-
-IReferenceClockVtbl SystemClock_Vtbl;
 
 static ULONG WINAPI SystemClockImpl_AddRef(IReferenceClock* iface) {
   SystemClockImpl *This = (SystemClockImpl *)iface;
@@ -355,7 +353,7 @@ out:
   return ret;
 }
 
-IReferenceClockVtbl SystemClock_Vtbl = 
+static const IReferenceClockVtbl SystemClock_Vtbl = 
 {
     SystemClockImpl_QueryInterface,
     SystemClockImpl_AddRef,

@@ -42,10 +42,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
-static const struct IBaseFilterVtbl Parser_Vtbl;
-static const struct IMediaSeekingVtbl Parser_Seeking_Vtbl;
-static const struct IPinVtbl Parser_OutputPin_Vtbl;
-static const struct IPinVtbl Parser_InputPin_Vtbl;
+static const IBaseFilterVtbl Parser_Vtbl;
+static const IMediaSeekingVtbl Parser_Seeking_Vtbl;
+static const IPinVtbl Parser_OutputPin_Vtbl;
+static const IPinVtbl Parser_InputPin_Vtbl;
 
 static HRESULT Parser_OutputPin_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt);
 static HRESULT Parser_ChangeStart(LPVOID iface);

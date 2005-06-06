@@ -248,7 +248,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *ifac
     return IWineD3DVolume_AddDirtyBox((IWineD3DVolume *) This->volumes[0], pDirtyBox);
 }
 
-IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
+const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
 {
     /* IUnknown */
     IWineD3DVolumeTextureImpl_QueryInterface,

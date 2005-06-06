@@ -136,7 +136,7 @@ static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl DSCF_Vtbl =
+static const IClassFactoryVtbl DSCF_Vtbl =
 {
     DSCF_QueryInterface,
     DSCF_AddRef,

@@ -80,8 +80,8 @@ typedef struct StdMediaSample2
     LONGLONG tMediaEnd;
 } StdMediaSample2;
 
-static const struct IMemAllocatorVtbl BaseMemAllocator_VTable;
-static const struct IMediaSample2Vtbl StdMediaSample2_VTable;
+static const IMemAllocatorVtbl BaseMemAllocator_VTable;
+static const IMediaSample2Vtbl StdMediaSample2_VTable;
 
 #define AM_SAMPLE2_PROP_SIZE_WRITABLE (unsigned int)(&((AM_SAMPLE2_PROPERTIES *)0)->pbBuffer)
 

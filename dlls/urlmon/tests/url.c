@@ -64,7 +64,7 @@ static void test_create()
 }
 
 typedef struct {
-    IBindStatusCallbackVtbl *lpVtbl;
+    const IBindStatusCallbackVtbl *lpVtbl;
     ULONG ref;
     IBinding *pbind;
     IStream *pstr;
@@ -178,7 +178,7 @@ static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, RE
     return E_NOTIMPL;
 }
 
-static IBindStatusCallbackVtbl statusclbVtbl = {
+static const IBindStatusCallbackVtbl statusclbVtbl = {
     statusclb_QueryInterface,
     statusclb_AddRef,
     statusclb_Release,

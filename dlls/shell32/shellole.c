@@ -278,11 +278,11 @@ DWORD WINAPI SHCLSIDFromStringAW (LPVOID clsid, CLSID *id)
  */
 
 /* set the vtable later */
-static IMallocVtbl VT_Shell_IMalloc32;
+static const IMallocVtbl VT_Shell_IMalloc32;
 
 /* this is the static object instance */
 typedef struct {
-	IMallocVtbl *lpVtbl;
+	const IMallocVtbl *lpVtbl;
 	DWORD dummy;
 } _ShellMalloc;
 
@@ -386,7 +386,7 @@ static VOID WINAPI IShellMalloc_fnHeapMinimize(LPMALLOC iface)
 	TRACE("()\n");
 }
 
-static IMallocVtbl VT_Shell_IMalloc32 =
+static const IMallocVtbl VT_Shell_IMalloc32 =
 {
 	IShellMalloc_fnQueryInterface,
 	IShellMalloc_fnAddRefRelease,
@@ -501,7 +501,7 @@ HRESULT WINAPI SHGetDesktopFolder(IShellFolder **psf)
 
 typedef struct
 {
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl    *lpVtbl;
     DWORD                       ref;
     CLSID			*rclsid;
     LPFNCREATEINSTANCE		lpfnCI;
@@ -509,7 +509,7 @@ typedef struct
     ULONG *			pcRefDll; /* pointer to refcounter in external dll (ugrrr...) */
 } IDefClFImpl;
 
-static IClassFactoryVtbl dclfvt;
+static const IClassFactoryVtbl dclfvt;
 
 /**************************************************************************
  *  IDefClF_fnConstructor
@@ -616,7 +616,7 @@ static HRESULT WINAPI IDefClF_fnLockServer(LPCLASSFACTORY iface, BOOL fLock)
 	return E_NOTIMPL;
 }
 
-static IClassFactoryVtbl dclfvt =
+static const IClassFactoryVtbl dclfvt =
 {
     IDefClF_fnQueryInterface,
     IDefClF_fnAddRef,

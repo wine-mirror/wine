@@ -516,7 +516,7 @@ typedef struct tagINTERNAL_BSTR
 
 typedef struct
 {
-  IDispatchVtbl *lpVtbl;
+  const IDispatchVtbl *lpVtbl;
   ULONG ref;
   VARTYPE vt;
   BOOL bFailInvoke;
@@ -583,7 +583,7 @@ static HRESULT WINAPI DummyDispatch_Invoke(LPDISPATCH iface,
   return S_OK;
 }
 
-static IDispatchVtbl DummyDispatch_VTable =
+static const IDispatchVtbl DummyDispatch_VTable =
 {
   DummyDispatch_QueryInterface,
   DummyDispatch_AddRef,

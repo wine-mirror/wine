@@ -61,10 +61,10 @@ static HRESULT VfwPin_Construct( IBaseFilter *, LPCRITICAL_SECTION, IPin ** );
 
 typedef struct VfwCapture
 {
-    const struct IBaseFilterVtbl * lpVtbl;
-    const struct IAMStreamConfigVtbl * IAMStreamConfig_vtbl;
-    const struct IAMVideoProcAmpVtbl * IAMVideoProcAmp_vtbl;
-    const struct IPersistPropertyBagVtbl * IPersistPropertyBag_vtbl;
+    const IBaseFilterVtbl * lpVtbl;
+    const IAMStreamConfigVtbl * IAMStreamConfig_vtbl;
+    const IAMVideoProcAmpVtbl * IAMVideoProcAmp_vtbl;
+    const IPersistPropertyBagVtbl * IPersistPropertyBag_vtbl;
 
     BOOL init;
     Capture *driver_info;
@@ -81,7 +81,7 @@ typedef struct VfwPinImpl
 {
     OutputPin pin;
     Capture *driver_info;
-    IKsPropertySetVtbl * KSP_VT;
+    const IKsPropertySetVtbl * KSP_VT;
 } VfwPinImpl;
 
 
@@ -722,7 +722,7 @@ KSP_QuerySupported( IKsPropertySet * iface, REFGUID guidPropSet,
    return E_NOTIMPL;
 }
 
-static IKsPropertySetVtbl KSP_VTable =
+static const IKsPropertySetVtbl KSP_VTable =
 {
    KSP_QueryInterface,
    KSP_AddRef,

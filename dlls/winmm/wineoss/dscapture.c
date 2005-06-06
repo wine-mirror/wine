@@ -73,7 +73,7 @@ typedef struct IDsCaptureDriverBufferImpl IDsCaptureDriverBufferImpl;
 struct IDsCaptureDriverPropertySetImpl
 {
     /* IUnknown fields */
-    IDsDriverPropertySetVtbl           *lpVtbl;
+    const IDsDriverPropertySetVtbl     *lpVtbl;
     DWORD                               ref;
 
     IDsCaptureDriverBufferImpl*         capture_buffer;
@@ -82,7 +82,7 @@ struct IDsCaptureDriverPropertySetImpl
 struct IDsCaptureDriverNotifyImpl
 {
     /* IUnknown fields */
-    IDsDriverNotifyVtbl                *lpVtbl;
+    const IDsDriverNotifyVtbl          *lpVtbl;
     DWORD                               ref;
 
     IDsCaptureDriverBufferImpl*         capture_buffer;
@@ -91,7 +91,7 @@ struct IDsCaptureDriverNotifyImpl
 struct IDsCaptureDriverImpl
 {
     /* IUnknown fields */
-    IDsCaptureDriverVtbl               *lpVtbl;
+    const IDsCaptureDriverVtbl         *lpVtbl;
     DWORD                               ref;
 
     /* IDsCaptureDriverImpl fields */
@@ -102,7 +102,7 @@ struct IDsCaptureDriverImpl
 struct IDsCaptureDriverBufferImpl
 {
     /* IUnknown fields */
-    IDsCaptureDriverBufferVtbl         *lpVtbl;
+    const IDsCaptureDriverBufferVtbl   *lpVtbl;
     DWORD                               ref;
 
     /* IDsCaptureDriverBufferImpl fields */
@@ -240,7 +240,7 @@ static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_QuerySupport(
     return DSERR_UNSUPPORTED;
 }
 
-IDsDriverPropertySetVtbl dscdpsvt =
+static const IDsDriverPropertySetVtbl dscdpsvt =
 {
     IDsCaptureDriverPropertySetImpl_QueryInterface,
     IDsCaptureDriverPropertySetImpl_AddRef,
@@ -340,7 +340,7 @@ static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-IDsDriverNotifyVtbl dscdnvt =
+static const IDsDriverNotifyVtbl dscdnvt =
 {
     IDsCaptureDriverNotifyImpl_QueryInterface,
     IDsCaptureDriverNotifyImpl_AddRef,
@@ -696,7 +696,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_SetFormat(
     return DSERR_UNSUPPORTED;
 }
 
-static IDsCaptureDriverBufferVtbl dscdbvt =
+static const IDsCaptureDriverBufferVtbl dscdbvt =
 {
     IDsCaptureDriverBufferImpl_QueryInterface,
     IDsCaptureDriverBufferImpl_AddRef,
@@ -1220,7 +1220,7 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
     return DS_OK;
 }
 
-static IDsCaptureDriverVtbl dscdvt =
+static const IDsCaptureDriverVtbl dscdvt =
 {
     IDsCaptureDriverImpl_QueryInterface,
     IDsCaptureDriverImpl_AddRef,

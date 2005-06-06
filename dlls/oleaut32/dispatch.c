@@ -214,7 +214,7 @@ HRESULT WINAPI CreateStdDispatch(
 
 typedef struct
 {
-    IDispatchVtbl *lpVtbl;
+    const IDispatchVtbl *lpVtbl;
     void * pvThis;
     ITypeInfo * pTypeInfo;
     ULONG ref;
@@ -417,7 +417,7 @@ static HRESULT WINAPI StdDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMember, 
     return DispInvoke(This->pvThis, This->pTypeInfo, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-static IDispatchVtbl StdDispatch_VTable =
+static const IDispatchVtbl StdDispatch_VTable =
 {
   StdDispatch_QueryInterface,
   StdDispatch_AddRef,

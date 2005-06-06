@@ -151,7 +151,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
  *              SHDOCVW_TryDownloadMozillaControl
  */
 typedef struct _IBindStatusCallbackImpl {
-    IBindStatusCallbackVtbl *vtbl;
+    const IBindStatusCallbackVtbl *vtbl;
     DWORD ref;
     HWND hDialog;
     BOOL *pbCancelled;
@@ -275,7 +275,7 @@ dlOnObjectAvailable( IBindStatusCallback* iface, REFIID riid, IUnknown* punk)
     return S_OK;
 }
 
-struct IBindStatusCallbackVtbl dlVtbl =
+static const IBindStatusCallbackVtbl dlVtbl =
 {
     dlQueryInterface,
     dlAddRef,

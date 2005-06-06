@@ -321,7 +321,7 @@ HRESULT WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIssueFlags
  * IWineD3DQuery VTbl follows
  **********************************************************/
 
-IWineD3DQueryVtbl IWineD3DQuery_Vtbl =
+const IWineD3DQueryVtbl IWineD3DQuery_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DQueryImpl_QueryInterface,

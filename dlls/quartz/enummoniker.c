@@ -38,14 +38,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 typedef struct EnumMonikerImpl
 {
-    IEnumMonikerVtbl *lpVtbl;
+    const IEnumMonikerVtbl *lpVtbl;
     ULONG ref;
     IMoniker ** ppMoniker;
     ULONG nMonikerCount;
     ULONG index;
 } EnumMonikerImpl;
 
-static struct IEnumMonikerVtbl EnumMonikerImpl_Vtbl;
+static const IEnumMonikerVtbl EnumMonikerImpl_Vtbl;
 
 static ULONG WINAPI EnumMonikerImpl_AddRef(LPENUMMONIKER iface);
 
@@ -195,7 +195,7 @@ static HRESULT WINAPI EnumMonikerImpl_Clone(LPENUMMONIKER iface, IEnumMoniker **
 /**********************************************************************
  * IEnumMoniker_Vtbl
  */
-static IEnumMonikerVtbl EnumMonikerImpl_Vtbl =
+static const IEnumMonikerVtbl EnumMonikerImpl_Vtbl =
 {
     EnumMonikerImpl_QueryInterface,
     EnumMonikerImpl_AddRef,

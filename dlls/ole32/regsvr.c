@@ -453,7 +453,7 @@ static struct regsvr_coclass const coclass_list[] = {
 #define INTERFACE_ENTRY(interface, base, clsid32, clsid16) { &IID_##interface, #interface, base, sizeof(interface##Vtbl)/sizeof(void*), clsid16, clsid32 }
 #define STD_INTERFACE_ENTRY(interface) INTERFACE_ENTRY(interface, NULL, &CLSID_PSFactoryBuffer, NULL)
 
-static struct regsvr_interface const interface_list[] = {
+static const struct regsvr_interface interface_list[] = {
     STD_INTERFACE_ENTRY(IUnknown),
     STD_INTERFACE_ENTRY(IClassFactory),
     STD_INTERFACE_ENTRY(IStorage),

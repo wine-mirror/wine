@@ -147,14 +147,14 @@ static HRESULT PropertyStorage_PropVariantCopy(PROPVARIANT *prop,
 static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
  LCID targetCP);
 
-static IPropertyStorageVtbl IPropertyStorage_Vtbl;
+static const IPropertyStorageVtbl IPropertyStorage_Vtbl;
 
 /***********************************************************************
  * Implementation of IPropertyStorage
  */
 typedef struct tagPropertyStorage_impl
 {
-    IPropertyStorageVtbl *vtbl;
+    const IPropertyStorageVtbl *vtbl;
     DWORD ref;
     CRITICAL_SECTION cs;
     IStream *stm;
@@ -2210,7 +2210,7 @@ static HRESULT WINAPI IPropertySetStorage_fnEnum(
 /***********************************************************************
  * vtables
  */
-IPropertySetStorageVtbl IPropertySetStorage_Vtbl =
+const IPropertySetStorageVtbl IPropertySetStorage_Vtbl =
 {
     IPropertySetStorage_fnQueryInterface,
     IPropertySetStorage_fnAddRef,
@@ -2221,7 +2221,7 @@ IPropertySetStorageVtbl IPropertySetStorage_Vtbl =
     IPropertySetStorage_fnEnum
 };
 
-static IPropertyStorageVtbl IPropertyStorage_Vtbl =
+static const IPropertyStorageVtbl IPropertyStorage_Vtbl =
 {
     IPropertyStorage_fnQueryInterface,
     IPropertyStorage_fnAddRef,

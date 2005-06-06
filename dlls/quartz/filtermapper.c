@@ -44,13 +44,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 typedef struct FilterMapper2Impl
 {
-    IFilterMapper2Vtbl *lpVtbl;
-    IFilterMapperVtbl  *lpVtblFilterMapper;
+    const IFilterMapper2Vtbl *lpVtbl;
+    const IFilterMapperVtbl  *lpVtblFilterMapper;
     ULONG refCount;
 } FilterMapper2Impl;
 
-static struct IFilterMapper2Vtbl fm2vtbl;
-static struct IFilterMapperVtbl fmvtbl;
+static const IFilterMapper2Vtbl fm2vtbl;
+static const IFilterMapperVtbl fmvtbl;
 
 #define _IFilterMapper_Offset ((int)(&(((FilterMapper2Impl*)0)->lpVtblFilterMapper)))
 #define ICOM_THIS_From_IFilterMapper(impl, iface) impl* This = (impl*)(((char*)iface)-_IFilterMapper_Offset)
@@ -1036,7 +1036,7 @@ static HRESULT WINAPI FilterMapper2_EnumMatchingFilters(
     return hr;
 }
 
-static IFilterMapper2Vtbl fm2vtbl =
+static const IFilterMapper2Vtbl fm2vtbl =
 {
 
     FilterMapper2_QueryInterface,
@@ -1522,7 +1522,7 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID Fi
     return hr;
 }
 
-static IFilterMapperVtbl fmvtbl =
+static const IFilterMapperVtbl fmvtbl =
 {
 
     FilterMapper_QueryInterface,

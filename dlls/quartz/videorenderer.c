@@ -46,15 +46,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 
 static const IBaseFilterVtbl VideoRenderer_Vtbl;
-static IBasicVideoVtbl IBasicVideo_VTable;
-static IVideoWindowVtbl IVideoWindow_VTable;
+static const IBasicVideoVtbl IBasicVideo_VTable;
+static const IVideoWindowVtbl IVideoWindow_VTable;
 static const IPinVtbl VideoRenderer_InputPin_Vtbl;
 
 typedef struct VideoRendererImpl
 {
     const IBaseFilterVtbl * lpVtbl;
-    IBasicVideoVtbl * IBasicVideo_vtbl;
-    IVideoWindowVtbl * IVideoWindow_vtbl;
+    const IBasicVideoVtbl * IBasicVideo_vtbl;
+    const IVideoWindowVtbl * IVideoWindow_vtbl;
 
     ULONG refCount;
     CRITICAL_SECTION csFilter;
@@ -1058,7 +1058,7 @@ static HRESULT WINAPI Basicvideo_IsUsingDefaultDestination(IBasicVideo *iface) {
 }
 
 
-static IBasicVideoVtbl IBasicVideo_VTable =
+static const IBasicVideoVtbl IBasicVideo_VTable =
 {
     Basicvideo_QueryInterface,
     Basicvideo_AddRef,
@@ -1545,7 +1545,7 @@ static HRESULT WINAPI Videowindow_IsCursorHidden(IVideoWindow *iface,
     return S_OK;
 }
 
-static IVideoWindowVtbl IVideoWindow_VTable =
+static const IVideoWindowVtbl IVideoWindow_VTable =
 {
     Videowindow_QueryInterface,
     Videowindow_AddRef,

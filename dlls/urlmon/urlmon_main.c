@@ -174,7 +174,7 @@ static HRESULT WINAPI CF_LockServer(LPCLASSFACTORY iface,BOOL dolock)
     return S_OK;
 }
 
-static IClassFactoryVtbl CF_Vtbl =
+static const IClassFactoryVtbl CF_Vtbl =
 {
     CF_QueryInterface,
     CF_AddRef,

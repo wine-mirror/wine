@@ -1781,7 +1781,7 @@ HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
  * IWineD3D VTbl follows
  **********************************************************/
 
-IWineD3DVtbl IWineD3D_Vtbl =
+const IWineD3DVtbl IWineD3D_Vtbl =
 {
     IWineD3DImpl_QueryInterface,
     IWineD3DImpl_AddRef,

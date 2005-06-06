@@ -29,10 +29,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const struct IPinVtbl InputPin_Vtbl;
-static const struct IPinVtbl OutputPin_Vtbl;
-static const struct IMemInputPinVtbl MemInputPin_Vtbl;
-static const struct IPinVtbl PullPin_Vtbl;
+static const IPinVtbl InputPin_Vtbl;
+static const IPinVtbl OutputPin_Vtbl;
+static const IMemInputPinVtbl MemInputPin_Vtbl;
+static const IPinVtbl PullPin_Vtbl;
 
 #define ALIGNDOWN(value,boundary) ((value) & ~(boundary-1))
 #define ALIGNUP(value,boundary) (ALIGNDOWN(value - 1, boundary) + boundary)

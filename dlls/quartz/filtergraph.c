@@ -141,15 +141,15 @@ static int EventsQueue_GetEvent(EventsQueue* omr, Event* evt, long msTimeOut)
 }
 
 typedef struct _IFilterGraphImpl {
-    IGraphBuilderVtbl *IGraphBuilder_vtbl;
-    IMediaControlVtbl *IMediaControl_vtbl;
-    IMediaSeekingVtbl *IMediaSeeking_vtbl;
-    IBasicAudioVtbl *IBasicAudio_vtbl;
-    IBasicVideoVtbl *IBasicVideo_vtbl;
-    IVideoWindowVtbl *IVideoWindow_vtbl;
-    IMediaEventExVtbl *IMediaEventEx_vtbl;
-    IMediaFilterVtbl *IMediaFilter_vtbl;
-    IMediaEventSinkVtbl *IMediaEventSink_vtbl;
+    const IGraphBuilderVtbl *IGraphBuilder_vtbl;
+    const IMediaControlVtbl *IMediaControl_vtbl;
+    const IMediaSeekingVtbl *IMediaSeeking_vtbl;
+    const IBasicAudioVtbl *IBasicAudio_vtbl;
+    const IBasicVideoVtbl *IBasicVideo_vtbl;
+    const IVideoWindowVtbl *IVideoWindow_vtbl;
+    const IMediaEventExVtbl *IMediaEventEx_vtbl;
+    const IMediaFilterVtbl *IMediaFilter_vtbl;
+    const IMediaEventSinkVtbl *IMediaEventSink_vtbl;
     /* IAMGraphStreams */
     /* IAMStats */
     /* IBasicVideo2 */
@@ -1090,7 +1090,7 @@ static HRESULT WINAPI Graphbuilder_ShouldOperationContinue(IGraphBuilder *iface)
 }
 
 
-static IGraphBuilderVtbl IGraphBuilder_VTable =
+static const IGraphBuilderVtbl IGraphBuilder_VTable =
 {
     Graphbuilder_QueryInterface,
     Graphbuilder_AddRef,
@@ -1411,7 +1411,7 @@ static HRESULT WINAPI Mediacontrol_StopWhenReady(IMediaControl *iface) {
 }
 
 
-static IMediaControlVtbl IMediaControl_VTable =
+static const IMediaControlVtbl IMediaControl_VTable =
 {
     Mediacontrol_QueryInterface,
     Mediacontrol_AddRef,
@@ -1622,7 +1622,7 @@ static HRESULT WINAPI Mediaseeking_GetPreroll(IMediaSeeking *iface,
 }
 
 
-static IMediaSeekingVtbl IMediaSeeking_VTable =
+static const IMediaSeekingVtbl IMediaSeeking_VTable =
 {
     Mediaseeking_QueryInterface,
     Mediaseeking_AddRef,
@@ -1760,7 +1760,7 @@ static HRESULT WINAPI Basicaudio_get_Balance(IBasicAudio *iface,
     return S_OK;
 }
 
-static IBasicAudioVtbl IBasicAudio_VTable =
+static const IBasicAudioVtbl IBasicAudio_VTable =
 {
     Basicaudio_QueryInterface,
     Basicaudio_AddRef,
@@ -2155,7 +2155,7 @@ static HRESULT WINAPI Basicvideo_IsUsingDefaultDestination(IBasicVideo *iface) {
 }
 
 
-static IBasicVideoVtbl IBasicVideo_VTable =
+static const IBasicVideoVtbl IBasicVideo_VTable =
 {
     Basicvideo_QueryInterface,
     Basicvideo_AddRef,
@@ -2643,7 +2643,7 @@ static HRESULT WINAPI Videowindow_IsCursorHidden(IVideoWindow *iface,
 }
 
 
-static IVideoWindowVtbl IVideoWindow_VTable =
+static const IVideoWindowVtbl IVideoWindow_VTable =
 {
     Videowindow_QueryInterface,
     Videowindow_AddRef,
@@ -2910,7 +2910,7 @@ static HRESULT WINAPI Mediaevent_GetNotifyFlags(IMediaEventEx *iface,
 }
 
 
-static IMediaEventExVtbl IMediaEventEx_VTable =
+static const IMediaEventExVtbl IMediaEventEx_VTable =
 {
     Mediaevent_QueryInterface,
     Mediaevent_AddRef,
@@ -3001,7 +3001,7 @@ static HRESULT WINAPI MediaFilter_GetSyncSource(IMediaFilter *iface, IReferenceC
     return E_NOTIMPL;
 }
 
-static IMediaFilterVtbl IMediaFilter_VTable =
+static const IMediaFilterVtbl IMediaFilter_VTable =
 {
     MediaFilter_QueryInterface,
     MediaFilter_AddRef,
@@ -3083,7 +3083,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, long EventCo
     return S_OK;
 }
 
-static IMediaEventSinkVtbl IMediaEventSink_VTable =
+static const IMediaEventSinkVtbl IMediaEventSink_VTable =
 {
     MediaEventSink_QueryInterface,
     MediaEventSink_AddRef,

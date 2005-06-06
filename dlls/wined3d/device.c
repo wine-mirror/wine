@@ -4371,7 +4371,7 @@ void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT iSwapCha
  * IWineD3DDevice VTbl follows
  **********************************************************/
 
-IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
+const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DDeviceImpl_QueryInterface,

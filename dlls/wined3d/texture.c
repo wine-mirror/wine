@@ -249,7 +249,7 @@ HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RE
     return IWineD3DSurface_AddDirtyRect((IWineD3DSurface *)This->surfaces[0], pDirtyRect);
 }
 
-IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
+const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
 {
     /* IUnknown */
     IWineD3DTextureImpl_QueryInterface,

@@ -112,21 +112,21 @@ typedef struct volume_info_t
 
 #include "poppack.h"
 
-static IShellLinkAVtbl		slvt;
-static IShellLinkWVtbl		slvtw;
-static IPersistFileVtbl	pfvt;
-static IPersistStreamVtbl	psvt;
+static const IShellLinkAVtbl    slvt;
+static const IShellLinkWVtbl    slvtw;
+static const IPersistFileVtbl   pfvt;
+static const IPersistStreamVtbl psvt;
 
 /* IShellLink Implementation */
 
 typedef struct
 {
-	IShellLinkAVtbl    *lpVtbl;
+	const IShellLinkAVtbl    *lpVtbl;
 	DWORD               ref;
 
-	IShellLinkWVtbl    *lpvtblw;
-	IPersistFileVtbl   *lpvtblPersistFile;
-	IPersistStreamVtbl *lpvtblPersistStream;
+	const IShellLinkWVtbl    *lpvtblw;
+	const IPersistFileVtbl   *lpvtblPersistFile;
+	const IPersistStreamVtbl *lpvtblPersistStream;
 
 	/* data structures according to the informations in the link */
 	LPITEMIDLIST	pPidl;
@@ -328,7 +328,7 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(IPersistFile* iface, LPOLESTR *p
 	return NOERROR;
 }
 
-static IPersistFileVtbl pfvt =
+static const IPersistFileVtbl pfvt =
 {
 	IPersistFile_fnQueryInterface,
 	IPersistFile_fnAddRef,
@@ -1030,7 +1030,7 @@ static HRESULT WINAPI IPersistStream_fnGetSizeMax(
 	return E_NOTIMPL;
 }
 
-static IPersistStreamVtbl psvt =
+static const IPersistStreamVtbl psvt =
 {
 	IPersistStream_fnQueryInterface,
 	IPersistStream_fnAddRef,
@@ -1576,7 +1576,7 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 * IShellLink Implementation
 */
 
-static IShellLinkAVtbl slvt =
+static const IShellLinkAVtbl slvt =
 {
 	IShellLinkA_fnQueryInterface,
 	IShellLinkA_fnAddRef,
@@ -2118,7 +2118,7 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 * IShellLinkW Implementation
 */
 
-static IShellLinkWVtbl slvtw =
+static const IShellLinkWVtbl slvtw =
 {
 	IShellLinkW_fnQueryInterface,
 	IShellLinkW_fnAddRef,

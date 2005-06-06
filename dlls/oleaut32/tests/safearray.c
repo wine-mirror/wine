@@ -77,13 +77,13 @@ BOOL HAVE_OLEAUT32_INT_PTR;
  */
 typedef struct IRecordInfoImpl
 {
-  IRecordInfoVtbl *lpvtbl;
+  const IRecordInfoVtbl *lpvtbl;
   DWORD ref;
   DWORD sizeCalled;
   DWORD clearCalled;
 } IRecordInfoImpl;
 
-static IRecordInfoVtbl IRecordInfoImpl_VTable;
+static const IRecordInfoVtbl IRecordInfoImpl_VTable;
 
 static IRecordInfoImpl *IRecordInfoImpl_Construct()
 {
@@ -137,7 +137,7 @@ static HRESULT CALLBACK IRecordInfoImpl_Dummy(IRecordInfo *iface)
   exit(255);
 }
 
-static IRecordInfoVtbl IRecordInfoImpl_VTable =
+static const IRecordInfoVtbl IRecordInfoImpl_VTable =
 {
   (PVOID)IRecordInfoImpl_Dummy,
   IRecordInfoImpl_AddRef,
@@ -1066,14 +1066,14 @@ static ULONG WINAPI tunk_Release(LPUNKNOWN punk) {
 	return --tunk_xref;
 }
 
-static IUnknownVtbl xtunk_vtbl = {
+static const IUnknownVtbl xtunk_vtbl = {
 	tunk_QueryInterface,
 	tunk_AddRef,
 	tunk_Release
 };
 
 static struct xtunk_iface {
-	IUnknownVtbl	*lpvtbl;
+	const IUnknownVtbl *lpvtbl;
 } xtunk_iface;
 
 

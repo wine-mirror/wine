@@ -716,7 +716,7 @@ HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, IMoniker ** ppmk)
 }
 
 /* Virtual function table for the IRunningObjectTable class. */
-static IRunningObjectTableVtbl VT_RunningObjectTableImpl =
+static const IRunningObjectTableVtbl VT_RunningObjectTableImpl =
 {
     RunningObjectTableImpl_QueryInterface,
     RunningObjectTableImpl_AddRef,

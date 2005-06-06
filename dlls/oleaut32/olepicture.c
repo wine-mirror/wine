@@ -103,10 +103,10 @@ typedef struct OLEPictureImpl {
    * IPicture handles IUnknown
    */
 
-    IPictureVtbl       *lpvtbl1;
-    IDispatchVtbl      *lpvtbl2;
-    IPersistStreamVtbl *lpvtbl3;
-    IConnectionPointContainerVtbl *lpvtbl4;
+    const IPictureVtbl       *lpvtbl1;
+    const IDispatchVtbl      *lpvtbl2;
+    const IPersistStreamVtbl *lpvtbl3;
+    const IConnectionPointContainerVtbl *lpvtbl4;
 
   /* Object reference count */
     DWORD ref;
@@ -156,10 +156,10 @@ typedef struct OLEPictureImpl {
 /*
  * Predeclare VTables.  They get initialized at the end.
  */
-static IPictureVtbl OLEPictureImpl_VTable;
-static IDispatchVtbl OLEPictureImpl_IDispatch_VTable;
-static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable;
-static IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable;
+static const IPictureVtbl OLEPictureImpl_VTable;
+static const IDispatchVtbl OLEPictureImpl_IDispatch_VTable;
+static const IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable;
+static const IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable;
 
 /***********************************************************************
  * Implementation of the OLEPictureImpl class.
@@ -1937,7 +1937,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
 }
 
 
-static IPictureVtbl OLEPictureImpl_VTable =
+static const IPictureVtbl OLEPictureImpl_VTable =
 {
   OLEPictureImpl_QueryInterface,
   OLEPictureImpl_AddRef,
@@ -1958,7 +1958,7 @@ static IPictureVtbl OLEPictureImpl_VTable =
   OLEPictureImpl_get_Attributes
 };
 
-static IDispatchVtbl OLEPictureImpl_IDispatch_VTable =
+static const IDispatchVtbl OLEPictureImpl_IDispatch_VTable =
 {
   OLEPictureImpl_IDispatch_QueryInterface,
   OLEPictureImpl_IDispatch_AddRef,
@@ -1969,7 +1969,7 @@ static IDispatchVtbl OLEPictureImpl_IDispatch_VTable =
   OLEPictureImpl_Invoke
 };
 
-static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable =
+static const IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable =
 {
   OLEPictureImpl_IPersistStream_QueryInterface,
   OLEPictureImpl_IPersistStream_AddRef,
@@ -1981,7 +1981,7 @@ static IPersistStreamVtbl OLEPictureImpl_IPersistStream_VTable =
   OLEPictureImpl_GetSizeMax
 };
 
-static IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable =
+static const IConnectionPointContainerVtbl OLEPictureImpl_IConnectionPointContainer_VTable =
 {
   OLEPictureImpl_IConnectionPointContainer_QueryInterface,
   OLEPictureImpl_IConnectionPointContainer_AddRef,
@@ -2209,7 +2209,7 @@ HRESULT WINAPI OleLoadPicturePath( LPOLESTR szURLorPath, LPUNKNOWN punkCaller,
 typedef struct
 {
     /* IUnknown fields */
-    IClassFactoryVtbl          *lpVtbl;
+    const IClassFactoryVtbl    *lpVtbl;
     DWORD                       ref;
 } IClassFactoryImpl;
 
@@ -2247,7 +2247,7 @@ static HRESULT WINAPI SPCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl SPCF_Vtbl = {
+static const IClassFactoryVtbl SPCF_Vtbl = {
 	SPCF_QueryInterface,
 	SPCF_AddRef,
 	SPCF_Release,

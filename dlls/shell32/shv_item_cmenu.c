@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 *  IContextMenu Implementation
 */
 typedef struct
-{	IContextMenu2Vtbl *lpVtbl;
+{	const IContextMenu2Vtbl *lpVtbl;
 	DWORD		ref;
 	IShellFolder*	pSFParent;
 	LPITEMIDLIST	pidl;		/* root pidl */
@@ -53,7 +53,7 @@ typedef struct
 } ItemCmImpl;
 
 
-static struct IContextMenu2Vtbl cmvt;
+static const IContextMenu2Vtbl cmvt;
 
 /**************************************************************************
 * ISvItemCm_CanRenameItems()
@@ -520,7 +520,7 @@ static HRESULT WINAPI ISvItemCm_fnHandleMenuMsg(
 	return E_NOTIMPL;
 }
 
-static struct IContextMenu2Vtbl cmvt =
+static const IContextMenu2Vtbl cmvt =
 {
 	ISvItemCm_fnQueryInterface,
 	ISvItemCm_fnAddRef,

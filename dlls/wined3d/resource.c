@@ -122,7 +122,7 @@ HRESULT WINAPI IWineD3DResourceImpl_GetParent(IWineD3DResource *iface, IUnknown 
 }
 
 
-IWineD3DResourceVtbl IWineD3DResource_Vtbl =
+static const IWineD3DResourceVtbl IWineD3DResource_Vtbl =
 {
     IWineD3DResourceImpl_QueryInterface,
     IWineD3DResourceImpl_AddRef,

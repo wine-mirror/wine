@@ -38,7 +38,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /* Layout of ISHFileStream object */
 typedef struct
 {
-  IStreamVtbl *lpVtbl;
+  const IStreamVtbl *lpVtbl;
   ULONG    ref;
   HANDLE   hFile;
   DWORD    dwMode;
@@ -325,7 +325,7 @@ static HRESULT WINAPI IStream_fnClone(IStream *iface, IStream** ppstm)
   return E_NOTIMPL;
 }
 
-static struct IStreamVtbl SHLWAPI_fsVTable =
+static const IStreamVtbl SHLWAPI_fsVTable =
 {
   IStream_fnQueryInterface,
   IStream_fnAddRef,

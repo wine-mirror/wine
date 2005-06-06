@@ -827,7 +827,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclar
   return IWineD3DVertexDeclarationImpl_GetDeclaration9(iface, (D3DVERTEXELEMENT9*) pData, pSize);
 }
 
-IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
+const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl =
 {
     IWineD3DVertexDeclarationImpl_QueryInterface,
     IWineD3DVertexDeclarationImpl_AddRef,

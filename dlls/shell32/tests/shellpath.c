@@ -23,6 +23,9 @@
  * FIXME:
  * - Need to verify on more systems.
  */
+
+#define COBJMACROS
+
 #include <stdarg.h>
 #include <stdio.h>
 #include "windef.h"
@@ -296,7 +299,7 @@ static void testSHGetFolderLocationInvalidArgs(void)
      "SHGetFolderLocation(NULL, 0xeeee, NULL, 0, &pidl)\n"
      "returned 0x%08lx, expected E_INVALIDARG\n", hr);
     if (SUCCEEDED(hr))
-        pMalloc->lpVtbl->Free(pMalloc, pidl);
+        IMalloc_Free(pMalloc, pidl);
     /* check a bogus user token: */
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_FAVORITES, (HANDLE)2, 0, &pidl);
@@ -304,7 +307,7 @@ static void testSHGetFolderLocationInvalidArgs(void)
      "SHGetFolderLocation(NULL, CSIDL_FAVORITES, 2, 0, &pidl)\n"
      "returned 0x%08lx, expected E_FAIL\n", hr);
     if (SUCCEEDED(hr))
-        pMalloc->lpVtbl->Free(pMalloc, pidl);
+        IMalloc_Free(pMalloc, pidl);
     /* check reserved is not zero: */
     pidl = NULL;
     hr = pSHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl);
@@ -312,7 +315,7 @@ static void testSHGetFolderLocationInvalidArgs(void)
      "SHGetFolderLocation(NULL, CSIDL_DESKTOP, NULL, 1, &pidl)\n"
      "returned 0x%08lx, expected E_INVALIDARG\n", hr);
     if (SUCCEEDED(hr))
-        pMalloc->lpVtbl->Free(pMalloc, pidl);
+        IMalloc_Free(pMalloc, pidl);
     /* a NULL pidl pointer crashes, so don't test it */
 }
 
@@ -409,7 +412,7 @@ static BYTE testSHGetFolderLocation(BOOL optional, int folder)
              getFolderName(folder));
             if (pidlLast)
                 ret = pidlLast->mkid.abID[0];
-            pMalloc->lpVtbl->Free(pMalloc, pidl);
+            IMalloc_Free(pMalloc, pidl);
         }
     }
     return ret;
@@ -443,7 +446,7 @@ static BYTE testSHGetSpecialFolderLocation(BOOL optional, int folder)
                 "%s: ILFindLastID failed\n", getFolderName(folder));
             if (pidlLast)
                 ret = pidlLast->mkid.abID[0];
-            pMalloc->lpVtbl->Free(pMalloc, pidl);
+            IMalloc_Free(pMalloc, pidl);
         }
     }
     return ret;
@@ -561,7 +564,7 @@ static void matchGUID(int folder, const GUID *guid)
              "%s: got GUID %s, expected %s\n", getFolderName(folder),
              printGUID(shellGuid), printGUID(guid));
         }
-        pMalloc->lpVtbl->Free(pMalloc, pidl);
+        IMalloc_Free(pMalloc, pidl);
     }
 }
 
@@ -726,7 +729,7 @@ static void testNonExistentPath1(void)
     ok(hr == E_FAIL,
      "SHGetFolderLocation returned 0x%08lx, expected E_FAIL\n", hr);
     if (SUCCEEDED(hr) && pidl)
-        pMalloc->lpVtbl->Free(pMalloc, pidl);
+        IMalloc_Free(pMalloc, pidl);
     ok(!pSHGetSpecialFolderPathA(NULL, path, CSIDL_FAVORITES, FALSE),
      "SHGetSpecialFolderPath succeeded, expected failure\n");
     pidl = NULL;
@@ -734,7 +737,7 @@ static void testNonExistentPath1(void)
     ok(hr == E_FAIL, "SHGetFolderLocation returned 0x%08lx, expected E_FAIL\n",
      hr);
     if (SUCCEEDED(hr) && pidl)
-        pMalloc->lpVtbl->Free(pMalloc, pidl);
+        IMalloc_Free(pMalloc, pidl);
     /* now test success: */
     hr = pSHGetFolderPathA(NULL, CSIDL_FAVORITES | CSIDL_FLAG_CREATE, NULL,
      SHGFP_TYPE_CURRENT, path);

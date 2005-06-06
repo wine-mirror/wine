@@ -189,7 +189,7 @@ typedef OLEOBJECTVTBL *LPOLEOBJECTVTBL;
 
 typedef struct _OLEOBJECT
 {
-    LPOLEOBJECTVTBL lpvtbl;
+    const OLEOBJECTVTBL *lpvtbl;
 } OLEOBJECT16;
 
 static LONG OLE_current_handle;

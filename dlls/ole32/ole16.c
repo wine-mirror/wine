@@ -50,10 +50,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-HTASK16 hETask = 0;
-WORD Table_ETask[62];
+static HTASK16 hETask = 0;
+static WORD Table_ETask[62];
 
-LPMALLOC16 currentMalloc16=NULL;
+static LPMALLOC16 currentMalloc16=NULL;
 
 /* --- IMalloc16 implementation */
 
@@ -61,7 +61,7 @@ LPMALLOC16 currentMalloc16=NULL;
 typedef struct
 {
         /* IUnknown fields */
-        IMalloc16Vtbl          *lpVtbl;
+        const IMalloc16Vtbl    *lpVtbl;
         DWORD                   ref;
         /* IMalloc16 fields */
 } IMalloc16Impl;
@@ -196,7 +196,7 @@ IMalloc16_Constructor()
 #undef VTENT
         msegvt16 = MapLS( &vt16 );
     }
-    This->lpVtbl = (IMalloc16Vtbl*)msegvt16;
+    This->lpVtbl = (const IMalloc16Vtbl*)msegvt16;
     This->ref = 1;
     return (LPMALLOC16)MapLS( This );
 }
@@ -310,7 +310,7 @@ _xmalloc16(DWORD size, SEGPTR *ptr) {
    * everything we need.
    */
   if (!K32WOWCallback16Ex(
-      (DWORD)((IMalloc16Vtbl*)MapSL(
+      (DWORD)((const IMalloc16Vtbl*)MapSL(
 	  (SEGPTR)((LPMALLOC16)MapSL((SEGPTR)mllc))->lpVtbl  )
       )->Alloc,
       WCB16_CDECL,

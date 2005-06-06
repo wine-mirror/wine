@@ -846,7 +846,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL 
     return D3D_OK;
 }
 
-IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
+const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
     /* IUnknown */
     IWineD3DSurfaceImpl_QueryInterface,

@@ -861,8 +861,8 @@ typedef struct tagTLBImpLib
 /* internal ITypeLib data */
 typedef struct tagITypeLibImpl
 {
-    ITypeLib2Vtbl *lpVtbl;
-    ITypeCompVtbl *lpVtblTypeComp;
+    const ITypeLib2Vtbl *lpVtbl;
+    const ITypeCompVtbl *lpVtblTypeComp;
     ULONG ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
 
@@ -889,8 +889,8 @@ typedef struct tagITypeLibImpl
     INT index;
 } ITypeLibImpl;
 
-static struct ITypeLib2Vtbl tlbvt;
-static struct ITypeCompVtbl tlbtcvt;
+static const ITypeLib2Vtbl tlbvt;
+static const ITypeCompVtbl tlbtcvt;
 
 #define _ITypeComp_Offset(impl) ((int)(&(((impl*)0)->lpVtblTypeComp)))
 #define ICOM_THIS_From_ITypeComp(impl, iface) impl* This = (impl*)(((char*)iface)-_ITypeComp_Offset(impl))
@@ -973,8 +973,8 @@ typedef struct tagTLBImplType
 /* internal TypeInfo data */
 typedef struct tagITypeInfoImpl
 {
-    ITypeInfo2Vtbl *lpVtbl;
-    ITypeCompVtbl  *lpVtblTypeComp;
+    const ITypeInfo2Vtbl *lpVtbl;
+    const ITypeCompVtbl  *lpVtblTypeComp;
     ULONG ref;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
@@ -1002,8 +1002,8 @@ typedef struct tagITypeInfoImpl
     struct tagITypeInfoImpl * next;
 } ITypeInfoImpl;
 
-static struct ITypeInfo2Vtbl tinfvt;
-static struct ITypeCompVtbl  tcompvt;
+static const ITypeInfo2Vtbl tinfvt;
+static const ITypeCompVtbl  tcompvt;
 
 static ITypeInfo2 * WINAPI ITypeInfo_Constructor(void);
 
@@ -4008,7 +4008,7 @@ static HRESULT WINAPI ITypeLib2_fnGetAllCustData(
     return S_OK;
 }
 
-static ITypeLib2Vtbl tlbvt = {
+static const ITypeLib2Vtbl tlbvt = {
     ITypeLib2_fnQueryInterface,
     ITypeLib2_fnAddRef,
     ITypeLib2_fnRelease,
@@ -4075,7 +4075,7 @@ static HRESULT WINAPI ITypeLibComp_fnBindType(
     return E_NOTIMPL;
 }
 
-static ITypeCompVtbl tlbtcvt =
+static const ITypeCompVtbl tlbtcvt =
 {
 
     ITypeLibComp_fnQueryInterface,
@@ -5767,7 +5767,7 @@ static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
     return TYPE_E_ELEMENTNOTFOUND;
 }
 
-static ITypeInfo2Vtbl tinfvt =
+static const ITypeInfo2Vtbl tinfvt =
 {
 
     ITypeInfo_fnQueryInterface,
@@ -5990,7 +5990,7 @@ static HRESULT WINAPI ITypeComp_fnBindType(
     return S_OK;
 }
 
-static ITypeCompVtbl tcompvt =
+static const ITypeCompVtbl tcompvt =
 {
 
     ITypeComp_fnQueryInterface,

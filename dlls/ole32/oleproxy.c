@@ -87,7 +87,7 @@ const CLSID CLSID_PSFactoryBuffer = { 0x00000320, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0,
  * COM will load the appropriate interface stubs and proxies as needed.
  */
 typedef struct _CFStub {
-    IRpcStubBufferVtbl	*lpvtbl;
+    const IRpcStubBufferVtbl   *lpvtbl;
     DWORD			ref;
 
     LPUNKNOWN			pUnkServer;
@@ -236,7 +236,7 @@ CFStub_DebugServerRelease(LPRPCSTUBBUFFER iface,void *pv) {
     FIXME("(%p), stub!\n",pv);
 }
 
-static IRpcStubBufferVtbl cfstubvt = {
+static const IRpcStubBufferVtbl cfstubvt = {
     CFStub_QueryInterface,
     CFStub_AddRef,
     CFStub_Release,
@@ -420,14 +420,14 @@ static HRESULT WINAPI CFProxy_LockServer(LPCLASSFACTORY iface,BOOL fLock) {
     return S_OK;
 }
 
-static IRpcProxyBufferVtbl pspbvtbl = {
+static const IRpcProxyBufferVtbl pspbvtbl = {
     IRpcProxyBufferImpl_QueryInterface,
     IRpcProxyBufferImpl_AddRef,
     IRpcProxyBufferImpl_Release,
     IRpcProxyBufferImpl_Connect,
     IRpcProxyBufferImpl_Disconnect
 };
-static IClassFactoryVtbl cfproxyvt = {
+static const IClassFactoryVtbl cfproxyvt = {
     CFProxy_QueryInterface,
     CFProxy_AddRef,
     CFProxy_Release,
@@ -959,7 +959,7 @@ PSFacBuf_CreateStub(
     return E_FAIL;
 }
 
-static IPSFactoryBufferVtbl psfacbufvtbl = {
+static const IPSFactoryBufferVtbl psfacbufvtbl = {
     PSFacBuf_QueryInterface,
     PSFacBuf_AddRef,
     PSFacBuf_Release,
@@ -968,7 +968,7 @@ static IPSFactoryBufferVtbl psfacbufvtbl = {
 };
 
 /* This is the whole PSFactoryBuffer object, just the vtableptr */
-static IPSFactoryBufferVtbl *lppsfac = &psfacbufvtbl;
+static const IPSFactoryBufferVtbl *lppsfac = &psfacbufvtbl;
 
 /***********************************************************************
  *           DllGetClassObject [OLE32.@]

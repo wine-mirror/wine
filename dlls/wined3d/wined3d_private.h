@@ -311,7 +311,7 @@ struct PLIGHTINFOEL {
 typedef struct IWineD3DImpl
 {
     /* IUnknown fields */
-    IWineD3DVtbl           *lpVtbl;
+    const IWineD3DVtbl     *lpVtbl;
     DWORD                   ref;     /* Note: Ref counting not required */
 
     /* WineD3D Information */
@@ -323,7 +323,7 @@ typedef struct IWineD3DImpl
     WineD3D_GL_Info         gl_info;
 } IWineD3DImpl;
 
-extern IWineD3DVtbl IWineD3D_Vtbl;
+extern const IWineD3DVtbl IWineD3D_Vtbl;
 
 /*****************************************************************************
  * IWineD3DDevice implementation structure
@@ -331,7 +331,7 @@ extern IWineD3DVtbl IWineD3D_Vtbl;
 typedef struct IWineD3DDeviceImpl
 {
     /* IUnknown fields      */
-    IWineD3DDeviceVtbl     *lpVtbl;
+    const IWineD3DDeviceVtbl *lpVtbl;
     DWORD                   ref;     /* Note: Ref counting not required */
 
     /* WineD3D Information  */
@@ -406,7 +406,7 @@ typedef struct IWineD3DDeviceImpl
 
 } IWineD3DDeviceImpl;
 
-extern IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
+extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
 /*****************************************************************************
  * IWineD3DResource implementation structure
@@ -431,11 +431,11 @@ typedef struct IWineD3DResourceClass
 typedef struct IWineD3DResourceImpl
 {
     /* IUnknown & WineD3DResource Information     */
-    IWineD3DResourceVtbl   *lpVtbl;
+    const IWineD3DResourceVtbl *lpVtbl;
     IWineD3DResourceClass   resource;
 } IWineD3DResourceImpl;
 
-extern IWineD3DResourceVtbl IWineD3DResource_Vtbl;
+extern const IWineD3DResourceVtbl IWineD3DResource_Vtbl;
 
 /*****************************************************************************
  * IWineD3DVertexBuffer implementation structure (extends IWineD3DResourceImpl)
@@ -443,7 +443,7 @@ extern IWineD3DResourceVtbl IWineD3DResource_Vtbl;
 typedef struct IWineD3DVertexBufferImpl
 {
     /* IUnknown & WineD3DResource Information     */
-    IWineD3DVertexBufferVtbl *lpVtbl;
+    const IWineD3DVertexBufferVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
 
     /* WineD3DVertexBuffer specifics */
@@ -451,7 +451,7 @@ typedef struct IWineD3DVertexBufferImpl
 
 } IWineD3DVertexBufferImpl;
 
-extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
+extern const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 
 
 /*****************************************************************************
@@ -460,13 +460,13 @@ extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 typedef struct IWineD3DIndexBufferImpl
 {
     /* IUnknown & WineD3DResource Information     */
-    IWineD3DIndexBufferVtbl *lpVtbl;
+    const IWineD3DIndexBufferVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
 
     /* WineD3DVertexBuffer specifics */
 } IWineD3DIndexBufferImpl;
 
-extern IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
+extern const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl;
 
 /*****************************************************************************
  * IWineD3DBaseTexture implementation structure (extends IWineD3DResourceImpl)
@@ -486,13 +486,13 @@ typedef struct IWineD3DBaseTextureClass
 typedef struct IWineD3DBaseTextureImpl
 {
     /* IUnknown & WineD3DResource Information     */
-    IWineD3DBaseTextureVtbl  *lpVtbl;
+    const IWineD3DBaseTextureVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
     IWineD3DBaseTextureClass  baseTexture;
 
 } IWineD3DBaseTextureImpl;
 
-extern IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl;
+extern const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl;
 
 /*****************************************************************************
  * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
@@ -500,7 +500,7 @@ extern IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl;
 typedef struct IWineD3DTextureImpl
 {
     /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    IWineD3DTextureVtbl      *lpVtbl;
+    const IWineD3DTextureVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
     IWineD3DBaseTextureClass  baseTexture;
 
@@ -512,7 +512,7 @@ typedef struct IWineD3DTextureImpl
 
 } IWineD3DTextureImpl;
 
-extern IWineD3DTextureVtbl IWineD3DTexture_Vtbl;
+extern const IWineD3DTextureVtbl IWineD3DTexture_Vtbl;
 
 /*****************************************************************************
  * IWineD3DCubeTexture implementation structure (extends IWineD3DBaseTextureImpl)
@@ -520,7 +520,7 @@ extern IWineD3DTextureVtbl IWineD3DTexture_Vtbl;
 typedef struct IWineD3DCubeTextureImpl
 {
     /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    IWineD3DCubeTextureVtbl  *lpVtbl;
+    const IWineD3DCubeTextureVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
     IWineD3DBaseTextureClass  baseTexture;
 
@@ -531,7 +531,7 @@ typedef struct IWineD3DCubeTextureImpl
 
 } IWineD3DCubeTextureImpl;
 
-extern IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
+extern const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
 
 /*****************************************************************************
  * IWineD3DVolume implementation structure (extends IUnknown)
@@ -539,7 +539,7 @@ extern IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
 typedef struct IWineD3DVolumeImpl
 {
     /* IUnknown & WineD3DResource fields */
-    IWineD3DVolumeVtbl        *lpVtbl;
+    const IWineD3DVolumeVtbl  *lpVtbl;
     IWineD3DResourceClass      resource;
 
     /* WineD3DVolume Information */
@@ -556,7 +556,7 @@ typedef struct IWineD3DVolumeImpl
 
 } IWineD3DVolumeImpl;
 
-extern IWineD3DVolumeVtbl IWineD3DVolume_Vtbl;
+extern const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl;
 
 /*****************************************************************************
  * IWineD3DVolumeTexture implementation structure (extends IWineD3DBaseTextureImpl)
@@ -564,7 +564,7 @@ extern IWineD3DVolumeVtbl IWineD3DVolume_Vtbl;
 typedef struct IWineD3DVolumeTextureImpl
 {
     /* IUnknown & WineD3DResource/WineD3DBaseTexture Information     */
-    IWineD3DVolumeTextureVtbl *lpVtbl;
+    const IWineD3DVolumeTextureVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
     IWineD3DBaseTextureClass  baseTexture;
 
@@ -576,7 +576,7 @@ typedef struct IWineD3DVolumeTextureImpl
     UINT                      depth;
 } IWineD3DVolumeTextureImpl;
 
-extern IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
+extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
 
 typedef struct _WINED3DSURFACET_DESC
 {
@@ -593,7 +593,7 @@ typedef struct _WINED3DSURFACET_DESC
 struct IWineD3DSurfaceImpl
 {
     /* IUnknown & IWineD3DResource Information     */
-    IWineD3DSurfaceVtbl      *lpVtbl;
+    const IWineD3DSurfaceVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
 
     /* IWineD3DSurface fields */
@@ -615,14 +615,14 @@ struct IWineD3DSurfaceImpl
     BOOL                      inPBuffer;
 };
 
-extern IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
+extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;
 
 /*****************************************************************************
  * IWineD3DVertexDeclaration implementation structure
  */
 typedef struct IWineD3DVertexDeclarationImpl {
  /* IUnknown  Information     */
-  IWineD3DVertexDeclarationVtbl *lpVtbl;
+  const IWineD3DVertexDeclarationVtbl *lpVtbl;
   DWORD                   ref;     /* Note: Ref counting not required */
 
   IUnknown               *parent;
@@ -640,7 +640,7 @@ typedef struct IWineD3DVertexDeclarationImpl {
   UINT               declaration9NumElements;
 } IWineD3DVertexDeclarationImpl;
 
-extern IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
+extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
 
 /*****************************************************************************
  * IWineD3DStateBlock implementation structure
@@ -668,7 +668,7 @@ typedef struct SAVEDSTATES {
 struct IWineD3DStateBlockImpl
 {
     /* IUnknown fields */
-    IWineD3DStateBlockVtbl   *lpVtbl;
+    const IWineD3DStateBlockVtbl *lpVtbl;
     DWORD                     ref;     /* Note: Ref counting not required */
     
     /* IWineD3DStateBlock information */
@@ -729,14 +729,14 @@ struct IWineD3DStateBlockImpl
 
 };
 
-extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
+extern const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;
 
 /*****************************************************************************
  * IWineD3DQueryImpl implementation structure (extends IUnknown)
  */
 typedef struct IWineD3DQueryImpl
 {
-    IWineD3DQueryVtbl        *lpVtbl;
+    const IWineD3DQueryVtbl  *lpVtbl;
     DWORD                     ref;     /* Note: Ref counting not required */
     
     IUnknown                 *parent;
@@ -754,7 +754,7 @@ typedef struct IWineD3DQueryImpl
   
 } IWineD3DQueryImpl;
 
-extern IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
+extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
 
 /*****************************************************************************
  * Utility function prototypes 
@@ -836,7 +836,7 @@ GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
  */
 typedef struct IWineD3DVertexShaderImpl {
     /* IUnknown parts*/   
-    IWineD3DVertexShaderVtbl    *lpVtbl;
+    const IWineD3DVertexShaderVtbl *lpVtbl;
     DWORD                       ref;     /* Note: Ref counting not required */
 
     IUnknown                    *parent;
@@ -855,14 +855,14 @@ typedef struct IWineD3DVertexShaderImpl {
     VSHADEROUTPUTDATA output;
 #endif
 } IWineD3DVertexShaderImpl;
-extern IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
+extern const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl;
 
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
 typedef struct IWineD3DPixelShaderImpl {
     /* IUnknown parts*/   
-    IWineD3DPixelShaderVtbl    *lpVtbl;
+    const IWineD3DPixelShaderVtbl *lpVtbl;
     DWORD                       ref;     /* Note: Ref counting not required */
     
     IUnknown                   *parent;
@@ -883,5 +883,5 @@ typedef struct IWineD3DPixelShaderImpl {
 #endif
 } IWineD3DPixelShaderImpl;
 
-extern IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
+extern const IWineD3DPixelShaderVtbl IWineD3DPixelShader_Vtbl;
 #endif

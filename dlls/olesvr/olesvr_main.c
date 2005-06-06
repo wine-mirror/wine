@@ -108,7 +108,7 @@ typedef struct _OLESERVERDOC *LPOLESERVERDOC;
 struct _OLESERVERDOCVTBL;
 typedef struct _OLESERVERDOC
 {
-    struct _OLESERVERDOCVTBL *lpvtbl;
+    const struct _OLESERVERDOCVTBL *lpvtbl;
     /* server provided state info */
 } OLESERVERDOC;
 
@@ -126,7 +126,7 @@ typedef struct _OLESERVERVTBL
 
 typedef struct _OLESERVER
 {
-    LPOLESERVERVTBL lpvtbl;
+    const OLESERVERVTBL *lpvtbl;
     /* server specific data */
 } OLESERVER;
 

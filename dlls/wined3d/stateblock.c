@@ -297,7 +297,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
  * IWineD3DStateBlock VTbl follows
  **********************************************************/
 
-IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
+const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
 {
     IWineD3DStateBlockImpl_QueryInterface,
     IWineD3DStateBlockImpl_AddRef,

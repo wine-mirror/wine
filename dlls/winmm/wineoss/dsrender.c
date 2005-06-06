@@ -76,7 +76,7 @@ typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
 struct IDsDriverPropertySetImpl
 {
     /* IUnknown fields */
-    IDsDriverPropertySetVtbl   *lpVtbl;
+    const IDsDriverPropertySetVtbl *lpVtbl;
     DWORD                       ref;
 
     IDsDriverBufferImpl*        buffer;
@@ -85,7 +85,7 @@ struct IDsDriverPropertySetImpl
 struct IDsDriverNotifyImpl
 {
     /* IUnknown fields */
-    IDsDriverNotifyVtbl        *lpVtbl;
+    const IDsDriverNotifyVtbl  *lpVtbl;
     DWORD                       ref;
 
     /* IDsDriverNotifyImpl fields */
@@ -98,7 +98,7 @@ struct IDsDriverNotifyImpl
 struct IDsDriverImpl
 {
     /* IUnknown fields */
-    IDsDriverVtbl              *lpVtbl;
+    const IDsDriverVtbl        *lpVtbl;
     DWORD                       ref;
 
     /* IDsDriverImpl fields */
@@ -112,7 +112,7 @@ struct IDsDriverImpl
 struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
-    IDsDriverBufferVtbl        *lpVtbl;
+    const IDsDriverBufferVtbl  *lpVtbl;
     DWORD                       ref;
 
     /* IDsDriverBufferImpl fields */
@@ -228,7 +228,7 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QuerySupport(
     return DSERR_UNSUPPORTED;
 }
 
-IDsDriverPropertySetVtbl dsdpsvt =
+static const IDsDriverPropertySetVtbl dsdpsvt =
 {
     IDsDriverPropertySetImpl_QueryInterface,
     IDsDriverPropertySetImpl_AddRef,
@@ -324,7 +324,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
     return S_OK;
 }
 
-IDsDriverNotifyVtbl dsdnvt =
+static const IDsDriverNotifyVtbl dsdnvt =
 {
     IDsDriverNotifyImpl_QueryInterface,
     IDsDriverNotifyImpl_AddRef,
@@ -645,7 +645,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     return DS_OK;
 }
 
-static IDsDriverBufferVtbl dsdbvt =
+static const IDsDriverBufferVtbl dsdbvt =
 {
     IDsDriverBufferImpl_QueryInterface,
     IDsDriverBufferImpl_AddRef,
@@ -874,7 +874,7 @@ static HRESULT WINAPI IDsDriverImpl_DuplicateSoundBuffer(PIDSDRIVER iface,
     return DSERR_INVALIDCALL;
 }
 
-static IDsDriverVtbl dsdvt =
+static const IDsDriverVtbl dsdvt =
 {
     IDsDriverImpl_QueryInterface,
     IDsDriverImpl_AddRef,

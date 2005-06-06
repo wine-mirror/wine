@@ -924,7 +924,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, 
 
 
 
-IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
+const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
 {
     /*** IUnknown methods ***/
     IWineD3DVertexShaderImpl_QueryInterface,
