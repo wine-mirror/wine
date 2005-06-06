@@ -1510,6 +1510,16 @@ BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags );
 
 BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext );
 
+BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext );
+
+BOOL WINAPI CertAddCRLContextToStore( HCERTSTORE hCertStore,
+ PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
+ PCCRL_CONTEXT *ppStoreContext );
+
+PCCERT_CONTEXT WINAPI CertFindCertificateInStore( HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
+ const void *pvFindPara, PCCERT_CONTEXT pPrevCertContext );
+
 BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, BYTE *pbEncoded, DWORD *pcbEncoded);
 BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
