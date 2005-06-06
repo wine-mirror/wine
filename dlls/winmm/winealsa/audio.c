@@ -1523,6 +1523,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
     DWORD		        param;
     HANDLE		        ev;
     int                         err;
+    TRACE("(%p)\n", wwo);
 
     /* flush all possible output */
     wait_for_poll(wwo->handle, wwo->ufds, wwo->count);
@@ -1799,6 +1800,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     wwo = &WOutDev[wDevID];
+
+    if (wwo->handle != NULL) {
+        WARN("already allocated\n");
+        return MMSYSERR_ALLOCATED;
+    }
 
     if ((dwFlags & WAVE_DIRECTSOUND) && !(wwo->caps.dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
@@ -2218,7 +2224,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     DWORD              rc;
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -2259,7 +2265,7 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     DWORD              rc;
 
     TRACE("(%u, %08lX);\n", wDevID, dwParam);
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
+    if (wDevID >= MAX_WAVEOUTDRV) {
 	WARN("bad device ID !\n");
 	return MMSYSERR_BADDEVICEID;
     }
@@ -3323,6 +3329,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     wwi = &WInDev[wDevID];
+
+    if (wwi->handle != NULL) {
+        WARN("already allocated\n");
+        return MMSYSERR_ALLOCATED;
+    }
 
     if ((dwFlags & WAVE_DIRECTSOUND) && !(wwi->dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
