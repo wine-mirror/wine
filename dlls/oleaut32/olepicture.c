@@ -334,6 +334,9 @@ static void OLEPictureImpl_Destroy(OLEPictureImpl* Obj)
     case PICTYPE_ENHMETAFILE:
       DeleteEnhMetaFile(Obj->desc.u.emf.hemf);
       break;
+    case PICTYPE_NONE:
+      /* Nothing to do */
+      break;
     default:
       FIXME("Unsupported type %d - unable to delete\n", Obj->desc.picType);
       break;
@@ -485,6 +488,9 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
   TRACE("(%p)->(%p)\n", This, phandle);
   switch(This->desc.picType) {
+  case PICTYPE_NONE:
+    *phandle = 0;
+    break;
   case PICTYPE_BITMAP:
     *phandle = (OLE_HANDLE)This->desc.u.bmp.hbitmap;
     break;
@@ -512,8 +518,10 @@ static HRESULT WINAPI OLEPictureImpl_get_hPal(IPicture *iface,
 					      OLE_HANDLE *phandle)
 {
   OLEPictureImpl *This = (OLEPictureImpl *)iface;
-  FIXME("(%p)->(%p): stub\n", This, phandle);
-  return E_NOTIMPL;
+  FIXME("(%p)->(%p): stub, return 0 palette.\n", This, phandle);
+
+  *phandle = 0;
+  return S_OK;
 }
 
 /************************************************************************
@@ -992,7 +1000,8 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
  */
 static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   HRESULT	hr = E_FAIL;
-  ULONG		xread;
+  BOOL		headerisdata = FALSE;
+  ULONG		xread, toread;
   BYTE 		*xbuf;
   DWORD		header[2];
   WORD		magic;
@@ -1013,43 +1022,54 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
    */
   hr=IStream_Stat(pStm,&statstg,STATFLAG_NONAME);
   if (hr)
-    FIXME("Stat failed with hres %lx\n",hr);
+      FIXME("Stat failed with hres %lx\n",hr);
   hr=IStream_Read(pStm,header,8,&xread);
   if (hr || xread!=8) {
       FIXME("Failure while reading picture header (hr is %lx, nread is %ld).\n",hr,xread);
       return hr;
   }
-  if (!memcmp(&(header[0]), "GIF8",     4) ||   /* GIF header */
-      !memcmp(&(header[0]), "BM",       2) ||   /* BMP header */
-      !memcmp(&(header[0]), "\xff\xd8", 2) ||   /* JPEG header */
-      header[1] > statstg.cbSize.QuadPart || (header[1]==0)) {/* Incorrect header, assume none. */
-    xread = 8;
-    xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,statstg.cbSize.QuadPart);
-    memcpy(xbuf,&header,8);
-    This->datalen = statstg.cbSize.QuadPart;
-    while (xread < This->datalen) {
+
+  headerisdata = FALSE;
+  xread = 0;
+  if (!memcmp(&(header[0]),"lt\0\0", 4) && (header[1] <= statstg.cbSize.QuadPart-8)) {
+      toread = header[1];
+  } else {
+      if (!memcmp(&(header[0]), "GIF8",     4)	||   /* GIF header */
+	  !memcmp(&(header[0]), "BM",       2)	||   /* BMP header */
+	  !memcmp(&(header[0]), "\xff\xd8", 2)	||   /* JPEG header */
+	  (header[1] > statstg.cbSize.QuadPart)	||   /* invalid size */
+	  (header[1]==0)
+      ) {/* Incorrect header, assume none. */
+          headerisdata = TRUE;
+          toread = statstg.cbSize.QuadPart-8;
+	  xread = 8;
+      } else {
+	  FIXME("Unknown stream header magic: %08lx\n", header[0]);
+          toread = header[1];
+      }
+  }
+
+  This->datalen = toread+(headerisdata?8:0);
+  xbuf = This->data = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, This->datalen);
+
+  if (headerisdata)
+      memcpy (xbuf, &header, 8);
+
+  while (xread < This->datalen) {
       ULONG nread;
       hr = IStream_Read(pStm,xbuf+xread,This->datalen-xread,&nread);
       xread+=nread;
       if (hr || !nread)
 	break;
-    }
-    if (xread != This->datalen)
-      FIXME("Could only read %ld of %d bytes in no-header case?\n",xread,This->datalen);
-  } else {
-    xread = 0;
-    xbuf = This->data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,header[1]);
-    This->datalen = header[1];
-    while (xread < header[1]) {
-      ULONG nread;
-      hr = IStream_Read(pStm,xbuf+xread,header[1]-xread,&nread);
-      xread+=nread;
-      if (hr || !nread)
-	break;
-    }
-    if (xread != header[1])
-      FIXME("Could only read %ld of %ld bytes?\n",xread,header[1]);
   }
+  if (xread != This->datalen)
+      FIXME("Could only read %ld of %d bytes out of stream?\n",xread,This->datalen);
+
+  if (This->datalen == 0) {	/* Marks the "NONE" picture */
+      This->desc.picType = PICTYPE_NONE;
+      return S_OK;
+  }
+
   magic = xbuf[0] + (xbuf[1]<<8);
   switch (magic) {
   case 0x4947: { /* GIF */
