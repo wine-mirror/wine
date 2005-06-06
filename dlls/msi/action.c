@@ -4565,7 +4565,8 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
         package->progids[index].ParentIndex != index)
     {
         int pindex = package->progids[index].ParentIndex;
-        while (package->progids[pindex].ParentIndex>= 0)
+        while (package->progids[pindex].ParentIndex>= 0 && 
+               package->progids[pindex].ParentIndex != pindex)
             pindex = package->progids[pindex].ParentIndex;
 
         FIXME("BAD BAD need to determing if we are really the CurVer\n");
