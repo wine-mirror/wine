@@ -175,29 +175,33 @@ static char* UNIXFS_build_shitemid(char *name, struct stat *pStat, void *buffer)
 }
 
 /******************************************************************************
- * UNIXFS_canonicalize_path [Internal]
+ * UNIXFS_get_unix_path [Internal]
  *
- * Evaluate "/.", "/.." and symbolic links for an absolute unix path.
+ * Convert an absolute dos path to an absolute canonicalized unix path.
+ * Evaluate "/.", "/.." and symbolic links.
  *
  * PARAMS
- *  pszUnixPath      [I] An absolute unix path
+ *  pszDosPath       [I] An absolute dos path
  *  pszCanonicalPath [O] Buffer of length FILENAME_MAX. Will receive the canonical path.
  *
  * RETURNS
  *  Success, TRUE
  *  Failure, FALSE - Path not existent, too long, insufficient rights, to many symlinks
  */
-static BOOL UNIXFS_canonicalize_path(const char *pszUnixPath, char *pszCanonicalPath)
+static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
 {
-    char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX];
+    char *pPathTail, *pElement, *pCanonicalTail, szPath[FILENAME_MAX], *pszUnixPath;
     struct stat fileStat;
     
-    TRACE("(pszUnixPath=%s, pszCanonicalPath=%p)\n", debugstr_a(pszUnixPath), pszCanonicalPath);
+    TRACE("(pszDosPath=%s, pszCanonicalPath=%p)\n", debugstr_w(pszDosPath), pszCanonicalPath);
     
-    if (!pszUnixPath || *pszUnixPath != '/')
+    if (!pszDosPath || pszDosPath[1] != ':')
         return FALSE;
 
+    pszUnixPath = wine_get_unix_file_name(pszDosPath);
+    if (!pszUnixPath) return FALSE;   
     strcpy(szPath, pszUnixPath);
+    HeapFree(GetProcessHeap(), 0, pszUnixPath);
    
     /* pCanonicalTail always points to the end of the canonical path constructed
      * thus far. pPathTail points to the still to be processed part of the input
@@ -328,12 +332,8 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     if ((pUnixFolder->m_dwPathMode == PATHMODE_DOS) && (path[1] == ':')) 
     {
         /* Absolute dos path. Convert to unix */
-        char *pszUnixPath = wine_get_unix_file_name(path);
-        if (!UNIXFS_canonicalize_path(pszUnixPath, szCompletePath)) {
-            HeapFree(GetProcessHeap(), 0, pszUnixPath);
+        if (!UNIXFS_get_unix_path(path, szCompletePath))
             return FALSE;
-        }
-        HeapFree(GetProcessHeap(), 0, pszUnixPath);
         pNextPathElement = szCompletePath + 1;
     } 
     else if ((pUnixFolder->m_dwPathMode == PATHMODE_UNIX) && (path[0] == '/')) 
@@ -423,29 +423,45 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
 static BOOL UNIXFS_pidl_to_path(LPCITEMIDLIST pidl, UnixFolder *pUnixFolder) {
     LPCITEMIDLIST current = pidl, root;
     DWORD dwPathLen;
-    char *pNextDir;
+    char *pNextDir, szBasePath[FILENAME_MAX] = "/";
 
     TRACE("(pidl=%p, pUnixFolder=%p)\n", pidl, pUnixFolder);
+    pdump(pidl);
     
     pUnixFolder->m_pszPath = NULL;
 
     /* Find the UnixFolderClass root */
     while (current->mkid.cb) {
-        LPPIDLDATA pData = _ILGetDataPointer(current);
-        if (!pData) return FALSE;
-        if (pData->type == PT_GUID && 
-            (IsEqualIID(&CLSID_UnixFolder, &pData->u.guid.guid) ||
-             IsEqualIID(&CLSID_UnixDosFolder, &pData->u.guid.guid)))
+        if (_ILIsDrive(current) || /* The dos drive, which maps to '/' */
+            (_ILIsSpecialFolder(current) && 
+             (IsEqualIID(&CLSID_UnixFolder, _ILGetGUIDPointer(current)) ||
+              IsEqualIID(&CLSID_UnixDosFolder, _ILGetGUIDPointer(current)))))
         {
             break;
         }
         current = ILGetNext(current);
     }
-    root = current = ILGetNext(current);
+
+    if (current && current->mkid.cb) {
+        root = current = ILGetNext(current);
+        dwPathLen = 2; /* For the '/' prefix and the terminating '\0' */
+    } else if (_ILIsDesktop(pidl) || _ILIsValue(pidl) || _ILIsFolder(pidl)) {
+        /* Path rooted at Desktop */
+        WCHAR wszDesktopPath[MAX_PATH];
+        if (FAILED(SHGetSpecialFolderPathW(0, wszDesktopPath, CSIDL_DESKTOP, FALSE)))
+           return FALSE;
+        if (!UNIXFS_get_unix_path(wszDesktopPath, szBasePath))
+            return FALSE;
+        dwPathLen = strlen(szBasePath) + 1;
+        root = current;
+    } else {
+        ERR("Unknown pidl type!\n");
+        pdump(pidl);
+        return FALSE;
+    }
     
     /* Determine the path's length bytes */
-    dwPathLen = 2; /* For the '/' prefix and the terminating '\0' */
-    while (current->mkid.cb) {
+    while (current && current->mkid.cb) {
         dwPathLen += NAME_LEN_FROM_LPSHITEMID(current) + 1; /* For the '/' */
         current = ILGetNext(current);
     };
@@ -457,8 +473,9 @@ static BOOL UNIXFS_pidl_to_path(LPCITEMIDLIST pidl, UnixFolder *pUnixFolder) {
         return FALSE;
     }
     current = root;
-    *pNextDir++ = '/';
-    while (current->mkid.cb) {
+    strcpy(pNextDir, szBasePath);
+    pNextDir += strlen(szBasePath);
+    while (current && current->mkid.cb) {
         memcpy(pNextDir, _ILGetTextPointer(current), NAME_LEN_FROM_LPSHITEMID(current));
         pNextDir += NAME_LEN_FROM_LPSHITEMID(current);
         *pNextDir++ = '/';
@@ -782,6 +799,9 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     TRACE("(iface=%p, pidl=%p, pbcReserver=%p, riid=%p, ppvOut=%p)\n", 
             iface, pidl, pbcReserved, riid, ppvOut);
 
+    if (!pidl || !pidl->mkid.cb)
+        return E_INVALIDARG;
+    
     if (This->m_dwPathMode == PATHMODE_DOS)
         hr = UnixDosFolder_Constructor(NULL, &IID_IPersistFolder2, (void**)&persistFolder);
     else
@@ -1157,7 +1177,8 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* ifa
     
     pdump(pidl);
     
-    UNIXFS_pidl_to_path(pidl, This);
+    if (!UNIXFS_pidl_to_path(pidl, This))
+        return E_FAIL;
     UNIXFS_build_subfolder_pidls(This);
    
     return S_OK;
