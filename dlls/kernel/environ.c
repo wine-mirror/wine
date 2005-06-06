@@ -30,7 +30,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "thread.h"
 #include "wine/server.h"
 #include "wine/library.h"
 #include "winternl.h"

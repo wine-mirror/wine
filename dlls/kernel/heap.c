@@ -47,7 +47,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "excpt.h"
-#include "thread.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
 

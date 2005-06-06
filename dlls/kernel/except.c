@@ -50,7 +50,6 @@
 #include "winuser.h"
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "thread.h"
 #include "excpt.h"
 #include "wine/server.h"
 #include "wine/unicode.h"

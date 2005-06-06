@@ -52,7 +52,6 @@
 #include "excpt.h"
 #include "console_private.h"
 #include "kernel_private.h"
-#include "thread.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
 

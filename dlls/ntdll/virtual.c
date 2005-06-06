@@ -30,6 +30,7 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -41,7 +42,9 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "ntstatus.h"
-#include "thread.h"
+#include "windef.h"
+#include "winbase.h"
+#include "winreg.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "wine/library.h"

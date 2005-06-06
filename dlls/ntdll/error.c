@@ -29,7 +29,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
-#include "thread.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);

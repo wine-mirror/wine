@@ -39,7 +39,6 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "winnt.h"
-#include "thread.h"
 #include "wine/debug.h"
 #include "winternl.h"
 #include "wine/server_protocol.h"

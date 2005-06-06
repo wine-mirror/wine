@@ -31,9 +31,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "wine/exception.h"
 #include "wine/library.h"
-#include "thread.h"
 
 struct fiber_data
 {
