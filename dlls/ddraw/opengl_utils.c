@@ -32,7 +32,7 @@
 #include "d3d.h"
 #include "wine/debug.h"
 
-#include "mesa_private.h"
+#include "opengl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 

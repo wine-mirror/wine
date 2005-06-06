@@ -42,7 +42,7 @@
 
 #include "ddraw_private.h"
 #include "d3d_private.h"
-#include "mesa_private.h"
+#include "opengl_private.h"
 
 #include "wine/debug.h"
 

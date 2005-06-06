@@ -39,7 +39,7 @@
 #include "wine/debug.h"
 
 #include "d3d_private.h"
-#include "mesa_private.h"
+#include "opengl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_geom);

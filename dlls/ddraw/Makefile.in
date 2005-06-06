@@ -9,18 +9,18 @@ EXTRAINCL = @X_CFLAGS@
 EXTRALIBS = -ldxguid -luuid @X_LIBS@ @X_PRE_LIBS@ @XLIB@ @X_EXTRA_LIBS@ 
 
 OPENGLFILES = \
-	d3dcommon.c \
-	d3ddevice/main.c \
-	d3ddevice/mesa.c \
-	d3dexecutebuffer.c \
-	d3dlight.c \
-	d3dmaterial.c \
-	d3dtexture.c \
-	d3dvertexbuffer.c \
-	d3dviewport.c \
-	direct3d/main.c \
-	direct3d/mesa.c \
-	mesa.c
+	d3d_utils.c \
+	device_main.c \
+	device_opengl.c \
+	direct3d_main.c \
+	direct3d_opengl.c \
+	executebuffer.c \
+	light.c \
+	material.c \
+	opengl_utils.c \
+	texture.c \
+	vertexbuffer.c \
+	viewport.c
 
 C_SRCS = \
 	@OPENGLFILES@ \
@@ -46,10 +46,6 @@ C_SRCS = \
 RC_SRCS = version.rc
 
 SUBDIRS = tests
-
-EXTRASUBDIRS = \
-	d3ddevice \
-	direct3d
 
 @MAKE_DLL_RULES@
 

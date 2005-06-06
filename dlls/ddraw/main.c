@@ -73,7 +73,7 @@ BOOL opengl_initialized = 0;
 
 #ifdef HAVE_OPENGL
 
-#include "mesa_private.h"
+#include "opengl_private.h"
 
 static void *gl_handle = NULL;
 

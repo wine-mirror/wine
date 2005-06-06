@@ -67,7 +67,7 @@
 #include "wine/debug.h"
 
 #include "ddraw_private.h"
-#include "mesa_private.h" /* To have the D3D creation function */
+#include "opengl_private.h" /* To have the D3D creation function */
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
