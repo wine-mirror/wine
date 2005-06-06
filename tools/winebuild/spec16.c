@@ -878,7 +878,6 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
 
     sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(spec->file_name) );
     sprintf( destructor, "__wine_spec_%s_fini", make_c_identifier(spec->file_name) );
-    output_dll_init( outfile, constructor, destructor );
 
     fprintf( outfile,
              "void %s(void)\n"
@@ -892,4 +891,14 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
              "    extern void __wine_dll_unregister_16( const struct module_data * );\n"
              "    __wine_dll_unregister_16( &module );\n"
              "}\n", destructor );
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
+    fprintf( outfile, "#endif\n" );
+
+    output_dll_init( outfile, constructor, destructor );
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif\n" );
 }

@@ -694,11 +694,9 @@ int resolve_imports( DLLSPEC *spec )
 /* output the import table of a Win32 module */
 static int output_immediate_imports( FILE *outfile )
 {
-    int i, j, pos;
-    int nb_imm = nb_imports - nb_delayed;
-    static const char import_thunks[] = "__wine_spec_import_thunks";
+    int i, j, nb_imm = nb_imports - nb_delayed;
 
-    if (!nb_imm) goto done;
+    if (!nb_imm) return 0;
 
     /* main import header */
 
@@ -749,11 +747,21 @@ static int output_immediate_imports( FILE *outfile )
     }
     fprintf( outfile, "  }\n};\n\n" );
 
-    /* thunks for imported functions */
+    return nb_imm;
+}
 
-    fprintf( outfile, "#ifndef __GNUC__\nstatic void __asm__dummy_import(void) {\n#endif\n\n" );
+/* output the import thunks of a Win32 module */
+static void output_immediate_import_thunks( FILE *outfile )
+{
+    int i, j, pos;
+    int nb_imm = nb_imports - nb_delayed;
+    static const char import_thunks[] = "__wine_spec_import_thunks";
+
+    if (!nb_imm) return;
+
     pos = (sizeof(void *) + 2*sizeof(unsigned int) + sizeof(const char *) + sizeof(void *)) *
             (nb_imm + 1);  /* offset of imports.data from start of imports */
+    fprintf( outfile, "/* immediate import thunks */\n" );
     fprintf( outfile, "asm(\".text\\n\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", import_thunks);
 
@@ -825,20 +833,15 @@ static int output_immediate_imports( FILE *outfile )
         pos += 4;
     }
     output_function_size( outfile, import_thunks );
-    fprintf( outfile, "    \".data\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
-
- done:
-    return nb_imm;
+    fprintf( outfile, ");\n" );
 }
 
 /* output the delayed import table of a Win32 module */
 static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 {
-    int i, idx, j, pos;
-    static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
-    static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
+    int i, j;
 
-    if (!nb_delayed) goto done;
+    if (!nb_delayed) return 0;
 
     fprintf( outfile, "static void *__wine_delay_imp_hmod[%d];\n", nb_delayed );
     for (i = 0; i < nb_imports; i++)
@@ -926,13 +929,23 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "    RaiseException( 0x%08x, %d, 2, args );\n",
              EXCEPTION_WINE_STUB, EH_NONCONTINUABLE );
     fprintf( outfile, "    return 0;\n" );
-    fprintf( outfile, "  }\n}\n\n" );
+    fprintf( outfile, "  }\n}\n" );
 
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy_delay_import(void) {\n" );
-    fprintf( outfile, "#endif\n" );
+    return nb_delayed;
+}
 
-    fprintf( outfile, "asm(\".align %d\\n\"\n", get_alignment(8) );
+/* output the delayed import thunks of a Win32 module */
+static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
+{
+    int i, idx, j, pos;
+    static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
+    static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
+
+    if (!nb_delayed) return;
+
+    fprintf( outfile, "/* delayed import thunks */\n" );
+    fprintf( outfile, "asm(\".text\\n\"\n" );
+    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", delayed_import_loaders);
     fprintf( outfile, "    \"\\t" __ASM_FUNC("__wine_delay_load_asm") "\\n\"\n" );
     fprintf( outfile, "    \"" __ASM_NAME("__wine_delay_load_asm") ":\\n\"\n" );
@@ -1129,13 +1142,6 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
     }
     output_function_size( outfile, delayed_import_thunks );
     fprintf( outfile, ");\n" );
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif\n" );
-    fprintf( outfile, "\n" );
-
- done:
-    return nb_delayed;
 }
 
 /* output the import and delayed import tables of a Win32 module
@@ -1145,4 +1151,11 @@ int output_imports( FILE *outfile, DLLSPEC *spec, int *nb_delayed )
 {
     *nb_delayed = output_delayed_imports( outfile, spec );
     return output_immediate_imports( outfile );
+}
+
+/* output the import and delayed import thunks of a Win32 module */
+void output_import_thunks( FILE *outfile, DLLSPEC *spec )
+{
+    output_delayed_import_thunks( outfile, spec );
+    output_immediate_import_thunks( outfile );
 }

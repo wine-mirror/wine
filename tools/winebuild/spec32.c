@@ -124,16 +124,55 @@ static int output_debug( FILE *outfile )
 
 
 /*******************************************************************
+ *         get_exports_size
+ *
+ * Compute the size of the export table.
+ */
+static int get_exports_size( DLLSPEC *spec )
+{
+    int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
+    int i, fwd_size = 0, total_size;
+
+    if (!nr_exports) return 0;
+
+    /* export directory header */
+    total_size = 10 * sizeof(int);
+
+    /* function pointers */
+    total_size += nr_exports * sizeof(int);
+
+    /* function name pointers */
+    total_size += spec->nb_names * sizeof(int);
+
+    /* function ordinals */
+    total_size += spec->nb_names * sizeof(short);
+    if (spec->nb_names % 2) total_size += sizeof(short);
+
+    /* forward strings */
+    for (i = spec->base; i <= spec->limit; i++)
+    {
+        ORDDEF *odp = spec->ordinals[i];
+        if (odp && odp->flags & FLAG_FORWARD) fwd_size += strlen(odp->link_name) + 1;
+    }
+    total_size += (fwd_size + 3) & ~3;
+
+    return total_size;
+}
+
+
+/*******************************************************************
  *         output_exports
  *
  * Output the export table for a Win32 module.
  */
-static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
+static void output_exports( FILE *outfile, DLLSPEC *spec )
 {
-    int i, fwd_size = 0, total_size = 0;
+    int i, fwd_size = 0;
+    int nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
 
-    if (!nr_exports) return 0;
+    if (!nr_exports) return;
 
+    fprintf( outfile, "/* export table */\n" );
     fprintf( outfile, "asm(\".data\\n\"\n" );
     fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
     fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_exports") ":\\n\"\n" );
@@ -158,7 +197,6 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
         fprintf( outfile, "    \"\\t.long 0\\n\"\n" );  /* AddressOfNames */
         fprintf( outfile, "    \"\\t.long 0\\n\"\n" );  /* AddressOfNameOrdinals */
     }
-    total_size += 10 * sizeof(int);
 
     /* output the function pointers */
 
@@ -191,7 +229,6 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
             assert(0);
         }
     }
-    total_size += (spec->limit - spec->base + 1) * sizeof(int);
 
     if (spec->nb_names)
     {
@@ -205,7 +242,6 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
             fprintf( outfile, "    \"\\t.long __wine_spec_exp_names+%d\\n\"\n", namepos );
             namepos += strlen(spec->names[i]->name) + 1;
         }
-        total_size += spec->nb_names * sizeof(int);
     }
 
     /* output the function names */
@@ -227,11 +263,9 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
             fprintf( outfile, "    \"\\t" __ASM_SHORT " %d\\n\"\n",
                      spec->names[i]->ordinal - spec->base );
         }
-        total_size += spec->nb_names * sizeof(short);
         if (spec->nb_names % 2)
         {
             fprintf( outfile, "    \"\\t" __ASM_SHORT " 0\\n\"\n" );
-            total_size += sizeof(short);
         }
     }
 
@@ -247,7 +281,6 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
                 fprintf( outfile, "    \"\\t" __ASM_STRING " \\\"%s\\\"\\n\"\n", odp->link_name );
         }
         fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(4) );
-        total_size += (fwd_size + 3) & ~3;
     }
 
     /* output relays */
@@ -297,11 +330,7 @@ static int output_exports( FILE *outfile, int nr_exports, DLLSPEC *spec )
             fprintf( outfile, "    \"\\t.long 0,0,0,0\\n\"\n" );
         }
     }
-
-    fprintf( outfile, "    \"\\t.data\\n\"\n" );
-    fprintf( outfile, ");\n\n" );
-
-    return total_size;
+    fprintf( outfile, ");\n" );
 }
 
 
@@ -367,10 +396,6 @@ static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
  */
 void output_dll_init( FILE *outfile, const char *constructor, const char *destructor )
 {
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "static void __asm__dummy_dll_init(void) {\n" );
-    fprintf( outfile, "#endif\n" );
-
 #if defined(__i386__)
     if (constructor)
     {
@@ -446,9 +471,6 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
 #else
 #error You need to define the DLL constructor for your architecture
 #endif
-    fprintf( outfile, "#ifndef __GNUC__\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#endif\n" );
 }
 
 
@@ -480,6 +502,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 
     nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
     resolve_imports( spec );
+    exports_size = get_exports_size( spec );
     output_standard_file_header( outfile );
 
     /* Reserve some space for the PE header */
@@ -512,24 +535,7 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "#define __stdcall\n\n" );
 #endif
 
-    if (nr_exports)
-    {
-        /* Output the stub functions */
-
-        output_stub_funcs( outfile, spec );
-
-        fprintf( outfile, "#ifndef __GNUC__\n" );
-        fprintf( outfile, "static void __asm__dummy(void) {\n" );
-        fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-
-        /* Output the exports and relay entry points */
-
-        exports_size = output_exports( outfile, nr_exports, spec );
-
-        fprintf( outfile, "#ifndef __GNUC__\n" );
-        fprintf( outfile, "}\n" );
-        fprintf( outfile, "#endif /* !defined(__GNUC__) */\n" );
-    }
+    output_stub_funcs( outfile, spec );
 
     /* Output the DLL imports */
 
@@ -792,7 +798,6 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
              "}\n\n",
              spec->file_name );
 
-    output_dll_init( outfile, "__wine_spec_init_ctor", NULL );
     fprintf( outfile,
              "void __wine_spec_init_ctor(void)\n"
              "{\n"
@@ -800,6 +805,18 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
              "    __wine_spec_init();\n"
              "    __wine_spec_init_state = 2;\n"
              "}\n" );
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "static void __asm__dummy(void) {\n" );
+    fprintf( outfile, "#endif\n" );
+
+    output_exports( outfile, spec );
+    output_import_thunks( outfile, spec );
+    output_dll_init( outfile, "__wine_spec_init_ctor", NULL );
+
+    fprintf( outfile, "#ifndef __GNUC__\n" );
+    fprintf( outfile, "}\n" );
+    fprintf( outfile, "#endif\n" );
 }
 
 
