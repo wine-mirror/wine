@@ -45,22 +45,12 @@ struct _events {
     EVENTHANDLER handler;
 };
 
-struct _subscriber {
+struct subscriber {
+    struct list entry;
+    LPWSTR event;
     LPWSTR control;
     LPWSTR attribute;
-    struct _subscriber *next;
 };
-
-struct _subscription_chain {
-    LPWSTR event;
-    struct _subscriber *chain;
-};
-
-struct _subscriptions {
-    DWORD chain_count; 
-    struct _subscription_chain* chain;
-};
-
 
 VOID ControlEvent_HandleControlEvent(MSIPACKAGE *, LPCWSTR, LPCWSTR, msi_dialog*);
 
@@ -125,6 +115,7 @@ static VOID ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument,
         package->CurrentInstallState = ERROR_FUNCTION_FAILED;
     }
 
+    ControlEvent_CleanupSubscriptions(package);
     msi_dialog_end_dialog( dialog );
 }
 
@@ -136,6 +127,7 @@ static VOID ControlEvent_NewDialog(MSIPACKAGE* package, LPCWSTR argument,
 {
     /* store the name of the next dialog, and signal this one to end */
     package->next_dialog = strdupW(argument);
+    ControlEvent_CleanupSubscriptions(package);
     msi_dialog_end_dialog( dialog );
 }
 
@@ -234,171 +226,80 @@ static VOID ControlEvent_AddSource(MSIPACKAGE* package, LPCWSTR argument,
 /*
  * Subscribed events
  */
-static void free_subscriber(struct _subscriber *who)
+static void free_subscriber( struct subscriber *sub )
 {
-    HeapFree(GetProcessHeap(),0,who->control);
-    HeapFree(GetProcessHeap(),0,who->attribute);
-    HeapFree(GetProcessHeap(),0,who);
+    HeapFree(GetProcessHeap(),0,sub->event);
+    HeapFree(GetProcessHeap(),0,sub->control);
+    HeapFree(GetProcessHeap(),0,sub->attribute);
+    HeapFree(GetProcessHeap(),0,sub);
 }
 
-VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
-                                   LPCWSTR control, LPCWSTR attribute)
+VOID ControlEvent_SubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
+                                    LPCWSTR control, LPCWSTR attribute )
 {
-    int i;
-    struct _subscription_chain *chain;
-    struct _subscriber *subscriber, *ptr;
+    struct subscriber *sub;
 
-    if (!package->EventSubscriptions)
-    {
-        package->EventSubscriptions = HeapAlloc(GetProcessHeap(), 0,
-                                       sizeof(struct _subscriptions));
-        package->EventSubscriptions->chain_count = 0;
-    }
-
-    chain = NULL;
-
-    for (i = 0; i < package->EventSubscriptions->chain_count; i++)
-    {
-        if (lstrcmpiW(package->EventSubscriptions->chain[i].event,event)==0)
-        {
-            chain = &package->EventSubscriptions->chain[i];
-            break;
-        }
-    }
-
-    if (chain == NULL)
-    {
-        if (package->EventSubscriptions->chain_count)
-            chain = HeapReAlloc(GetProcessHeap(), 0,
-                                package->EventSubscriptions->chain,
-                               (package->EventSubscriptions->chain_count + 1) *
-                                sizeof (struct _subscription_chain)); 
-        else
-            chain= HeapAlloc(GetProcessHeap(),0, sizeof (struct 
-                                                        _subscription_chain));
-
-        package->EventSubscriptions->chain = chain;
-        chain = &package->EventSubscriptions->chain[
-                                package->EventSubscriptions->chain_count];
-        package->EventSubscriptions->chain_count++;
-        memset(chain,0,sizeof(struct _subscription_chain));
-        chain->event = strdupW(event);
-    }
-
-    subscriber = ptr = chain->chain;
-    while (ptr)
-    {
-        subscriber = ptr;
-        ptr = ptr->next;
-    }
-
-    ptr = HeapAlloc(GetProcessHeap(),0,sizeof(struct _subscriber));
-    ptr->control = strdupW(control);
-    ptr->attribute = strdupW(attribute);
-    ptr->next = NULL;
-    
-    if (subscriber)
-        subscriber->next = ptr;
-    else
-        chain->chain = ptr;
-}
-
-VOID ControlEvent_UnSubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
-                                     LPCWSTR control, LPCWSTR attribute)
-{
-    int i;
-
-    if (!package->EventSubscriptions)
+    sub = HeapAlloc(GetProcessHeap(),0,sizeof (*sub));
+    if( !sub )
         return;
+    sub->event = strdupW(event);
+    sub->control = strdupW(control);
+    sub->attribute = strdupW(attribute);
+    list_add_tail( &package->subscriptions, &sub->entry );
+}
 
-    for (i = 0; i < package->EventSubscriptions->chain_count; i++)
+VOID ControlEvent_UnSubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
+                                      LPCWSTR control, LPCWSTR attribute )
+{
+    struct list *i, *t;
+    struct subscriber *sub;
+
+    LIST_FOR_EACH_SAFE( i, t, &package->subscriptions )
     {
-        if (lstrcmpiW(package->EventSubscriptions->chain[i].event,event)==0)
-        {
-            struct _subscriber *who;
-            struct _subscriber *prev=NULL;
-            who = package->EventSubscriptions->chain[i].chain;
-            while (who)
-            {
-                if (lstrcmpiW(who->control,control)==0
-                   && lstrcmpiW(who->attribute,attribute)==0)
-                {
-                    if (prev)
-                        prev->next = who->next;
-                    else
-                        package->EventSubscriptions->chain[i].chain = who->next;
-        
-                    free_subscriber(who);
-                }
-                else
-                {
-                    prev = who;
-                    who = who->next;
-                }
-            }
-            break;
-        }
+        sub = LIST_ENTRY( i, struct subscriber, entry );
+
+        if( lstrcmpiW(sub->control,control) )
+            continue;
+        if( lstrcmpiW(sub->attribute,attribute) )
+            continue;
+        if( lstrcmpiW(sub->event,event) )
+            continue;
+        list_remove( &sub->entry );
+        free_subscriber( sub );
     }
 }
 
-VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event, 
-                                      MSIRECORD *data)
+VOID ControlEvent_FireSubscribedEvent( MSIPACKAGE *package, LPCWSTR event, 
+                                       MSIRECORD *rec )
 {
-    int i;
+    struct subscriber *sub;
 
     TRACE("Firing Event %s\n",debugstr_w(event));
 
     if (!package->dialog)
         return;
 
-    if (!package->EventSubscriptions)
-        return;
-
-    for (i = 0; i < package->EventSubscriptions->chain_count; i++)
+    LIST_FOR_EACH_ENTRY( sub, &package->subscriptions, struct subscriber, entry )
     {
-        if (lstrcmpiW(package->EventSubscriptions->chain[i].event,event)==0)
-        {
-            struct _subscriber *who;
-            who = package->EventSubscriptions->chain[i].chain;
-            while (who)
-            {
-                ERR("Should Fire event for %s %s\n",
-                    debugstr_w(who->control), debugstr_w(who->attribute));
-                /*
-                 msi_dialog_fire_subscribed_event(package->dialog, who->control,
-                                                  who->attribute, data);
-                */
-                who = who->next;
-            }
-            break;
-        }
+        if (lstrcmpiW(sub->event, event))
+            continue;
+        msi_dialog_handle_event( package->dialog, sub->control,
+                                 sub->attribute, rec );
     }
 }
 
 VOID ControlEvent_CleanupSubscriptions(MSIPACKAGE *package)
 {
-    int i;
+    struct list *i, *t;
+    struct subscriber *sub;
 
-    if (!package->EventSubscriptions)
-        return;
-
-    for (i = 0; i < package->EventSubscriptions->chain_count; i++)
+    LIST_FOR_EACH_SAFE( i, t, &package->subscriptions )
     {
-        struct _subscriber *who;
-        struct _subscriber *ptr;
-        who = package->EventSubscriptions->chain[i].chain;
-        while (who)
-        {
-            ptr = who;
-            who = who->next;
-            free_subscriber(ptr);
-        }
-        HeapFree(GetProcessHeap(), 0,
-                    package->EventSubscriptions->chain[i].event);
+        sub = LIST_ENTRY( i, struct subscriber, entry );
+
+        list_remove( &sub->entry );
+        free_subscriber( sub );
     }
-    HeapFree(GetProcessHeap(),0,package->EventSubscriptions->chain);
-    HeapFree(GetProcessHeap(),0,package->EventSubscriptions);
-    package->EventSubscriptions = NULL;
 }
 
 /*

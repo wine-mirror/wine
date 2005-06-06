@@ -221,7 +221,7 @@ typedef struct tagMSIPACKAGE
     msi_dialog *dialog;
     LPWSTR next_dialog;
     
-    struct _subscriptions *EventSubscriptions;
+    struct list subscriptions;
 } MSIPACKAGE;
 
 typedef struct tagMSIPREVIEW
@@ -395,6 +395,7 @@ extern void msi_dialog_do_preview( msi_dialog* );
 extern void msi_dialog_destroy( msi_dialog* );
 extern BOOL msi_dialog_register_class( void );
 extern void msi_dialog_unregister_class( void );
+extern void msi_dialog_handle_event( msi_dialog*, LPCWSTR, LPCWSTR, MSIRECORD * );
 
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;

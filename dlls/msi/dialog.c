@@ -341,7 +341,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
     SetWindowTextW( ctrl->hwnd, text );
 }
 
-void msi_dialog_map_events(msi_dialog* dialog, LPCWSTR control)
+static void msi_dialog_map_events(msi_dialog* dialog, LPCWSTR control)
 {
     static WCHAR Query[] = {
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
