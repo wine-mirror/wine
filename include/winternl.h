@@ -1082,8 +1082,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION {
     FILETIME ftCreationTime;
     FILETIME ftUserTime;
     FILETIME ftKernelTime;
-    DWORD dwUnknown2;
-    WCHAR *pszProcessName;
+    UNICODE_STRING ProcessName;
     DWORD dwBasePriority;
     DWORD dwProcessID;
     DWORD dwParentProcessID;

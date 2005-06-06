@@ -760,9 +760,11 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
 
                     /* now append process name */
-                    spi->pszProcessName = (WCHAR*)((char*)spi + spi->dwOffset);
-                    memcpy( spi->pszProcessName, procname, wlen - sizeof(WCHAR) );
-                    spi->pszProcessName[wlen / sizeof(WCHAR)] = 0;
+                    spi->ProcessName.Buffer = (WCHAR*)((char*)spi + spi->dwOffset);
+                    spi->ProcessName.Length = wlen - sizeof(WCHAR);
+                    spi->ProcessName.MaximumLength = wlen;
+                    memcpy( spi->ProcessName.Buffer, procname, spi->ProcessName.Length );
+                    spi->ProcessName.Buffer[spi->ProcessName.Length / sizeof(WCHAR)] = 0;
                     len += wlen;
                     spi->dwOffset += wlen;
 
