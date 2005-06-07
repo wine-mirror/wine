@@ -218,7 +218,7 @@ static HRESULT AVIDec_ConnectInput(TransformFilterImpl* pTransformFilter, const 
             /* Update output media type */
             CopyMediaType(outpmt, pmt);
             outpmt->subtype = *outsubtype;
-            memcpy(&(((VIDEOINFOHEADER*)outpmt->pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize); 
+            memcpy(&(((VIDEOINFOHEADER*)outpmt->pbFormat)->bmiHeader), This->pBihOut, This->pBihOut->biSize);
 
             /* Update buffer size of media samples in output */
             ((OutputPin*)This->tf.ppPins[1])->allocProps.cbBuffer = This->pBihOut->biSizeImage;

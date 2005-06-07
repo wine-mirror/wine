@@ -127,7 +127,7 @@ static HRESULT VideoRenderer_CreatePrimarySurface(IBaseFilter * iface)
 	return hr;
     }
 
-    hr = IDirectDraw_SetCooperativeLevel(This->ddraw, NULL, DDSCL_FULLSCREEN|DDSCL_EXCLUSIVE);
+    hr = IDirectDraw_SetCooperativeLevel(This->ddraw, GetDesktopWindow(), DDSCL_NORMAL);
     if (FAILED(hr)) {
 	ERR("Cannot set fulscreen mode\n");
 	return hr;
@@ -298,12 +298,13 @@ static HRESULT VideoRenderer_Sample(LPVOID iface, IMediaSample * pSample)
     
     if (!This->init)
     {
-	This->init = 1;
 	hr = VideoRenderer_CreatePrimarySurface(iface);
 	if (FAILED(hr))
 	{
 	    ERR("Unable to create primary surface\n");
+	    return hr;
 	}
+	This->init = 1;
     }
 
     VideoRenderer_SendSampleData(This, pbSrcStream, cbSrcStream);
