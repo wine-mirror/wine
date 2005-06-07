@@ -32,6 +32,7 @@
 #include "msidefs.h"
 #include "ocidl.h"
 #include "olectl.h"
+#include "richedit.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -128,6 +129,7 @@ static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, 
 
 static DWORD uiThreadId;
 static HWND hMsiHiddenWindow;
+static HMODULE hRichedit;
 
 static INT msi_dialog_scale_unit( msi_dialog *dialog, INT val )
 {
@@ -478,14 +480,53 @@ static UINT msi_dialog_line_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
+struct msi_streamin_info
+{
+    LPSTR string;
+    DWORD offset;
+    DWORD length;
+};
+
+static DWORD CALLBACK
+msi_richedit_stream_in( DWORD_PTR arg, LPBYTE buffer, LONG count, LONG *pcb )
+{
+    struct msi_streamin_info *info = (struct msi_streamin_info*) arg;
+
+    if( (count + info->offset) > info->length )
+        count = info->length - info->offset;
+    memcpy( buffer, &info->string[ info->offset ], count );
+    *pcb = count;
+    info->offset += count;
+
+    TRACE("%ld/%ld\n", info->offset, info->length);
+
+    return 0;
+}
+
 static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    const static WCHAR szEdit[] = { 'E','D','I','T',0 };
+    const LPCWSTR szRichEdit = RICHEDIT_CLASS20W;
+    struct msi_streamin_info info;
+    msi_control *control;
+    LPCWSTR text;
+    EDITSTREAM es;
+    DWORD style;
 
-    FIXME("%p %p\n", dialog, rec);
+    style = WS_BORDER | ES_MULTILINE | WS_VSCROLL | ES_READONLY | ES_AUTOVSCROLL;
+    control = msi_dialog_add_control( dialog, rec, szRichEdit, style );
 
-    msi_dialog_add_control( dialog, rec, szEdit, WS_BORDER |
-                 ES_MULTILINE | WS_VSCROLL | ES_READONLY | ES_AUTOVSCROLL );
+    text = MSI_RecordGetString( rec, 10 );
+    info.string = strdupWtoA( text );
+    info.offset = 0;
+    info.length = lstrlenA( info.string ) + 1;
+
+    es.dwCookie = (DWORD_PTR) &info;
+    es.dwError = 0;
+    es.pfnCallback = msi_richedit_stream_in;
+
+    SendMessageW( control->hwnd, EM_STREAMIN, SF_RTF, (LPARAM) &es );
+
+    HeapFree( GetProcessHeap(), 0, info.string );
 
     return ERROR_SUCCESS;
 }
@@ -1367,6 +1408,8 @@ BOOL msi_dialog_register_class( void )
     if( !hMsiHiddenWindow )
         return FALSE;
 
+    hRichedit = LoadLibraryA("riched20");
+
     return TRUE;
 }
 
@@ -1375,4 +1418,5 @@ void msi_dialog_unregister_class( void )
     DestroyWindow( hMsiHiddenWindow );
     UnregisterClassW( szMsiDialogClass, NULL );
     uiThreadId = 0;
+    FreeLibrary( hRichedit );
 }
