@@ -764,6 +764,7 @@ typedef struct _SYSTEM_THREAD_INFORMATION{
     DWORD       dwContextSwitches;
     DWORD       dwThreadState;
     DWORD       dwWaitReason;
+    DWORD       dwUnknown;
 } SYSTEM_THREAD_INFORMATION, *PSYSTEM_THREAD_INFORMATION;
 
 typedef struct _IO_STATUS_BLOCK {
