@@ -4,8 +4,10 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = ddraw.dll
 IMPORTS   = ddraw user32 gdi32 kernel32
+EXTRALIBS = -ldxguid
 
 CTESTS = \
+	d3d.c \
 	ddrawmodes.c \
 	dsurface.c
 
