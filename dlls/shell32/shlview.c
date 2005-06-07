@@ -140,9 +140,6 @@ static const IViewObjectVtbl vovt;
 #define GET_WM_COMMAND_HWND(wp, lp)             (HWND)(lp)
 #define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
 
-extern void WINAPI _InsertMenuItem (HMENU hmenu, UINT indexMenu, BOOL fByPosition,
-			UINT wID, UINT fType, LPSTR dwTypeData, UINT fState);
-
 /*
   Items merged into the toolbar and and the filemenu
 */

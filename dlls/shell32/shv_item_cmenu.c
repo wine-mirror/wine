@@ -186,7 +186,7 @@ void WINAPI _InsertMenuItem (
 	BOOL fByPosition,
 	UINT wID,
 	UINT fType,
-	LPSTR dwTypeData,
+	LPCSTR dwTypeData,
 	UINT fState)
 {
 	MENUITEMINFOA	mii;

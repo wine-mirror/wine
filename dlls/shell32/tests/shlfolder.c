@@ -38,10 +38,10 @@
 #include "wine/test.h"
 
 
-IMalloc *ppM;
+static IMalloc *ppM;
 
 /* creates a file with the specified name for tests */
-void CreateTestFile(const CHAR *name)
+static void CreateTestFile(const CHAR *name)
 {
     HANDLE file;
     DWORD written;
@@ -57,7 +57,7 @@ void CreateTestFile(const CHAR *name)
 
 
 /* initializes the tests */
-void CreateFilesFolders(void)
+static void CreateFilesFolders(void)
 {
     CreateDirectoryA(".\\testdir", NULL);
     CreateDirectoryA(".\\testdir\\test.txt", NULL);
@@ -69,7 +69,7 @@ void CreateFilesFolders(void)
 }
 
 /* cleans after tests */
-void Cleanup(void)
+static void Cleanup(void)
 {
     DeleteFileA(".\\testdir\\test1.txt");
     DeleteFileA(".\\testdir\\test2.txt");
@@ -82,7 +82,7 @@ void Cleanup(void)
 
 
 /* perform test */
-void test_EnumObjects(IShellFolder *iFolder)
+static void test_EnumObjects(IShellFolder *iFolder)
 {
     IEnumIDList *iEnumList;
     ITEMIDLIST *newPIDL, *(idlArr [5]);
@@ -150,7 +150,7 @@ void test_EnumObjects(IShellFolder *iFolder)
         IMalloc_Free(ppM, idlArr[i]);
 }
 
-void test_BindToObject()
+static void test_BindToObject(void)
 {
     HRESULT hr;
     UINT cChars;

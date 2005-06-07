@@ -1050,7 +1050,7 @@ ISFHelper_fnGetUniqueName (ISFHelper * iface, LPSTR lpName, UINT uLen)
     IEnumIDList *penum;
     HRESULT hr;
     char szText[MAX_PATH];
-    char *szNewFolder = "New Folder";
+    const char *szNewFolder = "New Folder";
 
     TRACE ("(%p)(%s %u)\n", This, lpName, uLen);
 
