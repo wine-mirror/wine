@@ -101,9 +101,9 @@ IDM_WINEFILE MENU FIXED IMPURE
 	}
 
 	POPUP "&Options"  {
-		MENUITEM "&Confirmation..." ,		-1
+		MENUITEM "&Confirmation..." ,		501
 		MENUITEM "&Font..." ,			ID_SELECT_FONT
-		MENUITEM "Customize Tool&bar..." , -1
+		MENUITEM "Customize Tool&bar..." , 512
 		MENUITEM SEPARATOR
 		MENUITEM "&Toolbar" ,		ID_VIEW_TOOL_BAR, CHECKED
 		MENUITEM "&Drivebar" ,		ID_VIEW_DRIVE_BAR, CHECKED
@@ -112,7 +112,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "F&ull Screen\tCtrl+Shift+S" , 	ID_VIEW_FULLSCREEN
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "&Minimize on run" ,		-1
+		MENUITEM "&Minimize on run" ,		504
 		MENUITEM "&Save settings on exit" ,			511
 	}
 
@@ -140,13 +140,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Help &Search...\tF1" ,			ID_HELP
 		MENUITEM "&Using Help\tF1" ,			ID_HELP_USING
 		MENUITEM SEPARATOR
-		POPUP "Info..."  {
-		  MENUITEM "Info about &Wine..." ,			ID_ABOUT_WINE
-/*
- *		  MENUITEM "&License..."		ID_LICENSE
- *		  MENUITEM "&NO WARRANTY"		ID_NO_WARRANTY
- */
-		}
+		MENUITEM "&Info about Winefile..." ,		ID_ABOUT
+		MENUITEM "Info about &Wine..." ,			ID_ABOUT_WINE
 	}
 }
 

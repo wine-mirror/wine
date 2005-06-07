@@ -102,9 +102,9 @@ IDM_WINEFILE MENU FIXED IMPURE
 	}
 
 	POPUP "&Nastavení"  {
-		MENUITEM "&Potvrzování..." ,		-1
+		MENUITEM "&Potvrzování..." ,		501
 		MENUITEM "Pís&mo..." ,			ID_SELECT_FONT
-		MENUITEM "Upravit pr&uh nástrojù..." , -1
+		MENUITEM "Upravit pr&uh nástrojù..." , 512
 		MENUITEM SEPARATOR
 		MENUITEM "Nás&troje" ,		ID_VIEW_TOOL_BAR, CHECKED
 		MENUITEM "Pruh &jednotek" ,	ID_VIEW_DRIVE_BAR, CHECKED
@@ -113,7 +113,7 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Na p&lnou obrazovku\tCtrl+Shift+S" , 	ID_VIEW_FULLSCREEN
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "Spustit &minimalizovanì" ,		-1
+		MENUITEM "Spustit &minimalizovanì" ,		504
 		MENUITEM "Ulo¾it na&stavení pøi ukonèení" ,	511
 	}
 
@@ -141,13 +141,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "Hledání v &nápovìdì...\tF1" ,			ID_HELP
 		MENUITEM "Jak po&¾ívat nápovìdu\tF1" ,		ID_HELP_USING
 		MENUITEM SEPARATOR
-		POPUP "Informace..."  {
-		  MENUITEM "Informace o &Wine..." ,			ID_ABOUT_WINE
-/*
- *		  MENUITEM "&License..."		ID_LICENSE
- *		  MENUITEM "&NO WARRANTY"		ID_NO_WARRANTY
- */
-		}
+		MENUITEM "&Informace o Winefile..." ,			ID_ABOUT
+		MENUITEM "Informace o &Wine..." ,			ID_ABOUT_WINE
 	}
 }
 

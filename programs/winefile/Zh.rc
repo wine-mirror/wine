@@ -99,9 +99,9 @@ IDM_WINEFILE MENU FIXED IMPURE
 	}
 
 	POPUP "选项（&O）"  {
-		MENUITEM "确定方式（&C）..." ,		-1
-		MENUITEM "字体（&F）..." ,			-1
-		MENUITEM "定制工具条（&B）..." , -1
+		MENUITEM "确定方式（&C）..." ,		501
+		MENUITEM "字体（&F）..." ,			ID_SELECT_FONT
+		MENUITEM "定制工具条（&B）..." , 512
 		MENUITEM SEPARATOR
 		MENUITEM "工具条（&T）" ,		ID_VIEW_TOOL_BAR, CHECKED
 		MENUITEM "驱动器列表（&D）" ,		ID_VIEW_DRIVE_BAR, CHECKED
@@ -110,8 +110,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "全屏（&U）\tCtrl+Shift+S" , 	ID_VIEW_FULLSCREEN
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "&Symbol nach Programmstart" ,		-1  /*FIXME what's this? */
-		MENUITEM "&Einstellungen beim Beenden speichern" ,			511
+		MENUITEM "&Minimize on run" ,		504
+		MENUITEM "&Save settings on exit" ,			511
 	}
 
 
@@ -138,13 +138,8 @@ IDM_WINEFILE MENU FIXED IMPURE
 		MENUITEM "搜索帮助（&S）...\tF1" ,			ID_HELP
 		MENUITEM "使用帮助（&U）\tF1" ,			ID_HELP_USING
 		MENUITEM SEPARATOR
-		POPUP "资料信息..."  {
-		  MENUITEM "关于 &Wine..." ,			ID_ABOUT_WINE
-/*
- *		  MENUITEM "用户许可协议（&L）..."		ID_LICENSE
- *		  MENUITEM "责任无关（&N）"		ID_NO_WARRANTY
- */
-		}
+		MENUITEM "&关于 Winefile..." ,			ID_ABOUT
+		MENUITEM "关于 &Wine..." ,			ID_ABOUT_WINE
 	}
 }
 
