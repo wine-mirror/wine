@@ -787,7 +787,7 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
     WCHAR message[1024];
     WCHAR timet[0x100];
     MSIRECORD * row = 0;
-    WCHAR *ActionText=NULL;
+    LPCWSTR ActionText;
 
     GetTimeFormatW(LOCALE_USER_DEFAULT, 0, NULL, format, timet, 0x100);
 
@@ -795,17 +795,16 @@ static void ui_actionstart(MSIPACKAGE *package, LPCWSTR action)
     if (!row)
         return;
 
-    ActionText = load_dynamic_stringW(row,2);
-    msiobj_release(&row->hdr);
+    ActionText = MSI_RecordGetString(row,2);
 
     sprintfW(message,template_s,timet,action,ActionText);
+    msiobj_release(&row->hdr);
 
     row = MSI_CreateRecord(1);
     MSI_RecordSetStringW(row,1,message);
  
     MSI_ProcessMessage(package, INSTALLMESSAGE_ACTIONSTART, row);
     msiobj_release(&row->hdr);
-    HeapFree(GetProcessHeap(),0,ActionText);
 }
 
 static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start, 
@@ -1062,8 +1061,6 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
 static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 {
     UINT rc = ERROR_SUCCESS;
-    WCHAR buffer[0x100];
-    DWORD sz = 0x100;
     MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
@@ -1084,40 +1081,31 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 
     if (row)
     {
+        LPCWSTR action, cond;
+
         TRACE("Running the actions\n"); 
 
         /* check conditions */
-        if (!MSI_RecordIsNull(row,2))
+        cond = MSI_RecordGetString(row,2);
+        if (cond)
         {
-            LPWSTR cond = NULL;
-            cond = load_dynamic_stringW(row,2);
-
-            if (cond)
-            {
-                /* this is a hack to skip errors in the condition code */
-                if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
-                {
-                    HeapFree(GetProcessHeap(),0,cond);
-                    goto end;
-                }
-                else
-                    HeapFree(GetProcessHeap(),0,cond);
-            }
+            /* this is a hack to skip errors in the condition code */
+            if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
+                goto end;
         }
 
-        sz=0x100;
-        rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
-        if (rc != ERROR_SUCCESS)
+        action = MSI_RecordGetString(row,1);
+        if (!action)
         {
-            ERR("Error is %x\n",rc);
-            msiobj_release(&row->hdr);
+            ERR("failed to fetch action\n");
+            rc = ERROR_FUNCTION_FAILED;
             goto end;
         }
 
         if (UI)
-            rc = ACTION_PerformUIAction(package,buffer);
+            rc = ACTION_PerformUIAction(package,action);
         else
-            rc = ACTION_PerformAction(package,buffer, FALSE);
+            rc = ACTION_PerformAction(package,action,FALSE);
 end:
         msiobj_release(&row->hdr);
     }
@@ -1183,8 +1171,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 
         while (1)
         {
-            WCHAR buffer[0x100];
-            DWORD sz = 0x100;
+            LPCWSTR cond, action;
 
             rc = MSI_ViewFetch(view,&row);
             if (rc != ERROR_SUCCESS)
@@ -1193,39 +1180,29 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
                 break;
             }
 
-            sz=0x100;
-            rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
-            if (rc != ERROR_SUCCESS)
+            action = MSI_RecordGetString(row,1);
+            if (!action)
             {
-                ERR("Error is %x\n",rc);
+                rc = ERROR_FUNCTION_FAILED;
                 msiobj_release(&row->hdr);
                 break;
             }
 
             /* check conditions */
-            if (!MSI_RecordIsNull(row,2))
+            cond = MSI_RecordGetString(row,2);
+            if (cond)
             {
-                LPWSTR cond = NULL;
-                cond = load_dynamic_stringW(row,2);
-
-                if (cond)
+                /* this is a hack to skip errors in the condition code */
+                if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
                 {
-                    /* this is a hack to skip errors in the condition code */
-                    if (MSI_EvaluateConditionW(package, cond) ==
-                            MSICONDITION_FALSE)
-                    {
-                        HeapFree(GetProcessHeap(),0,cond);
-                        msiobj_release(&row->hdr);
-                        TRACE("Skipping action: %s (condition is false)\n",
-                                    debugstr_w(buffer));
-                        continue; 
-                    }
-                    else
-                        HeapFree(GetProcessHeap(),0,cond);
+                    msiobj_release(&row->hdr);
+                    TRACE("Skipping action: %s (condition is false)\n",
+                          debugstr_w(action));
+                    continue; 
                 }
             }
 
-            rc = ACTION_PerformAction(package,buffer, FALSE);
+            rc = ACTION_PerformAction(package,action,FALSE);
 
             if (rc == ERROR_FUNCTION_NOT_CALLED)
                 rc = ERROR_SUCCESS;
@@ -1279,8 +1256,7 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 
         while (1)
         {
-            WCHAR buffer[0x100];
-            DWORD sz = 0x100;
+            LPCWSTR action, cond;
             MSIRECORD * row = 0;
 
             rc = MSI_ViewFetch(view,&row);
@@ -1290,40 +1266,30 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
                 break;
             }
 
-            sz=0x100;
-            rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
-            if (rc != ERROR_SUCCESS)
+            action = MSI_RecordGetString(row,1);
+            if (!action)
             {
-                ERR("Error is %x\n",rc);
+                ERR("failed to fetch action\n");
+                rc = ERROR_FUNCTION_FAILED;
                 msiobj_release(&row->hdr);
                 break;
             }
 
-
             /* check conditions */
-            if (!MSI_RecordIsNull(row,2))
+            cond = MSI_RecordGetString(row,2);
+            if (cond)
             {
-                LPWSTR cond = NULL;
-                cond = load_dynamic_stringW(row,2);
-
-                if (cond)
+                /* this is a hack to skip errors in the condition code */
+                if (MSI_EvaluateConditionW(package,cond) == MSICONDITION_FALSE)
                 {
-                    /* this is a hack to skip errors in the condition code */
-                    if (MSI_EvaluateConditionW(package, cond) ==
-                            MSICONDITION_FALSE)
-                    {
-                        HeapFree(GetProcessHeap(),0,cond);
-                        msiobj_release(&row->hdr);
-                        TRACE("Skipping action: %s (condition is false)\n",
-                                    debugstr_w(buffer));
-                        continue; 
-                    }
-                    else
-                        HeapFree(GetProcessHeap(),0,cond);
+                    msiobj_release(&row->hdr);
+                    TRACE("Skipping action: %s (condition is false)\n",
+                          debugstr_w(action));
+                    continue; 
                 }
             }
 
-            rc = ACTION_PerformUIAction(package,buffer);
+            rc = ACTION_PerformUIAction(package,action);
 
             if (rc == ERROR_FUNCTION_NOT_CALLED)
                 rc = ERROR_SUCCESS;
