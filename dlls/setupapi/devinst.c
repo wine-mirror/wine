@@ -1500,11 +1500,11 @@ BOOL WINAPI SetupDiSetClassInstallParamsA(
  *		SetupDiCallClassInstaller (SETUPAPI.@)
  */
 BOOL WINAPI SetupDiCallClassInstaller(
-       DWORD InstallFunction,
+       DI_FUNCTION InstallFunction,
        HDEVINFO DeviceInfoSet,
        PSP_DEVINFO_DATA DeviceInfoData)
 {
-    FIXME("%ld %p %p\n", InstallFunction, DeviceInfoSet, DeviceInfoData);
+    FIXME("%d %p %p\n", InstallFunction, DeviceInfoSet, DeviceInfoData);
     return FALSE;
 }
 
