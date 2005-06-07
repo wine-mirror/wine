@@ -282,7 +282,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     LPWSTR font = NULL, title = NULL;
     msi_control *control;
 
-    style |= WS_CHILD | WS_GROUP;
+    style |= WS_CHILD;
 
     control = HeapAlloc( GetProcessHeap(), 0,
                          sizeof *control + strlenW(name)*sizeof(WCHAR) );
@@ -617,20 +617,20 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     MSIQUERY *view = NULL;
     radio_button_group_descr group;
     MSIPACKAGE *package = dialog->package;
+    WNDPROC oldproc;
 
     prop = MSI_RecordGetString( rec, 9 );
 
     TRACE("%p %p %s\n", dialog, rec, debugstr_w( prop ));
 
     /* Create parent group box to hold radio buttons */
-    control = msi_dialog_add_control( dialog, rec, szButton, BS_OWNERDRAW );
+    control = msi_dialog_add_control( dialog, rec, szButton, BS_OWNERDRAW|WS_GROUP );
+    if( !control )
+        return ERROR_FUNCTION_FAILED;
 
-    if (control->hwnd)
-    {
-        WNDPROC oldproc = (WNDPROC) SetWindowLongPtrW(control->hwnd, GWLP_WNDPROC,
-            (LONG_PTR)MSIRadioGroup_WndProc);
-        SetPropW(control->hwnd, szButtonData, oldproc);
-    }
+    oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
+                                           (LONG_PTR)MSIRadioGroup_WndProc );
+    SetPropW(control->hwnd, szButtonData, oldproc);
 
     if( prop )
         control->property = strdupW( prop );
