@@ -696,7 +696,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                         wlen = wine_server_reply_size(reply) + sizeof(WCHAR);
                         if (Length >= len + sizeof(*spi))
                         {
-                            /* ftCreationTime, ftUserTime, ftCreateTime;
+                            /* ftCreationTime, ftUserTime, ftKernelTime;
                              * vmCounters, ioCounters
                              */
  
@@ -747,6 +747,9 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                                     /* ftKernelTime, ftUserTime, ftCreateTime;
                                      * dwTickCount, dwStartAddress
                                      */
+
+                                    memset(&spi->ti[i], 0, sizeof(spi->ti));
+
                                     spi->ti[i].dwOwningPID = reply->pid;
                                     spi->ti[i].dwThreadID  = reply->tid;
                                     spi->ti[i].dwCurrentPriority = reply->base_pri + reply->delta_pri;
