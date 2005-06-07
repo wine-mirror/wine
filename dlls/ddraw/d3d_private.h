@@ -225,8 +225,10 @@ struct IDirect3DDeviceImpl
     DWORD material;
 
     /* Light parameters */
-    DWORD active_lights, set_lights;
-    D3DLIGHT7 light_parameters[MAX_LIGHTS];
+    DWORD num_set_lights;
+    DWORD max_active_lights;
+    LPD3DLIGHT7 light_parameters;
+    DWORD *active_lights;
 
     /* clipping planes */
     DWORD max_clipping_planes;

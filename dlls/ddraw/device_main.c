@@ -642,8 +642,16 @@ Main_IDirect3DDeviceImpl_7_GetLight(LPDIRECT3DDEVICE7 iface,
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, lpLight);
 
-    if (dwLightIndex > MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+    if (dwLightIndex >= This->num_set_lights)
+        return DDERR_INVALIDPARAMS;
+
     *lpLight = This->light_parameters[dwLightIndex];
+
+    /* If dltType is zero, then this light has never been set, either
+       by calling SetLight or implicitely by calling EnableLight without
+       calling SetLight first. */
+    if (lpLight->dltType == 0)
+        return DDERR_INVALIDPARAMS;
 
     if (TRACE_ON(ddraw)) {
         TRACE(" returning light : \n");
@@ -950,12 +958,25 @@ Main_IDirect3DDeviceImpl_7_GetLightEnable(LPDIRECT3DDEVICE7 iface,
                                           DWORD dwLightIndex,
                                           BOOL* pbEnable)
 {
+    int i;
+
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, pbEnable);
 
-    if (dwLightIndex > MAX_LIGHTS) *pbEnable = 0;
-    else *pbEnable = ((0x00000001 << dwLightIndex) & This->active_lights) != 0;
-    
+    *pbEnable = 0;
+    if (dwLightIndex >= This->num_set_lights)
+        return DDERR_INVALIDPARAMS;
+
+    /* If dltType is zero, then this light has never been set, either
+       by calling SetLight or implicitely by calling EnableLight without
+       calling SetLight first. */
+    if (This->light_parameters[dwLightIndex].dltType == 0)
+        return DDERR_INVALIDPARAMS;
+
+    for (i = 0; i < This->max_active_lights; i++)
+        if (This->active_lights[i] == dwLightIndex)
+            *pbEnable = TRUE;
+
     TRACE(" returning %d.\n", *pbEnable);
 
     return DD_OK;

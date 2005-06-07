@@ -428,6 +428,11 @@ GL_IDirect3DDeviceImpl_7_3T_2T_1T_Release(LPDIRECT3DDEVICE7 iface)
 	/* And warn the D3D object that this device is no longer active... */
 	This->d3d->d3d_removed_device(This->d3d, This);
 
+        /* Free light arrays */
+        if (This->light_parameters)
+            HeapFree(GetProcessHeap(), 0, This->light_parameters);
+        HeapFree(GetProcessHeap(), 0, This->active_lights);
+
 	HeapFree(GetProcessHeap(), 0, This->world_mat);
 	HeapFree(GetProcessHeap(), 0, This->view_mat);
 	HeapFree(GetProcessHeap(), 0, This->proj_mat);
@@ -2430,6 +2435,30 @@ GL_IDirect3DDeviceImpl_7_SetMaterial(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
+static LPD3DLIGHT7 get_light(IDirect3DDeviceImpl *This, DWORD dwLightIndex)
+{
+    if (dwLightIndex >= This->num_set_lights)
+    {
+        /* Extend, or allocate the light parameters array. */
+        DWORD newlightnum = dwLightIndex + 1;
+        LPD3DLIGHT7 newarrayptr = NULL;
+
+        if (This->light_parameters)
+            newarrayptr = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                This->light_parameters, newlightnum * sizeof(D3DLIGHT7));
+        else
+            newarrayptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                newlightnum * sizeof(D3DLIGHT7));
+
+        if (!newarrayptr)
+            return NULL;
+
+        This->light_parameters = newarrayptr;
+        This->num_set_lights = newlightnum;
+    }
+
+    return &This->light_parameters[dwLightIndex];
+}
 
 HRESULT WINAPI
 GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
@@ -2438,6 +2467,8 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+    LPD3DLIGHT7 lpdestlight = get_light( This, dwLightIndex );
+
     TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, lpLight);
     
     if (TRACE_ON(ddraw)) {
@@ -2445,9 +2476,13 @@ GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
 	dump_D3DLIGHT7(lpLight);
     }
     
-    if (dwLightIndex >= MAX_LIGHTS) return DDERR_INVALIDPARAMS;
-    This->set_lights |= 0x00000001 << dwLightIndex;
-    This->light_parameters[dwLightIndex] = *lpLight;
+    /* DirectX7 documentation states that this function can return
+       DDERR_OUTOFMEMORY, so we do just that in case of an allocation
+       error (which is the only reason why get_light() can fail). */
+    if( !lpdestlight )
+        return DDERR_OUTOFMEMORY;
+
+    *lpdestlight = *lpLight;
 
     /* Some checks to print out nice warnings :-) */
     switch (lpLight->dltType) {
@@ -2478,32 +2513,81 @@ GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
 				     DWORD dwLightIndex,
 				     BOOL bEnable)
 {
+    int lightslot = -1, i;
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    LPD3DLIGHT7 lpdestlight = get_light(This, dwLightIndex);
+
     TRACE("(%p/%p)->(%08lx,%d)\n", This, iface, dwLightIndex, bEnable);
-    
-    if (dwLightIndex >= MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+
+    /* The DirectX doc isn't as explicit as for SetLight as whether we can
+       return this from this function, but it doesn't state otherwise. */
+    if (!lpdestlight)
+        return DDERR_OUTOFMEMORY;
+
+    /* If this light hasn't been set, initialise it with default values. */
+    if (lpdestlight->dltType == 0)
+    {
+        TRACE("setting default light parameters\n");
+
+        /* We always use HEAP_ZERO_MEMORY when allocating the light_parameters
+           array, so we only have to setup anything that shoud not be zero. */
+        lpdestlight->dltType = D3DLIGHT_DIRECTIONAL;
+        lpdestlight->dcvDiffuse.u1.r = 1.f;
+        lpdestlight->dcvDiffuse.u2.g = 1.f;
+        lpdestlight->dcvDiffuse.u3.b = 1.f;
+        lpdestlight->dvDirection.u3.z = 1.f;
+    }
+
+    /* Look for this light in the active lights array. */
+    for (i = 0; i < This->max_active_lights; i++)
+        if (This->active_lights[i] == dwLightIndex)
+        {
+            lightslot = i;
+            break;
+        }
+
+    /* If we didn't find it, let's find the first available slot, if any. */
+    if (lightslot == -1)
+        for (i = 0; i < This->max_active_lights; i++)
+            if (This->active_lights[i] == ~0)
+            {
+                lightslot = i;
+                break;
+            }
 
     ENTER_GL();
     if (bEnable) {
-        if (((0x00000001 << dwLightIndex) & This->set_lights) == 0) {
-	    /* Set the default parameters.. */
-	    TRACE(" setting default light parameters...\n");
-	    GL_IDirect3DDeviceImpl_7_SetLight(iface, dwLightIndex, &(This->light_parameters[dwLightIndex]));
-	}
-	glEnable(GL_LIGHT0 + dwLightIndex);
-	if ((This->active_lights & (0x00000001 << dwLightIndex)) == 0) {
+        if (lightslot == -1)
+        {
+            /* This means that the app is trying to enable more lights than
+               the maximum possible indicated in the caps.
+
+               Windows actually let you do this, and disable one of the
+               previously enabled lights to let you enable this one.
+
+               It's not documented and I'm not sure how windows pick which light
+               to disable to make room for this one. */
+            FIXME("Enabling more light than the maximum is not supported yet.");
+            return D3D_OK;
+        }
+
+        glEnable(GL_LIGHT0 + lightslot);
+
+
+        if (This->active_lights[lightslot] == ~0)
+        {
 	    /* This light gets active... Need to update its parameters to GL before the next drawing */
 	    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
-	    
-	    This->active_lights |= 0x00000001 << dwLightIndex;
+
+            This->active_lights[lightslot] = dwLightIndex;
 	    glThis->transform_state = GL_TRANSFORM_NONE;
 	}
     } else {
-        glDisable(GL_LIGHT0 + dwLightIndex);
-	This->active_lights &= ~(0x00000001 << dwLightIndex);
+        glDisable(GL_LIGHT0 + lightslot);
+        This->active_lights[lightslot] = ~0;
     }
-    LEAVE_GL();
 
+    LEAVE_GL();
     return DD_OK;
 }
 
@@ -3421,23 +3505,27 @@ d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 	}
 	if (This->state_block.render_state[D3DRENDERSTATE_LIGHTING - 1] != FALSE) {
 	    GLint i;
-	    DWORD runner;
 
-	    for (i = 0, runner = 0x00000001; i < MAX_LIGHTS; i++, runner <<= 1) {
-	        if (runner & This->active_lights) {
-		    switch (This->light_parameters[i].dltType) {
+            for (i = 0; i < This->max_active_lights; i++ )
+            {
+                DWORD dwLightIndex = This->active_lights[i];
+                if (dwLightIndex != ~0)
+                {
+                    LPD3DLIGHT7 pLight = &This->light_parameters[dwLightIndex];
+                    switch (pLight->dltType)
+                    {
 		        case D3DLIGHT_DIRECTIONAL: {
 			    float direction[4];
 			    float cut_off = 180.0;
 			    
-			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &(This->light_parameters[i].dcvAmbient));
-			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &(This->light_parameters[i].dcvDiffuse));
-			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &(This->light_parameters[i].dcvSpecular));
+			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &pLight->dcvAmbient);
+			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &pLight->dcvDiffuse);
+			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &pLight->dcvSpecular);
 			    glLightfv(GL_LIGHT0 + i, GL_SPOT_CUTOFF, &cut_off);
 			    
-			    direction[0] = This->light_parameters[i].dvDirection.u1.x;
-			    direction[1] = This->light_parameters[i].dvDirection.u2.y;
-			    direction[2] = This->light_parameters[i].dvDirection.u3.z;
+			    direction[0] = pLight->dvDirection.u1.x;
+			    direction[1] = pLight->dvDirection.u2.y;
+			    direction[2] = pLight->dvDirection.u3.z;
 			    direction[3] = 0.0;
 			    glLightfv(GL_LIGHT0 + i, GL_POSITION, (float *) direction);
 			} break;
@@ -3446,17 +3534,17 @@ d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 			    float position[4];
 			    float cut_off = 180.0;
 			    
-			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &(This->light_parameters[i].dcvAmbient));
-			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &(This->light_parameters[i].dcvDiffuse));
-			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &(This->light_parameters[i].dcvSpecular));
-			    position[0] = This->light_parameters[i].dvPosition.u1.x;
-			    position[1] = This->light_parameters[i].dvPosition.u2.y;
-			    position[2] = This->light_parameters[i].dvPosition.u3.z;
+			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &pLight->dcvAmbient);
+			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &pLight->dcvDiffuse);
+			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &pLight->dcvSpecular);
+			    position[0] = pLight->dvPosition.u1.x;
+			    position[1] = pLight->dvPosition.u2.y;
+			    position[2] = pLight->dvPosition.u3.z;
 			    position[3] = 1.0;
 			    glLightfv(GL_LIGHT0 + i, GL_POSITION, (float *) position);
-			    glLightfv(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, &(This->light_parameters[i].dvAttenuation0));
-			    glLightfv(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, &(This->light_parameters[i].dvAttenuation1));
-			    glLightfv(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, &(This->light_parameters[i].dvAttenuation2));
+			    glLightfv(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, &pLight->dvAttenuation0);
+			    glLightfv(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, &pLight->dvAttenuation1);
+			    glLightfv(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, &pLight->dvAttenuation2);
 			    glLightfv(GL_LIGHT0 + i, GL_SPOT_CUTOFF, &cut_off);
 			} break;
 
@@ -3465,25 +3553,25 @@ d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 			    float position[4];
 			    float cut_off = 90.0 * (This->light_parameters[i].dvPhi / M_PI);
 			    
-			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &(This->light_parameters[i].dcvAmbient));
-			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &(This->light_parameters[i].dcvDiffuse));
-			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &(This->light_parameters[i].dcvSpecular));
+			    glLightfv(GL_LIGHT0 + i, GL_AMBIENT,  (float *) &pLight->dcvAmbient);
+			    glLightfv(GL_LIGHT0 + i, GL_DIFFUSE,  (float *) &pLight->dcvDiffuse);
+			    glLightfv(GL_LIGHT0 + i, GL_SPECULAR, (float *) &pLight->dcvSpecular);
 			    
-			    direction[0] = This->light_parameters[i].dvDirection.u1.x;
-			    direction[1] = This->light_parameters[i].dvDirection.u2.y;
-			    direction[2] = This->light_parameters[i].dvDirection.u3.z;
+			    direction[0] = pLight->dvDirection.u1.x;
+			    direction[1] = pLight->dvDirection.u2.y;
+			    direction[2] = pLight->dvDirection.u3.z;
 			    direction[3] = 0.0;
 			    glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, (float *) direction);
-			    position[0] = This->light_parameters[i].dvPosition.u1.x;
-			    position[1] = This->light_parameters[i].dvPosition.u2.y;
-			    position[2] = This->light_parameters[i].dvPosition.u3.z;
+			    position[0] = pLight->dvPosition.u1.x;
+			    position[1] = pLight->dvPosition.u2.y;
+			    position[2] = pLight->dvPosition.u3.z;
 			    position[3] = 1.0;
 			    glLightfv(GL_LIGHT0 + i, GL_POSITION, (float *) position);
-			    glLightfv(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, &(This->light_parameters[i].dvAttenuation0));
-			    glLightfv(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, &(This->light_parameters[i].dvAttenuation1));
-			    glLightfv(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, &(This->light_parameters[i].dvAttenuation2));
+			    glLightfv(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, &pLight->dvAttenuation0);
+			    glLightfv(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, &pLight->dvAttenuation1);
+			    glLightfv(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, &pLight->dvAttenuation2);
 			    glLightfv(GL_LIGHT0 + i, GL_SPOT_CUTOFF, &cut_off);
-			    glLightfv(GL_LIGHT0 + i, GL_SPOT_EXPONENT, &(This->light_parameters[i].dvFalloff));
+			    glLightfv(GL_LIGHT0 + i, GL_SPOT_EXPONENT, &pLight->dvFalloff);
 			} break;
 
 			default:
@@ -3492,7 +3580,7 @@ d3ddevice_set_matrices(IDirect3DDeviceImpl *This, DWORD matrices,
 		    }
 		}
 	    }
-	}
+        }
 	
 	glMultMatrixf((float *) world_mat);
     }
@@ -3985,14 +4073,16 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     }
 
     /* Set the various light parameters */
-    for (light = 0; light < MAX_LIGHTS; light++) {
-        /* Only set the fields that are not zero-created */
-        object->light_parameters[light].dltType = D3DLIGHT_DIRECTIONAL;
-	object->light_parameters[light].dcvDiffuse.u1.r = 1.0;
-	object->light_parameters[light].dcvDiffuse.u2.g = 1.0;
-	object->light_parameters[light].dcvDiffuse.u3.b = 1.0;
-	object->light_parameters[light].dvDirection.u3.z = 1.0;
-    }
+    object->num_set_lights = 0;
+    object->max_active_lights = opengl_device_caps.dwMaxActiveLights;
+    object->light_parameters = NULL;
+    object->active_lights = HeapAlloc(GetProcessHeap(), 0,
+        object->max_active_lights * sizeof(BOOLEAN));
+    /* Fill the active light array with ~0, which is used to indicate an
+       invalid light index. We don't use 0, because it's a valid light index. */
+    for (light=0; light < object->max_active_lights; light++)
+        object->active_lights[light] = ~0;
+
     
     /* Allocate memory for the matrices */
     object->world_mat = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
