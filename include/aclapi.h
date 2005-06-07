@@ -28,6 +28,10 @@
 extern "C" {
 #endif
 
+DWORD WINAPI GetExplicitEntriesFromAclA( PACL, PULONG, PEXPLICIT_ACCESS_A* );
+DWORD WINAPI GetExplicitEntriesFromAclW( PACL, PULONG, PEXPLICIT_ACCESS_W* );
+#define     GetExplicitEntriesFromAcl WINELIB_NAME_AW(GetExplicitEntriesFromAcl)
+
 DWORD WINAPI GetSecurityInfo( HANDLE, SE_OBJECT_TYPE, SECURITY_INFORMATION,
         PSID*, PSID*, PACL*, PACL*, PSECURITY_DESCRIPTOR*);
 
