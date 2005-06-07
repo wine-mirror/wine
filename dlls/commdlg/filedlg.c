@@ -196,6 +196,9 @@ static BOOL    FILEDLG95_SHELL_ExecuteCommand(HWND hwnd, LPCSTR lpVerb);
 static void    FILEDLG95_SHELL_Clean(HWND hwnd);
 static BOOL    FILEDLG95_SHELL_BrowseToDesktop(HWND hwnd);
 
+/* Functions used by the EDIT box */
+static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, UINT * sizeUsed, char separator);
+
 /* Functions used by the filetype combo box */
 static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd);
 static BOOL    FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode);
@@ -203,7 +206,7 @@ static int     FILEDLG95_FILETYPE_SearchExt(HWND hwnd,LPCWSTR lpstrExt);
 static void    FILEDLG95_FILETYPE_Clean(HWND hwnd);
 
 /* Functions used by the Look In combo box */
-static HRESULT FILEDLG95_LOOKIN_Init(HWND hwndCombo);
+static void    FILEDLG95_LOOKIN_Init(HWND hwndCombo);
 static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct);
 static BOOL    FILEDLG95_LOOKIN_OnCommand(HWND hwnd, WORD wNotifyCode);
 static int     FILEDLG95_LOOKIN_AddItem(HWND hwnd,LPITEMIDLIST pidl, int iInsertId);
@@ -214,8 +217,7 @@ static int     FILEDLG95_LOOKIN_RemoveMostExpandedItem(HWND hwnd);
 static void    FILEDLG95_LOOKIN_Clean(HWND hwnd);
 
 /* Miscellaneous tool functions */
-HRESULT       GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName);
-HRESULT       GetFileName(HWND hwnd, LPITEMIDLIST pidl, LPSTR lpstrFileName);
+static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName);
 IShellFolder* GetShellFolderFromPidl(LPITEMIDLIST pidlAbs);
 LPITEMIDLIST  GetParentPidl(LPITEMIDLIST pidl);
 LPITEMIDLIST  GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
@@ -224,11 +226,10 @@ LPITEMIDLIST  GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
 static void *MemAlloc(UINT size);
 static void MemFree(void *mem);
 
-BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos);
 INT_PTR CALLBACK FileOpenDlgProc95(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
-HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
+void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
+static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCount, UINT sizeUsed);
 static BOOL BrowseSelectedFolder(HWND hwnd);
 
 /***********************************************************************
@@ -241,7 +242,7 @@ static BOOL BrowseSelectedFolder(HWND hwnd);
  * OUT : TRUE on success
  *       FALSE on cancel, error, close or filename-does-not-fit-in-buffer.
  */
-BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
+static BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
 {
 
     LRESULT lRes;
@@ -811,17 +812,16 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
 * Send CustomDialogNotification (CDN_FIRST -- CDN_LAST) message to the custom template dialog
 */
 
-HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
+void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 {
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwndParentDlg,FileOpenDlgInfosStr);
 
     TRACE("%p 0x%04x\n",hwndParentDlg, uCode);
 
-    if(!fodInfos) return 0;
+    if(!fodInfos) return;
 
     if(fodInfos->DlgInfos.hwndCustomDlg)
     {
-	HRESULT ret;
 	TRACE("CALL NOTIFY for %x\n", uCode);
         if(fodInfos->unicode)
         {
@@ -831,7 +831,7 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
             ofnNotify.hdr.code = uCode;
             ofnNotify.lpOFN = fodInfos->ofnInfos;
             ofnNotify.pszFile = NULL;
-	    ret = SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
+            SendMessageW(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
         }
         else
         {
@@ -841,17 +841,15 @@ HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
             ofnNotify.hdr.code = uCode;
             ofnNotify.lpOFN = (LPOPENFILENAMEA)fodInfos->ofnInfos;
             ofnNotify.pszFile = NULL;
-	    ret = SendMessageA(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
+            SendMessageA(fodInfos->DlgInfos.hwndCustomDlg,WM_NOTIFY,0,(LPARAM)&ofnNotify);
         }
 	TRACE("RET NOTIFY\n");
-	return ret;
     }
-    return TRUE;
 }
 
-HRESULT FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
+static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
 {
-    UINT sizeUsed = 0, n, total;
+    INT_PTR sizeUsed = 0, n, total;
     LPWSTR lpstrFileList = NULL;
     WCHAR lpstrCurrentDir[MAX_PATH];
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
@@ -911,9 +909,9 @@ HRESULT FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
     return total;
 }
 
-HRESULT FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPVOID buffer)
+static INT_PTR FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPVOID buffer)
 {
-    UINT sizeUsed = 0;
+    INT_PTR sizeUsed = 0;
     LPWSTR lpstrFileList = NULL;
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 
@@ -943,11 +941,11 @@ HRESULT FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPVOID buffer)
 *
 * Handle Custom Dialog Messages (CDM_FIRST -- CDM_LAST) messages
 */
-HRESULT FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR FILEDLG95_HandleCustomDialogMessages(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
     WCHAR lpstrPath[MAX_PATH];
-    HRESULT retval;
+    INT_PTR retval;
 
     if(!fodInfos) return FALSE;
 
@@ -2385,8 +2383,7 @@ static HRESULT FILEDLG95_FILETYPE_Init(HWND hwnd)
     }
   } else
       fodInfos->ofnInfos->nFilterIndex = 0;
-
-  return NOERROR;
+  return S_OK;
 }
 
 /***********************************************************************
@@ -2489,7 +2486,7 @@ static void FILEDLG95_FILETYPE_Clean(HWND hwnd)
  *
  * Initialisation of the look in combo box
  */
-static HRESULT FILEDLG95_LOOKIN_Init(HWND hwndCombo)
+static void FILEDLG95_LOOKIN_Init(HWND hwndCombo)
 {
   IShellFolder	*psfRoot, *psfDrives;
   IEnumIDList	*lpeRoot, *lpeDrives;
@@ -2556,7 +2553,6 @@ static HRESULT FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   }
 
   COMDLG32_SHFree(pidlDrives);
-  return NOERROR;
 }
 
 /***********************************************************************
@@ -3034,7 +3030,9 @@ void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd)
 }
 
 
-/* copied from shell32 to avoid linking to it */
+/* copied from shell32 to avoid linking to it
+ * FIXME: why?  shell32 is already linked
+ */
 static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST pidl)
 {
 	switch (src->uType)
@@ -3058,7 +3056,7 @@ static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPI
 	    {
 	      *(LPSTR)dest = '\0';
 	    }
-	    return(FALSE);
+	    return(E_FAIL);
 	}
 	return S_OK;
 }
@@ -3070,7 +3068,7 @@ static HRESULT COMDLG32_StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, LPI
  * The delimiter is specified by the parameter 'separator',
  *  usually either a space or a nul
  */
-int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, UINT * sizeUsed, char separator)
+static int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPWSTR * lpstrFileList, UINT * sizeUsed, char separator)
 {
 	FileOpenDlgInfos *fodInfos  = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 	UINT nStrCharCount = 0;	/* index in src buffer */
@@ -3236,7 +3234,7 @@ UINT GetNumSelected( IDataObject *doSelected )
  * E_FAIL otherwise
  */
 
-HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName)
+static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName)
 {
   STRRET str;
   HRESULT hRes;

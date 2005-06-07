@@ -76,19 +76,12 @@ LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
 */
 extern const char *FileOpenDlgInfosStr;
 
-extern HRESULT          GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName);
-extern HRESULT          GetFileName(HWND hwnd, LPITEMIDLIST pidl, LPSTR lpstrFileName);
 extern IShellFolder*    GetShellFolderFromPidl(LPITEMIDLIST pidlAbs);
 extern LPITEMIDLIST     GetParentPidl(LPITEMIDLIST pidl);
 extern LPITEMIDLIST     GetPidlFromName(IShellFolder *psf,LPCSTR lpcstrFileName);
 
-extern BOOL    FILEDLG95_SHELL_FillIncludedItemList(HWND hwnd,
-                                                        LPITEMIDLIST pidlCurrentFolder,
-                                                        LPSTR lpstrMask);
-
 extern int     FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl);
-extern BOOL    FILEDLG95_OnOpen(HWND hwnd);
-extern HRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
+extern void    SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
 
 
 /*
