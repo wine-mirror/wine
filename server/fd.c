@@ -146,6 +146,8 @@ struct fd
     int                  unix_fd;     /* unix file descriptor */
     int                  fs_locks;    /* can we use filesystem locks for this fd? */
     int                  poll_index;  /* index of fd in poll array */
+    struct list          read_q;      /* async readers of this fd */
+    struct list          write_q;     /* async writers of this fd */
 };
 
 static void fd_dump( struct object *obj, int verbose );
@@ -1073,6 +1075,9 @@ static void fd_destroy( struct object *obj )
 {
     struct fd *fd = (struct fd *)obj;
 
+    async_terminate_queue( &fd->read_q, STATUS_CANCELLED );
+    async_terminate_queue( &fd->write_q, STATUS_CANCELLED );
+
     remove_fd_locks( fd );
     list_remove( &fd->inode_entry );
     if (fd->poll_index != -1) remove_poll_user( fd, fd->poll_index );
@@ -1126,6 +1131,8 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
     fd->poll_index = -1;
     list_init( &fd->inode_entry );
     list_init( &fd->locks );
+    list_init( &fd->read_q );
+    list_init( &fd->write_q );
 
     if ((fd->poll_index = add_poll_user( fd )) == -1)
     {
@@ -1370,12 +1377,75 @@ int default_fd_signaled( struct object *obj, struct thread *thread )
     return ret;
 }
 
+int default_fd_get_poll_events( struct fd *fd )
+{
+    int events = 0;
+
+    if( !list_empty( &fd->read_q ))
+        events |= POLLIN;
+    if( !list_empty( &fd->write_q ))
+        events |= POLLOUT;
+
+    return events;
+}
+
 /* default handler for poll() events */
 void default_poll_event( struct fd *fd, int event )
 {
-    /* an error occurred, stop polling this fd to avoid busy-looping */
+    if (!list_empty( &fd->read_q ) && (POLLIN & event) )
+    {
+        async_terminate_head( &fd->read_q, STATUS_ALERTED );
+        return;
+    }
+    if (!list_empty( &fd->write_q ) && (POLLOUT & event) )
+    {
+        async_terminate_head( &fd->write_q, STATUS_ALERTED );
+        return;
+    }
+
+    /* if an error occurred, stop polling this fd to avoid busy-looping */
     if (event & (POLLERR | POLLHUP)) set_fd_events( fd, -1 );
     wake_up( fd->user, 0 );
+}
+
+void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count )
+{
+    struct list *queue;
+    int events;
+
+    if (!(fd->fd_ops->get_file_info( fd ) & FD_FLAG_OVERLAPPED))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return;
+    }
+
+    switch (type)
+    {
+    case ASYNC_TYPE_READ:
+        queue = &fd->read_q;
+        break;
+    case ASYNC_TYPE_WRITE:
+        queue = &fd->write_q;
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!create_async( current, NULL, queue, apc, user, io_sb ))
+        return;
+
+    /* Check if the new pending request can be served immediately */
+    events = check_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+    if (events) fd->fd_ops->poll_event( fd, events );
+
+    set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+}
+
+void default_fd_cancel_async( struct fd *fd )
+{
+    async_terminate_queue( &fd->read_q, STATUS_CANCELLED );
+    async_terminate_queue( &fd->write_q, STATUS_CANCELLED );
 }
 
 /* default flush() routine */

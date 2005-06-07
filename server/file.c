@@ -60,8 +60,6 @@ struct file
     struct fd          *fd;         /* file descriptor for this file */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
-    struct list         read_q;
-    struct list         write_q;
 };
 
 static void file_dump( struct object *obj, int verbose );
@@ -69,11 +67,8 @@ static struct fd *file_get_fd( struct object *obj );
 static void file_destroy( struct object *obj );
 
 static int file_get_poll_events( struct fd *fd );
-static void file_poll_event( struct fd *fd, int event );
 static int file_flush( struct fd *fd, struct event **event );
 static int file_get_info( struct fd *fd );
-static void file_queue_async( struct fd *fd, void *apc, void *user, void* iosb, int type, int count );
-static void file_cancel_async( struct fd *fd );
 
 static const struct object_ops file_ops =
 {
@@ -91,11 +86,11 @@ static const struct object_ops file_ops =
 static const struct fd_ops file_fd_ops =
 {
     file_get_poll_events,         /* get_poll_events */
-    file_poll_event,              /* poll_event */
+    default_poll_event,           /* poll_event */
     file_flush,                   /* flush */
     file_get_info,                /* get_file_info */
-    file_queue_async,             /* queue_async */
-    file_cancel_async             /* cancel_async */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_cancel_async       /* cancel_async */
 };
 
 static inline int is_overlapped( const struct file *file )
@@ -164,8 +159,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
 
     file->access     = access;
     file->options    = options;
-    list_init( &file->read_q );
-    list_init( &file->write_q );
 
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
@@ -233,27 +226,6 @@ static int file_get_poll_events( struct fd *fd )
     return events;
 }
 
-static void file_poll_event( struct fd *fd, int event )
-{
-    struct file *file = get_fd_user( fd );
-    assert( file->obj.ops == &file_ops );
-    if (is_overlapped( file ))
-    {
-        if (!list_empty( &file->read_q ) && (POLLIN & event) )
-        {
-            async_terminate_head( &file->read_q, STATUS_ALERTED );
-            return;
-        }
-        if (!list_empty( &file->write_q ) && (POLLOUT & event) )
-        {
-            async_terminate_head( &file->write_q, STATUS_ALERTED );
-            return;
-        }
-    }
-    default_poll_event( fd, event );
-}
-
-
 static int file_flush( struct fd *fd, struct event **event )
 {
     int ret = (fsync( get_unix_fd(fd) ) != -1);
@@ -269,53 +241,6 @@ static int file_get_info( struct fd *fd )
     else return 0;
 }
 
-static void file_queue_async( struct fd *fd, void *apc, void *user, void *iosb,
-                              int type, int count )
-{
-    struct file *file = get_fd_user( fd );
-    struct list *queue;
-    int events;
-
-    assert( file->obj.ops == &file_ops );
-
-    if (!is_overlapped( file ))
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        return;
-    }
-
-    switch (type)
-    {
-    case ASYNC_TYPE_READ:
-        queue = &file->read_q;
-        break;
-    case ASYNC_TYPE_WRITE:
-        queue = &file->write_q;
-        break;
-    default:
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    if (!create_async( current, NULL, queue, apc, user, iosb ))
-        return;
-
-    /* Check if the new pending request can be served immediately */
-    events = check_fd_events( fd, file_get_poll_events( fd ) );
-    if (events) file_poll_event( fd, events );
-
-    set_fd_events( fd, file_get_poll_events( fd ));
-}
-
-static void file_cancel_async( struct fd *fd )
-{
-    struct file *file = get_fd_user( fd );
-    assert( file->obj.ops == &file_ops );
-
-    async_terminate_queue( &file->read_q, STATUS_CANCELLED );
-    async_terminate_queue( &file->write_q, STATUS_CANCELLED );
-}
-
 static struct fd *file_get_fd( struct object *obj )
 {
     struct file *file = (struct file *)obj;
@@ -328,11 +253,6 @@ static void file_destroy( struct object *obj )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (is_overlapped( file ))
-    {
-        async_terminate_queue( &file->read_q, STATUS_CANCELLED );
-        async_terminate_queue( &file->write_q, STATUS_CANCELLED );
-    }
     if (file->fd) release_object( file->fd );
 }
 
