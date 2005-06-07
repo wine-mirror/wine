@@ -220,3 +220,5 @@ VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
 VOID ControlEvent_CleanupSubscriptions(MSIPACKAGE *package);
 VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
                                    LPCWSTR control, LPCWSTR attribute);
+VOID ControlEvent_UnSubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
+                                      LPCWSTR control, LPCWSTR attribute );

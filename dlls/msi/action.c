@@ -1400,7 +1400,7 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
     return ret;
 }
 
-BOOL ACTION_HandleDialogBox(MSIPACKAGE *package, LPCWSTR dialog, UINT* rc)
+static BOOL ACTION_HandleDialogBox( MSIPACKAGE *package, LPCWSTR dialog, UINT* rc )
 {
     BOOL ret = FALSE;
 
@@ -1412,8 +1412,8 @@ BOOL ACTION_HandleDialogBox(MSIPACKAGE *package, LPCWSTR dialog, UINT* rc)
     return ret;
 }
 
-BOOL ACTION_HandleCustomAction(MSIPACKAGE* package, LPCWSTR action, UINT* rc, 
-                               BOOL force )
+static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
+                                       UINT* rc, BOOL force )
 {
     BOOL ret=FALSE;
     UINT arc;
@@ -1993,7 +1993,7 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
    return ERROR_SUCCESS;
 }
 
-UINT execute_script(MSIPACKAGE *package, UINT script )
+static UINT execute_script(MSIPACKAGE *package, UINT script )
 {
     int i;
     UINT rc = ERROR_SUCCESS;
@@ -2259,7 +2259,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
 }
 
 /* scan for and update current install states */
-void ACTION_UpdateInstallStates(MSIPACKAGE *package)
+static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
 {
     int i;
     LPWSTR productcode;
@@ -4243,7 +4243,7 @@ typedef struct {
     ITypeLib    *ptLib;
 } typelib_struct;
 
-BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType, 
+static BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType, 
                                        LPWSTR lpszName, LONG_PTR lParam)
 {
     TLIBATTR *attr;
@@ -7206,7 +7206,7 @@ static LPWSTR load_ttfname_from(LPCWSTR filename)
                 {
                     int nPos;
                     LPSTR buf;
-                    static const LPSTR tt = " (TrueType)";
+                    static LPCSTR tt = " (TrueType)";
 
                     ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
                     ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);

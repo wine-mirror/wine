@@ -365,8 +365,8 @@ extern UINT MSI_GetFeatureStateW( MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLS
 extern UINT WINAPI MSI_SetFeatureStateW(MSIPACKAGE*, LPCWSTR, INSTALLSTATE );
 
 /* for deformating */
-extern UINT MSI_FormatRecordW(MSIPACKAGE* package, MSIRECORD* record, 
-                              LPWSTR buffer, DWORD *size);
+extern UINT MSI_FormatRecordW( MSIPACKAGE *, MSIRECORD *, LPWSTR, DWORD * );
+extern UINT MSI_FormatRecordA( MSIPACKAGE *, MSIRECORD *, LPSTR, DWORD * );
     
 /* registry data encoding/decoding functions */
 extern BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
@@ -397,6 +397,22 @@ extern void msi_dialog_destroy( msi_dialog* );
 extern BOOL msi_dialog_register_class( void );
 extern void msi_dialog_unregister_class( void );
 extern void msi_dialog_handle_event( msi_dialog*, LPCWSTR, LPCWSTR, MSIRECORD * );
+
+/* preview */
+extern MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE * );
+extern UINT MSI_PreviewDialogW( MSIPREVIEW *, LPCWSTR );
+
+/* undocumented functions */
+UINT WINAPI MsiCreateAndVerifyInstallerDirectory( DWORD );
+UINT WINAPI MsiDecomposeDescriptorW( LPCWSTR, LPWSTR, LPWSTR, LPWSTR, DWORD * );
+UINT WINAPI MsiDecomposeDescriptorA( LPCSTR, LPSTR, LPSTR, LPSTR, DWORD * );
+LANGID WINAPI MsiLoadStringW( MSIHANDLE, UINT, LPWSTR, int, LANGID );
+LANGID WINAPI MsiLoadStringA( MSIHANDLE, UINT, LPSTR, int, LANGID );
+
+HRESULT WINAPI MSI_DllGetClassObject( REFCLSID, REFIID, LPVOID * );
+HRESULT WINAPI MSI_DllRegisterServer( void );
+HRESULT WINAPI MSI_DllUnregisterServer( void );
+BOOL WINAPI MSI_DllCanUnloadNow( void );
 
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;
