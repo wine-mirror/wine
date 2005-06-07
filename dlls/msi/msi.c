@@ -971,11 +971,16 @@ INSTALLSTATE WINAPI MsiGetComponentPathA(LPCSTR szProduct, LPCSTR szComponent,
     }
 
     if( pcchBuf && *pcchBuf > 0 )
+    {
         lpwPathBuf = HeapAlloc( GetProcessHeap(), 0, *pcchBuf * sizeof(WCHAR));
+        incoming_len = *pcchBuf;
+    }
     else
+    {
         lpwPathBuf = NULL;
+        incoming_len = 0;
+    }
 
-    incoming_len = *pcchBuf;
     rc = MsiGetComponentPathW(szwProduct, szwComponent, lpwPathBuf, pcchBuf);
 
     HeapFree( GetProcessHeap(), 0, szwProduct);
