@@ -374,7 +374,8 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
 {
     GUID const *clsid;
     DWORD dwAttributes;
-    DWORD dwSupportedAttr=SFGAO_CANCOPY |           /*0x00000001 */
+    static const DWORD dwSupportedAttr=
+                          SFGAO_CANCOPY |           /*0x00000001 */
                           SFGAO_CANMOVE |           /*0x00000002 */
                           SFGAO_CANLINK |           /*0x00000004 */
                           SFGAO_CANRENAME |         /*0x00000010 */
