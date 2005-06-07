@@ -51,6 +51,7 @@ WINDOWS_INCLUDES = \
 	accctrl.h \
 	aclapi.h \
 	advpub.h \
+	appmgmt.h \
 	audevcod.h \
 	aviriff.h \
 	basetsd.h \
