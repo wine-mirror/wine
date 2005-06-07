@@ -935,11 +935,18 @@ static const struct message WmSetRedrawTrueSeq[] =
     { 0 }
 };
 
-static const struct message WmEnableWindowSeq[] =
+static const struct message WmEnableWindowSeq_1[] =
 {
-    { WM_CANCELMODE, sent },
+    { WM_CANCELMODE, sent|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_ENABLE, sent },
+    { WM_ENABLE, sent|wparam|lparam, FALSE, 0 },
+    { 0 }
+};
+
+static const struct message WmEnableWindowSeq_2[] =
+{
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { WM_ENABLE, sent|wparam|lparam, TRUE, 0 },
     { 0 }
 };
 
@@ -3186,7 +3193,10 @@ static void test_messages(void)
     flush_sequence();
 
     EnableWindow(hparent, FALSE);
-    ok_sequence(WmEnableWindowSeq, "EnableWindow", FALSE);
+    ok_sequence(WmEnableWindowSeq_1, "EnableWindow(FALSE)", FALSE);
+
+    EnableWindow(hparent, TRUE);
+    ok_sequence(WmEnableWindowSeq_2, "EnableWindow(TRUE)", FALSE);
 
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     flush_sequence();
@@ -4427,6 +4437,14 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
 
     switch (message)
     {
+	case WM_ENABLE:
+	{
+	    LONG style = GetWindowLongA(hwnd, GWL_STYLE);
+	    ok((BOOL)wParam == !(style & WS_DISABLED),
+		"wrong WS_DISABLED state: %d != %d\n", wParam, !(style & WS_DISABLED));
+	    break;
+	}
+
 	case WM_CAPTURECHANGED:
 	    if (test_DestroyWindow_flag)
 	    {
