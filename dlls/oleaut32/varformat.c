@@ -275,8 +275,8 @@ typedef struct tagFMT_DATE_HEADER
 #define FMT_NUM_COPY_SKIP   0x35 /* Copy 1 digit or skip if no digit */
 #define FMT_NUM_DECIMAL     0x36 /* Decimal separator */
 #define FMT_NUM_EXP_POS_U   0x37 /* Scientific notation, uppercase, + sign */
-#define FMT_NUM_EXP_NEG_U   0x38 /* Scientific notation, lowercase, - sign */
-#define FMT_NUM_EXP_POS_L   0x39 /* Scientific notation, uppercase, + sign */
+#define FMT_NUM_EXP_NEG_U   0x38 /* Scientific notation, uppercase, - sign */
+#define FMT_NUM_EXP_POS_L   0x39 /* Scientific notation, lowercase, + sign */
 #define FMT_NUM_EXP_NEG_L   0x3A /* Scientific notation, lowercase, - sign */
 #define FMT_NUM_CURRENCY    0x3B /* Currency symbol */
 #define FMT_NUM_TRUE_FALSE  0x3D /* Convert to "True" or "False" */
@@ -708,7 +708,35 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
       pFormat++;
       TRACE("decimal sep\n");
     }
-    /* FIXME: E+ E- e+ e- => Exponent */
+    else if ((*pFormat == 'e' || *pFormat == 'E') && (pFormat[1] == '-' ||
+              pFormat[1] == '+') && header->type == FMT_TYPE_NUMBER)
+    {
+      /* Number formats: Exponent specifier
+       * Other formats: Literal
+       */
+      num_header->flags |= FMT_FLAG_EXPONENT;
+      NEED_SPACE(2 * sizeof(BYTE));
+      if (*pFormat == 'e') {
+        if (pFormat[1] == '+')
+          *pOut = FMT_NUM_EXP_POS_L;
+        else
+          *pOut = FMT_NUM_EXP_NEG_L;
+      } else {
+        if (pFormat[1] == '+')
+          *pOut = FMT_NUM_EXP_POS_U;
+        else
+          *pOut = FMT_NUM_EXP_NEG_U;
+      }
+      pFormat += 2;
+      *++pOut = 0x0;
+      while (*pFormat == '0')
+      {
+        *pOut = *pOut + 1;
+        pFormat++;
+      }
+      pOut++;
+      TRACE("exponent\n");
+    }
     /* FIXME: %% => Divide by 1000 */
     else if (*pFormat == ',' && header->type == FMT_TYPE_NUMBER)
     {
