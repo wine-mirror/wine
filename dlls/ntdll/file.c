@@ -158,6 +158,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_START_REQ( open_named_pipe )
         {
             req->access = access;
+            req->flags = options;
             req->inherit = (attr->Attributes & OBJ_INHERIT) != 0;
             wine_server_add_data( req, attr->ObjectName->Buffer + 4,
                                   attr->ObjectName->Length - 4*sizeof(WCHAR) );

@@ -2402,6 +2402,7 @@ struct open_named_pipe_request
 {
     struct request_header __header;
     unsigned int   access;
+    unsigned int   flags;
     int            inherit;
     /* VARARG(name,unicode_str); */
 };

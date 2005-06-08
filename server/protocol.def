@@ -1705,6 +1705,7 @@ enum message_type
 /* Open an existing named pipe */
 @REQ(open_named_pipe)
     unsigned int   access;
+    unsigned int   flags;        /* file flags */
     int            inherit;      /* inherit flag */
     VARARG(name,unicode_str);    /* pipe name */
 @REPLY

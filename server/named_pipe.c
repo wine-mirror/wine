@@ -44,6 +44,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
+#include "winternl.h"
 
 #include "file.h"
 #include "handle.h"
@@ -73,6 +75,7 @@ struct pipe_server
     struct timeout_user *flush_poll;
     struct event        *event;
     struct list          wait_q;     /* only a single one can be queued */
+    unsigned int         options;    /* pipe options */
 };
 
 struct pipe_client
@@ -80,6 +83,7 @@ struct pipe_client
     struct object        obj;        /* object header */
     struct fd           *fd;         /* pipe file descriptor */
     struct pipe_server  *server;     /* server that this client is connected to */
+    unsigned int         flags;      /* file flags */
 };
 
 struct named_pipe
@@ -111,15 +115,12 @@ static const struct object_ops named_pipe_ops =
     named_pipe_destroy            /* destroy */
 };
 
-/* common to clients and servers */
-static int pipe_end_get_poll_events( struct fd *fd );
-static int pipe_end_get_info( struct fd *fd );
-
 /* server end functions */
 static void pipe_server_dump( struct object *obj, int verbose );
 static struct fd *pipe_server_get_fd( struct object *obj );
 static void pipe_server_destroy( struct object *obj);
 static int pipe_server_flush( struct fd *fd, struct event **event );
+static int pipe_server_get_info( struct fd *fd );
 
 static const struct object_ops pipe_server_ops =
 {
@@ -136,12 +137,12 @@ static const struct object_ops pipe_server_ops =
 
 static const struct fd_ops pipe_server_fd_ops =
 {
-    pipe_end_get_poll_events,     /* get_poll_events */
+    default_fd_get_poll_events,     /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_server_flush,            /* flush */
-    pipe_end_get_info,            /* get_file_info */
-    no_queue_async,               /* queue_async */
-    no_cancel_async,              /* cancel_async */
+    pipe_server_get_info,         /* get_file_info */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_cancel_async,      /* cancel_async */
 };
 
 /* client end functions */
@@ -149,6 +150,7 @@ static void pipe_client_dump( struct object *obj, int verbose );
 static struct fd *pipe_client_get_fd( struct object *obj );
 static void pipe_client_destroy( struct object *obj );
 static int pipe_client_flush( struct fd *fd, struct event **event );
+static int pipe_client_get_info( struct fd *fd );
 
 static const struct object_ops pipe_client_ops =
 {
@@ -165,12 +167,12 @@ static const struct object_ops pipe_client_ops =
 
 static const struct fd_ops pipe_client_fd_ops =
 {
-    pipe_end_get_poll_events,     /* get_poll_events */
+    default_fd_get_poll_events,   /* get_poll_events */
     default_poll_event,           /* poll_event */
     pipe_client_flush,            /* flush */
-    pipe_end_get_info,            /* get_file_info */
-    no_queue_async,               /* queue_async */
-    no_cancel_async               /* cancel_async */
+    pipe_client_get_info,         /* get_file_info */
+    default_fd_queue_async,       /* queue_async */
+    default_fd_cancel_async       /* cancel_async */
 };
 
 static void named_pipe_dump( struct object *obj, int verbose )
@@ -330,11 +332,6 @@ static void pipe_client_destroy( struct object *obj)
     assert( !client->fd );
 }
 
-static int pipe_end_get_poll_events( struct fd *fd )
-{
-    return POLLIN | POLLOUT;  /* FIXME */
-}
-
 static int pipe_data_remaining( struct pipe_server *server )
 {
     struct pollfd pfd;
@@ -417,9 +414,29 @@ static int pipe_client_flush( struct fd *fd, struct event **event )
     return 0;
 }
 
-static int pipe_end_get_info( struct fd *fd )
+static inline int is_overlapped( unsigned int options )
 {
-    return 0;
+    return !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+}
+
+static int pipe_server_get_info( struct fd *fd )
+{
+    struct pipe_server *server = get_fd_user( fd );
+    int flags = FD_FLAG_AVAILABLE;
+ 
+    if (is_overlapped( server->options )) flags |= FD_FLAG_OVERLAPPED;
+
+    return flags;
+}
+
+static int pipe_client_get_info( struct fd *fd )
+{
+    struct pipe_client *client = get_fd_user( fd );
+    int flags = FD_FLAG_AVAILABLE;
+
+    if (is_overlapped( client->flags )) flags |= FD_FLAG_OVERLAPPED;
+
+    return flags;
 }
 
 static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
@@ -463,7 +480,7 @@ static struct pipe_server *get_pipe_server_obj( struct process *process,
     return (struct pipe_server *) obj;
 }
 
-static struct pipe_server *create_pipe_server( struct named_pipe *pipe )
+static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned int options )
 {
     struct pipe_server *server;
 
@@ -476,6 +493,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe )
     server->state = ps_idle_server;
     server->client = NULL;
     server->flush_poll = NULL;
+    server->options = options;
     list_init( &server->wait_q );
 
     list_add_head( &pipe->servers, &server->entry );
@@ -484,7 +502,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe )
     return server;
 }
 
-static struct pipe_client *create_pipe_client( struct pipe_server *server )
+static struct pipe_client *create_pipe_client( struct pipe_server *server, unsigned int flags )
 {
     struct pipe_client *client;
 
@@ -494,6 +512,7 @@ static struct pipe_client *create_pipe_client( struct pipe_server *server )
 
     client->fd = NULL;
     client->server = server;
+    client->flags = flags;
 
     return client;
 }
@@ -559,7 +578,7 @@ DECL_HANDLER(create_named_pipe)
         }
     }
 
-    server = create_pipe_server( pipe );
+    server = create_pipe_server( pipe, req->options );
     if(server)
     {
         reply->handle = alloc_handle( current->process, server,
@@ -594,10 +613,12 @@ DECL_HANDLER(open_named_pipe)
         return;
     }
 
-    client = create_pipe_client( server );
+    client = create_pipe_client( server, req->flags );
     if( client )
     {
-        if( !socketpair( PF_UNIX, SOCK_STREAM, 0, fds ) )
+        if( !socketpair( PF_UNIX, SOCK_STREAM, 0, fds ) &&
+            (fcntl( fds[0], F_SETFL, O_NONBLOCK ) != -1) &&
+            (fcntl( fds[1], F_SETFL, O_NONBLOCK ) != -1))
         {
             assert( !client->fd );
             assert( !server->fd );
