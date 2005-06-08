@@ -280,6 +280,7 @@ struct thread *create_process( int fd )
     process->queue           = NULL;
     process->peb             = NULL;
     process->ldt_copy        = NULL;
+    process->winstation      = 0;
     process->exe.file        = NULL;
     process->exe.dbg_offset  = 0;
     process->exe.dbg_size    = 0;
@@ -375,6 +376,10 @@ static struct startup_info *init_process( struct init_process_reply *reply )
         if (!(reply->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
             return NULL;
     }
+
+    /* connect to the window station and desktop */
+    connect_process_winstation( process, NULL, 0 );
+    connect_thread_desktop( current, NULL, 0 );
 
     /* set the process console */
     if (!set_process_console( process, parent_thread, info, reply )) return NULL;

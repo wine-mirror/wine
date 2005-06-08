@@ -266,6 +266,17 @@ DECL_HANDLER(set_window_property);
 DECL_HANDLER(remove_window_property);
 DECL_HANDLER(get_window_property);
 DECL_HANDLER(get_window_properties);
+DECL_HANDLER(create_winstation);
+DECL_HANDLER(open_winstation);
+DECL_HANDLER(close_winstation);
+DECL_HANDLER(get_process_winstation);
+DECL_HANDLER(set_process_winstation);
+DECL_HANDLER(create_desktop);
+DECL_HANDLER(open_desktop);
+DECL_HANDLER(close_desktop);
+DECL_HANDLER(get_thread_desktop);
+DECL_HANDLER(set_thread_desktop);
+DECL_HANDLER(set_user_object_info);
 DECL_HANDLER(attach_thread_input);
 DECL_HANDLER(get_thread_input);
 DECL_HANDLER(get_last_input_time);
@@ -465,6 +476,17 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_remove_window_property,
     (req_handler)req_get_window_property,
     (req_handler)req_get_window_properties,
+    (req_handler)req_create_winstation,
+    (req_handler)req_open_winstation,
+    (req_handler)req_close_winstation,
+    (req_handler)req_get_process_winstation,
+    (req_handler)req_set_process_winstation,
+    (req_handler)req_create_desktop,
+    (req_handler)req_open_desktop,
+    (req_handler)req_close_desktop,
+    (req_handler)req_get_thread_desktop,
+    (req_handler)req_set_thread_desktop,
+    (req_handler)req_set_user_object_info,
     (req_handler)req_attach_thread_input,
     (req_handler)req_get_thread_input,
     (req_handler)req_get_last_input_time,

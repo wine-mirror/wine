@@ -2877,6 +2877,160 @@ struct get_window_properties_reply
 
 
 
+struct create_winstation_request
+{
+    struct request_header __header;
+    unsigned int flags;
+    unsigned int access;
+    int          inherit;
+    /* VARARG(name,unicode_str); */
+};
+struct create_winstation_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct open_winstation_request
+{
+    struct request_header __header;
+    unsigned int access;
+    int          inherit;
+    /* VARARG(name,unicode_str); */
+};
+struct open_winstation_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct close_winstation_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct close_winstation_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct get_process_winstation_request
+{
+    struct request_header __header;
+};
+struct get_process_winstation_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct set_process_winstation_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct set_process_winstation_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct create_desktop_request
+{
+    struct request_header __header;
+    unsigned int flags;
+    unsigned int access;
+    int          inherit;
+    /* VARARG(name,unicode_str); */
+};
+struct create_desktop_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct open_desktop_request
+{
+    struct request_header __header;
+    unsigned int flags;
+    unsigned int access;
+    int          inherit;
+    /* VARARG(name,unicode_str); */
+};
+struct open_desktop_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct close_desktop_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct close_desktop_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct get_thread_desktop_request
+{
+    struct request_header __header;
+    thread_id_t  tid;
+};
+struct get_thread_desktop_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+};
+
+
+
+struct set_thread_desktop_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct set_thread_desktop_reply
+{
+    struct reply_header __header;
+};
+
+
+
+struct set_user_object_info_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+    unsigned int flags;
+    unsigned int obj_flags;
+};
+struct set_user_object_info_reply
+{
+    struct reply_header __header;
+    int          is_desktop;
+    unsigned int old_obj_flags;
+    /* VARARG(name,unicode_str); */
+};
+#define SET_USER_OBJECT_FLAGS 1
+
+
+
 struct attach_thread_input_request
 {
     struct request_header __header;
@@ -3568,6 +3722,17 @@ enum request
     REQ_remove_window_property,
     REQ_get_window_property,
     REQ_get_window_properties,
+    REQ_create_winstation,
+    REQ_open_winstation,
+    REQ_close_winstation,
+    REQ_get_process_winstation,
+    REQ_set_process_winstation,
+    REQ_create_desktop,
+    REQ_open_desktop,
+    REQ_close_desktop,
+    REQ_get_thread_desktop,
+    REQ_set_thread_desktop,
+    REQ_set_user_object_info,
     REQ_attach_thread_input,
     REQ_get_thread_input,
     REQ_get_last_input_time,
@@ -3768,6 +3933,17 @@ union generic_request
     struct remove_window_property_request remove_window_property_request;
     struct get_window_property_request get_window_property_request;
     struct get_window_properties_request get_window_properties_request;
+    struct create_winstation_request create_winstation_request;
+    struct open_winstation_request open_winstation_request;
+    struct close_winstation_request close_winstation_request;
+    struct get_process_winstation_request get_process_winstation_request;
+    struct set_process_winstation_request set_process_winstation_request;
+    struct create_desktop_request create_desktop_request;
+    struct open_desktop_request open_desktop_request;
+    struct close_desktop_request close_desktop_request;
+    struct get_thread_desktop_request get_thread_desktop_request;
+    struct set_thread_desktop_request set_thread_desktop_request;
+    struct set_user_object_info_request set_user_object_info_request;
     struct attach_thread_input_request attach_thread_input_request;
     struct get_thread_input_request get_thread_input_request;
     struct get_last_input_time_request get_last_input_time_request;
@@ -3966,6 +4142,17 @@ union generic_reply
     struct remove_window_property_reply remove_window_property_reply;
     struct get_window_property_reply get_window_property_reply;
     struct get_window_properties_reply get_window_properties_reply;
+    struct create_winstation_reply create_winstation_reply;
+    struct open_winstation_reply open_winstation_reply;
+    struct close_winstation_reply close_winstation_reply;
+    struct get_process_winstation_reply get_process_winstation_reply;
+    struct set_process_winstation_reply set_process_winstation_reply;
+    struct create_desktop_reply create_desktop_reply;
+    struct open_desktop_reply open_desktop_reply;
+    struct close_desktop_reply close_desktop_reply;
+    struct get_thread_desktop_reply get_thread_desktop_reply;
+    struct set_thread_desktop_reply set_thread_desktop_reply;
+    struct set_user_object_info_reply set_user_object_info_reply;
     struct attach_thread_input_reply attach_thread_input_reply;
     struct get_thread_input_reply get_thread_input_reply;
     struct get_last_input_time_reply get_last_input_time_reply;
@@ -3998,6 +4185,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 177
+#define SERVER_PROTOCOL_VERSION 178
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

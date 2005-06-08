@@ -129,6 +129,15 @@ static void set_object_name( struct namespace *namespace,
     obj->name = ptr;
 }
 
+/* get the name of an existing object */
+const WCHAR *get_object_name( struct object *obj, size_t *len )
+{
+    struct object_name *ptr = obj->name;
+    if (!ptr) return NULL;
+    *len = ptr->len;
+    return ptr->name;
+}
+
 /* allocate and initialize an object */
 void *alloc_object( const struct object_ops *ops )
 {

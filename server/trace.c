@@ -2515,6 +2515,115 @@ static void dump_get_window_properties_reply( const struct get_window_properties
     dump_varargs_properties( cur_size );
 }
 
+static void dump_create_winstation_request( const struct create_winstation_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_winstation_reply( const struct create_winstation_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_open_winstation_request( const struct open_winstation_request *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_open_winstation_reply( const struct open_winstation_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_close_winstation_request( const struct close_winstation_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_process_winstation_request( const struct get_process_winstation_request *req )
+{
+}
+
+static void dump_get_process_winstation_reply( const struct get_process_winstation_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_set_process_winstation_request( const struct set_process_winstation_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_create_desktop_request( const struct create_desktop_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_create_desktop_reply( const struct create_desktop_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_open_desktop_request( const struct open_desktop_request *req )
+{
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " inherit=%d,", req->inherit );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
+static void dump_open_desktop_reply( const struct open_desktop_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_close_desktop_request( const struct close_desktop_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_thread_desktop_request( const struct get_thread_desktop_request *req )
+{
+    fprintf( stderr, " tid=%04x", req->tid );
+}
+
+static void dump_get_thread_desktop_reply( const struct get_thread_desktop_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_set_thread_desktop_request( const struct set_thread_desktop_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_set_user_object_info_request( const struct set_user_object_info_request *req )
+{
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " flags=%08x,", req->flags );
+    fprintf( stderr, " obj_flags=%08x", req->obj_flags );
+}
+
+static void dump_set_user_object_info_reply( const struct set_user_object_info_reply *req )
+{
+    fprintf( stderr, " is_desktop=%d,", req->is_desktop );
+    fprintf( stderr, " old_obj_flags=%08x,", req->old_obj_flags );
+    fprintf( stderr, " name=" );
+    dump_varargs_unicode_str( cur_size );
+}
+
 static void dump_attach_thread_input_request( const struct attach_thread_input_request *req )
 {
     fprintf( stderr, " tid_from=%04x,", req->tid_from );
@@ -3106,6 +3215,17 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_window_property_request,
     (dump_func)dump_get_window_property_request,
     (dump_func)dump_get_window_properties_request,
+    (dump_func)dump_create_winstation_request,
+    (dump_func)dump_open_winstation_request,
+    (dump_func)dump_close_winstation_request,
+    (dump_func)dump_get_process_winstation_request,
+    (dump_func)dump_set_process_winstation_request,
+    (dump_func)dump_create_desktop_request,
+    (dump_func)dump_open_desktop_request,
+    (dump_func)dump_close_desktop_request,
+    (dump_func)dump_get_thread_desktop_request,
+    (dump_func)dump_set_thread_desktop_request,
+    (dump_func)dump_set_user_object_info_request,
     (dump_func)dump_attach_thread_input_request,
     (dump_func)dump_get_thread_input_request,
     (dump_func)dump_get_last_input_time_request,
@@ -3302,6 +3422,17 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_remove_window_property_reply,
     (dump_func)dump_get_window_property_reply,
     (dump_func)dump_get_window_properties_reply,
+    (dump_func)dump_create_winstation_reply,
+    (dump_func)dump_open_winstation_reply,
+    (dump_func)0,
+    (dump_func)dump_get_process_winstation_reply,
+    (dump_func)0,
+    (dump_func)dump_create_desktop_reply,
+    (dump_func)dump_open_desktop_reply,
+    (dump_func)0,
+    (dump_func)dump_get_thread_desktop_reply,
+    (dump_func)0,
+    (dump_func)dump_set_user_object_info_reply,
     (dump_func)0,
     (dump_func)dump_get_thread_input_reply,
     (dump_func)dump_get_last_input_time_reply,
@@ -3498,6 +3629,17 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "remove_window_property",
     "get_window_property",
     "get_window_properties",
+    "create_winstation",
+    "open_winstation",
+    "close_winstation",
+    "get_process_winstation",
+    "set_process_winstation",
+    "create_desktop",
+    "open_desktop",
+    "close_desktop",
+    "get_thread_desktop",
+    "set_thread_desktop",
+    "set_user_object_info",
     "attach_thread_input",
     "get_thread_input",
     "get_last_input_time",

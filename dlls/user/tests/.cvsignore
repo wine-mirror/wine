@@ -16,4 +16,5 @@ sysparams.ok
 testlist.c
 text.ok
 win.ok
+winstation.ok
 wsprintf.ok

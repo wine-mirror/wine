@@ -21,6 +21,7 @@ CTESTS = \
 	sysparams.c \
 	text.c \
 	win.c \
+	winstation.c \
 	wsprintf.c
 
 RC_SRCS = resource.rc

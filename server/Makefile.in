@@ -44,7 +44,8 @@ C_SRCS = \
 	trace.c \
 	unicode.c \
 	user.c \
-	window.c
+	window.c \
+	winstation.c
 
 PROGRAMS = wineserver
 

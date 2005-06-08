@@ -118,4 +118,10 @@ extern void release_class( struct window_class *class );
 extern atom_t get_class_atom( struct window_class *class );
 extern void *get_class_client_ptr( struct window_class *class );
 
+/* windows station functions */
+
+extern void connect_process_winstation( struct process *process, const WCHAR *name, size_t len );
+extern void connect_thread_desktop( struct thread *thread, const WCHAR *name, size_t len );
+extern void close_thread_desktop( struct thread *thread );
+
 #endif  /* __WINE_SERVER_USER_H */

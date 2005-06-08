@@ -87,7 +87,7 @@
 @ stdcall CreatePopupMenu()
 @ stdcall CreateWindowExA(long str str long long long long long long long long ptr)
 @ stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr)
-@ stub CreateWindowStationA
+@ stdcall CreateWindowStationA(str long long ptr)
 @ stdcall CreateWindowStationW(wstr long long ptr)
 @ stdcall DdeAbandonTransaction(long long long)
 @ stdcall DdeAccessData(long ptr)
@@ -436,11 +436,11 @@
 @ stdcall OffsetRect(ptr long long)
 @ stdcall OpenClipboard(long)
 @ stdcall OpenDesktopA(str long long long)
-@ stub OpenDesktopW
+@ stdcall OpenDesktopW(wstr long long long)
 @ stdcall OpenIcon(long)
 @ stdcall OpenInputDesktop(long long long)
-@ stub OpenWindowStationA
-@ stub OpenWindowStationW
+@ stdcall OpenWindowStationA(str long long)
+@ stdcall OpenWindowStationW(wstr long long)
 @ stdcall PackDDElParam(long long long)
 @ stdcall PaintDesktop(long)
 @ stdcall PeekMessageA(ptr long long long long)
@@ -547,8 +547,8 @@
 @ stdcall SetSystemTimer(long long long ptr)
 @ stdcall SetThreadDesktop(long)
 @ stdcall SetTimer(long long long ptr)
-@ stdcall SetUserObjectInformationA(long long long long)
-@ stub SetUserObjectInformationW
+@ stdcall SetUserObjectInformationA(long long ptr long)
+@ stdcall SetUserObjectInformationW(long long ptr long)
 @ stdcall SetUserObjectSecurity(long ptr ptr)
 @ stdcall SetWindowContextHelpId(long long)
 @ stub SetWindowFullScreenState

@@ -72,6 +72,7 @@ struct process
     struct startup_info *startup_info;    /* startup info while init is in progress */
     struct event        *idle_event;      /* event for input idle */
     struct msg_queue    *queue;           /* main message queue */
+    obj_handle_t         winstation;      /* main handle to process window station */
     struct token        *token;           /* security token associated with this process */
     struct process_dll   exe;             /* main exe file */
     struct list          dlls;            /* list of loaded dlls */

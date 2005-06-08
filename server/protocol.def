@@ -2023,6 +2023,101 @@ enum message_type
 @END
 
 
+/* Create a window station */
+@REQ(create_winstation)
+    unsigned int flags;           /* window station flags */
+    unsigned int access;          /* wanted access rights */
+    int          inherit;         /* inherit flag */
+    VARARG(name,unicode_str);     /* object name */
+@REPLY
+    obj_handle_t handle;          /* handle to the window station */
+@END
+
+
+/* Open a handle to a window station */
+@REQ(open_winstation)
+    unsigned int access;          /* wanted access rights */
+    int          inherit;         /* inherit flag */
+    VARARG(name,unicode_str);     /* object name */
+@REPLY
+    obj_handle_t handle;          /* handle to the window station */
+@END
+
+
+/* Close a window station */
+@REQ(close_winstation)
+    obj_handle_t handle;          /* handle to the window station */
+@END
+
+
+/* Get the process current window station */
+@REQ(get_process_winstation)
+@REPLY
+    obj_handle_t handle;          /* handle to the window station */
+@END
+
+
+/* Set the process current window station */
+@REQ(set_process_winstation)
+    obj_handle_t handle;          /* handle to the window station */
+@END
+
+
+/* Create a desktop */
+@REQ(create_desktop)
+    unsigned int flags;           /* desktop flags */
+    unsigned int access;          /* wanted access rights */
+    int          inherit;         /* inherit flag */
+    VARARG(name,unicode_str);     /* object name */
+@REPLY
+    obj_handle_t handle;          /* handle to the desktop */
+@END
+
+
+/* Open a handle to a desktop */
+@REQ(open_desktop)
+    unsigned int flags;           /* desktop flags */
+    unsigned int access;          /* wanted access rights */
+    int          inherit;         /* inherit flag */
+    VARARG(name,unicode_str);     /* object name */
+@REPLY
+    obj_handle_t handle;          /* handle to the desktop */
+@END
+
+
+/* Close a desktop */
+@REQ(close_desktop)
+    obj_handle_t handle;          /* handle to the desktop */
+@END
+
+
+/* Get the thread current desktop */
+@REQ(get_thread_desktop)
+    thread_id_t  tid;             /* thread id */
+@REPLY
+    obj_handle_t handle;          /* handle to the desktop */
+@END
+
+
+/* Set the thread current desktop */
+@REQ(set_thread_desktop)
+    obj_handle_t handle;          /* handle to the desktop */
+@END
+
+
+/* Get/set information about a user object (window station or desktop) */
+@REQ(set_user_object_info)
+    obj_handle_t handle;          /* handle to the object */
+    unsigned int flags;           /* information to set */
+    unsigned int obj_flags;       /* new object flags */
+@REPLY
+    int          is_desktop;      /* is object a desktop? */
+    unsigned int old_obj_flags;   /* old object flags */
+    VARARG(name,unicode_str);     /* object name */
+@END
+#define SET_USER_OBJECT_FLAGS 1
+
+
 /* Attach (or detach) thread inputs */
 @REQ(attach_thread_input)
     thread_id_t    tid_from;       /* thread to be attached */

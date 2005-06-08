@@ -137,6 +137,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->priority        = THREAD_PRIORITY_NORMAL;
     thread->affinity        = 1;
     thread->suspend         = 0;
+    thread->desktop         = 0;
     thread->creation_time   = time(NULL);
     thread->exit_time       = 0;
 
@@ -213,6 +214,7 @@ static void cleanup_thread( struct thread *thread )
     free_msg_queue( thread );
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
+    close_thread_desktop( thread );
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {
         if (thread->inflight[i].client != -1)
@@ -226,6 +228,7 @@ static void cleanup_thread( struct thread *thread )
     thread->request_fd = NULL;
     thread->reply_fd = NULL;
     thread->wait_fd = NULL;
+    thread->desktop = 0;
 
     if (thread == booting_thread)  /* killing booting thread */
     {
@@ -831,6 +834,7 @@ DECL_HANDLER(new_thread)
     if ((thread = create_thread( request_fd, current->process )))
     {
         if (req->suspend) thread->suspend++;
+        thread->desktop = current->desktop;
         reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle( current->process, thread,
                                            THREAD_ALL_ACCESS, req->inherit )))

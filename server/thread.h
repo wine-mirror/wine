@@ -82,6 +82,7 @@ struct thread
     int                    priority;      /* priority level */
     int                    affinity;      /* affinity mask */
     int                    suspend;       /* suspend count */
+    obj_handle_t           desktop;       /* desktop handle */
     time_t                 creation_time; /* Thread creation time */
     time_t                 exit_time;     /* Thread exit time */
     struct token          *token;         /* security token associated with this thread */
