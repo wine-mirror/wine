@@ -1534,9 +1534,8 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
     
     while (1)
     {
-        WCHAR dir[0x100];
+        LPCWSTR dir;
         LPWSTR full_path;
-        DWORD sz;
         MSIRECORD *row = NULL, *uirow;
 
         rc = MSI_ViewFetch(view,&row);
@@ -1546,17 +1545,14 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
             break;
         }
 
-        sz=0x100;
-        rc = MSI_RecordGetStringW(row,1,dir,&sz);
-
-        if (rc!= ERROR_SUCCESS)
+        dir = MSI_RecordGetString(row,1);
+        if (!dir)
         {
             ERR("Unable to get folder id \n");
             msiobj_release(&row->hdr);
             continue;
         }
 
-        sz = MAX_PATH;
         full_path = resolve_folder(package,dir,FALSE,FALSE,&folder);
         if (!full_path)
         {
@@ -1715,8 +1711,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
     }
     while (1)
     {
-        DWORD sz = 0x100;
-        WCHAR buffer[0x100];
+        LPCWSTR component;
         DWORD rc;
         INT c_indx;
         INT cnt = package->features[index].ComponentCount;
@@ -1725,14 +1720,13 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
         if (rc != ERROR_SUCCESS)
             break;
 
-        sz = 0x100;
-        MSI_RecordGetStringW(row2,1,buffer,&sz);
+        component = MSI_RecordGetString(row2,1);
 
         /* check to see if the component is already loaded */
-        c_indx = get_loaded_component(package,buffer);
+        c_indx = get_loaded_component(package,component);
         if (c_indx != -1)
         {
-            TRACE("Component %s already loaded at %i\n", debugstr_w(buffer),
+            TRACE("Component %s already loaded at %i\n", debugstr_w(component),
                   c_indx);
             package->features[index].Components[cnt] = c_indx;
             package->features[index].ComponentCount ++;
@@ -1740,7 +1734,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
             continue;
         }
 
-        rc = MSI_OpenQuery(package->db, &view2, Query2, buffer);
+        rc = MSI_OpenQuery(package->db, &view2, Query2, component);
         if (rc != ERROR_SUCCESS)
         {
             msiobj_release( &row2->hdr );
@@ -2583,10 +2577,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
         while (1)
         {
-            WCHAR name[0x100];
+            LPCWSTR name;
             LPWSTR path;
             MSIRECORD * row = 0;
-            DWORD sz;
 
             rc = MSI_ViewFetch(view,&row);
             if (rc != ERROR_SUCCESS)
@@ -2595,8 +2588,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                 break;
             }
 
-            sz=0x100;
-            MSI_RecordGetStringW(row,1,name,&sz);
+            name = MSI_RecordGetString(row,1);
 
             /* This helper function now does ALL the work */
             TRACE("Dir %s ...\n",debugstr_w(name));
@@ -2710,9 +2702,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     
         while (1)
         {
-            WCHAR Feature[0x100];
+            LPCWSTR Feature;
             MSIRECORD * row = 0;
-            DWORD sz;
             int feature_index;
 
             rc = MSI_ViewFetch(view,&row);
@@ -2723,16 +2714,15 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                 break;
             }
 
-            sz = 0x100;
-            MSI_RecordGetStringW(row,1,Feature,&sz);
+            Feature = MSI_RecordGetString(row,1);
 
             feature_index = get_loaded_feature(package,Feature);
             if (feature_index < 0)
                 ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
             else
             {
-                LPWSTR Condition;
-                Condition = load_dynamic_stringW(row,3);
+                LPCWSTR Condition;
+                Condition = MSI_RecordGetString(row,3);
 
                 if (MSI_EvaluateConditionW(package,Condition) == 
                     MSICONDITION_TRUE)
@@ -2742,7 +2732,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
                            debugstr_w(Feature), level);
                     package->features[feature_index].Level = level;
                 }
-                HeapFree(GetProcessHeap(),0,Condition);
             }
 
             msiobj_release(&row->hdr);
@@ -2782,7 +2771,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 /*
  * This is a helper function for handling embedded cabinet media
  */
-static UINT writeout_cabinet_stream(MSIPACKAGE *package, WCHAR* stream_name,
+static UINT writeout_cabinet_stream(MSIPACKAGE *package, LPCWSTR stream_name,
                                     WCHAR* source)
 {
     UINT rc;
@@ -3036,8 +3025,8 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
          '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
          ' ','%', 'i',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','L','a','s','t','S','e','q','u','e','n','c','e','`',0};
-    WCHAR cab[0x100];
-    DWORD sz=0x100;
+    LPCWSTR cab;
+    DWORD sz;
     INT seq;
     static UINT last_sequence = 0; 
 
@@ -3061,10 +3050,9 @@ static UINT ready_media_for_file(MSIPACKAGE *package, WCHAR* path,
     seq = MSI_RecordGetInteger(row,2);
     last_sequence = seq;
 
-    if (!MSI_RecordIsNull(row,4))
+    cab = MSI_RecordGetString(row,4);
+    if (cab)
     {
-        sz=0x100;
-        MSI_RecordGetStringW(row,4,cab,&sz);
         TRACE("Source is CAB %s\n",debugstr_w(cab));
         /* the stream does not contain the # character */
         if (cab[0]=='#')
@@ -3313,14 +3301,13 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 
     while (1)
     {
-        WCHAR file_key[0x100];
         WCHAR *file_source = NULL;
         WCHAR dest_name[0x100];
         LPWSTR dest_path, dest;
-        WCHAR component[0x100];
+        LPCWSTR file_key, component;
         INT component_index;
 
-        DWORD sz=0x100;
+        DWORD sz;
 
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -3329,9 +3316,8 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
             break;
         }
 
-        sz=0x100;
-        rc = MSI_RecordGetStringW(row,2,component,&sz);
-        if (rc != ERROR_SUCCESS)
+        component = MSI_RecordGetString(row,2);
+        if (!component)
         {
             ERR("Unable to get component\n");
             msiobj_release(&row->hdr);
@@ -3355,9 +3341,8 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 
         package->components[component_index].Action = INSTALLSTATE_LOCAL;
 
-        sz=0x100;
-        rc = MSI_RecordGetStringW(row,3,file_key,&sz);
-        if (rc != ERROR_SUCCESS)
+        file_key = MSI_RecordGetString(row,3);
+        if (!file_key)
         {
             ERR("Unable to get file key\n");
             msiobj_release(&row->hdr);
@@ -3395,10 +3380,8 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         }
         else
         {
-            WCHAR destkey[0x100];
-            sz=0x100;
-            MSI_RecordGetStringW(row,5,destkey,&sz);
-            sz = 0x100;
+            LPCWSTR destkey;
+            destkey = MSI_RecordGetString(row,5);
             dest_path = resolve_folder(package, destkey, FALSE,FALSE,NULL);
             if (!dest_path)
             {
