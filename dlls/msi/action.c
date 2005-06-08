@@ -6441,6 +6441,9 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     '%','x','.','m','s','i',0};
     static const WCHAR szLocalPackage[]=
          {'L','o','c','a','l','P','a','c','k','a','g','e',0};
+    static const WCHAR szUpgradeCode[] = 
+        {'U','p','g','r','a','d','e','C','o','d','e',0};
+    LPWSTR upgrade_code;
     WCHAR windir[MAX_PATH], path[MAX_PATH], packagefile[MAX_PATH];
     INT num,start;
 
@@ -6506,6 +6509,24 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
             GetLastError());
     size = strlenW(packagefile)*sizeof(WCHAR);
     RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
+
+    /* Handle Upgrade Codes */
+    upgrade_code = load_dynamic_property(package,szUpgradeCode, NULL);
+    if (upgrade_code)
+    {
+        HKEY hkey2;
+        WCHAR squashed[33];
+        MSIREG_OpenUpgradeCodesKey(upgrade_code, &hkey2, TRUE);
+        squash_guid(productcode,squashed);
+        RegSetValueExW(hkey2, squashed, 0,REG_SZ,NULL,0);
+        RegCloseKey(hkey2);
+        MSIREG_OpenUserUpgradeCodesKey(upgrade_code, &hkey2, TRUE);
+        squash_guid(productcode,squashed);
+        RegSetValueExW(hkey2, squashed, 0,REG_SZ,NULL,0);
+        RegCloseKey(hkey2);
+
+        HeapFree(GetProcessHeap(),0,upgrade_code);
+    }
     
 end:
     HeapFree(GetProcessHeap(),0,productcode);
