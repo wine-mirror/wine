@@ -4783,13 +4783,19 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             memcpy(rgvarg,pDispParams->rgvarg,sizeof(VARIANT)*pDispParams->cArgs);
 
 	    hres = S_OK;
-	    numargs = 1; numargs2 = 0;
+	    numargs = 1; /* sizeof(thisptr) */
+	    numargs2 = 0;
 	    for (i = 0; i < func_desc->cParams; i++) {
-		if (i<pDispParams->cArgs)
-		    numargs += _argsize(func_desc->lprgelemdescParam[i].tdesc.vt);
-		else {
-		    numargs	+= 1; /* sizeof(lpvoid) */
-		    numargs2	+= _argsize(func_desc->lprgelemdescParam[i].tdesc.vt);
+                TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
+
+		numargs += _argsize(tdesc->vt);
+		if (i>=pDispParams->cArgs) { /* arguments to return */
+		    if (tdesc->vt == VT_PTR) {
+		    	numargs2	+= _argsize(tdesc->u.lptdesc->vt);
+		    } else {
+			FIXME("The variant type here should have been VT_PTR, not vt %d\n", tdesc->vt);
+		    	numargs2	+= _argsize(tdesc->vt);
+		    }
 		}
 	    }
 
@@ -4799,11 +4805,14 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    args[0] = (DWORD)pIUnk;
 	    argspos = 1; args2pos = 0;
 	    for (i = 0; i < func_desc->cParams; i++) {
-		int arglen = _argsize(func_desc->lprgelemdescParam[i].tdesc.vt);
+		ELEMDESC *elemdesc = &(func_desc->lprgelemdescParam[i]);
+		TYPEDESC *tdesc = &(elemdesc->tdesc);
+		USHORT paramFlags = elemdesc->u.paramdesc.wParamFlags;
+		int arglen = _argsize(tdesc->vt);
+
 		if (i<pDispParams->cArgs) {
                     VARIANT *arg = &rgvarg[pDispParams->cArgs-i-1];
-                    TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
-                    USHORT paramFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+
                     if (paramFlags & PARAMFLAG_FOPT) {
                         if(i < func_desc->cParams - func_desc->cParamsOpt)
                             ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
@@ -4822,13 +4831,14 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     hres = _copy_arg(iface, tdesc, &args[argspos], arg, tdesc->vt);
                     if (FAILED(hres)) goto func_fail;
                     argspos += arglen;
-                } else if(func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FOPT) {
+                } else if (paramFlags & PARAMFLAG_FOPT) {
                     VARIANT *arg = &rgvarg[i];
-                    TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
-                    if(i < func_desc->cParams - func_desc->cParamsOpt)
+
+                    if (i < func_desc->cParams - func_desc->cParamsOpt)
                         ERR("Parameter has PARAMFLAG_FOPT flag but is not one of last cParamOpt parameters\n");
-                    if(func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+                    if (paramFlags & PARAMFLAG_FHASDEFAULT)
                         FIXME("PARAMFLAG_FHASDEFAULT flag not supported\n");
+
                     V_VT(arg) = VT_ERROR;
                     V_ERROR(arg) = DISP_E_PARAMNOTFOUND;
                     arglen = _argsize(VT_ERROR);
@@ -4836,10 +4846,12 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     if (FAILED(hres)) goto func_fail;
                     argspos += arglen;
 		} else {
-		    TYPEDESC *tdesc = &(func_desc->lprgelemdescParam[i].tdesc);
-		    if (tdesc->vt != VT_PTR)
+		    if (tdesc->vt == VT_PTR)
+			arglen = _argsize(tdesc->u.lptdesc->vt);
+		    else
 		    	FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
-		    /*FIXME: give pointers for the rest, so propertyget works*/
+
+		    /* Supply pointers for the rest, so propertyget works*/
 		    args[argspos] = (DWORD)&args2[args2pos];
 
 		    /* If pointer to variant, pass reference it. */
@@ -4864,20 +4876,24 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    if (pVarResult && (dwFlags & (DISPATCH_PROPERTYGET))) {
 		args2pos = 0;
 		for (i = 0; i < func_desc->cParams - pDispParams->cArgs; i++) {
-		    int arglen = _argsize(func_desc->lprgelemdescParam[i].tdesc.vt);
-		    TYPEDESC *tdesc = &(func_desc->lprgelemdescParam[i + pDispParams->cArgs].tdesc);
-                    TYPEDESC i4_tdesc;
-                    i4_tdesc.vt = VT_I4;
+		    ELEMDESC *elemdesc = &(func_desc->lprgelemdescParam[i+pDispParams->cArgs]);
+		    TYPEDESC *tdesc = &(elemdesc->tdesc);
+		    int arglen = _argsize(tdesc->vt);
+		    TYPEDESC i4_tdesc;
+		    i4_tdesc.vt = VT_I4;
 
 		    /* If we are a pointer to a variant, we are done already */
 		    if ((tdesc->vt==VT_PTR)&&(tdesc->u.lptdesc->vt==VT_VARIANT))
 			continue;
 
+		    if (tdesc->vt == VT_PTR) {
+			tdesc = tdesc->u.lptdesc;
+		        arglen = _argsize(tdesc->vt);
+		    }
+
 		    VariantInit(pVarResult);
 		    memcpy(&V_INT(pVarResult),&args2[args2pos],arglen*sizeof(DWORD));
 
-		    if (tdesc->vt == VT_PTR)
-			tdesc = tdesc->u.lptdesc;
 		    if (tdesc->vt == VT_USERDEFINED) {
 			ITypeInfo	*tinfo2;
 			TYPEATTR	*tattr;
