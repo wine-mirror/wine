@@ -412,9 +412,8 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     while (pow2Width < Width) pow2Width <<= 1;
     while (pow2Height < Height) pow2Height <<= 1;
 
-    /* TODO: support for non-power 2 textures */
     if(pow2Width > Width || pow2Height > Height){
-        /** TODO: add support for non power two compressed textures (OpenGL provices support for * non-power-two textures gratis) **/
+        FIXME("non-power-two textures unsupported\n"); /* OpenGL provides support for these gratis */
         return D3DERR_NOTAVAILABLE;
     }
 

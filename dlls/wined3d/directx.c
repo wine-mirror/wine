@@ -1496,6 +1496,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
     int                 num;
     XVisualInfo         template;
+    HRESULT             res;
 
     /* Validate the adapter number */
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -1659,25 +1660,28 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
        parms. Fix this by passing in a function to call which takes identical parms
        and handles the differences at the d3dx layer, and returns the IWineD3DSurface
        pointer rather than the created D3D8/9 one                                      */
-    D3DCB_CreateRenderTarget((IUnknown *) parent,
-                             *(pPresentationParameters->BackBufferWidth),
-                             *(pPresentationParameters->BackBufferHeight),
-                             *(pPresentationParameters->BackBufferFormat),
-                             *(pPresentationParameters->MultiSampleType),
-                             *(pPresentationParameters->MultiSampleQuality),
-                             TRUE,
-                             (IWineD3DSurface **) &object->frontBuffer,
-                             NULL);
-
-    D3DCB_CreateRenderTarget((IUnknown *) parent,
-                             *(pPresentationParameters->BackBufferWidth),
-                             *(pPresentationParameters->BackBufferHeight),
-                             *(pPresentationParameters->BackBufferFormat),
-                             *(pPresentationParameters->MultiSampleType),
-                             *(pPresentationParameters->MultiSampleQuality),
-                             TRUE,
-                             (IWineD3DSurface **) &object->backBuffer,
-                             NULL);
+    if ((res = D3DCB_CreateRenderTarget((IUnknown *) parent,
+                                        *(pPresentationParameters->BackBufferWidth),
+                                        *(pPresentationParameters->BackBufferHeight),
+                                        *(pPresentationParameters->BackBufferFormat),
+                                        *(pPresentationParameters->MultiSampleType),
+                                        *(pPresentationParameters->MultiSampleQuality),
+                                        TRUE,
+                                        (IWineD3DSurface **) &object->frontBuffer,
+                                        NULL) != D3D_OK) ||
+        (res = D3DCB_CreateRenderTarget((IUnknown *) parent,
+                                        *(pPresentationParameters->BackBufferWidth),
+                                        *(pPresentationParameters->BackBufferHeight),
+                                        *(pPresentationParameters->BackBufferFormat),
+                                        *(pPresentationParameters->MultiSampleType),
+                                        *(pPresentationParameters->MultiSampleQuality),
+                                        TRUE,
+                                        (IWineD3DSurface **) &object->backBuffer,
+                                       NULL) != D3D_OK))
+    {
+        ERR("D3DCB_CreateRenderTarget() failed\n");
+        return res;
+    }
 
 /* TODO: 
     if (*(pPresentationParameters->EnableAutoDepthStencil)) {
