@@ -2457,6 +2457,14 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
             }
         }
     }
+    else
+    {
+        /* set the Preselected Property */
+        static const WCHAR szPreselected[] = {'P','r','e','s','e','l','e','c','t','e','d',0};
+        static const WCHAR szOne[] = { '1', 0 };
+
+        MSI_SetPropertyW(package,szPreselected,szOne);
+    }
 
     /*
      * now we want to enable or disable components base on feature 
