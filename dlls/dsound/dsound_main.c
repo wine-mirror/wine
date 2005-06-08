@@ -152,8 +152,9 @@ void setup_dsound_options(void)
                    lstrcpynA(appname,p+1,MAX_PATH);
                    strcat(appname,"\\dsound");
                    TRACE("appname = [%s] \n",appname);
-                   if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
-                       RegCloseKey( tmpkey );
+                   if (RegOpenKeyA( tmpkey, appname, &appkey ))
+                       appkey = 0;
+                   RegCloseKey( tmpkey );
            }
         }
     }
