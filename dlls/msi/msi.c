@@ -517,6 +517,10 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
     static const WCHAR szAssignmentType[] =
         {'A','s','s','i','g','n','m','e','n','t','T','y','p','e',0};
+    static const WCHAR szLanguage[] =
+        {'L','a','n','g','u','a','g','e',0};
+    static const WCHAR szProductLanguage[] =
+        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
 
     FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szAttribute),
           szBuffer, pcchValueBuf);
@@ -576,6 +580,15 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         if (pcchValueBuf)
             *pcchValueBuf = 1;
         r = ERROR_SUCCESS;
+    }
+    else if (strcmpW(szAttribute, szLanguage)==0)
+    {
+        r = MsiOpenProductW(szProduct, &hProduct);
+        if (ERROR_SUCCESS != r)
+            return r;
+
+        r = MsiGetPropertyW(hProduct, szProductLanguage, szBuffer, pcchValueBuf);
+        MsiCloseHandle(hProduct);
     }
     else
     {
