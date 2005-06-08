@@ -1,5 +1,5 @@
 /*
- * Unit test suite for crypt32.dll's CryptEncodeObjectEx
+ * Unit test suite for crypt32.dll's CryptEncodeObjectEx/CryptDecodeObjectEx
  *
  * Copyright 2005 Juan Lang
  *
@@ -144,6 +144,158 @@ static void test_decodeint(void)
     }
 }
 
+struct encodedFiletime
+{
+    SYSTEMTIME sysTime;
+    BYTE *encodedTime;
+};
+
+static void testTimeEncoding(LPCSTR encoding,
+ const struct encodedFiletime *time)
+{
+    FILETIME ft = { 0 };
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+    BOOL ret;
+
+    ret = SystemTimeToFileTime(&time->sysTime, &ft);
+    ok(ret, "SystemTimeToFileTime failed: %ld\n", GetLastError());
+    /* No test case, but both X509_ASN_ENCODING and PKCS_7_ASN_ENCODING have
+     * the same effect for time encodings.
+     */
+    ret = CryptEncodeObjectEx(X509_ASN_ENCODING, encoding, &ft,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    /* years other than 1950-2050 are not allowed for encodings other than
+     * X509_CHOICE_OF_TIME.
+     */
+    if (encoding == X509_CHOICE_OF_TIME ||
+     (time->sysTime.wYear >= 1950 && time->sysTime.wYear <= 2050))
+    {
+        ok(ret, "CryptEncodeObjectEx failed: %ld (0x%08lx)\n", GetLastError(),
+         GetLastError());
+        ok(buf != NULL, "Expected an allocated buffer\n");
+        if (buf)
+        {
+            ok(buf[0] == time->encodedTime[0],
+             "Expected type 0x%02x, got 0x%02x\n", time->encodedTime[0],
+             buf[0]);
+            ok(buf[1] == time->encodedTime[1], "Expected %d bytes, got %ld\n",
+             time->encodedTime[1], bufSize);
+            ok(!memcmp(time->encodedTime + 2, buf + 2, time->encodedTime[1]),
+             "Got unexpected value for time encoding\n");
+            LocalFree(buf);
+        }
+    }
+    else
+        ok(!ret && GetLastError() == CRYPT_E_BAD_ENCODE,
+         "Expected CRYPT_E_BAD_ENCODE, got 0x%08lx\n", GetLastError());
+}
+
+static void testTimeDecoding(LPCSTR encoding,
+ const struct encodedFiletime *time)
+{
+    FILETIME ft1 = { 0 }, ft2 = { 0 };
+    DWORD size = sizeof(ft2);
+    BOOL ret;
+
+    ret = SystemTimeToFileTime(&time->sysTime, &ft1);
+    ok(ret, "SystemTimeToFileTime failed: %ld\n", GetLastError());
+    /* No test case, but both X509_ASN_ENCODING and PKCS_7_ASN_ENCODING have
+     * the same effect for time encodings.
+     */
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, encoding, time->encodedTime,
+     time->encodedTime[1] + 2, 0, NULL, &ft2, &size);
+    /* years other than 1950-2050 are not allowed for encodings other than
+     * X509_CHOICE_OF_TIME.
+     */
+    if (encoding == X509_CHOICE_OF_TIME ||
+     (time->sysTime.wYear >= 1950 && time->sysTime.wYear <= 2050))
+    {
+        ok(ret, "CryptDecodeObjectEx failed: %ld (0x%08lx)\n", GetLastError(),
+         GetLastError());
+        ok(!memcmp(&ft1, &ft2, sizeof(ft1)),
+         "Got unexpected value for time decoding\n");
+    }
+    else
+        ok(!ret && GetLastError() == CRYPT_E_ASN1_BADTAG,
+         "Expected CRYPT_E_ASN1_BADTAG, got 0x%08lx\n", GetLastError());
+}
+
+static const struct encodedFiletime times[] = {
+ { { 2005, 6, 1, 6, 16, 10, 0, 0 }, "\x17" "\x0d" "050606161000Z" },
+ { { 1945, 6, 1, 6, 16, 10, 0, 0 }, "\x18" "\x0f" "19450606161000Z" },
+ { { 2145, 6, 1, 6, 16, 10, 0, 0 }, "\x18" "\x0f" "21450606161000Z" },
+};
+
+static void test_encodeFiletime(void)
+{
+    DWORD i;
+
+    for (i = 0; i < sizeof(times) / sizeof(times[0]); i++)
+    {
+        testTimeEncoding(X509_CHOICE_OF_TIME, &times[i]);
+        testTimeEncoding(PKCS_UTC_TIME, &times[i]);
+        testTimeEncoding(szOID_RSA_signingTime, &times[i]);
+    }
+}
+
+static void test_decodeFiletime(void)
+{
+    static const struct encodedFiletime otherTimes[] = {
+     { { 1945, 6, 1, 6, 16, 10, 0, 0 },   "\x18" "\x13" "19450606161000.000Z" },
+     { { 1945, 6, 1, 6, 16, 10, 0, 999 }, "\x18" "\x13" "19450606161000.999Z" },
+     { { 1945, 6, 1, 6, 17, 10, 0, 0 },   "\x18" "\x13" "19450606161000+0100" },
+     { { 1945, 6, 1, 6, 15, 10, 0, 0 },   "\x18" "\x13" "19450606161000-0100" },
+     { { 1945, 6, 1, 6, 14, 55, 0, 0 },   "\x18" "\x13" "19450606161000-0115" },
+     { { 2145, 6, 1, 6, 16,  0, 0, 0 },   "\x18" "\x0a" "2145060616" },
+     { { 2045, 6, 1, 6, 16, 10, 0, 0 },   "\x17" "\x0a" "4506061610" },
+    };
+    /* An oddball case that succeeds in Windows, but doesn't seem correct
+     { { 2145, 6, 1, 2, 11, 31, 0, 0 },   "\x18" "\x13" "21450606161000-9999" },
+     */
+    static const char *bogusTimes[] = {
+     /* oddly, this succeeds on Windows, with year 2765
+     "\x18" "\x0f" "21r50606161000Z",
+      */
+     "\x17" "\x08" "45060616",
+     "\x18" "\x0f" "aaaaaaaaaaaaaaZ",
+     "\x18" "\x04" "2145",
+     "\x18" "\x08" "21450606",
+    };
+    DWORD i;
+
+    for (i = 0; i < sizeof(times) / sizeof(times[0]); i++)
+    {
+        testTimeDecoding(X509_CHOICE_OF_TIME, &times[i]);
+        testTimeDecoding(PKCS_UTC_TIME, &times[i]);
+        testTimeDecoding(szOID_RSA_signingTime, &times[i]);
+    }
+    for (i = 0; i < sizeof(otherTimes) / sizeof(otherTimes[0]); i++)
+    {
+        testTimeDecoding(X509_CHOICE_OF_TIME, &otherTimes[i]);
+        testTimeDecoding(PKCS_UTC_TIME, &otherTimes[i]);
+        testTimeDecoding(szOID_RSA_signingTime, &otherTimes[i]);
+    }
+    for (i = 0; i < sizeof(bogusTimes) / sizeof(bogusTimes[0]); i++)
+    {
+        FILETIME ft;
+        SYSTEMTIME sysTime;
+        DWORD size = sizeof(ft);
+        BOOL ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CHOICE_OF_TIME,
+         bogusTimes[i], bogusTimes[i][1] + 2, 0, NULL, &ft, &size);
+
+        if (ret)
+        {
+            ret = FileTimeToSystemTime(&ft, &sysTime);
+            printf("%02d %02d %04d %02d:%02d.%02d\n", sysTime.wMonth,
+             sysTime.wDay, sysTime.wYear, sysTime.wHour, sysTime.wMinute,
+             sysTime.wSecond);
+        }
+        ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+         "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+    }
+}
+
 static void test_registerOIDFunction(void)
 {
     static const WCHAR bogusDll[] = { 'b','o','g','u','s','.','d','l','l',0 };
@@ -202,5 +354,7 @@ START_TEST(encode)
 {
     test_encodeint();
     test_decodeint();
+    test_encodeFiletime();
+    test_decodeFiletime();
     test_registerOIDFunction();
 }
