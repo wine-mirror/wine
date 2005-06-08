@@ -149,6 +149,9 @@ static const WCHAR SPI_SETICONTITLEWRAP_REGKEY1[]=            {'C','o','n','t','
                                                                'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
 static const WCHAR SPI_SETICONTITLEWRAP_REGKEY2[]=            {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p',0};
 static const WCHAR SPI_SETICONTITLEWRAP_VALNAME[]=            {'I','c','o','n','T','i','t','l','e','W','r','a','p',0};
+static const WCHAR SPI_SETICONTITLELOGFONT_REGKEY[]=          {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\','D','e','s','k','t','o','p','\\',
+                                                               'W','i','n','d','o','w','M','e','t','r','i','c','s',0};
+static const WCHAR SPI_SETICONTITLELOGFONT_VALNAME[]=         {'I','c','o','n','F','o','n','t',0};
 static const WCHAR SPI_SETMENUDROPALIGNMENT_REGKEY1[]=        {'S','o','f','t','w','a','r','e','\\',
                                                                'M','i','c','r','o','s','o','f','t','\\',
                                                                'W','i','n','d','o','w','s',' ','N','T','\\',
@@ -219,6 +222,11 @@ static const WCHAR METRICS_MENUWIDTH_VALNAME[]=       {'M','e','n','u','W','i','
 static const WCHAR METRICS_MENUHEIGHT_VALNAME[]=      {'M','e','n','u','H','e','i','g','h','t',0};
 static const WCHAR METRICS_ICONSIZE_VALNAME[]=        {'S','h','e','l','l',' ','I','c','o','n',' ','S','i','z','e',0};
 static const WCHAR METRICS_BORDERWIDTH_VALNAME[]=     {'B','o','r','d','e','r','W','i','d','t','h',0};
+static const WCHAR METRICS_CAPTIONLOGFONT_VALNAME[]=  {'C','a','p','t','i','o','n','F','o','n','t',0};
+static const WCHAR METRICS_SMCAPTIONLOGFONT_VALNAME[]={'S','m','C','a','p','t','i','o','n','F','o','n','t',0};
+static const WCHAR METRICS_MENULOGFONT_VALNAME[]=     {'M','e','n','u','F','o','n','t',0};
+static const WCHAR METRICS_MESSAGELOGFONT_VALNAME[]=  {'M','e','s','s','a','g','e','F','o','n','t',0};
+static const WCHAR METRICS_STATUSLOGFONT_VALNAME[]=   {'S','t','a','t','u','s','F','o','n','t',0};
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'W','i','n','e',0};
@@ -279,7 +287,7 @@ static BOOL keyboard_cues = FALSE;
 static BOOL gradient_captions = FALSE;
 static BOOL listbox_smoothscrolling = FALSE;
 static BOOL hot_tracking = FALSE;
-static LOGFONTW log_font = { -11,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH };
+static LOGFONTW icontitle_log_font = { -11,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH };
 
 #define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
 
@@ -839,6 +847,41 @@ void SYSPARAMS_Init(void)
     __wine_make_gdi_object_system( SYSCOLOR_55AABrush, TRUE );
 }
 
+
+/***********************************************************************
+ *              reg_get_logfont
+ *
+ *  Tries to retrieve logfont info from the specified key and value
+ */
+static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
+{
+    HKEY hkey;
+    LOGFONTW lfbuf;
+    DWORD type, size;
+    BOOL found = FALSE;
+    HKEY base_keys[2];
+    int i;
+
+    base_keys[0] = get_volatile_regkey();
+    base_keys[1] = HKEY_CURRENT_USER;
+
+    for(i = 0; i < 2 && !found; i++)
+    {
+        if(RegOpenKeyW(base_keys[i], key, &hkey) == ERROR_SUCCESS)
+        {
+            size = sizeof(lfbuf);
+            if(RegQueryValueExW(hkey, value, NULL, &type, (LPBYTE)&lfbuf, &size) == ERROR_SUCCESS &&
+               type == REG_BINARY && size == sizeof(lfbuf))
+            {
+                found = TRUE;
+                memcpy(lf, &lfbuf, size);
+            }
+            RegCloseKey(hkey);
+        }
+    }
+
+    return found;
+}
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)
@@ -1417,32 +1460,35 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETICONTITLELOGFONT_IDX;
         if (!spi_loaded[spi_idx])
         {       
-            /*
-             * The 'default GDI fonts' seems to be returned.
-             * If a returned font is not a correct font in your environment,
-             * please try to fix objects/gdiobj.c at first.
-             */
-            GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(LOGFONTW), &lfDefault );
+            if(!reg_get_logfont(SPI_SETICONTITLELOGFONT_REGKEY, SPI_SETICONTITLELOGFONT_VALNAME, &icontitle_log_font))
+            {
+                /*
+                 * The 'default GDI fonts' seems to be returned.
+                 * If a returned font is not a correct font in your environment,
+                 * please try to fix objects/gdiobj.c at first.
+                 */
+                GetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(LOGFONTW), &lfDefault );
 
-            GetProfileStringW( Desktop, IconTitleFaceName,
-                               lfDefault.lfFaceName,
-                               log_font.lfFaceName,
-                               LF_FACESIZE );
-            log_font.lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
-            log_font.lfWidth = 0;
-            log_font.lfEscapement = log_font.lfOrientation = 0;
-            log_font.lfWeight = FW_NORMAL;
-            log_font.lfItalic = FALSE;
-            log_font.lfStrikeOut = FALSE;
-            log_font.lfUnderline = FALSE;
-            log_font.lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
-            log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
-            log_font.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-            log_font.lfQuality = DEFAULT_QUALITY;
-            log_font.lfPitchAndFamily = DEFAULT_PITCH;
-            spi_loaded[spi_idx] = TRUE;
+                GetProfileStringW( Desktop, IconTitleFaceName,
+                                   lfDefault.lfFaceName,
+                                   icontitle_log_font.lfFaceName,
+                                   LF_FACESIZE );
+                icontitle_log_font.lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
+                icontitle_log_font.lfWidth = 0;
+                icontitle_log_font.lfEscapement = icontitle_log_font.lfOrientation = 0;
+                icontitle_log_font.lfWeight = FW_NORMAL;
+                icontitle_log_font.lfItalic = FALSE;
+                icontitle_log_font.lfStrikeOut = FALSE;
+                icontitle_log_font.lfUnderline = FALSE;
+                icontitle_log_font.lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
+                icontitle_log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
+                icontitle_log_font.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+                icontitle_log_font.lfQuality = DEFAULT_QUALITY;
+                icontitle_log_font.lfPitchAndFamily = DEFAULT_PITCH;
+                spi_loaded[spi_idx] = TRUE;
+            }
         }
-        *(LOGFONTW *)pvParam = log_font;
+        *(LOGFONTW *)pvParam = icontitle_log_font;
 	break;
     }
 
@@ -1557,15 +1603,19 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    lpnm->iCaptionHeight = sysMetrics[SM_CYSIZE];
 
 	    /* caption font metrics */
-	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
-	    lpnm->lfCaptionFont.lfWeight = FW_BOLD;
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &lpnm->lfCaptionFont))
+            {
+                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
+                lpnm->lfCaptionFont.lfWeight = FW_BOLD;
+            }
 
 	    /* size of the small caption buttons */
 	    lpnm->iSmCaptionWidth = sysMetrics[SM_CXSMSIZE];
 	    lpnm->iSmCaptionHeight = sysMetrics[SM_CYSMSIZE];
 
 	    /* small caption font metrics */
-	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &lpnm->lfSmCaptionFont))
+                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
 
 	    /* menus, FIXME: names of wine.conf entries are bogus */
 
@@ -1574,28 +1624,36 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    lpnm->iMenuHeight = sysMetrics[SM_CYMENUSIZE];
 
 	    /* menu font metrics */
-	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
-	    GetProfileStringW( Desktop, MenuFont, lpnm->lfCaptionFont.lfFaceName,
-			       lpnm->lfMenuFont.lfFaceName, LF_FACESIZE );
-	    lpnm->lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
-	    lpnm->lfMenuFont.lfWeight = FW_NORMAL;
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &lpnm->lfMenuFont))
+            {
+                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
+                GetProfileStringW( Desktop, MenuFont, lpnm->lfCaptionFont.lfFaceName,
+                                   lpnm->lfMenuFont.lfFaceName, LF_FACESIZE );
+                lpnm->lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
+                lpnm->lfMenuFont.lfWeight = FW_NORMAL;
+            }
 
 	    /* status bar font metrics */
-	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
-				   (LPVOID)&(lpnm->lfStatusFont), 0 );
-            GetProfileStringW( Desktop, StatusFont, lpnm->lfCaptionFont.lfFaceName,
-                               lpnm->lfStatusFont.lfFaceName, LF_FACESIZE );
-            lpnm->lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
-            lpnm->lfStatusFont.lfWeight = FW_NORMAL;
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &lpnm->lfStatusFont))
+            {
+                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
+                                       (LPVOID)&(lpnm->lfStatusFont), 0 );
+                GetProfileStringW( Desktop, StatusFont, lpnm->lfCaptionFont.lfFaceName,
+                                   lpnm->lfStatusFont.lfFaceName, LF_FACESIZE );
+                lpnm->lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
+                lpnm->lfStatusFont.lfWeight = FW_NORMAL;
+            }
 
 	    /* message font metrics */
-	    SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
-				   (LPVOID)&(lpnm->lfMessageFont), 0 );
-            GetProfileStringW( Desktop, MessageFont, lpnm->lfCaptionFont.lfFaceName,
-                               lpnm->lfMessageFont.lfFaceName, LF_FACESIZE );
-            lpnm->lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
-            lpnm->lfMessageFont.lfWeight = FW_NORMAL;
-
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &lpnm->lfMessageFont))
+            {
+                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
+                                       (LPVOID)&(lpnm->lfMessageFont), 0 );
+                GetProfileStringW( Desktop, MessageFont, lpnm->lfCaptionFont.lfFaceName,
+                                   lpnm->lfMessageFont.lfFaceName, LF_FACESIZE );
+                lpnm->lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
+                lpnm->lfMessageFont.lfWeight = FW_NORMAL;
+            }
 	}
 	else
 	{
@@ -1665,7 +1723,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             sysMetrics[SM_CXICONSPACING] = lpIcon->iHorzSpacing;
             sysMetrics[SM_CYICONSPACING] = lpIcon->iVertSpacing;
             icon_title_wrap = lpIcon->iTitleWrap;
-            log_font = lpIcon->lfFont;
+            icontitle_log_font = lpIcon->lfFont;
 	}
 	else
 	{
