@@ -16,7 +16,6 @@ SPEC_SRCS16 = \
 	user.exe.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/windows/driver.c \
 	$(TOPOBJDIR)/windows/multimon.c \
 	button.c \
 	caret.c \
@@ -33,6 +32,7 @@ C_SRCS = \
 	desktop.c \
 	dialog.c \
 	dialog16.c \
+	driver16.c \
 	edit.c \
 	exticon.c \
 	focus.c \
