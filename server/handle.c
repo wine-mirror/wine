@@ -108,6 +108,7 @@ static const struct object_ops handle_table_ops =
     NULL,                            /* satisfied */
     no_signal,                       /* signal */
     no_get_fd,                       /* get_fd */
+    no_close_handle,                 /* close_handle */
     handle_table_destroy             /* destroy */
 };
 
@@ -323,6 +324,11 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
         return 0;
     }
     obj = entry->ptr;
+    if (!obj->ops->close_handle( obj, process, handle ))
+    {
+        set_error( STATUS_INVALID_HANDLE );
+        return 0;
+    }
     entry->ptr = NULL;
     if (fd) *fd = entry->fd;
     else if (entry->fd != -1) return 1;  /* silently ignore close attempt if we cannot close the fd */
@@ -330,8 +336,6 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
     table = handle_is_global(handle) ? global_table : process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
-    /* hack: windows seems to treat registry handles differently */
-    registry_close_handle( obj, handle );
     release_object( obj );
     return 1;
 }

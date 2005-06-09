@@ -63,6 +63,8 @@ struct object_ops
     int  (*signal)(struct object *, unsigned int);
     /* return an fd object that can be used to read/write from the object */
     struct fd *(*get_fd)(struct object *);
+    /* close a handle to this object */
+    int (*close_handle)(struct object *,struct process *,obj_handle_t);
     /* destroy on refcount == 0 */
     void (*destroy)(struct object *);
 };
@@ -102,6 +104,7 @@ extern int no_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern int no_satisfied( struct object *obj, struct thread *thread );
 extern int no_signal( struct object *obj, unsigned int access );
 extern struct fd *no_get_fd( struct object *obj );
+extern int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 extern void no_destroy( struct object *obj );
 #ifdef DEBUG_OBJECTS
 extern void dump_objects(void);
@@ -146,7 +149,6 @@ extern int get_page_size(void);
 extern void init_registry(void);
 extern void flush_registry(void);
 extern void close_registry(void);
-extern void registry_close_handle( struct object *obj, obj_handle_t hkey );
 
 /* signal functions */
 

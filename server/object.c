@@ -294,6 +294,11 @@ struct fd *no_get_fd( struct object *obj )
     return NULL;
 }
 
+int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    return 1;  /* ok to close */
+}
+
 void no_destroy( struct object *obj )
 {
 }

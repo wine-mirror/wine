@@ -129,6 +129,7 @@ struct file_load_info
 
 
 static void key_dump( struct object *obj, int verbose );
+static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void key_destroy( struct object *obj );
 
 static const struct object_ops key_ops =
@@ -141,6 +142,7 @@ static const struct object_ops key_ops =
     NULL,                    /* satisfied */
     no_signal,               /* signal */
     no_get_fd,               /* get_fd */
+    key_close_handle,        /* close_handle */
     key_destroy              /* destroy */
 };
 
@@ -293,17 +295,12 @@ static struct notify *find_notify( struct key *key, obj_handle_t hkey)
 }
 
 /* close the notification associated with a handle */
-void registry_close_handle( struct object *obj, obj_handle_t hkey )
+static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     struct key * key = (struct key *) obj;
-    struct notify *notify;
-
-    if( obj->ops != &key_ops )
-        return;
-    notify = find_notify( key, hkey );
-    if( !notify )
-        return;
-    do_notification( key, notify, 1 );
+    struct notify *notify = find_notify( key, handle );
+    if (notify) do_notification( key, notify, 1 );
+    return 1;  /* ok to close */
 }
 
 static void key_destroy( struct object *obj )

@@ -53,13 +53,9 @@ static DWORD CALLBACK thread( LPVOID arg )
     trace( "thread %p desktop: %p\n", arg, d1 );
     ok( d1 == initial_desktop, "thread %p doesn't use initial desktop\n", arg );
 
-    if (0)  /* FIXME: this should be todo_wine but it would break the rest of the test */
-    {
-        SetLastError( 0xdeadbeef );
-        ok( !CloseHandle( d1 ), "CloseHandle succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "bad last error %ld\n", GetLastError() );
-    }
-
+    SetLastError( 0xdeadbeef );
+    ok( !CloseHandle( d1 ), "CloseHandle succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "bad last error %ld\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ok( !CloseDesktop( d1 ), "CloseDesktop succeeded\n" );
     ok( GetLastError() == ERROR_BUSY, "bad last error %ld\n", GetLastError() );
@@ -109,7 +105,7 @@ static void test_handles(void)
 
     flags = 0;
     ok( GetHandleInformation( w1, &flags ), "GetHandleInformation failed\n" );
-    todo_wine ok( !(flags & HANDLE_FLAG_PROTECT_FROM_CLOSE), "handle %p PROTECT_FROM_CLOSE set\n", w1 );
+    ok( !(flags & HANDLE_FLAG_PROTECT_FROM_CLOSE), "handle %p PROTECT_FROM_CLOSE set\n", w1 );
 
     ok( DuplicateHandle( GetCurrentProcess(), w1, GetCurrentProcess(), (PHANDLE)&w2, 0,
                          TRUE, DUPLICATE_SAME_ACCESS ), "DuplicateHandle failed\n" );
@@ -165,12 +161,9 @@ static void test_handles(void)
     ok( !CloseDesktop(d1), "closing thread desktop succeeded\n" );
     ok( GetLastError() == ERROR_BUSY, "bad last error %ld\n", GetLastError() );
 
-    if (0)  /* FIXME: this should be todo_wine but it would break the rest of the test */
-    {
-        SetLastError( 0xdeadbeef );
-        ok( !CloseHandle(d1), "closing thread desktop handle failed\n" );
-        ok( GetLastError() == ERROR_INVALID_HANDLE, "bad last error %ld\n", GetLastError() );
-    }
+    SetLastError( 0xdeadbeef );
+    ok( !CloseHandle(d1), "closing thread desktop handle failed\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "bad last error %ld\n", GetLastError() );
 
     ok( DuplicateHandle( GetCurrentProcess(), d1, GetCurrentProcess(), (PHANDLE)&d2, 0,
                          TRUE, DUPLICATE_SAME_ACCESS ), "DuplicateHandle failed\n" );
@@ -198,12 +191,9 @@ static void test_handles(void)
     d3 = OpenDesktop( "foobar", 0, TRUE, DESKTOP_ALL_ACCESS );
     ok( !d3, "open foobar desktop succeeded\n" );
 
-    if (0)  /* FIXME: this should be todo_wine but it would break the rest of the test */
-    {
-        ok( !CloseHandle(d1), "closing thread desktop handle succeeded\n" );
-        d2 = GetThreadDesktop(GetCurrentThreadId());
-        ok( d1 == d2, "got different handles after close\n" );
-    }
+    ok( !CloseHandle(d1), "closing thread desktop handle succeeded\n" );
+    d2 = GetThreadDesktop(GetCurrentThreadId());
+    ok( d1 == d2, "got different handles after close\n" );
 
     trace( "thread 1 desktop: %p\n", d1 );
     print_object( d1 );

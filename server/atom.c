@@ -76,6 +76,7 @@ static const struct object_ops atom_table_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    no_close_handle,              /* close_handle */
     atom_table_destroy            /* destroy */
 };
 

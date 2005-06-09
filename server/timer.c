@@ -61,6 +61,7 @@ static const struct object_ops timer_ops =
     timer_satisfied,           /* satisfied */
     no_signal,                 /* signal */
     no_get_fd,                 /* get_fd */
+    no_close_handle,           /* close_handle */
     timer_destroy              /* destroy */
 };
 

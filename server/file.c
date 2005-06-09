@@ -80,6 +80,7 @@ static const struct object_ops file_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     file_get_fd,                  /* get_fd */
+    no_close_handle,              /* close_handle */
     file_destroy                  /* destroy */
 };
 

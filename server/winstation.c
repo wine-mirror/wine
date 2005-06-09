@@ -56,8 +56,10 @@ static struct winstation *interactive_winstation;
 static struct namespace *winstation_namespace;
 
 static void winstation_dump( struct object *obj, int verbose );
+static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void winstation_destroy( struct object *obj );
 static void desktop_dump( struct object *obj, int verbose );
+static int desktop_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void desktop_destroy( struct object *obj );
 
 static const struct object_ops winstation_ops =
@@ -70,6 +72,7 @@ static const struct object_ops winstation_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    winstation_close_handle,      /* close_handle */
     winstation_destroy            /* destroy */
 };
 
@@ -84,6 +87,7 @@ static const struct object_ops desktop_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    desktop_close_handle,         /* close_handle */
     desktop_destroy               /* destroy */
 };
 
@@ -123,6 +127,11 @@ static void winstation_dump( struct object *obj, int verbose )
     fprintf( stderr, "Winstation flags=%x ", winstation->flags );
     dump_object_name( &winstation->obj );
     fputc( '\n', stderr );
+}
+
+static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    return (process->winstation != handle);
 }
 
 static void winstation_destroy( struct object *obj )
@@ -199,25 +208,23 @@ static void desktop_dump( struct object *obj, int verbose )
     fputc( '\n', stderr );
 }
 
+static int desktop_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    struct thread *thread;
+
+    /* check if the handle is currently used by the process or one of its threads */
+    if (process->desktop == handle) return 0;
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+        if (thread->desktop == handle) return 0;
+    return 1;
+}
+
 static void desktop_destroy( struct object *obj )
 {
     struct desktop *desktop = (struct desktop *)obj;
 
     list_remove( &desktop->entry );
     release_object( desktop->winstation );
-}
-
-/* check if a desktop handle is currently used by the process */
-static int is_desktop_in_use( struct process *process, obj_handle_t handle )
-{
-    struct thread *thread;
-
-    if (process->desktop == handle) return 1;
-
-    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-        if (thread->desktop == handle) return 1;
-
-    return 0;
 }
 
 /* connect a process to its window station */
@@ -246,13 +253,7 @@ void connect_process_winstation( struct process *process, const WCHAR *name, siz
     }
     if (winstation)
     {
-        if ((process->winstation = alloc_handle( process, winstation, WINSTA_ALL_ACCESS, FALSE )))
-        {
-            int fd = -1;
-            /* FIXME: Windows doesn't do it this way */
-            set_handle_info( process, process->winstation, HANDLE_FLAG_PROTECT_FROM_CLOSE,
-                             HANDLE_FLAG_PROTECT_FROM_CLOSE, &fd );
-        }
+        process->winstation = alloc_handle( process, winstation, WINSTA_ALL_ACCESS, FALSE );
         release_object( winstation );
     }
     clear_error();  /* ignore errors */
@@ -291,8 +292,8 @@ void close_thread_desktop( struct thread *thread )
     obj_handle_t handle = thread->desktop;
 
     thread->desktop = 0;
-    if (handle && !is_desktop_in_use( thread->process, handle ))
-        close_handle( thread->process, handle, NULL );
+    if (handle) close_handle( thread->process, handle, NULL );
+    clear_error();  /* ignore errors */
 }
 
 
@@ -328,10 +329,7 @@ DECL_HANDLER(close_winstation)
     if ((winstation = (struct winstation *)get_handle_obj( current->process, req->handle,
                                                            0, &winstation_ops )))
     {
-        if (req->handle != current->process->winstation)
-            close_handle( current->process, req->handle, NULL );
-        else
-            set_error( STATUS_ACCESS_DENIED );
+        if (!close_handle( current->process, req->handle, NULL )) set_error( STATUS_ACCESS_DENIED );
         release_object( winstation );
     }
 }
@@ -408,10 +406,7 @@ DECL_HANDLER(close_desktop)
     if ((desktop = (struct desktop *)get_handle_obj( current->process, req->handle,
                                                      0, &desktop_ops )))
     {
-        if (!is_desktop_in_use( current->process, req->handle ))
-            close_handle( current->process, req->handle, NULL );
-        else
-            set_error( STATUS_DEVICE_BUSY );
+        if (!close_handle( current->process, req->handle, NULL )) set_error( STATUS_DEVICE_BUSY );
         release_object( desktop );
     }
 }

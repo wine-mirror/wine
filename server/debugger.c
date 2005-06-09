@@ -74,6 +74,7 @@ static const struct object_ops debug_event_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
+    no_close_handle,               /* close_handle */
     debug_event_destroy            /* destroy */
 };
 
@@ -91,6 +92,7 @@ static const struct object_ops debug_ctx_ops =
     no_satisfied,                  /* satisfied */
     no_signal,                     /* signal */
     no_get_fd,                     /* get_fd */
+    no_close_handle,               /* close_handle */
     debug_ctx_destroy              /* destroy */
 };
 

@@ -73,6 +73,7 @@ static const struct object_ops change_ops =
     no_satisfied,             /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
+    no_close_handle,          /* close_handle */
     change_destroy            /* destroy */
 };
 
