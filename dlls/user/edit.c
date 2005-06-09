@@ -1282,6 +1282,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 			rc.bottom = line_count * es->line_height;
 		else
 			rc.bottom = line_index * es->line_height;
+		rc.bottom += es->format_rect.top;
 		rc.bottom -= (es->y_offset * es->line_height); /* Adjust for vertical scrollbar */
 		tmphrgn = CreateRectRgn(rc.left, rc.top, rc.right, rc.bottom);
 		CombineRgn(hrgn, hrgn, tmphrgn, RGN_OR);
