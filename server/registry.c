@@ -58,6 +58,7 @@ struct notify
     int               subtree;  /* true if subtree notification */
     unsigned int      filter;   /* which events to notify on */
     obj_handle_t      hkey;     /* hkey associated with this notification */
+    struct process   *process;  /* process in which the hkey is valid */
 };
 
 /* a registry key */
@@ -283,13 +284,13 @@ static void do_notification( struct key *key, struct notify *notify, int del )
     }
 }
 
-static struct notify *find_notify( struct key *key, obj_handle_t hkey)
+static inline struct notify *find_notify( struct key *key, struct process *process, obj_handle_t hkey )
 {
     struct notify *notify;
 
     LIST_FOR_EACH_ENTRY( notify, &key->notify_list, struct notify, entry )
     {
-        if (notify->hkey == hkey) return notify;
+        if (notify->process == process && notify->hkey == hkey) return notify;
     }
     return NULL;
 }
@@ -298,7 +299,7 @@ static struct notify *find_notify( struct key *key, obj_handle_t hkey)
 static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     struct key * key = (struct key *) obj;
-    struct notify *notify = find_notify( key, handle );
+    struct notify *notify = find_notify( key, process, handle );
     if (notify) do_notification( key, notify, 1 );
     return 1;  /* ok to close */
 }
@@ -1934,7 +1935,7 @@ DECL_HANDLER(set_registry_notification)
         event = get_event_obj( current->process, req->event, SYNCHRONIZE );
         if( event )
         {
-            notify = find_notify( key, req->hkey );
+            notify = find_notify( key, current->process, req->hkey );
             if( notify )
             {
                 release_object( notify->event );
@@ -1951,6 +1952,7 @@ DECL_HANDLER(set_registry_notification)
                     notify->subtree = req->subtree;
                     notify->filter  = req->filter;
                     notify->hkey    = req->hkey;
+                    notify->process = current->process;
                     list_add_head( &key->notify_list, &notify->entry );
                 }
             }
