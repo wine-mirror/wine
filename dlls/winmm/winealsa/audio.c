@@ -146,37 +146,29 @@ typedef struct {
 } ALSA_MSG_RING;
 
 typedef struct {
-    /* Windows information */
     volatile int		state;			/* one of the WINE_WS_ manifest constants */
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     WAVEFORMATPCMEX		format;
-    WAVEOUTCAPSW		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
     char*                       device;
     char                        interface_name[64];
-    snd_pcm_t*                  handle;                 /* handle to ALSA playback device */
+    snd_pcm_t*                  handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
-
-    char*                       mixer;                  /* mixer device name: hw:# */
-    snd_hctl_t *                hctl;                    /* control handle for the playback volume */
-
-    snd_pcm_sframes_t           (*write)(snd_pcm_t *, const void *, snd_pcm_uframes_t );
-
-    struct pollfd		*ufds;
-    int				count;
 
     DWORD                       dwBufferSize;           /* size of whole ALSA buffer in bytes */
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
     LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
-    DWORD			dwPartialOffset;	/* Offset of not yet written bytes in lpPlayPtr */
 
     LPWAVEHDR			lpLoopPtr;              /* pointer of first buffer in loop, if any */
     DWORD			dwLoops;		/* private copy of loop counter */
 
     DWORD			dwPlayedTotal;		/* number of bytes actually played since opening */
     DWORD			dwWrittenTotal;		/* number of bytes written to ALSA buffer since opening */
+
+    struct pollfd		*ufds;
+    int				count;
 
     /* synchronization stuff */
     HANDLE			hStartUpEvent;
@@ -187,53 +179,34 @@ typedef struct {
     /* DirectSound stuff */
     DSDRIVERDESC                ds_desc;
     DSDRIVERCAPS                ds_caps;
-} WINE_WAVEOUT;
 
-typedef struct {
-    /* Windows information */
-    volatile int		state;			/* one of the WINE_WS_ manifest constants */
-    WAVEOPENDESC		waveDesc;
-    WORD			wFlags;
-    WAVEFORMATPCMEX		format;
-    WAVEINCAPSW                 caps;
+    /* Waveout only fields */
+    WAVEOUTCAPSW		outcaps;
+
+    char*                       mixer;                  /* mixer device name: hw:# */
+    snd_hctl_t *                hctl;                    /* control handle for the playback volume */
+
+    snd_pcm_sframes_t           (*write)(snd_pcm_t *, const void *, snd_pcm_uframes_t );
+
+    DWORD			dwPartialOffset;	/* Offset of not yet written bytes in lpPlayPtr */
+
+    /* Wavein only fields */
+
+    WAVEINCAPSW                 incaps;
     DWORD                       dwSupport;
-
-    /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char*                       device;
-    char                        interface_name[64];
-    snd_pcm_t*                  handle;                 /* handle to ALSA capture device */
-    snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
 
     snd_pcm_sframes_t           (*read)(snd_pcm_t *, void *, snd_pcm_uframes_t );
 
-    struct pollfd		*ufds;
-    int				count;
-
     DWORD			dwPeriodSize;		/* size of OSS buffer period */
-    DWORD                       dwBufferSize;           /* size of whole ALSA buffer in bytes */
-    LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
-    LPWAVEHDR			lpPlayPtr;		/* start of not yet fully played buffers */
-
-    LPWAVEHDR			lpLoopPtr;              /* pointer of first buffer in loop, if any */
-    DWORD			dwLoops;		/* private copy of loop counter */
-
-    /*DWORD			dwPlayedTotal; */
     DWORD			dwTotalRecorded;
 
-    /* synchronization stuff */
-    HANDLE			hStartUpEvent;
-    HANDLE			hThread;
-    DWORD			dwThreadID;
-    ALSA_MSG_RING		msgRing;
+}   WINE_WAVEDEV;
 
-    /* DirectSound stuff */
-    DSDRIVERDESC                ds_desc;
-    DSCDRIVERCAPS               ds_caps;
-} WINE_WAVEIN;
 
-static WINE_WAVEOUT	WOutDev   [MAX_WAVEOUTDRV];
+
+static WINE_WAVEDEV	WOutDev   [MAX_WAVEOUTDRV];
 static DWORD            ALSA_WodNumDevs;
-static WINE_WAVEIN	WInDev   [MAX_WAVEINDRV];
+static WINE_WAVEDEV	WInDev   [MAX_WAVEINDRV];
 static DWORD            ALSA_WidNumDevs;
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
@@ -582,7 +555,7 @@ out:
  *
  * used to recovery from XRUN errors (buffer underflow/overflow)
  */
-static int ALSA_XRUNRecovery(WINE_WAVEOUT * wwo, int err)
+static int ALSA_XRUNRecovery(WINE_WAVEDEV * wwo, int err)
 {
     if (err == -EPIPE) {    /* under-run */
         err = snd_pcm_prepare(wwo->handle);
@@ -792,8 +765,8 @@ LONG ALSA_WaveInit(void)
     unsigned int chmax=0;
     int dir=0;
     int err=0;
-    WINE_WAVEOUT*	        wwo;
-    WINE_WAVEIN*	        wwi;
+    WINE_WAVEDEV*	        wwo;
+    WINE_WAVEDEV*	        wwi;
     int i;
 
     if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
@@ -824,11 +797,11 @@ LONG ALSA_WaveInit(void)
 
         snprintf(wwo->interface_name, sizeof(wwo->interface_name), "winealsa: %s", wwo->device);
 
-        wwo->caps.wMid = 0x0002;
-        wwo->caps.wPid = 0x0104;
-        wwo->caps.vDriverVersion = 0x0100;
-        wwo->caps.dwFormats = 0x00000000;
-        wwo->caps.dwSupport = 0;
+        wwo->outcaps.wMid = 0x0002;
+        wwo->outcaps.wPid = 0x0104;
+        wwo->outcaps.vDriverVersion = 0x0100;
+        wwo->outcaps.dwFormats = 0x00000000;
+        wwo->outcaps.dwSupport = 0;
         strcpy(wwo->ds_desc.szDrvname, "winealsa.drv");
 
         snd_pcm_info_alloca(&info);
@@ -856,7 +829,7 @@ LONG ALSA_WaveInit(void)
 
         strcpy(wwo->ds_desc.szDesc, snd_pcm_info_get_name(info));
         MultiByteToWideChar(CP_ACP, 0, wwo->ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
-        strcpyW(wwo->caps.szPname, nameW);
+        strcpyW(wwo->outcaps.szPname, nameW);
         EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
 #undef EXIT_ON_ERROR
 
@@ -876,16 +849,16 @@ LONG ALSA_WaveInit(void)
            if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
            { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##M08; \
+                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##M08; \
               if (chmin <= 2 && 2 <= chmax) \
-                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##S08; \
+                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##S08; \
            } \
            if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
            { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##M16; \
+                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##M16; \
               if (chmin <= 2 && 2 <= chmax) \
-                  wwo->caps.dwFormats |= WAVE_FORMAT_##v##S16; \
+                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##S16; \
            } \
         }
         X(11025,1);
@@ -897,20 +870,20 @@ LONG ALSA_WaveInit(void)
 
         if (chmin > 1)
             FIXME("-\n");
-        wwo->caps.wChannels = chmax;
+        wwo->outcaps.wChannels = chmax;
 
         /* FIXME: always true ? */
-        wwo->caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
+        wwo->outcaps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
 
 	snd_pcm_access_mask_alloca(&acmask);
 	snd_pcm_hw_params_get_access_mask(hw_params, acmask);
 
 	/* FIXME: NONITERLEAVED and COMPLEX are not supported right now */
 	if ( snd_pcm_access_mask_test( acmask, SND_PCM_ACCESS_MMAP_INTERLEAVED ) )
-            wwo->caps.dwSupport |= WAVECAPS_DIRECTSOUND;
+            wwo->outcaps.dwSupport |= WAVECAPS_DIRECTSOUND;
 
         TRACE("Configured with dwFmts=%08lx dwSupport=%08lx\n",
-              wwo->caps.dwFormats, wwo->caps.dwSupport);
+              wwo->outcaps.dwFormats, wwo->outcaps.dwSupport);
 
         snd_pcm_close(h);
 
@@ -928,34 +901,34 @@ LONG ALSA_WaveInit(void)
 
         /* check for volume control support */
         if (wwo->hctl) {
-            wwo->caps.dwSupport |= WAVECAPS_VOLUME;
+            wwo->outcaps.dwSupport |= WAVECAPS_VOLUME;
 
             if (chmin <= 2 && 2 <= chmax)
-                wwo->caps.dwSupport |= WAVECAPS_LRVOLUME;
+                wwo->outcaps.dwSupport |= WAVECAPS_LRVOLUME;
         }
 
-        if (wwo->caps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
+        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
                                    WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
                                    WAVE_FORMAT_96M08 | WAVE_FORMAT_1M16  |
                                    WAVE_FORMAT_2M16  | WAVE_FORMAT_4M16  |
                                    WAVE_FORMAT_48M16 | WAVE_FORMAT_96M16) )
             wwo->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
 
-        if (wwo->caps.dwFormats & (WAVE_FORMAT_1S08  | WAVE_FORMAT_2S08  |
+        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1S08  | WAVE_FORMAT_2S08  |
                                    WAVE_FORMAT_4S08  | WAVE_FORMAT_48S08 |
                                    WAVE_FORMAT_96S08 | WAVE_FORMAT_1S16  |
                                    WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
                                    WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
             wwo->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
 
-        if (wwo->caps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
+        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
                                    WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
                                    WAVE_FORMAT_96M08 | WAVE_FORMAT_1S08  |
                                    WAVE_FORMAT_2S08  | WAVE_FORMAT_4S08  |
                                    WAVE_FORMAT_48S08 | WAVE_FORMAT_96S08) )
             wwo->ds_caps.dwFlags |= DSCAPS_PRIMARY8BIT;
 
-        if (wwo->caps.dwFormats & (WAVE_FORMAT_1M16  | WAVE_FORMAT_2M16  |
+        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1M16  | WAVE_FORMAT_2M16  |
                                    WAVE_FORMAT_4M16  | WAVE_FORMAT_48M16 |
                                    WAVE_FORMAT_96M16 | WAVE_FORMAT_1S16  |
                                    WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
@@ -991,10 +964,10 @@ LONG ALSA_WaveInit(void)
 
         snprintf(wwi->interface_name, sizeof(wwi->interface_name), "winealsa: %s", wwi->device);
 
-        wwi->caps.wMid = 0x0002;
-        wwi->caps.wPid = 0x0104;
-        wwi->caps.vDriverVersion = 0x0100;
-        wwi->caps.dwFormats = 0x00000000;
+        wwi->incaps.wMid = 0x0002;
+        wwi->incaps.wPid = 0x0104;
+        wwi->incaps.vDriverVersion = 0x0100;
+        wwi->incaps.dwFormats = 0x00000000;
         strcpy(wwi->ds_desc.szDrvname, "winealsa.drv");
         wwi->dwSupport = 0;
 
@@ -1023,7 +996,7 @@ LONG ALSA_WaveInit(void)
 
         strcpy(wwi->ds_desc.szDesc, snd_pcm_info_get_name(info));
         MultiByteToWideChar(CP_ACP, 0, wwi->ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
-        strcpyW(wwi->caps.szPname, nameW);
+        strcpyW(wwi->incaps.szPname, nameW);
         EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
 #undef EXIT_ON_ERROR
         err = snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir);
@@ -1043,16 +1016,16 @@ LONG ALSA_WaveInit(void)
            if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
            { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##M08; \
+                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##M08; \
               if (chmin <= 2 && 2 <= chmax) \
-                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##S08; \
+                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##S08; \
            } \
            if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
            { \
               if (chmin <= 1 && 1 <= chmax) \
-                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##M16; \
+                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##M16; \
               if (chmin <= 2 && 2 <= chmax) \
-                  wwi->caps.dwFormats |= WAVE_FORMAT_##v##S16; \
+                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##S16; \
            } \
         }
         X(11025,1);
@@ -1064,7 +1037,7 @@ LONG ALSA_WaveInit(void)
 
         if (chmin > 1)
             FIXME("-\n");
-        wwi->caps.wChannels = chmax;
+        wwi->incaps.wChannels = chmax;
 
 	snd_pcm_access_mask_alloca(&acmask);
 	snd_pcm_hw_params_get_access_mask(hw_params, acmask);
@@ -1076,7 +1049,7 @@ LONG ALSA_WaveInit(void)
 #endif
         }
 
-        TRACE("Configured with dwFmts=%08lx\n", wwi->caps.dwFormats);
+        TRACE("Configured with dwFmts=%08lx\n", wwi->incaps.dwFormats);
 
         snd_pcm_close(h);
 
@@ -1256,7 +1229,7 @@ static int ALSA_PeekRingMessage(ALSA_MSG_RING* omr,
 /**************************************************************************
  * 			wodNotifyClient			[internal]
  */
-static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
     TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
 
@@ -1282,7 +1255,7 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
  * 				wodUpdatePlayedTotal	[internal]
  *
  */
-static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, snd_pcm_status_t* ps)
+static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
 {
     snd_pcm_sframes_t delay = 0;
     snd_pcm_delay(wwo->handle, &delay);
@@ -1299,7 +1272,7 @@ static BOOL wodUpdatePlayedTotal(WINE_WAVEOUT* wwo, snd_pcm_status_t* ps)
  * If the specified wave header is a begin loop and we're not already in
  * a loop, setup the loop.
  */
-static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
+static void wodPlayer_BeginWaveHdr(WINE_WAVEDEV* wwo, LPWAVEHDR lpWaveHdr)
 {
     wwo->lpPlayPtr = lpWaveHdr;
 
@@ -1324,7 +1297,7 @@ static void wodPlayer_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
  *
  * Advance the play pointer to the next waveheader, looping if required.
  */
-static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
+static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEDEV* wwo)
 {
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
 
@@ -1360,7 +1333,7 @@ static LPWAVEHDR wodPlayer_PlayPtrNext(WINE_WAVEOUT* wwo)
  * Returns the number of milliseconds to wait for the DSP buffer to play a
  * period
  */
-static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
+static DWORD wodPlayer_DSPWait(const WINE_WAVEDEV *wwo)
 {
     /* time for one period to be played */
     unsigned int val=0;
@@ -1377,7 +1350,7 @@ static DWORD wodPlayer_DSPWait(const WINE_WAVEOUT *wwo)
  * This is based on the number of bytes remaining to be written in the
  * wave.
  */
-static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
+static DWORD wodPlayer_NotifyWait(const WINE_WAVEDEV* wwo, LPWAVEHDR lpWaveHdr)
 {
     DWORD dwMillis;
 
@@ -1397,7 +1370,7 @@ static DWORD wodPlayer_NotifyWait(const WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
  * Writes the maximum number of frames possible to the DSP and returns
  * the number of frames written.
  */
-static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
+static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
 {
     /* Only attempt to write to free frames */
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
@@ -1445,7 +1418,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEOUT* wwo, DWORD* frames)
  * we notify all wavehdrs and remove them all from the queue even if they
  * are unplayed or part of a loop.
  */
-static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
+static DWORD wodPlayer_NotifyCompletions(WINE_WAVEDEV* wwo, BOOL force)
 {
     LPWAVEHDR		lpWaveHdr;
 
@@ -1517,7 +1490,7 @@ static void wait_for_poll(snd_pcm_t *handle, struct pollfd *ufds, unsigned int c
  *
  * wodPlayer helper. Resets current output stream.
  */
-static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
+static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo)
 {
     enum win_wm_message	msg;
     DWORD		        param;
@@ -1573,7 +1546,7 @@ static	void	wodPlayer_Reset(WINE_WAVEOUT* wwo)
 /**************************************************************************
  * 		      wodPlayer_ProcessMessages			[internal]
  */
-static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
+static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 {
     LPWAVEHDR           lpWaveHdr;
     enum win_wm_message	msg;
@@ -1657,7 +1630,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
  * Feed as much sound data as we can into the DSP and return the number of
  * milliseconds before it will be necessary to feed the DSP again.
  */
-static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
+static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
 {
     DWORD               availInQ;
 
@@ -1699,7 +1672,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
 static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 {
     WORD	  uDevID = (DWORD)pmt;
-    WINE_WAVEOUT* wwo = (WINE_WAVEOUT*)&WOutDev[uDevID];
+    WINE_WAVEDEV* wwo = (WINE_WAVEDEV*)&WOutDev[uDevID];
     DWORD         dwNextFeedTime = INFINITE;   /* Time before DSP needs feeding */
     DWORD         dwNextNotifyTime = INFINITE; /* Time before next wave completion */
     DWORD         dwSleepTime;
@@ -1747,7 +1720,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    memcpy(lpCaps, &WOutDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    memcpy(lpCaps, &WOutDev[wDevID].outcaps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
 }
 
@@ -1756,7 +1729,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
  */
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    WINE_WAVEOUT*	        wwo;
+    WINE_WAVEDEV*	        wwo;
     snd_pcm_hw_params_t *       hw_params;
     snd_pcm_sw_params_t *       sw_params;
     snd_pcm_access_t            access;
@@ -1806,7 +1779,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ALLOCATED;
     }
 
-    if ((dwFlags & WAVE_DIRECTSOUND) && !(wwo->caps.dwSupport & WAVECAPS_DIRECTSOUND))
+    if ((dwFlags & WAVE_DIRECTSOUND) && !(wwo->outcaps.dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
@@ -2055,7 +2028,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 static DWORD wodClose(WORD wDevID)
 {
     DWORD		ret = MMSYSERR_NOERROR;
-    WINE_WAVEOUT*	wwo;
+    WINE_WAVEDEV*	wwo;
 
     TRACE("(%u);\n", wDevID);
 
@@ -2180,7 +2153,7 @@ static DWORD wodReset(WORD wDevID)
  */
 static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-    WINE_WAVEOUT*	wwo;
+    WINE_WAVEDEV*	wwo;
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
@@ -2218,7 +2191,7 @@ static DWORD wodBreakLoop(WORD wDevID)
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
     WORD	       wleft, wright;
-    WINE_WAVEOUT*      wwo;
+    WINE_WAVEDEV*      wwo;
     int                min, max;
     int                left, right;
     DWORD              rc;
@@ -2259,7 +2232,7 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
     WORD	       wleft, wright;
-    WINE_WAVEOUT*      wwo;
+    WINE_WAVEDEV*      wwo;
     int                min, max;
     int                left, right;
     DWORD              rc;
@@ -2405,7 +2378,7 @@ struct IDsDriverBufferImpl
 
 static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
 {
-    WINE_WAVEOUT *     wwo = &(WOutDev[pdbi->drv->wDevID]);
+    WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
     snd_pcm_state_t    state = snd_pcm_state(wwo->handle);
 
     if ( state == SND_PCM_STATE_XRUN )
@@ -2429,7 +2402,7 @@ static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
 
 static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 {
-    WINE_WAVEOUT *     wwo = &(WOutDev[pdbi->drv->wDevID]);
+    WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
     unsigned int       channels;
     snd_pcm_format_t   format;
     snd_pcm_uframes_t  period_size;
@@ -2509,7 +2482,7 @@ static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
 
 static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 {
-    WINE_WAVEOUT *            wwo = &(WOutDev[pdbi->drv->wDevID]);
+    WINE_WAVEDEV *            wwo = &(WOutDev[pdbi->drv->wDevID]);
     snd_pcm_format_t          format;
     snd_pcm_uframes_t         frames;
     snd_pcm_uframes_t         ofs;
@@ -2673,7 +2646,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 						      LPDWORD lpdwPlay, LPDWORD lpdwWrite)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    WINE_WAVEOUT *      wwo = &(WOutDev[This->drv->wDevID]);
+    WINE_WAVEDEV *      wwo = &(WOutDev[This->drv->wDevID]);
     snd_pcm_uframes_t   hw_ptr;
     snd_pcm_uframes_t   period_size;
     int dir;
@@ -2705,7 +2678,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    WINE_WAVEOUT *       wwo = &(WOutDev[This->drv->wDevID]);
+    WINE_WAVEDEV *       wwo = &(WOutDev[This->drv->wDevID]);
     snd_pcm_state_t      state;
     int                  err;
 
@@ -2730,7 +2703,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    WINE_WAVEOUT *    wwo = &(WOutDev[This->drv->wDevID]);
+    WINE_WAVEDEV *    wwo = &(WOutDev[This->drv->wDevID]);
     int               err;
     DWORD             play;
     DWORD             write;
@@ -2917,7 +2890,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     TRACE("driver created\n");
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
-    if (!(WOutDev[wDevID].caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
+    if (!(WOutDev[wDevID].outcaps.dwSupport & WAVECAPS_DIRECTSOUND)) {
 	ERR("DirectSound flag not set\n");
 	MESSAGE("This sound card's driver does not support direct access\n");
 	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
@@ -2948,7 +2921,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 /**************************************************************************
 * 			widNotifyClient			[internal]
 */
-static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+static DWORD widNotifyClient(WINE_WAVEDEV* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
    TRACE("wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n", wMsg, dwParam1, dwParam2);
 
@@ -2984,14 +2957,14 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 	return MMSYSERR_BADDEVICEID;
     }
 
-    memcpy(lpCaps, &WInDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    memcpy(lpCaps, &WInDev[wDevID].incaps, min(dwSize, sizeof(*lpCaps)));
     return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
  * 				widRecorder_ReadHeaders		[internal]
  */
-static void widRecorder_ReadHeaders(WINE_WAVEIN * wwi)
+static void widRecorder_ReadHeaders(WINE_WAVEDEV * wwi)
 {
     enum win_wm_message tmp_msg;
     DWORD		tmp_param;
@@ -3022,7 +2995,7 @@ static void widRecorder_ReadHeaders(WINE_WAVEIN * wwi)
 static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 {
     WORD		uDevID = (DWORD)pmt;
-    WINE_WAVEIN*	wwi = (WINE_WAVEIN*)&WInDev[uDevID];
+    WINE_WAVEDEV*	wwi = (WINE_WAVEDEV*)&WInDev[uDevID];
     WAVEHDR*		lpWaveHdr;
     DWORD		dwSleepTime;
     DWORD		bytesRead;
@@ -3285,7 +3258,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
  */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    WINE_WAVEIN*	        wwi;
+    WINE_WAVEDEV*	        wwi;
     snd_pcm_hw_params_t *       hw_params;
     snd_pcm_sw_params_t *       sw_params;
     snd_pcm_access_t            access;
@@ -3520,7 +3493,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 static DWORD widClose(WORD wDevID)
 {
     DWORD		ret = MMSYSERR_NOERROR;
-    WINE_WAVEIN*	wwi;
+    WINE_WAVEDEV*	wwi;
 
     TRACE("(%u);\n", wDevID);
 
@@ -3640,7 +3613,7 @@ static DWORD widReset(WORD wDevID)
  */
 static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
-    WINE_WAVEIN*	wwi;
+    WINE_WAVEDEV*	wwi;
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
