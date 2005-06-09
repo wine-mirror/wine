@@ -1,5 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
  * DDEML library
  *
@@ -36,7 +34,7 @@
 #include "ddeml.h"
 #include "win.h"
 #include "wine/debug.h"
-#include "dde/dde_private.h"
+#include "dde_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 

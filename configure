@@ -20055,8 +20055,6 @@ esac
 
           ac_config_commands="$ac_config_commands dlls/kernel/messages"
 
-          ac_config_commands="$ac_config_commands dlls/user/dde"
-
           ac_config_commands="$ac_config_commands dlls/user/resources"
 
           ac_config_commands="$ac_config_commands dlls/wineps/data"
@@ -20875,7 +20873,6 @@ do
   "dlls/gdi/enhmfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/enhmfdrv" ;;
   "dlls/gdi/mfdrv" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi/mfdrv" ;;
   "dlls/kernel/messages" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel/messages" ;;
-  "dlls/user/dde" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/dde" ;;
   "dlls/user/resources" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user/resources" ;;
   "dlls/wineps/data" ) CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps/data" ;;
   "include/wine" ) CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
@@ -21667,8 +21664,6 @@ echo "$as_me: creating dlls/gdi/enhmfdrv" >&6;} && mkdir "dlls/gdi/enhmfdrv") ;;
 echo "$as_me: creating dlls/gdi/mfdrv" >&6;} && mkdir "dlls/gdi/mfdrv") ;;
     dlls/kernel/messages ) test -d "dlls/kernel/messages" || ({ echo "$as_me:$LINENO: creating dlls/kernel/messages" >&5
 echo "$as_me: creating dlls/kernel/messages" >&6;} && mkdir "dlls/kernel/messages") ;;
-    dlls/user/dde ) test -d "dlls/user/dde" || ({ echo "$as_me:$LINENO: creating dlls/user/dde" >&5
-echo "$as_me: creating dlls/user/dde" >&6;} && mkdir "dlls/user/dde") ;;
     dlls/user/resources ) test -d "dlls/user/resources" || ({ echo "$as_me:$LINENO: creating dlls/user/resources" >&5
 echo "$as_me: creating dlls/user/resources" >&6;} && mkdir "dlls/user/resources") ;;
     dlls/wineps/data ) test -d "dlls/wineps/data" || ({ echo "$as_me:$LINENO: creating dlls/wineps/data" >&5

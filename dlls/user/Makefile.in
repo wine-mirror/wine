@@ -22,10 +22,10 @@ C_SRCS = \
 	clipboard.c \
 	combo.c \
 	cursoricon.c \
-	dde/client.c \
-	dde/ddeml16.c \
-	dde/misc.c \
-	dde/server.c \
+	dde_client.c \
+	dde_misc.c \
+	dde_server.c \
+	ddeml16.c \
 	defdlg.c \
 	defwnd.c \
 	desktop.c \
@@ -145,9 +145,7 @@ RC_SRCS16 = \
 
 SUBDIRS = tests
 
-EXTRASUBDIRS = \
-	dde \
-	resources
+EXTRASUBDIRS = resources
 
 @MAKE_DLL_RULES@
 

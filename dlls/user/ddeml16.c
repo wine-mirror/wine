@@ -30,7 +30,7 @@
 #include "wownt32.h"
 #include "dde.h"
 #include "ddeml.h"
-#include "dde/dde_private.h"
+#include "dde_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);

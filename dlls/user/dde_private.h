@@ -1,5 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
  * DDEML library
  *

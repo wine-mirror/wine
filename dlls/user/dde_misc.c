@@ -1,5 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
  * DDEML library
  *
@@ -39,7 +37,7 @@
 #include "dde.h"
 #include "ddeml.h"
 #include "win.h"
-#include "dde/dde_private.h"
+#include "dde_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
