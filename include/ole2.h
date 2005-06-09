@@ -120,6 +120,7 @@ HRESULT     WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder);
 HRESULT     WINAPI OleInitialize(LPVOID pvReserved);
 void        WINAPI OleUninitialize(void);
 BOOL        WINAPI IsValidInterface(LPUNKNOWN punk);
+DWORD       WINAPI OleBuildVersion(VOID);
 
 /*
  *  OLE version conversion declarations
