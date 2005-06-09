@@ -583,96 +583,6 @@ static BOOL UNIXFS_build_subfolder_pidls(UnixFolder *pUnixFolder)
 }
 
 /******************************************************************************
- * UnixFolderIcon 
- *
- * Singleton class, which is used by the shell to extract icons to represent
- * folders in tree- and listviews. Currently, all this singleton does is to
- * provide the shell with the absolute path to "shell32.dll" and with the 
- * indices of the closed and opened folder icons in the resources of this dll.
- */
-
-/* UnixFolderIcon object layout and typedef.
- */
-typedef struct _UnixFolderIcon {
-    const IExtractIconWVtbl *lpIExtractIconWVtbl;
-    BOOL bFolder;
-} UnixFolderIcon;
-
-static HRESULT WINAPI UnixFolderIcon_IExtractIconW_QueryInterface(IExtractIconW *iface, REFIID riid, 
-    void **ppv) 
-{
-    TRACE("(iface=%p, riid=%p, ppv=%p)\n", iface, riid, ppv);
-    
-    if (!ppv) return E_INVALIDARG;
-    
-    if (IsEqualIID(&IID_IUnknown, riid) ||
-        IsEqualIID(&IID_IExtractIconW, riid))
-    {
-        *ppv = iface;
-    } else {
-        *ppv = NULL;
-        return E_NOINTERFACE;
-    }
-
-    IExtractIconW_AddRef(iface);
-    return S_OK;
-}
-
-static ULONG WINAPI UnixFolderIcon_IExtractIconW_AddRef(IExtractIconW *iface) {
-    TRACE("(iface=%p)\n", iface);
-    return 2;
-}
-
-static ULONG WINAPI UnixFolderIcon_IExtractIconW_Release(IExtractIconW *iface) {
-    TRACE("(iface=%p)\n", iface);
-    return 1;
-}
-
-static HRESULT WINAPI UnixFolderIcon_IExtractIconW_GetIconLocation(IExtractIconW *iface, 
-    UINT uFlags, LPWSTR szIconFile, UINT cchMax, INT* piIndex, UINT* pwFlags)
-{
-    UnixFolderIcon *This = ADJUST_THIS(UnixFolderIcon, IExtractIconW, iface);
-        
-    TRACE("(iface=%p, uFlags=%u, szIconFile=%s, cchMax=%u, piIndex=%p, pwFlags=%p)\n",
-            iface, uFlags, debugstr_w(szIconFile), cchMax, piIndex, pwFlags);
-    
-    lstrcpynW(szIconFile, swShell32Name, cchMax);
-    if (This->bFolder) {
-        *piIndex = (uFlags & GIL_OPENICON) ? -IDI_SHELL_FOLDER_OPEN : -IDI_SHELL_FOLDER;
-    } else {
-        *piIndex = -IDI_SHELL_DOCUMENT;
-    }
-    *pwFlags = 0;
-
-    return S_OK;
-}
-
-static HRESULT WINAPI UnixFolderIcon_IExtractIconW_Extract(
-    IExtractIconW *iface, LPCWSTR pszFile, UINT nIconIndex, HICON* phiconLarge, HICON* phiconSmall, 
-    UINT nIconSize)
-{
-    TRACE("(iface=%p, pszFile=%s, nIconIndex=%u, phiconLarge=%p, phiconSmall=%p, nIconSize=%u)"
-          "stub\n", iface, debugstr_w(pszFile), nIconIndex, phiconLarge, phiconSmall, nIconSize);
-
-    return E_NOTIMPL;
-}
-
-/* VTable for the IExtractIconW interface of the UnixFolderIcon class. 
- */
-static const IExtractIconWVtbl UnixFolderIcon_IExtractIconW_Vtbl = {
-    UnixFolderIcon_IExtractIconW_QueryInterface,
-    UnixFolderIcon_IExtractIconW_AddRef,
-    UnixFolderIcon_IExtractIconW_Release,
-    UnixFolderIcon_IExtractIconW_GetIconLocation,
-    UnixFolderIcon_IExtractIconW_Extract
-};
-
-/* The singleton instance
- */
-UnixFolderIcon UnixFolderIconSingleton = { &UnixFolderIcon_IExtractIconW_Vtbl, TRUE };
-UnixFolderIcon UnixDocumentIconSingleton = { &UnixFolderIcon_IExtractIconW_Vtbl, FALSE };
-
-/******************************************************************************
  * UnixFolder
  *
  * Class whose heap based instances represent unix filesystem directories.
@@ -935,14 +845,18 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetUIObjectOf(IShellFolder2* ifac
         *ppvOut = IDataObject_Constructor(hwndOwner, This->m_pidlLocation, apidl, cidl);
         return S_OK;
     } else if (IsEqualIID(&IID_IExtractIconA, riid)) {
-        FIXME("IExtractIconA\n");
-        return E_FAIL;
-    } else if (IsEqualIID(&IID_IExtractIconW, riid)) {
+        LPITEMIDLIST pidl;
         if (cidl != 1) return E_FAIL;
-        if (_ILIsFolder(apidl[0])) 
-            *ppvOut = &UnixFolderIconSingleton;
-        else
-            *ppvOut = &UnixDocumentIconSingleton;
+        pidl = ILCombine(This->m_pidlLocation, apidl[0]);
+        *ppvOut = (LPVOID)IExtractIconA_Constructor(pidl);
+        SHFree(pidl);
+        return S_OK;
+    } else if (IsEqualIID(&IID_IExtractIconW, riid)) {
+        LPITEMIDLIST pidl;
+        if (cidl != 1) return E_FAIL;
+        pidl = ILCombine(This->m_pidlLocation, apidl[0]);
+        *ppvOut = (LPVOID)IExtractIconW_Constructor(pidl);
+        SHFree(pidl);
         return S_OK;
     } else if (IsEqualIID(&IID_IDropTarget, riid)) {
         FIXME("IDropTarget\n");
