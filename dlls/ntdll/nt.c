@@ -674,6 +674,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             HANDLE hSnap = 0;
             WCHAR procname[1024];
             DWORD wlen = 0;
+            DWORD procstructlen = 0;
 
             SERVER_START_REQ( create_snapshot )
             {
@@ -694,7 +695,8 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     if (!(ret = wine_server_call( req )))
                     {
                         wlen = wine_server_reply_size(reply) + sizeof(WCHAR);
-                        if (Length >= len + sizeof(*spi))
+                        procstructlen = sizeof(*spi) + wlen + ((reply->threads - 1) * sizeof(SYSTEM_THREAD_INFORMATION));
+                        if (Length >= len + procstructlen)
                         {
                             /* ftCreationTime, ftUserTime, ftKernelTime;
                              * vmCounters, ioCounters
@@ -702,7 +704,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
  
                             memset(spi, 0, sizeof(*spi));
 
-                            spi->dwOffset = sizeof(*spi);
+                            spi->dwOffset = procstructlen - wlen;
                             spi->dwThreadCount = reply->threads;
 
                             /* spi->pszProcessName will be set later on */
@@ -714,24 +716,23 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 
                             /* spi->ti will be set later on */
 
-                            len += sizeof(*spi) - sizeof(spi->ti);
+                            len += procstructlen;
                         }
                         else ret = STATUS_INFO_LENGTH_MISMATCH;
                     }
                 }
                 SERVER_END_REQ;
+ 
                 if (ret != STATUS_SUCCESS)
                 {
                     if (ret == STATUS_NO_MORE_FILES) ret = STATUS_SUCCESS;
                     break;
                 }
-                if (Length >= len + wlen + spi->dwThreadCount * sizeof(SYSTEM_THREAD_INFORMATION))
+                else /* Length is already checked for */
                 {
                     int     i, j;
 
                     /* set thread info */
-                    spi->dwOffset += spi->dwThreadCount * sizeof(SYSTEM_THREAD_INFORMATION);
-                    len += spi->dwThreadCount * sizeof(SYSTEM_THREAD_INFORMATION);
                     i = j = 0;
                     while (ret == STATUS_SUCCESS)
                     {
@@ -768,13 +769,11 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     spi->ProcessName.MaximumLength = wlen;
                     memcpy( spi->ProcessName.Buffer, procname, spi->ProcessName.Length );
                     spi->ProcessName.Buffer[spi->ProcessName.Length / sizeof(WCHAR)] = 0;
-                    len += wlen;
                     spi->dwOffset += wlen;
 
                     last = spi;
                     spi = (SYSTEM_PROCESS_INFORMATION*)((char*)spi + spi->dwOffset);
                 }
-                else ret = STATUS_INFO_LENGTH_MISMATCH;
             }
             if (ret == STATUS_SUCCESS && last) last->dwOffset = 0;
             if (hSnap) NtClose(hSnap);
