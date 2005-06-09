@@ -192,6 +192,7 @@ typedef struct tagMSISCRIPT
     LPWSTR  *Actions[TOTAL_SCRIPTS];
     UINT    ActionCount[TOTAL_SCRIPTS];
     BOOL    ExecuteSequenceRun;
+    BOOL    FindRelatedProductsRun;
     BOOL    CurrentlyScripting;
 }MSISCRIPT;
 
@@ -202,6 +203,7 @@ void ACTION_FinishCustomActions( MSIPACKAGE* package);
 UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
 UINT ACTION_AppSearch(MSIPACKAGE *package);
+UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 
 DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );
 WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index);
@@ -222,3 +224,6 @@ VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
                                    LPCWSTR control, LPCWSTR attribute);
 VOID ControlEvent_UnSubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
                                       LPCWSTR control, LPCWSTR attribute );
+
+/* version stuff for upgrades */
+DWORD build_version_dword(LPCWSTR version_string);

@@ -23,6 +23,15 @@
 extern "C" {
 #endif
 
+enum msidbUpgradeAttributes {
+    msidbUpgradeAttributesMigrateFeatures = 0x0000001,
+    msidbUpgradeAttributesOnlyDetect = 0x00000002,
+    msidbUpgradeAttributesIgnoreRemoveFailure = 0x00000004,
+    msidbUpgradeAttributesVersionMinInclusive = 0x00000100,
+    msidbUpgradeAttributesVersionMaxInclusive = 0x00000200,
+    msidbUpgradeAttributesLanguagesExclusive = 0x00000400
+};
+
 enum msidbFileAttributes {
     msidbFileAttributesReadOnly = 0x00000001,
     msidbFileAttributesHidden = 0x00000002,
