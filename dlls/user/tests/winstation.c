@@ -82,6 +82,7 @@ static DWORD CALLBACK thread( LPVOID arg )
         HANDLE hthread = CreateThread( NULL, 0, thread, (char *)arg + 1, 0, NULL );
         Sleep(1000);
         WaitForSingleObject( hthread, INFINITE );
+        CloseHandle( hthread );
     }
     return 0;
 }
@@ -206,6 +207,7 @@ static void test_handles(void)
     Sleep(1000);
     trace( "get other thread desktop: %p\n", GetThreadDesktop(id) );
     WaitForSingleObject( hthread, INFINITE );
+    CloseHandle( hthread );
 }
 
 START_TEST(winstation)
