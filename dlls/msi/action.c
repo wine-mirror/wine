@@ -5972,6 +5972,10 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         {'P','r','o','d','u','c','t','I','c','o','n',0};
     static const WCHAR szARPProductIcon[] =
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
+    static const WCHAR szProductVersion[] =
+        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szVersion[] =
+        {'V','e','r','s','i','o','n',0};
     DWORD langid;
     LPWSTR buffer;
     DWORD size;
@@ -6071,13 +6075,14 @@ next:
 
     buffer = load_dynamic_property(package,szProductName,NULL);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey,szProductName,0,REG_SZ, (LPSTR)buffer,size);
+    RegSetValueExW(hukey,szProductName,0,REG_SZ, (BYTE *)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = sizeof(DWORD);
     langid = atoiW(buffer);
     RegSetValueExW(hukey,szLanguage,0,REG_DWORD, (BYTE *)&langid,size);
+    HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szARPProductIcon,NULL);
     if (buffer)
@@ -6087,6 +6092,16 @@ next:
         size = strlenW(path) * sizeof(WCHAR);
         RegSetValueExW(hukey,szProductIcon,0,REG_SZ, (BYTE *)path,size);
     }
+    HeapFree(GetProcessHeap(),0,buffer);
+
+    buffer = load_dynamic_property(package,szProductVersion,NULL);
+    if (buffer)
+    {
+        DWORD verdword = build_version_dword(buffer);
+        size = sizeof(DWORD);
+        RegSetValueExW(hukey,szVersion,0,REG_DWORD, (BYTE *)&verdword,size);
+    }
+    HeapFree(GetProcessHeap(),0,buffer);
     
     FIXME("Need to write more keys to the user registry\n");
   
