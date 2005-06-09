@@ -32,6 +32,7 @@
 #include "handle.h"
 #include "request.h"
 #include "process.h"
+#include "user.h"
 #include "wine/unicode.h"
 
 struct winstation
