@@ -32,6 +32,7 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
+#include "appmgmt.h"
 
 #include "wine/library.h"
 #include "wine/debug.h"
