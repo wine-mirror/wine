@@ -16,7 +16,6 @@ SPEC_SRCS16 = \
 	user.exe.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/windows/multimon.c \
 	button.c \
 	caret.c \
 	class.c \
@@ -147,7 +146,6 @@ RC_SRCS16 = \
 SUBDIRS = tests
 
 EXTRASUBDIRS = \
-	$(TOPOBJDIR)/windows \
 	dde \
 	resources
 

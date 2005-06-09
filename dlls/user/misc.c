@@ -3,6 +3,7 @@
  *
  * Copyright 1995 Thomas Sandford
  * Copyright 1997 Marcus Meissner
+ * Copyright 1998 Turchanov Sergey
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,6 +29,7 @@
 #include "winuser.h"
 #include "winnls.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -53,6 +55,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define USIG_PROCESS_RUNNING      0x0500
 #define USIG_PROCESS_LOADED       0x0600
 
+#define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
 
 /***********************************************************************
  *		SignalProc32 (USER.391)
@@ -304,6 +307,168 @@ BOOL WINAPI EnumDisplayDevicesW( LPVOID unused, DWORD i, LPDISPLAY_DEVICEW lpDis
         DISPLAY_DEVICE_PRIMARY_DEVICE |
         DISPLAY_DEVICE_VGA_COMPATIBLE;
     return TRUE;
+}
+
+/***********************************************************************
+ *		MonitorFromPoint (USER32.@)
+ */
+HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
+{
+    if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
+        ((ptScreenCoords.x >= 0) &&
+        (ptScreenCoords.x < GetSystemMetrics(SM_CXSCREEN)) &&
+        (ptScreenCoords.y >= 0) &&
+        (ptScreenCoords.y < GetSystemMetrics(SM_CYSCREEN))))
+    {
+        return xPRIMARY_MONITOR;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *		MonitorFromRect (USER32.@)
+ */
+HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
+{
+    if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
+        ((lprcScreenCoords->right > 0) &&
+        (lprcScreenCoords->bottom > 0) &&
+        (lprcScreenCoords->left < GetSystemMetrics(SM_CXSCREEN)) &&
+        (lprcScreenCoords->top < GetSystemMetrics(SM_CYSCREEN))))
+    {
+        return xPRIMARY_MONITOR;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *		MonitorFromWindow (USER32.@)
+ */
+HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
+{
+    WINDOWPLACEMENT wp;
+
+    if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
+        return xPRIMARY_MONITOR;
+
+    if (IsIconic(hWnd) ?
+            GetWindowPlacement(hWnd, &wp) :
+            GetWindowRect(hWnd, &wp.rcNormalPosition)) {
+
+        return MonitorFromRect(&wp.rcNormalPosition, dwFlags);
+    }
+
+    return NULL;
+}
+
+/***********************************************************************
+ *		GetMonitorInfoA (USER32.@)
+ */
+BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
+{
+    RECT rcWork;
+
+    if ((hMonitor == xPRIMARY_MONITOR) &&
+        lpMonitorInfo &&
+        (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
+        SystemParametersInfoA(SPI_GETWORKAREA, 0, &rcWork, 0))
+    {
+        SetRect( &lpMonitorInfo->rcMonitor, 0, 0,
+                 GetSystemMetrics(SM_CXSCREEN),
+                 GetSystemMetrics(SM_CYSCREEN) );
+        lpMonitorInfo->rcWork = rcWork;
+        lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
+
+	if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXA))
+            strcpy(((MONITORINFOEXA*)lpMonitorInfo)->szDevice, "DISPLAY");
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *		GetMonitorInfoW (USER32.@)
+ */
+BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
+{
+    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
+    RECT rcWork;
+
+    if ((hMonitor == xPRIMARY_MONITOR) &&
+        lpMonitorInfo &&
+        (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcWork, 0))
+    {
+        SetRect( &lpMonitorInfo->rcMonitor, 0, 0,
+                 GetSystemMetrics(SM_CXSCREEN),
+                 GetSystemMetrics(SM_CYSCREEN) );
+        lpMonitorInfo->rcWork = rcWork;
+        lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
+
+        if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXW))
+            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, displayW);
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/***********************************************************************
+ *		EnumDisplayMonitors (USER32.@)
+ */
+BOOL WINAPI EnumDisplayMonitors(
+        HDC             hdcOptionalForPainting,
+        LPRECT         lprcEnumMonitorsThatIntersect,
+        MONITORENUMPROC lpfnEnumProc,
+        LPARAM          dwData)
+{
+    RECT rcLimit;
+    SetRect( &rcLimit, 0, 0, GetSystemMetrics(SM_CXSCREEN),
+             GetSystemMetrics(SM_CYSCREEN) );
+
+    if (!lpfnEnumProc)
+        return FALSE;
+
+    if (hdcOptionalForPainting)
+    {
+        RECT    rcClip;
+        POINT   ptOrg;
+
+        switch (GetClipBox(hdcOptionalForPainting, &rcClip))
+        {
+        default:
+            if (!GetDCOrgEx(hdcOptionalForPainting, &ptOrg))
+                return FALSE;
+
+            OffsetRect(&rcLimit, -ptOrg.x, -ptOrg.y);
+            if (IntersectRect(&rcLimit, &rcLimit, &rcClip) &&
+                (!lprcEnumMonitorsThatIntersect ||
+                     IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect))) {
+
+                break;
+            }
+            /* fall through */
+        case NULLREGION:
+             return TRUE;
+        case ERROR:
+             return FALSE;
+        }
+    } else {
+        if (    lprcEnumMonitorsThatIntersect &&
+                !IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect)) {
+
+            return TRUE;
+        }
+    }
+
+    return lpfnEnumProc(
+            xPRIMARY_MONITOR,
+            hdcOptionalForPainting,
+            &rcLimit,
+            dwData);
 }
 
 /***********************************************************************

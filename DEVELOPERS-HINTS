@@ -242,15 +242,6 @@ Support programs, libraries, etc:
 	tools/wrc/		- the resource compiler
 
 
-Miscellaneous:
---------------
-
-Note: these directories will ultimately get moved into their
-respective dlls.
-
-	windows/		- USER window management
-
-
 
 IMPLEMENTING NEW API CALLS
 ==========================
