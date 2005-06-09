@@ -41,7 +41,7 @@ static INT CALLBACK dpa_strcmp(LPVOID pvstr1, LPVOID pvstr2, LPARAM flags)
   return lstrcmpA (str1, str2);
 }
 
-void DPA_test()
+static void DPA_test(void)
 {
   HDPA dpa_ret;
   INT  int_ret;

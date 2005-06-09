@@ -296,7 +296,7 @@ static void PROPSHEET_GetPageRect(const PropSheetInfo * psInfo, HWND hwndDlg,
  *
  * Find page index corresponding to page resource id.
  */
-INT PROPSHEET_FindPageByResId(PropSheetInfo * psInfo, LRESULT resId)
+static INT PROPSHEET_FindPageByResId(PropSheetInfo * psInfo, LRESULT resId)
 {
    INT i;
 
@@ -1265,7 +1265,7 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
  * Subclassing window procedure for wizard extrior pages to prevent drawing
  * background and so drawing above the watermark.
  */
-LRESULT CALLBACK
+static LRESULT CALLBACK
 PROPSHEET_WizardSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uID, DWORD_PTR dwRef)
 {
   switch (uMsg)

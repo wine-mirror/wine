@@ -134,7 +134,7 @@ static const int DayOfWeekTable[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
 /* january is 1, december is 12 */
 int MONTHCAL_MonthLength(int month, int year)
 {
-const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
+  const int mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
   /*Wrap around, this eases handling*/
   if(month == 0)
     month = 12;
@@ -167,19 +167,6 @@ static int MONTHCAL_ValidateTime(SYSTEMTIME time)
   if(time.wMilliseconds > 999) return FALSE;
 
   return TRUE;
-}
-
-
-void MONTHCAL_CopyTime(const SYSTEMTIME *from, SYSTEMTIME *to)
-{
-  to->wYear = from->wYear;
-  to->wMonth = from->wMonth;
-  to->wDayOfWeek = from->wDayOfWeek;
-  to->wDay = from->wDay;
-  to->wHour = from->wHour;
-  to->wMinute = from->wMinute;
-  to->wSecond = from->wSecond;
-  to->wMilliseconds = from->wMilliseconds;
 }
 
 

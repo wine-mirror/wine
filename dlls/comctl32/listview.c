@@ -6926,7 +6926,7 @@ static DWORD LISTVIEW_SetIconSpacing(LISTVIEW_INFO *infoPtr, INT cx, INT cy)
     return oldspacing;
 }
 
-inline void set_icon_size(SIZE *size, HIMAGELIST himl, BOOL small)
+static inline void set_icon_size(SIZE *size, HIMAGELIST himl, BOOL small)
 {
     INT cx, cy;
     

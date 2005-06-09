@@ -39,7 +39,7 @@
 #define trace_tab(str)
 #endif
 
-HWND
+static HWND
 create_tabcontrol (DWORD style)
 {
     HWND handle;
@@ -76,7 +76,7 @@ create_tabcontrol (DWORD style)
     return handle;
 }
 
-void CheckSize(HWND hwnd, INT width, INT height)
+static void CheckSize(HWND hwnd, INT width, INT height)
 {
     RECT rTab, r1;
 
@@ -95,7 +95,7 @@ void CheckSize(HWND hwnd, INT width, INT height)
 	    "Expected [%d,%d] got [%ld,%ld]\n", width, height, rTab.right - rTab.left, rTab.bottom - rTab.top);
 }
 
-void TabCheckSetSize(HWND hwnd, INT SetWidth, INT SetHeight, INT ExpWidth, INT ExpHeight)
+static void TabCheckSetSize(HWND hwnd, INT SetWidth, INT SetHeight, INT ExpWidth, INT ExpHeight)
 {
     SendMessage (hwnd, TCM_SETITEMSIZE, 0,
 	(LPARAM) MAKELPARAM((SetWidth >= 0) ? SetWidth:0, (SetHeight >= 0) ? SetHeight:0));

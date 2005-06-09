@@ -27,7 +27,7 @@
 static HDC desktopDC;
 static HINSTANCE hinst;
 
-HWND create_edit_control (DWORD style, DWORD exstyle)
+static HWND create_edit_control (DWORD style, DWORD exstyle)
 {
     HWND handle;
 
@@ -43,7 +43,7 @@ HWND create_edit_control (DWORD style, DWORD exstyle)
     return handle;
 }
 
-HWND create_updown_control (HWND hWndEdit)
+static HWND create_updown_control (HWND hWndEdit)
 {
     HWND hWndUpDown;
 
