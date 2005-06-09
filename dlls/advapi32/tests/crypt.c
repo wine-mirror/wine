@@ -591,13 +591,13 @@ static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvN
 	PSTR ptr;
 	DWORD user = dwFlags & CRYPT_USER_DEFAULT;
 	
-	LPSTR MACHINESTR = "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types\\Type XXX";
-	LPSTR USERSTR = "Software\\Microsoft\\Cryptography\\Provider Type XXX";
+	LPCSTR machinestr = "Software\\Microsoft\\Cryptography\\Defaults\\Provider Types\\Type XXX";
+	LPCSTR userstr = "Software\\Microsoft\\Cryptography\\Provider Type XXX";
 	
-	keyname = LocalAlloc(LMEM_ZEROINIT, (user ? strlen(USERSTR) : strlen(MACHINESTR)) + 1);
+	keyname = LocalAlloc(LMEM_ZEROINIT, (user ? strlen(userstr) : strlen(machinestr)) + 1);
 	if (keyname)
 	{
-		user ? strcpy(keyname, USERSTR) : strcpy(keyname, MACHINESTR);
+		user ? strcpy(keyname, userstr) : strcpy(keyname, machinestr);
 		ptr = keyname + strlen(keyname);
 		*(--ptr) = (dwProvType % 10) + '0';
 		*(--ptr) = ((dwProvType / 10) % 10) + '0';

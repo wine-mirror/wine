@@ -53,7 +53,7 @@ static void init(void)
     hmod = GetModuleHandle("advapi32.dll");
 }
 
-void test_sid()
+static void test_sid(void)
 {
     struct sidRef refs[] = {
      { { {0x00,0x00,0x33,0x44,0x55,0x66} }, "S-1-860116326-1" },
@@ -144,11 +144,11 @@ void test_sid()
     }
 }
 
-void test_trustee()
+static void test_trustee(void)
 {
     TRUSTEE trustee;
     PSID psid;
-    LPSTR str = "2jjj";
+    char str[] = "2jjj";
 
     SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
@@ -253,7 +253,7 @@ static void test_allocateLuid(void)
 
 static void test_lookupPrivilegeName(void)
 {
-    BOOL (WINAPI *pLookupPrivilegeNameA)(LPSTR, PLUID, LPSTR, LPDWORD);
+    BOOL (WINAPI *pLookupPrivilegeNameA)(LPCSTR, PLUID, LPSTR, LPDWORD);
     char buf[MAX_PATH]; /* arbitrary, seems long enough */
     DWORD cchName = sizeof(buf);
     LUID luid = { 0, 0 };
