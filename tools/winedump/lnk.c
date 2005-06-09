@@ -300,6 +300,41 @@ static int dump_location(int fd)
     return 0;
 }
 
+static const unsigned char table_dec85[0x80] = {
+0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+0xff,0x00,0xff,0xff,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0xff,
+0x0c,0x0d,0x0e,0x0f,0x10,0x11,0x12,0x13,0x14,0x15,0xff,0xff,0xff,0x16,0xff,0x17,
+0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,
+0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,0x30,0x31,0x32,0x33,0xff,0x34,0x35,0x36,
+0x37,0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f,0x40,0x41,0x42,0x43,0x44,0x45,0x46,
+0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,0x4e,0x4f,0x50,0x51,0x52,0xff,0x53,0x54,0xff,
+};
+
+static int base85_to_guid( const unsigned char *str, LPGUID guid )
+{
+    DWORD i, val = 0, base = 1, *p;
+
+    p = (DWORD*) guid;
+    for( i=0; i<20; i++ )
+    {
+        if( (i%5) == 0 )
+        {
+            val = 0;
+            base = 1;
+        }
+        val += table_dec85[str[i]] * base;
+        if( str[i] >= 0x80 )
+            return 0;
+        if( table_dec85[str[i]] == 0xff )
+            return 0;
+        if( (i%5) == 4 )
+            p[i/5] = val;
+        base *= 85;
+    }
+    return 1;
+}
+
 static int dump_advertise_info(int fd, const char *type)
 {
     LINK_ADVERTISEINFO *avt;
@@ -312,6 +347,33 @@ static int dump_advertise_info(int fd, const char *type)
     printf("--------------\n\n");
     printf("magic   = %lx\n", avt->magic);
     printf("%s = %s\n", type, avt->bufA);
+    if (avt->magic == 0xa0000006)
+    {
+        char prod_str[40], comp_str[40], feat_str[40];
+        char *feat, *comp;
+        GUID guid;
+
+        if (base85_to_guid(avt->bufA, &guid))
+            guid_to_string( &guid, prod_str );
+        else
+            strcpy( prod_str, "?" );
+
+        comp = &avt->bufA[20];
+        feat = strchr(comp,'>');
+        if (feat)
+            memcpy( comp_str, comp, feat - comp );
+        else
+            strcpy( prod_str, "?" );
+
+        if (feat && base85_to_guid( &feat[1], &guid ))
+            guid_to_string( &guid, feat_str );
+        else
+            strcpy( prod_str, "?" );
+
+        printf("  product:   %s\n", prod_str);
+        printf("  component: %s\n", comp_str );
+        printf("  feature:   %s\n", feat_str);
+    }
     printf("\n");
 
     return 0;
@@ -369,7 +431,7 @@ static int dump_lnk_fd(int fd)
     if (hdr->dwFlags & SCF_PRODUCT)
         dump_advertise_info(fd, "product");
     if (hdr->dwFlags & SCF_COMPONENT)
-        dump_advertise_info(fd, "component");
+        dump_advertise_info(fd, "msi string");
 
     return 0;
 }
