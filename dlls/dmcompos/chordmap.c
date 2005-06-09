@@ -26,7 +26,7 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  * IDirectMusicChordMapImpl implementation
  */
 /* IDirectMusicChordMapImpl IUnknown part: */
-HRESULT WINAPI IDirectMusicChordMapImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, UnknownVtbl, iface);
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	
@@ -63,7 +63,7 @@ ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	return ref;
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_Release (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, UnknownVtbl, iface);
 	ULONG ref = InterlockedDecrement(&This->ref);
 
@@ -85,7 +85,7 @@ static const IUnknownVtbl DirectMusicChordMap_Unknown_Vtbl = {
 };
 
 /* IDirectMusicChordMapImpl IDirectMusicChordMap part: */
-HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_QueryInterface (LPDIRECTMUSICCHORDMAP iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_QueryInterface (LPDIRECTMUSICCHORDMAP iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ChordMapVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
@@ -95,12 +95,12 @@ ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_AddRef (LPDIRECTMUSIC
 	return IDirectMusicChordMapImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_Release (LPDIRECTMUSICCHORDMAP iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_Release (LPDIRECTMUSICCHORDMAP iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ChordMapVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_GetScale (LPDIRECTMUSICCHORDMAP iface, DWORD* pdwScale) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicChordMap_GetScale (LPDIRECTMUSICCHORDMAP iface, DWORD* pdwScale) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ChordMapVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pdwScale);
 	return S_OK;
@@ -114,7 +114,7 @@ static const IDirectMusicChordMapVtbl DirectMusicChordMap_ChordMap_Vtbl = {
 };
 
 /* IDirectMusicChordMapImpl IDirectMusicObject part: */
-HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
@@ -124,12 +124,12 @@ ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOB
 	return IDirectMusicChordMapImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p)\n", This, pDesc);
 	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
@@ -137,7 +137,7 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_GetDescriptor (LPDIRE
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
 	
@@ -171,7 +171,7 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_SetDescriptor (LPDIRE
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -329,7 +329,7 @@ static const IDirectMusicObjectVtbl DirectMusicChordMap_Object_Vtbl = {
 
 	
 /* IDirectMusicChordMapImpl IPersistStream part: */
-HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
@@ -339,20 +339,20 @@ ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTSTREAM ifa
 	return IDirectMusicChordMapImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicChordMapImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
 	return IDirectMusicChordMapImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
 	ICOM_THIS_MULTI(IDirectMusicChordMapImpl, PersistStreamVtbl, iface);
 
 	FOURCC chunkID;
@@ -499,11 +499,11 @@ HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Load (LPPERSISTSTREAM ifa
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
+static HRESULT WINAPI IDirectMusicChordMapImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
 	return E_NOTIMPL;
 }
 
