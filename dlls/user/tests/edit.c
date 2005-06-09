@@ -93,6 +93,25 @@ static void set_client_height(HWND Wnd, unsigned Height)
                  SWP_NOMOVE | SWP_NOZORDER);
 }
 
+#define edit_pos_ok(exp, got, txt) \
+    ok(exp == got, "wrong " #txt " expected %d got %ld\n", exp, got);
+
+#define edit_todo_pos_ok(exp, got, txt, todo) \
+    if (todo) todo_wine { edit_pos_ok(exp, got, txt); } \
+    else edit_pos_ok(exp, got, txt)
+
+#define check_pos(hwEdit, set_height, test_top, test_height, test_left, todo_top, todo_height, todo_left) \
+do { \
+    RECT format_rect; \
+    int left_margin; \
+    set_client_height(hwEdit, set_height); \
+    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &format_rect); \
+    left_margin = LOWORD(SendMessage(hwEdit, EM_GETMARGINS, 0, 0)); \
+    edit_todo_pos_ok(test_top, format_rect.top, vertical position, todo_top); \
+    edit_todo_pos_ok((int)test_height, format_rect.bottom - format_rect.top, height, todo_height); \
+    edit_todo_pos_ok(test_left, format_rect.left - left_margin, left, todo_left); \
+} while(0)
+
 static void test_edit_control_1(void)
 {
     HWND hwEdit;
@@ -102,7 +121,6 @@ static void test_edit_control_1(void)
     HFONT Font, OldFont;
     HDC Dc;
     TEXTMETRIC Metrics;
-    RECT FormatRect;
 
     msMessage.message = WM_KEYDOWN;
 
@@ -172,113 +190,244 @@ static void test_edit_control_1(void)
     SelectObject(Dc, OldFont);
     ReleaseDC(NULL, Dc);
 
-    trace("EDIT: vertical text position\n");
+    trace("EDIT: Text position\n");
+    hwEdit = create_editcontrol(0, 0);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, 0);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 1, 1, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, WS_EX_CLIENTEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, WS_EX_CLIENTEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 1, 1, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
     hwEdit = create_editcontrol(WS_POPUP, 0);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
-    set_client_height(hwEdit, Metrics.tmHeight - 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight - 1 == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight - 1, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 2);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 10);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 0, Metrics.tmHeight    , 0, 0, 0, 0);
     DestroyWindow(hwEdit);
 
     hwEdit = create_editcontrol(WS_POPUP | WS_BORDER, 0);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
-    set_client_height(hwEdit, Metrics.tmHeight - 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight - 1 == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight - 1, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 2);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 3);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 4);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(2 == FormatRect.top, "wrong vertical position expected 2 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 10);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(2 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 0, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  3, 0, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 2, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 2, Metrics.tmHeight    , 2, 0, 0, 0);
     DestroyWindow(hwEdit);
 
     hwEdit = create_editcontrol(WS_POPUP, WS_EX_CLIENTEDGE);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
-    set_client_height(hwEdit, Metrics.tmHeight - 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight - 1 == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight - 1, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 2);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(1 == FormatRect.top, "wrong vertical position expected 1 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 4);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(1 == FormatRect.top, "wrong vertical position expected 1 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 10);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(1 == FormatRect.top, "wrong vertical position expected 1 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
     DestroyWindow(hwEdit);
 
     hwEdit = create_editcontrol(WS_POPUP | WS_BORDER, WS_EX_CLIENTEDGE);
     SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
-    set_client_height(hwEdit, Metrics.tmHeight - 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight - 1 == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight - 1, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 1);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(0 == FormatRect.top, "wrong vertical position expected 0 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 2);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(1 == FormatRect.top, "wrong vertical position expected 1 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 4);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(1 == FormatRect.top, "wrong vertical position expected 1 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
-    set_client_height(hwEdit, Metrics.tmHeight + 10);
-    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM) &FormatRect);
-    ok(1 == FormatRect.top, "wrong vertical position expected 1 got %ld\n", FormatRect.top);
-    ok(Metrics.tmHeight == FormatRect.bottom - FormatRect.top, "wrong height expected %ld got %ld\n", Metrics.tmHeight, FormatRect.bottom - FormatRect.top);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_POPUP, WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 0, Metrics.tmHeight    , 0, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_POPUP | WS_BORDER, WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 0, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  3, 0, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 2, Metrics.tmHeight    , 2, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 2, Metrics.tmHeight    , 2, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_POPUP, WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_POPUP | WS_BORDER, WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, ES_MULTILINE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, ES_MULTILINE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 1, 1, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, ES_MULTILINE | WS_EX_CLIENTEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, ES_MULTILINE | WS_EX_CLIENTEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, ES_MULTILINE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, ES_MULTILINE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 1, 1, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 1, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(0, ES_MULTILINE | WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(WS_BORDER, ES_MULTILINE | WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
+    SendMessage(hwEdit, WM_SETFONT, (WPARAM) Font, (LPARAM) FALSE);
+    check_pos(hwEdit, Metrics.tmHeight -  1, 0, Metrics.tmHeight - 1, 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight     , 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  1, 0, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  2, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight +  4, 1, Metrics.tmHeight    , 1, 0, 0, 0);
+    check_pos(hwEdit, Metrics.tmHeight + 10, 1, Metrics.tmHeight    , 1, 0, 0, 0);
     DestroyWindow(hwEdit);
 }
 
@@ -400,7 +549,6 @@ static LRESULT CALLBACK edit3_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPAR
     }
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
-
 
 /* Test behaviour of WM_SETTEXT, WM_REPLACESEL and notificatisons sent in response
  * to these messages.

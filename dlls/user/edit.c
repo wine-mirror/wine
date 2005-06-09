@@ -2216,26 +2216,9 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 	LONG_PTR ExStyle;
 
 	CopyRect(&es->format_rect, rc);
-	if (es->style & ES_MULTILINE)
-	{
+	ExStyle = GetWindowLongPtrW(es->hwndSelf, GWL_EXSTYLE);
+	if ((es->style & WS_POPUP) && !(ExStyle & WS_EX_CLIENTEDGE)) {
 		if (es->style & WS_BORDER) {
-			INT bw = GetSystemMetrics(SM_CXBORDER) + 1;
-			es->format_rect.left += bw;
-			es->format_rect.right -= bw;
-			es->format_rect.top += bw;
-			es->format_rect.bottom -= bw;
-		}
-	}
-	else
-	{
-		ExStyle = GetWindowLongPtrW(es->hwndSelf, GWL_EXSTYLE);
-		if (ExStyle & WS_EX_CLIENTEDGE) {
-			if (es->line_height + 2 <=
-			    es->format_rect.bottom - es->format_rect.top) {
-				es->format_rect.top++;
-				es->format_rect.bottom--;
-			}
-		} else if (es->style & WS_BORDER) {
 			INT bw = GetSystemMetrics(SM_CXBORDER) + 1;
 			es->format_rect.left += bw;
 			es->format_rect.right -= bw;
@@ -2245,6 +2228,14 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 				es->format_rect.bottom -= bw;
 			}
 		}
+	} else {
+		if (es->line_height + 2 <=
+			es->format_rect.bottom - es->format_rect.top) {
+			es->format_rect.top++;
+			es->format_rect.bottom--;
+		}
+		es->format_rect.left++;
+		es->format_rect.right--;
 	}
 	es->format_rect.left += es->left_margin;
 	es->format_rect.right -= es->right_margin;
