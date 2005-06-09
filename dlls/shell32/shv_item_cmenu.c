@@ -200,7 +200,7 @@ void WINAPI _InsertMenuItem (
 	else
 	{
 	  mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-	  mii.dwTypeData = dwTypeData;
+	  mii.dwTypeData = (LPSTR) dwTypeData;
 	  mii.fState = fState;
 	}
 	mii.wID = wID;
