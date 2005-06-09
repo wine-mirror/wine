@@ -40,12 +40,25 @@ static LPDIRECT3D7          lpD3D = NULL;
 static LPDIRECTDRAWSURFACE7 lpDDS = NULL;
 static LPDIRECT3DDEVICE7    lpD3DDevice = NULL;
 
+static HRESULT (WINAPI *pDirectDrawCreateEx)(LPGUID,LPVOID*,REFIID,LPUNKNOWN);
+
+static void init_function_pointers(void)
+{
+    HMODULE hmod = GetModuleHandleA("ddraw.dll");
+
+    if(hmod)
+    {
+        pDirectDrawCreateEx = (void*)GetProcAddress(hmod, "DirectDrawCreateEx");
+    }
+}
+
+
 static void CreateDirect3D()
 {
     HRESULT rc;
     DDSURFACEDESC2 ddsd;
 
-    rc = DirectDrawCreateEx(NULL, (void**)&lpDD,
+    rc = pDirectDrawCreateEx(NULL, (void**)&lpDD,
         &IID_IDirectDraw7, NULL);
     ok(rc==DD_OK, "DirectDrawCreateEx returned: %lx\n", rc);
 
@@ -190,6 +203,12 @@ static void LightTest()
 
 START_TEST(d3d)
 {
+    init_function_pointers();
+    if(!pDirectDrawCreateEx) {
+        trace("function DirectDrawCreateEx not available, skipping tests\n");
+        return;
+    }
+
     CreateDirect3D();
     LightTest();
     ReleaseDirect3D();
