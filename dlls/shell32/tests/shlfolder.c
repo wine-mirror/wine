@@ -219,11 +219,13 @@ START_TEST(shlfolder)
 {
     ITEMIDLIST *newPIDL;
     IShellFolder *IDesktopFolder, *testIShellFolder;
+    char  cCurrDirA [MAX_PATH] = {0};
     WCHAR cCurrDirW [MAX_PATH];
     static const WCHAR cTestDirW[] = {'\\','t','e','s','t','d','i','r',0};
     HRESULT hr;
     
-    GetCurrentDirectoryW(MAX_PATH, cCurrDirW);
+    GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
+    MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
     strcatW(cCurrDirW, cTestDirW);
 
     OleInitialize(NULL);
