@@ -362,7 +362,7 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
     int result;
     int already = iosb->Information;
 
-    TRACE("%p %p %lu\n", iosb, fileio->buffer, status);
+    TRACE("%p %p 0x%lx\n", iosb, fileio->buffer, status);
 
     switch (status)
     {
@@ -525,7 +525,6 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         {
             wine_server_release_fd( hFile, unix_handle );
             if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
-            RtlFreeHeap(GetProcessHeap(), 0, fileio);
             return ret;
         }
         if (flags & FD_FLAG_TIMEOUT)
@@ -596,7 +595,7 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
     int result;
     int already = iosb->Information;
 
-    TRACE("(%p %p %lu)\n",iosb, fileio->buffer, status);
+    TRACE("(%p %p 0x%lx)\n",iosb, fileio->buffer, status);
 
     switch (status)
     {
@@ -739,7 +738,6 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         {
             wine_server_release_fd( hFile, unix_handle );
             if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
-            RtlFreeHeap(GetProcessHeap(), 0, fileio);
             return ret;
         }
         if (flags & FD_FLAG_TIMEOUT)
