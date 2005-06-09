@@ -90,8 +90,6 @@ if ($options->wine || $options->winetest) {
 }
 
 my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv);
-my @ntdll_dirs = qw(misc);
-my @user32_dirs = qw(dlls/user/dde windows);
 
 push @makefile_in_files, "tools/winebuild/Makefile.in";
 
@@ -275,61 +273,6 @@ MAKEFILE_IN: foreach my $makefile_in_file (@makefile_in_files) {
 	    $modules{$module}{resource_files} = $local_resource_files;
 	    $modules{$module}{imports} = [];
 	}
-    } elsif($module eq "ntdll.dll") {
-	foreach my $dir (@ntdll_dirs) {
-	    my $module = "ntdll_$dir.lib";
-	    $module =~ s%/%_%g;
-
-	    my $project = "ntdll_$dir";
-	    $project =~ s%/%_%g;
-
-	    my $type = "lib";
-	    my $dsp_file = "$dir/$project.dsp";
-
-	    ($source_files, my $local_source_files) = filter_files($source_files, "/$dir/");
-	    ($header_files, my $local_header_files) = filter_files($header_files, "/$dir/");
-	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "/$dir/");
-
-	    $modules{$module}{wine} = 1;
-	    $modules{$module}{winetest} = 0;
-	    $modules{$module}{project} = $project;
-	    $modules{$module}{type} = $type;
-	    $modules{$module}{dsp_file} = $dsp_file;
-	    $modules{$module}{c_srcs} = $c_srcs;
-	    $modules{$module}{source_files} = $local_source_files;
-	    $modules{$module}{header_files} = $local_header_files;
-	    $modules{$module}{resource_files} = $local_resource_files;
-	    $modules{$module}{imports} = [];
-	}
-    } elsif($module eq "user32.dll") {
-	foreach my $dir (@user32_dirs) {
-	    my $dir2 = $dir;
-	    $dir2 =~ s%^.*?/([^/]+)$%$1%;
-
-	    my $module = "user32_$dir2.lib";
-	    $module =~ s%/%_%g;
-
-	    my $project = "user32_$dir2";
-	    $project =~ s%/%_%g;
-
-	    my $type = "lib";
-	    my $dsp_file = "$dir/$project.dsp";
-
-	    ($source_files, my $local_source_files) = filter_files($source_files, "$dir2/");
-	    ($header_files, my $local_header_files) = filter_files($header_files, "$dir2/");
-	    ($resource_files, my $local_resource_files) = filter_files($resource_files, "$dir2/");
-
-	    $modules{$module}{wine} = 1;
-	    $modules{$module}{winetest} = 0;
-	    $modules{$module}{project} = $project;
-	    $modules{$module}{type} = $type;
-	    $modules{$module}{dsp_file} = $dsp_file;
-	    $modules{$module}{c_srcs} = $c_srcs;
-	    $modules{$module}{source_files} = $local_source_files;
-	    $modules{$module}{header_files} = $local_header_files;
-	    $modules{$module}{resource_files} = $local_resource_files;
-	    $modules{$module}{imports} = [];
-	}
     }
 
     $modules{$module}{wine} = 1;
@@ -479,7 +422,7 @@ sub _generate_dsp($$) {
     my @resource_files = @{$modules{$module}{resource_files}};
 
     if ($project !~ /^wine(?:_unicode|build|runtests|test)?$/ &&
-        $project !~ /^(?:gdi32|ntdll|user32)_.+?$/ &&
+        $project !~ /^(?:gdi32)_.+?$/ &&
         $project !~ /_test$/)
     {
 	push @source_files, "$project.spec";
@@ -685,14 +628,6 @@ sub _generate_dsp($$) {
 	    push @defines2, qw(__i386__ _X86_);
 
 	    if($project =~ /^gdi32_(?:enhmfdrv|mfdrv)$/) {
-		push @includes, "..";
-	    }
-
-	    if($project eq "user32_windows") {
-		push @includes, "..\\dlls\\user";
-	    }
-
-	    if($project eq "user32_dde") {
 		push @includes, "..";
 	    }
 
@@ -1048,7 +983,7 @@ sub _generate_wine_dsw($) {
 	    @dependencies = ();
 	} elsif($project =~ /^winebuild$/) {
 	    @dependencies = ("wine", "wine_unicode");
-	} elsif($project =~ /^(?:gdi32|ntdll|user32)_.+?$/) {
+	} elsif($project =~ /^(?:gdi32)_.+?$/) {
 	    @dependencies = ();
 	} else {
 	    @dependencies = ("wine", "wine_unicode", "winebuild");
@@ -1060,21 +995,6 @@ sub _generate_wine_dsw($) {
 		$dir2 =~ s%^.*?/([^/]+)$%$1%;
 
 		my $module = "gdi32_$dir2";
-		$module =~ s%/%_%g;
-		push @dependencies, $module;
-	    }
-        } elsif($project =~ /^ntdll$/) {
-	    foreach my $dir (@ntdll_dirs) {
-		my $module = "ntdll_$dir";
-		$module =~ s%/%_%g;
-		push @dependencies, $module;
-	    }
-        } elsif($project =~ /^user32$/) {
-	    foreach my $dir (@user32_dirs) {
-		my $dir2 = $dir;
-		$dir2 =~ s%^.*?/([^/]+)$%$1%;
-
-		my $module = "user32_$dir2";
 		$module =~ s%/%_%g;
 		push @dependencies, $module;
 	    }

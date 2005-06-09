@@ -127,9 +127,7 @@ sub cleanup_file($$$) {
 
 	if ($options->include_quotes) {
 	    my $module = "";
-	    if ($dir =~ m%^$wine_dir/(?:windows)$%) {
-		$module = "user";
-	    } elsif ($dir =~ m%^$wine_dir/dlls/(.*?)/.*?$%) {
+	    if ($dir =~ m%^$wine_dir/dlls/(.*?)/.*?$%) {
 		$module = $1;
 	    }
 

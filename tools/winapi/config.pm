@@ -83,10 +83,9 @@ sub file_type($) {
 
     $_ = file_absolutize($_);
 
-    m%^(?:libtest|rc|server|tests|tools)/% && return "";
-    m%^(?:programs|debugger|miscemu)/% && return "wineapp";
+    m%^(?:server|tests|tools)/% && return "";
+    m%^(?:programs)/% && return "wineapp";
     m%^(?:libs)/% && return "library";
-    m%^windows/x11drv/wineclipsrv\.c$% && return "application";
 
     return "winelib";
 }
