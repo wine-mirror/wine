@@ -57,6 +57,16 @@ const LUID SeManageVolumePrivilege         = { 28, 0 };
 const LUID SeImpersonatePrivilege          = { 29, 0 };
 const LUID SeCreateGlobalPrivilege         = { 30, 0 };
 
+static const SID world_sid = { SID_REVISION, 1, { SECURITY_WORLD_SID_AUTHORITY }, { SECURITY_WORLD_RID } };
+static const SID local_sid = { SID_REVISION, 1, { SECURITY_LOCAL_SID_AUTHORITY }, { SECURITY_LOCAL_RID } };
+static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_INTERACTIVE_RID } };
+static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
+static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
+static PSID security_world_sid = (PSID)&world_sid;
+static PSID security_local_sid = (PSID)&local_sid;
+static PSID security_interactive_sid = (PSID)&interactive_sid;
+static PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
+
 struct token
 {
     struct object  obj;             /* object header */
@@ -76,13 +86,13 @@ struct privilege
 struct sid_and_attributes
 {
     struct list entry;
-    int         enabled  : 1; /* is the sid currently enabled? */
-    int         def      : 1; /* is the sid enabled by default? */
-    int         logon    : 1; /* is this a logon sid? */
-    int         mandatory: 1; /* is this sid always enabled? */
-    int         owner    : 1; /* can this sid be an owner of an object? */
-    int         resource : 1; /* is this a domain-local group? */
-    int         deny_only: 1; /* is this a sid that should be use for denying only? */
+    unsigned    enabled  : 1; /* is the sid currently enabled? */
+    unsigned    def      : 1; /* is the sid enabled by default? */
+    unsigned    logon    : 1; /* is this a logon sid? */
+    unsigned    mandatory: 1; /* is this sid always enabled? */
+    unsigned    owner    : 1; /* can this sid be an owner of an object? */
+    unsigned    resource : 1; /* is this a domain-local group? */
+    unsigned    deny_only: 1; /* is this a sid that should be use for denying only? */
     SID         sid;
 };
 
@@ -114,7 +124,7 @@ static SID *security_sid_alloc( const SID_IDENTIFIER_AUTHORITY *idauthority, int
     int i;
     SID *sid = mem_alloc( FIELD_OFFSET(SID, SubAuthority[subauthcount]) );
     if (!sid) return NULL;
-    sid->Revision = MAX_ACL_REVISION;
+    sid->Revision = SID_REVISION;
     sid->SubAuthorityCount = subauthcount;
     sid->IdentifierAuthority = *idauthority;
     for (i = 0; i < subauthcount; i++)
@@ -342,7 +352,9 @@ static void token_destroy( struct object *obj )
     }
 }
 
-static struct token *create_token( const SID *user, const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
+static struct token *create_token( const SID *user,
+                                   const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
+                                   const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
@@ -358,7 +370,21 @@ static struct token *create_token( const SID *user, const LUID_AND_ATTRIBUTES *p
             return NULL;
         }
 
-        /* FIXME: copy groups */
+        /* copy groups */
+        for (i = 0; i < group_count; i++)
+        {
+            size_t size = FIELD_OFFSET( struct sid_and_attributes, sid.SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] );
+            struct sid_and_attributes *group = mem_alloc( size );
+            memcpy( &group->sid, groups[i].Sid, FIELD_OFFSET( SID, SubAuthority[((const SID *)groups[i].Sid)->SubAuthorityCount] ) );
+            group->enabled = TRUE;
+            group->def = TRUE;
+            group->logon = FALSE;
+            group->mandatory = (groups[i].Attributes & SE_GROUP_MANDATORY) ? TRUE : FALSE;
+            group->owner = FALSE;
+            group->resource = FALSE;
+            group->deny_only = FALSE;
+            list_add_tail( &token->groups, &group->entry );
+        }
 
         /* copy privileges */
         for (i = 0; i < priv_count; i++)
@@ -385,41 +411,66 @@ struct sid_data
 
 struct token *token_create_admin( void )
 {
-    struct token *token;
-    const LUID_AND_ATTRIBUTES admin_privs[] =
+    struct token *token = NULL;
+    static const SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
+    static const unsigned int alias_admins_subauth[] = { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS };
+    static const unsigned int alias_users_subauth[] = { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS };
+    PSID alias_admins_sid;
+    PSID alias_users_sid;
+
+    alias_admins_sid = security_sid_alloc( &nt_authority, sizeof(alias_admins_subauth)/sizeof(alias_admins_subauth[0]),
+                                           alias_admins_subauth );
+    alias_users_sid = security_sid_alloc( &nt_authority, sizeof(alias_users_subauth)/sizeof(alias_users_subauth[0]),
+                                          alias_users_subauth );
+
+    if (alias_admins_sid && alias_users_sid)
     {
-        { SeChangeNotifyPrivilege        , SE_PRIVILEGE_ENABLED },
-        { SeSecurityPrivilege            , 0                    },
-        { SeBackupPrivilege              , 0                    },
-        { SeRestorePrivilege             , 0                    },
-        { SeSystemtimePrivilege          , 0                    },
-        { SeShutdownPrivilege            , 0                    },
-        { SeRemoteShutdownPrivilege      , 0                    },
-        { SeTakeOwnershipPrivilege       , 0                    },
-        { SeDebugPrivilege               , 0                    },
-        { SeSystemEnvironmentPrivilege   , 0                    },
-        { SeSystemProfilePrivilege       , 0                    },
-        { SeProfileSingleProcessPrivilege, 0                    },
-        { SeIncreaseBasePriorityPrivilege, 0                    },
-        { SeLoadDriverPrivilege          , 0                    },
-        { SeCreatePagefilePrivilege      , 0                    },
-        { SeIncreaseQuotaPrivilege       , 0                    },
-        { SeUndockPrivilege              , 0                    },
-        { SeManageVolumePrivilege        , 0                    },
-        { SeImpersonatePrivilege         , SE_PRIVILEGE_ENABLED },
-        { SeCreateGlobalPrivilege        , SE_PRIVILEGE_ENABLED },
-    };
-    static const struct sid_data well_known_sid_data[] =
-    {
-        { { SECURITY_NT_AUTHORITY }, 1, { SECURITY_LOCAL_SYSTEM_RID } }, /* LOCAL_SYSTEM */
-    };
-    SID *local_system_sid = security_sid_alloc(
-        &well_known_sid_data[0].idauth,
-        well_known_sid_data[0].count,
-        well_known_sid_data[0].subauth );
-    if (!local_system_sid) return NULL;
-    token = create_token( local_system_sid, admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
-    free( local_system_sid );
+        const LUID_AND_ATTRIBUTES admin_privs[] =
+        {
+            { SeChangeNotifyPrivilege        , SE_PRIVILEGE_ENABLED },
+            { SeSecurityPrivilege            , 0                    },
+            { SeBackupPrivilege              , 0                    },
+            { SeRestorePrivilege             , 0                    },
+            { SeSystemtimePrivilege          , 0                    },
+            { SeShutdownPrivilege            , 0                    },
+            { SeRemoteShutdownPrivilege      , 0                    },
+            { SeTakeOwnershipPrivilege       , 0                    },
+            { SeDebugPrivilege               , 0                    },
+            { SeSystemEnvironmentPrivilege   , 0                    },
+            { SeSystemProfilePrivilege       , 0                    },
+            { SeProfileSingleProcessPrivilege, 0                    },
+            { SeIncreaseBasePriorityPrivilege, 0                    },
+            { SeLoadDriverPrivilege          , 0                    },
+            { SeCreatePagefilePrivilege      , 0                    },
+            { SeIncreaseQuotaPrivilege       , 0                    },
+            { SeUndockPrivilege              , 0                    },
+            { SeManageVolumePrivilege        , 0                    },
+            { SeImpersonatePrivilege         , SE_PRIVILEGE_ENABLED },
+            { SeCreateGlobalPrivilege        , SE_PRIVILEGE_ENABLED },
+        };
+        /* note: we don't include non-builtin groups here for the user -
+         * telling us these is the job of a client-side program */
+        const SID_AND_ATTRIBUTES admin_groups[] =
+        {
+            { security_world_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { security_local_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { security_interactive_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { security_authenticated_user_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+        };
+        /* note: we just set the user sid to be the local system builtin sid -
+         * telling us what this should be is the job of a client-side program */
+        token = create_token( &local_system_sid,
+                            admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
+                            admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
+    }
+
+    if (alias_admins_sid)
+        free( alias_admins_sid );
+    if (alias_users_sid)
+        free( alias_users_sid );
+
     return token;
 }
 
@@ -828,11 +879,13 @@ DECL_HANDLER(duplicate_token)
                                                      &token_ops )))
     {
         /* FIXME: use req->primary and req->impersonation_level */
-        struct token *token = create_token( src_token->user, NULL, 0 );
+        struct token *token = create_token( src_token->user, NULL, 0, NULL, 0 );
         if (token)
         {
             struct privilege *privilege;
             unsigned int access;
+
+            /* FIXME: copy groups */
 
             LIST_FOR_EACH_ENTRY( privilege, &src_token->privileges, struct privilege, entry )
                 privilege_add( token, &privilege->luid, privilege->enabled );
