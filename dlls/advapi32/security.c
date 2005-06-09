@@ -137,31 +137,23 @@ static void GetWorldAccessACL(PACL pACL)
  *
  * Checks whether the server name indicates local machine.
  */
-BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
+static BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName)
 {
-    if (!ServerName)
-    {
-        return TRUE;
-    }
-    else if (!ServerName[0])
-    {
-        return TRUE;
-    }
-    else
-    {
-        DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-        BOOL Result;
-        LPWSTR buf;
+    DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
+    BOOL Result;
+    LPWSTR buf;
 
-        buf = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
-        Result = GetComputerNameW(buf,  &dwSize);
-        if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
-            ServerName += 2;
-        Result = Result && !lstrcmpW(ServerName, buf);
-        HeapFree(GetProcessHeap(), 0, buf);
+    if (!ServerName || !ServerName[0])
+        return TRUE;
+    
+    buf = HeapAlloc(GetProcessHeap(), 0, dwSize * sizeof(WCHAR));
+    Result = GetComputerNameW(buf,  &dwSize);
+    if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
+        ServerName += 2;
+    Result = Result && !lstrcmpW(ServerName, buf);
+    HeapFree(GetProcessHeap(), 0, buf);
 
-        return Result;
-    }
+    return Result;
 }
 
 #define ADVAPI_ForceLocalComputer(ServerName, FailureCode) \
