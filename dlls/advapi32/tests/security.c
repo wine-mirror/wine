@@ -432,6 +432,95 @@ static void test_FileSecurity(void)
         "expected, got %ld\n", GetLastError());
 }
 
+static void test_AccessCheck(void)
+{
+    PSID EveryoneSid = NULL, AdminSid = NULL, UsersSid = NULL;
+    PACL Acl = NULL;
+    SECURITY_DESCRIPTOR *SecurityDescriptor = NULL;
+    SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
+    SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
+    GENERIC_MAPPING Mapping = { KEY_READ, KEY_WRITE, KEY_EXECUTE, KEY_ALL_ACCESS };
+    ACCESS_MASK Access;
+    BOOL AccessStatus;
+    HANDLE Token;
+    BOOL ret;
+    DWORD PrivSetLen;
+    PRIVILEGE_SET *PrivSet;
+    BOOL res;
+
+    res = AllocateAndInitializeSid( &SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &EveryoneSid);
+    ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+
+    res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdminSid);
+    ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+
+    res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
+        DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &UsersSid);
+    ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
+
+    Acl = HeapAlloc(GetProcessHeap(), 0, 256);
+    res = InitializeAcl(Acl, 256, ACL_REVISION);
+    ok(res, "InitializeAcl failed with error %ld\n", GetLastError());
+
+    res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, EveryoneSid);
+    ok(res, "AddAccessAllowedAceEx failed with error %ld\n", GetLastError());
+
+    res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_ALL_ACCESS, AdminSid);
+    ok(res, "AddAccessAllowedAceEx failed with error %ld\n", GetLastError());
+
+    SecurityDescriptor = HeapAlloc(GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH);
+
+    res = InitializeSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+    ok(res, "InitializeSecurityDescriptor failed with error %ld\n", GetLastError());
+
+    res = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
+    ok(res, "SetSecurityDescriptorDacl failed with error %ld\n", GetLastError());
+
+    res = SetSecurityDescriptorOwner(SecurityDescriptor, AdminSid, FALSE);
+    ok(res, "SetSecurityDescriptorOwner failed with error %ld\n", GetLastError());
+
+    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, TRUE);
+    ok(res, "SetSecurityDescriptorGroup failed with error %ld\n", GetLastError());
+
+    PrivSetLen = FIELD_OFFSET(PRIVILEGE_SET, Privilege[16]);
+    PrivSet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, PrivSetLen);
+    PrivSet->PrivilegeCount = 16;
+
+    ImpersonateSelf(SecurityImpersonation);
+
+    ret = OpenThreadToken(GetCurrentThread(),
+                          TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, TRUE, &Token);
+    ok(ret, "OpenThreadToken failed with error %ld\n", GetLastError());
+
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %ld\n", GetLastError());
+    ok(AccessStatus && (Access == KEY_READ),
+        "AccessCheck failed to grant access with error %ld\n",
+        GetLastError());
+
+    ret = AccessCheck(SecurityDescriptor, Token, MAXIMUM_ALLOWED, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %ld\n", GetLastError());
+    ok(AccessStatus,
+        "AccessCheck failed to grant any access with error %ld\n",
+        GetLastError());
+    trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08lx\n", Access);
+
+    RevertToSelf();
+
+    if (EveryoneSid)
+        FreeSid(EveryoneSid);
+    if (AdminSid)
+        FreeSid(AdminSid);
+    if (UsersSid)
+        FreeSid(UsersSid);
+    HeapFree(GetProcessHeap(), 0, Acl);
+    HeapFree(GetProcessHeap(), 0, SecurityDescriptor);
+    HeapFree(GetProcessHeap(), 0, PrivSet);
+}
+
 START_TEST(security)
 {
     init();
@@ -440,4 +529,5 @@ START_TEST(security)
     test_trustee();
     test_luid();
     test_FileSecurity();
+    test_AccessCheck();
 }
