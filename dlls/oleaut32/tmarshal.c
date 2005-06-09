@@ -455,6 +455,10 @@ static const IRpcProxyBufferVtbl tmproxyvtable = {
 int
 _argsize(DWORD vt) {
     switch (vt) {
+    case VT_R8:
+        return sizeof(double)/sizeof(DWORD);
+    case VT_CY:
+        return sizeof(CY)/sizeof(DWORD);
     case VT_DATE:
 	return sizeof(DATE)/sizeof(DWORD);
     case VT_VARIANT:
@@ -607,6 +611,9 @@ serialize_param(
     }
     case VT_PTR: {
 	DWORD cookie;
+	BOOL        derefhere;
+
+	derefhere = (tdesc->u.lptdesc->vt != VT_USERDEFINED);
 
 	if (debugout) TRACE_(olerelay)("*");
 	/* Write always, so the other side knows when it gets a NULL pointer.
@@ -620,7 +627,7 @@ serialize_param(
 	    return S_OK;
 	}
 	hres = serialize_param(tinfo,writeit,debugout,dealloc,tdesc->u.lptdesc,(DWORD*)*arg,buf);
-	if (dealloc) HeapFree(GetProcessHeap(),0,(LPVOID)arg);
+	if (derefhere && dealloc) HeapFree(GetProcessHeap(),0,(LPVOID)*arg);
 	return hres;
     }
     case VT_UNKNOWN:
