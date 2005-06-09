@@ -102,10 +102,11 @@ static void test_GetDiskFreeSpaceA(void)
 
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
+        UINT drivetype = GetDriveTypeA(drive);
         /* Skip floppy drives because NT pops up a MessageBox if no
          * floppy is present
          */
-        if (GetDriveTypeA(drive)!=DRIVE_REMOVABLE)
+        if (drivetype != DRIVE_REMOVABLE && drivetype != DRIVE_NO_ROOT_DIR)
         {
             ret = GetDiskFreeSpaceA(drive, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
             if (!(logical_drives & 1))
@@ -156,8 +157,9 @@ static void test_GetDiskFreeSpaceW(void)
 
     for (drive[0] = 'A'; drive[0] <= 'Z'; drive[0]++)
     {
+	UINT drivetype = GetDriveTypeW(drive);
         /* Skip floppy drives because NT4 pops up a MessageBox if no floppy is present */
-        if (GetDriveTypeW(drive)!=DRIVE_REMOVABLE)
+        if (drivetype != DRIVE_REMOVABLE && drivetype != DRIVE_NO_ROOT_DIR)
         {
             ret = GetDiskFreeSpaceW(drive, &sectors_per_cluster, &bytes_per_sector, &free_clusters, &total_clusters);
             if (!(logical_drives & 1))
