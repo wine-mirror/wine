@@ -616,17 +616,26 @@ DECL_HANDLER(open_named_pipe)
     client = create_pipe_client( server, req->flags );
     if( client )
     {
-        if( !socketpair( PF_UNIX, SOCK_STREAM, 0, fds ) &&
-            (fcntl( fds[0], F_SETFL, O_NONBLOCK ) != -1) &&
-            (fcntl( fds[1], F_SETFL, O_NONBLOCK ) != -1))
+        if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
         {
+            int res = 0;
+
             assert( !client->fd );
             assert( !server->fd );
+
+            /* for performance reasons, only set nonblocking mode when using
+             * overlapped I/O. Otherwise, we will be doing too much busy
+             * looping */
+            if (is_overlapped( req->flags ))
+                res = fcntl( fds[1], F_SETFL, O_NONBLOCK );
+            if ((res != -1) && is_overlapped( server->options ))
+                res = fcntl( fds[0], F_SETFL, O_NONBLOCK );
+
             client->fd = create_anonymous_fd( &pipe_client_fd_ops,
                                             fds[1], &client->obj );
             server->fd = create_anonymous_fd( &pipe_server_fd_ops,
                                             fds[0], &server->obj );
-            if (client->fd && server->fd)
+            if (client->fd && server->fd && res != 1)
             {
                 if( server->state == ps_wait_open )
                     async_terminate_head( &server->wait_q, STATUS_SUCCESS );
