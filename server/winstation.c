@@ -162,7 +162,7 @@ static WCHAR *build_desktop_name( const WCHAR *name, size_t len,
     if (!(full_name = mem_alloc( *res_len ))) return NULL;
     memcpy( full_name, winstation_name, winstation_len );
     full_name[winstation_len / sizeof(WCHAR)] = '\\';
-    memcpy( full_name + (winstation_len + 1) / sizeof(WCHAR), name, len );
+    memcpy( full_name + winstation_len / sizeof(WCHAR) + 1, name, len );
     return full_name;
 }
 
@@ -207,21 +207,17 @@ static void desktop_destroy( struct object *obj )
     release_object( desktop->winstation );
 }
 
-/* close a desktop handle if allowed */
-static void close_desktop_handle( struct process *process, obj_handle_t handle )
+/* check if a desktop handle is currently used by the process */
+static int is_desktop_in_use( struct process *process, obj_handle_t handle )
 {
     struct thread *thread;
 
-    /* make sure it's not in use by any thread in the process */
+    if (process->desktop == handle) return 1;
+
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-    {
-        if (thread->desktop == handle)
-        {
-            set_error( STATUS_DEVICE_BUSY );
-            return;
-        }
-    }
-    close_handle( process, handle, NULL );
+        if (thread->desktop == handle) return 1;
+
+    return 0;
 }
 
 /* connect a process to its window station */
@@ -262,14 +258,13 @@ void connect_process_winstation( struct process *process, const WCHAR *name, siz
     clear_error();  /* ignore errors */
 }
 
-/* connect a thread to its desktop */
-void connect_thread_desktop( struct thread *thread, const WCHAR *name, size_t len )
+/* connect a process to its main desktop */
+void connect_process_desktop( struct process *process, const WCHAR *name, size_t len )
 {
     struct desktop *desktop;
     struct winstation *winstation;
-    struct process *process = thread->process;
 
-    if (thread->desktop) return;  /* already has one */
+    if (process->desktop) return;  /* already has one */
 
     if ((winstation = get_process_winstation( process, WINSTA_CREATEDESKTOP )))
     {
@@ -282,7 +277,7 @@ void connect_thread_desktop( struct thread *thread, const WCHAR *name, size_t le
         }
         if ((desktop = create_desktop( name, len, 0, winstation )))
         {
-            thread->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, FALSE );
+            process->desktop = alloc_handle( process, desktop, DESKTOP_ALL_ACCESS, FALSE );
             release_object( desktop );
         }
         release_object( winstation );
@@ -296,8 +291,8 @@ void close_thread_desktop( struct thread *thread )
     obj_handle_t handle = thread->desktop;
 
     thread->desktop = 0;
-    if (handle) close_desktop_handle( thread->process, handle );
-    clear_error();  /* ignore errors */
+    if (handle && !is_desktop_in_use( thread->process, handle ))
+        close_handle( thread->process, handle, NULL );
 }
 
 
@@ -413,7 +408,10 @@ DECL_HANDLER(close_desktop)
     if ((desktop = (struct desktop *)get_handle_obj( current->process, req->handle,
                                                      0, &desktop_ops )))
     {
-        close_desktop_handle( current->process, req->handle );
+        if (!is_desktop_in_use( current->process, req->handle ))
+            close_handle( current->process, req->handle, NULL );
+        else
+            set_error( STATUS_DEVICE_BUSY );
         release_object( desktop );
     }
 }
@@ -479,8 +477,8 @@ DECL_HANDLER(set_user_object_info)
         /* if there is a backslash return the part of the name after it */
         if (name && (ptr = memchrW( name, '\\', len )))
         {
+            len -= (ptr + 1 - name) * sizeof(WCHAR);
             name = ptr + 1;
-            len -= (ptr - name) * sizeof(WCHAR);
         }
         if (name) set_reply_data( name, min( len, get_reply_max_size() ));
     }

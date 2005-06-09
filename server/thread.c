@@ -137,7 +137,6 @@ inline static void init_thread_structure( struct thread *thread )
     thread->priority        = THREAD_PRIORITY_NORMAL;
     thread->affinity        = 1;
     thread->suspend         = 0;
-    thread->desktop         = 0;
     thread->creation_time   = time(NULL);
     thread->exit_time       = 0;
 
@@ -159,6 +158,7 @@ struct thread *create_thread( int fd, struct process *process )
     init_thread_structure( thread );
 
     thread->process = (struct process *)grab_object( process );
+    thread->desktop = process->desktop;
     if (!current) current = thread;
 
     if (!booting_thread)  /* first thread ever */
@@ -834,7 +834,6 @@ DECL_HANDLER(new_thread)
     if ((thread = create_thread( request_fd, current->process )))
     {
         if (req->suspend) thread->suspend++;
-        thread->desktop = current->desktop;
         reply->tid = get_thread_id( thread );
         if ((reply->handle = alloc_handle( current->process, thread,
                                            THREAD_ALL_ACCESS, req->inherit )))

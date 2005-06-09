@@ -42,6 +42,8 @@ static void print_object( HANDLE obj )
         trace( "obj %p type '%s'\n", obj, buffer );
 }
 
+static HDESK initial_desktop;
+
 static DWORD CALLBACK thread( LPVOID arg )
 {
     HDESK d1, d2;
@@ -49,6 +51,7 @@ static DWORD CALLBACK thread( LPVOID arg )
     ok( hwnd != 0, "CreateWindow failed\n" );
     d1 = GetThreadDesktop(GetCurrentThreadId());
     trace( "thread %p desktop: %p\n", arg, d1 );
+    ok( d1 == initial_desktop, "thread %p doesn't use initial desktop\n", arg );
 
     if (0)  /* FIXME: this should be todo_wine but it would break the rest of the test */
     {
@@ -150,6 +153,7 @@ static void test_handles(void)
 
     /* desktops */
     d1 = GetThreadDesktop(GetCurrentThreadId());
+    initial_desktop = d1;
     ok( GetThreadDesktop(GetCurrentThreadId()) == d1,
         "GetThreadDesktop returned different handles\n" );
 
@@ -201,8 +205,8 @@ static void test_handles(void)
         ok( d1 == d2, "got different handles after close\n" );
     }
 
-    trace( "thread 1 desktop: %p\n", d2 );
-    print_object( d2 );
+    trace( "thread 1 desktop: %p\n", d1 );
+    print_object( d1 );
     hthread = CreateThread( NULL, 0, thread, (LPVOID)2, 0, &id );
     Sleep(1000);
     trace( "get other thread desktop: %p\n", GetThreadDesktop(id) );

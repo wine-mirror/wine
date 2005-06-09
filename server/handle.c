@@ -56,7 +56,7 @@ struct handle_table
 static struct handle_table *global_table;
 
 /* reserved handle access rights */
-#define RESERVED_SHIFT         25
+#define RESERVED_SHIFT         26
 #define RESERVED_INHERIT       (HANDLE_FLAG_INHERIT << RESERVED_SHIFT)
 #define RESERVED_CLOSE_PROTECT (HANDLE_FLAG_PROTECT_FROM_CLOSE << RESERVED_SHIFT)
 #define RESERVED_ALL           (RESERVED_INHERIT | RESERVED_CLOSE_PROTECT)

@@ -73,6 +73,7 @@ struct process
     struct event        *idle_event;      /* event for input idle */
     struct msg_queue    *queue;           /* main message queue */
     obj_handle_t         winstation;      /* main handle to process window station */
+    obj_handle_t         desktop;         /* handle to desktop to use for new threads */
     struct token        *token;           /* security token associated with this process */
     struct process_dll   exe;             /* main exe file */
     struct list          dlls;            /* list of loaded dlls */
