@@ -541,12 +541,12 @@ static long dwarf2_leb128_as_signed(dwarf2_parse_context_t* ctx)
   return ret;
 }
 
-const char* dwarf2_debug_ctx(dwarf2_parse_context_t* ctx) 
+static const char* dwarf2_debug_ctx(dwarf2_parse_context_t* ctx) 
 {
   /*return wine_dbg_sprintf("ctx(0x%x,%u)", ctx->data - ctx->start_data, ctx->level); */
   return wine_dbg_sprintf("ctx(0x%x,%u)", ctx->data - ctx->data_stream, ctx->level); 
 }
-const char* dwarf2_debug_attr(dwarf2_abbrev_entry_attr_t* attr) 
+static const char* dwarf2_debug_attr(dwarf2_abbrev_entry_attr_t* attr) 
 {
   return wine_dbg_sprintf("attr(attr:0x%lx,form:0x%lx)", attr->attribute, attr->form);
 }
@@ -563,7 +563,7 @@ static void dwarf2_check_sibling(dwarf2_parse_context_t* ctx, unsigned long next
 }
 
 
-dwarf2_abbrev_entry_attr_t* dwarf2_abbrev_entry_add_attr(dwarf2_abbrev_entry_t* abbrev_entry, unsigned long attribute, unsigned long form)
+static dwarf2_abbrev_entry_attr_t* dwarf2_abbrev_entry_add_attr(dwarf2_abbrev_entry_t* abbrev_entry, unsigned long attribute, unsigned long form)
 {
   dwarf2_abbrev_entry_attr_t* ret = NULL;
   dwarf2_abbrev_entry_attr_t* it = NULL;
@@ -585,7 +585,7 @@ dwarf2_abbrev_entry_attr_t* dwarf2_abbrev_entry_add_attr(dwarf2_abbrev_entry_t* 
   return ret;
 }
 
-dwarf2_abbrev_entry_t* dwarf2_abbrev_table_add_entry(dwarf2_abbrev_table_t* abbrev_table, unsigned long entry_code, unsigned long tag, unsigned char have_child)
+static dwarf2_abbrev_entry_t* dwarf2_abbrev_table_add_entry(dwarf2_abbrev_table_t* abbrev_table, unsigned long entry_code, unsigned long tag, unsigned char have_child)
 {
   dwarf2_abbrev_entry_t* ret = NULL;
 
@@ -606,7 +606,7 @@ dwarf2_abbrev_entry_t* dwarf2_abbrev_table_add_entry(dwarf2_abbrev_table_t* abbr
   return ret;
 }
 
-dwarf2_abbrev_entry_t* dwarf2_abbrev_table_find_entry(dwarf2_abbrev_table_t* abbrev_table, unsigned long entry_code)
+static dwarf2_abbrev_entry_t* dwarf2_abbrev_table_find_entry(dwarf2_abbrev_table_t* abbrev_table, unsigned long entry_code)
 {
   dwarf2_abbrev_entry_t* ret = NULL;
 
@@ -617,7 +617,7 @@ dwarf2_abbrev_entry_t* dwarf2_abbrev_table_find_entry(dwarf2_abbrev_table_t* abb
   return ret;
 }
 
-void dwarf2_abbrev_table_free(dwarf2_abbrev_table_t* abbrev_table)
+static void dwarf2_abbrev_table_free(dwarf2_abbrev_table_t* abbrev_table)
 {
   dwarf2_abbrev_entry_t* entry = NULL;
   dwarf2_abbrev_entry_t* next_entry = NULL;
@@ -636,7 +636,7 @@ void dwarf2_abbrev_table_free(dwarf2_abbrev_table_t* abbrev_table)
   abbrev_table->n_entries = 0;
 }
 
-dwarf2_abbrev_table_t* dwarf2_parse_abbrev_set(dwarf2_parse_context_t* abbrev_ctx)
+static dwarf2_abbrev_table_t* dwarf2_parse_abbrev_set(dwarf2_parse_context_t* abbrev_ctx)
 {
   dwarf2_abbrev_table_t* abbrev_table = NULL;
 
@@ -867,13 +867,13 @@ static void dwarf2_parse_attr(dwarf2_abbrev_entry_attr_t* attr,
   }
 }
 
-struct symt* dwarf2_find_symt_by_ref(struct module* module, unsigned long ref)
+static struct symt* dwarf2_find_symt_by_ref(struct module* module, unsigned long ref)
 {
   TRACE("want ref<0x%lx>\n", ref); 
   return NULL;
 }
 
-struct symt* dwarf2_add_symt_ref(struct module* module, unsigned long ref, struct symt* symt)
+static struct symt* dwarf2_add_symt_ref(struct module* module, unsigned long ref, struct symt* symt)
 {
   if (NULL != symt) return NULL;
   return NULL;
@@ -2171,10 +2171,4 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     dwarf2_abbrev_table_free(abbrev_table);
   }
   return bRet;
-}
-
-BOOL dwarf2_parse_lines(struct module* module, unsigned long load_offset,
-			const unsigned char* debug_line, unsigned int debug_line_size)
-{
-  return FALSE;
 }

@@ -112,7 +112,7 @@ static struct pool_arena* pool_is_last(struct pool* pool, void* p, unsigned old_
     return NULL;
 }
 
-void* pool_realloc(struct pool* pool, void* p, unsigned old_size, unsigned new_size)
+static void* pool_realloc(struct pool* pool, void* p, unsigned old_size, unsigned new_size)
 {
     struct pool_arena*  arena;
     void*               new;
