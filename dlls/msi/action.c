@@ -1224,6 +1224,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
             action = MSI_RecordGetString(row,1);
             if (!action)
             {
+                ERR("Error in retrieving action name\n");
                 rc = ERROR_FUNCTION_FAILED;
                 msiobj_release(&row->hdr);
                 break;
@@ -1236,9 +1237,9 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
                 /* this is a hack to skip errors in the condition code */
                 if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
                 {
-                    msiobj_release(&row->hdr);
                     TRACE("Skipping action: %s (condition is false)\n",
-                          debugstr_w(action));
+                                    debugstr_w(action));
+                    msiobj_release(&row->hdr);
                     continue; 
                 }
             }
@@ -1323,9 +1324,9 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
                 /* this is a hack to skip errors in the condition code */
                 if (MSI_EvaluateConditionW(package,cond) == MSICONDITION_FALSE)
                 {
-                    msiobj_release(&row->hdr);
                     TRACE("Skipping action: %s (condition is false)\n",
-                          debugstr_w(action));
+                                    debugstr_w(action));
+                    msiobj_release(&row->hdr);
                     continue; 
                 }
             }
@@ -1814,8 +1815,7 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
 {
     DWORD index = package->loaded_files;
-    DWORD i;
-    LPWSTR buffer;
+    LPCWSTR component;
 
     /* fill in the data */
 
@@ -1829,18 +1829,13 @@ static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
     memset(&package->files[index],0,sizeof(MSIFILE));
  
     package->files[index].File = load_dynamic_stringW(row, 1);
-    buffer = load_dynamic_stringW(row, 2);
 
-    package->files[index].ComponentIndex = -1;
-    for (i = 0; i < package->loaded_components; i++)
-        if (strcmpW(package->components[i].Component,buffer)==0)
-        {
-            package->files[index].ComponentIndex = i;
-            break;
-        }
+    component = MSI_RecordGetString(row, 2);
+    package->files[index].ComponentIndex = get_loaded_component(package,
+                    component);
+
     if (package->files[index].ComponentIndex == -1)
-        ERR("Unfound Component %s\n",debugstr_w(buffer));
-    HeapFree(GetProcessHeap(), 0, buffer);
+        ERR("Unfound Component %s\n",debugstr_w(component));
 
     package->files[index].FileName = load_dynamic_stringW(row,3);
     reduce_to_longfilename(package->files[index].FileName);
@@ -2033,7 +2028,8 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
          'W','H','E','R','E',' ', '`', 'D','i','r','e','c','t', 'o','r','y','`',
          ' ','=',' ','\'','%','s','\'',
          0};
-    LPWSTR ptargetdir, targetdir, parent, srcdir;
+    LPWSTR ptargetdir, targetdir, srcdir;
+    LPCWSTR parent;
     LPWSTR shortname = NULL;
     MSIRECORD * row = 0;
     INT index = -1;
@@ -2119,7 +2115,7 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     HeapFree(GetProcessHeap(), 0, ptargetdir);
         TRACE("   SourceDefault = %s\n",debugstr_w(package->folders[index].SourceDefault));
 
-    parent = load_dynamic_stringW(row,2);
+    parent = MSI_RecordGetString(row,2);
     if (parent) 
     {
         i = load_folder(package,parent);
@@ -2131,7 +2127,6 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     }
     else
         package->folders[index].ParentIndex = -2;
-    HeapFree(GetProcessHeap(), 0, parent);
 
     package->folders[index].Property = load_dynamic_property(package, dir,NULL);
 
@@ -2148,6 +2143,9 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     LPWSTR p, path = NULL;
 
     TRACE("Working to resolve %s\n",debugstr_w(name));
+
+    if (!name)
+        return NULL;
 
     /* special resolving for Target and Source root dir */
     if (strcmpW(name,cszTargetDir)==0 || strcmpW(name,cszSourceDir)==0)
@@ -3366,19 +3364,13 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
         }
 
         component = MSI_RecordGetString(row,2);
-        if (!component)
-        {
-            ERR("Unable to get component\n");
-            msiobj_release(&row->hdr);
-            break;
-        }
-
         component_index = get_loaded_component(package,component);
 
         if (!ACTION_VerifyComponentForAction(package, component_index, 
                                        INSTALLSTATE_LOCAL))
         {
-            TRACE("Skipping copy due to disabled component\n");
+            TRACE("Skipping copy due to disabled component %s\n",
+                            debugstr_w(component));
 
             /* the action taken was the same as the current install state */        
             package->components[component_index].Action =
@@ -3469,7 +3461,7 @@ static UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 
 /* OK this value is "interpreted" and then formatted based on the 
    first few characters */
-static LPSTR parse_value(MSIPACKAGE *package, WCHAR *value, DWORD *type, 
+static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type, 
                          DWORD *size)
 {
     LPSTR data = NULL;
@@ -3553,7 +3545,7 @@ static LPSTR parse_value(MSIPACKAGE *package, WCHAR *value, DWORD *type,
     else
     {
         static const WCHAR szMulti[] = {'[','~',']',0};
-        WCHAR *ptr;
+        LPCWSTR ptr;
         *type=REG_SZ;
 
         if (value[0]=='#')
@@ -3621,8 +3613,8 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         LPSTR value_data = NULL;
         HKEY  root_key, hkey;
         DWORD type,size;
-        LPWSTR value, key, name, component, deformated;
-        LPCWSTR szRoot;
+        LPWSTR  deformated;
+        LPCWSTR szRoot, component, name, key, value;
         INT component_index;
         MSIRECORD * uirow;
         LPWSTR uikey;
@@ -3642,13 +3634,14 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         uikey = NULL;
         name = NULL;
 
-        component = load_dynamic_stringW(row, 6);
+        component = MSI_RecordGetString(row, 6);
         component_index = get_loaded_component(package,component);
 
         if (!ACTION_VerifyComponentForAction(package, component_index, 
                                        INSTALLSTATE_LOCAL))
         {
-            TRACE("Skipping write due to disabled component\n");
+            TRACE("Skipping write due to disabled component %s\n", 
+                            debugstr_w(component));
             msiobj_release(&row->hdr);
 
             package->components[component_index].Action =
@@ -3659,7 +3652,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 
         package->components[component_index].Action = INSTALLSTATE_LOCAL;
 
-        name = load_dynamic_stringW(row, 4);
+        name = MSI_RecordGetString(row, 4);
         if( MSI_RecordIsNull(row,5) && name )
         {
             /* null values can have special meanings */
@@ -3670,16 +3663,12 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             }
             else if ((name[0]=='+' && name[1] == 0) || 
                      (name[0] == '*' && name[1] == 0))
-            {
-                HeapFree(GetProcessHeap(),0,name);
                 name = NULL;
                 check_first = TRUE;
-            }
         }
 
         root = MSI_RecordGetInteger(row,2);
-        key = load_dynamic_stringW(row, 3);
-      
+        key = MSI_RecordGetString(row, 3);
    
         /* get the root key */
         switch (root)
@@ -3723,7 +3712,7 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         }
         HeapFree(GetProcessHeap(),0,deformated);
 
-        value = load_dynamic_stringW(row,5);
+        value = MSI_RecordGetString(row,5);
         if (value)
             value_data = parse_value(package, value, &type, &size); 
         else
@@ -3759,7 +3748,8 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
             {
                 TRACE("Checked and setting value %s of %s\n",
                                 debugstr_w(deformated), debugstr_w(uikey));
-                RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+                if (deformated || size)
+                    RegSetValueExW(hkey, deformated, 0, type, value_data, size);
             }
         }
 
@@ -3776,16 +3766,12 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
         msiobj_release( &uirow->hdr );
 
         HeapFree(GetProcessHeap(),0,value_data);
-        HeapFree(GetProcessHeap(),0,value);
         HeapFree(GetProcessHeap(),0,deformated);
 
         msiobj_release(&row->hdr);
         RegCloseKey(hkey);
 next:
         HeapFree(GetProcessHeap(),0,uikey);
-        HeapFree(GetProcessHeap(),0,key);
-        HeapFree(GetProcessHeap(),0,name);
-        HeapFree(GetProcessHeap(),0,component);
     }
     MSI_ViewClose(view);
     msiobj_release(&view->hdr);
@@ -3885,8 +3871,8 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
     rc = ERROR_SUCCESS;
     while (rc == ERROR_SUCCESS)
     {
-        LPWSTR cond = NULL; 
-        LPWSTR message = NULL;
+        LPCWSTR cond = NULL; 
+        LPCWSTR message = NULL;
 
         rc = MSI_ViewFetch(view,&row);
         if (rc != ERROR_SUCCESS)
@@ -3895,19 +3881,17 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
             break;
         }
 
-        cond = load_dynamic_stringW(row,1);
+        cond = MSI_RecordGetString(row,1);
 
         if (MSI_EvaluateConditionW(package,cond) != MSICONDITION_TRUE)
         {
             LPWSTR deformated;
-            message = load_dynamic_stringW(row,2);
+            message = MSI_RecordGetString(row,2);
             deformat_string(package,message,&deformated); 
             MessageBoxW(NULL,deformated,title,MB_OK);
-            HeapFree(GetProcessHeap(),0,message);
             HeapFree(GetProcessHeap(),0,deformated);
             rc = ERROR_FUNCTION_FAILED;
         }
-        HeapFree(GetProcessHeap(),0,cond);
         msiobj_release(&row->hdr);
     }
     MSI_ViewClose(view);
@@ -3929,7 +3913,8 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
     {
         MSIRECORD * row = 0;
         UINT root,len;
-        LPWSTR key,deformated,buffer,name,deformated_name;
+        LPWSTR deformated,buffer,deformated_name;
+        LPCWSTR key,name;
         static const WCHAR ExecSeqQuery[] =
             {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
              '`','R','e','g','i','s','t','r','y','`',' ',
@@ -3944,8 +3929,8 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
             return NULL;
 
         root = MSI_RecordGetInteger(row,2);
-        key = load_dynamic_stringW(row, 3);
-        name = load_dynamic_stringW(row, 4);
+        key = MSI_RecordGetString(row, 3);
+        name = MSI_RecordGetString(row, 4);
         deformat_string(package, key , &deformated);
         deformat_string(package, name, &deformated_name);
 
@@ -3960,9 +3945,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
         else
             sprintfW(buffer,fmt,root,deformated);
 
-        HeapFree(GetProcessHeap(),0,key);
         HeapFree(GetProcessHeap(),0,deformated);
-        HeapFree(GetProcessHeap(),0,name);
         HeapFree(GetProcessHeap(),0,deformated_name);
         msiobj_release(&row->hdr);
 
@@ -4325,10 +4308,8 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 
     while (1)
     {   
-        WCHAR component[0x100];
-        DWORD sz;
+        LPCWSTR component;
         INT index;
-        LPWSTR guid;
         typelib_struct tl_struct;
         HMODULE module;
         static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
@@ -4340,9 +4321,7 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
             break;
         }
 
-        sz = 0x100;
-        MSI_RecordGetStringW(row,3,component,&sz);
-
+        component = MSI_RecordGetString(row,3);
         index = get_loaded_component(package,component);
         if (index < 0)
         {
@@ -4372,12 +4351,14 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
             continue;
         }
 
-        guid = load_dynamic_stringW(row,1);
         module = LoadLibraryExW(package->files[index].TargetPath, NULL,
                         LOAD_LIBRARY_AS_DATAFILE);
         if (module != NULL)
         {
+            LPWSTR guid;
+            guid = load_dynamic_stringW(row,1);
             CLSIDFromString(guid, &tl_struct.clsid);
+            HeapFree(GetProcessHeap(),0,guid);
             tl_struct.source = strdupW(package->files[index].TargetPath);
             tl_struct.path = NULL;
 
@@ -4386,14 +4367,14 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 
             if (tl_struct.path != NULL)
             {
-                LPWSTR help;
-                WCHAR helpid[0x100];
+                LPWSTR help = NULL;
+                LPCWSTR helpid;
                 HRESULT res;
 
-                sz = 0x100;
-                MSI_RecordGetStringW(row,6,helpid,&sz);
-
-                help = resolve_folder(package,helpid,FALSE,FALSE,NULL);
+                helpid = MSI_RecordGetString(row,6);
+    
+                if (helpid)
+                    help = resolve_folder(package,helpid,FALSE,FALSE,NULL);
                 res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
                 HeapFree(GetProcessHeap(),0,help);
 
@@ -4431,7 +4412,7 @@ static INT load_appid(MSIPACKAGE* package, MSIRECORD *row)
 {
     DWORD index = package->loaded_appids;
     DWORD sz;
-    LPWSTR buffer;
+    LPCWSTR buffer;
 
     /* fill in the data */
 
@@ -4448,9 +4429,8 @@ static INT load_appid(MSIPACKAGE* package, MSIRECORD *row)
     MSI_RecordGetStringW(row, 1, package->appids[index].AppID, &sz);
     TRACE("loading appid %s\n",debugstr_w(package->appids[index].AppID));
 
-    buffer = load_dynamic_stringW(row,2);
+    buffer = MSI_RecordGetString(row,2);
     deformat_string(package,buffer,&package->appids[index].RemoteServerName);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->appids[index].LocalServer = load_dynamic_stringW(row,3);
     package->appids[index].ServiceParameters = load_dynamic_stringW(row,4);
@@ -4499,7 +4479,7 @@ static INT load_given_class(MSIPACKAGE *package, LPCWSTR classid);
 static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
 {
     DWORD index = package->loaded_progids;
-    LPWSTR buffer;
+    LPCWSTR buffer;
 
     /* fill in the data */
 
@@ -4515,17 +4495,15 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
     package->progids[index].ProgID = load_dynamic_stringW(row,1);
     TRACE("loading progid %s\n",debugstr_w(package->progids[index].ProgID));
 
-    buffer = load_dynamic_stringW(row,2);
+    buffer = MSI_RecordGetString(row,2);
     package->progids[index].ParentIndex = load_given_progid(package,buffer);
     if (package->progids[index].ParentIndex < 0 && buffer)
         FIXME("Unknown parent ProgID %s\n",debugstr_w(buffer));
-    HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_stringW(row,3);
+    buffer = MSI_RecordGetString(row,3);
     package->progids[index].ClassIndex = load_given_class(package,buffer);
     if (package->progids[index].ClassIndex< 0 && buffer)
         FIXME("Unknown class %s\n",debugstr_w(buffer));
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->progids[index].Description = load_dynamic_stringW(row,4);
 
@@ -4549,10 +4527,9 @@ static INT load_progid(MSIPACKAGE* package, MSIRECORD *row)
     }
     else
     {
-        buffer = load_dynamic_stringW(row,5);
+        buffer = MSI_RecordGetString(row,5);
         if (buffer)
             build_icon_path(package,buffer,&(package->progids[index].IconPath));
-        HeapFree(GetProcessHeap(),0,buffer);
     }
 
     package->progids[index].CurVerIndex = -1;
@@ -4610,7 +4587,7 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
 {
     DWORD index = package->loaded_classes;
     DWORD sz,i;
-    LPWSTR buffer;
+    LPCWSTR buffer;
 
     /* fill in the data */
 
@@ -4628,10 +4605,9 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
     TRACE("loading class %s\n",debugstr_w(package->classes[index].CLSID));
     sz = IDENTIFIER_SIZE;
     MSI_RecordGetStringW(row, 2, package->classes[index].Context, &sz);
-    buffer = load_dynamic_stringW(row,3);
+    buffer = MSI_RecordGetString(row,3);
     package->classes[index].ComponentIndex = get_loaded_component(package, 
                     buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->classes[index].ProgIDText = load_dynamic_stringW(row,4);
     package->classes[index].ProgIDIndex = 
@@ -4639,13 +4615,12 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
 
     package->classes[index].Description = load_dynamic_stringW(row,5);
 
-    buffer = load_dynamic_stringW(row,6);
+    buffer = MSI_RecordGetString(row,6);
     if (buffer)
         package->classes[index].AppIDIndex = 
                 load_given_appid(package, buffer);
     else
         package->classes[index].AppIDIndex = -1;
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->classes[index].FileTypeMask = load_dynamic_stringW(row,7);
 
@@ -4670,10 +4645,9 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
     }
     else
     {
-        buffer = load_dynamic_stringW(row,8);
+        buffer = MSI_RecordGetString(row,8);
         if (buffer)
             build_icon_path(package,buffer,&(package->classes[index].IconPath));
-        HeapFree(GetProcessHeap(),0,buffer);
     }
 
     if (!MSI_RecordIsNull(row,10))
@@ -4705,13 +4679,11 @@ static INT load_class(MSIPACKAGE* package, MSIRECORD *row)
             reduce_to_longfilename(package->classes[index].DefInprocHandler32);
         }
     }
-    buffer = load_dynamic_stringW(row,11);
+    buffer = MSI_RecordGetString(row,11);
     deformat_string(package,buffer,&package->classes[index].Argument);
-    HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_stringW(row,12);
+    buffer = MSI_RecordGetString(row,12);
     package->classes[index].FeatureIndex = get_loaded_feature(package,buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->classes[index].Attributes = MSI_RecordGetInteger(row,13);
     
@@ -4762,7 +4734,7 @@ static INT load_mime(MSIPACKAGE* package, MSIRECORD *row)
 {
     DWORD index = package->loaded_mimes;
     DWORD sz;
-    LPWSTR buffer;
+    LPCWSTR buffer;
 
     /* fill in the data */
 
@@ -4779,10 +4751,9 @@ static INT load_mime(MSIPACKAGE* package, MSIRECORD *row)
     package->mimes[index].ContentType = load_dynamic_stringW(row,1); 
     TRACE("loading mime %s\n",debugstr_w(package->mimes[index].ContentType));
 
-    buffer = load_dynamic_stringW(row,2);
+    buffer = MSI_RecordGetString(row,2);
     package->mimes[index].ExtensionIndex = load_given_extension(package,
                     buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     sz = IDENTIFIER_SIZE;
     MSI_RecordGetStringW(row,3,package->mimes[index].CLSID,&sz);
@@ -4828,7 +4799,7 @@ static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
 {
     DWORD index = package->loaded_extensions;
     DWORD sz;
-    LPWSTR buffer;
+    LPCWSTR buffer;
 
     /* fill in the data */
 
@@ -4847,23 +4818,20 @@ static INT load_extension(MSIPACKAGE* package, MSIRECORD *row)
     TRACE("loading extension %s\n",
                     debugstr_w(package->extensions[index].Extension));
 
-    buffer = load_dynamic_stringW(row,2);
+    buffer = MSI_RecordGetString(row,2);
     package->extensions[index].ComponentIndex = 
             get_loaded_component(package,buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->extensions[index].ProgIDText = load_dynamic_stringW(row,3);
     package->extensions[index].ProgIDIndex = load_given_progid(package,
                     package->extensions[index].ProgIDText);
 
-    buffer = load_dynamic_stringW(row,4);
+    buffer = MSI_RecordGetString(row,4);
     package->extensions[index].MIMEIndex = load_given_mime(package,buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_stringW(row,5);
+    buffer = MSI_RecordGetString(row,5);
     package->extensions[index].FeatureIndex = 
             get_loaded_feature(package,buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     return index;
 }
@@ -4910,7 +4878,7 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
 {
     MSIPACKAGE* package = (MSIPACKAGE*)param;
     DWORD index = package->loaded_verbs;
-    LPWSTR buffer;
+    LPCWSTR buffer;
 
     /* fill in the data */
 
@@ -4923,23 +4891,20 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
 
     memset(&package->verbs[index],0,sizeof(MSIVERB));
 
-    buffer = load_dynamic_stringW(row,1);
+    buffer = MSI_RecordGetString(row,1);
     package->verbs[index].ExtensionIndex = load_given_extension(package,buffer);
     if (package->verbs[index].ExtensionIndex < 0 && buffer)
         ERR("Verb unable to find loaded extension %s\n", debugstr_w(buffer));
-    HeapFree(GetProcessHeap(),0,buffer);
 
     package->verbs[index].Verb = load_dynamic_stringW(row,2);
     TRACE("loading verb %s\n",debugstr_w(package->verbs[index].Verb));
     package->verbs[index].Sequence = MSI_RecordGetInteger(row,3);
 
-    buffer = load_dynamic_stringW(row,4);
+    buffer = MSI_RecordGetString(row,4);
     deformat_string(package,buffer,&package->verbs[index].Command);
-    HeapFree(GetProcessHeap(),0,buffer);
 
-    buffer = load_dynamic_stringW(row,5);
+    buffer = MSI_RecordGetString(row,5);
     deformat_string(package,buffer,&package->verbs[index].Argument);
-    HeapFree(GetProcessHeap(),0,buffer);
 
     /* assosiate the verb with the correct extension */
     if (package->verbs[index].ExtensionIndex >= 0)
@@ -4962,17 +4927,17 @@ static UINT iterate_load_verb(MSIRECORD *row, LPVOID param)
 
 static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
 {
-    LPWSTR clsid;
-    LPWSTR context;
-    LPWSTR buffer;
+    LPCWSTR clsid;
+    LPCWSTR context;
+    LPCWSTR buffer;
     INT    component_index;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
     INT i;
     BOOL match = FALSE;
 
-    clsid = load_dynamic_stringW(rec,1);
-    context = load_dynamic_stringW(rec,2);
-    buffer = load_dynamic_stringW(rec,3);
+    clsid = MSI_RecordGetString(rec,1);
+    context = MSI_RecordGetString(rec,2);
+    buffer = MSI_RecordGetString(rec,3);
     component_index = get_loaded_component(package,buffer);
 
     for (i = 0; i < package->loaded_classes; i++)
@@ -4988,10 +4953,6 @@ static UINT iterate_all_classes(MSIRECORD *rec, LPVOID param)
         }
     }
     
-    HeapFree(GetProcessHeap(),0,buffer);
-    HeapFree(GetProcessHeap(),0,clsid);
-    HeapFree(GetProcessHeap(),0,context);
-
     if (!match)
         load_class(package, rec);
 
@@ -5017,15 +4978,15 @@ static VOID load_all_classes(MSIPACKAGE *package)
 
 static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
 {
-    LPWSTR buffer;
-    LPWSTR extension;
+    LPCWSTR buffer;
+    LPCWSTR extension;
     INT    component_index;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
     BOOL match = FALSE;
     INT i;
 
-    extension = load_dynamic_stringW(rec,1);
-    buffer = load_dynamic_stringW(rec,2);
+    extension = MSI_RecordGetString(rec,1);
+    buffer = MSI_RecordGetString(rec,2);
     component_index = get_loaded_component(package,buffer);
 
     for (i = 0; i < package->loaded_extensions; i++)
@@ -5038,9 +4999,6 @@ static UINT iterate_all_extensions(MSIRECORD *rec, LPVOID param)
             break;
         }
     }
-
-    HeapFree(GetProcessHeap(),0,buffer);
-    HeapFree(GetProcessHeap(),0,extension);
 
     if (!match)
         load_extension(package, rec);
@@ -5067,12 +5025,11 @@ static VOID load_all_extensions(MSIPACKAGE *package)
 
 static UINT iterate_all_progids(MSIRECORD *rec, LPVOID param)
 {
-    LPWSTR buffer;
+    LPCWSTR buffer;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
 
-    buffer = load_dynamic_stringW(rec,1);
+    buffer = MSI_RecordGetString(rec,1);
     load_given_progid(package,buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
     return ERROR_SUCCESS;
 }
 
@@ -5112,12 +5069,11 @@ static VOID load_all_verbs(MSIPACKAGE *package)
 
 static UINT iterate_all_mimes(MSIRECORD *rec, LPVOID param)
 {
-    LPWSTR buffer;
+    LPCWSTR buffer;
     MSIPACKAGE* package =(MSIPACKAGE*)param;
 
-    buffer = load_dynamic_stringW(rec,1);
+    buffer = MSI_RecordGetString(rec,1);
     load_given_mime(package,buffer);
-    HeapFree(GetProcessHeap(),0,buffer);
     return ERROR_SUCCESS;
 }
 
@@ -5782,7 +5738,8 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
     while (1)
     {
         LPWSTR target_file, target_folder;
-        WCHAR buffer[0x100];
+        LPCWSTR buffer;
+        WCHAR filename[0x100];
         DWORD sz;
         DWORD index;
         static const WCHAR szlnk[]={'.','l','n','k',0};
@@ -5794,9 +5751,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
             break;
         }
         
-        sz = 0x100;
-        MSI_RecordGetStringW(row,4,buffer,&sz);
-
+        buffer = MSI_RecordGetString(row,4);
         index = get_loaded_component(package,buffer);
 
         if (index < 0)
@@ -5839,23 +5794,21 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
             continue;
         }
 
-        sz = 0x100;
-        MSI_RecordGetStringW(row,2,buffer,&sz);
+        buffer = MSI_RecordGetString(row,2);
         target_folder = resolve_folder(package, buffer,FALSE,FALSE,NULL);
 
         /* may be needed because of a bug somehwere else */
         create_full_pathW(target_folder);
 
         sz = 0x100;
-        MSI_RecordGetStringW(row,3,buffer,&sz);
-        reduce_to_longfilename(buffer);
-        if (!strchrW(buffer,'.') || strcmpiW(strchrW(buffer,'.'),szlnk))
-            strcatW(buffer,szlnk);
-        target_file = build_directory_name(2, target_folder, buffer);
+        MSI_RecordGetStringW(row,3,filename,&sz);
+        reduce_to_longfilename(filename);
+        if (!strchrW(filename,'.') || strcmpiW(strchrW(filename,'.'),szlnk))
+            strcatW(filename,szlnk);
+        target_file = build_directory_name(2, target_folder, filename);
         HeapFree(GetProcessHeap(),0,target_folder);
 
-        sz = 0x100;
-        MSI_RecordGetStringW(row,5,buffer,&sz);
+        buffer = MSI_RecordGetString(row,5);
         if (strchrW(buffer,'['))
         {
             LPWSTR deformated;
@@ -5875,8 +5828,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         if (!MSI_RecordIsNull(row,6))
         {
             LPWSTR deformated;
-            sz = 0x100;
-            MSI_RecordGetStringW(row,6,buffer,&sz);
+            buffer = MSI_RecordGetString(row,6);
             deformat_string(package,buffer,&deformated);
             IShellLinkW_SetArguments(sl,deformated);
             HeapFree(GetProcessHeap(),0,deformated);
@@ -5884,10 +5836,8 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
 
         if (!MSI_RecordIsNull(row,7))
         {
-            LPWSTR deformated;
-            deformated = load_dynamic_stringW(row,7);
-            IShellLinkW_SetDescription(sl,deformated);
-            HeapFree(GetProcessHeap(),0,deformated);
+            buffer = MSI_RecordGetString(row,7);
+            IShellLinkW_SetDescription(sl,buffer);
         }
 
         if (!MSI_RecordIsNull(row,8))
@@ -5898,8 +5848,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
             WCHAR *Path = NULL;
             INT index; 
 
-            sz = 0x100;
-            MSI_RecordGetStringW(row,9,buffer,&sz);
+            buffer = MSI_RecordGetString(row,9);
 
             build_icon_path(package,buffer,&Path);
             index = MSI_RecordGetInteger(row,10);
@@ -5914,8 +5863,7 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         if (!MSI_RecordIsNull(row,12))
         {
             LPWSTR Path;
-            sz = 0x100;
-            MSI_RecordGetStringW(row,12,buffer,&sz);
+            buffer = MSI_RecordGetString(row,12);
             Path = resolve_folder(package, buffer, FALSE, FALSE, NULL);
             IShellLinkW_SetWorkingDirectory(sl,Path);
             HeapFree(GetProcessHeap(), 0, Path);
@@ -5999,8 +5947,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     while (1)
     {
         HANDLE the_file;
-        WCHAR *FilePath=NULL;
-        WCHAR *FileName=NULL;
+        LPWSTR FilePath=NULL;
+        LPCWSTR FileName=NULL;
         CHAR buffer[1024];
 
         rc = MSI_ViewFetch(view,&row);
@@ -6010,7 +5958,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             break;
         }
     
-        FileName = load_dynamic_stringW(row,1);
+        FileName = MSI_RecordGetString(row,1);
         if (!FileName)
         {
             ERR("Unable to get FileName\n");
@@ -6019,8 +5967,6 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         }
 
         build_icon_path(package,FileName,&FilePath);
-
-        HeapFree(GetProcessHeap(),0,FileName);
 
         TRACE("Creating icon file at %s\n",debugstr_w(FilePath));
         
@@ -6175,7 +6121,7 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
 
     while (1)
     {
-        LPWSTR component,filename,dirproperty,section,key,value,identifier;
+        LPCWSTR component,section,key,value,identifier,filename,dirproperty;
         LPWSTR deformated_section, deformated_key, deformated_value;
         LPWSTR folder, fullname = NULL;
         MSIRECORD * uirow;
@@ -6188,14 +6134,14 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
             break;
         }
 
-        component = load_dynamic_stringW(row, 8);
+        component = MSI_RecordGetString(row, 8);
         component_index = get_loaded_component(package,component);
-        HeapFree(GetProcessHeap(),0,component);
 
         if (!ACTION_VerifyComponentForAction(package, component_index,
                                 INSTALLSTATE_LOCAL))
         {
-            TRACE("Skipping ini file due to disabled component\n");
+            TRACE("Skipping ini file due to disabled component %s\n",
+                            debugstr_w(component));
             msiobj_release(&row->hdr);
 
             package->components[component_index].Action =
@@ -6206,12 +6152,12 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
 
         package->components[component_index].Action = INSTALLSTATE_LOCAL;
    
-        identifier = load_dynamic_stringW(row,1); 
-        filename = load_dynamic_stringW(row,2);
-        dirproperty = load_dynamic_stringW(row,3);
-        section = load_dynamic_stringW(row,4);
-        key = load_dynamic_stringW(row,5);
-        value = load_dynamic_stringW(row,6);
+        identifier = MSI_RecordGetString(row,1); 
+        filename = MSI_RecordGetString(row,2);
+        dirproperty = MSI_RecordGetString(row,3);
+        section = MSI_RecordGetString(row,4);
+        key = MSI_RecordGetString(row,5);
+        value = MSI_RecordGetString(row,6);
         action = MSI_RecordGetInteger(row,7);
 
         deformat_string(package,section,&deformated_section);
@@ -6271,13 +6217,7 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
         ui_actiondata(package,szWriteIniValues,uirow);
         msiobj_release( &uirow->hdr );
 cleanup:
-        HeapFree(GetProcessHeap(),0,identifier);
         HeapFree(GetProcessHeap(),0,fullname);
-        HeapFree(GetProcessHeap(),0,filename);
-        HeapFree(GetProcessHeap(),0,key);
-        HeapFree(GetProcessHeap(),0,value);
-        HeapFree(GetProcessHeap(),0,section);
-        HeapFree(GetProcessHeap(),0,dirproperty);
         HeapFree(GetProcessHeap(),0,folder);
         HeapFree(GetProcessHeap(),0,deformated_key);
         HeapFree(GetProcessHeap(),0,deformated_value);
@@ -6324,7 +6264,8 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
 
     while (1)
     {
-        LPWSTR filename;
+        LPCWSTR filename;
+        LPWSTR FullName;
         INT index;
         DWORD len;
 
@@ -6335,35 +6276,33 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
             break;
         }
 
-        filename = load_dynamic_stringW(row,1);
+        filename = MSI_RecordGetString(row,1);
         index = get_loaded_file(package,filename);
 
         if (index < 0)
         {
             ERR("Unable to find file id %s\n",debugstr_w(filename));
-            HeapFree(GetProcessHeap(),0,filename);
             msiobj_release(&row->hdr);
             continue;
         }
-        HeapFree(GetProcessHeap(),0,filename);
 
         len = strlenW(ExeStr);
         len += strlenW(package->files[index].TargetPath);
         len +=2;
 
-        filename = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        strcpyW(filename,ExeStr);
-        strcatW(filename,package->files[index].TargetPath);
-        strcatW(filename,close);
+        FullName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+        strcpyW(FullName,ExeStr);
+        strcatW(FullName,package->files[index].TargetPath);
+        strcatW(FullName,close);
 
-        TRACE("Registering %s\n",debugstr_w(filename));
-        brc = CreateProcessW(NULL, filename, NULL, NULL, FALSE, 0, NULL,
+        TRACE("Registering %s\n",debugstr_w(FullName));
+        brc = CreateProcessW(NULL, FullName, NULL, NULL, FALSE, 0, NULL,
                   c_colon, &si, &info);
 
         if (brc)
             msi_dialog_check_messages(info.hProcess);
  
-        HeapFree(GetProcessHeap(),0,filename);
+        HeapFree(GetProcessHeap(),0,FullName);
         msiobj_release(&row->hdr);
     }
     MSI_ViewClose(view);
@@ -7345,7 +7284,7 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     while (1)
     {
         LPWSTR name;
-        LPWSTR file;
+        LPCWSTR file;
         UINT index;
         DWORD size;
 
@@ -7356,12 +7295,11 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
             break;
         }
 
-        file = load_dynamic_stringW(row,1);
+        file = MSI_RecordGetString(row,1);
         index = get_loaded_file(package,file);
         if (index < 0)
         {
             ERR("Unable to load file\n");
-            HeapFree(GetProcessHeap(),0,file);
             continue;
         }
 
@@ -7370,7 +7308,6 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
                 package->files[index].ComponentIndex, INSTALLSTATE_LOCAL))
         {
             TRACE("Skipping: Component not scheduled for install\n");
-            HeapFree(GetProcessHeap(),0,file);
 
             msiobj_release(&row->hdr);
 
@@ -7391,7 +7328,6 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
                         (LPBYTE)package->files[index].FileName,size);
         }
         
-        HeapFree(GetProcessHeap(),0,file);
         HeapFree(GetProcessHeap(),0,name);
         msiobj_release(&row->hdr);
     }
@@ -7408,11 +7344,11 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
 static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
 {
     MSIPACKAGE *package = (MSIPACKAGE*)param;
-    LPWSTR compgroupid=NULL;
-    LPWSTR feature=NULL;
-    LPWSTR text = NULL;
-    LPWSTR qualifier = NULL;
-    LPWSTR component = NULL;
+    LPCWSTR compgroupid=NULL;
+    LPCWSTR feature=NULL;
+    LPCWSTR text = NULL;
+    LPCWSTR qualifier = NULL;
+    LPCWSTR component = NULL;
     LPWSTR advertise = NULL;
     LPWSTR output = NULL;
     HKEY hkey;
@@ -7420,7 +7356,7 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
     UINT index;
     DWORD sz = 0;
 
-    component = load_dynamic_stringW(rec,3);
+    component = MSI_RecordGetString(rec,3);
     index = get_loaded_component(package,component);
 
     if (!ACTION_VerifyComponentForAction(package, index,
@@ -7433,19 +7369,18 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
         TRACE("Skipping: Component %s not scheduled for install\n",
                         debugstr_w(component));
 
-        HeapFree(GetProcessHeap(),0,component);
         return ERROR_SUCCESS;
     }
 
-    compgroupid = load_dynamic_stringW(rec,1);
+    compgroupid = MSI_RecordGetString(rec,1);
 
     rc = MSIREG_OpenUserComponentsKey(compgroupid, &hkey, TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
     
-    text = load_dynamic_stringW(rec,4);
-    qualifier = load_dynamic_stringW(rec,2);
-    feature = load_dynamic_stringW(rec,5);
+    text = MSI_RecordGetString(rec,4);
+    qualifier = MSI_RecordGetString(rec,2);
+    feature = MSI_RecordGetString(rec,5);
   
     advertise = create_component_advertise_string(package, 
                     &package->components[index], feature);
@@ -7471,11 +7406,6 @@ static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
 end:
     RegCloseKey(hkey);
     HeapFree(GetProcessHeap(),0,output);
-    HeapFree(GetProcessHeap(),0,compgroupid);
-    HeapFree(GetProcessHeap(),0,component);
-    HeapFree(GetProcessHeap(),0,feature);
-    HeapFree(GetProcessHeap(),0,text);
-    HeapFree(GetProcessHeap(),0,qualifier);
     
     return rc;
 }
