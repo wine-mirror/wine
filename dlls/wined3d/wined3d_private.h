@@ -435,7 +435,6 @@ typedef struct IWineD3DResourceImpl
     IWineD3DResourceClass   resource;
 } IWineD3DResourceImpl;
 
-extern const IWineD3DResourceVtbl IWineD3DResource_Vtbl;
 
 /*****************************************************************************
  * IWineD3DVertexBuffer implementation structure (extends IWineD3DResourceImpl)
@@ -491,8 +490,6 @@ typedef struct IWineD3DBaseTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
 } IWineD3DBaseTextureImpl;
-
-extern const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl;
 
 /*****************************************************************************
  * IWineD3DTexture implementation structure (extends IWineD3DBaseTextureImpl)
