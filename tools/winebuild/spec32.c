@@ -902,7 +902,7 @@ void BuildDef32File( FILE *outfile, DLLSPEC *spec )
 void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
 {
     int nr_debug;
-    char *prefix, *p;
+    char *prefix, *p, *constructor, *destructor;
 
     while (*argv)
     {
@@ -928,68 +928,34 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
 
     /* Output the DLL constructor */
 
+    constructor = xmalloc( strlen(prefix) + 17 );
+    destructor = xmalloc( strlen(prefix) + 17 );
+    sprintf( constructor, "__wine_dbg_%s_init", prefix );
+    sprintf( destructor, "__wine_dbg_%s_fini", prefix );
     fprintf( outfile,
              "#ifdef __GNUC__\n"
-             "void __wine_dbg_%s_init(void) __attribute__((constructor));\n"
-             "void __wine_dbg_%s_fini(void) __attribute__((destructor));\n"
+             "void %s(void) __attribute__((constructor));\n"
+             "void %s(void) __attribute__((destructor));\n"
              "#else\n"
              "static void __asm__dummy_dll_init(void) {\n",
-             prefix, prefix );
-
-#if defined(__i386__)
-    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-#elif defined(__sparc__)
-    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\tnop\\n\"\n" );
-    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\tnop\\n\"\n" );
-    fprintf( outfile, "    \"\\t.section\t\\\".text\\\"\\n\");\n" );
-#elif defined(__powerpc__)
-# ifdef __APPLE__
-	fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
-	fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
-	fprintf( outfile, "    \"\\t.long " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
-	fprintf( outfile, "    \"\\t.text\\n\");\n" );
-	fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
-	fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
-	fprintf( outfile, "    \"\\t.long " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
-	fprintf( outfile, "    \"\\t.text\\n\");\n" );
-# else
-    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.text\\n\");\n" );
-# endif
-#elif defined(__ALPHA__)
-    fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-    fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-#else
-#error You need to define the DLL constructor for your architecture
-#endif
+             constructor, destructor );
+    output_dll_init( outfile, constructor, destructor );
     fprintf( outfile, "}\n#endif /* defined(__GNUC__) */\n\n" );
 
     fprintf( outfile,
-             "void __wine_dbg_%s_init(void)\n"
+             "void %s(void)\n"
              "{\n"
              "    extern void *__wine_dbg_register( char * const *, int );\n"
              "    if (!debug_registration) debug_registration = __wine_dbg_register( debug_channels, %d );\n"
-             "}\n\n", prefix, nr_debug );
+             "}\n\n", constructor, nr_debug );
     fprintf( outfile,
-             "void __wine_dbg_%s_fini(void)\n"
+             "void %s(void)\n"
              "{\n"
              "    extern void __wine_dbg_unregister( void* );\n"
              "    __wine_dbg_unregister( debug_registration );\n"
-             "}\n", prefix );
+             "}\n", destructor );
 
+    free( constructor );
+    free( destructor );
     free( prefix );
 }
