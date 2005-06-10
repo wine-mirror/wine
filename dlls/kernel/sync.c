@@ -948,7 +948,8 @@ HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG period,
                               PTIMERAPCROUTINE callback, LPVOID arg, BOOL resume )
 {
-    NTSTATUS status = NtSetTimer(handle, when, callback, arg, resume, period, NULL);
+    NTSTATUS status = NtSetTimer(handle, when, (PTIMER_APC_ROUTINE)callback,
+                                 arg, resume, period, NULL);
 
     if (status != STATUS_SUCCESS)
     {

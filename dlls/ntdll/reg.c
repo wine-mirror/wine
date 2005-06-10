@@ -645,7 +645,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 
 NTSTATUS WINAPI NtQueryMultipleValueKey(
 	HKEY KeyHandle,
-	PVALENTW ListOfValuesToQuery,
+	PKEY_MULTIPLE_VALUE_INFORMATION ListOfValuesToQuery,
 	ULONG NumberOfItems,
 	PVOID MultipleValueInformation,
 	ULONG Length,

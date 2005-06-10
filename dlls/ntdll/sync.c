@@ -456,7 +456,7 @@ NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
  */
 NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
                            IN const LARGE_INTEGER* when,
-                           IN PTIMERAPCROUTINE callback,
+                           IN PTIMER_APC_ROUTINE callback,
                            IN PVOID callback_arg,
                            IN BOOLEAN resume,
                            IN ULONG period OPTIONAL,
