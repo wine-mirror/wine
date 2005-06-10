@@ -126,6 +126,9 @@ UINT WINAPI MsiViewClose(MSIHANDLE);
 UINT WINAPI MsiDatabaseOpenViewA(MSIHANDLE,LPCSTR,MSIHANDLE*);
 UINT WINAPI MsiDatabaseOpenViewW(MSIHANDLE,LPCWSTR,MSIHANDLE*);
 #define     MsiDatabaseOpenView WINELIB_NAME_AW(MsiDatabaseOpenView)
+UINT WINAPI MsiViewGetErrorA(MSIHANDLE,LPSTR,DWORD*);
+UINT WINAPI MsiViewGetErrorW(MSIHANDLE,LPWSTR,DWORD*);
+#define     MsiViewGetError WINELIB_NAME_AW(MsiViewGetError)
 
 /* record manipulation */
 MSIHANDLE WINAPI MsiCreateRecord(unsigned int);

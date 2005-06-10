@@ -563,6 +563,42 @@ out:
     return r;
 }
 
+UINT WINAPI MsiViewGetErrorW( MSIHANDLE handle, LPWSTR szColumnNameBuffer,
+                              DWORD *pcchBuf )
+{
+    MSIQUERY *query = NULL;
+
+    FIXME("%ld %p %p\n", handle, szColumnNameBuffer, pcchBuf );
+
+    if( !pcchBuf )
+        return MSIDBERROR_INVALIDARG;
+
+    query = msihandle2msiinfo( handle, MSIHANDLETYPE_VIEW );
+    if( !query )
+        return MSIDBERROR_INVALIDARG;
+
+    msiobj_release( &query->hdr );
+    return MSIDBERROR_NOERROR;
+}
+
+UINT WINAPI MsiViewGetErrorA( MSIHANDLE handle, LPSTR szColumnNameBuffer,
+                              DWORD *pcchBuf )
+{
+    MSIQUERY *query = NULL;
+
+    FIXME("%ld %p %p\n", handle, szColumnNameBuffer, pcchBuf );
+
+    if( !pcchBuf )
+        return MSIDBERROR_INVALIDARG;
+
+    query = msihandle2msiinfo( handle, MSIHANDLETYPE_VIEW );
+    if( !query )
+        return MSIDBERROR_INVALIDARG;
+
+    msiobj_release( &query->hdr );
+    return MSIDBERROR_NOERROR;
+}
+
 UINT WINAPI MsiDatabaseApplyTransformA( MSIHANDLE hdb, 
                  LPCSTR szTransformFile, int iErrorCond)
 {
