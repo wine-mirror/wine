@@ -396,7 +396,23 @@ static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
  */
 void output_dll_init( FILE *outfile, const char *constructor, const char *destructor )
 {
-#if defined(__i386__)
+#ifdef __APPLE__
+/* Mach-O doesn't have an init section */
+    if (constructor)
+    {
+        fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
+        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\t.text\\n\");\n" );
+    }
+    if (destructor)
+    {
+        fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
+        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\t.text\\n\");\n" );
+    }
+#elif defined(__i386__)
     if (constructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
@@ -425,23 +441,6 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
 #elif defined(__powerpc__)
-# ifdef __APPLE__
-/* Mach-O doesn't have an init section */
-    if (constructor)
-    {
-        fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
-        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
-        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.text\\n\");\n" );
-    }
-    if (destructor)
-    {
-        fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
-        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
-        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.text\\n\");\n" );
-    }
-# else /* __APPLE__ */
     if (constructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
@@ -454,7 +453,6 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
         fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", destructor );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
-# endif /* __APPLE__ */
 #elif defined(__ALPHA__)
     if (constructor)
     {
