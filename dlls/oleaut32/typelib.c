@@ -4800,7 +4800,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	    }
 
 	    args = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs);
-	    args2 = HeapAlloc(GetProcessHeap(),0,sizeof(DWORD)*numargs2);
+	    args2 = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(DWORD)*numargs2);
 
 	    args[0] = (DWORD)pIUnk;
 	    argspos = 1; args2pos = 0;
