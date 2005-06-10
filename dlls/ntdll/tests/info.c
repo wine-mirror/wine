@@ -87,37 +87,19 @@ static void test_query_basic()
     ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n", sbi.NumberOfProcessors);
 }
 
-static void test_query_handle()
+static void test_query_cpu()
 {
     DWORD status;
     ULONG ReturnLength;
-    ULONG SystemInformationLength = sizeof(SYSTEM_HANDLE_INFORMATION);
-    SYSTEM_HANDLE_INFORMATION* shi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
+    SYSTEM_CPU_INFORMATION sci;
 
-    /* Request the needed length : a SystemInformationLength greater than one struct sets ReturnLength */
-    status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
-
-    /* The following check assumes more than one handle on any given system */
-    todo_wine
-    {
-        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
-    }
-    ok( ReturnLength > 0, "Expected ReturnLength to be > 0, it was %ld\n", ReturnLength);
-
-    SystemInformationLength = ReturnLength;
-    shi = HeapReAlloc(GetProcessHeap(), 0, shi , SystemInformationLength);
-    status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
+    status = pNtQuerySystemInformation(SystemCpuInformation, &sci, sizeof(sci), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%08x) <-> (%ld)\n", sizeof(sci), ReturnLength);
+                                                                                                                       
     /* Check if we have some return values */
-    trace("Number of Handles : %ld\n", shi->Count);
-    todo_wine
-    {
-        /* our implementation is a stub for now */
-        ok( shi->Count > 1, "Expected more than 1 handles, got (%ld)\n", shi->Count);
-    }
-
-    HeapFree( GetProcessHeap(), 0, shi);
+    trace("Processor FeatureSet : %08lx\n", sci.FeatureSet);
+    ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08lx\n", sci.FeatureSet);
 }
 
 static void test_query_process()
@@ -172,7 +154,7 @@ static void test_query_process()
      *   dwOffset for a process is 136 + (no. of threads) * sizeof(SYSTEM_THREAD_INFORMATION)
      * Wine (with every windows version):
      *   dwOffset for a process is 0 if just this test is running
-     *   dwOffset for a process is 184 + (no. of threads + 1) * sizeof(SYSTEM_THREAD_INFORMATION) +
+     *   dwOffset for a process is 184 + (no. of threads) * sizeof(SYSTEM_THREAD_INFORMATION) +
      *                             ProcessName.MaximumLength
      *     if more wine processes are running
      *
@@ -222,16 +204,53 @@ static void test_query_process()
     HeapFree( GetProcessHeap(), 0, spi);
 }
 
+static void test_query_handle()
+{
+    DWORD status;
+    ULONG ReturnLength;
+    ULONG SystemInformationLength = sizeof(SYSTEM_HANDLE_INFORMATION);
+    SYSTEM_HANDLE_INFORMATION* shi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength);
+
+    /* Request the needed length : a SystemInformationLength greater than one struct sets ReturnLength */
+    status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
+
+    /* The following check assumes more than one handle on any given system */
+    todo_wine
+    {
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    }
+    ok( ReturnLength > 0, "Expected ReturnLength to be > 0, it was %ld\n", ReturnLength);
+
+    SystemInformationLength = ReturnLength;
+    shi = HeapReAlloc(GetProcessHeap(), 0, shi , SystemInformationLength);
+    status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+
+    /* Check if we have some return values */
+    trace("Number of Handles : %ld\n", shi->Count);
+    todo_wine
+    {
+        /* our implementation is a stub for now */
+        ok( shi->Count > 1, "Expected more than 1 handles, got (%ld)\n", shi->Count);
+    }
+
+    HeapFree( GetProcessHeap(), 0, shi);
+}
+
 START_TEST(info)
 {
     if(!InitFunctionPtrs())
         return;
 
-    /* 0 SystemBasicInformation */
+    /* 0x0 SystemBasicInformation */
     trace("Starting test_query_basic()\n");
     test_query_basic();
 
-    /* 5 SystemProcessInformation */
+    /* 0x1 SystemCpuInformation */
+    trace("Starting test_query_cpu()\n");
+    test_query_cpu();
+
+    /* 0x5 SystemProcessInformation */
     trace("Starting test_query_process()\n");
     test_query_process();
 

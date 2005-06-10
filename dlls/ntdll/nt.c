@@ -627,16 +627,20 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemCpuInformation:
         {
-            SYSTEM_CPU_INFORMATION* sci;
-            sci = (SYSTEM_CPU_INFORMATION *) SystemInformation;
-            if (Length >= sizeof(*sci))
+            SYSTEM_CPU_INFORMATION sci;
+
+            /* FIXME: move some code from kernel/cpu.c to process this */
+            sci.Architecture = PROCESSOR_ARCHITECTURE_INTEL;
+            sci.Level = 6; /* 686, aka Pentium II+ */
+            sci.Revision = 0;
+            sci.Reserved = 0;
+            sci.FeatureSet = 0x1fff;
+            len = sizeof(sci);
+
+            if ( Length >= len)
             {
-                /* FIXME: move some code from kernel/cpu.c to process this */
-                sci->Architecture = PROCESSOR_ARCHITECTURE_INTEL;
-                sci->Level = 6; /* 686, aka Pentium II+ */
-                sci->Revision = 0;
-                sci->Reserved = 0;
-                sci->FeatureSet = 0x1fff;
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sci, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
