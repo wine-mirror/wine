@@ -70,8 +70,7 @@ static void test_encodeint(void)
 
         ret = CryptEncodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
          X509_INTEGER, &ints[i].val, 0, NULL, NULL, &bufSize);
-        ok(ret || GetLastError() == ERROR_MORE_DATA,
-         "Expected success or ERROR_MORE_DATA, got %ld\n", GetLastError());
+        ok(ret, "Expected success, got %ld\n", GetLastError());
         ret = CryptEncodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
          X509_INTEGER, &ints[i].val, CRYPT_ENCODE_ALLOC_FLAG, NULL,
          (BYTE *)&buf, &bufSize);
@@ -122,12 +121,13 @@ static void test_decodeint(void)
      "Expected CRYPT_E_ASN1_BADTAG, got %ld\n", GetLastError());
     for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
     {
-        /* WinXP succeeds rather than failing with ERROR_MORE_DATA */
+        /* When the output buffer is NULL, this always succeeds */
+        SetLastError(0xdeadbeef);
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_INTEGER,
          (BYTE *)&ints[i].encoded, ints[i].encoded[1] + 2, 0, NULL, NULL,
          &bufSize);
-        ok(ret || GetLastError() == ERROR_MORE_DATA,
-         "Expected success or ERROR_MORE_DATA, got %ld\n", GetLastError());
+        ok(ret && GetLastError() == NOERROR,
+         "Expected success and NOERROR, got %ld\n", GetLastError());
         ret = CryptDecodeObjectEx(X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
          X509_INTEGER, (BYTE *)&ints[i].encoded, ints[i].encoded[1] + 2,
          CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
@@ -262,8 +262,19 @@ static void test_decodeFiletime(void)
      "\x18" "\x04" "2145",
      "\x18" "\x08" "21450606",
     };
-    DWORD i;
+    DWORD i, size;
+    FILETIME ft1 = { 0 }, ft2 = { 0 };
+    BOOL ret;
 
+    /* Check bogus length with non-NULL buffer */
+    ret = SystemTimeToFileTime(&times[0].sysTime, &ft1);
+    ok(ret, "SystemTimeToFileTime failed: %ld\n", GetLastError());
+    size = 1;
+    ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CHOICE_OF_TIME,
+     times[0].encodedTime, times[0].encodedTime[1] + 2, 0, NULL, &ft2, &size);
+    ok(!ret && GetLastError() == ERROR_MORE_DATA,
+     "Expected ERROR_MORE_DATA, got %ld\n", GetLastError());
+    /* Normal tests */
     for (i = 0; i < sizeof(times) / sizeof(times[0]); i++)
     {
         testTimeDecoding(X509_CHOICE_OF_TIME, &times[i]);
@@ -278,19 +289,9 @@ static void test_decodeFiletime(void)
     }
     for (i = 0; i < sizeof(bogusTimes) / sizeof(bogusTimes[0]); i++)
     {
-        FILETIME ft;
-        SYSTEMTIME sysTime;
-        DWORD size = sizeof(ft);
-        BOOL ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CHOICE_OF_TIME,
-         bogusTimes[i], bogusTimes[i][1] + 2, 0, NULL, &ft, &size);
-
-        if (ret)
-        {
-            ret = FileTimeToSystemTime(&ft, &sysTime);
-            printf("%02d %02d %04d %02d:%02d.%02d\n", sysTime.wMonth,
-             sysTime.wDay, sysTime.wYear, sysTime.wHour, sysTime.wMinute,
-             sysTime.wSecond);
-        }
+        size = sizeof(ft1);
+        ret = CryptDecodeObjectEx(X509_ASN_ENCODING, X509_CHOICE_OF_TIME,
+         bogusTimes[i], bogusTimes[i][1] + 2, 0, NULL, &ft1, &size);
         ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
          "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
     }

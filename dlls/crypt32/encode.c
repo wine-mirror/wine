@@ -317,17 +317,17 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
+/* Helper function to check *pcbEncoded, set it to the required size, and
+ * optionally to allocate memory.  Assumes pbEncoded is not NULL.
+ * If CRYPT_ENCODE_ALLOC_FLAG is set in dwFlags, *pbEncoded will be set to a
+ * pointer to the newly allocated memory.
+ */
 static BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded,
  DWORD bytesNeeded)
 {
-    if (!pbEncoded || (!(dwFlags & CRYPT_ENCODE_ALLOC_FLAG) &&
-     bytesNeeded > *pcbEncoded))
-    {
-        *pcbEncoded = bytesNeeded;
-        SetLastError(ERROR_MORE_DATA);
-        return FALSE;
-    }
+    BOOL ret = TRUE;
+
     if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
     {
         if (pEncodePara && pEncodePara->pfnAlloc)
@@ -335,9 +335,15 @@ static BOOL CRYPT_EncodeEnsureSpace(DWORD dwFlags,
         else
             *(BYTE **)pbEncoded = LocalAlloc(0, bytesNeeded);
         if (!*(BYTE **)pbEncoded)
-            return FALSE;
+            ret = FALSE;
     }
-    return TRUE;
+    else if (bytesNeeded > *pcbEncoded)
+    {
+        *pcbEncoded = bytesNeeded;
+        SetLastError(ERROR_MORE_DATA);
+        ret = FALSE;
+    }
+    return ret;
 }
 
 static BOOL WINAPI CRYPT_AsnEncodeInt(DWORD dwCertEncodingType,
@@ -383,6 +389,11 @@ static BOOL WINAPI CRYPT_AsnEncodeInt(DWORD dwCertEncodingType,
     bytesNeeded = 2 + significantBytes;
     if (pad)
         bytesNeeded++;
+    if (!pbEncoded)
+    {
+        *pcbEncoded = bytesNeeded;
+        return TRUE;
+    }
     if (!CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded, pcbEncoded,
      bytesNeeded))
         return FALSE;
@@ -425,6 +436,11 @@ static BOOL WINAPI CRYPT_AsnEncodeUtcTime(DWORD dwCertEncodingType,
         SetLastError(CRYPT_E_BAD_ENCODE);
         return FALSE;
     }
+    if (!pbEncoded)
+    {
+        *pcbEncoded = bytesNeeded;
+        return TRUE;
+    }
     if (!CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded, pcbEncoded,
      bytesNeeded))
         return FALSE;
@@ -440,7 +456,7 @@ static BOOL WINAPI CRYPT_AsnEncodeUtcTime(DWORD dwCertEncodingType,
     return TRUE;
 }
 
-static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
+static BOOL WINAPI CRYPT_AsnEncodeGeneralizedTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
  PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
 {
@@ -456,12 +472,13 @@ static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    /* Check the year, if it's in the UTCTime range call that encode func */
+    if (!pbEncoded)
+    {
+        *pcbEncoded = bytesNeeded;
+        return TRUE;
+    }
     if (!FileTimeToSystemTime((const FILETIME *)pvStructInfo, &sysTime))
         return FALSE;
-    if (sysTime.wYear >= 1950 && sysTime.wYear <= 2050)
-        return CRYPT_AsnEncodeUtcTime(dwCertEncodingType, lpszStructType,
-         pvStructInfo, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
     if (!CRYPT_EncodeEnsureSpace(dwFlags, pEncodePara, pbEncoded, pcbEncoded,
      bytesNeeded))
         return FALSE;
@@ -474,6 +491,31 @@ static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
      sysTime.wMinute, sysTime.wSecond);
     memcpy(pbEncoded, buf, bytesNeeded);
     return TRUE;
+}
+
+static BOOL WINAPI CRYPT_AsnEncodeChoiceOfTime(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const void *pvStructInfo, DWORD dwFlags,
+ PCRYPT_ENCODE_PARA pEncodePara, BYTE *pbEncoded, DWORD *pcbEncoded)
+{
+    SYSTEMTIME sysTime;
+    BOOL ret;
+
+    if (!pvStructInfo)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    /* Check the year, if it's in the UTCTime range call that encode func */
+    if (!FileTimeToSystemTime((const FILETIME *)pvStructInfo, &sysTime))
+        return FALSE;
+    if (sysTime.wYear >= 1950 && sysTime.wYear <= 2050)
+        ret = CRYPT_AsnEncodeUtcTime(dwCertEncodingType, lpszStructType,
+         pvStructInfo, dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+    else
+        ret = CRYPT_AsnEncodeGeneralizedTime(dwCertEncodingType,
+         lpszStructType, pvStructInfo, dwFlags, pEncodePara, pbEncoded,
+         pcbEncoded);
+    return ret;
 }
 
 typedef BOOL (WINAPI *CryptEncodeObjectExFunc)(DWORD, LPCSTR, const void *,
@@ -504,6 +546,7 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         return FALSE;
     }
 
+    SetLastError(NOERROR);
     if (!HIWORD(lpszStructType))
     {
         switch (LOWORD(lpszStructType))
@@ -577,10 +620,17 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     return ret;
 }
 
+/* Helper function to check *pcbStructInfo, set it to the required size, and
+ * optionally to allocate memory.  Assumes pvStructInfo is not NULL.
+ * If CRYPT_DECODE_ALLOC_FLAG is set in dwFlags, *pvStructInfo will be set to a
+ * pointer to the newly allocated memory.
+ */
 static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo,
  DWORD bytesNeeded)
 {
+    BOOL ret = TRUE;
+
     if (dwFlags & CRYPT_DECODE_ALLOC_FLAG)
     {
         if (pDecodePara && pDecodePara->pfnAlloc)
@@ -588,15 +638,15 @@ static BOOL CRYPT_DecodeEnsureSpace(DWORD dwFlags,
         else
             *(BYTE **)pvStructInfo = LocalAlloc(0, bytesNeeded);
         if (!*(BYTE **)pvStructInfo)
-            return FALSE;
+            ret = FALSE;
     }
     else if (*pcbStructInfo < bytesNeeded)
     {
         *pcbStructInfo = bytesNeeded;
         SetLastError(ERROR_MORE_DATA);
-        return FALSE;
+        ret = FALSE;
     }
-    return TRUE;
+    return ret;
 }
 
 static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
@@ -613,8 +663,7 @@ static BOOL WINAPI CRYPT_AsnDecodeInt(DWORD dwCertEncodingType,
     if (!pvStructInfo)
     {
         *pcbStructInfo = sizeof(int);
-        SetLastError(ERROR_MORE_DATA);
-        return FALSE;
+        return TRUE;
     }
     if (pbEncoded[0] != ASN_INTEGER)
     {
@@ -685,8 +734,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
     if (!pvStructInfo)
     {
         *pcbStructInfo = sizeof(FILETIME);
-        SetLastError(ERROR_MORE_DATA);
-        return FALSE;
+        return TRUE;
     }
     if (pbEncoded[0] != ASN_UTCTIME)
     {
@@ -731,7 +779,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
     return SystemTimeToFileTime(&sysTime, (FILETIME *)pvStructInfo);
 }
 
-static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
+static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
 {
@@ -746,13 +794,8 @@ static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
     if (!pvStructInfo)
     {
         *pcbStructInfo = sizeof(FILETIME);
-        SetLastError(ERROR_MORE_DATA);
-        return FALSE;
+        return TRUE;
     }
-    if (pbEncoded[0] == ASN_UTCTIME)
-        return CRYPT_AsnDecodeUtcTime(dwCertEncodingType, lpszStructType,
-         pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
-         pcbStructInfo);
     if (pbEncoded[0] != ASN_GENERALTIME)
     {
         SetLastError(CRYPT_E_ASN1_BADTAG);
@@ -831,6 +874,39 @@ static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
     return SystemTimeToFileTime(&sysTime, (FILETIME *)pvStructInfo);
 }
 
+static BOOL WINAPI CRYPT_AsnDecodeChoiceOfTime(DWORD dwCertEncodingType,
+ LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
+{
+    BOOL ret;
+
+    if (!pbEncoded || !cbEncoded)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (!pvStructInfo)
+    {
+        *pcbStructInfo = sizeof(FILETIME);
+        return TRUE;
+    }
+
+    if (pbEncoded[0] == ASN_UTCTIME)
+        ret = CRYPT_AsnDecodeUtcTime(dwCertEncodingType, lpszStructType,
+         pbEncoded, cbEncoded, dwFlags, pDecodePara, pvStructInfo,
+         pcbStructInfo);
+    else if (pbEncoded[0] == ASN_GENERALTIME)
+        ret = CRYPT_AsnDecodeGeneralizedTime(dwCertEncodingType,
+         lpszStructType, pbEncoded, cbEncoded, dwFlags, pDecodePara,
+         pvStructInfo, pcbStructInfo);
+    else
+    {
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 typedef BOOL (WINAPI *CryptDecodeObjectExFunc)(DWORD, LPCSTR, const BYTE *,
  DWORD, DWORD, PCRYPT_DECODE_PARA, void *, DWORD *);
 
@@ -859,6 +935,7 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         return FALSE;
     }
 
+    SetLastError(NOERROR);
     if (!HIWORD(lpszStructType))
     {
         switch (LOWORD(lpszStructType))
