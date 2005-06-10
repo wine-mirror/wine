@@ -868,15 +868,25 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 	 */
 
 	unsigned 	long red, green, blue;
-	unsigned 	idx = 0;
+	unsigned	idx = color & 0xffff;
+        RGBQUAD         quad;
 
 	switch(spec_type)
         {
+          case 0x10: /* DIBINDEX */
+            if( X11DRV_GetDIBColorTable( physDev, idx, 1, &quad ) != 1 ) {
+                WARN("DIBINDEX(%lx) : idx %d is out of bounds, assuming black\n", color , idx);
+                GDI_ReleaseObj( hPal );
+                return 0;
+            }
+            color = RGB( quad.rgbRed, quad.rgbGreen, quad.rgbBlue );
+            break;
+                
           case 1: /* PALETTEINDEX */
 
-            if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
+            if( idx >= palPtr->logpalette.palNumEntries)
             {
-                WARN("RGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
+                WARN("PALETTEINDEX(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
 		GDI_ReleaseObj( hPal );
                 return 0;
             }
@@ -965,7 +975,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 		index = color & 0xffff;
 
 	        if( index >= palPtr->logpalette.palNumEntries )
-		    WARN("RGB(%lx) : index %i is out of bounds\n", color, index);
+		    WARN("PALETTEINDEX(%lx) : index %i is out of bounds\n", color, index);
 		else if( palPtr->mapping ) index = palPtr->mapping[index];
 
 		/*  TRACE(palette,"PALETTEINDEX(%04x) -> pixel %i\n", (WORD)color, index);
