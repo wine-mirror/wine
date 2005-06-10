@@ -576,6 +576,35 @@ NTSTATUS WINAPI RtlEqualDomainName(const UNICODE_STRING *left,
 }
 
 
+/**************************************************************************
+ *      RtlAnsiCharToUnicodeChar   (NTDLL.@)
+ *
+ * Converts the first ansi character to a unicode character.
+ *
+ * PARAMS
+ *  ansi [I/O] Pointer to the ansi string.
+ *
+ * RETURNS
+ *  Unicode representation of the first character in the ansi string.
+ *
+ * NOTES
+ *  Upon successful completion, the char pointer ansi points to is
+ *  incremented by the size of the character.
+ */
+WCHAR WINAPI RtlAnsiCharToUnicodeChar(LPSTR *ansi)
+{
+    WCHAR str;
+    DWORD charSize = sizeof(CHAR);
+
+    if (is_dbcs_leadbyte(ansi_table, **ansi))
+        charSize++;
+
+    RtlMultiByteToUnicodeN(&str, sizeof(WCHAR), NULL, *ansi, charSize);
+    *ansi += charSize;
+
+    return str;
+}
+
 /*
         COPY BETWEEN ANSI_STRING or UNICODE_STRING
         there is no parameter checking, it just crashes
