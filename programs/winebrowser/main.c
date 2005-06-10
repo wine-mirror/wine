@@ -44,7 +44,7 @@ int main (int argc, char *argv[])
   DWORD maxLength;
   CHAR szBrowsers[256];
   DWORD type;
-  CHAR *defaultBrowsers =
+  const CHAR *defaultBrowsers =
       "mozilla,firefox,netscape,konqueror,galeon,opera,dillo";
   char *browser;
   HKEY hkey;

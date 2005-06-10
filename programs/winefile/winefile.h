@@ -144,6 +144,9 @@ typedef struct
 
 extern WINEFILE_GLOBALS Globals;
 
+extern void WineLicense(HWND hwnd);
+extern void WineWarranty(HWND hwnd);
+
 #ifdef __WINE__
 #ifdef UNICODE
 extern void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);

@@ -69,7 +69,7 @@ static int	nPerformancePageHeight;
 static HANDLE	hPerformancePageEvent = NULL;	/*  When this event becomes signaled then we refresh the performance page */
 DWORD WINAPI	PerformancePageRefreshThread(void *lpParameter);
 
-void AdjustFrameSize(HWND hCntrl, HWND hDlg, int nXDifference, int nYDifference, int pos)
+static void AdjustFrameSize(HWND hCntrl, HWND hDlg, int nXDifference, int nYDifference, int pos)
 {
     RECT	rc;
     int		cx, cy, sx, sy;
@@ -105,12 +105,12 @@ void AdjustFrameSize(HWND hCntrl, HWND hDlg, int nXDifference, int nYDifference,
     InvalidateRect(hCntrl, NULL, TRUE);
 }
 		 
-void AdjustControlPostion(HWND hCntrl, HWND hDlg, int nXDifference, int nYDifference)
+static void AdjustControlPostion(HWND hCntrl, HWND hDlg, int nXDifference, int nYDifference)
 {
     AdjustFrameSize(hCntrl, hDlg, nXDifference, nYDifference, 0);
 }
 		 
-void AdjustCntrlPos(int ctrl_id, HWND hDlg, int nXDifference, int nYDifference)
+static void AdjustCntrlPos(int ctrl_id, HWND hDlg, int nXDifference, int nYDifference)
 {
     AdjustFrameSize(GetDlgItem(hDlg, ctrl_id), hDlg, nXDifference, nYDifference, 0);
 }
