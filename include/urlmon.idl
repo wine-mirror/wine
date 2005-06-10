@@ -1116,11 +1116,27 @@ cpp_quote("HRESULT WINAPI CoInternetGetSession(DWORD,IInternetSession**,DWORD);"
 cpp_quote("HRESULT WINAPI MkParseDisplayNameEx(IBindCtx*,LPCWSTR,ULONG*,IMoniker**);")
 cpp_quote("HRESULT WINAPI IsAsyncMoniker(IMoniker* pmk);")
 cpp_quote("HRESULT WINAPI CreateAsyncBindCtx(DWORD, IBindStatusCallback*, IEnumFORMATETC*, IBindCtx**);")
-cpp_quote("HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx*,DWORD,IBindStatusCallback*,IEnumFORMATETC*,IBindCtx**,DWORD);");
+cpp_quote("HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx*,DWORD,IBindStatusCallback*,IEnumFORMATETC*,IBindCtx**,DWORD);")
+cpp_quote("HRESULT WINAPI CoInternetCreateSecurityManager(IServiceProvider*,IInternetSecurityManager**,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCombineUrl(LPCWSTR,LPCWSTR,DWORD,LPWSTR,DWORD,DWORD*,DWORD);")
-cpp_quote("HRESULT WINAPI CoInternetCompareUrl(LPCWSTR,LPCWSTR,DWORD);");
+cpp_quote("HRESULT WINAPI CoInternetCompareUrl(LPCWSTR,LPCWSTR,DWORD);")
 cpp_quote("HRESULT WINAPI CoInternetCreateZoneManager(IServiceProvider*, IInternetZoneManager**, DWORD);");
-cpp_quote("HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi);");
+cpp_quote("HRESULT WINAPI CoInternetQueryInfo(LPCWSTR,QUERYOPTION,DWORD,LPVOID,DWORD,DWORD*,DWORD);")
+cpp_quote("HRESULT WINAPI GetSoftwareUpdateInfo( LPCWSTR szDistUnit, LPSOFTDISTINFO psdi);")
+cpp_quote("HRESULT WINAPI FaultInIEFeature(HWND,uCLSSPEC*,QUERYCONTEXT*,DWORD);")
+cpp_quote("HRESULT WINAPI FindMimeFromData(LPBC,LPCWSTR,LPVOID,DWORD,LPCWSTR,DWORD,LPWSTR*,DWORD);")
+cpp_quote("HRESULT WINAPI HlinkGoBack(IUnknown*);")
+cpp_quote("HRESULT WINAPI HlinkGoForward(IUnknown*);")
+cpp_quote("HRESULT WINAPI HlinkNavigateMoniker(IUnknown*,IMoniker*);")
+cpp_quote("HRESULT WINAPI HlinkNavigateString(IUnknown*,LPCWSTR);")
+cpp_quote("HRESULT WINAPI HlinkSimpleNavigateToMoniker(IMoniker*,LPCWSTR,LPCWSTR,IUnknown*,IBindCtx*,IBindStatusCallback*,DWORD,DWORD);")
+cpp_quote("HRESULT WINAPI HlinkSimpleNavigateToString(LPCWSTR,LPCWSTR,LPCWSTR,IUnknown*,IBindCtx*,IBindStatusCallback*,DWORD,DWORD);")
+cpp_quote("HRESULT WINAPI IsValidURL(LPBC,LPCWSTR,DWORD);")
+cpp_quote("HRESULT WINAPI ObtainUserAgentString(DWORD,LPSTR,DWORD*);")
+cpp_quote("HRESULT WINAPI RevokeBindStatusCallback(LPBC,IBindStatusCallback*);")
+cpp_quote("void WINAPI ReleaseBindInfo(BINDINFO*);")
+cpp_quote("HRESULT WINAPI UrlMkGetSessionOption(DWORD,LPVOID,DWORD,DWORD*,DWORD);")
+cpp_quote("HRESULT WINAPI UrlMkSetSessionOption(DWORD,LPVOID,DWORD,DWORD);")
 
 cpp_quote("#define OInetCombineUrl CoInternetCombineUrl")
 cpp_quote("#define OInetCompareUrl CoInternetCompareUrl")

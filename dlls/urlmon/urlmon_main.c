@@ -250,7 +250,7 @@ HRESULT WINAPI URLMON_DllRegisterServerEx(void)
 /**************************************************************************
  *                 UrlMkSetSessionOption (URLMON.@)
  */
-HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID *pBuffer, DWORD dwBufferLength,
+HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
  					DWORD Reserved)
 {
     FIXME("(%#lx, %p, %#lx): stub\n", dwOption, pBuffer, dwBufferLength);
@@ -261,7 +261,7 @@ HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID *pBuffer, DWORD dwBu
 /**************************************************************************
  *                 UrlMkGetSessionOption (URLMON.@)
  */
-HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID *pBuffer, DWORD dwBufferLength,
+HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBufferLength,
                                         DWORD* pdwBufferLength, DWORD dwReserved)
 {
     FIXME("(%#lx, %p, %#lx, %p): stub\n", dwOption, pBuffer, dwBufferLength, pdwBufferLength);
@@ -272,7 +272,7 @@ HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID *pBuffer, DWORD dwBu
 /**************************************************************************
  *                 ObtainUserAgentString (URLMON.@)
  */
-HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPCSTR pcszUAOut, DWORD *cbSize)
+HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbSize)
 {
     FIXME("(%ld, %p, %p): stub\n", dwOption, pcszUAOut, cbSize);
 
