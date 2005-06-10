@@ -419,7 +419,7 @@ static int check_wait( struct thread *thread )
     struct wait_queue_entry *entry = wait->queues;
 
     /* Suspended threads may not acquire locks */
-    if( thread->process->suspend + thread->suspend > 0 ) return -1;
+    if (thread->process->suspend + thread->suspend > 0) return -1;
 
     assert( wait );
     if (wait->flags & SELECT_ALL)

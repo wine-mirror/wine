@@ -271,7 +271,7 @@ static void key_dump( struct object *obj, int verbose )
 /* notify waiter and maybe delete the notification */
 static void do_notification( struct key *key, struct notify *notify, int del )
 {
-    if( notify->event )
+    if (notify->event)
     {
         set_event( notify->event );
         release_object( notify->event );
@@ -756,7 +756,7 @@ static int delete_key( struct key *key, int recurse )
     }
 
     while (recurse && (key->last_subkey>=0))
-        if(0>delete_key(key->subkeys[key->last_subkey], 1))
+        if (0 > delete_key(key->subkeys[key->last_subkey], 1))
             return -1;
 
     for (index = 0; index <= parent->last_subkey; index++)
@@ -1930,13 +1930,13 @@ DECL_HANDLER(set_registry_notification)
     struct notify *notify;
 
     key = get_hkey_obj( req->hkey, KEY_NOTIFY );
-    if( key )
+    if (key)
     {
         event = get_event_obj( current->process, req->event, SYNCHRONIZE );
-        if( event )
+        if (event)
         {
             notify = find_notify( key, current->process, req->hkey );
-            if( notify )
+            if (notify)
             {
                 release_object( notify->event );
                 grab_object( event );
@@ -1945,7 +1945,7 @@ DECL_HANDLER(set_registry_notification)
             else
             {
                 notify = mem_alloc( sizeof(*notify) );
-                if( notify )
+                if (notify)
                 {
                     grab_object( event );
                     notify->event   = event;

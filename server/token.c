@@ -764,7 +764,7 @@ static unsigned int token_access_check( struct token *token,
 /* open a security token */
 DECL_HANDLER(open_token)
 {
-    if( req->flags & OPEN_TOKEN_THREAD )
+    if (req->flags & OPEN_TOKEN_THREAD)
     {
         struct thread *thread = get_thread_from_handle( req->handle, 0 );
         if (thread)

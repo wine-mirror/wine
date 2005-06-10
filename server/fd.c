@@ -1384,9 +1384,9 @@ int default_fd_get_poll_events( struct fd *fd )
 {
     int events = 0;
 
-    if( !list_empty( &fd->read_q ))
+    if (!list_empty( &fd->read_q ))
         events |= POLLIN;
-    if( !list_empty( &fd->write_q ))
+    if (!list_empty( &fd->write_q ))
         events |= POLLOUT;
 
     return events;

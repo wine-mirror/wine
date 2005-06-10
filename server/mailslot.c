@@ -198,7 +198,7 @@ static int mailslot_get_poll_events( struct fd *fd )
     int events = 0;
     assert( mailslot->obj.ops == &mailslot_ops );
 
-    if( !list_empty( &mailslot->read_q ))
+    if (!list_empty( &mailslot->read_q ))
         events |= POLLIN;
 
     return events;
@@ -208,7 +208,7 @@ static void mailslot_poll_event( struct fd *fd, int event )
 {
     struct mailslot *mailslot = get_fd_user( fd );
 
-    if( !list_empty( &mailslot->read_q ) && (POLLIN & event) )
+    if (!list_empty( &mailslot->read_q ) && (POLLIN & event))
         async_terminate_head( &mailslot->read_q, STATUS_ALERTED );
 
     set_fd_events( fd, mailslot_get_poll_events(fd) );
@@ -222,13 +222,13 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
 
     assert(mailslot->obj.ops == &mailslot_ops);
 
-    if( type != ASYNC_TYPE_READ )
+    if (type != ASYNC_TYPE_READ)
     {
         set_error(STATUS_INVALID_PARAMETER);
         return;
     }
 
-    if( list_empty( &mailslot->writers ) ||
+    if (list_empty( &mailslot->writers ) ||
         !mailslot_message_count( mailslot ))
     {
         set_error(STATUS_IO_TIMEOUT);
@@ -267,18 +267,18 @@ static struct mailslot *create_mailslot( const WCHAR *name, size_t len, int max_
     int fds[2];
     static const WCHAR slot[] = {'m','a','i','l','s','l','o','t','\\',0};
 
-    if( ( len <= strlenW( slot ) ) || strncmpiW( slot, name, strlenW( slot ) ) )
+    if (( len <= strlenW( slot )) || strncmpiW( slot, name, strlenW( slot ) ))
     {
         set_error( STATUS_OBJECT_NAME_INVALID );
         return NULL;
     }
 
     mailslot = create_named_object( sync_namespace, &mailslot_ops, name, len );
-    if( !mailslot )
+    if (!mailslot)
         return NULL;
 
     /* it already exists - there can only be one mailslot to read from */
-    if( get_error() == STATUS_OBJECT_NAME_COLLISION )
+    if (get_error() == STATUS_OBJECT_NAME_COLLISION)
     {
         release_object( mailslot );
         return NULL;
@@ -291,7 +291,7 @@ static struct mailslot *create_mailslot( const WCHAR *name, size_t len, int max_
     list_init( &mailslot->writers );
     list_init( &mailslot->read_q );
 
-    if( !socketpair( PF_UNIX, SOCK_DGRAM, 0, fds ) )
+    if (!socketpair( PF_UNIX, SOCK_DGRAM, 0, fds ))
     {
         fcntl( fds[0], F_SETFL, O_NONBLOCK );
         fcntl( fds[1], F_SETFL, O_NONBLOCK );
@@ -299,7 +299,7 @@ static struct mailslot *create_mailslot( const WCHAR *name, size_t len, int max_
                                 fds[1], &mailslot->obj );
         mailslot->write_fd = create_anonymous_fd( &mail_writer_fd_ops,
                                 fds[0], &mailslot->obj );
-        if( mailslot->fd && mailslot->write_fd ) return mailslot;
+        if (mailslot->fd && mailslot->write_fd) return mailslot;
     }
     else file_set_error();
 
@@ -402,7 +402,7 @@ DECL_HANDLER(create_mailslot)
     reply->handle = 0;
     mailslot = create_mailslot( get_req_data(), get_req_data_size(),
                                 req->max_msgsize, req->read_timeout );
-    if( mailslot )
+    if (mailslot)
     {
         reply->handle = alloc_handle( current->process, mailslot,
                                       GENERIC_READ, req->inherit );
@@ -418,19 +418,19 @@ DECL_HANDLER(open_mailslot)
 
     reply->handle = 0;
 
-    if( ! ( req->sharing & FILE_SHARE_READ ) )
+    if (!(req->sharing & FILE_SHARE_READ))
     {
         set_error( STATUS_SHARING_VIOLATION );
         return;
     }
 
     mailslot = open_mailslot( get_req_data(), get_req_data_size() );
-    if( mailslot )
+    if (mailslot)
     {
         struct mail_writer *writer;
 
         writer = create_mail_writer( mailslot, req->access, req->sharing );
-        if( writer )
+        if (writer)
         {
             reply->handle = alloc_handle( current->process, writer,
                                           req->access, req->inherit );
@@ -448,16 +448,16 @@ DECL_HANDLER(set_mailslot_info)
 {
     struct mailslot *mailslot = get_mailslot_obj( current->process, req->handle, 0 );
 
-    if( mailslot )
+    if (mailslot)
     {
-        if( req->flags & MAILSLOT_SET_READ_TIMEOUT )
+        if (req->flags & MAILSLOT_SET_READ_TIMEOUT)
             mailslot->read_timeout = req->read_timeout;
         reply->max_msgsize = mailslot->max_msgsize;
         reply->read_timeout = mailslot->read_timeout;
         reply->msg_count = mailslot_message_count(mailslot);
 
         /* get the size of the next message */
-        if( reply->msg_count )
+        if (reply->msg_count)
             reply->next_msgsize = mailslot_next_msg_size(mailslot);
         else
             reply->next_msgsize = MAILSLOT_NO_MESSAGE;

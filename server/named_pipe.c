@@ -213,7 +213,7 @@ static void named_pipe_destroy( struct object *obj)
 static struct fd *pipe_client_get_fd( struct object *obj )
 {
     struct pipe_client *client = (struct pipe_client *) obj;
-    if( client->fd )
+    if (client->fd)
         return (struct fd *) grab_object( client->fd );
     set_error( STATUS_PIPE_DISCONNECTED );
     return NULL;
@@ -246,7 +246,7 @@ static struct fd *pipe_server_get_fd( struct object *obj )
 
 static void notify_empty( struct pipe_server *server )
 {
-    if( !server->flush_poll )
+    if (!server->flush_poll)
         return;
     assert( server->state == ps_connected_server );
     assert( server->event );
@@ -260,7 +260,7 @@ static void notify_empty( struct pipe_server *server )
 static void do_disconnect( struct pipe_server *server )
 {
     /* we may only have a server fd, if the client disconnected */
-    if( server->client )
+    if (server->client)
     {
         assert( server->client->server == server );
         assert( server->client->fd );
@@ -278,13 +278,13 @@ static void pipe_server_destroy( struct object *obj)
 
     assert( obj->ops == &pipe_server_ops );
 
-    if( server->fd )
+    if (server->fd)
     {
         notify_empty( server );
         do_disconnect( server );
     }
 
-    if( server->client )
+    if (server->client)
     {
         server->client->server = NULL;
         server->client = NULL;
@@ -306,11 +306,11 @@ static void pipe_client_destroy( struct object *obj)
 
     assert( obj->ops == &pipe_client_ops );
 
-    if( server )
+    if (server)
     {
         notify_empty( server );
 
-        switch( server->state )
+        switch(server->state)
         {
         case ps_connected_server:
             /* Don't destroy the server's fd here as we can't
@@ -343,13 +343,13 @@ static int pipe_data_remaining( struct pipe_server *server )
     assert( server->client );
 
     fd = get_unix_fd( server->client->fd );
-    if( fd < 0 )
+    if (fd < 0)
         return 0;
     pfd.fd = fd;
     pfd.events = POLLIN;
     pfd.revents = 0;
 
-    if( 0 > poll( &pfd, 1, 0 ) )
+    if (0 > poll( &pfd, 1, 0 ))
         return 0;
  
     return pfd.revents&POLLIN;
@@ -360,7 +360,7 @@ static void check_flushed( void *arg )
     struct pipe_server *server = (struct pipe_server*) arg;
 
     assert( server->event );
-    if( pipe_data_remaining( server ) )
+    if (pipe_data_remaining( server ))
     {
         struct timeval tv;
 
@@ -382,25 +382,25 @@ static int pipe_server_flush( struct fd *fd, struct event **event )
 {
     struct pipe_server *server = get_fd_user( fd );
 
-    if( !server )
+    if (!server)
         return 0;
 
-    if( server->state != ps_connected_server )
+    if (server->state != ps_connected_server)
         return 0;
 
     /* FIXME: if multiple threads flush the same pipe,
               maybe should create a list of processes to notify */
-    if( server->flush_poll )
+    if (server->flush_poll)
         return 0;
 
-    if( pipe_data_remaining( server ) )
+    if (pipe_data_remaining( server ))
     {
         struct timeval tv;
 
         /* this kind of sux - 
            there's no unix way to be alerted when a pipe becomes empty */
         server->event = create_event( NULL, 0, 0, 0 );
-        if( !server->event )
+        if (!server->event)
             return 0;
         gettimeofday( &tv, NULL );
         add_timeout( &tv, 100 );
@@ -447,9 +447,9 @@ static struct named_pipe *create_named_pipe( const WCHAR *name, size_t len )
     struct named_pipe *pipe;
 
     pipe = create_named_object( sync_namespace, &named_pipe_ops, name, len );
-    if( pipe )
+    if (pipe)
     {
-        if( get_error() != STATUS_OBJECT_NAME_COLLISION )
+        if (get_error() != STATUS_OBJECT_NAME_COLLISION)
         {
             /* initialize it if it didn't already exist */
             pipe->instances = 0;
@@ -488,7 +488,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     struct pipe_server *server;
 
     server = alloc_object( &pipe_server_ops );
-    if( !server )
+    if (!server)
         return NULL;
 
     server->fd = NULL;
@@ -510,7 +510,7 @@ static struct pipe_client *create_pipe_client( struct pipe_server *server, unsig
     struct pipe_client *client;
 
     client = alloc_object( &pipe_client_ops );
-    if( !client )
+    if (!client)
         return NULL;
 
     client->fd = NULL;
@@ -551,10 +551,10 @@ DECL_HANDLER(create_named_pipe)
 
     reply->handle = 0;
     pipe = create_named_pipe( get_req_data(), get_req_data_size() );
-    if( !pipe )
+    if (!pipe)
         return;
 
-    if( get_error() != STATUS_OBJECT_NAME_COLLISION )
+    if (get_error() != STATUS_OBJECT_NAME_COLLISION)
     {
         pipe->insize = req->insize;
         pipe->outsize = req->outsize;
@@ -565,15 +565,15 @@ DECL_HANDLER(create_named_pipe)
     else
     {
         set_error( 0 );  /* clear the name collision */
-        if( pipe->maxinstances <= pipe->instances )
+        if (pipe->maxinstances <= pipe->instances)
         {
             set_error( STATUS_PIPE_BUSY );
             release_object( pipe );
             return;
         }
-        if( ( pipe->maxinstances != req->maxinstances ) ||
-            ( pipe->timeout != req->timeout ) ||
-            ( pipe->flags != req->flags ) )
+        if ((pipe->maxinstances != req->maxinstances) ||
+            (pipe->timeout != req->timeout) ||
+            (pipe->flags != req->flags))
         {
             set_error( STATUS_ACCESS_DENIED );
             release_object( pipe );
@@ -582,7 +582,7 @@ DECL_HANDLER(create_named_pipe)
     }
 
     server = create_pipe_server( pipe, req->options );
-    if(server)
+    if (server)
     {
         reply->handle = alloc_handle( current->process, server,
                                       GENERIC_READ|GENERIC_WRITE, req->inherit );
@@ -601,7 +601,7 @@ DECL_HANDLER(open_named_pipe)
     int fds[2];
 
     pipe = open_named_pipe( get_req_data(), get_req_data_size() );
-    if ( !pipe )
+    if (!pipe)
     {
         set_error( STATUS_NO_SUCH_FILE );
         return;
@@ -610,14 +610,14 @@ DECL_HANDLER(open_named_pipe)
     server = find_server2( pipe, ps_idle_server, ps_wait_open );
     release_object( pipe );
 
-    if ( !server )
+    if (!server)
     {
         set_error( STATUS_PIPE_NOT_AVAILABLE );
         return;
     }
 
     client = create_pipe_client( server, req->flags );
-    if( client )
+    if (client)
     {
         if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
         {
@@ -640,7 +640,7 @@ DECL_HANDLER(open_named_pipe)
                                             fds[0], &server->obj );
             if (client->fd && server->fd && res != 1)
             {
-                if( server->state == ps_wait_open )
+                if (server->state == ps_wait_open)
                     async_terminate_head( &server->wait_q, STATUS_SUCCESS );
                 assert( list_empty( &server->wait_q ) );
                 server->state = ps_connected_server;
@@ -663,10 +663,10 @@ DECL_HANDLER(connect_named_pipe)
     struct pipe_server *server;
 
     server = get_pipe_server_obj(current->process, req->handle, 0);
-    if(!server)
+    if (!server)
         return;
 
-    switch( server->state )
+    switch(server->state)
     {
     case ps_idle_server:
     case ps_wait_connect:
@@ -705,7 +705,7 @@ DECL_HANDLER(wait_named_pipe)
         return;
     }
     server = find_server( pipe, ps_wait_open );
-    if( server )
+    if (server)
     {
         /* there's already a server waiting for a client to connect */
         thread_queue_apc( current, NULL, req->func, APC_ASYNC_IO,
@@ -737,9 +737,9 @@ DECL_HANDLER(disconnect_named_pipe)
 
     reply->fd = -1;
     server = get_pipe_server_obj( current->process, req->handle, 0 );
-    if( !server )
+    if (!server)
         return;
-    switch( server->state )
+    switch(server->state)
     {
     case ps_connected_server:
         assert( server->fd );
@@ -778,7 +778,7 @@ DECL_HANDLER(get_named_pipe_info)
     struct pipe_server *server;
 
     server = get_pipe_server_obj( current->process, req->handle, 0 );
-    if(!server)
+    if (!server)
         return;
 
     reply->flags        = server->pipe->flags;

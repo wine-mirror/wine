@@ -87,21 +87,21 @@ static void adjust_changes( int fd, unsigned int filter )
         return;
 
     val = DN_MULTISHOT;
-    if( filter & FILE_NOTIFY_CHANGE_FILE_NAME )
+    if (filter & FILE_NOTIFY_CHANGE_FILE_NAME)
         val |= DN_RENAME | DN_DELETE | DN_CREATE;
-    if( filter & FILE_NOTIFY_CHANGE_DIR_NAME )
+    if (filter & FILE_NOTIFY_CHANGE_DIR_NAME)
         val |= DN_RENAME | DN_DELETE | DN_CREATE;
-    if( filter & FILE_NOTIFY_CHANGE_ATTRIBUTES )
+    if (filter & FILE_NOTIFY_CHANGE_ATTRIBUTES)
         val |= DN_ATTRIB;
-    if( filter & FILE_NOTIFY_CHANGE_SIZE )
+    if (filter & FILE_NOTIFY_CHANGE_SIZE)
         val |= DN_MODIFY;
-    if( filter & FILE_NOTIFY_CHANGE_LAST_WRITE )
+    if (filter & FILE_NOTIFY_CHANGE_LAST_WRITE)
         val |= DN_MODIFY;
-    if( filter & FILE_NOTIFY_CHANGE_LAST_ACCESS )
+    if (filter & FILE_NOTIFY_CHANGE_LAST_ACCESS)
         val |= DN_ACCESS;
-    if( filter & FILE_NOTIFY_CHANGE_CREATION )
+    if (filter & FILE_NOTIFY_CHANGE_CREATION)
         val |= DN_CREATE;
-    if( filter & FILE_NOTIFY_CHANGE_SECURITY )
+    if (filter & FILE_NOTIFY_CHANGE_SECURITY)
         val |= DN_ATTRIB;
     fcntl( fd, F_NOTIFY, val );
 #endif
