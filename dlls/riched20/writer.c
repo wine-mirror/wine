@@ -379,6 +379,7 @@ ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_DisplayItem *para)
       }
       if (fmt->rgxTabs[i] >> 28 <= 5)
         strcat(props, leader[fmt->rgxTabs[i] >> 28]);
+      sprintf(props+strlen(props), "\\tx%ld", fmt->rgxTabs[i]&0x00FFFFFF);
     }
   }
     
