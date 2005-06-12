@@ -1296,14 +1296,20 @@ inline static void handle_diffuse_and_specular(STATEBLOCK *sb, BYTE *fog_table, 
     }
 }
 
-inline static void handle_texture(D3DVALUE *coords) {
-    glTexCoord2fv(coords);
+static void handle_texture(DWORD size, const D3DVALUE *coords) {
+    switch (size) {
+        case 1: glTexCoord1fv(coords); break;
+	case 2: glTexCoord2fv(coords); break;
+	case 3: glTexCoord3fv(coords); break;
+	case 4: glTexCoord4fv(coords); break;
+    }
 }
-inline static void handle_textures(const D3DVALUE *coords, int tex_stage) {
-    if (GL_extensions.glMultiTexCoord2fv) {
-	GL_extensions.glMultiTexCoord2fv(GL_TEXTURE0_WINE + tex_stage, coords);
+
+inline static void handle_textures(DWORD size, const D3DVALUE *coords, int tex_stage) {
+    if (GL_extensions.max_texture_units > 0) {
+	GL_extensions.glMultiTexCoord[size - 1](GL_TEXTURE0_WINE + tex_stage, coords);
     } else {
-	if (tex_stage == 0) glTexCoord2fv(coords);
+	if (tex_stage == 0) handle_texture(size, coords);
     }
 }
 
@@ -1319,7 +1325,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
     BOOLEAN vertex_lighted = FALSE;
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     int num_active_stages = 0;
-    int num_tex_index = ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
+    int num_tex_index = GET_TEXCOUNT_FROM_FVF(d3dvtVertexType);
     
     /* I put the trace before the various locks... So as to better understand where locks occur :-) */
     if (TRACE_ON(ddraw)) {
@@ -1412,7 +1418,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		GL_extensions.glClientActiveTexture(GL_TEXTURE0_WINE + tex_stage);
 	    }
 	    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	    glTexCoordPointer(2, GL_FLOAT, lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride,
+	    glTexCoordPointer(GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_index), GL_FLOAT, lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride,
 			      lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData);
 	}
 	if (dwIndices != NULL) {
@@ -1450,7 +1456,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		    (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 		
 		handle_normal(normal);
-		handle_texture(tex_coord);
+		handle_texture(2, tex_coord);
 		handle_xyz(position);
 		
 		TRACE_(ddraw_geom)(" %f %f %f / %f %f %f (%f %f)\n",
@@ -1473,7 +1479,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		    (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 		
 		handle_diffuse_and_specular(&(This->state_block), glThis->fog_table, color_d, color_s, TRUE);
-		handle_texture(tex_coord);
+		handle_texture(2, tex_coord);
 		handle_xyzrhw(position);
 		
 		TRACE_(ddraw_geom)(" %f %f %f %f / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
@@ -1494,7 +1500,7 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 	       Note that people should write a fast path for all vertex formats out there...
 	       */  
 	    unsigned int index;
-	    static const D3DVALUE no_index[] = { 0.0, 0.0, 0.0, 0.0 };
+	    /* static const D3DVALUE no_index[] = { 0.0, 0.0, 0.0, 0.0 }; */
 	    
 	    for (index = 0; index < dwIndexCount; index++) {
 		int i = (dwIndices == NULL) ? index : dwIndices[index];
@@ -1525,14 +1531,19 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 		
 		for (tex_stage = 0; tex_stage < num_active_stages; tex_stage++) {
 		    int tex_index = This->state_block.texture_stage_state[tex_stage][D3DTSS_TEXCOORDINDEX - 1] & 0x0000FFFF;
+		    D3DVALUE *tex_coord;
+		    
 		    if (tex_index >= num_tex_index) {
-			handle_textures((const D3DVALUE *) no_index, tex_stage);
-		    } else {
-			D3DVALUE *tex_coord =
-			    (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
-					  i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
-			handle_textures(tex_coord, tex_stage);
+			/* This will have to be checked on Windows. RealMYST uses this feature and I would find it more
+			 * logical to re-use the index of the previous stage than a default index of '0'.
+			 */
+			
+			/* handle_textures((const D3DVALUE *) no_index, tex_stage); */
+			tex_index = num_tex_index - 1;
 		    }
+		    tex_coord = (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
+					      i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
+		    handle_textures(GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_index), tex_coord, tex_stage);
 		}
 		
 		if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
@@ -1580,11 +1591,17 @@ static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 					   (*color_s >>  0) & 0xFF,
 					   (*color_s >> 24) & 0xFF);
 		    }
-		    for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+		    for (tex_index = 0; tex_index < GET_TEXCOUNT_FROM_FVF(d3dvtVertexType); tex_index++) {
 			D3DVALUE *tex_coord =
 			    (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
 					  i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
-			TRACE_(ddraw_geom)(" / %f %f", tex_coord[0], tex_coord[1]);
+			switch (GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_index)) {
+			    case 1: TRACE_(ddraw_geom)(" / %f", tex_coord[0]); break;
+			    case 2: TRACE_(ddraw_geom)(" / %f %f", tex_coord[0], tex_coord[1]); break;
+			    case 3: TRACE_(ddraw_geom)(" / %f %f %f", tex_coord[0], tex_coord[1], tex_coord[2]); break;
+			    case 4: TRACE_(ddraw_geom)(" / %f %f %f %f", tex_coord[0], tex_coord[1], tex_coord[2], tex_coord[3]); break;
+			    default: TRACE_(ddraw_geom)("Invalid texture size (%ld) !!!", GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_index)); break;
+			}
 		    }
 		    TRACE_(ddraw_geom)("\n");
 		}
@@ -4397,15 +4414,20 @@ d3ddevice_init_at_startup(void *gl_handle)
 	    TRACE(" - multi-texturing (%d stages)\n", GL_extensions.max_texture_units);
 	    /* We query the ARB version to be the most portable we can... */
 	    GL_extensions.glActiveTexture = pglXGetProcAddressARB("glActiveTextureARB");
-	    GL_extensions.glMultiTexCoord2fv = pglXGetProcAddressARB("glMultiTexCoord2fv");
+	    GL_extensions.glMultiTexCoord[0] = pglXGetProcAddressARB("glMultiTexCoord1fvARB");
+	    GL_extensions.glMultiTexCoord[1] = pglXGetProcAddressARB("glMultiTexCoord2fvARB");
+	    GL_extensions.glMultiTexCoord[2] = pglXGetProcAddressARB("glMultiTexCoord3fvARB");
+	    GL_extensions.glMultiTexCoord[3] = pglXGetProcAddressARB("glMultiTexCoord4fvARB");
 	    GL_extensions.glClientActiveTexture = pglXGetProcAddressARB("glClientActiveTextureARB");
+	} else {
+	    GL_extensions.max_texture_units = 0;
 	}
 
 	if (strstr(glExtensions, "GL_EXT_texture_compression_s3tc")) {
 	    TRACE(" - S3TC compression supported\n");
 	    GL_extensions.s3tc_compressed_texture = TRUE;
-	    GL_extensions.glCompressedTexImage2D = pglXGetProcAddressARB("glCompressedTexImage2D");
-	    GL_extensions.glCompressedTexSubImage2D = pglXGetProcAddressARB("glCompressedTexSubImage2D");
+	    GL_extensions.glCompressedTexImage2D = pglXGetProcAddressARB("glCompressedTexImage2DARB");
+	    GL_extensions.glCompressedTexSubImage2D = pglXGetProcAddressARB("glCompressedTexSubImage2DARB");
 	}
     }
     

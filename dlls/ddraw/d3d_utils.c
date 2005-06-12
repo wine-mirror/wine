@@ -235,10 +235,10 @@ dump_D3DMATRIX(D3DMATRIX *mat)
     DPRINTF("  %f %f %f %f\n", mat->_41, mat->_42, mat->_43, mat->_44);
 }
 
-
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType)
 {
     DWORD size = 0;
+    int i;
     
     if (d3dvtVertexType & D3DFVF_NORMAL) size += 3 * sizeof(D3DVALUE);
     if (d3dvtVertexType & D3DFVF_DIFFUSE) size += sizeof(DWORD);
@@ -249,8 +249,10 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType)
         case D3DFVF_XYZRHW: size += 4 * sizeof(D3DVALUE); break;
 	default: TRACE(" matrix weighting not handled yet...\n");
     }
-    size += 2 * sizeof(D3DVALUE) * ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT);
-
+    for (i = 0; i < GET_TEXCOUNT_FROM_FVF(d3dvtVertexType); i++) {
+	size += GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, i) * sizeof(D3DVALUE);
+    }
+    
     return size;
 }
 
@@ -288,8 +290,8 @@ void dump_flexible_vertex(DWORD d3dvtVertexType)
 	GEN_CASE(D3DFVF_TEX8);
     }
 #undef GEN_CASE
-    for (i = 0; i < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); i++) {
-        DPRINTF(" T%d-s%ld", i + 1, (((d3dvtVertexType >> (16 + (2 * i))) + 1) & 0x03) + 1);
+    for (i = 0; i < GET_TEXCOUNT_FROM_FVF(d3dvtVertexType); i++) {
+        DPRINTF(" T%d-s%ld", i + 1, GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, i));
     }
     DPRINTF("\n");
 }
@@ -325,9 +327,9 @@ convert_FVF_to_strided_data(DWORD d3dvtVertexType, LPVOID lpvVertices, D3DDRAWPR
         strided->specular.lpvData  = ((char *) lpvVertices) + current_offset;
         current_offset += sizeof(DWORD);
     }
-    for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+    for (tex_index = 0; tex_index < GET_TEXCOUNT_FROM_FVF(d3dvtVertexType); tex_index++) {
         strided->textureCoords[tex_index].lpvData  = ((char *) lpvVertices) + current_offset;
-        current_offset += 2 * sizeof(D3DVALUE);
+        current_offset += GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_index) * sizeof(D3DVALUE);
     }
     strided->position.dwStride = current_offset;
     strided->normal.dwStride   = current_offset;

@@ -270,6 +270,12 @@ struct IDirect3DVertexBufferImpl
 };
 
 /* Various dump and helper functions */
+#define GET_TEXCOUNT_FROM_FVF(d3dvtVertexType) \
+    (((d3dvtVertexType) & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT)
+
+#define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
+    (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
+
 extern const char *_get_renderstate(D3DRENDERSTATETYPE type);
 extern void dump_D3DMATERIAL7(LPD3DMATERIAL7 lpMat);
 extern void dump_D3DCOLORVALUE(D3DCOLORVALUE *lpCol);

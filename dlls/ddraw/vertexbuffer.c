@@ -358,11 +358,11 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 	      (DWORD *) (((char *) lpStrideData->specular.lpvData) + i * lpStrideData->specular.dwStride);
 	    copy_and_next(dest_ptr, color_s, sizeof(DWORD));
 	}
-	for (tex_index = 0; tex_index < ((dwVertexTypeDesc & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+	for (tex_index = 0; tex_index < GET_TEXCOUNT_FROM_FVF(dwVertexTypeDesc); tex_index++) {
 	    D3DVALUE *tex_coord =
 	      (D3DVALUE *) (((char *) lpStrideData->textureCoords[tex_index].lpvData) + 
 			    i * lpStrideData->textureCoords[tex_index].dwStride);
-	    copy_and_next(dest_ptr, tex_coord, 2 * sizeof(D3DVALUE));
+	    copy_and_next(dest_ptr, tex_coord, GET_TEXCOORD_SIZE_FROM_FVF(dwVertexTypeDesc, i) * sizeof(D3DVALUE));
 	}
 
 	if (TRACE_ON(ddraw_geom)) {
@@ -398,11 +398,17 @@ process_vertices_strided(IDirect3DVertexBufferImpl *This,
 				   (*color_s >>  0) & 0xFF,
 				   (*color_s >> 24) & 0xFF);
 	    }
-	    for (tex_index = 0; tex_index < ((dwVertexTypeDesc & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
+	    for (tex_index = 0; tex_index < GET_TEXCOUNT_FROM_FVF(dwVertexTypeDesc); tex_index++) {
 	        D3DVALUE *tex_coord =
 		  (D3DVALUE *) (((char *) lpStrideData->textureCoords[tex_index].lpvData) + 
 				i * lpStrideData->textureCoords[tex_index].dwStride);
-		TRACE_(ddraw_geom)(" / %f %f", tex_coord[0], tex_coord[1]);
+		switch (GET_TEXCOORD_SIZE_FROM_FVF(dwVertexTypeDesc, tex_index)) {
+		    case 1: TRACE_(ddraw_geom)(" / %f", tex_coord[0]); break;
+		    case 2: TRACE_(ddraw_geom)(" / %f %f", tex_coord[0], tex_coord[1]); break;
+		    case 3: TRACE_(ddraw_geom)(" / %f %f %f", tex_coord[0], tex_coord[1], tex_coord[2]); break;
+		    case 4: TRACE_(ddraw_geom)(" / %f %f %f %f", tex_coord[0], tex_coord[1], tex_coord[2], tex_coord[3]); break;
+		    default: TRACE_(ddraw_geom)("Invalid texture size (%ld) !!!", GET_TEXCOORD_SIZE_FROM_FVF(dwVertexTypeDesc, tex_index)); break;
+		}
 	    }
 	    TRACE_(ddraw_geom)("\n");
 	}

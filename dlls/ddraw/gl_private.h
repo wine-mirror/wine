@@ -141,8 +141,11 @@
 #define glStencilFunc pglStencilFunc
 #define glStencilMask pglStencilMask
 #define glStencilOp pglStencilOp
+#define glTexCoord1fv pglTexCoord1fv
 #define glTexCoord2f pglTexCoord2f
 #define glTexCoord2fv pglTexCoord2fv
+#define glTexCoord3fv pglTexCoord3fv
+#define glTexCoord4fv pglTexCoord4fv
 #define glTexCoordPointer pglTexCoordPointer
 #define glTexEnvf pglTexEnvf
 #define glTexEnvfv pglTexEnvfv

@@ -171,7 +171,7 @@ typedef struct {
     /* Multi-texturing */
     GLint max_texture_units;
     void (*glActiveTexture)(GLenum texture);
-    void (*glMultiTexCoord2fv)(GLenum target, const GLfloat *v);
+    void (*glMultiTexCoord[4])(GLenum target, const GLfloat *v);
     void (*glClientActiveTexture)(GLenum texture);
     /* S3TC/DXTN compressed texture */
     BOOLEAN s3tc_compressed_texture;
