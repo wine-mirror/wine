@@ -430,9 +430,10 @@ extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
 extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
 
 extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib);
-void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
-                               DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
-                               DWORD width, DWORD height);
+extern UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, RGBQUAD *colors );
+extern void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
+                                      DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
+                                      DWORD width, DWORD height);
 struct _DCICMD;
 extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lpOutData);
 
