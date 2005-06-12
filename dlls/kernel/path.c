@@ -1313,6 +1313,17 @@ UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
     WCHAR bufferW[MAX_PATH];
     DWORD ret;
 
+    if (buflen && buf && !HIWORD(buf))
+    {
+        /* Win9x catches access violations here, returning zero.
+         * This behaviour resulted in some people not noticing
+         * that they got the argument order wrong. So let's be
+         * nice and fail gracefully if buf is invalid and looks
+         * more like a buflen (which is probably MAX_PATH). */
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
     ret = GetCurrentDirectoryW(MAX_PATH, bufferW);
 
     if (!ret) return 0;
