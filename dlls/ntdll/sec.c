@@ -835,18 +835,19 @@ NTSTATUS WINAPI RtlSelfRelativeToAbsoluteSD(
  * RtlGetControlSecurityDescriptor (NTDLL.@)
  */
 NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
-    PSECURITY_DESCRIPTOR  pSecurityDescriptor,
+    PSECURITY_DESCRIPTOR pSecurityDescriptor,
     PSECURITY_DESCRIPTOR_CONTROL pControl,
     LPDWORD lpdwRevision)
 {
-    SECURITY_DESCRIPTOR* lpsd=pSecurityDescriptor;
+    SECURITY_DESCRIPTOR *lpsd = pSecurityDescriptor;
 
-    TRACE("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
-
-    if ( !lpsd  || !pControl || !lpdwRevision )
-            return STATUS_INVALID_PARAMETER;
+    TRACE("(%p,%p,%p)\n",pSecurityDescriptor,pControl,lpdwRevision);
 
     *lpdwRevision = lpsd->Revision;
+
+    if (*lpdwRevision != SECURITY_DESCRIPTOR_REVISION)
+        return STATUS_UNKNOWN_REVISION;
+
     *pControl = lpsd->Control;
 
     return STATUS_SUCCESS;
