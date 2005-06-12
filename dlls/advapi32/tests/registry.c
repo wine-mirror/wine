@@ -267,48 +267,53 @@ static void test_reg_open_key()
     ok(hkResult != NULL, "expected hkResult != NULL\n");
     hkPreserve = hkResult;
 
-    /* open same key twice */
-    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-    ok(hkResult != hkPreserve, "epxected hkResult != hkPreserve\n");
-    ok(hkResult != NULL, "hkResult != NULL\n");
-    RegCloseKey(hkResult);
-
-    /* open nonexistent key
-     * check that hkResult is set to NULL
-     */
-    hkResult = hkPreserve;
-    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
-    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
-    ok(hkResult == NULL, "expected hkResult == NULL\n");
-
-    /* open the same nonexistent key again to make sure the key wasn't created */
-    hkResult = hkPreserve;
-    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
-    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
-    ok(hkResult == NULL, "expected hkResult == NULL\n");
-
-    /* send in NULL lpSubKey
-     * check that hkResult receives the value of hKey
-     */
-    hkResult = hkPreserve;
-    ret = RegOpenKeyA(HKEY_CURRENT_USER, NULL, &hkResult);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-    ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
-
-    /* send empty-string in lpSubKey */
-    hkResult = hkPreserve;
-    ret = RegOpenKeyA(HKEY_CURRENT_USER, "", &hkResult);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-    ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
-
-    /* send in NULL lpSubKey and NULL hKey
-     * hkResult is set to NULL
-     */
-    hkResult = hkPreserve;
-    ret = RegOpenKeyA(NULL, NULL, &hkResult);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
-    ok(hkResult == NULL, "expected hkResult == NULL\n");
+    /* these tests fail on Win9x, but we want to be compatible with NT, so
+     * run them if we can */
+    if (!(GetVersion() & 0x80000000))
+    {
+        /* open same key twice */
+        ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(hkResult != hkPreserve, "epxected hkResult != hkPreserve\n");
+        ok(hkResult != NULL, "hkResult != NULL\n");
+        RegCloseKey(hkResult);
+    
+        /* open nonexistent key
+        * check that hkResult is set to NULL
+        */
+        hkResult = hkPreserve;
+        ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
+        ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+        ok(hkResult == NULL, "expected hkResult == NULL\n");
+    
+        /* open the same nonexistent key again to make sure the key wasn't created */
+        hkResult = hkPreserve;
+        ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Nonexistent", &hkResult);
+        ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+        ok(hkResult == NULL, "expected hkResult == NULL\n");
+    
+        /* send in NULL lpSubKey
+        * check that hkResult receives the value of hKey
+        */
+        hkResult = hkPreserve;
+        ret = RegOpenKeyA(HKEY_CURRENT_USER, NULL, &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
+    
+        /* send empty-string in lpSubKey */
+        hkResult = hkPreserve;
+        ret = RegOpenKeyA(HKEY_CURRENT_USER, "", &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(hkResult == HKEY_CURRENT_USER, "expected hkResult == HKEY_CURRENT_USER\n");
+    
+        /* send in NULL lpSubKey and NULL hKey
+        * hkResult is set to NULL
+        */
+        hkResult = hkPreserve;
+        ret = RegOpenKeyA(NULL, NULL, &hkResult);
+        ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
+        ok(hkResult == NULL, "expected hkResult == NULL\n");
+    }
 
     /* only send NULL hKey
      * the value of hkResult remains unchanged
