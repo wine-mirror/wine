@@ -109,8 +109,8 @@ BOOL query_function_pbuffer(glXGetProcAddressARB_t proc, const char *gl_version,
 			    const char* glx_version, const char *glx_extensions,
 			    const char *server_glx_extensions, const char *client_glx_extensions)
 {
-  FIXME("gl_version is: \"%s\"\n", gl_version);
-  FIXME("glx_exts is: \"%s\"\n", glx_extensions);
+  TRACE("gl_version is: \"%s\"\n", gl_version);
+  TRACE("glx_exts is: \"%s\"\n", glx_extensions);
 
   return 0 <= strcmp("1.3", glx_version) || NULL != strstr(glx_extensions, "GLX_SGIX_pbuffer");
 }
