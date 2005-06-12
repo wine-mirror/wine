@@ -228,14 +228,14 @@ static void IDirectSoundCapture_tests()
        "should have failed: %s\n",DXGetErrorString8(rc));
 
     /* try with no device specified */
-    rc=DirectSoundCaptureCreate(NULL,&dsco,NULL);
+    rc=pDirectSoundCaptureCreate(NULL,&dsco,NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCaptureCreate(NULL) failed: %s\n",DXGetErrorString8(rc));
     if (rc==S_OK && dsco)
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with default capture device specified */
-    rc=DirectSoundCaptureCreate(&DSDEVID_DefaultCapture,&dsco,NULL);
+    rc=pDirectSoundCaptureCreate(&DSDEVID_DefaultCapture,&dsco,NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCaptureCreate(DSDEVID_DefaultCapture) failed: %s\n",
        DXGetErrorString8(rc));
@@ -243,7 +243,7 @@ static void IDirectSoundCapture_tests()
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with default voice capture device specified */
-    rc=DirectSoundCaptureCreate(&DSDEVID_DefaultVoiceCapture,&dsco,NULL);
+    rc=pDirectSoundCaptureCreate(&DSDEVID_DefaultVoiceCapture,&dsco,NULL);
     ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED||rc==E_FAIL,
        "DirectSoundCaptureCreate(DSDEVID_DefaultVoiceCapture) failed: %s\n",
        DXGetErrorString8(rc));
@@ -251,7 +251,7 @@ static void IDirectSoundCapture_tests()
         IDirectSoundCapture_test(dsco, TRUE, NULL);
 
     /* try with a bad device specified */
-    rc=DirectSoundCaptureCreate(&DSDEVID_DefaultVoicePlayback,&dsco,NULL);
+    rc=pDirectSoundCaptureCreate(&DSDEVID_DefaultVoicePlayback,&dsco,NULL);
     ok(rc==DSERR_NODRIVER,
        "DirectSoundCaptureCreate(DSDEVID_DefaultVoicePlatback) "
        "should have failed: %s\n",DXGetErrorString8(rc));
