@@ -1227,6 +1227,7 @@ AC_CHECK_HEADERS(linux/videodev.h,,,
 [#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#include <sys/types.h>
 #ifdef HAVE_ASM_TYPES_H
 #include <asm/types.h>
 #endif])
