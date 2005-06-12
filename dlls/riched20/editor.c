@@ -321,10 +321,25 @@ void ME_RTFCharAttrHook(RTF_Info *info)
     case rtfUnderline:
       fmt.dwMask = CFM_UNDERLINE;
       fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      fmt.bUnderlineType = CFU_CF1UNDERLINE;
+      break;
+    case rtfNoUnderline:
+      fmt.dwMask = CFM_UNDERLINE;
+      fmt.dwEffects = 0;
       break;
     case rtfStrikeThru:
       fmt.dwMask = CFM_STRIKEOUT;
       fmt.dwEffects = info->rtfParam ? fmt.dwMask : 0;
+      break;
+    case rtfSubScript:
+    case rtfSuperScript:
+    case rtfSubScrShrink:
+    case rtfSuperScrShrink:
+    case rtfNoSuperSub:
+      fmt.dwMask = CFM_SUBSCRIPT|CFM_SUPERSCRIPT;
+      if (info->rtfMinor == rtfSubScrShrink) fmt.dwEffects = CFE_SUBSCRIPT;
+      if (info->rtfMinor == rtfSuperScrShrink) fmt.dwEffects = CFE_SUPERSCRIPT;
+      if (info->rtfMinor == rtfNoSuperSub) fmt.dwEffects = 0;
       break;
     case rtfBackColor:
       fmt.dwMask = CFM_BACKCOLOR;
