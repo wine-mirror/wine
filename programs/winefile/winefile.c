@@ -1848,8 +1848,8 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_LASTCHANGE), b1);
 
 			size = ((ULONGLONG)pWFD->nFileSizeHigh << 32) | pWFD->nFileSizeLow;
-			wsprintf(b1, sLongNumFmt, size);
-			wsprintf(b2, sByteFmt, b1);
+			_stprintf(b1, sLongNumFmt, size);
+			_stprintf(b2, sByteFmt, b1);
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_SIZE), b2);
 
 			SetWindowText(GetDlgItem(hwnd, IDC_STATIC_PROP_FILENAME), pWFD->cFileName);
@@ -3250,7 +3250,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		}
 
 		if (visible_cols & COL_LINKS) {
-			wsprintf(buffer, sNumFmt, entry->bhfi.nNumberOfLinks);
+			_stprintf(buffer, sNumFmt, entry->bhfi.nNumberOfLinks);
 
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_CENTER);
