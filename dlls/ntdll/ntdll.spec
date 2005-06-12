@@ -300,7 +300,7 @@
 @ stub RtlAddAttributeActionToRXact
 @ stub RtlAddAuditAccessAce
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
-@ stdcall RtlAdjustPrivilege(long long long long)
+@ stdcall RtlAdjustPrivilege(long long long ptr)
 @ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr)
 @ stdcall RtlAllocateHandle(ptr ptr)
 @ stdcall RtlAllocateHeap(long long long)

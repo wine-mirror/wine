@@ -1154,11 +1154,89 @@ NTSTATUS WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 
 /******************************************************************************
  *  RtlAdjustPrivilege		[NTDLL.@]
+ *
+ * Enables or disables a privilege from the calling thread or process.
+ *
+ * PARAMS
+ *  Privilege     [I] Privilege index to change.
+ *  Enable        [I] If TRUE, then enable the privilege otherwise disable.
+ *  CurrentThread [I] If TRUE, then enable in calling thread, otherwise process.
+ *  Enabled       [O] Whether privilege was previously enabled or disabled.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: NTSTATUS code.
+ *
+ * SEE ALSO
+ *  NtAdjustPrivilegesToken, NtOpenThreadToken, NtOpenProcessToken.
+ *
  */
-DWORD WINAPI RtlAdjustPrivilege(DWORD x1,DWORD x2,DWORD x3,DWORD x4)
+NTSTATUS WINAPI
+RtlAdjustPrivilege(ULONG Privilege,
+                   BOOLEAN Enable,
+                   BOOLEAN CurrentThread,
+                   PBOOLEAN Enabled)
 {
-	FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
-	return 0;
+    TOKEN_PRIVILEGES NewState;
+    TOKEN_PRIVILEGES OldState;
+    ULONG ReturnLength;
+    HANDLE TokenHandle;
+    NTSTATUS Status;
+
+    TRACE("(%ld, %s, %s, %p)\n", Privilege, Enable ? "TRUE" : "FALSE",
+        CurrentThread ? "TRUE" : "FALSE", Enabled);
+
+    if (CurrentThread)
+    {
+        Status = NtOpenThreadToken(GetCurrentThread(),
+                                   TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                                   FALSE,
+                                   &TokenHandle);
+    }
+    else
+    {
+        Status = NtOpenProcessToken(GetCurrentProcess(),
+                                    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
+                                    &TokenHandle);
+    }
+
+    if (!NT_SUCCESS(Status))
+    {
+        WARN("Retrieving token handle failed (Status %lx)\n", Status);
+        return Status;
+    }
+
+    OldState.PrivilegeCount = 1;
+
+    NewState.PrivilegeCount = 1;
+    NewState.Privileges[0].Luid.LowPart = Privilege;
+    NewState.Privileges[0].Luid.HighPart = 0;
+    NewState.Privileges[0].Attributes = (Enable) ? SE_PRIVILEGE_ENABLED : 0;
+
+    Status = NtAdjustPrivilegesToken(TokenHandle,
+                                     FALSE,
+                                     &NewState,
+                                     sizeof(TOKEN_PRIVILEGES),
+                                     &OldState,
+                                     &ReturnLength);
+    NtClose (TokenHandle);
+    if (Status == STATUS_NOT_ALL_ASSIGNED)
+    {
+        TRACE("Failed to assign all privileges\n");
+        return STATUS_PRIVILEGE_NOT_HELD;
+    }
+    if (!NT_SUCCESS(Status))
+    {
+        WARN("NtAdjustPrivilegesToken() failed (Status %lx)\n", Status);
+        return Status;
+    }
+
+    if (OldState.PrivilegeCount == 0)
+        *Enabled = Enable;
+    else
+        *Enabled = (OldState.Privileges[0].Attributes & SE_PRIVILEGE_ENABLED);
+
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
