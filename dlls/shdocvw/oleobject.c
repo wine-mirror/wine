@@ -30,6 +30,30 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
 /**********************************************************************
+ * IOleControl declaration for SHDOCVW.DLL
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    const IOleControlVtbl *lpVtbl;
+    DWORD ref;
+} IOleControlImpl;
+
+static IOleControlImpl SHDOCVW_OleControl;
+
+/**********************************************************************
+ * IOleInPlaceObject declaration for SHDOCVW.DLL
+ */
+typedef struct
+{
+    /* IUnknown fields */
+    const IOleInPlaceObjectVtbl *lpVtbl;
+    DWORD ref;
+} IOleInPlaceObjectImpl;
+
+static IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject;
+
+/**********************************************************************
  * Implement the IOleObject interface for the web browser component
  *
  * Based on DefaultHandler code in dlls/ole32/defaulthandler.c.

@@ -60,33 +60,6 @@ typedef struct
 
 extern IOleObjectImpl SHDOCVW_OleObject;
 
-
-/**********************************************************************
- * IOleInPlaceObject declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IOleInPlaceObjectVtbl *lpVtbl;
-    DWORD ref;
-} IOleInPlaceObjectImpl;
-
-extern IOleInPlaceObjectImpl SHDOCVW_OleInPlaceObject;
-
-
-/**********************************************************************
- * IOleControl declaration for SHDOCVW.DLL
- */
-typedef struct
-{
-    /* IUnknown fields */
-    const IOleControlVtbl *lpVtbl;
-    DWORD ref;
-} IOleControlImpl;
-
-extern IOleControlImpl SHDOCVW_OleControl;
-
-
 /**********************************************************************
  * IWebBrowser declaration for SHDOCVW.DLL
  */
@@ -187,8 +160,6 @@ typedef struct
     const IConnectionPointVtbl *lpVtbl;
     DWORD ref;
 } IConnectionPointImpl;
-
-extern IConnectionPointImpl SHDOCVW_ConnectionPoint;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for shdocvw.dll
