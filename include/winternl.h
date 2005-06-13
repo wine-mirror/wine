@@ -977,7 +977,7 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
     LARGE_INTEGER liKeSystemTime;
     LARGE_INTEGER liExpTimeZoneBias;
     ULONG uCurrentTimeZoneId;
-    DWORD dwReserved;
+    DWORD dwUnknown1[5];
 #else
     BYTE Reserved1[48];
 #endif

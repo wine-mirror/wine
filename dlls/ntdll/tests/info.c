@@ -80,7 +80,7 @@ static void test_query_basic()
     trace("Check with correct parameters\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sbi) == ReturnLength, "Inconsistent length (%08x) <-> (%ld)\n", sizeof(sbi), ReturnLength);
+    ok( sizeof(sbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sbi), ReturnLength);
 
     /* Check if we have some return values */
     trace("Number of Processors : %d\n", sbi.NumberOfProcessors);
@@ -95,11 +95,91 @@ static void test_query_cpu()
 
     status = pNtQuerySystemInformation(SystemCpuInformation, &sci, sizeof(sci), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
-    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%08x) <-> (%ld)\n", sizeof(sci), ReturnLength);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
                                                                                                                        
     /* Check if we have some return values */
     trace("Processor FeatureSet : %08lx\n", sci.FeatureSet);
     ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08lx\n", sci.FeatureSet);
+}
+
+static void test_query_timeofday()
+{
+    DWORD status;
+    ULONG ReturnLength;
+    int isnt = 0;
+
+    /* Copy of our winternl.h structure turned into a private one */
+    typedef struct _SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE {
+        LARGE_INTEGER liKeBootTime;
+        LARGE_INTEGER liKeSystemTime;
+        LARGE_INTEGER liExpTimeZoneBias;
+        ULONG uCurrentTimeZoneId;
+        DWORD dwUnknown1[5];
+    } SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE, *PSYSTEM_TIMEOFDAY_INFORMATION_PRIVATE;
+
+    SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE sti;
+  
+    /*  The structsize for NT (32 bytes) and Win2K/XP (48 bytes) differ.
+     *
+     *  Windows 2000 and XP return STATUS_INFO_LENGTH_MISMATCH if the given buffer size is greater
+     *  then 48 and 0 otherwise
+     *  Windows NT returns STATUS_INFO_LENGTH_MISMATCH when the given buffer size is not correct
+     *  and 0 otherwise
+     *
+     *  Windows 2000 and XP copy the given buffer size into the provided buffer, if the return code is STATUS_SUCCESS
+     *  NT only fills the buffer if the return code is STATUS_SUCCESS
+     *
+    */
+
+    status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
+    isnt = ( status == STATUS_INFO_LENGTH_MISMATCH);
+
+    if (isnt)
+    {
+        trace("Windows version is NT, we have to cater for differences with W2K/WinXP\n");
+ 
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+
+        sti.uCurrentTimeZoneId = 0xdeadbeef;
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 28, &ReturnLength);
+        ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
+
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 32, &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+        ok( 32 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+    }
+    else
+    {
+
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+
+        sti.uCurrentTimeZoneId = 0xdeadbeef;
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 24, &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+        ok( 24 == ReturnLength, "ReturnLength should be 24, it is (%ld)\n", ReturnLength);
+        ok( 0xdeadbeef == sti.uCurrentTimeZoneId, "This part of the buffer should not have been filled\n");
+    
+        sti.uCurrentTimeZoneId = 0xdeadbeef;
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 32, &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+        ok( 32 == ReturnLength, "ReturnLength should be 32, it is (%ld)\n", ReturnLength);
+        ok( 0xdeadbeef != sti.uCurrentTimeZoneId, "Buffer should have been partially filled\n");
+    
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 49, &ReturnLength);
+        ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+        ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
+    
+        status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+        ok( sizeof(sti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sti), ReturnLength);
+    }
+
+    /* Check if we have some return values */
+    trace("uCurrentTimeZoneId : (%ld)\n", sti.uCurrentTimeZoneId);
 }
 
 static void test_query_process()
@@ -249,6 +329,10 @@ START_TEST(info)
     /* 0x1 SystemCpuInformation */
     trace("Starting test_query_cpu()\n");
     test_query_cpu();
+
+    /* 0x3 SystemCpuInformation */
+    trace("Starting test_query_timeofday()\n");
+    test_query_timeofday();
 
     /* 0x5 SystemProcessInformation */
     trace("Starting test_query_process()\n");

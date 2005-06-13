@@ -658,15 +658,18 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemTimeOfDayInformation:
         {
-            SYSTEM_TIMEOFDAY_INFORMATION* sti = (SYSTEM_TIMEOFDAY_INFORMATION*)SystemInformation;
-            if (Length >= sizeof(*sti))
+            SYSTEM_TIMEOFDAY_INFORMATION sti;
+
+            memset(&sti, 0 , sizeof(sti));
+
+            /* liKeSystemTime, liExpTimeZoneBias, uCurrentTimeZoneId */
+            sti.liKeBootTime.QuadPart = boottime;
+
+            if (Length <= sizeof(sti))
             {
-                sti->liKeBootTime.QuadPart = boottime;
-                sti->liKeSystemTime.QuadPart = 0; /* FIXME */
-                sti->liExpTimeZoneBias.QuadPart  = 0; /* FIXME */
-                sti->uCurrentTimeZoneId = 0; /* FIXME */
-                sti->dwReserved = 0;
-                len = sizeof(*sti);
+                len = Length;
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sti, Length);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
