@@ -28,86 +28,95 @@
 # define U(x) (x)
 #endif
 
+/* invalid in all versions */
+#define PROP_INV 255
+/* valid in v0 and above (NT4+) */
+#define PROP_V0  0
+/* valid in v1 and above (Win2k+) */
+#define PROP_V1  1
+/* valid in v1a and above (WinXP+) */
+#define PROP_V1A 2
+
 struct valid_mapping
 {
-    BOOL simple;
-    BOOL with_array;
-    BOOL with_vector;
-    BOOL byref;
+    BYTE simple;
+    BYTE with_array;
+    BYTE with_vector;
+    BYTE byref;
 } valid_types[] =
 {
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_EMPTY */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_NULL */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_I2 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_I4 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_R4 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_R8 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_CY */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_DATE */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_BSTR */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_DISPATCH */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_ERROR */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_BOOL */
-    { FALSE, FALSE, TRUE , FALSE }, /* VT_VARIANT */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_UNKNOWN */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_DECIMAL */
-    { FALSE, FALSE, FALSE, FALSE }, /* 15 */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_I1 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_UI1 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_UI2 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_UI4 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_I8 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_UI8 */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_INT */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_UINT */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_VOID */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_HRESULT */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_PTR */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_SAFEARRAY */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_CARRAY */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_USERDEFINED */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_LPSTR */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_LPWSTR */
-    { FALSE, FALSE, FALSE, FALSE }, /* 32 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 33 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 34 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 35 */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_RECORD */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_INT_PTR */
-    { FALSE, FALSE, FALSE, FALSE }, /* VT_UINT_PTR */
-    { FALSE, FALSE, FALSE, FALSE }, /* 39 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 40 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 41 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 42 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 43 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 44 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 45 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 46 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 47 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 48 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 49 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 50 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 51 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 52 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 53 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 54 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 55 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 56 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 57 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 58 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 59 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 60 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 61 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 62 */
-    { FALSE, FALSE, FALSE, FALSE }, /* 63 */
-    { TRUE , FALSE, TRUE , FALSE }, /* VT_FILETIME */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_BLOB */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_STREAM */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_STORAGE */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_STREAMED_OBJECT */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_STORED_OBJECT */
-    { TRUE , FALSE, FALSE, FALSE }, /* VT_BLOB_OBJECT */
-    { TRUE , FALSE, TRUE , FALSE }  /* VT_CF */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_EMPTY */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_NULL */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_I2 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_I4 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_R4 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_R8 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_CY */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_DATE */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_BSTR */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1  }, /* VT_DISPATCH */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_ERROR */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_BOOL */
+    { PROP_V1 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_VARIANT */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1  }, /* VT_UNKNOWN */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1  }, /* VT_DECIMAL */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 15 */
+    { PROP_V1 , PROP_V1 , PROP_V1 , PROP_V1  }, /* VT_I1 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_UI1 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_UI2 */
+    { PROP_V0 , PROP_V1 , PROP_V0 , PROP_V1  }, /* VT_UI4 */
+    { PROP_V0 , PROP_V1A, PROP_V0 , PROP_V1A }, /* VT_I8 */
+    { PROP_V0 , PROP_V1A, PROP_V0 , PROP_V1A }, /* VT_UI8 */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1  }, /* VT_INT */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1  }, /* VT_UINT */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_VOID */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_HRESULT */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_PTR */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_SAFEARRAY */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_CARRAY */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_USERDEFINED */
+    { PROP_V0 , PROP_INV, PROP_V0 , PROP_INV }, /* VT_LPSTR */
+    { PROP_V0 , PROP_INV, PROP_V0 , PROP_INV }, /* VT_LPWSTR */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 32 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 33 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 34 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 35 */
+    { PROP_V1 , PROP_V1 , PROP_INV, PROP_V1  }, /* VT_RECORD */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_INT_PTR */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* VT_UINT_PTR */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 39 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 40 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 41 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 42 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 43 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 44 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 45 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 46 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 47 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 48 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 49 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 50 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 51 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 52 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 53 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 54 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 55 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 56 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 57 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 58 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 59 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 60 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 61 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 62 */
+    { PROP_INV, PROP_INV, PROP_INV, PROP_INV }, /* 63 */
+    { PROP_V0 , PROP_INV, PROP_V0 , PROP_INV }, /* VT_FILETIME */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_BLOB */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_STREAM */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_STORAGE */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_STREAMED_OBJECT */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_STORED_OBJECT */
+    { PROP_V0 , PROP_INV, PROP_INV, PROP_INV }, /* VT_BLOB_OBJECT */
+    { PROP_V0 , PROP_INV, PROP_V0 , PROP_INV }  /* VT_CF */
 };
 
 static const char* wine_vtypes[VT_CLSID+1] =
@@ -128,38 +137,69 @@ static void test_validtypes()
     PROPVARIANT propvar;
     HRESULT hr;
     unsigned int i;
+    BYTE version;
 
     memset(&propvar, 0, sizeof(propvar));
 
+    /* detect version */
+    propvar.vt = VT_I2 | VT_ARRAY;
+    hr = PropVariantClear(&propvar);
+    if (hr == S_OK)
+    {
+        propvar.vt = VT_I8;
+        hr = PropVariantClear(&propvar);
+        if (hr == S_OK)
+        {
+            version = PROP_V1A;
+            trace("detected prop variant v1a\n");
+        }
+        else
+        {
+            version = PROP_V1;
+            trace("detected prop variant v1\n");
+        }
+    }
+    else
+    {
+        version = PROP_V0;
+        trace("detected prop variant v0\n");
+    }
+
     for (i = 0; i < sizeof(valid_types)/sizeof(valid_types[0]); i++)
     {
+        BOOL expected_result;
+
         propvar.vt = i;
         hr = PropVariantClear(&propvar);
-        ok(valid_types[i].simple == !(hr == STG_E_INVALIDPARAMETER),
+        expected_result = (valid_types[i].simple <= version ? TRUE : FALSE);
+        ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
             "PropVariantClear(%s) should have returned 0x%08lx, but returned 0x%08lx\n",
             wine_vtypes[i],
-            valid_types[i].simple ? S_OK : STG_E_INVALIDPARAMETER, hr);
+            expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
 
         propvar.vt = i | VT_ARRAY;
         hr = PropVariantClear(&propvar);
-        ok(valid_types[i].with_array == !(hr == STG_E_INVALIDPARAMETER),
+        expected_result = (valid_types[i].with_array <= version ? TRUE : FALSE);
+        ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
             "PropVariantClear(%s|VT_ARRAY) should have returned 0x%08lx, but returned 0x%08lx\n",
             wine_vtypes[i],
-            valid_types[i].with_array ? S_OK : STG_E_INVALIDPARAMETER, hr);
+            expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
 
         propvar.vt = i | VT_VECTOR;
         hr = PropVariantClear(&propvar);
-        ok(valid_types[i].with_vector == !(hr == STG_E_INVALIDPARAMETER),
+        expected_result = (valid_types[i].with_vector <= version ? TRUE : FALSE);
+        ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
             "PropVariantClear(%s|VT_VECTOR) should have returned 0x%08lx, but returned 0x%08lx\n",
             wine_vtypes[i],
-            valid_types[i].with_vector ? S_OK : STG_E_INVALIDPARAMETER, hr);
+            expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
 
         propvar.vt = i | VT_BYREF;
         hr = PropVariantClear(&propvar);
-        ok(valid_types[i].byref == !(hr == STG_E_INVALIDPARAMETER),
+        expected_result = (valid_types[i].byref <= version ? TRUE : FALSE);
+        ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
             "PropVariantClear(%s|VT_BYREF) should have returned 0x%08lx, but returned 0x%08lx\n",
             wine_vtypes[i],
-            valid_types[i].byref ? S_OK : STG_E_INVALIDPARAMETER, hr);
+            expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
     }
 }
 
