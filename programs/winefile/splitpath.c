@@ -20,6 +20,7 @@
 #define WIN32_EXTRA_LEAN
 
 #include <windows.h>
+#include "winefile.h"
 
 
 #ifdef __WINE__

@@ -17,6 +17,9 @@
 */
 
 #include "windows.h"
+#include "winefile.h"
+
+#ifdef __WINE__
 
 static const CHAR LicenseCaption[] = "LICENSE";
 static const CHAR License[] =
@@ -50,3 +53,5 @@ VOID WineWarranty(HWND hwnd)
 {
   MessageBoxA(hwnd, NoWarranty, NoWarrantyCaption, MB_ICONEXCLAMATION|MB_OK);
 }
+
+#endif

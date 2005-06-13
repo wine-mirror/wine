@@ -41,7 +41,7 @@ static struct epmap_entry *epmap;
 
 static const UUID nil_object;
 
-char *mystrdup(const char *str) {
+static char *mystrdup(const char *str) {
     char *rval;
     rval = LocalAlloc(LPTR, strlen(str)+1);
     CopyMemory(rval, str, strlen(str)+1);

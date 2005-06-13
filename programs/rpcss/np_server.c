@@ -82,7 +82,7 @@ BOOL RPCSS_UnBecomePipeServer(void)
   return rslt;
 }
 
-void RPCSS_ServerProcessRANMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply)
+static void RPCSS_ServerProcessRANMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply)
 {
   WINE_TRACE("\n");
   /* we do absolutely nothing, but on the server end,
@@ -92,7 +92,7 @@ void RPCSS_ServerProcessRANMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pRepl
   pReply->as_uint = 0;
 }
 
-void RPCSS_ServerProcessREGISTEREPMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply,
+static void RPCSS_ServerProcessREGISTEREPMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply,
   char *vardata)
 {
   WINE_TRACE("\n");
@@ -110,7 +110,7 @@ void RPCSS_ServerProcessREGISTEREPMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPL
   pReply->as_uint = 0;
 }
 
-void RPCSS_ServerProcessUNREGISTEREPMessage(PRPCSS_NP_MESSAGE pMsg,
+static void RPCSS_ServerProcessUNREGISTEREPMessage(PRPCSS_NP_MESSAGE pMsg,
   PRPCSS_NP_REPLY pReply, char *vardata)
 {
   WINE_TRACE("\n");
@@ -127,7 +127,7 @@ void RPCSS_ServerProcessUNREGISTEREPMessage(PRPCSS_NP_MESSAGE pMsg,
   pReply->as_uint = 0;
 }
 
-void RPCSS_ServerProcessRESOLVEEPMessage(PRPCSS_NP_MESSAGE pMsg,
+static void RPCSS_ServerProcessRESOLVEEPMessage(PRPCSS_NP_MESSAGE pMsg,
   PRPCSS_NP_REPLY pReply, char *vardata)
 {
   WINE_TRACE("\n");
@@ -142,7 +142,7 @@ void RPCSS_ServerProcessRESOLVEEPMessage(PRPCSS_NP_MESSAGE pMsg,
   );
 }
 
-void RPCSS_ServerProcessMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply, char *vardata)
+static void RPCSS_ServerProcessMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply, char *vardata)
 {
   WINE_TRACE("\n");
   switch (pMsg->message_type) {
@@ -164,7 +164,7 @@ void RPCSS_ServerProcessMessage(PRPCSS_NP_MESSAGE pMsg, PRPCSS_NP_REPLY pReply, 
 }
 
 /* each message gets its own thread.  this is it. */
-VOID HandlerThread(LPVOID lpvPipeHandle)
+static VOID HandlerThread(LPVOID lpvPipeHandle)
 {
   RPCSS_NP_MESSAGE msg, vardata_payload_msg;
   char *c, *vardata = NULL;
@@ -251,7 +251,7 @@ VOID HandlerThread(LPVOID lpvPipeHandle)
   InterlockedDecrement(&srv_thread_count);
 }
 
-VOID NPMainWorkThread(LPVOID ignored)
+static VOID NPMainWorkThread(LPVOID ignored)
 {
   BOOL connected;
   HANDLE hthread, master_mutex = RPCSS_GetMasterMutex();
@@ -334,7 +334,7 @@ VOID NPMainWorkThread(LPVOID ignored)
   WINE_TRACE("Server thread shutdown.\n");
 }
 
-HANDLE RPCSS_NPConnect(void)
+static HANDLE RPCSS_NPConnect(void)
 {
   HANDLE the_pipe = NULL;
   DWORD dwmode, wait_result;
@@ -405,7 +405,7 @@ HANDLE RPCSS_NPConnect(void)
   return the_pipe;
 }
 
-BOOL RPCSS_SendReceiveNPMsg(HANDLE np, PRPCSS_NP_MESSAGE msg, PRPCSS_NP_REPLY reply)
+static BOOL RPCSS_SendReceiveNPMsg(HANDLE np, PRPCSS_NP_MESSAGE msg, PRPCSS_NP_REPLY reply)
 {
   DWORD count;
 
