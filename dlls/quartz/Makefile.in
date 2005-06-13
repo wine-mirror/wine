@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = quartz.dll
 IMPORTLIB = libquartz.$(IMPLIBEXT)
-IMPORTS   = dsound ddraw msacm32 msvfw32 ole32 oleaut32 user32 advapi32 kernel32
+IMPORTS   = dsound msacm32 msvfw32 ole32 oleaut32 user32 gdi32 advapi32 kernel32
 EXTRALIBS = -lstrmiids -luuid $(LIBUNICODE)
 
 C_SRCS = \
