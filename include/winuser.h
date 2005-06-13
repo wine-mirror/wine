@@ -4009,6 +4009,7 @@ BOOL        WINAPI SetKeyboardState(LPBYTE);
 
 BOOL        WINAPI AdjustWindowRect(LPRECT,DWORD,BOOL);
 BOOL        WINAPI AdjustWindowRectEx(LPRECT,DWORD,BOOL,DWORD);
+BOOL        WINAPI AllowSetForegroundWindow(DWORD);
 BOOL        WINAPI AnimateWindow(HWND,DWORD,DWORD);
 #define     AnsiLowerA CharLowerA
 #define     AnsiLowerW CharLowerW
@@ -4226,6 +4227,7 @@ BOOL        WINAPI EndDialog(HWND,INT_PTR);
 BOOL        WINAPI EndPaint(HWND,const PAINTSTRUCT*);
 BOOL        WINAPI EnumChildWindows(HWND,WNDENUMPROC,LPARAM);
 UINT        WINAPI EnumClipboardFormats(UINT);
+BOOL        WINAPI EnumDesktopWindows(HDESK,WNDENUMPROC,LPARAM);
 INT         WINAPI EnumPropsA(HWND,PROPENUMPROCA);
 INT         WINAPI EnumPropsW(HWND,PROPENUMPROCW);
 #define     EnumProps WINELIB_NAME_AW(EnumProps)
@@ -4280,6 +4282,7 @@ INT         WINAPI GetClipboardFormatNameA(UINT,LPSTR,INT);
 INT         WINAPI GetClipboardFormatNameW(UINT,LPWSTR,INT);
 #define     GetClipboardFormatName WINELIB_NAME_AW(GetClipboardFormatName)
 HWND        WINAPI GetClipboardOwner(void);
+DWORD       WINAPI GetClipboardSequenceNumber(VOID);
 HWND        WINAPI GetClipboardViewer(void);
 BOOL        WINAPI GetClipCursor(LPRECT);
 HCURSOR     WINAPI GetCursor(void);
@@ -4354,6 +4357,7 @@ INT         WINAPI GetUpdateRgn(HWND,HRGN,BOOL);
 BOOL        WINAPI GetUserObjectInformationA(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 BOOL        WINAPI GetUserObjectInformationW(HANDLE,INT,LPVOID,DWORD,LPDWORD);
 #define     GetUserObjectInformation WINELIB_NAME_AW(GetUserObjectInformation)
+BOOL        WINAPI GetUserObjectSecurity(HANDLE,PSECURITY_INFORMATION,PSECURITY_DESCRIPTOR,DWORD,LPDWORD);
 HWND        WINAPI GetWindow(HWND,UINT);
 HDC         WINAPI GetWindowDC(HWND);
 BOOL        WINAPI GetWindowInfo(HWND, PWINDOWINFO);
@@ -4420,6 +4424,7 @@ BOOL      WINAPI IsDialogMessageA(HWND,LPMSG);
 BOOL      WINAPI IsDialogMessageW(HWND,LPMSG);
 #define     IsDialogMessage WINELIB_NAME_AW(IsDialogMessage)
 UINT      WINAPI IsDlgButtonChecked(HWND,UINT);
+BOOL      WINAPI IsHungAppWindow(HWND);
 BOOL      WINAPI IsIconic(HWND);
 BOOL      WINAPI IsMenu(HMENU);
 BOOL      WINAPI IsRectEmpty(const RECT*);
@@ -4456,6 +4461,7 @@ HMENU     WINAPI LoadMenuIndirectW(LPCVOID);
 INT       WINAPI LoadStringA(HINSTANCE,UINT,LPSTR,INT);
 INT       WINAPI LoadStringW(HINSTANCE,UINT,LPWSTR,INT);
 #define     LoadString WINELIB_NAME_AW(LoadString)
+BOOL      WINAPI LockSetForegroundWindow(UINT);
 BOOL      WINAPI LockWindowUpdate(HWND);
 INT       WINAPI LookupIconIdFromDirectory(LPBYTE,BOOL);
 INT       WINAPI LookupIconIdFromDirectoryEx(LPBYTE,BOOL,INT,INT,UINT);
@@ -4637,6 +4643,7 @@ BOOL      WINAPI ShowWindow(HWND,INT);
 BOOL      WINAPI ShowWindowAsync(HWND,INT);
 BOOL      WINAPI SubtractRect(LPRECT,const RECT*,const RECT*);
 BOOL      WINAPI SwapMouseButton(BOOL);
+BOOL      WINAPI SwitchDesktop(HDESK);
 VOID        WINAPI SwitchToThisWindow(HWND,BOOL);
 BOOL      WINAPI SystemParametersInfoA(UINT,UINT,LPVOID,UINT);
 BOOL      WINAPI SystemParametersInfoW(UINT,UINT,LPVOID,UINT);

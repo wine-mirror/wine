@@ -1185,6 +1185,9 @@ typedef struct _WIN32_STREAM_ID {
 BOOL        WINAPI ActivateActCtx(HANDLE,ULONG_PTR *);
 BOOL        WINAPI AddAccessAllowedAce(PACL,DWORD,DWORD,PSID);
 BOOL        WINAPI AddAccessAllowedAceEx(PACL,DWORD,DWORD,DWORD,PSID);
+BOOL        WINAPI AddAccessDeniedAce(PACL,DWORD,DWORD,PSID);
+BOOL        WINAPI AddAccessDeniedAceEx(PACL,DWORD,DWORD,DWORD,PSID);
+BOOL        WINAPI AddAce(PACL,DWORD,DWORD,LPVOID,DWORD);
 BOOL        WINAPI AddAuditAccessAce(PACL,DWORD,DWORD,PSID,BOOL,BOOL);
 VOID        WINAPI AddRefActCtx(HANDLE);
 PVOID       WINAPI AddVectoredExceptionHandler(ULONG,PVECTORED_EXCEPTION_HANDLER);
@@ -1363,6 +1366,7 @@ BOOL        WINAPI FindActCtxSectionGuid(DWORD,const GUID *,ULONG,const GUID *,P
 HANDLE      WINAPI FindFirstChangeNotificationA(LPCSTR,BOOL,DWORD);
 HANDLE      WINAPI FindFirstChangeNotificationW(LPCWSTR,BOOL,DWORD);
 #define     FindFirstChangeNotification WINELIB_NAME_AW(FindFirstChangeNotification)
+BOOL        WINAPI FindFirstFreeAce(PACL,LPVOID*);
 BOOL        WINAPI FindNextChangeNotification(HANDLE);
 BOOL        WINAPI FindCloseChangeNotification(HANDLE);
 HRSRC       WINAPI FindResourceExA(HMODULE,LPCSTR,LPCSTR,WORD);
@@ -1392,6 +1396,8 @@ BOOL        WINAPI FreeEnvironmentStringsW(LPWSTR);
 #define     FreeEnvironmentStrings WINELIB_NAME_AW(FreeEnvironmentStrings)
 VOID        WINAPI FreeLibraryAndExitThread(HINSTANCE,DWORD);
 PVOID       WINAPI FreeSid(PSID);
+BOOL        WINAPI GetAce(PACL,DWORD,LPVOID*);
+BOOL        WINAPI GetAclInformation(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
 BOOL        WINAPI GetBinaryTypeA( LPCSTR lpApplicationName, LPDWORD lpBinaryType );
 BOOL        WINAPI GetBinaryTypeW( LPCWSTR lpApplicationName, LPDWORD lpBinaryType );
 #define     GetBinaryType WINELIB_NAME_AW(GetBinaryType)
@@ -1529,6 +1535,7 @@ BOOL        WINAPI InitializeSid(PSID,PSID_IDENTIFIER_AUTHORITY,BYTE);
 BOOL        WINAPI IsSystemResumeAutomatic(void);
 BOOL        WINAPI IsTextUnicode(LPCVOID,INT,LPINT);
 BOOL        WINAPI IsTokenRestricted(HANDLE);
+BOOL        WINAPI IsValidAcl(PACL);
 BOOL        WINAPI IsValidSecurityDescriptor(PSECURITY_DESCRIPTOR);
 BOOL        WINAPI IsValidSid(PSID);
 BOOL        WINAPI ImpersonateLoggedOnUser(HANDLE);

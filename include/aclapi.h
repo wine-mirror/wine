@@ -88,6 +88,10 @@ VOID WINAPI BuildTrusteeWithSidA(PTRUSTEEA pTrustee, PSID pSid);
 VOID WINAPI BuildTrusteeWithSidW(PTRUSTEEW pTrustee, PSID pSid);
 #define     BuildTrusteeWithSid WINELIB_NAME_AW(BuildTrusteeWithSid)
 
+DWORD WINAPI GetEffectiveRightsFromAclA(PACL,PTRUSTEE_A,PACCESS_MASK);
+DWORD WINAPI GetEffectiveRightsFromAclW(PACL,PTRUSTEE_W,PACCESS_MASK);
+#define      GetEffectiveRightsFromAcl WINELIB_NAME_AW(GetEffectiveRightsFromAcl)
+
 #ifdef __cplusplus
 }
 #endif
