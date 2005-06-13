@@ -130,7 +130,7 @@ static void InitFunctionPtrs(void)
 	pRtlValidateUnicodeString = (void *)GetProcAddress(hntdll, "RtlValidateUnicodeString");
 	pRtlGUIDFromString = (void *)GetProcAddress(hntdll, "RtlGUIDFromString");
 	pRtlStringFromGUID = (void *)GetProcAddress(hntdll, "RtlStringFromGUID");
-    } /* if */
+    }
 }
 
 
@@ -405,37 +405,37 @@ static void test_RtlDuplicateUnicodeString(void)
 	if (dupl_ustr[test_num].source_buf != NULL) {
 	    for (pos = 0; pos < dupl_ustr[test_num].source_buf_size/sizeof(WCHAR); pos++) {
 		source_buf[pos] = dupl_ustr[test_num].source_buf[pos];
-	    } /* for */
+	    }
 	    source_str.Buffer = source_buf;
 	} else {
 	    source_str.Buffer = NULL;
-	} /* if */
+	}
 	dest_str.Length        = dupl_ustr[test_num].dest_Length;
 	dest_str.MaximumLength = dupl_ustr[test_num].dest_MaximumLength;
 	if (dupl_ustr[test_num].dest_buf != NULL) {
 	    for (pos = 0; pos < dupl_ustr[test_num].dest_buf_size/sizeof(WCHAR); pos++) {
 		dest_buf[pos] = dupl_ustr[test_num].dest_buf[pos];
-	    } /* for */
+	    }
 	    dest_str.Buffer = dest_buf;
 	} else {
 	    dest_str.Buffer = NULL;
-	} /* if */
+	}
 	res_str.Length        = dupl_ustr[test_num].res_Length;
 	res_str.MaximumLength = dupl_ustr[test_num].res_MaximumLength;
 	if (dupl_ustr[test_num].res_buf != NULL) {
 	    for (pos = 0; pos < dupl_ustr[test_num].res_buf_size/sizeof(WCHAR); pos++) {
 		res_buf[pos] = dupl_ustr[test_num].res_buf[pos];
-	    } /* for */
+	    }
 	    res_str.Buffer = res_buf;
 	} else {
 	    res_str.Buffer = NULL;
-	} /* if */
+	}
 	result = pRtlDuplicateUnicodeString(dupl_ustr[test_num].add_nul, &source_str, &dest_str);
         dest_ansi_str.Length = dest_str.Length / sizeof(WCHAR);
         dest_ansi_str.MaximumLength = dest_ansi_str.Length + 1;
         for (pos = 0; pos < dest_ansi_str.Length; pos++) {
        	    dest_ansi_buf[pos] = (char)dest_buf[pos];
-        } /* for */
+        }
         dest_ansi_buf[dest_ansi_str.Length] = '\0';
         dest_ansi_str.Buffer = dest_ansi_buf;
 	ok(result == dupl_ustr[test_num].result,
@@ -456,7 +456,7 @@ static void test_RtlDuplicateUnicodeString(void)
 	    ok(dest_str.Buffer != dest_buf,
 	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination buffer unchanged %p\n",
 	       test_num, dupl_ustr[test_num].add_nul, dest_str.Buffer);
-        } /* if */
+        }
         if (dest_str.Buffer != NULL && dupl_ustr[test_num].res_buf != NULL) {
 	    ok(memcmp(dest_str.Buffer, res_str.Buffer, dupl_ustr[test_num].res_buf_size) == 0,
 	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination \"%s\" expected \"%s\"\n",
@@ -465,8 +465,8 @@ static void test_RtlDuplicateUnicodeString(void)
 	    ok(dest_str.Buffer == NULL && dupl_ustr[test_num].res_buf == NULL,
 	       "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has destination %p expected %p\n",
 	       test_num, dupl_ustr[test_num].add_nul, dest_str.Buffer, dupl_ustr[test_num].res_buf);
-        } /* if */
-    } /* for */
+        }
+    }
 }
 
 
@@ -498,11 +498,11 @@ static void test_RtlUpperChar(void)
 	    expected_upper_ch = (CHAR) (byte_ch - 'a' + 'A');
 	} else {
 	    expected_upper_ch = (CHAR) byte_ch;
-	} /* if */
+	}
 	ok(upper_ch == expected_upper_ch,
 	   "RtlUpperChar('%c'[=0x%x]) has result '%c'[=0x%x], expected '%c'[=0x%x]\n",
 	   ch, ch, upper_ch, upper_ch, expected_upper_ch, expected_upper_ch);
-    } /* for */
+    }
 }
 
 
@@ -528,7 +528,7 @@ static void test_RtlUpperString(void)
 	ascii_buf[i] = ch;
 	result_buf[i] = '\0';
 	upper_buf[i] = upper_ch;
-    } /* for */
+    }
     ascii_buf[i] = '\0';
     result_buf[i] = '\0';
     upper_buf[i] = '\0';
@@ -566,11 +566,11 @@ static void test_RtlUpcaseUnicodeChar(void)
 	    expected_upper_ch = 0x178;
 	} else {
 	    expected_upper_ch = ch;
-	} /* if */
+	}
 	ok(upper_ch == expected_upper_ch,
 	   "RtlUpcaseUnicodeChar('%c'[=0x%x]) has result '%c'[=0x%x], expected: '%c'[=0x%x]\n",
 	   ch, ch, upper_ch, upper_ch, expected_upper_ch, expected_upper_ch);
-    } /* for */
+    }
 }
 
 
@@ -596,11 +596,11 @@ static void test_RtlUpcaseUnicodeString(void)
 	    upper_ch = 0x178;
 	} else {
 	    upper_ch = ch;
-	} /* if */
+	}
 	ascii_buf[i] = ch;
 	result_buf[i] = '\0';
 	upper_buf[i] = upper_ch;
-    } /* for */
+    }
     ascii_buf[i] = '\0';
     result_buf[i] = '\0';
     upper_buf[i] = '\0';
@@ -621,7 +621,7 @@ static void test_RtlUpcaseUnicodeString(void)
 	   ascii_str.Buffer[i], ascii_str.Buffer[i],
 	   result_str.Buffer[i], result_str.Buffer[i],
 	   upper_str.Buffer[i], upper_str.Buffer[i]);
-    } /* for */
+    }
 }
 
 
@@ -681,11 +681,11 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x400: lower_ch = 0x0; break;
 		default: lower_ch = ch; break;
 	    } /* switch */
-	} /* if */
+	}
 	source_buf[i] = ch;
 	result_buf[i] = '\0';
 	lower_buf[i] = lower_ch;
-    } /* for */
+    }
     source_buf[i] = '\0';
     result_buf[i] = '\0';
     lower_buf[i] = '\0';
@@ -706,7 +706,7 @@ static void test_RtlDowncaseUnicodeString(void)
 	   source_str.Buffer[i], source_str.Buffer[i],
 	   result_str.Buffer[i], result_str.Buffer[i],
 	   lower_str.Buffer[i], lower_str.Buffer[i]);
-    } /* for */
+    }
 }
 
 
@@ -765,17 +765,17 @@ static void test_RtlUnicodeStringToAnsiString(void)
 	    ansi_str.Buffer = ansi_buf;
 	} else {
 	    ansi_str.Buffer = NULL;
-	} /* if */
+	}
 	uni_str.Length        = ustr2astr[test_num].uni_Length;
 	uni_str.MaximumLength = ustr2astr[test_num].uni_MaximumLength;
 	if (ustr2astr[test_num].uni_buf != NULL) {
 	    for (pos = 0; pos < ustr2astr[test_num].uni_buf_size/sizeof(WCHAR); pos++) {
 		uni_buf[pos] = ustr2astr[test_num].uni_buf[pos];
-	    } /* for */
+	    }
 	    uni_str.Buffer = uni_buf;
 	} else {
 	    uni_str.Buffer = NULL;
-	} /* if */
+	}
 	result = pRtlUnicodeStringToAnsiString(&ansi_str, &uni_str, ustr2astr[test_num].doalloc);
 	ok(result == ustr2astr[test_num].result,
 	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has result %lx, expected %lx\n",
@@ -789,7 +789,7 @@ static void test_RtlUnicodeStringToAnsiString(void)
 	ok(memcmp(ansi_str.Buffer, ustr2astr[test_num].res_buf, ustr2astr[test_num].res_buf_size) == 0,
 	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has ansi \"%s\" expected \"%s\"\n",
 	   test_num, ustr2astr[test_num].doalloc, ansi_str.Buffer, ustr2astr[test_num].res_buf);
-    } /* for */
+    }
 }
 
 
@@ -836,7 +836,7 @@ static void test_RtlAppendAsciizToString(void)
 	    dest_str.Buffer = dest_buf;
 	} else {
 	    dest_str.Buffer = NULL;
-	} /* if */
+	}
 	result = pRtlAppendAsciizToString(&dest_str, app_asc2str[test_num].src);
 	ok(result == app_asc2str[test_num].result,
 	   "(test %d): RtlAppendAsciizToString(dest, src) has result %lx, expected %lx\n",
@@ -855,8 +855,8 @@ static void test_RtlAppendAsciizToString(void)
 	    ok(dest_str.Buffer == app_asc2str[test_num].res_buf,
 	       "(test %d): RtlAppendAsciizToString(dest, src) dest has Buffer %p expected %p\n",
 	       test_num, dest_str.Buffer, app_asc2str[test_num].res_buf);
-	} /* if */
-    } /* for */
+	}
+    }
 }
 
 
@@ -908,7 +908,7 @@ static void test_RtlAppendStringToString(void)
 	    dest_str.Buffer = dest_buf;
 	} else {
 	    dest_str.Buffer = NULL;
-	} /* if */
+	}
 	src_str.Length         = app_str2str[test_num].src_Length;
 	src_str.MaximumLength  = app_str2str[test_num].src_MaximumLength;
 	if (app_str2str[test_num].src_buf != NULL) {
@@ -917,7 +917,7 @@ static void test_RtlAppendStringToString(void)
 	    src_str.Buffer = src_buf;
 	} else {
 	    src_str.Buffer = NULL;
-	} /* if */
+	}
 	result = pRtlAppendStringToString(&dest_str, &src_str);
 	ok(result == app_str2str[test_num].result,
 	   "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx\n",
@@ -936,8 +936,8 @@ static void test_RtlAppendStringToString(void)
 	    ok(dest_str.Buffer == app_str2str[test_num].res_buf,
 	       "(test %d): RtlAppendStringToString(dest, src) dest has Buffer %p expected %p\n",
 	       test_num, dest_str.Buffer, app_str2str[test_num].res_buf);
-	} /* if */
-    } /* for */
+	}
+    }
 }
 
 
@@ -989,7 +989,7 @@ static void test_RtlAppendUnicodeToString(void)
 	    dest_str.Buffer = dest_buf;
 	} else {
 	    dest_str.Buffer = NULL;
-	} /* if */
+	}
 	result = pRtlAppendUnicodeToString(&dest_str, (LPCWSTR) app_uni2str[test_num].src);
 	ok(result == app_uni2str[test_num].result,
 	   "(test %d): RtlAppendUnicodeToString(dest, src) has result %lx, expected %lx\n",
@@ -1008,8 +1008,8 @@ static void test_RtlAppendUnicodeToString(void)
 	    ok(dest_str.Buffer == (WCHAR *) app_uni2str[test_num].res_buf,
 	       "(test %d): RtlAppendUnicodeToString(dest, src) dest has Buffer %p expected %p\n",
 	       test_num, dest_str.Buffer, app_uni2str[test_num].res_buf);
-	} /* if */
-    } /* for */
+	}
+    }
 }
 
 
@@ -1065,7 +1065,7 @@ static void test_RtlAppendUnicodeStringToString(void)
 	    dest_str.Buffer = dest_buf;
 	} else {
 	    dest_str.Buffer = NULL;
-	} /* if */
+	}
 	src_str.Length         = app_ustr2str[test_num].src_Length;
 	src_str.MaximumLength  = app_ustr2str[test_num].src_MaximumLength;
 	if (app_ustr2str[test_num].src_buf != NULL) {
@@ -1074,7 +1074,7 @@ static void test_RtlAppendUnicodeStringToString(void)
 	    src_str.Buffer = src_buf;
 	} else {
 	    src_str.Buffer = NULL;
-	} /* if */
+	}
 	result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
 	ok(result == app_ustr2str[test_num].result,
 	   "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx\n",
@@ -1093,8 +1093,8 @@ static void test_RtlAppendUnicodeStringToString(void)
 	    ok(dest_str.Buffer == (WCHAR *) app_ustr2str[test_num].res_buf,
 	       "(test %d): RtlAppendStringToString(dest, src) dest has Buffer %p expected %p\n",
 	       test_num, dest_str.Buffer, app_ustr2str[test_num].res_buf);
-	} /* if */
-    } /* for */
+	}
+    }
 }
 
 
@@ -1174,25 +1174,25 @@ static void test_RtlFindCharInUnicodeString(void)
 	    main_str.MaximumLength = main_str.Length + sizeof(WCHAR);
 	    for (idx = 0; idx < main_str.Length / sizeof(WCHAR); idx++) {
 		main_str_buf[idx] = find_ch_in_ustr[test_num].main_str[idx];
-	    } /* for */
+	    }
 	    main_str.Buffer = main_str_buf;
 	} else {
 	    main_str.Length        = 0;
 	    main_str.MaximumLength = 0;
 	    main_str.Buffer        = NULL;
-	} /* if */
+	}
 	if (find_ch_in_ustr[test_num].search_chars != NULL) {
 	    search_chars.Length        = strlen(find_ch_in_ustr[test_num].search_chars) * sizeof(WCHAR);
 	    search_chars.MaximumLength = search_chars.Length + sizeof(WCHAR);
 	    for (idx = 0; idx < search_chars.Length / sizeof(WCHAR); idx++) {
 		search_chars_buf[idx] = find_ch_in_ustr[test_num].search_chars[idx];
-	    } /* for */
+	    }
 	    search_chars.Buffer = search_chars_buf;
 	} else {
 	    search_chars.Length        = 0;
 	    search_chars.MaximumLength = 0;
 	    search_chars.Buffer        = NULL;
-	} /* if */
+	}
 	pos = 12345;
         result = pRtlFindCharInUnicodeString(find_ch_in_ustr[test_num].flags, &main_str, &search_chars, &pos);
         ok(result == find_ch_in_ustr[test_num].result,
@@ -1205,7 +1205,7 @@ static void test_RtlFindCharInUnicodeString(void)
            test_num, find_ch_in_ustr[test_num].flags,
            find_ch_in_ustr[test_num].main_str, find_ch_in_ustr[test_num].search_chars,
            pos, find_ch_in_ustr[test_num].pos);
-    } /* for */
+    }
 }
 
 
@@ -1353,7 +1353,7 @@ static void test_RtlUnicodeStringToInteger(void)
 	   "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
 	   test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
 	free(wstr);
-    } /* for */
+    }
 
     wstr = AtoW(str2int[1].str);
     pRtlInitUnicodeString(&uni, wstr);
@@ -1414,8 +1414,8 @@ static void test_RtlCharToInteger(void)
 	    ok(value == str2int[test_num].value,
 	       "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) assigns value %d, expected: %d\n",
 	       test_num, str2int[test_num].str, str2int[test_num].base, value, str2int[test_num].value);
-	} /* if */
-    } /* for */
+	}
+    }
 
     result = pRtlCharToInteger(str2int[1].str, str2int[1].base, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
@@ -1561,7 +1561,7 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 
     for (pos = 0; pos < STRI_BUFFER_LENGTH; pos++) {
 	expected_str_Buffer[pos] = int2str->Buffer[pos];
-    } /* for */
+    }
     expected_unicode_string.Length = int2str->Length * sizeof(WCHAR);
     expected_unicode_string.MaximumLength = int2str->MaximumLength * sizeof(WCHAR);
     expected_unicode_string.Buffer = expected_str_Buffer;
@@ -1569,7 +1569,7 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 
     for (pos = 0; pos < STRI_BUFFER_LENGTH; pos++) {
 	str_Buffer[pos] = '-';
-    } /* for */
+    }
     unicode_string.Length = 0;
     unicode_string.MaximumLength = int2str->MaximumLength * sizeof(WCHAR);
     unicode_string.Buffer = str_Buffer;
@@ -1580,7 +1580,7 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 	/* On BUFFER_OVERFLOW the string Buffer should be unchanged */
 	for (pos = 0; pos < STRI_BUFFER_LENGTH; pos++) {
 	    expected_str_Buffer[pos] = '-';
-	} /* for */
+	}
 	/* w2k: The native function has two reasons for BUFFER_OVERFLOW: */
 	/* If the value is too large to convert: The Length is unchanged */
 	/* If str is too small to hold the string: Set str->Length to the length */
@@ -1589,7 +1589,7 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 	if (expected_unicode_string.Length > 32 && unicode_string.Length == 0) {
 	    /* The value is too large to convert only triggerd when testing native */
 	    expected_unicode_string.Length = 0;
-	} /* if */
+	}
     } else {
 	ok(result == int2str->result,
 	   "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) has result %lx, expected: %lx\n",
@@ -1598,8 +1598,8 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 	    ok(unicode_string.Buffer[unicode_string.Length/sizeof(WCHAR)] == '\0',
 	       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string \"%s\" is not NULL terminated\n",
 	       test_num, int2str->value, int2str->base, ansi_str.Buffer);
-	} /* if */
-    } /* if */
+	}
+    }
     ok(memcmp(unicode_string.Buffer, expected_unicode_string.Buffer, STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
        "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, int2str->value, int2str->base, ansi_str.Buffer, expected_ansi_str.Buffer);
@@ -1720,7 +1720,7 @@ START_TEST(rtlstr)
 	test_RtlAppendStringToString();
 	test_RtlAppendUnicodeToString();
 	test_RtlAppendUnicodeStringToString();
-    } /* if */
+    }
 
     if (pRtlInitUnicodeStringEx)
         test_RtlInitUnicodeStringEx();
@@ -1732,9 +1732,10 @@ START_TEST(rtlstr)
         test_RtlGUIDFromString();
     if (pRtlStringFromGUID)
         test_RtlStringFromGUID();
-        /*
-	 * test_RtlUpcaseUnicodeChar();
-	 * test_RtlUpcaseUnicodeString();
-	 * test_RtlDowncaseUnicodeString();
-	 */
+    if(0)
+    {
+	test_RtlUpcaseUnicodeChar();
+	test_RtlUpcaseUnicodeString();
+	test_RtlDowncaseUnicodeString();
+    }
 }
