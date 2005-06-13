@@ -390,9 +390,9 @@ HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Read (LPSTREAM iface, vo
 	memcpy (pv, pByte, cb);
 	This->llPos += cb; /* move pointer */
 	/* FIXME: error checking would be nice */
-	*pcbRead = cb;
+	if (pcbRead) *pcbRead = cb;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08lX): '%s'\n", *pcbRead, debugstr_an(pv, *pcbRead));
+	TRACE_(dmfileraw)(": data (size = 0x%08lX): '%s'\n", cb, debugstr_an(pv, *pcbRead));
     return S_OK;
 }
 
