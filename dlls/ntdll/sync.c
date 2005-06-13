@@ -123,12 +123,12 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
  */
 NTSTATUS WINAPI NtQuerySemaphore(
 	HANDLE SemaphoreHandle,
-	PVOID SemaphoreInformationClass,
-	OUT PVOID SemaphoreInformation,
+	SEMAPHORE_INFORMATION_CLASS SemaphoreInformationClass,
+	PVOID SemaphoreInformation,
 	ULONG Length,
 	PULONG ReturnLength)
 {
-	FIXME("(%p,%p,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,%d,%p,0x%08lx,%p) stub!\n",
 	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
 	return STATUS_SUCCESS;
 }

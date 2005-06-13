@@ -413,12 +413,12 @@ NTSTATUS WINAPI NtPrivilegeCheck(
  */
 NTSTATUS WINAPI NtQuerySection(
 	IN HANDLE SectionHandle,
-	IN PVOID SectionInformationClass,
+	IN SECTION_INFORMATION_CLASS SectionInformationClass,
 	OUT PVOID SectionInformation,
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME("(%p,%p,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,%d,%p,0x%08lx,%p) stub!\n",
 	SectionHandle,SectionInformationClass,SectionInformation,Length,ResultLength);
 	return 0;
 }
@@ -432,10 +432,10 @@ NTSTATUS WINAPI NtQuerySection(
  *  ZwCreatePort		[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreatePort(PHANDLE PortHandle,POBJECT_ATTRIBUTES ObjectAttributes,
-                             DWORD MaxConnectInfoLength,DWORD MaxDataLength,DWORD unknown)
+                             ULONG MaxConnectInfoLength,ULONG MaxDataLength,PULONG reserved)
 {
-  FIXME("(%p,%p,0x%08lx,0x%08lx,0x%08lx),stub!\n",PortHandle,ObjectAttributes,
-        MaxConnectInfoLength,MaxDataLength,unknown);
+  FIXME("(%p,%p,%lu,%lu,%p),stub!\n",PortHandle,ObjectAttributes,
+        MaxConnectInfoLength,MaxDataLength,reserved);
   return 0;
 }
 

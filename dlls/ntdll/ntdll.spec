@@ -93,7 +93,7 @@
 @ stdcall NtCreateMutant(ptr long ptr long)
 @ stdcall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(long long long long)
-@ stdcall NtCreatePort(ptr ptr long long long)
+@ stdcall NtCreatePort(ptr ptr long long ptr)
 @ stub NtCreateProcess
 @ stub NtCreateProfile
 @ stdcall NtCreateSection(ptr long ptr ptr long long long)
@@ -188,7 +188,7 @@
 @ stdcall NtQueryPerformanceCounter(ptr ptr)
 @ stdcall NtQuerySection (long long long long long)
 @ stdcall NtQuerySecurityObject (long long long long long)
-@ stdcall NtQuerySemaphore (long long long long long)
+@ stdcall NtQuerySemaphore (long long ptr long ptr)
 @ stdcall NtQuerySymbolicLinkObject(long ptr ptr)
 @ stub NtQuerySystemEnvironmentValue
 @ stdcall NtQuerySystemInformation(long long long long)
