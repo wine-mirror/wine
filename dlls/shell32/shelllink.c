@@ -33,6 +33,7 @@
  */
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include "wine/debug.h"
 #include "winerror.h"
@@ -2254,13 +2255,55 @@ ShellLink_ExtInit_Release( IShellExtInit* iface )
     return IShellLinkA_Release((IShellLinkA*)This);
 }
 
+/**************************************************************************
+ * ShellLink implementation of IShellExtInit::Initialize()
+ *
+ * Loads the shelllink from the dataobject the shell is pointing to.
+ */
 static HRESULT WINAPI
 ShellLink_ExtInit_Initialize( IShellExtInit* iface, LPCITEMIDLIST pidlFolder,
                               IDataObject *pdtobj, HKEY hkeyProgID )
 {
     _ICOM_THIS_From_IShellExtInit(IShellLinkImpl, iface);
-    FIXME("%p %p %p %p\n", This, pidlFolder, pdtobj, hkeyProgID );
-    return E_NOTIMPL;
+    FORMATETC format;
+    STGMEDIUM stgm;
+    UINT count;
+    HRESULT r = E_FAIL;
+
+    TRACE("%p %p %p %p\n", This, pidlFolder, pdtobj, hkeyProgID );
+
+    if( !pdtobj )
+        return r;
+
+    format.cfFormat = CF_HDROP;
+    format.ptd = NULL;
+    format.dwAspect = DVASPECT_CONTENT;
+    format.lindex = -1;
+    format.tymed = TYMED_HGLOBAL;
+
+    if( FAILED( IDataObject_GetData( pdtobj, &format, &stgm ) ) )
+        return r;
+
+    count = DragQueryFileW( stgm.u.hGlobal, -1, NULL, 0 );
+    if( count == 1 )
+    {
+        LPWSTR path;
+
+        count = DragQueryFileW( stgm.u.hGlobal, 0, NULL, 0 );
+        count++;
+        path = HeapAlloc( GetProcessHeap(), 0, count*sizeof(WCHAR) );
+        if( path )
+        {
+            IPersistFile *pf = (IPersistFile*) &This->lpvtblPersistFile;
+
+            count = DragQueryFileW( stgm.u.hGlobal, 0, path, count );
+            r = IPersistFile_Load( pf, path, 0 );
+            HeapFree( GetProcessHeap(), 0, path );
+        }
+    }
+    ReleaseStgMedium( &stgm );
+
+    return r;
 }
 
 static const IShellExtInitVtbl eivt =
