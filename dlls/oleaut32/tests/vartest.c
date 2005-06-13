@@ -39,21 +39,6 @@
 
 static HMODULE hOleaut32;
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-# define U1(x) (x).u1
-#else
-# define U(x)  (x)
-# define U1(x) (x)
-#endif
-#ifdef NONAMELESSSTRUCT
-# define S(x)  (x).s
-# define S1(x) (x).s1
-#else
-# define S(x)  (x)
-# define S1(x) (x)
-#endif
-
 static HRESULT (WINAPI *pVarUdateFromDate)(DATE,ULONG,UDATE*);
 static HRESULT (WINAPI *pVarDateFromUdate)(UDATE*,ULONG,DATE*);
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);

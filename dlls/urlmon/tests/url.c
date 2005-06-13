@@ -29,12 +29,6 @@
 
 #include "wine/test.h"
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-#else
-# define U(x)  (x)
-#endif
-
 static const WCHAR TEST_URL_1[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','\0'};
 static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','/','\0'};
 

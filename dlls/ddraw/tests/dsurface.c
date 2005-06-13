@@ -22,14 +22,6 @@
 #include "wine/test.h"
 #include "ddraw.h"
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-# define U2(x) (x).u2
-#else
-# define U(x)  (x)
-# define U2(x) (x)
-#endif
-
 static LPDIRECTDRAW lpDD = NULL;
 
 static void CreateDirectDraw()

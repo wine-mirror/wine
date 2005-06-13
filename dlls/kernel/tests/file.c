@@ -28,17 +28,6 @@
 #include "winbase.h"
 #include "winerror.h"
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-#else
-# define U(x)  (x)
-#endif
-#ifdef NONAMELESSSTRUCT
-# define S(x)  (x).s
-#else
-# define S(x)  (x)
-#endif
-
 static int dll_capable(const char *dll, const char *function)
 {
     HMODULE module = GetModuleHandleA(dll);

@@ -20,12 +20,6 @@
 #include "objbase.h"
 #include "wine/test.h"
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-#else
-# define U(x)  (x)
-#endif
-
 static HRESULT (WINAPI *pFmtIdToPropStgName)(const FMTID *, LPOLESTR);
 static HRESULT (WINAPI *pPropStgNameToFmtId)(const LPOLESTR, FMTID *);
 static HRESULT (WINAPI *pStgCreatePropSetStg)(IStorage *, DWORD, IPropertySetStorage **);

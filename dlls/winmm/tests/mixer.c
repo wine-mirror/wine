@@ -36,18 +36,6 @@
 
 #include "winmm_test.h"
 
-#ifdef NONAMELESSSTRUCT
-# define S1(x) (x).s1
-#else
-# define S1(x) (x)
-#endif
-
-#ifdef NONAMELESSUNION
-# define U(x) (x).u
-#else
-# define U(x) (x)
-#endif
-
 static const char * line_flags(DWORD fdwLine)
 {
     static char flags[100];

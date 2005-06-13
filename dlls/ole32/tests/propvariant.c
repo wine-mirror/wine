@@ -22,12 +22,6 @@
 
 #include "wine/test.h"
 
-#ifdef NONAMELESSUNION
-# define U(x) (x).u
-#else
-# define U(x) (x)
-#endif
-
 /* invalid in all versions */
 #define PROP_INV 255
 /* valid in v0 and above (NT4+) */

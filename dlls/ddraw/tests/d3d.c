@@ -23,18 +23,6 @@
 #include "ddraw.h"
 #include "d3d.h"
 
-#ifdef NONAMELESSUNION
-# define U(x)  (x).u
-# define U1(x) (x).u1
-# define U2(x) (x).u2
-# define U3(x) (x).u3
-#else
-# define U(x)  (x)
-# define U1(x) (x)
-# define U2(x) (x)
-# define U3(x) (x)
-#endif
-
 static LPDIRECTDRAW7        lpDD = NULL;
 static LPDIRECT3D7          lpD3D = NULL;
 static LPDIRECTDRAWSURFACE7 lpDDS = NULL;

@@ -22,12 +22,6 @@
 #include "wine/test.h"
 #include "ddraw.h"
 
-#ifdef NONAMELESSUNION
-#define UNION_MEMBER(x, y) DUMMYUNIONNAME##x.y
-#else
-#define UNION_MEMBER(x, y) y
-#endif
-
 static LPDIRECTDRAW lpDD = NULL;
 static LPDIRECTDRAWSURFACE lpDDSPrimary = NULL;
 static LPDIRECTDRAWSURFACE lpDDSBack = NULL;
@@ -100,7 +94,7 @@ HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
 {
     trace("Width = %li, Height = %li, Refresh Rate = %li\r\n",
         lpddsd->dwWidth, lpddsd->dwHeight,
-        lpddsd->UNION_MEMBER(2, dwRefreshRate));
+        U2(*lpddsd).dwRefreshRate);
     adddisplaymode(lpddsd);
 
     return DDENUMRET_OK;
@@ -134,7 +128,7 @@ static void setdisplaymode(int i)
         {
             rc = IDirectDraw_SetDisplayMode(lpDD,
                 modes[i].dwWidth, modes[i].dwHeight,
-                modes[i].ddpfPixelFormat.UNION_MEMBER(1, dwRGBBitCount));
+                U1(modes[i].ddpfPixelFormat).dwRGBBitCount);
             ok(DD_OK==rc || DDERR_UNSUPPORTED==rc,"SetDisplayMode returned: %lx\n",rc);
 	    if (DD_OK==rc) {
                 rc = IDirectDraw_RestoreDisplayMode(lpDD);
