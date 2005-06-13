@@ -574,9 +574,12 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
     }
     else if (strcmpW(szAttribute, szAssignmentType)==0)
     {
-        FIXME("0 (zero) if advertised, 1(one) if per machine.\n");
+        FIXME("0 (zero) if advertised or per user , 1(one) if per machine.\n");
         if (szBuffer)
-            szBuffer[0] = 1;
+        {
+            szBuffer[0] = '1';
+            szBuffer[1] = 0;
+        }
         if (pcchValueBuf)
             *pcchValueBuf = 1;
         r = ERROR_SUCCESS;
