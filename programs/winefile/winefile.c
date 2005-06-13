@@ -806,7 +806,7 @@ static HICON extract_icon(IShellFolder* folder, LPCITEMIDLIST pidl)
 }
 
 
-static Entry* find_entry_shell(Entry* dir, LPITEMIDLIST pidl)
+static Entry* find_entry_shell(Entry* dir, LPCITEMIDLIST pidl)
 {
 	Entry* entry;
 
@@ -1192,7 +1192,8 @@ static void SortDirectory(Entry* dir, SORT_ORDER sortOrder)
 			p[0]->next = p[1];
 
 		(*p)->next = 0;
-                HeapFree( GetProcessHeap(), 0, array );
+
+                HeapFree(GetProcessHeap(), 0, array);
 	}
 }
 
@@ -1604,7 +1605,7 @@ struct ExecuteDialog {
 	int		cmdshow;
 };
 
-static INT_PTR CALLBACK ExecuteDialogWndProg(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
+static INT_PTR CALLBACK ExecuteDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 {
 	static struct ExecuteDialog* dlg;
 
@@ -2230,7 +2231,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 					memset(&dlg, 0, sizeof(struct ExecuteDialog));
 
-					if (DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_EXECUTE), hwnd, ExecuteDialogWndProg, (LPARAM)&dlg) == IDOK) {
+					if (DialogBoxParam(Globals.hInstance, MAKEINTRESOURCE(IDD_EXECUTE), hwnd, ExecuteDialogDlgProc, (LPARAM)&dlg) == IDOK) {
 						HINSTANCE hinst = ShellExecute(hwnd, NULL/*operation*/, dlg.cmd/*file*/, NULL/*parameters*/, NULL/*dir*/, dlg.cmdshow);
 
 						if ((int)hinst <= 32)
@@ -2327,7 +2328,7 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 					ShellAbout(hwnd, RS(b2,IDS_WINE), RS(b1,IDS_WINEFILE), 0);
 					break;
 
-				case ID_ABOUT:	/*ID_ABOUT_WINE: */
+				case ID_ABOUT:
 					ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL, 0);
 					break;
 #endif	/* _NO_EXTENSIONS */
@@ -4054,7 +4055,8 @@ static HRESULT ShellFolderContextMenu(IShellFolder* shell_folder, HWND hwndParen
 				  hr = (*pcm->lpVtbl->InvokeCommand)(pcm, &cmi);
 					executed = TRUE;
 				}
-			}
+			} else
+				CtxMenu_reset();
 		}
 
 		(*pcm->lpVtbl->Release)(pcm);
