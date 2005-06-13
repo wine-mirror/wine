@@ -3778,7 +3778,7 @@ static HRESULT WINAPI ITypeLib2_fnIsName(
     TLBFuncDesc *pFInfo;
     TLBVarDesc *pVInfo;
     int i;
-    UINT nNameBufLen = SysStringLen(szNameBuf);
+    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR);
 
     TRACE("(%p)->(%s,%08lx,%p)\n", This, debugstr_w(szNameBuf), lHashVal,
 	  pfName);
@@ -3824,16 +3824,16 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
     TLBFuncDesc *pFInfo;
     TLBVarDesc *pVInfo;
     int i,j = 0;
-
-    UINT nNameBufLen = SysStringLen(szNameBuf);
+    UINT nNameBufLen = (lstrlenW(szNameBuf)+1)*sizeof(WCHAR);
 
     for(pTInfo=This->pTypeInfo;pTInfo && j<*pcFound; pTInfo=pTInfo->next){
         if(!memcmp(szNameBuf,pTInfo->Name, nNameBufLen)) goto ITypeLib2_fnFindName_exit;
         for(pFInfo=pTInfo->funclist;pFInfo;pFInfo=pFInfo->next) {
             if(!memcmp(szNameBuf,pFInfo->Name,nNameBufLen)) goto ITypeLib2_fnFindName_exit;
-            for(i=0;i<pFInfo->funcdesc.cParams;i++)
+            for(i=0;i<pFInfo->funcdesc.cParams;i++) {
                 if(!memcmp(szNameBuf,pFInfo->pParamDesc[i].Name,nNameBufLen))
                     goto ITypeLib2_fnFindName_exit;
+	    }
         }
         for(pVInfo=pTInfo->varlist;pVInfo;pVInfo=pVInfo->next)
             if(!memcmp(szNameBuf,pVInfo->Name, nNameBufLen)) goto ITypeLib2_fnFindName_exit;
