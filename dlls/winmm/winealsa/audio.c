@@ -3570,8 +3570,6 @@ static DWORD widStart(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     
     ALSA_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_STARTING, 0, TRUE);
 
-    Sleep(500);
-
     return MMSYSERR_NOERROR;
 }
 
