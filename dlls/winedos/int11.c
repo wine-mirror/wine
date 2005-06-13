@@ -28,7 +28,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "dosexe.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -82,52 +81,26 @@ void WINAPI DOSVM_Int11Handler( CONTEXT86 *context )
     if (diskdrives) diskdrives--;
 
     for (x=0; x < 9; x++)
-    {        
-        HKEY hkey;
-        char option[10];
-        char temp[256];
+    {
+        HANDLE handle;
+        char file[10];
 
         /* serial port name */
-        strcpy( option, "COMx" );
-        option[3] = '1' + x;
-        option[4] = '\0';
-
-        /* default value */
-        strcpy( temp, "*" );
-
-        if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
-                         "Software\\Wine\\Wine\\Config\\serialports", 
-                         &hkey))
+        sprintf( file, "\\\\.\\COM%d", x+1 );
+        handle = CreateFileA( file, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
         {
-            DWORD type;
-            DWORD count = sizeof(temp);
-            RegQueryValueExA( hkey, option, 0, &type, temp, &count );
-            RegCloseKey( hkey );
-        }
-
-        if (strcmp(temp, "*") && *temp != '\0')
+            CloseHandle( handle );
             serialports++;
-
-        /* parallel port name */
-        strcpy( option, "LPTx" );
-        option[3] = '1' + x;
-        option[4] = '\0';
-
-        /* default value */
-        strcpy( temp, "*" );
-
-        if (!RegOpenKeyA(HKEY_LOCAL_MACHINE,
-                         "Software\\Wine\\Wine\\Config\\parallelports", 
-                         &hkey))
-        {
-            DWORD type;
-            DWORD count = sizeof(temp);
-            RegQueryValueExA( hkey, option, 0, &type, temp, &count );
-            RegCloseKey( hkey );
         }
 
-        if (strcmp(temp, "*") && *temp != '\0')
+        sprintf( file, "\\\\.\\LPT%d", x+1 );
+        handle = CreateFileA( file, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle( handle );
             parallelports++;
+        }
     }
 
     if (serialports > 7) /* 3 bits -- maximum value = 7 */
