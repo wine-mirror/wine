@@ -2059,15 +2059,22 @@ static void DIB_FixColorsToLoadflags(BITMAPINFO * bmi, UINT loadflags, BYTE pix)
 /**********************************************************************
  *       BITMAP_Load
  */
-static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
+static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name,
+                            INT desiredx, INT desiredy, UINT loadflags )
 {
-    HBITMAP hbitmap = 0;
+    HBITMAP hbitmap = 0, orig_bm;
     HRSRC hRsrc;
     HGLOBAL handle;
     char *ptr = NULL;
-    BITMAPINFO *info, *fix_info=NULL;
-    HGLOBAL hFix;
+    BITMAPINFO *info, *fix_info = NULL, *scaled_info = NULL;
     int size;
+    BYTE pix;
+    char *bits;
+    LONG width, height, new_width, new_height;
+    WORD bpp_dummy;
+    DWORD compr_dummy;
+    INT bm_type;
+    HDC screen_mem_dc = NULL;
 
     if (!(loadflags & LR_LOADFROMFILE))
     {
@@ -2090,62 +2097,68 @@ static HBITMAP BITMAP_Load( HINSTANCE instance, LPCWSTR name, UINT loadflags )
     }
 
     size = bitmap_info_size(info, DIB_RGB_COLORS);
-    if ((hFix = GlobalAlloc(0, size))) fix_info=GlobalLock(hFix);
+    fix_info = HeapAlloc(GetProcessHeap(), 0, size);
+    scaled_info = HeapAlloc(GetProcessHeap(), 0, size);
 
-    if (fix_info) {
-        BYTE pix;
+    if (!fix_info || !scaled_info) goto end;
+    memcpy(fix_info, info, size);
 
-        memcpy(fix_info, info, size);
-        pix = *((LPBYTE)info + size);
-        DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
-        if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
+    pix = *((LPBYTE)info + size);
+    DIB_FixColorsToLoadflags(fix_info, loadflags, pix);
 
-        if (screen_dc)
-        {
-            char *bits = (char *)info + size;
+    memcpy(scaled_info, fix_info, size);
+    bm_type = DIB_GetBitmapInfo( &fix_info->bmiHeader, &width, &height,
+                                 &bpp_dummy, &compr_dummy);
+    if(desiredx != 0)
+        new_width = desiredx;
+    else
+        new_width = width;
 
-            if (loadflags & LR_CREATEDIBSECTION) {
-                DIBSECTION dib;
-                fix_info->bmiHeader.biCompression = 0; /* DIBSection can't be compressed */
-                hbitmap = CreateDIBSection(screen_dc, fix_info, DIB_RGB_COLORS, NULL, 0, 0);
-                GetObjectA(hbitmap, sizeof(DIBSECTION), &dib);
-                SetDIBits(screen_dc, hbitmap, 0, dib.dsBm.bmHeight, bits, info,
-                          DIB_RGB_COLORS);
-            }
-            else {
-                /* If it's possible, create a monochrome bitmap */
+    if(desiredy != 0)
+        new_height = height > 0 ? desiredy : -desiredy;
+    else
+        new_height = height;
 
-                LONG width;
-                LONG height;
-                WORD bpp;
-                DWORD compr;
-
-                if (DIB_GetBitmapInfo( &fix_info->bmiHeader, &width, &height, &bpp, &compr ) != -1)
-                {
-                    if (width < 0)
-                        TRACE("Bitmap has a negative width\n");
-                    else
-                    {
-                        /* Top-down DIBs have a negative height */
-                        if (height < 0) height = -height;
-
-                        TRACE("width=%ld, height=%ld, bpp=%u, compr=%lu\n", width, height, bpp, compr);
-
-                        if (is_dib_monochrome(fix_info))
-                            hbitmap = CreateBitmap(width, height, 1, 1, NULL);
-                        else
-                            hbitmap = CreateCompatibleBitmap(screen_dc, width, height);
-
-                        SetDIBits(screen_dc, hbitmap, 0, height, bits, fix_info, DIB_RGB_COLORS);
-                    }
-                }
-            }
-        }
-
-        GlobalUnlock(hFix);
-        GlobalFree(hFix);
+    if(bm_type == 0)
+    {
+        BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)&scaled_info->bmiHeader;
+        core->bcWidth = new_width;
+        core->bcHeight = new_height;
+    }
+    else
+    {
+        scaled_info->bmiHeader.biWidth = new_width;
+        scaled_info->bmiHeader.biHeight = new_height;
     }
 
+    if (new_height < 0) new_height = -new_height;
+
+    if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
+    if (!(screen_mem_dc = CreateCompatibleDC( screen_dc ))) goto end;
+
+    bits = (char *)info + size;
+
+    if (loadflags & LR_CREATEDIBSECTION)
+    {
+        scaled_info->bmiHeader.biCompression = 0; /* DIBSection can't be compressed */
+        hbitmap = CreateDIBSection(screen_dc, scaled_info, DIB_RGB_COLORS, NULL, 0, 0);
+    }
+    else
+    {
+        if (is_dib_monochrome(fix_info))
+            hbitmap = CreateBitmap(new_width, new_height, 1, 1, NULL);
+        else
+            hbitmap = CreateCompatibleBitmap(screen_dc, new_width, new_height);        
+    }
+
+    orig_bm = SelectObject(screen_mem_dc, hbitmap);
+    StretchDIBits(screen_mem_dc, 0, 0, new_width, new_height, 0, 0, width, height, bits, fix_info, DIB_RGB_COLORS, SRCCOPY);
+    SelectObject(screen_mem_dc, orig_bm);
+
+end:
+    if (screen_mem_dc) DeleteDC(screen_mem_dc);
+    HeapFree(GetProcessHeap(), 0, scaled_info);
+    HeapFree(GetProcessHeap(), 0, fix_info);
     if (loadflags & LR_LOADFROMFILE) UnmapViewOfFile( ptr );
 
     return hbitmap;
@@ -2231,7 +2244,7 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
     if (loadflags & LR_LOADFROMFILE) loadflags &= ~LR_SHARED;
     switch (type) {
     case IMAGE_BITMAP:
-        return BITMAP_Load( hinst, name, loadflags );
+        return BITMAP_Load( hinst, name, desiredx, desiredy, loadflags );
 
     case IMAGE_ICON:
         if (!screen_dc) screen_dc = CreateDCW( DISPLAYW, NULL, NULL, NULL );
