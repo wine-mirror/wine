@@ -3341,7 +3341,7 @@ DEVMODEW * WINAPI GdiConvertToDevmodeW(const DEVMODEA *);
 BOOL      WINAPI GdiFlush(void);
 BOOL      WINAPI GdiIsMetaFileDC(HDC);
 BOOL      WINAPI GdiIsMetaPrintDC(HDC);
-BOOL      WINAPI GdiIsMetaPlayMetafileDC(HDC);
+BOOL      WINAPI GdiIsPlayMetafileDC(HDC);
 BOOL      WINAPI GdiTransparentBlt(HDC,int,int,int,int,HDC,int,int,int,int,UINT);
 INT       WINAPI GetArcDirection(HDC);
 BOOL      WINAPI GetAspectRatioFilterEx(HDC,LPSIZE);
