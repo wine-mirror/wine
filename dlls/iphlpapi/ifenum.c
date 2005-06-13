@@ -932,7 +932,7 @@ char *toIPAddressString(unsigned int addr, char string[16])
 
     iAddr.s_addr = addr;
     /* extra-anal, just to make auditors happy */
-    lstrcpynA(string, inet_ntoa(iAddr), sizeof(string));
+    lstrcpynA(string, inet_ntoa(iAddr), 16);
   }
   return string;
 }
