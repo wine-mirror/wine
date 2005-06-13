@@ -1517,6 +1517,7 @@ void NetBTInit(void)
      * different than MS', we can't do per-adapter WINS configuration in the
      * same place.  Just do a global WINS configuration instead.
      */
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Network */
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, Config_NetworkW, 0, KEY_READ, &hKey)
      == ERROR_SUCCESS)
     {

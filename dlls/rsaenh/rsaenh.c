@@ -884,6 +884,8 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
             hRootKey = HKEY_CURRENT_USER;
         }
         
+        /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
+        /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
         if (RegCreateKeyExA(hRootKey, szRSABase, 0, NULL, REG_OPTION_NON_VOLATILE, 
                             KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS)
         {
@@ -1013,6 +1015,8 @@ static HCRYPTPROV new_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTab
                 hRootKey = HKEY_CURRENT_USER;
             }
 
+            /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
+            /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
             RegCreateKeyA(hRootKey, szRSABase, &hKey);
             RegCloseKey(hKey);
         }
@@ -1053,6 +1057,8 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
         hRootKey = HKEY_CURRENT_USER;
     }
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Crypto\RSA */
+    /* @@ Wine registry key: HKCU\Software\Wine\Crypto\RSA */
     if (RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
     {
         SetLastError(NTE_BAD_KEYSET);

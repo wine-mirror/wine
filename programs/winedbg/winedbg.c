@@ -169,6 +169,7 @@ static	unsigned dbg_load_internal_vars(void)
 #include "intvar.h"
 #undef   INTERNAL_VAR
 
+    /* @@ Wine registry key: HKCU\Software\Wine\WineDbg */
     if (RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) 
     {
 	WINE_ERR("Cannot create WineDbg key in registry\n");
@@ -196,6 +197,7 @@ static	unsigned dbg_save_internal_vars(void)
     HKEY	                hkey;
     int		                i;
 
+    /* @@ Wine registry key: HKCU\Software\Wine\WineDbg */
     if (RegCreateKeyA(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) 
     {
 	WINE_ERR("Cannot create WineDbg key in registry\n");

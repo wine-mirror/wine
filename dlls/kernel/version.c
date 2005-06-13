@@ -120,6 +120,7 @@ WORD get_dos_version(void)
         TRACE( "getting version from %s\n", debugstr_w(appversion) );
         RtlInitUnicodeString( &nameW, appversion );
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\Version */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             ret = parse_dos_version( hkey );
@@ -131,6 +132,7 @@ WORD get_dos_version(void)
     {
         TRACE( "getting default version\n" );
         RtlInitUnicodeString( &nameW, versionW + 1 );
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Version */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             ret = parse_dos_version( hkey );

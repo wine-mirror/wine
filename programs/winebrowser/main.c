@@ -75,6 +75,7 @@ int main (int argc, char *argv[])
 
   maxLength = sizeof(szBrowsers);
 
+  /* @@ Wine registry key: HKCU\Software\Wine\WineBrowser */
   if(RegCreateKeyEx( HKEY_CURRENT_USER,
 		      "Software\\Wine\\WineBrowser", 0, NULL,
 		      REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,

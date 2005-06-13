@@ -414,6 +414,7 @@ static HKEY open_app_key( const WCHAR *app_name, const WCHAR *module )
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, str );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\DllOverrides */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
     RtlFreeHeap( GetProcessHeap(), 0, str );
     return hkey;
@@ -549,6 +550,7 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &nameW, DllOverridesW );
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\DllOverrides */
         if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
     }
 

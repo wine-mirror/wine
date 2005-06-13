@@ -463,6 +463,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     psCmd[0] = 0;
     if (!strncmp("LPR:",pszOutput,4))
     {
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\spooler */
         if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
 	{
 	    DWORD type, count = sizeof(psCmd);
@@ -474,6 +475,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     }
     else
     {
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\spooler */
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
 	{
 	    DWORD type, count = sizeof(psCmd);

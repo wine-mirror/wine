@@ -590,6 +590,7 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
     HKEY    	hkey;
     DWORD   	type, name_len, value_len;
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\TrueType Font Directories */
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
     	    "Software\\Wine\\Wine\\Config\\TrueType Font Directories",
 	    0, KEY_READ, &hkey) != ERROR_SUCCESS)

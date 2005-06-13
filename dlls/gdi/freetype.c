@@ -756,6 +756,7 @@ static void LoadReplaceList(void)
     struct list *family_elem_ptr, *face_elem_ptr;
     WCHAR old_nameW[200];
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\FontReplacements */
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
 		   "Software\\Wine\\Wine\\FontReplacements",
 		   &hkey) == ERROR_SUCCESS) {
@@ -955,6 +956,7 @@ static void update_reg_entries(void)
         ERR("Can't create Windows font reg key\n");
         goto end;
     }
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Fonts\ExternalFonts */
     if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, external_fonts_reg_key,
                        0, NULL, 0, KEY_ALL_ACCESS, NULL, &externalkey, NULL) != ERROR_SUCCESS) {
         ERR("Can't create external font reg key\n");
@@ -1220,6 +1222,7 @@ BOOL WineEngInit(void)
     load_fontconfig_fonts();
 
     /* then look in any directories that we've specified in the config file */
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\FontDirs */
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
 		   "Software\\Wine\\Wine\\Config\\FontDirs",
 		   &hkey) == ERROR_SUCCESS) {

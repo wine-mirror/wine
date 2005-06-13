@@ -625,6 +625,7 @@ BOOL GDI_Init(void)
     const struct DefaultFontInfo* deffonts;
     int i;
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Tweak.Fonts */
     if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
         hkey = 0;
 

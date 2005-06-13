@@ -597,6 +597,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
     /* Look for a ppd file for this printer in the config file.
      * First look under that printer's name, and then under 'generic'
      */
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\ppd */
     if((res != ERROR_SUCCESS) && !RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd", &hkey))
     {
         const char* value_name;

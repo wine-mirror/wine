@@ -185,6 +185,7 @@ static UINT get_registry_drive_type( const WCHAR *root )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, drive_types_keyW );
+    /* @@ Wine registry key: HKLM\Software\Wine\Drives */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return DRIVE_UNKNOWN;
 
     if (root) driveW[0] = root[0];

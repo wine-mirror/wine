@@ -222,6 +222,7 @@ static void setup_options(void)
     HKEY hkey, appkey = 0;
     DWORD len;
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
     {
@@ -239,6 +240,7 @@ static void setup_options(void)
         if ((p = strrchr( appname, '/' ))) appname = p + 1;
         if ((p = strrchr( appname, '\\' ))) appname = p + 1;
         strcat( appname, "\\x11drv" );
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\x11drv */
         if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &tmpkey ))
         {
             if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;

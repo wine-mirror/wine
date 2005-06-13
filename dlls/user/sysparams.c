@@ -476,6 +476,7 @@ static HKEY get_volatile_regkey(void)
 
     if (!volatile_key)
     {
+        /* @@ Wine registry key: HKCU\Wine */
         if (RegCreateKeyExW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY,
                              0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
                              &volatile_key, 0 ) != ERROR_SUCCESS)

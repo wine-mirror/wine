@@ -518,6 +518,7 @@ static void init_options(void)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, WineW );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Wine */
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
         RtlInitUnicodeString( &nameW, ShowDotFilesW );

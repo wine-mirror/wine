@@ -137,6 +137,7 @@ int X11DRV_PALETTE_Init(void)
     {
 	HKEY hkey;
 	BOOL private_color_map = FALSE;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
 	{
 	    char buffer[20];
@@ -396,6 +397,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
    defaultCM_max_copy = 128;
    COLOR_max = 256;
 
+   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
    {
 	char buffer[20];

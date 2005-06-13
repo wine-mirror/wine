@@ -132,6 +132,7 @@ void setup_dsound_options(void)
 
     buffer[MAX_PATH]='\0';
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\dsound */
     if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\dsound", 0, NULL,
                          REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
     {
@@ -144,6 +145,7 @@ void setup_dsound_options(void)
     {
         HKEY tmpkey;
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\dsound */
         if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &tmpkey ))
         {
            char appname[MAX_PATH+16];

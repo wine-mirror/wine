@@ -445,6 +445,7 @@ static char *extract_icon( LPCWSTR path, int index)
     /* Where should we save the icon? */
     WINE_TRACE("path=[%s] index=%d\n", wine_dbgstr_w(path), index);
     iconsdir=NULL;  /* Default is no icon */
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Wine */
     if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", &hkey ))
     {
         static const WCHAR IconsDirW[] = {'I','c','o','n','s','D','i','r',0};

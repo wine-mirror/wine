@@ -1177,6 +1177,7 @@ BOOL PSDRV_GetType1Metrics(void)
     HKEY    hkey;
     DWORD   type, name_len, value_len;
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\afmdirs */
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
     	    "Software\\Wine\\Wine\\Config\\afmdirs",
 	    0, KEY_READ, &hkey) != ERROR_SUCCESS)

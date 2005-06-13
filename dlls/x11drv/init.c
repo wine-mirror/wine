@@ -65,6 +65,7 @@ static DWORD get_dpi( void )
     DWORD dpi = 96;
     HKEY hkey;
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
     if(RegOpenKeyW(HKEY_LOCAL_MACHINE, INIFontSection, &hkey) == ERROR_SUCCESS)
     {
         char buffer[20];

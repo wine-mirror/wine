@@ -100,6 +100,7 @@ char IO_pp_init(void)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, configW );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\ppdev */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return 1;
 
     for (;;)

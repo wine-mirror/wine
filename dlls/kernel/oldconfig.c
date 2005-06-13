@@ -88,6 +88,7 @@ static int create_drives( int devices_only )
     {
         RtlInitUnicodeString( &nameW, driveW );
         nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Drive A */
         if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
 
         RtlInitUnicodeString( &nameW, PathW );
@@ -134,6 +135,7 @@ static int create_drives( int devices_only )
     {
         RtlInitUnicodeString( &nameW, driveW );
         nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Drive A */
         if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
 
         RtlInitUnicodeString( &nameW, DeviceW );
@@ -202,6 +204,7 @@ static void create_dos_devices(void)
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &nameW, serialportsW );
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\SerialPorts */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             RtlInitUnicodeString( &nameW, com );
@@ -226,6 +229,7 @@ static void create_dos_devices(void)
             NtClose( hkey );
         }
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\ParallelPorts */
         RtlInitUnicodeString( &nameW, parallelportsW );
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
@@ -313,6 +317,7 @@ static void convert_drive_types(void)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, drive_types_keyW );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Drives */
     if (NtCreateKey( &hkey_new, KEY_ALL_ACCESS, &attr, 0, NULL, 0, &disp )) return;
     if (disp != REG_CREATED_NEW_KEY)
     {
@@ -324,6 +329,7 @@ static void convert_drive_types(void)
     {
         RtlInitUnicodeString( &nameW, driveW );
         nameW.Buffer[(nameW.Length / sizeof(WCHAR)) - 1] = 'A' + i;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Drive A */
         if (NtOpenKey( &hkey_old, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
         RtlInitUnicodeString( &nameW, TypeW );
         if (!NtQueryValueKey( hkey_old, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -378,6 +384,7 @@ static void convert_environment( HKEY hkey_current_user )
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, wineW );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Wine */
     if (NtOpenKey( &hkey_old, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) return;
 
     attr.RootDirectory = hkey_current_user;

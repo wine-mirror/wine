@@ -212,6 +212,7 @@ static BOOL get_use_dns_option(void)
     _init_attr( &attr, &nameW );
     RtlInitUnicodeString( &nameW, NetworkW );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Network */
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
         RtlInitUnicodeString( &nameW, UseDNSW );

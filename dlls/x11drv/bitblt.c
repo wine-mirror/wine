@@ -549,6 +549,7 @@ static int perfect_graphics(void)
 	char buffer[20];
 	/* default value */
 	perfect = 0;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
 	{
 	    DWORD type, count = sizeof(buffer);

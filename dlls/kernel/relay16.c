@@ -131,6 +131,7 @@ void RELAY16_InitDebugLists(void)
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &name, configW );
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Debug */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return;
 
     str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;

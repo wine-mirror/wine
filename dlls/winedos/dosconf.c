@@ -465,6 +465,7 @@ DOSCONF *DOSCONF_GetConfig(void)
     /* default value */
     filename[0] = '*'; filename[1] = '\0';
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\wine */
     if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
                      "Software\\Wine\\Wine\\Config\\wine", 
                      &hkey))

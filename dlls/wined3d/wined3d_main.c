@@ -64,6 +64,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
        }
+       /* @@ Wine registry key: HKLM\Software\Wine\Direct3D */
        if ( !RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Direct3D", &hkey) )
        {
            if ( !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )

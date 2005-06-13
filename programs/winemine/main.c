@@ -276,6 +276,7 @@ void LoadBoard( BOARD *p_board )
     char key_name[8];
     unsigned i;
 
+    /* @@ Wine registry key: HKCU\Software\Wine\WineMine */
     RegOpenKeyEx( HKEY_CURRENT_USER, registry_key,
             0, KEY_QUERY_VALUE, &hkey );
 
@@ -360,6 +361,7 @@ void SaveBoard( BOARD *p_board )
     char data[16];
     char key_name[8];
 
+    /* @@ Wine registry key: HKCU\Software\Wine\WineMine */
     if( RegCreateKeyEx( HKEY_CURRENT_USER, registry_key,
 	        0, NULL,
                 REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL,

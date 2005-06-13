@@ -733,6 +733,7 @@ BOOL	MMDRV_Init(void)
     strcpy(mapper_buffer, WINE_DEFAULT_WINMM_MAPPER);
     strcpy(midi_buffer, WINE_DEFAULT_WINMM_MIDI);
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\WinMM */
     if (! RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\WinMM", &hKey)) {
         size = sizeof(driver_buffer);
         if (RegQueryValueExA(hKey, "Drivers", 0, &type, (LPVOID)driver_buffer, &size)) 

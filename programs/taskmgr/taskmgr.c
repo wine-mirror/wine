@@ -668,7 +668,7 @@ void OnSize( UINT nType, int cx, int cy )
 void LoadSettings(void)
 {
     HKEY    hKey;
-    TCHAR   szSubKey[] = _T("Software\\ReactWare\\TaskManager");
+    TCHAR   szSubKey[] = _T("Software\\Wine\\TaskManager");
     int     i;
     DWORD   dwSize;
 
@@ -761,6 +761,7 @@ void LoadSettings(void)
     TaskManagerSettings.ShowKernelTimes = FALSE;
 
     /* Open the key */
+    /* @@ Wine registry key: HKCU\Software\Wine\TaskManager */
     if (RegOpenKeyEx(HKEY_CURRENT_USER, szSubKey, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
         return;
     /* Read the settings */
@@ -774,18 +775,11 @@ void LoadSettings(void)
 void SaveSettings(void)
 {
     HKEY hKey;
-    TCHAR szSubKey1[] = _T("Software");
-    TCHAR szSubKey2[] = _T("Software\\ReactWare");
-    TCHAR szSubKey3[] = _T("Software\\ReactWare\\TaskManager");
+    TCHAR szSubKey3[] = _T("Software\\Wine\\TaskManager");
 
     /* Open (or create) the key */
-    hKey = NULL;
-    RegCreateKeyEx(HKEY_CURRENT_USER, szSubKey1, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-    RegCloseKey(hKey);
-    hKey = NULL;
-    RegCreateKeyEx(HKEY_CURRENT_USER, szSubKey2, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL);
-    RegCloseKey(hKey);
-    hKey = NULL;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\TaskManager */
     if (RegCreateKeyEx(HKEY_CURRENT_USER, szSubKey3, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
         return;
     /* Save the settings */

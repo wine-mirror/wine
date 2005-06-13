@@ -275,12 +275,14 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
 
     buffer[MAX_PATH]='\0';
 
+    /* @@ Wine registry key: HKLM\Software\Wine\dinput */
     if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\dinput", &hkey)) hkey = 0;
 
     len = GetModuleFileNameA( 0, buffer, MAX_PATH );
     if (len && len < MAX_PATH) {
         HKEY tmpkey;
 
+        /* @@ Wine registry key: HKLM\Software\Wine\AppDefaults\app.exe\dinput */
         if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\AppDefaults", &tmpkey )) {
            char appname[MAX_PATH+16];
            char *p = strrchr( buffer, '\\' );

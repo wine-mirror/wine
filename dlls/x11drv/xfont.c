@@ -1451,6 +1451,7 @@ static void XFONT_LoadDefault(LPCSTR ini, LPCSTR fonttype)
     HKEY hkey;
 
     buffer[0] = 0;
+   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
     {
 	DWORD type, count = sizeof(buffer);
@@ -1657,6 +1658,7 @@ static void XFONT_LoadAliases(void)
 
     /* built-ins first */
     strcpy(buffer, "-bitstream-charter-");
+   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
     {
 	DWORD type, count = sizeof(buffer);
@@ -1675,6 +1677,7 @@ static void XFONT_LoadAliases(void)
     }
 
     strcpy(buffer, "-adobe-helvetica-");
+   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
     if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
     {
 	DWORD type, count = sizeof(buffer);
@@ -1701,6 +1704,7 @@ static void XFONT_LoadAliases(void)
         snprintf( subsection, sizeof(subsection), "%s%i", INIAliasSection, i++ );
 
 	buffer[0] = 0;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
 	{
 	    DWORD type, count = sizeof(buffer);
@@ -1830,6 +1834,7 @@ static void XFONT_LoadIgnores(void)
 	sprintf( subsection, "%s%i", INIIgnoreSection, i++ );
 
 	buffer[0] = 0;
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
 	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
 	{
 	    DWORD type, count = sizeof(buffer);
@@ -2920,6 +2925,7 @@ void X11DRV_FONT_InitX11Metrics( void )
   /* deal with systemwide font metrics cache */
 
   buffer[0] = 0;
+  /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
   if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
   {
 	DWORD type, count = buf_size;

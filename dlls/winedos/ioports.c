@@ -280,6 +280,7 @@ static void IO_port_init(void)
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &nameW, portsW );
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Ports */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             RtlInitUnicodeString( &nameW, readW );

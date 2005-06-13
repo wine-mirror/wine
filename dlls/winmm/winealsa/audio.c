@@ -725,6 +725,7 @@ static char *ALSA_GetDeviceFromReg(const char *value)
     char *result = NULL;
     DWORD resultSize;
 
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\alsa */
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ALSA", 0, KEY_QUERY_VALUE, &key);
     if (res != ERROR_SUCCESS) goto end;
 

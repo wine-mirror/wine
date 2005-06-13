@@ -283,6 +283,7 @@ void VERSION_Init( const WCHAR *appname )
         TRACE( "getting version from %s\n", debugstr_w(appversion) );
         RtlInitUnicodeString( &nameW, appversion );
 
+        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\Version */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             got_win_ver = parse_win_version( hkey );
@@ -293,6 +294,7 @@ void VERSION_Init( const WCHAR *appname )
 
     TRACE( "getting default version\n" );
     RtlInitUnicodeString( &nameW, versionW + 1 );
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Version */
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
         parse_win_version( hkey );
