@@ -236,7 +236,7 @@ static void free_setting(struct setting *setting)
  * If already in the list, the contents as given there will be
  * returned. You are expected to HeapFree the result.
  */
-char *get(const char *path, const char *name, const char *def)
+char *get_reg_key(const char *path, const char *name, const char *def)
 {
     struct list *cursor;
     struct setting *s;
@@ -277,7 +277,7 @@ char *get(const char *path, const char *name, const char *def)
  *
  * These values will be copied when necessary.
  */
-void set(const char *path, const char *name, const char *value)
+void set_reg_key(const char *path, const char *name, const char *value)
 {
     struct list *cursor;
     struct setting *s;
@@ -440,9 +440,9 @@ char **enumerate_values(char *path)
  * returns true if the given key/value pair exists in the registry or
  * has been written to.
  */
-BOOL exists(const char *path, const char *name)
+BOOL reg_key_exists(const char *path, const char *name)
 {
-    char *val = get(path, name, NULL);
+    char *val = get_reg_key(path, name, NULL);
 
     if (val)
     {

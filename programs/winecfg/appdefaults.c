@@ -40,7 +40,7 @@ static void update_comboboxes(HWND dialog)
   char *winver;
   
   /* retrieve the registry values */
-  winver = get(keypath("Version"), "Windows", "");
+  winver = get_reg_key(keypath("Version"), "Windows", "");
 
   /* empty winver means use automatic mode (ie the builtin dll linkage heuristics)  */
   WINE_TRACE("winver is %s\n", *winver != '\0' ? winver : "null (automatic mode)");
@@ -279,7 +279,7 @@ static void on_remove_app_click(HWND dialog)
     assert( selection != 0 ); /* user cannot click this button when "default settings" is selected  */
 
     section[strlen(section)] = '\0'; /* remove last backslash  */
-    set(section, NULL, NULL); /* delete the section  */
+    set_reg_key(section, NULL, NULL); /* delete the section  */
     ListView_DeleteItem(listview, selection);
     ListView_SetItemState(listview, selection - 1, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
@@ -296,12 +296,12 @@ static void on_winver_change(HWND dialog)
     if (selection == 0)
     {
         WINE_TRACE("automatic/default selected so removing current setting\n");
-        set(keypath("Version"), "Windows", NULL);
+        set_reg_key(keypath("Version"), "Windows", NULL);
     }
     else
     {
         WINE_TRACE("setting Version\\Windows key to value '%s'\n", ver[selection - 1].szVersion);
-        set(keypath("Version"), "Windows", ver[selection - 1].szVersion);
+        set_reg_key(keypath("Version"), "Windows", ver[selection - 1].szVersion);
     }
 
     /* enable the apply button  */

@@ -44,7 +44,7 @@ static void update_gui_for_desktop_mode(HWND dialog) {
     updating_ui = TRUE;
     
     /* do we have desktop mode enabled? */
-    if (exists(keypath("x11drv"), "Desktop"))
+    if (reg_key_exists(keypath("x11drv"), "Desktop"))
     {
         char* buf, *bufindex;
 	CheckDlgButton(dialog, IDC_ENABLE_DESKTOP, BST_CHECKED);
@@ -54,7 +54,7 @@ static void update_gui_for_desktop_mode(HWND dialog) {
 	enable(IDC_DESKTOP_SIZE);
 	enable(IDC_DESKTOP_BY);
 
-        buf = get(keypath("x11drv"), "Desktop", "640x480");
+        buf = get_reg_key(keypath("x11drv"), "Desktop", "640x480");
         bufindex = strchr(buf, 'x');
         if (bufindex) {
             *bufindex = 0;
@@ -99,7 +99,7 @@ static void init_dialog (HWND dialog)
     SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "24 bit");
     SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_ADDSTRING, 0, (LPARAM) "32 bit"); /* is this valid? */
 
-    buf = get(keypath("x11drv"), "ScreenDepth", "24");
+    buf = get_reg_key(keypath("x11drv"), "ScreenDepth", "24");
     if (strcmp(buf, "8") == 0)
 	SendDlgItemMessage(dialog, IDC_SCREEN_DEPTH, CB_SETCURSEL, 0, 0);
     else if (strcmp(buf, "16") == 0)
@@ -115,14 +115,14 @@ static void init_dialog (HWND dialog)
     SendDlgItemMessage(dialog, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
     SendDlgItemMessage(dialog, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
 
-    buf = get(keypath("x11drv"), "DXGrab", "Y");
+    buf = get_reg_key(keypath("x11drv"), "DXGrab", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
-    buf = get(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
+    buf = get_reg_key(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_CHECKED);
     else
@@ -154,7 +154,7 @@ static void set_from_desktop_edits(HWND dialog) {
 
     new = HeapAlloc(GetProcessHeap(), 0, strlen(width) + strlen(height) + 2 /* x + terminator */);
     sprintf(new, "%sx%s", width, height);
-    set(keypath("x11drv"), "Desktop", new);
+    set_reg_key(keypath("x11drv"), "Desktop", new);
     
     HeapFree(GetProcessHeap(), 0, width);
     HeapFree(GetProcessHeap(), 0, height);
@@ -167,7 +167,7 @@ static void on_enable_desktop_clicked(HWND dialog) {
     if (IsDlgButtonChecked(dialog, IDC_ENABLE_DESKTOP) == BST_CHECKED) {
         set_from_desktop_edits(dialog);
     } else {
-	set(keypath("x11drv"), "Desktop", NULL);
+        set_reg_key(keypath("x11drv"), "Desktop", NULL);
     }
     
     update_gui_for_desktop_mode(dialog);
@@ -181,23 +181,23 @@ static void on_screen_depth_changed(HWND dialog) {
     if (updating_ui) return;
 
     *spaceIndex = '\0';
-    set(keypath("x11drv"), "ScreenDepth", newvalue);
+    set_reg_key(keypath("x11drv"), "ScreenDepth", newvalue);
     HeapFree(GetProcessHeap(), 0, newvalue);
 }
 
 static void on_dx_mouse_grab_clicked(HWND dialog) {
     if (IsDlgButtonChecked(dialog, IDC_DX_MOUSE_GRAB) == BST_CHECKED) 
-	set(keypath("x11drv"), "DXGrab", "Y");
+        set_reg_key(keypath("x11drv"), "DXGrab", "Y");
     else
-	set(keypath("x11drv"), "DXGrab", "N");
+        set_reg_key(keypath("x11drv"), "DXGrab", "N");
 }
 
 
 static void on_double_buffer_clicked(HWND dialog) {
     if (IsDlgButtonChecked(dialog, IDC_DOUBLE_BUFFER) == BST_CHECKED)
-	set(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
+        set_reg_key(keypath("x11drv"), "DesktopDoubleBuffered", "Y");
     else
-	set(keypath("x11drv"), "DesktopDoubleBuffered", "N");
+        set_reg_key(keypath("x11drv"), "DesktopDoubleBuffered", "N");
 }
 
 INT_PTR CALLBACK

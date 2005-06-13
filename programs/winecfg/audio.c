@@ -55,7 +55,7 @@ static void selectAudioDriver(HWND hDlg, const char *drivername)
     {
       if (!strcmp (pAudioDrv->szDriver, drivername))
       {
-	set("Winmm", "Drivers", (char *) pAudioDrv->szDriver);
+	set_reg_key("Winmm", "Drivers", (char *) pAudioDrv->szDriver);
         SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0); /* enable apply button */
 	SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_SETCURSEL,
 			   (WPARAM) i, 0);
@@ -66,7 +66,7 @@ static void selectAudioDriver(HWND hDlg, const char *drivername)
 
 static void initAudioDlg (HWND hDlg)
 {
-    char *curAudioDriver = get("Winmm", "Drivers", "winealsa.drv");
+    char *curAudioDriver = get_reg_key("Winmm", "Drivers", "winealsa.drv");
     const AUDIO_DRIVER *pAudioDrv = NULL;
     int i;
 

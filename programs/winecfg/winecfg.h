@@ -40,17 +40,17 @@
 
 extern char *current_app; /* NULL means editing global settings  */
 
-/* Use get and set to alter registry settings. The changes made through set
-   won't be committed to the registry until process_all_settings is called,
-   however get will still return accurate information.
+/* Use get_reg_key and set_reg_key to alter registry settings. The changes made through
+   set_reg_key won't be committed to the registry until process_all_settings is called,
+   however get_reg_key will still return accurate information.
 
-   You are expected to release the result of get. The parameters to set will
-   be copied, so release them too when necessary.
+   You are expected to HeapFree the result of get_reg_key. The parameters to set_reg_key will
+   be copied, so free them too when necessary.
  */
 
-void set(const char *path, const char *name, const char *value);
-char *get(const char *path, const char *name, const char *def);
-BOOL exists(const char *path, const char *name);
+void set_reg_key(const char *path, const char *name, const char *value);
+char *get_reg_key(const char *path, const char *name, const char *def);
+BOOL reg_key_exists(const char *path, const char *name);
 void apply(void);
 char **enumerate_values(char *path);
 
