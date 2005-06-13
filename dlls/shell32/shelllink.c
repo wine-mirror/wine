@@ -117,6 +117,7 @@ static const IShellLinkWVtbl slvtw;
 static const IPersistFileVtbl pfvt;
 static const IPersistStreamVtbl psvt;
 static const IShellLinkDataListVtbl dlvt;
+static const IShellExtInitVtbl eivt;
 
 /* IShellLink Implementation */
 
@@ -127,6 +128,7 @@ typedef struct
 	const IPersistFileVtbl *lpvtblPersistFile;
 	const IPersistStreamVtbl *lpvtblPersistStream;
 	const IShellLinkDataListVtbl *lpvtblShellLinkDataList;
+	const IShellExtInitVtbl *lpvtblShellExtInit;
 
 	DWORD           ref;
 
@@ -152,24 +154,40 @@ typedef struct
 	BOOL		bDirty;
 } IShellLinkImpl;
 
-#define _IShellLinkW_Offset ((int)(&(((IShellLinkImpl*)0)->lpvtblw)))
-#define _ICOM_THIS_From_IShellLinkW(class, name) \
-    class* This = (class*)(((char*)name)-_IShellLinkW_Offset)
+static inline IShellLinkImpl *impl_from_IShellLinkW( IShellLinkW *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblw));
+}
+#define _ICOM_THIS_From_IShellLinkW(class, iface) \
+    class* This = impl_from_IShellLinkW( iface )
 
-#define _IPersistFile_Offset \
-    ((int)(&(((IShellLinkImpl*)0)->lpvtblPersistFile)))
-#define _ICOM_THIS_From_IPersistFile(class, name) \
-    class* This = (class*)(((char*)name)-_IPersistFile_Offset)
+static inline IShellLinkImpl *impl_from_IPersistFile( IPersistFile *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblPersistFile));
+}
+#define _ICOM_THIS_From_IPersistFile(class, iface) \
+    class* This = impl_from_IPersistFile( iface )
 
-#define _IPersistStream_Offset \
-    ((int)(&(((IShellLinkImpl*)0)->lpvtblPersistStream)))
-#define _ICOM_THIS_From_IPersistStream(class, name) \
-    class* This = (class*)(((char*)name)-_IPersistStream_Offset)
+static inline IShellLinkImpl *impl_from_IPersistStream( IPersistStream *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblPersistStream));
+}
+#define _ICOM_THIS_From_IPersistStream(class, iface) \
+    class* This = impl_from_IPersistStream( iface )
 
-#define _IShellLinkDataList_Offset \
-    ((int)(&(((IShellLinkImpl*)0)->lpvtblShellLinkDataList)))
-#define _ICOM_THIS_From_IShellLinkDataList(class, name) \
-    class* This = (class*)(((char*)name)-_IShellLinkDataList_Offset)
+static inline IShellLinkImpl *impl_from_IShellLinkDataList( IShellLinkDataList *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblShellLinkDataList));
+}
+#define _ICOM_THIS_From_IShellLinkDataList(class, iface) \
+    class* This = impl_from_IShellLinkDataList( iface )
+
+static inline IShellLinkImpl *impl_from_IShellExtInit( IShellExtInit *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblShellExtInit));
+}
+#define _ICOM_THIS_From_IShellExtInit(class, iface) \
+    class* This = impl_from_IShellExtInit( iface )
 
 static HRESULT ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
 
@@ -1064,6 +1082,7 @@ HRESULT WINAPI IShellLink_Constructor( IUnknown *pUnkOuter,
 	sl->lpvtblPersistFile = &pfvt;
 	sl->lpvtblPersistStream = &psvt;
 	sl->lpvtblShellLinkDataList = &dlvt;
+	sl->lpvtblShellExtInit = &eivt;
 	sl->iShowCmd = SW_SHOWNORMAL;
 	sl->bDirty = FALSE;
 
@@ -1211,6 +1230,10 @@ static HRESULT WINAPI IShellLinkA_fnQueryInterface( IShellLinkA * iface, REFIID 
 	else if(IsEqualIID(riid, &IID_IShellLinkDataList))
 	{
 	  *ppvObj = &(This->lpvtblShellLinkDataList);
+	}
+	else if(IsEqualIID(riid, &IID_IShellExtInit))
+	{
+	  *ppvObj = &(This->lpvtblShellExtInit);
 	}
 
 	if(*ppvObj)
@@ -2208,4 +2231,42 @@ static const IShellLinkDataListVtbl dlvt =
     ShellLink_RemoveDataBlock,
     ShellLink_GetFlags,
     ShellLink_SetFlags
+};
+
+static HRESULT WINAPI
+ShellLink_ExtInit_QueryInterface( IShellExtInit* iface, REFIID riid, void** ppvObject )
+{
+    _ICOM_THIS_From_IShellExtInit(IShellLinkImpl, iface);
+    return IShellLinkA_QueryInterface((IShellLinkA*)This, riid, ppvObject);
+}
+
+static ULONG WINAPI
+ShellLink_ExtInit_AddRef( IShellExtInit* iface )
+{
+    _ICOM_THIS_From_IShellExtInit(IShellLinkImpl, iface);
+    return IShellLinkA_AddRef((IShellLinkA*)This);
+}
+
+static ULONG WINAPI
+ShellLink_ExtInit_Release( IShellExtInit* iface )
+{
+    _ICOM_THIS_From_IShellExtInit(IShellLinkImpl, iface);
+    return IShellLinkA_Release((IShellLinkA*)This);
+}
+
+static HRESULT WINAPI
+ShellLink_ExtInit_Initialize( IShellExtInit* iface, LPCITEMIDLIST pidlFolder,
+                              IDataObject *pdtobj, HKEY hkeyProgID )
+{
+    _ICOM_THIS_From_IShellExtInit(IShellLinkImpl, iface);
+    FIXME("%p %p %p %p\n", This, pidlFolder, pdtobj, hkeyProgID );
+    return E_NOTIMPL;
+}
+
+static const IShellExtInitVtbl eivt =
+{
+    ShellLink_ExtInit_QueryInterface,
+    ShellLink_ExtInit_AddRef,
+    ShellLink_ExtInit_Release,
+    ShellLink_ExtInit_Initialize
 };
