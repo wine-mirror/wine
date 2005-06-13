@@ -1,0 +1,102 @@
+/*
+ * Implementation of the Active Directory Service Interface
+ *
+ * Copyright 2005 Detlef Riekenberg
+ *
+ * This file contains only stubs to get the printui.dll up and running
+ * activeds.dll is much much more than this
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+#include <stdarg.h>
+
+#define COBJMACROS
+#define NONAMELESSUNION
+
+#include "windef.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "winver.h"
+#include "winnls.h"
+
+#include "wine/unicode.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(activeds);
+
+/*****************************************************
+ * DllMain
+ */
+
+/* For the moment, do nothing here. */
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+
+    TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
+    return TRUE;
+}
+
+/*****************************************************
+ * ADsGetObject     [ACTIVEDS.3]
+ */
+
+HRESULT WINAPI ADsGetObject(LPWSTR lpszPathName, REFIID riid, VOID** ppObject)
+{
+    FIXME("(%s)->(%s,%p)!stub\n",debugstr_w(lpszPathName), debugstr_guid(riid), ppObject);
+    return E_NOTIMPL;
+}
+
+/*****************************************************
+ * ADsBuildEnumerator    [ACTIVEDS.4]
+ */
+
+/* HRESULT WINAPI ADsBuildEnumerator(IADsContainer * pADsContainer, IEnumVariant ** ppEnumVariant) */
+HRESULT WINAPI ADsBuildEnumerator(LPVOID * pADsContainer, LPVOID ** ppEnumVariant)
+{
+    FIXME("(%p)->(%p)!stub\n",pADsContainer, ppEnumVariant);
+    return E_NOTIMPL;
+}
+
+/*****************************************************
+ * ADsEnumerateNext     [ACTIVEDS.6]
+ */
+
+/* HRESULT WINAPI ADsEnumerateNext(IEnumVariant * pEnumVariant, ULONG cElements, VARIANT * pvar, ULONG * pcElementsFetched) */
+HRESULT WINAPI ADsEnumerateNext(LPVOID * pEnumVariant, ULONG cElements, LPVOID * pvar, ULONG * pcElementsFetched)
+{
+    FIXME("(%p)->(%lu, %p, %p)!stub\n",pEnumVariant, cElements, pvar, pcElementsFetched);
+    return E_NOTIMPL;
+}
+
+/*****************************************************
+ * ADsOpenObject     [ACTIVEDS.9]
+ */
+
+HRESULT WINAPI ADsOpenObject(LPWSTR lpszPathName, REFIID riid, VOID** ppObject)
+{
+    FIXME("(%s)->(%s,%p)!stub\n",debugstr_w(lpszPathName), debugstr_guid(riid), ppObject);
+    return E_NOTIMPL;
+}
+
+/*****************************************************
+ * FreeADsMem             [ACTIVEDS.15]
+ */
+BOOL FreeADsMem(LPVOID pMem)
+{
+    FIXME("(%p)!stub\n",pMem);
+    return FALSE;
+}

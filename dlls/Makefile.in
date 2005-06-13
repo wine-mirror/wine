@@ -16,6 +16,7 @@ EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
 # Subdir list
 
 BASEDIRS = \
+	activeds \
 	advapi32 \
 	advpack \
 	amstream \
@@ -250,6 +251,7 @@ WIN16_FILES = \
 SYMLINKS_SO = \
 	$(EXTRADIRS:%=%.dll.so) \
 	@WIN16_FILES@ \
+	activeds.dll.so \
 	advapi32.dll.so \
 	advpack.dll.so \
 	amstream.dll.so \
@@ -425,6 +427,9 @@ x11drv.dll.so: winex11.drv.so
 
 
 # Map symlink name to the corresponding library
+
+activeds.dll.so: activeds/activeds.dll.so
+	$(RM) $@ && $(LN_S) activeds/activeds.dll.so $@
 
 advapi32.dll.so: advapi32/advapi32.dll.so
 	$(RM) $@ && $(LN_S) advapi32/advapi32.dll.so $@
@@ -1047,6 +1052,7 @@ IMPORT_SYMLINKS = \
 
 IMPORT_LIBS = \
 	$(IMPORT_SYMLINKS) \
+	activeds/libactiveds.$(IMPLIBEXT) \
 	advapi32/libadvapi32.$(IMPLIBEXT) \
 	advpack/libadvpack.$(IMPLIBEXT) \
 	amstream/libamstream.$(IMPLIBEXT) \
@@ -1180,6 +1186,9 @@ IMPORT_LIBS = \
 	wtsapi32/libwtsapi32.$(IMPLIBEXT)
 
 implib: $(IMPORT_LIBS)
+
+activeds/libactiveds.$(IMPLIBEXT): activeds/activeds.spec $(WINEBUILD)
+	@cd activeds && $(MAKE) libactiveds.$(IMPLIBEXT)
 
 advapi32/libadvapi32.$(IMPLIBEXT): advapi32/advapi32.spec $(WINEBUILD)
 	@cd advapi32 && $(MAKE) libadvapi32.$(IMPLIBEXT)
@@ -1630,6 +1639,7 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
+activeds/activeds.dll.so: activeds
 advapi32/advapi32.dll.so: advapi32
 advpack/advpack.dll.so: advpack
 amstream/amstream.dll.so: amstream

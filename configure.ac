@@ -1539,6 +1539,7 @@ libs/Makelib.rules
 programs/Makeprog.rules
 Makefile
 dlls/Makefile
+dlls/activeds/Makefile
 dlls/advapi32/Makefile
 dlls/advapi32/tests/Makefile
 dlls/advpack/Makefile
