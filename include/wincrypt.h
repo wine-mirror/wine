@@ -520,6 +520,11 @@ typedef struct _CRYPT_DECODE_PARA {
 #define ALG_SID_SAFERSK64               7
 #define ALG_SID_SAFERSK128              8
 #define ALG_SID_3DES_112                9
+/* Diffie-Hellmans SIDs */
+#define ALG_SID_DH_SANDF                1
+#define ALG_SID_DH_EPHEM                2
+#define ALG_SID_AGREED_KEY_ANY          3
+#define ALG_SID_KEA                     4
 /* RC2 SIDs */
 #define ALG_SID_RC4                     1
 #define ALG_SID_RC2                     2
@@ -555,6 +560,8 @@ typedef struct _CRYPT_DECODE_PARA {
 #define CALG_TLS1PRF              (ALG_CLASS_HASH         | ALG_TYPE_ANY           | ALG_SID_TLS1PRF)
 #define CALG_RSA_SIGN             (ALG_CLASS_SIGNATURE    | ALG_TYPE_RSA           | ALG_SID_RSA_ANY)
 #define CALG_DSS_SIGN             (ALG_CLASS_SIGNATURE    | ALG_TYPE_DSS           | ALG_SID_DSS_ANY)
+#define CALG_DH_SF                (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_DH            | ALG_SID_DH_SANDF)
+#define CALG_DH_EPHEM             (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_DH            | ALG_SID_DH_EPHEM)
 #define CALG_RSA_KEYX             (ALG_CLASS_KEY_EXCHANGE | ALG_TYPE_RSA           | ALG_SID_RSA_ANY)
 #define CALG_DES                  (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK         | ALG_SID_DES)
 #define CALG_RC2                  (ALG_CLASS_DATA_ENCRYPT | ALG_TYPE_BLOCK         | ALG_SID_RC2)
@@ -1173,15 +1180,16 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define szOID_RSA_SMIMEalgCMSRC2wrap        "1.2.840.113549.1.9.16.3.7"
 #define szOID_RSA_MD2                       "1.2.840.113549.2.2"
 #define szOID_RSA_MD4                       "1.2.840.113549.2.4"
+#define szOID_RSA_MD5                       "1.2.840.113549.2.5"
 #define szOID_RSA_RC2CBC                    "1.2.840.113549.3.2"
 #define szOID_RSA_RC4                       "1.2.840.113549.3.4"
 #define szOID_RSA_DES_EDE3_CBC              "1.2.840.113549.3.7"
 #define szOID_RSA_RC5_CBCPad                "1.2.840.113549.3.9"
 #define szOID_ANSI_X942                     "1.2.840.10046"
 #define szOID_ANSI_X942_DH                  "1.2.840.10046.2.1"
-#define szOID_ANSI_X957                     "1.2.840.10040"
-#define szOID_ANSI_X957_DSA                 "1.2.840.10040.4.1"
-#define szOID_ANSI_X957_SHA1DSA             "1.2.840.10040.4.3"
+#define szOID_X957                          "1.2.840.10040"
+#define szOID_X957_DSA                      "1.2.840.10040.4.1"
+#define szOID_X957_SHA1DSA                  "1.2.840.10040.4.3"
 #define szOID_DS                            "2.5"
 #define szOID_DSALG                         "2.5.8"
 #define szOID_DSALG_CRPT                    "2.5.8.1"
@@ -1464,6 +1472,9 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags);
 #define CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
+
+LPCSTR WINAPI CertAlgIdToOID(DWORD dwAlgId);
+DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId);
 
 /* cert store functions */
 HCERTSTORE WINAPI CertOpenStore(LPCSTR lpszStoreProvider, DWORD dwEncodingType,
