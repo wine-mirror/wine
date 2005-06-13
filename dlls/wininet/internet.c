@@ -102,9 +102,6 @@ static LPWORKREQUEST lpHeadWorkQueue;
 static LPWORKREQUEST lpWorkQueueTail;
 static HMODULE WININET_hModule;
 
-extern void URLCacheContainers_CreateDefaults(void);
-extern void URLCacheContainers_DeleteAll(void);
-
 #define HANDLE_CHUNK_SIZE 0x10
 
 static CRITICAL_SECTION WININET_cs;
@@ -373,7 +370,7 @@ static BOOL INTERNET_ConfigureProxyFromReg( LPWININETAPPINFOW lpwai )
 {
     HKEY key;
     DWORD r, keytype, len, enabled;
-    LPSTR lpszInternetSettings =
+    LPCSTR lpszInternetSettings =
         "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
     static const WCHAR szProxyServer[] = { 'P','r','o','x','y','S','e','r','v','e','r', 0 };
 

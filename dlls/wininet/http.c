@@ -490,7 +490,7 @@ end:
 static UINT HTTP_Base64( LPCWSTR bin, LPWSTR base64 )
 {
     UINT n = 0, x;
-    static LPSTR HTTP_Base64Enc = 
+    static LPCSTR HTTP_Base64Enc = 
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     while( bin[0] )
@@ -840,7 +840,7 @@ lend:
 /***********************************************************************
  *           HTTP_HttpQueryInfoW (internal)
  */
-BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
+static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLevel,
 	LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD lpdwIndex)
 {
     LPHTTPHEADERW lphttpHdr = NULL;

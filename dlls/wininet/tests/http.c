@@ -19,7 +19,7 @@
 
 int goon = 0;
 
-VOID WINAPI callback(
+static VOID WINAPI callback(
      HINTERNET hInternet,
      DWORD dwContext,
      DWORD dwInternetStatus,
@@ -85,10 +85,11 @@ VOID WINAPI callback(
             break;
     }
 
-    trace("Callback %p 0x%lx %s(%li) %p %ld\n",hInternet,dwContext,name,dwInternetStatus,lpvStatusInformation,dwStatusInformationLength);
+    trace("Callback %p 0x%lx %s(%li) %p %ld\n",hInternet,dwContext,name,
+          dwInternetStatus,lpvStatusInformation,dwStatusInformationLength);
 }
 
-void winapi_test(int flags)
+static void winapi_test(int flags)
 {
     DWORD rc;
     CHAR buffer[4000];
@@ -216,7 +217,7 @@ abort:
     }
 }
 
-void InternetOpenUrlA_test(void)
+static void InternetOpenUrlA_test(void)
 {
   HINTERNET myhinternet, myhttp;
   char buffer[0x400];
@@ -261,7 +262,7 @@ void InternetOpenUrlA_test(void)
   trace("read 0x%08lx bytes\n",totalbytes);
 }
   
-void InternetCrackUrl_test(void)
+static void InternetCrackUrl_test(void)
 {
   URL_COMPONENTSA urlComponents;
   char protocol[32], hostName[1024], userName[1024];
@@ -328,7 +329,7 @@ void InternetCrackUrl_test(void)
   ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE 0x%lx\n",GetLastError());
 }
 
-void InternetCrackUrlW_test(void)
+static void InternetCrackUrlW_test(void)
 {
     WCHAR url[] = {
         'h','t','t','p',':','/','/','1','9','2','.','1','6','8','.','0','.','2','2','/',
@@ -416,7 +417,7 @@ void InternetCrackUrlW_test(void)
     ok( comp.dwExtraInfoLength == 29, "extra length wrong\n");
 }
 
-static void InternetTimeFromSystemTimeA_test()
+static void InternetTimeFromSystemTimeA_test(void)
 {
     BOOL ret;
     static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
@@ -430,7 +431,7 @@ static void InternetTimeFromSystemTimeA_test()
         "InternetTimeFromSystemTimeA failed (%ld)\n", GetLastError() );
 }
 
-static void InternetTimeFromSystemTimeW_test()
+static void InternetTimeFromSystemTimeW_test(void)
 {
     BOOL ret;
     static const SYSTEMTIME time = { 2005, 1, 5, 7, 12, 6, 35, 0 };
@@ -445,7 +446,7 @@ static void InternetTimeFromSystemTimeW_test()
         "InternetTimeFromSystemTimeW failed (%ld)\n", GetLastError() );
 }
 
-static void InternetTimeToSystemTimeA_test()
+static void InternetTimeToSystemTimeA_test(void)
 {
     BOOL ret;
     SYSTEMTIME time;
@@ -464,7 +465,7 @@ static void InternetTimeToSystemTimeA_test()
         "InternetTimeToSystemTimeA failed (%ld)\n", GetLastError() );
 }
 
-static void InternetTimeToSystemTimeW_test()
+static void InternetTimeToSystemTimeW_test(void)
 {
     BOOL ret;
     SYSTEMTIME time;

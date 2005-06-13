@@ -548,7 +548,7 @@ static void URLCacheContainer_DeleteContainer(URLCACHECONTAINER * pContainer)
     HeapFree(GetProcessHeap(), 0, pContainer);
 }
 
-void URLCacheContainers_CreateDefaults()
+void URLCacheContainers_CreateDefaults(void)
 {
     static const WCHAR UrlSuffix[] = {'C','o','n','t','e','n','t','.','I','E','5',0};
     static const WCHAR UrlPrefix[] = {0};
@@ -604,7 +604,7 @@ void URLCacheContainers_CreateDefaults()
     }
 }
 
-void URLCacheContainers_DeleteAll()
+void URLCacheContainers_DeleteAll(void)
 {
     while(!list_empty(&UrlContainers))
         URLCacheContainer_DeleteContainer(
