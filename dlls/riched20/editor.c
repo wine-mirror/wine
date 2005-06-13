@@ -1479,7 +1479,7 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   WNDCLASSW wcW;
   WNDCLASSA wcA;
   
-  wcW.style = CS_HREDRAW | CS_VREDRAW;
+  wcW.style = CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcW.lpfnWndProc = RichEditANSIWndProc;
   wcW.cbClsExtra = 0;
   wcW.cbWndExtra = 4;
@@ -1495,7 +1495,7 @@ void ME_RegisterEditorClass(HINSTANCE hInstance)
   bResult = RegisterClassW(&wcW);  
   assert(bResult);
 
-  wcA.style = CS_HREDRAW | CS_VREDRAW;
+  wcA.style = CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
   wcA.lpfnWndProc = RichEditANSIWndProc;
   wcA.cbClsExtra = 0;
   wcA.cbWndExtra = 4;
