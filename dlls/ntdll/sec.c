@@ -862,9 +862,16 @@ NTSTATUS WINAPI RtlAbsoluteToSelfRelativeSD(
     PSECURITY_DESCRIPTOR SelfRelativeSecurityDescriptor,
     PULONG BufferLength)
 {
-    FIXME("%p %p %p\n", AbsoluteSecurityDescriptor,
+    SECURITY_DESCRIPTOR *abs = AbsoluteSecurityDescriptor;
+
+    TRACE("%p %p %p\n", AbsoluteSecurityDescriptor,
           SelfRelativeSecurityDescriptor, BufferLength);
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (abs->Control & SE_SELF_RELATIVE)
+        return STATUS_BAD_DESCRIPTOR_FORMAT;
+
+    return RtlMakeSelfRelativeSD(AbsoluteSecurityDescriptor, 
+        SelfRelativeSecurityDescriptor, BufferLength);
 }
 
 
