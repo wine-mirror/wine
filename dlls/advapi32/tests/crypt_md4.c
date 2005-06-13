@@ -43,7 +43,7 @@ fnMD4Final pMD4Final;
 
 #define ctxcmp( a, b ) memcmp( (char*)a, (char*)b, FIELD_OFFSET( MD4_CTX, in ) )
 
-void test_md4_ctx()
+static void test_md4_ctx(void)
 {
     static unsigned char message[] =
         "In our Life there's If"

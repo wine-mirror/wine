@@ -32,6 +32,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "winternl.h"
+#include "lmcons.h"
+#include "lmserver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
