@@ -77,26 +77,36 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     NTSTATUS ret = STATUS_SUCCESS;
     ULONG len = 0;
 
+    TRACE("(%p,0x%08x,%p,0x%08lx,%p)\n",
+          ProcessHandle,ProcessInformationClass,
+          ProcessInformation,ProcessInformationLength,
+          ReturnLength);
+
     switch (ProcessInformationClass) 
     {
     case ProcessBasicInformation:
         if (ProcessInformationLength == sizeof(PROCESS_BASIC_INFORMATION))
         {
-            SERVER_START_REQ(get_process_info)
+            if (!ProcessInformation) ret = STATUS_ACCESS_VIOLATION;
+            else
             {
-                req->handle = ProcessHandle;
-                if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                SERVER_START_REQ(get_process_info)
                 {
-                    PROCESS_BASIC_INFORMATION* pbi = (PROCESS_BASIC_INFORMATION*)ProcessInformation;
-                    pbi->ExitStatus = reply->exit_code;
-                    pbi->PebBaseAddress = (DWORD)reply->peb;
-                    pbi->AffinityMask = reply->process_affinity;
-                    pbi->BasePriority = reply->priority;
-                    pbi->UniqueProcessId = reply->pid;
-                    pbi->InheritedFromUniqueProcessId = reply->ppid;
+                    req->handle = ProcessHandle;
+                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    {
+                        PROCESS_BASIC_INFORMATION* pbi = (PROCESS_BASIC_INFORMATION*)ProcessInformation;
+                        pbi->ExitStatus = reply->exit_code;
+                        pbi->PebBaseAddress = (DWORD)reply->peb;
+                        pbi->AffinityMask = reply->process_affinity;
+                        pbi->BasePriority = reply->priority;
+                        pbi->UniqueProcessId = reply->pid;
+                        pbi->InheritedFromUniqueProcessId = reply->ppid;
+                        len = sizeof(PROCESS_BASIC_INFORMATION);
+                    }
                 }
+                SERVER_END_REQ;
             }
-            SERVER_END_REQ;
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
@@ -131,7 +141,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
               ProcessHandle,ProcessInformationClass,
               ProcessInformation,ProcessInformationLength,
               ReturnLength);
-        ret = STATUS_NOT_IMPLEMENTED;
+        ret = STATUS_INVALID_INFO_CLASS;
         break;
     }
 

@@ -21,6 +21,7 @@
 #include "ntdll_test.h"
 
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 
 static HMODULE hntdll = 0;
 
@@ -42,6 +43,7 @@ static BOOL InitFunctionPtrs(void)
     if (hntdll)
     {
       NTDLL_GET_PROC(NtQuerySystemInformation)
+      NTDLL_GET_PROC(NtQueryInformationProcess)
     }
     return TRUE;
 }
@@ -317,10 +319,73 @@ static void test_query_handle()
     HeapFree( GetProcessHeap(), 0, shi);
 }
 
+static void test_query_process_basic()
+{
+    DWORD status;
+    ULONG ReturnLength;
+
+    typedef struct _PROCESS_BASIC_INFORMATION_PRIVATE {
+        DWORD ExitStatus;
+        DWORD PebBaseAddress;
+        DWORD AffinityMask;
+        DWORD BasePriority;
+        ULONG UniqueProcessId;
+        ULONG InheritedFromUniqueProcessId;
+    } PROCESS_BASIC_INFORMATION_PRIVATE, *PPROCESS_BASIC_INFORMATION_PRIVATE;
+
+    PROCESS_BASIC_INFORMATION_PRIVATE pbi;
+
+    /* This test also covers some basic parameter testing that should be the same for
+     * every information class
+    */
+
+    /* Use a nonexistent info class */
+    trace("Check nonexistent info class\n");
+    status = pNtQueryInformationProcess(NULL, -1, NULL, 0, NULL);
+    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status);
+
+    /* Do not give a handle and buffer */
+    trace("Check NULL handle and buffer and zero-length buffersize\n");
+    status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, NULL, 0, NULL);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    /* Use a correct info class and buffer size, but still no handle and buffer */
+    trace("Check NULL handle and buffer\n");
+    status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, NULL, sizeof(pbi), NULL);
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
+
+    /* Use a correct info class and buffer size, but still no handle */
+    trace("Check NULL handle\n");
+    status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+    /* Use a greater buffer size */
+    trace("Check NULL handle and too large buffersize\n");
+    status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, &pbi, sizeof(pbi) * 2, NULL);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    /* Use no ReturnLength */
+    trace("Check NULL ReturnLength\n");
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+
+    /* Finally some correct calls */
+    trace("Check with correct parameters\n");
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(pbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pbi), ReturnLength);
+                                                                                                                                               
+    /* Check if we have some return values */
+    trace("ProcessID : %ld\n", pbi.UniqueProcessId);
+    ok( pbi.UniqueProcessId > 0, "Expected a ProcessID > 0, got 0, got %ld\n", pbi.UniqueProcessId);
+}
+
 START_TEST(info)
 {
     if(!InitFunctionPtrs())
         return;
+
+    /* NtQuerySystemInformation */
 
     /* 0x0 SystemBasicInformation */
     trace("Starting test_query_basic()\n");
@@ -341,6 +406,11 @@ START_TEST(info)
     /* 0x10 SystemHandleInformation */
     trace("Starting test_query_handle()\n");
     test_query_handle();
+
+    /* NtQueryInformationProcess */
+
+    trace("Starting test_query_process_basic()\n");
+    test_query_process_basic();
 
     FreeLibrary(hntdll);
 }
