@@ -224,6 +224,7 @@ static void test_GetDisplayName(void)
     WCHAR wszTestFile[MAX_PATH], wszTestFile2[MAX_PATH], wszTestDir[MAX_PATH];
     STRRET strret;
     LPSHELLFOLDER psfDesktop, psfPersonal;
+    IUnknown *psfFile;
     LPITEMIDLIST pidlTestFile;
     LPCITEMIDLIST pidlLast;
     static const WCHAR wszFileName[] = { 'w','i','n','e','t','e','s','t','.','f','o','o',0 };
@@ -269,6 +270,15 @@ static void test_GetDisplayName(void)
         return;
     }
 
+    /* It seems as if we can not bind to regular files on windows, but only directories. 
+     * XP sp2 returns 0x80070002, which is not defined in the PSDK 
+     */
+    hr = IShellFolder_BindToObject(psfDesktop, pidlTestFile, NULL, &IID_IUnknown, (VOID**)&psfFile);
+    todo_wine { ok (hr == 0x80070002, "hr = %08lx\n", hr); }
+    if (SUCCEEDED(hr)) {
+        IShellFolder_Release(psfFile);
+    }
+    
     /* Deleting the file and the directory */
     DeleteFileW(wszTestFile);
     RemoveDirectoryW(wszTestDir);
@@ -302,6 +312,38 @@ static void test_GetDisplayName(void)
     IShellFolder_Release(psfPersonal);
 }
 
+static void test_GetAttributesOf(void) 
+{
+    HRESULT hr;
+    LPSHELLFOLDER psfDesktop;
+    SHITEMID emptyitem = { 0, { 0 } };
+    LPCITEMIDLIST pidlEmpty = (LPCITEMIDLIST)&emptyitem;
+    DWORD dwFlags;
+    const static DWORD dwDesktopFlags = /* As observed on WinXP SP2 */
+        SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGE_ANCESTOR |
+        SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER;
+    
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    /* The Desktop attributes can be queried with a single empty itemidlist, .. */
+    dwFlags = 0xffffffff;
+    hr = IShellFolder_GetAttributesOf(psfDesktop, 1, &pidlEmpty, &dwFlags);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf failed! hr = %08lx\n", hr);
+    ok (dwFlags == dwDesktopFlags, "Wrong Desktop attributes: %08lx, expected: %08lx\n", 
+        dwFlags, dwDesktopFlags);
+
+    /* .. or with no itemidlist at all. */
+    dwFlags = 0xffffffff;
+    hr = IShellFolder_GetAttributesOf(psfDesktop, 0, NULL, &dwFlags);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf failed! hr = %08lx\n", hr);
+    ok (dwFlags == dwDesktopFlags, "Wrong Desktop attributes: %08lx, expected: %08lx\n", 
+        dwFlags, dwDesktopFlags);
+    
+    IShellFolder_Release(psfDesktop);
+}    
+
 START_TEST(shlfolder)
 {
     ITEMIDLIST *newPIDL;
@@ -334,6 +376,7 @@ START_TEST(shlfolder)
     test_EnumObjects(testIShellFolder);
     test_BindToObject();
     test_GetDisplayName();
+    test_GetAttributesOf();
 
     hr = IShellFolder_Release(testIShellFolder);
     ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
