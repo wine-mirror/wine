@@ -2584,8 +2584,8 @@ int SPY_Init(void)
     if (!TRACE_ON(message)) return TRUE;
 
     indent_tls_index = TlsAlloc();
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Debug */
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Debug", &hkey))
+    /* @@ Wine registry key: HKCU\Software\Wine\Debug */
+    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Debug", &hkey))
     {
         DWORD type, count = sizeof(buffer);
 

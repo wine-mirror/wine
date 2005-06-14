@@ -109,30 +109,30 @@ void RELAY16_InitDebugLists(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name;
     char buffer[1024];
-    HKEY hkey;
+    HKEY root, hkey;
     DWORD count;
     WCHAR *str;
-    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
-                                    'S','o','f','t','w','a','r','e','\\',
+    static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\',
                                     'W','i','n','e','\\',
-                                    'W','i','n','e','\\',
-                                    'C','o','n','f','i','g','\\',
                                     'D','e','b','u','g',0};
     static const WCHAR RelayIncludeW[] = {'R','e','l','a','y','I','n','c','l','u','d','e',0};
     static const WCHAR RelayExcludeW[] = {'R','e','l','a','y','E','x','c','l','u','d','e',0};
     static const WCHAR SnoopIncludeW[] = {'S','n','o','o','p','I','n','c','l','u','d','e',0};
     static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
 
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
+    attr.RootDirectory = root;
     attr.ObjectName = &name;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &name, configW );
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Debug */
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return;
+    /* @@ Wine registry key: HKCU\Software\Wine\Debug */
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
+    NtClose( root );
+    if (!hkey) return;
 
     str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;
     RtlInitUnicodeString( &name, RelayIncludeW );
