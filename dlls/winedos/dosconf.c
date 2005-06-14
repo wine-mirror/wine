@@ -32,7 +32,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 
 #include "dosexe.h"
 
@@ -455,51 +454,30 @@ static void DOSCONF_Parse(char *menuname)
 
 DOSCONF *DOSCONF_GetConfig(void)
 {
-    HKEY hkey;
+    char *fullname;
     WCHAR filename[MAX_PATH];
     static const WCHAR configW[] = {'c','o','n','f','i','g','.','s','y','s',0};
 
     if (DOSCONF_loaded)
         return &DOSCONF_config;
 
-    /* default value */
-    filename[0] = '*'; filename[1] = '\0';
+    /* look for config.sys at the root of the drive containing the windows dir */
+    GetWindowsDirectoryW( filename, MAX_PATH );
+    strcpyW( filename + 3, configW );
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\wine */
-    if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
-                     "Software\\Wine\\Wine\\Config\\wine", 
-                     &hkey))
+    if ((fullname = wine_get_unix_file_name(filename)))
     {
-        DWORD type;
-        DWORD count = sizeof(filename);
-
-        RegQueryValueExW(hkey, configW, 0, &type, (LPBYTE)filename, &count);
-        RegCloseKey(hkey);
+        DOSCONF_fd = fopen(fullname, "r");
+        HeapFree( GetProcessHeap(), 0, fullname );
     }
 
-    if ((filename[0] != '*' || filename[1] != '\0') && *filename != '\0')
+    if (DOSCONF_fd)
     {
-        char *fullname;
-
-        if ((fullname = wine_get_unix_file_name(filename)))
-        {
-            DOSCONF_fd = fopen(fullname, "r");
-            HeapFree( GetProcessHeap(), 0, fullname );
-        }
-
-        if (DOSCONF_fd)
-        {
-            DOSCONF_Parse(NULL);
-            fclose(DOSCONF_fd);
-            DOSCONF_fd = NULL;
-        }
-        else
-        {
-            WARN( "Couldn't open config.sys file given as %s in"
-                  " configuration file, section [wine]!\n", 
-                  debugstr_w(filename) );
-        }
+        DOSCONF_Parse(NULL);
+        fclose(DOSCONF_fd);
+        DOSCONF_fd = NULL;
     }
+    else WARN( "Couldn't open %s\n", debugstr_w(filename) );
 
     DOSCONF_loaded = TRUE;
     return &DOSCONF_config;
