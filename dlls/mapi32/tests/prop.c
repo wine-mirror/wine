@@ -812,13 +812,14 @@ static void test_ScCopyRelocProps(void)
     ok(sc == S_OK && lpResProp->ulPropTag == pvProp.ulPropTag &&
        lpResProp->Value.MVszA.cValues == 1 &&
        lpResProp->Value.MVszA.lppszA[0] == buffer + sizeof(SPropValue) + sizeof(char*) &&
-       !strcmp(lpResProp->Value.MVszA.lppszA[0], szTestA) &&
-       ulCount == sizeof(SPropValue) + sizeof(char*) + 5,
+       ulCount == sizeof(SPropValue) + sizeof(char*) + 5 &&
+       !strcmp(lpResProp->Value.MVszA.lppszA[0], szTestA),
        "CopyProps(str): Expected 0 {1,%lx,%p,%s} %d got 0x%08lx {%ld,%lx,%p,%s} %ld\n",
        pvProp.ulPropTag, buffer + sizeof(SPropValue) + sizeof(char*),
        szTestA, sizeof(SPropValue) + sizeof(char*) + 5, sc,
        lpResProp->Value.MVszA.cValues, lpResProp->ulPropTag,
-       lpResProp->Value.MVszA.lppszA[0], sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, ulCount);
+       sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, 
+       sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, ulCount);
 
     memcpy(buffer2, buffer, sizeof(buffer));
 
@@ -834,17 +835,18 @@ static void test_ScCopyRelocProps(void)
     ok(sc == S_OK && lpResProp->ulPropTag == pvProp.ulPropTag &&
        lpResProp->Value.MVszA.cValues == 1 &&
        lpResProp->Value.MVszA.lppszA[0] == buffer2 + sizeof(SPropValue) + sizeof(char*) &&
-       !strcmp(lpResProp->Value.MVszA.lppszA[0], szTestA) &&
        /* Native has a bug whereby it calculates the size correctly when copying
         * but when relocating does not (presumably it uses UlPropSize() which
         * ignores multivalue pointers). Wine returns the correct value.
         */
-       (ulCount == sizeof(SPropValue) + sizeof(char*) + 5 || ulCount == sizeof(SPropValue) + 5),
+       (ulCount == sizeof(SPropValue) + sizeof(char*) + 5 || ulCount == sizeof(SPropValue) + 5) &&
+       !strcmp(lpResProp->Value.MVszA.lppszA[0], szTestA),
        "RelocProps(str): Expected 0 {1,%lx,%p,%s} %d got 0x%08lx {%ld,%lx,%p,%s} %ld\n",
        pvProp.ulPropTag, buffer2 + sizeof(SPropValue) + sizeof(char*),
        szTestA, sizeof(SPropValue) + sizeof(char*) + 5, sc,
        lpResProp->Value.MVszA.cValues, lpResProp->ulPropTag,
-       lpResProp->Value.MVszA.lppszA[0], sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, ulCount);
+       sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, 
+       sc==S_OK?lpResProp->Value.MVszA.lppszA[0]:NULL, ulCount);
 
     /* Native crashes with lpNew or lpOld set to NULL so skip testing this */
 }
