@@ -797,6 +797,125 @@ static void test_edit_control_3(void)
     DestroyWindow(hWnd);
 }
 
+/* Test EM_CHARFROMPOS and EM_POSFROMCHAR
+ */
+static void test_edit_control_4(void)
+{
+    HWND hwEdit;
+    int lo, hi, mid;
+    int ret;
+    int i;
+
+    trace("EDIT: Test EM_CHARFROMPOS and EM_POSFROMCHAR\n");
+    hwEdit = create_editcontrol(0, 0);
+    SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
+    lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
+    hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
+    mid = lo + (hi - lo) / 2;
+
+    for (i = lo; i < mid; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(0 == ret, "expected 0 got %d\n", ret);
+    }
+    for (i = mid; i <= hi; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(1 == ret, "expected 1 got %d\n", ret);
+    }
+    ret = SendMessage(hwEdit, EM_POSFROMCHAR, 2, 0);
+    ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(ES_RIGHT, 0);
+    SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
+    lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
+    hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
+    mid = lo + (hi - lo) / 2;
+
+    for (i = lo; i < mid; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(0 == ret, "expected 0 got %d\n", ret);
+    }
+    for (i = mid; i <= hi; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(1 == ret, "expected 1 got %d\n", ret);
+    }
+    ret = SendMessage(hwEdit, EM_POSFROMCHAR, 2, 0);
+    ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(ES_CENTER, 0);
+    SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
+    lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
+    hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
+    mid = lo + (hi - lo) / 2;
+
+    for (i = lo; i < mid; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(0 == ret, "expected 0 got %d\n", ret);
+    }
+    for (i = mid; i <= hi; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(1 == ret, "expected 1 got %d\n", ret);
+    }
+    ret = SendMessage(hwEdit, EM_POSFROMCHAR, 2, 0);
+    ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(ES_MULTILINE, 0);
+    SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
+    lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
+    hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
+    mid = lo + (hi - lo) / 2;
+
+    for (i = lo; i < mid; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(0 == ret, "expected 0 got %d\n", ret);
+    }
+    for (i = mid; i <= hi; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(1 == ret, "expected 1 got %d\n", ret);
+    }
+    ret = SendMessage(hwEdit, EM_POSFROMCHAR, 2, 0);
+    ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(ES_MULTILINE | ES_RIGHT, 0);
+    SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
+    lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
+    hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
+    mid = lo + (hi - lo) / 2;
+
+    for (i = lo; i < mid; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(0 == ret, "expected 0 got %d\n", ret);
+    }
+    for (i = mid; i <= hi; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(1 == ret, "expected 1 got %d\n", ret);
+    }
+    ret = SendMessage(hwEdit, EM_POSFROMCHAR, 2, 0);
+    ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+
+    hwEdit = create_editcontrol(ES_MULTILINE | ES_CENTER, 0);
+    SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
+    lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
+    hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
+    mid = lo + (hi - lo) / 2;
+
+    for (i = lo; i < mid; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(0 == ret, "expected 0 got %d\n", ret);
+    }
+    for (i = mid; i <= hi; i++) {
+       ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
+       ok(1 == ret, "expected 1 got %d\n", ret);
+    }
+    ret = SendMessage(hwEdit, EM_POSFROMCHAR, 2, 0);
+    ok(-1 == ret, "expected -1 got %d\n", ret);
+    DestroyWindow(hwEdit);
+}
+
 START_TEST(edit)
 {
     hinst = GetModuleHandleA (NULL);
@@ -806,4 +925,5 @@ START_TEST(edit)
     test_edit_control_1();
     test_edit_control_2();
     test_edit_control_3();
+    test_edit_control_4();
 }

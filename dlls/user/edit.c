@@ -747,7 +747,9 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 		break;
 
 	case EM_POSFROMCHAR:
-		result = EDIT_EM_PosFromChar(es, (INT)wParam, FALSE);
+                result = strlenW(es->text);
+		if ((INT)wParam >= result) result = -1;
+		else result = EDIT_EM_PosFromChar(es, (INT)wParam, FALSE);
 		break;
 
 	case EM_CHARFROMPOS:
@@ -1410,6 +1412,7 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 	INT index;
 	HDC dc;
 	HFONT old_font = 0;
+	INT x_high = 0, x_low = 0;
 
 	if (es->style & ES_MULTILINE) {
 		INT line = (y - es->format_rect.top) / es->line_height + es->y_offset;
@@ -1439,15 +1442,24 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
 		dc = GetDC(es->hwndSelf);
 		if (es->font)
 			old_font = SelectObject(dc, es->font);
-                    low = line_index + 1;
+                    low = line_index;
                     high = line_index + line_def->net_length + 1;
                     while (low < high - 1)
                     {
                         INT mid = (low + high) / 2;
-			if (LOWORD(GetTabbedTextExtentW(dc, es->text + line_index,mid - line_index, es->tabs_count, es->tabs)) > x) high = mid;
-                        else low = mid;
+                        INT x_now = LOWORD(GetTabbedTextExtentW(dc, es->text + line_index, mid - line_index, es->tabs_count, es->tabs));
+                        if (x_now > x) {
+                            high = mid;
+                            x_high = x_now;
+                        } else {
+                            low = mid;
+                            x_low = x_now;
+                        }
                     }
-                    index = low;
+                    if (abs(x_high - x) <= abs(x_low - x) + 1)
+                        index = high;
+                    else
+                        index = low;
 
 		if (after_wrap)
 			*after_wrap = ((index == line_index + line_def->net_length) &&
@@ -1483,10 +1495,18 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
                         INT mid = (low + high) / 2;
                         GetTextExtentPoint32W( dc, text + mid,
                                                es->x_offset - mid, &size );
-                        if (size.cx > -x) low = mid;
-                        else high = mid;
+                        if (size.cx > -x) {
+                            low = mid;
+                            x_low = size.cx;
+                        } else {
+                            high = mid;
+                            x_high = size.cx;
+                        }
                     }
-                    index = low;
+                    if (abs(x_high + x) <= abs(x_low + x) + 1)
+                        index = high;
+                    else
+                        index = low;
 		}
                 else
                 {
@@ -1497,10 +1517,18 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
                         INT mid = (low + high) / 2;
                         GetTextExtentPoint32W( dc, text + es->x_offset,
                                                mid - es->x_offset, &size );
-                        if (size.cx > x) high = mid;
-                        else low = mid;
+                        if (size.cx > x) {
+                               high = mid;
+                               x_high = size.cx;
+                        } else {
+                               low = mid;
+                               x_low = size.cx;
+                       }
                     }
-                    index = low;
+                   if (abs(x_high - x) <= abs(x_low - x) + 1)
+                       index = high;
+                   else
+                       index = low;
 		}
 		if (es->style & ES_PASSWORD)
 			HeapFree(GetProcessHeap(), 0, text);
