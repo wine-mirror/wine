@@ -50,10 +50,6 @@ unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
 static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s','\0'};
 static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s','\0'};
 
-static const WCHAR INIFontSection[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
-                                       'W','i','n','e','\\','C','o','n','f','i','g','\\',
-                                       'f','o','n','t','s','\0'};
-static const WCHAR INIResolution[] = {'R','e','s','o','l','u','t','i','o','n','\0'};
 
 /******************************************************************************
  *      get_dpi
@@ -64,18 +60,6 @@ static DWORD get_dpi( void )
 {
     DWORD dpi = 96;
     HKEY hkey;
-
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-    if(RegOpenKeyW(HKEY_LOCAL_MACHINE, INIFontSection, &hkey) == ERROR_SUCCESS)
-    {
-        char buffer[20];
-        DWORD type, count = sizeof(buffer);
-        if(RegQueryValueExW(hkey, INIResolution, 0, &type, buffer, &count) == ERROR_SUCCESS)
-            if(atoi(buffer) != 96)
-                MESSAGE("Please use the registry key HKEY_CURRENT_CONFIG\\Software\\Fonts\\LogPixels\n"
-                        "to set the screen resolution and remove the \"Resolution\" entry in the config file\n");
-        RegCloseKey(hkey);
-    }
 
     if (RegOpenKeyW(HKEY_CURRENT_CONFIG, dpi_key_name, &hkey) == ERROR_SUCCESS)
     {
