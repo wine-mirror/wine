@@ -86,7 +86,7 @@ typedef struct {
    that the thread local storage routines work correctly, and that
    threads actually run concurrently
 */
-DWORD WINAPI threadFunc1(LPVOID p)
+static DWORD WINAPI threadFunc1(LPVOID p)
 {
     t1Struct *tstruct = (t1Struct *)p;
    int i;
@@ -111,12 +111,12 @@ DWORD WINAPI threadFunc1(LPVOID p)
    return NUM_THREADS+tstruct->threadnum;
 }
 
-DWORD WINAPI threadFunc2(LPVOID p)
+static DWORD WINAPI threadFunc2(LPVOID p)
 {
    return 99;
 }
 
-DWORD WINAPI threadFunc3(LPVOID p)
+static DWORD WINAPI threadFunc3(LPVOID p)
 {
    HANDLE thread;
    thread=GetCurrentThread();
@@ -124,7 +124,7 @@ DWORD WINAPI threadFunc3(LPVOID p)
    return 99;
 }
 
-DWORD WINAPI threadFunc4(LPVOID p)
+static DWORD WINAPI threadFunc4(LPVOID p)
 {
     HANDLE event = (HANDLE)p;
    if(event != NULL) {
@@ -135,7 +135,7 @@ DWORD WINAPI threadFunc4(LPVOID p)
 }
 
 #if CHECK_STACK
-DWORD WINAPI threadFunc5(LPVOID p)
+static DWORD WINAPI threadFunc5(LPVOID p)
 {
   DWORD *exitCode = (DWORD *)p;
   SYSTEM_INFO sysInfo;
@@ -155,7 +155,7 @@ DWORD WINAPI threadFunc5(LPVOID p)
 #endif
 
 /* Check basic funcationality of CreateThread and Tls* functions */
-VOID test_CreateThread_basic(void)
+static VOID test_CreateThread_basic(void)
 {
    HANDLE thread[NUM_THREADS],event[NUM_THREADS];
    DWORD threadid[NUM_THREADS],curthreadId;
@@ -217,7 +217,7 @@ VOID test_CreateThread_basic(void)
 }
 
 /* Check that using the CREATE_SUSPENDED flag works */
-VOID test_CreateThread_suspended(void)
+static VOID test_CreateThread_suspended(void)
 {
   HANDLE thread;
   DWORD threadId;
@@ -246,7 +246,7 @@ VOID test_CreateThread_suspended(void)
 }
 
 /* Check that SuspendThread and ResumeThread work */
-VOID test_SuspendThread(void)
+static VOID test_SuspendThread(void)
 {
   HANDLE thread,access_thread;
   DWORD threadId,exitCode,error;
@@ -303,7 +303,7 @@ VOID test_SuspendThread(void)
 
 /* Check that TerminateThread works properly
 */
-VOID test_TerminateThread(void)
+static VOID test_TerminateThread(void)
 {
   HANDLE thread,access_thread,event;
   DWORD threadId,exitCode;
@@ -342,7 +342,7 @@ VOID test_TerminateThread(void)
 /* Check if CreateThread obeys the specified stack size.  This code does
    not work properly, and is currently disabled
 */
-VOID test_CreateThread_stack(void)
+static VOID test_CreateThread_stack(void)
 {
 #if CHECK_STACK
 /* The only way I know of to test the stack size is to use alloca
@@ -369,7 +369,7 @@ VOID test_CreateThread_stack(void)
 }
 
 /* Check whether setting/retrieving thread priorities works */
-VOID test_thread_priority(void)
+static VOID test_thread_priority(void)
 {
    HANDLE curthread,access_thread;
    DWORD curthreadId,exitCode;
@@ -455,7 +455,7 @@ VOID test_thread_priority(void)
 }
 
 /* check the GetThreadTimes function */
-VOID test_GetThreadTimes(void)
+static VOID test_GetThreadTimes(void)
 {
      HANDLE thread,access_thread=NULL;
      FILETIME creationTime,exitTime,kernelTime,userTime;
@@ -506,7 +506,7 @@ VOID test_GetThreadTimes(void)
 /* Check the processor affinity functions */
 /* NOTE: These functions should also be checked that they obey access control
 */
-VOID test_thread_processor(void)
+static VOID test_thread_processor(void)
 {
    HANDLE curthread,curproc;
    DWORD processMask,systemMask;

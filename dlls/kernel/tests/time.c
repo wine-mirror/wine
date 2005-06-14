@@ -75,7 +75,7 @@
 
 
 
-static void test_conversions()
+static void test_conversions(void)
 {
     FILETIME ft;
     SYSTEMTIME st;
@@ -116,7 +116,7 @@ static void test_conversions()
 
 }
 
-static void test_invalid_arg()
+static void test_invalid_arg(void)
 {
     FILETIME ft;
     SYSTEMTIME st;
@@ -154,7 +154,7 @@ static void test_invalid_arg()
     ok( !SystemTimeToFileTime(&st, &ft), "bad minute\n");
 }
  
-void test_GetTimeZoneInformation()
+static void test_GetTimeZoneInformation(void)
 {
     TIME_ZONE_INFORMATION tzinfo, tzinfo1;
     DWORD res =  GetTimeZoneInformation(&tzinfo);
@@ -173,7 +173,7 @@ void test_GetTimeZoneInformation()
         
 }
 
-void test_FileTimeToSystemTime()
+static void test_FileTimeToSystemTime(void)
 {
     FILETIME ft;
     SYSTEMTIME st;
@@ -203,7 +203,7 @@ void test_FileTimeToSystemTime()
        st.wMilliseconds);
 }
 
-void test_FileTimeToLocalFileTime()
+static void test_FileTimeToLocalFileTime(void)
 {
     FILETIME ft, lft;
     SYSTEMTIME st;
@@ -260,7 +260,7 @@ typedef struct {
     WORD ehour;        /* expected hour */
 } TZLT2ST_case;
 
-void test_TzSpecificLocalTimeToSystemTime()
+static void test_TzSpecificLocalTimeToSystemTime(void)
 {    
     HMODULE hKernel = GetModuleHandle("kernel32");
     fnTzSpecificLocalTimeToSystemTime pTzSpecificLocalTimeToSystemTime;

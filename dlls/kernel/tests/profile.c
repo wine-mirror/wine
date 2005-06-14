@@ -89,7 +89,7 @@ static void test_profile_int(void)
     DeleteFileA( TESTFILE);
 }
 
-void test_profile_string()
+static void test_profile_string(void)
 {
     HANDLE h;
     int ret;

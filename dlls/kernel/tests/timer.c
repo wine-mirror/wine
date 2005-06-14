@@ -27,7 +27,7 @@ typedef HANDLE (WINAPI *fnCreateWaitableTimerA)( SECURITY_ATTRIBUTES*, BOOL, LPS
 typedef BOOL (WINAPI *fnSetWaitableTimer)(HANDLE, LARGE_INTEGER*, LONG, PTIMERAPCROUTINE, LPVOID, BOOL);
 
 
-void test_timer(void)
+static void test_timer(void)
 {
     HMODULE hker = GetModuleHandle("kernel32");
     fnCreateWaitableTimerA pCreateWaitableTimerA;
