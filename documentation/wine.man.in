@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "May 2004" "@PACKAGE_STRING@" "Windows On Unix"
+.TH WINE 1 "June 2005" "@PACKAGE_STRING@" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -39,11 +39,6 @@ or
 as the only argument,
 .B wine
 will simply print a small help message or its version respectively and exit.
-.SH REQUIREMENTS AND INSTALLATION
-Read the README file in the Wine source distribution and the
-.BR wine.conf (5)
-man page to know what Wine requires and how it is installed from
-source.
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (
 .I
@@ -238,14 +233,6 @@ Directory containing
 .B wine's
 shared libraries 
 .TP
-.I $WINEPREFIX/config
-User-specific configuration file, which must conform to the format specified
-in the
-.BR wine.conf (5)
-man page. A sample configuration file is documentation/samples/config in the 
-.B wine 
-source archive.
-.TP
 .I $WINEPREFIX/dosdevices
 Directory containing the DOS device mappings. Each file in that
 directory is a symlink to the Unix device file implementing a given
@@ -313,4 +300,4 @@ mailing lists at
 .I http://www.winehq.org/forums
 
 .SH "SEE ALSO"
-.BR wine.conf (5)
+.BR wineserver (1),\  winedbg (1)
