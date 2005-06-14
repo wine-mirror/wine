@@ -284,7 +284,7 @@ static const WCHAR *SystemFontValues[4] = {
     NULL
 };
 
-static const WCHAR external_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','W','i','n','e','\\',
+static const WCHAR external_fonts_reg_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                                'F','o','n','t','s','\\','E','x','t','e','r','n','a','l',' ','F','o','n','t','s','\0'};
 
 static const WCHAR ArabicW[] = {'A','r','a','b','i','c','\0'};
@@ -737,7 +737,7 @@ static void LoadSubstList(void)
  * The replacement list is a way to map an entire font
  * family onto another family.  For example adding
  *
- * [HKLM\Software\Wine\Wine\FontReplacements]
+ * [HKCU\Software\Wine\Fonts\Replacements]
  * "Wingdings"="Winedings"
  *
  * would enumerate the Winedings font both as Winedings and
@@ -756,11 +756,9 @@ static void LoadReplaceList(void)
     struct list *family_elem_ptr, *face_elem_ptr;
     WCHAR old_nameW[200];
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\FontReplacements */
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
-		   "Software\\Wine\\Wine\\FontReplacements",
-		   &hkey) == ERROR_SUCCESS) {
-
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
+    if(RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts\\Replacements", &hkey) == ERROR_SUCCESS)
+    {
         RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 			 &valuelen, &datalen, NULL, NULL);
 
@@ -956,9 +954,8 @@ static void update_reg_entries(void)
         ERR("Can't create Windows font reg key\n");
         goto end;
     }
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Fonts\ExternalFonts */
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, external_fonts_reg_key,
-                       0, NULL, 0, KEY_ALL_ACCESS, NULL, &externalkey, NULL) != ERROR_SUCCESS) {
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts\ExternalFonts */
+    if(RegCreateKeyW(HKEY_CURRENT_USER, external_fonts_reg_key, &externalkey) != ERROR_SUCCESS) {
         ERR("Can't create external font reg key\n");
         goto end;
     }
@@ -1078,6 +1075,7 @@ BOOL WineEngRemoveFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 BOOL WineEngInit(void)
 {
     static const WCHAR dot_fonW[] = {'.','f','o','n','\0'};
+    static const WCHAR pathW[] = {'P','a','t','h',0};
     HKEY hkey;
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
     LPVOID data;
@@ -1222,32 +1220,36 @@ BOOL WineEngInit(void)
     load_fontconfig_fonts();
 
     /* then look in any directories that we've specified in the config file */
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\FontDirs */
-    if(RegOpenKeyA(HKEY_LOCAL_MACHINE,
-		   "Software\\Wine\\Wine\\Config\\FontDirs",
-		   &hkey) == ERROR_SUCCESS) {
-        LPSTR value;
-        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-			 &valuelen, &datalen, NULL, NULL);
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
+    if(RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) == ERROR_SUCCESS)
+    {
+        DWORD len;
+        LPWSTR valueW;
+        LPSTR valueA, ptr;
 
-	valuelen++; /* returned value doesn't include room for '\0' */
-	value = HeapAlloc(GetProcessHeap(), 0, valuelen);
-	data = HeapAlloc(GetProcessHeap(), 0, datalen);
-
-	dlen = datalen;
-	vlen = valuelen;
-	i = 0;
-	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
-			    &dlen) == ERROR_SUCCESS) {
-	    TRACE("Got %s=%s\n", value, (LPSTR)data);
-	    ReadFontDir((LPSTR)data, TRUE);
-	    /* reset dlen and vlen */
-	    dlen = datalen;
-	    vlen = valuelen;
-	}
-	HeapFree(GetProcessHeap(), 0, data);
-	HeapFree(GetProcessHeap(), 0, value);
-	RegCloseKey(hkey);
+        if (RegQueryValueExW( hkey, pathW, NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
+        {
+            len += sizeof(WCHAR);
+            valueW = HeapAlloc( GetProcessHeap(), 0, len );
+            if (RegQueryValueExW( hkey, pathW, NULL, NULL, (LPBYTE)valueW, &len ) == ERROR_SUCCESS)
+            {
+                len = WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, NULL, 0, NULL, NULL );
+                valueA = HeapAlloc( GetProcessHeap(), 0, len );
+                WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, len, NULL, NULL );
+                TRACE( "got font path %s\n", debugstr_a(valueA) );
+                ptr = valueA;
+                while (ptr)
+                {
+                    LPSTR next = strchr( ptr, ':' );
+                    if (next) *next++ = 0;
+                    ReadFontDir( ptr, TRUE );
+                    ptr = next;
+                }
+                HeapFree( GetProcessHeap(), 0, valueA );
+            }
+            HeapFree( GetProcessHeap(), 0, valueW );
+        }
+        RegCloseKey(hkey);
     }
 
     DumpFontList();
