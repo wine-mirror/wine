@@ -73,6 +73,7 @@ struct token
     struct list    privileges;      /* privileges available to the token */
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
+    unsigned       primary;         /* is this a primary or impersonation token? */
 };
 
 struct privilege
@@ -353,7 +354,7 @@ static void token_destroy( struct object *obj )
     }
 }
 
-static struct token *create_token( const SID *user,
+static struct token *create_token( unsigned primary, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
 {
@@ -361,8 +362,11 @@ static struct token *create_token( const SID *user,
     if (token)
     {
         int i;
+
         list_init( &token->privileges );
         list_init( &token->groups );
+        token->primary = primary;
+
         /* copy user */
         token->user = memdup( user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
         if (!token->user)
@@ -462,7 +466,7 @@ struct token *token_create_admin( void )
         };
         /* note: we just set the user sid to be the local system builtin sid -
          * telling us what this should be is the job of a client-side program */
-        token = create_token( &local_system_sid,
+        token = create_token( TRUE, &local_system_sid,
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
     }
@@ -879,15 +883,24 @@ DECL_HANDLER(duplicate_token)
                                                      TOKEN_DUPLICATE,
                                                      &token_ops )))
     {
-        /* FIXME: use req->primary and req->impersonation_level */
-        struct token *token = create_token( src_token->user, NULL, 0, NULL, 0 );
+        /* FIXME: use req->impersonation_level */
+        struct token *token = create_token( req->primary, src_token->user, NULL, 0, NULL, 0 );
         if (token)
         {
             struct privilege *privilege;
+            struct sid_and_attributes *group;
             unsigned int access;
 
-            /* FIXME: copy groups */
+            /* copy groups */
+            LIST_FOR_EACH_ENTRY( group, &src_token->groups, struct sid_and_attributes, entry )
+            {
+                size_t size = FIELD_OFFSET( struct sid_and_attributes, sid.SubAuthority[group->sid.SubAuthorityCount] );
+                struct sid_and_attributes *newgroup = mem_alloc( size );
+                memcpy( newgroup, group, size );
+                list_add_tail( &token->groups, &newgroup->entry );
+            }
 
+            /* copy privileges */
             LIST_FOR_EACH_ENTRY( privilege, &src_token->privileges, struct privilege, entry )
                 privilege_add( token, &privilege->luid, privilege->enabled );
 
