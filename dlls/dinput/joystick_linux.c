@@ -269,30 +269,27 @@ inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
 
 static HRESULT setup_dinput_options(JoystickImpl * device)
 {
-    char buffer[MAX_PATH+1];
+    char buffer[MAX_PATH+16];
     HKEY hkey, appkey = 0;
     DWORD len;
 
     buffer[MAX_PATH]='\0';
 
-    /* @@ Wine registry key: HKLM\Software\Wine\dinput */
-    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\dinput", &hkey)) hkey = 0;
+    /* @@ Wine registry key: HKCU\Software\Wine\DirectInput */
+    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\DirectInput", &hkey)) hkey = 0;
 
     len = GetModuleFileNameA( 0, buffer, MAX_PATH );
     if (len && len < MAX_PATH) {
         HKEY tmpkey;
-
-        /* @@ Wine registry key: HKLM\Software\Wine\AppDefaults\app.exe\dinput */
-        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\AppDefaults", &tmpkey )) {
-           char appname[MAX_PATH+16];
-           char *p = strrchr( buffer, '\\' );
-           if (p!=NULL) {
-                   strcpy(appname,p+1);
-                   strcat(appname,"\\dinput");
-                   TRACE("appname = [%s] \n",appname);
-                   if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
-           }
-           RegCloseKey( tmpkey );
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DirectInput */
+        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
+        {
+            char *p, *appname = buffer;
+            if ((p = strrchr( appname, '/' ))) appname = p + 1;
+            if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+            strcat( appname, "\\DirectInput" );
+            if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+            RegCloseKey( tmpkey );
         }
     }
 
