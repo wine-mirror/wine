@@ -38,10 +38,10 @@ const char* TEST_URL_2 = "http://localhost:8080/tests%2e.html?date=Mon%2010/10/1
 const char* TEST_URL_3 = "http://foo:bar@localhost:21/internal.php?query=x&return=y";
 
 typedef struct _TEST_URL_CANONICALIZE {
-    char *url;
+    const char *url;
     DWORD flags;
     HRESULT expectret;
-    char *expecturl;
+    const char *expecturl;
 } TEST_URL_CANONICALIZE;
 
 const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
@@ -67,11 +67,11 @@ const TEST_URL_CANONICALIZE TEST_CANONICALIZE[] = {
 };
 
 typedef struct _TEST_URL_ESCAPE {
-    char *url;
+    const char *url;
     DWORD flags;
     DWORD expectescaped;
     HRESULT expectret;
-    char *expecturl;
+    const char *expecturl;
 } TEST_URL_ESCAPE;
 
 const TEST_URL_ESCAPE TEST_ESCAPE[] = {
@@ -156,11 +156,11 @@ const TEST_URL_ESCAPE TEST_ESCAPE[] = {
 };
 
 typedef struct _TEST_URL_COMBINE {
-    char *url1;
-    char *url2;
+    const char *url1;
+    const char *url2;
     DWORD flags;
     HRESULT expectret;
-    char *expecturl;
+    const char *expecturl;
 } TEST_URL_COMBINE;
 
 const TEST_URL_COMBINE TEST_COMBINE[] = {
@@ -178,8 +178,8 @@ const TEST_URL_COMBINE TEST_COMBINE[] = {
 };
 
 struct {
-    char *path;
-    char *url;
+    const char *path;
+    const char *url;
     DWORD ret;
 } TEST_URLFROMPATH [] = {
     {"foo", "file:foo", S_OK},
@@ -198,8 +198,8 @@ struct {
 };
 
 struct {
-    char *url;
-    char *path;
+    const char *url;
+    const char *path;
     DWORD ret;
 } TEST_PATHFROMURL[] = {
     {"file:///c:/foo/ba%5Cr", "c:\\foo\\ba\\r", S_OK},
@@ -232,8 +232,8 @@ struct {
 };
 
 struct {
-    char *url;
-    char *expect;
+    char url[30];
+    const char *expect;
 } TEST_URL_UNESCAPE[] = {
     {"file://foo/bar", "file://foo/bar"},
     {"file://fo%20o%5Ca/bar", "file://fo o\\a/bar"}
@@ -241,7 +241,7 @@ struct {
 
 
 struct {
-    char *path;
+    const char *path;
     BOOL expect;
 } TEST_PATH_IS_URL[] = {
     {"http://foo/bar", TRUE},
@@ -254,7 +254,7 @@ struct {
 };
 
 struct {
-    char *url;
+    const char *url;
     BOOL expectOpaque;
     BOOL expectFile;
 } TEST_URLIS_ATTRIBS[] = {

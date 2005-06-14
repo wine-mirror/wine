@@ -484,8 +484,6 @@ static void test_StrDupA()
 
 static void test_StrFormatByteSize64A(void)
 {
-/* this test fails on locales which do not use '.' as a decimal separator */
-#if 0
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
 
@@ -499,13 +497,10 @@ static void test_StrFormatByteSize64A(void)
 
     result++;
   }
-#endif
 }
 
 static void test_StrFormatKBSizeW(void)
 {
-/* FIXME: Awaiting NLS fixes in kernel before these succeed */
-#if 0
   WCHAR szBuffW[256];
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
@@ -519,13 +514,10 @@ static void test_StrFormatKBSizeW(void)
        (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
   }
-#endif
 }
 
 static void test_StrFormatKBSizeA(void)
 {
-/* this test fails on locales which do not use '.' as a decimal separator */
-#if 0
   char szBuff[256];
   const StrFormatSizeResult* result = StrFormatSize_results;
 
@@ -538,10 +530,9 @@ static void test_StrFormatKBSizeA(void)
        (LONG)(result->value >> 32), (LONG)result->value, szBuff, result->kb_size);
     result++;
   }
-#endif
 }
 
-void test_StrFromTimeIntervalA(void)
+static void test_StrFromTimeIntervalA(void)
 {
   char szBuff[256];
   const StrFromTimeIntervalResult* result = StrFromTimeInterval_results;
@@ -556,7 +547,7 @@ void test_StrFromTimeIntervalA(void)
   }
 }
 
-void test_StrCmpA(void)
+static void test_StrCmpA(void)
 {
   static const char str1[] = {'a','b','c','d','e','f'};
   static const char str2[] = {'a','B','c','d','e','f'};
@@ -582,7 +573,7 @@ void test_StrCmpA(void)
   ok(!pIntlStrEqWorkerA(TRUE, str1, str2, 5), "pIntlStrEqWorkerA(TRUE,...) isn't case-sensitive\n");
 }
 
-void test_StrCmpW(void)
+static void test_StrCmpW(void)
 {
   static const WCHAR str1[] = {'a','b','c','d','e','f'};
   static const WCHAR str2[] = {'a','B','c','d','e','f'};
@@ -747,9 +738,17 @@ START_TEST(string)
   test_StrToIntExA();
   test_StrToIntExW();
   test_StrDupA();
-  test_StrFormatByteSize64A();
-  test_StrFormatKBSizeA();
-  test_StrFormatKBSizeW();
+  if (0)
+  {
+    /* this test fails on locales which do not use '.' as a decimal separator */
+    test_StrFormatByteSize64A();
+
+    /* this test fails on locales which do not use '.' as a decimal separator */
+    test_StrFormatKBSizeA();
+
+    /* FIXME: Awaiting NLS fixes in kernel before these succeed */
+    test_StrFormatKBSizeW();
+  }
   test_StrFromTimeIntervalA();
   test_StrCmpA();
   test_StrCmpW();
