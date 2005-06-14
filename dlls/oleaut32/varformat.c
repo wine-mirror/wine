@@ -1183,13 +1183,14 @@ HRESULT WINAPI VarTokenizeFormatString(LPOLESTR lpszFormat, LPBYTE rgbTok,
 
 /* Number formatting state flags */
 #define NUM_WROTE_DEC  0x01 /* Written the decimal separator */
+#define NUM_WRITE_ON   0x02 /* Started to write the number */
 
 /* Format a variant using a number format */
 static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
                                     LPBYTE rgbTok, ULONG dwFlags,
                                     BSTR *pbstrOut, LCID lcid)
 {
-  BYTE rgbDig[256];
+  BYTE rgbDig[256], *prgbDig;
   NUMPARSE np;
   int wholeNumberDigits, fractionalDigits, divisor10 = 0, multiplier10 = 0;
   WCHAR buff[256], *pBuff = buff;
@@ -1240,7 +1241,7 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
         /* An exactly represented real number e.g. 1.024 */
         wholeNumberDigits = np.cDig + np.nPwr10;
         fractionalDigits = np.cDig - wholeNumberDigits;
-        divisor10 = np.cDig - wholeNumberDigits;
+        divisor10 = 0;
       }
     }
     else if (np.nPwr10 == 0)
@@ -1306,6 +1307,7 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
 
   }
   pToken = (const BYTE*)numHeader + sizeof(FMT_NUMBER_HEADER);
+  prgbDig = rgbDig;
 
   while (SUCCEEDED(hRes) && *pToken != FMT_GEN_END)
   {
@@ -1411,21 +1413,32 @@ VARIANT_FormatNumber_Bool:
 
         TRACE("write %d fractional digits or skip\n", pToken[1]);
 
-        for (count = 0; count < fractionalDigits; count++)
-          pBuff[count] = '0' + rgbDig[wholeNumberDigits + count];
+        for (count = 0; count < fractionalDigits; count++, prgbDig++)
+          pBuff[count] = '0' + *prgbDig;
         pBuff += fractionalDigits;
       }
       else
       {
-        int count;
+        int count, count_max;
 
         TRACE("write %d digits or skip\n", pToken[1]);
 
-        if (wholeNumberDigits > 1 || rgbDig[0] > 0)
+        numHeader->whole -= pToken[1];
+        count_max = wholeNumberDigits - numHeader->whole;
+        if (count_max < 0)
+            count_max = 0;
+        if (dwState & NUM_WRITE_ON) {
+          for (count = 0; count < pToken[1] - count_max; count++)
+            *pBuff++ = '0'; /* Write zeros, don't skip */
+        }
+        if (wholeNumberDigits > 1 || *prgbDig > 0)
         {
-          TRACE("write %d whole number digits\n", wholeNumberDigits);
-          for (count = 0; count < wholeNumberDigits; count++)
-            *pBuff++ = '0' + rgbDig[count];
+          TRACE("write %d whole number digits\n", count_max);
+          for (count = 0; count < count_max; count++, prgbDig++) {
+            *pBuff++ = '0' + *prgbDig;
+            wholeNumberDigits--;
+            dwState |= NUM_WRITE_ON;
+          }
           TRACE("write %d whole trailing 0's\n", multiplier10);
           for (count = 0; count < multiplier10; count++)
             *pBuff++ = '0'; /* Write trailing zeros for multiplied values */
@@ -1441,8 +1454,8 @@ VARIANT_FormatNumber_Bool:
 
         TRACE("write %d fractional digits or 0's\n", pToken[1]);
 
-        for (count = 0; count < fractionalDigits; count++)
-          pBuff[count] = '0' + rgbDig[wholeNumberDigits + count];
+        for (count = 0; count < fractionalDigits; count++, prgbDig++)
+          pBuff[count] = '0' + *prgbDig;
         pBuff += fractionalDigits;
         if (pToken[1] > fractionalDigits)
         {
@@ -1453,20 +1466,28 @@ VARIANT_FormatNumber_Bool:
       }
       else
       {
-        int count;
+        int count, count_max;
 
         TRACE("write %d digits or 0's\n", pToken[1]);
 
+        dwState |= NUM_WRITE_ON;
+        numHeader->whole -= pToken[1];
+        count_max = wholeNumberDigits + multiplier10 - numHeader->whole;
         if (pToken[1] > (wholeNumberDigits + multiplier10))
         {
-          count = pToken[1] - (wholeNumberDigits + multiplier10);
+          if (count_max > 0)
+            count = pToken[1] - (wholeNumberDigits + multiplier10);
+          else
+            count = pToken[1];
           TRACE("write %d leading zeros\n", count);
           while(count--)
             *pBuff++ = '0'; /* Write leading zeros for missing digits */
         }
         TRACE("write %d whole number digits\n", wholeNumberDigits);
-        for (count = 0; count < wholeNumberDigits; count++)
-          *pBuff++ = '0' + rgbDig[count];
+        for (count = 0; count < count_max - multiplier10; count++, prgbDig++) {
+          *pBuff++ = '0' + *prgbDig;
+          wholeNumberDigits--;
+        }
         TRACE("write %d whole trailing 0's\n", multiplier10);
         for (count = 0; count < multiplier10; count++)
           *pBuff++ = '0'; /* Write trailing zeros for multiplied values */

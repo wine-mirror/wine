@@ -1711,6 +1711,45 @@ static void test_VarFormat(void)
   /* Numeric values are converted to strings then output */
   VARFMT(VT_I1,V_I1,1,"<&>&",S_OK,"1");
 
+  /* Number formats */
+  VARFMT(VT_I4,V_I4,1,"#00000000",S_OK,"00000001");
+  VARFMT(VT_I4,V_I4,1,"000###",S_OK,"000001");
+  VARFMT(VT_I4,V_I4,1,"#00##00#0",S_OK,"00000001");
+  VARFMT(VT_I4,V_I4,1,"1#####0000",S_OK,"10001");
+  VARFMT(VT_I4,V_I4,17,"#0",S_OK,"17");
+  VARFMT(VT_I4,V_I4,4711,"#0",S_OK,"4711");
+  VARFMT(VT_I4,V_I4,17,"#00",S_OK,"17");
+  VARFMT(VT_I4,V_I4,17,"#000",S_OK,"017");
+  VARFMT(VT_I4,V_I4,17,"#0.00",S_OK,"17.00");
+  VARFMT(VT_I4,V_I4,17,"#0000.00",S_OK,"0017.00");
+  VARFMT(VT_I4,V_I4,17,"#.00",S_OK,"17.00");
+  VARFMT(VT_R8,V_R8,1.7,"#.00",S_OK,"1.70");
+  VARFMT(VT_R8,V_R8,.17,"#.00",S_OK,".17");
+  VARFMT(VT_I4,V_I4,17,"#3",S_OK,"173");
+  VARFMT(VT_I4,V_I4,17,"#33",S_OK,"1733");
+  VARFMT(VT_I4,V_I4,17,"#3.33",S_OK,"173.33");
+  VARFMT(VT_I4,V_I4,17,"#3333.33",S_OK,"173333.33");
+  VARFMT(VT_I4,V_I4,17,"#.33",S_OK,"17.33");
+  VARFMT(VT_R8,V_R8,.17,"#.33",S_OK,".33");
+  VARFMT(VT_R8,V_R8,1.7,"0.0000E-000",S_OK,"1.7000E000");
+  VARFMT(VT_R8,V_R8,1.7,"0.0000e-1",S_OK,"1.7000e01");
+  VARFMT(VT_R8,V_R8,86.936849,"#0.000000000000e-000",S_OK,"86.936849000000e000");
+  todo_wine {
+    /* rounding */
+    VARFMT(VT_R8,V_R8,1.7,"#0",S_OK,"2");
+    VARFMT(VT_R8,V_R8,1.7,"#.33",S_OK,"2.33");
+    VARFMT(VT_R8,V_R8,1.7,"#3",S_OK,"23");
+    VARFMT(VT_R8,V_R8,1.73245,"0.0000E+000",S_OK,"1.7325E+000");
+    VARFMT(VT_R8,V_R8,9.9999999,"#0.000000",S_OK,"10.000000");
+    /* handling of numbers > 0 with exponent format */
+    VARFMT(VT_R8,V_R8,1.7,"0.0000e+0#",S_OK,"1.7000e+0");
+    VARFMT(VT_R8,V_R8,100.0001e+0,"0.0000E+0",S_OK,"1.0000E+2");
+    VARFMT(VT_R8,V_R8,1000001,"0.0000e+1",S_OK,"1.0000e+61");
+    VARFMT(VT_R8,V_R8,100.0001e+25,"0.0000e+0",S_OK,"1.0000e+27");
+    VARFMT(VT_R8,V_R8,450.0001e+43,"#000.0000e+0",S_OK,"4500.0010e+42");
+  }
+
+
   /* 'out' is not cleared */
   out = (BSTR)0x1;
   pVarFormat(&in,NULL,fd,fw,flags,&out); /* Would crash if out is cleared */
