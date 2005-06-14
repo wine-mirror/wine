@@ -40,41 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 /* FIXME: fixed at 2005/2/22 */
 static LONGLONG boottime = (LONGLONG)1275356510 * 100000000;
 
-/* Structures used by NtConnectPort */
-
-typedef struct LpcSectionInfo
-{
-  DWORD Length;
-  HANDLE SectionHandle;
-  DWORD Param1;
-  DWORD SectionSize;
-  DWORD ClientBaseAddress;
-  DWORD ServerBaseAddress;
-} LPCSECTIONINFO, *PLPCSECTIONINFO;
-
-typedef struct LpcSectionMapInfo
-{
-  DWORD Length;
-  DWORD SectionSize;
-  DWORD ServerBaseAddress;
-} LPCSECTIONMAPINFO, *PLPCSECTIONMAPINFO;
-
-/* Structure used by NtAcceptConnectPort, NtReplyWaitReceivePort */
-
-#define MAX_MESSAGE_DATA 328
-
-typedef struct LpcMessage
-{
-  WORD ActualMessageLength;
-  WORD TotalMessageLength;
-  DWORD MessageType;
-  DWORD ClientProcessId;
-  DWORD ClientThreadId;
-  DWORD MessageId;
-  DWORD SharedSectionSize;
-  BYTE MessageData[MAX_MESSAGE_DATA];
-} LPCMESSAGE, *PLPCMESSAGE;
-
 /*
  *	Token
  */
@@ -443,22 +408,30 @@ NTSTATUS WINAPI NtCreatePort(PHANDLE PortHandle,POBJECT_ATTRIBUTES ObjectAttribu
  *  NtConnectPort		[NTDLL.@]
  *  ZwConnectPort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtConnectPort(PHANDLE PortHandle,PUNICODE_STRING PortName,PVOID Unknown1,
-                              PLPCSECTIONINFO sectionInfo,PLPCSECTIONMAPINFO mapInfo,PVOID Unknown2,
-                              PVOID ConnectInfo,PDWORD pConnectInfoLength)
+NTSTATUS WINAPI NtConnectPort(
+        PHANDLE PortHandle,
+        PUNICODE_STRING PortName,
+        PSECURITY_QUALITY_OF_SERVICE SecurityQos,
+        PLPC_SECTION_WRITE WriteSection,
+        PLPC_SECTION_READ ReadSection,
+        PULONG MaximumMessageLength,
+        PVOID ConnectInfo,
+        PULONG pConnectInfoLength)
 {
-  FIXME("(%p,%s,%p,%p,%p,%p,%p,%p (%ld)),stub!\n",PortHandle,debugstr_w(PortName->Buffer),Unknown1,
-        sectionInfo,mapInfo,Unknown2,ConnectInfo,pConnectInfoLength,pConnectInfoLength?*pConnectInfoLength:-1);
-  if(ConnectInfo && pConnectInfoLength)
-    TRACE("\tMessage = %s\n",debugstr_an(ConnectInfo,*pConnectInfoLength));
-  return 0;
+    FIXME("(%p,%s,%p,%p,%p,%p,%p,%p),stub!\n",
+          PortHandle,debugstr_w(PortName->Buffer),SecurityQos,
+          WriteSection,ReadSection,MaximumMessageLength,ConnectInfo,
+          pConnectInfoLength);
+    if (ConnectInfo && pConnectInfoLength)
+        TRACE("\tMessage = %s\n",debugstr_an(ConnectInfo,*pConnectInfoLength));
+    return 0;
 }
 
 /******************************************************************************
  *  NtListenPort		[NTDLL.@]
  *  ZwListenPort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtListenPort(HANDLE PortHandle,PLPCMESSAGE pLpcMessage)
+NTSTATUS WINAPI NtListenPort(HANDLE PortHandle,PLPC_MESSAGE pLpcMessage)
 {
   FIXME("(%p,%p),stub!\n",PortHandle,pLpcMessage);
   return 0;
@@ -468,10 +441,16 @@ NTSTATUS WINAPI NtListenPort(HANDLE PortHandle,PLPCMESSAGE pLpcMessage)
  *  NtAcceptConnectPort	[NTDLL.@]
  *  ZwAcceptConnectPort	[NTDLL.@]
  */
-NTSTATUS WINAPI NtAcceptConnectPort(PHANDLE PortHandle,DWORD Unknown,PLPCMESSAGE pLpcMessage,
-                                    DWORD acceptIt,DWORD Unknown2,PLPCSECTIONMAPINFO mapInfo)
+NTSTATUS WINAPI NtAcceptConnectPort(
+        PHANDLE PortHandle,
+        ULONG PortIdentifier,
+        PLPC_MESSAGE pLpcMessage,
+        BOOLEAN Accept,
+        PLPC_SECTION_WRITE WriteSection,
+        PLPC_SECTION_READ ReadSection)
 {
-  FIXME("(%p,0x%08lx,%p,0x%08lx,0x%08lx,%p),stub!\n",PortHandle,Unknown,pLpcMessage,acceptIt,Unknown2,mapInfo);
+  FIXME("(%p,%lu,%p,%d,%p,%p),stub!\n",
+        PortHandle,PortIdentifier,pLpcMessage,Accept,WriteSection,ReadSection);
   return 0;
 }
 
@@ -499,20 +478,25 @@ NTSTATUS WINAPI NtRegisterThreadTerminatePort(HANDLE PortHandle)
  *  NtRequestWaitReplyPort		[NTDLL.@]
  *  ZwRequestWaitReplyPort		[NTDLL.@]
  */
-NTSTATUS WINAPI NtRequestWaitReplyPort(HANDLE PortHandle,PLPCMESSAGE pLpcMessageIn,PLPCMESSAGE pLpcMessageOut)
+NTSTATUS WINAPI NtRequestWaitReplyPort(
+        HANDLE PortHandle,
+        PLPC_MESSAGE pLpcMessageIn,
+        PLPC_MESSAGE pLpcMessageOut)
 {
   FIXME("(%p,%p,%p),stub!\n",PortHandle,pLpcMessageIn,pLpcMessageOut);
   if(pLpcMessageIn)
   {
     TRACE("Message to send:\n");
-    TRACE("\tActualMessageLength = %d\n",pLpcMessageIn->ActualMessageLength);
-    TRACE("\tTotalMessageLength  = %d\n",pLpcMessageIn->TotalMessageLength);
-    TRACE("\tMessageType         = %ld\n",pLpcMessageIn->MessageType);
-    TRACE("\tClientProcessId     = %ld\n",pLpcMessageIn->ClientProcessId);
-    TRACE("\tClientThreadId      = %ld\n",pLpcMessageIn->ClientThreadId);
-    TRACE("\tMessageId           = %ld\n",pLpcMessageIn->MessageId);
-    TRACE("\tSharedSectionSize   = %ld\n",pLpcMessageIn->SharedSectionSize);
-    TRACE("\tMessageData         = %s\n",debugstr_an(pLpcMessageIn->MessageData,pLpcMessageIn->ActualMessageLength));
+    TRACE("\tDataSize            = %u\n",pLpcMessageIn->DataSize);
+    TRACE("\tMessageSize         = %u\n",pLpcMessageIn->MessageSize);
+    TRACE("\tMessageType         = %u\n",pLpcMessageIn->MessageType);
+    TRACE("\tVirtualRangesOffset = %u\n",pLpcMessageIn->VirtualRangesOffset);
+    TRACE("\tClientId.UniqueProcess = %p\n",pLpcMessageIn->ClientId.UniqueProcess);
+    TRACE("\tClientId.UniqueThread  = %p\n",pLpcMessageIn->ClientId.UniqueThread);
+    TRACE("\tMessageId           = %lu\n",pLpcMessageIn->MessageId);
+    TRACE("\tSectionSize         = %lu\n",pLpcMessageIn->SectionSize);
+    TRACE("\tData                = %s\n",
+      debugstr_an(pLpcMessageIn->Data,pLpcMessageIn->DataSize));
   }
   return 0;
 }
@@ -521,9 +505,13 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(HANDLE PortHandle,PLPCMESSAGE pLpcMessage
  *  NtReplyWaitReceivePort	[NTDLL.@]
  *  ZwReplyWaitReceivePort	[NTDLL.@]
  */
-NTSTATUS WINAPI NtReplyWaitReceivePort(HANDLE PortHandle,PDWORD Unknown,PLPCMESSAGE pLpcMessageOut,PLPCMESSAGE pLpcMessageIn)
+NTSTATUS WINAPI NtReplyWaitReceivePort(
+        HANDLE PortHandle,
+        PULONG PortIdentifier,
+        PLPC_MESSAGE ReplyMessage,
+        PLPC_MESSAGE Message)
 {
-  FIXME("(%p,%p,%p,%p),stub!\n",PortHandle,Unknown,pLpcMessageOut,pLpcMessageIn);
+  FIXME("(%p,%p,%p,%p),stub!\n",PortHandle,PortIdentifier,ReplyMessage,Message);
   return 0;
 }
 
