@@ -271,10 +271,9 @@ static void test_GetDisplayName(void)
     }
 
     /* It seems as if we can not bind to regular files on windows, but only directories. 
-     * XP sp2 returns 0x80070002, which is not defined in the PSDK 
      */
     hr = IShellFolder_BindToObject(psfDesktop, pidlTestFile, NULL, &IID_IUnknown, (VOID**)&psfFile);
-    todo_wine { ok (hr == 0x80070002, "hr = %08lx\n", hr); }
+    todo_wine { ok (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hr = %08lx\n", hr); }
     if (SUCCEEDED(hr)) {
         IShellFolder_Release(psfFile);
     }
