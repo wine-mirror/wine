@@ -161,6 +161,7 @@ static int acl_is_valid( const ACL *acl, size_t size )
     for (i = 0; i < acl->AceCount; i++)
     {
         const SID *sid;
+        size_t sid_size;
 
         if (size < sizeof(ACE_HEADER))
             return FALSE;
@@ -171,21 +172,25 @@ static int acl_is_valid( const ACL *acl, size_t size )
         {
         case ACCESS_DENIED_ACE_TYPE:
             sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
+            sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart);
             break;
         case ACCESS_ALLOWED_ACE_TYPE:
             sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
+            sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart);
             break;
         case SYSTEM_AUDIT_ACE_TYPE:
             sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
+            sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart);
             break;
         case SYSTEM_ALARM_ACE_TYPE:
             sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
+            sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_ALARM_ACE, SidStart);
             break;
         default:
             return FALSE;
         }
-        if (size < sizeof(SID) ||
-            size < FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]))
+        if (sid_size < FIELD_OFFSET(SID, SubAuthority[0]) ||
+            sid_size < FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]))
             return FALSE;
         ace = ace_next( ace );
     }

@@ -429,9 +429,12 @@ static void dump_inline_sid( const SID *sid, size_t size )
     DWORD i;
 
     /* security check */
-    if ((size < sizeof(SID)) ||
-      (FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]) > size))
+    if ((FIELD_OFFSET(SID, SubAuthority[0]) > size) ||
+        (FIELD_OFFSET(SID, SubAuthority[sid->SubAuthorityCount]) > size))
+    {
+        fprintf( stderr, "<invalid sid>" );
         return;
+    }
 
     fputc( '{', stderr );
     fprintf( stderr, "S-%u-%lu", sid->Revision, MAKELONG(
@@ -453,12 +456,16 @@ static void dump_inline_acl( const ACL *acl, size_t size )
     if (size)
     {
         if (size < sizeof(ACL))
+        {
+            fprintf( stderr, "<invalid acl>}\n" );
             return;
+        }
         size -= sizeof(ACL);
         ace = (const ACE_HEADER *)(acl + 1);
         for (i = 0; i < acl->AceCount; i++)
         {
             const SID *sid = NULL;
+            size_t sid_size = 0;
 
             if (size < sizeof(ACE_HEADER))
                 return;
@@ -471,21 +478,25 @@ static void dump_inline_acl( const ACL *acl, size_t size )
             {
             case ACCESS_DENIED_ACE_TYPE:
                 sid = (const SID *)&((const ACCESS_DENIED_ACE *)ace)->SidStart;
+                sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_DENIED_ACE, SidStart);
                 fprintf( stderr, "ACCESS_DENIED_ACE_TYPE,Mask=%lx",
                          ((const ACCESS_DENIED_ACE *)ace)->Mask );
                 break;
             case ACCESS_ALLOWED_ACE_TYPE:
                 sid = (const SID *)&((const ACCESS_ALLOWED_ACE *)ace)->SidStart;
+                sid_size = ace->AceSize - FIELD_OFFSET(ACCESS_ALLOWED_ACE, SidStart);
                 fprintf( stderr, "ACCESS_ALLOWED_ACE_TYPE,Mask=%lx",
                          ((const ACCESS_ALLOWED_ACE *)ace)->Mask );
                 break;
             case SYSTEM_AUDIT_ACE_TYPE:
                 sid = (const SID *)&((const SYSTEM_AUDIT_ACE *)ace)->SidStart;
+                sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart);
                 fprintf( stderr, "SYSTEM_AUDIT_ACE_TYPE,Mask=%lx",
                          ((const SYSTEM_AUDIT_ACE *)ace)->Mask );
                 break;
             case SYSTEM_ALARM_ACE_TYPE:
                 sid = (const SID *)&((const SYSTEM_ALARM_ACE *)ace)->SidStart;
+                sid_size = ace->AceSize - FIELD_OFFSET(SYSTEM_ALARM_ACE, SidStart);
                 fprintf( stderr, "SYSTEM_ALARM_ACE_TYPE,Mask=%lx",
                          ((const SYSTEM_ALARM_ACE *)ace)->Mask );
                 break;
@@ -495,7 +506,7 @@ static void dump_inline_acl( const ACL *acl, size_t size )
             }
             fprintf( stderr, ",AceFlags=%x,Sid=", ace->AceFlags );
             if (sid)
-                dump_inline_sid( sid, size );
+                dump_inline_sid( sid, sid_size );
             ace = (const ACE_HEADER *)((const char *)ace + ace->AceSize);
             fputc( '}', stderr );
         }
