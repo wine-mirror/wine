@@ -76,11 +76,14 @@ int use_xkb = 1;
 int use_take_focus = 1;
 int use_primary_selection = 0;
 int managed_mode = 1;
+int private_color_map = 0;
 int client_side_with_core = 1;
 int client_side_with_render = 1;
 int client_side_antialias_with_core = 1;
 int client_side_antialias_with_render = 1;
 int using_wine_desktop = 0;
+int copy_default_colors = 128;
+int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 
 static BOOL synchronous;  /* run in synchronous mode? */
@@ -301,6 +304,15 @@ static void setup_options(void)
 
     if (!get_config_key( hkey, appkey, "UseXIM", buffer, sizeof(buffer) ))
         use_xim = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "PrivateColorMap", buffer, sizeof(buffer) ))
+        private_color_map = IS_OPTION_TRUE( buffer[0] );
+
+    if (!get_config_key( hkey, appkey, "CopyDefaultColors", buffer, sizeof(buffer) ))
+        copy_default_colors = atoi(buffer);
+
+    if (!get_config_key( hkey, appkey, "AllocSystemColors", buffer, sizeof(buffer) ))
+        alloc_system_colors = atoi(buffer);
 
     get_config_key( hkey, appkey, "InputStyle", input_style, sizeof(input_style) );
 

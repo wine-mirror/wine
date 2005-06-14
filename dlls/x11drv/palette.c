@@ -53,7 +53,6 @@ static PALETTEENTRY *COLOR_sysPal; /* current system palette */
 static int COLOR_gapStart = 256;
 static int COLOR_gapEnd = -1;
 static int COLOR_gapFilled = 0;
-static int COLOR_max = 256;
 
 Colormap X11DRV_PALETTE_PaletteXColormap = 0;
 UINT16   X11DRV_PALETTE_PaletteFlags     = 0;
@@ -134,22 +133,6 @@ int X11DRV_PALETTE_Init(void)
 	X11DRV_PALETTE_PaletteFlags |= X11DRV_PALETTE_VIRTUAL;
     case GrayScale:
     case PseudoColor:
-    {
-	HKEY hkey;
-	BOOL private_color_map = FALSE;
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
-	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
-	{
-	    char buffer[20];
-	    DWORD type, count = sizeof(buffer);
-	    if(!RegQueryValueExA(hkey, "PrivateColorMap", 0, &type, buffer, &count))
-            {
-                char ch = buffer[0];
-                private_color_map = (ch == 'y' || ch == 'Y' || ch == 't' || ch == 'T' || ch == '1');
-            }
-	    RegCloseKey(hkey);
-	}
-
         wine_tsx11_lock();
 	if (private_color_map)
 	{
@@ -177,7 +160,6 @@ int X11DRV_PALETTE_Init(void)
 	}
         wine_tsx11_unlock();
         break;
-    }
 
     case StaticGray:
         wine_tsx11_lock();
@@ -388,47 +370,26 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
    int			i, j, warn = 0;
    int			diff, r, g, b, bp = 0, wp = 1;
    int			step = 1;
-   int			defaultCM_max_copy;
    unsigned int max = 256;
    Colormap		defaultCM;
    XColor		defaultColors[256];
-   HKEY hkey;
-
-   defaultCM_max_copy = 128;
-   COLOR_max = 256;
-
-   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
-   if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
-   {
-	char buffer[20];
-	DWORD type, count;
-
-	count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, "CopyDefaultColors", 0, &type, buffer, &count))
-	    defaultCM_max_copy = atoi(buffer);
-
-	count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, "AllocSystemColors", 0, &type, buffer, &count))
-	    COLOR_max = atoi(buffer);
-
-	RegCloseKey(hkey);
-   }
 
    /* Copy the first bunch of colors out of the default colormap to prevent
     * colormap flashing as much as possible.  We're likely to get the most
     * important Window Manager colors, etc in the first 128 colors */
    defaultCM = DefaultColormap( gdi_display, DefaultScreen(gdi_display) );
 
-   for (i = 0; i < defaultCM_max_copy; i++)
+   if (copy_default_colors > 256) copy_default_colors = 256;
+   for (i = 0; i < copy_default_colors; i++)
        defaultColors[i].pixel = (long) i;
    wine_tsx11_lock();
-   XQueryColors(gdi_display, defaultCM, &defaultColors[0], defaultCM_max_copy);
-   for (i = 0; i < defaultCM_max_copy; i++)
+   XQueryColors(gdi_display, defaultCM, &defaultColors[0], copy_default_colors);
+   for (i = 0; i < copy_default_colors; i++)
        XAllocColor( gdi_display, X11DRV_PALETTE_PaletteXColormap, &defaultColors[i] );
 
-   if (COLOR_max > 256) COLOR_max = 256;
-   else if (COLOR_max < 20) COLOR_max = 20;
-   TRACE("%d colors configured.\n", COLOR_max);
+   if (alloc_system_colors > 256) alloc_system_colors = 256;
+   else if (alloc_system_colors < 20) alloc_system_colors = 20;
+   TRACE("%d colors configured.\n", alloc_system_colors);
 
    TRACE("Building shared map - %i palette entries\n", palette_size);
 
@@ -532,8 +493,8 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
                }
           }
 
-	if( c_min > COLOR_max - NB_RESERVED_COLORS)
-	    c_min = COLOR_max - NB_RESERVED_COLORS;
+	if( c_min > alloc_system_colors - NB_RESERVED_COLORS)
+	    c_min = alloc_system_colors - NB_RESERVED_COLORS;
 
 	c_min = (c_min/2) + (c_min/2);		/* need even set for split palette */
 
@@ -720,7 +681,7 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
     XColor	xc;
     int		r, g, b, max;
 
-    max = COLOR_max - (256 - (COLOR_gapEnd - COLOR_gapStart));
+    max = alloc_system_colors - (256 - (COLOR_gapEnd - COLOR_gapStart));
     for ( i = 0, idx = COLOR_gapStart; i < 256 && idx <= COLOR_gapEnd; i++ )
       if( X11DRV_PALETTE_XPixelToPalette[i] == NB_PALETTE_EMPTY_VALUE )
 	{

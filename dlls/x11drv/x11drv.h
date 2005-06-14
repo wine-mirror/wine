@@ -539,6 +539,9 @@ extern int use_xkb;
 extern int use_take_focus;
 extern int use_primary_selection;
 extern int managed_mode;
+extern int private_color_map;
+extern int copy_default_colors;
+extern int alloc_system_colors;
 
 extern BYTE key_state_table[256];
 extern POINT cursor_pos;
