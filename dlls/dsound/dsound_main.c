@@ -116,7 +116,8 @@ inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
                                     char *buffer, DWORD size )
 {
     if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, buffer, &size )) return 0;
-    return RegQueryValueExA( defkey, name, 0, NULL, buffer, &size );
+    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, buffer, &size )) return 0;
+    return ERROR_FILE_NOT_FOUND;
 }
 
 
@@ -126,38 +127,29 @@ inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
 
 void setup_dsound_options(void)
 {
-    char buffer[MAX_PATH+1];
+    char buffer[MAX_PATH+16];
     HKEY hkey, appkey = 0;
     DWORD len;
 
     buffer[MAX_PATH]='\0';
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\dsound */
-    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\dsound", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
-    {
-        ERR("Cannot create config registry key\n" );
-        ExitProcess(1);
-    }
+    /* @@ Wine registry key: HKCU\Software\Wine\DirectSound */
+    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\DirectSound", &hkey )) hkey = 0;
 
     len = GetModuleFileNameA( 0, buffer, MAX_PATH );
     if (len && len < MAX_PATH)
     {
         HKEY tmpkey;
-
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\dsound */
-        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &tmpkey ))
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DirectSound */
+        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
         {
-           char appname[MAX_PATH+16];
-           char *p = strrchr( buffer, '\\' );
-           if (p!=NULL) {
-                   lstrcpynA(appname,p+1,MAX_PATH);
-                   strcat(appname,"\\dsound");
-                   TRACE("appname = [%s] \n",appname);
-                   if (RegOpenKeyA( tmpkey, appname, &appkey ))
-                       appkey = 0;
-                   RegCloseKey( tmpkey );
-           }
+            char *p, *appname = buffer;
+            if ((p = strrchr( appname, '/' ))) appname = p + 1;
+            if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+            strcat( appname, "\\DirectSound" );
+            TRACE("appname = [%s] \n",appname);
+            if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+            RegCloseKey( tmpkey );
         }
     }
 
@@ -196,7 +188,7 @@ void setup_dsound_options(void)
 	    ds_default_capture = atoi(buffer);
 
     if (appkey) RegCloseKey( appkey );
-    RegCloseKey( hkey );
+    if (hkey) RegCloseKey( hkey );
 
     if (ds_emuldriver != DS_EMULDRIVER )
        WARN("ds_emuldriver = %d (default=%d)\n",ds_emuldriver, DS_EMULDRIVER);
