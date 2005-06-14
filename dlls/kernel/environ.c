@@ -36,6 +36,8 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#include "kernel_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
 /* Notes:

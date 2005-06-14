@@ -75,7 +75,7 @@ static WORD parse_dos_version( HKEY hkey )
 /**********************************************************************
  *         get_dos_version
  */
-WORD get_dos_version(void)
+static WORD get_dos_version(void)
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;

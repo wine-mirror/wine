@@ -82,7 +82,7 @@ static void WIN87_SetCtrlWord( CONTEXT86 *context )
     CtrlWord_2 = LOWORD(context->Eax);
 }
 
-void WIN87_Init( CONTEXT86 *context )
+static void WIN87_Init( CONTEXT86 *context )
 {
     if (Installed) {
 #ifdef __i386__

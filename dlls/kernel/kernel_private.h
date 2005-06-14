@@ -119,6 +119,19 @@ extern void   load_winedos(void);
 /* thread.c */
 extern TEB *THREAD_InitStack( TEB *teb, DWORD stack_size );
 
+/* environ.c */
+extern void ENV_CopyStartupInformation(void);
+
+/* computername.c */
+extern void COMPUTERNAME_Init(void);
+
+/* locale.c */
+extern void LOCALE_Init(void);
+extern void LOCALE_InitRegistry(void);
+
+/* oldconfig.c */
+extern void convert_old_config(void);
+
 extern struct winedos_exports
 {
     /* for global16.c */

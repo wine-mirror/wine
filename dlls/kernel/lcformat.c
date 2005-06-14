@@ -36,6 +36,8 @@
 #include "winreg.h"
 #include "winternl.h"
 
+#include "kernel_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define DATE_DATEVARSONLY 0x0100  /* only date stuff: yMdg */
@@ -1988,7 +1990,7 @@ BOOL WINAPI EnumTimeFormatsW( TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, 
  * TODO
  *    The above note should be respected by GetCalendarInfoA.
  */
-BOOL WINAPI NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
+static BOOL NLS_EnumCalendarInfoAW(void *calinfoproc, LCID locale,
                   CALID calendar, CALTYPE caltype, BOOL unicode, BOOL ex )
 {
   WCHAR *buf, *opt = NULL, *iter = NULL;

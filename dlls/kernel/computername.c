@@ -46,6 +46,8 @@
 #include "excpt.h"
 #include "wine/debug.h"
 
+#include "kernel_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(computername);
 
 /* Registry key and value names */

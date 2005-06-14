@@ -46,6 +46,8 @@
 #include "wine/server.h"
 #include "wine/debug.h"
 
+#include "kernel_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 

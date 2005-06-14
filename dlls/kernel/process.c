@@ -87,9 +87,8 @@ static const WCHAR pifW[] = {'.','p','i','f',0};
 static const WCHAR winevdmW[] = {'w','i','n','e','v','d','m','.','e','x','e',0};
 
 extern void SHELL_LoadRegistry(void);
-extern void convert_old_config(void);
 extern void VERSION_Init( const WCHAR *appname );
-extern void LOCALE_Init(void);
+
 
 /***********************************************************************
  *           contains_path

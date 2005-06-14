@@ -568,7 +568,7 @@ static BOOL PROFILE_DeleteKey( PROFILESECTION **section,
  *
  * Delete all keys from a profile tree.
  */
-void PROFILE_DeleteAllKeys( LPCWSTR section_name)
+static void PROFILE_DeleteAllKeys( LPCWSTR section_name)
 {
     PROFILESECTION **section= &CurProfile->section;
     while (*section)

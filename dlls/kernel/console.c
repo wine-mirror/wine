@@ -1802,7 +1802,7 @@ BOOL WINAPI SetConsoleMode(HANDLE hcon, DWORD mode)
  * WriteConsoleOutput helper: hides server call semantics
  * writes a string at a given pos with standard attribute
  */
-int CONSOLE_WriteChars(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
+static int CONSOLE_WriteChars(HANDLE hCon, LPCWSTR lpBuffer, int nc, COORD* pos)
 {
     int written = -1;
 

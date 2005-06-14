@@ -44,12 +44,7 @@
 #include "kernel16_private.h"
 #include "console_private.h"
 
-extern void LOCALE_InitRegistry(void);
-extern void COMPUTERNAME_Init(void);
-
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
-/* memory/environ.c */
-extern void ENV_CopyStartupInformation(void);
 
 extern int main_create_flags;
 
