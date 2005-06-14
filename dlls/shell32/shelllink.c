@@ -1973,6 +1973,7 @@ static HRESULT WINAPI IShellLinkW_fnSetRelativePath(IShellLinkW * iface, LPCWSTR
 static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWORD fFlags)
 {
     HRESULT hr = S_OK;
+    BOOL bSuccess;
 
     _ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 
@@ -1983,9 +1984,9 @@ static HRESULT WINAPI IShellLinkW_fnResolve(IShellLinkW * iface, HWND hwnd, DWOR
     if (!This->sPath && This->pPidl) {
 	WCHAR buffer[MAX_PATH];
 
-	hr = SHELL_GetPathFromIDListW(This->pPidl, buffer, MAX_PATH);
+	bSuccess = SHGetPathFromIDListW(This->pPidl, buffer);
 
-	if (SUCCEEDED(hr) && *buffer) {
+	if (bSuccess && *buffer) {
 	    This->sPath = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(buffer)+1)*sizeof(WCHAR));
 	    if (!This->sPath)
 		return E_OUTOFMEMORY;
