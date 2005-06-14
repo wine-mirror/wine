@@ -530,46 +530,6 @@ static DWORD get_dpi( void )
     return dpi;
 }
 
-/******************************************************************************
- *           create_stock_font
- */
-static HFONT create_stock_font( char const *fontName, const LOGFONTW *font, HKEY hkey )
-{
-    LOGFONTW lf;
-    char  key[256];
-    char buffer[MAX_PATH];
-    DWORD type, count;
-
-    if (!hkey) return CreateFontIndirectW( font );
-
-    lf = *font;
-    sprintf(key, "%s.Height", fontName);
-    count = sizeof(buffer);
-    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-        lf.lfHeight = atoi(buffer);
-
-    sprintf(key, "%s.Bold", fontName);
-    count = sizeof(buffer);
-    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-        lf.lfWeight = get_bool(buffer) ? FW_BOLD : FW_NORMAL;
-
-    sprintf(key, "%s.Italic", fontName);
-    count = sizeof(buffer);
-    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-        lf.lfItalic = get_bool(buffer);
-
-    sprintf(key, "%s.Underline", fontName);
-    count = sizeof(buffer);
-    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-        lf.lfUnderline = get_bool(buffer);
-
-    sprintf(key, "%s.StrikeOut", fontName);
-    count = sizeof(buffer);
-    if(!RegQueryValueExA(hkey, key, 0, &type, buffer, &count))
-        lf.lfStrikeOut = get_bool(buffer);
-    return CreateFontIndirectW( &lf );
-}
-
 
 /***********************************************************************
  *           inc_ref_count
@@ -620,14 +580,9 @@ inline static void dec_ref_count( HGDIOBJ handle )
  */
 BOOL GDI_Init(void)
 {
-    HKEY hkey;
     LOGFONTW default_gui_font;
     const struct DefaultFontInfo* deffonts;
     int i;
-
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Tweak.Fonts */
-    if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Tweak.Fonts", &hkey))
-        hkey = 0;
 
     /* create stock objects */
     stock_objects[WHITE_BRUSH]  = CreateBrushIndirect( &WhiteBrush );
@@ -645,21 +600,21 @@ BOOL GDI_Init(void)
     stock_objects[DEFAULT_BITMAP]  = CreateBitmap( 1, 1, 1, 1, NULL );
 
     /* language-independent stock fonts */
-    stock_objects[OEM_FIXED_FONT]      = create_stock_font( "OEMFixed", &OEMFixedFont, hkey );
-    stock_objects[ANSI_FIXED_FONT]     = create_stock_font( "AnsiFixed", &AnsiFixedFont, hkey );
-    stock_objects[ANSI_VAR_FONT]       = create_stock_font( "AnsiVar", &AnsiVarFont, hkey );
+    stock_objects[OEM_FIXED_FONT]      = CreateFontIndirectW( &OEMFixedFont );
+    stock_objects[ANSI_FIXED_FONT]     = CreateFontIndirectW( &AnsiFixedFont );
+    stock_objects[ANSI_VAR_FONT]       = CreateFontIndirectW( &AnsiVarFont );
 
     /* language-dependent stock fonts */
     deffonts = get_default_fonts(get_default_charset());
-    stock_objects[SYSTEM_FONT]         = create_stock_font( "System", &deffonts->SystemFont, hkey );
-    stock_objects[DEVICE_DEFAULT_FONT] = create_stock_font( "DeviceDefault", &deffonts->DeviceDefaultFont, hkey );
-    stock_objects[SYSTEM_FIXED_FONT]   = create_stock_font( "SystemFixed", &deffonts->SystemFixedFont, hkey );
+    stock_objects[SYSTEM_FONT]         = CreateFontIndirectW( &deffonts->SystemFont );
+    stock_objects[DEVICE_DEFAULT_FONT] = CreateFontIndirectW( &deffonts->DeviceDefaultFont );
+    stock_objects[SYSTEM_FIXED_FONT]   = CreateFontIndirectW( &deffonts->SystemFixedFont );
 
     /* For the default gui font, we use the lfHeight member in deffonts as a place-holder
        for the point size so we must convert this into a true height */
     memcpy(&default_gui_font, &deffonts->DefaultGuiFont, sizeof(default_gui_font));
     default_gui_font.lfHeight = -MulDiv(default_gui_font.lfHeight, get_dpi(), 72);
-    stock_objects[DEFAULT_GUI_FONT]    = create_stock_font( "DefaultGui", &default_gui_font, hkey );
+    stock_objects[DEFAULT_GUI_FONT]    = CreateFontIndirectW( &default_gui_font );
 
     stock_objects[DC_BRUSH]     = CreateBrushIndirect( &DCBrush );
     stock_objects[DC_PEN]       = CreatePenIndirect( &DCPen );
@@ -675,8 +630,6 @@ BOOL GDI_Init(void)
         }
         __wine_make_gdi_object_system( stock_objects[i], TRUE );
     }
-
-    if (hkey) RegCloseKey( hkey );
 
     WineEngInit();
 
