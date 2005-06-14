@@ -9,7 +9,7 @@
 @ stub CertAddEnhancedKeyUsageIdentifier
 @ stub CertAddSerializedElementToStore
 @ stub CertAddStoreToCollection
-@ stub CertAlgIdToOID
+@ stdcall CertAlgIdToOID(long)
 @ stdcall CertCloseStore(ptr long)
 @ stub CertCompareCertificate
 @ stub CertCompareCertificateName
@@ -56,7 +56,7 @@
 @ stub CertIsRDNAttrsInCertificateName
 @ stub CertNameToStrA
 @ stub CertNameToStrW
-@ stub CertOIDToAlgId
+@ stdcall CertOIDToAlgId(str)
 @ stdcall CertOpenStore(str long long long ptr)
 @ stdcall CertOpenSystemStoreA(long str)
 @ stdcall CertOpenSystemStoreW(long wstr)
