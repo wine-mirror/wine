@@ -32,6 +32,7 @@
 #include "shlguid.h"
 #include "shlobj.h"
 #include "shobjidl.h"
+#include "shlwapi.h"
 
 
 #include "wine/unicode.h"
@@ -214,7 +215,93 @@ static void test_BindToObject(void)
     
     IShellFolder_Release(psfSystemDir);
 }
+  
+static void test_GetDisplayName(void)
+{
+    BOOL result;
+    HRESULT hr;
+    HANDLE hTestFile;
+    WCHAR wszTestFile[MAX_PATH], wszTestFile2[MAX_PATH], wszTestDir[MAX_PATH];
+    STRRET strret;
+    LPSHELLFOLDER psfDesktop, psfPersonal;
+    LPITEMIDLIST pidlTestFile;
+    LPCITEMIDLIST pidlLast;
+    static const WCHAR wszFileName[] = { 'w','i','n','e','t','e','s','t','.','f','o','o',0 };
+    static const WCHAR wszDirName[] = { 'w','i','n','e','t','e','s','t',0 };
+
+    /* I'm trying to figure if there is a functional difference between calling
+     * SHGetPathFromIDList and calling GetDisplayNameOf(SHGDN_FORPARSING) after
+     * binding to the shellfolder. One thing I thought of was that perhaps 
+     * SHGetPathFromIDList would be able to get the path to a file, which does
+     * not exist anymore, while the other method would'nt. It turns out there's
+     * no functional difference in this respect.
+     */
+
+    /* First creating a directory in MyDocuments and a file in this directory. */
+    result = SHGetSpecialFolderPathW(NULL, wszTestDir, CSIDL_PERSONAL, FALSE);
+    ok(result, "SHGetSpecialFolderPathW failed! Last error: %08lx\n", GetLastError());
+    if (!result) return;
+
+    PathAddBackslashW(wszTestDir);
+    lstrcatW(wszTestDir, wszDirName);
+    result = CreateDirectoryW(wszTestDir, NULL);
+    ok(result, "CreateDirectoryW failed! Last error: %08lx\n", GetLastError());
+    if (!result) return;
+
+    lstrcpyW(wszTestFile, wszTestDir);
+    PathAddBackslashW(wszTestFile);
+    lstrcatW(wszTestFile, wszFileName);
+
+    hTestFile = CreateFileW(wszTestFile, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+    ok(hTestFile != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: %08lx\n", GetLastError());
+    if (hTestFile == INVALID_HANDLE_VALUE) return;
+    CloseHandle(hTestFile);
+
+    /* Getting a itemidlist for the file. */
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok(SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszTestFile, NULL, &pidlTestFile, NULL);
+    ok(SUCCEEDED(hr), "Desktop->ParseDisplayName failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+
+    /* Deleting the file and the directory */
+    DeleteFileW(wszTestFile);
+    RemoveDirectoryW(wszTestDir);
+
+    /* SHGetPathFromIDListW still works, although the file is not present anymore. */
+    result = SHGetPathFromIDListW(pidlTestFile, wszTestFile2);
+    ok (result, "SHGetPathFromIDListW failed! Last error: %08lx\n", GetLastError());
+    ok (!lstrcmpiW(wszTestFile, wszTestFile2), "SHGetPathFromIDListW returns incorrect path!\n");
+
+    /* Binding to the folder and querying the display name of the file also works. */
+    hr = SHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast); 
+    ok (SUCCEEDED(hr), "SHBindToParent failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+
+    hr = IShellFolder_GetDisplayNameOf(psfPersonal, pidlLast, SHGDN_FORPARSING, &strret);
+    ok (SUCCEEDED(hr), "Personal->GetDisplayNameOf failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        IShellFolder_Release(psfPersonal);
+        return;
+    }
     
+    hr = StrRetToBufW(&strret, pidlLast, wszTestFile2, MAX_PATH);
+    ok (SUCCEEDED(hr), "StrRetToBufW failed! hr = %08lx\n", hr);
+    ok (!lstrcmpiW(wszTestFile, wszTestFile2), "GetDisplayNameOf returns incorrect path!\n");
+    
+    IShellFolder_Release(psfDesktop);
+    IShellFolder_Release(psfPersonal);
+}
+
 START_TEST(shlfolder)
 {
     ITEMIDLIST *newPIDL;
@@ -246,6 +333,7 @@ START_TEST(shlfolder)
         
     test_EnumObjects(testIShellFolder);
     test_BindToObject();
+    test_GetDisplayName();
 
     hr = IShellFolder_Release(testIShellFolder);
     ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
