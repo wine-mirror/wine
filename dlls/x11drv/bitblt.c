@@ -535,35 +535,6 @@ int main()
 #endif  /* BITBLT_TEST */
 
 
-/***********************************************************************
- *           perfect_graphics
- *
- * Favor correctness or speed?
- */
-static int perfect_graphics(void)
-{
-    static int perfect = -1;
-    if (perfect == -1)
-    {
-	HKEY hkey;
-	char buffer[20];
-	/* default value */
-	perfect = 0;
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
-	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
-	{
-	    DWORD type, count = sizeof(buffer);
-	    if(!RegQueryValueExA(hkey, "PerfectGraphics", 0, &type, buffer, &count))
-            {
-                char ch = buffer[0];
-                perfect = (ch == 'y' || ch == 'Y' || ch == 't' || ch == 'T' || ch == '1');
-            }
-	    RegCloseKey(hkey);
-	}
-    }
-    return perfect;
-}
-
 static void get_colors(X11DRV_PDEVICE *physDevDst, X11DRV_PDEVICE *physDevSrc,
 		       int *fg, int *bg)
 {
@@ -1350,36 +1321,30 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         return TRUE;
 
     case DSTINVERT:  /* 0x55 */
-        if ((physDevDst->depth == 1) || !X11DRV_PALETTE_PaletteToXPixel ||
-            !perfect_graphics())
-        {
-            wine_tsx11_lock();
-            XSetFunction( gdi_display, physDevDst->gc, GXinvert );
+        wine_tsx11_lock();
+        XSetFunction( gdi_display, physDevDst->gc, GXinvert );
 
-            if( X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_VIRTUAL) )
-                XSetFunction( gdi_display, physDevDst->gc, GXinvert);
-            else
-            {
-                /* Xor is much better when we do not have full colormap.   */
-                /* Using white^black ensures that we invert at least black */
-                /* and white. */
-                Pixel xor_pix = (WhitePixel( gdi_display, DefaultScreen(gdi_display) ) ^
-                                 BlackPixel( gdi_display, DefaultScreen(gdi_display) ));
-                XSetFunction( gdi_display, physDevDst->gc, GXxor );
-                XSetForeground( gdi_display, physDevDst->gc, xor_pix);
-                XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
-            }
-            XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
-                            physDevDst->org.x + visRectDst.left,
-                            physDevDst->org.y + visRectDst.top,
-                            width, height );
-            wine_tsx11_unlock();
-            return TRUE;
+        if( X11DRV_PALETTE_PaletteFlags & (X11DRV_PALETTE_PRIVATE | X11DRV_PALETTE_VIRTUAL) )
+            XSetFunction( gdi_display, physDevDst->gc, GXinvert);
+        else
+        {
+            /* Xor is much better when we do not have full colormap.   */
+            /* Using white^black ensures that we invert at least black */
+            /* and white. */
+            Pixel xor_pix = (WhitePixel( gdi_display, DefaultScreen(gdi_display) ) ^
+                             BlackPixel( gdi_display, DefaultScreen(gdi_display) ));
+            XSetFunction( gdi_display, physDevDst->gc, GXxor );
+            XSetForeground( gdi_display, physDevDst->gc, xor_pix);
+            XSetFillStyle( gdi_display, physDevDst->gc, FillSolid );
         }
-        break;
+        XFillRectangle( gdi_display, physDevDst->drawable, physDevDst->gc,
+                        physDevDst->org.x + visRectDst.left,
+                        physDevDst->org.y + visRectDst.top,
+                        width, height );
+        wine_tsx11_unlock();
+        return TRUE;
 
     case PATINVERT:  /* 0x5a */
-	if (perfect_graphics()) break;
         if (X11DRV_SetupGCForBrush( physDevDst ))
         {
             wine_tsx11_lock();
@@ -1393,7 +1358,6 @@ static BOOL BITBLT_InternalStretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT
         return TRUE;
 
     case 0xa50065:
-	if (perfect_graphics()) break;
 	if (X11DRV_SetupGCForBrush( physDevDst ))
 	{
             wine_tsx11_lock();
