@@ -4676,9 +4676,9 @@ static void test_VarMul(void)
     VARMUL(I2, I2_MAX, I2, I2_MIN, I4, I2_MAX * I2_MIN);
     VARMUL(I2, I2_MIN, I2, I2_MIN, I4, I2_MIN * I2_MIN);
 if (HAVE_OLEAUT32_I8) {
-    VARMUL(I4, I4_MAX, I4, I4_MAX, I8, (long long)I4_MAX * I4_MAX);
-    VARMUL(I4, I4_MAX, I4, I4_MIN, I8, (long long)I4_MAX * I4_MIN);
-    VARMUL(I4, I4_MIN, I4, I4_MIN, I8, (long long)I4_MIN * I4_MIN);
+    VARMUL(I4, I4_MAX, I4, I4_MAX, I8, (LONGLONG)I4_MAX * I4_MAX);
+    VARMUL(I4, I4_MAX, I4, I4_MIN, I8, (LONGLONG)I4_MAX * I4_MIN);
+    VARMUL(I4, I4_MIN, I4, I4_MIN, I8, (LONGLONG)I4_MIN * I4_MIN);
 } else {
     VARMUL(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX * I4_MAX);
     VARMUL(I4, I4_MAX, I4, I4_MIN, R8, (double)I4_MAX * I4_MIN);
@@ -4870,8 +4870,8 @@ static void test_VarAdd(void)
     VARADD(I2, I2_MIN, I2, I2_MIN, I4, I2_MIN + I2_MIN);
     VARADD(I4, I4_MAX, I4, I4_MIN, I4, I4_MAX + I4_MIN);
     if (HAVE_OLEAUT32_I8) {
-        VARADD(I4, I4_MAX, I4, I4_MAX, I8, (long long)I4_MAX + I4_MAX);
-        VARADD(I4, I4_MIN, I4, I4_MIN, I8, (long long)I4_MIN + I4_MIN);
+        VARADD(I4, I4_MAX, I4, I4_MAX, I8, (LONGLONG)I4_MAX + I4_MAX);
+        VARADD(I4, I4_MIN, I4, I4_MIN, I8, (LONGLONG)I4_MIN + I4_MIN);
     } else {
         VARADD(I4, I4_MAX, I4, I4_MAX, R8, (double)I4_MAX + I4_MAX);
         VARADD(I4, I4_MIN, I4, I4_MIN, R8, (double)I4_MIN + I4_MIN);
