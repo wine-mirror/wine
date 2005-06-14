@@ -119,6 +119,7 @@ static const IPersistFileVtbl pfvt;
 static const IPersistStreamVtbl psvt;
 static const IShellLinkDataListVtbl dlvt;
 static const IShellExtInitVtbl eivt;
+static const IContextMenuVtbl cmvt;
 
 /* IShellLink Implementation */
 
@@ -130,6 +131,7 @@ typedef struct
 	const IPersistStreamVtbl *lpvtblPersistStream;
 	const IShellLinkDataListVtbl *lpvtblShellLinkDataList;
 	const IShellExtInitVtbl *lpvtblShellExtInit;
+	const IContextMenuVtbl *lpvtblContextMenu;
 
 	DWORD           ref;
 
@@ -189,6 +191,13 @@ static inline IShellLinkImpl *impl_from_IShellExtInit( IShellExtInit *iface )
 }
 #define _ICOM_THIS_From_IShellExtInit(class, iface) \
     class* This = impl_from_IShellExtInit( iface )
+
+static inline IShellLinkImpl *impl_from_IContextMenu( IContextMenu *iface )
+{
+    return (IShellLinkImpl *)((char*)iface - FIELD_OFFSET(IShellLinkImpl, lpvtblContextMenu));
+}
+#define _ICOM_THIS_From_IContextMenu(class, iface) \
+    class* This = impl_from_IContextMenu( iface )
 
 static HRESULT ShellLink_UpdatePath(LPWSTR sPathRel, LPCWSTR path, LPCWSTR sWorkDir, LPWSTR* psPath);
 
@@ -1084,6 +1093,7 @@ HRESULT WINAPI IShellLink_Constructor( IUnknown *pUnkOuter,
 	sl->lpvtblPersistStream = &psvt;
 	sl->lpvtblShellLinkDataList = &dlvt;
 	sl->lpvtblShellExtInit = &eivt;
+	sl->lpvtblContextMenu = &cmvt;
 	sl->iShowCmd = SW_SHOWNORMAL;
 	sl->bDirty = FALSE;
 
@@ -1235,6 +1245,10 @@ static HRESULT WINAPI IShellLinkA_fnQueryInterface( IShellLinkA * iface, REFIID 
 	else if(IsEqualIID(riid, &IID_IShellExtInit))
 	{
 	  *ppvObj = &(This->lpvtblShellExtInit);
+	}
+	else if(IsEqualIID(riid, &IID_IContextMenu))
+	{
+	  *ppvObj = &(This->lpvtblContextMenu);
 	}
 
 	if(*ppvObj)
@@ -2312,4 +2326,69 @@ static const IShellExtInitVtbl eivt =
     ShellLink_ExtInit_AddRef,
     ShellLink_ExtInit_Release,
     ShellLink_ExtInit_Initialize
+};
+
+static HRESULT WINAPI
+ShellLink_ContextMenu_QueryInterface( IContextMenu* iface, REFIID riid, void** ppvObject )
+{
+    _ICOM_THIS_From_IContextMenu(IShellLinkImpl, iface);
+    return IShellLinkA_QueryInterface((IShellLinkA*)This, riid, ppvObject);
+}
+
+static ULONG WINAPI
+ShellLink_ContextMenu_AddRef( IContextMenu* iface )
+{
+    _ICOM_THIS_From_IContextMenu(IShellLinkImpl, iface);
+    return IShellLinkA_AddRef((IShellLinkA*)This);
+}
+
+static ULONG WINAPI
+ShellLink_ContextMenu_Release( IContextMenu* iface )
+{
+    _ICOM_THIS_From_IContextMenu(IShellLinkImpl, iface);
+    return IShellLinkA_Release((IShellLinkA*)This);
+}
+
+static HRESULT WINAPI
+ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
+                            UINT idCmdFirst, UINT idCmdLast, UINT uFlags )
+{
+    _ICOM_THIS_From_IContextMenu(IShellLinkImpl, iface);
+
+    FIXME("%p %p %u %u %u %u\n", This,
+          hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+ShellLink_InvokeCommand( IContextMenu* iface, LPCMINVOKECOMMANDINFO lpici )
+{
+    _ICOM_THIS_From_IContextMenu(IShellLinkImpl, iface);
+
+    FIXME("%p %p\n", This, lpici );
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+ShellLink_GetCommandString( IContextMenu* iface, UINT idCmd, UINT uType,
+                            UINT* pwReserved, LPSTR pszName, UINT cchMax )
+{
+    _ICOM_THIS_From_IContextMenu(IShellLinkImpl, iface);
+
+    FIXME("%p %u %u %p %p %u\n", This,
+          idCmd, uType, pwReserved, pszName, cchMax );
+
+    return E_NOTIMPL;
+}
+
+static const IContextMenuVtbl cmvt =
+{
+    ShellLink_ContextMenu_QueryInterface,
+    ShellLink_ContextMenu_AddRef,
+    ShellLink_ContextMenu_Release,
+    ShellLink_QueryContextMenu,
+    ShellLink_InvokeCommand,
+    ShellLink_GetCommandString
 };
