@@ -229,7 +229,11 @@ static const WCHAR METRICS_MESSAGELOGFONT_VALNAME[]=  {'M','e','s','s','a','g','
 static const WCHAR METRICS_STATUSLOGFONT_VALNAME[]=   {'S','t','a','t','u','s','F','o','n','t',0};
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
-static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'W','i','n','e',0};
+static const WCHAR WINE_CURRENT_USER_REGKEY[] = {'S','o','f','t','w','a','r','e','\\',
+                                                 'W','i','n','e','\\',
+                                                 'T','e','m','p','o','r','a','r','y',' ',
+                                                 'S','y','s','t','e','m',' ',
+                                                 'P','a','r','a','m','e','t','e','r','s',0};
 
 
 static const WCHAR Yes[]=                                    {'Y','e','s',0};
@@ -476,7 +480,7 @@ static HKEY get_volatile_regkey(void)
 
     if (!volatile_key)
     {
-        /* @@ Wine registry key: HKCU\Wine */
+        /* @@ Wine registry key: HKCU\Software\Wine\Temporary System Parameters */
         if (RegCreateKeyExW( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY,
                              0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
                              &volatile_key, 0 ) != ERROR_SUCCESS)
