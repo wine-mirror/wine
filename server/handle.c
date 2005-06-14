@@ -139,11 +139,21 @@ static void handle_table_destroy( struct object *obj )
 {
     int i;
     struct handle_table *table = (struct handle_table *)obj;
-    struct handle_entry *entry = table->entries;
+    struct handle_entry *entry;
 
     assert( obj->ops == &handle_table_ops );
 
-    for (i = 0; i <= table->last; i++, entry++)
+    /* first notify all objects that handles are being closed */
+    if (table->process)
+    {
+        for (i = 0, entry = table->entries; i <= table->last; i++, entry++)
+        {
+            struct object *obj = entry->ptr;
+            if (obj) obj->ops->close_handle( obj, table->process, index_to_handle(i) );
+        }
+    }
+
+    for (i = 0, entry = table->entries; i <= table->last; i++, entry++)
     {
         struct object *obj = entry->ptr;
         entry->ptr = NULL;
