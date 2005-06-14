@@ -1435,8 +1435,7 @@ static const WCHAR ScopeIDW[] = { 'S','c','o','p','e','I','D','\0' };
 static const WCHAR CacheTimeoutW[] = { 'C','a','c','h','e','T','i','m','e','o',
  'u','t','\0' };
 static const WCHAR Config_NetworkW[] = { 'S','o','f','t','w','a','r','e','\\',
- 'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g','\\','N','e',
- 't','w','o','r','k','\0' };
+                                         'W','i','n','e','\\','N','e','t','w','o','r','k','\0' };
 
 /* Initializes global variables and registers the NetBT transport */
 void NetBTInit(void)
@@ -1517,9 +1516,8 @@ void NetBTInit(void)
      * different than MS', we can't do per-adapter WINS configuration in the
      * same place.  Just do a global WINS configuration instead.
      */
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Network */
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, Config_NetworkW, 0, KEY_READ, &hKey)
-     == ERROR_SUCCESS)
+    /* @@ Wine registry key: HKCU\Software\Wine\Network */
+    if (RegOpenKeyW(HKEY_CURRENT_USER, Config_NetworkW, &hKey) == ERROR_SUCCESS)
     {
         static const char *nsValueNames[] = { "WinsServer", "BackupWinsServer" };
         char nsString[16];

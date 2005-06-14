@@ -198,23 +198,23 @@ inline static void _init_attr ( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *name )
  */
 static BOOL get_use_dns_option(void)
 {
-    static const WCHAR NetworkW[] = {'M','a','c','h','i','n','e','\\',
-                                  'S','o','f','t','w','a','r','e','\\',
-                                  'W','i','n','e','\\','W','i','n','e','\\',
-                                  'C','o','n','f','i','g','\\','N','e','t','w','o','r','k',0};
+    static const WCHAR NetworkW[] = {'S','o','f','t','w','a','r','e','\\',
+                                     'W','i','n','e','\\','N','e','t','w','o','r','k',0};
     static const WCHAR UseDNSW[] = {'U','s','e','D','n','s','C','o','m','p','u','t','e','r','N','a','m','e',0};
 
     char tmp[80];
-    HKEY hkey;
+    HKEY root, hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     BOOL ret = TRUE;
 
     _init_attr( &attr, &nameW );
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
+    attr.RootDirectory = root;
     RtlInitUnicodeString( &nameW, NetworkW );
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Network */
+    /* @@ Wine registry key: HKCU\Software\Wine\Network */
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
         RtlInitUnicodeString( &nameW, UseDNSW );
@@ -225,6 +225,7 @@ static BOOL get_use_dns_option(void)
         }
         NtClose( hkey );
     }
+    NtClose( root );
     return ret;
 }
 
