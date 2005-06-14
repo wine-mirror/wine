@@ -424,6 +424,7 @@ static void process_destroy( struct object *obj )
     assert( list_empty( &process->thread_list ));
 
     set_process_startup_state( process, STARTUP_ABORTED );
+    remove_process_locks( process );
     if (process->console) release_object( process->console );
     if (process->parent) release_object( process->parent );
     if (process->msg_fd) release_object( process->msg_fd );

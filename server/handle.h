@@ -49,6 +49,7 @@ extern obj_handle_t find_inherited_handle( struct process *process, const struct
 extern struct handle_table *alloc_handle_table( struct process *process, int count );
 extern struct handle_table *copy_handle_table( struct process *process, struct process *parent );
 extern unsigned int get_handle_table_count( struct process *process);
+extern int flush_cached_fd( struct process *process, obj_handle_t handle );
 
 extern void close_global_handles(void);
 

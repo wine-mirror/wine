@@ -59,7 +59,6 @@ extern int check_fd_events( struct fd *fd, int events );
 extern void set_fd_events( struct fd *fd, int events );
 extern obj_handle_t lock_fd( struct fd *fd, file_pos_t offset, file_pos_t count, int shared, int wait );
 extern void unlock_fd( struct fd *fd, file_pos_t offset, file_pos_t count );
-extern int flush_cached_fd( struct process *process, obj_handle_t handle );
 
 extern int default_fd_add_queue( struct object *obj, struct wait_queue_entry *entry );
 extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry *entry );
@@ -73,6 +72,7 @@ extern int no_get_file_info( struct fd *fd );
 extern void no_queue_async( struct fd *fd, void* apc, void* user, void* io_sb, int type, int count);
 extern void no_cancel_async( struct fd *fd );
 extern void main_loop(void);
+extern void remove_process_locks( struct process *process );
 
 inline static struct fd *get_obj_fd( struct object *obj ) { return obj->ops->get_fd( obj ); }
 
