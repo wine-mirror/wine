@@ -1445,41 +1445,35 @@ static void XFONT_LoadDefaultLFD(LFD* lfd, LPCSTR fonttype)
 /***********************************************************************
  *           XFONT_LoadDefault
  */
-static void XFONT_LoadDefault(LPCSTR ini, LPCSTR fonttype)
+static void XFONT_LoadDefault( HKEY hkey, LPCSTR ini, LPCSTR fonttype)
 {
     char buffer[MAX_LFD_LENGTH];
-    HKEY hkey;
+    DWORD type, count = sizeof(buffer);
 
     buffer[0] = 0;
-   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+    RegQueryValueExA(hkey, ini, 0, &type, buffer, &count);
+
+    if (*buffer)
     {
-	DWORD type, count = sizeof(buffer);
-	RegQueryValueExA(hkey, ini, 0, &type, buffer, &count);
-	RegCloseKey(hkey);
+        LFD lfd;
+        char* pch = buffer;
+        while( *pch && isspace(*pch) ) pch++;
 
-	if (*buffer)
-	{
-	    LFD lfd;
-	    char* pch = buffer;
-	    while( *pch && isspace(*pch) ) pch++;
-
-	    TRACE("Using '%s' as default %sfont\n", pch, fonttype);
-	    if (LFD_Parse(pch, &lfd) && lfd.foundry && lfd.family)
-		XFONT_LoadDefaultLFD(&lfd, fonttype);
-	    else
-		WARN("Ini section [%s]%s is malformed\n", INIFontSection, ini);
-	}
+        TRACE("Using '%s' as default %sfont\n", pch, fonttype);
+        if (LFD_Parse(pch, &lfd) && lfd.foundry && lfd.family)
+            XFONT_LoadDefaultLFD(&lfd, fonttype);
+        else
+            WARN("Ini section [%s]%s is malformed\n", INIFontSection, ini);
     }
 }
 
 /***********************************************************************
  *           XFONT_LoadDefaults
  */
-static void XFONT_LoadDefaults(void)
+static void XFONT_LoadDefaults( HKEY hkey )
 {
-    XFONT_LoadDefault(INIDefaultFixed, "fixed ");
-    XFONT_LoadDefault(INIDefault, "");
+    XFONT_LoadDefault( hkey, INIDefaultFixed, "fixed ");
+    XFONT_LoadDefault( hkey, INIDefault, "");
 }
 
 /***********************************************************************
@@ -1648,22 +1642,19 @@ typedef struct
   LPSTR                 fatAlias;
 } aliasTemplate;
 
-static void XFONT_LoadAliases(void)
+static void XFONT_LoadAliases( HKEY hkey )
 {
     char *lpResource;
     char buffer[MAX_LFD_LENGTH];
     int i = 0;
     LFD lfd;
-    HKEY hkey;
 
     /* built-ins first */
     strcpy(buffer, "-bitstream-charter-");
-   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+    if (hkey)
     {
 	DWORD type, count = sizeof(buffer);
 	RegQueryValueExA(hkey, INIDefaultSerif, 0, &type, buffer, &count);
-	RegCloseKey(hkey);
     }
     TRACE("Using '%s' as default serif font\n", buffer);
     if (LFD_Parse(buffer, &lfd))
@@ -1677,12 +1668,10 @@ static void XFONT_LoadAliases(void)
     }
 
     strcpy(buffer, "-adobe-helvetica-");
-   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+    if (hkey)
     {
 	DWORD type, count = sizeof(buffer);
 	RegQueryValueExA(hkey, INIDefaultSansSerif, 0, &type, buffer, &count);
-	RegCloseKey(hkey);
     }
     TRACE("Using '%s' as default sans serif font\n", buffer);
     if (LFD_Parse(buffer, &lfd))
@@ -1704,12 +1693,10 @@ static void XFONT_LoadAliases(void)
         snprintf( subsection, sizeof(subsection), "%s%i", INIAliasSection, i++ );
 
 	buffer[0] = 0;
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+        if (hkey)
 	{
 	    DWORD type, count = sizeof(buffer);
 	    RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count);
-	    RegCloseKey(hkey);
 	}
 
 	if (!buffer[0])
@@ -1817,7 +1804,7 @@ static void XFONT_LoadIgnore(char* lfdname)
 	WARN("Malformed font resource\n");
 }
 
-static void XFONT_LoadIgnores(void)
+static void XFONT_LoadIgnores( HKEY hkey )
 {
     int i = 0;
     char  subsection[32];
@@ -1828,21 +1815,13 @@ static void XFONT_LoadIgnores(void)
     XFONT_LoadIgnore(buffer);
 
     /* Others from INI file */
+    if (!hkey) return;
     do
     {
-	HKEY hkey;
+	DWORD type, count = sizeof(buffer);
 	sprintf( subsection, "%s%i", INIIgnoreSection, i++ );
 
-	buffer[0] = 0;
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
-	{
-	    DWORD type, count = sizeof(buffer);
-	    RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count);
-	    RegCloseKey(hkey);
-	}
-
-	if( buffer[0] )
+	if (!RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count))
 	{
 	    char* pch = buffer;
 	    while( *pch && isspace(*pch) ) pch++;
@@ -2926,11 +2905,11 @@ void X11DRV_FONT_InitX11Metrics( void )
 
   buffer[0] = 0;
   /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-  if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey))
+  if (RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey)) hkey = 0;
+  if (hkey)
   {
 	DWORD type, count = buf_size;
 	RegQueryValueExA(hkey, INIGlobalMetrics, 0, &type, buffer, &count);
-	RegCloseKey(hkey);
   }
 
   if( buffer[0] )
@@ -2981,9 +2960,9 @@ void X11DRV_FONT_InitX11Metrics( void )
   HeapFree(GetProcessHeap(), 0, buffer);
 
   XFONT_WindowsNames();
-  XFONT_LoadAliases();
-  XFONT_LoadDefaults();
-  XFONT_LoadIgnores();
+  XFONT_LoadAliases( hkey );
+  if (hkey) XFONT_LoadDefaults( hkey );
+  XFONT_LoadIgnores( hkey );
 
   /* fontList initialization is over, allocate X font cache */
 
@@ -2991,6 +2970,7 @@ void X11DRV_FONT_InitX11Metrics( void )
   XFONT_GrowFreeList(0, fontCacheSize - 1);
 
   TRACE("done!\n");
+  if (hkey) RegCloseKey(hkey);
 }
 
 /***********************************************************************
