@@ -4,6 +4,7 @@
  * Copyright 1994 Martin Ayotte
  * Copyright 1999, 2001, 2003 Eric Pouech
  * Copyright 2000 Andreas Mohr
+ * Copyright 2005 Ivan Leo Puoti
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1397,62 +1398,61 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
 }
 
 /******************************************************************
- *		CDROM_ScsiPassThroughDirect
- *
+ *        CDROM_ScsiPassThroughDirect
+ *        Implements IOCTL_SCSI_PASS_THROUGH_DIRECT
  *
  */
 static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
-#if defined(linux) && defined(CDROM_SEND_PACKET)
-    struct linux_cdrom_generic_command cmd;
-    struct request_sense sense;
+
+#if defined(linux)
+    sg_io_hdr_t cmd;
     int io;
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
-	return STATUS_BUFFER_TOO_SMALL;
+        return STATUS_BUFFER_TOO_SMALL;
 
-    if (pPacket->CdbLength > 12)
+    if (pPacket->CdbLength > 16)
         return STATUS_INVALID_PARAMETER;
 
-    if (pPacket->SenseInfoLength > sizeof(sense))
+    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
         return STATUS_INVALID_PARAMETER;
 
-    memset(&cmd, 0, sizeof(cmd));
-    memset(&sense, 0, sizeof(sense));
+    if (pPacket->DataTransferLength > 0 && !pPacket->DataBuffer)
+        return STATUS_INVALID_PARAMETER;
 
-    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
+    RtlZeroMemory(&cmd, sizeof(cmd));
 
-    cmd.buffer         = pPacket->DataBuffer;
-    cmd.buflen         = pPacket->DataTransferLength;
-    cmd.sense          = &sense;
-    cmd.quiet          = 0;
-    cmd.timeout        = pPacket->TimeOutValue*HZ;
+    cmd.interface_id   = 'S';
+    cmd.cmd_len        = pPacket->CdbLength;
+    cmd.mx_sb_len      = pPacket->SenseInfoLength;
+    cmd.dxfer_len      = pPacket->DataTransferLength;
+    cmd.dxferp         = pPacket->DataBuffer;
+    cmd.cmdp           = pPacket->Cdb;
+    cmd.sbp            = (char*)pPacket + pPacket->SenseInfoOffset;
+    cmd.timeout        = pPacket->TimeOutValue*1000;
 
     switch (pPacket->DataIn)
     {
-    case SCSI_IOCTL_DATA_OUT:
-        cmd.data_direction = CGC_DATA_WRITE;
-	break;
     case SCSI_IOCTL_DATA_IN:
-        cmd.data_direction = CGC_DATA_READ;
-	break;
+        cmd.dxfer_direction = SG_DXFER_TO_DEV;
+        break;
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.dxfer_direction = SG_DXFER_FROM_DEV;
+        break;
     case SCSI_IOCTL_DATA_UNSPECIFIED:
-        cmd.data_direction = CGC_DATA_NONE;
-	break;
+        cmd.dxfer_direction = SG_DXFER_NONE;
+        break;
     default:
        return STATUS_INVALID_PARAMETER;
     }
 
-    io = ioctl(fd, CDROM_SEND_PACKET, &cmd);
+    io = ioctl(fd, SG_IO, &cmd);
 
-    if (pPacket->SenseInfoLength != 0)
-    {
-        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
-	       &sense, pPacket->SenseInfoLength);
-    }
-
-    pPacket->ScsiStatus = cmd.stat;
+    pPacket->ScsiStatus         = cmd.status;
+    pPacket->DataTransferLength = cmd.resid;
+    pPacket->SenseInfoLength    = cmd.sb_len_wr;
 
     ret = CDROM_GetStatusCode(io);
 
@@ -1521,69 +1521,62 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
 }
 
 /******************************************************************
- *		CDROM_ScsiPassThrough
- *
+ *              CDROM_ScsiPassThrough
+ *              Implements IOCTL_SCSI_PASS_THROUGH
  *
  */
 static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
-#if defined(linux) && defined(CDROM_SEND_PACKET)
-    struct linux_cdrom_generic_command cmd;
-    struct request_sense sense;
+#if defined(linux)
+    sg_io_hdr_t cmd;
     int io;
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
-	return STATUS_BUFFER_TOO_SMALL;
+        return STATUS_BUFFER_TOO_SMALL;
 
-    if (pPacket->CdbLength > 12)
+    if (pPacket->CdbLength > 16)
         return STATUS_INVALID_PARAMETER;
 
-    if (pPacket->SenseInfoLength > sizeof(sense))
+    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
         return STATUS_INVALID_PARAMETER;
 
-    memset(&cmd, 0, sizeof(cmd));
-    memset(&sense, 0, sizeof(sense));
+    if (pPacket->DataTransferLength > 0 && pPacket->DataBufferOffset < sizeof(SCSI_PASS_THROUGH))
+        return STATUS_INVALID_PARAMETER;
 
-    memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
+    RtlZeroMemory(&cmd, sizeof(cmd));
 
-    if ( pPacket->DataBufferOffset > 0x1000 )
-    {
-        cmd.buffer     = (void*)pPacket->DataBufferOffset;
-    }
-    else
-    {
-        cmd.buffer     = (char*)pPacket + pPacket->DataBufferOffset;
-    }
-    cmd.buflen         = pPacket->DataTransferLength;
-    cmd.sense          = &sense;
-    cmd.quiet          = 0;
-    cmd.timeout        = pPacket->TimeOutValue*HZ;
+    cmd.interface_id   = 'S';
+    cmd.dxfer_len      = pPacket->DataTransferLength;
+    cmd.dxferp         = (char*)pPacket + pPacket->DataBufferOffset;
+    cmd.cmd_len        = pPacket->CdbLength;
+    cmd.cmdp           = pPacket->Cdb;
+    cmd.mx_sb_len      = pPacket->SenseInfoLength;
+    cmd.timeout        = pPacket->TimeOutValue*1000;
+
+    if(cmd.mx_sb_len > 0)
+        cmd.sbp = (char*)pPacket + pPacket->SenseInfoOffset;
 
     switch (pPacket->DataIn)
     {
-    case SCSI_IOCTL_DATA_OUT:
-        cmd.data_direction = CGC_DATA_WRITE;
-	break;
     case SCSI_IOCTL_DATA_IN:
-        cmd.data_direction = CGC_DATA_READ;
-	break;
+        cmd.dxfer_direction = SG_DXFER_TO_DEV;
+                             break;
+    case SCSI_IOCTL_DATA_OUT:
+        cmd.dxfer_direction = SG_DXFER_FROM_DEV;
+                             break;
     case SCSI_IOCTL_DATA_UNSPECIFIED:
-        cmd.data_direction = CGC_DATA_NONE;
-	break;
+        cmd.dxfer_direction = SG_DXFER_NONE;
+                             break;
     default:
        return STATUS_INVALID_PARAMETER;
     }
 
-    io = ioctl(fd, CDROM_SEND_PACKET, &cmd);
+    io = ioctl(fd, SG_IO, &cmd);
 
-    if (pPacket->SenseInfoLength != 0)
-    {
-        memcpy((char*)pPacket + pPacket->SenseInfoOffset,
-	       &sense, pPacket->SenseInfoLength);
-    }
-
-    pPacket->ScsiStatus = cmd.stat;
+    pPacket->ScsiStatus         = cmd.status;
+    pPacket->DataTransferLength = cmd.resid;
+    pPacket->SenseInfoLength    = cmd.sb_len_wr;
 
     ret = CDROM_GetStatusCode(io);
 
