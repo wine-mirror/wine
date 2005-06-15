@@ -22,6 +22,7 @@
 #define __WINE_TEST_H
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <windef.h>
 #include <winbase.h>
 
@@ -43,7 +44,7 @@ extern int winetest_get_mainargs( char*** pargv );
 #ifdef STANDALONE
 #define START_TEST(name) \
   static void func_##name(void); \
-  static const struct test winetest_testlist[] = { { #name, func_##name }, { 0, 0 } }; \
+  const struct test winetest_testlist[] = { { #name, func_##name }, { 0, 0 } }; \
   static void func_##name(void)
 #else
 #define START_TEST(name) void func_##name(void)
@@ -129,7 +130,7 @@ struct test
     void (*func)(void);
 };
 
-static const struct test winetest_testlist[];
+extern const struct test winetest_testlist[];
 
 /* debug level */
 int winetest_debug = 1;

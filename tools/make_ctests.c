@@ -130,7 +130,7 @@ int main( int argc, const char** argv )
 
     fprintf( out,
              "\n"
-             "static const struct test winetest_testlist[] =\n"
+             "const struct test winetest_testlist[] =\n"
              "{\n" );
 
     for (i = 0; i < count; i++) fprintf( out, "    { \"%s\", func_%s },\n", tests[i], tests[i] );
