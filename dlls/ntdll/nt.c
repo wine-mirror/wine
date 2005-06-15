@@ -605,7 +605,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             sbi.bKeNumberProcessors = 1; /* FIXME */
             len = sizeof(sbi);
 
-            if ( Length >= len)
+            if ( Length == len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
                 else memcpy( SystemInformation, &sbi, len);
