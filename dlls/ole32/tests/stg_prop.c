@@ -252,7 +252,7 @@ static void testProps(void)
     DeleteFileW(filename);
 }
 
-void testCodepage(void)
+static void testCodepage(void)
 {
     static const WCHAR szDot[] = { '.',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
@@ -379,7 +379,7 @@ void testCodepage(void)
      * and I expect it would under Windows as well, yet it succeeds.  There's
      * obviously something about string conversion I don't understand.
      */
-#if 0
+    if(0) {
     static const char strVal[] = { 0x81, 0xff, 0x04, 0 };
     /* Set code page to 950 (Traditional Chinese) */
     U(var).iVal = 950;
@@ -399,7 +399,7 @@ void testCodepage(void)
     ok(SUCCEEDED(hr), "ReadMultiple failed: 0x%08lx\n", hr);
     ok(var.vt == VT_LPSTR && !strcmp(U(var).pszVal, strVal),
      "Didn't get expected type or value for property\n");
-#endif
+    }
 
     IPropertyStorage_Release(propertyStorage);
     IPropertySetStorage_Release(propSetStorage);
@@ -479,7 +479,7 @@ static void testFmtId(void)
     ok(SUCCEEDED(hr), "PropStgNameToFmtId failed: 0x%08lx\n", hr);
     ok(!memcmp(&fmtid, &IID_IPropertySetStorage, sizeof(fmtid)),
      "Got unexpected FMTID, expected IID_IPropertySetStorage\n");
-}
+    }
 }
 
 START_TEST(stg_prop)

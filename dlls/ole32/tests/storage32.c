@@ -32,7 +32,7 @@
 
 DEFINE_GUID( test_stg_cls, 0x88888888, 0x0425, 0x0000, 0,0,0,0,0,0,0,0);
 
-void test_hglobal_storage_stat(void)
+static void test_hglobal_storage_stat(void)
 {
     ILockBytes *ilb = NULL;
     IStorage *stg = NULL;
@@ -66,7 +66,7 @@ void test_hglobal_storage_stat(void)
     ok( refcount == 0, "ILockBytes refcount is wrong\n");
 }
 
-void test_create_storage_modes(void)
+static void test_create_storage_modes(void)
 {
    static const WCHAR szPrefix[] = { 's','t','g',0 };
    static const WCHAR szDot[] = { '.',0 };
@@ -209,7 +209,7 @@ void test_create_storage_modes(void)
    ok(DeleteFileW(filename), "failed to delete file\n");
 }
 
-void test_storage_stream(void)
+static void test_storage_stream(void)
 {
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
@@ -341,7 +341,7 @@ static BOOL is_zero_length(LPCWSTR filename)
     return len == 0;
 }
 
-void test_open_storage(void)
+static void test_open_storage(void)
 {
     static const WCHAR szPrefix[] = { 's','t','g',0 };
     static const WCHAR szNonExist[] = { 'n','o','n','e','x','i','s','t',0 };
@@ -444,7 +444,7 @@ void test_open_storage(void)
     ok(r, "file didn't exist\n");
 }
 
-void test_storage_suminfo(void)
+static void test_storage_suminfo(void)
 {
     static const WCHAR szDot[] = { '.',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
