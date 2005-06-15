@@ -124,7 +124,7 @@ static void write_typeformatstring(void)
 }
 
 
-unsigned int get_required_stack_size(type_t *type)
+static unsigned int get_required_stack_size(type_t *type)
 {
     switch(type->type)
     {

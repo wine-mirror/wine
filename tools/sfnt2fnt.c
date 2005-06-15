@@ -54,13 +54,13 @@ typedef struct {
 
 #include "poppack.h"
 
-void usage(char **argv)
+static void usage(char **argv)
 {
     fprintf(stderr, "%s foo.ttf ppem enc dpi def_char avg_width\n", argv[0]);
     return;
 }
 
-int lookup_charset(int enc)
+static int lookup_charset(int enc)
 {
     /* FIXME: make winelib app and use TranslateCharsetInfo */
     switch(enc) {

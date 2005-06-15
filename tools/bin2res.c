@@ -64,13 +64,13 @@ static const char* help =
 	"To force processing of all resources, use the -f flag.\n"
 	"To process a particular file, use the -i/-o options.\n";
 
-void usage(void)
+static void usage(void)
 {
     printf(help);
     exit(1);
 }
 
-int insert_hexdump (FILE* outfile, FILE* infile)
+static int insert_hexdump (FILE* outfile, FILE* infile)
 {
     int i, c;
 
@@ -86,14 +86,14 @@ int insert_hexdump (FILE* outfile, FILE* infile)
     return 1;
 }
 
-int hex2bin(char c)
+static int hex2bin(char c)
 {
     if (!isxdigit(c)) return -1024;
     if (isdigit(c)) return c - '0';
     return toupper(c) - 'A' + 10;
 }
 
-int extract_hexdump (FILE* outfile, FILE* infile)
+static int extract_hexdump (FILE* outfile, FILE* infile)
 {
     int byte, c;
 
@@ -110,7 +110,7 @@ int extract_hexdump (FILE* outfile, FILE* infile)
     return 1;
 }
 
-const char* parse_marker(const char *line, time_t* last_updated)
+static const char* parse_marker(const char *line, time_t* last_updated)
 {
     static char res_file_name[PATH_MAX], *rpos, *wpos;
     struct stat st;
@@ -125,7 +125,7 @@ const char* parse_marker(const char *line, time_t* last_updated)
     return res_file_name;
 }
 
-int process_resources(const char* input_file_name, const char* specific_file_name, 
+static int process_resources(const char* input_file_name, const char* specific_file_name, 
 		      int inserting, int force_processing, int verbose)
 {
     char buffer[2048], tmp_file_name[PATH_MAX];
