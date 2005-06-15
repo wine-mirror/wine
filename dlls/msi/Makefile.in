@@ -19,6 +19,7 @@ C_SRCS = \
 	events.c \
 	format.c \
 	handle.c \
+	helpers.c \
 	insert.c \
 	msi.c \
 	msiquery.c \

@@ -205,6 +205,8 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
 UINT ACTION_AppSearch(MSIPACKAGE *package);
 UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
 
+
+/* Helpers */
 DWORD deformat_string(MSIPACKAGE *package, LPCWSTR ptr, WCHAR** data );
 WCHAR *load_dynamic_stringW(MSIRECORD *row, INT index);
 LPWSTR load_dynamic_property(MSIPACKAGE *package, LPCWSTR prop, UINT* rc);
@@ -215,6 +217,17 @@ int get_loaded_feature(MSIPACKAGE* package, LPCWSTR Feature );
 int get_loaded_file(MSIPACKAGE* package, LPCWSTR file);
 int track_tempfile(MSIPACKAGE *package, LPCWSTR name, LPCWSTR path);
 UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action);
+UINT build_icon_path(MSIPACKAGE *, LPCWSTR, LPWSTR *);
+DWORD build_version_dword(LPCWSTR);
+LPWSTR build_directory_name(DWORD , ...);
+BOOL create_full_pathW(const WCHAR *path);
+BOOL ACTION_VerifyComponentForAction(MSIPACKAGE*, INT, INSTALLSTATE);
+BOOL ACTION_VerifyFeatureForAction(MSIPACKAGE*, INT, INSTALLSTATE);
+void reduce_to_longfilename(WCHAR*);
+void reduce_to_shortfilename(WCHAR*);
+LPWSTR create_component_advertise_string(MSIPACKAGE*, MSICOMPONENT*, LPCWSTR);
+void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
+
 
 /* control event stuff */
 VOID ControlEvent_FireSubscribedEvent(MSIPACKAGE *package, LPCWSTR event,
@@ -225,5 +238,13 @@ VOID ControlEvent_SubscribeToEvent(MSIPACKAGE *package, LPCWSTR event,
 VOID ControlEvent_UnSubscribeToEvent( MSIPACKAGE *package, LPCWSTR event,
                                       LPCWSTR control, LPCWSTR attribute );
 
-/* version stuff for upgrades */
-DWORD build_version_dword(LPCWSTR version_string);
+/* User Interface messages from the actions */
+void ui_progress(MSIPACKAGE *, int, int, int, int);
+void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *);
+
+
+/* string consts use a number of places  and defined in helpers.c*/
+extern const WCHAR cszSourceDir[];
+extern const WCHAR szProductCode[];
+extern const WCHAR cszRootDrive[];
+extern const WCHAR cszbs[];
