@@ -178,6 +178,7 @@ static BOOL HCR_RegGetDefaultIconW(HKEY hkey, LPWSTR szDest, DWORD len, LPDWORD 
           else
              *dwNr=0; /* sometimes the icon number is missing */
 	  ParseFieldW (szDest, 1, szDest, len);
+          PathUnquoteSpacesW(szDest);
 	  return TRUE;
 	}
 	return FALSE;
@@ -201,6 +202,7 @@ static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, LPDWORD d
           else
              *dwNr=0; /* sometimes the icon number is missing */
 	  ParseFieldA (szDest, 1, szDest, len);
+          PathUnquoteSpacesA(szDest);
 	  return TRUE;
 	}
 	return FALSE;
