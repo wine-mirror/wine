@@ -3129,8 +3129,9 @@ BOOL WINAPI DuplicateToken(
         SECURITY_IMPERSONATION_LEVEL ImpersonationLevel,
         PHANDLE DuplicateTokenHandle )
 {
-    return DuplicateTokenEx( ExistingTokenHandle, 0, NULL, ImpersonationLevel,
-                             TokenImpersonation, DuplicateTokenHandle );
+    return DuplicateTokenEx( ExistingTokenHandle, TOKEN_IMPERSONATE | TOKEN_QUERY,
+                             NULL, ImpersonationLevel, TokenImpersonation,
+                             DuplicateTokenHandle );
 }
 
 BOOL WINAPI EnumDependentServicesA(
