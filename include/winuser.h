@@ -2344,6 +2344,9 @@ typedef struct tagSCROLLBARINFO
 #define CB_GETDROPPEDWIDTH       0x015f
 #define CB_SETDROPPEDWIDTH       0x0160
 #define CB_INITSTORAGE           0x0161
+#define CB_MULTIPLEADDSTRING     0x0163
+#define CB_GETCOMBOBOXINFO       0x0164
+#define CB_MSGMAX                0x0165
 
 /* Combo box notification codes */
 #define CBN_ERRSPACE        (-1)
