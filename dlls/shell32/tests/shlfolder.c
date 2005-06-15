@@ -343,6 +343,47 @@ static void test_GetAttributesOf(void)
     IShellFolder_Release(psfDesktop);
 }    
 
+static void test_SHGetPathFromIDList(void)
+{
+    SHITEMID emptyitem = { 0, { 0 } };
+    LPCITEMIDLIST pidlEmpty = (LPCITEMIDLIST)&emptyitem;
+    LPITEMIDLIST pidlMyComputer;
+    WCHAR wszPath[MAX_PATH], wszDesktop[MAX_PATH];
+    BOOL result;
+    HRESULT hr;
+    LPSHELLFOLDER psfDesktop;
+    WCHAR wszMyComputer[] = { 
+        ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
+        'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
+
+    /* Calling SHGetPathFromIDList with an empty pidl should return the desktop folder's path. */
+    result = SHGetSpecialFolderPathW(NULL, wszDesktop, CSIDL_DESKTOP, FALSE);
+    ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOP) failed! Last error: %08lx\n", GetLastError());
+    if (!result) return;
+    
+    result = SHGetPathFromIDListW(pidlEmpty, wszPath);
+    ok(result, "SHGetPathFromIDListW failed! Last error: %08lx\n", GetLastError());
+    if (!result) return;
+    ok(!lstrcmpiW(wszDesktop, wszPath), "SHGetPathFromIDList didn't return desktop path for empty pidl!\n");
+
+    /* MyComputer does not map to a filesystem path. SHGetPathFromIDList should fail. */
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
+    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08lx\n", hr);
+    IShellFolder_Release(psfDesktop);
+    if (FAILED(hr)) return;
+
+    SetLastError(0xdeadbeef);
+    result = SHGetPathFromIDListW(pidlMyComputer, wszPath);
+    ok (!result, "SHGetPathFromIDList succeeded where it shouldn't!\n");
+    ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDList shouldn't set last error! Last error: %08lx\n", GetLastError());
+
+    ILFree(pidlMyComputer);
+}
+
 START_TEST(shlfolder)
 {
     ITEMIDLIST *newPIDL;
@@ -376,6 +417,7 @@ START_TEST(shlfolder)
     test_BindToObject();
     test_GetDisplayName();
     test_GetAttributesOf();
+    test_SHGetPathFromIDList();
 
     hr = IShellFolder_Release(testIShellFolder);
     ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
