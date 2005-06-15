@@ -974,7 +974,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
  *  Success: Handle to the new key container.
  *  Failure: INVALID_HANDLE_VALUE
  */
-static HCRYPTPROV new_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTableProvStruc pVTable)
+static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, PVTableProvStruc pVTable)
 {
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;

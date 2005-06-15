@@ -42,7 +42,7 @@ static char szEditTest2Name[] = "Edit Test 2 window class";
 static HINSTANCE hinst;
 static HWND hwndET2;
 
-HWND create_editcontrol (DWORD style, DWORD exstyle)
+static HWND create_editcontrol (DWORD style, DWORD exstyle)
 {
     HWND handle;
 

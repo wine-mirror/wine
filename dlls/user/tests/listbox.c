@@ -37,7 +37,7 @@ static const char *strings[4] = {
   "Fourth added which is very long because at some time we only had a 256 byte character buffer and that was overflowing in one of those applications that had a common dialog file open box and tried to add a 300 characters long custom filter string which of course the code did not like and crashed. Just make sure this string is longer than 256 characters."
 };
 
-HWND
+static HWND
 create_listbox (DWORD add_style)
 {
   HWND handle=CreateWindow ("LISTBOX", "TestList",
@@ -75,7 +75,7 @@ struct listbox_test {
   struct listbox_stat   sel,   sel_todo;
 };
 
-void
+static void
 listbox_query (HWND handle, struct listbox_stat *results)
 {
   results->selected = SendMessage (handle, LB_GETCURSEL, 0, 0);
@@ -84,7 +84,7 @@ listbox_query (HWND handle, struct listbox_stat *results)
   results->selcount = SendMessage (handle, LB_GETSELCOUNT, 0, 0);
 }
 
-void
+static void
 buttonpress (HWND handle, WORD x, WORD y)
 {
   LPARAM lp=x+(y<<16);
@@ -95,7 +95,7 @@ buttonpress (HWND handle, WORD x, WORD y)
   REDRAW;
 }
 
-void
+static void
 keypress (HWND handle, WPARAM keycode, BYTE scancode, BOOL extended)
 {
   LPARAM lp=1+(scancode<<16)+(extended?KEYEVENTF_EXTENDEDKEY:0);
@@ -121,7 +121,7 @@ keypress (HWND handle, WPARAM keycode, BYTE scancode, BOOL extended)
   listbox_todo_field_ok(t, s, caret, got); \
   listbox_todo_field_ok(t, s, selcount, got)
 
-void
+static void
 check (const struct listbox_test test)
 {
   struct listbox_stat answer;
@@ -172,7 +172,7 @@ check (const struct listbox_test test)
   DestroyWindow (hLB);
 }
 
-void check_item_height()
+static void check_item_height(void)
 {
     HWND hLB;
     HDC hdc;

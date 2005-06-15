@@ -2627,7 +2627,7 @@ static void test_window_styles()
     check_window_style(0, WS_EX_APPWINDOW, WS_CLIPSIBLINGS|WS_CAPTION, WS_EX_APPWINDOW|WS_EX_WINDOWEDGE);
 }
 
-void test_scrollvalidate( HWND parent)
+static void test_scrollvalidate( HWND parent)
 {
     HDC hdc;
     HRGN hrgn=CreateRectRgn(0,0,0,0);
@@ -2758,7 +2758,7 @@ void test_scrollvalidate( HWND parent)
 
 /* couple of tests of return values of scrollbar functions
  * called on a scrollbarless window */ 
-void test_scroll()
+static void test_scroll(void)
 {
     BOOL ret;
     INT min, max;
@@ -2792,7 +2792,7 @@ void test_scroll()
     DestroyWindow( hwnd);
 }
 
-static void test_params()
+static void test_params(void)
 {
     INT rc;
 

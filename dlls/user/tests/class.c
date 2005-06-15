@@ -547,12 +547,12 @@ static void test_instances(void)
     check_thread_instance( "EDIT", (HINSTANCE)0x12345678, (HINSTANCE)0x12345678, (HINSTANCE)0xdeadbeef );
 }
 
-LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static LRESULT WINAPI TestDlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-BOOL RegisterTestDialog(HINSTANCE hInstance)
+static BOOL RegisterTestDialog(HINSTANCE hInstance)
 {
     WNDCLASSEX wcx;
     ATOM atom = 0;
@@ -582,7 +582,7 @@ BOOL RegisterTestDialog(HINSTANCE hInstance)
 
 /* test registering a dialog box created by using the CLASS directive in a
    resource file, then test creating the dialog using CreateDialogParam. */
-void WINAPI CreateDialogParamTest(HINSTANCE hInstance)
+static void WINAPI CreateDialogParamTest(HINSTANCE hInstance)
 {
     HWND hWndMain;
 

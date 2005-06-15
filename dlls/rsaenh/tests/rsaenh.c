@@ -1091,7 +1091,7 @@ static void test_verify_signature() {
     if (!result) return;
 }
 
-void test_rsa_encrypt()
+static void test_rsa_encrypt(void)
 {
     HCRYPTKEY hRSAKey;
     BYTE abData[2048] = "Wine rocks!";
@@ -1125,7 +1125,7 @@ void test_rsa_encrypt()
     CryptDestroyKey(hRSAKey);
 }
         
-void test_schannel_provider()
+static void test_schannel_provider(void)
 {
     HCRYPTPROV hProv;
     HCRYPTKEY hRSAKey, hMasterSecret, hServerWriteKey, hServerWriteMACKey;
@@ -1372,7 +1372,7 @@ void test_schannel_provider()
     CryptReleaseContext(hProv, 0);
 }
 
-void test_enum_container()
+static void test_enum_container(void)
 {
     BYTE abContainerName[256];
     DWORD dwBufferLen;

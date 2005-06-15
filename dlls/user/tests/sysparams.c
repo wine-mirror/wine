@@ -160,7 +160,7 @@ static void test_change_message( int action, int optional )
     change_last_param = 0;
 }
 
-static BOOL test_error_msg ( int rc, char *name )
+static BOOL test_error_msg ( int rc, const char *name )
 {
     DWORD last_error = GetLastError();
 
