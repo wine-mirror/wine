@@ -42,7 +42,6 @@ SUBDIRS = \
 
 # Sub-directories to install for install-lib
 INSTALLLIBSUBDIRS = \
-	documentation \
 	$(FONTSSUBDIRS) \
 	loader \
 	programs \
@@ -141,17 +140,8 @@ TAGS etags:
 tags ctags:
 	find $(TOPSRCDIR) -name '*.[ch]' -a -not -name '*.spec.c' -a -not -name '*.dbg.c' -print | ctags --c-types=+px -L -
 
-manpages:
-	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/man3w
-	cd dlls && $(MAKE) man
-
-htmlpages:
-	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/html
-	cd dlls && $(MAKE) doc-html
-
-sgmlpages:
-	$(MKINSTALLDIRS) $(TOPOBJDIR)/documentation/api-guide
-	cd dlls && $(MAKE) doc-sgml
+manpages htmlpages sgmlpages:
+	cd documentation && $(MAKE) $@
 
 clean::
 	$(RM) wine
@@ -161,6 +151,6 @@ distclean: clean
 	$(RM) -r autom4te.cache
 	$(RM) `find . \( -name Makefile -o -size 0 \) -print`
 
-.PHONY: manpages htmlpages distclean
+.PHONY: manpages htmlpages sgmlpages distclean
 
 ### Dependencies:

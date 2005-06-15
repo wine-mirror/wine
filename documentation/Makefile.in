@@ -8,9 +8,23 @@ EXTRASUBDIRS = samples
 
 @MAKE_RULES@
 
-install-api-man::
+manpages:
+	$(MKINSTALLDIRS) man$(api_manext)
+	cd $(DLLDIR) && $(MAKE) man
+
+htmlpages:
+	$(MKINSTALLDIRS) html
+	cd $(DLLDIR) && $(MAKE) doc-html
+
+sgmlpages:
+	$(MKINSTALLDIRS) api-guide
+	cd $(DLLDIR) && $(MAKE) doc-sgml
+
+.PHONY: manpages htmlpages sgmlpages
+
+install:: manpages
 	$(MKINSTALLDIRS) $(mandir)/man$(api_manext)
-	for i in man$(api_manext)/*; do $(INSTALL_DATA) $$i $(mandir)/man$(api_manext); done
+	for i in man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(mandir)/$$i; done
 
 clean::
 	$(RM) -r html api-guide man$(api_manext)
