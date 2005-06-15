@@ -42,11 +42,29 @@ static const struct encodedInt ints[] = {
  { 0xbaddf00d, { 2, 4, 0xba, 0xdd, 0xf0, 0x0d } },
 };
 
-static void test_encodeint(DWORD dwEncoding)
+struct encodedBigInt
+{
+    BYTE *val;
+    BYTE *encoded;
+    BYTE *decoded;
+};
+
+static const struct encodedBigInt bigInts[] = {
+ { "\xff\xff\x01\x02\x03\x04\x05\x06\x07\x08",
+   "\x02\x0a\x08\x07\x06\x05\x04\x03\x02\x01\xff\xff",
+   "\xff\xff\x01\x02\x03\x04\x05\x06\x07\x08" },
+ { "\x08\x07\x06\x05\x04\x03\x02\x01\xff\xff\xff",
+   "\x02\x09\xff\x01\x02\x03\x04\x05\x06\x07\x08",
+   "\x08\x07\x06\x05\x04\x03\x02\x01\xff" },
+};
+
+static void test_encodeInt(DWORD dwEncoding)
 {
     DWORD bufSize = 0;
     int i;
     BOOL ret;
+    CRYPT_INTEGER_BLOB blob;
+    BYTE *buf = NULL;
 
     /* CryptEncodeObjectEx with NULL bufSize crashes..
     ret = CryptEncodeObjectEx(3, X509_INTEGER, &ints[0].val, 0, NULL, NULL,
@@ -66,8 +84,7 @@ static void test_encodeint(DWORD dwEncoding)
      "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
     for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
     {
-        BYTE *buf = NULL;
-
+        /* encode as normal integer */
         ret = CryptEncodeObjectEx(dwEncoding, X509_INTEGER, &ints[i].val, 0,
          NULL, NULL, &bufSize);
         ok(ret, "Expected success, got %ld\n", GetLastError());
@@ -82,10 +99,54 @@ static void test_encodeint(DWORD dwEncoding)
              "Encoded value of 0x%08x didn't match expected\n", ints[i].val);
             LocalFree(buf);
         }
+        /* encode as multibyte integer */
+        blob.cbData = sizeof(ints[i].val);
+        blob.pbData = (BYTE *)&ints[i].val;
+        ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
+         0, NULL, NULL, &bufSize);
+        ok(ret, "Expected success, got %ld\n", GetLastError());
+        ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
+        if (buf)
+        {
+            ok(buf[0] == 2, "Got unexpected type %d for integer (expected 2)\n",
+             buf[0]);
+            ok(buf[1] == ints[i].encoded[1], "Got length %d, expected %d\n",
+             buf[1], ints[i].encoded[1]);
+            ok(!memcmp(buf + 1, ints[i].encoded + 1, ints[i].encoded[1] + 1),
+             "Encoded value of 0x%08x didn't match expected\n", ints[i].val);
+            LocalFree(buf);
+        }
+    }
+    /* encode a couple bigger ints, just to show it's little-endian and leading
+     * sign bytes are dropped
+     */
+    for (i = 0; i < sizeof(bigInts) / sizeof(bigInts[0]); i++)
+    {
+        blob.cbData = strlen(bigInts[i].val);
+        blob.pbData = (BYTE *)bigInts[i].val;
+        ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
+         0, NULL, NULL, &bufSize);
+        ok(ret, "Expected success, got %ld\n", GetLastError());
+        ret = CryptEncodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, &blob,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %ld\n", GetLastError());
+        if (buf)
+        {
+            ok(buf[0] == 2, "Got unexpected type %d for integer (expected 2)\n",
+             buf[0]);
+            ok(buf[1] == bigInts[i].encoded[1], "Got length %d, expected %d\n",
+             buf[1], bigInts[i].encoded[1]);
+            ok(!memcmp(buf + 1, bigInts[i].encoded + 1,
+             bigInts[i].encoded[1] + 1),
+             "Encoded value didn't match expected\n");
+            LocalFree(buf);
+        }
     }
 }
 
-static void test_decodeint(DWORD dwEncoding)
+static void test_decodeInt(DWORD dwEncoding)
 {
     static const char bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
     static const char testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
@@ -138,6 +199,33 @@ static void test_decodeint(DWORD dwEncoding)
         {
             ok(!memcmp(buf, &ints[i].val, bufSize), "Expected %d, got %d\n",
              ints[i].val, *(int *)buf);
+            LocalFree(buf);
+        }
+    }
+    for (i = 0; i < sizeof(bigInts) / sizeof(bigInts[0]); i++)
+    {
+        ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER,
+         (BYTE *)bigInts[i].encoded, bigInts[i].encoded[1] + 2, 0, NULL, NULL,
+         &bufSize);
+        ok(ret && GetLastError() == NOERROR,
+         "Expected success and NOERROR, got %ld\n", GetLastError());
+        ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER,
+         (BYTE *)bigInts[i].encoded, bigInts[i].encoded[1] + 2,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %ld\n", GetLastError());
+        ok(bufSize >= sizeof(CRYPT_INTEGER_BLOB),
+         "Expected size at least %d, got %ld\n", sizeof(CRYPT_INTEGER_BLOB),
+         bufSize);
+        ok(buf != NULL, "Expected allocated buffer\n");
+        if (buf)
+        {
+            CRYPT_INTEGER_BLOB *blob = (CRYPT_INTEGER_BLOB *)buf;
+
+            ok(blob->cbData == strlen(bigInts[i].decoded),
+             "Expected len %d, got %ld\n", strlen(bigInts[i].decoded),
+             blob->cbData);
+            ok(!memcmp(blob->pbData, bigInts[i].decoded, blob->cbData),
+             "Unexpected value\n");
             LocalFree(buf);
         }
     }
@@ -646,8 +734,8 @@ START_TEST(encode)
 
     for (i = 0; i < sizeof(encodings) / sizeof(encodings[0]); i++)
     {
-        test_encodeint(encodings[i]);
-        test_decodeint(encodings[i]);
+        test_encodeInt(encodings[i]);
+        test_decodeInt(encodings[i]);
         test_encodeFiletime(encodings[i]);
         test_decodeFiletime(encodings[i]);
         test_encodeName(encodings[i]);
