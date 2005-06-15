@@ -75,61 +75,49 @@ BOOL WINAPI EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW callback, LPVOID context )
 /***********************************************************************
  *           EnumProcesses (PSAPI.@)
  */
-BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
+BOOL WINAPI EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
 {
-    HANDLE	hSnapshot;
-    DWORD	count;
-    DWORD	countMax;
-    DWORD       pid;
-    int         ret;
+    SYSTEM_PROCESS_INFORMATION *spi;
+    NTSTATUS status;
+    PVOID pBuf = NULL;
+    ULONG nAlloc = 0x8000;
 
-    TRACE("(%p, %ld, %p)\n", lpidProcess,cb, lpcbNeeded);
+    do {
+        if (pBuf != NULL) 
+        {
+            HeapFree(GetProcessHeap(), 0, pBuf);
+            nAlloc *= 2;
+        }
 
-    if ( lpidProcess == NULL )
-        cb = 0;
-    if ( lpcbNeeded != NULL )
-        *lpcbNeeded = 0;
+        pBuf = HeapAlloc(GetProcessHeap(), 0, nAlloc);
+        if (pBuf == NULL)
+            return FALSE;
 
-    SERVER_START_REQ( create_snapshot )
+        status = NtQuerySystemInformation(SystemProcessInformation, pBuf,
+                                          nAlloc, NULL);
+    } while (status == STATUS_INFO_LENGTH_MISMATCH);
+
+    if (status != STATUS_SUCCESS)
     {
-        req->flags   = SNAP_PROCESS;
-        req->inherit = FALSE;
-        req->pid     = 0;
-        wine_server_call_err( req );
-        hSnapshot = reply->handle;
-    }
-    SERVER_END_REQ;
-
-    if ( hSnapshot == 0 )
-    {
-        FIXME("cannot create snapshot\n");
+        HeapFree(GetProcessHeap(), 0, pBuf);
+        SetLastError(RtlNtStatusToDosError(status));
         return FALSE;
     }
-    count = 0;
-    countMax = cb / sizeof(DWORD);
-    for (;;)
+
+    spi = pBuf;
+
+    for(*lpcbUsed = 0; cb >= sizeof(DWORD); cb -= sizeof(DWORD))
     {
-        SERVER_START_REQ( next_process )
-        {
-            req->handle = hSnapshot;
-            req->reset = (count == 0);
-            if ((ret = !wine_server_call_err( req )))
-                pid = reply->pid;
-        }
-        SERVER_END_REQ;
-        if (!ret) break;
-        TRACE("process 0x%08lx\n", pid);
-        if ( count < countMax )
-            lpidProcess[count] = pid;
-        count++;
+        *lpdwProcessIDs++ = spi->dwProcessID;
+        *lpcbUsed += sizeof(DWORD);
+
+        if(spi->dwOffset == 0)
+            break;
+
+        spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->dwOffset);
     }
-    CloseHandle( hSnapshot );
 
-    if ( lpcbNeeded != NULL )
-        *lpcbNeeded = sizeof(DWORD) * count;
-
-    TRACE("return %lu processes\n", count);
-
+    HeapFree(GetProcessHeap(), 0, pBuf);
     return TRUE;
 }
 
