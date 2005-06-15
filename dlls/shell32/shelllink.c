@@ -660,8 +660,8 @@ static HRESULT Stream_LoadAdvertiseInfo( IStream* stm, LPWSTR *str )
     }
 
     *str = HeapAlloc( GetProcessHeap(), 0, 
-                     (strlenW(buffer.szwDarwinID)+1) * sizeof(WCHAR) );
-    strcpyW( *str, buffer.szwDarwinID );
+                     (lstrlenW(buffer.szwDarwinID)+1) * sizeof(WCHAR) );
+    lstrcpyW( *str, buffer.szwDarwinID );
 
     return S_OK;
 }
@@ -958,7 +958,7 @@ static HRESULT WINAPI IPersistStream_fnSave(
          * so if the executable does not exist the just trust the path they
          * gave us
          */
-        if (!*exePath) strcpyW(exePath,This->sPath);
+        if (!*exePath) lstrcpyW(exePath,This->sPath);
     }
 
     memset(&header, 0, sizeof(header));
@@ -1443,25 +1443,25 @@ static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA * iface, LPCSTR psz
 
 static HRESULT WINAPI IShellLinkA_fnGetHotkey(IShellLinkA * iface, WORD *pwHotkey)
 {
-	IShellLinkImpl *This = (IShellLinkImpl *)iface;
+    IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-	TRACE("(%p)->(%p)(0x%08x)\n",This, pwHotkey, This->wHotKey);
+    TRACE("(%p)->(%p)(0x%08x)\n",This, pwHotkey, This->wHotKey);
 
-	*pwHotkey = This->wHotKey;
+    *pwHotkey = This->wHotKey;
 
-	return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellLinkA_fnSetHotkey(IShellLinkA * iface, WORD wHotkey)
 {
-	IShellLinkImpl *This = (IShellLinkImpl *)iface;
+    IShellLinkImpl *This = (IShellLinkImpl *)iface;
 
-	TRACE("(%p)->(hotkey=%x)\n",This, wHotkey);
+    TRACE("(%p)->(hotkey=%x)\n",This, wHotkey);
 
-	This->wHotKey = wHotkey;
-	This->bDirty = TRUE;
+    This->wHotKey = wHotkey;
+    This->bDirty = TRUE;
 
-	return S_OK;
+    return S_OK;
 }
 
 static HRESULT WINAPI IShellLinkA_fnGetShowCmd(IShellLinkA * iface, INT *piShowCmd)
@@ -1622,27 +1622,27 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 
 static const IShellLinkAVtbl slvt =
 {
-	IShellLinkA_fnQueryInterface,
-	IShellLinkA_fnAddRef,
-	IShellLinkA_fnRelease,
-	IShellLinkA_fnGetPath,
-	IShellLinkA_fnGetIDList,
-	IShellLinkA_fnSetIDList,
-	IShellLinkA_fnGetDescription,
-	IShellLinkA_fnSetDescription,
-	IShellLinkA_fnGetWorkingDirectory,
-	IShellLinkA_fnSetWorkingDirectory,
-	IShellLinkA_fnGetArguments,
-	IShellLinkA_fnSetArguments,
-	IShellLinkA_fnGetHotkey,
-	IShellLinkA_fnSetHotkey,
-	IShellLinkA_fnGetShowCmd,
-	IShellLinkA_fnSetShowCmd,
-	IShellLinkA_fnGetIconLocation,
-	IShellLinkA_fnSetIconLocation,
-	IShellLinkA_fnSetRelativePath,
-	IShellLinkA_fnResolve,
-	IShellLinkA_fnSetPath
+    IShellLinkA_fnQueryInterface,
+    IShellLinkA_fnAddRef,
+    IShellLinkA_fnRelease,
+    IShellLinkA_fnGetPath,
+    IShellLinkA_fnGetIDList,
+    IShellLinkA_fnSetIDList,
+    IShellLinkA_fnGetDescription,
+    IShellLinkA_fnSetDescription,
+    IShellLinkA_fnGetWorkingDirectory,
+    IShellLinkA_fnSetWorkingDirectory,
+    IShellLinkA_fnGetArguments,
+    IShellLinkA_fnSetArguments,
+    IShellLinkA_fnGetHotkey,
+    IShellLinkA_fnSetHotkey,
+    IShellLinkA_fnGetShowCmd,
+    IShellLinkA_fnSetShowCmd,
+    IShellLinkA_fnGetIconLocation,
+    IShellLinkA_fnSetIconLocation,
+    IShellLinkA_fnSetRelativePath,
+    IShellLinkA_fnResolve,
+    IShellLinkA_fnSetPath
 };
 
 
@@ -2158,27 +2158,27 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 
 static const IShellLinkWVtbl slvtw =
 {
-	IShellLinkW_fnQueryInterface,
-	IShellLinkW_fnAddRef,
-	IShellLinkW_fnRelease,
-	IShellLinkW_fnGetPath,
-	IShellLinkW_fnGetIDList,
-	IShellLinkW_fnSetIDList,
-	IShellLinkW_fnGetDescription,
-	IShellLinkW_fnSetDescription,
-	IShellLinkW_fnGetWorkingDirectory,
-	IShellLinkW_fnSetWorkingDirectory,
-	IShellLinkW_fnGetArguments,
-	IShellLinkW_fnSetArguments,
-	IShellLinkW_fnGetHotkey,
-	IShellLinkW_fnSetHotkey,
-	IShellLinkW_fnGetShowCmd,
-	IShellLinkW_fnSetShowCmd,
-	IShellLinkW_fnGetIconLocation,
-	IShellLinkW_fnSetIconLocation,
-	IShellLinkW_fnSetRelativePath,
-	IShellLinkW_fnResolve,
-	IShellLinkW_fnSetPath
+    IShellLinkW_fnQueryInterface,
+    IShellLinkW_fnAddRef,
+    IShellLinkW_fnRelease,
+    IShellLinkW_fnGetPath,
+    IShellLinkW_fnGetIDList,
+    IShellLinkW_fnSetIDList,
+    IShellLinkW_fnGetDescription,
+    IShellLinkW_fnSetDescription,
+    IShellLinkW_fnGetWorkingDirectory,
+    IShellLinkW_fnSetWorkingDirectory,
+    IShellLinkW_fnGetArguments,
+    IShellLinkW_fnSetArguments,
+    IShellLinkW_fnGetHotkey,
+    IShellLinkW_fnSetHotkey,
+    IShellLinkW_fnGetShowCmd,
+    IShellLinkW_fnSetShowCmd,
+    IShellLinkW_fnGetIconLocation,
+    IShellLinkW_fnSetIconLocation,
+    IShellLinkW_fnSetRelativePath,
+    IShellLinkW_fnResolve,
+    IShellLinkW_fnSetPath
 };
 
 static HRESULT WINAPI
