@@ -6,28 +6,13 @@ MODULE    = none
 
 EXTRASUBDIRS = samples
 
-MAN_TARGETS = wine.man
-
-all: $(MAN_TARGETS)
-
 @MAKE_RULES@
-
-wine.man: wine.man.in
-	sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' $(SRCDIR)/wine.man.in >$@ || ($(RM) $@ && false)
-
-install:: $(MAN_TARGETS)
-	$(MKINSTALLDIRS) $(mandir)/man$(prog_manext)
-	$(INSTALL_DATA) wine.man $(mandir)/man$(prog_manext)/wine.$(prog_manext)
-
-uninstall::
-	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 
 install-api-man::
 	$(MKINSTALLDIRS) $(mandir)/man$(api_manext)
 	for i in man$(api_manext)/*; do $(INSTALL_DATA) $$i $(mandir)/man$(api_manext); done
 
 clean::
-	$(RM) $(MAN_TARGETS)
 	$(RM) -r html api-guide man$(api_manext)
 
 ### Dependencies:
