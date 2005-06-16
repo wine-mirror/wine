@@ -210,7 +210,8 @@ inline static DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
                                     char *buffer, DWORD size )
 {
     if (appkey && !RegQueryValueExA( appkey, name, 0, NULL, buffer, &size )) return 0;
-    return RegQueryValueExA( defkey, name, 0, NULL, buffer, &size );
+    if (defkey && !RegQueryValueExA( defkey, name, 0, NULL, buffer, &size )) return 0;
+    return ERROR_FILE_NOT_FOUND;
 }
 
 
@@ -225,13 +226,8 @@ static void setup_options(void)
     HKEY hkey, appkey = 0;
     DWORD len;
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\x11drv */
-    if (RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", 0, NULL,
-                         REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
-    {
-        ERR("Cannot create config registry key\n" );
-        ExitProcess(1);
-    }
+    /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver */
+    if (RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\X11 Driver", &hkey )) hkey = 0;
 
     /* open the app-specific key */
 
@@ -242,9 +238,9 @@ static void setup_options(void)
         char *p, *appname = buffer;
         if ((p = strrchr( appname, '/' ))) appname = p + 1;
         if ((p = strrchr( appname, '\\' ))) appname = p + 1;
-        strcat( appname, "\\x11drv" );
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\x11drv */
-        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\AppDefaults", &tmpkey ))
+        strcat( appname, "\\X11 Driver" );
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\X11 Driver */
+        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
         {
             if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
             RegCloseKey( tmpkey );
@@ -317,7 +313,7 @@ static void setup_options(void)
     get_config_key( hkey, appkey, "InputStyle", input_style, sizeof(input_style) );
 
     if (appkey) RegCloseKey( appkey );
-    RegCloseKey( hkey );
+    if (hkey) RegCloseKey( hkey );
 }
 
 
