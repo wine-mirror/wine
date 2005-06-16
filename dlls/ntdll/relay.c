@@ -632,7 +632,7 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
  * (esp-8) ptr to relay entry code for RELAY_CallFrom32Regs
  *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
  */
-void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
+void WINAPI __regs_RELAY_CallFrom32Regs( CONTEXT86 *context )
 {
     char buffer[80];
     int* args;
@@ -698,10 +698,7 @@ void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 }
 
 void WINAPI RELAY_CallFrom32Regs(void);
-__ASM_GLOBAL_FUNC( RELAY_CallFrom32Regs,
-                   "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
-                   ".long " __ASM_NAME("RELAY_DoCallFrom32Regs") ",0" );
-
+DEFINE_REGS_ENTRYPOINT( RELAY_CallFrom32Regs, 0, 0 );
 
 /* check whether the function at addr starts with a call to __wine_call_from_32_regs */
 static BOOL is_register_entry_point( const BYTE *addr )
@@ -973,7 +970,7 @@ static void SNOOP_PrintArg(DWORD x)
 
 #define CALLER1REF (*(DWORD*)context->Esp)
 
-void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
+void WINAPI __regs_SNOOP_Entry( CONTEXT86 *context )
 {
 	DWORD		ordinal=0,entry = context->Eip - 5;
 	SNOOP_DLL	*dll = firstdll;
@@ -1066,7 +1063,7 @@ void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 }
 
 
-void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
+void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
 {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(context->Eip - 5);
         SNOOP_FUN *fun = &ret->dll->funs[ret->ordinal];
@@ -1117,12 +1114,8 @@ void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 }
 
 /* assembly wrappers that save the context */
-__ASM_GLOBAL_FUNC( SNOOP_Entry,
-                   "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
-                   ".long " __ASM_NAME("SNOOP_DoEntry") ",0" );
-__ASM_GLOBAL_FUNC( SNOOP_Return,
-                   "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t"
-                   ".long " __ASM_NAME("SNOOP_DoReturn") ",0" );
+DEFINE_REGS_ENTRYPOINT( SNOOP_Entry, 0, 0 );
+DEFINE_REGS_ENTRYPOINT( SNOOP_Return, 0, 0 );
 
 #else  /* __i386__ */
 
