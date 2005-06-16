@@ -706,7 +706,7 @@ typedef struct _LDT_ENTRY {
 } LDT_ENTRY, *PLDT_ENTRY;
 
 /* Alpha context definitions */
-#ifdef _ALPHA_
+#if defined(_ALPHA_) || defined(__ALPHA__) || defined(__alpha__)
 
 #define CONTEXT_ALPHA   0x00020000
 
@@ -800,6 +800,60 @@ typedef struct _CONTEXT
 #define _QUAD_FLAGS_OFFSET HighFir
 
 #endif  /* _ALPHA_ */
+
+#ifdef __arm__
+
+/* The following flags control the contents of the CONTEXT structure. */
+
+#define CONTEXT_ARM    0x0000040
+#define CONTEXT_CONTROL         (CONTEXT_ARM | 0x00000001L)
+#define CONTEXT_INTEGER         (CONTEXT_ARM | 0x00000002L)
+
+#define CONTEXT_FULL (CONTEXT_CONTROL | CONTEXT_INTEGER)
+
+typedef struct _CONTEXT {
+	/* The flags values within this flag control the contents of
+	   a CONTEXT record.
+
+	   If the context record is used as an input parameter, then
+	   for each portion of the context record controlled by a flag
+	   whose value is set, it is assumed that that portion of the
+	   context record contains valid context. If the context record
+	   is being used to modify a thread's context, then only that
+	   portion of the threads context will be modified.
+
+	   If the context record is used as an IN OUT parameter to capture
+	   the context of a thread, then only those portions of the thread's
+	   context corresponding to set flags will be returned.
+
+	   The context record is never used as an OUT only parameter. */
+
+	ULONG ContextFlags;
+
+	/* This section is specified/returned if the ContextFlags word contains
+	   the flag CONTEXT_INTEGER. */
+	ULONG R0;
+	ULONG R1;
+	ULONG R2;
+	ULONG R3;
+	ULONG R4;
+	ULONG R5;
+	ULONG R6;
+	ULONG R7;
+	ULONG R8;
+	ULONG R9;
+	ULONG R10;
+	ULONG R11;
+	ULONG R12;
+
+	ULONG Sp;
+	ULONG Lr;
+	ULONG Pc;
+	ULONG Psr;
+} CONTEXT;
+
+#endif /* __arm__ */
+
 
 /* Mips context definitions */
 #ifdef _MIPS_
@@ -1024,96 +1078,6 @@ typedef struct _STACK_FRAME_HEADER
 } STACK_FRAME_HEADER,*PSTACK_FRAME_HEADER;
 
 #endif  /* __powerpc__ */
-
-#ifdef __ALPHA__
-
-/*
- * FIXME:
- *
- * I have no idea if any of this is right as I just ripped 
- * it from mingw-win32api.
- *
- */
-
-#define CONTEXT_ALPHA 0x20000
-#define CONTEXT_CONTROL (CONTEXT_ALPHA|1L)
-#define CONTEXT_FLOATING_POINT (CONTEXT_ALPHA|2L)
-#define CONTEXT_INTEGER (CONTEXT_ALPHA|4L)
-#define CONTEXT_FULL (CONTEXT_CONTROL|CONTEXT_FLOATING_POINT|CONTEXT_INTEGER)
-typedef struct _CONTEXT {
-	ULONGLONG FltF0;
-	ULONGLONG FltF1;
-	ULONGLONG FltF2;
-	ULONGLONG FltF3;
-	ULONGLONG FltF4;
-	ULONGLONG FltF5;
-	ULONGLONG FltF6;
-	ULONGLONG FltF7;
-	ULONGLONG FltF8;
-	ULONGLONG FltF9;
-	ULONGLONG FltF10;
-	ULONGLONG FltF11;
-	ULONGLONG FltF12;
-	ULONGLONG FltF13;
-	ULONGLONG FltF14;
-	ULONGLONG FltF15;
-	ULONGLONG FltF16;
-	ULONGLONG FltF17;
-	ULONGLONG FltF18;
-	ULONGLONG FltF19;
-	ULONGLONG FltF20;
-	ULONGLONG FltF21;
-	ULONGLONG FltF22;
-	ULONGLONG FltF23;
-	ULONGLONG FltF24;
-	ULONGLONG FltF25;
-	ULONGLONG FltF26;
-	ULONGLONG FltF27;
-	ULONGLONG FltF28;
-	ULONGLONG FltF29;
-	ULONGLONG FltF30;
-	ULONGLONG FltF31;
-	ULONGLONG IntV0;
-	ULONGLONG IntT0;
-	ULONGLONG IntT1;
-	ULONGLONG IntT2;
-	ULONGLONG IntT3;
-	ULONGLONG IntT4;
-	ULONGLONG IntT5;
-	ULONGLONG IntT6;
-	ULONGLONG IntT7;
-	ULONGLONG IntS0;
-	ULONGLONG IntS1;
-	ULONGLONG IntS2;
-	ULONGLONG IntS3;
-	ULONGLONG IntS4;
-	ULONGLONG IntS5;
-	ULONGLONG IntFp;
-	ULONGLONG IntA0;
-	ULONGLONG IntA1;
-	ULONGLONG IntA2;
-	ULONGLONG IntA3;
-	ULONGLONG IntA4;
-	ULONGLONG IntA5;
-	ULONGLONG IntT8;
-	ULONGLONG IntT9;
-	ULONGLONG IntT10;
-	ULONGLONG IntT11;
-	ULONGLONG IntRa;
-	ULONGLONG IntT12;
-	ULONGLONG IntAt;
-	ULONGLONG IntGp;
-	ULONGLONG IntSp;
-	ULONGLONG IntZero;
-	ULONGLONG Fpcr;
-	ULONGLONG SoftFpcr;
-	ULONGLONG Fir;
-	DWORD Psr;
-	DWORD ContextFlags;
-	DWORD Fill[4];
-} CONTEXT;
-
-#endif  /* __ALPHA__ */
 
 #ifdef __sparc__
 
