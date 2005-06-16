@@ -213,9 +213,6 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         HANDLE the_file;
         CHAR buffer[1024];
 
-        if (track_tempfile(package, tmp_file, tmp_file)!=0)
-            FIXME("File Name in temp tracking collision\n");
-
         the_file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);
     
@@ -303,7 +300,7 @@ static UINT process_action_return_value(UINT type, HANDLE ThreadHandle)
 
 static UINT process_handle(MSIPACKAGE* package, UINT type, 
                            HANDLE ThreadHandle, HANDLE ProcessHandle,
-                           LPCWSTR Name)
+                           LPCWSTR Name, BOOL *finished)
 {
     UINT rc = ERROR_SUCCESS;
 
@@ -327,6 +324,8 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
         CloseHandle(ThreadHandle);
         if (ProcessHandle);
             CloseHandle(ProcessHandle);
+        if (finished)
+            *finished = TRUE;
     }
     else 
     {
@@ -348,6 +347,8 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
             if (ProcessHandle);
                 CloseHandle(ProcessHandle);
         }
+        if (finished)
+            *finished = FALSE;
     }
 
     return rc;
@@ -433,6 +434,7 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
     DWORD ThreadId;
     HANDLE ThreadHandle;
     UINT rc = ERROR_SUCCESS;
+    BOOL finished = FALSE;
 
     store_binary_to_temp(package, source, tmp_file);
 
@@ -453,7 +455,12 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
 
     ThreadHandle = CreateThread(NULL,0,DllThread,(LPVOID)info,0,&ThreadId);
 
-    rc = process_handle(package, type, ThreadHandle, NULL, action);
+    rc = process_handle(package, type, ThreadHandle, NULL, action, &finished );
+
+    if (!finished)
+        track_tempfile(package, tmp_file, tmp_file);
+    else
+        DeleteFileW(tmp_file);
  
     return rc;
 }
@@ -470,6 +477,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
     WCHAR *cmd;
     static const WCHAR spc[] = {' ',0};
     UINT prc = ERROR_SUCCESS;
+    BOOL finished = FALSE;
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
@@ -506,8 +514,14 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action);
+    prc = process_handle(package, type, info.hThread, info.hProcess, action, 
+                          &finished);
 
+    if (!finished)
+        track_tempfile(package, tmp_file, tmp_file);
+    else
+        DeleteFileW(tmp_file);
+    
     return prc;
 }
 
@@ -559,7 +573,8 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action);
+    prc = process_handle(package, type, info.hThread, info.hProcess, action, 
+                         NULL);
 
     return prc;
 }
@@ -643,7 +658,8 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action);
+    prc = process_handle(package, type, info.hThread, info.hProcess, action, 
+                         NULL);
 
     return prc;
 }
@@ -684,7 +700,8 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action);
+    prc = process_handle(package, type, info.hThread, info.hProcess, action,
+                         NULL);
 
     return prc;
 }
