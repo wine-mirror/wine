@@ -27,26 +27,23 @@
  */
 
 #include <stdarg.h>
-#include <stdio.h>
-
-#define COBJMACROS
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
 #include "wine/debug.h"
-#include "msi.h"
-#include "msiquery.h"
 #include "msidefs.h"
 #include "msipriv.h"
-#include "winnls.h"
 #include "winuser.h"
-#include "winver.h"
 #include "action.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
+
+extern const WCHAR szFindRelatedProducts[];
+extern const WCHAR szMigrateFeatureStates[];
+extern const WCHAR szRemoveExistingProducts[];
 
 static BOOL check_language(DWORD lang1, LPCWSTR lang2, DWORD attributes)
 {
@@ -113,6 +110,7 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
     LPCWSTR upgrade_code;
     HKEY hkey = 0;
     UINT rc = ERROR_SUCCESS;
+    MSIRECORD *uirow;
 
     upgrade_code = MSI_RecordGetString(rec,1);
 
@@ -120,6 +118,7 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
+    uirow = MSI_CreateRecord(1);
     attributes = MSI_RecordGetInteger(rec,5);
     
     while (rc == ERROR_SUCCESS)
@@ -194,10 +193,12 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
 
             action_property = MSI_RecordGetString(rec,7);
             append_productcode(package,action_property,productid);
+            ui_actiondata(package,szFindRelatedProducts,uirow);
         }
         index ++;
     }
     RegCloseKey(hkey);
+    msiobj_release( &uirow->hdr);
     
     return ERROR_SUCCESS;
 }
