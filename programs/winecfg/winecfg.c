@@ -90,7 +90,7 @@ static char *get_config_key (const char *subkey, const char *name, const char *d
 
     WINE_TRACE("subkey=%s, name=%s, def=%s\n", subkey, name, def);
 
-    res = RegOpenKeyEx(config_key, subkey, 0, KEY_READ, &hSubKey);
+    res = RegOpenKey(config_key, subkey, &hSubKey);
     if (res != ERROR_SUCCESS)
     {
         if (res == ERROR_FILE_NOT_FOUND)
@@ -171,7 +171,7 @@ static HRESULT remove_value(const char *subkey, const char *name)
 
     WINE_TRACE("subkey=%s, name=%s\n", subkey, name);
 
-    hr = RegOpenKeyEx(config_key, subkey, 0, KEY_READ, &key);
+    hr = RegOpenKey(config_key, subkey, &key);
     if (hr != S_OK) return hr;
 
     hr = RegDeleteValue(key, name);
@@ -341,7 +341,7 @@ char **enumerate_values(char *path)
     int valueslen = 0;
     struct list *cursor;
 
-    res = RegOpenKeyEx(config_key, path, 0, KEY_READ, &key);
+    res = RegOpenKey(config_key, path, &key);
     if (res == ERROR_SUCCESS)
     {
         while (TRUE)
