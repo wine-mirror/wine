@@ -23,7 +23,7 @@
 #include "wine/unicode.h"
 
 /* get the decomposition of a Unicode char */
-int get_decomposition( WCHAR src, WCHAR *dst, unsigned int dstlen )
+static int get_decomposition( WCHAR src, WCHAR *dst, unsigned int dstlen )
 {
     extern const WCHAR unicode_decompose_table[];
     const WCHAR *ptr = unicode_decompose_table;

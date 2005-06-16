@@ -27,7 +27,7 @@
 #include "winbase.h"
 #include "oleauto.h"
 
-void ref_count_test(LPCWSTR type_lib)
+static void ref_count_test(LPCWSTR type_lib)
 {
     ITypeLib *iface;
     ITypeInfo *iti1, *iti2;

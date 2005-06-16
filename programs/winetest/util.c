@@ -40,7 +40,7 @@ void *xrealloc (void *op, size_t len)
     return p;
 }
 
-char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
+static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
 {
     size_t size = 1000;
     char *p, *q;

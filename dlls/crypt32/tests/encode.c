@@ -234,7 +234,7 @@ static void test_decodeInt(DWORD dwEncoding)
 struct encodedFiletime
 {
     SYSTEMTIME sysTime;
-    BYTE *encodedTime;
+    const BYTE *encodedTime;
 };
 
 static void testTimeEncoding(DWORD dwEncoding, LPCSTR structType,

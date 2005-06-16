@@ -173,7 +173,7 @@ static inline void clear_block( void *ptr, size_t size )
 /***********************************************************************
  *           HEAP_Dump
  */
-void HEAP_Dump( HEAP *heap )
+static void HEAP_Dump( HEAP *heap )
 {
     int i;
     SUBHEAP *subheap;
@@ -244,7 +244,7 @@ void HEAP_Dump( HEAP *heap )
 }
 
 
-void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
+static void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
 {
     WORD rem_flags;
     TRACE( "Dumping entry %p\n", entry );

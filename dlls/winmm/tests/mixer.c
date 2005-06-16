@@ -343,7 +343,7 @@ static void mixer_test_controlA(HMIXER mix, LPMIXERCONTROLA control)
     }
 }
 
-void mixer_test_deviceA(int device)
+static void mixer_test_deviceA(int device)
 {
     MIXERCAPSA capsA;
     HMIXER mix;
@@ -720,7 +720,7 @@ static void mixer_test_controlW(HMIXER mix, LPMIXERCONTROLW control)
     }
 }
 
-void mixer_test_deviceW(int device)
+static void mixer_test_deviceW(int device)
 {
     MIXERCAPSW capsW;
     HMIXER mix;
@@ -952,7 +952,7 @@ void mixer_test_deviceW(int device)
     }
 }
 
-void mixer_testsA()
+static void mixer_testsA(void)
 {
     MIXERCAPSA capsA;
     HMIXER mix;
@@ -978,7 +978,7 @@ void mixer_testsA()
         mixer_test_deviceA(d);
 }
 
-void mixer_testsW()
+static void mixer_testsW(void)
 {
     MIXERCAPSW capsW;
     HMIXER mix;

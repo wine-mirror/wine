@@ -705,7 +705,7 @@ if (err<0) { \
 }
 
 /* return a string duplicated on the win32 process heap, free with HeapFree */
-static char* ALSA_strdup(char *s) {
+static char* ALSA_strdup(const char *s) {
     char *result = HeapAlloc(GetProcessHeap(), 0, strlen(s)+1);
     strcpy(result, s);
     return result;
