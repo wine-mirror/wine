@@ -233,15 +233,6 @@ WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
     if (ProcessCmdLine(szCmdLine)) {
         return 0;
     }
-        
-    /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
-    if (!getenv("WINECFG_NOWARN")) {
-        WINE_FIXME("The winecfg tool is not yet complete, and does not actually alter your configuration.\n");
-        WINE_FIXME("If you want to alter the way Wine works, look in the ~/.wine/config file for more information.\n");
-        MessageBoxA(NULL, "The winecfg tool is not yet complete, and does not actually alter your configuration\n\n"
-                    "If you want to alter the way Wine works, look in the ~/.wine/config file for more information.",
-                    "", MB_OK | MB_ICONEXCLAMATION);
-    }
 
     if (initialize() != 0) {
 	WINE_ERR("initialization failed, aborting\n");

@@ -521,7 +521,7 @@ void PRINTERROR(void)
 }
 
 int initialize(void) {
-    DWORD res = RegCreateKey(HKEY_LOCAL_MACHINE, WINE_KEY_ROOT, &config_key);
+    DWORD res = RegCreateKey(HKEY_CURRENT_USER, WINE_KEY_ROOT, &config_key);
 
     if (res != ERROR_SUCCESS) {
 	WINE_ERR("RegOpenKey failed on wine config key (%ld)\n", res);

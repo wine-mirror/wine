@@ -126,6 +126,6 @@ static inline void set_text(HWND dialog, WORD id, const char *text)
     SetWindowText(GetDlgItem(dialog, id), text);
 }
 
-#define WINE_KEY_ROOT "Software\\Wine\\Testing\\Config"
+#define WINE_KEY_ROOT "Software\\Wine"
 
 #endif
