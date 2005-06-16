@@ -33,7 +33,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
@@ -41,108 +40,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
-
-/**********************************************************************
- *         parse_dos_version
- *
- * Parse the contents of the Version key.
- */
-static WORD parse_dos_version( HKEY hkey )
-{
-    static const WCHAR DosW[] = {'D','O','S',0};
-
-    UNICODE_STRING valueW;
-    int hi, lo;
-    char tmp[64], buffer[50];
-    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
-    DWORD count, len;
-    WORD ret = 0;
-
-    RtlInitUnicodeString( &valueW, DosW );
-    if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
-    {
-        RtlUnicodeToMultiByteN( buffer, sizeof(buffer)-1, &len,
-                                (WCHAR *)info->Data, info->DataLength );
-        buffer[len] = 0;
-
-        if (sscanf( buffer, "%d.%d", &hi, &lo ) == 2) ret = MAKEWORD( lo, hi );
-        else MESSAGE("Wrong format for DOS version in config file. Use \"x.xx\"\n");
-    }
-    return ret;
-}
-
-
-/**********************************************************************
- *         get_dos_version
- */
-static WORD get_dos_version(void)
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    HKEY hkey, config_key;
-    WCHAR buffer[MAX_PATH];
-    WORD ret = 0;
-    DWORD len;
-
-    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
-                                    'S','o','f','t','w','a','r','e','\\',
-                                    'W','i','n','e','\\',
-                                    'W','i','n','e','\\',
-                                    'C','o','n','f','i','g',0};
-    static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
-    static const WCHAR versionW[] = {'\\','V','e','r','s','i','o','n',0};
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, configW );
-
-    if (NtOpenKey( &config_key, KEY_ALL_ACCESS, &attr )) return 0;
-    attr.RootDirectory = config_key;
-
-    /* open AppDefaults\\appname\\Version key */
-    len = GetModuleFileNameW( 0, buffer, sizeof(buffer)/sizeof(WCHAR) );
-    if (len && len < sizeof(buffer)/sizeof(WCHAR))
-    {
-        WCHAR *p, *appname, appversion[MAX_PATH+20];
-
-        appname = buffer;
-        if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-        if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
-
-        strcpyW( appversion, appdefaultsW );
-        strcatW( appversion, appname );
-        strcatW( appversion, versionW );
-
-        TRACE( "getting version from %s\n", debugstr_w(appversion) );
-        RtlInitUnicodeString( &nameW, appversion );
-
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\Version */
-        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
-        {
-            ret = parse_dos_version( hkey );
-            NtClose( hkey );
-        }
-    }
-
-    if (!ret)
-    {
-        TRACE( "getting default version\n" );
-        RtlInitUnicodeString( &nameW, versionW + 1 );
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Version */
-        if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
-        {
-            ret = parse_dos_version( hkey );
-            NtClose( hkey );
-        }
-    }
-
-    NtClose( config_key );
-    return ret;
-}
 
 
 /***********************************************************************
@@ -167,8 +64,6 @@ DWORD WINAPI GetVersion16(void)
         switch(info.dwPlatformId)
         {
         case VER_PLATFORM_WIN32s:
-            if ((dosver = get_dos_version())) break;  /* got the configured version */
-
             switch(MAKELONG( info.dwMinorVersion, info.dwMajorVersion ))
             {
             case 0x0200:
