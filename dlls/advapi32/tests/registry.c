@@ -330,6 +330,22 @@ static void test_reg_open_key()
     ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 }
 
+static void test_reg_create_key()
+{
+    LONG ret;
+    HKEY hkey1, hkey2;
+    ret = RegCreateKeyExA(hkey_main, "Subkey1", 0, NULL, 0, KEY_NOTIFY, NULL, &hkey1, NULL);
+    ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
+    /* should succeed: all versions of Windows ignore the access rights
+     * to the parent handle */
+    ret = RegCreateKeyExA(hkey1, "Subkey2", 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey2, NULL);
+    ok(!ret, "RegCreateKeyExA failed with error %ld\n", ret);
+
+    /* clean up */
+    RegDeleteKey(hkey2, NULL);
+    RegDeleteKey(hkey1, NULL);
+}
+
 static void test_reg_close_key()
 {
     DWORD ret = 0;
@@ -435,6 +451,7 @@ START_TEST(registry)
     test_enum_value();
     test_query_value_ex();
     test_reg_open_key();
+    test_reg_create_key();
     test_reg_close_key();
     test_reg_delete_key();
 

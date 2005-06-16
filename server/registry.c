@@ -1690,7 +1690,8 @@ DECL_HANDLER(create_key)
     if (access & MAXIMUM_ALLOWED) access = KEY_ALL_ACCESS;  /* FIXME: needs general solution */
     reply->hkey = 0;
     if (!(name = copy_req_path( req->namelen, !req->parent ))) return;
-    if ((parent = get_hkey_obj( req->parent, KEY_CREATE_SUB_KEY )))
+    /* NOTE: no access rights are required from the parent handle to create a key */
+    if ((parent = get_hkey_obj( req->parent, 0 )))
     {
         int flags = (req->options & REG_OPTION_VOLATILE) ? KEY_VOLATILE : KEY_DIRTY;
 
