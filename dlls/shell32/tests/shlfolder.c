@@ -314,14 +314,21 @@ static void test_GetDisplayName(void)
 static void test_GetAttributesOf(void) 
 {
     HRESULT hr;
-    LPSHELLFOLDER psfDesktop;
+    LPSHELLFOLDER psfDesktop, psfMyComputer;
     SHITEMID emptyitem = { 0, { 0 } };
     LPCITEMIDLIST pidlEmpty = (LPCITEMIDLIST)&emptyitem;
+    LPITEMIDLIST pidlMyComputer;
     DWORD dwFlags;
     const static DWORD dwDesktopFlags = /* As observed on WinXP SP2 */
         SFGAO_STORAGE | SFGAO_HASPROPSHEET | SFGAO_STORAGE_ANCESTOR |
         SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_HASSUBFOLDER;
-    
+    const static DWORD dwMyComputerFlags = /* As observed on WinXP SP2 */
+        SFGAO_CANRENAME | SFGAO_CANDELETE | SFGAO_HASPROPSHEET |
+        SFGAO_DROPTARGET | SFGAO_FILESYSANCESTOR | SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
+    WCHAR wszMyComputer[] = { 
+        ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
+        'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
+
     hr = SHGetDesktopFolder(&psfDesktop);
     ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
     if (FAILED(hr)) return;
@@ -329,18 +336,54 @@ static void test_GetAttributesOf(void)
     /* The Desktop attributes can be queried with a single empty itemidlist, .. */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 1, &pidlEmpty, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf failed! hr = %08lx\n", hr);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(empty pidl) failed! hr = %08lx\n", hr);
     ok (dwFlags == dwDesktopFlags, "Wrong Desktop attributes: %08lx, expected: %08lx\n", 
         dwFlags, dwDesktopFlags);
 
     /* .. or with no itemidlist at all. */
     dwFlags = 0xffffffff;
     hr = IShellFolder_GetAttributesOf(psfDesktop, 0, NULL, &dwFlags);
-    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf failed! hr = %08lx\n", hr);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(NULL) failed! hr = %08lx\n", hr);
     ok (dwFlags == dwDesktopFlags, "Wrong Desktop attributes: %08lx, expected: %08lx\n", 
         dwFlags, dwDesktopFlags);
-    
+   
+    /* Testing the attributes of the MyComputer shellfolder */
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
+    ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+
+    /* WinXP SP2 sets the SFGAO_CANLINK flag, when MyComputer is queried via the Desktop 
+     * folder object. It doesn't do this, if MyComputer is queried directly (see below).
+     * SFGAO_CANLINK is the same as DROPEFFECT_LINK, which MSDN says means: "Drag source
+     * should create a link to the original data". You can't create links on MyComputer on
+     * Windows, so this flag shouldn't be set. Seems like a bug in Windows. As long as nobody
+     * depends on this bug, we probably shouldn't imitate it.
+     */
+    dwFlags = 0xffffffff;
+    hr = IShellFolder_GetAttributesOf(psfDesktop, 1, (LPCITEMIDLIST*)&pidlMyComputer, &dwFlags);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyComputer) failed! hr = %08lx\n", hr);
+    todo_wine { ok ((dwFlags & ~(DWORD)SFGAO_CANLINK) == dwMyComputerFlags, 
+                    "Wrong MyComputer attributes: %08lx, expected: %08lx\n", dwFlags, dwMyComputerFlags); }
+
+    hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
+    ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08lx\n", hr);
     IShellFolder_Release(psfDesktop);
+    ILFree(pidlMyComputer);
+    if (FAILED(hr)) return;
+
+    hr = IShellFolder_GetAttributesOf(psfMyComputer, 1, &pidlEmpty, &dwFlags);
+    todo_wine {ok (hr == E_INVALIDARG, "MyComputer->GetAttributesOf(emtpy pidl) should fail! hr = %08lx\n", hr); }
+
+    dwFlags = 0xffffffff;
+    hr = IShellFolder_GetAttributesOf(psfMyComputer, 0, NULL, &dwFlags);
+    ok (SUCCEEDED(hr), "MyComputer->GetAttributesOf(NULL) failed! hr = %08lx\n", hr); 
+    todo_wine { ok (dwFlags == dwMyComputerFlags, 
+                    "Wrong MyComputer attributes: %08lx, expected: %08lx\n", dwFlags, dwMyComputerFlags); }
+
+    IShellFolder_Release(psfMyComputer);
 }    
 
 static void test_SHGetPathFromIDList(void)
