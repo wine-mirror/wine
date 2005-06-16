@@ -10,6 +10,7 @@ EXTRALIBS = -luuid $(LIBUNICODE)
 C_SRCS = \
 	action.c \
 	appsearch.c \
+	classes.c \
 	create.c \
 	custom.c \
 	database.c \

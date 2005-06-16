@@ -201,9 +201,14 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force);
 UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action);
 void ACTION_FinishCustomActions( MSIPACKAGE* package);
 UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
-void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
+
+/* actions in other modules */
 UINT ACTION_AppSearch(MSIPACKAGE *package);
 UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
+UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
+UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
+UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package);
+UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package);
 
 
 /* Helpers */
