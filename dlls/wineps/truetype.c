@@ -583,19 +583,17 @@ static BOOL ReadTrueTypeDir(FT_Library library, LPCSTR dirname)
  */
 BOOL PSDRV_GetTrueTypeMetrics(void)
 {
-    CHAR    	name_buf[256], value_buf[256];
-    INT     	i = 0;
+    static const WCHAR pathW[] = {'P','a','t','h',0};
     FT_Error	error;
     FT_Library	library;
-    HKEY    	hkey;
-    DWORD   	type, name_len, value_len;
+    HKEY hkey;
+    DWORD len;
+    LPWSTR valueW;
+    LPSTR valueA, ptr;
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\TrueType Font Directories */
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-    	    "Software\\Wine\\Wine\\Config\\TrueType Font Directories",
-	    0, KEY_READ, &hkey) != ERROR_SUCCESS)
-	return TRUE;
-
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) != ERROR_SUCCESS)
+        return TRUE;
 
     ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
     if(!ft_handle) {
@@ -631,25 +629,27 @@ BOOL PSDRV_GetTrueTypeMetrics(void)
 	return FALSE;
     }
 
-    name_len = sizeof(name_buf);
-    value_len = sizeof(value_buf);
-
-    while (RegEnumValueA(hkey, i++, name_buf, &name_len, NULL, &type, value_buf,
-    	    &value_len) == ERROR_SUCCESS)
+    if (RegQueryValueExW( hkey, pathW, NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
     {
-    	value_buf[sizeof(value_buf) - 1] = '\0';
-
-	if (ReadTrueTypeDir(library, value_buf) == FALSE)
-	{
-	    RegCloseKey(hkey);
-	    pFT_Done_FreeType(library);
-	    return FALSE;
-	}
-
-	/* initialize lengths for new iteration */
-
-	name_len = sizeof(name_buf);
-	value_len = sizeof(value_buf);
+        len += sizeof(WCHAR);
+        valueW = HeapAlloc( GetProcessHeap(), 0, len );
+        if (RegQueryValueExW( hkey, pathW, NULL, NULL, (LPBYTE)valueW, &len ) == ERROR_SUCCESS)
+        {
+            len = WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, NULL, 0, NULL, NULL );
+            valueA = HeapAlloc( GetProcessHeap(), 0, len );
+            WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, len, NULL, NULL );
+            TRACE( "got font path %s\n", debugstr_a(valueA) );
+            ptr = valueA;
+            while (ptr)
+            {
+                LPSTR next = strchr( ptr, ':' );
+                if (next) *next++ = 0;
+                ReadTrueTypeDir( library, ptr );
+                ptr = next;
+            }
+            HeapFree( GetProcessHeap(), 0, valueA );
+        }
+        HeapFree( GetProcessHeap(), 0, valueW );
     }
 
     RegCloseKey(hkey);
