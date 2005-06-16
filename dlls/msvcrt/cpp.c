@@ -631,12 +631,13 @@ void * __stdcall MSVCRT_type_info_vector_dtor(type_info * _this, unsigned int fl
 /* vtables */
 
 #define __ASM_VTABLE(name,funcs) \
-    __asm__(".align 4\n" \
+    __asm__(".data\n" \
+            "\t.align 4\n" \
             "\t.long " __ASM_NAME(#name "_rtti") "\n" \
             "\t.globl " __ASM_NAME("MSVCRT_" #name "_vtable") "\n" \
             __ASM_NAME("MSVCRT_" #name "_vtable") ":\n" \
             "\t.long " THISCALL_NAME(MSVCRT_ ## name ## _vector_dtor) "\n" \
-            funcs);
+            funcs "\n\t.text");
 
 #define __ASM_EXCEPTION_VTABLE(name) \
     __ASM_VTABLE(name, "\t.long " THISCALL_NAME(MSVCRT_what_exception) );
