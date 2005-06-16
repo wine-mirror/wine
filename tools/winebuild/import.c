@@ -691,6 +691,98 @@ int resolve_imports( DLLSPEC *spec )
     return 1;
 }
 
+/* output a single import thunk */
+static void output_import_thunk( FILE *outfile, const char *name, const char *table, int pos )
+{
+    fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
+    fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", name );
+    fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
+    fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", name);
+
+#if defined(__i386__)
+    if (!UsePIC)
+    {
+        if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+        fprintf( outfile, "    \"\\tjmp *(imports+%d)\\n\"\n", pos );
+    }
+    else
+    {
+        if (!strcmp( name, "__wine_call_from_32_regs" ) ||
+            !strcmp( name, "__wine_call_from_16_regs" ))
+        {
+            /* special case: need to preserve all registers */
+            fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
+            fprintf( outfile, "    \"\\tpushfl\\n\"\n" );
+            fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
+            fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
+            fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+            fprintf( outfile, "    \"\\taddl $%d+%s-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+            if (!strcmp( name, "__wine_call_from_16_regs" ))
+                fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+            fprintf( outfile, "    \"\\tmovl 0(%%eax),%%eax\\n\"\n" );
+            fprintf( outfile, "    \"\\txchgl 4(%%esp),%%eax\\n\"\n" );
+            fprintf( outfile, "    \"\\tpopfl\\n\"\n" );
+            fprintf( outfile, "    \"\\tret\\n\"\n" );
+        }
+        else
+        {
+            fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
+            fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
+            fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+            fprintf( outfile, "    \"\\taddl $%d+%s-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+            if (strstr( name, "__wine_call_from_16" ))
+                fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+            fprintf( outfile, "    \"\\tjmp *0(%%eax)\\n\"\n" );
+        }
+    }
+#elif defined(__sparc__)
+    if ( !UsePIC )
+    {
+        fprintf( outfile, "    \"\\tsethi %%hi(%s+%d), %%g1\\n\"\n", table, pos );
+        fprintf( outfile, "    \"\\tld [%%g1+%%lo(%s+%d)], %%g1\\n\"\n", table, pos );
+        fprintf( outfile, "    \"\\tjmp %%g1\\n\\tnop\\n\"\n" );
+    }
+    else
+    {
+        /* Hmpf.  Stupid sparc assembler always interprets global variable
+           names as GOT offsets, so we have to do it the long way ... */
+        fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
+        fprintf( outfile, "    \"0:\\tcall 1f\\n\\tnop\\n\"\n" );
+        fprintf( outfile, "    \"1:\\tsethi %%hi(%s+%d-0b), %%g1\\n\"\n", table, pos );
+        fprintf( outfile, "    \"\\tor %%g1, %%lo(%s+%d-0b), %%g1\\n\"\n", table, pos );
+        fprintf( outfile, "    \"\\tld [%%g1+%%o7], %%g1\\n\"\n" );
+        fprintf( outfile, "    \"\\tjmp %%g1\\n\\trestore\\n\"\n" );
+    }
+#elif defined(__powerpc__)
+    fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[9], ppc_reg[1]);
+    fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[8], ppc_reg[1]);
+    fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[7], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tlis %s, " ppc_high(__ASM_NAME("%s") "+ %d") "\\n\"\n",
+            ppc_reg[9], table, pos);
+    fprintf(outfile, "    \"\\tla  %s, " ppc_low (__ASM_NAME("%s") "+ %d") "(%s)\\n\"\n",
+            ppc_reg[8], table, pos, ppc_reg[9]);
+    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg[7], ppc_reg[8]);
+    fprintf(outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg[7]);
+    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[7], ppc_reg[1]);
+    fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[8], ppc_reg[1]);
+    fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
+    fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
+    fprintf(outfile, "    \"\\tbctr\\n\"\n");
+#elif defined(__ALPHA__)
+    fprintf( outfile, "    \"\\tlda $0,%s\\n\"\n", table );
+    fprintf( outfile, "    \"\\tlda $0,%d($0)\\n\"\n", pos);
+    fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
+#else
+#error You need to define import thunks for your architecture!
+#endif
+    output_function_size( outfile, name );
+}
+
 /* output the import table of a Win32 module */
 static int output_immediate_imports( FILE *outfile )
 {
@@ -771,64 +863,8 @@ static void output_immediate_import_thunks( FILE *outfile )
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += sizeof(const char *))
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
-            const char *name = odp->name ? odp->name : odp->export_name;
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", name );
-            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t", name);
-
-#if defined(__i386__)
-            if (strstr( name, "__wine_call_from_16" ))
-                fprintf( outfile, ".byte 0x2e\\n\\tjmp *(imports+%d)\\n\\tnop\\n", pos );
-            else
-                fprintf( outfile, "jmp *(imports+%d)\\n\\tmovl %%esi,%%esi\\n", pos );
-#elif defined(__sparc__)
-            if ( !UsePIC )
-            {
-                fprintf( outfile, "sethi %%hi(imports+%d), %%g1\\n\\t", pos );
-                fprintf( outfile, "ld [%%g1+%%lo(imports+%d)], %%g1\\n\\t", pos );
-                fprintf( outfile, "jmp %%g1\\n\\tnop\\n" );
-            }
-            else
-            {
-                /* Hmpf.  Stupid sparc assembler always interprets global variable
-                   names as GOT offsets, so we have to do it the long way ... */
-                fprintf( outfile, "save %%sp, -96, %%sp\\n" );
-                fprintf( outfile, "0:\\tcall 1f\\n\\tnop\\n" );
-                fprintf( outfile, "1:\\tsethi %%hi(imports+%d-0b), %%g1\\n\\t", pos );
-                fprintf( outfile, "or %%g1, %%lo(imports+%d-0b), %%g1\\n\\t", pos );
-                fprintf( outfile, "ld [%%g1+%%o7], %%g1\\n\\t" );
-                fprintf( outfile, "jmp %%g1\\n\\trestore\\n" );
-            }
-
-#elif defined(__powerpc__)
-            fprintf(outfile, "\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[9], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[8], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[7], ppc_reg[1]);
-
-            fprintf(outfile, "\t\"\\tlis %s, " ppc_high(__ASM_NAME("imports") "+ %d")  "\\n\"\n", ppc_reg[9], pos);
-            fprintf(outfile, "\t\"\\tla  %s, " ppc_low (__ASM_NAME("imports") "+ %d") "(%s)\\n\"\n", ppc_reg[8], pos, ppc_reg[9]);
-            fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg[7], ppc_reg[8]);
-            fprintf(outfile, "\t\"\\tmtctr %s\\n\"\n", ppc_reg[7]);
-
-            fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[7], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[8], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf(outfile, "\t\"\\tbctr\\n");
-#elif defined(__ALPHA__)
-            fprintf( outfile, "\tlda $0,imports\\n\"\n" );
-            fprintf( outfile, "\t\"\\tlda $0,%d($0)\\n\"\n", pos);
-            fprintf( outfile, "\t\"\\tjmp $31,($0)\\n" );
-#else
-#error You need to define import thunks for your architecture!
-#endif
-            fprintf( outfile, "\"\n" );
-            output_function_size( outfile, name );
+            output_import_thunk( outfile, odp->name ? odp->name : odp->export_name,
+                                 "imports", pos );
         }
         pos += 4;
     }
@@ -1080,64 +1116,8 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         for (j = 0; j < dll_imports[i]->nb_imports; j++, pos += 4)
         {
             ORDDEF *odp = dll_imports[i]->imports[j];
-            const char *name = odp->name ? odp->name : odp->export_name;
-
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", name );
-            fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\\t\"", name );
-#if defined(__i386__)
-            if (strstr( name, "__wine_call_from_16" ))
-                fprintf( outfile, "\".byte 0x2e\\n\\tjmp *(delay_imports+%d)\\n\\tnop\\n\"", pos );
-            else
-                fprintf( outfile, "\"jmp *(delay_imports+%d)\\n\\tmovl %%esi,%%esi\\n\"", pos );
-#elif defined(__sparc__)
-            if ( !UsePIC )
-            {
-                fprintf( outfile, "\"sethi %%hi(delay_imports+%d), %%g1\\n\\t\"", pos );
-                fprintf( outfile, "\"ld [%%g1+%%lo(delay_imports+%d)], %%g1\\n\\t\"", pos );
-                fprintf( outfile, "\"jmp %%g1\\n\\tnop\\n\"" );
-            }
-            else
-            {
-                /* Hmpf.  Stupid sparc assembler always interprets global variable
-                   names as GOT offsets, so we have to do it the long way ... */
-                fprintf( outfile, "\"save %%sp, -96, %%sp\\n\"" );
-                fprintf( outfile, "\"0:\\tcall 1f\\n\\tnop\\n\"" );
-                fprintf( outfile, "\"1:\\tsethi %%hi(delay_imports+%d-0b), %%g1\\n\\t\"", pos );
-                fprintf( outfile, "\"or %%g1, %%lo(delay_imports+%d-0b), %%g1\\n\\t\"", pos );
-                fprintf( outfile, "\"ld [%%g1+%%o7], %%g1\\n\\t\"" );
-                fprintf( outfile, "\"jmp %%g1\\n\\trestore\\n\"" );
-            }
-
-#elif defined(__powerpc__)
-            fprintf( outfile, "\t\"addi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[9], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[8], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[7], ppc_reg[1]);
-
-            fprintf( outfile, "\t\"\\tlis %s, " ppc_high(__ASM_NAME("delay_imports") "+ %d") "\\n\"\n", ppc_reg[9], pos);
-            fprintf( outfile, "\t\"\\tla  %s, " ppc_low (__ASM_NAME("delay_imports") "+ %d") "(%s)\\n\"\n", ppc_reg[8], pos, ppc_reg[9]);
-            fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg[7], ppc_reg[8]);
-            fprintf( outfile, "\t\"\\tmtctr %s\\n\"\n", ppc_reg[7]);
-
-            fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[7], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[8], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "\t\"\\tbctr\\n\"");
-#elif defined(__ALPHA__)
-            fprintf( outfile, "\t\"lda $0,delay_imports\\n\"\n" );
-            fprintf( outfile, "\t\"\\tlda $0,%d($0)\\n\"\n", pos);
-            fprintf( outfile, "\t\"\\tjmp $31,($0)\\n\"" );
-#else
-#error You need to define delayed import thunks for your architecture!
-#endif
-            fprintf( outfile, "\n" );
-            output_function_size( outfile, name );
+            output_import_thunk( outfile, odp->name ? odp->name : odp->export_name,
+                                 "delay_imports", pos );
         }
     }
     output_function_size( outfile, delayed_import_thunks );
