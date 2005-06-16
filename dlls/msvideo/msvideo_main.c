@@ -747,20 +747,20 @@ void VFWAPI ICCompressorFree(PCOMPVARS pc)
       ICClose(pc->hic);
       pc->hic = NULL;
     }
-    if (pc->lpbiOut != NULL) {
-      GlobalFreePtr(pc->lpbiOut);
-      pc->lpbiOut = NULL;
+    if (pc->lpbiIn != NULL) {
+      HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+      pc->lpbiIn = NULL;
     }
     if (pc->lpBitsOut != NULL) {
-      GlobalFreePtr(pc->lpBitsOut);
+      HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
       pc->lpBitsOut = NULL;
     }
     if (pc->lpBitsPrev != NULL) {
-      GlobalFreePtr(pc->lpBitsPrev);
+      HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
       pc->lpBitsPrev = NULL;
     }
     if (pc->lpState != NULL) {
-      GlobalFreePtr(pc->lpBitsPrev);
+      HeapFree(GetProcessHeap(), 0, pc->lpState);
       pc->lpState = NULL;
     }
     pc->dwFlags = 0;
@@ -1119,7 +1119,55 @@ err:
  */
 LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL *pfKey, LONG *plSize)
 {
-    FIXME("(%p, 0x%08x, %p, %p, %p), stub!\n", pc, uiFlags, lpBits, pfKey, plSize);
+    ICCOMPRESS* icComp = (ICCOMPRESS *)pc->lpState;
+    DWORD ret;
+    TRACE("(%p, 0x%08x, %p, %p, %p)\n", pc, uiFlags, lpBits, pfKey, plSize);
+
+    if (pc->cbState != sizeof(ICCOMPRESS))
+    {
+       ERR("Invalid cbState (%li should be %i)\n", pc->cbState, sizeof(ICCOMPRESS));
+       return NULL;
+    }
+
+    if (!pc->lKeyCount++)
+       icComp->dwFlags = ICCOMPRESS_KEYFRAME;
+    else
+    {
+        if (pc->lKey && pc->lKeyCount == (pc->lKey - 1))
+        /* No key frames if pc->lKey == 0 */
+           pc->lKeyCount = 0;
+	icComp->dwFlags = 0;
+    }
+
+    icComp->lpInput = lpBits;
+    icComp->lFrameNum = pc->lFrame++;
+    icComp->lpOutput = pc->lpBitsOut;
+    icComp->lpPrev = pc->lpBitsPrev;
+    ret = ICSendMessage(pc->hic, ICM_COMPRESS, (DWORD_PTR)icComp, sizeof(icComp));
+
+    if (icComp->dwFlags & AVIIF_KEYFRAME)
+    {
+       pc->lKeyCount = 1;
+       *pfKey = TRUE;
+       TRACE("Key frame\n");
+    }
+    else
+       *pfKey = FALSE;
+
+    *plSize = icComp->lpbiOutput->biSizeImage;
+    TRACE(" -- 0x%08lx\n", ret);
+    if (ret == ICERR_OK)
+    {
+       LPVOID oldprev, oldout;
+/* We shift Prev and Out, so we don't have to allocate and release memory */
+       oldprev = pc->lpBitsPrev;
+       oldout = pc->lpBitsOut;
+       pc->lpBitsPrev = oldout;
+       pc->lpBitsOut = oldprev;
+
+       TRACE("returning: %p\n", icComp->lpOutput);
+       return icComp->lpOutput;
+    }
     return NULL;
 }
 
@@ -1128,7 +1176,19 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
  */
 void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
 {
-    FIXME("(%p), stub!\n", pc);
+    DWORD ret;
+    TRACE("(%p)\n", pc);
+    ret = ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
+    TRACE(" -- %lx", ret);
+    if (pc->lpbiIn)
+       HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+    if (pc->lpBitsPrev)
+       HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+    if (pc->lpBitsOut)
+       HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
+    if (pc->lpState)
+       HeapFree(GetProcessHeap(), 0, pc->lpState);
+    pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
 }
 
 /***********************************************************************
@@ -1136,8 +1196,73 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
  */
 BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 {
-    FIXME("(%p, %p), stub!\n", pc, lpbiIn);
-    return TRUE;
+    /* I'm ignoring bmiColors as I don't know what to do with it,
+     * it doesn't appear to be used though
+     */
+    DWORD ret;
+    pc->lpbiIn = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFO));
+    if (!pc->lpbiIn)
+        return FALSE;
+
+    memcpy(pc->lpbiIn, lpbiIn, sizeof(BITMAPINFO));
+    pc->lpBitsPrev = HeapAlloc(GetProcessHeap(), 0, pc->lpbiIn->bmiHeader.biSizeImage);
+    if (!pc->lpBitsPrev)
+    {
+        HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+	return FALSE;
+    }
+
+    pc->lpState = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS));
+    if (!pc->lpState)
+    {
+       HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+       HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+       return FALSE;
+    }
+    pc->cbState = sizeof(ICCOMPRESS);
+
+    pc->lpBitsOut = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
+    if (!pc->lpBitsOut)
+    {
+       HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+       HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+       HeapFree(GetProcessHeap(), 0, pc->lpState);
+       return FALSE;
+    }
+    TRACE("Compvars:\n"
+	  "\tpc:\n"
+	  "\tsize: %li\n"
+	  "\tflags: %li\n"
+	  "\thic: %p\n"
+	  "\ttype: %lx\n"
+	  "\thandler: %lx\n"
+	  "\tin/out: %p/%p\n"
+	  "key/data/quality: %li/%li/%li\n",
+	     pc->cbSize, pc->dwFlags, pc->hic, pc->fccType, pc->fccHandler,
+	     pc->lpbiIn, pc->lpbiOut, pc->lKey, pc->lDataRate, pc->lQ);
+
+    ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD)pc->lpbiIn, (DWORD)pc->lpbiOut);
+    TRACE(" -- %lx\n", ret);
+    if (ret == ICERR_OK)
+    {
+       ICCOMPRESS* icComp = (ICCOMPRESS *)pc->lpState;
+       /* Initialise some variables */
+       pc->lFrame = 0; pc->lKeyCount = 0;
+
+       icComp->lpbiOutput = &pc->lpbiOut->bmiHeader;
+       icComp->lpbiInput = &pc->lpbiIn->bmiHeader;
+       icComp->lpckid = NULL;
+       icComp->dwFrameSize = 0;
+       icComp->dwQuality = pc->lQ;
+       icComp->lpbiPrev = &pc->lpbiIn->bmiHeader;
+       return TRUE;
+    }
+    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+    HeapFree(GetProcessHeap(), 0, pc->lpState);
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
+    pc->lpBitsPrev = pc->lpbiIn = pc->lpState = pc->lpBitsOut = NULL;
+    return FALSE;
 }
 
 /***********************************************************************
