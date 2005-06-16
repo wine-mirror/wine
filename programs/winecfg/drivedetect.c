@@ -111,7 +111,7 @@ static BOOL is_drive_defined(char *path)
 }
 
 /* returns Z + 1 if there are no more available letters */
-static char allocate_letter()
+static char allocate_letter(void)
 {
     char letter;
 
@@ -184,7 +184,7 @@ static void report_error(int code)
     }
 }
 
-static void ensure_root_is_mapped()
+static void ensure_root_is_mapped(void)
 {
     int i;
     BOOL mapped = FALSE;
@@ -211,7 +211,7 @@ static void ensure_root_is_mapped()
     }
 }
 
-static void ensure_home_is_mapped()
+static void ensure_home_is_mapped(void)
 {
     int i;
     BOOL mapped = FALSE;
@@ -239,7 +239,7 @@ static void ensure_home_is_mapped()
     }        
 }
 
-static void ensure_drive_c_is_mapped()
+static void ensure_drive_c_is_mapped(void)
 {
     struct stat buf;
     const char *configdir = wine_get_config_dir();

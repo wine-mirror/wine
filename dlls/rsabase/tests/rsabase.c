@@ -58,7 +58,7 @@ static void clean_up_environment(void)
 	CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
-static void test_gen_random()
+static void test_gen_random(void)
 {
 	BOOL result;
 	BYTE rnd1[16], rnd2[16];

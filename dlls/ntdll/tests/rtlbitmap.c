@@ -48,7 +48,7 @@ static ULONG (WINAPI *pRtlFindLongestRunClear)(PRTL_BITMAP,PULONG);
 static BYTE buff[256];
 static RTL_BITMAP bm;
 
-static void InitFunctionPtrs()
+static void InitFunctionPtrs(void)
 {
   hntdll = LoadLibraryA("ntdll.dll");
   ok(hntdll != 0, "LoadLibrary failed\n");
@@ -103,7 +103,7 @@ static void test_RtlSetAllBits(void)
   ok(buff[4] == 0, "set more than rounded size\n");
 }
 
-static void test_RtlClearAllBits()
+static void test_RtlClearAllBits(void)
 {
   if (!pRtlClearAllBits)
     return;
@@ -116,7 +116,7 @@ static void test_RtlClearAllBits()
   ok(buff[4] == 0xff, "cleared more than rounded size\n");
 }
 
-static void test_RtlSetBits()
+static void test_RtlSetBits(void)
 {
   if (!pRtlSetBits)
     return;
@@ -144,7 +144,7 @@ static void test_RtlSetBits()
   ok(buff[sizeof(buff)-1] == 0x80, "didn't set last bit\n");
 }
 
-static void test_RtlClearBits()
+static void test_RtlClearBits(void)
 {
   if (!pRtlClearBits)
     return;
@@ -172,7 +172,7 @@ static void test_RtlClearBits()
   ok(buff[sizeof(buff)-1] == 0x7f, "didn't set last bit\n");
 }
 
-static void test_RtlCheckBit()
+static void test_RtlCheckBit(void)
 {
   BOOLEAN bRet;
 
@@ -196,7 +196,7 @@ static void test_RtlCheckBit()
   ok (!bRet, "found non set bit\n");
 }
 
-static void test_RtlAreBitsSet()
+static void test_RtlAreBitsSet(void)
 {
   BOOLEAN bRet;
 
@@ -241,7 +241,7 @@ static void test_RtlAreBitsSet()
   ok(bRet, "didn't find last bit\n");
 }
 
-static void test_RtlAreBitsClear()
+static void test_RtlAreBitsClear(void)
 {
   BOOLEAN bRet;
 
@@ -286,7 +286,7 @@ static void test_RtlAreBitsClear()
   ok(bRet, "didn't find last bit\n");
 }
 
-static void test_RtlNumberOfSetBits()
+static void test_RtlNumberOfSetBits(void)
 {
   ULONG ulCount;
 
@@ -316,7 +316,7 @@ static void test_RtlNumberOfSetBits()
   ok(ulCount == 8+1+33+1, "count wrong\n");
 }
 
-static void test_RtlNumberOfClearBits()
+static void test_RtlNumberOfClearBits(void)
 {
   ULONG ulCount;
 
@@ -347,7 +347,7 @@ static void test_RtlNumberOfClearBits()
 }
 
 /* Note: this tests RtlFindSetBits also */
-static void test_RtlFindSetBitsAndClear()
+static void test_RtlFindSetBitsAndClear(void)
 {
   BOOLEAN bRet;
   ULONG ulPos;
@@ -379,7 +379,7 @@ static void test_RtlFindSetBitsAndClear()
 }
 
 /* Note: this tests RtlFindClearBits also */
-static void test_RtlFindClearBitsAndSet()
+static void test_RtlFindClearBitsAndSet(void)
 {
   BOOLEAN bRet;
   ULONG ulPos;
@@ -410,7 +410,7 @@ static void test_RtlFindClearBitsAndSet()
   }
 }
 
-static void test_RtlFindMostSignificantBit()
+static void test_RtlFindMostSignificantBit(void)
 {
   int i;
   CCHAR cPos;
@@ -437,7 +437,7 @@ static void test_RtlFindMostSignificantBit()
   ok (cPos == -1, "found bit when not set\n");
 }
 
-static void test_RtlFindLeastSignificantBit()
+static void test_RtlFindLeastSignificantBit(void)
 {
   int i;
   CCHAR cPos;
@@ -463,7 +463,7 @@ static void test_RtlFindLeastSignificantBit()
 }
 
 /* Note: Also tests RtlFindLongestRunSet() */
-static void test_RtlFindSetRuns()
+static void test_RtlFindSetRuns(void)
 {
   RTL_BITMAP_RUN runs[16];
   ULONG ulCount;
@@ -537,7 +537,7 @@ static void test_RtlFindSetRuns()
 }
 
 /* Note: Also tests RtlFindLongestRunClear() */
-static void test_RtlFindClearRuns()
+static void test_RtlFindClearRuns(void)
 {
   RTL_BITMAP_RUN runs[16];
   ULONG ulCount;

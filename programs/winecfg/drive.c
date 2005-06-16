@@ -271,7 +271,7 @@ void load_drives()
 
 /* some of this code appears to be broken by bugs in Wine: the label
  * setting code has no effect, for instance  */
-void apply_drive_changes()
+void apply_drive_changes(void)
 {
     int i;
     CHAR devicename[4];

@@ -38,7 +38,7 @@ static HTREEITEM hRoot, hChild;
 static int pos = 0;
 static char sequence[256];
 
-static void Clear()
+static void Clear(void)
 {
     pos = 0;
     sequence[0] = '\0';
@@ -67,7 +67,7 @@ static void IdentifyItem(HTREEITEM hItem)
     AddItem('?');
 }
 
-static void FillRoot()
+static void FillRoot(void)
 {
     TVINSERTSTRUCTA ins;
 
@@ -92,7 +92,7 @@ static void FillRoot()
     ok(!strcmp(sequence, "AB."), "Item creation");
 }
 
-static void DoTest1()
+static void DoTest1(void)
 {
     TreeView_SelectItem(hTree, NULL);
     Clear();
@@ -110,7 +110,7 @@ static void DoTest1()
     ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test");
 }
 
-static void DoTest2()
+static void DoTest2(void)
 {
     TreeView_SelectItem(hTree, NULL);
     Clear();

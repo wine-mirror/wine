@@ -813,7 +813,7 @@ static void test_RtlAreAnyAccessesGranted(void)
     } /* for */
 }
 
-static void test_RtlComputeCrc32()
+static void test_RtlComputeCrc32(void)
 {
   DWORD crc = 0;
 
@@ -837,7 +837,7 @@ static inline void RtlpMakeHandleAllocated(RTL_HANDLE * Handle)
     *AllocatedBit = *AllocatedBit | 1;
 }
 
-static void test_HandleTables()
+static void test_HandleTables(void)
 {
     BOOLEAN result;
     NTSTATUS status;

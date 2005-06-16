@@ -91,7 +91,7 @@ static void clean_up_environment(void)
     CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
-static void test_prov() 
+static void test_prov(void) 
 {
     BOOL result;
     DWORD dwLen, dwInc;
@@ -105,7 +105,7 @@ static void test_prov()
     ok(result && dwInc==8, "%08lx, %ld\n", GetLastError(), dwInc);
 }
 
-static void test_gen_random()
+static void test_gen_random(void)
 {
     BOOL result;
     BYTE rnd1[16], rnd2[16];
@@ -275,7 +275,7 @@ static void test_hashes(void)
     ok(result, "%08lx\n", GetLastError());
 }
 
-static void test_block_cipher_modes()
+static void test_block_cipher_modes(void)
 {
     static const BYTE plain[23] = { 
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 
@@ -357,7 +357,7 @@ static void test_block_cipher_modes()
     ok(!result && GetLastError() == NTE_BAD_ALGID, "%08lx\n", GetLastError());
 }
 
-static void test_3des112()
+static void test_3des112(void)
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -385,7 +385,7 @@ static void test_3des112()
     ok(result, "%08lx\n", GetLastError());
 }
 
-static void test_des() 
+static void test_des(void) 
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -421,7 +421,7 @@ static void test_des()
     ok(result, "%08lx\n", GetLastError());
 }
 
-static void test_3des()
+static void test_3des(void)
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -450,7 +450,7 @@ static void test_3des()
     ok(result, "%08lx\n", GetLastError());
 }
 
-static void test_rc2()
+static void test_rc2(void)
 {
     static const BYTE rc2encrypted[16] = { 
         0x02, 0x34, 0x7d, 0xf6, 0x1d, 0xc5, 0x9b, 0x8b, 
@@ -538,7 +538,7 @@ static void test_rc2()
     }
 }
 
-static void test_rc4()
+static void test_rc4(void)
 {
     static const BYTE rc4[16] = { 
         0x17, 0x0c, 0x44, 0x8e, 0xae, 0x90, 0xcd, 0xb0, 
@@ -609,7 +609,7 @@ static void test_rc4()
     }
 }
 
-static void test_hmac() {
+static void test_hmac(void) {
     HCRYPTKEY hKey;
     HCRYPTHASH hHash;
     BOOL result;
@@ -652,7 +652,7 @@ static void test_hmac() {
     ok(!result && GetLastError() == NTE_BAD_KEY, "%08lx\n", GetLastError());
 }
 
-static void test_mac() {
+static void test_mac(void) {
     HCRYPTKEY hKey;
     HCRYPTHASH hHash;
     BOOL result;
@@ -699,7 +699,7 @@ static void test_mac() {
     ok(result, "%08lx\n", GetLastError());
 }
 
-static void test_import_private() 
+static void test_import_private(void) 
 {
     DWORD dwLen;
     HCRYPTKEY hKeyExchangeKey, hSessionKey;
@@ -837,7 +837,7 @@ static void test_import_private()
     if (!result) return;
 }
 
-static void test_verify_signature() {
+static void test_verify_signature(void) {
     HCRYPTHASH hHash;
     HCRYPTKEY hPubSignKey;
     BYTE abData[] = "Wine rocks!";

@@ -76,7 +76,7 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
-static void register_serverwnd_class()
+static void register_serverwnd_class(void)
 {
     static WNDCLASSEXW wndclass = {
         sizeof(WNDCLASSEXW),

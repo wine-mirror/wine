@@ -76,8 +76,8 @@ INT_PTR CALLBACK LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM l
 INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* Drive management  */
-void load_drives();
-int autodetect_drives();
+void load_drives(void);
+int autodetect_drives(void);
 
 struct drive
 {
@@ -95,7 +95,7 @@ struct drive
 long drive_available_mask(char letter);
 BOOL add_drive(const char letter, const char *targetpath, const char *label, const char *serial, unsigned int type);
 void delete_drive(struct drive *pDrive);
-void apply_drive_changes();
+void apply_drive_changes(void);
 extern struct drive drives[26]; /* one for each drive letter */
 
 BOOL gui_mode;

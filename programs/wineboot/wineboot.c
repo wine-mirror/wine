@@ -98,7 +98,7 @@ static BOOL GetLine( HANDLE hFile, char *buf, size_t buflen )
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
  */
-static BOOL wininit()
+static BOOL wininit(void)
 {
     const char * const RENAME_FILE="wininit.ini";
     const char * const RENAME_FILE_TO="wininit.bak";
@@ -188,7 +188,7 @@ static BOOL wininit()
     return TRUE;
 }
 
-static BOOL pendingRename()
+static BOOL pendingRename(void)
 {
     static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
                                       'F','i','l','e','R','e','n','a','m','e',
