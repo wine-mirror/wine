@@ -207,7 +207,8 @@
 #define D3DPRESENTFLAG_DEVICECLIP           0x00000004 /* Clip the window blited into the client area 2k + xp only */
 #define D3DPRESENTFLAG_VIDEO                0x00000010 /* backbuffer 'may' contain video data */
 
-
+#define D3DPRESENT_BACK_BUFFERS_MAX         3L
+#define D3DPRESENT_RATE_DEFAULT             0x00000000
 
 /**************************** 
  * Vertex Shaders Declaration
@@ -811,6 +812,7 @@ typedef enum _D3DFORMAT {
     D3DFMT_D16_LOCKABLE         =  70,
     D3DFMT_D32                  =  71,
     D3DFMT_D15S1                =  73,
+    D3DFMT_D24S8                =  75,
     D3DFMT_D24X8                =  77,
     D3DFMT_D24X4S4              =  79,
     D3DFMT_D16                  =  80,
