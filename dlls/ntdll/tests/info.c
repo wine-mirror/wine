@@ -357,7 +357,8 @@ static void test_query_process_basic()
     /* Use a correct info class and buffer size, but still no handle and buffer */
     trace("Check NULL handle and buffer\n");
     status = pNtQueryInformationProcess(NULL, ProcessBasicInformation, NULL, sizeof(pbi), NULL);
-    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
 
     /* Use a correct info class and buffer size, but still no handle */
     trace("Check NULL handle\n");
