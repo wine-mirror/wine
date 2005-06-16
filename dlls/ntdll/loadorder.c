@@ -386,13 +386,9 @@ static HKEY open_app_key( const WCHAR *app_name, const WCHAR *module )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY hkey;
+    HKEY root, hkey;
     WCHAR *str;
-    static const WCHAR AppDefaultsW[] = {'M','a','c','h','i','n','e','\\',
-                                         'S','o','f','t','w','a','r','e','\\',
-                                         'W','i','n','e','\\',
-                                         'W','i','n','e','\\',
-                                         'C','o','n','f','i','g','\\',
+    static const WCHAR AppDefaultsW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                          'A','p','p','D','e','f','a','u','l','t','s','\\',0};
     static const WCHAR DllOverridesW[] = {'\\','D','l','l','O','v','e','r','r','i','d','e','s',0};
 
@@ -406,16 +402,18 @@ static HKEY open_app_key( const WCHAR *app_name, const WCHAR *module )
 
     TRACE( "searching %s in %s\n", debugstr_w(module), debugstr_w(str) );
 
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
+    attr.RootDirectory = root;
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, str );
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\DllOverrides */
+    /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DllOverrides */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
+    NtClose( root );
     RtlFreeHeap( GetProcessHeap(), 0, str );
     return hkey;
 }
@@ -480,11 +478,7 @@ static BOOL get_registry_value( HKEY hkey, const WCHAR *module, enum loadorder_t
 void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_name,
                           const WCHAR *path )
 {
-    static const WCHAR DllOverridesW[] = {'M','a','c','h','i','n','e','\\',
-                                          'S','o','f','t','w','a','r','e','\\',
-                                          'W','i','n','e','\\',
-                                          'W','i','n','e','\\',
-                                          'C','o','n','f','i','g','\\',
+    static const WCHAR DllOverridesW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                           'D','l','l','O','v','e','r','r','i','d','e','s',0};
 
     static HKEY std_key = (HKEY)-1;  /* key to standard section, cached */
@@ -541,17 +535,20 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     {
         OBJECT_ATTRIBUTES attr;
         UNICODE_STRING nameW;
+        HKEY root;
 
+        RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
         attr.Length = sizeof(attr);
-        attr.RootDirectory = 0;
+        attr.RootDirectory = root;
         attr.ObjectName = &nameW;
         attr.Attributes = 0;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &nameW, DllOverridesW );
 
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\DllOverrides */
+        /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
         if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
+        NtClose( root );
     }
 
     if (std_key && get_registry_value( std_key, module+1, loadorder ))
