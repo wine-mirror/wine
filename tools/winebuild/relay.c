@@ -774,6 +774,15 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%ebx\n" );
 
+    if (UsePIC)
+    {
+        /* Get Global Offset Table into %edx */
+        fprintf( outfile, "\tcall .L__wine_%s.getgot1\n", name );
+        fprintf( outfile, ".L__wine_%s.getgot1:\n", name );
+        fprintf( outfile, "\tpopl %%edx\n" );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_%s.getgot1], %%edx\n", name );
+    }
+
     /* Get the 16-bit stack */
 
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%ebx\n", STACKOFFSET);
@@ -783,7 +792,13 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tshldl $16,%%ebx,%%eax\n" );
     fprintf( outfile, "\tandl $0xfff8,%%eax\n" );
     fprintf( outfile, "\tshrl $1,%%eax\n" );
-    fprintf( outfile, "\tmovl " __ASM_NAME("wine_ldt_copy") "(%%eax),%%esi\n" );
+    if (!UsePIC)
+        fprintf( outfile, "\tmovl " __ASM_NAME("wine_ldt_copy") "(%%eax),%%esi\n" );
+    else
+    {
+        fprintf( outfile, "\tmovl " __ASM_NAME("wine_ldt_copy@GOT") "(%%edx), %%esi\n" );
+        fprintf( outfile, "\tmovl (%%esi,%%eax), %%esi\n" );
+    }
     fprintf( outfile, "\tmovw %%bx,%%ax\n" );
     fprintf( outfile, "\taddl %%eax,%%esi\n" );
 
@@ -816,7 +831,13 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\taddl $%d, %%ebx\n", sizeof(STACK16FRAME)-size+4 + 4 );
         fprintf( outfile, "\tmovl %%ebx, 0(%%edi)\n" );    /* 16-bit ss:sp */
 
-        fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
+        if (!UsePIC)
+            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
+        else
+        {
+            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr@GOT") "(%%edx), %%eax\n", name );
+            fprintf( outfile, "\tmovl (%%eax), %%eax\n" );
+        }
         fprintf( outfile, "\tmovl %%eax, 4(%%edi)\n" );   /* overwrite return address */
     }
     else
@@ -837,7 +858,13 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
         fprintf( outfile, "\tmovl %%eax, 16(%%edi)\n" );
 
-        fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
+        if (!UsePIC)
+            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
+        else
+        {
+            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr@GOT") "(%%edx), %%eax\n", name );
+            fprintf( outfile, "\tmovl (%%eax), %%eax\n" );
+        }
         fprintf( outfile, "\tmovl %%eax, 20(%%edi)\n" );
     }
 
