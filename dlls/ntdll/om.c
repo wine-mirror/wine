@@ -475,14 +475,12 @@ NTSTATUS WINAPI NtQuerySymbolicLinkObject(
 
 /******************************************************************************
  *  NtAllocateUuids   [NTDLL.@]
- *
- * NOTES
- *  I have seen lpdwCount pointing to a pointer once...
  */
-NTSTATUS WINAPI NtAllocateUuids(LPDWORD lpdwCount, LPDWORD *p2, LPDWORD *p3)
+NTSTATUS WINAPI NtAllocateUuids(
+        PULARGE_INTEGER Time,
+        PULONG Range,
+        PULONG Sequence)
 {
-	FIXME("(%p[%ld],%p,%p), stub.\n", lpdwCount,
-					 lpdwCount ? *lpdwCount : 0,
-					 p2, p3);
+        FIXME("(%p,%p,%p), stub.\n", Time, Range, Sequence);
 	return 0;
 }

@@ -524,9 +524,12 @@ NTSTATUS WINAPI NtReplyWaitReceivePort(
  *  NtSetIntervalProfile	[NTDLL.@]
  *  ZwSetIntervalProfile	[NTDLL.@]
  */
-NTSTATUS WINAPI NtSetIntervalProfile(DWORD x1,DWORD x2) {
-	FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
-	return 0;
+NTSTATUS WINAPI NtSetIntervalProfile(
+        ULONG Interval,
+        KPROFILE_SOURCE Source)
+{
+    FIXME("%lu,%d\n", Interval, Source);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -906,14 +909,13 @@ NTSTATUS WINAPI NtQuerySystemInformation(
  *  ZwCreatePagingFile		[NTDLL.@]
  */
 NTSTATUS WINAPI NtCreatePagingFile(
-	IN PUNICODE_STRING PageFileName,
-	IN ULONG MiniumSize,
-	IN ULONG MaxiumSize,
-	OUT PULONG ActualSize)
+	PUNICODE_STRING PageFileName,
+	PLARGE_INTEGER MiniumSize,
+	PLARGE_INTEGER MaxiumSize,
+	PLARGE_INTEGER ActualSize)
 {
-	FIXME("(%p(%s),0x%08lx,0x%08lx,%p),stub!\n",
-	PageFileName->Buffer, debugstr_w(PageFileName->Buffer),MiniumSize,MaxiumSize,ActualSize);
-	return 0;
+    FIXME("%p %p %p %p\n", PageFileName, MiniumSize, MaxiumSize, ActualSize);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -1013,10 +1015,10 @@ NTSTATUS WINAPI NtPowerInformation(
  *  NtShutdownSystem				[NTDLL.@]
  *
  */
-NTSTATUS WINAPI NtShutdownSystem(DWORD x1)
+NTSTATUS WINAPI NtShutdownSystem(SHUTDOWN_ACTION Action)
 {
-	FIXME("(0x%08lx),stub\n",x1);
-	return 0;
+    FIXME("%d\n",Action);
+    return STATUS_SUCCESS;
 }
 
 /******************************************************************************
