@@ -124,13 +124,11 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *pDeclImpl = (IDirect3DVertexDeclaration9Impl *)pDecl;
     HRESULT hr = S_OK;
-
-    This->UpdateStateBlock->vertexDecl = NULL;
+    /* TODO: implement stateblocks */
+    FIXME("Disabled\n");
+    return D3DERR_INVALIDCALL;
     if (NULL != pDecl) {
       hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl->wineD3DVertexDeclaration);
-      if (SUCCEEDED(hr)) {
-	This->UpdateStateBlock->vertexDecl = (IDirect3DVertexDeclaration9Impl*) pDecl;
-      }
     }
     return hr;
 }
@@ -139,15 +137,16 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
     IDirect3DDevice9Impl* This = (IDirect3DDevice9Impl*) iface;
     IWineD3DVertexDeclaration* pTest = NULL;
     HRESULT hr = S_OK;
-    IDirect3DVertexDeclaration9Impl* pCur = This->StateBlock->vertexDecl;
+    FIXME("Disabled\n");
+    return D3DERR_INVALIDCALL;
 
     if (NULL == ppDecl) {
       return D3DERR_INVALIDCALL;
     }
     *ppDecl = NULL;
     hr = IWineD3DDevice_GetVertexDeclaration(This->WineD3DDevice, &pTest);
-    if (SUCCEEDED(hr) && (NULL == pCur || pCur->wineD3DVertexDeclaration == pTest)) {
-      *ppDecl = (IDirect3DVertexDeclaration9*) pCur;
+    if (SUCCEEDED(hr)) {
+      *ppDecl = NULL;
     }
     return hr;
 }
