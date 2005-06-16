@@ -102,12 +102,12 @@ static void set_advanced(HWND dialog)
     if (advanced)
     {
         state = SW_NORMAL;
-        LoadString(GetModuleHandle(NULL), IDS_SHOW_ADVANCED, text, 256);
+        LoadString(GetModuleHandle(NULL), IDS_HIDE_ADVANCED, text, 256);
     }
     else
     {
         state = SW_HIDE;
-        LoadString(GetModuleHandle(NULL), IDS_HIDE_ADVANCED, text, 256);
+        LoadString(GetModuleHandle(NULL), IDS_SHOW_ADVANCED, text, 256);
     }
 
     ShowWindow(GetDlgItem(dialog, IDC_RADIO_AUTODETECT), state);
