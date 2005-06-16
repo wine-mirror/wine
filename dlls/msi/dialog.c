@@ -119,6 +119,7 @@ static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
 static UINT msi_dialog_button_handler( msi_dialog *, msi_control *, WPARAM );
 static UINT msi_dialog_edit_handler( msi_dialog *, msi_control *, WPARAM );
 static UINT msi_dialog_radiogroup_handler( msi_dialog *, msi_control *, WPARAM param );
+static UINT msi_dialog_evaluate_control_conditions( msi_dialog *dialog );
 static LRESULT WINAPI MSIRadioGroup_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
@@ -594,7 +595,6 @@ static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 
 static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    const static WCHAR szEdit[] = { 'E','D','I','T',0 };
     msi_control *control;
     LPCWSTR prop;
     LPWSTR val;
@@ -609,6 +609,273 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     HeapFree( GetProcessHeap(), 0, val );
     return ERROR_SUCCESS;
 }
+
+/******************** Masked Edit ********************************************/
+
+#define MASK_MAX_GROUPS 10
+
+struct msi_mask_group
+{
+    UINT len;
+    UINT ofs;
+    WCHAR type;
+    HWND hwnd;
+};
+
+struct msi_maskedit_info
+{
+    msi_dialog *dialog;
+    WNDPROC oldproc;
+    HWND hwnd;
+    LPWSTR prop;
+    UINT num_chars;
+    UINT num_groups;
+    struct msi_mask_group group[MASK_MAX_GROUPS];
+};
+
+static void msi_mask_control_change( struct msi_maskedit_info *info )
+{
+    LPWSTR val;
+    UINT i, n, r;
+
+    val = HeapAlloc( GetProcessHeap(), 0, (info->num_chars+1)*sizeof(WCHAR) );
+    for( i=0, n=0; i<info->num_groups; i++ )
+    {
+        if( (info->group[i].len + n) > info->num_chars )
+        {
+            ERR("can't fit control %d text into template\n",i);
+            break;
+        }
+        r = GetWindowTextW( info->group[i].hwnd, &val[n], info->group[i].len+1 );
+        if( r != info->group[i].len )
+            break;
+        n += r;
+    }
+
+    TRACE("%d/%d controls were good\n", i, info->num_groups);
+
+    if( i == info->num_groups )
+    {
+        TRACE("Set property %s to %s\n",
+              debugstr_w(info->prop), debugstr_w(val) );
+        CharUpperBuffW( val, info->num_chars );
+        MSI_SetPropertyW( info->dialog->package, info->prop, val );
+        msi_dialog_evaluate_control_conditions( info->dialog );
+    }
+    HeapFree( GetProcessHeap(), 0, val );
+}
+
+static LRESULT WINAPI
+MSIMaskedEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    struct msi_maskedit_info *info;
+    HRESULT r;
+
+    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+
+    info = GetPropW(hWnd, szButtonData);
+
+    r = CallWindowProcW(info->oldproc, hWnd, msg, wParam, lParam);
+
+    switch( msg )
+    {
+    case WM_COMMAND:
+        if (HIWORD(wParam) == EN_CHANGE)
+            msi_mask_control_change( info );
+        break;
+    case WM_NCDESTROY:
+        HeapFree( GetProcessHeap(), 0, info->prop );
+        HeapFree( GetProcessHeap(), 0, info );
+        RemovePropW( hWnd, szButtonData );
+        break;
+    }
+
+    return r;
+}
+
+/* fish the various bits of the property out and put them in the control */
+static void
+msi_maskedit_set_text( struct msi_maskedit_info *info, LPCWSTR text )
+{
+    LPCWSTR p;
+    UINT i;
+
+    p = text;
+    for( i = 0; i < info->num_groups; i++ )
+    {
+        if( info->group[i].len < lstrlenW( p ) )
+        {
+            LPWSTR chunk = strdupW( p );
+            chunk[ info->group[i].len ] = 0;
+            SetWindowTextW( info->group[i].hwnd, chunk );
+            HeapFree( GetProcessHeap(), 0, chunk );
+        }
+        else
+        {
+            SetWindowTextW( info->group[i].hwnd, p );
+            break;
+        }
+        p += info->group[i].len;
+    }
+}
+
+static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
+{
+    struct msi_maskedit_info * info = NULL;
+    int i = 0, n = 0, total = 0;
+    LPCWSTR p;
+
+    TRACE("masked control, template %s\n", debugstr_w(mask));
+
+    if( !mask )
+        return info;
+
+    p = strchrW(mask, '<');
+    if( !p )
+        return info;
+
+    info = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *info );
+    if( !info )
+        return info;
+
+    p++;
+    for( i=0; i<MASK_MAX_GROUPS; i++ )
+    {
+        /* stop at the end of the string */
+        if( p[0] == 0 || p[0] == '>' )
+            break;
+
+        /* count the number of the same identifier */
+        for( n=0; p[n] == p[0]; n++ )
+            ;
+        info->group[i].ofs = total;
+        info->group[i].type = p[0];
+        if( p[n] == '=' )
+        {
+            n++;
+            total++; /* an extra not part of the group */
+        }
+        info->group[i].len = n;
+        total += n;
+        p += n;
+    }
+
+    TRACE("%d characters in %d groups\n", total, info->num_groups );
+    if( i == MASK_MAX_GROUPS )
+        ERR("too many groups in PIDTemplate %s\n", debugstr_w(mask));
+
+    info->num_chars = total;
+    info->num_groups = i;
+
+    return info;
+}
+
+static void
+msi_maskedit_create_children( struct msi_maskedit_info *info )
+{
+    DWORD width, height, style, wx, ww;
+    LPCWSTR text, font = NULL;
+    RECT rect;
+    HWND hwnd;
+    UINT i;
+
+    style = WS_CHILD | WS_BORDER | WS_VISIBLE | WS_TABSTOP;
+
+    GetClientRect( info->hwnd, &rect );
+
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
+
+    if( text )
+        font = msi_dialog_get_style( &text );
+
+    for( i = 0; i < info->num_groups; i++ )
+    {
+        wx = (info->group[i].ofs * width) / info->num_chars;
+        ww = (info->group[i].len * width) / info->num_chars;
+
+        hwnd = CreateWindowW( szEdit, NULL, style, wx, 0, ww, height,
+                              info->hwnd, NULL, NULL, NULL );
+        if( !hwnd )
+        {
+            ERR("failed to create mask edit sub window\n");
+            break;
+        }
+
+        SendMessageW( hwnd, EM_LIMITTEXT, info->group[i].len, 0 );
+
+        msi_dialog_set_font( info->dialog, hwnd,
+                       font ? font : info->dialog->default_font );
+        info->group[i].hwnd = hwnd;
+    }
+}
+
+/* office 2003 uses "73931<````=````=````=````=`````>@@@@@" */
+static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    const static WCHAR pidt[] = {'P','I','D','T','e','m','p','l','a','t','e',0};
+    LPWSTR mask = NULL, title = NULL, val = NULL;
+    struct msi_maskedit_info *info = NULL;
+    UINT ret = ERROR_SUCCESS;
+    msi_control *control;
+    LPCWSTR prop;
+
+    mask = load_dynamic_property( dialog->package, pidt, NULL );
+    if( !mask )
+    {
+        ERR("PIDTemplate is empty\n");
+        goto end;
+    }
+
+    info = msi_dialog_parse_groups( mask );
+    if( !info )
+    {
+        ERR("template %s is invalid\n", debugstr_w(mask));
+        goto end;
+    }
+
+    info->dialog = dialog;
+
+    control = msi_dialog_add_control( dialog, rec, szStatic, SS_OWNERDRAW|WS_GROUP );
+    if( !control )
+    {
+        ERR("Failed to create maskedit container\n");
+        ret = ERROR_FUNCTION_FAILED;
+        goto end;
+    }
+
+    info->hwnd = control->hwnd;
+
+    /* subclass the static control */
+    info->oldproc = (WNDPROC) SetWindowLongPtrW( info->hwnd, GWLP_WNDPROC,
+                                          (LONG_PTR)MSIMaskedEdit_WndProc );
+    SetPropW( control->hwnd, szButtonData, info );
+
+    prop = MSI_RecordGetString( rec, 9 );
+    if( prop )
+        info->prop = strdupW( prop );
+
+    msi_maskedit_create_children( info );
+
+    if( prop )
+    {
+        val = load_dynamic_property( dialog->package, prop, NULL );
+        if( val )
+        {
+            msi_maskedit_set_text( info, val );
+            HeapFree( GetProcessHeap(), 0, val );
+        }
+    }
+
+end:
+    if( ret != ERROR_SUCCESS )
+        HeapFree( GetProcessHeap(), 0, info );
+    HeapFree( GetProcessHeap(), 0, title );
+    HeapFree( GetProcessHeap(), 0, mask );
+    return ret;
+}
+
+/******************** Path Edit ********************************************/
 
 static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
 {
@@ -705,7 +972,7 @@ struct control_handler msi_dialog_handler[] =
     { szScrollableText, msi_dialog_scrolltext_control },
     { szComboBox, msi_dialog_combo_control },
     { szEdit, msi_dialog_edit_control },
-    { szMaskedEdit, msi_dialog_edit_control },
+    { szMaskedEdit, msi_dialog_maskedit_control },
     { szPathEdit, msi_dialog_pathedit_control },
     { szRadioButtonGroup, msi_dialog_radiogroup_control },
 };
