@@ -2064,6 +2064,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msi.dll,1
 11,,ole32.dll,1
 11,,oleaut32.dll,1
+11,,qcap.dll,1
 11,,quartz.dll,1
 11,,rsaenh.dll,1
 11,,shdocvw.dll,1
