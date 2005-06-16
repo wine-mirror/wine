@@ -27,6 +27,7 @@
 #include <string.h>
 #include <time.h>
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -668,6 +669,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
             SYSTEM_PROCESS_INFORMATION* last = NULL;
             HANDLE hSnap = 0;
             WCHAR procname[1024];
+            WCHAR* exename;
             DWORD wlen = 0;
             DWORD procstructlen = 0;
 
@@ -686,11 +688,20 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 {
                     req->handle = hSnap;
                     req->reset = (len == 0);
-                    wine_server_set_reply( req, procname, sizeof(procname) );
+                    wine_server_set_reply( req, procname, sizeof(procname)-sizeof(WCHAR) );
                     if (!(ret = wine_server_call( req )))
                     {
-                        wlen = wine_server_reply_size(reply) + sizeof(WCHAR);
+                        /* Make sure procname is 0 terminated */
+                        procname[wine_server_reply_size(reply) / sizeof(WCHAR)] = 0;
+
+                        /* Get only the executable name, not the path */
+                        if ((exename = strrchrW(procname, '\\')) != NULL) exename++;
+                        else exename = procname;
+
+                        wlen = (strlenW(exename) + 1) * sizeof(WCHAR);
+
                         procstructlen = sizeof(*spi) + wlen + ((reply->threads - 1) * sizeof(SYSTEM_THREAD_INFORMATION));
+
                         if (Length >= len + procstructlen)
                         {
                             /* ftCreationTime, ftUserTime, ftKernelTime;
@@ -762,8 +773,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                     spi->ProcessName.Buffer = (WCHAR*)((char*)spi + spi->dwOffset);
                     spi->ProcessName.Length = wlen - sizeof(WCHAR);
                     spi->ProcessName.MaximumLength = wlen;
-                    memcpy( spi->ProcessName.Buffer, procname, spi->ProcessName.Length );
-                    spi->ProcessName.Buffer[spi->ProcessName.Length / sizeof(WCHAR)] = 0;
+                    memcpy( spi->ProcessName.Buffer, exename, wlen );
                     spi->dwOffset += wlen;
 
                     last = spi;
