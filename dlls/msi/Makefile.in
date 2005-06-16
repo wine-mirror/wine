@@ -22,6 +22,7 @@ C_SRCS = \
 	handle.c \
 	helpers.c \
 	insert.c \
+	install.c \
 	msi.c \
 	msiquery.c \
 	order.c \
