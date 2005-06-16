@@ -1451,10 +1451,10 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
     if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
         pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);
-        pCaps->MaxPixelShaderValue = 1.0;
+        pCaps->PixelShader1xMaxValue = 1.0;
     } else {
         pCaps->PixelShaderVersion = 0;
-        pCaps->MaxPixelShaderValue = 0.0;
+        pCaps->PixelShader1xMaxValue = 0.0;
     }
 
     /* ------------------------------------------------

@@ -364,7 +364,7 @@ typedef struct _D3DCAPS9 {
   DWORD               MaxVertexShaderConst;
   
   DWORD               PixelShaderVersion;
-  float               MaxPixelShaderValue;
+  float               PixelShader1xMaxValue;
 
   /* DX 9 */
   DWORD               DevCaps2;
