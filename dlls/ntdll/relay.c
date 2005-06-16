@@ -675,11 +675,13 @@ void WINAPI __regs_RELAY_CallFrom32Regs( CONTEXT86 *context )
     args_copy[nb_args] = (int)context;  /* append context argument */
     if (relay->ret == 0xc3) /* cdecl */
     {
-        call_cdecl_function( *(LONGLONG_CPROC *)(entry_point + 5), nb_args+1, args_copy );
+        call_cdecl_function( (LONGLONG_CPROC)(entry_point + 5 + *(DWORD *)(entry_point + 5)),
+                             nb_args+1, args_copy );
     }
     else  /* stdcall */
     {
-        call_stdcall_function( *(LONGLONG_FARPROC *)(entry_point + 5), nb_args+1, args_copy );
+        call_stdcall_function( (LONGLONG_FARPROC)(entry_point + 5 + *(DWORD *)(entry_point + 5)),
+                               nb_args+1, args_copy );
     }
 
     if (TRACE_ON(relay))

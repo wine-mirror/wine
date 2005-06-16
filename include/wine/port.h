@@ -241,7 +241,7 @@ struct statvfs
 #define DEFINE_REGS_ENTRYPOINT( name, args, pop_args ) \
     __ASM_GLOBAL_FUNC( name, \
                        "call " __ASM_NAME("__wine_call_from_32_regs") "\n\t" \
-                       ".long " __ASM_NAME("__regs_") #name "\n\t" \
+                       ".long " __ASM_NAME("__regs_") #name "-.\n\t" \
                        ".byte " #args "," #pop_args )
 /* FIXME: add support for other CPUs */
 #endif  /* __i386__ */

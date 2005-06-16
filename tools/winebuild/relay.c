@@ -1012,7 +1012,8 @@ static void BuildCallFrom32Regs( FILE *outfile )
 
     /* Call the entry point */
 
-    fprintf( outfile, "\tcall *0(%%ebx)\n" );
+    fprintf( outfile, "\taddl (%%ebx),%%ebx\n" );
+    fprintf( outfile, "\tcall *%%ebx\n" );
     fprintf( outfile, "\tleal -%d(%%ebp),%%ecx\n", STACK_SPACE );
 
     /* Restore the context structure */
