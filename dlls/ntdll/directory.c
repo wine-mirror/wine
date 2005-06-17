@@ -495,29 +495,27 @@ static char *get_default_drive_device( const char *root )
  */
 static void init_options(void)
 {
-    static const WCHAR WineW[] = {'M','a','c','h','i','n','e','\\',
-                                  'S','o','f','t','w','a','r','e','\\',
-                                  'W','i','n','e','\\','W','i','n','e','\\',
-                                  'C','o','n','f','i','g','\\','W','i','n','e',0};
+    static const WCHAR WineW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
     static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
     static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
     char tmp[80];
-    HANDLE hkey;
+    HANDLE root, hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
     show_dot_files = show_dir_symlinks = 0;
 
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
+    attr.RootDirectory = root;
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, WineW );
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Wine */
+    /* @@ Wine registry key: HKCU\Software\Wine */
     if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
     {
         RtlInitUnicodeString( &nameW, ShowDotFilesW );
@@ -534,6 +532,7 @@ static void init_options(void)
         }
         NtClose( hkey );
     }
+    NtClose( root );
 }
 
 
