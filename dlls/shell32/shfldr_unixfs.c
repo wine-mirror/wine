@@ -42,6 +42,7 @@
 #include "winuser.h"
 #include "objbase.h"
 #include "winreg.h"
+#include "shlwapi.h"
 #include "winternl.h"
 #include "wine/debug.h"
 
@@ -919,6 +920,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
             if (This->m_dwPathMode == PATHMODE_DOS) {
                 char path[MAX_PATH];
                 GetFullPathNameA(lpName->u.cStr, MAX_PATH, path, NULL);
+                PathRemoveBackslashA(path);
                 strcpy(lpName->u.cStr, path);
             }
         } else {
