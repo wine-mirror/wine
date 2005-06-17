@@ -506,7 +506,9 @@ msi_richedit_stream_in( DWORD_PTR arg, LPBYTE buffer, LONG count, LONG *pcb )
 
 static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
 {
-    const LPCWSTR szRichEdit = RICHEDIT_CLASS20W;
+    const static WCHAR szRichEdit20W[] = {
+    	'R','i','c','h','E','d','i','t','2','0','W',0
+    };
     struct msi_streamin_info info;
     msi_control *control;
     LPCWSTR text;
@@ -514,7 +516,7 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     DWORD style;
 
     style = WS_BORDER | ES_MULTILINE | WS_VSCROLL | ES_READONLY | ES_AUTOVSCROLL;
-    control = msi_dialog_add_control( dialog, rec, szRichEdit, style );
+    control = msi_dialog_add_control( dialog, rec, szRichEdit20W, style );
 
     text = MSI_RecordGetString( rec, 10 );
     info.string = strdupWtoA( text );
