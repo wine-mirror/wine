@@ -2,6 +2,7 @@
  * IDirect3D9 implementation
  *
  * Copyright 2002 Jason Edmeades
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -149,7 +150,23 @@ HRESULT  WINAPI  IDirect3D9Impl_CheckDeviceFormatConversion(LPDIRECT3D9 iface, U
 
 HRESULT  WINAPI  IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS9* pCaps) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
-    return IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, (WINED3DCAPS *)pCaps);
+    HRESULT hrc = D3D_OK;
+    WINED3DCAPS *pWineCaps;
+
+    TRACE("(%p) Relay %d %u %p \n", This, Adapter, DeviceType, pCaps);
+
+    if(NULL == pCaps){
+        return D3DERR_INVALIDCALL;
+    }
+    pWineCaps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINED3DCAPS));
+    if(pWineCaps == NULL){
+        return D3DERR_INVALIDCALL; /*well this is what MSDN says to return*/
+    }
+    D3D9CAPSTOWINECAPS(pCaps, pWineCaps)
+    hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
+    HeapFree(GetProcessHeap(), 0, pWineCaps);
+    TRACE("(%p) returning %p\n", This, pCaps);
+    return hrc;
 }
 
 HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapter) {

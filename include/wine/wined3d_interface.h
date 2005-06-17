@@ -126,8 +126,6 @@ DEFINE_GUID(IID_IWineD3DQuery,
 # define WINED3DMATERIAL        D3DMATERIAL8
 # define WINED3DVIEWPORT        D3DVIEWPORT8
 
- /* Subset: */
-# define WINED3DCAPS            D3DCAPS8
 #else
  /* Identical: */ 
 # define WINED3DLIGHT           D3DLIGHT9
@@ -135,8 +133,6 @@ DEFINE_GUID(IID_IWineD3DQuery,
 # define WINED3DMATERIAL        D3DMATERIAL9
 # define WINED3DVIEWPORT        D3DVIEWPORT9
 
- /* Subsets: */
-# define WINED3DCAPS            D3DCAPS9
 #endif
 
 typedef struct IWineD3D               IWineD3D;

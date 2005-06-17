@@ -92,6 +92,88 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define D3D_VSHADER_MAX_CONSTANTS 96
 #define D3D_PSHADER_MAX_CONSTANTS 32
 
+/* ===========================================================================
+    Macros
+   =========================================================================== */
+/* Not nice, but it lets wined3d support different versions of directx */
+#define D3D9CAPSTOWINECAPS(_pD3D9Caps, _pWineCaps) \
+    _pWineCaps->DeviceType                        = &_pD3D9Caps->DeviceType; \
+    _pWineCaps->AdapterOrdinal                    = &_pD3D9Caps->AdapterOrdinal; \
+    _pWineCaps->Caps                              = &_pD3D9Caps->Caps; \
+    _pWineCaps->Caps2                             = &_pD3D9Caps->Caps2; \
+    _pWineCaps->Caps3                             = &_pD3D9Caps->Caps3; \
+    _pWineCaps->PresentationIntervals             = &_pD3D9Caps->PresentationIntervals; \
+    _pWineCaps->CursorCaps                        = &_pD3D9Caps->CursorCaps; \
+    _pWineCaps->DevCaps                           = &_pD3D9Caps->DevCaps; \
+    _pWineCaps->PrimitiveMiscCaps                 = &_pD3D9Caps->PrimitiveMiscCaps; \
+    _pWineCaps->RasterCaps                        = &_pD3D9Caps->RasterCaps; \
+    _pWineCaps->ZCmpCaps                          = &_pD3D9Caps->ZCmpCaps; \
+    _pWineCaps->SrcBlendCaps                      = &_pD3D9Caps->SrcBlendCaps; \
+    _pWineCaps->DestBlendCaps                     = &_pD3D9Caps->DestBlendCaps; \
+    _pWineCaps->AlphaCmpCaps                      = &_pD3D9Caps->AlphaCmpCaps; \
+    _pWineCaps->ShadeCaps                         = &_pD3D9Caps->ShadeCaps; \
+    _pWineCaps->TextureCaps                       = &_pD3D9Caps->TextureCaps; \
+    _pWineCaps->TextureFilterCaps                 = &_pD3D9Caps->TextureFilterCaps; \
+    _pWineCaps->CubeTextureFilterCaps             = &_pD3D9Caps->CubeTextureFilterCaps; \
+    _pWineCaps->VolumeTextureFilterCaps           = &_pD3D9Caps->VolumeTextureFilterCaps; \
+    _pWineCaps->TextureAddressCaps                = &_pD3D9Caps->TextureAddressCaps; \
+    _pWineCaps->VolumeTextureAddressCaps          = &_pD3D9Caps->VolumeTextureAddressCaps; \
+    _pWineCaps->LineCaps                          = &_pD3D9Caps->LineCaps; \
+    _pWineCaps->MaxTextureWidth                   = &_pD3D9Caps->MaxTextureWidth; \
+    _pWineCaps->MaxTextureHeight                  = &_pD3D9Caps->MaxTextureHeight; \
+    _pWineCaps->MaxVolumeExtent                   = &_pD3D9Caps->MaxVolumeExtent; \
+    _pWineCaps->MaxTextureRepeat                  = &_pD3D9Caps->MaxTextureRepeat; \
+    _pWineCaps->MaxTextureAspectRatio             = &_pD3D9Caps->MaxTextureAspectRatio; \
+    _pWineCaps->MaxAnisotropy                     = &_pD3D9Caps->MaxAnisotropy; \
+    _pWineCaps->MaxVertexW                        = &_pD3D9Caps->MaxVertexW; \
+    _pWineCaps->GuardBandLeft                     = &_pD3D9Caps->GuardBandLeft; \
+    _pWineCaps->GuardBandTop                      = &_pD3D9Caps->GuardBandTop; \
+    _pWineCaps->GuardBandRight                    = &_pD3D9Caps->GuardBandRight; \
+    _pWineCaps->GuardBandBottom                   = &_pD3D9Caps->GuardBandBottom; \
+    _pWineCaps->ExtentsAdjust                     = &_pD3D9Caps->ExtentsAdjust; \
+    _pWineCaps->StencilCaps                       = &_pD3D9Caps->StencilCaps; \
+    _pWineCaps->FVFCaps                           = &_pD3D9Caps->FVFCaps; \
+    _pWineCaps->TextureOpCaps                     = &_pD3D9Caps->TextureOpCaps; \
+    _pWineCaps->MaxTextureBlendStages             = &_pD3D9Caps->MaxTextureBlendStages; \
+    _pWineCaps->MaxSimultaneousTextures           = &_pD3D9Caps->MaxSimultaneousTextures; \
+    _pWineCaps->VertexProcessingCaps              = &_pD3D9Caps->VertexProcessingCaps; \
+    _pWineCaps->MaxActiveLights                   = &_pD3D9Caps->MaxActiveLights; \
+    _pWineCaps->MaxUserClipPlanes                 = &_pD3D9Caps->MaxUserClipPlanes; \
+    _pWineCaps->MaxVertexBlendMatrices            = &_pD3D9Caps->MaxVertexBlendMatrices; \
+    _pWineCaps->MaxVertexBlendMatrixIndex         = &_pD3D9Caps->MaxVertexBlendMatrixIndex; \
+    _pWineCaps->MaxPointSize                      = &_pD3D9Caps->MaxPointSize; \
+    _pWineCaps->MaxPrimitiveCount                 = &_pD3D9Caps->MaxPrimitiveCount; \
+    _pWineCaps->MaxVertexIndex                    = &_pD3D9Caps->MaxVertexIndex; \
+    _pWineCaps->MaxStreams                        = &_pD3D9Caps->MaxStreams; \
+    _pWineCaps->MaxStreamStride                   = &_pD3D9Caps->MaxStreamStride; \
+    _pWineCaps->VertexShaderVersion               = &_pD3D9Caps->VertexShaderVersion; \
+    _pWineCaps->MaxVertexShaderConst              = &_pD3D9Caps->MaxVertexShaderConst; \
+    _pWineCaps->PixelShaderVersion                = &_pD3D9Caps->PixelShaderVersion; \
+    _pWineCaps->PixelShader1xMaxValue             = &_pD3D9Caps->PixelShader1xMaxValue; \
+    _pWineCaps->DevCaps2                          = &_pD3D9Caps->DevCaps2; \
+    _pWineCaps->MaxNpatchTessellationLevel        = &_pD3D9Caps->MaxNpatchTessellationLevel; \
+    _pWineCaps->MasterAdapterOrdinal              = &_pD3D9Caps->MasterAdapterOrdinal; \
+    _pWineCaps->AdapterOrdinalInGroup             = &_pD3D9Caps->AdapterOrdinalInGroup; \
+    _pWineCaps->NumberOfAdaptersInGroup           = &_pD3D9Caps->NumberOfAdaptersInGroup; \
+    _pWineCaps->DeclTypes                         = &_pD3D9Caps->DeclTypes; \
+    _pWineCaps->NumSimultaneousRTs                = &_pD3D9Caps->NumSimultaneousRTs; \
+    _pWineCaps->StretchRectFilterCaps             = &_pD3D9Caps->StretchRectFilterCaps; \
+    _pWineCaps->VS20Caps.Caps                     = &_pD3D9Caps->VS20Caps.Caps; \
+    _pWineCaps->VS20Caps.DynamicFlowControlDepth  = &_pD3D9Caps->VS20Caps.DynamicFlowControlDepth; \
+    _pWineCaps->VS20Caps.NumTemps                 = &_pD3D9Caps->VS20Caps.NumTemps; \
+    _pWineCaps->VS20Caps.NumTemps                 = &_pD3D9Caps->VS20Caps.NumTemps; \
+    _pWineCaps->VS20Caps.StaticFlowControlDepth   = &_pD3D9Caps->VS20Caps.StaticFlowControlDepth; \
+    _pWineCaps->PS20Caps.Caps                     = &_pD3D9Caps->PS20Caps.Caps; \
+    _pWineCaps->PS20Caps.DynamicFlowControlDepth  = &_pD3D9Caps->PS20Caps.DynamicFlowControlDepth; \
+    _pWineCaps->PS20Caps.NumTemps                 = &_pD3D9Caps->PS20Caps.NumTemps; \
+    _pWineCaps->PS20Caps.StaticFlowControlDepth   = &_pD3D9Caps->PS20Caps.StaticFlowControlDepth; \
+    _pWineCaps->PS20Caps.NumInstructionSlots      = &_pD3D9Caps->PS20Caps.NumInstructionSlots; \
+    _pWineCaps->VertexTextureFilterCaps           = &_pD3D9Caps->VertexTextureFilterCaps; \
+    _pWineCaps->MaxVShaderInstructionsExecuted    = &_pD3D9Caps->MaxVShaderInstructionsExecuted; \
+    _pWineCaps->MaxPShaderInstructionsExecuted    = &_pD3D9Caps->MaxPShaderInstructionsExecuted; \
+    _pWineCaps->MaxVertexShader30InstructionSlots = &_pD3D9Caps->MaxVertexShader30InstructionSlots; \
+    _pWineCaps->MaxPixelShader30InstructionSlots  = &_pD3D9Caps->MaxPixelShader30InstructionSlots;
+
 /* Direct3D9 Interfaces: */
 typedef struct IDirect3D9Impl                  IDirect3D9Impl;
 typedef struct IDirect3DDevice9Impl            IDirect3DDevice9Impl;

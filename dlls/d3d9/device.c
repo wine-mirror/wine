@@ -97,7 +97,23 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9 iface, IDire
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDeviceCaps(LPDIRECT3DDEVICE9 iface, D3DCAPS9* pCaps) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    return IWineD3DDevice_GetDeviceCaps(This->WineD3DDevice, pCaps);
+    HRESULT hrc = D3D_OK;
+    WINED3DCAPS *pWineCaps;
+
+    TRACE("(%p) : Relay pCaps %p \n", This, pCaps);
+    if(NULL == pCaps){
+        return D3DERR_INVALIDCALL;
+    }
+    pWineCaps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINED3DCAPS));
+    if(pWineCaps == NULL){
+        return D3DERR_INVALIDCALL; /* well this is what MSDN says to return */
+    }
+
+    D3D9CAPSTOWINECAPS(pCaps, pWineCaps)
+    hrc = IWineD3DDevice_GetDeviceCaps(This->WineD3DDevice, pWineCaps);
+    HeapFree(GetProcessHeap(), 0, pWineCaps);
+    TRACE("Returning %p %p\n", This, pCaps);
+    return hrc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDisplayMode(LPDIRECT3DDEVICE9 iface, UINT iSwapChain, D3DDISPLAYMODE* pMode) {

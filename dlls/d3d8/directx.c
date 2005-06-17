@@ -192,7 +192,23 @@ HRESULT  WINAPI  IDirect3D8Impl_CheckDepthStencilMatch(LPDIRECT3D8 iface,
 
 HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D3DDEVTYPE DeviceType, D3DCAPS8* pCaps) {
     IDirect3D8Impl *This = (IDirect3D8Impl *)iface;
-    return IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, (void *)pCaps);
+    HRESULT hrc = D3D_OK;
+    WINED3DCAPS *pWineCaps;
+
+    TRACE("(%p) Relay %d %u %p \n", This, Adapter, DeviceType, pCaps);
+
+    if(NULL == pCaps){
+        return D3DERR_INVALIDCALL;
+    }
+    pWineCaps = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WINED3DCAPS));
+    if(pWineCaps == NULL){
+        return D3DERR_INVALIDCALL; /*well this is what MSDN says to return*/
+    }
+    D3D8CAPSTOWINECAPS(pCaps, pWineCaps)
+    hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
+    HeapFree(GetProcessHeap(), 0, pWineCaps);
+    TRACE("(%p) returning %p\n", This, pCaps);
+    return hrc;
 }
 
 HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT Adapter) {

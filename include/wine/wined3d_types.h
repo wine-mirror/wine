@@ -4,6 +4,7 @@
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Jason Edmeades
  *                     Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -536,6 +537,118 @@ typedef struct WINED3DDEVINFO_VCACHE {
     DWORD         MagicNumber; 
 } WINED3DDEVINFO_VCACHE;
 
+/*
+ * The wined3dcaps structure
+ */
+
+typedef struct _WINED3DVSHADERCAPS2_0 {
+  DWORD  *Caps;
+  INT    *DynamicFlowControlDepth;
+  INT    *NumTemps;
+  INT    *StaticFlowControlDepth;
+} WINED3DVSHADERCAPS2_0;
+
+typedef struct _WINED3DPSHADERCAPS2_0 {
+  DWORD  *Caps;
+  INT    *DynamicFlowControlDepth;
+  INT    *NumTemps;
+  INT    *StaticFlowControlDepth;
+  INT    *NumInstructionSlots;
+} WINED3DPSHADERCAPS2_0;
+
+typedef struct _WINED3DCAPS {
+  D3DDEVTYPE          *DeviceType;
+  UINT                *AdapterOrdinal;
+
+  DWORD               *Caps;
+  DWORD               *Caps2;
+  DWORD               *Caps3;
+  DWORD               *PresentationIntervals;
+
+  DWORD               *CursorCaps;
+
+  DWORD               *DevCaps;
+
+  DWORD               *PrimitiveMiscCaps;
+  DWORD               *RasterCaps;
+  DWORD               *ZCmpCaps;
+  DWORD               *SrcBlendCaps;
+  DWORD               *DestBlendCaps;
+  DWORD               *AlphaCmpCaps;
+  DWORD               *ShadeCaps;
+  DWORD               *TextureCaps;
+  DWORD               *TextureFilterCaps;
+  DWORD               *CubeTextureFilterCaps;
+  DWORD               *VolumeTextureFilterCaps;
+  DWORD               *TextureAddressCaps;
+  DWORD               *VolumeTextureAddressCaps;
+
+  DWORD               *LineCaps;
+
+  DWORD               *MaxTextureWidth;
+  DWORD               *MaxTextureHeight;
+  DWORD               *MaxVolumeExtent;
+
+  DWORD               *MaxTextureRepeat;
+  DWORD               *MaxTextureAspectRatio;
+  DWORD               *MaxAnisotropy;
+  float               *MaxVertexW;
+
+  float               *GuardBandLeft;
+  float               *GuardBandTop;
+  float               *GuardBandRight;
+  float               *GuardBandBottom;
+
+  float               *ExtentsAdjust;
+  DWORD               *StencilCaps;
+
+  DWORD               *FVFCaps;
+  DWORD               *TextureOpCaps;
+  DWORD               *MaxTextureBlendStages;
+  DWORD               *MaxSimultaneousTextures;
+
+  DWORD               *VertexProcessingCaps;
+  DWORD               *MaxActiveLights;
+  DWORD               *MaxUserClipPlanes;
+  DWORD               *MaxVertexBlendMatrices;
+  DWORD               *MaxVertexBlendMatrixIndex;
+
+  float               *MaxPointSize;
+
+  DWORD               *MaxPrimitiveCount;
+  DWORD               *MaxVertexIndex;
+  DWORD               *MaxStreams;
+  DWORD               *MaxStreamStride;
+
+  DWORD               *VertexShaderVersion;
+  DWORD               *MaxVertexShaderConst;
+
+  DWORD               *PixelShaderVersion;
+  float               *PixelShader1xMaxValue;
+
+  /* DX 9 */
+  DWORD               *DevCaps2;
+
+  float               *MaxNpatchTessellationLevel;
+  DWORD               *Reserved5; /*undocumented*/
+
+  UINT                *MasterAdapterOrdinal;
+  UINT                *AdapterOrdinalInGroup;
+  UINT                *NumberOfAdaptersInGroup;
+  DWORD               *DeclTypes;
+  DWORD               *NumSimultaneousRTs;
+  DWORD               *StretchRectFilterCaps;
+  WINED3DVSHADERCAPS2_0   VS20Caps;
+  WINED3DPSHADERCAPS2_0   PS20Caps;
+  DWORD               *VertexTextureFilterCaps;
+  DWORD               *MaxVShaderInstructionsExecuted;
+  DWORD               *MaxPShaderInstructionsExecuted;
+  DWORD               *MaxVertexShader30InstructionSlots; 
+  DWORD               *MaxPixelShader30InstructionSlots;
+  DWORD               *Reserved2;/* Not in the microsoft headers but documented */
+  DWORD               *Reserved3;
+
+} WINED3DCAPS;
 
 
 #endif

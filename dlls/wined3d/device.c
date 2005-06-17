@@ -3626,11 +3626,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UINT iSwa
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, D3DCAPS9* pCaps) {
+HRESULT WINAPI IWineD3DDeviceImpl_GetDeviceCaps(IWineD3DDevice *iface, WINED3DCAPS* pCaps) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WARN("(%p) : stub, calling idirect3d for now\n", This);
-    IWineD3D_GetDeviceCaps(This->wineD3D, This->adapterNo, This->devType, pCaps);
-    return D3D_OK;
+    return IWineD3D_GetDeviceCaps(This->wineD3D, This->adapterNo, This->devType, pCaps);
 }
 
 /** TODO: move to swapchains **/
