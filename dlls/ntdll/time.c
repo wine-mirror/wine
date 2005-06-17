@@ -41,7 +41,6 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -848,7 +847,7 @@ static int TIME_GetTimeZoneInfoFromReg(LPTIME_ZONE_INFORMATION tzinfo)
     BYTE buf[90];
     KEY_VALUE_PARTIAL_INFORMATION * KpInfo =
         (KEY_VALUE_PARTIAL_INFORMATION *) buf;
-    HKEY hkey;
+    HANDLE hkey;
     DWORD size;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;

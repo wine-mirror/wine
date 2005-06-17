@@ -97,7 +97,7 @@ inline static int is_version_nt(void)
 }
 
 /* create one of the HKEY_* special root keys */
-static HKEY create_special_root_hkey( HKEY hkey, DWORD access )
+static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
 {
     HKEY ret = 0;
     int idx = (UINT)hkey - (UINT)HKEY_SPECIAL_ROOT_FIRST;
@@ -167,7 +167,7 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPCWSTR c
     RtlInitUnicodeString( &nameW, name );
     RtlInitUnicodeString( &classW, class );
 
-    return RtlNtStatusToDosError( NtCreateKey( retkey, access, &attr, 0,
+    return RtlNtStatusToDosError( NtCreateKey( (PHANDLE)retkey, access, &attr, 0,
                                                &classW, options, dispos ) );
 }
 
@@ -223,7 +223,7 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPCSTR cla
     {
         if (!(status = RtlAnsiStringToUnicodeString( &classW, &classA, TRUE )))
         {
-            status = NtCreateKey( retkey, access, &attr, 0, &classW, options, dispos );
+            status = NtCreateKey( (PHANDLE)retkey, access, &attr, 0, &classW, options, dispos );
             RtlFreeUnicodeString( &classW );
         }
     }
@@ -286,7 +286,7 @@ DWORD WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, REGSAM acce
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( NtOpenKey( retkey, access, &attr ) );
+    return RtlNtStatusToDosError( NtOpenKey( (PHANDLE)retkey, access, &attr ) );
 }
 
 
@@ -331,7 +331,7 @@ DWORD WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, REGSAM acces
     if (!(status = RtlAnsiStringToUnicodeString( &NtCurrentTeb()->StaticUnicodeString,
                                                  &nameA, FALSE )))
     {
-        status = NtOpenKey( retkey, access, &attr );
+        status = NtOpenKey( (PHANDLE)retkey, access, &attr );
     }
     return RtlNtStatusToDosError( status );
 }

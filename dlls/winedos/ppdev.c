@@ -75,7 +75,7 @@ char IO_pp_init(void)
 {
     char name[80];
     char buffer[256];
-    HKEY hkey;
+    HANDLE hkey;
     int i,idx=0,fd,res,userbase,nports=0;
     char * timeout;
     char ret=1;

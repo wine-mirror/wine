@@ -71,7 +71,7 @@ static int create_drives( int devices_only )
     char dest[1024];
     char *buffer;
     WCHAR *p, name[3];
-    HKEY hkey;
+    HANDLE hkey;
     DWORD dummy;
     int i, count = 0;
 
@@ -176,7 +176,7 @@ static void create_dos_devices(void)
 
     if (!mkdir( buffer, 0777 ))  /* we created it, so now create the devices */
     {
-        HKEY hkey;
+        HANDLE hkey;
         DWORD dummy;
         OBJECT_ATTRIBUTES attr;
         UNICODE_STRING nameW;
@@ -306,7 +306,7 @@ static void convert_drive_types(void)
     UNICODE_STRING nameW;
     DWORD dummy;
     ULONG disp;
-    HKEY hkey_old, hkey_new;
+    HANDLE hkey_old, hkey_new;
     int i;
 
     attr.Length = sizeof(attr);
@@ -350,7 +350,7 @@ static void convert_drive_types(void)
 
 
 /* convert the environment variable entries from the old format to the new one */
-static void convert_environment( HKEY hkey_current_user )
+static void convert_environment( HANDLE hkey_current_user )
 {
     static const WCHAR wineW[] = {'M','a','c','h','i','n','e','\\',
                                   'S','o','f','t','w','a','r','e','\\',
@@ -374,7 +374,7 @@ static void convert_environment( HKEY hkey_current_user )
     UNICODE_STRING nameW;
     DWORD dummy;
     ULONG disp;
-    HKEY hkey_old, hkey_env;
+    HANDLE hkey_old, hkey_env;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -485,7 +485,7 @@ static ULONG allocate_default_keys(void)
     static const WCHAR ConfigManagerW[] = {'D','y','n','D','a','t','a','\\',
                                            'C','o','n','f','i','g',' ','M','a','n','a','g','e','r','\\',
                                             'E','n','u','m',0};
-    HKEY hkey;
+    HANDLE hkey;
     ULONG dispos;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -527,10 +527,10 @@ static void init_cdrom_registry( HANDLE handle )
     char buffer[40];
     DWORD value;
     const char *data;
-    HKEY scsiKey;
-    HKEY portKey;
-    HKEY busKey;
-    HKEY targetKey;
+    HANDLE scsiKey;
+    HANDLE portKey;
+    HANDLE busKey;
+    HANDLE targetKey;
     DWORD disp;
     IO_STATUS_BLOCK io;
     SCSI_ADDRESS scsi_addr;
@@ -673,7 +673,7 @@ static void create_hardware_branch(void)
  */
 void convert_old_config(void)
 {
-    HKEY hkey_current_user;
+    HANDLE hkey_current_user;
 
     if (allocate_default_keys() == REG_OPENED_EXISTING_KEY)
         return; /* someone else already loaded the registry */

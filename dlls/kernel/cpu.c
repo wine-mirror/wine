@@ -119,7 +119,7 @@ static void create_registry_keys( const SYSTEM_INFO *info )
     /* static const WCHAR VenidAMDW[] = {'A','u','t','h','e','n','t','i','c','A','M','D',0}; */
 
     unsigned int i;
-    HKEY hkey, system_key, cpu_key;
+    HANDLE hkey, system_key, cpu_key;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW, valueW;
 

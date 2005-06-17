@@ -133,7 +133,7 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
     UNICODE_STRING nameW, source_name, dest_name;
     KEY_VALUE_PARTIAL_INFORMATION *info;
     BOOL rc = FALSE;
-    HKEY Reboot = 0;
+    HANDLE Reboot = 0;
     DWORD len1, len2;
     DWORD DataSize = 0;
     BYTE *Buffer = NULL;

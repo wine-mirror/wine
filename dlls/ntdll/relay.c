@@ -29,7 +29,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "wine/exception.h"
@@ -113,7 +112,7 @@ void RELAY_InitDebugLists(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name;
     char buffer[1024];
-    HKEY root, hkey;
+    HANDLE root, hkey;
     DWORD count;
     WCHAR *str;
     static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\',

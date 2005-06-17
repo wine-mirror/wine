@@ -37,7 +37,6 @@
 #include "ntstatus.h"
 #include "winbase.h"
 #include "winnt.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "ntdll_misc.h"

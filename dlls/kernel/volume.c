@@ -172,7 +172,7 @@ static UINT get_registry_drive_type( const WCHAR *root )
                                              'D','r','i','v','e','s',0 };
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY hkey;
+    HANDLE hkey;
     DWORD dummy;
     UINT ret = DRIVE_UNKNOWN;
     char tmp[32 + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];

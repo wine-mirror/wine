@@ -39,7 +39,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winnt.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "excpt.h"

@@ -30,7 +30,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "module.h"
@@ -382,11 +381,11 @@ static inline BOOL get_default_load_order( const WCHAR *module, enum loadorder_t
  *
  * Open the registry key to the app-specific DllOverrides list.
  */
-static HKEY open_app_key( const WCHAR *app_name, const WCHAR *module )
+static HANDLE open_app_key( const WCHAR *app_name, const WCHAR *module )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY root, hkey;
+    HANDLE root, hkey;
     WCHAR *str;
     static const WCHAR AppDefaultsW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                          'A','p','p','D','e','f','a','u','l','t','s','\\',0};
@@ -424,7 +423,7 @@ static HKEY open_app_key( const WCHAR *app_name, const WCHAR *module )
  *
  * Load the registry loadorder value for a given module.
  */
-static BOOL get_registry_value( HKEY hkey, const WCHAR *module, enum loadorder_type lo[] )
+static BOOL get_registry_value( HANDLE hkey, const WCHAR *module, enum loadorder_type lo[] )
 {
     UNICODE_STRING valueW;
     char buffer[80];
@@ -481,9 +480,9 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     static const WCHAR DllOverridesW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
                                           'D','l','l','O','v','e','r','r','i','d','e','s',0};
 
-    static HKEY std_key = (HKEY)-1;  /* key to standard section, cached */
+    static HANDLE std_key = (HANDLE)-1;  /* key to standard section, cached */
 
-    HKEY app_key = 0;
+    HANDLE app_key = 0;
     WCHAR *module, *basename;
     UNICODE_STRING path_str;
     int len;
@@ -531,11 +530,11 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     }
 
     /* then explicit module name in standard section */
-    if (std_key == (HKEY)-1)
+    if (std_key == (HANDLE)-1)
     {
         OBJECT_ATTRIBUTES attr;
         UNICODE_STRING nameW;
-        HKEY root;
+        HANDLE root;
 
         RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
         attr.Length = sizeof(attr);

@@ -31,7 +31,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "wine/server.h"

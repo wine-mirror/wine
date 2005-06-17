@@ -223,7 +223,7 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     char *cmdline, *env, *p;
-    HKEY		hDbgConf;
+    HANDLE		hDbgConf;
     DWORD		bAuto = FALSE;
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;

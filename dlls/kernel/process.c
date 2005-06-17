@@ -416,7 +416,7 @@ static BOOL build_initial_environment( char **environ )
  * helper for set_registry_environment().
  * Note that Windows happily truncates the value if it's too big.
  */
-static void set_registry_variables( HKEY hkey, ULONG type )
+static void set_registry_variables( HANDLE hkey, ULONG type )
 {
     UNICODE_STRING env_name, env_value;
     NTSTATUS status;
@@ -481,7 +481,7 @@ static void set_registry_environment(void)
 
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY hkey;
+    HANDLE hkey;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -500,7 +500,7 @@ static void set_registry_environment(void)
     }
 
     /* then the ones for the current user */
-    if (RtlOpenCurrentUser( KEY_ALL_ACCESS, (HKEY *)&attr.RootDirectory ) != STATUS_SUCCESS) return;
+    if (RtlOpenCurrentUser( KEY_ALL_ACCESS, &attr.RootDirectory ) != STATUS_SUCCESS) return;
     RtlInitUnicodeString( &nameW, envW );
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) == STATUS_SUCCESS)
     {

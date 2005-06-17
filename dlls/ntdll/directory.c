@@ -59,7 +59,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
-#include "winreg.h"
 #include "ntstatus.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
@@ -503,7 +502,7 @@ static void init_options(void)
     static const WCHAR ShowDotFilesW[] = {'S','h','o','w','D','o','t','F','i','l','e','s',0};
     static const WCHAR ShowDirSymlinksW[] = {'S','h','o','w','D','i','r','S','y','m','l','i','n','k','s',0};
     char tmp[80];
-    HKEY hkey;
+    HANDLE hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;

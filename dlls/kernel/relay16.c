@@ -109,7 +109,7 @@ void RELAY16_InitDebugLists(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name;
     char buffer[1024];
-    HKEY root, hkey;
+    HANDLE root, hkey;
     DWORD count;
     WCHAR *str;
     static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\',

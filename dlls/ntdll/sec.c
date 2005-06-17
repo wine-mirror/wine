@@ -35,7 +35,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/exception.h"
-#include "winreg.h"
 #include "ntdll_misc.h"
 #include "excpt.h"
 #include "wine/library.h"

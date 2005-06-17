@@ -254,7 +254,7 @@ static inline void outl( DWORD value, WORD port )
 static void IO_port_init(void)
 {
     char tmp[1024];
-    HKEY hkey;
+    HANDLE hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;

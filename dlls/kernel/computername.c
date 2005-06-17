@@ -203,7 +203,7 @@ static BOOL get_use_dns_option(void)
     static const WCHAR UseDNSW[] = {'U','s','e','D','n','s','C','o','m','p','u','t','e','r','N','a','m','e',0};
 
     char tmp[80];
-    HKEY root, hkey;
+    HANDLE root, hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
@@ -235,7 +235,7 @@ static BOOL get_use_dns_option(void)
  */
 void COMPUTERNAME_Init (void)
 {
-    HKEY hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
+    HANDLE hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     char buf[offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ) + (MAX_COMPUTERNAME_LENGTH + 1) * sizeof( WCHAR )];
@@ -316,7 +316,7 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
 {
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
-    HKEY hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
+    HANDLE hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
     char buf[offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ) + (MAX_COMPUTERNAME_LENGTH + 1) * sizeof( WCHAR )];
     DWORD len = sizeof( buf );
     LPWSTR theName = (LPWSTR) (buf + offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ));
@@ -574,7 +574,7 @@ BOOL WINAPI SetComputerNameW( LPCWSTR lpComputerName )
 {
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
-    HKEY hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
+    HANDLE hkey = INVALID_HANDLE_VALUE, hsubkey = INVALID_HANDLE_VALUE;
     int plen = strlenW ( lpComputerName );
     int i;
     NTSTATUS st = STATUS_INTERNAL_ERROR;

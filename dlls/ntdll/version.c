@@ -31,7 +31,6 @@
 #include "ntstatus.h"
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"
@@ -190,7 +189,7 @@ static WINDOWS_VERSION forcedWinVersion; /* init value irrelevant */
  *
  * Parse the contents of the Version key.
  */
-static BOOL parse_win_version( HKEY hkey )
+static BOOL parse_win_version( HANDLE hkey )
 {
     static const WCHAR WindowsW[] = {'W','i','n','d','o','w','s',0};
 
@@ -247,7 +246,7 @@ void VERSION_Init( const WCHAR *appname )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY hkey, config_key;
+    HANDLE hkey, config_key;
     static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
                                     'S','o','f','t','w','a','r','e','\\',
                                     'W','i','n','e','\\',

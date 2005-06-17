@@ -54,8 +54,8 @@ static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
 
-static HKEY NLS_RegOpenKey(HKEY hRootKey, LPCWSTR szKeyName);
-static HKEY NLS_RegOpenSubKey(HKEY hRootKey, LPCWSTR szKeyName);
+static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName);
+static HANDLE NLS_RegOpenSubKey(HANDLE hRootKey, LPCWSTR szKeyName);
 
 static const WCHAR szNlsKeyName[] = {
     'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
@@ -219,13 +219,13 @@ static const union cptable *get_codepage_table( unsigned int codepage )
  *
  * Create the Control Panel\\International registry key.
  */
-inline static HKEY create_registry_key(void)
+inline static HANDLE create_registry_key(void)
 {
     static const WCHAR intlW[] = {'C','o','n','t','r','o','l',' ','P','a','n','e','l','\\',
                                   'I','n','t','e','r','n','a','t','i','o','n','a','l',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HKEY hkey;
+    HANDLE hkey;
 
     if (RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey ) != STATUS_SUCCESS) return 0;
 
@@ -292,7 +292,7 @@ void LOCALE_InitRegistry(void)
     char buffer[20];
     WCHAR bufferW[80];
     DWORD count, i;
-    HKEY hkey;
+    HANDLE hkey;
     LCID lcid = GetUserDefaultLCID();
 
     if (!(hkey = create_registry_key()))
@@ -782,7 +782,7 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
 {
     DWORD size;
     INT ret;
-    HKEY hkey;
+    HANDLE hkey;
     NTSTATUS status;
     UNICODE_STRING nameW;
     KEY_VALUE_PARTIAL_INFORMATION *info;
@@ -1101,7 +1101,7 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     static const WCHAR intlW[] = {'i','n','t','l',0 };
     UNICODE_STRING valueW;
     NTSTATUS status;
-    HKEY hkey;
+    HANDLE hkey;
 
     lcid = ConvertDefaultLocale(lcid);
 
@@ -2585,11 +2585,11 @@ void LOCALE_Init(void)
            mac_cptable->info.codepage, unix_cp );
 }
 
-static HKEY NLS_RegOpenKey(HKEY hRootKey, LPCWSTR szKeyName)
+static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName)
 {
     UNICODE_STRING keyName;
     OBJECT_ATTRIBUTES attr;
-    HKEY hkey;
+    HANDLE hkey;
 
     RtlInitUnicodeString( &keyName, szKeyName );
     InitializeObjectAttributes(&attr, &keyName, 0, hRootKey, NULL);
@@ -2600,9 +2600,9 @@ static HKEY NLS_RegOpenKey(HKEY hRootKey, LPCWSTR szKeyName)
     return hkey;
 }
 
-static HKEY NLS_RegOpenSubKey(HKEY hRootKey, LPCWSTR szKeyName)
+static HANDLE NLS_RegOpenSubKey(HANDLE hRootKey, LPCWSTR szKeyName)
 {
-    HKEY hKey = NLS_RegOpenKey(hRootKey, szKeyName);
+    HANDLE hKey = NLS_RegOpenKey(hRootKey, szKeyName);
 
     if (hRootKey)
         NtClose( hRootKey );
@@ -2610,7 +2610,7 @@ static HKEY NLS_RegOpenSubKey(HKEY hRootKey, LPCWSTR szKeyName)
     return hKey;
 }
 
-static BOOL NLS_RegEnumSubKey(HKEY hKey, UINT ulIndex, LPWSTR szKeyName,
+static BOOL NLS_RegEnumSubKey(HANDLE hKey, UINT ulIndex, LPWSTR szKeyName,
                               ULONG keyNameSize)
 {
     BYTE buffer[80];
@@ -2633,7 +2633,7 @@ static BOOL NLS_RegEnumSubKey(HKEY hKey, UINT ulIndex, LPWSTR szKeyName,
     return TRUE;
 }
 
-static BOOL NLS_RegEnumValue(HKEY hKey, UINT ulIndex,
+static BOOL NLS_RegEnumValue(HANDLE hKey, UINT ulIndex,
                              LPWSTR szValueName, ULONG valueNameSize,
                              LPWSTR szValueData, ULONG valueDataSize)
 {
@@ -2660,7 +2660,7 @@ static BOOL NLS_RegEnumValue(HKEY hKey, UINT ulIndex,
     return TRUE;
 }
 
-static BOOL NLS_RegGetDword(HKEY hKey, LPCWSTR szValueName, DWORD *lpVal)
+static BOOL NLS_RegGetDword(HANDLE hKey, LPCWSTR szValueName, DWORD *lpVal)
 {
     BYTE buffer[128];
     const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
@@ -2749,7 +2749,7 @@ typedef struct
 static BOOL NLS_EnumSystemLanguageGroups(ENUMLANGUAGEGROUP_CALLBACKS *lpProcs)
 {
     WCHAR szNumber[10], szValue[4];
-    HKEY hKey;
+    HANDLE hKey;
     BOOL bContinue = TRUE;
     ULONG ulIndex = 0;
 
@@ -2898,7 +2898,7 @@ BOOL WINAPI IsValidLanguageGroup(LGRPID lgrpid, DWORD dwFlags)
     static const WCHAR szFormat[] = { '%','x','\0' };
     WCHAR szValueName[16], szValue[2];
     BOOL bSupported = FALSE, bInstalled = FALSE;
-    HKEY hKey;
+    HANDLE hKey;
 
 
     switch (dwFlags)
@@ -2951,7 +2951,7 @@ static BOOL NLS_EnumLanguageGroupLocales(ENUMLANGUAGEGROUPLOCALE_CALLBACKS *lpPr
       'A','l','t','e','r','n','a','t','e',' ','S','o','r','t','s','\0'
     };
     WCHAR szNumber[10], szValue[4];
-    HKEY hKey;
+    HANDLE hKey;
     BOOL bContinue = TRUE, bAlternate = FALSE;
     LGRPID lgrpid;
     ULONG ulIndex = 1;  /* Ignore default entry of 1st key */
@@ -3104,7 +3104,7 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID reserved, GEO_ENUMPROC pGeo
       'C','o','u','n','t','r','y','C','o','d','e','\0'
     };
     WCHAR szNumber[10];
-    HKEY hKey;
+    HANDLE hKey;
     ULONG ulIndex = 0;
 
     TRACE("(0x%08lX,0x%08lX,%p)\n", geoclass, reserved, pGeoEnumProc);
@@ -3121,7 +3121,7 @@ BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID reserved, GEO_ENUMPROC pGeo
     {
         BOOL bContinue = TRUE;
         DWORD dwGeoId;
-        HKEY hSubKey = NLS_RegOpenKey( hKey, szNumber );
+        HANDLE hSubKey = NLS_RegOpenKey( hKey, szNumber );
 
         if (hSubKey)
         {
