@@ -62,7 +62,7 @@ static TEB *alloc_teb( ULONG *size )
     struct ntdll_thread_data *thread_data;
 
     *size = SIGNAL_STACK_SIZE + sizeof(TEB);
-    teb = wine_anon_mmap( NULL, *size, PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+    teb = wine_anon_mmap( NULL, *size, PROT_READ | PROT_WRITE, 0 );
     if (teb == (TEB *)-1) return NULL;
     thread_data = (struct ntdll_thread_data *)teb->SystemReserved2;
     if (!(thread_data->teb_sel = wine_ldt_alloc_fs()))
@@ -153,7 +153,7 @@ void thread_init(void)
     /* create a memory view for the TEB */
     addr = teb;
     NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size,
-                             MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+                             MEM_SYSTEM, PAGE_READWRITE );
 
     /* create the process heap */
     if (!(peb.ProcessHeap = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL )))
@@ -277,7 +277,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
     info->pthread_info.teb_base = teb;
     NtAllocateVirtualMemory( NtCurrentProcess(), &info->pthread_info.teb_base, 0, &size,
-                             MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+                             MEM_SYSTEM, PAGE_READWRITE );
     info->pthread_info.teb_size = size;
     info->pthread_info.teb_sel  = thread_data->teb_sel;
 
