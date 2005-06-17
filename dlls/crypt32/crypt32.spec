@@ -90,7 +90,7 @@
 @ stub CryptDecryptAndVerifyMessageSignature
 @ stub CryptDecryptMessage
 @ stdcall CryptEncodeObject(long str ptr ptr ptr)
-@ stdcall CryptEncodeObjectEx(long str ptr long ptr ptr)
+@ stdcall CryptEncodeObjectEx(long str ptr long ptr ptr ptr)
 @ stub CryptEncryptMessage
 @ stub CryptEnumOIDFunction
 @ stub CryptEnumOIDInfo

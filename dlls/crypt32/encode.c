@@ -1211,7 +1211,7 @@ typedef BOOL (WINAPI *CryptEncodeObjectExFunc)(DWORD, LPCSTR, const void *,
 
 BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
- BYTE *pbEncoded, DWORD *pcbEncoded)
+ void *pvEncoded, DWORD *pcbEncoded)
 {
     BOOL ret = FALSE;
     HMODULE lib = NULL;
@@ -1219,10 +1219,10 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 
     TRACE("(0x%08lx, %s, %p, 0x%08lx, %p, %p, %p)\n",
      dwCertEncodingType, HIWORD(lpszStructType) ? debugstr_a(lpszStructType) :
-     "(integer value)", pvStructInfo, dwFlags, pEncodePara, pbEncoded,
+     "(integer value)", pvStructInfo, dwFlags, pEncodePara, pvEncoded,
      pcbEncoded);
 
-    if (!pbEncoded && !pcbEncoded)
+    if (!pvEncoded && !pcbEncoded)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
@@ -1287,7 +1287,7 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
          lpszStructType, "CryptEncodeObjectEx", &lib);
     if (encodeFunc)
         ret = encodeFunc(dwCertEncodingType, lpszStructType, pvStructInfo,
-         dwFlags, pEncodePara, pbEncoded, pcbEncoded);
+         dwFlags, pEncodePara, pvEncoded, pcbEncoded);
     else
         SetLastError(ERROR_FILE_NOT_FOUND);
     if (lib)

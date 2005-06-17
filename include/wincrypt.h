@@ -1644,7 +1644,7 @@ BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, BYTE *pbEncoded, DWORD *pcbEncoded);
 BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, DWORD dwFlags, PCRYPT_ENCODE_PARA pEncodePara,
- BYTE *pbEncoded, DWORD *pcbEncoded);
+ void *pvEncoded, DWORD *pcbEncoded);
 
 BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo,
