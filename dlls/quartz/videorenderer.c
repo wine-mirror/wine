@@ -195,7 +195,7 @@ static DWORD WINAPI MessageLoop(LPVOID lpParameter)
     This->ThreadResult = TRUE;
     SetEvent(This->hEvent);
 
-    while ((fGotMessage = GetMessageA(&msg, (HWND) NULL, 0, 0)) != 0 && fGotMessage != -1) 
+    while ((fGotMessage = GetMessageA(&msg, NULL, 0, 0)) != 0 && fGotMessage != -1) 
     {
         TranslateMessage(&msg); 
         DispatchMessageA(&msg); 
