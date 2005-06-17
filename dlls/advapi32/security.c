@@ -640,6 +640,9 @@ BOOL WINAPI MakeAbsoluteSD (
                                                      pPrimaryGroup, lpdwPrimaryGroupSize));
 }
 
+/******************************************************************************
+ * GetKernelObjectSecurity [ADVAPI32.@]
+ */
 BOOL WINAPI GetKernelObjectSecurity(
         HANDLE Handle,
         SECURITY_INFORMATION RequestedInformation,
@@ -647,12 +650,16 @@ BOOL WINAPI GetKernelObjectSecurity(
         DWORD nLength,
         LPDWORD lpnLengthNeeded )
 {
-    FIXME("%p 0x%08lx %p 0x%08lx %p - stub\n", Handle, RequestedInformation,
+    TRACE("(%p,0x%08lx,%p,0x%08lx,%p)\n", Handle, RequestedInformation,
           pSecurityDescriptor, nLength, lpnLengthNeeded);
 
-    return FALSE;
+    return set_ntstatus( NtQuerySecurityObject(Handle, RequestedInformation, pSecurityDescriptor,
+                                               nLength, lpnLengthNeeded ));
 }
 
+/******************************************************************************
+ * GetPrivateObjectSecurity [ADVAPI32.@]
+ */
 BOOL WINAPI GetPrivateObjectSecurity(
         PSECURITY_DESCRIPTOR ObjectDescriptor,
         SECURITY_INFORMATION SecurityInformation,
@@ -660,10 +667,11 @@ BOOL WINAPI GetPrivateObjectSecurity(
         DWORD DescriptorLength,
         PDWORD ReturnLength )
 {
-    FIXME("%p 0x%08lx %p 0x%08lx %p - stub\n", ObjectDescriptor, SecurityInformation,
+    TRACE("(%p,0x%08lx,%p,0x%08lx,%p)\n", ObjectDescriptor, SecurityInformation,
           ResultantDescriptor, DescriptorLength, ReturnLength);
 
-    return FALSE;
+    return set_ntstatus( NtQuerySecurityObject(ObjectDescriptor, SecurityInformation,
+                                               ResultantDescriptor, DescriptorLength, ReturnLength ));
 }
 
 /******************************************************************************
