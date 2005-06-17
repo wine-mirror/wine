@@ -30,116 +30,116 @@ IDM_WINEFILE MENU FIXED IMPURE
 {
 	POPUP "&Soubor"  {
 		MENUITEM "&Otev¯Ìt\tEnter" ,			ID_ACTIVATE
-		MENUITEM "P¯e&sunout...\tF7" , 			ID_FILE_MOVE
+        MENUITEM "&P¯esunout...\tF7",           ID_FILE_MOVE
 		MENUITEM "&KopÌrovat...\tF8" ,			ID_FILE_COPY
-		MENUITEM "&Do schr·nky...\tF9" ,		118
+        MENUITEM "&Ve schr·nce...\tF9",         118
 		MENUITEM "&Smazat\tDel" ,			ID_FILE_DELETE
-		MENUITEM "P¯ejme&novat..." ,			109
-		MENUITEM "Vlastnost&i...\tAlt+Enter" , ID_EDIT_PROPERTIES
+        MENUITEM "P¯&ejmenovat...",             109
+        MENUITEM "V&lastnosti...\tAlt+Enter",   ID_EDIT_PROPERTIES
 		MENUITEM SEPARATOR
-		MENUITEM "K&omprimovat..." ,		119
-		MENUITEM "R&ozbalit..." ,		120
+        MENUITEM "&Komprese...",                119
+        MENUITEM "&Dekomprese...",              120
 		MENUITEM SEPARATOR
-		MENUITEM "Sp&ustit..." ,			ID_EXECUTE
-		MENUITEM "&Tisk..." , 			102
-		MENUITEM "P¯i¯adit..." ,		103
+        MENUITEM "&Spustit...",                 ID_EXECUTE
+        MENUITEM "&Tisknout...",                102
+        MENUITEM "Asociovat...",                103
 		MENUITEM SEPARATOR
-		MENUITEM "Vytvo¯it &adres·¯..." ,			111
+        MENUITEM "V&ytvo¯it adres·¯...",        111
 		MENUITEM "&Hledat..." ,			104
-		MENUITEM "V&ybrat soubory..." ,			116
+        MENUITEM "&Zvolit voubory...",          116
 		MENUITEM SEPARATOR
 #ifndef _NO_EXTENSIONS
-		MENUITEM "&Konec\tAlt+X" , 			ID_FILE_EXIT
+        MENUITEM "K&onec\tAlt+X",               ID_FILE_EXIT
 #else
-		MENUITEM "&Konec", 				ID_FILE_EXIT
+        MENUITEM "K&onec",                      ID_FILE_EXIT
 #endif
 	}
 
 	POPUP "&Disk"  {
 		MENUITEM "&KopÌrovat disk..." ,			201
-		MENUITEM "&Pojmenovat disk..." ,			202
+        MENUITEM "&Jmenovka disk...",           202
 		MENUITEM SEPARATOR
 		MENUITEM "&Form·tovat disk..." ,			ID_FORMAT_DISK
 #ifdef _WIN95
-		MENUITEM "Vytvo¯it systÈ&mov˝ disk...", -1	/*@@ */
+        MENUITEM "&Vytvo¯it systemov˝ disk...", -1  /*TODO*/
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "P¯ipojit sÌªov˝ &disk" ,			ID_CONNECT_NETWORK_DRIVE
-		MENUITEM "&Odpojit sÌªov˝ disk" ,		ID_DISCONNECT_NETWORK_DRIVE
+        MENUITEM "P¯ipojit &sÌùovÈ za¯ÌzenÌ",   ID_CONNECT_NETWORK_DRIVE
+        MENUITEM "&Odpojit &sÌùovÈ za¯ÌzenÌ",   ID_DISCONNECT_NETWORK_DRIVE
 		MENUITEM SEPARATOR
 		MENUITEM "SdÌlet jako..." ,			254
-		MENUITEM "Odst&ranit sdÌlenÌ..." ,			255
+        MENUITEM "&Odstranit sdÌlenÌ...",       255
 		MENUITEM SEPARATOR
-		MENUITEM "&Vybrat jednotku..." ,			251
+        MENUITEM "&Zvolit za¯ÌzenÌ...",         251
 	}
 
-	POPUP "A&dres·¯e"  {
-		MENUITEM "D&alπÌ ˙roveÚ\t+" ,			301
-		MENUITEM "Rozbalit s&trom\t*" ,		302
-		MENUITEM "Rozbalit &vπe\tStrg+*" ,		303
-		MENUITEM "Sbalit st&rom\t-" ,			304
+    POPUP "&Adres·¯e"  {
+        MENUITEM "&DalöÌ ˙roveÚ\t+",            301
+        MENUITEM "Rozbalit &strom\t*",          302
+        MENUITEM "Rozbalit &vöe\tStrg+*",       303
+        MENUITEM "Sbalit &strom\t-",            304
 		MENUITEM SEPARATOR
-		MENUITEM "OznaËit poto&mka" ,				505
+        MENUITEM "&OznaËit potomky",            505
 	}
 
 	POPUP "&ZobrazenÌ"  {
-		MENUITEM "St&rom a adres·¯" ,			413
-		MENUITEM "J&en strom" ,			411
-		MENUITEM "Jen a&dres·¯&" ,			412
+        MENUITEM "&Strom a adres·¯e",           413
+        MENUITEM "&Jen strom",                  411
+        MENUITEM "Jen &adres·¯e",               412
 		MENUITEM SEPARATOR
-		MENUITEM "S&louËit" ,			ID_VIEW_SPLIT
+        MENUITEM "&RozdÏlit",                   ID_VIEW_SPLIT
 		MENUITEM SEPARATOR
-		MENUITEM "&N·zev" ,			ID_VIEW_NAME
-		MENUITEM "&Vπechny detaily" ,				ID_VIEW_ALL_ATTRIBUTES, CHECKED
-		MENUITEM "V&ybranÈ detaily..." ,			ID_VIEW_SELECTED_ATTRIBUTES
+        MENUITEM "&JmÈno",                      ID_VIEW_NAME
+        MENUITEM "&Detaily vöech soubor˘",      ID_VIEW_ALL_ATTRIBUTES, CHECKED
+        MENUITEM "»·&steËnÈ detaily...",        ID_VIEW_SELECTED_ATTRIBUTES
 		MENUITEM SEPARATOR
-		MENUITEM "&T¯Ìdit dle n·zvu" ,		404
-		MENUITEM "T¯Ìdit dle t&ypu" ,		405
-		MENUITEM "T¯Ìdit dle Velikost&i" , 		406
-		MENUITEM "T¯Ìdit dle &data" , 		407
+        MENUITEM "&T¯Ìdit podle jmÈna",         ID_VIEW_SORT_NAME
+        MENUITEM "T¯Ìdit &podle typu",          ID_VIEW_SORT_TYPE
+        MENUITEM "T¯Ìdit podle &velikosti",     ID_VIEW_SORT_SIZE
+        MENUITEM "T¯Ìdit podle &data",          ID_VIEW_SORT_DATE
 		MENUITEM SEPARATOR
-		MENUITEM "T¯Ìdit dle  &..." ,			ID_VIEW_FILTER
+        MENUITEM "T¯Ìdit podle &...",           ID_VIEW_FILTER
 	}
 
 	POPUP "&NastavenÌ"  {
 		MENUITEM "&Potvrzov·nÌ..." ,		501
-		MENUITEM "PÌs&mo..." ,			ID_SELECT_FONT
-		MENUITEM "Upravit pr&uh n·stroj˘..." , 512
+        MENUITEM "&PÌsmo...",                   ID_SELECT_FONT
+        MENUITEM "Upravit panel &n·stroj˘...",  512
 		MENUITEM SEPARATOR
-		MENUITEM "N·s&troje" ,		ID_VIEW_TOOL_BAR, CHECKED
-		MENUITEM "Pruh &jednotek" ,	ID_VIEW_DRIVE_BAR, CHECKED
-		MENUITEM "&Stavov˝ pruh" ,	ID_VIEW_STATUSBAR, CHECKED
+        MENUITEM "&Panel n·stroj˘",             ID_VIEW_TOOL_BAR, CHECKED
+        MENUITEM "&Panel za¯ÌenÌ",              ID_VIEW_DRIVE_BAR, CHECKED
+        MENUITEM "&Stavov˝ ¯·dek",              ID_VIEW_STATUSBAR, CHECKED
 #ifndef _NO_EXTENSIONS
-		MENUITEM "Na p&lnou obrazovku\tCtrl+Shift+S" , 	ID_VIEW_FULLSCREEN
+        MENUITEM "&Cela· obrazovka\tCtrl+Shift+S", ID_VIEW_FULLSCREEN
 #endif
 		MENUITEM SEPARATOR
-		MENUITEM "Spustit &minimalizovanÏ" ,		504
-		MENUITEM "Uloæit na&stavenÌ p¯i ukonËenÌ" ,	511
+        MENUITEM "&Minimalizovat p¯i spuötÏnÌ", 504
+        MENUITEM "&Uloûit nastavenÌ p¯i vypnutÌ",511
 	}
 
 
-	POPUP "Za&bezpeËenÌ"  {
+    POPUP "&ZabezpeËenÌ"  {
 		MENUITEM "&P¯Ìstup..." ,		605
-		MENUITEM "&Zaznamen·v·nÌ..." ,			606
+        MENUITEM "&Logov·nÌ...",                606
 		MENUITEM "&VlastnÌk..." ,		607
 	}
 
-	POPUP "&Okna"  {
+    POPUP "&Okno"  {
 		MENUITEM "NovÈ &okno" ,			ID_WINDOW_NEW
-		MENUITEM "Za sebou\tCtrl+F5" ,		ID_WINDOW_CASCADE
-		MENUITEM "Dlaædice &vodorovnÏ" ,	ID_WINDOW_TILE_HORZ
-		MENUITEM "Dlaædice &svisle\tCtrl+F4" ,		ID_WINDOW_TILE_VERT
+        MENUITEM "Kask·dov·nÌ\tCtrl+F5",        ID_WINDOW_CASCADE
+        MENUITEM "Uspo¯·dat &horizont·lnÏ",     ID_WINDOW_TILE_HORZ
+        MENUITEM "Uspo¯·dat &vertik·lnÏ\tCtrl+F4",ID_WINDOW_TILE_VERT
 #ifndef _NO_EXTENSIONS
-		MENUITEM "Vyrovnat automaticky" ,		ID_WINDOW_AUTOSORT
+        MENUITEM "Zarovnat automaticky",        ID_WINDOW_AUTOSORT
 #endif
-		MENUITEM "Vyrov&nat" ,		ID_WINDOW_ARRANGE
-		MENUITEM "P¯ek&reslit\tF5" ,		ID_REFRESH
+        MENUITEM "Zarovnat &symboly",           ID_WINDOW_ARRANGE
+        MENUITEM "&Aktualizovat\tF5",           ID_REFRESH
 	}
 
 	POPUP "&?"  {
-		MENUITEM "Obsa&h n·povÏdy\tF1" ,			ID_HELP
+        MENUITEM "&TÈmata n·povÏdy\tF1",        ID_HELP
 		MENUITEM "Hled·nÌ v &n·povÏdÏ...\tF1" ,			ID_HELP
-		MENUITEM "Jak po&æÌvat n·povÏdu\tF1" ,		ID_HELP_USING
+        MENUITEM "&Jak pouûÌvat n·povÏdu\tF1",  ID_HELP_USING
 		MENUITEM SEPARATOR
 		MENUITEM "&Informace o Winefile..." ,			ID_ABOUT
 		MENUITEM "Informace o &Wine..." ,			ID_ABOUT_WINE
@@ -155,48 +155,48 @@ FONT 8, "MS Shell Dlg"
 	CONTROL 		"", 101, "Static", SS_SIMPLE|SS_NOPREFIX, 3, 6, 162, 10
 	CONTROL 		"&P¯Ìkaz:" , -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
 	EDITTEXT		201, 3, 29, 134, 12, ES_AUTOHSCROLL
-	CONTROL 		"Jako &symbol" , 214, "Button", BS_AUTOCHECKBOX|WS_TABSTOP,3, 45, 71, 12
+    CONTROL         "Jako &Symbol", 214, "Button", BS_AUTOCHECKBOX|WS_TABSTOP,3, 45, 71, 12
 	DEFPUSHBUTTON		"OK" , 1, 158, 6, 47, 14
-	PUSHBUTTON		"Storno" , 2, 158, 23, 47, 14
-	PUSHBUTTON		"&N·povÏda" , 254, 158, 43, 47, 14
+    PUSHBUTTON      "Zruöit", 2, 158, 23, 47, 14
+    PUSHBUTTON      "&Pomoc", 254, 158, 43, 47, 14
 }
 
 IDD_SELECT_DESTINATION DIALOG FIXED IMPURE 15, 13, 210, 63
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "UrËenÌ cÌle"
+CAPTION "Zvolte cÌl"
 FONT 8, "MS Shell Dlg"
 {
 	CONTROL 		"", 101, "Static", SS_SIMPLE|SS_NOPREFIX, 3, 6, 162, 10
-	CONTROL 		"C&esta:" , -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
+    CONTROL         "&Cesta:", -1, "Static", SS_LEFTNOWORDWRAP|WS_GROUP, 3, 18, 60, 10
 	EDITTEXT		201, 3, 29, 134, 12, ES_AUTOHSCROLL
 	DEFPUSHBUTTON		"OK" , 1, 158, 6, 47, 14
-	PUSHBUTTON		"Storno" , 2, 158, 23, 47, 14
-	PUSHBUTTON		"Pr&och·zet" , 254, 158, 43, 47, 14
+    PUSHBUTTON      "Zruöit", 2, 158, 23, 47, 14
+    PUSHBUTTON      "&Proch·zet", 254, 158, 43, 47, 14
 }
 
 STRINGTABLE
 {
-	IDS_FONT_SEL_DLG_NAME	"MÏnÌm nastavenÌ pÌsma"
-	IDS_FONT_SEL_ERROR	"Chyba p¯i v˝bÏru novÈho pÌsma."
+    IDS_FONT_SEL_DLG_NAME   "Aplikov·nÌ nastavenÌ pÌsma"
+    IDS_FONT_SEL_ERROR      "Chyba p¯i volbÏ novÈho pÌsma."
 }
 
 STRINGTABLE
 {
  IDS_WINEFILE "Winefile"
  IDS_ERROR  "Chyba"
- IDS_ROOT_FS  "ko¯enov˝ fs"
+    IDS_ROOT_FS             "root fs"
  IDS_UNIXFS  "unixfs"
  IDS_DESKTOP  "Plocha"
- IDS_SHELL  "Interpret"
+    IDS_SHELL               "P¯Ìkazov˝ ¯·dek"
  IDS_TITLEFMT "%s - %s"
- IDS_NO_IMPL  "NenÌ dosud implementov·no"
+    IDS_NO_IMPL             "ZatÌm neimplementov·no"
  IDS_WINE  "WINE"
  IDS_WINE_FILE "Wine File"
 }
 
 STRINGTABLE
 {
- IDS_COL_NAME "N·zev"
+    IDS_COL_NAME            "JmÈno"
  IDS_COL_SIZE "Velikost"
  IDS_COL_CDATE "Datum vytvo¯enÌ"
  IDS_COL_ADATE "Datum poslednÌho p¯Ìstupu"
