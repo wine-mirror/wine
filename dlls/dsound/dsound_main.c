@@ -549,7 +549,7 @@ static const IClassFactoryVtbl DSPCF_Vtbl = {
 static IClassFactoryImpl DSOUND_PRIVATE_CF = { &DSPCF_Vtbl, 1 };
 
 /*******************************************************************************
- * DllGetClassObject [DSOUND.5]
+ * DllGetClassObject [DSOUND.@]
  * Retrieves class object from a DLL object
  *
  * NOTES

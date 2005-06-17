@@ -759,7 +759,7 @@ HRESULT WINAPI DllCanUnloadNow(void)
 
 
 /******************************************************************
- *		DllGetClassObject (DMIME.2)
+ *		DllGetClassObject (DMIME.@)
  *
  *
  */

@@ -659,6 +659,12 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
     return hIcon;
 }
 
+/*************************************************************************
+ *				ExtractAssociatedIconW (SHELL32.@)
+ *
+ * Return icon for given file (either from file itself or from associated
+ * executable) and patch parameters if needed.
+ */
 HICON WINAPI ExtractAssociatedIconW(HINSTANCE hInst, LPWSTR lpIconPath, LPWORD lpiIcon)
 {
     HICON hIcon = NULL;

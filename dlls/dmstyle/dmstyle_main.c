@@ -458,7 +458,7 @@ HRESULT WINAPI DllCanUnloadNow(void) {
 
 
 /******************************************************************
- *		DllGetClassObject (DMSTYLE.2)
+ *		DllGetClassObject (DMSTYLE.@)
  *
  *
  */

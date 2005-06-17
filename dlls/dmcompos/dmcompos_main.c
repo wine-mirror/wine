@@ -298,7 +298,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 
 
 /******************************************************************
- *		DllCanUnloadNow (DMCOMPOS.1)
+ *		DllCanUnloadNow (DMCOMPOS.@)
  *
  *
  */
@@ -308,7 +308,7 @@ HRESULT WINAPI DllCanUnloadNow(void) {
 
 
 /******************************************************************
- *		DllGetClassObject (DMCOMPOS.2)
+ *		DllGetClassObject (DMCOMPOS.@)
  *
  *
  */
