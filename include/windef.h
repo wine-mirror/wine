@@ -315,8 +315,13 @@ typedef struct _POINTL
 
 typedef struct tagPOINTS
 {
+#ifdef WORDS_BIGENDIAN
+    SHORT y;
+    SHORT x;
+#else
     SHORT x;
     SHORT y;
+#endif
 } POINTS, *PPOINTS, *LPPOINTS;
 
 /* The RECT structure */
