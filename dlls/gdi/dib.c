@@ -961,8 +961,28 @@ INT WINAPI GetDIBits(
                                                        bmp->bitmap.bmHeight,
                                                        bmp->bitmap.bmBitsPixel );
                 info->bmiHeader.biCompression = 0;
+                info->bmiHeader.biXPelsPerMeter = 0;
+                info->bmiHeader.biYPelsPerMeter = 0;
+                info->bmiHeader.biClrUsed = 0;
+                info->bmiHeader.biClrImportant = 0;
+                
+                /* Windows 2000 doesn't touch the additional struct members if
+                   it's a BITMAPV4HEADER or a BITMAPV5HEADER */
             }
             lines = abs(bmp->bitmap.bmHeight);
+        }
+        else
+        {
+            /* The knowledge base article Q81498 ("DIBs and Their Uses") states that
+               if bits == NULL and bpp != 0, only biSizeImage and the color table are
+               filled in. */
+            if (!core_header)
+            {
+                /* FIXME: biSizeImage should be calculated according to the selected
+                          compression algorithm if biCompression != BI_RGB */
+                info->bmiHeader.biSizeImage = DIB_GetDIBImageBytes( width, height, bpp );
+            }
+            lines = abs(height);
         }
     }
 
