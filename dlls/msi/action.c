@@ -3680,7 +3680,7 @@ end:
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
     HKEY hkey=0;
-    LPWSTR buffer;
+    LPWSTR buffer = NULL;
     LPWSTR productcode;
     UINT rc,i;
     DWORD size;
@@ -3736,6 +3736,31 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
          {'L','o','c','a','l','P','a','c','k','a','g','e',0};
     static const WCHAR szUpgradeCode[] = 
         {'U','p','g','r','a','d','e','C','o','d','e',0};
+    static const WCHAR modpath_fmt[] = 
+        {'M','s','i','E','x','e','c','.','e','x','e',' ','/','I','[','P','r','o','d','u','c','t','C','o','d','e',']',0};
+    static const WCHAR szModifyPath[] = 
+        {'M','o','d','i','f','y','P','a','t','h',0};
+    static const WCHAR szUninstallString[] = 
+        {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
+    static const WCHAR szEstimatedSize[] = 
+        {'E','s','t','i','m','a','t','e','d','S','i','z','e',0};
+    static const WCHAR szInstallDate[] = 
+        {'I','n','s','t','a','l','l','D','a','t','e',0};
+    static const WCHAR szLanguage[] =
+        {'L','a','n','g','u','a','g','e',0};
+    static const WCHAR szProductLanguage[] =
+        {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
+    static const WCHAR szProductVersion[] =
+        {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
+    static const WCHAR szVersion[] =
+        {'V','e','r','s','i','o','n',0};
+    static const WCHAR szVersionMajor[] =
+        {'V','e','r','s','i','o','n','M','a','j','o','r',0};
+    static const WCHAR szVersionMinor[] =
+        {'V','e','r','s','i','o','n','M','i','n','o','r',0};
+
+    SYSTEMTIME systime;
+    static const WCHAR date_fmt[] = {'%','i','%','i','%','i',0};
     LPWSTR upgrade_code;
     WCHAR windir[MAX_PATH], path[MAX_PATH], packagefile[MAX_PATH];
     INT num,start;
@@ -3762,6 +3787,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
             buffer = szNONE;
         size = strlenW(buffer)*sizeof(WCHAR);
         RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
+        HeapFree(GetProcessHeap(),0,buffer);
         i++;
     }
 
@@ -3803,6 +3829,42 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     size = strlenW(packagefile)*sizeof(WCHAR);
     RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
 
+    /* do ModifyPath and UninstallString */
+    size = deformat_string(package,modpath_fmt,&buffer);
+    RegSetValueExW(hkey,szModifyPath,0,REG_EXPAND_SZ,(LPSTR)buffer,size);
+    RegSetValueExW(hkey,szUninstallString,0,REG_EXPAND_SZ,(LPSTR)buffer,size);
+    HeapFree(GetProcessHeap(),0,buffer);
+
+    FIXME("Write real Estimated Size when we have it\n");
+    size = 0;
+    RegSetValueExW(hkey,szEstimatedSize,0,REG_DWORD,(LPSTR)&size,sizeof(DWORD));
+   
+    GetLocalTime(&systime);
+    size = 9*sizeof(WCHAR);
+    buffer= HeapAlloc(GetProcessHeap(),0,size);
+    sprintfW(buffer,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
+    size = strlenW(buffer)*sizeof(WCHAR);
+    RegSetValueExW(hkey,szInstallDate,0,REG_SZ,(LPSTR)buffer,size);
+    HeapFree(GetProcessHeap(),0,buffer);
+   
+    buffer = load_dynamic_property(package,szProductLanguage,NULL);
+    size = atoiW(buffer);
+    RegSetValueExW(hkey,szLanguage,0,REG_DWORD, (LPSTR)&size,sizeof(DWORD));
+    HeapFree(GetProcessHeap(),1,buffer);
+
+    buffer = load_dynamic_property(package,szProductVersion,NULL);
+    if (buffer)
+    {
+        DWORD verdword = build_version_dword(buffer);
+        DWORD vermajor = verdword>>24;
+        DWORD verminor = (verdword>>16)&0x00FF;
+        size = sizeof(DWORD);
+        RegSetValueExW(hkey,szVersion,0,REG_DWORD,(LPSTR)&verdword,size);
+        RegSetValueExW(hkey,szVersionMajor,0,REG_DWORD,(LPSTR)&vermajor,size);
+        RegSetValueExW(hkey,szVersionMinor,0,REG_DWORD,(LPSTR)&verminor,size);
+    }
+    HeapFree(GetProcessHeap(),0,buffer);
+    
     /* Handle Upgrade Codes */
     upgrade_code = load_dynamic_property(package,szUpgradeCode, NULL);
     if (upgrade_code)
