@@ -113,7 +113,6 @@ static void test_query_timeofday()
 {
     DWORD status;
     ULONG ReturnLength;
-    int isnt = 0;
 
     /* Copy of our winternl.h structure turned into a private one */
     typedef struct _SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE {
@@ -126,7 +125,7 @@ static void test_query_timeofday()
 
     SYSTEM_TIMEOFDAY_INFORMATION_PRIVATE sti;
   
-    /*  The structsize for NT (32 bytes) and Win2K/XP (48 bytes) differ.
+    /*  The struct size for NT (32 bytes) and Win2K/XP (48 bytes) differ.
      *
      *  Windows 2000 and XP return STATUS_INFO_LENGTH_MISMATCH if the given buffer size is greater
      *  then 48 and 0 otherwise
@@ -139,9 +138,8 @@ static void test_query_timeofday()
     */
 
     status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, sizeof(sti), &ReturnLength);
-    isnt = ( status == STATUS_INFO_LENGTH_MISMATCH);
 
-    if (isnt)
+    if (status == STATUS_INFO_LENGTH_MISMATCH)
     {
         trace("Windows version is NT, we have to cater for differences with W2K/WinXP\n");
  
@@ -159,7 +157,6 @@ static void test_query_timeofday()
     }
     else
     {
-
         status = pNtQuerySystemInformation(SystemTimeOfDayInformation, &sti, 0, &ReturnLength);
         ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
         ok( 0 == ReturnLength, "ReturnLength should be 0, it is (%ld)\n", ReturnLength);
@@ -194,7 +191,7 @@ static void test_query_process()
     DWORD status;
     ULONG ReturnLength;
     int i = 0, j = 0, k = 0;
-    int isnt = 0;
+    int is_nt = 0;
     SYSTEM_BASIC_INFORMATION sbi;
 
     /* Copy of our winternl.h structure turned into a private one */
@@ -250,9 +247,9 @@ static void test_query_process()
 
     pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
 
-    isnt = ( spi->dwOffset - (sbi.NumberOfProcessors * sizeof(SYSTEM_THREAD_INFORMATION)) == 136);
+    is_nt = ( spi->dwOffset - (sbi.NumberOfProcessors * sizeof(SYSTEM_THREAD_INFORMATION)) == 136);
 
-    if (isnt) trace("Windows version is NT, we will skip thread tests\n");
+    if (is_nt) trace("Windows version is NT, we will skip thread tests\n");
 
     /* Check if we have some return values
      * 
@@ -270,7 +267,7 @@ static void test_query_process()
 
         /* Loop through the threads, skip NT4 for now */
         
-        if (!isnt)
+        if (!is_nt)
         {
             for ( j = 0; j < spi->dwThreadCount; j++) 
             {
@@ -286,7 +283,7 @@ static void test_query_process()
         spi = (SYSTEM_PROCESS_INFORMATION_PRIVATE*)((char*)spi + spi->dwOffset);
     }
     trace("Total number of running processes : %d\n", i);
-    if (!isnt) trace("Total number of running threads   : %d\n", k);
+    if (!is_nt) trace("Total number of running threads   : %d\n", k);
 
     HeapFree( GetProcessHeap(), 0, spi);
 }
