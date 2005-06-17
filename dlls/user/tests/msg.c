@@ -2939,6 +2939,7 @@ static void test_messages(void)
     SetWindowPos(hwnd, 0,0,0,0,0, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE);
     ok_sequence(WmSWP_HideOverlappedSeq, "SetWindowPos:SWP_HIDEWINDOW:overlapped", FALSE);
     ok(!IsWindowVisible(hwnd), "window should not be visible at this point\n");
+    ok(GetActiveWindow() == hwnd, "window should still be active\n");
 
     /* test WM_SETREDRAW on a visible top level window */
     ShowWindow(hwnd, SW_SHOW);

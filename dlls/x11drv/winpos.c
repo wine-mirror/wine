@@ -934,7 +934,9 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
         case SW_HIDE:
             if (!wasVisible) return FALSE;
             showFlag = FALSE;
-            swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER;
+            swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+            if (hwnd != GetActiveWindow())
+                swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
 	case SW_SHOWMINNOACTIVE:
