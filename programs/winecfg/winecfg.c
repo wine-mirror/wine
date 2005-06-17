@@ -123,7 +123,7 @@ static char *get_config_key (const char *subkey, const char *name, const char *d
 
     WINE_TRACE("buffer=%s\n", buffer);
 end:
-    if (hSubKey) RegCloseKey(hSubKey);
+    if (hSubKey && hSubKey != config_key) RegCloseKey(hSubKey);
 
     return (char*)buffer;
 }
@@ -147,8 +147,12 @@ static int set_config_key(const char *subkey, const char *name, const char *valu
 
     assert( subkey != NULL );
 
-    res = RegCreateKey(config_key, subkey, &key);
-    if (res != ERROR_SUCCESS) goto end;
+    if (subkey[0])
+    {
+        res = RegCreateKey(config_key, subkey, &key);
+        if (res != ERROR_SUCCESS) goto end;
+    }
+    else key = config_key;
     if (name == NULL || value == NULL) goto end;
 
     res = RegSetValueEx(key, name, 0, REG_SZ, value, strlen(value) + 1);
@@ -156,7 +160,7 @@ static int set_config_key(const char *subkey, const char *name, const char *valu
 
     res = 0;
 end:
-    if (key) RegCloseKey(key);
+    if (key && key != config_key) RegCloseKey(key);
     if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s to %s, res=%ld\n", name, subkey, value, res);
     return res;
 }
@@ -496,7 +500,8 @@ char *keypath(const char *section)
     if (current_app)
     {
         result = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + strlen(current_app) + 2 /* \\ */ + strlen(section) + 1 /* terminator */);
-        sprintf(result, "AppDefaults\\%s\\%s", current_app, section);
+        sprintf(result, "AppDefaults\\%s", current_app);
+        if (section[0]) sprintf( result + strlen(result), "\\%s", section );
     }
     else
     {
