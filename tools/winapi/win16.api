@@ -38,7 +38,6 @@ void
 
 %long
 
-BOOL
 DWORD
 LONG
 LPARAM
@@ -61,11 +60,9 @@ LPSTR
 %word
 
 BOOL16
-HINSTANCE16
 HWND16
 INT16
 UINT16
-WORD
 WPARAM16
 short
 
@@ -566,6 +563,7 @@ HWND
 LONG
 LPARAM
 LRESULT
+int
 
 %ptr
 
