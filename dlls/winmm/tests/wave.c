@@ -1030,7 +1030,7 @@ static void wave_out_test_device(int device)
               dev_name(device));
 }
 
-static void wave_out_tests()
+static void wave_out_tests(void)
 {
     WAVEOUTCAPSA capsA;
     WAVEOUTCAPSW capsW;

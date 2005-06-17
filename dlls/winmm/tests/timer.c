@@ -35,7 +35,7 @@
 
 static TIMECAPS tc;
 
-static void test_timeGetDevCaps()
+static void test_timeGetDevCaps(void)
 {
    MMRESULT rc;
 
@@ -169,7 +169,7 @@ void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWO
     fired = TRUE;
 }
 
-void test_priority()
+void test_priority(void)
 {
     UINT id;
 

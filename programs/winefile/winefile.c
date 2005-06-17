@@ -166,7 +166,7 @@ typedef struct {
 static void read_directory(Entry* dir, LPCTSTR path, SORT_ORDER sortOrder, HWND hwnd);
 static void set_curdir(ChildWnd* child, Entry* entry, int idx, HWND hwnd);
 static void refresh_child(ChildWnd* child);
-static void refresh_drives();
+static void refresh_drives(void);
 static void get_path(Entry* dir, PTSTR path);
 static void format_date(const FILETIME* ft, TCHAR* buffer, int visible_cols);
 
@@ -240,7 +240,7 @@ static void display_network_error(HWND hwnd)
 
 
 /* allocate and initialise a directory entry */
-static Entry* alloc_entry()
+static Entry* alloc_entry(void)
 {
 	Entry* entry = (Entry*) malloc(sizeof(Entry));
 
@@ -3979,7 +3979,7 @@ static BOOL prompt_target(Pane* pane, LPTSTR source, LPTSTR target)
 static IContextMenu2* s_pctxmenu2 = NULL;
 static IContextMenu3* s_pctxmenu3 = NULL;
 
-static void CtxMenu_reset()
+static void CtxMenu_reset(void)
 {
 	s_pctxmenu2 = NULL;
 	s_pctxmenu3 = NULL;

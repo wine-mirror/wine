@@ -2621,7 +2621,7 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
 }
 
 /* tests what window styles the window manager automatically adds */
-static void test_window_styles()
+static void test_window_styles(void)
 {
     register_style_check_class();
 
@@ -2902,7 +2902,7 @@ static void test_AWR_window_size(BOOL menu)
 
 #define SHOWSYSMETRIC(SM) trace(#SM "=%d\n", GetSystemMetrics(SM))
 
-static void test_AdjustWindowRect()
+static void test_AdjustWindowRect(void)
 {
     if (!AWR_init())
 	return;
@@ -2952,7 +2952,7 @@ static LRESULT WINAPI redraw_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LP
 }
 
 /* Ensure we exit from RedrawNow regardless of invalidated area */
-static void test_redrawnow() {
+static void test_redrawnow(void) {
 
    WNDCLASSA cls;
    HWND hwndMain;

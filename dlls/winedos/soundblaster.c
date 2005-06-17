@@ -121,7 +121,7 @@ static DWORD CALLBACK SB_Poll( void *dummy )
     return 0;
 }
 
-BOOL SB_Init()
+BOOL SB_Init(void)
 {
     HRESULT result;
 
@@ -191,7 +191,7 @@ BOOL SB_Init()
     return 1;
 }
 
-void SB_Reset()
+void SB_Reset(void)
 {
     int i;
 

@@ -71,7 +71,7 @@ static VOID (WINAPI *pImmNotifyIME)(HIMC, DWORD, DWORD, DWORD);
 /*
  * here are the functions that sort of marshall calls into IMM32.DLL
  */
-static void LoadImmDll()
+static void LoadImmDll(void)
 {
     hImmDll = LoadLibraryA("imm32.dll");
 

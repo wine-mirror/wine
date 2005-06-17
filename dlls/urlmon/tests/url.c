@@ -52,7 +52,7 @@ static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
     if(mon2) IMoniker_Release(mon2);
 }
 
-static void test_create()
+static void test_create(void)
 {
     test_CreateURLMoniker(TEST_URL_1, TEST_PART_URL_1);
 }
@@ -196,7 +196,7 @@ static IBindStatusCallback* statusclb_create()
     return (IBindStatusCallback*)ret;
 }
 
-static void test_CreateAsyncBindCtx()
+static void test_CreateAsyncBindCtx(void)
 {
     IBindCtx *bctx = (IBindCtx*)0x0ff00ff0;
     HRESULT hres;
@@ -234,7 +234,7 @@ static void test_CreateAsyncBindCtx()
     ok(ref == 0, "bsc should be destroyed here\n");
 }
 
-static void test_BindToStorage()
+static void test_BindToStorage(void)
 {
     IMoniker *mon;
     HRESULT hres;

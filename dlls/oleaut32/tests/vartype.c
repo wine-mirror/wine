@@ -4632,7 +4632,7 @@ static inline BSTR GetBSTR(const LPINTERNAL_BSTR bstr)
   return (BSTR)bstr->szString;
 }
 
-static void test_SysStringLen()
+static void test_SysStringLen(void)
 {
   INTERNAL_BSTR bstr;
   BSTR str = GetBSTR(&bstr);
@@ -4643,7 +4643,7 @@ static void test_SysStringLen()
   ok (SysStringLen(str) == 1, "Expected dwLen 1, got %d\n", SysStringLen(str));
 }
 
-static void test_SysStringByteLen()
+static void test_SysStringByteLen(void)
 {
   INTERNAL_BSTR bstr;
   BSTR str = GetBSTR(&bstr);
@@ -4654,7 +4654,7 @@ static void test_SysStringByteLen()
   ok (SysStringByteLen(str) == 2, "Expected dwLen 2, got %d\n", SysStringByteLen(str));
 }
 
-static void test_SysAllocString()
+static void test_SysAllocString(void)
 {
   const OLECHAR szTest[5] = { 'T','e','s','t','\0' };
   BSTR str;
@@ -4674,7 +4674,7 @@ static void test_SysAllocString()
   }
 }
 
-static void test_SysAllocStringLen()
+static void test_SysAllocStringLen(void)
 {
   const OLECHAR szTest[5] = { 'T','e','s','t','\0' };
   BSTR str;
@@ -4710,7 +4710,7 @@ static void test_SysAllocStringLen()
   }
 }
 
-static void test_SysAllocStringByteLen()
+static void test_SysAllocStringByteLen(void)
 {
   const OLECHAR szTest[10] = { 'T','e','s','t','\0' };
   const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
@@ -4766,7 +4766,7 @@ static void test_SysAllocStringByteLen()
   }
 }
 
-static void test_SysReAllocString()
+static void test_SysReAllocString(void)
 {
   const OLECHAR szTest[5] = { 'T','e','s','t','\0' };
   const OLECHAR szSmaller[2] = { 'x','\0' };
@@ -4805,7 +4805,7 @@ static void test_SysReAllocString()
   }
 }
 
-static void test_SysReAllocStringLen()
+static void test_SysReAllocStringLen(void)
 {
   const OLECHAR szTest[5] = { 'T','e','s','t','\0' };
   const OLECHAR szSmaller[2] = { 'x','\0' };
@@ -4844,7 +4844,7 @@ static void test_SysReAllocStringLen()
   }
 }
 
-static void test_BstrCopy()
+static void test_BstrCopy(void)
 {
   const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
   const CHAR szTestTruncA[4] = { 'T','e','s','\0' };
@@ -5302,7 +5302,7 @@ static void test_ClearCustData(void)
   ok(!ci.cCustData && !ci.prgCustData, "ClearCustData didn't clear fields!\n");
 }
 
-static void test_NullByRef()
+static void test_NullByRef(void)
 {
   VARIANT v1, v2;
   HRESULT hRes;
@@ -5333,7 +5333,7 @@ static void test_NullByRef()
 }
 
 /* Dst Variant should remain unchanged if VariantChangeType cannot convert */
-static void test_ChangeType_keep_dst()
+static void test_ChangeType_keep_dst(void)
 {
      VARIANT v1, v2;
      BSTR bstr;

@@ -44,7 +44,7 @@ UINT (*pWTInfoA)(UINT wCategory, UINT nIndex, LPVOID lpOutput) = NULL;
 static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                           LPARAM lParam);
 
-static VOID TABLET_Register()
+static VOID TABLET_Register(void)
 {
     WNDCLASSW wndClass;
     ZeroMemory(&wndClass, sizeof(WNDCLASSW));
@@ -58,7 +58,7 @@ static VOID TABLET_Register()
     RegisterClassW(&wndClass);
 }
 
-static VOID TABLET_Unregister()
+static VOID TABLET_Unregister(void)
 {
     UnregisterClassW(WC_TABLETCLASSNAME, NULL);
 }

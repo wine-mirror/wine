@@ -781,7 +781,7 @@ LINGER linger_testvals[] = {
                         bug in the linux kernel (fixed in 2.6.8) */ 
 #define SOCKTIMEOUT2 997000 /* 997 seconds */
 
-static void test_set_getsockopt()
+static void test_set_getsockopt(void)
 {
     SOCKET s;
     int i, err;
@@ -826,7 +826,7 @@ static void test_set_getsockopt()
     closesocket(s);
 }
 
-static void test_so_reuseaddr()
+static void test_so_reuseaddr(void)
 {
     struct sockaddr_in saddr;
     SOCKET s1,s2;
@@ -940,7 +940,7 @@ static test_setup tests [NUM_TESTS] =
     }
 };
 
-static void test_UDP()
+static void test_UDP(void)
 {
     /* This function tests UDP sendto() and recvfrom(). UDP is unreliable, so it is
        possible that this test fails due to dropped packets. */
@@ -1018,7 +1018,7 @@ static void WINAPI do_getservbyname( HANDLE *starttest )
     }
 }
 
-static void test_getservbyname()
+static void test_getservbyname(void)
 {
     int i;
     HANDLE starttest, thread[NUM_THREADS];
@@ -1039,7 +1039,7 @@ static void test_getservbyname()
     }
 }
 
-static void test_WSAAddressToStringA()
+static void test_WSAAddressToStringA(void)
 {
     INT ret;
     DWORD len;
@@ -1106,7 +1106,7 @@ static void test_WSAAddressToStringA()
     ok( !strcmp( address, expect4 ), "Expected: %s, got: %s\n", expect4, address );
 }
 
-static void test_WSAAddressToStringW()
+static void test_WSAAddressToStringW(void)
 {
     INT ret;
     DWORD len;
@@ -1174,7 +1174,7 @@ static void test_WSAAddressToStringW()
     ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
 }
 
-static void test_WSAStringToAddressA()
+static void test_WSAStringToAddressA(void)
 {
     INT ret, len;
     SOCKADDR_IN sockaddr;
@@ -1227,7 +1227,7 @@ static void test_WSAStringToAddressA()
     ok( ret, "WSAStringToAddressA() succeeded unexpectedly: %d\n", WSAGetLastError() );
 }
 
-static void test_WSAStringToAddressW()
+static void test_WSAStringToAddressW(void)
 {
     INT ret, len;
     SOCKADDR_IN sockaddr;
