@@ -252,4 +252,3 @@ void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *);
 extern const WCHAR cszSourceDir[];
 extern const WCHAR szProductCode[];
 extern const WCHAR cszRootDrive[];
-extern const WCHAR cszbs[];
