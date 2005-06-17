@@ -18,6 +18,7 @@ C_SRCS = \
 	dialog.c \
 	distinct.c \
 	events.c \
+	files.c \
 	format.c \
 	handle.c \
 	helpers.c \

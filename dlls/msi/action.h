@@ -205,6 +205,8 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
 /* actions in other modules */
 UINT ACTION_AppSearch(MSIPACKAGE *package);
 UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);
+UINT ACTION_InstallFiles(MSIPACKAGE *package);
+UINT ACTION_DuplicateFiles(MSIPACKAGE *package);
 UINT ACTION_RegisterClassInfo(MSIPACKAGE *package);
 UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package);
 UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package);
@@ -252,3 +254,4 @@ void ui_actiondata(MSIPACKAGE *, LPCWSTR, MSIRECORD *);
 extern const WCHAR cszSourceDir[];
 extern const WCHAR szProductCode[];
 extern const WCHAR cszRootDrive[];
+extern const WCHAR cszbs[];
