@@ -255,10 +255,16 @@ UINT WINAPI MsiSetTargetPathA(MSIHANDLE hInstall, LPCSTR szFolder,
     return rc;
 }
 
+/*
+ * Ok my original interpretation of this was wrong. And it looks like msdn has
+ * changed a bit also. The given folder path does not have to actually already
+ * exist, it just cannot be read only and must be a legal folder path.
+ */
 UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder, 
                              LPCWSTR szFolderPath)
 {
     DWORD i;
+    DWORD attrib;
     LPWSTR path = NULL;
     LPWSTR path2 = NULL;
     MSIFOLDER *folder;
@@ -271,13 +277,24 @@ UINT MSI_SetTargetPathW(MSIPACKAGE *package, LPCWSTR szFolder,
     if (szFolderPath[0]==0)
         return ERROR_FUNCTION_FAILED;
 
-    if (GetFileAttributesW(szFolderPath) == INVALID_FILE_ATTRIBUTES)
+    attrib = GetFileAttributesW(szFolderPath);
+    if ( attrib != INVALID_FILE_ATTRIBUTES &&
+          (!(attrib & FILE_ATTRIBUTE_DIRECTORY) ||
+           attrib & FILE_ATTRIBUTE_OFFLINE ||
+           attrib & FILE_ATTRIBUTE_READONLY))
         return ERROR_FUNCTION_FAILED;
 
     path = resolve_folder(package,szFolder,FALSE,FALSE,&folder);
 
     if (!path)
         return ERROR_INVALID_PARAMETER;
+
+    if (attrib == INVALID_FILE_ATTRIBUTES)
+    {
+        if (!CreateDirectoryW(szFolderPath,NULL))
+            return ERROR_FUNCTION_FAILED;
+        RemoveDirectoryW(szFolderPath);
+    }
 
     HeapFree(GetProcessHeap(),0,folder->Property);
     folder->Property = build_directory_name(2, szFolderPath, NULL);
