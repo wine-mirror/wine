@@ -191,7 +191,7 @@ static WINDOWS_VERSION forcedWinVersion; /* init value irrelevant */
  */
 static BOOL parse_win_version( HANDLE hkey )
 {
-    static const WCHAR WindowsW[] = {'W','i','n','d','o','w','s',0};
+    static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
 
     UNICODE_STRING valueW;
     char tmp[64], buffer[50];
@@ -199,7 +199,7 @@ static BOOL parse_win_version( HANDLE hkey )
     DWORD count, len;
     int i;
 
-    RtlInitUnicodeString( &valueW, WindowsW );
+    RtlInitUnicodeString( &valueW, VersionW );
     if (NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation, tmp, sizeof(tmp), &count ))
         return FALSE;
 
@@ -246,27 +246,25 @@ void VERSION_Init( const WCHAR *appname )
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HANDLE hkey, config_key;
-    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
-                                    'S','o','f','t','w','a','r','e','\\',
-                                    'W','i','n','e','\\',
-                                    'W','i','n','e','\\',
-                                    'C','o','n','f','i','g',0};
+    HANDLE root, hkey, config_key;
+    static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e',0};
     static const WCHAR appdefaultsW[] = {'A','p','p','D','e','f','a','u','l','t','s','\\',0};
-    static const WCHAR versionW[] = {'\\','V','e','r','s','i','o','n',0};
 
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
+    attr.RootDirectory = root;
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, configW );
 
-    if (NtOpenKey( &config_key, KEY_ALL_ACCESS, &attr )) return;
-    attr.RootDirectory = config_key;
+    /* @@ Wine registry key: HKCU\Software\Wine */
+    if (NtOpenKey( &config_key, KEY_ALL_ACCESS, &attr )) config_key = 0;
+    NtClose( root );
+    if (!config_key) return;
 
-    /* open AppDefaults\\appname\\Version key */
+    /* open AppDefaults\\appname key */
     if (appname && *appname)
     {
         const WCHAR *p;
@@ -278,11 +276,11 @@ void VERSION_Init( const WCHAR *appname )
 
         strcpyW( appversion, appdefaultsW );
         strcatW( appversion, appname );
-        strcatW( appversion, versionW );
         TRACE( "getting version from %s\n", debugstr_w(appversion) );
         RtlInitUnicodeString( &nameW, appversion );
+        attr.RootDirectory = config_key;
 
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\AppDefaults\app.exe\Version */
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             got_win_ver = parse_win_version( hkey );
@@ -292,13 +290,7 @@ void VERSION_Init( const WCHAR *appname )
     }
 
     TRACE( "getting default version\n" );
-    RtlInitUnicodeString( &nameW, versionW + 1 );
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Version */
-    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
-    {
-        parse_win_version( hkey );
-        NtClose( hkey );
-    }
+    parse_win_version( config_key );
 
  done:
     NtClose( config_key );
