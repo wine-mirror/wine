@@ -145,14 +145,14 @@ static void create_registry_keys( const SYSTEM_INFO *info )
     {
         for (i = 0; i < info->dwNumberOfProcessors; i++)
         {
-            char num[10], id[20];
+            char num[10], id[60];
 
             attr.RootDirectory = cpu_key;
             sprintf( num, "%d", i );
             RtlCreateUnicodeStringFromAsciiz( &nameW, num );
             if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
             {
-                WCHAR idW[40];
+                WCHAR idW[60];
                 DWORD cpuMHz = cpuHz / 1000000;
 
                 /*TODO: report 64bit processors properly*/
