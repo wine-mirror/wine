@@ -2708,6 +2708,37 @@ SQLUINTEGER *
 SQLUSMALLINT *
 WCHAR *
 
+%%odbccp32.dll
+
+%long
+
+BOOL
+DWORD
+HWND
+LONG
+SQLRETURN
+UWORD
+WORD
+int
+
+%str
+
+LPCSTR
+LPSTR
+
+%wstr
+
+LPCWSTR
+LPWSTR
+
+%ptr
+
+DWORD *
+LONG *
+LPDWORD
+UWORD *
+WORD *
+
 %%ole32.dll
 
 %long

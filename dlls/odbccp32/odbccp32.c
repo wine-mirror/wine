@@ -106,14 +106,14 @@ BOOL WINAPI SQLConfigDriver(HWND hwndParent, WORD fRequest, LPCSTR lpszDriver,
     return FALSE;
 }
 
-BOOL WINAPI SQLCreateDataSourceW(HWND hwnd, LPWSTR lpszDS)
+BOOL WINAPI SQLCreateDataSourceW(HWND hwnd, LPCWSTR lpszDS)
 {
     FIXME("\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
-BOOL WINAPI SQLCreateDataSource(HWND hwnd, LPSTR lpszDS)
+BOOL WINAPI SQLCreateDataSource(HWND hwnd, LPCSTR lpszDS)
 {
     FIXME("\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -160,7 +160,7 @@ BOOL WINAPI SQLGetInstalledDrivers(LPSTR lpszBuf, WORD cbBufMax,
 }
 
 int WINAPI SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
-               LPCWSTR lpszDefault, LPCWSTR RetBuffer, INT cbRetBuffer,
+               LPCWSTR lpszDefault, LPCWSTR RetBuffer, int cbRetBuffer,
                LPCWSTR lpszFilename)
 {
     FIXME("\n");
@@ -169,7 +169,7 @@ int WINAPI SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
 }
 
 int WINAPI SQLGetPrivateProfileString(LPCSTR lpszSection, LPCSTR lpszEntry,
-               LPCSTR lpszDefault, LPCSTR RetBuffer, INT cbRetBuffer,
+               LPCSTR lpszDefault, LPCSTR RetBuffer, int cbRetBuffer,
                LPCSTR lpszFilename)
 {
     FIXME("\n");
@@ -287,7 +287,7 @@ BOOL WINAPI SQLInstallODBC(HWND hwndParent, LPCSTR lpszInfFile,
     return FALSE;
 }
 
-RETCODE WINAPI SQLInstallerErrorW(WORD iError, DWORD *pfErrorCode,
+SQLRETURN WINAPI SQLInstallerErrorW(WORD iError, DWORD *pfErrorCode,
                LPWSTR lpszErrorMsg, WORD cbErrorMsgMax, WORD *pcbErrorMsg)
 {
     FIXME("\n");
@@ -295,7 +295,7 @@ RETCODE WINAPI SQLInstallerErrorW(WORD iError, DWORD *pfErrorCode,
     return FALSE;
 }
 
-RETCODE WINAPI SQLInstallerError(WORD iError, DWORD *pfErrorCode,
+SQLRETURN WINAPI SQLInstallerError(WORD iError, DWORD *pfErrorCode,
                LPSTR lpszErrorMsg, WORD cbErrorMsgMax, WORD *pcbErrorMsg)
 {
     FIXME("\n");
@@ -346,14 +346,14 @@ BOOL WINAPI SQLManageDataSources(HWND hwnd)
     return FALSE;
 }
 
-RETCODE WINAPI SQLPostInstallerErrorW(DWORD fErrorCode, LPWSTR szErrorMsg)
+SQLRETURN WINAPI SQLPostInstallerErrorW(DWORD fErrorCode, LPCWSTR szErrorMsg)
 {
     FIXME("\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
 
-RETCODE WINAPI SQLPostInstallerError(DWORD fErrorCode, LPSTR szErrorMsg)
+SQLRETURN WINAPI SQLPostInstallerError(DWORD fErrorCode, LPCSTR szErrorMsg)
 {
     FIXME("\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
