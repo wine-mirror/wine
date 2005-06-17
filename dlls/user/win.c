@@ -2686,36 +2686,30 @@ BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
         if (GetWindow( win_array[count], GW_OWNER ) != owner) continue;
         if (!(pWnd = WIN_GetPtr( win_array[count] ))) continue;
         if (pWnd == WND_OTHER_PROCESS) continue;
-
-        if (pWnd->dwStyle & WS_POPUP)
+        if (fShow)
         {
-            if (fShow)
+            if (pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
             {
-                if (pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP)
-                {
-                    pWnd->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
-                    WIN_ReleasePtr( pWnd );
-                    /* In Windows, ShowOwnedPopups(TRUE) generates
-                     * WM_SHOWWINDOW messages with SW_PARENTOPENING,
-                     * regardless of the state of the owner
-                     */
-                    SendMessageW(win_array[count], WM_SHOWWINDOW, SW_SHOW, SW_PARENTOPENING);
-                    continue;
-                }
+                WIN_ReleasePtr( pWnd );
+                /* In Windows, ShowOwnedPopups(TRUE) generates
+                 * WM_SHOWWINDOW messages with SW_PARENTOPENING,
+                 * regardless of the state of the owner
+                 */
+                SendMessageW(win_array[count], WM_SHOWWINDOW, SW_SHOWNORMAL, SW_PARENTOPENING);
+                continue;
             }
-            else
+        }
+        else
+        {
+            if (pWnd->dwStyle & WS_VISIBLE)
             {
-                if (pWnd->dwStyle & WS_VISIBLE)
-                {
-                    pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
-                    WIN_ReleasePtr( pWnd );
-                    /* In Windows, ShowOwnedPopups(FALSE) generates
-                     * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
-                     * regardless of the state of the owner
-                     */
-                    SendMessageW(win_array[count], WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
-                    continue;
-                }
+                WIN_ReleasePtr( pWnd );
+                /* In Windows, ShowOwnedPopups(FALSE) generates
+                 * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
+                 * regardless of the state of the owner
+                 */
+                SendMessageW(win_array[count], WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
+                continue;
             }
         }
         WIN_ReleasePtr( pWnd );

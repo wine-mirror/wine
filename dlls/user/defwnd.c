@@ -580,11 +580,24 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_SHOWWINDOW:
         {
             LONG style = GetWindowLongW( hwnd, GWL_STYLE );
+            WND *pWnd;
             if (!lParam) return 0; /* sent from ShowWindow */
-            if (!(style & WS_POPUP)) return 0;
             if ((style & WS_VISIBLE) && wParam) return 0;
             if (!(style & WS_VISIBLE) && !wParam) return 0;
             if (!GetWindow( hwnd, GW_OWNER )) return 0;
+            if (!(pWnd = WIN_GetPtr( hwnd ))) return 0;
+            if (pWnd == WND_OTHER_PROCESS) return 0;
+            if (wParam)
+            {
+                if (!(pWnd->flags & WIN_NEEDS_SHOW_OWNEDPOPUP))
+                {
+                    WIN_ReleasePtr( pWnd );
+                    return 0;
+                }
+                pWnd->flags &= ~WIN_NEEDS_SHOW_OWNEDPOPUP;
+            }
+            else pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
+            WIN_ReleasePtr( pWnd );
             ShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
             break;
         }
