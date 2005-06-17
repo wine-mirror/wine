@@ -128,7 +128,7 @@ if($options->global) {
 	$complete_module{$module}++;
     }
 
-    my $all_modules = 1;
+    $all_modules = 1;
     foreach my $module ($modules->all_modules) {
 	if(!$complete_module{$module}) {
 	    $all_modules = 0;
