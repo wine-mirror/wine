@@ -15,6 +15,21 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * This file implements ASN.1 DER encoding and decoding of a limited set of
+ * types.  It isn't a full ASN.1 implementation.  Microsoft implements BER
+ * encoding of many of the basic types in msasn1.dll, but that interface is
+ * undocumented, so I implement them here.
+ *
+ * References:
+ * "A Layman's Guide to a Subset of ASN.1, BER, and DER", by Burton Kaliski
+ * (available online, look for a PDF copy as the HTML versions tend to have
+ * translation errors.)
+ *
+ * RFC3280, http://www.faqs.org/rfcs/rfc3280.html
+ *
+ * MSDN, especially:
+ * http://msdn.microsoft.com/library/en-us/seccrypto/security/constants_for_cryptencodeobject_and_cryptdecodeobject.asp
  */
 #include <stdarg.h>
 #include <stdio.h>
@@ -244,6 +259,9 @@ static void *CRYPT_GetFunc(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     HKEY hKey;
     DWORD type, size = 0;
 
+    TRACE("(%08lx %s %s %p)\n", dwCertEncodingType, debugstr_a(lpszStructType),
+     debugstr_a(szFuncName), lib);
+
     *lib = NULL;
     r = RegOpenKeyA(HKEY_LOCAL_MACHINE, szKey, &hKey);
     HeapFree(GetProcessHeap(), 0, szKey);
@@ -283,6 +301,7 @@ static void *CRYPT_GetFunc(DWORD dwCertEncodingType, LPCSTR lpszStructType,
     }
     if (funcName != szFuncName)
         HeapFree(GetProcessHeap(), 0, (char *)funcName);
+    TRACE("returning %p\n", ret);
     return ret;
 }
 
@@ -748,7 +767,8 @@ static BOOL WINAPI CRYPT_AsnEncodeName(DWORD dwCertEncodingType,
             return FALSE;
         if (dwFlags & CRYPT_ENCODE_ALLOC_FLAG)
             pbEncoded = *(BYTE **)pbEncoded;
-        *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SEQUENCE;
+        /* FIXME: could this be encoded using X509_SEQUENCE_OF_ANY? */
+        *pbEncoded++ = ASN_CONSTRUCTOR | ASN_SEQUENCEOF;
         CRYPT_EncodeLen(bytesNeeded - lenBytes - 1, pbEncoded, &size);
         pbEncoded += size;
         for (i = 0; ret && i < info->cRDN; i++)
@@ -1259,6 +1279,9 @@ BOOL WINAPI CryptEncodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         encodeFunc = CRYPT_AsnEncodeBits;
     else if (!strcmp(lpszStructType, szOID_SUBJECT_KEY_IDENTIFIER))
         encodeFunc = CRYPT_AsnEncodeOctets;
+    else
+        TRACE("OID %s not found or unimplemented, looking for DLL\n",
+         debugstr_a(lpszStructType));
     if (!encodeFunc)
         encodeFunc = (CryptEncodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
          lpszStructType, "CryptEncodeObjectEx", &lib);
@@ -2273,6 +2296,8 @@ end:
     return ret;
 }
 
+#define MIN_ENCODED_TIME_LENGTH 10
+
 static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
  LPCSTR lpszStructType, const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo)
@@ -2308,8 +2333,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUtcTime(DWORD dwCertEncodingType,
         return FALSE;
     }
     len = pbEncoded[1];
-    /* FIXME: magic # */
-    if (len < 10)
+    if (len < MIN_ENCODED_TIME_LENGTH)
     {
         SetLastError(CRYPT_E_ASN1_CORRUPT);
         return FALSE;
@@ -2382,8 +2406,7 @@ static BOOL WINAPI CRYPT_AsnDecodeGeneralizedTime(DWORD dwCertEncodingType,
         return FALSE;
     }
     len = pbEncoded[1];
-    /* FIXME: magic # */
-    if (len < 10)
+    if (len < MIN_ENCODED_TIME_LENGTH)
     {
         SetLastError(CRYPT_E_ASN1_CORRUPT);
         return FALSE;
@@ -2531,6 +2554,9 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
         decodeFunc = CRYPT_AsnDecodeBits;
     else if (!strcmp(lpszStructType, szOID_SUBJECT_KEY_IDENTIFIER))
         decodeFunc = CRYPT_AsnDecodeOctets;
+    else
+        TRACE("OID %s not found or unimplemented, looking for DLL\n",
+         debugstr_a(lpszStructType));
     if (!decodeFunc)
         decodeFunc = (CryptDecodeObjectExFunc)CRYPT_GetFunc(dwCertEncodingType,
          lpszStructType, "CryptDecodeObjectEx", &lib);
