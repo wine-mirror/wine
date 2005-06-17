@@ -108,12 +108,10 @@ sub file_skip($) {
 
     $_ = file_absolutize($_);
 
-    m%^(?:libtest|programs|rc|server|tests|tools)/% && return 1;
-    m%^(?:debugger|miscemu|libs|server)/% && return 1;
+    m%^(?:libs|programs|server|tools)/% && return 1;
     m%^dlls/wineps/data/% && return 1;
-    m%^windows/x11drv/wineclipsrv\.c$% && return 1;
     m%^dlls/winmm/wineoss/midipatch\.c$% && return 1;
-    m%(?:glue|spec)\.c$% && return 1;
+    m%spec\.c$% && return 1;
 
     return 0;
 }
