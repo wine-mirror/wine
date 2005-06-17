@@ -129,7 +129,7 @@ static void MipMapCreationTest()
     /* Fourth mipmap creation test: same as above with a different texture
        size.
        The purpose is to verify that the number of generated mipmaps is
-       dependant on the smallest dimension. */
+       dependent on the smallest dimension. */
     memset(&ddsd, 0, sizeof(DDSURFACEDESC));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;

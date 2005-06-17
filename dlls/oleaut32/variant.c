@@ -2818,7 +2818,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             V_VT(result) = VT_NULL;
             goto end;
         case VT_DISPATCH:
-            FIXME("can not handle variant type VT_DISPATCH\n");
+            FIXME("cannot handle variant type VT_DISPATCH\n");
             hres = DISP_E_TYPEMISMATCH;
             goto end;
         case VT_EMPTY:

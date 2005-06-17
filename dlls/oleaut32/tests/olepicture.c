@@ -210,7 +210,7 @@ static void test_empty_image() {
 	LARGE_INTEGER	seekto;
 	short		type;
 
-	/* Empty image. Happens occasionaly in VB programs. */
+	/* Empty image. Happens occasionally in VB programs. */
 	hglob = GlobalAlloc (0, 8);
 	data = GlobalLock (hglob);
 	memcpy(data,"lt\0\0",4);

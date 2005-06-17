@@ -547,7 +547,7 @@ static void V4l_GetFrame(Capture * capBox, unsigned char ** pInput)
         while ((retval = read(capBox->fd, capBox->grab_data, capBox->imagesize)) == -1)
             if (errno != EAGAIN) break;
         if (retval == -1)
-            WARN("Error occured while reading from device: %s\n", strerror(errno));
+            WARN("Error occurred while reading from device: %s\n", strerror(errno));
         *pInput = capBox->grab_data;
     }
 }

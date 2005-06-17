@@ -258,7 +258,7 @@ static void test_GetDisplayName(void)
     if (hTestFile == INVALID_HANDLE_VALUE) return;
     CloseHandle(hTestFile);
 
-    /* Getting a itemidlist for the file. */
+    /* Getting an itemidlist for the file. */
     hr = SHGetDesktopFolder(&psfDesktop);
     ok(SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
     if (FAILED(hr)) return;
@@ -270,7 +270,7 @@ static void test_GetDisplayName(void)
         return;
     }
 
-    /* It seems as if we can not bind to regular files on windows, but only directories. 
+    /* It seems as if we cannot bind to regular files on windows, but only directories. 
      */
     hr = IShellFolder_BindToObject(psfDesktop, pidlTestFile, NULL, &IID_IUnknown, (VOID**)&psfFile);
     todo_wine { ok (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "hr = %08lx\n", hr); }
