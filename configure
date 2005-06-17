@@ -13867,13 +13867,13 @@ echo "${ECHO_T}$ac_cv_c_export_dynamic" >&6
 
         case $host_cpu in
           *i[3456789]86*)
-            echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x77f00000" >&5
-echo $ECHO_N "checking whether we can relocate the executable to 0x77f00000... $ECHO_C" >&6
+            echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x7bf00000" >&5
+echo $ECHO_N "checking whether we can relocate the executable to 0x7bf00000... $ECHO_C" >&6
 if test "${ac_cv_ld_reloc_exec+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x77f00400"
+CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x7bf00400"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -13925,7 +13925,7 @@ echo "$as_me:$LINENO: result: $ac_cv_ld_reloc_exec" >&5
 echo "${ECHO_T}$ac_cv_ld_reloc_exec" >&6
             if test "$ac_cv_ld_reloc_exec" = "yes"
             then
-              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x77f00400"
+              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
             fi
             ;;
         esac

@@ -30,7 +30,7 @@ wine-glibc: glibc.o Makefile.in
 	$(CC) -o $@ glibc.o $(LIBWINE) $(LIBPORT) $(LIBPTHREAD) $(EXTRALIBS) $(LDFLAGS)
 
 wine-preloader: preloader.o Makefile.in
-	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x78000000 preloader.o $(LIBPORT) $(LDFLAGS)
+	$(CC) -o $@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c000000 preloader.o $(LIBPORT) $(LDFLAGS)
 
 wine-kthread: $(KTHREAD_OBJS) Makefile.in
 	$(CC) -o $@ $(LDEXECFLAGS) $(KTHREAD_OBJS) $(LIBWINE) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)

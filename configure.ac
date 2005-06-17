@@ -991,12 +991,12 @@ case $host_os in
 
         case $host_cpu in
           *i[[3456789]]86*)
-            AC_CACHE_CHECK([whether we can relocate the executable to 0x77f00000], ac_cv_ld_reloc_exec,
-              [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x77f00400],
+            AC_CACHE_CHECK([whether we can relocate the executable to 0x7bf00000], ac_cv_ld_reloc_exec,
+              [WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
                                ac_cv_ld_reloc_exec="yes", ac_cv_ld_reloc_exec="no")])
             if test "$ac_cv_ld_reloc_exec" = "yes"
             then
-              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x77f00400"
+              LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
             fi
             ;;
         esac
