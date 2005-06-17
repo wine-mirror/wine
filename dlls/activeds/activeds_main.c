@@ -42,11 +42,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(activeds);
  * DllMain
  */
 
-/* For the moment, do nothing here. */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-
     TRACE("(%p, %ld, %p)\n",hinstDLL, fdwReason, lpvReserved);
+    /* For the moment, do nothing here. */
     return TRUE;
 }
 
@@ -95,7 +94,7 @@ HRESULT WINAPI ADsOpenObject(LPWSTR lpszPathName, REFIID riid, VOID** ppObject)
 /*****************************************************
  * FreeADsMem             [ACTIVEDS.15]
  */
-BOOL FreeADsMem(LPVOID pMem)
+BOOL WINAPI FreeADsMem(LPVOID pMem)
 {
     FIXME("(%p)!stub\n",pMem);
     return FALSE;

@@ -1,3 +1,24 @@
+%%activeds.dll
+
+%long
+
+BOOL
+HRESULT
+ULONG
+
+%wstr
+
+LPWSTR
+
+%ptr
+
+LPVOID
+LPVOID *
+LPVOID **
+REFIID
+ULONG *
+VOID **
+
 %%advapi32.dll
 
 %long
