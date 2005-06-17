@@ -387,7 +387,7 @@ extern UINT MSIREG_OpenUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL create
 extern UINT MSIREG_OpenUserUpgradeCodesKey(LPCWSTR szProduct, HKEY* key, BOOL create);
 
 /* msi dialog interface */
-typedef VOID (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, msi_dialog* );
+typedef UINT (*msi_dialog_event_handler)( MSIPACKAGE*, LPCWSTR, LPCWSTR, msi_dialog* );
 extern msi_dialog *msi_dialog_create( MSIPACKAGE*, LPCWSTR, msi_dialog_event_handler );
 extern UINT msi_dialog_run_message_loop( msi_dialog* );
 extern void msi_dialog_end_dialog( msi_dialog* );

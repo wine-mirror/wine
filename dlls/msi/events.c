@@ -38,7 +38,7 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/contr
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
-typedef void (*EVENTHANDLER)(MSIPACKAGE*,LPCWSTR,msi_dialog *);
+typedef UINT (*EVENTHANDLER)(MSIPACKAGE*,LPCWSTR,msi_dialog *);
 
 struct _events {
     LPCSTR event;
@@ -52,7 +52,7 @@ struct subscriber {
     LPWSTR attribute;
 };
 
-VOID ControlEvent_HandleControlEvent(MSIPACKAGE *, LPCWSTR, LPCWSTR, msi_dialog*);
+UINT ControlEvent_HandleControlEvent(MSIPACKAGE *, LPCWSTR, LPCWSTR, msi_dialog*);
 
 /*
  * Create a dialog box and run it if it's modal
@@ -89,7 +89,7 @@ static UINT event_do_dialog( MSIPACKAGE *package, LPCWSTR name )
 /*
  * End a modal dialog box
  */
-static VOID ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument, 
                                    msi_dialog* dialog)
 {
     static const WCHAR szExit[] = {
@@ -117,48 +117,53 @@ static VOID ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument,
 
     ControlEvent_CleanupSubscriptions(package);
     msi_dialog_end_dialog( dialog );
+    return ERROR_SUCCESS;
 }
 
 /*
  * transition from one modal dialog to another modal dialog
  */
-static VOID ControlEvent_NewDialog(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_NewDialog(MSIPACKAGE* package, LPCWSTR argument, 
                                    msi_dialog *dialog)
 {
     /* store the name of the next dialog, and signal this one to end */
     package->next_dialog = strdupW(argument);
     ControlEvent_CleanupSubscriptions(package);
     msi_dialog_end_dialog( dialog );
+    return ERROR_SUCCESS;
 }
 
 /*
  * Create a new child dialog of an existing modal dialog
  */
-static VOID ControlEvent_SpawnDialog(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_SpawnDialog(MSIPACKAGE* package, LPCWSTR argument, 
                               msi_dialog *dialog)
 {
     event_do_dialog( package, argument );
     if( package->CurrentInstallState != ERROR_SUCCESS )
         msi_dialog_end_dialog( dialog );
+    return ERROR_SUCCESS;
 }
 
 /*
  * Creates a dialog that remains up for a period of time
  * based on a condition
  */
-static VOID ControlEvent_SpawnWaitDialog(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_SpawnWaitDialog(MSIPACKAGE* package, LPCWSTR argument, 
                                   msi_dialog* dialog)
 {
     FIXME("Doing Nothing\n");
+    return ERROR_SUCCESS;
 }
 
-static VOID ControlEvent_DoAction(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_DoAction(MSIPACKAGE* package, LPCWSTR argument, 
                                   msi_dialog* dialog)
 {
     ACTION_PerformAction(package,argument,TRUE);
+    return ERROR_SUCCESS;
 }
 
-static VOID ControlEvent_AddLocal(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_AddLocal(MSIPACKAGE* package, LPCWSTR argument, 
                                   msi_dialog* dialog)
 {
     static const WCHAR szAll[] = {'A','L','L',0};
@@ -177,10 +182,10 @@ static VOID ControlEvent_AddLocal(MSIPACKAGE* package, LPCWSTR argument,
         }
         ACTION_UpdateComponentStates(package,argument);
     }
-
+    return ERROR_SUCCESS;
 }
 
-static VOID ControlEvent_Remove(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_Remove(MSIPACKAGE* package, LPCWSTR argument, 
                                 msi_dialog* dialog)
 {
     static const WCHAR szAll[] = {'A','L','L',0};
@@ -199,9 +204,10 @@ static VOID ControlEvent_Remove(MSIPACKAGE* package, LPCWSTR argument,
         }
         ACTION_UpdateComponentStates(package,argument);
     }
+    return ERROR_SUCCESS;
 }
 
-static VOID ControlEvent_AddSource(MSIPACKAGE* package, LPCWSTR argument, 
+static UINT ControlEvent_AddSource(MSIPACKAGE* package, LPCWSTR argument, 
                                    msi_dialog* dialog)
 {
     static const WCHAR szAll[] = {'A','L','L',0};
@@ -220,8 +226,16 @@ static VOID ControlEvent_AddSource(MSIPACKAGE* package, LPCWSTR argument,
         }
         ACTION_UpdateComponentStates(package,argument);
     }
+    return ERROR_SUCCESS;
 }
 
+static UINT ControlEvent_SetTargetPath(MSIPACKAGE* package, LPCWSTR argument, 
+                                   msi_dialog* dialog)
+{
+    LPWSTR path = load_dynamic_property(package,argument, NULL);
+    /* failure to set the path halts the executing of control events */
+    return MSI_SetTargetPathW(package, argument, path);
+}
 
 /*
  * Subscribed events
@@ -350,17 +364,19 @@ struct _events Events[] = {
     { "AddLocal",ControlEvent_AddLocal },
     { "Remove",ControlEvent_Remove },
     { "AddSource",ControlEvent_AddSource },
+    { "SetTargetPath",ControlEvent_SetTargetPath },
     { NULL,NULL },
 };
 
-VOID ControlEvent_HandleControlEvent(MSIPACKAGE *package, LPCWSTR event,
+UINT ControlEvent_HandleControlEvent(MSIPACKAGE *package, LPCWSTR event,
                                      LPCWSTR argument, msi_dialog* dialog)
 {
     int i = 0;
+    UINT rc = ERROR_SUCCESS;
 
     TRACE("Handling Control Event %s\n",debugstr_w(event));
     if (!event)
-        return;
+        return rc;
 
     while( Events[i].event != NULL)
     {
@@ -368,12 +384,13 @@ VOID ControlEvent_HandleControlEvent(MSIPACKAGE *package, LPCWSTR event,
         if (lstrcmpW(wevent,event)==0)
         {
             HeapFree(GetProcessHeap(),0,wevent);
-            Events[i].handler(package,argument,dialog);
-            return;
+            rc = Events[i].handler(package,argument,dialog);
+            return rc;
         }
         HeapFree(GetProcessHeap(),0,wevent);
         i++;
     }
     FIXME("unhandled control event %s arg(%s)\n",
           debugstr_w(event), debugstr_w(argument));
+    return rc;
 }
