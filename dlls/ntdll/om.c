@@ -40,8 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-/* move to somewhere */
-typedef void * POBJDIR_INFORMATION;
 
 /*
  *	Generic object functions
