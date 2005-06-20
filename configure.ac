@@ -353,8 +353,8 @@ then
     dnl Check for the presence of OpenGL
     if test "x$with_opengl" != "xno"
     then
-        if test -f /usr/X11R6/lib/libGL.a -a ! -f /usr/X11R6/lib/libGL.so
-        then
+        if test -f /usr/X11R6/lib/libGL.a -a ! -f /usr/X11R6/lib/libGL.so -a ! -f /usr/X11R6/lib/libGL.dylib
+        then 
 	    AC_MSG_ERROR([/usr/X11R6/lib/libGL.a is present on your system.
 This prevents linking to OpenGL. Delete the file and restart configure.])
         fi
