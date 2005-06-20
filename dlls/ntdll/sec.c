@@ -52,6 +52,22 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+/* helper function to copy an ACL */
+static BOOLEAN copy_acl(DWORD nDestinationAclLength, PACL pDestinationAcl, PACL pSourceAcl)
+{
+    DWORD size;
+
+    if (!pSourceAcl || !RtlValidAcl(pSourceAcl))
+        return FALSE;
+        
+    size = ((ACL *)pSourceAcl)->AclSize;
+    if (nDestinationAclLength < size)
+        return FALSE;
+
+    memmove(pDestinationAcl, pSourceAcl, size);
+    return TRUE;
+}
+
 /*
  *	SID FUNCTIONS
  */
@@ -362,6 +378,107 @@ NTSTATUS WINAPI RtlCreateSecurityDescriptor(
 	((SECURITY_DESCRIPTOR*)lpsd)->Revision = SECURITY_DESCRIPTOR_REVISION;
 	return STATUS_SUCCESS;
 }
+
+/**************************************************************************
+ * RtlCopySecurityDescriptor            [NTDLL.@]
+ *
+ * Copies an absolute or sefl-relative SECURITY_DESCRIPTOR.
+ *
+ * PARAMS
+ *  pSourceSD      [O] SD to copy from.
+ *  pDestinationSD [I] Destination SD.
+ *
+ * RETURNS:
+ *  Success: STATUS_SUCCESS.
+ *  Failure: STATUS_UNKNOWN_REVISION if rev is incorrect.
+ */
+NTSTATUS WINAPI RtlCopySecurityDescriptor(PSECURITY_DESCRIPTOR pSourceSD, PSECURITY_DESCRIPTOR pDestinationSD)
+{
+    SECURITY_DESCRIPTOR *srcSD = (SECURITY_DESCRIPTOR *)pSourceSD;
+    SECURITY_DESCRIPTOR *destSD = (SECURITY_DESCRIPTOR *)pDestinationSD;
+    PSID Owner, Group;
+    PACL Dacl, Sacl;
+    BOOLEAN defaulted, present;
+    DWORD length;
+    BOOL isSelfRelative = srcSD->Control & SE_SELF_RELATIVE;
+    
+    if (srcSD->Revision != SECURITY_DESCRIPTOR_REVISION)
+        return STATUS_UNKNOWN_REVISION;
+
+    /* copy initial data */
+    destSD->Revision = srcSD->Revision;
+    destSD->Sbz1 = srcSD->Sbz1;
+    destSD->Control = srcSD->Control;
+
+    /* copy Owner */
+    RtlGetOwnerSecurityDescriptor(pSourceSD, &Owner, &defaulted);
+    length = RtlLengthSid(Owner);
+
+    if (isSelfRelative)
+    {
+        destSD->Owner = srcSD->Owner;
+        RtlCopySid(length, (LPBYTE)destSD + (DWORD)destSD->Owner, Owner);
+    }
+    else
+    {
+        destSD->Owner = RtlAllocateHeap(GetProcessHeap(), 0, length);
+        RtlCopySid(length, destSD->Owner, Owner);
+    }
+
+    /* copy Group */
+    RtlGetGroupSecurityDescriptor(pSourceSD, &Group, &defaulted);
+    length = RtlLengthSid(Group);
+
+    if (isSelfRelative)
+    {
+        destSD->Group = srcSD->Group;
+        RtlCopySid(length, (LPBYTE)destSD + (DWORD)destSD->Group, Group);
+    }
+    else
+    {
+        destSD->Group = RtlAllocateHeap(GetProcessHeap(), 0, length);
+        RtlCopySid(length, destSD->Group, Group);
+    }
+
+    /* copy Dacl */
+    if (srcSD->Control & SE_DACL_PRESENT)
+    {
+        RtlGetDaclSecurityDescriptor(pSourceSD, &present, &Dacl, &defaulted);
+        length = Dacl->AclSize;
+
+        if (isSelfRelative)
+        {
+            destSD->Dacl = srcSD->Dacl;
+            copy_acl(length, (PACL)((LPBYTE)destSD + (DWORD)destSD->Dacl), Dacl);
+        }
+        else
+        {
+            destSD->Dacl = RtlAllocateHeap(GetProcessHeap(), 0, length);
+            copy_acl(length, destSD->Dacl, Dacl);
+        }
+    }
+
+    /* copy Sacl */
+    if (srcSD->Control & SE_SACL_PRESENT)
+    {
+        RtlGetSaclSecurityDescriptor(pSourceSD, &present, &Sacl, &defaulted);
+        length = Sacl->AclSize;
+
+        if (isSelfRelative)
+        {
+            destSD->Sacl = srcSD->Sacl;
+            copy_acl(length, (PACL)((LPBYTE)destSD + (DWORD)destSD->Sacl), Sacl);
+        }
+        else
+        {
+            destSD->Sacl = RtlAllocateHeap(GetProcessHeap(), 0, length);
+            copy_acl(length, destSD->Sacl, Sacl);
+        }
+    }
+
+    return STATUS_SUCCESS;
+}
+
 /**************************************************************************
  * RtlValidSecurityDescriptor			[NTDLL.@]
  *

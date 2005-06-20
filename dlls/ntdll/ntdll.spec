@@ -339,7 +339,7 @@
 @ stdcall -ret64 RtlConvertUlongToLargeInteger(long)
 @ stdcall RtlCopyLuid(ptr ptr)
 @ stdcall RtlCopyLuidAndAttributesArray(long ptr ptr)
-@ stub RtlCopySecurityDescriptor
+@ stdcall RtlCopySecurityDescriptor(ptr ptr)
 @ stdcall RtlCopySid(long ptr ptr)
 @ stub RtlCopySidAndAttributesArray
 @ stdcall RtlCopyString(ptr ptr)
