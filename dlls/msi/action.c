@@ -85,7 +85,6 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package);
 static UINT ACTION_RegisterFonts(MSIPACKAGE *package);
 static UINT ACTION_PublishComponents(MSIPACKAGE *package);
 
- 
 /*
  * consts and values used
  */
@@ -346,6 +345,11 @@ static struct _actions StandardActions[] = {
     { szWriteRegistryValues, ACTION_WriteRegistryValues},
     { NULL, NULL},
 };
+
+
+/********************************************************
+ * helper functions
+ ********************************************************/
 
 static void ce_actiontext(MSIPACKAGE* package, LPCWSTR action)
 {
@@ -626,6 +630,51 @@ end:
     return rc;
 }
 
+typedef struct {
+    MSIPACKAGE* package;
+    BOOL UI;
+} iterate_action_param;
+
+static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
+{
+    iterate_action_param *iap= (iterate_action_param*)param;
+    UINT rc;
+    LPCWSTR cond, action;
+
+    action = MSI_RecordGetString(row,1);
+    if (!action)
+    {
+        ERR("Error is retrieving action name\n");
+        return  ERROR_FUNCTION_FAILED;
+    }
+
+    /* check conditions */
+    cond = MSI_RecordGetString(row,2);
+    if (cond)
+    {
+        /* this is a hack to skip errors in the condition code */
+        if (MSI_EvaluateConditionW(iap->package, cond) == MSICONDITION_FALSE)
+        {
+            TRACE("Skipping action: %s (condition is false)\n",
+                            debugstr_w(action));
+            return ERROR_SUCCESS;
+        }
+    }
+
+    if (iap->UI)
+        rc = ACTION_PerformUIAction(iap->package,action);
+    else
+        rc = ACTION_PerformAction(iap->package,action,FALSE);
+
+    if (rc == ERROR_FUNCTION_NOT_CALLED)
+        rc = ERROR_SUCCESS;
+
+    if (rc != ERROR_SUCCESS)
+        ERR("Execution halted due to error (%i)\n",rc);
+
+    return rc;
+}
+
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 {
     MSIQUERY * view;
@@ -646,7 +695,10 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
          ' ','\'', 'I','n','s','t','a','l','l',
          'V','a','l','i','d','a','t','e','\'', 0};
     INT seq = 0;
+    iterate_action_param iap;
 
+    iap.package = package;
+    iap.UI = FALSE;
 
     if (package->script->ExecuteSequenceRun)
     {
@@ -655,7 +707,7 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     }
 
     package->script->ExecuteSequenceRun = TRUE;
-    
+
     /* get the sequence number */
     if (UIran)
     {
@@ -669,74 +721,14 @@ static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
     rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, seq);
     if (rc == ERROR_SUCCESS)
     {
-        rc = MSI_ViewExecute(view, 0);
+        TRACE("Running the actions\n");
 
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            goto end;
-        }
-       
-        TRACE("Running the actions\n"); 
-
-        while (1)
-        {
-            LPCWSTR cond, action;
-
-            rc = MSI_ViewFetch(view,&row);
-            if (rc != ERROR_SUCCESS)
-            {
-                rc = ERROR_SUCCESS;
-                break;
-            }
-
-            action = MSI_RecordGetString(row,1);
-            if (!action)
-            {
-                ERR("Error in retrieving action name\n");
-                rc = ERROR_FUNCTION_FAILED;
-                msiobj_release(&row->hdr);
-                break;
-            }
-
-            /* check conditions */
-            cond = MSI_RecordGetString(row,2);
-            if (cond)
-            {
-                /* this is a hack to skip errors in the condition code */
-                if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
-                {
-                    TRACE("Skipping action: %s (condition is false)\n",
-                                    debugstr_w(action));
-                    msiobj_release(&row->hdr);
-                    continue; 
-                }
-            }
-
-            rc = ACTION_PerformAction(package,action,FALSE);
-
-            if (rc == ERROR_FUNCTION_NOT_CALLED)
-                rc = ERROR_SUCCESS;
-
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Execution halted due to error (%i)\n",rc);
-                msiobj_release(&row->hdr);
-                break;
-            }
-
-            msiobj_release(&row->hdr);
-        }
-
-        MSI_ViewClose(view);
+        rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, &iap);
         msiobj_release(&view->hdr);
     }
 
-end:
     return rc;
 }
-
 
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
 {
@@ -750,77 +742,21 @@ static UINT ACTION_ProcessUISequence(MSIPACKAGE *package)
          '`','S','e','q','u','e','n','c','e','`',' ',
          '>',' ','0',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','S','e','q','u','e','n','c','e','`',0};
-    
+    iterate_action_param iap;
+
+    iap.package = package;
+    iap.UI = TRUE;
+
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     
     if (rc == ERROR_SUCCESS)
     {
-        rc = MSI_ViewExecute(view, 0);
-
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            goto end;
-        }
-       
         TRACE("Running the actions \n"); 
 
-        while (1)
-        {
-            LPCWSTR action, cond;
-            MSIRECORD * row = 0;
-
-            rc = MSI_ViewFetch(view,&row);
-            if (rc != ERROR_SUCCESS)
-            {
-                rc = ERROR_SUCCESS;
-                break;
-            }
-
-            action = MSI_RecordGetString(row,1);
-            if (!action)
-            {
-                ERR("failed to fetch action\n");
-                rc = ERROR_FUNCTION_FAILED;
-                msiobj_release(&row->hdr);
-                break;
-            }
-
-            /* check conditions */
-            cond = MSI_RecordGetString(row,2);
-            if (cond)
-            {
-                /* this is a hack to skip errors in the condition code */
-                if (MSI_EvaluateConditionW(package,cond) == MSICONDITION_FALSE)
-                {
-                    TRACE("Skipping action: %s (condition is false)\n",
-                                    debugstr_w(action));
-                    msiobj_release(&row->hdr);
-                    continue; 
-                }
-            }
-
-            rc = ACTION_PerformUIAction(package,action);
-
-            if (rc == ERROR_FUNCTION_NOT_CALLED)
-                rc = ERROR_SUCCESS;
-
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Execution halted due to error (%i)\n",rc);
-                msiobj_release(&row->hdr);
-                break;
-            }
-
-            msiobj_release(&row->hdr);
-        }
-
-        MSI_ViewClose(view);
+        rc = MSI_IterateRecords(view, NULL, ITERATE_Actions, &iap);
         msiobj_release(&view->hdr);
     }
 
-end:
     return rc;
 }
 
