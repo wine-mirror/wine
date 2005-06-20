@@ -263,7 +263,7 @@ static IEnumSTATSTG_Impl *ITSS_create_enum( void )
 
 /************************************************************************/
 
-HRESULT WINAPI ITSS_IStorageImpl_QueryInterface(
+static HRESULT WINAPI ITSS_IStorageImpl_QueryInterface(
     IStorage* iface,
     REFIID riid,
     void** ppvObject)
@@ -282,14 +282,14 @@ HRESULT WINAPI ITSS_IStorageImpl_QueryInterface(
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI ITSS_IStorageImpl_AddRef(
+static ULONG WINAPI ITSS_IStorageImpl_AddRef(
     IStorage* iface)
 {
     ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
     return InterlockedIncrement(&This->ref);
 }
 
-ULONG WINAPI ITSS_IStorageImpl_Release(
+static ULONG WINAPI ITSS_IStorageImpl_Release(
     IStorage* iface)
 {
     ITSS_IStorageImpl *This = (ITSS_IStorageImpl *)iface;
@@ -305,7 +305,7 @@ ULONG WINAPI ITSS_IStorageImpl_Release(
     return ref;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_CreateStream(
+static HRESULT WINAPI ITSS_IStorageImpl_CreateStream(
     IStorage* iface,
     LPCOLESTR pwcsName,
     DWORD grfMode,
@@ -317,7 +317,7 @@ HRESULT WINAPI ITSS_IStorageImpl_CreateStream(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
+static HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
     IStorage* iface,
     LPCOLESTR pwcsName,
     void* reserved1,
@@ -363,7 +363,7 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStream(
     return S_OK;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_CreateStorage(
+static HRESULT WINAPI ITSS_IStorageImpl_CreateStorage(
     IStorage* iface,
     LPCOLESTR pwcsName,
     DWORD grfMode,
@@ -375,7 +375,7 @@ HRESULT WINAPI ITSS_IStorageImpl_CreateStorage(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
+static HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
     IStorage* iface,
     LPCOLESTR pwcsName,
     IStorage* pstgPriority,
@@ -391,7 +391,7 @@ HRESULT WINAPI ITSS_IStorageImpl_OpenStorage(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_CopyTo(
+static HRESULT WINAPI ITSS_IStorageImpl_CopyTo(
     IStorage* iface,
     DWORD ciidExclude,
     const IID* rgiidExclude,
@@ -402,7 +402,7 @@ HRESULT WINAPI ITSS_IStorageImpl_CopyTo(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_MoveElementTo(
+static HRESULT WINAPI ITSS_IStorageImpl_MoveElementTo(
     IStorage* iface,
     LPCOLESTR pwcsName,
     IStorage* pstgDest,
@@ -413,7 +413,7 @@ HRESULT WINAPI ITSS_IStorageImpl_MoveElementTo(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_Commit(
+static HRESULT WINAPI ITSS_IStorageImpl_Commit(
     IStorage* iface,
     DWORD grfCommitFlags)
 {
@@ -421,7 +421,7 @@ HRESULT WINAPI ITSS_IStorageImpl_Commit(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_Revert(
+static HRESULT WINAPI ITSS_IStorageImpl_Revert(
     IStorage* iface)
 {
     FIXME("\n");
@@ -452,7 +452,7 @@ static int ITSS_chm_enumerator(
     return CHM_ENUMERATOR_CONTINUE;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_EnumElements(
+static HRESULT WINAPI ITSS_IStorageImpl_EnumElements(
     IStorage* iface,
     DWORD reserved1,
     void* reserved2,
@@ -481,7 +481,7 @@ HRESULT WINAPI ITSS_IStorageImpl_EnumElements(
     return S_OK;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_DestroyElement(
+static HRESULT WINAPI ITSS_IStorageImpl_DestroyElement(
     IStorage* iface,
     LPCOLESTR pwcsName)
 {
@@ -489,7 +489,7 @@ HRESULT WINAPI ITSS_IStorageImpl_DestroyElement(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_RenameElement(
+static HRESULT WINAPI ITSS_IStorageImpl_RenameElement(
     IStorage* iface,
     LPCOLESTR pwcsOldName,
     LPCOLESTR pwcsNewName)
@@ -498,7 +498,7 @@ HRESULT WINAPI ITSS_IStorageImpl_RenameElement(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_SetElementTimes(
+static HRESULT WINAPI ITSS_IStorageImpl_SetElementTimes(
     IStorage* iface,
     LPCOLESTR pwcsName,
     const FILETIME* pctime,
@@ -509,7 +509,7 @@ HRESULT WINAPI ITSS_IStorageImpl_SetElementTimes(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_SetClass(
+static HRESULT WINAPI ITSS_IStorageImpl_SetClass(
     IStorage* iface,
     REFCLSID clsid)
 {
@@ -517,7 +517,7 @@ HRESULT WINAPI ITSS_IStorageImpl_SetClass(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_SetStateBits(
+static HRESULT WINAPI ITSS_IStorageImpl_SetStateBits(
     IStorage* iface,
     DWORD grfStateBits,
     DWORD grfMask)
@@ -526,7 +526,7 @@ HRESULT WINAPI ITSS_IStorageImpl_SetStateBits(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI ITSS_IStorageImpl_Stat(
+static HRESULT WINAPI ITSS_IStorageImpl_Stat(
     IStorage* iface,
     STATSTG* pstatstg,
     DWORD grfStatFlag)

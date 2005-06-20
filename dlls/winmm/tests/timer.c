@@ -142,7 +142,7 @@ static void test_timer(UINT period, UINT resolution)
           dwMin, dwMax, sum / (count - 1), sqrt(deviation / (count - 2)));
 }
 
-const char * get_priority(int priority)
+static const char * get_priority(int priority)
 {
     static char     tmp[32];
 #define STR(x) case x: return #x
@@ -162,14 +162,14 @@ const char * get_priority(int priority)
 static int priority = 0;
 static BOOL fired = FALSE;
 
-void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+static void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
 {
     priority = GetThreadPriority(GetCurrentThread());
     ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %08lx\n", GetLastError());
     fired = TRUE;
 }
 
-void test_priority(void)
+static void test_priority(void)
 {
     UINT id;
 

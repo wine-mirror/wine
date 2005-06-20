@@ -331,7 +331,7 @@ int x, y;
  * Call this function once at the start of the sequence and save the
  * returned context for calls to decode_cinepak().
  */
-cinepak_info *decode_cinepak_init(void)
+static cinepak_info *decode_cinepak_init(void)
 {
     cinepak_info *cvinfo;
     int i;
@@ -351,7 +351,7 @@ cinepak_info *decode_cinepak_init(void)
     return cvinfo;
 }
 
-void free_cvinfo( cinepak_info *cvinfo )
+static void free_cvinfo( cinepak_info *cvinfo )
 {
     unsigned int i;
 
@@ -381,7 +381,7 @@ typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit, int stride,
  * bit_per_pixel - the number of bits per pixel allocated to the output
  *   frame (only 24 or 32 bpp are supported)
  */
-void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
+static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
            unsigned char *frame, unsigned int width, unsigned int height, int bit_per_pixel)
 {
     cvid_codebook *v4_codebook, *v1_codebook, *codebook = NULL;
@@ -752,7 +752,7 @@ static inline int ICCVID_CheckMask(RGBQUAD bmiColors[3], COLORREF redMask, COLOR
     return FALSE;
 }
 
-LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
+static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
     TRACE("ICM_DECOMPRESS_QUERY %p %p %p\n", info, in, out);
 
@@ -802,7 +802,7 @@ LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
     return ICERR_OK;
 }
 
-LRESULT ICCVID_DecompressGetFormat( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
+static LRESULT ICCVID_DecompressGetFormat( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
     DWORD size;
 
@@ -826,7 +826,7 @@ LRESULT ICCVID_DecompressGetFormat( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAP
     return size;
 }
 
-LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
+static LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
     TRACE("ICM_DECOMPRESS_BEGIN %p %p %p\n", info, in, out);
 
@@ -862,7 +862,7 @@ LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBITMAPINFO
     return ICERR_OK;
 }
 
-LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
+static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
 {
     LONG width, height;
 
@@ -880,7 +880,7 @@ LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
     return ICERR_OK;
 }
 
-LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size )
+static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size )
 {
     LONG width, height;
 
@@ -900,7 +900,7 @@ LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size 
     return ICERR_OK;
 }
 
-LRESULT ICCVID_Close( ICCVID_Info *info )
+static LRESULT ICCVID_Close( ICCVID_Info *info )
 {
     if( (info==NULL) || (info->dwMagic!=ICCVID_MAGIC) )
         return 0;

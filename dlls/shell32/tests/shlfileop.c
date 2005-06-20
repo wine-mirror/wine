@@ -44,7 +44,7 @@ static void InitFunctionPointers(void)
 }
 
 /* creates a file with the specified name for tests */
-void createTestFile(const CHAR *name)
+static void createTestFile(const CHAR *name)
 {
     HANDLE file;
     DWORD written;
@@ -56,13 +56,13 @@ void createTestFile(const CHAR *name)
     CloseHandle(file);
 }
 
-BOOL file_exists(const CHAR *name)
+static BOOL file_exists(const CHAR *name)
 {
     return GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES;
 }
 
 /* initializes the tests */
-void init_shfo_tests(void)
+static void init_shfo_tests(void)
 {
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
     createTestFile(".\\test1.txt");
@@ -73,7 +73,7 @@ void init_shfo_tests(void)
 }
 
 /* cleans after tests */
-void clean_after_shfo_tests(void)
+static void clean_after_shfo_tests(void)
 {
     DeleteFileA(".\\test1.txt");
     DeleteFileA(".\\test2.txt");
@@ -95,7 +95,7 @@ void clean_after_shfo_tests(void)
  files - string with file names, separated by null characters. Ends on a double
  null characters
 */
-void set_curr_dir_path(CHAR *buf, const CHAR* files)
+static void set_curr_dir_path(CHAR *buf, const CHAR* files)
 {
     buf[0] = 0;
     while (files[0])
@@ -113,7 +113,7 @@ void set_curr_dir_path(CHAR *buf, const CHAR* files)
 
 
 /* tests the FO_DELETE action */
-void test_delete(void)
+static void test_delete(void)
 {
     SHFILEOPSTRUCTA shfo;
     DWORD ret;
@@ -162,7 +162,7 @@ void test_delete(void)
 }
 
 /* tests the FO_RENAME action */
-void test_rename()
+static void test_rename(void)
 {
     SHFILEOPSTRUCTA shfo, shfo2;
     CHAR from[MAX_PATH];
@@ -231,7 +231,7 @@ void test_rename()
 }
 
 /* tests the FO_COPY action */
-void test_copy(void)
+static void test_copy(void)
 {
     SHFILEOPSTRUCTA shfo, shfo2;
     CHAR from[MAX_PATH];
@@ -327,7 +327,7 @@ void test_copy(void)
 }
 
 /* tests the FO_MOVE action */
-void test_move(void)
+static void test_move(void)
 {
     SHFILEOPSTRUCTA shfo, shfo2;
     CHAR from[MAX_PATH];
@@ -411,7 +411,7 @@ void test_move(void)
     ok(!SHFileOperationA(&shfo), "Move dir back\n");
 }
 
-void test_sh_create_dir()
+static void test_sh_create_dir(void)
 {
     CHAR path[MAX_PATH];
     int ret;
