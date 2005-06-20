@@ -242,6 +242,7 @@ DWORD	WINAPI GetDriverFlags(HDRVR hDriver);
 typedef void (CALLBACK *LPDRVCALLBACK)(HDRVR,UINT,DWORD_PTR,DWORD_PTR,DWORD_PTR);
 
 #define MM_MICROSOFT            1       /* Microsoft Corp. */
+#define MM_CREATIVE             2       /* Creative labs   */
 
 #define MM_MIDI_MAPPER          1       /* MIDI Mapper */
 #define MM_WAVE_MAPPER          2       /* Wave Mapper */
@@ -259,6 +260,7 @@ typedef void (CALLBACK *LPDRVCALLBACK)(HDRVR,UINT,DWORD_PTR,DWORD_PTR,DWORD_PTR)
 
 #define MM_PC_JOYSTICK          12      /* Joystick adapter */
 
+#define MM_CREATIVE_SBP16_WAVEOUT   104 
 
 UINT 		WINAPI 	mmsystemGetVersion(void);
 BOOL 		WINAPI	sndPlaySoundA(LPCSTR lpszSound, UINT fuSound);

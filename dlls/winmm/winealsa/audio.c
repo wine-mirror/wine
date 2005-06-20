@@ -71,11 +71,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 #ifdef HAVE_ALSA
 
 /* internal ALSALIB functions */
+/* FIXME:  we shouldn't be using internal functions... */
 snd_pcm_uframes_t _snd_pcm_mmap_hw_ptr(snd_pcm_t *pcm);
 
-
-#define MAX_WAVEOUTDRV 	(6)
-#define MAX_WAVEINDRV 	(6)
 
 /* state diagram for waveOut writing:
  *
@@ -151,11 +149,13 @@ typedef struct {
     WORD			wFlags;
     WAVEFORMATPCMEX		format;
 
-    /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char*                       device;
-    char                        interface_name[64];
-    snd_pcm_t*                  handle;                 /* handle to ALSA capture device */
-    snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
+    char*                       pcmname;                /* string name of alsa PCM device */
+    char*                       ctlname;                /* string name of alsa control device */
+    char                        interface_name[MAXPNAMELEN * 2];
+
+    snd_pcm_t*                  pcm;                    /* handle to ALSA playback device */
+
+    snd_pcm_hw_params_t *       hw_params;
 
     DWORD                       dwBufferSize;           /* size of whole ALSA buffer in bytes */
     LPWAVEHDR			lpQueuePtr;		/* start of queued WAVEHDRs (waiting to be notified) */
@@ -183,7 +183,6 @@ typedef struct {
     /* Waveout only fields */
     WAVEOUTCAPSW		outcaps;
 
-    char*                       mixer;                  /* mixer device name: hw:# */
     snd_hctl_t *                hctl;                    /* control handle for the playback volume */
 
     snd_pcm_sframes_t           (*write)(snd_pcm_t *, const void *, snd_pcm_uframes_t );
@@ -203,14 +202,25 @@ typedef struct {
 }   WINE_WAVEDEV;
 
 
-
-static WINE_WAVEDEV	WOutDev   [MAX_WAVEOUTDRV];
+/*----------------------------------------------------------------------------
+**  Global array of output and input devices, initialized via ALSA_WaveInit
+*/
+#define WAVEDEV_ALLOC_EXTENT_SIZE       10
+static WINE_WAVEDEV	*WOutDev;
+static DWORD            ALSA_WodNumMallocedDevs;
 static DWORD            ALSA_WodNumDevs;
-static WINE_WAVEDEV	WInDev   [MAX_WAVEINDRV];
+
+static WINE_WAVEDEV	*WInDev;
+static DWORD            ALSA_WidNumMallocedDevs;
 static DWORD            ALSA_WidNumDevs;
 
 static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
+
+
+/*======================================================================*
+ *                  Utility functions                                   *
+ *======================================================================*/
 
 /* These strings used only for tracing */
 static const char * getCmdString(enum win_wm_message msg)
@@ -406,9 +416,155 @@ static void copy_format(LPWAVEFORMATEX wf1, LPWAVEFORMATPCMEX wf2)
         memcpy(wf2, wf1, sizeof(WAVEFORMATEX) + wf1->cbSize);
 }
 
+/*----------------------------------------------------------------------------
+** ALSA_RegGetString
+**  Retrieve a string from a registry key
+*/
+static int ALSA_RegGetString(HKEY key, const char *value, char **bufp)
+{
+    DWORD rc;
+    DWORD type;
+    DWORD bufsize;
+
+    *bufp = NULL;
+    rc = RegQueryValueExA(key, value, NULL, &type, NULL, &bufsize);
+    if (rc != ERROR_SUCCESS)
+        return(rc);
+
+    if (type != REG_SZ)
+        return 1;
+
+    *bufp = HeapAlloc(GetProcessHeap(), 0, bufsize);
+    if (! *bufp)
+        return 1;
+
+    rc = RegQueryValueExA(key, value, NULL, NULL, *bufp, &bufsize);
+    return rc;
+}
+
+/*----------------------------------------------------------------------------
+** ALSA_RegGetBoolean
+**  Get a string and interpret it as a boolean
+*/
+#define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
+static int ALSA_RegGetBoolean(HKEY key, const char *value, BOOL *answer)
+{
+    DWORD rc;
+    char *buf = NULL;
+
+    rc = ALSA_RegGetString(key, value, &buf);
+    if (buf)
+    {
+        *answer = FALSE;
+        if (IS_OPTION_TRUE(*buf))
+            *answer = TRUE;
+
+        HeapFree(GetProcessHeap(), 0, buf);
+    }
+
+    return rc;
+}
+
+/*----------------------------------------------------------------------------
+** ALSA_RegGetBoolean
+**  Get a string and interpret it as a DWORD
+*/
+static int ALSA_RegGetInt(HKEY key, const char *value, DWORD *answer)
+{
+    DWORD rc;
+    char *buf = NULL;
+
+    rc = ALSA_RegGetString(key, value, &buf);
+    if (buf)
+    {
+        *answer = atoi(buf);
+        HeapFree(GetProcessHeap(), 0, buf);
+    }
+
+    return rc;
+}
+
 /*======================================================================*
  *                  Low level WAVE implementation			*
  *======================================================================*/
+
+/*----------------------------------------------------------------------------
+**  ALSA_TestDeviceForWine
+**
+**      Test to see if a given device is sufficient for Wine.
+*/
+static int ALSA_TestDeviceForWine(int card, int device,  snd_pcm_stream_t streamtype)
+{
+    snd_pcm_t *pcm = NULL;
+    char pcmname[256];
+    int retcode;
+    snd_pcm_hw_params_t *hwparams;
+    char *reason = NULL;
+    unsigned int rrate;
+
+    
+    /* Note that the plug: device masks out a lot of info, we want to avoid that */
+    sprintf(pcmname, "hw:%d,%d", card, device);
+    retcode = snd_pcm_open(&pcm, pcmname, streamtype, SND_PCM_NONBLOCK);
+    if (retcode < 0)
+    {
+        /* Note that a busy device isn't automatically disqualified */
+        if (retcode == (-1 * EBUSY))
+            retcode = 0;
+        goto exit;
+    }
+
+    snd_pcm_hw_params_alloca(&hwparams);
+
+    retcode = snd_pcm_hw_params_any(pcm, hwparams);
+    if (retcode < 0)
+    {
+        reason = "Could not retrieve hw_params";
+        goto exit;
+    }
+
+	/* set the count of channels */
+    retcode = snd_pcm_hw_params_set_channels(pcm, hwparams, 2);
+    if (retcode < 0)
+    {
+        reason = "Could not set channels";
+        goto exit;
+    }
+
+    rrate = 44100;
+    retcode = snd_pcm_hw_params_set_rate_near(pcm, hwparams, &rrate, 0);
+    if (retcode < 0)
+    {
+        reason = "Could not set rate";
+        goto exit;
+    }
+
+    if (rrate == 0)
+    {
+        reason = "Rate came back as 0";
+        goto exit;
+    }
+
+    /* write the parameters to device */
+    retcode = snd_pcm_hw_params(pcm, hwparams);
+    if (retcode < 0)
+    {
+        reason = "Could not set hwparams";
+        goto exit;
+    }
+
+    retcode = 0;
+
+exit:
+    if (pcm)
+        snd_pcm_close(pcm);
+
+    if (retcode != 0 && retcode != (-1 * ENOENT))
+        TRACE("Discarding card %d/device %d:  %s [%d(%s)]\n", card, device, reason, retcode, snd_strerror(retcode));
+
+    return retcode;
+
+}
 
 /**************************************************************************
  * 			ALSA_CheckSetVolume		[internal]
@@ -558,15 +714,15 @@ out:
 static int ALSA_XRUNRecovery(WINE_WAVEDEV * wwo, int err)
 {
     if (err == -EPIPE) {    /* under-run */
-        err = snd_pcm_prepare(wwo->handle);
+        err = snd_pcm_prepare(wwo->pcm);
         if (err < 0)
              ERR( "underrun recovery failed. prepare failed: %s\n", snd_strerror(err));
         return 0;
     } else if (err == -ESTRPIPE) {
-        while ((err = snd_pcm_resume(wwo->handle)) == -EAGAIN)
+        while ((err = snd_pcm_resume(wwo->pcm)) == -EAGAIN)
             sleep(1);       /* wait until the suspend flag is released */
         if (err < 0) {
-            err = snd_pcm_prepare(wwo->handle);
+            err = snd_pcm_prepare(wwo->pcm);
             if (err < 0)
                 ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
         }
@@ -585,7 +741,6 @@ static void ALSA_TraceParameters(snd_pcm_hw_params_t * hw_params, snd_pcm_sw_par
     int err;
     snd_pcm_format_t   format;
     snd_pcm_access_t   access;
-
     err = snd_pcm_hw_params_get_access(hw_params, &access);
     err = snd_pcm_hw_params_get_format(hw_params, &format);
 
@@ -707,68 +862,733 @@ if (err<0) { \
 /* return a string duplicated on the win32 process heap, free with HeapFree */
 static char* ALSA_strdup(const char *s) {
     char *result = HeapAlloc(GetProcessHeap(), 0, strlen(s)+1);
+    if (!result)
+        return NULL;
     strcpy(result, s);
     return result;
 }
 
-/******************************************************************
- *             ALSA_GetDeviceFromReg
- *
- * Returns either "plug:hw" or reads the registry so the user can
- * override the playback/record device used.
- */
-static char *ALSA_GetDeviceFromReg(const char *value)
-{
-    DWORD res;
-    DWORD type;
-    HKEY key = 0;
-    char *result = NULL;
-    DWORD resultSize;
-
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\alsa */
-    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ALSA", 0, KEY_QUERY_VALUE, &key);
-    if (res != ERROR_SUCCESS) goto end;
-
-    res = RegQueryValueExA(key, value, NULL, &type, NULL, &resultSize);
-    if (res != ERROR_SUCCESS) goto end;
-
-    if (type != REG_SZ) {
-       ERR("Registry key [HKEY_LOCAL_MACHINE\\Software\\Wine\\Wine\\ALSA\\%s] must be a string\n", value);
-       goto end;
-    }
-
-    result = HeapAlloc(GetProcessHeap(), 0, resultSize);
-    res = RegQueryValueExA(key, value, NULL, NULL, result, &resultSize);
-
-end:
-    if (!result)
-        result = ALSA_strdup("plug:hw");
-
-    if (key)
-        RegCloseKey(key);
-
-    return result;
+#define ALSA_RETURN_ONFAIL(mycall)                                      \
+{                                                                       \
+    int rc;                                                             \
+    {rc = mycall;}                                                      \
+    if ((rc) < 0)                                                       \
+    {                                                                   \
+        ERR("%s failed:  %s(%d)\n", #mycall, snd_strerror(rc), rc);     \
+        return(rc);                                                     \
+    }                                                                   \
 }
 
-/******************************************************************
- *		ALSA_WaveInit
- *
- * Initialize internal structures from ALSA information
- */
+/*----------------------------------------------------------------------------
+**  ALSA_ComputeCaps
+**
+**      Given an ALSA PCM, figure out our HW CAPS structure info.
+**  ctl can be null, pcm is required, as is all output parms.
+**
+*/
+static int ALSA_ComputeCaps(snd_ctl_t *ctl, snd_pcm_t *pcm, 
+        WORD *channels, DWORD *flags, DWORD *formats, DWORD *supports)
+{
+    snd_pcm_hw_params_t *hw_params;
+    snd_pcm_format_mask_t *fmask;
+    snd_pcm_access_mask_t *acmask;
+    unsigned int ratemin = 0;
+    unsigned int ratemax = 0;
+    unsigned int chmin = 0;
+    unsigned int chmax = 0;
+    int dir = 0;
+
+    snd_pcm_hw_params_alloca(&hw_params);
+    ALSA_RETURN_ONFAIL(snd_pcm_hw_params_any(pcm, hw_params));
+
+    snd_pcm_format_mask_alloca(&fmask);
+    snd_pcm_hw_params_get_format_mask(hw_params, fmask);
+
+    snd_pcm_access_mask_alloca(&acmask);
+    ALSA_RETURN_ONFAIL(snd_pcm_hw_params_get_access_mask(hw_params, acmask));
+
+    ALSA_RETURN_ONFAIL(snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir));
+    ALSA_RETURN_ONFAIL(snd_pcm_hw_params_get_rate_max(hw_params, &ratemax, &dir));
+    ALSA_RETURN_ONFAIL(snd_pcm_hw_params_get_channels_min(hw_params, &chmin));
+    ALSA_RETURN_ONFAIL(snd_pcm_hw_params_get_channels_max(hw_params, &chmax));
+
+#define X(r,v) \
+    if ( (r) >= ratemin && ( (r) <= ratemax || ratemax == -1) ) \
+    { \
+       if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
+       { \
+          if (chmin <= 1 && 1 <= chmax) \
+              *formats |= WAVE_FORMAT_##v##M08; \
+          if (chmin <= 2 && 2 <= chmax) \
+              *formats |= WAVE_FORMAT_##v##S08; \
+       } \
+       if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
+       { \
+          if (chmin <= 1 && 1 <= chmax) \
+              *formats |= WAVE_FORMAT_##v##M16; \
+          if (chmin <= 2 && 2 <= chmax) \
+              *formats |= WAVE_FORMAT_##v##S16; \
+       } \
+    }
+    X(11025,1);
+    X(22050,2);
+    X(44100,4);
+    X(48000,48);
+    X(96000,96);
+#undef X
+
+    if (chmin > 1)
+        FIXME("Device has a minimum of %d channels\n", chmin);
+    *channels = chmax;
+
+    /* FIXME: is sample accurate always true ? 
+    ** Can we do WAVECAPS_PITCH, WAVECAPS_SYNC, or WAVECAPS_PLAYBACKRATE? */
+    *supports |= WAVECAPS_SAMPLEACCURATE;
+
+    /* FIXME: NONITERLEAVED and COMPLEX are not supported right now */
+    if ( snd_pcm_access_mask_test( acmask, SND_PCM_ACCESS_MMAP_INTERLEAVED ) )
+        *supports |= WAVECAPS_DIRECTSOUND;
+
+    /* check for volume control support */
+    if (ctl) {
+        *supports |= WAVECAPS_VOLUME;
+
+        if (chmin <= 2 && 2 <= chmax)
+            *supports |= WAVECAPS_LRVOLUME;
+    }
+
+    if (*formats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
+                               WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
+                               WAVE_FORMAT_96M08 | WAVE_FORMAT_1M16  |
+                               WAVE_FORMAT_2M16  | WAVE_FORMAT_4M16  |
+                               WAVE_FORMAT_48M16 | WAVE_FORMAT_96M16) )
+        *flags |= DSCAPS_PRIMARYMONO;
+
+    if (*formats & (WAVE_FORMAT_1S08  | WAVE_FORMAT_2S08  |
+                               WAVE_FORMAT_4S08  | WAVE_FORMAT_48S08 |
+                               WAVE_FORMAT_96S08 | WAVE_FORMAT_1S16  |
+                               WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
+                               WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
+        *flags |= DSCAPS_PRIMARYSTEREO;
+
+    if (*formats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
+                               WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
+                               WAVE_FORMAT_96M08 | WAVE_FORMAT_1S08  |
+                               WAVE_FORMAT_2S08  | WAVE_FORMAT_4S08  |
+                               WAVE_FORMAT_48S08 | WAVE_FORMAT_96S08) )
+        *flags |= DSCAPS_PRIMARY8BIT;
+
+    if (*formats & (WAVE_FORMAT_1M16  | WAVE_FORMAT_2M16  |
+                               WAVE_FORMAT_4M16  | WAVE_FORMAT_48M16 |
+                               WAVE_FORMAT_96M16 | WAVE_FORMAT_1S16  |
+                               WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
+                               WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
+        *flags |= DSCAPS_PRIMARY16BIT;
+
+    return(0);
+}
+
+/*----------------------------------------------------------------------------
+**  ALSA_AddCommonDevice
+**
+**      Perform Alsa initialization common to both capture and playback
+**
+**  Side Effect:  ww->pcname and ww->ctlname may need to be freed.
+**
+**  Note:  this was originally coded by using snd_pcm_name(pcm), until
+**         I discovered that with at least one version of alsa lib,
+**         the use of a pcm named default:0 would cause snd_pcm_name() to fail.
+**         So passing the name in is logically extraneous.  Sigh.
+*/
+static int ALSA_AddCommonDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcmname, WINE_WAVEDEV *ww)
+{
+    snd_pcm_info_t *infop;
+
+    snd_pcm_info_alloca(&infop);
+    ALSA_RETURN_ONFAIL(snd_pcm_info(pcm, infop));
+
+    if (pcm && pcmname)
+        ww->pcmname = ALSA_strdup(pcmname);
+    else    
+        return -1;
+
+    if (ctl && snd_ctl_name(ctl))
+        ww->ctlname = ALSA_strdup(snd_ctl_name(ctl));
+
+    strcpy(ww->interface_name, "winealsa: ");
+    memcpy(ww->interface_name + strlen(ww->interface_name),
+            ww->pcmname, 
+            min(strlen(ww->pcmname), sizeof(ww->interface_name) - strlen("winealsa:   ")));
+
+    strcpy(ww->ds_desc.szDrvname, "winealsa.drv");
+
+    memcpy(ww->ds_desc.szDesc, snd_pcm_info_get_name(infop),
+            min( (sizeof(ww->ds_desc.szDesc) - 1), strlen(snd_pcm_info_get_name(infop))) );
+
+    ww->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    ww->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+    ww->ds_caps.dwPrimaryBuffers = 1;
+
+    return 0;
+}
+
+/*----------------------------------------------------------------------------
+** ALSA_FreeDevice
+*/  
+static void ALSA_FreeDevice(WINE_WAVEDEV *ww)
+{
+    if (ww->pcmname)
+        HeapFree(GetProcessHeap(), 0, ww->pcmname);
+    ww->pcmname = NULL;
+
+    if (ww->ctlname)
+        HeapFree(GetProcessHeap(), 0, ww->ctlname);
+    ww->ctlname = NULL;
+}
+
+/*----------------------------------------------------------------------------
+**  ALSA_AddDeviceToArray
+**
+**      Dynamically size one of the wavein or waveout arrays of devices,
+**  and add a fully configured device node to the array.
+**
+*/
+static int ALSA_AddDeviceToArray(WINE_WAVEDEV *ww, WINE_WAVEDEV **array,
+        DWORD *count, DWORD *alloced, int isdefault)
+{
+    int i = *count;
+
+    if (*count >= *alloced)
+    {
+        (*alloced) += WAVEDEV_ALLOC_EXTENT_SIZE;
+        if (! (*array))
+            *array = HeapAlloc(GetProcessHeap(), 0, sizeof(*ww) * (*alloced));
+        else
+            *array = HeapReAlloc(GetProcessHeap(), 0, *array, sizeof(*ww) * (*alloced));
+
+        if (!*array)
+        {
+            return -1;
+        }
+    }
+
+    /* If this is the default, arrange for it to be the first element */
+    if (isdefault && i > 0)
+    {
+        (*array)[*count] = (*array)[0];
+        i = 0;
+    }
+
+    (*array)[i] = *ww;
+
+    (*count)++;
+    return 0;
+}
+
+/*----------------------------------------------------------------------------
+**  ALSA_AddPlaybackDevice
+**
+**      Add a given Alsa device to Wine's internal list of Playback
+**  devices.
+*/
+static int ALSA_AddPlaybackDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcmname, int isdefault)
+{
+    WINE_WAVEDEV    wwo;
+    WCHAR nameW[MAXPNAMELEN * 2];
+    int rc;
+
+    memset(&wwo, '\0', sizeof(wwo));
+
+    rc = ALSA_AddCommonDevice(ctl, pcm, pcmname, &wwo);
+    if (rc)
+        return(rc);
+
+    MultiByteToWideChar(CP_ACP, 0, wwo.ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
+    strcpyW(wwo.outcaps.szPname, nameW);
+
+    wwo.outcaps.wMid = MM_CREATIVE;
+    wwo.outcaps.wPid = MM_CREATIVE_SBP16_WAVEOUT;
+    wwo.outcaps.vDriverVersion = 0x0100;
+
+    rc = ALSA_ComputeCaps(ctl, pcm, &wwo.outcaps.wChannels, &wwo.ds_caps.dwFlags,
+            &wwo.outcaps.dwFormats, &wwo.outcaps.dwSupport);
+    if (rc)
+    {
+        WARN("Error calculating device caps for pcm [%s]\n", wwo.pcmname);
+        ALSA_FreeDevice(&wwo);
+        return(rc);
+    }
+
+    rc = ALSA_AddDeviceToArray(&wwo, &WOutDev, &ALSA_WodNumDevs, &ALSA_WodNumMallocedDevs, isdefault);
+    if (rc)
+        ALSA_FreeDevice(&wwo);
+    return (rc);
+}
+
+/*----------------------------------------------------------------------------
+**  ALSA_AddCaptureDevice
+**
+**      Add a given Alsa device to Wine's internal list of Capture
+**  devices.
+*/
+static int ALSA_AddCaptureDevice(snd_ctl_t *ctl, snd_pcm_t *pcm, const char *pcmname, int isdefault)
+{
+    WINE_WAVEDEV    wwi;
+    WCHAR nameW[MAXPNAMELEN * 2];
+    int rc;
+
+    memset(&wwi, '\0', sizeof(wwi));
+
+    rc = ALSA_AddCommonDevice(ctl, pcm, pcmname, &wwi);
+    if (rc)
+        return(rc);
+
+    MultiByteToWideChar(CP_ACP, 0, wwi.ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
+    strcpyW(wwi.incaps.szPname, nameW);
+
+    wwi.incaps.wMid = MM_CREATIVE;
+    wwi.incaps.wPid = MM_CREATIVE_SBP16_WAVEOUT;
+    wwi.incaps.vDriverVersion = 0x0100;
+
+    rc = ALSA_ComputeCaps(ctl, pcm, &wwi.incaps.wChannels, &wwi.ds_caps.dwFlags,
+            &wwi.incaps.dwFormats, &wwi.dwSupport);
+    if (rc)
+    {
+        WARN("Error calculating device caps for pcm [%s]\n", wwi.pcmname);
+        ALSA_FreeDevice(&wwi);
+        return(rc);
+    }
+
+    rc = ALSA_AddDeviceToArray(&wwi, &WInDev, &ALSA_WidNumDevs, &ALSA_WidNumMallocedDevs, isdefault);
+    if (rc)
+        ALSA_FreeDevice(&wwi);
+    return(rc);
+}
+
+/*----------------------------------------------------------------------------
+**  ALSA_CheckEnvironment
+**
+**      Given an Alsa style configuration node, scan its subitems
+**  for environment variable names, and use them to find an override,
+**  if appropriate.
+**      This is essentially a long and convolunted way of doing:
+**          getenv("ALSA_CARD") 
+**          getenv("ALSA_CTL_CARD") 
+**          getenv("ALSA_PCM_CARD") 
+**          getenv("ALSA_PCM_DEVICE") 
+**
+**  The output value is set with the atoi() of the first environment
+**  variable found to be set, if any; otherwise, it is left alone
+*/
+static void ALSA_CheckEnvironment(snd_config_t *node, int *outvalue)
+{
+    snd_config_iterator_t iter;
+
+    for (iter = snd_config_iterator_first(node); 
+         iter != snd_config_iterator_end(node);
+         iter = snd_config_iterator_next(iter))
+    {
+        snd_config_t *leaf = snd_config_iterator_entry(iter);
+        if (snd_config_get_type(leaf) == SND_CONFIG_TYPE_STRING)
+        {
+            const char *value;
+            if (snd_config_get_string(leaf, &value) >= 0)
+            {
+                char *p = getenv(value);
+                if (p)
+                {
+                    *outvalue = atoi(p);
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/*----------------------------------------------------------------------------
+**  ALSA_DefaultDevices
+**
+**      Jump through Alsa style hoops to (hopefully) properly determine
+**  Alsa defaults for CTL Card #, as well as for PCM Card + Device #.
+**  We'll also find out if the user has set any of the environment
+**  variables that specify we're to use a specific card or device.
+**
+**  Parameters:
+**      directhw        Whether to use a direct hardware device or not;
+**                      essentially switches the pcm device name from
+**                      one of 'default:X' or 'plughw:X' to "hw:X"
+**      defctlcard      If !NULL, will hold the ctl card number given
+**                      by the ALSA config as the default
+**      defpcmcard      If !NULL, default pcm card #
+**      defpcmdev       If !NULL, default pcm device #
+**      fixedctlcard    If !NULL, and the user set the appropriate
+**                          environment variable, we'll set to the
+**                          card the user specified.
+**      fixedpcmcard    If !NULL, and the user set the appropriate
+**                          environment variable, we'll set to the
+**                          card the user specified.
+**      fixedpcmdev     If !NULL, and the user set the appropriate
+**                          environment variable, we'll set to the
+**                          device the user specified.
+**
+**  Returns:  0 on success, < 0 on failiure
+*/
+static int ALSA_DefaultDevices(int directhw, 
+            long *defctlcard,
+            long *defpcmcard, long *defpcmdev,
+            int *fixedctlcard, 
+            int *fixedpcmcard, int *fixedpcmdev)
+{
+    snd_config_t   *configp;
+    char pcmsearch[256];
+
+    ALSA_RETURN_ONFAIL(snd_config_update());
+
+    if (defctlcard)
+        if (snd_config_search(snd_config, "defaults.ctl.card", &configp) >= 0)
+            snd_config_get_integer(configp, defctlcard);
+
+    if (defpcmcard)
+        if (snd_config_search(snd_config, "defaults.pcm.card", &configp) >= 0)
+            snd_config_get_integer(configp, defpcmcard);
+
+    if (defpcmdev)
+        if (snd_config_search(snd_config, "defaults.pcm.device", &configp) >= 0)
+            snd_config_get_integer(configp, defpcmdev);
+
+
+    if (fixedctlcard)
+    {
+        if (snd_config_search(snd_config, "ctl.hw.@args.CARD.default.vars", &configp) >= 0)
+            ALSA_CheckEnvironment(configp, fixedctlcard);
+    }
+
+    if (fixedpcmcard)
+    {
+        sprintf(pcmsearch, "pcm.%s.@args.CARD.default.vars", directhw ? "hw" : "plughw");
+        if (snd_config_search(snd_config, pcmsearch, &configp) >= 0)
+            ALSA_CheckEnvironment(configp, fixedpcmcard);
+    }
+
+    if (fixedpcmdev)
+    {
+        sprintf(pcmsearch, "pcm.%s.@args.DEV.default.vars", directhw ? "hw" : "plughw");
+        if (snd_config_search(snd_config, pcmsearch, &configp) >= 0)
+            ALSA_CheckEnvironment(configp, fixedpcmdev);
+    }
+
+    return 0;
+}
+
+
+/*----------------------------------------------------------------------------
+**  ALSA_ScanDevices
+**
+**      Iterate through all discoverable ALSA cards, searching
+**  for usable PCM devices.
+**
+**  Parameters:
+**      directhw        Whether to use a direct hardware device or not;
+**                      essentially switches the pcm device name from
+**                      one of 'default:X' or 'plughw:X' to "hw:X"
+**      defctlcard      Alsa's notion of the default ctl card.
+**      defpcmcard         . pcm card 
+**      defpcmdev          . pcm device 
+**      fixedctlcard    If not -1, then gives the value of ALSA_CTL_CARD
+**                          or equivalent environment variable
+**      fixedpcmcard    If not -1, then gives the value of ALSA_PCM_CARD
+**                          or equivalent environment variable
+**      fixedpcmdev     If not -1, then gives the value of ALSA_PCM_DEVICE
+**                          or equivalent environment variable
+**
+**  Returns:  0 on success, < 0 on failiure
+*/
+static int ALSA_ScanDevices(int directhw, 
+        long defctlcard, long defpcmcard, long defpcmdev,
+        int fixedctlcard, int fixedpcmcard, int fixedpcmdev)
+{
+    int card = fixedpcmcard;
+    int scan_devices = (fixedpcmdev == -1);
+
+    /*------------------------------------------------------------------------
+    ** Loop through all available cards
+    **----------------------------------------------------------------------*/
+    if (card == -1)
+        snd_card_next(&card);
+
+    for (; card != -1; snd_card_next(&card))
+    {
+        char ctlname[256];
+        snd_ctl_t *ctl;
+        int rc;
+        int device;
+
+        /*--------------------------------------------------------------------
+        ** Try to open a ctl handle; Wine doesn't absolutely require one,
+        **  but it does allow for volume control and for device scanning
+        **------------------------------------------------------------------*/
+        sprintf(ctlname, "default:%d", fixedctlcard == -1 ? card : fixedctlcard);
+        rc = snd_ctl_open(&ctl, ctlname, SND_CTL_NONBLOCK);
+        if (rc < 0)
+        {
+            sprintf(ctlname, "hw:%d", fixedctlcard == -1 ? card : fixedctlcard);
+            rc = snd_ctl_open(&ctl, ctlname, SND_CTL_NONBLOCK);
+        }
+        if (rc < 0)
+        {
+            ctl = NULL;
+            WARN("Unable to open an alsa ctl for [%s] (pcm card %d): %s; not scanning devices\n", 
+                    ctlname, card, snd_strerror(rc));
+            if (fixedpcmdev == -1)
+                fixedpcmdev = 0;
+        }
+
+        /*--------------------------------------------------------------------
+        ** Loop through all available devices on this card
+        **------------------------------------------------------------------*/
+        device = fixedpcmdev;
+        if (device == -1)
+            snd_ctl_pcm_next_device(ctl, &device);
+
+        for (; device != -1; snd_ctl_pcm_next_device(ctl, &device))
+        {
+            char defaultpcmname[256];
+            char plugpcmname[256];
+            char hwpcmname[256];
+            char *pcmname = NULL;
+            snd_pcm_t *pcm;
+
+            sprintf(defaultpcmname, "default:%d", card);
+            sprintf(plugpcmname,    "plughw:%d,%d", card, device);
+            sprintf(hwpcmname,      "hw:%d,%d", card, device);
+
+            /*----------------------------------------------------------------
+            ** See if it's a valid playback device 
+            **--------------------------------------------------------------*/
+            if (ALSA_TestDeviceForWine(card, device, SND_PCM_STREAM_PLAYBACK) == 0)
+            {
+                /* If we can, try the default:X device name first */
+                if (! scan_devices && ! directhw)
+                {
+                    pcmname = defaultpcmname;
+                    rc = snd_pcm_open(&pcm, pcmname, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+                }
+                else
+                    rc = -1;
+
+                if (rc < 0)
+                {
+                    pcmname = directhw ? hwpcmname : plugpcmname;
+                    rc = snd_pcm_open(&pcm, pcmname, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+                }
+
+                if (rc >= 0)
+                {
+                    if (defctlcard == card && defpcmcard == card && defpcmdev == device)
+                        ALSA_AddPlaybackDevice(ctl, pcm, pcmname, TRUE);
+                    else
+                        ALSA_AddPlaybackDevice(ctl, pcm, pcmname, FALSE);
+                    snd_pcm_close(pcm);
+                }
+                else
+                {
+                    TRACE("Device [%s/%s] failed to open for playback: %s\n", 
+                        directhw || scan_devices ? "(N/A)" : defaultpcmname,
+                        directhw ? hwpcmname : plugpcmname,
+                        snd_strerror(rc));
+                }
+            }
+
+            /*----------------------------------------------------------------
+            ** See if it's a valid capture device 
+            **--------------------------------------------------------------*/
+            if (ALSA_TestDeviceForWine(card, device, SND_PCM_STREAM_CAPTURE) == 0)
+            {
+                /* If we can, try the default:X device name first */
+                if (! scan_devices && ! directhw)
+                {
+                    pcmname = defaultpcmname;
+                    rc = snd_pcm_open(&pcm, pcmname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+                }
+                else
+                    rc = -1;
+
+                if (rc < 0)
+                {
+                    pcmname = directhw ? hwpcmname : plugpcmname;
+                    rc = snd_pcm_open(&pcm, pcmname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+                }
+
+                if (rc >= 0)
+                {
+                    if (defctlcard == card && defpcmcard == card && defpcmdev == device)
+                        ALSA_AddCaptureDevice(ctl, pcm, pcmname, TRUE);
+                    else
+                        ALSA_AddCaptureDevice(ctl, pcm, pcmname, FALSE);
+
+                    snd_pcm_close(pcm);
+                }
+                else
+                {
+                    TRACE("Device [%s/%s] failed to open for capture: %s\n", 
+                        directhw || scan_devices ? "(N/A)" : defaultpcmname,
+                        directhw ? hwpcmname : plugpcmname,
+                        snd_strerror(rc));
+                }
+            }
+
+            if (! scan_devices)
+                break;
+        }
+
+        if (ctl)
+            snd_ctl_close(ctl);
+
+        /*--------------------------------------------------------------------
+        ** If the user has set env variables such that we're pegged to
+        **  a specific card, then break after we've examined it
+        **------------------------------------------------------------------*/
+        if (fixedpcmcard != -1)
+            break;
+    }
+
+    return 0;
+
+}
+
+/*----------------------------------------------------------------------------
+** ALSA_PerformDefaultScan
+**  Perform the basic default scanning for devices within ALSA.
+**  The hope is that this routine implements a 'correct' 
+**  scanning algorithm from the Alsalib point of view.
+**
+**      Note that Wine, overall, has other mechanisms to
+**  override and specify exact CTL and PCM device names,
+**  but this routine is imagined as the default that
+**  99% of users will use.
+**
+**      The basic algorithm is simple:
+**  Use snd_card_next to iterate cards; within cards, use
+**  snd_ctl_pcm_next_device to iterate through devices.
+**
+**      We add a little complexity by taking into consideration
+**  environment variables such as ALSA_CARD (et all), and by
+**  detecting when a given device matches the default specified
+**  by Alsa.
+**
+**  Parameters:
+**      directhw        If !0, indicates we should use the hw:X
+**                      PCM interface, rather than first try
+**                      the 'default' device followed by the plughw
+**                      device.  (default and plughw do fancy mixing
+**                      and audio scaling, if they are available).
+**      devscan         If TRUE, we should scan all devices, not
+**                      juse use device 0 on each card
+**
+**  Returns:
+**      0   on succes
+**
+**  Effects:
+**      Invokes the ALSA_AddXXXDevice functions on valid
+**  looking devices
+*/
+static int ALSA_PerformDefaultScan(int directhw, BOOL devscan)
+{
+    long defctlcard = -1, defpcmcard = -1, defpcmdev = -1;
+    int fixedctlcard = -1, fixedpcmcard = -1, fixedpcmdev = -1;
+    int rc;
+   
+    /* FIXME:  We should dlsym the new snd_names_list/snd_names_list_free 1.0.9 apis, 
+    **          and use them instead of this scan mechanism if they are present         */
+
+    rc = ALSA_DefaultDevices(directhw, &defctlcard, &defpcmcard, &defpcmdev, 
+            &fixedctlcard, &fixedpcmcard, &fixedpcmdev);
+    if (rc)
+        return(rc);
+
+    if (fixedpcmdev == -1 && ! devscan)
+        fixedpcmdev = 0;
+
+    return(ALSA_ScanDevices(directhw, defctlcard, defpcmcard, defpcmdev, fixedctlcard, fixedpcmcard, fixedpcmdev));
+}
+
+
+/*----------------------------------------------------------------------------
+** ALSA_AddUserSpecifiedDevice
+**  Add a device given from the registry
+*/
+static int ALSA_AddUserSpecifiedDevice(const char *ctlname, const char *pcmname)
+{
+    int rc;
+    int okay = 0;
+    snd_ctl_t *ctl = NULL;
+    snd_pcm_t *pcm = NULL;
+
+    if (ctlname)
+    {
+        rc = snd_ctl_open(&ctl, ctlname, SND_CTL_NONBLOCK);
+        if (rc < 0)
+            ctl = NULL;
+    }
+
+    rc = snd_pcm_open(&pcm, pcmname, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
+    if (rc >= 0)
+    {
+        ALSA_AddPlaybackDevice(ctl, pcm, pcmname, FALSE);
+        okay++;
+        snd_pcm_close(pcm);
+    }
+
+    rc = snd_pcm_open(&pcm, pcmname, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
+    if (rc >= 0)
+    {
+        ALSA_AddCaptureDevice(ctl, pcm, pcmname, FALSE);
+        okay++;
+        snd_pcm_close(pcm);
+    }
+
+    if (ctl)
+        snd_ctl_close(ctl);
+
+    return (okay == 0);
+}
+
+
+/*----------------------------------------------------------------------------
+** ALSA_WaveInit
+**  Initialize the Wine Alsa sub system.
+** The main task is to probe for and store a list of all appropriate playback
+** and capture devices.
+**  Key control points are from the registry key:
+**  [Software\Wine\Wine\Config\ALSA]
+**  AutoScanCards           Whether or not to scan all known sound cards
+**                          and add them to Wine's list (default yes)
+**  AutoScanDevices         Whether or not to scan all known PCM devices
+**                          on each card (default no)
+**  UseDirectHW             Whether or not to use the hw:X device,
+**                          instead of the fancy default:X or plughw:X device.
+**                          The hw:X device goes straight to the hardware
+**                          without any fancy mixing or audio scaling in between.
+**  DeviceCount             If present, specifies the number of hard coded
+**                          Alsa devices to add to Wine's list; default 0
+**  DevicePCMn              Specifies the Alsa PCM devices to open for
+**                          Device n (where n goes from 1 to DeviceCount)
+**  DeviceCTLn              Specifies the Alsa control devices to open for
+**                          Device n (where n goes from 1 to DeviceCount)
+**
+**                          Using AutoScanCards no, and then Devicexxx info
+**                          is a way to exactly specify the devices used by Wine.
+**
+*/
 LONG ALSA_WaveInit(void)
 {
-    snd_pcm_t*                  h;
-    snd_pcm_info_t *            info;
-    snd_pcm_hw_params_t *       hw_params;
-    unsigned int ratemin=0;
-    unsigned int ratemax=0;
-    unsigned int chmin=0;
-    unsigned int chmax=0;
-    int dir=0;
-    int err=0;
-    WINE_WAVEDEV*	        wwo;
-    WINE_WAVEDEV*	        wwi;
-    int i;
+    DWORD rc;
+    BOOL  AutoScanCards = TRUE;
+    BOOL  AutoScanDevices = FALSE;
+    BOOL  UseDirectHW = FALSE;
+    DWORD DeviceCount = 0;
+    HKEY  key = 0;
+    int   i;
 
     if (!wine_dlopen("libasound.so.2", RTLD_LAZY|RTLD_GLOBAL, NULL, 0))
     {
@@ -776,288 +1596,44 @@ LONG ALSA_WaveInit(void)
         return -1;
     }
 
-    ALSA_WodNumDevs = 0;
-
-    for (i = 0; i < MAX_WAVEOUTDRV; i++)
+    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\alsa */
+    rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ALSA", 0, KEY_QUERY_VALUE, &key);
+    if (rc == ERROR_SUCCESS)
     {
-        char device[64];
-        char mixer[16];
-        char * regdev;
-        WCHAR nameW[64];
-	snd_pcm_format_mask_t * fmask;
-	snd_pcm_access_mask_t * acmask;
-
-        wwo = &WOutDev[ALSA_WodNumDevs];
-
-        regdev = ALSA_GetDeviceFromReg("PlaybackDevice");
-        sprintf(device, "%s:%d", regdev, i);
-        HeapFree(GetProcessHeap(), 0, regdev);
-        wwo->device = HeapAlloc(GetProcessHeap(), 0, strlen(device));
-        strcpy(wwo->device, device);
-        TRACE("using waveout device \"%s\"\n", wwo->device);
-
-        snprintf(wwo->interface_name, sizeof(wwo->interface_name), "winealsa: %s", wwo->device);
-
-        wwo->outcaps.wMid = 0x0002;
-        wwo->outcaps.wPid = 0x0104;
-        wwo->outcaps.vDriverVersion = 0x0100;
-        wwo->outcaps.dwFormats = 0x00000000;
-        wwo->outcaps.dwSupport = 0;
-        strcpy(wwo->ds_desc.szDrvname, "winealsa.drv");
-
-        snd_pcm_info_alloca(&info);
-        snd_pcm_hw_params_alloca(&hw_params);
-
-#define EXIT_ON_ERROR(f,txt) do { int err; if ( (err = (f) ) < 0) { ERR(txt ": %s\n", snd_strerror(err)); if (h) snd_pcm_close(h); return -1; } } while(0)
-
-        h = NULL;
-        snd_pcm_open(&h, wwo->device, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
-        if (!h)
-            continue;
-
-        EXIT_ON_ERROR( snd_pcm_info(h, info) , "pcm info" );
-
-        TRACE("dev=%d id=%s name=%s subdev=%d subdev_name=%s subdev_avail=%d subdev_num=%d stream=%s subclass=%s \n",
-           snd_pcm_info_get_device(info),
-           snd_pcm_info_get_id(info),
-           snd_pcm_info_get_name(info),
-           snd_pcm_info_get_subdevice(info),
-           snd_pcm_info_get_subdevice_name(info),
-           snd_pcm_info_get_subdevices_avail(info),
-           snd_pcm_info_get_subdevices_count(info),
-           snd_pcm_stream_name(snd_pcm_info_get_stream(info)),
-           (snd_pcm_info_get_subclass(info) == SND_PCM_SUBCLASS_GENERIC_MIX ? "GENERIC MIX": "MULTI MIX"));
-
-        strcpy(wwo->ds_desc.szDesc, snd_pcm_info_get_name(info));
-        MultiByteToWideChar(CP_ACP, 0, wwo->ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
-        strcpyW(wwo->outcaps.szPname, nameW);
-        EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
-#undef EXIT_ON_ERROR
-
-        err = snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir);
-        err = snd_pcm_hw_params_get_rate_max(hw_params, &ratemax, &dir);
-        err = snd_pcm_hw_params_get_channels_min(hw_params, &chmin);
-        err = snd_pcm_hw_params_get_channels_max(hw_params, &chmax);
-        if (TRACE_ON(wave))
-            ALSA_TraceParameters(hw_params, NULL, TRUE);
-
-	snd_pcm_format_mask_alloca(&fmask);
-	snd_pcm_hw_params_get_format_mask(hw_params, fmask);
-
-#define X(r,v) \
-        if ( (r) >= ratemin && ( (r) <= ratemax || ratemax == -1) ) \
-        { \
-           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
-           { \
-              if (chmin <= 1 && 1 <= chmax) \
-                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##M08; \
-              if (chmin <= 2 && 2 <= chmax) \
-                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##S08; \
-           } \
-           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
-           { \
-              if (chmin <= 1 && 1 <= chmax) \
-                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##M16; \
-              if (chmin <= 2 && 2 <= chmax) \
-                  wwo->outcaps.dwFormats |= WAVE_FORMAT_##v##S16; \
-           } \
-        }
-        X(11025,1);
-        X(22050,2);
-        X(44100,4);
-        X(48000,48);
-        X(96000,96);
-#undef X
-
-        if (chmin > 1)
-            FIXME("-\n");
-        wwo->outcaps.wChannels = chmax;
-
-        /* FIXME: always true ? */
-        wwo->outcaps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
-
-	snd_pcm_access_mask_alloca(&acmask);
-	snd_pcm_hw_params_get_access_mask(hw_params, acmask);
-
-	/* FIXME: NONITERLEAVED and COMPLEX are not supported right now */
-	if ( snd_pcm_access_mask_test( acmask, SND_PCM_ACCESS_MMAP_INTERLEAVED ) )
-            wwo->outcaps.dwSupport |= WAVECAPS_DIRECTSOUND;
-
-        TRACE("Configured with dwFmts=%08lx dwSupport=%08lx\n",
-              wwo->outcaps.dwFormats, wwo->outcaps.dwSupport);
-
-        snd_pcm_close(h);
-
-        /* Get a high level control handle for volume operations */
-        /* FIXME:  This is never freed! (there are other things done in this function similarly not freed) */
-        sprintf(mixer, "hw:%d", i);
-        wwo->mixer = HeapAlloc(GetProcessHeap(), 0, strlen(mixer));
-        strcpy(wwo->mixer, mixer);
-        TRACE("using mixer device \"%s\"\n", wwo->mixer);
-
-        if (snd_hctl_open(&wwo->hctl, wwo->mixer, 0) >= 0)
-            snd_hctl_load(wwo->hctl);
-        else
-            wwo->hctl = NULL;
-
-        /* check for volume control support */
-        if (wwo->hctl) {
-            wwo->outcaps.dwSupport |= WAVECAPS_VOLUME;
-
-            if (chmin <= 2 && 2 <= chmax)
-                wwo->outcaps.dwSupport |= WAVECAPS_LRVOLUME;
-        }
-
-        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
-                                   WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
-                                   WAVE_FORMAT_96M08 | WAVE_FORMAT_1M16  |
-                                   WAVE_FORMAT_2M16  | WAVE_FORMAT_4M16  |
-                                   WAVE_FORMAT_48M16 | WAVE_FORMAT_96M16) )
-            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
-
-        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1S08  | WAVE_FORMAT_2S08  |
-                                   WAVE_FORMAT_4S08  | WAVE_FORMAT_48S08 |
-                                   WAVE_FORMAT_96S08 | WAVE_FORMAT_1S16  |
-                                   WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
-                                   WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
-            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
-
-        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1M08  | WAVE_FORMAT_2M08  |
-                                   WAVE_FORMAT_4M08  | WAVE_FORMAT_48M08 |
-                                   WAVE_FORMAT_96M08 | WAVE_FORMAT_1S08  |
-                                   WAVE_FORMAT_2S08  | WAVE_FORMAT_4S08  |
-                                   WAVE_FORMAT_48S08 | WAVE_FORMAT_96S08) )
-            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARY8BIT;
-
-        if (wwo->outcaps.dwFormats & (WAVE_FORMAT_1M16  | WAVE_FORMAT_2M16  |
-                                   WAVE_FORMAT_4M16  | WAVE_FORMAT_48M16 |
-                                   WAVE_FORMAT_96M16 | WAVE_FORMAT_1S16  |
-                                   WAVE_FORMAT_2S16  | WAVE_FORMAT_4S16  |
-                                   WAVE_FORMAT_48S16 | WAVE_FORMAT_96S16) )
-            wwo->ds_caps.dwFlags |= DSCAPS_PRIMARY16BIT;
-
-        wwo->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
-        wwo->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
-        wwo->ds_caps.dwPrimaryBuffers = 1;
-
-        ALSA_WodNumDevs++;
+        ALSA_RegGetBoolean(key, "AutoScanCards", &AutoScanCards);
+        ALSA_RegGetBoolean(key, "AutoScanDevices", &AutoScanDevices);
+        ALSA_RegGetBoolean(key, "UseDirectHW", &UseDirectHW);
+        ALSA_RegGetInt(key, "DeviceCount", &DeviceCount);
     }
 
-    ALSA_WidNumDevs = 0;
+    if (AutoScanCards)
+        rc = ALSA_PerformDefaultScan(UseDirectHW, AutoScanDevices);
 
-    for (i = 0; i < MAX_WAVEINDRV; i++)
+    for (i = 0; i < DeviceCount; i++)
     {
-        char device[64];
-        char * regdev;
-        WCHAR nameW[64];
-	snd_pcm_format_mask_t * fmask;
-	snd_pcm_access_mask_t * acmask;
+        char *ctl_name = NULL;
+        char *pcm_name = NULL;
+        char value[30];
 
-        wwi = &WInDev[ALSA_WidNumDevs];
-
-        regdev = ALSA_GetDeviceFromReg("CaptureDevice");
-        sprintf(device, "%s:%d", regdev, i);
-        HeapFree(GetProcessHeap(), 0, regdev);
-        wwi->device = HeapAlloc(GetProcessHeap(), 0, strlen(device));
-        strcpy(wwi->device, device);
-
-        TRACE("using wavein device \"%s\"\n", wwi->device);
-
-        snprintf(wwi->interface_name, sizeof(wwi->interface_name), "winealsa: %s", wwi->device);
-
-        wwi->incaps.wMid = 0x0002;
-        wwi->incaps.wPid = 0x0104;
-        wwi->incaps.vDriverVersion = 0x0100;
-        wwi->incaps.dwFormats = 0x00000000;
-        strcpy(wwi->ds_desc.szDrvname, "winealsa.drv");
-        wwi->dwSupport = 0;
-
-        snd_pcm_info_alloca(&info);
-        snd_pcm_hw_params_alloca(&hw_params);
-
-#define EXIT_ON_ERROR(f,txt) do { int err; if ( (err = (f) ) < 0) { ERR(txt ": %s\n", snd_strerror(err)); if (h) snd_pcm_close(h); return -1; } } while(0)
-
-        h = NULL;
-        snd_pcm_open(&h, wwi->device, SND_PCM_STREAM_CAPTURE, SND_PCM_NONBLOCK);
-        if (!h)
-            continue;
-
-        EXIT_ON_ERROR( snd_pcm_info(h, info) , "pcm info" );
-
-        TRACE("dev=%d id=%s name=%s subdev=%d subdev_name=%s subdev_avail=%d subdev_num=%d stream=%s subclass=%s \n",
-           snd_pcm_info_get_device(info),
-           snd_pcm_info_get_id(info),
-           snd_pcm_info_get_name(info),
-           snd_pcm_info_get_subdevice(info),
-           snd_pcm_info_get_subdevice_name(info),
-           snd_pcm_info_get_subdevices_avail(info),
-           snd_pcm_info_get_subdevices_count(info),
-           snd_pcm_stream_name(snd_pcm_info_get_stream(info)),
-           (snd_pcm_info_get_subclass(info) == SND_PCM_SUBCLASS_GENERIC_MIX ? "GENERIC MIX": "MULTI MIX"));
-
-        strcpy(wwi->ds_desc.szDesc, snd_pcm_info_get_name(info));
-        MultiByteToWideChar(CP_ACP, 0, wwi->ds_desc.szDesc, -1, nameW, sizeof(nameW)/sizeof(WCHAR));
-        strcpyW(wwi->incaps.szPname, nameW);
-        EXIT_ON_ERROR( snd_pcm_hw_params_any(h, hw_params) , "pcm hw params" );
-#undef EXIT_ON_ERROR
-        err = snd_pcm_hw_params_get_rate_min(hw_params, &ratemin, &dir);
-        err = snd_pcm_hw_params_get_rate_max(hw_params, &ratemax, &dir);
-        err = snd_pcm_hw_params_get_channels_min(hw_params, &chmin);
-        err = snd_pcm_hw_params_get_channels_max(hw_params, &chmax);
-
-        if (TRACE_ON(wave))
-            ALSA_TraceParameters(hw_params, NULL, TRUE);
-
-	snd_pcm_format_mask_alloca(&fmask);
-	snd_pcm_hw_params_get_format_mask(hw_params, fmask);
-
-#define X(r,v) \
-        if ( (r) >= ratemin && ( (r) <= ratemax || ratemax == -1) ) \
-        { \
-           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_U8)) \
-           { \
-              if (chmin <= 1 && 1 <= chmax) \
-                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##M08; \
-              if (chmin <= 2 && 2 <= chmax) \
-                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##S08; \
-           } \
-           if (snd_pcm_format_mask_test( fmask, SND_PCM_FORMAT_S16_LE)) \
-           { \
-              if (chmin <= 1 && 1 <= chmax) \
-                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##M16; \
-              if (chmin <= 2 && 2 <= chmax) \
-                  wwi->incaps.dwFormats |= WAVE_FORMAT_##v##S16; \
-           } \
-        }
-        X(11025,1);
-        X(22050,2);
-        X(44100,4);
-        X(48000,48);
-        X(96000,96);
-#undef X
-
-        if (chmin > 1)
-            FIXME("-\n");
-        wwi->incaps.wChannels = chmax;
-
-	snd_pcm_access_mask_alloca(&acmask);
-	snd_pcm_hw_params_get_access_mask(hw_params, acmask);
-
-	/* FIXME: NONITERLEAVED and COMPLEX are not supported right now */
-	if ( snd_pcm_access_mask_test( acmask, SND_PCM_ACCESS_MMAP_INTERLEAVED ) ) {
-#if 0
-            wwi->dwSupport |= WAVECAPS_DIRECTSOUND;
-#endif
+        sprintf(value, "DevicePCM%d", i + 1);
+        if (ALSA_RegGetString(key, value, &pcm_name) == ERROR_SUCCESS)
+        {
+            sprintf(value, "DeviceCTL%d", i + 1);
+            ALSA_RegGetString(key, value, &ctl_name);
+            ALSA_AddUserSpecifiedDevice(ctl_name, pcm_name);
         }
 
-        TRACE("Configured with dwFmts=%08lx\n", wwi->incaps.dwFormats);
+        if (ctl_name)
+            HeapFree(GetProcessHeap(), 0, ctl_name);
 
-        snd_pcm_close(h);
-
-        ALSA_WidNumDevs++;
+        if (pcm_name)
+            HeapFree(GetProcessHeap(), 0, pcm_name);
     }
 
-    return 0;
+    if (key)
+        RegCloseKey(key);
+
+    return (rc);
 }
 
 /******************************************************************
@@ -1099,6 +1675,7 @@ static int ALSA_DestroyRingMessage(ALSA_MSG_RING* omr)
     CloseHandle(omr->msg_event);
 #endif
     HeapFree(GetProcessHeap(),0,omr->messages);
+    omr->ring_buffer_size = 0;
     DeleteCriticalSection(&omr->msg_crst);
     return 0;
 }
@@ -1259,10 +1836,18 @@ static DWORD wodNotifyClient(WINE_WAVEDEV* wwo, WORD wMsg, DWORD dwParam1, DWORD
 static BOOL wodUpdatePlayedTotal(WINE_WAVEDEV* wwo, snd_pcm_status_t* ps)
 {
     snd_pcm_sframes_t delay = 0;
-    snd_pcm_delay(wwo->handle, &delay);
-    if (snd_pcm_state(wwo->handle) != SND_PCM_STATE_RUNNING)
+    snd_pcm_state_t state;
+
+    state = snd_pcm_state(wwo->pcm);
+    snd_pcm_delay(wwo->pcm, &delay);
+
+    /* A delay < 0 indicates an underrun; for our purposes that's 0.  */
+    if ( (state != SND_PCM_STATE_RUNNING && state != SND_PCM_STATE_PREPARED) || (delay < 0))
+    {
+        WARN("Unexpected state (%d) or delay (%ld) while updating Total Played, resetting\n", state, delay);
         delay=0;
-    wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->handle, delay);
+    }
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal - snd_pcm_frames_to_bytes(wwo->pcm, delay);
     return TRUE;
 }
 
@@ -1375,18 +1960,18 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
 {
     /* Only attempt to write to free frames */
     LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
-    DWORD dwLength = snd_pcm_bytes_to_frames(wwo->handle, lpWaveHdr->dwBufferLength - wwo->dwPartialOffset);
+    DWORD dwLength = snd_pcm_bytes_to_frames(wwo->pcm, lpWaveHdr->dwBufferLength - wwo->dwPartialOffset);
     int toWrite = min(dwLength, *frames);
     int written;
 
     TRACE("Writing wavehdr %p.%lu[%lu]\n", lpWaveHdr, wwo->dwPartialOffset, lpWaveHdr->dwBufferLength);
 
     if (toWrite > 0) {
-	written = (wwo->write)(wwo->handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
+	written = (wwo->write)(wwo->pcm, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
 	if ( written < 0) {
 	    /* XRUN occurred. let's try to recover */
 	    ALSA_XRUNRecovery(wwo, written);
-	    written = (wwo->write)(wwo->handle, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
+	    written = (wwo->write)(wwo->pcm, lpWaveHdr->lpData + wwo->dwPartialOffset, toWrite);
 	}
 	if (written <= 0) {
 	    /* still in error */
@@ -1396,7 +1981,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
     } else
 	written = 0;
 
-    wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->handle, written);
+    wwo->dwPartialOffset += snd_pcm_frames_to_bytes(wwo->pcm, written);
     if ( wwo->dwPartialOffset >= lpWaveHdr->dwBufferLength) {
 	/* this will be used to check if the given wave header has been fully played or not... */
 	wwo->dwPartialOffset = lpWaveHdr->dwBufferLength;
@@ -1404,7 +1989,7 @@ static int wodPlayer_WriteMaxFrags(WINE_WAVEDEV* wwo, DWORD* frames)
 	wodPlayer_PlayPtrNext(wwo);
     }
     *frames -= written;
-    wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->handle, written);
+    wwo->dwWrittenTotal += snd_pcm_frames_to_bytes(wwo->pcm, written);
     TRACE("dwWrittenTotal=%lu\n", wwo->dwWrittenTotal);
 
     return written;
@@ -1500,19 +2085,19 @@ static	void	wodPlayer_Reset(WINE_WAVEDEV* wwo)
     TRACE("(%p)\n", wwo);
 
     /* flush all possible output */
-    wait_for_poll(wwo->handle, wwo->ufds, wwo->count);
+    wait_for_poll(wwo->pcm, wwo->ufds, wwo->count);
 
     wodUpdatePlayedTotal(wwo, NULL);
     /* updates current notify list */
     wodPlayer_NotifyCompletions(wwo, FALSE);
 
-    if ( (err = snd_pcm_drop(wwo->handle)) < 0) {
+    if ( (err = snd_pcm_drop(wwo->pcm)) < 0) {
 	FIXME("flush: %s\n", snd_strerror(err));
 	wwo->hThread = 0;
 	wwo->state = WINE_WS_STOPPED;
 	ExitThread(-1);
     }
-    if ( (err = snd_pcm_prepare(wwo->handle)) < 0 )
+    if ( (err = snd_pcm_prepare(wwo->pcm)) < 0 )
         ERR("pcm prepare failed: %s\n", snd_strerror(err));
 
     /* remove any buffer */
@@ -1560,9 +2145,9 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 
 	switch (msg) {
 	case WINE_WM_PAUSING:
-	    if ( snd_pcm_state(wwo->handle) == SND_PCM_STATE_RUNNING )
+	    if ( snd_pcm_state(wwo->pcm) == SND_PCM_STATE_RUNNING )
 	     {
-		err = snd_pcm_pause(wwo->handle, 1);
+		err = snd_pcm_pause(wwo->pcm, 1);
 		if ( err < 0 )
 		    ERR("pcm_pause failed: %s\n", snd_strerror(err));
 	     }
@@ -1572,9 +2157,9 @@ static void wodPlayer_ProcessMessages(WINE_WAVEDEV* wwo)
 	case WINE_WM_RESTARTING:
             if (wwo->state == WINE_WS_PAUSED)
             {
-		if ( snd_pcm_state(wwo->handle) == SND_PCM_STATE_PAUSED )
+		if ( snd_pcm_state(wwo->pcm) == SND_PCM_STATE_PAUSED )
 		 {
-		    err = snd_pcm_pause(wwo->handle, 0);
+		    err = snd_pcm_pause(wwo->pcm, 0);
 		    if ( err < 0 )
 		        ERR("pcm_pause failed: %s\n", snd_strerror(err));
 		 }
@@ -1636,7 +2221,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
     DWORD               availInQ;
 
     wodUpdatePlayedTotal(wwo, NULL);
-    availInQ = snd_pcm_avail_update(wwo->handle);
+    availInQ = snd_pcm_avail_update(wwo->pcm);
 
 #if 0
     /* input queue empty and output buffer with less than one fragment to play */
@@ -1645,7 +2230,6 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEDEV* wwo)
         return INFINITE;
     }
 #endif
-
     /* no more room... no need to try to feed */
     if (availInQ > 0) {
         /* Feed from partial wavehdr */
@@ -1716,8 +2300,8 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	TRACE("MAX_WAVOUTDRV reached !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -1731,7 +2315,9 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEDEV*	        wwo;
-    snd_pcm_hw_params_t *       hw_params;
+    snd_pcm_t *                 pcm = NULL;
+    snd_hctl_t *                hctl = NULL;
+    snd_pcm_hw_params_t *       hw_params = NULL;
     snd_pcm_sw_params_t *       sw_params;
     snd_pcm_access_t            access;
     snd_pcm_format_t            format = -1;
@@ -1741,11 +2327,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_uframes_t           buffer_size;
     snd_pcm_uframes_t           period_size;
     int                         flags;
-    snd_pcm_t *                 pcm;
     int                         err=0;
     int                         dir=0;
+    DWORD                       retcode = 0;
 
-    snd_pcm_hw_params_alloca(&hw_params);
     snd_pcm_sw_params_alloca(&sw_params);
 
     TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
@@ -1753,8 +2338,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	TRACE("MAX_WAVOUTDRV reached !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -1775,8 +2360,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo = &WOutDev[wDevID];
 
-    if (wwo->handle != NULL) {
-        WARN("already allocated\n");
+    if (wwo->pcm != NULL) {
+        WARN("%d already allocated\n", wDevID);
         return MMSYSERR_ALLOCATED;
     }
 
@@ -1784,17 +2369,32 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
-    wwo->handle = 0;
     flags = SND_PCM_NONBLOCK;
+
+    /* FIXME - why is this ifdefed? */
 #if 0
     if ( dwFlags & WAVE_DIRECTSOUND )
 	flags |= SND_PCM_ASYNC;
 #endif
 
-    if ( (err = snd_pcm_open(&pcm, wwo->device, SND_PCM_STREAM_PLAYBACK, flags)) < 0)
+    if ( (err = snd_pcm_open(&pcm, wwo->pcmname, SND_PCM_STREAM_PLAYBACK, flags)) < 0)
     {
         ERR("Error open: %s\n", snd_strerror(err));
 	return MMSYSERR_NOTENABLED;
+    }
+
+    if (wwo->ctlname)
+    {
+        err = snd_hctl_open(&hctl, wwo->ctlname, 0);
+        if (err >= 0)
+        {
+            snd_hctl_load(hctl);
+        }
+        else
+        {
+            WARN("Could not open hctl for [%s]: %s\n", wwo->ctlname, snd_strerror(err));
+            hctl = NULL;
+        }
     }
 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
@@ -1816,18 +2416,24 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	    wwo->format.Format.nChannels;
     }
 
-    snd_pcm_hw_params_any(pcm, hw_params);
-
 #define EXIT_ON_ERROR(f,e,txt) do \
 { \
     int err; \
     if ( (err = (f) ) < 0) \
     { \
 	WARN(txt ": %s\n", snd_strerror(err)); \
-	snd_pcm_close(pcm); \
-	return e; \
+	retcode=e; \
+	goto errexit; \
     } \
 } while(0)
+
+    snd_pcm_hw_params_malloc(&hw_params);
+    if (! hw_params)
+    {
+        retcode = MMSYSERR_NOMEM;
+        goto errexit;
+    }
+    snd_pcm_hw_params_any(pcm, hw_params);
 
     access = SND_PCM_ACCESS_MMAP_INTERLEAVED;
     if ( ( err = snd_pcm_hw_params_set_access(pcm, hw_params, access ) ) < 0) {
@@ -1868,20 +2474,20 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         format = (wwo->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_FLOAT_LE : -1;
     } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_MULAW) {
         FIXME("unimplemented format: WAVE_FORMAT_MULAW\n");
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        retcode = WAVERR_BADFORMAT;
+        goto errexit;
     } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_ALAW) {
         FIXME("unimplemented format: WAVE_FORMAT_ALAW\n");
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        retcode = WAVERR_BADFORMAT;
+        goto errexit;
     } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_ADPCM) {
         FIXME("unimplemented format: WAVE_FORMAT_ADPCM\n");
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        retcode = WAVERR_BADFORMAT;
+        goto errexit;
     } else {
         ERR("invalid format: %0x04x\n", wwo->format.Format.wFormatTag);
-        snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        retcode = WAVERR_BADFORMAT;
+        goto errexit;
     }
 
     if ((err = snd_pcm_hw_params_set_format(pcm, hw_params, format)) < 0) {
@@ -1911,8 +2517,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     err = snd_pcm_hw_params_set_rate_near(pcm, hw_params, &rate, &dir);
     if (err < 0) {
 	WARN("Rate %ld Hz not available for playback: %s\n", wwo->format.Format.nSamplesPerSec, snd_strerror(rate));
-	snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        retcode = WAVERR_BADFORMAT;
+        goto errexit;
     }
     if (!NearMatch(rate, wwo->format.Format.nSamplesPerSec)) {
         if (dwFlags & WAVE_DIRECTSOUND) {
@@ -1922,8 +2528,8 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
             wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
         } else {
             WARN("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
-            snd_pcm_close(pcm);
-            return WAVERR_BADFORMAT;
+            retcode = WAVERR_BADFORMAT;
+            goto errexit;
         }
     }
 
@@ -1959,6 +2565,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     EXIT_ON_ERROR( snd_pcm_sw_params_set_avail_min(pcm, sw_params, period_size), MMSYSERR_ERROR, "unable to set avail min");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_xfer_align(pcm, sw_params, 1), MMSYSERR_ERROR, "unable to set xfer align");
     EXIT_ON_ERROR( snd_pcm_sw_params_set_silence_threshold(pcm, sw_params, 0), MMSYSERR_ERROR, "unable to set silence threshold");
+    EXIT_ON_ERROR( snd_pcm_sw_params_set_xrun_mode(pcm, sw_params, SND_PCM_XRUN_NONE), MMSYSERR_ERROR, "unable to set xrun mode");
     EXIT_ON_ERROR( snd_pcm_sw_params(pcm, sw_params), MMSYSERR_ERROR, "unable to set sw params for playback");
 #undef EXIT_ON_ERROR
 
@@ -1968,20 +2575,15 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ALSA_TraceParameters(hw_params, sw_params, FALSE);
 
     /* now, we can save all required data for later use... */
-    if ( wwo->hw_params )
-    	snd_pcm_hw_params_free(wwo->hw_params);
-    snd_pcm_hw_params_malloc(&(wwo->hw_params));
-    snd_pcm_hw_params_copy(wwo->hw_params, hw_params);
 
     wwo->dwBufferSize = snd_pcm_frames_to_bytes(pcm, buffer_size);
     wwo->lpQueuePtr = wwo->lpPlayPtr = wwo->lpLoopPtr = NULL;
-    wwo->handle = pcm;
     wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
     wwo->dwPartialOffset = 0;
 
     ALSA_InitRingMessage(&wwo->msgRing);
 
-    wwo->count = snd_pcm_poll_descriptors_count (wwo->handle);
+    wwo->count = snd_pcm_poll_descriptors_count (pcm);
     if (wwo->count <= 0) {
 	ERR("Invalid poll descriptors count\n");
 	return MMSYSERR_ERROR;
@@ -1990,11 +2592,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     wwo->ufds = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(struct pollfd) * wwo->count);
     if (wwo->ufds == NULL) {
 	ERR("No enough memory\n");
-	return MMSYSERR_NOMEM;
+        retcode = MMSYSERR_NOMEM;
+        goto errexit;
     }
-    if ((err = snd_pcm_poll_descriptors(wwo->handle, wwo->ufds, wwo->count)) < 0) {
+    if ((err = snd_pcm_poll_descriptors(pcm, wwo->ufds, wwo->count)) < 0) {
 	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
-	return MMSYSERR_ERROR;
+        retcode = MMSYSERR_NOMEM;
+        goto errexit;
     }
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
@@ -2002,6 +2606,13 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
         if (wwo->hThread)
             SetThreadPriority(wwo->hThread, THREAD_PRIORITY_TIME_CRITICAL);
+        else
+        {
+            ERR("Thread creation for the wodPlayer failed!\n");
+	    CloseHandle(wwo->hStartUpEvent);
+            retcode = MMSYSERR_NOMEM;
+            goto errexit;
+        }
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
     } else {
@@ -2010,16 +2621,42 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
-    TRACE("handle=%08lx \n", (DWORD)wwo->handle);
-/*    if (wwo->dwFragmentSize % wwo->format.Format.nBlockAlign)
-	ERR("Fragment doesn't contain an integral number of data blocks\n");
-*/
+    TRACE("handle=%08lx \n", (DWORD)pcm);
     TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->format.Format.wBitsPerSample, wwo->format.Format.nAvgBytesPerSec,
 	  wwo->format.Format.nSamplesPerSec, wwo->format.Format.nChannels,
 	  wwo->format.Format.nBlockAlign);
 
+    wwo->pcm = pcm;
+    wwo->hctl = hctl;
+    if ( wwo->hw_params )
+    	snd_pcm_hw_params_free(wwo->hw_params);
+    wwo->hw_params = hw_params;
+
+
     return wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
+
+errexit:
+    if (pcm)
+        snd_pcm_close(pcm);
+
+    if (hctl)
+    {
+        snd_hctl_free(hctl);
+        snd_hctl_close(hctl);
+    }
+
+    if ( hw_params )
+    	snd_pcm_hw_params_free(hw_params);
+
+    if (wwo->ufds)
+        HeapFree(GetProcessHeap(), 0, wwo->ufds);
+    wwo->ufds = NULL;
+
+    if (wwo->msgRing.ring_buffer_size > 0)
+        ALSA_DestroyRingMessage(&wwo->msgRing);
+
+    return retcode;
 }
 
 
@@ -2033,8 +2670,13 @@ static DWORD wodClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to close already closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2048,16 +2690,27 @@ static DWORD wodClose(WORD wDevID)
 	}
         ALSA_DestroyRingMessage(&wwo->msgRing);
 
-	snd_pcm_hw_params_free(wwo->hw_params);
+        if (wwo->hw_params)
+	    snd_pcm_hw_params_free(wwo->hw_params);
 	wwo->hw_params = NULL;
 
-        snd_pcm_close(wwo->handle);
-	wwo->handle = NULL;
+        if (wwo->pcm)
+            snd_pcm_close(wwo->pcm);
+	wwo->pcm = NULL;
+
+        if (wwo->hctl)
+        {
+            snd_hctl_free(wwo->hctl);
+            snd_hctl_close(wwo->hctl);
+        }
+	wwo->hctl = NULL;
 
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
 
+    /* JPW TODO:  should we be freeing this in case of WAVERR_STILLPLAYING? */
     HeapFree(GetProcessHeap(), 0, wwo->ufds);
+    wwo->ufds = NULL;
     return ret;
 }
 
@@ -2070,9 +2723,13 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
-    /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-        WARN("bad dev ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to write to closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2098,8 +2755,13 @@ static DWORD wodPause(WORD wDevID)
 {
     TRACE("(%u);!\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to pause closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2115,8 +2777,13 @@ static DWORD wodRestart(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to restart closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2139,8 +2806,13 @@ static DWORD wodReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to reset closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2158,8 +2830,13 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to get position of closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2178,10 +2855,16 @@ static DWORD wodBreakLoop(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
+
+    if (WOutDev[wDevID].pcm == NULL) {
+	WARN("Requested to breakloop of closed device %d!\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
     ALSA_AddRingMessage(&WOutDev[wDevID].msgRing, WINE_WM_BREAKLOOP, 0, TRUE);
     return MMSYSERR_NOERROR;
 }
@@ -2198,8 +2881,8 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     DWORD              rc;
 
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -2239,10 +2922,11 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     DWORD              rc;
 
     TRACE("(%u, %08lX);\n", wDevID, dwParam);
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WodNumDevs) {
+	TRACE("Asked for device %d, but only %ld known!\n", wDevID, ALSA_WodNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
+
     wwo = &WOutDev[wDevID];
 
     rc = ALSA_CheckSetVolume(wwo->hctl, NULL, NULL, &min, &max, NULL, NULL, NULL);
@@ -2380,21 +3064,21 @@ struct IDsDriverBufferImpl
 static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
 {
     WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
-    snd_pcm_state_t    state = snd_pcm_state(wwo->handle);
+    snd_pcm_state_t    state = snd_pcm_state(wwo->pcm);
 
     if ( state == SND_PCM_STATE_XRUN )
     {
-	int            err = snd_pcm_prepare(wwo->handle);
+	int            err = snd_pcm_prepare(wwo->pcm);
 	TRACE("xrun occurred\n");
 	if ( err < 0 )
             ERR("recovery from xrun failed, prepare failed: %s\n", snd_strerror(err));
     }
     else if ( state == SND_PCM_STATE_SUSPENDED )
     {
-	int            err = snd_pcm_resume(wwo->handle);
+	int            err = snd_pcm_resume(wwo->pcm);
 	TRACE("recovery from suspension occurred\n");
         if (err < 0 && err != -EAGAIN){
-            err = snd_pcm_prepare(wwo->handle);
+            err = snd_pcm_prepare(wwo->pcm);
             if (err < 0)
                 ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
         }
@@ -2411,14 +3095,14 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
     int err;
     int dir=0;
 
-    if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->handle)
+    if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->pcm)
     	return;
 
     err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
     err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
     dir=0;
     err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
-    avail = snd_pcm_avail_update(wwo->handle);
+    avail = snd_pcm_avail_update(wwo->pcm);
 
     DSDB_CheckXRUN(pdbi);
 
@@ -2435,17 +3119,17 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 
 	EnterCriticalSection(&pdbi->mmap_crst);
 
-	snd_pcm_mmap_begin(wwo->handle, &areas, &ofs, &frames);
+	snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
 	if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
 	    FIXME("Can't access sound driver's buffer directly.\n");
-	err = snd_pcm_mmap_commit(wwo->handle, ofs, frames);
+	err = snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
 
 	LeaveCriticalSection(&pdbi->mmap_crst);
 
 	if ( err != (snd_pcm_sframes_t) frames)
 	    ERR("mmap partially failed.\n");
 
-	avail = snd_pcm_avail_update(wwo->handle);
+	avail = snd_pcm_avail_update(wwo->pcm);
     }
 
     if (avail > 0)
@@ -2459,17 +3143,17 @@ static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi)
 
 	EnterCriticalSection(&pdbi->mmap_crst);
 
-	snd_pcm_mmap_begin(wwo->handle, &areas, &ofs, &frames);
+	snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
 	if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
 	    FIXME("Can't access sound driver's buffer directly.\n");
-	err = snd_pcm_mmap_commit(wwo->handle, ofs, frames);
+	err = snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
 
 	LeaveCriticalSection(&pdbi->mmap_crst);
 
 	if ( err != (snd_pcm_sframes_t) frames)
 	    ERR("mmap partially failed.\n");
 
-	avail = snd_pcm_avail_update(wwo->handle);
+	avail = snd_pcm_avail_update(wwo->pcm);
     }
 }
 
@@ -2507,24 +3191,24 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
           snd_pcm_format_name(format), frames, channels, bits_per_sample, bits_per_frame);
 
     pdbi->mmap_buflen_frames = frames;
-    pdbi->mmap_buflen_bytes = snd_pcm_frames_to_bytes( wwo->handle, frames );
+    pdbi->mmap_buflen_bytes = snd_pcm_frames_to_bytes( wwo->pcm, frames );
 
-    avail = snd_pcm_avail_update(wwo->handle);
+    avail = snd_pcm_avail_update(wwo->pcm);
     if (avail < 0)
     {
 	ERR("No buffer is available: %s.", snd_strerror(avail));
 	return DSERR_GENERIC;
     }
-    err = snd_pcm_mmap_begin(wwo->handle, (const snd_pcm_channel_area_t **)&pdbi->mmap_areas, &ofs, &avail);
+    err = snd_pcm_mmap_begin(wwo->pcm, (const snd_pcm_channel_area_t **)&pdbi->mmap_areas, &ofs, &avail);
     if ( err < 0 )
     {
 	ERR("Can't map sound device for direct access: %s\n", snd_strerror(err));
 	return DSERR_GENERIC;
     }
     avail = 0;/* We don't have any data to commit yet */
-    err = snd_pcm_mmap_commit(wwo->handle, ofs, avail);
+    err = snd_pcm_mmap_commit(wwo->pcm, ofs, avail);
     if (ofs > 0)
-	err = snd_pcm_rewind(wwo->handle, ofs);
+	err = snd_pcm_rewind(wwo->pcm, ofs);
     pdbi->mmap_buffer = pdbi->mmap_areas->addr;
 
     snd_pcm_format_set_silence(format, pdbi->mmap_buffer, frames );
@@ -2534,7 +3218,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 
     InitializeCriticalSection(&pdbi->mmap_crst);
 
-    err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->handle, DSDB_PCMCallback, pdbi);
+    err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->pcm, DSDB_PCMCallback, pdbi);
     if ( err < 0 )
     {
 	ERR("add_pcm_handler failed. reason: %s\n", snd_strerror(err));
@@ -2658,18 +3342,18 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     dir=0;
     err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
 
-    if (wwo->handle == NULL) return DSERR_GENERIC;
+    if (wwo->pcm == NULL) return DSERR_GENERIC;
     /** we need to track down buffer underruns */
     DSDB_CheckXRUN(This);
 
     EnterCriticalSection(&This->mmap_crst);
     /* FIXME: snd_pcm_mmap_hw_ptr() should not be accessed by a user app. */
     /*        It will NOT return what why want anyway. */
-    hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->handle);
+    hw_ptr = _snd_pcm_mmap_hw_ptr(wwo->pcm);
     if (lpdwPlay)
-	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->handle, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
+	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr/ period_size  * period_size) % This->mmap_buflen_bytes;
     if (lpdwWrite)
-	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->handle, (hw_ptr / period_size + 1) * period_size ) % This->mmap_buflen_bytes;
+	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->pcm, (hw_ptr / period_size + 1) * period_size ) % This->mmap_buflen_bytes;
     LeaveCriticalSection(&This->mmap_crst);
 
     TRACE("hw_ptr=0x%08x, playpos=%ld, writepos=%ld\n", (unsigned int)hw_ptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
@@ -2685,18 +3369,18 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
 
-    if (wwo->handle == NULL) return DSERR_GENERIC;
+    if (wwo->pcm == NULL) return DSERR_GENERIC;
 
-    state = snd_pcm_state(wwo->handle);
+    state = snd_pcm_state(wwo->pcm);
     if ( state == SND_PCM_STATE_SETUP )
     {
-	err = snd_pcm_prepare(wwo->handle);
-        state = snd_pcm_state(wwo->handle);
+	err = snd_pcm_prepare(wwo->pcm);
+        state = snd_pcm_state(wwo->pcm);
     }
     if ( state == SND_PCM_STATE_PREPARED )
      {
 	DSDB_MMAPCopy(This);
-	err = snd_pcm_start(wwo->handle);
+	err = snd_pcm_start(wwo->pcm);
      }
     return DS_OK;
 }
@@ -2711,7 +3395,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 
     TRACE("(%p)\n",iface);
 
-    if (wwo->handle == NULL) return DSERR_GENERIC;
+    if (wwo->pcm == NULL) return DSERR_GENERIC;
 
     /* ring buffer wrap up detection */
     IDsDriverBufferImpl_GetPosition(iface, &play, &write);
@@ -2721,7 +3405,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
     	return DS_OK;
     }
 
-    if ( ( err = snd_pcm_drop(wwo->handle)) < 0 )
+    if ( ( err = snd_pcm_drop(wwo->pcm)) < 0 )
     {
    	ERR("error while stopping pcm: %s\n", snd_strerror(err));
 	return DSERR_GENERIC;
@@ -2953,8 +3637,8 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
-    if (wDevID >= MAX_WAVEINDRV) {
-	TRACE("MAX_WAVOUTDRV reached !\n");
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -3015,7 +3699,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
     /* make sleep time to be # of ms to output a period */
     dwSleepTime = (1024/*wwi-dwPeriodSize => overrun!*/ * 1000) / wwi->format.Format.nAvgBytesPerSec;
-    frames_per_period = snd_pcm_bytes_to_frames(wwi->handle, wwi->dwPeriodSize); 
+    frames_per_period = snd_pcm_bytes_to_frames(wwi->pcm, wwi->dwPeriodSize); 
     TRACE("sleeptime=%ld ms\n", dwSleepTime);
 
     for (;;) {
@@ -3032,8 +3716,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
             lpWaveHdr = wwi->lpQueuePtr;
             /* read all the fragments accumulated so far */
-	    frames = snd_pcm_avail_update(wwi->handle);
-	    bytes = snd_pcm_frames_to_bytes(wwi->handle, frames);
+	    frames = snd_pcm_avail_update(wwi->pcm);
+	    bytes = snd_pcm_frames_to_bytes(wwi->pcm, frames);
 	    TRACE("frames = %ld  bytes = %ld\n", frames, bytes);
 	    periods = bytes / wwi->dwPeriodSize;
             while ((periods > 0) && (wwi->lpQueuePtr))
@@ -3044,8 +3728,8 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                 if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded >= wwi->dwPeriodSize)
                 {
                     /* directly read fragment in wavehdr */
-                    read = wwi->read(wwi->handle, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames_per_period);
-		    bytesRead = snd_pcm_frames_to_bytes(wwi->handle, read);
+                    read = wwi->read(wwi->pcm, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, frames_per_period);
+		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
 			
                     TRACE("bytesRead=%ld (direct)\n", bytesRead);
 		    if (bytesRead != (DWORD) -1)
@@ -3070,7 +3754,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 			    lpWaveHdr = lpNext;
 			}
                     } else {
-                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->device,
+                        TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->pcmname,
                             lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
                             frames_per_period, strerror(errno));
                     }
@@ -3078,14 +3762,14 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		else
 		{
                     /* read the fragment in a local buffer */
-		    read = wwi->read(wwi->handle, buffer, frames_per_period);
-		    bytesRead = snd_pcm_frames_to_bytes(wwi->handle, read);
+		    read = wwi->read(wwi->pcm, buffer, frames_per_period);
+		    bytesRead = snd_pcm_frames_to_bytes(wwi->pcm, read);
                     pOffset = buffer;
 
                     TRACE("bytesRead=%ld (local)\n", bytesRead);
 
 		    if (bytesRead == (DWORD) -1) {
-			TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->device,
+			TRACE("read(%s, %p, %ld) failed (%s)\n", wwi->pcmname,
 			      buffer, frames_per_period, strerror(errno));
 			continue;
 		    }	
@@ -3172,7 +3856,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		break;
 	    case WINE_WM_STARTING:
 		wwi->state = WINE_WS_PLAYING;
-		snd_pcm_start(wwi->handle);
+		snd_pcm_start(wwi->pcm);
 		SetEvent(ev);
 		break;
 	    case WINE_WM_HEADER:
@@ -3189,7 +3873,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    case WINE_WM_STOPPING:
 		if (wwi->state != WINE_WS_STOPPED)
 		{
-		    snd_pcm_drain(wwi->handle);
+		    snd_pcm_drain(wwi->pcm);
 
 		    /* read any headers in queue */
 		    widRecorder_ReadHeaders(wwi);
@@ -3212,7 +3896,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	    case WINE_WM_RESETTING:
 		if (wwi->state != WINE_WS_STOPPED)
 		{
-		    snd_pcm_drain(wwi->handle);
+		    snd_pcm_drain(wwi->pcm);
 		}
 		wwi->state = WINE_WS_STOPPED;
     		wwi->dwTotalRecorded = 0;
@@ -3277,13 +3961,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     snd_pcm_hw_params_alloca(&hw_params);
     snd_pcm_sw_params_alloca(&sw_params);
 
+    /* JPW TODO - review this code */
     TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    if (wDevID >= MAX_WAVEOUTDRV) {
-	TRACE("MAX_WAVOUTDRV reached !\n");
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -3304,7 +3989,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi = &WInDev[wDevID];
 
-    if (wwi->handle != NULL) {
+    if (wwi->pcm != NULL) {
         WARN("already allocated\n");
         return MMSYSERR_ALLOCATED;
     }
@@ -3313,14 +3998,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
-    wwi->handle = 0;
+    wwi->pcm = 0;
     flags = SND_PCM_NONBLOCK;
 #if 0
     if ( dwFlags & WAVE_DIRECTSOUND )
 	flags |= SND_PCM_ASYNC;
 #endif
 
-    if ( (err=snd_pcm_open(&pcm, wwi->device, SND_PCM_STREAM_CAPTURE, flags)) < 0 )
+    if ( (err=snd_pcm_open(&pcm, wwi->pcmname, SND_PCM_STREAM_CAPTURE, flags)) < 0 )
     {
         ERR("Error open: %s\n", snd_strerror(err));
 	return MMSYSERR_NOTENABLED;
@@ -3441,11 +4126,11 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwi->dwBufferSize = snd_pcm_frames_to_bytes(pcm, buffer_size);
     wwi->lpQueuePtr = wwi->lpPlayPtr = wwi->lpLoopPtr = NULL;
-    wwi->handle = pcm;
+    wwi->pcm = pcm;
 
     ALSA_InitRingMessage(&wwi->msgRing);
 
-    wwi->count = snd_pcm_poll_descriptors_count (wwi->handle);
+    wwi->count = snd_pcm_poll_descriptors_count (wwi->pcm);
     if (wwi->count <= 0) {
 	ERR("Invalid poll descriptors count\n");
 	return MMSYSERR_ERROR;
@@ -3456,7 +4141,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	ERR("No enough memory\n");
 	return MMSYSERR_NOMEM;
     }
-    if ((err = snd_pcm_poll_descriptors(wwi->handle, wwi->ufds, wwi->count)) < 0) {
+    if ((err = snd_pcm_poll_descriptors(wwi->pcm, wwi->ufds, wwi->count)) < 0) {
 	ERR("Unable to obtain poll descriptors for playback: %s\n", snd_strerror(err));
 	return MMSYSERR_ERROR;
     }
@@ -3498,8 +4183,13 @@ static DWORD widClose(WORD wDevID)
 
     TRACE("(%u);\n", wDevID);
 
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
-	WARN("bad device ID !\n");
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WInDev[wDevID].pcm == NULL) {
+	WARN("Requested to close already closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -3516,13 +4206,15 @@ static DWORD widClose(WORD wDevID)
 	snd_pcm_hw_params_free(wwi->hw_params);
 	wwi->hw_params = NULL;
 
-        snd_pcm_close(wwi->handle);
-	wwi->handle = NULL;
+        snd_pcm_close(wwi->pcm);
+	wwi->pcm = NULL;
 
 	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
     }
 
+    /* JPW TODO:  Do we really want to always free this, even in case of WAVERR_STILLPLAYING? */
     HeapFree(GetProcessHeap(), 0, wwi->ufds);
+    wwi->ufds = NULL;
     return ret;
 }
 
@@ -3535,8 +4227,13 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
-        WARN("bad dev ID !\n");
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WInDev[wDevID].pcm == NULL) {
+	WARN("Requested to add buffer to already closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -3564,11 +4261,16 @@ static DWORD widStart(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
-        WARN("bad dev ID !\n");
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
 	return MMSYSERR_BADDEVICEID;
     }
-    
+
+    if (WInDev[wDevID].pcm == NULL) {
+	WARN("Requested to start closed device %d!\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
     ALSA_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_STARTING, 0, TRUE);
 
     return MMSYSERR_NOERROR;
@@ -3583,8 +4285,13 @@ static DWORD widStop(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].handle == NULL) {
-        WARN("bad dev ID !\n");
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WInDev[wDevID].pcm == NULL) {
+	WARN("Requested to stop closed device %d!\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
 
@@ -3599,10 +4306,16 @@ static DWORD widStop(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 static DWORD widReset(WORD wDevID)
 {
     TRACE("(%u);\n", wDevID);
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
-	WARN("can't reset !\n");
-	return MMSYSERR_INVALHANDLE;
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	return MMSYSERR_BADDEVICEID;
     }
+
+    if (WInDev[wDevID].pcm == NULL) {
+	WARN("Requested to reset closed device %d!\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
+    }
+
     ALSA_AddRingMessage(&WInDev[wDevID].msgRing, WINE_WM_RESETTING, 0, TRUE);
     return MMSYSERR_NOERROR;
 }
@@ -3616,9 +4329,14 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
 
-    if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].state == WINE_WS_CLOSED) {
-	WARN("can't get pos !\n");
-	return MMSYSERR_INVALHANDLE;
+    if (wDevID >= ALSA_WidNumDevs) {
+	TRACE("Requested device %d, but only %ld are known!\n", wDevID, ALSA_WidNumDevs);
+	return MMSYSERR_BADDEVICEID;
+    }
+
+    if (WInDev[wDevID].state == WINE_WS_CLOSED) {
+	WARN("Requested position of closed device %d!\n", wDevID);
+	return MMSYSERR_BADDEVICEID;
     }
 
     if (lpTime == NULL)	{
