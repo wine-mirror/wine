@@ -356,23 +356,22 @@ HRESULT WINAPI ProgIDFromCLSID16(
   REFCLSID clsid, /* [in] class id as found in registry */
   LPOLESTR16 *lplpszProgID/* [out] associated Prog ID */
 ) {
-  char     strCLSID[50], *buf, *buf2;
-  DWORD    buf2len;
+  static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
   HKEY     xhkey;
+  HKEY     hkey;
   HRESULT  ret = S_OK;
 
-  WINE_StringFromCLSID(clsid, strCLSID);
-
-  buf = HeapAlloc(GetProcessHeap(), 0, strlen(strCLSID)+14);
-  sprintf(buf,"CLSID\\%s\\ProgID", strCLSID);
-  if (RegOpenKeyA(HKEY_CLASSES_ROOT, buf, &xhkey))
+  if (COM_OpenKeyForCLSID(clsid, KEY_READ, &hkey))
     ret = REGDB_E_CLASSNOTREG;
-
-  HeapFree(GetProcessHeap(), 0, buf);
+  
+  if ((ret == S_OK) &&
+      RegOpenKeyW(hkey, wszProgID, &xhkey))
+    ret = REGDB_E_CLASSNOTREG;
 
   if (ret == S_OK)
   {
-    buf2 = HeapAlloc(GetProcessHeap(), 0, 255);
+    DWORD buf2len;
+    char *buf2 = HeapAlloc(GetProcessHeap(), 0, 255);
     buf2len = 255;
     if (RegQueryValueA(xhkey, NULL, buf2, &buf2len))
       ret = REGDB_E_CLASSNOTREG;
@@ -429,12 +428,8 @@ HRESULT WINAPI CoRegisterClassObject16(
 	DWORD flags,        /* [in] REGCLS flags indicating how connections are made */
 	LPDWORD lpdwRegister
 ) {
-	char	buf[80];
-
-	WINE_StringFromCLSID(rclsid,buf);
-
 	FIXME("(%s,%p,0x%08lx,0x%08lx,%p),stub\n",
-		buf,pUnk,dwClsContext,flags,lpdwRegister
+		debugstr_guid(rclsid),pUnk,dwClsContext,flags,lpdwRegister
 	);
 	return 0;
 }

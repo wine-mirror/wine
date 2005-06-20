@@ -2168,28 +2168,27 @@ HRESULT WINAPI CoSetState(IUnknown * pv)
  */
 HRESULT WINAPI OleGetAutoConvert(REFCLSID clsidOld, LPCLSID pClsidNew)
 {
-    HKEY hkey = 0;
-    char buf[200];
-    WCHAR wbuf[200];
+    static const WCHAR wszAutoConvertTo[] = {'A','u','t','o','C','o','n','v','e','r','t','T','o',0};
+    HKEY hkey = NULL;
+    WCHAR buf[CHARS_IN_GUID];
     DWORD len;
     HRESULT res = S_OK;
 
-    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
-    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    if (ERROR_SUCCESS != COM_OpenKeyForCLSID(clsidOld, KEY_READ, &hkey))
     {
         res = REGDB_E_CLASSNOTREG;
-	goto done;
+        goto done;
     }
-    len = 200;
+
+    len = sizeof(buf);
     /* we can just query for the default value of AutoConvertTo key like that,
        without opening the AutoConvertTo key and querying for NULL (default) */
-    if (RegQueryValueA(hkey,"AutoConvertTo",buf,&len))
+    if (RegQueryValueW(hkey, wszAutoConvertTo, buf, &len))
     {
         res = REGDB_E_KEYMISSING;
-	goto done;
+        goto done;
     }
-    MultiByteToWideChar( CP_ACP, 0, buf, -1, wbuf, sizeof(wbuf)/sizeof(WCHAR) );
-    CLSIDFromString(wbuf,pClsidNew);
+    res = CLSIDFromString(buf, pClsidNew);
 done:
     if (hkey) RegCloseKey(hkey);
     return res;
@@ -2213,27 +2212,26 @@ done:
  */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 {
-    HKEY hkey = 0;
-    char buf[47];
-    char szClsidNew[39];
+    static const WCHAR wszAutoTreatAs[] = {'A','u','t','o','T','r','e','a','t','A','s',0};
+    static const WCHAR wszTreatAs[] = {'T','r','e','a','t','A','s',0};
+    HKEY hkey = NULL;
+    WCHAR szClsidNew[CHARS_IN_GUID];
     HRESULT res = S_OK;
-    char auto_treat_as[39];
+    WCHAR auto_treat_as[CHARS_IN_GUID];
     LONG auto_treat_as_size = sizeof(auto_treat_as);
     CLSID id;
 
-    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
-    WINE_StringFromCLSID(clsidNew, szClsidNew);
-    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    if (ERROR_SUCCESS != COM_OpenKeyForCLSID(clsidOld, KEY_READ | KEY_WRITE, &hkey))
     {
         res = REGDB_E_CLASSNOTREG;
 	goto done;
     }
     if (!memcmp( clsidOld, clsidNew, sizeof(*clsidOld) ))
     {
-       if (!RegQueryValueA(hkey, "AutoTreatAs", auto_treat_as, &auto_treat_as_size) &&
-           !__CLSIDFromStringA(auto_treat_as, &id))
+       if (!RegQueryValueW(hkey, wszAutoTreatAs, auto_treat_as, &auto_treat_as_size) &&
+           !CLSIDFromString(auto_treat_as, &id))
        {
-           if (RegSetValueA(hkey, "TreatAs", REG_SZ, auto_treat_as, strlen(auto_treat_as)+1))
+           if (RegSetValueW(hkey, wszTreatAs, REG_SZ, auto_treat_as, sizeof(auto_treat_as)))
            {
                res = REGDB_E_WRITEREGDB;
                goto done;
@@ -2241,13 +2239,14 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
        }
        else
        {
-           RegDeleteKeyA(hkey, "TreatAs");
+           RegDeleteKeyW(hkey, wszTreatAs);
            goto done;
        }
     }
-    else if (RegSetValueA(hkey, "TreatAs", REG_SZ, szClsidNew, strlen(szClsidNew)+1))
+    else if (!StringFromGUID2(clsidNew, szClsidNew, ARRAYSIZE(szClsidNew)) &&
+             !RegSetValueW(hkey, wszTreatAs, REG_SZ, szClsidNew, sizeof(szClsidNew)))
     {
-       res = REGDB_E_WRITEREGDB;
+        res = REGDB_E_WRITEREGDB;
 	goto done;
     }
 
@@ -2274,32 +2273,31 @@ done:
  */
 HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID clsidNew)
 {
-    HKEY hkey = 0;
-    char buf[200], szClsidNew[200];
+    static const WCHAR wszTreatAs[] = {'T','r','e','a','t','A','s',0};
+    HKEY hkey = NULL;
+    WCHAR szClsidNew[CHARS_IN_GUID];
     HRESULT res = S_OK;
     LONG len = sizeof(szClsidNew);
 
     FIXME("(%s,%p)\n", debugstr_guid(clsidOld), clsidNew);
-    sprintf(buf,"CLSID\\");WINE_StringFromCLSID(clsidOld,&buf[6]);
     memcpy(clsidNew,clsidOld,sizeof(CLSID)); /* copy over old value */
 
-    if (RegOpenKeyA(HKEY_CLASSES_ROOT,buf,&hkey))
+    if (COM_OpenKeyForCLSID(clsidOld, KEY_READ, &hkey))
     {
         res = REGDB_E_CLASSNOTREG;
 	goto done;
     }
-    if (RegQueryValueA(hkey, "TreatAs", szClsidNew, &len))
+    if (RegQueryValueW(hkey, wszTreatAs, szClsidNew, &len))
     {
         res = S_FALSE;
 	goto done;
     }
-    res = __CLSIDFromStringA(szClsidNew,clsidNew);
+    res = CLSIDFromString(szClsidNew,clsidNew);
     if (FAILED(res))
-    	FIXME("Failed CLSIDFromStringA(%s), hres %lx?\n",szClsidNew,res);
+        ERR("Failed CLSIDFromStringA(%s), hres 0x%08lx\n", debugstr_w(szClsidNew), res);
 done:
     if (hkey) RegCloseKey(hkey);
     return res;
-
 }
 
 /******************************************************************************
