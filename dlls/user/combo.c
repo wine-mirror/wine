@@ -112,7 +112,7 @@ const struct builtin_class_descr COMBO_builtin_class =
  *
  * Load combo button bitmap.
  */
-static BOOL COMBO_Init()
+static BOOL COMBO_Init(void)
 {
   HDC		hDC;
 

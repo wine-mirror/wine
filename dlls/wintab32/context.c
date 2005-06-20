@@ -120,7 +120,7 @@ static LPOPENCONTEXT TABLET_FindOpenContext(HCTX hCtx)
     return NULL;
 }
 
-static void LoadTablet()
+static void LoadTablet(void)
 {
     TRACE("Initilizing the tablet to hwnd %p\n",hwndDefault);
     gLoaded= TRUE;

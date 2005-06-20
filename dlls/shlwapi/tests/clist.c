@@ -212,7 +212,7 @@ static HRESULT (WINAPI *pSHLWAPI_213)(_IDummyStream*);
 static HRESULT (WINAPI *pSHLWAPI_214)(_IDummyStream*,ULARGE_INTEGER*);
 
 
-static void InitFunctionPtrs()
+static void InitFunctionPtrs(void)
 {
   SHLWAPI_hshlwapi = LoadLibraryA("shlwapi.dll");
   ok(SHLWAPI_hshlwapi != 0, "LoadLibrary failed\n");

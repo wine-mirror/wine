@@ -135,7 +135,7 @@ static char GlobalBuffer[BUFFER_SIZE]; /* Buffer used by callback function */
 
 #define NUO LOCALE_NOUSEROVERRIDE
 
-static void test_GetLocaleInfoA()
+static void test_GetLocaleInfoA(void)
 {
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
@@ -161,7 +161,7 @@ static void test_GetLocaleInfoA()
   ok(!strcmp(buffer, "Monday"), "Expected 'Monday', got '%s'\n", buffer);
 }
 
-static void test_GetTimeFormatA()
+static void test_GetTimeFormatA(void)
 {
   int ret;
   SYSTEMTIME  curtime;
@@ -314,7 +314,7 @@ static void test_GetTimeFormatA()
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 }
 
-static void test_GetDateFormatA()
+static void test_GetDateFormatA(void)
 {
   int ret;
   SYSTEMTIME  curtime;
@@ -375,7 +375,7 @@ static void test_GetDateFormatA()
   EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
 }
 
-static void test_GetDateFormatW()
+static void test_GetDateFormatW(void)
 {
   int ret;
   SYSTEMTIME  curtime;
@@ -416,7 +416,7 @@ static void test_GetDateFormatW()
 #define CY_POS_LEFT_SPACE  2
 #define CY_POS_RIGHT_SPACE 3
 
-static void test_GetCurrencyFormatA()
+static void test_GetCurrencyFormatA(void)
 {
   static char szDot[] = { '.', '\0' };
   static char szComma[] = { ',', '\0' };
@@ -614,7 +614,7 @@ static void test_GetCurrencyFormatA()
 #define NEG_RIGHT       3 /* "1.1-"  */
 #define NEG_RIGHT_SPACE 4 /* "1.1 -" */
 
-static void test_GetNumberFormatA()
+static void test_GetNumberFormatA(void)
 {
   static char szDot[] = { '.', '\0' };
   static char szComma[] = { ',', '\0' };
@@ -759,7 +759,7 @@ static BOOL CALLBACK EnumTimeFormatsProc(char * lpTimeFormatString)
   return FALSE;
 }
 
-static void test_EnumTimeFormats()
+static void test_EnumTimeFormats(void)
 {
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
@@ -769,7 +769,7 @@ static void test_EnumTimeFormats()
   ok (ret == 1 && !strcmp(GlobalBuffer,"h:mm:ss tt"), "Expected %d '%s'\n", ret, GlobalBuffer);
 }
 
-static void test_CompareStringA()
+static void test_CompareStringA(void)
 {
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);

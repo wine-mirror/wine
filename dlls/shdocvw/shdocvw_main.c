@@ -388,7 +388,7 @@ dlProc ( HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 }
 
-static BOOL SHDOCVW_TryDownloadMozillaControl()
+static BOOL SHDOCVW_TryDownloadMozillaControl(void)
 {
     DWORD r;
     WCHAR buf[0x100];
@@ -414,7 +414,7 @@ static BOOL SHDOCVW_TryDownloadMozillaControl()
     return TRUE;
 }
  
-static BOOL SHDOCVW_TryLoadMozillaControl()
+static BOOL SHDOCVW_TryLoadMozillaControl(void)
 {
     WCHAR szPath[MAX_PATH];
     BOOL bTried = FALSE;

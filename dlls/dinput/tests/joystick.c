@@ -69,7 +69,7 @@ static const DIDATAFORMAT c_dfDIJoystickTest = {
     (LPDIOBJECTDATAFORMAT)dfDIJoystickTest
 };
 
-HWND get_hwnd()
+HWND get_hwnd(void)
 {
     HWND hwnd=GetForegroundWindow();
     if (!hwnd)

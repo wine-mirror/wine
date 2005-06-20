@@ -73,7 +73,7 @@
 #define CHECK_DEF(n,d1,d2) ok(d1 == d2, "Defines (MSVCRT_)%s are different: '%d' vs. '%d'\n", n, d1, d2)
 
 /************* Checking types ***************/
-void test_types()
+void test_types(void)
 {
     CHECK_TYPE(wchar_t);
     CHECK_TYPE(wint_t);
@@ -97,7 +97,7 @@ void test_types()
 }
 
 /************* Checking structs ***************/
-void test_structs()
+void test_structs(void)
 {
     CHECK_STRUCT(tm);
     CHECK_FIELD(tm, tm_sec);
@@ -294,7 +294,7 @@ void test_structs()
 }
 
 /************* Checking defines ***************/
-void test_defines()
+void test_defines(void)
 {
     CHECK_DEF("WEOF", WEOF, MSVCRT_WEOF);
     CHECK_DEF("EOF", EOF, MSVCRT_EOF);

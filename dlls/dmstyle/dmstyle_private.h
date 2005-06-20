@@ -299,8 +299,8 @@ extern ULONG WINAPI   IDirectMusicStyleTrack_IPersistStream_AddRef (LPPERSISTSTR
  * Dll lifetime tracking declaration for dmstyle.dll
  */
 extern LONG DMSTYLE_refCount;
-static inline void DMSTYLE_LockModule() { InterlockedIncrement( &DMSTYLE_refCount ); }
-static inline void DMSTYLE_UnlockModule() { InterlockedDecrement( &DMSTYLE_refCount ); }
+static inline void DMSTYLE_LockModule(void) { InterlockedIncrement( &DMSTYLE_refCount ); }
+static inline void DMSTYLE_UnlockModule(void) { InterlockedDecrement( &DMSTYLE_refCount ); }
 
 /*****************************************************************************
  * Misc.

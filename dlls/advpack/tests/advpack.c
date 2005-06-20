@@ -27,7 +27,7 @@
 static HRESULT (WINAPI *pGetVersionFromFile)(LPSTR,LPDWORD,LPDWORD,BOOL);
 static HRESULT (WINAPI *pDelNode)(LPCSTR,DWORD);
 
-static void version_test()
+static void version_test(void)
 {
     HRESULT hr;
     DWORD major, minor;
@@ -49,7 +49,7 @@ static void version_test()
           HIWORD(minor), LOWORD(minor));
 }
 
-static void delnode_test()
+static void delnode_test(void)
 {
     HRESULT hr;
     HANDLE hn;

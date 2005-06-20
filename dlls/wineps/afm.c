@@ -248,7 +248,7 @@ SHORT PSDRV_CalcAvgCharWidth(const AFM *afm)
  *
  */
 
-static BOOL AddBuiltinAFMs()
+static BOOL AddBuiltinAFMs(void)
 {
     const AFM *const	*afm = PSDRV_BuiltinAFMs;
 

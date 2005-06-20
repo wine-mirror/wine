@@ -341,7 +341,7 @@ static void test_RtlCheckRegistryKey(void)
     ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and RTL_REGISTRY_OPTIONAL: 0x%08lx\n", status);
 }
 
-static void test_NtDeleteKey()
+static void test_NtDeleteKey(void)
 {
     NTSTATUS status;
     HANDLE hkey;

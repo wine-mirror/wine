@@ -494,7 +494,7 @@ static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTy
 	return TRUE;
 }
 
-static void test_enum_provider_types()
+static void test_enum_provider_types(void)
 {
 	/* expected values */
 	DWORD dwProvType;
@@ -634,7 +634,7 @@ static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvN
 	return TRUE;
 }
 
-static void test_get_default_provider()
+static void test_get_default_provider(void)
 {
 	/* expected results */
 	DWORD dwProvType = PROV_RSA_FULL;
@@ -708,7 +708,7 @@ static void test_get_default_provider()
 	LocalFree(provName);
 }
 
-static void test_set_provider_ex()
+static void test_set_provider_ex(void)
 {
 	DWORD result;
 	DWORD notNull = 5;

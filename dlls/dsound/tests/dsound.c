@@ -168,7 +168,7 @@ EXIT:
     ok(ref==0,"IDirectSound_Release() has %d references, should have 0\n",ref);
 }
 
-static void IDirectSound_tests()
+static void IDirectSound_tests(void)
 {
     HRESULT rc;
     LPDIRECTSOUND dso=NULL;
@@ -928,7 +928,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     return 1;
 }
 
-static void dsound_tests()
+static void dsound_tests(void)
 {
     HRESULT rc;
     rc=DirectSoundEnumerateA(&dsenum_callback,NULL);

@@ -171,7 +171,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 /***********************************************************************
  *    DllRegisterServer (QCAP.@)
  */
-HRESULT WINAPI QCAP_DllRegisterServer()
+HRESULT WINAPI QCAP_DllRegisterServer(void)
 {
     TRACE("()\n");
 

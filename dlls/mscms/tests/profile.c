@@ -87,7 +87,7 @@ static void MSCMS_basenameW( LPCWSTR path, LPWSTR name )
     lstrcpyW( name, &path[i] );
 }
 
-static void test_GetColorDirectoryA()
+static void test_GetColorDirectoryA(void)
 {
     BOOL ret;
     DWORD size;
@@ -121,7 +121,7 @@ static void test_GetColorDirectoryA()
     ok( ret && size > 0, "GetColorDirectoryA() failed (%ld)\n", GetLastError() );
 }
 
-static void test_GetColorDirectoryW()
+static void test_GetColorDirectoryW(void)
 {
     BOOL ret;
     DWORD size;
@@ -159,7 +159,7 @@ static void test_GetColorDirectoryW()
     ok( ret && size > 0, "GetColorDirectoryW() failed (%ld)\n", GetLastError() );
 }
 
-static void test_GetColorProfileElement()
+static void test_GetColorProfileElement(void)
 {
     if (standardprofile)
     {
@@ -209,7 +209,7 @@ static void test_GetColorProfileElement()
     }
 }
 
-static void test_GetColorProfileElementTag()
+static void test_GetColorProfileElementTag(void)
 {
     if (standardprofile)
     {
@@ -250,7 +250,7 @@ static void test_GetColorProfileElementTag()
     }
 }
 
-static void test_GetColorProfileFromHandle()
+static void test_GetColorProfileFromHandle(void)
 {
     if (testprofile)
     {
@@ -308,7 +308,7 @@ static void test_GetColorProfileFromHandle()
     }
 }
 
-static void test_GetColorProfileHeader()
+static void test_GetColorProfileHeader(void)
 {
     if (testprofile)
     {
@@ -346,7 +346,7 @@ static void test_GetColorProfileHeader()
     }
 }
 
-static void test_GetCountColorProfileElements()
+static void test_GetCountColorProfileElements(void)
 {
     if (standardprofile)
     {
@@ -382,7 +382,7 @@ static void test_GetCountColorProfileElements()
     }
 }
 
-static void test_GetStandardColorSpaceProfileA()
+static void test_GetStandardColorSpaceProfileA(void)
 {
     BOOL ret;
     DWORD size;
@@ -431,7 +431,7 @@ static void test_GetStandardColorSpaceProfileA()
     }
 }
 
-static void test_GetStandardColorSpaceProfileW()
+static void test_GetStandardColorSpaceProfileW(void)
 {
     BOOL ret;
     DWORD size;
@@ -480,7 +480,7 @@ static void test_GetStandardColorSpaceProfileW()
     }
 }
 
-static void test_InstallColorProfileA()
+static void test_InstallColorProfileA(void)
 {
     BOOL ret;
 
@@ -531,7 +531,7 @@ static void test_InstallColorProfileA()
     }
 }
 
-static void test_InstallColorProfileW()
+static void test_InstallColorProfileW(void)
 {
     BOOL ret;
 
@@ -582,7 +582,7 @@ static void test_InstallColorProfileW()
     }
 }
 
-static void test_IsColorProfileTagPresent()
+static void test_IsColorProfileTagPresent(void)
 {
     if (standardprofile)
     {
@@ -622,7 +622,7 @@ static void test_IsColorProfileTagPresent()
     }
 }
 
-static void test_OpenColorProfileA()
+static void test_OpenColorProfileA(void)
 {
     PROFILE profile;
     HPROFILE handle;
@@ -672,7 +672,7 @@ static void test_OpenColorProfileA()
     }
 }
 
-static void test_OpenColorProfileW()
+static void test_OpenColorProfileW(void)
 {
     PROFILE profile;
     HPROFILE handle;
@@ -722,7 +722,7 @@ static void test_OpenColorProfileW()
     }
 }
 
-static void test_SetColorProfileElement()
+static void test_SetColorProfileElement(void)
 {
     if (testprofile)
     {
@@ -780,7 +780,7 @@ static void test_SetColorProfileElement()
     }
 }
 
-static void test_SetColorProfileHeader()
+static void test_SetColorProfileHeader(void)
 {
     if (testprofile)
     {
@@ -851,7 +851,7 @@ static void test_SetColorProfileHeader()
     }
 }
 
-static void test_UninstallColorProfileA()
+static void test_UninstallColorProfileA(void)
 {
     BOOL ret;
 
@@ -893,7 +893,7 @@ static void test_UninstallColorProfileA()
     }
 }
 
-static void test_UninstallColorProfileW()
+static void test_UninstallColorProfileW(void)
 {
     BOOL ret;
 

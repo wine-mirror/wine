@@ -1118,7 +1118,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     return 1;
 }
 
-static void ds3d8_tests()
+static void ds3d8_tests(void)
 {
     HRESULT rc;
     rc=DirectSoundEnumerateA(&dsenum_callback,NULL);

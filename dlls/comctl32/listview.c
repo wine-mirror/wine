@@ -549,7 +549,7 @@ static inline LPCSTR debugtext_tn(LPCWSTR text, BOOL isW, INT n)
     return isW ? debugstr_wn(text, n) : debugstr_an((LPCSTR)text, n);
 }
 
-static char* debug_getbuf()
+static char* debug_getbuf(void)
 {
     static int index = 0;
     static char buffers[DEBUG_BUFFERS][DEBUG_BUFFER_SIZE];

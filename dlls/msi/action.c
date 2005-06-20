@@ -2530,7 +2530,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
     return NULL;
 }
 
-static HKEY openSharedDLLsKey()
+static HKEY openSharedDLLsKey(void)
 {
     HKEY hkey=0;
     static const WCHAR path[] =

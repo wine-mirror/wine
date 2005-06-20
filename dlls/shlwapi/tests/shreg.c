@@ -321,7 +321,7 @@ static void test_SHCopyKey(void)
 	RegCloseKey(hKeyDst);
 }
 
-static void test_SHDeleteKey()
+static void test_SHDeleteKey(void)
 {
     HKEY hKeyTest, hKeyS;
     DWORD dwRet;

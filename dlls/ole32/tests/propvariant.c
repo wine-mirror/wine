@@ -126,7 +126,7 @@ static const char* wine_vtypes[VT_CLSID+1] =
   "VT_STREAMED_OBJECT","VT_STORED_OBJECT","VT_BLOB_OBJECT","VT_CF","VT_CLSID"
 };
 
-static void test_validtypes()
+static void test_validtypes(void)
 {
     PROPVARIANT propvar;
     HRESULT hr;
@@ -197,7 +197,7 @@ static void test_validtypes()
     }
 }
 
-static void test_copy()
+static void test_copy(void)
 {
     static const char szTestString[] = "Test String";
     static const WCHAR wszTestString[] = {'T','e','s','t',' ','S','t','r','i','n','g',0};

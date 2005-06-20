@@ -197,7 +197,7 @@ static void COMPOBJ_UninitProcess( void )
     UnregisterClassW(wszAptWinClass, OLE32_hInstance);
 }
 
-static void COM_TlsDestroy()
+static void COM_TlsDestroy(void)
 {
     struct oletls *info = NtCurrentTeb()->ReservedForOle;
     if (info)

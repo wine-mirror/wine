@@ -27,7 +27,7 @@
 #include "wine/test.h"
 
 
-static void test_WSAEnumProtocolsA()
+static void test_WSAEnumProtocolsA(void)
 {
     INT ret;
     DWORD len = 0;
@@ -62,7 +62,7 @@ static void test_WSAEnumProtocolsA()
     }
 }
 
-static void test_WSAEnumProtocolsW()
+static void test_WSAEnumProtocolsW(void)
 {
     INT ret;
     DWORD len = 0;

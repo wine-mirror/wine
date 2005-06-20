@@ -501,7 +501,7 @@ static void WINAPI IMallocSpy_fnPostHeapMinimize(LPMALLOCSPY iface)
     TRACE ("(%p)->()\n", This);
 }
 
-static void MallocSpyDumpLeaks() {
+static void MallocSpyDumpLeaks(void) {
         TRACE("leaks: %lu\n", Malloc32.SpyedAllocationsLeft);
 }
 

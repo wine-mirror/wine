@@ -31,7 +31,7 @@ static int modes_cnt;
 static int modes_size;
 static LPDDSURFACEDESC modes;
 
-static void createdirectdraw()
+static void createdirectdraw(void)
 {
     HRESULT rc;
     
@@ -64,7 +64,7 @@ static void createdirectdraw()
 }
 
 
-static void releasedirectdraw()
+static void releasedirectdraw(void)
 {
 	if( lpDD != NULL )
 	{
@@ -83,7 +83,7 @@ static void adddisplaymode(LPDDSURFACEDESC lpddsd)
     modes[modes_cnt++] = *lpddsd;
 }
 
-static void flushdisplaymodes()
+static void flushdisplaymodes(void)
 {
     free(modes);
     modes = 0;
@@ -100,7 +100,7 @@ HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
     return DDENUMRET_OK;
 }
 
-void enumdisplaymodes()
+void enumdisplaymodes(void)
 {
     DDSURFACEDESC ddsd;
     HRESULT rc;
@@ -138,7 +138,7 @@ static void setdisplaymode(int i)
     }
 }
 
-static void createsurface()
+static void createsurface(void)
 {
     DDSURFACEDESC ddsd;
     DDSCAPS ddscaps;
@@ -157,7 +157,7 @@ static void createsurface()
     ok(rc==DD_OK,"GetAttachedSurface returned: %lx\n",rc);
 }
 
-static void destroysurface()
+static void destroysurface(void)
 {
     if( lpDDSPrimary != NULL )
     {
@@ -166,7 +166,7 @@ static void destroysurface()
     }
 }
 
-static void testsurface()
+static void testsurface(void)
 {
     const char* testMsg = "ddraw device context test";
     HDC hdc;
@@ -197,7 +197,7 @@ static void testsurface()
     }
 }
 
-static void testdisplaymodes()
+static void testdisplaymodes(void)
 {
     int i;
 

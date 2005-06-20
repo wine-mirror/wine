@@ -32,7 +32,7 @@ typedef struct _STOCK_BRUSH {
     const char *name;
 } STOCK_BRUSH;
 
-static void test_solidbrush()
+static void test_solidbrush(void)
 {
     static const STOCK_BRUSH stock[] = {
         {RGB(255,255,255), WHITE_BRUSH, "white"},

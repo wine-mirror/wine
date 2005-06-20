@@ -83,7 +83,7 @@ static LPITEMIDLIST path_to_pidl(const char* path)
  * Test manipulation of an IShellLink's properties.
  */
 
-static void test_get_set()
+static void test_get_set(void)
 {
     HRESULT r;
     IShellLinkA *sl;
@@ -459,7 +459,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     IShellLinkA_Release(sl);
 }
 
-static void test_load_save()
+static void test_load_save(void)
 {
     lnk_desc_t desc;
     char mypath[MAX_PATH];

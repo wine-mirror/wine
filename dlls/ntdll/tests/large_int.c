@@ -35,7 +35,7 @@ static NTSTATUS (WINAPI *pRtlLargeIntegerToChar)(ULONGLONG *, ULONG, ULONG, PCHA
 static NTSTATUS (WINAPI *pRtlUnicodeStringToAnsiString)(STRING *, const UNICODE_STRING *, BOOLEAN);
 
 
-static void InitFunctionPtrs()
+static void InitFunctionPtrs(void)
 {
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed\n");

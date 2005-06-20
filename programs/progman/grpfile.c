@@ -451,7 +451,7 @@ BYTE GRPFILE_checksum_last_byte;
  *           GRPFILE_InitChecksum
  */
 
-static void GRPFILE_InitChecksum()
+static void GRPFILE_InitChecksum(void)
 {
 	GRPFILE_checksum = 0;
 	GRPFILE_checksum_half_word = 0;
@@ -462,7 +462,7 @@ static void GRPFILE_InitChecksum()
  *           GRPFILE_GetChecksum
  */
 
-static UINT16 GRPFILE_GetChecksum()
+static UINT16 GRPFILE_GetChecksum(void)
 {
 	return GRPFILE_checksum;
 }

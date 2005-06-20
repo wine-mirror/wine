@@ -67,7 +67,7 @@ const char * get_file_version(const char * file_name)
     return version;
 }
 
-static void keyboard_tests()
+static void keyboard_tests(void)
 {
 }
 

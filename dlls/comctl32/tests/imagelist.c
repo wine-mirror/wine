@@ -469,7 +469,7 @@ static BOOL DoTest3(void)
     return TRUE;
 }
 
-static void testMerge()
+static void testMerge(void)
 {
     HIMAGELIST himl1, himl2, hmerge;
     HICON hicon1;

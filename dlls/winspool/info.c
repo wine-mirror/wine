@@ -3179,7 +3179,7 @@ static BOOL WINSPOOL_ComPortExists( LPCSTR name )
     return TRUE;
 }
 
-static DWORD WINSPOOL_CountSerialPorts()
+static DWORD WINSPOOL_CountSerialPorts(void)
 {
     CHAR name[6];
     DWORD n = 0, i;

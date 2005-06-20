@@ -712,7 +712,7 @@ static void test_CreateFileW(void)
        "CreateFileW on invalid VxD name returned ret=%p error=%ld\n",hFile,GetLastError());
 }
 
-static void test_GetTempFileNameA()
+static void test_GetTempFileNameA(void)
 {
     UINT result;
     char out[MAX_PATH];
@@ -1170,14 +1170,14 @@ static void test_file_sharing(void)
     DeleteFileA( filename );
 }
 
-static char get_windows_drive()
+static char get_windows_drive(void)
 {
     char windowsdir[MAX_PATH];
     GetWindowsDirectory(windowsdir, sizeof(windowsdir));
     return windowsdir[0];
 }
 
-static void test_FindFirstFileA()
+static void test_FindFirstFileA(void)
 {
     HANDLE handle;
     WIN32_FIND_DATAA search_results;
@@ -1199,7 +1199,7 @@ static void test_FindFirstFileA()
     ok ( FindClose(handle) == TRUE, "Failed to close handle\n");
 }
 
-static void test_FindNextFileA()
+static void test_FindNextFileA(void)
 {
     HANDLE handle;
     WIN32_FIND_DATAA search_results;
@@ -1232,7 +1232,7 @@ static int test_Mapfile_createtemp(HANDLE *handle)
     return 0;
 }
 
-static void test_MapFile()
+static void test_MapFile(void)
 {
     HANDLE handle;
     HANDLE hmap;

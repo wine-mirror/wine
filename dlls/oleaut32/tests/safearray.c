@@ -85,7 +85,7 @@ typedef struct IRecordInfoImpl
 
 static const IRecordInfoVtbl IRecordInfoImpl_VTable;
 
-static IRecordInfoImpl *IRecordInfoImpl_Construct()
+static IRecordInfoImpl *IRecordInfoImpl_Construct(void)
 {
   IRecordInfoImpl *rec;
 

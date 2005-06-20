@@ -31,13 +31,13 @@ static const WCHAR file[] = {'t','e','s','t','.','a','v','i',0};
 
 IGraphBuilder* pgraph;
 
-static int createfiltergraph()
+static int createfiltergraph(void)
 {
     return S_OK == CoCreateInstance(
         &CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IGraphBuilder, (LPVOID*)&pgraph);
 }
 
-static void renderfile()
+static void renderfile(void)
 {
     HRESULT hr;
 
@@ -45,7 +45,7 @@ static void renderfile()
     ok(hr==S_OK, "RenderFile returned: %lx\n", hr);
 }
 
-static void rungraph()
+static void rungraph(void)
 {
     HRESULT hr;
     IMediaControl* pmc;
@@ -77,7 +77,7 @@ static void rungraph()
     ok(hr==1, "Releasing mediacontrol returned: %lx\n", hr);
 }
 
-static void releasefiltergraph()
+static void releasefiltergraph(void)
 {
     HRESULT hr;
 

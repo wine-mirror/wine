@@ -112,8 +112,8 @@ extern ULONG WINAPI   IDirectMusicScriptTrack_IPersistStream_AddRef (LPPERSISTST
  * Dll lifetime tracking declaration for dmscript.dll
  */
 extern LONG DMSCRIPT_refCount;
-static inline void DMSCRIPT_LockModule() { InterlockedIncrement( &DMSCRIPT_refCount ); }
-static inline void DMSCRIPT_UnlockModule() { InterlockedDecrement( &DMSCRIPT_refCount ); }
+static inline void DMSCRIPT_LockModule(void) { InterlockedIncrement( &DMSCRIPT_refCount ); }
+static inline void DMSCRIPT_UnlockModule(void) { InterlockedDecrement( &DMSCRIPT_refCount ); }
 
 /*****************************************************************************
  * Misc.

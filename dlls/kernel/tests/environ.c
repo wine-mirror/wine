@@ -211,7 +211,7 @@ static void test_GetSetEnvironmentVariableW(void)
        ret, GetLastError());
 }
 
-static void test_ExpandEnvironmentStringsA()
+static void test_ExpandEnvironmentStringsA(void)
 {
     char buf[256], buf1[256];
     DWORD ret_size, ret_size1;

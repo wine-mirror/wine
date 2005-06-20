@@ -144,8 +144,8 @@ extern ULONG WINAPI   IDirectMusicSignPostTrack_IPersistStream_AddRef (LPPERSIST
  * Dll lifetime tracking declaration for dmcompos.dll
  */
 extern LONG DMCOMPOS_refCount;
-static inline void DMCOMPOS_LockModule() { InterlockedIncrement( &DMCOMPOS_refCount ); }
-static inline void DMCOMPOS_UnlockModule() { InterlockedDecrement( &DMCOMPOS_refCount ); }
+static inline void DMCOMPOS_LockModule(void) { InterlockedIncrement( &DMCOMPOS_refCount ); }
+static inline void DMCOMPOS_UnlockModule(void) { InterlockedDecrement( &DMCOMPOS_refCount ); }
 
 /*****************************************************************************
  * Misc.

@@ -24,7 +24,7 @@
 
 static LPDIRECTDRAW lpDD = NULL;
 
-static void CreateDirectDraw()
+static void CreateDirectDraw(void)
 {
     HRESULT rc;
 
@@ -36,7 +36,7 @@ static void CreateDirectDraw()
 }
 
 
-static void ReleaseDirectDraw()
+static void ReleaseDirectDraw(void)
 {
     if( lpDD != NULL )
     {
@@ -45,7 +45,7 @@ static void ReleaseDirectDraw()
     }
 }
 
-static void MipMapCreationTest()
+static void MipMapCreationTest(void)
 {
     LPDIRECTDRAWSURFACE lpDDSMipMapTest;
     DDSURFACEDESC ddsd;

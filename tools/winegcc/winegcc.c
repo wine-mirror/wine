@@ -163,7 +163,7 @@ struct options
     strarray* files;
 };
 
-static void clean_temp_files()
+static void clean_temp_files(void)
 {
     int i;
 

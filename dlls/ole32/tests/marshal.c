@@ -37,7 +37,7 @@ HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 #define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %ld\n", cLocks)
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
 
-static void test_CoGetPSClsid()
+static void test_CoGetPSClsid(void)
 {
 	HRESULT hr;
 	CLSID clsid;
@@ -60,12 +60,12 @@ static void test_CoGetPSClsid()
 static const LARGE_INTEGER ullZero;
 static LONG cLocks;
 
-static void LockModule()
+static void LockModule(void)
 {
     InterlockedIncrement(&cLocks);
 }
 
-static void UnlockModule()
+static void UnlockModule(void)
 {
     InterlockedDecrement(&cLocks);
 }
@@ -273,7 +273,7 @@ static void end_host_object(DWORD tid, HANDLE thread)
 
 /* tests failure case of interface not having a marshaler specified in the
  * registry */
-static void test_no_marshaler()
+static void test_no_marshaler(void)
 {
     IStream *pStream;
     HRESULT hr;
@@ -293,7 +293,7 @@ static void test_no_marshaler()
 }
 
 /* tests normal marshal and then release without unmarshaling */
-static void test_normal_marshal_and_release()
+static void test_normal_marshal_and_release(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -316,7 +316,7 @@ static void test_normal_marshal_and_release()
 }
 
 /* tests success case of a same-thread marshal and unmarshal */
-static void test_normal_marshal_and_unmarshal()
+static void test_normal_marshal_and_unmarshal(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -344,7 +344,7 @@ static void test_normal_marshal_and_unmarshal()
 }
 
 /* tests failure case of unmarshaling a freed object */
-static void test_marshal_and_unmarshal_invalid()
+static void test_marshal_and_unmarshal_invalid(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -387,7 +387,7 @@ static void test_marshal_and_unmarshal_invalid()
 }
 
 /* tests success case of an interthread marshal */
-static void test_interthread_marshal_and_unmarshal()
+static void test_interthread_marshal_and_unmarshal(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -418,7 +418,7 @@ static void test_interthread_marshal_and_unmarshal()
 }
 
 /* tests that stubs are released when the containing apartment is destroyed */
-static void test_marshal_stub_apartment_shutdown()
+static void test_marshal_stub_apartment_shutdown(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -451,7 +451,7 @@ static void test_marshal_stub_apartment_shutdown()
 }
 
 /* tests that proxies are released when the containing apartment is destroyed */
-static void test_marshal_proxy_apartment_shutdown()
+static void test_marshal_proxy_apartment_shutdown(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -488,7 +488,7 @@ static void test_marshal_proxy_apartment_shutdown()
 }
 
 /* tests that proxies are released when the containing mta apartment is destroyed */
-static void test_marshal_proxy_mta_apartment_shutdown()
+static void test_marshal_proxy_mta_apartment_shutdown(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -555,7 +555,7 @@ static DWORD CALLBACK no_couninitialize_proc(LPVOID p)
 }
 
 /* tests apartment that an apartment is released if the owning thread exits */
-static void test_no_couninitialize()
+static void test_no_couninitialize(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -600,7 +600,7 @@ static void test_no_couninitialize()
 }
 
 /* tests success case of a same-thread table-weak marshal, unmarshal, unmarshal */
-static void test_tableweak_marshal_and_unmarshal_twice()
+static void test_tableweak_marshal_and_unmarshal_twice(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -641,7 +641,7 @@ static void test_tableweak_marshal_and_unmarshal_twice()
 }
 
 /* tests releasing after unmarshaling one object */
-static void test_tableweak_marshal_releasedata1()
+static void test_tableweak_marshal_releasedata1(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -691,7 +691,7 @@ static void test_tableweak_marshal_releasedata1()
 }
 
 /* tests releasing after unmarshaling one object */
-static void test_tableweak_marshal_releasedata2()
+static void test_tableweak_marshal_releasedata2(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -730,7 +730,7 @@ static void test_tableweak_marshal_releasedata2()
 }
 
 /* tests success case of a same-thread table-strong marshal, unmarshal, unmarshal */
-static void test_tablestrong_marshal_and_unmarshal_twice()
+static void test_tablestrong_marshal_and_unmarshal_twice(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -779,7 +779,7 @@ static void test_tablestrong_marshal_and_unmarshal_twice()
 }
 
 /* tests CoLockObjectExternal */
-static void test_lock_object_external()
+static void test_lock_object_external(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -808,7 +808,7 @@ static void test_lock_object_external()
 }
 
 /* tests disconnecting stubs */
-static void test_disconnect_stub()
+static void test_disconnect_stub(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -837,7 +837,7 @@ static void test_disconnect_stub()
 }
 
 /* tests failure case of a same-thread marshal and unmarshal twice */
-static void test_normal_marshal_and_unmarshal_twice()
+static void test_normal_marshal_and_unmarshal_twice(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -874,7 +874,7 @@ static void test_normal_marshal_and_unmarshal_twice()
 }
 
 /* tests success case of marshaling and unmarshaling an HRESULT */
-static void test_hresult_marshaling()
+static void test_hresult_marshaling(void)
 {
     HRESULT hr;
     HRESULT hr_marshaled = 0;
@@ -927,7 +927,7 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
 }
 
 /* tests failure case of a using a proxy in the wrong apartment */
-static void test_proxy_used_in_wrong_thread()
+static void test_proxy_used_in_wrong_thread(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -1047,7 +1047,7 @@ static const IMessageFilterVtbl MessageFilter_Vtbl =
 
 static IMessageFilter MessageFilter = { &MessageFilter_Vtbl };
 
-static void test_message_filter()
+static void test_message_filter(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -1094,7 +1094,7 @@ static void test_message_filter()
 }
 
 /* test failure case of trying to unmarshal from bad stream */
-static void test_bad_marshal_stream()
+static void test_bad_marshal_stream(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -1119,7 +1119,7 @@ static void test_bad_marshal_stream()
 }
 
 /* tests that proxies implement certain interfaces */
-static void test_proxy_interfaces()
+static void test_proxy_interfaces(void)
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -1273,7 +1273,7 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     }
 }
 
-static void test_message_reentrancy()
+static void test_message_reentrancy(void)
 {
     WNDCLASS wndclass;
     MSG msg;
@@ -1540,7 +1540,7 @@ static void test_out_of_process_com()
 }
 #endif
 
-static void test_ROT()
+static void test_ROT(void)
 {
     static const WCHAR wszFileName[] = {'B','E','2','0','E','2','F','5','-',
         '1','9','0','3','-','4','A','A','E','-','B','1','A','F','-',

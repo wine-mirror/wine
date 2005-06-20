@@ -27,7 +27,7 @@
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
 fnSystemFunction006 pSystemFunction006;
 
-static void test_SystemFunction006()
+static void test_SystemFunction006(void)
 {
     static unsigned char lmhash[16 + 1];
 

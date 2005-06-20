@@ -41,7 +41,7 @@ static void init_function_pointers(void)
 }
 
 
-static void CreateDirect3D()
+static void CreateDirect3D(void)
 {
     HRESULT rc;
     DDSURFACEDESC2 ddsd;
@@ -70,7 +70,7 @@ static void CreateDirect3D()
     ok(rc==D3D_OK, "CreateDevice returned: %lx\n", rc);
 }
 
-static void ReleaseDirect3D()
+static void ReleaseDirect3D(void)
 {
     if (lpD3DDevice != NULL)
     {
@@ -97,7 +97,7 @@ static void ReleaseDirect3D()
     }
 }
 
-static void LightTest()
+static void LightTest(void)
 {
     HRESULT rc;
     D3DLIGHT7 light;

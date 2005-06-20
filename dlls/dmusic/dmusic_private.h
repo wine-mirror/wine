@@ -286,8 +286,8 @@ extern HRESULT WINAPI IDirectMusicInstrumentImpl_Custom_Load (LPDIRECTMUSICINSTR
  * Dll lifetime tracking declaration for dmusic.dll
  */
 extern LONG DMUSIC_refCount;
-static inline void DMUSIC_LockModule() { InterlockedIncrement( &DMUSIC_refCount ); }
-static inline void DMUSIC_UnlockModule() { InterlockedDecrement( &DMUSIC_refCount ); }
+static inline void DMUSIC_LockModule(void) { InterlockedIncrement( &DMUSIC_refCount ); }
+static inline void DMUSIC_UnlockModule(void) { InterlockedDecrement( &DMUSIC_refCount ); }
 
 /*****************************************************************************
  * Helper Functions

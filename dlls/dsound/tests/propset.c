@@ -178,7 +178,7 @@ BOOL CALLBACK callbackW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA data,
     return TRUE;
 }
 
-static void propset_private_tests()
+static void propset_private_tests(void)
 {
     HMODULE hDsound;
     HRESULT rc;
@@ -700,7 +700,7 @@ EXIT:
     return 1;
 }
 
-static void propset_buffer_tests()
+static void propset_buffer_tests(void)
 {
     HRESULT rc;
     rc=DirectSoundEnumerateA(&dsenum_callback,NULL);

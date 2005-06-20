@@ -165,7 +165,7 @@ typedef struct
  * Dll lifetime tracking declaration for shdocvw.dll
  */
 extern LONG SHDOCVW_refCount;
-static inline void SHDOCVW_LockModule() { InterlockedIncrement( &SHDOCVW_refCount ); }
-static inline void SHDOCVW_UnlockModule() { InterlockedDecrement( &SHDOCVW_refCount ); }
+static inline void SHDOCVW_LockModule(void) { InterlockedIncrement( &SHDOCVW_refCount ); }
+static inline void SHDOCVW_UnlockModule(void) { InterlockedDecrement( &SHDOCVW_refCount ); }
 
 #endif /* __WINE_SHDOCVW_H */

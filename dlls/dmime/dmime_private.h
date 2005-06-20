@@ -547,8 +547,8 @@ extern ULONG WINAPI   IDirectMusicWaveTrack_IPersistStream_AddRef (LPPERSISTSTRE
  * Dll lifetime tracking declaration for dmime.dll
  */
 extern LONG DMIME_refCount;
-static inline void DMIME_LockModule() { InterlockedIncrement( &DMIME_refCount ); }
-static inline void DMIME_UnlockModule() { InterlockedDecrement( &DMIME_refCount ); }
+static inline void DMIME_LockModule(void) { InterlockedIncrement( &DMIME_refCount ); }
+static inline void DMIME_UnlockModule(void) { InterlockedDecrement( &DMIME_refCount ); }
 
 /*****************************************************************************
  * Misc.

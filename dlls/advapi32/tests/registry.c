@@ -243,7 +243,7 @@ static void test_enum_value(void)
     ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
 }
 
-static void test_query_value_ex()
+static void test_query_value_ex(void)
 {
     DWORD ret;
     DWORD size;
@@ -255,7 +255,7 @@ static void test_query_value_ex()
     ok(type == REG_SZ, "type %ld is not REG_SZ\n", type);
 }
 
-static void test_reg_open_key()
+static void test_reg_open_key(void)
 {
     DWORD ret = 0;
     HKEY hkResult = NULL;
@@ -330,7 +330,7 @@ static void test_reg_open_key()
     ok(ret == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
 }
 
-static void test_reg_create_key()
+static void test_reg_create_key(void)
 {
     LONG ret;
     HKEY hkey1, hkey2;
@@ -346,7 +346,7 @@ static void test_reg_create_key()
     RegDeleteKey(hkey1, NULL);
 }
 
-static void test_reg_close_key()
+static void test_reg_close_key(void)
 {
     DWORD ret = 0;
     HKEY hkHandle;
@@ -369,7 +369,7 @@ static void test_reg_close_key()
        "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %ld\n", ret);
 }
 
-static void test_reg_delete_key()
+static void test_reg_delete_key(void)
 {
     DWORD ret;
 
@@ -378,7 +378,7 @@ static void test_reg_delete_key()
        "expected ERROR_INVALID_PARAMETER or ERROR_ACCESS_DENIED, got %ld\n", ret);
 }
 
-static void test_reg_save_key()
+static void test_reg_save_key(void)
 {
     DWORD ret;
 
@@ -386,7 +386,7 @@ static void test_reg_save_key()
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
 }
 
-static void test_reg_load_key()
+static void test_reg_load_key(void)
 {
     DWORD ret;
     HKEY hkHandle;
@@ -400,7 +400,7 @@ static void test_reg_load_key()
     RegCloseKey(hkHandle);
 }
 
-static void test_reg_unload_key()
+static void test_reg_unload_key(void)
 {
     DWORD ret;
 

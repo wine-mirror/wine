@@ -222,7 +222,7 @@ static UINT try_insert_query( MSIHANDLE hdb, LPCSTR szQuery )
     return r;
 }
 
-static void test_msibadqueries()
+static void test_msibadqueries(void)
 {
     const char *msifile = "winetest.msi";
     MSIHANDLE hdb = 0;

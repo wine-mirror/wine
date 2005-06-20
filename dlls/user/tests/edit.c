@@ -472,7 +472,7 @@ static void test_edit_control_2(void)
     DestroyWindow (hwndMain);
 }
 
-static void ET2_check_change() {
+static void ET2_check_change(void) {
    char szLocalString[MAXLEN];
    /* This EN_UPDATE handler changes any 'foo' to 'bar'. */
    GetWindowText(hwndET2, szLocalString, MAXLEN);

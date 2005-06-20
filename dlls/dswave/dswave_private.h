@@ -81,8 +81,8 @@ extern ULONG WINAPI   IDirectMusicWaveImpl_IPersistStream_AddRef (LPPERSISTSTREA
  * Dll lifetime tracking declaration for dswave.dll
  */
 extern LONG DSWAVE_refCount;
-static inline void DSWAVE_LockModule() { InterlockedIncrement( &DSWAVE_refCount ); }
-static inline void DSWAVE_UnlockModule() { InterlockedDecrement( &DSWAVE_refCount ); }
+static inline void DSWAVE_LockModule(void) { InterlockedIncrement( &DSWAVE_refCount ); }
+static inline void DSWAVE_UnlockModule(void) { InterlockedDecrement( &DSWAVE_refCount ); }
 
 /*****************************************************************************
  * Misc.

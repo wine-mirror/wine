@@ -89,8 +89,8 @@ extern ULONG WINAPI   IDirectMusicSynthSinkImpl_AddRef (LPDIRECTMUSICSYNTHSINK i
  * Dll lifetime tracking declaration for dmsynth.dll
  */
 extern LONG DMSYNTH_refCount;
-static inline void DMSYNTH_LockModule() { InterlockedIncrement( &DMSYNTH_refCount ); }
-static inline void DMSYNTH_UnlockModule() { InterlockedDecrement( &DMSYNTH_refCount ); }
+static inline void DMSYNTH_LockModule(void) { InterlockedIncrement( &DMSYNTH_refCount ); }
+static inline void DMSYNTH_UnlockModule(void) { InterlockedDecrement( &DMSYNTH_refCount ); }
 
 /*****************************************************************************
  * Misc.
