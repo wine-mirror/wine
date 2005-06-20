@@ -1596,8 +1596,8 @@ LONG ALSA_WaveInit(void)
         return -1;
     }
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\alsa */
-    rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ALSA", 0, KEY_QUERY_VALUE, &key);
+    /* @@ Wine registry key: HKCU\Software\Wine\Alsa Driver */
+    rc = RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Wine\\Alsa Driver", 0, KEY_QUERY_VALUE, &key);
     if (rc == ERROR_SUCCESS)
     {
         ALSA_RegGetBoolean(key, "AutoScanCards", &AutoScanCards);
