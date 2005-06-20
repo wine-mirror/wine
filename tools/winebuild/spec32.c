@@ -83,6 +83,7 @@ static void declare_weak_function( FILE *outfile, const char *ret_type, const ch
     fprintf( outfile, "extern %s %s(%s) __attribute__((weak_import));\n", ret_type, name, params );
     fprintf( outfile, "static %s (*__wine_spec_weak_%s)(%s) = %s;\n", ret_type, name, params, name );
     fprintf( outfile, "#define %s __wine_spec_weak_%s\n", name, name );
+    fprintf( outfile, "asm(\".weak_reference " __ASM_NAME("%s") "\");\n", name );
     fprintf( outfile, "# else\n" );
     fprintf( outfile, "extern %s %s(%s) __attribute__((weak));\n", ret_type, name, params );
     fprintf( outfile, "# endif\n" );

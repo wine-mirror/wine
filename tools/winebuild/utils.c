@@ -349,7 +349,7 @@ const char *make_c_identifier( const char *str )
  */
 int get_alignment(int alignBoundary)
 {
-#if defined(__powerpc__) || defined(__ALPHA__)
+#if defined(__powerpc__) || defined(__ALPHA__) || defined(__APPLE__)
 
     int n = 0;
 
