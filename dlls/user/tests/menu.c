@@ -41,8 +41,9 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
     case WM_ENTERMENULOOP:
         /* mark window as having entered menu loop */
         SetWindowLongPtr(hwnd, GWLP_USERDATA, TRUE);
-        /* exit menu modal loop */
-        return SendMessage(hwnd, WM_CANCELMODE, 0, 0);
+        /* exit menu modal loop
+         * ( A SendMessage does not work on NT3.51 here ) */
+        return PostMessage(hwnd, WM_CANCELMODE, 0, 0);
     }
     return DefWindowProc(hwnd, msg, wparam, lparam);
 }
@@ -50,40 +51,56 @@ static LRESULT WINAPI menu_check_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LP
 /* globals to communicate between test and wndproc */
 unsigned int MOD_maxid;
 RECT MOD_rc[4];
+int MOD_avec, MOD_hic;
+int MOD_odheight;
+#define MOD_SIZE 10
 /* wndproc used by test_menu_ownerdraw() */
 static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
         WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
-    case WM_MEASUREITEM:
-        if( winetest_debug)
-            trace("WM_MEASUREITEM received %d,%d\n",
-			((MEASUREITEMSTRUCT*)lparam)->itemWidth	,
-			((MEASUREITEMSTRUCT*)lparam)->itemHeight);
-        ((MEASUREITEMSTRUCT*)lparam)->itemWidth = 10;
-        ((MEASUREITEMSTRUCT*)lparam)->itemHeight = 10;
-        return TRUE;
-    case WM_DRAWITEM:
-        {
-        DRAWITEMSTRUCT * pdis;
-        HPEN oldpen;
-        pdis = (DRAWITEMSTRUCT *) lparam;
-        /* store the rectangl */
-        MOD_rc[pdis->itemID] = pdis->rcItem;
-        if( winetest_debug) {
-            trace("WM_DRAWITEM received item %d rc %ld,%ld-%ld,%ld \n",
-                    pdis->itemID, pdis->rcItem.left, pdis->rcItem.top,
-                    pdis->rcItem.right,pdis->rcItem.bottom );
-            oldpen=SelectObject( pdis->hDC, GetStockObject(
-                        pdis->itemState & ODS_SELECTED ? WHITE_PEN :BLACK_PEN));
-            Rectangle( pdis->hDC, pdis->rcItem.left,pdis->rcItem.top,
-                    pdis->rcItem.right,pdis->rcItem.bottom );
-            SelectObject( pdis->hDC, oldpen);
-        }
-        if( pdis->itemID == MOD_maxid) PostMessage(hwnd, WM_CANCELMODE, 0, 0);
-        return TRUE;
-        }
+        case WM_MEASUREITEM:
+            {
+                MEASUREITEMSTRUCT* pmis = (MEASUREITEMSTRUCT*)lparam;
+                if( winetest_debug)
+                    trace("WM_MEASUREITEM received %d,%d\n",
+                            pmis->itemWidth, pmis->itemHeight);
+                MOD_odheight = pmis->itemHeight;
+                pmis->itemWidth = MOD_SIZE;
+                pmis->itemHeight = MOD_SIZE;
+                return TRUE;
+            }
+        case WM_DRAWITEM:
+            {
+                DRAWITEMSTRUCT * pdis;
+                TEXTMETRIC tm;
+                HPEN oldpen;
+                char chrs[]="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+                SIZE sz;
+                pdis = (DRAWITEMSTRUCT *) lparam;
+                if( winetest_debug) {
+                    trace("WM_DRAWITEM received itemdata %ld item %d rc %ld,%ld-%ld,%ld \n",
+                            pdis->itemData,
+                            pdis->itemID, pdis->rcItem.left, pdis->rcItem.top,
+                            pdis->rcItem.right,pdis->rcItem.bottom );
+                    oldpen=SelectObject( pdis->hDC, GetStockObject(
+                                pdis->itemState & ODS_SELECTED ? WHITE_PEN :BLACK_PEN));
+                    Rectangle( pdis->hDC, pdis->rcItem.left,pdis->rcItem.top,
+                            pdis->rcItem.right,pdis->rcItem.bottom );
+                    SelectObject( pdis->hDC, oldpen);
+                }
+                if( pdis->itemData > MOD_maxid) return TRUE;
+                /* store the rectangl */
+                MOD_rc[pdis->itemData] = pdis->rcItem;
+                /* calculate average character width */
+                GetTextExtentPoint( pdis->hDC, chrs, 52, &sz );
+                MOD_avec = (sz.cx + 26)/52;
+                GetTextMetrics( pdis->hDC, &tm);
+                MOD_hic = tm.tmHeight;
+                if( pdis->itemData == MOD_maxid) PostMessage(hwnd, WM_CANCELMODE, 0, 0);
+                return TRUE;
+            }
 
     }
     return DefWindowProc(hwnd, msg, wparam, lparam);
@@ -163,7 +180,8 @@ static void test_menu_ownerdraw()
     for( j=0;j<2;j++) /* create columns */
         for(i=0;i<2;i++) { /* create rows */
             ret = AppendMenu( hmenu, MF_OWNERDRAW | 
-                    (i==0 ? MF_MENUBREAK : 0), k++, 0);
+                    (i==0 ? MF_MENUBREAK : 0), k, (LPCTSTR) k);
+            k++;
             ok( ret, "AppendMenu failed for %d\n", k-1);
         }
     MOD_maxid = k-1;
@@ -175,26 +193,61 @@ static void test_menu_ownerdraw()
     ok( MOD_rc[0].right + 4 ==  MOD_rc[2].left,
             "item rectangles are not separated by 4 pixels space\n");
     /* height should be what the MEASUREITEM message has returned */
-    ok( MOD_rc[0].bottom - MOD_rc[0].top == 10,
+    ok( MOD_rc[0].bottom - MOD_rc[0].top == MOD_SIZE,
             "menu item has wrong height: %ld should be %d\n",
-            MOD_rc[0].bottom - MOD_rc[0].top, 10);
+            MOD_rc[0].bottom - MOD_rc[0].top, MOD_SIZE);
     /* no gaps between the rows */
     ok( MOD_rc[0].bottom - MOD_rc[1].top == 0,
             "There should not be a space between the rows, gap is %ld\n",
             MOD_rc[0].bottom - MOD_rc[1].top);
-
+    /* test the correct value of the item height that was sent
+     * by the WM_MEASUREITEM message */
+    ok( MOD_odheight == HIWORD( GetDialogBaseUnits()) || /* WinNT,2k,XP */
+            MOD_odheight == MOD_hic,                     /* Win95,98,ME */
+            "Wrong height field in MEASUREITEMSTRUCT, expected %d or %d actual %d\n",
+            HIWORD( GetDialogBaseUnits()), MOD_hic, MOD_odheight);
+    /* test what MF_MENUBREAK did at the first position. Also show
+     * that an MF_SEPARATOR is ignored in the height calculation. */
     leftcol= MOD_rc[0].left;
-    ModifyMenu( hmenu, 0, MF_BYCOMMAND| MF_OWNERDRAW, 0, 0); 
+    ModifyMenu( hmenu, 0, MF_BYCOMMAND| MF_OWNERDRAW| MF_SEPARATOR, 0, 0); 
     /* display the menu */
     ret = TrackPopupMenu( hmenu, 0x100, 100,100, 0, hwnd, NULL);
-
     /* left should be 4 pixels less now */
     ok( leftcol == MOD_rc[0].left + 4, 
             "columns should be 4 pixels to the left (actual %ld).\n",
             leftcol - MOD_rc[0].left);
+    /* test width */
+    ok( MOD_rc[0].right - MOD_rc[0].left == 2 * MOD_avec + MOD_SIZE,
+            "width of owner drawn menu item is wrong. Got %ld expected %d\n",
+            MOD_rc[0].right - MOD_rc[0].left , 2*MOD_avec + MOD_SIZE);
+    /* and height */
+    ok( MOD_rc[0].bottom - MOD_rc[0].top == MOD_SIZE,
+            "Height is incorrect. Got %ld expected %d",
+            MOD_rc[0].bottom - MOD_rc[0].top, MOD_SIZE);
 
-    trace("done\n");
-    DestroyMenu( hmenu);
+    /* test width/height of a OD menu bar as well */
+    ret = DestroyMenu(hmenu);
+    ok(ret, "DestroyMenu failed with error %ld\n", GetLastError());
+    hmenu = CreateMenu();
+    ok(hmenu != NULL, "CreateMenu failed with error %ld\n", GetLastError());
+    if( !hmenu) { DestroyWindow(hwnd);return;}
+    MOD_maxid=1;
+    for(i=0;i<2;i++) { 
+        ret = AppendMenu( hmenu, MF_OWNERDRAW , i, 0);
+        ok( ret, "AppendMenu failed for %d\n", i);
+    }
+    SetMenu( hwnd, hmenu);
+    UpdateWindow( hwnd); /* hack for wine to draw the window + menu */
+    ok(ret, "SetMenu failed with error %ld\n", GetLastError());
+    /* test width */
+    ok( MOD_rc[0].right - MOD_rc[0].left == 2 * MOD_avec + MOD_SIZE,
+            "width of owner drawn menu item is wrong. Got %ld expected %d\n",
+            MOD_rc[0].right - MOD_rc[0].left , 2*MOD_avec + MOD_SIZE);
+    /* test hight */
+    ok( MOD_rc[0].bottom - MOD_rc[0].top == GetSystemMetrics( SM_CYMENU) - 1,
+            "Height of owner drawn menu item is wrong. Got %ld expected %d\n",
+            MOD_rc[0].bottom - MOD_rc[0].top, GetSystemMetrics( SM_CYMENU) - 1);
+    /* clean up */
     DestroyWindow(hwnd);
 }
 

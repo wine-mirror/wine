@@ -175,6 +175,8 @@ static HBITMAP hBmpSysMenu = 0;
 static HBRUSH	hShadeBrush = 0;
 static HFONT	hMenuFont = 0;
 static HFONT	hMenuFontBold = 0;
+static SIZE     menucharsize;
+static UINT     ODitemheight; /* default owner drawn item height */      
 
 static HMENU MENU_DefSysPopup = 0;  /* Default system menu popup */
 
@@ -873,38 +875,36 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 
     if (lpitem->fType & MF_OWNERDRAW)
     {
-        /*
-        ** Experimentation under Windows reveals that an owner-drawn
-        ** menu is expected to return the size of the content part of
-        ** the menu item, not including the checkmark nor the submenu
-        ** arrow.  Windows adds those values itself and returns the
-        ** enlarged rectangle on subsequent WM_DRAWITEM messages.
-        */
         MEASUREITEMSTRUCT mis;
+        /* not done in Menu_Init: GetDialogBaseUnits() breaks there */
+        if( !menucharsize.cx ) {
+            DIALOG_GetCharSize( hdc, hMenuFont, &menucharsize );
+            /* Win95/98/ME will use menucharsize.cy here. Testing is possible
+             * but it is unlikely an application will depend on that */
+            ODitemheight = HIWORD( GetDialogBaseUnits());
+        }
         mis.CtlType    = ODT_MENU;
         mis.CtlID      = 0;
         mis.itemID     = lpitem->wID;
         mis.itemData   = (DWORD)lpitem->dwItemData;
-        mis.itemHeight = 0;
+        mis.itemHeight = ODitemheight;
         mis.itemWidth  = 0;
         SendMessageW( hwndOwner, WM_MEASUREITEM, 0, (LPARAM)&mis );
-        lpitem->rect.right  += mis.itemWidth;
-
- 	if (menuBar)
-	{
-	     lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
-
-
-             /* under at least win95 you seem to be given a standard
-                height for the menu and the height value is ignored */
-	     lpitem->rect.bottom += GetSystemMetrics(SM_CYMENU)-1;
-        }
-        else
+        /* Tests reveal that Windows ( Win95 thru WinXP) adds twice the average
+         * width of a menufont character to the width of an owner-drawn menu. 
+         */
+        lpitem->rect.right += mis.itemWidth + 2 * menucharsize.cx;
+        if (menuBar) {
+            /* under at least win95 you seem to be given a standard
+               height for the menu and the height value is ignored */
+            lpitem->rect.bottom += GetSystemMetrics(SM_CYMENUSIZE);
+        } else
             lpitem->rect.bottom += mis.itemHeight;
 
-	TRACE("id=%04x size=%dx%d\n",
-                     lpitem->wID, mis.itemWidth, mis.itemHeight);
-        /* Fall through to get check/arrow width calculation. */
+        TRACE("id=%04x size=%ldx%ld\n",
+                lpitem->wID, lpitem->rect.right-lpitem->rect.left,
+                lpitem->rect.bottom-lpitem->rect.top);
+        return;
     }
 
     if (lpitem->fType & MF_SEPARATOR)
@@ -951,9 +951,6 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 	if (lpitem->fType & MF_POPUP)
 	    lpitem->rect.right += arrow_bitmap_width;
     }
-
-    if (lpitem->fType & MF_OWNERDRAW)
-        return;
 
     if (IS_BITMAP_ITEM(lpitem->fType))
     {
