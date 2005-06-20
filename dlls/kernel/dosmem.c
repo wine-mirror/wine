@@ -33,7 +33,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "excpt.h"
 #include "winternl.h"
 #include "wine/winbase16.h"

@@ -36,7 +36,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winerror.h"
 #include "winternl.h"
 #include "kernel_private.h"

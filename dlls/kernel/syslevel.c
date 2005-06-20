@@ -27,7 +27,6 @@
 #include <sys/types.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel_private.h"

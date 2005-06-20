@@ -49,7 +49,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "winreg.h"
 #include "winternl.h"
 
 #include "wine/server.h"

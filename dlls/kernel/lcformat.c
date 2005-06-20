@@ -33,7 +33,6 @@
 #include "winbase.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
-#include "winreg.h"
 #include "winternl.h"
 
 #include "kernel_private.h"

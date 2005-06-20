@@ -35,7 +35,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"  /* for RT_STRINGW */
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "winnls.h"

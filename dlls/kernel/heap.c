@@ -44,7 +44,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnt.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "wine/exception.h"

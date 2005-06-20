@@ -29,7 +29,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "winerror.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "wine/unicode.h"

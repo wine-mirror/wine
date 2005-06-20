@@ -42,7 +42,6 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winnls.h"
 #include "winternl.h"
 #include "ntstatus.h"
@@ -52,6 +51,7 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 

@@ -37,7 +37,6 @@
 #include "wine/winuser16.h"
 #include "ntstatus.h"
 #include "winioctl.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "module.h"
 #include "kernel_private.h"

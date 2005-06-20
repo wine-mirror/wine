@@ -41,7 +41,6 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"

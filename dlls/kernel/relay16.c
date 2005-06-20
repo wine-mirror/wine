@@ -29,7 +29,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "kernel16_private.h"

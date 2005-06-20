@@ -28,7 +28,6 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "ntstatus.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "kernel_private.h"
 #include "wine/windef16.h"
