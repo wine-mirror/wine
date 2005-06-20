@@ -40,7 +40,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -842,7 +841,7 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
 /***  TIME_GetTimeZoneInfoFromReg: helper for GetTimeZoneInformation ***/
 
 
-static int TIME_GetTimeZoneInfoFromReg(LPTIME_ZONE_INFORMATION tzinfo)
+static int TIME_GetTimeZoneInfoFromReg(RTL_TIME_ZONE_INFORMATION *tzinfo)
 {
     BYTE buf[90];
     KEY_VALUE_PARTIAL_INFORMATION * KpInfo =
@@ -909,13 +908,13 @@ static int TIME_GetTimeZoneInfoFromReg(LPTIME_ZONE_INFORMATION tzinfo)
  *   Success: STATUS_SUCCESS.
  *   Failure: An NTSTATUS error code indicating the problem.
  */
-NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
+NTSTATUS WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION *tzinfo)
 {
     time_t gmt;
     int bias, daylight;
     const WCHAR *psTZ;
 
-    memset(tzinfo, 0, sizeof(TIME_ZONE_INFORMATION));
+    memset(tzinfo, 0, sizeof(RTL_TIME_ZONE_INFORMATION));
 
     if( !TIME_GetTimeZoneInfoFromReg(tzinfo)) {
 
@@ -948,7 +947,7 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
  * BUGS
  *   Uses the obsolete unix timezone structure and tz_dsttime member.
  */
-NTSTATUS WINAPI RtlSetTimeZoneInformation( const TIME_ZONE_INFORMATION *tzinfo )
+NTSTATUS WINAPI RtlSetTimeZoneInformation( const RTL_TIME_ZONE_INFORMATION *tzinfo )
 {
 #ifdef HAVE_SETTIMEOFDAY
     struct timezone tz;

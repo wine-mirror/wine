@@ -76,6 +76,35 @@ typedef struct _FILETIME
 } FILETIME, *PFILETIME, *LPFILETIME;
 #endif /* _FILETIME_ */
 
+/*
+ * RTL_SYSTEM_TIME and RTL_TIME_ZONE_INFORMATION are the same as
+ * the SYSTEMTIME and TIME_ZONE_INFORMATION structures defined
+ * in winbase.h, however we need to define them seperately so
+ * winternl.h doesn't depend on winbase.h.  They are used by
+ * RtlQueryTimeZoneInformation and RtlSetTimeZoneInformation.
+ * The names are guessed; if anybody knows the real names, let me know.
+ */
+typedef struct _RTL_SYSTEM_TIME {
+    WORD wYear;
+    WORD wMonth;
+    WORD wDayOfWeek;
+    WORD wDay;
+    WORD wHour;
+    WORD wMinute;
+    WORD wSecond;
+    WORD wMilliseconds;
+} RTL_SYSTEM_TIME, *PRTL_SYSTEM_TIME;
+
+typedef struct _RTL_TIME_ZONE_INFORMATION {
+    LONG Bias;
+    WCHAR StandardName[32];
+    RTL_SYSTEM_TIME StandardDate;
+    LONG StandardBias;
+    WCHAR DaylightName[32];
+    RTL_SYSTEM_TIME DaylightDate;
+    LONG DaylightBias;
+} RTL_TIME_ZONE_INFORMATION, *PRTL_TIME_ZONE_INFORMATION;
+
 typedef struct _CLIENT_ID
 {
    HANDLE UniqueProcess;
@@ -1953,7 +1982,7 @@ NTSTATUS  WINAPI RtlQueryEnvironmentVariable_U(PWSTR,PUNICODE_STRING,PUNICODE_ST
 NTSTATUS  WINAPI RtlQueryInformationAcl(PACL,LPVOID,DWORD,ACL_INFORMATION_CLASS);
 NTSTATUS  WINAPI RtlQueryProcessDebugInformation(ULONG,ULONG,PDEBUG_BUFFER);
 NTSTATUS  WINAPI RtlQueryRegistryValues(ULONG, PCWSTR, PRTL_QUERY_REGISTRY_TABLE, PVOID, PVOID);
-NTSTATUS  WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION);
+NTSTATUS  WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION*);
 void      WINAPI RtlRaiseException(PEXCEPTION_RECORD);
 void      WINAPI RtlRaiseStatus(NTSTATUS);
 ULONG     WINAPI RtlRandom(PULONG);
@@ -1979,7 +2008,7 @@ NTSTATUS  WINAPI RtlSetGroupSecurityDescriptor(PSECURITY_DESCRIPTOR,PSID,BOOLEAN
 void      WINAPI RtlSetLastWin32Error(DWORD);
 void      WINAPI RtlSetLastWin32ErrorAndNtStatusFromNtStatus(NTSTATUS);
 NTSTATUS  WINAPI RtlSetSaclSecurityDescriptor(PSECURITY_DESCRIPTOR,BOOLEAN,PACL,BOOLEAN);
-NTSTATUS  WINAPI RtlSetTimeZoneInformation(const TIME_ZONE_INFORMATION*);
+NTSTATUS  WINAPI RtlSetTimeZoneInformation(const RTL_TIME_ZONE_INFORMATION*);
 ULONG     WINAPI RtlSizeHeap(HANDLE,ULONG,PVOID);
 LPDWORD   WINAPI RtlSubAuthoritySid(PSID,DWORD);
 LPBYTE    WINAPI RtlSubAuthorityCountSid(PSID);

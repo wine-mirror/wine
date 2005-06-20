@@ -42,6 +42,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "ntstatus.h"
 #include "kernel_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -371,7 +372,10 @@ DWORD WINAPI GetTimeZoneInformation(
     LPTIME_ZONE_INFORMATION tzinfo) /* [out] Destination for time zone information */
 {
     NTSTATUS status;
-    if ((status = RtlQueryTimeZoneInformation(tzinfo))) {
+
+    status = RtlQueryTimeZoneInformation( (RTL_TIME_ZONE_INFORMATION*)tzinfo );
+    if ( status != STATUS_SUCCESS )
+    {
         SetLastError( RtlNtStatusToDosError(status) );
         return TIME_ZONE_ID_INVALID;
     }
@@ -391,7 +395,8 @@ BOOL WINAPI SetTimeZoneInformation(
     const TIME_ZONE_INFORMATION *tzinfo) /* [in] The new time zone. */
 {
     NTSTATUS status;
-    if ((status = RtlSetTimeZoneInformation(tzinfo)))
+    status = RtlSetTimeZoneInformation( (RTL_TIME_ZONE_INFORMATION*) tzinfo );
+    if ( status != STATUS_SUCCESS )
         SetLastError( RtlNtStatusToDosError(status) );
     return !status;
 }
