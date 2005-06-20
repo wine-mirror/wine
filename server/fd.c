@@ -51,7 +51,6 @@
 #include "request.h"
 
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 
 #if defined(HAVE_SYS_EPOLL_H) && defined(HAVE_EPOLL_CREATE)

@@ -33,7 +33,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "request.h"
 #include "unicode.h"

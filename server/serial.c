@@ -46,10 +46,8 @@
 #include <poll.h>
 #endif
 
-#include "winerror.h"
 #include "windef.h"
 #include "winbase.h"
-#include "winreg.h"
 #include "winternl.h"
 
 #include "file.h"
