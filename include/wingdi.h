@@ -1759,11 +1759,7 @@ typedef struct
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER, *LPBITMAPFILEHEADER;
 #include <poppack.h>
 
-#ifdef __WINESRC__
-#define MAKEPOINTS(l)  do_not_use_MAKEPOINTS_in_wine
-#else
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
-#endif
 
 typedef struct
 {
