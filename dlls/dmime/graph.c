@@ -63,7 +63,7 @@ ULONG WINAPI IDirectMusicGraphImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	return ref;
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IUnknown_Release (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
 	ULONG ref = InterlockedDecrement(&This->ref);
 	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
@@ -94,18 +94,18 @@ ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_AddRef (LPDIRECTMUSICGRAPH 
 	return IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_Release (LPDIRECTMUSICGRAPH iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_Release (LPDIRECTMUSICGRAPH iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
 	return IDirectMusicGraphImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg (LPDIRECTMUSICGRAPH iface, DMUS_PMSG* pPMSG) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg (LPDIRECTMUSICGRAPH iface, DMUS_PMSG* pPMSG) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pPMSG);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool, DWORD* pdwPChannels, DWORD cPChannels, LONG lIndex) {
   ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
 
   HRESULT hr; 
@@ -153,7 +153,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_InsertTool (LPDIRECTMUSIC
   return DS_OK;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dwIndex, IDirectMusicTool** ppTool) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_GetTool (LPDIRECTMUSICGRAPH iface, DWORD dwIndex, IDirectMusicTool** ppTool) {
   ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
   struct list* pEntry = NULL;
   LPDMUS_PRIVATE_GRAPH_TOOL pIt = NULL;
@@ -177,7 +177,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_GetTool (LPDIRECTMUSICGRA
   return DMUS_E_NOT_FOUND;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_RemoveTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_RemoveTool (LPDIRECTMUSICGRAPH iface, IDirectMusicTool* pTool) {
   ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
   FIXME("(%p, %p): stub\n", This, pTool);
   return S_OK;
@@ -205,12 +205,12 @@ ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJEC
 	return IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
 	return IDirectMusicGraphImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p)\n", This, pDesc);
 	/* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
@@ -218,7 +218,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_GetDescriptor (LPDIRECTM
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_SetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
 	TRACE("(%p, %p): setting descriptor:\n%s\n", This, pDesc, debugstr_DMUS_OBJECTDESC (pDesc));
 	
@@ -252,7 +252,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_SetDescriptor (LPDIRECTM
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_ParseDescriptor (LPDIRECTMUSICOBJECT iface, LPSTREAM pStream, LPDMUS_OBJECTDESC pDesc) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[1], ListCount[1];
@@ -420,20 +420,20 @@ ULONG WINAPI IDirectMusicGraphImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface)
 	return IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, PersistStreamVtbl, iface);
 	return IDirectMusicGraphImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, PersistStreamVtbl, iface);
 	FOURCC chunkID;
 	DWORD chunkSize, StreamSize, StreamCount, ListSize[3], ListCount[3];
@@ -579,11 +579,11 @@ HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_Load (LPPERSISTSTREAM iface,
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
 	return E_NOTIMPL;
 }
 
-HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
 	return E_NOTIMPL;
 }
 

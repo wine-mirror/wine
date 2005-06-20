@@ -47,7 +47,7 @@ ULONG WINAPI IDirectMusicTool8Impl_AddRef (LPDIRECTMUSICTOOL8 iface) {
 	return ref;
 }
 
-ULONG WINAPI IDirectMusicTool8Impl_Release (LPDIRECTMUSICTOOL8 iface) {
+static ULONG WINAPI IDirectMusicTool8Impl_Release (LPDIRECTMUSICTOOL8 iface) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	ULONG ref = InterlockedDecrement(&This->ref);
 	TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
@@ -62,44 +62,44 @@ ULONG WINAPI IDirectMusicTool8Impl_Release (LPDIRECTMUSICTOOL8 iface) {
 }
 
 /* IDirectMusicTool8Impl IDirectMusicTool part: */
-HRESULT WINAPI IDirectMusicTool8Impl_Init (LPDIRECTMUSICTOOL8 iface, IDirectMusicGraph* pGraph) {
+static HRESULT WINAPI IDirectMusicTool8Impl_Init (LPDIRECTMUSICTOOL8 iface, IDirectMusicGraph* pGraph) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p): stub\n", This, pGraph);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicTool8Impl_GetMsgDeliveryType (LPDIRECTMUSICTOOL8 iface, DWORD* pdwDeliveryType) {
+static HRESULT WINAPI IDirectMusicTool8Impl_GetMsgDeliveryType (LPDIRECTMUSICTOOL8 iface, DWORD* pdwDeliveryType) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p): stub\n", This, pdwDeliveryType);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicTool8Impl_GetMediaTypeArraySize (LPDIRECTMUSICTOOL8 iface, DWORD* pdwNumElements) {
+static HRESULT WINAPI IDirectMusicTool8Impl_GetMediaTypeArraySize (LPDIRECTMUSICTOOL8 iface, DWORD* pdwNumElements) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p): stub\n", This, pdwNumElements);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicTool8Impl_GetMediaTypes (LPDIRECTMUSICTOOL8 iface, DWORD** padwMediaTypes, DWORD dwNumElements) {
+static HRESULT WINAPI IDirectMusicTool8Impl_GetMediaTypes (LPDIRECTMUSICTOOL8 iface, DWORD** padwMediaTypes, DWORD dwNumElements) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p, %ld): stub\n", This, padwMediaTypes, dwNumElements);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicTool8Impl_ProcessPMsg (LPDIRECTMUSICTOOL8 iface, IDirectMusicPerformance* pPerf, DMUS_PMSG* pPMSG) {
+static HRESULT WINAPI IDirectMusicTool8Impl_ProcessPMsg (LPDIRECTMUSICTOOL8 iface, IDirectMusicPerformance* pPerf, DMUS_PMSG* pPMSG) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p, %p): stub\n", This, pPerf, pPMSG);
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicTool8Impl_Flush (LPDIRECTMUSICTOOL8 iface, IDirectMusicPerformance* pPerf, DMUS_PMSG* pPMSG, REFERENCE_TIME rtTime) {
+static HRESULT WINAPI IDirectMusicTool8Impl_Flush (LPDIRECTMUSICTOOL8 iface, IDirectMusicPerformance* pPerf, DMUS_PMSG* pPMSG, REFERENCE_TIME rtTime) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p, %p, %lli): stub\n", This, pPerf, pPMSG, rtTime);
 	return S_OK;
 }
 
 /* IDirectMusicTool8Impl IDirectMusicTool8 part: */
-HRESULT WINAPI IDirectMusicTool8Impl_Clone (LPDIRECTMUSICTOOL8 iface, IDirectMusicTool** ppTool) {
+static HRESULT WINAPI IDirectMusicTool8Impl_Clone (LPDIRECTMUSICTOOL8 iface, IDirectMusicTool** ppTool) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	FIXME("(%p, %p): stub\n", This, ppTool);
 	return S_OK;

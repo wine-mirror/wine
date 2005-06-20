@@ -264,7 +264,7 @@ const char *debugstr_dmversion (LPDMUS_VERSION version) {
 }
 
 /* month number into month name (for debugstr_filetime) */
-const char *debugstr_month (DWORD dwMonth) {
+static const char *debugstr_month (DWORD dwMonth) {
 	switch (dwMonth) {
 		case 1: return "January";
 		case 2: return "February";
