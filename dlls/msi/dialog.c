@@ -402,7 +402,7 @@ static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
 
     TRACE("%p %p\n", dialog, rec);
 
-    control = msi_dialog_add_control( dialog, rec, szButton, 0 );
+    control = msi_dialog_add_control( dialog, rec, szButton, WS_TABSTOP );
     control->handler = msi_dialog_button_handler;
 
     return ERROR_SUCCESS;
@@ -458,7 +458,7 @@ static UINT msi_dialog_checkbox_control( msi_dialog *dialog, MSIRECORD *rec )
     TRACE("%p %p\n", dialog, rec);
 
     control = msi_dialog_add_control( dialog, rec, szButton,
-                                      BS_CHECKBOX | BS_MULTILINE );
+                                BS_CHECKBOX | BS_MULTILINE | WS_TABSTOP );
     control->handler = msi_dialog_checkbox_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
@@ -515,7 +515,8 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     EDITSTREAM es;
     DWORD style;
 
-    style = WS_BORDER | ES_MULTILINE | WS_VSCROLL | ES_READONLY | ES_AUTOVSCROLL;
+    style = WS_BORDER | ES_MULTILINE | WS_VSCROLL |
+            ES_READONLY | ES_AUTOVSCROLL | WS_TABSTOP;
     control = msi_dialog_add_control( dialog, rec, szRichEdit20W, style );
 
     text = MSI_RecordGetString( rec, 10 );
@@ -601,7 +602,8 @@ static UINT msi_dialog_edit_control( msi_dialog *dialog, MSIRECORD *rec )
     LPCWSTR prop;
     LPWSTR val;
 
-    control = msi_dialog_add_control( dialog, rec, szEdit, WS_BORDER );
+    control = msi_dialog_add_control( dialog, rec, szEdit,
+                                      WS_BORDER | WS_TABSTOP );
     control->handler = msi_dialog_edit_handler;
     prop = MSI_RecordGetString( rec, 9 );
     if( prop )
@@ -838,13 +840,15 @@ static UINT msi_dialog_maskedit_control( msi_dialog *dialog, MSIRECORD *rec )
 
     info->dialog = dialog;
 
-    control = msi_dialog_add_control( dialog, rec, szStatic, SS_OWNERDRAW|WS_GROUP );
+    control = msi_dialog_add_control( dialog, rec, szStatic,
+                   SS_OWNERDRAW | WS_GROUP | WS_VISIBLE );
     if( !control )
     {
         ERR("Failed to create maskedit container\n");
         ret = ERROR_FUNCTION_FAILED;
         goto end;
     }
+    SetWindowLongPtrW( control->hwnd, GWL_EXSTYLE, WS_EX_CONTROLPARENT );
 
     info->hwnd = control->hwnd;
 
@@ -895,7 +899,7 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
     DWORD style;
     DWORD attributes = group->attributes;
 
-    style = WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE;
+    style = WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE | WS_TABSTOP;
     name = MSI_RecordGetString( rec, 3 );
     text = MSI_RecordGetString( rec, 8 );
     if( attributes & 1 )
@@ -941,6 +945,7 @@ static UINT msi_dialog_radiogroup_control( msi_dialog *dialog, MSIRECORD *rec )
     oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
                                            (LONG_PTR)MSIRadioGroup_WndProc );
     SetPropW(control->hwnd, szButtonData, oldproc);
+    SetWindowLongPtrW( control->hwnd, GWL_EXSTYLE, WS_EX_CONTROLPARENT );
 
     if( prop )
         control->property = strdupW( prop );
@@ -1048,7 +1053,7 @@ static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
         TRACE("%s control %s\n", debugstr_w(action), debugstr_w(name));
 
         /* FIXME: case sensitive? */
-        if(!strcmpW(action, szHide))
+        if(!lstrcmpW(action, szHide))
             ShowWindow(control->hwnd, SW_HIDE);
         else if(!strcmpW(action, szShow))
             ShowWindow(control->hwnd, SW_SHOW);
@@ -1513,12 +1518,14 @@ msi_dialog *msi_dialog_create( MSIPACKAGE* package, LPCWSTR szDialogName,
     return dialog;
 }
 
-static void msi_process_pending_messages(void)
+static void msi_process_pending_messages( HWND hdlg )
 {
     MSG msg;
 
     while( PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ) )
     {
+        if( hdlg && IsDialogMessageW( hdlg, &msg ))
+            continue;
         TranslateMessage( &msg );
         DispatchMessageW( &msg );
     }
@@ -1546,7 +1553,7 @@ void msi_dialog_check_messages( HANDLE handle )
     /* there's two choices for the UI thread */
     while (1)
     {
-        msi_process_pending_messages();
+        msi_process_pending_messages( NULL );
 
         if( !handle )
             break;
@@ -1589,7 +1596,7 @@ UINT msi_dialog_run_message_loop( msi_dialog *dialog )
         while( !dialog->finished )
         {
             MsgWaitForMultipleObjects( 0, NULL, 0, INFINITE, QS_ALLEVENTS );
-            msi_process_pending_messages();
+            msi_process_pending_messages( dialog->hwnd );
         }
     }
     else
