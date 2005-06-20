@@ -41,6 +41,20 @@
 
 static IMalloc *ppM;
 
+static HRESULT (WINAPI *pSHBindToParent)(LPCITEMIDLIST, REFIID, LPVOID*, LPCITEMIDLIST*);
+static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
+
+static void init_function_pointers(void)
+{
+    HMODULE hmod = GetModuleHandleA("shell32.dll");
+
+    if(hmod)
+    {
+        pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
+        pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
+    }
+}
+
 /* creates a file with the specified name for tests */
 static void CreateTestFile(const CHAR *name)
 {
@@ -238,8 +252,10 @@ static void test_GetDisplayName(void)
      * no functional difference in this respect.
      */
 
+    if(!pSHGetSpecialFolderPathW) return;
+
     /* First creating a directory in MyDocuments and a file in this directory. */
-    result = SHGetSpecialFolderPathW(NULL, wszTestDir, CSIDL_PERSONAL, FALSE);
+    result = pSHGetSpecialFolderPathW(NULL, wszTestDir, CSIDL_PERSONAL, FALSE);
     ok(result, "SHGetSpecialFolderPathW failed! Last error: %08lx\n", GetLastError());
     if (!result) return;
 
@@ -287,8 +303,10 @@ static void test_GetDisplayName(void)
     ok (result, "SHGetPathFromIDListW failed! Last error: %08lx\n", GetLastError());
     ok (!lstrcmpiW(wszTestFile, wszTestFile2), "SHGetPathFromIDListW returns incorrect path!\n");
 
+    if(!pSHBindToParent) return;
+
     /* Binding to the folder and querying the display name of the file also works. */
-    hr = SHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast); 
+    hr = pSHBindToParent(pidlTestFile, &IID_IShellFolder, (VOID**)&psfPersonal, &pidlLast); 
     ok (SUCCEEDED(hr), "SHBindToParent failed! hr = %08lx\n", hr);
     if (FAILED(hr)) {
         IShellFolder_Release(psfDesktop);
@@ -399,8 +417,10 @@ static void test_SHGetPathFromIDList(void)
         ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-',
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
 
+    if(!pSHGetSpecialFolderPathW) return;
+
     /* Calling SHGetPathFromIDList with an empty pidl should return the desktop folder's path. */
-    result = SHGetSpecialFolderPathW(NULL, wszDesktop, CSIDL_DESKTOP, FALSE);
+    result = pSHGetSpecialFolderPathW(NULL, wszDesktop, CSIDL_DESKTOP, FALSE);
     ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOP) failed! Last error: %08lx\n", GetLastError());
     if (!result) return;
     
@@ -436,6 +456,8 @@ START_TEST(shlfolder)
     static const WCHAR cTestDirW[] = {'\\','t','e','s','t','d','i','r',0};
     HRESULT hr;
     
+    init_function_pointers();
+
     GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
     strcatW(cCurrDirW, cTestDirW);
