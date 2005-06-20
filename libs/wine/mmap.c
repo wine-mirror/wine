@@ -137,6 +137,28 @@ static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
 
     return result == addr;
 }
+
+#elif defined(__APPLE__)
+
+/*
+ * On Darwin, we can use the Mach call vm_allocate to allocate
+ * anonymous memory at the specified address, and then use mmap with
+ * MAP_FIXED to replace the mapping.
+ */
+static int try_mmap_fixed (void *addr, size_t len, int prot, int flags,
+                           int fildes, off_t off)
+{
+    void *result;
+    result = addr;
+    if(vm_allocate(mach_task_self(),&result,len,0))
+        return 0;
+    else
+    {
+        result = mmap( addr, len, prot, flags | MAP_FIXED, fildes, off );
+        return result == addr;
+    }
+}
+
 #endif  /* (__svr4__ || __NetBSD__) && !MAP_TRYFIXED */
 
 
@@ -182,7 +204,7 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
 #ifdef MAP_TRYFIXED
         /* If available, this will attempt a fixed mapping in-kernel */
         flags |= MAP_TRYFIXED;
-#elif defined(__svr4__) || defined(__NetBSD__)
+#elif defined(__svr4__) || defined(__NetBSD__) || defined(__APPLE__)
         if ( try_mmap_fixed( start, size, prot, flags, fdzero, 0 ) )
             return start;
 #endif
