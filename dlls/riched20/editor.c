@@ -916,10 +916,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     return 0;
   case EM_GETSEL:
   {
-    ME_GetSelection(editor, (int *)wParam, (int *)lParam);
-    if (!((wParam|lParam) & 0xFFFF0000))
-      return (lParam<<16)|wParam;
-    return -1;
+    /* Note: wParam/lParam can be NULL */
+    UINT from, to;
+    PUINT pfrom = wParam ? (PUINT)wParam : &from;
+    PUINT pto = lParam ? (PUINT)lParam : &to;
+    ME_GetSelection(editor, pfrom, pto);
+    if ((*pfrom|*pto) & 0xFFFF0000)
+      return -1;
+    return MAKELONG(*pfrom,*pto);
   }
   case EM_EXGETSEL:
   {
