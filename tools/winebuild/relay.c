@@ -45,7 +45,9 @@ static void function_header( FILE *outfile, const char *name )
 
 static void function_footer( FILE *outfile, const char *name )
 {
-    fprintf( outfile, ".size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\n", name, name );
+#ifdef HAVE_ASM_DOT_SIZE
+    fprintf( outfile, "\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\n", name, name );
+#endif
 }
 
 /*******************************************************************
@@ -757,14 +759,14 @@ static void BuildRet16Func( FILE *outfile )
  */
 static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 {
-    const char *name = isEx? "CBClientEx" : "CBClient";
+    const char *name = isEx? "CALL32_CBClientEx" : "CALL32_CBClient";
     int size = isEx? 24 : 12;
 
     /* Function header */
 
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-    fprintf( outfile, "\t.globl " __ASM_NAME("CALL32_%s") "\n", name );
-    fprintf( outfile, __ASM_NAME("CALL32_%s") ":\n", name );
+    fprintf( outfile, "\t.globl " __ASM_NAME("%s") "\n", name );
+    fprintf( outfile, __ASM_NAME("%s") ":\n", name );
 
     /* Entry code */
 
@@ -832,10 +834,10 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tmovl %%ebx, 0(%%edi)\n" );    /* 16-bit ss:sp */
 
         if (!UsePIC)
-            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
+            fprintf( outfile, "\tmovl " __ASM_NAME("%s_RetAddr") ", %%eax\n", name );
         else
         {
-            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr@GOT") "(%%edx), %%eax\n", name );
+            fprintf( outfile, "\tmovl " __ASM_NAME("%s_RetAddr@GOT") "(%%edx), %%eax\n", name );
             fprintf( outfile, "\tmovl (%%eax), %%eax\n" );
         }
         fprintf( outfile, "\tmovl %%eax, 4(%%edi)\n" );   /* overwrite return address */
@@ -859,10 +861,10 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tmovl %%eax, 16(%%edi)\n" );
 
         if (!UsePIC)
-            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr") ", %%eax\n", name );
+            fprintf( outfile, "\tmovl " __ASM_NAME("%s_RetAddr") ", %%eax\n", name );
         else
         {
-            fprintf( outfile, "\tmovl " __ASM_NAME("CALL32_%s_RetAddr@GOT") "(%%edx), %%eax\n", name );
+            fprintf( outfile, "\tmovl " __ASM_NAME("%s_RetAddr@GOT") "(%%edx), %%eax\n", name );
             fprintf( outfile, "\tmovl (%%eax), %%eax\n" );
         }
         fprintf( outfile, "\tmovl %%eax, 20(%%edi)\n" );
@@ -913,17 +915,17 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tpopl %%edi\n" );
     fprintf( outfile, "\tpopl %%ebp\n" );
     fprintf( outfile, "\tret\n" );
-    fprintf( outfile, ".size " __ASM_NAME("CALL32_%s") ", . - " __ASM_NAME("CALL32_%s") "\n", name, name );
+    function_footer( outfile, name );
 }
 
 static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
 {
-    const char *name = isEx? "CBClientEx" : "CBClient";
+    const char *name = isEx? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret";
 
     /* '16-bit' return stub */
 
-    fprintf( outfile, "\n\t.globl " __ASM_NAME("CALL32_%s_Ret") "\n", name );
-    fprintf( outfile, __ASM_NAME("CALL32_%s_Ret") ":\n", name );
+    fprintf( outfile, "\n\t.globl " __ASM_NAME("%s") "\n", name );
+    fprintf( outfile, __ASM_NAME("%s") ":\n", name );
 
     if ( !isEx )
     {
@@ -938,13 +940,12 @@ static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tlssl %%ss:-12(%%ebx), %%esp\n" );
     }
     fprintf( outfile, "\tlret\n" );
-
-    fprintf( outfile, ".size " __ASM_NAME("CALL32_%s_Ret") ", . - " __ASM_NAME("CALL32_%s_Ret") "\n", name, name );
+    function_footer( outfile, name );
 
     /* Declare the return address variable */
 
-    fprintf( outfile, "\n\t.globl " __ASM_NAME("CALL32_%s_RetAddr") "\n", name );
-    fprintf( outfile, __ASM_NAME("CALL32_%s_RetAddr") ":\t.long 0\n", name );
+    fprintf( outfile, "\n\t.globl " __ASM_NAME("%sAddr") "\n", name );
+    fprintf( outfile, __ASM_NAME("%sAddr") ":\t.long 0\n", name );
 }
 
 
@@ -1177,7 +1178,7 @@ void BuildRelays16( FILE *outfile )
 
     fprintf( outfile, __ASM_NAME("Call16_End") ":\n" );
     fprintf( outfile, "\t.globl " __ASM_NAME("Call16_End") "\n" );
-    fprintf( outfile, "\t.size " __ASM_NAME("__wine_spec_thunk_text_16") ",. - " __ASM_NAME("__wine_spec_thunk_text_16") "\n" );
+    function_footer( outfile, "__wine_spec_thunk_text_16" );
 
     /* The whole Call16_Ret segment must lie within the .data section */
     fprintf( outfile, "\n\t.data\n" );
@@ -1200,7 +1201,7 @@ void BuildRelays16( FILE *outfile )
     /* End of Call16_Ret segment */
     fprintf( outfile, "\n\t.globl " __ASM_NAME("Call16_Ret_End") "\n" );
     fprintf( outfile, __ASM_NAME("Call16_Ret_End") ":\n" );
-    fprintf( outfile, "\t.size " __ASM_NAME("__wine_spec_thunk_data_16") ",. - " __ASM_NAME("__wine_spec_thunk_data_16") "\n" );
+    function_footer( outfile, "__wine_spec_thunk_data_16" );
 }
 
 /*******************************************************************
@@ -1219,7 +1220,7 @@ void BuildRelays32( FILE *outfile )
     /* 32-bit register entry point */
     BuildCallFrom32Regs( outfile );
 
-    fprintf( outfile, "\t.size " __ASM_NAME("__wine_spec_thunk_text_32") ",. - " __ASM_NAME("__wine_spec_thunk_text_32") "\n" );
+    function_footer( outfile, "__wine_spec_thunk_text_32" );
 }
 
 #else /* __i386__ */

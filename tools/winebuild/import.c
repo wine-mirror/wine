@@ -716,7 +716,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
             fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
             fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
             fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\taddl $%d+%s-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+            fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
             if (!strcmp( name, "__wine_call_from_16_regs" ))
                 fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
             fprintf( outfile, "    \"\\tmovl 0(%%eax),%%eax\\n\"\n" );
@@ -729,7 +729,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
             fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
             fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
             fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\taddl $%d+%s-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+            fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
             if (strstr( name, "__wine_call_from_16" ))
                 fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
             fprintf( outfile, "    \"\\tjmp *0(%%eax)\\n\"\n" );
@@ -987,11 +987,11 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "    \"" __ASM_NAME("__wine_delay_load_asm") ":\\n\"\n" );
 #if defined(__i386__)
     fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
     fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
 #elif defined(__sparc__)
     fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall __wine_delay_load\\n\"\n" );
+    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
     fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
     fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
 #elif defined(__powerpc__)
@@ -1047,7 +1047,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     /* branch to ctr register. */
     fprintf( outfile, "    \"bctr\\n\"\n");
 #elif defined(__ALPHA__)
-    fprintf( outfile, "    \"\\tjsr $26,__wine_delay_load\\n\"\n" );
+    fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("__wine_delay_load") "\\n\"\n" );
     fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
 #else
 #error You need to defined delayed import thunks for your architecture!
@@ -1068,10 +1068,10 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
             fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", buffer );
 #if defined(__i386__)
             fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
-            fprintf( outfile, "    \"\\tjmp __wine_delay_load_asm\\n\"\n" );
+            fprintf( outfile, "    \"\\tjmp " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
 #elif defined(__sparc__)
             fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
-            fprintf( outfile, "    \"\\tb,a __wine_delay_load_asm\\n\"\n" );
+            fprintf( outfile, "    \"\\tb,a " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
 #elif defined(__powerpc__)
 #ifdef __APPLE__
             /* On Darwin we can use r0 and r2 */
@@ -1097,7 +1097,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 #elif defined(__ALPHA__)
             fprintf( outfile, "    \"\\tlda $0,%d($31)\\n\"\n", j);
             fprintf( outfile, "    \"\\tldah $0,%d($0)\\n\"\n", idx);
-            fprintf( outfile, "    \"\\tjmp $31,__wine_delay_load_asm\\n\"\n" );
+            fprintf( outfile, "    \"\\tjmp $31," __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
 #else
 #error You need to defined delayed import thunks for your architecture!
 #endif
