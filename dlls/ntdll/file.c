@@ -57,6 +57,12 @@
 # endif
 #endif
 
+#ifdef __APPLE__
+# include <IOKit/IOKitLib.h>
+# include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
+# include <paths.h>
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "wine/unicode.h"
@@ -1549,9 +1555,6 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
                     info->Characteristics |= FILE_REMOTE_DEVICE;
                 }
 #elif defined (__APPLE__)
-# include <IOKit/IOKitLib.h>
-# include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
-# include <paths.h>
                 struct statfs stfs;
                 
                 info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
