@@ -67,8 +67,8 @@ static BOOL load_driver(void)
     HKEY hkey;
 
     strcpy( buffer, "x11,tty" );  /* default value */
-    /* @@ Wine registry key: HKLM\Software\Wine\Drivers */
-    if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Drivers", &hkey ))
+    /* @@ Wine registry key: HKCU\Software\Wine\Drivers */
+    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
     {
         DWORD type, count = sizeof(buffer);
         RegQueryValueExA( hkey, "Graphics", 0, &type, buffer, &count );

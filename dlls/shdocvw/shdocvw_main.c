@@ -318,8 +318,8 @@ static DWORD WINAPI ThreadFunc( LPVOID info )
 
     /* find the name of the thing to download */
     szUrl[0] = 0;
-    /* @@ Wine registry key: HKLM\Software\Wine\shdocw */
-    r = RegOpenKeyW( HKEY_LOCAL_MACHINE, szMozDlPath, &hkey );
+    /* @@ Wine registry key: HKCU\Software\Wine\shdocw */
+    r = RegOpenKeyW( HKEY_CURRENT_USER, szMozDlPath, &hkey );
     if( r == ERROR_SUCCESS )
     {
         sz = MAX_PATH;
