@@ -1770,23 +1770,40 @@ NotifyBootConfigStatus( DWORD x1 )
 /******************************************************************************
  * RevertToSelf [ADVAPI32.@]
  *
+ * Ends the impersonation of a user.
+ *
  * PARAMS
  *   void []
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
  */
 BOOL WINAPI
 RevertToSelf( void )
 {
-	FIXME("(), stub\n");
-	return TRUE;
+    HANDLE Token = NULL;
+    return set_ntstatus( NtSetInformationThread( GetCurrentThread(),
+        ThreadImpersonationToken, &Token, sizeof(Token) ) );
 }
 
 /******************************************************************************
  * ImpersonateSelf [ADVAPI32.@]
+ *
+ * Makes an impersonation token that represents the process user and assigns
+ * to the current thread.
+ *
+ * PARAMS
+ *  ImpersonationLevel [I] Level at which to impersonate.
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE.
  */
 BOOL WINAPI
 ImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 {
-	return RtlImpersonateSelf(ImpersonationLevel);
+    return set_ntstatus( RtlImpersonateSelf( ImpersonationLevel ) );
 }
 
 /******************************************************************************
@@ -1844,14 +1861,22 @@ BOOL WINAPI AccessCheckByType(
 	return !*AccessStatus;
 }
 
+/******************************************************************************
+ * MapGenericMask [ADVAPI32.@]
+ *
+ * Maps generic access rights into specific access rights according to the
+ * supplied mapping.
+ *
+ * PARAMS
+ *  AccessMask     [I/O] Access rights.
+ *  GenericMapping [I] The mapping between generic and specific rights.
+ *
+ * RETURNS
+ *  Nothing.
+ */
 VOID WINAPI MapGenericMask( PDWORD AccessMask, PGENERIC_MAPPING GenericMapping )
 {
-	FIXME("%p %p - stub\n", AccessMask, GenericMapping);
-
-    *AccessMask |= GenericMapping->GenericRead;
-    *AccessMask |= GenericMapping->GenericWrite;
-    *AccessMask |= GenericMapping->GenericExecute;
-    *AccessMask |= GenericMapping->GenericAll;
+    RtlMapGenericMask( AccessMask, GenericMapping );
 }
 
 /*************************************************************************

@@ -1365,12 +1365,55 @@ RtlAdjustPrivilege(ULONG Privilege,
 
 /******************************************************************************
  *  RtlImpersonateSelf		[NTDLL.@]
+ *
+ * Makes an impersonation token that represents the process user and assigns
+ * to the current thread.
+ *
+ * PARAMS
+ *  ImpersonationLevel [I] Level at which to impersonate.
+ *
+ * RETURNS
+ *  Success: STATUS_SUCCESS.
+ *  Failure: NTSTATUS code.
  */
-BOOL WINAPI
+NTSTATUS WINAPI
 RtlImpersonateSelf(SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
 {
-	FIXME("(%08x), stub\n", ImpersonationLevel);
-	return TRUE;
+    NTSTATUS Status;
+    OBJECT_ATTRIBUTES ObjectAttributes;
+    HANDLE ProcessToken;
+    HANDLE ImpersonationToken;
+
+    TRACE("(%08x)\n", ImpersonationLevel);
+
+    Status = NtOpenProcessToken( NtCurrentProcess(), TOKEN_DUPLICATE,
+                                 &ProcessToken);
+    if (Status != STATUS_SUCCESS)
+        return Status;
+
+    InitializeObjectAttributes( &ObjectAttributes, NULL, 0, NULL, NULL );
+
+    Status = NtDuplicateToken( ProcessToken,
+                               TOKEN_IMPERSONATE,
+                               &ObjectAttributes,
+                               ImpersonationLevel,
+                               TokenImpersonation,
+                               &ImpersonationToken );
+    if (Status != STATUS_SUCCESS)
+    {
+        NtClose( ProcessToken );
+        return Status;
+    }
+
+    Status = NtSetInformationThread( GetCurrentThread(),
+                                     ThreadImpersonationToken,
+                                     &ImpersonationToken,
+                                     sizeof(ImpersonationToken) );
+
+    NtClose( ImpersonationToken );
+    NtClose( ProcessToken );
+
+    return Status;
 }
 
 /******************************************************************************
