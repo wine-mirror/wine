@@ -1010,7 +1010,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
         SetLastError(0xdeadbeef);
         rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-        if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEBUTTONSWAP"))
+        if (!test_error_msg(rc!=vals[i],"SPI_{GET,SET}MOUSEBUTTONSWAP"))
             return;
             
         test_change_message( SPI_SETMOUSEBUTTONSWAP, 0 );
@@ -1023,7 +1023,7 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
 
     rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, old_b, 0,
                               SPIF_UPDATEINIFILE );
-    ok(rc!=0,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
+    ok(!rc,"***warning*** failed to restore the original value: rc=%d err=%ld\n",rc,GetLastError());
 }
 
 static void test_SPI_SETFASTTASKSWITCH( void )         /*     36 */

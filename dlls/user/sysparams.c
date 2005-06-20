@@ -1522,18 +1522,18 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     {
         WCHAR buf[5];
         spi_idx = SPI_SETMOUSEBUTTONSWAP_IDX;
-
         wsprintfW(buf, CSu, uiParam);
+        /* MSDN says it returns previous state of swapbutton always */
+	ret = sysMetrics[SM_SWAPBUTTON];
         if (SYSPARAMS_Save( SPI_SETMOUSEBUTTONSWAP_REGKEY,
                             SPI_SETMOUSEBUTTONSWAP_VALNAME,
                             buf, fWinIni ))
         {
             sysMetrics[SM_SWAPBUTTON] = uiParam;
             spi_loaded[spi_idx] = TRUE;
+            SYSPARAMS_NotifyChange( uiAction, fWinIni );
         }
-        else
-            ret = FALSE;
-        break;
+        return ret;
     }
 
     WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
