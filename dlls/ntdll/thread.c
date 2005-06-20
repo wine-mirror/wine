@@ -535,6 +535,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
                                         LPCVOID data, ULONG length )
 {
+    NTSTATUS status;
     switch(class)
     {
     case ThreadZeroTlsCell:
@@ -577,8 +578,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         {
             const HANDLE *phToken = data;
             if (length != sizeof(HANDLE)) return STATUS_INVALID_PARAMETER;
-            FIXME("Set ThreadImpersonationToken handle to %p\n", *phToken );
-            return STATUS_SUCCESS;
+            TRACE("Setting ThreadImpersonationToken handle to %p\n", *phToken );
+            SERVER_START_REQ( set_thread_info )
+            {
+                req->handle   = handle;
+                req->token    = *phToken;
+                req->mask     = SET_THREAD_INFO_TOKEN;
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+            return status;
         }
     case ThreadBasicInformation:
     case ThreadTimes:

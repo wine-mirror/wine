@@ -741,7 +741,8 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " mask=%d,", req->mask );
     fprintf( stderr, " priority=%d,", req->priority );
-    fprintf( stderr, " affinity=%d", req->affinity );
+    fprintf( stderr, " affinity=%d,", req->affinity );
+    fprintf( stderr, " token=%p", req->token );
 }
 
 static void dump_get_dll_info_request( const struct get_dll_info_request *req )

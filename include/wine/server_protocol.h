@@ -414,6 +414,7 @@ struct set_thread_info_request
     int          mask;
     int          priority;
     int          affinity;
+    obj_handle_t token;
 };
 struct set_thread_info_reply
 {
@@ -421,6 +422,7 @@ struct set_thread_info_reply
 };
 #define SET_THREAD_INFO_PRIORITY 0x01
 #define SET_THREAD_INFO_AFFINITY 0x02
+#define SET_THREAD_INFO_TOKEN    0x04
 
 
 
@@ -4186,6 +4188,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 178
+#define SERVER_PROTOCOL_VERSION 179
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

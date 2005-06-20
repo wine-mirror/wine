@@ -140,6 +140,29 @@ static inline int security_equal_sid( const SID *sid1, const SID *sid2 )
         !memcmp( sid1, sid2, FIELD_OFFSET(SID, SubAuthority[sid1->SubAuthorityCount]) ));
 }
 
+void security_set_thread_token( struct thread *thread, obj_handle_t handle )
+{
+    if (!handle)
+    {
+        if (thread->token)
+            release_object( thread->token );
+        thread->token = NULL;
+    }
+    else
+    {
+        struct token *token = (struct token *)get_handle_obj( current->process,
+                                                              handle,
+                                                              TOKEN_IMPERSONATE,
+                                                              &token_ops );
+        if (token)
+        {
+            if (thread->token)
+                release_object( thread->token );
+            thread->token = token;
+        }
+    }
+}
+
 static const ACE_HEADER *ace_next( const ACE_HEADER *ace )
 {
     return (const ACE_HEADER *)((const char *)ace + ace->AceSize);
@@ -964,8 +987,13 @@ DECL_HANDLER(access_check)
 
         memset(&priv, 0, sizeof(priv));
 
-        /* FIXME: check token is an impersonation token, if not return
-         * STATUS_NO_IMPERSONATION_TOKEN */
+        /* only impersonation tokens may be used with this function */
+        if (token->primary)
+        {
+            set_error( STATUS_NO_IMPERSONATION_TOKEN );
+            release_object( token );
+            return;
+        }
 
         mapping.GenericRead = req->mapping_read;
         mapping.GenericWrite = req->mapping_write;

@@ -45,6 +45,7 @@
 #include "thread.h"
 #include "request.h"
 #include "user.h"
+#include "security.h"
 
 
 /* thread queues */
@@ -314,6 +315,8 @@ static void set_thread_info( struct thread *thread,
         if (req->affinity != 1) set_error( STATUS_INVALID_PARAMETER );
         else thread->affinity = req->affinity;
     }
+    if (req->mask & SET_THREAD_INFO_TOKEN)
+        security_set_thread_token( thread, req->token );
 }
 
 /* stop a thread (at the Unix level) */
