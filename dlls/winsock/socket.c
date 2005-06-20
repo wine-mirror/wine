@@ -1420,7 +1420,7 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
 
     if (fd != -1)
     {
-        if (!name || !SUPPORTED_PF(name->sa_family))
+        if (!name || (name->sa_family && !SUPPORTED_PF(name->sa_family)))
         {
             SetLastError(WSAEAFNOSUPPORT);
         }
