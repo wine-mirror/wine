@@ -25,9 +25,11 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "mmsystem.h"
 
 #include "wine/test.h"
 
+static BOOL is_win9x;
 
 static void test_createdibitmap(void)
 {
@@ -144,15 +146,30 @@ static void test_createdibitmap(void)
     DeleteDC(hdcmem);
 
     /* If hdc == 0 then we get a 1 bpp bitmap */
-    bmih.biBitCount = 32;
-    hbm = CreateDIBitmap(0, &bmih, 0, NULL, NULL, 0);
-    ok(hbm != NULL, "CreateDIBitmap failed\n");
-    ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
+    if (!is_win9x) {
+        bmih.biBitCount = 32;
+        hbm = CreateDIBitmap(0, &bmih, 0, NULL, NULL, 0);
+        ok(hbm != NULL, "CreateDIBitmap failed\n");
+        ok(GetObject(hbm, sizeof(bm), &bm), "GetObject failed\n");
 
-    ok(bm.bmBitsPixel == 1, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, 1);
-    DeleteObject(hbm);
+        ok(bm.bmBitsPixel == 1, "CreateDIBitmap created bitmap of incorrect depth %d != %d\n", bm.bmBitsPixel, 1);
+        DeleteObject(hbm);
+    }
     
     ReleaseDC(0, hdc);
+}
+
+#define test_color_todo(got, exp, txt, todo) \
+    if (todo) todo_wine { ok(got == exp, #txt " failed: got 0x%06x expected 0x%06x\n", (UINT)got, (UINT)exp); } \
+    else ok(got == exp, #txt " failed: got 0x%06x expected 0x%06x\n", (UINT)got, (UINT)exp)
+
+#define test_color(hdc, color, exp, todo_setp, todo_getp) \
+{ \
+    COLORREF c; \
+    c = SetPixel(hdc, 0, 0, color); \
+    if (!is_win9x) { test_color_todo(c, exp, SetPixel, todo_setp); } \
+    c = GetPixel(hdc, 0, 0); \
+    test_color_todo(c, exp, GetPixel, todo_getp); \
 }
 
 static void test_dibsections(void)
@@ -173,6 +190,8 @@ static void test_dibsections(void)
     WORD *index;
     DWORD *bits32;
     HPALETTE hpal, oldpal;
+    COLORREF c0, c1;
+    int i;
 
     hdc = GetDC(0);
     memset(pbmi, 0, sizeof(bmibuf));
@@ -197,31 +216,33 @@ static void test_dibsections(void)
     pbci->bmciHeader.bcSize = sizeof(BITMAPCOREHEADER);
     pbci->bmciHeader.bcBitCount = 0;
 
-    ret = GetDIBits(hdc, hdib, 0, 16, NULL, (BITMAPINFO*) pbci, DIB_RGB_COLORS);    
-    ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
-    ok((pbci->bmciHeader.bcWidth == 16) && (pbci->bmciHeader.bcHeight == 16)
-        && (pbci->bmciHeader.bcBitCount == 1) && (pbci->bmciHeader.bcPlanes == 1),
-	"GetDIBits did't fill in the BITMAPCOREHEADER structure properly\n");
+    if (!is_win9x) {
+        ret = GetDIBits(hdc, hdib, 0, 16, NULL, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
+        ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
+        ok((pbci->bmciHeader.bcWidth == 16) && (pbci->bmciHeader.bcHeight == 16)
+            && (pbci->bmciHeader.bcBitCount == 1) && (pbci->bmciHeader.bcPlanes == 1),
+        "GetDIBits did't fill in the BITMAPCOREHEADER structure properly\n");
 
-    ret = GetDIBits(hdc, hdib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
-    ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
-    ok((pbci->bmciColors[0].rgbtRed == 0xff) && (pbci->bmciColors[0].rgbtGreen == 0) &&
-       (pbci->bmciColors[0].rgbtBlue == 0) && (pbci->bmciColors[1].rgbtRed == 0) &&
-       (pbci->bmciColors[1].rgbtGreen == 0) && (pbci->bmciColors[1].rgbtBlue == 0xff),
-       "The color table has not been translated to the old BITMAPCOREINFO format\n");
+        ret = GetDIBits(hdc, hdib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
+        ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
+        ok((pbci->bmciColors[0].rgbtRed == 0xff) && (pbci->bmciColors[0].rgbtGreen == 0) &&
+            (pbci->bmciColors[0].rgbtBlue == 0) && (pbci->bmciColors[1].rgbtRed == 0) &&
+            (pbci->bmciColors[1].rgbtGreen == 0) && (pbci->bmciColors[1].rgbtBlue == 0xff),
+            "The color table has not been translated to the old BITMAPCOREINFO format\n");
 
-    hcoredib = CreateDIBSection(hdc, (BITMAPINFO*) pbci, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
-    ok(hcoredib != NULL, "CreateDIBSection failed with a BITMAPCOREINFO\n");
+        hcoredib = CreateDIBSection(hdc, (BITMAPINFO*) pbci, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+        ok(hcoredib != NULL, "CreateDIBSection failed with a BITMAPCOREINFO\n");
 
-    ZeroMemory(pbci->bmciColors, 256 * sizeof(RGBTRIPLE));
-    ret = GetDIBits(hdc, hcoredib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
-    ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
-    ok((pbci->bmciColors[0].rgbtRed == 0xff) && (pbci->bmciColors[0].rgbtGreen == 0) &&
-       (pbci->bmciColors[0].rgbtBlue == 0) && (pbci->bmciColors[1].rgbtRed == 0) &&
-       (pbci->bmciColors[1].rgbtGreen == 0) && (pbci->bmciColors[1].rgbtBlue == 0xff),
-       "The color table has not been translated to the old BITMAPCOREINFO format\n");    
+        ZeroMemory(pbci->bmciColors, 256 * sizeof(RGBTRIPLE));
+        ret = GetDIBits(hdc, hcoredib, 0, 16, &coreBits, (BITMAPINFO*) pbci, DIB_RGB_COLORS);
+        ok(ret, "GetDIBits doesn't work with a BITMAPCOREHEADER\n");
+        ok((pbci->bmciColors[0].rgbtRed == 0xff) && (pbci->bmciColors[0].rgbtGreen == 0) &&
+            (pbci->bmciColors[0].rgbtBlue == 0) && (pbci->bmciColors[1].rgbtRed == 0) &&
+            (pbci->bmciColors[1].rgbtGreen == 0) && (pbci->bmciColors[1].rgbtBlue == 0xff),
+            "The color table has not been translated to the old BITMAPCOREINFO format\n");
 
-    DeleteObject(hcoredib);
+        DeleteObject(hcoredib);
+    }
 
     hdcmem = CreateCompatibleDC(hdc);
     oldbm = SelectObject(hdcmem, hdib);
@@ -233,8 +254,51 @@ static void test_dibsections(void)
        rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
        rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
 
+    c0 = RGB(pbmi->bmiColors[0].rgbRed, pbmi->bmiColors[0].rgbGreen, pbmi->bmiColors[0].rgbBlue);
+    c1 = RGB(pbmi->bmiColors[1].rgbRed, pbmi->bmiColors[1].rgbGreen, pbmi->bmiColors[1].rgbBlue);
+
+    test_color(hdcmem, DIBINDEX(0), c0, 0, 1);
+    test_color(hdcmem, DIBINDEX(1), c1, 0, 1);
+    test_color(hdcmem, DIBINDEX(2), c0, 1, 1);
+    test_color(hdcmem, PALETTEINDEX(0), c0, 1, 1);
+    test_color(hdcmem, PALETTEINDEX(1), c0, 1, 1);
+    test_color(hdcmem, PALETTEINDEX(2), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(pbmi->bmiColors[0].rgbRed, pbmi->bmiColors[0].rgbGreen,
+        pbmi->bmiColors[0].rgbBlue), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(pbmi->bmiColors[1].rgbRed, pbmi->bmiColors[1].rgbGreen,
+        pbmi->bmiColors[1].rgbBlue), c1, 1, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(0xff, 0xff, 0xff), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0xfe), c1, 1, 1);
+
     SelectObject(hdcmem, oldbm);
     DeleteObject(hdib);
+
+    pbmi->bmiHeader.biBitCount = 8;
+
+    for (i = 0; i < 128; i++) {
+        pbmi->bmiColors[i].rgbRed = 255 - i * 2;
+        pbmi->bmiColors[i].rgbGreen = i * 2;
+        pbmi->bmiColors[i].rgbBlue = 0;
+        pbmi->bmiColors[255 - i].rgbRed = 0;
+        pbmi->bmiColors[255 - i].rgbGreen = i * 2;
+        pbmi->bmiColors[255 - i].rgbBlue = 255 - i * 2;
+    }
+    hdib = CreateDIBSection(hdcmem, pbmi, DIB_RGB_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+    oldbm = SelectObject(hdcmem, hdib);
+
+    for (i = 0; i < 256; i++) {
+        test_color(hdcmem, DIBINDEX(i), 
+            RGB(pbmi->bmiColors[i].rgbRed, pbmi->bmiColors[i].rgbGreen, pbmi->bmiColors[i].rgbBlue), 0, 0);
+        test_color(hdcmem, PALETTERGB(pbmi->bmiColors[i].rgbRed, pbmi->bmiColors[i].rgbGreen, pbmi->bmiColors[i].rgbBlue), 
+            RGB(pbmi->bmiColors[i].rgbRed, pbmi->bmiColors[i].rgbGreen, pbmi->bmiColors[i].rgbBlue), 0, 0);
+    }
+
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+
+    pbmi->bmiHeader.biBitCount = 1;
 
     /* Now create a palette and a palette indexed dib section */
     memset(plogpal, 0, sizeof(logpalbuf));
@@ -258,6 +322,7 @@ static void test_dibsections(void)
 
     SelectPalette(hdc, oldpal, TRUE);
     oldbm = SelectObject(hdcmem, hdib);
+    oldpal = SelectPalette(hdcmem, hpal, TRUE);
 
     ret = GetDIBColorTable(hdcmem, 0, 2, rgb);
     ok(ret == 2, "GetDIBColorTable returned %d\n", ret);
@@ -266,6 +331,26 @@ static void test_dibsections(void)
        "GetDIBColorTable returns table 0: r%02x g%02x b%02x res%02x 1: r%02x g%02x b%02x res%02x\n",
        rgb[0].rgbRed, rgb[0].rgbGreen, rgb[0].rgbBlue, rgb[0].rgbReserved,
        rgb[1].rgbRed, rgb[1].rgbGreen, rgb[1].rgbBlue, rgb[1].rgbReserved);
+
+    c0 = RGB(plogpal->palPalEntry[0].peRed, plogpal->palPalEntry[0].peGreen, plogpal->palPalEntry[0].peBlue);
+    c1 = RGB(plogpal->palPalEntry[1].peRed, plogpal->palPalEntry[1].peGreen, plogpal->palPalEntry[1].peBlue);
+
+    test_color(hdcmem, DIBINDEX(0), c0, 0, 1);
+    test_color(hdcmem, DIBINDEX(1), c1, 0, 1);
+    test_color(hdcmem, DIBINDEX(2), c0, 1, 1);
+    test_color(hdcmem, PALETTEINDEX(0), c0, 0, 1);
+    test_color(hdcmem, PALETTEINDEX(1), c1, 0, 1);
+    test_color(hdcmem, PALETTEINDEX(2), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(plogpal->palPalEntry[0].peRed, plogpal->palPalEntry[0].peGreen,
+        plogpal->palPalEntry[0].peBlue), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(plogpal->palPalEntry[1].peRed, plogpal->palPalEntry[1].peGreen,
+        plogpal->palPalEntry[1].peBlue), c1, 1, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0), c1, 1, 1);
+    test_color(hdcmem, PALETTERGB(0xff, 0xff, 0xff), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(0, 0, 0xfe), c0, 1, 1);
+    test_color(hdcmem, PALETTERGB(0, 1, 0), c1, 1, 1);
+    test_color(hdcmem, PALETTERGB(0x3f, 0, 0x3f), c1, 1, 1);
+    test_color(hdcmem, PALETTERGB(0x40, 0, 0x40), c0, 1, 1);
 
     /* Bottom and 2nd row from top green, everything else magenta */
     bits[0] = bits[1] = 0xff;
@@ -288,7 +373,64 @@ static void test_dibsections(void)
     DeleteObject(hdib2);
 
     SelectObject(hdcmem, oldbm);
+    SelectObject(hdcmem, oldpal);
     DeleteObject(hdib);
+    DeleteObject(hpal);
+
+
+    pbmi->bmiHeader.biBitCount = 8;
+
+    memset(plogpal, 0, sizeof(logpalbuf));
+    plogpal->palVersion = 0x300;
+    plogpal->palNumEntries = 256;
+
+    for (i = 0; i < 128; i++) {
+        plogpal->palPalEntry[i].peRed = 255 - i * 2;
+        plogpal->palPalEntry[i].peBlue = i * 2;
+        plogpal->palPalEntry[i].peGreen = 0;
+        plogpal->palPalEntry[255 - i].peRed = 0;
+        plogpal->palPalEntry[255 - i].peGreen = i * 2;
+        plogpal->palPalEntry[255 - i].peBlue = 255 - i * 2;
+    }
+
+    index = (WORD*)pbmi->bmiColors;
+    for (i = 0; i < 256; i++) {
+        *index++ = i;
+    }
+
+    hpal = CreatePalette(plogpal);
+    ok(hpal != NULL, "CreatePalette failed\n");
+    oldpal = SelectPalette(hdc, hpal, TRUE);
+    hdib = CreateDIBSection(hdc, pbmi, DIB_PAL_COLORS, (void**)&bits, NULL, 0);
+    ok(hdib != NULL, "CreateDIBSection failed\n");
+
+    SelectPalette(hdc, oldpal, TRUE);
+    oldbm = SelectObject(hdcmem, hdib);
+    oldpal = SelectPalette(hdcmem, hpal, TRUE);
+
+    ret = GetDIBColorTable(hdcmem, 0, 256, rgb);
+    ok(ret == 256, "GetDIBColorTable returned %d\n", ret);
+    for (i = 0; i < 256; i++) {
+        ok(rgb[i].rgbRed == plogpal->palPalEntry[i].peRed && 
+            rgb[i].rgbBlue == plogpal->palPalEntry[i].peBlue && 
+            rgb[i].rgbGreen == plogpal->palPalEntry[i].peGreen, 
+            "GetDIBColorTable returns table %d: r%02x g%02x b%02x res%02x\n",
+            i, rgb[i].rgbRed, rgb[i].rgbGreen, rgb[i].rgbBlue, rgb[i].rgbReserved);
+    }
+
+    for (i = 0; i < 256; i++) {
+        test_color(hdcmem, DIBINDEX(i), 
+            RGB(plogpal->palPalEntry[i].peRed, plogpal->palPalEntry[i].peGreen, plogpal->palPalEntry[i].peBlue), 0, 0);
+        test_color(hdcmem, PALETTEINDEX(i), 
+            RGB(plogpal->palPalEntry[i].peRed, plogpal->palPalEntry[i].peGreen, plogpal->palPalEntry[i].peBlue), 0, 0);
+        test_color(hdcmem, PALETTERGB(plogpal->palPalEntry[i].peRed, plogpal->palPalEntry[i].peGreen, plogpal->palPalEntry[i].peBlue), 
+            RGB(plogpal->palPalEntry[i].peRed, plogpal->palPalEntry[i].peGreen, plogpal->palPalEntry[i].peBlue), 0, 0);
+    }
+
+    SelectPalette(hdcmem, oldpal, TRUE);
+    SelectObject(hdcmem, oldbm);
+    DeleteObject(hdib);
+    DeleteObject(hpal);
 
 
     DeleteDC(hdcmem);
@@ -297,6 +439,15 @@ static void test_dibsections(void)
 
 START_TEST(bitmap)
 {
+    HWND hWnd;
+
+    hWnd = CreateWindowExA(0, "EDIT", NULL, 0,
+                           10, 10, 300, 300,
+                           NULL, NULL, NULL, NULL);
+    assert(hWnd);
+    is_win9x = GetWindowLongW(hWnd, GWL_WNDPROC) == 0;
+    DestroyWindow(hWnd);
+
     test_createdibitmap();
     test_dibsections();
 }
