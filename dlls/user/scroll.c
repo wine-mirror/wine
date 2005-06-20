@@ -667,7 +667,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     INT arrowSize, thumbSize, thumbPos;
     RECT rect;
     BOOL vertical;
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
+    SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE );
     BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
