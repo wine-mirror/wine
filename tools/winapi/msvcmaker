@@ -1079,26 +1079,20 @@ sub _generate_testlist_c($$) {
     print OUT "#include \"windef.h\"\n";
     print OUT "#include \"winbase.h\"\n";
     print OUT "\n";
+    print OUT "#define STANDALONE\n";
+    print OUT "#include \"wine/test.h\"\n";
+    print OUT "\n";
     foreach my $test (@tests) {
 	print OUT "extern void func_$test(void);\n";
     }
     print OUT "\n";
-    print OUT "struct test\n";
-    print OUT "{\n";
-    print OUT "    const char *name;\n";
-    print OUT "    void (*func)(void);\n";
-    print OUT "};\n";
-    print OUT "\n";
-    print OUT "static const struct test winetest_testlist[] =\n";
+    print OUT "const struct test winetest_testlist[] =\n";
     print OUT "{\n";
     foreach my $test (@tests) {
 	print OUT "    { \"$test\", func_$test },\n";
     }
     print OUT "    { 0, 0 }\n";
     print OUT "};\n";
-    print OUT "\n";
-    print OUT "#define WINETEST_WANT_MAIN\n";
-    print OUT "#include \"wine/test.h\"\n";
 }
 
 if ($options->winetest) {
