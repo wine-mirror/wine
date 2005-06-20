@@ -677,7 +677,7 @@ typedef struct DATAREQUEST
     struct DATAREQUEST * pNext; /* next data request in list */
 } DATAREQUEST;
 
-void queue(DATAREQUEST * pHead, DATAREQUEST * pItem)
+static void queue(DATAREQUEST * pHead, DATAREQUEST * pItem)
 {
     DATAREQUEST * pCurrent;
     for (pCurrent = pHead; pCurrent->pNext; pCurrent = pCurrent->pNext)

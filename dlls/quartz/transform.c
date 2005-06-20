@@ -146,7 +146,7 @@ static HRESULT TransformFilter_InputPin_Construct(const PIN_INFO * pPinInfo, SAM
     return E_FAIL;
 }
 
-HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
+static HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, ALLOCATOR_PROPERTIES *props, LPVOID pUserData, QUERYACCEPTPROC pQueryAccept, LPCRITICAL_SECTION pCritSec, IPin ** ppPin)
 {
     OutputPin * pPinImpl;
 
@@ -497,7 +497,7 @@ static const IBaseFilterVtbl TransformFilter_Vtbl =
     TransformFilter_QueryVendorInfo
 };
 
-HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
+static HRESULT WINAPI TransformFilter_InputPin_EndOfStream(IPin * iface)
 {
     InputPin* This = (InputPin*) iface;
     TransformFilterImpl* pTransform;
@@ -545,7 +545,7 @@ static const IPinVtbl TransformFilter_InputPin_Vtbl =
     InputPin_NewSegment
 };
 
-HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
+static HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
 {
     IPinImpl *This = (IPinImpl *)iface;
     ENUMMEDIADETAILS emd;
@@ -558,7 +558,7 @@ HRESULT WINAPI TransformFilter_Output_EnumMediaTypes(IPin * iface, IEnumMediaTyp
     return IEnumMediaTypesImpl_Construct(&emd, ppEnum);
 }
 
-HRESULT WINAPI TransformFilter_Output_Disconnect(IPin * iface)
+static HRESULT WINAPI TransformFilter_Output_Disconnect(IPin * iface)
 {
     OutputPin* This = (OutputPin*)iface;
     HRESULT hr;

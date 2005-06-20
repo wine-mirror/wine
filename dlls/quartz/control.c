@@ -163,7 +163,7 @@ HRESULT WINAPI MediaSeekingImpl_ConvertTimeFormat(IMediaSeeking * iface, LONGLON
     return E_INVALIDARG;
 }
 
-__inline LONGLONG Adjust(LONGLONG value, LONGLONG * pModifier, DWORD dwFlags)
+static inline LONGLONG Adjust(LONGLONG value, LONGLONG * pModifier, DWORD dwFlags)
 {
     switch (dwFlags & AM_SEEKING_PositioningBitsMask)
     {

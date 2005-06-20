@@ -50,7 +50,7 @@ void FreeMediaType(AM_MEDIA_TYPE * pMediaType)
     }
 }
 
-AM_MEDIA_TYPE * CreateMediaType(AM_MEDIA_TYPE const * pSrc)
+static AM_MEDIA_TYPE * CreateMediaType(AM_MEDIA_TYPE const * pSrc)
 {
     AM_MEDIA_TYPE * pDest;
     
