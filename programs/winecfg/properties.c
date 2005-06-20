@@ -58,12 +58,12 @@ static DLL_DESC sDLLType[] = {
 };
 
 static AUDIO_DRIVER sAudioDrivers[] = {
-  {"Alsa", "winealsa.drv"},
-  {"aRts", "winearts.drv"},
-  {"OSS", "wineoss.drv"},
-  {"Jack", "winejack.drv"},
-  {"Nas", "winenas.drv"},
-  {"Audio IO(Solaris)", "wineaudioio.drv"},
+  {"Alsa", "alsa"},
+  {"aRts", "arts"},
+  {"OSS", "oss"},
+  {"Jack", "jack"},
+  {"Nas", "nas"},
+  {"Audio IO(Solaris)", "audioio"},
   {"Disable sound", ""},
   {"", ""}
 };

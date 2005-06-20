@@ -55,7 +55,7 @@ static void selectAudioDriver(HWND hDlg, const char *drivername)
     {
       if (!strcmp (pAudioDrv->szDriver, drivername))
       {
-	set_reg_key("Winmm", "Drivers", (char *) pAudioDrv->szDriver);
+	set_reg_key("Drivers", "Audio", (char *) pAudioDrv->szDriver);
         SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0); /* enable apply button */
 	SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_SETCURSEL,
 			   (WPARAM) i, 0);
@@ -66,7 +66,7 @@ static void selectAudioDriver(HWND hDlg, const char *drivername)
 
 static void initAudioDlg (HWND hDlg)
 {
-    char *curAudioDriver = get_reg_key("Winmm", "Drivers", "winealsa.drv");
+    char *curAudioDriver = get_reg_key("Drivers", "Audio", "alsa");
     const AUDIO_DRIVER *pAudioDrv = NULL;
     int i;
 
@@ -101,7 +101,7 @@ static const char *audioAutoDetect(void)
   if(fd)
   {
     close(fd);
-    driversFound[numFound] = "wineoss.drv";
+    driversFound[numFound] = "oss";
     name[numFound] = "OSS";
     numFound++;
   }
@@ -109,7 +109,7 @@ static const char *audioAutoDetect(void)
     /* try to detect alsa */
   if(!stat("/proc/asound", &buf))
   {
-    driversFound[numFound] = "winealsa.drv";
+    driversFound[numFound] = "alsa";
     name[numFound] = "Alsa";
     numFound++;
   }
@@ -118,7 +118,7 @@ static const char *audioAutoDetect(void)
   argv_new[2] = "ps awx|grep artsd|grep -v grep|grep artsd > /dev/null";
   if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
   {
-    driversFound[numFound] = "winearts.drv";
+    driversFound[numFound] = "arts";
     name[numFound] = "aRts";
     numFound++;
   }
@@ -127,7 +127,7 @@ static const char *audioAutoDetect(void)
   argv_new[2] = "ps awx|grep jackd|grep -v grep|grep jackd > /dev/null";
   if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
   {
-    driversFound[numFound] = "winejack.drv";
+    driversFound[numFound] = "jack";
     name[numFound] = "jack";
     numFound++;
   }
