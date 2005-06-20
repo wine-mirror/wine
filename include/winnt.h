@@ -579,6 +579,7 @@ typedef struct _SINGLE_LIST_ENTRY {
 #define PF_RDTSC_INSTRUCTION_AVAILABLE		8
 #define PF_PAE_ENABLED				9
 #define PF_XMMI64_INSTRUCTIONS_AVAILABLE	10
+#define PF_NX_ENABLED				12
 
 
 /* Execution state flags */
