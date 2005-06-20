@@ -442,6 +442,10 @@ BOOL        WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
 int         WINAPIV ShellMessageBoxA(HINSTANCE,HWND,LPCSTR,LPCSTR,UINT,...);
 int         WINAPIV ShellMessageBoxW(HINSTANCE,HWND,LPCWSTR,LPCWSTR,UINT,...);
 #define     ShellMessageBox WINELIB_NAME_AW(ShellMessageBox)
+DWORD       WINAPI DoEnvironmentSubstA(LPSTR, UINT);
+DWORD       WINAPI DoEnvironmentSubstW(LPWSTR, UINT);
+#define     DoEnvironmentSubst WINELIB_NAME_AW(DoEnvironmentSubst)
+
 
 #ifdef __cplusplus
 } /* extern "C" */
