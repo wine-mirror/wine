@@ -1977,6 +1977,15 @@ typedef const MENUITEMINFOA *LPCMENUITEMINFOA;
 typedef const MENUITEMINFOW *LPCMENUITEMINFOW;
 DECL_WINELIB_TYPE_AW(LPCMENUITEMINFO)
 
+typedef struct tagMENUBARINFO {
+  DWORD cbSize;
+  RECT  rcBar;
+  HMENU hMenu;
+  HWND  hwndMenu;
+  BOOL  fBarFocused:1;
+  BOOL  fFocused:1;
+} MENUBARINFO, *PMENUBARINFO, *LPMENUBARINFO;
+
 typedef struct tagMENUINFO {
   DWORD   cbSize;
   DWORD   fMask;
@@ -3934,6 +3943,7 @@ BOOL      WINAPI GetIconInfo(HICON,PICONINFO);
 HKL       WINAPI GetKeyboardLayout(DWORD);
 UINT      WINAPI GetKeyboardLayoutList(INT,HKL *);
 BOOL      WINAPI GetComboBoxInfo(HWND,PCOMBOBOXINFO);
+BOOL      WINAPI GetMenuBarInfo(HWND,LONG,LONG,PMENUBARINFO);
 DWORD     WINAPI GetMenuContextHelpId(HMENU);
 UINT      WINAPI GetMenuDefaultItem(HMENU,UINT,UINT);
 BOOL      WINAPI GetMenuInfo(HMENU,LPMENUINFO);

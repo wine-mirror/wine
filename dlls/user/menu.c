@@ -3758,6 +3758,14 @@ HMENU WINAPI GetMenu( HWND hWnd )
     return retvalue;
 }
 
+/**********************************************************************
+ *         GetMenuBarInfo    (USER32.@)
+ */
+BOOL WINAPI GetMenuBarInfo( HWND hwnd, LONG idObject, LONG idItem, PMENUBARINFO pmbi )
+{
+    FIXME( "(%p,0x%08lx,0x%08lx,%p)\n", hwnd, idObject, idItem, pmbi );
+    return FALSE;
+}
 
 /**********************************************************************
  *         MENU_SetMenu

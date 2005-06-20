@@ -266,7 +266,7 @@
 @ stdcall GetLastInputInfo(ptr)
 # @ stub GetListBoxInfo
 @ stdcall GetMenu(long)
-# @ stub GetMenuBarInfo
+@ stdcall GetMenuBarInfo(long long long ptr)
 @ stdcall GetMenuCheckMarkDimensions()
 @ stdcall GetMenuContextHelpId(long)
 @ stdcall GetMenuDefaultItem(long long long)
