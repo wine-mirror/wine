@@ -380,22 +380,22 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 	len = fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
-		INT temp = MulDiv(dsb->dsound->device->pwfx->nAvgBytesPerSec, dsb->buflen,
-			dsb->nAvgBytesPerSec) -
-			MulDiv(dsb->dsound->device->pwfx->nAvgBytesPerSec, dsb->buf_mixpos,
-			dsb->nAvgBytesPerSec);
-		len = min(len, temp);
+		int secondary_remainder = dsb->buflen - dsb->buf_mixpos;
+		int adjusted_remainder = MulDiv(dsb->dsound->device->pwfx->nAvgBytesPerSec, secondary_remainder, dsb->nAvgBytesPerSec);
+		assert(remainder >= 0);
+		TRACE("secondary_remainder = %d, adjusted_remainder = %d, len = %d\n", secondary_remainder, adjusted_remainder, len);
+		if (adjusted_remainder < len) {
+			TRACE("clipping len to remainder of secondary buffer\n");
+			len = adjusted_remainder;
+		}
+		if (len == 0)
+			return 0;
 	}
 
 	if (len % dsb->dsound->device->pwfx->nBlockAlign) {
 		INT nBlockAlign = dsb->dsound->device->pwfx->nBlockAlign;
 		ERR("length not a multiple of block size, len = %d, block size = %d\n", len, nBlockAlign);
 		len = (len / nBlockAlign) * nBlockAlign;	/* data alignment */
-	}
-
-	if (len == 0) {
-		/* This should only happen if we aren't looping and temp < nBlockAlign */
-		return 0;
 	}
 
 	if ((buf = ibuf = DSOUND_tmpbuffer(dsb->dsound->device, len)) == NULL)
