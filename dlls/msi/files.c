@@ -562,11 +562,109 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     return rc;
 }
 
+static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    WCHAR *file_source = NULL;
+    WCHAR dest_name[0x100];
+    LPWSTR dest_path, dest;
+    LPCWSTR file_key, component;
+    INT component_index;
+    DWORD sz;
+    DWORD rc;
+
+    component = MSI_RecordGetString(row,2);
+    component_index = get_loaded_component(package,component);
+
+    if (!ACTION_VerifyComponentForAction(package, component_index, 
+                                   INSTALLSTATE_LOCAL))
+    {
+        TRACE("Skipping copy due to disabled component %s\n",
+                        debugstr_w(component));
+
+        /* the action taken was the same as the current install state */        
+        package->components[component_index].Action =
+            package->components[component_index].Installed;
+
+        return ERROR_SUCCESS;
+    }
+
+    package->components[component_index].Action = INSTALLSTATE_LOCAL;
+
+    file_key = MSI_RecordGetString(row,3);
+    if (!file_key)
+    {
+        ERR("Unable to get file key\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    rc = get_file_target(package,file_key,&file_source);
+
+    if (rc != ERROR_SUCCESS)
+    {
+        ERR("Original file unknown %s\n",debugstr_w(file_key));
+        HeapFree(GetProcessHeap(),0,file_source);
+        return ERROR_SUCCESS;
+    }
+
+    if (MSI_RecordIsNull(row,4))
+    {
+        strcpyW(dest_name,strrchrW(file_source,'\\')+1);
+    }
+    else
+    {
+        sz=0x100;
+        MSI_RecordGetStringW(row,4,dest_name,&sz);
+        reduce_to_longfilename(dest_name);
+     }
+
+    if (MSI_RecordIsNull(row,5))
+    {
+        LPWSTR p;
+        dest_path = strdupW(file_source);
+        p = strrchrW(dest_path,'\\');
+        if (p)
+            *p=0;
+    }
+    else
+    {
+        LPCWSTR destkey;
+        destkey = MSI_RecordGetString(row,5);
+        dest_path = resolve_folder(package, destkey, FALSE,FALSE,NULL);
+        if (!dest_path)
+        {
+            ERR("Unable to get destination folder\n");
+            HeapFree(GetProcessHeap(),0,file_source);
+            return ERROR_FUNCTION_FAILED;
+        }
+    }
+
+    dest = build_directory_name(2, dest_path, dest_name);
+       
+    TRACE("Duplicating file %s to %s\n",debugstr_w(file_source),
+          debugstr_w(dest)); 
+    
+    if (strcmpW(file_source,dest))
+        rc = !CopyFileW(file_source,dest,TRUE);
+    else
+        rc = ERROR_SUCCESS;
+    
+    if (rc != ERROR_SUCCESS)
+        ERR("Failed to copy file %s -> %s, last error %ld\n", debugstr_w(file_source), debugstr_w(dest_path), GetLastError());
+
+    FIXME("We should track these duplicate files as well\n");   
+
+    HeapFree(GetProcessHeap(),0,dest_path);
+    HeapFree(GetProcessHeap(),0,dest);
+    HeapFree(GetProcessHeap(),0,file_source);
+
+    return ERROR_SUCCESS;
+}
+
 UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
 {
     UINT rc;
     MSIQUERY * view;
-    MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','D','u','p','l','i','c','a','t','e','F','i','l','e','`',0};
@@ -578,122 +676,8 @@ UINT ACTION_DuplicateFiles(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    while (1)
-    {
-        WCHAR *file_source = NULL;
-        WCHAR dest_name[0x100];
-        LPWSTR dest_path, dest;
-        LPCWSTR file_key, component;
-        INT component_index;
-
-        DWORD sz;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        component = MSI_RecordGetString(row,2);
-        component_index = get_loaded_component(package,component);
-
-        if (!ACTION_VerifyComponentForAction(package, component_index, 
-                                       INSTALLSTATE_LOCAL))
-        {
-            TRACE("Skipping copy due to disabled component %s\n",
-                            debugstr_w(component));
-
-            /* the action taken was the same as the current install state */        
-            package->components[component_index].Action =
-                package->components[component_index].Installed;
-
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        package->components[component_index].Action = INSTALLSTATE_LOCAL;
-
-        file_key = MSI_RecordGetString(row,3);
-        if (!file_key)
-        {
-            ERR("Unable to get file key\n");
-            msiobj_release(&row->hdr);
-            break;
-        }
-
-        rc = get_file_target(package,file_key,&file_source);
-
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Original file unknown %s\n",debugstr_w(file_key));
-            msiobj_release(&row->hdr);
-            HeapFree(GetProcessHeap(),0,file_source);
-            continue;
-        }
-
-        if (MSI_RecordIsNull(row,4))
-        {
-            strcpyW(dest_name,strrchrW(file_source,'\\')+1);
-        }
-        else
-        {
-            sz=0x100;
-            MSI_RecordGetStringW(row,4,dest_name,&sz);
-            reduce_to_longfilename(dest_name);
-         }
-
-        if (MSI_RecordIsNull(row,5))
-        {
-            LPWSTR p;
-            dest_path = strdupW(file_source);
-            p = strrchrW(dest_path,'\\');
-            if (p)
-                *p=0;
-        }
-        else
-        {
-            LPCWSTR destkey;
-            destkey = MSI_RecordGetString(row,5);
-            dest_path = resolve_folder(package, destkey, FALSE,FALSE,NULL);
-            if (!dest_path)
-            {
-                ERR("Unable to get destination folder\n");
-                msiobj_release(&row->hdr);
-                HeapFree(GetProcessHeap(),0,file_source);
-                break;
-            }
-        }
-
-        dest = build_directory_name(2, dest_path, dest_name);
-           
-        TRACE("Duplicating file %s to %s\n",debugstr_w(file_source),
-              debugstr_w(dest)); 
-        
-        if (strcmpW(file_source,dest))
-            rc = !CopyFileW(file_source,dest,TRUE);
-        else
-            rc = ERROR_SUCCESS;
-        
-        if (rc != ERROR_SUCCESS)
-            ERR("Failed to copy file %s -> %s, last error %ld\n", debugstr_w(file_source), debugstr_w(dest_path), GetLastError());
-
-        FIXME("We should track these duplicate files as well\n");   
- 
-        msiobj_release(&row->hdr);
-        HeapFree(GetProcessHeap(),0,dest_path);
-        HeapFree(GetProcessHeap(),0,dest);
-        HeapFree(GetProcessHeap(),0,file_source);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_DuplicateFiles, package);
     msiobj_release(&view->hdr);
+
     return rc;
 }
