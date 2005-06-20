@@ -110,10 +110,73 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     case ProcessIoCounters:
-        if (ProcessInformationLength == sizeof(IO_COUNTERS))
         {
-            memset(ProcessInformation, 0, ProcessInformationLength);
-            len = sizeof(IO_COUNTERS);
+            IO_COUNTERS pii;
+
+            if (ProcessInformationLength >= sizeof(IO_COUNTERS))
+            {
+                if (!ProcessInformation)
+                    ret = STATUS_ACCESS_VIOLATION;
+                else if (!ProcessHandle)
+                    ret = STATUS_INVALID_HANDLE;
+                else
+                {
+                    /* FIXME : real data */
+                    memset(&pii, 0 , sizeof(IO_COUNTERS));
+
+                    if (ProcessInformationLength > sizeof(IO_COUNTERS))
+                        ret = STATUS_INFO_LENGTH_MISMATCH;
+
+                    memcpy(ProcessInformation, &pii, sizeof(IO_COUNTERS));
+
+                    len = sizeof(IO_COUNTERS);
+                }
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case ProcessVmCounters:
+        {
+            VM_COUNTERS pvmi;
+
+            if (ProcessInformationLength >= sizeof(VM_COUNTERS))
+            {
+                if (!ProcessInformation)
+                    ret = STATUS_ACCESS_VIOLATION;
+                else if (!ProcessHandle)
+                    ret = STATUS_INVALID_HANDLE;
+                else
+                {
+                    /* FIXME : real data */
+                    memset(&pvmi, 0 , sizeof(VM_COUNTERS));
+
+                    if (ProcessInformationLength > sizeof(VM_COUNTERS))
+                        ret = STATUS_INFO_LENGTH_MISMATCH;
+
+                    memcpy(ProcessInformation, &pvmi, sizeof(VM_COUNTERS));
+
+                    len = sizeof(VM_COUNTERS);
+                }
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
+    case ProcessTimes:
+        if (ProcessInformationLength >= 32)
+        {
+            if (!ProcessInformation)
+                ret = STATUS_ACCESS_VIOLATION;
+            else if (!ProcessHandle)
+                ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                memset(ProcessInformation, 0, 32);
+
+                if (ProcessInformationLength > 32)
+                    ret = STATUS_INFO_LENGTH_MISMATCH;
+
+                len = 32;
+            }
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
@@ -127,6 +190,25 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
+    case ProcessHandleCount:
+        if (ProcessInformationLength >= 4)
+        {
+            if (!ProcessInformation)
+                ret = STATUS_ACCESS_VIOLATION;
+            else if (!ProcessHandle)
+                ret = STATUS_INVALID_HANDLE;
+            else
+            {
+                memset(ProcessInformation, 0, 4);
+
+                if (ProcessInformationLength > 4)
+                    ret = STATUS_INFO_LENGTH_MISMATCH;
+
+                len = 4;
+            }
+         }
+         else ret = STATUS_INFO_LENGTH_MISMATCH;
+         break;
     case ProcessWow64Information:
         if (ProcessInformationLength == 4)
         {
