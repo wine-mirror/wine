@@ -58,7 +58,7 @@ static BOOL Uuid_Comparison_Grid[11][11] = {
   { TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE  }
 };
 
-void UuidConversionAndComparison(void) {
+static void UuidConversionAndComparison(void) {
     CHAR strx[100], x;
     LPSTR str = strx;
     WCHAR wstrx[100], wx;
@@ -123,7 +123,7 @@ void UuidConversionAndComparison(void) {
     }
 }
 
-void TestDceErrorInqText (void)
+static void TestDceErrorInqText (void)
 {
     char bufferInvalid [1024];
     char buffer [1024]; /* The required size is not documented but would

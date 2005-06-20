@@ -100,7 +100,7 @@ HRESULT WINAPI enummodescallback(LPDDSURFACEDESC lpddsd, LPVOID lpContext)
     return DDENUMRET_OK;
 }
 
-void enumdisplaymodes(void)
+static void enumdisplaymodes(void)
 {
     DDSURFACEDESC ddsd;
     HRESULT rc;

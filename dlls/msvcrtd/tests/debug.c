@@ -34,7 +34,7 @@ static void * (*pMSVCRTD_operator_new_dbg)(unsigned long, int, const char *, int
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hModule,y)
 #define SET(x,y) SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y)
 
-int init_functions(void)
+static int init_functions(void)
 {
   HMODULE hModule = LoadLibraryA("msvcrtd.dll");
   ok(hModule != NULL, "LoadLibraryA failed\n");
@@ -51,7 +51,7 @@ int init_functions(void)
 
 /**********************************************************************/
 
-void test_new(void)
+static void test_new(void)
 {
   void *mem;
 

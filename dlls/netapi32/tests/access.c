@@ -64,7 +64,7 @@ static int init_access_tests(void)
     return 1;
 }
 
-void run_usergetinfo_tests(void)
+static void run_usergetinfo_tests(void)
 {
     NET_API_STATUS rc;
     PUSER_INFO_0 ui0 = NULL;
@@ -123,7 +123,7 @@ void run_usergetinfo_tests(void)
 }
 
 /* checks Level 1 of NetQueryDisplayInformation */
-void run_querydisplayinformation1_tests(void)
+static void run_querydisplayinformation1_tests(void)
 {
     PNET_DISPLAY_USER Buffer, rec;
     DWORD Result, EntryCount;

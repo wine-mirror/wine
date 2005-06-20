@@ -297,7 +297,7 @@ static void test_CreateNamedPipe(int pipemode)
     trace("test_CreateNamedPipe returning\n");
 }
 
-void test_CreateNamedPipe_instances_must_match(void)
+static void test_CreateNamedPipe_instances_must_match(void)
 {
     HANDLE hnp, hnp2;
 

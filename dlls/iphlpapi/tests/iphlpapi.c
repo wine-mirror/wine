@@ -277,7 +277,7 @@ static void testGetIpForwardTable(void)
   }
 }
 
-void testGetIpNetTable(void)
+static void testGetIpNetTable(void)
 {
   if (gGetIpNetTable) {
     DWORD apiReturn;
@@ -307,7 +307,7 @@ void testGetIpNetTable(void)
   }
 }
 
-void testGetIcmpStatistics(void)
+static void testGetIcmpStatistics(void)
 {
   if (gGetIcmpStatistics) {
     DWORD apiReturn;
@@ -325,7 +325,7 @@ void testGetIcmpStatistics(void)
   }
 }
 
-void testGetIpStatistics(void)
+static void testGetIpStatistics(void)
 {
   if (gGetIpStatistics) {
     DWORD apiReturn;
@@ -343,7 +343,7 @@ void testGetIpStatistics(void)
   }
 }
 
-void testGetTcpStatistics(void)
+static void testGetTcpStatistics(void)
 {
   if (gGetTcpStatistics) {
     DWORD apiReturn;
@@ -361,7 +361,7 @@ void testGetTcpStatistics(void)
   }
 }
 
-void testGetUdpStatistics(void)
+static void testGetUdpStatistics(void)
 {
   if (gGetUdpStatistics) {
     DWORD apiReturn;
@@ -379,7 +379,7 @@ void testGetUdpStatistics(void)
   }
 }
 
-void testGetTcpTable(void)
+static void testGetTcpTable(void)
 {
   if (gGetTcpTable) {
     DWORD apiReturn;
@@ -407,7 +407,7 @@ void testGetTcpTable(void)
   }
 }
 
-void testGetUdpTable(void)
+static void testGetUdpTable(void)
 {
   if (gGetUdpTable) {
     DWORD apiReturn;

@@ -35,7 +35,7 @@ static NET_API_STATUS (WINAPI *pNetApiBufferReallocate)(LPVOID,DWORD,LPVOID*)=NU
 static NET_API_STATUS (WINAPI *pNetApiBufferSize)(LPVOID,LPDWORD)=NULL;
 
 
-void run_apibuf_tests(void)
+static void run_apibuf_tests(void)
 {
     VOID *p;
     DWORD dwSize;
