@@ -633,9 +633,14 @@ static UINT ITERATE_DuplicateFiles(MSIRECORD *row, LPVOID param)
         dest_path = resolve_folder(package, destkey, FALSE,FALSE,NULL);
         if (!dest_path)
         {
-            ERR("Unable to get destination folder\n");
-            HeapFree(GetProcessHeap(),0,file_source);
-            return ERROR_FUNCTION_FAILED;
+            /* try a Property */
+            dest_path = load_dynamic_property(package, destkey, NULL);
+            if (!dest_path)
+            {
+                FIXME("Unable to get destination folder, try AppSearch properties\n");
+                HeapFree(GetProcessHeap(),0,file_source);
+                return ERROR_SUCCESS;
+            }
         }
     }
 
