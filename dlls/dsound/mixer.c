@@ -382,7 +382,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
 		int secondary_remainder = dsb->buflen - dsb->buf_mixpos;
 		int adjusted_remainder = MulDiv(dsb->dsound->device->pwfx->nAvgBytesPerSec, secondary_remainder, dsb->nAvgBytesPerSec);
-		assert(remainder >= 0);
+		assert(adjusted_remainder >= 0);
 		TRACE("secondary_remainder = %d, adjusted_remainder = %d, len = %d\n", secondary_remainder, adjusted_remainder, len);
 		if (adjusted_remainder < len) {
 			TRACE("clipping len to remainder of secondary buffer\n");
