@@ -1708,6 +1708,53 @@ static UINT SetFeatureStates(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT ITERATE_CostFinalizeDirectories(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPCWSTR name;
+    LPWSTR path;
+
+    name = MSI_RecordGetString(row,1);
+
+    /* This helper function now does ALL the work */
+    TRACE("Dir %s ...\n",debugstr_w(name));
+    load_folder(package,name);
+    path = resolve_folder(package,name,FALSE,TRUE,NULL);
+    TRACE("resolves to %s\n",debugstr_w(path));
+    HeapFree( GetProcessHeap(), 0, path);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPCWSTR Feature;
+    int feature_index;
+
+    Feature = MSI_RecordGetString(row,1);
+
+    feature_index = get_loaded_feature(package,Feature);
+    if (feature_index < 0)
+        ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
+    else
+    {
+        LPCWSTR Condition;
+        Condition = MSI_RecordGetString(row,3);
+
+        if (MSI_EvaluateConditionW(package,Condition) == 
+            MSICONDITION_TRUE)
+        {
+            int level = MSI_RecordGetInteger(row,2);
+            TRACE("Reseting feature %s to level %i\n",
+                   debugstr_w(Feature), level);
+            package->features[feature_index].Level = level;
+        }
+    }
+    return ERROR_SUCCESS;
+}
+
+
 /* 
  * A lot is done in this function aside from just the costing.
  * The costing needs to be implemented at some point but for now I am going
@@ -1743,39 +1790,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc == ERROR_SUCCESS)
     {
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
-
-        while (1)
-        {
-            LPCWSTR name;
-            LPWSTR path;
-            MSIRECORD * row = 0;
-
-            rc = MSI_ViewFetch(view,&row);
-            if (rc != ERROR_SUCCESS)
-            {
-                rc = ERROR_SUCCESS;
-                break;
-            }
-
-            name = MSI_RecordGetString(row,1);
-
-            /* This helper function now does ALL the work */
-            TRACE("Dir %s ...\n",debugstr_w(name));
-            load_folder(package,name);
-            path = resolve_folder(package,name,FALSE,TRUE,NULL);
-            TRACE("resolves to %s\n",debugstr_w(path));
-            HeapFree( GetProcessHeap(), 0, path);
-
-            msiobj_release(&row->hdr);
-        }
-        MSI_ViewClose(view);
+        rc = MSI_IterateRecords(view, NULL, ITERATE_CostFinalizeDirectories,
+                        package);
         msiobj_release(&view->hdr);
     }
 
@@ -1868,51 +1884,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW(package->db, ConditionQuery, &view);
     if (rc == ERROR_SUCCESS)
     {
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            MSI_ViewClose(view);
-            msiobj_release(&view->hdr);
-            return rc;
-        }
-    
-        while (1)
-        {
-            LPCWSTR Feature;
-            MSIRECORD * row = 0;
-            int feature_index;
-
-            rc = MSI_ViewFetch(view,&row);
-
-            if (rc != ERROR_SUCCESS)
-            {
-                rc = ERROR_SUCCESS;
-                break;
-            }
-
-            Feature = MSI_RecordGetString(row,1);
-
-            feature_index = get_loaded_feature(package,Feature);
-            if (feature_index < 0)
-                ERR("FAILED to find loaded feature %s\n",debugstr_w(Feature));
-            else
-            {
-                LPCWSTR Condition;
-                Condition = MSI_RecordGetString(row,3);
-
-                if (MSI_EvaluateConditionW(package,Condition) == 
-                    MSICONDITION_TRUE)
-                {
-                    int level = MSI_RecordGetInteger(row,2);
-                    TRACE("Reseting feature %s to level %i\n",
-                           debugstr_w(Feature), level);
-                    package->features[feature_index].Level = level;
-                }
-            }
-
-            msiobj_release(&row->hdr);
-        }
-        MSI_ViewClose(view);
+        rc = MSI_IterateRecords(view, NULL, ITERATE_CostFinalizeConditions,
+                    package);
         msiobj_release(&view->hdr);
     }
 
