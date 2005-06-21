@@ -2148,6 +2148,9 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     case INTERNET_OPTION_CONNECTED_STATE:
         FIXME("Option INTERNET_OPTION_CONNECTED_STATE: STUB\n");
         break;
+    case INTERNET_OPTION_DISABLE_PASSPORT_AUTH:
+	TRACE("Option INTERNET_OPTION_DISABLE_PASSPORT_AUTH: harmless stub, since not enabled\n");
+	break;
     default:
         FIXME("Option %ld STUB\n",dwOption);
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
@@ -2156,7 +2159,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
     }
     WININET_Release( lpwhh );
 
-    return TRUE;
+    return ret;
 }
 
 
