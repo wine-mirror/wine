@@ -25,6 +25,11 @@ static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, 
 
 static HMODULE hntdll = 0;
 
+/* one_before_last_pid is used to be able to compare values of a still running process
+   with the output of the test_query_process_times and test_query_process_handlecount tests.
+*/
+static DWORD one_before_last_pid = 0;
+
 #define NTDLL_GET_PROC(func) \
     p ## func = (void*)GetProcAddress(hntdll, #func); \
     if(!p ## func) { \
@@ -48,7 +53,7 @@ static BOOL InitFunctionPtrs(void)
     return TRUE;
 }
 
-static void test_query_basic()
+static void test_query_basic(void)
 {
     DWORD status;
     ULONG ReturnLength;
@@ -94,7 +99,7 @@ static void test_query_basic()
     ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n", sbi.NumberOfProcessors);
 }
 
-static void test_query_cpu()
+static void test_query_cpu(void)
 {
     DWORD status;
     ULONG ReturnLength;
@@ -109,7 +114,7 @@ static void test_query_cpu()
     ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08lx\n", sci.FeatureSet);
 }
 
-static void test_query_timeofday()
+static void test_query_timeofday(void)
 {
     DWORD status;
     ULONG ReturnLength;
@@ -186,9 +191,10 @@ static void test_query_timeofday()
     trace("uCurrentTimeZoneId : (%ld)\n", sti.uCurrentTimeZoneId);
 }
 
-static void test_query_process()
+static void test_query_process(void)
 {
     DWORD status;
+    DWORD last_pid;
     ULONG ReturnLength;
     int i = 0, j = 0, k = 0;
     int is_nt = 0;
@@ -263,6 +269,8 @@ static void test_query_process()
     {
         i++;
 
+        last_pid = spi->dwProcessID;
+
         ok( spi->dwThreadCount > 0, "Expected some threads for this process, got 0\"");
 
         /* Loop through the threads, skip NT4 for now */
@@ -279,16 +287,20 @@ static void test_query_process()
         }
 
         if (!spi->dwOffset) break;
+
+        one_before_last_pid = last_pid;
                                                                                                                               
         spi = (SYSTEM_PROCESS_INFORMATION_PRIVATE*)((char*)spi + spi->dwOffset);
     }
     trace("Total number of running processes : %d\n", i);
     if (!is_nt) trace("Total number of running threads   : %d\n", k);
 
+    if (one_before_last_pid == 0) one_before_last_pid = last_pid;
+
     HeapFree( GetProcessHeap(), 0, spi);
 }
 
-static void test_query_handle()
+static void test_query_handle(void)
 {
     DWORD status;
     ULONG ReturnLength;
@@ -321,7 +333,7 @@ static void test_query_handle()
     HeapFree( GetProcessHeap(), 0, shi);
 }
 
-static void test_query_process_basic()
+static void test_query_process_basic(void)
 {
     DWORD status;
     ULONG ReturnLength;
@@ -377,10 +389,168 @@ static void test_query_process_basic()
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( sizeof(pbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pbi), ReturnLength);
+
+    /* Everything is correct except a too large buffersize */
+    trace("Too large buffersize\n");
+    status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi) * 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( sizeof(pbi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pbi), ReturnLength);
                                                                                                                                                
     /* Check if we have some return values */
     trace("ProcessID : %ld\n", pbi.UniqueProcessId);
-    ok( pbi.UniqueProcessId > 0, "Expected a ProcessID > 0, got 0, got %ld\n", pbi.UniqueProcessId);
+    ok( pbi.UniqueProcessId > 0, "Expected a ProcessID > 0, got 0\n");
+}
+
+static void test_query_process_vm(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    VM_COUNTERS pvi;
+
+    status = pNtQueryInformationProcess(NULL, ProcessVmCounters, NULL, sizeof(pvi), NULL);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessVmCounters, &pvi, sizeof(pvi), NULL);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+    /* Windows XP and W2K3 will report success for a size of 44 AND 48 !
+       Windows W2K will only report success for 44.
+       For now we only care for 44, which is sizeof(VM_COUNTERS)
+       If an app depends on it, we have to implement this in ntdll/process.c
+    */
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 24, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, sizeof(pvi), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(pvi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pvi), ReturnLength);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &pvi, 46, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( sizeof(pvi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pvi), ReturnLength);
+
+    /* Check if we have some return values */
+    trace("WorkingSetSize : %ld\n", pvi.WorkingSetSize);
+    todo_wine
+    {
+        ok( pvi.WorkingSetSize > 0, "Expected a WorkingSetSize > 0\n");
+    }
+}
+
+static void test_query_process_io(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    IO_COUNTERS pii;
+
+    status = pNtQueryInformationProcess(NULL, ProcessIoCounters, NULL, sizeof(pii), NULL);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessIoCounters, &pii, sizeof(pii), NULL);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, 24, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(pii) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pii), ReturnLength);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii) * 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( sizeof(pii) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(pii), ReturnLength);
+
+    /* Check if we have some return values */
+    trace("OtherOperationCount : %lld\n", pii.OtherOperationCount);
+    todo_wine
+    {
+        ok( pii.OtherOperationCount > 0, "Expected an OtherOperationCount > 0\n");
+    }
+}
+
+static void test_query_process_times(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    HANDLE process;
+    SYSTEMTIME UTC, Local;
+    KERNEL_USER_TIMES spti;
+
+    status = pNtQueryInformationProcess(NULL, ProcessTimes, NULL, sizeof(spti), NULL);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessTimes, &spti, sizeof(spti), NULL);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, 24, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    process = OpenProcess (PROCESS_QUERY_INFORMATION, TRUE, one_before_last_pid);
+    trace("ProcessTimes for process with ID : %ld\n", one_before_last_pid);
+    status = pNtQueryInformationProcess( process, ProcessTimes, &spti, sizeof(spti), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(spti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spti), ReturnLength);
+    CloseHandle(process);
+
+    FileTimeToSystemTime((const FILETIME *)&spti.CreateTime, &UTC);
+    SystemTimeToTzSpecificLocalTime(NULL, &UTC, &Local);
+    trace("CreateTime : %02d/%02d/%04d %02d:%02d:%02d\n", Local.wMonth, Local.wDay, Local.wYear,
+           Local.wHour, Local.wMinute, Local.wSecond);
+
+    FileTimeToSystemTime((const FILETIME *)&spti.ExitTime, &UTC);
+    SystemTimeToTzSpecificLocalTime(NULL, &UTC, &Local);
+    trace("ExitTime   : %02d/%02d/%04d %02d:%02d:%02d\n", Local.wMonth, Local.wDay, Local.wYear,
+           Local.wHour, Local.wMinute, Local.wSecond);
+
+    FileTimeToSystemTime((const FILETIME *)&spti.KernelTime, &Local);
+    trace("KernelTime : %02d:%02d:%02d.%03d\n", Local.wHour, Local.wMinute, Local.wSecond, Local.wMilliseconds);
+
+    FileTimeToSystemTime((const FILETIME *)&spti.UserTime, &Local);
+    trace("UserTime   : %02d:%02d:%02d.%03d\n", Local.wHour, Local.wMinute, Local.wSecond, Local.wMilliseconds);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, sizeof(spti) * 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( sizeof(spti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spti), ReturnLength);
+}
+
+static void test_query_process_handlecount(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    DWORD handlecount;
+    HANDLE process;
+
+    status = pNtQueryInformationProcess(NULL, ProcessHandleCount, NULL, sizeof(handlecount), NULL);
+    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
+
+    status = pNtQueryInformationProcess(NULL, ProcessHandleCount, &handlecount, sizeof(handlecount), NULL);
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %08lx\n", status);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessHandleCount, &handlecount, 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    process = OpenProcess (PROCESS_QUERY_INFORMATION, TRUE, one_before_last_pid);
+    trace("Handlecount for process with ID : %ld\n", one_before_last_pid);
+    status = pNtQueryInformationProcess( process, ProcessHandleCount, &handlecount, sizeof(handlecount), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(handlecount), ReturnLength);
+    CloseHandle(process);
+
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessHandleCount, &handlecount, sizeof(handlecount) * 2, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( sizeof(handlecount) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(handlecount), ReturnLength);
+
+    /* Check if we have some return values */
+    trace("HandleCount : %ld\n", handlecount);
+    todo_wine
+    {
+        ok( handlecount > 0, "Expected some handles, got 0\n");
+    }
 }
 
 START_TEST(info)
@@ -412,8 +582,25 @@ START_TEST(info)
 
     /* NtQueryInformationProcess */
 
+    /* 0x0 ProcessBasicInformation */
     trace("Starting test_query_process_basic()\n");
     test_query_process_basic();
+
+    /* 0x2 ProcessIoCounters */
+    trace("Starting test_query_process_io()\n");
+    test_query_process_io();
+
+    /* 0x3 ProcessVmCounters */
+    trace("Starting test_query_process_vm()\n");
+    test_query_process_vm();
+
+    /* 0x4 ProcessTimes */
+    trace("Starting test_query_process_times()\n");
+    test_query_process_times();
+
+    /* 0x14 ProcessHandleCount */
+    trace("Starting test_query_process_handlecount()\n");
+    test_query_process_handlecount();
 
     FreeLibrary(hntdll);
 }

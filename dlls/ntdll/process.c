@@ -83,30 +83,42 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     switch (ProcessInformationClass) 
     {
     case ProcessBasicInformation:
-        if (ProcessInformationLength == sizeof(PROCESS_BASIC_INFORMATION))
         {
-            if (!ProcessInformation) ret = STATUS_ACCESS_VIOLATION;
-            else
+            PROCESS_BASIC_INFORMATION pbi;
+
+            if (ProcessInformationLength >= sizeof(PROCESS_BASIC_INFORMATION))
             {
-                SERVER_START_REQ(get_process_info)
+                if (!ProcessInformation)
+                    ret = STATUS_ACCESS_VIOLATION;
+                else if (!ProcessHandle)
+                    ret = STATUS_INVALID_HANDLE;
+                else
                 {
-                    req->handle = ProcessHandle;
-                    if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                    SERVER_START_REQ(get_process_info)
                     {
-                        PROCESS_BASIC_INFORMATION* pbi = (PROCESS_BASIC_INFORMATION*)ProcessInformation;
-                        pbi->ExitStatus = reply->exit_code;
-                        pbi->PebBaseAddress = (DWORD)reply->peb;
-                        pbi->AffinityMask = reply->process_affinity;
-                        pbi->BasePriority = reply->priority;
-                        pbi->UniqueProcessId = reply->pid;
-                        pbi->InheritedFromUniqueProcessId = reply->ppid;
-                        len = sizeof(PROCESS_BASIC_INFORMATION);
+                        req->handle = ProcessHandle;
+                        if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
+                        {
+                            pbi.ExitStatus = reply->exit_code;
+                            pbi.PebBaseAddress = (DWORD)reply->peb;
+                            pbi.AffinityMask = reply->process_affinity;
+                            pbi.BasePriority = reply->priority;
+                            pbi.UniqueProcessId = reply->pid;
+                            pbi.InheritedFromUniqueProcessId = reply->ppid;
+                        }
                     }
+                    SERVER_END_REQ;
+
+                    memcpy(ProcessInformation, &pbi, sizeof(PROCESS_BASIC_INFORMATION));
+
+                    len = sizeof(PROCESS_BASIC_INFORMATION);
                 }
-                SERVER_END_REQ;
+
+                if (ProcessInformationLength > sizeof(PROCESS_BASIC_INFORMATION))
+                    ret = STATUS_INFO_LENGTH_MISMATCH;
             }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     case ProcessIoCounters:
         {
@@ -123,13 +135,13 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     /* FIXME : real data */
                     memset(&pii, 0 , sizeof(IO_COUNTERS));
 
-                    if (ProcessInformationLength > sizeof(IO_COUNTERS))
-                        ret = STATUS_INFO_LENGTH_MISMATCH;
-
                     memcpy(ProcessInformation, &pii, sizeof(IO_COUNTERS));
 
                     len = sizeof(IO_COUNTERS);
                 }
+
+                if (ProcessInformationLength > sizeof(IO_COUNTERS))
+                    ret = STATUS_INFO_LENGTH_MISMATCH;
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
@@ -149,35 +161,42 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     /* FIXME : real data */
                     memset(&pvmi, 0 , sizeof(VM_COUNTERS));
 
-                    if (ProcessInformationLength > sizeof(VM_COUNTERS))
-                        ret = STATUS_INFO_LENGTH_MISMATCH;
-
                     memcpy(ProcessInformation, &pvmi, sizeof(VM_COUNTERS));
 
                     len = sizeof(VM_COUNTERS);
                 }
+
+                if (ProcessInformationLength > sizeof(VM_COUNTERS))
+                    ret = STATUS_INFO_LENGTH_MISMATCH;
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
     case ProcessTimes:
-        if (ProcessInformationLength >= 32)
         {
-            if (!ProcessInformation)
-                ret = STATUS_ACCESS_VIOLATION;
-            else if (!ProcessHandle)
-                ret = STATUS_INVALID_HANDLE;
-            else
+            KERNEL_USER_TIMES pti;
+
+            if (ProcessInformationLength >= sizeof(KERNEL_USER_TIMES))
             {
-                memset(ProcessInformation, 0, 32);
+                if (!ProcessInformation)
+                    ret = STATUS_ACCESS_VIOLATION;
+                else if (!ProcessHandle)
+                    ret = STATUS_INVALID_HANDLE;
+                else
+                {
+                    /* FIXME : real data */
+                    memset(&pti, 0, sizeof(KERNEL_USER_TIMES));
 
-                if (ProcessInformationLength > 32)
+                    memcpy(ProcessInformation, &pti, sizeof(KERNEL_USER_TIMES));
+
+                    len = sizeof(KERNEL_USER_TIMES);
+                }
+
+                if (ProcessInformationLength > sizeof(KERNEL_USER_TIMES))
                     ret = STATUS_INFO_LENGTH_MISMATCH;
-
-                len = 32;
             }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     case ProcessDebugPort:
         /* "These are not the debuggers you are looking for." *
@@ -200,11 +219,12 @@ NTSTATUS WINAPI NtQueryInformationProcess(
             {
                 memset(ProcessInformation, 0, 4);
 
-                if (ProcessInformationLength > 4)
-                    ret = STATUS_INFO_LENGTH_MISMATCH;
 
                 len = 4;
             }
+
+            if (ProcessInformationLength > 4)
+                ret = STATUS_INFO_LENGTH_MISMATCH;
          }
          else ret = STATUS_INFO_LENGTH_MISMATCH;
          break;
