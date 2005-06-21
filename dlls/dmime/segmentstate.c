@@ -22,14 +22,14 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 /* IDirectMusicSegmentState8Impl IUnknown part: */
-HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMENTSTATE8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMENTSTATE8 iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID(riid, &IID_IUnknown) || 
 	    IsEqualIID(riid, &IID_IDirectMusicSegmentState) ||
 	    IsEqualIID(riid, &IID_IDirectMusicSegmentState8)) {
-		IDirectMusicSegmentState8Impl_AddRef(iface);
+		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
@@ -37,7 +37,7 @@ HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMEN
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTSTATE8 iface) {
+static ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTSTATE8 iface) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -100,7 +100,7 @@ static HRESULT WINAPI IDirectMusicSegmentState8Impl_SetTrackConfig (LPDIRECTMUSI
 	return S_OK;
 }
 
-HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGMENTSTATE8 iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject) {
+static HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGMENTSTATE8 iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
 	FIXME("(%p, %ld, %ld, %ld, %s, %ld, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
 	return S_OK;

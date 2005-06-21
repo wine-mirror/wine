@@ -26,22 +26,22 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  * IDirectMusicParamControlTrack implementation
  */
 /* IDirectMusicParamControlTrack IUnknown part: */
-HRESULT WINAPI IDirectMusicParamControlTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicParamControlTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, UnknownVtbl, iface);
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPUNKNOWN)&This->UnknownVtbl;
-		IDirectMusicParamControlTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
 	  || IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
 		*ppobj = (LPDIRECTMUSICTRACK8)&This->TrackVtbl;
-		IDirectMusicParamControlTrack_IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
+		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
 		*ppobj = (LPPERSISTSTREAM)&This->PersistStreamVtbl;
-		IDirectMusicParamControlTrack_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
+		IUnknown_AddRef (iface);
 		return S_OK;
 	}
 	
@@ -49,7 +49,7 @@ HRESULT WINAPI IDirectMusicParamControlTrack_IUnknown_QueryInterface (LPUNKNOWN 
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicParamControlTrack_IUnknown_AddRef (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicParamControlTrack_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, UnknownVtbl, iface);
         ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -81,19 +81,19 @@ static const IUnknownVtbl DirectMusicParamControlTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicParamControlTrack IDirectMusicTrack8 part: */
-HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	return IDirectMusicParamControlTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
+static ULONG WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	return IDirectMusicParamControlTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_Release (LPDIRECTMUSICTRACK8 iface) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	return IDirectMusicParamControlTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_Init (LPDIRECTMUSICTRACK8 iface, IDirectMusicSegment* pSegment)
@@ -215,19 +215,19 @@ static const IDirectMusicTrack8Vtbl DirectMusicParamControlTrack_Track_Vtbl = {
 };
 
 /* IDirectMusicParamControlTrack IPersistStream part: */
-HRESULT WINAPI IDirectMusicParamControlTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicParamControlTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, PersistStreamVtbl, iface);
-	return IDirectMusicParamControlTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicParamControlTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicParamControlTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, PersistStreamVtbl, iface);
-	return IDirectMusicParamControlTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IDirectMusicParamControlTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, PersistStreamVtbl, iface);
-	return IDirectMusicParamControlTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static HRESULT WINAPI IDirectMusicParamControlTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {

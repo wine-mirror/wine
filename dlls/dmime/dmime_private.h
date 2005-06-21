@@ -167,16 +167,6 @@ struct IDirectMusicPerformance8Impl {
   struct DMUS_PMSGItem* imm_head; 
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORMANCE8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicPerformance8Impl_AddRef (LPDIRECTMUSICPERFORMANCE8 iface);
-/* IDirectMusicPerformance: */
-extern HRESULT WINAPI IDirectMusicPerformance8Impl_GetTime (LPDIRECTMUSICPERFORMANCE8 iface, REFERENCE_TIME* prtNow, MUSIC_TIME* pmtNow);
-extern HRESULT WINAPI IDirectMusicPerformance8Impl_GetGraph (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicGraph** ppGraph);
-extern HRESULT WINAPI IDirectMusicPerformance8Impl_SetGraph (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicGraph* pGraph);
-/* IDirectMusicPerformance8: */
-extern HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, DWORD dwType, DWORD dwPChannelCount, BOOL fActivate, IDirectMusicAudioPath** ppNewPath);
-
 /*****************************************************************************
  * IDirectMusicSegment8Impl implementation structure
  */
@@ -195,19 +185,6 @@ struct IDirectMusicSegment8Impl {
   struct list Tracks;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSegment8Impl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSegment8Impl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicSegment(8): */
-extern HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_QueryInterface (LPDIRECTMUSICSEGMENT8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSegment8Impl_IDirectMusicSegment8_AddRef (LPDIRECTMUSICSEGMENT8 iface);
-/* IDirectMusicObject: */
-extern HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSegment8Impl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicSegment8Impl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicSegmentState8Impl implementation structure
  */
@@ -218,12 +195,6 @@ struct IDirectMusicSegmentState8Impl {
 
   /* IDirectMusicSegmentState8Impl fields */
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMENTSTATE8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTSTATE8 iface);
-/* IDirectMusicSegmentState(8): */
-extern HRESULT WINAPI IDirectMusicSegmentState8Impl_GetObjectInPath (LPDIRECTMUSICSEGMENTSTATE8 iface, DWORD dwPChannel, DWORD dwStage, DWORD dwBuffer, REFGUID guidObject, DWORD dwIndex, REFGUID iidInterface, void** ppObject);
 
 /*****************************************************************************
  * IDirectMusicGraphImpl implementation structure
@@ -241,19 +212,6 @@ struct IDirectMusicGraphImpl {
   WORD              num_tools;
   struct list       Tools;
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicGraphImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicGraph: */
-extern HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_QueryInterface (LPDIRECTMUSICGRAPH iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicGraphImpl_IDirectMusicGraph_AddRef (LPDIRECTMUSICGRAPH iface);
-/* IDirectMusicObject: */
-extern HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicGraphImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicGraphImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /*****************************************************************************
  * IDirectMusicAudioPathImpl implementation structure
@@ -277,20 +235,6 @@ struct IDirectMusicAudioPathImpl {
   BOOL fActive;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicAudioPathImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicAudioPathImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicAudioPath: */
-extern HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_QueryInterface (LPDIRECTMUSICAUDIOPATH iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicAudioPathImpl_IDirectMusicAudioPath_AddRef (LPDIRECTMUSICAUDIOPATH iface);
-extern HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_Activate (LPDIRECTMUSICAUDIOPATH iface, BOOL fActivate);
-/* IDirectMusicObject: */
-extern HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicAudioPathImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicAudioPathImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicAudioPathImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicTool8Impl implementation structure
  */
@@ -302,10 +246,6 @@ struct IDirectMusicTool8Impl {
   /* IDirectMusicTool8Impl fields */
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicTool8Impl_AddRef (LPDIRECTMUSICTOOL8 iface);
-
 /*****************************************************************************
  * IDirectMusicPatternTrackImpl implementation structure
  */
@@ -316,10 +256,6 @@ struct IDirectMusicPatternTrackImpl {
 
   /* IDirectMusicPatternTrackImpl fields */
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERNTRACK iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK iface);
 
 /*****************************************************************************
  * IDirectMusicLyricsTrack implementation structure
@@ -336,16 +272,6 @@ struct IDirectMusicLyricsTrack
   LPDMUS_OBJECTDESC pDesc;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicLyricsTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicLyricsTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicLyricsTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicLyricsTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicLyricsTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicLyricsTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicMarkerTrack implementation structure
  */
@@ -360,16 +286,6 @@ struct IDirectMusicMarkerTrack {
   LPDMUS_OBJECTDESC pDesc;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicMarkerTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicMarkerTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicMarkerTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicMarkerTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicMarkerTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicMarkerTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicParamControlTrack implementation structure
  */
@@ -383,16 +299,6 @@ struct IDirectMusicParamControlTrack {
   /* IDirectMusicParamControlTrack fields */
   LPDMUS_OBJECTDESC pDesc;
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicParamControlTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicParamControlTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicParamControlTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicParamControlTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicParamControlTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /*****************************************************************************
  * IDirectMusicSegTriggerTrack implementation structure
@@ -410,16 +316,6 @@ struct IDirectMusicSegTriggerTrack {
   struct list Items;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSegTriggerTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSegTriggerTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSegTriggerTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicSegTriggerTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicSeqTrack implementation structure
  */
@@ -434,16 +330,6 @@ struct IDirectMusicSeqTrack {
   LPDMUS_OBJECTDESC pDesc;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSeqTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSeqTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicSeqTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSeqTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicSeqTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicSeqTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicSysExTrack implementation structure
  */
@@ -457,16 +343,6 @@ struct IDirectMusicSysExTrack {
   /* IDirectMusicSysExTrack fields */
   LPDMUS_OBJECTDESC pDesc;
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicSysExTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSysExTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicSysExTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicSysExTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicSysExTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicSysExTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /*****************************************************************************
  * IDirectMusicTempoTrack implementation structure
@@ -484,17 +360,6 @@ struct IDirectMusicTempoTrack {
   struct list Items;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicTempoTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicTempoTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicTempoTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-extern HRESULT WINAPI IDirectMusicTempoTrack_IDirectMusicTrack_IsParamSupported (LPDIRECTMUSICTRACK8 iface, REFGUID rguidType);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicTempoTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicTimeSigTrack implementation structure
  */
@@ -509,16 +374,6 @@ struct IDirectMusicTimeSigTrack {
   LPDMUS_OBJECTDESC pDesc;
 };
 
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicTimeSigTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicTimeSigTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicTimeSigTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicTimeSigTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicTimeSigTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicWaveTrack implementation structure
  */
@@ -532,16 +387,6 @@ struct IDirectMusicWaveTrack {
   /* IDirectMusicWaveTrack fields */
   LPDMUS_OBJECTDESC pDesc;
 };
-
-/* IUnknown: */
-extern HRESULT WINAPI IDirectMusicWaveTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicWaveTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern HRESULT WINAPI IDirectMusicWaveTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj);
-extern ULONG WINAPI   IDirectMusicWaveTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern HRESULT WINAPI IDirectMusicWaveTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, void** ppvObject);
-extern ULONG WINAPI   IDirectMusicWaveTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmime.dll

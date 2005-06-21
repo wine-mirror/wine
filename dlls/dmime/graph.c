@@ -26,25 +26,25 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
  * IDirectMusicGraphImpl implementation
  */
 /* IDirectMusicGraphImpl IUnknown part: */
-HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
 	TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), ppobj);
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = (LPVOID)&This->UnknownVtbl;
-		IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+		IUnknown_AddRef (iface);
 		return S_OK;	
 	} else if (IsEqualIID (riid, &IID_IDirectMusicGraph)) {
 		*ppobj = (LPVOID)&This->GraphVtbl;
-		IDirectMusicGraphImpl_IDirectMusicGraph_AddRef ((LPDIRECTMUSICGRAPH)&This->GraphVtbl);
+		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
 		*ppobj = (LPVOID)&This->ObjectVtbl;
-		IDirectMusicGraphImpl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
+		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
 		*ppobj = (LPVOID)&This->PersistStreamVtbl;
-		IDirectMusicGraphImpl_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);		
+		IUnknown_AddRef (iface);
 		return S_OK;
 	}
 	
@@ -52,7 +52,7 @@ HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, R
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IUnknown_AddRef (LPUNKNOWN iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
         ULONG ref = InterlockedIncrement(&This->ref);
 
@@ -84,19 +84,19 @@ static const IUnknownVtbl DirectMusicGraph_Unknown_Vtbl = {
 };
 
 /* IDirectMusicGraphImpl IDirectMusicGraph part: */
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_QueryInterface (LPDIRECTMUSICGRAPH iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_QueryInterface (LPDIRECTMUSICGRAPH iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
-	return IDirectMusicGraphImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_AddRef (LPDIRECTMUSICGRAPH iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_AddRef (LPDIRECTMUSICGRAPH iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
-	return IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_Release (LPDIRECTMUSICGRAPH iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, GraphVtbl, iface);
-	return IDirectMusicGraphImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_StampPMsg (LPDIRECTMUSICGRAPH iface, DMUS_PMSG* pPMSG) {
@@ -165,7 +165,7 @@ static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicGraph_GetTool (LPDIRECTM
     if (pIt->dwIndex == dwIndex) {
       *ppTool = pIt->pTool;
       if (NULL != *ppTool) {
-	IDirectMusicTool8Impl_AddRef((LPDIRECTMUSICTOOL8) *ppTool);
+	IDirectMusicTool8_AddRef((LPDIRECTMUSICTOOL8) *ppTool);
       }
       return S_OK;      
     }
@@ -195,19 +195,19 @@ static const IDirectMusicGraphVtbl DirectMusicGraph_Graph_Vtbl = {
 
 
 /* IDirectMusicGraphImpl IDirectMusicObject part: */
-HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
-	return IDirectMusicGraphImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
-	return IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IDirectMusicGraphImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, ObjectVtbl, iface);
-	return IDirectMusicGraphImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static HRESULT WINAPI IDirectMusicGraphImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
@@ -410,12 +410,12 @@ static const IDirectMusicObjectVtbl DirectMusicGraph_Object_Vtbl = {
 };
 
 /* IDirectMusicGraphImpl IPersistStream part: */
-HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicGraphImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, PersistStreamVtbl, iface);
 	return IDirectMusicGraphImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-ULONG WINAPI IDirectMusicGraphImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
+static ULONG WINAPI IDirectMusicGraphImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, PersistStreamVtbl, iface);
 	return IDirectMusicGraphImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }

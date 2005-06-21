@@ -22,13 +22,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
 /* IDirectMusicTool8Impl IUnknown part: */
-HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, REFIID riid, LPVOID *ppobj) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown) || 
 	    IsEqualIID (riid, &IID_IDirectMusicTool) ||
 	    IsEqualIID (riid, &IID_IDirectMusicTool8)) {
-		IDirectMusicTool8Impl_AddRef(iface);
+		IUnknown_AddRef(iface);
 		*ppobj = This;
 		return S_OK;
 	}
@@ -36,7 +36,7 @@ HRESULT WINAPI IDirectMusicTool8Impl_QueryInterface (LPDIRECTMUSICTOOL8 iface, R
 	return E_NOINTERFACE;
 }
 
-ULONG WINAPI IDirectMusicTool8Impl_AddRef (LPDIRECTMUSICTOOL8 iface) {
+static ULONG WINAPI IDirectMusicTool8Impl_AddRef (LPDIRECTMUSICTOOL8 iface) {
 	IDirectMusicTool8Impl *This = (IDirectMusicTool8Impl *)iface;
         ULONG ref = InterlockedIncrement(&This->ref);
 
