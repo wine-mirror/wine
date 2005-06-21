@@ -88,11 +88,25 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_EvictManagedResources(LPDIRECT3DDEVICE9 if
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDirect3D(LPDIRECT3DDEVICE9 iface, IDirect3D9** ppD3D9) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : returning %p\n", This, This->direct3d);
-    /* Inc ref count */
-    *ppD3D9 = (IDirect3D9*) This->direct3d;
-    IDirect3D9_AddRef(*ppD3D9);
-    return D3D_OK;
+    HRESULT hr = D3D_OK;
+    IWineD3D* pWineD3D;
+
+    TRACE("(%p) Relay\n", This);
+
+    if (NULL == ppD3D9) {
+        return D3DERR_INVALIDCALL;
+    }
+    hr = IWineD3DDevice_GetDirect3D(This->WineD3DDevice, &pWineD3D);
+    if (hr == D3D_OK && pWineD3D != NULL)
+    {
+        IWineD3DResource_GetParent((IWineD3DResource *)pWineD3D,(IUnknown **)ppD3D9);
+        IWineD3DResource_Release((IWineD3DResource *)pWineD3D);
+    } else {
+        FIXME("Call to IWineD3DDevice_GetDirect3D failed\n");
+        *ppD3D9 = NULL;
+    }
+    TRACE("(%p) returning %p\b",This , *ppD3D9);
+    return hr;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetDeviceCaps(LPDIRECT3DDEVICE9 iface, D3DCAPS9* pCaps) {
