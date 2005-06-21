@@ -2056,11 +2056,176 @@ static LPSTR parse_value(MSIPACKAGE *package, LPCWSTR value, DWORD *type,
     return data;
 }
 
+static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    static const WCHAR szHCR[] = 
+        {'H','K','E','Y','_','C','L','A','S','S','E','S','_',
+         'R','O','O','T','\\',0};
+    static const WCHAR szHCU[] =
+        {'H','K','E','Y','_','C','U','R','R','E','N','T','_',
+         'U','S','E','R','\\',0};
+    static const WCHAR szHLM[] =
+        {'H','K','E','Y','_','L','O','C','A','L','_',
+         'M','A','C','H','I','N','E','\\',0};
+    static const WCHAR szHU[] =
+        {'H','K','E','Y','_','U','S','E','R','S','\\',0};
+
+    LPSTR value_data = NULL;
+    HKEY  root_key, hkey;
+    DWORD type,size;
+    LPWSTR  deformated;
+    LPCWSTR szRoot, component, name, key, value;
+    INT component_index;
+    MSIRECORD * uirow;
+    LPWSTR uikey;
+    INT   root;
+    BOOL check_first = FALSE;
+    UINT rc;
+
+    ui_progress(package,2,0,0,0);
+
+    value = NULL;
+    key = NULL;
+    uikey = NULL;
+    name = NULL;
+
+    component = MSI_RecordGetString(row, 6);
+    component_index = get_loaded_component(package,component);
+
+    if (!ACTION_VerifyComponentForAction(package, component_index,
+                            INSTALLSTATE_LOCAL))
+    {
+        TRACE("Skipping write due to disabled component %s\n",
+                        debugstr_w(component));
+
+        package->components[component_index].Action =
+                package->components[component_index].Installed;
+
+        return ERROR_SUCCESS;
+    }
+
+    package->components[component_index].Action = INSTALLSTATE_LOCAL;
+
+    name = MSI_RecordGetString(row, 4);
+    if( MSI_RecordIsNull(row,5) && name )
+    {
+        /* null values can have special meanings */
+        if (name[0]=='-' && name[1] == 0)
+                return ERROR_SUCCESS;
+        else if ((name[0]=='+' && name[1] == 0) || 
+                 (name[0] == '*' && name[1] == 0))
+                name = NULL;
+        check_first = TRUE;
+    }
+
+    root = MSI_RecordGetInteger(row,2);
+    key = MSI_RecordGetString(row, 3);
+
+    /* get the root key */
+    switch (root)
+    {
+        case 0:  root_key = HKEY_CLASSES_ROOT; 
+                 szRoot = szHCR;
+                 break;
+        case 1:  root_key = HKEY_CURRENT_USER;
+                 szRoot = szHCU;
+                 break;
+        case 2:  root_key = HKEY_LOCAL_MACHINE;
+                 szRoot = szHLM;
+                 break;
+        case 3:  root_key = HKEY_USERS; 
+                 szRoot = szHU;
+                 break;
+        default:
+                 ERR("Unknown root %i\n",root);
+                 root_key=NULL;
+                 szRoot = NULL;
+                 break;
+    }
+    if (!root_key)
+        return ERROR_SUCCESS;
+
+    deformat_string(package, key , &deformated);
+    size = strlenW(deformated) + strlenW(szRoot) + 1;
+    uikey = HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
+    strcpyW(uikey,szRoot);
+    strcatW(uikey,deformated);
+
+    if (RegCreateKeyW( root_key, deformated, &hkey))
+    {
+        ERR("Could not create key %s\n",debugstr_w(deformated));
+        HeapFree(GetProcessHeap(),0,deformated);
+        HeapFree(GetProcessHeap(),0,uikey);
+        return ERROR_SUCCESS;
+    }
+    HeapFree(GetProcessHeap(),0,deformated);
+
+    value = MSI_RecordGetString(row,5);
+    if (value)
+        value_data = parse_value(package, value, &type, &size); 
+    else
+    {
+        static const WCHAR szEmpty[] = {0};
+        value_data = (LPSTR)strdupW(szEmpty);
+        size = 0;
+        type = REG_SZ;
+    }
+
+    deformat_string(package, name, &deformated);
+
+    /* get the double nulls to terminate SZ_MULTI */
+    if (type == REG_MULTI_SZ)
+        size +=sizeof(WCHAR);
+
+    if (!check_first)
+    {
+        TRACE("Setting value %s of %s\n",debugstr_w(deformated),
+                        debugstr_w(uikey));
+        RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+    }
+    else
+    {
+        DWORD sz = 0;
+        rc = RegQueryValueExW(hkey, deformated, NULL, NULL, NULL, &sz);
+        if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
+        {
+            TRACE("value %s of %s checked already exists\n",
+                            debugstr_w(deformated), debugstr_w(uikey));
+        }
+        else
+        {
+            TRACE("Checked and setting value %s of %s\n",
+                            debugstr_w(deformated), debugstr_w(uikey));
+            if (deformated || size)
+                RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+        }
+    }
+    RegCloseKey(hkey);
+
+    uirow = MSI_CreateRecord(3);
+    MSI_RecordSetStringW(uirow,2,deformated);
+    MSI_RecordSetStringW(uirow,1,uikey);
+
+    if (type == REG_SZ)
+        MSI_RecordSetStringW(uirow,3,(LPWSTR)value_data);
+    else
+        MSI_RecordSetStringW(uirow,3,value);
+
+    ui_actiondata(package,szWriteRegistryValues,uirow);
+    msiobj_release( &uirow->hdr );
+
+    HeapFree(GetProcessHeap(),0,value_data);
+    HeapFree(GetProcessHeap(),0,deformated);
+    HeapFree(GetProcessHeap(),0,uikey);
+
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
 {
     UINT rc;
     MSIQUERY * view;
-    MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','R','e','g','i','s','t','r','y','`',0 };
@@ -2072,195 +2237,11 @@ static UINT ACTION_WriteRegistryValues(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
     /* increment progress bar each time action data is sent */
     ui_progress(package,1,REG_PROGRESS_VALUE,1,0);
 
-    while (1)
-    {
-        static const WCHAR szHCR[] = 
-            {'H','K','E','Y','_','C','L','A','S','S','E','S','_',
-             'R','O','O','T','\\',0};
-        static const WCHAR szHCU[] =
-            {'H','K','E','Y','_','C','U','R','R','E','N','T','_',
-             'U','S','E','R','\\',0};
-        static const WCHAR szHLM[] =
-            {'H','K','E','Y','_','L','O','C','A','L','_',
-             'M','A','C','H','I','N','E','\\',0};
-        static const WCHAR szHU[] =
-            {'H','K','E','Y','_','U','S','E','R','S','\\',0};
+    rc = MSI_IterateRecords(view, NULL, ITERATE_WriteRegistryValues, package);
 
-        LPSTR value_data = NULL;
-        HKEY  root_key, hkey;
-        DWORD type,size;
-        LPWSTR  deformated;
-        LPCWSTR szRoot, component, name, key, value;
-        INT component_index;
-        MSIRECORD * uirow;
-        LPWSTR uikey;
-        INT   root;
-        BOOL check_first = FALSE;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-        ui_progress(package,2,0,0,0);
-
-        value = NULL;
-        key = NULL;
-        uikey = NULL;
-        name = NULL;
-
-        component = MSI_RecordGetString(row, 6);
-        component_index = get_loaded_component(package,component);
-
-        if (!ACTION_VerifyComponentForAction(package, component_index, 
-                                       INSTALLSTATE_LOCAL))
-        {
-            TRACE("Skipping write due to disabled component %s\n", 
-                            debugstr_w(component));
-            msiobj_release(&row->hdr);
-
-            package->components[component_index].Action =
-                package->components[component_index].Installed;
-
-            goto next;
-        }
-
-        package->components[component_index].Action = INSTALLSTATE_LOCAL;
-
-        name = MSI_RecordGetString(row, 4);
-        if( MSI_RecordIsNull(row,5) && name )
-        {
-            /* null values can have special meanings */
-            if (name[0]=='-' && name[1] == 0)
-            {
-                msiobj_release(&row->hdr);
-                goto next;
-            }
-            else if ((name[0]=='+' && name[1] == 0) || 
-                     (name[0] == '*' && name[1] == 0))
-                name = NULL;
-                check_first = TRUE;
-        }
-
-        root = MSI_RecordGetInteger(row,2);
-        key = MSI_RecordGetString(row, 3);
-   
-        /* get the root key */
-        switch (root)
-        {
-            case 0:  root_key = HKEY_CLASSES_ROOT; 
-                     szRoot = szHCR;
-                     break;
-            case 1:  root_key = HKEY_CURRENT_USER;
-                     szRoot = szHCU;
-                     break;
-            case 2:  root_key = HKEY_LOCAL_MACHINE;
-                     szRoot = szHLM;
-                     break;
-            case 3:  root_key = HKEY_USERS; 
-                     szRoot = szHU;
-                     break;
-            default:
-                 ERR("Unknown root %i\n",root);
-                 root_key=NULL;
-                 szRoot = NULL;
-                 break;
-        }
-        if (!root_key)
-        {
-            msiobj_release(&row->hdr);
-            goto next;
-        }
-
-        deformat_string(package, key , &deformated);
-        size = strlenW(deformated) + strlenW(szRoot) + 1;
-        uikey = HeapAlloc(GetProcessHeap(), 0, size*sizeof(WCHAR));
-        strcpyW(uikey,szRoot);
-        strcatW(uikey,deformated);
-
-        if (RegCreateKeyW( root_key, deformated, &hkey))
-        {
-            ERR("Could not create key %s\n",debugstr_w(deformated));
-            msiobj_release(&row->hdr);
-            HeapFree(GetProcessHeap(),0,deformated);
-            goto next;
-        }
-        HeapFree(GetProcessHeap(),0,deformated);
-
-        value = MSI_RecordGetString(row,5);
-        if (value)
-            value_data = parse_value(package, value, &type, &size); 
-        else
-        {
-            static const WCHAR szEmpty[] = {0};
-            value_data = (LPSTR)strdupW(szEmpty);
-            size = 0;
-            type = REG_SZ;
-        }
-
-        deformat_string(package, name, &deformated);
-
-        /* get the double nulls to terminate SZ_MULTI */
-        if (type == REG_MULTI_SZ)
-            size +=sizeof(WCHAR);
-
-        if (!check_first)
-        {
-            TRACE("Setting value %s of %s\n",debugstr_w(deformated),
-                            debugstr_w(uikey));
-            RegSetValueExW(hkey, deformated, 0, type, value_data, size);
-        }
-        else
-        {
-            DWORD sz = 0;
-            rc = RegQueryValueExW(hkey, deformated, NULL, NULL, NULL, &sz);
-            if (rc == ERROR_SUCCESS || rc == ERROR_MORE_DATA)
-            {
-                TRACE("value %s of %s checked already exists\n",
-                                debugstr_w(deformated), debugstr_w(uikey));
-            }
-            else
-            {
-                TRACE("Checked and setting value %s of %s\n",
-                                debugstr_w(deformated), debugstr_w(uikey));
-                if (deformated || size)
-                    RegSetValueExW(hkey, deformated, 0, type, value_data, size);
-            }
-        }
-
-        uirow = MSI_CreateRecord(3);
-        MSI_RecordSetStringW(uirow,2,deformated);
-        MSI_RecordSetStringW(uirow,1,uikey);
-
-        if (type == REG_SZ)
-            MSI_RecordSetStringW(uirow,3,(LPWSTR)value_data);
-        else
-            MSI_RecordSetStringW(uirow,3,value);
-
-        ui_actiondata(package,szWriteRegistryValues,uirow);
-        msiobj_release( &uirow->hdr );
-
-        HeapFree(GetProcessHeap(),0,value_data);
-        HeapFree(GetProcessHeap(),0,deformated);
-
-        msiobj_release(&row->hdr);
-        RegCloseKey(hkey);
-next:
-        HeapFree(GetProcessHeap(),0,uikey);
-    }
-    MSI_ViewClose(view);
     msiobj_release(&view->hdr);
     return rc;
 }
