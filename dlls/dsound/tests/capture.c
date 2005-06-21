@@ -593,7 +593,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
 	ok(((rc==DS_OK)&&(dscbo!=NULL))||(rc==DSERR_BADFORMAT)||
-           (rc==DSERR_ALLOCATED)||(rc==E_INVALIDARG),
+           ((rc==DSERR_NODRIVER))||(rc==DSERR_ALLOCATED)||(rc==E_INVALIDARG),
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
            "%s capture buffer: %s\n",format_string(&wfx),DXGetErrorString8(rc));
 	if (rc==DS_OK) {
@@ -607,6 +607,8 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                "capture buffer: format listed as supported but using it failed\n");
             if (!(dsccaps.dwFormats & formats[f][3]))
                 trace("  Format not supported: %s\n", format_string(&wfx));
+        } else if (rc==DSERR_NODRIVER) {
+            trace("  No Driver\n");
         } else if (rc==DSERR_ALLOCATED) {
             trace("  Already In Use\n");
         } else if (rc==E_INVALIDARG) { /* try the old version struct */
