@@ -882,11 +882,13 @@ static BOOL process_attach(void)
     RegCloseKey(hkey);
   }
 
-  /* Initialize also the list of supported WGL extensions. */
-  wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB, internal_gl_disabled_extensions);
-  
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
+  }
+  else
+  {
+    /* After context initialize also the list of supported WGL extensions. */
+    wgl_ext_initialize_extensions(default_display, DefaultScreen(default_display), p_glXGetProcAddressARB, internal_gl_disabled_extensions);
   }
   return TRUE;
 }
