@@ -675,6 +675,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
     INTERNET_ASYNC_RESULT iar;
+    INTERNET_PORT port;
 
     TRACE("--> \n");
 
@@ -815,7 +816,14 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
                       INTERNET_STATUS_RESOLVING_NAME,
                       lpwhs->lpszServerName,
                       strlenW(lpwhs->lpszServerName)+1);
-    if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
+    port = lpwhs->nServerPort;
+
+    if (port == INTERNET_INVALID_PORT_NUMBER)
+        port = (dwFlags & INTERNET_FLAG_SECURE ?
+                        INTERNET_DEFAULT_HTTPS_PORT :
+                        INTERNET_DEFAULT_HTTP_PORT);
+
+    if (!GetAddress(lpwhs->lpszServerName, port,
                     &lpwhs->phostent, &lpwhs->socketAddress))
     {
         INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
@@ -1833,9 +1841,6 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
    /*
     * According to my tests. The name is not resolved until a request is sent
     */
-
-    if (nServerPort == INTERNET_INVALID_PORT_NUMBER)
-	nServerPort = INTERNET_DEFAULT_HTTP_PORT;
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
     lpwhs->hdr.lpwhparent = WININET_AddRef( &hIC->hdr );
