@@ -2284,6 +2284,84 @@ VOID WINAPI BuildTrusteeWithNameW(PTRUSTEEW pTrustee, LPWSTR name)
     pTrustee->ptstrName = name;
 }
 
+/****************************************************************************** 
+ * GetTrusteeFormA [ADVAPI32.@] 
+ */ 
+TRUSTEE_FORM WINAPI GetTrusteeFormA(PTRUSTEEA pTrustee) 
+{  
+    TRACE("(%p)\n", pTrustee); 
+  
+    if (!pTrustee) 
+        return TRUSTEE_BAD_FORM; 
+  
+    return pTrustee->TrusteeForm; 
+}  
+  
+/****************************************************************************** 
+ * GetTrusteeFormW [ADVAPI32.@] 
+ */ 
+TRUSTEE_FORM WINAPI GetTrusteeFormW(PTRUSTEEW pTrustee) 
+{  
+    TRACE("(%p)\n", pTrustee); 
+  
+    if (!pTrustee) 
+        return TRUSTEE_BAD_FORM; 
+  
+    return pTrustee->TrusteeForm; 
+}  
+  
+/****************************************************************************** 
+ * GetTrusteeNameA [ADVAPI32.@] 
+ */ 
+LPSTR WINAPI GetTrusteeNameA(PTRUSTEEA pTrustee) 
+{  
+    TRACE("(%p)\n", pTrustee); 
+  
+    if (!pTrustee) 
+        return NULL; 
+  
+    return pTrustee->ptstrName; 
+}  
+  
+/****************************************************************************** 
+ * GetTrusteeNameW [ADVAPI32.@] 
+ */ 
+LPWSTR WINAPI GetTrusteeNameW(PTRUSTEEW pTrustee) 
+{  
+    TRACE("(%p)\n", pTrustee); 
+  
+    if (!pTrustee) 
+        return NULL; 
+  
+    return pTrustee->ptstrName; 
+}  
+  
+/****************************************************************************** 
+ * GetTrusteeTypeA [ADVAPI32.@] 
+ */ 
+TRUSTEE_TYPE WINAPI GetTrusteeTypeA(PTRUSTEEA pTrustee) 
+{  
+    TRACE("(%p)\n", pTrustee); 
+  
+    if (!pTrustee) 
+        return TRUSTEE_IS_UNKNOWN; 
+  
+    return pTrustee->TrusteeType; 
+}  
+  
+/****************************************************************************** 
+ * GetTrusteeTypeW [ADVAPI32.@] 
+ */ 
+TRUSTEE_TYPE WINAPI GetTrusteeTypeW(PTRUSTEEW pTrustee) 
+{  
+    TRACE("(%p)\n", pTrustee); 
+  
+    if (!pTrustee) 
+        return TRUSTEE_IS_UNKNOWN; 
+  
+    return pTrustee->TrusteeType; 
+} 
+ 
 BOOL WINAPI SetAclInformation( PACL pAcl, LPVOID pAclInformation,
                                DWORD nAclInformationLength,
                                ACL_INFORMATION_CLASS dwAclInformationClass )

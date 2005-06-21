@@ -146,6 +146,12 @@
 @ stdcall GetSidSubAuthorityCount(ptr)
 @ stub GetSiteSidFromToken
 @ stdcall GetTokenInformation(long long ptr long ptr)
+@ stdcall GetTrusteeFormA(ptr) 
+@ stdcall GetTrusteeFormW(ptr) 
+@ stdcall GetTrusteeNameA(ptr) 
+@ stdcall GetTrusteeNameW(ptr) 
+@ stdcall GetTrusteeTypeA(ptr) 
+@ stdcall GetTrusteeTypeW(ptr) 
 @ stdcall GetUserNameA(ptr ptr)
 @ stdcall GetUserNameW(ptr ptr)
 @ stdcall ImpersonateLoggedOnUser(long)
