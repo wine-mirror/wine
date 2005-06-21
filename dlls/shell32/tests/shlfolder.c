@@ -447,7 +447,7 @@ static void test_SHGetPathFromIDList(void)
     ILFree(pidlMyComputer);
 }
 
-START_TEST(shlfolder)
+static void test_EnumObjects_and_CompareIDs(void)
 {
     ITEMIDLIST *newPIDL;
     IShellFolder *IDesktopFolder, *testIShellFolder;
@@ -479,10 +479,6 @@ START_TEST(shlfolder)
     ok(hr == S_OK, "BindToObject failed %08lx\n", hr);
         
     test_EnumObjects(testIShellFolder);
-    test_BindToObject();
-    test_GetDisplayName();
-    test_GetAttributesOf();
-    test_SHGetPathFromIDList();
 
     hr = IShellFolder_Release(testIShellFolder);
     ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
@@ -490,4 +486,13 @@ START_TEST(shlfolder)
     IMalloc_Free(ppM, newPIDL);
 
     Cleanup();
+}
+
+START_TEST(shlfolder)
+{
+    test_EnumObjects_and_CompareIDs();
+    test_BindToObject();
+    test_GetDisplayName();
+    test_GetAttributesOf();
+    test_SHGetPathFromIDList();
 }
