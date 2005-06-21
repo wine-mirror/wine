@@ -467,9 +467,39 @@ CopySid( DWORD nDestinationSidLength, PSID pDestinationSid, PSID pSourceSid )
 BOOL WINAPI
 IsTokenRestricted( HANDLE TokenHandle )
 {
-    FIXME("%p - stub\n", TokenHandle);
+    TOKEN_GROUPS *groups;
+    DWORD size;
+    NTSTATUS status;
+    BOOL restricted;
 
-    return FALSE;
+    TRACE("(%p)\n", TokenHandle);
+ 
+    status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, NULL, 0, &size);
+    if (status != STATUS_BUFFER_TOO_SMALL)
+        return FALSE;
+ 
+    groups = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!groups)
+    {
+        SetLastError(ERROR_OUTOFMEMORY);
+        return FALSE;
+    }
+ 
+    status = NtQueryInformationToken(TokenHandle, TokenRestrictedSids, groups, size, &size);
+    if (status != STATUS_SUCCESS)
+    {
+        HeapFree(GetProcessHeap(), 0, groups);
+        return set_ntstatus(status);
+    }
+ 
+    if (groups->GroupCount)
+        restricted = TRUE;
+    else
+        restricted = FALSE;
+     
+    HeapFree(GetProcessHeap(), 0, groups);
+ 
+    return restricted;
 }
 
 /******************************************************************************
