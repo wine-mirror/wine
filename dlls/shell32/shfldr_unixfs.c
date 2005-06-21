@@ -80,6 +80,9 @@ const GUID CLSID_UnixDosFolder = {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71,
 #define PATHMODE_UNIX 0
 #define PATHMODE_DOS  1
 
+/* ShellFolder attributes of the root folder ('/') */
+static DWORD dwRootAttr = 0;
+
 /* This structure is appended to shell32's FileStruct type in IDLs to store unix
  * filesystem specific informationen extracted with the stat system call.
  */
@@ -125,6 +128,36 @@ static inline BOOL UNIXFS_is_pidl_of_type(LPITEMIDLIST pIDL, SHCONTF fFilter) {
     }
     if (_ILIsFolder(pIDL) && (fFilter & SHCONTF_FOLDERS)) return TRUE;
     if (_ILIsValue(pIDL) && (fFilter & SHCONTF_NONFOLDERS)) return TRUE;
+    return FALSE;
+}
+
+/******************************************************************************
+ * UNIXFS_is_dos_device [Internal]
+ *
+ * Determines if a unix directory corresponds to any dos device.
+ *
+ * PARAMS
+ *  statPath [I] The stat struct of the directory, as returned by stat(2).
+ *
+ * RETURNS
+ *  TRUE, if statPath corresponds to any dos drive letter
+ *  FALSE, otherwise
+ */
+static BOOL UNIXFS_is_dos_device(const struct stat *statPath) {
+    struct stat statDrive;
+    char *pszDrivePath;
+    DWORD dwDriveMap;
+    WCHAR wszDosDevice[4] = { 'A', ':', '\\', 0 };
+
+    for (dwDriveMap = GetLogicalDrives(); dwDriveMap; dwDriveMap >>= 1, wszDosDevice[0]++) {
+        if (!(dwDriveMap & 0x1)) continue;
+        pszDrivePath = wine_get_unix_file_name(wszDosDevice);
+        if (pszDrivePath && !stat(pszDrivePath, &statDrive)) {
+            HeapFree(GetProcessHeap(), 0, pszDrivePath);
+            if ((statPath->st_dev == statDrive.st_dev) && (statPath->st_ino == statDrive.st_ino))
+                return TRUE;
+        }
+    }
     return FALSE;
 }
 
@@ -277,10 +310,8 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, BOOL bParentIsFS, void *pI
     LPPIDLDATA pIDLData;
     struct stat fileStat;
     StatStruct *pStatStruct;
-    char szDevicePath[FILENAME_MAX], *pszComponent;
+    char *pszComponent;
     int cComponentLen;
-    DWORD dwDrivemap = GetLogicalDrives();
-    WCHAR wszDosDevice[4] = { 'A', ':', '\\', 0 }; 
 
     TRACE("(pszUnixPath=%s, pIDL=%p)\n", debugstr_a(pszUnixPath), pIDL);
 
@@ -299,25 +330,7 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, BOOL bParentIsFS, void *pI
     pStatStruct->st_uid = fileStat.st_uid;
     pStatStruct->st_gid = fileStat.st_gid;
     pStatStruct->sfAttr = S_ISDIR(fileStat.st_mode) ? (SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR) : 0;
-    if (bParentIsFS) pStatStruct->sfAttr |= SFGAO_FILESYSTEM;
-
-    /* Determine if the FILESYSTEM flag should be set. */ 
-    while (!(pStatStruct->sfAttr & SFGAO_FILESYSTEM) && wszDosDevice[0] <= 'Z') {
-        if (dwDrivemap & 0x1) {
-            if (UNIXFS_get_unix_path(wszDosDevice, szDevicePath)) {
-                struct stat deviceStat;
-                if (stat(szDevicePath, &deviceStat)) continue;
-                if ((deviceStat.st_dev == fileStat.st_dev) && 
-                    (deviceStat.st_ino == fileStat.st_ino))
-                {
-                    pStatStruct->sfAttr |= SFGAO_FILESYSTEM;
-                    break;
-                }
-            }
-        }
-        dwDrivemap >>= 1;
-        wszDosDevice[0]++;
-    }
+    if (bParentIsFS || UNIXFS_is_dos_device(&fileStat)) pStatStruct->sfAttr |= SFGAO_FILESYSTEM;
 
     /* Set shell32's standard SHITEMID data fields. */
     pIDLData = _ILGetDataPointer((LPCITEMIDLIST)pIDL);
@@ -354,7 +367,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     LPITEMIDLIST pidl;
     int cSubDirs, cPidlLen, cPathLen;
     char *pSlash, szCompletePath[FILENAME_MAX], *pNextPathElement;
-    BOOL bParentIsFS = FALSE;
+    BOOL bParentIsFS = dwRootAttr & SFGAO_FILESYSTEM;
 
     TRACE("pUnixFolder=%p, path=%s, ppidl=%p\n", pUnixFolder, debugstr_w(path), ppidl);
    
@@ -545,7 +558,7 @@ static BOOL UNIXFS_build_subfolder_pidls(UnixFolder *pUnixFolder)
     DWORD cDirEntries, i;
     USHORT sLen;
     char *pszFQPath;
-    BOOL bParentIsFS = FALSE;
+    BOOL bParentIsFS = dwRootAttr & SFGAO_FILESYSTEM;
     
     TRACE("(pUnixFolder=%p)\n", pUnixFolder);
     
@@ -1133,6 +1146,34 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* ifa
     
     if (!UNIXFS_pidl_to_path(pidl, This))
         return E_FAIL;
+  
+    /* Attributes of a shell namespace extension's root folder (in this case the '/' folder)
+     * are not queried for with ShellFolder's GetAttributesOf, but looked up in the registry
+     * (see MSDN: Creating a Shell Namespace Extension > Implementing the Basic Folder Object
+     * Interface > Registering an Extension). When they change, we have to write them there.
+     */
+    if (!strcmp(This->m_pszPath, "/")) {
+        DWORD dwTempAttr = SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR;
+        struct stat statRoot;
+        
+        if (stat(This->m_pszPath, &statRoot)) return E_FAIL;
+        if (UNIXFS_is_dos_device(&statRoot)) dwTempAttr |= SFGAO_FILESYSTEM;
+        
+        if (dwRootAttr != dwTempAttr) {
+            HKEY hKey;
+            static const WCHAR wszFolderAttrValue[] = { 'A','t','t','r','i','b','u','t','e','s',0 };
+            static const WCHAR wszFolderAttrKey[] = { 'C','L','S','I','D','\\',
+                '{','9','D','2','0','A','A','E','8','-','0','6','2','5','-','4','4','B','0','-',
+                '9','C','A','7','-','7','1','8','8','9','C','2','2','5','4','D','9','}','\\',
+                'S','h','e','l','l','F','o','l','d','e','r',0 };
+            
+            dwRootAttr = dwTempAttr;
+            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFolderAttrKey, 0, KEY_WRITE, &hKey) == ERROR_SUCCESS) {
+                RegSetValueExW(hKey, wszFolderAttrValue, 0, REG_DWORD, (BYTE*)&dwTempAttr, sizeof(DWORD));
+                RegCloseKey(hKey);
+            }    
+        }
+    }
     
     return S_OK;
 }
