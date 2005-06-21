@@ -270,13 +270,20 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     {
         if (!source)
         {
-            path = load_dynamic_property(package,cszTargetDir,NULL);
-            if (!path)
+            LPWSTR check_path;
+            check_path = load_dynamic_property(package,cszTargetDir,NULL);
+            if (!check_path)
             {
-                path = load_dynamic_property(package,cszRootDrive,NULL);
+                check_path = load_dynamic_property(package,cszRootDrive,NULL);
                 if (set_prop)
-                    MSI_SetPropertyW(package,cszTargetDir,path);
+                    MSI_SetPropertyW(package,cszTargetDir,check_path);
             }
+
+            /* correct misbuilt target dir */
+            path = build_directory_name(2, check_path, NULL);
+            if (strcmpiW(path,check_path)!=0)
+                MSI_SetPropertyW(package,cszTargetDir,path);
+
             if (folder)
             {
                 for (i = 0; i < package->loaded_folders; i++)
