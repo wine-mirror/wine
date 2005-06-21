@@ -35,7 +35,6 @@
 #endif
 
 #include "windef.h"
-#include "winbase.h"
 
 #include "file.h"
 #include "thread.h"

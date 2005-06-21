@@ -48,7 +48,6 @@
 #include <unistd.h>
 
 #include "windef.h"
-#include "winbase.h"
 
 #include "process.h"
 #include "file.h"

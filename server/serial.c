@@ -47,7 +47,6 @@
 #endif
 
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 
 #include "file.h"

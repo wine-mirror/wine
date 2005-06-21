@@ -46,7 +46,6 @@
 #include "unicode.h"
 #include "security.h"
 
-#include "winbase.h"
 #include "winternl.h"
 #include "wine/library.h"
 
