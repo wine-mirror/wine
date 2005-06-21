@@ -325,6 +325,25 @@ static void SYSPARAMS_LogFont32ATo16( const LOGFONTA* font32, LPLOGFONT16 font16
     lstrcpynA( font16->lfFaceName, font32->lfFaceName, LF_FACESIZE );
 }
 
+static void SYSPARAMS_LogFont16To32W( const LOGFONT16 *font16, LPLOGFONTW font32 )
+{
+    font32->lfHeight = font16->lfHeight;
+    font32->lfWidth = font16->lfWidth;
+    font32->lfEscapement = font16->lfEscapement;
+    font32->lfOrientation = font16->lfOrientation;
+    font32->lfWeight = font16->lfWeight;
+    font32->lfItalic = font16->lfItalic;
+    font32->lfUnderline = font16->lfUnderline;
+    font32->lfStrikeOut = font16->lfStrikeOut;
+    font32->lfCharSet = font16->lfCharSet;
+    font32->lfOutPrecision = font16->lfOutPrecision;
+    font32->lfClipPrecision = font16->lfClipPrecision;
+    font32->lfQuality = font16->lfQuality;
+    font32->lfPitchAndFamily = font16->lfPitchAndFamily;
+    MultiByteToWideChar( CP_ACP, 0, font16->lfFaceName, -1, font32->lfFaceName, LF_FACESIZE );
+    font32->lfFaceName[LF_FACESIZE-1] = 0;
+}
+
 static void SYSPARAMS_LogFont32WTo32A( const LOGFONTW* font32W, LPLOGFONTA font32A )
 {
     font32A->lfHeight = font32W->lfHeight;
@@ -858,7 +877,7 @@ void SYSPARAMS_Init(void)
  *
  *  Tries to retrieve logfont info from the specified key and value
  */
-static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
+static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf, int dpi)
 {
     HKEY hkey;
     LOGFONTW lfbuf;
@@ -876,15 +895,27 @@ static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
         {
             size = sizeof(lfbuf);
             if(RegQueryValueExW(hkey, value, NULL, &type, (LPBYTE)&lfbuf, &size) == ERROR_SUCCESS &&
-               type == REG_BINARY && size == sizeof(lfbuf))
+                    type == REG_BINARY)
             {
-                found = TRUE;
-                memcpy(lf, &lfbuf, size);
+                if( size == sizeof(lfbuf))
+                {
+                    found = TRUE;
+                    memcpy(lf, &lfbuf, size);
+                } else if( size == sizeof( LOGFONT16))
+                {    /* win9x-winME format */
+                    found = TRUE;
+                    SYSPARAMS_LogFont16To32W( (LOGFONT16*) &lfbuf, lf);
+                } else
+                    WARN("Unknown format in key %s value %s, size is %ld\n",
+                            debugstr_w( key), debugstr_w( value), size);
             }
             RegCloseKey(hkey);
         }
     }
-
+    if( found && lf->lfHeight > 0) { 
+        /* positive height value means points ( inch/72 ) */
+        lf->lfHeight = -MulDiv( lf->lfHeight, dpi, 72);
+    }
     return found;
 }
 
@@ -1465,7 +1496,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETICONTITLELOGFONT_IDX;
         if (!spi_loaded[spi_idx])
         {       
-            if(!reg_get_logfont(SPI_SETICONTITLELOGFONT_REGKEY, SPI_SETICONTITLELOGFONT_VALNAME, &icontitle_log_font))
+            int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
+            if(!reg_get_logfont(SPI_SETICONTITLELOGFONT_REGKEY, SPI_SETICONTITLELOGFONT_VALNAME, &icontitle_log_font, dpi))
             {
                 /*
                  * The 'default GDI fonts' seems to be returned.
@@ -1591,6 +1623,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
 	if (lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
 	{
+            int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
 	    /* clear the struct, so we have 'sane' members */
 	    memset(
 		(char *)pvParam + sizeof(lpnm->cbSize),
@@ -1608,7 +1641,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    lpnm->iCaptionHeight = sysMetrics[SM_CYSIZE];
 
 	    /* caption font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &lpnm->lfCaptionFont))
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &lpnm->lfCaptionFont, dpi))
             {
                 SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
                 lpnm->lfCaptionFont.lfWeight = FW_BOLD;
@@ -1619,7 +1652,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    lpnm->iSmCaptionHeight = sysMetrics[SM_CYSMSIZE];
 
 	    /* small caption font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &lpnm->lfSmCaptionFont))
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &lpnm->lfSmCaptionFont, dpi))
                 SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
 
 	    /* menus, FIXME: names of wine.conf entries are bogus */
@@ -1629,7 +1662,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	    lpnm->iMenuHeight = sysMetrics[SM_CYMENUSIZE];
 
 	    /* menu font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &lpnm->lfMenuFont))
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &lpnm->lfMenuFont, dpi))
             {
                 SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
                 GetProfileStringW( Desktop, MenuFont, lpnm->lfCaptionFont.lfFaceName,
@@ -1639,7 +1672,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             }
 
 	    /* status bar font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &lpnm->lfStatusFont))
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &lpnm->lfStatusFont, dpi))
             {
                 SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
                                        (LPVOID)&(lpnm->lfStatusFont), 0 );
@@ -1650,7 +1683,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             }
 
 	    /* message font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &lpnm->lfMessageFont))
+            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &lpnm->lfMessageFont, dpi))
             {
                 SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
                                        (LPVOID)&(lpnm->lfMessageFont), 0 );
