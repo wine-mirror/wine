@@ -707,6 +707,12 @@ typedef struct _THREAD_BASIC_INFORMATION
     LONG      BasePriority;
 } THREAD_BASIC_INFORMATION, *PTHREAD_BASIC_INFORMATION;
 
+typedef struct _KERNEL_USER_TIMES {
+    LARGE_INTEGER  CreateTime;
+    LARGE_INTEGER  ExitTime;
+    LARGE_INTEGER  KernelTime;
+    LARGE_INTEGER  UserTime;
+} KERNEL_USER_TIMES, *PKERNEL_USER_TIMES;
 
 typedef enum _WINSTATIONINFOCLASS {
     WinStationInformation = 8
