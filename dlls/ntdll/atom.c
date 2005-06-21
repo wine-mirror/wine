@@ -29,7 +29,6 @@
 #include <ctype.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "ntstatus.h"
 
 #include "wine/server.h"

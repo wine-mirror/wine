@@ -28,7 +28,6 @@
 #include <stdio.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 #include "excpt.h"
 #include "wine/exception.h"

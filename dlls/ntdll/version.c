@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include "ntstatus.h"
 #include "windef.h"
-#include "winbase.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"

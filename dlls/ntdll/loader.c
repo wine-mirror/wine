@@ -29,7 +29,6 @@
 #define NONAMELESSSTRUCT
 
 #include "windef.h"
-#include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
 

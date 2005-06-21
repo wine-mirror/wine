@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

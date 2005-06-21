@@ -52,7 +52,6 @@
 #endif
 
 #include "windef.h"
-#include "winbase.h"
 #include "thread.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"

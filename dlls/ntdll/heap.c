@@ -34,9 +34,7 @@
 #define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
-#include "winerror.h"
 #include "winnt.h"
 #include "wine/debug.h"
 #include "winternl.h"

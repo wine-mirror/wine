@@ -40,7 +40,6 @@
 #include "winnls.h"
 #include "winnt.h"
 #include "winternl.h"
-#include "winerror.h"
 #include "excpt.h"
 #include "wine/exception.h"
 #include "wine/unicode.h"

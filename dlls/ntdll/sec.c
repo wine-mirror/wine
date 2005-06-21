@@ -33,7 +33,6 @@
 #endif
 
 #include "windef.h"
-#include "winbase.h"
 #include "wine/exception.h"
 #include "ntdll_misc.h"
 #include "excpt.h"

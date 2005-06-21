@@ -25,7 +25,6 @@
 
 #include "ntstatus.h"
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 #include "winerror.h"
 #include "wine/debug.h"

@@ -28,8 +28,6 @@
 #include <assert.h>
 
 #include "windef.h"
-#include "winbase.h"
-#include "winerror.h"
 #include "winternl.h"
 #include "ntdll_misc.h"
 #include "module.h"

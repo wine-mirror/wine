@@ -58,7 +58,6 @@
 #include "wine/pthread.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "winerror.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(server);

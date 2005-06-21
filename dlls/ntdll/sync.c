@@ -51,7 +51,6 @@
 #define NONAMELESSSTRUCT
 
 #include "windef.h"
-#include "winbase.h"
 #include "thread.h"
 #include "wine/server.h"
 #include "wine/debug.h"

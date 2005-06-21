@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
 #include "ntdll_misc.h"

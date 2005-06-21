@@ -21,7 +21,6 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#include "winbase.h"
 #include "winternl.h"
 #include "wine/debug.h"
 #include "ntdll_misc.h"

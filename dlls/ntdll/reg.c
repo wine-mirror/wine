@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "winerror.h"
 #include "wine/library.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
