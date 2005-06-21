@@ -16,5 +16,5 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-extern HWND get_hwnd();
+extern HWND get_hwnd(void);
 extern const char * get_file_version(const char * file_name);

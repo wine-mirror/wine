@@ -75,7 +75,7 @@ WCHAR szCurrentSize[64];
  *
  * Set the current active theme from the registry
  */
-void UXTHEME_LoadTheme()
+static void UXTHEME_LoadTheme(void)
 {
     HKEY hKey;
     LONG buffsize;

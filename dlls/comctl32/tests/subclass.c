@@ -134,7 +134,7 @@ static void add_message(const struct message *msg)
     sequence_cnt++;
 }
 
-static void flush_sequence()
+static void flush_sequence(void)
 {
     HeapFree(GetProcessHeap(), 0, sequence);
     sequence = 0;
@@ -215,7 +215,7 @@ static LRESULT WINAPI WndProcSub(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     return pDefSubclassProc(hwnd, message, wParam, lParam);
 }
 
-static void test_subclass()
+static void test_subclass(void)
 {
     HWND hwnd = CreateWindowExA(0, "TestSubclass", "Test subclass", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);

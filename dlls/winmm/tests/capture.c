@@ -648,7 +648,7 @@ static void wave_in_test_device(int device)
               dev_name(device));
 }
 
-static void wave_in_tests()
+static void wave_in_tests(void)
 {
     WAVEINCAPSA capsA;
     WAVEINCAPSW capsW;

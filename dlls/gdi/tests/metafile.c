@@ -358,7 +358,7 @@ static void test_mf_Blank(void)
 /* Simple APIs from mfdrv/graphics.c
  */
 
-static void test_mf_Graphics()
+static void test_mf_Graphics(void)
 {
     HDC hdcMetafile;
     HMETAFILE hMetafile;
@@ -516,7 +516,7 @@ static HENHMETAFILE create_converted_emf(const METAFILEPICT *mfp)
     return SetWinMetaFileBits(size, pBits, NULL, mfp);
 }
 
-static void test_mf_conversions()
+static void test_mf_conversions(void)
 {
     trace("Testing MF->EMF conversion (MM_ANISOTROPIC)\n");
     {

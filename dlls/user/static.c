@@ -239,7 +239,7 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
     }
 }
 
-static VOID STATIC_InitColours()
+static VOID STATIC_InitColours(void)
 {
     color_3ddkshadow  = GetSysColor(COLOR_3DDKSHADOW);
     color_3dshadow    = GetSysColor(COLOR_3DSHADOW);

@@ -231,7 +231,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 int me_debug = 0;
 HANDLE me_heap = NULL;
 
-ME_TextBuffer *ME_MakeText() {
+ME_TextBuffer *ME_MakeText(void) {
   
   ME_TextBuffer *buf = ALLOC_OBJ(ME_TextBuffer);
 

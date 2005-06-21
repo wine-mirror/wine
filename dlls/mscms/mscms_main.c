@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 static void *lcmshandle = NULL;
 #endif /* HAVE_LCMS_H */
 
-static BOOL MSCMS_init_lcms()
+static BOOL MSCMS_init_lcms(void)
 {
 #ifdef HAVE_LCMS_H
     /* dynamically load lcms if not yet loaded */
@@ -107,7 +107,7 @@ sym_not_found:
     return TRUE;
 }
 
-static void MSCMS_deinit_lcms()
+static void MSCMS_deinit_lcms(void)
 {
 #ifdef HAVE_LCMS_H
     if (lcmshandle)

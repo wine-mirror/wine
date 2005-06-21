@@ -198,7 +198,7 @@ static void test_SHSearchMapInt(void)
   ok(i == values[0], "Len 3, expected %d, got %d\n", values[0], i);
 }
 
-static void test_alloc_shared()
+static void test_alloc_shared(void)
 {
     DWORD procid;
     HANDLE hmem;

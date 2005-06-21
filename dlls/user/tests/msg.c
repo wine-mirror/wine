@@ -1095,7 +1095,7 @@ static void add_message(const struct message *msg)
     sequence_cnt++;
 }
 
-static void flush_sequence()
+static void flush_sequence(void)
 {
     HeapFree(GetProcessHeap(), 0, sequence);
     sequence = 0;

@@ -196,7 +196,7 @@ typedef struct
 
 DWORD DOS_LOLSeg;
 
-static struct _DOS_LISTOFLISTS * DOSMEM_LOL()
+static struct _DOS_LISTOFLISTS * DOSMEM_LOL(void)
 {
     return PTR_REAL_TO_LIN(HIWORD(DOS_LOLSeg),0);
 }

@@ -58,7 +58,7 @@ static int count_moniker_matches(IBindCtx * pbc, IEnumMoniker * spEM)
     return matchCnt;
 }
 
-static void test_MkParseDisplayName()
+static void test_MkParseDisplayName(void)
 {
     IBindCtx * pbc = NULL;
     HRESULT hr;
@@ -178,7 +178,7 @@ static const BYTE expected_moniker_data[] =
 
 static const LARGE_INTEGER llZero;
 
-static void test_class_moniker()
+static void test_class_moniker(void)
 {
     IStream * stream;
     IMoniker * moniker;

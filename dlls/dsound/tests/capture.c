@@ -186,7 +186,7 @@ EXIT:
        "should have 0\n", ref);
 }
 
-static void IDirectSoundCapture_tests()
+static void IDirectSoundCapture_tests(void)
 {
     HRESULT rc;
     LPDIRECTSOUNDCAPTURE dsco=NULL;
@@ -682,7 +682,7 @@ EXIT:
     return TRUE;
 }
 
-static void capture_tests()
+static void capture_tests(void)
 {
     HRESULT rc;
     rc=pDirectSoundCaptureEnumerateA(&dscenum_callback,NULL);

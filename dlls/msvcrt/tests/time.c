@@ -31,7 +31,7 @@
 #define MINSPERHOUR        60
 #define HOURSPERDAY        24
 
-static void test_gmtime()
+static void test_gmtime(void)
 {
     time_t gmt = (time_t)NULL;
     struct tm* gmt_tm = gmtime(&gmt);
@@ -48,7 +48,7 @@ static void test_gmtime()
        gmt_tm->tm_hour, gmt_tm->tm_min, gmt_tm->tm_sec, gmt_tm->tm_isdst); 
   
 }
-static void test_mktime()
+static void test_mktime(void)
 {
     TIME_ZONE_INFORMATION tzinfo;
     DWORD res =  GetTimeZoneInformation(&tzinfo);

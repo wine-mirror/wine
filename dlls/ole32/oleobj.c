@@ -323,7 +323,7 @@ static const IOleAdviseHolderVtbl oahvt =
  *  OleAdviseHolderImpl_Constructor
  */
 
-static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor()
+static LPOLEADVISEHOLDER OleAdviseHolderImpl_Constructor(void)
 {
   OleAdviseHolderImpl* lpoah;
   DWORD                index;
@@ -639,7 +639,7 @@ static const IDataAdviseHolderVtbl DataAdviseHolderImpl_VTable =
 /******************************************************************************
  * DataAdviseHolder_Constructor
  */
-static IDataAdviseHolder* DataAdviseHolder_Constructor()
+static IDataAdviseHolder* DataAdviseHolder_Constructor(void)
 {
   DataAdviseHolder* newHolder;
 

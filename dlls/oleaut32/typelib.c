@@ -1328,7 +1328,7 @@ static TYPEDESC stndTypeDesc[VT_LPWSTR+1]=
     {{0},30},{{0},31}
 };
 
-static void TLB_abort()
+static void TLB_abort(void)
 {
     DebugBreak();
 }

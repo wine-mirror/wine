@@ -202,7 +202,7 @@ extern LRESULT CreateIRichEditOle(LPVOID *);
 /* wintest.c */
 
 /* editor.c */
-void ME_RegisterEditorClass();
+void ME_RegisterEditorClass(HINSTANCE hInstance);
 ME_TextEditor *ME_MakeEditor(HWND hWnd);
 void ME_DestroyEditor(ME_TextEditor *editor);
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode);

@@ -33,7 +33,7 @@
 #include "dxerr8.h"
 #include "dinput_test.h"
 
-static void mouse_tests()
+static void mouse_tests(void)
 {
 }
 

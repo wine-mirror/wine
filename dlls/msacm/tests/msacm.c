@@ -398,7 +398,7 @@ static DWORD check_count(UINT uMetric)
     return dwMetric;
 }
 
-static void msacm_tests()
+static void msacm_tests(void)
 {
     MMRESULT rc;
     DWORD dwCount;
