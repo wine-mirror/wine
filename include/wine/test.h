@@ -21,10 +21,7 @@
 #ifndef __WINE_TEST_H
 #define __WINE_TEST_H
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <windef.h>
-#include <winbase.h>
+#include <windows.h>
 
 /* debug level */
 extern int winetest_debug;
