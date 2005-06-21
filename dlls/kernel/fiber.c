@@ -93,7 +93,7 @@ LPVOID WINAPI CreateFiberEx( SIZE_T stack_commit, SIZE_T stack_reserve, DWORD fl
 
     /* FIXME: should use the thread stack allocation routines here */
     if (!stack_reserve) stack_reserve = 1024*1024;
-    if(!(fiber->stack_allocation = VirtualAlloc( 0, stack_reserve, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
+    if(!(fiber->stack_allocation = VirtualAlloc( 0, stack_reserve, MEM_COMMIT, PAGE_READWRITE )))
     {
         HeapFree( GetProcessHeap(), 0, fiber );
         return NULL;

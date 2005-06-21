@@ -66,7 +66,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
     stack_size = (stack_size + (page_size - 1)) & ~(page_size - 1);
     if (stack_size < 1024 * 1024) stack_size = 1024 * 1024;  /* Xlib needs a large stack */
 
-    if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE )))
+    if (!(base = VirtualAlloc( NULL, stack_size, MEM_COMMIT, PAGE_READWRITE )))
         return NULL;
 
     teb->DeallocationStack = base;
@@ -75,7 +75,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size )
 
     /* Setup guard pages */
 
-    VirtualProtect( base, 1, PAGE_EXECUTE_READWRITE | PAGE_GUARD, &old_prot );
+    VirtualProtect( base, 1, PAGE_READWRITE | PAGE_GUARD, &old_prot );
     return teb;
 }
 

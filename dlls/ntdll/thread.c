@@ -192,7 +192,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     size = info->stack_size;
     teb->DeallocationStack = info->stack_base;
     NtAllocateVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, 0,
-                             &size, MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
+                             &size, MEM_SYSTEM, PAGE_READWRITE );
     /* limit is lower than base since the stack grows down */
     teb->Tib.StackBase  = (char *)info->stack_base + info->stack_size;
     teb->Tib.StackLimit = info->stack_base;
@@ -200,7 +200,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     /* setup the guard page */
     size = 1;
     NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size,
-                            PAGE_EXECUTE_READWRITE | PAGE_GUARD, NULL );
+                            PAGE_READWRITE | PAGE_GUARD, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, info );
 
     RtlAcquirePebLock();
