@@ -269,6 +269,8 @@ HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
     return S_OK;
 }
 
+static const CHAR Agent[] = "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0)";
+
 /**************************************************************************
  *                 ObtainUserAgentString (URLMON.@)
  */
@@ -279,6 +281,10 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbS
     if(dwOption) {
       ERR("dwOption: %ld, must be zero\n", dwOption);
     }
+
+    if (sizeof(Agent) < *cbSize)
+        *cbSize = sizeof(Agent);
+    lstrcpynA(pcszUAOut, Agent, *cbSize); 
 
     return S_OK;
 }
