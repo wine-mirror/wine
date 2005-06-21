@@ -899,6 +899,51 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
     return rc;
 }
 
+
+/*
+ * Actual Action Handlers
+ */
+
+static UINT ITERATE_CreateFolders(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPCWSTR dir;
+    LPWSTR full_path;
+    MSIRECORD *uirow;
+    MSIFOLDER *folder;
+
+    dir = MSI_RecordGetString(row,1);
+    if (!dir)
+    {
+        ERR("Unable to get folder id \n");
+        return ERROR_SUCCESS;
+    }
+
+    full_path = resolve_folder(package,dir,FALSE,FALSE,&folder);
+    if (!full_path)
+    {
+        ERR("Unable to resolve folder id %s\n",debugstr_w(dir));
+        return ERROR_SUCCESS;
+    }
+
+    TRACE("Folder is %s\n",debugstr_w(full_path));
+
+    /* UI stuff */
+    uirow = MSI_CreateRecord(1);
+    MSI_RecordSetStringW(uirow,1,full_path);
+    ui_actiondata(package,szCreateFolders,uirow);
+    msiobj_release( &uirow->hdr );
+
+    if (folder->State == 0)
+        create_full_pathW(full_path);
+
+    folder->State = 3;
+
+    HeapFree(GetProcessHeap(),0,full_path);
+    return ERROR_SUCCESS;
+}
+
+
 /*
  * Also we cannot enable/disable components either, so for now I am just going 
  * to do all the directories for all the components.
@@ -912,66 +957,12 @@ static UINT ACTION_CreateFolders(MSIPACKAGE *package)
          '`','C','r','e','a','t','e','F','o','l','d','e','r','`',0 };
     UINT rc;
     MSIQUERY *view;
-    MSIFOLDER *folder;
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view );
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-    
-    while (1)
-    {
-        LPCWSTR dir;
-        LPWSTR full_path;
-        MSIRECORD *row = NULL, *uirow;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        dir = MSI_RecordGetString(row,1);
-        if (!dir)
-        {
-            ERR("Unable to get folder id \n");
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        full_path = resolve_folder(package,dir,FALSE,FALSE,&folder);
-        if (!full_path)
-        {
-            ERR("Unable to resolve folder id %s\n",debugstr_w(dir));
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        TRACE("Folder is %s\n",debugstr_w(full_path));
-
-        /* UI stuff */
-        uirow = MSI_CreateRecord(1);
-        MSI_RecordSetStringW(uirow,1,full_path);
-        ui_actiondata(package,szCreateFolders,uirow);
-        msiobj_release( &uirow->hdr );
-
-        if (folder->State == 0)
-            create_full_pathW(full_path);
-
-        folder->State = 3;
-
-        msiobj_release(&row->hdr);
-        HeapFree(GetProcessHeap(),0,full_path);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_CreateFolders, package);
     msiobj_release(&view->hdr);
    
     return rc;
