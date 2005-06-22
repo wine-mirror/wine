@@ -179,6 +179,20 @@ typedef struct _xml_error {
 [
 local,
 object,
+uuid(d4d4a0fc-3b73-11d1-b2b4-00c04fb92596)
+]
+interface IXMLAttribute : IDispatch
+{
+    [propget, id(DISPID_XMLATTRIBUTE_NAME)]
+    HRESULT name( [retval, out] BSTR *p );
+
+    [propget, id(DISPID_XMLATTRIBUTE_VALUE)]
+    HRESULT value( [retval, out] BSTR *p );
+}
+
+[
+local,
+object,
 uuid(948c5ad3-c58d-11d0-9c0b-00c04fc99c8e)
 ]
 interface IXMLError : IUnknown
