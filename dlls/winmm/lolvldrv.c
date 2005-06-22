@@ -414,7 +414,7 @@ DWORD	MMDRV_Close(LPWINE_MLD mld, UINT wMsg)
 /**************************************************************************
  * 				MMDRV_GetByID			[internal]
  */
-LPWINE_MLD	MMDRV_GetByID(UINT uDevID, UINT type)
+static LPWINE_MLD MMDRV_GetByID(UINT uDevID, UINT type)
 {
     TRACE("(%04x, %04x)\n", uDevID, type);
     if (uDevID < llTypes[type].wMaxId)
