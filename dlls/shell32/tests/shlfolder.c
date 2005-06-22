@@ -455,8 +455,6 @@ static void test_EnumObjects_and_CompareIDs(void)
     WCHAR cCurrDirW [MAX_PATH];
     static const WCHAR cTestDirW[] = {'\\','t','e','s','t','d','i','r',0};
     HRESULT hr;
-    
-    init_function_pointers();
 
     GetCurrentDirectoryA(MAX_PATH, cCurrDirA);
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
@@ -467,29 +465,31 @@ static void test_EnumObjects_and_CompareIDs(void)
     hr = SHGetMalloc(&ppM);
     ok(hr == S_OK, "SHGetMalloc failed %08lx\n", hr);
 
-    CreateFilesFolders();
-    
     hr = SHGetDesktopFolder(&IDesktopFolder);
     ok(hr == S_OK, "SHGetDesktopfolder failed %08lx\n", hr);
+
+    CreateFilesFolders();
 
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cCurrDirW, NULL, &newPIDL, 0);
     ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
 
     hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL, (REFIID)&IID_IShellFolder, (LPVOID *)&testIShellFolder);
     ok(hr == S_OK, "BindToObject failed %08lx\n", hr);
-        
+
     test_EnumObjects(testIShellFolder);
 
     hr = IShellFolder_Release(testIShellFolder);
     ok(hr == S_OK, "IShellFolder_Release failed %08lx\n", hr);
 
-    IMalloc_Free(ppM, newPIDL);
-
     Cleanup();
+
+    IMalloc_Free(ppM, newPIDL);
 }
 
 START_TEST(shlfolder)
 {
+    init_function_pointers();
+
     test_EnumObjects_and_CompareIDs();
     test_BindToObject();
     test_GetDisplayName();
