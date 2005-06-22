@@ -1942,7 +1942,7 @@ NTSTATUS WINAPI RtlIntegerToUnicodeString(
  * SEE ALSO
  *  See RtlStringFromGUID.
  */
-NTSTATUS WINAPI RtlGUIDFromString(const UNICODE_STRING *str, GUID* guid)
+NTSTATUS WINAPI RtlGUIDFromString(PUNICODE_STRING str, GUID* guid)
 {
   int i = 0;
   const WCHAR *lpszCLSID = str->Buffer;
