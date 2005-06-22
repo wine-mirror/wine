@@ -557,7 +557,7 @@ HKEY getRegClass(LPSTR lpClass)
 /******************************************************************************
  * Close the currently opened key.
  */
-void closeKey()
+void closeKey(void)
 {
     RegCloseKey(currentKeyHandle);
 
