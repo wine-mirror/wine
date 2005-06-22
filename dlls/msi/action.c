@@ -2284,16 +2284,36 @@ static UINT ACTION_InstallValidate(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT ITERATE_LaunchConditions(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE* package = (MSIPACKAGE*)param;
+    LPCWSTR cond = NULL; 
+    LPCWSTR message = NULL;
+    static const WCHAR title[]=
+        {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
+
+    cond = MSI_RecordGetString(row,1);
+
+    if (MSI_EvaluateConditionW(package,cond) != MSICONDITION_TRUE)
+    {
+        LPWSTR deformated;
+        message = MSI_RecordGetString(row,2);
+        deformat_string(package,message,&deformated); 
+        MessageBoxW(NULL,deformated,title,MB_OK);
+        HeapFree(GetProcessHeap(),0,deformated);
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
 {
     UINT rc;
     MSIQUERY * view = NULL;
-    MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','`',0};
-    static const WCHAR title[]=
-        {'I','n','s','t','a','l','l',' ','F','a', 'i','l','e','d',0};
 
     TRACE("Checking launch conditions\n");
 
@@ -2301,42 +2321,9 @@ static UINT ACTION_LaunchConditions(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    rc = ERROR_SUCCESS;
-    while (rc == ERROR_SUCCESS)
-    {
-        LPCWSTR cond = NULL; 
-        LPCWSTR message = NULL;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        cond = MSI_RecordGetString(row,1);
-
-        if (MSI_EvaluateConditionW(package,cond) != MSICONDITION_TRUE)
-        {
-            LPWSTR deformated;
-            message = MSI_RecordGetString(row,2);
-            deformat_string(package,message,&deformated); 
-            MessageBoxW(NULL,deformated,title,MB_OK);
-            HeapFree(GetProcessHeap(),0,deformated);
-            rc = ERROR_FUNCTION_FAILED;
-        }
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_LaunchConditions, package);
     msiobj_release(&view->hdr);
+
     return rc;
 }
 
