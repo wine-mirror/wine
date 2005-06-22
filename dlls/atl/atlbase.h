@@ -18,6 +18,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef __WINE_ATLBASE_H__
+#define __WINE_ATLBASE_H__
+
+#define COBJMACROS
+
+#include "atliface.h"
+
 typedef HRESULT (WINAPI _ATL_CREATORFUNC)(void* pv, REFIID riid, LPVOID* ppv);
 typedef HRESULT (WINAPI _ATL_CREATORARGFUNC)(void* pv, REFIID riid, LPVOID* ppv, DWORD dw);
 typedef HRESULT (WINAPI _ATL_MODULEFUNC)(DWORD dw);
@@ -134,9 +141,18 @@ struct _ATL_REGMAP_ENTRY
     LPCOLESTR szData;
 };
 
+HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID * iid, LPDWORD dpw);
+HRESULT WINAPI AtlFreeMarshalStream(IStream *pStream);
+HRESULT WINAPI AtlInternalQueryInterface(LPVOID pThis, const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, LPVOID* ppvObject);
+HRESULT WINAPI AtlMarshalPtrInProc(IUnknown *pUnk, const IID *iid, IStream **ppStream);
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE h);
 HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA* pM, DWORD dwClsContext, DWORD dwFlags);
+HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* pCLSID);
+HRESULT WINAPI AtlModuleUnregisterServer(_ATL_MODULEW* pM, const CLSID* pCLSID);
+HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW *pM, LPCOLESTR lpszRes, BOOL bRegister, struct _ATL_REGMAP_ENTRY *pMapEntries, IRegistrar *pReg );
 HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID);
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM);
-HRESULT WINAPI AtlInternalQueryInterface(LPVOID pThis,
-        const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, LPVOID* ppvObject);
+HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID * iid, DWORD dw);
+HRESULT WINAPI AtlUnmarshalPtr(IStream *pStream, const IID *iid, IUnknown **ppUnk);
+
+#endif /* __WINE_ATLBASE_H__ */
