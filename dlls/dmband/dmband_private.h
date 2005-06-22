@@ -100,15 +100,6 @@ struct IDirectMusicBandImpl {
   struct list Instruments;
 };
 
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicBandImpl_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicBand: */
-extern ULONG WINAPI   IDirectMusicBandImpl_IDirectMusicBand_AddRef (LPDIRECTMUSICBAND iface);
-/* IDirectMusicObject: */
-extern ULONG WINAPI   IDirectMusicBandImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicBandImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicBandTrack implementation structure
  */
@@ -126,13 +117,6 @@ struct IDirectMusicBandTrack {
   /* data */
   struct list Bands;
 };
-
-/* IUnknown: */
-extern ULONG WINAPI   IDirectMusicBandTrack_IUnknown_AddRef (LPUNKNOWN iface);
-/* IDirectMusicTrack(8): */
-extern ULONG WINAPI   IDirectMusicBandTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-/* IPersistStream: */
-extern ULONG WINAPI   IDirectMusicBandTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmband.dll
