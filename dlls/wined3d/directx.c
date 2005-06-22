@@ -1161,13 +1161,12 @@ HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT 
 /* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true 
       subset of a D3DCAPS9 structure. However, it has to come via a void * 
       as the d3d8 interface cannot import the d3d9 header                  */
-HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DCAPS* pCapsIn) {
+HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
     BOOL             gotContext  = FALSE;
-    GLint            gl_tex_size = 0;    
+    GLint            gl_tex_size = 0;
     WineD3D_Context *fake_ctx = NULL;
-    D3DCAPS9        *pCaps = (D3DCAPS9 *)pCapsIn;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
@@ -1177,7 +1176,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
     /* Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
        ie there is no GL Context - Get a default rendering context to enable the 
-       function query some info from GL                                           */    
+       function query some info from GL                                           */
     if (glXGetCurrentContext() == NULL) {
         fake_ctx = WineD3D_CreateFakeGLContext();
         if (NULL != fake_ctx) gotContext = TRUE;
@@ -1189,14 +1188,15 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
         FIXME_(d3d_caps)("GetDeviceCaps called but no GL Context - Returning dummy values\n");
         gl_tex_size=65535;
-        pCaps->MaxTextureBlendStages = 2;
-        pCaps->MaxSimultaneousTextures = 2;
-        pCaps->MaxUserClipPlanes = 8;
-        pCaps->MaxActiveLights = 8;
-        pCaps->MaxVertexBlendMatrices = 0;
-        pCaps->MaxVertexBlendMatrixIndex = 1;
-        pCaps->MaxAnisotropy = 0;
-        pCaps->MaxPointSize = 255.0;
+        *(pCaps->MaxTextureBlendStages)     = 2;
+        *pCaps->MaxSimultaneousTextures     = 2;
+        *pCaps->MaxUserClipPlanes           = 8;
+        *pCaps->MaxActiveLights             = 8;
+        *pCaps->MaxVertexBlendMatrices      = 0;
+        *pCaps->MaxVertexBlendMatrixIndex   = 1;
+        *pCaps->MaxAnisotropy               = 0;
+        *pCaps->MaxPointSize                = 255.0;
+
     } else {
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
     }
@@ -1212,167 +1212,181 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     /* ------------------------------------------------
        The following fields apply to both d3d8 and d3d9
        ------------------------------------------------ */
-    pCaps->DeviceType = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
-    pCaps->AdapterOrdinal = Adapter;
+    *pCaps->DeviceType              = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
+    *pCaps->AdapterOrdinal          = Adapter;
 
-    pCaps->Caps = 0;
-    pCaps->Caps2 = D3DCAPS2_CANRENDERWINDOWED;
-    pCaps->Caps3 = D3DDEVCAPS_HWTRANSFORMANDLIGHT;
-    pCaps->PresentationIntervals = D3DPRESENT_INTERVAL_IMMEDIATE;
+    *pCaps->Caps                    = 0;
+    *pCaps->Caps2                   = D3DCAPS2_CANRENDERWINDOWED;
+    *pCaps->Caps3                   = D3DDEVCAPS_HWTRANSFORMANDLIGHT;
+    *pCaps->PresentationIntervals   = D3DPRESENT_INTERVAL_IMMEDIATE;
 
-    pCaps->CursorCaps = 0;
+    *pCaps->CursorCaps              = 0;
 
-    pCaps->DevCaps = D3DDEVCAPS_DRAWPRIMTLVERTEX    | 
-                     D3DDEVCAPS_HWTRANSFORMANDLIGHT |
-                     D3DDEVCAPS_PUREDEVICE | D3DDEVCAPS_HWRASTERIZATION;
 
-    pCaps->PrimitiveMiscCaps = D3DPMISCCAPS_CULLCCW               | 
-                               D3DPMISCCAPS_CULLCW                | 
-                               D3DPMISCCAPS_COLORWRITEENABLE      |
-                               D3DPMISCCAPS_CLIPTLVERTS           |
-                               D3DPMISCCAPS_CLIPPLANESCALEDPOINTS | 
-                               D3DPMISCCAPS_MASKZ; 
+    *pCaps->DevCaps                 = D3DDEVCAPS_DRAWPRIMTLVERTEX    |
+                                      D3DDEVCAPS_HWTRANSFORMANDLIGHT |
+                                      D3DDEVCAPS_PUREDEVICE          |
+                                      D3DDEVCAPS_HWRASTERIZATION;
+
+
+    *pCaps->PrimitiveMiscCaps       = D3DPMISCCAPS_CULLCCW               |
+                                      D3DPMISCCAPS_CULLCW                |
+                                      D3DPMISCCAPS_COLORWRITEENABLE      |
+                                      D3DPMISCCAPS_CLIPTLVERTS           |
+                                      D3DPMISCCAPS_CLIPPLANESCALEDPOINTS |
+                                      D3DPMISCCAPS_MASKZ;
                                /*NOT: D3DPMISCCAPS_TSSARGTEMP*/
 
-    pCaps->RasterCaps = D3DPRASTERCAPS_DITHER   | 
-                        D3DPRASTERCAPS_PAT      | 
-			D3DPRASTERCAPS_WFOG |
-			D3DPRASTERCAPS_ZFOG |
-                        D3DPRASTERCAPS_FOGVERTEX |
-			D3DPRASTERCAPS_FOGTABLE  |
-                        D3DPRASTERCAPS_FOGRANGE;
+    *pCaps->RasterCaps              = D3DPRASTERCAPS_DITHER    |
+                                      D3DPRASTERCAPS_PAT       |
+                                      D3DPRASTERCAPS_WFOG      |
+                                      D3DPRASTERCAPS_ZFOG      |
+                                      D3DPRASTERCAPS_FOGVERTEX |
+                                      D3DPRASTERCAPS_FOGTABLE  |
+                                      D3DPRASTERCAPS_FOGRANGE;
 
     if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-      pCaps->RasterCaps |= D3DPRASTERCAPS_ANISOTROPY;
+      *pCaps->RasterCaps |= D3DPRASTERCAPS_ANISOTROPY    |
+                            D3DPRASTERCAPS_ZBIAS         |
+                            D3DPRASTERCAPS_MIPMAPLODBIAS;
     }
                         /* FIXME Add:
-			   D3DPRASTERCAPS_MIPMAPLODBIAS
-			   D3DPRASTERCAPS_ZBIAS
 			   D3DPRASTERCAPS_COLORPERSPECTIVE
 			   D3DPRASTERCAPS_STRETCHBLTMULTISAMPLE
 			   D3DPRASTERCAPS_ANTIALIASEDGES
 			   D3DPRASTERCAPS_ZBUFFERLESSHSR
 			   D3DPRASTERCAPS_WBUFFER */
 
-    pCaps->ZCmpCaps = D3DPCMPCAPS_ALWAYS       | 
-                      D3DPCMPCAPS_EQUAL        | 
-                      D3DPCMPCAPS_GREATER      | 
-                      D3DPCMPCAPS_GREATEREQUAL |
-                      D3DPCMPCAPS_LESS         | 
-                      D3DPCMPCAPS_LESSEQUAL    | 
-                      D3DPCMPCAPS_NEVER        |
-                      D3DPCMPCAPS_NOTEQUAL;
+    *pCaps->ZCmpCaps = D3DPCMPCAPS_ALWAYS       |
+                       D3DPCMPCAPS_EQUAL        |
+                       D3DPCMPCAPS_GREATER      |
+                       D3DPCMPCAPS_GREATEREQUAL |
+                       D3DPCMPCAPS_LESS         |
+                       D3DPCMPCAPS_LESSEQUAL    |
+                       D3DPCMPCAPS_NEVER        |
+                       D3DPCMPCAPS_NOTEQUAL;
 
-    pCaps->SrcBlendCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
-    pCaps->DestBlendCaps = 0xFFFFFFFF;   /*FIXME: Tidy up later */
-    pCaps->AlphaCmpCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
+    *pCaps->SrcBlendCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
+    *pCaps->DestBlendCaps = 0xFFFFFFFF;   /*FIXME: Tidy up later */
+    *pCaps->AlphaCmpCaps  = 0xFFFFFFFF;   /*FIXME: Tidy up later */
 
-    pCaps->ShadeCaps = D3DPSHADECAPS_SPECULARGOURAUDRGB | 
-                       D3DPSHADECAPS_COLORGOURAUDRGB;
+    *pCaps->ShadeCaps     = D3DPSHADECAPS_SPECULARGOURAUDRGB |
+                            D3DPSHADECAPS_COLORGOURAUDRGB;
 
-    pCaps->TextureCaps =  D3DPTEXTURECAPS_ALPHA        | 
-                          D3DPTEXTURECAPS_ALPHAPALETTE | 
-                          D3DPTEXTURECAPS_POW2         | 
-                          D3DPTEXTURECAPS_VOLUMEMAP    | 
-                          D3DPTEXTURECAPS_MIPMAP       |
-                          D3DPTEXTURECAPS_PROJECTED;
+    *pCaps->TextureCaps =  D3DPTEXTURECAPS_ALPHA              |
+                           D3DPTEXTURECAPS_ALPHAPALETTE       |
+                           D3DPTEXTURECAPS_VOLUMEMAP          |
+                           D3DPTEXTURECAPS_MIPMAP             |
+                           D3DPTEXTURECAPS_PROJECTED          |
+                           D3DPTEXTURECAPS_PERSPECTIVE        |
+                           D3DPTEXTURECAPS_VOLUMEMAP_POW2 ;
+                          /* TODO: add support for NON-POW2 if avaialble
+
+                          */
+    if (This->dxVersion > 8) {
+        *pCaps->TextureCaps |= D3DPTEXTURECAPS_NONPOW2CONDITIONAL;
+
+    } else {  /* NONPOW2 isn't accessable by d3d8 yet */
+        *pCaps->TextureCaps |= D3DPTEXTURECAPS_POW2;
+    }
 
     if (GL_SUPPORT(ARB_TEXTURE_CUBE_MAP)) {
-      pCaps->TextureCaps |= D3DPTEXTURECAPS_CUBEMAP      | 
-	                    D3DPTEXTURECAPS_MIPCUBEMAP   | 
-	                    D3DPTEXTURECAPS_CUBEMAP_POW2;
+        *pCaps->TextureCaps |= D3DPTEXTURECAPS_CUBEMAP     |
+                             D3DPTEXTURECAPS_MIPCUBEMAP    |
+                             D3DPTEXTURECAPS_CUBEMAP_POW2;
+
     }
 
-    pCaps->TextureFilterCaps = D3DPTFILTERCAPS_MAGFLINEAR | 
-                               D3DPTFILTERCAPS_MAGFPOINT  | 
-                               D3DPTFILTERCAPS_MINFLINEAR | 
-                               D3DPTFILTERCAPS_MINFPOINT  |
-                               D3DPTFILTERCAPS_MIPFLINEAR | 
-                               D3DPTFILTERCAPS_MIPFPOINT;
+    *pCaps->TextureFilterCaps = D3DPTFILTERCAPS_MAGFLINEAR |
+                                D3DPTFILTERCAPS_MAGFPOINT  |
+                                D3DPTFILTERCAPS_MINFLINEAR |
+                                D3DPTFILTERCAPS_MINFPOINT  |
+                                D3DPTFILTERCAPS_MIPFLINEAR |
+                                D3DPTFILTERCAPS_MIPFPOINT;
 
-    pCaps->CubeTextureFilterCaps = 0;
-    pCaps->VolumeTextureFilterCaps = 0;
+    *pCaps->CubeTextureFilterCaps = 0;
+    *pCaps->VolumeTextureFilterCaps = 0;
 
-    pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_BORDER | 
-                                 D3DPTADDRESSCAPS_CLAMP  | 
-                                 D3DPTADDRESSCAPS_WRAP;
+    *pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_BORDER |
+                                  D3DPTADDRESSCAPS_CLAMP  |
+                                  D3DPTADDRESSCAPS_WRAP;
 
     if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
-      pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_BORDER;
+        *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_BORDER;
     }
     if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
-      pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
+        *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
     }
     if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
-      pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
+        *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
     }
 
-    pCaps->VolumeTextureAddressCaps = 0;
+    *pCaps->VolumeTextureAddressCaps = 0;
 
-    pCaps->LineCaps = D3DLINECAPS_TEXTURE | 
-                      D3DLINECAPS_ZTEST;
-                      /* FIXME: Add 
+    *pCaps->LineCaps = D3DLINECAPS_TEXTURE |
+                       D3DLINECAPS_ZTEST;
+                      /* FIXME: Add
 			 D3DLINECAPS_BLEND
 			 D3DLINECAPS_ALPHACMP
 			 D3DLINECAPS_FOG */
 
-    pCaps->MaxTextureWidth = gl_tex_size;
-    pCaps->MaxTextureHeight = gl_tex_size;
+    *pCaps->MaxTextureWidth = gl_tex_size;
+    *pCaps->MaxTextureHeight = gl_tex_size;
 
-    pCaps->MaxVolumeExtent = 0;
+    *pCaps->MaxVolumeExtent = 0;
 
-    pCaps->MaxTextureRepeat = 32768;
-    pCaps->MaxTextureAspectRatio = 32768;
-    pCaps->MaxVertexW = 1.0;
+    *pCaps->MaxTextureRepeat = 32768;
+    *pCaps->MaxTextureAspectRatio = 32768;
+    *pCaps->MaxVertexW = 1.0;
 
-    pCaps->GuardBandLeft = 0;
-    pCaps->GuardBandTop = 0;
-    pCaps->GuardBandRight = 0;
-    pCaps->GuardBandBottom = 0;
+    *pCaps->GuardBandLeft = 0;
+    *pCaps->GuardBandTop = 0;
+    *pCaps->GuardBandRight = 0;
+    *pCaps->GuardBandBottom = 0;
 
-    pCaps->ExtentsAdjust = 0;
+    *pCaps->ExtentsAdjust = 0;
 
-    pCaps->StencilCaps =  D3DSTENCILCAPS_DECRSAT | 
-                          D3DSTENCILCAPS_INCRSAT | 
-                          D3DSTENCILCAPS_INVERT  | 
-                          D3DSTENCILCAPS_KEEP    | 
-                          D3DSTENCILCAPS_REPLACE | 
-                          D3DSTENCILCAPS_ZERO;
+    *pCaps->StencilCaps =  D3DSTENCILCAPS_DECRSAT |
+                           D3DSTENCILCAPS_INCRSAT |
+                           D3DSTENCILCAPS_INVERT  |
+                           D3DSTENCILCAPS_KEEP    |
+                           D3DSTENCILCAPS_REPLACE |
+                           D3DSTENCILCAPS_ZERO;
     if (GL_SUPPORT(EXT_STENCIL_WRAP)) {
-      pCaps->StencilCaps |= D3DSTENCILCAPS_DECR    | 
-	                    D3DSTENCILCAPS_INCR;
+      *pCaps->StencilCaps |= D3DSTENCILCAPS_DECR  |
+                             D3DSTENCILCAPS_INCR;
     }
 
-    pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
+    *pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 
-    pCaps->TextureOpCaps =  D3DTEXOPCAPS_ADD         | 
-                            D3DTEXOPCAPS_ADDSIGNED   | 
-                            D3DTEXOPCAPS_ADDSIGNED2X |
-                            D3DTEXOPCAPS_MODULATE    | 
-                            D3DTEXOPCAPS_MODULATE2X  | 
-                            D3DTEXOPCAPS_MODULATE4X  |
-                            D3DTEXOPCAPS_SELECTARG1  | 
-                            D3DTEXOPCAPS_SELECTARG2  | 
-                            D3DTEXOPCAPS_DISABLE;
+    *pCaps->TextureOpCaps =  D3DTEXOPCAPS_ADD         |
+                             D3DTEXOPCAPS_ADDSIGNED   |
+                             D3DTEXOPCAPS_ADDSIGNED2X |
+                             D3DTEXOPCAPS_MODULATE    |
+                             D3DTEXOPCAPS_MODULATE2X  |
+                             D3DTEXOPCAPS_MODULATE4X  |
+                             D3DTEXOPCAPS_SELECTARG1  |
+                             D3DTEXOPCAPS_SELECTARG2  |
+                             D3DTEXOPCAPS_DISABLE;
 #if defined(GL_VERSION_1_3)
-    pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 | 
-                            D3DTEXOPCAPS_SUBTRACT;
+    *pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3 |
+                             D3DTEXOPCAPS_SUBTRACT;
 #endif
-    if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) || 
-	GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) || 
-	GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
-      pCaps->TextureOpCaps |= D3DTEXOPCAPS_BLENDDIFFUSEALPHA |
-	                      D3DTEXOPCAPS_BLENDTEXTUREALPHA | 
-			      D3DTEXOPCAPS_BLENDFACTORALPHA  |
-			      D3DTEXOPCAPS_BLENDCURRENTALPHA |
-			      D3DTEXOPCAPS_LERP;
+    if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) ||
+        GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) ||
+        GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_BLENDDIFFUSEALPHA |
+                                D3DTEXOPCAPS_BLENDTEXTUREALPHA  |
+                                D3DTEXOPCAPS_BLENDFACTORALPHA   |
+                                D3DTEXOPCAPS_BLENDCURRENTALPHA  |
+                                D3DTEXOPCAPS_LERP;
     }
     if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
-      pCaps->TextureOpCaps |= D3DTEXOPCAPS_ADDSMOOTH | 
-			      D3DTEXOPCAPS_MULTIPLYADD |
-			      D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
-			      D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
-                              D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
+        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_ADDSMOOTH             |
+                                D3DTEXOPCAPS_MULTIPLYADD            |
+                                D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
+                                D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
+                                D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
     
 #if 0
@@ -1384,105 +1398,129 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
     if (gotContext) {
         GLint gl_max;
-	GLfloat gl_float;
+        GLfloat gl_float;
 #if defined(GL_VERSION_1_3)
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, &gl_max);
 #else
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
 #endif
         TRACE_(d3d_caps)("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
-        pCaps->MaxTextureBlendStages = min(8, gl_max);
-        pCaps->MaxSimultaneousTextures = min(8, gl_max);
+        *pCaps->MaxTextureBlendStages = min(8, gl_max);
+        *pCaps->MaxSimultaneousTextures = min(8, gl_max);
 
         glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
-        pCaps->MaxUserClipPlanes = min(D3DMAXUSERCLIPPLANES, gl_max);
-        TRACE_(d3d_caps)("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", pCaps->MaxUserClipPlanes);
+        *pCaps->MaxUserClipPlanes = min(D3DMAXUSERCLIPPLANES, gl_max);
+        TRACE_(d3d_caps)("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", *pCaps->MaxUserClipPlanes);
 
         glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-        pCaps->MaxActiveLights = gl_max;
-        TRACE_(d3d_caps)("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
+        *pCaps->MaxActiveLights = gl_max;
+        TRACE_(d3d_caps)("GLCaps: GL_MAX_LIGHTS=%ld\n", *pCaps->MaxActiveLights);
 
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-	   glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
-	   pCaps->MaxVertexBlendMatrices = gl_max;
-	   pCaps->MaxVertexBlendMatrixIndex = 1;
+            glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+#if 0  /* TODO : add support for blends to drawprim */
+            *pCaps->MaxVertexBlendMatrices      = gl_max;
+#else
+            *pCaps->MaxVertexBlendMatrices      = 0;
+#endif
+            *pCaps->MaxVertexBlendMatrixIndex   = 1;
         } else {
-           pCaps->MaxVertexBlendMatrices = 0;
-           pCaps->MaxVertexBlendMatrixIndex = 1;
+           *pCaps->MaxVertexBlendMatrices       = 0;
+           *pCaps->MaxVertexBlendMatrixIndex    = 1;
         }
 
         if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-          glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
-          pCaps->MaxAnisotropy = gl_max;
+            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+            *pCaps->MaxAnisotropy = gl_max;
         } else {
-          pCaps->MaxAnisotropy = 0;
+            *pCaps->MaxAnisotropy = 0;
         }
 
         glGetFloatv(GL_POINT_SIZE_RANGE, &gl_float);
-        pCaps->MaxPointSize = gl_float;
+        *pCaps->MaxPointSize = gl_float;
     }
 
-    pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS | 
-                                  D3DVTXPCAPS_MATERIALSOURCE7   | 
-                                  D3DVTXPCAPS_POSITIONALLIGHTS  | 
-                                  D3DVTXPCAPS_LOCALVIEWER |
-                                  D3DVTXPCAPS_TEXGEN;
+    *pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS |
+                                   D3DVTXPCAPS_MATERIALSOURCE7   | 
+                                   D3DVTXPCAPS_POSITIONALLIGHTS  | 
+                                   D3DVTXPCAPS_LOCALVIEWER |
+                                   D3DVTXPCAPS_TEXGEN;
                                   /* FIXME: Add 
                                      D3DVTXPCAPS_TWEENING */
 
-    pCaps->MaxPrimitiveCount = 0xFFFFFFFF;
-    pCaps->MaxVertexIndex = 0xFFFFFFFF;
-    pCaps->MaxStreams = MAX_STREAMS;
-    pCaps->MaxStreamStride = 1024;
+    *pCaps->MaxPrimitiveCount   = 0xFFFFFFFF;
+    *pCaps->MaxVertexIndex      = 0xFFFFFFFF;
+    *pCaps->MaxStreams          = MAX_STREAMS;
+    *pCaps->MaxStreamStride     = 1024;
 
     if (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF)) {
-      pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
-      
-      if (This->gl_info.gl_vendor == VENDOR_MESA || 
+      *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+
+      if (This->gl_info.gl_vendor == VENDOR_MESA ||
           This->gl_info.gl_vendor == VENDOR_WINE) {
-        pCaps->MaxVertexShaderConst = 95;
+        *pCaps->MaxVertexShaderConst = 95;
       } else {
-        pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
+        *pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
       }
     } else {
-      pCaps->VertexShaderVersion = 0;
-      pCaps->MaxVertexShaderConst = 0;
+        *pCaps->VertexShaderVersion = 0;
+        *pCaps->MaxVertexShaderConst = 0;
     }
 
     if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
-        pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);
-        pCaps->PixelShader1xMaxValue = 1.0;
+        *pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);
+        *pCaps->PixelShader1xMaxValue = 1.0;
     } else {
-        pCaps->PixelShaderVersion = 0;
-        pCaps->PixelShader1xMaxValue = 0.0;
+        *pCaps->PixelShaderVersion = 0;
+        *pCaps->PixelShader1xMaxValue = 0.0;
     }
+    /* TODO: ARB_FRAGMENT_PROGRAM_100 */
 
     /* ------------------------------------------------
        The following fields apply to d3d9 only
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
+        GLint max_buffers=1;
         FIXME("Caps support for directx9 is nonexistent at the moment!\n");
-        pCaps->DevCaps2 = 0;
-        pCaps->MaxNpatchTessellationLevel = 0;
-        pCaps->MasterAdapterOrdinal = 0;
-        pCaps->AdapterOrdinalInGroup = 0;
-        pCaps->NumberOfAdaptersInGroup = 1;
-        pCaps->DeclTypes = 0;
-        pCaps->NumSimultaneousRTs = 0;
-        pCaps->StretchRectFilterCaps = 0;
-        pCaps->VS20Caps.Caps = 0;
-        pCaps->PS20Caps.Caps = 0;
-        pCaps->VertexTextureFilterCaps = 0;
-        pCaps->MaxVShaderInstructionsExecuted = 0;
-        pCaps->MaxPShaderInstructionsExecuted = 0;
-        pCaps->MaxVertexShader30InstructionSlots = 0;
-        pCaps->MaxPixelShader30InstructionSlots = 0;
+        *pCaps->DevCaps2                          = 0;
+        /* TODO: D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES */
+        *pCaps->MaxNpatchTessellationLevel        = 0;
+        *pCaps->MasterAdapterOrdinal              = 0;
+        *pCaps->AdapterOrdinalInGroup             = 0;
+        *pCaps->NumberOfAdaptersInGroup           = 1;
+        *pCaps->DeclTypes                         = 0;
+#if 0 /*FIXME: Simultaneous render targets*/
+        GL_MAX_DRAW_BUFFERS_ATI 0x00008824
+        if (GL_SUPPORT(GL_MAX_DRAW_BUFFERS_ATI)) {
+            ENTER_GL();        
+            glEnable(GL_MAX_DRAW_BUFFERS_ATI);
+            glGetIntegerv(GL_MAX_DRAW_BUFFERS_ATI, &max_buffers);
+            glDisable(GL_MAX_DRAW_BUFFERS_ATI);
+            LEAVE_GL();
+        }
+#endif
+        *pCaps->NumSimultaneousRTs                = max_buffers;
+        *pCaps->StretchRectFilterCaps             = 0;
+        /* TODO: add
+           D3DPTFILTERCAPS_MINFPOINT
+           D3DPTFILTERCAPS_MAGFPOINT
+           D3DPTFILTERCAPS_MINFLINEAR
+           D3DPTFILTERCAPS_MAGFLINEAR
+        */
+        *pCaps->VS20Caps.Caps                     = 0;
+        *pCaps->PS20Caps.Caps                     = 0;
+        *pCaps->VertexTextureFilterCaps           = 0;
+        *pCaps->MaxVShaderInstructionsExecuted    = 0;
+        *pCaps->MaxPShaderInstructionsExecuted    = 0;
+        *pCaps->MaxVertexShader30InstructionSlots = 0;
+        *pCaps->MaxPixelShader30InstructionSlots  = 0;
     }
 
     /* If we created a dummy context, throw it away */
     if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
     return D3D_OK;
 }
+
 
 /* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
    and fields being inserted in the middle, a new structure is used in place    */
