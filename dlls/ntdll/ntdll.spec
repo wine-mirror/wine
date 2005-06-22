@@ -202,6 +202,7 @@
 @ stdcall NtRaiseException(ptr ptr long)
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long)
+@ stub NtReadFileScatter
 @ stub NtReadRequestData
 @ stdcall NtReadVirtualMemory(long ptr ptr long ptr)
 @ stub NtRegisterNewDevice
@@ -253,6 +254,7 @@
 @ stdcall NtSetValueKey(long long long long long long)
 @ stdcall NtSetVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtShutdownSystem(long)
+@ stdcall NtSignalAndWaitForSingleObject(long long long ptr)
 @ stub NtStartProfile
 @ stub NtStopProfile
 @ stdcall NtSuspendThread(long ptr)
@@ -274,6 +276,7 @@
 @ stub NtWaitHighEventPair
 @ stub NtWaitLowEventPair
 @ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
+@ stub NtWriteFileGather
 @ stub NtWriteRequestData
 @ stdcall NtWriteVirtualMemory(long ptr ptr long ptr)
 @ stdcall NtYieldExecution()
@@ -323,6 +326,7 @@
 @ stdcall RtlCheckRegistryKey(long ptr)
 @ stdcall RtlClearAllBits(ptr)
 @ stdcall RtlClearBits(ptr long long)
+@ stub RtlClosePropertySet
 @ stdcall RtlCompactHeap(long long)
 @ stdcall RtlCompareMemory(ptr ptr long)
 @ stdcall RtlCompareMemoryUlong(ptr long long)
@@ -350,6 +354,7 @@
 @ stdcall RtlCreateEnvironment(long ptr)
 @ stdcall RtlCreateHeap(long ptr long long ptr ptr)
 @ stdcall RtlCreateProcessParameters(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stub RtlCreatePropertySet
 @ stdcall RtlCreateQueryDebugBuffer(long long)
 @ stub RtlCreateRegistryKey
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
@@ -402,6 +407,7 @@
 @ stub RtlEnumProcessHeaps
 @ stub RtlEnumerateGenericTable
 @ stub RtlEnumerateGenericTableWithoutSplaying
+@ stub RtlEnumerateProperties
 @ stdcall RtlEqualComputerName(ptr ptr)
 @ stdcall RtlEqualDomainName(ptr ptr)
 @ stdcall RtlEqualLuid(ptr ptr)
@@ -439,6 +445,7 @@
 @ stdcall RtlFindSetRuns(ptr ptr long long)
 @ stub RtlFirstEntrySList
 @ stdcall RtlFirstFreeAce(ptr ptr)
+@ stub RtlFlushPropertySet
 @ stdcall RtlFormatCurrentUserKeyPath(ptr)
 @ stdcall RtlFormatMessage(ptr long long long long ptr ptr long)
 @ stdcall RtlFreeAnsiString(long)
@@ -448,10 +455,9 @@
 @ stdcall RtlFreeSid (long)
 @ stdcall RtlFreeUnicodeString(ptr)
 @ stub RtlFreeUserThreadStack
+@ stdcall RtlGUIDFromString(ptr ptr)
 @ stub RtlGenerate8dot3Name
 @ stdcall RtlGetAce(ptr long ptr)
-@ stdcall RtlGetNtVersionNumbers(ptr ptr ptr)
-@ stdcall RtlGetVersion(ptr)
 @ stub RtlGetCallersAddress
 @ stub RtlGetCompressionWorkSpaceSize
 @ stdcall RtlGetControlSecurityDescriptor(ptr ptr ptr)
@@ -465,11 +471,13 @@
 @ stdcall RtlGetLongestNtPathLength()
 @ stub RtlGetNtGlobalFlags
 @ stdcall RtlGetNtProductType(ptr)
+@ stdcall RtlGetNtVersionNumbers(ptr ptr ptr)
 @ stdcall RtlGetOwnerSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetProcessHeaps(long ptr)
 @ stdcall RtlGetSaclSecurityDescriptor(ptr ptr ptr ptr)
 @ stub RtlGetUserInfoHeap
-@ stdcall RtlGUIDFromString(ptr ptr)
+@ stdcall RtlGetVersion(ptr)
+@ stub RtlGuidToPropertySetName
 @ stdcall RtlIdentifierAuthoritySid(ptr)
 @ stdcall RtlImageDirectoryEntryToData(long long long ptr)
 @ stdcall RtlImageNtHeader(long)
@@ -539,6 +547,7 @@
 @ stdcall RtlPinAtomInAtomTable(ptr long)
 @ stdcall RtlPrefixString(ptr ptr long)
 @ stdcall RtlPrefixUnicodeString(ptr ptr long)
+@ stub RtlPropertySetNameToGuid
 @ stub RtlProtectHeap
 @ stdcall RtlQueryAtomInAtomTable(ptr long ptr ptr ptr ptr)
 @ stub RtlQueryDepthSList
@@ -552,6 +561,9 @@
 @ stdcall RtlQueryProcessDebugInformation(long long ptr)
 @ stub RtlQueryProcessHeapInformation
 @ stub RtlQueryProcessLockInformation
+@ stub RtlQueryProperties
+@ stub RtlQueryPropertyNames
+@ stub RtlQueryPropertySet
 @ stdcall RtlQueryRegistryValues(long ptr ptr ptr ptr)
 @ stub RtlQuerySecurityObject
 @ stub RtlQueryTagHeap
@@ -592,12 +604,17 @@
 @ stdcall RtlSetEnvironmentVariable(ptr ptr ptr)
 @ stdcall RtlSetGroupSecurityDescriptor(ptr ptr long)
 @ stub RtlSetInformationAcl
-@ stdcall RtlSetLastWin32ErrorAndNtStatusFromNtStatus(long)
 @ stdcall RtlSetLastWin32Error(long)
+@ stdcall RtlSetLastWin32ErrorAndNtStatusFromNtStatus(long)
 @ stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long)
+@ stub RtlSetProperties
+@ stub RtlSetPropertyClassId
+@ stub RtlSetPropertyNames
+@ stub RtlSetPropertySetClassId
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)
 @ stub RtlSetSecurityObject
 @ stdcall RtlSetTimeZoneInformation(ptr)
+@ stub RtlSetUnicodeCallouts
 @ stub RtlSetUserFlagsHeap
 @ stub RtlSetUserValueHeap
 @ stdcall RtlSizeHeap(long long ptr)
@@ -614,6 +631,7 @@
 @ stdcall RtlTimeToSecondsSince1970(ptr ptr)
 @ stdcall RtlTimeToSecondsSince1980(ptr ptr)
 @ stdcall RtlTimeToTimeFields (long long)
+@ stdcall RtlTryEnterCriticalSection(ptr)
 @ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
 @ cdecl -ret64 RtlUlonglongByteSwap(long long)
 @ stdcall RtlUnicodeStringToAnsiSize(ptr)
@@ -667,6 +685,7 @@
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stub SaveEm87Context
+@ stdcall -ret64 VerSetConditionMask(long long long long)
 @ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub ZwAccessCheckAndAuditAlarm
@@ -987,25 +1006,6 @@
 @ cdecl wcstol(wstr ptr long) NTDLL_wcstol
 @ cdecl wcstombs(ptr ptr long) NTDLL_wcstombs
 @ cdecl wcstoul(wstr ptr long) NTDLL_wcstoul
-@ stub NtReadFileScatter
-@ stdcall NtSignalAndWaitForSingleObject(long long long ptr)
-@ stub NtWriteFileGather
-@ stdcall RtlTryEnterCriticalSection(ptr)
-@ stub RtlEnumerateProperties
-@ stub RtlSetPropertyClassId
-@ stub RtlSetPropertyNames
-@ stub RtlQueryPropertyNames
-@ stub RtlFlushPropertySet
-@ stub RtlSetProperties
-@ stub RtlQueryProperties
-@ stub RtlQueryPropertySet
-@ stub RtlSetUnicodeCallouts
-@ stub RtlPropertySetNameToGuid
-@ stub RtlGuidToPropertySetName
-@ stub RtlClosePropertySet
-@ stub RtlCreatePropertySet
-@ stub RtlSetPropertySetClassId
-@ stdcall -ret64 VerSetConditionMask(long long long long)
 
 ##################
 # Wine extensions

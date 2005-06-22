@@ -35,6 +35,7 @@
 @ stdcall ChangeServiceConfig2W(long long ptr)
 @ stdcall ChangeServiceConfigA(long long long long wstr str ptr str str str str)
 @ stdcall ChangeServiceConfigW(long long long long wstr wstr ptr wstr wstr wstr wstr)
+@ stdcall CheckTokenMembership(long ptr ptr)
 @ stdcall ClearEventLogA (long str)
 @ stdcall ClearEventLogW (long wstr)
 @ stdcall CloseEventLog (long)
@@ -43,10 +44,10 @@
 @ stdcall ControlService(long long ptr)
 @ stdcall ConvertSidToStringSidA(ptr ptr)
 @ stdcall ConvertSidToStringSidW(ptr ptr)
-@ stdcall ConvertStringSidToSidA(ptr ptr)
-@ stdcall ConvertStringSidToSidW(ptr ptr)
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorA(str long ptr ptr)
 @ stdcall ConvertStringSecurityDescriptorToSecurityDescriptorW(wstr long ptr ptr)
+@ stdcall ConvertStringSidToSidA(ptr ptr)
+@ stdcall ConvertStringSidToSidW(ptr ptr)
 @ stdcall CopySid(long ptr ptr)
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr)
 @ stdcall CreateProcessAsUserA(long str str ptr ptr long long ptr str ptr ptr)
@@ -65,10 +66,10 @@
 @ stdcall CryptDuplicateHash(long ptr long ptr)
 @ stdcall CryptDuplicateKey(long ptr long ptr)
 @ stdcall CryptEncrypt(long long long long ptr ptr long)
-@ stdcall CryptEnumProvidersA(long ptr long ptr ptr ptr)
-@ stdcall CryptEnumProvidersW(long ptr long ptr ptr ptr)
 @ stdcall CryptEnumProviderTypesA(long ptr long ptr ptr ptr)
 @ stdcall CryptEnumProviderTypesW(long ptr long ptr ptr ptr)
+@ stdcall CryptEnumProvidersA(long ptr long ptr ptr ptr)
+@ stdcall CryptEnumProvidersW(long ptr long ptr ptr ptr)
 @ stdcall CryptExportKey(long long long long ptr ptr)
 @ stdcall CryptGenKey(long long long ptr)
 @ stdcall CryptGenRandom(long long ptr)
@@ -82,15 +83,15 @@
 @ stdcall CryptHashSessionKey(long long long)
 @ stdcall CryptImportKey(long ptr long long long ptr)
 @ stdcall CryptReleaseContext(long long)
-@ stdcall CryptSignHashA(long long ptr long ptr ptr)
-@ stdcall CryptSignHashW(long long ptr long ptr ptr)
 @ stdcall CryptSetHashParam(long long ptr long)
 @ stdcall CryptSetKeyParam(long long ptr long)
+@ stdcall CryptSetProvParam(long long ptr long)
 @ stdcall CryptSetProviderA(str long)
-@ stdcall CryptSetProviderW(wstr long)
 @ stdcall CryptSetProviderExA(str long ptr long)
 @ stdcall CryptSetProviderExW(wstr long ptr long)
-@ stdcall CryptSetProvParam(long long ptr long)
+@ stdcall CryptSetProviderW(wstr long)
+@ stdcall CryptSignHashA(long long ptr long ptr ptr)
+@ stdcall CryptSignHashW(long long ptr long ptr ptr)
 @ stdcall CryptVerifySignatureA(long ptr long long ptr long)
 @ stdcall CryptVerifySignatureW(long ptr long long ptr long)
 @ stdcall DecryptFileA(str long)
@@ -101,10 +102,16 @@
 @ stdcall DestroyPrivateObjectSecurity(ptr)
 @ stdcall DuplicateToken(long long ptr)
 @ stdcall DuplicateTokenEx(long long ptr long long ptr)
+@ stub ElfDeregisterEventSource
+@ stub ElfDeregisterEventSourceW
+@ stub ElfRegisterEventSourceW
+@ stub ElfReportEventW
 @ stdcall EncryptFileA(str)
 @ stdcall EncryptFileW(wstr)
 @ stdcall EnumDependentServicesA(long long ptr long ptr ptr)
 @ stdcall EnumDependentServicesW(long long ptr long ptr ptr)
+@ stub EnumServiceGroupA
+@ stub EnumServiceGroupW
 @ stdcall EnumServicesStatusA (long long long ptr long ptr ptr ptr)
 @ stdcall EnumServicesStatusW (long long long ptr long ptr ptr ptr)
 @ stdcall EqualPrefixSid(ptr ptr)
@@ -154,6 +161,8 @@
 @ stdcall GetTrusteeTypeW(ptr) 
 @ stdcall GetUserNameA(ptr ptr)
 @ stdcall GetUserNameW(ptr ptr)
+@ stub I_ScSetServiceBit
+@ stub I_ScSetServiceBitsA
 @ stdcall ImpersonateLoggedOnUser(long)
 @ stdcall ImpersonateNamedPipeClient(long)
 @ stdcall ImpersonateSelf(long)
@@ -161,9 +170,9 @@
 @ stdcall InitializeSecurityDescriptor(ptr long)
 @ stdcall InitializeSid(ptr ptr long)
 @ stdcall InitiateSystemShutdownA(str str long long long)
-@ stdcall InitiateSystemShutdownW(str str long long long)
 @ stdcall InitiateSystemShutdownExA(str str long long long long)
 @ stdcall InitiateSystemShutdownExW(wstr wstr long long long long)
+@ stdcall InitiateSystemShutdownW(str str long long long)
 @ stub InstallApplication
 @ stub IsProcessRestricted
 @ stdcall IsTextUnicode(ptr long ptr)
@@ -184,15 +193,47 @@
 @ stdcall LookupPrivilegeNameW(wstr ptr ptr long)
 @ stdcall LookupPrivilegeValueA(ptr ptr ptr)
 @ stdcall LookupPrivilegeValueW(ptr ptr ptr)
-@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
-@ stdcall MakeSelfRelativeSD(ptr ptr ptr)
-@ stdcall MapGenericMask(ptr ptr)
+@ stub LsaAddPrivilegesToAccount
+@ stdcall LsaClose(ptr)
+@ stub LsaCreateAccount
+@ stub LsaCreateSecret
+@ stub LsaCreateTrustedDomain
+@ stub LsaDelete
+@ stub LsaEnumerateAccounts
+@ stub LsaEnumeratePrivileges
+@ stub LsaEnumeratePrivilegesOfAccount
+@ stdcall LsaEnumerateTrustedDomains(long ptr ptr long ptr)
+@ stdcall LsaFreeMemory(ptr)
+@ stub LsaGetSystemAccessAccount
+@ stub LsaICLookupNames
+@ stub LsaICLookupSids
+@ stdcall LsaLookupNames(long long ptr ptr ptr)
+@ stub LsaLookupPrivilegeDisplayName
+@ stdcall LsaLookupSids(ptr long ptr ptr ptr)
+@ stdcall LsaNtStatusToWinError(long)
+@ stub LsaOpenAccount
+@ stdcall LsaOpenPolicy(long long long long)
+@ stub LsaOpenSecret
+@ stub LsaOpenTrustedDomain
+@ stub LsaQueryInfoTrustedDomain
+@ stdcall LsaQueryInformationPolicy(ptr long ptr)
+@ stub LsaQuerySecret
+@ stub LsaRemovePrivilegesFromAccount
+@ stdcall LsaRetrievePrivateData(ptr ptr ptr)
+@ stdcall LsaSetInformationPolicy(long long ptr)
+@ stub LsaSetInformationTrustedDomain
+@ stub LsaSetSecret
+@ stub LsaSetSystemAccessAccount
+@ stdcall LsaStorePrivateData(ptr ptr ptr)
 @ stdcall MD4Final(ptr)
 @ stdcall MD4Init(ptr)
 @ stdcall MD4Update(ptr ptr long)
 @ stdcall MD5Final(ptr)
 @ stdcall MD5Init(ptr)
 @ stdcall MD5Update(ptr ptr long)
+@ stdcall MakeAbsoluteSD(ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr ptr)
+@ stdcall MakeSelfRelativeSD(ptr ptr ptr)
+@ stdcall MapGenericMask(ptr ptr)
 @ stdcall NotifyBootConfigStatus(long)
 @ stdcall NotifyChangeEventLog (long long)
 @ stdcall ObjectCloseAuditAlarmA(str ptr long)
@@ -221,6 +262,7 @@
 @ stdcall QueryServiceObjectSecurity(long long ptr long ptr)
 @ stdcall QueryServiceStatus(long ptr)
 @ stdcall QueryServiceStatusEx (long long ptr long ptr)
+@ stdcall QueryWindows31FilesMigration(long)
 @ stdcall ReadEventLogA (long long long ptr long ptr ptr)
 @ stdcall ReadEventLogW (long long long ptr long ptr ptr)
 @ stdcall RegCloseKey(long)
@@ -306,14 +348,7 @@
 @ stdcall StartServiceCtrlDispatcherA(ptr)
 @ stdcall StartServiceCtrlDispatcherW(ptr)
 @ stdcall StartServiceW(long long ptr)
-@ stdcall UnlockServiceDatabase (ptr)
-@ stdcall LsaOpenPolicy(long long long long)
-@ stdcall LsaLookupSids(ptr long ptr ptr ptr)
-@ stdcall LsaFreeMemory(ptr)
-@ stdcall LsaQueryInformationPolicy(ptr long ptr)
-@ stdcall LsaClose(ptr)
-@ stdcall LsaSetInformationPolicy(long long ptr)
-@ stdcall LsaLookupNames(long long ptr ptr ptr)
+@ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
 @ stub SystemFunction001
 @ stub SystemFunction002
 @ stub SystemFunction003
@@ -356,45 +391,10 @@
 @ stub TraceEventInstance
 @ stub TraceMessage
 @ stub TraceMessageVa
+@ stdcall UnlockServiceDatabase (ptr)
 @ stub UnregisterTraceGuids
 @ stub UpdateTraceA
 @ stub UpdateTraceW
-@ stub LsaQueryInfoTrustedDomain
-@ stub LsaQuerySecret
-@ stub LsaCreateSecret
-@ stub LsaOpenSecret
-@ stub LsaCreateTrustedDomain
-@ stub LsaOpenTrustedDomain
-@ stub LsaSetSecret
-@ stub LsaCreateAccount
-@ stub LsaAddPrivilegesToAccount
-@ stub LsaRemovePrivilegesFromAccount
-@ stub LsaDelete
-@ stub LsaSetSystemAccessAccount
-@ stub LsaEnumeratePrivilegesOfAccount
-@ stub LsaEnumerateAccounts
-@ stub LsaGetSystemAccessAccount
-@ stub LsaSetInformationTrustedDomain
-@ stdcall LsaEnumerateTrustedDomains(long ptr ptr long ptr)
-@ stdcall LsaNtStatusToWinError(long)
-@ stub LsaOpenAccount
-@ stub LsaEnumeratePrivileges
-@ stub LsaLookupPrivilegeDisplayName
-@ stub LsaICLookupNames
-@ stdcall LsaRetrievePrivateData(ptr ptr ptr)
-@ stdcall LsaStorePrivateData(ptr ptr ptr)
-@ stub ElfRegisterEventSourceW
-@ stub ElfReportEventW
-@ stub ElfDeregisterEventSource
-@ stub ElfDeregisterEventSourceW
-@ stub I_ScSetServiceBit
-@ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
-@ stdcall QueryWindows31FilesMigration(long)
-@ stub LsaICLookupSids
-@ stub I_ScSetServiceBitsA
-@ stub EnumServiceGroupA
-@ stub EnumServiceGroupW
-@ stdcall CheckTokenMembership(long ptr ptr)
 @ stub WdmWmiServiceMain
 @ stub WmiCloseBlock
 @ stub WmiOpenBlock

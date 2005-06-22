@@ -265,8 +265,8 @@
 @ cdecl _fpieee_flt(long ptr ptr) msvcrt._fpieee_flt
 @ cdecl _fpreset() msvcrt._fpreset
 @ cdecl _fputchar(long) msvcrt._fputchar
-@ cdecl _free_dbg(ptr) msvcrt.free
 @ cdecl _fputwchar(long) msvcrt._fputwchar
+@ cdecl _free_dbg(ptr) msvcrt.free
 @ cdecl _fsopen(str str long) msvcrt._fsopen
 @ cdecl _fstat(long ptr) msvcrt._fstat
 @ cdecl _fstati64(long ptr) msvcrt._fstati64

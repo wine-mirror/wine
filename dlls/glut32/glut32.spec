@@ -1,3 +1,6 @@
+@ stdcall __glutCreateMenuWithExit(ptr ptr) wine___glutCreateMenuWithExit
+@ stdcall __glutCreateWindowWithExit(ptr ptr) wine___glutCreateWindowWithExit
+@ stdcall __glutInitWithExit(ptr ptr ptr) wine___glutInitWithExit
 @ stdcall glutAddMenuEntry(ptr long) wine_glutAddMenuEntry
 @ stdcall glutAddSubMenu(ptr long) wine_glutAddSubMenu
 @ stdcall glutAttachMenu(long) wine_glutAttachMenu
@@ -9,10 +12,8 @@
 @ stdcall glutChangeToSubMenu(long ptr long) wine_glutChangeToSubMenu
 @ stdcall glutCopyColormap(long) wine_glutCopyColormap
 @ stdcall glutCreateMenu(ptr) wine_glutCreateMenu
-@ stdcall __glutCreateMenuWithExit(ptr ptr) wine___glutCreateMenuWithExit
 @ stdcall glutCreateSubWindow(long long long long long) wine_glutCreateSubWindow
 @ stdcall glutCreateWindow(ptr) wine_glutCreateWindow
-@ stdcall __glutCreateWindowWithExit(ptr ptr) wine___glutCreateWindowWithExit
 @ stdcall glutDestroyMenu(long) wine_glutDestroyMenu
 @ stdcall glutDestroyWindow(long) wine_glutDestroyWindow
 @ stdcall glutDetachMenu(long) wine_glutDetachMenu
@@ -27,8 +28,8 @@
 @ stdcall glutFullScreen() wine_glutFullScreen
 @ stdcall glutGameModeGet(long) wine_glutGameModeGet
 @ stdcall glutGameModeString(ptr) wine_glutGameModeString
-@ stdcall glutGetColor(long long) wine_glutGetColor
 @ stdcall glutGet(long) wine_glutGet
+@ stdcall glutGetColor(long long) wine_glutGetColor
 @ stdcall glutGetMenu() wine_glutGetMenu
 @ stdcall glutGetModifiers() wine_glutGetModifiers
 @ stdcall glutGetWindow() wine_glutGetWindow
@@ -37,12 +38,11 @@
 @ stdcall glutIconifyWindow() wine_glutIconifyWindow
 @ stdcall glutIdleFunc(ptr) wine_glutIdleFunc
 @ stdcall glutIgnoreKeyRepeat(long) wine_glutIgnoreKeyRepeat
+@ stdcall glutInit(ptr ptr) wine_glutInit
 @ stdcall glutInitDisplayMode(long) wine_glutInitDisplayMode
 @ stdcall glutInitDisplayString(ptr) wine_glutInitDisplayString
-@ stdcall glutInit(ptr ptr) wine_glutInit
 @ stdcall glutInitWindowPosition(long long) wine_glutInitWindowPosition
 @ stdcall glutInitWindowSize(long long) wine_glutInitWindowSize
-@ stdcall __glutInitWithExit(ptr ptr ptr) wine___glutInitWithExit
 @ stdcall glutJoystickFunc(ptr long) wine_glutJoystickFunc
 @ stdcall glutKeyboardFunc(ptr) wine_glutKeyboardFunc
 @ stdcall glutKeyboardUpFunc(ptr) wine_glutKeyboardUpFunc
@@ -72,9 +72,9 @@
 @ stdcall glutSetIconTitle(ptr) wine_glutSetIconTitle
 @ stdcall glutSetKeyRepeat(long) wine_glutSetKeyRepeat
 @ stdcall glutSetMenu(long) wine_glutSetMenu
-@ stdcall glutSetupVideoResizing() wine_glutSetupVideoResizing
 @ stdcall glutSetWindow(long) wine_glutSetWindow
 @ stdcall glutSetWindowTitle(ptr) wine_glutSetWindowTitle
+@ stdcall glutSetupVideoResizing() wine_glutSetupVideoResizing
 @ stdcall glutShowOverlay() wine_glutShowOverlay
 @ stdcall glutShowWindow() wine_glutShowWindow
 @ stdcall glutSolidCone(double double long long) wine_glutSolidCone
@@ -101,8 +101,8 @@
 @ stdcall glutTimerFunc(long ptr long) wine_glutTimerFunc
 @ stdcall glutUseLayer(long) wine_glutUseLayer
 @ stdcall glutVideoPan(long long long long) wine_glutVideoPan
-@ stdcall glutVideoResizeGet(long) wine_glutVideoResizeGet
 @ stdcall glutVideoResize(long long long long) wine_glutVideoResize
+@ stdcall glutVideoResizeGet(long) wine_glutVideoResizeGet
 @ stdcall glutVisibilityFunc(ptr) wine_glutVisibilityFunc
 @ stdcall glutWarpPointer(long long) wine_glutWarpPointer
 @ stdcall glutWindowStatusFunc(ptr) wine_glutWindowStatusFunc

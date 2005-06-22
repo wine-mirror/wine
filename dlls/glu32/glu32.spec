@@ -4,6 +4,7 @@
 @ stdcall gluBeginTrim(ptr) wine_gluBeginTrim
 @ stdcall gluBuild1DMipmaps(long long long long long ptr) wine_gluBuild1DMipmaps
 @ stdcall gluBuild2DMipmaps(long long long long long long ptr) wine_gluBuild2DMipmaps
+@ stdcall gluCheckExtension(str ptr) wine_gluCheckExtension
 @ stdcall gluCylinder(ptr double double double long long) wine_gluCylinder
 @ stdcall gluDeleteNurbsRenderer(ptr) wine_gluDeleteNurbsRenderer
 @ stdcall gluDeleteQuadric(ptr) wine_gluDeleteQuadric
@@ -50,4 +51,3 @@
 @ stdcall gluTessProperty(ptr long double) wine_gluTessProperty
 @ stdcall gluTessVertex(ptr ptr ptr) wine_gluTessVertex
 @ stdcall gluUnProject(double double double ptr ptr ptr ptr ptr ptr) wine_gluUnProject
-@ stdcall gluCheckExtension(str ptr) wine_gluCheckExtension

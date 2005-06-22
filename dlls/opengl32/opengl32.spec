@@ -1,29 +1,3 @@
-@  stdcall wglCreateContext(long)
-@  stdcall wglCreateLayerContext(long long)
-@  stdcall wglCopyContext(long long long)
-@  stdcall wglDeleteContext(long)
-@  stdcall wglDescribeLayerPlane(long long long long ptr)
-@  stdcall wglGetCurrentContext()
-@  stdcall wglGetCurrentDC()
-@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
-@  stdcall wglGetProcAddress(str)
-@  stdcall wglMakeCurrent(long long)
-@  stdcall wglRealizeLayerPalette(long long long)
-@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
-@  stdcall wglShareLists(long long)
-@  stdcall wglSwapLayerBuffers(long long)
-@  stdcall wglUseFontBitmapsA(long long long long)
-@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
-@  stub    glGetLevelParameterfv
-@  stub    glGetLevelParameteriv
-@  stdcall wglUseFontBitmapsW(long long long long)
-@  stub    wglUseFontOutlinesW
-@  stub    wglGetDefaultProcAddress
-@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
-@  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
-@  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
-@  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
-@  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
 @  stdcall glAccum( long long ) wine_glAccum
 @  stdcall glAlphaFunc( long long ) wine_glAlphaFunc
 @  stdcall glAreTexturesResident( long ptr ptr ) wine_glAreTexturesResident
@@ -156,6 +130,8 @@
 @  stdcall glGetHistogramParameterfv( long long ptr ) wine_glGetHistogramParameterfv
 @  stdcall glGetHistogramParameteriv( long long ptr ) wine_glGetHistogramParameteriv
 @  stdcall glGetIntegerv( long ptr ) wine_glGetIntegerv
+@  stub    glGetLevelParameterfv
+@  stub    glGetLevelParameteriv
 @  stdcall glGetLightfv( long long ptr ) wine_glGetLightfv
 @  stdcall glGetLightiv( long long ptr ) wine_glGetLightiv
 @  stdcall glGetMapdv( long long ptr ) wine_glGetMapdv
@@ -398,3 +374,27 @@
 @  stdcall glVertex4sv( ptr ) wine_glVertex4sv
 @  stdcall glVertexPointer( long long long ptr ) wine_glVertexPointer
 @  stdcall glViewport( long long long long ) wine_glViewport
+@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
+@  stdcall wglCopyContext(long long long)
+@  stdcall wglCreateContext(long)
+@  stdcall wglCreateLayerContext(long long)
+@  stdcall wglDeleteContext(long)
+@  stdcall wglDescribeLayerPlane(long long long long ptr)
+@  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
+@  stdcall wglGetCurrentContext()
+@  stdcall wglGetCurrentDC()
+@  stub    wglGetDefaultProcAddress
+@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
+@  stdcall wglGetProcAddress(str)
+@  stdcall wglMakeCurrent(long long)
+@  stdcall wglRealizeLayerPalette(long long long)
+@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
+@  stdcall wglShareLists(long long)
+@  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
+@  stdcall wglSwapLayerBuffers(long long)
+@  stdcall wglUseFontBitmapsA(long long long long)
+@  stdcall wglUseFontBitmapsW(long long long long)
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
+@  stub    wglUseFontOutlinesW

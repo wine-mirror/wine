@@ -19,9 +19,9 @@
 @ stdcall AddPrinterConnectionA(str)
 @ stdcall AddPrinterConnectionW(wstr)
 @ stdcall AddPrinterDriverA(str long ptr)
-@ stdcall AddPrinterDriverW(wstr long ptr)
 @ stdcall AddPrinterDriverExA(str long ptr long)
 @ stdcall AddPrinterDriverExW(wstr long ptr long)
+@ stdcall AddPrinterDriverW(wstr long ptr)
 @ stdcall AddPrinterW(wstr long ptr)
 @ stdcall AdvancedDocumentPropertiesA(long long str ptr ptr)
 @ stdcall AdvancedDocumentPropertiesW(long long wstr ptr ptr)
@@ -49,9 +49,9 @@
 @ stdcall DeletePrinterDataExA(long str str)
 @ stdcall DeletePrinterDataExW(long wstr wstr)
 @ stdcall DeletePrinterDriverA(str str str)
-@ stdcall DeletePrinterDriverW(wstr wstr wstr)
 @ stdcall DeletePrinterDriverExA(str str str long long)
 @ stdcall DeletePrinterDriverExW(wstr wstr wstr long long)
+@ stdcall DeletePrinterDriverW(wstr wstr wstr)
 @ stub DeletePrinterIC
 @ stub DevQueryPrint
 @ stdcall DeviceCapabilities(str str long ptr ptr) DeviceCapabilitiesA

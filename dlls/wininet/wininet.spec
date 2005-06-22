@@ -16,8 +16,6 @@
 122 stub -noname FreeP3PObject
 123 stub -noname GetP3PRequestStatus
 
-@ stdcall InternetInitializeAutoProxyDll(long)
-@ stub ShowCertificate
 @ stdcall CommitUrlCacheEntryA(str str long long long long long str long str str)
 @ stdcall CommitUrlCacheEntryW(wstr wstr long long long long long wstr long wstr wstr)
 @ stdcall CreateMD5SSOHash(wstr wstr wstr ptr)
@@ -163,12 +161,13 @@
 @ stdcall InternetGoOnlineA(str long long)
 @ stdcall InternetGoOnlineW(wstr long long)
 @ stdcall InternetHangUp(long long)
+@ stdcall InternetInitializeAutoProxyDll(long)
 @ stdcall InternetLockRequestFile(ptr ptr)
 @ stdcall InternetOpenA(str long str str long)
 @ stub InternetOpenServerPushParse
-@ stdcall InternetOpenW(wstr long wstr wstr long)
 @ stdcall InternetOpenUrlA(ptr str str long long long)
 @ stdcall InternetOpenUrlW(ptr wstr wstr long long long)
+@ stdcall InternetOpenW(wstr long wstr wstr long)
 @ stdcall InternetQueryDataAvailable(ptr ptr long long)
 @ stub InternetQueryFortezzaStatus
 @ stdcall InternetQueryOptionA(ptr long ptr ptr)
@@ -234,6 +233,7 @@
 @ stdcall SetUrlCacheGroupAttributeA(double long long ptr ptr)
 @ stdcall SetUrlCacheGroupAttributeW(double long long ptr ptr)
 @ stub SetUrlCacheHeaderData
+@ stub ShowCertificate
 @ stub ShowClientAuthCerts
 @ stub ShowSecurityInfo
 @ stub ShowX509EncodedCertificate

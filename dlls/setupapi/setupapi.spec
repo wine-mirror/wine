@@ -325,15 +325,15 @@
 @ stub SetupDiGetDeviceInstallParamsW
 @ stub SetupDiGetDeviceInstanceIdA
 @ stub SetupDiGetDeviceInstanceIdW
+@ stub SetupDiGetDeviceInterfaceAlias
+@ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
+@ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)
 @ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr)
 @ stub SetupDiGetDeviceRegistryPropertyW
 @ stub SetupDiGetDriverInfoDetailA
 @ stub SetupDiGetDriverInfoDetailW
 @ stub SetupDiGetDriverInstallParamsA
 @ stub SetupDiGetDriverInstallParamsW
-@ stub SetupDiGetDeviceInterfaceAlias
-@ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
-@ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)
 @ stub SetupDiGetHwProfileFriendlyNameA
 @ stub SetupDiGetHwProfileFriendlyNameExA
 @ stub SetupDiGetHwProfileFriendlyNameExW
@@ -383,6 +383,8 @@
 @ stub SetupDiUnremoveDevice
 @ stub SetupDuplicateDiskSpaceListA
 @ stub SetupDuplicateDiskSpaceListW
+@ stub SetupFileQueueAlternatePlatformA
+@ stub SetupFileQueueAlternatePlatformW
 @ stdcall SetupFindFirstLineA(long str str ptr)
 @ stdcall SetupFindFirstLineW(long wstr wstr ptr)
 @ stdcall SetupFindNextLine(ptr ptr)
@@ -502,8 +504,6 @@
 @ stub SetupSetDirectoryIdExA
 @ stub SetupSetDirectoryIdExW
 @ stdcall SetupSetDirectoryIdW(long long wstr)
-@ stub SetupFileQueueAlternatePlatformA
-@ stub SetupFileQueueAlternatePlatformW
 @ stdcall SetupSetFileQueueFlags(long long long)
 @ stub SetupSetPlatformPathOverrideA
 @ stub SetupSetPlatformPathOverrideW

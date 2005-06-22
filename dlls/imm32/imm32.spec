@@ -25,9 +25,9 @@
 @ stdcall ImmGetCandidateWindow(long long ptr)
 @ stdcall ImmGetCompositionFontA(long ptr)
 @ stdcall ImmGetCompositionFontW(long ptr)
+@ stdcall ImmGetCompositionString (long long ptr long) ImmGetCompositionStringA
 @ stdcall ImmGetCompositionStringA (long long ptr long)
 @ stdcall ImmGetCompositionStringW (long long ptr long)
-@ stdcall ImmGetCompositionString (long long ptr long) ImmGetCompositionStringA
 @ stdcall ImmGetCompositionWindow(long ptr)
 @ stdcall ImmGetContext(long)
 @ stdcall ImmGetConversionListA(long long str ptr long long)

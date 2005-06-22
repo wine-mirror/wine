@@ -46,12 +46,12 @@
 @ stub CertGetCRLContextProperty
 @ stub CertGetCRLFromStore
 @ stub CertGetCTLContextProperty
+@ stub CertGetCertificateChain
 @ stub CertGetCertificateContextProperty
 @ stub CertGetEnhancedKeyUsage
 @ stub CertGetIntendedKeyUsage
 @ stub CertGetIssuerCertificateFromStore
 @ stub CertGetPublicKeyLength
-@ stub CertGetCertificateChain
 @ stub CertGetSubjectCertificateFromStore
 @ stub CertIsRDNAttrsInCertificateName
 @ stub CertNameToStrA

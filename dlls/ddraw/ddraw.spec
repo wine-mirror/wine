@@ -7,9 +7,9 @@
 @ stdcall DirectDrawCreateClipper(long ptr ptr)
 @ stdcall DirectDrawCreateEx(ptr ptr ptr ptr)
 @ stdcall DirectDrawEnumerateA(ptr ptr)
-@ stdcall DirectDrawEnumerateW(ptr ptr)
 @ stdcall DirectDrawEnumerateExA(ptr ptr long)
 @ stdcall DirectDrawEnumerateExW(ptr ptr long)
+@ stdcall DirectDrawEnumerateW(ptr ptr)
 @ stdcall -private DllCanUnloadNow() DDRAW_DllCanUnloadNow
 @ stdcall -private DllGetClassObject(ptr ptr ptr) DDRAW_DllGetClassObject
 @ stdcall -private DllRegisterServer() DDRAW_DllRegisterServer

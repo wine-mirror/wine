@@ -5,11 +5,10 @@
 @ stdcall CryptCATAdminCalcHashFromFileHandle(long ptr ptr long)
 @ stub CryptCATAdminEnumCatalogFromHash
 @ stub CryptCATAdminPauseServiceForBackup
-@ stdcall CryptCATAdminReleaseContext(long long)
 @ stub CryptCATAdminReleaseCatalogContext
+@ stdcall CryptCATAdminReleaseContext(long long)
 @ stub CryptCATAdminRemoveCatalog
 @ stub CryptCATAdminResolveCatalogPath
-@ stub CryptCATCatalogInfoFromContext
 @ stub CryptCATCDFClose
 @ stub CryptCATCDFEnumAttributes
 @ stub CryptCATCDFEnumAttributesWithCDFTag
@@ -18,6 +17,7 @@
 @ stub CryptCATCDFEnumMembersByCDFTag
 @ stub CryptCATCDFEnumMembersByCDFTagEx
 @ stub CryptCATCDFOpen
+@ stub CryptCATCatalogInfoFromContext
 @ stub CryptCATClose
 @ stub CryptCATEnumerateAttr
 @ stub CryptCATEnumerateCatAttr
