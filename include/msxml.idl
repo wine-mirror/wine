@@ -51,7 +51,8 @@ interface IXMLElementCollection : IDispatch
 
 [
 local,
-object
+object,
+uuid(3f7f31ac-e15f-11d0-9c25-00c04fc99c8e)
 ]
 interface IXMLElement : IDispatch
 {
@@ -103,7 +104,8 @@ interface IXMLElement : IDispatch
 
 [
 local,
-object
+object,
+uuid(f52e2b61-18a1-11d1-b105-00805f49916b)
 ]
 interface IXMLDocument : IDispatch
 {
@@ -152,3 +154,42 @@ interface IXMLDocument : IDispatch
             [optional, in] VARIANT var1,
             [retval, out] IXMLElement **ppElem );
 };
+
+typedef enum tagXMLEMEM_TYPE {
+	XMLELEMTYPE_ELEMENT	= 0,
+	XMLELEMTYPE_TEXT 	= 1,
+	XMLELEMTYPE_COMMENT	= 2,
+	XMLELEMTYPE_DOCUMENT	= 3,
+	XMLELEMTYPE_DTD		= 4,
+	XMLELEMTYPE_PI		= 5,
+	XMLELEMTYPE_OTHER	= 6
+} XMLELEM_TYPE;
+
+typedef struct _xml_error {
+	UINT _nLine;
+	BSTR _pchBuf;
+	BSTR _cchBuf;
+	UINT _ich;
+	BSTR _pszFound;
+	BSTR _pszExpected;
+	DWORD _reserved1;
+	DWORD _reserved2;
+} XML_ERROR;
+
+[
+local,
+object,
+uuid(948c5ad3-c58d-11d0-9c0b-00c04fc99c8e)
+]
+interface IXMLError : IUnknown
+{
+    HRESULT GetErrorInfo([out]XML_ERROR *pErrorReturn);
+}
+
+[
+uuid(cfc399af-d876-11d0-9c10-00c04fc99c8e)
+]
+coclass XMLDocument
+{
+    [default] interface IXMLDocument;
+}
