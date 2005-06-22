@@ -2704,6 +2704,91 @@ static BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType,
     return TRUE;
 }
 
+static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE* package = (MSIPACKAGE*)param;
+    LPCWSTR component;
+    INT index;
+    typelib_struct tl_struct;
+    HMODULE module;
+    static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
+
+    component = MSI_RecordGetString(row,3);
+    index = get_loaded_component(package,component);
+    if (index < 0)
+        return ERROR_SUCCESS;
+
+    if (!ACTION_VerifyComponentForAction(package, index, INSTALLSTATE_LOCAL))
+    {
+        TRACE("Skipping typelib reg due to disabled component\n");
+
+        package->components[index].Action =
+            package->components[index].Installed;
+
+        return ERROR_SUCCESS;
+    }
+
+    package->components[index].Action = INSTALLSTATE_LOCAL;
+
+    index = get_loaded_file(package,package->components[index].KeyPath); 
+
+    if (index < 0)
+        return ERROR_SUCCESS;
+
+    module = LoadLibraryExW(package->files[index].TargetPath, NULL,
+                    LOAD_LIBRARY_AS_DATAFILE);
+    if (module != NULL)
+    {
+        LPWSTR guid;
+        guid = load_dynamic_stringW(row,1);
+        CLSIDFromString(guid, &tl_struct.clsid);
+        HeapFree(GetProcessHeap(),0,guid);
+        tl_struct.source = strdupW(package->files[index].TargetPath);
+        tl_struct.path = NULL;
+
+        EnumResourceNamesW(module, szTYPELIB, Typelib_EnumResNameProc,
+                        (LONG_PTR)&tl_struct);
+
+        if (tl_struct.path != NULL)
+        {
+            LPWSTR help = NULL;
+            LPCWSTR helpid;
+            HRESULT res;
+
+            helpid = MSI_RecordGetString(row,6);
+
+            if (helpid)
+                help = resolve_folder(package,helpid,FALSE,FALSE,NULL);
+            res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
+            HeapFree(GetProcessHeap(),0,help);
+
+            if (!SUCCEEDED(res))
+                ERR("Failed to register type library %s\n",
+                        debugstr_w(tl_struct.path));
+            else
+            {
+                ui_actiondata(package,szRegisterTypeLibraries,row);
+
+                TRACE("Registered %s\n", debugstr_w(tl_struct.path));
+            }
+
+            ITypeLib_Release(tl_struct.ptLib);
+            HeapFree(GetProcessHeap(),0,tl_struct.path);
+        }
+        else
+            ERR("Failed to load type library %s\n",
+                    debugstr_w(tl_struct.source));
+
+        FreeLibrary(module);
+        HeapFree(GetProcessHeap(),0,tl_struct.source);
+    }
+    else
+        ERR("Could not load file! %s\n",
+                debugstr_w(package->files[index].TargetPath));
+
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
 {
     /* 
@@ -2714,7 +2799,6 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
      */
     UINT rc;
     MSIQUERY * view;
-    MSIRECORD * row = 0;
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','T','y','p','e','L','i','b','`',0};
@@ -2726,112 +2810,7 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    while (1)
-    {   
-        LPCWSTR component;
-        INT index;
-        typelib_struct tl_struct;
-        HMODULE module;
-        static const WCHAR szTYPELIB[] = {'T','Y','P','E','L','I','B',0};
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        component = MSI_RecordGetString(row,3);
-        index = get_loaded_component(package,component);
-        if (index < 0)
-        {
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        if (!ACTION_VerifyComponentForAction(package, index,
-                                INSTALLSTATE_LOCAL))
-        {
-            TRACE("Skipping typelib reg due to disabled component\n");
-            msiobj_release(&row->hdr);
-
-            package->components[index].Action =
-                package->components[index].Installed;
-
-            continue;
-        }
-
-        package->components[index].Action = INSTALLSTATE_LOCAL;
-
-        index = get_loaded_file(package,package->components[index].KeyPath); 
-   
-        if (index < 0)
-        {
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        module = LoadLibraryExW(package->files[index].TargetPath, NULL,
-                        LOAD_LIBRARY_AS_DATAFILE);
-        if (module != NULL)
-        {
-            LPWSTR guid;
-            guid = load_dynamic_stringW(row,1);
-            CLSIDFromString(guid, &tl_struct.clsid);
-            HeapFree(GetProcessHeap(),0,guid);
-            tl_struct.source = strdupW(package->files[index].TargetPath);
-            tl_struct.path = NULL;
-
-            EnumResourceNamesW(module, szTYPELIB, Typelib_EnumResNameProc, 
-                               (LONG_PTR)&tl_struct);
-
-            if (tl_struct.path != NULL)
-            {
-                LPWSTR help = NULL;
-                LPCWSTR helpid;
-                HRESULT res;
-
-                helpid = MSI_RecordGetString(row,6);
-    
-                if (helpid)
-                    help = resolve_folder(package,helpid,FALSE,FALSE,NULL);
-                res = RegisterTypeLib(tl_struct.ptLib,tl_struct.path,help);
-                HeapFree(GetProcessHeap(),0,help);
-
-                if (!SUCCEEDED(res))
-                    ERR("Failed to register type library %s\n", 
-                            debugstr_w(tl_struct.path));
-                else
-                {
-                    ui_actiondata(package,szRegisterTypeLibraries,row);
-                
-                    TRACE("Registered %s\n", debugstr_w(tl_struct.path));
-                }
-
-                ITypeLib_Release(tl_struct.ptLib);
-                HeapFree(GetProcessHeap(),0,tl_struct.path);
-            }
-            else
-                ERR("Failed to load type library %s\n", 
-                    debugstr_w(tl_struct.source));
-       
-            FreeLibrary(module);
-            HeapFree(GetProcessHeap(),0,tl_struct.source);
-        }
-        else
-            ERR("Could not load file! %s\n",
-                    debugstr_w(package->files[index].TargetPath));
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_RegisterTypeLibraries, package);
     msiobj_release(&view->hdr);
     return rc;
 }
