@@ -445,26 +445,15 @@ static void test_mf_PatternBrush(void)
 
 static INT CALLBACK EmfMmTextEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
 {
-    POINT mapping[2] = { { 0, 0 }, { 1000, 1000 } };
+    POINT mapping[2] = { { 0, 0 }, { 10, 10 } };
     LPtoDP(hdc, mapping, 2);
     trace("Meta record: iType = %ld, (%ld,%ld)-(%ld,%ld)\n", lpEMFR->iType, mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
     if (lpEMFR->iType == EMR_LINETO)
     {
-        FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
-        INT xframe = LINE_X * (float)GetDeviceCaps(hdc, HORZSIZE) * 100.0f / (float)GetDeviceCaps(hdc, HORZRES);
-        INT yframe = LINE_Y * (float)GetDeviceCaps(hdc, VERTSIZE) * 100.0f / (float)GetDeviceCaps(hdc, VERTRES);
         INT x0 = 0;
         INT y0 = 0;
-        INT x1;
-        INT y1;
-        xSrcPixSize = (FLOAT) GetDeviceCaps(hdc, HORZSIZE) / GetDeviceCaps(hdc, HORZRES);
-        ySrcPixSize = (FLOAT) GetDeviceCaps(hdc, VERTSIZE) / GetDeviceCaps(hdc, VERTRES);
-        xscale = (FLOAT) 1000 * 100.0 /
-                 xframe * xSrcPixSize;
-        yscale = (FLOAT) 1000 * 100.0 /
-                 yframe * ySrcPixSize;
-        x1 = (INT)floor(xscale * 100.0 + 0.5f);
-        y1 = (INT)floor(yscale * 100.0 + 0.5f);
+        INT x1 = (INT)floor(10 * 100.0 / LINE_X + 0.5);
+        INT y1 = (INT)floor(10 * 100.0 / LINE_Y + 0.5);
         ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
             "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
             mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
@@ -476,15 +465,15 @@ static INT CALLBACK EmfMmTextEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHM
 
 static INT CALLBACK EmfMmAnisotropicEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
 {
-    POINT mapping[2] = { { 0, 0 }, { 1000, 1000 } };
+    POINT mapping[2] = { { 0, 0 }, { 10, 10 } };
     LPtoDP(hdc, mapping, 2);
     trace("Meta record: iType = %ld, (%ld,%ld)-(%ld,%ld)\n", lpEMFR->iType, mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
     if (lpEMFR->iType == EMR_LINETO)
     {
         INT x0 = MulDiv(0, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
         INT y0 = MulDiv(0, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
-        INT x1 = MulDiv(1000, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
-        INT y1 = MulDiv(1000, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
+        INT x1 = MulDiv(10, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
+        INT y1 = MulDiv(10, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
         ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
             "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
             mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
