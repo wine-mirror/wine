@@ -448,6 +448,15 @@ static void test_AccessCheck(void)
     PRIVILEGE_SET *PrivSet;
     BOOL res;
 
+    Acl = HeapAlloc(GetProcessHeap(), 0, 256);
+    res = InitializeAcl(Acl, 256, ACL_REVISION);
+    if(!res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        trace("ACLs not implemented - skipping tests\n");
+        return;
+    }
+    ok(res, "InitializeAcl failed with error %ld\n", GetLastError());
+
     res = AllocateAndInitializeSid( &SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &EveryoneSid);
     ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
 
@@ -458,10 +467,6 @@ static void test_AccessCheck(void)
     res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
         DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &UsersSid);
     ok(res, "AllocateAndInitializeSid failed with error %ld\n", GetLastError());
-
-    Acl = HeapAlloc(GetProcessHeap(), 0, 256);
-    res = InitializeAcl(Acl, 256, ACL_REVISION);
-    ok(res, "InitializeAcl failed with error %ld\n", GetLastError());
 
     res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, EveryoneSid);
     ok(res, "AddAccessAllowedAceEx failed with error %ld\n", GetLastError());
