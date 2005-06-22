@@ -3002,6 +3002,57 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
     return rc;
 }
 
+static UINT ITERATE_PublishProduct(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE* package = (MSIPACKAGE*)param;
+    HANDLE the_file;
+    LPWSTR FilePath=NULL;
+    LPCWSTR FileName=NULL;
+    CHAR buffer[1024];
+    DWORD sz;
+    UINT rc;
+
+    FileName = MSI_RecordGetString(row,1);
+    if (!FileName)
+    {
+        ERR("Unable to get FileName\n");
+        return ERROR_SUCCESS;
+    }
+
+    build_icon_path(package,FileName,&FilePath);
+
+    TRACE("Creating icon file at %s\n",debugstr_w(FilePath));
+
+    the_file = CreateFileW(FilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                        FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (the_file == INVALID_HANDLE_VALUE)
+    {
+        ERR("Unable to create file %s\n",debugstr_w(FilePath));
+        HeapFree(GetProcessHeap(),0,FilePath);
+        return ERROR_SUCCESS;
+    }
+
+    do 
+    {
+        DWORD write;
+        sz = 1024;
+        rc = MSI_RecordReadStream(row,2,buffer,&sz);
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Failed to get stream\n");
+            CloseHandle(the_file);  
+            DeleteFileW(FilePath);
+            break;
+        }
+        WriteFile(the_file,buffer,sz,&write,NULL);
+    } while (sz == 1024);
+
+    HeapFree(GetProcessHeap(),0,FilePath);
+
+    CloseHandle(the_file);
+    return ERROR_SUCCESS;
+}
 
 /*
  * 99% of the work done here is only done for 
@@ -3013,11 +3064,9 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 {
     UINT rc;
     MSIQUERY * view;
-    MSIRECORD * row = 0;
     static const WCHAR Query[]=
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','I','c','o','n','`',0};
-    DWORD sz;
     /* for registry stuff */
     LPWSTR productcode;
     HKEY hkey=0;
@@ -3046,80 +3095,17 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
+    /* write out icon files */
+
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
-    if (rc != ERROR_SUCCESS)
-        goto next;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
+    if (rc == ERROR_SUCCESS)
     {
-        MSI_ViewClose(view);
+        MSI_IterateRecords(view, NULL, ITERATE_PublishProduct, package);
         msiobj_release(&view->hdr);
-        goto next;
     }
 
-    while (1)
-    {
-        HANDLE the_file;
-        LPWSTR FilePath=NULL;
-        LPCWSTR FileName=NULL;
-        CHAR buffer[1024];
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-    
-        FileName = MSI_RecordGetString(row,1);
-        if (!FileName)
-        {
-            ERR("Unable to get FileName\n");
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        build_icon_path(package,FileName,&FilePath);
-
-        TRACE("Creating icon file at %s\n",debugstr_w(FilePath));
-        
-        the_file = CreateFileW(FilePath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                           FILE_ATTRIBUTE_NORMAL, NULL);
-
-        if (the_file == INVALID_HANDLE_VALUE)
-        {
-            ERR("Unable to create file %s\n",debugstr_w(FilePath));
-            msiobj_release(&row->hdr);
-            HeapFree(GetProcessHeap(),0,FilePath);
-            continue;
-        }
-
-        do 
-        {
-            DWORD write;
-            sz = 1024;
-            rc = MSI_RecordReadStream(row,2,buffer,&sz);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Failed to get stream\n");
-                CloseHandle(the_file);  
-                DeleteFileW(FilePath);
-                break;
-            }
-            WriteFile(the_file,buffer,sz,&write,NULL);
-        } while (sz == 1024);
-
-        HeapFree(GetProcessHeap(),0,FilePath);
-
-        CloseHandle(the_file);
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
-
-next:
     /* ok there is a lot more done here but i need to figure out what */
+
     productcode = load_dynamic_property(package,szProductCode,&rc);
     if (!productcode)
         return rc;
