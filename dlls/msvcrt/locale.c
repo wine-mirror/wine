@@ -490,9 +490,9 @@ const char* _Getmonths(void)
 }
 
 /*********************************************************************
- *		_Getnames (MSVCRT.@)
+ *		_Gettnames (MSVCRT.@)
  */
-const char* _Getnames(void)
+const char* _Gettnames(void)
 {
   /* FIXME: */
   TRACE("(void) stub\n");
@@ -593,13 +593,4 @@ struct MSVCRT_lconv *MSVCRT_localeconv(void) {
 void __lconv_init(void)
 {
   FIXME(" stub\n");
-}
-
-/*********************************************************************
- *		_Gettnames (MSVCRT.@)
- */
-void *_Gettnames(void)
-{
-  FIXME("(void), stub!\n");
-  return NULL;
 }

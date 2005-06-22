@@ -90,7 +90,7 @@
 @ cdecl -i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ cdecl _Getdays() msvcrt._Getdays
 @ cdecl _Getmonths() msvcrt._Getmonths
-@ cdecl _Getnames() msvcrt._Getnames
+@ cdecl _Gettnames() msvcrt._Gettnames
 @ extern _HUGE msvcrt._HUGE
 @ cdecl _Strftime(str long str ptr ptr) msvcrt._Strftime
 @ cdecl _XcptFilter(long ptr) msvcrt._XcptFilter
@@ -792,4 +792,3 @@
 @ cdecl wctomb(ptr long) msvcrt.wctomb
 @ varargs wprintf(wstr) msvcrt.wprintf
 @ varargs wscanf(wstr) msvcrt.wscanf
-@ cdecl _Gettnames() msvcrt._Gettnames

@@ -71,7 +71,7 @@
 @ cdecl -i386 -norelay _EH_prolog()
 @ cdecl _Getdays()
 @ cdecl _Getmonths()
-@ cdecl _Getnames()
+@ cdecl _Gettnames()
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
@@ -762,5 +762,4 @@
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
 @ varargs wscanf(wstr) MSVCRT_wscanf
-@ cdecl _Gettnames() _Gettnames
 # extern __lc_collate_cp
