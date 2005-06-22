@@ -173,25 +173,6 @@ inline static BOOL is_old_app( LB_DESCR *descr )
 
 
 /***********************************************************************
- *           LISTBOX_Dump
- */
-void LISTBOX_Dump( LB_DESCR *descr )
-{
-    INT i;
-    LB_ITEMDATA *item;
-
-    TRACE( "Listbox:\n" );
-    TRACE( "hwnd=%p descr=%08x items=%d top=%d\n",
-           descr->self, (UINT)descr, descr->nb_items, descr->top_item );
-    for (i = 0, item = descr->items; i < descr->nb_items; i++, item++)
-    {
-        TRACE( "%4d: %-40s %d %08lx %3d\n",
-               i, debugstr_w(item->str), item->selected, item->data, item->height );
-    }
-}
-
-
-/***********************************************************************
  *           LISTBOX_GetCurrentPageSize
  *
  * Return the current page size

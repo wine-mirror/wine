@@ -80,7 +80,7 @@ static BOOL bCBHasChanged = FALSE;
  * Set the global wineserver clipboard owner. The current process will
  * be the owner and <hWnd> will get the render notifications.
  */
-BOOL CLIPBOARD_SetClipboardOwner(HWND hWnd)
+static BOOL CLIPBOARD_SetClipboardOwner(HWND hWnd)
 {
     BOOL bRet = FALSE;
 

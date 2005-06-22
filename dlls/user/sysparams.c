@@ -399,93 +399,6 @@ static void SYSPARAMS_NonClientMetrics32WTo32A( const NONCLIENTMETRICSW* lpnm32W
     SYSPARAMS_LogFont32WTo32A( &lpnm32W->lfMessageFont,		&lpnm32A->lfMessageFont );
 }
 
-/***********************************************************************
- *           SYSPARAMS_Reset
- *
- * Sets the system parameter which should be always loaded to
- * current value stored in registry.
- * Invalidates lazy loaded parameter, so it will be loaded the next time
- * it is requested.
- *
- * Parameters:
- * uiAction - system parameter to reload value for.
- *      Note, only "SET" values can be used for this parameter.
- *      If uiAction is 0 all system parameters are reset.
- */
-void SYSPARAMS_Reset( UINT uiAction )
-{
-#define WINE_RELOAD_SPI(x) \
-    case x: \
-        spi_loaded[x##_IDX] = FALSE; \
-        SystemParametersInfoA( x, 0, dummy_buf, 0 );\
-        if (uiAction) \
-            break
-
-#define WINE_IGNORE_SPI(x) \
-    case x: \
-        if (uiAction) \
-            break
-
-#define WINE_INVALIDATE_SPI(x) \
-    case x: \
-        spi_loaded[x##_IDX] = FALSE; \
-        break
-
-    BOOL not_all_processed = TRUE;
-    char dummy_buf[10];
-
-    /* Execution falls through all the branches for uiAction == 0 */
-    switch (uiAction)
-    {
-    case 0:
-        memset( spi_loaded, 0, sizeof(spi_loaded) );
-
-    WINE_RELOAD_SPI(SPI_SETBORDER);
-    WINE_RELOAD_SPI(SPI_ICONHORIZONTALSPACING);
-    WINE_RELOAD_SPI(SPI_ICONVERTICALSPACING);
-    WINE_IGNORE_SPI(SPI_SETSCREENSAVEACTIVE);
-    WINE_RELOAD_SPI(SPI_SETDOUBLECLKWIDTH);
-    WINE_RELOAD_SPI(SPI_SETDOUBLECLKHEIGHT);
-    WINE_RELOAD_SPI(SPI_SETMOUSEBUTTONSWAP);
-    WINE_RELOAD_SPI(SPI_SETSHOWSOUNDS);
-    WINE_RELOAD_SPI(SPI_SETMENUDROPALIGNMENT);
-
-    default:
-        if (uiAction)
-        {
-            /* lazy loaded parameters */
-            switch (uiAction)
-            {
-            WINE_INVALIDATE_SPI(SPI_SETBEEP);
-            WINE_INVALIDATE_SPI(SPI_SETMOUSE);
-            WINE_INVALIDATE_SPI(SPI_SETKEYBOARDSPEED);
-            WINE_INVALIDATE_SPI(SPI_SETSCREENSAVETIMEOUT);
-            WINE_INVALIDATE_SPI(SPI_SETGRIDGRANULARITY);
-            WINE_INVALIDATE_SPI(SPI_SETKEYBOARDDELAY);
-            WINE_INVALIDATE_SPI(SPI_SETICONTITLEWRAP);
-            WINE_INVALIDATE_SPI(SPI_SETDOUBLECLICKTIME);
-            WINE_INVALIDATE_SPI(SPI_SETDRAGFULLWINDOWS);
-            WINE_INVALIDATE_SPI(SPI_SETWORKAREA);
-            WINE_INVALIDATE_SPI(SPI_SETKEYBOARDPREF);
-            WINE_INVALIDATE_SPI(SPI_SETSCREENREADER);
-            WINE_INVALIDATE_SPI(SPI_SETSCREENSAVERRUNNING);
-            default:
-                FIXME( "Unknown action reset: %u\n", uiAction );
-                break;
-            }
-        }
-        else
-            not_all_processed = FALSE;
-	break;
-    }
-
-    if (!uiAction && not_all_processed)
-        ERR( "Incorrect implementation of SYSPARAMS_Reset. "
-             "Not all params are reloaded.\n" );
-#undef WINE_INVALIDATE_SPI
-#undef WINE_IGNORE_SPI
-#undef WINE_RELOAD_SPI
-}
 
 /***********************************************************************
  *           get_volatile_regkey
@@ -513,7 +426,7 @@ static HKEY get_volatile_regkey(void)
  *
  * Sends notification about system parameter update.
  */
-void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
+static void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 {
     static const WCHAR emptyW[1];
 

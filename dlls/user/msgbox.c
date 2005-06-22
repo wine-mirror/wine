@@ -47,7 +47,7 @@ struct ThreadWindows
     HWND *handles;
 };
 
-BOOL CALLBACK MSGBOX_EnumProc(HWND hwnd, LPARAM lParam)
+static BOOL CALLBACK MSGBOX_EnumProc(HWND hwnd, LPARAM lParam)
 {
     struct ThreadWindows *threadWindows = (struct ThreadWindows *)lParam;
 
