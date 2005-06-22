@@ -78,7 +78,7 @@ typedef struct __fontAlias
 static fontAlias *aliasTable = NULL;
 
 static const char*	INIFontMetrics = "cachedmetrics.";
-static const char*	INIFontSection = "Software\\Wine\\Wine\\Config\\fonts";
+static const char*	INIFontSection = "Software\\Wine\\X11 Driver\\Fonts";
 static const char*	INIAliasSection = "Alias";
 static const char*	INIIgnoreSection = "Ignore";
 static const char*	INIDefault = "Default";
@@ -2904,8 +2904,8 @@ void X11DRV_FONT_InitX11Metrics( void )
   /* deal with systemwide font metrics cache */
 
   buffer[0] = 0;
-  /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\fonts */
-  if (RegOpenKeyA(HKEY_LOCAL_MACHINE, INIFontSection, &hkey)) hkey = 0;
+  /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver\Fonts */
+  if (RegOpenKeyA(HKEY_CURRENT_USER, INIFontSection, &hkey)) hkey = 0;
   if (hkey)
   {
 	DWORD type, count = buf_size;
