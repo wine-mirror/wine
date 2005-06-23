@@ -579,6 +579,61 @@ HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Heig
     return res;
 }
 
+/* Callback for creating the inplicite swapchain when the device is created */
+HRESULT WINAPI D3D8CB_CreateAdditionalSwapChain(IUnknown *device,
+                                                WINED3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                IWineD3DSwapChain ** ppSwapChain){
+    HRESULT res = D3D_OK;
+    IDirect3DSwapChain8Impl *d3dSwapChain = NULL;
+    /* We have to pass the presentation parameters back and forth */
+    D3DPRESENT_PARAMETERS localParameters;
+    localParameters.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
+    localParameters.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);
+    localParameters.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
+    localParameters.BackBufferCount                = *(pPresentationParameters->BackBufferCount);
+    localParameters.MultiSampleType                = *(pPresentationParameters->MultiSampleType);
+  /* d3d9 only */
+  /* localParameters.MultiSampleQuality             = *(pPresentationParameters->MultiSampleQuality); */
+    localParameters.SwapEffect                     = *(pPresentationParameters->SwapEffect);
+    localParameters.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);
+    localParameters.Windowed                       = *(pPresentationParameters->Windowed);
+    localParameters.EnableAutoDepthStencil         = *(pPresentationParameters->EnableAutoDepthStencil);
+    localParameters.AutoDepthStencilFormat         = *(pPresentationParameters->AutoDepthStencilFormat);
+    localParameters.Flags                          = *(pPresentationParameters->Flags);
+    localParameters.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz);
+/* not in d3d8 */
+/*    localParameters.PresentationInterval           = *(pPresentationParameters->PresentationInterval); */
+
+    TRACE("(%p) rellaying\n", device);
+    /*copy the presentation parameters*/
+    res = IDirect3DDevice8_CreateAdditionalSwapChain((IDirect3DDevice8 *)device, &localParameters, (IDirect3DSwapChain8 **)&d3dSwapChain);
+
+    if (res == D3D_OK){
+        *ppSwapChain = d3dSwapChain->wineD3DSwapChain;
+    } else {
+        FIXME("failed to create additional swap chain\n");
+        *ppSwapChain = NULL;
+    }
+    /* Copy back the presentation parameters */
+    TRACE("(%p) setting up return parameters\n", device);
+   *pPresentationParameters->BackBufferWidth               = localParameters.BackBufferWidth;
+   *pPresentationParameters->BackBufferHeight              = localParameters.BackBufferHeight;
+   *pPresentationParameters->BackBufferFormat              = localParameters.BackBufferFormat;
+   *pPresentationParameters->BackBufferCount               = localParameters.BackBufferCount;
+   *pPresentationParameters->MultiSampleType               = localParameters.MultiSampleType;
+/*   *pPresentationParameters->MultiSampleQuality            leave alone incase wineD3D set something internally */
+   *pPresentationParameters->SwapEffect                    = localParameters.SwapEffect;
+   *pPresentationParameters->hDeviceWindow                 = localParameters.hDeviceWindow;
+   *pPresentationParameters->Windowed                      = localParameters.Windowed;
+   *pPresentationParameters->EnableAutoDepthStencil        = localParameters.EnableAutoDepthStencil;
+   *pPresentationParameters->AutoDepthStencilFormat        = localParameters.AutoDepthStencilFormat;
+   *pPresentationParameters->Flags                         = localParameters.Flags;
+   *pPresentationParameters->FullScreen_RefreshRateInHz    = localParameters.FullScreen_RefreshRateInHz;
+/*   *pPresentationParameters->PresentationInterval          leave alone incase wineD3D set something internally */
+
+   return res;
+}
+
 HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
                                                             UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                                                             DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
@@ -624,7 +679,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->FullScreen_PresentationInterval;    /* Renamed in dx9 */
-    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D8CB_CreateRenderTarget);
+    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D8CB_CreateAdditionalSwapChain);
 
     /** use StateBlock Factory here, for creating the startup stateBlock */
     object->StateBlock = NULL;

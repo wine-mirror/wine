@@ -655,6 +655,9 @@ struct IDirect3DSwapChain8Impl
     /* OpenGL/GLX related */
     GLXContext              swap_ctx;
     Drawable                swap_drawable;
+
+    /* ready for when we move over to wined3d */
+    IWineD3DSwapChain      *wineD3DSwapChain;
 };
 
 /* IUnknown: */

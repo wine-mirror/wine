@@ -3,7 +3,8 @@
  *
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Raphael Junqueira
- * Copyright 2004      Jason Edmeades   
+ * Copyright 2004 Jason Edmeades
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,6 +41,9 @@
 #include "d3d9types.h"
 #include "wine/wined3d_interface.h"
 #include "wine/wined3d_gl.h"
+
+/* Swap chains */
+#define MAX_SWAPCHAINS 256
 
 extern int vs_mode;
 #define VS_NONE 0
@@ -339,13 +343,6 @@ typedef struct IWineD3DDeviceImpl
     IWineD3D               *wineD3D;
 
     /* X and GL Information */
-    HWND                    win_handle;
-    Window                  win;
-    Display                *display;
-    GLXContext              glCtx;
-    XVisualInfo            *visInfo;
-    GLXContext              render_ctx;
-    Drawable                drawable;
     GLint                   maxConcurrentLights;
 
     /* Optimization */
@@ -375,6 +372,10 @@ typedef struct IWineD3DDeviceImpl
     D3DPRESENT_PARAMETERS           presentParms;
     UINT                            adapterNo;
     D3DDEVTYPE                      devType;
+
+    /* TODO: Replace with a linked list */
+    IWineD3DSwapChain      *swapchains[MAX_SWAPCHAINS]; /* no-one wil ever need more that MAX_SWAPCHAINS swapchains */
+    int                     numberOfSwapChains;
 
     /* Render Target Support */
     IWineD3DSurface        *frontBuffer;
@@ -752,6 +753,43 @@ typedef struct IWineD3DQueryImpl
 } IWineD3DQueryImpl;
 
 extern const IWineD3DQueryVtbl IWineD3DQuery_Vtbl;
+
+/*****************************************************************************
+ * IWineD3DSwapChainImpl implementation structure (extends IUnknown)
+ */
+
+typedef struct IWineD3DSwapChainImpl
+{
+    /*IUnknown part*/
+    IWineD3DSwapChainVtbl    *lpVtbl;
+    DWORD                     ref;     /* Note: Ref counting not required */
+
+    IUnknown                 *parent;
+    IWineD3DDeviceImpl       *wineD3DDevice;
+
+    /* IWineD3DSwapChain fields */
+    IWineD3DSurface          *backBuffer;
+    IWineD3DSurface          *frontBuffer;
+    BOOL                      wantsDepthStencilBuffer;
+    D3DPRESENT_PARAMETERS     presentParms;
+
+    /* TODO: move everything upto drawable off into a context manager
+      and store the 'data' in the contextManagerData interface.
+    IUnknown                  *contextManagerData;
+    */
+
+    HWND                    win_handle;
+    Window                  win;
+    Display                *display;
+
+    GLXContext              glCtx;
+    XVisualInfo            *visInfo;
+    GLXContext              render_ctx;
+    /* This has been left in device for now, but needs moving off into a rendertarget mamangement class and seperated out from swapchains and devices. */
+    Drawable                drawable;
+} IWineD3DSwapChainImpl;
+
+extern IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
 
 /*****************************************************************************
  * Utility function prototypes 

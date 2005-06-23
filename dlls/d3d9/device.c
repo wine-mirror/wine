@@ -57,7 +57,6 @@ ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
     if (ref == 0) {
-      IDirect3D9_Release((LPDIRECT3D9) This->direct3d);
       IWineD3DDevice_Release(This->WineD3DDevice);
       HeapFree(GetProcessHeap(), 0, This);
     }

@@ -4,6 +4,7 @@
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1526,15 +1527,12 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
    and fields being inserted in the middle, a new structure is used in place    */
 HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                                            DWORD BehaviourFlags, WINED3DPRESENT_PARAMETERS* pPresentationParameters,
-                                           IWineD3DDevice** ppReturnedDeviceInterface, IUnknown *parent, D3DCB_CREATERENDERTARGETFN D3DCB_CreateRenderTarget) {
+                                           IWineD3DDevice** ppReturnedDeviceInterface, IUnknown *parent,
+                                           D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
 
-    HWND                whichHWND;
-    HDC                 hDc;
     IWineD3DDeviceImpl *object  = NULL;
     IWineD3DImpl       *This    = (IWineD3DImpl *)iface;
-    int                 num;
-    XVisualInfo         template;
-    HRESULT             res;
+    IWineD3DSwapChainImpl *swapchain;
 
     /* Validate the adapter number */
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -1573,241 +1571,85 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->adapterNo                    = Adapter;
     object->devType                      = DeviceType;
 
-    /* Setup hwnd we are using, plus which display this equates to */
-    whichHWND = *(pPresentationParameters->hDeviceWindow);
-    if (!whichHWND) {
-        whichHWND = hFocusWindow;
-    }
-    object->win_handle = whichHWND;
-    object->win        = (Window)GetPropA( whichHWND, "__wine_x11_whole_window" );
-    hDc                = GetDC(whichHWND);
-    object->display    = get_display(hDc);
-    ReleaseDC(whichHWND, hDc);
-
     /* FIXME: Use for dx8 code eventually too! */
     /* Deliberately no indentation here, as this if will be removed when dx8 support merged in */
-    if (This->dxVersion > 8) {   
+    if (This->dxVersion > 8) {
 
-    /* Create a context based off the properties of the existing visual */
-    /*   Note the visual is chosen as the window is created and the glcontext cannot
-         use different properties after that point in time. FIXME: How to handle when requested format 
-         doesn't match actual visual? Cannot choose one here - code removed as it ONLY works if the one
-         it chooses is identical to the one already being used!                                        */
-    /* FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat */
-    ENTER_GL();
-    template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
-    object->visInfo   = XGetVisualInfo(object->display, VisualIDMask, &template, &num);
-    if (NULL == object->visInfo) {
-        ERR("cannot really get XVisual\n"); 
-        LEAVE_GL();
-        return D3DERR_NOTAVAILABLE;
-    }
-    object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
-    if (NULL == object->glCtx) {
-        ERR("cannot create glxContext\n"); 
-        LEAVE_GL();
-        return D3DERR_NOTAVAILABLE;
-    }
-    LEAVE_GL();
+        /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
+        IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object,
+                                        (D3DSTATEBLOCKTYPE) 0,
+                                        (IWineD3DStateBlock **)&object->stateBlock,
+                                        NULL);   /* Note: No parent needed for initial internal stateblock */
+        object->updateStateBlock = object->stateBlock;
+        IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)object->updateStateBlock);
+        /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
 
-    if (object->glCtx == NULL) {
-        ERR("Error in context creation !\n");
-        return D3DERR_INVALIDCALL;
-    } else {
-        TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
-                whichHWND, object->glCtx, object->win, object->visInfo);
-    }
+        /* Setup the  implicite swapchain */
+        TRACE("Creating implicite swapchain\n");
 
-    /* If not windowed, need to go fullscreen, and resize the HWND to the appropriate  */
-    /*        dimensions                                                               */
-    if (!*(pPresentationParameters->Windowed)) {
+        if (D3D_OK == D3DCB_CreateAdditionalSwapChain((IUnknown *) object->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) && swapchain != NULL) {
 
-        DEVMODEW devmode;
-        HDC      hdc;
-        int      bpp = 0;
-
-        /* Get info on the current display setup */
-        hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        DeleteDC(hdc);
-
-        /* Change the display settings */
-        memset(&devmode, 0, sizeof(DEVMODEW));
-        devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT; 
-        devmode.dmBitsPerPel = (bpp >= 24) ? 32 : bpp;   /*Stupid XVidMode cannot change bpp D3DFmtGetBpp(object, pPresentationParameters->BackBufferFormat);*/
-        devmode.dmPelsWidth  = *(pPresentationParameters->BackBufferWidth);
-        devmode.dmPelsHeight = *(pPresentationParameters->BackBufferHeight);
-        MultiByteToWideChar(CP_ACP, 0, "Gamers CG", -1, devmode.dmDeviceName, CCHDEVICENAME);
-        ChangeDisplaySettingsExW(devmode.dmDeviceName, &devmode, object->win_handle, CDS_FULLSCREEN, NULL);
-
-        /* Make popup window */
-        SetWindowLongA(whichHWND, GWL_STYLE, WS_POPUP);
-        SetWindowPos(object->win_handle, HWND_TOP, 0, 0, 
-                     *(pPresentationParameters->BackBufferWidth),
-                     *(pPresentationParameters->BackBufferHeight), SWP_SHOWWINDOW | SWP_FRAMECHANGED);
-    }
-
-    /* MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
-       then the corresponding dimension of the client area of the hDeviceWindow
-       (or the focus window, if hDeviceWindow is NULL) is taken. */
-    if (*(pPresentationParameters->Windowed) && 
-        ((*(pPresentationParameters->BackBufferWidth)  == 0) ||
-         (*(pPresentationParameters->BackBufferHeight) == 0))) {
-
-        RECT Rect;
-        GetClientRect(whichHWND, &Rect);
-
-        if (*(pPresentationParameters->BackBufferWidth) == 0) {
-           *(pPresentationParameters->BackBufferWidth) = Rect.right;
-           TRACE("Updating width to %d\n", *(pPresentationParameters->BackBufferWidth));
-        }
-        if (*(pPresentationParameters->BackBufferHeight) == 0) {
-           *(pPresentationParameters->BackBufferHeight) = Rect.bottom;
-           TRACE("Updating height to %d\n", *(pPresentationParameters->BackBufferHeight));
-        }
-    }
-
-    /* Save the presentation parms now filled in correctly */
-    object->presentParms.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
-    object->presentParms.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);           
-    object->presentParms.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);           
-    object->presentParms.BackBufferCount                = *(pPresentationParameters->BackBufferCount);            
-    object->presentParms.MultiSampleType                = *(pPresentationParameters->MultiSampleType);            
-    object->presentParms.MultiSampleQuality             = *(pPresentationParameters->MultiSampleQuality);         
-    object->presentParms.SwapEffect                     = *(pPresentationParameters->SwapEffect);                 
-    object->presentParms.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);              
-    object->presentParms.Windowed                       = *(pPresentationParameters->Windowed);                   
-    object->presentParms.EnableAutoDepthStencil         = *(pPresentationParameters->EnableAutoDepthStencil);     
-    object->presentParms.AutoDepthStencilFormat         = *(pPresentationParameters->AutoDepthStencilFormat);     
-    object->presentParms.Flags                          = *(pPresentationParameters->Flags);                      
-    object->presentParms.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz); 
-    object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);       
-
-    /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
-    IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object, 
-                                    (D3DSTATEBLOCKTYPE) 0, 
-                                    (IWineD3DStateBlock **)&object->stateBlock,
-                                    NULL);   /* Note: No parent needed for initial internal stateblock */
-    object->updateStateBlock = object->stateBlock;
-
-    /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
-    TRACE("Creating initial device surfaces\n");
-
-    /* We need to 'magic' either d3d8 or d3d9 surfaces for the front and backbuuffer 
-       but the respective CreateRenderTarget functions take a differing number of
-       parms. Fix this by passing in a function to call which takes identical parms
-       and handles the differences at the d3dx layer, and returns the IWineD3DSurface
-       pointer rather than the created D3D8/9 one                                      */
-    if ((res = D3DCB_CreateRenderTarget((IUnknown *) parent,
-                                        *(pPresentationParameters->BackBufferWidth),
-                                        *(pPresentationParameters->BackBufferHeight),
-                                        *(pPresentationParameters->BackBufferFormat),
-                                        *(pPresentationParameters->MultiSampleType),
-                                        *(pPresentationParameters->MultiSampleQuality),
-                                        TRUE,
-                                        (IWineD3DSurface **) &object->frontBuffer,
-                                        NULL) != D3D_OK) ||
-        (res = D3DCB_CreateRenderTarget((IUnknown *) parent,
-                                        *(pPresentationParameters->BackBufferWidth),
-                                        *(pPresentationParameters->BackBufferHeight),
-                                        *(pPresentationParameters->BackBufferFormat),
-                                        *(pPresentationParameters->MultiSampleType),
-                                        *(pPresentationParameters->MultiSampleQuality),
-                                        TRUE,
-                                        (IWineD3DSurface **) &object->backBuffer,
-                                       NULL) != D3D_OK))
-    {
-        ERR("D3DCB_CreateRenderTarget() failed\n");
-        return res;
-    }
-
-/* TODO: 
-    if (*(pPresentationParameters->EnableAutoDepthStencil)) {
-       IWineD3DDevice_CreateDepthStencilSurface((IWineD3DDevice *) object,
-                                                *(pPresentationParameters->BackBufferWidth),
-                                                *(pPresentationParameters->BackBufferHeight),
-                                                *(pPresentationParameters->AutoDepthStencilFormat,
-                                                D3DMULTISAMPLE_NONE,
-                                                (IWineD3DSurface *) &object->depthStencilBuffer);
-    } else {
-      object->depthStencilBuffer = NULL;
-    }
-    TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil @ %p\n",object->frontBuffer, object->backBuffer, object->depthStencilBuffer);
-*/    
-
-    /* init the default renderTarget management */
-    object->drawable     = object->win;
-    object->render_ctx   = object->glCtx;
-    object->renderTarget = object->backBuffer;
+            object->renderTarget = swapchain->backBuffer;
+            IWineD3DSurface_AddRef(object->renderTarget);
+            /* Depth Stencil support */
+            object->stencilBufferTarget = object->depthStencilBuffer;
+            if (NULL != object->stencilBufferTarget) {
+                IWineD3DSurface_AddRef(object->stencilBufferTarget);
+            }
     
-    IWineD3DSurface_AddRef((IWineD3DSurface *) object->renderTarget);
-/* TODO: Depth Stencil support
-    object->stencilBufferTarget = object->depthStencilBuffer;
-    if (NULL != object->stencilBufferTarget) {
-      IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) object->stencilBufferTarget);
+            /* Set up some starting GL setup */
+    
+            ENTER_GL();
+            /*
+            * Initialize openGL extension related variables
+            *  with Default values 
+            */
+    
+            This->isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, swapchain->display);
+            /* Setup all the devices defaults */
+            IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)object->stateBlock);
+#if 0
+            IWineD3DImpl_CheckGraphicsMemory();
+#endif
+            LEAVE_GL();
+    
+            { /* Set a default viewport */
+                D3DVIEWPORT9 vp;
+                vp.X      = 0;
+                vp.Y      = 0;
+                vp.Width  = *(pPresentationParameters->BackBufferWidth);
+                vp.Height = *(pPresentationParameters->BackBufferHeight);
+                vp.MinZ   = 0.0f;
+                vp.MaxZ   = 1.0f;
+                IWineD3DDevice_SetViewport((IWineD3DDevice *)object, &vp);
+            }
+    
+    
+            /* Initialize the current view state */
+            object->modelview_valid = 1;
+            object->proj_valid = 0;
+            object->view_ident = 1;
+            object->last_was_rhw = 0;
+            glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
+            TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
+    
+            /* Clear the screen */
+            IWineD3DDevice_Clear((IWineD3DDevice *) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+        } else { /* couldn't create swapchain */
+            IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->updateStateBlock);
+            object->updateStateBlock = NULL;
+            IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->stateBlock);
+            object->stateBlock = NULL;
+            HeapFree(GetProcessHeap(), 0, object);
+            *ppReturnedDeviceInterface = NULL;
+            return D3DERR_INVALIDCALL;
+        }
+
+    } else { /* End of FIXME: remove when dx8 merged in */
+
+     FIXME("(%p) Incomplete stub for d3d8\n", This);
+
     }
-*/    
-
-    /* Set up some starting GL setup */
-    ENTER_GL();
-
-    if (glXMakeCurrent(object->display, object->win, object->glCtx) == False) {
-      ERR("Error in setting current context (context %p drawable %ld)!\n", object->glCtx, object->win);
-    }
-    checkGLcall("glXMakeCurrent");
-
-    /* Clear the screen */
-    glClearColor(1.0, 0.0, 0.0, 0.0);
-    checkGLcall("glClearColor");
-    glColor3f(1.0, 1.0, 1.0);
-    checkGLcall("glColor3f");
-
-    glEnable(GL_LIGHTING);
-    checkGLcall("glEnable");
-
-    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-    checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-    checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
-
-    glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-    checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
-
-    /* 
-     * Initialize openGL extension related variables
-     *  with Default values 
-     */
-    This->isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, object->display);
-
-    /* Setup all the devices defaults */
-    IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)object->stateBlock); 
-
-    LEAVE_GL();
-
-    { /* Set a default viewport */
-       D3DVIEWPORT9 vp;
-       vp.X      = 0;
-       vp.Y      = 0;
-       vp.Width  = *(pPresentationParameters->BackBufferWidth);
-       vp.Height = *(pPresentationParameters->BackBufferHeight);
-       vp.MinZ   = 0.0f;
-       vp.MaxZ   = 1.0f;
-       IWineD3DDevice_SetViewport((IWineD3DDevice *)object, &vp);
-    }
-
-    /* Initialize the current view state */
-    object->modelview_valid = 1;
-    object->proj_valid = 0;
-    object->view_ident = 1;
-    object->last_was_rhw = 0;
-    glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
-    TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
-
-    /* Clear the screen */
-    IWineD3DDevice_Clear((IWineD3DDevice *) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
-
-    } /* End of FIXME: remove when dx8 merged in */
 
     return D3D_OK;
 }

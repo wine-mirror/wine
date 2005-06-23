@@ -175,38 +175,103 @@ HMONITOR WINAPI  IDirect3D9Impl_GetAdapterMonitor(LPDIRECT3D9 iface, UINT Adapte
 }
 
 /* Internal function called back during the CreateDevice to create a render target */
-HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, 
-                                         DWORD MultisampleQuality, BOOL Lockable, 
+HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height,
+                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         DWORD MultisampleQuality, BOOL Lockable,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
     IDirect3DSurface9Impl *d3dSurface = NULL;
-    IDirect3DDevice9Impl* pDeviceImpl = (IDirect3DDevice9Impl*) device;
-
+    TRACE("(%p) call back\n", device);
     res = IDirect3DDevice9_CreateRenderTarget((IDirect3DDevice9 *)device, Width, Height, 
-                                         (D3DFORMAT) Format, MultiSample, MultisampleQuality, Lockable, 
+                                         (D3DFORMAT)Format, MultiSample, MultisampleQuality, Lockable,
                                          (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
 
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
-	if (NULL == pDeviceImpl->backBuffer) {
-	  pDeviceImpl->backBuffer = d3dSurface;
-	  pDeviceImpl->renderTarget = d3dSurface;
-	  IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) pDeviceImpl->renderTarget);
-	}
     } else {
         *ppSurface = NULL;
     }
     return res;
 }
 
+HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
+                                                WINED3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                IWineD3DSwapChain ** ppSwapChain) {
+    HRESULT res = D3D_OK;
+    IDirect3DSwapChain9Impl *d3dSwapChain = NULL;
+    D3DPRESENT_PARAMETERS localParameters;
+    TRACE("(%p) call back\n", device);
+
+    localParameters.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
+    localParameters.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);
+    localParameters.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
+    localParameters.BackBufferCount                = *(pPresentationParameters->BackBufferCount);
+    localParameters.MultiSampleType                = *(pPresentationParameters->MultiSampleType);
+    localParameters.MultiSampleQuality             = *(pPresentationParameters->MultiSampleQuality);
+    localParameters.SwapEffect                     = *(pPresentationParameters->SwapEffect);
+    localParameters.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);
+    localParameters.Windowed                       = *(pPresentationParameters->Windowed);
+    localParameters.EnableAutoDepthStencil         = *(pPresentationParameters->EnableAutoDepthStencil);
+    localParameters.AutoDepthStencilFormat         = *(pPresentationParameters->AutoDepthStencilFormat);
+    localParameters.Flags                          = *(pPresentationParameters->Flags);
+    localParameters.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz);
+    localParameters.PresentationInterval           = *(pPresentationParameters->PresentationInterval);
+
+    /*copy the presentation parameters*/
+    res = IDirect3DDevice9_CreateAdditionalSwapChain((IDirect3DDevice9 *)device, &localParameters, (IDirect3DSwapChain9 **)&d3dSwapChain);
+
+    if (res == D3D_OK && d3dSwapChain != NULL) {
+        *ppSwapChain = d3dSwapChain->wineD3DSwapChain;
+    } else {
+        *ppSwapChain = NULL;
+    }
+    /*Copy back the presentation parameters*/
+   *pPresentationParameters->BackBufferWidth               = localParameters.BackBufferWidth;
+   *pPresentationParameters->BackBufferHeight              = localParameters.BackBufferHeight;
+   *pPresentationParameters->BackBufferFormat              = localParameters.BackBufferFormat;
+   *pPresentationParameters->BackBufferCount               = localParameters.BackBufferCount;
+   *pPresentationParameters->MultiSampleType               = localParameters.MultiSampleType;
+   *pPresentationParameters->MultiSampleQuality            = localParameters.MultiSampleQuality;
+   *pPresentationParameters->SwapEffect                    = localParameters.SwapEffect;
+   *pPresentationParameters->hDeviceWindow                 = localParameters.hDeviceWindow;
+   *pPresentationParameters->Windowed                      = localParameters.Windowed;
+   *pPresentationParameters->EnableAutoDepthStencil        = localParameters.EnableAutoDepthStencil;
+   *pPresentationParameters->AutoDepthStencilFormat        = localParameters.AutoDepthStencilFormat;
+   *pPresentationParameters->Flags                         = localParameters.Flags;
+   *pPresentationParameters->FullScreen_RefreshRateInHz    = localParameters.FullScreen_RefreshRateInHz;
+   *pPresentationParameters->PresentationInterval          = localParameters.PresentationInterval;
+
+   return res;
+}
+
+/* Internal function called back during the CreateDevice to create a render target */
+HRESULT WINAPI D3D9CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UINT Height, 
+                                         WINED3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample,
+                                         DWORD MultisampleQuality, BOOL Discard,
+                                         IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
+    HRESULT res = D3D_OK;
+    IDirect3DSurface9Impl *d3dSurface = NULL;
+    TRACE("(%p) call back\n", device);
+
+    res = IDirect3DDevice9_CreateDepthStencilSurface((IDirect3DDevice9 *)device, Width, Height, 
+                                         (D3DFORMAT)Format, MultiSample, MultisampleQuality, Discard, 
+                                         (IDirect3DSurface9 **)&d3dSurface, pSharedHandle);
+    if (res == D3D_OK) {
+        *ppSurface = d3dSurface->wineD3DSurface;
+    }
+    return res;
+}
+
+
 HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
-					     DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters, 
-					     IDirect3DDevice9** ppReturnedDeviceInterface) {
+                                            DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
+                                            IDirect3DDevice9** ppReturnedDeviceInterface) {
 
     IDirect3D9Impl       *This   = (IDirect3D9Impl *)iface;
     IDirect3DDevice9Impl *object = NULL;
     WINED3DPRESENT_PARAMETERS localParameters;
+    HRESULT hr;
+    TRACE("(%p) Relay \n", This);
 
     /* Check the validity range of the adapter parameter */
     if (Adapter >= IDirect3D9Impl_GetAdapterCount(iface)) {
@@ -224,27 +289,37 @@ HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3
 
     object->lpVtbl = &Direct3DDevice9_Vtbl;
     object->ref = 1;
-    object->direct3d = This;
-    IDirect3D9_AddRef((LPDIRECT3D9) object->direct3d);
     *ppReturnedDeviceInterface = (IDirect3DDevice9 *)object;
-    
+
     /* Allocate an associated WineD3DDevice object */
     localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
-    localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;           
-    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;           
-    localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;            
-    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;            
-    localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;         
-    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;                 
-    localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;              
-    localParameters.Windowed                       = &pPresentationParameters->Windowed;                   
-    localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;     
-    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;     
-    localParameters.Flags                          = &pPresentationParameters->Flags;                      
+    localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
+    localParameters.BackBufferFormat               = &pPresentationParameters->BackBufferFormat;
+    localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
+    localParameters.MultiSampleType                = &pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;
+    localParameters.SwapEffect                     = &pPresentationParameters->SwapEffect;
+    localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
+    localParameters.Windowed                       = &pPresentationParameters->Windowed;
+    localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;
+    localParameters.AutoDepthStencilFormat         = &pPresentationParameters->AutoDepthStencilFormat;
+    localParameters.Flags                          = &pPresentationParameters->Flags;
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
-    localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;       
-    return IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D9CB_CreateRenderTarget);
+    localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;
+
+    hr =IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object, D3D9CB_CreateAdditionalSwapChain);
+
+    if (hr == D3D_OK) {
+
+        TRACE("(%p) : Created Device %p\n", This, object);
+    } else {
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppReturnedDeviceInterface = NULL;
+    }
+    return hr;
 }
+
+
 
 const IDirect3D9Vtbl Direct3D9_Vtbl =
 {
