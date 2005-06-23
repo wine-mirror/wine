@@ -3193,16 +3193,112 @@ end:
     return rc;
 }
 
+static UINT ITERATE_WriteIniValues(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPCWSTR component,section,key,value,identifier,filename,dirproperty;
+    LPWSTR deformated_section, deformated_key, deformated_value;
+    LPWSTR folder, fullname = NULL;
+    MSIRECORD * uirow;
+    INT component_index,action;
+    static const WCHAR szWindowsFolder[] =
+          {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
+
+    component = MSI_RecordGetString(row, 8);
+    component_index = get_loaded_component(package,component);
+
+    if (!ACTION_VerifyComponentForAction(package, component_index,
+                            INSTALLSTATE_LOCAL))
+    {
+        TRACE("Skipping ini file due to disabled component %s\n",
+                        debugstr_w(component));
+
+        package->components[component_index].Action =
+            package->components[component_index].Installed;
+
+        return ERROR_SUCCESS;
+    }
+
+    package->components[component_index].Action = INSTALLSTATE_LOCAL;
+
+    identifier = MSI_RecordGetString(row,1); 
+    filename = MSI_RecordGetString(row,2);
+    dirproperty = MSI_RecordGetString(row,3);
+    section = MSI_RecordGetString(row,4);
+    key = MSI_RecordGetString(row,5);
+    value = MSI_RecordGetString(row,6);
+    action = MSI_RecordGetInteger(row,7);
+
+    deformat_string(package,section,&deformated_section);
+    deformat_string(package,key,&deformated_key);
+    deformat_string(package,value,&deformated_value);
+
+    if (dirproperty)
+    {
+        folder = resolve_folder(package, dirproperty, FALSE, FALSE, NULL);
+        if (!folder)
+            folder = load_dynamic_property(package,dirproperty,NULL);
+    }
+    else
+        folder = load_dynamic_property(package, szWindowsFolder, NULL);
+
+    if (!folder)
+    {
+        ERR("Unable to resolve folder! (%s)\n",debugstr_w(dirproperty));
+        goto cleanup;
+    }
+
+    fullname = build_directory_name(3, folder, filename, NULL);
+
+    if (action == 0)
+    {
+        TRACE("Adding value %s to section %s in %s\n",
+                debugstr_w(deformated_key), debugstr_w(deformated_section),
+                debugstr_w(fullname));
+        WritePrivateProfileStringW(deformated_section, deformated_key,
+                                   deformated_value, fullname);
+    }
+    else if (action == 1)
+    {
+        WCHAR returned[10];
+        GetPrivateProfileStringW(deformated_section, deformated_key, NULL,
+                                 returned, 10, fullname);
+        if (returned[0] == 0)
+        {
+            TRACE("Adding value %s to section %s in %s\n",
+                    debugstr_w(deformated_key), debugstr_w(deformated_section),
+                    debugstr_w(fullname));
+
+            WritePrivateProfileStringW(deformated_section, deformated_key,
+                                       deformated_value, fullname);
+        }
+    }
+    else if (action == 3)
+        FIXME("Append to existing section not yet implemented\n");
+
+    uirow = MSI_CreateRecord(4);
+    MSI_RecordSetStringW(uirow,1,identifier);
+    MSI_RecordSetStringW(uirow,2,deformated_section);
+    MSI_RecordSetStringW(uirow,3,deformated_key);
+    MSI_RecordSetStringW(uirow,4,deformated_value);
+    ui_actiondata(package,szWriteIniValues,uirow);
+    msiobj_release( &uirow->hdr );
+cleanup:
+    HeapFree(GetProcessHeap(),0,fullname);
+    HeapFree(GetProcessHeap(),0,folder);
+    HeapFree(GetProcessHeap(),0,deformated_key);
+    HeapFree(GetProcessHeap(),0,deformated_value);
+    HeapFree(GetProcessHeap(),0,deformated_section);
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
 {
     UINT rc;
     MSIQUERY * view;
-    MSIRECORD * row = 0;
     static const WCHAR ExecSeqQuery[] = 
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
          '`','I','n','i','F','i','l','e','`',0};
-    static const WCHAR szWindowsFolder[] =
-          {'W','i','n','d','o','w','s','F','o','l','d','e','r',0};
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
@@ -3211,120 +3307,7 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
         return ERROR_SUCCESS;
     }
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    while (1)
-    {
-        LPCWSTR component,section,key,value,identifier,filename,dirproperty;
-        LPWSTR deformated_section, deformated_key, deformated_value;
-        LPWSTR folder, fullname = NULL;
-        MSIRECORD * uirow;
-        INT component_index,action;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        component = MSI_RecordGetString(row, 8);
-        component_index = get_loaded_component(package,component);
-
-        if (!ACTION_VerifyComponentForAction(package, component_index,
-                                INSTALLSTATE_LOCAL))
-        {
-            TRACE("Skipping ini file due to disabled component %s\n",
-                            debugstr_w(component));
-            msiobj_release(&row->hdr);
-
-            package->components[component_index].Action =
-                package->components[component_index].Installed;
-
-            continue;
-        }
-
-        package->components[component_index].Action = INSTALLSTATE_LOCAL;
-   
-        identifier = MSI_RecordGetString(row,1); 
-        filename = MSI_RecordGetString(row,2);
-        dirproperty = MSI_RecordGetString(row,3);
-        section = MSI_RecordGetString(row,4);
-        key = MSI_RecordGetString(row,5);
-        value = MSI_RecordGetString(row,6);
-        action = MSI_RecordGetInteger(row,7);
-
-        deformat_string(package,section,&deformated_section);
-        deformat_string(package,key,&deformated_key);
-        deformat_string(package,value,&deformated_value);
-
-        if (dirproperty)
-        {
-            folder = resolve_folder(package, dirproperty, FALSE, FALSE, NULL);
-            if (!folder)
-                folder = load_dynamic_property(package,dirproperty,NULL);
-        }
-        else
-            folder = load_dynamic_property(package, szWindowsFolder, NULL);
-
-        if (!folder)
-        {
-            ERR("Unable to resolve folder! (%s)\n",debugstr_w(dirproperty));
-            goto cleanup;
-        }
-
-        fullname = build_directory_name(3, folder, filename, NULL);
-
-        if (action == 0)
-        {
-            TRACE("Adding value %s to section %s in %s\n",
-                debugstr_w(deformated_key), debugstr_w(deformated_section),
-                debugstr_w(fullname));
-            WritePrivateProfileStringW(deformated_section, deformated_key,
-                                       deformated_value, fullname);
-        }
-        else if (action == 1)
-        {
-            WCHAR returned[10];
-            GetPrivateProfileStringW(deformated_section, deformated_key, NULL,
-                                     returned, 10, fullname);
-            if (returned[0] == 0)
-            {
-                TRACE("Adding value %s to section %s in %s\n",
-                    debugstr_w(deformated_key), debugstr_w(deformated_section),
-                    debugstr_w(fullname));
-
-                WritePrivateProfileStringW(deformated_section, deformated_key,
-                                       deformated_value, fullname);
-            }
-        }
-        else if (action == 3)
-        {
-            FIXME("Append to existing section not yet implemented\n");
-        }
-        
-        uirow = MSI_CreateRecord(4);
-        MSI_RecordSetStringW(uirow,1,identifier);
-        MSI_RecordSetStringW(uirow,2,deformated_section);
-        MSI_RecordSetStringW(uirow,3,deformated_key);
-        MSI_RecordSetStringW(uirow,4,deformated_value);
-        ui_actiondata(package,szWriteIniValues,uirow);
-        msiobj_release( &uirow->hdr );
-cleanup:
-        HeapFree(GetProcessHeap(),0,fullname);
-        HeapFree(GetProcessHeap(),0,folder);
-        HeapFree(GetProcessHeap(),0,deformated_key);
-        HeapFree(GetProcessHeap(),0,deformated_value);
-        HeapFree(GetProcessHeap(),0,deformated_section);
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_WriteIniValues, package);
     msiobj_release(&view->hdr);
     return rc;
 }
