@@ -632,6 +632,63 @@ GetLengthSid (PSID pSid)
 	##############################################
 */
 
+ /****************************************************************************** 
+ * BuildSecurityDescriptorA [ADVAPI32.@]
+ *
+ * Builds a SD from 
+ *
+ * PARAMS
+ *  pOwner                [I]
+ *  pGroup                [I]
+ *  cCountOfAccessEntries [I]
+ *  pListOfAccessEntries  [I]
+ *  cCountOfAuditEntries  [I]
+ *  pListofAuditEntries   [I]
+ *  pOldSD                [I]
+ *  lpdwBufferLength      [I/O]
+ *  pNewSD                [O]
+ */
+DWORD WINAPI BuildSecurityDescriptorA(
+    IN PTRUSTEE_A pOwner,
+    IN PTRUSTEE_A pGroup,
+    IN DWORD cCountOfAccessEntries,
+    IN PEXPLICIT_ACCESS_A pListOfAccessEntries,
+    IN DWORD cCountOfAuditEntries,
+    IN PEXPLICIT_ACCESS_A pListofAuditEntries,
+    IN PSECURITY_DESCRIPTOR pOldSD,
+    IN OUT PDWORD lpdwBufferLength,
+    OUT PSECURITY_DESCRIPTOR pNewSD)
+{ 
+    FIXME("(%p,%p,%ld,%p,%ld,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
+          cCountOfAccessEntries,pListOfAccessEntries,cCountOfAuditEntries,
+          pListofAuditEntries,pOldSD,lpdwBufferLength,pNewSD);
+ 
+    return ERROR_CALL_NOT_IMPLEMENTED;
+} 
+ 
+/******************************************************************************
+ * BuildSecurityDescriptorW [ADVAPI32.@]
+ *
+ * See BuildSecurityDescriptorA.
+ */
+DWORD WINAPI BuildSecurityDescriptorW(
+    IN PTRUSTEE_W pOwner,
+    IN PTRUSTEE_W pGroup,
+    IN DWORD cCountOfAccessEntries,
+    IN PEXPLICIT_ACCESS_W pListOfAccessEntries,
+    IN DWORD cCountOfAuditEntries,
+    IN PEXPLICIT_ACCESS_W pListofAuditEntries,
+    IN PSECURITY_DESCRIPTOR pOldSD,
+    IN OUT PDWORD lpdwBufferLength,
+    OUT PSECURITY_DESCRIPTOR pNewSD)
+{ 
+    FIXME("(%p,%p,%ld,%p,%ld,%p,%p,%p,%p) stub!\n",pOwner,pGroup,
+          cCountOfAccessEntries,pListOfAccessEntries,cCountOfAuditEntries,
+          pListofAuditEntries,pOldSD,lpdwBufferLength,pNewSD);
+ 
+    return ERROR_CALL_NOT_IMPLEMENTED;
+} 
+
 /******************************************************************************
  * InitializeSecurityDescriptor [ADVAPI32.@]
  *

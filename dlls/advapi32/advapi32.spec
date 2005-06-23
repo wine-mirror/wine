@@ -23,6 +23,8 @@
 @ stdcall BackupEventLogW (long wstr)
 @ stdcall BuildExplicitAccessWithNameA(ptr str long long long)
 @ stdcall BuildExplicitAccessWithNameW(ptr wstr long long long)
+@ stdcall BuildSecurityDescriptorA(ptr ptr long ptr long ptr ptr ptr ptr)
+@ stdcall BuildSecurityDescriptorW(ptr ptr long ptr long ptr ptr ptr ptr)
 @ stdcall BuildTrusteeWithNameA(ptr str)
 @ stdcall BuildTrusteeWithNameW(ptr wstr)
 @ stdcall BuildTrusteeWithObjectsAndNameA(ptr ptr long str str str)
