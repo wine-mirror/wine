@@ -52,8 +52,7 @@ static const char *usage =
     "\n"
     "The switches are case-insensitive, can be prefixed either by '-' or '/'.\n"
     "This program is command-line compatible with Microsoft Windows\n"
-    "regedit. The difference with Windows regedit - this application has\n"
-    "command-line interface only.\n";
+    "regedit.\n";
 
 typedef enum {
     ACTION_UNDEF, ACTION_ADD, ACTION_EXPORT, ACTION_DELETE
