@@ -81,7 +81,7 @@ void set_window_title(HWND dialog)
  * not. Caller is responsible for releasing the result.
  *
  */
-static char *get_config_key (const char *subkey, const char *name, const char *def)
+static char *get_config_key (HKEY root, const char *subkey, const char *name, const char *def)
 {
     LPBYTE buffer = NULL;
     DWORD len;
@@ -90,7 +90,7 @@ static char *get_config_key (const char *subkey, const char *name, const char *d
 
     WINE_TRACE("subkey=%s, name=%s, def=%s\n", subkey, name, def);
 
-    res = RegOpenKey(config_key, subkey, &hSubKey);
+    res = RegOpenKey(root, subkey, &hSubKey);
     if (res != ERROR_SUCCESS)
     {
         if (res == ERROR_FILE_NOT_FOUND)
@@ -123,7 +123,7 @@ static char *get_config_key (const char *subkey, const char *name, const char *d
 
     WINE_TRACE("buffer=%s\n", buffer);
 end:
-    if (hSubKey && hSubKey != config_key) RegCloseKey(hSubKey);
+    if (hSubKey && hSubKey != root) RegCloseKey(hSubKey);
 
     return (char*)buffer;
 }
@@ -139,7 +139,7 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-static int set_config_key(const char *subkey, const char *name, const char *value) {
+static int set_config_key(HKEY root, const char *subkey, const char *name, const char *value) {
     DWORD res = 1;
     HKEY key = NULL;
 
@@ -149,10 +149,10 @@ static int set_config_key(const char *subkey, const char *name, const char *valu
 
     if (subkey[0])
     {
-        res = RegCreateKey(config_key, subkey, &key);
+        res = RegCreateKey(root, subkey, &key);
         if (res != ERROR_SUCCESS) goto end;
     }
-    else key = config_key;
+    else key = root;
     if (name == NULL || value == NULL) goto end;
 
     res = RegSetValueEx(key, name, 0, REG_SZ, value, strlen(value) + 1);
@@ -160,7 +160,7 @@ static int set_config_key(const char *subkey, const char *name, const char *valu
 
     res = 0;
 end:
-    if (key && key != config_key) RegCloseKey(key);
+    if (key && key != root) RegCloseKey(key);
     if (res != 0) WINE_ERR("Unable to set configuration key %s in section %s to %s, res=%ld\n", name, subkey, value, res);
     return res;
 }
@@ -168,14 +168,14 @@ end:
 /* removes the requested value from the registry, however, does not
  * remove the section if empty. Returns S_OK (0) on success.
  */
-static HRESULT remove_value(const char *subkey, const char *name)
+static HRESULT remove_value(HKEY root, const char *subkey, const char *name)
 {
     HRESULT hr;
     HKEY key;
 
     WINE_TRACE("subkey=%s, name=%s\n", subkey, name);
 
-    hr = RegOpenKey(config_key, subkey, &key);
+    hr = RegOpenKey(root, subkey, &key);
     if (hr != S_OK) return hr;
 
     hr = RegDeleteValue(key, name);
@@ -185,10 +185,10 @@ static HRESULT remove_value(const char *subkey, const char *name)
 }
 
 /* removes the requested subkey from the registry, assuming it exists */
-static HRESULT remove_path(char *section) {
+static HRESULT remove_path(HKEY root, char *section) {
     WINE_TRACE("section=%s\n", section);
 
-    return RegDeleteKey(config_key, section);
+    return RegDeleteKey(root, section);
 }
 
 
@@ -209,7 +209,8 @@ static HRESULT remove_path(char *section) {
 struct setting
 {
     struct list entry;
-    char *path;   /* path in the registry rooted at the config key  */
+    HKEY root;    /* the key on which path is rooted */
+    char *path;   /* path in the registry rooted at root  */
     char *name;   /* name of the registry value. if null, this means delete the key  */
     char *value;  /* contents of the registry value. if null, this means delete the value  */
 };
@@ -240,7 +241,7 @@ static void free_setting(struct setting *setting)
  * If already in the list, the contents as given there will be
  * returned. You are expected to HeapFree the result.
  */
-char *get_reg_key(const char *path, const char *name, const char *def)
+char *get_reg_key(HKEY root, const char *path, const char *name, const char *def)
 {
     struct list *cursor;
     struct setting *s;
@@ -253,6 +254,7 @@ char *get_reg_key(const char *path, const char *name, const char *def)
     {
         s = LIST_ENTRY(cursor, struct setting, entry);
 
+        if (root != s->root) continue;
         if (strcasecmp(path, s->path) != 0) continue;
         if (strcasecmp(name, s->name) != 0) continue;
 
@@ -261,7 +263,7 @@ char *get_reg_key(const char *path, const char *name, const char *def)
     }
 
     /* no, so get from the registry */
-    val = get_config_key(path, name, def);
+    val = get_config_key(root, path, name, def);
 
     WINE_TRACE("returning %s\n", val);
 
@@ -281,7 +283,7 @@ char *get_reg_key(const char *path, const char *name, const char *def)
  *
  * These values will be copied when necessary.
  */
-void set_reg_key(const char *path, const char *name, const char *value)
+void set_reg_key(HKEY root, const char *path, const char *name, const char *value)
 {
     struct list *cursor;
     struct setting *s;
@@ -295,6 +297,7 @@ void set_reg_key(const char *path, const char *name, const char *value)
     {
         struct setting *s = LIST_ENTRY(cursor, struct setting, entry);
 
+        if (root != s->root) continue;
         if (strcasecmp(s->path, path) != 0) continue;
         if ((s->name && name) && strcasecmp(s->name, name) != 0) continue;
 
@@ -323,6 +326,7 @@ void set_reg_key(const char *path, const char *name, const char *value)
 
     /* otherwise add a new setting for it  */
     s = HeapAlloc(GetProcessHeap(), 0, sizeof(struct setting));
+    s->root  = root;
     s->path  = strdupA(path);
     s->name  = name  ? strdupA(name)  : NULL;
     s->value = value ? strdupA(value) : NULL;
@@ -337,7 +341,7 @@ void set_reg_key(const char *path, const char *name, const char *value)
  * you are expected to HeapFree each element of the array, which is null
  * terminated, as well as the array itself.
  */
-char **enumerate_values(char *path)
+char **enumerate_values(HKEY root, char *path)
 {
     HKEY key;
     DWORD res, i = 0;
@@ -345,7 +349,7 @@ char **enumerate_values(char *path)
     int valueslen = 0;
     struct list *cursor;
 
-    res = RegOpenKey(config_key, path, &key);
+    res = RegOpenKey(root, path, &key);
     if (res == ERROR_SUCCESS)
     {
         while (TRUE)
@@ -444,9 +448,9 @@ char **enumerate_values(char *path)
  * returns true if the given key/value pair exists in the registry or
  * has been written to.
  */
-BOOL reg_key_exists(const char *path, const char *name)
+BOOL reg_key_exists(HKEY root, const char *path, const char *name)
 {
-    char *val = get_reg_key(path, name, NULL);
+    char *val = get_reg_key(root, path, name, NULL);
 
     if (val)
     {
@@ -462,13 +466,13 @@ static void process_setting(struct setting *s)
     if (s->value)
     {
 	WINE_TRACE("Setting %s:%s to '%s'\n", s->path, s->name, s->value);
-        set_config_key(s->path, s->name, s->value);
+        set_config_key(s->root, s->path, s->name, s->value);
     }
     else
     {
         /* NULL name means remove that path/section entirely */
-	if (s->path && s->name) remove_value(s->path, s->name);
-        else if (s->path && !s->name) remove_path(s->path);
+	if (s->path && s->name) remove_value(s->root, s->path, s->name);
+        else if (s->path && !s->name) remove_path(s->root, s->path);
     }
 }
 

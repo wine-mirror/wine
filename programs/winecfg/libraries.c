@@ -174,7 +174,7 @@ static void clear_settings(HWND dialog)
 
 static void load_library_settings(HWND dialog)
 {
-    char **overrides = enumerate_values(keypath("DllOverrides"));
+    char **overrides = enumerate_values(config_key, keypath("DllOverrides"));
     char **p;
     int sel, count = 0;
 
@@ -201,7 +201,7 @@ static void load_library_settings(HWND dialog)
         const char *label;
         struct dll *dll;
 
-        value = get_reg_key(keypath("DllOverrides"), *p, NULL);
+        value = get_reg_key(config_key, keypath("DllOverrides"), *p, NULL);
 
         label = mode_to_label(string_to_mode(value));
         
@@ -273,7 +273,7 @@ static void set_dllmode(HWND dialog, DWORD id)
     WINE_TRACE("Setting %s to %s\n", dll->name, str);
     
     SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
-    set_reg_key(keypath("DllOverrides"), dll->name, str);
+    set_reg_key(config_key, keypath("DllOverrides"), dll->name, str);
 
     load_library_settings(dialog);  /* ... and refresh  */
 }
@@ -292,7 +292,7 @@ static void on_add_click(HWND dialog)
     WINE_TRACE("Adding %s as native, builtin", buffer);
     
     SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
-    set_reg_key(keypath("DllOverrides"), buffer, "native,builtin");
+    set_reg_key(config_key, keypath("DllOverrides"), buffer, "native,builtin");
 
     load_library_settings(dialog);
 
@@ -313,7 +313,7 @@ static void on_remove_click(HWND dialog)
     SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_DELETESTRING, sel, 0);
 
     SendMessage(GetParent(dialog), PSM_CHANGED, 0, 0);
-    set_reg_key(keypath("DllOverrides"), dll->name, NULL);
+    set_reg_key(config_key, keypath("DllOverrides"), dll->name, NULL);
 
     HeapFree(GetProcessHeap(), 0, dll->name);
     HeapFree(GetProcessHeap(), 0, dll);

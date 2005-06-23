@@ -310,14 +310,14 @@ static int fill_drives_list(HWND dialog)
 static void on_options_click(HWND dialog)
 {
     if (IsDlgButtonChecked(dialog, IDC_SHOW_DIRSYM_LINK) == BST_CHECKED)
-        set_reg_key("", "ShowDirSymLinks", "Y");
+        set_reg_key(config_key, "", "ShowDirSymLinks", "Y");
     else
-        set_reg_key("", "ShowDirSymLinks", "N");
+        set_reg_key(config_key, "", "ShowDirSymLinks", "N");
 
     if (IsDlgButtonChecked(dialog, IDC_SHOW_DOT_FILES) == BST_CHECKED)
-        set_reg_key("", "ShowDotFiles", "Y");
+        set_reg_key(config_key, "", "ShowDotFiles", "Y");
     else
-        set_reg_key("", "ShowDotFiles", "N");
+        set_reg_key(config_key, "", "ShowDotFiles", "N");
 }
 
 static void on_add_click(HWND dialog)
@@ -684,10 +684,10 @@ static void init_listview_columns(HWND dialog)
 
 static void load_drive_options(HWND dialog)
 {
-    if (!strcmp(get_reg_key("", "ShowDirSymLinks", "N"), "Y"))
+    if (!strcmp(get_reg_key(config_key, "", "ShowDirSymLinks", "N"), "Y"))
         CheckDlgButton(dialog, IDC_SHOW_DIRSYM_LINK, BST_CHECKED);
 
-    if (!strcmp(get_reg_key("", "ShowDotFiles", "N"), "Y"))
+    if (!strcmp(get_reg_key(config_key, "", "ShowDotFiles", "N"), "Y"))
         CheckDlgButton(dialog, IDC_SHOW_DOT_FILES, BST_CHECKED);
 }
 

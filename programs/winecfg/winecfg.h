@@ -44,15 +44,18 @@ extern char *current_app; /* NULL means editing global settings  */
    set_reg_key won't be committed to the registry until process_all_settings is called,
    however get_reg_key will still return accurate information.
 
+   The root HKEY has to be non-ambiguous. So only the registry roots (HKCU, HKLM, ...) or
+   the global config_key are allowed here.
+   
    You are expected to HeapFree the result of get_reg_key. The parameters to set_reg_key will
    be copied, so free them too when necessary.
  */
 
-void set_reg_key(const char *path, const char *name, const char *value);
-char *get_reg_key(const char *path, const char *name, const char *def);
-BOOL reg_key_exists(const char *path, const char *name);
+void set_reg_key(HKEY root, const char *path, const char *name, const char *value);
+char *get_reg_key(HKEY root, const char *path, const char *name, const char *def);
+BOOL reg_key_exists(HKEY root, const char *path, const char *name);
 void apply(void);
-char **enumerate_values(char *path);
+char **enumerate_values(HKEY root, char *path);
 
 /* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
    the user is editing the global settings.
