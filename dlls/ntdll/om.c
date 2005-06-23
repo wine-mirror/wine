@@ -437,7 +437,7 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(
 	FIXME("(%p,0x%08lx,%p) stub\n",
 	LinkHandle, DesiredAccess, ObjectAttributes);
 	dump_ObjectAttributes(ObjectAttributes);
-	return 0;
+        return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
 /******************************************************************************
