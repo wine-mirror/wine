@@ -629,17 +629,17 @@ static void assign_ordinals( DLLSPEC *spec )
     }
 
     /* now assign ordinals to the rest */
-    for (i = 0, ordinal = spec->base; i < spec->nb_names; i++)
+    for (i = 0, ordinal = spec->base; i < spec->nb_entry_points; i++)
     {
-        if (spec->names[i]->ordinal != -1) continue;  /* already has an ordinal */
+        if (spec->entry_points[i].ordinal != -1) continue;
         while (spec->ordinals[ordinal]) ordinal++;
         if (ordinal >= MAX_ORDINALS)
         {
-            current_line = spec->names[i]->lineno;
+            current_line = spec->entry_points[i].lineno;
             fatal_error( "Too many functions defined (max %d)\n", MAX_ORDINALS );
         }
-        spec->names[i]->ordinal = ordinal;
-        spec->ordinals[ordinal] = spec->names[i];
+        spec->entry_points[i].ordinal = ordinal;
+        spec->ordinals[ordinal] = &spec->entry_points[i];
     }
     if (ordinal > spec->limit) spec->limit = ordinal;
 }
