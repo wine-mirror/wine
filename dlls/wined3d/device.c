@@ -83,6 +83,7 @@ inline static Display *get_display( HDC hdc )
     _basetexture.levels     = Levels; \
     _basetexture.filterType = (Usage & D3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
     _basetexture.LOD        = 0; \
+    _basetexture.dirty      = TRUE; \
 }
 
 /**********************************************************
@@ -443,7 +444,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     }
     
     if(MultisampleQuality > 0){
-        FIXME("MultisampleQuality set to %ld, bstituting 0  \n" , MultisampleQuality);  
+        FIXME("MultisampleQuality set to %ld, substituting 0  \n" , MultisampleQuality);
         MultisampleQuality=0;
     }
 
@@ -546,7 +547,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     }
     
 
-    IWineD3DSurface_CleanDirtyRect(*ppSurface);
+    IWineD3DSurface_AddDirtyRect(*ppSurface, NULL);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),
            (WINED3DFMT_D16_LOCKABLE == Format), *ppSurface, object->resource.allocatedMemory, object->resource.size);

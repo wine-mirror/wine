@@ -31,23 +31,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
    ******************************************* */
 HRESULT WINAPI IWineD3DBaseTextureImpl_QueryInterface(IWineD3DBaseTexture *iface, REFIID riid, LPVOID *ppobj)
 {
-    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;   
-    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);        
-    /* FIXME: This needs to extend an IWineD3DBaseObject */        
-    if (IsEqualGUID(riid, &IID_IUnknown)     
-        || IsEqualGUID(riid, &IID_IWineD3DResource)   
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
+    /* FIXME: This needs to extend an IWineD3DBaseObject */
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DResource)
         || IsEqualGUID(riid, &IID_IWineD3DBaseTexture)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
-    }        
+    }
     return E_NOINTERFACE;
 }
 
 ULONG WINAPI IWineD3DBaseTextureImpl_AddRef(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
-    
+
     TRACE("(%p) : AddRef increasing from %ld\n", This,ref - 1);
     IUnknown_AddRef(This->resource.parent);
     return ref;
@@ -67,7 +67,7 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
 }
 
 /* class static */
-void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface){
+void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     TRACE("(%p) : ", This);
     if (This->baseTexture.textureName != 0) {
@@ -126,35 +126,35 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_GetParent(IWineD3DBaseTexture *iface, IUn
  * so just pretend that they work unless something really needs a failure. */
 DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    
+
     if (This->resource.pool != D3DPOOL_MANAGED) {
         return  D3DERR_INVALIDCALL;
-    }    
-    
+    }
+
     if(LODNew >= This->baseTexture.levels)
         LODNew = This->baseTexture.levels - 1;
      This->baseTexture.LOD = LODNew;
-    
+
     TRACE("(%p) : set bogus LOD to %d \n", This, This->baseTexture.LOD);
-    
+
     return This->baseTexture.LOD;
 }
 
 DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    
+
     if (This->resource.pool != D3DPOOL_MANAGED) {
         return  D3DERR_INVALIDCALL;
     }
-    
+
     TRACE("(%p) : returning %d \n", This, This->baseTexture.LOD);
-    
+
     return This->baseTexture.LOD;
 }
 
 DWORD WINAPI IWineD3DBaseTextureImpl_GetLevelCount(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    TRACE("(%p) : returning %d\n", This, This->baseTexture.levels);    
+    TRACE("(%p) : returning %d\n", This, This->baseTexture.levels);
     return This->baseTexture.levels;
 }
 
@@ -182,7 +182,7 @@ D3DTEXTUREFILTERTYPE WINAPI IWineD3DBaseTextureImpl_GetAutoGenFilterType(IWineD3
 
 void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface) {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-  /* TODO: implement filters using GL_SGI_generate_mipmaps http://oss.sgi.com/projects/ogl-sample/registry/SGIS/generate_mipmap.txt */  
+  /* TODO: implement filters using GL_SGI_generate_mipmaps http://oss.sgi.com/projects/ogl-sample/registry/SGIS/generate_mipmap.txt */
   FIXME("(%p) : stub\n", This);
   return ;
 }
@@ -203,15 +203,15 @@ BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface) {
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    HRESULT hr = D3D_OK;
     UINT textureDimensions;
-
     TRACE("(%p) : About to bind texture\n", This);
 
-    textureDimensions = IWineD3DCubeTexture_GetTextureDimensions(iface);
+    textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     ENTER_GL();
 #if 0 /* TODO: context manager support */
      IWineD3DContextManager_PushState(This->contextManager, textureDimensions, ENABLED, NOW /* make sure the state is applied now */);
-#else    
+#else
     glEnable(textureDimensions);
 #endif
 
@@ -225,7 +225,8 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             GLclampf tmp;
             tmp = 0.9f;
             glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
-         }        
+         }
+        IWineD3DBaseTexture_SetDirty(iface, TRUE);
     }
 
     /* Bind the texture */
@@ -234,34 +235,37 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         checkGLcall("glBindTexture");
     } else { /* this only happened if we've run out of openGL textures */
         WARN("This texture doesn't have an openGL texture assigned to it\n");
-        return D3DERR_INVALIDCALL;
+        hr =  D3DERR_INVALIDCALL;
     }
 
-    /* Always need to reset the number of mipmap levels when rebinding as it is
-       a property of the active texture unit, and another texture may have set it
-       to a different value                                                       */
-    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-    glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
-    checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
-    
-    return D3D_OK;
+    if (hr == D3D_OK) {
+        /* Always need to reset the number of mipmap levels when rebinding as it is
+        a property of the active texture unit, and another texture may have set it
+        to a different value                                                       */
+        TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+        glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+        checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+    }
+    LEAVE_GL();
+    return hr;
 }
+
 HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     UINT textureDimensions;
 
     TRACE("(%p) : About to bind texture\n", This);
-    textureDimensions = IWineD3DCubeTexture_GetTextureDimensions(iface);
+    textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
 
     ENTER_GL();
-    
+
     glBindTexture(textureDimensions, 0);
 #if 0 /* TODO: context manager support */
-     IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_CUBE_MAP_ARB, ENABLED, NOW /* make sure the state is applied now */);
-#else    
+     IWineD3DContextManager_PopState(This->contextManager, textureDimensions, ENABLED, NOW /* make sure the state is applied now */);
+#else
     glDisable(textureDimensions);
 #endif
-    
+
     LEAVE_GL();
     return D3D_OK;
 }
@@ -287,7 +291,6 @@ static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_GetPriority,
     IWineD3DBaseTextureImpl_PreLoad,
     IWineD3DBaseTextureImpl_GetType,
-    
     /*IWineD3DBaseTexture*/
     IWineD3DBaseTextureImpl_SetLOD,
     IWineD3DBaseTextureImpl_GetLOD,
