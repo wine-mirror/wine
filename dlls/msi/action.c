@@ -1016,8 +1016,68 @@ static int load_component(MSIPACKAGE* package, MSIRECORD * row)
     return index;
 }
 
-static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
+typedef struct {
+    MSIPACKAGE *package;
+    INT index;
+    INT cnt;
+} _ilfs;
+
+static UINT iterate_component_check(MSIRECORD *row, LPVOID param)
 {
+    _ilfs* ilfs= (_ilfs*)param;
+    INT c_indx;
+
+    c_indx = load_component(ilfs->package,row);
+
+    ilfs->package->features[ilfs->index].Components[ilfs->cnt] = c_indx;
+    ilfs->package->features[ilfs->index].ComponentCount ++;
+    TRACE("Loaded new component to index %i\n",c_indx);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT iterate_load_featurecomponents(MSIRECORD *row, LPVOID param)
+{
+    _ilfs* ilfs= (_ilfs*)param;
+    LPCWSTR component;
+    DWORD rc;
+    INT c_indx;
+    INT cnt = ilfs->package->features[ilfs->index].ComponentCount;
+    MSIQUERY * view;
+    static const WCHAR Query[] = 
+        {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
+         '`','C','o','m','p','o','n','e','n','t','`',' ',
+         'W','H','E','R','E',' ', 
+         '`','C','o','m','p','o','n','e','n','t','`',' ',
+         '=','\'','%','s','\'',0};
+
+    component = MSI_RecordGetString(row,1);
+
+    /* check to see if the component is already loaded */
+    c_indx = get_loaded_component(ilfs->package,component);
+    if (c_indx != -1)
+    {
+        TRACE("Component %s already loaded at %i\n", debugstr_w(component),
+                        c_indx);
+        ilfs->package->features[ilfs->index].Components[cnt] = c_indx;
+        ilfs->package->features[ilfs->index].ComponentCount ++;
+        return ERROR_SUCCESS;
+    }
+
+    rc = MSI_OpenQuery(ilfs->package->db, &view, Query, component);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    ilfs->cnt = cnt;
+    rc = MSI_IterateRecords(view, NULL, iterate_component_check, ilfs);
+    msiobj_release( &view->hdr );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT load_feature(MSIRECORD * row, LPVOID param)
+{
+    MSIPACKAGE* package = (MSIPACKAGE*)param;
     int index = package->loaded_features;
     DWORD sz;
     static const WCHAR Query1[] = 
@@ -1027,17 +1087,12 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
          'C','o','m','p','o','n','e','n','t','s','`',' ',
          'W','H','E','R','E',' ',
          '`','F','e', 'a','t','u','r','e','_','`',' ','=','\'','%','s','\'',0};
-    static const WCHAR Query2[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ', 
-         '`','C','o','m','p','o','n','e','n','t','`',' ',
-         'W','H','E','R','E',' ', 
-         '`','C','o','m','p','o','n','e','n','t','`',' ',
-         '=','\'','%','s','\'',0};
     MSIQUERY * view;
-    MSIQUERY * view2;
-    MSIRECORD * row2;
-    MSIRECORD * row3;
     UINT    rc;
+    _ilfs ilfs;
+
+    ilfs.package = package;
+    ilfs.index = index;
 
     /* fill in the data */
 
@@ -1084,79 +1139,20 @@ static void load_feature(MSIPACKAGE* package, MSIRECORD * row)
 
     /* load feature components */
 
-    rc = MSI_OpenQuery(package->db, &view, Query1, package->features[index].Feature);
+    rc = MSI_OpenQuery(package->db, &view, Query1, 
+                    package->features[index].Feature);
     if (rc != ERROR_SUCCESS)
-        return;
-    rc = MSI_ViewExecute(view,0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return;
-    }
-    while (1)
-    {
-        LPCWSTR component;
-        DWORD rc;
-        INT c_indx;
-        INT cnt = package->features[index].ComponentCount;
+        return ERROR_SUCCESS;
 
-        rc = MSI_ViewFetch(view,&row2);
-        if (rc != ERROR_SUCCESS)
-            break;
-
-        component = MSI_RecordGetString(row2,1);
-
-        /* check to see if the component is already loaded */
-        c_indx = get_loaded_component(package,component);
-        if (c_indx != -1)
-        {
-            TRACE("Component %s already loaded at %i\n", debugstr_w(component),
-                  c_indx);
-            package->features[index].Components[cnt] = c_indx;
-            package->features[index].ComponentCount ++;
-            msiobj_release( &row2->hdr );
-            continue;
-        }
-
-        rc = MSI_OpenQuery(package->db, &view2, Query2, component);
-        if (rc != ERROR_SUCCESS)
-        {
-            msiobj_release( &row2->hdr );
-            continue;
-        }
-        rc = MSI_ViewExecute(view2,0);
-        if (rc != ERROR_SUCCESS)
-        {
-            msiobj_release( &row2->hdr );
-            MSI_ViewClose(view2);
-            msiobj_release( &view2->hdr );  
-            continue;
-        }
-        while (1)
-        {
-            DWORD rc;
-
-            rc = MSI_ViewFetch(view2,&row3);
-            if (rc != ERROR_SUCCESS)
-                break;
-            c_indx = load_component(package,row3);
-            msiobj_release( &row3->hdr );
-
-            package->features[index].Components[cnt] = c_indx;
-            package->features[index].ComponentCount ++;
-            TRACE("Loaded new component to index %i\n",c_indx);
-        }
-        MSI_ViewClose(view2);
-        msiobj_release( &view2->hdr );
-        msiobj_release( &row2->hdr );
-    }
-    MSI_ViewClose(view);
+    MSI_IterateRecords(view, NULL, iterate_load_featurecomponents , &ilfs);
     msiobj_release(&view->hdr);
+
+    return ERROR_SUCCESS;
 }
 
-static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
+static UINT load_file(MSIRECORD *row, LPVOID param)
 {
+    MSIPACKAGE* package = (MSIPACKAGE*)param;
     DWORD index = package->loaded_files;
     LPCWSTR component;
 
@@ -1203,7 +1199,6 @@ static UINT load_file(MSIPACKAGE* package, MSIRECORD * row)
 static UINT load_all_files(MSIPACKAGE *package)
 {
     MSIQUERY * view;
-    MSIRECORD * row;
     UINT rc;
     static const WCHAR Query[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
@@ -1216,27 +1211,8 @@ static UINT load_all_files(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
     if (rc != ERROR_SUCCESS)
         return ERROR_SUCCESS;
-   
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return ERROR_SUCCESS;
-    }
 
-    while (1)
-    {
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-        load_file(package,row);
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, load_file, package);
     msiobj_release(&view->hdr);
 
     return ERROR_SUCCESS;
@@ -1259,7 +1235,6 @@ static UINT load_all_files(MSIPACKAGE *package)
 static UINT ACTION_CostInitialize(MSIPACKAGE *package)
 {
     MSIQUERY * view;
-    MSIRECORD * row;
     UINT rc;
     static const WCHAR Query_all[] =
         {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
@@ -1280,25 +1255,8 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     rc = MSI_DatabaseOpenViewW(package->db,Query_all,&view);
     if (rc != ERROR_SUCCESS)
         return rc;
-    rc = MSI_ViewExecute(view,0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-    while (1)
-    {
-        DWORD rc;
 
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-            break;
-       
-        load_feature(package,row); 
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, load_feature, package);
     msiobj_release(&view->hdr);
 
     load_all_files(package);
