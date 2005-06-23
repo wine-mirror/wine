@@ -34,6 +34,9 @@
 #include "winnls.h"
 #include "ole2.h"
 
+#include "winreg.h"
+#include "shlwapi.h"
+
 #include "query.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
@@ -773,4 +776,57 @@ UINT MSI_RecordGetIStream( MSIRECORD *rec, unsigned int iField, IStream **pstm)
     IStream_AddRef( *pstm );
 
     return ERROR_SUCCESS;
+}
+
+static UINT msi_dump_stream_to_file( IStream *stm, LPCWSTR name )
+{
+    ULARGE_INTEGER size;
+    LARGE_INTEGER pos;
+    IStream *out;
+    DWORD stgm;
+    HRESULT r;
+
+    stgm = STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_FAILIFTHERE;
+    r = SHCreateStreamOnFileW( name, stgm, &out );
+    if( FAILED( r ) )
+        return ERROR_FUNCTION_FAILED;
+
+    pos.QuadPart = 0;
+    r = IStream_Seek( stm, pos, STREAM_SEEK_END, &size );
+    if( FAILED( r ) )
+        goto end;
+
+    pos.QuadPart = 0;
+    r = IStream_Seek( stm, pos, STREAM_SEEK_SET, NULL );
+    if( FAILED( r ) )
+        goto end;
+
+    r = IStream_CopyTo( stm, out, size, NULL, NULL );
+
+end:
+    IStream_Release( out );
+    if( FAILED( r ) )
+        return ERROR_FUNCTION_FAILED;
+    return ERROR_SUCCESS;
+}
+
+UINT MSI_RecordStreamToFile( MSIRECORD *rec, unsigned int iField, LPCWSTR name )
+{
+    IStream *stm = NULL;
+    UINT r;
+
+    TRACE("%p %u %s\n", rec, iField, debugstr_w(name));
+
+    msiobj_lock( &rec->hdr );
+
+    r = MSI_RecordGetIStream( rec, iField, &stm );
+    if( r == ERROR_SUCCESS )
+    {
+        r = msi_dump_stream_to_file( stm, name );
+        IStream_Release( stm );
+    }
+
+    msiobj_unlock( &rec->hdr );
+
+    return r;
 }

@@ -54,6 +54,7 @@ struct msi_control_tag
     LPWSTR property;
     LPWSTR value;
     IPicture *pic;
+    HICON hIcon;
     WCHAR name[1];
 };
 
@@ -113,6 +114,7 @@ static const WCHAR szMaskedEdit[] = { 'M','a','s','k','e','d','E','d','i','t',0 
 static const WCHAR szPathEdit[] = { 'P','a','t','h','E','d','i','t',0 };
 static const WCHAR szRadioButtonGroup[] = { 
     'R','a','d','i','o','B','u','t','t','o','n','G','r','o','u','p',0 };
+static const WCHAR szIcon[] = { 'I','c','o','n',0 };
 
 static UINT msi_dialog_checkbox_handler( msi_dialog *, msi_control *, WPARAM );
 static void msi_dialog_checkbox_sync_state( msi_dialog *, msi_control * );
@@ -296,6 +298,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->property = NULL;
     control->value = NULL;
     control->pic = NULL;
+    control->hIcon = NULL;
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
@@ -535,7 +538,7 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
-static UINT msi_load_bitmap( MSIDATABASE *db, LPCWSTR name, IPicture **pic )
+static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
 {
     const static WCHAR query[] = {
         's','e','l','e','c','t',' ','*',' ',
@@ -543,11 +546,17 @@ static UINT msi_load_bitmap( MSIDATABASE *db, LPCWSTR name, IPicture **pic )
         'w','h','e','r','e',' ',
             '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0
     };
+
+    return MSI_QueryGetRecord( db, query, name );
+}
+
+static UINT msi_load_bitmap( MSIDATABASE *db, LPCWSTR name, IPicture **pic )
+{
     MSIRECORD *rec = NULL;
     IStream *stm = NULL;
     UINT r;
 
-    rec = MSI_QueryGetRecord( db, query, name );
+    rec = msi_get_binary_record( db, name );
     if( !rec )
         return ERROR_FUNCTION_FAILED;
 
@@ -584,6 +593,108 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
         control->pic = pic;
     }
     
+    return ERROR_SUCCESS;
+}
+
+static LPWSTR msi_create_tmp_path(void)
+{
+    WCHAR tmp[MAX_PATH];
+    LPWSTR path = NULL;
+    static const WCHAR prefix[] = { 'm','s','i',0 };
+    DWORD len, r;
+
+    r = GetTempPathW( MAX_PATH, tmp );
+    if( !r )
+        return path;
+    len = lstrlenW( tmp ) + 20;
+    path = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+    if( path )
+    {
+        r = GetTempFileNameW( tmp, prefix, 0, path );
+        if (!r)
+        {
+            HeapFree( GetProcessHeap(), 0, path );
+            path = NULL;
+        }
+    }
+    return path;
+}
+
+static UINT
+msi_load_icon( MSIDATABASE *db, LPCWSTR name, DWORD attributes, HICON *picon )
+{
+    UINT r = ERROR_FUNCTION_FAILED;
+    LPWSTR tmp;
+    MSIRECORD *rec;
+    HICON hicon = 0;
+
+    TRACE("loading %s\n", debugstr_w( name ) );
+
+    tmp = msi_create_tmp_path();
+    if( !tmp )
+        return r;
+
+    rec = msi_get_binary_record( db, name );
+    if( rec )
+    {
+        r = MSI_RecordStreamToFile( rec, 2, tmp );
+        if( r == ERROR_SUCCESS )
+        {
+            DWORD cx = 0, cy = 0, flags = LR_LOADFROMFILE | LR_DEFAULTSIZE;
+            
+            if( attributes & msidbControlAttributesFixedSize )
+            {
+                flags &= ~LR_DEFAULTSIZE;
+                if( attributes & msidbControlAttributesIconSize16 )
+                {
+                    cx += 16;
+                    cy += 16;
+                }
+                if( attributes & msidbControlAttributesIconSize32 )
+                {
+                    cx += 32;
+                    cy += 32;
+                }
+                /* msidbControlAttributesIconSize48 handled by above logic */
+            }
+            
+            hicon = LoadImageW( 0, tmp, IMAGE_ICON, cx, cy, flags );
+            if( hicon )
+                *picon = hicon;
+            else
+                ERR("failed to load icon from %s\n", debugstr_w( tmp ));
+            DeleteFileW( tmp );
+        }
+        msiobj_release( &rec->hdr );
+    }
+
+    HeapFree( GetProcessHeap(), 0, tmp );
+
+    return r;
+}
+
+static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    msi_control *control;
+    DWORD attributes;
+    HICON hIcon = 0;
+    LPCWSTR text;
+    UINT r;
+
+    TRACE("\n");
+
+    control = msi_dialog_add_control( dialog, rec, szStatic,
+                            SS_ICON | SS_CENTERIMAGE | WS_GROUP );
+    text = MSI_RecordGetString( rec, 10 );
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    r = msi_load_icon( dialog->package->db, text, attributes, &hIcon );
+    if( r == ERROR_SUCCESS )
+    {
+        r = SendMessageW( control->hwnd, STM_SETICON, (WPARAM) hIcon, 0 );
+        control->hIcon = hIcon;
+    }
+    else
+        ERR("Failed to load bitmap %s\n", debugstr_w(text));
     return ERROR_SUCCESS;
 }
 
@@ -982,6 +1093,7 @@ struct control_handler msi_dialog_handler[] =
     { szMaskedEdit, msi_dialog_maskedit_control },
     { szPathEdit, msi_dialog_pathedit_control },
     { szRadioButtonGroup, msi_dialog_radiogroup_control },
+    { szIcon, msi_dialog_icon_control },
 };
 
 #define NUM_CONTROL_TYPES (sizeof msi_dialog_handler/sizeof msi_dialog_handler[0])
@@ -1634,6 +1746,8 @@ void msi_dialog_destroy( msi_dialog *dialog )
         HeapFree( GetProcessHeap(), 0, t->value );
         if( t->pic )
             IPicture_Release( t->pic );
+        if( t->hIcon )
+            DestroyIcon( t->hIcon );
         HeapFree( GetProcessHeap(), 0, t );
     }
 
