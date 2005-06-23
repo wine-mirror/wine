@@ -79,6 +79,12 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IOleInPlaceActiveObject, riid)) {
         TRACE("(%p)->(IID_IOleInPlaceActiveObject, %p)\n", This, ppvObject);
         *ppvObject = ACTOBJ(This);
+    }else if(IsEqualGUID(&IID_IViewObject, riid)) {
+        TRACE("(%p)->(IID_IViewObject, %p)\n", This, ppvObject);
+        *ppvObject = VIEWOBJ(This);
+    }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
+        TRACE("(%p)->(IID_IViewObject2, %p)\n", This, ppvObject);
+        *ppvObject = VIEWOBJ2(This);
     }
 
     if(*ppvObject) {

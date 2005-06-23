@@ -374,9 +374,103 @@ static const IOleDocumentViewVtbl OleDocumentViewVtbl = {
     OleDocumentView_Clone
 };
 
+/**********************************************************
+ * IViewObject implementation
+ */
+
+#define VIEWOBJ_THIS \
+    HTMLDocument* const This=(HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpViewObject2Vtbl));
+
+static HRESULT WINAPI ViewObject_QueryInterface(IViewObject2 *iface, REFIID riid, void **ppvObject)
+{
+    VIEWOBJ_THIS
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
+}
+
+static ULONG WINAPI ViewObject_AddRef(IViewObject2 *iface)
+{
+    VIEWOBJ_THIS
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI ViewObject_Release(IViewObject2 *iface)
+{
+    VIEWOBJ_THIS
+    return IHTMLDocument2_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI ViewObject_Draw(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect,
+        DVTARGETDEVICE *ptd, HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds,
+        LPCRECTL lprcWBounds, BOOL (CALLBACK *pfnContinue)(ULONG_PTR dwContinue), ULONG_PTR dwContinue)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%ld %ld %p %p %p %p %p %p %p %ld)\n", This, dwDrawAspect, lindex, pvAspect,
+            ptd, hdcTargetDev, hdcDraw, lprcBounds, lprcWBounds, pfnContinue, dwContinue);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_GetColorSet(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect,
+        DVTARGETDEVICE *ptd, HDC hicTargetDev, LOGPALETTE **ppColorSet)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, dwDrawAspect, lindex, pvAspect, ptd, hicTargetDev, ppColorSet);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_Freeze(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex,
+        void *pvAspect, DWORD *pdwFreeze)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, dwDrawAspect, lindex, pvAspect, pdwFreeze);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_Unfreeze(IViewObject2 *iface, DWORD dwFreeze)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%ld)\n", This, dwFreeze);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_SetAdvise(IViewObject2 *iface, DWORD aspects, DWORD advf, IAdviseSink *pAdvSink)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%ld %ld %p)\n", This, aspects, advf, pAdvSink);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_GetAdvise(IViewObject2 *iface, DWORD *pAspects, DWORD *pAdvf, IAdviseSink **ppAdvSink)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%p %p %p)\n", This, pAspects, pAdvf, ppAdvSink);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ViewObject_GetExtent(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex,
+                                DVTARGETDEVICE* ptd, LPSIZEL lpsizel)
+{
+    VIEWOBJ_THIS
+    FIXME("(%p)->(%ld %ld %p %p)\n", This, dwDrawAspect, lindex, ptd, lpsizel);
+    return E_NOTIMPL;
+}
+
+static const IViewObject2Vtbl ViewObjectVtbl = {
+    ViewObject_QueryInterface,
+    ViewObject_AddRef,
+    ViewObject_Release,
+    ViewObject_Draw,
+    ViewObject_GetColorSet,
+    ViewObject_Freeze,
+    ViewObject_Unfreeze,
+    ViewObject_SetAdvise,
+    ViewObject_GetAdvise,
+    ViewObject_GetExtent
+};
+
 void HTMLDocument_View_Init(HTMLDocument *This)
 {
     This->lpOleDocumentViewVtbl = &OleDocumentViewVtbl;
+    This->lpViewObject2Vtbl = &ViewObjectVtbl;
 
     This->ipsite = NULL;
     This->frame = NULL;

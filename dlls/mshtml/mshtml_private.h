@@ -25,6 +25,7 @@ typedef struct {
     const IOleDocumentVtbl            *lpOleDocumentVtbl;
     const IOleDocumentViewVtbl        *lpOleDocumentViewVtbl;
     const IOleInPlaceActiveObjectVtbl *lpOleInPlaceActiveObjectVtbl;
+    const IViewObject2Vtbl            *lpViewObject2Vtbl;
 
     ULONG ref;
 
@@ -43,7 +44,9 @@ typedef struct {
 #define OLEOBJ(x)        ((IOleObject*)              &(x)->lpOleObjectVtbl)
 #define OLEDOC(x)        ((IOleDocument*)            &(x)->lpOleDocumentVtbl)
 #define DOCVIEW(x)       ((IOleDocumentView*)        &(x)->lpOleDocumentViewVtbl)
-#define ACTOBJ(x)        ((IOleInPlaceActiveObject*)  &(x)->lpOleInPlaceActiveObjectVtbl)
+#define ACTOBJ(x)        ((IOleInPlaceActiveObject*) &(x)->lpOleInPlaceActiveObjectVtbl)
+#define VIEWOBJ(x)       ((IViewObject*)             &(x)->lpViewObject2Vtbl)
+#define VIEWOBJ2(x)      ((IViewObject2*)            &(x)->lpViewObject2Vtbl)
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
