@@ -24,14 +24,127 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "winnls.h"
+#include "winternl.h"
 #include "ntstatus.h"
 #include "psapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);
+
+typedef struct
+{
+    HANDLE hProcess;             
+    PLIST_ENTRY pHead, pCurrent;
+    LDR_MODULE LdrModule;
+} MODULE_ITERATOR;
+
+/***********************************************************************
+ *           PSAPI_ModuleIteratorInit [internal]
+ *
+ * Prepares to iterate through the loaded modules of the given process.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+static BOOL PSAPI_ModuleIteratorInit(MODULE_ITERATOR *iter, HANDLE hProcess)
+{
+    PROCESS_BASIC_INFORMATION pbi;
+    PPEB_LDR_DATA pLdrData;
+    NTSTATUS status;
+
+    /* Get address of PEB */
+    status = NtQueryInformationProcess(hProcess, ProcessBasicInformation,
+                                       &pbi, sizeof(pbi), NULL);
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+
+    /* Read address of LdrData from PEB */
+    if (!ReadProcessMemory(hProcess, &((PPEB)pbi.PebBaseAddress)->LdrData,
+                           &pLdrData, sizeof(pLdrData), NULL))
+        return FALSE;
+
+    /* Read address of first module from LdrData */
+    if (!ReadProcessMemory(hProcess,
+                           &pLdrData->InLoadOrderModuleList.Flink,
+                           &iter->pCurrent, sizeof(iter->pCurrent), NULL))
+        return FALSE;
+
+    iter->pHead = &pLdrData->InLoadOrderModuleList;
+    iter->hProcess = hProcess;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *           PSAPI_ModuleIteratorNext [internal]
+ *
+ * Iterates to the next module.
+ *
+ * RETURNS
+ *   1 : Success
+ *   0 : No more modules
+ *  -1 : Failure
+ *
+ * NOTES
+ *  Every function which uses this routine suffers from a race condition 
+ *  when a module is unloaded during the enumeration which can cause the
+ *  function to fail. As there is no way to lock the loader of another 
+ *  process we can't avoid that.
+ */
+static INT PSAPI_ModuleIteratorNext(MODULE_ITERATOR *iter)
+{
+    if (iter->pCurrent == iter->pHead)
+        return 0;
+
+    if (!ReadProcessMemory(iter->hProcess, CONTAINING_RECORD(iter->pCurrent,
+                           LDR_MODULE, InLoadOrderModuleList),
+                           &iter->LdrModule, sizeof(iter->LdrModule), NULL))
+         return -1;
+    else
+         iter->pCurrent = iter->LdrModule.InLoadOrderModuleList.Flink;
+
+    return 1;
+}
+
+/***********************************************************************
+ *           PSAPI_GetLdrModule [internal]
+ *
+ * Reads the LDR_MODULE structure of the given module.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ */
+
+static BOOL PSAPI_GetLdrModule(HANDLE hProcess, HMODULE hModule, 
+                               LDR_MODULE *pLdrModule)
+{
+    MODULE_ITERATOR iter;
+    INT ret;
+
+    if (!PSAPI_ModuleIteratorInit(&iter, hProcess))
+        return FALSE;
+
+    while ((ret = PSAPI_ModuleIteratorNext(&iter)) > 0)
+        /* When hModule is NULL we return the process image - which will be
+         * the first module since our iterator uses InLoadOrderModuleList */
+        if (!hModule || hModule == (HMODULE)iter.LdrModule.BaseAddress)
+        {
+            *pLdrModule = iter.LdrModule;
+            return TRUE;
+        }
+
+    if (ret == 0)
+        SetLastError(ERROR_INVALID_HANDLE);
+
+    return FALSE;
+}
 
 /***********************************************************************
  *           EmptyWorkingSet (PSAPI.@)
@@ -106,12 +219,12 @@ BOOL WINAPI EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
 
     spi = pBuf;
 
-    for(*lpcbUsed = 0; cb >= sizeof(DWORD); cb -= sizeof(DWORD))
+    for (*lpcbUsed = 0; cb >= sizeof(DWORD); cb -= sizeof(DWORD))
     {
         *lpdwProcessIDs++ = spi->dwProcessID;
         *lpcbUsed += sizeof(DWORD);
 
-        if(spi->dwOffset == 0)
+        if (spi->dwOffset == 0)
             break;
 
         spi = (SYSTEM_PROCESS_INFORMATION *)(((PCHAR)spi) + spi->dwOffset);
@@ -123,83 +236,32 @@ BOOL WINAPI EnumProcesses(DWORD *lpdwProcessIDs, DWORD cb, DWORD *lpcbUsed)
 
 /***********************************************************************
  *           EnumProcessModules (PSAPI.@)
+ *
+ * NOTES
+ *  Returned list is in load order.
  */
-BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule, 
+BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule,
                                DWORD cb, LPDWORD lpcbNeeded)
 {
-    HANDLE	hSnapshot;
-    DWORD	pid;
-    DWORD	count;
-    DWORD	countMax;
-    int         ret;
-    HMODULE     hModule;
+    MODULE_ITERATOR iter;
+    INT ret;
 
-    TRACE("(hProcess=%p, %p, %ld, %p)\n",
-          hProcess, lphModule, cb, lpcbNeeded );
-
-    if ( lphModule == NULL )
-        cb = 0;
-    if ( lpcbNeeded != NULL )
-        *lpcbNeeded = 0;
-
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = hProcess;
-        if ( !wine_server_call_err( req ) )
-            pid = (DWORD)reply->pid;
-        else
-            pid = 0;
-    }
-    SERVER_END_REQ;
-
-    if ( pid == 0 )
-    {
-        FIXME("no pid for hProcess %p\n" ,hProcess);
+    if (!PSAPI_ModuleIteratorInit(&iter, hProcess))
         return FALSE;
-    }
 
-    SERVER_START_REQ( create_snapshot )
+    *lpcbNeeded = 0;
+        
+    while ((ret = PSAPI_ModuleIteratorNext(&iter)) > 0)
     {
-        req->flags   = SNAP_MODULE;
-        req->inherit = FALSE;
-        req->pid     = pid;
-        wine_server_call_err( req );
-        hSnapshot = reply->handle;
-    }
-    SERVER_END_REQ;
-    if ( hSnapshot == 0 )
-    {
-        FIXME("cannot create snapshot\n");
-        return FALSE;
-    }
-    count = 0;
-    countMax = cb / sizeof(HMODULE);
-    for (;;)
-    {
-        SERVER_START_REQ( next_module )
+        if (cb >= sizeof(HMODULE))
         {
-            req->handle = hSnapshot;
-            req->reset = (count == 0);
-            if ((ret = !wine_server_call_err( req )))
-            {
-                hModule = (HMODULE)reply->base;
-            }
+            *lphModule++ = (HMODULE)iter.LdrModule.BaseAddress;
+            cb -= sizeof(HMODULE);
         }
-        SERVER_END_REQ;
-        if ( !ret ) break;
-        TRACE("module 0x%p\n", hModule);
-        if ( count < countMax )
-            lphModule[count] = hModule;
-        count++;
+        *lpcbNeeded += sizeof(HMODULE);
     }
-    CloseHandle( hSnapshot );
 
-    if ( lpcbNeeded != NULL )
-        *lpcbNeeded = sizeof(HMODULE) * count;
-
-    TRACE("return %lu modules\n", count);
-
-    return TRUE;
+    return (ret == 0);
 }
 
 /***********************************************************************
@@ -324,23 +386,18 @@ DWORD WINAPI GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule,
 DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule, 
                                 LPWSTR lpBaseName, DWORD nSize)
 {
-    WCHAR  tmp[MAX_PATH];
-    WCHAR* ptr;
-    int    ptrlen;
+    LDR_MODULE LdrModule;
 
-    if(!lpBaseName || !nSize) {
-        SetLastError(ERROR_INVALID_PARAMETER);
+    if (!PSAPI_GetLdrModule(hProcess, hModule, &LdrModule))
         return 0;
-    }
 
-    if (!GetModuleFileNameExW(hProcess, hModule, tmp,
-                              sizeof(tmp)/sizeof(WCHAR)))
+    nSize = min(LdrModule.BaseDllName.Length / sizeof(WCHAR), nSize);
+    if (!ReadProcessMemory(hProcess, LdrModule.BaseDllName.Buffer,
+                           lpBaseName, nSize * sizeof(WCHAR), NULL))
         return 0;
-    TRACE("%s\n", debugstr_w(tmp));
-    if ((ptr = strrchrW(tmp, '\\')) != NULL) ptr++; else ptr = tmp;
-    ptrlen = strlenW(ptr);
-    memcpy(lpBaseName, ptr, min(ptrlen+1,nSize) * sizeof(WCHAR));
-    return min(ptrlen, nSize);
+
+    lpBaseName[nSize] = 0;
+    return nSize;
 }
 
 /***********************************************************************
@@ -385,39 +442,18 @@ DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule,
 DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule, 
                                   LPWSTR lpFileName, DWORD nSize)
 {
-    DWORD len = 0;
+    LDR_MODULE LdrModule;
+    
+    if(!PSAPI_GetLdrModule(hProcess, hModule, &LdrModule))
+        return 0;
+        
+    nSize = min(LdrModule.FullDllName.Length / sizeof(WCHAR), nSize);
+    if (!ReadProcessMemory(hProcess, LdrModule.FullDllName.Buffer,
+                           lpFileName, nSize * sizeof(WCHAR), NULL))
+        return 0;
 
-    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
-          hProcess, hModule, lpFileName, nSize);
-
-    if (!lpFileName || !nSize) return 0;
-
-    if ( hProcess == GetCurrentProcess() )
-    {
-        DWORD len = GetModuleFileNameW( hModule, lpFileName, nSize );
-        if (nSize) lpFileName[nSize - 1] = '\0';
-        TRACE("return (cur) %s (%lu)\n", debugstr_w(lpFileName), len);
-        return len;
-    }
-
-    lpFileName[0] = 0;
-
-    SERVER_START_REQ( get_dll_info )
-    {
-        req->handle       = hProcess;
-        req->base_address = hModule;
-        wine_server_set_reply( req, lpFileName, (nSize - 1) * sizeof(WCHAR) );
-        if (!wine_server_call_err( req ))
-        {
-            len = wine_server_reply_size(reply) / sizeof(WCHAR);
-            lpFileName[len] = 0;
-        }
-    }
-    SERVER_END_REQ;
-
-    TRACE("return %s (%lu)\n", debugstr_w(lpFileName), len);
-
-    return len;
+    lpFileName[nSize] = 0;
+    return nSize;
 }
 
 /***********************************************************************
@@ -426,27 +462,20 @@ DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule,
 BOOL WINAPI GetModuleInformation(HANDLE hProcess, HMODULE hModule, 
                                  LPMODULEINFO lpmodinfo, DWORD cb)
 {
-    BOOL ret = FALSE;
+    LDR_MODULE LdrModule;
 
-    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
-          hProcess, hModule, lpmodinfo, cb);
-
-    if (cb < sizeof(MODULEINFO)) return FALSE;
-
-    SERVER_START_REQ( get_dll_info )
+    if (cb < sizeof(MODULEINFO)) 
     {
-        req->handle       = hProcess;
-        req->base_address = (void*)hModule;
-        if (!wine_server_call_err( req ))
-        {
-            ret = TRUE;
-            lpmodinfo->lpBaseOfDll = (void*)hModule;
-            lpmodinfo->SizeOfImage = reply->size;
-            lpmodinfo->EntryPoint  = reply->entry_point;
-        }
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
     }
-    SERVER_END_REQ;
 
+    if (!PSAPI_GetLdrModule(hProcess, hModule, &LdrModule))
+        return FALSE;
+
+    lpmodinfo->lpBaseOfDll = LdrModule.BaseAddress;
+    lpmodinfo->SizeOfImage = LdrModule.SizeOfImage;
+    lpmodinfo->EntryPoint  = LdrModule.EntryPoint;
     return TRUE;
 }
 
