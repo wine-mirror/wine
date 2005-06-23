@@ -301,7 +301,7 @@
 @ stub RtlAddActionToRXact
 @ stdcall RtlAddAtomToAtomTable(ptr wstr ptr)
 @ stub RtlAddAttributeActionToRXact
-@ stub RtlAddAuditAccessAce
+@ stdcall RtlAddAuditAccessAce(ptr long long ptr long long) 
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
 @ stdcall RtlAdjustPrivilege(long long long ptr)
 @ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr)

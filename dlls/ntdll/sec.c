@@ -1211,6 +1211,23 @@ NTSTATUS WINAPI RtlAddAccessDeniedAceEx(
 	return STATUS_SUCCESS;
 }
 
+/************************************************************************** 
+ *  RtlAddAuditAccessAce     [NTDLL.@] 
+ */ 
+NTSTATUS WINAPI RtlAddAuditAccessAce( 
+    IN OUT PACL pAcl, 
+    IN DWORD dwAceRevision, 
+    IN DWORD dwAccessMask, 
+    IN PSID pSid, 
+    IN BOOL bAuditSuccess, 
+    IN BOOL bAuditFailure) 
+{ 
+    FIXME("(%p,%ld,%ld,%p,%u,%u) stub\n",pAcl,dwAceRevision,dwAccessMask, 
+          pSid,bAuditSuccess,bAuditFailure); 
+ 
+    return STATUS_NOT_IMPLEMENTED; 
+} 
+ 
 /******************************************************************************
  *  RtlValidAcl		[NTDLL.@]
  */
