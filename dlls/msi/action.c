@@ -4043,14 +4043,13 @@ static LPWSTR load_ttfname_from(LPCWSTR filename)
     return ret;
 }
 
-static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
+static UINT ITERATE_RegisterFonts(MSIRECORD *row, LPVOID param)
 {
-    UINT rc;
-    MSIQUERY * view;
-    MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','F','o','n','t','`',0};
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPWSTR name;
+    LPCWSTR file;
+    UINT index;
+    DWORD size;
     static const WCHAR regfont1[] =
         {'S','o','f','t','w','a','r','e','\\',
          'M','i','c','r','o','s','o','f','t','\\',
@@ -4066,7 +4065,52 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
     HKEY hkey1;
     HKEY hkey2;
 
-    TRACE("%p\n", package);
+    file = MSI_RecordGetString(row,1);
+    index = get_loaded_file(package,file);
+    if (index < 0)
+    {
+        ERR("Unable to load file\n");
+        return ERROR_SUCCESS;
+    }
+
+    /* check to make sure that component is installed */
+    if (!ACTION_VerifyComponentForAction(package, 
+                package->files[index].ComponentIndex, INSTALLSTATE_LOCAL))
+    {
+        TRACE("Skipping: Component not scheduled for install\n");
+        return ERROR_SUCCESS;
+    }
+
+    RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont1,&hkey1);
+    RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont2,&hkey2);
+
+    if (MSI_RecordIsNull(row,2))
+        name = load_ttfname_from(package->files[index].TargetPath);
+    else
+        name = load_dynamic_stringW(row,2);
+
+    if (name)
+    {
+        size = strlenW(package->files[index].FileName) * sizeof(WCHAR);
+        RegSetValueExW(hkey1,name,0,REG_SZ,
+                    (LPBYTE)package->files[index].FileName,size);
+        RegSetValueExW(hkey2,name,0,REG_SZ,
+                    (LPBYTE)package->files[index].FileName,size);
+    }
+
+    HeapFree(GetProcessHeap(),0,name);
+    RegCloseKey(hkey1);
+    RegCloseKey(hkey2);
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','F','o','n','t','`',0};
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
@@ -4075,76 +4119,10 @@ static UINT ACTION_RegisterFonts(MSIPACKAGE *package)
         return ERROR_SUCCESS;
     }
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        TRACE("MSI_ViewExecute returned %d\n", rc);
-        return ERROR_SUCCESS;
-    }
-
-    RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont1,&hkey1);
-    RegCreateKeyW(HKEY_LOCAL_MACHINE,regfont2,&hkey2);
-    
-    while (1)
-    {
-        LPWSTR name;
-        LPCWSTR file;
-        UINT index;
-        DWORD size;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        file = MSI_RecordGetString(row,1);
-        index = get_loaded_file(package,file);
-        if (index < 0)
-        {
-            ERR("Unable to load file\n");
-            continue;
-        }
-
-        /* check to make sure that component is installed */
-        if (!ACTION_VerifyComponentForAction(package, 
-                package->files[index].ComponentIndex, INSTALLSTATE_LOCAL))
-        {
-            TRACE("Skipping: Component not scheduled for install\n");
-
-            msiobj_release(&row->hdr);
-
-            continue;
-        }
-
-        if (MSI_RecordIsNull(row,2))
-            name = load_ttfname_from(package->files[index].TargetPath);
-        else
-            name = load_dynamic_stringW(row,2);
-
-        if (name)
-        {
-            size = strlenW(package->files[index].FileName) * sizeof(WCHAR);
-            RegSetValueExW(hkey1,name,0,REG_SZ,
-                        (LPBYTE)package->files[index].FileName,size);
-            RegSetValueExW(hkey2,name,0,REG_SZ,
-                        (LPBYTE)package->files[index].FileName,size);
-        }
-        
-        HeapFree(GetProcessHeap(),0,name);
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    MSI_IterateRecords(view, NULL, ITERATE_RegisterFonts, package);
     msiobj_release(&view->hdr);
 
-    RegCloseKey(hkey1);
-    RegCloseKey(hkey2);
-
-    TRACE("returning %d\n", rc);
-    return rc;
+    return ERROR_SUCCESS;
 }
 
 static UINT ITERATE_PublishComponent(MSIRECORD *rec, LPVOID param)
