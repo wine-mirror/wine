@@ -1925,15 +1925,15 @@ BOOL WINAPI SetKernelObjectSecurity (
  *  AddAuditAccessAce [ADVAPI32.@]
  */
 BOOL WINAPI AddAuditAccessAce(
-        IN OUT PACL pAcl,
-        IN DWORD dwAceRevision,
-        IN DWORD dwAccessMask,
-        IN PSID pSid,
-        IN BOOL bAuditSuccess,
-        IN BOOL bAuditFailure)
+    IN OUT PACL pAcl, 
+    IN DWORD dwAceRevision, 
+    IN DWORD dwAccessMask, 
+    IN PSID pSid, 
+    IN BOOL bAuditSuccess, 
+    IN BOOL bAuditFailure) 
 {
-        FIXME("Stub\n");
-        return TRUE;
+    return set_ntstatus( RtlAddAuditAccessAce(pAcl, dwAceRevision, dwAccessMask, pSid, 
+                                              bAuditSuccess, bAuditFailure) ); 
 }
 
 /******************************************************************************
