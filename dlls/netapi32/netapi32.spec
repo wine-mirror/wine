@@ -11,8 +11,8 @@
 @ stub I_NetAccountSync
 @ stub I_NetDatabaseDeltas
 @ stub I_NetDatabaseRedo
-@ stub I_NetDatabaseSync
 @ stub I_NetDatabaseSync2
+@ stub I_NetDatabaseSync
 @ stub I_NetDfsCreateExitPoint
 @ stub I_NetDfsCreateLocalPartition
 @ stub I_NetDfsDeleteExitPoint
@@ -26,8 +26,8 @@
 @ stub I_NetGetDCList
 @ stub I_NetListCanonicalize
 @ stub I_NetListTraverse
-@ stub I_NetLogonControl
 @ stub I_NetLogonControl2
+@ stub I_NetLogonControl
 @ stub I_NetLogonSamLogoff
 @ stub I_NetLogonSamLogon
 @ stub I_NetLogonUasLogoff
@@ -38,8 +38,8 @@
 @ stub I_NetPathCanonicalize
 @ stub I_NetPathCompare
 @ stub I_NetPathType
-@ stub I_NetServerAuthenticate
 @ stub I_NetServerAuthenticate2
+@ stub I_NetServerAuthenticate
 @ stub I_NetServerPasswordSet
 @ stub I_NetServerReqChallenge
 @ stub I_NetServerSetServiceBits

@@ -6,8 +6,8 @@
 @ stub Direct3DCreateTexture
 @ stub Direct3DGetSWRastZPixFmts
 @ stub Direct3D_HALCleanUp
-@ stub FlushD3DDevices
 @ stub FlushD3DDevices2
+@ stub FlushD3DDevices
 @ stub PaletteAssociateNotify
 @ stub PaletteUpdateNotify
 @ stub SurfaceFlipNotify
