@@ -445,6 +445,14 @@ static void test_query_process_io(void)
     ULONG ReturnLength;
     IO_COUNTERS pii;
 
+    /* NT4 doesn't support this information class, so check for it */
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessIoCounters, &pii, sizeof(pii), &ReturnLength);
+    if (status == STATUS_NOT_SUPPORTED)
+    {
+        trace("ProcessIoCounters information class not supported, skipping tests\n");
+        return;
+    }
+ 
     status = pNtQueryInformationProcess(NULL, ProcessIoCounters, NULL, sizeof(pii), NULL);
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
         "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_HANDLE(W2K3), got %08lx\n", status);
