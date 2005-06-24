@@ -4677,6 +4677,7 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 	RECT rcLine;
 	RECT rcRgn;
 	HBRUSH brush;
+	HBRUSH old_brush;
 	BOOL rev = es->bEnableState &&
 				((es->flags & EF_FOCUSED) ||
 					(es->style & ES_NOHIDESEL));
@@ -4684,21 +4685,25 @@ static void EDIT_WM_Paint(EDITSTATE *es, HDC hdc)
 
 	GetClientRect(es->hwndSelf, &rcClient);
 
-	/* paint the background */
+	/* get the background brush */
 	if (!(brush = EDIT_NotifyCtlColor(es, dc)))
 		brush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	IntersectClipRect(dc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
-	GetClipBox(dc, &rc);
-	FillRect(dc, &rc, brush);
 
-	/* draw the border */
+	/* paint the border and the background */
+	IntersectClipRect(dc, rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
 	if(es->style & WS_BORDER) {
 		rc = rcClient;
 		if(es->style & ES_MULTILINE) {
 			if(es->style & WS_HSCROLL) rc.bottom++;
 			if(es->style & WS_VSCROLL) rc.right++;
 		}
+		old_brush = SelectObject(dc, brush);
 		Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+		SelectObject(dc, old_brush);
+	}
+	else {
+		GetClipBox(dc, &rc);
+		FillRect(dc, &rc, brush);
 	}
 	IntersectClipRect(dc, es->format_rect.left,
 				es->format_rect.top,
