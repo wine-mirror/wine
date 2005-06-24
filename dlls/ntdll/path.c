@@ -504,7 +504,12 @@ static inline void collapse_path( WCHAR *path, UINT mark )
         }
         /* skip to the next component */
         while (*p && *p != '\\') p++;
-        if (*p == '\\') p++;
+        if (*p == '\\')
+        {
+            /* remove last dot in previous dir name */
+            if (p > path + mark && p[-1] == '.') memmove( p-1, p, (strlenW(p) + 1) * sizeof(WCHAR) );
+            else p++;
+        }
     }
 
     /* remove trailing spaces and dots (yes, Windows really does that, don't ask) */
