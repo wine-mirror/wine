@@ -329,6 +329,125 @@ static void test_GetDisplayName(void)
     IShellFolder_Release(psfPersonal);
 }
 
+static void test_CallForAttributes(void)
+{
+    HKEY hKey;
+    LONG lResult;
+    HRESULT hr;
+    DWORD dwSize;
+    LPSHELLFOLDER psfDesktop;
+    LPITEMIDLIST pidlMyDocuments;
+    DWORD dwAttributes, dwCallForAttributes, dwOrigAttributes, dwOrigCallForAttributes;
+    static const WCHAR wszAttributes[] = { 'A','t','t','r','i','b','u','t','e','s',0 };
+    static const WCHAR wszCallForAttributes[] = { 
+        'C','a','l','l','F','o','r','A','t','t','r','i','b','u','t','e','s',0 };
+    static const WCHAR wszMyDocumentsKey[] = {
+        'C','L','S','I','D','\\','{','4','5','0','D','8','F','B','A','-','A','D','2','5','-',
+        '1','1','D','0','-','9','8','A','8','-','0','8','0','0','3','6','1','B','1','1','0','3','}',
+        '\\','S','h','e','l','l','F','o','l','d','e','r',0 };
+    WCHAR wszMyDocuments[] = {
+        ':',':','{','4','5','0','D','8','F','B','A','-','A','D','2','5','-','1','1','D','0','-',
+        '9','8','A','8','-','0','8','0','0','3','6','1','B','1','1','0','3','}',0 };
+    
+    /* For the root of a namespace extension, the attributes are not queried by binding
+     * to the object and calling GetAttributesOf. Instead, the attributes are read from 
+     * the registry value HKCR/CLSID/{...}/ShellFolder/Attributes. This is documented on MSDN.
+     *
+     * The MyDocuments shellfolder on WinXP has a HKCR/CLSID/{...}/ShellFolder/CallForAttributes
+     * value. It seems that if the folder is queried for one of the flags set in CallForAttributes,
+     * the shell does bind to the folder object and calls GetAttributesOf. This is not documented
+     * on MSDN. This test is meant to document the observed behaviour on WinXP SP2.
+     */
+    hr = SHGetDesktopFolder(&psfDesktop);
+    ok (SUCCEEDED(hr), "SHGetDesktopFolder failed! hr = %08lx\n", hr);
+    if (FAILED(hr)) return;
+    
+    hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyDocuments, NULL, 
+                                       &pidlMyDocuments, NULL);
+    ok (SUCCEEDED(hr), 
+        "Desktop's ParseDisplayName failed to parse MyDocuments's CLSID! hr = %08lx\n", hr);
+    if (FAILED(hr)) {
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+
+    dwAttributes = 0xffffffff;
+    hr = IShellFolder_GetAttributesOf(psfDesktop, 1, 
+                                      (LPCITEMIDLIST*)&pidlMyDocuments, &dwAttributes);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08lx\n", hr);
+
+    /* We need the following setup (as observed on WinXP SP2), for the tests to make sense. */
+    todo_wine{ ok (dwAttributes & SFGAO_FILESYSTEM, 
+                   "SFGAO_FILESYSTEM attribute is not set for MyDocuments!\n"); }
+    ok (!(dwAttributes & SFGAO_ISSLOW), "SFGAO_ISSLOW attribute is set for MyDocuments!\n");
+    ok (!(dwAttributes & SFGAO_GHOSTED), "SFGAO_GHOSTED attribute is set for MyDocuments!\n");
+
+    /* We don't have the MyDocuments shellfolder in wine yet, and thus we don't have the registry
+     * key. So the test will return at this point, if run on wine. 
+     */
+    lResult = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMyDocumentsKey, 0, KEY_WRITE|KEY_READ, &hKey);
+    todo_wine { ok (lResult == ERROR_SUCCESS, "RegOpenKeyEx failed! result: %08lx\n", lResult); }
+    if (lResult != ERROR_SUCCESS) {
+        ILFree(pidlMyDocuments);
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+    
+    /* Query MyDocuments' Attributes value, to be able to restore it later. */
+    dwSize = sizeof(DWORD);
+    lResult = RegQueryValueExW(hKey, wszAttributes, NULL, NULL, (LPBYTE)&dwOrigAttributes, &dwSize);
+    ok (lResult == ERROR_SUCCESS, "RegQueryValueEx failed! result: %08lx\n", lResult);
+    if (lResult != ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        ILFree(pidlMyDocuments);
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+
+    /* Query MyDocuments' CallForAttributes value, to be able to restore it later. */
+    dwSize = sizeof(DWORD);
+    lResult = RegQueryValueExW(hKey, wszCallForAttributes, NULL, NULL, 
+                              (LPBYTE)&dwOrigCallForAttributes, &dwSize);
+    ok (lResult == ERROR_SUCCESS, "RegQueryValueEx failed! result: %08lx\n", lResult);
+    if (lResult != ERROR_SUCCESS) {
+        RegCloseKey(hKey);
+        ILFree(pidlMyDocuments);
+        IShellFolder_Release(psfDesktop);
+        return;
+    }
+    
+    /* Define via the Attributes value that MyDocuments attributes are SFGAO_ISSLOW and 
+     * SFGAO_GHOSTED and that MyDocuments should be called for the SFGAO_ISSLOW and
+     * SFGAO_FILESYSTEM attributes. */
+    dwAttributes = SFGAO_ISSLOW|SFGAO_GHOSTED;
+    RegSetValueExW(hKey, wszAttributes, 0, REG_DWORD, (LPBYTE)&dwAttributes, sizeof(DWORD));
+    dwCallForAttributes = SFGAO_ISSLOW|SFGAO_FILESYSTEM;
+    RegSetValueExW(hKey, wszCallForAttributes, 0, REG_DWORD, 
+                   (LPBYTE)&dwCallForAttributes, sizeof(DWORD));
+
+    /* Although it is not set in CallForAttributes, the SFGAO_GHOSTED flag is reset by 
+     * GetAttributesOf. It seems that once there is a single attribute queried, for which
+     * CallForAttributes is set, all flags are taken from the GetAttributesOf call and
+     * the flags in Attributes are ignored. 
+     */
+    dwAttributes = SFGAO_ISSLOW|SFGAO_GHOSTED|SFGAO_FILESYSTEM;
+    hr = IShellFolder_GetAttributesOf(psfDesktop, 1, 
+                                      (LPCITEMIDLIST*)&pidlMyDocuments, &dwAttributes);
+    ok (SUCCEEDED(hr), "Desktop->GetAttributesOf(MyDocuments) failed! hr = %08lx\n", hr);
+    if (SUCCEEDED(hr)) 
+        ok (dwAttributes == SFGAO_FILESYSTEM, 
+            "Desktop->GetAttributes(MyDocuments) returned unexpected attributes: %08lx\n", 
+            dwAttributes);
+
+    /* Restore MyDocuments' original Attributes and CallForAttributes registry values */
+    RegSetValueExW(hKey, wszAttributes, 0, REG_DWORD, (LPBYTE)&dwOrigAttributes, sizeof(DWORD));
+    RegSetValueExW(hKey, wszCallForAttributes, 0, REG_DWORD, 
+                   (LPBYTE)&dwOrigCallForAttributes, sizeof(DWORD));
+    RegCloseKey(hKey);
+    ILFree(pidlMyDocuments);
+    IShellFolder_Release(psfDesktop);
+}
+
 static void test_GetAttributesOf(void) 
 {
     HRESULT hr;
@@ -495,4 +614,5 @@ START_TEST(shlfolder)
     test_GetDisplayName();
     test_GetAttributesOf();
     test_SHGetPathFromIDList();
+    test_CallForAttributes();
 }
