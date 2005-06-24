@@ -2787,20 +2787,156 @@ static UINT ACTION_RegisterTypeLibraries(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
+static UINT ITERATE_CreateShortcuts(MSIRECORD *row, LPVOID param)
 {
-    UINT rc;
-    MSIQUERY * view;
-    MSIRECORD * row = 0;
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','S','h','o','r','t','c','u','t','`',0};
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPWSTR target_file, target_folder;
+    LPCWSTR buffer;
+    WCHAR filename[0x100];
+    DWORD sz;
+    DWORD index;
+    static const WCHAR szlnk[]={'.','l','n','k',0};
     IShellLinkW *sl;
     IPersistFile *pf;
     HRESULT res;
 
+    buffer = MSI_RecordGetString(row,4);
+    index = get_loaded_component(package,buffer);
+
+    if (index < 0)
+        return ERROR_SUCCESS;
+
+    if (!ACTION_VerifyComponentForAction(package, index, INSTALLSTATE_LOCAL))
+    {
+        TRACE("Skipping shortcut creation due to disabled component\n");
+
+        package->components[index].Action =
+                package->components[index].Installed;
+
+        return ERROR_SUCCESS;
+    }
+
+    package->components[index].Action = INSTALLSTATE_LOCAL;
+
+    ui_actiondata(package,szCreateShortcuts,row);
+
+    res = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IShellLinkW, (LPVOID *) &sl );
+
+    if (FAILED(res))
+    {
+        ERR("Is IID_IShellLink\n");
+        return ERROR_SUCCESS;
+    }
+
+    res = IShellLinkW_QueryInterface( sl, &IID_IPersistFile,(LPVOID*) &pf );
+    if( FAILED( res ) )
+    {
+        ERR("Is IID_IPersistFile\n");
+        return ERROR_SUCCESS;
+    }
+
+    buffer = MSI_RecordGetString(row,2);
+    target_folder = resolve_folder(package, buffer,FALSE,FALSE,NULL);
+
+    /* may be needed because of a bug somehwere else */
+    create_full_pathW(target_folder);
+
+    sz = 0x100;
+    MSI_RecordGetStringW(row,3,filename,&sz);
+    reduce_to_longfilename(filename);
+    if (!strchrW(filename,'.') || strcmpiW(strchrW(filename,'.'),szlnk))
+        strcatW(filename,szlnk);
+    target_file = build_directory_name(2, target_folder, filename);
+    HeapFree(GetProcessHeap(),0,target_folder);
+
+    buffer = MSI_RecordGetString(row,5);
+    if (strchrW(buffer,'['))
+    {
+        LPWSTR deformated;
+        deformat_string(package,buffer,&deformated);
+        IShellLinkW_SetPath(sl,deformated);
+        HeapFree(GetProcessHeap(),0,deformated);
+    }
+    else
+    {
+        LPWSTR keypath;
+        FIXME("poorly handled shortcut format, advertised shortcut\n");
+        keypath = strdupW(package->components[index].FullKeypath);
+        IShellLinkW_SetPath(sl,keypath);
+        HeapFree(GetProcessHeap(),0,keypath);
+    }
+
+    if (!MSI_RecordIsNull(row,6))
+    {
+        LPWSTR deformated;
+        buffer = MSI_RecordGetString(row,6);
+        deformat_string(package,buffer,&deformated);
+        IShellLinkW_SetArguments(sl,deformated);
+        HeapFree(GetProcessHeap(),0,deformated);
+    }
+
+    if (!MSI_RecordIsNull(row,7))
+    {
+        buffer = MSI_RecordGetString(row,7);
+        IShellLinkW_SetDescription(sl,buffer);
+    }
+
+    if (!MSI_RecordIsNull(row,8))
+        IShellLinkW_SetHotkey(sl,MSI_RecordGetInteger(row,8));
+
+    if (!MSI_RecordIsNull(row,9))
+    {
+        WCHAR *Path = NULL;
+        INT index; 
+
+        buffer = MSI_RecordGetString(row,9);
+
+        build_icon_path(package,buffer,&Path);
+        index = MSI_RecordGetInteger(row,10);
+
+        IShellLinkW_SetIconLocation(sl,Path,index);
+        HeapFree(GetProcessHeap(),0,Path);
+    }
+
+    if (!MSI_RecordIsNull(row,11))
+        IShellLinkW_SetShowCmd(sl,MSI_RecordGetInteger(row,11));
+
+    if (!MSI_RecordIsNull(row,12))
+    {
+        LPWSTR Path;
+        buffer = MSI_RecordGetString(row,12);
+        Path = resolve_folder(package, buffer, FALSE, FALSE, NULL);
+        IShellLinkW_SetWorkingDirectory(sl,Path);
+        HeapFree(GetProcessHeap(), 0, Path);
+    }
+
+    TRACE("Writing shortcut to %s\n",debugstr_w(target_file));
+    IPersistFile_Save(pf,target_file,FALSE);
+
+    HeapFree(GetProcessHeap(),0,target_file);    
+
+    IPersistFile_Release( pf );
+    IShellLinkW_Release( sl );
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
+{
+    UINT rc;
+    HRESULT res;
+    MSIQUERY * view;
+    static const WCHAR Query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','S','h','o','r','t','c','u','t','`',0};
+
     if (!package)
         return ERROR_INVALID_HANDLE;
+
+    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
 
     res = CoInitialize( NULL );
     if (FAILED (res))
@@ -2809,165 +2945,8 @@ static UINT ACTION_CreateShortcuts(MSIPACKAGE *package)
         return ERROR_FUNCTION_FAILED;
     }
 
-    rc = MSI_DatabaseOpenViewW(package->db, Query, &view);
-    if (rc != ERROR_SUCCESS)
-        return ERROR_SUCCESS;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    while (1)
-    {
-        LPWSTR target_file, target_folder;
-        LPCWSTR buffer;
-        WCHAR filename[0x100];
-        DWORD sz;
-        DWORD index;
-        static const WCHAR szlnk[]={'.','l','n','k',0};
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-        
-        buffer = MSI_RecordGetString(row,4);
-        index = get_loaded_component(package,buffer);
-
-        if (index < 0)
-        {
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        if (!ACTION_VerifyComponentForAction(package, index,
-                                INSTALLSTATE_LOCAL))
-        {
-            TRACE("Skipping shortcut creation due to disabled component\n");
-            msiobj_release(&row->hdr);
-
-            package->components[index].Action =
-                package->components[index].Installed;
-
-            continue;
-        }
-
-        package->components[index].Action = INSTALLSTATE_LOCAL;
-
-        ui_actiondata(package,szCreateShortcuts,row);
-
-        res = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
-                              &IID_IShellLinkW, (LPVOID *) &sl );
-
-        if (FAILED(res))
-        {
-            ERR("Is IID_IShellLink\n");
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        res = IShellLinkW_QueryInterface( sl, &IID_IPersistFile,(LPVOID*) &pf );
-        if( FAILED( res ) )
-        {
-            ERR("Is IID_IPersistFile\n");
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        buffer = MSI_RecordGetString(row,2);
-        target_folder = resolve_folder(package, buffer,FALSE,FALSE,NULL);
-
-        /* may be needed because of a bug somehwere else */
-        create_full_pathW(target_folder);
-
-        sz = 0x100;
-        MSI_RecordGetStringW(row,3,filename,&sz);
-        reduce_to_longfilename(filename);
-        if (!strchrW(filename,'.') || strcmpiW(strchrW(filename,'.'),szlnk))
-            strcatW(filename,szlnk);
-        target_file = build_directory_name(2, target_folder, filename);
-        HeapFree(GetProcessHeap(),0,target_folder);
-
-        buffer = MSI_RecordGetString(row,5);
-        if (strchrW(buffer,'['))
-        {
-            LPWSTR deformated;
-            deformat_string(package,buffer,&deformated);
-            IShellLinkW_SetPath(sl,deformated);
-            HeapFree(GetProcessHeap(),0,deformated);
-        }
-        else
-        {
-            LPWSTR keypath;
-            FIXME("poorly handled shortcut format, advertised shortcut\n");
-            keypath = strdupW(package->components[index].FullKeypath);
-            IShellLinkW_SetPath(sl,keypath);
-            HeapFree(GetProcessHeap(),0,keypath);
-        }
-
-        if (!MSI_RecordIsNull(row,6))
-        {
-            LPWSTR deformated;
-            buffer = MSI_RecordGetString(row,6);
-            deformat_string(package,buffer,&deformated);
-            IShellLinkW_SetArguments(sl,deformated);
-            HeapFree(GetProcessHeap(),0,deformated);
-        }
-
-        if (!MSI_RecordIsNull(row,7))
-        {
-            buffer = MSI_RecordGetString(row,7);
-            IShellLinkW_SetDescription(sl,buffer);
-        }
-
-        if (!MSI_RecordIsNull(row,8))
-            IShellLinkW_SetHotkey(sl,MSI_RecordGetInteger(row,8));
-
-        if (!MSI_RecordIsNull(row,9))
-        {
-            WCHAR *Path = NULL;
-            INT index; 
-
-            buffer = MSI_RecordGetString(row,9);
-
-            build_icon_path(package,buffer,&Path);
-            index = MSI_RecordGetInteger(row,10);
-
-            IShellLinkW_SetIconLocation(sl,Path,index);
-            HeapFree(GetProcessHeap(),0,Path);
-        }
-
-        if (!MSI_RecordIsNull(row,11))
-            IShellLinkW_SetShowCmd(sl,MSI_RecordGetInteger(row,11));
-
-        if (!MSI_RecordIsNull(row,12))
-        {
-            LPWSTR Path;
-            buffer = MSI_RecordGetString(row,12);
-            Path = resolve_folder(package, buffer, FALSE, FALSE, NULL);
-            IShellLinkW_SetWorkingDirectory(sl,Path);
-            HeapFree(GetProcessHeap(), 0, Path);
-        }
-
-        TRACE("Writing shortcut to %s\n",debugstr_w(target_file));
-        IPersistFile_Save(pf,target_file,FALSE);
-    
-        HeapFree(GetProcessHeap(),0,target_file);    
-
-        IPersistFile_Release( pf );
-        IShellLinkW_Release( sl );
-
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    rc = MSI_IterateRecords(view, NULL, ITERATE_CreateShortcuts, package);
     msiobj_release(&view->hdr);
-
 
     CoUninitialize();
 
