@@ -3841,8 +3841,16 @@ end:
 
 static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
 {
+    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
+    static const WCHAR szTwo[] = {'2',0};
     UINT rc;
+    LPWSTR level;
+    level = load_dynamic_property(package,szUILevel,NULL);
+
+    MSI_SetPropertyW(package,szUILevel,szTwo);
     rc = ACTION_ProcessExecSequence(package,FALSE);
+    MSI_SetPropertyW(package,szUILevel,level);
+    HeapFree(GetProcessHeap(),0,level);
     return rc;
 }
 
