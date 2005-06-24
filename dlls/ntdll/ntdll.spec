@@ -153,7 +153,7 @@
 @ stdcall NtOpenProcessToken(long long long)
 @ stdcall NtOpenSection(ptr long ptr)
 @ stdcall NtOpenSemaphore(long long ptr)
-@ stdcall NtOpenSymbolicLinkObject (long long long)
+@ stdcall NtOpenSymbolicLinkObject (ptr long ptr)
 @ stdcall NtOpenThread(ptr long ptr ptr)
 @ stdcall NtOpenThreadToken(long long long long)
 @ stdcall NtOpenTimer(ptr long ptr)
@@ -773,7 +773,7 @@
 @ stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
 @ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stdcall ZwOpenSemaphore(long long ptr) NtOpenSemaphore
-@ stdcall ZwOpenSymbolicLinkObject (long long long) NtOpenSymbolicLinkObject
+@ stdcall ZwOpenSymbolicLinkObject (ptr long ptr) NtOpenSymbolicLinkObject
 @ stdcall ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall ZwOpenThreadToken(long long long long) NtOpenThreadToken
 @ stdcall ZwOpenTimer(ptr long ptr) NtOpenTimer
