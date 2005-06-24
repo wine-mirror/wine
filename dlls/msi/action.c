@@ -1700,12 +1700,11 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
         LPCWSTR Condition;
         Condition = MSI_RecordGetString(row,3);
 
-        if (MSI_EvaluateConditionW(package,Condition) == 
-            MSICONDITION_TRUE)
+        if (MSI_EvaluateConditionW(package,Condition) == MSICONDITION_TRUE)
         {
             int level = MSI_RecordGetInteger(row,2);
-            TRACE("Reseting feature %s to level %i\n",
-                   debugstr_w(Feature), level);
+            TRACE("Reseting feature %s to level %i\n", debugstr_w(Feature),
+                            level);
             package->features[feature_index].Level = level;
         }
     }
@@ -1874,8 +1873,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 
     return SetFeatureStates(package);
 }
-
-
 
 /* OK this value is "interpreted" and then formatted based on the 
    first few characters */
@@ -2056,6 +2053,23 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     /* get the root key */
     switch (root)
     {
+        case -1: 
+            {
+                static const WCHAR szALLUSER[] = {'A','L','L','U','S','E','R','S',0};
+                LPWSTR all_users = load_dynamic_property(package, szALLUSER, NULL);
+                if (all_users && all_users[0] == '1')
+                {
+                    root_key = HKEY_LOCAL_MACHINE;
+                    szRoot = szHLM;
+                }
+                else
+                {
+                    root_key = HKEY_CURRENT_USER;
+                    szRoot = szHCU;
+                }
+                HeapFree(GetProcessHeap(),0,all_users);
+            }
+                 break;
         case 0:  root_key = HKEY_CLASSES_ROOT; 
                  szRoot = szHCR;
                  break;
