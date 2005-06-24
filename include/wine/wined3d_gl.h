@@ -883,6 +883,7 @@ typedef struct _WineD3D_GL_Info {
    */
   UINT   max_lights;
   UINT   max_textures;
+  UINT   max_samplers;
   UINT   max_clipplanes;
 
   GL_PSVersion ps_arb_version;

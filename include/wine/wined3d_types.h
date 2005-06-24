@@ -347,6 +347,30 @@ typedef enum _WINED3DSAMPLERSTATETYPE {
     WINED3DSAMP_FORCE_DWORD   = 0x7fffffff,
 } WINED3DSAMPLERSTATETYPE;
 
+typedef enum _WINED3DTEXTURESTAGESTATETYPE {
+    WINED3DTSS_COLOROP               =  1,
+    WINED3DTSS_COLORARG1             =  2,
+    WINED3DTSS_COLORARG2             =  3,
+    WINED3DTSS_ALPHAOP               =  4,
+    WINED3DTSS_ALPHAARG1             =  5,
+    WINED3DTSS_ALPHAARG2             =  6,
+    WINED3DTSS_BUMPENVMAT00          =  7,
+    WINED3DTSS_BUMPENVMAT01          =  8,
+    WINED3DTSS_BUMPENVMAT10          =  9,
+    WINED3DTSS_BUMPENVMAT11          = 10,
+    WINED3DTSS_TEXCOORDINDEX         = 11,
+    WINED3DTSS_BUMPENVLSCALE         = 22,
+    WINED3DTSS_BUMPENVLOFFSET        = 23,
+    WINED3DTSS_TEXTURETRANSFORMFLAGS = 24,
+    WINED3DTSS_ADDRESSW              = 25,
+    WINED3DTSS_COLORARG0             = 26,
+    WINED3DTSS_ALPHAARG0             = 27,
+    WINED3DTSS_RESULTARG             = 28,
+    WINED3DTSS_CONSTANT              = 32,
+
+    WINED3DTSS_FORCE_DWORD           = 0x7fffffff
+} WINED3DTEXTURESTAGESTATETYPE;
+
 typedef struct _WINEDD3DRECTPATCH_INFO {
     UINT                StartVertexOffsetWidth;
     UINT                StartVertexOffsetHeight;

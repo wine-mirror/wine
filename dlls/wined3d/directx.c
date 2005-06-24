@@ -330,6 +330,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
      */
     memset(&gl_info->supported, 0, sizeof(gl_info->supported));
     gl_info->max_textures   = 1;
+    gl_info->max_samplers   = 1;
     gl_info->ps_arb_version = PS_VERSION_NOT_SUPPORTED;
     gl_info->vs_arb_version = VS_VERSION_NOT_SUPPORTED;
     gl_info->vs_nv_version  = VS_VERSION_NOT_SUPPORTED;
@@ -374,6 +375,9 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->ps_arb_version = PS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - version=%02x\n", gl_info->ps_arb_version);
                 gl_info->supported[ARB_FRAGMENT_PROGRAM] = TRUE;
+                glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
+                gl_info->max_samplers = min(16, gl_max);
             } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
@@ -382,6 +386,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 TRACE_(d3d_caps)(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
                 gl_info->supported[ARB_MULTITEXTURE] = TRUE;
                 gl_info->max_textures = min(8, gl_max);
+                gl_info->max_samplers = max(gl_info->max_samplers, gl_max);
             } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
                 gl_info->supported[ARB_TEXTURE_CUBE_MAP] = TRUE;

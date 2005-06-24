@@ -69,10 +69,10 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
 /* class static */
 void IWineD3DBaseTextureImpl_CleanUp(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    TRACE("(%p) : ", This);
+    TRACE("(%p) : textureName(%d)\n", This, This->baseTexture.textureName);
     if (This->baseTexture.textureName != 0) {
         ENTER_GL();
-        TRACE("Deleting texture %d\n", This->baseTexture.textureName);
+        TRACE("(%p) : Deleting texture %d\n", This, This->baseTexture.textureName);
         glDeleteTextures(1, &This->baseTexture.textureName);
         LEAVE_GL();
     }

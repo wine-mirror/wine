@@ -242,36 +242,47 @@ const char* debug_d3drenderstate(DWORD state) {
   }
 }
 
+const char* debug_d3dsamplerstate(DWORD state) {
+  switch (state) {
+#define D3DSTATE_TO_STR(u) case u: return #u
+    D3DSTATE_TO_STR(WINED3DSAMP_BORDERCOLOR  );
+    D3DSTATE_TO_STR(WINED3DSAMP_ADDRESSU     );
+    D3DSTATE_TO_STR(WINED3DSAMP_ADDRESSV     );
+    D3DSTATE_TO_STR(WINED3DSAMP_ADDRESSW     );
+    D3DSTATE_TO_STR(WINED3DSAMP_MAGFILTER    );
+    D3DSTATE_TO_STR(WINED3DSAMP_MINFILTER    );
+    D3DSTATE_TO_STR(WINED3DSAMP_MIPFILTER    );
+    D3DSTATE_TO_STR(WINED3DSAMP_MIPMAPLODBIAS);
+    D3DSTATE_TO_STR(WINED3DSAMP_MAXMIPLEVEL  );
+    D3DSTATE_TO_STR(WINED3DSAMP_MAXANISOTROPY);
+#undef D3DSTATE_TO_STR
+  default:
+    FIXME("Unrecognized %lu texture state!\n", state);
+    return "unrecognized";
+  }
+}
+
 const char* debug_d3dtexturestate(DWORD state) {
   switch (state) {
 #define D3DSTATE_TO_STR(u) case u: return #u
-    D3DSTATE_TO_STR(D3DTSS_COLOROP               );
-    D3DSTATE_TO_STR(D3DTSS_COLORARG1             );
-    D3DSTATE_TO_STR(D3DTSS_COLORARG2             );
-    D3DSTATE_TO_STR(D3DTSS_ALPHAOP               );
-    D3DSTATE_TO_STR(D3DTSS_ALPHAARG1             );
-    D3DSTATE_TO_STR(D3DTSS_ALPHAARG2             );
-    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT00          );
-    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT01          );
-    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT10          );
-    D3DSTATE_TO_STR(D3DTSS_BUMPENVMAT11          );
-    D3DSTATE_TO_STR(D3DTSS_TEXCOORDINDEX         );
-    D3DSTATE_TO_STR(D3DTSS_ADDRESSU              );
-    D3DSTATE_TO_STR(D3DTSS_ADDRESSV              );
-    D3DSTATE_TO_STR(D3DTSS_BORDERCOLOR           );
-    D3DSTATE_TO_STR(D3DTSS_MAGFILTER             );
-    D3DSTATE_TO_STR(D3DTSS_MINFILTER             );
-    D3DSTATE_TO_STR(D3DTSS_MIPFILTER             );
-    D3DSTATE_TO_STR(D3DTSS_MIPMAPLODBIAS         );
-    D3DSTATE_TO_STR(D3DTSS_MAXMIPLEVEL           );
-    D3DSTATE_TO_STR(D3DTSS_MAXANISOTROPY         );
-    D3DSTATE_TO_STR(D3DTSS_BUMPENVLSCALE         );
-    D3DSTATE_TO_STR(D3DTSS_BUMPENVLOFFSET        );
-    D3DSTATE_TO_STR(D3DTSS_TEXTURETRANSFORMFLAGS );
-    D3DSTATE_TO_STR(D3DTSS_ADDRESSW              );
-    D3DSTATE_TO_STR(D3DTSS_COLORARG0             );
-    D3DSTATE_TO_STR(D3DTSS_ALPHAARG0             );
-    D3DSTATE_TO_STR(D3DTSS_RESULTARG             );
+    D3DSTATE_TO_STR(WINED3DTSS_COLOROP               );
+    D3DSTATE_TO_STR(WINED3DTSS_COLORARG1             );
+    D3DSTATE_TO_STR(WINED3DTSS_COLORARG2             );
+    D3DSTATE_TO_STR(WINED3DTSS_ALPHAOP               );
+    D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG1             );
+    D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG2             );
+    D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT00          );
+    D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT01          );
+    D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT10          );
+    D3DSTATE_TO_STR(WINED3DTSS_BUMPENVMAT11          );
+    D3DSTATE_TO_STR(WINED3DTSS_TEXCOORDINDEX         );
+    D3DSTATE_TO_STR(WINED3DTSS_BUMPENVLSCALE         );
+    D3DSTATE_TO_STR(WINED3DTSS_BUMPENVLOFFSET        );
+    D3DSTATE_TO_STR(WINED3DTSS_TEXTURETRANSFORMFLAGS );
+    D3DSTATE_TO_STR(WINED3DTSS_ADDRESSW              );
+    D3DSTATE_TO_STR(WINED3DTSS_COLORARG0             );
+    D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG0             );
+    D3DSTATE_TO_STR(WINED3DTSS_RESULTARG             );
 #undef D3DSTATE_TO_STR
   case 12:
     /* Note D3DTSS are not consecutive, so skip these */
@@ -386,7 +397,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 scal_target = useext(GL_RGB_SCALE);
         }
 
-        /* From MSDN (D3DTSS_ALPHAARG1) : 
+        /* From MSDN (WINED3DTSS_ALPHAARG1) :
            The default argument is D3DTA_TEXTURE. If no texture is set for this stage, 
                    then the default argument is D3DTA_DIFFUSE.
                    FIXME? If texture added/removed, may need to reset back as well?    */
@@ -869,13 +880,13 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                   DWORD d;
                 } tmpvalue;
                 
-                tmpvalue.d = This->stateBlock->textureState[Stage][D3DTSS_BUMPENVMAT00];
+                tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT00];
                 m[0][0] = tmpvalue.f;
-                tmpvalue.d = This->stateBlock->textureState[Stage][D3DTSS_BUMPENVMAT01];
+                tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT01];
                 m[0][1] = tmpvalue.f;
-                tmpvalue.d = This->stateBlock->textureState[Stage][D3DTSS_BUMPENVMAT10];
+                tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT10];
                 m[1][0] = tmpvalue.f;
-                tmpvalue.d = This->stateBlock->textureState[Stage][D3DTSS_BUMPENVMAT11];
+                tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT11];
                 m[1][1] = tmpvalue.f;
                 
                 /*FIXME("Stage %d matrix is (%.2f,%.2f),(%.2f,%.2f)\n", Stage, m[0][0], m[0][1], m[1][0], m[1][0]);*/
@@ -1393,9 +1404,9 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
             DWORD op2;
             
             if (isAlpha) {
-              op2 = This->stateBlock->textureState[Stage][D3DTSS_COLOROP];
+              op2 = This->stateBlock->textureState[Stage][WINED3DTSS_COLOROP];
             } else {
-              op2 = This->stateBlock->textureState[Stage][D3DTSS_ALPHAOP];
+              op2 = This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAOP];
             }
             
             /* Note: If COMBINE4 in effect can't go back to combine! */

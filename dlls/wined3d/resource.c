@@ -61,7 +61,7 @@ ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
 /* class static (not in vtable) */
 void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    TRACE("(%p) :", This);
+    TRACE("(%p) : allocatedMemory(%p)\n", This, This->resource.allocatedMemory);
 
     HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
     This->resource.allocatedMemory = 0;

@@ -42,6 +42,9 @@
 #include "wine/wined3d_interface.h"
 #include "wine/wined3d_gl.h"
 
+/* Device caps */
+#define MAX_SAMPLERS      16
+
 /* Swap chains */
 #define MAX_SWAPCHAINS 256
 
@@ -658,6 +661,7 @@ typedef struct SAVEDSTATES {
         BOOL                      renderState[WINEHIGHEST_RENDER_STATE];
         BOOL                      textureState[8][HIGHEST_TEXTURE_STATE];
         BOOL                      clipplane[MAX_CLIPPLANES];
+        BOOL                      samplerState[MAX_SAMPLERS][HIGHEST_SAMPLER_STATE + 1];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
         BOOL                      vertexShader;        
@@ -724,6 +728,9 @@ struct IWineD3DStateBlockImpl
 
     /* Texture State Stage */
     DWORD                     textureState[8][HIGHEST_TEXTURE_STATE];
+
+    /* Sampler States */
+    DWORD                     samplerState[MAX_SAMPLERS][HIGHEST_SAMPLER_STATE + 1];
 
 };
 
