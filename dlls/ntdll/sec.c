@@ -67,6 +67,59 @@ static BOOLEAN copy_acl(DWORD nDestinationAclLength, PACL pDestinationAcl, PACL 
     return TRUE;
 }
 
+/* generically adds an ACE to an ACL */
+static NTSTATUS add_access_ace(PACL pAcl, DWORD dwAceRevision, DWORD dwAceFlags,
+                               DWORD dwAccessMask, PSID pSid, DWORD dwAceType)
+{
+    SID *sid = (SID *)pSid;
+    ACE_HEADER *pAceHeader;
+    DWORD dwAceSize;
+    DWORD dwSidStart;
+    DWORD sidLength;
+    PDWORD pAccessMask;
+
+    if (!RtlValidSid(sid))
+        return STATUS_INVALID_SID;
+
+    if (pAcl->AclRevision > MAX_ACL_REVISION || dwAceRevision > MAX_ACL_REVISION)
+        return STATUS_REVISION_MISMATCH;
+
+    /* choose the higher of the two revisions */
+    sid->IdentifierAuthority.Value[1] = pAcl->AclRevision;
+    if (dwAceRevision > pAcl->AclRevision)
+        sid->IdentifierAuthority.Value[1] = dwAceRevision;
+
+    if (!RtlValidAcl(pAcl))
+        return STATUS_INVALID_ACL;
+
+    if (!RtlFirstFreeAce(pAcl, &pAceHeader))
+        return STATUS_INVALID_ACL;
+
+    if (!pAceHeader)
+        return STATUS_ALLOTTED_SPACE_EXCEEDED;
+
+    /* calculate generic size of the ACE */
+    sidLength = RtlLengthSid(sid);
+    dwAceSize = sizeof(ACE_HEADER) + sizeof(DWORD) + sidLength;
+    if ((DWORD)(pAceHeader + dwAceSize) > (DWORD)(pAcl + pAcl->AclSize))
+        return STATUS_ALLOTTED_SPACE_EXCEEDED;
+
+    /* fill the new Ace */
+    pAceHeader->AceType = dwAceType;
+    pAceHeader->AceFlags = dwAceFlags;
+    pAceHeader->AceSize = dwAceSize;
+    pAccessMask = (DWORD *)(pAceHeader + sizeof(ACE_HEADER));
+    *pAccessMask = dwAccessMask;
+
+    dwSidStart = (DWORD)(pAceHeader + sizeof(ACE_HEADER) + sizeof(DWORD));
+    RtlCopySid(sidLength, (PSID)dwSidStart, sid);
+
+    pAcl->AclRevision = sid->IdentifierAuthority.Value[1];
+    pAcl->AceCount++;
+
+    return STATUS_SUCCESS;
+}
+
 /*
  *	SID FUNCTIONS
  */
@@ -1222,10 +1275,19 @@ NTSTATUS WINAPI RtlAddAuditAccessAce(
     IN BOOL bAuditSuccess, 
     IN BOOL bAuditFailure) 
 { 
-    FIXME("(%p,%ld,%ld,%p,%u,%u) stub\n",pAcl,dwAceRevision,dwAccessMask, 
-          pSid,bAuditSuccess,bAuditFailure); 
- 
-    return STATUS_NOT_IMPLEMENTED; 
+    DWORD dwAceFlags = 0;
+
+    TRACE("(%p,%ld,%ld,%p,%u,%u)\n",pAcl,dwAceRevision,dwAccessMask,
+          pSid,bAuditSuccess,bAuditFailure);
+
+    if (bAuditSuccess)
+        dwAceFlags |= SUCCESSFUL_ACCESS_ACE_FLAG;
+
+    if (bAuditFailure)
+        dwAceFlags |= FAILED_ACCESS_ACE_FLAG;
+
+    return add_access_ace(pAcl, dwAceRevision, dwAceFlags,
+                          dwAccessMask, pSid, SYSTEM_AUDIT_ACE_TYPE);
 } 
  
 /******************************************************************************
