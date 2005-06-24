@@ -117,12 +117,7 @@ int main( int argc, const char** argv )
     fprintf( out,
              "/* Automatically generated file; DO NOT EDIT!! */\n"
              "\n"
-             "/* stdarg.h is needed for Winelib */\n"
-             "#include <stdarg.h>\n"
-             "#include <stdio.h>\n"
-             "#include <stdlib.h>\n"
-             "#include \"windef.h\"\n"
-             "#include \"winbase.h\"\n\n"
+             "#include <windows.h>\n\n"
              "#define STANDALONE\n"
              "#include \"wine/test.h\"\n\n" );
 
