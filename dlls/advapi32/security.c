@@ -27,6 +27,7 @@
 #include "rpcnterr.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "ntstatus.h"
 #include "ntsecapi.h"
 #include "accctrl.h"
@@ -928,9 +929,10 @@ BOOL WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 
 BOOL WINAPI ImpersonateNamedPipeClient( HANDLE hNamedPipe )
 {
-    FIXME("%p - stub\n", hNamedPipe);
+    TRACE("(%p)\n", hNamedPipe);
 
-    return FALSE;
+    return set_ntstatus( NtFsControlFile(hNamedPipe, NULL, NULL, NULL, NULL,
+                         FSCTL_PIPE_IMPERSONATE, NULL, 0, NULL, 0) );
 }
 
 /******************************************************************************
