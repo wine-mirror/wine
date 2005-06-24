@@ -380,9 +380,9 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
     name = MSI_RecordGetString( rec, 2 );
     attributes = MSI_RecordGetInteger( rec, 8 );
     text = MSI_RecordGetString( rec, 10 );
-    if( attributes & 1 )
+    if( attributes & msidbControlAttributesVisible )
         style |= WS_VISIBLE;
-    if( ~attributes & 2 )
+    if( ~attributes & msidbControlAttributesEnabled )
         style |= WS_DISABLED;
 
     msi_dialog_map_events(dialog, name);
@@ -391,11 +391,65 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
                                      style, dialog->hwnd );
 }
 
+struct msi_text_info
+{
+    WNDPROC oldproc;
+    DWORD attributes;
+};
+
+static LRESULT WINAPI
+MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    struct msi_text_info *info;
+    HRESULT r = 0;
+
+    TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
+
+    info = GetPropW(hWnd, szButtonData);
+
+    if( msg == WM_CTLCOLORSTATIC &&
+       ( info->attributes & msidbControlAttributesTransparent ) )
+    {
+        SetBkMode( (HDC)wParam, TRANSPARENT );
+        return (LRESULT) GetStockObject(NULL_BRUSH);
+    }
+
+    r = CallWindowProcW(info->oldproc, hWnd, msg, wParam, lParam);
+
+    switch( msg )
+    {
+    case WM_NCDESTROY:
+        HeapFree( GetProcessHeap(), 0, info );
+        RemovePropW( hWnd, szButtonData );
+        break;
+    }
+
+    return r;
+}
+
 static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
 {
+    msi_control *control;
+    struct msi_text_info *info;
+
     TRACE("%p %p\n", dialog, rec);
 
-    msi_dialog_add_control( dialog, rec, szStatic, 0 );
+    control = msi_dialog_add_control( dialog, rec, szStatic, SS_LEFT | WS_GROUP );
+    if( !control )
+        return ERROR_FUNCTION_FAILED;
+
+    info = HeapAlloc( GetProcessHeap(), 0, sizeof *info );
+    if( !info )
+        return ERROR_SUCCESS;
+
+    info->attributes = MSI_RecordGetInteger( rec, 8 );
+    if( info->attributes & msidbControlAttributesTransparent )
+        SetWindowLongPtrW( control->hwnd, GWL_EXSTYLE, WS_EX_TRANSPARENT );
+
+    info->oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
+                                          (LONG_PTR)MSIText_WndProc );
+    SetPropW( control->hwnd, szButtonData, info );
+
     return ERROR_SUCCESS;
 }
 
@@ -1558,6 +1612,10 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
 
     case WM_COMMAND:
         return msi_dialog_oncommand( dialog, wParam, (HWND)lParam );
+
+    /* bounce back to our subclassed static control */
+    case WM_CTLCOLORSTATIC:
+        return SendMessageW( (HWND) lParam, WM_CTLCOLORSTATIC, wParam, lParam );
 
     case WM_DESTROY:
         dialog->hwnd = NULL;
