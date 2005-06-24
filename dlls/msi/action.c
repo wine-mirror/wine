@@ -3270,15 +3270,13 @@ static UINT ACTION_WriteIniValues(MSIPACKAGE *package)
     return rc;
 }
 
-static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
+static UINT ITERATE_SelfRegModules(MSIRECORD *row, LPVOID param)
 {
-    UINT rc;
-    MSIQUERY * view;
-    MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] = 
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','S','e','l','f','R','e','g','`',0};
-
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPCWSTR filename;
+    LPWSTR FullName;
+    INT index;
+    DWORD len;
     static const WCHAR ExeStr[] =
         {'r','e','g','s','v','r','3','2','.','e','x','e',' ','\"',0};
     static const WCHAR close[] =  {'\"',0};
@@ -3288,6 +3286,43 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
+    filename = MSI_RecordGetString(row,1);
+    index = get_loaded_file(package,filename);
+
+    if (index < 0)
+    {
+        ERR("Unable to find file id %s\n",debugstr_w(filename));
+        return ERROR_SUCCESS;
+    }
+
+    len = strlenW(ExeStr);
+    len += strlenW(package->files[index].TargetPath);
+    len +=2;
+
+    FullName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+    strcpyW(FullName,ExeStr);
+    strcatW(FullName,package->files[index].TargetPath);
+    strcatW(FullName,close);
+
+    TRACE("Registering %s\n",debugstr_w(FullName));
+    brc = CreateProcessW(NULL, FullName, NULL, NULL, FALSE, 0, NULL, c_colon,
+                    &si, &info);
+
+    if (brc)
+        msi_dialog_check_messages(info.hProcess);
+
+    HeapFree(GetProcessHeap(),0,FullName);
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
+{
+    UINT rc;
+    MSIQUERY * view;
+    static const WCHAR ExecSeqQuery[] = 
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','S','e','l','f','R','e','g','`',0};
+
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
     if (rc != ERROR_SUCCESS)
     {
@@ -3295,60 +3330,10 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
         return ERROR_SUCCESS;
     }
 
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
-    {
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-        return rc;
-    }
-
-    while (1)
-    {
-        LPCWSTR filename;
-        LPWSTR FullName;
-        INT index;
-        DWORD len;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            rc = ERROR_SUCCESS;
-            break;
-        }
-
-        filename = MSI_RecordGetString(row,1);
-        index = get_loaded_file(package,filename);
-
-        if (index < 0)
-        {
-            ERR("Unable to find file id %s\n",debugstr_w(filename));
-            msiobj_release(&row->hdr);
-            continue;
-        }
-
-        len = strlenW(ExeStr);
-        len += strlenW(package->files[index].TargetPath);
-        len +=2;
-
-        FullName = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
-        strcpyW(FullName,ExeStr);
-        strcatW(FullName,package->files[index].TargetPath);
-        strcatW(FullName,close);
-
-        TRACE("Registering %s\n",debugstr_w(FullName));
-        brc = CreateProcessW(NULL, FullName, NULL, NULL, FALSE, 0, NULL,
-                  c_colon, &si, &info);
-
-        if (brc)
-            msi_dialog_check_messages(info.hProcess);
- 
-        HeapFree(GetProcessHeap(),0,FullName);
-        msiobj_release(&row->hdr);
-    }
-    MSI_ViewClose(view);
+    MSI_IterateRecords(view, NULL, ITERATE_SelfRegModules, package);
     msiobj_release(&view->hdr);
-    return rc;
+
+    return ERROR_SUCCESS;
 }
 
 static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
