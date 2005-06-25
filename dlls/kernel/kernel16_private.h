@@ -110,8 +110,6 @@ typedef struct
 
 /* relay entry points */
 
-#ifdef __i386__
-
 typedef struct
 {
     WORD   pushw_bp;               /* pushw %bp */
@@ -132,24 +130,6 @@ typedef struct
     WORD   nArgs;
     DWORD  arg_types[2];           /* type of each argument */
 } CALLFROM16;
-
-#else  /* __i386__ */
-
-typedef struct
-{
-    void (*target)();
-    WORD   call;                   /* call CALLFROM16 */
-    short  callfrom16;
-} ENTRYPOINT16;
-
-typedef struct
-{
-    WORD   lret;                   /* lret $nArgs */
-    WORD   nArgs;
-    DWORD  arg_types[2];           /* type of each argument */
-} CALLFROM16;
-
-#endif  /* __i386__ */
 
 /* THHOOK Kernel Data Structure */
 typedef struct _THHOOK
