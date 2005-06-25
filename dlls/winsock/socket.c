@@ -127,6 +127,7 @@
 #include "winsock2.h"
 #include "mswsock.h"
 #include "ws2tcpip.h"
+#include "ws2spi.h"
 #include "wsipx.h"
 #include "winnt.h"
 #include "iphlpapi.h"
@@ -4252,13 +4253,13 @@ INT WINAPI WSCEnableNSProvider( LPGUID provider, BOOL enable )
 /***********************************************************************
  *              WSCGetProviderPath                          (WS2_32.86)
  */
-INT WINAPI WSCGetProviderPath( LPGUID provider, LPWSTR path, LPINT len, LPINT errno )
+INT WINAPI WSCGetProviderPath( LPGUID provider, LPWSTR path, LPINT len, LPINT errcode )
 {
-    FIXME( "(%s %p %p %p) Stub!\n", debugstr_guid(provider), path, len, errno );
+    FIXME( "(%s %p %p %p) Stub!\n", debugstr_guid(provider), path, len, errcode );
 
-    if (!errno || !provider || !len) return WSAEFAULT;
+    if (!errcode || !provider || !len) return WSAEFAULT;
 
-    *errno = WSAEINVAL;
+    *errcode = WSAEINVAL;
     return SOCKET_ERROR;
 }
 

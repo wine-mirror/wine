@@ -46,6 +46,7 @@
 #include "winsock2.h"
 #include "wsipx.h"
 #include "wshisotp.h"
+#include "ws2spi.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"

@@ -33,6 +33,17 @@ extern "C" {
 
 typedef BOOL (WINAPI *LPWPUPOSTMESSAGE)(HWND,UINT,WPARAM,LPARAM);
 
+WSAEVENT WINAPI WPUCompleteOverlappedRequest(SOCKET,LPWSAOVERLAPPED,DWORD,DWORD,LPINT);
+INT      WINAPI WSCInstallProvider(const LPGUID,LPCWSTR,const LPWSAPROTOCOL_INFOW,
+                                   DWORD,LPINT);
+INT      WINAPI WSCDeinstallProvider(LPGUID,LPINT);
+INT      WINAPI WSCEnableNSProvider(LPGUID,BOOL);
+INT      WINAPI WSCEnumProtocols(LPINT,LPWSAPROTOCOL_INFOW,LPDWORD,LPINT);
+INT      WINAPI WSCGetProviderPath(LPGUID,LPWSTR,LPINT,LPINT);
+INT      WINAPI WSCInstallNameSpace(LPWSTR,LPWSTR,DWORD,DWORD,LPGUID);
+INT      WINAPI WSCUnInstallNameSpace(LPGUID);
+INT      WINAPI WSCWriteProviderOrder(LPDWORD,DWORD);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
