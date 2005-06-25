@@ -213,6 +213,7 @@ static void	EDIT_MoveWordForward(EDITSTATE *es, BOOL extend);
 static void	EDIT_PaintLine(EDITSTATE *es, HDC hdc, INT line, BOOL rev);
 static INT	EDIT_PaintText(EDITSTATE *es, HDC hdc, INT x, INT y, INT line, INT col, INT count, BOOL rev);
 static void	EDIT_SetCaretPos(EDITSTATE *es, INT pos, BOOL after_wrap);
+static void	EDIT_AdjustFormatRect(EDITSTATE *es);
 static void	EDIT_SetRectNP(EDITSTATE *es, LPRECT lprc);
 static void	EDIT_UnlockBuffer(EDITSTATE *es, BOOL force);
 static void	EDIT_UpdateScrollInfo(EDITSTATE *es);
@@ -239,7 +240,7 @@ static void	EDIT_EM_ScrollCaret(EDITSTATE *es);
 static void	EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc);
 static void	EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc);
 static void	EDIT_EM_SetLimitText(EDITSTATE *es, INT limit);
-static void	EDIT_EM_SetMargins(EDITSTATE *es, INT action, INT left, INT right);
+static void	EDIT_EM_SetMargins(EDITSTATE *es, INT action, INT left, INT right, BOOL repaint);
 static void	EDIT_EM_SetPasswordChar(EDITSTATE *es, WCHAR c);
 static void	EDIT_EM_SetSel(EDITSTATE *es, UINT start, UINT end, BOOL after_wrap);
 static BOOL	EDIT_EM_SetTabStops(EDITSTATE *es, INT count, LPINT tabs);
@@ -735,7 +736,7 @@ static LRESULT WINAPI EditWndProc_common( HWND hwnd, UINT msg,
 	/* The following EM_xxx are new to win95 and don't exist for 16 bit */
 
 	case EM_SETMARGINS:
-		EDIT_EM_SetMargins(es, (INT)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam));
+		EDIT_EM_SetMargins(es, (INT)wParam, (short)LOWORD(lParam), (short)HIWORD(lParam), TRUE);
 		break;
 
 	case EM_GETMARGINS:
@@ -2233,41 +2234,16 @@ static void EDIT_SetCaretPos(EDITSTATE *es, INT pos,
 
 /*********************************************************************
  *
- *	EDIT_SetRectNP
+ *	EDIT_AdjustFormatRect
  *
- *	note:	this is not (exactly) the handler called on EM_SETRECTNP
- *		it is also used to set the rect of a single line control
+ *	Adjusts the format rectangle for the current font and the
+ *	current client rectangle.
  *
  */
-static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
+static void EDIT_AdjustFormatRect(EDITSTATE *es)
 {
 	RECT ClientRect;
-	LONG_PTR ExStyle;
-
-	CopyRect(&es->format_rect, rc);
-	ExStyle = GetWindowLongPtrW(es->hwndSelf, GWL_EXSTYLE);
-	if ((es->style & WS_POPUP) && !(ExStyle & WS_EX_CLIENTEDGE)) {
-		if (es->style & WS_BORDER) {
-			INT bw = GetSystemMetrics(SM_CXBORDER) + 1;
-			es->format_rect.left += bw;
-			es->format_rect.right -= bw;
-			if (es->line_height + 2 * bw <=
-			    es->format_rect.bottom - es->format_rect.top) {
-				es->format_rect.top += bw;
-				es->format_rect.bottom -= bw;
-			}
-		}
-	} else {
-		if (es->line_height + 2 <=
-			es->format_rect.bottom - es->format_rect.top) {
-			es->format_rect.top++;
-			es->format_rect.bottom--;
-		}
-		es->format_rect.left++;
-		es->format_rect.right--;
-	}
-	es->format_rect.left += es->left_margin;
-	es->format_rect.right -= es->right_margin;
+	
 	es->format_rect.right = max(es->format_rect.right, es->format_rect.left + es->char_width);
 	if (es->style & ES_MULTILINE)
 	{
@@ -2304,6 +2280,47 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 	
 	EDIT_SetCaretPos(es, es->selection_end, es->flags & EF_AFTER_WRAP);
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_SetRectNP
+ *
+ *	note:	this is not (exactly) the handler called on EM_SETRECTNP
+ *		it is also used to set the rect of a single line control
+ *
+ */
+static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
+{
+	LONG_PTR ExStyle;
+
+	CopyRect(&es->format_rect, rc);
+	ExStyle = GetWindowLongPtrW(es->hwndSelf, GWL_EXSTYLE);
+	if ((es->style & WS_POPUP) && !(ExStyle & WS_EX_CLIENTEDGE)) {
+		if (es->style & WS_BORDER) {
+			INT bw = GetSystemMetrics(SM_CXBORDER) + 1;
+			es->format_rect.left += bw;
+			es->format_rect.right -= bw;
+			if (es->line_height + 2 * bw <=
+		    	es->format_rect.bottom - es->format_rect.top) {
+				es->format_rect.top += bw;
+				es->format_rect.bottom -= bw;
+			}
+		}
+	} else {
+		if (es->line_height + 2 <=
+			es->format_rect.bottom - es->format_rect.top) {
+			es->format_rect.top++;
+			es->format_rect.bottom--;
+		}
+		es->format_rect.left++;
+		es->format_rect.right--;
+	}
+	
+	es->format_rect.left += es->left_margin;
+	es->format_rect.right -= es->right_margin;
+	EDIT_AdjustFormatRect(es);
 }
 
 
@@ -3557,7 +3574,7 @@ static void EDIT_EM_SetLimitText(EDITSTATE *es, INT limit)
  *
  */
 static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
-			       INT left, INT right)
+			       INT left, INT right, BOOL repaint)
 {
 	TEXTMETRICW tm;
 	INT default_left_margin  = 0; /* in pixels */
@@ -3579,18 +3596,28 @@ static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
         }
 
 	if (action & EC_LEFTMARGIN) {
+		es->format_rect.left -= es->left_margin;
 		if (left != EC_USEFONTINFO)
 			es->left_margin = left;
 		else
 			es->left_margin = default_left_margin;
+		es->format_rect.left += es->left_margin;
 	}
 
 	if (action & EC_RIGHTMARGIN) {
+		es->format_rect.right += es->right_margin;
 		if (right != EC_USEFONTINFO)
  			es->right_margin = right;
 		else
 			es->right_margin = default_right_margin;
+		es->format_rect.right -= es->right_margin;
 	}
+	
+	if (action & (EC_LEFTMARGIN | EC_RIGHTMARGIN)) {
+		EDIT_AdjustFormatRect(es);
+		if (repaint) EDIT_UpdateText(es, NULL, TRUE);
+	}
+	
 	TRACE("left=%d, right=%d\n", es->left_margin, es->right_margin);
 }
 
@@ -4005,6 +4032,8 @@ static void EDIT_WM_Copy(EDITSTATE *es)
  */
 static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
 {
+        RECT clientRect;
+        
 	TRACE("%s\n", debugstr_w(name));
        /*
         *	To initialize some final structure members, we call some helper
@@ -4014,6 +4043,11 @@ static LRESULT EDIT_WM_Create(EDITSTATE *es, LPCWSTR name)
         */
         EDIT_WM_SetFont(es, 0, FALSE);
         EDIT_EM_EmptyUndoBuffer(es);
+        
+        /* We need to calculate the format rect
+           (applications may send EM_SETMARGINS before the control gets visible) */
+        GetClientRect(es->hwndSelf, &clientRect);
+        EDIT_SetRectNP(es, &clientRect);
 
        if (name && *name) {
 	   EDIT_EM_ReplaceSel(es, FALSE, name, FALSE, TRUE);
@@ -4796,7 +4830,7 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	TEXTMETRICW tm;
 	HDC dc;
 	HFONT old_font = 0;
-	RECT r;
+	RECT clientRect;
 
 	es->font = font;
 	dc = GetDC(es->hwndSelf);
@@ -4808,12 +4842,12 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	if (font)
 		SelectObject(dc, old_font);
 	ReleaseDC(es->hwndSelf, dc);
+	
+	/* Reset the format rect and the margins */
+	GetClientRect(es->hwndSelf, &clientRect);
+	EDIT_SetRectNP(es, &clientRect);
 	EDIT_EM_SetMargins(es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
-			   EC_USEFONTINFO, EC_USEFONTINFO);
-
-	/* Force the recalculation of the format rect for each font change */
-	GetClientRect(es->hwndSelf, &r);
-	EDIT_SetRectNP(es, &r);
+			   EC_USEFONTINFO, EC_USEFONTINFO, FALSE);
 
 	if (es->style & ES_MULTILINE)
 		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);

@@ -916,6 +916,64 @@ static void test_edit_control_4(void)
     DestroyWindow(hwEdit);
 }
 
+static void test_margins(void)
+{
+    HWND hwEdit;
+    RECT old_rect, new_rect;
+    INT old_left_margin, old_right_margin;
+    DWORD old_margins, new_margins;
+
+    hwEdit = create_editcontrol(WS_BORDER, 0);
+    
+    old_margins = SendMessage(hwEdit, EM_GETMARGINS, 0, 0);
+    old_left_margin = LOWORD(old_margins);
+    old_right_margin = HIWORD(old_margins);
+    
+    /* Check if setting the margins works */
+    
+    SendMessage(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN, MAKELONG(10, 0));
+    new_margins = SendMessage(hwEdit, EM_GETMARGINS, 0, 0);
+    ok(LOWORD(new_margins) == 10, "Wrong left margin: %d\n", LOWORD(new_margins));
+    ok(HIWORD(new_margins) == old_right_margin, "Wrong right margin: %d\n", HIWORD(new_margins));
+    
+    SendMessage(hwEdit, EM_SETMARGINS, EC_RIGHTMARGIN, MAKELONG(0, 10));
+    new_margins = SendMessage(hwEdit, EM_GETMARGINS, 0, 0);
+    ok(LOWORD(new_margins) == 10, "Wrong left margin: %d\n", LOWORD(new_margins));
+    ok(HIWORD(new_margins) == 10, "Wrong right margin: %d\n", HIWORD(new_margins));
+    
+    
+    /* The size of the rectangle must decrease if we increase the margin */
+    
+    SendMessage(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(5, 5));
+    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM)&old_rect);
+    SendMessage(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(15, 20));
+    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
+    ok(new_rect.left == old_rect.left + 10, "The left border of the rectangle is wrong\n");
+    ok(new_rect.right == old_rect.right - 15, "The right border of the rectangle is wrong\n");
+    ok(new_rect.top == old_rect.top, "The top border of the rectangle must not change\n");
+    ok(new_rect.bottom == old_rect.bottom, "The bottom border of the rectangle must not change\n");
+    
+    
+    /* If we set the margin to same value as the current margin,
+       the rectangle must not change */
+    
+    SendMessage(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(10, 10));
+    old_rect.left = 1;
+    old_rect.right = 99;
+    old_rect.top = 1;
+    old_rect.bottom = 99;
+    SendMessage(hwEdit, EM_SETRECT, 0, (LPARAM)&old_rect);    
+    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM)&old_rect);
+    SendMessage(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(10, 10));
+    SendMessage(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
+    ok(new_rect.left == old_rect.left, "The left border of the rectangle has changed\n");
+    ok(new_rect.right == old_rect.right, "The right border of the rectangle has changed\n");
+    ok(new_rect.top == old_rect.top, "The top border of the rectangle has changed\n");
+    ok(new_rect.bottom == old_rect.bottom, "The bottom border of the rectangle has changed\n");
+    
+    DestroyWindow (hwEdit);
+}
+
 START_TEST(edit)
 {
     hinst = GetModuleHandleA (NULL);
@@ -926,4 +984,5 @@ START_TEST(edit)
     test_edit_control_2();
     test_edit_control_3();
     test_edit_control_4();
+    test_margins();
 }
