@@ -372,7 +372,6 @@ HRESULT SHELL32_GetDisplayNameOfChild (IShellFolder2 * psf,
  */
 HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWORD pdwAttributes)
 {
-    GUID const *clsid;
     DWORD dwAttributes;
     static const DWORD dwSupportedAttr=
                           SFGAO_CANCOPY |           /*0x00000001 */
@@ -399,12 +398,12 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPCITEMIDLIST pidl, LPDWO
     }
 
     if (_ILIsDrive (pidl)) {
-        *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANLINK;
-    } else if ((clsid = _ILGetGUIDPointer (pidl))) {
-	if (HCR_GetFolderAttributes (clsid, &dwAttributes)) {
-	    *pdwAttributes &= dwAttributes;
-	} else {
-	    *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
+        *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|
+	    SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANLINK;
+    } else if (_ILGetGUIDPointer (pidl)) {
+	if (!HCR_GetFolderAttributes (pidl, pdwAttributes)) {
+	    *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|
+		SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
 	}
     } else if (_ILGetDataPointer (pidl)) {
 	dwAttributes = _ILGetFileAttributes (pidl, NULL, 0);
