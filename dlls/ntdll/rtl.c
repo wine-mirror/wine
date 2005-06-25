@@ -167,10 +167,13 @@ start:
 wait:
 	 if( fWait )
 	 {
+             NTSTATUS status;
+
 	     rwl->uExclusiveWaiters++;
 
 	     RtlLeaveCriticalSection( &rwl->rtlCS );
-	     if( NtWaitForSingleObject( rwl->hExclusiveReleaseSemaphore, FALSE, NULL ) == WAIT_FAILED )
+	     status = NtWaitForSingleObject( rwl->hExclusiveReleaseSemaphore, FALSE, NULL );
+	     if( HIWORD(status) )
 		 goto done;
 	     goto start; /* restart the acquisition to avoid deadlocks */
 	 }
@@ -191,7 +194,7 @@ done:
  */
 BYTE WINAPI RtlAcquireResourceShared(LPRTL_RWLOCK rwl, BYTE fWait)
 {
-    DWORD dwWait = WAIT_FAILED;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     BYTE retVal = 0;
     if( !rwl ) return 0;
 
@@ -210,14 +213,15 @@ start:
 	{
 	    rwl->uSharedWaiters++;
 	    RtlLeaveCriticalSection( &rwl->rtlCS );
-	    if( (dwWait = NtWaitForSingleObject( rwl->hSharedReleaseSemaphore, FALSE, NULL )) == WAIT_FAILED )
+	    status = NtWaitForSingleObject( rwl->hSharedReleaseSemaphore, FALSE, NULL );
+	    if( HIWORD(status) )
 		goto done;
 	    goto start;
 	}
     }
     else
     {
-	if( dwWait != WAIT_OBJECT_0 ) /* otherwise RtlReleaseResource() has already done it */
+	if( status != STATUS_WAIT_0 ) /* otherwise RtlReleaseResource() has already done it */
 	    rwl->iNumberActive++;
 	retVal = 1;
     }
