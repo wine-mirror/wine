@@ -270,8 +270,7 @@ BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule,
 DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %s, %ld): stub\n",
-          ImageBase, debugstr_a(lpBaseName), nSize);
+    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpBaseName, nSize);
 
     if (lpBaseName && nSize)
         lpBaseName[0] = '\0';
@@ -285,8 +284,7 @@ DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName,
 DWORD WINAPI GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpBaseName, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %s, %ld): stub\n",
-          ImageBase, debugstr_w(lpBaseName), nSize);
+    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpBaseName, nSize);
 
     if (lpBaseName && nSize)
         lpBaseName[0] = '\0';
@@ -300,8 +298,7 @@ DWORD WINAPI GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpBaseName,
 DWORD WINAPI GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %s, %ld): stub\n",
-          ImageBase, debugstr_a(lpFilename), nSize);
+    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -315,8 +312,7 @@ DWORD WINAPI GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename,
 DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename, 
                                       DWORD nSize)
 {
-    FIXME("(%p, %s, %ld): stub\n",
-          ImageBase, debugstr_w(lpFilename), nSize);
+    FIXME("(%p, %p, %ld): stub\n", ImageBase, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -330,8 +326,7 @@ DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename,
 DWORD WINAPI GetMappedFileNameA(HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, 
                                 DWORD nSize)
 {
-    FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
-          hProcess, lpv, debugstr_a(lpFilename), nSize);
+    FIXME("(%p, %p, %p, %ld): stub\n", hProcess, lpv, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
@@ -345,8 +340,7 @@ DWORD WINAPI GetMappedFileNameA(HANDLE hProcess, LPVOID lpv, LPSTR lpFilename,
 DWORD WINAPI GetMappedFileNameW(HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, 
                                 DWORD nSize)
 {
-    FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
-          hProcess, lpv, debugstr_w(lpFilename), nSize);
+    FIXME("(%p, %p, %p, %ld): stub\n", hProcess, lpv, lpFilename, nSize);
 
     if (lpFilename && nSize)
         lpFilename[0] = '\0';
