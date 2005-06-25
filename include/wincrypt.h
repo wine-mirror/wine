@@ -283,6 +283,97 @@ typedef struct _CERT_BASIC_CONSTRAINTS2_INFO {
     DWORD dwPathLenConstraint;
 } CERT_BASIC_CONSTRAINTS2_INFO, *PCERT_BASIC_CONSTRAINTS2_INFO;
 
+typedef struct _CERT_POLICY_QUALIFIER_INFO {
+    LPSTR            pszPolicyQualifierId;
+    CRYPT_OBJID_BLOB Qualifier;
+} CERT_POLICY_QUALIFIER_INFO, *PCERT_POLICY_QUALIFIER_INFO;
+
+typedef struct _CERT_POLICY_INFO {
+    LPSTR                       pszPolicyIdentifier;
+    DWORD                       cPolicyQualifier;
+    CERT_POLICY_QUALIFIER_INFO *rgPolicyQualifier;
+} CERT_POLICY_INFO, *PCERT_POLICY_INFO;
+
+typedef struct _CERT_POLICIES_INFO {
+    DWORD             cPolicyInfo;
+    CERT_POLICY_INFO *rgPolicyInfo;
+} CERT_POLICIES_INFO, *PCERT_POLICIES_INFO;
+
+typedef struct _CERT_POLICY_QUALIFIER_NOTICE_REFERENCE {
+    LPSTR pszOrganization;
+    DWORD cNoticeNumbers;
+    int  *rgNoticeNumbers;
+} CERT_POLICY_QUALIFIER_NOTICE_REFERENCE,
+ *PCERT_POLICY_QUALIFIER_NOTICE_REFERENCE;
+
+typedef struct _CERT_POLICY_QUALIFIER_USER_NOTICE {
+    CERT_POLICY_QUALIFIER_NOTICE_REFERENCE *pNoticeReference;
+    LPWSTR                                  pszDisplayText;
+} CERT_POLICY_QUALIFIER_USER_NOTICE, *PCERT_POLICY_QUALIFIER_USER_NOTICE;
+
+typedef struct _CPS_URLS {
+    LPWSTR                      pszURL;
+    CRYPT_ALGORITHM_IDENTIFIER *pAlgorithm;
+    CRYPT_DATA_BLOB            *pDigest;
+} CPS_URLS, *PCPS_URLS;
+
+typedef struct _CERT_POLICY95_QUALIFIER1 {
+    LPWSTR    pszPracticesReference;
+    LPSTR     pszNoticeIdentifier;
+    LPSTR     pszNSINoticeIdentifier;
+    DWORD     cCPSURLs;
+    CPS_URLS *rgCPSURLs;
+} CERT_POLICY95_QUALIFIER1, *PCERT_POLICY95_QUALIFIER1;
+
+typedef struct _CERT_POLICY_MAPPING {
+    LPSTR pszIssuerDomainPolicy;
+    LPSTR pszSubjectDomainPolicy;
+} CERT_POLICY_MAPPING, *PCERT_POLICY_MAPPING;
+
+typedef struct _CERT_POLICY_MAPPINGS_INFO {
+    DWORD                cPolicyMapping;
+    PCERT_POLICY_MAPPING rgPolicyMapping;
+} CERT_POLICY_MAPPINGS_INFO, *PCERT_POLICY_MAPPINGS_INFO;
+
+typedef struct _CERT_POLICY_CONSTRAINTS_INFO {
+    BOOL  fRequireExplicitPolicy;
+    DWORD dwRequireExplicitPolicySkipCerts;
+    BOOL  fInhibitPolicyMapping;
+    DWORD dwInhibitPolicyMappingSkipCerts;
+} CERT_POLICY_CONSTRAINTS_INFO, *PCERT_POLICY_CONSTRAINTS_INFO;
+
+typedef struct _CRYPT_CONTENT_INFO_SEQUENCE_OF_ANY {
+    LPSTR           pszObjId;
+    DWORD           cValue;
+    PCRYPT_DER_BLOB rgValue;
+} CRYPT_CONTENT_INFO_SEQUENCE_OF_ANY, *PCRYPT_CONTENT_INFO_SEQUENCE_OF_ANY;
+
+typedef struct _CRYPT_CONTENT_INFO {
+    LPSTR          pszObjId;
+    CRYPT_DER_BLOB Content;
+} CRYPT_CONTENT_INFO, *PCRYPT_CONTENT_INFO;
+
+typedef struct _CRYPT_SEQUENCE_OF_ANY {
+    DWORD           cValue;
+    PCRYPT_DER_BLOB rgValue;
+} CRYPT_SEQUENCE_OF_ANY, *PCRYPT_SEQUENCE_OF_ANY;
+
+typedef struct _CERT_AUTHORITY_KEY_ID2_INFO {
+    CRYPT_DATA_BLOB    KeyId;
+    CERT_ALT_NAME_INFO AuthorityCertIssuer;
+    CRYPT_INTEGER_BLOB AuthorityCertSerialNumber;
+} CERT_AUTHORITY_KEY_ID2_INFO, *PCERT_AUTHORITY_KEY_ID2_INFO;
+
+typedef struct _CERT_ACCESS_DESCRIPTION {
+    LPSTR               pszAccessMethod;
+    CERT_ALT_NAME_ENTRY AccessLocation;
+} CERT_ACCESS_DESCRIPTION, *PCERT_ACCESS_DESCRIPTION;
+
+typedef struct _CERT_AUTHORITY_INFO_ACCESS {
+    DWORD                    cAccDescr;
+    PCERT_ACCESS_DESCRIPTION rgAccDescr;
+} CERT_AUTHORITY_INFO_ACCESS, *PCERT_AUTHORITY_INFO_ACCESS;
+
 typedef struct _CERT_CONTEXT {
     DWORD      dwCertEncodingType;
     BYTE       *pbCertEncoded;
