@@ -108,8 +108,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 if(!hMozCtl)
                     ERR("Can't load the Mozilla ActiveX control\n");
             }else {
-                MESSAGE("You need to install the Mozilla ActiveX control to\n");
-                MESSAGE("use Wine's builtin MSHTML dll.\n");
+                TRACE("Not found Mozilla ActiveX Control. HTML rendering will be disabled.");
             }
             hInst = hInstDLL;
 	    break;
