@@ -24,7 +24,6 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
-#include <winreg.h>
 #include <winternl.h>
 #include <wine/server_protocol.h>
 
