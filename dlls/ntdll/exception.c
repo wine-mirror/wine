@@ -53,14 +53,14 @@ typedef struct
 
 static struct list vectored_handlers = LIST_INIT(vectored_handlers);
 
-static CRITICAL_SECTION vectored_handlers_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION vectored_handlers_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &vectored_handlers_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
       0, 0, { 0, (DWORD)(__FILE__ ": vectored_handlers_section") }
 };
-static CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION vectored_handlers_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 #ifdef __i386__
 # define GET_IP(context) ((LPVOID)(context)->Eip)

@@ -363,14 +363,14 @@ struct cdrom_cache {
 #define MAX_CACHE_ENTRIES       5
 static struct cdrom_cache cdrom_cache[MAX_CACHE_ENTRIES];
 
-static CRITICAL_SECTION cache_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION cache_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &cache_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
       0, 0, { 0, (DWORD)(__FILE__ ": cache_section") }
 };
-static CRITICAL_SECTION cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* Proposed media change function: not really needed at this time */
 /* This is a 1 or 0 type of function */

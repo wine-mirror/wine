@@ -135,14 +135,14 @@ static int show_dot_files;
 /* at some point we may want to allow Winelib apps to set this */
 static const int is_case_sensitive = FALSE;
 
-static CRITICAL_SECTION dir_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION dir_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &dir_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
       0, 0, { 0, (DWORD)(__FILE__ ": dir_section") }
 };
-static CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION dir_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 /* check if a given Unicode char is OK in a DOS short name */

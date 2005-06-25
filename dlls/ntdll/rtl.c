@@ -37,14 +37,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-static CRITICAL_SECTION peb_lock;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION peb_lock;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &peb_lock,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
       0, 0, { 0, (DWORD)(__FILE__ ": peb_lock") }
 };
-static CRITICAL_SECTION peb_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION peb_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* CRC polynomial 0xedb88320 */
 static const DWORD CRC_table[256] =

@@ -47,14 +47,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-static CRITICAL_SECTION TIME_GetBias_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION TIME_GetBias_section;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &TIME_GetBias_section,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
       0, 0, { 0, (DWORD)(__FILE__ ": TIME_GetBias_section") }
 };
-static CRITICAL_SECTION TIME_GetBias_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION TIME_GetBias_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /* TimeZone registry key values */
 static const WCHAR TZInformationKeyW[] = { 'M','a','c','h','i','n','e','\\',
