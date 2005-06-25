@@ -1,3 +1,4 @@
 Makefile
 libmshtml.def
 mshtml.dll.dbg.c
+rsrc.res

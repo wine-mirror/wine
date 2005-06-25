@@ -4,7 +4,7 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr) MSHTML_DllGetClassObject
 @ stdcall DllInstall(long wstr) MSHTML_DllInstall
 @ stdcall -private DllRegisterServer() MSHTML_DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllUnregisterServer() MSHTML_DllUnregisterServer
 @ stub MatchExactGetIDsOfNames
 @ stub PrintHTML
 @ stub RNIGetCompatibleVersion

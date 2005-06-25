@@ -15,6 +15,10 @@ C_SRCS = \
 	persist.c \
 	view.c
 
+RC_SRCS = rsrc.rc
+
 @MAKE_DLL_RULES@
+
+rsrc.res: mshtml.inf
 
 ### Dependencies:
