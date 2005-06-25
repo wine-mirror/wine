@@ -54,28 +54,17 @@ FontSubStr="Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes"
 
 [Classes]
 HKCR,.avi,"Content Type",,"video/avi"
-HKCR,.bmp,"Content Type",,"image/bmp"
-HKCR,.css,"Content Type",,"text/css"
-HKCR,.dib,"Content Type",,"image/bmp"
 HKCR,.dll,"Content Type",,"application/x-msdownload"
 HKCR,.exe,,,"exefile"
 HKCR,.exe,"Content Type",,"application/x-msdownload"
-HKCR,.gif,"Content Type",,"image/gif"
-HKCR,.htm,,,"htmlfile"
 HKCR,.htm,"Content Type",,"text/html"
-HKCR,.html,,,"htmlfile"
 HKCR,.html,"Content Type",,"text/html"
 HKCR,.jfif,"Content Type",,"image/jpeg"
-HKCR,.jpe,"Content Type",,"image/jpeg"
-HKCR,.jpeg,"Content Type",,"image/jpeg"
-HKCR,.jpg,"Content Type",,"image/jpeg"
 HKCR,.lnk,,,"lnkfile"
 HKCR,.msi,,,"Msi.Package" 
-HKCR,.png,"Content Type",,"image/png"
 HKCR,.tif,"Content Type",,"image/tiff"
 HKCR,.tiff,"Content Type",,"image/tiff"
 HKCR,.txt,,,"txtfile"
-HKCR,.txt,"Content Type",,"text/plain"
 HKCR,.wav,"Content Type",,"audio/wav"
 HKCR,.xml,"Content Type",,"text/xml"
 HKCR,.xsl,"Content Type",,"text/xsl"
@@ -2061,6 +2050,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dxdiagn.dll,1
 11,,hhctrl.ocx,1
 11,,mlang.dll,1
+11,,mshtml.dll,1
 11,,msi.dll,1
 11,,ole32.dll,1
 11,,oleaut32.dll,1
