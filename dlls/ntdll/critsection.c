@@ -117,7 +117,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *
     if (!GetProcessHeap()) crit->DebugInfo = NULL;
     else
     {
-        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(CRITICAL_SECTION_DEBUG));
+        crit->DebugInfo = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(RTL_CRITICAL_SECTION_DEBUG));
         if (crit->DebugInfo)
         {
             crit->DebugInfo->Type = 0;
@@ -234,7 +234,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 
         time.QuadPart = -5000 * 10000;  /* 5 seconds */
         status = NtWaitForSingleObject( sem, FALSE, &time );
-        if ( status == WAIT_TIMEOUT )
+        if ( status == STATUS_TIMEOUT )
         {
             const char *name = NULL;
             if (crit->DebugInfo) name = (char *)crit->DebugInfo->Spare[1];
@@ -243,7 +243,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
                  crit, debugstr_a(name), GetCurrentThreadId(), (DWORD)crit->OwningThread );
             time.QuadPart = -60000 * 10000;
             status = NtWaitForSingleObject( sem, FALSE, &time );
-            if ( status == WAIT_TIMEOUT && TRACE_ON(relay) )
+            if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
                 ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), (DWORD) crit->OwningThread );
