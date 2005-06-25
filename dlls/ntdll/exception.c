@@ -210,7 +210,7 @@ static void EXC_DefaultHandling( EXCEPTION_RECORD *rec, CONTEXT *context )
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
         ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
-    else if (rec->ExceptionCode == EXCEPTION_NONCONTINUABLE_EXCEPTION)
+    else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
         ERR("Process attempted to continue execution after noncontinuable exception.\n");
     else
         ERR("Unhandled exception code %lx flags %lx addr %p\n",
