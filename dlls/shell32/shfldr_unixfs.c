@@ -869,16 +869,31 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_CreateViewObject(IShellFolder2* i
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT cidl, 
     LPCITEMIDLIST* apidl, SFGAOF* rgfInOut)
 {
-    UINT i;
-    SFGAOF flags= ~(SFGAOF)0;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
+    const StatStruct *pStatStruct;
         
-    TRACE("(iface=%p, cidl=%u, apidl=%p, rgfInOut=%p) semi-stub\n", iface, cidl, apidl, rgfInOut);
-   
-    for (i=0; i<cidl; i++) 
-        flags &= LPSTATSTRUCT_FROM_LPSHITEMID(apidl[i])->sfAttr;
+    TRACE("(iface=%p, cidl=%u, apidl=%p, rgfInOut=%p)\n", iface, cidl, apidl, rgfInOut);
+ 
+    if (!rgfInOut || (cidl && !apidl)) 
+        return E_INVALIDARG;
     
-    *rgfInOut = *rgfInOut & flags;
-            
+    if (cidl == 0) {
+        if (!strcmp(This->m_pszPath, "/")) {
+            *rgfInOut &= dwRootAttr;
+        } else {
+            pStatStruct = LPSTATSTRUCT_FROM_LPSHITEMID(ILFindLastID(This->m_pidlLocation));
+            if (!pStatStruct) return E_FAIL;                
+            *rgfInOut &= pStatStruct->sfAttr;
+        }
+    } else {
+        UINT i;
+        for (i=0; i<cidl; i++) {
+            pStatStruct = LPSTATSTRUCT_FROM_LPSHITEMID(apidl[i]);
+            if (!pStatStruct) return E_INVALIDARG;
+            *rgfInOut &= pStatStruct->sfAttr;
+        }
+    }
+    
     return S_OK;
 }
 
@@ -1146,33 +1161,12 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* ifa
     
     if (!UNIXFS_pidl_to_path(pidl, This))
         return E_FAIL;
-  
-    /* Attributes of a shell namespace extension's root folder (in this case the '/' folder)
-     * are not queried for with ShellFolder's GetAttributesOf, but looked up in the registry
-     * (see MSDN: Creating a Shell Namespace Extension > Implementing the Basic Folder Object
-     * Interface > Registering an Extension). When they change, we have to write them there.
-     */
+
     if (!strcmp(This->m_pszPath, "/")) {
-        DWORD dwTempAttr = SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR;
         struct stat statRoot;
-        
         if (stat(This->m_pszPath, &statRoot)) return E_FAIL;
-        if (UNIXFS_is_dos_device(&statRoot)) dwTempAttr |= SFGAO_FILESYSTEM;
-        
-        if (dwRootAttr != dwTempAttr) {
-            HKEY hKey;
-            static const WCHAR wszFolderAttrValue[] = { 'A','t','t','r','i','b','u','t','e','s',0 };
-            static const WCHAR wszFolderAttrKey[] = { 'C','L','S','I','D','\\',
-                '{','9','D','2','0','A','A','E','8','-','0','6','2','5','-','4','4','B','0','-',
-                '9','C','A','7','-','7','1','8','8','9','C','2','2','5','4','D','9','}','\\',
-                'S','h','e','l','l','F','o','l','d','e','r',0 };
-            
-            dwRootAttr = dwTempAttr;
-            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, wszFolderAttrKey, 0, KEY_WRITE, &hKey) == ERROR_SUCCESS) {
-                RegSetValueExW(hKey, wszFolderAttrValue, 0, REG_DWORD, (BYTE*)&dwTempAttr, sizeof(DWORD));
-                RegCloseKey(hKey);
-            }    
-        }
+        dwRootAttr = SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR;
+        if (UNIXFS_is_dos_device(&statRoot)) dwRootAttr |= SFGAO_FILESYSTEM;
     }
     
     return S_OK;
