@@ -2,6 +2,7 @@
  * Unit test suite for file functions
  *
  * Copyright 2002 Bill Currie
+ * Copyright 2005 Paul Rupe
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,6 +60,7 @@ static void test_fileops( void )
     int fd;
     FILE *file;
     fpos_t pos;
+    int i, c;
 
     fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
     write (fd, outbuffer, sizeof (outbuffer));
@@ -76,6 +78,26 @@ static void test_fileops( void )
     ok(fgets(buffer,sizeof(outbuffer),file) !=0,"fgets failed unexpected\n");
     ok(strlen(buffer) == 1,"fgets dropped chars\n");
     ok(buffer[0] == outbuffer[strlen(outbuffer)-1],"fgets exchanged chars\n");
+
+    rewind(file);
+    for (i = 0, c = EOF; i < sizeof(outbuffer); i++)
+    {
+        ok((c = fgetc(file)) == outbuffer[i], "fgetc returned wrong data\n");
+    }
+    ok((c = fgetc(file)) == EOF, "getc did not return EOF\n");
+    ok(feof(file), "feof did not return EOF\n");
+    ok(ungetc(c, file) == EOF, "ungetc(EOF) did not return EOF\n");
+    ok(feof(file), "feof after ungetc(EOF) did not return EOF\n");
+    ok((c = fgetc(file)) == EOF, "getc did not return EOF\n");
+    c = outbuffer[sizeof(outbuffer) - 1];
+    ok(ungetc(c, file) == c, "ungetc did not return its input\n");
+    ok(!feof(file), "feof after ungetc returned EOF\n");
+    ok((c = fgetc(file)) != EOF, "getc after ungetc returned EOF\n");
+    ok(c == outbuffer[sizeof(outbuffer) - 1],
+       "getc did not return ungetc'd data\n");
+    ok(!feof(file), "feof after getc returned EOF prematurely\n");
+    ok((c = fgetc(file)) == EOF, "getc did not return EOF\n");
+    ok(feof(file), "feof after getc did not return EOF\n");
 
     rewind(file);
     ok(fgetpos(file,&pos) == 0, "fgetpos failed unexpected\n");

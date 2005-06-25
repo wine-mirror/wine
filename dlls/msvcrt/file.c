@@ -2190,7 +2190,7 @@ char *MSVCRT_fgets(char *s, int size, MSVCRT_FILE* file)
   if ((cc != MSVCRT_EOF) && (size > 1))
     *s++ = cc;
   *s = '\0';
-  TRACE(":got '%s'\n", debugstr_a(buf_start));
+  TRACE(":got %s\n", debugstr_a(buf_start));
   return buf_start;
 }
 
@@ -2983,6 +2983,8 @@ int MSVCRT_printf(const char *format, ...)
  */
 int MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 {
+	if (c == MSVCRT_EOF)
+		return MSVCRT_EOF;
 	if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF)) {
 		msvcrt_alloc_buffer(file);
 		file->_ptr++;
@@ -2991,6 +2993,7 @@ int MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 		file->_ptr--;
 		*file->_ptr=c;
 		file->_cnt++;
+		MSVCRT_clearerr(file);
 		return c;
 	}
 	return MSVCRT_EOF;
