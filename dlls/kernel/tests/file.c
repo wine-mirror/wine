@@ -766,7 +766,8 @@ static void test_DeleteFileA( void )
     ret = DeleteFileA("nul");
     ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
                 GetLastError() == ERROR_INVALID_PARAMETER ||
-                GetLastError() == ERROR_ACCESS_DENIED),
+                GetLastError() == ERROR_ACCESS_DENIED ||
+                GetLastError() == ERROR_INVALID_FUNCTION),
        "DeleteFileA(\"nul\") returned ret=%d error=%ld\n",ret,GetLastError());
 }
 
