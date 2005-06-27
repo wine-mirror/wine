@@ -80,7 +80,7 @@ static void browsefolder_callback( LPBROWSEINFOW lpBrowseInfo, HWND hWnd,
 {
     if (!lpBrowseInfo->lpfn)
         return;
-    lpBrowseInfo->lpfn( hWnd, BFFM_INITIALIZED, param, lpBrowseInfo->lParam );
+    lpBrowseInfo->lpfn( hWnd, msg, param, lpBrowseInfo->lParam );
 }
 
 /******************************************************************************
