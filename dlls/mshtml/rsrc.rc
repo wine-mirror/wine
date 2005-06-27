@@ -17,3 +17,5 @@
  */
 
 REGINST REGINST mshtml.inf
+
+HTML_RESOURCE HTML "blank.htm"
