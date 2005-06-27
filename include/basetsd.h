@@ -139,6 +139,8 @@ typedef unsigned short UHALF_PTR, *PUHALF_PTR;
 typedef LONG_PTR SSIZE_T, *PSSIZE_T;
 typedef ULONG_PTR SIZE_T, *PSIZE_T;
 
+typedef ULONG_PTR KAFFINITY, *PKAFFINITY;
+
 /* Some Wine-specific definitions */
 
 /* Architecture dependent settings. */
