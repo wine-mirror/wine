@@ -160,8 +160,12 @@ static void test_createdibitmap(void)
 }
 
 #define test_color_todo(got, exp, txt, todo) \
-    if (todo) todo_wine { ok(got == exp, #txt " failed: got 0x%06x expected 0x%06x\n", (UINT)got, (UINT)exp); } \
-    else ok(got == exp, #txt " failed: got 0x%06x expected 0x%06x\n", (UINT)got, (UINT)exp)
+    if (!todo && got != exp && screen_depth < 24) { \
+      todo_wine ok(0, #txt " failed at %d-bit screen depth: got 0x%06x expected 0x%06x - skipping DIB tests\n", \
+                   screen_depth, (UINT)got, (UINT)exp); \
+      return; \
+    } else if (todo) todo_wine { ok(got == exp, #txt " failed: got 0x%06x expected 0x%06x\n", (UINT)got, (UINT)exp); } \
+    else ok(got == exp, #txt " failed: got 0x%06x expected 0x%06x\n", (UINT)got, (UINT)exp) \
 
 #define test_color(hdc, color, exp, todo_setp, todo_getp) \
 { \
@@ -192,8 +196,10 @@ static void test_dibsections(void)
     HPALETTE hpal, oldpal;
     COLORREF c0, c1;
     int i;
+    int screen_depth;
 
     hdc = GetDC(0);
+    screen_depth = GetDeviceCaps(hdc, BITSPIXEL) * GetDeviceCaps(hdc, PLANES);
     memset(pbmi, 0, sizeof(bmibuf));
     pbmi->bmiHeader.biSize = sizeof(pbmi->bmiHeader);
     pbmi->bmiHeader.biHeight = 16;
