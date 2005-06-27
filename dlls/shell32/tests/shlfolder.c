@@ -187,6 +187,9 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfDesktop, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "Desktop's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
 
+    hr = IShellFolder_BindToObject(psfDesktop, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
+    ok (hr == E_INVALIDARG, "Desktop's BindToObject should fail, when called with NULL pidl! hr = %08lx\n", hr);
+
     hr = IShellFolder_ParseDisplayName(psfDesktop, NULL, NULL, wszMyComputer, NULL, &pidlMyComputer, NULL);
     ok (SUCCEEDED(hr), "Desktop's ParseDisplayName failed to parse MyComputer's CLSID! hr = %08lx\n", hr);
     if (FAILED(hr)) {
@@ -202,6 +205,9 @@ static void test_BindToObject(void)
 
     hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
     ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
+
+    hr = IShellFolder_BindToObject(psfMyComputer, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
+    ok (hr == E_INVALIDARG, "MyComputers's BindToObject should fail, when called with NULL pidl! hr = %08lx\n", hr);
 
     cChars = GetSystemDirectoryW(wszSystemDir, MAX_PATH);
     ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryW failed! LastError: %08lx\n", GetLastError());
@@ -227,6 +233,10 @@ static void test_BindToObject(void)
     ok (hr == E_INVALIDARG, 
         "FileSystem ShellFolder's BindToObject should fail, when called with empty pidl! hr = %08lx\n", hr);
     
+    hr = IShellFolder_BindToObject(psfSystemDir, NULL, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
+    ok (hr == E_INVALIDARG, 
+        "FileSystem ShellFolder's BindToObject should fail, when called with NULL pidl! hr = %08lx\n", hr);
+
     IShellFolder_Release(psfSystemDir);
 }
   
