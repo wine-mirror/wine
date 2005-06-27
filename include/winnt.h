@@ -3013,7 +3013,7 @@ typedef struct _TOKEN_OWNER {
 
 typedef struct _TOKEN_PRIMARY_GROUP {
   PSID PrimaryGroup;
-} TOKEN_PRIMARY_GROUP;
+} TOKEN_PRIMARY_GROUP, *PTOKEN_PRIMARY_GROUP;
 
 
 /*
@@ -3022,7 +3022,7 @@ typedef struct _TOKEN_PRIMARY_GROUP {
 
 typedef struct _TOKEN_DEFAULT_DACL {
   PACL DefaultDacl;
-} TOKEN_DEFAULT_DACL;
+} TOKEN_DEFAULT_DACL, *PTOKEN_DEFAULT_DACL;
 
 /*
  * TOKEN_SOURCEL
@@ -3033,7 +3033,7 @@ typedef struct _TOKEN_DEFAULT_DACL {
 typedef struct _TOKEN_SOURCE {
   char SourceName[TOKEN_SOURCE_LENGTH];
   LUID SourceIdentifier;
-} TOKEN_SOURCE;
+} TOKEN_SOURCE, *PTOKEN_SOURCE;
 
 /*
  * TOKEN_TYPE
