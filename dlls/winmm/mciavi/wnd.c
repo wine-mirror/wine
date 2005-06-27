@@ -116,7 +116,6 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
     static const WCHAR captionW[] = {'W','i','n','e',' ','M','C','I','-','A','V','I',' ','p','l','a','y','e','r',0};
     HWND	hParent = 0;
     DWORD	dwStyle = WS_OVERLAPPEDWINDOW;
-    int		p = CW_USEDEFAULT;
     RECT        rc;
 
     /* what should be done ? */
@@ -124,13 +123,17 @@ BOOL    MCIAVI_CreateWindow(WINE_MCIAVI* wma, DWORD dwFlags, LPMCI_DGV_OPEN_PARM
 
     if (dwFlags & MCI_DGV_OPEN_PARENT)	hParent = lpOpenParms->hWndParent;
     if (dwFlags & MCI_DGV_OPEN_WS)	dwStyle = lpOpenParms->dwStyle;
-    if (dwStyle & WS_CHILD)		p = 0;
 
-    rc.left = p;
-    rc.top = p;
+    rc.left = rc.top = 0;
     rc.right = (wma->hic ? wma->outbih : wma->inbih)->biWidth;
     rc.bottom = (wma->hic ? wma->outbih : wma->inbih)->biHeight;
     AdjustWindowRect(&rc, dwStyle, FALSE);
+    if (!(dwStyle & (WS_CHILD|WS_POPUP))) /* overlapped window ? */
+    {
+        rc.right -= rc.left;
+        rc.bottom -= rc.top;
+        rc.left = rc.top = CW_USEDEFAULT;
+    }
 
     wma->hWnd = CreateWindowW(mciaviW, captionW,
                               dwStyle, rc.left, rc.top,
