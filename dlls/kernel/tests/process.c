@@ -1015,6 +1015,11 @@ static  void    test_DebuggingFlag(void)
     assert(DeleteFileA(resfile) != 0);
 }
 
+static BOOL is_console(HANDLE h)
+{
+    return h != INVALID_HANDLE_VALUE && ((ULONG_PTR)h & 3) == 3;
+}
+
 static void test_Console(void)
 {
     char                buffer[MAX_PATH];
@@ -1042,7 +1047,7 @@ static void test_Console(void)
     startup.hStdOutput = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, &sa, OPEN_EXISTING, 0, 0);
 
     /* first, we need to be sure we're attached to a console */
-    if (startup.hStdInput == INVALID_HANDLE_VALUE || startup.hStdOutput == INVALID_HANDLE_VALUE)
+    if (!is_console(startup.hStdInput) || !is_console(startup.hStdOutput))
     {
         /* we're not attached to a console, let's do it */
         AllocConsole();

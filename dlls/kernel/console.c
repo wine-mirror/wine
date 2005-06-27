@@ -5,7 +5,7 @@
  * Copyright 1997 Karl Garrison
  * Copyright 1998 John Richardson
  * Copyright 1998 Marcus Meissner
- * Copyright 2001,2002,2004 Eric Pouech
+ * Copyright 2001,2002,2004,2005 Eric Pouech
  * Copyright 2001 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
@@ -58,6 +58,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(console);
 static UINT console_input_codepage;
 static UINT console_output_codepage;
 
+static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
+static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
 /* map input records to ASCII */
 static void input_records_WtoA( INPUT_RECORD *buffer, int count )
@@ -208,10 +210,8 @@ BOOL WINAPI Beep( DWORD dwFreq, DWORD dwDur )
  */
 HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creation)
 {
-    static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
-    static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
     BOOL        output;
-    HANDLE ret;
+    HANDLE      ret;
 
     if (strcmpiW(coninW, name) == 0) 
         output = FALSE;
@@ -239,7 +239,23 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
         ret = reply->handle;
     }
     SERVER_END_REQ;
-    return ret ? console_handle_map(ret) : INVALID_HANDLE_VALUE;
+    if (ret)
+        ret = console_handle_map(ret);
+    else
+    {
+        /* likely, we're not attached to wineconsole
+         * let's try to return a handle to the unix-console
+         */
+        int fd = open("/dev/tty", output ? O_WRONLY : O_RDONLY);
+        ret = INVALID_HANDLE_VALUE;
+        if (fd != -1)
+        {
+            DWORD attr = (output ? GENERIC_WRITE : GENERIC_READ) | SYNCHRONIZE;
+            wine_server_fd_to_handle(fd, attr, inherit, &ret);
+            close(fd);
+        }
+    }
+    return ret;
 }
 
 /******************************************************************
@@ -1099,19 +1115,20 @@ BOOL WINAPI AllocConsole(void)
     STARTUPINFOA        siCurrent;
     STARTUPINFOA	siConsole;
     char                buffer[1024];
-    SECURITY_ATTRIBUTES sa;
 
     TRACE("()\n");
 
-    handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
-			     0, NULL, OPEN_EXISTING, 0, 0 );
+    handle_in = OpenConsoleW( coninW, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
+                              FALSE, OPEN_EXISTING );
 
-    if (handle_in != INVALID_HANDLE_VALUE)
+    if (VerifyConsoleIoHandle(handle_in))
     {
 	/* we already have a console opened on this process, don't create a new one */
 	CloseHandle(handle_in);
 	return FALSE;
     }
+    /* happens when we're running on a Unix console */
+    if (handle_in != INVALID_HANDLE_VALUE) CloseHandle(handle_in);
 
     GetStartupInfoA(&siCurrent);
 
@@ -1148,16 +1165,12 @@ BOOL WINAPI AllocConsole(void)
 
     if( !(siCurrent.dwFlags & STARTF_USESTDHANDLES) ) {
         /* all std I/O handles are inheritable by default */
-        sa.nLength = sizeof(sa);
-        sa.lpSecurityDescriptor = NULL;
-        sa.bInheritHandle = TRUE;
-  
-        handle_in = CreateFileA( "CONIN$", GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
-                0, &sa, OPEN_EXISTING, 0, 0 );
+        handle_in = OpenConsoleW( coninW, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE,
+                                  TRUE, OPEN_EXISTING );
         if (handle_in == INVALID_HANDLE_VALUE) goto the_end;
   
-        handle_out = CreateFileA( "CONOUT$", GENERIC_READ|GENERIC_WRITE,
-                                  0, &sa, OPEN_EXISTING, 0, 0 );
+        handle_out = OpenConsoleW( conoutW, GENERIC_READ|GENERIC_WRITE,
+                                   TRUE, OPEN_EXISTING );
         if (handle_out == INVALID_HANDLE_VALUE) goto the_end;
   
         if (!DuplicateHandle(GetCurrentProcess(), handle_out, GetCurrentProcess(),
