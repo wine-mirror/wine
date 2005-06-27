@@ -1172,35 +1172,41 @@ static BOOL ReadAFMDir(LPCSTR dirname)
  */
 BOOL PSDRV_GetType1Metrics(void)
 {
-    CHAR    name_buf[256], value_buf[256];
-    INT     i = 0;
-    HKEY    hkey;
-    DWORD   type, name_len, value_len;
+    static const WCHAR pathW[] = {'A','F','M','P','a','t','h',0};
+    HKEY hkey;
+    DWORD len;
+    LPWSTR valueW;
+    LPSTR valueA, ptr;
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\afmdirs */
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-    	    "Software\\Wine\\Wine\\Config\\afmdirs",
-	    0, KEY_READ, &hkey) != ERROR_SUCCESS)
-	return TRUE;
+    /* @@ Wine registry key: HKCU\Software\Wine\Fonts */
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) != ERROR_SUCCESS)
+        return TRUE;
 
-    name_len = sizeof(name_buf);
-    value_len = sizeof(value_buf);
-
-    while (RegEnumValueA(hkey, i++, name_buf, &name_len, NULL, &type, value_buf,
-    	    &value_len) == ERROR_SUCCESS)
+    if (RegQueryValueExW( hkey, pathW, NULL, NULL, NULL, &len ) == ERROR_SUCCESS)
     {
-    	value_buf[sizeof(value_buf) - 1] = '\0';
-
-	if (ReadAFMDir(value_buf) == FALSE)
-	{
-	    RegCloseKey(hkey);
-	    return FALSE;
-	}
-
-	/* initialize lengths for new iteration */
-
-	name_len = sizeof(name_buf);
-	value_len = sizeof(value_buf);
+        len += sizeof(WCHAR);
+        valueW = HeapAlloc( PSDRV_Heap, 0, len );
+        if (RegQueryValueExW( hkey, pathW, NULL, NULL, (LPBYTE)valueW, &len ) == ERROR_SUCCESS)
+        {
+            len = WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, NULL, 0, NULL, NULL );
+            valueA = HeapAlloc( PSDRV_Heap, 0, len );
+            WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, len, NULL, NULL );
+            TRACE( "got AFM font path %s\n", debugstr_a(valueA) );
+            ptr = valueA;
+            while (ptr)
+            {
+                LPSTR next = strchr( ptr, ':' );
+                if (next) *next++ = 0;
+                if (!ReadAFMDir( ptr ))
+                {
+                    RegCloseKey(hkey);
+                    return FALSE;
+                }
+                ptr = next;
+            }
+            HeapFree( PSDRV_Heap, 0, valueA );
+        }
+        HeapFree( PSDRV_Heap, 0, valueW );
     }
 
     RegCloseKey(hkey);
