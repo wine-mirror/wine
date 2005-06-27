@@ -200,16 +200,27 @@ HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE
  */
 HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwThreadId )
 {
-    HANDLE ret = 0;
-    SERVER_START_REQ( open_thread )
+    NTSTATUS status;
+    HANDLE handle;
+    OBJECT_ATTRIBUTES attr;
+    CLIENT_ID cid;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = bInheritHandle ? OBJ_INHERIT : 0;
+    attr.ObjectName = NULL;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    cid.UniqueProcess = 0; /* FIXME */
+    cid.UniqueThread = (HANDLE)dwThreadId;
+    status = NtOpenThread( &handle, dwDesiredAccess, &attr, &cid );
+    if (status)
     {
-        req->tid     = dwThreadId;
-        req->access  = dwDesiredAccess;
-        req->inherit = bInheritHandle;
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        SetLastError( RtlNtStatusToDosError(status) );
+        handle = 0;
     }
-    SERVER_END_REQ;
-    return ret;
+    return handle;
 }
 
 
