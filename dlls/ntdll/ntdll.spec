@@ -149,7 +149,7 @@
 @ stdcall NtOpenKey(ptr long ptr)
 @ stdcall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
-@ stub NtOpenProcess
+@ stdcall NtOpenProcess(ptr long ptr ptr)
 @ stdcall NtOpenProcessToken(long long long)
 @ stdcall NtOpenSection(ptr long ptr)
 @ stdcall NtOpenSemaphore(long long ptr)
@@ -769,7 +769,7 @@
 @ stdcall ZwOpenKey(ptr long ptr) NtOpenKey
 @ stdcall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm
-@ stub ZwOpenProcess
+@ stdcall ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
 @ stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
 @ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stdcall ZwOpenSemaphore(long long ptr) NtOpenSemaphore

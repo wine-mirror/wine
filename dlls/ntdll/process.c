@@ -281,3 +281,24 @@ NTSTATUS WINAPI NtFlushInstructionCache(
 #endif
     return STATUS_SUCCESS;
 }
+
+/******************************************************************
+ *		NtOpenProcess [NTDLL.@]
+ *		ZwOpenProcess [NTDLL.@]
+ */
+NTSTATUS  WINAPI NtOpenProcess(PHANDLE handle, ACCESS_MASK access,
+                               const OBJECT_ATTRIBUTES* attr, const CLIENT_ID* cid)
+{
+    NTSTATUS    status;
+
+    SERVER_START_REQ( open_process )
+    {
+        req->pid     = (DWORD)cid->UniqueProcess;
+        req->access  = access;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        status = wine_server_call( req );
+        if (!status) *handle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
+}

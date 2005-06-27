@@ -2468,16 +2468,28 @@ void WINAPI ExitProcess16( WORD status )
  */
 HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 {
-    HANDLE ret = 0;
-    SERVER_START_REQ( open_process )
+    NTSTATUS            status;
+    HANDLE              handle;
+    OBJECT_ATTRIBUTES   attr;
+    CLIENT_ID           cid;
+
+    cid.UniqueProcess = (HANDLE)id;
+    cid.UniqueThread = 0; /* FIXME ? */
+
+    attr.Length = sizeof(OBJECT_ATTRIBUTES);
+    attr.RootDirectory = NULL;
+    attr.Attributes = inherit ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    attr.ObjectName = NULL;
+
+    status = NtOpenProcess(&handle, access, &attr, &cid);
+    if (status != STATUS_SUCCESS)
     {
-        req->pid     = id;
-        req->access  = access;
-        req->inherit = inherit;
-        if (!wine_server_call_err( req )) ret = reply->handle;
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
     }
-    SERVER_END_REQ;
-    return ret;
+    return handle;
 }
 
 
