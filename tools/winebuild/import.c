@@ -603,7 +603,7 @@ void read_undef_symbols( char **argv )
 
     if (!argv[0]) return;
 
-    strcpy( name_prefix, func_name("") );
+    strcpy( name_prefix, asm_name("") );
     prefix_len = strlen( name_prefix );
 
     undef_size = nb_undef_symbols = 0;
@@ -690,8 +690,8 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
 {
     fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(name) );
-    fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
-    fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", name);
+    fprintf( outfile, "    \"\\t.globl %s\\n\"\n", asm_name(name) );
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(name) );
 
     switch(target_cpu)
     {
@@ -712,7 +712,8 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                 fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
                 fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
                 fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-                fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+                fprintf( outfile, "    \"\\taddl $%d+%s-.L__wine_spec_%s,%%eax\\n\"\n",
+                         pos, asm_name(table), name );
                 if (!strcmp( name, "__wine_call_from_16_regs" ))
                     fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
                 fprintf( outfile, "    \"\\tmovl 0(%%eax),%%eax\\n\"\n" );
@@ -725,7 +726,8 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                 fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
                 fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
                 fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-                fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+                fprintf( outfile, "    \"\\taddl $%d+%s-.L__wine_spec_%s,%%eax\\n\"\n",
+                         pos, asm_name(table), name );
                 if (strstr( name, "__wine_call_from_16" ))
                     fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
                 fprintf( outfile, "    \"\\tjmp *0(%%eax)\\n\"\n" );
@@ -765,17 +767,17 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
         fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(7), ppc_reg(1));
         if (target_platform == PLATFORM_APPLE)
         {
-            fprintf(outfile, "    \"\\tlis %s, ha16(" __ASM_NAME("%s") "+ %d)\\n\"\n",
-                    ppc_reg(9), table, pos);
-            fprintf(outfile, "    \"\\tla  %s, lo16(" __ASM_NAME("%s") "+ %d)(%s)\\n\"\n",
-                    ppc_reg(8), table, pos, ppc_reg(9));
+            fprintf(outfile, "    \"\\tlis %s, ha16(%s+%d)\\n\"\n",
+                    ppc_reg(9), asm_name(table), pos);
+            fprintf(outfile, "    \"\\tla  %s, lo16(%s+%d)(%s)\\n\"\n",
+                    ppc_reg(8), asm_name(table), pos, ppc_reg(9));
         }
         else
         {
-            fprintf(outfile, "    \"\\tlis %s, (" __ASM_NAME("%s") "+ %d)@hi\\n\"\n",
-                    ppc_reg(9), table, pos);
-            fprintf(outfile, "    \"\\tla  %s, (" __ASM_NAME("%s") "+ %d)@l(%s)\\n\"\n",
-                    ppc_reg(8), table, pos, ppc_reg(9));
+            fprintf(outfile, "    \"\\tlis %s, (%s+%d)@hi\\n\"\n",
+                    ppc_reg(9), asm_name(table), pos);
+            fprintf(outfile, "    \"\\tla  %s, (%s+%d)@l(%s)\\n\"\n",
+                    ppc_reg(8), asm_name(table), pos, ppc_reg(9));
         }
         fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg(7), ppc_reg(8));
         fprintf(outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(7));
@@ -863,7 +865,7 @@ static void output_immediate_import_thunks( FILE *outfile )
             (nb_imm + 1);  /* offset of imports.data from start of imports */
     fprintf( outfile, "/* immediate import thunks */\n" );
     fprintf( outfile, "asm(\".text\\n\\t.align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", import_thunks);
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(import_thunks));
 
     for (i = 0; i < nb_imports; i++)
     {
@@ -990,24 +992,24 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "/* delayed import thunks */\n" );
     fprintf( outfile, "asm(\".text\\n\"\n" );
     fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", delayed_import_loaders);
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(delayed_import_loaders));
     fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration("__wine_delay_load_asm") );
-    fprintf( outfile, "    \"" __ASM_NAME("__wine_delay_load_asm") ":\\n\"\n" );
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name("__wine_delay_load_asm") );
     switch(target_cpu)
     {
     case CPU_x86:
         fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_delay_load") );
         fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
         break;
     case CPU_SPARC:
         fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall %s\\n\"\n", asm_name("__wine_delay_load") );
         fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
         fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
         break;
     case CPU_ALPHA:
-        fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("__wine_delay_load") "\\n\"\n" );
+        fprintf( outfile, "    \"\\tjsr $26,%s\\n\"\n", asm_name("__wine_delay_load") );
         fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
         break;
     case CPU_POWERPC:
@@ -1034,7 +1036,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
         fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
 
         /* Call the __wine_delay_load function, arg1 is arg1. */
-        fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_delay_load") "\\n\"\n");
+        fprintf( outfile, "    \"\\tbl %s\\n\"\n", asm_name("__wine_delay_load") );
 
         /* Load return value from call into ctr register */
         fprintf( outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(3));
@@ -1073,21 +1075,21 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 
             sprintf( buffer, "__wine_delay_imp_%d_%s", i, name );
             fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(buffer) );
-            fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", buffer );
+            fprintf( outfile, "    \"%s:\\n\"\n", asm_name(buffer) );
             switch(target_cpu)
             {
             case CPU_x86:
                 fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
-                fprintf( outfile, "    \"\\tjmp " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
+                fprintf( outfile, "    \"\\tjmp %s\\n\"\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_SPARC:
                 fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
-                fprintf( outfile, "    \"\\tb,a " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
+                fprintf( outfile, "    \"\\tb,a %s\\n\"\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_ALPHA:
                 fprintf( outfile, "    \"\\tlda $0,%d($31)\\n\"\n", j);
                 fprintf( outfile, "    \"\\tldah $0,%d($0)\\n\"\n", idx);
-                fprintf( outfile, "    \"\\tjmp $31," __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
+                fprintf( outfile, "    \"\\tjmp $31,%s\\n\"\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_POWERPC:
                 switch(target_platform)
@@ -1098,7 +1100,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
                     fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg(2), idx);
                     /* Lower part + r2 -> r0, Note we can't use r0 directly */
                     fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(0), ppc_reg(2), j);
-                    fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+                    fprintf( outfile, "    \"\\tb %s\\n\"\n", asm_name("__wine_delay_load_asm") );
                     break;
                 default:
                     /* On linux we can't use r2 since r2 is not a scratch register (hold the TOC) */
@@ -1112,7 +1114,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
                     /* Restore r13 */
                     fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(13), ppc_reg(1));
                     fprintf( outfile, "    \"\\taddic %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
-                    fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+                    fprintf( outfile, "    \"\\tb %s\\n\"\n", asm_name("__wine_delay_load_asm") );
                     break;
                 }
                 break;
@@ -1124,7 +1126,7 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     output_function_size( outfile, delayed_import_loaders );
 
     fprintf( outfile, "\n    \".align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", delayed_import_thunks);
+    fprintf( outfile, "    \"%s:\\n\"\n", asm_name(delayed_import_thunks));
     pos = nb_delayed * 32;
     for (i = 0; i < nb_imports; i++)
     {

@@ -380,11 +380,11 @@ unsigned int get_page_size(void)
     return 0;
 }
 
-/* return the assembly name for a C function name */
-const char *func_name( const char *func )
+/* return the assembly name for a C symbol */
+const char *asm_name( const char *sym )
 {
     static char buffer[256];
-    sprintf( buffer, __ASM_NAME("%s"), func );
+    sprintf( buffer, __ASM_NAME("%s"), sym );
     return buffer;
 }
 

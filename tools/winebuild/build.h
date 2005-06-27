@@ -181,7 +181,7 @@ extern void free_dll_spec( DLLSPEC *spec );
 extern const char *make_c_identifier( const char *str );
 extern unsigned int get_alignment(unsigned int align);
 extern unsigned int get_page_size(void);
-extern const char *func_name( const char *func );
+extern const char *asm_name( const char *func );
 extern const char *func_declaration( const char *func );
 extern const char *func_size( const char *func );
 
