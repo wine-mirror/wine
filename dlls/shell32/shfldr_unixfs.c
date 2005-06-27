@@ -374,8 +374,6 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     if (!ppidl || !path)
         return FALSE;
 
-    cPathLen = lstrlenW(path);
-    
     /* Build an absolute path and let pNextPathElement point to the interesting 
      * relative sub-path. We need the absolute path to call 'stat', but the pidl
      * will only contain the relative part.
@@ -385,13 +383,13 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
         /* Absolute dos path. Convert to unix */
         if (!UNIXFS_get_unix_path(path, szCompletePath))
             return FALSE;
-        pNextPathElement = szCompletePath + 1;
+        pNextPathElement = szCompletePath;
     } 
     else if ((pUnixFolder->m_dwPathMode == PATHMODE_UNIX) && (path[0] == '/')) 
     {
         /* Absolute unix path. Just convert to ANSI. */
         WideCharToMultiByte(CP_ACP, 0, path, -1, szCompletePath, FILENAME_MAX, NULL, NULL); 
-        pNextPathElement = szCompletePath + 1;
+        pNextPathElement = szCompletePath;
     } 
     else 
     {
@@ -400,7 +398,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
         memcpy(szCompletePath, pUnixFolder->m_pszPath, cBasePathLen);
         WideCharToMultiByte(CP_ACP, 0, path, -1, szCompletePath + cBasePathLen, 
                             FILENAME_MAX - cBasePathLen, NULL, NULL);
-        pNextPathElement = szCompletePath + cBasePathLen;
+        pNextPathElement = szCompletePath + cBasePathLen - 1;
         
         /* If in dos mode, replace '\' with '/' */
         if (pUnixFolder->m_dwPathMode == PATHMODE_DOS) {
@@ -412,26 +410,38 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
         }
     }
 
-    /* At this point, we have an absolute unix path in szCompletePath. */
-    TRACE("complete path: %s\n", szCompletePath);
+    /* Remove trailing slash, if present */
+    cPathLen = strlen(szCompletePath);
+    if (szCompletePath[cPathLen-1] == '/') 
+        szCompletePath[cPathLen-1] = '\0';
+
+    if ((szCompletePath[0] != '/') || (pNextPathElement[0] != '/')) {
+        ERR("szCompletePath: %s, pNextPathElment: %s\n", szCompletePath, pNextPathElement);
+        return FALSE;
+    }
+    
+    /* At this point, we have an absolute unix path in szCompletePath 
+     * and the relative portion of it in pNextPathElement. Both starting with '/'
+     * and _not_ terminated by a '/'. */
+    TRACE("complete path: %s, relative path: %s\n", szCompletePath, pNextPathElement);
     
     /* Count the number of sub-directories in the path */
-    cSubDirs = 1; /* Path may not be terminated with '/', thus start with 1 */
-    pSlash = strchr(pNextPathElement, '/');
-    while (pSlash && pSlash[1]) {
+    cSubDirs = 0;
+    pSlash = pNextPathElement;
+    while (pSlash) {
         cSubDirs++;
         pSlash = strchr(pSlash+1, '/');
     }
   
     /* Allocate enough memory to hold the path. The -cSubDirs is for the '/' 
      * characters, which are not stored in the ITEMIDLIST. */
-    cPidlLen = strlen(pNextPathElement) - cSubDirs + 1 + cSubDirs * SHITEMID_LEN_FROM_NAME_LEN(0) + sizeof(USHORT);
+    cPidlLen = strlen(pNextPathElement) - cSubDirs + cSubDirs * SHITEMID_LEN_FROM_NAME_LEN(0) + sizeof(USHORT);
     *ppidl = pidl = (LPITEMIDLIST)SHAlloc(cPidlLen);
     if (!pidl) return FALSE;
 
     /* Concatenate the SHITEMIDs of the sub-directories. */
     while (*pNextPathElement) {
-        pSlash = strchr(pNextPathElement, '/');
+        pSlash = strchr(pNextPathElement+1, '/');
         if (pSlash) *pSlash = '\0';
         pNextPathElement = UNIXFS_build_shitemid(szCompletePath, bParentIsFS, pidl);
         if (pSlash) *pSlash = '/';
@@ -446,8 +456,8 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     }
     pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
 
-    if ((int)pidl-(int)*ppidl+sizeof(USHORT) > cPidlLen) /* We've corrupted the heap :( */ 
-        ERR("Computed length of pidl to small. Please report.\n");
+    if ((int)pidl-(int)*ppidl+sizeof(USHORT) != cPidlLen) /* We've corrupted the heap :( */ 
+        ERR("Computed length of pidl incorrect. Please report.\n");
     
     return TRUE;
 }
