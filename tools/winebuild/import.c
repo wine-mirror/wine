@@ -121,23 +121,16 @@ static const char * const default_ignored_symbols[] =
     "tanh"
 };
 
-#ifdef __powerpc__
-# ifdef __APPLE__
-# define ppc_high(mem) "ha16(" mem ")"
-# define ppc_low(mem)  "lo16(" mem ")"
-static const char * const ppc_reg[32] = { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-                                          "r8", "r9", "r10","r11","r12","r13","r14","r15",
-                                          "r16","r17","r18","r19","r20","r21","r22","r23",
-                                          "r24","r25","r26","r27","r28","r29","r30","r31" };
-# else  /* __APPLE__ */
-# define ppc_high(mem) "(" mem ")@hi"
-# define ppc_low(mem)  "(" mem ")@l"
-static const char * const ppc_reg[32] = { "0", "1", "2", "3", "4", "5", "6", "7",
-                                          "8", "9", "10","11","12","13","14","15",
-                                          "16","17","18","19","20","21","22","23",
-                                          "24","25","26","27","28","29","30","31" };
-# endif  /* __APPLE__ */
-#endif  /* __powerpc__ */
+
+static inline const char *ppc_reg( int reg )
+{
+    static const char * const ppc_regs[32] = { "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
+                                               "r8", "r9", "r10","r11","r12","r13","r14","r15",
+                                               "r16","r17","r18","r19","r20","r21","r22","r23",
+                                               "r24","r25","r26","r27","r28","r29","r30","r31" };
+    if (target_platform == PLATFORM_APPLE) return ppc_regs[reg];
+    return ppc_regs[reg] + 1;  /* skip the 'r' */
+}
 
 /* compare function names; helper for resolve_imports */
 static int name_cmp( const void *name, const void *entry )
@@ -187,9 +180,8 @@ inline static void sort_symbols( char **table, int size )
 
 inline static void output_function_size( FILE *outfile, const char *name )
 {
-#ifdef HAVE_ASM_DOT_SIZE
-    fprintf( outfile, "    \"\\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\\n\"\n", name, name);
-#endif
+    const char *size = func_size( name );
+    if (size[0]) fprintf( outfile, "    \"\\t%s\\n\"\n", size );
 }
 
 /* free an import structure */
@@ -603,14 +595,16 @@ static const char *ldcombine_files( char **argv )
 /* read in the list of undefined symbols */
 void read_undef_symbols( char **argv )
 {
-    static const char name_prefix[] = __ASM_NAME("");
-    static const int prefix_len = sizeof(name_prefix) - 1;
+    size_t prefix_len;
     FILE *f;
-    char *cmd, buffer[1024];
+    char *cmd, buffer[1024], name_prefix[16];
     int err;
     const char *name;
 
     if (!argv[0]) return;
+
+    strcpy( name_prefix, func_name("") );
+    prefix_len = strlen( name_prefix );
 
     undef_size = nb_undef_symbols = 0;
 
@@ -695,91 +689,105 @@ int resolve_imports( DLLSPEC *spec )
 static void output_import_thunk( FILE *outfile, const char *name, const char *table, int pos )
 {
     fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
-    fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", name );
+    fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(name) );
     fprintf( outfile, "    \"\\t.globl " __ASM_NAME("%s") "\\n\"\n", name );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", name);
 
-#if defined(__i386__)
-    if (!UsePIC)
+    switch(target_cpu)
     {
-        if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-        fprintf( outfile, "    \"\\tjmp *(imports+%d)\\n\"\n", pos );
-    }
-    else
-    {
-        if (!strcmp( name, "__wine_call_from_32_regs" ) ||
-            !strcmp( name, "__wine_call_from_16_regs" ))
+    case CPU_x86:
+        if (!UsePIC)
         {
-            /* special case: need to preserve all registers */
-            fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\tpushfl\\n\"\n" );
-            fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
-            fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
-            fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
-            if (!strcmp( name, "__wine_call_from_16_regs" ))
-                fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-            fprintf( outfile, "    \"\\tmovl 0(%%eax),%%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\txchgl 4(%%esp),%%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\tpopfl\\n\"\n" );
-            fprintf( outfile, "    \"\\tret\\n\"\n" );
+            if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+            fprintf( outfile, "    \"\\tjmp *(imports+%d)\\n\"\n", pos );
         }
         else
         {
-            fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
-            fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
-            fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
-            fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
-            if (strstr( name, "__wine_call_from_16" ))
-                fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-            fprintf( outfile, "    \"\\tjmp *0(%%eax)\\n\"\n" );
+            if (!strcmp( name, "__wine_call_from_32_regs" ) ||
+                !strcmp( name, "__wine_call_from_16_regs" ))
+            {
+                /* special case: need to preserve all registers */
+                fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\tpushfl\\n\"\n" );
+                fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
+                fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
+                fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+                if (!strcmp( name, "__wine_call_from_16_regs" ))
+                    fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+                fprintf( outfile, "    \"\\tmovl 0(%%eax),%%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\txchgl 4(%%esp),%%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\tpopfl\\n\"\n" );
+                fprintf( outfile, "    \"\\tret\\n\"\n" );
+            }
+            else
+            {
+                fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
+                fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
+                fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\taddl $%d+" __ASM_NAME("%s") "-.L__wine_spec_%s,%%eax\\n\"\n", pos, table, name );
+                if (strstr( name, "__wine_call_from_16" ))
+                    fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+                fprintf( outfile, "    \"\\tjmp *0(%%eax)\\n\"\n" );
+            }
         }
+        break;
+    case CPU_SPARC:
+        if ( !UsePIC )
+        {
+            fprintf( outfile, "    \"\\tsethi %%hi(%s+%d), %%g1\\n\"\n", table, pos );
+            fprintf( outfile, "    \"\\tld [%%g1+%%lo(%s+%d)], %%g1\\n\"\n", table, pos );
+            fprintf( outfile, "    \"\\tjmp %%g1\\n\\tnop\\n\"\n" );
+        }
+        else
+        {
+            /* Hmpf.  Stupid sparc assembler always interprets global variable
+               names as GOT offsets, so we have to do it the long way ... */
+            fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
+            fprintf( outfile, "    \"0:\\tcall 1f\\n\\tnop\\n\"\n" );
+            fprintf( outfile, "    \"1:\\tsethi %%hi(%s+%d-0b), %%g1\\n\"\n", table, pos );
+            fprintf( outfile, "    \"\\tor %%g1, %%lo(%s+%d-0b), %%g1\\n\"\n", table, pos );
+            fprintf( outfile, "    \"\\tld [%%g1+%%o7], %%g1\\n\"\n" );
+            fprintf( outfile, "    \"\\tjmp %%g1\\n\\trestore\\n\"\n" );
+        }
+        break;
+    case CPU_ALPHA:
+        fprintf( outfile, "    \"\\tlda $0,%s\\n\"\n", table );
+        fprintf( outfile, "    \"\\tlda $0,%d($0)\\n\"\n", pos);
+        fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
+        break;
+    case CPU_POWERPC:
+        fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+        fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(9), ppc_reg(1));
+        fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+        fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(8), ppc_reg(1));
+        fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+        fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(7), ppc_reg(1));
+        if (target_platform == PLATFORM_APPLE)
+        {
+            fprintf(outfile, "    \"\\tlis %s, ha16(" __ASM_NAME("%s") "+ %d)\\n\"\n",
+                    ppc_reg(9), table, pos);
+            fprintf(outfile, "    \"\\tla  %s, lo16(" __ASM_NAME("%s") "+ %d)(%s)\\n\"\n",
+                    ppc_reg(8), table, pos, ppc_reg(9));
+        }
+        else
+        {
+            fprintf(outfile, "    \"\\tlis %s, (" __ASM_NAME("%s") "+ %d)@hi\\n\"\n",
+                    ppc_reg(9), table, pos);
+            fprintf(outfile, "    \"\\tla  %s, (" __ASM_NAME("%s") "+ %d)@l(%s)\\n\"\n",
+                    ppc_reg(8), table, pos, ppc_reg(9));
+        }
+        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg(7), ppc_reg(8));
+        fprintf(outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(7));
+        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg(7), ppc_reg(1));
+        fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg(8), ppc_reg(1));
+        fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+        fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg(9), ppc_reg(1));
+        fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+        fprintf(outfile, "    \"\\tbctr\\n\"\n");
+        break;
     }
-#elif defined(__sparc__)
-    if ( !UsePIC )
-    {
-        fprintf( outfile, "    \"\\tsethi %%hi(%s+%d), %%g1\\n\"\n", table, pos );
-        fprintf( outfile, "    \"\\tld [%%g1+%%lo(%s+%d)], %%g1\\n\"\n", table, pos );
-        fprintf( outfile, "    \"\\tjmp %%g1\\n\\tnop\\n\"\n" );
-    }
-    else
-    {
-        /* Hmpf.  Stupid sparc assembler always interprets global variable
-           names as GOT offsets, so we have to do it the long way ... */
-        fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-        fprintf( outfile, "    \"0:\\tcall 1f\\n\\tnop\\n\"\n" );
-        fprintf( outfile, "    \"1:\\tsethi %%hi(%s+%d-0b), %%g1\\n\"\n", table, pos );
-        fprintf( outfile, "    \"\\tor %%g1, %%lo(%s+%d-0b), %%g1\\n\"\n", table, pos );
-        fprintf( outfile, "    \"\\tld [%%g1+%%o7], %%g1\\n\"\n" );
-        fprintf( outfile, "    \"\\tjmp %%g1\\n\\trestore\\n\"\n" );
-    }
-#elif defined(__powerpc__)
-    fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[9], ppc_reg[1]);
-    fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[8], ppc_reg[1]);
-    fprintf(outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[7], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tlis %s, " ppc_high(__ASM_NAME("%s") "+ %d") "\\n\"\n",
-            ppc_reg[9], table, pos);
-    fprintf(outfile, "    \"\\tla  %s, " ppc_low (__ASM_NAME("%s") "+ %d") "(%s)\\n\"\n",
-            ppc_reg[8], table, pos, ppc_reg[9]);
-    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg[7], ppc_reg[8]);
-    fprintf(outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg[7]);
-    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[7], ppc_reg[1]);
-    fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[8], ppc_reg[1]);
-    fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[9], ppc_reg[1]);
-    fprintf(outfile, "    \"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-    fprintf(outfile, "    \"\\tbctr\\n\"\n");
-#elif defined(__ALPHA__)
-    fprintf( outfile, "    \"\\tlda $0,%s\\n\"\n", table );
-    fprintf( outfile, "    \"\\tlda $0,%d($0)\\n\"\n", pos);
-    fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
-#else
-#error You need to define import thunks for your architecture!
-#endif
     output_function_size( outfile, name );
 }
 
@@ -973,7 +981,7 @@ static int output_delayed_imports( FILE *outfile, const DLLSPEC *spec )
 /* output the delayed import thunks of a Win32 module */
 static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
 {
-    int i, idx, j, pos;
+    int i, idx, j, pos, extra_stack_storage = 0;
     static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
     static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
 
@@ -983,75 +991,75 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
     fprintf( outfile, "asm(\".text\\n\"\n" );
     fprintf( outfile, "    \"\\t.align %d\\n\"\n", get_alignment(8) );
     fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", delayed_import_loaders);
-    fprintf( outfile, "    \"\\t" __ASM_FUNC("__wine_delay_load_asm") "\\n\"\n" );
+    fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration("__wine_delay_load_asm") );
     fprintf( outfile, "    \"" __ASM_NAME("__wine_delay_load_asm") ":\\n\"\n" );
-#if defined(__i386__)
-    fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
-    fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
-#elif defined(__sparc__)
-    fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
-    fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
-    fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
-    fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
-#elif defined(__powerpc__)
-# if defined(__APPLE__)
-/* On darwin an extra 56 bytes must be allowed for the linkage area+param area */
-#  define extra_stack_storage    56
-# else
-#  define extra_stack_storage    0
-# endif
-    /* Save all callee saved registers into a stackframe. */
-    fprintf( outfile, "    \"\\tstwu %s, -%d(%s)\\n\"\n",ppc_reg[1], 48+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[3],  4+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[4],  8+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[5], 12+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[6], 16+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[7], 20+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[8], 24+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[9], 28+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[10],32+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[11],36+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[12],40+extra_stack_storage, ppc_reg[1]);
+    switch(target_cpu)
+    {
+    case CPU_x86:
+        fprintf( outfile, "    \"\\tpushl %%ecx\\n\\tpushl %%edx\\n\\tpushl %%eax\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
+        fprintf( outfile, "    \"\\tpopl %%edx\\n\\tpopl %%ecx\\n\\tjmp *%%eax\\n\"\n" );
+        break;
+    case CPU_SPARC:
+        fprintf( outfile, "    \"\\tsave %%sp, -96, %%sp\\n\"\n" );
+        fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_delay_load") "\\n\"\n" );
+        fprintf( outfile, "    \"\\tmov %%g1, %%o0\\n\"\n" );
+        fprintf( outfile, "    \"\\tjmp %%o0\\n\\trestore\\n\"\n" );
+        break;
+    case CPU_ALPHA:
+        fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("__wine_delay_load") "\\n\"\n" );
+        fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
+        break;
+    case CPU_POWERPC:
+        if (target_platform == PLATFORM_APPLE) extra_stack_storage = 56;
 
-    /* r0 -> r3 (arg1) */
-    fprintf( outfile, "    \"\\tmr %s, %s\\n\"\n", ppc_reg[3], ppc_reg[0]);
+        /* Save all callee saved registers into a stackframe. */
+        fprintf( outfile, "    \"\\tstwu %s, -%d(%s)\\n\"\n",ppc_reg(1), 48+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
 
-    /* save return address */
-    fprintf( outfile, "    \"\\tmflr %s\\n\"\n", ppc_reg[0]);
-    fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg[0], 44+extra_stack_storage, ppc_reg[1]);
+        /* r0 -> r3 (arg1) */
+        fprintf( outfile, "    \"\\tmr %s, %s\\n\"\n", ppc_reg(3), ppc_reg(0));
 
-    /* Call the __wine_delay_load function, arg1 is arg1. */
-    fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_delay_load") "\\n\"\n");
+        /* save return address */
+        fprintf( outfile, "    \"\\tmflr %s\\n\"\n", ppc_reg(0));
+        fprintf( outfile, "    \"\\tstw  %s, %d(%s)\\n\"\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
 
-    /* Load return value from call into ctr register */
-    fprintf( outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg[3]);
+        /* Call the __wine_delay_load function, arg1 is arg1. */
+        fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_delay_load") "\\n\"\n");
 
-    /* restore all saved registers and drop stackframe. */
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[3],  4+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[4],  8+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[5], 12+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[6], 16+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[7], 20+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[8], 24+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[9], 28+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[10],32+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[11],36+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg[12],40+extra_stack_storage, ppc_reg[1]);
+        /* Load return value from call into ctr register */
+        fprintf( outfile, "    \"\\tmtctr %s\\n\"\n", ppc_reg(3));
 
-    /* Load return value from call into return register */
-    fprintf( outfile, "    \"\\tlwz  %s,  %d(%s)\\n\"\n", ppc_reg[0], 44+extra_stack_storage, ppc_reg[1]);
-    fprintf( outfile, "    \"\\tmtlr %s\\n\"\n", ppc_reg[0]);
-    fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg[1], ppc_reg[1],  48+extra_stack_storage);
+        /* restore all saved registers and drop stackframe. */
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(3),  4+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(4),  8+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(5), 12+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(6), 16+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(7), 20+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(8), 24+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(9), 28+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(10),32+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(11),36+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tlwz  %s, %d(%s)\\n\"\n", ppc_reg(12),40+extra_stack_storage, ppc_reg(1));
 
-    /* branch to ctr register. */
-    fprintf( outfile, "    \"bctr\\n\"\n");
-#elif defined(__ALPHA__)
-    fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("__wine_delay_load") "\\n\"\n" );
-    fprintf( outfile, "    \"\\tjmp $31,($0)\\n\"\n" );
-#else
-#error You need to defined delayed import thunks for your architecture!
-#endif
+        /* Load return value from call into return register */
+        fprintf( outfile, "    \"\\tlwz  %s,  %d(%s)\\n\"\n", ppc_reg(0), 44+extra_stack_storage, ppc_reg(1));
+        fprintf( outfile, "    \"\\tmtlr %s\\n\"\n", ppc_reg(0));
+        fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(1), ppc_reg(1),  48+extra_stack_storage);
+
+        /* branch to ctr register. */
+        fprintf( outfile, "    \"bctr\\n\"\n");
+        break;
+    }
     output_function_size( outfile, "__wine_delay_load_asm" );
 
     for (i = idx = 0; i < nb_imports; i++)
@@ -1064,43 +1072,51 @@ static void output_delayed_import_thunks( FILE *outfile, const DLLSPEC *spec )
             const char *name = odp->name ? odp->name : odp->export_name;
 
             sprintf( buffer, "__wine_delay_imp_%d_%s", i, name );
-            fprintf( outfile, "    \"\\t" __ASM_FUNC("%s") "\\n\"\n", buffer );
+            fprintf( outfile, "    \"\\t%s\\n\"\n", func_declaration(buffer) );
             fprintf( outfile, "    \"" __ASM_NAME("%s") ":\\n\"\n", buffer );
-#if defined(__i386__)
-            fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
-            fprintf( outfile, "    \"\\tjmp " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
-#elif defined(__sparc__)
-            fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
-            fprintf( outfile, "    \"\\tb,a " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
-#elif defined(__powerpc__)
-#ifdef __APPLE__
-            /* On Darwin we can use r0 and r2 */
-            /* Upper part in r2 */
-            fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg[2], idx);
-            /* Lower part + r2 -> r0, Note we can't use r0 directly */
-            fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg[0], ppc_reg[2], j);
-            fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
-#else /* __APPLE__ */
-            /* On linux we can't use r2 since r2 is not a scratch register (hold the TOC) */
-            /* Save r13 on the stack */
-            fprintf( outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[13], ppc_reg[1]);
-            /* Upper part in r13 */
-            fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg[13], idx);
-            /* Lower part + r13 -> r0, Note we can't use r0 directly */
-            fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg[0], ppc_reg[13], j);
-            /* Restore r13 */
-            fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg[13], ppc_reg[1]);
-            fprintf( outfile, "    \"\\taddic %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
-            fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
-#endif /* __APPLE__ */
-#elif defined(__ALPHA__)
-            fprintf( outfile, "    \"\\tlda $0,%d($31)\\n\"\n", j);
-            fprintf( outfile, "    \"\\tldah $0,%d($0)\\n\"\n", idx);
-            fprintf( outfile, "    \"\\tjmp $31," __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
-#else
-#error You need to defined delayed import thunks for your architecture!
-#endif
+            switch(target_cpu)
+            {
+            case CPU_x86:
+                fprintf( outfile, "    \"\\tmovl $%d, %%eax\\n\"\n", (idx << 16) | j );
+                fprintf( outfile, "    \"\\tjmp " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
+                break;
+            case CPU_SPARC:
+                fprintf( outfile, "    \"\\tset %d, %%g1\\n\"\n", (idx << 16) | j );
+                fprintf( outfile, "    \"\\tb,a " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
+                break;
+            case CPU_ALPHA:
+                fprintf( outfile, "    \"\\tlda $0,%d($31)\\n\"\n", j);
+                fprintf( outfile, "    \"\\tldah $0,%d($0)\\n\"\n", idx);
+                fprintf( outfile, "    \"\\tjmp $31," __ASM_NAME("__wine_delay_load_asm") "\\n\"\n" );
+                break;
+            case CPU_POWERPC:
+                switch(target_platform)
+                {
+                case PLATFORM_APPLE:
+                    /* On Darwin we can use r0 and r2 */
+                    /* Upper part in r2 */
+                    fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg(2), idx);
+                    /* Lower part + r2 -> r0, Note we can't use r0 directly */
+                    fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(0), ppc_reg(2), j);
+                    fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+                    break;
+                default:
+                    /* On linux we can't use r2 since r2 is not a scratch register (hold the TOC) */
+                    /* Save r13 on the stack */
+                    fprintf( outfile, "    \"\\taddi %s, %s, -0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+                    fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(13), ppc_reg(1));
+                    /* Upper part in r13 */
+                    fprintf( outfile, "    \"\\tlis %s, %d\\n\"\n", ppc_reg(13), idx);
+                    /* Lower part + r13 -> r0, Note we can't use r0 directly */
+                    fprintf( outfile, "    \"\\taddi %s, %s, %d\\n\"\n", ppc_reg(0), ppc_reg(13), j);
+                    /* Restore r13 */
+                    fprintf( outfile, "    \"\\tstw  %s, 0(%s)\\n\"\n",    ppc_reg(13), ppc_reg(1));
+                    fprintf( outfile, "    \"\\taddic %s, %s, 0x4\\n\"\n", ppc_reg(1), ppc_reg(1));
+                    fprintf( outfile, "    \"\\tb " __ASM_NAME("__wine_delay_load_asm") "\\n\"\n");
+                    break;
+                }
+                break;
+            }
             output_function_size( outfile, name );
         }
         idx++;

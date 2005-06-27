@@ -487,14 +487,12 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
         assert( 0 );
     }
 
-#ifndef __i386__
-    if (odp->flags & FLAG_I386)
+    if ((target_cpu != CPU_x86) && (odp->flags & FLAG_I386))
     {
         /* ignore this entry point on non-Intel archs */
         spec->nb_entry_points--;
         return 1;
     }
-#endif
 
     if (ordinal != -1)
     {

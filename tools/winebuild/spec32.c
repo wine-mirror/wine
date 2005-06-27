@@ -36,12 +36,6 @@
 #include "build.h"
 
 
-#ifdef __APPLE__
-# define __ASM_SKIP ".space"
-#else
-# define __ASM_SKIP ".skip"
-#endif
-
 static int string_compare( const void *ptr1, const void *ptr2 )
 {
     const char * const *str1 = ptr1;
@@ -79,14 +73,15 @@ static const char *make_internal_name( const ORDDEF *odp, DLLSPEC *spec, const c
 static void declare_weak_function( FILE *outfile, const char *ret_type, const char *name, const char *params)
 {
     fprintf( outfile, "#ifdef __GNUC__\n" );
-    fprintf( outfile, "# ifdef __APPLE__\n" );
-    fprintf( outfile, "extern %s %s(%s) __attribute__((weak_import));\n", ret_type, name, params );
-    fprintf( outfile, "static %s (*__wine_spec_weak_%s)(%s) = %s;\n", ret_type, name, params, name );
-    fprintf( outfile, "#define %s __wine_spec_weak_%s\n", name, name );
-    fprintf( outfile, "asm(\".weak_reference " __ASM_NAME("%s") "\");\n", name );
-    fprintf( outfile, "# else\n" );
-    fprintf( outfile, "extern %s %s(%s) __attribute__((weak));\n", ret_type, name, params );
-    fprintf( outfile, "# endif\n" );
+    if (target_platform == PLATFORM_APPLE)
+    {
+        fprintf( outfile, "extern %s %s(%s) __attribute__((weak_import));\n", ret_type, name, params );
+        fprintf( outfile, "static %s (*__wine_spec_weak_%s)(%s) = %s;\n", ret_type, name, params, name );
+        fprintf( outfile, "#define %s __wine_spec_weak_%s\n", name, name );
+        fprintf( outfile, "asm(\".weak_reference " __ASM_NAME("%s") "\");\n", name );
+    }
+    else fprintf( outfile, "extern %s %s(%s) __attribute__((weak));\n", ret_type, name, params );
+
     fprintf( outfile, "#else\n" );
     fprintf( outfile, "extern %s %s(%s);\n", ret_type, name, params );
     fprintf( outfile, "static void __asm__dummy_%s(void)", name );
@@ -407,79 +402,85 @@ static void output_stub_funcs( FILE *outfile, DLLSPEC *spec )
  */
 void output_dll_init( FILE *outfile, const char *constructor, const char *destructor )
 {
-#ifdef __APPLE__
-/* Mach-O doesn't have an init section */
-    if (constructor)
+    if (target_platform == PLATFORM_APPLE)
     {
-        fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
-        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
-        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.text\\n\");\n" );
+        /* Mach-O doesn't have an init section */
+        if (constructor)
+        {
+            fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
+            fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", constructor );
+            fprintf( outfile, "    \"\\t.text\\n\");\n" );
+        }
+        if (destructor)
+        {
+            fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
+            fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+            fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", destructor );
+            fprintf( outfile, "    \"\\t.text\\n\");\n" );
+        }
     }
-    if (destructor)
+    else switch(target_cpu)
     {
-        fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
-        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
-        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.text\\n\");\n" );
+    case CPU_x86:
+        if (constructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", constructor );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        if (destructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", destructor );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        break;
+    case CPU_SPARC:
+        if (constructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", constructor );
+            fprintf( outfile, "    \"\\tnop\\n\"\n" );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        if (destructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", destructor );
+            fprintf( outfile, "    \"\\tnop\\n\"\n" );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        break;
+    case CPU_ALPHA:
+        if (constructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("%s") "\\n\"\n", constructor );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        if (destructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("%s") "\\n\"\n", destructor );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        break;
+    case CPU_POWERPC:
+        if (constructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", constructor );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        if (destructor)
+        {
+            fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
+            fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", destructor );
+            fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+        }
+        break;
     }
-#elif defined(__i386__)
-    if (constructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-    if (destructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-#elif defined(__sparc__)
-    if (constructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\tnop\\n\"\n" );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-    if (destructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tcall " __ASM_NAME("%s") "\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\tnop\\n\"\n" );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-#elif defined(__powerpc__)
-    if (constructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-    if (destructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-#elif defined(__ALPHA__)
-    if (constructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("%s") "\\n\"\n", constructor );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-    if (destructor)
-    {
-        fprintf( outfile, "asm(\"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
-        fprintf( outfile, "    \"\\tjsr $26," __ASM_NAME("%s") "\\n\"\n", destructor );
-        fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
-    }
-#else
-#error You need to define the DLL constructor for your architecture
-#endif
 }
 
 
@@ -492,22 +493,8 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
 {
     int exports_size = 0;
     int nr_exports, nr_imports, nr_delayed;
-    DWORD page_size;
+    unsigned int page_size = get_page_size();
     const char *init_func = spec->init_func;
-
-#ifdef HAVE_GETPAGESIZE
-    page_size = getpagesize();
-#elif defined(__svr4__)
-    page_size = sysconf(_SC_PAGESIZE);
-#elif defined(_WINDOWS)
-    {
-        SYSTEM_INFO si;
-        GetSystemInfo(&si);
-        page_size = si.dwPageSize;
-    }
-#else
-#   error Cannot get the page size on this platform
-#endif
 
     nr_exports = spec->base <= spec->limit ? spec->limit - spec->base + 1 : 0;
     resolve_imports( spec );
@@ -522,7 +509,11 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "#endif\n" );
     fprintf( outfile, "asm(\".text\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_pe_header") ":\\t" __ASM_SKIP " 65536\\n\\t\"\n" );
+    fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_pe_header") ":\\t\"\n" );
+    if (target_platform == PLATFORM_APPLE)
+        fprintf( outfile, "    \".space 65536\\n\\t\"\n" );
+    else
+        fprintf( outfile, "    \".skip 65536\\n\\t\"\n" );
     fprintf( outfile, "    \".data\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(4) );
     fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_data_start") ":\\t.long 1\");\n" );
@@ -530,19 +521,17 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
 
-#ifdef __APPLE__
-    fprintf( outfile, "static char _end[4];\n" );
-#else
-    fprintf( outfile, "extern char _end[];\n" );
-#endif
-    
+    if (target_platform == PLATFORM_APPLE)
+        fprintf( outfile, "static char _end[4];\n" );
+    else
+        fprintf( outfile, "extern char _end[];\n" );
+
     fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
 
-#ifdef __i386__
-    fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
-#else
-    fprintf( outfile, "#define __stdcall\n\n" );
-#endif
+    if (target_cpu == CPU_x86)
+        fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
+    else
+        fprintf( outfile, "#define __stdcall\n\n" );
 
     output_stub_funcs( outfile, spec );
     output_export_names( outfile, spec );
@@ -562,26 +551,29 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "extern char **__wine_main_argv;\n" );
     fprintf( outfile, "extern char **__wine_main_environ;\n" );
     fprintf( outfile, "extern unsigned short **__wine_main_wargv;\n" );
-#ifdef __APPLE__
-    fprintf( outfile, "extern _dyld_func_lookup(char *, void *);" );
-    fprintf( outfile, "static void __wine_spec_hidden_init(int argc, char** argv, char** envp)\n" );
-    fprintf( outfile, "{\n" );
-    fprintf( outfile, "    void (*init)(void);\n" );
-    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_make_delayed_module_initializer_calls\", (unsigned long *)&init);\n" );
-    fprintf( outfile, "    init();\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "static void __wine_spec_hidden_fini()\n" );
-    fprintf( outfile, "{\n" );
-    fprintf( outfile, "    void (*fini)(void);\n" );
-    fprintf( outfile, "    _dyld_func_lookup(\"__dyld_mod_term_funcs\", (unsigned long *)&fini);\n" );
-    fprintf( outfile, "    fini();\n" );
-    fprintf( outfile, "}\n" );
-    fprintf( outfile, "#define _init __wine_spec_hidden_init\n" );
-    fprintf( outfile, "#define _fini __wine_spec_hidden_fini\n" );
-#else
-    fprintf( outfile, "extern void _init(int, char**, char**);\n" );
-    fprintf( outfile, "extern void _fini();\n" );
-#endif
+    if (target_platform == PLATFORM_APPLE)
+    {
+        fprintf( outfile, "extern _dyld_func_lookup(char *, void *);" );
+        fprintf( outfile, "static void __wine_spec_hidden_init(int argc, char** argv, char** envp)\n" );
+        fprintf( outfile, "{\n" );
+        fprintf( outfile, "    void (*init)(void);\n" );
+        fprintf( outfile, "    _dyld_func_lookup(\"__dyld_make_delayed_module_initializer_calls\", (unsigned long *)&init);\n" );
+        fprintf( outfile, "    init();\n" );
+        fprintf( outfile, "}\n" );
+        fprintf( outfile, "static void __wine_spec_hidden_fini()\n" );
+        fprintf( outfile, "{\n" );
+        fprintf( outfile, "    void (*fini)(void);\n" );
+        fprintf( outfile, "    _dyld_func_lookup(\"__dyld_mod_term_funcs\", (unsigned long *)&fini);\n" );
+        fprintf( outfile, "    fini();\n" );
+        fprintf( outfile, "}\n" );
+        fprintf( outfile, "#define _init __wine_spec_hidden_init\n" );
+        fprintf( outfile, "#define _fini __wine_spec_hidden_fini\n" );
+    }
+    else
+    {
+        fprintf( outfile, "extern void _init(int, char**, char**);\n" );
+        fprintf( outfile, "extern void _fini();\n" );
+    }
 
     if (spec->characteristics & IMAGE_FILE_DLL)
     {
@@ -750,15 +742,21 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "  } OptionalHeader;\n" );
     fprintf( outfile, "} nt_header = {\n" );
     fprintf( outfile, "  0x%04x,\n", IMAGE_NT_SIGNATURE );   /* Signature */
-#ifdef __i386__
-    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_I386 );  /* Machine */
-#elif defined(__powerpc__)
-    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_POWERPC ); /* Machine */
-#elif defined(__ALPHA__)
-    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_ALPHA ); /* Machine */
-#else
-    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_UNKNOWN );  /* Machine */
-#endif
+    switch(target_cpu)
+    {
+    case CPU_x86:
+        fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_I386 );  /* Machine */
+        break;
+    case CPU_POWERPC:
+        fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_POWERPC ); /* Machine */
+        break;
+    case CPU_ALPHA:
+        fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_ALPHA ); /* Machine */
+        break;
+    case CPU_SPARC:
+        fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_UNKNOWN );  /* Machine */
+        break;
+    }
     fprintf( outfile, "    0, 0, 0, 0,\n" );
     fprintf( outfile, "    sizeof(nt_header.OptionalHeader),\n" ); /* SizeOfOptionalHeader */
     fprintf( outfile, "    0x%04x },\n", spec->characteristics );  /* Characteristics */
@@ -769,21 +767,21 @@ void BuildSpec32File( FILE *outfile, DLLSPEC *spec )
     fprintf( outfile, "    %s,\n", init_func );          /* AddressOfEntryPoint */
     fprintf( outfile, "    0, __wine_spec_data_start,\n" );              /* BaseOfCode/Data */
     fprintf( outfile, "    __wine_spec_pe_header,\n" );  /* ImageBase */
-    fprintf( outfile, "    %ld,\n", page_size );         /* SectionAlignment */
-    fprintf( outfile, "    %ld,\n", page_size );         /* FileAlignment */
+    fprintf( outfile, "    %u,\n", page_size );          /* SectionAlignment */
+    fprintf( outfile, "    %u,\n", page_size );          /* FileAlignment */
     fprintf( outfile, "    1, 0,\n" );                   /* Major/MinorOperatingSystemVersion */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorImageVersion */
     fprintf( outfile, "    %d,\n", spec->subsystem_major );             /* MajorSubsystemVersion */
     fprintf( outfile, "    %d,\n", spec->subsystem_minor );             /* MinorSubsystemVersion */
     fprintf( outfile, "    0,\n" );                      /* Win32VersionValue */
     fprintf( outfile, "    _end,\n" );                   /* SizeOfImage */
-    fprintf( outfile, "    %ld,\n", page_size );         /* SizeOfHeaders */
+    fprintf( outfile, "    %u,\n", page_size );          /* SizeOfHeaders */
     fprintf( outfile, "    0,\n" );                      /* CheckSum */
     fprintf( outfile, "    0x%04x,\n", spec->subsystem );/* Subsystem */
     fprintf( outfile, "    0,\n" );                      /* DllCharacteristics */
-    fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfStackReserve/Commit */
+    fprintf( outfile, "    %u, %u,\n",                   /* SizeOfStackReserve/Commit */
              (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );
-    fprintf( outfile, "    %d, %ld,\n",                  /* SizeOfHeapReserve/Commit */
+    fprintf( outfile, "    %u, %u,\n",                   /* SizeOfHeapReserve/Commit */
              (spec->heap_size ? spec->heap_size : 1024) * 1024, page_size );
     fprintf( outfile, "    0,\n" );                      /* LoaderFlags */
     fprintf( outfile, "    %d,\n", IMAGE_NUMBEROF_DIRECTORY_ENTRIES );  /* NumberOfRvaAndSizes */

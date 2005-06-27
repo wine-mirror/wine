@@ -32,12 +32,10 @@
 
 #include "build.h"
 
-#ifdef __i386__
-
 static void function_header( FILE *outfile, const char *name )
 {
     fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-    fprintf( outfile, "\t" __ASM_FUNC("%s") "\n", name );
+    fprintf( outfile, "\t%s\n", func_declaration(name) );
     fprintf( outfile, "\t.globl " __ASM_NAME("%s") "\n", name );
     fprintf( outfile, __ASM_NAME("%s") ":\n", name );
 }
@@ -45,9 +43,13 @@ static void function_header( FILE *outfile, const char *name )
 
 static void function_footer( FILE *outfile, const char *name )
 {
-#ifdef HAVE_ASM_DOT_SIZE
-    fprintf( outfile, "\t.size " __ASM_NAME("%s") ", . - " __ASM_NAME("%s") "\n", name, name );
-#endif
+    const char *size = func_size( name );
+    if (size[0]) fprintf( outfile, "\t%s\n", size );
+}
+
+static inline const char *data16_prefix(void)
+{
+    return (target_platform == PLATFORM_SVR4) ? "\tdata16\n" : "";
 }
 
 /*******************************************************************
@@ -157,14 +159,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_DataSelector") ",%%edx\n" );
 
     /* Load 32-bit segment registers */
-#ifdef __svr4__
-    fprintf( outfile, "\tdata16\n");
-#endif
-    fprintf( outfile, "\tmovw %%dx, %%ds\n" );
-#ifdef __svr4__
-    fprintf( outfile, "\tdata16\n");
-#endif
-    fprintf( outfile, "\tmovw %%dx, %%es\n" );
+    fprintf( outfile, "%s\tmovw %%dx, %%ds\n", data16_prefix() );
+    fprintf( outfile, "%s\tmovw %%dx, %%es\n", data16_prefix() );
 
     if ( UsePIC )
     {
@@ -198,10 +194,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "\tpushl %%ebp\n" );
 
     /* Switch stacks */
-#ifdef __svr4__
-    fprintf( outfile,"\tdata16\n");
-#endif
-    fprintf( outfile, "\t.byte 0x64\n\tmovw %%ss, (%d)\n", STACKOFFSET + 2 );
+    fprintf( outfile, "%s\t.byte 0x64\n\tmovw %%ss, (%d)\n", data16_prefix(), STACKOFFSET + 2 );
     fprintf( outfile, "\t.byte 0x64\n\tmovw %%sp, (%d)\n", STACKOFFSET );
     fprintf( outfile, "\tpushl %%ds\n" );
     fprintf( outfile, "\tpopl %%ss\n" );
@@ -548,10 +541,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
 
     /* Switch to the 16-bit stack */
     fprintf( outfile, "\tmovl %%esp,%%edx\n" );
-#ifdef __svr4__
-    fprintf( outfile,"\tdata16\n");
-#endif
-    fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%ss\n", STACKOFFSET + 2);
+    fprintf( outfile, "%s\t.byte 0x64\n\tmovw (%d),%%ss\n", data16_prefix(), STACKOFFSET + 2);
     fprintf( outfile, "\t.byte 0x64\n\tmovw (%d),%%sp\n", STACKOFFSET );
     fprintf( outfile, "\t.byte 0x64\n\tmovl %%edx,(%d)\n", STACKOFFSET );
 
@@ -629,14 +619,8 @@ static void BuildRet16Func( FILE *outfile )
     /* Restore 32-bit segment registers */
 
     fprintf( outfile, "\t.byte 0x2e\n\tmovl " __ASM_NAME("CallTo16_DataSelector") "-" __ASM_NAME("Call16_Ret_Start") ",%%edi\n" );
-#ifdef __svr4__
-    fprintf( outfile, "\tdata16\n");
-#endif
-    fprintf( outfile, "\tmovw %%di,%%ds\n" );
-#ifdef __svr4__
-    fprintf( outfile, "\tdata16\n");
-#endif
-    fprintf( outfile, "\tmovw %%di,%%es\n" );
+    fprintf( outfile, "%s\tmovw %%di,%%ds\n", data16_prefix() );
+    fprintf( outfile, "%s\tmovw %%di,%%es\n", data16_prefix() );
 
     fprintf( outfile, "\t.byte 0x2e\n\tmov " __ASM_NAME("CallTo16_TebSelector") "-" __ASM_NAME("Call16_Ret_Start") ",%%fs\n" );
 
@@ -644,10 +628,7 @@ static void BuildRet16Func( FILE *outfile )
 
     /* Restore the 32-bit stack */
 
-#ifdef __svr4__
-    fprintf( outfile, "\tdata16\n");
-#endif
-    fprintf( outfile, "\tmovw %%di,%%ss\n" );
+    fprintf( outfile, "%s\tmovw %%di,%%ss\n", data16_prefix() );
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%esp\n", STACKOFFSET );
 
     /* Return to caller */
@@ -1141,6 +1122,12 @@ static void BuildPendingEventCheck( FILE *outfile )
  */
 void BuildRelays16( FILE *outfile )
 {
+    if (target_cpu != CPU_x86)
+    {
+        fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
+        return;
+    }
+
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
@@ -1211,6 +1198,12 @@ void BuildRelays16( FILE *outfile )
  */
 void BuildRelays32( FILE *outfile )
 {
+    if (target_cpu != CPU_x86)
+    {
+        fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
+        return;
+    }
+
     /* File header */
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
@@ -1222,17 +1215,3 @@ void BuildRelays32( FILE *outfile )
 
     function_footer( outfile, "__wine_spec_thunk_text_32" );
 }
-
-#else /* __i386__ */
-
-void BuildRelays16( FILE *outfile )
-{
-    fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
-}
-
-void BuildRelays32( FILE *outfile )
-{
-    fprintf( outfile, "/* File not used with this architecture. Do not edit! */\n\n" );
-}
-
-#endif  /* __i386__ */
