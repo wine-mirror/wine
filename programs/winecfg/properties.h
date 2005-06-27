@@ -93,10 +93,10 @@ typedef struct
   int nType;
 } DEV_NODES;
 
-VERSION_DESC *getWinVersions(void);
-VERSION_DESC *getDOSVersions(void);
-DLL_DESC *getDLLDefaults(void);
-AUDIO_DRIVER *getAudioDrivers(void);
+const VERSION_DESC *getWinVersions(void);
+const VERSION_DESC *getDOSVersions(void);
+const DLL_DESC *getDLLDefaults(void);
+const AUDIO_DRIVER *getAudioDrivers(void);
 char* getVersionFromDescription(VERSION_DESC *pVer, char *desc);
 char* getDescriptionFromVersion(VERSION_DESC *pVer, char *ver);
 

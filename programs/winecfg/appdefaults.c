@@ -291,7 +291,7 @@ static void on_remove_app_click(HWND dialog)
 static void on_winver_change(HWND dialog)
 {
     int selection = SendDlgItemMessage(dialog, IDC_WINVER, CB_GETCURSEL, 0, 0);
-    VERSION_DESC *ver = getWinVersions();
+    const VERSION_DESC *ver = getWinVersions();
 
     if (selection == 0)
     {

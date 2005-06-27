@@ -44,13 +44,13 @@ static long working_mask = 0;
 
 #ifdef HAVE_MNTENT_H
 
-static DEV_NODES sDeviceNodes[] = {
+static const DEV_NODES sDeviceNodes[] = {
   {"/dev/fd", DRIVE_REMOVABLE},
   {"/dev/cdrom", DRIVE_CDROM},
   {"",0}
 };
 
-static const char *ignored_fstypes[] = {
+static const char * const ignored_fstypes[] = {
     "devpts",
     "tmpfs",
     "proc",
@@ -61,7 +61,7 @@ static const char *ignored_fstypes[] = {
     NULL
 };
 
-static const char *ignored_mnt_dirs[] = {
+static const char * const ignored_mnt_dirs[] = {
     "/boot",
     NULL
 };
@@ -82,7 +82,7 @@ static int try_dev_node(char *dev)
 
 static BOOL should_ignore_fstype(char *type)
 {
-    const char **s;
+    const char * const *s;
     
     for (s = ignored_fstypes; *s; s++)
         if (!strcmp(*s, type)) return TRUE;
@@ -92,7 +92,7 @@ static BOOL should_ignore_fstype(char *type)
 
 static BOOL should_ignore_mnt_dir(char *dir)
 {
-    const char **s;
+    const char * const *s;
 
     for (s = ignored_mnt_dirs; *s; s++)
         if (!strcmp(*s, dir)) return TRUE;
@@ -138,7 +138,7 @@ static void report_error(int code)
         case FSTAB_OPEN:
             if (gui_mode)
             {
-                static const char *s = "Could not open your mountpoint description table.\n\nOpening of /etc/fstab failed: %s";
+                static const char s[] = "Could not open your mountpoint description table.\n\nOpening of /etc/fstab failed: %s";
                 len = snprintf(NULL, 0, s, strerror(errno));
                 buffer = HeapAlloc(GetProcessHeap(), 0, len + 1);
                 snprintf(buffer, len, s, strerror(errno));

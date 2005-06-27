@@ -110,7 +110,7 @@ static const char *audioAutoDetect(void)
   if(!stat("/proc/asound", &buf))
   {
     driversFound[numFound] = "alsa";
-    name[numFound] = "Alsa";
+    name[numFound] = "ALSA";
     numFound++;
   }
 
@@ -128,7 +128,7 @@ static const char *audioAutoDetect(void)
   if(!spawnvp(_P_WAIT, "/bin/sh", argv_new))
   {
     driversFound[numFound] = "jack";
-    name[numFound] = "jack";
+    name[numFound] = "JACK";
     numFound++;
   }
 

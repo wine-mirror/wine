@@ -24,7 +24,7 @@
 
 #include "properties.h"
 
-static VERSION_DESC sWinVersions[] = {
+static const VERSION_DESC sWinVersions[] = {
     {"win2003", "Windows 2003"},
     {"winxp", "Windows XP"},
     {"win2k", "Windows 2000"},
@@ -39,7 +39,7 @@ static VERSION_DESC sWinVersions[] = {
     {"", ""}
 };
 
-static DLL_DESC sDLLType[] = {
+static const DLL_DESC sDLLType[] = {
     {"oleaut32", DLL_BUILTIN},
     {"ole32", DLL_BUILTIN},
     {"commdlg", DLL_BUILTIN},
@@ -57,12 +57,12 @@ static DLL_DESC sDLLType[] = {
     {"", -1}
 };
 
-static AUDIO_DRIVER sAudioDrivers[] = {
-  {"Alsa", "alsa"},
+static const AUDIO_DRIVER sAudioDrivers[] = {
+  {"ALSA", "alsa"},
   {"aRts", "arts"},
   {"OSS", "oss"},
-  {"Jack", "jack"},
-  {"Nas", "nas"},
+  {"JACK", "jack"},
+  {"NAS", "nas"},
   {"Audio IO(Solaris)", "audioio"},
   {"Disable sound", ""},
   {"", ""}
@@ -72,7 +72,7 @@ static AUDIO_DRIVER sAudioDrivers[] = {
 
 /*****************************************************************************
  */
-VERSION_DESC* getWinVersions(void)
+const VERSION_DESC* getWinVersions(void)
 {
     return sWinVersions;
 }
@@ -80,14 +80,14 @@ VERSION_DESC* getWinVersions(void)
 
 /*****************************************************************************
  */
-DLL_DESC* getDLLDefaults(void)
+const DLL_DESC* getDLLDefaults(void)
 {
     return sDLLType;
 }
 
 /*****************************************************************************
  */
-AUDIO_DRIVER* getAudioDrivers(void)
+const AUDIO_DRIVER* getAudioDrivers(void)
 {
     return sAudioDrivers;
 }
