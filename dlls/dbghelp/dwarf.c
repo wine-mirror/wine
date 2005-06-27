@@ -480,21 +480,21 @@ typedef struct dwarf2_parse_context_s {
 
 static unsigned char dwarf2_parse_byte(dwarf2_parse_context_t* ctx)
 {
-  unsigned char uvalue = *(unsigned char*) ctx->data;
+  unsigned char uvalue = *(const unsigned char*) ctx->data;
   ctx->data += 1;
   return uvalue;
 }
 
 static unsigned short dwarf2_parse_u2(dwarf2_parse_context_t* ctx)
 {
-  unsigned short uvalue = *(unsigned short*) ctx->data;
+  unsigned short uvalue = *(const unsigned short*) ctx->data;
   ctx->data += 2;
   return uvalue;
 }
 
 static unsigned long dwarf2_parse_u4(dwarf2_parse_context_t* ctx)
 {
-  unsigned long uvalue = *(unsigned int*) ctx->data;
+  unsigned long uvalue = *(const unsigned int*) ctx->data;
   ctx->data += 4;
   return uvalue;
 }
@@ -706,7 +706,7 @@ static unsigned long dwarf2_parse_attr_as_addr(dwarf2_abbrev_entry_attr_t* attr,
   unsigned long offset = 0;
   switch (ctx->word_size) {
   case 4:
-    offset = *(unsigned int*) ctx->data;
+    offset = *(const unsigned int*) ctx->data;
     break;
   case 8:
   default:
@@ -1941,7 +1941,7 @@ static struct symt_function* dwarf2_parse_subprogram(struct module* module, dwar
   return func_type;
 }
 
-static void dwarf2_parse_compiland_content(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_compiland* compiland)
+static void dwarf2_parse_compiland_content(struct module* module, const dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx, struct symt_compiland* compiland)
 {
   if (entry->have_child) { /** any interest to not have child ? */
     ++ctx->level;
@@ -2044,7 +2044,7 @@ static void dwarf2_parse_compiland_content(struct module* module, dwarf2_abbrev_
   }
 }
 
-static struct symt_compiland* dwarf2_parse_compiland(struct module* module, dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
+static struct symt_compiland* dwarf2_parse_compiland(struct module* module, const dwarf2_abbrev_entry_t* entry, dwarf2_parse_context_t* ctx)
 {
   struct symt_compiland* compiland = NULL;
   const char* name = NULL;
@@ -2086,13 +2086,13 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 
   while (comp_unit_cursor < end_debug) {
     dwarf2_abbrev_table_t* abbrev_table;
-    dwarf2_comp_unit_stream_t* comp_unit_stream;
+    const dwarf2_comp_unit_stream_t* comp_unit_stream;
     dwarf2_comp_unit_t comp_unit;
     dwarf2_parse_context_t ctx;
     dwarf2_parse_context_t abbrev_ctx;
     struct symt_compiland* compiland = NULL;
     
-    comp_unit_stream = (dwarf2_comp_unit_stream_t*) comp_unit_cursor;
+    comp_unit_stream = (const dwarf2_comp_unit_stream_t*) comp_unit_cursor;
 
     comp_unit.length = *(unsigned long*)  comp_unit_stream->length;
     comp_unit.version = *(unsigned short*) comp_unit_stream->version;
@@ -2131,7 +2131,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     ctx.abbrev_table = abbrev_table;
 
     while (ctx.data < ctx.end_data) {
-      dwarf2_abbrev_entry_t* entry = NULL;
+      const dwarf2_abbrev_entry_t* entry = NULL;
       unsigned long entry_code;
       unsigned long entry_ref = 0;
 

@@ -395,7 +395,7 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
 
     if (core_info)
     {
-        colors = 1 << ((BITMAPCOREINFO*) info)->bmciHeader.bcBitCount;
+        colors = 1 << ((const BITMAPCOREINFO*) info)->bmciHeader.bcBitCount;
     }
     else
     {
@@ -418,22 +418,22 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
            /* Convert RGBTRIPLEs to RGBQUADs */
            for (i=0; i < colors; i++)
            {
-               colorTable[i].rgbRed   = ((BITMAPCOREINFO*) info)->bmciColors[i].rgbtRed;
-               colorTable[i].rgbGreen = ((BITMAPCOREINFO*) info)->bmciColors[i].rgbtGreen;
-               colorTable[i].rgbBlue  = ((BITMAPCOREINFO*) info)->bmciColors[i].rgbtBlue;
+               colorTable[i].rgbRed   = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtRed;
+               colorTable[i].rgbGreen = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtGreen;
+               colorTable[i].rgbBlue  = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtBlue;
                colorTable[i].rgbReserved = 0;
            }
         }
         else
         {
-            memcpy(colorTable, (LPBYTE) info + (WORD) info->bmiHeader.biSize, colors * sizeof(RGBQUAD));
+            memcpy(colorTable, (const BYTE*) info + (WORD) info->bmiHeader.biSize, colors * sizeof(RGBQUAD));
         }
     }
     else
     {
         HPALETTE hpal = GetCurrentObject(physDev->hdc, OBJ_PAL);
         PALETTEENTRY * pal_ents;
-        WORD *index = (WORD*) ((LPBYTE) info + (WORD) info->bmiHeader.biSize);
+        const WORD *index = (const WORD*) ((const BYTE*) info + (WORD) info->bmiHeader.biSize);
         int logcolors, entry;
 
         logcolors = GetPaletteEntries( hpal, 0, 0, NULL );
@@ -3761,7 +3761,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     LONG width, height;
     BOOL top_down;
     POINT pt;
-    void* colorPtr;
+    const void* colorPtr;
 
     if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height,
 			   &descr.infoBpp, &descr.compression ) == -1)
@@ -3817,7 +3817,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     XSetFunction(gdi_display, physDev->gc, X11DRV_XROPfunction[GetROP2(physDev->hdc) - 1]);
     wine_tsx11_unlock();
 
-    colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
+    colorPtr = (const BYTE*) info + (WORD) info->bmiHeader.biSize;
 
     switch (descr.infoBpp)
     {
@@ -3887,7 +3887,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
   BITMAP bitmap;
   LONG height, tmpheight;
   INT result;
-  void* colorPtr;
+  const void* colorPtr;
 
   descr.physDev = physDev;
 
@@ -3906,7 +3906,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
 
   if (startscan + lines > height) lines = height - startscan;
 
-  colorPtr = (LPBYTE) info + (WORD) info->bmiHeader.biSize;
+  colorPtr = (const BYTE*) info + (WORD) info->bmiHeader.biSize;
 
   switch (descr.infoBpp)
   {

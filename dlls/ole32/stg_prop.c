@@ -2310,7 +2310,7 @@ HRESULT WINAPI FmtIdToPropStgName(const FMTID *rfmtid, LPOLESTR str)
             }
             else
             {
-                if (++fmtptr < (BYTE *)rfmtid + sizeof(FMTID))
+                if (++fmtptr < (const BYTE *)rfmtid + sizeof(FMTID))
                     i |= *fmtptr << bitsRemaining;
                 *pstr++ = (WCHAR)(fmtMap[i & CHARMASK]);
                 bitsRemaining += BITS_PER_BYTE - BITS_IN_CHARMASK;

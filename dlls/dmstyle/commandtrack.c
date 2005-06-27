@@ -287,7 +287,7 @@ HRESULT WINAPI IDirectMusicCommandTrack_IPersistStream_Load (LPPERSISTSTREAM ifa
 		int r = 0;
 		DMUS_PRIVATE_COMMAND *tmpEntry;
 		struct list *listEntry;
-		TRACE("*** IDirectMusicCommandTrack (%p) ***\n", (LPDIRECTMUSICTRACK8)This->TrackVtbl);
+		TRACE("*** IDirectMusicCommandTrack (%p) ***\n", This->TrackVtbl);
 		TRACE(" - Commands:\n");
 		LIST_FOR_EACH (listEntry, &This->Commands) {
 			tmpEntry = LIST_ENTRY (listEntry, DMUS_PRIVATE_COMMAND, entry);

@@ -160,9 +160,9 @@ inline static const char *debugstr_sockaddr( const struct WS_sockaddr *a )
 {
     if (!a) return "(nil)";
     return wine_dbg_sprintf("{ family %d, address %s, port %d }",
-                            ((struct sockaddr_in *)a)->sin_family,
-                            inet_ntoa(((struct sockaddr_in *)a)->sin_addr),
-                            ntohs(((struct sockaddr_in *)a)->sin_port));
+                            ((const struct sockaddr_in *)a)->sin_family,
+                            inet_ntoa(((const struct sockaddr_in *)a)->sin_addr),
+                            ntohs(((const struct sockaddr_in *)a)->sin_port));
 }
 
 /* HANDLE<->SOCKET conversion (SOCKET is UINT_PTR). */
@@ -783,7 +783,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 #ifdef HAVE_IPX
     case WS_AF_IPX:
         {
-            struct WS_sockaddr_ipx* wsipx=(struct WS_sockaddr_ipx*)wsaddr;
+            const struct WS_sockaddr_ipx* wsipx=(const struct WS_sockaddr_ipx*)wsaddr;
             struct sockaddr_ipx* uipx;
 
             if (wsaddrlen<sizeof(struct WS_sockaddr_ipx))
@@ -845,7 +845,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
 #ifdef HAVE_IPX
     case AF_IPX:
         {
-            struct sockaddr_ipx* uipx=(struct sockaddr_ipx*)uaddr;
+            const struct sockaddr_ipx* uipx=(const struct sockaddr_ipx*)uaddr;
             struct WS_sockaddr_ipx* wsipx=(struct WS_sockaddr_ipx*)wsaddr;
 
             res=-1;

@@ -880,8 +880,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     BOOL unicode = (type == WIN_PROC_32W);
 
     TRACE("%s %s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
-          (type == WIN_PROC_32W) ? debugstr_w((LPWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
-          (type == WIN_PROC_32W) ? debugstr_w((LPWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
+          (type == WIN_PROC_32W) ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
+          (type == WIN_PROC_32W) ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
 

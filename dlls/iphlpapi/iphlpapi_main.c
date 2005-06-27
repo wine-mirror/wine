@@ -858,7 +858,7 @@ static int IfTableSorter(const void *a, const void *b)
   int ret;
 
   if (a && b)
-    ret = ((PMIB_IFROW)a)->dwIndex - ((PMIB_IFROW)b)->dwIndex;
+    ret = ((const MIB_IFROW*)a)->dwIndex - ((const MIB_IFROW*)b)->dwIndex;
   else
     ret = 0;
   return ret;
@@ -1011,7 +1011,7 @@ static int IpAddrTableSorter(const void *a, const void *b)
   int ret;
 
   if (a && b)
-    ret = ((PMIB_IPADDRROW)a)->dwAddr - ((PMIB_IPADDRROW)b)->dwAddr;
+    ret = ((const MIB_IPADDRROW*)a)->dwAddr - ((const MIB_IPADDRROW*)b)->dwAddr;
   else
     ret = 0;
   return ret;
@@ -1110,7 +1110,8 @@ static int IpForwardTableSorter(const void *a, const void *b)
   int ret;
 
   if (a && b) {
-    PMIB_IPFORWARDROW rowA = (PMIB_IPFORWARDROW)a, rowB = (PMIB_IPFORWARDROW)b;
+   const MIB_IPFORWARDROW* rowA = (const MIB_IPFORWARDROW*)a;
+   const MIB_IPFORWARDROW* rowB = (const MIB_IPFORWARDROW*)b;
 
     ret = rowA->dwForwardDest - rowB->dwForwardDest;
     if (ret == 0) {
@@ -1227,7 +1228,7 @@ static int IpNetTableSorter(const void *a, const void *b)
   int ret;
 
   if (a && b)
-    ret = ((PMIB_IPNETROW)a)->dwAddr - ((PMIB_IPNETROW)b)->dwAddr;
+    ret = ((const MIB_IPNETROW*)a)->dwAddr - ((const MIB_IPNETROW*)b)->dwAddr;
   else
     ret = 0;
   return ret;
@@ -1503,7 +1504,8 @@ static int TcpTableSorter(const void *a, const void *b)
   int ret;
 
   if (a && b) {
-    PMIB_TCPROW rowA = (PMIB_TCPROW)a, rowB = (PMIB_TCPROW)b;
+    const MIB_TCPROW* rowA = a;
+    const MIB_TCPROW* rowB = b;
 
     ret = rowA->dwLocalAddr - rowB->dwLocalAddr;
     if (ret == 0) {
@@ -1614,7 +1616,8 @@ static int UdpTableSorter(const void *a, const void *b)
   int ret;
 
   if (a && b) {
-    PMIB_UDPROW rowA = (PMIB_UDPROW)a, rowB = (PMIB_UDPROW)b;
+    const MIB_UDPROW* rowA = (const MIB_UDPROW*)a;
+    const MIB_UDPROW* rowB = (const MIB_UDPROW*)b;
 
     ret = rowA->dwLocalAddr - rowB->dwLocalAddr;
     if (ret == 0)
