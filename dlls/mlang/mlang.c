@@ -1997,3 +1997,9 @@ HRESULT WINAPI MLANG_DllCanUnloadNow(void)
     FIXME("\n");
     return S_FALSE;
 }
+
+HRESULT WINAPI GetGlobalFontLinkObject(void)
+{
+    FIXME("\n");
+    return S_FALSE;
+}

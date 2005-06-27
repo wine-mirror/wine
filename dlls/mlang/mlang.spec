@@ -6,7 +6,7 @@
 @ stdcall -private DllGetClassObject(ptr ptr ptr) MLANG_DllGetClassObject
 @ stdcall -private DllRegisterServer() MLANG_DllRegisterServer
 @ stdcall -private DllUnregisterServer() MLANG_DllUnregisterServer
-@ stub GetGlobalFontLinkObject
+@ stdcall GetGlobalFontLinkObject()
 @ stdcall IsConvertINetStringAvailable(long long)
 @ stdcall LcidToRfc1766A(long ptr long)
 @ stdcall LcidToRfc1766W(long ptr long)
