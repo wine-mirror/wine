@@ -13,6 +13,7 @@ C_SRCS = \
 	main.c \
 	oleobj.c \
 	persist.c \
+	protocol.c \
 	view.c
 
 RC_SRCS = rsrc.rc

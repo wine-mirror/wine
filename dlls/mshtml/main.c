@@ -37,14 +37,14 @@
 #include "advpub.h"
 
 #include "mshtml.h"
-#include "mshtml_private.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
-
 #include "initguid.h"
+#include "mshtml_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 DEFINE_GUID( CLSID_MozillaBrowser, 0x1339B54C,0x3453,0x11D2,0x93,0xB9,0x00,0x00,0x00,0x00,0x00,0x00);
 
@@ -207,8 +207,6 @@ HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *pp
     HRESULT hres;
     fnGetClassObject pGetClassObject;
 
-    TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv );
-
     if(hMozCtl && IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
         pGetClassObject = (fnGetClassObject) GetProcAddress(hMozCtl, "DllGetClassObject");
         if(pGetClassObject) {
@@ -221,9 +219,23 @@ HRESULT WINAPI MSHTML_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *pp
     }
 
     if(IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
-        hres = ClassFactory_Create(riid, ppv, HTMLDocument_Create);
-        TRACE("hres = %08lx\n", hres);
-        return hres;
+        TRACE("(CLSID_HTMLDocument %s %p)\n", debugstr_guid(riid), ppv);
+        return ClassFactory_Create(riid, ppv, HTMLDocument_Create);
+    }else if(IsEqualGUID(&CLSID_AboutProtocol, rclsid)) {
+        TRACE("(CLSID_AboutProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        return ProtocolFactory_Create(rclsid, riid, ppv);
+    }else if(IsEqualGUID(&CLSID_JSProtocol, rclsid)) {
+        TRACE("(CLSID_JSProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        return ProtocolFactory_Create(rclsid, riid, ppv);
+    }else if(IsEqualGUID(&CLSID_MailtoProtocol, rclsid)) {
+        TRACE("(CLSID_MailtoProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        return ProtocolFactory_Create(rclsid, riid, ppv);
+    }else if(IsEqualGUID(&CLSID_ResProtocol, rclsid)) {
+        TRACE("(CLSID_ResProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        return ProtocolFactory_Create(rclsid, riid, ppv);
+    }else if(IsEqualGUID(&CLSID_SysimageProtocol, rclsid)) {
+        TRACE("(CLSID_SysimageProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        return ProtocolFactory_Create(rclsid, riid, ppv);
     }
 
     FIXME("Unknown class %s\n", debugstr_guid(rclsid));
@@ -270,7 +282,6 @@ HRESULT WINAPI MSHTML_DllInstall(BOOL bInstall, LPCWSTR cmdline)
     return S_OK;
 }
 
-DEFINE_GUID(CLSID_AboutProtocol, 0x3050F406, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_CAnchorBrowsePropertyPage, 0x3050F3BB, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_CBackgroundPropertyPage, 0x3050F232, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_CCDAnchorPropertyPage, 0x3050F1FC, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
@@ -296,12 +307,8 @@ DEFINE_GUID(CLSID_HTMLWindowProxy, 0x3050F391, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0
 DEFINE_GUID(CLSID_IImageDecodeFilter, 0x607FD4E8, 0x0A03, 0x11D1, 0xAB,0x1D, 0x00,0xC0,0x4F,0xC9,0xB3,0x04);
 DEFINE_GUID(CLSID_IImgCtx, 0x3050F3D6, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_IntDitherer, 0x05F6FE1A, 0xECEF, 0x11D0, 0xAA,0xE7, 0x00,0xC0,0x4F,0xC9,0xB3,0x04);
-DEFINE_GUID(CLSID_JSProtocol, 0x3050F3B2, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_MHTMLDocument, 0x3050F3D9, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
-DEFINE_GUID(CLSID_MailtoProtocol, 0x3050F3DA, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
-DEFINE_GUID(CLSID_ResProtocol, 0x3050F3BC, 0x98B5, 0x11CF, 0xBB,0x82, 0x00,0xAA,0x00,0xBD,0xCE,0x0B);
 DEFINE_GUID(CLSID_Scriptlet, 0xAE24FDAE, 0x03C6, 0x11D1, 0x8B,0x76, 0x00,0x80,0xC7,0x44,0xF3,0x89);
-DEFINE_GUID(CLSID_SysimageProtocol, 0x76E67A63, 0x06E9, 0x11D2, 0xA8,0x40, 0x00,0x60,0x08,0x05,0x93,0x82);
 DEFINE_GUID(CLSID_TridentAPI, 0x429AF92C, 0xA51F, 0x11D2, 0x86,0x1E, 0x00,0xC0,0x4F,0xA3,0x5C,0x89);
 
 #define INF_SET_CLSID(clsid) \
