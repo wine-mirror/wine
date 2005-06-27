@@ -751,23 +751,8 @@ BOOL	MMDRV_Init(void)
         p = next;
     }
 
-    /* finish with mappers */
-
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\WinMM */
-    if (! RegCreateKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\WinMM", &hKey)) {
-        size = sizeof(mapper_buffer);
-        if (RegQueryValueExA(hKey, "WaveMapper", 0, &type, (LPVOID)mapper_buffer, &size))
-            strcpy(mapper_buffer, WINE_DEFAULT_WINMM_MAPPER);
-
-        size = sizeof(midi_buffer);
-        if (RegQueryValueExA(hKey, "MidiMapper", 0, &type, (LPVOID)midi_buffer, &size))
-            strcpy(midi_buffer, WINE_DEFAULT_WINMM_MIDI);
-
-        RegCloseKey(hKey);
-    }
-
-    ret |= MMDRV_Install("wavemapper", mapper_buffer, TRUE);
-    ret |= MMDRV_Install("midimapper", midi_buffer, TRUE);
+    ret |= MMDRV_Install("wavemapper", WINE_DEFAULT_WINMM_MAPPER, TRUE);
+    ret |= MMDRV_Install("midimapper", WINE_DEFAULT_WINMM_MIDI, TRUE);
     return ret;
 }
 
