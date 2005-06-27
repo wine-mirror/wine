@@ -26,12 +26,9 @@
 #include "dialog.h"
 #include "resource.h"
 
-#ifdef DUMB_DEBUG
-#include <stdio.h>
-#define DEBUG(x) fprintf(stderr,x)
-#else
-#define DEBUG(x)
-#endif
+#include <wine/debug.h>
+
+WINE_DEFAULT_DEBUG_CHANNEL(winemine);
 
 static const DWORD wnd_style = WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX;
 static const char* registry_key = "Software\\Wine\\WineMine";
@@ -100,7 +97,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       {
         HDC hMemDC;
 
-        DEBUG("WM_PAINT\n");
+        WINE_TRACE("WM_PAINT\n");
         hdc = BeginPaint( hWnd, &ps );
         hMemDC = CreateCompatibleDC( hdc );
 
@@ -113,7 +110,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }
 
     case WM_MOVE:
-        DEBUG("WM_MOVE\n");
+        WINE_TRACE("WM_MOVE\n");
 	board.pos.x = GET_X_LPARAM(lParam);
 	board.pos.y = GET_Y_LPARAM(lParam);
         return 0;
@@ -133,7 +130,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_LBUTTONDOWN:
-        DEBUG("WM_LBUTTONDOWN\n");
+        WINE_TRACE("WM_LBUTTONDOWN\n");
         if( wParam & MK_RBUTTON )
             msg = WM_MBUTTONDOWN;
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
@@ -141,7 +138,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_LBUTTONUP:
-        DEBUG("WM_LBUTTONUP\n");
+        WINE_TRACE("WM_LBUTTONUP\n");
         if( wParam & MK_RBUTTON )
             msg = WM_MBUTTONUP;
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
@@ -149,7 +146,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_RBUTTONDOWN:
-        DEBUG("WM_RBUTTONDOWN\n");
+        WINE_TRACE("WM_RBUTTONDOWN\n");
         if( wParam & MK_LBUTTON ) {
             board.press.x = 0;
             board.press.y = 0;
@@ -159,19 +156,19 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_RBUTTONUP:
-        DEBUG("WM_RBUTTONUP\n");
+        WINE_TRACE("WM_RBUTTONUP\n");
         if( wParam & MK_LBUTTON )
             msg = WM_MBUTTONUP;
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
         return 0;
 
     case WM_MBUTTONDOWN:
-        DEBUG("WM_MBUTTONDOWN\n");
+        WINE_TRACE("WM_MBUTTONDOWN\n");
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
         return 0;
 
     case WM_MBUTTONUP:
-        DEBUG("WM_MBUTTONUP\n");
+        WINE_TRACE("WM_MBUTTONUP\n");
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
         return 0;
 
@@ -240,7 +237,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             DialogBox( board.hInst, "DLG_ABOUT", hWnd, AboutDlgProc );
             return 0;
         default:
-            DEBUG("Unknown WM_COMMAND command message received\n");
+            WINE_TRACE("Unknown WM_COMMAND command message received\n");
             break;
         }
     }
@@ -662,7 +659,7 @@ void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, 
                 /* Do nothing */
                 break;
             default:
-                DEBUG("Unknown FlagType during game over in DrawMine\n");
+                WINE_TRACE("Unknown FlagType during game over in DrawMine\n");
                 break;
             }
         }
@@ -687,7 +684,7 @@ void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, 
             /* Do nothing */
             break;
         default:
-            DEBUG("Unknown FlagType while playing in DrawMine\n");
+            WINE_TRACE("Unknown FlagType while playing in DrawMine\n");
             break;
         }
     }
@@ -890,7 +887,7 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
         p_board->status = PLAYING;
         break;
     default:
-        DEBUG("Unknown message type received in TestMines\n");
+        WINE_TRACE("Unknown message type received in TestMines\n");
         break;
     }
 
