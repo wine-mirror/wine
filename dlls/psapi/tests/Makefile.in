@@ -3,10 +3,10 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = psapi.dll
-IMPORTS   = psapi kernel32
+IMPORTS   = kernel32
 
 CTESTS = \
-	module.c
+	psapi_main.c
 
 @MAKE_TEST_RULES@
 
