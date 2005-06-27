@@ -75,7 +75,7 @@ char IO_pp_init(void)
 {
     char name[80];
     char buffer[256];
-    HANDLE hkey;
+    HANDLE root, hkey;
     int i,idx=0,fd,res,userbase,nports=0;
     char * timeout;
     char ret=1;
@@ -83,25 +83,24 @@ char IO_pp_init(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    static const WCHAR configW[] = {'M','a','c','h','i','n','e','\\',
-                                    'S','o','f','t','w','a','r','e','\\',
-                                    'W','i','n','e','\\',
-                                    'W','i','n','e','\\',
-                                    'C','o','n','f','i','g','\\',
-                                    'p','p','d','e','v',0};
+    static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\',
+                                    'W','i','n','e','\\','V','D','M','\\','p','p','d','e','v',0};
 
     TRACE("\n");
 
+    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
+    attr.RootDirectory = root;
     attr.ObjectName = &nameW;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &nameW, configW );
 
-    /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\ppdev */
-    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) return 1;
+    /* @@ Wine registry key: HKCU\Software\Wine\VDM\ppdev */
+    if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
+    NtClose( root );
+    if (!hkey) return 1;
 
     for (;;)
     {
