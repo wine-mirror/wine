@@ -3268,6 +3268,8 @@ typedef enum tagSID_NAME_USE {
 #define FILE_GENERIC_EXECUTE      (STANDARD_RIGHTS_EXECUTE | FILE_EXECUTE | \
                                    FILE_READ_ATTRIBUTES | SYNCHRONIZE)
 
+#define DUPLICATE_CLOSE_SOURCE     0x00000001
+#define DUPLICATE_SAME_ACCESS      0x00000002
 
 /* File attribute flags */
 #define FILE_SHARE_READ			0x00000001L
