@@ -1,6 +1,7 @@
 /* Unit test suite for comm functions
  *
  * Copyright 2003 Kevin Groeneveld
+ * Copyright 2005 Uwe Bonnes
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +23,26 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winnls.h"
+
+#define TIMEOUT 1000   /* one second for Timeouts*/
+#define SLOWBAUD 150
+#define FASTBAUD 115200
+#define TIMEDELTA 100  /* 100 ms uncertainty allowed */
+
+/* Define the appropriate LOOPBACK(s) TRUE if you have a Loopback cable with
+ * the mentioned shorts connected to your Serial port
+ */
+#define LOOPBACK_TXD_RXD  FALSE /* Sub-D 9: Short 2-3 */
+#define LOOPBACK_CTS_RTS  FALSE /* Sub-D 9: Short 7-8 */
+#define LOOPBACK_DTR_DSR  FALSE /* Sub-D 9: Short 4-6 */
+#define LOOPBACK_DTR_RING FALSE /* Sub-D 9: Short 4-9 */
+#define LOOPBACK_DTR_DCD  FALSE /* Sub-D 9: Short 4-1 */
+
+/* SETBREAK seems to give instable results, MSDN mentions possible problems
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/wcedebug5/\
+ *         html/wce50conSerialPortDriverTest.asp
+ * but perhaps it's only a programming error, that causes it...  */
+#define BROKEN_SETBREAK TRUE
 
 typedef struct
 {
@@ -597,7 +618,7 @@ static void test_BuildCommDCB(void)
 	{
 		COMMCONFIG commconfig;
 		DWORD size = sizeof(COMMCONFIG);
-		
+
 		if(GetDefaultCommConfig(port_name, &commconfig, &size))
 		{
 			port = port_name[3];
@@ -612,7 +633,7 @@ static void test_BuildCommDCB(void)
 	{
 		/* Check if this test case needs a valid COM port. */
 		ptr = strstr(test[i].string, "COMx");
-		
+
 		/* If required, substitute valid port number into device control string. */
 		if(ptr)
 		{
@@ -634,7 +655,881 @@ static void test_BuildCommDCB(void)
 	}
 }
 
+static HANDLE test_OpenComm(BOOL doOverlap)
+{
+    HANDLE hcom = INVALID_HANDLE_VALUE;
+    char port_name[] = "COMx";
+    static BOOL shown = FALSE;
+
+    /* Try to find a port */
+    for(port_name[3] = '1'; port_name[3] <= '9'; port_name[3]++)
+    {
+	hcom = CreateFile( port_name, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+			   (doOverlap)?FILE_FLAG_OVERLAPPED:0, NULL );
+	if (hcom != INVALID_HANDLE_VALUE)
+	    break;
+    }
+    if(!shown)
+    {
+	if (hcom == INVALID_HANDLE_VALUE)
+	    trace("Could not find a valid COM port.  Skipping test_ReadTimeOut\n");
+	else
+	    trace("Found Com port %s. Connected devices may disturbe results\n", port_name);
+	/*shown = TRUE; */
+    }
+    return hcom;
+}
+
+static void test_GetModemStatus(HANDLE hcom)
+{
+    DWORD ModemStat;
+
+    ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+    trace("GetCommModemStatus returned 0x%08lx->%s%s%s%s\n", ModemStat,
+	  (ModemStat &MS_RLSD_ON)?"MS_RLSD_ON ":"",
+	  (ModemStat &MS_RING_ON)?"MS_RING_ON ":"",
+	  (ModemStat &MS_DSR_ON)?"MS_DSR_ON ":"",
+	  (ModemStat &MS_CTS_ON)?"MS_CTS_ON ":"");
+}
+
+/* When we don't write anything, Read should time out even on a loopbacked port */
+static void test_ReadTimeOut(HANDLE hcom)
+{
+    DCB dcb;
+    COMMTIMEOUTS timeouts;
+    char rbuf[32];
+    DWORD before, after, read, timediff, LastError;
+    BOOL res;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    dcb.BaudRate = FASTBAUD;
+    dcb.ByteSize = 8;
+    dcb.Parity = NOPARITY;
+    dcb.StopBits = ONESTOPBIT;
+    ok(SetCommState(hcom, &dcb), "SetCommState failed\n");
+
+    ZeroMemory( &timeouts, sizeof(timeouts));
+    timeouts.ReadTotalTimeoutConstant = TIMEOUT;
+    ok(SetCommTimeouts(hcom, &timeouts),"SetCommTimeouts failed\n");
+
+    before = GetTickCount();
+    res = ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL);
+    LastError = GetLastError();
+    after = GetTickCount();
+    todo_wine ok( res == TRUE, "A timed-out read should return TRUE\n");
+    todo_wine ok( LastError == NO_ERROR, "A timed-out read is not an error\n");
+    timediff = after - before;
+    ok( timediff > TIMEOUT>>2 && timediff < TIMEOUT *2,
+	"Unexpected TimeOut %ld, expected %d\n", timediff, TIMEOUT);
+}
+
+static void test_waittxempty(HANDLE hcom)
+{
+    DCB dcb;
+    COMMTIMEOUTS timeouts;
+    char tbuf[]="Some Characters\n";
+    DWORD before, after, written, timediff, evtmask = 0;
+    BOOL res_write, res;
+    DWORD baud = SLOWBAUD;
+
+    /* set a low baud rate to have ample time*/
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    dcb.BaudRate = baud;
+    dcb.ByteSize = 8;
+    dcb.Parity = NOPARITY;
+    dcb.StopBits = ONESTOPBIT;
+    ok(SetCommState(hcom, &dcb), "SetCommState failed\n");
+
+    ZeroMemory( &timeouts, sizeof(timeouts));
+    timeouts.ReadTotalTimeoutConstant = TIMEOUT;
+    ok(SetCommTimeouts(hcom, &timeouts),"SetCommTimeouts failed\n");
+
+    ok(SetupComm(hcom,1024,1024),"SetUpComm failed\n");
+    ok(SetCommMask(hcom, EV_TXEMPTY), "SetCommMask failed\n");
+
+    before = GetTickCount();
+    res_write=WriteFile(hcom, tbuf, sizeof(tbuf), &written, NULL);
+    after = GetTickCount();
+    ok(res_write == TRUE, "WriteFile failed\n");
+    ok(written == sizeof(tbuf),
+       "WriteFile: Unexpected write_size %ld , expected %d\n", written, sizeof(tbuf));
+
+    trace("WriteFile succeeded, took %ld ms to write %d Bytes at %ld Baud\n",
+	  after - before, sizeof(tbuf), baud);
+
+    before = GetTickCount();
+    res = WaitCommEvent(hcom, &evtmask, NULL);
+    after = GetTickCount();
+
+    todo_wine ok(res == TRUE, "WaitCommEvent failed\n");
+    todo_wine ok(evtmask == EV_TXEMPTY,
+		 "WaitCommEvent: Unexpected EvtMask 0x%08lx, expected 0x%08x\n",
+		 evtmask, EV_TXEMPTY);
+
+    timediff = after - before;
+
+    trace("WaitCommEvent for EV_TXEMPTY took %ld ms\n", timediff);
+    /* 050604: This shows a difference between XP (tested with mingw compiled crosstest):
+       XP returns Writefile only after everything went out of the Serial port,
+       while wine returns immedate.
+       Thus on XP, WaintCommEvent after setting the CommMask for EV_TXEMPTY
+       nearly return immediate,
+       while on wine the most time is spent here
+    */
+
+}
+
+/* A new open handle should not return error or have bytes in the Queues */
+static void test_ClearCommErrors(HANDLE hcom)
+{
+    DWORD   errors;
+    COMSTAT lpStat;
+
+    ok(ClearCommError(hcom, &errors, &lpStat), "ClearCommError failed\n");
+    ok(lpStat.cbInQue == 0, "Unexpected %ld Bytes in InQueue\n", lpStat.cbInQue);
+    ok(lpStat.cbOutQue == 0, "Unexpected %ld Bytes in OutQueue\n", lpStat.cbOutQue);
+    ok(errors == 0, "ClearCommErrors: Unexpected error 0x%08lx\n", errors);
+}
+
+/**/
+static void test_LoopbackRead(HANDLE hcom)
+{
+    DCB dcb;
+    COMMTIMEOUTS timeouts;
+    char rbuf[32];
+    DWORD before, after, diff, read, written, evtmask=0;
+    BOOL res;
+    char tbuf[]="Some Characters\n";
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    dcb.BaudRate = FASTBAUD;
+    dcb.ByteSize = 8;
+    dcb.Parity = NOPARITY;
+    dcb.StopBits = ONESTOPBIT;
+    ok(SetCommState(hcom, &dcb), "SetCommState failed\n");
+
+    ZeroMemory( &timeouts, sizeof(timeouts));
+    timeouts.ReadTotalTimeoutConstant = TIMEOUT;
+    ok(SetCommTimeouts(hcom, &timeouts),"SetCommTimeouts failed\n");
+
+    ok(SetCommMask(hcom, EV_TXEMPTY), "SetCommMask failed\n");
+
+    ok(WriteFile(hcom,tbuf,sizeof(tbuf),&written, NULL), "WriteFile failed\n");
+    ok(written == sizeof(tbuf),"WriteFile %ld bytes written, expected %d\n",
+       written, sizeof(tbuf));
+
+    /* make sure all bytes are written, so Readfile will succeed in one call*/
+    todo_wine ok(WaitCommEvent(hcom, &evtmask, NULL), "WaitCommEvent failed\n");
+    todo_wine ok(evtmask == EV_TXEMPTY,
+		 "WaitCommEvent: Unexpected EvtMask 0x%08lx, expected 0x%08x\n",
+		 evtmask, EV_TXEMPTY);
+
+    read=0;
+    todo_wine ok(ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL), "Readfile failed\n");
+    todo_wine ok(read == sizeof(tbuf),"ReadFile read %ld bytes, expected %d\n", read, sizeof(tbuf));
+
+    /* Now do the same withe a slow Baud rate.
+       On XP, nothing should change, as WriteFile only returns
+       after all Bytes have gone to the physical line
+    */
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    dcb.BaudRate = 9600;
+    dcb.ByteSize = 8;
+    dcb.Parity = NOPARITY;
+    dcb.StopBits = ONESTOPBIT;
+    ok(SetCommState(hcom, &dcb), "SetCommState failed\n");
+
+    ok(SetCommMask(hcom, EV_RXCHAR), "SetCommMask failed\n");
+    ok(WriteFile(hcom,tbuf,sizeof(tbuf),&written, NULL), "WriteFile failed\n");
+    ok(written == sizeof(tbuf),"WriteFile %ld bytes written, expected %d\n",
+       written, sizeof(tbuf));
+
+    todo_wine ok(WaitCommEvent(hcom, &evtmask, NULL), "WaitCommEvent failed\n");
+    todo_wine ok(evtmask == EV_RXCHAR, "WaitCommEvent: Unexpected EvtMask 0x%08lx, expected 0x%08x\n",
+       evtmask, EV_RXCHAR);
+
+    before = GetTickCount();
+    res = ReadFile(hcom, rbuf, sizeof(rbuf), &read, NULL);
+    after = GetTickCount();
+    todo_wine ok(res, "Readfile failed\n");
+    todo_wine ok(read == sizeof(tbuf),"ReadFile read %ld bytes, expected %d\n", read, sizeof(tbuf));
+    diff = after - before;
+    trace("Readfile for %d chars with %d avail took %ld ms\n",
+	  sizeof(rbuf), sizeof(tbuf), diff);
+    ok( (diff > TIMEOUT - TIMEDELTA) && (diff < TIMEOUT + TIMEDELTA),
+	"Timedout Wait took %ld ms, expected around %d\n", diff, TIMEOUT);
+}
+
+static void test_LoopbackCtsRts(HANDLE hcom)
+{
+    DWORD ModemStat, defaultStat;
+    DCB dcb;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fRtsControl == RTS_CONTROL_HANDSHAKE)
+    {
+	trace("RTS_CONTROL_HANDSHAKE is set, so don't manipulate RTS\n");
+	return;
+    }
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    /* XP returns some values in the low nibble, so mask them out*/
+    defaultStat &= MS_CTS_ON|MS_DSR_ON|MS_RING_ON|MS_RLSD_ON;
+    if(defaultStat & MS_CTS_ON)
+    {
+	ok(EscapeCommFunction(hcom, CLRRTS), "EscapeCommFunction failed to clear RTS\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok ((ModemStat & MS_CTS_ON) == 0, "CTS didn't react: 0x%04lx,  expected 0x%04lx\n",
+	    ModemStat, (defaultStat & ~MS_CTS_ON));
+	ok(EscapeCommFunction(hcom, SETRTS), "EscapeCommFunction failed to clear RTS\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+    else
+    {
+	ok(EscapeCommFunction(hcom, SETRTS), "EscapeCommFunction failed to set RTS\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	todo_wine ok ((ModemStat & MS_CTS_ON) == MS_CTS_ON,
+	    "CTS didn't react: 0x%04lx,  expected 0x%04lx\n",
+	    ModemStat, (defaultStat | MS_CTS_ON));
+	ok(EscapeCommFunction(hcom, CLRRTS), "EscapeCommFunction failed to clear RTS\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore CTS: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+}
+
+static void test_LoopbackDtrDcd(HANDLE hcom)
+{
+    DWORD ModemStat, defaultStat;
+    DCB dcb;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == DTR_CONTROL_HANDSHAKE)
+    {
+	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    /* XP returns some values in the low nibble, so mask them out*/
+    defaultStat &= MS_CTS_ON|MS_DSR_ON|MS_RING_ON|MS_RLSD_ON;
+    if(defaultStat & MS_RLSD_ON)
+    {
+	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok ((ModemStat & MS_RLSD_ON) == 0, "RLSD didn't react: 0x%04lx,  expected 0x%04lx\n",
+	    ModemStat, (defaultStat & ~MS_RLSD_ON));
+	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+    else
+    {
+	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	todo_wine ok ((ModemStat & MS_RLSD_ON) == MS_RLSD_ON,
+	    "RLSD didn't react: 0x%04lx,  expected 0x%04lx\n",
+	    ModemStat, (defaultStat | MS_RLSD_ON));
+	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore RLSD: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+}
+
+static void test_LoopbackDtrDsr(HANDLE hcom)
+{
+    DWORD ModemStat, defaultStat;
+    DCB dcb;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
+    {
+	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    /* XP returns some values in the low nibble, so mask them out*/
+    defaultStat &= MS_CTS_ON|MS_DSR_ON|MS_RING_ON|MS_RLSD_ON;
+    if(defaultStat & MS_DSR_ON)
+    {
+	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok ((ModemStat & MS_DSR_ON) == 0, "CTS didn't react: 0x%04lx,  expected 0x%04lx\n",
+	    ModemStat, (defaultStat & ~MS_DSR_ON));
+	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	todo_wine ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+    else
+    {
+	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	todo_wine ok ((ModemStat & MS_DSR_ON) == MS_DSR_ON,
+	    "CTS didn't react: 0x%04lx,expected 0x%04lx\n",
+	    ModemStat, (defaultStat | MS_DSR_ON));
+	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore DSR: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+}
+
+static void test_LoopbackDtrRing(HANDLE hcom)
+{
+    DWORD ModemStat, defaultStat;
+    DCB dcb;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == DTR_CONTROL_HANDSHAKE)
+    {
+	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    /* XP returns some values in the low nibble, so mask them out*/
+    defaultStat &= MS_CTS_ON|MS_DSR_ON|MS_RING_ON|MS_RLSD_ON;
+    if(defaultStat & MS_RING_ON)
+    {
+	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok ((ModemStat & MS_RING_ON) == 0, "RING didn't react: 0x%04lx,  expected 0x%04lx\n",
+	    ModemStat, (defaultStat & ~MS_RING_ON));
+	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+    else
+    {
+	ok(EscapeCommFunction(hcom, SETDTR), "EscapeCommFunction failed to set DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	todo_wine ok ((ModemStat & MS_RING_ON) == MS_RING_ON,
+	    "RING didn't react: 0x%04lx,expected 0x%04lx\n",
+	    ModemStat, (defaultStat | MS_RING_ON));
+	ok(EscapeCommFunction(hcom, CLRDTR), "EscapeCommFunction failed to clear DTR\n");
+	ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
+	ok (ModemStat ==  defaultStat, "Failed to restore RING: 0x%04lx, expected 0x%04lx\n",
+	    ModemStat, defaultStat);
+    }
+}
+
+/*
+  Set up a WaitCommEvent for anything in the receive buffer,
+  then write to TX to put a character
+  into the RX buffer via the Loopback
+*/
+
+static void  test_WaitRx(HANDLE hcom)
+{
+    OVERLAPPED overlapped, overlapped_w;
+    HANDLE hComPortEvent, hComWriteEvent;
+    DWORD before, after, after1, diff, success_wait = FALSE, success_write;
+    DWORD err_wait, err_write, written, evtmask=0;
+
+    ok(SetCommMask(hcom, EV_RXCHAR), "SetCommMask failed\n");
+    hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
+    ok(hComPortEvent != 0, "CreateEvent failed\n");
+    ZeroMemory( &overlapped, sizeof(overlapped));
+    overlapped.hEvent = hComPortEvent;
+
+    ok((hComWriteEvent =  CreateEvent( NULL, TRUE, FALSE, NULL )) !=0,
+       "CreateEvent res 0x%08lx\n",
+       GetLastError());
+    ZeroMemory( &overlapped_w, sizeof(overlapped_w));
+    overlapped_w.hEvent = hComWriteEvent;
+
+    before = GetTickCount();
+    todo_wine {success_wait = WaitCommEvent(hcom, &evtmask, &overlapped);}
+    err_wait = GetLastError();
+    after = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx\n", success_wait, err_wait, evtmask);
+    todo_wine ok(success_wait || err_wait == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
+    trace("overlapped WriteCommEvent returned.\n");
+
+    success_write= WriteFile(hcom, "X", 1, &written, &overlapped_w);
+    err_write = GetLastError();
+    ok(success_write || err_write == ERROR_IO_PENDING,
+       "overlapped WriteFile failed, err 0x%08lx\n",
+       err_write);
+
+    if (!success_write && (err_write == ERROR_IO_PENDING)) {
+      success_write = WaitForSingleObjectEx(hComWriteEvent, TIMEOUT, TRUE);
+      err_write = GetLastError();
+      ok(success_write == WAIT_OBJECT_0, "WaitForSingleObjectEx, res 0x%08lx, err 0x%08lx\n",
+	 success_write, err_write);
+    }
+    Sleep(TIMEOUT >>1);
+    success_write = GetOverlappedResult(hcom, &overlapped_w, &written, FALSE);
+    err_write = GetLastError();
+
+    trace("Write after Wait res 0x%08lx err 0x%08lx\n",success_write, err_write);
+    ok(success_write && written ==1, "Write after Wait res 0x%08lx err 0x%08lx\n",
+       success_write, err_write);
+
+    if (!success_wait && (err_wait == ERROR_IO_PENDING)) {
+      success_wait = WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE);
+      err_wait = GetLastError();
+      ok(success_wait == WAIT_OBJECT_0, "wait hComPortEvent, res 0x%08lx, err 0x%08lx\n",
+	 success_wait, err_wait);
+    }
+    success_wait = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
+    err_wait = GetLastError();
+    after1 = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
+	  success_wait, err_wait, evtmask, after-before, after1-before);
+
+    todo_wine ok(evtmask & EV_RXCHAR, "Detect  EV_RXCHAR: 0x%08lx, expected 0x%08x\n",
+       evtmask, EV_RXCHAR);
+    diff = after1 - before;
+    ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
+	"Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
+
+}
+
+/* Change the controling line after the given timeout to the given state
+   By the loopback, this should trigger the WaitCommEvent
+*/
+static DWORD CALLBACK toggle_ctlLine(LPVOID arg)
+{
+    DWORD *args = (DWORD *) arg;
+    DWORD timeout = args[0];
+    DWORD ctl     = args[1];
+    HANDLE hcom   = (HANDLE) args[2];
+    HANDLE hComPortEvent = (HANDLE) args[3];
+    DWORD success, err;
+
+    trace("toggle_ctlLine timeout %ld clt 0x%08lx handle 0x%08lx\n",
+	  args[0], args[1], args[2]);
+    Sleep(timeout);
+    ok(EscapeCommFunction(hcom, ctl),"EscapeCommFunction 0x%08lx failed\n", ctl);
+    trace("toggle_ctline done\n");
+    success = WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE);
+    err = GetLastError();
+    trace("toggle_ctline WaitForSingleObjectEx res 0x%08lx err 0x%08lx\n",
+	  success, err);
+    return 0;
+}
+
+static void  test_WaitCts(HANDLE hcom)
+{
+    DCB dcb;
+    OVERLAPPED overlapped;
+    HANDLE hComPortEvent;
+    HANDLE alarmThread;
+    DWORD args[4], defaultStat;
+    DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == RTS_CONTROL_DISABLE)
+    {
+	trace("RTS_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    args[0]= TIMEOUT >>1;
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_CTS_ON)
+	args[1] = CLRRTS;
+    else
+	args[1] = SETRTS;
+    args[2]=(DWORD) hcom;
+
+    trace("test_WaitCts timeout %ld clt 0x%08lx handle 0x%08lx\n",args[0], args[1], args[2]);
+
+    ok(SetCommMask(hcom, EV_CTS), "SetCommMask failed\n");
+    hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
+    ok(hComPortEvent != 0, "CreateEvent failed\n");
+    args[3] = (DWORD) hComPortEvent;
+    alarmThread = CreateThread(NULL, 0, toggle_ctlLine, (void *) &args, 0, &alarmThreadId);
+    Sleep(100);
+    trace("Thread created\n");
+    ok(alarmThread !=0 , "CreateThread Failed\n");
+
+    ZeroMemory( &overlapped, sizeof(overlapped));
+    overlapped.hEvent = hComPortEvent;
+    before = GetTickCount();
+    success = WaitCommEvent(hcom, &evtmask, &overlapped);
+    err = GetLastError();
+    after = GetTickCount();
+
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx\n", success, err, evtmask);
+    todo_wine ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
+    trace("overlapped WriteCommEvent returned.\n");
+    if (!success && (err == ERROR_IO_PENDING))
+	todo_wine ok(WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE) == 0,
+		     "wait hComPortEvent failed\n");
+    success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
+    err = GetLastError();
+    after1 = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
+	  success, err, evtmask, after-before, after1-before);
+
+    todo_wine ok(evtmask & EV_CTS, "Failed to detect  EV_CTS: 0x%08lx, expected 0x%08x\n",
+		 evtmask, EV_CTS);
+    ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_CTS_ON)
+	todo_wine ok((evtmask & MS_CTS_ON) == 0,"CTS didn't change state!\n");
+    else
+	todo_wine ok((evtmask & MS_CTS_ON), "CTS didn't change state!\n");
+
+    diff = after1 - before;
+    todo_wine ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
+		  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
+
+    /*restore RTS Settings*/
+    if(defaultStat & MS_CTS_ON)
+	args[1] = SETRTS;
+    else
+	args[1] = CLRRTS;
+}
+
+static void  test_WaitDsr(HANDLE hcom)
+{
+    DCB dcb;
+    OVERLAPPED overlapped;
+    HANDLE hComPortEvent;
+    HANDLE alarmThread;
+    DWORD args[3], defaultStat;
+    DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
+    {
+	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    args[0]= TIMEOUT >>1;
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_DSR_ON)
+	args[1] = CLRDTR;
+    else
+	args[1] = SETDTR;
+    args[2]=(DWORD) hcom;
+
+    trace("test_WaitDsr timeout %ld clt 0x%08lx handle 0x%08lx\n",args[0], args[1], args[2]);
+
+    ok(SetCommMask(hcom, EV_DSR), "SetCommMask failed\n");
+    hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
+    ok(hComPortEvent != 0, "CreateEvent failed\n");
+    alarmThread = CreateThread(NULL, 0, toggle_ctlLine, (void *) &args, 0, &alarmThreadId);
+    ok(alarmThread !=0 , "CreateThread Failed\n");
+
+    ZeroMemory( &overlapped, sizeof(overlapped));
+    overlapped.hEvent = hComPortEvent;
+    before = GetTickCount();
+    success = WaitCommEvent(hcom, &evtmask, &overlapped);
+    err = GetLastError();
+    after = GetTickCount();
+
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx\n", success, err, evtmask);
+    todo_wine ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
+    trace("overlapped WriteCommEvent returned.\n");
+    if (!success && (err == ERROR_IO_PENDING))
+	todo_wine ok(WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE) == 0,
+		     "wait hComPortEvent failed\n");
+    success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
+    err = GetLastError();
+    after1 = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
+	  success, err, evtmask, after-before, after1-before);
+
+    todo_wine ok(evtmask & EV_DSR, "Failed to detect  EV_DSR: 0x%08lx, expected 0x%08x\n",
+		 evtmask, EV_CTS);
+    ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_DSR_ON)
+	todo_wine ok((evtmask & MS_DSR_ON) == 0,"DTR didn't change state!\n");
+    else
+	todo_wine ok((evtmask & MS_DSR_ON), "DTR didn't change state!\n");
+
+    diff = after1 - before;
+    todo_wine ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
+		  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
+
+    /*restore RTS Settings*/
+    if(defaultStat & MS_DSR_ON)
+	args[1] = SETDTR;
+    else
+	args[1] = CLRDTR;
+}
+
+static void  test_WaitRing(HANDLE hcom)
+{
+    DCB dcb;
+    OVERLAPPED overlapped;
+    HANDLE hComPortEvent;
+    HANDLE alarmThread;
+    DWORD args[3], defaultStat;
+    DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
+    {
+	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    args[0]= TIMEOUT >>1;
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_RING_ON)
+	args[1] = CLRDTR;
+    else
+	args[1] = SETDTR;
+    args[2]=(DWORD) hcom;
+
+    trace("test_WaitRing timeout %ld clt 0x%08lx handle 0x%08lx\n",args[0], args[1], args[2]);
+
+    ok(SetCommMask(hcom, EV_RING), "SetCommMask failed\n");
+    hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
+    ok(hComPortEvent != 0, "CreateEvent failed\n");
+    alarmThread = CreateThread(NULL, 0, toggle_ctlLine, (void *) &args, 0, &alarmThreadId);
+    ok(alarmThread !=0 , "CreateThread Failed\n");
+
+    ZeroMemory( &overlapped, sizeof(overlapped));
+    overlapped.hEvent = hComPortEvent;
+    before = GetTickCount();
+    success = WaitCommEvent(hcom, &evtmask, &overlapped);
+    err = GetLastError();
+    after = GetTickCount();
+
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx\n", success, err, evtmask);
+    todo_wine ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
+    trace("overlapped WriteCommEvent returned.\n");
+    if (!success && (err == ERROR_IO_PENDING))
+	todo_wine ok(WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE) == 0,
+		     "wait hComPortEvent failed\n");
+    success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
+    err = GetLastError();
+    after1 = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
+	  success, err, evtmask, after-before, after1-before);
+
+    todo_wine ok(evtmask & EV_RING, "Failed to detect  EV_RING: 0x%08lx, expected 0x%08x\n",
+       evtmask, EV_CTS);
+    ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_RING_ON)
+	todo_wine ok((evtmask & MS_RING_ON) == 0,"DTR didn't change state!\n");
+    else
+	todo_wine ok((evtmask & MS_RING_ON), "DTR didn't change state!\n");
+
+    diff = after1 - before;
+    todo_wine ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
+		  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
+
+    /*restore RTS Settings*/
+    if(defaultStat & MS_RING_ON)
+	args[1] = SETDTR;
+    else
+	args[1] = CLRDTR;
+}
+
+static void  test_WaitDcd(HANDLE hcom)
+{
+    DCB dcb;
+    OVERLAPPED overlapped;
+    HANDLE hComPortEvent;
+    HANDLE alarmThread;
+    DWORD args[3], defaultStat;
+    DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
+
+    ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
+    if (dcb.fDtrControl == DTR_CONTROL_DISABLE)
+    {
+	trace("DTR_CONTROL_HANDSHAKE is set, so don't manipulate DTR\n");
+	return;
+    }
+    args[0]= TIMEOUT >>1;
+    ok(GetCommModemStatus(hcom, &defaultStat), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_RLSD_ON)
+	args[1] = CLRDTR;
+    else
+	args[1] = SETDTR;
+    args[2]=(DWORD) hcom;
+
+    trace("test_WaitDcd timeout %ld clt 0x%08lx handle 0x%08lx\n",args[0], args[1], args[2]);
+
+    ok(SetCommMask(hcom, EV_RLSD), "SetCommMask failed\n");
+    hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
+    ok(hComPortEvent != 0, "CreateEvent failed\n");
+    alarmThread = CreateThread(NULL, 0, toggle_ctlLine, (void *) &args, 0, &alarmThreadId);
+    ok(alarmThread !=0 , "CreateThread Failed\n");
+
+    ZeroMemory( &overlapped, sizeof(overlapped));
+    overlapped.hEvent = hComPortEvent;
+    before = GetTickCount();
+    success = WaitCommEvent(hcom, &evtmask, &overlapped);
+    err = GetLastError();
+    after = GetTickCount();
+
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx\n", success, err, evtmask);
+    todo_wine ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
+    trace("overlapped WriteCommEvent returned.\n");
+    if (!success && (err == ERROR_IO_PENDING))
+	todo_wine ok(WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE) == 0,
+		     "wait hComPortEvent failed\n");
+    success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
+    err = GetLastError();
+    after1 = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
+	  success, err, evtmask, after-before, after1-before);
+
+    todo_wine ok(evtmask & EV_RLSD, "Failed to detect  EV_RLSD: 0x%08lx, expected 0x%08x\n",
+		 evtmask, EV_CTS);
+    ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
+    if(defaultStat & MS_RLSD_ON)
+	todo_wine ok((evtmask & MS_RLSD_ON) == 0,"DTR didn't change state!\n");
+    else
+	todo_wine ok((evtmask & MS_RLSD_ON), "DTR didn't change state!\n");
+
+    diff = after1 - before;
+    todo_wine ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
+		  "Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
+
+    /*restore RTS Settings*/
+    if(defaultStat & MS_RLSD_ON)
+	args[1] = SETDTR;
+    else
+	args[1] = CLRDTR;
+}
+
+/*
+   Set the Break status after the given timeout to the given state
+*/
+static void  test_WaitBreak(HANDLE hcom)
+{
+    OVERLAPPED overlapped;
+    HANDLE hComPortEvent;
+    DWORD before, after, after1, diff, success, err, written, evtmask=0;
+
+    ok(SetCommMask(hcom, EV_BREAK), "SetCommMask failed\n");
+    hComPortEvent =  CreateEvent( NULL, TRUE, FALSE, NULL );
+    ok(hComPortEvent != 0, "CreateEvent failed\n");
+
+    ZeroMemory( &overlapped, sizeof(overlapped));
+    overlapped.hEvent = hComPortEvent;
+    before = GetTickCount();
+    success = WaitCommEvent(hcom, &evtmask, &overlapped);
+    err = GetLastError();
+    after = GetTickCount();
+
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx\n", success, err, evtmask);
+    ok(success || err == ERROR_IO_PENDING, "overlapped WaitCommEvent failed\n");
+    trace("overlapped WriteCommEvent returned.\n");
+
+    Sleep(TIMEOUT >>1);
+
+    ok(SetCommBreak(hcom), "SetCommBreak err 0x%08lx\n", GetLastError());
+    trace("Break set\n");
+    ok(ClearCommError(hcom, &err, NULL),"ClearCommError err 0x%08lx\n", GetLastError());
+    ok((err & CE_BREAK)!= 0, "Break condition should be reported\n");
+    ok(ClearCommBreak(hcom), "ClearCommBreak err 0x%08lx\n", GetLastError());
+    trace("Break cleared\n");
+    ok(ClearCommError(hcom, &err, NULL),"ClearCommError err 0x%08lx\n", GetLastError());
+    ok((err & CE_BREAK)== 0, "Break should be cleared now\n");
+
+    if (!success && (err == ERROR_IO_PENDING))
+	ok(WaitForSingleObjectEx(hComPortEvent, TIMEOUT, TRUE) == 0,
+	   "wait hComPortEvent res 0x%08lx\n", GetLastError());
+    success = GetOverlappedResult(hcom, &overlapped, &written, FALSE);
+    err = GetLastError();
+    after1 = GetTickCount();
+    trace("Success 0x%08lx err 0x%08lx evtmask 0x%08lx diff1 %ld, diff2 %ld\n",
+	  success, err, evtmask, after-before, after1-before);
+
+    ok(evtmask & EV_BREAK, "Failed to detect  EV_BREAK: 0x%08lx, expected 0x%08x\n",
+       evtmask, EV_BREAK);
+    ok(GetCommModemStatus(hcom, &evtmask), "GetCommModemStatus failed\n");
+
+    diff = after1 - before;
+    ok ((diff > (TIMEOUT>>1) -TIMEDELTA) && (diff < (TIMEOUT>>1) + TIMEDELTA),
+	"Unexpected time %ld, expected around %d\n", diff, TIMEOUT>>1);
+
+}
+
 START_TEST(comm)
 {
-	test_BuildCommDCB();
+    HANDLE hcom;
+    /* use variabel and not #define to compile the code */
+    BOOL loopback_txd_rxd  = LOOPBACK_TXD_RXD;
+    BOOL loopback_rts_cts  = LOOPBACK_CTS_RTS;
+    BOOL loopback_dtr_dsr  = LOOPBACK_DTR_DSR;
+    BOOL loopback_dtr_ring = LOOPBACK_DTR_RING;
+    BOOL loopback_dtr_dcd  = LOOPBACK_DTR_DCD;
+    BOOL broken_setbreak = BROKEN_SETBREAK;
+
+#if 1
+    test_BuildCommDCB();
+    hcom = test_OpenComm(FALSE);
+    if (hcom != INVALID_HANDLE_VALUE)
+    {
+	test_GetModemStatus(hcom);
+	test_ReadTimeOut(hcom);
+	test_waittxempty(hcom);
+	CloseHandle(hcom);
+    }
+    hcom = test_OpenComm(FALSE);
+    if (hcom != INVALID_HANDLE_VALUE)
+    {
+	test_ClearCommErrors(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_txd_rxd) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
+    {
+	test_LoopbackRead(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_rts_cts) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
+    {
+	test_LoopbackCtsRts(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_dtr_dsr) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
+    {
+	test_LoopbackDtrDsr(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_dtr_ring) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
+    {
+	test_LoopbackDtrRing(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_dtr_dcd) && ((hcom = test_OpenComm(FALSE))!=INVALID_HANDLE_VALUE))
+    {
+	test_LoopbackDtrDcd(hcom);
+	CloseHandle(hcom);
+    }
+#endif
+    if((loopback_txd_rxd) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
+    {
+        test_WaitRx(hcom);
+        CloseHandle(hcom);
+    }
+#if 1
+    if((loopback_rts_cts) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
+    {
+	test_WaitCts(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_dtr_dsr) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
+    {
+	test_WaitDsr(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_dtr_ring) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
+    {
+	test_WaitRing(hcom);
+	CloseHandle(hcom);
+    }
+    if((loopback_dtr_dcd) && ((hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE))
+    {
+	test_WaitDcd(hcom);
+	CloseHandle(hcom);
+    }
+    if(!broken_setbreak && (hcom = test_OpenComm(TRUE))!=INVALID_HANDLE_VALUE)
+    {
+	test_WaitBreak(hcom);
+	CloseHandle(hcom);
+    }
+#endif
 }
