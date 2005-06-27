@@ -1403,9 +1403,11 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
 static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
-
-#if defined(linux)
+#ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
+#elif defined HAVE_SCSIREQ_T_CMD
+    scsireq_t cmd;
+#endif
     int io;
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
@@ -1420,6 +1422,7 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     if (pPacket->DataTransferLength > 0 && !pPacket->DataBuffer)
         return STATUS_INVALID_PARAMETER;
 
+#ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     RtlZeroMemory(&cmd, sizeof(cmd));
 
     cmd.interface_id   = 'S';
@@ -1454,18 +1457,7 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
 
     ret = CDROM_GetStatusCode(io);
 
-#elif defined(__NetBSD__)
-    scsireq_t cmd;
-    int io;
-
-    if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
-	return STATUS_BUFFER_TOO_SMALL;
-
-    if (pPacket->CdbLength > 12)
-        return STATUS_INVALID_PARAMETER;
-
-    if (pPacket->SenseInfoLength > SENSEBUFLEN)
-        return STATUS_INVALID_PARAMETER;
+#elif defined HAVE_SCSIREQ_T_CMD
 
     memset(&cmd, 0, sizeof(cmd));
     memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
@@ -1526,8 +1518,11 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
 static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
 {
     int ret = STATUS_NOT_SUPPORTED;
-#if defined(linux)
+#ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
+#elif defined HAVE_SCSIREQ_T_CMD
+    scsireq_t cmd;
+#endif
     int io;
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
@@ -1542,6 +1537,7 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     if (pPacket->DataTransferLength > 0 && pPacket->DataBufferOffset < sizeof(SCSI_PASS_THROUGH))
         return STATUS_INVALID_PARAMETER;
 
+#ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     RtlZeroMemory(&cmd, sizeof(cmd));
 
     cmd.interface_id   = 'S';
@@ -1578,9 +1574,7 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
 
     ret = CDROM_GetStatusCode(io);
 
-#elif defined(__NetBSD__)
-    scsireq_t cmd;
-    int io;
+#elif defined HAVE_SCSIREQ_T_CMD
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
 	return STATUS_BUFFER_TOO_SMALL;
@@ -1660,7 +1654,7 @@ static NTSTATUS CDROM_ScsiGetCaps(PIO_SCSI_CAPABILITIES caps)
     NTSTATUS    ret = STATUS_NOT_IMPLEMENTED;
 
     caps->Length = sizeof(*caps);
-#if defined(linux)
+#ifdef SG_SCATTER_SZ
     caps->MaximumTransferLength = SG_SCATTER_SZ; /* FIXME */
     caps->MaximumPhysicalPages = SG_SCATTER_SZ / getpagesize();
     caps->SupportedAsynchronousEvents = TRUE;

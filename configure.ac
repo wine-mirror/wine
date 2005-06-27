@@ -1463,6 +1463,13 @@ AC_CHECK_MEMBERS([struct msghdr.msg_accrights, struct sockaddr.sa_len, struct so
 # include <sys/un.h>
 #endif])
 
+dnl Check for scsireq_t and sg_io_hdr_t members
+AC_CHECK_MEMBERS([scsireq_t.cmd, sg_io_hdr_t.interface_id],,,
+[#include <sys/types.h>
+#ifdef HAVE_SCSI_SG_H
+#include <scsi/sg.h>
+#endif])
+
 dnl Check for siginfo_t members
 AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 
