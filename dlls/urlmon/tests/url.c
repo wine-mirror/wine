@@ -186,7 +186,7 @@ static const IBindStatusCallbackVtbl statusclbVtbl = {
     statusclb_OnObjectAvailable
 };
 
-static IBindStatusCallback* statusclb_create()
+static IBindStatusCallback* statusclb_create(void)
 {
     statusclb *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(statusclb));
     ret->lpVtbl = &statusclbVtbl;

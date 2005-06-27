@@ -91,12 +91,12 @@ static void fatal_string(int which)
 	ExitProcess(1);
 }
 
-static void usage()
+static void usage(void)
 {
 	fatal_string(STRING_USAGE);
 }
 
-static void license()
+static void license(void)
 {
 	fatal_string(STRING_LICENSE);
 }

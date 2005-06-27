@@ -127,7 +127,7 @@ static void register_menu_check_class(void)
 
 /* demonstrates that windows lock the menu object so that it is still valid
  * even after a client calls DestroyMenu on it */
-static void test_menu_locked_by_window()
+static void test_menu_locked_by_window(void)
 {
     BOOL ret;
     HMENU hmenu;
@@ -161,7 +161,7 @@ static void test_menu_locked_by_window()
     DestroyWindow(hwnd);
 }
 
-static void test_menu_ownerdraw()
+static void test_menu_ownerdraw(void)
 {
     int i,j,k;
     BOOL ret;

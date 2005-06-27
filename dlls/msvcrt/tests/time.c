@@ -146,7 +146,7 @@ static void test_mktime(void)
     ok(((DWORD)nulltime == SECSPERDAY),"mktime returned 0x%08lx\n",(DWORD)nulltime);
     putenv(TZ_env);
 }
-static void test_localtime()
+static void test_localtime(void)
 {
     TIME_ZONE_INFORMATION tzinfo;
     DWORD res =  GetTimeZoneInformation(&tzinfo);

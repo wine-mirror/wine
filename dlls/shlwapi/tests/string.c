@@ -457,7 +457,7 @@ static void test_StrToIntExW(void)
   }
 }
 
-static void test_StrDupA()
+static void test_StrDupA(void)
 {
   LPSTR lpszStr;
   const StrFormatSizeResult* result = StrFormatSize_results;

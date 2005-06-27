@@ -219,7 +219,7 @@ static void test_RtlIsNameLegalDOS8Dot3(void)
         }
     }
 }
-static void test_RtlGetFullPathName_U()
+static void test_RtlGetFullPathName_U(void)
 {
     struct test
     {

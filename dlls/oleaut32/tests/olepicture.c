@@ -198,7 +198,7 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 	ok (res == 0, "refcount after release is %ld, but should be 1?\n", res);
 }
 
-static void test_empty_image() {
+static void test_empty_image(void) {
 	LPBYTE		data;
 	LPSTREAM	stream;
 	IPicture*	pic = NULL;
@@ -238,7 +238,7 @@ static void test_empty_image() {
 	IPicture_Release (pic);
 }
 
-static void test_empty_image_2() {
+static void test_empty_image_2(void) {
 	LPBYTE		data;
 	LPSTREAM	stream;
 	IPicture*	pic = NULL;

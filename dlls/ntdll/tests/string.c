@@ -55,7 +55,7 @@ static long     (WINAPIV *pwcstol)(LPCWSTR, LPWSTR *, INT);
 static ULONG    (WINAPIV *pwcstoul)(LPCWSTR, LPWSTR *, INT);
 
 
-static void InitFunctionPtrs()
+static void InitFunctionPtrs(void)
 {
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed\n");
