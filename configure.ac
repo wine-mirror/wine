@@ -1629,6 +1629,7 @@ dlls/mscms/Makefile
 dlls/mscms/tests/Makefile
 dlls/msdmo/Makefile
 dlls/mshtml/Makefile
+dlls/mshtml/tests/Makefile
 dlls/msi/Makefile
 dlls/msi/tests/Makefile
 dlls/msimg32/Makefile
