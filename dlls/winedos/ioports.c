@@ -254,15 +254,13 @@ static inline void outl( DWORD value, WORD port )
 static void IO_port_init(void)
 {
     char tmp[1024];
-    HANDLE hkey;
+    HANDLE root, hkey;
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    static const WCHAR portsW[] = {'M','a','c','h','i','n','e','\\',
-                                   'S','o','f','t','w','a','r','e','\\',
-                                   'W','i','n','e','\\','W','i','n','e','\\',
-                                   'C','o','n','f','i','g','\\','P','o','r','t','s',0};
+    static const WCHAR portsW[] = {'S','o','f','t','w','a','r','e','\\',
+                                   'W','i','n','e','\\','V','D','M','\\','P','o','r','t','s',0};
     static const WCHAR readW[] = {'r','e','a','d',0};
     static const WCHAR writeW[] = {'w','r','i','t','e',0};
 
@@ -272,15 +270,16 @@ static void IO_port_init(void)
     {
         iopl(0);
 
+        RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
         attr.Length = sizeof(attr);
-        attr.RootDirectory = 0;
+        attr.RootDirectory = root;
         attr.ObjectName = &nameW;
         attr.Attributes = 0;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
         RtlInitUnicodeString( &nameW, portsW );
 
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\Ports */
+        /* @@ Wine registry key: HKCU\Software\Wine\VDM\Ports */
         if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ))
         {
             RtlInitUnicodeString( &nameW, readW );
@@ -297,6 +296,7 @@ static void IO_port_init(void)
             }
             NtClose( hkey );
         }
+        NtClose( root );
     }
 }
 
