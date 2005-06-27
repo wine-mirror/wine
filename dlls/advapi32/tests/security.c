@@ -33,6 +33,7 @@ typedef BOOL (WINAPI *fnConvertSidToStringSidA)( PSID pSid, LPSTR *str );
 typedef BOOL (WINAPI *fnConvertStringSidToSidA)( LPCSTR str, PSID pSid );
 typedef BOOL (WINAPI *fnGetFileSecurityA)(LPCSTR, SECURITY_INFORMATION,
                                           PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
+typedef DWORD (WINAPI *fnRtlAdjustPrivilege)(ULONG,BOOLEAN,BOOLEAN,PBOOLEAN);
 
 static HMODULE hmod;
 
@@ -41,6 +42,7 @@ fnBuildTrusteeWithNameA  pBuildTrusteeWithNameA;
 fnConvertSidToStringSidA pConvertSidToStringSidA;
 fnConvertStringSidToSidA pConvertStringSidToSidA;
 fnGetFileSecurityA pGetFileSecurityA;
+fnRtlAdjustPrivilege pRtlAdjustPrivilege;
 
 struct sidRef
 {
@@ -447,6 +449,19 @@ static void test_AccessCheck(void)
     DWORD PrivSetLen;
     PRIVILEGE_SET *PrivSet;
     BOOL res;
+    HMODULE NtDllModule;
+    BOOLEAN Enabled;
+
+    NtDllModule = GetModuleHandle("ntdll.dll");
+
+    if (!NtDllModule)
+    {
+        trace("not running on NT, skipping test\n");
+        return;
+    }
+    pRtlAdjustPrivilege = (fnRtlAdjustPrivilege)
+                          GetProcAddress(NtDllModule, "RtlAdjustPrivilege");
+    if (!pRtlAdjustPrivilege) return;
 
     Acl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(Acl, 256, ACL_REVISION);
@@ -494,8 +509,10 @@ static void test_AccessCheck(void)
 
     ImpersonateSelf(SecurityImpersonation);
 
+    pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, FALSE, TRUE, &Enabled);
+
     ret = OpenThreadToken(GetCurrentThread(),
-                          TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, TRUE, &Token);
+                          TOKEN_QUERY, TRUE, &Token);
     ok(ret, "OpenThreadToken failed with error %ld\n", GetLastError());
 
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
@@ -512,6 +529,32 @@ static void test_AccessCheck(void)
         "AccessCheck failed to grant any access with error %ld\n",
         GetLastError());
     trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08lx\n", Access);
+
+    SetLastError(0);
+    PrivSet->PrivilegeCount = 16;
+    ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret && !AccessStatus && GetLastError() == ERROR_PRIVILEGE_NOT_HELD,
+        "AccessCheck should have failed with ERROR_PRIVILEGE_NOT_HELD, instead of %ld\n",
+        GetLastError());
+
+    ret = pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, TRUE, TRUE, &Enabled);
+    if (!ret)
+    {
+        SetLastError(0);
+        PrivSet->PrivilegeCount = 16;
+        ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
+                          PrivSet, &PrivSetLen, &Access, &AccessStatus);
+        ok(ret && AccessStatus && GetLastError() == 0,
+            "AccessCheck should have succeeded, error %ld\n",
+            GetLastError());
+        ok(Access == ACCESS_SYSTEM_SECURITY,
+            "Access should be equal to ACCESS_SYSTEM_SECURITY instead of 0x%08lx\n",
+            Access);
+    }
+    else
+        trace("Couldn't get SE_SECURITY_PRIVILEGE (0x%08lx), skipping ACCESS_SYSTEM_SECURITY test\n",
+            ret);
 
     RevertToSelf();
 
