@@ -345,6 +345,7 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         return;
     text = MSI_RecordGetString( rec , 1 );
     SetWindowTextW( ctrl->hwnd, text );
+    msi_dialog_check_messages( NULL );
 }
 
 static void msi_dialog_map_events(msi_dialog* dialog, LPCWSTR control)
@@ -397,11 +398,26 @@ struct msi_text_info
     DWORD attributes;
 };
 
+/*
+ * we don't erase our own background,
+ * so we have to make sure that the parent window redraws first
+ */
+static void msi_text_on_settext( HWND hWnd )
+{
+    HWND hParent;
+    RECT rc;
+
+    hParent = GetParent( hWnd );
+    GetWindowRect( hWnd, &rc );
+    MapWindowPoints( NULL, hParent, (LPPOINT) &rc, 2 );
+    InvalidateRect( hParent, &rc, TRUE );
+}
+
 static LRESULT WINAPI
 MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     struct msi_text_info *info;
-    HRESULT r = 0;
+    LRESULT r = 0;
 
     TRACE("%p %04x %08x %08lx\n", hWnd, msg, wParam, lParam);
 
@@ -418,6 +434,9 @@ MSIText_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     switch( msg )
     {
+    case WM_SETTEXT:
+        msi_text_on_settext( hWnd );
+        break;
     case WM_NCDESTROY:
         HeapFree( GetProcessHeap(), 0, info );
         RemovePropW( hWnd, szButtonData );
