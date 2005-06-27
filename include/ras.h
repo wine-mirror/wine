@@ -393,6 +393,23 @@ typedef struct tagRASDIALEXTENSIONS
     ULONG_PTR reserved;
 } RASDIALEXTENSIONS, *LPRASDIALEXTENSIONS;
 
+typedef struct tagRASAUTODIALENTRYA
+{
+    DWORD dwSize;
+    DWORD dwFlags;
+    DWORD dwDialingLocation;
+    CHAR  szEntry[ RAS_MaxEntryName + 1 ];
+} RASAUTODIALENTRYA, *LPRASAUTODIALENTRYA;
+
+typedef struct tagRASAUTODIALENTRYW
+{
+    DWORD dwSize;
+    DWORD dwFlags;
+    DWORD dwDialingLocation;
+    WCHAR szEntry[ RAS_MaxEntryName + 1 ];
+} RASAUTODIALENTRYW, *LPRASAUTODIALENTRYW;
+
+
 DWORD WINAPI RasConnectionNotificationA(HRASCONN,HANDLE,DWORD);
 DWORD WINAPI RasConnectionNotificationW(HRASCONN,HANDLE,DWORD);
 #define      RasConnectionNotification WINELIB_NAME_AW(RasConnectionNotification)
@@ -411,6 +428,9 @@ DWORD WINAPI RasDialW(LPRASDIALEXTENSIONS,LPCWSTR,LPRASDIALPARAMSW,DWORD,LPVOID,
 DWORD WINAPI RasEditPhonebookEntryA(HWND,LPCSTR,LPCSTR);
 DWORD WINAPI RasEditPhonebookEntryW(HWND,LPCWSTR,LPCWSTR);
 #define      RasEditPhonebookEntry WINELIB_NAME_AW(RasEditPhonebookEntry)
+DWORD WINAPI RasEnumAutodialAddressesA(LPSTR*,LPDWORD,LPDWORD);
+DWORD WINAPI RasEnumAutodialAddressesW(LPWSTR*,LPDWORD,LPDWORD);
+#define      RasEnumAutodialAddresses WINELIB_NAME_AW(RasEnumAutodialAddresses)
 DWORD WINAPI RasEnumConnectionsA(LPRASCONNA,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumConnectionsW(LPRASCONNW,LPDWORD,LPDWORD);
 #define      RasEnumConnections WINELIB_NAME_AW(RasEnumConnections)
@@ -420,6 +440,15 @@ DWORD WINAPI RasEnumDevicesW(LPRASDEVINFOW,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumEntriesA(LPCSTR,LPCSTR,LPRASENTRYNAMEA,LPDWORD,LPDWORD);
 DWORD WINAPI RasEnumEntriesW(LPCWSTR,LPCWSTR,LPRASENTRYNAMEW,LPDWORD,LPDWORD);
 #define      RasEnumEntries WINELIB_NAME_AW(RasEnumEntries)
+DWORD WINAPI RasGetAutodialAddressA(LPCSTR,LPDWORD,LPRASAUTODIALENTRYA,LPDWORD,LPDWORD);
+DWORD WINAPI RasGetAutodialAddressW(LPCWSTR,LPDWORD,LPRASAUTODIALENTRYW,LPDWORD,LPDWORD);
+#define      RasGetAutodialAddresses WINELIB_NAME_AW(RasGetAutodialAddresses)
+DWORD WINAPI RasGetAutodialEnableA(DWORD,LPBOOL);
+DWORD WINAPI RasGetAutodialEnableW(DWORD,LPBOOL);
+#define      RasGetAutodialEnable WINELIB_NAME_AW(RasGetAutodialEnable)
+DWORD WINAPI RasGetAutodialParamA(DWORD dwKey, LPVOID lpvValue, LPDWORD lpdwcbValue);
+DWORD WINAPI RasGetAutodialParamW(DWORD dwKey, LPVOID lpvValue, LPDWORD lpdwcbValue);
+#define RasGetAutodialParam WINELIB_NAME_AW(RasGetAutodialParam)
 DWORD WINAPI RasGetConnectStatusA(HRASCONN,LPRASCONNSTATUSA);
 DWORD WINAPI RasGetConnectStatusW(HRASCONN,LPRASCONNSTATUSW);
 #define      RasGetConnectStatus WINELIB_NAME_AW(RasGetConnectStatus)
@@ -441,6 +470,12 @@ DWORD WINAPI RasHangUpW(HRASCONN);
 DWORD WINAPI RasRenameEntryA(LPCSTR,LPCSTR,LPCSTR);
 DWORD WINAPI RasRenameEntryW(LPCWSTR,LPCWSTR,LPCWSTR);
 #define      RasRenameEntry WINELIB_NAME_AW(RasRenameEntry)
+DWORD WINAPI RasSetAutodialAddressA(LPCSTR,DWORD,LPRASAUTODIALENTRYA,DWORD,DWORD);
+DWORD WINAPI RasSetAutodialAddressW(LPCWSTR,DWORD,LPRASAUTODIALENTRYW,DWORD,DWORD);
+#define      RasSetAutodialAddress WINELIB_NAME_AW(RasSetAutodialAddress)
+DWORD WINAPI RasSetAutodialParamA(DWORD,LPVOID,DWORD);
+DWORD WINAPI RasSetAutodialParamW(DWORD,LPVOID,DWORD);
+#define      RasSetAutodialParam WINELIB_NAME_AW(RasSetAutodialParam)
 DWORD WINAPI RasSetEntryDialParamsA(LPCSTR,LPRASDIALPARAMSA,BOOL);
 DWORD WINAPI RasSetEntryDialParamsW(LPCWSTR,LPRASDIALPARAMSW,BOOL);
 #define      RasSetEntryDialParams WINELIB_NAME_AW(RasSetEntryDialParams)
@@ -450,16 +485,9 @@ DWORD WINAPI RasSetSubEntryPropertiesW(LPCWSTR,LPCWSTR,DWORD,LPRASSUBENTRYW,DWOR
 DWORD WINAPI RasValidateEntryNameA(LPCSTR  lpszPhonebook, LPCSTR  lpszEntry);
 DWORD WINAPI RasValidateEntryNameW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry);
 #define RasValidateEntryName WINELIB_NAME_AW(RasValidateEntryName)
-DWORD WINAPI RasSetEntryPropertiesA(LPCSTR lpszPhonebook, LPCSTR lpszEntry,
-        LPRASENTRYA lpRasEntry, DWORD dwEntryInfoSize, LPBYTE lpbDeviceInfo,
-	DWORD dwDeviceInfoSize);
-DWORD WINAPI RasSetEntryPropertiesW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry,
-        LPRASENTRYW lpRasEntry, DWORD dwEntryInfoSize, LPBYTE lpbDeviceInfo,
-	DWORD dwDeviceInfoSize);
+DWORD WINAPI RasSetEntryPropertiesA(LPCSTR,LPCSTR,LPRASENTRYA,DWORD,LPBYTE,DWORD);
+DWORD WINAPI RasSetEntryPropertiesW(LPCWSTR,LPCWSTR,LPRASENTRYW,DWORD,LPBYTE,DWORD);
 #define RasSetEntryProperties WINELIB_NAME_AW(RasSetEntryProperties)
-DWORD WINAPI RasGetAutodialParamA(DWORD dwKey, LPVOID lpvValue, LPDWORD lpdwcbValue);
-DWORD WINAPI RasGetAutodialParamW(DWORD dwKey, LPVOID lpvValue, LPDWORD lpdwcbValue);
-#define RasGetAutodialParam WINELIB_NAME_AW(RasGetAutodialParam)
 DWORD WINAPI RasSetAutodialEnableA(DWORD dwDialingLocation, BOOL fEnabled);
 DWORD WINAPI RasSetAutodialEnableW(DWORD dwDialingLocation, BOOL fEnabled);
 #define RasSetAutodialEnable WINELIB_NAME_AW(RasSetAutodialEnable)

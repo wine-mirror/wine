@@ -220,7 +220,7 @@ DWORD WINAPI RasDeleteEntryW(LPCWSTR a, LPCWSTR b)
 /**************************************************************************
  *                 RasEnumAutodialAddressesA	[RASAPI32.14]
  */
-DWORD WINAPI RasEnumAutodialAddressesA(LPCSTR *a, LPDWORD b, LPDWORD c)
+DWORD WINAPI RasEnumAutodialAddressesA(LPSTR *a, LPDWORD b, LPDWORD c)
 {
 	FIXME("(%p,%p,%p),stub!\n",a,b,c);
 	return 0;
@@ -229,14 +229,11 @@ DWORD WINAPI RasEnumAutodialAddressesA(LPCSTR *a, LPDWORD b, LPDWORD c)
 /**************************************************************************
  *                 RasEnumAutodialAddressesW	[RASAPI32.15]
  */
-DWORD WINAPI RasEnumAutodialAddressesW(LPCWSTR *a, LPDWORD b, LPDWORD c)
+DWORD WINAPI RasEnumAutodialAddressesW(LPWSTR *a, LPDWORD b, LPDWORD c)
 {
 	FIXME("(%p,%p,%p),stub!\n",a,b,c);
 	return 0;
 }
-
-typedef LPVOID LPRASAUTODIALENTRYA;
-typedef LPVOID LPRASAUTODIALENTRYW;
 
 /**************************************************************************
  *                 RasEnumDevicesA		[RASAPI32.19]
