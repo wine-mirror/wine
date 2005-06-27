@@ -238,6 +238,7 @@ sub GenerateThunk($$$$)
 	    $call_arg = "$call_arg ";
 	}
     }
+    $ret .= 'void ' if ($#{@{$func_ref->[2]}} < 0);
     $ret = "$ret) {\n";
     if ($func_ref->[1] ne "void") {
 	$ret = "$ret  " . ConvertType($func_ref->[1]) . " ret_value;\n";
@@ -689,6 +690,7 @@ foreach (sort keys %ext_functions) {
 	    print EXT " ";
 	}
     }
+    print EXT 'void ' if ($#{@{$func_ref->[2]}} < 0);
     print EXT ") = (void *) 0xdeadbeef;\n";
 }
 
@@ -706,6 +708,7 @@ foreach (sort keys %ext_functions) {
 	    print EXT " ";
 	}
     }
+    print EXT 'void ' if ($#{@{$func_ref->[2]}} < 0);
     print EXT ");\n";
 }
 

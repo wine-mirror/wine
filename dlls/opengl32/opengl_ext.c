@@ -21,11 +21,11 @@ void (*func_glArrayObjectATI)( GLenum, GLint, GLenum, GLsizei, GLuint, GLuint ) 
 void (*func_glAsyncMarkerSGIX)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glAttachObjectARB)( unsigned int, unsigned int ) = (void *) 0xdeadbeef;
 void (*func_glAttachShader)( GLuint, GLuint ) = (void *) 0xdeadbeef;
-void (*func_glBeginFragmentShaderATI)( ) = (void *) 0xdeadbeef;
+void (*func_glBeginFragmentShaderATI)( void ) = (void *) 0xdeadbeef;
 void (*func_glBeginOcclusionQueryNV)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glBeginQuery)( GLenum, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glBeginQueryARB)( GLenum, GLuint ) = (void *) 0xdeadbeef;
-void (*func_glBeginVertexShaderEXT)( ) = (void *) 0xdeadbeef;
+void (*func_glBeginVertexShaderEXT)( void ) = (void *) 0xdeadbeef;
 void (*func_glBindAttribLocation)( GLuint, GLuint, char* ) = (void *) 0xdeadbeef;
 void (*func_glBindAttribLocationARB)( unsigned int, GLuint, char* ) = (void *) 0xdeadbeef;
 void (*func_glBindBuffer)( GLenum, GLuint ) = (void *) 0xdeadbeef;
@@ -63,7 +63,7 @@ void (*func_glBlendFuncSeparateEXT)( GLenum, GLenum, GLenum, GLenum ) = (void *)
 void (*func_glBlendFuncSeparateINGR)( GLenum, GLenum, GLenum, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glBufferData)( GLenum, ptrdiff_t, GLvoid*, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glBufferDataARB)( GLenum, ptrdiff_t, GLvoid*, GLenum ) = (void *) 0xdeadbeef;
-GLuint (*func_glBufferRegionEnabled)( ) = (void *) 0xdeadbeef;
+GLuint (*func_glBufferRegionEnabled)( void ) = (void *) 0xdeadbeef;
 void (*func_glBufferSubData)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glBufferSubDataARB)( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* ) = (void *) 0xdeadbeef;
 GLenum (*func_glCheckFramebufferStatusEXT)( GLenum ) = (void *) 0xdeadbeef;
@@ -130,8 +130,8 @@ void (*func_glCopyTexImage2DEXT)( GLenum, GLint, GLenum, GLint, GLint, GLsizei, 
 void (*func_glCopyTexSubImage1DEXT)( GLenum, GLint, GLint, GLint, GLint, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glCopyTexSubImage2DEXT)( GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei ) = (void *) 0xdeadbeef;
 void (*func_glCopyTexSubImage3DEXT)( GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei ) = (void *) 0xdeadbeef;
-GLuint (*func_glCreateProgram)( ) = (void *) 0xdeadbeef;
-unsigned int (*func_glCreateProgramObjectARB)( ) = (void *) 0xdeadbeef;
+GLuint (*func_glCreateProgram)( void ) = (void *) 0xdeadbeef;
+unsigned int (*func_glCreateProgramObjectARB)( void ) = (void *) 0xdeadbeef;
 GLuint (*func_glCreateShader)( GLenum ) = (void *) 0xdeadbeef;
 unsigned int (*func_glCreateShaderObjectARB)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glCullParameterdvEXT)( GLenum, GLdouble* ) = (void *) 0xdeadbeef;
@@ -186,11 +186,11 @@ void (*func_glElementPointerATI)( GLenum, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glEnableVariantClientStateEXT)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glEnableVertexAttribArray)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glEnableVertexAttribArrayARB)( GLuint ) = (void *) 0xdeadbeef;
-void (*func_glEndFragmentShaderATI)( ) = (void *) 0xdeadbeef;
-void (*func_glEndOcclusionQueryNV)( ) = (void *) 0xdeadbeef;
+void (*func_glEndFragmentShaderATI)( void ) = (void *) 0xdeadbeef;
+void (*func_glEndOcclusionQueryNV)( void ) = (void *) 0xdeadbeef;
 void (*func_glEndQuery)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glEndQueryARB)( GLenum ) = (void *) 0xdeadbeef;
-void (*func_glEndVertexShaderEXT)( ) = (void *) 0xdeadbeef;
+void (*func_glEndVertexShaderEXT)( void ) = (void *) 0xdeadbeef;
 void (*func_glEvalMapsNV)( GLenum, GLenum ) = (void *) 0xdeadbeef;
 void (*func_glExecuteProgramNV)( GLenum, GLuint, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glExtractComponentEXT)( GLuint, GLuint, GLuint ) = (void *) 0xdeadbeef;
@@ -199,11 +199,11 @@ GLint (*func_glFinishAsyncSGIX)( GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glFinishFenceAPPLE)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glFinishFenceNV)( GLuint ) = (void *) 0xdeadbeef;
 void (*func_glFinishObjectAPPLE)( GLenum, GLint ) = (void *) 0xdeadbeef;
-void (*func_glFinishTextureSUNX)( ) = (void *) 0xdeadbeef;
+void (*func_glFinishTextureSUNX)( void ) = (void *) 0xdeadbeef;
 void (*func_glFlushPixelDataRangeNV)( GLenum ) = (void *) 0xdeadbeef;
-void (*func_glFlushRasterSGIX)( ) = (void *) 0xdeadbeef;
+void (*func_glFlushRasterSGIX)( void ) = (void *) 0xdeadbeef;
 void (*func_glFlushVertexArrayRangeAPPLE)( GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
-void (*func_glFlushVertexArrayRangeNV)( ) = (void *) 0xdeadbeef;
+void (*func_glFlushVertexArrayRangeNV)( void ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordPointer)( GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordPointerEXT)( GLenum, GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glFogCoordPointerListIBM)( GLenum, GLint, GLvoid**, GLint ) = (void *) 0xdeadbeef;
@@ -304,7 +304,7 @@ void (*func_glGetHistogramParameterivEXT)( GLenum, GLenum, GLint* ) = (void *) 0
 void (*func_glGetImageTransformParameterfvHP)( GLenum, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glGetImageTransformParameterivHP)( GLenum, GLenum, GLint* ) = (void *) 0xdeadbeef;
 void (*func_glGetInfoLogARB)( unsigned int, GLsizei, GLsizei*, char* ) = (void *) 0xdeadbeef;
-GLint (*func_glGetInstrumentsSGIX)( ) = (void *) 0xdeadbeef;
+GLint (*func_glGetInstrumentsSGIX)( void ) = (void *) 0xdeadbeef;
 void (*func_glGetInvariantBooleanvEXT)( GLuint, GLenum, GLboolean* ) = (void *) 0xdeadbeef;
 void (*func_glGetInvariantFloatvEXT)( GLuint, GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glGetInvariantIntegervEXT)( GLuint, GLenum, GLint* ) = (void *) 0xdeadbeef;
@@ -618,7 +618,7 @@ GLint (*func_glPollAsyncSGIX)( GLuint* ) = (void *) 0xdeadbeef;
 GLint (*func_glPollInstrumentsSGIX)( GLint* ) = (void *) 0xdeadbeef;
 void (*func_glPolygonOffsetEXT)( GLfloat, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glPrimitiveRestartIndexNV)( GLuint ) = (void *) 0xdeadbeef;
-void (*func_glPrimitiveRestartNV)( ) = (void *) 0xdeadbeef;
+void (*func_glPrimitiveRestartNV)( void ) = (void *) 0xdeadbeef;
 void (*func_glPrioritizeTexturesEXT)( GLsizei, GLuint*, GLclampf* ) = (void *) 0xdeadbeef;
 void (*func_glProgramEnvParameter4dARB)( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
 void (*func_glProgramEnvParameter4dvARB)( GLenum, GLuint, GLdouble* ) = (void *) 0xdeadbeef;
@@ -669,7 +669,7 @@ void (*func_glReplacementCodeusvSUN)( GLushort* ) = (void *) 0xdeadbeef;
 void (*func_glRequestResidentProgramsNV)( GLsizei, GLuint* ) = (void *) 0xdeadbeef;
 void (*func_glResetHistogramEXT)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glResetMinmaxEXT)( GLenum ) = (void *) 0xdeadbeef;
-void (*func_glResizeBuffersMESA)( ) = (void *) 0xdeadbeef;
+void (*func_glResizeBuffersMESA)( void ) = (void *) 0xdeadbeef;
 void (*func_glSampleCoverage)( GLclampf, GLboolean ) = (void *) 0xdeadbeef;
 void (*func_glSampleCoverageARB)( GLclampf, GLboolean ) = (void *) 0xdeadbeef;
 void (*func_glSampleMapATI)( GLuint, GLuint, GLenum ) = (void *) 0xdeadbeef;
@@ -732,7 +732,7 @@ void (*func_glSpriteParameterfSGIX)( GLenum, GLfloat ) = (void *) 0xdeadbeef;
 void (*func_glSpriteParameterfvSGIX)( GLenum, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glSpriteParameteriSGIX)( GLenum, GLint ) = (void *) 0xdeadbeef;
 void (*func_glSpriteParameterivSGIX)( GLenum, GLint* ) = (void *) 0xdeadbeef;
-void (*func_glStartInstrumentsSGIX)( ) = (void *) 0xdeadbeef;
+void (*func_glStartInstrumentsSGIX)( void ) = (void *) 0xdeadbeef;
 void (*func_glStencilFuncSeparate)( GLenum, GLenum, GLint, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glStencilFuncSeparateATI)( GLenum, GLenum, GLint, GLuint ) = (void *) 0xdeadbeef;
 void (*func_glStencilMaskSeparate)( GLenum, GLuint ) = (void *) 0xdeadbeef;
@@ -741,7 +741,7 @@ void (*func_glStencilOpSeparateATI)( GLenum, GLenum, GLenum, GLenum ) = (void *)
 void (*func_glStopInstrumentsSGIX)( GLint ) = (void *) 0xdeadbeef;
 void (*func_glStringMarkerGREMEDY)( GLsizei, GLvoid* ) = (void *) 0xdeadbeef;
 void (*func_glSwizzleEXT)( GLuint, GLuint, GLenum, GLenum, GLenum, GLenum ) = (void *) 0xdeadbeef;
-void (*func_glTagSampleBufferSGIX)( ) = (void *) 0xdeadbeef;
+void (*func_glTagSampleBufferSGIX)( void ) = (void *) 0xdeadbeef;
 void (*func_glTangent3bEXT)( GLbyte, GLbyte, GLbyte ) = (void *) 0xdeadbeef;
 void (*func_glTangent3bvEXT)( GLbyte* ) = (void *) 0xdeadbeef;
 void (*func_glTangent3dEXT)( GLdouble, GLdouble, GLdouble ) = (void *) 0xdeadbeef;
@@ -834,7 +834,7 @@ void (*func_glUniformMatrix3fv)( GLint, GLsizei, GLboolean, GLfloat* ) = (void *
 void (*func_glUniformMatrix3fvARB)( GLint, GLsizei, GLboolean, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glUniformMatrix4fv)( GLint, GLsizei, GLboolean, GLfloat* ) = (void *) 0xdeadbeef;
 void (*func_glUniformMatrix4fvARB)( GLint, GLsizei, GLboolean, GLfloat* ) = (void *) 0xdeadbeef;
-void (*func_glUnlockArraysEXT)( ) = (void *) 0xdeadbeef;
+void (*func_glUnlockArraysEXT)( void ) = (void *) 0xdeadbeef;
 GLboolean (*func_glUnmapBuffer)( GLenum ) = (void *) 0xdeadbeef;
 GLboolean (*func_glUnmapBufferARB)( GLenum ) = (void *) 0xdeadbeef;
 void (*func_glUnmapObjectBufferATI)( GLuint ) = (void *) 0xdeadbeef;
@@ -1117,11 +1117,11 @@ void WINAPI wine_glArrayObjectATI( GLenum, GLint, GLenum, GLsizei, GLuint, GLuin
 void WINAPI wine_glAsyncMarkerSGIX( GLuint );
 void WINAPI wine_glAttachObjectARB( unsigned int, unsigned int );
 void WINAPI wine_glAttachShader( GLuint, GLuint );
-void WINAPI wine_glBeginFragmentShaderATI( );
+void WINAPI wine_glBeginFragmentShaderATI( void );
 void WINAPI wine_glBeginOcclusionQueryNV( GLuint );
 void WINAPI wine_glBeginQuery( GLenum, GLuint );
 void WINAPI wine_glBeginQueryARB( GLenum, GLuint );
-void WINAPI wine_glBeginVertexShaderEXT( );
+void WINAPI wine_glBeginVertexShaderEXT( void );
 void WINAPI wine_glBindAttribLocation( GLuint, GLuint, char* );
 void WINAPI wine_glBindAttribLocationARB( unsigned int, GLuint, char* );
 void WINAPI wine_glBindBuffer( GLenum, GLuint );
@@ -1159,7 +1159,7 @@ void WINAPI wine_glBlendFuncSeparateEXT( GLenum, GLenum, GLenum, GLenum );
 void WINAPI wine_glBlendFuncSeparateINGR( GLenum, GLenum, GLenum, GLenum );
 void WINAPI wine_glBufferData( GLenum, ptrdiff_t, GLvoid*, GLenum );
 void WINAPI wine_glBufferDataARB( GLenum, ptrdiff_t, GLvoid*, GLenum );
-GLuint WINAPI wine_glBufferRegionEnabled( );
+GLuint WINAPI wine_glBufferRegionEnabled( void );
 void WINAPI wine_glBufferSubData( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* );
 void WINAPI wine_glBufferSubDataARB( GLenum, ptrdiff_t, ptrdiff_t, GLvoid* );
 GLenum WINAPI wine_glCheckFramebufferStatusEXT( GLenum );
@@ -1226,8 +1226,8 @@ void WINAPI wine_glCopyTexImage2DEXT( GLenum, GLint, GLenum, GLint, GLint, GLsiz
 void WINAPI wine_glCopyTexSubImage1DEXT( GLenum, GLint, GLint, GLint, GLint, GLsizei );
 void WINAPI wine_glCopyTexSubImage2DEXT( GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei );
 void WINAPI wine_glCopyTexSubImage3DEXT( GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei );
-GLuint WINAPI wine_glCreateProgram( );
-unsigned int WINAPI wine_glCreateProgramObjectARB( );
+GLuint WINAPI wine_glCreateProgram( void );
+unsigned int WINAPI wine_glCreateProgramObjectARB( void );
 GLuint WINAPI wine_glCreateShader( GLenum );
 unsigned int WINAPI wine_glCreateShaderObjectARB( GLenum );
 void WINAPI wine_glCullParameterdvEXT( GLenum, GLdouble* );
@@ -1282,11 +1282,11 @@ void WINAPI wine_glElementPointerATI( GLenum, GLvoid* );
 void WINAPI wine_glEnableVariantClientStateEXT( GLuint );
 void WINAPI wine_glEnableVertexAttribArray( GLuint );
 void WINAPI wine_glEnableVertexAttribArrayARB( GLuint );
-void WINAPI wine_glEndFragmentShaderATI( );
-void WINAPI wine_glEndOcclusionQueryNV( );
+void WINAPI wine_glEndFragmentShaderATI( void );
+void WINAPI wine_glEndOcclusionQueryNV( void );
 void WINAPI wine_glEndQuery( GLenum );
 void WINAPI wine_glEndQueryARB( GLenum );
-void WINAPI wine_glEndVertexShaderEXT( );
+void WINAPI wine_glEndVertexShaderEXT( void );
 void WINAPI wine_glEvalMapsNV( GLenum, GLenum );
 void WINAPI wine_glExecuteProgramNV( GLenum, GLuint, GLfloat* );
 void WINAPI wine_glExtractComponentEXT( GLuint, GLuint, GLuint );
@@ -1295,11 +1295,11 @@ GLint WINAPI wine_glFinishAsyncSGIX( GLuint* );
 void WINAPI wine_glFinishFenceAPPLE( GLuint );
 void WINAPI wine_glFinishFenceNV( GLuint );
 void WINAPI wine_glFinishObjectAPPLE( GLenum, GLint );
-void WINAPI wine_glFinishTextureSUNX( );
+void WINAPI wine_glFinishTextureSUNX( void );
 void WINAPI wine_glFlushPixelDataRangeNV( GLenum );
-void WINAPI wine_glFlushRasterSGIX( );
+void WINAPI wine_glFlushRasterSGIX( void );
 void WINAPI wine_glFlushVertexArrayRangeAPPLE( GLsizei, GLvoid* );
-void WINAPI wine_glFlushVertexArrayRangeNV( );
+void WINAPI wine_glFlushVertexArrayRangeNV( void );
 void WINAPI wine_glFogCoordPointer( GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glFogCoordPointerEXT( GLenum, GLsizei, GLvoid* );
 void WINAPI wine_glFogCoordPointerListIBM( GLenum, GLint, GLvoid**, GLint );
@@ -1400,7 +1400,7 @@ void WINAPI wine_glGetHistogramParameterivEXT( GLenum, GLenum, GLint* );
 void WINAPI wine_glGetImageTransformParameterfvHP( GLenum, GLenum, GLfloat* );
 void WINAPI wine_glGetImageTransformParameterivHP( GLenum, GLenum, GLint* );
 void WINAPI wine_glGetInfoLogARB( unsigned int, GLsizei, GLsizei*, char* );
-GLint WINAPI wine_glGetInstrumentsSGIX( );
+GLint WINAPI wine_glGetInstrumentsSGIX( void );
 void WINAPI wine_glGetInvariantBooleanvEXT( GLuint, GLenum, GLboolean* );
 void WINAPI wine_glGetInvariantFloatvEXT( GLuint, GLenum, GLfloat* );
 void WINAPI wine_glGetInvariantIntegervEXT( GLuint, GLenum, GLint* );
@@ -1714,7 +1714,7 @@ GLint WINAPI wine_glPollAsyncSGIX( GLuint* );
 GLint WINAPI wine_glPollInstrumentsSGIX( GLint* );
 void WINAPI wine_glPolygonOffsetEXT( GLfloat, GLfloat );
 void WINAPI wine_glPrimitiveRestartIndexNV( GLuint );
-void WINAPI wine_glPrimitiveRestartNV( );
+void WINAPI wine_glPrimitiveRestartNV( void );
 void WINAPI wine_glPrioritizeTexturesEXT( GLsizei, GLuint*, GLclampf* );
 void WINAPI wine_glProgramEnvParameter4dARB( GLenum, GLuint, GLdouble, GLdouble, GLdouble, GLdouble );
 void WINAPI wine_glProgramEnvParameter4dvARB( GLenum, GLuint, GLdouble* );
@@ -1765,7 +1765,7 @@ void WINAPI wine_glReplacementCodeusvSUN( GLushort* );
 void WINAPI wine_glRequestResidentProgramsNV( GLsizei, GLuint* );
 void WINAPI wine_glResetHistogramEXT( GLenum );
 void WINAPI wine_glResetMinmaxEXT( GLenum );
-void WINAPI wine_glResizeBuffersMESA( );
+void WINAPI wine_glResizeBuffersMESA( void );
 void WINAPI wine_glSampleCoverage( GLclampf, GLboolean );
 void WINAPI wine_glSampleCoverageARB( GLclampf, GLboolean );
 void WINAPI wine_glSampleMapATI( GLuint, GLuint, GLenum );
@@ -1828,7 +1828,7 @@ void WINAPI wine_glSpriteParameterfSGIX( GLenum, GLfloat );
 void WINAPI wine_glSpriteParameterfvSGIX( GLenum, GLfloat* );
 void WINAPI wine_glSpriteParameteriSGIX( GLenum, GLint );
 void WINAPI wine_glSpriteParameterivSGIX( GLenum, GLint* );
-void WINAPI wine_glStartInstrumentsSGIX( );
+void WINAPI wine_glStartInstrumentsSGIX( void );
 void WINAPI wine_glStencilFuncSeparate( GLenum, GLenum, GLint, GLuint );
 void WINAPI wine_glStencilFuncSeparateATI( GLenum, GLenum, GLint, GLuint );
 void WINAPI wine_glStencilMaskSeparate( GLenum, GLuint );
@@ -1837,7 +1837,7 @@ void WINAPI wine_glStencilOpSeparateATI( GLenum, GLenum, GLenum, GLenum );
 void WINAPI wine_glStopInstrumentsSGIX( GLint );
 void WINAPI wine_glStringMarkerGREMEDY( GLsizei, GLvoid* );
 void WINAPI wine_glSwizzleEXT( GLuint, GLuint, GLenum, GLenum, GLenum, GLenum );
-void WINAPI wine_glTagSampleBufferSGIX( );
+void WINAPI wine_glTagSampleBufferSGIX( void );
 void WINAPI wine_glTangent3bEXT( GLbyte, GLbyte, GLbyte );
 void WINAPI wine_glTangent3bvEXT( GLbyte* );
 void WINAPI wine_glTangent3dEXT( GLdouble, GLdouble, GLdouble );
@@ -1930,7 +1930,7 @@ void WINAPI wine_glUniformMatrix3fv( GLint, GLsizei, GLboolean, GLfloat* );
 void WINAPI wine_glUniformMatrix3fvARB( GLint, GLsizei, GLboolean, GLfloat* );
 void WINAPI wine_glUniformMatrix4fv( GLint, GLsizei, GLboolean, GLfloat* );
 void WINAPI wine_glUniformMatrix4fvARB( GLint, GLsizei, GLboolean, GLfloat* );
-void WINAPI wine_glUnlockArraysEXT( );
+void WINAPI wine_glUnlockArraysEXT( void );
 GLboolean WINAPI wine_glUnmapBuffer( GLenum );
 GLboolean WINAPI wine_glUnmapBufferARB( GLenum );
 void WINAPI wine_glUnmapObjectBufferATI( GLuint );
@@ -3399,7 +3399,7 @@ void WINAPI wine_glAttachShader( GLuint program, GLuint shader ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glBeginFragmentShaderATI( ) {
+void WINAPI wine_glBeginFragmentShaderATI( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glBeginFragmentShaderATI( );
@@ -3427,7 +3427,7 @@ void WINAPI wine_glBeginQueryARB( GLenum target, GLuint id ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glBeginVertexShaderEXT( ) {
+void WINAPI wine_glBeginVertexShaderEXT( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glBeginVertexShaderEXT( );
@@ -3703,7 +3703,7 @@ void WINAPI wine_glBufferDataARB( GLenum target, ptrdiff_t size, GLvoid* data, G
   LEAVE_GL();
 }
 
-GLuint WINAPI wine_glBufferRegionEnabled( ) {
+GLuint WINAPI wine_glBufferRegionEnabled( void ) {
   GLuint ret_value;
   TRACE("()\n");
   ENTER_GL();
@@ -4176,7 +4176,7 @@ void WINAPI wine_glCopyTexSubImage3DEXT( GLenum target, GLint level, GLint xoffs
   LEAVE_GL();
 }
 
-GLuint WINAPI wine_glCreateProgram( ) {
+GLuint WINAPI wine_glCreateProgram( void ) {
   GLuint ret_value;
   TRACE("()\n");
   ENTER_GL();
@@ -4185,7 +4185,7 @@ GLuint WINAPI wine_glCreateProgram( ) {
   return ret_value;
 }
 
-unsigned int WINAPI wine_glCreateProgramObjectARB( ) {
+unsigned int WINAPI wine_glCreateProgramObjectARB( void ) {
   unsigned int ret_value;
   TRACE("()\n");
   ENTER_GL();
@@ -4576,14 +4576,14 @@ void WINAPI wine_glEnableVertexAttribArrayARB( GLuint index ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glEndFragmentShaderATI( ) {
+void WINAPI wine_glEndFragmentShaderATI( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glEndFragmentShaderATI( );
   LEAVE_GL();
 }
 
-void WINAPI wine_glEndOcclusionQueryNV( ) {
+void WINAPI wine_glEndOcclusionQueryNV( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glEndOcclusionQueryNV( );
@@ -4604,7 +4604,7 @@ void WINAPI wine_glEndQueryARB( GLenum target ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glEndVertexShaderEXT( ) {
+void WINAPI wine_glEndVertexShaderEXT( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glEndVertexShaderEXT( );
@@ -4669,7 +4669,7 @@ void WINAPI wine_glFinishObjectAPPLE( GLenum object, GLint name ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glFinishTextureSUNX( ) {
+void WINAPI wine_glFinishTextureSUNX( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glFinishTextureSUNX( );
@@ -4683,7 +4683,7 @@ void WINAPI wine_glFlushPixelDataRangeNV( GLenum target ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glFlushRasterSGIX( ) {
+void WINAPI wine_glFlushRasterSGIX( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glFlushRasterSGIX( );
@@ -4697,7 +4697,7 @@ void WINAPI wine_glFlushVertexArrayRangeAPPLE( GLsizei length, GLvoid* pointer )
   LEAVE_GL();
 }
 
-void WINAPI wine_glFlushVertexArrayRangeNV( ) {
+void WINAPI wine_glFlushVertexArrayRangeNV( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glFlushVertexArrayRangeNV( );
@@ -5418,7 +5418,7 @@ void WINAPI wine_glGetInfoLogARB( unsigned int obj, GLsizei maxLength, GLsizei* 
   LEAVE_GL();
 }
 
-GLint WINAPI wine_glGetInstrumentsSGIX( ) {
+GLint WINAPI wine_glGetInstrumentsSGIX( void ) {
   GLint ret_value;
   TRACE("()\n");
   ENTER_GL();
@@ -7672,7 +7672,7 @@ void WINAPI wine_glPrimitiveRestartIndexNV( GLuint index ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glPrimitiveRestartNV( ) {
+void WINAPI wine_glPrimitiveRestartNV( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glPrimitiveRestartNV( );
@@ -8029,7 +8029,7 @@ void WINAPI wine_glResetMinmaxEXT( GLenum target ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glResizeBuffersMESA( ) {
+void WINAPI wine_glResizeBuffersMESA( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glResizeBuffersMESA( );
@@ -8470,7 +8470,7 @@ void WINAPI wine_glSpriteParameterivSGIX( GLenum pname, GLint* params ) {
   LEAVE_GL();
 }
 
-void WINAPI wine_glStartInstrumentsSGIX( ) {
+void WINAPI wine_glStartInstrumentsSGIX( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glStartInstrumentsSGIX( );
@@ -8533,7 +8533,7 @@ void WINAPI wine_glSwizzleEXT( GLuint res, GLuint in, GLenum outX, GLenum outY, 
   LEAVE_GL();
 }
 
-void WINAPI wine_glTagSampleBufferSGIX( ) {
+void WINAPI wine_glTagSampleBufferSGIX( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glTagSampleBufferSGIX( );
@@ -9190,7 +9190,7 @@ void WINAPI wine_glUniformMatrix4fvARB( GLint location, GLsizei count, GLboolean
   LEAVE_GL();
 }
 
-void WINAPI wine_glUnlockArraysEXT( ) {
+void WINAPI wine_glUnlockArraysEXT( void ) {
   TRACE("()\n");
   ENTER_GL();
   func_glUnlockArraysEXT( );

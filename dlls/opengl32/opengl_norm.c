@@ -932,7 +932,7 @@ void WINAPI wine_glEnableClientState( GLenum array ) {
 /***********************************************************************
  *              glEnd (OPENGL32.@)
  */
-void WINAPI wine_glEnd( ) {
+void WINAPI wine_glEnd( void ) {
   TRACE("()\n");
   ENTER_GL();
   glEnd( );
@@ -942,7 +942,7 @@ void WINAPI wine_glEnd( ) {
 /***********************************************************************
  *              glEndList (OPENGL32.@)
  */
-void WINAPI wine_glEndList( ) {
+void WINAPI wine_glEndList( void ) {
   TRACE("()\n");
   ENTER_GL();
   glEndList( );
@@ -1082,7 +1082,7 @@ void WINAPI wine_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat* buffer ) 
 /***********************************************************************
  *              glFinish (OPENGL32.@)
  */
-void WINAPI wine_glFinish( ) {
+void WINAPI wine_glFinish( void ) {
   TRACE("()\n");
   ENTER_GL();
   glFinish( );
@@ -1092,7 +1092,7 @@ void WINAPI wine_glFinish( ) {
 /***********************************************************************
  *              glFlush (OPENGL32.@)
  */
-void WINAPI wine_glFlush( ) {
+void WINAPI wine_glFlush( void ) {
   TRACE("()\n");
   ENTER_GL();
   glFlush( );
@@ -1274,7 +1274,7 @@ void WINAPI wine_glGetDoublev( GLenum pname, GLdouble* params ) {
 /***********************************************************************
  *              glGetError (OPENGL32.@)
  */
-GLenum WINAPI wine_glGetError( ) {
+GLenum WINAPI wine_glGetError( void ) {
   GLenum ret_value;
   TRACE("()\n");
   ENTER_GL();
@@ -1748,7 +1748,7 @@ void WINAPI wine_glIndexubv( GLubyte* c ) {
 /***********************************************************************
  *              glInitNames (OPENGL32.@)
  */
-void WINAPI wine_glInitNames( ) {
+void WINAPI wine_glInitNames( void ) {
   TRACE("()\n");
   ENTER_GL();
   glInitNames( );
@@ -1914,7 +1914,7 @@ void WINAPI wine_glListBase( GLuint base ) {
 /***********************************************************************
  *              glLoadIdentity (OPENGL32.@)
  */
-void WINAPI wine_glLoadIdentity( ) {
+void WINAPI wine_glLoadIdentity( void ) {
   TRACE("()\n");
   ENTER_GL();
   glLoadIdentity( );
@@ -2384,7 +2384,7 @@ void WINAPI wine_glPolygonStipple( GLubyte* mask ) {
 /***********************************************************************
  *              glPopAttrib (OPENGL32.@)
  */
-void WINAPI wine_glPopAttrib( ) {
+void WINAPI wine_glPopAttrib( void ) {
   TRACE("()\n");
   ENTER_GL();
   glPopAttrib( );
@@ -2394,7 +2394,7 @@ void WINAPI wine_glPopAttrib( ) {
 /***********************************************************************
  *              glPopClientAttrib (OPENGL32.@)
  */
-void WINAPI wine_glPopClientAttrib( ) {
+void WINAPI wine_glPopClientAttrib( void ) {
   TRACE("()\n");
   ENTER_GL();
   glPopClientAttrib( );
@@ -2404,7 +2404,7 @@ void WINAPI wine_glPopClientAttrib( ) {
 /***********************************************************************
  *              glPopMatrix (OPENGL32.@)
  */
-void WINAPI wine_glPopMatrix( ) {
+void WINAPI wine_glPopMatrix( void ) {
   TRACE("()\n");
   ENTER_GL();
   glPopMatrix( );
@@ -2414,7 +2414,7 @@ void WINAPI wine_glPopMatrix( ) {
 /***********************************************************************
  *              glPopName (OPENGL32.@)
  */
-void WINAPI wine_glPopName( ) {
+void WINAPI wine_glPopName( void ) {
   TRACE("()\n");
   ENTER_GL();
   glPopName( );
@@ -2454,7 +2454,7 @@ void WINAPI wine_glPushClientAttrib( GLbitfield mask ) {
 /***********************************************************************
  *              glPushMatrix (OPENGL32.@)
  */
-void WINAPI wine_glPushMatrix( ) {
+void WINAPI wine_glPushMatrix( void ) {
   TRACE("()\n");
   ENTER_GL();
   glPushMatrix( );
