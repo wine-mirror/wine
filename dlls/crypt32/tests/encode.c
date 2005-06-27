@@ -977,6 +977,211 @@ static void test_decodeBits(DWORD dwEncoding)
     }
 }
 
+struct Constraints2
+{
+    CERT_BASIC_CONSTRAINTS2_INFO info;
+    const BYTE *encoded;
+};
+
+static const struct Constraints2 constraints2[] = {
+ /* empty constraints */
+ { { FALSE, FALSE, 0}, "\x30\x00" },
+ /* can be a CA */
+ { { TRUE,  FALSE, 0}, "\x30\x03\x01\x01\xff" },
+ /* has path length constraints set (MSDN implies fCA needs to be TRUE as well,
+  * but that's not the case
+  */
+ { { FALSE, TRUE,  0}, "\x30\x03\x02\x01\x00" },
+ /* can be a CA and has path length constraints set */
+ { { TRUE,  TRUE,  1}, "\x30\x06\x01\x01\xff\x02\x01\x01" },
+};
+
+static void test_encodeBasicConstraints(DWORD dwEncoding)
+{
+    DWORD i;
+
+    /* First test with the simpler info2 */
+    for (i = 0; i < sizeof(constraints2) / sizeof(constraints2[0]); i++)
+    {
+        BOOL ret;
+        BYTE *buf = NULL;
+        DWORD bufSize = 0;
+
+        ret = CryptEncodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
+         &constraints2[i].info, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+         &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(bufSize == constraints2[i].encoded[1] + 2,
+             "Expected %d bytes, got %ld\n", constraints2[i].encoded[1] + 2,
+             bufSize);
+            ok(!memcmp(buf, constraints2[i].encoded,
+             constraints2[i].encoded[1] + 2), "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodeBasicConstraints(DWORD dwEncoding)
+{
+    static const BYTE inverted[] = "\x30\x06\x02\x01\x01\x01\x01\xff";
+    static const struct Constraints2 badBool = { { TRUE, TRUE, 1 },
+     "\x30\x06\x01\x01\x01\x02\x01\x01" };
+    DWORD i;
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+
+    /* First test with simpler info2 */
+    for (i = 0; i < sizeof(constraints2) / sizeof(constraints2[0]); i++)
+    {
+        ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
+         constraints2[i].encoded, constraints2[i].encoded[1] + 2,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            CERT_BASIC_CONSTRAINTS2_INFO *info =
+             (CERT_BASIC_CONSTRAINTS2_INFO *)buf;
+
+            ok(!memcmp(info, &constraints2[i].info, sizeof(*info)),
+             "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+    /* Check with the order of encoded elements inverted */
+    buf = (PBYTE)1;
+    ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
+     inverted, inverted[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+     "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+    ok(!buf, "Expected buf to be set to NULL\n");
+    /* Check with a non-DER bool */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
+     badBool.encoded, badBool.encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_BASIC_CONSTRAINTS2_INFO *info =
+         (CERT_BASIC_CONSTRAINTS2_INFO *)buf;
+
+        ok(!memcmp(info, &badBool.info, sizeof(*info)), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Check with a non-basic constraints value */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_BASIC_CONSTRAINTS2,
+     names[0].encoded, names[0].encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
+     (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+     "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+}
+
+static const BYTE intSequence[] = { 0x30, 0x1b, 0x02, 0x01, 0x01, 0x02, 0x01,
+ 0x7f, 0x02, 0x02, 0x00, 0x80, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x80, 0x02,
+ 0x02, 0xff, 0x7f, 0x02, 0x04, 0xba, 0xdd, 0xf0, 0x0d };
+
+static const BYTE mixedSequence[] = { 0x30, 0x27, 0x17, 0x0d, 0x30, 0x35, 0x30,
+ 0x36, 0x30, 0x36, 0x31, 0x36, 0x31, 0x30, 0x30, 0x30, 0x5a, 0x02, 0x01, 0x7f,
+ 0x02, 0x02, 0x00, 0x80, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x80, 0x02, 0x02,
+ 0xff, 0x7f, 0x02, 0x04, 0xba, 0xdd, 0xf0, 0x0d };
+
+static void test_encodeSequenceOfAny(DWORD dwEncoding)
+{
+    CRYPT_DER_BLOB blobs[sizeof(ints) / sizeof(ints[0])];
+    CRYPT_SEQUENCE_OF_ANY seq;
+    DWORD i;
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+
+    /* Encode a homogenous sequence */
+    for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
+    {
+        blobs[i].cbData = ints[i].encoded[1] + 2;
+        blobs[i].pbData = ints[i].encoded;
+    }
+    seq.cValue = sizeof(ints) / sizeof(ints[0]);
+    seq.rgValue = blobs;
+
+    ret = CryptEncodeObjectEx(dwEncoding, X509_SEQUENCE_OF_ANY, &seq,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(bufSize == sizeof(intSequence), "Expected %d bytes, got %ld\n",
+         sizeof(intSequence), bufSize);
+        ok(!memcmp(buf, intSequence, intSequence[1] + 2), "Unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Change the type of the first element in the sequence, and give it
+     * another go
+     */
+    blobs[0].cbData = times[0].encodedTime[1] + 2;
+    blobs[0].pbData = (BYTE *)times[0].encodedTime;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_SEQUENCE_OF_ANY, &seq,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(bufSize == sizeof(mixedSequence), "Expected %d bytes, got %ld\n",
+         sizeof(mixedSequence), bufSize);
+        ok(!memcmp(buf, mixedSequence, mixedSequence[1] + 2),
+         "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodeSequenceOfAny(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+
+    ret = CryptDecodeObjectEx(dwEncoding, X509_SEQUENCE_OF_ANY, intSequence,
+     intSequence[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CRYPT_SEQUENCE_OF_ANY *seq = (CRYPT_SEQUENCE_OF_ANY *)buf;
+        DWORD i;
+
+        ok(seq->cValue == sizeof(ints) / sizeof(ints[0]),
+         "Expected %d elements, got %ld\n", sizeof(ints) / sizeof(ints[0]),
+         seq->cValue);
+        for (i = 0; i < min(seq->cValue, sizeof(ints) / sizeof(ints[0])); i++)
+        {
+            ok(seq->rgValue[i].cbData == ints[i].encoded[1] + 2,
+             "Expected %d bytes, got %ld\n", ints[i].encoded[1] + 2,
+             seq->rgValue[i].cbData);
+            ok(!memcmp(seq->rgValue[i].pbData, ints[i].encoded,
+             ints[i].encoded[1] + 2), "Unexpected value\n");
+        }
+        LocalFree(buf);
+    }
+    ret = CryptDecodeObjectEx(dwEncoding, X509_SEQUENCE_OF_ANY, mixedSequence,
+     mixedSequence[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+     &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CRYPT_SEQUENCE_OF_ANY *seq = (CRYPT_SEQUENCE_OF_ANY *)buf;
+
+        ok(seq->cValue == sizeof(ints) / sizeof(ints[0]),
+         "Expected %d elements, got %ld\n", sizeof(ints) / sizeof(ints[0]),
+         seq->cValue);
+        /* Just check the first element since it's all that changed */
+        ok(seq->rgValue[0].cbData == times[0].encodedTime[1] + 2,
+         "Expected %d bytes, got %ld\n", times[0].encodedTime[1] + 2,
+         seq->rgValue[0].cbData);
+        ok(!memcmp(seq->rgValue[0].pbData, times[0].encodedTime,
+         times[0].encodedTime[1] + 2), "Unexpected value\n");
+        LocalFree(buf);
+    }
+}
+
 static void test_registerOIDFunction(void)
 {
     static const WCHAR bogusDll[] = { 'b','o','g','u','s','.','d','l','l',0 };
@@ -1051,6 +1256,10 @@ START_TEST(encode)
         test_decodeOctets(encodings[i]);
         test_encodeBits(encodings[i]);
         test_decodeBits(encodings[i]);
+        test_encodeBasicConstraints(encodings[i]);
+        test_decodeBasicConstraints(encodings[i]);
+        test_encodeSequenceOfAny(encodings[i]);
+        test_decodeSequenceOfAny(encodings[i]);
     }
     test_registerOIDFunction();
 }
