@@ -713,7 +713,7 @@ static void ArrangeCtrlPositions(HWND hwndChildDlg, HWND hwndParentDlg, BOOL hid
                  0, 0, rectChild.right, rectChild.bottom, SWP_NOACTIVATE);
 }
 
-INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch(uMsg) {
     case WM_INITDIALOG:
@@ -722,7 +722,7 @@ INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam
     return FALSE;
 }
 
-HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
+static HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
 {
     LPCVOID template;
     HRSRC hRes;
@@ -3527,7 +3527,7 @@ static BOOL CALLBACK FD32_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
  *
  *      called from the common 16/32 code to call the appropriate hook
  */
-BOOL CALLBACK FD32_CallWindowProc(PFD31_DATA lfs, UINT wMsg, WPARAM wParam,
+static BOOL CALLBACK FD32_CallWindowProc(PFD31_DATA lfs, UINT wMsg, WPARAM wParam,
                                  LPARAM lParam)
 {
     BOOL ret;

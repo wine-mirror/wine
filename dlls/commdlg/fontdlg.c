@@ -427,7 +427,7 @@ static int SetFontSizesToCombo3(HWND hwnd, LPCHOOSEFONTW lpcf)
 /*************************************************************************
  *              CFn_GetDC                           [internal]
  */
-inline HDC CFn_GetDC(LPCHOOSEFONTW lpcf)
+static inline HDC CFn_GetDC(LPCHOOSEFONTW lpcf)
 {
     HDC ret = ((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC) ?
         lpcf->hDC :
@@ -439,7 +439,7 @@ inline HDC CFn_GetDC(LPCHOOSEFONTW lpcf)
 /*************************************************************************
  *              CFn_ReleaseDC                           [internal]
  */
-inline void CFn_ReleaseDC(LPCHOOSEFONTW lpcf, HDC hdc)
+static inline void CFn_ReleaseDC(LPCHOOSEFONTW lpcf, HDC hdc)
 {
         if(!((lpcf->Flags & CF_PRINTERFONTS) && lpcf->hDC))
             ReleaseDC(0, hdc);
@@ -1021,7 +1021,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam,
     return(FALSE);
 }
 
-LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpcfw)
+static LRESULT CFn_WMDestroy(HWND hwnd, WPARAM wParam, LPARAM lParam, LPCHOOSEFONTW lpcfw)
 {
     LPCHOOSEFONTA lpcfa;
     LPSTR lpszStyle;
