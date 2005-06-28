@@ -985,9 +985,9 @@ static void update_reg_entries(void)
     /* Delete the old external fonts key */
     RegCloseKey(externalkey);
     externalkey = 0;
-    RegDeleteKeyW(HKEY_LOCAL_MACHINE, external_fonts_reg_key);
+    RegDeleteKeyW(HKEY_CURRENT_USER, external_fonts_reg_key);
 
-    if(RegCreateKeyExW(HKEY_LOCAL_MACHINE, external_fonts_reg_key,
+    if(RegCreateKeyExW(HKEY_CURRENT_USER, external_fonts_reg_key,
                        0, NULL, 0, KEY_ALL_ACCESS, NULL, &externalkey, NULL) != ERROR_SUCCESS) {
         ERR("Can't create external font reg key\n");
         goto end;
