@@ -37,6 +37,7 @@
 #include <shlguid.h>
 #include <shlwapi.h>
 #include <shlobj.h>
+#include <mmsystem.h>
 
 #include "winecfg.h"
 #include "resource.h"
@@ -59,6 +60,49 @@ static void selectAudioDriver(HWND hDlg, const char *drivername)
         SendMessage(GetParent(hDlg), PSM_CHANGED, (WPARAM) hDlg, 0); /* enable apply button */
 	SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_SETCURSEL,
 			   (WPARAM) i, 0);
+      }
+    }
+  }
+}
+
+static void configureAudioDriver(HWND hDlg, const char *drivername)
+{
+  int i;
+  const AUDIO_DRIVER *pAudioDrv = NULL;
+
+  if ((pAudioDrv = getAudioDrivers()))
+  {
+    for (i = 0; *pAudioDrv->szName; i++, pAudioDrv++)
+    {
+      if (!strcmp (pAudioDrv->szDriver, drivername))
+      {
+        if (strlen(pAudioDrv->szDriver) != 0)
+        {
+          HDRVR hdrvr;
+	  char wine_driver[MAX_NAME_LENGTH + 8];
+	  sprintf(wine_driver, "wine%s.drv", pAudioDrv->szDriver);
+          hdrvr = OpenDriverA(wine_driver, 0, 0);
+	  if (hdrvr != 0)
+	  {
+	    if (SendDriverMessage(hdrvr, DRV_QUERYCONFIGURE, 0, 0) != 0)
+	    {
+              DRVCONFIGINFO dci;
+              LONG lRes;
+              dci.dwDCISize = sizeof (dci);
+              dci.lpszDCISectionName = (LPWSTR)0;
+              dci.lpszDCIAliasName = (LPWSTR)0;
+              lRes = SendDriverMessage(hdrvr, DRV_CONFIGURE, 0, (LONG)&dci);
+	    }
+	    CloseDriver(hdrvr, 0, 0);
+	  }
+          else
+          {
+	    char str[1024];
+	    sprintf(str, "Couldn't open %s!", wine_driver);
+	    MessageBox(NULL, str, "Fixme", MB_OK | MB_ICONERROR);
+          }
+	}
+	break;
       }
     }
   }
@@ -172,6 +216,16 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		selectAudioDriver(hDlg, (char*)pAudioDrv[selected_driver].szDriver);
 	     }
 	     break;
+          case IDC_AUDIO_CONFIGURE:
+	     {
+		const AUDIO_DRIVER *pAudioDrv = getAudioDrivers();
+		int selected_driver = SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_GETCURSEL, 0, 0);
+		configureAudioDriver(hDlg, (char*)pAudioDrv[selected_driver].szDriver);
+	     }
+	     break;
+          case IDC_AUDIO_CONTROL_PANEL:
+	     MessageBox(NULL, "Launching audio control panel not implemented yet!", "Fixme", MB_OK | MB_ICONERROR);
+             break;
 	}
 	break;
 

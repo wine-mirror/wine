@@ -123,3 +123,5 @@
 /* audio tab */
 #define IDC_AUDIO_AUTODETECT            1300
 #define IDC_AUDIO_DRIVER                1301
+#define IDC_AUDIO_CONFIGURE             1302
+#define IDC_AUDIO_CONTROL_PANEL         1303
