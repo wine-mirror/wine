@@ -122,7 +122,7 @@
   - EM_SETZOOM 3.0
   - EM_SHOWSCROLLBAR 2.0
   - EM_STOPGROUPTYPING 2.0
-  + EM_STREAMIN (can't fall back to text when the RTF isn't really RTF)
+  + EM_STREAMIN
   + EM_STREAMOUT
   + EM_UNDO
   + WM_CHAR
