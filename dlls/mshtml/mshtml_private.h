@@ -17,15 +17,16 @@
  */
 
 typedef struct {
-    const IHTMLDocument2Vtbl          *lpHTMLDocument2Vtbl;
-    const IPersistMonikerVtbl         *lpPersistMonikerVtbl;
-    const IPersistFileVtbl            *lpPersistFileVtbl;
-    const IMonikerPropVtbl            *lpMonikerPropVtbl;
-    const IOleObjectVtbl              *lpOleObjectVtbl;
-    const IOleDocumentVtbl            *lpOleDocumentVtbl;
-    const IOleDocumentViewVtbl        *lpOleDocumentViewVtbl;
-    const IOleInPlaceActiveObjectVtbl *lpOleInPlaceActiveObjectVtbl;
-    const IViewObject2Vtbl            *lpViewObject2Vtbl;
+    const IHTMLDocument2Vtbl              *lpHTMLDocument2Vtbl;
+    const IPersistMonikerVtbl             *lpPersistMonikerVtbl;
+    const IPersistFileVtbl                *lpPersistFileVtbl;
+    const IMonikerPropVtbl                *lpMonikerPropVtbl;
+    const IOleObjectVtbl                  *lpOleObjectVtbl;
+    const IOleDocumentVtbl                *lpOleDocumentVtbl;
+    const IOleDocumentViewVtbl            *lpOleDocumentViewVtbl;
+    const IOleInPlaceActiveObjectVtbl     *lpOleInPlaceActiveObjectVtbl;
+    const IViewObject2Vtbl                *lpViewObject2Vtbl;
+    const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
 
     ULONG ref;
 
@@ -36,23 +37,29 @@ typedef struct {
     HWND hwnd;
 } HTMLDocument;
 
-#define HTMLDOC(x)       ((IHTMLDocument2*)          &(x)->lpHTMLDocument2Vtbl)
-#define PERSIST(x)       ((IPersist*)                &(x)->lpPersistFileVtbl)
-#define PERSISTMON(x)    ((IPersistMoniker*)         &(x)->lpPersistMonikerVtbl)
-#define PERSISTFILE(x)   ((IPersistFile*)            &(x)->lpPersistFileVtbl)
-#define MONPROP(x)       ((IMonikerProp*)            &(x)->lpMonikerPropVtbl)
-#define OLEOBJ(x)        ((IOleObject*)              &(x)->lpOleObjectVtbl)
-#define OLEDOC(x)        ((IOleDocument*)            &(x)->lpOleDocumentVtbl)
-#define DOCVIEW(x)       ((IOleDocumentView*)        &(x)->lpOleDocumentViewVtbl)
-#define ACTOBJ(x)        ((IOleInPlaceActiveObject*) &(x)->lpOleInPlaceActiveObjectVtbl)
-#define VIEWOBJ(x)       ((IViewObject*)             &(x)->lpViewObject2Vtbl)
-#define VIEWOBJ2(x)      ((IViewObject2*)            &(x)->lpViewObject2Vtbl)
+#define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
+#define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
+#define PERSISTMON(x)    ((IPersistMoniker*)              &(x)->lpPersistMonikerVtbl)
+#define PERSISTFILE(x)   ((IPersistFile*)                 &(x)->lpPersistFileVtbl)
+#define MONPROP(x)       ((IMonikerProp*)                 &(x)->lpMonikerPropVtbl)
+#define OLEOBJ(x)        ((IOleObject*)                   &(x)->lpOleObjectVtbl)
+#define OLEDOC(x)        ((IOleDocument*)                 &(x)->lpOleDocumentVtbl)
+#define DOCVIEW(x)       ((IOleDocumentView*)             &(x)->lpOleDocumentViewVtbl)
+#define OLEWIN(x)        ((IOleWindow*)                   &(x)->lpOleInPlaceActiveObjectVtbl)
+#define ACTOBJ(x)        ((IOleInPlaceActiveObject*)      &(x)->lpOleInPlaceActiveObjectVtbl)
+#define VIEWOBJ(x)       ((IViewObject*)                  &(x)->lpViewObject2Vtbl)
+#define VIEWOBJ2(x)      ((IViewObject2*)                 &(x)->lpViewObject2Vtbl)
+#define INPLACEOBJ(x)    ((IOleInPlaceObject*)            &(x)->lpOleInPlaceObjectWindowlessVtbl)
+#define INPLACEWIN(x)    ((IOleInPlaceObjectWindowless*)  &(x)->lpOleInPlaceObjectWindowlessVtbl)
+
+#define DEFINE_THIS(cls,ifc) cls* const This=(cls*)((char*)(iface)-offsetof(cls,lp ## ifc ## Vtbl));
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
 void HTMLDocument_Persist_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);
+void HTMLDocument_Window_Init(HTMLDocument*);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 

@@ -85,6 +85,15 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IViewObject2, riid)) {
         TRACE("(%p)->(IID_IViewObject2, %p)\n", This, ppvObject);
         *ppvObject = VIEWOBJ2(This);
+    }else if(IsEqualGUID(&IID_IOleWindow, riid)) {
+        TRACE("(%p)->(IID_IOleWindow, %p)\n", This, ppvObject);
+        *ppvObject = OLEWIN(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceObject, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceObject, %p)\n", This, ppvObject);
+        *ppvObject = INPLACEOBJ(This);
+    }else if(IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
+        TRACE("(%p)->(IID_IOleInPlaceObjectWindowless, %p)\n", This, ppvObject);
+        *ppvObject = INPLACEWIN(This);
     }
 
     if(*ppvObject) {
@@ -959,6 +968,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_Persist_Init(ret);
     HTMLDocument_OleObj_Init(ret);
     HTMLDocument_View_Init(ret);
+    HTMLDocument_Window_Init(ret);
 
     return hres;
 }

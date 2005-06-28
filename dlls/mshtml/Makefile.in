@@ -12,6 +12,7 @@ C_SRCS = \
 	htmldoc.c \
 	main.c \
 	oleobj.c \
+	olewnd.c \
 	persist.c \
 	protocol.c \
 	view.c

@@ -374,104 +374,10 @@ static const IOleDocumentVtbl OleDocumentVtbl = {
     OleDocument_EnumViews
 };
 
-/**********************************************************
- * IOleInPlaceActiveObject implementation
- */
-
-#define ACTOBJ_THIS \
-    HTMLDocument* const This=(HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpOleInPlaceActiveObjectVtbl));
-
-static HRESULT WINAPI OleInPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface, REFIID riid, void **ppvObject)
-{
-    ACTOBJ_THIS
-    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
-}
-
-static ULONG WINAPI OleInPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
-{
-    ACTOBJ_THIS
-    return IHTMLDocument2_AddRef(HTMLDOC(This));
-}
-
-static ULONG WINAPI OleInPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
-{
-    ACTOBJ_THIS
-    return IHTMLDocument2_Release(HTMLDOC(This));
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface, HWND *phwnd)
-{
-    ACTOBJ_THIS
-    TRACE("(%p)->(%p)\n", This, phwnd);
-
-    if(!phwnd)
-        return E_INVALIDARG;
-
-    *phwnd = This->hwnd;
-    return S_OK;
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_ContextSensitiveHelp(IOleInPlaceActiveObject *iface, BOOL fEnterMode)
-{
-    ACTOBJ_THIS
-    FIXME("(%p)->(%x)\n", This, fEnterMode);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_TranslateAccelerator(IOleInPlaceActiveObject *iface, LPMSG lpmsg)
-{
-    ACTOBJ_THIS
-    FIXME("(%p)->(%p)\n", This, lpmsg);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface, BOOL fActivate)
-{
-    ACTOBJ_THIS
-    FIXME("(%p)->(%x)\n", This, fActivate);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface, BOOL fActivate)
-{
-    ACTOBJ_THIS
-    FIXME("(%p)->(%x)\n", This, fActivate);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_ResizeBorder(IOleInPlaceActiveObject *iface, LPCRECT prcBorder,
-                                                IOleInPlaceUIWindow *pUIWindow, BOOL fFrameWindow)
-{
-    ACTOBJ_THIS
-    FIXME("(%p)->(%p %p %x)\n", This, prcBorder, pUIWindow, fFrameWindow);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI OleInPlaceActiveObject_EnableModeless(IOleInPlaceActiveObject *iface, BOOL fEnable)
-{
-    ACTOBJ_THIS
-    FIXME("(%p)->(%x)\n", This, fEnable);
-    return E_NOTIMPL;
-}
-
-static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
-    OleInPlaceActiveObject_QueryInterface,
-    OleInPlaceActiveObject_AddRef,
-    OleInPlaceActiveObject_Release,
-    OleInPlaceActiveObject_GetWindow,
-    OleInPlaceActiveObject_ContextSensitiveHelp,
-    OleInPlaceActiveObject_TranslateAccelerator,
-    OleInPlaceActiveObject_OnFrameWindowActivate,
-    OleInPlaceActiveObject_OnDocWindowActivate,
-    OleInPlaceActiveObject_ResizeBorder,
-    OleInPlaceActiveObject_EnableModeless
-};
-
 void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
     This->lpOleObjectVtbl = &OleObjectVtbl;
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
-    This->lpOleInPlaceActiveObjectVtbl = &OleInPlaceActiveObjectVtbl;
 
     This->client = NULL;
 }
