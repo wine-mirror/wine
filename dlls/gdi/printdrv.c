@@ -461,28 +461,16 @@ static int CreateSpoolFile(LPCSTR pszOutput)
       return -1;
 
     psCmd[0] = 0;
-    if (!strncmp("LPR:",pszOutput,4))
+    /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
+    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\Spooler", &hkey))
     {
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\spooler */
-        if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
-	{
-	    DWORD type, count = sizeof(psCmd);
-	    RegQueryValueExA(hkey, pszOutput, 0, &type, psCmd, &count);
-	    RegCloseKey(hkey);
-	}
-        if(psCmd[0] == 0)
-            sprintf(psCmd,"|lpr -P%s",pszOutput+4);
+        DWORD type, count = sizeof(psCmd);
+        RegQueryValueExA(hkey, pszOutput, 0, &type, psCmd, &count);
+        RegCloseKey(hkey);
     }
-    else
-    {
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\spooler */
-	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\spooler", &hkey))
-	{
-	    DWORD type, count = sizeof(psCmd);
-	    RegQueryValueExA(hkey, pszOutput, 0, &type, psCmd, &count);
-	    RegCloseKey(hkey);
-	}
-    }
+    if (!psCmd[0] && !strncmp("LPR:",pszOutput,4))
+        sprintf(psCmd,"|lpr -P%s",pszOutput+4);
+
     TRACE("Got printerSpoolCommand '%s' for output device '%s'\n",
 	  psCmd, pszOutput);
     if (!*psCmd)
