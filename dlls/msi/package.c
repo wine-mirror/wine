@@ -454,18 +454,40 @@ UINT WINAPI MsiOpenPackageExW(LPCWSTR szPackage, DWORD dwOptions, MSIHANDLE *phP
 {
     MSIPACKAGE *package = NULL;
     UINT ret;
+    WCHAR path[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    static const WCHAR szMSI[] = {'M','S','I',0};
 
     TRACE("%s %08lx %p\n",debugstr_w(szPackage), dwOptions, phPackage);
 
+    /* copy the msi file to a temp file to pervent locking a CD
+     * with a multi disc install 
+     */ 
+    if( szPackage[0] == '#' )
+        strcpyW(filename,szPackage);
+    else
+    {
+        GetTempPathW(MAX_PATH, path);
+        GetTempFileNameW(path, szMSI, 0, filename);
+
+        CopyFileW(szPackage, filename, FALSE);
+
+        TRACE("Opening relocated package %s\n",debugstr_w(filename));
+    }
+    
     if( dwOptions )
         FIXME("dwOptions %08lx not supported\n", dwOptions);
 
-    ret = MSI_OpenPackageW( szPackage, &package);
+    ret = MSI_OpenPackageW( filename, &package);
     if( ret == ERROR_SUCCESS )
     {
         *phPackage = alloc_msihandle( &package->hdr );
         msiobj_release( &package->hdr );
     }
+
+    if( szPackage[0] != '#' )
+        DeleteFileW(filename);
+
     return ret;
 }
 

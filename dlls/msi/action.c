@@ -432,7 +432,7 @@ static void ui_actioninfo(MSIPACKAGE *package, LPCWSTR action, BOOL start,
  *****************************************************/
 
 UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
-                              LPCWSTR szCommandLine)
+                              LPCWSTR szCommandLine, LPCWSTR msiFilePath)
 {
     DWORD sz;
     WCHAR buffer[10];
@@ -446,6 +446,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
 
     package->script = HeapAlloc(GetProcessHeap(),0,sizeof(MSISCRIPT));
     memset(package->script,0,sizeof(MSISCRIPT));
+
+    package->msiFilePath= strdupW(msiFilePath);
 
     if (szPackagePath)   
     {
@@ -1371,9 +1373,6 @@ static INT load_folder(MSIPACKAGE *package, const WCHAR* dir)
     if (targetdir[0] == '.' && targetdir[1] == 0)
         targetdir = NULL;
         
-    if (srcdir && srcdir[0] == '.' && srcdir[1] == 0)
-        srcdir = NULL;
-
     if (targetdir)
     {
         TRACE("   TargetDefault = %s\n",debugstr_w(targetdir));
@@ -3574,9 +3573,9 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     snprintfW(path,sizeof(path)/sizeof(path[0]),installerPathFmt,windir);
     create_full_pathW(path);
     TRACE("Copying to local package %s\n",debugstr_w(packagefile));
-    if (!CopyFileW(package->PackagePath,packagefile,FALSE))
+    if (!CopyFileW(package->msiFilePath,packagefile,FALSE))
         ERR("Unable to copy package (%s -> %s) (error %ld)\n",
-            debugstr_w(package->PackagePath), debugstr_w(packagefile),
+            debugstr_w(package->msiFilePath), debugstr_w(packagefile),
             GetLastError());
     size = strlenW(packagefile)*sizeof(WCHAR);
     RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);

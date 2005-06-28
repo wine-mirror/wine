@@ -202,6 +202,9 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     MSIPACKAGE *package = NULL;
     UINT r;
     MSIHANDLE handle;
+    WCHAR path[MAX_PATH];
+    WCHAR filename[MAX_PATH];
+    static const WCHAR szMSI[] = {'M','S','I',0};
 
     FIXME("%s %s\n",debugstr_w(szPackagePath), debugstr_w(szCommandLine));
 
@@ -209,16 +212,31 @@ UINT WINAPI MsiInstallProductW(LPCWSTR szPackagePath, LPCWSTR szCommandLine)
     if (r != ERROR_SUCCESS)
         return r;
 
-    r = MSI_OpenPackageW(szPackagePath,&package);
+    /* copy the msi file to a temp file to pervent locking a CD
+     * with a multi disc install 
+     */
+    GetTempPathW(MAX_PATH, path);
+    GetTempFileNameW(path, szMSI, 0, filename);
+
+    CopyFileW(szPackagePath, filename, FALSE);
+
+    TRACE("Opening relocated package %s\n",debugstr_w(filename));
+    r = MSI_OpenPackageW(filename, &package);
     if (r != ERROR_SUCCESS)
+    {
+        DeleteFileW(filename);
         return r;
+    }
 
     handle = alloc_msihandle( &package->hdr );
 
-    r = ACTION_DoTopLevelINSTALL(package, szPackagePath, szCommandLine);
+    r = ACTION_DoTopLevelINSTALL(package, szPackagePath, szCommandLine, 
+                                 filename);
 
     MsiCloseHandle(handle);
     msiobj_release( &package->hdr );
+
+    DeleteFileW(filename);
     return r;
 }
 
@@ -324,7 +342,7 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     if (MsiQueryProductStateW(szProduct) != INSTALLSTATE_UNKNOWN)
         lstrcatW(commandline,szInstalled);
 
-    rc = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline);
+    rc = ACTION_DoTopLevelINSTALL(package, sourcepath, commandline, sourcepath);
 
     msiobj_release( &package->hdr );
 

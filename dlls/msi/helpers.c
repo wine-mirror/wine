@@ -580,6 +580,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     }
 
     HeapFree(GetProcessHeap(),0,package->PackagePath);
+    HeapFree(GetProcessHeap(),0,package->msiFilePath);
 
     /* cleanup control event subscriptions */
     ControlEvent_CleanupSubscriptions(package);
