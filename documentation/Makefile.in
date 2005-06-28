@@ -4,8 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
-EXTRASUBDIRS = samples
-
 @MAKE_RULES@
 
 manpages:
