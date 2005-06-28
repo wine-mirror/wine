@@ -1178,36 +1178,10 @@ NTSTATUS WINAPI RtlAddAccessAllowedAceEx(
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
-	DWORD dwLengthSid;
-	ACCESS_ALLOWED_ACE * pAaAce;
-	DWORD dwSpaceLeft;
+   TRACE("(%p,0x%08lx,0x%08lx,%p)\n", pAcl, dwAceRevision, AccessMask, pSid);
 
-	TRACE("(%p,0x%08lx,0x%08lx,%p)\n",
-		pAcl, dwAceRevision, AccessMask, pSid);
-
-	if (!RtlValidSid(pSid))
-		return STATUS_INVALID_SID;
-	if (!RtlValidAcl(pAcl))
-		return STATUS_INVALID_ACL;
-
-	dwLengthSid = RtlLengthSid(pSid);
-	if (!RtlFirstFreeAce(pAcl, (PACE_HEADER *) &pAaAce))
-		return STATUS_INVALID_ACL;
-
-	if (!pAaAce)
-		return STATUS_ALLOTTED_SPACE_EXCEEDED;
-
-	dwSpaceLeft = (DWORD)pAcl + pAcl->AclSize - (DWORD)pAaAce;
-	if (dwSpaceLeft < sizeof(*pAaAce) - sizeof(pAaAce->SidStart) + dwLengthSid)
-		return STATUS_ALLOTTED_SPACE_EXCEEDED;
-
-	pAaAce->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
-	pAaAce->Header.AceFlags = AceFlags;
-	pAaAce->Header.AceSize = sizeof(*pAaAce) - sizeof(pAaAce->SidStart) + dwLengthSid;
-	pAaAce->Mask = AccessMask;
-	pAcl->AceCount++;
-	RtlCopySid(dwLengthSid, (PSID)&pAaAce->SidStart, pSid);
-	return STATUS_SUCCESS;
+    return add_access_ace(pAcl, dwAceRevision, AceFlags,
+                          AccessMask, pSid, ACCESS_ALLOWED_ACE_TYPE);
 }
 
 /******************************************************************************
@@ -1232,36 +1206,10 @@ NTSTATUS WINAPI RtlAddAccessDeniedAceEx(
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
-	DWORD dwLengthSid;
-	DWORD dwSpaceLeft;
-	ACCESS_DENIED_ACE * pAdAce;
+   TRACE("(%p,0x%08lx,0x%08lx,%p)\n", pAcl, dwAceRevision, AccessMask, pSid);
 
-	TRACE("(%p,0x%08lx,0x%08lx,%p)\n",
-		pAcl, dwAceRevision, AccessMask, pSid);
-
-	if (!RtlValidSid(pSid))
-		return STATUS_INVALID_SID;
-	if (!RtlValidAcl(pAcl))
-		return STATUS_INVALID_ACL;
-
-	dwLengthSid = RtlLengthSid(pSid);
-	if (!RtlFirstFreeAce(pAcl, (PACE_HEADER *) &pAdAce))
-		return STATUS_INVALID_ACL;
-
-	if (!pAdAce)
-		return STATUS_ALLOTTED_SPACE_EXCEEDED;
-
-	dwSpaceLeft = (DWORD)pAcl + pAcl->AclSize - (DWORD)pAdAce;
-	if (dwSpaceLeft < sizeof(*pAdAce) - sizeof(pAdAce->SidStart) + dwLengthSid)
-		return STATUS_ALLOTTED_SPACE_EXCEEDED;
-
-	pAdAce->Header.AceType = ACCESS_DENIED_ACE_TYPE;
-	pAdAce->Header.AceFlags = AceFlags;
-	pAdAce->Header.AceSize = sizeof(*pAdAce) - sizeof(pAdAce->SidStart) + dwLengthSid;
-	pAdAce->Mask = AccessMask;
-	pAcl->AceCount++;
-	RtlCopySid(dwLengthSid, (PSID)&pAdAce->SidStart, pSid);
-	return STATUS_SUCCESS;
+    return add_access_ace(pAcl, dwAceRevision, AceFlags,
+                          AccessMask, pSid, ACCESS_DENIED_ACE_TYPE);
 }
 
 /************************************************************************** 
