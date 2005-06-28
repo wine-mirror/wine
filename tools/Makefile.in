@@ -24,7 +24,7 @@ C_SRCS = \
 	makedep.c \
 	sfnt2fnt.c \
 
-SUBDIRS = \
+INSTALLSUBDIRS = \
 	widl \
 	winebuild \
 	winedump \
@@ -32,7 +32,9 @@ SUBDIRS = \
 	wmc \
 	wrc
 
-INSTALLSUBDIRS = $(SUBDIRS)
+SUBDIRS = \
+	$(INSTALLSUBDIRS) \
+	winapi
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
