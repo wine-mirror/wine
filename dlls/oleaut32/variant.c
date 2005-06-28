@@ -2569,6 +2569,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     case VT_UI4  :
     case VT_UINT : lVal = V_UI4(left); break;
     case VT_BOOL : lVal = V_BOOL(left); break;
+    case VT_EMPTY : lVal = 0; break;
     default: lOk = FALSE;
     }
 
@@ -2583,6 +2584,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
     case VT_UI4  :
     case VT_UINT : rVal = V_UI4(right); break;
     case VT_BOOL : rVal = V_BOOL(right); break;
+    case VT_EMPTY : rVal = 0; break;
     default: rOk = FALSE;
     }
 
@@ -2596,7 +2598,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
         }
     }
 
-    /* Strings - use VarBstrCmp */
+    /* Dates */
     if ((V_VT(left)&VT_TYPEMASK) == VT_DATE &&
         (V_VT(right)&VT_TYPEMASK) == VT_DATE) {
 
