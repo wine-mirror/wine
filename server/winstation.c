@@ -175,6 +175,13 @@ static WCHAR *build_desktop_name( const WCHAR *name, size_t len,
     return full_name;
 }
 
+/* retrieve a pointer to a desktop object */
+inline static struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle,
+                                               unsigned int access )
+{
+    return (struct desktop *)get_handle_obj( process, handle, access, &desktop_ops );
+}
+
 /* create a desktop object */
 static struct desktop *create_desktop( const WCHAR *name, size_t len, unsigned int flags,
                                        struct winstation *winstation )
@@ -426,14 +433,39 @@ DECL_HANDLER(get_thread_desktop)
 /* set the thread current desktop */
 DECL_HANDLER(set_thread_desktop)
 {
-    struct desktop *desktop;
+    struct desktop *old_desktop, *new_desktop;
+    struct winstation *winstation;
 
-    if ((desktop = (struct desktop *)get_handle_obj( current->process, req->handle, 0, &desktop_ops )))
+    if (!(winstation = get_process_winstation( current->process, 0 /* FIXME: access rights? */ )))
+        return;
+
+    if (!(new_desktop = get_desktop_obj( current->process, req->handle, 0 )))
     {
-        /* FIXME: should we close the old one? */
-        current->desktop = req->handle;
-        release_object( desktop );
+        release_object( winstation );
+        return;
     }
+    if (new_desktop->winstation != winstation)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        release_object( new_desktop );
+        release_object( winstation );
+        return;
+    }
+
+    /* check if we are changing to a new desktop */
+
+    if (!(old_desktop = get_desktop_obj( current->process, current->desktop, 0)))
+        clear_error();  /* ignore error */
+
+    /* when changing desktop, we can't have any users on the current one */
+    if (old_desktop != new_desktop && current->desktop_users > 0)
+        set_error( STATUS_DEVICE_BUSY );
+    else
+        current->desktop = req->handle;  /* FIXME: should we close the old one? */
+
+    if (old_desktop) release_object( old_desktop );
+    release_object( new_desktop );
+    release_object( winstation );
 }
 
 

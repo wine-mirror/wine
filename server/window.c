@@ -311,6 +311,8 @@ static void destroy_window( struct window *win )
     if (win == shell_listview) shell_listview = NULL;
     if (win == progman_window) progman_window = NULL;
     if (win == taskman_window) taskman_window = NULL;
+    assert( win->thread->desktop_users > 0 );
+    win->thread->desktop_users--;
     free_user_handle( win->handle );
     destroy_properties( win );
     list_remove( &win->entry );
@@ -376,6 +378,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     /* put it on parent unlinked list */
     if (parent) list_add_head( &parent->unlinked, &win->entry );
 
+    current->desktop_users++;
     return win;
 
 failed:
@@ -1303,6 +1306,7 @@ DECL_HANDLER(create_window)
         if (!top_window)
         {
             if (!(top_window = create_window( NULL, NULL, req->atom, req->instance ))) return;
+            current->desktop_users--;
             top_window->thread = NULL;  /* no thread owns the desktop */
             top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
         }

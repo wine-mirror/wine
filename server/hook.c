@@ -125,6 +125,7 @@ static struct hook *add_hook( struct thread *thread, int index, int global )
     hook->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
     hook->index  = index;
     list_add_head( &table->hooks[index], &hook->chain );
+    if (thread) thread->desktop_users++;
     return hook;
 }
 
@@ -133,7 +134,12 @@ static void free_hook( struct hook *hook )
 {
     free_user_handle( hook->handle );
     if (hook->module) free( hook->module );
-    if (hook->thread) release_object( hook->thread );
+    if (hook->thread)
+    {
+        assert( hook->thread->desktop_users > 0 );
+        hook->thread->desktop_users--;
+        release_object( hook->thread );
+    }
     if (hook->process) release_object( hook->process );
     release_object( hook->owner );
     list_remove( &hook->chain );

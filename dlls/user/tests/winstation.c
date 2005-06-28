@@ -64,12 +64,9 @@ static DWORD CALLBACK thread( LPVOID arg )
     trace( "created desktop %p\n", d2 );
     ok( d2 != 0, "CreateDesktop failed\n" );
 
-    todo_wine
-    {
-        SetLastError( 0xdeadbeef );
-        ok( !SetThreadDesktop( d2 ), "set thread desktop succeeded with existing window\n" );
-        ok( GetLastError() == ERROR_BUSY, "bad last error %ld\n", GetLastError() );
-    }
+    SetLastError( 0xdeadbeef );
+    ok( !SetThreadDesktop( d2 ), "set thread desktop succeeded with existing window\n" );
+    ok( GetLastError() == ERROR_BUSY, "bad last error %ld\n", GetLastError() );
 
     DestroyWindow( hwnd );
     ok( SetThreadDesktop( d2 ), "set thread desktop failed\n" );

@@ -140,6 +140,7 @@ inline static void init_thread_structure( struct thread *thread )
     thread->suspend         = 0;
     thread->creation_time   = time(NULL);
     thread->exit_time       = 0;
+    thread->desktop_users   = 0;
 
     list_init( &thread->mutex_list );
     list_init( &thread->system_apc );
