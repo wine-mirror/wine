@@ -508,8 +508,8 @@ void WINSPOOL_LoadSystemPrinters(void)
 
     if(!done) { /* If we have any CUPS based printers, skip looking for printcap printers */
         /* Check for [ppd] section in config file before parsing /etc/printcap */
-        /* @@ Wine registry key: HKLM\Software\Wine\Wine\Config\ppd */
-        if (RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ppd",
+        /* @@ Wine registry key: HKCU\Software\Wine\Printing\PPD Files */
+        if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\PPD Files",
                         &hkey) == ERROR_SUCCESS) {
             RegCloseKey(hkey);
             PRINTCAP_LoadPrinters();
