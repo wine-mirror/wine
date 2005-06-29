@@ -71,23 +71,17 @@ static BOOLEAN copy_acl(DWORD nDestinationAclLength, PACL pDestinationAcl, PACL 
 static NTSTATUS add_access_ace(PACL pAcl, DWORD dwAceRevision, DWORD dwAceFlags,
                                DWORD dwAccessMask, PSID pSid, DWORD dwAceType)
 {
-    SID *sid = (SID *)pSid;
     ACE_HEADER *pAceHeader;
+    DWORD dwLengthSid;
     DWORD dwAceSize;
-    DWORD dwSidStart;
-    DWORD sidLength;
-    PDWORD pAccessMask;
+    DWORD *pAccessMask;
+    DWORD *pSidStart;
 
-    if (!RtlValidSid(sid))
+    if (!RtlValidSid(pSid))
         return STATUS_INVALID_SID;
 
     if (pAcl->AclRevision > MAX_ACL_REVISION || dwAceRevision > MAX_ACL_REVISION)
         return STATUS_REVISION_MISMATCH;
-
-    /* choose the higher of the two revisions */
-    sid->IdentifierAuthority.Value[1] = pAcl->AclRevision;
-    if (dwAceRevision > pAcl->AclRevision)
-        sid->IdentifierAuthority.Value[1] = dwAceRevision;
 
     if (!RtlValidAcl(pAcl))
         return STATUS_INVALID_ACL;
@@ -99,22 +93,25 @@ static NTSTATUS add_access_ace(PACL pAcl, DWORD dwAceRevision, DWORD dwAceFlags,
         return STATUS_ALLOTTED_SPACE_EXCEEDED;
 
     /* calculate generic size of the ACE */
-    sidLength = RtlLengthSid(sid);
-    dwAceSize = sizeof(ACE_HEADER) + sizeof(DWORD) + sidLength;
+    dwLengthSid = RtlLengthSid(pSid);
+    dwAceSize = sizeof(ACE_HEADER) + sizeof(DWORD) + dwLengthSid;
     if ((DWORD)(pAceHeader + dwAceSize) > (DWORD)(pAcl + pAcl->AclSize))
         return STATUS_ALLOTTED_SPACE_EXCEEDED;
 
-    /* fill the new Ace */
+    /* fill the new ACE */
     pAceHeader->AceType = dwAceType;
     pAceHeader->AceFlags = dwAceFlags;
     pAceHeader->AceSize = dwAceSize;
-    pAccessMask = (DWORD *)(pAceHeader + sizeof(ACE_HEADER));
+
+    /* skip past the ACE_HEADER of the ACE */
+    pAccessMask = (DWORD *)(pAceHeader + 1);
     *pAccessMask = dwAccessMask;
 
-    dwSidStart = (DWORD)(pAceHeader + sizeof(ACE_HEADER) + sizeof(DWORD));
-    RtlCopySid(sidLength, (PSID)dwSidStart, sid);
+    /* skip past ACE->Mask */
+    pSidStart = pAccessMask + 1;
+    RtlCopySid(dwLengthSid, (PSID)pSidStart, pSid);
 
-    pAcl->AclRevision = sid->IdentifierAuthority.Value[1];
+    pAcl->AclRevision = max(pAcl->AclRevision, dwAceRevision);
     pAcl->AceCount++;
 
     return STATUS_SUCCESS;

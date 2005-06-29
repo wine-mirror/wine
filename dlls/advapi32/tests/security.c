@@ -518,14 +518,14 @@ static void test_AccessCheck(void)
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     ok(ret, "AccessCheck failed with error %ld\n", GetLastError());
-    todo_wine ok(AccessStatus && (Access == KEY_READ),
+    ok(AccessStatus && (Access == KEY_READ),
         "AccessCheck failed to grant access with error %ld\n",
         GetLastError());
 
     ret = AccessCheck(SecurityDescriptor, Token, MAXIMUM_ALLOWED, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     ok(ret, "AccessCheck failed with error %ld\n", GetLastError());
-    todo_wine ok(AccessStatus,
+    ok(AccessStatus,
         "AccessCheck failed to grant any access with error %ld\n",
         GetLastError());
     trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08lx\n", Access);
