@@ -107,6 +107,36 @@ typedef struct _UnixFolder {
 } UnixFolder;
 
 /******************************************************************************
+ * UNIXFS_is_rooted_at_desktop [Internal]
+ *
+ * Checks if the unixfs namespace extension is rooted at desktop level.
+ *
+ * RETURNS
+ *  TRUE, if unixfs is rooted at desktop level
+ *  FALSE, if not.
+ */
+BOOL UNIXFS_is_rooted_at_desktop(void) {
+    HKEY hKey;
+    WCHAR *pwszCLSID_UnixDosFolder, wszRootedAtDesktop[69 + CHARS_IN_GUID] = { 
+        'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'E','x','p','l','o','r','e','r','\\','D','e','s','k','t','o','p','\\',
+        'N','a','m','e','S','p','a','c','e','\\',0 }; 
+
+    if (FAILED(StringFromCLSID(&CLSID_UnixDosFolder, &pwszCLSID_UnixDosFolder)))
+        return FALSE;
+    
+    lstrcatW(wszRootedAtDesktop, pwszCLSID_UnixDosFolder);
+    CoTaskMemFree(pwszCLSID_UnixDosFolder);
+    
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, wszRootedAtDesktop, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+        return FALSE;
+        
+    RegCloseKey(hKey);
+    return TRUE;
+}
+
+/******************************************************************************
  * UNIXFS_is_pidl_of_type [INTERNAL]
  *
  * Checks for the first SHITEMID of an ITEMIDLIST if it passes a filter.

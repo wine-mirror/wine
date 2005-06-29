@@ -186,8 +186,11 @@ static HRESULT WINAPI ISF_Desktop_fnParseDisplayName (IShellFolder2 * iface,
     }
     else if (PathGetDriveNumberW (lpszDisplayName) >= 0)
     {
-        /* it's a filesystem path with a drive. Let MyComputer parse it */
-        pidlTemp = _ILCreateMyComputer ();
+        /* it's a filesystem path with a drive. Let MyComputer/UnixDosFolder parse it */
+        if (UNIXFS_is_rooted_at_desktop()) 
+            pidlTemp = _ILCreateGuid(PT_GUID, &CLSID_UnixDosFolder);
+        else
+            pidlTemp = _ILCreateMyComputer ();
         szNext = lpszDisplayName;
     }
     else if (PathIsUNCW(lpszDisplayName))
