@@ -55,6 +55,7 @@ WINDOWS_INCLUDES = \
 	audevcod.h \
 	aviriff.h \
 	basetsd.h \
+	basetyps.h \
 	cderr.h \
 	cfgmgr32.h \
 	cguid.h \
