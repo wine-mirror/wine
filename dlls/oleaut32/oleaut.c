@@ -667,7 +667,7 @@ extern void _get_STDPIC_CF(LPVOID);
 /***********************************************************************
  *		DllGetClassObject (OLEAUT32.1)
  */
-HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     *ppv = NULL;
     if (IsEqualGUID(rclsid,&CLSID_StdFont)) {
@@ -707,7 +707,7 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *p
  * RETURNS
  *  Always returns S_FALSE. This dll cannot be unloaded.
  */
-HRESULT WINAPI OLEAUT32_DllCanUnloadNow(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
 }
