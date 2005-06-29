@@ -29,6 +29,7 @@ struct window;
 struct msg_queue;
 struct hook_table;
 struct window_class;
+struct clipboard;
 
 enum user_object
 {
@@ -120,6 +121,9 @@ extern void *get_class_client_ptr( struct window_class *class );
 
 /* windows station functions */
 
+extern struct winstation *get_process_winstation( struct process *process, unsigned int access );
+extern void set_winstation_clipboard( struct winstation *winstation, struct clipboard *clipboard );
+extern struct clipboard *get_winstation_clipboard( struct winstation *winstation );
 extern void connect_process_winstation( struct process *process, const WCHAR *name, size_t len );
 extern void connect_process_desktop( struct process *process, const WCHAR *name, size_t len );
 extern void close_thread_desktop( struct thread *thread );

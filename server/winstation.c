@@ -41,6 +41,7 @@ struct winstation
     unsigned int       flags;              /* winstation flags */
     struct list        entry;              /* entry in global winstation list */
     struct list        desktops;           /* list of desktops of this winstation */
+    struct clipboard  *clipboard;          /* clipboard information */
 };
 
 struct desktop
@@ -113,6 +114,7 @@ static struct winstation *create_winstation( const WCHAR *name, size_t len, unsi
         {
             /* initialize it if it didn't already exist */
             winstation->flags = flags;
+            winstation->clipboard = NULL;
             list_add_tail( &winstation_list, &winstation->entry );
             list_init( &winstation->desktops );
         }
@@ -140,14 +142,26 @@ static void winstation_destroy( struct object *obj )
 
     if (winstation == interactive_winstation) interactive_winstation = NULL;
     list_remove( &winstation->entry );
+    if (winstation->clipboard) release_object( winstation->clipboard );
 }
 
 /* retrieve the process window station, checking the handle access rights */
-inline static struct winstation *get_process_winstation( struct process *process,
-                                                         unsigned int access )
+struct winstation *get_process_winstation( struct process *process, unsigned int access )
 {
     return (struct winstation *)get_handle_obj( process, process->winstation,
                                                 access, &winstation_ops );
+}
+
+/* set the pointer to the (opaque) clipboard info */
+void set_winstation_clipboard( struct winstation *winstation, struct clipboard *clipboard )
+{
+    winstation->clipboard = clipboard;
+}
+
+/* retrieve the pointer to the (opaque) clipboard info */
+struct clipboard *get_winstation_clipboard( struct winstation *winstation )
+{
+    return winstation->clipboard;
 }
 
 /* build the full name of a desktop object */
