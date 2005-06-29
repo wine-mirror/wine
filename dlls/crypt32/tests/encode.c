@@ -29,7 +29,7 @@
 struct encodedInt
 {
     int val;
-    BYTE *encoded;
+    const BYTE *encoded;
 };
 
 static const struct encodedInt ints[] = {
@@ -44,9 +44,9 @@ static const struct encodedInt ints[] = {
 
 struct encodedBigInt
 {
-    BYTE *val;
-    BYTE *encoded;
-    BYTE *decoded;
+    const BYTE *val;
+    const BYTE *encoded;
+    const BYTE *decoded;
 };
 
 static const struct encodedBigInt bigInts[] = {
@@ -103,6 +103,8 @@ static void test_encodeInt(DWORD dwEncoding)
         {
             ok(buf[0] == 2, "Got unexpected type %d for integer (expected 2)\n",
              buf[0]);
+            ok(buf[1] == ints[i].encoded[1], "Got length %d, expected %d\n",
+             buf[1], ints[i].encoded[1]);
             ok(!memcmp(buf + 1, ints[i].encoded + 1, ints[i].encoded[1] + 1),
              "Encoded value of 0x%08x didn't match expected\n", ints[i].val);
             LocalFree(buf);
@@ -181,6 +183,9 @@ static void test_decodeInt(DWORD dwEncoding)
 {
     static const char bigInt[] = { 2, 5, 0xff, 0xfe, 0xff, 0xfe, 0xff };
     static const char testStr[] = { 0x16, 4, 't', 'e', 's', 't' };
+    static const BYTE longForm[] = { 2, 0x81, 0x01, 0x01 };
+    static const BYTE tooBig[] = { 0x02, 0x84, 0xff, 0xff, 0xff, 0xff };
+    static const BYTE bigBogus[] = { 0x02, 0x84, 0x01, 0xff, 0xff, 0xf9 };
     BYTE *buf = NULL;
     DWORD bufSize = 0;
     int i;
@@ -287,6 +292,33 @@ static void test_decodeInt(DWORD dwEncoding)
             LocalFree(buf);
         }
     }
+    /* Decode the value 1 with long-form length */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, longForm,
+     sizeof(longForm), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(*(int *)buf == 1, "Expected 1, got %d\n", *(int *)buf);
+        LocalFree(buf);
+    }
+    /* Try to decode some bogus large items */
+    /* The buffer size is smaller than the encoded length, so this should fail
+     * with CRYPT_E_ASN1_EOD if it's being decoded.  It's failing with
+     * CRYPT_E_ASN1_LARGE, meaning there's a limit on the size decoded.
+     * The magic limit under XP seems to be 0x061a8000 bytes--more than this
+     * fails with CRYPT_E_ASN1_LARGE.
+     */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, tooBig,
+     0x7fffffff, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_LARGE,
+     "Expected CRYPT_E_ASN1_LARGE, got %08lx\n", GetLastError());
+    /* This will try to decode the buffer and overflow it, check that it's
+     * caught.
+     */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER, bigBogus,
+     0x01ffffff, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
 }
 
 /* These are always encoded unsigned, and aren't constrained to be any
@@ -516,7 +548,7 @@ static void test_decodeFiletime(DWORD dwEncoding)
 struct EncodedName
 {
     CERT_RDN_ATTR attr;
-    BYTE *encoded;
+    const BYTE *encoded;
 };
 
 static const char commonName[] = "Juan Lang";
@@ -804,8 +836,8 @@ static void test_decodeName(DWORD dwEncoding)
 
 struct encodedOctets
 {
-    BYTE *val;
-    BYTE *encoded;
+    const BYTE *val;
+    const BYTE *encoded;
 };
 
 static const struct encodedOctets octets[] = {
@@ -878,9 +910,9 @@ static const BYTE bytesToEncode[] = { 0xff, 0xff };
 struct encodedBits
 {
     DWORD cUnusedBits;
-    BYTE *encoded;
+    const BYTE *encoded;
     DWORD cbDecoded;
-    BYTE *decoded;
+    const BYTE *decoded;
 };
 
 static const struct encodedBits bits[] = {
@@ -1101,7 +1133,7 @@ static void test_encodeSequenceOfAny(DWORD dwEncoding)
     for (i = 0; i < sizeof(ints) / sizeof(ints[0]); i++)
     {
         blobs[i].cbData = ints[i].encoded[1] + 2;
-        blobs[i].pbData = ints[i].encoded;
+        blobs[i].pbData = (BYTE *)ints[i].encoded;
     }
     seq.cValue = sizeof(ints) / sizeof(ints[0]);
     seq.rgValue = blobs;
