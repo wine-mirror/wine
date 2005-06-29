@@ -1242,7 +1242,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetTypeFlags(ICreateTypeInfo2 *iface, U
 	guidoffset = ctl2_alloc_guid(This->typelib, &foo);
 	if (guidoffset == -1) return E_OUTOFMEMORY;
 
-	impinfo.res0 = 0x03010000;
+	impinfo.flags = TKIND_INTERFACE << 24 | MSFT_IMPINFO_OFFSET_IS_GUID;
 	impinfo.oImpFile = fileoffset;
 	impinfo.oGuid = guidoffset;
 	ctl2_alloc_importinfo(This->typelib, &impinfo);

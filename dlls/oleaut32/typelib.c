@@ -1997,8 +1997,11 @@ static void MSFT_DoRefType(TLBContext *pcx, ITypeInfoImpl *pTI,
         if(pImpLib){
             (*ppRefType)->reference=offset;
             (*ppRefType)->pImpTLInfo = pImpLib;
-            MSFT_ReadGuid(&(*ppRefType)->guid, impinfo.oGuid, pcx);
-	    (*ppRefType)->index = TLB_REF_USE_GUID;
+            if(impinfo.flags & MSFT_IMPINFO_OFFSET_IS_GUID) {
+                MSFT_ReadGuid(&(*ppRefType)->guid, impinfo.oGuid, pcx);
+                (*ppRefType)->index = TLB_REF_USE_GUID;
+            } else
+                (*ppRefType)->index = impinfo.oGuid;               
         }else{
             ERR("Cannot find a reference\n");
             (*ppRefType)->reference=-1;
