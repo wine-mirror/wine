@@ -1751,7 +1751,7 @@ static void add_dispatch(msft_typelib_t *typelib)
     guidentry.guid = iid_idispatch;
     guidentry.hreftype = 1;
     guidentry.next_hash = -1;
-    impinfo.res0 = 0x301 << 16;
+    impinfo.flags = TKIND_INTERFACE << 24 | MSFT_IMPINFO_OFFSET_IS_GUID;
     impinfo.oImpFile = impfile_offset;
     impinfo.oGuid = ctl2_alloc_guid(typelib, &guidentry);
     typelib->typelib_header.dispatchpos = alloc_importinfo(typelib, &impinfo) | 0x01;
