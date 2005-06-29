@@ -84,6 +84,8 @@ WINE_DECLARE_DEBUG_CHANNEL(typelib);
 /* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
 const GUID CLSID_PSOAInterface = { 0x00020424, 0, 0, { 0xC0, 0, 0, 0, 0, 0, 0, 0x46 } };
 
+static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYPE *vt);
+
 /****************************************************************************
  *              FromLExxx
  *
@@ -4700,6 +4702,117 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
     return E_FAIL;
 }
 
+static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYPE *vt)
+{
+    HRESULT hr = S_OK;
+    ITypeInfo *tinfo2 = NULL;
+    TYPEATTR *tattr = NULL;
+
+    hr = ITypeInfo_GetRefTypeInfo(tinfo, tdesc->u.hreftype, &tinfo2);
+    if (hr)
+    {
+        ERR("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, "
+            "hr = 0x%08lx\n",
+              tdesc->u.hreftype, hr);
+        return hr;
+    }
+    hr = ITypeInfo_GetTypeAttr(tinfo2, &tattr);
+    if (hr)
+    {
+        ERR("ITypeInfo_GetTypeAttr failed, hr = 0x%08lx\n", hr);
+        ITypeInfo_Release(tinfo2);
+        return hr;
+    }
+
+    switch (tattr->typekind)
+    {
+    case TKIND_ENUM:
+        *vt |= VT_INT;
+        break;
+
+    case TKIND_ALIAS:
+        tdesc = &tattr->tdescAlias;
+        hr = typedescvt_to_variantvt(tinfo2, &tattr->tdescAlias, vt);
+        break;
+
+    case TKIND_INTERFACE:
+      	if (IsEqualIID(&IID_IDispatch, &tattr->guid))
+      	   *vt |= VT_DISPATCH;
+       	else
+       	   *vt |= VT_UNKNOWN;
+       	break;
+
+    case TKIND_DISPATCH:
+        *vt |= VT_DISPATCH;
+        break;
+
+    case TKIND_RECORD:
+        FIXME("TKIND_RECORD unhandled.\n");
+        hr = E_NOTIMPL;
+  	    break;
+
+    case TKIND_UNION:
+        FIXME("TKIND_RECORD unhandled.\n");
+        hr = E_NOTIMPL;
+  	    break;
+
+    default:
+        FIXME("TKIND %d unhandled.\n",tattr->typekind);
+        hr = E_NOTIMPL;
+        break;
+    }
+    ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+    ITypeInfo_Release(tinfo2);
+    return hr;
+}
+
+static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYPE *vt)
+{
+    HRESULT hr = S_OK;
+
+    /* enforce only one level of pointer indirection */
+    if (!(*vt & VT_BYREF) && (tdesc->vt == VT_PTR))
+    {
+        tdesc = tdesc->u.lptdesc;
+
+        /* munch VT_PTR -> VT_USERDEFINED(interface) into VT_UNKNOWN or
+         * VT_DISPATCH and VT_PTR -> VT_PTR -> VT_USERDEFINED(interface) into 
+         * VT_BYREF|VT_DISPATCH or VT_BYREF|VT_UNKNOWN */
+        if ((tdesc->vt == VT_USERDEFINED) ||
+            ((tdesc->vt == VT_PTR) && (tdesc->u.lptdesc->vt == VT_USERDEFINED)))
+        {
+            VARTYPE vt_userdefined = 0;
+            TYPEDESC *tdesc_userdefined = tdesc;
+            if (tdesc->vt == VT_PTR)
+            {
+                vt_userdefined = VT_BYREF;
+                tdesc_userdefined = tdesc->u.lptdesc;
+            }
+            hr = userdefined_to_variantvt(tinfo, tdesc_userdefined, &vt_userdefined);
+            if (!hr && ((vt_userdefined == VT_UNKNOWN) || (vt_userdefined == VT_DISPATCH)))
+            {
+                *vt |= vt_userdefined;
+                return S_OK;
+            }
+        }
+        *vt = VT_BYREF;
+    }
+
+    switch (tdesc->vt)
+    {
+    case VT_HRESULT:
+        *vt |= VT_ERROR;
+        break;
+    case VT_USERDEFINED:
+        hr = userdefined_to_variantvt(tinfo, tdesc, vt);
+        break;
+    default:
+        *vt |= tdesc->vt;
+        break;
+    }
+    return hr;
+}
+
 /***********************************************************************
  *		DispCallFunc (OLEAUT32.@)
  */
@@ -4775,6 +4888,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
         hres = ITypeInfo2_GetFuncDesc(iface, func_index, &func_desc);
         if(FAILED(hres)) return hres;
+        if (TRACE_ON(ole))
+        {
+            TRACE("invoking:\n");
+            dump_FUNCDESC(func_desc);
+        }
         
 	switch (func_desc->funckind) {
 	case FUNC_PUREVIRTUAL:
@@ -4876,74 +4994,23 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		    args
 	    );
 
-	    if (pVarResult && (dwFlags & (DISPATCH_PROPERTYGET))) {
-		args2pos = 0;
-		for (i = 0; i < func_desc->cParams - pDispParams->cArgs; i++) {
-		    ELEMDESC *elemdesc = &(func_desc->lprgelemdescParam[i+pDispParams->cArgs]);
-		    TYPEDESC *tdesc = &(elemdesc->tdesc);
-		    int arglen = _argsize(tdesc->vt);
-		    TYPEDESC i4_tdesc;
-		    i4_tdesc.vt = VT_I4;
-
-		    /* If we are a pointer to a variant, we are done already */
-		    if ((tdesc->vt==VT_PTR)&&(tdesc->u.lptdesc->vt==VT_VARIANT))
-			continue;
-
-		    if (tdesc->vt == VT_PTR) {
-			tdesc = tdesc->u.lptdesc;
-		        arglen = _argsize(tdesc->vt);
-		    }
-
-		    VariantInit(pVarResult);
-		    memcpy(&V_INT(pVarResult),&args2[args2pos],arglen*sizeof(DWORD));
-
-		    if (tdesc->vt == VT_USERDEFINED) {
-			ITypeInfo	*tinfo2;
-			TYPEATTR	*tattr;
-
-			hres = ITypeInfo_GetRefTypeInfo(iface,tdesc->u.hreftype,&tinfo2);
-			if (FAILED(hres)) {
-			    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, while coercing. Copying 4 byte.\n",tdesc->u.hreftype);
-			    goto func_fail;
-			}
-			ITypeInfo_GetTypeAttr(tinfo2,&tattr);
-			switch (tattr->typekind) {
-			case TKIND_ENUM:
-                            /* force the return type to be VT_I4 */
-                            tdesc = &i4_tdesc;
+	    if (pVarResult) {
+		for (i = 0; i < func_desc->cParams; i++) {
+                    USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                    if (wParamFlags & PARAMFLAG_FRETVAL) {
+                        ELEMDESC *elemdesc = &func_desc->lprgelemdescParam[i];
+                        TYPEDESC *tdesc = &elemdesc->tdesc;
+                        VARIANTARG varresult;
+                        V_VT(&varresult) = 0;
+                        hres = typedescvt_to_variantvt((ITypeInfo *)iface, tdesc, &V_VT(&varresult));
+                        if (hres)
                             break;
-			case TKIND_ALIAS:
-			    TRACE("TKIND_ALIAS to vt 0x%x\n",tattr->tdescAlias.vt);
-			    tdesc = &(tattr->tdescAlias);
-			    break;
-
-			case TKIND_INTERFACE:
-			    FIXME("TKIND_INTERFACE unhandled.\n");
-			    break;
-			case TKIND_DISPATCH:
-			    FIXME("TKIND_DISPATCH unhandled.\n");
-			    break;
-			case TKIND_RECORD:
-			    FIXME("TKIND_RECORD unhandled.\n");
-			    break;
-			default:
-			    FIXME("TKIND %d unhandled.\n",tattr->typekind);
-			    break;
-			}
-		        ITypeInfo_Release(tinfo2);
+                        /* FIXME: this is really messy - we should keep the
+                         * args in VARIANTARGs rather than a DWORD array */
+                        memcpy(&V_UI4(&varresult), &args[i+1], sizeof(DWORD));
+                        hres = VariantCopyInd(pVarResult, &varresult);
+                        break;
 		    }
-		    V_VT(pVarResult) = tdesc->vt;
-
-		    /* HACK: VB5 likes this.
-		     * I do not know why. There is 1 example in MSDN which uses
-		     * this which appears broken (mixes int vals and
-		     * IDispatch*.).
-		     */
-		    if ((tdesc->vt == VT_PTR) && (dwFlags & DISPATCH_METHOD))
-			V_VT(pVarResult) = VT_DISPATCH;
-		    TRACE("storing into variant:\n");
-		    dump_Variant(pVarResult);
-		    args2pos += arglen;
 		}
 	    }
 func_fail:
