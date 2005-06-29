@@ -1772,14 +1772,10 @@ static NTSTATUS DVD_SendKey(int fd, PDVD_COPY_PROTECT_KEY key)
 	FIXME("Unknown Keytype 0x%x\n",key->KeyType);
     }
     return ret;
-#elif defined(__FreeBSD__) || defined(__NetBSD__)
-    TRACE("bsd\n");
-    return STATUS_NOT_SUPPORTED;
 #else
-    TRACE("outside\n");
+    FIXME("unsupported on this platform\n");
     return STATUS_NOT_SUPPORTED;
-#endif
-    TRACE("not reached\n");
+#endif    
 }
 
 /******************************************************************
