@@ -234,6 +234,7 @@ void reduce_to_longfilename(WCHAR*);
 void reduce_to_shortfilename(WCHAR*);
 LPWSTR create_component_advertise_string(MSIPACKAGE*, MSICOMPONENT*, LPCWSTR);
 void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature);
+WCHAR* generate_error_string(MSIPACKAGE *, UINT, DWORD, ... );
 
 
 /* control event stuff */

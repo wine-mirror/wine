@@ -912,3 +912,52 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             component->Action, component->ActionRequest);
     } 
 }
+
+WCHAR* generate_error_string(MSIPACKAGE *package, UINT error, DWORD count, ... )
+{
+    static const WCHAR query[] = {'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ','F','R','O','M',' ','`','E','r','r','o','r','`',' ','W','H','E','R','E',' ','`','E','r','r','o','r','`',' ','=',' ','%','i',0};
+
+    MSIRECORD *rec;
+    MSIRECORD *row;
+    DWORD size = 0;
+    DWORD i;
+    va_list va;
+    LPCWSTR str;
+    LPWSTR data;
+
+    row = MSI_QueryGetRecord(package->db, query, error);
+    if (!row)
+        return 0;
+
+    rec = MSI_CreateRecord(count+2);
+
+    str = MSI_RecordGetString(row,1);
+    MSI_RecordSetStringW(rec,0,str);
+    msiobj_release( &row->hdr );
+    MSI_RecordSetInteger(rec,1,error);
+
+    va_start(va,count);
+    for (i = 0; i < count; i++)
+    {
+        str = va_arg(va,LPCWSTR);
+        MSI_RecordSetStringW(rec,(i+2),str);
+    }
+    va_end(va);
+
+    MSI_FormatRecordW(package,rec,NULL,&size);
+    if (size >= 0)
+    {
+        size++;
+        data = HeapAlloc(GetProcessHeap(),0,size*sizeof(WCHAR));
+        if (size > 1)
+            MSI_FormatRecordW(package,rec,data,&size);
+        else
+            data[0] = 0;
+        msiobj_release( &rec->hdr );
+        return data;
+    }
+
+    msiobj_release( &rec->hdr );
+    data = NULL;
+    return data;
+}
