@@ -144,8 +144,8 @@ static HMODULE hOleaut32;
 
 #define TYPETEST(typ,res,fs) CHANGETYPEEX(typ); \
   ok(hres == S_OK && V_VT(&vDst) == typ && (CONV_TYPE)res == in, \
-     "hres=0x%lX, type=%d (should be %d(" #typ ")), value=" fs " (should be 1)\n", \
-      hres, V_VT(&vDst), typ, (CONV_TYPE)res);
+     "hres=0x%lX, type=%d (should be %d(" #typ ")), value=" fs " (should be " fs ")\n", \
+      hres, V_VT(&vDst), typ, (CONV_TYPE)res, in);
 #define TYPETESTI8(typ,res) CHANGETYPEEX(typ); \
   ok(hres == S_OK && V_VT(&vDst) == typ && (CONV_TYPE)res == in, \
      "hres=0x%lX, type=%d (should be %d(" #typ ")), value=%d (should be 1)\n", \
@@ -178,6 +178,15 @@ static HMODULE hOleaut32;
   { \
     TYPETEST(VT_I8, V_I8(&vDst), fs); \
     TYPETEST(VT_UI8, V_UI8(&vDst), fs); \
+  }
+#define NEGATIVE_TYPETEST(vt, val, fs, vtneg, valneg) \
+  in = -in; \
+  VariantInit(&vSrc); \
+  VariantInit(&vDst); \
+  V_VT(&vSrc) = vt; \
+  (val(&vSrc)) = in; \
+  if (!IS_ANCIENT) { \
+    TYPETEST(vtneg, valneg(&vDst), fs); \
   }
 
 #define INITIAL_TYPETESTI8(vt, val) \
@@ -832,6 +841,7 @@ static void test_VarI1ChangeTypeEx(void)
   {
       INITIAL_TYPETEST(VT_I1, V_I1, "%d");
       COMMON_TYPETEST;
+      NEGATIVE_TYPETEST(VT_I1, V_I1, "%d", VT_UI1, V_UI1);
   }
 }
 
@@ -1113,6 +1123,7 @@ static void test_VarUI1ChangeTypeEx(void)
 
   INITIAL_TYPETEST(VT_UI1, V_UI1, "%d");
   COMMON_TYPETEST;
+  NEGATIVE_TYPETEST(VT_UI1, V_UI1, "%d", VT_I1, V_I1);
 }
 
 /*
@@ -1361,6 +1372,7 @@ static void test_VarI2ChangeTypeEx(void)
 
   INITIAL_TYPETEST(VT_I2, V_I2, "%d");
   COMMON_TYPETEST;
+  NEGATIVE_TYPETEST(VT_I2, V_I2, "%d", VT_UI2, V_UI2);
 }
 
 #undef CONV_TYPE
@@ -1601,6 +1613,7 @@ static void test_VarUI2ChangeTypeEx(void)
   {
     INITIAL_TYPETEST(VT_UI2, V_UI2, "%d");
     COMMON_TYPETEST;
+    NEGATIVE_TYPETEST(VT_UI2, V_UI2, "%d", VT_I2, V_I2);
   }
 }
 
@@ -1853,6 +1866,7 @@ static void test_VarI4ChangeTypeEx(void)
 
   INITIAL_TYPETEST(VT_I4, V_I4, "%ld");
   COMMON_TYPETEST;
+  NEGATIVE_TYPETEST(VT_I4, V_I4, "%ld", VT_UI4, V_UI4);
 }
 
 #undef CONV_TYPE
@@ -2088,6 +2102,7 @@ static void test_VarUI4ChangeTypeEx(void)
   {
     INITIAL_TYPETEST(VT_UI4, V_UI4, "%lu");
     COMMON_TYPETEST;
+    NEGATIVE_TYPETEST(VT_UI4, V_UI4, "%lu", VT_I4, V_I4);
   }
 }
 
