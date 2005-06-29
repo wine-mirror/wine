@@ -175,6 +175,7 @@ WINDOWS_INCLUDES = \
 	msiquery.h \
 	mssip.h \
 	mswsock.h \
+	msxml2did.h \
 	msxmldid.h \
 	nb30.h \
 	npapi.h \
