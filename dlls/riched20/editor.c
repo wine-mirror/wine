@@ -845,7 +845,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETRECT)
   UNSUPPORTED_MSG(EM_GETREDONAME)
   UNSUPPORTED_MSG(EM_GETSCROLLPOS)
-  UNSUPPORTED_MSG(EM_GETTEXTEX)
   UNSUPPORTED_MSG(EM_GETTEXTMODE)
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
@@ -1183,6 +1182,29 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     tr.chrg.cpMax = wParam-1;
     tr.lpstrText = (WCHAR *)lParam;
     return RichEditANSIWndProc(hWnd, EM_GETTEXTRANGE, 0, (LPARAM)&tr);
+  }
+  case EM_GETTEXTEX:
+  {
+    GETTEXTEX *ex = (GETTEXTEX*)wParam;
+
+    if (ex->flags != 0)
+        FIXME("Unhandled EM_GETTEXTEX flags 0x%lx\n",ex->flags);
+
+    if (IsWindowUnicode(hWnd))
+      return ME_GetTextW(editor, (LPWSTR)lParam, 0, ex->cb, FALSE);
+    else
+    {
+        LPWSTR buffer = HeapAlloc(GetProcessHeap(),0,ex->cb*sizeof(WCHAR));
+        DWORD buflen = ex->cb;
+        LRESULT rc;
+        DWORD flags = 0;
+
+        buflen = ME_GetTextW(editor, buffer, 0, buflen, FALSE);
+        rc = WideCharToMultiByte(ex->codepage, flags, buffer, buflen, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
+
+        HeapFree(GetProcessHeap(),0,buffer);
+        return rc;
+    }
   }
   case EM_GETSELTEXT:
   {
