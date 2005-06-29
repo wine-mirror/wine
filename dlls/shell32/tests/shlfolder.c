@@ -47,12 +47,16 @@ static BOOL (WINAPI *pSHGetSpecialFolderPathW)(HWND, LPWSTR, int, BOOL);
 static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("shell32.dll");
+    HRESULT hr;
 
     if(hmod)
     {
         pSHBindToParent = (void*)GetProcAddress(hmod, "SHBindToParent");
         pSHGetSpecialFolderPathW = (void*)GetProcAddress(hmod, "SHGetSpecialFolderPathW");
     }
+
+    hr = SHGetMalloc(&ppM);
+    ok(hr == S_OK, "SHGetMalloc failed %08lx\n", hr);
 }
 
 /* creates a file with the specified name for tests */
@@ -200,7 +204,7 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
     ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08lx\n", hr);
     IShellFolder_Release(psfDesktop);
-    ILFree(pidlMyComputer);
+    IMalloc_Free(ppM, pidlMyComputer);
     if (FAILED(hr)) return;
 
     hr = IShellFolder_BindToObject(psfMyComputer, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
@@ -226,7 +230,7 @@ static void test_BindToObject(void)
     hr = IShellFolder_BindToObject(psfMyComputer, pidlSystemDir, NULL, &IID_IShellFolder, (LPVOID*)&psfSystemDir);
     ok (SUCCEEDED(hr), "MyComputer failed to bind to a FileSystem ShellFolder! hr = %08lx\n", hr);
     IShellFolder_Release(psfMyComputer);
-    ILFree(pidlSystemDir);
+    IMalloc_Free(ppM, pidlSystemDir);
     if (FAILED(hr)) return;
 
     hr = IShellFolder_BindToObject(psfSystemDir, pidlEmpty, NULL, &IID_IShellFolder, (LPVOID*)&psfChild);
@@ -398,7 +402,7 @@ static void test_CallForAttributes(void)
     lResult = RegOpenKeyExW(HKEY_CLASSES_ROOT, wszMyDocumentsKey, 0, KEY_WRITE|KEY_READ, &hKey);
     todo_wine { ok (lResult == ERROR_SUCCESS, "RegOpenKeyEx failed! result: %08lx\n", lResult); }
     if (lResult != ERROR_SUCCESS) {
-        ILFree(pidlMyDocuments);
+        IMalloc_Free(ppM, pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -409,7 +413,7 @@ static void test_CallForAttributes(void)
     ok (lResult == ERROR_SUCCESS, "RegQueryValueEx failed! result: %08lx\n", lResult);
     if (lResult != ERROR_SUCCESS) {
         RegCloseKey(hKey);
-        ILFree(pidlMyDocuments);
+        IMalloc_Free(ppM, pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -421,7 +425,7 @@ static void test_CallForAttributes(void)
     ok (lResult == ERROR_SUCCESS, "RegQueryValueEx failed! result: %08lx\n", lResult);
     if (lResult != ERROR_SUCCESS) {
         RegCloseKey(hKey);
-        ILFree(pidlMyDocuments);
+        IMalloc_Free(ppM, pidlMyDocuments);
         IShellFolder_Release(psfDesktop);
         return;
     }
@@ -454,7 +458,7 @@ static void test_CallForAttributes(void)
     RegSetValueExW(hKey, wszCallForAttributes, 0, REG_DWORD, 
                    (LPBYTE)&dwOrigCallForAttributes, sizeof(DWORD));
     RegCloseKey(hKey);
-    ILFree(pidlMyDocuments);
+    IMalloc_Free(ppM, pidlMyDocuments);
     IShellFolder_Release(psfDesktop);
 }
 
@@ -518,7 +522,7 @@ static void test_GetAttributesOf(void)
     hr = IShellFolder_BindToObject(psfDesktop, pidlMyComputer, NULL, &IID_IShellFolder, (LPVOID*)&psfMyComputer);
     ok (SUCCEEDED(hr), "Desktop failed to bind to MyComputer object! hr = %08lx\n", hr);
     IShellFolder_Release(psfDesktop);
-    ILFree(pidlMyComputer);
+    IMalloc_Free(ppM, pidlMyComputer);
     if (FAILED(hr)) return;
 
     hr = IShellFolder_GetAttributesOf(psfMyComputer, 1, &pidlEmpty, &dwFlags);
@@ -573,7 +577,7 @@ static void test_SHGetPathFromIDList(void)
     ok (!result, "SHGetPathFromIDList succeeded where it shouldn't!\n");
     ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDList shouldn't set last error! Last error: %08lx\n", GetLastError());
 
-    ILFree(pidlMyComputer);
+    IMalloc_Free(ppM, pidlMyComputer);
 }
 
 static void test_EnumObjects_and_CompareIDs(void)
@@ -590,9 +594,6 @@ static void test_EnumObjects_and_CompareIDs(void)
     strcatW(cCurrDirW, cTestDirW);
 
     OleInitialize(NULL);
-
-    hr = SHGetMalloc(&ppM);
-    ok(hr == S_OK, "SHGetMalloc failed %08lx\n", hr);
 
     hr = SHGetDesktopFolder(&IDesktopFolder);
     ok(hr == S_OK, "SHGetDesktopfolder failed %08lx\n", hr);
