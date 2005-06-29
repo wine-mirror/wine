@@ -1560,7 +1560,7 @@ static int ALSA_AddUserSpecifiedDevice(const char *ctlname, const char *pcmname)
 ** The main task is to probe for and store a list of all appropriate playback
 ** and capture devices.
 **  Key control points are from the registry key:
-**  [Software\Wine\Wine\Config\ALSA]
+**  [Software\Wine\Alsa Driver]
 **  AutoScanCards           Whether or not to scan all known sound cards
 **                          and add them to Wine's list (default yes)
 **  AutoScanDevices         Whether or not to scan all known PCM devices
