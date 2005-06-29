@@ -23,7 +23,6 @@
 
 There is still some work to be done:
 
-- currently no support for big-endian machines
 - the ERF error structure aren't used on error
 - no real compression yet
 - unknown behaviour if files>4GB or cabinet >4GB
@@ -44,6 +43,7 @@ There is still some work to be done:
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winternl.h"
 #include "fci.h"
 #include "cabinet.h"
 
@@ -442,7 +442,41 @@ static cab_ULONG fci_get_checksum(void *pv, UINT cb, CHECKSUM seed)
 } /* end of fci_get_checksum */
 
 
+static inline cab_ULONG fci_set_little_endian_ulong( cab_ULONG i )
+{
+#ifdef WORDS_BIGENDIAN
+    return RtlUlongByteSwap( i );
+#else
+    return i;
+#endif
+}
 
+static inline cab_ULONG fci_get_little_endian_ulong( cab_ULONG i )
+{
+#ifdef WORDS_BIGENDIAN
+    return RtlUlongByteSwap( i );
+#else
+    return i;
+#endif
+}
+
+static inline cab_UWORD fci_set_little_endian_uword( cab_UWORD i )
+{
+#ifdef WORDS_BIGENDIAN
+    return RtlUshortByteSwap( i );
+#else
+    return i;
+#endif
+}
+
+static inline cab_UWORD fci_get_little_endian_uword( cab_UWORD i )
+{
+#ifdef WORDS_BIGENDIAN
+    return RtlUshortByteSwap( i );
+#else
+    return i;
+#endif
+}
 
 
 static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveCFData,
@@ -599,11 +633,18 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
         return FALSE;
       }
 
+      /* set little endian */
+      pcfdata->cbData=fci_set_little_endian_uword(pcfdata->cbData);
+      pcfdata->cbUncomp=fci_set_little_endian_uword(pcfdata->cbUncomp);
+
       /* get checksum and write to cfdata.csum */
       pcfdata->csum = fci_get_checksum( &(pcfdata->cbData),
         sizeof(CFDATA)+cbReserveCFData -
         sizeof(pcfdata->csum), fci_get_checksum( p_fci_internal->data_out, /*buffer*/
         pcfdata->cbData, 0 ) );
+
+      /* set little endian */
+      pcfdata->csum=fci_set_little_endian_ulong(pcfdata->csum);
 
       /* write cfdata with checksum to p_fci_internal->handleCFDATA2 */
       if( PFCI_WRITE(hfci, p_fci_internal->handleCFDATA2, /* file handle */
@@ -616,6 +657,11 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
       /* TODO error handling of err */
 
       p_fci_internal->sizeFileCFDATA2 += sizeof(CFDATA)+cbReserveCFData;
+
+      /* reset little endian */
+      pcfdata->cbData=fci_get_little_endian_uword(pcfdata->cbData);
+      pcfdata->cbUncomp=fci_get_little_endian_uword(pcfdata->cbUncomp);
+      pcfdata->csum=fci_get_little_endian_ulong(pcfdata->csum);
 
       /* write compressed data into p_fci_internal->handleCFDATA2 */
       if( PFCI_WRITE(hfci, p_fci_internal->handleCFDATA2, /* file handle */
@@ -649,6 +695,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
 
         /* reset checksum, it will be computed later */
         pcfdata->csum=0;
+
         /* write cfdata WITHOUT checksum to handleCFDATA1new */
         if( PFCI_WRITE(hfci, handleCFDATA1new, /* file handle */
             buffer, /* memory buffer */
@@ -965,6 +1012,14 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
       cffile.iFolder=cffileCONTINUED_TO_NEXT;
     }
 
+    /* set little endian */
+    cffile.cbFile=fci_set_little_endian_ulong(cffile.cbFile);
+    cffile.uoffFolderStart=fci_set_little_endian_ulong(cffile.uoffFolderStart);
+    cffile.iFolder=fci_set_little_endian_uword(cffile.iFolder);
+    cffile.date=fci_set_little_endian_uword(cffile.date);
+    cffile.time=fci_set_little_endian_uword(cffile.time);
+    cffile.attribs=fci_set_little_endian_uword(cffile.attribs);
+
     /* write cffile to p_fci_internal->handleCFFILE2 */
     if( PFCI_WRITE(hfci, p_fci_internal->handleCFFILE2, /* file handle */
       &cffile, /* memory buffer */
@@ -976,6 +1031,14 @@ static BOOL fci_flushfolder_copy_cffile(HFCI hfci, int* err, int handleCFFILE1ne
     /* TODO error handling of err */
 
     p_fci_internal->sizeFileCFFILE2 += sizeof(cffile);
+
+    /* reset little endian */
+    cffile.cbFile=fci_get_little_endian_ulong(cffile.cbFile);
+    cffile.uoffFolderStart=fci_get_little_endian_ulong(cffile.uoffFolderStart);
+    cffile.iFolder=fci_get_little_endian_uword(cffile.iFolder);
+    cffile.date=fci_get_little_endian_uword(cffile.date);
+    cffile.time=fci_get_little_endian_uword(cffile.time);
+    cffile.attribs=fci_get_little_endian_uword(cffile.attribs);
 
     /* write file name to p_fci_internal->handleCFFILE2 */
     if( PFCI_WRITE(hfci, p_fci_internal->handleCFFILE2, /* file handle */
@@ -1580,6 +1643,18 @@ static BOOL fci_flush_cabinet(
     cfheader.iCabinet = p_fci_internal->pccab->iCab-1;
   }
 
+  /* set little endian */
+  cfheader.reserved1=fci_set_little_endian_ulong(cfheader.reserved1);
+  cfheader.cbCabinet=fci_set_little_endian_ulong(cfheader.cbCabinet);
+  cfheader.reserved2=fci_set_little_endian_ulong(cfheader.reserved2);
+  cfheader.coffFiles=fci_set_little_endian_ulong(cfheader.coffFiles);
+  cfheader.reserved3=fci_set_little_endian_ulong(cfheader.reserved3);
+  cfheader.cFolders=fci_set_little_endian_uword(cfheader.cFolders);
+  cfheader.cFiles=fci_set_little_endian_uword(cfheader.cFiles);
+  cfheader.flags=fci_set_little_endian_uword(cfheader.flags);
+  cfheader.setID=fci_set_little_endian_uword(cfheader.setID);
+  cfheader.iCabinet=fci_set_little_endian_uword(cfheader.iCabinet);
+
   /* write CFHEADER into cabinet file */
   if( PFCI_WRITE(hfci, handleCABINET, /* file handle */
       &cfheader, /* memory buffer */
@@ -1589,6 +1664,18 @@ static BOOL fci_flush_cabinet(
     return FALSE;
   }
   /* TODO error handling of err */
+
+  /* reset little endian */
+  cfheader.reserved1=fci_get_little_endian_ulong(cfheader.reserved1);
+  cfheader.cbCabinet=fci_get_little_endian_ulong(cfheader.cbCabinet);
+  cfheader.reserved2=fci_get_little_endian_ulong(cfheader.reserved2);
+  cfheader.coffFiles=fci_get_little_endian_ulong(cfheader.coffFiles);
+  cfheader.reserved3=fci_get_little_endian_ulong(cfheader.reserved3);
+  cfheader.cFolders=fci_get_little_endian_uword(cfheader.cFolders);
+  cfheader.cFiles=fci_get_little_endian_uword(cfheader.cFiles);
+  cfheader.flags=fci_get_little_endian_uword(cfheader.flags);
+  cfheader.setID=fci_get_little_endian_uword(cfheader.setID);
+  cfheader.iCabinet=fci_get_little_endian_uword(cfheader.iCabinet);
 
   if( cfheader.flags & cfheadRESERVE_PRESENT ) {
     /* NOTE: No checks for maximum value overflows as designed by MS!!! */
@@ -1600,6 +1687,10 @@ static BOOL fci_flush_cabinet(
     } else {
       cfreserved.cbCFData = p_fci_internal->pccab->cbReserveCFData;
     }
+
+    /* set little endian */
+    cfreserved.cbCFHeader=fci_set_little_endian_uword(cfreserved.cbCFHeader);
+
     /* write reserved info into cabinet file */
     if( PFCI_WRITE(hfci, handleCABINET, /* file handle */
         &cfreserved, /* memory buffer */
@@ -1609,6 +1700,9 @@ static BOOL fci_flush_cabinet(
       return FALSE;
     }
     /* TODO error handling of err */
+
+    /* reset little endian */
+    cfreserved.cbCFHeader=fci_get_little_endian_uword(cfreserved.cbCFHeader);
   }
 
   /* add optional reserved area */
@@ -1735,6 +1829,11 @@ static BOOL fci_flush_cabinet(
       }
     }
 
+    /* set little endian */
+    cffolder.coffCabStart=fci_set_little_endian_ulong(cffolder.coffCabStart);
+    cffolder.cCFData=fci_set_little_endian_uword(cffolder.cCFData);
+    cffolder.typeCompress=fci_set_little_endian_uword(cffolder.typeCompress);
+
     /* write cffolder to cabinet file */
     if( PFCI_WRITE(hfci, handleCABINET, /* file handle */
       &cffolder, /* memory buffer */
@@ -1744,6 +1843,11 @@ static BOOL fci_flush_cabinet(
       return FALSE;
     }
     /* TODO error handling of err */
+
+    /* reset little endian */
+    cffolder.coffCabStart=fci_get_little_endian_ulong(cffolder.coffCabStart);
+    cffolder.cCFData=fci_get_little_endian_uword(cffolder.cCFData);
+    cffolder.typeCompress=fci_get_little_endian_uword(cffolder.typeCompress);
 
     /* add optional reserved area */
 
