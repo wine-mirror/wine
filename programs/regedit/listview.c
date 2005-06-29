@@ -159,7 +159,7 @@ static void AddEntryToList(HWND hwndLV, LPTSTR Name, DWORD dwValType,
     index = ListView_InsertItem(hwndLV, &item);
     if (index != -1) {
         /*        LPTSTR pszText = NULL; */
-        LPCTSTR pszText = _T("(cannot display value)");
+        LPTSTR pszText = _T("(cannot display value)");
         switch (dwValType) {
         case REG_SZ:
         case REG_EXPAND_SZ:
