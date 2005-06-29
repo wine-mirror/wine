@@ -1416,7 +1416,11 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     if (pPacket->CdbLength > 16)
         return STATUS_INVALID_PARAMETER;
 
+#ifdef SENSEBUFLEN
+    if (pPacket->SenseInfoLength > SENSEBUFLEN)
+#else
     if (pPacket->SenseInfoLength > sizeof(struct request_sense))
+#endif
         return STATUS_INVALID_PARAMETER;
 
     if (pPacket->DataTransferLength > 0 && !pPacket->DataBuffer)
@@ -1531,7 +1535,11 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     if (pPacket->CdbLength > 16)
         return STATUS_INVALID_PARAMETER;
 
+#ifdef SENSEBUFLEN
+    if (pPacket->SenseInfoLength > SENSEBUFLEN)
+#else
     if (pPacket->SenseInfoLength > sizeof(struct request_sense))
+#endif
         return STATUS_INVALID_PARAMETER;
 
     if (pPacket->DataTransferLength > 0 && pPacket->DataBufferOffset < sizeof(SCSI_PASS_THROUGH))
@@ -1575,15 +1583,6 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     ret = CDROM_GetStatusCode(io);
 
 #elif defined HAVE_SCSIREQ_T_CMD
-
-    if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
-	return STATUS_BUFFER_TOO_SMALL;
-
-    if (pPacket->CdbLength > 12)
-        return STATUS_INVALID_PARAMETER;
-
-    if (pPacket->SenseInfoLength > SENSEBUFLEN)
-        return STATUS_INVALID_PARAMETER;
 
     memset(&cmd, 0, sizeof(cmd));
     memcpy(&(cmd.cmd), &(pPacket->Cdb), pPacket->CdbLength);
