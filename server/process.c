@@ -602,12 +602,14 @@ void kill_console_processes( struct thread *renderer, int exit_code )
 /* a process has been killed (i.e. its last thread died) */
 static void process_killed( struct process *process )
 {
+    struct handle_table *handles;
     struct list *ptr;
 
     assert( list_empty( &process->thread_list ));
     gettimeofday( &process->end_time, NULL );
-    if (process->handles) release_object( process->handles );
+    handles = process->handles;
     process->handles = NULL;
+    if (handles) release_object( handles );
 
     /* close the console attached to this process, if any */
     free_console( process );
