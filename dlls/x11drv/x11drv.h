@@ -274,7 +274,6 @@ extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UIN
 				      UINT count, const INT *lpDx, INT breakExtra);
 extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
-extern void X11DRV_OpenGL_Init(Display *display);
 extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
 
 /* XIM support */
@@ -441,7 +440,6 @@ extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lp
  * X11 GDI driver
  */
 
-extern void X11DRV_GDI_Initialize( Display *display );
 extern void X11DRV_GDI_Finalize(void);
 
 extern Display *gdi_display;  /* display to use for all GDI functions */

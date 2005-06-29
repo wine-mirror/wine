@@ -336,6 +336,7 @@ static BOOL process_attach(void)
     screen = DefaultScreenOfDisplay( display );
     visual = DefaultVisual( display, DefaultScreen(display) );
     root_window = DefaultRootWindow( display );
+    gdi_display = display;
     old_error_handler = XSetErrorHandler( error_handler );
 
     /* Initialize screen depth */
@@ -354,9 +355,6 @@ static BOOL process_attach(void)
         }
     }
     if (!screen_depth) screen_depth = DefaultDepthOfScreen( screen );
-
-    /* Initialize OpenGL */
-    X11DRV_OpenGL_Init(display);
 
     /* If OpenGL is available, change the default visual, etc as necessary */
     if (desktop_dbl_buf && (desktop_vi = X11DRV_setup_opengl_visual( display )))
@@ -378,9 +376,6 @@ static BOOL process_attach(void)
         root_window = X11DRV_create_desktop( desktop_vi, desktop_geometry );
         using_wine_desktop = 1;
     }
-
-    /* initialize GDI */
-    X11DRV_GDI_Initialize( display );
 
 #ifdef HAVE_LIBXXF86VM
     /* initialize XVidMode */

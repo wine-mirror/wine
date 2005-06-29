@@ -112,8 +112,6 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
 #define SONAME_LIBGL "libGL.so"
 #endif
 
-static void *opengl_handle;
-
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
 MAKE_FUNCPTR(glGetError)
 MAKE_FUNCPTR(glXChooseVisual)
@@ -126,11 +124,18 @@ MAKE_FUNCPTR(glXChooseFBConfig)
 MAKE_FUNCPTR(glXGetFBConfigAttrib)
 #undef MAKE_FUNCPTR
 
-void X11DRV_OpenGL_Init(Display *display) {
+static BOOL has_opengl(void)
+{
+    static int init_done;
+    static void *opengl_handle;
+
     int error_base, event_base;
 
+    if (init_done) return (opengl_handle != NULL);
+    init_done = 1;
+
     opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
-    if (opengl_handle == NULL) return;
+    if (opengl_handle == NULL) return FALSE;
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(opengl_handle, #f, NULL, 0)) == NULL) goto sym_not_found;
 LOAD_FUNCPTR(glGetError)
@@ -145,18 +150,19 @@ LOAD_FUNCPTR(glXGetFBConfigAttrib)
 #undef LOAD_FUNCPTR
 
     wine_tsx11_lock();
-    if (pglXQueryExtension(display, &event_base, &error_base) == True) {
+    if (pglXQueryExtension(gdi_display, &event_base, &error_base) == True) {
 	TRACE("GLX is up and running error_base = %d\n", error_base);
     } else {
         wine_dlclose(opengl_handle, NULL, 0);
 	opengl_handle = NULL;
     }
     wine_tsx11_unlock();
-    return;
+    return (opengl_handle != NULL);
 
 sym_not_found:
     wine_dlclose(opengl_handle, NULL, 0);
     opengl_handle = NULL;
+    return FALSE;
 }
 
 #define TEST_AND_ADD1(t,a) if (t) att_list[att_pos++] = (a)
@@ -176,7 +182,7 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   GLXFBConfig* cfgs = NULL;
   int ret = 0;
 
-  if (opengl_handle == NULL) {
+  if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
     return 0;
   }
@@ -298,7 +304,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   int nCfgs = 0;
   int ret = 0;
 
-  if (opengl_handle == NULL) {
+  if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
     return 0;
   }
@@ -444,7 +450,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
  * Swap the buffers of this DC
  */
 BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
-  if (opengl_handle == NULL) {
+  if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
     return 0;
   }
@@ -470,7 +476,7 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
     XVisualInfo *visual = NULL;
     int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
 
-    if (opengl_handle == NULL) return NULL;
+    if (!has_opengl()) return NULL;
     
     /* In order to support OpenGL or D3D, we require a double-buffered visual */
     wine_tsx11_lock();

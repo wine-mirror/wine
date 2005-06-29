@@ -41,6 +41,7 @@ static int log_pixels_y;  /* pixels per logical inch in y direction */
 static int horz_size;     /* horz. size of screen in millimeters */
 static int vert_size;     /* vert. size of screen in millimeters */
 static int palette_size;
+static int device_init_done;
 unsigned int text_caps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
                           TC_CR_ANY | TC_SA_DOUBLE | TC_SA_INTEGER |
                           TC_SA_CONTIN | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE);
@@ -77,11 +78,13 @@ static DWORD get_dpi( void )
 }
 
 /**********************************************************************
- *	     X11DRV_GDI_Initialize
+ *	     device_init
+ *
+ * Perform initializations needed upon creation of the first device.
  */
-void X11DRV_GDI_Initialize( Display *display )
+static void device_init(void)
 {
-    gdi_display = display;
+    device_init_done = TRUE;
 
     /* Initialize XRender */
     X11DRV_XRender_Init();
@@ -116,6 +119,8 @@ BOOL X11DRV_CreateDC( HDC hdc, X11DRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR de
                       LPCWSTR output, const DEVMODEW* initData )
 {
     X11DRV_PDEVICE *physDev;
+
+    if (!device_init_done) device_init();
 
     physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if (!physDev) return FALSE;
