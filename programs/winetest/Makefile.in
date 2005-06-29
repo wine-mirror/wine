@@ -119,6 +119,8 @@ msacm32_test.exe$(DLLEXT): $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msacm/tests/msacm32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 mscms_test.exe$(DLLEXT): $(DLLDIR)/mscms/tests/mscms_test.exe$(DLLEXT)
 	cp $(DLLDIR)/mscms/tests/mscms_test.exe$(DLLEXT) $@ && $(STRIP) $@
+mshtml_test.exe$(DLLEXT): $(DLLDIR)/mshtml/tests/mshtml_test.exe$(DLLEXT)
+	cp $(DLLDIR)/mshtml/tests/mshtml_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msi_test.exe$(DLLEXT): $(DLLDIR)/msi/tests/msi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/msi/tests/msi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 msvcrt_test.exe$(DLLEXT): $(DLLDIR)/msvcrt/tests/msvcrt_test.exe$(DLLEXT)
