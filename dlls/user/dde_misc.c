@@ -207,7 +207,7 @@ LPARAM WINAPI ReuseDDElParam(LPARAM lParam, UINT msgIn, UINT msgOut,
             params[0] = uiLo;
             params[1] = uiHi;
             TRACE("Reusing pack %08x %08x\n", uiLo, uiHi);
-            GlobalLock( (HGLOBAL)lParam );
+            GlobalUnlock( (HGLOBAL)lParam );
             return lParam;
 
         case WM_DDE_EXECUTE:
