@@ -89,8 +89,8 @@ static void configureAudioDriver(HWND hDlg, const char *drivername)
               DRVCONFIGINFO dci;
               LONG lRes;
               dci.dwDCISize = sizeof (dci);
-              dci.lpszDCISectionName = (LPWSTR)0;
-              dci.lpszDCIAliasName = (LPWSTR)0;
+              dci.lpszDCISectionName = NULL;
+              dci.lpszDCIAliasName = NULL;
               lRes = SendDriverMessage(hdrvr, DRV_CONFIGURE, 0, (LONG)&dci);
 	    }
 	    CloseDriver(hdrvr, 0, 0);
