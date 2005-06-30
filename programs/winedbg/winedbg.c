@@ -1137,7 +1137,7 @@ static void dbg_init_console(void)
 
 static int dbg_winedbg_usage(void)
 {
-    dbg_printf("Usage: winedbg [--auto] [--gdb] cmdline\n");
+    dbg_printf("Usage: winedbg [--command cmd|--auto] [--gdb [--no-start] [--with-xterm]] cmdline\n");
     return 1;
 }
 
