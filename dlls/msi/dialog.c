@@ -55,6 +55,7 @@ struct msi_control_tag
     LPWSTR value;
     IPicture *pic;
     HICON hIcon;
+    LPWSTR tabnext;
     WCHAR name[1];
 };
 
@@ -143,6 +144,8 @@ static msi_control *msi_dialog_find_control( msi_dialog *dialog, LPCWSTR name )
 {
     msi_control *control;
 
+    if( !name )
+        return NULL;
     for( control = dialog->control_list; control; control = control->next )
         if( !strcmpW( control->name, name ) ) /* FIXME: case sensitive? */
             break;
@@ -299,6 +302,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->value = NULL;
     control->pic = NULL;
     control->hIcon = NULL;
+    control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
 
     x = MSI_RecordGetInteger( rec, 4 );
     y = MSI_RecordGetInteger( rec, 5 );
@@ -1351,6 +1355,28 @@ static void msi_dialog_adjust_dialog_size( msi_dialog *dialog, LPSIZE sz )
     sz->cy = rect.bottom - rect.top;
 }
 
+static BOOL msi_control_set_next( msi_control *control, msi_control *next )
+{
+    return SetWindowPos( next->hwnd, control->hwnd, 0, 0, 0, 0,
+                         SWP_NOMOVE | SWP_NOOWNERZORDER | SWP_NOREDRAW |
+                         SWP_NOREPOSITION | SWP_NOSENDCHANGING | SWP_NOSIZE );
+}
+
+static UINT msi_dialog_set_tab_order( msi_dialog *dialog )
+{
+    msi_control *control, *tab_next;
+
+    for( control = dialog->control_list; control; control = control->next )
+    {
+        tab_next = msi_dialog_find_control( dialog, control->tabnext );
+        if( !tab_next )
+            continue;
+        msi_control_set_next( control, tab_next );
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
 {
     static const WCHAR df[] = {
@@ -1395,6 +1421,7 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     msi_dialog_build_font_list( dialog );
     msi_dialog_fill_controls( dialog );
     msi_dialog_evaluate_control_conditions( dialog );
+    msi_dialog_set_tab_order( dialog );
 
     return 0;
 }
@@ -1825,6 +1852,7 @@ void msi_dialog_destroy( msi_dialog *dialog )
             IPicture_Release( t->pic );
         if( t->hIcon )
             DestroyIcon( t->hIcon );
+        HeapFree( GetProcessHeap(), 0, t->tabnext );
         HeapFree( GetProcessHeap(), 0, t );
     }
 
