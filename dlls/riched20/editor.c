@@ -51,7 +51,7 @@
   - EM_GETLANGOPTIONS 2.0
   - EM_GETLIMITTEXT
   - EM_GETLINE        
-  - EM_GETLINECOUNT   returns number of rows, not of paragraphs
+  + EM_GETLINECOUNT   returns number of rows, not of paragraphs
   + EM_GETMODIFY
   - EM_GETOLEINTERFACE
   - EM_GETOPTIONS
@@ -838,7 +838,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_GETLIMITTEXT)
   UNSUPPORTED_MSG(EM_GETLINE)
-  UNSUPPORTED_MSG(EM_GETLINECOUNT)
   /* UNSUPPORTED_MSG(EM_GETOLEINTERFACE) separate stub */
   UNSUPPORTED_MSG(EM_GETOPTIONS)
   UNSUPPORTED_MSG(EM_GETPASSWORDCHAR)
@@ -1234,6 +1233,19 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       return nChars;
     }
     return ME_GetTextW(editor, rng->lpstrText, rng->chrg.cpMin, rng->chrg.cpMax-rng->chrg.cpMin, FALSE);
+  }
+  case EM_GETLINECOUNT:
+  {
+    ME_DisplayItem *item = editor->pBuffer->pFirst->next;
+    int nRows = 0;
+
+    while (item != editor->pBuffer->pLast)
+    {
+      assert(item->type == diParagraph);
+      nRows += item->member.para.nRows;
+      item = item->member.para.next_para;
+    }
+    return max(1, nRows);
   }
   case WM_CREATE:
     ME_CommitUndo(editor);

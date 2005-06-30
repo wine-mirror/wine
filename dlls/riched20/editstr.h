@@ -147,6 +147,7 @@ typedef struct tagME_Paragraph
   int nFlags;
   int nYPos, nHeight;
   int nLastPaintYPos, nLastPaintHeight;
+  int nRows;
   struct tagME_DisplayItem *prev_para, *next_para, *document;
 } ME_Paragraph;
 

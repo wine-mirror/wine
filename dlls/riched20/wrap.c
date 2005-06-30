@@ -375,12 +375,15 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   ME_WrapEndParagraph(&wc, p);
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
+  tp->member.para.nRows = wc.nRow + 1;
 }
 
 
 void ME_PrepareParagraphForWrapping(ME_Context *c, ME_DisplayItem *tp) {
   ME_DisplayItem *p;
+
   /* remove all items that will be reinserted by paragraph wrapper anyway */
+  tp->member.para.nRows = 0;
   for (p = tp->next; p!=tp->member.para.next_para; p = p->next) {
     switch(p->type) {
       case diStartRow:
