@@ -457,10 +457,7 @@ static char *extract_icon( LPCWSTR path, int index)
             iconsdirW = HeapAlloc(GetProcessHeap(), 0, size);
             RegQueryValueExW(hkey, IconsDirW, 0, NULL, (LPBYTE)iconsdirW, &size);
 
-            s = wine_get_unix_file_name(iconsdirW);
-            if (s)
-                iconsdir = s;
-            else
+            if (!(iconsdir = wine_get_unix_file_name(iconsdirW)))
             {
                 int n = WideCharToMultiByte(CP_UNIXCP, 0, iconsdirW, -1, NULL, 0, NULL, NULL);
                 iconsdir = HeapAlloc(GetProcessHeap(), 0, n);
@@ -468,19 +465,16 @@ static char *extract_icon( LPCWSTR path, int index)
             }
             HeapFree(GetProcessHeap(), 0, iconsdirW);
         }
-        else
-        {
-            WCHAR path[MAX_PATH];
-
-            if (GetTempPathW(MAX_PATH, path))
-            {
-                s = wine_get_unix_file_name(path);
-                if (s)
-                    iconsdir = s;
-            }
-        }
         RegCloseKey( hkey );
     }
+
+    if (!iconsdir)
+    {
+        WCHAR path[MAX_PATH];
+
+        if (GetTempPathW(MAX_PATH, path)) iconsdir = wine_get_unix_file_name(path);
+    }
+
     if (!iconsdir)
         return NULL;  /* No icon created */
     
