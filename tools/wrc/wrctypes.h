@@ -87,10 +87,10 @@
 #define RES_BLOCKSIZE	512
 
 typedef struct res {
-	int	allocsize;	/* Allocated datablock size */
-	int	size;		/* Actual size of data */
-	int	dataidx;	/* Tag behind the resource-header */
-	char	*data;
+	unsigned int	allocsize;	/* Allocated datablock size */
+	unsigned int	size;		/* Actual size of data */
+	unsigned int	dataidx;	/* Tag behind the resource-header */
+	char		*data;
 } res_t;
 
 /* Resource strings are slightly more complex because they include '\0' */

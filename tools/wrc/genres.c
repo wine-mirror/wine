@@ -55,7 +55,7 @@ res_t *new_res(void)
 	return r;
 }
 
-res_t *grow_res(res_t *r, int add)
+res_t *grow_res(res_t *r, unsigned int add)
 {
 	r->allocsize += add;
 	r->data = (char *)xrealloc(r->data, r->allocsize);
@@ -407,7 +407,7 @@ static void put_lvc(res_t *res, lvc_t *lvc)
 */
 static void put_raw_data(res_t *res, raw_data_t *raw, int offset)
 {
-	int wsize = raw->size - offset;
+	unsigned int wsize = raw->size - offset;
 	if(res->allocsize - res->size < wsize)
 		grow_res(res, wsize);
 	memcpy(&(res->data[res->size]), raw->data + offset, wsize);
