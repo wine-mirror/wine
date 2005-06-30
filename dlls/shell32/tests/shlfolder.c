@@ -593,8 +593,6 @@ static void test_EnumObjects_and_CompareIDs(void)
     MultiByteToWideChar(CP_ACP, 0, cCurrDirA, -1, cCurrDirW, MAX_PATH);
     strcatW(cCurrDirW, cTestDirW);
 
-    OleInitialize(NULL);
-
     hr = SHGetDesktopFolder(&IDesktopFolder);
     ok(hr == S_OK, "SHGetDesktopfolder failed %08lx\n", hr);
 
@@ -619,11 +617,16 @@ static void test_EnumObjects_and_CompareIDs(void)
 START_TEST(shlfolder)
 {
     init_function_pointers();
+    /* if OleInitialize doesn't get called, ParseDisplayName returns
+       CO_E_NOTINITIALIZED for malformed directory names on win2k. */
+    OleInitialize(NULL);
 
-    test_EnumObjects_and_CompareIDs();
     test_BindToObject();
+    test_EnumObjects_and_CompareIDs();
     test_GetDisplayName();
     test_GetAttributesOf();
     test_SHGetPathFromIDList();
     test_CallForAttributes();
+
+    OleUninitialize();
 }
