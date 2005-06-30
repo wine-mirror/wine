@@ -1341,6 +1341,35 @@ static res_t *fontdir2res(name_id_t *name, fontdir_t *fnd)
 
 /*
  *****************************************************************************
+ * Function	: html2res
+ * Syntax	: res_t *html2res(name_id_t *name, html_t *html)
+ * Input	:
+ *	name	- Name/ordinal of the resource
+ *	rdt	- The html descriptor
+ * Output	: New .res format structure
+ * Description	:
+ * Remarks	:
+ *****************************************************************************
+*/
+static res_t *html2res(name_id_t *name, html_t *html)
+{
+	int restag;
+	res_t *res;
+	assert(name != NULL);
+	assert(html != NULL);
+
+	res = new_res();
+	restag = put_res_header(res, WRC_RT_HTML, NULL, name, html->memopt, &(html->data->lvc));
+	put_raw_data(res, html->data, 0);
+	/* Set ResourceSize */
+	SetResSize(res, restag);
+	if(win32)
+		put_pad(res);
+	return res;
+}
+
+/*
+ *****************************************************************************
  * Function	: rcdata2res
  * Syntax	: res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
  * Input	:
@@ -1931,6 +1960,10 @@ void resources2res(resource_t *top)
 		case res_menex:
 			if(!top->binres)
 				top->binres = menuex2res(top->name, top->res.menex);
+			break;
+		case res_html:
+			if(!top->binres)
+				top->binres = html2res(top->name, top->res.html);
 			break;
 		case res_rdt:
 			if(!top->binres)

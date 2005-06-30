@@ -204,6 +204,7 @@ static struct keyword keywords[] = {
 	{ "GRAYED",		tGRAYED,		0, 0, 0},
 	{ "GROUPBOX",		tGROUPBOX,		0, 0, 0},
 	{ "HELP",		tHELP,			0, 0, 0},
+	{ "HTML",		tHTML,			0, 0, 0},
 	{ "ICON",		tICON,			0, 0, 0},
 	{ "IMPURE",		tIMPURE,		0, 0, 0},
 	{ "INACTIVE",		tINACTIVE,		0, 0, 0},
