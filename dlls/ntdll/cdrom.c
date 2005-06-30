@@ -1405,10 +1405,11 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
     int ret = STATUS_NOT_SUPPORTED;
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
+    int io;
 #elif defined HAVE_SCSIREQ_T_CMD
     scsireq_t cmd;
-#endif
     int io;
+#endif
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH_DIRECT))
         return STATUS_BUFFER_TOO_SMALL;
@@ -1524,10 +1525,11 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
     int ret = STATUS_NOT_SUPPORTED;
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
     sg_io_hdr_t cmd;
+    int io;
 #elif defined HAVE_SCSIREQ_T_CMD
     scsireq_t cmd;
-#endif
     int io;
+#endif
 
     if (pPacket->Length < sizeof(SCSI_PASS_THROUGH))
         return STATUS_BUFFER_TOO_SMALL;
