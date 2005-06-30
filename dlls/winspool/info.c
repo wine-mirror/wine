@@ -1587,8 +1587,39 @@ BOOL WINAPI EndPagePrinter(HANDLE hPrinter)
  */
 DWORD WINAPI StartDocPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
 {
-    FIXME("(hPrinter=%p, Level=0x%lx, pDocInfo=%p): stub\n", hPrinter, Level, pDocInfo);
-    return FALSE;
+    UNICODE_STRING usBuffer;
+    DOC_INFO_2W doc2W;
+    DOC_INFO_2A *doc2 = (DOC_INFO_2A*)pDocInfo;
+    DWORD ret;
+
+    /* DOC_INFO_1, 2 and 3 all have the strings in the same place with either two (DOC_INFO_2)
+       or one (DOC_INFO_3) extra DWORDs */
+
+    switch(Level) {
+    case 2:
+        doc2W.JobId = doc2->JobId;
+        /* fall through */
+    case 3:
+        doc2W.dwMode = doc2->dwMode;
+        /* fall through */
+    case 1:
+        doc2W.pDocName = asciitounicode(&usBuffer, doc2->pDocName);
+        doc2W.pOutputFile = asciitounicode(&usBuffer, doc2->pOutputFile);
+        doc2W.pDatatype = asciitounicode(&usBuffer, doc2->pDatatype);
+        break;
+
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    ret = StartDocPrinterW(hPrinter, Level, (LPBYTE)&doc2W);
+
+    HeapFree(GetProcessHeap(), 0, doc2W.pDatatype);
+    HeapFree(GetProcessHeap(), 0, doc2W.pOutputFile);
+    HeapFree(GetProcessHeap(), 0, doc2W.pDocName);
+
+    return ret;
 }
 
 /*****************************************************************************
@@ -1596,7 +1627,11 @@ DWORD WINAPI StartDocPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
  */
 DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
 {
-    FIXME("(hPrinter=%p, Level=0x%lx, pDocInfo=%p): stub\n", hPrinter, Level, pDocInfo);
+    DOC_INFO_2W *doc = (DOC_INFO_2W *)pDocInfo;
+
+    FIXME("(hPrinter = %p, Level = %ld, pDocInfo = %p {pDocName = %s, pOutputFile = %s, pDatatype = %s}): stub\n",
+          hPrinter, Level, doc, debugstr_w(doc->pDocName), debugstr_w(doc->pOutputFile),
+          debugstr_w(doc->pDatatype));
     return FALSE;
 }
 
