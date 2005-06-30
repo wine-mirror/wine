@@ -404,11 +404,10 @@ const char *func_declaration( const char *func )
 
     switch (target_platform)
     {
+    case PLATFORM_APPLE:
+        return "";
     case PLATFORM_WINDOWS:
         sprintf( buffer, ".def _%s; .scl 2; .type 32; .endef", func );
-        break;
-    case PLATFORM_APPLE:
-        sprintf( buffer, ".type _%s,@function", func );
         break;
     case PLATFORM_SVR4:
         sprintf( buffer, ".type %s,2", func );
@@ -440,8 +439,11 @@ const char *get_asm_string_keyword(void)
 {
     switch (target_platform)
     {
-    case PLATFORM_SVR4: return ".asciz";
-    default:            return ".string";
+    case PLATFORM_APPLE:
+    case PLATFORM_SVR4:
+        return ".asciz";
+    default:
+        return ".string";
     }
 }
 
