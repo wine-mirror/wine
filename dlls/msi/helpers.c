@@ -576,6 +576,11 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         
             HeapFree(GetProcessHeap(),0,package->script->Actions[i]);
         }
+
+        for (i = 0; i < package->script->UniqueActionsCount; i++)
+            HeapFree(GetProcessHeap(),0,package->script->UniqueActions[i]);
+
+        HeapFree(GetProcessHeap(),0,package->script->UniqueActions);
         HeapFree(GetProcessHeap(),0,package->script);
     }
 
@@ -911,6 +916,45 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             newstate, debugstr_w(component->Component), component->Installed, 
             component->Action, component->ActionRequest);
     } 
+}
+
+UINT register_unique_action(MSIPACKAGE *package, LPCWSTR action)
+{
+    UINT count;
+    LPWSTR *newbuf = NULL;
+
+    if (!package || !package->script)
+        return FALSE;
+
+    TRACE("Registering Action %s as having fun\n",debugstr_w(action));
+    
+    count = package->script->UniqueActionsCount;
+    package->script->UniqueActionsCount++;
+    if (count != 0)
+        newbuf = HeapReAlloc(GetProcessHeap(),0,
+                        package->script->UniqueActions,
+                        package->script->UniqueActionsCount* sizeof(LPWSTR));
+    else
+        newbuf = HeapAlloc(GetProcessHeap(),0, sizeof(LPWSTR));
+
+    newbuf[count] = strdupW(action);
+    package->script->UniqueActions = newbuf;
+
+   return ERROR_SUCCESS;
+}
+
+BOOL check_unique_action(MSIPACKAGE *package, LPCWSTR action)
+{
+    INT i;
+
+    if (!package || !package->script)
+        return FALSE;
+
+    for (i = 0; i < package->script->UniqueActionsCount; i++)
+        if (!strcmpW(package->script->UniqueActions[i],action))
+            return TRUE;
+
+    return FALSE;
 }
 
 WCHAR* generate_error_string(MSIPACKAGE *package, UINT error, DWORD count, ... )

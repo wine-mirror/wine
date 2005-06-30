@@ -447,6 +447,8 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     package->script = HeapAlloc(GetProcessHeap(),0,sizeof(MSISCRIPT));
     memset(package->script,0,sizeof(MSISCRIPT));
 
+    package->script->InWhatSequence = SEQUENCE_INSTALL;
+
     package->msiFilePath= strdupW(msiFilePath);
 
     if (szPackagePath)   
@@ -540,10 +542,14 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     {
         if (atoiW(buffer) >= INSTALLUILEVEL_REDUCED)
         {
+            package->script->InWhatSequence |= SEQUENCE_UI;
             rc = ACTION_ProcessUISequence(package);
             ui = TRUE;
             if (rc == ERROR_SUCCESS)
+            {
+                package->script->InWhatSequence |= SEQUENCE_EXEC;
                 rc = ACTION_ProcessExecSequence(package,TRUE);
+            }
         }
         else
             rc = ACTION_ProcessExecSequence(package,FALSE);
@@ -3847,6 +3853,7 @@ static UINT ACTION_ExecuteAction(MSIPACKAGE *package)
     level = load_dynamic_property(package,szUILevel,NULL);
 
     MSI_SetPropertyW(package,szUILevel,szTwo);
+    package->script->InWhatSequence |= SEQUENCE_EXEC;
     rc = ACTION_ProcessExecSequence(package,FALSE);
     MSI_SetPropertyW(package,szUILevel,level);
     HeapFree(GetProcessHeap(),0,level);
