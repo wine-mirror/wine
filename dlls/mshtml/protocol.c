@@ -463,7 +463,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    src = FindResourceW(hdll, ++url_file, (LPCWSTR)23);
+    src = FindResourceW(hdll, ++url_file, (LPCWSTR)RT_HTML);
     if(!src) {
         WARN("Could not find resource: %s\n", debugstr_w(url_file));
         IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
