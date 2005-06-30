@@ -35,9 +35,6 @@
 /* Define if you have ARTS sound server */
 #undef HAVE_ARTS
 
-/* Define if the assembler keyword .size is accepted */
-#undef HAVE_ASM_DOT_SIZE
-
 /* Define to 1 if you have the <asm/types.h> header file. */
 #undef HAVE_ASM_TYPES_H
 
@@ -961,12 +958,6 @@
 
 /* Define to a macro to generate an assembly name from a C symbol */
 #undef __ASM_NAME
-
-/* Define to the assembler keyword used to specify a word value */
-#undef __ASM_SHORT
-
-/* Define to the assembler keyword used to specify an ASCII string */
-#undef __ASM_STRING
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
