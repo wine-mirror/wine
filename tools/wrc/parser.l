@@ -405,7 +405,7 @@ static struct keyword *iskeyword(char *kw)
 	 * and *only* in a filename. In this case, the second
 	 * rule will be reduced because it is longer.
 	 */
-[A-Za-z_0-9]+		{
+[A-Za-z_0-9.]+		{
 				struct keyword *tok = iskeyword(yytext);
 
 				if(tok)
