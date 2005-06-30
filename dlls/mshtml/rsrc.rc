@@ -18,4 +18,4 @@
 
 REGINST REGINST mshtml.inf
 
-HTML_RESOURCE HTML "blank.htm"
+blank.htm 23 "blank.htm"
