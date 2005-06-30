@@ -280,11 +280,17 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
                 if (cLinkLen + cTailLen + 1 > FILENAME_MAX)
                     return FALSE;
                     
+                /* Avoid double slashes. */
+                if (szSymlink[cLinkLen-1] == '/' && pPathTail[0] == '/') {
+                    szSymlink[cLinkLen-1] = '\0';
+                    cLinkLen--;
+                }
+                
                 memcpy(szSymlink + cLinkLen, pPathTail, cTailLen + 1);
                 memcpy(szPath, szSymlink, cLinkLen + cTailLen + 1);
                 *pszCanonicalPath = '\0';
-                    pCanonicalTail = pszCanonicalPath;
-                    pPathTail = szPath;
+                pCanonicalTail = pszCanonicalPath;
+                pPathTail = szPath;
             } else {
                 /* Relative link. Expand into szPath and continue. */
                 char szTemp[FILENAME_MAX];
@@ -307,7 +313,7 @@ static BOOL UNIXFS_get_unix_path(LPCWSTR pszDosPath, char *pszCanonicalPath)
             pCanonicalTail += pPathTail - pElement;
             *pPathTail = cTemp;
         }
-    } while (pPathTail[0] == '/' && pPathTail[1]); /* Also handles paths terminated by '/' */
+    } while (pPathTail[0] == '/');
    
     TRACE("--> %s\n", debugstr_a(pszCanonicalPath));
     
@@ -440,6 +446,14 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
         }
     }
 
+    /* Special case for the root folder. */
+    if (!strcmp(szCompletePath, "/")) {
+        *ppidl = pidl = (LPITEMIDLIST)SHAlloc(sizeof(USHORT));
+        if (!pidl) return FALSE;
+        pidl->mkid.cb = 0; /* Terminate the ITEMIDLIST */
+        return TRUE;
+    }
+    
     /* Remove trailing slash, if present */
     cPathLen = strlen(szCompletePath);
     if (szCompletePath[cPathLen-1] == '/') 
