@@ -21,6 +21,7 @@ IDL_SRCS = \
 	mshtmhst.idl \
 	mshtml.idl \
 	msxml.idl \
+	msxml2.idl \
 	oaidl.idl \
 	objidl.idl \
 	ocidl.idl \

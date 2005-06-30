@@ -188,7 +188,7 @@ interface IXMLAttribute : IDispatch
 
     [propget, id(DISPID_XMLATTRIBUTE_VALUE)]
     HRESULT value( [retval, out] BSTR *p );
-}
+};
 
 [
 local,
@@ -198,7 +198,7 @@ uuid(948c5ad3-c58d-11d0-9c0b-00c04fc99c8e)
 interface IXMLError : IUnknown
 {
     HRESULT GetErrorInfo([out]XML_ERROR *pErrorReturn);
-}
+};
 
 [
 uuid(cfc399af-d876-11d0-9c10-00c04fc99c8e)
@@ -206,4 +206,4 @@ uuid(cfc399af-d876-11d0-9c10-00c04fc99c8e)
 coclass XMLDocument
 {
     [default] interface IXMLDocument;
-}
+};
