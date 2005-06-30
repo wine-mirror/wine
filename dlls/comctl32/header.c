@@ -193,6 +193,21 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 
     if (phdi->fmt & HDF_OWNERDRAW) {
 	DRAWITEMSTRUCT dis;
+	NMCUSTOMDRAW nmcd;
+	
+	nmcd.hdr.hwndFrom = hwnd;
+	nmcd.hdr.idFrom   = GetWindowLongPtrW (hwnd, GWLP_ID);
+	nmcd.hdr.code     = NM_CUSTOMDRAW;
+	nmcd.dwDrawStage  = CDDS_PREPAINT | CDDS_ITEM | CDDS_ITEMPOSTERASE;
+	nmcd.hdc          = hdc;
+	nmcd.dwItemSpec   = iItem;
+	nmcd.rc           = r;
+	nmcd.uItemState   = phdi->bDown ? CDIS_SELECTED : 0;
+	nmcd.lItemlParam  = phdi->lParam;
+
+	SendMessageW (infoPtr->hwndNotify, WM_NOTIFY,
+			(WPARAM)nmcd.hdr.idFrom, (LPARAM)&nmcd);
+
 	dis.CtlType    = ODT_HEADER;
 	dis.CtlID      = GetWindowLongPtrW (hwnd, GWLP_ID);
 	dis.itemID     = iItem;
