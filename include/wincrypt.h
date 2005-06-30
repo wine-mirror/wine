@@ -1477,13 +1477,43 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define szOID_DOMAIN_COMPONENT              "0.9.2342.19200300.100.1.25"
 #define szOID_PKCS_12_FRIENDLY_NAME_ATTR     "1.2.840.113549.1.9.20"
 #define szOID_PKCS_12_LOCAL_KEY_ID           "1.2.840.113549.1.9.21"
+#define szOID_CERT_EXTENSIONS                "1.3.6.1.4.1.311.2.1.14"
+#define szOID_NEXT_UPDATE_LOCATION           "1.3.6.1.4.1.311.10.2"
+#define szOID_REMOVE_CERTIFICATE             "1.3.6.1.4.1.311.10.8.1"
+#define szOID_CROSS_CERT_DIST_POINTS         "1.3.6.1.4.1.311.10.9.1"
+#define szOID_CTL                            "1.3.6.1.4.1.311.10.10.1"
+#define szOID_SORTED_CTL                     "1.3.6.1.4.1.311.10.10.1.1"
+#define szOID_ANY_APPLICATION_POLICY         "1.3.6.1.4.1.311.10.12.1"
 #define szOID_RENEWAL_CERTIFICATE            "1.3.6.1.4.1.311.13.1"
 #define szOID_ENROLLMENT_NAME_VALUE_PAIR     "1.3.6.1.4.1.311.13.2.1"
 #define szOID_ENROLLMENT_CSP_PROVIDER        "1.3.6.1.4.1.311.13.2.2"
 #define szOID_OS_VERSION                     "1.3.6.1.4.1.311.13.2.3"
 #define szOID_PKCS_12_KEY_PROVIDER_NAME_ATTR "1.3.6.1.4.1.311.17.1"
 #define szOID_LOCAL_MACHINE_KEYSET           "1.3.6.1.4.1.311.17.2"
+#define szOID_AUTO_ENROLL_CTL_USAGE          "1.3.6.1.4.1.311.20.1"
+#define szOID_ENROLL_CERTTYPE_EXTENSION      "1.3.6.1.4.1.311.20.2"
 #define szOID_ENROLLMENT_AGENT               "1.3.6.1.4.1.311.20.2.1"
+#define szOID_CERT_MANIFOLD                  "1.3.6.1.4.1.311.20.3"
+#define szOID_CERTSRV_PREVIOUS_CERT_HASH     "1.3.6.1.4.1.311.21.2"
+#define szOID_CRL_VIRTUAL_BASE               "1.3.6.1.4.1.311.21.3"
+#define szOID_CRL_NEXT_PUBLISH               "1.3.6.1.4.1.311.21.4"
+#define szOID_KP_CA_EXCHANGE                 "1.3.6.1.4.1.311.21.5"
+#define szOID_KP_KEY_RECOVERY_AGENT          "1.3.6.1.4.1.311.21.6"
+#define szOID_CERTIFICATE_TEMPLATE           "1.3.6.1.4.1.311.21.7"
+#define szOID_ENTERPRISE_OID_ROOT            "1.3.6.1.4.1.311.21.8"
+#define szOID_RDN_DUMMY_SIGNER               "1.3.6.1.4.1.311.21.9"
+#define szOID_APPLICATION_CERT_POLICIES      "1.3.6.1.4.1.311.21.10"
+#define szOID_APPLICATION_POLICY_MAPPINGS    "1.3.6.1.4.1.311.21.11"
+#define szOID_APPLICATION_POLICY_CONSTRAINTS "1.3.6.1.4.1.311.21.12"
+#define szOID_ARCHIVED_KEY_ATTR              "1.3.6.1.4.1.311.21.13"
+#define szOID_CRL_SELF_CDP                   "1.3.6.1.4.1.311.21.14"
+#define szOID_REQUIRE_CERT_CHAIN_POLICY      "1.3.6.1.4.1.311.21.15"
+#define szOID_ARCHIVED_KEY_CERT_HASH         "1.3.6.1.4.1.311.21.16"
+#define szOID_ISSUED_CERT_HASH               "1.3.6.1.4.1.311.21.17"
+#define szOID_DS_EMAIL_REPLICATION           "1.3.6.1.4.1.311.21.19"
+#define szOID_REQUEST_CLIENT_INFO            "1.3.6.1.4.1.311.21.20"
+#define szOID_ENCRYPTED_KEY_HASH             "1.3.6.1.4.1.311.21.21"
+#define szOID_CERTSRV_CROSSCA_VERSION        "1.3.6.1.4.1.311.21.22"
 #define szOID_KEYID_RDN                      "1.3.6.1.4.1.311.10.7.1"
 #define szOID_PKIX                           "1.3.6.1.5.5.7"
 #define szOID_PKIX_PE                        "1.3.6.1.5.5.7.1"
@@ -1500,6 +1530,23 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define szOID_PKIX_KP_IPSEC_USER             "1.3.6.1.5.5.7.3.7"
 #define szOID_PKIX_KP_TIMESTAMP_SIGNING      "1.3.6.1.5.5.7.3.8"
 #define szOID_IPSEC_KP_IKE_INTERMEDIATE      "1.3.6.1.5.5.8.2.2"
+
+#ifndef szOID_SERIALIZED
+#define szOID_SERIALIZED                     "1.3.6.1.4.1.311.10.3.3.1"
+#endif
+
+#ifndef szOID_NT_PRINCIPAL_NAME
+#define szOID_NT_PRINCIPAL_NAME              "1.3.6.1.4.1.311.20.2.3"
+#endif
+
+#ifndef szOID_CERTSRV_CA_VERSION
+#define szOID_CERTSRV_CA_VERSION             "1.3.6.1.4.1.311.21.1"
+#endif
+
+#ifndef szOID_PRODUCT_UPDATE
+#define szOID_PRODUCT_UPDATE                 "1.3.6.1.4.1.311.31.1"
+#endif
+
 #define CRYPT_ENCODE_DECODE_NONE             0
 #define X509_CERT                            ((LPCSTR)1)
 #define X509_CERT_TO_BE_SIGNED               ((LPCSTR)2)
