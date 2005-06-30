@@ -684,7 +684,8 @@ then
         [AC_TRY_COMPILE([#include <artsc.h>],[arts_stream_t stream;],
             [AC_SUBST(ARTSLIBS, $ARTSC_LIBS)
             AC_SUBST(ARTSINCL, $ARTSC_CFLAGS)
-            AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])])],)
+            AC_DEFINE(HAVE_ARTS, 1, [Define if you have ARTS sound server])])],,
+            $ARTSC_LIBS)
     CFLAGS="$save_CFLAGS"
 fi
 
