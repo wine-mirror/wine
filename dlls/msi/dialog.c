@@ -857,6 +857,28 @@ static void msi_mask_control_change( struct msi_maskedit_info *info )
     HeapFree( GetProcessHeap(), 0, val );
 }
 
+/* now move to the next control if necessary */
+static VOID msi_mask_next_control( struct msi_maskedit_info *info, HWND hWnd )
+{
+    HWND hWndNext;
+    UINT len, i;
+
+    for( i=0; i<info->num_groups; i++ )
+        if( info->group[i].hwnd == hWnd )
+            break;
+
+    /* don't move from the last control */
+    if( i >= (info->num_groups-1) )
+        return;
+
+    len = SendMessageW( hWnd, WM_GETTEXTLENGTH, 0, 0 );
+    if( len < info->group[i].len )
+        return;
+
+    hWndNext = GetNextDlgTabItem( GetParent( hWnd ), hWnd, FALSE );
+    SetFocus( hWndNext );
+}
+
 static LRESULT WINAPI
 MSIMaskedEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -873,7 +895,10 @@ MSIMaskedEdit_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
     case WM_COMMAND:
         if (HIWORD(wParam) == EN_CHANGE)
+        {
             msi_mask_control_change( info );
+            msi_mask_next_control( info, (HWND) lParam );
+        }
         break;
     case WM_NCDESTROY:
         HeapFree( GetProcessHeap(), 0, info->prop );
