@@ -985,14 +985,6 @@ void WINAPI FreeIconList( DWORD dw )
 }
 
 
-/*************************************************************************
- * ShellDDEInit (SHELL32.@)
- */
-void WINAPI ShellDDEInit(BOOL start)
-{
-    FIXME("stub: %d\n", start);
-}
-
 /***********************************************************************
  * DllGetVersion [SHELL32.@]
  *
