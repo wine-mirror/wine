@@ -56,6 +56,20 @@
 #  define FD_ISSET   Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
 #  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+# elif defined(RLIM_INFINITY)
+/* On Darwin stdlib.h includes sys/resource.h which defines timeval but not the fd_set macros */
+#  define fd_set unix_fd_set
+#  include <sys/types.h>
+#  include <time.h>
+#  include <stdlib.h>
+#  undef fd_set
+#  undef FD_SETSIZE
+#  undef FD_CLR
+#  undef FD_SET
+#  undef FD_ZERO
+#  undef FD_ISSET
+#  define select     Include_winsock_h_before_sys_types_h_or_use_the_MSVCRT_library
+#  define timeval    Include_winsock_h_before_sys_types_h_or_use_the_MSVCRT_library
 # else  /* FD_CLR */
 /* stdlib.h has not been included yet so it's not too late. Include it now
  * making sure that none of the select symbols is affected. Then we can
