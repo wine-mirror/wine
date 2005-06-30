@@ -792,7 +792,7 @@ typedef struct IWineD3DSwapChainImpl
     GLXContext              glCtx;
     XVisualInfo            *visInfo;
     GLXContext              render_ctx;
-    /* This has been left in device for now, but needs moving off into a rendertarget mamangement class and seperated out from swapchains and devices. */
+    /* This has been left in device for now, but needs moving off into a rendertarget management class and separated out from swapchains and devices. */
     Drawable                drawable;
 } IWineD3DSwapChainImpl;
 

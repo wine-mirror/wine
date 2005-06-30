@@ -1292,7 +1292,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     if (This->dxVersion > 8) {
         *pCaps->TextureCaps |= D3DPTEXTURECAPS_NONPOW2CONDITIONAL;
 
-    } else {  /* NONPOW2 isn't accessable by d3d8 yet */
+    } else {  /* NONPOW2 isn't accessible by d3d8 yet */
         *pCaps->TextureCaps |= D3DPTEXTURECAPS_POW2;
     }
 

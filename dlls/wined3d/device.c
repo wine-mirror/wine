@@ -3140,8 +3140,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDE
 HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /**
-    * SetSampler is designed to allow for more than the standard upto 8 textures
-    *  and Geforce has stopped suporting more than 6 standards texture in openGL,
+    * SetSampler is designed to allow for more than the standard up to 8 textures
+    *  and Geforce has stopped supporting more than 6 standard textures in openGL.
     * So I have to use ARB for Gforce. (maybe if the sampler > 4 then use ARB?)
     *
     * http://developer.nvidia.com/object/General_FAQ.html#t6

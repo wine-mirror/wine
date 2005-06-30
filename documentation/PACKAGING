@@ -188,7 +188,7 @@ WINE COMPONENTS
 	- progman : A Program Manager replacement.
 	- regedit : A graphical tool to edit your registry or for
 		importing a windows registry to Wine.
-	- regsvr32 : A program to register/unregister .DLL's and .OCX files.
+	- regsvr32 : A program to register/unregister .DLL and .OCX files.
 		Only works on those dlls that can self-register.
 	- taskmgr : A clone of the windows taskmgr, used for debugging and
 		managing running Windows and Winlib processes.

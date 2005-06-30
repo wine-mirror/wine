@@ -5,21 +5,21 @@ Background
 ----------
 
 Most of the functions available in Windows, and in Windows applications, are
-made available to applications from DLL's. Wine implements the Win32 API by
-providing replacement's for the essential Windows DLL's in the form of Unix
+made available to applications from DLLs. Wine implements the Win32 API by
+providing replacements for the essential Windows DLLs in the form of Unix
 shared library (.so) files, and provides a tool, winebuild, to allow Winelib
-applications to link to functions exported from shared libraries/DLL's.
+applications to link to functions exported from shared libraries/DLLs.
 
-The first thing to note is that there are many DLL's that aren't yet
+The first thing to note is that there are many DLLs that aren't yet
 implemented in Wine. Mostly this doesn't present a problem because the native
-Win32 versions of lots of DLL's can be used without problems, at least on
+Win32 versions of lots of DLLs can be used without problems, at least on
 x86 platforms. However, one of Wine's goals is the eventual replacement of
 every essential O/S DLL so that the whole API is implemented. This not only
 means that a copy of the real O/S is not needed, but also that non-x86
 platforms can run most Win32 programs after recompiling.
 
 The second thing to note is that applications commonly use their own or 3rd
-party DLL's to provide functionality. In order to call these functions with
+party DLLs to provide functionality. In order to call these functions with
 a Winelib program, some 'glue' is needed. This 'glue' comes in the form of
 a .spec file. The .spec file, along with some dummy code, is used to create
 a Wine .so corresponding to the Windows DLL. The winebuild program can then
@@ -32,7 +32,7 @@ Wine to use the .so version instead [1].
 These two factors mean that if you are:
 
 A: Reimplementing a Win32 DLL for use within Wine, or
-B: Compiling a Win32 application with Winelib that uses x86 DLL's
+B: Compiling a Win32 application with Winelib that uses x86 DLLs
 
 Then you will need to create a .spec file (amongst other things). If you
 won't be doing either of the above, then you won't need winedump.
@@ -54,7 +54,7 @@ Usage
 Winedump is a command line tool. For the list of options and the basic usage
 see the the winedump(1) man page.
 
-Spec mode: Generating stub DLL's
+Spec mode: Generating stub DLLs
 -------------------------------
 
 If all you want to do is generate a stub DLL to allow you to link your
@@ -75,7 +75,7 @@ Export    2 - '_UnZipFile' ... [Ignoring]
 ...
 
 "[Ignoring]" Just tells you that winedump isn't trying to determine the
-parameters or return types of the functions, its just creating stubs.
+parameters or return types of the functions, it's just creating stubs.
 
 The following files are created:
 
@@ -103,7 +103,7 @@ will not be part of Wine, or you don't wish to build it this way,
 you should look at the Wine tool 'winemaker' to generate a DLL project.
 
 FIXME: winemaker could run this tool automatically when generating projects
-that use extra DLL's (*.lib in the "ADD LINK32" line in .dsp) ....
+that use extra DLLs (*.lib in the "ADD LINK32" line in .dsp) ....
 
 zipextra_install
 A shell script for adding zipextra to the Wine source tree (see below).
@@ -135,7 +135,7 @@ If you have problems with this step, you can post to the wine-devel mailing
 list for help. The build process can change regularly and winebuild may lag
 behind in support.
 
-NOTE: **DO NOT** submit patches to Wine for 3rd party DLL's! Building DLL's
+NOTE: **DO NOT** submit patches to Wine for 3rd party DLLs! Building DLLs
       into your copy of the tree is just a simple way for you to link. When
       you release your application you won't be distributing the Unix .so
       anyway, just the Win32 DLL. As you update your version of Wine
@@ -314,7 +314,7 @@ Spec mode: Problems compiling a DLL containing generated code
 
 Unless you are very lucky, you will need to do a small amount of work to
 get a DLL generated with -c, -t or -f to compile. The reason for this is
-that most DLL's will use custom types such as structs whose definition
+that most DLLs will use custom types such as structs whose definition
 is not known to the code in the DLL.
 
 Heres an example prototype from crtdll:
@@ -329,8 +329,8 @@ compiling the function in order to be compatible with the native DLL. (In
 general this is not an issue, but you need to be aware of such issues if you
 encounter problems with your forwarding DLL).
 
-For third party (non C++) DLL's, the header(s) supplied with the DLL  can
-normally be added as an include to the generated DLL header. For other DLL's
+For third party (non C++) DLLs, the header(s) supplied with the DLL  can
+normally be added as an include to the generated DLL header. For other DLLs
 I suggest creating a separate header in the DLL directory and adding any
 needed types to that. This allows you to rebuild the DLL at whim, for example
 if a new version of winedump brings increased functionality, then you

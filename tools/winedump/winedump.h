@@ -26,9 +26,9 @@
  *  relies on Patrik Stridvall's 'function_grep.pl' script to work.
  *
  *  http://msdn.microsoft.com/library/periodic/period96/msj/S330.htm
- *  This article provides both a description and freely downloadble
+ *  This article provides both a description and freely downloadable
  *  implementation, in source code form, of how to extract symbols
- *  from Win32 PE executables/DLL's.
+ *  from Win32 PE executables/DLLs.
  *
  *  http://www.kegel.com/mangle.html
  *  Gives information on the name mangling scheme used by MS compilers,

@@ -621,7 +621,7 @@ HRESULT WINAPI D3D8CB_CreateAdditionalSwapChain(IUnknown *device,
    *pPresentationParameters->BackBufferFormat              = localParameters.BackBufferFormat;
    *pPresentationParameters->BackBufferCount               = localParameters.BackBufferCount;
    *pPresentationParameters->MultiSampleType               = localParameters.MultiSampleType;
-/*   *pPresentationParameters->MultiSampleQuality            leave alone incase wineD3D set something internally */
+/*   *pPresentationParameters->MultiSampleQuality            leave alone in case wined3d set something internally */
    *pPresentationParameters->SwapEffect                    = localParameters.SwapEffect;
    *pPresentationParameters->hDeviceWindow                 = localParameters.hDeviceWindow;
    *pPresentationParameters->Windowed                      = localParameters.Windowed;
@@ -629,7 +629,7 @@ HRESULT WINAPI D3D8CB_CreateAdditionalSwapChain(IUnknown *device,
    *pPresentationParameters->AutoDepthStencilFormat        = localParameters.AutoDepthStencilFormat;
    *pPresentationParameters->Flags                         = localParameters.Flags;
    *pPresentationParameters->FullScreen_RefreshRateInHz    = localParameters.FullScreen_RefreshRateInHz;
-/*   *pPresentationParameters->PresentationInterval          leave alone incase wineD3D set something internally */
+/*   *pPresentationParameters->PresentationInterval          leave alone in case wined3d set something internally */
 
    return res;
 }

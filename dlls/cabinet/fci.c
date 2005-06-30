@@ -590,7 +590,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
         read_result=pcfdata->cbData;
         /* Modify the size of the compressed data to store only a part of the */
         /* data block into the current cabinet. This is done to prevent */
-        /* that the maximum cabinet size will be exceeded. The remainer */
+        /* that the maximum cabinet size will be exceeded. The remainder */
         /* will be stored into the next following cabinet. */
 
         /* The cabinet will be of size "p_fci_internal->oldCCAB.cb". */
@@ -678,7 +678,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
       p_fci_internal->statusFolderCopied += pcfdata->cbData;
       (*payload)+=pcfdata->cbUncomp;
       /* if cabinet size too large and data has been split */
-      /* write the remainer of the data block to the new CFDATA1 file */
+      /* write the remainder of the data block to the new CFDATA1 file */
       if( split_block  ) { /* This does not include the */
                                   /* abused one (just search for "abused" )*/
       /* copy all CFDATA structures from handleCFDATA1 to handleCFDATA1new */
@@ -687,7 +687,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
           return FALSE;
         }
 
-        /* set cbData the size of the remainer of the data block */
+        /* set cbData to the size of the remainder of the data block */
         pcfdata->cbData = read_result - pcfdata->cbData;
         /*recover former value of cfdata.cbData; read_result will be the offset*/
         read_result -= pcfdata->cbData;
@@ -704,7 +704,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             /* TODO write error */
           return FALSE;
         }
-        /* TODO error handling of err dont forget PFCI_FREE(hfci, reserved) */
+        /* TODO error handling of err don't forget PFCI_FREE(hfci, reserved) */
 
         *psizeFileCFDATA1new += sizeof(CFDATA)+cbReserveCFData;
 
@@ -723,7 +723,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
 
         *psizeFileCFDATA1new += pcfdata->cbData;
         /* the two blocks of the split data block have been written */
-        /* dont reset split_data yet, because it is still needed see below */
+        /* don't reset split_data yet, because it is still needed see below */
       }
 
       /* report status with pfnfcis about copied size of folder */
@@ -768,7 +768,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
           /* TODO read error */
           return FALSE;
         }
-        /* TODO error handling of err dont forget PFCI_FREE(hfci, reserved) */
+        /* TODO error handling of err don't forget PFCI_FREE(hfci, reserved) */
 
         /* write cfdata with checksum to handleCFDATA1new */
         if( PFCI_WRITE(hfci, handleCFDATA1new, /* file handle */
@@ -778,7 +778,7 @@ static BOOL fci_flushfolder_copy_cfdata(HFCI hfci, char* buffer, UINT cbReserveC
             /* TODO write error */
           return FALSE;
         }
-        /* TODO error handling of err dont forget PFCI_FREE(hfci, reserved) */
+        /* TODO error handling of err don't forget PFCI_FREE(hfci, reserved) */
 
         *psizeFileCFDATA1new += sizeof(CFDATA)+cbReserveCFData;
 
@@ -826,7 +826,7 @@ static BOOL fci_flushfolder_copy_cffolder(HFCI hfci, int* err, UINT cbReserveCFF
   /* absolute offset cannot be set yet, because the size of cabinet header, */
   /* the number of CFFOLDERs and the number of CFFILEs may change. */
   /* Instead the size of all previous data blocks will be stored and */
-  /* the remainer of the offset will be added when the cabinet will be */
+  /* the remainder of the offset will be added when the cabinet will be */
   /* flushed to disk. */
   /* This is exactly the way the original CABINET.DLL works!!! */
   cffolder.coffCabStart=sizeFileCFDATA2old;

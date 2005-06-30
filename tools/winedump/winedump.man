@@ -15,7 +15,7 @@ is a Wine tool which aims to help:
 .nf
 A: Reimplementing a Win32 DLL for use within Wine, or
 .nf
-B: Compiling a Win32 application with Winelib that uses x86 DLL's
+B: Compiling a Win32 application with Winelib that uses x86 DLLs
 .PP
 For both tasks in order to be able to link to the Win functions some
 glue code is needed.  This 'glue' comes in the form of a \fI.spec\fR file.
@@ -47,7 +47,7 @@ Basic usage help is printed.
 .IP \fBdump\fR
 To dump the contents of a PE file.
 .IP \fBspec\fR
-For generating .spec files and stub DLL's.
+For generating .spec files and stub DLLs.
 .IP \fBsym\fR
 Symbol mode.
 Used to demangle C++ symbols.
@@ -85,7 +85,7 @@ into a file, since a lot of output will be produced.
 Use dll for input file and generate implementation code.
 .IP "\fB-I \fIdir\fR"
 Look for prototypes in '\fIdir\fR' (implies \fB-c\fR). In the case of
-Windows DLL's, this could be either the standard include
+Windows DLLs, this could be either the standard include
 directory from your compiler, or a SDK include directory.
 If you have a text document with prototypes (such as
 documentation) that can be used also, however you may need
