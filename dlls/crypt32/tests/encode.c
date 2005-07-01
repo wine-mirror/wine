@@ -1214,6 +1214,99 @@ static void test_decodeSequenceOfAny(DWORD dwEncoding)
     }
 }
 
+struct encodedExtensions
+{
+    CERT_EXTENSIONS exts;
+    const BYTE *encoded;
+};
+
+static CERT_EXTENSION criticalExt =
+ { szOID_BASIC_CONSTRAINTS2, TRUE, { 8, "\x30\x06\x01\x01\xff\x02\x01\x01" } };
+static CERT_EXTENSION nonCriticalExt =
+ { szOID_BASIC_CONSTRAINTS2, FALSE, { 8, "\x30\x06\x01\x01\xff\x02\x01\x01" } };
+
+static const struct encodedExtensions exts[] = {
+ { { 0, NULL }, "\x30\x00" },
+ { { 1, &criticalExt }, "\x30\x14\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff"
+  "\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01" },
+ { { 1, &nonCriticalExt }, "\x30\x11\x30\x0f\x06\x03\x55\x1d\x13"
+  "\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01" },
+};
+
+#if 0
+static void printBytes(const BYTE *pbData, size_t cb)
+{
+    size_t i;
+
+    for (i = 0; i < cb; i++)
+        printf("%02x ", pbData[i]);
+    putchar('\n');
+}
+#endif
+
+static void test_encodeExtensions(DWORD dwEncoding)
+{
+    DWORD i;
+
+    for (i = 0; i < sizeof(exts) / sizeof(exts[i]); i++)
+    {
+        BOOL ret;
+        BYTE *buf = NULL;
+        DWORD bufSize = 0;
+
+        ret = CryptEncodeObjectEx(dwEncoding, X509_EXTENSIONS, &exts[i].exts,
+         CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(bufSize == exts[i].encoded[1] + 2,
+             "Expected %d bytes, got %ld\n", exts[i].encoded[1] + 2, bufSize);
+            ok(!memcmp(buf, exts[i].encoded, exts[i].encoded[1] + 2),
+             "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodeExtensions(DWORD dwEncoding)
+{
+    DWORD i;
+
+    for (i = 0; i < sizeof(exts) / sizeof(exts[i]); i++)
+    {
+        BOOL ret;
+        BYTE *buf = NULL;
+        DWORD bufSize = 0;
+
+        ret = CryptDecodeObjectEx(dwEncoding, X509_EXTENSIONS,
+         exts[i].encoded, exts[i].encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG,
+         NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            CERT_EXTENSIONS *ext = (CERT_EXTENSIONS *)buf;
+            DWORD j;
+
+            ok(ext->cExtension == exts[i].exts.cExtension,
+             "Expected %ld extensions, see %ld\n", exts[i].exts.cExtension,
+             ext->cExtension);
+            for (j = 0; j < min(ext->cExtension, exts[i].exts.cExtension); j++)
+            {
+                ok(!strcmp(ext->rgExtension[j].pszObjId,
+                 exts[i].exts.rgExtension[j].pszObjId),
+                 "Expected OID %s, got %s\n",
+                 exts[i].exts.rgExtension[j].pszObjId,
+                 ext->rgExtension[j].pszObjId);
+                ok(!memcmp(ext->rgExtension[j].Value.pbData,
+                 exts[i].exts.rgExtension[j].Value.pbData,
+                 exts[i].exts.rgExtension[j].Value.cbData),
+                 "Unexpected value\n");
+            }
+            LocalFree(buf);
+        }
+    }
+}
+
 static void test_registerOIDFunction(void)
 {
     static const WCHAR bogusDll[] = { 'b','o','g','u','s','.','d','l','l',0 };
@@ -1292,6 +1385,8 @@ START_TEST(encode)
         test_decodeBasicConstraints(encodings[i]);
         test_encodeSequenceOfAny(encodings[i]);
         test_decodeSequenceOfAny(encodings[i]);
+        test_encodeExtensions(encodings[i]);
+        test_decodeExtensions(encodings[i]);
     }
     test_registerOIDFunction();
 }
