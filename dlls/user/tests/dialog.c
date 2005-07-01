@@ -849,6 +849,18 @@ static void InitialFocusTest (void)
     }
 }
 
+static void test_GetDlgItemText(void)
+{
+    char string[64];
+    BOOL ret;
+
+    strcpy(string, "Overwrite Me");
+    ret = GetDlgItemTextA(NULL, 0, string, sizeof(string)/sizeof(string[0]));
+    ok(!ret, "GetDlgItemText(NULL) shouldn't have succeeded\n");
+
+    ok(string[0] == '\0', "string retrieved using GetDlgItemText should have been NULL terminated\n");
+}
+
 
 START_TEST(dialog)
 {
@@ -860,4 +872,5 @@ START_TEST(dialog)
     IsDialogMessageWTest();
     WM_NEXTDLGCTLTest();
     InitialFocusTest();
+    test_GetDlgItemText();
 }

@@ -1295,6 +1295,7 @@ BOOL WINAPI SetDlgItemTextW( HWND hwnd, INT id, LPCWSTR lpString )
  */
 INT WINAPI GetDlgItemTextA( HWND hwnd, INT id, LPSTR str, UINT len )
 {
+    if (str && (len > 0)) str[0] = '\0';
     return (INT)SendDlgItemMessageA( hwnd, id, WM_GETTEXT,
                                          len, (LPARAM)str );
 }
@@ -1305,6 +1306,7 @@ INT WINAPI GetDlgItemTextA( HWND hwnd, INT id, LPSTR str, UINT len )
  */
 INT WINAPI GetDlgItemTextW( HWND hwnd, INT id, LPWSTR str, UINT len )
 {
+    if (str && (len > 0)) str[0] = '\0';
     return (INT)SendDlgItemMessageW( hwnd, id, WM_GETTEXT,
                                          len, (LPARAM)str );
 }
