@@ -85,8 +85,6 @@ extern void DPMI_PendingEventCheck();
 extern void DPMI_PendingEventCheck_Cleanup();
 extern void DPMI_PendingEventCheck_Return();
 extern DWORD CallTo16_DataSelector;
-extern SEGPTR CALL32_CBClient_RetAddr;
-extern SEGPTR CALL32_CBClientEx_RetAddr;
 extern BYTE Call16_Start;
 extern BYTE Call16_End;
 

@@ -144,6 +144,9 @@ struct SLApiDB
     DWORD                  errorReturnValue;
 };
 
+SEGPTR CALL32_CBClient_RetAddr = 0;
+SEGPTR CALL32_CBClientEx_RetAddr = 0;
+
 #ifdef __i386__
 extern void __wine_call_from_16_thunk();
 #else
@@ -1997,7 +2000,7 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
 /***********************************************************************
  *     CBClientThunkSL                      (KERNEL.620)
  */
-extern DWORD CALL32_CBClient( FARPROC proc, LPWORD args, DWORD *esi );
+extern DWORD CALL32_CBClient( FARPROC proc, LPWORD args, WORD *stackLin, DWORD *esi );
 void WINAPI CBClientThunkSL( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
@@ -2005,13 +2008,24 @@ void WINAPI CBClientThunkSL( CONTEXT86 *context )
     LPWORD args = MapSL( MAKESEGPTR( context->SegSs, LOWORD(context->Ebp) ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
 
-    context->Eax = CALL32_CBClient( proc, args, &context->Esi );
+    /* fill temporary area for the asm code (see comments in winebuild) */
+    SEGPTR stack = stack16_push( 12 );
+    LPWORD stackLin = MapSL(stack);
+    /* stackLin[0] and stackLin[1] reserved for the 32-bit stack ptr */
+    stackLin[2] = wine_get_ss();
+    stackLin[3] = 0;
+    stackLin[4] = OFFSETOF(stack) + 12;
+    stackLin[5] = SELECTOROF(stack);
+    stackLin[6] = OFFSETOF(CALL32_CBClientEx_RetAddr);  /* overwrite return address */
+    stackLin[7] = SELECTOROF(CALL32_CBClientEx_RetAddr);
+    context->Eax = CALL32_CBClient( proc, args, stackLin + 4, &context->Esi );
+    stack16_pop( 12 );
 }
 
 /***********************************************************************
  *     CBClientThunkSLEx                    (KERNEL.621)
  */
-extern DWORD CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArgs );
+extern DWORD CALL32_CBClientEx( FARPROC proc, LPWORD args, WORD *stackLin, DWORD *esi, INT *nArgs );
 void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
@@ -2021,7 +2035,21 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
     INT nArgs;
     LPWORD stackLin;
 
-    context->Eax = CALL32_CBClientEx( proc, args, &context->Esi, &nArgs );
+    /* fill temporary area for the asm code (see comments in winebuild) */
+    SEGPTR stack = stack16_push( 24 );
+    stackLin = MapSL(stack);
+    stackLin[0] = OFFSETOF(stack) + 4;
+    stackLin[1] = SELECTOROF(stack);
+    stackLin[2] = wine_get_ds();
+    stackLin[5] = OFFSETOF(stack) + 24;
+    /* stackLin[6] and stackLin[7] reserved for the 32-bit stack ptr */
+    stackLin[8] = wine_get_ss();
+    stackLin[9] = 0;
+    stackLin[10] = OFFSETOF(CALL32_CBClientEx_RetAddr);
+    stackLin[11] = SELECTOROF(CALL32_CBClientEx_RetAddr);
+
+    context->Eax = CALL32_CBClientEx( proc, args, stackLin, &context->Esi, &nArgs );
+    stack16_pop( 24 );
 
     /* Restore registers saved by CBClientGlueSL */
     stackLin = (LPWORD)((LPBYTE)CURRENT_STACK16 + sizeof(STACK16FRAME) - 4);

@@ -743,7 +743,6 @@ static void BuildRet16Func( FILE *outfile )
 static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 {
     const char *name = isEx? "CALL32_CBClientEx" : "CALL32_CBClient";
-    int size = isEx? 24 : 12;
 
     /* Function header */
 
@@ -759,106 +758,21 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%ebx\n" );
 
-    if (UsePIC)
-    {
-        /* Get Global Offset Table into %edx */
-        fprintf( outfile, "\tcall .L__wine_%s.getgot1\n", name );
-        fprintf( outfile, ".L__wine_%s.getgot1:\n", name );
-        fprintf( outfile, "\tpopl %%edx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_%s.getgot1], %%edx\n", name );
-    }
+    /* Get pointer to temporary area and save the 32-bit stack pointer */
 
-    /* Get the 16-bit stack */
-
-    fprintf( outfile, "\t.byte 0x64\n\tmovl (%d),%%ebx\n", STACKOFFSET);
-
-    /* Convert it to a flat address */
-
-    fprintf( outfile, "\tshldl $16,%%ebx,%%eax\n" );
-    fprintf( outfile, "\tandl $0xfff8,%%eax\n" );
-    fprintf( outfile, "\tshrl $1,%%eax\n" );
-    if (!UsePIC)
-        fprintf( outfile, "\tmovl %s(%%eax),%%esi\n", asm_name("wine_ldt_copy") );
-    else
-    {
-        fprintf( outfile, "\tmovl %s(%%edx), %%esi\n", asm_name("wine_ldt_copy@GOT") );
-        fprintf( outfile, "\tmovl (%%esi,%%eax), %%esi\n" );
-    }
-    fprintf( outfile, "\tmovw %%bx,%%ax\n" );
-    fprintf( outfile, "\taddl %%eax,%%esi\n" );
-
-    /* Allocate temporary area (simulate STACK16_PUSH) */
-
-    fprintf( outfile, "\tpushf\n" );
-    fprintf( outfile, "\tcld\n" );
-    fprintf( outfile, "\tleal -%d(%%esi), %%edi\n", size );
-    fprintf( outfile, "\tmovl $%d, %%ecx\n", sizeof(STACK16FRAME) );
-    fprintf( outfile, "\trep\n\tmovsb\n" );
-    fprintf( outfile, "\tpopf\n" );
-
-    fprintf( outfile, "\t.byte 0x64\n\tsubw $%d,(%d)\n", size, STACKOFFSET );
-
-    fprintf( outfile, "\tpushl %%edi\n" );  /* remember address */
-
-    /* Set up temporary area */
+    fprintf( outfile, "\tmovl 16(%%ebp), %%ebx\n" );
+    fprintf( outfile, "\tleal -8(%%esp), %%eax\n" );
 
     if ( !isEx )
-    {
-        fprintf( outfile, "\tleal 4(%%edi), %%edi\n" );
-
-        fprintf( outfile, "\tleal -8(%%esp), %%eax\n" );
-        fprintf( outfile, "\tmovl %%eax, -8(%%edi)\n" );    /* 32-bit sp */
-
-        fprintf( outfile, "\tmovw %%ss, %%ax\n" );
-        fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
-        fprintf( outfile, "\tmovl %%eax, -4(%%edi)\n" );    /* 32-bit ss */
-
-        fprintf( outfile, "\taddl $%d, %%ebx\n", sizeof(STACK16FRAME)-size+4 + 4 );
-        fprintf( outfile, "\tmovl %%ebx, 0(%%edi)\n" );    /* 16-bit ss:sp */
-
-        if (!UsePIC)
-            fprintf( outfile, "\tmovl %s_RetAddr, %%eax\n", asm_name(name) );
-        else
-        {
-            fprintf( outfile, "\tmovl %s_RetAddr@GOT(%%edx), %%eax\n", asm_name(name) );
-            fprintf( outfile, "\tmovl (%%eax), %%eax\n" );
-        }
-        fprintf( outfile, "\tmovl %%eax, 4(%%edi)\n" );   /* overwrite return address */
-    }
+        fprintf( outfile, "\tmovl %%eax, -8(%%ebx)\n" );
     else
-    {
-        fprintf( outfile, "\taddl $%d, %%ebx\n", sizeof(STACK16FRAME)-size+4 );
-        fprintf( outfile, "\tmovl %%ebx, 0(%%edi)\n" );
-
-        fprintf( outfile, "\tmovw %%ds, %%ax\n" );
-        fprintf( outfile, "\tmovw %%ax, 4(%%edi)\n" );
-
-        fprintf( outfile, "\taddl $20, %%ebx\n" );
-        fprintf( outfile, "\tmovw %%bx, 10(%%edi)\n" );
-
-        fprintf( outfile, "\tleal -8(%%esp), %%eax\n" );
-        fprintf( outfile, "\tmovl %%eax, 12(%%edi)\n" );
-
-        fprintf( outfile, "\tmovw %%ss, %%ax\n" );
-        fprintf( outfile, "\tandl $0x0000ffff, %%eax\n" );
-        fprintf( outfile, "\tmovl %%eax, 16(%%edi)\n" );
-
-        if (!UsePIC)
-            fprintf( outfile, "\tmovl %s_RetAddr, %%eax\n", asm_name(name) );
-        else
-        {
-            fprintf( outfile, "\tmovl %s_RetAddr@GOT(%%edx), %%eax\n", asm_name(name) );
-            fprintf( outfile, "\tmovl (%%eax), %%eax\n" );
-        }
-        fprintf( outfile, "\tmovl %%eax, 20(%%edi)\n" );
-    }
+        fprintf( outfile, "\tmovl %%eax, 12(%%ebx)\n" );
 
     /* Set up registers and call CBClient relay stub (simulating a far call) */
 
-    fprintf( outfile, "\tmovl 16(%%ebp), %%esi\n" );
+    fprintf( outfile, "\tmovl 20(%%ebp), %%esi\n" );
     fprintf( outfile, "\tmovl (%%esi), %%esi\n" );
 
-    fprintf( outfile, "\tmovl %%edi, %%ebx\n" );
     fprintf( outfile, "\tmovl 8(%%ebp), %%eax\n" );
     fprintf( outfile, "\tmovl 12(%%ebp), %%ebp\n" );
 
@@ -870,24 +784,10 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tmovl 32(%%esp), %%edi\n" );
     fprintf( outfile, "\tmovl %%esi, (%%edi)\n" );
 
-    /* Cleanup temporary area (simulate STACK16_POP) */
-
-    fprintf( outfile, "\tpop %%esi\n" );
-
-    fprintf( outfile, "\tpushf\n" );
-    fprintf( outfile, "\tstd\n" );
-    fprintf( outfile, "\tdec %%esi\n" );
-    fprintf( outfile, "\tleal %d(%%esi), %%edi\n", size );
-    fprintf( outfile, "\tmovl $%d, %%ecx\n", sizeof(STACK16FRAME) );
-    fprintf( outfile, "\trep\n\tmovsb\n" );
-    fprintf( outfile, "\tpopf\n" );
-
-    fprintf( outfile, "\t.byte 0x64\n\taddw $%d,(%d)\n", size, STACKOFFSET );
-
     /* Return argument size to caller */
     if ( isEx )
     {
-        fprintf( outfile, "\tmovl 32(%%esp), %%ebx\n" );
+        fprintf( outfile, "\tmovl 36(%%esp), %%ebx\n" );
         fprintf( outfile, "\tmovl %%ebp, (%%ebx)\n" );
     }
 
@@ -924,11 +824,6 @@ static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
     }
     fprintf( outfile, "\tlret\n" );
     function_footer( outfile, name );
-
-    /* Declare the return address variable */
-
-    fprintf( outfile, "\n\t.globl %sAddr\n", asm_name(name) );
-    fprintf( outfile, "%sAddr:\t.long 0\n", asm_name(name) );
 }
 
 
