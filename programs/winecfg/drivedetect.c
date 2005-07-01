@@ -58,6 +58,7 @@ static const char * const ignored_fstypes[] = {
     "swap",
     "usbdevfs",
     "rpc_pipefs",
+    "binfmt_misc",
     NULL
 };
 
