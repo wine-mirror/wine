@@ -233,6 +233,7 @@ WINDOWS_INCLUDES = \
 	storage.h \
 	tapi.h \
 	tchar.h \
+	textserv.h \
 	tlhelp32.h \
 	tmschema.h \
 	uuids.h \
