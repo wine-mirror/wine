@@ -705,8 +705,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
         }
         else
         {
-            if (!strcmp( name, "__wine_call_from_32_regs" ) ||
-                !strcmp( name, "__wine_call_from_16_regs" ))
+            if (!strcmp( name, "__wine_call_from_32_regs" ))
             {
                 /* special case: need to preserve all registers */
                 fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
@@ -718,6 +717,23 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
                 fprintf( outfile, "    \"\\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\\n\"\n",
                          asm_name(table), pos, name );
                 fprintf( outfile, "    \"\\txchgl %%eax,(%%esp)\\n\"\n" );
+                fprintf( outfile, "    \"\\tret\\n\"\n" );
+            }
+            else if (!strcmp( name, "__wine_call_from_16_regs" ))
+            {
+                /* special case: need to preserve all registers */
+                fprintf( outfile, "    \"\\tpushl %%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\tpushl %%ecx\\n\"\n" );
+                fprintf( outfile, "    \"\\tcall .L__wine_spec_%s\\n\"\n", name );
+                fprintf( outfile, "    \".L__wine_spec_%s:\\n\"\n", name );
+                fprintf( outfile, "    \"\\tpopl %%eax\\n\"\n" );
+                fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
+                fprintf( outfile, "    \"\\tmovl %s+%d-.L__wine_spec_%s(%%eax),%%eax\\n\"\n",
+                         asm_name(table), pos, name );
+                fprintf( outfile, "    \"\\tmovzwl %%sp, %%ecx\\n\"\n" );
+                fprintf( outfile, "    \"\\t.byte 0x36\\n\"\n" );
+                fprintf( outfile, "    \"\\txchgl %%eax,4(%%ecx)\\n\"\n" );
+                fprintf( outfile, "    \"\\tpopl %%ecx\\n\"\n" );
                 fprintf( outfile, "    \"\\tret\\n\"\n" );
             }
             else
