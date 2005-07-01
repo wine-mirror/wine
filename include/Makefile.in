@@ -38,7 +38,8 @@ IDL_SRCS = \
 	unknwn.idl \
 	urlmon.idl \
 	wtypes.idl \
-	xmldom.idl
+	xmldom.idl \
+	xmldso.idl
 
 IDL_INCLUDES = \
 	$(IDL_SRCS) \
@@ -277,6 +278,7 @@ WINDOWS_INCLUDES = \
 	wtsapi32.h \
 	xcmc.h \
 	xmldomdid.h \
+	xmldsodid.h \
 	zmouse.h
 
 MSVCRT_INCLUDES = \
