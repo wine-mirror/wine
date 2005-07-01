@@ -45,6 +45,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
 
 BOOL MSSTYLES_GetNextInteger(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, int *value);
 BOOL MSSTYLES_GetNextToken(LPCWSTR lpStringStart, LPCWSTR lpStringEnd, LPCWSTR *lpValEnd, LPWSTR lpBuff, DWORD buffSize);
+void MSSTYLES_ParseThemeIni(PTHEME_FILE tf);
 
 extern HINSTANCE hDllInst;
 
@@ -229,7 +230,11 @@ HRESULT MSSTYLES_SetActiveTheme(PTHEME_FILE tf)
         MSSTYLES_CloseThemeFile(tfActiveTheme);
     tfActiveTheme = tf;
     if (tfActiveTheme)
+    {
 	tfActiveTheme->dwRefCount++;
+	if(!tfActiveTheme->classes)
+	    MSSTYLES_ParseThemeIni(tfActiveTheme);
+    }
     return S_OK;
 }
 
@@ -784,9 +789,7 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
         return NULL;
     }
     if(!tfActiveTheme->classes) {
-        MSSTYLES_ParseThemeIni(tfActiveTheme);
-        if(!tfActiveTheme->classes)
-            return NULL;
+	return NULL;
     }
 
     start = pszClassList;
