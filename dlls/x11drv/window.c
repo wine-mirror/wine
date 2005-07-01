@@ -374,6 +374,38 @@ static void set_size_hints( Display *display, struct x11drv_win_data *data, DWOR
 
 
 /***********************************************************************
+ *              get_process_name
+ *
+ * get the name of the current process for setting class hints
+ */
+static char *get_process_name(void)
+{
+    static char *name;
+
+    if (!name)
+    {
+        WCHAR module[MAX_PATH];
+        DWORD len = GetModuleFileNameW( 0, module, MAX_PATH );
+        if (len && len < MAX_PATH)
+        {
+            char *ptr;
+            WCHAR *p, *appname = module;
+
+            if ((p = strrchrW( appname, '/' ))) appname = p + 1;
+            if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+            len = WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, NULL, 0, NULL, NULL );
+            if ((ptr = HeapAlloc( GetProcessHeap(), 0, len )))
+            {
+                WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, ptr, len, NULL, NULL );
+                name = ptr;
+            }
+        }
+    }
+    return name;
+}
+
+
+/***********************************************************************
  *              X11DRV_set_wm_hints
  *
  * Set the window manager hints for a newly-created window
@@ -390,6 +422,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     DWORD style = GetWindowLongW( data->hwnd, GWL_STYLE );
     DWORD ex_style = GetWindowLongW( data->hwnd, GWL_EXSTYLE );
     HWND owner = GetWindow( data->hwnd, GW_OWNER );
+    char *process_name = get_process_name();
 
     /* transient for hint */
     if (owner)
@@ -415,7 +448,7 @@ void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data )
     /* class hints */
     if ((class_hints = XAllocClassHint()))
     {
-        class_hints->res_name = "wine";
+        class_hints->res_name = process_name;
         class_hints->res_class = "Wine";
         XSetClassHint( display, data->whole_window, class_hints );
         XFree( class_hints );
