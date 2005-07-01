@@ -1445,9 +1445,6 @@ void init_registry(void)
     static const WCHAR root_name[] = { 0 };
     static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
     static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
-    static const WCHAR config_name[] =
-    { 'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
-      'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g',0 };
 
     const char *config = wine_get_config_dir();
     char *p, *filename;
@@ -1458,7 +1455,6 @@ void init_registry(void)
     root_key = alloc_key( root_name, time(NULL) );
     assert( root_key );
 
-    /* load the config file */
     if (!(filename = malloc( strlen(config) + 16 ))) fatal_error( "out of memory\n" );
     strcpy( filename, config );
     p = filename + strlen(filename);
@@ -1480,17 +1476,6 @@ void init_registry(void)
         fatal_error( "could not create User\\.Default registry key\n" );
 
     strcpy( p, "/userdef.reg" );
-    load_init_registry_from_file( filename, key );
-    release_object( key );
-
-    /* load config into Registry\Machine\Software\Wine\Wine\Config */
-
-    if (!(key = create_key( root_key, copy_path( config_name, sizeof(config_name), 0 ),
-                            NULL, 0, time(NULL), &dummy )))
-        fatal_error( "could not create Config registry key\n" );
-
-    key->flags |= KEY_VOLATILE;
-    strcpy( p, "/config" );
     load_init_registry_from_file( filename, key );
     release_object( key );
 
