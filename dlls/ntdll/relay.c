@@ -722,12 +722,11 @@ static BOOL is_register_entry_point( const BYTE *addr )
     }
     else  /* check for import thunk */
     {
-        if (addr[0] != 0x50) return FALSE;  /* pushl %%eax */
-        if (addr[1] != 0x9c) return FALSE;  /* pushfl */
-        if (addr[2] != 0xe8 || addr[3] || addr[4] || addr[5] || addr[6]) return FALSE;  /* call .+0 */
-        if (addr[7] != 0x58) return FALSE;  /* popl %%eax */
-        if (addr[8] != 0x05) return FALSE;  /* addl offset,%%eax */
-        ptr = addr + 7 + *(const int *)(addr + 9);
+        if (addr[0] != 0x50) return FALSE;  /* pushl %eax */
+        if (addr[1] != 0xe8 || addr[2] || addr[3] || addr[4] || addr[5]) return FALSE;  /* call .+0 */
+        if (addr[6] != 0x58) return FALSE;  /* popl %eax */
+        if (addr[7] != 0x8b || addr[8] != 0x80) return FALSE;  /* movl offset(%eax),%eax */
+        ptr = addr + 6 + *(const int *)(addr + 9);
     }
     return (*(const char * const*)ptr == (char *)__wine_call_from_32_regs);
 }
