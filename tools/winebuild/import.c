@@ -582,6 +582,7 @@ static const char *ldcombine_files( char **argv )
     close( fd );
     atexit( remove_ld_tmp_file );
 
+    if (!ld_command) ld_command = xstrdup("ld");
     for (i = 0; argv[i]; i++) len += strlen(argv[i]) + 1;
     cmd = xmalloc( len + strlen(ld_tmp_file) + 8 + strlen(ld_command)  );
     sprintf( cmd, "%s -r -o %s", ld_command, ld_tmp_file );
@@ -612,6 +613,7 @@ void read_undef_symbols( char **argv )
     if (argv[1]) name = ldcombine_files( argv );
     else name = argv[0];
 
+    if (!nm_command) nm_command = xstrdup("nm");
     cmd = xmalloc( strlen(nm_command) + strlen(name) + 5 );
     sprintf( cmd, "%s -u %s", nm_command, name );
     if (!(f = popen( cmd, "r" )))
