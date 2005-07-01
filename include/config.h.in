@@ -224,6 +224,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
+#undef HAVE_IOKIT_IOKITLIB_H
+
 /* Define to 1 if you have the <io.h> header file. */
 #undef HAVE_IO_H
 

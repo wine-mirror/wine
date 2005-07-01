@@ -75,6 +75,14 @@
 # include <sys/scsiio.h>
 #endif
 
+#ifdef HAVE_IOKIT_IOKITLIB_H
+# ifndef SENSEBUFLEN
+#  include <IOKit/IOKitLib.h>
+#  include <IOKit/scsi/SCSICmds_REQUEST_SENSE_Defs.h>
+#  define SENSEBUFLEN kSenseDefaultSize
+# endif
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "ntstatus.h"

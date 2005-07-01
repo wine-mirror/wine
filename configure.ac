@@ -171,6 +171,7 @@ OPENGL_LIBS=""
 dnl **** Check for header files ****
 
 AC_CHECK_HEADERS(\
+	IOKit/IOKitLib.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \

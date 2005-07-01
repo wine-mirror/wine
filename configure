@@ -7110,7 +7110,9 @@ done
 
 
 
+
 for ac_header in \
+	IOKit/IOKitLib.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \
