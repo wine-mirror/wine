@@ -81,7 +81,7 @@ UINT     WINAPI  IDirect3DDevice9Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE9 i
 HRESULT  WINAPI  IDirect3DDevice9Impl_EvictManagedResources(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
 
-    TRACE("(%p) : relay\n", This);
+    TRACE("(%p) : Relay\n", This);
     return IWineD3DDevice_EvictManagedResources(This->WineD3DDevice);
 }
 
@@ -137,9 +137,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetDisplayMode(LPDIRECT3DDEVICE9 iface, UI
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetCreationParameters(LPDIRECT3DDEVICE9 iface, D3DDEVICE_CREATION_PARAMETERS *pParameters) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) copying to %p\n", This, pParameters);    
-    memcpy(pParameters, &This->CreateParms, sizeof(D3DDEVICE_CREATION_PARAMETERS));
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DDevice_GetCreationParameters(This->WineD3DDevice, pParameters);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetCursorProperties(LPDIRECT3DDEVICE9 iface, UINT XHotSpot, UINT YHotSpot, IDirect3DSurface9* pCursorBitmap) {
@@ -272,9 +271,9 @@ HRESULT  WINAPI IDirect3DDevice9Impl_CreateSurface(LPDIRECT3DDEVICE9 iface, UINT
            
     hrc = IWineD3DDevice_CreateSurface(This->WineD3DDevice, Width, Height, Format, Lockable, Discard, Level,  &object->wineD3DSurface, Type, Usage, Pool,MultiSample,MultisampleQuality,pSharedHandle,(IUnknown *)object);
     
-    if (hrc != D3D_OK) {
+    if (hrc != D3D_OK || NULL == object->wineD3DSurface) {
        /* free up object */
-        FIXME("(%p) call to IWineD3DDevice_CreateRenderTarget failed\n", This);
+        FIXME("(%p) call to IWineD3DDevice_CreateSurface failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
         *ppSurface = NULL;
     } else {
