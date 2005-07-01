@@ -1679,9 +1679,6 @@ BOOL WINAPI CryptGetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData,
 		DWORD *pdwDataLen, DWORD dwFlags);
 BOOL WINAPI CryptGetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData,
 		DWORD *pdwDataLen, DWORD dwFlags);
-BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
-                                     LPCSTR pszOID, LPCWSTR szValueName, DWORD *pdwValueType,
-                                     BYTE *pbValueData, DWORD *pcbValueData);
 BOOL WINAPI CryptGetProvParam (HCRYPTPROV hProv, DWORD dwParam, BYTE *pbData,
 		DWORD *pdwDataLen, DWORD dwFlags);
 BOOL WINAPI CryptGetDefaultProviderA (DWORD dwProvType, DWORD *pdwReserved,
@@ -1694,13 +1691,9 @@ BOOL WINAPI CryptHashData (HCRYPTHASH hHash, BYTE *pbData, DWORD dwDataLen, DWOR
 BOOL WINAPI CryptHashSessionKey (HCRYPTHASH hHash, HCRYPTKEY hKey, DWORD dwFlags);
 BOOL WINAPI CryptImportKey (HCRYPTPROV hProv, BYTE *pbData, DWORD dwDataLen,
 		HCRYPTKEY hPubKey, DWORD dwFlags, HCRYPTKEY *phKey);
-BOOL WINAPI CryptRegisterOIDFunction(DWORD,LPCSTR,LPCSTR,LPCWSTR,LPCSTR);
 BOOL WINAPI CryptReleaseContext (HCRYPTPROV hProv, DWORD dwFlags);
 BOOL WINAPI CryptSetHashParam (HCRYPTHASH hHash, DWORD dwParam, BYTE *pbData, DWORD dwFlags);
 BOOL WINAPI CryptSetKeyParam (HCRYPTKEY hKey, DWORD dwParam, BYTE *pbData, DWORD dwFlags);
-BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
-                                     LPCSTR pszOID, LPCWSTR pwszValueName, DWORD dwValueType,
-                                     const BYTE *pbValueData, DWORD cbValueData);
 BOOL WINAPI CryptSetProviderA (LPCSTR pszProvName, DWORD dwProvType);
 BOOL WINAPI CryptSetProviderW (LPCWSTR pszProvName, DWORD dwProvType);
 #define CryptSetProvider WINELIB_NAME_AW(CryptSetProvider)
@@ -1713,12 +1706,21 @@ BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescripti
 BOOL WINAPI CryptSignHashW (HCRYPTHASH hHash, DWORD dwKeySpec, LPCWSTR sDescription,
 		DWORD dwFlags, BYTE *pbSignature, DWORD *pdwSigLen);
 #define CryptSignHash WINELIB_NAME_AW(CryptSignHash)
-BOOL WINAPI CryptUnregisterOIDFunction(DWORD,LPCSTR,LPCSTR);
 BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCSTR sDescription, DWORD dwFlags);
 BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dwSigLen,
 		HCRYPTKEY hPubKey, LPCWSTR sDescription, DWORD dwFlags);
 #define CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
+
+/* crypt32.dll functions */
+BOOL WINAPI CryptRegisterOIDFunction(DWORD,LPCSTR,LPCSTR,LPCWSTR,LPCSTR);
+BOOL WINAPI CryptGetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
+                                     LPCSTR pszOID, LPCWSTR szValueName, DWORD *pdwValueType,
+                                     BYTE *pbValueData, DWORD *pcbValueData);
+BOOL WINAPI CryptSetOIDFunctionValue(DWORD dwEncodingType, LPCSTR pszFuncName,
+                                     LPCSTR pszOID, LPCWSTR pwszValueName, DWORD dwValueType,
+                                     const BYTE *pbValueData, DWORD cbValueData);
+BOOL WINAPI CryptUnregisterOIDFunction(DWORD,LPCSTR,LPCSTR);
 
 LPCSTR WINAPI CertAlgIdToOID(DWORD dwAlgId);
 DWORD WINAPI CertOIDToAlgId(LPCSTR pszObjId);
@@ -1791,7 +1793,15 @@ BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo);
 
-/* crypt32.dll functions */
+PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
+ CRYPT_ATTRIBUTE rgAttr[]);
+PCERT_EXTENSION WINAPI CertFindExtension(LPCSTR pszObjId, DWORD cExtensions,
+ CERT_EXTENSION rgExtensions[]);
+PCERT_RDN_ATTR WINAPI CertFindRDNAttr(LPCSTR pszObjId, PCERT_NAME_INFO pName);
+
+LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
+ PCERT_INFO pCertInfo);
+
 BOOL WINAPI CryptProtectData( DATA_BLOB* pDataIn, LPCWSTR szDataDescr,
  DATA_BLOB* pOptionalEntropy, PVOID pvReserved,
  CRYPTPROTECT_PROMPTSTRUCT* pPromptStruct, DWORD dwFlags, DATA_BLOB* pDataOut );
