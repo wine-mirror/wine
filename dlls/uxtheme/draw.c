@@ -134,7 +134,7 @@ HRESULT WINAPI DrawThemeBackground(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Select the image to use
  */
-PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph)
+static PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph)
 {
     PTHEME_PROPERTY tp;
     int imageselecttype = IST_NONE;
@@ -186,7 +186,7 @@ PTHEME_PROPERTY UXTHEME_SelectImage(HTHEME hTheme, HDC hdc, int iPartId, int iSt
  *
  * Load image for part/state
  */
-HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph,
+static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, BOOL glyph,
                           HBITMAP *hBmp, RECT *bmpRect)
 {
     int imagelayout = IL_VERTICAL;
@@ -267,7 +267,7 @@ static inline BOOL UXTHEME_Blt(HDC hdcDest, int nXOriginDest, int nYOriginDest, 
  *
  * Draw an imagefile glyph
  */
-HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
+static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
                                int iStateId, RECT *pRect,
                                const DTBGOPTS *pOptions)
 {
@@ -333,7 +333,7 @@ HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Draw glyph on top of background, if appropriate
  */
-HRESULT UXTHEME_DrawGlyph(HTHEME hTheme, HDC hdc, int iPartId,
+static HRESULT UXTHEME_DrawGlyph(HTHEME hTheme, HDC hdc, int iPartId,
                                     int iStateId, RECT *pRect,
                                     const DTBGOPTS *pOptions)
 {
@@ -356,7 +356,7 @@ HRESULT UXTHEME_DrawGlyph(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Draw an imagefile background
  */
-HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
+static HRESULT UXTHEME_DrawImageBackground(HTHEME hTheme, HDC hdc, int iPartId,
                                     int iStateId, RECT *pRect,
                                     const DTBGOPTS *pOptions)
 {
@@ -576,7 +576,7 @@ draw_error:
  *
  * Draw the bounding rectangle for a borderfill background
  */
-HRESULT UXTHEME_DrawBorderRectangle(HTHEME hTheme, HDC hdc, int iPartId,
+static HRESULT UXTHEME_DrawBorderRectangle(HTHEME hTheme, HDC hdc, int iPartId,
                                     int iStateId, RECT *pRect,
                                     const DTBGOPTS *pOptions)
 {
@@ -621,7 +621,7 @@ HRESULT UXTHEME_DrawBorderRectangle(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Fill a borderfill background rectangle
  */
-HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
+static HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
                                    int iStateId, RECT *pRect,
                                    const DTBGOPTS *pOptions)
 {
@@ -696,7 +696,7 @@ HRESULT UXTHEME_DrawBackgroundFill(HTHEME hTheme, HDC hdc, int iPartId,
  *
  * Draw an imagefile background
  */
-HRESULT UXTHEME_DrawBorderBackground(HTHEME hTheme, HDC hdc, int iPartId,
+static HRESULT UXTHEME_DrawBorderBackground(HTHEME hTheme, HDC hdc, int iPartId,
                                      int iStateId, const RECT *pRect,
                                      const DTBGOPTS *pOptions)
 {

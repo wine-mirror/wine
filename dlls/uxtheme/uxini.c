@@ -149,7 +149,7 @@ static inline BOOL UXINI_isspace(WCHAR c)
  * RETURNS
  *     The section name, non NULL terminated
  */
-LPCWSTR UXINI_GetNextLine(PUXINI_FILE uf, DWORD *dwLen)
+static LPCWSTR UXINI_GetNextLine(PUXINI_FILE uf, DWORD *dwLen)
 {
     LPCWSTR lpLineEnd;
     LPCWSTR lpLineStart;
