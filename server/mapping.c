@@ -161,8 +161,6 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
         write_pos = shared_pos;
         shared_pos += ROUND_SIZE( sec[i].Misc.VirtualSize );
-        if ((sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) &&
-            !(sec[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)) continue;
         if (!sec[i].PointerToRawData || !sec[i].SizeOfRawData) continue;
         read_pos = sec[i].PointerToRawData;
         toread = sec[i].SizeOfRawData;
