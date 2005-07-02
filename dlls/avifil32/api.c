@@ -176,8 +176,7 @@ static BOOL AVIFILE_GetFileHandlerByExtension(LPCWSTR szFile, LPCLSID lpclsid)
  *		AVIFileInit		(AVIFILE.100)
  */
 void WINAPI AVIFileInit(void) {
-  /* need to load ole32.dll if not already done and get some functions */
-  FIXME("(): stub!\n");
+  OleInitialize(NULL);
 }
 
 /***********************************************************************
@@ -186,6 +185,7 @@ void WINAPI AVIFileInit(void) {
  */
 void WINAPI AVIFileExit(void) {
   /* need to free ole32.dll if we are the last exit call */
+  /* OleUnitialize() */
   FIXME("(): stub!\n");
 }
 
@@ -253,8 +253,7 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
     memcpy(&clsidHandler, lpHandler, sizeof(clsidHandler));
 
   /* create instance of handler */
-  hr = SHCoCreateInstance(NULL, &clsidHandler, NULL,
-			  &IID_IAVIFile, (LPVOID*)ppfile);
+  hr = CoCreateInstance(&clsidHandler, NULL, CLSCTX_INPROC, &IID_IAVIFile, (LPVOID*)ppfile);
   if (FAILED(hr) || *ppfile == NULL)
     return hr;
 
@@ -493,8 +492,7 @@ HRESULT WINAPI AVIStreamCreate(PAVISTREAM *ppavi, LONG lParam1, LONG lParam2,
   if (pclsidHandler == NULL)
     return AVIERR_UNSUPPORTED;
 
-  hr = SHCoCreateInstance(NULL, pclsidHandler, NULL,
-			  &IID_IAVIStream, (LPVOID*)ppavi);
+  hr = CoCreateInstance(pclsidHandler, NULL, CLSCTX_INPROC, &IID_IAVIStream, (LPVOID*)ppavi);
   if (FAILED(hr) || *ppavi == NULL)
     return hr;
 
@@ -751,8 +749,7 @@ HRESULT WINAPI AVIMakeCompressedStream(PAVISTREAM *ppsCompressed,
   } else
     memcpy(&clsidHandler, pclsidHandler, sizeof(clsidHandler));
 
-  hr = SHCoCreateInstance(NULL, &clsidHandler, NULL,
-			  &IID_IAVIStream, (LPVOID*)ppsCompressed);
+  hr = CoCreateInstance(&clsidHandler, NULL, CLSCTX_INPROC, &IID_IAVIStream, (LPVOID*)ppsCompressed);
   if (FAILED(hr) || *ppsCompressed == NULL)
     return hr;
 
