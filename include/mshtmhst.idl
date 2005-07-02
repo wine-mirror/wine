@@ -22,10 +22,38 @@ import "oleidl.idl";
 import "oaidl.idl";
 import "docobj.idl";
 
-
 /*****************************************************************************
  *    IDocHostUIHandler interface
  */
+
+typedef enum tagDOCHOSTUIFLAG
+{
+    DOCHOSTUIFLAG_DIALOG                      = 0x00000001,
+    DOCHOSTUIFLAG_DISABLE_HELP_MENU           = 0x00000002,
+    DOCHOSTUIFLAG_NO3DBORDER                  = 0x00000004,
+    DOCHOSTUIFLAG_SCROLL_NO                   = 0x00000008,
+    DOCHOSTUIFLAG_DISABLE_SCRIPT_INACTIVE     = 0x00000010,
+    DOCHOSTUIFLAG_OPENNEWWIN                  = 0x00000020,
+    DOCHOSTUIFLAG_DISABLE_OFFSCREEN           = 0x00000040,
+    DOCHOSTUIFLAG_FLAT_SCROLLBAR              = 0x00000080,
+    DOCHOSTUIFLAG_DIV_BLOCKDEFAULT            = 0x00000100,
+    DOCHOSTUIFLAG_ACTIVATE_CLIENTHIT_ONLY     = 0x00000200,
+    DOCHOSTUIFLAG_OVERRIDEBEHAVIORFACTORY     = 0x00000400,
+    DOCHOSTUIFLAG_CODEPAGELINKEDFONTS         = 0x00000800,
+    DOCHOSTUIFLAG_URL_ENCODING_DISABLE_UTF8   = 0x00001000,
+    DOCHOSTUIFLAG_URL_ENCODING_ENABLE_UTF8    = 0x00002000,
+    DOCHOSTUIFLAG_ENABLE_FORMS_AUTOCOMPLETE   = 0x00004000,
+    DOCHOSTUIFLAG_ENABLE_INPLACE_NAVIGATION   = 0x00010000,
+    DOCHOSTUIFLAG_IME_ENABLE_RECONVERSION     = 0x00020000,
+    DOCHOSTUIFLAG_THEME                       = 0x00040000,
+    DOCHOSTUIFLAG_NOTHEME                     = 0x00080000,
+    DOCHOSTUIFLAG_NOPICS                      = 0x00100000,
+    DOCHOSTUIFLAG_NO3DOUTERBORDER             = 0x00200000,
+    DOCHOSTUIFLAG_DISABLE_EDIT_NS_FIXUP       = 0x00400000,
+    DOCHOSTUIFLAG_LOCAL_MACHINE_ACCESS_CHECK  = 0x00800000,
+    DOCHOSTUIFLAG_DISABLE_UNTRUSTEDPROTOCOL   = 0x01000000
+} DOCHOSTUIFLAG;
+
 [
     object,
     uuid(BD3F23C0-D43E-11CF-893B-00AA00BDCE1A),
@@ -94,6 +122,29 @@ interface IDocHostUIHandler : IUnknown
         [out] OLECHAR **ppchURLOut);
 
     HRESULT FilterDataObject(
-        [in]IDataObject *pDO,
-        [out]IDataObject **ppDORet);
+        [in] IDataObject *pDO,
+        [out] IDataObject **ppDORet);
 }
+
+[
+    object,
+    uuid(3050F6D0-98b5-11CF-BB82-00AA00BDCE0B),
+    pointer_default(unique),
+    local
+]
+interface IDocHostUIHandler2 : IDocHostUIHandler
+{
+    HRESULT GetOverrideKeyPath(
+        [out] LPOLESTR *pchKey,
+        [in] DWORD dw);
+}
+
+cpp_quote("typedef HRESULT WINAPI SHOWHTMLDIALOGFN(HWND,IMoniker*,VARIANT*,WCHAR*,VARIANT*);");
+cpp_quote("typedef HRESULT WINAPI SHOWHTMLDIALOGEXFN(HWND,IMoniker*,DWORD,VARIANT*,WCHAR*,VARIANT*);");
+cpp_quote("typedef HRESULT WINAPI SHOWMODELESSHTMLDIALOGFN(HWND,IMoniker*,VARIANT*,VARIANT*,IHTMLWindow2**);");
+
+cpp_quote("EXTERN_C HRESULT WINAPI ShowHTMLDialog(HWND,IMoniker*,VARIANT*,WCHAR*,VARIANT*);");
+cpp_quote("EXTERN_C HRESULT WINAPI ShowHTMLDialogEx(HWND,IMoniker*,DWORD,VARIANT*,WCHAR,VARIANT*);");
+cpp_quote("EXTERN_C HRESULT WINAPI ShowModelessHTMLDialog(HWND,IMoniker*,VARIANT,IHTMLWindow2**);");
+cpp_quote("EXTERN_C HRESULT WINAPI RunHTMLApplication(HINSTANCE,HINSTANCE,LPSTR,int);");
+cpp_quote("EXTERN_C HRESULT WINAPI CreateHTMLPropertyPage(IMoniker*,IPropertyPage**);");

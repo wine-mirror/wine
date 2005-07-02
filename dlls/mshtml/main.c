@@ -37,6 +37,7 @@
 #include "advpub.h"
 
 #include "mshtml.h"
+#include "mshtmhst.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -266,8 +267,8 @@ HRESULT WINAPI MSHTML_DllCanUnloadNow(void)
  *
  * Appears to have the same prototype as WinMain.
  */
-INT WINAPI RunHTMLApplication( HINSTANCE hinst, HINSTANCE hPrevInst,
-                               LPCSTR szCmdLine, INT nCmdShow )
+HRESULT WINAPI RunHTMLApplication( HINSTANCE hinst, HINSTANCE hPrevInst,
+                               LPSTR szCmdLine, INT nCmdShow )
 {
     FIXME("%p %p %s %d\n", hinst, hPrevInst, debugstr_a(szCmdLine), nCmdShow );
     return 0;
