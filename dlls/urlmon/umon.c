@@ -340,8 +340,6 @@ static ULONG WINAPI URLMonikerImpl_AddRef(IMoniker* iface)
 
     TRACE("(%p)->(ref before=%lu)\n",This, refCount - 1);
 
-    URLMON_LockModule();
-
     return refCount;
 }
 
@@ -359,9 +357,9 @@ static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
     if (!refCount) {
         HeapFree(GetProcessHeap(),0,This->URLName);
         HeapFree(GetProcessHeap(),0,This);
-    }
 
-    URLMON_UnlockModule();
+        URLMON_UnlockModule();
+    }
 
     return refCount;
 }
@@ -1169,6 +1167,8 @@ static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeft
     }
     else
         strcpyW(This->URLName,lpszURLName);
+
+    URLMON_LockModule();
 
     return S_OK;
 }
