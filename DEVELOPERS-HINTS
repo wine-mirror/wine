@@ -339,7 +339,7 @@ following:
 4.  Run ./make_dlls in the dlls directory to update Makefile.in in
     that directory.
 
-5.  You can now regenerate ./configure file (with 'make configure')
+5.  You can now regenerate ./configure file (with 'autoconf')
     and the various Makefiles (with 'configure; make depend') (run
     from the top of Wine's tree).
     You should now have a Makefile file in ./dlls/<MyDll>/
