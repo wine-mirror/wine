@@ -15,6 +15,7 @@ C_SRCS = \
 	olewnd.c \
 	persist.c \
 	protocol.c \
+	service.c \
 	view.c
 
 RC_SRCS = rsrc.rc

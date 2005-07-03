@@ -27,6 +27,7 @@ typedef struct {
     const IOleInPlaceActiveObjectVtbl     *lpOleInPlaceActiveObjectVtbl;
     const IViewObject2Vtbl                *lpViewObject2Vtbl;
     const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
+    const IServiceProviderVtbl            *lpServiceProviderVtbl;
 
     ULONG ref;
 
@@ -51,6 +52,7 @@ typedef struct {
 #define VIEWOBJ2(x)      ((IViewObject2*)                 &(x)->lpViewObject2Vtbl)
 #define INPLACEOBJ(x)    ((IOleInPlaceObject*)            &(x)->lpOleInPlaceObjectWindowlessVtbl)
 #define INPLACEWIN(x)    ((IOleInPlaceObjectWindowless*)  &(x)->lpOleInPlaceObjectWindowlessVtbl)
+#define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
 
 #define DEFINE_THIS(cls,ifc) cls* const This=(cls*)((char*)(iface)-offsetof(cls,lp ## ifc ## Vtbl));
 
@@ -60,6 +62,7 @@ void HTMLDocument_Persist_Init(HTMLDocument*);
 void HTMLDocument_OleObj_Init(HTMLDocument*);
 void HTMLDocument_View_Init(HTMLDocument*);
 void HTMLDocument_Window_Init(HTMLDocument*);
+void HTMLDocument_Service_Init(HTMLDocument*);
 
 HRESULT ProtocolFactory_Create(REFCLSID,REFIID,void**);
 
