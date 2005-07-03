@@ -67,7 +67,7 @@
 # define TEST_FIELD_ALIGNMENT(type, field, align) \
    ok(FIELD_ALIGNMENT(type, field) == align, \
        "FIELD_ALIGNMENT(" #type ", " #field ") == %d (expected " #align ")\n", \
-           FIELD_ALIGNMENT(type, field))
+           (int)FIELD_ALIGNMENT(type, field))
 #else
 # define TEST_FIELD_ALIGNMENT(type, field, align) do { } while (0)
 #endif
@@ -75,24 +75,24 @@
 #define TEST_FIELD_OFFSET(type, field, offset) \
     ok(FIELD_OFFSET(type, field) == offset, \
         "FIELD_OFFSET(" #type ", " #field ") == %ld (expected " #offset ")\n", \
-             FIELD_OFFSET(type, field))
+             (long int)FIELD_OFFSET(type, field))
 
 #ifdef _TYPE_ALIGNMENT
 #define TEST__TYPE_ALIGNMENT(type, align) \
-    ok(_TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", _TYPE_ALIGNMENT(type))
+    ok(_TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", (int)_TYPE_ALIGNMENT(type))
 #else
 # define TEST__TYPE_ALIGNMENT(type, align) do { } while (0)
 #endif
 
 #ifdef TYPE_ALIGNMENT
 #define TEST_TYPE_ALIGNMENT(type, align) \
-    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", TYPE_ALIGNMENT(type))
+    ok(TYPE_ALIGNMENT(type) == align, "TYPE_ALIGNMENT(" #type ") == %d (expected " #align ")\n", (int)TYPE_ALIGNMENT(type))
 #else
 # define TEST_TYPE_ALIGNMENT(type, align) do { } while (0)
 #endif
 
 #define TEST_TYPE_SIZE(type, size) \
-    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")\n", sizeof(type))
+    ok(sizeof(type) == size, "sizeof(" #type ") == %d (expected " #size ")\n", ((int) sizeof(type)))
 
 /***********************************************************************
  * Test macros
