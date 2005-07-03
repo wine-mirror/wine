@@ -1002,6 +1002,11 @@ typedef struct tagNMHDFILTERBTNCLICK
 
 #define BCN_HOTITEMCHANGE       (BCN_FIRST + 0x0001)
 
+typedef struct tagNMBCHOTITEM
+{
+  NMHDR hdr;
+  DWORD dwFlags;
+} NMBCHOTITEM, *LPNMBCHOTITEM;
 
 /* Toolbar */
 
