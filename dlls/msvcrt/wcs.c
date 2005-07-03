@@ -553,7 +553,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         /* output a pointer */
         else if( flags.Format == 'p' )
         {
-            char pointer[10];
+            char pointer[11];
 
             flags.PadZero = 0;
             if( flags.Alternate )
