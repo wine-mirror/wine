@@ -611,7 +611,7 @@ static void BuildCallTo16Core( FILE *outfile, int reg_func )
  */
 static void BuildRet16Func( FILE *outfile )
 {
-    function_header( outfile, "CallTo16_Ret" );
+    function_header( outfile, "__wine_call_to_16_ret" );
 
     /* Save %esp into %esi */
     fprintf( outfile, "\tmovl %%esp,%%esi\n" );
@@ -619,12 +619,12 @@ static void BuildRet16Func( FILE *outfile )
     /* Restore 32-bit segment registers */
 
     fprintf( outfile, "\t.byte 0x2e\n\tmovl %s", asm_name("CallTo16_DataSelector") );
-    fprintf( outfile, "-%s,%%edi\n", asm_name("Call16_Ret_Start") );
+    fprintf( outfile, "-%s,%%edi\n", asm_name("__wine_call16_start") );
     fprintf( outfile, "%s\tmovw %%di,%%ds\n", data16_prefix() );
     fprintf( outfile, "%s\tmovw %%di,%%es\n", data16_prefix() );
 
     fprintf( outfile, "\t.byte 0x2e\n\tmov %s", asm_name("CallTo16_TebSelector") );
-    fprintf( outfile, "-%s,%%fs\n", asm_name("Call16_Ret_Start") );
+    fprintf( outfile, "-%s,%%fs\n", asm_name("__wine_call16_start") );
 
     fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
@@ -636,17 +636,7 @@ static void BuildRet16Func( FILE *outfile )
     /* Return to caller */
 
     fprintf( outfile, "\tlret\n" );
-
-    /* Function footer */
-    function_footer( outfile, "CallTo16_Ret" );
-
-    /* Declare the return address and data selector variables */
-
-    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-    fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_DataSelector") );
-    fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_DataSelector") );
-    fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_TebSelector") );
-    fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_TebSelector") );
+    function_footer( outfile, "__wine_call_to_16_ret" );
 }
 
 
@@ -742,13 +732,7 @@ static void BuildRet16Func( FILE *outfile )
  */
 static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
 {
-    const char *name = isEx? "CALL32_CBClientEx" : "CALL32_CBClient";
-
-    /* Function header */
-
-    fprintf( outfile, "\n\t.align %d\n", get_alignment(4) );
-    fprintf( outfile, "\t.globl %s\n", asm_name(name) );
-    fprintf( outfile, "%s:\n", asm_name(name) );
+    function_header( outfile, isEx ? "CALL32_CBClientEx" : "CALL32_CBClient" );
 
     /* Entry code */
 
@@ -798,18 +782,11 @@ static void BuildCallTo32CBClient( FILE *outfile, BOOL isEx )
     fprintf( outfile, "\tpopl %%edi\n" );
     fprintf( outfile, "\tpopl %%ebp\n" );
     fprintf( outfile, "\tret\n" );
-    function_footer( outfile, name );
-}
-
-static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
-{
-    const char *name = isEx? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret";
+    function_footer( outfile, isEx ? "CALL32_CBClientEx" : "CALL32_CBClient" );
 
     /* '16-bit' return stub */
 
-    fprintf( outfile, "\n\t.globl %s\n", asm_name(name) );
-    fprintf( outfile, "%s:\n", asm_name(name) );
-
+    function_header( outfile, isEx ? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret" );
     if ( !isEx )
     {
         fprintf( outfile, "\tmovzwl %%sp, %%ebx\n" );
@@ -823,7 +800,7 @@ static void BuildCallTo32CBClientRet( FILE *outfile, BOOL isEx )
         fprintf( outfile, "\tlssl %%ss:-12(%%ebx), %%esp\n" );
     }
     fprintf( outfile, "\tlret\n" );
-    function_footer( outfile, name );
+    function_footer( outfile, isEx ? "CALL32_CBClientEx_Ret" : "CALL32_CBClient_Ret" );
 }
 
 
@@ -1032,9 +1009,8 @@ void BuildRelays16( FILE *outfile )
 
     fprintf( outfile, "%s:\n\n", asm_name("__wine_spec_thunk_text_16") );
 
-    fprintf( outfile, "\t.globl %s\n", asm_name("Call16_Start") );
-    fprintf( outfile, "%s:\n", asm_name("Call16_Start") );
-    fprintf( outfile, "\t.byte 0\n\n" );
+    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_call16_start") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_call16_start") );
 
     /* Standard CallFrom16 routine (WORD return) */
     BuildCallFrom16Core( outfile, FALSE, FALSE, TRUE );
@@ -1054,38 +1030,28 @@ void BuildRelays16( FILE *outfile )
     /* Register CallTo16 routine */
     BuildCallTo16Core( outfile, 1 );
 
+    /* Standard CallTo16 return stub */
+    BuildRet16Func( outfile );
+
     /* CBClientThunkSL routine */
     BuildCallTo32CBClient( outfile, FALSE );
 
     /* CBClientThunkSLEx routine */
     BuildCallTo32CBClient( outfile, TRUE  );
 
-    fprintf( outfile, "\t.globl %s\n", asm_name("Call16_End") );
-    fprintf( outfile, "%s:\n", asm_name("Call16_End") );
-    function_footer( outfile, "__wine_spec_thunk_text_16" );
-
-    /* The whole Call16_Ret segment must lie within the .data section */
-    fprintf( outfile, "\n\t.data\n" );
-    fprintf( outfile, "%s:\n\n", asm_name("__wine_spec_thunk_data_16") );
-    fprintf( outfile, "\t.globl %s\n", asm_name("Call16_Ret_Start") );
-    fprintf( outfile, "%s:\n", asm_name("Call16_Ret_Start") );
-
-    /* Standard CallTo16 return stub */
-    BuildRet16Func( outfile );
-
-    /* CBClientThunkSL return stub */
-    BuildCallTo32CBClientRet( outfile, FALSE );
-
-    /* CBClientThunkSLEx return stub */
-    BuildCallTo32CBClientRet( outfile, TRUE  );
-
     /* Pending DPMI events check stub */
     BuildPendingEventCheck( outfile );
 
-    /* End of Call16_Ret segment */
-    fprintf( outfile, "\n\t.globl %s\n", asm_name("Call16_Ret_End") );
-    fprintf( outfile, "%s:\n", asm_name("Call16_Ret_End") );
-    function_footer( outfile, "__wine_spec_thunk_data_16" );
+    fprintf( outfile, "\t.globl %s\n", asm_name("__wine_call16_end") );
+    fprintf( outfile, "%s:\n", asm_name("__wine_call16_end") );
+    function_footer( outfile, "__wine_spec_thunk_text_16" );
+
+    /* Declare the return address and data selector variables */
+    fprintf( outfile, "\n\t.data\n\t.align %d\n", get_alignment(4) );
+    fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_DataSelector") );
+    fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_DataSelector") );
+    fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_TebSelector") );
+    fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_TebSelector") );
 }
 
 /*******************************************************************

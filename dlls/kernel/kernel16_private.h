@@ -224,6 +224,8 @@ extern HTASK16 TASK_GetTaskFromThread( DWORD thread );
 extern TDB *TASK_GetCurrent(void);
 extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
+extern DWORD CallTo16_DataSelector;
+extern DWORD CallTo16_TebSelector;
 extern SEGPTR CALL32_CBClient_RetAddr;
 extern SEGPTR CALL32_CBClientEx_RetAddr;
 

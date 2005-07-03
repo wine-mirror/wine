@@ -76,22 +76,19 @@ static DWORD CALLBACK start_thread16( LPVOID threadArgs )
 /* symbols exported from relay16.s */
 extern DWORD WINAPI wine_call_to_16( FARPROC16 target, DWORD cbArgs, PEXCEPTION_HANDLER handler );
 extern void WINAPI wine_call_to_16_regs( CONTEXT86 *context, DWORD cbArgs, PEXCEPTION_HANDLER handler );
-extern void Call16_Ret_Start();
-extern void Call16_Ret_End();
-extern void CallTo16_Ret();
+extern void __wine_call_to_16_ret(void);
 extern void CALL32_CBClient_Ret();
 extern void CALL32_CBClientEx_Ret();
 extern void DPMI_PendingEventCheck();
 extern void DPMI_PendingEventCheck_Cleanup();
 extern void DPMI_PendingEventCheck_Return();
-extern DWORD CallTo16_DataSelector;
-extern BYTE Call16_Start;
-extern BYTE Call16_End;
+extern BYTE __wine_call16_start[];
+extern BYTE __wine_call16_end[];
 
 extern void RELAY16_InitDebugLists(void);
 
 static LONG CALLBACK vectored_handler( EXCEPTION_POINTERS *ptrs );
-static SEGPTR call16_ret_addr;  /* segptr to CallTo16_Ret routine */
+static SEGPTR call16_ret_addr;  /* segptr to __wine_call_to_16_ret routine */
 
 static WORD  dpmi_checker_selector;
 static DWORD dpmi_checker_offset_call;
@@ -104,28 +101,29 @@ static DWORD dpmi_checker_offset_return;
 BOOL WOWTHUNK_Init(void)
 {
     /* allocate the code selector for CallTo16 routines */
-    WORD codesel = SELECTOR_AllocBlock( (void *)Call16_Ret_Start,
-                                        (char *)Call16_Ret_End - (char *)Call16_Ret_Start,
-                                        WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+    LDT_ENTRY entry;
+    WORD codesel = wine_ldt_alloc_entries(1);
+
     if (!codesel) return FALSE;
+    wine_ldt_set_base( &entry, __wine_call16_start );
+    wine_ldt_set_limit( &entry, (BYTE *)(&CallTo16_TebSelector + 1) - __wine_call16_start - 1 );
+    wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_CODE | WINE_LDT_FLAGS_32BIT );
+    wine_ldt_set_entry( codesel, &entry );
 
       /* Patch the return addresses for CallTo16 routines */
 
     CallTo16_DataSelector = wine_get_ds();
-    call16_ret_addr = MAKESEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
+    call16_ret_addr = MAKESEGPTR( codesel, (BYTE *)__wine_call_to_16_ret - __wine_call16_start );
     CALL32_CBClient_RetAddr =
-        MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
+        MAKESEGPTR( codesel, (BYTE *)CALL32_CBClient_Ret - __wine_call16_start );
     CALL32_CBClientEx_RetAddr =
-        MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
+        MAKESEGPTR( codesel, (BYTE *)CALL32_CBClientEx_Ret - __wine_call16_start );
 
     /* Prepare selector and offsets for DPMI event checking. */
     dpmi_checker_selector = codesel;
-    dpmi_checker_offset_call = 
-        (char*)DPMI_PendingEventCheck - (char*)Call16_Ret_Start;
-    dpmi_checker_offset_cleanup = 
-        (char*)DPMI_PendingEventCheck_Cleanup - (char*)Call16_Ret_Start;
-    dpmi_checker_offset_return = 
-        (char*)DPMI_PendingEventCheck_Return - (char*)Call16_Ret_Start;
+    dpmi_checker_offset_call = (BYTE *)DPMI_PendingEventCheck - __wine_call16_start;
+    dpmi_checker_offset_cleanup = (BYTE *)DPMI_PendingEventCheck_Cleanup - __wine_call16_start;
+    dpmi_checker_offset_return = (BYTE *)DPMI_PendingEventCheck_Return - __wine_call16_start;
 
     if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY16_InitDebugLists();
 
@@ -146,7 +144,7 @@ static BOOL fix_selector( CONTEXT *context )
     WORD *stack;
     BYTE *instr = (BYTE *)context->Eip;
 
-    if (instr < &Call16_Start || instr >= &Call16_End) return FALSE;
+    if (instr < __wine_call16_start || instr >= __wine_call16_end) return FALSE;
 
     /* skip prefixes */
     while (*instr == 0x66 || *instr == 0x67) instr++;

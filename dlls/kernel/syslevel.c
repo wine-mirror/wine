@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "wine/winbase16.h"
 #include "kernel_private.h"
+#include "kernel16_private.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
@@ -43,10 +44,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { 0, (DWORD)(__FILE__ ": Win16Mutex") }
 };
 static SYSLEVEL Win16Mutex = { { &critsect_debug, -1, 0, 0, 0, 0 }, 1 };
-
-#ifdef __i386__
-extern unsigned int CallTo16_TebSelector;
-#endif
 
 
 /************************************************************************
