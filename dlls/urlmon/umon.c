@@ -51,7 +51,7 @@ static const WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e',
 typedef struct {
     const IBindingVtbl *lpVtbl;
 
-    ULONG ref;
+    LONG ref;
 
     LPWSTR URLName;
 
@@ -291,7 +291,7 @@ typedef struct {
 
     const IMonikerVtbl* lpvtbl;  /* VTable relative to the IMoniker interface.*/
 
-    ULONG ref; /* reference counter for this object */
+    LONG ref; /* reference counter for this object */
 
     LPOLESTR URLName; /* URL string identified by this URLmoniker */
 } URLMonikerImpl;

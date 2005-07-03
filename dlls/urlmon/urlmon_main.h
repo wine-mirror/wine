@@ -40,7 +40,7 @@ static inline void URLMON_UnlockModule(void) { InterlockedDecrement( &URLMON_ref
 typedef struct
 {	
 	const IStreamVtbl	*lpVtbl;
-	DWORD		ref;
+	LONG		ref;
 	HANDLE		handle;
 	BOOL		closed;
 	WCHAR		*pszFileName;

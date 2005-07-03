@@ -43,7 +43,7 @@ typedef struct SecManagerImpl{
 
     const IInternetSecurityManagerVtbl* lpvtbl1;  /* VTable relative to the IInternetSecurityManager interface.*/
 
-    ULONG ref; /* reference counter for this object */
+    LONG ref; /* reference counter for this object */
 
 } SecManagerImpl;
 
@@ -210,7 +210,7 @@ HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
  */
 typedef struct {
     const IInternetZoneManagerVtbl* lpVtbl;
-    ULONG ref;
+    LONG ref;
 } ZoneMgrImpl;
 
 /********************************************************************
