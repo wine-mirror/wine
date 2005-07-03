@@ -200,9 +200,7 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
         if ((ret = modify_ldt(0x11, &ldt_info, sizeof(ldt_info))) < 0)
             perror( "modify_ldt" );
     }
-#endif  /* linux */
-
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#elif defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
     {
 	LDT_ENTRY entry_copy = *entry;
 	/* The kernel will only let us set LDTs with user priority level */
@@ -217,9 +215,7 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
             exit(1);
         }
     }
-#endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
-
-#if defined(__svr4__) || defined(_SCO_DS)
+#elif defined(__svr4__) || defined(_SCO_DS)
     {
         struct ssd ldt_mod;
         ldt_mod.sel  = sel;
@@ -229,6 +225,9 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
         ldt_mod.acc2 = entry->HighWord.Bytes.Flags2 >> 4;
         if ((ret = sysi86(SI86DSCR, &ldt_mod)) == -1) perror("sysi86");
     }
+#else
+    fprintf( stderr, "No LDT support on this platform\n" );
+    exit(1);
 #endif
 
 #endif  /* __i386__ */
