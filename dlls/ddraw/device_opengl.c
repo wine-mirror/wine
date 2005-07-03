@@ -4094,7 +4094,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     object->max_active_lights = opengl_device_caps.dwMaxActiveLights;
     object->light_parameters = NULL;
     object->active_lights = HeapAlloc(GetProcessHeap(), 0,
-        object->max_active_lights * sizeof(BOOLEAN));
+        object->max_active_lights * sizeof(object->active_lights[0]));
     /* Fill the active light array with ~0, which is used to indicate an
        invalid light index. We don't use 0, because it's a valid light index. */
     for (light=0; light < object->max_active_lights; light++)
