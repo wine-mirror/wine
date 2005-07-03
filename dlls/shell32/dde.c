@@ -73,7 +73,7 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
 
 static inline DWORD Dde_OnExecute(HCONV hconv, HSZ hszTopic, HDDEDATA hdata)
 {
-    char * pszCommand;
+    BYTE * pszCommand;
 
     pszCommand = DdeAccessData(hdata, NULL);
     if (!pszCommand)

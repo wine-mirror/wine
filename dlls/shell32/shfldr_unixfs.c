@@ -98,7 +98,7 @@ typedef struct tagStatStruct {
 typedef struct _UnixFolder {
     const IShellFolder2Vtbl  *lpIShellFolder2Vtbl;
     const IPersistFolder2Vtbl *lpIPersistFolder2Vtbl;
-    ULONG m_cRef;
+    LONG m_cRef;
     CHAR *m_pszPath;
     LPITEMIDLIST m_pidlLocation;
     LPITEMIDLIST *m_apidlSubDirs;
@@ -1306,7 +1306,7 @@ HRESULT WINAPI UnixDosFolder_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOI
  */
 typedef struct _UnixSubFolderIterator {
     const IEnumIDListVtbl *lpIEnumIDListVtbl;
-    ULONG m_cRef;
+    LONG m_cRef;
     UnixFolder *m_pUnixFolder;
     ULONG m_cIdx;
     SHCONTF m_fFilter;

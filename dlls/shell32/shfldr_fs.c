@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 
 typedef struct {
     const IUnknownVtbl        *lpVtbl;
-    DWORD                ref;
+    LONG                ref;
     const IShellFolder2Vtbl   *lpvtblShellFolder;
     const IPersistFolder3Vtbl *lpvtblPersistFolder3;
     const IDropTargetVtbl     *lpvtblDropTarget;
