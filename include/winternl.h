@@ -606,6 +606,12 @@ typedef enum _PROCESSINFOCLASS {
     ProcessSessionInformation = 24,
     ProcessForegroundInformation = 25,
     ProcessWow64Information = 26,
+    ProcessImageFileName = 27,
+    ProcessLUIDDeviceMapsEnabled = 28,
+    ProcessBreakOnTermination = 29,
+    ProcessDebugObjectHandle = 30,
+    ProcessDebugFlags = 31,
+    ProcessHandleTracing = 32,
     MaxProcessInfoClass
 } PROCESSINFOCLASS, PROCESS_INFORMATION_CLASS;
 
