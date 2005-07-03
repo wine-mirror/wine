@@ -345,7 +345,8 @@ static HRESULT DSDB_MapBuffer(IDsDriverBufferImpl *dsdb)
                              dsdb->fd, 0);
         if (dsdb->mapping == (LPBYTE)-1) {
             ERR("Could not map sound device for direct access (%s)\n", strerror(errno));
-            ERR("Use: \"HardwareAcceleration\" = \"Emulation\" in the [dsound] section of your config file.\n");
+	    ERR("Create string value : \"HardwareAcceleration\" = \"Emulation\" in the registry\n"
+                "under [HKEY_CURRENT_USER\\Software\\Wine\\DirectSound].\n");
             return DSERR_GENERIC;
         }
         TRACE("The sound device has been mapped for direct access at %p, size=%ld\n", dsdb->mapping, dsdb->maplen);

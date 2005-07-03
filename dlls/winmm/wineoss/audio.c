@@ -511,7 +511,8 @@ DWORD OSS_OpenDevice(OSS_DEVICE* ossdev, unsigned req_access,
 	/* check if the fragment sizes are the same */
         if (ossdev->audio_fragment != (frag ? *frag : 0) ) {
 	    ERR("FullDuplex: Playback and Capture hardware acceleration levels are different.\n"
-		"Use: \"HardwareAcceleration\" = \"Emulation\" in the [dsound] section of your config file.\n");
+	        "Create string value : \"HardwareAcceleration\" = \"Emulation\" in the registry\n"
+                "under [HKEY_CURRENT_USER\\Software\\Wine\\DirectSound].\n");
 	    return WAVERR_BADFORMAT;
 	}
         if (GetCurrentThreadId() != ossdev->owner_tid)
