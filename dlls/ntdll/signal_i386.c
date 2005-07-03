@@ -297,7 +297,27 @@ typedef struct
 # include <signal.h>
 
 typedef siginfo_t siginfo;
-typedef struct ucontext SIGCONTEXT;
+typedef struct sigcontext SIGCONTEXT;
+
+#define EAX_sig(context)     ((context)->sc_eax)
+#define EBX_sig(context)     ((context)->sc_ebx)
+#define ECX_sig(context)     ((context)->sc_ecx)
+#define EDX_sig(context)     ((context)->sc_edx)
+#define ESI_sig(context)     ((context)->sc_esi)
+#define EDI_sig(context)     ((context)->sc_edi)
+#define EBP_sig(context)     ((context)->sc_ebp)
+
+#define CS_sig(context)      ((context)->sc_cs)
+#define DS_sig(context)      ((context)->sc_ds)
+#define ES_sig(context)      ((context)->sc_es)
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#define SS_sig(context)      ((context)->sc_ss)
+
+#define EFL_sig(context)     ((context)->sc_eflags)
+
+#define EIP_sig(context)     (*((unsigned long*)&(context)->sc_eip))
+#define ESP_sig(context)     (*((unsigned long*)&(context)->sc_esp))
 
 # define HANDLER_DEF(name) void name( int __signal, siginfo *__siginfo, SIGCONTEXT *__context )
 # define HANDLER_CONTEXT (__context)
@@ -386,29 +406,6 @@ typedef struct ucontext SIGCONTEXT;
 #define FAULT_ADDRESS         (__siginfo->si_addr)
 
 #endif  /* svr4 || SCO_DS */
-
-#ifdef __APPLE__
-#define EAX_sig(context)     ((context)->uc_mcontext.sc_eax)
-#define EBX_sig(context)     ((context)->uc_mcontext.sc_ebx)
-#define ECX_sig(context)     ((context)->uc_mcontext.sc_ecx)
-#define EDX_sig(context)     ((context)->uc_mcontext.sc_edx)
-#define ESI_sig(context)     ((context)->uc_mcontext.sc_esi)
-#define EDI_sig(context)     ((context)->uc_mcontext.sc_edi)
-#define EBP_sig(context)     ((context)->uc_mcontext.sc_ebp)
-
-#define CS_sig(context)      ((context)->uc_mcontext.sc_cs)
-#define DS_sig(context)      ((context)->uc_mcontext.sc_ds)
-#define ES_sig(context)      ((context)->uc_mcontext.sc_es)
-#define FS_sig(context)      ((context)->uc_mcontext.sc_fs)
-#define GS_sig(context)      ((context)->uc_mcontext.sc_gs)
-#define SS_sig(context)      ((context)->uc_mcontext.sc_ss)
-
-#define EFL_sig(context)     ((context)->uc_mcontext.sc_eflags)
-
-#define EIP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext.sc_eip))
-#define ESP_sig(context)     (*((unsigned long*)&(context)->uc_mcontext.sc_esp))
-
-#endif /* __APPLE__ */
 
 /* exception code definitions (already defined by FreeBSD/NetBSD) */
 #if !defined(__FreeBSD__) && !defined(__NetBSD__) /* FIXME: other BSDs? */
