@@ -85,7 +85,7 @@ typedef struct tagBOARD
     unsigned cols;
     unsigned mines;
     char best_name [3][16];
-    unsigned best_time [3];
+    DWORD best_time [3];
     DIFFICULTY difficulty;
 
     POINT press;
