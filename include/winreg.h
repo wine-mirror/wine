@@ -64,6 +64,21 @@ typedef ACCESS_MASK REGSAM;
 
 #define MAX_SHUTDOWN_TIMEOUT    (10*365*24*60*60)
 
+/*
+ * RegGetValue() restrictions
+ */
+
+#define RRF_RT_REG_NONE         (1 << 0)
+#define RRF_RT_REG_SZ           (1 << 1)
+#define RRF_RT_REG_EXPAND_SZ    (1 << 2)
+#define RRF_RT_REG_BINARY       (1 << 3)
+#define RRF_RT_REG_DWORD        (1 << 4)
+#define RRF_RT_REG_MULTI_SZ     (1 << 5)
+#define RRF_RT_REG_QWORD        (1 << 6)
+#define RRF_RT_DWORD            (RRF_RT_REG_BINARY | RRF_RT_REG_DWORD)
+#define RRF_RT_QWORD            (RRF_RT_REG_BINARY | RRF_RT_REG_QWORD)
+#define RRF_NOEXPAND            (1 << 28)
+#define RRF_ZEROONFAILURE       (1 << 29)
 
 BOOL        WINAPI AbortSystemShutdownA(LPSTR);
 BOOL        WINAPI AbortSystemShutdownW(LPWSTR);
