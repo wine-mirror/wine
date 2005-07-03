@@ -1255,11 +1255,12 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
 	return E_OUTOFMEMORY;
 
     if(pmkContext) {
-        CLSID clsid;
         IBindCtx* bind;
-        IMoniker_GetClassID(pmkContext, &clsid);
-        if(IsEqualCLSID(&clsid, &CLSID_StdURLMoniker) && SUCCEEDED(CreateBindCtx(0, &bind))) {
-            URLMonikerImpl_GetDisplayName(pmkContext, bind, NULL, &lefturl);
+        DWORD dwMksys = 0;
+        IMoniker_IsSystemMoniker(pmkContext, &dwMksys);
+        if(dwMksys == MKSYS_URLMONIKER && SUCCEEDED(CreateBindCtx(0, &bind))) {
+            IMoniker_GetDisplayName(pmkContext, bind, NULL, &lefturl);
+            TRACE("lefturl = %s\n", debugstr_w(lefturl));
             IBindCtx_Release(bind);
         }
     }
