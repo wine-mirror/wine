@@ -41,18 +41,21 @@ static const WCHAR machineW[] = { 'd','u','m','m','y',0 };
  *  http://download.microsoft.com/download/whistler/hwdev1/1.0/wxp/en-us/ColorProfile.exe
  */
 
-/* Two common places to find the standard color space profile */
-static const char profilefile[] =
+/* Two common places to find the standard color space profile, relative
+ * to the system directory.
+ */
+static const char profile1[] =
 "\\color\\srgb color space profile.icm";
-static const char profilesubdir[] =
-"\\system32\\spool\\drivers";
+static const char profile2[] =
+"\\spool\\drivers\\color\\srgb color space profile.icm";
 
-static const WCHAR profilefileW[] =
+static const WCHAR profile1W[] =
 { '\\','c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
   's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
-static const WCHAR profilesubdirW[] =
-{ '\\', 's','y','s','t','e','m','3','2','\\','s','p','o','o','l',
-  '\\','d','r','i','v','e','r','s',0 };
+static const WCHAR profile2W[] =
+{ '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\',
+  'c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
+  's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
 
 static const unsigned char rgbheader[] =
 { 0x48, 0x0c, 0x00, 0x00, 0x6f, 0x6e, 0x69, 0x4c, 0x00, 0x00, 0x10, 0x02,
@@ -940,36 +943,34 @@ START_TEST(profile)
     UINT len;
     HANDLE handle;
     char path[MAX_PATH], file[MAX_PATH];
-    char profile1[MAX_PATH], profile2[MAX_PATH];
-    WCHAR profile1W[MAX_PATH], profile2W[MAX_PATH];
+    char profilefile1[MAX_PATH], profilefile2[MAX_PATH];
+    WCHAR profilefile1W[MAX_PATH], profilefile2W[MAX_PATH];
     WCHAR fileW[MAX_PATH];
 
     /* See if we can find the standard color profile */
-    GetSystemDirectoryA( profile1, sizeof(profile1) );
-    GetSystemDirectoryW( profile1W, sizeof(profile1W) / sizeof(WCHAR) );
-    strcat( profile1, profilefile );
-    lstrcatW( profile1W, profilefileW );
-    handle = CreateFileA( profile1, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+    GetSystemDirectoryA( profilefile1, sizeof(profilefile1) );
+    GetSystemDirectoryW( profilefile1W, sizeof(profilefile1W) / sizeof(WCHAR) );
+    lstrcatA( profilefile1, profile1 );
+    lstrcatW( profilefile1W, profile1W );
+    handle = CreateFileA( profilefile1, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        standardprofile = profile1;
-        standardprofileW = profile1W;
+        standardprofile = profilefile1;
+        standardprofileW = profilefile1W;
         CloseHandle( handle );
     }
 
-    GetWindowsDirectoryA( profile2, sizeof(profile2) );
-    GetWindowsDirectoryW( profile2W, sizeof(profile2W) / sizeof(WCHAR) );
-    strcat( profile2, profilesubdir );
-    lstrcatW( profile2W, profilesubdirW );
-    strcat( profile2, profilefile );
-    lstrcatW( profile2W, profilefileW );
-    handle = CreateFileA( profile2, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
+    GetSystemDirectoryA( profilefile2, sizeof(profilefile2) );
+    GetSystemDirectoryW( profilefile2W, sizeof(profilefile2W) / sizeof(WCHAR) );
+    lstrcatA( profilefile2, profile2 );
+    lstrcatW( profilefile2W, profile2W );
+    handle = CreateFileA( profilefile2, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
 
     if (handle != INVALID_HANDLE_VALUE)
     {
-        standardprofile = profile2;
-        standardprofileW = profile2W;
+        standardprofile = profilefile2;
+        standardprofileW = profilefile2W;
         CloseHandle( handle );
     }
 
