@@ -709,6 +709,10 @@ void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
                             FIXME("Invalid color value for %s\n", debugstr_w(szPropertyName));
                         }
                     }
+		    else if (iPropertyId == TMT_FLATMENUS) {
+			BOOL flatMenus = (*lpValue == 'T') || (*lpValue == 't');
+			SystemParametersInfoW (SPI_SETFLATMENU, 0, (PVOID)flatMenus, 0);
+		    }
                     /* Catch all metrics, including colors */
                     MSSTYLES_AddMetric(tf, iPropertyPrimitive, iPropertyId, lpValue, dwValueLen);
                 }
