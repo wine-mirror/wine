@@ -86,7 +86,7 @@
 @ stdcall IsAppThemed()
 @ stdcall IsThemeActive()
 @ stdcall IsThemeBackgroundPartiallyTransparent(ptr long long)
-@ stdcall IsThemeDialogTextureEnabled()
+@ stdcall IsThemeDialogTextureEnabled(ptr)
 @ stdcall IsThemePartDefined(ptr long long)
 @ stdcall OpenThemeData(ptr wstr)
 @ stdcall SetThemeAppProperties(long)

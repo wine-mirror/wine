@@ -58,9 +58,9 @@ HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
 /***********************************************************************
  *      IsThemeDialogTextureEnabled                         (UXTHEME.@)
  */
-BOOL WINAPI IsThemeDialogTextureEnabled(void)
+BOOL WINAPI IsThemeDialogTextureEnabled(HWND hwnd)
 {
-    TRACE("\n");
+    TRACE("(%p)\n", hwnd);
     return (dwDialogTextureFlags & ETDT_ENABLE) && !(dwDialogTextureFlags & ETDT_DISABLE);
 }
 
