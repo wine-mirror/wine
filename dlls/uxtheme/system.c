@@ -169,9 +169,12 @@ HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
         tmp[1] = '\0';
         RegSetValueExW(hKey, szThemeActive, 0, REG_SZ, (const BYTE*)tmp, sizeof(WCHAR)*2);
         if(bThemeActive) {
-            RegSetValueExW(hKey, szColorName, 0, REG_SZ, (const BYTE*)szCurrentColor, lstrlenW(szCurrentColor)+1);
-            RegSetValueExW(hKey, szSizeName, 0, REG_SZ, (const BYTE*)szCurrentSize, lstrlenW(szCurrentSize)+1);
-            RegSetValueExW(hKey, szDllName, 0, REG_SZ, (const BYTE*)szCurrentTheme, lstrlenW(szCurrentTheme)+1);
+            RegSetValueExW(hKey, szColorName, 0, REG_SZ, (const BYTE*)szCurrentColor, 
+		(lstrlenW(szCurrentColor)+1)*sizeof(WCHAR));
+            RegSetValueExW(hKey, szSizeName, 0, REG_SZ, (const BYTE*)szCurrentSize, 
+		(lstrlenW(szCurrentSize)+1)*sizeof(WCHAR));
+            RegSetValueExW(hKey, szDllName, 0, REG_SZ, (const BYTE*)szCurrentTheme, 
+		(lstrlenW(szCurrentTheme)+1)*sizeof(WCHAR));
         }
         else {
             RegDeleteValueW(hKey, szColorName);
