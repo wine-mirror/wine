@@ -1156,6 +1156,8 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 			       UINT height, BOOL menuBar, UINT odaction )
 {
     RECT rect;
+    BOOL flat_menu = FALSE;
+    int bkgnd;
 
     debug_print_menuitem("MENU_DrawMenuItem: ", lpitem, "");
 
@@ -1166,11 +1168,14 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	return;
     }
 
+    SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
+    bkgnd = (menuBar && flat_menu) ? COLOR_MENUBAR : COLOR_MENU;
+  
       /* Setup colors */
 
     if (lpitem->fState & MF_HILITE)
     {
-        if(menuBar) {
+        if(menuBar && !flat_menu) {
 	    SetTextColor(hdc, GetSysColor(COLOR_MENUTEXT));
             SetBkColor(hdc, GetSysColor(COLOR_MENU));
 	} else {
@@ -1187,7 +1192,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
 	else
 	    SetTextColor( hdc, GetSysColor( COLOR_MENUTEXT ) );
-	SetBkColor( hdc, GetSysColor( COLOR_MENU ) );
+	SetBkColor( hdc, GetSysColor( bkgnd ) );
     }
 
     if (lpitem->fType & MF_OWNERDRAW)
@@ -1235,26 +1240,46 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
     {
 	if (lpitem->fState & MF_HILITE)
 	{
-	     if(menuBar)
-		DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
-	     else
-		FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+	    if (flat_menu)
+	    {
+		InflateRect (&rect, -1, -1);
+		FillRect(hdc, &rect, GetSysColorBrush(COLOR_MENUHILIGHT));
+		InflateRect (&rect, 1, 1);
+		FrameRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+	    }
+	    else
+	    {
+		if(menuBar)
+		    DrawEdge(hdc, &rect, BDR_SUNKENOUTER, BF_RECT);
+		else
+		    FillRect(hdc, &rect, GetSysColorBrush(COLOR_HIGHLIGHT));
+	    }
 	}
         else
-	    FillRect( hdc, &rect, GetSysColorBrush(COLOR_MENU) );
+	    FillRect( hdc, &rect, GetSysColorBrush(bkgnd) );
     }
 
     SetBkMode( hdc, TRANSPARENT );
 
     if (!(lpitem->fType & MF_OWNERDRAW))
     {
+	HPEN oldPen;
+    
         /* vertical separator */
         if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
         {
 	    RECT rc = rect;
 	    rc.top = 3;
 	    rc.bottom = height - 3;
-	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
+	    if (flat_menu)
+	    {
+		oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
+		MoveToEx( hdc, rc.left, rc.top, NULL );
+		LineTo( hdc, rc.left, rc.bottom );
+		SelectObject( hdc, oldPen );
+	    }
+	    else
+		DrawEdge (hdc, &rc, EDGE_ETCHED, BF_LEFT);
         }
 
         /* horizontal separator */
@@ -1264,7 +1289,15 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    rc.left++;
 	    rc.right--;
 	    rc.top += SEPARATOR_HEIGHT / 2;
-	    DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
+	    if (flat_menu)
+	    {
+		oldPen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_BTNSHADOW) );
+		MoveToEx( hdc, rc.left, rc.top, NULL );
+		LineTo( hdc, rc.right, rc.top );
+		SelectObject( hdc, oldPen );
+	    }
+	    else
+		DrawEdge (hdc, &rc, EDGE_ETCHED, BF_TOP);
 	    return;
         }
     }
@@ -1477,8 +1510,13 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 	if( hPrevPen )
 	{
 	    POPUPMENU *menu;
+	    BOOL flat_menu = FALSE;
 
-	    DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
+	    SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
+	    if (flat_menu)
+		FrameRect(hdc, &rect, GetSysColorBrush(COLOR_BTNSHADOW));
+	    else
+		DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
 
 	    /* draw menu items */
 
@@ -3859,6 +3897,9 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
     LPPOPUPMENU lppop;
     UINT i,retvalue;
     HFONT hfontOld = 0;
+    BOOL flat_menu = FALSE;
+
+    SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
 
     if (!hMenu)
         hMenu = GetMenu(hwnd);
@@ -3882,7 +3923,7 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
 
     lprect->bottom = lprect->top + lppop->Height;
 
-    FillRect(hDC, lprect, GetSysColorBrush(COLOR_MENU) );
+    FillRect(hDC, lprect, GetSysColorBrush(flat_menu ? COLOR_MENUBAR : COLOR_MENU) );
 
     SelectObject( hDC, SYSCOLOR_GetPen(COLOR_3DFACE));
     MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
