@@ -2431,6 +2431,17 @@ VarNumFromParseNum_DecOverflow:
 
 /**********************************************************************
  *              VarCat [OLEAUT32.318]
+ *
+ * Concatenates one variant onto another.
+ *
+ * PARAMS
+ *  left    [I] First variant
+ *  right   [I] Second variant
+ *  result  [O] Result variant
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
@@ -2626,6 +2637,16 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 /**********************************************************************
  *              VarAnd [OLEAUT32.142]
  *
+ * Computes the logical AND of two variants.
+ *
+ * PARAMS
+ *  left    [I] First variant
+ *  right   [I] Second variant
+ *  result  [O] Result variant
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
@@ -3061,6 +3082,16 @@ end:
 /**********************************************************************
  *              VarDiv [OLEAUT32.143]
  *
+ * Divides one variant with another.
+ *
+ * PARAMS
+ *  left    [I] First variant
+ *  right   [I] Second variant
+ *  result  [O] Result variant
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
@@ -3120,6 +3151,16 @@ HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 /**********************************************************************
  *              VarSub [OLEAUT32.159]
  *
+ * Subtract two variants.
+ *
+ * PARAMS
+ *  left    [I] First variant
+ *  right   [I] Second variant
+ *  result  [O] Result variant
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI VarSub(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
@@ -4516,6 +4557,16 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 /**********************************************************************
  *              VarPow [OLEAUT32.158]
  *
+ * Computes the power of one variant to another variant.
+ *
+ * PARAMS
+ *  left    [I] First variant
+ *  right   [I] Second variant
+ *  result  [O] Result variant
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code indicating the error.
  */
 HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {

@@ -449,6 +449,18 @@ static WCHAR	*pdelimiter = &_delimiter[0];
 
 /***********************************************************************
  *		RegisterActiveObject (OLEAUT32.33)
+ *
+ * Registers an object in the global item table.
+ *
+ * PARAMS
+ *  punk        [I] Object to register.
+ *  rcid        [I] CLSID of the object.
+ *  dwFlags     [I] Flags.
+ *  pdwRegister [O] Address to store cookie of object registration in.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
  */
 HRESULT WINAPI RegisterActiveObject(
 	LPUNKNOWN punk,REFCLSID rcid,DWORD dwFlags,LPDWORD pdwRegister
@@ -475,6 +487,16 @@ HRESULT WINAPI RegisterActiveObject(
 
 /***********************************************************************
  *		RevokeActiveObject (OLEAUT32.34)
+ *
+ * Revokes an object from the global item table.
+ *
+ * PARAMS
+ *  xregister [I] Registration cookie.
+ *  reserved  [I] Reserved. Set to NULL.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
  */
 HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 {
@@ -491,6 +513,17 @@ HRESULT WINAPI RevokeActiveObject(DWORD xregister,LPVOID reserved)
 
 /***********************************************************************
  *		GetActiveObject (OLEAUT32.35)
+ *
+ * Gets an object from the global item table.
+ *
+ * PARAMS
+ *  rcid        [I] CLSID of the object.
+ *  preserved   [I] Reserved. Set to NULL.
+ *  ppunk       [O] Address to store object into.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
  */
 HRESULT WINAPI GetActiveObject(REFCLSID rcid,LPVOID preserved,LPUNKNOWN *ppunk)
 {
