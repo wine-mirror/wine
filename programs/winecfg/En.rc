@@ -153,3 +153,33 @@ BEGIN
     IDS_HIDE_ADVANCED       "Hide Advanced"
     IDS_SHOW_ADVANCED       "Show Advanced"
 END
+
+
+/****************************************************************/
+/* English neutral resources
+/****************************************************************/
+
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+IDD_GRAPHCFG DIALOG DISCARDABLE  0, 0, 260, 250
+STYLE WS_CHILD | WS_DISABLED
+FONT 8, "MS Shell Dlg"
+BEGIN
+    LTEXT	    "Screen colour depth: ",IDC_STATIC,8,10,70,30
+    COMBOBOX	    IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL	    "Allow DirectX apps to stop the mouse leaving their window",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
+    CONTROL	    "Enable desktop double buffering",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
+    
+    GROUPBOX        " Window settings ",IDC_STATIC,8,25,244,120
+
+    /* FIXME: the wording of this explanation could be a lot better */
+    LTEXT           "You can choose to emulate a windows desktop, where all the windows are confined to one 'virtual screen', or you can have the windows placed on your standard desktop.",
+                    IDC_STATIC,15,73,228,28
+    LTEXT           "Desktop size:",IDC_DESKTOP_SIZE,15,115,44,8,WS_DISABLED
+    LTEXT           "X",IDC_DESKTOP_BY,108,115,8,8,WS_DISABLED
+    CONTROL         "Emulate a virtual desktop",IDC_ENABLE_DESKTOP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+		    
+    EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+END
