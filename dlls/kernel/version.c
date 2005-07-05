@@ -155,9 +155,8 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA) &&
         v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d or %d)\n",
-                        v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOA),
-                        sizeof(OSVERSIONINFOEXA));
+        WARN("wrong OSVERSIONINFO size from app (got: %ld)\n",
+                        v->dwOSVersionInfoSize );
         return FALSE;
     }
 
@@ -191,9 +190,8 @@ BOOL WINAPI GetVersionExW( OSVERSIONINFOW *info )
     if (info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOW) &&
         info->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d or %d)\n",
-                        info->dwOSVersionInfoSize, sizeof(OSVERSIONINFOW),
-                        sizeof(OSVERSIONINFOEXW));
+        WARN("wrong OSVERSIONINFO size from app (got: %ld)\n",
+                        info->dwOSVersionInfoSize);
         return FALSE;
     }
     return (RtlGetVersion( (RTL_OSVERSIONINFOEXW *)info ) == STATUS_SUCCESS);
