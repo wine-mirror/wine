@@ -810,6 +810,8 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
     }
     if(cls) {
         TRACE("Opened app %s, class %s from list %s\n", debugstr_w(cls->szAppName), debugstr_w(cls->szClassName), debugstr_w(pszClassList));
+	cls->tf = tfActiveTheme;
+	cls->tf->dwRefCount++;
     }
     return cls;
 }
@@ -823,11 +825,12 @@ PTHEME_CLASS MSSTYLES_OpenThemeClass(LPCWSTR pszAppName, LPCWSTR pszClassList)
  *     tc                  Theme class to close
  *
  * NOTES
- *  There is currently no need clean anything up for theme classes,
- *  so do nothing for now
+ *  The MSSTYLES_CloseThemeFile decreases the refcount of the owning
+ *  theme file and cleans it up, if needed.
  */
 HRESULT MSSTYLES_CloseThemeClass(PTHEME_CLASS tc)
 {
+    MSSTYLES_CloseThemeFile (tc->tf);
     return S_OK;
 }
 
