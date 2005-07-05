@@ -189,7 +189,7 @@
  202 stub SHLocalReAlloc
  203 stub AddCommasW
  204 stub ShortSizeFormatW
- 205 stub Printer_LoadIconsW
+ 205 stdcall Printer_LoadIconsW(wstr ptr ptr)
  206 stub Link_AddExtraDataSection
  207 stub Link_ReadExtraDataSection
  208 stub Link_RemoveExtraDataSection

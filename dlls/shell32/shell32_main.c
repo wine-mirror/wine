@@ -718,6 +718,37 @@ HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex
     return NULL;
 }
 
+/*************************************************************************
+ * Printer_LoadIconsW        [SHELL32.205]
+ */
+VOID WINAPI Printer_LoadIconsW(LPCWSTR wsPrinterName, HICON * pLargeIcon, HICON * pSmallIcon)
+{
+    INT iconindex=IDI_SHELL_PRINTER;
+
+    TRACE("(%s, %p, %p)\n", debugstr_w(wsPrinterName), pLargeIcon, pSmallIcon);
+
+    /* We should check if wsPrinterName is
+       1. the Default Printer or not
+       2. connected or not
+       3. a Local Printer or a Network-Printer
+       and use different Icons
+    */
+
+    FIXME("(select Icon by PrinterName %s not implemented)\n", debugstr_w(wsPrinterName));
+
+    if(pLargeIcon != NULL)
+        *pLargeIcon = LoadImageW(shell32_hInstance,
+                                 (LPCWSTR) MAKEINTRESOURCE(iconindex), IMAGE_ICON,
+                                 0, 0, LR_DEFAULTCOLOR|LR_DEFAULTSIZE);
+
+    if(pSmallIcon != NULL)
+        *pSmallIcon = LoadImageW(shell32_hInstance,
+                                 (LPCWSTR) MAKEINTRESOURCE(iconindex), IMAGE_ICON,
+                                 16, 16, LR_DEFAULTCOLOR);
+}
+
+/*************************************************************************/
+
 typedef struct
 {
     LPCWSTR  szApp;
