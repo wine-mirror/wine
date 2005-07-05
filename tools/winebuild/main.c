@@ -46,7 +46,6 @@ int nb_lib_paths = 0;
 int nb_errors = 0;
 int display_warnings = 0;
 int kill_at = 0;
-int debugging = 0;
 
 #ifdef __i386__
 enum target_cpu target_cpu = CPU_x86;
@@ -547,9 +546,6 @@ int main(int argc, char **argv)
 
     output_file = stdout;
     argv = parse_options( argc, argv, spec );
-
-    /* we only support relay debugging on i386 */
-    debugging = (target_cpu == CPU_x86);
 
     switch(exec_mode)
     {

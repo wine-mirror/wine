@@ -221,7 +221,6 @@ extern int parse_debug_channels( const char *srcdir, const char *filename );
 
 extern int current_line;
 extern int UsePIC;
-extern int debugging;
 extern int nb_debug_channels;
 extern int nb_lib_paths;
 extern int nb_errors;

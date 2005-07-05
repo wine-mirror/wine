@@ -291,7 +291,8 @@ static void output_exports( FILE *outfile, DLLSPEC *spec )
 
     /* output relays */
 
-    if (debugging)
+    /* we only support relay debugging on i386 */
+    if (target_cpu == CPU_x86)
     {
         for (i = spec->base; i <= spec->limit; i++)
         {
