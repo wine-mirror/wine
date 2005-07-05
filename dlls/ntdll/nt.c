@@ -637,11 +637,15 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemPerformanceInformation:
         {
-            SYSTEM_PERFORMANCE_INFORMATION* spi = (SYSTEM_PERFORMANCE_INFORMATION*)SystemInformation;
-            if (Length >= sizeof(*spi))
+            SYSTEM_PERFORMANCE_INFORMATION spi;
+
+            memset(&spi, 0 , sizeof(spi));
+            len = sizeof(spi);
+
+            if (Length >= len)
             {
-                memset(spi, 0, sizeof(*spi)); /* FIXME */
-                len = sizeof(*spi);
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &spi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
@@ -787,26 +791,30 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemProcessorPerformanceInformation:
         {
-            SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sppi = (SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION*)SystemInformation;
-            if (Length >= sizeof(*sppi))
+            SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION sppi;
+
+            memset(&sppi, 0 , sizeof(sppi)); /* FIXME */
+            len = sizeof(sppi);
+
+            if (Length >= len)
             {
-                memset(sppi, 0, sizeof(*sppi)); /* FIXME */
-                len = sizeof(*sppi);
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sppi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
     case SystemModuleInformation:
         {
-            SYSTEM_DRIVER_INFORMATION sdi;
+            SYSTEM_MODULE_INFORMATION smi;
 
-            memset(&sdi, 0, sizeof(sdi));
-            len = sizeof(sdi);
+            memset(&smi, 0, sizeof(smi));
+            len = sizeof(smi);
 
             if ( Length >= len)
             {
                 if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
-                else memcpy( SystemInformation, &sdi, len);
+                else memcpy( SystemInformation, &smi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
@@ -828,11 +836,15 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemCacheInformation:
         {
-            SYSTEM_CACHE_INFORMATION* sci = (SYSTEM_CACHE_INFORMATION*)SystemInformation;
-            if (Length >= sizeof(*sci))
+            SYSTEM_CACHE_INFORMATION sci;
+
+            memset(&sci, 0, sizeof(sci)); /* FIXME */
+            len = sizeof(sci);
+
+            if ( Length >= len)
             {
-                memset(sci, 0, sizeof(*sci)); /* FIXME */
-                len = sizeof(*sci);
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &sci, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
@@ -854,33 +866,42 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         break;
     case SystemKernelDebuggerInformation:
         {
-            PSYSTEM_KERNEL_DEBUGGER_INFORMATION pkdi;
-            if( Length >= sizeof(*pkdi))
+            SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
+
+            skdi.DebuggerEnabled = FALSE;
+            skdi.DebuggerNotPresent = TRUE;
+            len = sizeof(skdi);
+
+            if ( Length >= len)
             {
-                pkdi = SystemInformation;
-                pkdi->DebuggerEnabled = FALSE;
-                pkdi->DebuggerNotPresent = TRUE;
-                len = sizeof(*pkdi);
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else memcpy( SystemInformation, &skdi, len);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
         break;
     case SystemRegistryQuotaInformation:
-	/* Something to do with the size of the registry             *
-	 * Since we don't have a size limitation, fake it            *
-	 * This is almost certainly wrong.                           *
-	 * This sets each of the three words in the struct to 32 MB, *
-	 * which is enough to make the IE 5 installer happy.         */
         {
-            SYSTEM_REGISTRY_QUOTA_INFORMATION* srqi = (SYSTEM_REGISTRY_QUOTA_INFORMATION*)SystemInformation;
-            if (Length >= sizeof(*srqi))
+	    /* Something to do with the size of the registry             *
+	     * Since we don't have a size limitation, fake it            *
+	     * This is almost certainly wrong.                           *
+	     * This sets each of the three words in the struct to 32 MB, *
+	     * which is enough to make the IE 5 installer happy.         */
+            SYSTEM_REGISTRY_QUOTA_INFORMATION srqi;
+
+            srqi.RegistryQuotaAllowed = 0x2000000;
+            srqi.RegistryQuotaUsed = 0x200000;
+            srqi.Reserved1 = (void*)0x200000;
+            len = sizeof(srqi);
+
+            if ( Length >= len)
             {
-                FIXME("(0x%08x,%p,0x%08lx,%p) faking max registry size of 32 MB\n",
-                      SystemInformationClass,SystemInformation,Length,ResultLength);
-                srqi->RegistryQuotaAllowed = 0x2000000;
-                srqi->RegistryQuotaUsed = 0x200000;
-                srqi->Reserved1 = (void*)0x200000;
-                len = sizeof(*srqi);
+                if (!SystemInformation) ret = STATUS_ACCESS_VIOLATION;
+                else
+                {
+                    FIXME("SystemRegistryQuotaInformation: faking max registry size of 32 MB\n");
+                    memcpy( SystemInformation, &srqi, len);
+                }
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
