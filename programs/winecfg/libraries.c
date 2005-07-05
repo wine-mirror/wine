@@ -93,7 +93,7 @@ static const char* mode_to_string(enum dllmode mode)
 /* Convert a dllmode to a pretty string for display. TODO: use translations. */
 static const char* mode_to_label(enum dllmode mode)
 {
-    WINE_FIXME("translate me");
+    WINE_FIXME("translate me\n");
     return mode_to_string(mode);
 }
 
