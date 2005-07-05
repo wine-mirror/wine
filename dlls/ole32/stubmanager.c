@@ -539,7 +539,7 @@ const IID IID_IRemUnknown = { 0x00000131, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} }
 typedef struct rem_unknown
 {
     const IRemUnknownVtbl *lpVtbl;
-    ULONG refs;
+    LONG refs;
 } RemUnknown;
 
 static const IRemUnknownVtbl RemUnknown_Vtbl;

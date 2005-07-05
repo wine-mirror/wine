@@ -57,7 +57,7 @@ struct HGLOBALLockBytesImpl
   /*
    * Reference count
    */
-  ULONG        ref;
+  LONG        ref;
 
   /*
    * Support for the LockBytes object

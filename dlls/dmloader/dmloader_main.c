@@ -21,8 +21,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
-DWORD dwDirectMusicContainer = 0;
-DWORD dwDirectMusicLoader = 0;
+LONG dwDirectMusicContainer = 0;
+LONG dwDirectMusicLoader = 0;
 
 /******************************************************************
  *		DllMain

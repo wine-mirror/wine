@@ -45,8 +45,8 @@
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
 /* dmloader.dll global (for DllCanUnloadNow) */
-extern DWORD dwDirectMusicLoader; /* number of DirectMusicLoader(CF) instances */
-extern DWORD dwDirectMusicContainer; /* number of DirectMusicContainer(CF) instances */
+extern LONG dwDirectMusicLoader; /* number of DirectMusicLoader(CF) instances */
+extern LONG dwDirectMusicContainer; /* number of DirectMusicContainer(CF) instances */
 
 /*****************************************************************************
  * Interfaces
@@ -87,7 +87,7 @@ extern HRESULT WINAPI DMUSIC_DestroyDirectMusicLoaderGenericStream (LPSTREAM ifa
 struct IDirectMusicLoaderCF {
 	/* IUnknown fields */
 	const IClassFactoryVtbl *lpVtbl;
-	DWORD dwRef;
+	LONG dwRef;
 };
 
 /* IUnknown / IClassFactory: */
@@ -100,7 +100,7 @@ extern ULONG   WINAPI IDirectMusicLoaderCF_AddRef (LPCLASSFACTORY iface);
 struct IDirectMusicContainerCF {
 	/* IUnknown fields */
 	const IClassFactoryVtbl *lpVtbl;
-	DWORD dwRef;
+	LONG dwRef;
 };
 
 /* IUnknown / IClassFactory: */
@@ -130,7 +130,7 @@ struct IDirectMusicLoaderImpl {
 	/* VTABLEs */
 	const IDirectMusicLoader8Vtbl *LoaderVtbl;
 	/* reference counter */
-	DWORD dwRef;	
+	LONG dwRef;	
 	/* simple cache (linked list) */
 	struct list *pObjects;
 	/* settings for certain object classes */
@@ -162,7 +162,7 @@ struct IDirectMusicContainerImpl {
 	const IDirectMusicObjectVtbl *ObjectVtbl;
 	const IPersistStreamVtbl *PersistStreamVtbl;
 	/* reference counter */
-	DWORD dwRef;
+	LONG dwRef;
 	/* stream */
 	LPSTREAM pStream;
 	/* header */
@@ -191,7 +191,7 @@ struct IDirectMusicLoaderFileStream {
 	const IStreamVtbl *StreamVtbl;
 	const IDirectMusicGetLoaderVtbl *GetLoaderVtbl;
 	/* reference counter */
-	DWORD dwRef;
+	LONG dwRef;
 	/* file */
 	WCHAR wzFileName[MAX_PATH]; /* for clone */
 	HANDLE hFile;
@@ -217,7 +217,7 @@ struct IDirectMusicLoaderResourceStream {
 	const IStreamVtbl *StreamVtbl;
 	const IDirectMusicGetLoaderVtbl *GetLoaderVtbl;
 	/* reference counter */
-	DWORD dwRef;
+	LONG dwRef;
 	/* data */
 	LPBYTE pbMemData;
 	LONGLONG llMemLength;
@@ -245,7 +245,7 @@ struct IDirectMusicLoaderGenericStream {
 	const IStreamVtbl *StreamVtbl;
 	const IDirectMusicGetLoaderVtbl *GetLoaderVtbl;
 	/* reference counter */
-	DWORD dwRef;
+	LONG dwRef;
 	/* stream */
 	LPSTREAM pStream;
 	/* loader */

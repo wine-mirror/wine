@@ -88,7 +88,7 @@ const CLSID CLSID_PSFactoryBuffer = { 0x00000320, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0,
  */
 typedef struct _CFStub {
     const IRpcStubBufferVtbl   *lpvtbl;
-    DWORD			ref;
+    LONG			ref;
 
     LPUNKNOWN			pUnkServer;
 } CFStub;
@@ -268,7 +268,7 @@ CFStub_Construct(LPRPCSTUBBUFFER *ppv) {
 typedef struct _CFProxy {
     const IClassFactoryVtbl		*lpvtbl_cf;
     const IRpcProxyBufferVtbl	*lpvtbl_proxy;
-    DWORD				ref;
+    LONG				ref;
 
     IRpcChannelBuffer			*chanbuf;
     IUnknown *outer_unknown;
@@ -459,7 +459,7 @@ CFProxy_Construct(IUnknown *pUnkOuter, LPVOID *ppv,LPVOID *ppProxy) {
 typedef struct
 {
     const IRpcStubBufferVtbl *lpVtbl;
-    ULONG refs;
+    LONG refs;
     IRemUnknown *iface;
 } RemUnkStub;
 
@@ -664,7 +664,7 @@ static HRESULT RemUnkStub_Construct(IRpcStubBuffer **ppStub)
 typedef struct _RemUnkProxy {
     const IRemUnknownVtbl		*lpvtbl_remunk;
     const IRpcProxyBufferVtbl	*lpvtbl_proxy;
-    DWORD				refs;
+    LONG				refs;
 
     IRpcChannelBuffer			*chan;
     IUnknown *outer_unknown;

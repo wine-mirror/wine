@@ -88,7 +88,7 @@ static inline void get_rpc_endpoint(LPWSTR endpoint, const OXID *oxid)
 typedef struct
 {
     const IRpcChannelBufferVtbl *lpVtbl;
-    DWORD                  refs;
+    LONG                  refs;
 } RpcChannelBuffer;
 
 typedef struct

@@ -956,7 +956,7 @@ typedef struct
 {
         /* IUnknown fields */
         const IStream16Vtbl            *lpVtbl;
-        DWORD                           ref;
+        LONG                            ref;
         /* IStream16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
         struct storage_pps_entry        stde;
@@ -1450,7 +1450,7 @@ typedef struct
 {
         /* IUnknown fields */
         const IStreamVtbl              *lpVtbl;
-        DWORD                           ref;
+        LONG                            ref;
         /* IStream32 fields */
         struct storage_pps_entry        stde;
         int                             ppsent;
@@ -1504,7 +1504,7 @@ typedef struct
 {
         /* IUnknown fields */
         const IStorage16Vtbl           *lpVtbl;
-        DWORD                           ref;
+        LONG                            ref;
         /* IStorage16 fields */
         SEGPTR                          thisptr; /* pointer to this struct as segmented */
         struct storage_pps_entry        stde;

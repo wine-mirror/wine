@@ -394,7 +394,7 @@ HRESULT WINAPI OleRegGetUserType(
   DWORD   cbData;
   HKEY    clsidKey;
   LONG    hres;
-  LPBYTE  buffer;
+  LPSTR   buffer;
   HRESULT retVal;
   /*
    * Initialize the out parameter.
@@ -464,7 +464,7 @@ HRESULT WINAPI OleRegGetUserType(
 			  "",
 			  NULL,
 			  &dwKeyType,
-			  buffer,
+			  (LPBYTE) buffer,
 			  &cbData);
 
   RegCloseKey(clsidKey);

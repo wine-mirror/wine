@@ -370,7 +370,7 @@ HRESULT WINAPI ProgIDFromCLSID16(
 
   if (ret == S_OK)
   {
-    DWORD buf2len;
+    LONG buf2len;
     char *buf2 = HeapAlloc(GetProcessHeap(), 0, 255);
     buf2len = 255;
     if (RegQueryValueA(xhkey, NULL, buf2, &buf2len))

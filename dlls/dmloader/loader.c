@@ -827,7 +827,7 @@ HRESULT WINAPI DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]) {
 	char szPath[MAX_PATH];
 
 	if ((RegOpenKeyExA (HKEY_LOCAL_MACHINE, "Software\\Microsoft\\DirectMusic" , 0, KEY_READ, &hkDM) != ERROR_SUCCESS) || 
-	    (RegQueryValueExA (hkDM, "GMFilePath", NULL, &returnType, szPath, &sizeOfReturnBuffer) != ERROR_SUCCESS)) {
+	    (RegQueryValueExA (hkDM, "GMFilePath", NULL, &returnType, (LPBYTE) szPath, &sizeOfReturnBuffer) != ERROR_SUCCESS)) {
 		WARN(": registry entry missing\n" );
 		return E_FAIL;
 	}

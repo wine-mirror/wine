@@ -53,7 +53,7 @@ struct HGLOBALLockBytesImpl16
    * since we want to cast this in an ILockBytes pointer
    */
   const ILockBytes16Vtbl *lpVtbl;
-  ULONG        ref;
+  LONG        ref;
 
   /*
    * Support for the LockBytes object

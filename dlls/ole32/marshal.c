@@ -763,7 +763,7 @@ HRESULT apartment_disconnectproxies(struct apartment *apt)
 typedef struct _StdMarshalImpl
 {
     const IMarshalVtbl	*lpvtbl;
-    DWORD		ref;
+    LONG		ref;
 
     IID			iid;
     DWORD		dwDestContext;
