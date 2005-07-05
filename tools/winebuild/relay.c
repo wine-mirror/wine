@@ -139,21 +139,15 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "\tpushl %%edx\n" );
 
     /* Save original EFlags register */
-    fprintf( outfile, "\tpushfl\n" );
+    if (reg_func) fprintf( outfile, "\tpushfl\n" );
 
     if ( UsePIC )
     {
-        /* Get Global Offset Table into %ecx */
-        fprintf( outfile, "\tcall .L__wine_call_from_16_%s.getgot1\n", name );
-        fprintf( outfile, ".L__wine_call_from_16_%s.getgot1:\n", name );
+        fprintf( outfile, "\tcall .Lcall_from_16_%s.getpc\n", name );
+        fprintf( outfile, ".Lcall_from_16_%s.getpc:\n", name );
         fprintf( outfile, "\tpopl %%ecx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_call_from_16_%s.getgot1], %%ecx\n", name );
-    }
-
-    if (UsePIC)
-    {
-        fprintf( outfile, "\t.byte 0x2e\n\tmovl %s(%%ecx), %%edx\n", asm_name("CallTo16_DataSelector@GOT") );
-        fprintf( outfile, "\t.byte 0x2e\n\tmovl (%%edx), %%edx\n" );
+        fprintf( outfile, "\t.byte 0x2e\n\tmovl %s-.Lcall_from_16_%s.getpc(%%ecx),%%edx\n",
+                 asm_name("CallTo16_DataSelector"), name );
     }
     else
         fprintf( outfile, "\t.byte 0x2e\n\tmovl %s,%%edx\n", asm_name("CallTo16_DataSelector") );
@@ -163,31 +157,29 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     fprintf( outfile, "%s\tmovw %%dx, %%es\n", data16_prefix() );
 
     if ( UsePIC )
-    {
-        fprintf( outfile, "\tmovl %s(%%ecx), %%edx\n", asm_name("CallTo16_TebSelector@GOT") );
-        fprintf( outfile, "\tmovw (%%edx), %%fs\n" );
-    }
+        fprintf( outfile, "\tmovw %s-.Lcall_from_16_%s.getpc(%%ecx), %%fs\n",
+                 asm_name("CallTo16_TebSelector"), name );
     else
         fprintf( outfile, "\tmovw %s, %%fs\n", asm_name("CallTo16_TebSelector") );
 
     fprintf( outfile, "\t.byte 0x64\n\tmov (%d),%%gs\n", STRUCTOFFSET(TEB,gs_sel) );
 
-    /* Get address of wine_ldt_copy array into %ecx */
-    if ( UsePIC )
-        fprintf( outfile, "\tmovl %s(%%ecx), %%ecx\n", asm_name("wine_ldt_copy@GOT") );
-    else
-        fprintf( outfile, "\tmovl $%s, %%ecx\n", asm_name("wine_ldt_copy") );
-
     /* Translate STACK16FRAME base to flat offset in %edx */
     fprintf( outfile, "\tmovw %%ss, %%dx\n" );
     fprintf( outfile, "\tandl $0xfff8, %%edx\n" );
     fprintf( outfile, "\tshrl $1, %%edx\n" );
-    fprintf( outfile, "\tmovl (%%ecx,%%edx), %%edx\n" );
+    if (UsePIC)
+    {
+        fprintf( outfile, "\taddl wine_ldt_copy_ptr-.Lcall_from_16_%s.getpc(%%ecx),%%edx\n", name );
+        fprintf( outfile, "\tmovl (%%edx), %%edx\n" );
+    }
+    else
+        fprintf( outfile, "\tmovl %s(%%edx), %%edx\n", asm_name("wine_ldt_copy") );
     fprintf( outfile, "\tmovzwl %%sp, %%ebp\n" );
-    fprintf( outfile, "\tleal (%%ebp,%%edx), %%edx\n" );
+    fprintf( outfile, "\tleal %d(%%ebp,%%edx), %%edx\n", reg_func ? 0 : -4 );
 
     /* Get saved flags into %ecx */
-    fprintf( outfile, "\tpopl %%ecx\n" );
+    if (reg_func) fprintf( outfile, "\tpopl %%ecx\n" );
 
     /* Get the 32-bit stack pointer from the TEB and complete STACK16FRAME */
     fprintf( outfile, "\t.byte 0x64\n\tmovl (%d), %%ebp\n", STACKOFFSET );
@@ -908,13 +900,13 @@ static void BuildPendingEventCheck( FILE *outfile )
 
     /* Start cleanup. Restore fs register. */
 
-    fprintf( outfile, ".globl %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
+    fprintf( outfile, "\t.globl %s\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
     fprintf( outfile, "%s:\n", asm_name("DPMI_PendingEventCheck_Cleanup") );
     fprintf( outfile, "\tpopw %%fs\n" );
 
     /* Return from function. */
 
-    fprintf( outfile, ".globl %s\n", asm_name("DPMI_PendingEventCheck_Return") );
+    fprintf( outfile, "\t.globl %s\n", asm_name("DPMI_PendingEventCheck_Return") );
     fprintf( outfile, "%s:\n", asm_name("DPMI_PendingEventCheck_Return") );
     fprintf( outfile, "\tiret\n" );
 
@@ -985,6 +977,7 @@ void BuildRelays16( FILE *outfile )
     fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_DataSelector") );
     fprintf( outfile, "\t.globl %s\n", asm_name("CallTo16_TebSelector") );
     fprintf( outfile, "%s:\t.long 0\n", asm_name("CallTo16_TebSelector") );
+    if (UsePIC) fprintf( outfile, "wine_ldt_copy_ptr:\t.long %s\n", asm_name("wine_ldt_copy") );
 }
 
 /*******************************************************************
