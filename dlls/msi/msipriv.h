@@ -217,6 +217,7 @@ typedef struct tagMSIPACKAGE
 
     LPWSTR PackagePath;
     LPWSTR msiFilePath;
+    LPWSTR ProductCode;
 
     UINT CurrentInstallState;
     msi_dialog *dialog;
