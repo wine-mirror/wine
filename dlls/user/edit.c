@@ -1457,7 +1457,7 @@ static INT EDIT_CharFromPos(EDITSTATE *es, INT x, INT y, LPBOOL after_wrap)
                             x_low = x_now;
                         }
                     }
-                    if (abs(x_high - x) <= abs(x_low - x) + 1)
+                    if (abs(x_high - x) + 1 <= abs(x_low - x))
                         index = high;
                     else
                         index = low;

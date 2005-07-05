@@ -865,7 +865,7 @@ static void test_edit_control_4(void)
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2;
+    mid = lo + (hi - lo) / 2 +1;
 
     for (i = lo; i < mid; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
@@ -883,7 +883,7 @@ static void test_edit_control_4(void)
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2;
+    mid = lo + (hi - lo) / 2 +1;
 
     for (i = lo; i < mid; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
@@ -901,7 +901,7 @@ static void test_edit_control_4(void)
     SendMessage(hwEdit, WM_SETTEXT, 0, (LPARAM) "aa");
     lo = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessage(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2;
+    mid = lo + (hi - lo) / 2 +1;
 
     for (i = lo; i < mid; i++) {
        ret = LOWORD(SendMessage(hwEdit, EM_CHARFROMPOS, 0, (LPARAM) i));
