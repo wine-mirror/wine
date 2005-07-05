@@ -294,7 +294,7 @@ static void test_structs(void)
 }
 
 /************* Checking defines ***************/
-void test_defines(void)
+static void test_defines(void)
 {
     CHECK_DEF("WEOF", WEOF, MSVCRT_WEOF);
     CHECK_DEF("EOF", EOF, MSVCRT_EOF);

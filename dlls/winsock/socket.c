@@ -815,7 +815,7 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
 }
 
 /* Allocates a Unix sockaddr structure to receive the data */
-inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
+static inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
 {
     if (wsaddr==NULL)
     {
@@ -899,7 +899,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
 /* to be called to free the memory allocated by ws_sockaddr_ws2u or
  * ws_sockaddr_alloc
  */
-inline void ws_sockaddr_free(const struct sockaddr* uaddr, const struct WS_sockaddr* wsaddr)
+static inline void ws_sockaddr_free(const struct sockaddr* uaddr, const struct WS_sockaddr* wsaddr)
 {
     if (uaddr!=(const struct sockaddr*)wsaddr)
         HeapFree(GetProcessHeap(), 0, (void *)uaddr);

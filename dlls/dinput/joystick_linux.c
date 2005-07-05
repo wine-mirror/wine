@@ -385,7 +385,7 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
     return DI_OK;
 }
 
-void calculate_ids(JoystickImpl* device)
+static void calculate_ids(JoystickImpl* device)
 {
     int i;
     int axis = 0;
@@ -830,7 +830,7 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_NOEFFECT;
 }
 
-LONG map_axis(JoystickImpl * This, short val, short index)
+static LONG map_axis(JoystickImpl * This, short val, short index)
 {
     double    fval = val;
     double    fmin = This->props[index].lMin;
@@ -848,7 +848,7 @@ LONG map_axis(JoystickImpl * This, short val, short index)
 }
 
 /* convert wine format offset to user format object index */
-int offset_to_object(JoystickImpl *This, int offset)
+static int offset_to_object(JoystickImpl *This, int offset)
 {
     int i;
 
@@ -1093,7 +1093,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(
     return hr;
 }
 
-int find_property(JoystickImpl * This, LPCDIPROPHEADER ph)
+static int find_property(JoystickImpl * This, LPCDIPROPHEADER ph)
 {
     int i;
     if (ph->dwHow == DIPH_BYOFFSET) {

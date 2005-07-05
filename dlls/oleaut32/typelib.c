@@ -1072,14 +1072,14 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
     }
 }
 
-void dump_ELEMDESC(ELEMDESC *edesc) {
+static void dump_ELEMDESC(ELEMDESC *edesc) {
   char buf[200];
   dump_TypeDesc(&edesc->tdesc,buf);
   MESSAGE("\t\ttdesc.vartype %d (%s)\n",edesc->tdesc.vt,buf);
   MESSAGE("\t\tu.parmadesc.flags %x\n",edesc->u.paramdesc.wParamFlags);
   MESSAGE("\t\tu.parmadesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
 }
-void dump_FUNCDESC(FUNCDESC *funcdesc) {
+static void dump_FUNCDESC(FUNCDESC *funcdesc) {
   int i;
   MESSAGE("memid is %08lx\n",funcdesc->memid);
   for (i=0;i<funcdesc->cParams;i++) {
@@ -1118,10 +1118,6 @@ void dump_FUNCDESC(FUNCDESC *funcdesc) {
   dump_ELEMDESC(&funcdesc->elemdescFunc);
 }
 
-void dump_IDLDESC(IDLDESC *idl) {
-  MESSAGE("\t\twIdlflags: %d\n",idl->wIDLFlags);
-}
-
 static const char * typekind_desc[] =
 {
 	"TKIND_ENUM",
@@ -1134,27 +1130,6 @@ static const char * typekind_desc[] =
 	"TKIND_UNION",
 	"TKIND_MAX"
 };
-
-void dump_TYPEATTR(TYPEATTR *tattr) {
-  char buf[200];
-  MESSAGE("\tguid: %s\n",debugstr_guid(&tattr->guid));
-  MESSAGE("\tlcid: %ld\n",tattr->lcid);
-  MESSAGE("\tmemidConstructor: %ld\n",tattr->memidConstructor);
-  MESSAGE("\tmemidDestructor: %ld\n",tattr->memidDestructor);
-  MESSAGE("\tschema: %s\n",debugstr_w(tattr->lpstrSchema));
-  MESSAGE("\tsizeInstance: %ld\n",tattr->cbSizeInstance);
-  MESSAGE("\tkind:%s\n", typekind_desc[tattr->typekind]);
-  MESSAGE("\tcFuncs: %d\n", tattr->cFuncs);
-  MESSAGE("\tcVars: %d\n", tattr->cVars);
-  MESSAGE("\tcImplTypes: %d\n", tattr->cImplTypes);
-  MESSAGE("\tcbSizeVft: %d\n", tattr->cbSizeVft);
-  MESSAGE("\tcbAlignment: %d\n", tattr->cbAlignment);
-  MESSAGE("\twTypeFlags: %d\n", tattr->wTypeFlags);
-  MESSAGE("\tVernum: %d.%d\n", tattr->wMajorVerNum,tattr->wMinorVerNum);
-  dump_TypeDesc(&tattr->tdescAlias,buf);
-  MESSAGE("\ttypedesc: %s\n", buf);
-  dump_IDLDESC(&tattr->idldescType);
-}
 
 static void dump_TLBFuncDescOne(TLBFuncDesc * pfd)
 {
@@ -1307,7 +1282,7 @@ static void dump_TypeInfo(ITypeInfoImpl * pty)
     dump_TLBImplType(pty->impltypelist);
 }
 
-void dump_VARDESC(VARDESC *v)
+static void dump_VARDESC(VARDESC *v)
 {
     MESSAGE("memid %ld\n",v->memid);
     MESSAGE("lpstrSchema %s\n",debugstr_w(v->lpstrSchema));
@@ -1399,7 +1374,7 @@ static void free_deep_typedesc(TYPEDESC *tdesc)
  *  Functions for reading MSFT typelibs (those created by CreateTypeLib2)
  */
 /* read function */
-DWORD MSFT_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
+static DWORD MSFT_Read(void *buffer,  DWORD count, TLBContext *pcx, long where )
 {
     TRACE_(typelib)("pos=0x%08x len=0x%08lx 0x%08x 0x%08x 0x%08lx\n",
        pcx->pos, count, pcx->oStart, pcx->length, where);
@@ -1456,7 +1431,7 @@ static void MSFT_ReadGuid( GUID *pGuid, int offset, TLBContext *pcx)
     TRACE_(typelib)("%s\n", debugstr_guid(pGuid));
 }
 
-BSTR MSFT_ReadName( TLBContext *pcx, int offset)
+static BSTR MSFT_ReadName( TLBContext *pcx, int offset)
 {
     char * name;
     MSFT_NameIntro niName;
@@ -1491,7 +1466,7 @@ BSTR MSFT_ReadName( TLBContext *pcx, int offset)
     return bstrName;
 }
 
-BSTR MSFT_ReadString( TLBContext *pcx, int offset)
+static BSTR MSFT_ReadString( TLBContext *pcx, int offset)
 {
     char * string;
     INT16 length;
@@ -2043,7 +2018,7 @@ static void MSFT_DoImplTypes(TLBContext *pcx, ITypeInfoImpl *pTI, int count,
 /*
  * process a typeinfo record
  */
-ITypeInfoImpl * MSFT_DoTypeInfo(
+static ITypeInfoImpl * MSFT_DoTypeInfo(
     TLBContext *pcx,
     int count,
     ITypeLibImpl * pLibInfo)

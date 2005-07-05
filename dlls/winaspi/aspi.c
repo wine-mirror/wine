@@ -562,7 +562,7 @@ SCSI_MapHCtoController()
 }
 #endif
 
-int SCSI_Linux_CheckDevices(void)
+static int SCSI_Linux_CheckDevices(void)
 {
     DIR *devdir;
     struct dirent *dent = NULL;

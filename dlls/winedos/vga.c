@@ -345,14 +345,14 @@ static BOOL VGA_IsTimerRunning(void)
     return VGA_timer_thread ? TRUE : FALSE;
 }
 
-HANDLE VGA_AlphaConsole(void)
+static HANDLE VGA_AlphaConsole(void)
 {
     /* this assumes that no Win32 redirection has taken place, but then again,
      * only 16-bit apps are likely to use this part of Wine... */
     return GetStdHandle(STD_OUTPUT_HANDLE);
 }
 
-char*VGA_AlphaBuffer(void)
+static char*VGA_AlphaBuffer(void)
 {
     return (char *)0xb8000;
 }
@@ -526,7 +526,7 @@ int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
     return 0;
 }
 
-void VGA_Exit(void)
+static void VGA_Exit(void)
 {
     if (lpddraw) MZ_RunInThread(VGA_DoExit, 0);
 }
@@ -687,7 +687,7 @@ void VGA_ShowMouse( BOOL show )
 
 /* prepare the text mode video memory copy that is used to only
  * update the video memory line that did get updated. */
-void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
+static void VGA_PrepareVideoMemCopy(unsigned Xres, unsigned Yres)
 {
     char *p, *p2;
     unsigned int i;

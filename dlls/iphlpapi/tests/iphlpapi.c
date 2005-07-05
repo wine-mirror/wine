@@ -146,7 +146,7 @@ static void freeIPHlpApi(void)
 still-to-be-tested 98-only functions:
 GetUniDirectionalAdapterInfo
 */
-void testWin98OnlyFunctions(void)
+static void testWin98OnlyFunctions(void)
 {
 }
 

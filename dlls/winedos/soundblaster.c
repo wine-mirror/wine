@@ -121,7 +121,7 @@ static DWORD CALLBACK SB_Poll( void *dummy )
     return 0;
 }
 
-BOOL SB_Init(void)
+static BOOL SB_Init(void)
 {
     HRESULT result;
 
@@ -191,7 +191,7 @@ BOOL SB_Init(void)
     return 1;
 }
 
-void SB_Reset(void)
+static void SB_Reset(void)
 {
     int i;
 
@@ -225,7 +225,7 @@ void SB_Reset(void)
 }
 
 /* Find a standard sampling rate for DirectSound */
-int SB_StdSampleRate(int SampleRate)
+static int SB_StdSampleRate(int SampleRate)
 {
   if (SampleRate>((44100+48000)/2)) return 48000;
   if (SampleRate>((32000+44100)/2)) return 44100;
