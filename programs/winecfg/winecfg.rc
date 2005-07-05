@@ -28,7 +28,7 @@
 #include "resource.h"
 
 #include "De.rc"
-/* #include "Fr.rc" */
+#include "Fr.rc"
 #include "En.rc"
 /* #include "Cs.rc" */
 /* #include "Es.rc" */
