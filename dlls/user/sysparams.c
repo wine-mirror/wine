@@ -75,6 +75,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETICONTITLELOGFONT_IDX             31
 #define SPI_SETLOWPOWERACTIVE_IDX               32
 #define SPI_SETPOWEROFFACTIVE_IDX               33
+#define SPI_SETFLATMENU_IDX               	34
 
 #define SPI_WINE_IDX                            SPI_SETPOWEROFFACTIVE_IDX
 
@@ -291,6 +292,7 @@ static BOOL keyboard_cues = FALSE;
 static BOOL gradient_captions = FALSE;
 static BOOL listbox_smoothscrolling = FALSE;
 static BOOL hot_tracking = FALSE;
+static BOOL flat_menu = FALSE;
 static LOGFONTW icontitle_log_font = { -11,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH };
 
 #define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
@@ -2503,8 +2505,34 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETMOUSECLICKLOCK);      /* 0x101F  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
     WINE_SPI_FIXME(SPI_GETMOUSEVANISH);         /* 0x1020  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
     WINE_SPI_FIXME(SPI_SETMOUSEVANISH);         /* 0x1021  _WIN32_WINNT >= 0x510 || _WIN32_WINDOW >= 0x490*/
-    WINE_SPI_FIXME(SPI_GETFLATMENU);            /* 0x1022  _WIN32_WINNT >= 0x510 */
-    WINE_SPI_FIXME(SPI_SETFLATMENU);            /* 0x1023  _WIN32_WINNT >= 0x510 */
+    case SPI_GETFLATMENU:    /* 0x1022  _WIN32_WINNT >= 0x510 */
+        if (!pvParam) return FALSE;
+
+        spi_idx = SPI_SETFLATMENU_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            WCHAR buf[5];
+
+            if (SYSPARAMS_Load( SPI_USERPREFERENCEMASK_REGKEY,
+                                SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            {
+                flat_menu = (buf[2]&0x2);
+            }
+            spi_loaded[spi_idx] = TRUE;
+        }
+
+        *(BOOL *)pvParam = flat_menu;
+
+        break;
+
+    case SPI_SETFLATMENU:    /* 0x1023  _WIN32_WINNT >= 0x510 */
+        spi_idx = SPI_SETFLATMENU_IDX;
+        spi_loaded[spi_idx] = TRUE;
+        flat_menu = (BOOL)pvParam;
+        FIXME( "Implement proper saving for SPI_SETFLATMENU\n" );
+
+        break;
+
     WINE_SPI_FIXME(SPI_GETDROPSHADOW);          /* 0x1024  _WIN32_WINNT >= 0x510 */
     WINE_SPI_FIXME(SPI_SETDROPSHADOW);          /* 0x1025  _WIN32_WINNT >= 0x510 */
     WINE_SPI_FIXME(SPI_GETBLOCKSENDINPUTRESETS);
