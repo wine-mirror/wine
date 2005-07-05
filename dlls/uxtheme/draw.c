@@ -302,8 +302,8 @@ static HRESULT UXTHEME_DrawImageGlyph(HTHEME hTheme, HDC hdc, int iPartId,
     GetThemeBool(hTheme, iPartId, iStateId, TMT_GLYPHTRANSPARENT, &transparent);
     if(transparent) {
         if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_GLYPHTRANSPARENTCOLOR, &transparentcolor))) {
-            /* If image is transparent, but no color was specified, get the color of the upper left corner */
-            transparentcolor = GetPixel(hdcSrc, 0, 0);
+            /* If image is transparent, but no color was specified, use magenta */
+            transparentcolor = RGB(255, 0, 255);
         }
     }
     GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_VALIGN, &valign);
