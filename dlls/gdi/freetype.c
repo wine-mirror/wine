@@ -2209,7 +2209,7 @@ static FT_UInt get_glyph_index(GdiFont font, UINT glyph)
 {
     if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
         WCHAR wc = (WCHAR)glyph;
-        unsigned char buf;
+        char buf;
         WideCharToMultiByte(font->codepage, 0, &wc, 1, &buf, sizeof(buf), 0, 0);
         return pFT_Get_Char_Index(font->ft_face, buf);
     }

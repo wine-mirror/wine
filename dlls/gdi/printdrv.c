@@ -465,7 +465,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
     if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\Spooler", &hkey))
     {
         DWORD type, count = sizeof(psCmd);
-        RegQueryValueExA(hkey, pszOutput, 0, &type, psCmd, &count);
+        RegQueryValueExA(hkey, pszOutput, 0, &type, (LPBYTE)psCmd, &count);
         RegCloseKey(hkey);
     }
     if (!psCmd[0] && !strncmp("LPR:",pszOutput,4))

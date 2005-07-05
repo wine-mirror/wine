@@ -226,7 +226,7 @@ static struct graphics_driver *load_display_driver(void)
     if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Drivers", &hkey ))
     {
         DWORD type, count = sizeof(buffer);
-        RegQueryValueExA( hkey, "Graphics", 0, &type, buffer, &count );
+        RegQueryValueExA( hkey, "Graphics", 0, &type, (LPBYTE) buffer, &count );
         RegCloseKey( hkey );
     }
 
