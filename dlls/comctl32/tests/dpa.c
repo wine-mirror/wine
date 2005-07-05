@@ -87,8 +87,8 @@ static BOOL InitFunctionPtrs(HMODULE hcomctl32)
         /* 4.71+ */
         COMCTL32_GET_PROC(DPA_DestroyCallback, 386) &&
         COMCTL32_GET_PROC(DPA_EnumCallback, 385) &&
-        COMCTL32_GET_PROC(DPA_LoadStream, 9);
-        COMCTL32_GET_PROC(DPA_Merge, 11);
+        COMCTL32_GET_PROC(DPA_LoadStream, 9) &&
+        COMCTL32_GET_PROC(DPA_Merge, 11) &&
         COMCTL32_GET_PROC(DPA_SaveStream, 10);
 
         return TRUE;
