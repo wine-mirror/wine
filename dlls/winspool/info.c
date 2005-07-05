@@ -57,8 +57,21 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
-static LPWSTR *printer_array;
-static int nb_printers;
+static CRITICAL_SECTION printer_handles_cs;
+static CRITICAL_SECTION_DEBUG printer_handles_cs_debug = 
+{
+    0, 0, &printer_handles_cs,
+    { &printer_handles_cs_debug.ProcessLocksList, &printer_handles_cs_debug.ProcessLocksList },
+      0, 0, { 0, (DWORD)(__FILE__ ": printer_handles_cs") }
+};
+static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0, 0, 0, 0 };
+
+typedef struct {
+    LPWSTR name;
+} opened_printer_t;
+
+static opened_printer_t **printer_handles;
+static int nb_printer_handles;
 
 static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
                                                      WORD fwCapability, LPSTR lpszOutput,
@@ -546,51 +559,83 @@ void WINSPOOL_LoadSystemPrinters(void)
 
 
 /******************************************************************
- *  WINSPOOL_GetOpenedPrinterEntry
+ *  get_opened_printer_entry
  *  Get the first place empty in the opened printer table
  */
-static HANDLE WINSPOOL_GetOpenedPrinterEntry( LPCWSTR name )
+static HANDLE get_opened_printer_entry( LPCWSTR name )
 {
-    int i;
+    UINT handle;
 
-    for (i = 0; i < nb_printers; i++) if (!printer_array[i]) break;
+    EnterCriticalSection(&printer_handles_cs);
 
-    if (i >= nb_printers)
+    for (handle = 0; handle < nb_printer_handles; handle++)
+        if (!printer_handles[handle])
+            break;
+
+    if (handle >= nb_printer_handles)
     {
-        LPWSTR *new_array;
-	if (printer_array) 
-	    new_array = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, printer_array,
-                                         (nb_printers + 16) * sizeof(*new_array) );
-	else 
-	    new_array = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                         (nb_printers + 16) * sizeof(*new_array) );
+        opened_printer_t **new_array;
+        if (printer_handles)
+            new_array = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, printer_handles,
+                                     (nb_printer_handles + 16) * sizeof(*new_array) );
+        else 
+            new_array = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                   (nb_printer_handles + 16) * sizeof(*new_array) );
 
-        if (!new_array) return 0;
-        printer_array = new_array;
-        nb_printers += 16;
+        if (!new_array)
+        {
+            handle = 0;
+            goto end;
+        }
+        printer_handles = new_array;
+        nb_printer_handles += 16;
     }
 
-    if ((printer_array[i] = HeapAlloc( GetProcessHeap(), 0, (strlenW(name)+1)*sizeof(WCHAR) )))
+    if (!(printer_handles[handle] = HeapAlloc(GetProcessHeap(), 0, sizeof(**printer_handles))))
     {
-        strcpyW( printer_array[i], name );
-        return (HANDLE)(i + 1);
+        handle = 0;
+        goto end;
     }
-    return 0;
+
+    printer_handles[handle]->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
+    strcpyW(printer_handles[handle]->name, name);
+
+    handle++;
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+
+    return (HANDLE)handle;
 }
 
 /******************************************************************
- *  WINSPOOL_GetOpenedPrinter
+ *  get_opened_printer
  *  Get the pointer to the opened printer referred by the handle
  */
-static LPCWSTR WINSPOOL_GetOpenedPrinter(HANDLE printerHandle)
+static opened_printer_t *get_opened_printer(HANDLE hprn)
 {
-    int idx = (int)printerHandle;
-    if ((idx <= 0) || (idx > nb_printers))
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return NULL;
-    }
-    return printer_array[idx - 1];
+    int idx = (int)hprn;
+    opened_printer_t *ret = NULL;
+
+    EnterCriticalSection(&printer_handles_cs);
+
+    if ((idx <= 0) || (idx > nb_printer_handles))
+        goto end;
+
+    ret = printer_handles[idx - 1];
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
+}
+
+/******************************************************************
+ *  get_opened_printer_name
+ *  Get the pointer to the opened printer name referred by the handle
+ */
+static LPCWSTR get_opened_printer_name(HANDLE hprn)
+{
+    opened_printer_t *printer = get_opened_printer(hprn);
+    if(!printer) return NULL;
+    return printer->name;
 }
 
 /******************************************************************
@@ -599,7 +644,7 @@ static LPCWSTR WINSPOOL_GetOpenedPrinter(HANDLE printerHandle)
  */
 static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
 {
-    LPCWSTR name = WINSPOOL_GetOpenedPrinter(hPrinter);
+    LPCWSTR name = get_opened_printer_name(hPrinter);
     DWORD ret;
     HKEY hkeyPrinters;
 
@@ -612,8 +657,8 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     if(RegOpenKeyW(hkeyPrinters, name, phkey) != ERROR_SUCCESS)
     {
         ERR("Can't find opened printer %s in registry\n",
-	    debugstr_w(name));
-	RegCloseKey(hkeyPrinters);
+            debugstr_w(name));
+        RegCloseKey(hkeyPrinters);
         return ERROR_INVALID_PRINTER_NAME; /* ? */
     }
     RegCloseKey(hkeyPrinters);
@@ -839,9 +884,10 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
     );
 
     if(!pDeviceName) {
-        LPCWSTR lpNameW = WINSPOOL_GetOpenedPrinter(hPrinter);
+        LPCWSTR lpNameW = get_opened_printer_name(hPrinter);
         if(!lpNameW) {
 		ERR("no name from hPrinter?\n");
+                SetLastError(ERROR_INVALID_HANDLE);
 		return -1;
 	}
 	lpName = HEAP_strdupWtoA(GetProcessHeap(),0,lpNameW);
@@ -974,7 +1020,7 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
         return TRUE;
 
     /* Get the unique handle of the printer*/
-    *phPrinter = WINSPOOL_GetOpenedPrinterEntry( lpPrinterName );
+    *phPrinter = get_opened_printer_entry( lpPrinterName );
 
     if (pDefault != NULL)
         FIXME("Not handling pDefault\n");
@@ -1433,13 +1479,27 @@ HANDLE WINAPI AddPrinterA(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
     int i = (int)hPrinter;
+    opened_printer_t *printer = NULL;
 
     TRACE("Handle %p\n", hPrinter);
 
-    if ((i <= 0) || (i > nb_printers)) return FALSE;
-    HeapFree( GetProcessHeap(), 0, printer_array[i - 1] );
-    printer_array[i - 1] = NULL;
-    return TRUE;
+    EnterCriticalSection(&printer_handles_cs);
+
+    if ((i > 0) && (i <= nb_printer_handles))
+    {
+        printer = printer_handles[i - 1];
+        printer_handles[i - 1] = NULL;
+    }
+
+    LeaveCriticalSection(&printer_handles_cs);
+
+    if(printer)
+    {
+        HeapFree(GetProcessHeap(), 0, printer->name);
+        HeapFree(GetProcessHeap(), 0, printer);
+        return TRUE;
+    }
+    return FALSE;
 }
 
 /*****************************************************************************
@@ -1516,10 +1576,13 @@ static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
  */
 BOOL WINAPI DeletePrinter(HANDLE hPrinter)
 {
-    LPCWSTR lpNameW = WINSPOOL_GetOpenedPrinter(hPrinter);
+    LPCWSTR lpNameW = get_opened_printer_name(hPrinter);
     HKEY hkeyPrinters, hkey;
 
-    if(!lpNameW) return FALSE;
+    if(!lpNameW) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
     if(RegOpenKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) == ERROR_SUCCESS) {
         WINSPOOL_SHDeleteKeyW(hkeyPrinters, lpNameW);
         RegCloseKey(hkeyPrinters);
@@ -2134,7 +2197,10 @@ static BOOL WINSPOOL_GetPrinter(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 
     TRACE("(%p,%ld,%p,%ld,%p)\n",hPrinter,Level,pPrinter,cbBuf, pcbNeeded);
 
-    if (!(name = WINSPOOL_GetOpenedPrinter(hPrinter))) return FALSE;
+    if (!(name = get_opened_printer_name(hPrinter))) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
 
     if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
        ERROR_SUCCESS) {
@@ -2664,8 +2730,10 @@ static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 
     ZeroMemory(pDriverInfo, cbBuf);
 
-    if (!(name = WINSPOOL_GetOpenedPrinter(hPrinter))) return FALSE;
-
+    if (!(name = get_opened_printer_name(hPrinter))) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
     if(Level < 1 || Level > 3) {
         SetLastError(ERROR_INVALID_LEVEL);
 	return FALSE;
