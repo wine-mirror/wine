@@ -1029,7 +1029,9 @@ typedef struct _SYSTEM_TIMEOFDAY_INFORMATION {
 typedef struct _SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION {
 #ifdef __WINESRC__
     LARGE_INTEGER liIdleTime;
-    DWORD dwSpare[10];
+    LARGE_INTEGER liKernelTime;
+    LARGE_INTEGER liUserTime;
+    DWORD dwSpare[5];
 #else
     LARGE_INTEGER IdleTime;
     LARGE_INTEGER KernelTime;
