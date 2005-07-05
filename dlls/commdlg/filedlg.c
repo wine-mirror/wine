@@ -850,7 +850,7 @@ void SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode)
 
 static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer)
 {
-    INT_PTR sizeUsed = 0, n, total;
+    UINT sizeUsed = 0, n, total;
     LPWSTR lpstrFileList = NULL;
     WCHAR lpstrCurrentDir[MAX_PATH];
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
@@ -912,7 +912,7 @@ static INT_PTR FILEDLG95_Handle_GetFilePath(HWND hwnd, DWORD size, LPVOID buffer
 
 static INT_PTR FILEDLG95_Handle_GetFileSpec(HWND hwnd, DWORD size, LPVOID buffer)
 {
-    INT_PTR sizeUsed = 0;
+    UINT sizeUsed = 0;
     LPWSTR lpstrFileList = NULL;
     FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
 

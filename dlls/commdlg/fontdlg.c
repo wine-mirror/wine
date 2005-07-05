@@ -722,11 +722,13 @@ LRESULT CFn_WMMeasureItem(HWND hDlg, WPARAM wParam, LPARAM lParam)
     HFONT hfontprev;
     TEXTMETRICW tm;
     LPMEASUREITEMSTRUCT lpmi=(LPMEASUREITEMSTRUCT)lParam;
+    INT height = 0;
+
     if (!himlTT)
         himlTT = ImageList_LoadImageW( COMDLG32_hInstance, MAKEINTRESOURCEW(38),
                 TTBITMAP_XSIZE, 0, CLR_DEFAULT, IMAGE_BITMAP, 0);
-    ImageList_GetIconSize( himlTT, 0, &lpmi->itemHeight);
-    lpmi->itemHeight += 2;
+    ImageList_GetIconSize( himlTT, 0, &height);
+    lpmi->itemHeight = height + 2;
     /* use MAX of bitmap height and tm.tmHeight .*/
     hdc=GetDC(hDlg);
     if(!hdc) return 0;

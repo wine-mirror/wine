@@ -50,7 +50,7 @@ typedef struct
     const IShellBrowserVtbl *lpVtbl;
     const ICommDlgBrowserVtbl *lpVtblCommDlgBrowser;
     const IServiceProviderVtbl *lpVtblServiceProvider;
-    DWORD ref;                                  /* Reference counter */
+    LONG ref;                                   /* Reference counter */
     HWND hwndOwner;                             /* Owner dialog of the interface */
 
 } IShellBrowserImpl;

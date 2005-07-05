@@ -473,7 +473,7 @@ static BOOL PRINTDLG_PaperSizeA(
 	goto out;
     }
     points = HeapAlloc(GetProcessHeap(),0,sizeof(points[0])*NrOfEntries);
-    if (NrOfEntries!=(ret=DeviceCapabilitiesA(devname,portname,DC_PAPERSIZE,(LPBYTE)points,dm))) {
+    if (NrOfEntries!=(ret=DeviceCapabilitiesA(devname,portname,DC_PAPERSIZE,(LPSTR)points,dm))) {
 	FIXME("Number of returned sizes %d is not %d?\n",NrOfEntries,ret);
 	goto out;
     }
@@ -898,7 +898,7 @@ BOOL PRINTDLG_ChangePrinterA(HWND hDlg, char *name,
     dmSize = DocumentPropertiesA(0, 0, name, PrintStructures->lpDevMode, NULL,
 				 DM_OUT_BUFFER);
     if(lppd->hDevMode && (lpdm = GlobalLock(lppd->hDevMode)) &&
-			  !strcmp(lpdm->dmDeviceName,
+			  !lstrcmpA(lpdm->dmDeviceName,
 				  PrintStructures->lpDevMode->dmDeviceName)) {
       /* Supplied devicemode matches current printer so try to use it */
         DocumentPropertiesA(0, 0, name, PrintStructures->lpDevMode, lpdm,
@@ -1241,7 +1241,7 @@ static LRESULT PRINTDLG_WMInitDialog(HWND hDlg, WPARAM wParam,
 	if(pdn)
 	    name = (char*)pdn + pdn->wDeviceOffset;
 	else if(pdm)
-	    name = pdm->dmDeviceName;
+	    name = (char*)pdm->dmDeviceName;
 	PRINTDLG_SetUpPrinterListComboA(hDlg, comboID, name);
 	if(pdm) GlobalUnlock(lppd->hDevMode);
 	if(pdn) GlobalUnlock(lppd->hDevNames);
