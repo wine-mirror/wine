@@ -771,15 +771,14 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
     result = UNIXFS_path_to_pidl(This, lpszDisplayName, ppidl);
     if (result && pdwAttributes && *pdwAttributes)
     {
-        /* need to traverse to the last element for the attribute */
-        LPCITEMIDLIST pidl, last_pidl;
-        pidl = last_pidl = *ppidl;
-        while(pidl && pidl->mkid.cb)
-        {
-            last_pidl = pidl;
-            pidl = ILGetNext(pidl);
-        }
-        SHELL32_GetItemAttributes((IShellFolder*)iface, last_pidl, pdwAttributes);
+        IShellFolder *pParentSF;
+        LPCITEMIDLIST pidlLast;
+        HRESULT hr;
+        
+        hr = SHBindToParent(This->m_pidlLocation, &IID_IShellFolder, (LPVOID*)&pParentSF, &pidlLast);
+        if (FAILED(hr)) return E_FAIL;
+        IShellFolder_GetAttributesOf(pParentSF, 1, &pidlLast, pdwAttributes);
+        IShellFolder_Release(pParentSF);
     }
 
     if (!result) TRACE("FAILED!\n");
