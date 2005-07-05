@@ -375,7 +375,7 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   ME_WrapEndParagraph(&wc, p);
   tp->member.para.nFlags &= ~MEPF_REWRAP;
   tp->member.para.nHeight = wc.pt.y;
-  tp->member.para.nRows = wc.nRow + 1;
+  tp->member.para.nRows = wc.nRow;
 }
 
 
