@@ -60,6 +60,12 @@ NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
     return ret;
 }
 
+#define UNIMPLEMENTED_INFO_CLASS(c) \
+    case c: \
+        FIXME("(process=%p) Unimplemented information class: " #c "\n", ProcessHandle); \
+        ret = STATUS_INVALID_INFO_CLASS; \
+        break
+
 /******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.@]
 *  ZwQueryInformationProcess		[NTDLL.@]
@@ -82,6 +88,33 @@ NTSTATUS WINAPI NtQueryInformationProcess(
 
     switch (ProcessInformationClass) 
     {
+    UNIMPLEMENTED_INFO_CLASS(ProcessQuotaLimits);
+    UNIMPLEMENTED_INFO_CLASS(ProcessBasePriority);
+    UNIMPLEMENTED_INFO_CLASS(ProcessRaisePriority);
+    UNIMPLEMENTED_INFO_CLASS(ProcessExceptionPort);
+    UNIMPLEMENTED_INFO_CLASS(ProcessAccessToken);
+    UNIMPLEMENTED_INFO_CLASS(ProcessLdtInformation);
+    UNIMPLEMENTED_INFO_CLASS(ProcessLdtSize);
+    UNIMPLEMENTED_INFO_CLASS(ProcessDefaultHardErrorMode);
+    UNIMPLEMENTED_INFO_CLASS(ProcessIoPortHandlers);
+    UNIMPLEMENTED_INFO_CLASS(ProcessPooledUsageAndLimits);
+    UNIMPLEMENTED_INFO_CLASS(ProcessWorkingSetWatch);
+    UNIMPLEMENTED_INFO_CLASS(ProcessUserModeIOPL);
+    UNIMPLEMENTED_INFO_CLASS(ProcessEnableAlignmentFaultFixup);
+    UNIMPLEMENTED_INFO_CLASS(ProcessPriorityClass);
+    UNIMPLEMENTED_INFO_CLASS(ProcessWx86Information);
+    UNIMPLEMENTED_INFO_CLASS(ProcessAffinityMask);
+    UNIMPLEMENTED_INFO_CLASS(ProcessPriorityBoost);
+    UNIMPLEMENTED_INFO_CLASS(ProcessDeviceMap);
+    UNIMPLEMENTED_INFO_CLASS(ProcessSessionInformation);
+    UNIMPLEMENTED_INFO_CLASS(ProcessForegroundInformation);
+    UNIMPLEMENTED_INFO_CLASS(ProcessImageFileName);
+    UNIMPLEMENTED_INFO_CLASS(ProcessLUIDDeviceMapsEnabled);
+    UNIMPLEMENTED_INFO_CLASS(ProcessBreakOnTermination);
+    UNIMPLEMENTED_INFO_CLASS(ProcessDebugObjectHandle);
+    UNIMPLEMENTED_INFO_CLASS(ProcessDebugFlags);
+    UNIMPLEMENTED_INFO_CLASS(ProcessHandleTracing);
+
     case ProcessBasicInformation:
         {
             PROCESS_BASIC_INFORMATION pbi;
@@ -237,7 +270,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     default:
-        FIXME("(%p,0x%08x,%p,0x%08lx,%p),stub!\n",
+        FIXME("(%p,info_class=%d,%p,0x%08lx,%p) Unknown information class\n",
               ProcessHandle,ProcessInformationClass,
               ProcessInformation,ProcessInformationLength,
               ReturnLength);

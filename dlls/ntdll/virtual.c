@@ -1401,6 +1401,10 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
     return status;
 }
 
+#define UNIMPLEMENTED_INFO_CLASS(c) \
+    case c: \
+        FIXME("(process=%p,addr=%p) Unimplemented information class: " #c "\n", process, addr); \
+        return STATUS_INVALID_INFO_CLASS
 
 /***********************************************************************
  *             NtQueryVirtualMemory   (NTDLL.@)
@@ -1418,9 +1422,17 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     if (info_class != MemoryBasicInformation)
     {
-        FIXME("(%p, %p, %d, %p, %ld, %p) Unimplemented information class\n", process, addr,
-              info_class, buffer, len, res_len);
-        return STATUS_INVALID_INFO_CLASS;
+        switch(info_class)
+        {
+            UNIMPLEMENTED_INFO_CLASS(MemoryWorkingSetList);
+            UNIMPLEMENTED_INFO_CLASS(MemorySectionName);
+            UNIMPLEMENTED_INFO_CLASS(MemoryBasicVlmInformation);
+
+            default:
+                FIXME("(%p,%p,info_class=%d,%p,%ld,%p) Unknown information class\n", 
+                      process, addr, info_class, buffer, len, res_len);
+                return STATUS_INVALID_INFO_CLASS;
+        }
     }
     if (ADDRESS_SPACE_LIMIT && addr >= ADDRESS_SPACE_LIMIT)
         return STATUS_WORKING_SET_LIMIT_RANGE;
