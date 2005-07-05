@@ -541,3 +541,23 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "&Define Custom Colours >>", 719/*1025*/,   4, 150, 142, 14, WS_GROUP | WS_TABSTOP
  PUSHBUTTON  "&i",713,300,200,4,14   /* just a dummy:  'i' is  like  &i  in "sol&id"  */
 }
+
+STRINGTABLE DISCARDABLE /* Color names */
+{
+    IDS_COLOR_BLACK     "Black"
+    IDS_COLOR_MAROON    "Maroon"
+    IDS_COLOR_GREEN     "Green"
+    IDS_COLOR_OLIVE     "Olive"
+    IDS_COLOR_NAVY      "Navy"
+    IDS_COLOR_PURPLE    "Purple"
+    IDS_COLOR_TEAL      "Teal"
+    IDS_COLOR_GRAY      "Grey"
+    IDS_COLOR_SILVER    "Silver"
+    IDS_COLOR_RED       "Red"
+    IDS_COLOR_LIME      "Lime"
+    IDS_COLOR_YELLOW    "Yellow"
+    IDS_COLOR_BLUE      "Blue"
+    IDS_COLOR_FUCHSIA   "Fuchsia"
+    IDS_COLOR_AQUA      "Aqua"
+    IDS_COLOR_WHITE     "White"
+}
