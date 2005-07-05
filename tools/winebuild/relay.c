@@ -369,7 +369,8 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
 
     if ( reg_func )
     {
-        fprintf( outfile, "\tmovl %%esp, %%ebx\n" );
+        fprintf( outfile, "\tleal -%d(%%ebp), %%ebx\n",
+                 sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME, ebp) );
 
         /* Switch stack back */
         fprintf( outfile, "\t.byte 0x64\n\tmovw (%d), %%ss\n", STACKOFFSET+2 );

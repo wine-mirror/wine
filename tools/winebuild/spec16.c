@@ -254,7 +254,7 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
         fprintf( outfile, "void" );
     fprintf( outfile, " );\n" );
 
-    fprintf( outfile, "static %s __stdcall __wine_%s_CallFrom16_%s( proc_%s_t proc, unsigned char *args%s )\n",
+    fprintf( outfile, "static %s __wine_%s_CallFrom16_%s( proc_%s_t proc, unsigned char *args%s )\n",
              ret_type, make_c_identifier(prefix), profile, profile,
              reg_func? ", void *context" : "" );
 
@@ -781,6 +781,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
             }
             arg_types[j / 10] |= type << (3 * (j % 10));
         }
+        if (typelist[i]->type == TYPE_VARARGS) arg_types[j / 10] |= ARG_VARARG << (3 * (j % 10));
         if (typelist[i]->flags & FLAG_REGISTER) arg_types[0] |= ARG_REGISTER;
         if (typelist[i]->flags & FLAG_RET16) arg_types[0] |= ARG_RET16;
 

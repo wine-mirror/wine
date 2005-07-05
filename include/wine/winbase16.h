@@ -213,7 +213,8 @@ enum arg_types
     ARG_LONG,     /* long or segmented pointer */
     ARG_PTR,      /* linear pointer */
     ARG_STR,      /* linear pointer to null-terminated string */
-    ARG_SEGSTR    /* segmented pointer to null-terminated string */
+    ARG_SEGSTR,   /* segmented pointer to null-terminated string */
+    ARG_VARARG    /* start of varargs */
 };
 
 /* flags added to arg_types[0] */
