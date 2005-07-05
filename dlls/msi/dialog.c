@@ -77,6 +77,7 @@ struct msi_dialog_tag
     LPWSTR default_font;
     msi_font *font_list;
     msi_control *control_list;
+    HWND hWndFocus;
     WCHAR name[1];
 };
 
@@ -1402,6 +1403,17 @@ static UINT msi_dialog_set_tab_order( msi_dialog *dialog )
     return ERROR_SUCCESS;
 }
 
+static void msi_dialog_set_first_control( msi_dialog* dialog, LPCWSTR name )
+{
+    msi_control *control;
+
+    control = msi_dialog_find_control( dialog, name );
+    if( control )
+        dialog->hWndFocus = control->hwnd;
+    else
+        dialog->hWndFocus = NULL;
+}
+
 static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
 {
     static const WCHAR df[] = {
@@ -1441,12 +1453,13 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
                   SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW );
 
     HeapFree( GetProcessHeap(), 0, title );
-    msiobj_release( &rec->hdr );
 
     msi_dialog_build_font_list( dialog );
     msi_dialog_fill_controls( dialog );
     msi_dialog_evaluate_control_conditions( dialog );
     msi_dialog_set_tab_order( dialog );
+    msi_dialog_set_first_control( dialog, MSI_RecordGetString( rec, 8 ) );
+    msiobj_release( &rec->hdr );
 
     return 0;
 }
@@ -1669,6 +1682,16 @@ static LRESULT msi_dialog_oncommand( msi_dialog *dialog, WPARAM param, HWND hwnd
     return 0;
 }
 
+static void msi_dialog_setfocus( msi_dialog *dialog )
+{
+    HWND hwnd = dialog->hWndFocus;
+
+    hwnd = GetNextDlgTabItem( dialog->hwnd, hwnd, TRUE);
+    hwnd = GetNextDlgTabItem( dialog->hwnd, hwnd, FALSE);
+    SetFocus( hwnd );
+    dialog->hWndFocus = hwnd;
+}
+
 static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
                 WPARAM wParam, LPARAM lParam )
 {
@@ -1683,6 +1706,17 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
 
     case WM_COMMAND:
         return msi_dialog_oncommand( dialog, wParam, (HWND)lParam );
+
+    case WM_ACTIVATE:
+        if( LOWORD(wParam) == WA_INACTIVE )
+            dialog->hWndFocus = GetFocus();
+        else
+            msi_dialog_setfocus( dialog );
+        return 0;
+
+    case WM_SETFOCUS:
+        msi_dialog_setfocus( dialog );
+        return 0;
 
     /* bounce back to our subclassed static control */
     case WM_CTLCOLORSTATIC:
