@@ -316,6 +316,17 @@ interface IXMLError : IUnknown
 };
 
 [
+    object,
+    local,
+    uuid(D9F1E15A-CCDB-11d0-9C0C-00C04FC99C8E)
+]
+interface IXMLElementNotificationSink : IDispatch
+{
+    [id(DISPID_XMLNOTIFSINK_CHILDADDED)] 
+    HRESULT ChildAdded([in]IDispatch *pChildElem); 
+};
+
+[
 uuid(cfc399af-d876-11d0-9c10-00c04fc99c8e)
 ]
 coclass XMLDocument
