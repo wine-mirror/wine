@@ -33,6 +33,7 @@ ME_StreamOutInit(ME_TextEditor *editor, EDITSTREAM *stream)
 {
   editor->pStream = ALLOC_OBJ(ME_OutStream);
   editor->pStream->stream = stream;
+  editor->pStream->stream->dwError = 0;
   editor->pStream->pos = 0;
   editor->pStream->written = 0;
   editor->pStream->nFontTblLen = 0;
@@ -790,7 +791,7 @@ ME_StreamOut(ME_TextEditor *editor, DWORD dwFormat, EDITSTREAM *stream)
     nTo = ME_GetTextLength(editor);
   TRACE("from %d to %d\n", nStart, nTo);
   
-  if (dwFormat & SF_RTF || dwFormat & SF_RTFNOOBJS)
+  if (dwFormat & SF_RTF)
     ME_StreamOutRTF(editor, nStart, nTo - nStart, dwFormat);
   else if (dwFormat & SF_TEXT || dwFormat & SF_TEXTIZED)
     ME_StreamOutText(editor, nStart, nTo - nStart, dwFormat);
