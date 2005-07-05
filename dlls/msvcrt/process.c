@@ -541,7 +541,6 @@ MSVCRT_FILE* MSVCRT__popen(const char* command, const char* mode)
         break;
     }
   }
-  textmode |= MSVCRT__O_NOINHERIT;
   if (_pipe(fds, 0, textmode) == -1)
     return NULL;
 
