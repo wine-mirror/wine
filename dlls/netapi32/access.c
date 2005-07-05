@@ -42,7 +42,7 @@ static const WCHAR sGuestUserName[] = {'G','u','e','s','t',0};
  *
  * Validates server name
  */
-NET_API_STATUS NETAPI_ValidateServername(LPCWSTR ServerName)
+static NET_API_STATUS NETAPI_ValidateServername(LPCWSTR ServerName)
 {
     if (ServerName)
     {
@@ -66,7 +66,7 @@ NET_API_STATUS NETAPI_ValidateServername(LPCWSTR ServerName)
  *
  * Checks whether the user name indicates current user.
  */
-BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
+static BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
 {
     DWORD dwSize = UNLEN + 1;
     BOOL Result;
@@ -275,7 +275,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
  *
  *  Creates a buffer with information for the Admin User
  */
-void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
+static void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
 {
     static const WCHAR sAdminUserName[] = {
         'A','d','m','i','n','i','s','t','r','a','t','o','r',0};
@@ -314,7 +314,7 @@ void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
  *
  *  Creates a buffer with information for the Guest User
  */
-void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
+static void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
 {
     static const WCHAR sGuestUserName[] = {
         'G','u','e','s','t',0 };
@@ -353,7 +353,7 @@ void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
  *                NetQueryDisplayInformation  (NETAPI32.@)
  * Copies NET_DISPLAY_USER record.
  */
-void ACCESS_CopyDisplayUser(PNET_DISPLAY_USER dest, LPWSTR *dest_buf,
+static void ACCESS_CopyDisplayUser(PNET_DISPLAY_USER dest, LPWSTR *dest_buf,
                             PNET_DISPLAY_USER src)
 {
     LPWSTR str = *dest_buf;

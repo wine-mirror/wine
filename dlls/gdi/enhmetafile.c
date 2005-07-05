@@ -510,7 +510,7 @@ typedef struct enum_emh_data
 
 #define IS_WIN9X() (GetVersion()&0x80000000)
 
-void EMF_Update_MF_Xform(HDC hdc, enum_emh_data *info)
+static void EMF_Update_MF_Xform(HDC hdc, enum_emh_data *info)
 {
     XFORM mapping_mode_trans, final_trans;
     FLOAT scaleX, scaleY;
@@ -533,7 +533,7 @@ void EMF_Update_MF_Xform(HDC hdc, enum_emh_data *info)
     }
 }
 
-void EMF_SetMapMode(HDC hdc, enum_emh_data *info)
+static void EMF_SetMapMode(HDC hdc, enum_emh_data *info)
 {
     INT horzSize = GetDeviceCaps( hdc, HORZSIZE );
     INT vertSize = GetDeviceCaps( hdc, VERTSIZE );
@@ -2434,7 +2434,7 @@ typedef struct tagEMF_PaletteCopy
  *
  * NOTE: To be used by GetEnhMetaFilePaletteEntries only!
  */
-INT CALLBACK cbEnhPaletteCopy( HDC a,
+static INT CALLBACK cbEnhPaletteCopy( HDC a,
                                HANDLETABLE *b,
                                const ENHMETARECORD *lpEMR,
                                INT c,

@@ -3953,7 +3953,7 @@ static HRESULT WINAPI DirectPlay3WImpl_GetGroupConnectionSettings
   return DP_OK;
 }
 
-BOOL CALLBACK DP_GetSpLpGuidFromCompoundAddress(
+static BOOL CALLBACK DP_GetSpLpGuidFromCompoundAddress(
     REFGUID         guidDataType,
     DWORD           dwDataSize,
     LPCVOID         lpData,

@@ -231,7 +231,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 int me_debug = 0;
 HANDLE me_heap = NULL;
 
-ME_TextBuffer *ME_MakeText(void) {
+static ME_TextBuffer *ME_MakeText(void) {
   
   ME_TextBuffer *buf = ALLOC_OBJ(ME_TextBuffer);
 
@@ -295,7 +295,7 @@ static LRESULT ME_StreamInText(ME_TextEditor *editor, DWORD dwFormat, ME_InStrea
   return 0;
 }
 
-void ME_RTFCharAttrHook(RTF_Info *info)
+static void ME_RTFCharAttrHook(RTF_Info *info)
 {
   CHARFORMAT2W fmt;
   fmt.cbSize = sizeof(fmt);
@@ -394,7 +394,7 @@ void ME_RTFCharAttrHook(RTF_Info *info)
 
 /* FIXME this function doesn't get any information about context of the RTF tag, which is very bad,
    the same tags mean different things in different contexts */
-void ME_RTFParAttrHook(RTF_Info *info)
+static void ME_RTFParAttrHook(RTF_Info *info)
 {
   PARAFORMAT2 fmt;
   fmt.cbSize = sizeof(fmt);
@@ -459,7 +459,7 @@ void ME_RTFParAttrHook(RTF_Info *info)
   }
 }
 
-void ME_RTFReadHook(RTF_Info *info) {
+static void ME_RTFReadHook(RTF_Info *info) {
   switch(info->rtfClass)
   {
     case rtfGroup:

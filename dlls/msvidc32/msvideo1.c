@@ -369,7 +369,7 @@ CRAM_DecompressGetFormat( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO o
     return size;
 }
 
-LRESULT CRAM_DecompressBegin( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO out )
+static LRESULT CRAM_DecompressBegin( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPINFO out )
 {
     TRACE("ICM_DECOMPRESS_BEGIN %p %p %p\n", info, in, out);
 
@@ -390,7 +390,7 @@ LRESULT CRAM_DecompressBegin( Msvideo1Context *info, LPBITMAPINFO in, LPBITMAPIN
     return ICERR_OK;
 }
 
-LRESULT CRAM_Decompress( Msvideo1Context *info, ICDECOMPRESS *icd, DWORD size )
+static LRESULT CRAM_Decompress( Msvideo1Context *info, ICDECOMPRESS *icd, DWORD size )
 {
     LONG width, height, stride, sz;
     WORD bit_per_pixel;
@@ -422,7 +422,7 @@ LRESULT CRAM_Decompress( Msvideo1Context *info, ICDECOMPRESS *icd, DWORD size )
     return ICERR_OK;
 }
 
-LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DWORD size )
+static LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DWORD size )
 {
     LONG width, height, stride, sz;
     WORD bit_per_pixel;
