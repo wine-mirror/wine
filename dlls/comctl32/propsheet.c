@@ -3473,6 +3473,10 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
       return FALSE;
     }
+  
+    case WM_SYSCOLORCHANGE:
+      COMCTL32_RefreshSysColors();
+      return FALSE;
 
     case PSM_GETCURRENTPAGEHWND:
     {
