@@ -190,7 +190,7 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
                           HBITMAP *hBmp, RECT *bmpRect)
 {
     int imagelayout = IL_VERTICAL;
-    int imagecount = 0;
+    int imagecount = 1;
     BITMAP bmp;
     WCHAR szPath[MAX_PATH];
     PTHEME_PROPERTY tp = UXTHEME_SelectImage(hTheme, hdc, iPartId, iStateId, pRect, glyph);
@@ -213,12 +213,12 @@ static HRESULT UXTHEME_LoadImage(HTHEME hTheme, HDC hdc, int iPartId, int iState
         int height = bmp.bmHeight/imagecount;
         bmpRect->left = 0;
         bmpRect->right = bmp.bmWidth;
-        bmpRect->top = (min(imagecount, iStateId)-1) * height;
+        bmpRect->top = (max(min(imagecount, iStateId), 1)-1) * height;
         bmpRect->bottom = bmpRect->top + height;
     }
     else {
         int width = bmp.bmWidth/imagecount;
-        bmpRect->left = (min(imagecount, iStateId)-1) * width;
+        bmpRect->left = (max(min(imagecount, iStateId), 1)-1) * width;
         bmpRect->right = bmpRect->left + width;
         bmpRect->top = 0;
         bmpRect->bottom = bmp.bmHeight;
