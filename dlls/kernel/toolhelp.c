@@ -86,7 +86,7 @@ static BOOL TOOLHELP_Thread32Next( HANDLE handle, LPTHREADENTRY32 lpte, BOOL fir
     if (lpte->dwSize < sizeof(THREADENTRY32))
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(THREADENTRY32), lpte->dwSize);
+        ERR("Result buffer too small (%ld)\n", lpte->dwSize);
         return FALSE;
     }
     SERVER_START_REQ( next_thread )
@@ -138,26 +138,16 @@ static BOOL TOOLHELP_Process32Next( HANDLE handle, LPPROCESSENTRY32W lppe, BOOL 
 {
     BOOL ret;
     WCHAR exe[MAX_PATH-1];
-    DWORD len;
+    DWORD len, sz;
 
-    if (unicode)
+    sz = unicode ? sizeof(PROCESSENTRY32W) : sizeof(PROCESSENTRY32);
+    if (lppe->dwSize < sz)
     {
-        if (lppe->dwSize < sizeof(PROCESSENTRY32W))
-        {
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32W), lppe->dwSize);
-            return FALSE;
-        }
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        ERR("Result buffer too small (req: %ld, was: %ld)\n", sz, lppe->dwSize);
+        return FALSE;
     }
-    else
-    {
-        if (lppe->dwSize < sizeof(PROCESSENTRY32))
-        {
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            ERR("Result buffer too small (req: %d, was: %ld)\n", sizeof(PROCESSENTRY32), lppe->dwSize);
-            return FALSE;
-        }
-    }
+
     SERVER_START_REQ( next_process )
     {
         req->handle = handle;
