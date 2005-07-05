@@ -365,7 +365,10 @@ static char* UNIXFS_build_shitemid(char *pszUnixPath, BOOL bParentIsFS, void *pI
     pStatStruct->st_mode = fileStat.st_mode;
     pStatStruct->st_uid = fileStat.st_uid;
     pStatStruct->st_gid = fileStat.st_gid;
-    pStatStruct->sfAttr = S_ISDIR(fileStat.st_mode) ? (SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR) : 0;
+    if (S_ISDIR(fileStat.st_mode)) 
+        pStatStruct->sfAttr = SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|SFGAO_CANRENAME;
+    else
+        pStatStruct->sfAttr = SFGAO_CANRENAME;
     if (bParentIsFS || UNIXFS_is_dos_device(&fileStat)) pStatStruct->sfAttr |= SFGAO_FILESYSTEM;
 
     /* Set shell32's standard SHITEMID data fields. */
@@ -1034,11 +1037,62 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     return hr;
 }
 
-static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* This, HWND hwnd, 
+static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, HWND hwnd, 
     LPCITEMIDLIST pidl, LPCOLESTR lpszName, SHGDNF uFlags, LPITEMIDLIST* ppidlOut)
 {
-    TRACE("stub\n");
-    return E_NOTIMPL;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
+
+    char szSrc[FILENAME_MAX], szDest[FILENAME_MAX];
+    int cBasePathLen = lstrlenA(This->m_pszPath);
+    struct stat statDest;
+    LPITEMIDLIST pidlNew;
+    
+    TRACE("(iface=%p, hwnd=%p, pidl=%p, lpszName=%s, uFlags=0x%08lx, ppidlOut=%p)\n",
+          iface, hwnd, pidl, debugstr_w(lpszName), uFlags, ppidlOut); 
+
+    /* pidl has to contain a single non-empty SHITEMID */
+    if (_ILIsDesktop(pidl) || !_ILIsPidlSimple(pidl) || !_ILGetTextPointer(pidl))
+        return E_INVALIDARG;
+   
+    if (ppidlOut)
+        *ppidlOut = NULL;
+    
+    /* build source path */
+    memcpy(szSrc, This->m_pszPath, cBasePathLen);
+    lstrcpyA(szSrc+cBasePathLen, _ILGetTextPointer(pidl));
+
+    /* build destination path */
+    if (uFlags & SHGDN_FORPARSING) { /* absolute path in lpszName */
+        WideCharToMultiByte(CP_ACP, 0, lpszName, -1, szDest, FILENAME_MAX, NULL, NULL);
+    } else {
+        memcpy(szDest, This->m_pszPath, cBasePathLen);
+        WideCharToMultiByte(CP_ACP, 0, lpszName, -1, szDest+cBasePathLen, 
+                            FILENAME_MAX-cBasePathLen, NULL, NULL);
+    } 
+
+    TRACE("src=%s dest=%s\n", szSrc, szDest);
+
+    /* Fail, if destination does already exist */
+    if (!stat(szDest, &statDest)) 
+        return E_FAIL;
+   
+    /* Rename the file and inform the shell */
+    if (!rename(szSrc, szDest) && UNIXFS_path_to_pidl(This, lpszName, &pidlNew)) {
+        LPITEMIDLIST pidlSrc = ILCombine(This->m_pidlLocation, pidl);
+        LPITEMIDLIST pidlDest = ILCombine(This->m_pidlLocation, pidlNew);
+        if (_ILIsFolder(pidlNew)) 
+            SHChangeNotify(SHCNE_RENAMEFOLDER, SHCNF_IDLIST, pidlSrc, pidlDest);
+        else 
+            SHChangeNotify(SHCNE_RENAMEITEM, SHCNF_IDLIST, pidlSrc, pidlDest);
+        ILFree(pidlSrc);
+        ILFree(pidlDest);
+        if (ppidlOut) 
+            *ppidlOut = pidlNew;
+        else
+            ILFree(pidlNew);
+        return S_OK;
+    }
+    return E_FAIL;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_EnumSearches(IShellFolder2* iface, 
