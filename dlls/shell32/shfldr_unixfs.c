@@ -49,6 +49,7 @@
 #include "wine/debug.h"
 
 #include "shell32_main.h"
+#include "shellfolder.h"
 #include "shfldr.h"
 #include "shresdef.h"
 #include "pidl.h"
@@ -98,6 +99,7 @@ typedef struct tagStatStruct {
 typedef struct _UnixFolder {
     const IShellFolder2Vtbl  *lpIShellFolder2Vtbl;
     const IPersistFolder2Vtbl *lpIPersistFolder2Vtbl;
+    const ISFHelperVtbl *lpISFHelperVtbl;
     LONG m_cRef;
     CHAR *m_pszPath;
     LPITEMIDLIST m_pidlLocation;
@@ -729,6 +731,8 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
                IsEqualIID(&IID_IPersist, riid)) 
     {
         *ppv = &This->lpIPersistFolder2Vtbl;
+    } else if (IsEqualIID(&IID_ISFHelper, riid)) {
+        *ppv = &This->lpISFHelperVtbl;
     } else {
         *ppv = NULL;
         return E_NOINTERFACE;
@@ -1302,6 +1306,64 @@ static const IPersistFolder2Vtbl UnixFolder_IPersistFolder2_Vtbl = {
     UnixFolder_IPersistFolder2_GetCurFolder
 };
 
+static HRESULT WINAPI UnixFolder_ISFHelper_QueryInterface(ISFHelper* iface, REFIID riid, 
+    void** ppvObject)
+{
+    return UnixFolder_IShellFolder2_QueryInterface(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, ISFHelper, iface), riid, ppvObject);
+}
+
+static ULONG WINAPI UnixFolder_ISFHelper_AddRef(ISFHelper* iface)
+{
+    return UnixFolder_IShellFolder2_AddRef(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, ISFHelper, iface));
+}
+
+static ULONG WINAPI UnixFolder_ISFHelper_Release(ISFHelper* iface)
+{
+    return UnixFolder_IShellFolder2_Release(
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, ISFHelper, iface));
+}
+
+static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPSTR lpName, UINT uLen)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd, LPCSTR lpName, 
+    LPITEMIDLIST* ppidlOut)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT cidl, 
+    LPCITEMIDLIST* apidl)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFolder *psfFrom, 
+    UINT cidl, LPCITEMIDLIST *apidl)
+{
+    FIXME("stub\n");
+    return E_NOTIMPL;
+}
+
+/* VTable for UnixFolder's ISFHelper interface
+ */
+static const ISFHelperVtbl UnixFolder_ISFHelper_Vtbl = {
+    UnixFolder_ISFHelper_QueryInterface,
+    UnixFolder_ISFHelper_AddRef,
+    UnixFolder_ISFHelper_Release,
+    UnixFolder_ISFHelper_GetUniqueName,
+    UnixFolder_ISFHelper_AddFolder,
+    UnixFolder_ISFHelper_DeleteItems,
+    UnixFolder_ISFHelper_CopyItems
+};
+
 /******************************************************************************
  * Unix[Dos]Folder_Constructor [Internal]
  *
@@ -1325,6 +1387,7 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
     if(pUnixFolder) {
         pUnixFolder->lpIShellFolder2Vtbl = &UnixFolder_IShellFolder2_Vtbl;
         pUnixFolder->lpIPersistFolder2Vtbl = &UnixFolder_IPersistFolder2_Vtbl;
+        pUnixFolder->lpISFHelperVtbl = &UnixFolder_ISFHelper_Vtbl;
         pUnixFolder->m_cRef = 0;
         pUnixFolder->m_pszPath = NULL;
         pUnixFolder->m_apidlSubDirs = NULL;
