@@ -43,11 +43,33 @@
 #include "wine/wined3d_gl.h"
 
 /* Device caps */
+#define MAX_PALETTES      256
+#define MAX_STREAMS       16
+#define MAX_TEXTURES      8
 #define MAX_SAMPLERS      16
+#define MAX_ACTIVE_LIGHTS 8
+#define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
+#define MAX_LEVELS        256
 
 /* Swap chains */
 #define MAX_SWAPCHAINS 256
 
+/* Used for CreateStateBlock */
+#define NUM_SAVEDPIXELSTATES_R     35
+#define NUM_SAVEDPIXELSTATES_T     18
+#define NUM_SAVEDPIXELSTATES_S     12
+#define NUM_SAVEDVERTEXSTATES_R    31
+#define NUM_SAVEDVERTEXSTATES_T    2
+#define NUM_SAVEDVERTEXSTATES_S    1
+
+extern const DWORD SavedPixelStates_R[NUM_SAVEDPIXELSTATES_R];
+extern const DWORD SavedPixelStates_T[NUM_SAVEDPIXELSTATES_T];
+extern const DWORD SavedPixelStates_S[NUM_SAVEDPIXELSTATES_S];
+extern const DWORD SavedVertexStates_R[NUM_SAVEDVERTEXSTATES_R];
+extern const DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T];
+extern const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S];
+
+/* vertex and pixel shader modes */
 extern int vs_mode;
 #define VS_NONE 0
 #define VS_HW   1
@@ -284,7 +306,7 @@ typedef struct Direct3DVertexStridedData {
              Direct3DStridedData  pSize;
              Direct3DStridedData  diffuse;
              Direct3DStridedData  specular;
-             Direct3DStridedData  texCoords[8];
+             Direct3DStridedData  texCoords[MAX_TEXTURES];
         } s;
         Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
     } u;
@@ -403,7 +425,7 @@ typedef struct IWineD3DDeviceImpl
     UINT                    yScreenSpace;
 
     /* Textures for when no other textures are mapped */
-    UINT                          dummyTextureName[8];
+    UINT                          dummyTextureName[MAX_TEXTURES];
 
     /* Debug stream management */
     BOOL                     debug;
@@ -654,17 +676,18 @@ typedef struct SAVEDSTATES {
         BOOL                      indices;
         BOOL                      material;
         BOOL                      fvf;
-        BOOL                      stream_source[MAX_STREAMS];
-        BOOL                      textures[8];
-        BOOL                      transform[HIGHEST_TRANSFORMSTATE];
+        BOOL                      streamSource[MAX_STREAMS];
+        BOOL                      streamFreq[MAX_STREAMS];
+        BOOL                      textures[MAX_TEXTURES];
+        BOOL                      transform[HIGHEST_TRANSFORMSTATE + 1];
         BOOL                      viewport;
-        BOOL                      renderState[WINEHIGHEST_RENDER_STATE];
-        BOOL                      textureState[8][HIGHEST_TEXTURE_STATE];
+        BOOL                      renderState[WINEHIGHEST_RENDER_STATE + 1];
+        BOOL                      textureState[MAX_TEXTURES][HIGHEST_TEXTURE_STATE + 1];
         BOOL                      clipplane[MAX_CLIPPLANES];
         BOOL                      samplerState[MAX_SAMPLERS][HIGHEST_SAMPLER_STATE + 1];
         BOOL                      vertexDecl;
         BOOL                      pixelShader;
-        BOOL                      vertexShader;        
+        BOOL                      vertexShader;
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl
@@ -672,7 +695,7 @@ struct IWineD3DStateBlockImpl
     /* IUnknown fields */
     const IWineD3DStateBlockVtbl *lpVtbl;
     DWORD                     ref;     /* Note: Ref counting not required */
-    
+
     /* IWineD3DStateBlock information */
     IUnknown                 *parent;
     IWineD3DDeviceImpl       *wineD3DDevice;
@@ -681,7 +704,7 @@ struct IWineD3DStateBlockImpl
     /* Array indicating whether things have been set or changed */
     SAVEDSTATES               changed;
     SAVEDSTATES               set;
-  
+
     /* Drawing - Vertex Shader or FVF related */
     DWORD                     fvf;
     /* Vertex Shader Declaration */
@@ -691,20 +714,22 @@ struct IWineD3DStateBlockImpl
 
     /* Stream Source */
     BOOL                      streamIsUP;
-    UINT                      stream_stride[MAX_STREAMS];
-    UINT                      stream_offset[MAX_STREAMS];
-    IWineD3DVertexBuffer     *stream_source[MAX_STREAMS];
+    UINT                      streamStride[MAX_STREAMS];
+    UINT                      streamOffset[MAX_STREAMS];
+    IWineD3DVertexBuffer     *streamSource[MAX_STREAMS];
+    UINT                      streamFreq[MAX_STREAMS];
+    UINT                      streamFlags[MAX_STREAMS];     /*0 | D3DSTREAMSOURCE_INSTANCEDATA | D3DSTREAMSOURCE_INDEXEDDATA  */
 
     /* Indices */
     IWineD3DIndexBuffer*      pIndexData;
     UINT                      baseVertexIndex; /* Note: only used for d3d8 */
 
     /* Transform */
-    D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
+    D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE + 1];
 
     /* Lights */
     PLIGHTINFOEL             *lights; /* NOTE: active GL lights must be front of the chain */
-    
+
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];
     WINED3DCLIPSTATUS         clip_status;
@@ -715,20 +740,22 @@ struct IWineD3DStateBlockImpl
     /* Material */
     WINED3DMATERIAL           material;
 
+    /* Pixel Shader */
+    void                     *pixelShader; /* TODO: Replace void * with IWineD3DPixelShader * */
+
     /* Indexed Vertex Blending */
     D3DVERTEXBLENDFLAGS       vertex_blend;
     FLOAT                     tween_factor;
 
     /* RenderState */
-    DWORD                     renderState[WINEHIGHEST_RENDER_STATE];
+    DWORD                     renderState[WINEHIGHEST_RENDER_STATE + 1];
 
     /* Texture */
-    IWineD3DBaseTexture      *textures[8];
-    int                       textureDimensions[8];
+    IWineD3DBaseTexture      *textures[MAX_TEXTURES];
+    int                       textureDimensions[MAX_SAMPLERS];
 
     /* Texture State Stage */
-    DWORD                     textureState[8][HIGHEST_TEXTURE_STATE];
-
+    DWORD                     textureState[MAX_TEXTURES][HIGHEST_TEXTURE_STATE + 1];
     /* Sampler States */
     DWORD                     samplerState[MAX_SAMPLERS][HIGHEST_SAMPLER_STATE + 1];
 

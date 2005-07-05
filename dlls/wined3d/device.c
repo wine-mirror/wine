@@ -383,6 +383,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
   
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
+    int i,j;
 
     D3DCREATEOBJECTINSTANCE(object, StateBlock)
     object->blockType     = Type; 
@@ -397,8 +398,96 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
 
     /* Otherwise, might as well set the whole state block to the appropriate values */
     IWineD3DDevice_AddRef(iface);
-    memcpy(object, This->stateBlock, sizeof(IWineD3DStateBlockImpl));
-    FIXME("unfinished - needs to set up changed and set attributes\n");
+    /* Otherwise, might as well set the whole state block to the appropriate values  */
+    if ( This->stateBlock != NULL){
+       memcpy(object, This->stateBlock, sizeof(IWineD3DStateBlockImpl));
+    } else {
+       memset(object->streamFreq, 1, sizeof(object->streamFreq));
+    }
+
+    /* Reset the ref and type after kluging it */
+    object->wineD3DDevice = This;
+    object->ref           = 1;
+    object->blockType     = Type;
+
+    TRACE("Updating changed flags appropriate for type %d\n", Type);
+
+    if (Type == D3DSBT_ALL) {
+        TRACE("ALL => Pretend everything has changed\n");
+        memset(&object->changed, TRUE, sizeof(This->stateBlock->changed));
+    } else if (Type == D3DSBT_PIXELSTATE) {
+
+        memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
+        /* TODO: Pixel Shader Constants */
+        object->changed.pixelShader = TRUE;
+        for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
+            object->changed.renderState[SavedPixelStates_R[i]] = TRUE;
+        }
+        for (j = 0; j < GL_LIMITS(textures); i++) {
+            for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
+                object->changed.textureState[j][SavedPixelStates_T[i]] = TRUE;
+            }
+        }
+        /* Setting sampler block changes states */
+        for (j = 0 ; j < GL_LIMITS(samplers); j++){
+            for (i =0; i < NUM_SAVEDPIXELSTATES_S;i++){
+
+                object->changed.samplerState[j][SavedPixelStates_S[i]] = TRUE;
+            }
+        }
+    } else if (Type == D3DSBT_VERTEXSTATE) {
+
+        memset(&object->changed, FALSE, sizeof(This->stateBlock->changed));
+
+        /* TODO: Vertex Shader Constants */
+        object->changed.vertexShader = TRUE;
+        for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
+            object->changed.renderState[SavedVertexStates_R[i]] = TRUE;
+        }
+        for (j = 0; j < GL_LIMITS(textures); i++) {
+            for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
+                object->changed.textureState[j][SavedVertexStates_T[i]] = TRUE;
+            }
+        }
+        /* Setting sampler block changes states */
+        for (j = 0 ; j < GL_LIMITS(samplers); j++){
+            for (i =0; i < NUM_SAVEDVERTEXSTATES_S;i++){
+                object->changed.samplerState[j][SavedVertexStates_S[i]] = TRUE;
+            }
+        }
+
+    /* Duplicate light chain */
+    {
+        PLIGHTINFOEL *src = NULL;
+        PLIGHTINFOEL *dst = NULL;
+        PLIGHTINFOEL *newEl = NULL;
+        src = This->stateBlock->lights;
+        object->lights = NULL;
+
+
+        while (src) {
+            newEl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
+            if (newEl == NULL) return D3DERR_OUTOFVIDEOMEMORY;
+            memcpy(newEl, src, sizeof(PLIGHTINFOEL));
+            newEl->prev = dst;
+            newEl->changed = TRUE;
+            newEl->enabledChanged = TRUE;
+            if (dst == NULL) {
+                object->lights = newEl;
+            } else {
+                dst->next = newEl;
+            }
+            dst = newEl;
+            src = src->next;
+        }
+
+     }
+
+    } else {
+        FIXME("Unrecognized state block type %d\n", Type);
+    }
+
+    TRACE("(%p) returning token (ptr to stateblock) of %p\n", This, object);
     return D3D_OK;
 }
 
@@ -1372,14 +1461,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBuffer     *oldSrc;
 
-    oldSrc = This->stateBlock->stream_source[StreamNumber];
+    oldSrc = This->stateBlock->streamSource[StreamNumber];
     TRACE("(%p) : StreamNo: %d, OldStream (%p), NewStream (%p), NewStride %d\n", This, StreamNumber, oldSrc, pStreamData, Stride);
 
-    This->updateStateBlock->changed.stream_source[StreamNumber] = TRUE;
-    This->updateStateBlock->set.stream_source[StreamNumber]     = TRUE;
-    This->updateStateBlock->stream_stride[StreamNumber]         = Stride;
-    This->updateStateBlock->stream_source[StreamNumber]         = pStreamData;
-    This->updateStateBlock->stream_offset[StreamNumber]         = OffsetInBytes;
+    This->updateStateBlock->changed.streamSource[StreamNumber] = TRUE;
+    This->updateStateBlock->set.streamSource[StreamNumber]     = TRUE;
+    This->updateStateBlock->streamStride[StreamNumber]         = Stride;
+    This->updateStateBlock->streamSource[StreamNumber]         = pStreamData;
+    This->updateStateBlock->streamOffset[StreamNumber]         = OffsetInBytes;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
@@ -1397,10 +1486,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT St
 HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer** pStream, UINT *pOffset, UINT* pStride) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->stateBlock->stream_source[StreamNumber], This->stateBlock->stream_stride[StreamNumber]);
-    *pStream = This->stateBlock->stream_source[StreamNumber];
-    *pStride = This->stateBlock->stream_stride[StreamNumber];
-    *pOffset = This->stateBlock->stream_offset[StreamNumber];
+    TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->stateBlock->streamSource[StreamNumber], This->stateBlock->streamStride[StreamNumber]);
+    *pStream = This->stateBlock->streamSource[StreamNumber];
+    *pStride = This->stateBlock->streamStride[StreamNumber];
+    *pOffset = This->stateBlock->streamOffset[StreamNumber];
     if (*pStream != NULL) IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     return D3D_OK;
 }
@@ -4480,15 +4569,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, D3DPRIM
              debug_d3dprimitivetype(PrimitiveType), 
              PrimitiveCount, pVertexStreamZeroData, VertexStreamZeroStride);
 
-    if (This->stateBlock->stream_source[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->stream_source[0]);
+    if (This->stateBlock->streamSource[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->streamSource[0]);
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
-    This->stateBlock->stream_source[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData; 
-    This->stateBlock->stream_stride[0] = VertexStreamZeroStride;
+    This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
+    This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, NULL, 0);
-    This->stateBlock->stream_stride[0] = 0;
-    This->stateBlock->stream_source[0] = NULL;
+    This->stateBlock->streamStride[0] = 0;
+    This->stateBlock->streamSource[0] = NULL;
 
     /*stream zero settings set to null at end, as per the msdn */
     return D3D_OK;
@@ -4507,7 +4596,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
              MinVertexIndex, NumVertexIndices, PrimitiveCount, pIndexData,  
              IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
 
-    if (This->stateBlock->stream_source[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->stream_source[0]);
+    if (This->stateBlock->streamSource[0] != NULL) IWineD3DVertexBuffer_Release(This->stateBlock->streamSource[0]);
 
     if (IndexDataFormat == WINED3DFMT_INDEX16) {
         idxStride = 2;
@@ -4516,15 +4605,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     }
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
-    This->stateBlock->stream_source[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
+    This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
     This->stateBlock->streamIsUP = TRUE;
-    This->stateBlock->stream_stride[0] = VertexStreamZeroStride;
+    This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, idxStride, pIndexData, MinVertexIndex);
 
     /* stream zero settings set to null at end as per the msdn */
-    This->stateBlock->stream_source[0] = NULL;
-    This->stateBlock->stream_stride[0] = 0;
+    This->stateBlock->streamSource[0] = NULL;
+    This->stateBlock->streamStride[0] = 0;
     IWineD3DDevice_SetIndices(iface, NULL, 0);
 
     return D3D_OK;
@@ -4986,4 +5075,122 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** Internal use IWineD3DDevice methods ***/
     IWineD3DDeviceImpl_SetupTextureStates
+};
+
+
+const DWORD SavedPixelStates_R[NUM_SAVEDPIXELSTATES_R] = {
+    WINED3DRS_ALPHABLENDENABLE   ,
+    WINED3DRS_ALPHAFUNC          ,
+    WINED3DRS_ALPHAREF           ,
+    WINED3DRS_ALPHATESTENABLE    ,
+    WINED3DRS_BLENDOP            ,
+    WINED3DRS_COLORWRITEENABLE   ,
+    WINED3DRS_DESTBLEND          ,
+    WINED3DRS_DITHERENABLE       ,
+    WINED3DRS_FILLMODE           ,
+    WINED3DRS_FOGDENSITY         ,
+    WINED3DRS_FOGEND             ,
+    WINED3DRS_FOGSTART           ,
+    WINED3DRS_LASTPIXEL          ,
+    WINED3DRS_SHADEMODE          ,
+    WINED3DRS_SRCBLEND           ,
+    WINED3DRS_STENCILENABLE      ,
+    WINED3DRS_STENCILFAIL        ,
+    WINED3DRS_STENCILFUNC        ,
+    WINED3DRS_STENCILMASK        ,
+    WINED3DRS_STENCILPASS        ,
+    WINED3DRS_STENCILREF         ,
+    WINED3DRS_STENCILWRITEMASK   ,
+    WINED3DRS_STENCILZFAIL       ,
+    WINED3DRS_TEXTUREFACTOR      ,
+    WINED3DRS_WRAP0              ,
+    WINED3DRS_WRAP1              ,
+    WINED3DRS_WRAP2              ,
+    WINED3DRS_WRAP3              ,
+    WINED3DRS_WRAP4              ,
+    WINED3DRS_WRAP5              ,
+    WINED3DRS_WRAP6              ,
+    WINED3DRS_WRAP7              ,
+    WINED3DRS_ZENABLE            ,
+    WINED3DRS_ZFUNC              ,
+    WINED3DRS_ZWRITEENABLE
+};
+
+const DWORD SavedPixelStates_T[NUM_SAVEDPIXELSTATES_T] = {
+    WINED3DTSS_ADDRESSW              ,
+    WINED3DTSS_ALPHAARG0             ,
+    WINED3DTSS_ALPHAARG1             ,
+    WINED3DTSS_ALPHAARG2             ,
+    WINED3DTSS_ALPHAOP               ,
+    WINED3DTSS_BUMPENVLOFFSET        ,
+    WINED3DTSS_BUMPENVLSCALE         ,
+    WINED3DTSS_BUMPENVMAT00          ,
+    WINED3DTSS_BUMPENVMAT01          ,
+    WINED3DTSS_BUMPENVMAT10          ,
+    WINED3DTSS_BUMPENVMAT11          ,
+    WINED3DTSS_COLORARG0             ,
+    WINED3DTSS_COLORARG1             ,
+    WINED3DTSS_COLORARG2             ,
+    WINED3DTSS_COLOROP               ,
+    WINED3DTSS_RESULTARG             ,
+    WINED3DTSS_TEXCOORDINDEX         ,
+    WINED3DTSS_TEXTURETRANSFORMFLAGS
+};
+
+const DWORD SavedPixelStates_S[NUM_SAVEDPIXELSTATES_S] = {
+    WINED3DSAMP_ADDRESSU         ,
+    WINED3DSAMP_ADDRESSV         ,
+    WINED3DSAMP_ADDRESSW         ,
+    WINED3DSAMP_BORDERCOLOR      ,
+    WINED3DSAMP_MAGFILTER        ,
+    WINED3DSAMP_MINFILTER        ,
+    WINED3DSAMP_MIPFILTER        ,
+    WINED3DSAMP_MIPMAPLODBIAS    ,
+    WINED3DSAMP_MAXMIPLEVEL      ,
+    WINED3DSAMP_MAXANISOTROPY    ,
+    WINED3DSAMP_SRGBTEXTURE      ,
+    WINED3DSAMP_ELEMENTINDEX
+};
+
+const DWORD SavedVertexStates_R[NUM_SAVEDVERTEXSTATES_R] = {
+    WINED3DRS_AMBIENT                       ,
+    WINED3DRS_AMBIENTMATERIALSOURCE         ,
+    WINED3DRS_CLIPPING                      ,
+    WINED3DRS_CLIPPLANEENABLE               ,
+    WINED3DRS_COLORVERTEX                   ,
+    WINED3DRS_DIFFUSEMATERIALSOURCE         ,
+    WINED3DRS_EMISSIVEMATERIALSOURCE        ,
+    WINED3DRS_FOGDENSITY                    ,
+    WINED3DRS_FOGEND                        ,
+    WINED3DRS_FOGSTART                      ,
+    WINED3DRS_FOGTABLEMODE                  ,
+    WINED3DRS_FOGVERTEXMODE                 ,
+    WINED3DRS_INDEXEDVERTEXBLENDENABLE      ,
+    WINED3DRS_LIGHTING                      ,
+    WINED3DRS_LOCALVIEWER                   ,
+    WINED3DRS_MULTISAMPLEANTIALIAS          ,
+    WINED3DRS_MULTISAMPLEMASK               ,
+    WINED3DRS_NORMALIZENORMALS              ,
+    WINED3DRS_PATCHEDGESTYLE                ,
+    WINED3DRS_POINTSCALE_A                  ,
+    WINED3DRS_POINTSCALE_B                  ,
+    WINED3DRS_POINTSCALE_C                  ,
+    WINED3DRS_POINTSCALEENABLE              ,
+    WINED3DRS_POINTSIZE                     ,
+    WINED3DRS_POINTSIZE_MAX                 ,
+    WINED3DRS_POINTSIZE_MIN                 ,
+    WINED3DRS_POINTSPRITEENABLE             ,
+    WINED3DRS_RANGEFOGENABLE                ,
+    WINED3DRS_SPECULARMATERIALSOURCE        ,
+    WINED3DRS_TWEENFACTOR                   ,
+    WINED3DRS_VERTEXBLEND
+};
+
+const DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T] = {
+    WINED3DTSS_TEXCOORDINDEX         ,
+    WINED3DTSS_TEXTURETRANSFORMFLAGS
+};
+
+const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S] = {
+    WINED3DSAMP_DMAPOFFSET
 };

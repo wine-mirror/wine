@@ -371,26 +371,26 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
 
     /* Work through stream by stream */
     for (nStream=0; nStream<LoopThroughTo; nStream++) {
-        DWORD  stride  = This->stateBlock->stream_stride[nStream];
+        DWORD  stride  = This->stateBlock->streamStride[nStream];
         BYTE  *data    = NULL;
         DWORD  thisFVF = 0;
 
         /* Skip empty streams */
-        if (This->stateBlock->stream_source[nStream] == NULL) continue;
+        if (This->stateBlock->streamSource[nStream] == NULL) continue;
 
         /* Retrieve appropriate FVF */
         if (LoopThroughTo == 1) { /* Use FVF, not vertex shader */
             thisFVF = This->updateStateBlock->fvf;
             /* Handle memory passed directly as well as vertex buffers */
             if (This->stateBlock->streamIsUP) {
-                data    = (BYTE *)This->stateBlock->stream_source[nStream];
+                data    = (BYTE *)This->stateBlock->streamSource[nStream];
             } else {
-                data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->stream_source[nStream])->resource.allocatedMemory;
+                data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->streamSource[nStream])->resource.allocatedMemory;
             }
         } else {
 #if 0 /* TODO: Vertex shader support */
             thisFVF = This->stateBlock->vertexShaderDecl->fvf[nStream];
-            data    = ((IDirect3DVertexBuffer8Impl *)This->stateBlock->stream_source[nStream])->allocatedMemory;
+            data    = ((IDirect3DVertexBuffer8Impl *)This->stateBlock->streamSource[nStream])->allocatedMemory;
 #endif
         }
         VTRACE(("FVF for stream %d is %lx\n", nStream, thisFVF));
@@ -706,9 +706,9 @@ void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
         }
     } else {
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-            FIXME("TODO\n");
+            TRACE("TODO ARB_VERTEX_BLEND\n");
         } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-            FIXME("TODO\n");
+            TRACE("TODO EXT_VERTEX_WEIGHTING\n");
             /*
             glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
             checkGLcall("glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");

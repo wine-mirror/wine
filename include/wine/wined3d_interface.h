@@ -1114,6 +1114,9 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DStateBlock methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **pDevice) PURE;
+    STDMETHOD(Capture)(THIS) PURE;
+    STDMETHOD(Apply)(THIS) PURE;
     STDMETHOD(InitStartupStateBlock)(THIS) PURE;
 };
 #undef INTERFACE
@@ -1125,6 +1128,9 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
 #define IWineD3DStateBlock_Release(p)                           (p)->lpVtbl->Release(p)
 /*** IWineD3DStateBlock methods ***/
 #define IWineD3DStateBlock_GetParent(p,a)                       (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DStateBlock_GetDevice(p,a)                       (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DStateBlock_Capture(p)                           (p)->lpVtbl->Capture(p)
+#define IWineD3DStateBlock_Apply(p)                             (p)->lpVtbl->Apply(p)
 #define IWineD3DStateBlock_InitStartupStateBlock(p)             (p)->lpVtbl->InitStartupStateBlock(p)
 #endif
 
