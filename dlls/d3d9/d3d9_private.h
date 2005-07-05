@@ -186,9 +186,7 @@ typedef struct IDirect3DIndexBuffer9Impl       IDirect3DIndexBuffer9Impl;
 typedef struct IDirect3DSurface9Impl           IDirect3DSurface9Impl;
 typedef struct IDirect3DResource9Impl          IDirect3DResource9Impl;
 typedef struct IDirect3DVolume9Impl            IDirect3DVolume9Impl;
-typedef struct IDirect3DStateBlock9Impl        IDirect3DStateBlock9Impl;
 typedef struct IDirect3DVertexShader9Impl      IDirect3DVertexShader9Impl;
-typedef struct IDirect3DPixelShader9Impl       IDirect3DPixelShader9Impl;
 typedef struct IDirect3DVertexDeclaration9Impl IDirect3DVertexDeclaration9Impl;
 
 
@@ -214,30 +212,6 @@ typedef struct IDirect3DVertexDeclaration9Impl IDirect3DVertexDeclaration9Impl;
   (vec)[1] = D3DCOLOR_G(dw); \
   (vec)[2] = D3DCOLOR_B(dw); \
   (vec)[3] = D3DCOLOR_A(dw);
-
-/**
- * State Block for Begin/End/Capture/Create/Apply State Block
- *  Note: Very long winded but I do not believe gl Lists will 
- *  resolve everything we need, so doing it manually for now
- */
-typedef struct SAVEDSTATES {
-  BOOL          lightEnable[MAX_ACTIVE_LIGHTS];
-  BOOL          Indices;
-  BOOL          lights[MAX_ACTIVE_LIGHTS];
-  BOOL          material;
-  BOOL          stream_source[MAX_STREAMS];
-  BOOL          textures[8];
-  BOOL          transform[HIGHEST_TRANSFORMSTATE];
-  BOOL          viewport;
-  BOOL          vertexShader;
-  BOOL          vertexShaderConstant;
-  BOOL          vertexShaderDecl;
-  BOOL          pixelShader;
-  BOOL          pixelShaderConstant;
-  BOOL          renderstate[HIGHEST_RENDER_STATE];
-  BOOL          texture_state[8][HIGHEST_TEXTURE_STATE];
-  BOOL          clipplane[MAX_CLIPPLANES];
-} SAVEDSTATES;
 
 typedef struct D3DSHADERVECTORF {
   float x;
@@ -321,7 +295,6 @@ struct IDirect3DDevice9Impl
     DWORD                         ref;
 
     /* IDirect3DDevice9 fields */
-    IDirect3D9Impl               *direct3d;
     IWineD3DDevice               *WineD3DDevice;
 
     /* FIXME: To be sorted out during move */
@@ -331,58 +304,6 @@ struct IDirect3DDevice9Impl
 
     IDirect3DSurface9Impl        *renderTarget;
     IDirect3DSurface9Impl        *stencilBufferTarget;
-
-    D3DPRESENT_PARAMETERS         PresentParms;
-    D3DDEVICE_CREATION_PARAMETERS CreateParms;
-
-    UINT                          adapterNo;
-    D3DDEVTYPE                    devType;
-
-    UINT                          srcBlend;
-    UINT                          dstBlend;
-    UINT                          alphafunc;
-    UINT                          stencilfunc;
-
-    /* State block related */
-    BOOL                          isRecordingState;
-    IDirect3DStateBlock9Impl     *StateBlock;
-    IDirect3DStateBlock9Impl     *UpdateStateBlock;
-
-    /* Other required values */
-    float                         lightPosn[MAX_ACTIVE_LIGHTS][4];
-    float                         lightDirn[MAX_ACTIVE_LIGHTS][4];
-
-    /* palettes texture management */
-    PALETTEENTRY                  palettes[MAX_PALETTES][256];
-    UINT                          currentPalette;
-
-    /* Optimization */
-    D3DMATRIX                     lastProj;
-    D3DMATRIX                     lastView;
-    D3DMATRIX                     lastWorld0;
-    D3DMATRIX                     lastTexTrans[8];
-
-    /* OpenGL related */
-    /*
-    GLXContext                    glCtx;
-    XVisualInfo                  *visInfo;
-    Display                      *display;
-    GLXContext                    render_ctx;
-    Drawable                      drawable;
-    Window                        win;
-    */
-    HWND                          win_handle;
-
-    /* OpenGL Extension related */
-
-    /* Cursor management */
-    BOOL                          bCursorVisible;
-    UINT                          xHotSpot;
-    UINT                          yHotSpot;
-    UINT                          xScreenSpace;
-    UINT                          yScreenSpace;
-
-    UINT                          dummyTextureName[8];
 };
 
 /* IUnknown: */
@@ -958,90 +879,14 @@ extern const IDirect3DStateBlock9Vtbl Direct3DStateBlock9_Vtbl;
 /*****************************************************************************
  * IDirect3DStateBlock9 implementation structure
  */
-struct  IDirect3DStateBlock9Impl {
+typedef struct  IDirect3DStateBlock9Impl {
   /* IUnknown fields */
   const IDirect3DStateBlock9Vtbl *lpVtbl;
   DWORD                     ref;
 
   /* IDirect3DStateBlock9 fields */
-  IDirect3DDevice9Impl*     Device;
-
-  D3DSTATEBLOCKTYPE         blockType;
-
-  SAVEDSTATES               Changed;
-  SAVEDSTATES               Set;
-  
-  /* Light Enable */
-  BOOL                      lightEnable[MAX_ACTIVE_LIGHTS];
-  
-  /* ClipPlane */
-  double                    clipplane[MAX_CLIPPLANES][4];
-  
-  /* Stream Source */
-  UINT                      stream_stride[MAX_STREAMS];
-  IDirect3DVertexBuffer9*   stream_source[MAX_STREAMS];
-  BOOL                      streamIsUP;
-
-  /* Indices */
-  IDirect3DIndexBuffer9*    pIndexData;
-  UINT                      baseVertexIndex;
-  
-  /* Texture */
-  IDirect3DBaseTexture9*    textures[8];
-  int                       textureDimensions[8];
-  /* Texture State Stage */
-  DWORD                     texture_state[8][HIGHEST_TEXTURE_STATE];
-  
-  /* RenderState */
-  DWORD                     renderstate[HIGHEST_RENDER_STATE];
-  
-  /* Transform */
-  D3DMATRIX                 transforms[HIGHEST_TRANSFORMSTATE];
-  
-
-  /* ViewPort */
-  D3DVIEWPORT9              viewport;
-  
-  /* Lights */
-  D3DLIGHT9                 lights[MAX_ACTIVE_LIGHTS];
-  
-  /* Material */
-  D3DMATERIAL9              material;
-
-  DWORD                     FVF;
-  
-  /* Vertex Shader */
-  IDirect3DVertexShader9*   VertexShader;
-
-  /* Vertex Shader Declaration */
-  IDirect3DVertexDeclaration9Impl* vertexDecl;
-  
-  /* Pixel Shader */
-  IDirect3DPixelShader9*    PixelShader;
-  
-  /* Indexed Vertex Blending */
-  D3DVERTEXBLENDFLAGS       vertex_blend;
-  FLOAT                     tween_factor;
-
-  /* Vertex Shader Constant */
-  D3DSHADERVECTORF          vertexShaderConstantF[D3D_VSHADER_MAX_CONSTANTS];
-  D3DSHADERVECTORI          vertexShaderConstantI[D3D_VSHADER_MAX_CONSTANTS];
-  BOOL                      vertexShaderConstantB[D3D_VSHADER_MAX_CONSTANTS];
-  /* Pixel Shader Constant */
-  D3DSHADERVECTORF          pixelShaderConstantF[D3D_PSHADER_MAX_CONSTANTS];
-  D3DSHADERVECTORI          pixelShaderConstantI[D3D_PSHADER_MAX_CONSTANTS];
-  BOOL                      pixelShaderConstantB[D3D_PSHADER_MAX_CONSTANTS];
-};
-
-/* IUnknown: */
-extern HRESULT WINAPI         IDirect3DStateBlock9Impl_QueryInterface(LPDIRECT3DSTATEBLOCK9 iface, REFIID refiid, LPVOID* obj);
-extern ULONG WINAPI           IDirect3DStateBlock9Impl_AddRef(LPDIRECT3DSTATEBLOCK9 iface);
-extern ULONG WINAPI           IDirect3DStateBlock9Impl_Release(LPDIRECT3DSTATEBLOCK9 iface);
-
-/* IDirect3DStateBlock9: */
-extern HRESULT WINAPI         IDirect3DStateBlock9Impl_GetDevice(LPDIRECT3DSTATEBLOCK9 iface, IDirect3DDevice9** ppDevice);
-extern HRESULT WINAPI         IDirect3DStateBlock9Impl_Capture(LPDIRECT3DSTATEBLOCK9 iface);
-extern HRESULT WINAPI         IDirect3DStateBlock9Impl_Apply(LPDIRECT3DSTATEBLOCK9 iface);
+  IWineD3DStateBlock       *wineD3DStateBlock;
+} IDirect3DStateBlock9Impl;
 
 
 /* --------------------------- */
@@ -1129,24 +974,15 @@ extern const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl;
 /*****************************************************************************
  * IDirect3DPixelShader implementation structure
  */
-struct IDirect3DPixelShader9Impl { 
+typedef struct IDirect3DPixelShader9Impl {
   /* IUnknown fields */
-  const IDirect3DPixelShader9Vtbl *lpVtbl;
-  DWORD ref;
+    const IDirect3DPixelShader9Vtbl *lpVtbl;
+    DWORD ref;
 
-  /* IDirect3DPixelShader9 fields */
-  IDirect3DDevice9Impl* Device;
+    /* IDirect3DPixelShader9 fields */
+    IWineD3DPixelShader       *wineD3DPixelShader;
 
-  DWORD* function;
-  UINT functionLength;
-  DWORD version;
-  /* run time datas */
-  /*
-  PSHADERDATA* data;
-  PSHADERINPUTDATA input;
-  PSHADEROUTPUTDATA output;
-  */
-};
+} IDirect3DPixelShader9Impl;
 
 /* IUnknown: */
 extern HRESULT WINAPI         IDirect3DPixelShader9Impl_QueryInterface(LPDIRECT3DPIXELSHADER9 iface, REFIID refiid, LPVOID* obj);
