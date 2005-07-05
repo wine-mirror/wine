@@ -2225,13 +2225,9 @@ HANDLE WINAPI LoadImageA( HINSTANCE hinst, LPCSTR name, UINT type,
 HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
                 INT desiredx, INT desiredy, UINT loadflags )
 {
-    if (HIWORD(name)) {
-        TRACE_(resource)("(%p,%p,%d,%d,%d,0x%08x)\n",
-              hinst,name,type,desiredx,desiredy,loadflags);
-    } else {
-        TRACE_(resource)("(%p,%p,%d,%d,%d,0x%08x)\n",
-              hinst,name,type,desiredx,desiredy,loadflags);
-    }
+    TRACE_(resource)("(%p,%s,%d,%d,%d,0x%08x)\n",
+                     hinst,debugstr_w(name),type,desiredx,desiredy,loadflags);
+
     if (loadflags & LR_DEFAULTSIZE) {
         if (type == IMAGE_ICON) {
             if (!desiredx) desiredx = GetSystemMetrics(SM_CXICON);
