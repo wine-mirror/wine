@@ -108,10 +108,30 @@ static void test_query_cpu(void)
     status = pNtQuerySystemInformation(SystemCpuInformation, &sci, sizeof(sci), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
-                                                                                                                       
+
     /* Check if we have some return values */
     trace("Processor FeatureSet : %08lx\n", sci.FeatureSet);
     ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08lx\n", sci.FeatureSet);
+}
+
+static void test_query_performance(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    SYSTEM_PERFORMANCE_INFORMATION spi;
+
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(spi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spi), ReturnLength);
+
+    status = pNtQuerySystemInformation(SystemPerformanceInformation, &spi, sizeof(spi) + 2, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(spi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spi), ReturnLength);
+
+    /* Not return values yet, as struct members are unknown */
 }
 
 static void test_query_timeofday(void)
@@ -289,7 +309,7 @@ static void test_query_process(void)
         if (!spi->dwOffset) break;
 
         one_before_last_pid = last_pid;
-                                                                                                                              
+
         spi = (SYSTEM_PROCESS_INFORMATION_PRIVATE*)((char*)spi + spi->dwOffset);
     }
     trace("Total number of running processes : %d\n", i);
@@ -298,6 +318,82 @@ static void test_query_process(void)
     if (one_before_last_pid == 0) one_before_last_pid = last_pid;
 
     HeapFree( GetProcessHeap(), 0, spi);
+}
+
+static void test_query_procperf(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    ULONG NeededLength;
+    SYSTEM_BASIC_INFORMATION sbi;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* sppi;
+
+    /* Find out the number of processors */
+    status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
+    NeededLength = sbi.NumberOfProcessors * sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION);
+
+    sppi = HeapAlloc(GetProcessHeap(), 0, NeededLength);
+
+    status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    /* Try it for 1 processor */
+    status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi,
+                                       sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) == ReturnLength,
+        "Inconsistent length (%d) <-> (%ld)\n", sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION), ReturnLength);
+ 
+    /* Try it for all processors */
+    status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( NeededLength == ReturnLength, "Inconsistent length (%ld) <-> (%ld)\n", NeededLength, ReturnLength);
+
+    /* A too large given buffer size */
+    sppi = HeapReAlloc(GetProcessHeap(), 0, sppi , NeededLength + 2);
+    status = pNtQuerySystemInformation(SystemProcessorPerformanceInformation, sppi, NeededLength + 2, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( NeededLength == ReturnLength, "Inconsistent length (%ld) <-> (%ld)\n", NeededLength, ReturnLength);
+
+    HeapFree( GetProcessHeap(), 0, sppi);
+}
+
+static void test_query_module(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    DWORD ModuleCount;
+    int i;
+
+    ULONG SystemInformationLength = sizeof(SYSTEM_MODULE_INFORMATION);
+    SYSTEM_MODULE_INFORMATION* smi = HeapAlloc(GetProcessHeap(), 0, SystemInformationLength); 
+    SYSTEM_MODULE* sm;
+
+    /* Request the needed length */
+    status = pNtQuerySystemInformation(SystemModuleInformation, smi, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+    ok( ReturnLength > 0, "Expected a ReturnLength to show the needed length\n");
+
+    SystemInformationLength = ReturnLength;
+    smi = HeapReAlloc(GetProcessHeap(), 0, smi , SystemInformationLength);
+    status = pNtQuerySystemInformation(SystemModuleInformation, smi, SystemInformationLength, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+
+    ModuleCount = smi->ModulesCount;
+    sm = &smi->Modules[0];
+    todo_wine{
+        /* our implementation is a stub for now */
+        ok( ModuleCount > 0, "Expected some modules to be loaded\n");
+    }
+
+    /* Loop through all the modules/drivers, Wine doesn't get here (yet) */
+    for (i = 0; i < ModuleCount ; i++)
+    {
+        ok( i == sm->Id, "Id (%d) should have matched %d\n", sm->Id, i);
+        sm++;
+    }
+
+    HeapFree( GetProcessHeap(), 0, smi);
 }
 
 static void test_query_handle(void)
@@ -331,6 +427,88 @@ static void test_query_handle(void)
     }
 
     HeapFree( GetProcessHeap(), 0, shi);
+}
+
+static void test_query_cache(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    SYSTEM_CACHE_INFORMATION sci;
+
+    status = pNtQuerySystemInformation(SystemCacheInformation, &sci, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    status = pNtQuerySystemInformation(SystemCacheInformation, &sci, sizeof(sci), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
+
+    status = pNtQuerySystemInformation(SystemCacheInformation, &sci, sizeof(sci) + 2, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(sci) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(sci), ReturnLength);
+}
+
+static void test_query_interrupt(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    ULONG NeededLength;
+    SYSTEM_BASIC_INFORMATION sbi;
+    SYSTEM_INTERRUPT_INFORMATION* sii;
+
+    /* Find out the number of processors */
+    status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
+    NeededLength = sbi.NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
+
+    sii = HeapAlloc(GetProcessHeap(), 0, NeededLength);
+
+    status = pNtQuerySystemInformation(SystemInterruptInformation, sii, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    /* Try it for all processors */
+    status = pNtQuerySystemInformation(SystemInterruptInformation, sii, NeededLength, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+
+    /* Windows XP and W2K3 (and others?) always return 0 for the ReturnLength
+     * No test added for this as it's highly unlikely that an app depends on this
+    */
+
+    HeapFree( GetProcessHeap(), 0, sii);
+}
+
+static void test_query_kerndebug(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
+
+    status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(skdi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(skdi), ReturnLength);
+
+    status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi) + 2, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(skdi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(skdi), ReturnLength);
+}
+
+static void test_query_regquota(void)
+{
+    DWORD status;
+    ULONG ReturnLength;
+    SYSTEM_REGISTRY_QUOTA_INFORMATION srqi;
+
+    status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
+
+    status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, sizeof(srqi), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(srqi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(srqi), ReturnLength);
+
+    status = pNtQuerySystemInformation(SystemRegistryQuotaInformation, &srqi, sizeof(srqi) + 2, &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
+    ok( sizeof(srqi) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(srqi), ReturnLength);
 }
 
 static void test_query_process_basic(void)
@@ -497,7 +675,7 @@ static void test_query_process_times(void)
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessTimes, &spti, 24, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
 
-    process = OpenProcess (PROCESS_QUERY_INFORMATION, TRUE, one_before_last_pid);
+    process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
     trace("ProcessTimes for process with ID : %ld\n", one_before_last_pid);
     status = pNtQueryInformationProcess( process, ProcessTimes, &spti, sizeof(spti), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
@@ -542,7 +720,7 @@ static void test_query_process_handlecount(void)
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessHandleCount, &handlecount, 2, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
 
-    process = OpenProcess (PROCESS_QUERY_INFORMATION, TRUE, one_before_last_pid);
+    process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
     trace("Handlecount for process with ID : %ld\n", one_before_last_pid);
     status = pNtQueryInformationProcess( process, ProcessHandleCount, &handlecount, sizeof(handlecount), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
@@ -576,7 +754,11 @@ START_TEST(info)
     trace("Starting test_query_cpu()\n");
     test_query_cpu();
 
-    /* 0x3 SystemCpuInformation */
+    /* 0x2 SystemPerformanceInformation */
+    trace("Starting test_query_performance()\n");
+    test_query_performance();
+
+    /* 0x3 SystemTimeOfDayInformation */
     trace("Starting test_query_timeofday()\n");
     test_query_timeofday();
 
@@ -584,9 +766,33 @@ START_TEST(info)
     trace("Starting test_query_process()\n");
     test_query_process();
 
+    /* 0x8 SystemProcessorPerformanceInformation */
+    trace("Starting test_query_procperf()\n");
+    test_query_procperf();
+
+    /* 0xb SystemModuleInformation */
+    trace("Starting test_query_module()\n");
+    test_query_module();
+
     /* 0x10 SystemHandleInformation */
     trace("Starting test_query_handle()\n");
     test_query_handle();
+
+    /* 0x15 SystemCacheInformation */
+    trace("Starting test_query_cache()\n");
+    test_query_cache();
+
+    /* 0x17 SystemInterruptInformation */
+    trace("Starting test_query_interrupt()\n");
+    test_query_interrupt();
+
+    /* 0x23 SystemKernelDebuggerInformation */
+    trace("Starting test_query_kerndebug()\n");
+    test_query_kerndebug();
+
+    /* 0x25 SystemRegistryQuotaInformation */
+    trace("Starting test_query_regquota()\n");
+    test_query_regquota();
 
     /* NtQueryInformationProcess */
 
