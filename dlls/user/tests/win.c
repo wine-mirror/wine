@@ -2952,8 +2952,8 @@ static LRESULT WINAPI redraw_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LP
 }
 
 /* Ensure we exit from RedrawNow regardless of invalidated area */
-static void test_redrawnow(void) {
-
+static void test_redrawnow(void)
+{
    WNDCLASSA cls;
    HWND hwndMain;
 
@@ -2988,6 +2988,122 @@ static void test_redrawnow(void) {
    DestroyWindow( hwndMain);
 }
 
+static void test_IsWindowUnicode(void)
+{
+    static const char ansi_class_nameA[] = "ansi class name";
+    static const WCHAR ansi_class_nameW[] = {'a','n','s','i',' ','c','l','a','s','s',' ','n','a','m','e',0};
+    static const char unicode_class_nameA[] = "unicode class name";
+    static const WCHAR unicode_class_nameW[] = {'u','n','i','c','o','d','e',' ','c','l','a','s','s',' ','n','a','m','e',0};
+    WNDCLASSA classA;
+    WNDCLASSW classW;
+    HWND hwnd;
+
+    memset(&classW, 0, sizeof(classW));
+    classW.hInstance = GetModuleHandleA(0);
+    classW.lpfnWndProc = DefWindowProcW;
+    classW.lpszClassName = unicode_class_nameW;
+    if (!RegisterClassW(&classW)) return;
+
+    memset(&classA, 0, sizeof(classA));
+    classA.hInstance = GetModuleHandleA(0);
+    classA.lpfnWndProc = DefWindowProcA;
+    classA.lpszClassName = ansi_class_nameA;
+    assert(RegisterClassA(&classA));
+
+    /* unicode class: window proc */
+    hwnd = CreateWindowExW(0, unicode_class_nameW, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, unicode_class_nameA, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+
+    DestroyWindow(hwnd);
+
+    /* ansi class: window proc */
+    hwnd = CreateWindowExW(0, ansi_class_nameW, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, ansi_class_nameA, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    SetWindowLongPtrW(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+
+    DestroyWindow(hwnd);
+
+    /* unicode class: class proc */
+    hwnd = CreateWindowExW(0, unicode_class_nameW, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    SetClassLongPtrA(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    /* do not restore class window proc back to unicode */
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, unicode_class_nameA, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE");
+
+    DestroyWindow(hwnd);
+
+    /* ansi class: class proc */
+    hwnd = CreateWindowExW(0, ansi_class_nameW, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
+    /* do not restore class window proc back to ansi */
+
+    DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, ansi_class_nameA, NULL, WS_POPUP,
+                           0, 0, 100, 100, GetDesktopWindow(), 0, 0, NULL);
+    assert(hwnd);
+
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+    SetClassLongPtrA(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcA);
+    ok(IsWindowUnicode(hwnd), "IsWindowUnicode expected to return TRUE\n");
+
+    DestroyWindow(hwnd);
+}
 
 START_TEST(win)
 {
@@ -3053,6 +3169,7 @@ START_TEST(win)
     test_nccalcscroll( hwndMain);
     test_scrollvalidate( hwndMain);
     test_scroll();
+    test_IsWindowUnicode();
 
     UnhookWindowsHookEx(hhook);
 
