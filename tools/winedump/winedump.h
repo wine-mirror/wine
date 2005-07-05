@@ -82,7 +82,7 @@ typedef struct __parsed_symbol
   char *return_text;
   char  return_type;
   char *function_name;
-  unsigned int varargs;
+  int varargs;
   unsigned int argc;
   unsigned int flags;
   char  arg_type [MAX_FUNCTION_ARGS];

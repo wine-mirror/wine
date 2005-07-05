@@ -398,7 +398,7 @@ void BuildSpec16File( FILE *outfile, DLLSPEC *spec )
     ORDDEF **type, **typelist;
     int i, nFuncs, nTypes;
     unsigned char *resdir_buffer, *resdata_buffer, *et_buffer, *data_buffer;
-    unsigned char string[256];
+    char string[256];
     unsigned int ne_offset, segtable_offset, impnames_offset;
     unsigned int entrypoint_size, callfrom_size;
     unsigned int code_size, code_offset;

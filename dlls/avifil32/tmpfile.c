@@ -66,7 +66,7 @@ static const struct IAVIFileVtbl itmpft = {
 typedef struct _ITmpFileImpl {
   /* IUnknown stuff */
   const IAVIFileVtbl *lpVtbl;
-  DWORD         ref;
+  LONG         ref;
 
   /* IAVIFile stuff */
   AVIFILEINFOW  fInfo;

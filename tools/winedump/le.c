@@ -288,7 +288,7 @@ static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
 
 static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
 {
-    const char *pstr = (const char *)le + le->e32_restab;
+    const unsigned char *pstr = (const unsigned char *)le + le->e32_restab;
 
     printf( "\nResident name table:\n" );
     while (*pstr)
@@ -300,7 +300,7 @@ static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
     if (le->e32_cbnrestab)
     {
         printf( "\nNon-resident name table:\n" );
-        pstr = (char *)base + le->e32_nrestab;
+        pstr = (unsigned char *)base + le->e32_nrestab;
         while (*pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr,

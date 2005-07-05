@@ -165,7 +165,7 @@ typedef struct _IEditStreamInternalImpl {
 struct _IAVIEditStreamImpl {
   /* IUnknown stuff */
   const IAVIEditStreamVtbl *lpVtbl;
-  DWORD  ref;
+  LONG  ref;
 
   /* IAVIEditStream stuff */
   IEditAVIStreamImpl      iAVIStream;

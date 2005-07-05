@@ -74,7 +74,7 @@ static const struct IAVIStreamVtbl iacmst = {
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
   const IAVIStreamVtbl *lpVtbl;
-  DWORD		  ref;
+  LONG		  ref;
 
   /* IAVIStream stuff */
   PAVISTREAM      pStream;

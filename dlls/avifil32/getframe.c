@@ -67,7 +67,7 @@ static const struct IGetFrameVtbl igetframeVtbl = {
 typedef struct _IGetFrameImpl {
   /* IUnknown stuff */
   const IGetFrameVtbl *lpVtbl;
-  DWORD              ref;
+  LONG               ref;
 
   /* IGetFrame stuff */
   BOOL               bFixedStream;

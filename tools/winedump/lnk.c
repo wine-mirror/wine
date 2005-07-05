@@ -312,9 +312,10 @@ static const unsigned char table_dec85[0x80] = {
 0x47,0x48,0x49,0x4a,0x4b,0x4c,0x4d,0x4e,0x4f,0x50,0x51,0x52,0xff,0x53,0x54,0xff,
 };
 
-static int base85_to_guid( const unsigned char *str, LPGUID guid )
+static int base85_to_guid( const char *str, LPGUID guid )
 {
     DWORD i, val = 0, base = 1, *p;
+    unsigned char ch;
 
     p = (DWORD*) guid;
     for( i=0; i<20; i++ )
@@ -324,10 +325,11 @@ static int base85_to_guid( const unsigned char *str, LPGUID guid )
             val = 0;
             base = 1;
         }
-        val += table_dec85[str[i]] * base;
-        if( str[i] >= 0x80 )
+        ch = str[i];
+        if( ch >= 0x80 )
             return 0;
-        if( table_dec85[str[i]] == 0xff )
+        val += table_dec85[ch] * base;
+        if( table_dec85[ch] == 0xff )
             return 0;
         if( (i%5) == 4 )
             p[i/5] = val;

@@ -123,7 +123,7 @@ static void fill_fontinfo(FT_Face face, int enc, FILE *fp, int dpi, unsigned cha
     DWORD start;
     CHAR_TABLE_ENTRY *dfCharTable;
     int i, x, y, x_off, x_end, first_char;
-    FT_Int gi;
+    FT_UInt gi;
     int num_names;
     const union cptable *cptable;
     FT_SfntName sfntname;

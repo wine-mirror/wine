@@ -187,7 +187,7 @@ typedef struct _IAVIStreamImpl {
 struct _IAVIFileImpl {
   /* IUnknown stuff */
   const IAVIFileVtbl *lpVtbl;
-  DWORD		    ref;
+  LONG		    ref;
 
   /* IAVIFile, IAVIStream stuff... */
   IPersistFileImpl  iPersistFile;

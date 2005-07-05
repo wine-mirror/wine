@@ -149,7 +149,7 @@ typedef struct _IPersistFileImpl {
 typedef struct _IAVIStreamImpl {
   /* IUnknown stuff */
   const IAVIStreamVtbl *lpVtbl;
-  DWORD		    ref;
+  LONG		    ref;
 
   /* IAVIStream stuff */
   IAVIFileImpl     *paf;
@@ -178,7 +178,7 @@ typedef struct _IAVIStreamImpl {
 struct _IAVIFileImpl {
   /* IUnknown stuff */
   const IAVIFileVtbl     *lpVtbl;
-  DWORD		    ref;
+  LONG		    ref;
 
   /* IAVIFile stuff... */
   IPersistFileImpl  iPersistFile;

@@ -97,7 +97,7 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
 
 static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
 {
-    const char *pstr = (const char *)ne + ne->ne_restab;
+    const unsigned char *pstr = (const unsigned char *)ne + ne->ne_restab;
 
     printf( "\nResident name table:\n" );
     while (*pstr)
@@ -108,7 +108,7 @@ static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
     if (ne->ne_cbnrestab)
     {
         printf( "\nNon-resident name table:\n" );
-        pstr = (char *)base + ne->ne_nrestab;
+        pstr = (unsigned char *)base + ne->ne_nrestab;
         while (*pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr, pstr + 1 );
