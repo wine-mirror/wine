@@ -474,14 +474,26 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
 XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 {
     XVisualInfo *visual = NULL;
-    int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-
+    /* In order to support OpenGL or D3D, we require a double-buffered visual and stencil buffer support, */
+    int dblBuf[] = {GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_STENCIL_SIZE,8,GLX_DOUBLEBUFFER,None};
     if (!has_opengl()) return NULL;
-    
-    /* In order to support OpenGL or D3D, we require a double-buffered visual */
+
     wine_tsx11_lock();
     visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf);
     wine_tsx11_unlock();
+    if (visual == NULL) {
+        /* fallback to a 1 bit stencil (opengl states that at least 1 bit of stencil must be provided for on of the available configurations) */
+        int dblBuf2[] = {GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_STENCIL_SIZE,1,GLX_DOUBLEBUFFER,None};
+        WARN("Failed to get a visual with at least 8 bits of stencil\n");
+
+        wine_tsx11_lock();
+        visual = pglXChooseVisual(display, DefaultScreen(display), dblBuf2);
+        wine_tsx11_unlock();
+        if (visual == NULL) {
+            /* This should only happen if we cannot fidn a match with a depth size 16 */
+            FIXME("Failed to find a suitable visual\n");
+        }
+    }
     return visual;
 }
 
