@@ -40,7 +40,6 @@ MENU_WINEMINE MENU DISCARDABLE
         MENUITEM "&Ekspert",          IDM_EXPERT
         MENUITEM "&U¿ytkownika",      IDM_CUSTOM
         MENUITEM SEPARATOR
-        MENUITEM SEPARATOR
         MENUITEM "W&yjœcie\tAlt+X",   IDM_EXIT
     }
     POPUP "&Info" {
