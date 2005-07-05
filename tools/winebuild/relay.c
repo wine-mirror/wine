@@ -293,79 +293,11 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
         fprintf( outfile, "\tpushl %%esp\n" );
     }
 
-
-    /* Print debug info before call */
-    if ( debugging )
-    {
-        if ( UsePIC )
-        {
-            fprintf( outfile, "\tpushl %%ebx\n" );
-
-            /* Get Global Offset Table into %ebx (for PLT call) */
-            fprintf( outfile, "\tcall .L__wine_call_from_16_%s.getgot2\n", name );
-            fprintf( outfile, ".L__wine_call_from_16_%s.getgot2:\n", name );
-            fprintf( outfile, "\tpopl %%ebx\n" );
-            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_call_from_16_%s.getgot2], %%ebx\n", name );
-        }
-
-        fprintf( outfile, "\tpushl %%edx\n" );
-        if ( reg_func )
-            fprintf( outfile, "\tleal -%d(%%ebp), %%eax\n\tpushl %%eax\n",
-                              sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME, ebp) );
-        else
-            fprintf( outfile, "\tpushl $0\n" );
-
-        if ( UsePIC )
-            fprintf( outfile, "\tcall %s\n ", asm_name("RELAY_DebugCallFrom16@PLT"));
-        else
-            fprintf( outfile, "\tcall %s\n ", asm_name("RELAY_DebugCallFrom16"));
-
-        fprintf( outfile, "\tpopl %%edx\n" );
-        fprintf( outfile, "\tpopl %%edx\n" );
-
-        if ( UsePIC )
-            fprintf( outfile, "\tpopl %%ebx\n" );
-    }
-
     /* Call relay routine (which will call the API entry point) */
     fprintf( outfile, "\tleal %d(%%edx), %%eax\n", sizeof(STACK16FRAME) );
     fprintf( outfile, "\tpushl %%eax\n" );
     fprintf( outfile, "\tpushl %d(%%edx)\n", STACK16OFFSET(entry_point) );
     fprintf( outfile, "\tcall *%d(%%edx)\n", STACK16OFFSET(relay) );
-
-    /* Print debug info after call */
-    if ( debugging )
-    {
-        if ( UsePIC )
-        {
-            fprintf( outfile, "\tpushl %%ebx\n" );
-
-            /* Get Global Offset Table into %ebx (for PLT call) */
-            fprintf( outfile, "\tcall .L__wine_call_from_16_%s.getgot3\n", name );
-            fprintf( outfile, ".L__wine_call_from_16_%s.getgot3:\n", name );
-            fprintf( outfile, "\tpopl %%ebx\n" );
-            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_call_from_16_%s.getgot3], %%ebx\n", name );
-        }
-
-        fprintf( outfile, "\tpushl %%eax\n" );
-        if ( reg_func )
-            fprintf( outfile, "\tleal -%d(%%ebp), %%eax\n\tpushl %%eax\n",
-                              sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME, ebp) );
-        else
-            fprintf( outfile, "\tpushl $0\n" );
-
-        if ( UsePIC )
-            fprintf( outfile, "\tcall %s\n ", asm_name("RELAY_DebugCallFrom16Ret@PLT"));
-        else
-            fprintf( outfile, "\tcall %s\n ", asm_name("RELAY_DebugCallFrom16Ret"));
-
-        fprintf( outfile, "\tpopl %%eax\n" );
-        fprintf( outfile, "\tpopl %%eax\n" );
-
-        if ( UsePIC )
-            fprintf( outfile, "\tpopl %%ebx\n" );
-    }
-
 
     if ( reg_func )
     {

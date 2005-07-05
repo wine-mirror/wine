@@ -210,6 +210,9 @@ extern void SELECTOR_FreeBlock( WORD sel );
 #define IS_SELECTOR_32BIT(sel) \
    (wine_ldt_is_system(sel) || (wine_ldt_copy.flags[LOWORD(sel) >> 3] & WINE_LDT_FLAGS_32BIT))
 
+/* relay16.c */
+extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *context );
+
 /* snoop16.c */
 extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR);
 extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);

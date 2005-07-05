@@ -45,6 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #include "pshpack1.h"
 typedef struct _GPHANDLERDEF
@@ -103,21 +104,19 @@ inline static void patch_code_segment( NE_MODULE *pModule )
 {
 #ifdef __i386__
     int i;
+    CALLFROM16 *call;
     SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule );
 
     for (i = 0; i < pModule->ne_cseg; i++, pSeg++)
-    {
-        if (!(pSeg->flags & NE_SEGFLAGS_DATA))  /* found the code segment */
-        {
-            CALLFROM16 *call = GlobalLock16( pSeg->hSeg );
-            if (call->flatcs == wine_get_cs()) return;  /* nothing to patch */
-            while (call->pushl == 0x68)
-            {
-                call->flatcs = wine_get_cs();
-                call++;
-            }
-        }
-    }
+        if (!(pSeg->flags & NE_SEGFLAGS_DATA)) break;  /* found the code segment */
+
+    call = GlobalLock16( pSeg->hSeg );
+
+    if (call->flatcs != wine_get_cs())  /* need to patch cs values */
+        for (i = 0; call[i].pushl == 0x68; i++) call[i].flatcs = wine_get_cs();
+
+    if (TRACE_ON(relay))  /* patch relay functions to all point to relay_call_from_16 */
+        for (i = 0; call[i].pushl == 0x68; i++) call[i].relay = relay_call_from_16;
 #endif
 }
 

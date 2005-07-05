@@ -281,61 +281,165 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
 }
 
 
+typedef int (*CDECL_PROC)();
+typedef int (WINAPI *PASCAL_PROC)();
+
 /***********************************************************************
- *           RELAY_DebugCallFrom16
+ *           call_cdecl_function
  */
-void RELAY_DebugCallFrom16( CONTEXT86 *context )
+static int call_cdecl_function( CDECL_PROC func, int nb_args, const int *args )
 {
-    STACK16FRAME *frame;
-    WORD ordinal;
-    char *args16, module[10], func[64];
-    const CALLFROM16 *call;
-    int i;
+    int ret;
+    switch(nb_args)
+    {
+    case 0: ret = func(); break;
+    case 1: ret = func(args[0]); break;
+    case 2: ret = func(args[0],args[1]); break;
+    case 3: ret = func(args[0],args[1],args[2]); break;
+    case 4: ret = func(args[0],args[1],args[2],args[3]); break;
+    case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
+    case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
+                       args[5]); break;
+    case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                       args[6]); break;
+    case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                       args[6],args[7]); break;
+    case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                       args[6],args[7],args[8]); break;
+    case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9]); break;
+    case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10]); break;
+    case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],
+                        args[11]); break;
+    case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12]); break;
+    case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13]); break;
+    case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14]); break;
+    case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14],args[15]); break;
+    case 17: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14],args[15],args[16]); break;
+    case 18: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14],args[15],args[16],
+                        args[17]); break;
+    default:
+        ERR( "Unsupported nb of args %d\n", nb_args );
+        assert(FALSE);
+        ret = 0;
+        break;
+    }
+    return ret;
+}
 
-    if (!TRACE_ON(relay)) return;
 
-    frame = CURRENT_STACK16;
-    call = get_entry_point( frame, module, func, &ordinal );
-    if (!call) return; /* happens for the two snoop register relays */
-    if (!RELAY_ShowDebugmsgRelay( module, ordinal, func )) return;
-    DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
-    args16 = (char *)(frame + 1);
+/***********************************************************************
+ *           call_pascal_function
+ */
+static inline int call_pascal_function( PASCAL_PROC func, int nb_args, const int *args )
+{
+    int ret;
+    switch(nb_args)
+    {
+    case 0: ret = func(); break;
+    case 1: ret = func(args[0]); break;
+    case 2: ret = func(args[0],args[1]); break;
+    case 3: ret = func(args[0],args[1],args[2]); break;
+    case 4: ret = func(args[0],args[1],args[2],args[3]); break;
+    case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
+    case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
+                       args[5]); break;
+    case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                       args[6]); break;
+    case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                       args[6],args[7]); break;
+    case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                       args[6],args[7],args[8]); break;
+    case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9]); break;
+    case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10]); break;
+    case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],
+                        args[11]); break;
+    case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12]); break;
+    case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13]); break;
+    case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14]); break;
+    case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14],args[15]); break;
+    case 17: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14],args[15],args[16]); break;
+    case 18: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
+                        args[6],args[7],args[8],args[9],args[10],args[11],
+                        args[12],args[13],args[14],args[15],args[16],
+                        args[17]); break;
+    default:
+        ERR( "Unsupported nb of args %d\n", nb_args );
+        assert(FALSE);
+        ret = 0;
+        break;
+    }
+    return ret;
+}
 
+
+/***********************************************************************
+ *           relay_call_from_16_no_debug
+ *
+ * Same as relay_call_from_16 but doesn't print any debug information.
+ */
+static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16, CONTEXT86 *context,
+                                        const CALLFROM16 *call )
+{
+    int i, nb_args, args32[20];
+
+    nb_args = 0;
     if (call->lret == 0xcb66)  /* cdecl */
     {
-        for (i = 0; i < 20; i++)
+        for (i = 0; i < 20; i++, nb_args++)
         {
             int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
 
             if (type == ARG_NONE) break;
-            if (i) DPRINTF( "," );
             switch(type)
             {
             case ARG_WORD:
+                args32[nb_args] = *(WORD *)args16;
+                args16 += sizeof(WORD);
+                break;
             case ARG_SWORD:
-                DPRINTF( "%04x", *(WORD *)args16 );
+                args32[nb_args] = *(short *)args16;
                 args16 += sizeof(WORD);
                 break;
             case ARG_LONG:
-                DPRINTF( "%08x", *(int *)args16 );
+            case ARG_SEGSTR:
+                args32[nb_args] = *(int *)args16;
                 args16 += sizeof(int);
                 break;
             case ARG_PTR:
-                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-                args16 += sizeof(SEGPTR);
-                break;
             case ARG_STR:
-                DPRINTF( "%08x %s", *(int *)args16,
-                         debugstr_a( MapSL(*(SEGPTR *)args16 )));
-                args16 += sizeof(int);
-                break;
-            case ARG_SEGSTR:
-                DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
-                         debugstr_a( MapSL(*(SEGPTR *)args16 )) );
+                args32[nb_args] = (int)MapSL( *(SEGPTR *)args16 );
                 args16 += sizeof(SEGPTR);
                 break;
             case ARG_VARARG:
-                DPRINTF( "..." );
+                args32[nb_args] = (int)args16;
                 break;
             default:
                 break;
@@ -346,7 +450,72 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     {
         /* Start with the last arg */
         args16 += call->nArgs;
-        for (i = 0; i < 20; i++)
+        for (i = 0; i < 20; i++, nb_args++)
+        {
+            int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
+
+            if (type == ARG_NONE) break;
+            switch(type)
+            {
+            case ARG_WORD:
+                args16 -= sizeof(WORD);
+                args32[nb_args] = *(WORD *)args16;
+                break;
+            case ARG_SWORD:
+                args16 -= sizeof(WORD);
+                args32[nb_args] = *(short *)args16;
+                break;
+            case ARG_LONG:
+            case ARG_SEGSTR:
+                args16 -= sizeof(int);
+                args32[nb_args] = *(int *)args16;
+                break;
+            case ARG_PTR:
+            case ARG_STR:
+                args16 -= sizeof(SEGPTR);
+                args32[nb_args] = (int)MapSL( *(SEGPTR *)args16 );
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    if (call->arg_types[0] & ARG_REGISTER) args32[nb_args++] = (int)context;
+
+    SYSLEVEL_CheckNotLevel( 2 );
+
+    if (call->lret == 0xcb66)  /* cdecl */
+        return call_cdecl_function( entry_point, nb_args, args32 );
+    else
+        return call_pascal_function( entry_point, nb_args, args32 );
+}
+
+
+/***********************************************************************
+ *           relay_call_from_16
+ *
+ * Replacement for the 16-bit relay functions when relay debugging is on.
+ */
+int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *context )
+{
+    STACK16FRAME *frame;
+    WORD ordinal;
+    int i, ret_val, nb_args, args32[20];
+    char module[10], func[64];
+    const CALLFROM16 *call;
+
+    frame = CURRENT_STACK16;
+    call = get_entry_point( frame, module, func, &ordinal );
+    if (!TRACE_ON(relay) || !RELAY_ShowDebugmsgRelay( module, ordinal, func ))
+        return relay_call_from_16_no_debug( entry_point, args16, context, call );
+
+    DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
+
+    nb_args = 0;
+    if (call->lret == 0xcb66)  /* cdecl */
+    {
+        for (i = 0; i < 20; i++, nb_args++)
         {
             int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
 
@@ -355,30 +524,93 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
             switch(type)
             {
             case ARG_WORD:
+                DPRINTF( "%04x", *(WORD *)args16 );
+                args32[nb_args] = *(WORD *)args16;
+                args16 += sizeof(WORD);
+                break;
+            case ARG_SWORD:
+                DPRINTF( "%04x", *(WORD *)args16 );
+                args32[nb_args] = *(short *)args16;
+                args16 += sizeof(WORD);
+                break;
+            case ARG_LONG:
+                DPRINTF( "%08x", *(int *)args16 );
+                args32[nb_args] = *(int *)args16;
+                args16 += sizeof(int);
+                break;
+            case ARG_PTR:
+                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
+                args32[nb_args] = (int)MapSL( *(SEGPTR *)args16 );
+                args16 += sizeof(SEGPTR);
+                break;
+            case ARG_STR:
+                DPRINTF( "%08x %s", *(int *)args16,
+                         debugstr_a( MapSL(*(SEGPTR *)args16 )));
+                args32[nb_args] = (int)MapSL( *(SEGPTR *)args16 );
+                args16 += sizeof(int);
+                break;
+            case ARG_SEGSTR:
+                DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
+                         debugstr_a( MapSL(*(SEGPTR *)args16 )) );
+                args32[nb_args] = *(SEGPTR *)args16;
+                args16 += sizeof(SEGPTR);
+                break;
+            case ARG_VARARG:
+                DPRINTF( "..." );
+                args32[nb_args] = (int)args16;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    else  /* not cdecl */
+    {
+        /* Start with the last arg */
+        args16 += call->nArgs;
+        for (i = 0; i < 20; i++, nb_args++)
+        {
+            int type = (call->arg_types[i / 10] >> (3 * (i % 10))) & 7;
+
+            if (type == ARG_NONE) break;
+            if (i) DPRINTF( "," );
+            switch(type)
+            {
+            case ARG_WORD:
+                args16 -= sizeof(WORD);
+                args32[nb_args] = *(WORD *)args16;
+                DPRINTF( "%04x", *(WORD *)args16 );
+                break;
             case ARG_SWORD:
                 args16 -= sizeof(WORD);
+                args32[nb_args] = *(short *)args16;
                 DPRINTF( "%04x", *(WORD *)args16 );
                 break;
             case ARG_LONG:
                 args16 -= sizeof(int);
+                args32[nb_args] = *(int *)args16;
                 DPRINTF( "%08x", *(int *)args16 );
                 break;
             case ARG_PTR:
                 args16 -= sizeof(SEGPTR);
+                args32[nb_args] = (int)MapSL( *(SEGPTR *)args16 );
                 DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 break;
             case ARG_STR:
                 args16 -= sizeof(int);
+                args32[nb_args] = (int)MapSL( *(SEGPTR *)args16 );
                 DPRINTF( "%08x %s", *(int *)args16,
                          debugstr_a( MapSL(*(SEGPTR *)args16 )));
                 break;
             case ARG_SEGSTR:
                 args16 -= sizeof(SEGPTR);
+                args32[nb_args] = *(SEGPTR *)args16;
                 DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
                          debugstr_a( MapSL(*(SEGPTR *)args16 )) );
                 break;
             case ARG_VARARG:
                 DPRINTF( "..." );
+                args32[nb_args] = (int)args16;
                 break;
             default:
                 break;
@@ -389,32 +621,24 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
     DPRINTF( ") ret=%04x:%04x ds=%04x\n", frame->cs, frame->ip, frame->ds );
 
     if (call->arg_types[0] & ARG_REGISTER)
+    {
+        args32[nb_args++] = (int)context;
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
                 (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                 (WORD)context->SegEs, context->EFlags );
+    }
 
     SYSLEVEL_CheckNotLevel( 2 );
-}
 
+    if (call->lret == 0xcb66)  /* cdecl */
+        ret_val = call_cdecl_function( entry_point, nb_args, args32 );
+    else
+        ret_val = call_pascal_function( entry_point, nb_args, args32 );
 
-/***********************************************************************
- *           RELAY_DebugCallFrom16Ret
- */
-void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
-{
-    STACK16FRAME *frame;
-    WORD ordinal;
-    char module[10], func[64];
-    const CALLFROM16 *call;
+    SYSLEVEL_CheckNotLevel( 2 );
 
-    if (!TRACE_ON(relay)) return;
-    frame = CURRENT_STACK16;
-    call = get_entry_point( frame, module, func, &ordinal );
-    if (!call) return;
-    if (!RELAY_ShowDebugmsgRelay( module, ordinal, func )) return;
-    DPRINTF( "%04lx:Ret  %s.%d: %s() ", GetCurrentThreadId(), module, ordinal, func );
-
+    DPRINTF( "%04lx:Ret  %s.%d: %s() ",GetCurrentThreadId(), module, ordinal, func );
     if (call->arg_types[0] & ARG_REGISTER)
     {
         DPRINTF("retval=none ret=%04x:%04x ds=%04x\n",
@@ -424,17 +648,17 @@ void RELAY_DebugCallFrom16Ret( CONTEXT86 *context, int ret_val )
                 (WORD)context->Edx, (WORD)context->Esi, (WORD)context->Edi,
                 (WORD)context->SegEs, context->EFlags );
     }
-    else if (call->arg_types[0] & ARG_RET16)
-    {
-        DPRINTF( "retval=%04x ret=%04x:%04x ds=%04x\n",
-                 ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
-    }
     else
     {
-        DPRINTF( "retval=%08x ret=%04x:%04x ds=%04x\n",
-                 ret_val, frame->cs, frame->ip, frame->ds );
+        frame = CURRENT_STACK16;  /* might have be changed by the entry point */
+        if (call->arg_types[0] & ARG_RET16)
+            DPRINTF( "retval=%04x ret=%04x:%04x ds=%04x\n",
+                     ret_val & 0xffff, frame->cs, frame->ip, frame->ds );
+        else
+            DPRINTF( "retval=%08x ret=%04x:%04x ds=%04x\n",
+                     ret_val, frame->cs, frame->ip, frame->ds );
     }
-    SYSLEVEL_CheckNotLevel( 2 );
+    return ret_val;
 }
 
 #else /* __i386__ */
