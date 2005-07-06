@@ -101,6 +101,7 @@ ME_DisplayItem *ME_RowStart(ME_DisplayItem *item);
 ME_DisplayItem *ME_RowEnd(ME_DisplayItem *item);
 void ME_RenumberParagraphs(ME_DisplayItem *item); /* TODO */
 ME_DisplayItem *ME_FindRowWithNumber(ME_TextEditor *editor, int nRow);
+int ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs);
 
 /* run.c */
 ME_DisplayItem *ME_MakeRun(ME_Style *s, ME_String *strData, int nFlags);

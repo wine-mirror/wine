@@ -76,7 +76,7 @@
   - EM_SETZOOM 3.0
   - EM_HIDESELECTION
   - EM_LIMITTEXT
-  - EM_LINEFROMCHAR
+  + EM_LINEFROMCHAR
   + EM_LINEINDEX
   - EM_LINELENGTH
   + EM_LINESCROLL
@@ -914,7 +914,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETZOOM)
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
-  UNSUPPORTED_MSG(EM_LINEFROMCHAR)
   UNSUPPORTED_MSG(EM_LINELENGTH)
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
 /*  UNSUPPORTED_MSG(EM_POSFROMCHARS) missing in Wine headers */
@@ -1308,37 +1307,23 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     return max(1, nRows);
   }
+  case EM_LINEFROMCHAR:
+  {
+    if (wParam == -1)
+      return ME_RowNumberFromCharOfs(editor, ME_GetCursorOfs(editor, 1));
+    else
+      return ME_RowNumberFromCharOfs(editor, wParam);
+  }
   case EM_EXLINEFROMCHAR:
   {
-    ME_DisplayItem *item = editor->pBuffer->pFirst->next;
-    int nOffset;
-    int nRow = 0;
-
-    while (item && item->member.para.next_para->member.para.nCharOfs <= lParam)
-    {
-      nRow += item->member.para.nRows;
-      item = ME_FindItemFwd(item, diParagraph);
-    }
-    if (item)
-    {
-      nOffset = lParam - item->member.para.nCharOfs;
-      item = ME_FindItemFwd(item, diRun);
-      while ((item = ME_FindItemFwd(item, diStartRowOrParagraph)))
-      {
-	item = ME_FindItemFwd(item, diRun);
-	if (item->member.run.nCharOfs > nOffset)
-          break;
-	nRow++;
-      }
-    }
-    return nRow;
+    return ME_RowNumberFromCharOfs(editor, lParam);
   }
   case EM_LINEINDEX:
   {
     ME_DisplayItem *item, *para;
     
     if (wParam == -1)
-      item = ME_FindItemBack(editor->pCursors[1].pRun, diStartRow);
+      item = ME_FindItemBack(editor->pCursors[0].pRun, diStartRow);
     else
       item = ME_FindRowWithNumber(editor, wParam);
     if (!item)

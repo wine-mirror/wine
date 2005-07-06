@@ -101,3 +101,30 @@ ME_FindRowWithNumber(ME_TextEditor *editor, int nRow)
     item = ME_FindItemFwd(item, diStartRow);
   return item;
 }
+
+
+int
+ME_RowNumberFromCharOfs(ME_TextEditor *editor, int nOfs)
+{
+  ME_DisplayItem *item = editor->pBuffer->pFirst->next;
+  int nRow = 0;
+
+  while (item && item->member.para.next_para->member.para.nCharOfs <= nOfs)
+  {
+    nRow += item->member.para.nRows;
+    item = ME_FindItemFwd(item, diParagraph);
+  }
+  if (item)
+  {
+    nOfs -= item->member.para.nCharOfs;
+    item = ME_FindItemFwd(item, diRun);
+    while ((item = ME_FindItemFwd(item, diStartRowOrParagraph)) != NULL)
+    {
+      item = ME_FindItemFwd(item, diRun);
+      if (item->member.run.nCharOfs > nOfs)
+        break;
+      nRow++;
+    }
+  }
+  return nRow;
+}
