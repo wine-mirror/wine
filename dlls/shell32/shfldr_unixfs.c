@@ -104,7 +104,7 @@ typedef struct _UnixFolder {
     CHAR *m_pszPath;
     LPITEMIDLIST m_pidlLocation;
     LPITEMIDLIST *m_apidlSubDirs;
-    DWORD m_cSubDirs;
+    LONG m_cSubDirs;
     DWORD m_dwPathMode;
 } UnixFolder;
 
@@ -620,6 +620,13 @@ static BOOL UNIXFS_build_subfolder_pidls(UnixFolder *pUnixFolder)
     BOOL bParentIsFS = dwRootAttr & SFGAO_FILESYSTEM;
     
     TRACE("(pUnixFolder=%p)\n", pUnixFolder);
+
+    /* For updates: If there already is an initialized list, release it */
+    if (pUnixFolder->m_cSubDirs > 0) {
+        for (i=0; i < pUnixFolder->m_cSubDirs; i++) 
+            SHFree(pUnixFolder->m_apidlSubDirs[i]);
+        SHFree(pUnixFolder->m_apidlSubDirs);
+    }
     
     pUnixFolder->m_apidlSubDirs = NULL;
     pUnixFolder->m_cSubDirs = 0;
@@ -1084,6 +1091,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     if (!rename(szSrc, szDest) && UNIXFS_path_to_pidl(This, lpszName, &pidlNew)) {
         LPITEMIDLIST pidlSrc = ILCombine(This->m_pidlLocation, pidl);
         LPITEMIDLIST pidlDest = ILCombine(This->m_pidlLocation, pidlNew);
+        UNIXFS_build_subfolder_pidls(This); /* Update list of children */
         if (_ILIsFolder(pidlNew)) 
             SHChangeNotify(SHCNE_RENAMEFOLDER, SHCNF_IDLIST, pidlSrc, pidlDest);
         else 
@@ -1327,15 +1335,84 @@ static ULONG WINAPI UnixFolder_ISFHelper_Release(ISFHelper* iface)
 
 static HRESULT WINAPI UnixFolder_ISFHelper_GetUniqueName(ISFHelper* iface, LPSTR lpName, UINT uLen)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, ISFHelper, iface);
+    IEnumIDList *pEnum;
+    HRESULT hr;
+    LPITEMIDLIST pidlElem;
+    DWORD dwFetched;
+    int i;
+    static const char szNewFolder[] = "New Folder";
+
+    TRACE("(iface=%p, lpName=%p, uLen=%u)\n", iface, lpName, uLen);
+    
+    if (uLen < sizeof(szNewFolder)+3)
+        return E_INVALIDARG;
+
+    hr = IShellFolder2_EnumObjects(STATIC_CAST(IShellFolder2, This), 0,
+                                   SHCONTF_FOLDERS|SHCONTF_NONFOLDERS|SHCONTF_INCLUDEHIDDEN, &pEnum);
+    if (SUCCEEDED(hr)) {
+        lstrcpyA(lpName, szNewFolder);
+        IEnumIDList_Reset(pEnum);
+        i = 2;
+        while ((IEnumIDList_Next(pEnum, 1, &pidlElem, &dwFetched) == S_OK) && (dwFetched == 1)) {
+            if (!strcasecmp(_ILGetTextPointer(pidlElem), lpName)) {
+                IEnumIDList_Reset(pEnum);
+                sprintf(lpName, "%s %d", szNewFolder, i++);
+                if (i > 99) {
+                    hr = E_FAIL;
+                    break;
+                }
+            }
+        }
+        IEnumIDList_Release(pEnum);
+    }
+    return hr;
 }
 
-static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd, LPCSTR lpName, 
+static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd, LPCSTR pszName, 
     LPITEMIDLIST* ppidlOut)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, ISFHelper, iface);
+    char szNewDir[FILENAME_MAX];
+
+    TRACE("(iface=%p, hwnd=%p, pszName=%s, ppidlOut=%p)\n", iface, hwnd, pszName, ppidlOut);
+
+    if (ppidlOut)
+        *ppidlOut = NULL;
+    
+    lstrcpyA(szNewDir, This->m_pszPath);
+    lstrcatA(szNewDir, pszName);
+
+    if (mkdir(szNewDir, 0755)) {
+        char szMessage[256 + FILENAME_MAX];
+        char szCaption[256];
+
+        LoadStringA(shell32_hInstance, IDS_CREATEFOLDER_DENIED, szCaption, sizeof(szCaption));
+        sprintf(szMessage, szCaption, szNewDir);
+        LoadStringA(shell32_hInstance, IDS_CREATEFOLDER_CAPTION, szCaption, sizeof(szCaption));
+        MessageBoxA(hwnd, szMessage, szCaption, MB_OK | MB_ICONEXCLAMATION);
+
+        return E_FAIL;
+    } else {
+        LPITEMIDLIST pidlRelative;
+        WCHAR wszName[MAX_PATH];
+
+        /* Update the folder's children */
+        UNIXFS_build_subfolder_pidls(This);
+
+        /* Inform the shell */
+        MultiByteToWideChar(CP_ACP, 0, pszName, -1, wszName, MAX_PATH);
+        if (UNIXFS_path_to_pidl(This, wszName, &pidlRelative)) {
+            LPITEMIDLIST pidlAbsolute = ILCombine(This->m_pidlLocation, pidlRelative);
+            if (ppidlOut)
+                *ppidlOut = pidlRelative;
+            else
+                ILFree(pidlRelative);
+            SHChangeNotify(SHCNE_MKDIR, SHCNF_IDLIST, pidlAbsolute, NULL);
+            ILFree(pidlAbsolute);
+        }
+        return S_OK;
+    }
 }
 
 static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT cidl, 
