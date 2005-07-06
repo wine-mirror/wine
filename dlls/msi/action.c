@@ -2132,7 +2132,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     {
         TRACE("Setting value %s of %s\n",debugstr_w(deformated),
                         debugstr_w(uikey));
-        RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+        RegSetValueExW(hkey, deformated, 0, type, (LPBYTE)value_data, size);
     }
     else
     {
@@ -2148,7 +2148,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
             TRACE("Checked and setting value %s of %s\n",
                             debugstr_w(deformated), debugstr_w(uikey));
             if (deformated || size)
-                RegSetValueExW(hkey, deformated, 0, type, value_data, size);
+                RegSetValueExW(hkey, deformated, 0, type, (LPBYTE) value_data, size);
         }
     }
     RegCloseKey(hkey);
@@ -2560,7 +2560,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 
                 if (keypath)
                 {
-                    RegSetValueExW(hkey2,squished_pc,0,REG_SZ,(LPVOID)keypath,
+                    RegSetValueExW(hkey2,squished_pc,0,REG_SZ,(LPBYTE)keypath,
                                 (strlenW(keypath)+1)*sizeof(WCHAR));
 
                     if (package->components[i].Attributes & 
@@ -2572,7 +2572,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                               '0','0','0','0','0','0','0','0',0};
 
                         RegSetValueExW(hkey2,szPermKey,0,REG_SZ,
-                                        (LPVOID)keypath,
+                                        (LPBYTE)keypath,
                                         (strlenW(keypath)+1)*sizeof(WCHAR));
                     }
                     
@@ -3077,13 +3077,13 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
 
     buffer = load_dynamic_property(package,szProductName,NULL);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey,szProductName,0,REG_SZ, (BYTE *)buffer,size);
+    RegSetValueExW(hukey,szProductName,0,REG_SZ, (LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = sizeof(DWORD);
     langid = atoiW(buffer);
-    RegSetValueExW(hukey,szLanguage,0,REG_DWORD, (BYTE *)&langid,size);
+    RegSetValueExW(hukey,szLanguage,0,REG_DWORD, (LPBYTE)&langid,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szARPProductIcon,NULL);
@@ -3092,7 +3092,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         LPWSTR path;
         build_icon_path(package,buffer,&path);
         size = strlenW(path) * sizeof(WCHAR);
-        RegSetValueExW(hukey,szProductIcon,0,REG_SZ, (BYTE *)path,size);
+        RegSetValueExW(hukey,szProductIcon,0,REG_SZ, (LPBYTE)path,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
 
@@ -3101,7 +3101,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     {
         DWORD verdword = build_version_dword(buffer);
         size = sizeof(DWORD);
-        RegSetValueExW(hukey,szVersion,0,REG_DWORD, (BYTE *)&verdword,size);
+        RegSetValueExW(hukey,szVersion,0,REG_DWORD, (LPBYTE)&verdword,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
     
@@ -3124,7 +3124,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             if (ptr) *ptr = 0;
             squash_guid(guidbuffer,squashed);
             size = strlenW(squashed)*sizeof(WCHAR);
-            RegSetValueExW(hukey,szPackageCode,0,REG_SZ, (LPSTR)squashed,
+            RegSetValueExW(hukey,szPackageCode,0,REG_SZ, (LPBYTE)squashed,
                            size);
         }
         else
@@ -3405,14 +3405,14 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
 
         size = (strlenW(data)+1)*sizeof(WCHAR);
         RegSetValueExW(hkey,package->features[i].Feature,0,REG_SZ,
-                       (LPSTR)data,size);
+                       (LPBYTE)data,size);
         HeapFree(GetProcessHeap(),0,data);
 
         if (!absent)
         {
             size = strlenW(package->features[i].Feature_Parent)*sizeof(WCHAR);
             RegSetValueExW(hukey,package->features[i].Feature,0,REG_SZ,
-                       (LPSTR)package->features[i].Feature_Parent,size);
+                       (LPBYTE)package->features[i].Feature_Parent,size);
         }
         else
         {
@@ -3422,7 +3422,7 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
             data[0] = 0x6;
             strcpyW(&data[1],package->features[i].Feature_Parent);
             RegSetValueExW(hukey,package->features[i].Feature,0,REG_SZ,
-                       (LPSTR)data,size);
+                       (LPBYTE)data,size);
             HeapFree(GetProcessHeap(),0,data);
         }
     }
@@ -3543,14 +3543,14 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         if (rc != ERROR_SUCCESS)
             buffer = szNONE;
         size = strlenW(buffer)*sizeof(WCHAR);
-        RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
+        RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPBYTE)buffer,size);
         HeapFree(GetProcessHeap(),0,buffer);
         i++;
     }
 
     rc = 0x1;
     size = sizeof(rc);
-    RegSetValueExW(hkey,szWindowsInstaler,0,REG_DWORD,(LPSTR)&rc,size);
+    RegSetValueExW(hkey,szWindowsInstaler,0,REG_DWORD,(LPBYTE)&rc,size);
     
     /* copy the package locally */
     num = GetTickCount() & 0xffff;
@@ -3584,29 +3584,29 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
             debugstr_w(package->msiFilePath), debugstr_w(packagefile),
             GetLastError());
     size = strlenW(packagefile)*sizeof(WCHAR);
-    RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
+    RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPBYTE)packagefile,size);
 
     /* do ModifyPath and UninstallString */
     size = deformat_string(package,modpath_fmt,&buffer);
-    RegSetValueExW(hkey,szModifyPath,0,REG_EXPAND_SZ,(LPSTR)buffer,size);
-    RegSetValueExW(hkey,szUninstallString,0,REG_EXPAND_SZ,(LPSTR)buffer,size);
+    RegSetValueExW(hkey,szModifyPath,0,REG_EXPAND_SZ,(LPBYTE)buffer,size);
+    RegSetValueExW(hkey,szUninstallString,0,REG_EXPAND_SZ,(LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     FIXME("Write real Estimated Size when we have it\n");
     size = 0;
-    RegSetValueExW(hkey,szEstimatedSize,0,REG_DWORD,(LPSTR)&size,sizeof(DWORD));
+    RegSetValueExW(hkey,szEstimatedSize,0,REG_DWORD,(LPBYTE)&size,sizeof(DWORD));
    
     GetLocalTime(&systime);
     size = 9*sizeof(WCHAR);
     buffer= HeapAlloc(GetProcessHeap(),0,size);
     sprintfW(buffer,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,szInstallDate,0,REG_SZ,(LPSTR)buffer,size);
+    RegSetValueExW(hkey,szInstallDate,0,REG_SZ,(LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
    
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = atoiW(buffer);
-    RegSetValueExW(hkey,szLanguage,0,REG_DWORD, (LPSTR)&size,sizeof(DWORD));
+    RegSetValueExW(hkey,szLanguage,0,REG_DWORD, (LPBYTE)&size,sizeof(DWORD));
     HeapFree(GetProcessHeap(),1,buffer);
 
     buffer = load_dynamic_property(package,szProductVersion,NULL);
@@ -3616,9 +3616,9 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         DWORD vermajor = verdword>>24;
         DWORD verminor = (verdword>>16)&0x00FF;
         size = sizeof(DWORD);
-        RegSetValueExW(hkey,szVersion,0,REG_DWORD,(LPSTR)&verdword,size);
-        RegSetValueExW(hkey,szVersionMajor,0,REG_DWORD,(LPSTR)&vermajor,size);
-        RegSetValueExW(hkey,szVersionMinor,0,REG_DWORD,(LPSTR)&verminor,size);
+        RegSetValueExW(hkey,szVersion,0,REG_DWORD,(LPBYTE)&verdword,size);
+        RegSetValueExW(hkey,szVersionMajor,0,REG_DWORD,(LPBYTE)&vermajor,size);
+        RegSetValueExW(hkey,szVersionMinor,0,REG_DWORD,(LPBYTE)&verminor,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
     
@@ -3708,7 +3708,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     HKEY hkey,hukey;
     LPWSTR productcode;
     WCHAR  squished_pc[100];
-    INT rc;
+    UINT rc;
     DWORD size;
     static const WCHAR szLUS[] = {
          'L','a','s','t','U','s','e','d','S','o','u','r','c','e',0};
@@ -3732,7 +3732,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
      squished_pc);
 
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPSTR)buffer,size);
+    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPBYTE)buffer,size);
     RegCloseKey(hkey);
 
     TRACE("Reboot command %s\n",debugstr_w(buffer));
@@ -3741,7 +3741,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     sprintfW(buffer,install_fmt,productcode,squished_pc);
 
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPSTR)buffer,size);
+    RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPBYTE)buffer,size);
     RegCloseKey(hkey);
 
     rc = MSIREG_OpenUserProductsKey(productcode,&hukey,TRUE);
@@ -3752,7 +3752,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
         RegCreateKeyW(hukey, szSourceList, &hukey2);
         buf = load_dynamic_property(package,cszSourceDir,NULL);
         size = strlenW(buf)*sizeof(WCHAR);
-        RegSetValueExW(hukey2,szLUS,0,REG_SZ,(LPSTR)buf,size);
+        RegSetValueExW(hukey2,szLUS,0,REG_SZ,(LPBYTE)buf,size);
         HeapFree(GetProcessHeap(),0,buf); 
 
         buf = strrchrW(package->PackagePath,'\\');
@@ -3760,7 +3760,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
         {
             buf++;
             size = strlenW(buf)*sizeof(WCHAR);
-            RegSetValueExW(hukey2,szPackageName,0,REG_SZ,(LPSTR)buf,size);
+            RegSetValueExW(hukey2,szPackageName,0,REG_SZ,(LPBYTE)buf,size);
         }
 
         RegCloseKey(hukey2);
@@ -3828,7 +3828,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
         if (rc == ERROR_SUCCESS)
         {
             size = strlenW(buffer)*sizeof(WCHAR);
-            RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
+            RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPBYTE)buffer,size);
         }
         else
             RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,NULL,0);

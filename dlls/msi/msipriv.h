@@ -55,7 +55,7 @@ struct tagMSIOBJECTHDR
 {
     UINT magic;
     UINT type;
-    DWORD refcount;
+    LONG refcount;
     msihandledestructor destructor;
     struct tagMSIOBJECTHDR *next;
     struct tagMSIOBJECTHDR *prev;
@@ -283,8 +283,8 @@ extern HRESULT init_string_table( IStorage *stg );
 
 
 /* string table functions */
-extern BOOL msi_addstring( string_table *st, int string_no, const CHAR *data, int len, UINT refcount );
-extern BOOL msi_addstringW( string_table *st, int string_no, const WCHAR *data, int len, UINT refcount );
+extern BOOL msi_addstring( string_table *st, UINT string_no, const CHAR *data, int len, UINT refcount );
+extern BOOL msi_addstringW( string_table *st, UINT string_no, const WCHAR *data, int len, UINT refcount );
 extern UINT msi_id2stringW( string_table *st, UINT string_no, LPWSTR buffer, UINT *sz );
 extern UINT msi_id2stringA( string_table *st, UINT string_no, LPSTR buffer, UINT *sz );
 
