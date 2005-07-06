@@ -1623,9 +1623,6 @@ static BOOL PROPSHEET_ShowPage(HWND hwndDlg, int index, PropSheetInfo * psInfo)
 	  ShowWindow(hwndLineHeader, SW_SHOW);
   }
 
-  InvalidateRgn(hwndDlg, NULL, TRUE);
-  UpdateWindow(hwndDlg);
-
   return TRUE;
 }
 
