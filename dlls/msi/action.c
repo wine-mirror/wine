@@ -674,6 +674,11 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     else
         rc = ACTION_PerformAction(iap->package,action,FALSE);
 
+    msi_dialog_check_messages( NULL );
+
+    if (iap->package->CurrentInstallState != ERROR_SUCCESS )
+        rc = iap->package->CurrentInstallState;
+
     if (rc == ERROR_FUNCTION_NOT_CALLED)
         rc = ERROR_SUCCESS;
 
@@ -822,18 +827,6 @@ static BOOL ACTION_HandleStandardAction(MSIPACKAGE *package, LPCWSTR action,
     return ret;
 }
 
-static BOOL ACTION_HandleDialogBox( MSIPACKAGE *package, LPCWSTR dialog, UINT* rc )
-{
-    BOOL ret = FALSE;
-
-    if (ACTION_DialogBox(package,dialog) == ERROR_SUCCESS)
-    {
-        *rc = package->CurrentInstallState;
-        ret = TRUE;
-    }
-    return ret;
-}
-
 static BOOL ACTION_HandleCustomAction( MSIPACKAGE* package, LPCWSTR action,
                                        UINT* rc, BOOL force )
 {
@@ -876,7 +869,6 @@ UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action, BOOL force)
         rc = ERROR_FUNCTION_NOT_CALLED;
     }
 
-    package->CurrentInstallState = rc;
     return rc;
 }
 
@@ -892,10 +884,8 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
     if (!handled)
         handled = ACTION_HandleCustomAction(package, action, &rc, FALSE);
 
-    if (!handled)
-        handled = ACTION_HandleDialogBox(package, action, &rc);
-
-    msi_dialog_check_messages( NULL );
+    if( !handled && ACTION_DialogBox(package,action) == ERROR_SUCCESS )
+        handled = TRUE;
 
     if (!handled)
     {
@@ -903,7 +893,6 @@ UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action)
         rc = ERROR_FUNCTION_NOT_CALLED;
     }
 
-    package->CurrentInstallState = rc;
     return rc;
 }
 
