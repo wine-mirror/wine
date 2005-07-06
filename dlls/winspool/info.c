@@ -52,6 +52,7 @@
 #include "wine/windef16.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "heap.h"
 #include "winnls.h"
 
@@ -68,10 +69,18 @@ static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0,
 
 typedef struct {
     LPWSTR name;
+    struct list jobs;
 } opened_printer_t;
+
+typedef struct {
+    struct list entry;
+    DWORD job_id;
+    WCHAR *filename;
+} job_t;
 
 static opened_printer_t **printer_handles;
 static int nb_printer_handles;
+static long next_job_id = 1;
 
 static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
                                                      WORD fwCapability, LPSTR lpszOutput,
@@ -565,6 +574,7 @@ void WINSPOOL_LoadSystemPrinters(void)
 static HANDLE get_opened_printer_entry( LPCWSTR name )
 {
     UINT handle;
+    opened_printer_t *printer;
 
     EnterCriticalSection(&printer_handles_cs);
 
@@ -578,7 +588,7 @@ static HANDLE get_opened_printer_entry( LPCWSTR name )
         if (printer_handles)
             new_array = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, printer_handles,
                                      (nb_printer_handles + 16) * sizeof(*new_array) );
-        else 
+        else
             new_array = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                    (nb_printer_handles + 16) * sizeof(*new_array) );
 
@@ -591,15 +601,17 @@ static HANDLE get_opened_printer_entry( LPCWSTR name )
         nb_printer_handles += 16;
     }
 
-    if (!(printer_handles[handle] = HeapAlloc(GetProcessHeap(), 0, sizeof(**printer_handles))))
+    if (!(printer = HeapAlloc(GetProcessHeap(), 0, sizeof(*printer))))
     {
         handle = 0;
         goto end;
     }
 
-    printer_handles[handle]->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
-    strcpyW(printer_handles[handle]->name, name);
+    printer->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
+    strcpyW(printer->name, name);
+    list_init(&printer->jobs);
 
+    printer_handles[handle] = printer;
     handle++;
 end:
     LeaveCriticalSection(&printer_handles_cs);
@@ -1178,23 +1190,96 @@ BOOL WINAPI AddFormW(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 /*****************************************************************************
  *          AddJobA  [WINSPOOL.@]
  */
-BOOL WINAPI AddJobA(HANDLE hPrinter, DWORD Level, LPBYTE pData,
-                        DWORD cbBuf, LPDWORD pcbNeeded)
+BOOL WINAPI AddJobA(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("(%p,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pData, cbBuf,
-          pcbNeeded);
-    return 1;
+    BOOL ret;
+    BYTE buf[MAX_PATH * sizeof(WCHAR) + sizeof(ADDJOB_INFO_1W)];
+    DWORD needed;
+
+    if(Level != 1) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    ret = AddJobW(hPrinter, Level, buf, sizeof(buf), &needed);
+
+    if(ret) {
+        ADDJOB_INFO_1W *addjobW = (ADDJOB_INFO_1W*)buf;
+        DWORD len = WideCharToMultiByte(CP_ACP, 0, addjobW->Path, -1, NULL, 0, NULL, NULL);
+        *pcbNeeded = len + sizeof(ADDJOB_INFO_1A);
+        if(*pcbNeeded > cbBuf) {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            ret = FALSE;
+        } else {
+            ADDJOB_INFO_1A *addjobA = (ADDJOB_INFO_1A*)pData;
+            addjobA->JobId = addjobW->JobId;
+            addjobA->Path = (char *)(addjobA + 1);
+            WideCharToMultiByte(CP_ACP, 0, addjobW->Path, -1, addjobA->Path, len, NULL, NULL);
+        }
+    }
+    return ret;
 }
 
 /*****************************************************************************
  *          AddJobW  [WINSPOOL.@]
  */
-BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf,
-                        LPDWORD pcbNeeded)
+BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("(%p,%ld,%p,%ld,%p): stub\n", hPrinter, Level, pData, cbBuf,
-          pcbNeeded);
-    return 1;
+    opened_printer_t *printer;
+    job_t *job;
+    BOOL ret = FALSE;
+    static const WCHAR spool_path[] = {'s','p','o','o','l','\\','P','R','I','N','T','E','R','S','\\',0};
+    static const WCHAR fmtW[] = {'%','s','%','0','5','d','.','S','P','L',0};
+    WCHAR path[MAX_PATH], filename[MAX_PATH];
+    DWORD len;
+    ADDJOB_INFO_1W *addjob;
+
+    TRACE("(%p,%ld,%p,%ld,%p)\n", hPrinter, Level, pData, cbBuf, pcbNeeded);
+    
+    EnterCriticalSection(&printer_handles_cs);
+
+    printer = get_opened_printer(hPrinter);
+
+    if(!printer) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        goto end;
+    }
+
+    if(Level != 1) {
+        SetLastError(ERROR_INVALID_LEVEL);
+        goto end;
+    }
+
+    job = HeapAlloc(GetProcessHeap(), 0, sizeof(*job));
+    if(!job)
+        goto end;
+
+    job->job_id = InterlockedIncrement(&next_job_id);
+
+    len = GetSystemDirectoryW(path, sizeof(path) / sizeof(WCHAR));
+    if(path[len - 1] != '\\')
+        path[len++] = '\\';
+    memcpy(path + len, spool_path, sizeof(spool_path));    
+    sprintfW(filename, fmtW, path, job->job_id);
+
+    len = strlenW(filename);
+    job->filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+    memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
+    list_add_tail(&printer->jobs, &job->entry);
+
+    *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
+    if(*pcbNeeded <= cbBuf) {
+        addjob = (ADDJOB_INFO_1W*)pData;
+        addjob->JobId = job->job_id;
+        addjob->Path = (WCHAR *)(addjob + 1);
+        memcpy(addjob->Path, filename, (len + 1) * sizeof(WCHAR));
+        ret = TRUE;
+    } else 
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
 }
 
 /*****************************************************************************
@@ -1480,26 +1565,30 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 {
     int i = (int)hPrinter;
     opened_printer_t *printer = NULL;
+    BOOL ret = FALSE;
 
     TRACE("Handle %p\n", hPrinter);
 
     EnterCriticalSection(&printer_handles_cs);
 
     if ((i > 0) && (i <= nb_printer_handles))
-    {
         printer = printer_handles[i - 1];
-        printer_handles[i - 1] = NULL;
-    }
-
-    LeaveCriticalSection(&printer_handles_cs);
 
     if(printer)
     {
+        struct list *cursor, *cursor2;
+        LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->jobs)
+        {
+            job_t *job = LIST_ENTRY(cursor, job_t, entry);
+            ScheduleJob(hPrinter, job->job_id);
+        }
         HeapFree(GetProcessHeap(), 0, printer->name);
         HeapFree(GetProcessHeap(), 0, printer);
-        return TRUE;
+        printer_handles[i - 1] = NULL;
+        ret = TRUE;
     }
-    return FALSE;
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
 }
 
 /*****************************************************************************
@@ -4518,6 +4607,37 @@ BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
  */
 BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
 {
-    FIXME("Stub: %p %lx\n", hPrinter, dwJobID);
-    return FALSE;
+    opened_printer_t *printer;
+    BOOL ret = FALSE;
+    struct list *cursor, *cursor2;
+
+    TRACE("(%p, %lx)\n", hPrinter, dwJobID);
+    EnterCriticalSection(&printer_handles_cs);
+    printer = get_opened_printer(hPrinter);
+    if(!printer)
+        goto end;
+
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->jobs)
+    {
+        job_t *job = LIST_ENTRY(cursor, job_t, entry);
+        HANDLE hf;
+
+        if(job->job_id != dwJobID) continue;
+
+        hf = CreateFileW(job->filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+        if(hf != INVALID_HANDLE_VALUE)
+        {
+            FIXME("need to schedule job %ld filename %s\n", job->job_id, debugstr_w(job->filename));
+            CloseHandle(hf);
+            DeleteFileW(job->filename);
+        }
+        list_remove(cursor);
+        HeapFree(GetProcessHeap(), 0, job->filename);
+        HeapFree(GetProcessHeap(), 0, job);
+        ret = TRUE;
+        break;
+    }
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
 }
