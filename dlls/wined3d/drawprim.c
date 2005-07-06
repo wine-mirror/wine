@@ -55,10 +55,10 @@ BOOL initializeFVF(IWineD3DDevice *iface,
        streams                                                                        */
 #endif
 
-    if (This->updateStateBlock->vertexShader == NULL) {
+    if (This->stateBlock->vertexShader == NULL) {
 
         /* Use this as the FVF */
-        *FVFbits = This->updateStateBlock->fvf;
+        *FVFbits = This->stateBlock->fvf;
         *useVertexShaderFunction = FALSE;
         TRACE("FVF explicitally defined, using fixed function pipeline with FVF=%lx\n", *FVFbits);
 
@@ -67,17 +67,17 @@ BOOL initializeFVF(IWineD3DDevice *iface,
 #if 0 /* TODO */
         /* Use created shader */
         IDirect3DVertexShaderImpl* vertex_shader = NULL;
-        vertex_shader = VERTEX_SHADER(This->updateStateBlock->VertexShader);
+        vertex_shader = VERTEX_SHADER(This->stateBlock->VertexShader);
 
         if (vertex_shader == NULL) {
 
             /* Hmm - User pulled figure out of the air? Unlikely, probably a bug */
-            ERR("trying to use unitialised vertex shader: %lu\n", This->updateStateBlock->VertexShader);
+            ERR("trying to use unitialised vertex shader: %lu\n", This->stateBlock->VertexShader);
             return TRUE;
 
         } else {
 
-            *FVFbits = This->updateStateBlock->vertexShaderDecl->allFVF;
+            *FVFbits = This->stateBlock->vertexShaderDecl->allFVF;
 
             if (vertex_shader->function == NULL) {
                 /* No function, so many streams supplied plus FVF definition pre stream */
@@ -363,7 +363,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
        For the non-created vertex shaders, the VertexShader var holds the real 
           FVF and only stream 0 matters
        For the created vertex shaders, there is an FVF per stream              */
-    if (!This->stateBlock->streamIsUP && !(This->updateStateBlock->vertexShader == NULL)) {
+    if (!This->stateBlock->streamIsUP && !(This->stateBlock->vertexShader == NULL)) {
         LoopThroughTo = MAX_STREAMS;
     } else {
         LoopThroughTo = 1;
@@ -380,7 +380,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
 
         /* Retrieve appropriate FVF */
         if (LoopThroughTo == 1) { /* Use FVF, not vertex shader */
-            thisFVF = This->updateStateBlock->fvf;
+            thisFVF = This->stateBlock->fvf;
             /* Handle memory passed directly as well as vertex buffers */
             if (This->stateBlock->streamIsUP) {
                 data    = (BYTE *)This->stateBlock->streamSource[nStream];
@@ -416,7 +416,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedD
         }
 
         /* Blending is numBlends * FLOATs followed by a DWORD for UBYTE4 */
-        /** do we have to Check This->updateStateBlock->renderState[D3DRS_INDEXEDVERTEXBLENDENABLE] ? */
+        /** do we have to Check This->stateBlock->renderState[D3DRS_INDEXEDVERTEXBLENDENABLE] ? */
         numBlends = ((thisFVF & D3DFVF_POSITION_MASK) >> 1) - 2 + 
                     ((FALSE == (thisFVF & D3DFVF_LASTBETA_UBYTE4)) ? 0 : -1);    /* WARNING can be < 0 because -2 */
         if (numBlends > 0) {
@@ -556,7 +556,7 @@ void draw_vertex(IWineD3DDevice *iface,                              /* interfac
         /* Query tex coords */
         if (This->stateBlock->textures[textureNo] != NULL) {
 
-            int    coordIdx = This->updateStateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
+            int    coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
             if (coordIdx > 7) {
                 VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
                 continue;
@@ -816,7 +816,7 @@ void drawStridedFast(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
 
         /* Query tex coords */
         if (This->stateBlock->textures[textureNo] != NULL) {
-            int coordIdx = This->updateStateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
+            int coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
 
             if (!GL_SUPPORT(ARB_MULTITEXTURE) && textureNo > 0) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
@@ -1020,7 +1020,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
             /* Query tex coords */
             if (This->stateBlock->textures[textureNo] != NULL) {
 
-                int    coordIdx = This->updateStateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
+                int    coordIdx = This->stateBlock->textureState[textureNo][D3DTSS_TEXCOORDINDEX];
                 float *ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
                 float  s = 0.0, t = 0.0, r = 0.0, q = 0.0;
 
@@ -1044,10 +1044,10 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
 
                     /* Projected is more 'fun' - Move the last coord to the 'q'
                           parameter (see comments under D3DTSS_TEXTURETRANSFORMFLAGS */
-                    if ((This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
-                        (This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
+                    if ((This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) &&
+                        (This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED)) {
 
-                        if (This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
+                        if (This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED) {
                             switch (coordsToUse) {
                             case 0:  /* Drop Through */
                             case 1:
@@ -1067,7 +1067,7 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                                 break;
                             default:
                                 FIXME("Unexpected D3DTSS_TEXTURETRANSFORMFLAGS value of %ld\n", 
-                                      This->updateStateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
+                                      This->stateBlock->textureState[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & D3DTTFF_PROJECTED);
                             }
                         }
                     }
@@ -1290,8 +1290,8 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                texcoords[textureNo].y   = vertex_shader->output.oT[textureNo].y;
                texcoords[textureNo].z   = vertex_shader->output.oT[textureNo].z;
                texcoords[textureNo].w   = vertex_shader->output.oT[textureNo].w;
-               if (This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) {
-                   numcoords[textureNo]    = This->updateStateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
+               if (This->stateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] != D3DTTFF_DISABLE) {
+                   numcoords[textureNo]    = This->stateBlock->texture_state[textureNo][D3DTSS_TEXTURETRANSFORMFLAGS] & ~D3DTTFF_PROJECTED;
                } else {
                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->stateBlock->textures[textureNo])) {
                    case D3DRTYPE_TEXTURE:       numcoords[textureNo]    = 2; break;
@@ -1436,7 +1436,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* If we will be using a vertex shader, do some initialization for it */
     if (useVertexShaderFunction) {
 #if 0 /* TODO: vertex and pixel shaders */
-        vertex_shader = VERTEX_SHADER(This->updateStateBlock->VertexShader);
+        vertex_shader = VERTEX_SHADER(This->stateBlock->VertexShader);
         memset(&vertex_shader->input, 0, sizeof(VSHADERINPUTDATA8));
 
     	useHW = (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) &&
@@ -1445,9 +1445,9 @@ void drawPrimitive(IWineD3DDevice *iface,
 		 vertex_shader->usage != D3DUSAGE_SOFTWAREPROCESSING);
 
         /** init Constants */
-        if (This->updateStateBlock->Changed.vertexShaderConstant) {
+        if (This->stateBlock->Changed.vertexShaderConstant) {
             TRACE_(d3d_shader)("vertex shader initializing constants\n");
-            IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->updateStateBlock->vertexShaderConstant[0], 96);
+            IDirect3DVertexShaderImpl_SetConstantF(vertex_shader, 0, (CONST FLOAT*) &This->stateBlock->vertexShaderConstant[0], 96);
         }
 #endif /* TODO: vertex and pixel shaders */
     }
@@ -1457,7 +1457,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
 #if 0 /* TODO: vertex and pixel shaders */
     /* If we will be using a pixel, do some initialization for it */
-    if ((pixel_shader = PIXEL_SHADER(This->updateStateBlock->PixelShader))) {
+    if ((pixel_shader = PIXEL_SHADER(This->stateBlock->PixelShader))) {
         TRACE("drawing with pixel shader handle %p\n", pixel_shader);
         memset(&pixel_shader->input, 0, sizeof(PSHADERINPUTDATA8));
 
@@ -1467,9 +1467,9 @@ void drawPrimitive(IWineD3DDevice *iface,
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");	
 
         /* init Constants */
-        if (This->updateStateBlock->Changed.pixelShaderConstant) {
+        if (This->stateBlock->Changed.pixelShaderConstant) {
             TRACE_(d3d_shader)("pixel shader initializing constants %p\n",pixel_shader);
-            IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->updateStateBlock->pixelShaderConstant[0], 8);
+            IDirect3DPixelShaderImpl_SetConstantF(pixel_shader, 0, (CONST FLOAT*) &This->stateBlock->pixelShaderConstant[0], 8);
         }
         /* Update the constants */
         for (i=0; i<D3D8_PSHADER_MAX_CONSTANTS; i++) {
