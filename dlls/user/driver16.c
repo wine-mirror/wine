@@ -120,7 +120,7 @@ static LRESULT inline DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT16 msg,
 					 LPARAM lParam1, LPARAM lParam2)
 {
     WORD args[8];
-    LRESULT ret;
+    DWORD ret;
 
     TRACE("Before CallDriverProc proc=%p driverID=%08lx wMsg=%04x p1=%08lx p2=%08lx\n",
 	  lpDrv->lpDrvProc, lpDrv->dwDriverID, msg, lParam1, lParam2);

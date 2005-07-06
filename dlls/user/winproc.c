@@ -809,7 +809,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
     case WM_SYSDEADCHAR:
     case EM_SETPASSWORDCHAR:
         {
-            BYTE ch = LOWORD(*pwparam);
+            CHAR ch = LOWORD(*pwparam);
             WCHAR wch;
             MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
             *pwparam = MAKEWPARAM( wch, HIWORD(*pwparam) );
@@ -818,7 +818,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
 
     case WM_IME_CHAR:
         {
-            BYTE ch[2];
+            CHAR ch[2];
             WCHAR wch;
             ch[0] = (*pwparam >> 8);
             ch[1] = *pwparam & 0xff;
@@ -1106,7 +1106,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
         {
             WCHAR wch = LOWORD(*pwparam);
             BYTE ch;
-            WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL );
             *pwparam = MAKEWPARAM( ch, HIWORD(*pwparam) );
         }
         return 0;
@@ -1116,7 +1116,7 @@ static INT WINPROC_MapMsg32WTo32A( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM 
             WCHAR wch = LOWORD(*pwparam);
             BYTE ch[2];
 
-            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL ) == 2)
+            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)ch, 2, NULL, NULL ) == 2)
                 *pwparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(*pwparam) );
             else
                 *pwparam = MAKEWPARAM( ch[0], HIWORD(*pwparam) );
@@ -1734,7 +1734,7 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 INT WINPROC_MapMsg16To32W( HWND hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
                            WPARAM *pwparam32, LPARAM *plparam )
 {
-    BYTE ch;
+    CHAR ch;
     WCHAR wch;
 
     *pmsg32=(UINT)msg16;
@@ -2805,13 +2805,13 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
 
     case WM_CHARTOITEM:
         wch = LOWORD(wParam32);
-        WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL);
+        WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL);
         *pwparam16 = ch;
         *plparam = MAKELPARAM( (HWND16)*plparam, HIWORD(wParam32) );
         return 0;
     case WM_MENUCHAR:
         wch = LOWORD(wParam32);
-        WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL);
+        WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL);
         *pwparam16 = ch;
         *plparam = MAKELPARAM( HIWORD(wParam32), (HMENU16)*plparam );
         return 0;
@@ -2820,7 +2820,7 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_SYSCHAR:
     case WM_SYSDEADCHAR:
         wch = wParam32;
-        WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL);
+        WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL);
         *pwparam16 = ch;
         return 0;
     case WM_IME_CHAR:
@@ -2828,7 +2828,7 @@ INT WINPROC_MapMsg32WTo16( HWND hwnd, UINT msg32, WPARAM wParam32,
             BYTE ch[2];
 
             wch = wParam32;
-            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL ) == 2)
+            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)ch, 2, NULL, NULL ) == 2)
                 *pwparam16 = (ch[0] << 8) | ch[1];
             else
                 *pwparam16 = ch[0];

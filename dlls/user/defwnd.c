@@ -831,7 +831,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case WM_SYSCHAR:
     {
-        BYTE ch = LOWORD(wParam);
+        CHAR ch = LOWORD(wParam);
         WCHAR wch;
         MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
         wParam = MAKEWPARAM( wch, HIWORD(wParam) );

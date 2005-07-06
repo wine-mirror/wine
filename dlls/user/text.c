@@ -598,7 +598,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
     int num_fit;
     int word_broken;
     int line_fits;
-    int j_in_seg;
+    unsigned int j_in_seg;
     int ellipsified;
     *pprefix_offset = -1;
 
@@ -674,7 +674,7 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
         if (!line_fits && (format & DT_WORDBREAK))
         {
             const WCHAR *s;
-            int chars_used;
+            unsigned int chars_used;
             TEXT_WordBreak (hdc, dest+seg_j, maxl-seg_j, &j_in_seg,
                             max_seg_width, format, num_fit, &chars_used, &size);
             line_fits = (size.cx <= max_seg_width);

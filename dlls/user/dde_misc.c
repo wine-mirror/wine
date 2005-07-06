@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 #define HSZ2ATOM(hsz)	((ATOM)	(ULONG_PTR)(hsz))
 
 static WDML_INSTANCE*	WDML_InstanceList = NULL;
-static DWORD		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
+static LONG		WDML_MaxInstanceID = 0;  /* OK for present, have to worry about wrap-around later */
 const WCHAR		WDML_szEventClass[] = {'W','i','n','e','D','d','e','E','v','e','n','t','C','l','a','s','s',0};
 
 static CRITICAL_SECTION_DEBUG critsect_debug =

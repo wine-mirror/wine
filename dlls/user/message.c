@@ -409,7 +409,7 @@ static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
         {
             WCHAR wch = LOWORD(wparam);
             BYTE ch;
-            WideCharToMultiByte( CP_ACP, 0, &wch, 1, &ch, 1, NULL, NULL );
+            WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)&ch, 1, NULL, NULL );
             wparam = MAKEWPARAM( ch, HIWORD(wparam) );
         }
         break;
@@ -418,7 +418,7 @@ static WPARAM map_wparam_WtoA( UINT message, WPARAM wparam )
             WCHAR wch = LOWORD(wparam);
             BYTE ch[2];
 
-            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, ch, 2, NULL, NULL ) == 2)
+            if (WideCharToMultiByte( CP_ACP, 0, &wch, 1, (LPSTR)ch, 2, NULL, NULL ) == 2)
                 wparam = MAKEWPARAM( (ch[0] << 8) | ch[1], HIWORD(wparam) );
             else
                 wparam = MAKEWPARAM( ch[0], HIWORD(wparam) );
@@ -2432,7 +2432,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
  */
 LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    LRESULT res = 0;
+    DWORD_PTR res = 0;
     SendMessageTimeoutW( hwnd, msg, wparam, lparam, SMTO_NORMAL, INFINITE, &res );
     return res;
 }
@@ -2443,7 +2443,7 @@ LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
  */
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    LRESULT res = 0;
+    DWORD_PTR res = 0;
     SendMessageTimeoutA( hwnd, msg, wparam, lparam, SMTO_NORMAL, INFINITE, &res );
     return res;
 }

@@ -111,7 +111,7 @@ static LRESULT call_hook_16( INT id, INT code, WPARAM wp, LPARAM lp )
 {
     struct hook16_queue_info *info = get_user_thread_info()->hook16_info;
     WORD args[4];
-    LRESULT ret;
+    DWORD ret;
     INT prev_id = info->id;
     info->id = id;
 

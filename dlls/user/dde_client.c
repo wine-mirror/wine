@@ -573,7 +573,7 @@ static	HGLOBAL	WDML_BuildExecuteCommand(WDML_CONV* pConv, LPCVOID pData, DWORD c
 
     if (hMem)
     {
-	LPBYTE	pDst;
+	LPSTR	pDst;
 
 	pDst = GlobalLock(hMem);
 	if (pDst)

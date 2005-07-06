@@ -333,7 +333,7 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
     DWORD pid = 0, tid = 0;
     WCHAR module[MAX_PATH];
     BOOL unicode_hook = FALSE;
-    LRESULT ret = 0;
+    DWORD_PTR ret = 0;
 
     USER_CheckNotLock();
 
@@ -513,7 +513,7 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
     DWORD pid = 0, tid = 0;
     INT id = 0;
     BOOL prev_unicode = FALSE, next_unicode = FALSE;
-    LRESULT ret = 0;
+    DWORD_PTR ret = 0;
 
     SERVER_START_REQ( get_next_hook )
     {

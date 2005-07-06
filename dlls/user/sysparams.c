@@ -757,7 +757,7 @@ void SYSPARAMS_Init(void)
         if (hkey)
         {
             DWORD dwDataSize = sizeof(buffer);
-            if (!(RegQueryValueExA(hkey,DefSysColors[i*2], 0, 0, buffer, &dwDataSize)))
+            if (!(RegQueryValueExA(hkey,DefSysColors[i*2], 0, 0, (LPBYTE) buffer, &dwDataSize)))
                 if (sscanf( buffer, "%d %d %d", &r, &g, &b ) == 3) bOk = TRUE;
         }
 

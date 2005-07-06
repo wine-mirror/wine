@@ -2590,7 +2590,7 @@ int SPY_Init(void)
         DWORD type, count = sizeof(buffer);
 
         buffer[0] = 0;
-        if (!RegQueryValueExA(hkey, "SpyInclude", 0, &type, buffer, &count) &&
+        if (!RegQueryValueExA(hkey, "SpyInclude", 0, &type, (LPBYTE) buffer, &count) &&
             strcmp( buffer, "INCLUDEALL" ))
         {
             TRACE("Include=%s\n", buffer );
@@ -2600,7 +2600,7 @@ int SPY_Init(void)
 
         count = sizeof(buffer);
         buffer[0] = 0;
-        if (!RegQueryValueExA(hkey, "SpyExclude", 0, &type, buffer, &count))
+        if (!RegQueryValueExA(hkey, "SpyExclude", 0, &type, (LPBYTE) buffer, &count))
         {
             TRACE("Exclude=%s\n", buffer );
             if (!strcmp( buffer, "EXCLUDEALL" ))
@@ -2612,7 +2612,7 @@ int SPY_Init(void)
 
         SPY_ExcludeDWP = 0;
         count = sizeof(buffer);
-        if(!RegQueryValueExA(hkey, "SpyExcludeDWP", 0, &type, buffer, &count))
+        if(!RegQueryValueExA(hkey, "SpyExcludeDWP", 0, &type, (LPBYTE) buffer, &count))
             SPY_ExcludeDWP = atoi(buffer);
 
         RegCloseKey(hkey);
