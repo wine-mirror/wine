@@ -130,7 +130,7 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
 
 typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
-    ULONG ref;
+    LONG ref;
 } AboutProtocol;
 
 static HRESULT WINAPI AboutProtocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
@@ -355,7 +355,7 @@ static ProtocolFactory AboutProtocolFactory = {
 
 typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
-    ULONG ref;
+    LONG ref;
 
     BYTE *data;
     ULONG data_len;

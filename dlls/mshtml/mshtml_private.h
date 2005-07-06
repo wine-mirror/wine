@@ -29,7 +29,7 @@ typedef struct {
     const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
     const IServiceProviderVtbl            *lpServiceProviderVtbl;
 
-    ULONG ref;
+    LONG ref;
 
     IOleClientSite *client;
     IOleInPlaceSite *ipsite;

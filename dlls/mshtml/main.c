@@ -127,7 +127,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 typedef HRESULT (*CreateInstanceFunc)(IUnknown*,REFIID,void**);
 typedef struct {
     const IClassFactoryVtbl *lpVtbl;
-    ULONG ref;
+    LONG ref;
     CreateInstanceFunc fnCreateInstance;
 } ClassFactory;
 
