@@ -1418,8 +1418,38 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
 static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT cidl, 
     LPCITEMIDLIST* apidl)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, ISFHelper, iface);
+    char szAbsolute[FILENAME_MAX], *pszRelative;
+    LPITEMIDLIST pidlAbsolute;
+    HRESULT hr = S_OK;
+    UINT i;
+    
+    TRACE("(iface=%p, cidl=%d, apidl=%p)\n", iface, cidl, apidl);
+
+    lstrcpyA(szAbsolute, This->m_pszPath);
+    pszRelative = szAbsolute + lstrlenA(szAbsolute);
+    
+    for (i=0; i<cidl && SUCCEEDED(hr); i++) {
+        lstrcpyA(pszRelative, _ILGetTextPointer(apidl[i]));
+        pidlAbsolute = ILCombine(This->m_pidlLocation, apidl[i]);
+        if (_ILIsFolder(apidl[i])) {
+            if (rmdir(szAbsolute)) {
+                hr = E_FAIL;
+            } else {
+                SHChangeNotify(SHCNE_RMDIR, SHCNF_IDLIST, pidlAbsolute, NULL);
+            }
+        } else if (_ILIsValue(apidl[i])) {
+            if (unlink(szAbsolute)) {
+                hr = E_FAIL;
+            } else {
+                SHChangeNotify(SHCNE_DELETE, SHCNF_IDLIST, pidlAbsolute, NULL);
+            }
+        }
+        ILFree(pidlAbsolute);
+    }
+    UNIXFS_build_subfolder_pidls(This);
+        
+    return hr;
 }
 
 static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFolder *psfFrom, 
