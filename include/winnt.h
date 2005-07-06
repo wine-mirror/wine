@@ -296,6 +296,7 @@
 #define VOID void
 #endif
 typedef VOID           *PVOID;
+typedef VOID           *PVOID64;
 typedef BYTE            BOOLEAN,    *PBOOLEAN;
 typedef char            CHAR,       *PCHAR;
 typedef short           SHORT,      *PSHORT;
@@ -3575,6 +3576,11 @@ typedef struct _SYSTEM_POWER_POLICY {
 	POWER_ACTION_POLICY OverThrottled;
 } SYSTEM_POWER_POLICY,
 *PSYSTEM_POWER_POLICY;
+
+typedef union _FILE_SEGMENT_ELEMENT {
+	PVOID64 Buffer;
+	ULONGLONG Alignment;
+} FILE_SEGMENT_ELEMENT, *PFILE_SEGMENT_ELEMENT;
 
 /* ----------------------------- begin registry ----------------------------- */
 
