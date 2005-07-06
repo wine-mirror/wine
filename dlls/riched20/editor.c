@@ -31,10 +31,10 @@
   + EM_EMPTYUNDOBUFFER
   + EM_EXGETSEL
   - EM_EXLIMITTEXT
-  - EM_EXLINEFROMCHAR
+  + EM_EXLINEFROMCHAR
   + EM_EXSETSEL
-  - EM_FINDTEXT
-  - EM_FINDTEXTEX
+  + EM_FINDTEXT (only FR_DOWN flag implemented)
+  + EM_FINDTEXTEX (only FR_DOWN flag implemented)
   - EM_FINDWORDBREAK
   - EM_FMTLINES
   - EM_FORMATRANGE
@@ -77,7 +77,7 @@
   - EM_HIDESELECTION
   - EM_LIMITTEXT
   - EM_LINEFROMCHAR
-  - EM_LINEINDEX
+  + EM_LINEINDEX
   - EM_LINELENGTH
   + EM_LINESCROLL
   - EM_PASTESPECIAL
@@ -218,6 +218,7 @@
  */
 
 #include "editor.h"
+#include "commdlg.h"
 #include "ole2.h"
 #include "richole.h"
 #include "winreg.h"
@@ -651,6 +652,69 @@ ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, int nOffset, int
 }
 
 
+static int
+ME_FindText(ME_TextEditor *editor, DWORD flags, CHARRANGE *chrg, WCHAR *text, CHARRANGE *chrgText)
+{
+  int nStart = chrg->cpMin;
+  int nLen = lstrlenW(text);
+  ME_DisplayItem *item = ME_FindItemAtOffset(editor, diRun, nStart, &nStart);
+  ME_DisplayItem *para;
+  
+  if (!item)
+    return -1;
+
+  if (!nLen)
+  {
+    if (chrgText)
+      chrgText->cpMin = chrgText->cpMax = chrg->cpMin;
+    return chrg->cpMin;
+  }
+ 
+  if (!(flags & FR_DOWN))
+    FIXME("Backward search not implemented\n");
+  if (!(flags & FR_MATCHCASE))
+    FIXME("Case-insensitive search not implemented\n");
+  if (flags & ~(FR_DOWN | FR_MATCHCASE))
+    FIXME("Flags 0x%08lx not implemented\n", flags & ~(FR_DOWN | FR_MATCHCASE));
+  
+  para = ME_GetParagraph(item);
+  while (item && para->member.para.nCharOfs + item->member.run.nCharOfs + nStart + nLen < chrg->cpMax)
+  {
+    ME_DisplayItem *pCurItem = item;
+    int nCurStart = nStart;
+    int nMatched = 0;
+    
+    while (pCurItem->member.run.strText->szData[nCurStart + nMatched] == text[nMatched])
+    {
+      nMatched++;
+      if (nMatched == nLen)
+      {
+        nStart += para->member.para.nCharOfs + item->member.run.nCharOfs;
+        if (chrgText)
+        {
+          chrgText->cpMin = nStart;
+          chrgText->cpMax = nStart + nLen;
+        }
+        return nStart;
+      }
+      if (nCurStart + nMatched == ME_StrLen(pCurItem->member.run.strText))
+      {
+        pCurItem = ME_FindItemFwd(pCurItem, diRun);
+        nCurStart = -nMatched;
+      }
+    }
+    nStart++;
+    if (nStart == ME_StrLen(item->member.run.strText))
+    {
+      item = ME_FindItemFwd(item, diRun);
+      para = ME_GetParagraph(item);
+      nStart = 0;
+    }
+  }
+  return -1;
+}
+
+
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   HDC hDC;
@@ -753,6 +817,7 @@ static DWORD CALLBACK ME_ReadFromHGLOBALRTF(DWORD_PTR dwCookie, LPBYTE lpBuff, L
   return 0;
 }
 
+
 void ME_DestroyEditor(ME_TextEditor *editor)
 {
   ME_DisplayItem *pFirst = editor->pBuffer->pFirst;
@@ -823,9 +888,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_CHARFROMPOS)
   UNSUPPORTED_MSG(EM_DISPLAYBAND)
   UNSUPPORTED_MSG(EM_EXLIMITTEXT)
-  UNSUPPORTED_MSG(EM_EXLINEFROMCHAR)
-  UNSUPPORTED_MSG(EM_FINDTEXT)
-  UNSUPPORTED_MSG(EM_FINDTEXTEX)
   UNSUPPORTED_MSG(EM_FINDWORDBREAK)
   UNSUPPORTED_MSG(EM_FMTLINES)
   UNSUPPORTED_MSG(EM_FORMATRANGE)
@@ -853,7 +915,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_LINEFROMCHAR)
-  UNSUPPORTED_MSG(EM_LINEINDEX)
   UNSUPPORTED_MSG(EM_LINELENGTH)
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
 /*  UNSUPPORTED_MSG(EM_POSFROMCHARS) missing in Wine headers */
@@ -1246,6 +1307,75 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       item = item->member.para.next_para;
     }
     return max(1, nRows);
+  }
+  case EM_EXLINEFROMCHAR:
+  {
+    ME_DisplayItem *item = editor->pBuffer->pFirst->next;
+    int nOffset;
+    int nRow = 0;
+
+    while (item && item->member.para.next_para->member.para.nCharOfs <= lParam)
+    {
+      nRow += item->member.para.nRows;
+      item = ME_FindItemFwd(item, diParagraph);
+    }
+    if (item)
+    {
+      nOffset = lParam - item->member.para.nCharOfs;
+      item = ME_FindItemFwd(item, diRun);
+      while ((item = ME_FindItemFwd(item, diStartRowOrParagraph)))
+      {
+	item = ME_FindItemFwd(item, diRun);
+	if (item->member.run.nCharOfs > nOffset)
+          break;
+	nRow++;
+      }
+    }
+    return nRow;
+  }
+  case EM_LINEINDEX:
+  {
+    ME_DisplayItem *item, *para;
+    
+    if (wParam == -1)
+      item = ME_FindItemBack(editor->pCursors[1].pRun, diStartRow);
+    else
+      item = ME_FindRowWithNumber(editor, wParam);
+    if (!item)
+      return -1;
+    para = ME_GetParagraph(item);
+    item = ME_FindItemFwd(item, diRun);
+    return para->member.para.nCharOfs + item->member.run.nCharOfs;
+  }
+  case EM_FINDTEXT:
+  {
+    FINDTEXTA *ft = (FINDTEXTA *)lParam;
+    int nChars = MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, NULL, 0);
+    WCHAR *tmp;
+    
+    if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
+      MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, tmp, nChars);
+    return ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
+  }
+  case EM_FINDTEXTEX:
+  {
+    FINDTEXTEXA *ex = (FINDTEXTEXA *)lParam;
+    int nChars = MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, NULL, 0);
+    WCHAR *tmp;
+    
+    if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
+      MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, tmp, nChars);
+    return ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
+  }
+  case EM_FINDTEXTW:
+  {
+    FINDTEXTW *ft = (FINDTEXTW *)lParam;
+    return ME_FindText(editor, wParam, &ft->chrg, ft->lpstrText, NULL);
+  }
+  case EM_FINDTEXTEXW:
+  {
+    FINDTEXTEXW *ex = (FINDTEXTEXW *)lParam;
+    return ME_FindText(editor, wParam, &ex->chrg, ex->lpstrText, &ex->chrgText);
   }
   case WM_CREATE:
     ME_CommitUndo(editor);
