@@ -175,7 +175,7 @@ TW_UINT16 TWAIN_SaneCapability (activeDS *pSource, pTW_CAPABILITY pCapability,
     return twCC;
 }
 
-TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
+static TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
 {
     pCapability->hContainer = (TW_HANDLE)GlobalAlloc (0, sizeof(TW_ONEVALUE));
 
@@ -191,7 +191,7 @@ TW_BOOL TWAIN_OneValueSet (pTW_CAPABILITY pCapability, TW_UINT32 value)
         return FALSE;
 }
 
-TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
+static TW_BOOL TWAIN_OneValueGet (pTW_CAPABILITY pCapability, TW_UINT32 *pValue)
 {
     pTW_ONEVALUE pVal = GlobalLock ((HGLOBAL) pCapability->hContainer);
 

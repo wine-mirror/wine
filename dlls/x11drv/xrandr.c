@@ -82,7 +82,7 @@ static unsigned int real_xrandr_sizes_count;
 static int *real_xrandr_rates_count;
 static unsigned int real_xrandr_modes_count;
 
-int load_xrandr(void)
+static int load_xrandr(void)
 {
     int r = 0;
 

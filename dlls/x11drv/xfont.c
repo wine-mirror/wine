@@ -2870,7 +2870,7 @@ static int XFONT_ReleaseCacheEntry(const fontObject* pfo)
  *
  * Initialize font resource list and allocate font cache.
  */
-void X11DRV_FONT_InitX11Metrics( void )
+static void X11DRV_FONT_InitX11Metrics( void )
 {
   char**    x_pattern;
   unsigned  x_checksum;
