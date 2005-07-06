@@ -222,7 +222,7 @@ static void test_menu_ownerdraw(void)
             MOD_rc[0].right - MOD_rc[0].left , 2*MOD_avec + MOD_SIZE);
     /* and height */
     ok( MOD_rc[0].bottom - MOD_rc[0].top == MOD_SIZE,
-            "Height is incorrect. Got %ld expected %d",
+            "Height is incorrect. Got %ld expected %d\n",
             MOD_rc[0].bottom - MOD_rc[0].top, MOD_SIZE);
 
     /* test width/height of a OD menu bar as well */

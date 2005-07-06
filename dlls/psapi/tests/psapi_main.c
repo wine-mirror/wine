@@ -150,11 +150,11 @@ static void test_GetMappedFileName(void)
     if(!w32_suc(ret = pGetMappedFileNameA(hpQI, hMod, szMapPath, sizeof(szMapPath))))
         return;
     ok(ret == strlen(szMapPath), "szMapPath=\"%s\" ret=%ld\n", szMapPath, ret);
-    ok(szMapPath[0] == '\\', "szMapPath=\"%s\"", szMapPath);
+    ok(szMapPath[0] == '\\', "szMapPath=\"%s\"\n", szMapPath);
     szMapBaseName = strrchr(szMapPath, '\\'); /* That's close enough for us */
     if(!szMapBaseName || !*szMapBaseName)
     {
-        ok(0, "szMapPath=\"%s\"", szMapPath);
+        ok(0, "szMapPath=\"%s\"\n", szMapPath);
         return;
     }
     GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
@@ -211,7 +211,7 @@ static void test_GetModuleFileNameEx(void)
     ok(ret == strlen(szModExPath), "szModExPath=\"%s\" ret=%ld\n", szModExPath, ret);
     GetModuleFileNameA(NULL, szModPath, sizeof(szModPath));
     ok(!strncmp(szModExPath, szModPath, MAX_PATH), 
-       "szModExPath=\"%s\" szModPath=\"%s\"", szModExPath, szModPath);
+       "szModExPath=\"%s\" szModPath=\"%s\"\n", szModExPath, szModPath);
 }
 
 static void test_GetModuleBaseName(void)
@@ -250,7 +250,7 @@ static void test_ws_functions(void)
 
     if(!VirtualLock(addr, 1))
     {
-        trace("locking failed (error=%ld) - skipping test", GetLastError());
+        trace("locking failed (error=%ld) - skipping test\n", GetLastError());
         goto free_page;
     }
 	

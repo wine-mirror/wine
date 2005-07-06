@@ -270,7 +270,7 @@ static BOOL CALLBACK EnumJoysticks(
             break;
         trace("X%5ld Y%5ld Z%5ld Rx%5ld Ry%5ld Rz%5ld "
               "S0%5ld S1%5ld POV0%5ld POV1%5ld POV2%5ld POV3%5ld "
-              "B %d %d %d %d %d %d %d %d %d %d %d %d\r",
+              "B %d %d %d %d %d %d %d %d %d %d %d %d\n",
               js.lX, js.lY, js.lZ, js.lRx, js.lRy, js.lRz,
               js.rglSlider[0], js.rglSlider[1],
               js.rgdwPOV[0], js.rgdwPOV[1], js.rgdwPOV[2], js.rgdwPOV[3],

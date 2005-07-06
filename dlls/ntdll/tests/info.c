@@ -291,7 +291,7 @@ static void test_query_process(void)
 
         last_pid = spi->dwProcessID;
 
-        ok( spi->dwThreadCount > 0, "Expected some threads for this process, got 0\"");
+        ok( spi->dwThreadCount > 0, "Expected some threads for this process, got 0\n");
 
         /* Loop through the threads, skip NT4 for now */
         

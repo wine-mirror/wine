@@ -89,7 +89,7 @@ static void FillRoot(void)
     assert(hChild);
     AddItem('.');
     
-    ok(!strcmp(sequence, "AB."), "Item creation");
+    ok(!strcmp(sequence, "AB."), "Item creation\n");
 }
 
 static void DoTest1(void)
@@ -107,7 +107,7 @@ static void DoTest1(void)
     AddItem('5');
     TreeView_SelectItem(hTree, hRoot);
     AddItem('.');
-    ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test");
+    ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test\n");
 }
 
 static void DoTest2(void)
@@ -125,7 +125,7 @@ static void DoTest2(void)
     AddItem('5');
     TreeView_SelectItem(hTree, hRoot);
     AddItem('.');
-    ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test");
+    ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test\n");
 }
 
 LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)

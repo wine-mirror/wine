@@ -4714,12 +4714,12 @@ if (HAVE_OLEAUT32_I8) {
     V_UI1(&right) = 9;
 
     hres = VarMul(&cy, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_CY, "VarMul: expected coerced type VT_CY, got %s!\n'", vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_VT(&result) == VT_CY, "VarMul: expected coerced type VT_CY, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromCy(V_CY(&result), &r);
     ok(hres == S_OK && EQ_DOUBLE(r, 42399), "VarMul: CY value %f, expected %f\n", r, (double)42399);
 
     hres = VarMul(&left, &dec, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarMul: expected coerced type VT_DECIMAL, got %s!\n'", vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarMul: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromDec(&V_DECIMAL(&result), &r);
     ok(hres == S_OK && EQ_DOUBLE(r, 46.2), "VarMul: DECIMAL value %f, expected %f\n", r, (double)46.2);
 }
@@ -4897,7 +4897,7 @@ static void test_VarAdd(void)
     V_VT(&right) = VT_BSTR;
     V_BSTR(&right) = rbstr;
     hres = VarAdd(&left, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_BSTR, "VarAdd: expected coerced type VT_BSTR, got %s!\n'", vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_VT(&result) == VT_BSTR, "VarAdd: expected coerced type VT_BSTR, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromStr(V_BSTR(&result), 0, 0, &r);
     ok(hres == S_OK && EQ_DOUBLE(r, 1212), "VarAdd: BSTR value %f, expected %f\n", r, (double)1212);
 
@@ -4916,12 +4916,12 @@ static void test_VarAdd(void)
     V_UI1(&right) = 9;
 
     hres = VarAdd(&cy, &right, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_CY, "VarAdd: expected coerced type VT_CY, got %s!\n'", vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_VT(&result) == VT_CY, "VarAdd: expected coerced type VT_CY, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromCy(V_CY(&result), &r);
     ok(hres == S_OK && EQ_DOUBLE(r, 4720), "VarAdd: CY value %f, expected %f\n", r, (double)4720);
 
     hres = VarAdd(&left, &dec, &result);
-    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarAdd: expected coerced type VT_DECIMAL, got %s!\n'", vtstr(V_VT(&result)));
+    ok(hres == S_OK && V_VT(&result) == VT_DECIMAL, "VarAdd: expected coerced type VT_DECIMAL, got %s!\n", vtstr(V_VT(&result)));
     hres = VarR8FromDec(&V_DECIMAL(&result), &r);
     ok(hres == S_OK && EQ_DOUBLE(r, -15.2), "VarAdd: DECIMAL value %f, expected %f\n", r, (double)-15.2);
 }

@@ -3078,7 +3078,7 @@ static void test_IsWindowUnicode(void)
 
     ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
     SetClassLongPtrW(hwnd, GCLP_WNDPROC, (ULONG_PTR)DefWindowProcW);
-    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE");
+    ok(!IsWindowUnicode(hwnd), "IsWindowUnicode expected to return FALSE\n");
 
     DestroyWindow(hwnd);
 
