@@ -461,6 +461,7 @@ static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, LPWSTR lpBuf, D
     if ((RegOpenKeyW( get_volatile_regkey(), lpRegKey, &hKey ) == ERROR_SUCCESS) ||
         (RegOpenKeyW( HKEY_CURRENT_USER, lpRegKey, &hKey ) == ERROR_SUCCESS))
     {
+        memset( lpBuf, 0, count );
         ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, (LPBYTE)lpBuf, &count);
         RegCloseKey( hKey );
     }
