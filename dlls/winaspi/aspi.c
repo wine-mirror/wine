@@ -560,7 +560,6 @@ SCSI_MapHCtoController()
 	RegCloseKey(hkeyScsi);
 	return;
 }
-#endif
 
 static int SCSI_Linux_CheckDevices(void)
 {
@@ -582,6 +581,7 @@ static int SCSI_Linux_CheckDevices(void)
     }
     return 1;
 }
+#endif
 
 static void
 SCSI_GetProcinfo()
