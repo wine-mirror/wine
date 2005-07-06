@@ -1318,39 +1318,16 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
         if (!(lpitem->fType & MF_OWNERDRAW))
         {
+            RECT rc;
+            rc = rect;
             /* New style MIIM_BITMAP */
             if (lpitem->hbmpItem)
             {
                 POPUPMENU *menu = MENU_GetMenu(hmenu);
-                HBITMAP hbm = lpitem->hbmpItem;
-
-                if (hbm == HBMMENU_CALLBACK)
-                {
-                    DRAWITEMSTRUCT drawItem;
-                    drawItem.CtlType = ODT_MENU;
-                    drawItem.CtlID = 0;
-                    drawItem.itemID = lpitem->wID;
-                    drawItem.itemAction = odaction;
-                    drawItem.itemState |= (lpitem->fState & MF_CHECKED)?ODS_CHECKED:0;
-                    drawItem.itemState |= (lpitem->fState & MF_DEFAULT)?ODS_DEFAULT:0;
-                    drawItem.itemState |= (lpitem->fState & MF_DISABLED)?ODS_DISABLED:0;
-                    drawItem.itemState |= (lpitem->fState & MF_GRAYED)?ODS_GRAYED|ODS_DISABLED:0;
-                    drawItem.itemState |= (lpitem->fState & MF_HILITE)?ODS_SELECTED:0;
-                    drawItem.hwndItem = (HWND)hmenu;
-                    drawItem.hDC = hdc;
-                    drawItem.rcItem = lpitem->rect;
-                    drawItem.itemData = lpitem->dwItemData;
-
-                    if (!(lpitem->fState & MF_CHECKED))
-                        SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&drawItem);
-
-                } else {
-                    MENU_DrawBitmapItem(hdc, lpitem, &rect, FALSE, TRUE);
-                }
                 if (menu->dwStyle & MNS_CHECKORBMP)
-                    rect.left += menu->maxBmpSize.cx - check_bitmap_width;
+                    rc.left += menu->maxBmpSize.cx - check_bitmap_width;
                 else
-                    rect.left += menu->maxBmpSize.cx;
+                    rc.left += menu->maxBmpSize.cx;
             }
             /* Draw the check mark
              *
@@ -1362,7 +1339,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
             {
                 HDC hdcMem = CreateCompatibleDC( hdc );
                 SelectObject( hdcMem, bm );
-                BitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
+                BitBlt( hdc, rc.left, (y - check_bitmap_height) / 2,
                         check_bitmap_width, check_bitmap_height,
                         hdcMem, 0, 0, SRCCOPY );
                 DeleteDC( hdcMem );
@@ -1377,10 +1354,42 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
                 DrawFrameControl( hdcMem, &r, DFC_MENU,
                                   (lpitem->fType & MFT_RADIOCHECK) ?
                                   DFCS_MENUBULLET : DFCS_MENUCHECK );
-                BitBlt( hdc, rect.left, (y - r.bottom) / 2, r.right, r.bottom,
+                BitBlt( hdc, rc.left, (y - r.bottom) / 2, r.right, r.bottom,
                         hdcMem, 0, 0, SRCCOPY );
                 DeleteDC( hdcMem );
                 DeleteObject( bm );
+            }
+            /* New style MIIM_BITMAP */
+            if (lpitem->hbmpItem)
+            {
+                HBITMAP hbm = lpitem->hbmpItem;
+
+                if (hbm == HBMMENU_CALLBACK)
+                {
+                    DRAWITEMSTRUCT drawItem;
+                    POINT origorg;
+                    drawItem.CtlType = ODT_MENU;
+                    drawItem.CtlID = 0;
+                    drawItem.itemID = lpitem->wID;
+                    drawItem.itemAction = odaction;
+                    drawItem.itemState = (lpitem->fState & MF_CHECKED)?ODS_CHECKED:0;
+                    drawItem.itemState |= (lpitem->fState & MF_DEFAULT)?ODS_DEFAULT:0;
+                    drawItem.itemState |= (lpitem->fState & MF_DISABLED)?ODS_DISABLED:0;
+                    drawItem.itemState |= (lpitem->fState & MF_GRAYED)?ODS_GRAYED|ODS_DISABLED:0;
+                    drawItem.itemState |= (lpitem->fState & MF_HILITE)?ODS_SELECTED:0;
+                    drawItem.hwndItem = (HWND)hmenu;
+                    drawItem.hDC = hdc;
+                    drawItem.rcItem = lpitem->rect;
+                    drawItem.itemData = lpitem->dwItemData;
+                    /* some applications make this assumption on the DC's origin */
+                    SetViewportOrgEx( hdc, lpitem->rect.left, lpitem->rect.top, &origorg);
+                    OffsetRect( &drawItem.rcItem, - lpitem->rect.left, - lpitem->rect.top);
+                    SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&drawItem);
+                    SetViewportOrgEx( hdc, origorg.x, origorg.y, NULL);
+
+                } else {
+                    MENU_DrawBitmapItem(hdc, lpitem, &rect, FALSE, TRUE);
+                }
             }
         }
 
