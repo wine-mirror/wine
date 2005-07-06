@@ -98,13 +98,12 @@ sym_not_found:
 #endif /* HAVE_LCMS_H */
     WINE_MESSAGE(
       "This version of Wine was compiled without support for color management\n"
-      "functions. This means many color functions are empty stubs and you should\n"
-      "expect your application to fail. To enable Wine to use LittleCMS for color\n"
-      "management please install a liblcms development package version 1.13 or\n"
-      "higher and rebuild Wine.\n"
+      "functions. To enable Wine to use LittleCMS for color management please\n"
+      "install a liblcms development package version 1.13 or higher and rebuild\n"
+      "Wine.\n"
       "http://www.littlecms.com\n" );
 
-    return TRUE;
+    return FALSE;
 }
 
 static void MSCMS_deinit_lcms(void)
