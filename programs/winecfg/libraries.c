@@ -127,32 +127,8 @@ static DWORD mode_to_id(enum dllmode mode)
 
 static void set_controls_from_selection(HWND dialog)
 {
-    int index = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
-    struct dll *dll;
-    DWORD id;
-    int i;
-    
-    if (index == -1) /* no selection  */
-    {
-        for (i = IDC_RAD_BUILTIN; i <= IDC_RAD_DISABLE; i++)
-            disable(i);
-
-        CheckRadioButton(dialog, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, -1);
-        
-        return;
-    }
-
-    /* enable the controls  */
-    for (i = IDC_RAD_BUILTIN; i <= IDC_RAD_DISABLE; i++)
-        enable(i);
-
-    dll = (struct dll *) SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETITEMDATA, index, 0);
-   
-    id = mode_to_id(dll->mode);
-
-    CheckRadioButton(dialog, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, id);
+    /* FIXME: display/update some information about the selected dll (purpose, recommended loadorder) maybe? */
 }
-
 
 static void clear_settings(HWND dialog)
 {
@@ -187,11 +163,13 @@ static void load_library_settings(HWND dialog)
     if (!overrides || *overrides == NULL)
     {
         set_controls_from_selection(dialog);
+        disable(IDC_DLLS_EDITDLL);
         disable(IDC_DLLS_REMOVEDLL);
         HeapFree(GetProcessHeap(), 0, overrides);
         return;
     }
 
+    enable(IDC_DLLS_EDITDLL);
     enable(IDC_DLLS_REMOVEDLL);
     
     for (p = overrides; *p != NULL; p++)
@@ -241,7 +219,6 @@ static void init_libsheet(HWND dialog)
     SendDlgItemMessage(dialog, IDC_DLLCOMBO, WM_SETTEXT, 1, (LPARAM) "");
     disable(IDC_DLLS_ADDDLL);
 }
-
 
 static void on_add_combo_change(HWND dialog)
 {
@@ -301,6 +278,58 @@ static void on_add_click(HWND dialog)
     set_controls_from_selection(dialog);
 }
 
+static INT_PTR CALLBACK loadorder_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    static WORD sel;
+
+    switch(uMsg) 
+    {
+    case WM_INITDIALOG:
+        CheckRadioButton(hwndDlg, IDC_RAD_BUILTIN, IDC_RAD_DISABLE, lParam);
+        sel = lParam;
+        return TRUE;
+
+    case WM_COMMAND:
+        if(HIWORD(wParam) != BN_CLICKED) break;
+        switch (LOWORD(wParam))
+        {
+        case IDC_RAD_BUILTIN:
+        case IDC_RAD_NATIVE:
+        case IDC_RAD_BUILTIN_NATIVE:
+        case IDC_RAD_NATIVE_BUILTIN:
+        case IDC_RAD_DISABLE:
+            sel = LOWORD(wParam);
+            return TRUE;
+        case IDOK:
+            EndDialog(hwndDlg, sel);
+            return TRUE;
+        case IDCANCEL:
+            EndDialog(hwndDlg, wParam);
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static void on_edit_click(HWND hwnd)
+{
+    INT_PTR ret; 
+    int index = SendDlgItemMessage(hwnd, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
+    struct dll *dll;
+    DWORD id;
+
+    /* if no override is selected the edit button should be disabled... */
+    assert(index != -1);
+
+    dll = (struct dll *) SendDlgItemMessage(hwnd, IDC_DLLS_LIST, LB_GETITEMDATA, index, 0);
+    id = mode_to_id(dll->mode);
+    
+    ret = DialogBoxParam(0, MAKEINTRESOURCE(IDD_LOADORDER), hwnd, loadorder_dlgproc, id);
+    
+    if(ret != IDCANCEL)
+        set_dllmode(hwnd, ret);
+}
+
 static void on_remove_click(HWND dialog)
 {
     int sel = SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCURSEL, 0, 0);
@@ -321,7 +350,10 @@ static void on_remove_click(HWND dialog)
     if (SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_GETCOUNT, 0, 0) > 0)
         SendDlgItemMessage(dialog, IDC_DLLS_LIST, LB_SETCURSEL, max(sel - 1, 0), 0);
     else
+    {
+        disable(IDC_DLLS_EDITDLL);
         disable(IDC_DLLS_REMOVEDLL);
+    }
 
     set_controls_from_selection(dialog);
 }
@@ -357,20 +389,15 @@ LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             on_add_combo_change(hDlg);
                             break;
                         }
-                    
+
 		case BN_CLICKED:
 			switch(LOWORD(wParam)) {
-			case IDC_RAD_BUILTIN:
-			case IDC_RAD_NATIVE:
-			case IDC_RAD_BUILTIN_NATIVE:
-			case IDC_RAD_NATIVE_BUILTIN:
-			case IDC_RAD_DISABLE:
-                            set_dllmode(hDlg, LOWORD(wParam));
-                            break;
-                            
 			case IDC_DLLS_ADDDLL:
                             on_add_click(hDlg);
                             break;
+			case IDC_DLLS_EDITDLL:
+			    on_edit_click(hDlg);
+			    break;
 			case IDC_DLLS_REMOVEDLL:
                             on_remove_click(hDlg);
                             break;

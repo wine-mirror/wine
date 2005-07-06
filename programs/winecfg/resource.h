@@ -63,8 +63,10 @@
 #define IDC_RAD_DISABLE                 1033
 #define IDC_DLLS_LIST                   1034
 #define IDC_DLLS_ADDDLL                 8001
+#define IDC_DLLS_EDITDLL                8002
 #define IDC_DLLS_REMOVEDLL              8003
 #define IDC_DLLCOMBO                    8004
+#define IDD_LOADORDER                   8005
 
 /* drive editing */
 #define IDC_LIST_DRIVES                 1042
