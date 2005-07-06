@@ -3235,6 +3235,8 @@ typedef struct {
 #define DC_ICON			0x0004
 #define DC_TEXT			0x0008
 #define DC_INBUTTON		0x0010
+#define DC_GRADIENT             0x0020
+#define DC_BUTTONS              0x1000
 
 /* DrawEdge() flags */
 #define BDR_RAISEDOUTER    0x0001
