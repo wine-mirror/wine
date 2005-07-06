@@ -263,7 +263,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
             {
                 if (need_erase && hwnd != GetDesktopWindow())  /* FIXME: mark it as needing erase again */
                     RedrawWindow( hwnd, clip_rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
-                ReleaseDC( hwnd, hdc );
+                USER_Driver.pReleaseDC( hwnd, hdc, TRUE );
             }
         }
 

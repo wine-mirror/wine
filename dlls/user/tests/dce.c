@@ -340,6 +340,19 @@ static void test_begin_paint(void)
     GetClipBox( hdc, &rect );
     ok( !(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
         "clip box should have been reset %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
+    RedrawWindow( hwnd_owndc, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 10, 10, 20, 20 );
+    RedrawWindow( hwnd_owndc, &rect, 0, RDW_INVALIDATE|RDW_ERASE );
+    ok( GetDC( hwnd_owndc ) == hdc, "got different hdc\n" );
+    SetRectEmpty( &rect );
+    GetClipBox( hdc, &rect );
+    ok( !(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
+        "clip box should be the whole window %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
+    RedrawWindow( hwnd_owndc, NULL, 0, RDW_ERASENOW );
+    SetRectEmpty( &rect );
+    GetClipBox( hdc, &rect );
+    ok( !(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
+        "clip box should still be the whole window %ld,%ld-%ld,%ld\n", rect.left, rect.top, rect.right, rect.bottom );
 
     /* class DC */
 
