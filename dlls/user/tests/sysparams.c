@@ -209,7 +209,7 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
     *value='\0';
     valueLen=sizeof(value);
     RegOpenKeyA( HKEY_CURRENT_USER, subKey1, &hKey );
-    rc=RegQueryValueExA( hKey, valName1, NULL, &type, value, &valueLen );
+    rc=RegQueryValueExA( hKey, valName1, NULL, &type, (LPBYTE)value, &valueLen );
     RegCloseKey( hKey );
     if (rc==ERROR_SUCCESS)
     {
@@ -228,7 +228,7 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
         *value='\0';
         valueLen=sizeof(value);
         RegOpenKeyA( HKEY_CURRENT_USER, subKey1, &hKey );
-        rc=RegQueryValueExA( hKey, valName2, NULL, &type, value, &valueLen );
+        rc=RegQueryValueExA( hKey, valName2, NULL, &type, (LPBYTE)value, &valueLen );
         RegCloseKey( hKey );
         if (rc==ERROR_SUCCESS)
         {
@@ -248,7 +248,7 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
         *value='\0';
         valueLen=sizeof(value);
         RegOpenKeyA( HKEY_CURRENT_USER, subKey2, &hKey );
-        rc=RegQueryValueExA( hKey, valName1, NULL, &type, value, &valueLen );
+        rc=RegQueryValueExA( hKey, valName1, NULL, &type, (LPBYTE)value, &valueLen );
         RegCloseKey( hKey );
         if (rc==ERROR_SUCCESS)
         {
@@ -267,7 +267,7 @@ static void _test_reg_key( LPCSTR subKey1, LPCSTR subKey2, LPCSTR valName1, LPCS
             *value='\0';
             valueLen=sizeof(value);
             RegOpenKeyA( HKEY_CURRENT_USER, subKey2, &hKey );
-            rc=RegQueryValueExA( hKey, valName2, NULL, &type, value, &valueLen );
+            rc=RegQueryValueExA( hKey, valName2, NULL, &type, (LPBYTE)value, &valueLen );
             RegCloseKey( hKey );
             if (rc==ERROR_SUCCESS)
             {

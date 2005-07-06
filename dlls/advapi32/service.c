@@ -1654,7 +1654,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     total = sizeof (QUERY_SERVICE_CONFIGA);
 
     sz = sizeof(str_buffer);
-    r = RegQueryValueExA( hKey, szImagePath, 0, &type, str_buffer, &sz );
+    r = RegQueryValueExA( hKey, szImagePath, 0, &type, (LPBYTE)str_buffer, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
     {
         sz = ExpandEnvironmentStringsA(str_buffer,NULL,0);
@@ -1719,7 +1719,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     n = total - sizeof (QUERY_SERVICE_CONFIGA);
 
     sz = sizeof(str_buffer);
-    r = RegQueryValueExA( hKey, szImagePath, 0, &type, str_buffer, &sz );
+    r = RegQueryValueExA( hKey, szImagePath, 0, &type, (LPBYTE)str_buffer, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
     {
         sz = ExpandEnvironmentStringsA(str_buffer, p, n);
@@ -1736,7 +1736,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     }
 
     sz = n;
-    r = RegQueryValueExA( hKey, szGroup, 0, &type, p, &sz );
+    r = RegQueryValueExA( hKey, szGroup, 0, &type, (LPBYTE)p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
         lpServiceConfig->lpLoadOrderGroup = (LPSTR) p;
@@ -1745,7 +1745,7 @@ QueryServiceConfigA( SC_HANDLE hService,
     }
 
     sz = n;
-    r = RegQueryValueExA( hKey, szDependencies, 0, &type, p, &sz );
+    r = RegQueryValueExA( hKey, szDependencies, 0, &type, (LPBYTE)p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
         lpServiceConfig->lpDependencies = (LPSTR) p;

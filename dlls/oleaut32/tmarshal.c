@@ -262,7 +262,8 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
     char	tlguid[200],typelibkey[300],interfacekey[300],ver[100];
     char	tlfn[260];
     OLECHAR	tlfnW[260];
-    DWORD	tlguidlen, verlen, type, tlfnlen;
+    DWORD	tlguidlen, verlen, type;
+    LONG	tlfnlen;
     ITypeLib	*tl;
 
     sprintf( interfacekey, "Interface\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\Typelib",
@@ -277,14 +278,14 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
     }
     type = (1<<REG_SZ);
     tlguidlen = sizeof(tlguid);
-    if (RegQueryValueExA(ikey,NULL,NULL,&type,tlguid,&tlguidlen)) {
+    if (RegQueryValueExA(ikey,NULL,NULL,&type,(LPBYTE)tlguid,&tlguidlen)) {
 	ERR("Getting typelib guid failed.\n");
 	RegCloseKey(ikey);
 	return E_FAIL;
     }
     type = (1<<REG_SZ);
     verlen = sizeof(ver);
-    if (RegQueryValueExA(ikey,"Version",NULL,&type,ver,&verlen)) {
+    if (RegQueryValueExA(ikey,"Version",NULL,&type,(LPBYTE)ver,&verlen)) {
 	ERR("Could not get version value?\n");
 	RegCloseKey(ikey);
 	return E_FAIL;

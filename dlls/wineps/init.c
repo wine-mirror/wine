@@ -611,7 +611,7 @@ PRINTERINFO *PSDRV_FindPrinterInfo(LPCSTR name)
         }
         if (value_name) {
             ppdFileName=HeapAlloc(PSDRV_Heap, 0, needed);
-            RegQueryValueExA(hkey, value_name, 0, &ppdType, ppdFileName, &needed);
+            RegQueryValueExA(hkey, value_name, 0, &ppdType, (LPBYTE)ppdFileName, &needed);
         }
         RegCloseKey(hkey);
     }

@@ -1451,7 +1451,7 @@ static void XFONT_LoadDefault( HKEY hkey, LPCSTR ini, LPCSTR fonttype)
     DWORD type, count = sizeof(buffer);
 
     buffer[0] = 0;
-    RegQueryValueExA(hkey, ini, 0, &type, buffer, &count);
+    RegQueryValueExA(hkey, ini, 0, &type, (LPBYTE)buffer, &count);
 
     if (*buffer)
     {
@@ -1654,7 +1654,7 @@ static void XFONT_LoadAliases( HKEY hkey )
     if (hkey)
     {
 	DWORD type, count = sizeof(buffer);
-	RegQueryValueExA(hkey, INIDefaultSerif, 0, &type, buffer, &count);
+	RegQueryValueExA(hkey, INIDefaultSerif, 0, &type, (LPBYTE)buffer, &count);
     }
     TRACE("Using '%s' as default serif font\n", buffer);
     if (LFD_Parse(buffer, &lfd))
@@ -1671,7 +1671,7 @@ static void XFONT_LoadAliases( HKEY hkey )
     if (hkey)
     {
 	DWORD type, count = sizeof(buffer);
-	RegQueryValueExA(hkey, INIDefaultSansSerif, 0, &type, buffer, &count);
+	RegQueryValueExA(hkey, INIDefaultSansSerif, 0, &type, (LPBYTE)buffer, &count);
     }
     TRACE("Using '%s' as default sans serif font\n", buffer);
     if (LFD_Parse(buffer, &lfd))
@@ -1696,7 +1696,7 @@ static void XFONT_LoadAliases( HKEY hkey )
         if (hkey)
 	{
 	    DWORD type, count = sizeof(buffer);
-	    RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count);
+	    RegQueryValueExA(hkey, subsection, 0, &type, (LPBYTE)buffer, &count);
 	}
 
 	if (!buffer[0])
@@ -1821,7 +1821,7 @@ static void XFONT_LoadIgnores( HKEY hkey )
 	DWORD type, count = sizeof(buffer);
 	sprintf( subsection, "%s%i", INIIgnoreSection, i++ );
 
-	if (!RegQueryValueExA(hkey, subsection, 0, &type, buffer, &count))
+	if (!RegQueryValueExA(hkey, subsection, 0, &type, (LPBYTE)buffer, &count))
 	{
 	    char* pch = buffer;
 	    while( *pch && isspace(*pch) ) pch++;
@@ -2909,7 +2909,7 @@ static void X11DRV_FONT_InitX11Metrics( void )
   if (hkey)
   {
 	DWORD type, count = buf_size;
-	RegQueryValueExA(hkey, INIGlobalMetrics, 0, &type, buffer, &count);
+	RegQueryValueExA(hkey, INIGlobalMetrics, 0, &type, (LPBYTE)buffer, &count);
   }
 
   if( buffer[0] )

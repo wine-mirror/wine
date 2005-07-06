@@ -187,7 +187,7 @@ SCSI_GetDeviceName( int h, int c, int t, int d, LPSTR devstr, LPDWORD lpcbData )
 
 	sprintf(idstr, "h%02dc%02dt%02dd%02d", h, c, t, d);
 
-	if( RegQueryValueExA(hkeyScsi, idstr, NULL, &type, devstr, lpcbData) != ERROR_SUCCESS )
+	if( RegQueryValueExA(hkeyScsi, idstr, NULL, &type, (LPBYTE)devstr, lpcbData) != ERROR_SUCCESS )
 	{
 		WARN("Could not query value HKEY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, idstr);
 		RegCloseKey(hkeyScsi);
@@ -647,7 +647,7 @@ SCSI_GetProcinfo()
 
 		sprintf(idstr, "h%02dc%02dt%02dd%02d", dev.host, dev.channel, dev.target, dev.lun);
 		sprintf(devstr, "/dev/sg%c", 'a'+devnum);
-		if( RegSetValueExA(hkeyScsi, idstr, 0, REG_SZ, devstr, strlen(devstr)+1 ) != ERROR_SUCCESS )
+		if( RegSetValueExA(hkeyScsi, idstr, 0, REG_SZ, (LPBYTE)devstr, strlen(devstr)+1 ) != ERROR_SUCCESS )
 		{
 			ERR("Could not set value HKEY_DYN_DATA\\%s\\%s\n",KEYNAME_SCSI, idstr);
 		}

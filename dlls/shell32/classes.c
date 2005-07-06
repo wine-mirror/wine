@@ -194,7 +194,7 @@ static BOOL HCR_RegGetDefaultIconA(HKEY hkey, LPSTR szDest, DWORD len, LPDWORD d
 	char sTemp[MAX_PATH];
 	char  sNum[5];
 
-	if (!RegQueryValueExA(hkey, NULL, 0, &dwType, szDest, &len))
+	if (!RegQueryValueExA(hkey, NULL, 0, &dwType, (LPBYTE)szDest, &len))
 	{
       if (dwType == REG_EXPAND_SZ)
 	  {
@@ -319,7 +319,7 @@ BOOL HCR_GetClassNameA(REFIID riid, LPSTR szDest, DWORD len)
 	szDest[0] = 0;
 	if (HCR_RegOpenClassIDKey(riid, &hkey))
 	{
-	  if (!RegQueryValueExA(hkey,"",0,NULL,szDest,&len))
+	  if (!RegQueryValueExA(hkey,"",0,NULL,(LPBYTE)szDest,&len))
 	  {
 	    ret = TRUE;
 	  }

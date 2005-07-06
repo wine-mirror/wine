@@ -89,7 +89,7 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     if (!RegOpenKeyExA( HKEY_LOCAL_MACHINE, idstr, 0, KEY_ALL_ACCESS, &hkey ))
     {
         DWORD type, count = sizeof(device_str);
-        if (RegQueryValueExA( hkey, "Device", 0, &type, device_str, &count )) device_str[0] = 0;
+        if (RegQueryValueExA( hkey, "Device", 0, &type, (LPBYTE)device_str, &count )) device_str[0] = 0;
         RegCloseKey( hkey );
     }
 

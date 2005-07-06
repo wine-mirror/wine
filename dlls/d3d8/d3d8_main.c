@@ -85,7 +85,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        /* @@ Wine registry key: HKCU\Software\Wine\Direct3D */
        if ( !RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey) )
        {
-           if ( !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )
+           if ( !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, (LPBYTE) buffer, &size) )
            {
                if (!strcmp(buffer,"none"))
                {
@@ -98,7 +98,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                    vs_mode = VS_SW;
                }
            }
-           if ( !RegQueryValueExA( hkey, "PixelShaderMode", 0, NULL, buffer, &size) )
+           if ( !RegQueryValueExA( hkey, "PixelShaderMode", 0, NULL, (LPBYTE) buffer, &size) )
            {
                if (!strcmp(buffer,"enabled"))
                {

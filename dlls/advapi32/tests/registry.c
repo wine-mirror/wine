@@ -66,17 +66,17 @@ static void create_test_entries(void)
     SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
     SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
 
-    ok(!RegSetValueExA(hkey_main,"Test1",0,REG_EXPAND_SZ, sTestpath1, strlen(sTestpath1)+1), 
+    ok(!RegSetValueExA(hkey_main,"Test1",0,REG_EXPAND_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"Test2",0,REG_SZ, sTestpath1, strlen(sTestpath1)+1), 
+    ok(!RegSetValueExA(hkey_main,"Test2",0,REG_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"Test3",0,REG_EXPAND_SZ, sTestpath2, strlen(sTestpath2)+1), 
+    ok(!RegSetValueExA(hkey_main,"Test3",0,REG_EXPAND_SZ, (LPBYTE)sTestpath2, strlen(sTestpath2)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"DWORD",0,REG_DWORD, (PVOID)qw, 4),
+    ok(!RegSetValueExA(hkey_main,"DWORD",0,REG_DWORD, (LPBYTE)qw, 4),
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"BIN32",0,REG_BINARY, (PVOID)qw, 4),
+    ok(!RegSetValueExA(hkey_main,"BIN32",0,REG_BINARY, (LPBYTE)qw, 4),
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"BIN64",0,REG_BINARY, (PVOID)qw, 8),
+    ok(!RegSetValueExA(hkey_main,"BIN64",0,REG_BINARY, (LPBYTE)qw, 8),
         "RegSetValueExA failed\n");
 }
         
@@ -115,7 +115,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 2, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -129,7 +129,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     /* Win9x returns 2 as specified by MSDN but NT returns 3... */
     ok( val_count == 2 || val_count == 3, "val_count set to %ld\n", val_count );
@@ -147,7 +147,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 0, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -164,7 +164,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %ld\n", res );
     ok( val_count == 20, "val_count set to %ld\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
@@ -178,7 +178,7 @@ static void test_enum_value(void)
     type = 1234;
     strcpy( value, "xxxxxxxxxx" );
     strcpy( data, "xxxxxxxxxx" );
-    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, data, &data_count );
+    res = RegEnumValueA( test_key, 0, value, &val_count, NULL, &type, (LPBYTE)data, &data_count );
     ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", res );
     ok( val_count == 4, "val_count set to %ld instead of 4\n", val_count );
     ok( data_count == 7, "data_count set to %ld instead of 7\n", data_count );
