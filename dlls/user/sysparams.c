@@ -77,7 +77,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETPOWEROFFACTIVE_IDX               33
 #define SPI_SETFLATMENU_IDX               	34
 
-#define SPI_WINE_IDX                            SPI_SETPOWEROFFACTIVE_IDX
+#define SPI_WINE_IDX                            SPI_SETFLATMENU_IDX
 
 static const char * const DefSysColors[] =
 {
@@ -452,7 +452,7 @@ static void SYSPARAMS_NotifyChange( UINT uiAction, UINT fWinIni )
 /***********************************************************************
  * Loads system parameter from user profile.
  */
-static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, LPWSTR lpBuf, DWORD count )
+static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, LPBYTE lpBuf, DWORD count )
 {
     BOOL ret = FALSE;
     DWORD type;
@@ -468,11 +468,19 @@ static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, LPWSTR lpBuf, D
     return ret;
 }
 
+static BOOL SYSPARAMS_Load( LPCWSTR lpRegKey, LPCWSTR lpValName, LPWSTR lpBuf, DWORD count )
+{
+  return SYSPARAMS_LoadRaw( lpRegKey, lpValName, (LPBYTE)lpBuf, count );
+}
+
 /***********************************************************************
  * Saves system parameter to user profile.
  */
-static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue,
-                            UINT fWinIni )
+
+/* Save data as-is */
+static BOOL SYSPARAMS_SaveRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, 
+                               const BYTE* lpValue, DWORD valueSize, 
+                               DWORD type, UINT fWinIni )
 {
     HKEY hKey;
     HKEY hBaseKey;
@@ -494,9 +502,8 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
                          0, 0, dwOptions, KEY_ALL_ACCESS,
                          0, &hKey, 0 ) == ERROR_SUCCESS)
     {
-        if (RegSetValueExW( hKey, lpValName, 0, REG_SZ,
-                            (const BYTE*)lpValue,
-                            (strlenW(lpValue) + 1)*sizeof(WCHAR)) == ERROR_SUCCESS)
+        if (RegSetValueExW( hKey, lpValName, 0, type,
+                            lpValue, valueSize) == ERROR_SUCCESS)
         {
             ret = TRUE;
             if (hBaseKey == HKEY_CURRENT_USER)
@@ -505,6 +512,14 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
         RegCloseKey( hKey );
     }
     return ret;
+}
+
+/* Convenience function to save strings */
+static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue,
+                            UINT fWinIni )
+{
+    return SYSPARAMS_SaveRaw( lpRegKey, lpValName, (const BYTE*)lpValue, 
+        (strlenW(lpValue) + 1)*sizeof(WCHAR), REG_SZ, fWinIni );
 }
 
 
@@ -2421,10 +2436,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETGRADIENTCAPTIONS_IDX;
         if (!spi_loaded[spi_idx])
         {
-            WCHAR buf[5];
+            BYTE buf[4];
 
-            if (SYSPARAMS_Load( SPI_USERPREFERENCEMASK_REGKEY,
-                                SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            if (SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                                   SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
             {
                 if ((buf[0]&0x10) == 0x10)
                 {
@@ -2438,7 +2453,33 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
         break;
 
-    WINE_SPI_FIXME(SPI_SETGRADIENTCAPTIONS);    /* 0x1009  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    case SPI_SETGRADIENTCAPTIONS:    /* 0x1009  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+    {
+        BYTE buf[4];
+        BOOL b = (BOOL)pvParam;
+    
+        spi_idx = SPI_SETGRADIENTCAPTIONS_IDX;
+
+        if (!SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                               SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            memset (buf, 0, sizeof (buf));
+
+        if (b)
+            buf[0] |= 0x10;
+        else
+            buf[0] &= ~0x10;
+        if (SYSPARAMS_SaveRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                               SPI_USERPREFERENCEMASK_VALNAME,
+                               buf, sizeof(buf), REG_BINARY, fWinIni ))
+        {
+            gradient_captions = b;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
+
 
     case SPI_GETKEYBOARDCUES:     /* 0x100A  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
         if (!pvParam) return FALSE;
@@ -2512,12 +2553,12 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETFLATMENU_IDX;
         if (!spi_loaded[spi_idx])
         {
-            WCHAR buf[5];
+            BYTE buf[4];
 
-            if (SYSPARAMS_Load( SPI_USERPREFERENCEMASK_REGKEY,
-                                SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            if (SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                                   SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
             {
-                flat_menu = (buf[2]&0x2);
+		flat_menu = (buf[2]&0x2);
             }
             spi_loaded[spi_idx] = TRUE;
         }
@@ -2527,12 +2568,31 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         break;
 
     case SPI_SETFLATMENU:    /* 0x1023  _WIN32_WINNT >= 0x510 */
+    {
+        BYTE buf[4];
+        BOOL b = (BOOL)pvParam;
+    
         spi_idx = SPI_SETFLATMENU_IDX;
-        spi_loaded[spi_idx] = TRUE;
-        flat_menu = (BOOL)pvParam;
-        FIXME( "Implement proper saving for SPI_SETFLATMENU\n" );
 
+        if (!SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                               SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
+            memset (buf, 0, sizeof (buf));
+
+        if (b)
+            buf[2] |= 0x02;
+        else
+            buf[2] &= ~0x02;
+        if (SYSPARAMS_SaveRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                               SPI_USERPREFERENCEMASK_VALNAME,
+                               buf, sizeof(buf), REG_BINARY, fWinIni ))
+        {
+            flat_menu = b;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
         break;
+    }
 
     WINE_SPI_FIXME(SPI_GETDROPSHADOW);          /* 0x1024  _WIN32_WINNT >= 0x510 */
     WINE_SPI_FIXME(SPI_SETDROPSHADOW);          /* 0x1025  _WIN32_WINNT >= 0x510 */
