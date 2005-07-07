@@ -129,10 +129,6 @@ typedef struct
 #define TPM_BUTTONDOWN		0x40000000		/* menu was clicked before tracking */
 #define TPM_POPUPMENU           0x20000000              /* menu is a popup menu */
 
-  /* popup menu shade thickness */
-#define POPUP_XSHADE		4
-#define POPUP_YSHADE		4
-
   /* Space between 2 menu bar items */
 #define MENU_BAR_ITEMS_SPACE 12
 
@@ -172,7 +168,6 @@ static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 static HBITMAP hStdMnArrow = 0;
 static HBITMAP hBmpSysMenu = 0;
 
-static HBRUSH	hShadeBrush = 0;
 static HFONT	hMenuFont = 0;
 static HFONT	hMenuFontBold = 0;
 static SIZE     menucharsize;
@@ -412,13 +407,7 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
  */
 BOOL MENU_Init(void)
 {
-    HBITMAP hBitmap;
     NONCLIENTMETRICSW ncm;
-
-    static unsigned char shade_bits[16] = { 0x55, 0, 0xAA, 0,
-					    0x55, 0, 0xAA, 0,
-					    0x55, 0, 0xAA, 0,
-					    0x55, 0, 0xAA, 0 };
 
     /* Load menu bitmaps */
     hStdMnArrow = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_MNARROW));
@@ -434,13 +423,6 @@ BOOL MENU_Init(void)
     } else
 	return FALSE;
 
-    if (! (hBitmap = CreateBitmap( 8, 8, 1, 1, shade_bits)))
-	return FALSE;
-
-    if(!(hShadeBrush = CreatePatternBrush( hBitmap )))
-	return FALSE;
-
-    DeleteObject( hBitmap );
     if (!(MENU_DefSysPopup = MENU_CopySysPopup()))
 	return FALSE;
 
