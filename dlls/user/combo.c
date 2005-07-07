@@ -27,9 +27,7 @@
  * If you discover missing features, or bugs, please note them below.
  * 
  * TODO:
- *   - GetComboBoxInfo()
  *   - ComboBox_[GS]etMinVisible()
- *   - CB_GETCOMBOBOXINFO
  *   - CB_GETMINVISIBLE, CB_SETMINVISIBLE
  *   - CB_LIMITTEXT
  *   - CB_SETTOPINDEX
