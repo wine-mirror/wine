@@ -2386,11 +2386,11 @@ static LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 				case ID_NO_WARRANTY:
 					WineWarranty(Globals.hMainWnd);
 					break;
-#endif
 
 				case ID_ABOUT_WINE:
 					ShellAbout(hwnd, RS(b2,IDS_WINE), RS(b1,IDS_WINEFILE), 0);
 					break;
+#endif
 
 				case ID_ABOUT:
 					ShellAbout(hwnd, RS(b1,IDS_WINEFILE), NULL, 0);
@@ -3729,7 +3729,15 @@ static void refresh_child(ChildWnd* child)
 
 	scan_entry(child, &child->root.entry, 0, child->hwnd);
 
-	entry = read_tree(&child->root, path, NULL, drv, child->sortOrder, child->hwnd);
+#ifdef _SHELL_FOLDERS
+	if (child->root.entry.etype == ET_SHELL)
+		entry = read_tree(&child->root, NULL, get_path_pidl(path,child->hwnd), drv, child->sortOrder, child->hwnd);
+	else
+#endif
+		entry = read_tree(&child->root, path, NULL, drv, child->sortOrder, child->hwnd);
+
+	if (!entry)
+		entry = &child->root.entry;
 
 	insert_entries(&child->left, child->root.entry.down, NULL, TF_ALL, 0);
 
