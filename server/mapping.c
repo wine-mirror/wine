@@ -45,8 +45,7 @@ struct mapping
     void           *base;            /* default base addr (for PE image mapping) */
     struct file    *shared_file;     /* temp file for shared PE mapping */
     int             shared_size;     /* shared mapping total size */
-    struct mapping *shared_next;     /* next in shared PE mapping list */
-    struct mapping *shared_prev;     /* prev in shared PE mapping list */
+    struct list     shared_entry;    /* entry in global shared PE mappings list */
 };
 
 static void mapping_dump( struct object *obj, int verbose );
@@ -67,7 +66,7 @@ static const struct object_ops mapping_ops =
     mapping_destroy              /* destroy */
 };
 
-static struct mapping *shared_first;
+static struct list shared_list = LIST_INIT(shared_list);
 
 #ifdef __i386__
 
@@ -111,7 +110,7 @@ static struct file *get_shared_file( struct mapping *mapping )
 {
     struct mapping *ptr;
 
-    for (ptr = shared_first; ptr; ptr = ptr->shared_next)
+    LIST_FOR_EACH_ENTRY( ptr, &shared_list, struct mapping, shared_entry )
         if (is_same_file( ptr->file, mapping->file ))
             return (struct file *)grab_object( ptr->shared_file );
     return NULL;
@@ -223,12 +222,7 @@ static int get_image_params( struct mapping *mapping )
 
     if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections )) goto error;
 
-    if (mapping->shared_file)  /* link it in the list */
-    {
-        if ((mapping->shared_next = shared_first)) shared_first->shared_prev = mapping;
-        mapping->shared_prev = NULL;
-        shared_first = mapping;
-    }
+    if (mapping->shared_file) list_add_head( &shared_list, &mapping->shared_entry );
 
     mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
     mapping->base        = (void *)nt.OptionalHeader.ImageBase;
@@ -351,9 +345,7 @@ static void mapping_destroy( struct object *obj )
     if (mapping->shared_file)
     {
         release_object( mapping->shared_file );
-        if (mapping->shared_next) mapping->shared_next->shared_prev = mapping->shared_prev;
-        if (mapping->shared_prev) mapping->shared_prev->shared_next = mapping->shared_next;
-        else shared_first = mapping->shared_next;
+        list_remove( &mapping->shared_entry );
     }
 }
 
