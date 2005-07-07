@@ -105,6 +105,57 @@ static char input_style[20];
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
+Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
+
+static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
+{
+    "CLIPBOARD",
+    "COMPOUND_TEXT",
+    "MULTIPLE",
+    "SELECTION_DATA",
+    "TARGETS",
+    "TEXT",
+    "UTF8_STRING",
+    "RAW_ASCENT",
+    "RAW_DESCENT",
+    "RAW_CAP_HEIGHT",
+    "WM_PROTOCOLS",
+    "WM_DELETE_WINDOW",
+    "WM_TAKE_FOCUS",
+    "KWM_DOCKWINDOW",
+    "DndProtocol",
+    "DndSelection",
+    "_MOTIF_WM_HINTS",
+    "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR",
+    "_NET_WM_MOVERESIZE",
+    "_NET_WM_PID",
+    "_NET_WM_PING",
+    "_NET_WM_NAME",
+    "_NET_WM_WINDOW_TYPE",
+    "_NET_WM_WINDOW_TYPE_UTILITY",
+    "XdndAware",
+    "XdndEnter",
+    "XdndPosition",
+    "XdndStatus",
+    "XdndLeave",
+    "XdndFinished",
+    "XdndDrop",
+    "XdndActionCopy",
+    "XdndActionMove",
+    "XdndActionLink",
+    "XdndActionAsk",
+    "XdndActionPrivate",
+    "XdndSelection",
+    "XdndTarget",
+    "XdndTypeList",
+    "WCF_DIB",
+    "image/gif",
+    "text/html",
+    "text/plain",
+    "text/rtf",
+    "text/richtext"
+};
+
 /***********************************************************************
  *		ignore_error
  *
@@ -364,6 +415,8 @@ static BOOL process_attach(void)
         screen_depth = desktop_vi->depth;
     }
 
+    XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
+
     if (synchronous) XSynchronize( display, True );
 
     screen_width  = WidthOfScreen( screen );
@@ -391,6 +444,7 @@ static BOOL process_attach(void)
 #endif
 
     X11DRV_InitKeyboard();
+    X11DRV_InitClipboard();
 
     return TRUE;
 }

@@ -54,60 +54,10 @@ XContext winContext = 0;
 /* X context to associate a struct x11drv_win_data to an hwnd */
 static XContext win_data_context;
 
-Atom X11DRV_Atoms[NB_XATOMS - FIRST_XATOM];
-
-static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
-{
-    "CLIPBOARD",
-    "COMPOUND_TEXT",
-    "MULTIPLE",
-    "SELECTION_DATA",
-    "TARGETS",
-    "TEXT",
-    "UTF8_STRING",
-    "RAW_ASCENT",
-    "RAW_DESCENT",
-    "RAW_CAP_HEIGHT",
-    "WM_PROTOCOLS",
-    "WM_DELETE_WINDOW",
-    "WM_TAKE_FOCUS",
-    "KWM_DOCKWINDOW",
-    "DndProtocol",
-    "DndSelection",
-    "_MOTIF_WM_HINTS",
-    "_KDE_NET_WM_SYSTEM_TRAY_WINDOW_FOR",
-    "_NET_WM_MOVERESIZE",
-    "_NET_WM_PID",
-    "_NET_WM_PING",
-    "_NET_WM_NAME",
-    "_NET_WM_WINDOW_TYPE",
-    "_NET_WM_WINDOW_TYPE_UTILITY",
-    "XdndAware",
-    "XdndEnter",
-    "XdndPosition",
-    "XdndStatus",
-    "XdndLeave",
-    "XdndFinished",
-    "XdndDrop",
-    "XdndActionCopy",
-    "XdndActionMove",
-    "XdndActionLink",
-    "XdndActionAsk",
-    "XdndActionPrivate",
-    "XdndSelection",
-    "XdndTarget",
-    "XdndTypeList",
-    "WCF_DIB",
-    "image/gif",
-    "text/html",
-    "text/plain",
-    "text/rtf",
-    "text/richtext"
-};
-
-static LPCSTR whole_window_atom;
-static LPCSTR icon_window_atom;
-static LPCSTR managed_atom;
+static const char whole_window_prop[] = "__wine_x11_whole_window";
+static const char icon_window_prop[]  = "__wine_x11_icon_window";
+static const char managed_prop[]      = "__wine_x11_managed";
+static const char visual_id_prop[]    = "__wine_x11_visual_id";
 
 /***********************************************************************
  *		is_window_managed
@@ -174,7 +124,7 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
     if (!data->managed && !using_wine_desktop && is_window_managed( data->hwnd ))
     {
         data->managed = TRUE;
-        SetPropA( data->hwnd, managed_atom, (HANDLE)1 );
+        SetPropA( data->hwnd, managed_prop, (HANDLE)1 );
     }
     attr->override_redirect = !data->managed;
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
@@ -262,7 +212,7 @@ static Window create_icon_window( Display *display, struct x11drv_win_data *data
     wine_tsx11_unlock();
 
     TRACE( "created %lx\n", data->icon_window );
-    SetPropA( data->hwnd, icon_window_atom, (HANDLE)data->icon_window );
+    SetPropA( data->hwnd, icon_window_prop, (HANDLE)data->icon_window );
     return data->icon_window;
 }
 
@@ -281,7 +231,7 @@ static void destroy_icon_window( Display *display, struct x11drv_win_data *data 
     XDestroyWindow( display, data->icon_window );
     data->icon_window = 0;
     wine_tsx11_unlock();
-    RemovePropA( data->hwnd, icon_window_atom );
+    RemovePropA( data->hwnd, icon_window_prop );
 }
 
 
@@ -698,22 +648,14 @@ static void create_desktop( Display *display, struct x11drv_win_data *data )
     VisualID visualid;
 
     wine_tsx11_lock();
-    winContext = XUniqueContext();
-    XInternAtoms( display, (char **)atom_names, NB_XATOMS - FIRST_XATOM, False, X11DRV_Atoms );
     visualid = XVisualIDFromVisual(visual);
     wine_tsx11_unlock();
-
-    whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
-    icon_window_atom   = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_icon_window" ));
-    managed_atom       = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_managed" ));
 
     data->whole_window = root_window;
     data->whole_rect = data->client_rect = data->window_rect;
 
-    SetPropA( data->hwnd, whole_window_atom, (HANDLE)root_window );
-    SetPropA( data->hwnd, "__wine_x11_visual_id", (HANDLE)visualid );
-
-    X11DRV_InitClipboard();
+    SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
+    SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
 
     if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
 }
@@ -775,7 +717,7 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
 
     X11DRV_set_wm_hints( display, data );
 
-    SetPropA( data->hwnd, whole_window_atom, (HANDLE)data->whole_window );
+    SetPropA( data->hwnd, whole_window_prop, (HANDLE)data->whole_window );
     return data->whole_window;
 }
 
@@ -804,7 +746,7 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
         XDestroyIC( data->xic );
     }
     wine_tsx11_unlock();
-    RemovePropA( data->hwnd, whole_window_atom );
+    RemovePropA( data->hwnd, whole_window_prop );
 }
 
 
@@ -937,6 +879,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->hWMIconMask   = 0;
 
     wine_tsx11_lock();
+    if (!winContext) winContext = XUniqueContext();
     if (!win_data_context) win_data_context = XUniqueContext();
     XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
     wine_tsx11_unlock();
@@ -1108,7 +1051,7 @@ Window X11DRV_get_whole_window( HWND hwnd )
 {
     struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
 
-    if (!data) return (Window)GetPropA( hwnd, whole_window_atom );
+    if (!data) return (Window)GetPropA( hwnd, whole_window_prop );
     return data->whole_window;
 }
 
@@ -1175,7 +1118,7 @@ HWND X11DRV_SetParent( HWND hwnd, HWND parent )
                 if (data->managed)
                 {
                     data->managed = FALSE;
-                    RemovePropA( data->hwnd, managed_atom );
+                    RemovePropA( data->hwnd, managed_prop );
                 }
             }
         }
