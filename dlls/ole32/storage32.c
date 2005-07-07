@@ -23,6 +23,14 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ *  The compound file implementation of IStorage used for create
+ *  and manage substorages and streams within a storage object
+ *  residing in a compound file object.
+ *
+ * MSDN
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/stg/stg/istorage_compound_file_implementation.asp
  */
 
 #include <assert.h>
@@ -1583,6 +1591,13 @@ HRESULT WINAPI StorageImpl_MoveElementTo(
 
 /*************************************************************************
  * Commit (IStorage)
+ *
+ * Ensures that any changes made to a storage object open in transacted mode
+ * are reflected in the parent storage
+ *
+ * NOTES
+ *  Wine doesn't implement transacted mode, which seems to be a basic
+ *  optimization, so we can ignore this stub for now.
  */
 HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
@@ -1594,6 +1609,8 @@ HRESULT WINAPI StorageImpl_Commit(
 
 /*************************************************************************
  * Revert (IStorage)
+ *
+ * Discard all changes that have been made since the last commit operation
  */
 HRESULT WINAPI StorageImpl_Revert(
   IStorage* iface)
