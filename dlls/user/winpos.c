@@ -79,15 +79,16 @@ typedef struct
 
 static LPCSTR atomInternalPos;
 
-
-/***********************************************************************
- *           WINPOS_CreateInternalPosAtom
- */
-BOOL WINPOS_CreateInternalPosAtom()
+static inline INTERNALPOS *get_internal_pos( HWND hwnd )
 {
-    LPCSTR str = "SysIP";
-    atomInternalPos = (LPCSTR)(DWORD)GlobalAddAtomA(str);
-    return (atomInternalPos) ? TRUE : FALSE;
+    if (!atomInternalPos) return NULL;
+    return GetPropA( hwnd, atomInternalPos );
+}
+
+static inline void set_internal_pos( HWND hwnd, INTERNALPOS *pos )
+{
+    if (!atomInternalPos) atomInternalPos = (LPCSTR)(DWORD)GlobalAddAtomA("SysIP");
+    SetPropA( hwnd, atomInternalPos, pos );
 }
 
 /***********************************************************************
@@ -97,9 +98,9 @@ BOOL WINPOS_CreateInternalPosAtom()
  */
 void WINPOS_CheckInternalPos( HWND hwnd )
 {
-    LPINTERNALPOS lpPos = (LPINTERNALPOS) GetPropA( hwnd, atomInternalPos );
+    LPINTERNALPOS lpPos = get_internal_pos( hwnd );
 
-    if( lpPos )
+    if ( lpPos )
     {
 	if( IsWindow(lpPos->hwndIconTitle) )
 	    DestroyWindow( lpPos->hwndIconTitle );
@@ -633,7 +634,7 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
  */
 static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd )
 {
-    LPINTERNALPOS lpPos = GetPropA( wnd->hwndSelf, atomInternalPos );
+    LPINTERNALPOS lpPos = get_internal_pos( wnd->hwndSelf );
     if( !lpPos )
     {
 	/* this happens when the window is minimized/maximized
@@ -642,7 +643,7 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd )
 	lpPos = HeapAlloc( GetProcessHeap(), 0, sizeof(INTERNALPOS) );
 	if( !lpPos ) return NULL;
 
-	SetPropA( wnd->hwndSelf, atomInternalPos, (HANDLE)lpPos );
+	set_internal_pos( wnd->hwndSelf, lpPos );
 	lpPos->hwndIconTitle = 0; /* defer until needs to be shown */
         lpPos->rectNormal.left   = wnd->rectWindow.left;
         lpPos->rectNormal.top    = wnd->rectWindow.top;
@@ -677,7 +678,7 @@ static LPINTERNALPOS WINPOS_InitInternalPos( WND* wnd )
  */
 BOOL WINPOS_RedrawIconTitle( HWND hWnd )
 {
-    LPINTERNALPOS lpPos = (LPINTERNALPOS)GetPropA( hWnd, atomInternalPos );
+    LPINTERNALPOS lpPos = get_internal_pos( hWnd );
     if( lpPos )
     {
 	if( lpPos->hwndIconTitle )
@@ -695,7 +696,7 @@ BOOL WINPOS_RedrawIconTitle( HWND hWnd )
  */
 BOOL WINPOS_ShowIconTitle( HWND hwnd, BOOL bShow )
 {
-    LPINTERNALPOS lpPos = (LPINTERNALPOS)GetPropA( hwnd, atomInternalPos );
+    LPINTERNALPOS lpPos = get_internal_pos( hwnd );
 
     if (lpPos && !GetPropA( hwnd, "__wine_x11_managed" ))
     {
@@ -786,7 +787,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     MinMax.ptMaxSize.x += 2 * xinc;
     MinMax.ptMaxSize.y += 2 * yinc;
 
-    lpPos = (LPINTERNALPOS)GetPropA( hwnd, atomInternalPos );
+    lpPos = get_internal_pos( hwnd );
     if( lpPos && !EMPTYPOINT(lpPos->ptMaxPos) )
     {
         MinMax.ptMaxPosition.x = lpPos->ptMaxPos.x;

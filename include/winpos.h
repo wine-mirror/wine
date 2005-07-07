@@ -42,6 +42,5 @@ extern LONG WINPOS_HandleWindowPosChanging(HWND hwnd, WINDOWPOS *winpos);
 extern HWND WINPOS_WindowFromPoint( HWND hwndScope, POINT pt, INT *hittest );
 extern void WINPOS_CheckInternalPos( HWND hwnd );
 extern void WINPOS_ActivateOtherWindow( HWND hwnd );
-extern BOOL WINPOS_CreateInternalPosAtom(void);
 
 #endif  /* __WINE_WINPOS_H */

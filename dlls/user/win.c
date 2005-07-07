@@ -617,8 +617,6 @@ BOOL WIN_CreateDesktopWindow(void)
 
     TRACE("Creating desktop window\n");
 
-    if (!WINPOS_CreateInternalPosAtom()) return FALSE;
-
     SERVER_START_REQ( create_window )
     {
         req->parent   = 0;
