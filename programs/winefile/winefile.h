@@ -36,14 +36,13 @@
 
 #ifdef UNICODE
 #define _UNICODE
-#include <wchar.h>
 #endif
-#include <tchar.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <locale.h>
+#include <time.h>
 
 #ifndef __WINE__
 #include <malloc.h> /* for alloca() */
@@ -145,12 +144,23 @@ typedef struct
 extern WINEFILE_GLOBALS Globals;
 
 #ifdef __WINE__
+
 extern void WineLicense(HWND hwnd);
 extern void WineWarranty(HWND hwnd);
 
+
 #ifdef UNICODE
 extern void _wsplitpath(const WCHAR* path, WCHAR* drv, WCHAR* dir, WCHAR* name, WCHAR* ext);
+#define _tsplitpath _wsplitpath
+#define _stprintf msvcrt_swprintf
 #else
 extern void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext);
+#define _tsplitpath _splitpath
+#define _stprintf sprintf
 #endif
+
+#else
+
+#include <tchar.h>	/* for _tsplitpath() */
+
 #endif

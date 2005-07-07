@@ -1,4 +1,4 @@
-EXTRADEFS = -D__WINE__
+EXTRADEFS = -D__WINE__ -DUNICODE
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
