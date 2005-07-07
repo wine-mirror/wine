@@ -2904,6 +2904,7 @@ static void test_messages(void)
     HWND hchild2, hbutton;
     HMENU hmenu;
     MSG msg;
+    DWORD ret;
 
     flush_sequence();
 
@@ -3201,6 +3202,22 @@ static void test_messages(void)
 
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     flush_sequence();
+
+    /* MsgWaitForMultipleObjects test */
+    ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
+    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %lx\n", ret);
+
+    PostMessageA(hparent, WM_USER, 0, 0);
+
+    ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
+    ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %lx\n", ret);
+
+    ok(PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ), "PeekMessage should succeed\n");
+    ok(msg.message == WM_USER, "got %04x instead of WM_USER\n", msg.message);
+
+    ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
+    ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %lx\n", ret);
+    /* end of MsgWaitForMultipleObjects test */
 
     /* the following test causes an exception in user.exe under win9x */
     if (!PostMessageW( hparent, WM_USER, 0, 0 )) return;
