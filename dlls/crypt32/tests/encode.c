@@ -916,7 +916,8 @@ struct encodedBits
 };
 
 static const struct encodedBits bits[] = {
-    /* normal test case */
+    /* normal test cases */
+    { 0, "\x03\x03\x00\xff\xff", 2, "\xff\xff" },
     { 1, "\x03\x03\x01\xff\xfe", 2, "\xff\xfe" },
     /* strange test case, showing cUnusedBits >= 8 is allowed */
     { 9, "\x03\x02\x01\xfe", 1, "\xfe" },
@@ -1233,17 +1234,6 @@ static const struct encodedExtensions exts[] = {
   "\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01" },
 };
 
-#if 0
-static void printBytes(const BYTE *pbData, size_t cb)
-{
-    size_t i;
-
-    for (i = 0; i < cb; i++)
-        printf("%02x ", pbData[i]);
-    putchar('\n');
-}
-#endif
-
 static void test_encodeExtensions(DWORD dwEncoding)
 {
     DWORD i;
@@ -1302,6 +1292,109 @@ static void test_decodeExtensions(DWORD dwEncoding)
                  exts[i].exts.rgExtension[j].Value.cbData),
                  "Unexpected value\n");
             }
+            LocalFree(buf);
+        }
+    }
+}
+
+struct encodedPublicKey
+{
+    CERT_PUBLIC_KEY_INFO info;
+    const BYTE *encoded;
+    CERT_PUBLIC_KEY_INFO decoded;
+};
+
+static const BYTE aKey[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd,
+ 0xe, 0xf };
+static const BYTE params[] = { 0x02, 0x01, 0x01 };
+
+static const struct encodedPublicKey pubKeys[] = {
+ /* with a bogus OID */
+ { { { "1.2.3", { 0, NULL } }, { 0, NULL, 0 } },
+  "\x30\x0b\x30\x06\x06\x02\x2a\x03\x05\x00\x03\x01\x00",
+  { { "1.2.3", { 2, "\x05\x00" } }, { 0, NULL, 0 } } },
+ /* some normal keys */
+ { { { szOID_RSA, { 0, NULL } }, { 0, NULL, 0} },
+  "\x30\x0f\x30\x0a\x06\x06\x2a\x86\x48\x86\xf7\x0d\x05\x00\x03\x01\x00",
+  { { szOID_RSA, { 2, "\x05\x00" } }, { 0, NULL, 0 } } },
+ { { { szOID_RSA, { 0, NULL } }, { sizeof(aKey), (BYTE *)aKey, 0} },
+  "\x30\x1f\x30\x0a\x06\x06\x2a\x86\x48\x86\xf7\x0d\x05\x00\x03\x11\x00\x00\x01"
+  "\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+  { { szOID_RSA, { 2, "\x05\x00" } }, { sizeof(aKey), (BYTE *)aKey, 0} } },
+ /* with add'l parameters--note they must be DER-encoded */
+ { { { szOID_RSA, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
+  (BYTE *)aKey, 0 } },
+  "\x30\x20\x30\x0b\x06\x06\x2a\x86\x48\x86\xf7\x0d\x02\x01\x01"
+  "\x03\x11\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e"
+  "\x0f",
+  { { szOID_RSA, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
+  (BYTE *)aKey, 0 } } },
+};
+
+static void test_encodePublicKeyInfo(DWORD dwEncoding)
+{
+    DWORD i;
+
+    for (i = 0; i < sizeof(pubKeys) / sizeof(pubKeys[0]); i++)
+    {
+        BOOL ret;
+        BYTE *buf = NULL;
+        DWORD bufSize = 0;
+
+        ret = CryptEncodeObjectEx(dwEncoding, X509_PUBLIC_KEY_INFO,
+         &pubKeys[i].info, CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf,
+         &bufSize);
+        ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            ok(bufSize == pubKeys[i].encoded[1] + 2,
+             "Expected %d bytes, got %ld\n", pubKeys[i].encoded[1] + 2,
+             bufSize);
+            ok(!memcmp(buf, pubKeys[i].encoded, pubKeys[i].encoded[1] + 2),
+             "Unexpected value\n");
+            LocalFree(buf);
+        }
+    }
+}
+
+static void test_decodePublicKeyInfo(DWORD dwEncoding)
+{
+    DWORD i;
+
+    for (i = 0; i < sizeof(pubKeys) / sizeof(pubKeys[0]); i++)
+    {
+        BOOL ret;
+        BYTE *buf = NULL;
+        DWORD bufSize = 0;
+
+        ret = CryptDecodeObjectEx(dwEncoding, X509_PUBLIC_KEY_INFO,
+         pubKeys[i].encoded, pubKeys[i].encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG,
+         NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            CERT_PUBLIC_KEY_INFO *info = (CERT_PUBLIC_KEY_INFO *)buf;
+
+            ok(!strcmp(pubKeys[i].decoded.Algorithm.pszObjId,
+             info->Algorithm.pszObjId), "Expected OID %s, got %s\n",
+             pubKeys[i].decoded.Algorithm.pszObjId, info->Algorithm.pszObjId);
+            ok(pubKeys[i].decoded.Algorithm.Parameters.cbData ==
+             info->Algorithm.Parameters.cbData,
+             "Expected parameters of %ld bytes, got %ld\n",
+             pubKeys[i].decoded.Algorithm.Parameters.cbData,
+             info->Algorithm.Parameters.cbData);
+            if (pubKeys[i].decoded.Algorithm.Parameters.cbData)
+                ok(!memcmp(pubKeys[i].decoded.Algorithm.Parameters.pbData,
+                 info->Algorithm.Parameters.pbData,
+                 info->Algorithm.Parameters.cbData),
+                 "Unexpected algorithm parameters\n");
+            ok(pubKeys[i].decoded.PublicKey.cbData == info->PublicKey.cbData,
+             "Expected public key of %ld bytes, got %ld\n",
+             pubKeys[i].decoded.PublicKey.cbData, info->PublicKey.cbData);
+            if (pubKeys[i].decoded.PublicKey.cbData)
+                ok(!memcmp(pubKeys[i].decoded.PublicKey.pbData,
+                 info->PublicKey.pbData, info->PublicKey.cbData),
+                 "Unexpected public key value\n");
             LocalFree(buf);
         }
     }
@@ -1387,6 +1480,8 @@ START_TEST(encode)
         test_decodeSequenceOfAny(encodings[i]);
         test_encodeExtensions(encodings[i]);
         test_decodeExtensions(encodings[i]);
+        test_encodePublicKeyInfo(encodings[i]);
+        test_decodePublicKeyInfo(encodings[i]);
     }
     test_registerOIDFunction();
 }
