@@ -22,7 +22,7 @@
 #include "config.h"
 #include "d3d9_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d9);
 
 /* IDirect3DVertexDeclaration9 IUnknown parts follow: */
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(LPDIRECT3DVERTEXDECLARATION9 iface, REFIID riid, LPVOID* ppobj) {
@@ -30,7 +30,7 @@ HRESULT WINAPI IDirect3DVertexDeclaration9Impl_QueryInterface(LPDIRECT3DVERTEXDE
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DVertexDeclaration9)) {
-        IDirect3DVertexDeclaration9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -65,23 +65,36 @@ ULONG WINAPI IDirect3DVertexDeclaration9Impl_Release(LPDIRECT3DVERTEXDECLARATION
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEXDECLARATION9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
     IWineD3DDevice *myDevice = NULL;
-    IWineD3DVertexDeclaration_GetDevice(This->wineD3DVertexDeclaration, &myDevice);
-    IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
-    IWineD3DDevice_Release(myDevice);
-    return D3D_OK;
+    HRESULT hr = D3D_OK;
+
+    TRACE("(%p) : Relay\n", iface);
+
+    hr = IWineD3DVertexDeclaration_GetDevice(This->wineD3DVertexDeclaration, &myDevice);
+    if (hr == D3D_OK && myDevice != NULL) {
+        hr = IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
+        IWineD3DDevice_Release(myDevice);
+    }
+    return hr;
 }
 
 HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDECLARATION9 iface, D3DVERTEXELEMENT9* pDecl, UINT* pNumElements) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
-    return IWineD3DVertexDeclaration_GetDeclaration(This->wineD3DVertexDeclaration, 9, pDecl, (DWORD*) pNumElements);
-}
+    DWORD NumElements;
+    HRESULT hr;
+    TRACE("(%p) : Relay\n", iface);
+    hr = IWineD3DVertexDeclaration_GetDeclaration(This->wineD3DVertexDeclaration, pDecl, &NumElements);
 
+    *pNumElements = NumElements;
+    return hr;
+}
 
 const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
 {
+    /* IUnknown */
     IDirect3DVertexDeclaration9Impl_QueryInterface,
     IDirect3DVertexDeclaration9Impl_AddRef,
     IDirect3DVertexDeclaration9Impl_Release,
+    /* IDirect3DVertexDeclaration9 */
     IDirect3DVertexDeclaration9Impl_GetDevice,
     IDirect3DVertexDeclaration9Impl_GetDeclaration
 };
@@ -93,7 +106,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *object = NULL;
     HRESULT hr = D3D_OK;
-    
+
+    TRACE("(%p) : Relay\n", iface);
     if (NULL == ppDecl) {
       return D3DERR_INVALIDCALL;
     }
@@ -123,30 +137,34 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9* pDecl) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *pDeclImpl = (IDirect3DVertexDeclaration9Impl *)pDecl;
-    HRESULT hr = S_OK;
-    /* TODO: implement stateblocks */
-    FIXME("Disabled\n");
-    return D3DERR_INVALIDCALL;
-    if (NULL != pDecl) {
-      hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl->wineD3DVertexDeclaration);
-    }
+    HRESULT hr = D3D_OK;
+
+    TRACE("(%p) : Relay\n", iface);
+
+    hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl == NULL ? NULL : pDeclImpl->wineD3DVertexDeclaration);
+
     return hr;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 iface, IDirect3DVertexDeclaration9** ppDecl) {
     IDirect3DDevice9Impl* This = (IDirect3DDevice9Impl*) iface;
     IWineD3DVertexDeclaration* pTest = NULL;
-    HRESULT hr = S_OK;
-    FIXME("Disabled\n");
-    return D3DERR_INVALIDCALL;
+    HRESULT hr = D3D_OK;
+
+    TRACE("(%p) : Relay+\n", iface);
 
     if (NULL == ppDecl) {
       return D3DERR_INVALIDCALL;
     }
+
     *ppDecl = NULL;
     hr = IWineD3DDevice_GetVertexDeclaration(This->WineD3DDevice, &pTest);
-    if (SUCCEEDED(hr)) {
-      *ppDecl = NULL;
+    if (hr == D3D_OK && NULL != pTest) {
+        IWineD3DResource_GetParent(pTest, (IUnknown **)ppDecl);
+        IWineD3DResource_Release(pTest);
+    } else {
+        *ppDecl = NULL;
     }
+    TRACE("(%p) : returning %p\n", This, *ppDecl);
     return hr;
 }

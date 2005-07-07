@@ -1342,61 +1342,18 @@ HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PA
 /*****
  * Vertex Declaration
  *****/
- /* TODO: Get ridd of thease and put the functions in the  IWineD3DVertexDeclaration interface */
-#if 1
-extern HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DDeviceImpl * This, const DWORD* pDecl, IWineD3DVertexDeclarationImpl * object);
-extern HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DDeviceImpl * This, const D3DVERTEXELEMENT9* pDecl, IWineD3DVertexDeclarationImpl * object);
-
-
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice* iface, CONST VOID* pDeclaration, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *parent) {
     IWineD3DDeviceImpl            *This   = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexDeclarationImpl *object = NULL;
     HRESULT hr = D3D_OK;
-    
-    TRACE("(%p) : directXVersion=%u, pFunction=%p, ppDecl=%p\n", This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, pDeclaration, ppVertexDeclaration);    
+    TRACE("(%p) : directXVersion=%u, pFunction=%p, ppDecl=%p\n", This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, pDeclaration, ppVertexDeclaration);
     D3DCREATEOBJECTINSTANCE(object, VertexDeclaration)
     object->allFVF = 0;
 
-    if (8 == ((IWineD3DImpl *)This->wineD3D)->dxVersion) {
-      /** @TODO */
-      hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(This, (const DWORD*) pDeclaration, object);
-    } else {
-      hr = IWineD3DVertexDeclarationImpl_ParseDeclaration9(This, (const D3DVERTEXELEMENT9*) pDeclaration, object);
-    }
+    hr = IWineD3DVertexDeclaration_SetDeclaration((IWineD3DVertexDeclaration *)object, (void *)pDeclaration);
 
     return hr;
 }
-
-
-#else
-HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration8(IWineD3DDevice* iface, const DWORD* pDeclaration, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *parent){
-    IWineD3DDeviceImpl            *This   = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexDeclarationImpl *object = NULL; /* NOTE: impl allowed, this is a create */
-    HRESULT hr = D3D_OK;
-    /* TODO: replace impl usage with a call to Version*/
-    TRACE("(%p) : directXVersion=%u, pFunction=%p, ppDecl=%p\n", This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, pDeclaration, ppVertexDeclaration);    
-    D3DCREATEOBJECTINSTANCE(object, VertexDeclaration)
-    object->allFVF = 0;
-    /* TODO: get ridd of the impl usage, we should only be using interfaces */
-    hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(This, pDeclaration, object);
-    
-    return hr;
-}
-
-HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration9(IWineD3DDevice* iface, const D3DVERTEXELEMENT9* pDeclaration, IWineD3DVertexDeclaration** ppVertexDeclaration, IUnknown *parent){
-    IWineD3DDeviceImpl            *This   = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexDeclarationImpl *object = NULL; /* NOTE: impl allowed, this is a create */
-    HRESULT hr = D3D_OK;
-    /* TODO: replace impl usage with a call to Version*/
-    TRACE("(%p) : directXVersion=%u, pFunction=%p, ppDecl=%p\n", This, ((IWineD3DImpl *)This->wineD3D)->dxVersion, pDeclaration, ppVertexDeclaration);    
-    D3DCREATEOBJECTINSTANCE(object, VertexDeclaration)
-    object->allFVF = 0;
-    /* TODO: get ridd of the impl usage, we should only be using interfaces */
-    hr = IWineD3DVertexDeclarationImpl_ParseDeclaration9(This, pDeclaration, object);
-    
-    return hr;
-}
-#endif
 
 /* http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/programmable/vertexshaders/vscreate.asp */
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice* iface,  CONST DWORD* pFunction, IWineD3DVertexShader** ppVertexShader, IUnknown *parent){
@@ -1443,10 +1400,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
     This->updateStateBlock->set.fvf          = TRUE;
 
     TRACE("(%p) : FVF Shader FVF set to %lx\n", This, fvf);
-    
+    /* clear down the vertex declaration
+     NOTE: Axis and Allies doesn't work properly otherwise
+     (may be a stateblock problem though!)
+    */
     /* No difference if recording or not */
-    return D3D_OK;
+    return IWineD3DDevice_SetVertexDeclaration(iface, NULL);
+
 }
+
+
 HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD *pfvf) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : GetFVF returning %lx\n", This, This->stateBlock->fvf);
@@ -3554,10 +3517,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pR
 }
 
 HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IWineD3DVertexDeclaration* pDecl) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;   
-    
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+
     TRACE("(%p) : pDecl=%p\n", This, pDecl);
 
+    /* TODO: what about recording stateblocks? */
     IWineD3DVertexDeclaration_AddRef(pDecl);
     if (NULL != This->updateStateBlock->vertexDecl) {
       IWineD3DVertexDeclaration_Release(This->updateStateBlock->vertexDecl);

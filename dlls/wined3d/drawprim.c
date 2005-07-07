@@ -23,7 +23,7 @@
 #include "config.h"
 #include "wined3d_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
@@ -344,6 +344,192 @@ BOOL primitiveInitState(IWineD3DDevice *iface, BOOL vtx_transformed, BOOL vtx_li
         This->last_was_rhw = FALSE;
     }
     return isLightingOn;
+}
+
+void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedData *strided, LONG BaseVertexIndex, DWORD *fvf) {
+     /* We need to deal with frequency data!*/
+
+    int           textureNo =0;
+    BYTE  *data    = NULL;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl*)This->stateBlock->vertexDecl;
+    int i;
+    D3DVERTEXELEMENT9 *element;
+    DWORD stride;
+    for(i = 0 ; i < vertexDeclaration->declaration9NumElements -1; i++){
+
+        element = vertexDeclaration->pDeclaration9 + i;
+        TRACE("%p Elements %p %d or %d\n", vertexDeclaration->pDeclaration9, element,  i, vertexDeclaration->declaration9NumElements);
+        if (This->stateBlock->streamIsUP) {
+            TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
+            data    = (BYTE *)This->stateBlock->streamSource[element->Stream];
+        } else {
+             TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
+            data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
+        }
+        stride  = This->stateBlock->streamSource[element->Stream];
+        data += (BaseVertexIndex * stride);
+        data += element->Offset;
+        /* Why can't I just use a lookup table instead of a switch statment? */
+        switch(element->Usage){
+        case D3DDECLUSAGE_POSITION:
+                switch(element->UsageIndex){
+                case 0: /* N-patch */
+                    strided->u.s.position.lpData    = data;
+                    strided->u.s.position.dwType    = element->Type;
+                    strided->u.s.position.dwStride  = stride;
+                break;
+                case 1: /* tweened see http://www.gamedev.net/reference/articles/article2017.asp */
+                    FIXME("Tweened positions\n");
+                break;
+                }
+        break;
+        case D3DDECLUSAGE_NORMAL:
+                switch(element->UsageIndex){
+                case 0: /* N-patch */
+                    strided->u.s.normal.lpData    = data;
+                    strided->u.s.normal.dwType    = element->Type;
+                    strided->u.s.normal.dwStride  = stride;
+                break;
+                case 1: /* skinning */
+                   FIXME("Skinning normals\n");
+                break;
+                }
+                *fvf |=  D3DFVF_NORMAL;
+        break;
+        case D3DDECLUSAGE_BLENDINDICES:
+        /* demo @http://www.ati.com/developer/vertexblend.html
+            and http://www.flipcode.com/articles/article_dx8shaders.shtml
+        */
+            strided->u.s.blendMatrixIndices.lpData  = data;
+            strided->u.s.blendMatrixIndices.dwType  = element->Type;
+            strided->u.s.blendMatrixIndices.dwStride= stride;
+        break;
+        case D3DDECLUSAGE_BLENDWEIGHT:
+            strided->u.s.blendWeights.lpData        = data;
+            strided->u.s.blendWeights.dwType        = element->Type;
+            strided->u.s.blendWeights.dwStride      = stride;
+        break;
+        case D3DDECLUSAGE_PSIZE:
+            strided->u.s.pSize.lpData               = data;
+            strided->u.s.pSize.dwType               = element->Type;
+            strided->u.s.pSize.dwStride             = stride;
+        break;
+        case D3DDECLUSAGE_COLOR:
+        switch(element->UsageIndex){
+        case 0:/* diffuse */
+            strided->u.s.diffuse.lpData             = data;
+            strided->u.s.diffuse.dwType             = element->Type;
+            strided->u.s.diffuse.dwStride           = stride;
+        break;
+        case 1: /* specular */
+            strided->u.s.specular.lpData            = data;
+            strided->u.s.specular.dwType            = element->Type;
+            strided->u.s.specular.dwStride          = stride;
+        }
+
+        break;
+        case D3DDECLUSAGE_TEXCOORD:
+        /* For some odd reason Microsoft desided to sum usage accross all the streams,
+        which means we need to do a count and not just use the usage number */
+
+            strided->u.s.texCoords[textureNo].lpData    = data;
+            strided->u.s.texCoords[textureNo].dwType    = element->Type;
+            strided->u.s.texCoords[textureNo].dwStride  = stride;
+
+        textureNo++;
+        break;
+        case D3DDECLUSAGE_TANGENT:
+        /* Implement tangents and binormals using http://oss.sgi.com/projects/ogl-sample/registry/EXT/coordinate_frame.txt
+        this is easy so long as the OpenGL implementation supports it, otherwise drop back to calculating the
+        normal using tangents where no normal data has been provided */
+#if 0
+        strided->u.s.tangent.lpData   = data;
+        strided->u.s.tangent.dwType   = element->type;
+        strided->u.s.tangent.dsString = stride;
+#endif
+        TRACE("Tangents\n");
+        break;
+        case D3DDECLUSAGE_BINORMAL:
+        /* Binormals are really bitangents perpendicular to the normal but s-aligned to the tangent, basicly they are the vectors of any two lines on the plain at right angles to the normal and at right angles to each other, like the x,y,z axis.
+        tangent data makes it easier to perform some calcualtions (a bit like using 2d graph paper instead of the normal of the piece of paper)
+        The only thing they are usefull for in fixed function would be working out normals when none are give.
+        */
+#if 0
+        strided->u.s.binormal.lpData   = data;
+        strided->u.s.binormal.dwType   = element->type;
+        strided->u.s.binormal.dsString = stride;
+#endif
+        /* Don't bother showing fixme's tangents aren't that interesting */
+        TRACE("BI-Normal\n");
+        break;
+        case D3DDECLUSAGE_TESSFACTOR:
+        /* a google for D3DDECLUSAGE_TESSFACTOR turns up a wopping 36 entries, 7 of which are from MSDN.
+        */
+#if 0
+        strided->u.s.tessFacrot.lpData   = data;
+        strided->u.s.tessFactor.dwType   = element->type;
+        strided->u.s.tessFactor.dsString = stride;
+#else
+        FIXME("Tess Factor\n");
+#endif
+        break;
+        case D3DDECLUSAGE_POSITIONT:
+
+               switch(element->UsageIndex){
+                case 0: /* N-patch */
+                    strided->u.s.position.lpData    = data;
+                    strided->u.s.position.dwType    = element->Type;
+                    strided->u.s.position.dwStride  = stride;
+                break;
+                case 1: /* skinning */
+                        /* see http://rsn.gamedev.net/tutorials/ms3danim.asp
+                        http://xface.blogspot.com/2004_08_01_xface_archive.html
+                        */
+                    FIXME("Skinning positionsT\n");
+                break;
+                }
+                /* TODO: change fvf usage to a plain boolean flag */
+                *fvf |= D3DFVF_XYZRHW;
+            /* FIXME: were faking this flag so that we don't transform the data again */
+        break;
+        case D3DDECLUSAGE_FOG:
+        /* maybe GL_EXT_fog_coord ?
+        * http://oss.sgi.com/projects/ogl-sample/registry/EXT/fog_coord.txt
+        * This extension allows specifying an explicit per-vertex fog
+        * coordinate to be used in fog computations, rather than using a
+        * fragment depth-based fog equation.
+        *
+        * */
+#if 0
+        strided->u.s.fog.lpData   = data;
+        strided->u.s.fog.dwType   = element->type;
+        strided->u.s.fog.dsString = stride;
+#else
+        FIXME("Fog\n");
+#endif
+        break;
+        case D3DDECLUSAGE_DEPTH:
+        FIXME("depth\n");
+#if 0
+        strided->u.s.depth.lpData   = data;
+        strided->u.s.depth.dwType   = element->type;
+        strided->u.s.depth.dsString = stride;
+#endif
+
+        break;
+        case D3DDECLUSAGE_SAMPLE: /* VertexShader textures */
+#if 0
+        strided->u.s.sample.lpData   = data;
+        strided->u.s.sample.dwType   = element->type;
+        strided->u.s.sample.dsString = stride;
+#endif
+        FIXME("depth\n");
+        break;
+        };
+
+    };
+
 }
 
 void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexStridedData *strided, LONG BaseVertexIndex) {
@@ -1405,6 +1591,29 @@ void drawStridedHardwareVS(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
 }
 #endif
 
+void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocations,DWORD fvf){
+
+    /* Dump out what parts we have supplied */
+    TRACE("Strided Data (from FVF/VS): %lx\n", fvf);
+    TRACE_STRIDED((dataLocations), position);
+    TRACE_STRIDED((dataLocations), blendWeights);
+    TRACE_STRIDED((dataLocations), blendMatrixIndices);
+    TRACE_STRIDED((dataLocations), normal);
+    TRACE_STRIDED((dataLocations), pSize);
+    TRACE_STRIDED((dataLocations), diffuse);
+    TRACE_STRIDED((dataLocations), specular);
+    TRACE_STRIDED((dataLocations), texCoords[0]);
+    TRACE_STRIDED((dataLocations), texCoords[1]);
+    TRACE_STRIDED((dataLocations), texCoords[2]);
+    TRACE_STRIDED((dataLocations), texCoords[3]);
+    TRACE_STRIDED((dataLocations), texCoords[4]);
+    TRACE_STRIDED((dataLocations), texCoords[5]);
+    TRACE_STRIDED((dataLocations), texCoords[6]);
+    TRACE_STRIDED((dataLocations), texCoords[7]);
+    return;
+
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
                     int PrimitiveType, long NumPrimitives,
@@ -1429,10 +1638,14 @@ void drawPrimitive(IWineD3DDevice *iface,
     Direct3DVertexStridedData     dataLocations;
     int                           useHW = FALSE;
 
-    /* Work out what the FVF should look like */
-    rc = initializeFVF(iface, &fvf, &useVertexShaderFunction);
-    if (rc) return;
-
+    if (This->stateBlock->vertexDecl == NULL) {
+        /* Work out what the FVF should look like */
+        rc = initializeFVF(iface, &fvf, &useVertexShaderFunction);
+        if (rc) return;
+    } else {
+        TRACE("(%p) : using vertex declaration %p \n", iface, This->stateBlock->vertexDecl);
+    }
+    
     /* If we will be using a vertex shader, do some initialization for it */
     if (useVertexShaderFunction) {
 #if 0 /* TODO: vertex and pixel shaders */
@@ -1479,6 +1692,25 @@ void drawPrimitive(IWineD3DDevice *iface,
     }
 #endif /* TODO: vertex and pixel shaders */
 
+    /* Initialize all values to null */
+    if (useVertexShaderFunction == FALSE) {
+        memset(&dataLocations, 0x00, sizeof(dataLocations));
+
+        /* Convert to strided data */
+         if(This->stateBlock->vertexDecl != NULL){
+            TRACE("================ Vertex Declaration  ===================\n");
+            primitiveDeclarationConvertToStridedData(iface, &dataLocations, StartVertexIndex, &fvf);
+         }else{
+            TRACE("================ FVF ===================\n");
+            primitiveConvertToStridedData(iface, &dataLocations, StartVertexIndex);
+         }
+
+        /* write out some debug information*/
+        drawPrimitiveTraceDataLocations(&dataLocations, fvf);
+    } else {
+        FIXME("line %d, drawing using vertex shaders\n", __LINE__);
+    }
+
     /* Setup transform matrices and sort out */
     if (useHW) {
 	/* Lighting is not completely bypassed with ATI drivers although it should be. Mesa is ok from this respect...
@@ -1487,36 +1719,11 @@ void drawPrimitive(IWineD3DDevice *iface,
         glDisable(GL_LIGHTING);
         checkGLcall("glDisable(GL_LIGHTING);");
         TRACE("Disabled lighting as no normals supplied, old state = %d\n", isLightingOn); 
-    } else
+    } else {
         isLightingOn = primitiveInitState(iface, 
                                           fvf & D3DFVF_XYZRHW, 
                                           !(fvf & D3DFVF_NORMAL),
                                           useVertexShaderFunction);
-
-    /* Initialize all values to null */
-    if (useVertexShaderFunction == FALSE) {
-        memset(&dataLocations, 0x00, sizeof(dataLocations));
-
-        /* Convert to strided data */
-        primitiveConvertToStridedData(iface, &dataLocations, StartVertexIndex); 
-
-        /* Dump out what parts we have supplied */
-        TRACE("Strided Data (from FVF/VS): %lx\n", fvf);
-        TRACE_STRIDED((&dataLocations), position);
-        TRACE_STRIDED((&dataLocations), blendWeights);
-        TRACE_STRIDED((&dataLocations), blendMatrixIndices);
-        TRACE_STRIDED((&dataLocations), normal);
-        TRACE_STRIDED((&dataLocations), pSize);
-        TRACE_STRIDED((&dataLocations), diffuse);
-        TRACE_STRIDED((&dataLocations), specular);
-        TRACE_STRIDED((&dataLocations), texCoords[0]);
-        TRACE_STRIDED((&dataLocations), texCoords[1]);
-        TRACE_STRIDED((&dataLocations), texCoords[2]);
-        TRACE_STRIDED((&dataLocations), texCoords[3]);
-        TRACE_STRIDED((&dataLocations), texCoords[4]);
-        TRACE_STRIDED((&dataLocations), texCoords[5]);
-        TRACE_STRIDED((&dataLocations), texCoords[6]);
-        TRACE_STRIDED((&dataLocations), texCoords[7]);
     }
 
     /* Now initialize the materials state */
@@ -1525,13 +1732,12 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* And re-upload any dirty textures */
     for (i=0; i<GL_LIMITS(textures); i++) {
-        
+
         if ((This->stateBlock->textures[i] != NULL) && 
             (IWineD3DBaseTexture_GetDirty(This->stateBlock->textures[i])))
         {
             /* Load up the texture now */
-            IWineD3DTexture_PreLoad((IWineD3DTexture *) This->stateBlock->textures[i]);
-            /* TODO: Is this right, as its cast all texture types to texture8... checkme */
+            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
         }
     }
 

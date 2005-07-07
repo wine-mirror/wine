@@ -1083,12 +1083,14 @@ DECLARE_INTERFACE_(IWineD3DVolume,IWineD3DResource)
 DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
 {
     /*** IUnknown methods ***/
-    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void **ppvObject) PURE;
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DVertexDeclaration methods ***/
-    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
-    STDMETHOD(GetDeclaration)(THIS_ UINT iDeclVersion, VOID*, DWORD* pSize) PURE;
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
+    STDMETHOD(GetDeclaration)(THIS_ VOID *pDecl, DWORD *pSize) PURE;
+    STDMETHOD(SetDeclaration)(THIS_ VOID *pDecl) PURE;
 };
 #undef INTERFACE
 
@@ -1098,8 +1100,10 @@ DECLARE_INTERFACE_(IWineD3DVertexDeclaration,IUnknown)
 #define IWineD3DVertexDeclaration_AddRef(p)                  (p)->lpVtbl->AddRef(p)
 #define IWineD3DVertexDeclaration_Release(p)                 (p)->lpVtbl->Release(p)
 /*** IWineD3DVertexDeclaration methods ***/
+#define IWineD3DVertexDeclaration_GetParent(p,a)             (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DVertexDeclaration_GetDevice(p,a)             (p)->lpVtbl->GetDevice(p,a)
-#define IWineD3DVertexDeclaration_GetDeclaration(p,a,b,c)    (p)->lpVtbl->GetDeclaration(p,a,b,c)
+#define IWineD3DVertexDeclaration_GetDeclaration(p,a,b)      (p)->lpVtbl->GetDeclaration(p,a,b)
+#define IWineD3DVertexDeclaration_SetDeclaration(p,b)        (p)->lpVtbl->SetDeclaration(p,b)
 #endif
 
 /*****************************************************************************
