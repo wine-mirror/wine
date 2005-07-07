@@ -32,11 +32,11 @@
 @ stub CertEnumCTLsInStore
 @ stub CertEnumCertificateContextProperties
 @ stdcall CertEnumCertificatesInStore(long ptr)
-@ stub CertFindAttribute
+@ stdcall CertFindAttribute(str long ptr)
 @ stub CertFindCTLInStore
 @ stdcall CertFindCertificateInStore(long long long long ptr ptr)
-@ stub CertFindExtension
-@ stub CertFindRDNAttr
+@ stdcall CertFindExtension(str long ptr)
+@ stdcall CertFindRDNAttr(str ptr)
 @ stub CertFindSubjectInCTL
 @ stdcall CertFreeCRLContext(ptr)
 @ stub CertFreeCTLContext
@@ -78,7 +78,7 @@
 @ stub CertVerifyCTLUsage
 @ stub CertVerifyRevocation
 @ stub CertVerifySubjectCertificateContext
-@ stub CertVerifyTimeValidity
+@ stdcall CertVerifyTimeValidity(ptr ptr)
 @ stub CertVerifyValidityNesting
 @ stub CreateFileU
 @ stub CryptAcquireContextU

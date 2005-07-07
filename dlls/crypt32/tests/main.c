@@ -113,8 +113,159 @@ static void testAlgIDToOID(void)
     }
 }
 
+static void test_findAttribute(void)
+{
+    PCRYPT_ATTRIBUTE ret;
+    CRYPT_ATTR_BLOB blobs[] = {
+     { 3, "\x02\x01\x01" },
+    };
+    CRYPT_ATTRIBUTE attr = { "1.2.3", sizeof(blobs) / sizeof(blobs[0]), blobs };
+
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindAttribute(NULL, 0, NULL);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* crashes
+    SetLastError(0xdeadbeef);
+    ret = CertFindAttribute(NULL, 1, NULL);
+     */
+    /* returns NULL, last error is ERROR_INVALID_PARAMETER */
+    SetLastError(0xdeadbeef);
+    ret = CertFindAttribute(NULL, 1, &attr);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %ld (%08lx)\n", GetLastError(),
+     GetLastError());
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindAttribute("bogus", 1, &attr);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindAttribute("1.2.4", 1, &attr);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* succeeds, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindAttribute("1.2.3", 1, &attr);
+    ok(ret != NULL, "CertFindAttribute failed: %08lx\n", GetLastError());
+}
+
+static void test_findExtension(void)
+{
+    PCERT_EXTENSION ret;
+    CERT_EXTENSION ext = { "1.2.3", TRUE, { 3, "\x02\x01\x01" } };
+
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindExtension(NULL, 0, NULL);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* crashes
+    SetLastError(0xdeadbeef);
+    ret = CertFindExtension(NULL, 1, NULL);
+     */
+    /* returns NULL, last error is ERROR_INVALID_PARAMETER */
+    SetLastError(0xdeadbeef);
+    ret = CertFindExtension(NULL, 1, &ext);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %ld (%08lx)\n", GetLastError(),
+     GetLastError());
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindExtension("bogus", 1, &ext);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindExtension("1.2.4", 1, &ext);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* succeeds, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindExtension("1.2.3", 1, &ext);
+    ok(ret != NULL, "CertFindExtension failed: %08lx\n", GetLastError());
+}
+
+static void test_findRDNAttr(void)
+{
+    PCERT_RDN_ATTR ret;
+    CERT_RDN_ATTR attrs[] = {
+     { "1.2.3", CERT_RDN_IA5_STRING, { 11, "\x16\x09Juan Lang" } },
+    };
+    CERT_RDN rdns[] = {
+     { sizeof(attrs) / sizeof(attrs[0]), attrs },
+    };
+    CERT_NAME_INFO nameInfo = { sizeof(rdns) / sizeof(rdns[0]), rdns };
+
+    /* crashes
+    SetLastError(0xdeadbeef);
+    ret = CertFindRDNAttr(NULL, NULL);
+     */
+    /* returns NULL, last error is ERROR_INVALID_PARAMETER */
+    SetLastError(0xdeadbeef);
+    ret = CertFindRDNAttr(NULL, &nameInfo);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER,
+     "Expected ERROR_INVALID_PARAMETER, got %ld (%08lx)\n", GetLastError(),
+     GetLastError());
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindRDNAttr("bogus", &nameInfo);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* returns NULL, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindRDNAttr("1.2.4", &nameInfo);
+    ok(ret == NULL, "Expected failure\n");
+    ok(GetLastError() == 0xdeadbeef, "Last error was set to %08lx\n",
+     GetLastError());
+    /* succeeds, last error not set */
+    SetLastError(0xdeadbeef);
+    ret = CertFindRDNAttr("1.2.3", &nameInfo);
+    ok(ret != NULL, "CertFindRDNAttr failed: %08lx\n", GetLastError());
+}
+
+static void test_verifyTimeValidity(void)
+{
+    SYSTEMTIME sysTime;
+    FILETIME fileTime;
+    CERT_INFO info = { 0 };
+    LONG ret;
+
+    GetSystemTime(&sysTime);
+    SystemTimeToFileTime(&sysTime, &fileTime);
+    /* crashes
+    ret = CertVerifyTimeValidity(NULL, NULL);
+    ret = CertVerifyTimeValidity(&fileTime, NULL);
+     */
+    /* Check with 0 NotBefore and NotAfter */
+    ret = CertVerifyTimeValidity(&fileTime, &info);
+    ok(ret == 1, "Expected 1, got %ld\n", ret);
+    memcpy(&info.NotAfter, &fileTime, sizeof(info.NotAfter));
+    /* Check with NotAfter equal to comparison time */
+    ret = CertVerifyTimeValidity(&fileTime, &info);
+    ok(ret == 0, "Expected 0, got %ld\n", ret);
+    /* Check with NotBefore after comparison time */
+    memcpy(&info.NotBefore, &fileTime, sizeof(info.NotBefore));
+    info.NotBefore.dwLowDateTime += 5000;
+    ret = CertVerifyTimeValidity(&fileTime, &info);
+    ok(ret == -1, "Expected -1, got %ld\n", ret);
+}
+
 START_TEST(main)
 {
     testOIDToAlgID();
     testAlgIDToOID();
+    test_findAttribute();
+    test_findExtension();
+    test_findRDNAttr();
+    test_verifyTimeValidity();
 }

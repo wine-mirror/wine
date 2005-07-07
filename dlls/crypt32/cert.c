@@ -178,3 +178,92 @@ PCCERT_CONTEXT WINAPI CertFindCertificateInStore(HCERTSTORE hCertStore,
     SetLastError(CRYPT_E_NOT_FOUND);
     return NULL;
 }
+
+PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
+ CRYPT_ATTRIBUTE rgAttr[])
+{
+    PCRYPT_ATTRIBUTE ret = NULL;
+    DWORD i;
+
+    TRACE("%s %ld %p\n", debugstr_a(pszObjId), cAttr, rgAttr);
+
+    if (!cAttr)
+        return NULL;
+    if (!pszObjId)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    for (i = 0; !ret && i < cAttr; i++)
+        if (rgAttr[i].pszObjId && !strcmp(pszObjId, rgAttr[i].pszObjId))
+            ret = &rgAttr[i];
+    return ret;
+}
+
+PCERT_EXTENSION WINAPI CertFindExtension(LPCSTR pszObjId, DWORD cExtensions,
+ CERT_EXTENSION rgExtensions[])
+{
+    PCERT_EXTENSION ret = NULL;
+    DWORD i;
+
+    TRACE("%s %ld %p\n", debugstr_a(pszObjId), cExtensions, rgExtensions);
+
+    if (!cExtensions)
+        return NULL;
+    if (!pszObjId)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    for (i = 0; !ret && i < cExtensions; i++)
+        if (rgExtensions[i].pszObjId && !strcmp(pszObjId,
+         rgExtensions[i].pszObjId))
+            ret = &rgExtensions[i];
+    return ret;
+}
+
+PCERT_RDN_ATTR WINAPI CertFindRDNAttr(LPCSTR pszObjId, PCERT_NAME_INFO pName)
+{
+    PCERT_RDN_ATTR ret = NULL;
+    DWORD i, j;
+
+    TRACE("%s %p\n", debugstr_a(pszObjId), pName);
+
+    if (!pszObjId)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+
+    for (i = 0; !ret && i < pName->cRDN; i++)
+        for (j = 0; !ret && j < pName->rgRDN[i].cRDNAttr; j++)
+            if (pName->rgRDN[i].rgRDNAttr[j].pszObjId && !strcmp(pszObjId,
+             pName->rgRDN[i].rgRDNAttr[j].pszObjId))
+                ret = &pName->rgRDN[i].rgRDNAttr[j];
+    return ret;
+}
+
+LONG WINAPI CertVerifyTimeValidity(LPFILETIME pTimeToVerify,
+ PCERT_INFO pCertInfo)
+{
+    FILETIME fileTime;
+    LONG ret;
+
+    if (!pTimeToVerify)
+    {
+        SYSTEMTIME sysTime;
+
+        GetSystemTime(&sysTime);
+        SystemTimeToFileTime(&sysTime, &fileTime);
+        pTimeToVerify = &fileTime;
+    }
+    if ((ret = CompareFileTime(pTimeToVerify, &pCertInfo->NotBefore)) >= 0)
+    {
+        ret = CompareFileTime(pTimeToVerify, &pCertInfo->NotAfter);
+        if (ret < 0)
+            ret = 0;
+    }
+    return ret;
+}
