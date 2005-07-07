@@ -438,7 +438,7 @@ static int ALSA_RegGetString(HKEY key, const char *value, char **bufp)
     if (! *bufp)
         return 1;
 
-    rc = RegQueryValueExA(key, value, NULL, NULL, *bufp, &bufsize);
+    rc = RegQueryValueExA(key, value, NULL, NULL, (LPBYTE)*bufp, &bufsize);
     return rc;
 }
 

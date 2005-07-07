@@ -362,7 +362,7 @@ static BOOL FindProvRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszProvNam
 	(*pcbProvName)++;
 
 	RegOpenKey(hKey, *pszProvName, &subkey);
-	RegQueryValueEx(subkey, "Type", NULL, NULL, (BYTE*)pdwProvType, &size);
+	RegQueryValueEx(subkey, "Type", NULL, NULL, (LPBYTE)pdwProvType, &size);
 	
 	RegCloseKey(subkey);
 	RegCloseKey(hKey);
@@ -485,7 +485,7 @@ static BOOL FindProvTypesRegVals(DWORD dwIndex, DWORD *pdwProvType, LPSTR *pszTy
 	if (!(*pszTypeName = ((LPSTR)LocalAlloc(LMEM_ZEROINIT, *pcbTypeName))))
 		return FALSE;
 	
-	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, *pszTypeName, pcbTypeName))
+	if (RegQueryValueEx(hSubKey, "TypeName", NULL, NULL, (LPBYTE)*pszTypeName, pcbTypeName))
 	    return FALSE;
 	
 	RegCloseKey(hSubKey);
@@ -612,7 +612,7 @@ static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvN
 	}
 	LocalFree(keyname);
 	
-	if (RegQueryValueEx(hKey, "Name", NULL, NULL, *pszProvName, pcbProvName))
+	if (RegQueryValueEx(hKey, "Name", NULL, NULL, (LPBYTE)*pszProvName, pcbProvName))
 	{
 		if (GetLastError() != ERROR_MORE_DATA)
 			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);
@@ -622,7 +622,7 @@ static BOOL FindDfltProvRegVals(DWORD dwProvType, DWORD dwFlags, LPSTR *pszProvN
 	if (!(*pszProvName = LocalAlloc(LMEM_ZEROINIT, *pcbProvName)))
 		return FALSE;
 	
-	if (RegQueryValueEx(hKey, "Name", NULL, NULL, *pszProvName, pcbProvName))
+	if (RegQueryValueEx(hKey, "Name", NULL, NULL, (LPBYTE)*pszProvName, pcbProvName))
 	{
 		if (GetLastError() != ERROR_MORE_DATA)
 			SetLastError(NTE_PROV_TYPE_ENTRY_BAD);

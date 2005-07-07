@@ -105,7 +105,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
     IErrorLog* pErrorLog)
 {
     LPVOID pData = NULL;
-    LONG received;
+    DWORD received;
     DWORD type = 0;
     RegPropBagImpl *This = (RegPropBagImpl *)iface;
     HRESULT res = S_OK;
@@ -124,7 +124,7 @@ static HRESULT WINAPI DEVENUM_IPropertyBag_Read(
         pData = HeapAlloc(GetProcessHeap(), 0, received);
 
         /* work around a GCC bug that occurs here unless we use the reswin32 variable as well */
-        reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, &type, pData, &received);
+        reswin32 = RegQueryValueExW(This->hkey, pszPropName, NULL, &type, (LPBYTE)pData, &received);
         res = HRESULT_FROM_WIN32(reswin32);
     }
 

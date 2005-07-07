@@ -3707,7 +3707,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       }
 
       if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnTypeGUID, returnBuffer,
+                            NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
         ERR(": missing GUID registry data members\n" );
@@ -3802,7 +3802,7 @@ static HRESULT WINAPI DirectPlay3AImpl_EnumConnections
       }
 
       if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnTypeGUID, returnBuffer,
+                            NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
         ERR(": missing GUID registry data members\n" );
@@ -4043,7 +4043,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
       }
 
       if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnType, returnBuffer,
+                            NULL, &returnType, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
         ERR(": missing GUID registry data members\n" );
@@ -4072,7 +4072,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
 
       /* Get dwReserved1 */
       if( RegQueryValueExA( hkServiceProvider, majVerDataSubKey,
-                            NULL, &returnType, returnBuffer,
+                            NULL, &returnType, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
          ERR(": missing dwReserved1 registry data members\n") ;
@@ -4086,7 +4086,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
 
       /* Get dwReserved2 */
       if( RegQueryValueExA( hkServiceProvider, minVerDataSubKey,
-                            NULL, &returnType, returnBuffer,
+                            NULL, &returnType, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
          ERR(": missing dwReserved1 registry data members\n") ;
@@ -4100,7 +4100,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
 
       /* Get the path for this service provider */
       if( ( dwTemp = RegQueryValueExA( hkServiceProvider, pathSubKey,
-                            NULL, NULL, returnBuffer,
+                            NULL, NULL, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) ) != ERROR_SUCCESS )
       {
         ERR(": missing PATH registry data members: 0x%08lx\n", dwTemp );

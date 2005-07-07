@@ -228,7 +228,7 @@ static LPTSTR read_value(HWND hwnd, HKEY hKey, LPCTSTR valueName, DWORD *lpType,
         error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
         goto done;
     }
-    lRet = RegQueryValueEx(hKey, valueName, 0, 0, buffer, &valueDataLen);
+    lRet = RegQueryValueEx(hKey, valueName, 0, 0, (LPBYTE)buffer, &valueDataLen);
     if (lRet != ERROR_SUCCESS) {
         error(hwnd, IDS_BAD_VALUE, valueName);
         goto done;
@@ -300,7 +300,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPCTSTR valueName)
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
         if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
-            lRet = RegSetValueEx(hKey, valueName, 0, type, stringValueData, lstrlen(stringValueData) + 1);
+            lRet = RegSetValueEx(hKey, valueName, 0, type, (LPBYTE)stringValueData, lstrlen(stringValueData) + 1);
             if (lRet == ERROR_SUCCESS) result = TRUE;
             else error_code_messagebox(hwnd, lRet);
         }

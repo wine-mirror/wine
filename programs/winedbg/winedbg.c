@@ -181,7 +181,7 @@ static	unsigned dbg_load_internal_vars(void)
         if (!dbg_internal_vars[i].pval) 
         {
             if (!RegQueryValueEx(hkey, dbg_internal_vars[i].name, 0,
-                                 &type, (LPSTR)&val, &count))
+                                 &type, (LPBYTE)&val, &count))
                 dbg_internal_vars[i].val = val;
             dbg_internal_vars[i].pval = &dbg_internal_vars[i].val;
         }

@@ -99,7 +99,7 @@ static BOOL CALLBACK UXTHEME_broadcast_msg (HWND hWnd, LPARAM msg)
 static void UXTHEME_LoadTheme(void)
 {
     HKEY hKey;
-    LONG buffsize;
+    DWORD buffsize;
     HRESULT hr;
     WCHAR tmp[10];
     PTHEME_FILE pt;

@@ -1491,7 +1491,7 @@ void NetBTInit(void)
          && dword <= MAX_QUERY_TIMEOUT)
             gWINSQueryTimeout = dword;
         size = MAX_DOMAIN_NAME_LEN - 1;
-        if (RegQueryValueExW(hKey, ScopeIDW, NULL, NULL, gScopeID + 1, &size)
+        if (RegQueryValueExW(hKey, ScopeIDW, NULL, NULL, (LPBYTE)gScopeID + 1, &size)
          == ERROR_SUCCESS)
         {
             /* convert into L2-encoded version, suitable for use by

@@ -2321,7 +2321,7 @@ BOOL WINAPI CommitUrlCacheEntryW(
 	if (header_info)
             WideCharToMultiByte(CP_ACP, 0, lpHeaderInfo, -1, header_info, len, NULL, NULL);
 	if (CommitUrlCacheEntryInternal(lpszUrlName, lpszLocalFileName, ExpireTime, LastModifiedTime,
-				CacheEntryType, header_info, len, lpszFileExtension, lpszOriginalUrl))
+				CacheEntryType, (LPBYTE)header_info, len, lpszFileExtension, lpszOriginalUrl))
 	{
 		bSuccess = TRUE;
 	}

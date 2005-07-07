@@ -694,7 +694,7 @@ DWORD WINAPI RegQueryMultipleValuesA(HKEY hkey, PVALENTA val_list, DWORD num_val
         if(lpValueBuf != NULL && *ldwTotsize + val_list[i].ve_valuelen <= maxBytes)
         {
             status = RegQueryValueExA(hkey, val_list[i].ve_valuename, NULL, &val_list[i].ve_type,
-                                      bufptr, &val_list[i].ve_valuelen);
+                                      (LPBYTE)bufptr, &val_list[i].ve_valuelen);
             if(status != ERROR_SUCCESS)
             {
                 return status;
@@ -739,7 +739,7 @@ DWORD WINAPI RegQueryMultipleValuesW(HKEY hkey, PVALENTW val_list, DWORD num_val
         if(lpValueBuf != NULL && *ldwTotsize + val_list[i].ve_valuelen <= maxBytes)
         {
             status = RegQueryValueExW(hkey, val_list[i].ve_valuename, NULL, &val_list[i].ve_type,
-                                      bufptr, &val_list[i].ve_valuelen);
+                                      (LPBYTE)bufptr, &val_list[i].ve_valuelen);
             if(status != ERROR_SUCCESS)
             {
                 return status;

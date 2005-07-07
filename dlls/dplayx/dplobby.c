@@ -783,7 +783,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumAddressTypes
       }
 
       if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                            NULL, &returnTypeGUID, returnBuffer,
+                            NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
                             &sizeOfReturnBuffer ) != ERROR_SUCCESS )
       {
         ERR(": missing GUID registry data members\n" );
@@ -928,7 +928,7 @@ static HRESULT WINAPI IDirectPlayLobbyAImpl_EnumLocalApplications
     }
 
     if( RegQueryValueExA( hkServiceProvider, guidDataSubKey,
-                          NULL, &returnTypeGUID, returnBuffer,
+                          NULL, &returnTypeGUID, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
       ERR(": missing GUID registry data members\n" );
@@ -1084,7 +1084,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
 
     /* Get all the appropriate data from the registry */
     if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, clSubKey,
-                          NULL, &returnType, returnBuffer,
+                          NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
        ERR( ": missing CommandLine registry data member\n" );
@@ -1098,7 +1098,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     sizeOfReturnBuffer = 200;
 
     if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, cdSubKey,
-                          NULL, &returnType, returnBuffer,
+                          NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
        ERR( ": missing CurrentDirectory registry data member\n" );
@@ -1112,7 +1112,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     sizeOfReturnBuffer = 200;
 
     if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, fileSubKey,
-                          NULL, &returnType, returnBuffer,
+                          NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
        ERR( ": missing File registry data member\n" );
@@ -1126,7 +1126,7 @@ static BOOL CALLBACK RunApplicationA_EnumLocalApplications
     sizeOfReturnBuffer = 200;
 
     if( RegQueryValueExA( lpData->This->dpl->hkCallbackKeyHack, pathSubKey,
-                          NULL, &returnType, returnBuffer,
+                          NULL, &returnType, (LPBYTE)returnBuffer,
                           &sizeOfReturnBuffer ) != ERROR_SUCCESS )
     {
        ERR( ": missing Path registry data member\n" );

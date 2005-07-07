@@ -147,7 +147,8 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
 {
    HKEY hKey;
    BYTE lpValue[40];
-   LONG cbValue = 40, r;
+   LONG r;
+   DWORD cbValue = sizeof(lpValue);
 
    TRACE("(%p, %p)\n", RangeMax, RangeMin);
 
@@ -179,7 +180,7 @@ BOOLEAN WINAPI GetPwrDiskSpindownRange(PUINT RangeMax, PUINT RangeMin)
       *RangeMax = atoiW((LPCWSTR)lpValue);
    }
 
-   cbValue = 40;
+   cbValue = sizeof(lpValue);
 
    r = RegQueryValueExW(hKey, szDiskMin, 0, 0, lpValue, &cbValue);
    if (r != ERROR_SUCCESS) {
@@ -319,7 +320,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             TRACE("Couldn't open registry key HKLM\\%s, using some sane(?) defaults\n", debugstr_w(szPowerCfgSubKey));
          } else {
             BYTE lpValue[40];
-            LONG cbValue = 40;
+            DWORD cbValue = sizeof(lpValue);
             r = RegQueryValueExW(hKey, szLastID, 0, 0, lpValue, &cbValue);
             if (r != ERROR_SUCCESS) {
                TRACE("Couldn't open registry entry HKLM\\%s\\LastID, using some sane(?) defaults\n", debugstr_w(szPowerCfgSubKey));

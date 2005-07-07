@@ -719,7 +719,7 @@ static RETERR16 VCP_UI_CopyStart(void)
     if (RegSetValueExA(hKeyConflict, "Dirty", 0, REG_BINARY, (LPBYTE)&dirty, 1))
 	return VCPN_FAIL;
     len = 12;
-    if (!(RegQueryValueExA(hKeyConflict, "BackupDirectory", NULL, 0, BackupDir, &len)))
+    if (!(RegQueryValueExA(hKeyConflict, "BackupDirectory", NULL, 0, (LPBYTE)BackupDir, &len)))
 	strcpy(BackupDir, "VCM");
 
     /* create C:\WINDOWS\[BackupDir] and set registry key to it */

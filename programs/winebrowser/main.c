@@ -85,7 +85,7 @@ int main (int argc, char *argv[])
     return 1;
   }
 
-  r = RegQueryValueExA( hkey, "Browsers", 0, &type, szBrowsers, &maxLength);
+  r = RegQueryValueExA( hkey, "Browsers", 0, &type, (LPBYTE)szBrowsers, &maxLength);
   if(r != ERROR_SUCCESS)
   {
     /* set value to the default */
