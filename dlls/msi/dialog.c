@@ -53,7 +53,7 @@ struct msi_control_tag
     msi_handler handler;
     LPWSTR property;
     LPWSTR value;
-    IPicture *pic;
+    HBITMAP hBitmap;
     HICON hIcon;
     LPWSTR tabnext;
     WCHAR name[1];
@@ -301,7 +301,7 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     control->handler = NULL;
     control->property = NULL;
     control->value = NULL;
-    control->pic = NULL;
+    control->hBitmap = NULL;
     control->hIcon = NULL;
     control->tabnext = strdupW( MSI_RecordGetString( rec, 11) );
 
@@ -628,52 +628,6 @@ static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
     return MSI_QueryGetRecord( db, query, name );
 }
 
-static UINT msi_load_bitmap( MSIDATABASE *db, LPCWSTR name, IPicture **pic )
-{
-    MSIRECORD *rec = NULL;
-    IStream *stm = NULL;
-    UINT r;
-
-    rec = msi_get_binary_record( db, name );
-    if( !rec )
-        return ERROR_FUNCTION_FAILED;
-
-    r = MSI_RecordGetIStream( rec, 2, &stm );
-    msiobj_release( &rec->hdr );
-    if( r != ERROR_SUCCESS )
-        return r;
-
-    r = OleLoadPicture( stm, 0, TRUE, &IID_IPicture, (LPVOID*) pic );
-    IStream_Release( stm );
-    if( FAILED( r ) )
-        return ERROR_FUNCTION_FAILED;
-
-    return ERROR_SUCCESS;
-}
-
-static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
-{
-    IPicture *pic = NULL;
-    msi_control *control;
-    OLE_HANDLE hBitmap = 0;
-    LPCWSTR text;
-    UINT r;
-
-    control = msi_dialog_add_control( dialog, rec, szStatic,
-                            SS_BITMAP | SS_LEFT | SS_CENTERIMAGE );
-    text = MSI_RecordGetString( rec, 10 );
-    r = msi_load_bitmap( dialog->package->db, text, &pic );
-    if( r == ERROR_SUCCESS )
-    {
-        r = IPicture_get_Handle( pic, &hBitmap );
-        if( SUCCEEDED( r ) )
-            SendMessageW( control->hwnd, STM_SETIMAGE, IMAGE_BITMAP, hBitmap );
-        control->pic = pic;
-    }
-    
-    return ERROR_SUCCESS;
-}
-
 static LPWSTR msi_create_tmp_path(void)
 {
     WCHAR tmp[MAX_PATH];
@@ -698,19 +652,19 @@ static LPWSTR msi_create_tmp_path(void)
     return path;
 }
 
-static UINT
-msi_load_icon( MSIDATABASE *db, LPCWSTR name, DWORD attributes, HICON *picon )
+static HANDLE msi_load_image( MSIDATABASE *db, LPCWSTR name, UINT type,
+                              UINT cx, UINT cy, UINT flags )
 {
-    UINT r = ERROR_FUNCTION_FAILED;
+    MSIRECORD *rec = NULL;
+    HANDLE himage = NULL;
     LPWSTR tmp;
-    MSIRECORD *rec;
-    HICON hicon = 0;
+    UINT r;
 
-    TRACE("loading %s\n", debugstr_w( name ) );
+    TRACE("%p %s %u %u %08x\n", db, debugstr_w(name), cx, cy, flags);
 
     tmp = msi_create_tmp_path();
     if( !tmp )
-        return r;
+        return himage;
 
     rec = msi_get_binary_record( db, name );
     if( rec )
@@ -718,59 +672,84 @@ msi_load_icon( MSIDATABASE *db, LPCWSTR name, DWORD attributes, HICON *picon )
         r = MSI_RecordStreamToFile( rec, 2, tmp );
         if( r == ERROR_SUCCESS )
         {
-            DWORD cx = 0, cy = 0, flags = LR_LOADFROMFILE | LR_DEFAULTSIZE;
-            
-            if( attributes & msidbControlAttributesFixedSize )
-            {
-                flags &= ~LR_DEFAULTSIZE;
-                if( attributes & msidbControlAttributesIconSize16 )
-                {
-                    cx += 16;
-                    cy += 16;
-                }
-                if( attributes & msidbControlAttributesIconSize32 )
-                {
-                    cx += 32;
-                    cy += 32;
-                }
-                /* msidbControlAttributesIconSize48 handled by above logic */
-            }
-            
-            hicon = LoadImageW( 0, tmp, IMAGE_ICON, cx, cy, flags );
-            if( hicon )
-                *picon = hicon;
-            else
-                ERR("failed to load icon from %s\n", debugstr_w( tmp ));
+            himage = LoadImageW( 0, tmp, type, cx, cy, flags );
             DeleteFileW( tmp );
         }
         msiobj_release( &rec->hdr );
     }
 
     HeapFree( GetProcessHeap(), 0, tmp );
+    return himage;
+}
 
-    return r;
+static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
+{
+    UINT cx, cy, flags, style, attributes;
+    msi_control *control;
+    LPCWSTR text;
+
+    flags = LR_LOADFROMFILE;
+    style = SS_BITMAP | SS_LEFT | WS_GROUP;
+
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    if( attributes & msidbControlAttributesFixedSize )
+    {
+        flags |= LR_DEFAULTSIZE;
+    }
+        style |= SS_CENTERIMAGE;
+
+    control = msi_dialog_add_control( dialog, rec, szStatic, style );
+    text = MSI_RecordGetString( rec, 10 );
+    cx = MSI_RecordGetInteger( rec, 6 );
+    cy = MSI_RecordGetInteger( rec, 7 );
+    cx = msi_dialog_scale_unit( dialog, cx );
+    cy = msi_dialog_scale_unit( dialog, cy );
+
+    control->hBitmap = msi_load_image( dialog->package->db, text,
+                                       IMAGE_BITMAP, cx, cy, flags );
+    if( control->hBitmap )
+        SendMessageW( control->hwnd, STM_SETIMAGE,
+                      IMAGE_BITMAP, (LPARAM) control->hBitmap );
+    else
+        ERR("Failed to load bitmap %s\n", debugstr_w(text));
+    
+    return ERROR_SUCCESS;
 }
 
 static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
-    DWORD attributes;
-    HICON hIcon = 0;
+    DWORD attributes, cx = 0, cy = 0, flags;
     LPCWSTR text;
-    UINT r;
 
     TRACE("\n");
 
     control = msi_dialog_add_control( dialog, rec, szStatic,
                             SS_ICON | SS_CENTERIMAGE | WS_GROUP );
-    text = MSI_RecordGetString( rec, 10 );
+            
+    flags = LR_LOADFROMFILE | LR_DEFAULTSIZE;
     attributes = MSI_RecordGetInteger( rec, 8 );
-    r = msi_load_icon( dialog->package->db, text, attributes, &hIcon );
-    if( r == ERROR_SUCCESS )
+    if( attributes & msidbControlAttributesFixedSize )
     {
-        r = SendMessageW( control->hwnd, STM_SETICON, (WPARAM) hIcon, 0 );
-        control->hIcon = hIcon;
+        flags &= ~LR_DEFAULTSIZE;
+        if( attributes & msidbControlAttributesIconSize16 )
+        {
+            cx += 16;
+            cy += 16;
+        }
+        if( attributes & msidbControlAttributesIconSize32 )
+        {
+            cx += 32;
+            cy += 32;
+        }
+        /* msidbControlAttributesIconSize48 handled by above logic */
     }
+
+    text = MSI_RecordGetString( rec, 10 );
+    control->hIcon = msi_load_image( dialog->package->db, text,
+                                     IMAGE_ICON, cx, cy, flags );
+    if( control->hIcon )
+        SendMessageW( control->hwnd, STM_SETICON, (WPARAM) control->hIcon, 0 );
     else
         ERR("Failed to load bitmap %s\n", debugstr_w(text));
     return ERROR_SUCCESS;
@@ -1907,8 +1886,8 @@ void msi_dialog_destroy( msi_dialog *dialog )
         /* leave dialog->hwnd - destroying parent destroys child windows */
         HeapFree( GetProcessHeap(), 0, t->property );
         HeapFree( GetProcessHeap(), 0, t->value );
-        if( t->pic )
-            IPicture_Release( t->pic );
+        if( t->hBitmap )
+            DeleteObject( t->hBitmap );
         if( t->hIcon )
             DestroyIcon( t->hIcon );
         HeapFree( GetProcessHeap(), 0, t->tabnext );
