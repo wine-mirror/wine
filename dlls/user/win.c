@@ -613,8 +613,6 @@ void WIN_DestroyThreadWindows( HWND hwnd )
  */
 BOOL WIN_CreateDesktopWindow(void)
 {
-    CREATESTRUCTA cs;
-
     TRACE("Creating desktop window\n");
 
     SERVER_START_REQ( create_window )
@@ -633,20 +631,7 @@ BOOL WIN_CreateDesktopWindow(void)
         return FALSE;
     }
 
-    cs.lpCreateParams = NULL;
-    cs.hInstance      = 0;
-    cs.hMenu          = 0;
-    cs.hwndParent     = 0;
-    cs.x              = 0;
-    cs.y              = 0;
-    cs.cx             = GetSystemMetrics( SM_CXSCREEN );
-    cs.cy             = GetSystemMetrics( SM_CYSCREEN );
-    cs.style          = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-    cs.dwExStyle      = 0;
-    cs.lpszName       = NULL;
-    cs.lpszClass      = DESKTOP_CLASS_ATOM;
-
-    return USER_Driver.pCreateWindow( hwndDesktop, &cs, TRUE );
+    return USER_Driver.pCreateDesktopWindow( hwndDesktop );
 }
 
 

@@ -641,27 +641,6 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
 
 
 /**********************************************************************
- *		create_desktop
- */
-static void create_desktop( Display *display, struct x11drv_win_data *data )
-{
-    VisualID visualid;
-
-    wine_tsx11_lock();
-    visualid = XVisualIDFromVisual(visual);
-    wine_tsx11_unlock();
-
-    data->whole_window = root_window;
-    data->whole_rect = data->client_rect = data->window_rect;
-
-    SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
-    SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
-
-    if (root_window != DefaultRootWindow(display)) X11DRV_create_desktop_thread();
-}
-
-
-/**********************************************************************
  *		create_whole_window
  *
  * Create the whole X window for a given window
@@ -832,6 +811,60 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
 }
 
 
+static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
+{
+    struct x11drv_win_data *data;
+
+    if ((data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data))))
+    {
+        data->hwnd          = hwnd;
+        data->whole_window  = 0;
+        data->icon_window   = 0;
+        data->xic           = 0;
+        data->managed       = FALSE;
+        data->dce           = NULL;
+        data->hWMIconBitmap = 0;
+        data->hWMIconMask   = 0;
+
+        wine_tsx11_lock();
+        if (!winContext) winContext = XUniqueContext();
+        if (!win_data_context) win_data_context = XUniqueContext();
+        XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
+        wine_tsx11_unlock();
+    }
+    return data;
+}
+
+
+/**********************************************************************
+ *		CreateDesktopWindow   (X11DRV.@)
+ */
+BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
+{
+    Display *display = thread_display();
+    VisualID visualid;
+    struct x11drv_win_data *data;
+    RECT rect;
+
+    if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
+    data->whole_window = root_window;
+
+    SetRect( &rect, 0, 0, screen_width, screen_height );
+    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
+
+    wine_tsx11_lock();
+    visualid = XVisualIDFromVisual(visual);
+    wine_tsx11_unlock();
+
+    SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
+    SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
+
+    if (root_window != DefaultRootWindow(display) && !desktop_tid) X11DRV_create_desktop_thread();
+
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		CreateWindow   (X11DRV.@)
  */
@@ -840,12 +873,14 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     Display *display = thread_display();
     WND *wndPtr;
     struct x11drv_win_data *data;
-    HWND parent, insert_after;
+    HWND insert_after;
     RECT rect;
     DWORD style;
     CBT_CREATEWNDA cbtc;
     CREATESTRUCTA cbcs;
     BOOL ret = FALSE;
+
+    if (!(data = alloc_win_data( display, hwnd ))) return FALSE;
 
     if (cs->cx > 65535)
     {
@@ -868,35 +903,12 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
         cs->cy = 0;
     }
 
-    if (!(data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data)))) return FALSE;
-    data->hwnd          = hwnd;
-    data->whole_window  = 0;
-    data->icon_window   = 0;
-    data->xic           = 0;
-    data->managed       = FALSE;
-    data->dce           = NULL;
-    data->hWMIconBitmap = 0;
-    data->hWMIconMask   = 0;
-
-    wine_tsx11_lock();
-    if (!winContext) winContext = XUniqueContext();
-    if (!win_data_context) win_data_context = XUniqueContext();
-    XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
-    wine_tsx11_unlock();
-
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
     X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
 
-    parent = GetAncestor( hwnd, GA_PARENT );
-    if (!parent)
-    {
-        create_desktop( display, data );
-        return TRUE;
-    }
-
     /* create an X window if it's a top level window */
-    if (parent == GetDesktopWindow())
+    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
     {
         if (!create_whole_window( display, data, cs->style )) goto failed;
     }

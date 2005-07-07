@@ -588,7 +588,11 @@ BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
     }
     SERVER_END_REQ;
 
-    if (win == WND_DESKTOP) return ret;
+    if (win == WND_DESKTOP)
+    {
+        data->whole_rect = data->client_rect = data->window_rect = *rectWindow;
+        return ret;
+    }
 
     if (ret)
     {

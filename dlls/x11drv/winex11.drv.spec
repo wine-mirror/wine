@@ -85,6 +85,7 @@
 @ cdecl EnumDisplaySettingsExW (ptr long ptr long) X11DRV_EnumDisplaySettingsExW
 @ cdecl AcquireClipboard(long) X11DRV_AcquireClipboard
 @ cdecl CountClipboardFormats() X11DRV_CountClipboardFormats
+@ cdecl CreateDesktopWindow(long) X11DRV_CreateDesktopWindow
 @ cdecl CreateWindow(long ptr long) X11DRV_CreateWindow
 @ cdecl DestroyWindow(long) X11DRV_DestroyWindow
 @ cdecl EmptyClipboard(long) X11DRV_EmptyClipboard

@@ -125,13 +125,26 @@ static BOOL set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow
 
 
 /**********************************************************************
+ *		CreateDesktopWindow   (TTYDRV.@)
+ */
+BOOL TTYDRV_CreateDesktopWindow( HWND hwnd )
+{
+    RECT rect;
+
+    SetRect( &rect, 0, 0, cell_width * screen_cols, cell_height * screen_rows );
+    set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER );
+    SetPropA( hwnd, "__wine_ttydrv_window", root_window );
+    return TRUE;
+}
+
+/**********************************************************************
  *		CreateWindow   (TTYDRV.@)
  */
 BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 {
     BOOL ret;
     RECT rect;
-    HWND parent, hwndLinkAfter;
+    HWND hwndLinkAfter;
     CBT_CREATEWNDA cbtc;
 
     TRACE("(%p)\n", hwnd);
@@ -140,16 +153,9 @@ BOOL TTYDRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     SetRect( &rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
     set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER );
 
-    parent = GetAncestor( hwnd, GA_PARENT );
-    if (!parent)  /* desktop window */
-    {
-        SetPropA( hwnd, "__wine_ttydrv_window", root_window );
-        return TRUE;
-    }
-
 #ifdef WINE_CURSES
     /* Only create top-level windows */
-    if (parent == GetDesktopWindow())
+    if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())
     {
         WINDOW *window;
         const INT cellWidth=8, cellHeight=8; /* FIXME: Hardcoded */

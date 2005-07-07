@@ -44,6 +44,7 @@
 @ cdecl SetCursor(ptr) TTYDRV_SetCursor
 @ cdecl GetScreenSaveActive() TTYDRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) TTYDRV_SetScreenSaveActive
+@ cdecl CreateDesktopWindow(long) TTYDRV_CreateDesktopWindow
 @ cdecl CreateWindow(long ptr long) TTYDRV_CreateWindow
 @ cdecl DestroyWindow(long) TTYDRV_DestroyWindow
 @ cdecl GetDC(long long long long) TTYDRV_GetDC

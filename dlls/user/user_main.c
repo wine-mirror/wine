@@ -124,6 +124,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(ResetSelectionOwner);
     GET_USER_FUNC(ChangeDisplaySettingsExW);
     GET_USER_FUNC(EnumDisplaySettingsExW);
+    GET_USER_FUNC(CreateDesktopWindow);
     GET_USER_FUNC(CreateWindow);
     GET_USER_FUNC(DestroyWindow);
     GET_USER_FUNC(GetDCEx);

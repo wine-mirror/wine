@@ -137,6 +137,7 @@ typedef struct tagUSER_DRIVER {
     LONG   (*pChangeDisplaySettingsExW)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
     BOOL   (*pEnumDisplaySettingsExW)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
     /* windowing functions */
+    BOOL   (*pCreateDesktopWindow)(HWND);
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
     BOOL   (*pDestroyWindow)(HWND);
     HDC    (*pGetDCEx)(HWND,HRGN,DWORD);
