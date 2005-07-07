@@ -786,9 +786,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         {"__wine_spec_delayed_import_thunks",   THUNK_ORDINAL_LOAD,   0, 0},    /* delayed inter DLL calls */
         {"__wine_delay_load",                   THUNK_ORDINAL_LOAD,   0, 0},    /* delayed inter DLL calls */
         {"__wine_spec_thunk_text_16",           -16,                  0, 0},    /* 16 => 32 thunks */
-        {"__wine_spec_thunk_data_16",           -16,                  0, 0},    /* 16 => 32 thunks */
         {"__wine_spec_thunk_text_32",           -32,                  0, 0},    /* 32 => 16 thunks */
-        {"__wine_spec_thunk_data_32",           -32,                  0, 0},    /* 32 => 16 thunks */
         {NULL,                                  0,                    0, 0}
     };
 
