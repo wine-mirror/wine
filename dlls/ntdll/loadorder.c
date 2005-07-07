@@ -80,12 +80,6 @@ static const enum loadorder_type default_loadorder[LOADORDER_NTYPES] =
     LOADORDER_BI, LOADORDER_DLL, 0
 };
 
-/* default for modules with an explicit path */
-static const enum loadorder_type default_path_loadorder[LOADORDER_NTYPES] =
-{
-    LOADORDER_DLL, LOADORDER_BI, 0
-};
-
 static const WCHAR separatorsW[] = {',',' ','\t',0};
 
 static int init_done;
@@ -608,11 +602,6 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
                    debugstr_loadorder(loadorder), debugstr_w(path) );
             goto done;
         }
-
-        /* and last the hard-coded default */
-        memcpy( loadorder, default_loadorder, sizeof(default_loadorder) );
-        TRACE( "got hardcoded default %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
     }
     else  /* module contains an explicit path */
     {
@@ -639,12 +628,12 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
                    debugstr_loadorder(loadorder), debugstr_w(path) );
             goto done;
         }
-
-        /* and last the hard-coded default */
-        memcpy( loadorder, default_path_loadorder, sizeof(default_path_loadorder) );
-        TRACE( "got hardcoded path default %s for %s\n",
-               debugstr_loadorder(loadorder), debugstr_w(path) );
     }
+
+    /* and last the hard-coded default */
+    memcpy( loadorder, default_loadorder, sizeof(default_loadorder) );
+    TRACE( "got hardcoded default %s for %s\n",
+           debugstr_loadorder(loadorder), debugstr_w(path) );
 
  done:
     if (app_key) NtClose( app_key );
