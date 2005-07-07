@@ -422,9 +422,9 @@ typedef struct _VTableProvStruc {
 } VTableProvStruc, *PVTableProvStruc;
 
 typedef struct _CRYPT_ATTRIBUTE {
-    LPSTR           pszObjId;
-    DWORD           cValue;
-    CRYPT_DATA_BLOB rgValue;
+    LPSTR            pszObjId;
+    DWORD            cValue;
+    PCRYPT_DATA_BLOB rgValue;
 } CRYPT_ATTRIBUTE, *PCRYPT_ATTRIBUTE;
 
 typedef struct _CRYPT_ATTRIBUTES {
