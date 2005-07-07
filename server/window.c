@@ -73,6 +73,7 @@ struct window
     unsigned int     ex_style;        /* window extended style */
     unsigned int     id;              /* window id */
     void*            instance;        /* creator instance */
+    int              is_unicode;      /* ANSI or unicode */
     void*            user_data;       /* user-specific data */
     WCHAR           *text;            /* window caption text */
     unsigned int     paint_flags;     /* various painting flags */
@@ -354,6 +355,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->ex_style       = 0;
     win->id             = 0;
     win->instance       = NULL;
+    win->is_unicode     = 1;
     win->user_data      = NULL;
     win->text           = NULL;
     win->paint_flags    = 0;
@@ -1393,6 +1395,7 @@ DECL_HANDLER(get_window_info)
     {
         reply->full_handle = win->handle;
         reply->last_active = win->handle;
+        reply->is_unicode  = win->is_unicode;
         if (get_user_object( win->last_active, USER_WINDOW )) reply->last_active = win->last_active;
         if (win->thread)
         {
@@ -1440,6 +1443,7 @@ DECL_HANDLER(set_window_info)
     if (req->flags & SET_WIN_EXSTYLE) win->ex_style = req->ex_style;
     if (req->flags & SET_WIN_ID) win->id = req->id;
     if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
+    if (req->flags & SET_WIN_UNICODE) win->is_unicode = req->is_unicode;
     if (req->flags & SET_WIN_USERDATA) win->user_data = req->user_data;
     if (req->flags & SET_WIN_EXTRA) memcpy( win->extra_bytes + req->extra_offset,
                                             &req->extra_value, req->extra_size );

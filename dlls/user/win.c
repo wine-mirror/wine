@@ -1056,10 +1056,11 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     SERVER_START_REQ( set_window_info )
     {
         req->handle    = hwnd;
-        req->flags     = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE;
+        req->flags     = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE | SET_WIN_UNICODE;
         req->style     = wndPtr->dwStyle;
         req->ex_style  = wndPtr->dwExStyle;
         req->instance  = (void *)wndPtr->hInstance;
+        req->is_unicode = (type == WIN_PROC_32W);
         req->extra_offset = -1;
         wine_server_call( req );
     }
@@ -1658,12 +1659,26 @@ BOOL WINAPI IsWindowEnabled(HWND hWnd)
 BOOL WINAPI IsWindowUnicode( HWND hwnd )
 {
     WND * wndPtr;
-    BOOL retvalue;
+    BOOL retvalue = FALSE;
 
-    if (!(wndPtr = WIN_GetPtr(hwnd)) || wndPtr == WND_OTHER_PROCESS) return FALSE;
+    if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
+
     if (wndPtr == WND_DESKTOP) return TRUE;
-    retvalue = (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
-    WIN_ReleasePtr( wndPtr );
+
+    if (wndPtr != WND_OTHER_PROCESS)
+    {
+        retvalue = (WINPROC_GetProcType( wndPtr->winproc ) == WIN_PROC_32W);
+        WIN_ReleasePtr( wndPtr );
+    }
+    else
+    {
+        SERVER_START_REQ( get_window_info )
+        {
+            req->handle = hwnd;
+            if (!wine_server_call_err( req )) retvalue = reply->is_unicode;
+        }
+        SERVER_END_REQ;
+    }
     return retvalue;
 }
 
@@ -1976,10 +1991,18 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
             return (ULONG_PTR)SetParent( hwnd, (HWND)newval );
         }
     case GWLP_WNDPROC:
+    {
+        WINDOWPROCTYPE old_type = WINPROC_GetProcType( wndPtr->winproc );
         retval = (ULONG_PTR)WINPROC_GetProc( wndPtr->winproc, type );
         wndPtr->winproc = WINPROC_AllocProc( (WNDPROC)newval, type );
-        WIN_ReleasePtr( wndPtr );
-        return retval;
+        if (old_type == type)
+        {
+            WIN_ReleasePtr( wndPtr );
+            return retval;
+        }
+        /* update is_unicode flag on the server side */
+        break;
+    }
     case GWLP_ID:
     case GWLP_HINSTANCE:
     case GWLP_USERDATA:
@@ -2036,6 +2059,10 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
             req->flags = SET_WIN_INSTANCE;
             req->instance = (void *)newval;
             break;
+        case GWLP_WNDPROC:
+            req->flags = SET_WIN_UNICODE;
+            req->is_unicode = (type == WIN_PROC_32W);
+            break;
         case GWLP_USERDATA:
             req->flags = SET_WIN_USERDATA;
             req->user_data = (void *)newval;
@@ -2065,6 +2092,8 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
             case GWLP_HINSTANCE:
                 wndPtr->hInstance = (HINSTANCE)newval;
                 retval = (ULONG_PTR)reply->old_instance;
+                break;
+            case GWLP_WNDPROC:
                 break;
             case GWLP_USERDATA:
                 wndPtr->userdata = newval;

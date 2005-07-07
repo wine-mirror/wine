@@ -2249,7 +2249,8 @@ static void dump_get_window_info_reply( const struct get_window_info_reply *req 
     fprintf( stderr, " last_active=%p,", req->last_active );
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " atom=%04x", req->atom );
+    fprintf( stderr, " atom=%04x,", req->atom );
+    fprintf( stderr, " is_unicode=%d", req->is_unicode );
 }
 
 static void dump_set_window_info_request( const struct set_window_info_request *req )
@@ -2260,6 +2261,7 @@ static void dump_set_window_info_request( const struct set_window_info_request *
     fprintf( stderr, " ex_style=%08x,", req->ex_style );
     fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " instance=%p,", req->instance );
+    fprintf( stderr, " is_unicode=%d,", req->is_unicode );
     fprintf( stderr, " user_data=%p,", req->user_data );
     fprintf( stderr, " extra_offset=%d,", req->extra_offset );
     fprintf( stderr, " extra_size=%d,", req->extra_size );

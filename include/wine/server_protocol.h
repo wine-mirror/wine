@@ -2531,6 +2531,7 @@ struct get_window_info_reply
     process_id_t   pid;
     thread_id_t    tid;
     atom_t         atom;
+    int            is_unicode;
 };
 
 
@@ -2544,6 +2545,7 @@ struct set_window_info_request
     unsigned int   ex_style;
     unsigned int   id;
     void*          instance;
+    int            is_unicode;
     void*          user_data;
     int            extra_offset;
     size_t         extra_size;
@@ -2565,6 +2567,7 @@ struct set_window_info_reply
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
 #define SET_WIN_EXTRA     0x20
+#define SET_WIN_UNICODE   0x40
 
 
 
@@ -4188,6 +4191,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 179
+#define SERVER_PROTOCOL_VERSION 180
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

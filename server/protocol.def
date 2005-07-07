@@ -1788,6 +1788,7 @@ enum message_type
     process_id_t   pid;         /* process owning the window */
     thread_id_t    tid;         /* thread owning the window */
     atom_t         atom;        /* class atom */
+    int            is_unicode;  /* ANSI or unicode */
 @END
 
 
@@ -1799,6 +1800,7 @@ enum message_type
     unsigned int   ex_style;      /* window extended style */
     unsigned int   id;            /* window id */
     void*          instance;      /* creator instance */
+    int            is_unicode;    /* ANSI or unicode */
     void*          user_data;     /* user-specific data */
     int            extra_offset;  /* offset to set in extra bytes */
     size_t         extra_size;    /* size to set in extra bytes */
@@ -1817,6 +1819,7 @@ enum message_type
 #define SET_WIN_INSTANCE  0x08
 #define SET_WIN_USERDATA  0x10
 #define SET_WIN_EXTRA     0x20
+#define SET_WIN_UNICODE   0x40
 
 
 /* Set the parent of a window */
