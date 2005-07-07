@@ -30,6 +30,9 @@
  * it's only a first step. :-)
  */
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+
 #include <windows.h>
 #include <commdlg.h>
 #include <stdio.h>
@@ -75,6 +78,7 @@ static HINSTANCE g_hInstance;
  * so that the custom dialog boxes can get at them.
  */
 
+static PAGESETUPDLG psd;
 static PRINTDLG pd;
 static COLORREF cc_cr[16];
 static CHOOSECOLOR cc;
@@ -151,6 +155,14 @@ static void mwi_Print(HWND hWnd)
 	pd.lpSetupTemplateName = 0;
 	pd.hPrintTemplate = 0;
 	pd.hSetupTemplate = 0;
+}
+
+static void mwi_PageSetup(HWND hWnd)
+{
+	ZeroMemory(&psd, sizeof(PAGESETUPDLG));
+	psd.lStructSize = sizeof(PAGESETUPDLG);
+	psd.hwndOwner = hWnd;
+	
 }
 
 static void mwi_Color(HWND hWnd)
@@ -245,6 +257,7 @@ static void mwi_InitAll(HWND hWnd)
 	mwi_Color(hWnd);
 	mwi_File(hWnd);
 	mwi_FindReplace(hWnd);
+	mwi_PageSetup(hWnd);
 }
 
 /*
@@ -450,6 +463,97 @@ static void mw_PrintSetup(HWND hWnd)
 	else mw_checkError(hWnd,TRUE);
 }
 
+#define OF(fn, fi, fl)  \
+		if(dm->dmFields & fl){ \
+			printf("        %s  =%hd \n", (fn), dm->fi); \
+		} else \
+			printf("        %s NOT SET!\n", fn);
+
+
+static void mw_PageSetup(HWND hWnd)
+{
+	DEVMODEA *dm;
+	DEVNAMES *dn;
+	CHAR      tmplnm[30] = "PAGESETUPDLGORD_CSTM";
+	
+	if(psd.Flags & PSD_ENABLEPAGESETUPTEMPLATE)
+		psd.lpPageSetupTemplateName = tmplnm;
+	psd.hInstance = g_hInstance;
+	
+	if(PageSetupDlg(&psd)){
+		dm = GlobalLock(psd.hDevMode);
+		if(dm) {
+			printf("dm != NULL\nDEVMODEA struct:\n");
+			printf("    dmDeviceName    ='%s'  \n", 	dm->dmDeviceName);
+			printf("    dmSpecVersion   =%#x \n",	dm->dmSpecVersion);
+			printf("    dmDriverVersion =%#x \n",	dm->dmDriverVersion);
+			printf("    dmSize          =%#x \n", 	dm->dmSize);	
+			printf("    dmDriverExtra   =%#x \n",	dm->dmDriverExtra);
+			printf("    dmFields        =%#lx\n", 	dm->dmFields);
+			OF("dmOrientation",	u1.s1.dmOrientation,	DM_ORIENTATION)
+			OF("dmPaperSize",	u1.s1.dmPaperSize,	DM_PAPERSIZE);
+			OF("dmPaperLength",	u1.s1.dmPaperLength,	DM_PAPERLENGTH);
+			OF("dmPaperWidth",	u1.s1.dmPaperWidth,	DM_PAPERWIDTH);
+			OF("dmScale",		dmScale,	DM_SCALE);
+			OF("dmCopies",		dmCopies,	DM_COPIES);
+			OF("dmDefaultSource",	dmDefaultSource,DM_DEFAULTSOURCE);
+			OF("dmPrintQuality",	dmPrintQuality,	DM_PRINTQUALITY);
+			if(dm->dmFields &	DM_POSITION)
+				printf("        dmPosition(%ld, %ld)\n", dm->u1.dmPosition.x, dm->u1.dmPosition.y);
+			else
+				printf("        dmPosition NOT SET!\n");
+			OF("dmColor",		dmColor,	DM_COLOR);
+			OF("dmDuplex",		dmDuplex,	DM_DUPLEX);
+			OF("dmYResolution",	dmYResolution,	DM_YRESOLUTION);
+			OF("dmTTOption",	dmTTOption,	DM_TTOPTION);
+			OF("dmCollate",		dmCollate,	DM_COLLATE);
+			if(dm->dmFields & DM_FORMNAME)
+				printf("        dmFormName = '%s'\n", dm->dmFormName);
+			else 
+				printf("        dmFormName NOT SET!\n");
+			if(dm->dmFields & DM_ICMMETHOD)
+				printf("        dmICMMethod = %#lx\n", dm->dmICMMethod);
+			else
+				printf("        dmICMMethod NOT SET!");
+			
+			GlobalUnlock(psd.hDevMode);
+		}
+		else
+			printf("dm == NULL\n");
+	
+		printf("\nPAGESETUPDLG struct\n");
+		printf("    ptPaperSize(%ld, %ld)\n", psd.ptPaperSize.x, psd.ptPaperSize.y);
+		printf("    rtMargin(%ld, %ld, %ld, %ld)\n", 
+			psd.rtMargin.left, psd.rtMargin.top, psd.rtMargin.right, psd.rtMargin.bottom);
+	
+		printf("\nDEVNAMES struct\n");
+		dn = GlobalLock(psd.hDevNames);
+		if(dn){
+			printf("    wDriverOffset='%s'\n", ((char*)dn+dn->wDriverOffset));
+			printf("    wDeviceOffset='%s'\n", ((char*)dn+dn->wDeviceOffset));
+			printf("    wOutputOffset='%s'\n", ((char*)dn+dn->wOutputOffset));
+			printf("    wDefault     ='%s'\n", ((char*)dn+dn->wDefault));
+			GlobalUnlock(psd.hDevNames);
+		}else
+			printf(" dn == NULL!\n");		
+		printf("End.\n");
+
+		if (psd.hDevMode != NULL)
+			GlobalFree(psd.hDevMode);
+		if (psd.hDevNames != NULL)
+			GlobalFree(psd.hDevNames);
+		if (psd.hPageSetupTemplate != NULL)
+			GlobalFree(psd.hPageSetupTemplate);
+
+		psd.hDevMode  = NULL;
+		psd.hDevNames = NULL;
+		psd.hPageSetupTemplate = NULL;
+
+		MessageBox(hWnd, "Success.", "Yes", MB_OK);
+	} mw_checkError(hWnd, FALSE);
+}
+
+/********************************************************************************************************/
 /*
  * Some support functions for the custom dialog box handlers.
  * In particular, we have to set things properly, and get the flags back.
@@ -630,6 +734,34 @@ static BOOL CALLBACK mwcd_PrintSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM
 	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &pd.Flags);
 }
 
+static BOOL CALLBACK mwcd_PageSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	static struct FlagTableEntry flagTable[] = {
+		{I_PSD_DEFAULTMINMARGINS, 	PSD_DEFAULTMINMARGINS},
+		{I_PSD_DISABLEMARGINS,    	PSD_DISABLEMARGINS},
+		{I_PSD_DISABLEORIENTATION, 	PSD_DISABLEORIENTATION},
+		{I_PSD_DISABLEPAGEPAINTING, 	PSD_DISABLEPAGEPAINTING},
+		{I_PSD_DISABLEPAPER, 		PSD_DISABLEPAPER},
+		{I_PSD_DISABLEPRINTER, 		PSD_DISABLEPRINTER},
+		{I_PSD_ENABLEPAGEPAINTHOOK, 	PSD_ENABLEPAGEPAINTHOOK},
+		{I_PSD_ENABLEPAGESETUPHOOK, 	PSD_ENABLEPAGESETUPHOOK},
+		{I_PSD_ENABLEPAGESETUPTEMPLATE, PSD_ENABLEPAGESETUPTEMPLATE},
+		{I_PSD_ENABLEPAGESETUPTEMPLATEHANDLE, PSD_ENABLEPAGESETUPTEMPLATEHANDLE},
+		{I_PSD_INHUNDREDTHSOFMILLIMETERS, PSD_INHUNDREDTHSOFMILLIMETERS},
+		{I_PSD_INTHOUSANDTHSOFINCHES, 	PSD_INTHOUSANDTHSOFINCHES},
+		{I_PSD_INWININIINTLMEASURE, 	PSD_INWININIINTLMEASURE},
+		{I_PSD_MARGINS, 		PSD_MARGINS},
+		{I_PSD_MINMARGINS, 		PSD_MINMARGINS},
+		{I_PSD_NONETWORKBUTTON, 	PSD_NONETWORKBUTTON},
+		{I_PSD_NOWARNING, 		PSD_NOWARNING},
+		{I_PSD_RETURNDEFAULT, 		PSD_RETURNDEFAULT},
+		{I_PSD_SHOWHELP, 		PSD_SHOWHELP},
+		{IDOK, 0}
+	};
+
+	return mwcd_Setup(hWnd, uMsg, wParam, lParam, flagTable, &psd.Flags);
+}
+
 static BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	static struct FlagTableEntry flagTable[] = {
@@ -697,6 +829,12 @@ static void mwc_PrintSetup(HWND hWnd)
 {
 	int r = DialogBox(g_hInstance, "Print_Flags_Dialog", hWnd, (DLGPROC) mwcd_PrintSetup);
 	if(r < 0) { MessageBox(hWnd, "Failure opening Print_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
+}
+
+static void mwc_PageSetup(HWND hWnd)
+{
+	int r = DialogBox(g_hInstance, "PageSetup_Flags_Dialog", hWnd, (DLGPROC) mwcd_PageSetup);
+	if(r < 0) { MessageBox(hWnd, "Failure opening PageSetup_Flags_Dialog box", "Error", MB_ICONASTERISK|MB_OK); }
 }
 
 static void mwc_FileSetup(HWND hWnd)
@@ -793,7 +931,10 @@ static LRESULT CALLBACK EXPORT mainWindowDispatcher(
 
 		case CM_U_PRINT:
 			mw_PrintSetup(hWnd); return 1;
-
+			
+		case CM_U_PAGESETUP:
+			mw_PageSetup(hWnd); return 1;
+			
 		/*
 		 * these set up various flags and values in the Common Dialog
 		 * data structures, which are currently stored in static memory.
@@ -814,6 +955,9 @@ static LRESULT CALLBACK EXPORT mainWindowDispatcher(
 
 		case CM_F_PRINT:
 			mwc_PrintSetup(hWnd); return 1;
+
+		case CM_F_PAGESETUP: 
+			mwc_PageSetup(hWnd); return 1;
 
 		case CM_H_ABOUT:
 			DialogBox(g_hInstance, "AboutDialog", hWnd, (DLGPROC) mwcd_About);
