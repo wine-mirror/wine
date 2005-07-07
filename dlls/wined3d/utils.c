@@ -1761,4 +1761,138 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     TRACE("bytes/Pxl for fmt(%u,%s) = %d\n", fmt, debug_d3dformat(fmt), retVal);
     return retVal;
 }
+
+/* Convertes a D3D format into a OpenGL configuration format */
+int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate){
+#define PUSH1(att)        attribs[(*nAttribs)++] = (att); 
+#define PUSH2(att,value)  attribs[(*nAttribs)++] = (att); attribs[(*nAttribs)++] = (value);
+    /*We need to do some Card specific stuff in here at some point, 
+    D3D now support floating point format buffers, and their are a number of different OpelGl ways on managing thease e.g.
+    GLX_ATI_pixel_format_float
+    */
+    switch (BackBufferFormat) {
+        /* color buffer */
+    case WINED3DFMT_P8:
+        PUSH2(GLX_RENDER_TYPE,  GLX_COLOR_INDEX_BIT);
+        PUSH2(GLX_BUFFER_SIZE,  8);
+        PUSH2(GLX_DOUBLEBUFFER, TRUE);
+        break;
+
+    case WINED3DFMT_R3G3B2:
+        PUSH2(GLX_RENDER_TYPE,  GLX_RGBA_BIT);
+        PUSH2(GLX_RED_SIZE,     3);
+        PUSH2(GLX_GREEN_SIZE,   3);
+        PUSH2(GLX_BLUE_SIZE,    2);
+        break;
+
+    case WINED3DFMT_A1R5G5B5:
+        PUSH2(GLX_ALPHA_SIZE,   1);
+    case WINED3DFMT_X1R5G5B5:
+        PUSH2(GLX_RED_SIZE,     5);
+        PUSH2(GLX_GREEN_SIZE,   5);
+        PUSH2(GLX_BLUE_SIZE,    5);
+        break;
+
+    case WINED3DFMT_R5G6B5:
+        PUSH2(GLX_RED_SIZE,     5);
+        PUSH2(GLX_GREEN_SIZE,   6);
+        PUSH2(GLX_BLUE_SIZE,    5);
+        break;
+
+    case WINED3DFMT_A4R4G4B4:
+        PUSH2(GLX_ALPHA_SIZE,   4);
+    case WINED3DFMT_X4R4G4B4:
+        PUSH2(GLX_RED_SIZE,     4);
+        PUSH2(GLX_GREEN_SIZE,   4);
+        PUSH2(GLX_BLUE_SIZE,    4);
+        break;
+
+    case WINED3DFMT_A8R8G8B8:
+        PUSH2(GLX_ALPHA_SIZE,   8);
+    case WINED3DFMT_R8G8B8:
+    case WINED3DFMT_X8R8G8B8:
+        PUSH2(GLX_RED_SIZE,     8);
+        PUSH2(GLX_GREEN_SIZE,   8);
+        PUSH2(GLX_BLUE_SIZE,    8);
+        break;
+
+    default:
+        break;
+    }
+    if(!alternate){
+        switch (StencilBufferFormat) { 
+    case WINED3DFMT_D16_LOCKABLE:
+    case WINED3DFMT_D16:
+        PUSH2(GLX_DEPTH_SIZE,   16);
+        break;
+
+    case WINED3DFMT_D15S1:
+        PUSH2(GLX_DEPTH_SIZE,   15);
+        PUSH2(GLX_STENCIL_SIZE, 1);
+        /*Does openGl support a 1bit stencil?, I've seen it used elsewhere 
+        e.g. http://www.ks.uiuc.edu/Research/vmd/doxygen/OpenGLDisplayDevice_8C-source.html*/
+        break;
+
+    case WINED3DFMT_D24X8:
+        PUSH2(GLX_DEPTH_SIZE,   24);
+        break;
+
+    case WINED3DFMT_D24X4S4:
+        PUSH2(GLX_DEPTH_SIZE,   24);
+        PUSH2(GLX_STENCIL_SIZE, 4);
+        break;
+
+    case WINED3DFMT_D24S8:
+        PUSH2(GLX_DEPTH_SIZE,   24);
+        PUSH2(GLX_STENCIL_SIZE, 8);
+        break;
+
+    case WINED3DFMT_D32:
+        PUSH2(GLX_DEPTH_SIZE,   32);
+        break;
+
+    default:
+        break;
+    }
+
+    }else{ /* it the device doesn't support the 'exact' format, try to find something close */
+        switch (StencilBufferFormat) { 
+        case WINED3DFMT_D16_LOCKABLE:
+        case WINED3DFMT_D16:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            break;
+
+        case WINED3DFMT_D15S1:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            PUSH2(GLX_STENCIL_SIZE, 1);
+            /*Does openGl support a 1bit stencil?, I've seen it used elsewhere 
+            e.g. http://www.ks.uiuc.edu/Research/vmd/doxygen/OpenGLDisplayDevice_8C-source.html*/
+            break;
+
+        case WINED3DFMT_D24X8:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            break;
+
+        case WINED3DFMT_D24X4S4:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            PUSH2(GLX_STENCIL_SIZE, 1);
+            break;
+
+        case WINED3DFMT_D24S8:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            PUSH2(GLX_STENCIL_SIZE, 1);
+            break;
+
+        case WINED3DFMT_D32:
+            PUSH2(GLX_DEPTH_SIZE,   1);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    return *nAttribs;
+}
+
 #undef GLINFO_LOCATION

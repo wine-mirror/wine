@@ -1572,7 +1572,6 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->createParms.BehaviorFlags  = BehaviourFlags;
 
     /* Initialize other useful values */
-    object->presentParms.BackBufferCount = 1; /* Opengl only supports one? */
     object->adapterNo                    = Adapter;
     object->devType                      = DeviceType;
 

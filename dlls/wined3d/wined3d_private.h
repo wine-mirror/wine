@@ -394,7 +394,6 @@ typedef struct IWineD3DDeviceImpl
 
     /* Internal use fields  */
     D3DDEVICE_CREATION_PARAMETERS   createParms;
-    D3DPRESENT_PARAMETERS           presentParms;
     UINT                            adapterNo;
     D3DDEVTYPE                      devType;
 
@@ -403,8 +402,6 @@ typedef struct IWineD3DDeviceImpl
     int                     numberOfSwapChains;
 
     /* Render Target Support */
-    IWineD3DSurface        *frontBuffer;
-    IWineD3DSurface        *backBuffer;
     IWineD3DSurface        *depthStencilBuffer;
 
     IWineD3DSurface        *renderTarget;
@@ -849,6 +846,9 @@ SHORT  D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
 GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
 GLenum D3DFmt2GLType(IWineD3DDeviceImpl *This, D3DFORMAT fmt);
 GLint  D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt);
+
+int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
+
 
 /*****************************************************************************
  * To enable calling of inherited functions, requires prototypes 

@@ -374,53 +374,61 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateOffscreenPlainSurface(LPDIRECT3DDEVI
 /* TODO: move to wineD3D */
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9* pRenderTarget) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hr = S_OK;
-
-    /* If pRenderTarget == NULL, it seems to default to back buffer */
-    if (pRenderTarget == NULL) pRenderTarget = (IDirect3DSurface9*) This->backBuffer;
- 
-    /* If we are trying to set what we already have, don't bother */
-    if ((IDirect3DSurface9Impl*) pRenderTarget == This->renderTarget) {
-      TRACE("Trying to do a NOP SetRenderTarget operation\n");
-    } else {
-      /* Otherwise, set the render target up */
-      TRACE("(%p) : newRender@%p (default is backbuffer=(%p))\n", This, pRenderTarget, This->backBuffer);
-      hr = E_FAIL; /* not supported yet */
-    }
-
-   return hr;
+    IDirect3DSurface9Impl *pSurface = (IDirect3DSurface9Impl*)pRenderTarget;
+    TRACE("(%p) Relay\n" , This);
+    return IWineD3DDevice_SetRenderTarget(This->WineD3DDevice,RenderTargetIndex,(IWineD3DSurface*)pSurface->wineD3DSurface);
 }
 
-/* TODO: move to wineD3D */
-HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9** ppRenderTarget) {
+HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTarget(LPDIRECT3DDEVICE9 iface, DWORD RenderTargetIndex, IDirect3DSurface9 **ppRenderTarget) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p)->returning (%p) default is backbuffer=(%p)\n", This, This->renderTarget, This->backBuffer);
-    *ppRenderTarget = (LPDIRECT3DSURFACE9) This->renderTarget;
-    IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppRenderTarget);
-    return D3D_OK;
+    HRESULT hr = D3D_OK;
+    IWineD3DSurface *pRenderTarget;
+
+    TRACE("(%p) Relay\n" , This);
+
+    if (ppRenderTarget == NULL) {
+        return D3DERR_INVALIDCALL;
+    }
+    hr=IWineD3DDevice_GetRenderTarget(This->WineD3DDevice,RenderTargetIndex,&pRenderTarget);
+
+    if (hr == D3D_OK && pRenderTarget != NULL) {
+        IWineD3DResource_GetParent((IWineD3DResource *)pRenderTarget,(IUnknown**)ppRenderTarget);
+        IWineD3DResource_Release((IWineD3DResource *)pRenderTarget);
+    } else {
+        FIXME("Call to IWineD3DDevice_GetRenderTarget failed\n");
+        *ppRenderTarget = NULL;
+    }
+    return hr;
 }
 
-/* TODO: move to wineD3D */
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetDepthStencilSurface(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9* pZStencilSurface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    HRESULT hr = S_OK;
-    /* If we are trying to set what we already have, don't bother */
-    if ((IDirect3DSurface9Impl*) pZStencilSurface == This->stencilBufferTarget) {
-      TRACE("Trying to do a NOP SetDepthStencilSurface operation\n");
-    } else {
-      /* Otherwise, set the target up */
-      TRACE("(%p) : newDepthStencil@%p (default is stencilbuffer=(%p))\n", This, pZStencilSurface, This->depthStencilBuffer);
-      hr = E_FAIL; /* not supported yet */
-    }
-    return D3D_OK;
+    IDirect3DSurface9Impl *pSurface;
+
+    TRACE("(%p) Relay\n" , This);
+
+    pSurface = (IDirect3DSurface9Impl*)pZStencilSurface;
+    return IWineD3DDevice_SetDepthStencilSurface(This->WineD3DDevice,NULL==pSurface?NULL:(IWineD3DSurface*)pSurface->wineD3DSurface);
 }
 
-/* TODO: move to wineD3D */
-HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9** ppZStencilSurface) {
+HRESULT  WINAPI  IDirect3DDevice9Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9 **ppZStencilSurface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p)->returning (%p) default is stencilbuffer=(%p)\n", This, This->stencilBufferTarget, This->depthStencilBuffer);
-    *ppZStencilSurface = (LPDIRECT3DSURFACE9) This->stencilBufferTarget;
-    if (NULL != *ppZStencilSurface) IDirect3DSurface9Impl_AddRef((LPDIRECT3DSURFACE9) *ppZStencilSurface);
+    HRESULT hr = D3D_OK;
+    IWineD3DSurface *pZStencilSurface;
+
+    TRACE("(%p) Relay\n" , This);
+    if(ppZStencilSurface == NULL){
+        return D3DERR_INVALIDCALL;
+    }
+
+    hr=IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice,&pZStencilSurface);
+    if(hr == D3D_OK && pZStencilSurface != NULL){
+        IWineD3DResource_GetParent((IWineD3DResource *)pZStencilSurface,(IUnknown**)ppZStencilSurface);
+        IWineD3DResource_Release((IWineD3DResource *)pZStencilSurface);
+    }else{
+        FIXME("Call to IWineD3DDevice_GetRenderTarget failed\n");
+        *ppZStencilSurface = NULL;
+    }
     return D3D_OK;
 }
 
