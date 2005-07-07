@@ -157,7 +157,6 @@ extern void close_signals(void);
 
 /* atom functions */
 
-extern void close_atom_table(void);
 extern atom_t add_global_atom( const WCHAR *str, size_t len );
 extern atom_t find_global_atom( const WCHAR *str, size_t len );
 extern int grab_global_atom( atom_t atom );

@@ -32,6 +32,8 @@
 #include "object.h"
 #include "process.h"
 #include "handle.h"
+#include "user.h"
+#include "winuser.h"
 
 #define HASH_SIZE     37
 #define MIN_HASH_SIZE 4
@@ -79,8 +81,6 @@ static const struct object_ops atom_table_ops =
     no_close_handle,              /* close_handle */
     atom_table_destroy            /* destroy */
 };
-
-static struct atom_table *global_table;
 
 
 /* create an atom table */
@@ -205,12 +205,6 @@ static struct atom_entry *find_atom_entry( struct atom_table *table, const WCHAR
     return entry;
 }
 
-/* close the atom table; used on server exit */
-void close_atom_table(void)
-{
-    if (global_table) release_object( global_table );
-}
-
 /* add an atom to the table */
 static atom_t add_atom( struct atom_table *table, const WCHAR *str, size_t len )
 {
@@ -290,24 +284,54 @@ static atom_t find_atom( struct atom_table *table, const WCHAR *str, size_t len 
     return 0;
 }
 
-static struct atom_table* get_table( obj_handle_t h )
+static struct atom_table *get_global_table( int create )
 {
-    if (h) return (struct atom_table *)get_handle_obj( current->process, h, 0, &atom_table_ops );
+    struct atom_table *global_table;
+    struct winstation *winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS );
 
-    if (!global_table && !(global_table = create_table( HASH_SIZE ))) return NULL;
-    return (struct atom_table *)grab_object( global_table );
+    if (!winstation) return NULL;
+
+    if (!(global_table = get_winstation_atom_table( winstation )))
+    {
+        if (create)
+        {
+            global_table = create_table( HASH_SIZE );
+            if (global_table) set_winstation_atom_table( winstation, global_table );
+        }
+        else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+    }
+    release_object( winstation );
+    return global_table;
+}
+
+static struct atom_table *get_table( obj_handle_t h, int create )
+{
+    struct atom_table *table;
+
+    if (h)
+    {
+        table = (struct atom_table *)get_handle_obj( current->process, h, 0, &atom_table_ops );
+    }
+    else
+    {
+        table = get_global_table( 1 );
+        if (table) grab_object( table );
+    }
+    return table;
 }
 
 /* add an atom in the global table; used for window properties */
 atom_t add_global_atom( const WCHAR *str, size_t len )
 {
-    if (!global_table && !(global_table = create_table( HASH_SIZE ))) return 0;
+    struct atom_table *global_table = get_global_table( 1 );
+    if (!global_table) return 0;
     return add_atom( global_table, str, len );
 }
 
 /* find an atom in the global table; used for window properties */
 atom_t find_global_atom( const WCHAR *str, size_t len )
 {
+    struct atom_table *global_table = get_global_table( 0 );
     struct atom_entry *entry;
 
     if (!len || len > MAX_ATOM_LEN || !global_table) return 0;
@@ -321,9 +345,14 @@ int grab_global_atom( atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
-        struct atom_entry *entry = get_atom_entry( global_table, atom );
-        if (entry) entry->count++;
-        return (entry != NULL);
+        struct atom_table *global_table = get_global_table( 0 );
+        if (global_table)
+        {
+            struct atom_entry *entry = get_atom_entry( global_table, atom );
+            if (entry) entry->count++;
+            return (entry != NULL);
+        }
+        else return 0;
     }
     else return 1;
 }
@@ -331,13 +360,17 @@ int grab_global_atom( atom_t atom )
 /* decrement the ref count of a global atom; used for window properties */
 void release_global_atom( atom_t atom )
 {
-    if (atom >= MIN_STR_ATOM) delete_atom( global_table, atom, 1 );
+    if (atom >= MIN_STR_ATOM)
+    {
+        struct atom_table *global_table = get_global_table( 0 );
+        if (global_table) delete_atom( global_table, atom, 1 );
+    }
 }
 
 /* add a global atom */
 DECL_HANDLER(add_atom)
 {
-    struct atom_table *table = get_table( req->table );
+    struct atom_table *table = get_table( req->table, 1 );
     if (table)
     {
         reply->atom = add_atom( table, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
@@ -348,7 +381,7 @@ DECL_HANDLER(add_atom)
 /* delete a global atom */
 DECL_HANDLER(delete_atom)
 {
-    struct atom_table *table = get_table( req->table );
+    struct atom_table *table = get_table( req->table, 0 );
     if (table)
     {
         delete_atom( table, req->atom, 0 );
@@ -359,7 +392,7 @@ DECL_HANDLER(delete_atom)
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
-    struct atom_table *table = get_table( req->table );
+    struct atom_table *table = get_table( req->table, 0 );
     if (table)
     {
         reply->atom = find_atom( table, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
@@ -370,7 +403,7 @@ DECL_HANDLER(find_atom)
 /* get global atom name */
 DECL_HANDLER(get_atom_information)
 {
-    struct atom_table *table = get_table( req->table );
+    struct atom_table *table = get_table( req->table, 0 );
     if (table)
     {
         struct atom_entry *entry;
@@ -391,7 +424,7 @@ DECL_HANDLER(get_atom_information)
 /* set global atom name */
 DECL_HANDLER(set_atom_information)
 {
-    struct atom_table *table = get_table( req->table );
+    struct atom_table *table = get_table( req->table, 0 );
     if (table)
     {
         struct atom_entry *entry;
@@ -419,7 +452,7 @@ DECL_HANDLER(init_atom_table)
 /* set global atom name */
 DECL_HANDLER(empty_atom_table)
 {
-    struct atom_table *table = get_table( req->table );
+    struct atom_table *table = get_table( req->table, 1 );
     if (table)
     {
         int i;

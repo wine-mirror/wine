@@ -42,6 +42,7 @@ struct winstation
     struct list        entry;              /* entry in global winstation list */
     struct list        desktops;           /* list of desktops of this winstation */
     struct clipboard  *clipboard;          /* clipboard information */
+    struct atom_table *atom_table;         /* global atom table */
 };
 
 struct desktop
@@ -115,6 +116,7 @@ static struct winstation *create_winstation( const WCHAR *name, size_t len, unsi
             /* initialize it if it didn't already exist */
             winstation->flags = flags;
             winstation->clipboard = NULL;
+            winstation->atom_table = NULL;
             list_add_tail( &winstation_list, &winstation->entry );
             list_init( &winstation->desktops );
         }
@@ -143,6 +145,7 @@ static void winstation_destroy( struct object *obj )
     if (winstation == interactive_winstation) interactive_winstation = NULL;
     list_remove( &winstation->entry );
     if (winstation->clipboard) release_object( winstation->clipboard );
+    if (winstation->atom_table) release_object( winstation->atom_table );
 }
 
 /* retrieve the process window station, checking the handle access rights */
@@ -162,6 +165,18 @@ void set_winstation_clipboard( struct winstation *winstation, struct clipboard *
 struct clipboard *get_winstation_clipboard( struct winstation *winstation )
 {
     return winstation->clipboard;
+}
+
+/* set the pointer to the (opaque) atom table */
+void set_winstation_atom_table( struct winstation *winstation, struct atom_table *table )
+{
+    winstation->atom_table = table;
+}
+
+/* retrieve the pointer to the (opaque) clipboard info */
+struct atom_table *get_winstation_atom_table( struct winstation *winstation )
+{
+    return winstation->atom_table;
 }
 
 /* build the full name of a desktop object */
