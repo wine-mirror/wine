@@ -93,6 +93,48 @@ static BOOL NETAPI_IsKnownUser(LPCWSTR UserName)
     }
 
 /************************************************************
+ *                NetUserAdd (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetUserAdd(LMSTR servername,
+                  DWORD level, LPBYTE* bufptr, LPDWORD parm_err)
+{
+    NET_API_STATUS status;
+    FIXME("(%s, %ld, %p, %p) stub!\n", debugstr_w(servername), level, bufptr, parm_err);
+
+    status = NETAPI_ValidateServername(servername);
+    if (status != NERR_Success)
+        return status;
+    
+    if ((bufptr != NULL) && (level > 0) && (level <= 4))
+    {
+        PUSER_INFO_1 ui = (PUSER_INFO_1) bufptr;
+        TRACE("usri%ld_name: %s\n", level, debugstr_w(ui->usri1_name));
+        TRACE("usri%ld_password: %s\n", level, debugstr_w(ui->usri1_password));
+        TRACE("usri%ld_comment: %s\n", level, debugstr_w(ui->usri1_comment));
+    }
+    return status;
+}
+
+/************************************************************
+ *                NetUserDel  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetUserDel(LPCWSTR servername, LPCWSTR username)
+{
+    NET_API_STATUS status;
+    FIXME("(%s, %s) stub!\n", debugstr_w(servername), debugstr_w(username));
+
+    status = NETAPI_ValidateServername(servername);
+    if (status != NERR_Success)
+        return status;
+
+    if (!NETAPI_IsKnownUser(username))
+        return NERR_UserNotFound;
+
+    /* Delete the user here */
+    return status;
+}
+
+/************************************************************
  *                NetUserGetInfo  (NETAPI32.@)
  */
 NET_API_STATUS WINAPI
@@ -266,7 +308,9 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
 	    DWORD prefmaxlen, LPDWORD entriesread, LPDWORD totalentries,
 	    LPDWORD resume_handle)
 {
-  FIXME("stub!\n");
+  FIXME("(%s,%ld, 0x%ld,%p,%ld,%p,%p,%p) stub!\n", debugstr_w(servername), level,
+        filter, bufptr, prefmaxlen, entriesread, totalentries, resume_handle);
+
   return ERROR_ACCESS_DENIED;
 }
 
@@ -498,7 +542,8 @@ NetQueryDisplayInformation(
 NET_API_STATUS WINAPI
 NetGetDCName(LPWSTR servername, LPWSTR domainname, LPBYTE *bufptr)
 {
-  FIXME("stub!\n");
+  FIXME("(%s, %s, %p) stub!\n", debugstr_w(servername),
+                 debugstr_w(domainname), bufptr);
   return NERR_DCNotFound; /* say we can't find a domain controller */  
 }
 
@@ -508,21 +553,28 @@ NetGetDCName(LPWSTR servername, LPWSTR domainname, LPBYTE *bufptr)
  */
 NET_API_STATUS WINAPI NetUserModalsGet(LPCWSTR szServer, DWORD level, LPBYTE *pbuffer)
 {
-    FIXME("%s %ld %p\n", debugstr_w( szServer ), level, pbuffer );
+    FIXME("(%s %ld %p) stub!\n", debugstr_w(szServer), level, pbuffer);
     return NERR_InternalError;
 }
 
-NET_API_STATUS WINAPI NetLocalGroupAdd( LPCWSTR servername, DWORD level,
+/************************************************************
+ *                NetLocalGroupAdd  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupAdd(LPCWSTR servername, DWORD level,
                  LPBYTE buf, LPDWORD parm_err)
 {
-    FIXME("%s %ld %p %p\n", debugstr_w( servername ), level, buf, parm_err);
+    FIXME("(%s %ld %p %p) stub!\n", debugstr_w(servername), level, buf, parm_err);
     return NERR_Success;
 }
 
-NET_API_STATUS WINAPI NetLocalGroupSetMembers( LPCWSTR servername,
+/************************************************************
+ *                NetLocalGroupSetMember (NETAPI32.@)
+ */
+
+NET_API_STATUS WINAPI NetLocalGroupSetMembers(LPCWSTR servername,
              LPCWSTR groupname, DWORD level, LPBYTE buf, DWORD totalentries)
 {
-    FIXME("%s %s %ld %p %ld\n", debugstr_w(servername), debugstr_w(groupname),
-          level, buf, totalentries);
+    FIXME("(%s %s %ld %p %ld) stub!\n", debugstr_w(servername), 
+            debugstr_w(groupname),level, buf, totalentries);
     return NERR_Success;
 }
