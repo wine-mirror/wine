@@ -353,6 +353,12 @@ static void test_dpa(void)
         ok(CheckDPA(dpa2, 0x777456, &dw2), "dw=0x%lx\n", dw2);
         ok(nEnum == 3, "nEnum=%d\n", nEnum);
     }
+    
+    /* Setting item with huge index should work */
+    todo_wine ok(pDPA_SetPtr(dpa2, 0x12345, (PVOID)0xdeadbeef), "\n");
+    ret = pDPA_GetPtrIndex(dpa2, (PVOID)0xdeadbeef);
+    todo_wine ok(ret == 0x12345, "ret=%d\n", ret);
+          
     pDPA_DeleteAllPtrs(dpa2);
     ok(CheckDPA(dpa2, 0, &dw2), "dw2=0x%lx\n", dw2);
     pDPA_Destroy(dpa2);
