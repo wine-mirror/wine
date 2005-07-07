@@ -31,13 +31,13 @@ TtfTable: cvt  4
 !(6u&
 EndTtf
 LangName: 1033 "" "" "" "" "" "" "" "" "" "" "" "http://www.winehq.org" "" "This library is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option) any later version.+AAoACgAA-This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more details.+AAoACgAA-You should have received a copy of the GNU Lesser General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA+AAoA" "http://www.gnu.org/licenses/lgpl.html" 
-Encoding: symbol
+Encoding: Symbol
 UnicodeInterp: none
 DisplaySize: -24
 AntiAlias: 1
 FitToEm: 1
 WinInfo: 0 24 5
-TeXData: 1 10485760 0 708670 354335 236222 1342177 -2147484 236222 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
+TeXData: 1 0 0 708670 354335 236222 1342177 -2147484 236222 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
 BeginChars: 257 36
 StartChar: f020
 Encoding: 0 61472 0
@@ -73,33 +73,70 @@ Encoding: 49 49 2
 Width: 2048
 Flags: H
 Fore
-256 384 m 1,0,-1
- 1536 384 l 1,1,-1
+256 384 m 5,0,-1
+ 1536 384 l 5,1,-1
  1536 1408 l 5,2,-1
- 256 1408 l 1,3,-1
- 256 384 l 1,0,-1
-128 256 m 1,4,-1
- 128 1664 l 1,5,-1
- 1664 1664 l 1,6,-1
- 1664 256 l 1,7,-1
- 128 256 l 1,4,-1
+ 256 1408 l 5,3,-1
+ 256 384 l 5,0,-1
+128 256 m 5,4,-1
+ 128 1664 l 5,5,-1
+ 1664 1664 l 5,6,-1
+ 1664 256 l 5,7,-1
+ 128 256 l 5,4,-1
 EndSplineSet
 EndChar
 StartChar: two
 Encoding: 50 50 3
 Width: 2048
-Flags: H
+Flags: HO
+Back
+651.601 848 m 1,0,-1
+ 1582.4 848 l 1,1,-1
+ 1582.4 1430 l 1,2,-1
+ 651.601 1430 l 1,3,-1
+ 651.601 848 l 1,0,-1
+570 766.4 m 1,4,-1
+ 570 1664 l 1,5,-1
+ 1664 1664 l 1,6,-1
+ 1664 766.4 l 1,7,-1
+ 570 766.4 l 1,4,-1
+211.2 339.2 m 1,0,-1
+ 1156.8 339.2 l 1,1,-1
+ 1156.8 935 l 1,2,-1
+ 211.2 935 l 1,3,-1
+ 211.2 339.2 l 1,0,-1
+128 256 m 1,4,-1
+ 128 1171.2 l 1,5,-1
+ 1240 1171.2 l 1,6,-1
+ 1240 256 l 1,7,-1
+ 128 256 l 1,4,-1
+EndSplineSet
 Fore
-1452 1272 m 25,0,-1
- 306 420 l 25,1,-1
- 408 288 l 25,2,-1
- 1542 1152 l 25,3,-1
- 1452 1272 l 25,0,-1
-564 1296 m 25,4,-1
- 1506 342 l 25,5,-1
- 1410 216 l 25,6,-1
- 444 1224 l 25,7,-1
- 564 1296 l 25,4,-1
+1220 1040 m 1,0,-1
+ 1220 848 l 5,0,0
+ 1582.4 848 l 1,1,-1
+ 1582.4 1430 l 1,2,-1
+ 651.601 1430 l 1,3,-1
+ 651.601 1040 l 1,0,0
+ 1220 1040 l 1,0,-1
+570 975 m 1,4,-1
+ 570 1040 l 1,0,0
+ 570 1664 l 1,5,-1
+ 1664 1664 l 1,6,-1
+ 1664 766.4 l 1,7,-1
+ 1170 766.4 l 1,0,0
+ 1170 975 l 1,0,0
+ 570 975 l 1,4,-1
+211.2 339.2 m 1,0,-1
+ 1156.8 339.2 l 1,1,-1
+ 1156.8 935 l 1,2,-1
+ 211.2 935 l 1,3,-1
+ 211.2 339.2 l 1,0,-1
+128 256 m 1,4,-1
+ 128 1171.2 l 1,5,-1
+ 1240 1171.2 l 1,6,-1
+ 1240 256 l 1,7,-1
+ 128 256 l 1,4,-1
 EndSplineSet
 EndChar
 StartChar: three
