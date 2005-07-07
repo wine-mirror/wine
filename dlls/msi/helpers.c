@@ -40,7 +40,6 @@ static const WCHAR cszTargetDir[] = {'T','A','R','G','E','T','D','I','R',0};
 static const WCHAR cszDatabase[]={'D','A','T','A','B','A','S','E',0};
 
 const WCHAR cszSourceDir[] = {'S','o','u','r','c','e','D','i','r',0};
-const WCHAR szProductCode[]= {'P','r','o','d','u','c','t','C','o','d','e',0};
 const WCHAR cszRootDrive[] = {'R','O','O','T','D','R','I','V','E',0};
 const WCHAR cszbs[]={'\\',0};
 
@@ -88,10 +87,8 @@ DWORD build_version_dword(LPCWSTR version_string)
 UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name, 
                             LPWSTR *FilePath)
 {
-    LPWSTR ProductCode;
     LPWSTR SystemFolder;
     LPWSTR dest;
-    UINT rc;
 
     static const WCHAR szInstaller[] = 
         {'M','i','c','r','o','s','o','f','t','\\',
@@ -99,20 +96,15 @@ UINT build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name,
     static const WCHAR szFolder[] =
         {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
 
-    ProductCode = load_dynamic_property(package,szProductCode,&rc);
-    if (!ProductCode)
-        return rc;
-
     SystemFolder = load_dynamic_property(package,szFolder,NULL);
 
-    dest = build_directory_name(3, SystemFolder, szInstaller, ProductCode);
+    dest = build_directory_name(3, SystemFolder, szInstaller, package->ProductCode);
 
     create_full_pathW(dest);
 
     *FilePath = build_directory_name(2, dest, icon_name);
 
     HeapFree(GetProcessHeap(),0,SystemFolder);
-    HeapFree(GetProcessHeap(),0,ProductCode);
     HeapFree(GetProcessHeap(),0,dest);
     return ERROR_SUCCESS;
 }
@@ -586,6 +578,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
 
     HeapFree(GetProcessHeap(),0,package->PackagePath);
     HeapFree(GetProcessHeap(),0,package->msiFilePath);
+    HeapFree(GetProcessHeap(),0,package->ProductCode);
 
     /* cleanup control event subscriptions */
     ControlEvent_CleanupSubscriptions(package);
@@ -801,7 +794,6 @@ void reduce_to_shortfilename(WCHAR* filename)
 LPWSTR create_component_advertise_string(MSIPACKAGE* package, 
                 MSICOMPONENT* component, LPCWSTR feature)
 {
-    LPWSTR productid=NULL;
     GUID clsid;
     WCHAR productid_85[21];
     WCHAR component_85[21];
@@ -820,8 +812,7 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
     memset(productid_85,0,sizeof(productid_85));
     memset(component_85,0,sizeof(component_85));
 
-    productid = load_dynamic_property(package,szProductCode,NULL);
-    CLSIDFromString(productid, &clsid);
+    CLSIDFromString(package->ProductCode, &clsid);
     
     encode_base85_guid(&clsid,productid_85);
 
@@ -846,8 +837,6 @@ LPWSTR create_component_advertise_string(MSIPACKAGE* package,
         sprintfW(output,fmt2,productid_85,feature,component_85);
     else
         sprintfW(output,fmt1,productid_85,feature);
-
-    HeapFree(GetProcessHeap(),0,productid);
     
     return output;
 }
