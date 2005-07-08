@@ -1455,8 +1455,45 @@ static HRESULT WINAPI UnixFolder_ISFHelper_DeleteItems(ISFHelper* iface, UINT ci
 static HRESULT WINAPI UnixFolder_ISFHelper_CopyItems(ISFHelper* iface, IShellFolder *psfFrom, 
     UINT cidl, LPCITEMIDLIST *apidl)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    UnixFolder *This = ADJUST_THIS(UnixFolder, ISFHelper, iface);
+    DWORD dwAttributes;
+    UINT i;
+    HRESULT hr;
+    char szAbsoluteDst[FILENAME_MAX], *pszRelativeDst;
+    
+    TRACE("(iface=%p, psfFrom=%p, cidl=%d, apidl=%p): semi-stub\n", iface, psfFrom, cidl, apidl);
+
+    if (!psfFrom || !cidl || !apidl)
+        return E_INVALIDARG;
+
+    /* All source items have to be filesystem items. */
+    dwAttributes = SFGAO_FILESYSTEM;
+    hr = IShellFolder_GetAttributesOf(psfFrom, cidl, apidl, &dwAttributes);
+    if (FAILED(hr) || !(dwAttributes & SFGAO_FILESYSTEM)) 
+        return E_INVALIDARG;
+
+    lstrcpyA(szAbsoluteDst, This->m_pszPath);
+    pszRelativeDst = szAbsoluteDst + strlen(szAbsoluteDst);
+    
+    for (i=0; i<cidl; i++) {
+        WCHAR wszSrc[MAX_PATH];
+        char szSrc[FILENAME_MAX];
+        STRRET strret;
+
+        /* Build the unix path of the current source item. */
+        if (FAILED(IShellFolder_GetDisplayNameOf(psfFrom, apidl[i], SHGDN_FORPARSING, &strret)))
+            return E_FAIL;
+        if (FAILED(StrRetToBufW(&strret, apidl[i], wszSrc, MAX_PATH)))
+            return E_FAIL;
+        if (!UNIXFS_get_unix_path(wszSrc, szSrc)) 
+            return E_FAIL;
+
+        /* Build the unix path of the current destination item */
+        lstrcpyA(pszRelativeDst, _ILGetTextPointer(apidl[i]));
+
+        FIXME("Would copy %s to %s. Not yet implemented.\n", szSrc, szAbsoluteDst);
+    }
+    return S_OK;
 }
 
 /* VTable for UnixFolder's ISFHelper interface
