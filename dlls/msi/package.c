@@ -408,6 +408,8 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     MSIDATABASE *db = NULL;
     MSIPACKAGE *package;
     MSIHANDLE handle;
+    DWORD size;
+    static const WCHAR szProductCode[]= {'P','r','o','d','u','c','t','C','o','d','e',0};
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -445,6 +447,13 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         MSI_SetPropertyW( package, Database, szPackage );
     }
 
+    /* this property must exist */
+    size  = 0;
+    MSI_GetPropertyW(package,szProductCode,NULL,&size);
+    size ++;
+    package->ProductCode = HeapAlloc(GetProcessHeap(),0,size * sizeof(WCHAR));
+    MSI_GetPropertyW(package,szProductCode,package->ProductCode, &size);
+    
     *pPackage = package;
 
     return ERROR_SUCCESS;

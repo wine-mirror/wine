@@ -441,7 +441,6 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR szAction[] = {'A','C','T','I','O','N',0};
     static const WCHAR szInstall[] = {'I','N','S','T','A','L','L',0};
-    static const WCHAR szProductCode[]= {'P','r','o','d','u','c','t','C','o','d','e',0};
 
     MSI_SetPropertyW(package, szAction, szInstall);
 
@@ -451,8 +450,6 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     package->script->InWhatSequence = SEQUENCE_INSTALL;
 
     package->msiFilePath= strdupW(msiFilePath);
-
-    package->ProductCode = load_dynamic_property(package,szProductCode,NULL);
 
     if (szPackagePath)   
     {
