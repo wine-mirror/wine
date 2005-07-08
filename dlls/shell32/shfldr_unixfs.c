@@ -1603,7 +1603,7 @@ static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Next(IEnumIDList* iface,
     if (pceltFetched)
         *pceltFetched = i;
 
-    return i == celt ? S_OK : S_FALSE;
+    return (i == 0) ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI UnixSubFolderIterator_IEnumIDList_Skip(IEnumIDList* iface, ULONG celt)

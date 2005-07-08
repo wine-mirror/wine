@@ -104,7 +104,7 @@ static void Cleanup(void)
 static void test_EnumObjects(IShellFolder *iFolder)
 {
     IEnumIDList *iEnumList;
-    ITEMIDLIST *newPIDL, *(idlArr [5]);
+    LPITEMIDLIST newPIDL, idlArr[10];
     ULONG NumPIDLs;
     int i=0, j;
     HRESULT hr;
@@ -131,10 +131,13 @@ static void test_EnumObjects(IShellFolder *iFolder)
     hr = IShellFolder_EnumObjects(iFolder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList);
     ok(hr == S_OK, "EnumObjects failed %08lx\n", hr);
 
-    while (IEnumIDList_Next(iEnumList, 1, &newPIDL, &NumPIDLs) == S_OK)
-    {
-        idlArr[i++] = newPIDL;
-    }
+    /* This is to show that, contrary to what is said on MSDN on IEnumIDList::Next,
+     * the filesystem shellfolders return S_OK even if less then 'celt' items are
+     * returned (in contrast to S_FALSE). We have to do it in a loop since WinXP
+     * only ever returns a single entry per call. */
+    while (IEnumIDList_Next(iEnumList, 10-i, &idlArr[i], &NumPIDLs) == S_OK) 
+        i += NumPIDLs;
+    ok (i == 5, "i: %d\n", i);
 
     hr = IEnumIDList_Release(iEnumList);
     ok(hr == S_OK, "IEnumIDList_Release failed %08lx\n", hr);
