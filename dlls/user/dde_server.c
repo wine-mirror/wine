@@ -39,7 +39,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddeml);
 
 static const WCHAR szServerNameClass[] = {'W','i','n','e','D','d','e','S','e','r','v','e','r','N','a','m','e',0};
-const WCHAR WDML_szServerConvClass[] = {'W','i','n','e','D','d','e','S','e','r','v','e','r','C','o','n','v',0};
+const char WDML_szServerConvClassA[] = "WineDdeServerConvA";
+const WCHAR WDML_szServerConvClassW[] = {'W','i','n','e','D','d','e','S','e','r','v','e','r','C','o','n','v','W',0};
 
 static LRESULT CALLBACK WDML_ServerNameProc(HWND, UINT, WPARAM, LPARAM);
 static LRESULT CALLBACK WDML_ServerConvProc(HWND, UINT, WPARAM, LPARAM);
@@ -308,26 +309,53 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
 {
     HWND	hwndServerConv;
     WDML_CONV*	pConv;
-    WNDCLASSEXW wndclass;
 
-    wndclass.cbSize        = sizeof(wndclass);
-    wndclass.style         = 0;
-    wndclass.lpfnWndProc   = WDML_ServerConvProc;
-    wndclass.cbClsExtra    = 0;
-    wndclass.cbWndExtra    = 2 * sizeof(ULONG_PTR);
-    wndclass.hInstance     = 0;
-    wndclass.hIcon         = 0;
-    wndclass.hCursor       = 0;
-    wndclass.hbrBackground = 0;
-    wndclass.lpszMenuName  = NULL;
-    wndclass.lpszClassName = WDML_szServerConvClass;
-    wndclass.hIconSm       = 0;
+    if (pInstance->unicode)
+    {
+        WNDCLASSEXW wndclass;
 
-    RegisterClassExW(&wndclass);
+        wndclass.cbSize        = sizeof(wndclass);
+        wndclass.style         = 0;
+        wndclass.lpfnWndProc   = WDML_ServerConvProc;
+        wndclass.cbClsExtra    = 0;
+        wndclass.cbWndExtra    = 2 * sizeof(ULONG_PTR);
+        wndclass.hInstance     = 0;
+        wndclass.hIcon         = 0;
+        wndclass.hCursor       = 0;
+        wndclass.hbrBackground = 0;
+        wndclass.lpszMenuName  = NULL;
+        wndclass.lpszClassName = WDML_szServerConvClassW;
+        wndclass.hIconSm       = 0;
 
-    hwndServerConv = CreateWindowW(WDML_szServerConvClass, 0,
+        RegisterClassExW(&wndclass);
+
+        hwndServerConv = CreateWindowW(WDML_szServerConvClassW, 0,
 				       WS_CHILD, 0, 0, 0, 0,
 				       hwndServerName, 0, 0, 0);
+    }
+    else
+    {
+        WNDCLASSEXA wndclass;
+
+        wndclass.cbSize        = sizeof(wndclass);
+        wndclass.style         = 0;
+        wndclass.lpfnWndProc   = WDML_ServerConvProc;
+        wndclass.cbClsExtra    = 0;
+        wndclass.cbWndExtra    = 2 * sizeof(ULONG_PTR);
+        wndclass.hInstance     = 0;
+        wndclass.hIcon         = 0;
+        wndclass.hCursor       = 0;
+        wndclass.hbrBackground = 0;
+        wndclass.lpszMenuName  = NULL;
+        wndclass.lpszClassName = WDML_szServerConvClassA;
+        wndclass.hIconSm       = 0;
+
+        RegisterClassExA(&wndclass);
+
+        hwndServerConv = CreateWindowA(WDML_szServerConvClassA, 0,
+                                      WS_CHILD, 0, 0, 0, 0,
+                                      hwndServerName, 0, 0, 0);
+    }
 
     TRACE("Created convServer=%p (nameServer=%p) for instance=%08lx\n",
 	  hwndServerConv, hwndServerName, pInstance->instanceID);
@@ -396,7 +424,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    CONVCONTEXT		cc;
 	    CONVCONTEXT*	pcc = NULL;
 	    WDML_CONV*		pConv;
-	    WCHAR		buf[256];
+	    char		buf[256];
 
 	    if (GetWindowThreadProcessId(hwndClient, NULL) == GetWindowThreadProcessId(hwndServer, NULL) &&
 		WDML_GetInstanceFromWnd(hwndClient) == WDML_GetInstanceFromWnd(hwndServer))
@@ -406,13 +434,15 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    /* FIXME: so far, we don't grab distant convcontext, so only check if remote is
 	     * handled under DDEML, and if so build a default context
 	     */
-	    if (GetClassNameW(hwndClient, buf, sizeof(buf)/sizeof(WCHAR)) &&
-		 lstrcmpiW(buf, WDML_szClientConvClass) == 0)
+           if ((GetClassNameA(hwndClient, buf, sizeof(buf)) &&
+                lstrcmpiA(buf, WDML_szClientConvClassA) == 0) ||
+               (GetClassNameW(hwndClient, (LPWSTR)buf, sizeof(buf)/sizeof(WCHAR)) &&
+                lstrcmpiW((LPWSTR)buf, WDML_szClientConvClassW) == 0))
 	    {
 		pcc = &cc;
 		memset(pcc, 0, sizeof(*pcc));
 		pcc->cb = sizeof(*pcc);
-		pcc->iCodePage = CP_WINUNICODE;
+		pcc->iCodePage = IsWindowUnicode(hwndClient) ? CP_WINUNICODE : CP_WINANSI;
 	    }
 	    if ((pInstance->CBFflags & CBF_FAIL_SELFCONNECTIONS) && self)
 	    {
@@ -976,7 +1006,8 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
     }
     if (iMsg < WM_DDE_FIRST || iMsg > WM_DDE_LAST)
     {
-        return DefWindowProcW(hwndServer, iMsg, wParam, lParam);
+        return IsWindowUnicode(hwndServer) ? DefWindowProcW(hwndServer, iMsg, wParam, lParam) :
+                                             DefWindowProcA(hwndServer, iMsg, wParam, lParam);
     }
 
     EnterCriticalSection(&WDML_CritSect);

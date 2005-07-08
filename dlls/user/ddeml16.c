@@ -151,7 +151,8 @@ HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt,
 UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 			      DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, (PFNCALLBACK)pfnCallback, afCmd, ulRes, TRUE);
+    return WDML_Initialize(pidInst, (PFNCALLBACK)pfnCallback, afCmd, ulRes,
+                           FALSE, TRUE);
 }
 
 /*****************************************************************

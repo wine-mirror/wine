@@ -341,7 +341,7 @@ static LRESULT CALLBACK WDML_EventProc(HWND hwndEvent, UINT uMsg, WPARAM wParam,
  *
  */
 UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
-		     DWORD afCmd, DWORD ulRes, BOOL b16)
+		     DWORD afCmd, DWORD ulRes, BOOL bUnicode, BOOL b16)
 {
     WDML_INSTANCE*		pInstance;
     WDML_INSTANCE*		reference_inst;
@@ -376,6 +376,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     pInstance->instanceID = *pidInst; /* May need to add calling proc Id */
     pInstance->threadID = GetCurrentThreadId();
     pInstance->callback = *pfnCallback;
+    pInstance->unicode = bUnicode;
     pInstance->win16 = b16;
     pInstance->nodeList = NULL; /* node will be added later */
     pInstance->monitorFlags = afCmd & MF_MASK;
@@ -585,7 +586,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 UINT WINAPI DdeInitializeA(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 			   DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, FALSE);
+    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, FALSE, FALSE);
 }
 
 /******************************************************************************
@@ -605,7 +606,7 @@ UINT WINAPI DdeInitializeA(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 UINT WINAPI DdeInitializeW(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 			   DWORD afCmd, DWORD ulRes)
 {
-    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, FALSE);
+    return WDML_Initialize(pidInst, pfnCallback, afCmd, ulRes, TRUE, FALSE);
 }
 
 /*****************************************************************
@@ -1919,7 +1920,7 @@ WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected)
 	FIXME("found conv but ain't connected\n");
 	return NULL;
     }
-    if (GetCurrentThreadId() != pConv->instance->threadID)
+    if (!pConv->instance || GetCurrentThreadId() != pConv->instance->threadID)
     {
 	FIXME("wrong thread ID\n");
 	return NULL;
@@ -2100,6 +2101,7 @@ static	BOOL	WDML_GetLocalConvInfo(WDML_CONV* pConv, CONVINFO* ci, DWORD id)
 /******************************************************************
  *		DdeQueryConvInfo (USER32.@)
  *
+ * FIXME: Set last DDE error on failure.
  */
 UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
 {
@@ -2118,18 +2120,20 @@ UINT WINAPI DdeQueryConvInfo(HCONV hConv, DWORD id, PCONVINFO lpConvInfo)
     EnterCriticalSection(&WDML_CritSect);
 
     pConv = WDML_GetConv(hConv, FALSE);
-    if (pConv != NULL && !WDML_GetLocalConvInfo(pConv, &ci, id))
+    if (pConv != NULL)
     {
-	ret = 0;
+        if (!WDML_GetLocalConvInfo(pConv, &ci, id))
+            ret = 0;
     }
-    else if ((ULONG_PTR)hConv & 1)
+    else
     {
-	pConv = WDML_GetConv((HCONV)((ULONG_PTR)hConv & ~1), FALSE);
-	if (pConv != NULL)
-	{
-	    FIXME("Request on remote conversation information is not implemented yet\n");
-	    ret = 0;
-	}
+        if ((ULONG_PTR)hConv & 1)
+        {
+            pConv = WDML_GetConv((HCONV)((ULONG_PTR)hConv & ~1), FALSE);
+            if (pConv != NULL)
+                FIXME("Request on remote conversation information is not implemented yet\n");
+        }
+        ret = 0;
     }
     LeaveCriticalSection(&WDML_CritSect);
     if (ret != 0)
