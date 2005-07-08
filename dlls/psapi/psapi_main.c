@@ -516,33 +516,37 @@ DWORD WINAPI GetProcessImageFileNameW( HANDLE process, LPWSTR file, DWORD size )
  * Retrieve memory usage information for a given process
  *
  */
-BOOL WINAPI GetProcessMemoryInfo( HANDLE process, PPROCESS_MEMORY_COUNTERS counters, DWORD size )
+BOOL WINAPI GetProcessMemoryInfo(HANDLE hProcess, 
+                                 PPROCESS_MEMORY_COUNTERS pmc, DWORD cb)
 {
     NTSTATUS status;
     VM_COUNTERS vmc;
 
-    TRACE( "(%p, %p, %ld)\n", process, counters, size );
-
-    status = NtQueryInformationProcess( process, ProcessVmCounters, &vmc, sizeof(vmc), NULL );
-
-    if (status)
+    if (cb < sizeof(PROCESS_MEMORY_COUNTERS))
     {
-        SetLastError( RtlNtStatusToDosError( status ) );
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
 
-    /* FIXME: check size */
+    status = NtQueryInformationProcess(hProcess, ProcessVmCounters, 
+                                       &vmc, sizeof(vmc), NULL);
 
-    counters->cb = sizeof(PROCESS_MEMORY_COUNTERS);
-    counters->PageFaultCount = vmc.PageFaultCount;
-    counters->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
-    counters->WorkingSetSize = vmc.WorkingSetSize;
-    counters->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
-    counters->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
-    counters->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
-    counters->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
-    counters->PagefileUsage = vmc.PagefileUsage;
-    counters->PeakPagefileUsage = vmc.PeakPagefileUsage;
+    if (status)
+    {
+        SetLastError(RtlNtStatusToDosError(status));
+        return FALSE;
+    }
+
+    pmc->cb = sizeof(PROCESS_MEMORY_COUNTERS);
+    pmc->PageFaultCount = vmc.PageFaultCount;
+    pmc->PeakWorkingSetSize = vmc.PeakWorkingSetSize;
+    pmc->WorkingSetSize = vmc.WorkingSetSize;
+    pmc->QuotaPeakPagedPoolUsage = vmc.QuotaPeakPagedPoolUsage;
+    pmc->QuotaPagedPoolUsage = vmc.QuotaPagedPoolUsage;
+    pmc->QuotaPeakNonPagedPoolUsage = vmc.QuotaPeakNonPagedPoolUsage;
+    pmc->QuotaNonPagedPoolUsage = vmc.QuotaNonPagedPoolUsage;
+    pmc->PagefileUsage = vmc.PagefileUsage;
+    pmc->PeakPagefileUsage = vmc.PeakPagefileUsage;
 
     return TRUE;
 }

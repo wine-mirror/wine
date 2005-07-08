@@ -135,7 +135,7 @@ static void test_GetProcessMemoryInfo(void)
 
     w32_err(pGetProcessMemoryInfo(NULL, &pmc, sizeof(pmc)), ERROR_INVALID_HANDLE);
     todo_wine w32_err(pGetProcessMemoryInfo(hpSR, &pmc, sizeof(pmc)), ERROR_ACCESS_DENIED);
-    todo_wine w32_err(pGetProcessMemoryInfo(hpQI, &pmc, sizeof(pmc)-1), ERROR_INSUFFICIENT_BUFFER);
+    w32_err(pGetProcessMemoryInfo(hpQI, &pmc, sizeof(pmc)-1), ERROR_INSUFFICIENT_BUFFER);
     w32_suc(pGetProcessMemoryInfo(hpQI, &pmc, sizeof(pmc)));
 }
 
