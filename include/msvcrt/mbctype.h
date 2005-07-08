@@ -30,6 +30,26 @@ extern "C" {
 unsigned char* __p__mbctype(void);
 #define _mbctype                   (__p__mbctype())
 
+#define _MS     0x01
+#define _MP     0x02
+#define _M1     0x04
+#define _M2     0x08
+
+#define _SBUP   0x10
+#define _SBLOW  0x20
+
+#define _MBC_SINGLE     0
+#define _MBC_LEAD       1
+#define _MBC_TRAIL      2
+#define _MBC_ILLEGAL    -1
+
+#define _KANJI_CP   932
+
+#define _MB_CP_SBCS     0
+#define _MB_CP_OEM      -2
+#define _MB_CP_ANSI     -3
+#define _MB_CP_LOCALE   -4
+
 int         _getmbcp(void);
 int         _ismbbalnum(unsigned int);
 int         _ismbbalpha(unsigned int);
