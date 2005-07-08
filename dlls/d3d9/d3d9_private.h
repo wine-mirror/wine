@@ -984,16 +984,6 @@ typedef struct IDirect3DPixelShader9Impl {
 
 } IDirect3DPixelShader9Impl;
 
-/* IUnknown: */
-extern HRESULT WINAPI         IDirect3DPixelShader9Impl_QueryInterface(LPDIRECT3DPIXELSHADER9 iface, REFIID refiid, LPVOID* obj);
-extern ULONG WINAPI           IDirect3DPixelShader9Impl_AddRef(LPDIRECT3DPIXELSHADER9 iface);
-extern ULONG WINAPI           IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 iface);
-
-/* IDirect3DPixelShader9: */
-extern HRESULT WINAPI         IDirect3DPixelShader9Impl_GetDevice(LPDIRECT3DPIXELSHADER9 iface, IDirect3DDevice9** ppDevice);
-extern HRESULT WINAPI         IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 iface, VOID* pData, UINT* pSizeOfData);
-
-
 /* --------------- */
 /* IDirect3DQuery9 */
 /* --------------- */

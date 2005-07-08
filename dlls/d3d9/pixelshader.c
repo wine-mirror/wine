@@ -30,7 +30,7 @@ HRESULT WINAPI IDirect3DPixelShader9Impl_QueryInterface(LPDIRECT3DPIXELSHADER9 i
 
     if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IDirect3DPixelShader9)) {
-        IDirect3DPixelShader9Impl_AddRef(iface);
+        IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
@@ -55,6 +55,7 @@ ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 iface) {
     TRACE("(%p) : ReleaseRef to %ld\n", This, ref);
 
     if (ref == 0) {
+        IWineD3DPixelShader_Release(This->wineD3DPixelShader);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -63,14 +64,21 @@ ULONG WINAPI IDirect3DPixelShader9Impl_Release(LPDIRECT3DPIXELSHADER9 iface) {
 /* IDirect3DPixelShader9 Interface follow: */
 HRESULT WINAPI IDirect3DPixelShader9Impl_GetDevice(LPDIRECT3DPIXELSHADER9 iface, IDirect3DDevice9** ppDevice) {
     IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
-    FIXME("(%p): stub\n", This);
+    IWineD3DDevice *myDevice = NULL;
+
+    TRACE("(%p) : Relay\n", This);
+
+    IWineD3DPixelShader_GetDevice(This->wineD3DPixelShader, &myDevice);
+    IWineD3DDevice_GetParent(myDevice, (IUnknown **)ppDevice);
+    IWineD3DDevice_Release(myDevice);
+    TRACE("(%p) returing (%p)", This, *ppDevice);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DPixelShader9Impl_GetFunction(LPDIRECT3DPIXELSHADER9 iface, VOID* pData, UINT* pSizeOfData) {
     IDirect3DPixelShader9Impl *This = (IDirect3DPixelShader9Impl *)iface;
-    FIXME("(%p): stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DPixelShader_GetFunction(This->wineD3DPixelShader, pData, pSizeOfData);
 }
 
 
@@ -87,55 +95,100 @@ const IDirect3DPixelShader9Vtbl Direct3DPixelShader9_Vtbl =
 /* IDirect3DDevice9 IDirect3DPixelShader9 Methods follow:  */
 HRESULT WINAPI IDirect3DDevice9Impl_CreatePixelShader(LPDIRECT3DDEVICE9 iface, CONST DWORD* pFunction, IDirect3DPixelShader9** ppShader) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IDirect3DPixelShader9Impl *object;
+    HRESULT hrc = D3D_OK;
+
+    FIXME("(%p) Relay (disabled)\n", This);
+    *ppShader = NULL;
     return D3D_OK;
+    if(ppShader == NULL){
+        TRACE("(%p) Invalid call\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+
+    if(NULL == object){
+        return E_OUTOFMEMORY;
+    }else{
+
+        object->ref    = 1;
+        object->lpVtbl = &Direct3DPixelShader9_Vtbl;
+        hrc = IWineD3DDevice_CreatePixelShader(This->WineD3DDevice, pFunction, &object->wineD3DPixelShader , (IUnknown *)object);
+        if(hrc != D3D_OK){
+            FIXME("(%p) call to IWineD3DDevice_CreatePixelShader failed\n", This);
+            HeapFree(GetProcessHeap(), 0 , object);
+            *ppShader = NULL;
+        }else{
+            *ppShader = (IDirect3DPixelShader9*) object;
+        }
+
+    }
+
+    TRACE("(%p) : returning %p\n", This, *ppShader);
+    return hrc;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShader(LPDIRECT3DDEVICE9 iface, IDirect3DPixelShader9* pShader) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
+    IDirect3DPixelShader9Impl *shader = (IDirect3DPixelShader9Impl *)pShader;
+    TRACE("(%p) Relay\n", This);
+    IWineD3DDevice_SetPixelShader(This->WineD3DDevice, shader == NULL ? NULL :shader->wineD3DPixelShader);
     return D3D_OK;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShader(LPDIRECT3DDEVICE9 iface, IDirect3DPixelShader9** ppShader) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    *ppShader = NULL;
-    return D3D_OK;
+    IWineD3DPixelShader *object;
+
+    HRESULT hrc = D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    if(ppShader == NULL){
+        TRACE("(%p) Invalid call\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+
+    hrc = IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &object);
+    if(hrc == D3D_OK && object != NULL){
+       hrc = IWineD3DPixelShader_GetParent(object, (IUnknown **)ppShader);
+       IWineD3DPixelShader_Release(object);
+    }
+
+    TRACE("(%p) : returning %p\n", This, *ppShader);
+    return hrc;
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, CONST float* pConstantData, UINT Vector4fCount) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+   IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    TRACE("(%p) Relay\n", This);   
+    return IWineD3DDevice_SetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantF(LPDIRECT3DDEVICE9 iface, UINT Register, float* pConstantData, UINT Vector4fCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DDevice_GetPixelShaderConstantF(This->WineD3DDevice, Register, pConstantData, Vector4fCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, CONST int* pConstantData, UINT Vector4iCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DDevice_SetPixelShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantI(LPDIRECT3DDEVICE9 iface, UINT Register, int* pConstantData, UINT Vector4iCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DDevice_GetPixelShaderConstantI(This->WineD3DDevice, Register, pConstantData, Vector4iCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_SetPixelShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, CONST BOOL* pConstantData, UINT BoolCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return  IWineD3DDevice_SetPixelShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
 }
 
 HRESULT WINAPI IDirect3DDevice9Impl_GetPixelShaderConstantB(LPDIRECT3DDEVICE9 iface, UINT Register, BOOL* pConstantData, UINT BoolCount) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    TRACE("(%p) Relay\n", This);
+    return IWineD3DDevice_GetPixelShaderConstantB(This->WineD3DDevice, Register, pConstantData, BoolCount);
 }
