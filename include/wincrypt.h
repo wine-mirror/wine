@@ -1239,6 +1239,32 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 /* CertFindChainInStore dwFindType types */
 #define CERT_CHAIN_FIND_BY_ISSUER 1
 
+/* CERT_INFO versions/flags */
+#define CERT_V1 0
+#define CERT_V2 1
+#define CERT_V3 2
+#define CERT_INFO_VERSION_FLAG                 1
+#define CERT_INFO_SERIAL_NUMBER_FLAG           2
+#define CERT_INFO_SIGNATURE_ALGORITHM_FLAG     3
+#define CERT_INFO_ISSUER_FLAG                  4
+#define CERT_INFO_NOT_BEFORE_FLAG              5
+#define CERT_INFO_NOT_AFTER_FLAG               6
+#define CERT_INFO_SUBJECT_FLAG                 7
+#define CERT_INFO_SUBJECT_PUBLIC_KEY_INFO_FLAG 8
+#define CERT_INFO_ISSUER_UNIQUE_ID_FLAG        9
+#define CERT_INFO_SUBJECT_UNIQUE_ID_FLAG       10
+#define CERT_INFO_EXTENSION_FLAG               11
+
+/* CERT_REQUEST_INFO versions */
+#define CERT_REQUEST_V1 0
+
+/* CRL versions */
+#define CRL_V1 0
+#define CRL_V2 1
+
+/* CTL versions */
+#define CTL_V1 0
+
 /* CERT_RDN attribute dwValueType types */
 #define CERT_RDN_TYPE_MASK 0x000000ff
 #define CERT_RDN_ANY_TYPE         0
