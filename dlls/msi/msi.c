@@ -853,14 +853,14 @@ LANGID WINAPI MsiLoadStringA( MSIHANDLE handle, UINT id, LPSTR lpBuffer,
 INSTALLSTATE WINAPI MsiLocateComponentA(LPCSTR szComponent, LPSTR lpPathBuf,
                 DWORD *pcchBuf)
 {
-    FIXME("%s %p %08lx\n", debugstr_a(szComponent), lpPathBuf, *pcchBuf);
+    FIXME("%s %p %p\n", debugstr_a(szComponent), lpPathBuf, pcchBuf);
     return INSTALLSTATE_UNKNOWN;
 }
 
 INSTALLSTATE WINAPI MsiLocateComponentW(LPCWSTR szComponent, LPWSTR lpPathBuf,
                 DWORD *pcchBuf)
 {
-    FIXME("%s %p %08lx\n", debugstr_w(szComponent), lpPathBuf, *pcchBuf);
+    FIXME("%s %p %p\n", debugstr_w(szComponent), lpPathBuf, pcchBuf);
     return INSTALLSTATE_UNKNOWN;
 }
 
