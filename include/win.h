@@ -80,7 +80,6 @@ extern ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits );
 extern BOOL WIN_GetRectangles( HWND hwnd, RECT *rectWindow, RECT *rectClient );
 extern LRESULT WIN_DestroyWindow( HWND hwnd );
 extern void WIN_DestroyThreadWindows( HWND hwnd );
-extern BOOL WIN_CreateDesktopWindow(void);
 extern BOOL WIN_IsWindowDrawable( HWND hwnd, BOOL );
 extern HWND *WIN_ListChildren( HWND hwnd );
 extern void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id );

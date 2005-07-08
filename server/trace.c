@@ -2226,6 +2226,15 @@ static void dump_destroy_window_request( const struct destroy_window_request *re
     fprintf( stderr, " handle=%p", req->handle );
 }
 
+static void dump_get_desktop_window_request( const struct get_desktop_window_request *req )
+{
+}
+
+static void dump_get_desktop_window_reply( const struct get_desktop_window_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
 static void dump_set_window_owner_request( const struct set_window_owner_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
@@ -3206,6 +3215,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_named_pipe_info_request,
     (dump_func)dump_create_window_request,
     (dump_func)dump_destroy_window_request,
+    (dump_func)dump_get_desktop_window_request,
     (dump_func)dump_set_window_owner_request,
     (dump_func)dump_get_window_info_request,
     (dump_func)dump_set_window_info_request,
@@ -3413,6 +3423,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_named_pipe_info_reply,
     (dump_func)dump_create_window_reply,
     (dump_func)0,
+    (dump_func)dump_get_desktop_window_reply,
     (dump_func)dump_set_window_owner_reply,
     (dump_func)dump_get_window_info_reply,
     (dump_func)dump_set_window_info_reply,
@@ -3620,6 +3631,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_named_pipe_info",
     "create_window",
     "destroy_window",
+    "get_desktop_window",
     "set_window_owner",
     "get_window_info",
     "set_window_info",

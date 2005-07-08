@@ -243,6 +243,7 @@ DECL_HANDLER(disconnect_named_pipe);
 DECL_HANDLER(get_named_pipe_info);
 DECL_HANDLER(create_window);
 DECL_HANDLER(destroy_window);
+DECL_HANDLER(get_desktop_window);
 DECL_HANDLER(set_window_owner);
 DECL_HANDLER(get_window_info);
 DECL_HANDLER(set_window_info);
@@ -453,6 +454,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_named_pipe_info,
     (req_handler)req_create_window,
     (req_handler)req_destroy_window,
+    (req_handler)req_get_desktop_window,
     (req_handler)req_set_window_owner,
     (req_handler)req_get_window_info,
     (req_handler)req_set_window_info,

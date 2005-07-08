@@ -1769,6 +1769,13 @@ enum message_type
 @END
 
 
+/* Retrieve the desktop window for the current thread */
+@REQ(get_desktop_window)
+@REPLY
+    user_handle_t  handle;      /* handle to the desktop window */
+@END
+
+
 /* Set a window owner */
 @REQ(set_window_owner)
     user_handle_t  handle;      /* handle to the window */

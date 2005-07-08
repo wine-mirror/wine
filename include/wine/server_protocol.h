@@ -2503,6 +2503,18 @@ struct destroy_window_reply
 
 
 
+struct get_desktop_window_request
+{
+    struct request_header __header;
+};
+struct get_desktop_window_reply
+{
+    struct reply_header __header;
+    user_handle_t  handle;
+};
+
+
+
 struct set_window_owner_request
 {
     struct request_header __header;
@@ -3705,6 +3717,7 @@ enum request
     REQ_get_named_pipe_info,
     REQ_create_window,
     REQ_destroy_window,
+    REQ_get_desktop_window,
     REQ_set_window_owner,
     REQ_get_window_info,
     REQ_set_window_info,
@@ -3916,6 +3929,7 @@ union generic_request
     struct get_named_pipe_info_request get_named_pipe_info_request;
     struct create_window_request create_window_request;
     struct destroy_window_request destroy_window_request;
+    struct get_desktop_window_request get_desktop_window_request;
     struct set_window_owner_request set_window_owner_request;
     struct get_window_info_request get_window_info_request;
     struct set_window_info_request set_window_info_request;
@@ -4125,6 +4139,7 @@ union generic_reply
     struct get_named_pipe_info_reply get_named_pipe_info_reply;
     struct create_window_reply create_window_reply;
     struct destroy_window_reply destroy_window_reply;
+    struct get_desktop_window_reply get_desktop_window_reply;
     struct set_window_owner_reply set_window_owner_reply;
     struct get_window_info_reply get_window_info_reply;
     struct set_window_info_reply set_window_info_reply;
@@ -4191,6 +4206,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 180
+#define SERVER_PROTOCOL_VERSION 181
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

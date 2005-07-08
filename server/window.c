@@ -96,8 +96,6 @@ struct user_handle_array
     int            total;
 };
 
-static struct window *top_window;  /* top-level (desktop) window */
-
 /* global window pointers */
 static struct window *shell_window;
 static struct window *shell_listview;
@@ -173,6 +171,12 @@ static inline struct window *get_last_child( struct window *win )
 {
     struct list *ptr = list_tail( &win->children );
     return ptr ? LIST_ENTRY( ptr, struct window, entry ) : NULL;
+}
+
+/* check if window is the desktop */
+static inline int is_desktop_window( const struct window *win )
+{
+    return !win->parent;  /* only desktop windows have no parent */
 }
 
 /* append a user handle to a handle array */
@@ -293,8 +297,6 @@ inline static void destroy_properties( struct window *win )
 /* destroy a window */
 static void destroy_window( struct window *win )
 {
-    assert( win != top_window );
-
     /* destroy all children */
     while (!list_empty(&win->children))
         destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
@@ -403,6 +405,21 @@ void destroy_thread_windows( struct thread *thread )
     }
 }
 
+/* get the desktop window */
+static struct window *get_desktop_window( int create )
+{
+    static struct window *top_window;  /* FIXME: should be part of the desktop object */
+
+    if (!top_window && create)
+    {
+        if (!(top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 ))) return NULL;
+        current->desktop_users--;
+        top_window->thread = NULL;  /* no thread owns the desktop */
+        top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+    }
+    return top_window;
+}
+
 /* check whether child is a descendant of parent */
 int is_child_window( user_handle_t parent, user_handle_t child )
 {
@@ -422,7 +439,7 @@ int is_child_window( user_handle_t parent, user_handle_t child )
 int is_top_level_window( user_handle_t window )
 {
     struct window *win = get_user_object( window, USER_WINDOW );
-    return (win && win->parent == top_window);
+    return (win && win->parent && is_desktop_window(win->parent));
 }
 
 /* make a window active if possible */
@@ -447,7 +464,7 @@ static inline void inc_window_paint_count( struct window *win, int incr )
 /* check if window and all its ancestors are visible */
 static int is_visible( const struct window *win )
 {
-    while (win && win != top_window)
+    while (win && win->parent)
     {
         if (!(win->style & WS_VISIBLE)) return 0;
         win = win->parent;
@@ -533,9 +550,9 @@ static int get_window_children_from_point( struct window *parent, int x, int y,
 /* find window containing point (in absolute coords) */
 user_handle_t window_from_point( int x, int y )
 {
-    struct window *ret;
+    struct window *ret, *top_window;
 
-    if (!top_window) return 0;
+    if (!(top_window = get_desktop_window(0))) return 0;
     ret = child_window_from_point( top_window, x, y );
     return ret->handle;
 }
@@ -546,7 +563,7 @@ static int all_windows_from_point( struct window *top, int x, int y, struct user
     struct window *ptr;
 
     /* make point relative to top window */
-    for (ptr = top->parent; ptr && ptr != top_window; ptr = ptr->parent)
+    for (ptr = top->parent; ptr; ptr = ptr->parent)
     {
         x -= ptr->client_rect.left;
         y -= ptr->client_rect.top;
@@ -618,8 +635,11 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
 /* find a window that needs to receive a WM_PAINT; also clear its internal paint flag */
 user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread )
 {
-    struct window *ptr, *win = find_child_to_repaint( top_window, thread );
+    struct window *ptr, *win, *top_window = get_desktop_window(0);
 
+    if (!top_window) return 0;
+
+    win = find_child_to_repaint( top_window, thread );
     if (win && parent)
     {
         /* check that it is a child of the specified parent */
@@ -718,7 +738,7 @@ static void set_region_client_rect( struct region *region, struct window *win )
 /* get the top-level window to clip against for a given window */
 static inline struct window *get_top_clipping_window( struct window *win )
 {
-    while (win->parent && win->parent != top_window) win = win->parent;
+    while (win->parent && !is_desktop_window(win->parent)) win = win->parent;
     return win;
 }
 
@@ -916,7 +936,7 @@ static void validate_parents( struct window *child )
 
     if (!child->update_region) return;
 
-    while (win->parent && win->parent != top_window)
+    while (win->parent)
     {
         /* map to parent client coords */
         offset_x += win->window_rect.left;
@@ -1095,7 +1115,7 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
     /* if some parent is not visible start from the next sibling */
 
     if (!is_visible( win )) return 0;
-    for (ptr = from_child; ptr && ptr != top_window; ptr = ptr->parent)
+    for (ptr = from_child; ptr; ptr = ptr->parent)
     {
         if (!(ptr->style & WS_VISIBLE) || (ptr->style & WS_MINIMIZE)) from_sibling = ptr;
         if (ptr == win) break;
@@ -1106,15 +1126,14 @@ static unsigned int get_window_update_flags( struct window *win, struct window *
 
     if ((flags & UPDATE_NONCLIENT) && !(flags & (UPDATE_PAINT|UPDATE_INTERNALPAINT)))
     {
-        for (ptr = win->parent; ptr && ptr != top_window; ptr = ptr->parent)
+        for (ptr = win->parent; ptr; ptr = ptr->parent)
         {
             if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr ))
                 return 0;
         }
         if (from_child && !(flags & UPDATE_ALLCHILDREN))
         {
-            for (ptr = from_sibling ? from_sibling : from_child;
-                 ptr && ptr != top_window; ptr = ptr->parent)
+            for (ptr = from_sibling ? from_sibling : from_child; ptr; ptr = ptr->parent)
             {
                 if (!(ptr->style & WS_CLIPCHILDREN) && win_needs_repaint( ptr )) from_sibling = ptr;
                 if (ptr == win) break;
@@ -1300,35 +1319,24 @@ done:
 /* create a window */
 DECL_HANDLER(create_window)
 {
-    struct window *win;
+    struct window *win, *parent, *owner = NULL;
 
     reply->handle = 0;
-    if (!req->parent)  /* return desktop window */
-    {
-        if (!top_window)
-        {
-            if (!(top_window = create_window( NULL, NULL, req->atom, req->instance ))) return;
-            current->desktop_users--;
-            top_window->thread = NULL;  /* no thread owns the desktop */
-            top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-        }
-        win = top_window;
-    }
-    else
-    {
-        struct window *parent, *owner = NULL;
 
-        if (!(parent = get_window( req->parent ))) return;
-        if (req->owner && !(owner = get_window( req->owner ))) return;
-        if (owner == top_window) owner = NULL;
-        else if (owner && parent != top_window)
+    if (!(parent = get_window( req->parent ))) return;
+    if (req->owner)
+    {
+        if (!(owner = get_window( req->owner ))) return;
+        if (is_desktop_window(owner)) owner = NULL;
+        else if (!is_desktop_window(parent))
         {
             /* an owned window must be created as top-level */
             set_error( STATUS_ACCESS_DENIED );
             return;
         }
-        if (!(win = create_window( parent, owner, req->atom, req->instance ))) return;
     }
+    if (!(win = create_window( parent, owner, req->atom, req->instance ))) return;
+
     reply->handle    = win->handle;
     reply->extra     = win->nb_extra_bytes;
     reply->class_ptr = get_class_client_ptr( win->class );
@@ -1343,7 +1351,7 @@ DECL_HANDLER(set_parent)
     if (!(win = get_window( req->handle ))) return;
     if (req->parent && !(parent = get_window( req->parent ))) return;
 
-    if (win == top_window)
+    if (is_desktop_window(win))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
@@ -1360,9 +1368,18 @@ DECL_HANDLER(destroy_window)
     struct window *win = get_window( req->handle );
     if (win)
     {
-        if (win != top_window) destroy_window( win );
+        if (!is_desktop_window(win)) destroy_window( win );
         else set_error( STATUS_ACCESS_DENIED );
     }
+}
+
+
+/* retrieve the desktop window for the current thread */
+DECL_HANDLER(get_desktop_window)
+{
+    struct window *win = get_desktop_window(1);
+
+    if (win) reply->handle = win->handle;
 }
 
 
@@ -1374,7 +1391,7 @@ DECL_HANDLER(set_window_owner)
 
     if (!win) return;
     if (req->owner && !(owner = get_window( req->owner ))) return;
-    if (win == top_window)
+    if (is_desktop_window(win))
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
@@ -1413,7 +1430,7 @@ DECL_HANDLER(set_window_info)
     struct window *win = get_window( req->handle );
 
     if (!win) return;
-    if (req->flags && win == top_window)
+    if (req->flags && is_desktop_window(win))
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
@@ -1805,7 +1822,7 @@ DECL_HANDLER(get_update_region)
         {
             win->paint_flags &= ~PAINT_ERASE;
             /* desktop window only gets erased, not repainted */
-            if (win == top_window) validate_whole_window( win );
+            if (is_desktop_window(win)) validate_whole_window( win );
         }
     }
 }

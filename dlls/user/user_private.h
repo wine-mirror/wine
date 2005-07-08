@@ -177,7 +177,8 @@ struct user_thread_info
     HCURSOR                       cursor;                 /* 20 Current cursor */
     INT                           cursor_count;           /* 24 Cursor show count */
     UINT                          active_hooks;           /* 28 Bitmap of active hooks */
-                                                          /* 2c-7c Available for more data */
+    HWND                          desktop;                /* 2c Desktop window */
+                                                          /* 30-7c Available for more data */
 };
 
 static inline struct user_thread_info *get_user_thread_info(void)

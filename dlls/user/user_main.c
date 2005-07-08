@@ -279,9 +279,6 @@ static BOOL process_attach(void)
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
 
-    /* Create desktop window */
-    if (!WIN_CreateDesktopWindow()) return FALSE;
-
     return TRUE;
 }
 

@@ -38,6 +38,8 @@ enum user_object
     USER_HOOK
 };
 
+#define DESKTOP_ATOM  ((atom_t)32769)
+
 /* user handles functions */
 
 extern user_handle_t alloc_user_handle( void *ptr, enum user_object type );

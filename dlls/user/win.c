@@ -47,9 +47,6 @@ WINE_DECLARE_DEBUG_CHANNEL(msg);
 
 /**********************************************************************/
 
-/* Desktop window */
-static HWND hwndDesktop;
-
 static WORD wDragWidth = 4;
 static WORD wDragHeight= 3;
 
@@ -313,7 +310,7 @@ WND *WIN_GetPtr( HWND hwnd )
             return ptr;
         ptr = NULL;
     }
-    else if (index == USER_HANDLE_TO_INDEX(hwndDesktop))
+    else if (index == USER_HANDLE_TO_INDEX(GetDesktopWindow()))
     {
         if (hwnd == GetDesktopWindow() || !HIWORD(hwnd) || HIWORD(hwnd) == 0xffff) ptr = WND_DESKTOP;
         else ptr = NULL;
@@ -604,34 +601,6 @@ void WIN_DestroyThreadWindows( HWND hwnd )
             WIN_DestroyThreadWindows( list[i] );
     }
     HeapFree( GetProcessHeap(), 0, list );
-}
-
-/***********************************************************************
- *           WIN_CreateDesktopWindow
- *
- * Create the desktop window.
- */
-BOOL WIN_CreateDesktopWindow(void)
-{
-    TRACE("Creating desktop window\n");
-
-    SERVER_START_REQ( create_window )
-    {
-        req->parent   = 0;
-        req->owner    = 0;
-        req->atom     = LOWORD(DESKTOP_CLASS_ATOM);
-        req->instance = 0;
-        if (!wine_server_call_err( req )) hwndDesktop = reply->handle;
-    }
-    SERVER_END_REQ;
-
-    if (!hwndDesktop)
-    {
-        ERR( "error %ld creating desktop window\n", GetLastError() );
-        return FALSE;
-    }
-
-    return USER_Driver.pCreateDesktopWindow( hwndDesktop );
 }
 
 
@@ -1571,10 +1540,19 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    if (hwndDesktop) return hwndDesktop;
-    ERR( "Wine init error: either you're trying to use an invalid native USER.EXE config, or some graphics/GUI libraries or DLLs didn't initialize properly. Aborting.\n" );
-    ExitProcess(1);
-    return 0;
+    struct user_thread_info *thread_info = get_user_thread_info();
+
+    if (!thread_info->desktop)
+    {
+        SERVER_START_REQ( get_desktop_window )
+        {
+            if (!wine_server_call( req )) thread_info->desktop = reply->handle;
+        }
+        SERVER_END_REQ;
+        if (!thread_info->desktop || !USER_Driver.pCreateDesktopWindow( thread_info->desktop ))
+            ERR( "failed to create desktop window\n" );
+    }
+    return thread_info->desktop;
 }
 
 

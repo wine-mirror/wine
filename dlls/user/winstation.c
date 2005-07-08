@@ -28,6 +28,7 @@
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "user_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winstation);
 
@@ -359,6 +360,7 @@ BOOL WINAPI SetThreadDesktop( HDESK handle )
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+    if (ret) get_user_thread_info()->desktop = 0;  /* reset the desktop window */
     return ret;
 }
 
