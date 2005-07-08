@@ -229,12 +229,12 @@ static void test_dpa(void)
     ok(ret == 3, "ret=%d\n", ret);
     /* Append item using out of bound index */
     ret = pDPA_InsertPtr(dpa, 5, (PVOID)2);
-    todo_wine ok(ret == 4, "ret=%d\n", ret);
+    ok(ret == 4, "ret=%d\n", ret);
     /* Append item using DPA_APPEND */ 
     ret = pDPA_InsertPtr(dpa, DPA_APPEND, (PVOID)4);
-    todo_wine ok(ret == 5, "ret=%d\n", ret);
+    ok(ret == 5, "ret=%d\n", ret);
 
-    todo_wine ok(CheckDPA(dpa, 0x516324, &dw), "dw=0x%lx\n", dw);
+    ok(CheckDPA(dpa, 0x516324, &dw), "dw=0x%lx\n", dw);
 
     for(i = 1; i <= 6; i++)
     {
@@ -306,7 +306,7 @@ static void test_dpa(void)
     /* DPAS_INSERTBEFORE works just like DPAS_INSERTAFTER */
     i = pDPA_Search(dpa, (PVOID)3, 0,
                     CB_CmpLT, 0xdeadbeef, DPAS_SORTED|DPAS_INSERTBEFORE);
-    todo_wine ok(i == 2, "i=%d\n", i);
+    ok(i == 2, "i=%d\n", i);
 
     /* Re-insert the item */
     ret = pDPA_InsertPtr(dpa, 2, (PVOID)3);
@@ -355,9 +355,9 @@ static void test_dpa(void)
     }
     
     /* Setting item with huge index should work */
-    todo_wine ok(pDPA_SetPtr(dpa2, 0x12345, (PVOID)0xdeadbeef), "\n");
+    ok(pDPA_SetPtr(dpa2, 0x12345, (PVOID)0xdeadbeef), "\n");
     ret = pDPA_GetPtrIndex(dpa2, (PVOID)0xdeadbeef);
-    todo_wine ok(ret == 0x12345, "ret=%d\n", ret);
+    ok(ret == 0x12345, "ret=%d\n", ret);
           
     pDPA_DeleteAllPtrs(dpa2);
     ok(CheckDPA(dpa2, 0, &dw2), "dw2=0x%lx\n", dw2);

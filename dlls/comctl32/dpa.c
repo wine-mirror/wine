@@ -540,15 +540,16 @@ INT WINAPI DPA_InsertPtr (const HDPA hdpa, INT i, LPVOID p)
 
     if (!hdpa || i < 0) return -1;
 
-    if (i >= 0x7fff)
-        i = hdpa->nItemCount;
-
-    if (i >= hdpa->nItemCount)
-        return DPA_SetPtr(hdpa, i, p) ? i : -1;
+    /* append item if index is out of bounds */
+    i = min(hdpa->nItemCount, i);
 
     /* create empty spot at the end */
     if (!DPA_SetPtr(hdpa, hdpa->nItemCount, 0)) return -1;
-    memmove (hdpa->ptrs + i + 1, hdpa->ptrs + i, (hdpa->nItemCount - i - 1) * sizeof(LPVOID));
+    
+    if (i != hdpa->nItemCount - 1)
+        memmove (hdpa->ptrs + i + 1, hdpa->ptrs + i, 
+                 (hdpa->nItemCount - i - 1) * sizeof(LPVOID));
+    
     hdpa->ptrs[i] = p;
     return i;
 }
@@ -574,7 +575,7 @@ BOOL WINAPI DPA_SetPtr (const HDPA hdpa, INT i, LPVOID p)
 
     TRACE("(%p %d %p)\n", hdpa, i, p);
 
-    if (!hdpa || i < 0 || i > 0x7fff)
+    if (!hdpa || i < 0)
         return FALSE;
 
     if (hdpa->nItemCount <= i) {
@@ -824,13 +825,7 @@ INT WINAPI DPA_Search (const HDPA hdpa, LPVOID pFind, INT nStart,
             }
         }
 
-        if (uOptions & DPAS_INSERTBEFORE) {
-            if (r == -1) r = 0;
-            TRACE("-- ret=%d\n", r);
-            return r;
-        }
-
-        if (uOptions & DPAS_INSERTAFTER) {
+        if (uOptions & (DPAS_INSERTBEFORE | DPAS_INSERTAFTER)) {
             TRACE("-- ret=%d\n", l);
             return l;
         }
@@ -942,13 +937,13 @@ VOID WINAPI DPA_EnumCallback (HDPA hdpa, PFNDPAENUMCALLBACK enumProc,
     TRACE("(%p %p %p)\n", hdpa, enumProc, lParam);
 
     if (!hdpa)
-	return;
+        return;
     if (hdpa->nItemCount <= 0)
-	return;
+        return;
 
     for (i = 0; i < hdpa->nItemCount; i++) {
-	if ((enumProc)(hdpa->ptrs[i], lParam) == 0)
-	    return;
+        if ((enumProc)(hdpa->ptrs[i], lParam) == 0)
+            return;
     }
 
     return;
