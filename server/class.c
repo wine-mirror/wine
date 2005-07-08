@@ -33,6 +33,7 @@
 #include "object.h"
 #include "process.h"
 #include "user.h"
+#include "winuser.h"
 
 struct window_class
 {
@@ -156,6 +157,7 @@ void *get_class_client_ptr( struct window_class *class )
 DECL_HANDLER(create_class)
 {
     struct window_class *class;
+    struct winstation *winstation;
 
     if (!req->local && req->atom == DESKTOP_ATOM)
     {
@@ -175,11 +177,19 @@ DECL_HANDLER(create_class)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!grab_global_atom( req->atom )) return;
 
+    if (!(winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS )))
+        return;
+
+    if (!grab_global_atom( winstation, req->atom ))
+    {
+        release_object( winstation );
+        return;
+    }
     if (!(class = create_class( current->process, req->extra, req->local )))
     {
-        release_global_atom( req->atom );
+        release_global_atom( winstation, req->atom );
+        release_object( winstation );
         return;
     }
     class->atom       = req->atom;
@@ -187,6 +197,7 @@ DECL_HANDLER(create_class)
     class->style      = req->style;
     class->win_extra  = req->win_extra;
     class->client_ptr = req->client_ptr;
+    release_object( winstation );
 }
 
 /* destroy a window class */
@@ -249,9 +260,16 @@ DECL_HANDLER(set_class_info)
 
     if (req->flags & SET_CLASS_ATOM)
     {
-        if (!grab_global_atom( req->atom )) return;
-        release_global_atom( class->atom );
+        struct winstation *winstation = get_process_winstation( current->process,
+                                                                WINSTA_ACCESSGLOBALATOMS );
+        if (!grab_global_atom( winstation, req->atom ))
+        {
+            release_object( winstation );
+            return;
+        }
+        release_global_atom( winstation, class->atom );
         class->atom = req->atom;
+        release_object( winstation );
     }
     if (req->flags & SET_CLASS_STYLE) class->style = req->style;
     if (req->flags & SET_CLASS_WINEXTRA) class->win_extra = req->win_extra;

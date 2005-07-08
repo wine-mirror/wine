@@ -284,12 +284,9 @@ static atom_t find_atom( struct atom_table *table, const WCHAR *str, size_t len 
     return 0;
 }
 
-static struct atom_table *get_global_table( int create )
+static struct atom_table *get_global_table( struct winstation *winstation, int create )
 {
     struct atom_table *global_table;
-    struct winstation *winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS );
-
-    if (!winstation) return NULL;
 
     if (!(global_table = get_winstation_atom_table( winstation )))
     {
@@ -300,13 +297,12 @@ static struct atom_table *get_global_table( int create )
         }
         else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
-    release_object( winstation );
     return global_table;
 }
 
 static struct atom_table *get_table( obj_handle_t h, int create )
 {
-    struct atom_table *table;
+    struct atom_table *table = NULL;
 
     if (h)
     {
@@ -314,24 +310,30 @@ static struct atom_table *get_table( obj_handle_t h, int create )
     }
     else
     {
-        table = get_global_table( 1 );
-        if (table) grab_object( table );
+        struct winstation *winstation = get_process_winstation( current->process,
+                                                                WINSTA_ACCESSGLOBALATOMS );
+        if (winstation)
+        {
+            table = get_global_table( winstation, 1 );
+            if (table) grab_object( table );
+            release_object( winstation );
+        }
     }
     return table;
 }
 
 /* add an atom in the global table; used for window properties */
-atom_t add_global_atom( const WCHAR *str, size_t len )
+atom_t add_global_atom( struct winstation *winstation, const WCHAR *str, size_t len )
 {
-    struct atom_table *global_table = get_global_table( 1 );
+    struct atom_table *global_table = get_global_table( winstation, 1 );
     if (!global_table) return 0;
     return add_atom( global_table, str, len );
 }
 
 /* find an atom in the global table; used for window properties */
-atom_t find_global_atom( const WCHAR *str, size_t len )
+atom_t find_global_atom( struct winstation *winstation, const WCHAR *str, size_t len )
 {
-    struct atom_table *global_table = get_global_table( 0 );
+    struct atom_table *global_table = get_global_table( winstation, 0 );
     struct atom_entry *entry;
 
     if (!len || len > MAX_ATOM_LEN || !global_table) return 0;
@@ -341,11 +343,11 @@ atom_t find_global_atom( const WCHAR *str, size_t len )
 }
 
 /* increment the ref count of a global atom; used for window properties */
-int grab_global_atom( atom_t atom )
+int grab_global_atom( struct winstation *winstation, atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
-        struct atom_table *global_table = get_global_table( 0 );
+        struct atom_table *global_table = get_global_table( winstation, 0 );
         if (global_table)
         {
             struct atom_entry *entry = get_atom_entry( global_table, atom );
@@ -358,11 +360,11 @@ int grab_global_atom( atom_t atom )
 }
 
 /* decrement the ref count of a global atom; used for window properties */
-void release_global_atom( atom_t atom )
+void release_global_atom( struct winstation *winstation, atom_t atom )
 {
     if (atom >= MIN_STR_ATOM)
     {
-        struct atom_table *global_table = get_global_table( 0 );
+        struct atom_table *global_table = get_global_table( winstation, 0 );
         if (global_table) delete_atom( global_table, atom, 1 );
     }
 }

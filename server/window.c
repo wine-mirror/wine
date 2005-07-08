@@ -200,8 +200,8 @@ static int add_handle_to_array( struct user_handle_array *array, user_handle_t h
 }
 
 /* set a window property */
-static void set_property( struct window *win, atom_t atom, obj_handle_t handle,
-                          enum property_type type )
+static void set_property( struct winstation *winstation, struct window *win,
+                          atom_t atom, obj_handle_t handle, enum property_type type )
 {
     int i, free = -1;
     struct property *new_props;
@@ -223,7 +223,7 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle,
     }
 
     /* need to add an entry */
-    if (!grab_global_atom( atom )) return;
+    if (!grab_global_atom( winstation, atom )) return;
     if (free == -1)
     {
         /* no free entry */
@@ -234,7 +234,7 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle,
                                        sizeof(*new_props) * (win->prop_alloc + 16) )))
             {
                 set_error( STATUS_NO_MEMORY );
-                release_global_atom( atom );
+                release_global_atom( winstation, atom );
                 return;
             }
             win->prop_alloc += 16;
@@ -248,7 +248,7 @@ static void set_property( struct window *win, atom_t atom, obj_handle_t handle,
 }
 
 /* remove a window property */
-static obj_handle_t remove_property( struct window *win, atom_t atom )
+static obj_handle_t remove_property( struct winstation *winstation, struct window *win, atom_t atom )
 {
     int i;
 
@@ -257,7 +257,7 @@ static obj_handle_t remove_property( struct window *win, atom_t atom )
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
         if (win->properties[i].atom == atom)
         {
-            release_global_atom( atom );
+            release_global_atom( winstation, atom );
             win->properties[i].type = PROP_TYPE_FREE;
             return win->properties[i].handle;
         }
@@ -283,15 +283,20 @@ static obj_handle_t get_property( struct window *win, atom_t atom )
 /* destroy all properties of a window */
 inline static void destroy_properties( struct window *win )
 {
+    struct winstation *winstation;
     int i;
 
     if (!win->properties) return;
+    /* FIXME: winstation pointer should be taken from window */
+    if (!(winstation = get_process_winstation( win->thread->process, WINSTA_ACCESSGLOBALATOMS )))
+        return;
     for (i = 0; i < win->prop_inuse; i++)
     {
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
-        release_global_atom( win->properties[i].atom );
+        release_global_atom( winstation, win->properties[i].atom );
     }
     free( win->properties );
+    release_object( winstation );
 }
 
 /* destroy a window */
@@ -1878,34 +1883,42 @@ DECL_HANDLER(redraw_window)
 /* set a window property */
 DECL_HANDLER(set_window_property)
 {
+    struct winstation *winstation;
     struct window *win = get_window( req->window );
 
     if (!win) return;
+    if (!(winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS ))) return;
 
     if (get_req_data_size())
     {
-        atom_t atom = add_global_atom( get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+        atom_t atom = add_global_atom( winstation, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
         if (atom)
         {
-            set_property( win, atom, req->handle, PROP_TYPE_STRING );
-            release_global_atom( atom );
+            set_property( winstation, win, atom, req->handle, PROP_TYPE_STRING );
+            release_global_atom( winstation, atom );
         }
     }
-    else set_property( win, req->atom, req->handle, PROP_TYPE_ATOM );
+    else set_property( winstation, win, req->atom, req->handle, PROP_TYPE_ATOM );
+
+    release_object( winstation );
 }
 
 
 /* remove a window property */
 DECL_HANDLER(remove_window_property)
 {
+    struct winstation *winstation;
     struct window *win = get_window( req->window );
-    reply->handle = 0;
-    if (win)
+
+    if (!win) return;
+
+    if ((winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS )))
     {
         atom_t atom = req->atom;
-        if (get_req_data_size()) atom = find_global_atom( get_req_data(),
+        if (get_req_data_size()) atom = find_global_atom( winstation, get_req_data(),
                                                           get_req_data_size() / sizeof(WCHAR) );
-        if (atom) reply->handle = remove_property( win, atom );
+        if (atom) reply->handle = remove_property( winstation, win, atom );
+        release_object( winstation );
     }
 }
 
@@ -1913,14 +1926,18 @@ DECL_HANDLER(remove_window_property)
 /* get a window property */
 DECL_HANDLER(get_window_property)
 {
+    struct winstation *winstation;
     struct window *win = get_window( req->window );
-    reply->handle = 0;
-    if (win)
+
+    if (!win) return;
+
+    if ((winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS )))
     {
         atom_t atom = req->atom;
-        if (get_req_data_size()) atom = find_global_atom( get_req_data(),
+        if (get_req_data_size()) atom = find_global_atom( winstation, get_req_data(),
                                                           get_req_data_size() / sizeof(WCHAR) );
         if (atom) reply->handle = get_property( win, atom );
+        release_object( winstation );
     }
 }
 
