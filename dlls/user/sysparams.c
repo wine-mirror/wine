@@ -458,10 +458,10 @@ static BOOL SYSPARAMS_LoadRaw( LPCWSTR lpRegKey, LPCWSTR lpValName, LPBYTE lpBuf
     DWORD type;
     HKEY hKey;
 
+    memset( lpBuf, 0, count );
     if ((RegOpenKeyW( get_volatile_regkey(), lpRegKey, &hKey ) == ERROR_SUCCESS) ||
         (RegOpenKeyW( HKEY_CURRENT_USER, lpRegKey, &hKey ) == ERROR_SUCCESS))
     {
-        memset( lpBuf, 0, count );
         ret = !RegQueryValueExW( hKey, lpValName, NULL, &type, (LPBYTE)lpBuf, &count);
         RegCloseKey( hKey );
     }
@@ -2460,9 +2460,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     
         spi_idx = SPI_SETGRADIENTCAPTIONS_IDX;
 
-        if (!SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
-                               SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
-            memset (buf, 0, sizeof (buf));
+        SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                           SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) );
 
         if (b)
             buf[0] |= 0x10;
@@ -2574,9 +2573,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     
         spi_idx = SPI_SETFLATMENU_IDX;
 
-        if (!SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
-                               SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) ))
-            memset (buf, 0, sizeof (buf));
+        SYSPARAMS_LoadRaw( SPI_USERPREFERENCEMASK_REGKEY,
+                           SPI_USERPREFERENCEMASK_VALNAME, buf, sizeof(buf) );
 
         if (b)
             buf[2] |= 0x02;
