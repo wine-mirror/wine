@@ -1113,7 +1113,7 @@ HRESULT WINAPI SHGetDataFromIDListA(LPSHELLFOLDER psf, LPCITEMIDLIST pidl,
     case SHGDFIL_FINDDATA:
         pfd = dest;
 
-        if (_ILIsDrive(pidl))
+        if (_ILIsDrive(pidl) || _ILIsSpecialFolder(pidl))
             return E_INVALIDARG;
 
         if (len < sizeof(WIN32_FIND_DATAA))
