@@ -68,8 +68,14 @@ static CRITICAL_SECTION_DEBUG printer_handles_cs_debug =
 static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0, 0, 0, 0 };
 
 typedef struct {
+    DWORD job_id;
+    HANDLE hf;
+} started_doc_t;
+
+typedef struct {
     LPWSTR name;
     struct list jobs;
+    started_doc_t *doc;
 } opened_printer_t;
 
 typedef struct {
@@ -610,6 +616,7 @@ static HANDLE get_opened_printer_entry( LPCWSTR name )
     printer->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
     strcpyW(printer->name, name);
     list_init(&printer->jobs);
+    printer->doc = NULL;
 
     printer_handles[handle] = printer;
     handle++;
@@ -1157,16 +1164,31 @@ SetPrinterW(
 /******************************************************************************
  *    WritePrinter  [WINSPOOL.@]
  */
-BOOL WINAPI
-WritePrinter(
-  HANDLE  hPrinter,
-  LPVOID  pBuf,
-  DWORD   cbBuf,
-  LPDWORD pcWritten) {
+BOOL WINAPI WritePrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf, LPDWORD pcWritten)
+{
+    opened_printer_t *printer;
+    BOOL ret = FALSE;
 
-    FIXME("():stub\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    TRACE("(%p, %p, %ld, %p)\n", hPrinter, pBuf, cbBuf, pcWritten);
+
+    EnterCriticalSection(&printer_handles_cs);
+    printer = get_opened_printer(hPrinter);
+    if(!printer)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        goto end;
+    }
+
+    if(!printer->doc)
+    {
+        SetLastError(ERROR_SPL_NO_STARTDOC);
+        goto end;
+    }
+
+    ret = WriteFile(printer->doc->hf, pBuf, cbBuf, pcWritten, NULL);
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
 }
 
 /*****************************************************************************
@@ -1577,6 +1599,10 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
     if(printer)
     {
         struct list *cursor, *cursor2;
+
+        if(printer->doc)
+            EndDocPrinter(hPrinter);
+
         LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->jobs)
         {
             job_t *job = LIST_ENTRY(cursor, job_t, entry);
@@ -1721,8 +1747,33 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
  */
 BOOL WINAPI EndDocPrinter(HANDLE hPrinter)
 {
-    FIXME("(hPrinter=%p): stub\n", hPrinter);
-    return FALSE;
+    opened_printer_t *printer;
+    BOOL ret = FALSE;
+    TRACE("(%p)\n", hPrinter);
+
+    EnterCriticalSection(&printer_handles_cs);
+
+    printer = get_opened_printer(hPrinter);
+    if(!printer)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        goto end;
+    }
+
+    if(!printer->doc)    
+    {
+        SetLastError(ERROR_SPL_NO_STARTDOC);
+        goto end;
+    }
+
+    CloseHandle(printer->doc->hf);
+    ScheduleJob(hPrinter, printer->doc->job_id);
+    HeapFree(GetProcessHeap(), 0, printer->doc);
+    printer->doc = NULL;
+    ret = TRUE;
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
 }
 
 /*****************************************************************************
@@ -1730,8 +1781,8 @@ BOOL WINAPI EndDocPrinter(HANDLE hPrinter)
  */
 BOOL WINAPI EndPagePrinter(HANDLE hPrinter)
 {
-    FIXME("(hPrinter=%p): stub\n", hPrinter);
-    return FALSE;
+    FIXME("(%p): stub\n", hPrinter);
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -1780,11 +1831,64 @@ DWORD WINAPI StartDocPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
 DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
 {
     DOC_INFO_2W *doc = (DOC_INFO_2W *)pDocInfo;
+    opened_printer_t *printer;
+    BYTE addjob_buf[MAX_PATH * sizeof(WCHAR) + sizeof(ADDJOB_INFO_1W)];
+    ADDJOB_INFO_1W *addjob = (ADDJOB_INFO_1W*) addjob_buf;
+    DWORD needed, ret = 0;
+    HANDLE hf;
+    WCHAR *filename;
 
-    FIXME("(hPrinter = %p, Level = %ld, pDocInfo = %p {pDocName = %s, pOutputFile = %s, pDatatype = %s}): stub\n",
+    TRACE("(hPrinter = %p, Level = %ld, pDocInfo = %p {pDocName = %s, pOutputFile = %s, pDatatype = %s}):\n",
           hPrinter, Level, doc, debugstr_w(doc->pDocName), debugstr_w(doc->pOutputFile),
           debugstr_w(doc->pDatatype));
-    return FALSE;
+
+    if(Level < 1 || Level > 3)
+    {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return 0;
+    }
+
+    EnterCriticalSection(&printer_handles_cs);
+    printer = get_opened_printer(hPrinter);
+    if(!printer)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        goto end;
+    }
+
+    if(printer->doc)
+    {
+        SetLastError(ERROR_INVALID_PRINTER_STATE);
+        goto end;
+    }
+
+    /* Even if we're printing to a file we still add a print job, we'll
+       just ignore the spool file name */
+
+    if(!AddJobW(hPrinter, 1, addjob_buf, sizeof(addjob_buf), &needed))
+    {
+        ERR("AddJob failed gle %08lx\n", GetLastError());
+        goto end;
+    }
+
+    if(doc->pOutputFile)
+        filename = doc->pOutputFile;
+    else
+        filename = addjob->Path;
+
+    hf = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hf == INVALID_HANDLE_VALUE)
+        goto end;
+
+    /* FIXME should set doc title with SetJob */
+
+    printer->doc = HeapAlloc(GetProcessHeap(), 0, sizeof(*printer->doc));
+    printer->doc->hf = hf;
+    ret = printer->doc->job_id = addjob->JobId;
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+
+    return ret;
 }
 
 /*****************************************************************************
@@ -1792,8 +1896,8 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
  */
 BOOL WINAPI StartPagePrinter(HANDLE hPrinter)
 {
-    FIXME("(hPrinter=%p): stub\n", hPrinter);
-    return FALSE;
+    FIXME("(%p): stub\n", hPrinter);
+    return TRUE;
 }
 
 /*****************************************************************************
