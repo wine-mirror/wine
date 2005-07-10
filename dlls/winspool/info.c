@@ -153,6 +153,10 @@ static const WCHAR emptyStringW[] = {0};
 
 static const WCHAR May_Delete_Value[] = {'W','i','n','e','M','a','y','D','e','l','e','t','e','M','e',0};
 
+static const WCHAR CUPS_Port[] = {'C','U','P','S',':',0};
+static const WCHAR FILE_Port[] = {'F','I','L','E',':',0};
+static const WCHAR LPR_Port[] = {'L','P','R',':',0};
+
 static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode);
 static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD Level, LPBYTE pDriverInfo,
@@ -4706,6 +4710,34 @@ BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
 }
 
 /*****************************************************************************
+ *          schedule_lpr
+ */
+static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
+{
+    char *unixname, *queue, *cmd;
+    char fmt[] = "lpr -P%s %s";
+    DWORD len;
+
+    if(!(unixname = wine_get_unix_file_name(filename)))
+        return FALSE;
+
+    len = WideCharToMultiByte(CP_ACP, 0, printer_name, -1, NULL, 0, NULL, NULL);
+    queue = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, printer_name, -1, queue, len, NULL, NULL);
+
+    cmd = HeapAlloc(GetProcessHeap(), 0, strlen(unixname) + len + sizeof(fmt) - 5);
+    sprintf(cmd, fmt, queue, unixname);
+
+    TRACE("printing with: %s\n", cmd);
+    system(cmd);
+
+    HeapFree(GetProcessHeap(), 0, cmd);
+    HeapFree(GetProcessHeap(), 0, queue);
+    HeapFree(GetProcessHeap(), 0, unixname);
+    return TRUE;
+}
+
+/*****************************************************************************
  *          ScheduleJob [WINSPOOL.@]
  *
  */
@@ -4731,7 +4763,25 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         hf = CreateFileW(job->filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
         if(hf != INVALID_HANDLE_VALUE)
         {
-            FIXME("need to schedule job %ld filename %s\n", job->job_id, debugstr_w(job->filename));
+            PRINTER_INFO_5W *pi5;
+            DWORD needed;
+
+            GetPrinterW(hPrinter, 5, NULL, 0, &needed);
+            pi5 = HeapAlloc(GetProcessHeap(), 0, needed);
+            GetPrinterW(hPrinter, 5, (LPBYTE)pi5, needed, &needed);
+            TRACE("need to schedule job %ld filename %s to port %s\n", job->job_id, debugstr_w(job->filename),
+                  debugstr_w(pi5->pPortName));
+            
+            if(!strncmpW(pi5->pPortName, LPR_Port, strlenW(LPR_Port)))
+            {
+                schedule_lpr(pi5->pPortName + strlenW(LPR_Port), job->filename);
+            }
+            else
+            {
+                FIXME("can't schedule to port %s\n", debugstr_w(pi5->pPortName));
+            }
+
+            HeapFree(GetProcessHeap(), 0, pi5);
             CloseHandle(hf);
             DeleteFileW(job->filename);
         }
