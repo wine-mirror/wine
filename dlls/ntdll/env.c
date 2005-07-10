@@ -116,7 +116,7 @@ NTSTATUS WINAPI RtlQueryEnvironmentVariable_U(PWSTR env,
     PCWSTR      var;
     unsigned    namelen;
 
-    TRACE("%s %s %p\n", debugstr_w(env), debugstr_w(name->Buffer), value);
+    TRACE("%p %s %p\n", env, debugstr_us(name), value);
 
     value->Length = 0;
     namelen = name->Length / sizeof(WCHAR);
@@ -175,9 +175,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
     NTSTATUS    nts = STATUS_VARIABLE_NOT_FOUND;
     MEMORY_BASIC_INFORMATION mbi;
 
-    TRACE("(%p,%s,%s)\n", 
-          penv, debugstr_w(name->Buffer), 
-          value ? debugstr_w(value->Buffer) : "--nil--");
+    TRACE("(%p, %s, %s)\n", penv, debugstr_us(name), debugstr_us(value));
 
     if (!name || !name->Buffer || !name->Length)
         return STATUS_INVALID_PARAMETER_1;
