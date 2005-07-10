@@ -3522,7 +3522,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* iface, IW
     TRACE("(%p) : pDecl=%p\n", This, pDecl);
 
     /* TODO: what about recording stateblocks? */
-    IWineD3DVertexDeclaration_AddRef(pDecl);
+    if (NULL != pDecl) {
+        IWineD3DVertexDeclaration_AddRef(pDecl);
+    }
     if (NULL != This->updateStateBlock->vertexDecl) {
       IWineD3DVertexDeclaration_Release(This->updateStateBlock->vertexDecl);
     }
