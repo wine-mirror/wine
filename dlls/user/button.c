@@ -657,8 +657,8 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
 
       default:
       empty_rect:
-         r.right = r.left;
-         r.bottom = r.top;
+         rc->right = r.left;
+         rc->bottom = r.top;
          return (UINT)(LONG)-1;
    }
 
