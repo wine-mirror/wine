@@ -200,8 +200,21 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     const char *gl_string        = NULL;
     const char *gl_string_cursor = NULL;
     GLint       gl_max;
+    GLfloat     gl_float;
     Bool        test = 0;
     int         major, minor;
+    WineD3D_Context *fake_ctx = NULL;
+    BOOL             gotContext  = FALSE;
+
+    /* Make sure that we've got a context */
+    if (glXGetCurrentContext() == NULL) {
+        /* TODO: CreateFakeGLContext should really take a display as a parameter  */
+        fake_ctx = WineD3D_CreateFakeGLContext();
+        if (NULL != fake_ctx) gotContext = TRUE;
+    } else {
+        gotContext = TRUE;
+    }
+
 
     TRACE_(d3d_caps)("(%p, %p)\n", gl_info, display);
 
@@ -211,115 +224,126 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
         gl_info->glx_version = ((major & 0x0000FFFF) << 16) | (minor & 0x0000FFFF);
         gl_string = glXGetClientString(display, GLX_VENDOR);
     } else {
+        FIXME("Display must not be NULL, use glXGetCurrentDisplay or getAdapterDisplay()\n");
         gl_string = glGetString(GL_VENDOR);
     }
-    
-    /* Fill in the GL vendor */
-    if (strstr(gl_string, "NVIDIA")) {
-        gl_info->gl_vendor = VENDOR_NVIDIA;
-    } else if (strstr(gl_string, "ATI")) {
-        gl_info->gl_vendor = VENDOR_ATI;
+    TRACE_(d3d_caps)("Filling vendor string %s\n", gl_string);
+    if (gl_string != NULL) {
+        /* Fill in the GL vendor */
+        if (strstr(gl_string, "NVIDIA")) {
+            gl_info->gl_vendor = VENDOR_NVIDIA;
+        } else if (strstr(gl_string, "ATI")) {
+            gl_info->gl_vendor = VENDOR_ATI;
+        } else {
+            gl_info->gl_vendor = VENDOR_WINE;
+        }
     } else {
         gl_info->gl_vendor = VENDOR_WINE;
     }
-   
+
+
     TRACE_(d3d_caps)("found GL_VENDOR (%s)->(0x%04x)\n", debugstr_a(gl_string), gl_info->gl_vendor);
-    
+
     /* Parse the GL_VERSION field into major and minor information */
     gl_string = glGetString(GL_VERSION);
-    switch (gl_info->gl_vendor) {
-    case VENDOR_NVIDIA:
-        gl_string_cursor = strstr(gl_string, "NVIDIA");
-        gl_string_cursor = strstr(gl_string_cursor, " ");
-        while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
-        if (*gl_string_cursor) {
-            char tmp[16];
-            int cursor = 0;
+    if (gl_string != NULL) {
 
-            while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-                tmp[cursor++] = *gl_string_cursor;
+        switch (gl_info->gl_vendor) {
+        case VENDOR_NVIDIA:
+            gl_string_cursor = strstr(gl_string, "NVIDIA");
+            gl_string_cursor = strstr(gl_string_cursor, " ");
+            while (*gl_string_cursor && ' ' == *gl_string_cursor) ++gl_string_cursor;
+            if (*gl_string_cursor) {
+                char tmp[16];
+                int cursor = 0;
+    
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                    tmp[cursor++] = *gl_string_cursor;
+                    ++gl_string_cursor;
+                }
+                tmp[cursor] = 0;
+                major = atoi(tmp);
+            
+                if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
                 ++gl_string_cursor;
+    
+                while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
+                    tmp[cursor++] = *gl_string_cursor;
+                    ++gl_string_cursor;
+                }
+                tmp[cursor] = 0;
+                minor = atoi(tmp);
             }
-            tmp[cursor] = 0;
-            major = atoi(tmp);
-        
-            if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
-            ++gl_string_cursor;
-
-            while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
-                tmp[cursor++] = *gl_string_cursor;
-                ++gl_string_cursor;
+            break;
+    
+        case VENDOR_ATI:
+            major = minor = 0;
+            gl_string_cursor = strchr(gl_string, '-');
+            if (gl_string_cursor) {
+                int error = 0;
+                gl_string_cursor++;
+    
+                /* Check if version number is of the form x.y.z */
+                if (*gl_string_cursor > '9' && *gl_string_cursor < '0')
+                    error = 1;
+                if (!error && *(gl_string_cursor+2) > '9' && *(gl_string_cursor+2) < '0')
+                    error = 1;
+                if (!error && *(gl_string_cursor+4) > '9' && *(gl_string_cursor+4) < '0')
+                    error = 1;
+                if (!error && *(gl_string_cursor+1) != '.' && *(gl_string_cursor+3) != '.')
+                    error = 1;
+    
+                /* Mark version number as malformed */
+                if (error)
+                    gl_string_cursor = 0;
             }
-            tmp[cursor] = 0;
-            minor = atoi(tmp);
+    
+            if (!gl_string_cursor)
+                WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
+            else {
+                major = *gl_string_cursor - '0';
+                minor = (*(gl_string_cursor+2) - '0') * 256 + (*(gl_string_cursor+4) - '0');
+            }      
+            break;
+    
+        default:
+            major = 0;
+            minor = 9;
         }
-        break;
-
-    case VENDOR_ATI:
-        major = minor = 0;
-        gl_string_cursor = strchr(gl_string, '-');
-        if (gl_string_cursor) {
-            int error = 0;
-            gl_string_cursor++;
-
-            /* Check if version number is of the form x.y.z */
-            if (*gl_string_cursor > '9' && *gl_string_cursor < '0')
-                error = 1;
-            if (!error && *(gl_string_cursor+2) > '9' && *(gl_string_cursor+2) < '0')
-                error = 1;
-            if (!error && *(gl_string_cursor+4) > '9' && *(gl_string_cursor+4) < '0')
-                error = 1;
-            if (!error && *(gl_string_cursor+1) != '.' && *(gl_string_cursor+3) != '.')
-                error = 1;
-
-            /* Mark version number as malformed */
-            if (error)
-                gl_string_cursor = 0;
+        gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
+        TRACE_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), gl_info->gl_driver_version);
+    
+        /* Fill in the renderer information */
+        gl_string = glGetString(GL_RENDERER);
+        strcpy(gl_info->gl_renderer, gl_string);
+    
+        switch (gl_info->gl_vendor) {
+        case VENDOR_NVIDIA:
+            if (strstr(gl_info->gl_renderer, "GeForce4 Ti")) {
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
+            } else if (strstr(gl_info->gl_renderer, "GeForceFX")) {
+                gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5900ULTRA;
+            } else {
+                gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
+            }
+            break;
+    
+        case VENDOR_ATI:
+            if (strstr(gl_info->gl_renderer, "RADEON 9800 PRO")) {
+                gl_info->gl_card = CARD_ATI_RADEON_9800PRO;
+            } else if (strstr(gl_info->gl_renderer, "RADEON 9700 PRO")) {
+                gl_info->gl_card = CARD_ATI_RADEON_9700PRO;
+            } else {
+                gl_info->gl_card = CARD_ATI_RADEON_8500;
+            }
+            break;
+    
+        default:
+            gl_info->gl_card = CARD_WINE;
+            break;
         }
-
-        if (!gl_string_cursor)
-            WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
-        else {
-            major = *gl_string_cursor - '0';
-            minor = (*(gl_string_cursor+2) - '0') * 256 + (*(gl_string_cursor+4) - '0');
-        }      
-        break;
-
-    default:
-        major = 0;
-        minor = 9;
-    }
-    gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
-    TRACE_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), gl_info->gl_driver_version);
-
-    /* Fill in the renderer information */
-    gl_string = glGetString(GL_RENDERER);
-    strcpy(gl_info->gl_renderer, gl_string);
-
-    switch (gl_info->gl_vendor) {
-    case VENDOR_NVIDIA:
-        if (strstr(gl_info->gl_renderer, "GeForce4 Ti")) {
-            gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
-        } else if (strstr(gl_info->gl_renderer, "GeForceFX")) {
-            gl_info->gl_card = CARD_NVIDIA_GEFORCEFX_5900ULTRA;
-        } else {
-            gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
-        }
-        break;
-
-    case VENDOR_ATI:
-        if (strstr(gl_info->gl_renderer, "RADEON 9800 PRO")) {
-            gl_info->gl_card = CARD_ATI_RADEON_9800PRO;
-        } else if (strstr(gl_info->gl_renderer, "RADEON 9700 PRO")) {
-            gl_info->gl_card = CARD_ATI_RADEON_9700PRO;
-        } else {
-            gl_info->gl_card = CARD_ATI_RADEON_8500;
-        }
-        break;
-
-    default:
-        gl_info->gl_card = CARD_WINE;
-        break;
+    } else {
+        FIXME("get version string returned null\n");
     }
 
     TRACE_(d3d_caps)("found GL_RENDERER (%s)->(0x%04x)\n", debugstr_a(gl_info->gl_renderer), gl_info->gl_card);
@@ -350,6 +374,14 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     gl_info->max_lights = gl_max;
     TRACE_(d3d_caps)("Lights support - max lights=%d\n", gl_max);
 
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_max);
+    gl_info->max_texture_size = gl_max;
+    TRACE_(d3d_caps)("Maximum texture size support - max texture size=%d\n", gl_max);
+
+    glGetFloatv(GL_POINT_SIZE_RANGE, &gl_float);
+    gl_info->max_pointsize = gl_float;
+    TRACE_(d3d_caps)("Maximum point size support - max texture size=%f\n", gl_float);
+
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
     TRACE_(d3d_caps)("GL_Extensions reported:\n");  
@@ -377,7 +409,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->supported[ARB_FRAGMENT_PROGRAM] = TRUE;
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Pixel Shader support - GL_MAX_TEXTURE_IMAGE_UNITS_ARB=%u\n", gl_max);
-                gl_info->max_samplers = min(16, gl_max);
+                gl_info->max_samplers = min(MAX_SAMPLERS, gl_max);
             } else if (strcmp(ThisExtn, "GL_ARB_multisample") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Multisample support\n");
                 gl_info->supported[ARB_MULTISAMPLE] = TRUE;
@@ -385,7 +417,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
                 TRACE_(d3d_caps)(" FOUND: ARB Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%u\n", gl_max);
                 gl_info->supported[ARB_MULTITEXTURE] = TRUE;
-                gl_info->max_textures = min(8, gl_max);
+                gl_info->max_textures = min(MAX_TEXTURES, gl_max);
                 gl_info->max_samplers = max(gl_info->max_samplers, gl_max);
             } else if (strcmp(ThisExtn, "GL_ARB_texture_cube_map") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture Cube Map support\n");
@@ -410,17 +442,24 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             } else if (strcmp(ThisExtn, "GL_ARB_texture_mirrored_repeat") == 0) {
                 TRACE_(d3d_caps)(" FOUND: ARB Texture mirrored repeat support\n");
                 gl_info->supported[ARB_TEXTURE_MIRRORED_REPEAT] = TRUE;
+            } else if (strcmp(ThisExtn, "GLX_ARB_multisample") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB multisample support\n");
+                gl_info->supported[ARB_MULTISAMPLE] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_point_sprite") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB point sprint support\n");
+                gl_info->supported[ARB_POINT_SPRITE] = TRUE;
             } else if (strstr(ThisExtn, "GL_ARB_vertex_program")) {
                 gl_info->vs_arb_version = VS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ARB Vertex Shader support - version=%02x\n", gl_info->vs_arb_version);
                 gl_info->supported[ARB_VERTEX_PROGRAM] = TRUE;
-	    } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
-	        TRACE_(d3d_caps)(" FOUND: ARB Vertex Blend support\n");
-		gl_info->supported[ARB_VERTEX_BLEND] = TRUE;
-	    } else if (strcmp(ThisExtn, "GL_ARB_vertex_buffer_object") == 0) {
-	        TRACE_(d3d_caps)(" FOUND: ARB Vertex Buffer support\n");
-		gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] = TRUE;
-
+            } else if (strcmp(ThisExtn, "GL_ARB_vertex_blend") == 0) {
+                glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: ARB Vertex Blend support GL_MAX_VERTEX_UNITS_ARB %d\n", gl_max);
+                gl_info->max_blends = gl_max;
+                gl_info->supported[ARB_VERTEX_BLEND] = TRUE;
+            } else if (strcmp(ThisExtn, "GL_ARB_vertex_buffer_object") == 0) {
+                TRACE_(d3d_caps)(" FOUND: ARB Vertex Buffer support\n");
+                gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] = TRUE;
             /**
              * EXT
              */
@@ -452,8 +491,10 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 TRACE_(d3d_caps)(" FOUND: EXT Dot3 support\n");
                 gl_info->supported[EXT_TEXTURE_ENV_DOT3] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_texture_filter_anisotropic") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Texture Anisotropic filter support\n");
                 gl_info->supported[EXT_TEXTURE_FILTER_ANISOTROPIC] = TRUE;
+                glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
+                TRACE_(d3d_caps)(" FOUND: EXT Texture Anisotropic filter support. GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT %d\n", gl_max);
+                gl_info->max_anisotropy = gl_max;
             } else if (strcmp(ThisExtn, "GL_EXT_texture_lod") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Texture LOD support\n");
                 gl_info->supported[EXT_TEXTURE_LOD] = TRUE;
@@ -551,8 +592,11 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
     GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
+    /* If we created a dummy context, throw it away */
+    if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
+
     /* Only save the values obtained when a display is provided */
-    if (display != NULL) {
+    if (fake_ctx == NULL) {
         return TRUE;
     } else {
         return FALSE;
@@ -791,7 +835,19 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter,
     return D3D_OK;
 }
 
-/* Note due to structure differences between dx8 and dx9 D3DADAPTER_IDENTIFIER,
+static Display * WINAPI IWineD3DImpl_GetAdapterDisplay(IWineD3D *iface, UINT Adapter) {
+    Display *display;
+    HDC     device_context;
+    /* only works with one adapter at the moment... */
+
+    /* Get the display */
+    device_context = GetDC(0);
+    display = get_display(device_context);
+    ReleaseDC(0, device_context);
+    return display;
+}
+
+/* NOTE: due to structure differences between dx8 and dx9 D3DADAPTER_IDENTIFIER,
    and fields being inserted in the middle, a new structure is used in place    */
 HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags, 
                                                    WINED3DADAPTER_IDENTIFIER* pIdentifier) {
@@ -811,14 +867,8 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
            reuse the values once we have a context which is valid. Values from
            a temporary context may differ from the final ones                 */
         if (isGLInfoValid == FALSE) {
-        
-          /* If we don't know the device settings, go query them now via a 
-             fake context                                                   */
-          WineD3D_Context* ctx = WineD3D_CreateFakeGLContext();
-          if (NULL != ctx) {
-              isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, ctx->display);
-              WineD3D_ReleaseFakeGLContext(ctx);
-          }
+            /* If we don't know the device settings, go query them now */
+            isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
         }
 
         /* If it worked, return the information requested */
@@ -1170,9 +1220,6 @@ HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT 
 HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
     IWineD3DImpl    *This = (IWineD3DImpl *)iface;
-    BOOL             gotContext  = FALSE;
-    GLint            gl_tex_size = 0;
-    WineD3D_Context *fake_ctx = NULL;
 
     TRACE_(d3d_caps)("(%p)->(Adptr:%d, DevType: %x, pCaps: %p)\n", This, Adapter, DeviceType, pCaps);
 
@@ -1180,39 +1227,14 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
         return D3DERR_INVALIDCALL;
     }
 
-    /* Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
-       ie there is no GL Context - Get a default rendering context to enable the 
-       function query some info from GL                                           */
-    if (glXGetCurrentContext() == NULL) {
-        fake_ctx = WineD3D_CreateFakeGLContext();
-        if (NULL != fake_ctx) gotContext = TRUE;
-    } else {
-        gotContext = TRUE;
-    }
-
-    if (gotContext == FALSE) {
-
-        FIXME_(d3d_caps)("GetDeviceCaps called but no GL Context - Returning dummy values\n");
-        gl_tex_size=65535;
-        *(pCaps->MaxTextureBlendStages)     = 2;
-        *pCaps->MaxSimultaneousTextures     = 2;
-        *pCaps->MaxUserClipPlanes           = 8;
-        *pCaps->MaxActiveLights             = 8;
-        *pCaps->MaxVertexBlendMatrices      = 0;
-        *pCaps->MaxVertexBlendMatrixIndex   = 1;
-        *pCaps->MaxAnisotropy               = 0;
-        *pCaps->MaxPointSize                = 255.0;
-
-    } else {
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
-    }
-
     /* If we don't know the device settings, go query them now */
     if (This->isGLInfoValid == FALSE) {
-        BOOL rc = IWineD3DImpl_FillGLCaps(&This->gl_info, NULL);
+        /* use the desktop window to fill gl caps */
+        BOOL rc = IWineD3DImpl_FillGLCaps(&This->gl_info, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
 
-        /* If we are running off a real context, save the values */
-        if (rc && ((NULL != fake_ctx))) This->isGLInfoValid = TRUE;
+        /* We are running off a real context, save the values */
+        if (rc) This->isGLInfoValid = TRUE;
+
     }
 
     /* ------------------------------------------------
@@ -1336,8 +1358,8 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 			 D3DLINECAPS_ALPHACMP
 			 D3DLINECAPS_FOG */
 
-    *pCaps->MaxTextureWidth = gl_tex_size;
-    *pCaps->MaxTextureHeight = gl_tex_size;
+    *pCaps->MaxTextureWidth  = GL_LIMITS(texture_size);
+    *pCaps->MaxTextureHeight = GL_LIMITS(texture_size);
 
     *pCaps->MaxVolumeExtent = 0;
 
@@ -1396,55 +1418,29 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     }
     
 #if 0
-    pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
+    *pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
                             /* FIXME: Add 
 			      D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
 			      D3DTEXOPCAPS_PREMODULATE */
 #endif
 
-    if (gotContext) {
-        GLint gl_max;
-        GLfloat gl_float;
-#if defined(GL_VERSION_1_3)
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS, &gl_max);
+    *pCaps->MaxTextureBlendStages   = GL_LIMITS(textures);
+    *pCaps->MaxSimultaneousTextures = GL_LIMITS(textures);
+    *pCaps->MaxUserClipPlanes       = GL_LIMITS(clipplanes);
+    *pCaps->MaxActiveLights         = GL_LIMITS(lights);
+
+
+
+#if 0 /* TODO: Blends support in drawprim */
+    *pCaps->MaxVertexBlendMatrices      = GL_LIMITS(blends);
 #else
-        glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
+    *pCaps->MaxVertexBlendMatrices      = 0;
 #endif
-        TRACE_(d3d_caps)("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
-        *pCaps->MaxTextureBlendStages = min(8, gl_max);
-        *pCaps->MaxSimultaneousTextures = min(8, gl_max);
+    *pCaps->MaxVertexBlendMatrixIndex   = 1;
 
-        glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
-        *pCaps->MaxUserClipPlanes = min(D3DMAXUSERCLIPPLANES, gl_max);
-        TRACE_(d3d_caps)("GLCaps: GL_MAX_CLIP_PLANES=%ld\n", *pCaps->MaxUserClipPlanes);
+    *pCaps->MaxAnisotropy   = GL_LIMITS(anisotropy);
+    *pCaps->MaxPointSize    = GL_LIMITS(pointsize);
 
-        glGetIntegerv(GL_MAX_LIGHTS, &gl_max);
-        *pCaps->MaxActiveLights = gl_max;
-        TRACE_(d3d_caps)("GLCaps: GL_MAX_LIGHTS=%ld\n", *pCaps->MaxActiveLights);
-
-        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-            glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
-#if 0  /* TODO : add support for blends to drawprim */
-            *pCaps->MaxVertexBlendMatrices      = gl_max;
-#else
-            *pCaps->MaxVertexBlendMatrices      = 0;
-#endif
-            *pCaps->MaxVertexBlendMatrixIndex   = 1;
-        } else {
-           *pCaps->MaxVertexBlendMatrices       = 0;
-           *pCaps->MaxVertexBlendMatrixIndex    = 1;
-        }
-
-        if (GL_SUPPORT(EXT_TEXTURE_FILTER_ANISOTROPIC)) {
-            glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
-            *pCaps->MaxAnisotropy = gl_max;
-        } else {
-            *pCaps->MaxAnisotropy = 0;
-        }
-
-        glGetFloatv(GL_POINT_SIZE_RANGE, &gl_float);
-        *pCaps->MaxPointSize = gl_float;
-    }
 
     *pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS |
                                    D3DVTXPCAPS_MATERIALSOURCE7   | 
@@ -1522,8 +1518,6 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
         *pCaps->MaxPixelShader30InstructionSlots  = 0;
     }
 
-    /* If we created a dummy context, throw it away */
-    if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
     return D3D_OK;
 }
 

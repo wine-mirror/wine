@@ -659,6 +659,14 @@ typedef void (APIENTRY * PGLFNGETCOMBINERSTAGEPARAMETERFVNVPROC) (GLenum stage, 
 /* #define ZERO */
 #endif
 
+/* Point sprites */
+#ifndef GL_ARB_point_sprite
+#define GL_ARB_point_sprite 1
+#define GL_POINT_SPRITE_ARB               0x8861
+#define GL_COORD_REPLACE_ARB              0x8862
+#endif
+
+
 /****************************************************
  * OpenGL Official Version 
  *  defines 
@@ -755,6 +763,7 @@ typedef enum _GL_SupportedExt {
   ARB_MULTISAMPLE,
   ARB_MULTITEXTURE,
   ARB_POINT_PARAMETERS,
+  ARB_POINT_SPRITE,
   ARB_TEXTURE_COMPRESSION,
   ARB_TEXTURE_CUBE_MAP,
   ARB_TEXTURE_ENV_ADD,
@@ -878,13 +887,17 @@ typedef struct _WineD3D_GL_Info {
   GL_Cards   gl_card;
   DWORD  gl_driver_version;
   CHAR   gl_renderer[255];
-  /** 
+  /**
    * CAPS Constants 
    */
   UINT   max_lights;
   UINT   max_textures;
   UINT   max_samplers;
   UINT   max_clipplanes;
+  UINT   max_texture_size;
+  float  max_pointsize;
+  UINT   max_blends;
+  UINT   max_anisotropy;
 
   GL_PSVersion ps_arb_version;
   GL_PSVersion ps_nv_version;
@@ -892,8 +905,8 @@ typedef struct _WineD3D_GL_Info {
   GL_VSVersion vs_arb_version;
   GL_VSVersion vs_nv_version;
   GL_VSVersion vs_ati_version;
-  
-  BOOL supported[50];
+
+  BOOL supported[OPENGL_SUPPORTED_EXT_END + 1];
 
   /** OpenGL EXT and ARB functions ptr */
   GL_EXT_FUNCS_GEN;
