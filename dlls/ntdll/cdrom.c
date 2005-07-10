@@ -1427,10 +1427,11 @@ static NTSTATUS CDROM_ScsiPassThroughDirect(int fd, PSCSI_PASS_THROUGH_DIRECT pP
 
 #ifdef SENSEBUFLEN
     if (pPacket->SenseInfoLength > SENSEBUFLEN)
-#else
-    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
-#endif
         return STATUS_INVALID_PARAMETER;
+#elif defined HAVE_REQUEST_SENSE
+    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
+        return STATUS_INVALID_PARAMETER;
+#endif
 
     if (pPacket->DataTransferLength > 0 && !pPacket->DataBuffer)
         return STATUS_INVALID_PARAMETER;
@@ -1547,10 +1548,11 @@ static NTSTATUS CDROM_ScsiPassThrough(int fd, PSCSI_PASS_THROUGH pPacket)
 
 #ifdef SENSEBUFLEN
     if (pPacket->SenseInfoLength > SENSEBUFLEN)
-#else
-    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
-#endif
         return STATUS_INVALID_PARAMETER;
+#elif defined HAVE_REQUEST_SENSE
+    if (pPacket->SenseInfoLength > sizeof(struct request_sense))
+        return STATUS_INVALID_PARAMETER;
+#endif
 
     if (pPacket->DataTransferLength > 0 && pPacket->DataBufferOffset < sizeof(SCSI_PASS_THROUGH))
         return STATUS_INVALID_PARAMETER;

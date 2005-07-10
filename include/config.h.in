@@ -482,6 +482,9 @@
 /* Define to 1 if you have the <regex.h> header file. */
 #undef HAVE_REGEX_H
 
+/* Define to 1 if the system has the type `request_sense'. */
+#undef HAVE_REQUEST_SENSE
+
 /* Define to 1 if you have the <resolv.h> header file. */
 #undef HAVE_RESOLV_H
 
