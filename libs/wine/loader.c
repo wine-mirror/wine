@@ -305,7 +305,7 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 
     /* Build the code section */
 
-    strcpy( sec->Name, ".text" );
+    memcpy( sec->Name, ".text", sizeof(".text") );
     sec->SizeOfRawData = data_start - code_start;
     sec->Misc.VirtualSize = sec->SizeOfRawData;
     sec->VirtualAddress   = code_start;
@@ -315,7 +315,7 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 
     /* Build the data section */
 
-    strcpy( sec->Name, ".data" );
+    memcpy( sec->Name, ".data", sizeof(".data") );
     sec->SizeOfRawData = data_end - data_start;
     sec->Misc.VirtualSize = sec->SizeOfRawData;
     sec->VirtualAddress   = data_start;
