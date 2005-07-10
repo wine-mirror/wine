@@ -1619,7 +1619,7 @@ inline static void get_register_name(const DWORD param, char* regstr)
   }
 }	
 
-inline static void addline(int* lineNum, char* pgm, char* line)
+inline static void addline(unsigned int* lineNum, char* pgm, char* line)
 {
   ++(*lineNum);
   TRACE_(d3d_hw_shader)("GL HW (%u, %u) : %s\n", *lineNum, strlen(pgm), line);
