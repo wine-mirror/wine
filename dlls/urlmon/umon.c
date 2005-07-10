@@ -636,7 +636,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
                 memset(&url, 0, sizeof(url));
                 url.dwStructSize = sizeof(url);
                 url.dwSchemeLength = url.dwHostNameLength = url.dwUrlPathLength = url.dwUserNameLength = url.dwPasswordLength = 1;
-                InternetCrackUrlW(urlcopy, 0, 0, &url);
+                InternetCrackUrlW(urlcopy, 0, ICU_ESCAPE, &url);
                 host = HeapAlloc(GetProcessHeap(), 0, (url.dwHostNameLength + 1) * sizeof(WCHAR));
                 memcpy(host, url.lpszHostName, url.dwHostNameLength * sizeof(WCHAR));
                 host[url.dwHostNameLength] = '\0';
