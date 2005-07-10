@@ -2482,6 +2482,9 @@ MSVCRT_size_t MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nmemb, M
   MSVCRT_size_t read=0;
   int pread=0;
 
+  if(!rcnt)
+	return 0;
+
   /* first buffered data */
   if(file->_cnt>0) {
 	int pcnt= (rcnt>file->_cnt)? file->_cnt:rcnt;
