@@ -1268,6 +1268,26 @@ BOOL WINAPI SetupSetFileQueueFlags( HSPFILEQ handle, DWORD mask, DWORD flags )
 
 
 /***********************************************************************
+ *   SetupSetFileQueueAlternatePlatformA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupSetFileQueueAlternatePlatformA(HSPFILEQ handle, PSP_ALTPLATFORM_INFO platform, PCSTR catalogfile)
+{
+    FIXME("(%p, %p, %s) stub!\n", handle, platform, debugstr_a(catalogfile));
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *   SetupSetFileQueueAlternatePlatformW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupSetFileQueueAlternatePlatformW(HSPFILEQ handle, PSP_ALTPLATFORM_INFO platform, PCWSTR catalogfile)
+{
+    FIXME("(%p, %p, %s) stub!\n", handle, platform, debugstr_w(catalogfile));
+    return FALSE;
+}
+
+
+/***********************************************************************
  *            SetupInitDefaultQueueCallback   (SETUPAPI.@)
  */
 PVOID WINAPI SetupInitDefaultQueueCallback( HWND owner )

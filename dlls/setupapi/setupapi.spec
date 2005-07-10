@@ -383,8 +383,6 @@
 @ stub SetupDiUnremoveDevice
 @ stub SetupDuplicateDiskSpaceListA
 @ stub SetupDuplicateDiskSpaceListW
-@ stub SetupFileQueueAlternatePlatformA
-@ stub SetupFileQueueAlternatePlatformW
 @ stdcall SetupFindFirstLineA(long str str ptr)
 @ stdcall SetupFindFirstLineW(long wstr wstr ptr)
 @ stdcall SetupFindNextLine(ptr ptr)
@@ -504,6 +502,8 @@
 @ stub SetupSetDirectoryIdExA
 @ stub SetupSetDirectoryIdExW
 @ stdcall SetupSetDirectoryIdW(long long wstr)
+@ stdcall SetupSetFileQueueAlternatePlatformA(ptr ptr str)
+@ stdcall SetupSetFileQueueAlternatePlatformW(ptr ptr wstr)
 @ stdcall SetupSetFileQueueFlags(long long long)
 @ stub SetupSetPlatformPathOverrideA
 @ stub SetupSetPlatformPathOverrideW
