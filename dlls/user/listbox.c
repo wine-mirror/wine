@@ -92,6 +92,7 @@ typedef struct
     INT         horz_pos;       /* Horizontal position */
     INT         nb_tabs;        /* Number of tabs in array */
     INT        *tabs;           /* Array of tabs */
+    INT         avg_char_width; /* Average width of characters */
     BOOL        caret_on;       /* Is caret on? */
     BOOL        captured;       /* Is mouse captured? */
     BOOL	in_focus;
@@ -719,6 +720,8 @@ static LRESULT LISTBOX_InitStorage( LB_DESCR *descr, INT nb_items )
  */
 static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL short_ints )
 {
+    INT i;
+
     if (!(descr->style & LBS_USETABSTOPS)) return TRUE;
     HeapFree( GetProcessHeap(), 0, descr->tabs );
     if (!(descr->nb_tabs = count))
@@ -743,6 +746,11 @@ static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL sh
         TRACE("\n");
     }
     else memcpy( descr->tabs, tabs, descr->nb_tabs * sizeof(INT) );
+
+    /* convert into "dialog units"*/
+    for (i = 0; i < descr->nb_tabs; i++)
+        descr->tabs[i] = MulDiv(descr->tabs[i], descr->avg_char_width, 4);
+
     /* FIXME: repaint the window? */
     return TRUE;
 }
@@ -1248,7 +1256,8 @@ static INT LISTBOX_SetFont( LB_DESCR *descr, HFONT font )
 {
     HDC hdc;
     HFONT oldFont = 0;
-    TEXTMETRICW tm;
+    const char *alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    SIZE sz;
 
     descr->font = font;
 
@@ -1258,12 +1267,14 @@ static INT LISTBOX_SetFont( LB_DESCR *descr, HFONT font )
         return 16;
     }
     if (font) oldFont = SelectObject( hdc, font );
-    GetTextMetricsW( hdc, &tm );
+    GetTextExtentPointA( hdc, alphabet, 52, &sz);
     if (oldFont) SelectObject( hdc, oldFont );
     ReleaseDC( descr->self, hdc );
+
+    descr->avg_char_width = (sz.cx / 26 + 1) / 2;
     if (!IS_OWNERDRAW(descr))
-        LISTBOX_SetItemHeight( descr, 0, tm.tmHeight, FALSE );
-    return tm.tmHeight;
+        LISTBOX_SetItemHeight( descr, 0, sz.cy, FALSE );
+    return sz.cy;
 }
 
 
