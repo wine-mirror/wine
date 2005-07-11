@@ -810,6 +810,8 @@ FARPROC WINAPI GetProcAddress( HMODULE hModule, LPCSTR function )
     NTSTATUS    nts;
     FARPROC     fp;
 
+    if (!hModule) hModule = NtCurrentTeb()->Peb->ImageBaseAddress;
+
     if (HIWORD(function))
     {
         ANSI_STRING     str;
