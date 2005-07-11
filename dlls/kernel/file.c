@@ -377,7 +377,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     if (status != STATUS_PENDING && bytesRead)
         *bytesRead = io_status->Information;
 
-    if (status && status != STATUS_END_OF_FILE)
+    if (status && status != STATUS_END_OF_FILE && status != STATUS_TIMEOUT)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
@@ -463,7 +463,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     if (status != STATUS_PENDING && bytesWritten)
         *bytesWritten = piosb->Information;
 
-    if (status)
+    if (status && status != STATUS_TIMEOUT)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return FALSE;
