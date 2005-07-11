@@ -78,9 +78,57 @@ static void testGetModuleFileName_Wrong(void)
     ok(bufA[0] == '*', "When failing, buffer shouldn't be written to\n");
 }
 
+static void testLoadLibraryA(void)
+{
+    HMODULE hModule;
+    FARPROC fp;
+
+    SetLastError(0xdeadbeef);
+    hModule = LoadLibraryA("ntdll.dll");
+    ok( hModule != NULL, "ntdll.dll should be loadable\n");
+    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08lx\n", GetLastError());
+
+    fp = GetProcAddress(hModule, "LdrLoadDll"); 
+    ok( fp != NULL, "Call should be there\n");
+    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08lx\n", GetLastError());
+
+    FreeLibrary(hModule);
+}
+
+static void testLoadLibraryA_Wrong(void)
+{
+    HMODULE hModule;
+
+    /* Try to load a non-existing dll */
+    SetLastError(0xdeadbeef);
+    hModule = LoadLibraryA("non_ex_pv.dll");
+    ok( !hModule, "non_ex_pv.dll should be not loadable\n");
+    ok( GetLastError() == ERROR_MOD_NOT_FOUND, "Expected ERROR_MOD_NOT_FOUND, got %08lx\n", GetLastError());
+
+    /* Just in case */
+    FreeLibrary(hModule);
+}
+
+static void testGetProcAddress_Wrong(void)
+{
+    FARPROC fp;
+
+    SetLastError(0xdeadbeef);
+    fp = GetProcAddress(NULL, "non_ex_call");
+    ok( !fp, "non_ex_call should not be found\n");
+    ok( GetLastError() == ERROR_PROC_NOT_FOUND, "Expected ERROR_PROC_NOT_FOUND, got %08lx\n", GetLastError());
+    fp = GetProcAddress((HMODULE)0xdeadbeef, "non_ex_call");
+    ok( !fp, "non_ex_call should not be found\n");
+    ok( GetLastError() == ERROR_MOD_NOT_FOUND, "Expected ERROR_MOD_NOT_FOUND, got %08lx\n", GetLastError());
+}
+
 START_TEST(module)
 {
     testGetModuleFileName(NULL);
     testGetModuleFileName("kernel32.dll");
     testGetModuleFileName_Wrong();
+
+    testLoadLibraryA();
+    testLoadLibraryA_Wrong();
+    testGetProcAddress_Wrong();
 }
