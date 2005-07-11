@@ -1076,14 +1076,19 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_GETCHARFORMAT:
   {
-    CHARFORMAT2W tmp;
+    CHARFORMAT2W tmp, *dst = (CHARFORMAT2W *)lParam;
+    if (dst->cbSize != sizeof(CHARFORMATA) &&
+        dst->cbSize != sizeof(CHARFORMATW) &&
+        dst->cbSize != sizeof(CHARFORMAT2A) &&
+        dst->cbSize != sizeof(CHARFORMAT2W))
+      return 0;
     tmp.cbSize = sizeof(tmp);
     if (!wParam)
       ME_GetDefaultCharFormat(editor, &tmp);
     else
       ME_GetSelectionCharFormat(editor, &tmp);
-    ME_CopyToCFAny((CHARFORMAT2W *)lParam, &tmp);
-    return 0;
+    ME_CopyToCFAny(dst, &tmp);
+    return tmp.dwMask;
   }
   case EM_SETPARAFORMAT:
     ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
