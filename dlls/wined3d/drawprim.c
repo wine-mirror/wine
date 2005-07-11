@@ -3,7 +3,8 @@
  *
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2002-2004 Raphael Junqueira
- * Copyright 2004 Christian Costa
+ * Copyright 2004 Christian Costa 
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -367,7 +368,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
              TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
         }
-        stride  = This->stateBlock->streamSource[element->Stream];
+        stride  = This->stateBlock->streamStride[element->Stream];
         data += (BaseVertexIndex * stride);
         data += element->Offset;
         /* Why can't I just use a lookup table instead of a switch statment? */
@@ -1258,6 +1259,12 @@ void drawStridedSlow(IWineD3DDevice *iface, Direct3DVertexStridedData *sd,
                         }
                     }
 
+                    /* crude support for non-power2 textures */
+                    if(((IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->nonpow2){
+                        t *= ((IWineD3DSurfaceImpl *)((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->pow2scalingFactorY;
+                        s *= ((IWineD3DSurfaceImpl *)((IWineD3DTextureImpl *)This->stateBlock->textures[textureNo])->surfaces[0])->pow2scalingFactorX;
+                    }
+
                     switch (coordsToUse) {   /* Supply the provided texture coords */
                     case D3DTTFF_COUNT1:
                         VTRACE(("tex:%d, s=%f\n", textureNo, s));
@@ -1637,6 +1644,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
     int                           useHW = FALSE;
+    BOOL                          nonPower2 = FALSE; /* set to true if any surfaces are non-power2 so that drawslow is used. */
 
     if (This->stateBlock->vertexDecl == NULL) {
         /* Work out what the FVF should look like */
@@ -1738,6 +1746,14 @@ void drawPrimitive(IWineD3DDevice *iface,
         {
             /* Load up the texture now */
             IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
+            if (IWineD3DResourceImpl_GetType((IWineD3DResource *)This->stateBlock->textures[i]) == D3DRTYPE_TEXTURE ) {
+                /* TODO: Is this right, as its cast all texture types to texture8... checkme */
+                IWineD3DSurface *surface;
+                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[i], 0, &surface);
+                if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
+                    nonPower2 = TRUE;
+                }
+            }
         }
     }
 
@@ -1764,6 +1780,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     } else if ((dataLocations.u.s.pSize.lpData           != NULL) 
                || (dataLocations.u.s.diffuse.lpData      != NULL) 
+               || nonPower2
 	       /*|| (dataLocations.u.s.blendWeights.lpData != NULL)*/) {
 
         /* Fixme, Ideally, only use the per-vertex code for software HAL 

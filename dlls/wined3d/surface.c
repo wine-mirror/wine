@@ -272,6 +272,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         This->lockedRect.bottom = pRect->bottom;
     }
 
+    if(This->nonpow2){
+        TRACE("Locking non-power 2 texture\n");
+    }
 
     if (0 == This->resource.usage) { /* classic surface */
 
@@ -678,8 +681,23 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
 HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl_target, GLenum gl_level) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
-    if (This->inTexture)
+    if (This->inTexture) {
+        TRACE("Surface already in texture\n");
         return D3D_OK;
+    }
+    if (This->Dirty == FALSE) {
+        TRACE("surface isn't dirty\n");
+        return D3D_OK;
+    }
+
+    This->Dirty = FALSE;
+
+    /* Resources are placed in system RAM and do not need to be recreated when a device is lost. These resources are not bound by device size or format restrictions. Because of this, these resources cannot be accessed by the Direct3D device nor set as textures or render targets. However, these resources can always be created, locked, and copied. */
+    if (This->resource.pool == D3DPOOL_SCRATCH || This->resource.pool == D3DPOOL_SYSTEMMEM) /*never store scratch or system mem textures in the video ram*/
+    {
+        FIXME("(%p) Opperation not supported for scratch or SYSTEMMEM textures\n",This);
+        return D3DERR_INVALIDCALL;
+    }
 
     if (This->inPBuffer) {
         ENTER_GL();
@@ -791,32 +809,79 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         }
     } else {
 
-        TRACE("Calling glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-              gl_target, 
-              gl_level, 
-              debug_d3dformat(This->resource.format),
-              D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format), 
-              This->currentDesc.Width, 
-              This->currentDesc.Height, 
-              0, 
-              D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format), 
-              D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
-              This->resource.allocatedMemory);
+       /* TODO: possibly use texture recrangle (though we probably more compatable without it) */
+        if (This->nonpow2 == TRUE) {
 
-        ENTER_GL();
+            TRACE("non power of two support\n");
+            ENTER_GL();
+            TRACE("(%p) Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n", This,
+                gl_target,
+                gl_level,
+                debug_d3dformat(This->resource.format),
+                D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+                This->pow2Width,
+                This->pow2Height,
+                0,
+                D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
+                D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                NULL);
 
-        glTexImage2D(gl_target, 
-                     gl_level,
-                     D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
-                     This->currentDesc.Width,
-                     This->currentDesc.Height,
-                     0,
-                     D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
-                     D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
-                     This->resource.allocatedMemory);
-        checkGLcall("glTexImage2D");
+            glTexImage2D(gl_target,
+                         gl_level,
+                         D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+                         This->pow2Width,
+                         This->pow2Height,
+                         0/*border*/,
+                         D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
+                         D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                         NULL);
 
-        LEAVE_GL();
+            checkGLcall("glTexImage2D");
+            if (This->resource.allocatedMemory != NULL) {
+                TRACE("(%p) Calling glTexSubImage2D w(%d) h(%d) mem(%p)\n", This, This->currentDesc.Width, This->currentDesc.Height, This->resource.allocatedMemory);
+                /* And map the non-power two data into the top left corner */
+                glTexSubImage2D(
+                    gl_target,
+                    gl_level,
+                    0 /* xoffset */,
+                    0 /* ysoffset */ ,
+                    This->currentDesc.Width,
+                    This->currentDesc.Height,
+                    D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
+                    D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                    This->resource.allocatedMemory
+                );
+                checkGLcall("glTexSubImage2D");
+            }
+            LEAVE_GL();
+
+        } else {
+
+            TRACE("Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+                gl_target,
+                gl_level,
+                debug_d3dformat(This->resource.format),
+                D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+                This->currentDesc.Width,
+                This->currentDesc.Height,
+                0, 
+                D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
+                D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                This->resource.allocatedMemory);
+
+            ENTER_GL();
+            glTexImage2D(gl_target,
+                        gl_level,
+                        D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+                        This->currentDesc.Width,
+                        This->currentDesc.Height,
+                        0 /* border */,
+                        D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
+                        D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                        This->resource.allocatedMemory);
+            checkGLcall("glTexImage2D");
+            LEAVE_GL();
+        }
 
 #if 0
         {
@@ -939,6 +1004,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
  */
 extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, CONST RECT* pDirtyRect) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DBaseTexture *baseTexture = NULL;
     This->Dirty = TRUE;
     if (NULL != pDirtyRect) {
         This->dirtyRect.left   = min(This->dirtyRect.left,   pDirtyRect->left);
@@ -953,6 +1019,12 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
     }
     TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left, 
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
+    /* if the container is a basetexture then mark it dirty. */
+    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == D3D_OK) {
+        TRACE("Passing to conatiner\n");
+        IWineD3DBaseTexture_SetDirty(baseTexture, TRUE);
+        IWineD3DBaseTexture_Release(baseTexture);
+    }
     return D3D_OK;
 }
 

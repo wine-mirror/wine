@@ -549,10 +549,14 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     while (pow2Width < Width) pow2Width <<= 1;
     while (pow2Height < Height) pow2Height <<= 1;
 
-    if((pow2Width > Width || pow2Height > Height) && !Usage & D3DUSAGE_RENDERTARGET) {
-        /** TODO: add support for non power two  textures (OpenGL 2 provices support for * non-power-two textures gratis) **/
-        FIXME("non-power-two textures unsupported\n");
-        return D3DERR_NOTAVAILABLE;
+    if (pow2Width > Width || pow2Height > Height) {
+         /** TODO: add support for non power two compressed textures (OpenGL 2 provices support for * non-power-two textures gratis) **/
+        if (Format == WINED3DFMT_DXT1 || Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3
+               || Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
+            FIXME("(%p) Compressed non-power-two textures are not supported w(%d) h(%d) \n",
+                    This, Width, Height);
+            return D3DERR_NOTAVAILABLE;
+        }
     }
         
     /** TODO: Check against the maximum texture sizes supported by the video card **/
@@ -565,9 +569,21 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->currentDesc.Level      = Level;
     object->currentDesc.MultiSampleType    = MultiSample;
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
+    /* Internal data */
+    object->pow2Width  = pow2Width;
+    object->pow2Height = pow2Height;
+    object->nonpow2    = (pow2Width != Width || pow2Height != Height) ? TRUE : FALSE;
     object->discard    = Discard;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
-    
+    object->pow2Size      = (pow2Width * object->bytesPerPixel) * pow2Height;
+
+    /** TODO: change this into a texture transform matrix so that it's processed in hardware **/
+
+    /* Precalculated scaling for 'faked' non power of two texture coords */
+    object->pow2scalingFactorX  =  (((float)Width)  / ((float)pow2Width));
+    object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
+    TRACE(" xf(%f) yf(%f) \n", object->pow2scalingFactorX, object->pow2scalingFactorY);
+
     /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
      *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
      *  space!
@@ -640,7 +656,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
         return D3DERR_OUTOFVIDEOMEMORY;
     }
     
-
+    /* mark the texture as dirty so that it get's loaded first time around*/
     IWineD3DSurface_AddDirtyRect(*ppSurface, NULL);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
            This, Width, Height, Format, debug_d3dformat(Format),

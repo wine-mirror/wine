@@ -622,7 +622,18 @@ struct IWineD3DSurfaceImpl
 
     UINT                      textureName;
     UINT                      bytesPerPixel;
-    
+
+    /* TODO: move this off into a management class(maybe!) */
+    BOOL                      nonpow2;
+
+    UINT                      pow2Width;
+    UINT                      pow2Height;
+    UINT                      pow2Size;
+
+    /* precalculated x and y scalings for texture coords */
+    float                     pow2scalingFactorX; /* =  (Width  / pow2Width ) */
+    float                     pow2scalingFactorY; /* =  (Height / pow2Height) */
+
     BOOL                      lockable;
     BOOL                      discard;
     BOOL                      locked;
