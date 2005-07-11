@@ -205,15 +205,17 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
 }
 
 #ifdef HAVE_CUPS_CUPS_H
+static typeof(cupsGetDests)  *pcupsGetDests;
+static typeof(cupsGetPPD)    *pcupsGetPPD;
+static typeof(cupsPrintFile) *pcupsPrintFile;
+static void *cupshandle;
+
 static BOOL CUPS_LoadPrinters(void)
 {
-    typeof(cupsGetDests) *pcupsGetDests = NULL;
-    typeof(cupsGetPPD)   *pcupsGetPPD = NULL;
     int	                  i, nrofdests;
     BOOL                  hadprinter = FALSE;
     cups_dest_t          *dests;
     PRINTER_INFO_2A       pinfo2a;
-    void *cupshandle = NULL;
     char   *port,*devline;
     HKEY hkeyPrinter, hkeyPrinters, hkey;
 
@@ -228,6 +230,7 @@ static BOOL CUPS_LoadPrinters(void)
 
     DYNCUPS(cupsGetPPD);
     DYNCUPS(cupsGetDests);
+    DYNCUPS(cupsPrintFile);
 #undef DYNCUPS
 
     if(RegCreateKeyA(HKEY_LOCAL_MACHINE, Printers, &hkeyPrinters) !=
@@ -282,7 +285,6 @@ static BOOL CUPS_LoadPrinters(void)
             WINSPOOL_SetDefaultPrinter(dests[i].name, dests[i].name, TRUE);
     }
     RegCloseKey(hkeyPrinters);
-    wine_dlclose(cupshandle, NULL, 0);
     return hadprinter;
 }
 #endif
@@ -4738,6 +4740,39 @@ static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
 }
 
 /*****************************************************************************
+ *          schedule_cups
+ */
+static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename)
+{
+#if HAVE_CUPS_CUPS_H
+    if(pcupsPrintFile)
+    {
+        char *unixname, *queue;
+        DWORD len;
+        BOOL ret;
+
+        if(!(unixname = wine_get_unix_file_name(filename)))
+            return FALSE;
+
+        len = WideCharToMultiByte(CP_ACP, 0, printer_name, -1, NULL, 0, NULL, NULL);
+        queue = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, printer_name, -1, queue, len, NULL, NULL);
+
+        TRACE("printing via cups\n");
+        /* FIXME: get job title from GetJob */
+        ret = pcupsPrintFile(queue, unixname, "Wine print job", 0, NULL);
+        HeapFree(GetProcessHeap(), 0, queue);
+        HeapFree(GetProcessHeap(), 0, unixname);
+        return ret;
+    }
+    else
+#endif
+    {
+        return schedule_lpr(printer_name, filename);
+    }
+}
+
+/*****************************************************************************
  *          ScheduleJob [WINSPOOL.@]
  *
  */
@@ -4776,11 +4811,14 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             {
                 schedule_lpr(pi5->pPortName + strlenW(LPR_Port), job->filename);
             }
+            else if(!strncmpW(pi5->pPortName, CUPS_Port, strlenW(CUPS_Port)))
+            {
+                schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename);
+            }
             else
             {
                 FIXME("can't schedule to port %s\n", debugstr_w(pi5->pPortName));
             }
-
             HeapFree(GetProcessHeap(), 0, pi5);
             CloseHandle(hf);
             DeleteFileW(job->filename);
