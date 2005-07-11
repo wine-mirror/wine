@@ -1,5 +1,5 @@
 /*
- * IDirect3DTexture9 implementation
+ * IWineD3DTexture implementation
  *
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
@@ -47,7 +47,6 @@ HRESULT WINAPI IWineD3DTextureImpl_QueryInterface(IWineD3DTexture *iface, REFIID
 ULONG WINAPI IWineD3DTextureImpl_AddRef(IWineD3DTexture *iface) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
-    IUnknown_AddRef(This->resource.parent);
     return InterlockedIncrement(&This->resource.ref);
 }
 
@@ -58,10 +57,14 @@ ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         int i;
+
+        TRACE("(%p) : Cleaning up\n",This);
         for (i = 0; i < This->baseTexture.levels; i++) {
             if (This->surfaces[i] != NULL) {
                 /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
                 IUnknown* surfaceParent;
+                /* Clean out the texture name we gave to the suface so that the surface doesn't try and release it */
+                IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], 0, 0);
                 IWineD3DSurface_GetParent(This->surfaces[i], &surfaceParent);
                 IUnknown_Release(surfaceParent);
                 IUnknown_Release(surfaceParent);
@@ -70,8 +73,6 @@ ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
 
         IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *)iface);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }
@@ -107,20 +108,28 @@ void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
 
     /* Override the IWineD3DResource PreLoad method */
     unsigned int i;
+    BOOL setGlTextureDesc = FALSE;
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
 
     TRACE("(%p) : About to load texture\n", This);
 
+    if (This->baseTexture.textureName == 0)  setGlTextureDesc = TRUE;
+
     IWineD3DTexture_BindTexture(iface);
     ENTER_GL();
-    /* If were dirty then reload the surfaces */
+        /* If were dirty then reload the surfaces */
     if(This->baseTexture.dirty != FALSE) {
+
         for (i = 0; i < This->baseTexture.levels; i++) {
-             IWineD3DSurface_LoadTexture(This->surfaces[i], GL_TEXTURE_2D, i);
+            if(setGlTextureDesc)
+                IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], This->baseTexture.textureName, IWineD3DTexture_GetTextureDimensions(iface));
+            IWineD3DSurface_LoadTexture(This->surfaces[i]);
         }
 
         /* No longer dirty */
         This->baseTexture.dirty = FALSE;
+    } else {
+        TRACE("(%p) Texture not dirty, nothing to do\n" , iface);
     }
     LEAVE_GL();
 

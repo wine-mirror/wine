@@ -414,12 +414,12 @@ typedef struct _WINED3DPRESENT_PARAMETERS {
 
 typedef struct _WINED3DSURFACE_DESC
 {
-    D3DFORMAT           *Format;
+    WINED3DFORMAT           *Format;
     D3DRESOURCETYPE     *Type;
     DWORD               *Usage;
     D3DPOOL             *Pool;
     UINT                *Size;
-                        
+
     D3DMULTISAMPLE_TYPE *MultiSampleType;
     DWORD               *MultiSampleQuality;
     UINT                *Width;
@@ -433,7 +433,7 @@ typedef struct _WINED3DVOLUME_DESC
     DWORD               *Usage;
     D3DPOOL             *Pool;
     UINT                *Size;
-                        
+
     UINT                *Width;
     UINT                *Height;
     UINT                *Depth;
@@ -674,5 +674,13 @@ typedef struct _WINED3DCAPS {
 
 } WINED3DCAPS;
 
+typedef struct glDescriptor {
+    UINT          textureName;
+    int           level;
+    int           target;
+    int/*GLenum*/ glFormat;
+    int/*GLenum*/ glFormatInternal;
+    int/*GLenum*/ glType;
+} glDescriptor;
 
 #endif

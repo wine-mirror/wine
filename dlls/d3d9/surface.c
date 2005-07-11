@@ -165,7 +165,7 @@ HRESULT WINAPI IDirect3DSurface9Impl_GetDesc(LPDIRECT3DSURFACE9 iface, D3DSURFAC
     TRACE("(%p) Relay\n", This);
 
     /* As d3d8 and d3d9 structures differ, pass in ptrs to where data needs to go */
-    wined3ddesc.Format              = &pDesc->Format;
+    wined3ddesc.Format              = (WINED3DFORMAT *)&pDesc->Format;
     wined3ddesc.Type                = &pDesc->Type;
     wined3ddesc.Usage               = &pDesc->Usage;
     wined3ddesc.Pool                = &pDesc->Pool;

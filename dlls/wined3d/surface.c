@@ -60,13 +60,16 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
-        if (This->textureName != 0) { /* release the openGL texture.. */
+        TRACE("(%p) : cleaning up\n", This);
+        if (This->glDescription.textureName != 0) { /* release the openGL texture.. */
             ENTER_GL();
-            TRACE("Deleting texture %d\n", This->textureName);
-            glDeleteTextures(1, &This->textureName);
+            TRACE("Deleting texture %d\n", This->glDescription.textureName);
+            glDeleteTextures(1, &This->glDescription.textureName);
             LEAVE_GL();
         }
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
+
+        TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
 
     }
@@ -108,7 +111,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     /* TODO: check for locks */
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
-    TRACE("(%p)Checking to see if the container is a base textuer\n", This);
+    TRACE("(%p)Checking to see if the container is a base texture\n", This);
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == D3D_OK) {
         TRACE("Passing to conatiner\n");
         IWineD3DBaseTexture_PreLoad(baseTexture);
@@ -119,21 +122,21 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
 #if 0 /* TODO: context manager support */
      IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_2D, ENABLED, NOW /* make sure the state is applied now */);
 #endif
-    glEnable(GL_TEXTURE_2D); /* make sure texture support is enabled in this context */
-    if (This->currentDesc.Level == 0 &&  This->textureName == 0) {
-          glGenTextures(1, &This->textureName);
+    glEnable(This->glDescription.target);/* make sure texture support is enabled in this context */
+    if (This->glDescription.level == 0 &&  This->glDescription.textureName == 0) {
+          glGenTextures(1, &This->glDescription.textureName);
           checkGLcall("glGenTextures");
-          TRACE("Surface %p given name %d\n", This, This->textureName);
-          glBindTexture(GL_TEXTURE_2D, This->textureName);
+          TRACE("Surface %p given name %d\n", This, This->glDescription.textureName);
+          glBindTexture(This->glDescription.target, This->glDescription.textureName);
           checkGLcall("glBindTexture");
-          IWineD3DSurface_LoadTexture((IWineD3DSurface *) This, GL_TEXTURE_2D, This->currentDesc.Level);
+          IWineD3DSurface_LoadTexture(iface);
           /* This is where we should be reducing the amount of GLMemoryUsed */
     }else {
-        if (This->currentDesc.Level == 0) {
-          glBindTexture(GL_TEXTURE_2D, This->textureName);
+        if (This->glDescription.level == 0) {
+          glBindTexture(This->glDescription.target, This->glDescription.textureName);
           checkGLcall("glBindTexture");
-          IWineD3DSurface_LoadTexture((IWineD3DSurface *) This, GL_TEXTURE_2D, This->currentDesc.Level);
-        } else  if (This->textureName != 0) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
+          IWineD3DSurface_LoadTexture(iface);
+        } else  if (This->glDescription.textureName != 0) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
             /* assume this is a coding error not a real error for now */
             FIXME("Mipmap surface has a glTexture bound to it!\n");
         }
@@ -142,7 +145,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
        /* Tell opengl to try and keep this texture in video ram (well mostly) */
        GLclampf tmp;
        tmp = 0.9f;
-        glPrioritizeTextures(1, &This->textureName, &tmp);
+        glPrioritizeTextures(1, &This->glDescription.textureName, &tmp);
     }
     /* TODO: disable texture support, if it wastn't enabled when we entered. */
 #if 0 /* TODO: context manager support */
@@ -197,6 +200,33 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     *(pDesc->Width)              = This->currentDesc.Width;
     *(pDesc->Height)             = This->currentDesc.Height;
     return D3D_OK;
+}
+
+void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target){
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
+    if (This->glDescription.textureName == 0 && textureName != 0) {
+        This->Dirty = TRUE;
+        IWineD3DSurface_AddDirtyRect(iface, NULL);
+    }
+    This->glDescription.textureName = textureName;
+    This->glDescription.target      = target;
+}
+
+void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription){
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    TRACE("(%p) : returning %p\n", This, &This->glDescription);
+    *glDescription = &This->glDescription;
+}
+
+/* TODO: think about moving this down to resource? */
+const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    /* This should only be called for sysmem textures, it may be a good idea to extend this to all pools at some point in the futture  */
+    if (This->resource.pool != D3DPOOL_SYSTEMMEM) {
+        FIXME(" (%p)Attempting to get system memory for a non-system memory texture\n", iface);
+    }
+    return (CONST void*)(This->resource.allocatedMemory);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
@@ -678,7 +708,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
 /* ******************************************************
    IWineD3DSurface Internal (No mapping to directx api) parts follow
    ****************************************************** */
-HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl_target, GLenum gl_level) {
+HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     if (This->inTexture) {
@@ -702,23 +732,32 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
     if (This->inPBuffer) {
         ENTER_GL();
 
-        if (gl_level != 0)
+        if (This->glDescription.level != 0)
             FIXME("Surface in texture is only supported for level 0\n");
         else if (This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8 ||
                  This->resource.format == WINED3DFMT_DXT1 || This->resource.format == WINED3DFMT_DXT3 ||
                  This->resource.format == WINED3DFMT_DXT5)
             FIXME("Format %d not supported\n", This->resource.format);
         else {
-            glCopyTexImage2D(gl_target,
-                             0,
-                             D3DFmt2GLIntFmt(This->resource.wineD3DDevice,
-                                             This->resource.format),
+            GLenum prevRead;
+            glGetIntegerv(GL_READ_BUFFER, &prevRead);
+            vcheckGLcall("glGetIntegerv");
+            glReadBuffer(GL_BACK);
+            vcheckGLcall("glReadBuffer");
+
+            glCopyTexImage2D(This->glDescription.target,
+                             This->glDescription.level,
+                             This->glDescription.glFormatInternal,
                              0,
                              0,
                              This->currentDesc.Width,
                              This->currentDesc.Height,
                              0);
-            TRACE("Updating target %d\n", gl_target);
+
+            checkGLcall("glCopyTexImage2D");
+            glReadBuffer(prevRead);
+            vcheckGLcall("glReadBuffer");
+            TRACE("Updating target %d\n", This->glDescription.target);
             This->inTexture = TRUE;
         }
         LEAVE_GL();
@@ -751,8 +790,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         ENTER_GL();
 
         TRACE("Calling glTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-              gl_target,
-              gl_level, 
+              This->glDescription.target,
+              This->glDescription.level,
               GL_RGBA,
               This->currentDesc.Width, 
               This->currentDesc.Height, 
@@ -760,8 +799,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
               GL_RGBA,
               GL_UNSIGNED_BYTE,
               surface);
-        glTexImage2D(gl_target,
-                     gl_level, 
+        glTexImage2D(This->glDescription.target,
+                     This->glDescription.level,
                      GL_RGBA,
                      This->currentDesc.Width,
                      This->currentDesc.Height,
@@ -777,14 +816,16 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         return D3D_OK;    
     }
 
+    /* TODO: Compressed non-power 2 support */
+    /* TODO: DXT2 DXT4 support */
     if (This->resource.format == WINED3DFMT_DXT1 ||
         This->resource.format == WINED3DFMT_DXT3 ||
         This->resource.format == WINED3DFMT_DXT5) {
         if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
             TRACE("Calling glCompressedTexImage2D %x i=%d, intfmt=%x, w=%d, h=%d,0=%d, sz=%d, Mem=%p\n",
-                  gl_target, 
-                  gl_level, 
-                  D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format), 
+                  This->glDescription.target,
+                  This->glDescription.level,
+                  This->glDescription.glFormatInternal,
                   This->currentDesc.Width, 
                   This->currentDesc.Height, 
                   0, 
@@ -793,9 +834,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
 
             ENTER_GL();
 
-            GL_EXTCALL(glCompressedTexImage2DARB)(gl_target, 
-                                                  gl_level, 
-                                                  D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+            GL_EXTCALL(glCompressedTexImage2DARB)(This->glDescription.target,
+                                                  This->glDescription.level,
+                                                  This->glDescription.glFormatInternal,
                                                   This->currentDesc.Width,
                                                   This->currentDesc.Height,
                                                   0,
@@ -815,20 +856,20 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
             TRACE("non power of two support\n");
             ENTER_GL();
             TRACE("(%p) Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n", This,
-                gl_target,
-                gl_level,
+                This->glDescription.target,
+                This->glDescription.level,
                 debug_d3dformat(This->resource.format),
-                D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+                This->glDescription.glFormatInternal,
                 This->pow2Width,
                 This->pow2Height,
                 0,
-                D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
-                D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                This->glDescription.glFormat,
+                This->glDescription.glType,
                 NULL);
 
-            glTexImage2D(gl_target,
-                         gl_level,
-                         D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+            glTexImage2D(This->glDescription.target,
+                         This->glDescription.level,
+                         This->glDescription.glFormatInternal,
                          This->pow2Width,
                          This->pow2Height,
                          0/*border*/,
@@ -841,14 +882,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
                 TRACE("(%p) Calling glTexSubImage2D w(%d) h(%d) mem(%p)\n", This, This->currentDesc.Width, This->currentDesc.Height, This->resource.allocatedMemory);
                 /* And map the non-power two data into the top left corner */
                 glTexSubImage2D(
-                    gl_target,
-                    gl_level,
+                    This->glDescription.target,
+                    This->glDescription.level,
                     0 /* xoffset */,
                     0 /* ysoffset */ ,
                     This->currentDesc.Width,
                     This->currentDesc.Height,
-                    D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
-                    D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                    This->glDescription.glFormat,
+                    This->glDescription.glType,
                     This->resource.allocatedMemory
                 );
                 checkGLcall("glTexSubImage2D");
@@ -858,26 +899,26 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
         } else {
 
             TRACE("Calling 2 glTexImage2D %x i=%d, d3dfmt=%s, intfmt=%x, w=%d, h=%d,0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-                gl_target,
-                gl_level,
+                This->glDescription.target,
+                This->glDescription.level,
                 debug_d3dformat(This->resource.format),
-                D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+                This->glDescription.glFormatInternal,
                 This->currentDesc.Width,
                 This->currentDesc.Height,
                 0, 
-                D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
-                D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                This->glDescription.glFormat,
+                This->glDescription.glType,
                 This->resource.allocatedMemory);
 
             ENTER_GL();
-            glTexImage2D(gl_target,
-                        gl_level,
-                        D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->resource.format),
+            glTexImage2D(This->glDescription.target,
+                        This->glDescription.level,
+                        This->glDescription.glFormatInternal,
                         This->currentDesc.Width,
                         This->currentDesc.Height,
                         0 /* border */,
-                        D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
-                        D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                        This->glDescription.glFormat,
+                        This->glDescription.glType,
                         This->resource.allocatedMemory);
             checkGLcall("glTexImage2D");
             LEAVE_GL();
@@ -889,7 +930,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface, GLenum gl
             char buffer[4096];
             ++gen;
             if ((gen % 10) == 0) {
-                snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, gl_target, gl_level, gen);
+                snprintf(buffer, sizeof(buffer), "/tmp/surface%p_type%u_level%u_%u.ppm", This, This->glDescription.target, This->glDescription.level, gen);
                 IWineD3DSurfaceImpl_SaveSnapshot((IWineD3DSurface *) This, buffer);
             }
             /*
@@ -1073,5 +1114,8 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_LoadTexture,
     IWineD3DSurfaceImpl_SaveSnapshot,
     IWineD3DSurfaceImpl_SetContainer,
-    IWineD3DSurfaceImpl_SetPBufferState    
+    IWineD3DSurfaceImpl_SetPBufferState,
+    IWineD3DSurfaceImpl_SetGlTextureDesc,
+    IWineD3DSurfaceImpl_GetGlDesc,
+    IWineD3DSurfaceImpl_GetData
 };

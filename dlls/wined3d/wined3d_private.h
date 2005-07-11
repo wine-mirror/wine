@@ -600,7 +600,6 @@ extern const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;
 
 typedef struct _WINED3DSURFACET_DESC
 {
-    UINT                Level;
     D3DMULTISAMPLE_TYPE MultiSampleType;
     DWORD               MultiSampleQuality;
     UINT                Width;
@@ -644,6 +643,8 @@ struct IWineD3DSurfaceImpl
     
     BOOL                      inTexture;
     BOOL                      inPBuffer;
+
+    glDescriptor              glDescription;
 };
 
 extern const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl;

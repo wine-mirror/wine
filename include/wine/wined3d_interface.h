@@ -979,11 +979,14 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     /* Internally used methods */
     STDMETHOD(CleanDirtyRect)(THIS) PURE;
     STDMETHOD(AddDirtyRect)(THIS_ CONST RECT* pRect) PURE;
-    STDMETHOD(LoadTexture)(THIS_ UINT gl_target, UINT gl_level) PURE;
+    STDMETHOD(LoadTexture)(THIS) PURE;
     STDMETHOD(SaveSnapshot)(THIS_ const char *filename) PURE;
     STDMETHOD(SetContainer)(THIS_ IUnknown *container) PURE;
     STDMETHOD(SetPBufferState)(THIS_ BOOL inPBuffer, BOOL  inTexture) PURE;
-    
+    STDMETHOD_(void,SetGlTextureDesc)(THIS_ UINT textureName, int target) PURE;
+    STDMETHOD_(void,GetGlDesc)(THIS_ glDescriptor **glDescription) PURE;
+    STDMETHOD_(CONST void *, GetData)(THIS) PURE;
+
 };
 #undef INTERFACE
 
@@ -1012,10 +1015,13 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 /*** IWineD3DSurface (Internal, no d3d mapping) methods ***/
 #define IWineD3DSurface_CleanDirtyRect(p)            (p)->lpVtbl->CleanDirtyRect(p)
 #define IWineD3DSurface_AddDirtyRect(p,a)            (p)->lpVtbl->AddDirtyRect(p,a)
-#define IWineD3DSurface_LoadTexture(p,a,b)           (p)->lpVtbl->LoadTexture(p,a,b)
+#define IWineD3DSurface_LoadTexture(p)               (p)->lpVtbl->LoadTexture(p)
 #define IWineD3DSurface_SaveSnapshot(p,a)            (p)->lpVtbl->SaveSnapshot(p,a)
 #define IWineD3DSurface_SetContainer(p,a)            (p)->lpVtbl->SetContainer(p,a)
 #define IWineD3DSurface_SetPBufferState(p,a,b)       (p)->lpVtbl->SetPBufferState(p,a,b)
+#define IWineD3DSurface_SetGlTextureDesc(p,a,b)      (p)->lpVtbl->SetGlTextureDesc(p,a,b)
+#define IWineD3DSurface_GetGlDesc(p,a)               (p)->lpVtbl->GetGlDesc(p,a)
+#define IWineD3DSurface_GetData(p)                   (p)->lpVtbl->GetData(p)
 #endif
 
 /*****************************************************************************

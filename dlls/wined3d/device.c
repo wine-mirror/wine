@@ -558,17 +558,25 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
             return D3DERR_NOTAVAILABLE;
         }
     }
-        
+
     /** TODO: Check against the maximum texture sizes supported by the video card **/
-    
+
     D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,D3DRTYPE_SURFACE)
     object->container = (IUnknown*) This;
-            
+
     object->currentDesc.Width      = Width;
     object->currentDesc.Height     = Height;
-    object->currentDesc.Level      = Level;
     object->currentDesc.MultiSampleType    = MultiSample;
     object->currentDesc.MultiSampleQuality = MultisampleQuality;
+
+/* Setup some glformat defaults */
+    object->glDescription.glFormat         = D3DFmt2GLFmt(This, object->resource.format);
+    object->glDescription.glFormatInternal = D3DFmt2GLIntFmt(This, object->resource.format);
+    object->glDescription.glType           = D3DFmt2GLType(This, object->resource.format);
+    object->glDescription.textureName      = 0;
+    object->glDescription.level            = Level;
+    object->glDescription.target           = GL_TEXTURE_2D;
+
     /* Internal data */
     object->pow2Width  = pow2Width;
     object->pow2Height = pow2Height;

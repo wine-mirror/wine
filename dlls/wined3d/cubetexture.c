@@ -76,11 +76,19 @@ ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         int i,j;
+      TRACE("(%p) : Cleaning up\n",This);
         for (i = 0; i < This->baseTexture.levels; i++) {
           for (j = 0; j < 6; j++) { 
             if (This->surfaces[j][i] != NULL) {
-              TRACE("(%p) : Releasing surface%d %d  %p\n", This, j, i, This->surfaces[j][i]);
-              IWineD3DSurface_Release((IWineD3DSurface *) This->surfaces[j][i]);
+                /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
+                IUnknown* surfaceParent;
+                /* Clean out the texture name we gave to the suface so that the surface doesn't try and release it */
+                IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], 0, 0);
+                TRACE("(%p) : Releasing surface%d %d  %p\n", This, j, i, This->surfaces[j][i]);
+                IWineD3DSurface_GetParent(This->surfaces[j][i], &surfaceParent);
+                IUnknown_Release(surfaceParent);
+                IUnknown_Release(surfaceParent);
+
             }
           }
         }
@@ -122,18 +130,23 @@ DWORD WINAPI IWineD3DCubeTextureImpl_GetPriority(IWineD3DCubeTexture *iface) {
 void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     /* Override the IWineD3DResource Preload method */
     unsigned int i,j;
+    BOOL setGlTextureDesc = FALSE;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->baseTexture.dirty);
+
+    if (This->baseTexture.textureName == 0)  setGlTextureDesc = TRUE;
 
     IWineD3DCubeTexture_BindTexture(iface);
         
     ENTER_GL();
     /* If were dirty then reload the surfaces */
-    if(This->baseTexture.dirty != FALSE) {
+    if (This->baseTexture.dirty != FALSE) {
         for (i = 0; i < This->baseTexture.levels; i++) {
           for (j = 0; j < 6; j++)
-              IWineD3DSurface_LoadTexture((IWineD3DSurface *) This->surfaces[j][i], cube_targets[j], i);
+              if(setGlTextureDesc)
+                  IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
+                  IWineD3DSurface_LoadTexture((IWineD3DSurface *) This->surfaces[j][i]);
         }
         /* No longer dirty */
         This->baseTexture.dirty = FALSE;
