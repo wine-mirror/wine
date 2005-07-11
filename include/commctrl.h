@@ -997,6 +997,16 @@ typedef struct tagNMHDFILTERBTNCLICK
   (BOOL)SNDMSGA((hwnd),HDM_GETUNICODEFORMAT,0,0)
 
 /* Win32 5.1 Button Theme */
+#define WC_BUTTONA       "Button"
+#if defined(__GNUC__)
+# define WC_BUTTONW (const WCHAR []){ 'B','u','t','t','o','n',0 }
+#elif defined(_MSC_VER)
+# define WC_BUTTONW      L"Button"
+#else
+static const WCHAR WC_BUTTONW[] = { 'B','u','t','t','o','n',0 };
+#endif
+#define WC_BUTTON WINELIB_NAME_AW(WC_BUTTON)
+
 #define BCN_FIRST               (0U-1250U)
 #define BCN_LAST                (0U-1350U)
 
@@ -1007,6 +1017,8 @@ typedef struct tagNMBCHOTITEM
   NMHDR hdr;
   DWORD dwFlags;
 } NMBCHOTITEM, *LPNMBCHOTITEM;
+
+#define BST_HOT                 0x0200
 
 /* Toolbar */
 
