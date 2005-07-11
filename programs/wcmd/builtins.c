@@ -833,9 +833,9 @@ char buffer[1048];
     }
     *p++ = '\0';
 
-    if (strlen(p) == 0) p = 0x00;
+    if (strlen(p) == 0) p = NULL;
     status = SetEnvironmentVariable (s, p);
-    if (!status) WCMD_print_error();
+    if ((!status) & (GetLastError() != ERROR_ENVVAR_NOT_FOUND)) WCMD_print_error();
   }
   /* WCMD_output (newline);   @JED*/
 }
