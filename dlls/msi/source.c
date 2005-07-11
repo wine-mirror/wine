@@ -225,7 +225,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEstringW,
                     0, 0, (LPBYTE)buffer,&size); 
             ptr = strchrW(buffer,';');
-            ptr = strchrW(ptr,';');
+            if (ptr) ptr = strchrW(ptr+1,';');
             if (!ptr)
                 rc = ERROR_UNKNOWN_PROPERTY;
             else
