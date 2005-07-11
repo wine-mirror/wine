@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(amstream);
 
 typedef struct {
     IAMMultiMediaStream lpVtbl;
-    ULONG ref;
+    LONG ref;
 } IAMMultiMediaStreamImpl;
 
 static const struct IAMMultiMediaStreamVtbl AM_Vtbl;

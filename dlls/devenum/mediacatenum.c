@@ -41,7 +41,7 @@ static ULONG WINAPI DEVENUM_IPropertyBag_AddRef(LPPROPERTYBAG iface);
 typedef struct
 {
     const IPropertyBagVtbl *lpVtbl;
-    DWORD ref;
+    LONG ref;
     HKEY hkey;
 } RegPropBagImpl;
 

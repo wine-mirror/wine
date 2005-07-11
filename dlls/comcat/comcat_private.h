@@ -38,7 +38,7 @@
 /**********************************************************************
  * Dll lifetime tracking declaration for comcat.dll
  */
-extern DWORD dll_ref;
+extern LONG dll_ref;
 
 /**********************************************************************
  * ClassFactory declaration for comcat.dll
@@ -47,7 +47,7 @@ typedef struct
 {
     /* IUnknown fields */
     const IClassFactoryVtbl *lpVtbl;
-    DWORD ref;
+    LONG ref;
 } ClassFactoryImpl;
 
 extern ClassFactoryImpl COMCAT_ClassFactory;
@@ -61,7 +61,7 @@ typedef struct
     const IUnknownVtbl *unkVtbl;
     const ICatRegisterVtbl *regVtbl;
     const ICatInformationVtbl *infVtbl;
-    DWORD ref;
+    LONG ref;
 } ComCatMgrImpl;
 
 extern const ComCatMgrImpl COMCAT_ComCatMgr;

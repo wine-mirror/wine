@@ -47,7 +47,7 @@ struct ID3DXBufferImpl
 {
   /* IUnknown fields */
   const ID3DXBufferVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* ID3DXBuffer fields */
   DWORD         *buffer;
@@ -79,7 +79,7 @@ struct ID3DXFontImpl
 {
   /* IUnknown fields */
   const ID3DXFontVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* ID3DXFont fields */
 };

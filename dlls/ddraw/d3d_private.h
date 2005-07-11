@@ -67,7 +67,7 @@ typedef struct STATEBLOCK {
 struct IDirect3DLightImpl
 {
     ICOM_VFIELD_MULTI(IDirect3DLight);
-    DWORD ref;
+    LONG ref;
     /* IDirect3DLight fields */
     IDirectDrawImpl *d3d;
     /* If this light is active for one viewport, put the viewport here */
@@ -95,7 +95,7 @@ struct IDirect3DMaterialImpl
     ICOM_VFIELD_MULTI(IDirect3DMaterial3);
     ICOM_VFIELD_MULTI(IDirect3DMaterial2);
     ICOM_VFIELD_MULTI(IDirect3DMaterial);
-    DWORD  ref;
+    LONG  ref;
     /* IDirect3DMaterial2 fields */
     IDirectDrawImpl *d3d;
     IDirect3DDeviceImpl *active_device;
@@ -111,7 +111,7 @@ struct IDirect3DMaterialImpl
 struct IDirect3DViewportImpl
 {
     ICOM_VFIELD_MULTI(IDirect3DViewport3);
-    DWORD ref;
+    LONG ref;
     /* IDirect3DViewport fields */
     IDirectDrawImpl *d3d;
     /* If this viewport is active for one device, put the device here */
@@ -145,7 +145,7 @@ struct IDirect3DViewportImpl
 struct IDirect3DExecuteBufferImpl
 {
     ICOM_VFIELD_MULTI(IDirect3DExecuteBuffer);
-    DWORD ref;
+    LONG ref;
     /* IDirect3DExecuteBuffer fields */
     IDirectDrawImpl *d3d;
     IDirect3DDeviceImpl* d3ddev;
@@ -195,7 +195,7 @@ struct IDirect3DDeviceImpl
     ICOM_VFIELD_MULTI(IDirect3DDevice3);
     ICOM_VFIELD_MULTI(IDirect3DDevice2);
     ICOM_VFIELD_MULTI(IDirect3DDevice);
-    DWORD  ref;
+    LONG  ref;
 
     /* Version of the Direct3D object from which the device has been created */
     DWORD version;
@@ -260,7 +260,7 @@ struct IDirect3DVertexBufferImpl
 {
     ICOM_VFIELD_MULTI(IDirect3DVertexBuffer7);
     ICOM_VFIELD_MULTI(IDirect3DVertexBuffer);
-    DWORD ref;
+    LONG ref;
     IDirectDrawImpl *d3d;
     D3DVERTEXBUFFERDESC desc;
     LPVOID *vertices;

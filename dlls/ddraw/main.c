@@ -450,7 +450,7 @@ static HRESULT DDRAW_CreateDirectDraw(IUnknown* pUnkOuter, REFIID iid,
 typedef struct {
     ICOM_VFIELD_MULTI(IClassFactory);
 
-    DWORD ref;
+    LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid,
 				 LPVOID *ppObj);
 } IClassFactoryImpl;

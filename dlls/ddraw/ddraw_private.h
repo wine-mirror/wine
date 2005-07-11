@@ -86,7 +86,7 @@ struct IDirectDrawImpl
     ICOM_VFIELD_MULTI(IDirect3D2);
     ICOM_VFIELD_MULTI(IDirect3D);
 
-    DWORD ref;
+    LONG ref;
 
     /* TRUE if created via DirectDrawCreateEx or CoCreateInstance,
      * FALSE if created via DirectDrawCreate. */
@@ -198,7 +198,7 @@ struct IDirectDrawPaletteImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD_MULTI(IDirectDrawPalette);
-    DWORD ref;
+    LONG ref;
 
     DDRAWI_DDRAWPALETTE_LCL local;
     DDRAWI_DDRAWPALETTE_GBL global;
@@ -226,7 +226,7 @@ struct IDirectDrawClipperImpl
 {
     /* IUnknown fields */
     ICOM_VFIELD_MULTI(IDirectDrawClipper);
-    DWORD ref;
+    LONG ref;
 
     /* IDirectDrawClipper fields */
     HWND hWnd;
@@ -248,7 +248,7 @@ struct IDirectDrawSurfaceImpl
     ICOM_VFIELD_MULTI(IDirectDrawGammaControl);
     ICOM_VFIELD_MULTI(IDirect3DTexture2);
     ICOM_VFIELD_MULTI(IDirect3DTexture);
-    DWORD ref;
+    LONG ref;
 
     struct IDirectDrawSurfaceImpl* attached; /* attached surfaces */
 

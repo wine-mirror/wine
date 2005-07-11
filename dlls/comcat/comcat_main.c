@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-DWORD dll_ref = 0;
+LONG dll_ref = 0;
 
 /***********************************************************************
  *		Global string constant definitions

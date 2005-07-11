@@ -342,7 +342,7 @@ struct IDirect3D8Impl
 {
     /* IUnknown fields */
     const IDirect3D8Vtbl   *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* The WineD3D device */
     IWineD3D               *WineD3D;
@@ -395,7 +395,7 @@ struct IDirect3DDevice8Impl
 {
     /* IUnknown fields */
     const IDirect3DDevice8Vtbl   *lpVtbl;
-    DWORD                         ref;
+    LONG                         ref;
 
     /* IDirect3DDevice8 fields */
     IDirect3D8Impl               *direct3d8;
@@ -590,7 +590,7 @@ struct IDirect3DVolume8Impl
 {
     /* IUnknown fields */
     const IDirect3DVolume8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DVolume8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -644,7 +644,7 @@ struct IDirect3DSwapChain8Impl
 {
     /* IUnknown fields */
     const IDirect3DSwapChain8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DSwapChain8 fields */
     IDirect3DSurface8Impl  *frontBuffer;
@@ -686,7 +686,7 @@ struct IDirect3DSurface8Impl
 {
     /* IUnknown fields */
     const IDirect3DSurface8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DSurface8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -746,7 +746,7 @@ struct IDirect3DResource8Impl
 {
     /* IUnknown fields */
     const IDirect3DResource8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -788,7 +788,7 @@ struct IDirect3DVertexBuffer8Impl
 {
     /* IUnknown fields */
     const IDirect3DVertexBuffer8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -836,7 +836,7 @@ struct IDirect3DIndexBuffer8Impl
 {
     /* IUnknown fields */
     const IDirect3DIndexBuffer8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -879,7 +879,7 @@ struct IDirect3DBaseTexture8Impl
 {
     /* IUnknown fields */
     const IDirect3DBaseTexture8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -936,7 +936,7 @@ struct IDirect3DCubeTexture8Impl
 {
     /* IUnknown fields */
     const IDirect3DCubeTexture8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -998,7 +998,7 @@ struct IDirect3DTexture8Impl
 {
     /* IUnknown fields */
     const IDirect3DTexture8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResourc8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -1061,7 +1061,7 @@ struct IDirect3DVolumeTexture8Impl
 {
     /* IUnknown fields */
     const IDirect3DVolumeTexture8Vtbl *lpVtbl;
-    DWORD                   ref;
+    LONG                   ref;
 
     /* IDirect3DResource8 fields */
     IDirect3DDevice8Impl   *Device;
@@ -1149,7 +1149,7 @@ typedef struct SAVEDSTATES {
 struct  IDirect3DStateBlockImpl {
   /* IUnknown fields */
   /*const IDirect3DStateBlock9Vtbl *lpVtbl;*/
-  DWORD  ref;
+  LONG  ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
@@ -1238,7 +1238,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl
 struct IDirect3DVertexShaderDeclarationImpl {
   /* IUnknown fields */
   /*const IDirect3DVertexShaderDeclaration9Vtbl *lpVtbl;*/
-  DWORD  ref;
+  LONG  ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
@@ -1274,7 +1274,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_CreateVertexShaderDeclaration8(IDirect
  */
 struct IDirect3DVertexShaderImpl {
   /*const IDirect3DVertexShader9Vtbl *lpVtbl;*/
-  DWORD ref;
+  LONG ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;
@@ -1323,7 +1323,7 @@ extern HRESULT WINAPI IDirect3DDeviceImpl_FillVertexShaderInputArbHW(IDirect3DDe
  */
 struct IDirect3DPixelShaderImpl { 
   /*const IDirect3DPixelShader9Vtbl *lpVtbl;*/
-  DWORD ref;
+  LONG ref;
 
   /* The device, to be replaced by an IDirect3DDeviceImpl */
   IDirect3DDevice8Impl* device;

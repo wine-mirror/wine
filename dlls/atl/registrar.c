@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
-ULONG dll_count = 0;
+LONG dll_count = 0;
 
 /**************************************************************
  * ATLRegistrar implementation
@@ -79,7 +79,7 @@ typedef struct rep_list_str {
 
 typedef struct {
     const IRegistrarVtbl *lpVtbl;
-    ULONG ref;
+    LONG ref;
     rep_list *rep;
 } Registrar;
 

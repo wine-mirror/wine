@@ -298,7 +298,7 @@ const ICatInformationVtbl COMCAT_ICatInformation_Vtbl =
 typedef struct
 {
     const IEnumCATEGORYINFOVtbl *lpVtbl;
-    DWORD ref;
+    LONG  ref;
     LCID  lcid;
     HKEY  key;
     DWORD next_index;
@@ -602,7 +602,7 @@ static HRESULT COMCAT_IsClassOfCategories(
 typedef struct
 {
     const IEnumGUIDVtbl *lpVtbl;
-    DWORD ref;
+    LONG  ref;
     const struct class_categories *categories;
     HKEY  key;
     DWORD next_index;
@@ -795,7 +795,7 @@ static LPENUMGUID COMCAT_CLSID_IEnumGUID_Construct(
 typedef struct
 {
     const IEnumGUIDVtbl *lpVtbl;
-    DWORD ref;
+    LONG  ref;
     WCHAR keyname[68];
     HKEY  key;
     DWORD next_index;
