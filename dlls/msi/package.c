@@ -893,6 +893,10 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf,
     if (NULL != szValueBuf && NULL == pchValueBuf)
         return ERROR_INVALID_PARAMETER;
 
+    /* This was tested against native msi */
+    if (NULL == szValueBuf && NULL != pchValueBuf)
+        *pchValueBuf = 0;
+
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -919,6 +923,10 @@ UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
         return ERROR_INVALID_PARAMETER;
     if (NULL != szValueBuf && NULL == pchValueBuf)
         return ERROR_INVALID_PARAMETER;
+
+    /* This was tested against native msi */
+    if (NULL == szValueBuf && NULL != pchValueBuf)
+        *pchValueBuf = 0;
 
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
     if (!package)
