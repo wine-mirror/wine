@@ -31,6 +31,7 @@
 
 #include "msvcrt.h"
 #include "mtdll.h"
+#include "msvcrt/mbctype.h"
 
 #include "wine/debug.h"
 
@@ -517,16 +518,32 @@ const char* _Strftime(char *out, unsigned int len, const char *fmt,
  */
 int _setmbcp(int cp)
 {
-  if (cp < 0)
-  {
-      FIXME ("Unreal codepages (e.g. %d) not implemented\n", cp);
-      return 0; /* Let's not confuse the caller by returning -1 */
-  }
   LOCK_LOCALE;
-  if (msvcrt_current_lc_all_cp != cp)
+  if ((msvcrt_current_lc_all_cp != cp) && (cp > _MB_CP_SBCS))
   {
     /* FIXME: set ctype behaviour for this cp */
     msvcrt_current_lc_all_cp = cp;
+  }
+  else if(cp == _MB_CP_ANSI)
+  {
+    msvcrt_current_lc_all_cp = GetACP();
+  }
+  else if(cp == _MB_CP_OEM)
+  {
+    msvcrt_current_lc_all_cp = GetOEMCP();
+  }
+  else if(cp == _MB_CP_LOCALE)
+  {
+    GetLocaleInfoW( GetUserDefaultLCID(), LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER, 
+                    (WCHAR *)&msvcrt_current_lc_all_cp, sizeof(INT)/sizeof(WCHAR) );
+  }
+  else if(cp == _MB_CP_SBCS)
+  {
+    FIXME ("SBCS codepages (e.g. %d) not implemented\n", cp);
+  }
+  else
+  {
+    FIXME ("Unreal codepages (e.g. %d) not implemented\n", cp);
   }
   UNLOCK_LOCALE;
   return 0;
