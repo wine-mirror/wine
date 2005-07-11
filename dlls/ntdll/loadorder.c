@@ -605,6 +605,14 @@ void MODULE_GetLoadOrderW( enum loadorder_type loadorder[], const WCHAR *app_nam
     }
     else  /* module contains an explicit path */
     {
+        /* then base name without '*' in environment */
+        if (get_env_load_order( basename, loadorder ))
+        {
+            TRACE( "got environment basename %s for %s\n",
+                   debugstr_loadorder(loadorder), debugstr_w(path) );
+            goto done;
+        }
+
         /* then base name without '*' in AppDefaults */
         if (app_key && get_registry_value( app_key, basename, loadorder ))
         {
