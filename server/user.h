@@ -40,6 +40,24 @@ enum user_object
 
 #define DESKTOP_ATOM  ((atom_t)32769)
 
+struct winstation
+{
+    struct object      obj;                /* object header */
+    unsigned int       flags;              /* winstation flags */
+    struct list        entry;              /* entry in global winstation list */
+    struct list        desktops;           /* list of desktops of this winstation */
+    struct clipboard  *clipboard;          /* clipboard information */
+    struct atom_table *atom_table;         /* global atom table */
+};
+
+struct desktop
+{
+    struct object      obj;           /* object header */
+    unsigned int       flags;         /* desktop flags */
+    struct winstation *winstation;    /* winstation this desktop belongs to */
+    struct list        entry;         /* entry in winstation list of desktops */
+};
+
 /* user handles functions */
 
 extern user_handle_t alloc_user_handle( void *ptr, enum user_object type );
@@ -125,10 +143,7 @@ extern void *get_class_client_ptr( struct window_class *class );
 /* windows station functions */
 
 extern struct winstation *get_process_winstation( struct process *process, unsigned int access );
-extern void set_winstation_clipboard( struct winstation *winstation, struct clipboard *clipboard );
-extern void set_winstation_atom_table( struct winstation *winstation, struct atom_table *table );
-extern struct clipboard *get_winstation_clipboard( struct winstation *winstation );
-extern struct atom_table *get_winstation_atom_table( struct winstation *winstation );
+extern struct desktop *get_thread_desktop( struct thread *thread, unsigned int access );
 extern void connect_process_winstation( struct process *process, const WCHAR *name, size_t len );
 extern void connect_process_desktop( struct process *process, const WCHAR *name, size_t len );
 extern void close_thread_desktop( struct thread *thread );

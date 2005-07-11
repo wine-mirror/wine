@@ -80,7 +80,7 @@ static struct clipboard *get_process_clipboard(void)
 
     if (!winstation) return NULL;
 
-    if (!(clipboard = get_winstation_clipboard( winstation )))
+    if (!(clipboard = winstation->clipboard))
     {
         if ((clipboard = alloc_object( &clipboard_ops )))
         {
@@ -91,7 +91,7 @@ static struct clipboard *get_process_clipboard(void)
             clipboard->viewer = 0;
             clipboard->seqno = 0;
             clipboard->seqno_timestamp = 0;
-            set_winstation_clipboard( winstation, clipboard );
+            winstation->clipboard = clipboard;
         }
     }
     release_object( winstation );
@@ -107,7 +107,7 @@ void cleanup_clipboard_thread(struct thread *thread)
 
     if (!winstation) return;
 
-    if ((clipboard = get_winstation_clipboard( winstation )))
+    if ((clipboard = winstation->clipboard))
     {
         if (thread == clipboard->open_thread)
         {

@@ -286,18 +286,12 @@ static atom_t find_atom( struct atom_table *table, const WCHAR *str, size_t len 
 
 static struct atom_table *get_global_table( struct winstation *winstation, int create )
 {
-    struct atom_table *global_table;
-
-    if (!(global_table = get_winstation_atom_table( winstation )))
+    if (!winstation->atom_table)
     {
-        if (create)
-        {
-            global_table = create_table( HASH_SIZE );
-            if (global_table) set_winstation_atom_table( winstation, global_table );
-        }
+        if (create) winstation->atom_table = create_table( HASH_SIZE );
         else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
     }
-    return global_table;
+    return winstation->atom_table;
 }
 
 static struct atom_table *get_table( obj_handle_t h, int create )

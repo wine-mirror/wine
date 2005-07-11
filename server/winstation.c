@@ -35,23 +35,6 @@
 #include "user.h"
 #include "wine/unicode.h"
 
-struct winstation
-{
-    struct object      obj;                /* object header */
-    unsigned int       flags;              /* winstation flags */
-    struct list        entry;              /* entry in global winstation list */
-    struct list        desktops;           /* list of desktops of this winstation */
-    struct clipboard  *clipboard;          /* clipboard information */
-    struct atom_table *atom_table;         /* global atom table */
-};
-
-struct desktop
-{
-    struct object      obj;           /* object header */
-    unsigned int       flags;         /* desktop flags */
-    struct winstation *winstation;    /* winstation this desktop belongs to */
-    struct list        entry;         /* entry in winstation list of desktops */
-};
 
 static struct list winstation_list = LIST_INIT(winstation_list);
 static struct winstation *interactive_winstation;
@@ -155,30 +138,6 @@ struct winstation *get_process_winstation( struct process *process, unsigned int
                                                 access, &winstation_ops );
 }
 
-/* set the pointer to the (opaque) clipboard info */
-void set_winstation_clipboard( struct winstation *winstation, struct clipboard *clipboard )
-{
-    winstation->clipboard = clipboard;
-}
-
-/* retrieve the pointer to the (opaque) clipboard info */
-struct clipboard *get_winstation_clipboard( struct winstation *winstation )
-{
-    return winstation->clipboard;
-}
-
-/* set the pointer to the (opaque) atom table */
-void set_winstation_atom_table( struct winstation *winstation, struct atom_table *table )
-{
-    winstation->atom_table = table;
-}
-
-/* retrieve the pointer to the (opaque) clipboard info */
-struct atom_table *get_winstation_atom_table( struct winstation *winstation )
-{
-    return winstation->atom_table;
-}
-
 /* build the full name of a desktop object */
 static WCHAR *build_desktop_name( const WCHAR *name, size_t len,
                                   struct winstation *winstation, size_t *res_len )
@@ -261,6 +220,12 @@ static void desktop_destroy( struct object *obj )
 
     list_remove( &desktop->entry );
     release_object( desktop->winstation );
+}
+
+/* retrieve the thread desktop, checking the handle access rights */
+struct desktop *get_thread_desktop( struct thread *thread, unsigned int access )
+{
+    return get_desktop_obj( thread->process, thread->desktop, access );
 }
 
 /* connect a process to its window station */
