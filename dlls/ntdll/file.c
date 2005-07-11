@@ -535,7 +535,11 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         }
         if (flags & FD_FLAG_TIMEOUT)
         {
-            ret = NtWaitForSingleObject(hEvent, TRUE, NULL);
+            do
+            {
+                ret = NtWaitForSingleObject(hEvent, TRUE, NULL);
+            }
+            while (ret == STATUS_USER_APC && io_status->u.Status == STATUS_PENDING);
             NtClose(hEvent);
             if (ret != STATUS_USER_APC)
                 fileio->queue_apc_on_error = 1;
@@ -748,7 +752,11 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         }
         if (flags & FD_FLAG_TIMEOUT)
         {
-            ret = NtWaitForSingleObject(hEvent, TRUE, NULL);
+            do
+            {
+                ret = NtWaitForSingleObject(hEvent, TRUE, NULL);
+            }
+            while (ret == STATUS_USER_APC && io_status->u.Status == STATUS_PENDING);
             NtClose(hEvent);
             if (ret != STATUS_USER_APC)
                 fileio->queue_apc_on_error = 1;
