@@ -61,6 +61,7 @@ struct window
     struct list      entry;           /* entry in parent's children list */
     user_handle_t    handle;          /* full handle for this window */
     struct thread   *thread;          /* thread owning the window */
+    struct desktop  *desktop;         /* desktop that the window belongs to */
     struct window_class *class;       /* window class */
     atom_t           atom;            /* class atom */
     user_handle_t    last_active;     /* last active popup */
@@ -200,8 +201,7 @@ static int add_handle_to_array( struct user_handle_array *array, user_handle_t h
 }
 
 /* set a window property */
-static void set_property( struct winstation *winstation, struct window *win,
-                          atom_t atom, obj_handle_t handle, enum property_type type )
+static void set_property( struct window *win, atom_t atom, obj_handle_t handle, enum property_type type )
 {
     int i, free = -1;
     struct property *new_props;
@@ -223,7 +223,7 @@ static void set_property( struct winstation *winstation, struct window *win,
     }
 
     /* need to add an entry */
-    if (!grab_global_atom( winstation, atom )) return;
+    if (!grab_global_atom( win->desktop->winstation, atom )) return;
     if (free == -1)
     {
         /* no free entry */
@@ -234,7 +234,7 @@ static void set_property( struct winstation *winstation, struct window *win,
                                        sizeof(*new_props) * (win->prop_alloc + 16) )))
             {
                 set_error( STATUS_NO_MEMORY );
-                release_global_atom( winstation, atom );
+                release_global_atom( win->desktop->winstation, atom );
                 return;
             }
             win->prop_alloc += 16;
@@ -248,7 +248,7 @@ static void set_property( struct winstation *winstation, struct window *win,
 }
 
 /* remove a window property */
-static obj_handle_t remove_property( struct winstation *winstation, struct window *win, atom_t atom )
+static obj_handle_t remove_property( struct window *win, atom_t atom )
 {
     int i;
 
@@ -257,7 +257,7 @@ static obj_handle_t remove_property( struct winstation *winstation, struct windo
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
         if (win->properties[i].atom == atom)
         {
-            release_global_atom( winstation, atom );
+            release_global_atom( win->desktop->winstation, atom );
             win->properties[i].type = PROP_TYPE_FREE;
             return win->properties[i].handle;
         }
@@ -283,44 +283,40 @@ static obj_handle_t get_property( struct window *win, atom_t atom )
 /* destroy all properties of a window */
 inline static void destroy_properties( struct window *win )
 {
-    struct winstation *winstation;
     int i;
 
     if (!win->properties) return;
-    /* FIXME: winstation pointer should be taken from window */
-    if (!(winstation = get_process_winstation( win->thread->process, WINSTA_ACCESSGLOBALATOMS )))
-        return;
     for (i = 0; i < win->prop_inuse; i++)
     {
         if (win->properties[i].type == PROP_TYPE_FREE) continue;
-        release_global_atom( winstation, win->properties[i].atom );
+        release_global_atom( win->desktop->winstation, win->properties[i].atom );
     }
     free( win->properties );
-    release_object( winstation );
 }
 
 /* destroy a window */
-static void destroy_window( struct window *win )
+void destroy_window( struct window *win )
 {
+    struct thread *thread = win->thread;
+
     /* destroy all children */
     while (!list_empty(&win->children))
         destroy_window( LIST_ENTRY( list_head(&win->children), struct window, entry ));
     while (!list_empty(&win->unlinked))
         destroy_window( LIST_ENTRY( list_head(&win->unlinked), struct window, entry ));
 
-    if (win->thread->queue)
+    if (thread && thread->queue)
     {
-        if (win->update_region) inc_queue_paint_count( win->thread, -1 );
-        if (win->paint_flags & PAINT_INTERNAL) inc_queue_paint_count( win->thread, -1 );
-        queue_cleanup_window( win->thread, win->handle );
+        if (win->update_region) inc_queue_paint_count( thread, -1 );
+        if (win->paint_flags & PAINT_INTERNAL) inc_queue_paint_count( thread, -1 );
+        queue_cleanup_window( thread, win->handle );
     }
+
     /* reset global window pointers, if the corresponding window is destroyed */
     if (win == shell_window) shell_window = NULL;
     if (win == shell_listview) shell_listview = NULL;
     if (win == progman_window) progman_window = NULL;
     if (win == taskman_window) taskman_window = NULL;
-    assert( win->thread->desktop_users > 0 );
-    win->thread->desktop_users--;
     free_user_handle( win->handle );
     destroy_properties( win );
     list_remove( &win->entry );
@@ -328,6 +324,12 @@ static void destroy_window( struct window *win )
     if (win->update_region) free_region( win->update_region );
     release_class( win->class );
     if (win->text) free( win->text );
+    if (!is_desktop_window(win))
+    {
+        assert( thread->desktop_users > 0 );
+        thread->desktop_users--;
+        release_object( win->desktop );
+    }
     memset( win, 0x55, sizeof(*win) + win->nb_extra_bytes - 1 );
     free( win );
 }
@@ -338,13 +340,21 @@ static struct window *create_window( struct window *parent, struct window *owner
 {
     int extra_bytes;
     struct window *win;
-    struct window_class *class = grab_class( current->process, atom, instance, &extra_bytes );
+    struct desktop *desktop;
+    struct window_class *class;
 
-    if (!class) return NULL;
+    if (!(desktop = get_thread_desktop( current, DESKTOP_CREATEWINDOW ))) return NULL;
+
+    if (!(class = grab_class( current->process, atom, instance, &extra_bytes )))
+    {
+        release_object( desktop );
+        return NULL;
+    }
 
     win = mem_alloc( sizeof(*win) + extra_bytes - 1 );
     if (!win)
     {
+        release_object( desktop );
         release_class( class );
         return NULL;
     }
@@ -353,6 +363,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->parent         = parent;
     win->owner          = owner ? owner->handle : 0;
     win->thread         = current;
+    win->desktop        = desktop;
     win->class          = class;
     win->atom           = atom;
     win->last_active    = win->handle;
@@ -374,6 +385,13 @@ static struct window *create_window( struct window *parent, struct window *owner
     list_init( &win->children );
     list_init( &win->unlinked );
 
+    /* parent must be on the same desktop */
+    if (parent && parent->desktop != desktop)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        goto failed;
+    }
+
     /* if parent belongs to a different thread, attach the two threads */
     if (parent && parent->thread && parent->thread != current)
     {
@@ -386,12 +404,14 @@ static struct window *create_window( struct window *parent, struct window *owner
 
     /* put it on parent unlinked list */
     if (parent) list_add_head( &parent->unlinked, &win->entry );
+    else list_init( &win->entry );
 
     current->desktop_users++;
     return win;
 
 failed:
     if (win->handle) free_user_handle( win->handle );
+    release_object( desktop );
     release_class( class );
     free( win );
     return NULL;
@@ -411,17 +431,27 @@ void destroy_thread_windows( struct thread *thread )
 }
 
 /* get the desktop window */
-static struct window *get_desktop_window( int create )
+static struct window *get_desktop_window( struct thread *thread, int create )
 {
-    static struct window *top_window;  /* FIXME: should be part of the desktop object */
+    struct window *top_window;
+    struct desktop *desktop = get_thread_desktop( thread, 0 );
 
-    if (!top_window && create)
+    if (!desktop) return NULL;
+
+    if (!(top_window = desktop->top_window) && create)
     {
-        if (!(top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 ))) return NULL;
-        current->desktop_users--;
-        top_window->thread = NULL;  /* no thread owns the desktop */
-        top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+        if ((top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
+        {
+            current->desktop_users--;
+            top_window->thread = NULL;  /* no thread owns the desktop */
+            top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+            desktop->top_window = top_window;
+            /* don't hold a reference to the desktop so that the desktop window can be */
+            /* destroyed when the desktop ref count reaches zero */
+            release_object( top_window->desktop );
+        }
     }
+    release_object( desktop );
     return top_window;
 }
 
@@ -553,12 +583,12 @@ static int get_window_children_from_point( struct window *parent, int x, int y,
 }
 
 /* find window containing point (in absolute coords) */
-user_handle_t window_from_point( int x, int y )
+user_handle_t window_from_point( struct desktop *desktop, int x, int y )
 {
-    struct window *ret, *top_window;
+    struct window *ret;
 
-    if (!(top_window = get_desktop_window(0))) return 0;
-    ret = child_window_from_point( top_window, x, y );
+    if (!desktop->top_window) return 0;
+    ret = child_window_from_point( desktop->top_window, x, y );
     return ret->handle;
 }
 
@@ -640,7 +670,7 @@ static struct window *find_child_to_repaint( struct window *parent, struct threa
 /* find a window that needs to receive a WM_PAINT; also clear its internal paint flag */
 user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread )
 {
-    struct window *ptr, *win, *top_window = get_desktop_window(0);
+    struct window *ptr, *win, *top_window = get_desktop_window( thread, 0 );
 
     if (!top_window) return 0;
 
@@ -1382,7 +1412,7 @@ DECL_HANDLER(destroy_window)
 /* retrieve the desktop window for the current thread */
 DECL_HANDLER(get_desktop_window)
 {
-    struct window *win = get_desktop_window(1);
+    struct window *win = get_desktop_window( current, 1 );
 
     if (win) reply->handle = win->handle;
 }
@@ -1883,42 +1913,35 @@ DECL_HANDLER(redraw_window)
 /* set a window property */
 DECL_HANDLER(set_window_property)
 {
-    struct winstation *winstation;
     struct window *win = get_window( req->window );
 
     if (!win) return;
-    if (!(winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS ))) return;
 
     if (get_req_data_size())
     {
-        atom_t atom = add_global_atom( winstation, get_req_data(), get_req_data_size() / sizeof(WCHAR) );
+        atom_t atom = add_global_atom( win->desktop->winstation,
+                                       get_req_data(), get_req_data_size() / sizeof(WCHAR) );
         if (atom)
         {
-            set_property( winstation, win, atom, req->handle, PROP_TYPE_STRING );
-            release_global_atom( winstation, atom );
+            set_property( win, atom, req->handle, PROP_TYPE_STRING );
+            release_global_atom( win->desktop->winstation, atom );
         }
     }
-    else set_property( winstation, win, req->atom, req->handle, PROP_TYPE_ATOM );
-
-    release_object( winstation );
+    else set_property( win, req->atom, req->handle, PROP_TYPE_ATOM );
 }
 
 
 /* remove a window property */
 DECL_HANDLER(remove_window_property)
 {
-    struct winstation *winstation;
     struct window *win = get_window( req->window );
 
-    if (!win) return;
-
-    if ((winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS )))
+    if (win)
     {
         atom_t atom = req->atom;
-        if (get_req_data_size()) atom = find_global_atom( winstation, get_req_data(),
+        if (get_req_data_size()) atom = find_global_atom( win->desktop->winstation, get_req_data(),
                                                           get_req_data_size() / sizeof(WCHAR) );
-        if (atom) reply->handle = remove_property( winstation, win, atom );
-        release_object( winstation );
+        if (atom) reply->handle = remove_property( win, atom );
     }
 }
 
@@ -1926,18 +1949,14 @@ DECL_HANDLER(remove_window_property)
 /* get a window property */
 DECL_HANDLER(get_window_property)
 {
-    struct winstation *winstation;
     struct window *win = get_window( req->window );
 
-    if (!win) return;
-
-    if ((winstation = get_process_winstation( current->process, WINSTA_ACCESSGLOBALATOMS )))
+    if (win)
     {
         atom_t atom = req->atom;
-        if (get_req_data_size()) atom = find_global_atom( winstation, get_req_data(),
+        if (get_req_data_size()) atom = find_global_atom( win->desktop->winstation, get_req_data(),
                                                           get_req_data_size() / sizeof(WCHAR) );
         if (atom) reply->handle = get_property( win, atom );
-        release_object( winstation );
     }
 }
 

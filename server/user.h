@@ -56,6 +56,7 @@ struct desktop
     unsigned int       flags;         /* desktop flags */
     struct winstation *winstation;    /* winstation this desktop belongs to */
     struct list        entry;         /* entry in winstation list of desktops */
+    struct window     *top_window;    /* desktop window for this desktop */
 };
 
 /* user handles functions */
@@ -86,6 +87,7 @@ extern void inc_queue_paint_count( struct thread *thread, int incr );
 extern void queue_cleanup_window( struct thread *thread, user_handle_t win );
 extern int init_thread_queue( struct thread *thread );
 extern int attach_thread_input( struct thread *thread_from, struct thread *thread_to );
+extern void detach_thread_input( struct thread *thread_from );
 extern void post_message( user_handle_t win, unsigned int message,
                           unsigned int wparam, unsigned int lparam );
 extern void post_win_event( struct thread *thread, unsigned int event,
@@ -121,13 +123,14 @@ extern int rect_in_region( struct region *region, const rectangle_t *rect );
 
 /* window functions */
 
+extern void destroy_window( struct window *win );
 extern void destroy_thread_windows( struct thread *thread );
 extern int is_child_window( user_handle_t parent, user_handle_t child );
 extern int is_top_level_window( user_handle_t window );
 extern int is_window_visible( user_handle_t window );
 extern int make_window_active( user_handle_t window );
 extern struct thread *get_window_thread( user_handle_t handle );
-extern user_handle_t window_from_point( int x, int y );
+extern user_handle_t window_from_point( struct desktop *desktop, int x, int y );
 extern user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *thread );
 extern struct window_class *get_window_class( user_handle_t window );
 

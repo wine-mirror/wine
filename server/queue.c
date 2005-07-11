@@ -94,6 +94,7 @@ struct timer
 struct thread_input
 {
     struct object          obj;           /* object header */
+    struct desktop        *desktop;       /* desktop that this thread input belongs to */
     user_handle_t          focus;         /* focus window */
     user_handle_t          capture;       /* capture window */
     user_handle_t          active;        /* active window */
@@ -188,12 +189,17 @@ static void set_caret_window( struct thread_input *input, user_handle_t win )
 }
 
 /* create a thread input object */
-static struct thread_input *create_thread_input(void)
+static struct thread_input *create_thread_input( struct thread *thread )
 {
     struct thread_input *input;
 
     if ((input = alloc_object( &thread_input_ops )))
     {
+        if (!(input->desktop = get_thread_desktop( thread, 0 /* FIXME: access rights */ )))
+        {
+            free( input );
+            return NULL;
+        }
         input->focus       = 0;
         input->capture     = 0;
         input->active      = 0;
@@ -222,7 +228,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
     struct msg_queue *queue;
     int i;
 
-    if (!input && !(input = create_thread_input())) return NULL;
+    if (!input && !(input = create_thread_input( thread ))) return NULL;
     if ((queue = alloc_object( &msg_queue_ops )))
     {
         queue->wake_bits       = 0;
@@ -797,6 +803,7 @@ static void thread_input_destroy( struct object *obj )
 
     if (foreground_input == input) foreground_input = NULL;
     empty_msg_list( &input->msg_list );
+    release_object( input->desktop );
 }
 
 /* fix the thread input data when a window is destroyed */
@@ -841,10 +848,20 @@ int init_thread_queue( struct thread *thread )
 /* attach two thread input data structures */
 int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 {
+    struct desktop *desktop;
     struct thread_input *input;
 
     if (!thread_to->queue && !(thread_to->queue = create_msg_queue( thread_to, NULL ))) return 0;
+    if (!(desktop = get_thread_desktop( thread_from, 0 ))) return 0;
     input = (struct thread_input *)grab_object( thread_to->queue->input );
+    if (input->desktop != desktop)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        release_object( input );
+        release_object( desktop );
+        return 0;
+    }
+    release_object( desktop );
 
     if (thread_from->queue)
     {
@@ -860,17 +877,11 @@ int attach_thread_input( struct thread *thread_from, struct thread *thread_to )
 }
 
 /* detach two thread input data structures */
-static void detach_thread_input( struct thread *thread_from, struct thread *thread_to )
+void detach_thread_input( struct thread *thread_from )
 {
     struct thread_input *input;
 
-    if (!thread_from->queue || !thread_to->queue ||
-        thread_from->queue->input != thread_to->queue->input)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return;
-    }
-    if ((input = create_thread_input()))
+    if ((input = create_thread_input( thread_from )))
     {
         release_thread_input( thread_from );
         thread_from->queue->input = input;
@@ -1146,7 +1157,7 @@ static user_handle_t find_hardware_message_window( struct thread_input *input, s
         if (!input || !(win = input->capture))
         {
             if (!(win = msg->win) || !is_window_visible( win ))
-                win = window_from_point( msg->x, msg->y );
+                win = window_from_point( input->desktop, msg->x, msg->y );
         }
     }
     return win;
@@ -1808,7 +1819,14 @@ DECL_HANDLER(attach_thread_input)
     if (thread_from != thread_to)
     {
         if (req->attach) attach_thread_input( thread_from, thread_to );
-        else detach_thread_input( thread_from, thread_to );
+        else
+        {
+            if (thread_from->queue && thread_to->queue &&
+                thread_from->queue->input == thread_to->queue->input)
+                detach_thread_input( thread_from );
+            else
+                set_error( STATUS_ACCESS_DENIED );
+        }
     }
     else set_error( STATUS_ACCESS_DENIED );
     release_object( thread_from );

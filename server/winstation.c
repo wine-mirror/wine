@@ -111,7 +111,8 @@ static void winstation_dump( struct object *obj, int verbose )
 {
     struct winstation *winstation = (struct winstation *)obj;
 
-    fprintf( stderr, "Winstation flags=%x ", winstation->flags );
+    fprintf( stderr, "Winstation flags=%x clipboard=%p atoms=%p ",
+             winstation->flags, winstation->clipboard, winstation->atom_table );
     dump_object_name( &winstation->obj );
     fputc( '\n', stderr );
 }
@@ -187,6 +188,7 @@ static struct desktop *create_desktop( const WCHAR *name, size_t len, unsigned i
             /* initialize it if it didn't already exist */
             desktop->flags = flags;
             desktop->winstation = (struct winstation *)grab_object( winstation );
+            desktop->top_window = NULL;
             list_add_tail( &winstation->desktops, &desktop->entry );
         }
     }
@@ -198,7 +200,8 @@ static void desktop_dump( struct object *obj, int verbose )
 {
     struct desktop *desktop = (struct desktop *)obj;
 
-    fprintf( stderr, "Desktop flags=%x winstation=%p ", desktop->flags, desktop->winstation );
+    fprintf( stderr, "Desktop flags=%x winstation=%p top_win=%p",
+             desktop->flags, desktop->winstation, desktop->top_window );
     dump_object_name( &desktop->obj );
     fputc( '\n', stderr );
 }
@@ -218,6 +221,7 @@ static void desktop_destroy( struct object *obj )
 {
     struct desktop *desktop = (struct desktop *)obj;
 
+    if (desktop->top_window) destroy_window( desktop->top_window );
     list_remove( &desktop->entry );
     release_object( desktop->winstation );
 }
@@ -456,6 +460,8 @@ DECL_HANDLER(set_thread_desktop)
         set_error( STATUS_DEVICE_BUSY );
     else
         current->desktop = req->handle;  /* FIXME: should we close the old one? */
+
+    if (old_desktop != new_desktop) detach_thread_input( current );
 
     if (old_desktop) release_object( old_desktop );
     release_object( new_desktop );
