@@ -230,7 +230,7 @@
 @ stdcall GetGraphicsMode(long)
 @ stdcall GetICMProfileA(long ptr str)
 @ stdcall GetICMProfileW(long ptr wstr)
-@ stub GetKerningPairs
+@ stdcall GetKerningPairs(long long ptr) GetKerningPairsA
 @ stdcall GetKerningPairsA(long long ptr)
 @ stdcall GetKerningPairsW(long long ptr)
 @ stdcall GetLayout(long)
