@@ -1341,14 +1341,6 @@ enum char_info_mode
 @END
 
 
-/* Load the user registry files */
-@REQ(load_user_registries)
-    obj_handle_t hkey;         /* key for HKCU */
-    int          saving;       /* new saving level */
-    int          period;       /* duration between periodic saves (milliseconds) */
-@END
-
-
 /* Add a registry key change notification */
 @REQ(set_registry_notification)
     obj_handle_t hkey;         /* key to watch for changes */

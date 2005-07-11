@@ -1421,30 +1421,14 @@ static void load_init_registry_from_file( const char *filename, struct key *key 
     }
 }
 
-/* load the user registry files */
-static void load_user_registries( struct key *key_current_user )
-{
-    const char *config = wine_get_config_dir();
-    char *filename;
-
-    /* load user.reg into HKEY_CURRENT_USER */
-
-    if (!(filename = mem_alloc( strlen(config) + sizeof("/user.reg") ))) return;
-    strcpy( filename, config );
-    strcat( filename, "/user.reg" );
-    load_init_registry_from_file( filename, key_current_user );
-    free( filename );
-
-    /* start the periodic save timer */
-    set_periodic_save_timer();
-}
-
 /* registry initialisation */
 void init_registry(void)
 {
     static const WCHAR root_name[] = { 0 };
     static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
     static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
+    /* FIXME: hardcoded to match what NtQueryTokenInformation currently returns */
+    static const WCHAR HKCU[] = {'U','s','e','r','\\','S','-','1','-','5','-','4',0};
 
     const char *config = wine_get_config_dir();
     char *p, *filename;
@@ -1479,7 +1463,19 @@ void init_registry(void)
     load_init_registry_from_file( filename, key );
     release_object( key );
 
+    /* load user.reg into HKEY_CURRENT_USER */
+
+    if (!(key = create_key( root_key, copy_path( HKCU, sizeof(HKCU), 0 ),
+                            NULL, 0, time(NULL), &dummy )))
+        fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
+    strcpy( p, "/user.reg" );
+    load_init_registry_from_file( filename, key );
+    release_object( key );
+
     free( filename );
+
+    /* start the periodic save timer */
+    set_periodic_save_timer();
 }
 
 /* save a registry branch to a file */
@@ -1890,18 +1886,6 @@ DECL_HANDLER(save_registry)
     if ((key = get_hkey_obj( req->hkey, 0 )))
     {
         save_registry( key, req->file );
-        release_object( key );
-    }
-}
-
-/* load the user registry files */
-DECL_HANDLER(load_user_registries)
-{
-    struct key *key;
-
-    if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE | KEY_CREATE_SUB_KEY )))
-    {
-        load_user_registries( key );
         release_object( key );
     }
 }

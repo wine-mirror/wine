@@ -253,23 +253,9 @@ static void create_hardware_branch(void)
  */
 void convert_old_config(void)
 {
-    HANDLE hkey_current_user;
-
     if (allocate_default_keys() == REG_OPENED_EXISTING_KEY)
         return; /* someone else already loaded the registry */
 
-    RtlOpenCurrentUser( KEY_ALL_ACCESS, &hkey_current_user );
-
-    /* load the user registry (FIXME: should be done at server init time) */
-    SERVER_START_REQ( load_user_registries )
-    {
-        req->hkey = hkey_current_user;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
     /* create some hardware keys (FIXME: should not be done here) */
     create_hardware_branch();
-
-    NtClose( hkey_current_user );
 }
