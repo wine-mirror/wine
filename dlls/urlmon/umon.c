@@ -598,7 +598,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
             if(SUCCEEDED(hres)) {
                 WCHAR *urlcopy, *tmpwc;
                 URL_COMPONENTSW url;
-                WCHAR *host, *path, *user, *pass;
+                WCHAR *host, *path, *partial_path, *user, *pass;
                 DWORD lensz = sizeof(bind->expected_size);
                 DWORD dwService = 0;
                 BOOL bSuccess;
@@ -797,9 +797,9 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
                     break;
 
                 case INTERNET_SCHEME_FILE:
-                    path = bind->URLName + 5; /* Skip the "file:" part */
-                    if ((path[0] != '/' && path[0] != '\\') ||
-                        (path[1] != '/' && path[1] != '\\'))
+                    partial_path = bind->URLName + 5; /* Skip the "file:" part */
+                    if ((partial_path[0] != '/' && partial_path[0] != '\\') ||
+                        (partial_path[1] != '/' && partial_path[1] != '\\'))
                     {
                         hres = E_FAIL;
                     }
@@ -807,10 +807,10 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
                     {
                         HANDLE h;
 
-                        path += 2;
-                        if (path[0] == '/' || path[0] == '\\')
-                            ++path;
-                        h = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+                        partial_path += 2;
+                        if (partial_path[0] == '/' || partial_path[0] == '\\')
+                            ++partial_path;
+                        h = CreateFileW(partial_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
                         if (h == (HANDLE) HFILE_ERROR)
                         {
                             hres = HRESULT_FROM_WIN32(GetLastError());
