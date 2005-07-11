@@ -109,7 +109,7 @@ typedef struct OLEPictureImpl {
     const IConnectionPointContainerVtbl *lpvtbl4;
 
   /* Object reference count */
-    DWORD ref;
+    LONG ref;
 
   /* We own the object and must destroy it ourselves */
     BOOL fOwn;
@@ -2210,7 +2210,7 @@ typedef struct
 {
     /* IUnknown fields */
     const IClassFactoryVtbl    *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 } IClassFactoryImpl;
 
 static HRESULT WINAPI

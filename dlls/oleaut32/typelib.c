@@ -865,7 +865,7 @@ typedef struct tagITypeLibImpl
 {
     const ITypeLib2Vtbl *lpVtbl;
     const ITypeCompVtbl *lpVtblTypeComp;
-    ULONG ref;
+    LONG ref;
     TLIBATTR LibAttr;            /* guid,lcid,syskind,version,flags */
 
     /* strings can be stored in tlb as multibyte strings BUT they are *always*
@@ -977,7 +977,7 @@ typedef struct tagITypeInfoImpl
 {
     const ITypeInfo2Vtbl *lpVtbl;
     const ITypeCompVtbl  *lpVtblTypeComp;
-    ULONG ref;
+    LONG ref;
     TYPEATTR TypeAttr ;         /* _lots_ of type information. */
     ITypeLibImpl * pTypeLib;        /* back pointer to typelib */
     int index;                  /* index in this typelib; */

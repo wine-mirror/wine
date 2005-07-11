@@ -148,7 +148,7 @@ typedef struct tagICreateTypeLib2Impl
     const ICreateTypeLib2Vtbl *lpVtbl;
     const ITypeLib2Vtbl       *lpVtblTypeLib2;
 
-    ULONG ref;
+    LONG ref;
 
     WCHAR *filename;
 
@@ -174,7 +174,7 @@ typedef struct tagICreateTypeInfo2Impl
     const ICreateTypeInfo2Vtbl *lpVtbl;
     const ITypeInfo2Vtbl       *lpVtblTypeInfo2;
 
-    ULONG ref;
+    LONG ref;
 
     ICreateTypeLib2Impl *typelib;
     MSFT_TypeInfoBase *typeinfo;

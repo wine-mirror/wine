@@ -358,7 +358,7 @@ typedef struct _TMAsmProxy {
 typedef struct _TMProxyImpl {
     LPVOID                             *lpvtbl;
     const IRpcProxyBufferVtbl          *lpvtbl2;
-    ULONG				ref;
+    LONG				ref;
 
     TMAsmProxy				*asmstubs;
     ITypeInfo*				tinfo;
@@ -1912,7 +1912,7 @@ PSFacBuf_CreateProxy(
 
 typedef struct _TMStubImpl {
     const IRpcStubBufferVtbl   *lpvtbl;
-    ULONG			ref;
+    LONG			ref;
 
     LPUNKNOWN			pUnk;
     ITypeInfo			*tinfo;
