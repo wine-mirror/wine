@@ -189,6 +189,7 @@ static struct desktop *create_desktop( const WCHAR *name, size_t len, unsigned i
             desktop->flags = flags;
             desktop->winstation = (struct winstation *)grab_object( winstation );
             desktop->top_window = NULL;
+            desktop->global_hooks = NULL;
             list_add_tail( &winstation->desktops, &desktop->entry );
         }
     }
@@ -200,8 +201,8 @@ static void desktop_dump( struct object *obj, int verbose )
 {
     struct desktop *desktop = (struct desktop *)obj;
 
-    fprintf( stderr, "Desktop flags=%x winstation=%p top_win=%p",
-             desktop->flags, desktop->winstation, desktop->top_window );
+    fprintf( stderr, "Desktop flags=%x winstation=%p top_win=%p hooks=%p ",
+             desktop->flags, desktop->winstation, desktop->top_window, desktop->global_hooks );
     dump_object_name( &desktop->obj );
     fputc( '\n', stderr );
 }
@@ -222,6 +223,7 @@ static void desktop_destroy( struct object *obj )
     struct desktop *desktop = (struct desktop *)obj;
 
     if (desktop->top_window) destroy_window( desktop->top_window );
+    if (desktop->global_hooks) release_object( desktop->global_hooks );
     list_remove( &desktop->entry );
     release_object( desktop->winstation );
 }

@@ -795,7 +795,6 @@ static void close_socket_timeout( void *arg )
     /* shut down everything properly */
     release_object( master_socket );
     close_signals();
-    close_global_hooks();
     close_global_handles();
     close_registry();
     dump_objects();  /* dump any remaining objects */

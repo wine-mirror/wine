@@ -57,6 +57,7 @@ struct desktop
     struct winstation *winstation;    /* winstation this desktop belongs to */
     struct list        entry;         /* entry in winstation list of desktops */
     struct window     *top_window;    /* desktop window for this desktop */
+    struct hook_table *global_hooks;  /* table of global hooks on this desktop */
 };
 
 /* user handles functions */
@@ -74,7 +75,6 @@ extern void cleanup_clipboard_thread( struct thread *thread );
 
 /* hook functions */
 
-extern void close_global_hooks(void);
 extern void remove_thread_hooks( struct thread *thread );
 extern unsigned int get_active_hooks(void);
 

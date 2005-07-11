@@ -44,6 +44,7 @@ struct hook
     struct process     *process;  /* process the hook is set to */
     struct thread      *thread;   /* thread the hook is set to */
     struct thread      *owner;    /* owner of the out of context hook */
+    struct hook_table  *table;    /* hook table that contains this hook */
     int                 index;    /* hook table index */
     int                 event_min;
     int                 event_max;
@@ -84,8 +85,6 @@ static const struct object_ops hook_table_ops =
 };
 
 
-static struct hook_table *global_hooks;
-
 /* create a new hook table */
 static struct hook_table *alloc_hook_table(void)
 {
@@ -103,16 +102,27 @@ static struct hook_table *alloc_hook_table(void)
     return table;
 }
 
+static struct hook_table *get_global_hooks( struct thread *thread )
+{
+    struct hook_table *table;
+    struct desktop *desktop = get_thread_desktop( thread, 0 );
+
+    if (!desktop) return NULL;
+    table = desktop->global_hooks;
+    release_object( desktop );
+    return table;
+}
+
 /* create a new hook and add it to the specified table */
-static struct hook *add_hook( struct thread *thread, int index, int global )
+static struct hook *add_hook( struct desktop *desktop, struct thread *thread, int index, int global )
 {
     struct hook *hook;
-    struct hook_table *table = global ? global_hooks : get_queue_hooks(thread);
+    struct hook_table *table = global ? desktop->global_hooks : get_queue_hooks(thread);
 
     if (!table)
     {
         if (!(table = alloc_hook_table())) return NULL;
-        if (global) global_hooks = table;
+        if (global) desktop->global_hooks = table;
         else set_queue_hooks( thread, table );
     }
     if (!(hook = mem_alloc( sizeof(*hook) ))) return NULL;
@@ -123,6 +133,7 @@ static struct hook *add_hook( struct thread *thread, int index, int global )
         return NULL;
     }
     hook->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
+    hook->table  = table;
     hook->index  = index;
     list_add_head( &table->hooks[index], &hook->chain );
     if (thread) thread->desktop_users++;
@@ -161,15 +172,6 @@ static struct hook *find_hook( struct thread *thread, int index, void *proc )
         }
     }
     return NULL;
-}
-
-/* get the hook table that a given hook belongs to */
-inline static struct hook_table *get_table( struct hook *hook )
-{
-    if (!hook->thread) return global_hooks;
-    if (hook->index + WH_MINHOOK == WH_KEYBOARD_LL) return global_hooks;
-    if (hook->index + WH_MINHOOK == WH_MOUSE_LL) return global_hooks;
-    return get_queue_hooks(hook->thread);
 }
 
 /* get the first hook in the chain */
@@ -220,10 +222,10 @@ inline static struct hook *get_first_valid_hook( struct hook_table *table, int i
 }
 
 /* find the next hook in the chain, skipping the deleted ones */
-static struct hook *get_next_hook( struct hook *hook, int event, user_handle_t win,
-                                   int object_id, int child_id )
+static struct hook *get_next_hook( struct thread *thread, struct hook *hook, int event,
+                                   user_handle_t win, int object_id, int child_id )
 {
-    struct hook_table *table = get_table( hook );
+    struct hook_table *global_hooks, *table = hook->table;
     int index = hook->index;
 
     while ((hook = HOOK_ENTRY( list_next( &table->hooks[index], &hook->chain ) )))
@@ -242,6 +244,7 @@ static struct hook *get_next_hook( struct hook *hook, int event, user_handle_t w
             }
         }
     }
+    global_hooks = get_global_hooks( thread );
     if (global_hooks && table != global_hooks)  /* now search through the global table */
     {
         hook = get_first_valid_hook( global_hooks, index, event, win, object_id, child_id );
@@ -251,9 +254,8 @@ static struct hook *get_next_hook( struct hook *hook, int event, user_handle_t w
 
 static void hook_table_dump( struct object *obj, int verbose )
 {
-    struct hook_table *table = (struct hook_table *)obj;
-    if (table == global_hooks) fprintf( stderr, "Global hook table\n" );
-    else fprintf( stderr, "Hook table\n" );
+    /* struct hook_table *table = (struct hook_table *)obj; */
+    fprintf( stderr, "Hook table\n" );
 }
 
 static void hook_table_destroy( struct object *obj )
@@ -268,17 +270,10 @@ static void hook_table_destroy( struct object *obj )
     }
 }
 
-/* free the global hooks table */
-void close_global_hooks(void)
-{
-    if (global_hooks) release_object( global_hooks );
-}
-
 /* remove a hook, freeing it if the chain is not in use */
 static void remove_hook( struct hook *hook )
 {
-    struct hook_table *table = get_table( hook );
-    if (table->counts[hook->index])
+    if (hook->table->counts[hook->index])
         hook->proc = NULL; /* chain is in use, just mark it and return */
     else
         free_hook( hook );
@@ -307,6 +302,7 @@ static void release_hook_chain( struct hook_table *table, int index )
 /* remove all global hooks owned by a given thread */
 void remove_thread_hooks( struct thread *thread )
 {
+    struct hook_table *global_hooks = get_global_hooks( thread );
     int index;
 
     if (!global_hooks) return;
@@ -341,6 +337,7 @@ static int is_hook_active( struct hook_table *table, int index )
 unsigned int get_active_hooks(void)
 {
     struct hook_table *table = get_queue_hooks( current );
+    struct hook_table *global_hooks = get_global_hooks( current );
     unsigned int ret = 1 << 31;  /* set high bit to indicate that the bitmap is valid */
     int id;
 
@@ -358,6 +355,7 @@ DECL_HANDLER(set_hook)
 {
     struct process *process = NULL;
     struct thread *thread = NULL;
+    struct desktop *desktop;
     struct hook *hook;
     WCHAR *module;
     int global;
@@ -369,21 +367,17 @@ DECL_HANDLER(set_hook)
         return;
     }
 
-    if (req->pid && !(process = get_process_from_id( req->pid ))) return;
+    if (!(desktop = get_thread_desktop( current, DESKTOP_HOOKCONTROL ))) return;
+
+    if (req->pid && !(process = get_process_from_id( req->pid ))) goto done;
 
     if (req->tid)
     {
-        if (!(thread = get_thread_from_id( req->tid )))
-        {
-            if (process) release_object( process );
-            return;
-        }
+        if (!(thread = get_thread_from_id( req->tid ))) goto done;
         if (process && process != thread->process)
         {
-            release_object( process );
-            release_object( thread );
             set_error( STATUS_INVALID_PARAMETER );
-            return;
+            goto done;
         }
     }
 
@@ -399,14 +393,10 @@ DECL_HANDLER(set_hook)
         /* out of context hooks do not need a module handle */
         if (!module_size && (req->flags & WINEVENT_INCONTEXT))
         {
-            if (process) release_object( process );
-            if (thread) release_object( thread );
             set_error( STATUS_INVALID_PARAMETER );
-            return;
+            goto done;
         }
-
-        if (!(module = memdup( get_req_data(), module_size ))) return;
-        thread = NULL;
+        if (!(module = memdup( get_req_data(), module_size ))) goto done;
         global = 1;
     }
     else
@@ -415,7 +405,7 @@ DECL_HANDLER(set_hook)
         global = 0;
     }
 
-    if ((hook = add_hook( thread, req->id - WH_MINHOOK, global )))
+    if ((hook = add_hook( desktop, thread, req->id - WH_MINHOOK, global )))
     {
         hook->owner = (struct thread *)grab_object( current );
         hook->process = process ? (struct process *)grab_object( process ) : NULL;
@@ -431,8 +421,10 @@ DECL_HANDLER(set_hook)
     }
     else if (module) free( module );
 
+done:
     if (process) release_object( process );
     if (thread) release_object( thread );
+    release_object( desktop );
 }
 
 
@@ -485,8 +477,8 @@ DECL_HANDLER(start_hook_chain)
                                                  req->window, req->object_id, req->child_id )))
     {
         /* try global table */
-        if (!(table = global_hooks) ||
-            !(hook = get_first_valid_hook( global_hooks, req->id - WH_MINHOOK, req->event,
+        if (!(table = get_global_hooks( current )) ||
+            !(hook = get_first_valid_hook( table, req->id - WH_MINHOOK, req->event,
                                            req->window, req->object_id, req->child_id )))
             return;  /* no hook set */
     }
@@ -513,6 +505,7 @@ DECL_HANDLER(start_hook_chain)
 DECL_HANDLER(finish_hook_chain)
 {
     struct hook_table *table = get_queue_hooks( current );
+    struct hook_table *global_hooks = get_global_hooks( current );
     int index = req->id - WH_MINHOOK;
 
     if (req->id < WH_MINHOOK || req->id > WH_WINEVENT)
@@ -536,7 +529,7 @@ DECL_HANDLER(get_next_hook)
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    if ((next = get_next_hook( hook, req->event, req->window, req->object_id, req->child_id )))
+    if ((next = get_next_hook( current, hook, req->event, req->window, req->object_id, req->child_id )))
     {
         reply->next = next->handle;
         reply->id   = next->index + WH_MINHOOK;
