@@ -23,6 +23,7 @@
 #include <windows.h>
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "wine/test.h"
@@ -138,6 +139,7 @@ static BOOL CALLBACK EnumJoysticks(
     DIDEVICEINSTANCE inst;
     DIDEVICEINSTANCE_DX3 inst3;
     HWND hWnd = get_hwnd();
+    char oldstate[248], curstate[248];
 
     ok(data->version > 0x0300, "Joysticks not supported in version 0x%04lx\n", data->version);
  
@@ -261,13 +263,14 @@ static BOOL CALLBACK EnumJoysticks(
         count = 1;
 
     trace("\n");
+    oldstate[0]='\0';
     for (i = 0; i < count; i++) {
         hr = IDirectInputDevice_GetDeviceState(pJoystick, sizeof(DIJOYSTATE2), &js);
         ok(hr==DI_OK,"IDirectInputDevice_GetDeviceState() failed: %s\n",
            DXGetErrorString8(hr));
         if (hr != DI_OK)
             break;
-        trace("X%5ld Y%5ld Z%5ld Rx%5ld Ry%5ld Rz%5ld "
+        sprintf(curstate, "X%5ld Y%5ld Z%5ld Rx%5ld Ry%5ld Rz%5ld "
               "S0%5ld S1%5ld POV0%5ld POV1%5ld POV2%5ld POV3%5ld "
               "B %d %d %d %d %d %d %d %d %d %d %d %d\n",
               js.lX, js.lY, js.lZ, js.lRx, js.lRy, js.lRz,
@@ -277,6 +280,11 @@ static BOOL CALLBACK EnumJoysticks(
               js.rgbButtons[3]>>7, js.rgbButtons[4]>>7, js.rgbButtons[5]>>7,
               js.rgbButtons[6]>>7, js.rgbButtons[7]>>7, js.rgbButtons[8]>>7,
               js.rgbButtons[9]>>7, js.rgbButtons[10]>>7, js.rgbButtons[11]>>7);
+        if (strcmp(oldstate, curstate) != 0)
+        {
+            trace(curstate);
+            strcpy(oldstate, curstate);
+        }
         Sleep(100);
     }
     trace("\n");
