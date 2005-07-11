@@ -590,8 +590,10 @@ IShellFolder_fnGetAttributesOf (IShellFolder2 * iface, UINT cidl,
         LPCITEMIDLIST rpidl = NULL;
 
         hr = SHBindToParent(This->pidlRoot, &IID_IShellFolder, (LPVOID*)&psfParent, (LPCITEMIDLIST*)&rpidl);
-        if(SUCCEEDED(hr))
+        if(SUCCEEDED(hr)) {
             SHELL32_GetItemAttributes (psfParent, rpidl, rgfInOut);
+            IShellFolder_Release(psfParent);
+        }
     }
     else {
         while (cidl > 0 && *apidl) {
