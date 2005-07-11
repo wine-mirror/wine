@@ -5,7 +5,7 @@
 @ stdcall DelNodeRunDLL32(ptr ptr str long)
 @ stdcall DllMain(long long ptr)
 @ stdcall DoInfInstall(ptr)
-@ stub ExecuteCab
+@ stdcall ExecuteCab(ptr ptr ptr)
 @ stub ExtractFiles
 @ stub FileSaveMarkNotExist
 @ stub FileSaveRestore
@@ -26,7 +26,7 @@
 @ stdcall RegisterOCX(ptr ptr str long)
 @ stdcall RunSetupCommand(long str str str str ptr long ptr)
 @ stub SetPerUserSecValues
-@ stub TranslateInfString
+@ stdcall TranslateInfString(str str str str ptr long ptr ptr)
 @ stub TranslateInfStringEx
 @ stub UserInstStubWrapper
 @ stub UserUnInstStubWrapper

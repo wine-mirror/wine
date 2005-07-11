@@ -370,3 +370,32 @@ void WINAPI DelNodeRunDLL32( HWND hWnd, HINSTANCE hInst, LPCSTR cmdline, INT sho
 {
     FIXME("(%s): stub\n", debugstr_a(cmdline));
 }
+
+/***********************************************************************
+ *             ExecuteCab    (ADVPACK.@)
+ *
+ * BUGS
+ *   Unimplemented
+ */
+HRESULT WINAPI ExecuteCab( HWND hwnd, PCABINFO pCab, LPVOID pReserved )
+{
+    FIXME("(%p %p %p): stub\n", hwnd, pCab, pReserved);
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *             TranslateInfString    (ADVPACK.@)
+ *
+ * BUGS
+ *   Unimplemented
+ */
+HRESULT WINAPI TranslateInfString(PCSTR pszInfFilename, PCSTR pszInstallSection,
+                PCSTR pszTranslateSection, PCSTR pszTranslateKey, PSTR pszBuffer,
+                DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved)
+{
+    FIXME("(%s %s %s %s %p %ld %p %p): stub\n",
+        debugstr_a(pszInfFilename), debugstr_a(pszInstallSection),
+        debugstr_a(pszTranslateSection), debugstr_a(pszTranslateKey),
+        pszBuffer, dwBufferSize,pdwRequiredSize, pvReserved);
+    return E_FAIL;
+}

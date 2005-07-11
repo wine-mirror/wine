@@ -22,6 +22,14 @@
 extern "C" {
 #endif
 
+typedef struct _CabInfo {
+    PSTR  pszCab;
+    PSTR  pszInf;
+    PSTR  pszSection;
+    char  szSrcPath[MAX_PATH];
+    DWORD dwFlags;
+} CABINFO, *PCABINFO;
+
 typedef struct _StrEntry {
     LPSTR pszName;
     LPSTR pszValue;
