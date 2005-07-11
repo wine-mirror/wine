@@ -733,8 +733,10 @@ VOID WINAPI Printer_LoadIconsW(LPCWSTR wsPrinterName, HICON * pLargeIcon, HICON 
        3. a Local Printer or a Network-Printer
        and use different Icons
     */
-
-    FIXME("(select Icon by PrinterName %s not implemented)\n", debugstr_w(wsPrinterName));
+    if((wsPrinterName != NULL) && (wsPrinterName[0] != 0))
+    {
+        FIXME("(select Icon by PrinterName %s not implemented)\n", debugstr_w(wsPrinterName));
+    }
 
     if(pLargeIcon != NULL)
         *pLargeIcon = LoadImageW(shell32_hInstance,
@@ -746,6 +748,30 @@ VOID WINAPI Printer_LoadIconsW(LPCWSTR wsPrinterName, HICON * pLargeIcon, HICON 
                                  (LPCWSTR) MAKEINTRESOURCE(iconindex), IMAGE_ICON,
                                  16, 16, LR_DEFAULTCOLOR);
 }
+
+/*************************************************************************
+ * Printers_RegisterWindowW        [SHELL32.213]
+ * used by "printui.dll":
+ * find the Window of the given Type for the specific Printer and 
+ * return the already existent hwnd or open a new window
+ */
+BOOL WINAPI Printers_RegisterWindowW(LPCWSTR wsPrinter, DWORD dwType,
+            HANDLE * phClassPidl, HWND * phwnd)
+{
+    FIXME("(%s, %lx, %p (%p), %p (%p)) stub!\n", debugstr_w(wsPrinter), dwType,
+                phClassPidl, (phClassPidl != NULL) ? *(phClassPidl) : NULL,
+                phwnd, (phwnd != NULL) ? *(phwnd) : NULL);
+
+    return FALSE;
+} 
+
+/*************************************************************************
+ * Printers_UnregisterWindow      [SHELL32.214]
+ */
+VOID WINAPI Printers_UnregisterWindow(HANDLE hClassPidl, HWND hwnd)
+{
+    FIXME("(%p, %p) stub!\n", hClassPidl, hwnd);
+} 
 
 /*************************************************************************/
 
