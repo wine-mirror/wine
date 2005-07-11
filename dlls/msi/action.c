@@ -3007,22 +3007,12 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     /* for registry stuff */
     HKEY hkey=0;
     HKEY hukey=0;
-    static const WCHAR szProductName[] =
-        {'P','r','o','d','u','c','t','N','a','m','e',0};
-    static const WCHAR szPackageCode[] =
-        {'P','a','c','k','a','g','e','C','o','d','e',0};
-    static const WCHAR szLanguage[] =
-        {'L','a','n','g','u','a','g','e',0};
     static const WCHAR szProductLanguage[] =
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
-    static const WCHAR szProductIcon[] =
-        {'P','r','o','d','u','c','t','I','c','o','n',0};
     static const WCHAR szARPProductIcon[] =
         {'A','R','P','P','R','O','D','U','C','T','I','C','O','N',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
-    static const WCHAR szVersion[] =
-        {'V','e','r','s','i','o','n',0};
     DWORD langid;
     LPWSTR buffer;
     DWORD size;
@@ -3051,15 +3041,17 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         goto end;
 
 
-    buffer = load_dynamic_property(package,szProductName,NULL);
+    buffer = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTNAMEstringW,NULL);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey,szProductName,0,REG_SZ, (LPBYTE)buffer,size);
+    RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTNAMEstringW,0,REG_SZ, 
+            (LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = sizeof(DWORD);
     langid = atoiW(buffer);
-    RegSetValueExW(hukey,szLanguage,0,REG_DWORD, (LPBYTE)&langid,size);
+    RegSetValueExW(hukey,INSTALLPROPERTY_LANGUAGEstringW,0,REG_DWORD, 
+            (LPBYTE)&langid,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szARPProductIcon,NULL);
@@ -3068,7 +3060,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         LPWSTR path;
         build_icon_path(package,buffer,&path);
         size = strlenW(path) * sizeof(WCHAR);
-        RegSetValueExW(hukey,szProductIcon,0,REG_SZ, (LPBYTE)path,size);
+        RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTICONstringW,0,REG_SZ,
+                (LPBYTE)path,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
 
@@ -3077,7 +3070,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     {
         DWORD verdword = build_version_dword(buffer);
         size = sizeof(DWORD);
-        RegSetValueExW(hukey,szVersion,0,REG_DWORD, (LPBYTE)&verdword,size);
+        RegSetValueExW(hukey,INSTALLPROPERTY_VERSIONstringW,0,REG_DWORD, (LPBYTE
+                    )&verdword,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
     
@@ -3100,8 +3094,8 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             if (ptr) *ptr = 0;
             squash_guid(guidbuffer,squashed);
             size = strlenW(squashed)*sizeof(WCHAR);
-            RegSetValueExW(hukey,szPackageCode,0,REG_SZ, (LPBYTE)squashed,
-                           size);
+            RegSetValueExW(hukey,INSTALLPROPERTY_PACKAGECODEstringW,0,REG_SZ,
+                    (LPBYTE)squashed, size);
         }
         else
         {
@@ -3457,8 +3451,6 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     '%','s','\\',
     'I','n','s','t','a','l','l','e','r','\\',
     '%','x','.','m','s','i',0};
-    static const WCHAR szLocalPackage[]=
-         {'L','o','c','a','l','P','a','c','k','a','g','e',0};
     static const WCHAR szUpgradeCode[] = 
         {'U','p','g','r','a','d','e','C','o','d','e',0};
     static const WCHAR modpath_fmt[] = 
@@ -3469,20 +3461,10 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         {'U','n','i','n','s','t','a','l','l','S','t','r','i','n','g',0};
     static const WCHAR szEstimatedSize[] = 
         {'E','s','t','i','m','a','t','e','d','S','i','z','e',0};
-    static const WCHAR szInstallDate[] = 
-        {'I','n','s','t','a','l','l','D','a','t','e',0};
-    static const WCHAR szLanguage[] =
-        {'L','a','n','g','u','a','g','e',0};
     static const WCHAR szProductLanguage[] =
         {'P','r','o','d','u','c','t','L','a','n','g','u','a','g','e',0};
     static const WCHAR szProductVersion[] =
         {'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0};
-    static const WCHAR szVersion[] =
-        {'V','e','r','s','i','o','n',0};
-    static const WCHAR szVersionMajor[] =
-        {'V','e','r','s','i','o','n','M','a','j','o','r',0};
-    static const WCHAR szVersionMinor[] =
-        {'V','e','r','s','i','o','n','M','i','n','o','r',0};
 
     SYSTEMTIME systime;
     static const WCHAR date_fmt[] = {'%','i','%','i','%','i',0};
@@ -3548,7 +3530,8 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
             debugstr_w(package->msiFilePath), debugstr_w(packagefile),
             GetLastError());
     size = strlenW(packagefile)*sizeof(WCHAR);
-    RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPBYTE)packagefile,size);
+    RegSetValueExW(hkey,INSTALLPROPERTY_LOCALPACKAGEstringW,0,REG_SZ,
+            (LPBYTE)packagefile,size);
 
     /* do ModifyPath and UninstallString */
     size = deformat_string(package,modpath_fmt,&buffer);
@@ -3565,12 +3548,14 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     buffer= HeapAlloc(GetProcessHeap(),0,size);
     sprintfW(buffer,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,szInstallDate,0,REG_SZ,(LPBYTE)buffer,size);
+    RegSetValueExW(hkey,INSTALLPROPERTY_INSTALLDATEstringW,0,REG_SZ,
+            (LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
    
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = atoiW(buffer);
-    RegSetValueExW(hkey,szLanguage,0,REG_DWORD, (LPBYTE)&size,sizeof(DWORD));
+    RegSetValueExW(hkey,INSTALLPROPERTY_LANGUAGEstringW,0,REG_DWORD,
+            (LPBYTE)&size,sizeof(DWORD));
     HeapFree(GetProcessHeap(),1,buffer);
 
     buffer = load_dynamic_property(package,szProductVersion,NULL);
@@ -3580,9 +3565,12 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         DWORD vermajor = verdword>>24;
         DWORD verminor = (verdword>>16)&0x00FF;
         size = sizeof(DWORD);
-        RegSetValueExW(hkey,szVersion,0,REG_DWORD,(LPBYTE)&verdword,size);
-        RegSetValueExW(hkey,szVersionMajor,0,REG_DWORD,(LPBYTE)&vermajor,size);
-        RegSetValueExW(hkey,szVersionMinor,0,REG_DWORD,(LPBYTE)&verminor,size);
+        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONstringW,0,REG_DWORD,
+                (LPBYTE)&verdword,size);
+        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMAJORstringW,0,REG_DWORD,
+                (LPBYTE)&vermajor,size);
+        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMINORstringW,0,REG_DWORD,
+                (LPBYTE)&verminor,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
     
@@ -3709,8 +3697,6 @@ UINT ACTION_ResolveSource(MSIPACKAGE* package)
 
 static UINT ACTION_RegisterUser(MSIPACKAGE *package)
 {
-    static const WCHAR szProductID[]=
-         {'P','r','o','d','u','c','t','I','D',0};
     HKEY hkey=0;
     LPWSTR buffer;
     LPWSTR productid;
@@ -3736,7 +3722,8 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    productid = load_dynamic_property(package,szProductID,&rc);
+    productid = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTIDstringW,
+            &rc);
     if (!productid)
         return ERROR_SUCCESS;
 
