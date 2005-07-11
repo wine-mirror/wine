@@ -660,16 +660,15 @@ fail:
 
 
 /**********************************************************************
- *          CURSORICON_CreateFromResource
- *
- * Create a cursor or icon from in-memory resource template.
+ *		CreateIconFromResourceEx (USER32.@)
  *
  * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
  *        with cbSize parameter as well.
  */
-static HICON CURSORICON_CreateFromResource( LPBYTE bits,
-                                            UINT cbSize, BOOL bIcon, DWORD dwVersion,
-                                            INT width, INT height, UINT loadflags )
+HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
+                                       BOOL bIcon, DWORD dwVersion,
+                                       INT width, INT height,
+                                       UINT cFlag )
 {
     HGLOBAL16 hObj;
     static HDC hdcMem;
@@ -686,7 +685,7 @@ static HICON CURSORICON_CreateFromResource( LPBYTE bits,
 
     TRACE_(cursor)("%08x (%u bytes), ver %08x, %ix%i %s %s\n",
                         (unsigned)bits, cbSize, (unsigned)dwVersion, width, height,
-                                  bIcon ? "icon" : "cursor", (loadflags & LR_MONOCHROME) ? "mono" : "" );
+                                  bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
     if (dwVersion == 0x00020000)
     {
         FIXME_(cursor)("\t2.xx resources are not supported\n");
@@ -882,18 +881,6 @@ HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
 
 
 /**********************************************************************
- *		CreateIconFromResourceEx (USER32.@)
- */
-HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
-                                           BOOL bIcon, DWORD dwVersion,
-                                           INT width, INT height,
-                                           UINT cFlag )
-{
-    return CURSORICON_CreateFromResource( bits, cbSize, bIcon, dwVersion,
-                                          width, height, cFlag );
-}
-
-/**********************************************************************
  *          CURSORICON_Load
  *
  * Load a cursor or icon from resource or file.
@@ -919,7 +906,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         else
             dirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestIcon(dir, width, height, colors);
         bits = ptr[dirEntry->wResId-1];
-        hIcon = CURSORICON_CreateFromResource( bits, dirEntry->dwBytesInRes,
+        hIcon = CreateIconFromResourceEx( bits, dirEntry->dwBytesInRes,
                                            !fCursor, 0x00030000, width, height, loadflags);
         HeapFree( GetProcessHeap(), 0, dir );
         HeapFree( GetProcessHeap(), 0, ptr );
@@ -971,7 +958,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
         if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
         bits = (LPBYTE)LockResource( handle );
-        hIcon = CURSORICON_CreateFromResource( bits, dwBytesInRes,
+        hIcon = CreateIconFromResourceEx( bits, dwBytesInRes,
                                            !fCursor, 0x00030000, width, height, loadflags);
         FreeResource( handle );
 
@@ -1025,7 +1012,7 @@ static HICON CURSORICON_Copy( HINSTANCE16 hInst16, HICON hIcon )
  *
  * NOTES
  *     LR_COPYDELETEORG and LR_MONOCHROME are currently not implemented.
- *     LR_MONOCHROME should be implemented by CURSORICON_CreateFromResource.
+ *     LR_MONOCHROME should be implemented by CreateIconFromResourceEx.
  *     LR_COPYFROMRESOURCE will only work if the Image is in the Cache.
  *
  *
@@ -1140,7 +1127,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
 
             /* Create a New Icon with the proper dimension
             */
-            hNew = CURSORICON_CreateFromResource( pBits, dwBytesInRes,
+            hNew = CreateIconFromResourceEx( pBits, dwBytesInRes,
                        bIsIcon, 0x00030000, iTargetCX, iTargetCY, nFlags);
             FreeResource(hMem);
         }
@@ -1670,7 +1657,7 @@ HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 
     TRACE_(cursor)("hRes=%04x\n",hResource);
 
-    return HICON_16(CURSORICON_CreateFromResource( bits, 0, TRUE,
+    return HICON_16(CreateIconFromResourceEx( bits, 0, TRUE,
                       bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR));
 }
 
