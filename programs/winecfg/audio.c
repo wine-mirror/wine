@@ -44,6 +44,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
+static const char* DSound_HW_Accels[] = {
+  "Full",
+  "Standard",
+  "Basic",
+  "Emulation",
+  NULL
+};
+
 /* Select the correct entry in the combobox based on drivername */
 static void selectAudioDriver(HWND hDlg, const char *drivername)
 {
@@ -113,6 +121,7 @@ static void initAudioDlg (HWND hDlg)
     char *curAudioDriver = get_reg_key(config_key, "Drivers", "Audio", "alsa");
     const AUDIO_DRIVER *pAudioDrv = NULL;
     int i;
+    char* buf = NULL;
 
     WINE_TRACE("\n");
 
@@ -124,6 +133,31 @@ static void initAudioDlg (HWND hDlg)
             SendDlgItemMessage(hDlg, IDC_AUDIO_DRIVER, CB_SETCURSEL, i, 0);
         }
     }
+
+
+    SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_RESETCONTENT, 0, 0);
+    for (i = 0; NULL != DSound_HW_Accels[i]; ++i) {
+      SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_ADDSTRING, 0, (LPARAM) DSound_HW_Accels[i]);
+    }    
+    buf = get_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", "Full"); 
+    for (i = 0; NULL != DSound_HW_Accels[i]; ++i) {
+      if (strcmp(buf, DSound_HW_Accels[i]) == 0) {
+	SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_SETCURSEL, i, 0);
+	break ;
+      }
+    }
+    if (NULL == DSound_HW_Accels[i]) {
+      WINE_ERR("Invalid Direct Sound HW Accel read from registry (%s)\n", buf);
+    }
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    buf = get_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "N");
+    if (IS_OPTION_TRUE(*buf))
+      CheckDlgButton(hDlg, IDC_DSOUND_DRV_EMUL, BST_CHECKED);
+    else
+      CheckDlgButton(hDlg, IDC_DSOUND_DRV_EMUL, BST_UNCHECKED);
+    HeapFree(GetProcessHeap(), 0, buf);
+
 }
 
 static const char *audioAutoDetect(void)
@@ -226,6 +260,23 @@ AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
           case IDC_AUDIO_CONTROL_PANEL:
 	     MessageBox(NULL, "Launching audio control panel not implemented yet!", "Fixme", MB_OK | MB_ICONERROR);
              break;
+          case IDC_DSOUND_HW_ACCEL:
+	    if (HIWORD(wParam) == CBN_SELCHANGE) {
+	      int selected_dsound_accel;
+	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
+	      selected_dsound_accel = SendDlgItemMessage(hDlg, IDC_DSOUND_HW_ACCEL, CB_GETCURSEL, 0, 0);
+	      set_reg_key(config_key, keypath("DirectSound"), "HardwareAcceleration", DSound_HW_Accels[selected_dsound_accel]); 
+	    }
+	    break;
+          case IDC_DSOUND_DRV_EMUL:
+	    if (HIWORD(wParam) == BN_CLICKED) {
+	      SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0); 
+	      if (IsDlgButtonChecked(hDlg, IDC_DSOUND_DRV_EMUL) == BST_CHECKED)
+		set_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "Y");
+	      else
+		set_reg_key(config_key, keypath("DirectSound"), "EmulDriver", "N");
+	    }
+	    break;
 	}
 	break;
 
