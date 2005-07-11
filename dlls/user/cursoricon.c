@@ -667,10 +667,11 @@ fail:
  * FIXME: Convert to mono when cFlag is LR_MONOCHROME. Do something
  *        with cbSize parameter as well.
  */
-static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, LPBYTE bits,
-                                                UINT cbSize, BOOL bIcon, DWORD dwVersion,
-                                                INT width, INT height, UINT loadflags )
+static HICON CURSORICON_CreateFromResource( LPBYTE bits,
+                                            UINT cbSize, BOOL bIcon, DWORD dwVersion,
+                                            INT width, INT height, UINT loadflags )
 {
+    HGLOBAL16 hObj;
     static HDC hdcMem;
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
@@ -842,17 +843,11 @@ static HICON CURSORICON_CreateFromResource( HMODULE16 hModule, HGLOBAL16 hObj, L
     sizeXor = bmpXor.bmHeight * bmpXor.bmWidthBytes;
     sizeAnd = bmpAnd.bmHeight * bmpAnd.bmWidthBytes;
 
-    if (hObj) hObj = GlobalReAlloc16( hObj,
-                     sizeof(CURSORICONINFO) + sizeXor + sizeAnd, GMEM_MOVEABLE );
-    if (!hObj) hObj = GlobalAlloc16( GMEM_MOVEABLE,
+    hObj = GlobalAlloc16( GMEM_MOVEABLE,
                      sizeof(CURSORICONINFO) + sizeXor + sizeAnd );
     if (hObj)
     {
         CURSORICONINFO *info;
-
-        /* Make it owned by the module */
-        if (hModule) hModule = GetExePtr(hModule);
-        FarSetOwner16( hObj, hModule );
 
         info = (CURSORICONINFO *)GlobalLock16( hObj );
         info->ptHotSpot.x   = hotspot.x;
@@ -894,7 +889,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
                                            INT width, INT height,
                                            UINT cFlag )
 {
-    return CURSORICON_CreateFromResource( 0, 0, bits, cbSize, bIcon, dwVersion,
+    return CURSORICON_CreateFromResource( bits, cbSize, bIcon, dwVersion,
                                           width, height, cFlag );
 }
 
@@ -924,7 +919,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
         else
             dirEntry = (CURSORICONDIRENTRY *)CURSORICON_FindBestIcon(dir, width, height, colors);
         bits = ptr[dirEntry->wResId-1];
-        hIcon = CURSORICON_CreateFromResource( 0, 0, bits, dirEntry->dwBytesInRes,
+        hIcon = CURSORICON_CreateFromResource( bits, dirEntry->dwBytesInRes,
                                            !fCursor, 0x00030000, width, height, loadflags);
         HeapFree( GetProcessHeap(), 0, dir );
         HeapFree( GetProcessHeap(), 0, ptr );
@@ -976,7 +971,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
         if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
         bits = (LPBYTE)LockResource( handle );
-        hIcon = CURSORICON_CreateFromResource( 0, 0, bits, dwBytesInRes,
+        hIcon = CURSORICON_CreateFromResource( bits, dwBytesInRes,
                                            !fCursor, 0x00030000, width, height, loadflags);
         FreeResource( handle );
 
@@ -1145,7 +1140,7 @@ static HICON CURSORICON_ExtCopy(HICON hIcon, UINT nType,
 
             /* Create a New Icon with the proper dimension
             */
-            hNew = CURSORICON_CreateFromResource( 0, 0, pBits, dwBytesInRes,
+            hNew = CURSORICON_CreateFromResource( pBits, dwBytesInRes,
                        bIsIcon, 0x00030000, iTargetCX, iTargetCY, nFlags);
             FreeResource(hMem);
         }
@@ -1675,7 +1670,7 @@ HICON16 WINAPI LoadIconHandler16( HGLOBAL16 hResource, BOOL16 bNew )
 
     TRACE_(cursor)("hRes=%04x\n",hResource);
 
-    return HICON_16(CURSORICON_CreateFromResource(0, 0, bits, 0, TRUE,
+    return HICON_16(CURSORICON_CreateFromResource( bits, 0, TRUE,
                       bNew ? 0x00030000 : 0x00020000, 0, 0, LR_DEFAULTCOLOR));
 }
 
