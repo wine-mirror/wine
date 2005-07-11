@@ -51,7 +51,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(heap);
 typedef struct tagARENA_INUSE
 {
     DWORD  size;                    /* Block size; must be the first field */
-    DWORD  magic;                   /* Magic number */
+    DWORD  magic : 27;              /* Magic number */
+    DWORD  unused_bytes : 5;        /* Number of bytes in the block not used by user data (max value is HEAP_MIN_BLOCK_SIZE+ALIGNMENT) */
 } ARENA_INUSE;
 
 typedef struct tagARENA_FREE
@@ -65,7 +66,7 @@ typedef struct tagARENA_FREE
 #define ARENA_FLAG_FREE        0x00000001  /* flags OR'ed with arena size */
 #define ARENA_FLAG_PREV_FREE   0x00000002
 #define ARENA_SIZE_MASK        (~3)
-#define ARENA_INUSE_MAGIC      0x44455355      /* Value for arena 'magic' field */
+#define ARENA_INUSE_MAGIC      0x4455355       /* Value for arena 'magic' field */
 #define ARENA_FREE_MAGIC       0x45455246      /* Value for arena 'magic' field */
 
 #define ARENA_INUSE_FILLER     0x55
@@ -1132,19 +1133,20 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
     HEAP *heapPtr = HEAP_GetPtr( heap );
+    ULONG rounded_size;
 
     /* Validate the parameters */
 
     if (!heapPtr) return NULL;
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
     flags |= heapPtr->flags;
-    size = ROUND_SIZE(size);
-    if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
+    rounded_size = ROUND_SIZE(size);
+    if (rounded_size < HEAP_MIN_BLOCK_SIZE) rounded_size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
     /* Locate a suitable free block */
 
-    if (!(pArena = HEAP_FindFreeBlock( heapPtr, size, &subheap )))
+    if (!(pArena = HEAP_FindFreeBlock( heapPtr, rounded_size, &subheap )))
     {
         TRACE("(%p,%08lx,%08lx): returning NULL\n",
                   heap, flags, size  );
@@ -1169,7 +1171,8 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, ULONG size )
 
     /* Shrink the block */
 
-    HEAP_ShrinkBlock( subheap, pInUse, size );
+    HEAP_ShrinkBlock( subheap, pInUse, rounded_size );
+    pInUse->unused_bytes = (pInUse->size & ARENA_SIZE_MASK) - size;
 
     if (flags & HEAP_ZERO_MEMORY)
         clear_block( pInUse + 1, pInUse->size & ARENA_SIZE_MASK );
@@ -1262,6 +1265,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     DWORD oldSize;
     HEAP *heapPtr;
     SUBHEAP *subheap;
+    ULONG rounded_size;
 
     if (!ptr) return NULL;
     if (!(heapPtr = HEAP_GetPtr( heap )))
@@ -1275,8 +1279,8 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY |
              HEAP_REALLOC_IN_PLACE_ONLY;
     flags |= heapPtr->flags;
-    size = ROUND_SIZE(size);
-    if (size < HEAP_MIN_BLOCK_SIZE) size = HEAP_MIN_BLOCK_SIZE;
+    rounded_size = ROUND_SIZE(size);
+    if (rounded_size < HEAP_MIN_BLOCK_SIZE) rounded_size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlEnterCriticalSection( &heapPtr->critSection );
     if (!HEAP_IsRealArena( heapPtr, HEAP_NO_SERIALIZE, ptr, QUIET ))
@@ -1293,12 +1297,12 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
     pArena = (ARENA_INUSE *)ptr - 1;
     subheap = HEAP_FindSubHeap( heapPtr, pArena );
     oldSize = (pArena->size & ARENA_SIZE_MASK);
-    if (size > oldSize)
+    if (rounded_size > oldSize)
     {
         char *pNext = (char *)(pArena + 1) + oldSize;
         if ((pNext < (char *)subheap + subheap->size) &&
             (*(DWORD *)pNext & ARENA_FLAG_FREE) &&
-            (oldSize + (*(DWORD *)pNext & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) >= size))
+            (oldSize + (*(DWORD *)pNext & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) >= rounded_size))
         {
             /* The next block is free and large enough */
             ARENA_FREE *pFree = (ARENA_FREE *)pNext;
@@ -1306,14 +1310,14 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
             pFree->prev->next = pFree->next;
             pArena->size += (pFree->size & ARENA_SIZE_MASK) + sizeof(*pFree);
             if (!HEAP_Commit( subheap, (char *)pArena + sizeof(ARENA_INUSE)
-                                               + size + HEAP_MIN_BLOCK_SIZE))
+                                               + rounded_size + HEAP_MIN_BLOCK_SIZE))
             {
                 if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
                 if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
                 RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
                 return NULL;
             }
-            HEAP_ShrinkBlock( subheap, pArena, size );
+            HEAP_ShrinkBlock( subheap, pArena, rounded_size );
         }
         else  /* Do it the hard way */
         {
@@ -1322,7 +1326,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
             SUBHEAP *newsubheap;
 
             if ((flags & HEAP_REALLOC_IN_PLACE_ONLY) ||
-                !(pNew = HEAP_FindFreeBlock( heapPtr, size, &newsubheap )))
+                !(pNew = HEAP_FindFreeBlock( heapPtr, rounded_size, &newsubheap )))
             {
                 if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
                 if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
@@ -1338,7 +1342,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
             pInUse->size = (pInUse->size & ~ARENA_FLAG_FREE)
                            + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
             pInUse->magic = ARENA_INUSE_MAGIC;
-            HEAP_ShrinkBlock( newsubheap, pInUse, size );
+            HEAP_ShrinkBlock( newsubheap, pInUse, rounded_size );
             mark_block_initialized( pInUse + 1, oldSize );
             memcpy( pInUse + 1, pArena + 1, oldSize );
 
@@ -1349,11 +1353,13 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, ULONG size 
             pArena  = pInUse;
         }
     }
-    else HEAP_ShrinkBlock( subheap, pArena, size );  /* Shrink the block */
+    else HEAP_ShrinkBlock( subheap, pArena, rounded_size );  /* Shrink the block */
+
+    pArena->unused_bytes = (pArena->size & ARENA_SIZE_MASK) - size;
 
     /* Clear the extra bytes if needed */
 
-    if (size > oldSize)
+    if (rounded_size > oldSize)
     {
         if (flags & HEAP_ZERO_MEMORY)
             clear_block( (char *)(pArena + 1) + oldSize,
@@ -1475,7 +1481,7 @@ ULONG WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     else
     {
         ARENA_INUSE *pArena = (ARENA_INUSE *)ptr - 1;
-        ret = pArena->size & ARENA_SIZE_MASK;
+        ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 

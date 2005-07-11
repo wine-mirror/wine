@@ -38,6 +38,15 @@ START_TEST(heap)
     mem = HeapReAlloc(GetProcessHeap(), 0, NULL, 10);
     ok(mem == NULL, "memory allocated by HeapReAlloc\n");
 
+    for (size = 0; size <= 256; size++)
+    {
+        SIZE_T heap_size;
+        mem = HeapAlloc(GetProcessHeap(), 0, size);
+        heap_size = HeapSize(GetProcessHeap(), 0, mem);
+        ok(size == heap_size, "HeapSize returned %lu instead of %lu\n", heap_size, size);
+        HeapFree(GetProcessHeap(), 0, mem);
+    }
+
     /* Global*() functions */
     gbl = GlobalAlloc(GMEM_MOVEABLE, 0);
     ok(gbl != NULL, "global memory not allocated for size 0\n");
