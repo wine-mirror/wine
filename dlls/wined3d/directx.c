@@ -1582,8 +1582,8 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
         IWineD3DStateBlock_AddRef((IWineD3DStateBlock*)object->updateStateBlock);
         /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
 
-        /* Setup the  implicite swapchain */
-        TRACE("Creating implicite swapchain\n");
+        /* Setup the implicit swapchain */
+        TRACE("Creating implicit swapchain\n");
 
         if (D3D_OK == D3DCB_CreateAdditionalSwapChain((IUnknown *) object->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) && swapchain != NULL) {
 

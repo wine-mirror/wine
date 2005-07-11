@@ -284,7 +284,7 @@ static void test_dpa(void)
         todo_wine ok(j+1 == i, "j=%d i=%d\n", j, i);
     }
     
-    /* Try to get the index of a non-existent item */
+    /* Try to get the index of a nonexistent item */
     i = pDPA_GetPtrIndex(dpa, (PVOID)7);
     ok(i == DPA_ERR, "i=%d\n", i);
     

@@ -340,7 +340,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
 #if 0 /* TODO: This looks like overkill so I've removed it. */
   {
     D3DVERTEXELEMENT9* pIt = This->pDeclaration9;
-    TRACE("dumping of D3D9 Convertion:\n");
+    TRACE("dumping of D3D9 Conversion:\n");
     while (0xFF != pIt->Stream) {
       IWineD3DVertexDeclarationImpl_ParseToken9(pIt);
       ++pIt;

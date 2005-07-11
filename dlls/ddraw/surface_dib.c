@@ -476,7 +476,7 @@ static void DoDXTCDecompression(const DDSURFACEDESC2 *sdesc, const DDSURFACEDESC
 		    *((DWORD*)(dst+y*pitch+x*(is16?2:4))) = pixel;
 	    }
     }
-#if 0 /* Usefull for debugging */
+#if 0 /* Useful for debugging */
     {
 	static int idx;
 	char texname[255];

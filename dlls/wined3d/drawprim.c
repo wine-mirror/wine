@@ -430,7 +430,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
 
         break;
         case D3DDECLUSAGE_TEXCOORD:
-        /* For some odd reason Microsoft desided to sum usage accross all the streams,
+        /* For some odd reason Microsoft decided to sum usage accross all the streams,
         which means we need to do a count and not just use the usage number */
 
             strided->u.s.texCoords[textureNo].lpData    = data;
@@ -451,9 +451,9 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
         TRACE("Tangents\n");
         break;
         case D3DDECLUSAGE_BINORMAL:
-        /* Binormals are really bitangents perpendicular to the normal but s-aligned to the tangent, basicly they are the vectors of any two lines on the plain at right angles to the normal and at right angles to each other, like the x,y,z axis.
-        tangent data makes it easier to perform some calcualtions (a bit like using 2d graph paper instead of the normal of the piece of paper)
-        The only thing they are usefull for in fixed function would be working out normals when none are give.
+        /* Binormals are really bitangents perpendicular to the normal but s-aligned to the tangent, basically they are the vectors of any two lines on the plain at right angles to the normal and at right angles to each other, like the x,y,z axis.
+        tangent data makes it easier to perform some calculations (a bit like using 2d graph paper instead of the normal of the piece of paper)
+        The only thing they are useful for in fixed function would be working out normals when none are given.
         */
 #if 0
         strided->u.s.binormal.lpData   = data;
@@ -464,7 +464,7 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
         TRACE("BI-Normal\n");
         break;
         case D3DDECLUSAGE_TESSFACTOR:
-        /* a google for D3DDECLUSAGE_TESSFACTOR turns up a wopping 36 entries, 7 of which are from MSDN.
+        /* a google for D3DDECLUSAGE_TESSFACTOR turns up a whopping 36 entries, 7 of which are from MSDN.
         */
 #if 0
         strided->u.s.tessFacrot.lpData   = data;

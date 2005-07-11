@@ -104,7 +104,7 @@ NTSTATUS WINAPI LsaClose(IN LSA_HANDLE ObjectHandle)
  *  PolicyHandle          [I] Handle to a Policy object.
  *  EnumerationContext    [I] Pointer to an enumeration handle.
  *  Buffer                [O] Contains the names and SIDs of trusted domains.
- *  PreferedMaximumLength [I] Prefered maximum size in bytes of Buffer.
+ *  PreferredMaximumLength[I] Preferred maximum size in bytes of Buffer.
  *  CountReturned         [O] Number of elements in Buffer.
  *
  * RETURNS
@@ -121,11 +121,11 @@ NTSTATUS WINAPI LsaEnumerateTrustedDomains(
     IN LSA_HANDLE PolicyHandle,
     IN PLSA_ENUMERATION_HANDLE EnumerationContext,
     OUT PVOID* Buffer,
-    IN ULONG PreferedMaximumLength,
+    IN ULONG PreferredMaximumLength,
     OUT PULONG CountReturned)
 {
     FIXME("(%p,%p,%p,0x%08lx,%p) stub\n", PolicyHandle, EnumerationContext,
-          Buffer, PreferedMaximumLength, CountReturned);
+          Buffer, PreferredMaximumLength, CountReturned);
 
     if (CountReturned) *CountReturned = 0;
     return STATUS_SUCCESS;

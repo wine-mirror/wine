@@ -377,7 +377,7 @@ should really perform a delta so that only the changes get updated*/
 
         /* FIXME: Texture are set against samplers... not just TextureStages */
         /* Texture */
-        for (j = 0; j < GL_LIMITS(textures); j++) { /* Set The texture first, just incase it resets the states? */
+        for (j = 0; j < GL_LIMITS(textures); j++) { /* Set The texture first, just in case it resets the states? */
             if (This->set.textures[j] && This->changed.textures[j]) {
                 IWineD3DDevice_SetTexture(pDevice, j, This->textures[j]);
             }

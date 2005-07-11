@@ -145,7 +145,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
             FIXME("Unable to render to a destination window %d\n", (int)hDestWindowOverride );
             if(This == swapChainImpl){
                 /* FIXME: this will be fixed by moving to a context management system */
-                FIXME("Cannot change the target of the implicite swapchain\n");
+                FIXME("Cannot change the target of the implicit swapchain\n");
             }else{
                 HDC               hDc;
                 XVisualInfo       template;
@@ -178,7 +178,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
                     LEAVE_GL();
                     return D3DERR_NOTAVAILABLE;
                 }
-                /* Now we have problems? well not really we just need to know what the implicite context is */
+                /* Now we have problems? well not really we just need to know what the implicit context is */
                 /* now destroy the old context and create a new one (we should really copy the buffers over, and do the whole make current thing! */
                 /* destroy the active context?*/
                 TRACE("Creating new context for %p %p %p\n",This->display, This->visInfo, swapChainImpl->glCtx);
@@ -189,7 +189,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CONST REC
                 }
                 This->drawable     = This->win;
                 This->render_ctx   = This->glCtx;
-                /* SEtup some default states TODO: apply the stateblock to the new context */
+                /* Setup some default states TODO: apply the stateblock to the new context */
                 /** save current context and drawable **/
                 currentContext  =   glXGetCurrentContext();
                 currentDrawable =   glXGetCurrentDrawable();
@@ -327,7 +327,7 @@ HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain *iface
     TRACE("(%p) : iface(%p) pDestSurface(%p) \n", This, iface, pDestSurface);
     ENTER_GL();
 
-    /* check to see if it's the backbuffer or the frontbuffer being requested (to make sureteh data is upto date) */
+    /* check to see if it's the backbuffer or the frontbuffer being requested (to make sure the data is up to date) */
     format = D3DFmt2GLFmt(This->wineD3DDevice, surface->resource.format);
     type   = D3DFmt2GLType(This->wineD3DDevice, surface->resource.format);
     glReadBuffer(GL_FRONT);

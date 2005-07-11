@@ -4608,7 +4608,7 @@ HRESULT WINAPI IDirect3DDevice8Impl_ActiveRender(LPDIRECT3DDEVICE8 iface,
       vcheckGLcall("glFlush");
 
 #ifdef EXTRA_TRACES
-      /** very very usefull debug code */
+      /** very very useful debug code */
       glXSwapBuffers(This->display, This->drawable);   
       printf("Hit Enter to get next frame ...\n");
       getchar();

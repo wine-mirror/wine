@@ -32,7 +32,7 @@ mode. \fBwinedbg\fR will act as the front end for the user.
 .IP \fB--auto\fR
 This mode is used when \fBwinedbg\fR is setup in \fIAeDebug\fR
 registry entry as the default debugger. \fBwinedbg\fR will then
-display basic information about a crash. This is usefull for users
+display basic information about a crash. This is useful for users
 who don't want to debug a crash, but rather gather relevant
 information about the crash to be sent to developers.
 .IP \fB--gdb\fR
@@ -45,7 +45,7 @@ Only the \fBgdb\fR proxy mode allows some options:
 .PP
 .IP \fI--no-start\fR \fBgdb\fR will not be automatically
 started. Relevant information for starting \fBgdb\fR are printed on
-screen. This is somehow usefull when not directly using \fBgdb\fR but
+screen. This is somehow useful when not directly using \fBgdb\fR but
 some graphical front-ends, like \fBddd\fR or \fBkgbd\fR. 
 .IP \fI--with-xterm\fR
 This will run \fBgdb\fR in its own xterm instead of using the current

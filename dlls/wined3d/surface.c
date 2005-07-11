@@ -308,14 +308,14 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
 
  /* Here's what we have to do:
             See if the swapchain has the same context as the renderTarget or the surface is the render target.
-            Otherwise, see if were sharing a context with the implicite swapchain (because were using a shared context model!)
-            and use the fron back buffer as required.
+            Otherwise, see if were sharing a context with the implicit swapchain (because we're using a shared context model!)
+            and use the front back buffer as required.
             if not, we need to switch contexts and then switchback at the end.
          */
         IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
         IWineD3DSurface_GetContainer(myDevice->renderTarget, &IID_IWineD3DSwapChain, (void **)&targetSwapChain);
 
-        /* NOTE: In a shared context environment the renderTarget will use the same context as the implicite swapchain (we're not in a shared environment yet! */
+        /* NOTE: In a shared context environment the renderTarget will use the same context as the implicit swapchain (we're not in a shared environment yet! */
         if ((swapchain == targetSwapChain && targetSwapChain != NULL) || iface == myDevice->renderTarget) {
                 if (iface == myDevice->renderTarget || iface == swapchain->backBuffer) {
                     TRACE("locking back buffer\n");
@@ -333,7 +333,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             IWineD3DSwapChainImpl *implSwapChain;
             IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
             if (swapchain->glCtx == implSwapChain->render_ctx && swapchain->drawable == implSwapChain->win) {
-                    /* This will fail for the implicite swapchain, which is why there needs to be a context manager */
+                    /* This will fail for the implicit swapchain, which is why there needs to be a context manager */
                     if (iface == swapchain->backBuffer) {
                         glReadBuffer(GL_BACK);
                     }else if (iface == swapchain->frontBuffer) {
@@ -376,8 +376,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             GLenum format = D3DFmt2GLFmt(myDevice, This->resource.format);
             GLenum type   = D3DFmt2GLType(myDevice, This->resource.format);
 #if 0
-            /* Bizarly it's takes 120 millseconds to get an 800x600 region a line at a time, but only 10 to get the whole lot every time,
-            *  This is on an ATI9600, and may be format dependant, anyhow this hack makes this demo dx9_2d_demo_game
+            /* Bizarly it takes 120 millseconds to get an 800x600 region a line at a time, but only 10 to get the whole lot every time,
+            *  This is on an ATI9600, and may be format dependent, anyhow this hack makes this demo dx9_2d_demo_game
             *  run ten times faster!
             * ************************************/
             BOOL ati_performance_hack = FALSE;

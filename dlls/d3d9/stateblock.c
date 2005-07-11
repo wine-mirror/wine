@@ -138,13 +138,15 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_EndStateBlock(LPDIRECT3DDEVICE9 iface, IDi
 
     TRACE("(%p) Relay\n", This); 
     
-    /*Tell wineD3D to endstatablock before anything else (incase we run out of memory later and cause locking problems)*/
+    /* Tell wineD3D to endstatablock before anything else (in case we run out
+     * of memory later and cause locking problems)
+     */
     hr=IWineD3DDevice_EndStateBlock(This->WineD3DDevice,&wineD3DStateBlock);
     if(hr!= D3D_OK){
        FIXME("IWineD3DDevice_EndStateBlock returned an error\n");
        return hr;
     }    
-    /*allocate a new IDirectD3DStateBlock*/
+    /* allocate a new IDirectD3DStateBlock */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY ,sizeof(IDirect3DStateBlock9Impl));      
     object->ref = 1;
     object->lpVtbl = &Direct3DStateBlock9_Vtbl;

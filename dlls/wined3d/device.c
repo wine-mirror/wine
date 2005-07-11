@@ -299,12 +299,12 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         /* TODO: Clean up all the surfaces and textures! */
         /* FIXME: Create targets and state blocks in d3d8 */        
         if (((IWineD3DImpl *)This->wineD3D)->dxVersion > 8) { /*We don't create a state block in d3d8 yet*/
-            /* NOTE: You must release the parent if the objects was created via a callback
+            /* NOTE: You must release the parent if the object was created via a callback
             ** ***************************/
             int i;
             IUnknown* swapChainParent;
 
-            /* Release all of the swapchains, except the implicite swapchain (#0) */
+            /* Release all of the swapchains, except the implicit swapchain (#0) */
             for(i = 1; i < This->numberOfSwapChains; i++){
                 /*  TODO: don't access swapchains[x] directly! */
                 IWineD3DSwapChain_Release(This->swapchains[i]);
@@ -315,12 +315,12 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             }
 
             if (This->swapchains[0] != NULL) {
-                /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release it's parent now */
+                /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release its parent now */
                 /*  TODO: don't access swapchains[x] directly!, check that there are no-more swapchains left for this device! */
                 IWineD3DSwapChain_GetParent(This->swapchains[0], &swapChainParent);
                 IUnknown_Release(swapChainParent);           /* once for the get parent */
                 if (IUnknown_Release(swapChainParent)  > 0){  /* the second time for when it was created */
-                    FIXME("(%p) Something's still holding the implicite swapchain\n",This);
+                    FIXME("(%p) Something's still holding the implicit swapchain\n",This);
                 }
             }
 
@@ -405,7 +405,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
        memset(object->streamFreq, 1, sizeof(object->streamFreq));
     }
 
-    /* Reset the ref and type after kluging it */
+    /* Reset the ref and type after kludging it */
     object->wineD3DDevice = This;
     object->ref           = 1;
     object->blockType     = Type;
@@ -1034,9 +1034,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     {
         IWineD3DSwapChain *implSwapChain;
         if (D3D_OK != IWineD3DDevice_GetSwapChain(iface, 0, &implSwapChain)) {
-            /* The first time around we create the context that is shared with all other swapchians and render targets */
+            /* The first time around we create the context that is shared with all other swapchains and render targets */
             object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
-            TRACE("Creating implicite context for vis %p, hwnd %p\n", object->display, object->visInfo);
+            TRACE("Creating implicit context for vis %p, hwnd %p\n", object->display, object->visInfo);
         } else {
 
             TRACE("Creating context for vis %p, hwnd %p\n", object->display, object->visInfo);
@@ -1071,9 +1071,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
    *******************/
 
    /**
-   * TODO: MSDNsays that we are only allowed one fullscreen swapchain per device,
+   * TODO: MSDN says that we are only allowed one fullscreen swapchain per device,
    * so we should really check to see if their is a fullscreen swapchain already
-   * I think Windows and X have differnt ideas about fullscreen, does a single head count as full screen?
+   * I think Windows and X have different ideas about fullscreen, does a single head count as full screen?
     **************************************/
 
    if (!*(pPresentationParameters->Windowed)) {
@@ -1303,7 +1303,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* ifac
     return hr;
 }
 
-/** NOTE: These are ahead of the other getters and setters to save using a forward declartion **/
+/** NOTE: These are ahead of the other getters and setters to save using a forward declaration **/
 UINT     WINAPI  IWineD3DDeviceImpl_GetNumberOfSwapChains(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -1483,7 +1483,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSourceFreq(IWineD3DDevice *iface,  UI
 }
 
 /*****
- * Get / Set & Multipy Transform
+ * Get / Set & Multiply Transform
  *****/
 HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, D3DTRANSFORMSTATETYPE d3dts, CONST D3DMATRIX* lpmatrix) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -4797,7 +4797,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD R
     }
 
     /* MSDN says that null disables the render target
-    but a device must always be associatated with a render target
+    but a device must always be associated with a render target
     nope MSDN says that we return invalid call to a null rendertarget with an index of 0
 
     see http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/AdvancedTopics/PixelPipe/MultipleRenderTarget.asp
@@ -4823,16 +4823,16 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD R
         TRACE("clearing renderer\n");
         /* IWineD3DDeviceImpl_CleanRender(iface); */
         /* OpenGL doesn't support 'sharing' of the stencilBuffer so we may incure an extra memory overhead
-        depending on the renter target implemenattion being used.
+        depending on the renter target implementation being used.
         A shared context implementation will share all buffers between all rendertargets (including swapchains),
-        implemenations that use serperate pbuffers for different swapchains or rendertargets will have to duplicate the
+        implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
         stencil buffer and incure an extra memory overhead */
         hr = IWineD3DDeviceImpl_ActiveRender(iface, pRenderTarget);
     }
 
     if (SUCCEEDED(hr)) {
         /* Finally, reset the viewport as the MSDN states. */
-        /* TODO: Repalace impl usage */
+        /* TODO: Replace impl usage */
         viewport.Height = ((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height;
         viewport.Width  = ((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Width;
         viewport.X      = 0;
@@ -4858,9 +4858,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, 
         TRACE("Trying to do a NOP SetRenderTarget operation\n");
     }else{
         /** OpenGL doesn't support 'sharing' of the stencilBuffer so we may incure an extra memory overhead
-        * depending on the renter target implemenattion being used.
+        * depending on the renter target implementation being used.
         * A shared context implementation will share all buffers between all rendertargets (including swapchains),
-        * implemenations that use serperate pbuffers for different swapchains or rendertargets will have to duplicate the
+        * implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
         * stencil buffer and incure an extra memory overhead
          ******************************************************/
 
@@ -4915,7 +4915,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwa
         glXDestroyPbuffer(swapchain->display, swapchain->drawable);
 #endif
         LEAVE_GL();
-        /* Set everything back to the way that it ws */
+        /* Set everything back the way it ws */
         swapchain->render_ctx = swapchain->glCtx;
         swapchain->drawable = swapchain->win;
     }
@@ -4923,8 +4923,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwa
 }
 
 /** FIXME: This is currently used called whenever SetRenderTarget or SetStencilBuffer are called
-* the functiolaity needs splitting up so that we don't do more than we should do.
-* this only seems to affect performance a little.
+* the functionality needs splitting up so that we don't do more than we should do.
+* this only seems to impact performance a little.
  ******************************/
 HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                IWineD3DSurface *RenderSurface) {
@@ -4938,10 +4938,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
    * for others versions we'll have to use GLXPixmaps
    *
    * normally we must test GLX_VERSION_1_3 but nvidia headers are not correct
-   * as they implements GLX 1.3 but only define GLX_VERSION_1_2
+   * as they implement GLX 1.3 but only define GLX_VERSION_1_2
    * so only check OpenGL version
    * ..........................
-   * I don't belive that it is a problem with NVidia headers,
+   * I don't believe that it is a problem with NVidia headers,
    * XFree only supports GLX1.2, nVidia (and ATI to some extent) provide 1.3 functions
    * in GLX 1.2, there is no mention of the correct way to tell if the extensions are provided.
    * ATI Note:
@@ -4957,7 +4957,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     int nAttribs = 0;
     IWineD3DSwapChain     *currentSwapchain;
     IWineD3DSwapChainImpl *swapchain;
-    /** TODO: get rid of Impl usage we should always create a zbuffer/stencil with our contexts if pussible,
+    /** TODO: get rid of Impl usage we should always create a zbuffer/stencil with our contexts if possible,
     * but switch them off if the StencilSurface is set to NULL
     ** *********************************************************/
     D3DFORMAT BackBufferFormat = ((IWineD3DSurfaceImpl *) RenderSurface)->resource.format;
@@ -4969,7 +4969,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     IWineD3DSurface *tmp;
 
     /**TODO:
-        if StencilSurface == NULL && zBufferTarget != NULL then swtich the zbuffer off,
+        if StencilSurface == NULL && zBufferTarget != NULL then switch the zbuffer off,
         it StencilSurface != NULL && zBufferTarget == NULL switch it on
     */
 
@@ -4978,11 +4978,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 
     /* PUSH2(GLX_BIND_TO_TEXTURE_RGBA_ATI, True); examples of this are few and far between (but I've got a nice working one!)*/
 
-    /** TODO: remove the reff to Impl (context manager should fis this!) **/
+    /** TODO: remove the reff to Impl (context manager should fix this!) **/
     IWineD3DSwapChainImpl *impSwapChain;
     IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **)&impSwapChain);
     if (NULL == impSwapChain){ /* NOTE: This should NEVER fail */
-        ERR("(%p) Failed to get a the implicite swapchain\n", iface);
+        ERR("(%p) Failed to get a the implicit swapchain\n", iface);
     }
 
     ENTER_GL();
@@ -5000,7 +5000,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     cfgs = glXChooseFBConfig(impSwapChain->display, DefaultScreen(impSwapChain->display),
                                                      attribs, &nCfgs);
 
-    if (!cfgs){ /* OK we didn't find the exact config, so use any reasonably match */
+    if (!cfgs){ /* OK we didn't find the exact config, so use any reasonable match */
         /* TODO: fill in the 'requested' and 'current' depths, also make sure that's
            why we failed and only show this message once! */
         MESSAGE("Failed to find exact match, finding alternative but you may suffer performance issues, try changing xfree's depth to match the requested depth\n"); /**/
@@ -5030,7 +5030,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 #ifdef EXTRA_TRACES
         glFlush();
         vcheckGLcall("glFlush");
-        /** This is only usefuly if the old render target was a swapchain,
+        /** This is only useful if the old render target was a swapchain,
         * we need to supercede this with a function that displays
         * the current buffer on the screen. This is easy to do in glx1.3 but
         * we need to do copy-write pixels in glx 1.2.
@@ -5043,7 +5043,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     }
 
     if (IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain) != D3D_OK){
-        /* the selected render target doesn't belong to a swapchain, so use the devices implicite swapchain */
+        /* the selected render target doesn't belong to a swapchain, so use the devices implicit swapchain */
         IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
     }
 
@@ -5096,21 +5096,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                 ||  Height > ((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height))) {
 
         /** ********************************************************************
-        * This code is far too leaky to be usefull IWineD3DDeviceImpl_CleanRender
-        * doesn't seem to work properly and creating a new context Every time is 'extream' overkill.
+        * This code is far too leaky to be useful. IWineD3DDeviceImpl_CleanRender
+        * doesn't seem to work properly and creating a new context every time is 'extremely' overkill.
         * The code does however work, and should be moved to a context manager to
         * manage caching of pbuffers or render to texture are appropriate.
         *
-        * There are some real speed vs compatability issues here:
+        * There are some real speed vs compatibility issues here:
         *    we should really use a new context for every texture, but that eats ram.
         *    we should also be restoring the texture to the pbuffer but that eats CPU
         *    we can also 'reuse' the current pbuffer if the size is larger than the requested buffer,
         *    but if this means reusing the display backbuffer then we need to make sure that
         *    states are correctly preserved.
         * In many cases I would expect that we can 'skip' some functions, such as preserving states,
-        * and gain a good performance increase at the cost of compatability.
+        * and gain a good performance increase at the cost of compatibility.
         * I would suggest that, when this is the case, a user configurable flag be made
-        * available, alowing the user to choose the best emmulated experiance for them.
+        * available, allowing the user to choose the best emulated experience for them.
          *********************************************************************/
 
         /**
@@ -5183,7 +5183,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         /** TODO: We may need to copy the bits into the buffer,
         * this should !!ONLY!! be done if an operation is performed on the target
         * without it being cleared and the buffer is not discardable.
-        * (basicly only bother preserving the contents if there's a possiblity that it will be reused)
+        * (basically only bother preserving the contents if there's a possibility that it will be reused)
         ** *********************************************************************/
         impSwapChain->drawable = newDrawable;
         impSwapChain->render_ctx = newContext;
