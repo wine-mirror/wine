@@ -30,8 +30,6 @@
  *    - GetListBoxInfo()
  *    - LB_GETLISTBOXINFO
  *    - LBS_NODATA
- *    - LB_SETLOCALE: some FIXMEs remain
- *    - LBS_USETABSTOPS: some FIXMEs remain
  */
 
 #include <string.h>
@@ -722,14 +720,18 @@ static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL sh
 {
     INT i;
 
-    if (!(descr->style & LBS_USETABSTOPS)) return TRUE;
+    if (!(descr->style & LBS_USETABSTOPS))
+    {
+        SetLastError(ERROR_LB_WITHOUT_TABSTOPS);
+        return FALSE;
+    }
+
     HeapFree( GetProcessHeap(), 0, descr->tabs );
     if (!(descr->nb_tabs = count))
     {
         descr->tabs = NULL;
         return TRUE;
     }
-    /* FIXME: count = 1 */
     if (!(descr->tabs = HeapAlloc( GetProcessHeap(), 0,
                                             descr->nb_tabs * sizeof(INT) )))
         return FALSE;
@@ -751,7 +753,6 @@ static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL sh
     for (i = 0; i < descr->nb_tabs; i++)
         descr->tabs[i] = MulDiv(descr->tabs[i], descr->avg_char_width, 4);
 
-    /* FIXME: repaint the window? */
     return TRUE;
 }
 
@@ -791,6 +792,17 @@ static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL 
     }
 }
 
+static inline INT LISTBOX_lstrcmpiW( LCID lcid, LPCWSTR str1, LPCWSTR str2 )
+{
+    INT ret = CompareStringW( lcid, NORM_IGNORECASE, str1, -1, str2, -1 );
+    if (ret == CSTR_LESS_THAN)
+        return -1;
+    if (ret == CSTR_EQUAL)
+        return 0;
+    if (ret == CSTR_GREATER_THAN)
+        return 1;
+    return -1;
+}
 
 /***********************************************************************
  *           LISTBOX_FindStringPos
@@ -809,7 +821,7 @@ static INT LISTBOX_FindStringPos( LB_DESCR *descr, LPCWSTR str, BOOL exact )
     {
         index = (min + max) / 2;
         if (HAS_STRINGS(descr))
-            res = lstrcmpiW( str, descr->items[index].str);
+            res = LISTBOX_lstrcmpiW( descr->locale, str, descr->items[index].str);
         else
         {
             COMPAREITEMSTRUCT cis;
@@ -864,13 +876,13 @@ static INT LISTBOX_FindFileStrPos( LB_DESCR *descr, LPCWSTR str )
             else  /* directory */
             {
                 if (str[1] == '-') res = 1;
-                else res = lstrcmpiW( str, p );
+                else res = LISTBOX_lstrcmpiW( descr->locale, str, p );
             }
         }
         else  /* filename */
         {
             if (*str == '[') res = 1;
-            else res = lstrcmpiW( str, p );
+            else res = LISTBOX_lstrcmpiW( descr->locale, str, p );
         }
         if (!res) return index;
         if (res < 0) max = index;
@@ -898,9 +910,9 @@ static INT LISTBOX_FindString( LB_DESCR *descr, INT start, LPCWSTR str, BOOL exa
         if (exact)
         {
             for (i = start + 1; i < descr->nb_items; i++, item++)
-                if (!lstrcmpiW( str, item->str )) return i;
+                if (!LISTBOX_lstrcmpiW( descr->locale, str, item->str )) return i;
             for (i = 0, item = descr->items; i <= start; i++, item++)
-                if (!lstrcmpiW( str, item->str )) return i;
+                if (!LISTBOX_lstrcmpiW( descr->locale, str, item->str )) return i;
         }
         else
         {
@@ -2438,7 +2450,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
     descr->in_focus 	 = FALSE;
     descr->captured      = FALSE;
     descr->font          = 0;
-    descr->locale        = 0;  /* FIXME */
+    descr->locale        = GetUserDefaultLCID();
     descr->lphc		 = lphc;
 
     if (is_old_app(descr) && ( descr->style & ( WS_VSCROLL | WS_HSCROLL ) ) )
@@ -2909,8 +2921,14 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         return descr->locale;
 
     case LB_SETLOCALE:
-        descr->locale = (LCID)wParam;  /* FIXME: should check for valid lcid */
-        return LB_OKAY;
+    {
+        LCID ret;
+        if (!IsValidLocale((LCID)wParam, LCID_INSTALLED))
+            return LB_ERR;
+        ret = descr->locale;
+        descr->locale = (LCID)wParam;
+        return ret;
+    }
 
     case LB_INITSTORAGE:
         return LISTBOX_InitStorage( descr, wParam );
