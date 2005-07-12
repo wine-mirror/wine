@@ -431,7 +431,12 @@ static void LISTBOX_UpdateSize( LB_DESCR *descr )
 static LRESULT LISTBOX_GetItemRect( LB_DESCR *descr, INT index, RECT *rect )
 {
     /* Index <= 0 is legal even on empty listboxes */
-    if (index && (index >= descr->nb_items)) return -1;
+    if (index && (index >= descr->nb_items))
+    {
+        memset(rect, 0, sizeof(*rect));
+        SetLastError(ERROR_INVALID_INDEX);
+        return LB_ERR;
+    }
     SetRect( rect, 0, 0, descr->width, descr->height );
     if (descr->style & LBS_MULTICOLUMN)
     {
@@ -762,7 +767,11 @@ static BOOL LISTBOX_SetTabStops( LB_DESCR *descr, INT count, LPINT tabs, BOOL sh
  */
 static LRESULT LISTBOX_GetText( LB_DESCR *descr, INT index, LPWSTR buffer, BOOL unicode )
 {
-    if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
+    if ((index < 0) || (index >= descr->nb_items))
+    {
+        SetLastError(ERROR_INVALID_INDEX);
+        return LB_ERR;
+    }
     if (HAS_STRINGS(descr))
     {
         if (!buffer)
@@ -1163,7 +1172,11 @@ static LRESULT LISTBOX_GetItemHeight( LB_DESCR *descr, INT index )
 {
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
-        if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
+        if ((index < 0) || (index >= descr->nb_items))
+        {
+            SetLastError(ERROR_INVALID_INDEX);
+            return LB_ERR;
+        }
         return descr->items[index].height;
     }
     else return descr->item_height;
@@ -1179,7 +1192,11 @@ static LRESULT LISTBOX_SetItemHeight( LB_DESCR *descr, INT index, INT height, BO
 
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
-        if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
+        if ((index < 0) || (index >= descr->nb_items))
+        {
+            SetLastError(ERROR_INVALID_INDEX);
+            return LB_ERR;
+        }
         TRACE("[%p]: item %d height = %d\n", descr->self, index, height );
         descr->items[index].height = height;
         LISTBOX_UpdateScroll( descr );
@@ -1728,7 +1745,12 @@ static LRESULT LISTBOX_SetCount( LB_DESCR *descr, INT count )
 {
     LRESULT ret;
 
-    if (HAS_STRINGS(descr)) return LB_ERR;
+    if (HAS_STRINGS(descr))
+    {
+        SetLastError(ERROR_SETCOUNT_ON_BAD_LB);
+        return LB_ERR;
+    }
+
     /* FIXME: this is far from optimal... */
     if (count > descr->nb_items)
     {
@@ -2628,20 +2650,29 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
     case LB_DELETESTRING16:
     case LB_DELETESTRING:
         if (LISTBOX_RemoveItem( descr, wParam) != LB_ERR)
-           return descr->nb_items;
+            return descr->nb_items;
         else
-           return LB_ERR;
+        {
+            SetLastError(ERROR_INVALID_INDEX);
+            return LB_ERR;
+        }
 
     case LB_GETITEMDATA16:
     case LB_GETITEMDATA:
         if (((INT)wParam < 0) || ((INT)wParam >= descr->nb_items))
+        {
+            SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
+        }
         return descr->items[wParam].data;
 
     case LB_SETITEMDATA16:
     case LB_SETITEMDATA:
         if (((INT)wParam < 0) || ((INT)wParam >= descr->nb_items))
+        {
+            SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
+        }
         descr->items[wParam].data = (DWORD)lParam;
         return LB_OKAY;
 
@@ -2659,7 +2690,10 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         /* fall through */
     case LB_GETTEXTLEN:
         if ((INT)wParam >= descr->nb_items || (INT)wParam < 0)
+        {
+            SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
+        }
         if (!HAS_STRINGS(descr)) return sizeof(DWORD);
         if (unicode) return strlenW( descr->items[wParam].str );
         return WideCharToMultiByte( CP_ACP, 0, descr->items[wParam].str,
@@ -2888,7 +2922,10 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         /* fall through */
     case LB_SETANCHORINDEX:
         if (((INT)wParam < -1) || ((INT)wParam >= descr->nb_items))
+        {
+            SetLastError(ERROR_INVALID_INDEX);
             return LB_ERR;
+        }
         descr->anchor_item = (INT)wParam;
         return LB_OKAY;
 
