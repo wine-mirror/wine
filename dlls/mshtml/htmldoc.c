@@ -30,7 +30,7 @@
 #include "docobj.h"
 
 #include "mshtml.h"
-#include "mshtmdid.h"
+#include "mshtmhst.h"
 
 #include "wine/debug.h"
 
@@ -97,6 +97,9 @@ static HRESULT WINAPI HTMLDocument_QueryInterface(IHTMLDocument2 *iface, REFIID 
     }else if(IsEqualGUID(&IID_IServiceProvider, riid)) {
         TRACE("(%p)->(IID_IServiceProvider, %p)\n", This, ppvObject);
         *ppvObject = SERVPROV(This);
+    }else if(IsEqualGUID(&IID_IOleCommandTarget, riid)) {
+        TRACE("(%p)->(IID_IOleCommandTarget, %p)\n", This, ppvObject);
+        *ppvObject = CMDTARGET(This);
     }
 
     if(*ppvObject) {
@@ -126,6 +129,8 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
     if(!ref) {
         if(This->client)
             IOleClientSite_Release(This->client);
+        if(This->hostui)
+            IDocHostUIHandler_Release(This->hostui);
         if(This->ipsite)
             IOleInPlaceSite_Release(This->ipsite);
         if(This->frame)

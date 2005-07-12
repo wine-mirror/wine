@@ -30,6 +30,7 @@
 #include "docobj.h"
 
 #include "mshtml.h"
+#include "mshtmhst.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"

@@ -65,13 +65,16 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
-    IDocHostUIHandler *pDocHostUIHandler;
+    IDocHostUIHandler *pDocHostUIHandler = NULL;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pClientSite);
 
     if(This->client)
         IOleClientSite_Release(This->client);
+
+    if(This->hostui)
+        IDocHostUIHandler_Release(This->hostui);
 
     if(!pClientSite) {
         This->client = NULL;
@@ -110,6 +113,7 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 
     IOleClientSite_AddRef(pClientSite);
     This->client = pClientSite;
+    This->hostui = pDocHostUIHandler;
 
     return S_OK;
 }
@@ -196,10 +200,10 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
         hres = IOleClientSite_GetContainer(pActiveSite, &pContainer);
         if(SUCCEEDED(hres)) {
             IOleContainer_LockContainer(pContainer, TRUE);
-            /* FIXME: Create new IOleDocumentView. See CreateView for more info. */
-            hres = IOleDocumentSite_ActivateMe(pDocSite, DOCVIEW(This));
             IOleContainer_Release(pContainer);
         }
+        /* FIXME: Create new IOleDocumentView. See CreateView for more info. */
+        hres = IOleDocumentSite_ActivateMe(pDocSite, DOCVIEW(This));
         IOleDocumentSite_Release(pDocSite);
     }else {
         hres = IOleDocumentView_UIActivate(DOCVIEW(This), TRUE);
@@ -417,10 +421,61 @@ static const IOleDocumentVtbl OleDocumentVtbl = {
     OleDocument_EnumViews
 };
 
+/**********************************************************
+ * IOleCommandTarget implementation
+ */
+
+#define CMDTARGET_THIS(iface)  (HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpOleCommandTargetVtbl))
+
+static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
+{
+    HTMLDocument *This = CMDTARGET_THIS(iface);
+    return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppv);
+}
+
+static ULONG WINAPI OleCommandTarget_AddRef(IOleCommandTarget *iface)
+{
+    HTMLDocument *This = CMDTARGET_THIS(iface);
+    return IHTMLDocument2_AddRef(HTMLDOC(This));
+}
+
+static ULONG WINAPI OleCommandTarget_Release(IOleCommandTarget *iface)
+{
+    HTMLDocument *This = CMDTARGET_THIS(iface);
+    return IHTMLDocument_Release(HTMLDOC(This));
+}
+
+static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        ULONG cCmds, OLECMD prgCmds[], OLECMDTEXT *pCmdText)
+{
+    HTMLDocument *This = CMDTARGET_THIS(iface);
+    FIXME("(%p)->(%s %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), cCmds, prgCmds, pCmdText);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID *pguidCmdGroup,
+        DWORD nCmdID, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    HTMLDocument *This = CMDTARGET_THIS(iface);
+    FIXME("(%p)->(%s %ld %ld %p %p)\n", This, debugstr_guid(pguidCmdGroup), nCmdID, nCmdexecopt,
+            pvaIn, pvaOut);
+    return E_NOTIMPL;
+}
+
+static const IOleCommandTargetVtbl OleCommandTargetVtbl = {
+    OleCommandTarget_QueryInterface,
+    OleCommandTarget_AddRef,
+    OleCommandTarget_Release,
+    OleCommandTarget_QueryStatus,
+    OleCommandTarget_Exec
+};
+
 void HTMLDocument_OleObj_Init(HTMLDocument *This)
 {
     This->lpOleObjectVtbl = &OleObjectVtbl;
     This->lpOleDocumentVtbl = &OleDocumentVtbl;
+    This->lpOleCommandTargetVtbl = &OleCommandTargetVtbl;
 
     This->client = NULL;
+    This->hostui = NULL;
 }

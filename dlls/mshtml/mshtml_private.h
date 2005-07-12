@@ -28,10 +28,12 @@ typedef struct {
     const IViewObject2Vtbl                *lpViewObject2Vtbl;
     const IOleInPlaceObjectWindowlessVtbl *lpOleInPlaceObjectWindowlessVtbl;
     const IServiceProviderVtbl            *lpServiceProviderVtbl;
+    const IOleCommandTargetVtbl           *lpOleCommandTargetVtbl;
 
     LONG ref;
 
     IOleClientSite *client;
+    IDocHostUIHandler *hostui;
     IOleInPlaceSite *ipsite;
     IOleInPlaceFrame *frame;
 
@@ -53,6 +55,7 @@ typedef struct {
 #define INPLACEOBJ(x)    ((IOleInPlaceObject*)            &(x)->lpOleInPlaceObjectWindowlessVtbl)
 #define INPLACEWIN(x)    ((IOleInPlaceObjectWindowless*)  &(x)->lpOleInPlaceObjectWindowlessVtbl)
 #define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
+#define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
 
 #define DEFINE_THIS(cls,ifc) cls* const This=(cls*)((char*)(iface)-offsetof(cls,lp ## ifc ## Vtbl));
 
