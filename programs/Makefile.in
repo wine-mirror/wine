@@ -11,6 +11,7 @@ SUBDIRS = \
 	cmdlgtst \
 	control \
 	expand \
+	hh \
 	msiexec \
 	notepad \
 	progman \
@@ -43,6 +44,7 @@ INSTALLSUBDIRS = \
 	clock \
 	control \
 	expand \
+	hh \
 	msiexec \
 	notepad \
 	progman \
@@ -95,6 +97,7 @@ SYMLINKS = \
 	cmdlgtst.exe$(DLLEXT) \
 	control.exe$(DLLEXT) \
 	expand.exe$(DLLEXT) \
+	hh.exe$(DLLEXT) \
 	icinfo.exe$(DLLEXT) \
 	msiexec.exe$(DLLEXT) \
 	notepad.exe$(DLLEXT) \
@@ -183,6 +186,9 @@ control.exe$(DLLEXT): control/control.exe$(DLLEXT)
 expand.exe$(DLLEXT): expand/expand.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) expand/expand.exe$(DLLEXT) $@
 
+hh.exe$(DLLEXT): hh/hh.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) hh/hh.exe$(DLLEXT) $@
+
 icinfo.exe$(DLLEXT): avitools/icinfo.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) avitools/icinfo.exe$(DLLEXT) $@
 
@@ -267,6 +273,7 @@ clock/clock.exe$(DLLEXT): clock
 cmdlgtst/cmdlgtst.exe$(DLLEXT): cmdlgtst
 control/control.exe$(DLLEXT): control
 expand/expand.exe$(DLLEXT): expand
+hh/hh.exe$(DLLEXT): hh
 avitools/icinfo.exe$(DLLEXT): avitools
 msiexec/msiexec.exe$(DLLEXT): msiexec
 notepad/notepad.exe$(DLLEXT): notepad

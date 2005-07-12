@@ -1738,6 +1738,7 @@ programs/clock/Makefile
 programs/cmdlgtst/Makefile
 programs/control/Makefile
 programs/expand/Makefile
+programs/hh/Makefile
 programs/msiexec/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
