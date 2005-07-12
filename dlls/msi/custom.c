@@ -182,7 +182,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
 
             static const WCHAR szActionData[] = {
             'C','u','s','t','o','m','A','c','t','i','o','n','D','a','t','a',0};
-            static const WCHAR szBlank[] = {' ',0};
+            static const WCHAR szBlank[] = {0};
             LPWSTR actiondata = load_dynamic_property(package,action,NULL);
             if (actiondata)
                 MSI_SetPropertyW(package,szActionData,actiondata);
