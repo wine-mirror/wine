@@ -1297,10 +1297,16 @@ static void test_decodeExtensions(DWORD dwEncoding)
     }
 }
 
+/* MS encodes public key info with a NULL if the algorithm identifier's
+ * parameters are empty.  However, when encoding an algorithm in a CERT_INFO,
+ * it encodes them by omitting the algorithm parameters.  This latter approach
+ * seems more correct, so accept either form.
+ */
 struct encodedPublicKey
 {
     CERT_PUBLIC_KEY_INFO info;
     const BYTE *encoded;
+    const BYTE *encodedNoNull;
     CERT_PUBLIC_KEY_INFO decoded;
 };
 
@@ -1312,18 +1318,25 @@ static const struct encodedPublicKey pubKeys[] = {
  /* with a bogus OID */
  { { { "1.2.3", { 0, NULL } }, { 0, NULL, 0 } },
   "\x30\x0b\x30\x06\x06\x02\x2a\x03\x05\x00\x03\x01\x00",
+  "\x30\x09\x30\x04\x06\x02\x2a\x03\x03\x01\x00",
   { { "1.2.3", { 2, "\x05\x00" } }, { 0, NULL, 0 } } },
  /* some normal keys */
  { { { szOID_RSA, { 0, NULL } }, { 0, NULL, 0} },
   "\x30\x0f\x30\x0a\x06\x06\x2a\x86\x48\x86\xf7\x0d\x05\x00\x03\x01\x00",
+  "\x30\x0d\x30\x08\x06\x06\x2a\x86\x48\x86\xf7\x0d\x03\x01\x00",
   { { szOID_RSA, { 2, "\x05\x00" } }, { 0, NULL, 0 } } },
  { { { szOID_RSA, { 0, NULL } }, { sizeof(aKey), (BYTE *)aKey, 0} },
   "\x30\x1f\x30\x0a\x06\x06\x2a\x86\x48\x86\xf7\x0d\x05\x00\x03\x11\x00\x00\x01"
+  "\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+  "\x30\x1d\x30\x08\x06\x06\x2a\x86\x48\x86\xf7\x0d\x03\x11\x00\x00\x01"
   "\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
   { { szOID_RSA, { 2, "\x05\x00" } }, { sizeof(aKey), (BYTE *)aKey, 0} } },
  /* with add'l parameters--note they must be DER-encoded */
  { { { szOID_RSA, { sizeof(params), (BYTE *)params } }, { sizeof(aKey),
   (BYTE *)aKey, 0 } },
+  "\x30\x20\x30\x0b\x06\x06\x2a\x86\x48\x86\xf7\x0d\x02\x01\x01"
+  "\x03\x11\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e"
+  "\x0f",
   "\x30\x20\x30\x0b\x06\x06\x2a\x86\x48\x86\xf7\x0d\x02\x01\x01"
   "\x03\x11\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e"
   "\x0f",
@@ -1347,56 +1360,271 @@ static void test_encodePublicKeyInfo(DWORD dwEncoding)
         ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
         if (buf)
         {
-            ok(bufSize == pubKeys[i].encoded[1] + 2,
-             "Expected %d bytes, got %ld\n", pubKeys[i].encoded[1] + 2,
-             bufSize);
-            ok(!memcmp(buf, pubKeys[i].encoded, pubKeys[i].encoded[1] + 2),
-             "Unexpected value\n");
+            ok(bufSize == pubKeys[i].encoded[1] + 2 ||
+             bufSize == pubKeys[i].encodedNoNull[1] + 2,
+             "Expected %d or %d bytes, got %ld\n", pubKeys[i].encoded[1] + 2,
+             pubKeys[i].encodedNoNull[1] + 2, bufSize);
+            if (bufSize == pubKeys[i].encoded[1] + 2)
+                ok(!memcmp(buf, pubKeys[i].encoded, pubKeys[i].encoded[1] + 2),
+                 "Unexpected value\n");
+            else if (bufSize == pubKeys[i].encodedNoNull[1] + 2)
+                ok(!memcmp(buf, pubKeys[i].encodedNoNull,
+                 pubKeys[i].encodedNoNull[1] + 2), "Unexpected value\n");
             LocalFree(buf);
         }
     }
 }
 
+static void comparePublicKeyInfo(const CERT_PUBLIC_KEY_INFO *expected,
+ const CERT_PUBLIC_KEY_INFO *got)
+{
+    ok(!strcmp(expected->Algorithm.pszObjId, got->Algorithm.pszObjId),
+     "Expected OID %s, got %s\n", expected->Algorithm.pszObjId,
+     got->Algorithm.pszObjId);
+    ok(expected->Algorithm.Parameters.cbData ==
+     got->Algorithm.Parameters.cbData,
+     "Expected parameters of %ld bytes, got %ld\n",
+     expected->Algorithm.Parameters.cbData, got->Algorithm.Parameters.cbData);
+    if (expected->Algorithm.Parameters.cbData)
+        ok(!memcmp(expected->Algorithm.Parameters.pbData,
+         got->Algorithm.Parameters.pbData, got->Algorithm.Parameters.cbData),
+         "Unexpected algorithm parameters\n");
+    ok(expected->PublicKey.cbData == got->PublicKey.cbData,
+     "Expected public key of %ld bytes, got %ld\n",
+     expected->PublicKey.cbData, got->PublicKey.cbData);
+    if (expected->PublicKey.cbData)
+        ok(!memcmp(expected->PublicKey.pbData, got->PublicKey.pbData,
+         got->PublicKey.cbData), "Unexpected public key value\n");
+}
+
 static void test_decodePublicKeyInfo(DWORD dwEncoding)
 {
+    static const BYTE bogusPubKeyInfo[] =
+     "\x30\x22\x30\x0d\x06\x06\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01\x01\x01"
+     "\x03\x11\x00\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e"
+     "\x0f";
     DWORD i;
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
 
     for (i = 0; i < sizeof(pubKeys) / sizeof(pubKeys[0]); i++)
     {
-        BOOL ret;
-        BYTE *buf = NULL;
-        DWORD bufSize = 0;
-
+        /* The NULL form decodes to the decoded member */
         ret = CryptDecodeObjectEx(dwEncoding, X509_PUBLIC_KEY_INFO,
          pubKeys[i].encoded, pubKeys[i].encoded[1] + 2, CRYPT_DECODE_ALLOC_FLAG,
          NULL, (BYTE *)&buf, &bufSize);
         ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
         if (buf)
         {
-            CERT_PUBLIC_KEY_INFO *info = (CERT_PUBLIC_KEY_INFO *)buf;
-
-            ok(!strcmp(pubKeys[i].decoded.Algorithm.pszObjId,
-             info->Algorithm.pszObjId), "Expected OID %s, got %s\n",
-             pubKeys[i].decoded.Algorithm.pszObjId, info->Algorithm.pszObjId);
-            ok(pubKeys[i].decoded.Algorithm.Parameters.cbData ==
-             info->Algorithm.Parameters.cbData,
-             "Expected parameters of %ld bytes, got %ld\n",
-             pubKeys[i].decoded.Algorithm.Parameters.cbData,
-             info->Algorithm.Parameters.cbData);
-            if (pubKeys[i].decoded.Algorithm.Parameters.cbData)
-                ok(!memcmp(pubKeys[i].decoded.Algorithm.Parameters.pbData,
-                 info->Algorithm.Parameters.pbData,
-                 info->Algorithm.Parameters.cbData),
-                 "Unexpected algorithm parameters\n");
-            ok(pubKeys[i].decoded.PublicKey.cbData == info->PublicKey.cbData,
-             "Expected public key of %ld bytes, got %ld\n",
-             pubKeys[i].decoded.PublicKey.cbData, info->PublicKey.cbData);
-            if (pubKeys[i].decoded.PublicKey.cbData)
-                ok(!memcmp(pubKeys[i].decoded.PublicKey.pbData,
-                 info->PublicKey.pbData, info->PublicKey.cbData),
-                 "Unexpected public key value\n");
+            comparePublicKeyInfo(&pubKeys[i].decoded,
+             (CERT_PUBLIC_KEY_INFO *)buf);
             LocalFree(buf);
         }
+        /* The non-NULL form decodes to the original */
+        ret = CryptDecodeObjectEx(dwEncoding, X509_PUBLIC_KEY_INFO,
+         pubKeys[i].encodedNoNull, pubKeys[i].encodedNoNull[1] + 2,
+         CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+        ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+        if (buf)
+        {
+            comparePublicKeyInfo(&pubKeys[i].info, (CERT_PUBLIC_KEY_INFO *)buf);
+            LocalFree(buf);
+        }
+    }
+    /* Test with bogus (not valid DER) parameters */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_PUBLIC_KEY_INFO,
+     bogusPubKeyInfo, bogusPubKeyInfo[1] + 2, CRYPT_DECODE_ALLOC_FLAG,
+     NULL, (BYTE *)&buf, &bufSize);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+     "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+}
+
+static const BYTE v1Cert[] = "\x30\x33\x02\x00\x30\x02\x06\x00\x30\x22\x18"
+ "\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x18\x0f\x31"
+ "\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30\x07\x30\x02\x06"
+ "\x00\x03\x01\x00";
+static const BYTE v2Cert[] = "\x30\x38\xa0\x03\x02\x01\x01\x02\x00\x30\x02\x06"
+ "\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30"
+ "\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30"
+ "\x07\x30\x02\x06\x00\x03\x01\x00";
+static const BYTE v3Cert[] = "\x30\x38\xa0\x03\x02\x01\x02\x02\x00\x30\x02\x06"
+ "\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30"
+ "\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30"
+ "\x07\x30\x02\x06\x00\x03\x01\x00";
+static const BYTE v1CertWithConstraints[] = "\x30\x4b\x02\x00\x30\x02\x06\x00"
+ "\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a"
+ "\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30\x07"
+ "\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14\x30\x12\x06\x03\x55\x1d\x13\x01"
+ "\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01";
+static const BYTE v1CertWithSerial[] = "\x30\x4c\x02\x01\x01\x30\x02\x06\x00"
+ "\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a"
+ "\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30\x30\x5a\x30\x07"
+ "\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14\x30\x12\x06\x03\x55\x1d\x13\x01"
+ "\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01\x01";
+static const BYTE bigCert[] = "\x30\x7a\x02\x01\x01\x30\x02\x06\x00"
+ "\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x4a\x75\x61\x6e\x20\x4c"
+ "\x61\x6e\x67\x00\x30\x22\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30"
+ "\x30\x30\x30\x5a\x18\x0f\x31\x36\x30\x31\x30\x31\x30\x31\x30\x30\x30\x30\x30"
+ "\x30\x5a\x30\x15\x31\x13\x30\x11\x06\x03\x55\x04\x03\x13\x0a\x4a\x75\x61\x6e"
+ "\x20\x4c\x61\x6e\x67\x00\x30\x07\x30\x02\x06\x00\x03\x01\x00\xa3\x16\x30\x14"
+ "\x30\x12\x06\x03\x55\x1d\x13\x01\x01\xff\x04\x08\x30\x06\x01\x01\xff\x02\x01"
+ "\x01";
+/* This is the encoded form of the printable string "Juan Lang" */
+static const BYTE encodedCommonName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11,
+ 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c,
+ 0x61, 0x6e, 0x67, 0x00 };
+static const BYTE serialNum[] = { 0x01 };
+
+static void test_encodeCertToBeSigned(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+    CERT_INFO info = { 0 };
+
+    /* Test with NULL pvStructInfo */
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    /* Test with a V1 cert */
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == v1Cert[1] + 2, "Expected size %d, got %ld\n",
+         v1Cert[1] + 2, size);
+        ok(!memcmp(buf, v1Cert, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Test v2 cert */
+    info.dwVersion = CERT_V2;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == v2Cert[1] + 2, "Expected size %d, got %ld\n",
+         v3Cert[1] + 2, size);
+        ok(!memcmp(buf, v2Cert, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Test v3 cert */
+    info.dwVersion = CERT_V3;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == v3Cert[1] + 2, "Expected size %d, got %ld\n",
+         v3Cert[1] + 2, size);
+        ok(!memcmp(buf, v3Cert, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* see if a V1 cert can have basic constraints set (RFC3280 says no, but
+     * API doesn't prevent it)
+     */
+    info.dwVersion = CERT_V1;
+    info.cExtension = 1;
+    info.rgExtension = &criticalExt;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(size == v1CertWithConstraints[1] + 2, "Expected size %d, got %ld\n",
+         v1CertWithConstraints[1] + 2, size);
+        ok(!memcmp(buf, v1CertWithConstraints, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* test v1 cert with a serial number */
+    info.SerialNumber.cbData = sizeof(serialNum);
+    info.SerialNumber.pbData = (BYTE *)serialNum;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        ok(size == v1CertWithSerial[1] + 2, "Expected size %d, got %ld\n",
+         v1CertWithSerial[1] + 2, size);
+        ok(!memcmp(buf, v1CertWithSerial, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* Test v1 cert with an issuer name, a subject name, and a serial number */
+    info.Issuer.cbData = sizeof(encodedCommonName);
+    info.Issuer.pbData = (BYTE *)encodedCommonName;
+    info.Subject.cbData = sizeof(encodedCommonName);
+    info.Subject.pbData = (BYTE *)encodedCommonName;
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    if (buf)
+    {
+        ok(size == bigCert[1] + 2, "Expected size %d, got %ld\n",
+         bigCert[1] + 2, size);
+        ok(!memcmp(buf, bigCert, size), "Got unexpected value\n");
+        LocalFree(buf);
+    }
+    /* for now, I let more interesting tests be done for each subcomponent,
+     * rather than retesting them all here.
+     */
+}
+
+static void test_decodeCertToBeSigned(DWORD dwEncoding)
+{
+    static const BYTE *corruptCerts[] = { v1Cert, v2Cert, v3Cert,
+     v1CertWithConstraints, v1CertWithSerial };
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0, i;
+
+    /* Test with NULL pbEncoded */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL, 0,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == CRYPT_E_ASN1_EOD,
+     "Expected CRYPT_E_ASN1_EOD, got %08lx\n", GetLastError());
+    ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, NULL, 1,
+     CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(!ret && GetLastError() == STATUS_ACCESS_VIOLATION,
+     "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", GetLastError());
+    /* The following certs all fail with CRYPT_E_ASN1_CORRUPT, because at a
+     * minimum a cert must have a non-zero serial number, an issuer, and a
+     * subject.
+     */
+    for (i = 0; i < sizeof(corruptCerts) / sizeof(corruptCerts[0]); i++)
+    {
+        ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED,
+         corruptCerts[i], corruptCerts[i][1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL,
+         (BYTE *)&buf, &size);
+        ok(!ret && GetLastError() == CRYPT_E_ASN1_CORRUPT,
+         "Expected CRYPT_E_ASN1_CORRUPT, got %08lx\n", GetLastError());
+    }
+    /* Now check with serial number, subject and issuer specified */
+    ret = CryptDecodeObjectEx(dwEncoding, X509_CERT_TO_BE_SIGNED, bigCert,
+     bigCert[1] + 2, CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_INFO *info = (CERT_INFO *)buf;
+
+        ok(size >= sizeof(CERT_INFO), "Expected size at least %d, got %ld\n",
+         sizeof(CERT_INFO), size);
+        ok(info->SerialNumber.cbData == 1,
+         "Expected serial number size 1, got %ld\n", info->SerialNumber.cbData);
+        ok(*info->SerialNumber.pbData == *serialNum,
+         "Expected serial number %d, got %d\n", *serialNum,
+         *info->SerialNumber.pbData);
+        ok(info->Issuer.cbData == sizeof(encodedCommonName),
+         "Expected issuer of %d bytes, got %ld\n", sizeof(encodedCommonName),
+         info->Issuer.cbData);
+        ok(!memcmp(info->Issuer.pbData, encodedCommonName, info->Issuer.cbData),
+         "Unexpected issuer\n");
+        ok(info->Subject.cbData == sizeof(encodedCommonName),
+         "Expected subject of %d bytes, got %ld\n", sizeof(encodedCommonName),
+         info->Subject.cbData);
+        ok(!memcmp(info->Subject.pbData, encodedCommonName,
+         info->Subject.cbData), "Unexpected subject\n");
+        LocalFree(buf);
     }
 }
 
@@ -1482,6 +1710,8 @@ START_TEST(encode)
         test_decodeExtensions(encodings[i]);
         test_encodePublicKeyInfo(encodings[i]);
         test_decodePublicKeyInfo(encodings[i]);
+        test_encodeCertToBeSigned(encodings[i]);
+        test_decodeCertToBeSigned(encodings[i]);
     }
     test_registerOIDFunction();
 }
