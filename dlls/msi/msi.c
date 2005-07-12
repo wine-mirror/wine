@@ -271,13 +271,9 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
     MSIHANDLE handle = -1;
     MSIPACKAGE* package;
     UINT rc;
-    HKEY hkey=0,hkey1=0;
     DWORD sz;
-    static const WCHAR szSouceList[] = {
-        'S','o','u','r','c','e','L','i','s','t',0};
-    static const WCHAR szLUS[] = {
-        'L','a','s','t','U','s','e','d','S','o','u','r','c','e',0};
-    WCHAR sourcepath[0x200];
+    WCHAR sourcepath[MAX_PATH];
+    WCHAR filename[MAX_PATH];
     static const WCHAR szInstalled[] = {
         ' ','I','n','s','t','a','l','l','e','d','=','1',0};
     LPWSTR commandline;
@@ -292,20 +288,17 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
         return ERROR_CALL_NOT_IMPLEMENTED;
     }
 
-    rc = MSIREG_OpenUserProductsKey(szProduct,&hkey,FALSE);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegOpenKeyW(hkey,szSouceList,&hkey1);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
     sz = sizeof(sourcepath);
-    rc = RegQueryValueExW(hkey1, szLUS, NULL, NULL,(LPBYTE)sourcepath, &sz);
-    if (rc != ERROR_SUCCESS)
-        goto end;
+    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
+            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEstringW, sourcepath,
+            &sz);
 
-    RegCloseKey(hkey1);
+    sz = sizeof(filename);
+    MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
+            MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEstringW, filename, &sz);
+
+    strcatW(sourcepath,filename);
+
     /*
      * ok 1, we need to find the msi file for this product.
      *    2, find the source dir for the files
@@ -345,7 +338,6 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     HeapFree(GetProcessHeap(),0,commandline);
 end:
-    RegCloseKey(hkey);
     if (handle != -1)
         MsiCloseHandle(handle);
 
