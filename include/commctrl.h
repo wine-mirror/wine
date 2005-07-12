@@ -4861,6 +4861,20 @@ typedef struct tagNMLINK
   LITEM item;
 } NMLINK, *PNMLINK;
 
+/**************************************************************************
+ * Static control
+ */
+
+#define WC_STATICA		"Static"
+#if defined(__GNUC__)
+# define WC_STATICW 		(const WCHAR []){ 'S','t','a','t','i','c',0 }
+#elif defined(_MSC_VER)
+# define WC_STATICW 		L"Static"
+#else
+static const WCHAR WC_STATICW[] = { 'S','t','a','t','i','c',0 };
+#endif
+#define WC_STATIC		WINELIB_NAME_AW(WC_STATIC)
+
 #ifdef __cplusplus
 }
 #endif
