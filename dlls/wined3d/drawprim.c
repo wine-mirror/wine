@@ -1741,11 +1741,12 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* And re-upload any dirty textures */
     for (i=0; i<GL_LIMITS(textures); i++) {
 
-        if ((This->stateBlock->textures[i] != NULL) && 
-            (IWineD3DBaseTexture_GetDirty(This->stateBlock->textures[i])))
-        {
-            /* Load up the texture now */
-            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
+        if (This->stateBlock->textures[i] != NULL) {
+	
+            if (IWineD3DBaseTexture_GetDirty(This->stateBlock->textures[i])) {
+                /* Load up the texture now */
+                IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
+            }
             if (IWineD3DResourceImpl_GetType((IWineD3DResource *)This->stateBlock->textures[i]) == D3DRTYPE_TEXTURE ) {
                 /* TODO: Is this right, as its cast all texture types to texture8... checkme */
                 IWineD3DSurface *surface;
@@ -1753,8 +1754,8 @@ void drawPrimitive(IWineD3DDevice *iface,
                 if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
                     nonPower2 = TRUE;
                 }
-            }
-        }
+	    }
+        } 
     }
 
     /* Now draw the graphics to the screen */

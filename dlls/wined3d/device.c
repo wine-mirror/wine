@@ -4618,10 +4618,52 @@ HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *iface, 
     return D3D_OK;
 }
 
+ /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */
 HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, IWineD3DBaseTexture *pSourceTexture,  IWineD3DBaseTexture *pDestinationTexture){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    
-    TRACE("(%p) : stub\n", This);
+    D3DRESOURCETYPE sourceType;
+    D3DRESOURCETYPE destinationType;
+    IWineD3DTextureImpl *pDestTexture = (IWineD3DTextureImpl *)pDestinationTexture;
+    IWineD3DTextureImpl *pSrcTexture  = (IWineD3DTextureImpl *)pSourceTexture;
+    int i;
+
+    sourceType = IWineD3DBaseTexture_GetType(pSourceTexture);
+    destinationType = IWineD3DBaseTexture_GetType(pDestinationTexture);
+    if(sourceType != D3DRTYPE_TEXTURE && destinationType != D3DRTYPE_TEXTURE){
+        FIXME("(%p) Only D3DRTYPE_TEXTURE to D3DRTYPE_TEXTURE supported\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+    TRACE("(%p) Source %p Destination %p\n", This, pSourceTexture, pDestinationTexture);
+
+    /** TODO: Get rid of the casts to IWineD3DBaseTextureImpl
+        repalce surfaces[x] with GetSurfaceLevel, or GetCubeMapSurface etc..
+        think about moving the code into texture, and adding a member to base texture to occomplish this **/
+
+    /* Make sure that the destination texture is loaded */
+    IWineD3DBaseTexture_PreLoad(pDestinationTexture);
+    TRACE("Loading source texture\n");
+
+    if(pSrcTexture->surfaces[0] == NULL || pDestTexture->surfaces[0] == NULL){
+        FIXME("(%p) Texture src %p or dest %p has not surface %p %p\n", This, pSrcTexture, pDestTexture,
+               pSrcTexture->surfaces[0], pDestTexture->surfaces[0]);
+    }
+
+    if(((IWineD3DSurfaceImpl *)pSrcTexture->surfaces[0])->resource.pool != D3DPOOL_SYSTEMMEM ||
+        ((IWineD3DSurfaceImpl *)pDestTexture->surfaces[0])->resource.pool != D3DPOOL_DEFAULT){
+
+        FIXME("(%p) source %p must be SYSTEMMEM and dest %p must be DEFAULT\n",This, pSrcTexture, pDestTexture);
+        return D3DERR_INVALIDCALL;
+    }
+    /** TODO: check that both textures have the same number of levels  **/
+#if 0
+    if(IWineD3DBaseTexture_GetLevelCount(pDestinationTexture)  !=IWineD3DBaseTexture_GetLevelCount(pSourceTexture))
+            return D3DERR_INVALIDCALL;
+#endif
+    /** TODO: move this code into baseTexture? device should never touch impl*'s **/
+    for(i = 0 ; i < IWineD3DBaseTexture_GetLevelCount(pDestinationTexture) ; i++){
+        IWineD3DDevice_UpdateSurface(iface, pSrcTexture->surfaces[i], NULL, pDestTexture->surfaces[i], NULL);
+    }
+
     return D3D_OK;
 }
 
@@ -4731,10 +4773,169 @@ float    WINAPI  IWineD3DDeviceImpl_GetNPatchMode(IWineD3DDevice *iface) {
 
 
 HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface, CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface, CONST POINT* pDestPoint) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    FIXME("(%p) : stub\n", This);
-    return D3D_OK;
+    IWineD3DDeviceImpl  *This         = (IWineD3DDeviceImpl *) iface;
+    /** TODO: remove casts to IWineD3DSurfaceImpl
+     *       NOTE: move code to surface to accomplish this
+      ****************************************/
+    IWineD3DSurfaceImpl *pSrcSurface  = (IWineD3DSurfaceImpl *)pSourceSurface;
+    int srcWidth, srcHeight, srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
+    WINED3DFORMAT destFormat, srcFormat;
+    UINT destSize;
+    int destLeft, destTop;
+    D3DPOOL     srcPool, destPool;
+    int offset    = 0;
+    int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
+    glDescriptor *glDescription = NULL;
+    GLenum textureDimensions = GL_TEXTURE_2D;
+    IWineD3DBaseTexture *baseTexture;
 
+    WINED3DSURFACE_DESC  winedesc;
+
+    memset(&winedesc, 0, sizeof(winedesc));
+    winedesc.Width  = &srcSurfaceWidth;
+    winedesc.Height = &srcSurfaceHeight;
+    winedesc.Pool   = &srcPool;
+    winedesc.Format = &srcFormat;
+
+    IWineD3DSurface_GetDesc(pSourceSurface, &winedesc);
+
+    winedesc.Width  = &destSurfaceWidth;
+    winedesc.Height = &destSurfaceHeight;
+    winedesc.Pool   = &destPool;
+    winedesc.Format = &destFormat;
+    winedesc.Size   = &destSize;
+
+    IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
+
+    if(srcPool != D3DPOOL_SYSTEMMEM  || destPool != D3DPOOL_DEFAULT){
+        FIXME("source %p must be SYSTEMMEM and dest %p must be DEFAULT\n", pSourceSurface, pDestinationSurface);
+        return D3DERR_INVALIDCALL;
+    }
+    /* TODO:  change this to use bindTexture */
+    /* Make sure the surface is loaded and upto date */
+    IWineD3DSurface_PreLoad(pDestinationSurface);
+
+    IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
+
+    ENTER_GL();
+
+    /* this needs to be done in lines if the sourceRect != the sourceWidth */
+    srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
+    srcHeight  = pSourceRect ? pSourceRect->top   - pSourceRect->bottom : srcSurfaceHeight;
+    destLeft   = pDestPoint  ? pDestPoint->x : 0;
+    destTop    = pDestPoint  ? pDestPoint->y : 0;
+
+
+    /* This function doesn't support compressed textures
+    the pitch is just bytesPerPixel * width */
+
+    if(srcWidth != srcSurfaceWidth  || (pSourceRect != NULL && pSourceRect->left != 0) ){
+        rowoffset = (srcSurfaceWidth - srcWidth) * pSrcSurface->bytesPerPixel;
+        offset   += pSourceRect->left * pSrcSurface->bytesPerPixel;
+        /* TODO: do we ever get 3bpp?, would a shift and an add be quicker than a mul (well maybe a cycle or two) */
+    }
+    /* TODO DXT formats */
+
+    if(pSourceRect != NULL && pSourceRect->top != 0){
+       offset +=  pSourceRect->top * srcWidth * pSrcSurface->bytesPerPixel;
+    }
+    TRACE("(%p) glTexSubImage2D, Level %d, left %d, top %d, width %d, height %d , ftm %d, type %d, memory %p\n"
+    ,This
+    ,glDescription->level
+    ,destLeft
+    ,destTop
+    ,srcWidth
+    ,srcHeight
+    ,glDescription->glFormat
+    ,glDescription->glType
+    ,IWineD3DSurface_GetData(pSourceSurface)
+    );
+
+    /* Sanity check */
+    if (IWineD3DSurface_GetData(pSourceSurface) == NULL) {
+    /* need to lock the surface to get the data */
+       FIXME("Surfaces has no allocated memory, but should be an in memory only surface\n");
+    }
+    /* TODO: Cube and volume support */
+    if(rowoffset != 0){
+        /* not a whole row so we have to do it a line at a time */
+        int j;
+        /* hopefully using pointer addtion will be quicker than using a point + j * rowoffset */
+        unsigned char* data =((unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
+
+        for(j = destTop ; j < (srcHeight + destTop) ; j++){
+
+                glTexSubImage2D(glDescription->target
+                    ,glDescription->level
+                    ,destLeft
+                    ,j
+                    ,srcWidth
+                    ,1
+                    ,glDescription->glFormat
+                    ,glDescription->glType
+                    ,data/* could be quicker using */
+                );
+            data += rowoffset;
+        }
+
+    } else { /* Full width, so just write out the whole texture */
+
+        if (WINED3DFMT_DXT1 == destFormat ||
+            WINED3DFMT_DXT3 == destFormat ||
+            WINED3DFMT_DXT5 == destFormat) {
+            if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
+                if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth) {
+                    /* FIXME: The easy way to do this is lock the destination, and copy the bits accross */
+                    FIXME("Updating part of a compressed texture is not supported at the moment\n");
+                } if (destFormat != srcFormat) {
+                    FIXME("Updating mixed format compressed texture is not curretly support\n");
+                } else {
+                    GL_EXTCALL(glCompressedTexImage2DARB)(glDescription->target,
+                                                        glDescription->level,
+                                                        glDescription->glFormatInternal,
+                                                        srcWidth,
+                                                        srcHeight,
+                                                        0,
+                                                        destSize,
+                                                        IWineD3DSurface_GetData(pSourceSurface));
+                }
+            } else {
+                FIXME("Attempting to update a DXT compressed texture without hardware support\n");
+            }
+
+
+        } else {
+            /* some applications can not handle odd pitches returned by soft non-power2, so we have
+               to repack the data from pow2Width/Height to expected Width,Height, this makes the
+               data returned by GetData non-power2 width/height with hardware non-power2
+               pow2Width/height are set to surface width height, repacking isn't needed so it
+               doesn't matter which function gets called. */
+            glTexSubImage2D(glDescription->target
+                    ,glDescription->level
+                    ,destLeft
+                    ,destTop
+                    ,srcWidth
+                    ,srcHeight
+                    ,glDescription->glFormat
+                    ,glDescription->glType
+                    ,IWineD3DSurface_GetData(pSourceSurface)
+                );
+
+        }
+     }
+    checkGLcall("glTexSubImage2D");
+    /* I only need to look up baseTexture here, so it may be a good idea to hava a GL_TARGET ->
+     * GL_DIMENSIONS lookup, or maybe store the dimensions on the surface (but that's making the
+     * surface bigger than it needs to be hmm.. */
+    if (D3D_OK == IWineD3DSurface_GetContainer(pDestinationSurface, &IID_IWineD3DBaseTexture, (void **)&baseTexture)) {
+        textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(baseTexture);
+        IWineD3DBaseTexture_Release(baseTexture);
+    }
+
+    glDisable(textureDimensions); /* This needs to be managed better.... */
+    LEAVE_GL();
+
+    return D3D_OK;
 }
 
 /* Implementation details at http://developer.nvidia.com/attach/6494

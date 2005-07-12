@@ -190,15 +190,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
 
     TRACE("(%p) : copying into %p\n", This, pDesc);
-    *(pDesc->Format)             = This->resource.format;
-    *(pDesc->Type)               = This->resource.resourceType;
-    *(pDesc->Usage)              = This->resource.usage;
-    *(pDesc->Pool)               = This->resource.pool;
-    *(pDesc->Size)               = This->resource.size;   /* dx8 only */
-    *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
-    *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
-    *(pDesc->Width)              = This->currentDesc.Width;
-    *(pDesc->Height)             = This->currentDesc.Height;
+    if(pDesc->Format != NULL)             *(pDesc->Format) = This->resource.format;
+    if(pDesc->Type != NULL)               *(pDesc->Type)   = This->resource.resourceType;
+    if(pDesc->Usage != NULL)              *(pDesc->Usage)              = This->resource.usage;
+    if(pDesc->Pool != NULL)               *(pDesc->Pool)               = This->resource.pool;
+    if(pDesc->Size != NULL)               *(pDesc->Size)               = This->resource.size;   /* dx8 only */
+    if(pDesc->MultiSampleType != NULL)    *(pDesc->MultiSampleType)    = This->currentDesc.MultiSampleType;
+    if(pDesc->MultiSampleQuality != NULL) *(pDesc->MultiSampleQuality) = This->currentDesc.MultiSampleQuality;
+    if(pDesc->Width != NULL)              *(pDesc->Width)              = This->currentDesc.Width;
+    if(pDesc->Height != NULL)             *(pDesc->Height)             = This->currentDesc.Height;
     return D3D_OK;
 }
 
@@ -406,8 +406,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             *****************************************/
         if (!notInContext) { /* Only read the buffer if it's in the current context */
             long j;
-            GLenum format = D3DFmt2GLFmt(myDevice, This->resource.format);
-            GLenum type   = D3DFmt2GLType(myDevice, This->resource.format);
 #if 0
             /* Bizarly it takes 120 millseconds to get an 800x600 region a line at a time, but only 10 to get the whole lot every time,
             *  This is on an ATI9600, and may be format dependent, anyhow this hack makes this demo dx9_2d_demo_game
@@ -422,16 +420,16 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
                     glReadPixels(0, 0,
                     This->currentDesc.Width,
                     This->currentDesc.Height,
-                    format,
-                    type,
+                    This->glDescription.glFormat,
+                    This->glDescription.glType,
                     (char *)pLockedRect->pBits);
             }else if (This->lockedRect.left ==0 &&  This->lockedRect.right == This->currentDesc.Width) {
                     glReadPixels(0,
                     This->lockedRect.top,
                     This->currentDesc.Width,
                     This->currentDesc.Height,
-                    format,
-                    type,
+                    This->glDescription.glFormat,
+                    This->glDescription.glType,
                     (char *)pLockedRect->pBits);
             } else{
 
@@ -440,8 +438,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
                                  This->lockedRect.bottom - j - 1, 
                                  This->lockedRect.right - This->lockedRect.left, 
                                  1,
-                                 format, 
-                                 type, 
+                                 This->glDescription.glFormat,
+                                 This->glDescription.glType,
                                  (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
 
                 }
@@ -873,8 +871,8 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                          This->pow2Width,
                          This->pow2Height,
                          0/*border*/,
-                         D3DFmt2GLFmt(This->resource.wineD3DDevice, This->resource.format),
-                         D3DFmt2GLType(This->resource.wineD3DDevice, This->resource.format),
+                         This->glDescription.glFormat,
+                         This->glDescription.glType,
                          NULL);
 
             checkGLcall("glTexImage2D");
