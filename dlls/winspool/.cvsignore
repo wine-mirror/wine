@@ -1,3 +1,4 @@
 Makefile
 libwinspool.drv.def
 winspool.drv.dbg.c
+winspool.res

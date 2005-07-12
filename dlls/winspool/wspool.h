@@ -1,8 +1,8 @@
 /******************************************************************************
- * Print Spooler Functions
+ * winspool internal include file
  *
  *
- * Copyright 1999 Thuy Nguyen
+ * Copyright 2005  Huw Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,39 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+extern HINSTANCE WINSPOOL_hInstance;
 
-#include "config.h"
-#include <stdarg.h>
+extern void WINSPOOL_LoadSystemPrinters(void);
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winspool.h"
-#include "wspool.h"
-#include "wine/debug.h"
+#define IDS_CAPTION       10
+#define IDS_FILE_EXISTS   11
+#define IDS_CANNOT_OPEN   12
 
-WINE_DEFAULT_DEBUG_CHANNEL(winspool);
-HINSTANCE WINSPOOL_hInstance = NULL;
-
-/******************************************************************************
- *  DllMain
- *
- * Winspool entry point.
- *
- */
-BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD reason, LPVOID lpReserved)
-{
-  switch (reason)
-  {
-    case DLL_PROCESS_ATTACH: {
-      WINSPOOL_hInstance = hInstance;
-      DisableThreadLibraryCalls(hInstance);
-      WINSPOOL_LoadSystemPrinters();
-      break;
-    }
-    case DLL_PROCESS_DETACH:
-      break;
-  }
-
-  return TRUE;
-}
+#define FILENAME_DIALOG  100
+#define EDITBOX 201

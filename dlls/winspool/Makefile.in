@@ -12,6 +12,8 @@ C_SRCS = \
 	info.c \
 	wspool.c
 
+RC_SRCS = winspool.rc
+
 SUBDIRS = tests
 
 @MAKE_DLL_RULES@

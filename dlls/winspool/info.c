@@ -56,6 +56,8 @@
 #include "heap.h"
 #include "winnls.h"
 
+#include "wspool.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
 static CRITICAL_SECTION printer_handles_cs;
@@ -4772,6 +4774,88 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename)
     }
 }
 
+INT_PTR CALLBACK file_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    LPWSTR filename;
+
+    switch(msg)
+    {
+    case WM_INITDIALOG:
+        SetWindowLongPtrW(hwnd, DWLP_USER, lparam);
+        return TRUE;
+
+    case WM_COMMAND:
+        if(HIWORD(wparam) == BN_CLICKED)
+        {
+            if(LOWORD(wparam) == IDOK)
+            {
+                HANDLE hf;
+                DWORD len = SendDlgItemMessageW(hwnd, 201, WM_GETTEXTLENGTH, 0, 0);
+                LPWSTR *output;
+
+                filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+                GetDlgItemTextW(hwnd, EDITBOX, filename, len + 1);
+                
+                if(GetFileAttributesW(filename) != INVALID_FILE_ATTRIBUTES)
+                {
+                    WCHAR caption[200], message[200];
+                    int mb_ret;
+
+                    LoadStringW(WINSPOOL_hInstance, IDS_CAPTION, caption, sizeof(caption) / sizeof(WCHAR));
+                    LoadStringW(WINSPOOL_hInstance, IDS_FILE_EXISTS, message, sizeof(message) / sizeof(WCHAR));
+                    mb_ret = MessageBoxW(hwnd, message, caption, MB_OKCANCEL | MB_ICONEXCLAMATION);
+                    if(mb_ret == IDCANCEL)
+                    {
+                        HeapFree(GetProcessHeap(), 0, filename);
+                        return TRUE;
+                    }
+                }
+                hf = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                if(hf == INVALID_HANDLE_VALUE)
+                {
+                    WCHAR caption[200], message[200];
+
+                    LoadStringW(WINSPOOL_hInstance, IDS_CAPTION, caption, sizeof(caption) / sizeof(WCHAR));
+                    LoadStringW(WINSPOOL_hInstance, IDS_CANNOT_OPEN, message, sizeof(message) / sizeof(WCHAR));
+                    MessageBoxW(hwnd, message, caption, MB_OK | MB_ICONEXCLAMATION);
+                    HeapFree(GetProcessHeap(), 0, filename);
+                    return TRUE;
+                }
+                CloseHandle(hf);
+                DeleteFileW(filename);
+                output = (LPWSTR *)GetWindowLongPtrW(hwnd, DWLP_USER);
+                *output = filename;
+                EndDialog(hwnd, IDOK);
+                return TRUE;
+            }
+            if(LOWORD(wparam) == IDCANCEL)
+            {
+                EndDialog(hwnd, IDCANCEL);
+                return TRUE;
+            }
+        }
+        return FALSE;
+    }
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          schedule_file
+ */
+static BOOL schedule_file(LPCWSTR filename)
+{
+    LPWSTR output = NULL;
+
+    if(DialogBoxParamW(WINSPOOL_hInstance, MAKEINTRESOURCEW(FILENAME_DIALOG), GetForegroundWindow(),
+                       file_dlg_proc, (LPARAM)&output) == IDOK)
+    {
+        TRACE("copy to %s\n", debugstr_w(output));
+        CopyFileW(filename, output, FALSE);
+        HeapFree(GetProcessHeap(), 0, output);
+        return TRUE;
+    }
+    return FALSE;
+}
 /*****************************************************************************
  *          ScheduleJob [WINSPOOL.@]
  *
@@ -4814,6 +4898,10 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             else if(!strncmpW(pi5->pPortName, CUPS_Port, strlenW(CUPS_Port)))
             {
                 schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename);
+            }
+            else if(!strncmpW(pi5->pPortName, FILE_Port, strlenW(FILE_Port)))
+            {
+                schedule_file(job->filename);
             }
             else
             {
