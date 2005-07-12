@@ -588,15 +588,17 @@ static HRESULT UXTHEME_DrawBorderRectangle(HTHEME hTheme, HDC hdc, int iPartId,
 
     GetThemeInt(hTheme, iPartId, iStateId, TMT_BORDERSIZE, &bordersize);
     if(bordersize > 0) {
-        POINT ptCorners[4];
+        POINT ptCorners[5];
         ptCorners[0].x = pRect->left;
         ptCorners[0].y = pRect->top;
-        ptCorners[1].x = pRect->right;
+        ptCorners[1].x = pRect->right-1;
         ptCorners[1].y = pRect->top;
-        ptCorners[2].x = pRect->right;
-        ptCorners[2].y = pRect->bottom;
+        ptCorners[2].x = pRect->right-1;
+        ptCorners[2].y = pRect->bottom-1;
         ptCorners[3].x = pRect->left;
-        ptCorners[3].y = pRect->bottom;
+        ptCorners[3].y = pRect->bottom-1;
+        ptCorners[4].x = pRect->left;
+        ptCorners[4].y = pRect->top;
 
         InflateRect(pRect, -bordersize, -bordersize);
         if(pOptions->dwFlags & DTBG_OMITBORDER)
@@ -607,7 +609,7 @@ static HRESULT UXTHEME_DrawBorderRectangle(HTHEME hTheme, HDC hdc, int iPartId,
             return HRESULT_FROM_WIN32(GetLastError());
         oldPen = SelectObject(hdc, hPen);
 
-        if(!Polyline(hdc, ptCorners, 4))
+        if(!Polyline(hdc, ptCorners, 5))
             hr = HRESULT_FROM_WIN32(GetLastError());
 
         SelectObject(hdc, oldPen);
