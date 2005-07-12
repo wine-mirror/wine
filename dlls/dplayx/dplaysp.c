@@ -45,7 +45,7 @@ typedef struct IDirectPlaySPImpl IDirectPlaySPImpl;
 
 typedef struct tagDirectPlaySPIUnknownData
 {
-  ULONG             ulObjRef;
+  LONG              ulObjRef;
   CRITICAL_SECTION  DPSP_lock;
 } DirectPlaySPIUnknownData;
 
@@ -62,7 +62,7 @@ typedef struct tagDirectPlaySPData
 } DirectPlaySPData;
 
 #define DPSP_IMPL_FIELDS \
-   ULONG ulInterfaceRef; \
+   LONG ulInterfaceRef; \
    DirectPlaySPIUnknownData* unk; \
    DirectPlaySPData* sp;
 

@@ -56,7 +56,7 @@ typedef struct CaptureGraphImpl
 {
     const ICaptureGraphBuilder2Vtbl * lpVtbl2;
     const ICaptureGraphBuilderVtbl * lpVtbl;
-    DWORD ref;
+    LONG ref;
     IGraphBuilder *mygraph;
 
     CRITICAL_SECTION csFilter;

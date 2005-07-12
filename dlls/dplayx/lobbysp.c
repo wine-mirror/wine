@@ -39,7 +39,7 @@ typedef struct IDPLobbySPImpl IDPLobbySPImpl;
 
 typedef struct tagDPLobbySPIUnknownData
 {
-  ULONG             ulObjRef;
+  LONG              ulObjRef;
   CRITICAL_SECTION  DPLSP_lock;
 } DPLobbySPIUnknownData;
 
@@ -49,7 +49,7 @@ typedef struct tagDPLobbySPData
 } DPLobbySPData;
 
 #define DPLSP_IMPL_FIELDS \
-   ULONG ulInterfaceRef; \
+   LONG ulInterfaceRef; \
    DPLobbySPIUnknownData* unk; \
    DPLobbySPData* sp;
 

@@ -71,7 +71,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 typedef struct {
     IClassFactory ITF_IClassFactory;
 
-    DWORD ref;
+    LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
 } IClassFactoryImpl;
 
@@ -214,7 +214,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
 typedef struct {
     const IITStorageVtbl *vtbl_IITStorage;
-    DWORD ref;
+    LONG ref;
 } ITStorageImpl;
 
 

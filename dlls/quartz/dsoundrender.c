@@ -52,7 +52,7 @@ typedef struct DSoundRenderImpl
     const IBaseFilterVtbl * lpVtbl;
     const IBasicAudioVtbl *IBasicAudio_vtbl;
 
-    ULONG refCount;
+    LONG refCount;
     CRITICAL_SECTION csFilter;
     FILTER_STATE state;
     REFERENCE_TIME rtStreamStart;

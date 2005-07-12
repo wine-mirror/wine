@@ -43,8 +43,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
-static DWORD objects_ref = 0;
-static DWORD server_locks = 0;
+static LONG objects_ref = 0;
+static LONG server_locks = 0;
 static HINSTANCE ghInst = NULL;
 
 static const WCHAR wAudioCaptFilter[] =
@@ -206,7 +206,7 @@ HRESULT WINAPI QCAP_DllCanUnloadNow(void)
 typedef struct {
     IClassFactory ITF_IClassFactory;
 
-    DWORD ref;
+    LONG ref;
     LPFNNewCOMObject pfnCreateInstance;
 } IClassFactoryImpl;
 

@@ -55,7 +55,7 @@ typedef struct BaseMemAllocator
 {
     const IMemAllocatorVtbl * lpVtbl;
 
-    ULONG ref;
+    LONG ref;
     ALLOCATOR_PROPERTIES * pProps;
     CRITICAL_SECTION csState;
     HRESULT (* fnAlloc) (IMemAllocator *);
@@ -72,7 +72,7 @@ typedef struct StdMediaSample2
 {
     const IMediaSample2Vtbl * lpvtbl;
 
-    ULONG ref;
+    LONG ref;
     AM_SAMPLE2_PROPERTIES props;
     IMemAllocator * pParent;
     struct list listentry;

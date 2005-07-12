@@ -40,7 +40,7 @@ struct SystemClockAdviseEntry {
 
 typedef struct SystemClockImpl {
   const IReferenceClockVtbl *lpVtbl;
-  ULONG ref;
+  LONG ref;
 
   /** IReferenceClock */
   HANDLE         adviseThread;

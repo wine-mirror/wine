@@ -56,7 +56,7 @@ typedef struct _NetBIOSAdapter
 {
     BOOL               enabled;
     BOOL               shuttingDown;
-    ULONG              resetting;
+    LONG               resetting;
     ULONG              transport_id;
     NetBIOSTransport  *transport;
     NetBIOSAdapterImpl impl;

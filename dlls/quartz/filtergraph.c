@@ -165,7 +165,7 @@ typedef struct _IFilterGraphImpl {
     /* IServiceProvider */
     /* IVideoFrameStep */
 
-    ULONG ref;
+    LONG ref;
     IFilterMapper2 * pFilterMapper2;
     IBaseFilter ** ppFiltersInGraph;
     LPWSTR * pFilterNames;

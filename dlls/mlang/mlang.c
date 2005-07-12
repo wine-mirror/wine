@@ -654,7 +654,7 @@ HRESULT WINAPI LcidToRfc1766W(
 typedef struct {
     IClassFactory ITF_IClassFactory;
 
-    DWORD ref;
+    LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
 } IClassFactoryImpl;
 
@@ -793,7 +793,7 @@ typedef struct tagMLang_impl
     const IMLangFontLinkVtbl *vtbl_IMLangFontLink;
     const IMultiLanguageVtbl *vtbl_IMultiLanguage;
     const IMultiLanguage2Vtbl *vtbl_IMultiLanguage2;
-    DWORD ref;
+    LONG ref;
     DWORD total_cp, total_scripts;
 } MLang_impl;
 
@@ -858,7 +858,7 @@ static HRESULT WINAPI MLang_QueryInterface(
 typedef struct tagEnumCodePage_impl
 {
     const IEnumCodePageVtbl *vtbl_IEnumCodePage;
-    DWORD ref;
+    LONG ref;
     MIMECPINFO *cpinfo;
     DWORD total, pos;
 } EnumCodePage_impl;
@@ -1044,7 +1044,7 @@ static HRESULT EnumCodePage_create( MLang_impl* mlang, DWORD grfFlags,
 typedef struct tagEnumScript_impl
 {
     const IEnumScriptVtbl *vtbl_IEnumScript;
-    DWORD ref;
+    LONG ref;
     SCRIPTINFO *script_info;
     DWORD total, pos;
 } EnumScript_impl;

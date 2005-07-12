@@ -95,7 +95,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicInstrumentImpl (LPCGUID lpcGUID, L
 struct IDirectMusic8Impl {
   /* IUnknown fields */
   const IDirectMusic8Vtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicImpl fields */
   IReferenceClockImpl* pMasterClock;
@@ -112,7 +112,7 @@ extern ULONG WINAPI   IDirectMusic8Impl_AddRef (LPDIRECTMUSIC8 iface);
 struct IDirectMusicBufferImpl {
   /* IUnknown fields */
   const IDirectMusicBufferVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicBufferImpl fields */
 };
@@ -126,7 +126,7 @@ extern ULONG WINAPI   IDirectMusicBufferImpl_AddRef (LPDIRECTMUSICBUFFER iface);
 struct IDirectMusicDownloadedInstrumentImpl {
   /* IUnknown fields */
   const IDirectMusicDownloadedInstrumentVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicDownloadedInstrumentImpl fields */
 };
@@ -142,7 +142,7 @@ extern ULONG WINAPI   IDirectMusicDownloadedInstrumentImpl_AddRef (LPDIRECTMUSIC
 struct IDirectMusicDownloadImpl {
   /* IUnknown fields */
   const IDirectMusicDownloadVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicDownloadImpl fields */
 };
@@ -156,7 +156,7 @@ extern ULONG WINAPI   IDirectMusicDownloadImpl_AddRef (LPDIRECTMUSICDOWNLOAD ifa
 struct IDirectMusicPortDownloadImpl {
   /* IUnknown fields */
   const IDirectMusicPortDownloadVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicPortDownloadImpl fields */
 };
@@ -170,7 +170,7 @@ extern ULONG WINAPI   IDirectMusicPortDownloadImpl_AddRef (LPDIRECTMUSICPORTDOWN
 struct IDirectMusicPortImpl {
   /* IUnknown fields */
   const IDirectMusicPortVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicPortImpl fields */
   IDirectSound* pDirectSound;
@@ -191,7 +191,7 @@ extern ULONG WINAPI   IDirectMusicPortImpl_AddRef (LPDIRECTMUSICPORT iface);
 struct IDirectMusicThruImpl {
   /* IUnknown fields */
   const IDirectMusicThruVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicThruImpl fields */
 };
@@ -205,7 +205,7 @@ extern ULONG WINAPI   IDirectMusicThruImpl_AddRef (LPDIRECTMUSICTHRU iface);
 struct IReferenceClockImpl {
   /* IUnknown fields */
   const IReferenceClockVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IReferenceClockImpl fields */
   REFERENCE_TIME rtTime;
@@ -233,7 +233,7 @@ struct IDirectMusicCollectionImpl {
   const IDirectMusicCollectionVtbl *CollectionVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicCollectionImpl fields */
   IStream *pStm; /* stream from which we load collection and later instruments */
@@ -265,7 +265,7 @@ struct IDirectMusicInstrumentImpl {
   /* IUnknown fields */
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicInstrumentVtbl *InstrumentVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicInstrumentImpl fields */
   LARGE_INTEGER liInstrumentPosition; /* offset in a stream where instrument chunk can be found */

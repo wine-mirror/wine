@@ -80,7 +80,7 @@ static const WCHAR szCat2Fmt[] =
 typedef struct
 {
     const IEnumDMOVtbl         *lpVtbl;
-    DWORD			ref;
+    LONG			ref;
     DWORD			index;
     const GUID*                 guidCategory;
     DWORD                       dwFlags;

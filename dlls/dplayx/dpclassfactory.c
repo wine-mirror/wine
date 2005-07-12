@@ -40,7 +40,7 @@ typedef struct
 {
     /* IUnknown fields */
     const IClassFactoryVtbl    *lpVtbl;
-    DWORD                       ref;
+    LONG                        ref;
 } IClassFactoryImpl;
 
 static HRESULT WINAPI

@@ -27,7 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct IEnumPinsImpl
 {
     const IEnumPinsVtbl * lpVtbl;
-    ULONG refCount;
+    LONG refCount;
     ENUMPINDETAILS enumPinDetails;
     ULONG uIndex;
 } IEnumPinsImpl;

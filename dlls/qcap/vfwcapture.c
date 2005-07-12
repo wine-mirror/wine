@@ -68,7 +68,7 @@ typedef struct VfwCapture
 
     BOOL init;
     Capture *driver_info;
-    ULONG refCount;
+    LONG refCount;
     FILTER_INFO filterInfo;
     FILTER_STATE state;
     CRITICAL_SECTION csFilter;

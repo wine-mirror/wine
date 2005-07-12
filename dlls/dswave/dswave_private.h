@@ -60,7 +60,7 @@ struct IDirectMusicWaveImpl {
   const IDirectMusicSegment8Vtbl *SegmentVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG          ref;
 
   /* IDirectMusicWaveImpl fields */
   LPDMUS_OBJECTDESC pDesc;

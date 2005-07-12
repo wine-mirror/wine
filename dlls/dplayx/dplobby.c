@@ -88,7 +88,7 @@ typedef struct DPLMSG* LPDPLMSG;
 
 typedef struct tagDirectPlayLobbyIUnknownData
 {
-  ULONG             ulObjRef;
+  LONG              ulObjRef;
   CRITICAL_SECTION  DPL_lock;
 } DirectPlayLobbyIUnknownData;
 
@@ -110,7 +110,7 @@ typedef struct tagDirectPlayLobby3Data
 } DirectPlayLobby3Data;
 
 #define DPL_IMPL_FIELDS \
- ULONG ulInterfaceRef; \
+ LONG ulInterfaceRef; \
  DirectPlayLobbyIUnknownData*  unk; \
  DirectPlayLobbyData*          dpl; \
  DirectPlayLobby2Data*         dpl2; \

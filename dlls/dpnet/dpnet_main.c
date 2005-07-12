@@ -66,7 +66,7 @@ typedef struct
 {
   /* IUnknown fields */
   const IClassFactoryVtbl *lpVtbl;
-  DWORD      ref; 
+  LONG       ref; 
   REFCLSID   rclsid;
   HRESULT   (*pfnCreateInstanceFactory)(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj);
 } IClassFactoryImpl;

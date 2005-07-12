@@ -32,7 +32,7 @@ struct TransformFilterImpl
 {
     const IBaseFilterVtbl * lpVtbl;
 
-    ULONG refCount;
+    LONG refCount;
     CRITICAL_SECTION csFilter;
     FILTER_STATE state;
     REFERENCE_TIME rtStreamStart;

@@ -50,7 +50,7 @@ extern ULONG dll_count;
 
 typedef struct {
     const IMonikerVtbl *vtbl_ITS_IMoniker;
-    DWORD ref;
+    LONG ref;
     LPWSTR szHtml;
     WCHAR szFile[1];
 } ITS_IMonikerImpl;
@@ -378,7 +378,7 @@ static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPWSTR name, DWORD n )
 
 typedef struct {
     const IParseDisplayNameVtbl *vtbl_ITS_IParseDisplayName;
-    DWORD ref;
+    LONG ref;
 } ITS_IParseDisplayNameImpl;
 
 static HRESULT WINAPI ITS_IParseDisplayNameImpl_QueryInterface(

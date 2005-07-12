@@ -91,7 +91,7 @@ void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
 typedef struct IEnumMediaTypesImpl
 {
     const IEnumMediaTypesVtbl * lpVtbl;
-    ULONG refCount;
+    LONG refCount;
     ENUMMEDIADETAILS enumMediaDetails;
     ULONG uIndex;
 } IEnumMediaTypesImpl;
