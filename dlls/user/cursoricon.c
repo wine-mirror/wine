@@ -919,69 +919,63 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 {
     HANDLE handle = 0;
     HICON hIcon = 0;
-    HRSRC hRsrc;
+    HRSRC hRsrc, hGroupRsrc;
     CURSORICONDIR *dir;
     CURSORICONDIRENTRY *dirEntry;
     LPBYTE bits;
+    WORD wResId;
+    DWORD dwBytesInRes;
 
     if ( loadflags & LR_LOADFROMFILE )    /* Load from file */
-    {
-        hIcon = CURSORICON_LoadFromFile( name, width, height, colors, fCursor, loadflags );
-    }
-    else  /* Load from resource */
-    {
-        HRSRC hGroupRsrc;
-        WORD wResId;
-        DWORD dwBytesInRes;
+        return CURSORICON_LoadFromFile( name, width, height, colors, fCursor, loadflags );
 
-        if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */
+    if (!hInstance) hInstance = user32_module;  /* Load OEM cursor/icon */
 
-        /* Normalize hInstance (must be uniquely represented for icon cache) */
+    /* Normalize hInstance (must be uniquely represented for icon cache) */
 
-        if (!HIWORD( hInstance ))
-            hInstance = HINSTANCE_32(GetExePtr( HINSTANCE_16(hInstance) ));
+    if (!HIWORD( hInstance ))
+        hInstance = HINSTANCE_32(GetExePtr( HINSTANCE_16(hInstance) ));
 
-        /* Get directory resource ID */
+    /* Get directory resource ID */
 
-        if (!(hRsrc = FindResourceW( hInstance, name,
-                                     (LPWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
-            return 0;
-        hGroupRsrc = hRsrc;
+    if (!(hRsrc = FindResourceW( hInstance, name,
+                                 (LPWSTR)(fCursor ? RT_GROUP_CURSOR : RT_GROUP_ICON) )))
+        return 0;
+    hGroupRsrc = hRsrc;
 
-        /* Find the best entry in the directory */
+    /* Find the best entry in the directory */
 
-        if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
-        if (!(dir = (CURSORICONDIR*)LockResource( handle ))) return 0;
-        if (fCursor)
-            dirEntry = CURSORICON_FindBestCursorRes( dir, width, height, 1);
-        else
-            dirEntry = CURSORICON_FindBestIconRes( dir, width, height, colors );
-        if (!dirEntry) return 0;
-        wResId = dirEntry->wResId;
-        dwBytesInRes = dirEntry->dwBytesInRes;
-        FreeResource( handle );
+    if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
+    if (!(dir = (CURSORICONDIR*)LockResource( handle ))) return 0;
+    if (fCursor)
+        dirEntry = CURSORICON_FindBestCursorRes( dir, width, height, 1);
+    else
+        dirEntry = CURSORICON_FindBestIconRes( dir, width, height, colors );
+    if (!dirEntry) return 0;
+    wResId = dirEntry->wResId;
+    dwBytesInRes = dirEntry->dwBytesInRes;
+    FreeResource( handle );
 
-        /* Load the resource */
+    /* Load the resource */
 
-        if (!(hRsrc = FindResourceW(hInstance,MAKEINTRESOURCEW(wResId),
-                                    (LPWSTR)(fCursor ? RT_CURSOR : RT_ICON) ))) return 0;
+    if (!(hRsrc = FindResourceW(hInstance,MAKEINTRESOURCEW(wResId),
+                                (LPWSTR)(fCursor ? RT_CURSOR : RT_ICON) ))) return 0;
 
-        /* If shared icon, check whether it was already loaded */
-        if (    (loadflags & LR_SHARED)
-             && (hIcon = CURSORICON_FindSharedIcon( hInstance, hRsrc ) ) != 0 )
-            return hIcon;
+    /* If shared icon, check whether it was already loaded */
+    if (    (loadflags & LR_SHARED)
+         && (hIcon = CURSORICON_FindSharedIcon( hInstance, hRsrc ) ) != 0 )
+        return hIcon;
 
-        if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
-        bits = (LPBYTE)LockResource( handle );
-        hIcon = CreateIconFromResourceEx( bits, dwBytesInRes,
-                                           !fCursor, 0x00030000, width, height, loadflags);
-        FreeResource( handle );
+    if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
+    bits = (LPBYTE)LockResource( handle );
+    hIcon = CreateIconFromResourceEx( bits, dwBytesInRes,
+                                      !fCursor, 0x00030000, width, height, loadflags);
+    FreeResource( handle );
 
-        /* If shared icon, add to icon cache */
+    /* If shared icon, add to icon cache */
 
-        if ( hIcon && (loadflags & LR_SHARED) )
-            CURSORICON_AddSharedIcon( hInstance, hRsrc, hGroupRsrc, hIcon );
-    }
+    if ( hIcon && (loadflags & LR_SHARED) )
+        CURSORICON_AddSharedIcon( hInstance, hRsrc, hGroupRsrc, hIcon );
 
     return hIcon;
 }
