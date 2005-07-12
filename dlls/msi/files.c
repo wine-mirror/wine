@@ -462,6 +462,11 @@ static UINT ready_media_for_file(MSIPACKAGE *package, int fileindex,
     {
         HeapFree(GetProcessHeap(),0,last_path);
         HeapFree(GetProcessHeap(),0,last_volume);
+        last_sequence = 0;
+        last_path = NULL;
+        last_volume = NULL;
+        count = 0;
+        memset(source,0,sizeof(source));
         return ERROR_SUCCESS;
     }
 
