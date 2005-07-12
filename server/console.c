@@ -362,6 +362,7 @@ void inherit_console(struct thread *parent_thread, struct process *process, obj_
 	    }
 	    release_object( console );
 	}
+        else clear_error();  /* ignore error */
     }
     /* otherwise, if parent has a console, attach child to this console */
     if (!done && parent->console)

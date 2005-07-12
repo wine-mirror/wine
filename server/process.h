@@ -64,7 +64,7 @@ struct process
     int                  priority;        /* priority class */
     int                  affinity;        /* process affinity mask */
     int                  suspend;         /* global process suspend count */
-    int                  create_flags;    /* process creation flags */
+    unsigned int         create_flags;    /* process creation flags */
     struct list          locks;           /* list of file locks owned by the process */
     struct list          classes;         /* window classes owned by the process */
     struct console_input*console;         /* console input */

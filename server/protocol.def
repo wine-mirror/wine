@@ -199,7 +199,7 @@ struct security_descriptor
 /* Create a new process from the context of the parent */
 @REQ(new_process)
     int          inherit_all;  /* inherit all handles from parent */
-    int          create_flags; /* creation flags */
+    unsigned int create_flags; /* creation flags */
     int          unix_pid;     /* Unix pid of new process */
     obj_handle_t exe_file;     /* file handle for main exe */
     obj_handle_t hstdin;       /* handle for stdin */
@@ -248,19 +248,19 @@ struct security_descriptor
     void*        peb;          /* addr of PEB */
     void*        ldt_copy;     /* addr of LDT copy */
 @REPLY
-    int          create_flags; /* creation flags */
     unsigned int server_start; /* server start time (GetTickCount) */
     size_t       info_size;    /* total size of startup info */
-    obj_handle_t exe_file;     /* file handle for main exe */
-    obj_handle_t hstdin;       /* handle for stdin */
-    obj_handle_t hstdout;      /* handle for stdout */
-    obj_handle_t hstderr;      /* handle for stderr */
 @END
 
 
 /* Retrieve the new process startup info */
 @REQ(get_startup_info)
 @REPLY
+    unsigned int create_flags; /* creation flags */
+    obj_handle_t exe_file;     /* file handle for main exe */
+    obj_handle_t hstdin;       /* handle for stdin */
+    obj_handle_t hstdout;      /* handle for stdout */
+    obj_handle_t hstderr;      /* handle for stderr */
     VARARG(info,startup_info); /* startup information */
     VARARG(env,unicode_str);   /* environment */
 @END

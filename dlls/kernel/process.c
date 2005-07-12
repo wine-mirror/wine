@@ -739,9 +739,11 @@ static void usage(void)
  */
 static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
 {
+    BOOL ret;
     void *ptr;
     DWORD size, env_size;
     RTL_USER_PROCESS_PARAMETERS *params;
+    HANDLE hstdin, hstdout, hstderr;
 
     size = info_size;
     ptr = NULL;
@@ -752,10 +754,23 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     SERVER_START_REQ( get_startup_info )
     {
         wine_server_set_reply( req, ptr, info_size );
-        wine_server_call( req );
-        info_size = wine_server_reply_size( reply );
+        if ((ret = !wine_server_call( req )))
+        {
+            info_size = wine_server_reply_size( reply );
+            main_create_flags = reply->create_flags;
+            main_exe_file     = reply->exe_file;
+            hstdin            = reply->hstdin;
+            hstdout           = reply->hstdout;
+            hstderr           = reply->hstderr;
+        }
     }
     SERVER_END_REQ;
+    if (!ret)
+    {
+        size = 0;
+        NtFreeVirtualMemory( NtCurrentProcess(), &ptr, &size, MEM_RELEASE );
+        return NULL;
+    }
 
     params = ptr;
     params->AllocationSize = size;
@@ -780,6 +795,29 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
         return NULL;
     memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
     params->Environment = ptr;
+
+    /* convert value from server:
+     * + 0 => INVALID_HANDLE_VALUE
+     * + console handle needs to be mapped
+     */
+    if (!hstdin)
+        hstdin = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(hstdin)))
+        hstdin = console_handle_map(hstdin);
+
+    if (!hstdout)
+        hstdout = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(hstdout)))
+        hstdout = console_handle_map(hstdout);
+
+    if (!hstderr)
+        hstderr = INVALID_HANDLE_VALUE;
+    else if (VerifyConsoleIoHandle(console_handle_map(hstderr)))
+        hstderr = console_handle_map(hstderr);
+
+    params->hStdInput  = hstdin;
+    params->hStdOutput = hstdout;
+    params->hStdError  = hstderr;
 
     return RtlNormalizeProcessParams( params );
 }
@@ -910,7 +948,6 @@ static BOOL process_init(void)
     size_t info_size = 0;
     RTL_USER_PROCESS_PARAMETERS *params;
     PEB *peb = NtCurrentTeb()->Peb;
-    HANDLE hstdin, hstdout, hstderr;
     extern void __wine_dbg_kernel32_init(void);
 
     PTHREAD_Init();
@@ -928,13 +965,8 @@ static BOOL process_init(void)
         req->ldt_copy = &wine_ldt_copy;
         if ((ret = !wine_server_call_err( req )))
         {
-            main_exe_file     = reply->exe_file;
-            main_create_flags = reply->create_flags;
             info_size         = reply->info_size;
             server_startticks = reply->server_start;
-            hstdin            = reply->hstdin;
-            hstdout           = reply->hstdout;
-            hstderr           = reply->hstderr;
         }
     }
     SERVER_END_REQ;
@@ -960,29 +992,6 @@ static BOOL process_init(void)
     {
         if (!(params = init_user_process_params( info_size ))) return FALSE;
         peb->ProcessParameters = params;
-
-        /* convert value from server:
-         * + 0 => INVALID_HANDLE_VALUE
-         * + console handle need to be mapped
-         */
-        if (!hstdin)
-            hstdin = INVALID_HANDLE_VALUE;
-        else if (VerifyConsoleIoHandle(console_handle_map(hstdin)))
-            hstdin = console_handle_map(hstdin);
-
-        if (!hstdout)
-            hstdout = INVALID_HANDLE_VALUE;
-        else if (VerifyConsoleIoHandle(console_handle_map(hstdout)))
-            hstdout = console_handle_map(hstdout);
-
-        if (!hstderr)
-            hstderr = INVALID_HANDLE_VALUE;
-        else if (VerifyConsoleIoHandle(console_handle_map(hstderr)))
-            hstderr = console_handle_map(hstderr);
-
-        params->hStdInput  = hstdin;
-        params->hStdOutput = hstdout;
-        params->hStdError  = hstderr;
     }
 
     kernel32_handle = GetModuleHandleW(kernel32W);

@@ -559,7 +559,7 @@ typedef void (*dump_func)( const void *req );
 static void dump_new_process_request( const struct new_process_request *req )
 {
     fprintf( stderr, " inherit_all=%d,", req->inherit_all );
-    fprintf( stderr, " create_flags=%d,", req->create_flags );
+    fprintf( stderr, " create_flags=%08x,", req->create_flags );
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " exe_file=%p,", req->exe_file );
     fprintf( stderr, " hstdin=%p,", req->hstdin );
@@ -619,13 +619,8 @@ static void dump_init_process_request( const struct init_process_request *req )
 
 static void dump_init_process_reply( const struct init_process_reply *req )
 {
-    fprintf( stderr, " create_flags=%d,", req->create_flags );
     fprintf( stderr, " server_start=%08x,", req->server_start );
-    fprintf( stderr, " info_size=%d,", req->info_size );
-    fprintf( stderr, " exe_file=%p,", req->exe_file );
-    fprintf( stderr, " hstdin=%p,", req->hstdin );
-    fprintf( stderr, " hstdout=%p,", req->hstdout );
-    fprintf( stderr, " hstderr=%p", req->hstderr );
+    fprintf( stderr, " info_size=%d", req->info_size );
 }
 
 static void dump_get_startup_info_request( const struct get_startup_info_request *req )
@@ -634,6 +629,11 @@ static void dump_get_startup_info_request( const struct get_startup_info_request
 
 static void dump_get_startup_info_reply( const struct get_startup_info_reply *req )
 {
+    fprintf( stderr, " create_flags=%08x,", req->create_flags );
+    fprintf( stderr, " exe_file=%p,", req->exe_file );
+    fprintf( stderr, " hstdin=%p,", req->hstdin );
+    fprintf( stderr, " hstdout=%p,", req->hstdout );
+    fprintf( stderr, " hstderr=%p,", req->hstderr );
     fprintf( stderr, " info=" );
     dump_varargs_startup_info( cur_size );
     fputc( ',', stderr );

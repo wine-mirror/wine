@@ -185,7 +185,7 @@ struct new_process_request
 {
     struct request_header __header;
     int          inherit_all;
-    int          create_flags;
+    unsigned int create_flags;
     int          unix_pid;
     obj_handle_t exe_file;
     obj_handle_t hstdin;
@@ -258,13 +258,8 @@ struct init_process_request
 struct init_process_reply
 {
     struct reply_header __header;
-    int          create_flags;
     unsigned int server_start;
     size_t       info_size;
-    obj_handle_t exe_file;
-    obj_handle_t hstdin;
-    obj_handle_t hstdout;
-    obj_handle_t hstderr;
 };
 
 
@@ -276,6 +271,11 @@ struct get_startup_info_request
 struct get_startup_info_reply
 {
     struct reply_header __header;
+    unsigned int create_flags;
+    obj_handle_t exe_file;
+    obj_handle_t hstdin;
+    obj_handle_t hstdout;
+    obj_handle_t hstderr;
     /* VARARG(info,startup_info); */
     /* VARARG(env,unicode_str); */
 };
@@ -4189,6 +4189,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 182
+#define SERVER_PROTOCOL_VERSION 183
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

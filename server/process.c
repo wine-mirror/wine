@@ -92,7 +92,7 @@ struct startup_info
     struct object       obj;          /* object header */
     struct list         entry;        /* entry in list of startup infos */
     int                 inherit_all;  /* inherit all handles from parent */
-    int                 create_flags; /* creation flags */
+    unsigned int        create_flags; /* creation flags */
     int                 unix_pid;     /* Unix pid of new process */
     obj_handle_t        hstdin;       /* handle for stdin */
     obj_handle_t        hstdout;      /* handle for stdout */
@@ -219,43 +219,6 @@ static void set_process_startup_state( struct process *process, enum startup_sta
     }
 }
 
-/* set the console and stdio handles for a newly created process */
-static int set_process_console( struct process *process, struct thread *parent_thread,
-                                struct startup_info *info, struct init_process_reply *reply )
-{
-    if (info)
-    {
-        if (!(process->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
-        {
-            /* FIXME: some better error checking should be done...
-             * like if hConOut and hConIn are console handles, then they should be on the same
-             * physical console
-             */
-            inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
-        }
-        if (!info->inherit_all && !(process->create_flags & CREATE_NEW_CONSOLE))
-        {
-            reply->hstdin  = duplicate_handle( parent_thread->process, info->hstdin, process,
-                                               0, TRUE, DUPLICATE_SAME_ACCESS );
-            reply->hstdout = duplicate_handle( parent_thread->process, info->hstdout, process,
-                                               0, TRUE, DUPLICATE_SAME_ACCESS );
-            reply->hstderr = duplicate_handle( parent_thread->process, info->hstderr, process,
-                                               0, TRUE, DUPLICATE_SAME_ACCESS );
-        }
-        else
-        {
-            reply->hstdin  = info->hstdin;
-            reply->hstdout = info->hstdout;
-            reply->hstderr = info->hstderr;
-        }
-    }
-    else reply->hstdin = reply->hstdout = reply->hstderr = 0;
-    /* some handles above may have been invalid; this is not an error */
-    if (get_error() == STATUS_INVALID_HANDLE ||
-        get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
-    return 1;
-}
-
 /* create a new process and its main thread */
 struct thread *create_process( int fd )
 {
@@ -288,7 +251,6 @@ struct thread *create_process( int fd )
     process->exe.dbg_size    = 0;
     process->exe.namelen     = 0;
     process->exe.filename    = NULL;
-    process->group_id        = 0;
     process->token           = token_create_admin();
     list_init( &process->thread_list );
     list_init( &process->locks );
@@ -298,7 +260,7 @@ struct thread *create_process( int fd )
     gettimeofday( &process->start_time, NULL );
     list_add_head( &process_list, &process->entry );
 
-    if (!(process->id = alloc_ptid( process ))) goto error;
+    if (!(process->id = process->group_id = alloc_ptid( process ))) goto error;
     if (!(process->msg_fd = create_anonymous_fd( &process_fd_ops, fd, &process->obj ))) goto error;
 
     /* create the main thread */
@@ -341,7 +303,7 @@ inline static struct startup_info *find_startup_info( int unix_pid )
 }
 
 /* initialize the current process and fill in the request */
-static struct startup_info *init_process( struct init_process_reply *reply )
+static size_t init_process(void)
 {
     struct process *process = current->process;
     struct thread *parent_thread = NULL;
@@ -353,7 +315,7 @@ static struct startup_info *init_process( struct init_process_reply *reply )
         if (info->thread)
         {
             fatal_protocol_error( current, "init_process: called twice?\n" );
-            return NULL;
+            return 0;
         }
         parent_thread = info->owner;
         parent = parent_thread->process;
@@ -368,16 +330,10 @@ static struct startup_info *init_process( struct init_process_reply *reply )
         process->handles = copy_handle_table( process, parent );
     else
         process->handles = alloc_handle_table( process, 0 );
-    if (!process->handles) return NULL;
+    if (!process->handles) return 0;
 
     /* retrieve the main exe file */
-    reply->exe_file = 0;
-    if (info && info->exe_file)
-    {
-        process->exe.file = (struct file *)grab_object( info->exe_file );
-        if (!(reply->exe_file = alloc_handle( process, process->exe.file, GENERIC_READ, 0 )))
-            return NULL;
-    }
+    if (info && info->exe_file) process->exe.file = (struct file *)grab_object( info->exe_file );
 
     /* connect to the window station and desktop */
     connect_process_winstation( process, NULL, 0 );
@@ -385,9 +341,15 @@ static struct startup_info *init_process( struct init_process_reply *reply )
     current->desktop = process->desktop;
 
     /* set the process console */
-    if (!set_process_console( process, parent_thread, info, reply )) return NULL;
+    if (info && !(info->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
+    {
+        /* FIXME: some better error checking should be done...
+         * like if hConOut and hConIn are console handles, then they should be on the same
+         * physical console
+         */
+        inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
+    }
 
-    process->group_id = get_process_id( process );
     if (parent)
     {
         /* attach to the debugger if requested */
@@ -404,13 +366,12 @@ static struct startup_info *init_process( struct init_process_reply *reply )
 
     if (info)
     {
-        reply->info_size = info->data_size;
         info->process = (struct process *)grab_object( process );
         info->thread  = (struct thread *)grab_object( current );
+        process->startup_info = (struct startup_info *)grab_object( info );
+        return info->data_size;
     }
-    reply->create_flags = process->create_flags;
-    reply->server_start = server_start_ticks;
-    return info ? (struct startup_info *)grab_object( info ) : NULL;
+    return 0;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -965,18 +926,43 @@ DECL_HANDLER(get_new_process_info)
 /* Retrieve the new process startup info */
 DECL_HANDLER(get_startup_info)
 {
-    struct startup_info *info;
+    struct process *process = current->process;
+    struct startup_info *info = process->startup_info;
+    size_t size;
 
-    if ((info = current->process->startup_info))
+    if (!info) return;
+
+    reply->create_flags = info->create_flags;
+
+    if (info->exe_file &&
+        !(reply->exe_file = alloc_handle( process, info->exe_file, GENERIC_READ, 0 ))) return;
+
+    if (!info->inherit_all && !(info->create_flags & CREATE_NEW_CONSOLE))
     {
-        size_t size = info->data_size;
-        if (size > get_reply_max_size()) size = get_reply_max_size();
-
-        /* we return the data directly without making a copy so this can only be called once */
-        set_reply_data_ptr( info->data, size );
-        info->data = NULL;
-        info->data_size = 0;
+        struct process *parent_process = info->owner->process;
+        reply->hstdin  = duplicate_handle( parent_process, info->hstdin, process,
+                                           0, TRUE, DUPLICATE_SAME_ACCESS );
+        reply->hstdout = duplicate_handle( parent_process, info->hstdout, process,
+                                           0, TRUE, DUPLICATE_SAME_ACCESS );
+        reply->hstderr = duplicate_handle( parent_process, info->hstderr, process,
+                                           0, TRUE, DUPLICATE_SAME_ACCESS );
+        /* some handles above may have been invalid; this is not an error */
+        if (get_error() == STATUS_INVALID_HANDLE ||
+            get_error() == STATUS_OBJECT_TYPE_MISMATCH) clear_error();
     }
+    else
+    {
+        reply->hstdin  = info->hstdin;
+        reply->hstdout = info->hstdout;
+        reply->hstderr = info->hstderr;
+    }
+
+    /* we return the data directly without making a copy so this can only be called once */
+    size = info->data_size;
+    if (size > get_reply_max_size()) size = get_reply_max_size();
+    set_reply_data_ptr( info->data, size );
+    info->data = NULL;
+    info->data_size = 0;
 }
 
 
@@ -1003,10 +989,10 @@ DECL_HANDLER(init_process)
         fatal_protocol_error( current, "init_process: bad ldt_copy address\n" );
         return;
     }
-    reply->info_size = 0;
     current->process->peb = req->peb;
     current->process->ldt_copy = req->ldt_copy;
-    current->process->startup_info = init_process( reply );
+    reply->server_start = server_start_ticks;
+    reply->info_size = init_process();
 }
 
 /* signal the end of the process initialization */
