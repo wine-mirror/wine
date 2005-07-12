@@ -607,103 +607,40 @@ static CURSORICONDIRENTRY *CURSORICON_FindBestCursorRes( CURSORICONDIR *dir,
     return &dir->idEntries[n];
 }
 
-
-/*********************************************************************
- * The main purpose of this function is to create fake resource directory
- * and fake resource entries. There are several reasons for this:
- *	-	CURSORICONDIR and CURSORICONFILEDIR differ in sizes and their
- *              fields
- *	There are some "bad" cursor files which do not have
- *		bColorCount initialized but instead one must read this info
- *		directly from corresponding DIB sections
- * Note: wResId is index to array of pointer returned in ptrs (origin is 1)
- */
-static BOOL CURSORICON_SimulateLoadingFromResourceW( LPCWSTR filename, BOOL fCursor,
-                                                     CURSORICONDIR **res, LPBYTE **ptr)
+static BOOL CURSORICON_GetFileEntry( LPVOID dir, int n,
+                                     int *width, int *height, int *bits )
 {
-    LPBYTE   _free;
-    DWORD filesize;
-    CURSORICONFILEDIR *bits;
-    int      entries, size, i;
+    CURSORICONFILEDIR *filedir = dir;
+    CURSORICONFILEDIRENTRY *entry;
 
-    *res = NULL;
-    *ptr = NULL;
-    if (!(bits = map_fileW( filename, &filesize ))) return FALSE;
-
-    /* FIXME: test for animated icons
-     * hack to load the first icon from the *.ani file
-     */
-    if ( *(LPDWORD)bits==0x46464952 ) /* "RIFF" */
-    { LPBYTE pos = (LPBYTE) bits;
-      FIXME_(cursor)("Animated icons not correctly implemented! %p \n", bits);
-
-      for (;;)
-      { if (*(LPDWORD)pos==0x6e6f6369)          /* "icon" */
-        { FIXME_(cursor)("icon entry found! %p\n", bits);
-          pos+=4;
-          if ( !*(LPWORD) pos==0x2fe)           /* iconsize */
-          { goto fail;
-          }
-          bits=(CURSORICONFILEDIR*)(pos+4);
-          FIXME_(cursor)("icon size ok. offset=%p \n", bits);
-          break;
-        }
-        pos+=2;
-        if (pos>=(LPBYTE)bits+766) goto fail;
-      }
-    }
-    if (!(entries = bits->idCount)) goto fail;
-    if ( (sizeof(CURSORICONFILEDIR) + 
-          sizeof(CURSORICONFILEDIRENTRY) * (entries - 1)) > filesize)
-    {
-        FIXME("broken file %s\n", wine_dbgstr_w(filename));
-        goto fail;
-    }
-    size = sizeof(CURSORICONDIR) + sizeof(CURSORICONDIRENTRY) * (entries - 1);
-    _free = (LPBYTE) size;
-
-    for (i=0; i < entries; i++)
-      size += bits->idEntries[i].dwDIBSize + (fCursor ? sizeof(POINT16): 0);
-
-    if (!(*ptr = HeapAlloc( GetProcessHeap(), 0,
-                            entries * sizeof (CURSORICONDIRENTRY*)))) goto fail;
-    if (!(*res = HeapAlloc( GetProcessHeap(), 0, size))) goto fail;
-
-    _free = (LPBYTE)(*res) + (int)_free;
-    memcpy((*res), bits, 6);
-    for (i=0; i<entries; i++)
-    {
-      ((LPBYTE*)(*ptr))[i] = _free;
-      if (fCursor) {
-        (*res)->idEntries[i].ResInfo.cursor.wWidth=bits->idEntries[i].bWidth;
-        (*res)->idEntries[i].ResInfo.cursor.wHeight=bits->idEntries[i].bHeight;
-        ((LPPOINT16)_free)->x=bits->idEntries[i].xHotspot;
-        ((LPPOINT16)_free)->y=bits->idEntries[i].yHotspot;
-        _free+=sizeof(POINT16);
-      } else {
-        (*res)->idEntries[i].ResInfo.icon.bWidth=bits->idEntries[i].bWidth;
-        (*res)->idEntries[i].ResInfo.icon.bHeight=bits->idEntries[i].bHeight;
-        (*res)->idEntries[i].ResInfo.icon.bColorCount = bits->idEntries[i].bColorCount;
-      }
-      (*res)->idEntries[i].wPlanes=1;
-      (*res)->idEntries[i].wBitCount = ((LPBITMAPINFOHEADER)((LPBYTE)bits +
-                                                   bits->idEntries[i].dwDIBOffset))->biBitCount;
-      (*res)->idEntries[i].dwBytesInRes = bits->idEntries[i].dwDIBSize;
-      (*res)->idEntries[i].wResId=i+1;
-
-      memcpy(_free,(LPBYTE)bits +bits->idEntries[i].dwDIBOffset,
-             (*res)->idEntries[i].dwBytesInRes);
-      _free += (*res)->idEntries[i].dwBytesInRes;
-    }
-    UnmapViewOfFile( bits );
+    if ( filedir->idCount <= n )
+        return FALSE;
+    entry = &filedir->idEntries[n];
+    *width = entry->bWidth;
+    *height = entry->bHeight;
+    *bits = entry->bColorCount;
     return TRUE;
-fail:
-    HeapFree( GetProcessHeap(), 0, *res );
-    HeapFree( GetProcessHeap(), 0, *ptr );
-    UnmapViewOfFile( bits );
-    return FALSE;
 }
 
+static CURSORICONFILEDIRENTRY *CURSORICON_FindBestCursorFile( CURSORICONFILEDIR *dir,
+                                      int width, int height, int color )
+{
+    int n = CURSORICON_FindBestCursor( dir, CURSORICON_GetFileEntry,
+                                       width, height, color );
+    if ( n < 0 )
+        return NULL;
+    return &dir->idEntries[n];
+}
+
+static CURSORICONFILEDIRENTRY *CURSORICON_FindBestIconFile( CURSORICONFILEDIR *dir,
+                                      int width, int height, int color )
+{
+    int n = CURSORICON_FindBestIcon( dir, CURSORICON_GetFileEntry,
+                                     width, height, color );
+    if ( n < 0 )
+        return NULL;
+    return &dir->idEntries[n];
+}
 
 /**********************************************************************
  *		CreateIconFromResourceEx (USER32.@)
@@ -926,6 +863,51 @@ HICON WINAPI CreateIconFromResource( LPBYTE bits, UINT cbSize,
 }
 
 
+static HICON CURSORICON_LoadFromFile( LPCWSTR filename,
+                             INT width, INT height, INT colors,
+                             BOOL fCursor, UINT loadflags)
+{
+    CURSORICONFILEDIRENTRY *entry;
+    CURSORICONFILEDIR *dir;
+    DWORD filesize = 0;
+    HICON hIcon = 0;
+    LPBYTE bits;
+
+    TRACE("loading %s\n", debugstr_w( filename ));
+
+    bits = map_fileW( filename, &filesize );
+    if (!bits)
+        return hIcon;
+
+    dir = (CURSORICONFILEDIR*) bits;
+    if ( filesize < sizeof(*dir) )
+        goto end;
+
+    if ( filesize < (sizeof(*dir) + sizeof(dir->idEntries[0])*(dir->idCount-1)) )
+        goto end;
+
+    if ( fCursor )
+        entry = CURSORICON_FindBestCursorFile( dir, width, height, 1 );
+    else
+        entry = CURSORICON_FindBestIconFile( dir, width, height, colors );
+
+    if ( !entry )
+        goto end;
+
+    /* check that we don't run off the end of the file */
+    if ( entry->dwDIBOffset > filesize )
+        goto end;
+    if ( entry->dwDIBOffset + entry->dwDIBSize > filesize )
+        goto end;
+
+    hIcon = CreateIconFromResourceEx( &bits[entry->dwDIBOffset], entry->dwDIBSize,
+                                      !fCursor, 0x00030000, width, height, loadflags );
+end:
+    TRACE("loaded %s -> %p\n", debugstr_w( filename ), hIcon );
+    UnmapViewOfFile( bits );
+    return hIcon;
+}
+
 /**********************************************************************
  *          CURSORICON_Load
  *
@@ -944,18 +926,7 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 
     if ( loadflags & LR_LOADFROMFILE )    /* Load from file */
     {
-        LPBYTE *ptr;
-        if (!CURSORICON_SimulateLoadingFromResourceW(name, fCursor, &dir, &ptr))
-            return 0;
-        if (fCursor)
-            dirEntry = CURSORICON_FindBestCursorRes(dir, width, height, 1);
-        else
-            dirEntry = CURSORICON_FindBestIconRes(dir, width, height, colors);
-        bits = ptr[dirEntry->wResId-1];
-        hIcon = CreateIconFromResourceEx( bits, dirEntry->dwBytesInRes,
-                                           !fCursor, 0x00030000, width, height, loadflags);
-        HeapFree( GetProcessHeap(), 0, dir );
-        HeapFree( GetProcessHeap(), 0, ptr );
+        hIcon = CURSORICON_LoadFromFile( name, width, height, colors, fCursor, loadflags );
     }
     else  /* Load from resource */
     {
