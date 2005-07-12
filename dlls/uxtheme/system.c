@@ -330,6 +330,8 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
     if(!pszUseClassList)
         pszUseClassList = pszClassList;
 
+    if (!pszClassList) return NULL;
+    
     hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
     if(IsWindow(hwnd))
         SetPropW(hwnd, MAKEINTATOMW(atWindowTheme), hTheme);
