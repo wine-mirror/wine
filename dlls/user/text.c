@@ -1214,8 +1214,9 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
 {
     INT defWidth;
     SIZE extent;
-    int i, tabPos = x;
+    int i;
     int start = x;
+    BOOL first = TRUE;
 
     extent.cx = 0;
     extent.cy = 0;
@@ -1239,43 +1240,69 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
 
     while (count > 0)
     {
+        /* tokenize string by tabs */
         for (i = 0; i < count; i++)
             if (lpstr[i] == '\t') break;
+
         GetTextExtentPointW( hdc, lpstr, i, &extent );
-        while ((cTabStops > 0) &&
-               (nTabOrg + *lpTabPos <= x + extent.cx))
+
+        /* the first time round the loop we should use the value of x
+         * passed into the function.
+         * all other times, we calculate it here */
+        if (!first)
         {
-            lpTabPos++;
-            cTabStops--;
+            /* get x coordinate for the drawing of this string */
+            for (; cTabStops > 0; lpTabPos++, cTabStops--)
+            {
+                if (*lpTabPos >= 0)
+                {
+                    if (nTabOrg + *lpTabPos >= x)
+                    {
+                        x = nTabOrg + *lpTabPos;
+                        break;
+                    }
+                }
+                else
+                {
+                    /* if tab pos is negative then text is right-aligned to tab
+                     * stop meaning that the string extends to the left, so we
+                     * must subtract the width of the string */
+                    if (nTabOrg + -*lpTabPos -extent.cx >= x)
+                    {
+                        x = nTabOrg + -*lpTabPos - extent.cx;
+                        break;
+                    }
+                }
+            }
+            /* if we have run out of tab stops and we have a valid default tab
+             * stop width then round x up to that width */
+            if ((cTabStops <= 0) && (defWidth > 0))
+                x = nTabOrg + ((x - nTabOrg) / defWidth + 1) * defWidth;
         }
-        if (i == count)
-            tabPos = x + extent.cx;
-        else if (cTabStops > 0)
-            tabPos = nTabOrg + *lpTabPos;
-        else if (defWidth <= 0)
-            tabPos = x + extent.cx;
-        else
-            tabPos = nTabOrg + ((x + extent.cx - nTabOrg) / defWidth + 1) * defWidth;
+        else first = FALSE;
+
         if (fDisplayText)
         {
             RECT r;
             r.left   = x;
             r.top    = y;
-            r.right  = tabPos;
+            r.right  = x + extent.cx;
             r.bottom = y + extent.cy;
             ExtTextOutW( hdc, x, y, GetBkMode(hdc) == OPAQUE ? ETO_OPAQUE : 0,
                          &r, lpstr, i, NULL );
         }
-        x = tabPos;
+        x += extent.cx;
         count -= i+1;
         lpstr += i+1;
     }
-    return MAKELONG(tabPos - start, extent.cy);
+    return MAKELONG(x - start, extent.cy);
 }
 
 
 /***********************************************************************
  *           TabbedTextOutA    (USER32.@)
+ *
+ * See TabbedTextOutW.
  */
 LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
@@ -1293,6 +1320,31 @@ LONG WINAPI TabbedTextOutA( HDC hdc, INT x, INT y, LPCSTR lpstr, INT count,
 
 /***********************************************************************
  *           TabbedTextOutW    (USER32.@)
+ *
+ * Draws tabbed text aligned using the specified tab stops.
+ *
+ * PARAMS
+ *  hdc       [I] Handle to device context to draw to.
+ *  x         [I] X co-ordinate to start drawing the text at in logical units.
+ *  y         [I] Y co-ordinate to start drawing the text at in logical units.
+ *  str       [I] Pointer to the characters to draw.
+ *  count     [I] Number of WCHARs pointed to by str.
+ *  cTabStops [I] Number of tab stops pointed to by lpTabPos.
+ *  lpTabPos  [I] Tab stops in logical units. Should be sorted in ascending order.
+ *  nTabOrg   [I] Starting position to expand tabs from in logical units.
+ *
+ * RETURNS
+ *  The dimensions of the string drawn. The height is in the high-order word
+ *  and the width is in the low-order word.
+ *
+ * NOTES
+ *  The tabs stops can be negative, in which case the text is right aligned to
+ *  that tab stop and, despite what MSDN says, this is supported on
+ *  Windows XP SP2.
+ *
+ * BUGS
+ *  MSDN says that the TA_UPDATECP from GetTextAlign causes this function to
+ *  ignore the x and y co-ordinates, but this is unimplemented at the moment.
  */
 LONG WINAPI TabbedTextOutW( HDC hdc, INT x, INT y, LPCWSTR str, INT count,
                             INT cTabStops, const INT *lpTabPos, INT nTabOrg )
