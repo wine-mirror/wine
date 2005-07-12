@@ -1734,9 +1734,97 @@ BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
 BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
                        LPBYTE pJob, DWORD Command)
 {
-    FIXME("(%p,%ld,%ld,%p,%ld): stub\n",hPrinter,JobId,Level,pJob,
-         Command);
-    return FALSE;
+    BOOL ret;
+    LPBYTE JobW;
+    UNICODE_STRING usBuffer;
+
+    TRACE("(%p,%ld,%ld,%p,%ld)\n",hPrinter, JobId, Level, pJob, Command);
+
+    /* JobId, pPrinterName, pMachineName, pDriverName, Size, Submitted, Time and TotalPages
+       are all ignored by SetJob, so we don't bother copying them */
+    switch(Level)
+    {
+    case 0:
+        JobW = NULL;
+        break;
+    case 1:
+      {
+        JOB_INFO_1W *info1W = HeapAlloc(GetProcessHeap(), 0, sizeof(*info1W));
+        JOB_INFO_1A *info1A = (JOB_INFO_1A*)pJob;
+
+        JobW = (LPBYTE)info1W;
+        info1W->pUserName = asciitounicode(&usBuffer, info1A->pUserName);
+        info1W->pDocument = asciitounicode(&usBuffer, info1A->pDocument);
+        info1W->pDatatype = asciitounicode(&usBuffer, info1A->pDatatype);
+        info1W->pStatus = asciitounicode(&usBuffer, info1A->pStatus);
+        info1W->Status = info1A->Status;
+        info1W->Priority = info1A->Priority;
+        info1W->Position = info1A->Position;
+        info1W->PagesPrinted = info1A->PagesPrinted;
+        break;
+      }
+    case 2:
+      {
+        JOB_INFO_2W *info2W = HeapAlloc(GetProcessHeap(), 0, sizeof(*info2W));
+        JOB_INFO_2A *info2A = (JOB_INFO_2A*)pJob;
+
+        JobW = (LPBYTE)info2W;
+        info2W->pUserName = asciitounicode(&usBuffer, info2A->pUserName);
+        info2W->pDocument = asciitounicode(&usBuffer, info2A->pDocument);
+        info2W->pNotifyName = asciitounicode(&usBuffer, info2A->pNotifyName);
+        info2W->pDatatype = asciitounicode(&usBuffer, info2A->pDatatype);
+        info2W->pPrintProcessor = asciitounicode(&usBuffer, info2A->pPrintProcessor);
+        info2W->pParameters = asciitounicode(&usBuffer, info2A->pParameters);
+        info2W->pDevMode = info2A->pDevMode ? GdiConvertToDevmodeW(info2A->pDevMode) : NULL;
+        info2W->pStatus = asciitounicode(&usBuffer, info2A->pStatus);
+        info2W->pSecurityDescriptor = info2A->pSecurityDescriptor;
+        info2W->Status = info2A->Status;
+        info2W->Priority = info2A->Priority;
+        info2W->Position = info2A->Position;
+        info2W->StartTime = info2A->StartTime;
+        info2W->UntilTime = info2A->UntilTime;
+        info2W->PagesPrinted = info2A->PagesPrinted;
+        break;
+      }
+    case 3:
+        JobW = HeapAlloc(GetProcessHeap(), 0, sizeof(JOB_INFO_3));
+        memcpy(JobW, pJob, sizeof(JOB_INFO_3));
+        break;
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    ret = SetJobW(hPrinter, JobId, Level, JobW, Command);
+
+    switch(Level)
+    {
+    case 1:
+      {
+        JOB_INFO_1W *info1W = (JOB_INFO_1W*)JobW;
+        HeapFree(GetProcessHeap(), 0, info1W->pUserName);
+        HeapFree(GetProcessHeap(), 0, info1W->pDocument); 
+        HeapFree(GetProcessHeap(), 0, info1W->pDatatype);
+        HeapFree(GetProcessHeap(), 0, info1W->pStatus);
+        break;
+      }
+    case 2:
+      {
+        JOB_INFO_2W *info2W = (JOB_INFO_2W*)JobW;
+        HeapFree(GetProcessHeap(), 0, info2W->pUserName);
+        HeapFree(GetProcessHeap(), 0, info2W->pDocument); 
+        HeapFree(GetProcessHeap(), 0, info2W->pNotifyName);
+        HeapFree(GetProcessHeap(), 0, info2W->pDatatype);
+        HeapFree(GetProcessHeap(), 0, info2W->pPrintProcessor);
+        HeapFree(GetProcessHeap(), 0, info2W->pParameters);
+        HeapFree(GetProcessHeap(), 0, info2W->pDevMode);
+        HeapFree(GetProcessHeap(), 0, info2W->pStatus);
+        break;
+      }
+    }
+    HeapFree(GetProcessHeap(), 0, JobW);
+
+    return ret;
 }
 
 /*****************************************************************************
