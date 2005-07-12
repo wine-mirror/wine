@@ -67,7 +67,7 @@ struct IDirectMusicChordMapImpl {
   const IDirectMusicChordMapVtbl *ChordMapVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD ref;
+  LONG  ref;
 
   /* IDirectMusicChordMapImpl fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -89,7 +89,7 @@ extern ULONG WINAPI   IDirectMusicChordMapImpl_IPersistStream_AddRef (LPPERSISTS
 struct IDirectMusicComposerImpl {
   /* IUnknown fields */
   const IDirectMusicComposerVtbl *lpVtbl;
-  DWORD ref;
+  LONG  ref;
 
   /* IDirectMusicComposerImpl fields */
 };
@@ -106,7 +106,7 @@ struct IDirectMusicChordMapTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicChordMapTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -127,7 +127,7 @@ struct IDirectMusicSignPostTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicSignPostTrack fields */
   LPDMUS_OBJECTDESC pDesc;

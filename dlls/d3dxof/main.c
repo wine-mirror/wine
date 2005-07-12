@@ -43,7 +43,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
-static DWORD dll_ref = 0;
+static LONG dll_ref = 0;
 
 /* For the moment, do nothing here. */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
@@ -64,7 +64,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 typedef struct {
     IClassFactory ITF_IClassFactory;
 
-    DWORD ref;
+    LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, LPVOID *ppObj);
 } IClassFactoryImpl;
 

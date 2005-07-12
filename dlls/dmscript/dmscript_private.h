@@ -65,7 +65,7 @@ struct IDirectMusicScriptImpl {
   const IDirectMusicScriptVtbl *ScriptVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicScriptImpl fields */
   IDirectMusicPerformance* pPerformance;
@@ -94,7 +94,7 @@ struct IDirectMusicScriptTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicScriptTrack fields */
   LPDMUS_OBJECTDESC pDesc;

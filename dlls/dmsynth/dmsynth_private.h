@@ -58,7 +58,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl (LPCGUID lpcGUID, LP
 struct IDirectMusicSynth8Impl {
   /* IUnknown fields */
   const IDirectMusicSynth8Vtbl *lpVtbl;
-  DWORD          ref;
+  LONG          ref;
 
   /* IDirectMusicSynth8 fields */
   DMUS_PORTCAPS pCaps;
@@ -77,7 +77,7 @@ extern ULONG WINAPI   IDirectMusicSynth8Impl_AddRef (LPDIRECTMUSICSYNTH8 iface);
 struct IDirectMusicSynthSinkImpl {
   /* IUnknown fields */
   const IDirectMusicSynthSinkVtbl *lpVtbl;
-  DWORD          ref;
+  LONG          ref;
 
   /* IDirectMusicSynthSinkImpl fields */
 };

@@ -71,7 +71,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt;
 struct JoystickImpl
 {
         const void                     *lpVtbl;
-        DWORD                           ref;
+        LONG                            ref;
         GUID                            guid;
 
 

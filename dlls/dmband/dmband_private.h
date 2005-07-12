@@ -92,7 +92,7 @@ struct IDirectMusicBandImpl {
   const IDirectMusicBandVtbl *BandVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicBandImpl fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -108,7 +108,7 @@ struct IDirectMusicBandTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicBandTrack fields */
   LPDMUS_OBJECTDESC pDesc;

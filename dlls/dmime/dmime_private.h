@@ -132,7 +132,7 @@ typedef struct DMUSIC_PRIVATE_PCHANNEL_ {
 struct IDirectMusicPerformance8Impl {
   /* IUnknown fields */
   const IDirectMusicPerformance8Vtbl *lpVtbl;
-  DWORD                  ref;
+  LONG                   ref;
 
   /* IDirectMusicPerformanceImpl fields */
   IDirectMusic8*         pDirectMusic;
@@ -176,7 +176,7 @@ struct IDirectMusicSegment8Impl {
   const IDirectMusicSegment8Vtbl *SegmentVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicSegment8Impl fields */
   LPDMUS_OBJECTDESC      pDesc;
@@ -191,7 +191,7 @@ struct IDirectMusicSegment8Impl {
 struct IDirectMusicSegmentState8Impl {
   /* IUnknown fields */
   const IDirectMusicSegmentState8Vtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicSegmentState8Impl fields */
 };
@@ -205,7 +205,7 @@ struct IDirectMusicGraphImpl {
   const IDirectMusicGraphVtbl *GraphVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicGraphImpl fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -222,7 +222,7 @@ struct IDirectMusicAudioPathImpl {
   const IDirectMusicAudioPathVtbl *AudioPathVtbl;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicAudioPathImpl fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -241,7 +241,7 @@ struct IDirectMusicAudioPathImpl {
 struct IDirectMusicTool8Impl {
   /* IUnknown fields */
   const IDirectMusicTool8Vtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicTool8Impl fields */
 };
@@ -252,7 +252,7 @@ struct IDirectMusicTool8Impl {
 struct IDirectMusicPatternTrackImpl {
   /* IUnknown fields */
   const IDirectMusicPatternTrackVtbl *lpVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicPatternTrackImpl fields */
 };
@@ -266,7 +266,7 @@ struct IDirectMusicLyricsTrack
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicLyricsTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -280,7 +280,7 @@ struct IDirectMusicMarkerTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicMarkerTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -294,7 +294,7 @@ struct IDirectMusicParamControlTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicParamControlTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -308,7 +308,7 @@ struct IDirectMusicSegTriggerTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicSegTriggerTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -324,7 +324,7 @@ struct IDirectMusicSeqTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicSeqTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -338,7 +338,7 @@ struct IDirectMusicSysExTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicSysExTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -352,7 +352,7 @@ struct IDirectMusicTempoTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicTempoTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -368,7 +368,7 @@ struct IDirectMusicTimeSigTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicTimeSigTrack fields */
   LPDMUS_OBJECTDESC pDesc;
@@ -382,7 +382,7 @@ struct IDirectMusicWaveTrack {
   const IUnknownVtbl *UnknownVtbl;
   const IDirectMusicTrack8Vtbl *TrackVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
-  DWORD          ref;
+  LONG           ref;
 
   /* IDirectMusicWaveTrack fields */
   LPDMUS_OBJECTDESC pDesc;
