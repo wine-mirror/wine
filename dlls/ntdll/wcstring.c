@@ -132,15 +132,7 @@ LPWSTR __cdecl NTDLL_wcscpy( LPWSTR dst, LPCWSTR src )
  */
 INT __cdecl NTDLL_wcscspn( LPCWSTR str, LPCWSTR reject )
 {
-    LPCWSTR start = str;
-    while (*str)
-    {
-        LPCWSTR p = reject;
-        while (*p && (*p != *str)) p++;
-        if (*p) break;
-        str++;
-    }
-    return str - start;
+    return strcspnW( str, reject );
 }
 
 
@@ -192,13 +184,7 @@ LPWSTR __cdecl NTDLL_wcsncpy( LPWSTR s1, LPCWSTR s2, INT n )
  */
 LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
 {
-    LPCWSTR p;
-    while (*str)
-    {
-        for (p = accept; *p; p++) if (*p == *str) return (LPWSTR)str;
-        str++;
-    }
-    return NULL;
+    return strpbrkW( str, accept );
 }
 
 
@@ -207,13 +193,7 @@ LPWSTR __cdecl NTDLL_wcspbrk( LPCWSTR str, LPCWSTR accept )
  */
 LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
 {
-    LPWSTR last = NULL;
-    while (*str)
-    {
-        if (*str == ch) last = str;
-        str++;
-    }
-    return last;
+    return strrchrW( str, ch );
 }
 
 
@@ -222,15 +202,7 @@ LPWSTR __cdecl NTDLL_wcsrchr( LPWSTR str, WCHAR ch )
  */
 INT __cdecl NTDLL_wcsspn( LPCWSTR str, LPCWSTR accept )
 {
-    LPCWSTR start = str;
-    while (*str)
-    {
-        LPCWSTR p = accept;
-        while (*p && (*p != *str)) p++;
-        if (!*p) break;
-        str++;
-    }
-    return str - start;
+    return strspnW( str, accept );
 }
 
 
