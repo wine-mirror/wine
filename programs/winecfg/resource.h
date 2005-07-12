@@ -5,6 +5,7 @@
  * Copyright 2003 Dimitrie O. Paun
  * Copyright 2003 Mark Westcott
  * Copyright 2004 Mike Hearn
+ * Copyright 2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -116,6 +117,8 @@
 #define IDC_DX_MOUSE_GRAB               1102
 #define IDC_USE_TAKE_FOCUS              1103
 #define IDC_DOUBLE_BUFFER               1104
+#define IDC_D3D_VSHADER_MODE            1105
+#define IDC_D3D_PSHADER_MODE            1106
 
 /* applications tab */
 #define IDC_APP_LISTVIEW                1200

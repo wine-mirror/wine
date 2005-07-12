@@ -3,6 +3,7 @@
  *
  * Copyright 2003 Mark Westcott
  * Copyright 2003-2004 Mike Hearn
+ * Copyright 2005 Raphael Junqueira
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,6 +36,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 #define RES_MAXLEN 5 /* the maximum number of characters in a screen dimension. 5 digits should be plenty, what kind of crazy person runs their screen >10,000 pixels across? */
+
+
+static const char* D3D_VS_Modes[] = {
+  "hardware",
+  "none",
+  "emulation",
+  NULL
+};
+
 
 int updating_ui;
 
@@ -87,6 +97,7 @@ static void update_gui_for_desktop_mode(HWND dialog) {
 
 static void init_dialog (HWND dialog)
 {
+    unsigned int it;
     char* buf;
 
     update_gui_for_desktop_mode(dialog);
@@ -128,7 +139,30 @@ static void init_dialog (HWND dialog)
     else
 	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
-    
+
+    SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_RESETCONTENT, 0, 0);
+    for (it = 0; NULL != D3D_VS_Modes[it]; ++it) {
+      SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_ADDSTRING, 0, (LPARAM) D3D_VS_Modes[it]);
+    }  
+    buf = get_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode", "hardware"); 
+    for (it = 0; NULL != D3D_VS_Modes[it]; ++it) {
+      if (strcmp(buf, D3D_VS_Modes[it]) == 0) {
+	SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_SETCURSEL, it, 0);
+	break ;
+      }
+    }
+    if (NULL == D3D_VS_Modes[it]) {
+      WINE_ERR("Invalid Direct3D VertexShader Mode read from registry (%s)\n", buf);
+    }
+    HeapFree(GetProcessHeap(), 0, buf);
+
+    buf = get_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "enabled");
+    if (!strcmp(buf, "enabled"))
+      CheckDlgButton(dialog, IDC_D3D_PSHADER_MODE, BST_CHECKED);
+    else
+      CheckDlgButton(dialog, IDC_D3D_PSHADER_MODE, BST_UNCHECKED);
+    HeapFree(GetProcessHeap(), 0, buf);
+
     updating_ui = FALSE;
 }
 
@@ -200,6 +234,18 @@ static void on_double_buffer_clicked(HWND dialog) {
         set_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "N");
 }
 
+static void on_d3d_vshader_mode_changed(HWND dialog) {
+  int selected_mode = SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_GETCURSEL, 0, 0);  
+  set_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode", D3D_VS_Modes[selected_mode]); 
+}
+
+static void on_d3d_pshader_mode_clicked(HWND dialog) {
+    if (IsDlgButtonChecked(dialog, IDC_D3D_PSHADER_MODE) == BST_CHECKED)
+        set_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "enabled");
+    else
+        set_reg_key(config_key, keypath("Direct3D"), "PixelShaderMode", "disabled");
+}
+
 INT_PTR CALLBACK
 GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -227,12 +273,16 @@ GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case IDC_ENABLE_DESKTOP: on_enable_desktop_clicked(hDlg); break;
 			case IDC_DX_MOUSE_GRAB:  on_dx_mouse_grab_clicked(hDlg); break;
                         case IDC_DOUBLE_BUFFER:  on_double_buffer_clicked(hDlg); break;
+		        case IDC_D3D_PSHADER_MODE: on_d3d_pshader_mode_clicked(hDlg); break;
 		    }
 		    break;
 		}
 		case CBN_SELCHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
-		    if (LOWORD(wParam) == IDC_SCREEN_DEPTH) on_screen_depth_changed(hDlg);
+		    switch (LOWORD(wParam)) {
+		    case IDC_SCREEN_DEPTH: on_screen_depth_changed(hDlg); break;
+		    case IDC_D3D_VSHADER_MODE: on_d3d_vshader_mode_changed(hDlg); break;
+		    }
 		    break;
 		}
 		    
