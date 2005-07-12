@@ -336,6 +336,97 @@ static msi_control *msi_dialog_create_window( msi_dialog *dialog,
     return control;
 }
 
+static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
+{
+    const static WCHAR query[] = {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ','B','i','n','a','r','y',' ',
+        'w','h','e','r','e',' ',
+            '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0
+    };
+
+    return MSI_QueryGetRecord( db, query, name );
+}
+
+static LPWSTR msi_create_tmp_path(void)
+{
+    WCHAR tmp[MAX_PATH];
+    LPWSTR path = NULL;
+    static const WCHAR prefix[] = { 'm','s','i',0 };
+    DWORD len, r;
+
+    r = GetTempPathW( MAX_PATH, tmp );
+    if( !r )
+        return path;
+    len = lstrlenW( tmp ) + 20;
+    path = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
+    if( path )
+    {
+        r = GetTempFileNameW( tmp, prefix, 0, path );
+        if (!r)
+        {
+            HeapFree( GetProcessHeap(), 0, path );
+            path = NULL;
+        }
+    }
+    return path;
+}
+
+
+static HANDLE msi_load_image( MSIDATABASE *db, LPCWSTR name, UINT type,
+                              UINT cx, UINT cy, UINT flags )
+{
+    MSIRECORD *rec = NULL;
+    HANDLE himage = NULL;
+    LPWSTR tmp;
+    UINT r;
+
+    TRACE("%p %s %u %u %08x\n", db, debugstr_w(name), cx, cy, flags);
+
+    tmp = msi_create_tmp_path();
+    if( !tmp )
+        return himage;
+
+    rec = msi_get_binary_record( db, name );
+    if( rec )
+    {
+        r = MSI_RecordStreamToFile( rec, 2, tmp );
+        if( r == ERROR_SUCCESS )
+        {
+            himage = LoadImageW( 0, tmp, type, cx, cy, flags );
+            DeleteFileW( tmp );
+        }
+        msiobj_release( &rec->hdr );
+    }
+
+    HeapFree( GetProcessHeap(), 0, tmp );
+    return himage;
+}
+
+static HICON msi_load_icon( MSIDATABASE *db, LPCWSTR text, UINT attributes )
+{
+    DWORD cx = 0, cy = 0, flags;
+
+    flags = LR_LOADFROMFILE | LR_DEFAULTSIZE;
+    if( attributes & msidbControlAttributesFixedSize )
+    {
+        flags &= ~LR_DEFAULTSIZE;
+        if( attributes & msidbControlAttributesIconSize16 )
+        {
+            cx += 16;
+            cy += 16;
+        }
+        if( attributes & msidbControlAttributesIconSize32 )
+        {
+            cx += 32;
+            cy += 32;
+        }
+        /* msidbControlAttributesIconSize48 handled by above logic */
+    }
+    return msi_load_image( db, text, IMAGE_ICON, cx, cy, flags );
+}
+
+
 /* called from the Control Event subscription code */
 void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control, 
                               LPCWSTR attribute, MSIRECORD *rec )
@@ -480,11 +571,27 @@ static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
 static UINT msi_dialog_button_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
+    UINT attributes, style;
+    LPCWSTR text;
 
     TRACE("%p %p\n", dialog, rec);
 
-    control = msi_dialog_add_control( dialog, rec, szButton, WS_TABSTOP );
+    style = WS_TABSTOP;
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    if( attributes & msidbControlAttributesIcon )
+        style |= BS_ICON;
+
+    control = msi_dialog_add_control( dialog, rec, szButton, style );
+    if( !control )
+        return ERROR_FUNCTION_FAILED;
+
     control->handler = msi_dialog_button_handler;
+
+    /* set the icon */
+    text = MSI_RecordGetString( rec, 10 );
+    control->hIcon = msi_load_icon( dialog->package->db, text, attributes );
+    if( attributes & msidbControlAttributesIcon )
+        SendMessageW( control->hwnd, BM_SETIMAGE, IMAGE_ICON, (LPARAM) control->hIcon );
 
     return ERROR_SUCCESS;
 }
@@ -616,72 +723,6 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     return ERROR_SUCCESS;
 }
 
-static MSIRECORD *msi_get_binary_record( MSIDATABASE *db, LPCWSTR name )
-{
-    const static WCHAR query[] = {
-        's','e','l','e','c','t',' ','*',' ',
-        'f','r','o','m',' ','B','i','n','a','r','y',' ',
-        'w','h','e','r','e',' ',
-            '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0
-    };
-
-    return MSI_QueryGetRecord( db, query, name );
-}
-
-static LPWSTR msi_create_tmp_path(void)
-{
-    WCHAR tmp[MAX_PATH];
-    LPWSTR path = NULL;
-    static const WCHAR prefix[] = { 'm','s','i',0 };
-    DWORD len, r;
-
-    r = GetTempPathW( MAX_PATH, tmp );
-    if( !r )
-        return path;
-    len = lstrlenW( tmp ) + 20;
-    path = HeapAlloc( GetProcessHeap(), 0, len * sizeof (WCHAR) );
-    if( path )
-    {
-        r = GetTempFileNameW( tmp, prefix, 0, path );
-        if (!r)
-        {
-            HeapFree( GetProcessHeap(), 0, path );
-            path = NULL;
-        }
-    }
-    return path;
-}
-
-static HANDLE msi_load_image( MSIDATABASE *db, LPCWSTR name, UINT type,
-                              UINT cx, UINT cy, UINT flags )
-{
-    MSIRECORD *rec = NULL;
-    HANDLE himage = NULL;
-    LPWSTR tmp;
-    UINT r;
-
-    TRACE("%p %s %u %u %08x\n", db, debugstr_w(name), cx, cy, flags);
-
-    tmp = msi_create_tmp_path();
-    if( !tmp )
-        return himage;
-
-    rec = msi_get_binary_record( db, name );
-    if( rec )
-    {
-        r = MSI_RecordStreamToFile( rec, 2, tmp );
-        if( r == ERROR_SUCCESS )
-        {
-            himage = LoadImageW( 0, tmp, type, cx, cy, flags );
-            DeleteFileW( tmp );
-        }
-        msiobj_release( &rec->hdr );
-    }
-
-    HeapFree( GetProcessHeap(), 0, tmp );
-    return himage;
-}
-
 static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     UINT cx, cy, flags, style, attributes;
@@ -695,8 +736,8 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
     if( attributes & msidbControlAttributesFixedSize )
     {
         flags |= LR_DEFAULTSIZE;
-    }
         style |= SS_CENTERIMAGE;
+    }
 
     control = msi_dialog_add_control( dialog, rec, szStatic, style );
     text = MSI_RecordGetString( rec, 10 );
@@ -719,7 +760,7 @@ static UINT msi_dialog_bitmap_control( msi_dialog *dialog, MSIRECORD *rec )
 static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
-    DWORD attributes, cx = 0, cy = 0, flags;
+    DWORD attributes;
     LPCWSTR text;
 
     TRACE("\n");
@@ -727,27 +768,9 @@ static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
     control = msi_dialog_add_control( dialog, rec, szStatic,
                             SS_ICON | SS_CENTERIMAGE | WS_GROUP );
             
-    flags = LR_LOADFROMFILE | LR_DEFAULTSIZE;
     attributes = MSI_RecordGetInteger( rec, 8 );
-    if( attributes & msidbControlAttributesFixedSize )
-    {
-        flags &= ~LR_DEFAULTSIZE;
-        if( attributes & msidbControlAttributesIconSize16 )
-        {
-            cx += 16;
-            cy += 16;
-        }
-        if( attributes & msidbControlAttributesIconSize32 )
-        {
-            cx += 32;
-            cy += 32;
-        }
-        /* msidbControlAttributesIconSize48 handled by above logic */
-    }
-
     text = MSI_RecordGetString( rec, 10 );
-    control->hIcon = msi_load_image( dialog->package->db, text,
-                                     IMAGE_ICON, cx, cy, flags );
+    control->hIcon = msi_load_icon( dialog->package->db, text, attributes );
     if( control->hIcon )
         SendMessageW( control->hwnd, STM_SETICON, (WPARAM) control->hIcon, 0 );
     else
