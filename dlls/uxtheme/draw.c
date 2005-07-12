@@ -95,7 +95,7 @@ HRESULT WINAPI DrawThemeParentBackground(HWND hwnd, HDC hdc, RECT *prc)
         MapWindowPoints(hParent, NULL, (LPPOINT)&rt, 2);
     }
 
-    SetViewportOrgEx(hdc, rt.left, rt.top, &org);
+    OffsetViewportOrgEx(hdc, -rt.left, -rt.top, &org);
 
     SendMessageW(hParent, WM_ERASEBKGND, (WPARAM)hdc, 0);
     SendMessageW(hParent, WM_PRINTCLIENT, (WPARAM)hdc, PRF_CLIENT);
