@@ -54,6 +54,8 @@ static LPWSTR   (WINAPIV *p_ui64tow)(ULONGLONG, LPWSTR, INT);
 static long     (WINAPIV *pwcstol)(LPCWSTR, LPWSTR *, INT);
 static ULONG    (WINAPIV *pwcstoul)(LPCWSTR, LPWSTR *, INT);
 
+static LPWSTR   (WINAPIV *p_wcschr)(LPCWSTR, WCHAR);
+static LPWSTR   (WINAPIV *p_wcsrchr)(LPCWSTR, WCHAR);
 
 static void InitFunctionPtrs(void)
 {
@@ -85,6 +87,9 @@ static void InitFunctionPtrs(void)
 
 	pwcstol = (void *)GetProcAddress(hntdll, "wcstol");
 	pwcstoul = (void *)GetProcAddress(hntdll, "wcstoul");
+
+	p_wcschr= (void *)GetProcAddress(hntdll, "wcschr");
+	p_wcsrchr= (void *)GetProcAddress(hntdll, "wcsrchr");
     } /* if */
 }
 
@@ -1063,6 +1068,12 @@ static void test_wtoi64(void)
     } /* for */
 }
 
+static void test_wcsfuncs(void)
+{       
+    static const WCHAR testing[] = {'T','e','s','t','i','n','g',0};
+    ok (p_wcschr(testing,0)!=NULL, "wcschr Not finding terminating character\n");
+    ok (p_wcsrchr(testing,0)!=NULL, "wcsrchr Not finding terminating character\n");
+}
 
 START_TEST(string)
 {
@@ -1084,4 +1095,6 @@ START_TEST(string)
         test_wtol();
     if (p_wtoi64)
         test_wtoi64();
+    if (p_wcschr && p_wcsrchr)
+        test_wcsfuncs();
 }
