@@ -215,14 +215,14 @@ static inline WCHAR *strcatW( WCHAR *dst, const WCHAR *src )
 
 static inline WCHAR *strchrW( const WCHAR *str, WCHAR ch )
 {
-    for ( ; *str; str++) if (*str == ch) return (WCHAR *)str;
+    do { if (*str == ch) return (WCHAR *)str; } while (*str++);
     return NULL;
 }
 
 static inline WCHAR *strrchrW( const WCHAR *str, WCHAR ch )
 {
     WCHAR *ret = NULL;
-    for ( ; *str; str++) if (*str == ch) ret = (WCHAR *)str;
+    do { if (*str == ch) ret = (WCHAR *)str; } while (*str++);
     return ret;
 }
 
