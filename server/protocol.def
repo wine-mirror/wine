@@ -245,8 +245,6 @@ struct security_descriptor
 
 /* Initialize a process; called from the new process context */
 @REQ(init_process)
-    void*        peb;          /* addr of PEB */
-    void*        ldt_copy;     /* addr of LDT copy */
 @REPLY
     unsigned int server_start; /* server start time (GetTickCount) */
     size_t       info_size;    /* total size of startup info */
@@ -283,13 +281,15 @@ struct security_descriptor
     int          unix_pid;     /* Unix pid of new thread */
     int          unix_tid;     /* Unix tid of new thread */
     void*        teb;          /* TEB of new thread (in thread address space) */
+    void*        peb;          /* address of PEB (in thread address space) */
     void*        entry;        /* thread entry point (in thread address space) */
+    void*        ldt_copy;     /* address of LDT copy (in thread address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
+    int          debug_level;  /* new debug level */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
-    int          boot;         /* is this the boot thread? */
     int          version;      /* protocol version */
 @END
 

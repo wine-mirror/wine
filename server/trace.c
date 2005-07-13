@@ -613,8 +613,6 @@ static void dump_boot_done_request( const struct boot_done_request *req )
 
 static void dump_init_process_request( const struct init_process_request *req )
 {
-    fprintf( stderr, " peb=%p,", req->peb );
-    fprintf( stderr, " ldt_copy=%p", req->ldt_copy );
 }
 
 static void dump_init_process_reply( const struct init_process_reply *req )
@@ -658,16 +656,18 @@ static void dump_init_thread_request( const struct init_thread_request *req )
     fprintf( stderr, " unix_pid=%d,", req->unix_pid );
     fprintf( stderr, " unix_tid=%d,", req->unix_tid );
     fprintf( stderr, " teb=%p,", req->teb );
+    fprintf( stderr, " peb=%p,", req->peb );
     fprintf( stderr, " entry=%p,", req->entry );
+    fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
     fprintf( stderr, " reply_fd=%d,", req->reply_fd );
-    fprintf( stderr, " wait_fd=%d", req->wait_fd );
+    fprintf( stderr, " wait_fd=%d,", req->wait_fd );
+    fprintf( stderr, " debug_level=%d", req->debug_level );
 }
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
-    fprintf( stderr, " boot=%d,", req->boot );
     fprintf( stderr, " version=%d", req->version );
 }
 

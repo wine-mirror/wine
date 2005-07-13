@@ -961,8 +961,6 @@ static BOOL process_init(void)
     /* Retrieve startup info from the server */
     SERVER_START_REQ( init_process )
     {
-        req->peb      = peb;
-        req->ldt_copy = &wine_ldt_copy;
         if ((ret = !wine_server_call_err( req )))
         {
             info_size         = reply->info_size;

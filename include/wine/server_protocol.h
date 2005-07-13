@@ -252,8 +252,6 @@ struct boot_done_reply
 struct init_process_request
 {
     struct request_header __header;
-    void*        peb;
-    void*        ldt_copy;
 };
 struct init_process_reply
 {
@@ -306,16 +304,18 @@ struct init_thread_request
     int          unix_pid;
     int          unix_tid;
     void*        teb;
+    void*        peb;
     void*        entry;
+    void*        ldt_copy;
     int          reply_fd;
     int          wait_fd;
+    int          debug_level;
 };
 struct init_thread_reply
 {
     struct reply_header __header;
     process_id_t pid;
     thread_id_t  tid;
-    int          boot;
     int          version;
 };
 
@@ -4189,6 +4189,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 183
+#define SERVER_PROTOCOL_VERSION 184
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -303,45 +303,56 @@ inline static struct startup_info *find_startup_info( int unix_pid )
 }
 
 /* initialize the current process and fill in the request */
-static size_t init_process(void)
+void init_process( struct thread *thread )
 {
-    struct process *process = current->process;
+    struct process *process = thread->process;
     struct thread *parent_thread = NULL;
     struct process *parent = NULL;
-    struct startup_info *info = find_startup_info( current->unix_pid );
+    struct startup_info *info;
 
-    if (info)
+    if (process->startup_info) return;  /* already initialized */
+
+    if ((info = find_startup_info( thread->unix_pid )))
     {
-        if (info->thread)
-        {
-            fatal_protocol_error( current, "init_process: called twice?\n" );
-            return 0;
-        }
+        if (info->thread) return;  /* already initialized */
+
+        info->thread  = (struct thread *)grab_object( thread );
+        info->process = (struct process *)grab_object( process );
+        process->startup_info = (struct startup_info *)grab_object( info );
+
         parent_thread = info->owner;
         parent = parent_thread->process;
         process->parent = (struct process *)grab_object( parent );
+
+        /* set the process flags */
+        process->create_flags = info->create_flags;
+
+        if (info->inherit_all) process->handles = copy_handle_table( process, parent );
     }
 
-    /* set the process flags */
-    process->create_flags = info ? info->create_flags : 0;
-
     /* create the handle table */
-    if (info && info->inherit_all)
-        process->handles = copy_handle_table( process, parent );
-    else
-        process->handles = alloc_handle_table( process, 0 );
-    if (!process->handles) return 0;
-
-    /* retrieve the main exe file */
-    if (info && info->exe_file) process->exe.file = (struct file *)grab_object( info->exe_file );
+    if (!process->handles) process->handles = alloc_handle_table( process, 0 );
+    if (!process->handles)
+    {
+        fatal_protocol_error( thread, "Failed to allocate handle table\n" );
+        return;
+    }
 
     /* connect to the window station and desktop */
     connect_process_winstation( process, NULL, 0 );
     connect_process_desktop( process, NULL, 0 );
-    current->desktop = process->desktop;
+    thread->desktop = process->desktop;
+
+    if (!info) return;
+
+    /* retrieve the main exe file */
+    if (info->exe_file) process->exe.file = (struct file *)grab_object( info->exe_file );
+
+    /* thread will be actually suspended in init_done */
+    if (info->create_flags & CREATE_SUSPENDED) thread->suspend++;
 
     /* set the process console */
-    if (info && !(info->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
+    if (!(info->create_flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE)))
     {
         /* FIXME: some better error checking should be done...
          * like if hConOut and hConIn are console handles, then they should be on the same
@@ -350,28 +361,14 @@ static size_t init_process(void)
         inherit_console( parent_thread, process, info->inherit_all ? info->hstdin : 0 );
     }
 
-    if (parent)
-    {
-        /* attach to the debugger if requested */
-        if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
-            set_process_debugger( process, parent_thread );
-        else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
-            set_process_debugger( process, parent->debugger );
-        if (!(process->create_flags & CREATE_NEW_PROCESS_GROUP))
-            process->group_id = parent->group_id;
-    }
+    /* attach to the debugger if requested */
+    if (process->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
+        set_process_debugger( process, parent_thread );
+    else if (parent->debugger && !(parent->create_flags & DEBUG_ONLY_THIS_PROCESS))
+        set_process_debugger( process, parent->debugger );
 
-    /* thread will be actually suspended in init_done */
-    if (process->create_flags & CREATE_SUSPENDED) current->suspend++;
-
-    if (info)
-    {
-        info->process = (struct process *)grab_object( process );
-        info->thread  = (struct thread *)grab_object( current );
-        process->startup_info = (struct startup_info *)grab_object( info );
-        return info->data_size;
-    }
-    return 0;
+    if (!(process->create_flags & CREATE_NEW_PROCESS_GROUP))
+        process->group_id = parent->group_id;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -969,30 +966,9 @@ DECL_HANDLER(get_startup_info)
 /* initialize a new process */
 DECL_HANDLER(init_process)
 {
-    if (current->unix_pid == -1)
-    {
-        fatal_protocol_error( current, "init_process: init_thread not called yet\n" );
-        return;
-    }
-    if (current->process->startup_info)
-    {
-        fatal_protocol_error( current, "init_process: called twice\n" );
-        return;
-    }
-    if (!req->peb || (unsigned int)req->peb % sizeof(int))
-    {
-        fatal_protocol_error( current, "init_process: bad peb address\n" );
-        return;
-    }
-    if (!req->ldt_copy || (unsigned int)req->ldt_copy % sizeof(int))
-    {
-        fatal_protocol_error( current, "init_process: bad ldt_copy address\n" );
-        return;
-    }
-    current->process->peb = req->peb;
-    current->process->ldt_copy = req->ldt_copy;
     reply->server_start = server_start_ticks;
-    reply->info_size = init_process();
+    if (current->process->startup_info)
+        reply->info_size = current->process->startup_info->data_size;
 }
 
 /* signal the end of the process initialization */

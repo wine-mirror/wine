@@ -150,6 +150,12 @@ inline static void init_thread_structure( struct thread *thread )
         thread->inflight[i].server = thread->inflight[i].client = -1;
 }
 
+/* check if address looks valid for a client-side data structure (TEB etc.) */
+static inline int is_valid_address( void *addr )
+{
+    return addr && !((unsigned int)addr % sizeof(int));
+}
+
 /* create a new thread */
 struct thread *create_thread( int fd, struct process *process )
 {
@@ -814,7 +820,6 @@ struct token *thread_get_impersonation_token( struct thread *thread )
 /* signal that we are finished booting on the client side */
 DECL_HANDLER(boot_done)
 {
-    debug_level = max( debug_level, req->debug_level );
     if (current == booting_thread)
     {
         booting_thread = (struct thread *)~0UL;  /* make sure it doesn't match other threads */
@@ -852,6 +857,7 @@ DECL_HANDLER(new_thread)
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
+    struct process *process = current->process;
     int reply_fd = thread_get_inflight_fd( current, req->reply_fd );
     int wait_fd = thread_get_inflight_fd( current, req->wait_fd );
 
@@ -879,17 +885,31 @@ DECL_HANDLER(init_thread)
     if (!(current->wait_fd  = create_anonymous_fd( &thread_fd_ops, wait_fd, &current->obj )))
         return;
 
+    if (!is_valid_address(req->teb) || !is_valid_address(req->peb) || !is_valid_address(req->ldt_copy))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
     current->unix_pid = req->unix_pid;
     current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
 
-    if (current->suspend + current->process->suspend > 0) stop_thread( current );
-    if (current->process->running_threads > 1)
+    if (!process->peb)  /* first thread, initialize the process too */
+    {
+        process->peb      = req->peb;
+        process->ldt_copy = req->ldt_copy;
+        init_process( current );
+    }
+    else
+    {
+        if (current->suspend + process->suspend > 0) stop_thread( current );
         generate_debug_event( current, CREATE_THREAD_DEBUG_EVENT, req->entry );
+    }
+    debug_level = max( debug_level, req->debug_level );
 
-    reply->pid     = get_process_id( current->process );
+    reply->pid     = get_process_id( process );
     reply->tid     = get_thread_id( current );
-    reply->boot    = (current == booting_thread);
     reply->version = SERVER_PROTOCOL_VERSION;
     return;
 

@@ -909,9 +909,12 @@ void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
         req->unix_pid    = unix_pid;
         req->unix_tid    = unix_tid;
         req->teb         = NtCurrentTeb();
+        req->peb         = NtCurrentTeb()->Peb;
         req->entry       = entry_point;
+        req->ldt_copy    = &wine_ldt_copy;
         req->reply_fd    = reply_pipe[1];
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
+        req->debug_level = (TRACE_ON(server) != 0);
         ret = wine_server_call( req );
         NtCurrentTeb()->ClientId.UniqueProcess = (HANDLE)reply->pid;
         NtCurrentTeb()->ClientId.UniqueThread  = (HANDLE)reply->tid;
