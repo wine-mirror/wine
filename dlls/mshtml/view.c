@@ -264,6 +264,8 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             return hres;
         }
 
+        TRACE("got parent window %p\n", parent_hwnd);
+
         hwnd = CreateWindowExW(0, wszInternetExplorer_Server, NULL,
                 WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
@@ -298,11 +300,16 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             IOleInPlaceFrame_Release(This->frame);
         This->frame = pIPFrame;
         This->hwnd = hwnd;
+
+        hres = IDocHostUIHandler_ShowUI(This->hostui, 0, ACTOBJ(This), CMDTARGET(This),
+                pIPFrame, NULL);
+        if(FAILED(hres))
+            IDocHostUIHandler_HideUI(This->hostui);
     }else {
-        static const WCHAR wszEmpty[] = {0};
-    
         if(This->frame)
-            IOleInPlaceFrame_SetActiveObject(This->frame, NULL, wszEmpty);
+            IOleInPlaceFrame_SetActiveObject(This->frame, NULL, NULL);
+        if(This->hostui)
+            IDocHostUIHandler_HideUI(This->hostui);
         if(This->ipsite)
             IOleInPlaceSite_OnUIDeactivate(This->ipsite, FALSE);
     }
