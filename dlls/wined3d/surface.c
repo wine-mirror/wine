@@ -306,9 +306,62 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         TRACE("Locking non-power 2 texture\n");
     }
 
-    if (0 == This->resource.usage) { /* classic surface */
+    if (0 == This->resource.usage || This->resource.usage & D3DUSAGE_DYNAMIC) {
+        /* classic surface  TODO: non 2d surfaces?
+        Thease resources may be POOL_SYSTEMMEM, so they must not access the device */
+        TRACE("locking an ordinarary surface\n");
+        /* Check to see if memory has already been allocated fro the sufrace*/
+        if (NULL == This->resource.allocatedMemory) { /* TODO: check to see if an update has been performed on the surface (an update could just clobber allocatedMemory */
+            /* Non-systemmemory surfaces */
 
-        /* Nothing to do ;) */
+            /*Surface has no memory currently allocate to it!*/
+            TRACE("(%p) Locking rect\n" , This);
+            This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->pow2Size);
+
+            /*Now I have to copy thing bits back*/  
+            This->activeLock = TRUE; /* When this flag is set to true, laoding the surface again won't free THis->resource.allocatedMemory */
+            /* TODO: make activeLock a bit more intelegent, maybe implement a method to purge the texture memory. */
+            ENTER_GL();
+
+            /* Make sure that the texture is loaded */
+            IWineD3DSurface_PreLoad(iface); /* Make sure there is a texture to bind! */
+
+            TRACE("(%p) glGetTexImage level(%d), fmt(%d), typ(%d), mem(%p) \n" , This, This->glDescription.level,  This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
+            /* TODO: DXT2 and DXT4 formats */
+            if (This->resource.format == WINED3DFMT_DXT1 ||
+                This->resource.format == WINED3DFMT_DXT3 ||
+                This->resource.format == WINED3DFMT_DXT5) {
+                TRACE("Locking a compressed texture\n");
+                if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) { /* we can assume this as the texture would not have been created otherwise */
+                    GL_EXTCALL(glGetCompressedTexImageARB)(This->glDescription.target,
+                                                        This->glDescription.level,
+                                                        This->resource.allocatedMemory);
+
+                } else {
+                    FIXME("(%p) attempting to lock a compressed texture when texture compression isn't supported by opengl\n", This);
+                }
+            } else {
+                glGetTexImage(This->glDescription.target,
+                            This->glDescription.level,
+                            This->glDescription.glFormat,
+                            This->glDescription.glType,
+                            This->resource.allocatedMemory);
+                vcheckGLcall("glGetTexImage");
+            }
+            LEAVE_GL();
+        } else { /* Nothing to do */
+            TRACE("Memory %p already allocted for texture\n",  This->resource.allocatedMemory);
+        }
+
+        if (NULL == pRect) {
+            pLockedRect->pBits = This->resource.allocatedMemory;
+        }  else{
+            if (This->resource.format == D3DFMT_DXT1) { /* DXT1 is half byte per pixel */
+                pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel/2));
+            } else {
+                pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
+            }
+        }
 
     } else if (D3DUSAGE_RENDERTARGET & This->resource.usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
 
@@ -330,6 +383,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         if (This->resource.allocatedMemory == NULL)
                 This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 ,This->resource.size);
 
+        This->activeLock = TRUE; /*When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory*/
         pLockedRect->pBits = This->resource.allocatedMemory;
 
         glFlush();
@@ -843,6 +897,12 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             checkGLcall("glCommpressedTexTexImage2D");
 
             LEAVE_GL();
+
+            if(This->activeLock == FALSE){
+                HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+                This->resource.allocatedMemory = NULL;
+            }
+
         } else {
             FIXME("Using DXT1/3/5 without advertized support\n");
         }
@@ -940,6 +1000,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             */
         }
 #endif
+        if(This->activeLock == FALSE){
+            HeapFree(GetProcessHeap(),0,This->resource.allocatedMemory);
+            This->resource.allocatedMemory = NULL;
+        }
+
     }
 
     return D3D_OK;

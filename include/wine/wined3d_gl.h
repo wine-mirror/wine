@@ -819,6 +819,7 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXIMAGE3DPROC,       glCompressedTexImage3DARB); \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE2DPROC,    glCompressedTexSubImage2DARB); \
     USE_GL_FUNC(PGLFNCOMPRESSEDTEXSUBIMAGE3DPROC,    glCompressedTexSubImage3DARB); \
+    USE_GL_FUNC(PGLFNGETCOMPRESSEDTEXIMAGEPROC,      glGetCompressedTexImageARB); \
     /* GL_ARB_vertex_blend */ \
     USE_GL_FUNC(PGLFNGLWEIGHTPOINTERARB,             glWeightPointerARB); \
     /* GL_ARB_vertex_buffer_object */ \

@@ -50,6 +50,9 @@ inline static Display *get_display( HDC hdc )
     return display;
 }
 
+/* Memory tracking and object counting */
+static unsigned int emulated_textureram = 64*1024*1024;
+
 /* helper macros */
 #define D3DMEMCHECK(object, ppResult) if(NULL == object){ *ppResult = NULL; WARN("Out of memory\n"); return D3DERR_OUTOFVIDEOMEMORY;}
 
@@ -63,7 +66,7 @@ inline static Display *get_display( HDC hdc )
     *pp##type = (IWineD3D##type *) object; \
 }
 
-#define  D3DCREATERESOURCEOBJECTINSTANCE(object, type, d3dtype){ \
+#define  D3DCREATERESOURCEOBJECTINSTANCE(object, type, d3dtype, _size){ \
     object=HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3D##type##Impl)); \
     D3DMEMCHECK(object, pp##type); \
     object->lpVtbl = &IWineD3D##type##_Vtbl;  \
@@ -74,9 +77,26 @@ inline static Display *get_display( HDC hdc )
     object->resource.pool            = Pool; \
     object->resource.format          = Format; \
     object->resource.usage           = Usage; \
-    object->resource.size            = 0; \
-    object->resource.allocatedMemory = 0; \
+    object->resource.size            = _size; \
+    /* Check that we have enough video ram left */ \
+    if (Pool == D3DPOOL_DEFAULT) { \
+        if (IWineD3DDevice_GetAvailableTextureMem(iface) <= _size) { \
+            WARN("Out of 'bogus' video memory\n"); \
+            HeapFree(GetProcessHeap(),0,object); \
+            *pp##type = NULL; \
+            return D3DERR_OUTOFVIDEOMEMORY; \
+        } \
+        globalChangeGlRam(_size); \
+    } \
+    object->resource.allocatedMemory = (0 == _size ? NULL : Pool == D3DPOOL_DEFAULT ? NULL : HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, _size)); \
+    if (object->resource.allocatedMemory == NULL && _size != 0 && Pool != D3DPOOL_DEFAULT) { \
+        FIXME("Out of memory!\n"); \
+        HeapFree(GetProcessHeap(), 0, object); \
+        *pp##type = NULL; \
+        return D3DERR_OUTOFVIDEOMEMORY; \
+    } \
     *pp##type = (IWineD3D##type *) object; \
+    TRACE("(%p) : Created resource %p\n", This, object); \
 }
 
 #define D3DINITILIZEBASETEXTURE(_basetexture) { \
@@ -347,11 +367,13 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBufferImpl *object;
     WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
-    D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, D3DRTYPE_VERTEXBUFFER)
+    D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, D3DRTYPE_VERTEXBUFFER, Size)
     
-    object->resource.size             = Size;
-    object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
-    object->FVF                       = FVF;
+    /*TODO: use VBO's */
+    if (Pool == D3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
+        object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
+    }
+    object->fvf = FVF;
 
     TRACE("(%p) : Size=%d, Usage=%ld, FVF=%lx, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
@@ -367,10 +389,12 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT 
     TRACE("(%p) Creating index buffer\n", This);
     
     /* Allocate the storage for the device */
-    D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,D3DRTYPE_INDEXBUFFER)
+    D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,D3DRTYPE_INDEXBUFFER, Length)
     
-    object->resource.size                   = Length;
-    object->resource.allocatedMemory        = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
+    /*TODO: use VBO's */
+    if (Pool == D3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
+        object->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
+    }
 
     TRACE("(%p) : Len=%d, Use=%lx, Format=(%u,%s), Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage, Format, 
                            debug_d3dformat(Format), Pool, object, object->resource.allocatedMemory);
@@ -507,7 +531,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;    
     IWineD3DSurfaceImpl *object; /*NOTE: impl ref allowed since this is a create function */
     unsigned int pow2Width, pow2Height;
-
+    unsigned int Size       = 1;
     TRACE("(%p) Create surface\n",This);
     
     /** FIXME: Check ranges on the inputs are valid 
@@ -561,7 +585,24 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
     /** TODO: Check against the maximum texture sizes supported by the video card **/
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,D3DRTYPE_SURFACE)
+
+    /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
+     *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
+     *  space!
+      *********************************/
+    if (Format == WINED3DFMT_DXT1) {
+        /* DXT1 is half byte per pixel */
+       Size = ((max(Width,4) * D3DFmtGetBpp(This, Format)) * max(Height,4)) >> 1;
+
+    } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
+               Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
+       Size = ((max(Width,4) * D3DFmtGetBpp(This, Format)) * max(Height,4));
+    } else {
+       Size = (Width     * D3DFmtGetBpp(This, Format)) * Height;
+    }
+
+    /** Create the and initilise surface resource **/
+    D3DCREATERESOURCEOBJECTINSTANCE(object,Surface,D3DRTYPE_SURFACE, Size)
     object->container = (IUnknown*) This;
 
     object->currentDesc.Width      = Width;
@@ -582,6 +623,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->pow2Height = pow2Height;
     object->nonpow2    = (pow2Width != Width || pow2Height != Height) ? TRUE : FALSE;
     object->discard    = Discard;
+    object->activeLock = FALSE;
     object->bytesPerPixel = D3DFmtGetBpp(This, Format);
     object->pow2Size      = (pow2Width * object->bytesPerPixel) * pow2Height;
 
@@ -592,33 +634,8 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
     object->pow2scalingFactorY  =  (((float)Height) / ((float)pow2Height));
     TRACE(" xf(%f) yf(%f) \n", object->pow2scalingFactorX, object->pow2scalingFactorY);
 
-    /** DXTn mipmaps use the same number of 'levels' down to eg. 8x1, but since
-     *  it is based around 4x4 pixel blocks it requires padding, so allocate enough
-     *  space!
-      *********************************/
-    if (Format == WINED3DFMT_DXT1) {
-        /* DXT1 is half byte per pixel */
-        object->resource.size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4)) / 2;
-        
-    } else if (Format == WINED3DFMT_DXT2 || Format == WINED3DFMT_DXT3 ||
-               Format == WINED3DFMT_DXT4 || Format == WINED3DFMT_DXT5) {
-        object->resource.size = ((max(Width,4) * object->bytesPerPixel) * max(Height,4));
-    } else {
-        object->resource.size = (Width * object->bytesPerPixel) * Height;
-    }
-    
     TRACE("Pool %d %d %d %d",Pool, D3DPOOL_DEFAULT, D3DPOOL_MANAGED, D3DPOOL_SYSTEMMEM);
 
-#if 0
-    /* TODO: Check that we have enough video ram left */
-    if(Pool == D3DPOOL_DEFAULT  && IWineD3DDevice_GetAvailableTextureMem(iface) <= object->currentDesc.Size){
-        TRACE("Out of 'bogus' video memory\n");
-        HeapFree(GetProcessHeap(),0,object);
-        *ppSurface = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-#endif
-    
     /** Quick lockable sanity check TODO: remove this after surfaces, usage and locablility have been debugged properly
     * this function is too deap to need to care about things like this.
     * Levels need to be checked too, and possibly Type wince they all affect what can be done.
@@ -655,15 +672,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, UINT Wid
 
     object->locked   = FALSE;
     object->lockable = (WINED3DFMT_D16_LOCKABLE == Format) ? TRUE : Lockable;
-    /* TODO: memory management */
-    object->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
-    if(object->resource.allocatedMemory == NULL ) {
-        FIXME("Out of memory!\n");
-        HeapFree(GetProcessHeap(),0,object);
-        *ppSurface = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-    
+
     /* mark the texture as dirty so that it get's loaded first time around*/
     IWineD3DSurface_AddDirtyRect(*ppSurface, NULL);
     TRACE("(%p) : w(%d) h(%d) fmt(%d,%s) lockable(%d) surf@%p, surfmem@%p, %d bytes\n",
@@ -687,7 +696,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
 
     TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) .... \n", This, Width, Height, Levels, Usage);
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE);
+    D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);    
     object->width  = Width;
     object->height = Height;
@@ -753,7 +762,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
     UINT                       tmpH;
     UINT                       tmpD;
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, D3DRTYPE_VOLUMETEXTURE);
+    D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, D3DRTYPE_VOLUMETEXTURE, 0);
     D3DINITILIZEBASETEXTURE(object->baseTexture);
     
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
@@ -810,7 +819,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     IWineD3DDeviceImpl        *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVolumeImpl        *object; /** NOTE: impl ref allowed since this is a create function **/
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, D3DRTYPE_VOLUME)
+    D3DCREATERESOURCEOBJECTINSTANCE(object, Volume, D3DRTYPE_VOLUME, ((Width * D3DFmtGetBpp(This, Format)) * Height * Depth))
 
     TRACE("(%p) : W(%d) H(%d) D(%d), Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -821,8 +830,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolume(IWineD3DDevice *iface,
     object->bytesPerPixel       = D3DFmtGetBpp(This, Format);
 
     /** Note: Volume textures cannot be dxtn, hence no need to check here **/
-    object->resource.size       = (Width * object->bytesPerPixel) * Height * Depth; 
-    object->resource.allocatedMemory     = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
     object->lockable            = TRUE;
     object->locked              = FALSE;
     memset(&object->lockedBox, 0, sizeof(D3DBOX));
@@ -843,7 +850,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
    UINT                     tmpW;
    HRESULT                  hr;
 
-   D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE);
+   D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE, 0);
    D3DINITILIZEBASETEXTURE(object->baseTexture);
 
    TRACE("(%p) Create Cube Texture \n", This);
@@ -1406,10 +1413,23 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice* iface, IWineD3D** 
 }
     
 UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
+    /** NOTE: There's a probably  a hack-around for this one by putting as many pbuffers, VBO's (or whatever)
+    * Into the video ram as possible and seeing how many fit
+    * you can also get the correct initial value from via X and ATI's driver
+    *******************/
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    FIXME("Stub :(%p) returning 64Mib\n", This);
-    return 64*1024*1024;
+    static BOOL showfixmes = TRUE;
+    if (showfixmes) {
+        FIXME("(%p) : stub, emulating %dMib for now, returning %dMib\n", This, (emulated_textureram/(1024*1024)),
+         ((emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
+         showfixmes = FALSE;
+    }
+    TRACE("(%p) :  emulating %dMib for now, returning %dMib\n",  This, (emulated_textureram/(1024*1024)),
+         ((emulated_textureram - wineD3DGlobalStatistics->glsurfaceram) / (1024*1024)));
+    /* videomemory is simulated videomemory + AGP memory left */
+    return (emulated_textureram - wineD3DGlobalStatistics->glsurfaceram);
 }
+
 
 
 /*****

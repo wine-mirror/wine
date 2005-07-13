@@ -124,7 +124,7 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *if
     pDesc->Usage  = This->resource.usage;
     pDesc->Pool   = This->resource.pool;
     pDesc->Size   = This->resource.size;
-    pDesc->FVF    = This->FVF;
+    pDesc->FVF    = This->fvf;
     return D3D_OK;
 }
 

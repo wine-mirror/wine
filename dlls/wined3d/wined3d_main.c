@@ -33,12 +33,40 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 int vs_mode = VS_HW;   /* Hardware by default */
 int ps_mode = PS_NONE; /* Disabled by default */
 
+WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
+CRITICAL_SECTION resourceStoreCriticalSection;
+
+long globalChangeGlRam(long glram){
+    /* FIXME: replace this function with object tracking */
+    int result;
+
+    EnterCriticalSection(&resourceStoreCriticalSection); /* this is overkill really, but I suppose it should be thread safe */
+    wineD3DGlobalStatistics->glsurfaceram     += glram;
+    TRACE("Adjusted gl ram by %ld to %d\n", glram, wineD3DGlobalStatistics->glsurfaceram);
+    result = wineD3DGlobalStatistics->glsurfaceram;
+    LeaveCriticalSection(&resourceStoreCriticalSection);
+    return result;
+
+}
+
 IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent) {
     IWineD3DImpl* object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DImpl));
     object->lpVtbl = &IWineD3D_Vtbl;
     object->dxVersion = dxVersion;
     object->ref = 1;
     object->parent = parent;
+
+    /* TODO: Move this off to device and possibly x11drv */
+    /* Create a critical section for a dll global data store */
+    InitializeCriticalSectionAndSpinCount(&resourceStoreCriticalSection, 0x80000400);
+
+    /*Create a structure for storing global data in*/
+    if(wineD3DGlobalStatistics == NULL){
+        TRACE("Createing global statistics store\n");
+        wineD3DGlobalStatistics = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wineD3DGlobalStatistics));
+
+    }
+
 
     TRACE("Created WineD3D object @ %p for d3d%d support\n", object, dxVersion);
 

@@ -215,6 +215,23 @@ do {                                                                            
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 
+/* Tracking */
+
+/* TODO: Move some of this to the device */
+long globalChangeGlRam(long glram);
+
+/* Memory and object tracking */
+
+/*Structure for holding information on all direct3d objects
+usefull for making sure tracking is ok and when release is called on a device!
+and probably quite handy for debuggin and dumping states out
+*/
+typedef struct WineD3DGlobalStatistics {
+    int glsurfaceram; /* The aproximate amount of glTexture memory allocated for textures */
+} WineD3DGlobalStatistics;
+
+extern WineD3DGlobalStatistics* wineD3DGlobalStatistics;
+
 /* Global variables */
 extern const float identity[16];
 
@@ -469,7 +486,7 @@ typedef struct IWineD3DVertexBufferImpl
     IWineD3DResourceClass     resource;
 
     /* WineD3DVertexBuffer specifics */
-    DWORD                     FVF;
+    DWORD                     fvf;
 
 } IWineD3DVertexBufferImpl;
 
@@ -636,6 +653,7 @@ struct IWineD3DSurfaceImpl
     BOOL                      lockable;
     BOOL                      discard;
     BOOL                      locked;
+    BOOL                      activeLock;
     
     RECT                      lockedRect;
     RECT                      dirtyRect;
