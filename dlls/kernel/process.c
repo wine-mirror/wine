@@ -47,7 +47,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(file);
-WINE_DECLARE_DEBUG_CHANNEL(server);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 typedef struct
@@ -1003,14 +1002,6 @@ static BOOL process_init(void)
 
         /* convert old configuration to new format */
         convert_old_config();
-
-        /* global boot finished, the rest is process-local */
-        SERVER_START_REQ( boot_done )
-        {
-            req->debug_level = TRACE_ON(server);
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
 
         set_registry_environment();
     }

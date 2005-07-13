@@ -106,7 +106,6 @@ inline static void set_reply_data_ptr( void *data, size_t size )
 DECL_HANDLER(new_process);
 DECL_HANDLER(get_new_process_info);
 DECL_HANDLER(new_thread);
-DECL_HANDLER(boot_done);
 DECL_HANDLER(init_process);
 DECL_HANDLER(get_startup_info);
 DECL_HANDLER(init_process_done);
@@ -316,7 +315,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_new_process,
     (req_handler)req_get_new_process_info,
     (req_handler)req_new_thread,
-    (req_handler)req_boot_done,
     (req_handler)req_init_process,
     (req_handler)req_get_startup_info,
     (req_handler)req_init_process_done,

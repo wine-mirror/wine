@@ -237,12 +237,6 @@ struct security_descriptor
 @END
 
 
-/* Signal that we are finished booting on the client side */
-@REQ(boot_done)
-    int          debug_level;  /* new debug level */
-@END
-
-
 /* Initialize a process; called from the new process context */
 @REQ(init_process)
 @REPLY

@@ -606,11 +606,6 @@ static void dump_new_thread_reply( const struct new_thread_reply *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_boot_done_request( const struct boot_done_request *req )
-{
-    fprintf( stderr, " debug_level=%d", req->debug_level );
-}
-
 static void dump_init_process_request( const struct init_process_request *req )
 {
 }
@@ -3071,7 +3066,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
     (dump_func)dump_new_thread_request,
-    (dump_func)dump_boot_done_request,
     (dump_func)dump_init_process_request,
     (dump_func)dump_get_startup_info_request,
     (dump_func)dump_init_process_done_request,
@@ -3278,7 +3272,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_reply,
     (dump_func)dump_get_new_process_info_reply,
     (dump_func)dump_new_thread_reply,
-    (dump_func)0,
     (dump_func)dump_init_process_reply,
     (dump_func)dump_get_startup_info_reply,
     (dump_func)0,
@@ -3485,7 +3478,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
     "get_new_process_info",
     "new_thread",
-    "boot_done",
     "init_process",
     "get_startup_info",
     "init_process_done",

@@ -109,7 +109,6 @@ static const struct fd_ops thread_fd_ops =
 };
 
 static struct list thread_list = LIST_INIT(thread_list);
-static struct thread *booting_thread;
 
 /* initialize the structure for a newly allocated thread */
 inline static void init_thread_structure( struct thread *thread )
@@ -168,12 +167,6 @@ struct thread *create_thread( int fd, struct process *process )
     thread->process = (struct process *)grab_object( process );
     thread->desktop = process->desktop;
     if (!current) current = thread;
-
-    if (!booting_thread)  /* first thread ever */
-    {
-        booting_thread = thread;
-        lock_master_socket(1);
-    }
 
     list_add_head( &thread_list, &thread->entry );
 
@@ -237,12 +230,6 @@ static void cleanup_thread( struct thread *thread )
     thread->reply_fd = NULL;
     thread->wait_fd = NULL;
     thread->desktop = 0;
-
-    if (thread == booting_thread)  /* killing booting thread */
-    {
-        booting_thread = NULL;
-        lock_master_socket(0);
-    }
 }
 
 /* destroy a thread when its refcount is 0 */
@@ -815,16 +802,6 @@ struct token *thread_get_impersonation_token( struct thread *thread )
         return thread->token;
     else
         return thread->process->token;
-}
-
-/* signal that we are finished booting on the client side */
-DECL_HANDLER(boot_done)
-{
-    if (current == booting_thread)
-    {
-        booting_thread = (struct thread *)~0UL;  /* make sure it doesn't match other threads */
-        lock_master_socket(0);  /* allow other clients now */
-    }
 }
 
 /* create a new thread */
