@@ -9,6 +9,7 @@ control.h
 ddstream.h
 dispex.h
 docobj.h
+downloadmgr.h
 exdisp.h
 mediaobj.h
 mimeinfo.h
