@@ -84,6 +84,7 @@ typedef struct {
     struct list entry;
     DWORD job_id;
     WCHAR *filename;
+    WCHAR *document_title;
 } job_t;
 
 static opened_printer_t **printer_handles;
@@ -180,6 +181,18 @@ static inline PWSTR asciitounicode( UNICODE_STRING * usBufferPtr, LPCSTR src )
     return NULL;
 }
             
+static LPWSTR strdupW(LPWSTR p)
+{
+    LPWSTR ret;
+    DWORD len;
+
+    if(!p) return NULL;
+    len = (strlenW(p) + 1) * sizeof(WCHAR);
+    ret = HeapAlloc(GetProcessHeap(), 0, len);
+    memcpy(ret, p, len);
+    return ret;
+}
+
 static void
 WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     char qbuf[200];
@@ -690,6 +703,26 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     }
     RegCloseKey(hkeyPrinters);
     return ERROR_SUCCESS;
+}
+
+/******************************************************************
+ *                  get_job
+ *
+ *  Get the pointer to the specified job.
+ *  Should hold the printer_handles_cs before calling.
+ */
+static job_t *get_job(HANDLE hprn, DWORD JobId)
+{
+    opened_printer_t *printer = get_opened_printer(hprn);
+    job_t *job;
+
+    if(!printer) return NULL;
+    LIST_FOR_EACH_ENTRY(job, &printer->jobs, job_t, entry)
+    {
+        if(job->job_id == JobId)
+            return job;
+    }
+    return NULL;
 }
 
 /***********************************************************
@@ -1295,6 +1328,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     len = strlenW(filename);
     job->filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
+    job->document_title = NULL;
     list_add_tail(&printer->jobs, &job->entry);
 
     *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
@@ -1732,13 +1766,13 @@ BOOL WINAPI SetPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pPrinter,
  *          SetJobA  [WINSPOOL.@]
  */
 BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
-                       LPBYTE pJob, DWORD Command)
+                    LPBYTE pJob, DWORD Command)
 {
     BOOL ret;
     LPBYTE JobW;
     UNICODE_STRING usBuffer;
 
-    TRACE("(%p,%ld,%ld,%p,%ld)\n",hPrinter, JobId, Level, pJob, Command);
+    TRACE("(%p, %ld, %ld, %p, %ld)\n",hPrinter, JobId, Level, pJob, Command);
 
     /* JobId, pPrinterName, pMachineName, pDriverName, Size, Submitted, Time and TotalPages
        are all ignored by SetJob, so we don't bother copying them */
@@ -1831,11 +1865,47 @@ BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
  *          SetJobW  [WINSPOOL.@]
  */
 BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
-                       LPBYTE pJob, DWORD Command)
+                    LPBYTE pJob, DWORD Command)
 {
-    FIXME("(%p,%ld,%ld,%p,%ld): stub\n",hPrinter,JobId,Level,pJob,
-         Command);
-    return FALSE;
+    BOOL ret = FALSE;
+    job_t *job;
+
+    TRACE("(%p, %ld, %ld, %p, %ld)\n", hPrinter, JobId, Level, pJob, Command);
+    FIXME("Ignoring everything other than document title\n");
+
+    EnterCriticalSection(&printer_handles_cs);
+    job = get_job(hPrinter, JobId);
+    if(!job)
+        goto end;
+
+    switch(Level)
+    {
+    case 0:
+        break;
+    case 1:
+      {
+        JOB_INFO_1W *info1 = (JOB_INFO_1W*)pJob;
+        HeapFree(GetProcessHeap(), 0, job->document_title);
+        job->document_title = strdupW(info1->pDocument);
+        break;
+      }
+    case 2:
+      {
+        JOB_INFO_2W *info2 = (JOB_INFO_2W*)pJob;
+        HeapFree(GetProcessHeap(), 0, job->document_title);
+        job->document_title = strdupW(info2->pDocument);
+        break;
+      }
+    case 3:
+        break;
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        goto end;
+    }
+    ret = TRUE;
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
 }
 
 /*****************************************************************************
@@ -1930,6 +2000,7 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     opened_printer_t *printer;
     BYTE addjob_buf[MAX_PATH * sizeof(WCHAR) + sizeof(ADDJOB_INFO_1W)];
     ADDJOB_INFO_1W *addjob = (ADDJOB_INFO_1W*) addjob_buf;
+    JOB_INFO_1W job_info;
     DWORD needed, ret = 0;
     HANDLE hf;
     WCHAR *filename;
@@ -1976,7 +2047,9 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     if(hf == INVALID_HANDLE_VALUE)
         goto end;
 
-    /* FIXME should set doc title with SetJob */
+    memset(&job_info, 0, sizeof(job_info));
+    job_info.pDocument = doc->pDocName;
+    SetJobW(hPrinter, addjob->JobId, 1, (LPBYTE)&job_info, 0);
 
     printer->doc = HeapAlloc(GetProcessHeap(), 0, sizeof(*printer->doc));
     printer->doc->hf = hf;
@@ -5000,6 +5073,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             DeleteFileW(job->filename);
         }
         list_remove(cursor);
+        HeapFree(GetProcessHeap(), 0, job->document_title);
         HeapFree(GetProcessHeap(), 0, job->filename);
         HeapFree(GetProcessHeap(), 0, job);
         ret = TRUE;
