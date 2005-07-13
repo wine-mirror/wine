@@ -43,6 +43,7 @@ extern struct token *token_create_admin(void);
 extern int token_check_privileges( struct token *token, int all_required,
                                    const LUID_AND_ATTRIBUTES *reqprivs,
                                    unsigned int count, LUID_AND_ATTRIBUTES *usedprivs);
+extern const ACL *token_get_default_dacl( struct token *token );
 extern void security_set_thread_token( struct thread *thread, obj_handle_t handle );
 
 static inline int thread_single_check_privilege( struct thread *thread, const LUID *priv)

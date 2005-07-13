@@ -74,6 +74,7 @@ struct token
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
     unsigned       primary;         /* is this a primary or impersonation token? */
+    ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
 };
 
 struct privilege
@@ -380,11 +381,20 @@ static void token_destroy( struct object *obj )
         list_remove( &group->entry );
         free( group );
     }
+
+    free( token->default_dacl );
 }
 
+/* creates a new token.
+ *  groups may be NULL if group_count is 0.
+ *  privs may be NULL if priv_count is 0.
+ *  default_dacl may be NULL, indicating that all objects created by the user
+ *   are unsecured.
+ */
 static struct token *create_token( unsigned primary, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
-                                   const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count )
+                                   const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
+                                   const ACL *default_dacl )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
@@ -431,8 +441,62 @@ static struct token *create_token( unsigned primary, const SID *user,
                 return NULL;
             }
         }
+
+        if (default_dacl)
+        {
+            token->default_dacl = memdup( default_dacl, default_dacl->AclSize );
+            if (!token->default_dacl)
+            {
+                release_object( token );
+                return NULL;
+            }
+        }
+        else
+            token->default_dacl = NULL;
     }
     return token;
+}
+
+static ACL *create_default_dacl( const SID *user )
+{
+    ACCESS_ALLOWED_ACE *aaa;
+    ACL *default_dacl;
+    SID *sid;
+    size_t default_dacl_size = sizeof(ACL) +
+                               2*(sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
+                               sizeof(local_system_sid) +
+                               FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+
+    default_dacl = mem_alloc( default_dacl_size );
+    if (!default_dacl) return NULL;
+
+    default_dacl->AclRevision = MAX_ACL_REVISION;
+    default_dacl->Sbz1 = 0;
+    default_dacl->AclSize = default_dacl_size;
+    default_dacl->AceCount = 2;
+    default_dacl->Sbz2 = 0;
+
+    /* GENERIC_ALL for Local System */
+    aaa = (ACCESS_ALLOWED_ACE *)(default_dacl + 1);
+    aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+    aaa->Header.AceFlags = 0;
+    aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
+                          sizeof(local_system_sid);
+    aaa->Mask = GENERIC_ALL;
+    sid = (SID *)&aaa->SidStart;
+    memcpy( sid, &local_system_sid, sizeof(local_system_sid) );
+
+    /* GENERIC_ALL for specified user */
+    aaa = (ACCESS_ALLOWED_ACE *)((const char *)aaa + aaa->Header.AceSize);
+    aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
+    aaa->Header.AceFlags = 0;
+    aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
+                          FIELD_OFFSET( SID, SubAuthority[user->SubAuthorityCount] );
+    aaa->Mask = GENERIC_ALL;
+    sid = (SID *)&aaa->SidStart;
+    memcpy( sid, user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
+
+    return default_dacl;
 }
 
 struct sid_data
@@ -450,13 +514,14 @@ struct token *token_create_admin( void )
     static const unsigned int alias_users_subauth[] = { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS };
     PSID alias_admins_sid;
     PSID alias_users_sid;
+    ACL *default_dacl = create_default_dacl( &local_system_sid );
 
     alias_admins_sid = security_sid_alloc( &nt_authority, sizeof(alias_admins_subauth)/sizeof(alias_admins_subauth[0]),
                                            alias_admins_subauth );
     alias_users_sid = security_sid_alloc( &nt_authority, sizeof(alias_users_subauth)/sizeof(alias_users_subauth[0]),
                                           alias_users_subauth );
 
-    if (alias_admins_sid && alias_users_sid)
+    if (alias_admins_sid && alias_users_sid && default_dacl)
     {
         const LUID_AND_ATTRIBUTES admin_privs[] =
         {
@@ -496,18 +561,21 @@ struct token *token_create_admin( void )
          * telling us what this should be is the job of a client-side program */
         token = create_token( TRUE, &local_system_sid,
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
-                            admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]) );
+                            admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
+                            default_dacl );
     }
 
     if (alias_admins_sid)
         free( alias_admins_sid );
     if (alias_users_sid)
         free( alias_users_sid );
+    if (default_dacl)
+        free( default_dacl );
 
     return token;
 }
 
-static struct privilege *token_find_privilege( struct token *token, const LUID *luid, int enabled_only)
+static struct privilege *token_find_privilege( struct token *token, const LUID *luid, int enabled_only )
 {
     struct privilege *privilege;
     LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
@@ -524,7 +592,7 @@ static struct privilege *token_find_privilege( struct token *token, const LUID *
 
 static unsigned int token_adjust_privileges( struct token *token, const LUID_AND_ATTRIBUTES *privs,
                                              unsigned int count, LUID_AND_ATTRIBUTES *mod_privs,
-                                             unsigned int mod_privs_count)
+                                             unsigned int mod_privs_count )
 {
     int i;
     unsigned int modified_count = 0;
@@ -793,6 +861,11 @@ static unsigned int token_access_check( struct token *token,
     }
 }
 
+const ACL *token_get_default_dacl( struct token *token )
+{
+    return token->default_dacl;
+}
+
 /* open a security token */
 DECL_HANDLER(open_token)
 {
@@ -912,7 +985,7 @@ DECL_HANDLER(duplicate_token)
                                                      &token_ops )))
     {
         /* FIXME: use req->impersonation_level */
-        struct token *token = create_token( req->primary, src_token->user, NULL, 0, NULL, 0 );
+        struct token *token = create_token( req->primary, src_token->user, NULL, 0, NULL, 0, src_token->default_dacl );
         if (token)
         {
             struct privilege *privilege;
