@@ -252,6 +252,7 @@ WINDOWS_INCLUDES = \
 	wingdi.h \
 	wininet.h \
 	winioctl.h \
+	winldap.h \
 	winnetwk.h \
 	winnls.h \
 	winnls32.h \
