@@ -876,7 +876,7 @@ DECL_HANDLER(init_thread)
     {
         process->peb      = req->peb;
         process->ldt_copy = req->ldt_copy;
-        init_process( current );
+        reply->info_size  = init_process( current );
     }
     else
     {

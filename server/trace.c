@@ -612,8 +612,7 @@ static void dump_init_process_request( const struct init_process_request *req )
 
 static void dump_init_process_reply( const struct init_process_reply *req )
 {
-    fprintf( stderr, " server_start=%08x,", req->server_start );
-    fprintf( stderr, " info_size=%d", req->info_size );
+    fprintf( stderr, " server_start=%08x", req->server_start );
 }
 
 static void dump_get_startup_info_request( const struct get_startup_info_request *req )
@@ -663,6 +662,7 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
+    fprintf( stderr, " info_size=%d,", req->info_size );
     fprintf( stderr, " version=%d", req->version );
 }
 

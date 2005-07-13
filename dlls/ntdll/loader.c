@@ -2126,9 +2126,22 @@ void __wine_process_init( int argc, char *argv[] )
     NTSTATUS status;
     ANSI_STRING func_name;
     void (* DECLSPEC_NORETURN init_func)();
+    ULONG info_size;
     extern mode_t FILE_umask;
 
-    thread_init();
+    info_size = thread_init();
+
+    if (info_size)
+    {
+        RTL_USER_PROCESS_PARAMETERS *params = NULL;
+
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &info_size,
+                                     MEM_COMMIT, PAGE_READWRITE ) == STATUS_SUCCESS)
+        {
+            params->AllocationSize = info_size;
+            NtCurrentTeb()->Peb->ProcessParameters = params;
+        }
+    }
 
     /* retrieve current umask */
     FILE_umask = umask(0777);

@@ -102,11 +102,11 @@ static inline void free_teb( TEB *teb )
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-void thread_init(void)
+ULONG thread_init(void)
 {
     TEB *teb;
     void *addr;
-    ULONG size;
+    ULONG size, info_size;
     struct ntdll_thread_data *thread_data;
     struct wine_pthread_thread_info thread_info;
     static struct debug_info debug_info;  /* debug info for initial thread */
@@ -148,7 +148,7 @@ void thread_init(void)
 
     /* setup the server connection */
     server_init_process();
-    server_init_thread( thread_info.pid, thread_info.tid, NULL );
+    info_size = server_init_thread( thread_info.pid, thread_info.tid, NULL );
 
     /* create a memory view for the TEB */
     addr = teb;
@@ -161,6 +161,7 @@ void thread_init(void)
         MESSAGE( "wine: failed to create the process heap\n" );
         exit(1);
     }
+    return info_size;
 }
 
 

@@ -104,7 +104,7 @@ extern unsigned int alloc_ptid( void *ptr );
 extern void free_ptid( unsigned int id );
 extern void *get_ptid_entry( unsigned int id );
 extern struct thread *create_process( int fd );
-extern void init_process( struct thread *thread );
+extern size_t init_process( struct thread *thread );
 extern struct thread *get_process_first_thread( struct process *process );
 extern struct process *get_process_from_id( process_id_t id );
 extern struct process *get_process_from_handle( obj_handle_t handle, unsigned int access );

@@ -241,7 +241,6 @@ struct security_descriptor
 @REQ(init_process)
 @REPLY
     unsigned int server_start; /* server start time (GetTickCount) */
-    size_t       info_size;    /* total size of startup info */
 @END
 
 
@@ -284,6 +283,7 @@ struct security_descriptor
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
+    size_t       info_size;    /* total size of startup info */
     int          version;      /* protocol version */
 @END
 

@@ -48,12 +48,12 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
 /* init routines */
 extern BOOL SIGNAL_Init(void);
 extern void debug_init(void);
-extern void thread_init(void);
+extern ULONG thread_init(void);
 extern void virtual_init(void);
 
 /* server support */
 extern void server_init_process(void);
-extern void server_init_thread( int unix_pid, int unix_tid, void *entry_point );
+extern size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point );
 extern void DECLSPEC_NORETURN server_protocol_error( const char *err, ... );
 extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
 extern void DECLSPEC_NORETURN server_abort_thread( int status );

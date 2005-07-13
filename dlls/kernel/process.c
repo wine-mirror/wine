@@ -736,23 +736,18 @@ static void usage(void)
  *
  * Fill the RTL_USER_PROCESS_PARAMETERS structure from the server.
  */
-static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
+static BOOL init_user_process_params( RTL_USER_PROCESS_PARAMETERS *params )
 {
     BOOL ret;
     void *ptr;
-    DWORD size, env_size;
-    RTL_USER_PROCESS_PARAMETERS *params;
+    DWORD size, env_size, info_size;
     HANDLE hstdin, hstdout, hstderr;
 
-    size = info_size;
-    ptr = NULL;
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &size,
-                                 MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
-        return NULL;
+    size = info_size = params->AllocationSize;
 
     SERVER_START_REQ( get_startup_info )
     {
-        wine_server_set_reply( req, ptr, info_size );
+        wine_server_set_reply( req, params, size );
         if ((ret = !wine_server_call( req )))
         {
             info_size = wine_server_reply_size( reply );
@@ -764,14 +759,8 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
         }
     }
     SERVER_END_REQ;
-    if (!ret)
-    {
-        size = 0;
-        NtFreeVirtualMemory( NtCurrentProcess(), &ptr, &size, MEM_RELEASE );
-        return NULL;
-    }
+    if (!ret) return ret;
 
-    params = ptr;
     params->AllocationSize = size;
     if (params->Size > info_size) params->Size = info_size;
 
@@ -791,7 +780,7 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     ptr = NULL;
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0, &env_size,
                                  MEM_COMMIT, PAGE_READWRITE ) != STATUS_SUCCESS)
-        return NULL;
+        return FALSE;
     memcpy( ptr, (char *)params + params->Size, info_size - params->Size );
     params->Environment = ptr;
 
@@ -818,7 +807,8 @@ static RTL_USER_PROCESS_PARAMETERS *init_user_process_params( size_t info_size )
     params->hStdOutput = hstdout;
     params->hStdError  = hstderr;
 
-    return RtlNormalizeProcessParams( params );
+    RtlNormalizeProcessParams( params );
+    return TRUE;
 }
 
 
@@ -944,9 +934,8 @@ static BOOL process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     BOOL ret;
-    size_t info_size = 0;
-    RTL_USER_PROCESS_PARAMETERS *params;
     PEB *peb = NtCurrentTeb()->Peb;
+    RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
     extern void __wine_dbg_kernel32_init(void);
 
     PTHREAD_Init();
@@ -962,17 +951,14 @@ static BOOL process_init(void)
     {
         if ((ret = !wine_server_call_err( req )))
         {
-            info_size         = reply->info_size;
             server_startticks = reply->server_start;
         }
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
 
-    if (info_size == 0)
+    if (!params->AllocationSize)
     {
-        params = peb->ProcessParameters;
-
         /* This is wine specific: we have no parent (we're started from unix)
          * so, create a simple console with bare handles to unix stdio 
          * input & output streams (aka simple console)
@@ -985,17 +971,13 @@ static BOOL process_init(void)
         params->CurrentDirectory.DosPath.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
         params->CurrentDirectory.DosPath.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, params->CurrentDirectory.DosPath.MaximumLength);
     }
-    else
-    {
-        if (!(params = init_user_process_params( info_size ))) return FALSE;
-        peb->ProcessParameters = params;
-    }
+    else if (!init_user_process_params( params )) return FALSE;
 
     kernel32_handle = GetModuleHandleW(kernel32W);
 
     LOCALE_Init();
 
-    if (!info_size)
+    if (!params->AllocationSize)
     {
         /* Copy the parent environment */
         if (!build_initial_environment( __wine_main_environ )) return FALSE;

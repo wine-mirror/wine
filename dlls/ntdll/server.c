@@ -873,11 +873,12 @@ void server_init_process(void)
  *
  * Send an init thread request. Return 0 if OK.
  */
-void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
+size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
 {
     int version, ret;
     int reply_pipe[2];
     struct sigaction sig_act;
+    size_t info_size;
 
     sig_act.sa_handler = SIG_IGN;
     sig_act.sa_flags   = 0;
@@ -918,7 +919,8 @@ void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
         ret = wine_server_call( req );
         NtCurrentTeb()->ClientId.UniqueProcess = (HANDLE)reply->pid;
         NtCurrentTeb()->ClientId.UniqueThread  = (HANDLE)reply->tid;
-        version  = reply->version;
+        info_size = reply->info_size;
+        version   = reply->version;
     }
     SERVER_END_REQ;
 
@@ -930,4 +932,5 @@ void server_init_thread( int unix_pid, int unix_tid, void *entry_point )
                                "Or maybe the wrong wineserver is still running?\n",
                                version, SERVER_PROTOCOL_VERSION,
                                (version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
+    return info_size;
 }

@@ -303,18 +303,18 @@ inline static struct startup_info *find_startup_info( int unix_pid )
 }
 
 /* initialize the current process and fill in the request */
-void init_process( struct thread *thread )
+size_t init_process( struct thread *thread )
 {
     struct process *process = thread->process;
     struct thread *parent_thread = NULL;
     struct process *parent = NULL;
     struct startup_info *info;
 
-    if (process->startup_info) return;  /* already initialized */
+    if (process->startup_info) return process->startup_info->data_size;  /* already initialized */
 
     if ((info = find_startup_info( thread->unix_pid )))
     {
-        if (info->thread) return;  /* already initialized */
+        if (info->thread) return info->data_size;  /* already initialized */
 
         info->thread  = (struct thread *)grab_object( thread );
         info->process = (struct process *)grab_object( process );
@@ -335,7 +335,7 @@ void init_process( struct thread *thread )
     if (!process->handles)
     {
         fatal_protocol_error( thread, "Failed to allocate handle table\n" );
-        return;
+        return 0;
     }
 
     /* connect to the window station and desktop */
@@ -343,7 +343,7 @@ void init_process( struct thread *thread )
     connect_process_desktop( process, NULL, 0 );
     thread->desktop = process->desktop;
 
-    if (!info) return;
+    if (!info) return 0;
 
     /* retrieve the main exe file */
     if (info->exe_file) process->exe.file = (struct file *)grab_object( info->exe_file );
@@ -369,6 +369,8 @@ void init_process( struct thread *thread )
 
     if (!(process->create_flags & CREATE_NEW_PROCESS_GROUP))
         process->group_id = parent->group_id;
+
+    return info->data_size;
 }
 
 /* destroy a process when its refcount is 0 */
@@ -967,8 +969,6 @@ DECL_HANDLER(get_startup_info)
 DECL_HANDLER(init_process)
 {
     reply->server_start = server_start_ticks;
-    if (current->process->startup_info)
-        reply->info_size = current->process->startup_info->data_size;
 }
 
 /* signal the end of the process initialization */

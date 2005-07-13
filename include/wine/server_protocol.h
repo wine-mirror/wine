@@ -245,7 +245,6 @@ struct init_process_reply
 {
     struct reply_header __header;
     unsigned int server_start;
-    size_t       info_size;
 };
 
 
@@ -304,6 +303,7 @@ struct init_thread_reply
     struct reply_header __header;
     process_id_t pid;
     thread_id_t  tid;
+    size_t       info_size;
     int          version;
 };
 
@@ -4174,6 +4174,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 185
+#define SERVER_PROTOCOL_VERSION 186
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
