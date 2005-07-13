@@ -103,10 +103,10 @@ typedef struct _msft_typeinfo_t
     msft_typelib_t *typelib;
     MSFT_TypeInfoBase *typeinfo;
 
-    int var_data_allocated;
+    unsigned int var_data_allocated;
     int *var_data;
 
-    int func_data_allocated;
+    unsigned int func_data_allocated;
     int *func_data;
 
     int vars_allocated;
@@ -1458,7 +1458,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 
 static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 {
-    int offset, typedata_size, id;
+    int offset, id;
+    unsigned int typedata_size;
     INT *typedata;
     int var_datawidth;
     int var_alignment;
