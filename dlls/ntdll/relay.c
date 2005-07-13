@@ -39,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 
+#ifdef __i386__
+
 static const WCHAR **debug_relay_excludelist;
 static const WCHAR **debug_relay_includelist;
 static const WCHAR **debug_snoop_excludelist;
@@ -47,6 +49,8 @@ static const WCHAR **debug_from_relay_excludelist;
 static const WCHAR **debug_from_relay_includelist;
 static const WCHAR **debug_from_snoop_excludelist;
 static const WCHAR **debug_from_snoop_includelist;
+
+static BOOL init_done;
 
 /* compare an ASCII and a Unicode string without depending on the current codepage */
 inline static int strcmpAW( const char *strA, const WCHAR *strW )
@@ -102,11 +106,11 @@ static const WCHAR **build_list( const WCHAR *buffer )
 
 
 /***********************************************************************
- *           RELAY_InitDebugLists
+ *           init_debug_lists
  *
  * Build the relay include/exclude function lists.
  */
-void RELAY_InitDebugLists(void)
+static void init_debug_lists(void)
 {
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING name;
@@ -125,6 +129,9 @@ void RELAY_InitDebugLists(void)
     static const WCHAR RelayFromExcludeW[] = {'R','e','l','a','y','F','r','o','m','E','x','c','l','u','d','e',0};
     static const WCHAR SnoopFromIncludeW[] = {'S','n','o','o','p','F','r','o','m','I','n','c','l','u','d','e',0};
     static const WCHAR SnoopFromExcludeW[] = {'S','n','o','o','p','F','r','o','m','E','x','c','l','u','d','e',0};
+
+    if (init_done) return;
+    init_done = TRUE;
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
     attr.Length = sizeof(attr);
@@ -200,8 +207,6 @@ void RELAY_InitDebugLists(void)
     NtClose( hkey );
 }
 
-
-#ifdef __i386__
 
 #include "pshpack1.h"
 
@@ -768,6 +773,8 @@ void RELAY_SetupDLL( HMODULE module )
     char *p, dllname[80];
     DWORD size;
 
+    if (!init_done) init_debug_lists();
+
     exports = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
     if (!exports) return;
     debug = (DEBUG_ENTRY_POINT *)((char *)exports + size);
@@ -832,6 +839,8 @@ void SNOOP_SetupDLL(HMODULE hmod)
     void *addr;
     SIZE_T size;
     IMAGE_EXPORT_DIRECTORY *exports;
+
+    if (!init_done) init_debug_lists();
 
     exports = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
     if (!exports) return;
