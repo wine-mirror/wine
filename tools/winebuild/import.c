@@ -701,7 +701,7 @@ static void output_import_thunk( FILE *outfile, const char *name, const char *ta
         if (!UsePIC)
         {
             if (strstr( name, "__wine_call_from_16" )) fprintf( outfile, "    \"\\t.byte 0x2e\\n\"\n" );
-            fprintf( outfile, "    \"\\tjmp *(imports+%d)\\n\"\n", pos );
+            fprintf( outfile, "    \"\\tjmp *(%s+%d)\\n\"\n", asm_name(table), pos );
         }
         else
         {
