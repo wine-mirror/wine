@@ -402,6 +402,37 @@ typedef struct _CRL_INFO {
     PCERT_EXTENSION rgExtension;
 } CRL_INFO, *PCRL_INFO;
 
+typedef struct _CRYPT_ATTRIBUTE {
+    LPSTR            pszObjId;
+    DWORD            cValue;
+    PCRYPT_DATA_BLOB rgValue;
+} CRYPT_ATTRIBUTE, *PCRYPT_ATTRIBUTE;
+
+typedef struct _CRYPT_ATTRIBUTES {
+    DWORD            cAttr;
+    PCRYPT_ATTRIBUTE rgAttr;
+} CRYPT_ATTRIBUTES, *PCRYPT_ATTRIBUTES;
+
+typedef struct _CERT_REQUEST_INFO {
+    DWORD                dwVersion;
+    CERT_NAME_BLOB       Subject;
+    CERT_PUBLIC_KEY_INFO SubjectPublicKeyInfo;
+    DWORD                cAttribute;
+    PCRYPT_ATTRIBUTE     rgAttribute;
+} CERT_REQUEST_INFO, *PCERT_REQUEST_INFO;
+
+typedef struct _CERT_KEYGEN_REQUEST_INFO {
+    DWORD                dwVersion;
+    CERT_PUBLIC_KEY_INFO SubjectPubliceKeyInfo;
+    LPWSTR               pwszChallengeString;
+} CERT_KEYGEN_REQUEST_INFO, *PCERT_KEYGEN_REQUEST_INFO;
+
+typedef struct _CERT_SIGNED_CONTENT_INFO {
+    CRYPT_DER_BLOB             ToBeSigned;
+    CRYPT_ALGORITHM_IDENTIFIER SignatureAlgorithm;
+    CRYPT_BIT_BLOB             Signature;
+} CERT_SIGNED_CONTENT_INFO, *PCERT_SIGNED_CONTENT_INFO;
+
 typedef struct _CRL_CONTEXT {
     DWORD      dwCertEncodingType;
     BYTE      *pbCrlEncoded;
@@ -420,17 +451,6 @@ typedef struct _VTableProvStruc {
     DWORD    cbContextInfo;
     LPSTR    pszProvName;
 } VTableProvStruc, *PVTableProvStruc;
-
-typedef struct _CRYPT_ATTRIBUTE {
-    LPSTR            pszObjId;
-    DWORD            cValue;
-    PCRYPT_DATA_BLOB rgValue;
-} CRYPT_ATTRIBUTE, *PCRYPT_ATTRIBUTE;
-
-typedef struct _CRYPT_ATTRIBUTES {
-    DWORD            cAttr;
-    PCRYPT_ATTRIBUTE rgAttr;
-} CRYPT_ATTRIBUTES, *PCRYPT_ATTRIBUTES;
 
 typedef struct _CERT_PRIVATE_KEY_INFO {
     DWORD                      Version;
@@ -475,6 +495,19 @@ typedef struct _CTL_CONTEXT {
     DWORD      cbCtlContext;
 } CTL_CONTEXT, *PCTL_CONTEXT;
 typedef const CTL_CONTEXT *PCCTL_CONTEXT;
+
+typedef struct _CRYPT_TIME_STAMP_REQUEST_INFO {
+    LPSTR            pszTimeStampAlgorithm;
+    LPSTR            pszContentType;
+    CRYPT_OBJID_BLOB Content;
+    DWORD            cAttribute;
+    PCRYPT_ATTRIBUTE rgAttribute;
+} CRYPT_TIME_STAMP_REQUEST_INFO, *PCRYPT_TIME_STAMP_REQUEST_INFO;
+
+typedef struct _CRYPT_ENROLLMENT_NAME_VALUE_PAIR {
+    LPWSTR pwszName;
+    LPWSTR pwszValue;
+} CRYPT_ENROLLMENT_NAME_VALUE_PAIR, *PCRYPT_ENROLLMENT_NAME_VALUE_PAIR;
 
 typedef struct _CMSG_SIGNER_INFO {
     DWORD                      dwVersion;
@@ -1258,12 +1291,78 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 /* CERT_REQUEST_INFO versions */
 #define CERT_REQUEST_V1 0
 
+/* CERT_KEYGEN_REQUEST_INFO versions */
+#define CERT_KEYGEN_REQUEST_V1 0
+
 /* CRL versions */
 #define CRL_V1 0
 #define CRL_V2 1
 
 /* CTL versions */
 #define CTL_V1 0
+
+/* Certificate, CRL, CTL property IDs */
+#define CERT_KEY_PROV_HANDLE_PROP_ID               1
+#define CERT_KEY_PROV_INFO_PROP_ID                 2
+#define CERT_SHA1_HASH_PROP_ID                     3
+#define CERT_HASH_PROP_ID                          CERT_SHA1_HASH_PROP_ID
+#define CERT_MD5_HASH_PROP_ID                      4
+#define CERT_KEY_CONTEXT_PROP_ID                   5
+#define CERT_KEY_SPEC_PROP_ID                      6
+#define CERT_IE30_RESERVED_PROP_ID                 7
+#define CERT_PUBKEY_HASH_RESERVED_PROP_ID          8
+#define CERT_ENHKEY_USAGE_PROP_ID                  9
+#define CERT_CTL_USAGE_PROP_ID                     CERT_ENHKEY_USAGE_PROP_ID
+#define CERT_NEXT_UPDATE_LOCATION_PROP_ID          10
+#define CERT_FRIENDLY_NAME_PROP_ID                 11
+#define CERT_PVK_FILE_PROP_ID                      12
+#define CERT_DESCRIPTION_PROP_ID                   13
+#define CERT_ACCESS_STATE_PROP_ID                  14
+#define CERT_SIGNATURE_HASH_PROP_ID                15
+#define CERT_SMART_CARD_DATA_PROP_ID               16
+#define CERT_EFS_PROP_ID                           17
+#define CERT_FORTEZZA_DATA_PROP                    18
+#define CERT_ARCHIVED_PROP_ID                      19
+#define CERT_KEY_IDENTIFIER_PROP_ID                20
+#define CERT_AUTO_ENROLL_PROP_ID                   21
+#define CERT_PUBKEY_ALG_PARA_PROP_ID               22
+#define CERT_CROSS_CERT_DIST_POINTS_PROP_ID        23
+#define CERT_ISSUER_PUBLIC_KEY_MD5_HASH_PROP_ID    24
+#define CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID   25
+#define CERT_ENROLLMENT_PROP_ID                    26
+#define CERT_DATE_STAMP_PROP_ID                    27
+#define CERT_ISSUER_SERIAL_NUMBER_MD5_HASH_PROP_ID 28
+#define CERT_SUBJECT_NAME_MD5_HASH_PROP_ID         29
+#define CERT_EXTENDED_ERROR_INFO_PROP_ID           30
+/* 31    -- unused?
+   32    -- cert prop id
+   33    -- CRL prop id
+   34    -- CTL prop id
+   35    -- KeyId prop id
+   36-63 -- reserved
+ */
+#define CERT_RENEWAL_PROP_ID                       64
+#define CERT_ARCHIVED_KEY_HASH_PROP_ID             65
+#define CERT_AUTO_ENROLL_RETRY_PROP_ID             66
+#define CERT_AIA_URL_RETRIEVED_PROP_ID             67
+#define CERT_FIRST_RESERVED_PROP_ID                68
+#define CERT_LAST_RESERVED_PROP_ID                 0x00007fff
+#define CERT_FIRST_USER_PROP_ID                    0x00008000
+#define CERT_LAST_USER_PROP_ID                     0x0000ffff
+
+#define IS_CERT_HASH_PROP_ID(x) \
+ ((x) == CERT_SHA1_HASH_PROP_ID || (x) == CERT_MD5_HASH_PROP_ID || \
+  (x) == CERT_SIGNATURE_HASH_PROP_ID)
+
+#define IS_PUBKEY_HASH_PROP_ID(x) \
+ ((x) == CERT_ISSUER_PUBLIC_KEY_MD5_HASH_PROP_ID || \
+  (x) == CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID)
+
+#define IS_CHAIN_HASH_PROP_ID(x) \
+ ((x) == CERT_ISSUER_PUBLIC_KEY_MD5_HASH_PROP_ID || \
+  (x) == CERT_SUBJECT_PUBLIC_KEY_MD5_HASH_PROP_ID || \
+  (x) == CERT_ISSUER_SERIAL_NUMBER_MD5_HASH_PROP_ID || \
+  (x) == CERT_SUBJECT_NAME_MD5_HASH_PROP_ID)
 
 /* CERT_RDN attribute dwValueType types */
 #define CERT_RDN_TYPE_MASK 0x000000ff
