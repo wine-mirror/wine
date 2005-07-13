@@ -57,7 +57,7 @@ typedef struct {
 #define SERVPROV(x)      ((IServiceProvider*)             &(x)->lpServiceProviderVtbl)
 #define CMDTARGET(x)     ((IOleCommandTarget*)            &(x)->lpOleCommandTargetVtbl)
 
-#define DEFINE_THIS(cls,ifc) cls* const This=(cls*)((char*)(iface)-offsetof(cls,lp ## ifc ## Vtbl));
+#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 
