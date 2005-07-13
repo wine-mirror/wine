@@ -91,9 +91,9 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 static VOID INTERNET_ExecuteWork(void);
 
 static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
-static DWORD dwNumThreads;
-static DWORD dwNumIdleThreads;
-static DWORD dwNumJobs;
+static LONG dwNumThreads;
+static LONG dwNumIdleThreads;
+static LONG dwNumJobs;
 static HANDLE hEventArray[2];
 #define hQuitEvent hEventArray[0]
 #define hWorkEvent hEventArray[1]

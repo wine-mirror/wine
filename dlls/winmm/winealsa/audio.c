@@ -3039,7 +3039,7 @@ struct IDsDriverImpl
 {
     /* IUnknown fields */
     const IDsDriverVtbl *lpVtbl;
-    DWORD		ref;
+    LONG		ref;
     /* IDsDriverImpl fields */
     UINT		wDevID;
     IDsDriverBufferImpl*primary;
@@ -3049,7 +3049,7 @@ struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
     const IDsDriverBufferVtbl *lpVtbl;
-    DWORD		      ref;
+    LONG		      ref;
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl*	      drv;
 

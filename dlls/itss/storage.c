@@ -45,14 +45,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
-extern ULONG dll_count;
+extern LONG dll_count;
 
 /************************************************************************/
 
 typedef struct _ITSS_IStorageImpl
 {
     const IStorageVtbl *vtbl_IStorage;
-    DWORD ref;
+    LONG ref;
     struct chmFile *chmfile;
     WCHAR dir[1];
 } ITSS_IStorageImpl;
@@ -66,14 +66,14 @@ struct enum_info
 typedef struct _IEnumSTATSTG_Impl
 {
     const IEnumSTATSTGVtbl *vtbl_IEnumSTATSTG;
-    DWORD ref;
+    LONG ref;
     struct enum_info *first, *last, *current;
 } IEnumSTATSTG_Impl;
 
 typedef struct _IStream_Impl
 {
     const IStreamVtbl *vtbl_IStream;
-    DWORD ref;
+    LONG ref;
     ITSS_IStorageImpl *stg;
     ULONGLONG addr;
     struct chmUnitInfo ui;

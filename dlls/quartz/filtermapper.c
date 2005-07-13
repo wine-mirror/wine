@@ -46,7 +46,7 @@ typedef struct FilterMapper2Impl
 {
     const IFilterMapper2Vtbl *lpVtbl;
     const IFilterMapperVtbl  *lpVtblFilterMapper;
-    ULONG refCount;
+    LONG refCount;
 } FilterMapper2Impl;
 
 static const IFilterMapper2Vtbl fm2vtbl;

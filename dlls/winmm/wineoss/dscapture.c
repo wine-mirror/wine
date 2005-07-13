@@ -74,7 +74,7 @@ struct IDsCaptureDriverPropertySetImpl
 {
     /* IUnknown fields */
     const IDsDriverPropertySetVtbl     *lpVtbl;
-    DWORD                               ref;
+    LONG                                ref;
 
     IDsCaptureDriverBufferImpl*         capture_buffer;
 };
@@ -83,7 +83,7 @@ struct IDsCaptureDriverNotifyImpl
 {
     /* IUnknown fields */
     const IDsDriverNotifyVtbl          *lpVtbl;
-    DWORD                               ref;
+    LONG                                ref;
 
     IDsCaptureDriverBufferImpl*         capture_buffer;
 };
@@ -92,7 +92,7 @@ struct IDsCaptureDriverImpl
 {
     /* IUnknown fields */
     const IDsCaptureDriverVtbl         *lpVtbl;
-    DWORD                               ref;
+    LONG                                ref;
 
     /* IDsCaptureDriverImpl fields */
     UINT                                wDevID;
@@ -103,7 +103,7 @@ struct IDsCaptureDriverBufferImpl
 {
     /* IUnknown fields */
     const IDsCaptureDriverBufferVtbl   *lpVtbl;
-    DWORD                               ref;
+    LONG                                ref;
 
     /* IDsCaptureDriverBufferImpl fields */
     IDsCaptureDriverImpl*               drv;

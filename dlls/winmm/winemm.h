@@ -132,7 +132,7 @@ typedef struct {
        DWORD                    dwThreadID;     	/* 0C */
        DWORD    		fpThread;		/* 10 address of thread proc (segptr or lin depending on dwFlags) */
        DWORD			dwThreadPmt;    	/* 14 parameter to be passed upon thread creation to fpThread */
-       DWORD                    dwSignalCount;	     	/* 18 counter used for signaling */
+       LONG                     dwSignalCount;	     	/* 18 counter used for signaling */
        HANDLE                   hEvent;     		/* 1C event */
        HANDLE                   hVxD;		     	/* 20 return from OpenVxDHandle */
        DWORD                    dwStatus;       	/* 24 0x00, 0x10, 0x20, 0x30 */

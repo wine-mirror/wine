@@ -71,7 +71,7 @@ typedef struct {
     /* data for playing the audio part */
     HANDLE		hWave;
     HANDLE		hEvent;			/* for synchronization */
-    DWORD		dwEventCount;		/* for synchronization */
+    LONG		dwEventCount;		/* for synchronization */
     /* data for play back */
     HWND               hWnd, hWndPaint;
     DWORD               dwCachedFrame; /* buffered frame */

@@ -50,7 +50,7 @@ typedef struct {
     DWORD			dwMciTimeFormat;/* One of the supported MCI_FORMAT_xxxx */
     DWORD			dwPosition;	/* position in bytes in chunk */
     HANDLE			hEvent;		/* for synchronization */
-    DWORD			dwEventCount;	/* for synchronization */
+    LONG			dwEventCount;	/* for synchronization */
     BOOL                       	bTemporaryFile; /* temporary file (MCI_RECORD) */
     MMCKINFO                   	ckMainRIFF;     /* main RIFF chunk */
     MMCKINFO                   	ckWaveData;     /* data chunk */

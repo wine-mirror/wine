@@ -227,7 +227,7 @@ static HRESULT DP_InitializeDPLSP( IDirectPlay3Impl* This, HMODULE hServiceProvi
 /* Strip out all dwFlags values for CREATEPLAYER msg */
 #define DPMSG_CREATEPLAYER_DWFLAGS(x) 0
 
-static DWORD kludgePlayerGroupId = 1000;
+static LONG kludgePlayerGroupId = 1000;
 
 /* ------------------------------------------------------------------ */
 

@@ -53,7 +53,7 @@ static const SHLWAPI_CLIST SHLWAPI_CLIST_items[] =
 typedef struct
 {
   void* lpVtbl;
-  ULONG ref;
+  LONG  ref;
   int   readcalls;
   BOOL  failreadcall;
   BOOL  failreadsize;

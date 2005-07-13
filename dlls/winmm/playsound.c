@@ -140,7 +140,7 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
 struct playsound_data
 {
     HANDLE	hEvent;
-    DWORD	dwEventCount;
+    LONG	dwEventCount;
 };
 
 static void CALLBACK PlaySound_Callback(HWAVEOUT hwo, UINT uMsg,

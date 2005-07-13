@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct IEnumRegFiltersImpl
 {
     const IEnumRegFiltersVtbl * lpVtbl;
-    ULONG refCount;
+    LONG refCount;
     ULONG size;
     REGFILTER* RegFilters;
     ULONG uIndex;

@@ -59,7 +59,7 @@ static void test_create(void)
 
 typedef struct {
     const IBindStatusCallbackVtbl *lpVtbl;
-    ULONG ref;
+    LONG ref;
     IBinding *pbind;
     IStream *pstr;
 } statusclb;

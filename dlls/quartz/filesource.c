@@ -42,7 +42,7 @@ typedef struct AsyncReader
     const IBaseFilterVtbl * lpVtbl;
     const IFileSourceFilterVtbl * lpVtblFSF;
 
-    ULONG refCount;
+    LONG refCount;
     FILTER_INFO filterInfo;
     FILTER_STATE state;
     CRITICAL_SECTION csFilter;

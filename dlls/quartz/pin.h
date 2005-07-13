@@ -38,7 +38,7 @@ typedef HRESULT (* PRECONNECTPROC)(IPin * iface, IPin * pConnectPin);
 typedef struct IPinImpl
 {
 	const struct IPinVtbl * lpVtbl;
-	ULONG refCount;
+	LONG refCount;
 	LPCRITICAL_SECTION pCritSec;
 	PIN_INFO pinInfo;
 	IPin * pConnectedTo;

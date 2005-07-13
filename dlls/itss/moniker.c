@@ -44,7 +44,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
-extern ULONG dll_count;
+extern LONG dll_count;
 
 /*****************************************************************************/
 

@@ -51,7 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
 static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
-ULONG dll_count = 0;
+LONG dll_count = 0;
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
