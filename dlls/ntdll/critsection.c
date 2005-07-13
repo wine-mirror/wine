@@ -135,7 +135,8 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
     crit->LockSemaphore  = 0;
-    crit->SpinCount      = spincount;
+    if (NtCurrentTeb()->Peb->NumberOfProcessors <= 1) spincount = 0;
+    crit->SpinCount = spincount & ~0x80000000;
     return STATUS_SUCCESS;
 }
 
