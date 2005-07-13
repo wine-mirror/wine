@@ -1,0 +1,14 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = wldap32.dll
+IMPORTLIB = libwldap32.$(IMPLIBEXT)
+IMPORTS   = kernel32
+
+C_SRCS = \
+	main.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

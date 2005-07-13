@@ -168,6 +168,7 @@ BASEDIRS = \
 	winspool \
 	wintab32 \
 	wintrust \
+	wldap32 \
 	wow32 \
 	wsock32 \
 	wtsapi32
@@ -406,6 +407,7 @@ SYMLINKS_SO = \
 	winspool.drv.so \
 	wintab32.dll.so \
 	wintrust.dll.so \
+	wldap32.dll.so \
 	wnaspi32.dll.so \
 	wow32.dll.so \
 	ws2_32.dll.so \
@@ -985,6 +987,9 @@ wintab.dll.so : wintab32.dll.so
 wintrust.dll.so: wintrust/wintrust.dll.so
 	$(RM) $@ && $(LN_S) wintrust/wintrust.dll.so $@
 
+wldap32.dll.so: wldap32/wldap32.dll.so
+	$(RM) $@ && $(LN_S) wldap32/wldap32.dll.so $@
+
 wnaspi32.dll.so: winaspi/wnaspi32.dll.so
 	$(RM) $@ && $(LN_S) winaspi/wnaspi32.dll.so $@
 
@@ -1179,6 +1184,7 @@ IMPORT_LIBS = \
 	winspool/libwinspool.$(IMPLIBEXT) \
 	wintab32/libwintab32.$(IMPLIBEXT) \
 	wintrust/libwintrust.$(IMPLIBEXT) \
+	wldap32/libwldap32.$(IMPLIBEXT) \
 	winaspi/libwnaspi32.$(IMPLIBEXT) \
 	wow32/libwow32.$(IMPLIBEXT) \
 	winsock/libws2_32.$(IMPLIBEXT) \
@@ -1568,6 +1574,9 @@ wintab32/libwintab32.$(IMPLIBEXT): wintab32/wintab32.spec $(WINEBUILD)
 wintrust/libwintrust.$(IMPLIBEXT): wintrust/wintrust.spec $(WINEBUILD)
 	@cd wintrust && $(MAKE) libwintrust.$(IMPLIBEXT)
 
+wldap32/libwldap32.$(IMPLIBEXT): wldap32/wldap32.spec $(WINEBUILD)
+	@cd wldap32 && $(MAKE) libwldap32.$(IMPLIBEXT)
+
 winaspi/libwnaspi32.$(IMPLIBEXT): winaspi/wnaspi32.spec $(WINEBUILD)
 	@cd winaspi && $(MAKE) libwnaspi32.$(IMPLIBEXT)
 
@@ -1798,6 +1807,7 @@ winnls/winnls32.dll.so: winnls
 winspool/winspool.drv.so: winspool
 wintab32/wintab32.dll.so: wintab32
 wintrust/wintrust.dll.so: wintrust
+wldap32/wldap32.dll.so: wldap32
 winaspi/wnaspi32.dll.so: winaspi
 wow32/wow32.dll.so: wow32
 winsock/ws2_32.dll.so: winsock
@@ -1838,7 +1848,7 @@ uninstall::
 	-rmdir $(dlldir)
 
 clean::
-	$(RM) $(IMPORT_SYMLINKS) *.$(IMPLIBEXT)
+	$(RM) $(IMPORT_SYMLINKS)
 
 check test:: $(BUILDSUBDIRS:%=%/__test__)
 

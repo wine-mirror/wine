@@ -1719,6 +1719,7 @@ dlls/winspool/Makefile
 dlls/winspool/tests/Makefile
 dlls/wintab32/Makefile
 dlls/wintrust/Makefile
+dlls/wldap32/Makefile
 dlls/wow32/Makefile
 dlls/wsock32/Makefile
 dlls/wtsapi32/Makefile
