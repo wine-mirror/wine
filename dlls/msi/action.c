@@ -3041,16 +3041,16 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         goto end;
 
 
-    buffer = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTNAMEstringW,NULL);
+    buffer = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTNAMEW,NULL);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTNAMEstringW,0,REG_SZ, 
+    RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTNAMEW,0,REG_SZ, 
             (LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = sizeof(DWORD);
     langid = atoiW(buffer);
-    RegSetValueExW(hukey,INSTALLPROPERTY_LANGUAGEstringW,0,REG_DWORD, 
+    RegSetValueExW(hukey,INSTALLPROPERTY_LANGUAGEW,0,REG_DWORD, 
             (LPBYTE)&langid,size);
     HeapFree(GetProcessHeap(),0,buffer);
 
@@ -3060,7 +3060,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
         LPWSTR path;
         build_icon_path(package,buffer,&path);
         size = strlenW(path) * sizeof(WCHAR);
-        RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTICONstringW,0,REG_SZ,
+        RegSetValueExW(hukey,INSTALLPROPERTY_PRODUCTICONW,0,REG_SZ,
                 (LPBYTE)path,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
@@ -3070,7 +3070,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     {
         DWORD verdword = build_version_dword(buffer);
         size = sizeof(DWORD);
-        RegSetValueExW(hukey,INSTALLPROPERTY_VERSIONstringW,0,REG_DWORD, (LPBYTE
+        RegSetValueExW(hukey,INSTALLPROPERTY_VERSIONW,0,REG_DWORD, (LPBYTE
                     )&verdword,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
@@ -3094,7 +3094,7 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
             if (ptr) *ptr = 0;
             squash_guid(guidbuffer,squashed);
             size = strlenW(squashed)*sizeof(WCHAR);
-            RegSetValueExW(hukey,INSTALLPROPERTY_PACKAGECODEstringW,0,REG_SZ,
+            RegSetValueExW(hukey,INSTALLPROPERTY_PACKAGECODEW,0,REG_SZ,
                     (LPBYTE)squashed, size);
         }
         else
@@ -3530,7 +3530,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
             debugstr_w(package->msiFilePath), debugstr_w(packagefile),
             GetLastError());
     size = strlenW(packagefile)*sizeof(WCHAR);
-    RegSetValueExW(hkey,INSTALLPROPERTY_LOCALPACKAGEstringW,0,REG_SZ,
+    RegSetValueExW(hkey,INSTALLPROPERTY_LOCALPACKAGEW,0,REG_SZ,
             (LPBYTE)packagefile,size);
 
     /* do ModifyPath and UninstallString */
@@ -3548,13 +3548,13 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     buffer= HeapAlloc(GetProcessHeap(),0,size);
     sprintfW(buffer,date_fmt,systime.wYear,systime.wMonth,systime.wDay);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hkey,INSTALLPROPERTY_INSTALLDATEstringW,0,REG_SZ,
+    RegSetValueExW(hkey,INSTALLPROPERTY_INSTALLDATEW,0,REG_SZ,
             (LPBYTE)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
    
     buffer = load_dynamic_property(package,szProductLanguage,NULL);
     size = atoiW(buffer);
-    RegSetValueExW(hkey,INSTALLPROPERTY_LANGUAGEstringW,0,REG_DWORD,
+    RegSetValueExW(hkey,INSTALLPROPERTY_LANGUAGEW,0,REG_DWORD,
             (LPBYTE)&size,sizeof(DWORD));
     HeapFree(GetProcessHeap(),1,buffer);
 
@@ -3565,11 +3565,11 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         DWORD vermajor = verdword>>24;
         DWORD verminor = (verdword>>16)&0x00FF;
         size = sizeof(DWORD);
-        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONstringW,0,REG_DWORD,
+        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONW,0,REG_DWORD,
                 (LPBYTE)&verdword,size);
-        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMAJORstringW,0,REG_DWORD,
+        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMAJORW,0,REG_DWORD,
                 (LPBYTE)&vermajor,size);
-        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMINORstringW,0,REG_DWORD,
+        RegSetValueExW(hkey,INSTALLPROPERTY_VERSIONMINORW,0,REG_DWORD,
                 (LPBYTE)&verminor,size);
     }
     HeapFree(GetProcessHeap(),0,buffer);
@@ -3722,7 +3722,7 @@ static UINT ACTION_RegisterUser(MSIPACKAGE *package)
     if (!package)
         return ERROR_INVALID_HANDLE;
 
-    productid = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTIDstringW,
+    productid = load_dynamic_property(package,INSTALLPROPERTY_PRODUCTIDW,
             &rc);
     if (!productid)
         return ERROR_SUCCESS;

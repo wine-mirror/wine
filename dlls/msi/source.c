@@ -187,34 +187,34 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
     if (rc != ERROR_SUCCESS)
         return ERROR_UNKNOWN_PRODUCT;
 
-    if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHstringW) == 0)
+    if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) == 0)
     {
         HKEY key;
         rc = OpenMediaSubkey(sourcekey, &key, FALSE);
         if (rc == ERROR_SUCCESS)
-            rc = RegQueryValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHstringW,
+            rc = RegQueryValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHW,
                     0, 0, (LPBYTE)szValue, pcchValue);
         if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA)
             rc = ERROR_UNKNOWN_PROPERTY;
         RegCloseKey(key);
     }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTstringW) ==0)
+    else if (strcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW) ==0)
     {
         HKEY key;
         rc = OpenMediaSubkey(sourcekey, &key, FALSE);
         if (rc == ERROR_SUCCESS)
-            rc = RegQueryValueExW(key, INSTALLPROPERTY_DISKPROMPTstringW, 0, 0,
+            rc = RegQueryValueExW(key, INSTALLPROPERTY_DISKPROMPTW, 0, 0,
                     (LPBYTE)szValue, pcchValue);
         if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA)
             rc = ERROR_UNKNOWN_PROPERTY;
         RegCloseKey(key);
     }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEstringW)==0)
+    else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW)==0)
     {
         LPWSTR buffer;
         DWORD size = 0;
 
-        RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEstringW, 0, 0,
+        RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW, 0, 0,
                 NULL, &size);
         if (size == 0)
             rc = ERROR_UNKNOWN_PROPERTY;
@@ -222,7 +222,7 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         {
             LPWSTR ptr;
             buffer = HeapAlloc(GetProcessHeap(),0,size);
-            rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEstringW,
+            rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
                     0, 0, (LPBYTE)buffer,&size); 
             ptr = strchrW(buffer,';');
             if (ptr) ptr = strchrW(ptr+1,';');
@@ -243,19 +243,19 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             HeapFree(GetProcessHeap(),0,buffer);
         }
     }
-    else if (strcmpW(INSTALLPROPERTY_LASTUSEDTYPEstringW, szProperty)==0)
+    else if (strcmpW(INSTALLPROPERTY_LASTUSEDTYPEW, szProperty)==0)
     {
         LPWSTR buffer;
         DWORD size = 0;
 
-        RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEstringW, 0, 0,
+        RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW, 0, 0,
                 NULL, &size);
         if (size == 0)
             rc = ERROR_UNKNOWN_PROPERTY;
         else
         {
             buffer = HeapAlloc(GetProcessHeap(),0,size);
-            rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEstringW,
+            rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW,
                     0, 0, (LPBYTE)buffer,&size); 
             if (*pcchValue < 1)
             {
@@ -270,9 +270,9 @@ UINT WINAPI MsiSourceListGetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
             HeapFree(GetProcessHeap(),0,buffer);
         }
     }
-    else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEstringW, szProperty)==0)
+    else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {
-        rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEstringW, 0, 0, 
+        rc = RegQueryValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0, 0, 
                 (LPBYTE)szValue, pcchValue);
         if (rc != ERROR_SUCCESS && rc != ERROR_MORE_DATA)
             rc = ERROR_UNKNOWN_PROPERTY;
@@ -324,31 +324,31 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         return ERROR_UNKNOWN_PRODUCT;
 
 
-    if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHstringW) == 0)
+    if (strcmpW(szProperty, INSTALLPROPERTY_MEDIAPACKAGEPATHW) == 0)
     {
         HKEY key;
         DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
         rc = OpenMediaSubkey(sourcekey, &key, FALSE);
         if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHstringW, 0,
+            rc = RegSetValueExW(key, INSTALLPROPERTY_MEDIAPACKAGEPATHW, 0,
                     REG_SZ, (LPBYTE)szValue, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
         RegCloseKey(key);
     }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTstringW) == 0)
+    else if (strcmpW(szProperty, INSTALLPROPERTY_DISKPROMPTW) == 0)
     {
         HKEY key;
         DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
         rc = OpenMediaSubkey(sourcekey, &key, FALSE);
         if (rc == ERROR_SUCCESS)
-            rc = RegSetValueExW(key, INSTALLPROPERTY_DISKPROMPTstringW, 0,
+            rc = RegSetValueExW(key, INSTALLPROPERTY_DISKPROMPTW, 0,
                     REG_SZ, (LPBYTE)szValue, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
         RegCloseKey(key);
     }
-    else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEstringW)==0)
+    else if (strcmpW(szProperty, INSTALLPROPERTY_LASTUSEDSOURCEW)==0)
     {
         LPWSTR buffer = NULL;
         DWORD size;
@@ -371,16 +371,16 @@ UINT WINAPI MsiSourceListSetInfoW( LPCWSTR szProduct, LPCWSTR szUserSid,
         size = (lstrlenW(szValue)+5)*sizeof(WCHAR);
         buffer = HeapAlloc(GetProcessHeap(),0,size);
         sprintfW(buffer, LastUsedSource_Fmt, typechar, 1, szValue);
-        rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEstringW, 0, 
+        rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_LASTUSEDSOURCEW, 0, 
                 REG_EXPAND_SZ, (LPBYTE)buffer, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;
         HeapFree( GetProcessHeap(), 0, buffer );
     }
-    else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEstringW, szProperty)==0)
+    else if (strcmpW(INSTALLPROPERTY_PACKAGENAMEW, szProperty)==0)
     {
         DWORD size = lstrlenW(szValue)*sizeof(WCHAR);
-        rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEstringW, 0,
+        rc = RegSetValueExW(sourcekey, INSTALLPROPERTY_PACKAGENAMEW, 0,
                 REG_SZ, (LPBYTE)szValue, size);
         if (rc != ERROR_SUCCESS)
             rc = ERROR_UNKNOWN_PROPERTY;

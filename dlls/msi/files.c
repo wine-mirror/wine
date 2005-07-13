@@ -511,12 +511,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, int fileindex,
             MsiSourceListSetInfoW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, 
                 MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                INSTALLPROPERTY_LASTUSEDSOURCEstringW, last_path);
+                INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
         else
             MsiSourceListSetInfoW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, 
                 MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                INSTALLPROPERTY_LASTUSEDSOURCEstringW, last_path);
+                INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
         msiobj_release(&row->hdr);
         return rc;
     }
@@ -544,7 +544,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, int fileindex,
             MsiSourceListSetInfoW(package->ProductCode, NULL,
                 MSIINSTALLCONTEXT_USERMANAGED,
                 MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                INSTALLPROPERTY_LASTUSEDSOURCEstringW, path);
+                INSTALLPROPERTY_LASTUSEDSOURCEW, path);
 
             HeapFree(GetProcessHeap(),0,path);
         }
@@ -568,12 +568,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, int fileindex,
                     MsiSourceListSetInfoW(package->ProductCode, NULL,
                             MSIINSTALLCONTEXT_USERMANAGED,
                             MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                            INSTALLPROPERTY_LASTUSEDSOURCEstringW, last_path);
+                            INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
                 else
                     MsiSourceListSetInfoW(package->ProductCode, NULL,
                             MSIINSTALLCONTEXT_USERMANAGED,
                             MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                            INSTALLPROPERTY_LASTUSEDSOURCEstringW, last_path);
+                            INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
 
                 /* extract the cab file into a folder in the temp folder */
                 sz = MAX_PATH;
@@ -599,12 +599,12 @@ static UINT ready_media_for_file(MSIPACKAGE *package, int fileindex,
             MsiSourceListSetInfoW(package->ProductCode, NULL,
                     MSIINSTALLCONTEXT_USERMANAGED,
                     MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                    INSTALLPROPERTY_LASTUSEDSOURCEstringW, last_path);
+                    INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
         else
             MsiSourceListSetInfoW(package->ProductCode, NULL,
                     MSIINSTALLCONTEXT_USERMANAGED,
                     MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                    INSTALLPROPERTY_LASTUSEDSOURCEstringW, last_path);
+                    INSTALLPROPERTY_LASTUSEDSOURCEW, last_path);
     }
     set_file_source(package, file, comp, last_path);
 
@@ -669,7 +669,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         MsiSourceListSetInfoW(package->ProductCode, NULL,
                 MSIINSTALLCONTEXT_USERMANAGED,
                 MSICODE_PRODUCT,
-                INSTALLPROPERTY_PACKAGENAMEstringW, ptr);
+                INSTALLPROPERTY_PACKAGENAMEW, ptr);
     }
     FIXME("Write DiskPrompt\n");
     

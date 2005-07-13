@@ -147,7 +147,7 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
             }
           
             sz = sizeof(DWORD);
-            RegQueryValueExW(hukey, INSTALLPROPERTY_VERSIONstringW, NULL, NULL,
+            RegQueryValueExW(hukey, INSTALLPROPERTY_VERSIONW, NULL, NULL,
                     (LPBYTE)&check, &sz);
             /* check min */
             ver = MSI_RecordGetString(rec,2);
@@ -175,7 +175,7 @@ static UINT ITERATE_FindRelatedProducts(MSIRECORD *rec, LPVOID param)
 
             /* check language*/
             sz = sizeof(DWORD);
-            RegQueryValueExW(hukey, INSTALLPROPERTY_LANGUAGEstringW, NULL, NULL,
+            RegQueryValueExW(hukey, INSTALLPROPERTY_LANGUAGEW, NULL, NULL,
                     (LPBYTE)&check, &sz);
             RegCloseKey(hukey);
             language = MSI_RecordGetString(rec,4);

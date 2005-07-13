@@ -99,7 +99,7 @@ UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
 
     /* find the size of the path */
     type = count = 0;
-    r = RegQueryValueExW( hKeyProduct, INSTALLPROPERTY_LOCALPACKAGEstringW,
+    r = RegQueryValueExW( hKeyProduct, INSTALLPROPERTY_LOCALPACKAGEW,
                           NULL, &type, NULL, &count );
     if( r != ERROR_SUCCESS )
     {
@@ -112,7 +112,7 @@ UINT WINAPI MsiOpenProductW(LPCWSTR szProduct, MSIHANDLE *phProduct)
     if( !path )
         goto end;
 
-    r = RegQueryValueExW( hKeyProduct, INSTALLPROPERTY_LOCALPACKAGEstringW,
+    r = RegQueryValueExW( hKeyProduct, INSTALLPROPERTY_LOCALPACKAGEW,
                           NULL, &type, (LPBYTE) path, &count );
     if( r != ERROR_SUCCESS )
     {
@@ -290,12 +290,12 @@ UINT WINAPI MsiConfigureProductExW(LPCWSTR szProduct, int iInstallLevel,
 
     sz = sizeof(sourcepath);
     MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
-            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEstringW, sourcepath,
+            MSICODE_PRODUCT, INSTALLPROPERTY_LASTUSEDSOURCEW, sourcepath,
             &sz);
 
     sz = sizeof(filename);
     MsiSourceListGetInfoW(szProduct, NULL, MSIINSTALLCONTEXT_USERMANAGED, 
-            MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEstringW, filename, &sz);
+            MSICODE_PRODUCT, INSTALLPROPERTY_PACKAGENAMEW, filename, &sz);
 
     strcatW(sourcepath,filename);
 
@@ -530,7 +530,7 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         return ERROR_INVALID_PARAMETER;
     
     /* check for special properties */
-    if (strcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEstringW)==0)
+    if (strcmpW(szAttribute, INSTALLPROPERTY_PACKAGECODEW)==0)
     {
         HKEY hkey;
         WCHAR squished[GUID_SIZE];
@@ -541,7 +541,7 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         if (r != ERROR_SUCCESS)
             return ERROR_UNKNOWN_PRODUCT;
 
-        r = RegQueryValueExW(hkey, INSTALLPROPERTY_PACKAGECODEstringW, NULL, NULL, 
+        r = RegQueryValueExW(hkey, INSTALLPROPERTY_PACKAGECODEW, NULL, NULL, 
                         (LPBYTE)squished, &sz);
         if (r != ERROR_SUCCESS)
         {
@@ -562,7 +562,7 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         RegCloseKey(hkey);
         r = ERROR_SUCCESS;
     }
-    else if (strcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGstringW)==0)
+    else if (strcmpW(szAttribute, INSTALLPROPERTY_VERSIONSTRINGW)==0)
     {
         r = MsiOpenProductW(szProduct, &hProduct);
         if (ERROR_SUCCESS != r)
@@ -571,7 +571,7 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
         r = MsiGetPropertyW(hProduct, szProductVersion, szBuffer, pcchValueBuf);
         MsiCloseHandle(hProduct);
     }
-    else if (strcmpW(szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEstringW)==0)
+    else if (strcmpW(szAttribute, INSTALLPROPERTY_ASSIGNMENTTYPEW)==0)
     {
         FIXME("0 (zero) if advertised or per user , 1(one) if per machine.\n");
         if (szBuffer)
@@ -583,7 +583,7 @@ UINT WINAPI MsiGetProductInfoW(LPCWSTR szProduct, LPCWSTR szAttribute,
             *pcchValueBuf = 1;
         r = ERROR_SUCCESS;
     }
-    else if (strcmpW(szAttribute, INSTALLPROPERTY_LANGUAGEstringW)==0)
+    else if (strcmpW(szAttribute, INSTALLPROPERTY_LANGUAGEW)==0)
     {
         r = MsiOpenProductW(szProduct, &hProduct);
         if (ERROR_SUCCESS != r)
@@ -1580,14 +1580,14 @@ USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
     if (lpUserNameBuf)
     {
         sz = *lpUserNameBuf * sizeof(WCHAR);
-        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_REGOWNERstringW, NULL,
+        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_REGOWNERW, NULL,
                 NULL, (LPBYTE)lpUserNameBuf,
                                &sz);
     }
     if (!lpUserNameBuf && pcchUserNameBuf)
     {
         sz = 0;
-        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_REGOWNERstringW, NULL,
+        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_REGOWNERW, NULL,
                 NULL, NULL, &sz);
     }
 
@@ -1597,13 +1597,13 @@ USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
     if (lpOrgNameBuf)
     {
         sz = *pcchOrgNameBuf * sizeof(WCHAR);
-        rc2 = RegQueryValueExW( hkey, INSTALLPROPERTY_REGCOMPANYstringW, NULL,
+        rc2 = RegQueryValueExW( hkey, INSTALLPROPERTY_REGCOMPANYW, NULL,
                 NULL, (LPBYTE)lpOrgNameBuf, &sz);
     }
     if (!lpOrgNameBuf && pcchOrgNameBuf)
     {
         sz = 0;
-        rc2 = RegQueryValueExW( hkey, INSTALLPROPERTY_REGCOMPANYstringW, NULL,
+        rc2 = RegQueryValueExW( hkey, INSTALLPROPERTY_REGCOMPANYW, NULL,
                 NULL, NULL, &sz);
     }
 
@@ -1620,13 +1620,13 @@ USERINFOSTATE WINAPI MsiGetUserInfoW(LPCWSTR szProduct, LPWSTR lpUserNameBuf,
     if (lpSerialBuf)
     {
         sz = *pcchSerialBuf * sizeof(WCHAR);
-        RegQueryValueExW( hkey, INSTALLPROPERTY_PRODUCTIDstringW, NULL, NULL,
+        RegQueryValueExW( hkey, INSTALLPROPERTY_PRODUCTIDW, NULL, NULL,
                 (LPBYTE)lpSerialBuf, &sz);
     }
     if (!lpSerialBuf && pcchSerialBuf)
     {
         sz = 0;
-        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_PRODUCTIDstringW, NULL,
+        rc = RegQueryValueExW( hkey, INSTALLPROPERTY_PRODUCTIDW, NULL,
                 NULL, NULL, &sz);
     }
     if (pcchSerialBuf)
