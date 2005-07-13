@@ -221,12 +221,14 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 /* return the handle, or 0 on error */
 obj_handle_t alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
 {
-    struct handle_table *table = process->handles;
-
-    assert( table );
-    assert( !(access & RESERVED_ALL) );
+    access &= ~RESERVED_ALL;
     if (inherit) access |= RESERVED_INHERIT;
-    return alloc_entry( table, obj, access );
+    if (!process->handles)
+    {
+        set_error( STATUS_NO_MEMORY );
+        return 0;
+    }
+    return alloc_entry( process->handles, obj, access );
 }
 
 /* allocate a global handle for an object, incrementing its refcount */
@@ -530,6 +532,7 @@ obj_handle_t open_object( const struct namespace *namespace, const WCHAR *name, 
 /* return the size of the handle table of a given process */
 unsigned int get_handle_table_count( struct process *process )
 {
+    if (!process->handles) return 0;
     return process->handles->count;
 }
 
