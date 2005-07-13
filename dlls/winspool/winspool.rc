@@ -23,4 +23,5 @@
 #include "winuser.h"
 #include "wspool.h"
 
+#include "De.rc"
 #include "En.rc"
