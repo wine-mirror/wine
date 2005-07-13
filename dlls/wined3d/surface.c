@@ -4,7 +4,7 @@
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
- * Copyright 2005 Oliver Stieber 
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -107,7 +107,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
     /* TODO: re-write the way textures and managed,
     *  use a 'opengl context manager' to manage RenderTarget surfaces
     ** *********************************************************/
-    
+
     /* TODO: check for locks */
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DBaseTexture *baseTexture = NULL;
@@ -116,7 +116,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
         TRACE("Passing to conatiner\n");
         IWineD3DBaseTexture_PreLoad(baseTexture);
         IWineD3DBaseTexture_Release(baseTexture);
-    } else{
+    } else {
     TRACE("(%p) : About to load surface\n", This);
     ENTER_GL();
 #if 0 /* TODO: context manager support */
@@ -131,7 +131,7 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
           checkGLcall("glBindTexture");
           IWineD3DSurface_LoadTexture(iface);
           /* This is where we should be reducing the amount of GLMemoryUsed */
-    }else {
+    } else {
         if (This->glDescription.level == 0) {
           glBindTexture(This->glDescription.target, This->glDescription.textureName);
           checkGLcall("glBindTexture");
@@ -158,10 +158,12 @@ void    WINAPI IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
 }
 
 D3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface) {
+    TRACE("(%p) : calling resourceimpl_GetType\n", iface);
     return IWineD3DResourceImpl_GetType((IWineD3DResource *)iface);
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **pParent) {
+    TRACE("(%p) : calling resourceimpl_GetParent\n", iface);
     return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
 }
 
@@ -202,7 +204,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFAC
     return D3D_OK;
 }
 
-void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target){
+void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT textureName, int target) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p) : setting textureName %u, target %i\n", This, textureName, target);
     if (This->glDescription.textureName == 0 && textureName != 0) {
@@ -213,7 +215,7 @@ void WINAPI IWineD3DSurfaceImpl_SetGlTextureDesc(IWineD3DSurface *iface, UINT te
     This->glDescription.target      = target;
 }
 
-void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription){
+void WINAPI IWineD3DSurfaceImpl_GetGlDesc(IWineD3DSurface *iface, glDescriptor **glDescription) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("(%p) : returning %p\n", This, &This->glDescription);
     *glDescription = &This->glDescription;
@@ -243,36 +245,38 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     }
 
     if (FALSE == This->lockable) {
-        /* Note: UpdateTextures calls CopyRects which calls this routine to populate the 
+        /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
               texture regions, and since the destination is an unlockable region we need
               to tolerate this                                                           */
-        TRACE("Warning: trying to lock unlockable surf@%p\n", This);  
+        TRACE("Warning: trying to lock unlockable surf@%p\n", This);
         /*return D3DERR_INVALIDCALL; */
     }
 
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if (This->resource.usage & D3DUSAGE_RENDERTARGET) {
+        IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
 
-    if (swapchain != NULL ||  iface == myDevice->renderTarget || iface == myDevice->depthStencilBuffer) {
-        if (swapchain != NULL && iface ==  swapchain->backBuffer) {
-            TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-        } else if (swapchain != NULL && iface ==  swapchain->frontBuffer) {
-            TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-        } else if (iface == myDevice->renderTarget) {
-            TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-        } else if (iface == myDevice->depthStencilBuffer) {
-            TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-        }
+        if (swapchain != NULL ||  iface == myDevice->renderTarget || iface == myDevice->depthStencilBuffer) {
+            if (swapchain != NULL && iface ==  swapchain->backBuffer) {
+                TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+            } else if (swapchain != NULL && iface ==  swapchain->frontBuffer) {
+                TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+            } else if (iface == myDevice->renderTarget) {
+                TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+            } else if (iface == myDevice->depthStencilBuffer) {
+                TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
+            }
 
-        if (NULL != swapchain) {
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+            if (NULL != swapchain) {
+                IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+            }
+            swapchain = NULL;
         }
-        swapchain = NULL;
     } else {
         TRACE("(%p) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
     }
 
     /* DXTn formats don't have exact pitches as they are to the new row of blocks,
-         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)      
+         where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt3/5)
           ie pitch = (width/4) * bytes per block                                  */
     if (This->resource.format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
         pLockedRect->Pitch = (This->currentDesc.Width >> 2) << 3;
@@ -302,7 +306,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         This->lockedRect.bottom = pRect->bottom;
     }
 
-    if(This->nonpow2){
+    if (This->nonpow2) {
         TRACE("Locking non-power 2 texture\n");
     }
 
@@ -407,31 +411,31 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
                 if (iface == myDevice->renderTarget || iface == swapchain->backBuffer) {
                     TRACE("locking back buffer\n");
                    glReadBuffer(GL_BACK);
-                }else if (iface == swapchain->frontBuffer) {
+                } else if (iface == swapchain->frontBuffer) {
                    TRACE("locking front\n");
                    glReadBuffer(GL_FRONT);
-                }else if (iface == myDevice->depthStencilBuffer) {
+                } else if (iface == myDevice->depthStencilBuffer) {
                     FIXME("Stencil Buffer lock unsupported for now\n");
-                } else{
+                } else {
                    FIXME("(%p) Shouldn't have got here!\n", This);
                    glReadBuffer(GL_BACK);
                 }
-        }else if (swapchain != NULL) {
+        } else if (swapchain != NULL) {
             IWineD3DSwapChainImpl *implSwapChain;
             IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
             if (swapchain->glCtx == implSwapChain->render_ctx && swapchain->drawable == implSwapChain->win) {
                     /* This will fail for the implicit swapchain, which is why there needs to be a context manager */
                     if (iface == swapchain->backBuffer) {
                         glReadBuffer(GL_BACK);
-                    }else if (iface == swapchain->frontBuffer) {
+                    } else if (iface == swapchain->frontBuffer) {
                         glReadBuffer(GL_FRONT);
                     } else if (iface == myDevice->depthStencilBuffer) {
                         FIXME("Stencil Buffer lock unsupported for now\n");
-                    } else{
+                    } else {
                         FIXME("Should have got here!\n");
                         glReadBuffer(GL_BACK);
                     }
-            }else{
+            } else {
                 /* We need to switch contexts to be able to read the buffer!!! */
                 FIXME("The buffer requested isn't in the current openGL context\n");
                 notInContext = TRUE;
@@ -468,7 +472,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             BOOL ati_performance_hack = FALSE;
             ati_performance_hack = (This->lockedRect.bottom - This->lockedRect.top > 10) || (This->lockedRect.right - This->lockedRect.left > 10)? TRUE: FALSE;
 #endif
-            if ((This->lockedRect.left ==0 &&  This->lockedRect.top ==0 &&
+            if ((This->lockedRect.left == 0 &&  This->lockedRect.top == 0 &&
                 This->lockedRect.right == This->currentDesc.Width
                 && This->lockedRect.bottom ==  This->currentDesc.Height)) {
                     glReadPixels(0, 0,
@@ -477,7 +481,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
                     This->glDescription.glFormat,
                     This->glDescription.glType,
                     (char *)pLockedRect->pBits);
-            }else if (This->lockedRect.left ==0 &&  This->lockedRect.right == This->currentDesc.Width) {
+            } else if (This->lockedRect.left == 0 &&  This->lockedRect.right == This->currentDesc.Width) {
                     glReadPixels(0,
                     This->lockedRect.top,
                     This->currentDesc.Width,
@@ -507,19 +511,19 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
 
     } else if (D3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
-        if(!messages & 1){
+        if (!messages & 1) {
             FIXME("TODO stencil depth surface locking surf%p usage(%lu)\n", This, This->resource.usage);
             /*
 
             glReadPixels(This->lockedRect.left,
-            This->lockedRect.bottom - j - 1, 
+            This->lockedRect.bottom - j - 1,
             This->lockedRect.right - This->lockedRect.left,
             1,
             GL_STENCIL_INDEX or GL_DEPTH_COMPONENT
 
             )
             */
-            messages |=1;
+            messages |= 1;
         }
     } else {
         FIXME("unsupported locking to surface surf@%p usage(%lu)\n", This, This->resource.usage);
@@ -540,7 +544,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             TRACE("Making container dirty\n");
             IWineD3DBaseTexture_SetDirty(pBaseTexture, TRUE);
             IWineD3DBaseTexture_Release(pBaseTexture);
-        }else{
+        } else {
             TRACE("Surface is standalone, no need to dirty the container\n");
         }
     }
@@ -563,16 +567,18 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         return D3DERR_INVALIDCALL;
     }
 
-    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if (D3DUSAGE_RENDERTARGET & This->resource.usage) {
+        IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
 
-    if ((swapchain != NULL) &&  iface ==  swapchain->backBuffer) {
-            buffername = "backBuffer";
-    } else if ((swapchain != NULL) && iface ==  swapchain->frontBuffer) {
-            buffername = "frontBuffer";
-    } else if (iface == myDevice->depthStencilBuffer) {
-            buffername = "depthStencilBuffer";
-    } else if (iface == myDevice->renderTarget) {
-            buffername = "renderTarget";
+        if ((swapchain != NULL) &&  iface ==  swapchain->backBuffer) {
+                buffername = "backBuffer";
+        } else if ((swapchain != NULL) && iface ==  swapchain->frontBuffer) {
+                buffername = "frontBuffer";
+        } else if (iface == myDevice->depthStencilBuffer) {
+                buffername = "depthStencilBuffer";
+        } else if (iface == myDevice->renderTarget) {
+                buffername = "renderTarget";
+        }
     }
 
     if (swapchain != NULL) {
@@ -621,7 +627,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             vcheckGLcall("glPixelZoom");
 
             /* glDrawPixels transforms the raster position as though it was a vertex -
-               we want to draw at screen position 0,0 - Set up ortho (rhw) mode as   
+               we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
             if (!myDevice->last_was_rhw) {
 
@@ -629,7 +635,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 myDevice->last_was_rhw = TRUE;
 
                 /* Transformed already into viewport coordinates, so we do not need transform
-                   matrices. Reset all matrices to identity and leave the default matrix in world 
+                   matrices. Reset all matrices to identity and leave the default matrix in world
                    mode.                                                                         */
                 glMatrixMode(GL_MODELVIEW);
                 checkGLcall("glMatrixMode");
@@ -819,7 +825,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     if ((This->resource.format == WINED3DFMT_P8 || This->resource.format == WINED3DFMT_A8P8) &&
         !GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
         /**
-         * wanted a paletted texture and not really support it in HW 
+         * wanted a paletted texture and not really support it in HW
          * so software emulation code begin
          */
         UINT i;
@@ -836,7 +842,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             if (This->resource.format == WINED3DFMT_A8P8)
                 *dst++ = pal[color].peFlags;
             else
-                *dst++ = 0xFF; 
+                *dst++ = 0xFF;
         }
 
         ENTER_GL();
@@ -845,9 +851,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
               This->glDescription.target,
               This->glDescription.level,
               GL_RGBA,
-              This->currentDesc.Width, 
-              This->currentDesc.Height, 
-              0, 
+              This->currentDesc.Width,
+              This->currentDesc.Height,
+              0,
               GL_RGBA,
               GL_UNSIGNED_BYTE,
               surface);
@@ -865,7 +871,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
         LEAVE_GL();
 
-        return D3D_OK;    
+        return D3D_OK;
     }
 
     /* TODO: Compressed non-power 2 support */
@@ -878,9 +884,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                   This->glDescription.target,
                   This->glDescription.level,
                   This->glDescription.glFormatInternal,
-                  This->currentDesc.Width, 
-                  This->currentDesc.Height, 
-                  0, 
+                  This->currentDesc.Width,
+                  This->currentDesc.Height,
+                  0,
                   This->resource.size,
                   This->resource.allocatedMemory);
 
@@ -963,7 +969,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                 This->glDescription.glFormatInternal,
                 This->currentDesc.Width,
                 This->currentDesc.Height,
-                0, 
+                0,
                 This->glDescription.glFormat,
                 This->glDescription.glType,
                 This->resource.allocatedMemory);
@@ -1084,7 +1090,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
             }
         }
         break;
-    default: 
+    default:
         FIXME("Unimplemented dump mode format(%u,%s)\n", This->resource.format, debug_d3dformat(This->resource.format));
     }
     fclose(f);
@@ -1098,7 +1104,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_CleanDirtyRect(IWineD3DSurface *iface) {
     This->dirtyRect.top    = This->currentDesc.Height;
     This->dirtyRect.right  = 0;
     This->dirtyRect.bottom = 0;
-    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left, 
+    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     return D3D_OK;
 }
@@ -1121,7 +1127,7 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
         This->dirtyRect.right  = This->currentDesc.Width;
         This->dirtyRect.bottom = This->currentDesc.Height;
     }
-    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left, 
+    TRACE("(%p) : Dirty?%d, Rect:(%ld,%ld,%ld,%ld)\n", This, This->Dirty, This->dirtyRect.left,
           This->dirtyRect.top, This->dirtyRect.right, This->dirtyRect.bottom);
     /* if the container is a basetexture then mark it dirty. */
     if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == D3D_OK) {
@@ -1136,13 +1142,13 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IUnknown
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     TRACE("Setting container to %p from %p\n", container, This->container);
     This->container = container;
-    return D3D_OK;    
+    return D3D_OK;
 }
 
 /* TODO: replace this function with context management routines */
 HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL inPBuffer, BOOL  inTexture) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    
+
     This->inPBuffer = inPBuffer;
     This->inTexture = inTexture;
     return D3D_OK;
@@ -1164,7 +1170,7 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_GetPriority,
     IWineD3DSurfaceImpl_PreLoad,
     IWineD3DSurfaceImpl_GetType,
-    /* IWineD3DSurface */    
+    /* IWineD3DSurface */
     IWineD3DSurfaceImpl_GetContainer,
     IWineD3DSurfaceImpl_GetDesc,
     IWineD3DSurfaceImpl_LockRect,

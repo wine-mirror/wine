@@ -32,8 +32,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #if 0 /* Musxt not be 1 in cvs version */
 # define VSTRACE(A) TRACE A
 # define TRACE_VSVECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
-#else 
-# define VSTRACE(A) 
+#else
+# define VSTRACE(A)
 # define TRACE_VSVECTOR(name)
 #endif
 
@@ -68,7 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
  *  http://developer.nvidia.com/view.asp?IO=vstovp
  *
  * NVIDIA: Memory Management with VAR
- *  http://developer.nvidia.com/view.asp?IO=var_memory_management 
+ *  http://developer.nvidia.com/view.asp?IO=var_memory_management
  */
 
 typedef void (*shader_fct_t)();
@@ -143,7 +143,7 @@ void vshader_lit(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
 }
 
 void vshader_logp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
-  float tmp_f = fabsf(s0->w); 
+  float tmp_f = fabsf(s0->w);
   d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
   VSTRACE(("executing logp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	         s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
@@ -249,7 +249,7 @@ void vshader_exp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
 }
 
 void vshader_log(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
-  float tmp_f = fabsf(s0->w); 
+  float tmp_f = fabsf(s0->w);
   d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE_VAL;
   VSTRACE(("executing log: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
 	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w));
@@ -275,7 +275,7 @@ void vshader_m4x4(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, /*D3DSHADERVECTOR* ma
    * BuGGY CODE: here only if cast not work for copy/paste
   D3DSHADERVECTOR* mat2 = mat1 + 1;
   D3DSHADERVECTOR* mat3 = mat1 + 2;
-  D3DSHADERVECTOR* mat4 = mat1 + 3; 
+  D3DSHADERVECTOR* mat4 = mat1 + 3;
   d->x = mat1->x * s0->x + mat2->x * s0->y + mat3->x * s0->z + mat4->x * s0->w;
   d->y = mat1->y * s0->x + mat2->y * s0->y + mat3->y * s0->z + mat4->y * s0->w;
   d->z = mat1->z * s0->x + mat2->z * s0->y + mat3->z * s0->z + mat4->z * s0->w;
@@ -336,10 +336,10 @@ void vshader_m3x2(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DMATRIX32 mat) {
  * Version 2.0 specific
  */
 void vshader_lrp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1, D3DSHADERVECTOR* s2, D3DSHADERVECTOR* s3) {
-  d->x = s0->x * (s1->x - s2->x) + s2->x; 
-  d->y = s0->y * (s1->y - s2->y) + s2->y; 
-  d->z = s0->z * (s1->z - s2->z) + s2->z; 
-  d->w = s0->w * (s1->w - s2->w) + s2->x; 
+  d->x = s0->x * (s1->x - s2->x) + s2->x;
+  d->y = s0->y * (s1->y - s2->y) + s2->y;
+  d->z = s0->z * (s1->z - s2->z) + s2->z;
+  d->w = s0->w * (s1->w - s2->w) + s2->x;
 }
 
 /**
@@ -399,7 +399,7 @@ inline static void vshader_program_dump_param(const DWORD param, int input) {
   DWORD regtype = ((param & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
 
   if ((param & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG) TRACE("-");
-  
+
   switch (regtype << D3DSP_REGTYPE_SHIFT) {
   case D3DSPR_TEMP:
     TRACE("R[%lu]", reg);
@@ -446,16 +446,16 @@ inline static void vshader_program_dump_param(const DWORD param, int input) {
      *  WWZZYYXX
      */
     if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) != swizzle) { /* ! D3DVS_NOSWIZZLE == 0xE4 << D3DVS_SWIZZLE_SHIFT */
-      if (swizzle_x == swizzle_y && 
-	  swizzle_x == swizzle_z && 
-	  swizzle_x == swizzle_w) {
-	TRACE(".%c", swizzle_reg_chars[swizzle_x]);
-      } else {
-	TRACE(".%c%c%c%c", 
-		swizzle_reg_chars[swizzle_x], 
-		swizzle_reg_chars[swizzle_y], 
-		swizzle_reg_chars[swizzle_z], 
-		swizzle_reg_chars[swizzle_w]);
+      if (swizzle_x == swizzle_y &&
+            swizzle_x == swizzle_z &&
+            swizzle_x == swizzle_w) {
+                TRACE(".%c", swizzle_reg_chars[swizzle_x]);
+            } else {
+                TRACE(".%c%c%c%c",
+                    swizzle_reg_chars[swizzle_x],
+                    swizzle_reg_chars[swizzle_y],
+                    swizzle_reg_chars[swizzle_z],
+                    swizzle_reg_chars[swizzle_w]);
       }
     }
   }
@@ -475,50 +475,50 @@ inline static BOOL vshader_is_comment_token(DWORD token) {
 HRESULT WINAPI IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl* vshader, CONST DWORD* pFunction) {
   const DWORD* pToken = pFunction;
   const SHADER_OPCODE* curOpcode = NULL;
-  DWORD len = 0;  
+  DWORD len = 0;
   DWORD i;
 
   if (NULL != pToken) {
     while (D3DVS_END() != *pToken) {
       if (vshader_is_version_token(*pToken)) { /** version */
-	TRACE("vs.%lu.%lu\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
-	++pToken;
-	++len;
-	continue;
-      } 
+        TRACE("vs.%lu.%lu\n", (*pToken >> 8) & 0x0F, (*pToken & 0x0F));
+        ++pToken;
+        ++len;
+        continue;
+      }
       if (vshader_is_comment_token(*pToken)) { /** comment */
-	DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
-	++pToken;
-	/*TRACE("comment[%ld] ;%s\n", comment_len, (char*)pToken);*/
-	pToken += comment_len;
-	len += comment_len + 1;
-	continue;
+        DWORD comment_len = (*pToken & D3DSI_COMMENTSIZE_MASK) >> D3DSI_COMMENTSIZE_SHIFT;
+        ++pToken;
+        /*TRACE("comment[%ld] ;%s\n", comment_len, (char*)pToken);*/
+        pToken += comment_len;
+        len += comment_len + 1;
+        continue;
       }
       curOpcode = vshader_program_get_opcode(*pToken);
       ++pToken;
       ++len;
-      if (NULL == curOpcode) {
-	/* unkown current opcode ... */
-	while (*pToken & 0x80000000) {
-	  TRACE("unrecognized opcode: %08lx\n", *pToken);
-	  ++pToken;
-	  ++len;
-	}
-      } else {
-	TRACE("%s ", curOpcode->name);
-	if (curOpcode->num_params > 0) {
-	  vshader_program_dump_param(*pToken, 0);
-	  ++pToken;
-	  ++len;
-	  for (i = 1; i < curOpcode->num_params; ++i) {
-	    TRACE(", ");
-	    vshader_program_dump_param(*pToken, 1);
-	    ++pToken;
-	    ++len;
-	  }
-	}
-	TRACE("\n");
-      }
+        if (NULL == curOpcode) {
+            /* unkown current opcode ... */
+            while (*pToken & 0x80000000) {
+                TRACE("unrecognized opcode: %08lx\n", *pToken);
+                ++pToken;
+                ++len;
+            }
+        } else {
+            TRACE("%s ", curOpcode->name);
+            if (curOpcode->num_params > 0) {
+                vshader_program_dump_param(*pToken, 0);
+                ++pToken;
+                ++len;
+                for (i = 1; i < curOpcode->num_params; ++i) {
+                    TRACE(", ");
+                    vshader_program_dump_param(*pToken, 1);
+                    ++pToken;
+                    ++len;
+                }
+            }
+            TRACE("\n");
+        }
     }
     vshader->functionLength = (len + 1) * sizeof(DWORD);
   } else {
@@ -536,9 +536,9 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ParseProgram(IDirect3DVertexShaderImpl*
 }
 
 BOOL IDirect3DVertexShaderImpl_ExecuteHAL(IDirect3DVertexShaderImpl* vshader, VSHADERINPUTDATA* input, VSHADEROUTPUTDATA* output) {
-  /** 
-   * TODO: use the NV_vertex_program (or 1_1) extension 
-   *  and specifics vendors (ARB_vertex_program??) variants for it 
+  /**
+   * TODO: use the NV_vertex_program (or 1_1) extension
+   *  and specifics vendors (ARB_vertex_program??) variants for it
    */
   return TRUE;
 }
@@ -590,7 +590,7 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
 
   /* the first dword is the version tag */
   /* TODO: parse it */
-  
+
   if (vshader_is_version_token(*pToken)) { /** version */
     ++pToken;
   }
@@ -607,149 +607,148 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
       i = 0;
       /* unkown current opcode ... */
       while (*pToken & 0x80000000) {
-	if (i == 0) {
-	  TRACE("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - vshader->function, *(pToken - 1));
-	}
-	TRACE("unrecognized opcode param: pos=%d token=%08lX what=", pToken - vshader->function, *pToken);
-	vshader_program_dump_param(*pToken, i);
-	TRACE("\n");
-	++i;
-	++pToken;
+        if (i == 0) {
+            TRACE("unrecognized opcode: pos=%d token=%08lX\n", (pToken - 1) - vshader->function, *(pToken - 1));
+        }
+        TRACE("unrecognized opcode param: pos=%d token=%08lX what=", pToken - vshader->function, *pToken);
+        vshader_program_dump_param(*pToken, i);
+        TRACE("\n");
+        ++i;
+        ++pToken;
       }
       /*return FALSE;*/
-    } else {     
-      if (curOpcode->num_params > 0) {	
-	/*TRACE(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken);*/
-	for (i = 0; i < curOpcode->num_params; ++i) {
-	  DWORD reg = pToken[i] & 0x00001FFF;
-	  DWORD regtype = ((pToken[i] & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
+    } else {
+      if (curOpcode->num_params > 0) {
+        /*TRACE(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken);*/
+        for (i = 0; i < curOpcode->num_params; ++i) {
+            DWORD reg = pToken[i] & 0x00001FFF;
+            DWORD regtype = ((pToken[i] & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
 
-	  switch (regtype << D3DSP_REGTYPE_SHIFT) {
-	  case D3DSPR_TEMP:
-	    /*TRACE("p[%d]=R[%d]\n", i, reg);*/
-	    p[i] = &R[reg];
-	    break;
-	  case D3DSPR_INPUT:
-	    /*TRACE("p[%d]=V[%s]\n", i, VertexShaderDeclRegister[reg]);*/
-	    p[i] = &input->V[reg];
-	    break;
-	  case D3DSPR_CONST:
-	    if (pToken[i] & D3DVS_ADDRMODE_RELATIVE) {
-	      p[i] = &vshader->data->C[(DWORD) A[0].x + reg];
-	    } else {
-	      p[i] = &vshader->data->C[reg];
-	    }
-	    break;
-	  case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
-	    if (0 != reg) {
-	      ERR("cannot handle address registers != a0, forcing use of a0\n");
-	      reg = 0;
-	    }
-	    /*TRACE("p[%d]=A[%d]\n", i, reg);*/
-	    p[i] = &A[reg];
-	    break;
-	  case D3DSPR_RASTOUT:
-	    switch (reg) {
-	    case D3DSRO_POSITION:
-	      p[i] = &output->oPos;
-	      break;
-	    case D3DSRO_FOG:
-	      p[i] = &output->oFog;
-	      break;
-	    case D3DSRO_POINT_SIZE:
-	      p[i] = &output->oPts;
-	      break;
-	    }
-	    break;
-	  case D3DSPR_ATTROUT:
-	    /*TRACE("p[%d]=oD[%d]\n", i, reg);*/
-	    p[i] = &output->oD[reg];
-	    break;
-	  case D3DSPR_TEXCRDOUT:
-	    /*TRACE("p[%d]=oT[%d]\n", i, reg);*/
-	    p[i] = &output->oT[reg];
-	    break;
-	  default:
-	    break;
-	  }
-	  
-	  if (i > 0) { /* input reg */
-	    DWORD swizzle = (pToken[i] & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
-	    UINT isNegative = ((pToken[i] & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG);
+            switch (regtype << D3DSP_REGTYPE_SHIFT) {
+            case D3DSPR_TEMP:
+                /*TRACE("p[%d]=R[%d]\n", i, reg);*/
+                p[i] = &R[reg];
+                break;
+            case D3DSPR_INPUT:
+                /*TRACE("p[%d]=V[%s]\n", i, VertexShaderDeclRegister[reg]);*/
+                p[i] = &input->V[reg];
+                break;
+            case D3DSPR_CONST:
+                if (pToken[i] & D3DVS_ADDRMODE_RELATIVE) {
+                    p[i] = &vshader->data->C[(DWORD) A[0].x + reg];
+                } else {
+                    p[i] = &vshader->data->C[reg];
+                }
+                break;
+            case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
+                if (0 != reg) {
+                    ERR("cannot handle address registers != a0, forcing use of a0\n");
+                    reg = 0;
+                }
+                /*TRACE("p[%d]=A[%d]\n", i, reg);*/
+                p[i] = &A[reg];
+                break;
+            case D3DSPR_RASTOUT:
+                switch (reg) {
+                case D3DSRO_POSITION:
+                    p[i] = &output->oPos;
+                    break;
+                case D3DSRO_FOG:
+                    p[i] = &output->oFog;
+                    break;
+                case D3DSRO_POINT_SIZE:
+                    p[i] = &output->oPts;
+                    break;
+                }
+                break;
+                case D3DSPR_ATTROUT:
+                    /*TRACE("p[%d]=oD[%d]\n", i, reg);*/
+                    p[i] = &output->oD[reg];
+                    break;
+                case D3DSPR_TEXCRDOUT:
+                    /*TRACE("p[%d]=oT[%d]\n", i, reg);*/
+                    p[i] = &output->oT[reg];
+                    break;
+                default:
+                break;
+                }
 
-	    if (!isNegative && (D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) {
-	      /*TRACE("p[%d] not swizzled\n", i);*/
-	      p_send[i] = p[i];
-	    } else {
-	      DWORD swizzle_x = swizzle & 0x03;
-	      DWORD swizzle_y = (swizzle >> 2) & 0x03;
-	      DWORD swizzle_z = (swizzle >> 4) & 0x03;
-	      DWORD swizzle_w = (swizzle >> 6) & 0x03;
-	      /*TRACE("p[%d] swizzled\n", i);*/
-	      float* tt = (float*) p[i];
-	      s[i].x = (isNegative) ? -tt[swizzle_x] : tt[swizzle_x];
-	      s[i].y = (isNegative) ? -tt[swizzle_y] : tt[swizzle_y];
-	      s[i].z = (isNegative) ? -tt[swizzle_z] : tt[swizzle_z];
-	      s[i].w = (isNegative) ? -tt[swizzle_w] : tt[swizzle_w];
-	      p_send[i] = &s[i];
-	    }
-	  } else { /* output reg */
-	    if ((pToken[i] & D3DSP_WRITEMASK_ALL) == D3DSP_WRITEMASK_ALL) {
-	      p_send[i] = p[i];
-	    } else {
-	      p_send[i] = &d; /* to be post-processed for modifiers management */
-	    }
-	  }
-	}      
-      }
+                if (i > 0) { /* input reg */
+                    DWORD swizzle = (pToken[i] & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
+                    UINT isNegative = ((pToken[i] & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG);
 
-      switch (curOpcode->num_params) {	
-      case 0:
-	curOpcode->soft_fct();
-	break;
-      case 1:
-	curOpcode->soft_fct(p_send[0]);
-	break;
-      case 2:
-	curOpcode->soft_fct(p_send[0], p_send[1]);
-	break;
-      case 3:
-	curOpcode->soft_fct(p_send[0], p_send[1], p_send[2]);
-	break;
-      case 4:
-	curOpcode->soft_fct(p_send[0], p_send[1], p_send[2], p_send[3]);
-	break;
-      case 5:
-	curOpcode->soft_fct(p_send[0], p_send[1], p_send[2], p_send[3], p_send[4]);
-	break;
-      default:
-	ERR("%s too many params: %u\n", curOpcode->name, curOpcode->num_params);
-      }
+                    if (!isNegative && (D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) {
+                        /*TRACE("p[%d] not swizzled\n", i);*/
+                        p_send[i] = p[i];
+                    } else {
+                        DWORD swizzle_x = swizzle & 0x03;
+                        DWORD swizzle_y = (swizzle >> 2) & 0x03;
+                        DWORD swizzle_z = (swizzle >> 4) & 0x03;
+                        DWORD swizzle_w = (swizzle >> 6) & 0x03;
+                        /*TRACE("p[%d] swizzled\n", i);*/
+                        float* tt = (float*) p[i];
+                        s[i].x = (isNegative) ? -tt[swizzle_x] : tt[swizzle_x];
+                        s[i].y = (isNegative) ? -tt[swizzle_y] : tt[swizzle_y];
+                        s[i].z = (isNegative) ? -tt[swizzle_z] : tt[swizzle_z];
+                        s[i].w = (isNegative) ? -tt[swizzle_w] : tt[swizzle_w];
+                        p_send[i] = &s[i];
+                    }
+                } else { /* output reg */
+                    if ((pToken[i] & D3DSP_WRITEMASK_ALL) == D3DSP_WRITEMASK_ALL) {
+                        p_send[i] = p[i];
+                    } else {
+                        p_send[i] = &d; /* to be post-processed for modifiers management */
+                    }
+                }
+            }
+        }
 
-      /* check if output reg modifier post-process */
-      if (curOpcode->num_params > 0 && (pToken[0] & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
-	if (pToken[0] & D3DSP_WRITEMASK_0) p[0]->x = d.x; 
-	if (pToken[0] & D3DSP_WRITEMASK_1) p[0]->y = d.y; 
-	if (pToken[0] & D3DSP_WRITEMASK_2) p[0]->z = d.z; 
-	if (pToken[0] & D3DSP_WRITEMASK_3) p[0]->w = d.w; 
-      }
-      
+        switch (curOpcode->num_params) {
+        case 0:
+            curOpcode->soft_fct();
+            break;
+        case 1:
+            curOpcode->soft_fct(p_send[0]);
+        break;
+        case 2:
+            curOpcode->soft_fct(p_send[0], p_send[1]);
+            break;
+        case 3:
+            curOpcode->soft_fct(p_send[0], p_send[1], p_send[2]);
+            break;
+        case 4:
+            curOpcode->soft_fct(p_send[0], p_send[1], p_send[2], p_send[3]);
+            break;
+        case 5:
+            curOpcode->soft_fct(p_send[0], p_send[1], p_send[2], p_send[3], p_send[4]);
+            break;
+        default:
+            ERR("%s too many params: %u\n", curOpcode->name, curOpcode->num_params);
+        }
+
+        /* check if output reg modifier post-process */
+        if (curOpcode->num_params > 0 && (pToken[0] & D3DSP_WRITEMASK_ALL) != D3DSP_WRITEMASK_ALL) {
+            if (pToken[0] & D3DSP_WRITEMASK_0) p[0]->x = d.x; 
+            if (pToken[0] & D3DSP_WRITEMASK_1) p[0]->y = d.y; 
+            if (pToken[0] & D3DSP_WRITEMASK_2) p[0]->z = d.z; 
+            if (pToken[0] & D3DSP_WRITEMASK_3) p[0]->w = d.w; 
+        }
 #if 0
-      TRACE_VSVECTOR(output->oPos);
-      TRACE_VSVECTOR(output->oD[0]);
-      TRACE_VSVECTOR(output->oD[1]);
-      TRACE_VSVECTOR(output->oT[0]);
-      TRACE_VSVECTOR(output->oT[1]);
-      TRACE_VSVECTOR(R[0]);
-      TRACE_VSVECTOR(R[1]);
-      TRACE_VSVECTOR(R[2]);
-      TRACE_VSVECTOR(R[3]);
-      TRACE_VSVECTOR(R[4]);
-      TRACE_VSVECTOR(R[5]);
+        TRACE_VSVECTOR(output->oPos);
+        TRACE_VSVECTOR(output->oD[0]);
+        TRACE_VSVECTOR(output->oD[1]);
+        TRACE_VSVECTOR(output->oT[0]);
+        TRACE_VSVECTOR(output->oT[1]);
+        TRACE_VSVECTOR(R[0]);
+        TRACE_VSVECTOR(R[1]);
+        TRACE_VSVECTOR(R[2]);
+        TRACE_VSVECTOR(R[3]);
+        TRACE_VSVECTOR(R[4]);
+        TRACE_VSVECTOR(R[5]);
 #endif
 
-      /* to next opcode token */
-      pToken += curOpcode->num_params;
+        /* to next opcode token */
+        pToken += curOpcode->num_params;
     }
 #if 0
     TRACE("End of current instruction:\n");
@@ -861,7 +860,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_QueryInterface(IWineD3DVertexShader *ifa
 
 ULONG WINAPI IWineD3DVertexShaderImpl_AddRef(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);    
+    TRACE("(%p) : AddRef increasing from %ld\n", This, This->ref);
     return InterlockedIncrement(&This->ref);
 }
 
@@ -870,7 +869,7 @@ ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
     ULONG ref;
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
-    if (ref == 0) {        
+    if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -882,18 +881,18 @@ ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface) {
 
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetParent(IWineD3DVertexShader *iface, IUnknown** parent){
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
-    
+
     *parent= (IUnknown*) parent;
     IUnknown_AddRef(*parent);
     TRACE("(%p) : returning %p\n", This, *parent);
     return D3D_OK;
 }
-   
+
 HRESULT WINAPI IWineD3DVertexShaderImpl_GetDevice(IWineD3DVertexShader* iface, IWineD3DDevice **pDevice){
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     IWineD3DDevice_AddRef((IWineD3DDevice *)This->wineD3DDevice);
     *pDevice = (IWineD3DDevice *)This->wineD3DDevice;
-    TRACE("(%p) returning %p\n", This, *pDevice);   
+    TRACE("(%p) returning %p\n", This, *pDevice);
     return D3D_OK;
 }
 
@@ -914,7 +913,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_GetFunction(IWineD3DVertexShader* impl, 
     (*(DWORD **) pData) = NULL;
   } else {
     if(This->functionLength == 0){
-    
+
     }
     TRACE("(%p) : GetFunction copying to %p\n", This, pData);
     memcpy(pData, This->function, This->functionLength);
@@ -933,5 +932,5 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetParent,
     IWineD3DVertexShaderImpl_GetDevice,
-    IWineD3DVertexShaderImpl_GetFunction    
+    IWineD3DVertexShaderImpl_GetFunction
 };

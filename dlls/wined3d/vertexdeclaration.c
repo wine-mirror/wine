@@ -55,7 +55,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
  *  http://developer.nvidia.com/view.asp?IO=vstovp
  *
  * NVIDIA: Memory Management with VAR
- *  http://developer.nvidia.com/view.asp?IO=var_memory_management 
+ *  http://developer.nvidia.com/view.asp?IO=var_memory_management
  */
 
 /** Vertex Shader Declaration 8 data types tokens */
@@ -215,21 +215,21 @@ static DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
       ++pToken;
       for (i = 0; i < count; ++i) {
 #if 0
-	TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n", 
-		constaddress, 
-		*pToken, 
-		*(pToken + 1), 
-		*(pToken + 2), 
-		*(pToken + 3));
+        TRACE("        c[%lu] = (0x%08lx, 0x%08lx, 0x%08lx, 0x%08lx)\n",
+            constaddress,
+            *pToken,
+            *(pToken + 1),
+            *(pToken + 2),
+            *(pToken + 3));
 #endif
-	TRACE("        c[%lu] = (%8f, %8f, %8f, %8f)\n", 
-		constaddress, 
-		 *(const float*) pToken, 
-		 *(const float*) (pToken + 1), 
-		 *(const float*) (pToken + 2), 
-		 *(const float*) (pToken + 3));
-	pToken += 4; 
-	++constaddress;
+        TRACE("        c[%lu] = (%8f, %8f, %8f, %8f)\n",
+            constaddress,
+            *(const float*) pToken,
+            *(const float*) (pToken + 1),
+            *(const float*) (pToken + 2),
+            *(const float*) (pToken + 3));
+        pToken += 4;
+        ++constaddress;
       }
       tokenlen = (4 * count) + 1;
     }
@@ -295,7 +295,7 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     /* Convert from a directx* declaration into a directx9 one, so we only have to deal with one type of declaration everywhere else */
     while (D3DVSD_END() != *pToken) {
         token = *pToken;
-        tokenlen = IWineD3DVertexDeclarationImpl_ParseToken8(pToken); 
+        tokenlen = IWineD3DVertexDeclarationImpl_ParseToken8(pToken);
         tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
 
         if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
@@ -426,7 +426,7 @@ HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetParent(IWineD3DVertexDeclaration
 HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDeclaration *iface, IWineD3DDevice** ppDevice) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     TRACE("(%p) : returning %p\n", This, This->wineD3DDevice);
-    
+
     *ppDevice = (IWineD3DDevice *) This->wineD3DDevice;
     IWineD3DDevice_AddRef(*ppDevice);
 

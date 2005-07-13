@@ -278,6 +278,7 @@ UINT WINAPI IWineD3DBaseTextureImpl_GetTextureDimensions(IWineD3DBaseTexture *if
 
 static const IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
 {
+    /* IUnknown */
     IWineD3DBaseTextureImpl_QueryInterface,
     IWineD3DBaseTextureImpl_AddRef,
     IWineD3DBaseTextureImpl_Release,

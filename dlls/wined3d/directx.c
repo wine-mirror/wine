@@ -60,9 +60,9 @@ inline static Display *get_display( HDC hdc )
 
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
- * ie there is no GL Context - Get a default rendering context to enable the 
- * function query some info from GL                                     
- */    
+ * ie there is no GL Context - Get a default rendering context to enable the
+ * function query some info from GL
+ */
 static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
     static WineD3D_Context ctx = { NULL, NULL, NULL, 0, 0 };
     WineD3D_Context* ret = NULL;
@@ -76,7 +76,7 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
        BOOL         failed = FALSE;
        int          num;
        XWindowAttributes win_attr;
-     
+
        TRACE_(d3d_caps)("Creating Fake GL Context\n");
 
        ctx.drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
@@ -85,7 +85,7 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
        device_context = GetDC(0);
        ctx.display = get_display(device_context);
        ReleaseDC(0, device_context);
-     
+
        /* Get the X visual */
        ENTER_GL();
        if (XGetWindowAttributes(ctx.display, ctx.drawable, &win_attr)) {
@@ -100,26 +100,26 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
            WARN_(d3d_caps)("Error creating visual info for capabilities initialization\n");
            failed = TRUE;
        }
-     
+
        /* Create a GL context */
        if (!failed) {
            ctx.glCtx = glXCreateContext(ctx.display, ctx.visInfo, NULL, GL_TRUE);
-       
+
            if (ctx.glCtx == NULL) {
                LEAVE_GL();
                WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
                failed = TRUE;
            }
        }
-     
+
        /* Make it the current GL context */
        if (!failed && glXMakeCurrent(ctx.display, ctx.drawable, ctx.glCtx) == False) {
            glXDestroyContext(ctx.display, ctx.glCtx);
            LEAVE_GL();
            WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
-           failed = TRUE;        
+           failed = TRUE;
        }
-     
+
        /* It worked! Wow... */
        if (!failed) {
            gotContext = TRUE;
@@ -158,15 +158,15 @@ HRESULT WINAPI IWineD3DImpl_QueryInterface(IWineD3D *iface,REFIID riid,LPVOID *p
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /* FIXME: This needs to extend an IWineD3DBaseObject */
-    
+
     TRACE("(%p)->(%s,%p)\n",This,debugstr_guid(riid),ppobj);
-    if (IsEqualGUID(riid, &IID_IUnknown)        
+    if (IsEqualGUID(riid, &IID_IUnknown)
         || IsEqualGUID(riid, &IID_IWineD3DDevice)) {
         IUnknown_AddRef(iface);
         *ppobj = This;
         return D3D_OK;
     }
-    
+
     return E_NOINTERFACE;
 }
 
@@ -186,7 +186,7 @@ ULONG WINAPI IWineD3DImpl_Release(IWineD3D *iface) {
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
     }
-    
+
     return ref;
 }
 
@@ -256,17 +256,17 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             if (*gl_string_cursor) {
                 char tmp[16];
                 int cursor = 0;
-    
+
                 while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
                     tmp[cursor++] = *gl_string_cursor;
                     ++gl_string_cursor;
                 }
                 tmp[cursor] = 0;
                 major = atoi(tmp);
-            
+
                 if (*gl_string_cursor != '.') WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
                 ++gl_string_cursor;
-    
+
                 while (*gl_string_cursor <= '9' && *gl_string_cursor >= '0') {
                     tmp[cursor++] = *gl_string_cursor;
                     ++gl_string_cursor;
@@ -275,14 +275,14 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 minor = atoi(tmp);
             }
             break;
-    
+
         case VENDOR_ATI:
             major = minor = 0;
             gl_string_cursor = strchr(gl_string, '-');
             if (gl_string_cursor) {
                 int error = 0;
                 gl_string_cursor++;
-    
+
                 /* Check if version number is of the form x.y.z */
                 if (*gl_string_cursor > '9' && *gl_string_cursor < '0')
                     error = 1;
@@ -292,31 +292,31 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                     error = 1;
                 if (!error && *(gl_string_cursor+1) != '.' && *(gl_string_cursor+3) != '.')
                     error = 1;
-    
+
                 /* Mark version number as malformed */
                 if (error)
                     gl_string_cursor = 0;
             }
-    
+
             if (!gl_string_cursor)
                 WARN_(d3d_caps)("malformed GL_VERSION (%s)\n", debugstr_a(gl_string));
             else {
                 major = *gl_string_cursor - '0';
                 minor = (*(gl_string_cursor+2) - '0') * 256 + (*(gl_string_cursor+4) - '0');
-            }      
+            }
             break;
-    
+
         default:
             major = 0;
             minor = 9;
         }
         gl_info->gl_driver_version = MAKEDWORD_VERSION(major, minor);
         TRACE_(d3d_caps)("found GL_VERSION  (%s)->(0x%08lx)\n", debugstr_a(gl_string), gl_info->gl_driver_version);
-    
+
         /* Fill in the renderer information */
         gl_string = glGetString(GL_RENDERER);
         strcpy(gl_info->gl_renderer, gl_string);
-    
+
         switch (gl_info->gl_vendor) {
         case VENDOR_NVIDIA:
             if (strstr(gl_info->gl_renderer, "GeForce4 Ti")) {
@@ -327,7 +327,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->gl_card = CARD_NVIDIA_GEFORCE4_TI4600;
             }
             break;
-    
+
         case VENDOR_ATI:
             if (strstr(gl_info->gl_renderer, "RADEON 9800 PRO")) {
                 gl_info->gl_card = CARD_ATI_RADEON_9800PRO;
@@ -337,7 +337,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->gl_card = CARD_ATI_RADEON_8500;
             }
             break;
-    
+
         default:
             gl_info->gl_card = CARD_WINE;
             break;
@@ -384,10 +384,10 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
 
     /* Parse the gl supported features, in theory enabling parts of our code appropriately */
     GL_Extensions = glGetString(GL_EXTENSIONS);
-    TRACE_(d3d_caps)("GL_Extensions reported:\n");  
-    
+    TRACE_(d3d_caps)("GL_Extensions reported:\n");
+
     if (NULL == GL_Extensions) {
-        ERR("   GL_Extensions returns NULL\n");      
+        ERR("   GL_Extensions returns NULL\n");
     } else {
         while (*GL_Extensions != 0x00) {
             const char *Start = GL_Extensions;
@@ -401,7 +401,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
             TRACE_(d3d_caps)("- %s\n", ThisExtn);
 
             /**
-             * ARB 
+             * ARB
              */
             if (strcmp(ThisExtn, "GL_ARB_fragment_program") == 0) {
                 gl_info->ps_arb_version = PS_VERSION_11;
@@ -506,7 +506,7 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
                 gl_info->supported[EXT_VERTEX_WEIGHTING] = TRUE;
 
             /**
-             * NVIDIA 
+             * NVIDIA
              */
             } else if (strstr(ThisExtn, "GL_NV_fog_distance")) {
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Fog Distance support\n");
@@ -568,15 +568,15 @@ static BOOL IWineD3DImpl_FillGLCaps(WineD3D_GL_Info *gl_info, Display* display) 
 
     if (display != NULL) {
         GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-        TRACE_(d3d_caps)("GLX_Extensions reported:\n");  
-    
+        TRACE_(d3d_caps)("GLX_Extensions reported:\n");
+
         if (NULL == GLX_Extensions) {
-            ERR("   GLX_Extensions returns NULL\n");      
+            ERR("   GLX_Extensions returns NULL\n");
         } else {
             while (*GLX_Extensions != 0x00) {
                 const char *Start = GLX_Extensions;
                 char ThisExtn[256];
-           
+
                 memset(ThisExtn, 0x00, sizeof(ThisExtn));
                 while (*GLX_Extensions != ' ' && *GLX_Extensions != 0x00) {
                     GLX_Extensions++;
@@ -630,7 +630,7 @@ HMONITOR WINAPI  IWineD3DImpl_GetAdapterMonitor(IWineD3D *iface, UINT Adapter) {
     return D3D_OK;
 }
 
-/* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes 
+/* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
      of the same bpp but different resolutions                                  */
 
 /* Note: dx9 supplies a format. Calls from d3d8 supply D3DFMT_UNKNOWN */
@@ -657,18 +657,18 @@ UINT     WINAPI  IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Adapter,
             j++;
             switch (Format)
             {
-            case D3DFMT_UNKNOWN: 
-                   i++; 
+            case D3DFMT_UNKNOWN:
+                   i++;
                    break;
-            case D3DFMT_X8R8G8B8:   
-            case D3DFMT_A8R8G8B8:    
-                   if (min(DevModeW.dmBitsPerPel, bpp) == 32) i++; 
-                   if (min(DevModeW.dmBitsPerPel, bpp) == 24) i++; 
+            case D3DFMT_X8R8G8B8:
+            case D3DFMT_A8R8G8B8:
+                   if (min(DevModeW.dmBitsPerPel, bpp) == 32) i++;
+                   if (min(DevModeW.dmBitsPerPel, bpp) == 24) i++;
                    break;
             case D3DFMT_X1R5G5B5:
             case D3DFMT_A1R5G5B5:
             case D3DFMT_R5G6B5:
-                   if (min(DevModeW.dmBitsPerPel, bpp) == 16) i++; 
+                   if (min(DevModeW.dmBitsPerPel, bpp) == 16) i++;
                    break;
             default:
                    /* Skip other modes as they do not match requested format */
@@ -693,7 +693,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
     TRACE_(d3d_caps)("(%p}->(Adapter:%d, mode:%d, pMode:%p, format:%s)\n", This, Adapter, Mode, pMode, debug_d3dformat(Format));
 
     /* Validate the parameters as much as possible */
-    if (NULL == pMode || 
+    if (NULL == pMode ||
         Adapter >= IWineD3DImpl_GetAdapterCount(iface) ||
         Mode    >= IWineD3DImpl_GetAdapterModeCount(iface, Adapter, Format)) {
         return D3DERR_INVALIDCALL;
@@ -703,7 +703,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
 #if !defined( DEBUG_SINGLE_MODE )
         DEVMODEW DevModeW;
         int ModeIdx = 0;
-            
+
         /* Work out the current screen bpp */
         HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
         int bpp = GetDeviceCaps(hdc, BITSPIXEL);
@@ -711,7 +711,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
 
         /* If we are filtering to a specific format, then need to skip all unrelated
            modes, but if mode is irrelevant, then we can use the index directly      */
-        if (Format == D3DFMT_UNKNOWN) 
+        if (Format == D3DFMT_UNKNOWN)
         {
             ModeIdx = Mode;
         } else {
@@ -724,18 +724,18 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
                 j++;
                 switch (Format)
                 {
-                case D3DFMT_UNKNOWN: 
-                       i++; 
+                case D3DFMT_UNKNOWN:
+                       i++;
                        break;
-                case D3DFMT_X8R8G8B8:   
-                case D3DFMT_A8R8G8B8:   
-                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 32) i++; 
-                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 24) i++; 
+                case D3DFMT_X8R8G8B8:
+                case D3DFMT_A8R8G8B8:
+                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 32) i++;
+                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 24) i++;
                        break;
                 case D3DFMT_X1R5G5B5:
                 case D3DFMT_A1R5G5B5:
                 case D3DFMT_R5G6B5:
-                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 16) i++; 
+                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 16) i++;
                        break;
                 default:
                        /* Skip other modes as they do not match requested format */
@@ -746,7 +746,7 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
         }
 
         /* Now get the display mode via the calculated index */
-        if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0)) 
+        if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0))
         {
             pMode->Width        = DevModeW.dmPelsWidth;
             pMode->Height       = DevModeW.dmPelsHeight;
@@ -782,10 +782,10 @@ HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapter, WINE
         pMode->Width        = 800;
         pMode->Height       = 600;
         pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-        pMode->Format       = (Format==D3DFMT_UNKNOWN)?D3DFMT_A8R8G8B8:Format;
+        pMode->Format       = (Format == D3DFMT_UNKNOWN) ? D3DFMT_A8R8G8B8 : Format;
         bpp = 32;
 #endif
-        TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x - %s) bpp %u\n", pMode->Width, pMode->Height, 
+        TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x - %s) bpp %u\n", pMode->Width, pMode->Height,
                  pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
 
     } else {
@@ -799,7 +799,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter,
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     TRACE_(d3d_caps)("(%p}->(Adapter: %d, pMode: %p)\n", This, Adapter, pMode);
 
-    if (NULL == pMode || 
+    if (NULL == pMode ||
         Adapter >= IWineD3D_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
     }
@@ -849,7 +849,7 @@ static Display * WINAPI IWineD3DImpl_GetAdapterDisplay(IWineD3D *iface, UINT Ada
 
 /* NOTE: due to structure differences between dx8 and dx9 D3DADAPTER_IDENTIFIER,
    and fields being inserted in the middle, a new structure is used in place    */
-HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags, 
+HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, DWORD Flags,
                                                    WINED3DADAPTER_IDENTIFIER* pIdentifier) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
@@ -860,10 +860,10 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Adapter, 
     }
 
     if (Adapter == 0) { /* Display - only device supported for now */
-        
+
         BOOL isGLInfoValid = This->isGLInfoValid;
 
-        /* FillGLCaps updates gl_info, but we only want to store and 
+        /* FillGLCaps updates gl_info, but we only want to store and
            reuse the values once we have a context which is valid. Values from
            a temporary context may differ from the final ones                 */
         if (isGLInfoValid == FALSE) {
@@ -927,7 +927,7 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* c
   gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_BUFFER_SIZE, &buf_sz);
 
   switch (Format) {
-  case WINED3DFMT_X8R8G8B8:   
+  case WINED3DFMT_X8R8G8B8:
   case WINED3DFMT_R8G8B8:
     if (8 == rb && 8 == gb && 8 == bb) return TRUE;
     break;
@@ -962,7 +962,7 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* c
 static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ctx, GLXFBConfig cfgs, WINED3DFORMAT Format) {
   int gl_test;
   int db, sb;
-  
+
   gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_DEPTH_SIZE, &db);
   gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_STENCIL_SIZE, &sb);
 
@@ -996,16 +996,16 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ct
   return FALSE;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
-						   WINED3DFORMAT AdapterFormat, 
-						   WINED3DFORMAT RenderTargetFormat, 
-						   WINED3DFORMAT DepthStencilFormat) {
+HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType,
+                                                   WINED3DFORMAT AdapterFormat,
+                                                   WINED3DFORMAT RenderTargetFormat,
+                                                   WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n", 
-           This, Adapter, 
+    WARN_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), AdptFmt:(%x,%s), RendrTgtFmt:(%x,%s), DepthStencilFmt:(%x,%s))\n",
+           This, Adapter,
            DeviceType, debug_d3ddevicetype(DeviceType),
            AdapterFormat, debug_d3dformat(AdapterFormat),
-           RenderTargetFormat, debug_d3dformat(RenderTargetFormat), 
+           RenderTargetFormat, debug_d3dformat(RenderTargetFormat),
            DepthStencilFormat, debug_d3dformat(DepthStencilFormat));
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -1017,66 +1017,66 @@ HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT Adapter
       int nCfgs = 0;
       int it;
       HRESULT hr = D3DERR_NOTAVAILABLE;
-      
+
       WineD3D_Context* ctx = WineD3D_CreateFakeGLContext();
       if (NULL != ctx) {
-	cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
-	for (it = 0; it < nCfgs; ++it) {
-	  if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], RenderTargetFormat)) {
-	    if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(ctx, cfgs[it], DepthStencilFormat)) {
-	      hr = D3D_OK;
-	      break ;
-	    }
-	  }
-	}
-	XFree(cfgs);
-	
-	WineD3D_ReleaseFakeGLContext(ctx);
-	return hr;
+        cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
+        for (it = 0; it < nCfgs; ++it) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], RenderTargetFormat)) {
+                if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(ctx, cfgs[it], DepthStencilFormat)) {
+                    hr = D3D_OK;
+                    break ;
+                }
+            }
+        }
+        XFree(cfgs);
+
+        WineD3D_ReleaseFakeGLContext(ctx);
+        return hr;
       }
     }
-     
+
     return D3DERR_NOTAVAILABLE;
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceMultiSampleType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
-						       WINED3DFORMAT SurfaceFormat,
-						       BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD* pQualityLevels) {
-    
+                                                       WINED3DFORMAT SurfaceFormat,
+                                                       BOOL Windowed, D3DMULTISAMPLE_TYPE MultiSampleType, DWORD*   pQualityLevels) {
+
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n", 
-          This, 
-          Adapter, 
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%x,%s), SurfFmt:(%x,%s), Win?%d, MultiSamp:%x, pQual:%p)\n",
+          This,
+          Adapter,
           DeviceType, debug_d3ddevicetype(DeviceType),
           SurfaceFormat, debug_d3dformat(SurfaceFormat),
-          Windowed, 
+          Windowed,
           MultiSampleType,
           pQualityLevels);
-  
+
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
         return D3DERR_INVALIDCALL;
     }
 
     if (pQualityLevels != NULL) {
-      static int s_single_shot = 0;
-      if (!s_single_shot) {
-        FIXME("Quality levels unsupported at present\n");
-	s_single_shot = 1;
-      }
-      *pQualityLevels = 1; /* Guess at a value! */
+        static int s_single_shot = 0;
+        if (!s_single_shot) {
+            FIXME("Quality levels unsupported at present\n");
+            s_single_shot = 1;
+        }
+        *pQualityLevels = 1; /* Guess at a value! */
     }
 
     if (D3DMULTISAMPLE_NONE == MultiSampleType) return D3D_OK;
     return D3DERR_NOTAVAILABLE;
 }
 
-HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE CheckType, 
-					    WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
+HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, D3DDEVTYPE CheckType,
+                                            WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n", 
-          This, 
-          Adapter, 
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n",
+          This,
+          Adapter,
           CheckType, debug_d3ddevicetype(CheckType),
           DisplayFormat, debug_d3dformat(DisplayFormat),
           BackBufferFormat, debug_d3dformat(BackBufferFormat),
@@ -1091,20 +1091,20 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, D3DDE
       int nCfgs = 0;
       int it;
       HRESULT hr = D3DERR_NOTAVAILABLE;
-      
+
       WineD3D_Context* ctx = WineD3D_CreateFakeGLContext();
       if (NULL != ctx) {
-	cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
-	for (it = 0; it < nCfgs; ++it) {
-	  if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], DisplayFormat)) {
-	    hr = D3D_OK;
-	    break ;
-	  }
-	}
-	XFree(cfgs);
-	
-	WineD3D_ReleaseFakeGLContext(ctx);
-	return hr;
+        cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
+        for (it = 0; it < nCfgs; ++it) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], DisplayFormat)) {
+                hr = D3D_OK;
+                break ;
+            }
+        }
+        XFree(cfgs);
+
+        WineD3D_ReleaseFakeGLContext(ctx);
+        return hr;
       }
     }
 
@@ -1112,15 +1112,15 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter, D3DDE
 }
 
 HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
-					      WINED3DFORMAT AdapterFormat, DWORD Usage, D3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
+                                              WINED3DFORMAT AdapterFormat, DWORD Usage, D3DRESOURCETYPE RType, WINED3DFORMAT CheckFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
-    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ", 
-          This, 
-          Adapter, 
-          DeviceType, debug_d3ddevicetype(DeviceType), 
-          AdapterFormat, debug_d3dformat(AdapterFormat), 
+    TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), AdptFmt:(%u,%s), Use:(%lu,%s), ResTyp:(%x,%s), CheckFmt:(%u,%s)) ",
+          This,
+          Adapter,
+          DeviceType, debug_d3ddevicetype(DeviceType),
+          AdapterFormat, debug_d3dformat(AdapterFormat),
           Usage, debug_d3dusage(Usage),
-          RType, debug_d3dresourcetype(RType), 
+          RType, debug_d3dresourcetype(RType),
           CheckFormat, debug_d3dformat(CheckFormat));
 
     if (Adapter >= IWineD3D_GetAdapterCount(iface)) {
@@ -1141,16 +1141,16 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3D
 
     switch (CheckFormat) {
     /*****
-     * check supported using GL_SUPPORT 
+     * check supported using GL_SUPPORT
      */
     case D3DFMT_DXT1:
     case D3DFMT_DXT2:
     case D3DFMT_DXT3:
     case D3DFMT_DXT4:
-    case D3DFMT_DXT5: 
+    case D3DFMT_DXT5:
 
     /*****
-     *  supported 
+     *  supported
      */
       /*case D3DFMT_R5G6B5: */
       /*case D3DFMT_X1R5G5B5:*/
@@ -1158,7 +1158,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3D
       /*case D3DFMT_A4R4G4B4:*/
 
     /*****
-     * unsupported 
+     * unsupported
      */
 
       /* color buffer */
@@ -1185,7 +1185,7 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3D
     case D3DFMT_W11V11U10:
 
     /****
-     * currently hard to support 
+     * currently hard to support
      */
     case D3DFMT_UYVY:
     case D3DFMT_YUY2:
@@ -1201,21 +1201,21 @@ HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, D3D
     return D3D_OK;
 }
 
-HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, 
-							  WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) {
+HRESULT  WINAPI  IWineD3DImpl_CheckDeviceFormatConversion(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType,
+                                                          WINED3DFORMAT SourceFormat, WINED3DFORMAT TargetFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
 
     FIXME_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, DevType:(%u,%s), SrcFmt:(%u,%s), TgtFmt:(%u,%s))",
-          This, 
-          Adapter, 
-          DeviceType, debug_d3ddevicetype(DeviceType), 
-          SourceFormat, debug_d3dformat(SourceFormat), 
+          This,
+          Adapter,
+          DeviceType, debug_d3ddevicetype(DeviceType),
+          SourceFormat, debug_d3dformat(SourceFormat),
           TargetFormat, debug_d3dformat(TargetFormat));
     return D3D_OK;
 }
 
-/* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true 
-      subset of a D3DCAPS9 structure. However, it has to come via a void * 
+/* Note: d3d8 passes in a pointer to a D3DCAPS8 structure, which is a true
+      subset of a D3DCAPS9 structure. However, it has to come via a void *
       as the d3d8 interface cannot import the d3d9 header                  */
 HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, WINED3DCAPS* pCaps) {
 
@@ -1416,12 +1416,12 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
                                 D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
                                 D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
-    
+
 #if 0
     *pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
-                            /* FIXME: Add 
-			      D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
-			      D3DTEXOPCAPS_PREMODULATE */
+                            /* FIXME: Add
+                            D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
+                            D3DTEXOPCAPS_PREMODULATE */
 #endif
 
     *pCaps->MaxTextureBlendStages   = GL_LIMITS(textures);
@@ -1443,8 +1443,8 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 
 
     *pCaps->VertexProcessingCaps = D3DVTXPCAPS_DIRECTIONALLIGHTS |
-                                   D3DVTXPCAPS_MATERIALSOURCE7   | 
-                                   D3DVTXPCAPS_POSITIONALLIGHTS  | 
+                                   D3DVTXPCAPS_MATERIALSOURCE7   |
+                                   D3DVTXPCAPS_POSITIONALLIGHTS  |
                                    D3DVTXPCAPS_LOCALVIEWER |
                                    D3DVTXPCAPS_TEXGEN;
                                   /* FIXME: Add 
@@ -1465,15 +1465,15 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
         *pCaps->MaxVertexShaderConst = WINED3D_VSHADER_MAX_CONSTANTS;
       }
     } else {
-        *pCaps->VertexShaderVersion = 0;
+        *pCaps->VertexShaderVersion  = 0;
         *pCaps->MaxVertexShaderConst = 0;
     }
 
     if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
-        *pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);
+        *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
     } else {
-        *pCaps->PixelShaderVersion = 0;
+        *pCaps->PixelShaderVersion    = 0;
         *pCaps->PixelShader1xMaxValue = 0.0;
     }
     /* TODO: ARB_FRAGMENT_PROGRAM_100 */
@@ -1482,7 +1482,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
        The following fields apply to d3d9 only
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
-        GLint max_buffers=1;
+        GLint max_buffers = 1;
         FIXME("Caps support for directx9 is nonexistent at the moment!\n");
         *pCaps->DevCaps2                          = 0;
         /* TODO: D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES */
@@ -1494,7 +1494,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
 #if 0 /*FIXME: Simultaneous render targets*/
         GL_MAX_DRAW_BUFFERS_ATI 0x00008824
         if (GL_SUPPORT(GL_MAX_DRAW_BUFFERS_ATI)) {
-            ENTER_GL();        
+            ENTER_GL();
             glEnable(GL_MAX_DRAW_BUFFERS_ATI);
             glGetIntegerv(GL_MAX_DRAW_BUFFERS_ATI, &max_buffers);
             glDisable(GL_MAX_DRAW_BUFFERS_ATI);
@@ -1552,10 +1552,10 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->wineD3D = iface;
     IWineD3D_AddRef(object->wineD3D);
     object->parent  = parent;
-    
+
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
           hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
-    TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This, 
+    TRACE("(%p)->(DepthStencil:(%u,%s), BackBufferFormat:(%u,%s))\n", This,
           *(pPresentationParameters->AutoDepthStencilFormat), debug_d3dformat(*(pPresentationParameters->AutoDepthStencilFormat)),
           *(pPresentationParameters->BackBufferFormat), debug_d3dformat(*(pPresentationParameters->BackBufferFormat)));
 
@@ -1594,15 +1594,15 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
             if (NULL != object->stencilBufferTarget) {
                 IWineD3DSurface_AddRef(object->stencilBufferTarget);
             }
-    
+
             /* Set up some starting GL setup */
-    
+
             ENTER_GL();
             /*
             * Initialize openGL extension related variables
-            *  with Default values 
+            *  with Default values
             */
-    
+
             This->isGLInfoValid = IWineD3DImpl_FillGLCaps(&This->gl_info, swapchain->display);
             /* Setup all the devices defaults */
             IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)object->stateBlock);
@@ -1610,7 +1610,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
             IWineD3DImpl_CheckGraphicsMemory();
 #endif
             LEAVE_GL();
-    
+
             { /* Set a default viewport */
                 D3DVIEWPORT9 vp;
                 vp.X      = 0;
@@ -1621,8 +1621,8 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
                 vp.MaxZ   = 1.0f;
                 IWineD3DDevice_SetViewport((IWineD3DDevice *)object, &vp);
             }
-    
-    
+
+
             /* Initialize the current view state */
             object->modelview_valid = 1;
             object->proj_valid = 0;
@@ -1630,7 +1630,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
             object->last_was_rhw = 0;
             glGetIntegerv(GL_MAX_LIGHTS, &object->maxConcurrentLights);
             TRACE("(%p,%d) All defaults now set up, leaving CreateDevice with %p\n", This, Adapter, object);
-    
+
             /* Clear the screen */
             IWineD3DDevice_Clear((IWineD3DDevice *) object, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
         } else { /* couldn't create swapchain */
@@ -1665,9 +1665,11 @@ HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
 
 const IWineD3DVtbl IWineD3D_Vtbl =
 {
+    /* IUnknown */
     IWineD3DImpl_QueryInterface,
     IWineD3DImpl_AddRef,
     IWineD3DImpl_Release,
+    /* IWineD3D */
     IWineD3DImpl_GetParent,
     IWineD3DImpl_GetAdapterCount,
     IWineD3DImpl_RegisterSoftwareDevice,

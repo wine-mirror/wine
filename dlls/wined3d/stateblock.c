@@ -454,7 +454,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
     unsigned int i;
 
     /* Note this may have a large overhead but it should only be executed
-       once, in order to initialize the complete state of the device and 
+       once, in order to initialize the complete state of the device and
        all opengl equivalents                                            */
     TRACE("-----------------------> Setting up device defaults...\n");
     This->blockType = D3DSBT_ALL;
@@ -634,7 +634,7 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
 
         /* Sampler states*/
     for (i = 0 ; i <  MAX_SAMPLERS; i++) {
-        TRACE("Setting up default samplers states for sampler %d\n", i);	
+        TRACE("Setting up default samplers states for sampler %d\n", i);
         This->samplerState[i][WINED3DSAMP_ADDRESSU         ] = D3DTADDRESS_WRAP;
         This->samplerState[i][WINED3DSAMP_ADDRESSV         ] = D3DTADDRESS_WRAP;
         This->samplerState[i][WINED3DSAMP_ADDRESSW         ] = D3DTADDRESS_WRAP;
@@ -714,9 +714,11 @@ HRESULT WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStateBlock* 
 
 const IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl =
 {
+    /* IUnknown */
     IWineD3DStateBlockImpl_QueryInterface,
     IWineD3DStateBlockImpl_AddRef,
     IWineD3DStateBlockImpl_Release,
+    /* IWineD3DStateBlock */
     IWineD3DStateBlockImpl_GetParent,
     IWineD3DStateBlockImpl_GetDevice,
     IWineD3DStateBlockImpl_Capture,

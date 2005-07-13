@@ -78,7 +78,7 @@ ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) {
         int i,j;
       TRACE("(%p) : Cleaning up\n",This);
         for (i = 0; i < This->baseTexture.levels; i++) {
-          for (j = 0; j < 6; j++) { 
+          for (j = 0; j < 6; j++) {
             if (This->surfaces[j][i] != NULL) {
                 /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
                 IUnknown* surfaceParent;
@@ -132,13 +132,13 @@ void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     unsigned int i,j;
     BOOL setGlTextureDesc = FALSE;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    
+
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->baseTexture.dirty);
 
     if (This->baseTexture.textureName == 0)  setGlTextureDesc = TRUE;
 
     IWineD3DCubeTexture_BindTexture(iface);
-        
+
     ENTER_GL();
     /* If were dirty then reload the surfaces */
     if (This->baseTexture.dirty != FALSE) {
@@ -215,7 +215,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_UnBindTexture(IWineD3DCubeTexture *iface)
 UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *iface){
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     TRACE("(%p) \n", This);
-    
+
     return GLTEXTURECUBEMAP;
 }
 
@@ -224,7 +224,7 @@ UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *if
    ******************************************* */
 HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, UINT Level, WINED3DSURFACE_DESC* pDesc) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
-    
+
     if (Level < This->baseTexture.levels) {
         TRACE("(%p) level (%d)\n", This, Level);
         return IWineD3DSurface_GetDesc((IWineD3DSurface *) This->surfaces[0][Level], pDesc);
@@ -277,7 +277,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3
 HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, CONST RECT* pDirtyRect) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
-    TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);    
+    TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);
     return IWineD3DSurface_AddDirtyRect((IWineD3DSurface *) This->surfaces[FaceType][0], pDirtyRect);
 }
 
@@ -298,7 +298,7 @@ const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_GetPriority,
     IWineD3DCubeTextureImpl_PreLoad,
     IWineD3DCubeTextureImpl_GetType,
-    /*base texture */
+    /* IWineD3DBaseTexture */
     IWineD3DCubeTextureImpl_SetLOD,
     IWineD3DCubeTextureImpl_GetLOD,
     IWineD3DCubeTextureImpl_GetLevelCount,
@@ -309,8 +309,8 @@ const IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_GetDirty,
     IWineD3DCubeTextureImpl_BindTexture,
     IWineD3DCubeTextureImpl_UnBindTexture,
-    IWineD3DCubeTextureImpl_GetTextureDimensions,    
-    /* cube texture */    
+    IWineD3DCubeTextureImpl_GetTextureDimensions,
+    /* IWineD3DCubeTexture */
     IWineD3DCubeTextureImpl_GetLevelDesc,
     IWineD3DCubeTextureImpl_GetCubeMapSurface,
     IWineD3DCubeTextureImpl_LockRect,

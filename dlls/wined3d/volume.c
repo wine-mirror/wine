@@ -3,7 +3,7 @@
  *
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
- * Copyright 2005 Oliver Stieber 
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -61,7 +61,7 @@ ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
 }
 
 /* ****************************************************
-   IWineD3DSurface IWineD3DResource parts follow
+   IWineD3DVolume IWineD3DResource parts follow
    **************************************************** */
 HRESULT WINAPI IWineD3DVolumeImpl_GetParent(IWineD3DVolume *iface, IUnknown **pParent) {
     return IWineD3DResourceImpl_GetParent((IWineD3DResource *)iface, pParent);
@@ -113,7 +113,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetContainer(IWineD3DVolume *iface, REFIID rii
 HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_DESC* pDesc) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     TRACE("(%p) : copying into %p\n", This, pDesc);
-    
+
     *(pDesc->Format)  = This->resource.format;
     *(pDesc->Type)    = This->resource.resourceType;
     *(pDesc->Usage)   = This->resource.usage;
@@ -127,7 +127,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_GetDesc(IWineD3DVolume *iface, WINED3DVOLUME_D
 
 HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* pLockedVolume, CONST D3DBOX* pBox, DWORD Flags) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-    FIXME("(%p) : pBox=%p stub\n", This, pBox);    
+    FIXME("(%p) : pBox=%p stub\n", This, pBox);
 
     /* fixme: should we really lock as such? */
     TRACE("(%p) : box=%p, output pbox=%p, allMem=%p\n", This, pBox, pLockedVolume, This->resource.allocatedMemory);
@@ -145,9 +145,9 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
         This->lockedBox.Back   = This->currentDesc.Depth;
     } else {
         TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
-        pLockedVolume->pBits = This->resource.allocatedMemory + 
+        pLockedVolume->pBits = This->resource.allocatedMemory +
           (pLockedVolume->SlicePitch * pBox->Front) + /* FIXME: is front < back or vica versa? */
-          (pLockedVolume->RowPitch * pBox->Top) + 
+          (pLockedVolume->RowPitch * pBox->Top) +
           (pBox->Left * This->bytesPerPixel);
         This->lockedBox.Left   = pBox->Left;
         This->lockedBox.Top    = pBox->Top;
@@ -156,7 +156,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
         This->lockedBox.Bottom = pBox->Bottom;
         This->lockedBox.Back   = pBox->Back;
     }
-    
+
     if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
       /* Don't dirtify */
     } else {
@@ -169,7 +169,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
       /**  Dirtify Container if needed */
       if (NULL != This->container) {
 
-        IWineD3DVolumeTexture *cont = (IWineD3DVolumeTexture*) This->container;        
+        IWineD3DVolumeTexture *cont = (IWineD3DVolumeTexture*) This->container;
         D3DRESOURCETYPE containerType = IWineD3DBaseTexture_GetType((IWineD3DBaseTexture *) cont);
 
         if (containerType == D3DRTYPE_VOLUMETEXTURE) {
@@ -189,7 +189,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LockBox(IWineD3DVolume *iface, D3DLOCKED_BOX* 
 HRESULT WINAPI IWineD3DVolumeImpl_UnlockBox(IWineD3DVolume *iface) {
     IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
     if (FALSE == This->locked) {
-      ERR("trying to lock unlocked volume@%p\n", This);  
+      ERR("trying to lock unlocked volume@%p\n", This);
       return D3DERR_INVALIDCALL;
     }
     TRACE("(%p) : unlocking volume\n", This);
@@ -205,7 +205,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_CleanDirtyBox(IWineD3DVolume *iface) {
   This->dirty = FALSE;
   This->lockedBox.Left   = This->currentDesc.Width;
   This->lockedBox.Top    = This->currentDesc.Height;
-  This->lockedBox.Front  = This->currentDesc.Depth;  
+  This->lockedBox.Front  = This->currentDesc.Depth;
   This->lockedBox.Right  = 0;
   This->lockedBox.Bottom = 0;
   This->lockedBox.Back   = 0;
@@ -235,7 +235,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST D3DBO
 
 HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IUnknown* container){
   IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
-  
+
   This->container = container;
   return D3D_OK;
 }
@@ -267,7 +267,7 @@ HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_l
                     This->resource.allocatedMemory);
     checkGLcall("glTexImage3D");
     return D3D_OK;
-    
+
 }
 
 const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
@@ -291,7 +291,7 @@ const IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_LockBox,
     IWineD3DVolumeImpl_UnlockBox,
-    /* Internal interface */    
+    /* Internal interface */
     IWineD3DVolumeImpl_AddDirtyBox,
     IWineD3DVolumeImpl_CleanDirtyBox,
     IWineD3DVolumeImpl_LoadTexture,

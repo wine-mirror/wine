@@ -4,6 +4,7 @@
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(((IWineD3DDeviceImpl *)This->resource.wineD3DDevice)->wineD3D))->gl_info
 
-/* IDirect3DResource IUnknown parts follow: */
+/* IWineD3DResource IUnknown parts follow: */
 HRESULT WINAPI IWineD3DResourceImpl_QueryInterface(IWineD3DResource *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
@@ -71,7 +72,7 @@ void IWineD3DResourceImpl_CleanUp(IWineD3DResource *iface){
     This->resource.allocatedMemory = 0;
 }
 
-/* IDirect3DResource Interface follow: */
+/* IWineD3DResource Interface follow: */
 HRESULT WINAPI IWineD3DResourceImpl_GetDevice(IWineD3DResource *iface, IWineD3DDevice** ppDevice) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
     TRACE("(%p) : returning %p\n", This, This->resource.wineD3DDevice);
@@ -128,9 +129,11 @@ HRESULT WINAPI IWineD3DResourceImpl_GetParent(IWineD3DResource *iface, IUnknown 
 
 static const IWineD3DResourceVtbl IWineD3DResource_Vtbl =
 {
+    /* IUnknown */
     IWineD3DResourceImpl_QueryInterface,
     IWineD3DResourceImpl_AddRef,
     IWineD3DResourceImpl_Release,
+    /* IWineD3DResource */
     IWineD3DResourceImpl_GetParent,
     IWineD3DResourceImpl_GetDevice,
     IWineD3DResourceImpl_SetPrivateData,

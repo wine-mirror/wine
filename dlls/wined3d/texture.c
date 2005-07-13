@@ -231,7 +231,7 @@ HRESULT WINAPI IWineD3DTextureImpl_GetSurfaceLevel(IWineD3DTexture *iface, UINT 
     return hr;
 }
 
-HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, D3DLOCKED_RECT *pLockedRect, 
+HRESULT WINAPI IWineD3DTextureImpl_LockRect(IWineD3DTexture *iface, UINT Level, D3DLOCKED_RECT *pLockedRect,
                                             CONST RECT *pRect, DWORD Flags) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     HRESULT hr = D3DERR_INVALIDCALL;
@@ -266,7 +266,7 @@ HRESULT WINAPI IWineD3DTextureImpl_UnlockRect(IWineD3DTexture *iface, UINT Level
 HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RECT* pDirtyRect) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
-    TRACE("(%p) : dirtyfication of surface Level (0)\n", This);    
+    TRACE("(%p) : dirtyfication of surface Level (0)\n", This);
     return IWineD3DSurface_AddDirtyRect((IWineD3DSurface *)This->surfaces[0], pDirtyRect);
 }
 

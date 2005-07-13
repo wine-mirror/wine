@@ -4,6 +4,7 @@
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,12 +41,12 @@ const char* debug_d3dformat(D3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_A1R5G5B5);
     FMT_TO_STR(WINED3DFMT_A4R4G4B4);
     FMT_TO_STR(WINED3DFMT_R3G3B2);
-    FMT_TO_STR(WINED3DFMT_A8);   
+    FMT_TO_STR(WINED3DFMT_A8);
     FMT_TO_STR(WINED3DFMT_A8R3G3B2);
     FMT_TO_STR(WINED3DFMT_X4R4G4B4);
     FMT_TO_STR(WINED3DFMT_G16R16);
     FMT_TO_STR(WINED3DFMT_A2R10G10B10);
-    FMT_TO_STR(WINED3DFMT_A16B16G16R16);    
+    FMT_TO_STR(WINED3DFMT_A16B16G16R16);
     FMT_TO_STR(WINED3DFMT_A8P8);
     FMT_TO_STR(WINED3DFMT_P8);
     FMT_TO_STR(WINED3DFMT_L8);
@@ -57,7 +58,7 @@ const char* debug_d3dformat(D3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_Q8W8V8U8);
     FMT_TO_STR(WINED3DFMT_V16U16);
     FMT_TO_STR(WINED3DFMT_W11V11U10);
-    FMT_TO_STR(WINED3DFMT_A2W10V10U10);    
+    FMT_TO_STR(WINED3DFMT_A2W10V10U10);
     FMT_TO_STR(WINED3DFMT_UYVY);
     FMT_TO_STR(WINED3DFMT_YUY2);
     FMT_TO_STR(WINED3DFMT_DXT1);
@@ -95,7 +96,7 @@ const char* debug_d3ddevicetype(D3DDEVTYPE devtype) {
 #define DEVTYPE_TO_STR(dev) case dev: return #dev
     DEVTYPE_TO_STR(D3DDEVTYPE_HAL);
     DEVTYPE_TO_STR(D3DDEVTYPE_REF);
-    DEVTYPE_TO_STR(D3DDEVTYPE_SW);    
+    DEVTYPE_TO_STR(D3DDEVTYPE_SW);
 #undef DEVTYPE_TO_STR
   default:
     FIXME("Unrecognized %u D3DDEVTYPE!\n", devtype);
@@ -233,8 +234,8 @@ const char* debug_d3drenderstate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DRS_COLORWRITEENABLE          );
     D3DSTATE_TO_STR(WINED3DRS_TWEENFACTOR               );
     D3DSTATE_TO_STR(WINED3DRS_BLENDOP                   );
-    D3DSTATE_TO_STR(WINED3DRS_POSITIONORDER             );
-    D3DSTATE_TO_STR(WINED3DRS_NORMALORDER               );
+    D3DSTATE_TO_STR(WINED3DRS_POSITIONDEGREE            );
+    D3DSTATE_TO_STR(WINED3DRS_NORMALDEGREE              );
 #undef D3DSTATE_TO_STR
   default:
     FIXME("Unrecognized %lu render state!\n", state);
@@ -311,13 +312,13 @@ const char* debug_d3dpool(D3DPOOL Pool) {
  * Useful functions mapping GL <-> D3D values
  */
 GLenum StencilOp(DWORD op) {
-    switch(op) {                
+    switch(op) {
     case D3DSTENCILOP_KEEP    : return GL_KEEP;
     case D3DSTENCILOP_ZERO    : return GL_ZERO;
     case D3DSTENCILOP_REPLACE : return GL_REPLACE;
     case D3DSTENCILOP_INCRSAT : return GL_INCR;
     case D3DSTENCILOP_DECRSAT : return GL_DECR;
-    case D3DSTENCILOP_INVERT  : return GL_INVERT; 
+    case D3DSTENCILOP_INVERT  : return GL_INVERT;
     case D3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
     case D3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
     default:
@@ -341,8 +342,8 @@ GLenum StencilOp(DWORD op) {
 #endif
 
 #if !defined(combine_ext)
-void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
-{ 
+void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op, DWORD arg1, DWORD arg2, DWORD arg3)
+{
         FIXME("Requires opengl combine extensions to work\n");
         return;
 }
@@ -367,15 +368,15 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
 
         /* Note: Operations usually involve two ars, src0 and src1 and are operations of
            the form (a1 <operation> a2). However, some of the more complex operations
-           take 3 parameters. Instead of the (sensible) addition of a3, Microsoft added  
+           take 3 parameters. Instead of the (sensible) addition of a3, Microsoft added
            in a third parameter called a0. Therefore these are operations of the form
            a0 <operation> a1 <operation> a2, ie the new parameter goes to the front.
-           
+
            However, below we treat the new (a0) parameter as src2/opr2, so in the actual
            functions below, expect their syntax to differ slightly to those listed in the
            manuals, ie replace arg1 with arg3, arg2 with arg1 and arg3 with arg2
            This affects D3DTOP_MULTIPLYADD and D3DTOP_LERP                               */
-           
+
         if (isAlpha) {
                 comb_target = useext(GL_COMBINE_ALPHA);
                 src0_target = useext(GL_SOURCE0_ALPHA);
@@ -398,17 +399,17 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
         }
 
         /* From MSDN (WINED3DTSS_ALPHAARG1) :
-           The default argument is D3DTA_TEXTURE. If no texture is set for this stage, 
+           The default argument is D3DTA_TEXTURE. If no texture is set for this stage,
                    then the default argument is D3DTA_DIFFUSE.
                    FIXME? If texture added/removed, may need to reset back as well?    */
         if (isAlpha && This->stateBlock->textures[Stage] == NULL && arg1 == D3DTA_TEXTURE) {
-            GetSrcAndOpFromValue(D3DTA_DIFFUSE, isAlpha, &src1, &opr1);  
+            GetSrcAndOpFromValue(D3DTA_DIFFUSE, isAlpha, &src1, &opr1);
         } else {
             GetSrcAndOpFromValue(arg1, isAlpha, &src1, &opr1);
         }
         GetSrcAndOpFromValue(arg2, isAlpha, &src2, &opr2);
         GetSrcAndOpFromValue(arg3, isAlpha, &src3, &opr3);
-        
+
         TRACE("ct(%x), 1:(%x,%x), 2:(%x,%x), 3:(%x,%x)\n", comb_target, src1, opr1, src2, opr2, src3, opr3);
 
         Handled = TRUE; /* Assume will be handled */
@@ -434,60 +435,60 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, GL_SRC_ALPHA);
             checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
-            glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);    
+            glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
-            glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);              
-            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);             
+            glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);
+            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src2_target, GL_ZERO");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
-            checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");  
-            glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);             
+            checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");
+            glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src3_target, GL_ZERO");
             glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr);
-            checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");  
+            checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");
             break;
           case D3DTOP_SELECTARG1:                                          /* = a1 * 1 + 0 * 0 */
           case D3DTOP_SELECTARG2:                                          /* = a2 * 1 + 0 * 0 */
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD");
             if (op == D3DTOP_SELECTARG1) {
-              glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);                
+              glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
               checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
-              glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);        
-              checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");  
+              glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
+              checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
             } else {
-              glTexEnvi(GL_TEXTURE_ENV, src0_target, src2);                
+              glTexEnvi(GL_TEXTURE_ENV, src0_target, src2);
               checkGLcall("GL_TEXTURE_ENV, src0_target, src2");
-              glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr2);        
-              checkGLcall("GL_TEXTURE_ENV, opr0_target, opr2");  
+              glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr2);
+              checkGLcall("GL_TEXTURE_ENV, opr0_target, opr2");
             }
-            glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);             
+            glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
-            glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);              
-            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);             
+            glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);
+            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src2_target, GL_ZERO");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
-            checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");  
-            glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);             
+            checkGLcall("GL_TEXTURE_ENV, opr2_target, opr");
+            glTexEnvi(GL_TEXTURE_ENV, src3_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src3_target, GL_ZERO");
             glTexEnvi(GL_TEXTURE_ENV, opr3_target, opr);
-            checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");  
+            checkGLcall("GL_TEXTURE_ENV, opr3_target, opr");
             break;
-            
+
           case D3DTOP_MODULATE:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD"); /* Add = a0*a1 + a2*a3 */
-            glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);    
+            glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
             checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
             glTexEnvi(GL_TEXTURE_ENV, src1_target, src2);
             checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
-            glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);      
-            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO); 
+            glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
+            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
             checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
@@ -501,15 +502,15 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
           case D3DTOP_MODULATE2X:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD"); /* Add = a0*a1 + a2*a3 */
-            glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);    
+            glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
             checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
             glTexEnvi(GL_TEXTURE_ENV, src1_target, src2);
             checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
-            glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);      
-            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO); 
+            glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
+            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
             checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
@@ -523,15 +524,15 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
           case D3DTOP_MODULATE4X:
             glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_ADD);
             checkGLcall("GL_TEXTURE_ENV, comb_target, GL_ADD"); /* Add = a0*a1 + a2*a3 */
-            glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);    
+            glTexEnvi(GL_TEXTURE_ENV, src0_target, src1);
             checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
             glTexEnvi(GL_TEXTURE_ENV, opr0_target, opr1);
             checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
             glTexEnvi(GL_TEXTURE_ENV, src1_target, src2);
             checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
-            glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);      
-            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
-            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO); 
+            glTexEnvi(GL_TEXTURE_ENV, opr1_target, opr2);
+            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
+            glTexEnvi(GL_TEXTURE_ENV, src2_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr);
             checkGLcall("GL_TEXTURE_ENV, opr2_target, opr2");
@@ -738,8 +739,8 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
             checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");    /*   a1 = 1 (see docs) */
             glTexEnvi(GL_TEXTURE_ENV, src1_target, GL_ZERO);
             checkGLcall("GL_TEXTURE_ENV, src1_target, GL_ZERO");
-            glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);      
-            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");  
+            glTexEnvi(GL_TEXTURE_ENV, opr1_target, invopr);
+            checkGLcall("GL_TEXTURE_ENV, opr1_target, invopr");
             glTexEnvi(GL_TEXTURE_ENV, src2_target, src2);        /*   a2 = arg2         */
             checkGLcall("GL_TEXTURE_ENV, src2_target, src2");
             glTexEnvi(GL_TEXTURE_ENV, opr2_target, opr2);
@@ -863,7 +864,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
             glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
             checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
             break;
-            
+
           case D3DTOP_BUMPENVMAP:
             {
               if (GL_SUPPORT(NV_TEXTURE_SHADER)) {
@@ -874,12 +875,12 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                   texture unit 3: GL_DOT_PRODUCT_REFLECT_CUBE_MAP_NV
                 */
                 float m[2][2];
-                
+
                 union {
                   float f;
                   DWORD d;
                 } tmpvalue;
-                
+
                 tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT00];
                 m[0][0] = tmpvalue.f;
                 tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT01];
@@ -888,7 +889,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 m[1][0] = tmpvalue.f;
                 tmpvalue.d = This->stateBlock->textureState[Stage][WINED3DTSS_BUMPENVMAT11];
                 m[1][1] = tmpvalue.f;
-                
+
                 /*FIXME("Stage %d matrix is (%.2f,%.2f),(%.2f,%.2f)\n", Stage, m[0][0], m[0][1], m[1][0], m[1][0]);*/
 
                 if (FALSE == This->texture_shader_active) {
@@ -947,7 +948,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 */
                 LEAVE_GL();
                 return;
-                break;            
+                break;
               }
             }
 
@@ -959,12 +960,12 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
           if (Handled) {
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV);
             checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE4_NV");
-            
+
             LEAVE_GL();
             return;
           }
         } /* GL_NV_texture_env_combine4 */
-        
+
         Handled = TRUE; /* Again, assume handled */
         switch (op) {
         case D3DTOP_DISABLE: /* Only for alpha */
@@ -1172,7 +1173,7 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
                 glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
                 checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
                 break;
-        case D3DTOP_DOTPRODUCT3: 
+        case D3DTOP_DOTPRODUCT3:
                 if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3)) {
                   glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB);
                   checkGLcall("GL_TEXTURE_ENV, comb_target, GL_DOT3_RGBA_ARB");
@@ -1402,13 +1403,13 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
           BOOL  combineOK = TRUE;
           if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
             DWORD op2;
-            
+
             if (isAlpha) {
               op2 = This->stateBlock->textureState[Stage][WINED3DTSS_COLOROP];
             } else {
               op2 = This->stateBlock->textureState[Stage][WINED3DTSS_ALPHAOP];
             }
-            
+
             /* Note: If COMBINE4 in effect can't go back to combine! */
             switch (op2) {
             case D3DTOP_ADDSMOOTH:
@@ -1432,21 +1433,21 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, D3DTEXTUREOP op,
               }
             }
           }
-          
+
           if (combineOK) {
             glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE));
             checkGLcall("GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, useext(GL_COMBINE)");
-            
+
             LEAVE_GL();
             return;
           }
         }
 
         LEAVE_GL();
-        
+
         /* After all the extensions, if still unhandled, report fixme */
         FIXME("Unhandled texture operation %d\n", op);
-        #undef GLINFO_LOCATION 
+        #undef GLINFO_LOCATION
 }
 #endif
 
@@ -1476,7 +1477,7 @@ void set_texture_matrix(const float *smat, DWORD flags)
     case D3DTTFF_COUNT2: mat[2] = mat[6] = mat[10] = mat[14] = 0;
     default: mat[3] = mat[7] = mat[11] = 0, mat[15] = 1;
     }
-    
+
     if (flags & D3DTTFF_PROJECTED) switch (flags & ~D3DTTFF_PROJECTED) {
     case D3DTTFF_COUNT2:
         mat[3] = mat[1], mat[7] = mat[5], mat[11] = mat[9], mat[15] = mat[13];
@@ -1491,26 +1492,26 @@ void set_texture_matrix(const float *smat, DWORD flags)
     checkGLcall("glLoadMatrixf(mat)");
 }
 
-void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand) 
+void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand)
 {
   BOOL isAlphaReplicate = FALSE;
   BOOL isComplement     = FALSE;
-  
+
   *operand = GL_SRC_COLOR;
   *source = GL_TEXTURE;
-  
+
   /* Catch alpha replicate */
   if (iValue & D3DTA_ALPHAREPLICATE) {
     iValue = iValue & ~D3DTA_ALPHAREPLICATE;
     isAlphaReplicate = TRUE;
   }
-  
+
   /* Catch Complement */
   if (iValue & D3DTA_COMPLEMENT) {
     iValue = iValue & ~D3DTA_COMPLEMENT;
     isComplement = TRUE;
   }
-  
+
   /* Calculate the operand */
   if (isAlphaReplicate && !isComplement) {
     *operand = GL_SRC_ALPHA;
@@ -1529,7 +1530,7 @@ void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum*
       *operand = GL_SRC_COLOR;
     }
   }
-  
+
   /* Calculate the source */
   switch (iValue & D3DTA_SELECTMASK) {
   case D3DTA_CURRENT:   *source  = GL_PREVIOUS_EXT;
@@ -1574,7 +1575,7 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
 
     if (retVal == 0) {
         switch (fmt) {
-        /* Paletted */
+            /* Paletted */
         case WINED3DFMT_P8:               retVal = GL_COLOR_INDEX8_EXT; break;
         case WINED3DFMT_A8P8:             retVal = GL_COLOR_INDEX8_EXT; break;
             /* Luminance */
@@ -1586,7 +1587,7 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX8_EXT; break;
         case WINED3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
-            /* color buffer */ 
+            /* color buffer */
         case WINED3DFMT_R3G3B2:           retVal = GL_R3_G3_B2; break;
         case WINED3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
         case WINED3DFMT_R8G8B8:           retVal = GL_RGB8; break;
@@ -1741,13 +1742,13 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_L6V5U5:           retVal = 2; break;
     case WINED3DFMT_V16U16:           retVal = 4; break;
     case WINED3DFMT_X8L8V8U8:         retVal = 4; break;
-        /* Compressed */                                  
+        /* Compressed */
     case WINED3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
     case WINED3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
     case WINED3DFMT_DXT5:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */
         /* to see */
     case WINED3DFMT_A8:               retVal = 1; break;
-        /* unknown */                                  
+        /* unknown */
     case WINED3DFMT_UNKNOWN:
         /* Guess at the highest value of the above */
         TRACE("WINED3DFMT_UNKNOWN - Guessing at 4 bytes/pixel %u\n", fmt);
@@ -1764,9 +1765,9 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
 
 /* Convertes a D3D format into a OpenGL configuration format */
 int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate){
-#define PUSH1(att)        attribs[(*nAttribs)++] = (att); 
+#define PUSH1(att)        attribs[(*nAttribs)++] = (att);
 #define PUSH2(att,value)  attribs[(*nAttribs)++] = (att); attribs[(*nAttribs)++] = (value);
-    /*We need to do some Card specific stuff in here at some point, 
+    /*We need to do some Card specific stuff in here at some point,
     D3D now support floating point format buffers, and their are a number of different OpelGl ways on managing thease e.g.
     GLX_ATI_pixel_format_float
     */
@@ -1820,7 +1821,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         break;
     }
     if(!alternate){
-        switch (StencilBufferFormat) { 
+        switch (StencilBufferFormat) {
     case WINED3DFMT_D16_LOCKABLE:
     case WINED3DFMT_D16:
         PUSH2(GLX_DEPTH_SIZE,   16);
@@ -1829,7 +1830,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     case WINED3DFMT_D15S1:
         PUSH2(GLX_DEPTH_SIZE,   15);
         PUSH2(GLX_STENCIL_SIZE, 1);
-        /*Does openGl support a 1bit stencil?, I've seen it used elsewhere 
+        /*Does openGl support a 1bit stencil?, I've seen it used elsewhere
         e.g. http://www.ks.uiuc.edu/Research/vmd/doxygen/OpenGLDisplayDevice_8C-source.html*/
         break;
 
@@ -1855,8 +1856,8 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         break;
     }
 
-    }else{ /* it the device doesn't support the 'exact' format, try to find something close */
-        switch (StencilBufferFormat) { 
+    } else { /* it the device doesn't support the 'exact' format, try to find something close */
+        switch (StencilBufferFormat) {
         case WINED3DFMT_D16_LOCKABLE:
         case WINED3DFMT_D16:
             PUSH2(GLX_DEPTH_SIZE,   1);
@@ -1865,7 +1866,7 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
         case WINED3DFMT_D15S1:
             PUSH2(GLX_DEPTH_SIZE,   1);
             PUSH2(GLX_STENCIL_SIZE, 1);
-            /*Does openGl support a 1bit stencil?, I've seen it used elsewhere 
+            /*Does openGl support a 1bit stencil?, I've seen it used elsewhere
             e.g. http://www.ks.uiuc.edu/Research/vmd/doxygen/OpenGLDisplayDevice_8C-source.html*/
             break;
 

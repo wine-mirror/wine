@@ -130,9 +130,11 @@ HRESULT  WINAPI        IWineD3DVertexBufferImpl_GetDesc(IWineD3DVertexBuffer *if
 
 const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
 {
+    /* IUnknown */
     IWineD3DVertexBufferImpl_QueryInterface,
     IWineD3DVertexBufferImpl_AddRef,
     IWineD3DVertexBufferImpl_Release,
+    /* IWineD3DResource */
     IWineD3DVertexBufferImpl_GetParent,
     IWineD3DVertexBufferImpl_GetDevice,
     IWineD3DVertexBufferImpl_SetPrivateData,
@@ -142,6 +144,7 @@ const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
     IWineD3DVertexBufferImpl_GetPriority,
     IWineD3DVertexBufferImpl_PreLoad,
     IWineD3DVertexBufferImpl_GetType,
+    /* IWineD3DVertexBuffer */
     IWineD3DVertexBufferImpl_Lock,
     IWineD3DVertexBufferImpl_Unlock,
     IWineD3DVertexBufferImpl_GetDesc

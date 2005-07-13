@@ -4,6 +4,7 @@
  * Copyright 2002-2004 Jason Edmeades
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,7 +48,7 @@ ULONG WINAPI IWineD3DIndexBufferImpl_AddRef(IWineD3DIndexBuffer *iface) {
     IWineD3DIndexBufferImpl *This = (IWineD3DIndexBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
     TRACE("(%p) : AddRef increasing from %ld\n", This, ref - 1);
-    return ref; 
+    return ref;
 }
 
 ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface) {
@@ -128,9 +129,11 @@ HRESULT  WINAPI        IWineD3DIndexBufferImpl_GetDesc(IWineD3DIndexBuffer *ifac
 
 const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =
 {
+    /* IUnknown */
     IWineD3DIndexBufferImpl_QueryInterface,
     IWineD3DIndexBufferImpl_AddRef,
     IWineD3DIndexBufferImpl_Release,
+    /* IWineD3DResource */
     IWineD3DIndexBufferImpl_GetParent,
     IWineD3DIndexBufferImpl_GetDevice,
     IWineD3DIndexBufferImpl_SetPrivateData,
@@ -140,6 +143,7 @@ const IWineD3DIndexBufferVtbl IWineD3DIndexBuffer_Vtbl =
     IWineD3DIndexBufferImpl_GetPriority,
     IWineD3DIndexBufferImpl_PreLoad,
     IWineD3DIndexBufferImpl_GetType,
+    /* IWineD3DIndexBuffer */
     IWineD3DIndexBufferImpl_Lock,
     IWineD3DIndexBufferImpl_Unlock,
     IWineD3DIndexBufferImpl_GetDesc

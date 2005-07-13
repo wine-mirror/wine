@@ -103,20 +103,20 @@ void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
     /* Overrider the IWineD3DResource Preload method */
     UINT i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    
+
     TRACE("(%p) : About to load texture\n", This);
 
     IWineD3DVolumeTexture_BindTexture(iface);
-    
+
     ENTER_GL();
     /* If were dirty then reload the volumes */
     if(This->baseTexture.dirty != FALSE) {
         for (i = 0; i < This->baseTexture.levels; i++) {
             IWineD3DVolume_LoadTexture(This->volumes[i], i);
         }
-        
+
         /* No longer dirty */
-        This->baseTexture.dirty = FALSE;        
+        This->baseTexture.dirty = FALSE;
     }
     LEAVE_GL();
 
@@ -181,7 +181,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_UnBindTexture(IWineD3DVolumeTexture *if
 
 UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
-    TRACE("(%p) \n", This);    
+    TRACE("(%p) \n", This);
     return GL_TEXTURE_3D;
 }
 
@@ -244,7 +244,7 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_UnlockBox(IWineD3DVolumeTexture *iface,
 HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *iface, CONST D3DBOX* pDirtyBox) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
-    TRACE("(%p) : dirtyfication of volume Level (0)\n", This);    
+    TRACE("(%p) : dirtyfication of volume Level (0)\n", This);
     return IWineD3DVolume_AddDirtyBox((IWineD3DVolume *) This->volumes[0], pDirtyBox);
 }
 

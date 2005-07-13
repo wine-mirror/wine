@@ -3,7 +3,7 @@
  *
  * Copyright 2002-2003 The wine-d3d team
  * Copyright 2002-2003 Raphael Junqueira
- * Copyright 2004      Jason Edmeades   
+ * Copyright 2004      Jason Edmeades
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -97,24 +97,24 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
        {
            if ( !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )
            {
-               if (!strcmp(buffer,"none"))
-               {
-                   TRACE("Disable vertex shaders\n");
-                   vs_mode = VS_NONE;
-	       }
-	       else if (!strcmp(buffer,"emulation"))
-               {
-                   TRACE("Force SW vertex shaders\n");
-                   vs_mode = VS_SW;
-               }
+                if (!strcmp(buffer,"none"))
+                {
+                    TRACE("Disable vertex shaders\n");
+                    vs_mode = VS_NONE;
+                }
+                else if (!strcmp(buffer,"emulation"))
+                {
+                    TRACE("Force SW vertex shaders\n");
+                    vs_mode = VS_SW;
+                }
            }
            if ( !RegQueryValueExA( hkey, "PixelShaderMode", 0, NULL, buffer, &size) )
            {
-               if (!strcmp(buffer,"enabled"))
-               {
-                   TRACE("Allow pixel shaders\n");
-                   ps_mode = PS_HW;
-	       }
+                if (!strcmp(buffer,"enabled"))
+                {
+                    TRACE("Allow pixel shaders\n");
+                    ps_mode = PS_HW;
+                }
            }
        }
        if (vs_mode == VS_HW)
