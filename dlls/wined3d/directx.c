@@ -821,7 +821,7 @@ HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT Adapter,
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
         case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
-        case 24: /*pMode->Format       = D3DFMT_R5G6B5;   break;*/ /* Make 24bit appear as 32 bit */
+        case 24: pMode->Format       = D3DFMT_X8R8G8B8; break; /* Robots needs 24bit to be X8R8G8B8 */
         case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
         default: pMode->Format       = D3DFMT_UNKNOWN;
         }

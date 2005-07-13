@@ -29,7 +29,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 /*****************************************************************************
  * Trace formatting of useful values
  */
-const char* debug_d3dformat(D3DFORMAT fmt) {
+const char* debug_d3dformat(WINED3DFORMAT fmt) {
   switch (fmt) {
 #define FMT_TO_STR(fmt) case fmt: return #fmt
     FMT_TO_STR(WINED3DFMT_UNKNOWN);
@@ -256,9 +256,12 @@ const char* debug_d3dsamplerstate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DSAMP_MIPMAPLODBIAS);
     D3DSTATE_TO_STR(WINED3DSAMP_MAXMIPLEVEL  );
     D3DSTATE_TO_STR(WINED3DSAMP_MAXANISOTROPY);
+    D3DSTATE_TO_STR(WINED3DSAMP_SRGBTEXTURE  );
+    D3DSTATE_TO_STR(WINED3DSAMP_ELEMENTINDEX );
+    D3DSTATE_TO_STR(WINED3DSAMP_DMAPOFFSET   );
 #undef D3DSTATE_TO_STR
   default:
-    FIXME("Unrecognized %lu texture state!\n", state);
+    FIXME("Unrecognized %lu sampler state!\n", state);
     return "unrecognized";
   }
 }
@@ -284,6 +287,7 @@ const char* debug_d3dtexturestate(DWORD state) {
     D3DSTATE_TO_STR(WINED3DTSS_COLORARG0             );
     D3DSTATE_TO_STR(WINED3DTSS_ALPHAARG0             );
     D3DSTATE_TO_STR(WINED3DTSS_RESULTARG             );
+    D3DSTATE_TO_STR(WINED3DTSS_CONSTANT              );
 #undef D3DSTATE_TO_STR
   case 12:
     /* Note D3DTSS are not consecutive, so skip these */
@@ -1586,7 +1590,9 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_V8U8:             retVal = GL_COLOR_INDEX8_EXT; break;
         case WINED3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX8_EXT; break;
-        case WINED3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_X8L8V8U8:         retVal = GL_RGBA8; break;
+        case WINED3DFMT_Q8W8V8U8:         retVal = GL_RGBA8; break; /* almost but not quite... */
+        case WINED3DFMT_Q16W16V16U16:     retVal = GL_COLOR_INDEX; break; /* almost but not quite... */
             /* color buffer */
         case WINED3DFMT_R3G3B2:           retVal = GL_R3_G3_B2; break;
         case WINED3DFMT_R5G6B5:           retVal = GL_RGB5; break; /* fixme: internal format 6 for g? */
@@ -1594,11 +1600,21 @@ GLint D3DFmt2GLIntFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_A1R5G5B5:         retVal = GL_RGB5_A1; break;
         case WINED3DFMT_X1R5G5B5:         retVal = GL_RGB5_A1; break;
         case WINED3DFMT_A4R4G4B4:         retVal = GL_RGBA4; break;
-        case WINED3DFMT_X4R4G4B4:         retVal = GL_RGBA4; break;
+        case WINED3DFMT_X4R4G4B4:         retVal = GL_RGB4; break;
         case WINED3DFMT_A8R8G8B8:         retVal = GL_RGBA8; break;
-        case WINED3DFMT_X8R8G8B8:         retVal = GL_RGBA8; break;
+        case WINED3DFMT_X8R8G8B8:         retVal = GL_RGB; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA8; break;
+
+        /* Depth + Stencil NOTE: OpenGL doesn't support depth-stencil surfaces so the formats are the closes bits match for the data */
+        case WINED3DFMT_D24S8:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D24X8:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D24X4S4:          retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D32:              retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D16:              retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D15S1:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D16_LOCKABLE:     retVal = GL_COLOR_INDEX; break;
+
         default:
             FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
             retVal = GL_RGB8;
@@ -1635,11 +1651,13 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_V8U8:             retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_V16U16:           retVal = GL_COLOR_INDEX; break;
         case WINED3DFMT_L6V5U5:           retVal = GL_COLOR_INDEX; break;
-        case WINED3DFMT_X8L8V8U8:         retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_X8L8V8U8:         retVal = GL_BGRA; break;
+        case WINED3DFMT_Q8W8V8U8:         retVal = GL_RGBA; break;
+        case WINED3DFMT_Q16W16V16U16:     retVal = GL_COLOR_INDEX; break;
             /* color buffer */
         case WINED3DFMT_R3G3B2:           retVal = GL_BGR; break;
-        case WINED3DFMT_R5G6B5:           retVal = GL_RGB; break;
-        case WINED3DFMT_R8G8B8:           retVal = GL_RGB; break;
+        case WINED3DFMT_R5G6B5:           retVal = GL_BGR; break;
+        case WINED3DFMT_R8G8B8:           retVal = GL_BGR; break;
         case WINED3DFMT_A1R5G5B5:         retVal = GL_BGRA; break;
         case WINED3DFMT_X1R5G5B5:         retVal = GL_BGRA; break;
         case WINED3DFMT_A4R4G4B4:         retVal = GL_BGRA; break;
@@ -1648,6 +1666,14 @@ GLenum D3DFmt2GLFmt(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_X8R8G8B8:         retVal = GL_BGRA; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
+            /* Depth + Stencil */
+        case WINED3DFMT_D24S8:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D24X8:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D24X4S4:          retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D32:              retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D16:              retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D15S1:            retVal = GL_COLOR_INDEX; break;
+        case WINED3DFMT_D16_LOCKABLE:     retVal = GL_COLOR_INDEX; break;
         default:
             FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
             retVal = GL_BGR;
@@ -1698,6 +1724,19 @@ GLenum D3DFmt2GLType(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
         case WINED3DFMT_X8R8G8B8:         retVal = GL_UNSIGNED_INT_8_8_8_8_REV; break;
             /* to see */
         case WINED3DFMT_A8:               retVal = GL_ALPHA; break;
+            /* Depth + Stencil */
+        case WINED3DFMT_D24S8:            retVal = GL_UNSIGNED_INT; break;
+        case WINED3DFMT_D24X8:            retVal = GL_UNSIGNED_INT; break;
+        case WINED3DFMT_D24X4S4:          retVal = GL_UNSIGNED_INT; break;
+        case WINED3DFMT_D32:              retVal = GL_UNSIGNED_INT; break;
+        case WINED3DFMT_D16:              retVal = GL_UNSIGNED_SHORT; break;
+        case WINED3DFMT_D15S1:            retVal = GL_UNSIGNED_SHORT; break;
+        case WINED3DFMT_D16_LOCKABLE:     retVal = GL_UNSIGNED_SHORT; break;
+            /* compressed textures */
+        case WINED3DFMT_DXT1:             retVal = 0; break;
+        case WINED3DFMT_DXT3:             retVal = 0; break;
+        case WINED3DFMT_DXT5:             retVal = 0; break;
+
         default:
             FIXME("Unhandled fmt(%u,%s)\n", fmt, debug_d3dformat(fmt));
             retVal = GL_UNSIGNED_BYTE;
@@ -1742,6 +1781,8 @@ SHORT D3DFmtGetBpp(IWineD3DDeviceImpl* This, D3DFORMAT fmt) {
     case WINED3DFMT_L6V5U5:           retVal = 2; break;
     case WINED3DFMT_V16U16:           retVal = 4; break;
     case WINED3DFMT_X8L8V8U8:         retVal = 4; break;
+    case WINED3DFMT_Q8W8V8U8:         retVal = 4; break;
+    case WINED3DFMT_Q16W16V16U16:     retVal = 8; break;
         /* Compressed */
     case WINED3DFMT_DXT1:             retVal = 1; break; /* Actually  8 bytes per 16 pixels - Special cased later */
     case WINED3DFMT_DXT3:             retVal = 1; break; /* Actually 16 bytes per 16 pixels */

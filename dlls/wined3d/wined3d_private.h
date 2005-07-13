@@ -857,7 +857,7 @@ extern IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
  */
 
 /* Trace routines */
-const char* debug_d3dformat(D3DFORMAT fmt);
+const char* debug_d3dformat(WINED3DFORMAT fmt);
 const char* debug_d3ddevicetype(D3DDEVTYPE devtype);
 const char* debug_d3dresourcetype(D3DRESOURCETYPE res);
 const char* debug_d3dusage(DWORD usage);
