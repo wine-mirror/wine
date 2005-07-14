@@ -30,6 +30,35 @@ interface IHTMLDocument2;
 interface IHTMLStyleSheetsCollection;
 
 /*****************************************************************************
+ *    IHTMLFiltersCollection interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050F3EE-98B5-11Cf-BB82-00AA00BDCE0B)
+]
+interface IHTMLFiltersCollection : IDispatch
+{
+    [propget, id(DISPID_IHTMLFILTERSCOLLECTION_LENGTH)]
+    HRESULT length([retval, out] long *p);
+
+    [propget, id(DISPID_IHTMLFILTERSCOLLECTION__NEWENUM)]
+    HRESULT _newEnum([retval, out] IUnknown **p);
+
+    [id(DISPID_IHTMLFILTERSCOLLECTION_ITEM)]
+    HRESULT item(
+            [in] VARIANT *pvarIndex,
+            [retval, out] VARIANT *pvarResult);
+}
+
+[
+    uuid(3050F1C5-98B5-11CF-BB82-00AA00BDCE0B)
+]
+library MSHTML
+{
+
+/*****************************************************************************
  *    IHTMLStyle interface
  */
 [
@@ -1094,30 +1123,6 @@ interface IHTMLRuleStyle : IDispatch
         [defaultvalue(1), in] LONG lFlags,
         [retval, out] VARIANT_BOOL *pfSuccess);
 }
-
-/*****************************************************************************
- *    IHTMLFiltersCollection interface
- */
-[
-	odl,
-	oleautomation,
-	dual,
-	uuid(3050F3EE-98B5-11Cf-BB82-00AA00BDCE0B)
-]
-interface IHTMLFiltersCollection : IDispatch
-{
-    [propget, id(DISPID_IHTMLFILTERSCOLLECTION_LENGTH)]
-    HRESULT length([retval, out] long *p);
-
-    [propget, id(DISPID_IHTMLFILTERSCOLLECTION__NEWENUM)]
-    HRESULT _newEnum([retval, out] IUnknown **p);
-
-    [id(DISPID_IHTMLFILTERSCOLLECTION_ITEM)]
-    HRESULT item(
-        [in] VARIANT *pvarIndex,
-        [retval, out] VARIANT *pvarResult);
-}
-
 
 /*****************************************************************************
  *    IHTMLElement interface
@@ -2989,3 +2994,5 @@ coclass HTMLDocument
     [default]         interface IHTMLDocument2;
     [source, default] dispinterface HTMLDocumentEvents;
 };
+
+} /* library MSHTML */
