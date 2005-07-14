@@ -65,6 +65,7 @@ extern void default_fd_remove_queue( struct object *obj, struct wait_queue_entry
 extern int default_fd_signaled( struct object *obj, struct thread *thread );
 extern int default_fd_get_poll_events( struct fd *fd );
 extern void default_poll_event( struct fd *fd, int event );
+extern void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count, int *timeout );
 extern void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count );
 extern void default_fd_cancel_async( struct fd *fd );
 extern int no_flush( struct fd *fd, struct event **event );

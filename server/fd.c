@@ -1409,12 +1409,12 @@ void default_poll_event( struct fd *fd, int event )
     wake_up( fd->user, 0 );
 }
 
-void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count )
+void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count, int *timeout )
 {
     struct list *queue;
     int events;
 
-    if (!(fd->fd_ops->get_file_info( fd ) & FD_FLAG_OVERLAPPED))
+    if (!(fd->fd_ops->get_file_info( fd ) & (FD_FLAG_OVERLAPPED|FD_FLAG_TIMEOUT)))
     {
         set_error( STATUS_INVALID_HANDLE );
         return;
@@ -1433,7 +1433,7 @@ void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, 
         return;
     }
 
-    if (!create_async( current, NULL, queue, apc, user, io_sb ))
+    if (!create_async( current, timeout, queue, apc, user, io_sb ))
         return;
 
     /* Check if the new pending request can be served immediately */
@@ -1441,6 +1441,11 @@ void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, 
     if (events) fd->fd_ops->poll_event( fd, events );
 
     set_fd_events( fd, fd->fd_ops->get_poll_events( fd ) );
+}
+
+void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count )
+{
+    fd_queue_async_timeout( fd, apc, user, io_sb, type, count, NULL );
 }
 
 void default_fd_cancel_async( struct fd *fd )

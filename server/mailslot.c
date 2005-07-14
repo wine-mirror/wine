@@ -57,7 +57,6 @@ struct mailslot
     unsigned int        max_msgsize;
     unsigned int        read_timeout;
     struct list         writers;
-    struct list         read_q;
 };
 
 /* mailslot functions */
@@ -79,20 +78,17 @@ static const struct object_ops mailslot_ops =
     mailslot_destroy           /* destroy */
 };
 
-static int mailslot_get_poll_events( struct fd * );
-static void mailslot_poll_event( struct fd *, int );
 static int mailslot_get_info( struct fd * );
 static void mailslot_queue_async( struct fd *, void*, void*, void*, int, int );
-static void mailslot_cancel_async( struct fd * );
 
 static const struct fd_ops mailslot_fd_ops =
 {
-    mailslot_get_poll_events,  /* get_poll_events */
-    mailslot_poll_event,       /* poll_event */
-    no_flush,                  /* flush */
-    mailslot_get_info,         /* get_file_info */
-    mailslot_queue_async,      /* queue_async */
-    mailslot_cancel_async      /* cancel_async */
+    default_fd_get_poll_events, /* get_poll_events */
+    default_poll_event,         /* poll_event */
+    no_flush,                   /* flush */
+    mailslot_get_info,          /* get_file_info */
+    mailslot_queue_async,       /* queue_async */
+    default_fd_cancel_async     /* cancel_async */
 };
 
 struct mail_writer
@@ -140,8 +136,6 @@ static void mailslot_destroy( struct object *obj)
 
     assert( mailslot->fd );
     assert( mailslot->write_fd );
-
-    async_terminate_queue( &mailslot->read_q, STATUS_CANCELLED );
 
     release_object( mailslot->fd );
     release_object( mailslot->write_fd );
@@ -191,33 +185,11 @@ static struct fd *mailslot_get_fd( struct object *obj )
     return (struct fd *)grab_object( mailslot->fd );
 }
 
-static int mailslot_get_poll_events( struct fd *fd )
-{
-    struct mailslot *mailslot = get_fd_user( fd );
-    int events = 0;
-    assert( mailslot->obj.ops == &mailslot_ops );
-
-    if (!list_empty( &mailslot->read_q ))
-        events |= POLLIN;
-
-    return events;
-}
-
-static void mailslot_poll_event( struct fd *fd, int event )
-{
-    struct mailslot *mailslot = get_fd_user( fd );
-
-    if (!list_empty( &mailslot->read_q ) && (POLLIN & event))
-        async_terminate_head( &mailslot->read_q, STATUS_ALERTED );
-
-    set_fd_events( fd, mailslot_get_poll_events(fd) );
-}
-
 static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
                                   void *iosb, int type, int count )
 {
     struct mailslot *mailslot = get_fd_user( fd );
-    int events, *ptimeout = NULL;
+    int *timeout = NULL;
 
     assert(mailslot->obj.ops == &mailslot_ops);
 
@@ -235,28 +207,9 @@ static void mailslot_queue_async( struct fd *fd, void *apc, void *user,
     }
 
     if (mailslot->read_timeout != MAILSLOT_WAIT_FOREVER)
-        ptimeout = &mailslot->read_timeout;
+        timeout = &mailslot->read_timeout;
 
-    if (!create_async( current, ptimeout, &mailslot->read_q, apc, user, iosb ))
-        return;
-
-    /* Check if the new pending request can be served immediately */
-    events = check_fd_events( fd, mailslot_get_poll_events( fd ) );
-    if (events)
-    {
-        mailslot_poll_event( fd, events );
-        return;
-    }
-
-    set_fd_events( fd, mailslot_get_poll_events( fd ));
-}
-
-static void mailslot_cancel_async( struct fd *fd )
-{
-    struct mailslot *mailslot = get_fd_user( fd );
-
-    assert(mailslot->obj.ops == &mailslot_ops);
-    async_terminate_queue( &mailslot->read_q, STATUS_CANCELLED );
+    fd_queue_async_timeout( fd, apc, user, iosb, type, count, timeout );
 }
 
 static struct mailslot *create_mailslot( const WCHAR *name, size_t len, int max_msgsize,
@@ -288,7 +241,6 @@ static struct mailslot *create_mailslot( const WCHAR *name, size_t len, int max_
     mailslot->max_msgsize = max_msgsize;
     mailslot->read_timeout = read_timeout;
     list_init( &mailslot->writers );
-    list_init( &mailslot->read_q );
 
     if (!socketpair( PF_UNIX, SOCK_DGRAM, 0, fds ))
     {
