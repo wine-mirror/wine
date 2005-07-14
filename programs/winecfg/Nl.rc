@@ -40,10 +40,10 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     GROUPBOX        " Toepassingsinstellingen ",IDC_STATIC, 8,4,244,240
-    LTEXT           "Wine geeft de mogelijkheid om per toepassing de Windowsversie in te stellen.",
-                    IDC_STATIC,15,20,227,20
+    LTEXT           "Wine geeft de mogelijkheid om per toepassing de Windowsversie in te stellen. Deze tab is gekoppeld aan de Libraries en Graphics tabs om zowel systeemwijde als applicatie specifieke instellingen in deze tabs mogelijk te maken.",
+                    IDC_STATIC,15,20,227,40
     CONTROL         "Toepassingen",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
-                    15,40,230,160
+                    15,60,230,140
     PUSHBUTTON	    "Toepassing toevoegen..",IDC_APP_ADDAPP, 80,204,80,14
     PUSHBUTTON	    "Toepassing verwijderen",IDC_APP_REMOVEAPP, 165,204,80,14
     LTEXT           "Windows Versie:",IDC_STATIC,17,226,58,8
@@ -57,11 +57,11 @@ BEGIN
     LTEXT	    "Kleurdiepte: ",IDC_STATIC,8,10,70,30
     COMBOBOX	    IDC_SCREEN_DEPTH,80,8,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 
+    GROUPBOX        " Windowsinstellingen ",IDC_STATIC,8,25,244,120
+
     CONTROL	    "Een DirectX programma kan de muis in een window vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
     CONTROL	    "Schakel \"double buffering\" in.",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
-    GROUPBOX        " Windowsinstellingen ",IDC_STATIC,8,25,244,120
-
     /* FIXME: the wording of this explanation could be a lot better */
     LTEXT           "U kunt kiezen voor een virtuele windows desktop waarop alle windows geplaatst worden, of U kunt er voor kiezen dat de windows op uw standaard desktop geplaatst worden.",
                     IDC_STATIC,15,73,228,28
@@ -72,6 +72,12 @@ BEGIN
 		    
     EDITTEXT        IDC_DESKTOP_WIDTH,64,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
     EDITTEXT        IDC_DESKTOP_HEIGHT,117,115,40,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+    GROUPBOX        " Direct3D ",IDC_STATIC,8,140,244,120
+
+    LTEXT	    "Vertex Shader ondersteuning: ",IDC_STATIC,15,150,100,30
+    COMBOBOX	    IDC_D3D_VSHADER_MODE,120,148,130,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+
+    CONTROL         "Pixel Shader toestaan (indien ondersteund door de hardware)",IDC_D3D_PSHADER_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,165,230,10
 END
 
 IDD_DLLCFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -102,7 +108,7 @@ BEGIN
     CONTROL         "Nati&ve dan Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,75,10
     CONTROL         "&Uitzetten",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,75,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
-    PUSHBUTTON      "Cancel",IDCANCEL,57,74,45,14,WS_GROUP
+    PUSHBUTTON      "Afbreken",IDCANCEL,57,74,45,14,WS_GROUP
 END
 
 IDD_DRIVECFG DIALOG DISCARDABLE  0, 0, 260, 250
@@ -152,6 +158,12 @@ BEGIN
     PUSHBUTTON	"Automatisch detecteren",IDC_AUDIO_AUTODETECT,170,18,79,14
     PUSHBUTTON	"Configureer",IDC_AUDIO_CONFIGURE,170,38,49,14
     PUSHBUTTON	"Configuratiescherm",IDC_AUDIO_CONTROL_PANEL,170,58,69,14
+
+    GROUPBOX    " DirectSound ",IDC_STATIC,8,75,244,120
+    LTEXT	"Hardwareversnelling: ",IDC_STATIC,15,85,90,10
+    COMBOBOX	IDC_DSOUND_HW_ACCEL,100,83,150,70,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL     "Stuurprogramma emulatie",IDC_DSOUND_DRV_EMUL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,100,230,10
+
 END
 
 STRINGTABLE DISCARDABLE
