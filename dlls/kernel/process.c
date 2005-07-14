@@ -743,6 +743,7 @@ static BOOL init_user_process_params( RTL_USER_PROCESS_PARAMETERS *params )
     HANDLE hstdin, hstdout, hstderr;
 
     size = info_size = params->AllocationSize;
+    if (!size) return TRUE;  /* no parameters received from parent */
 
     SERVER_START_REQ( get_startup_info )
     {
@@ -933,7 +934,6 @@ static BOOL process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     PEB *peb = NtCurrentTeb()->Peb;
-    RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
     extern void __wine_dbg_kernel32_init(void);
 
     PTHREAD_Init();
@@ -944,27 +944,13 @@ static BOOL process_init(void)
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
 
-    if (!params->AllocationSize)
-    {
-        /* This is wine specific: we have no parent (we're started from unix)
-         * so, create a simple console with bare handles to unix stdio 
-         * input & output streams (aka simple console)
-	 */
-        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  TRUE, &params->hStdInput );
-        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params->hStdOutput );
-        wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params->hStdError );
-
-        params->CurrentDirectory.DosPath.Length = 0;
-        params->CurrentDirectory.DosPath.MaximumLength = RtlGetLongestNtPathLength() * sizeof(WCHAR);
-        params->CurrentDirectory.DosPath.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, params->CurrentDirectory.DosPath.MaximumLength);
-    }
-    else if (!init_user_process_params( params )) return FALSE;
+    if (!init_user_process_params( peb->ProcessParameters )) return FALSE;
 
     kernel32_handle = GetModuleHandleW(kernel32W);
 
     LOCALE_Init();
 
-    if (!params->AllocationSize)
+    if (!peb->ProcessParameters->Environment)
     {
         /* Copy the parent environment */
         if (!build_initial_environment( __wine_main_environ )) return FALSE;
@@ -976,7 +962,7 @@ static BOOL process_init(void)
     }
 
     init_windows_dirs();
-    init_current_directory( &params->CurrentDirectory );
+    init_current_directory( &peb->ProcessParameters->CurrentDirectory );
 
     return TRUE;
 }

@@ -783,7 +783,7 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
  */
 DWORD WINAPI RtlGetLongestNtPathLength(void)
 {
-    return 277;
+    return MAX_NT_PATH_LENGTH;
 }
 
 /******************************************************************

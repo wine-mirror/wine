@@ -48,6 +48,7 @@ struct startup_info
 static PEB peb;
 static PEB_LDR_DATA ldr;
 static RTL_USER_PROCESS_PARAMETERS params;  /* default parameters if no parent */
+static WCHAR current_dir[MAX_NT_PATH_LENGTH];
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static LIST_ENTRY tls_links;
@@ -102,7 +103,7 @@ static inline void free_teb( TEB *teb )
  *
  * NOTES: The first allocated TEB on NT is at 0x7ffde000.
  */
-ULONG thread_init(void)
+void thread_init(void)
 {
     TEB *teb;
     void *addr;
@@ -116,6 +117,8 @@ ULONG thread_init(void)
     peb.TlsBitmap          = &tls_bitmap;
     peb.TlsExpansionBitmap = &tls_expansion_bitmap;
     peb.LdrData            = &ldr;
+    params.CurrentDirectory.DosPath.Buffer = current_dir;
+    params.CurrentDirectory.DosPath.MaximumLength = sizeof(current_dir);
     RtlInitializeBitMap( &tls_bitmap, peb.TlsBitmapBits, sizeof(peb.TlsBitmapBits) * 8 );
     RtlInitializeBitMap( &tls_expansion_bitmap, peb.TlsExpansionBitmapBits,
                          sizeof(peb.TlsExpansionBitmapBits) * 8 );
@@ -161,7 +164,28 @@ ULONG thread_init(void)
         MESSAGE( "wine: failed to create the process heap\n" );
         exit(1);
     }
-    return info_size;
+
+    /* allocate user parameters */
+    if (info_size)
+    {
+        RTL_USER_PROCESS_PARAMETERS *params = NULL;
+
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &info_size,
+                                     MEM_COMMIT, PAGE_READWRITE ) == STATUS_SUCCESS)
+        {
+            params->AllocationSize = info_size;
+            NtCurrentTeb()->Peb->ProcessParameters = params;
+        }
+    }
+    else
+    {
+        /* This is wine specific: we have no parent (we're started from unix)
+         * so, create a simple console with bare handles to unix stdio
+         */
+        wine_server_fd_to_handle( 0, GENERIC_READ|SYNCHRONIZE,  TRUE, &params.hStdInput );
+        wine_server_fd_to_handle( 1, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params.hStdOutput );
+        wine_server_fd_to_handle( 2, GENERIC_WRITE|SYNCHRONIZE, TRUE, &params.hStdError );
+    }
 }
 
 

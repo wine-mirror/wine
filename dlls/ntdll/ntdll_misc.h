@@ -34,6 +34,8 @@
 #define SIGNAL_STACK_SIZE  0  /* we don't need a signal stack on non-i386 */
 #endif
 
+#define MAX_NT_PATH_LENGTH 277
+
 extern void WINAPI __regs_RtlRaiseException( PEXCEPTION_RECORD, PCONTEXT );
 
 /* debug helper */
@@ -48,7 +50,7 @@ extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handl
 /* init routines */
 extern BOOL SIGNAL_Init(void);
 extern void debug_init(void);
-extern ULONG thread_init(void);
+extern void thread_init(void);
 extern void virtual_init(void);
 
 /* server support */
