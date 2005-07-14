@@ -675,6 +675,8 @@ typedef struct _gettextlengthex {
 #define GTL_NUMCHARS          0x00000008
 #define GTL_NUMBYTES          0x00000010
 
+#define GCM_RIGHTMOUSEDROP    0x8000
+
 #ifdef __cplusplus
 }
 #endif
