@@ -964,13 +964,6 @@ DECL_HANDLER(get_startup_info)
     info->data_size = 0;
 }
 
-
-/* initialize a new process */
-DECL_HANDLER(init_process)
-{
-    reply->server_start = server_start_ticks;
-}
-
 /* signal the end of the process initialization */
 DECL_HANDLER(init_process_done)
 {

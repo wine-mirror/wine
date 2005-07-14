@@ -64,7 +64,6 @@ static DWORD shutdown_flags = 0;
 static DWORD shutdown_priority = 0x280;
 static DWORD process_dword;
 
-static unsigned int server_startticks;
 int main_create_flags = 0;
 HMODULE kernel32_handle = 0;
 
@@ -933,7 +932,6 @@ static void init_windows_dirs(void)
 static BOOL process_init(void)
 {
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
-    BOOL ret;
     PEB *peb = NtCurrentTeb()->Peb;
     RTL_USER_PROCESS_PARAMETERS *params = peb->ProcessParameters;
     extern void __wine_dbg_kernel32_init(void);
@@ -945,17 +943,6 @@ static BOOL process_init(void)
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
     setlocale(LC_CTYPE,"");
-
-    /* Retrieve startup info from the server */
-    SERVER_START_REQ( init_process )
-    {
-        if ((ret = !wine_server_call_err( req )))
-        {
-            server_startticks = reply->server_start;
-        }
-    }
-    SERVER_END_REQ;
-    if (!ret) return FALSE;
 
     if (!params->AllocationSize)
     {
@@ -2884,31 +2871,6 @@ DWORD WINAPI RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
 {
     /* I don't think that Wine needs to do anything in this function */
     return 1; /* success */
-}
-
-
-/***********************************************************************
- *           GetSystemMSecCount (SYSTEM.6)
- *           GetTickCount       (KERNEL32.@)
- *
- * Get the number of milliseconds the system has been running.
- *
- * PARANS
- *  None.
- *
- * RETURNS
- *  The current tick count.
- *
- * NOTES
- *  -The value returned will wrap arounf every 2^32 milliseconds.
- *  -Under Windows, tick 0 is the moment at which the system is rebooted.
- *  Under Wine, tick 0 begins at the moment the wineserver process is started,
- */
-DWORD WINAPI GetTickCount(void)
-{
-    struct timeval t;
-    gettimeofday( &t, NULL );
-    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - server_startticks;
 }
 
 

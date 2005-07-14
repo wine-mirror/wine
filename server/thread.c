@@ -888,6 +888,7 @@ DECL_HANDLER(init_thread)
     reply->pid     = get_process_id( process );
     reply->tid     = get_thread_id( current );
     reply->version = SERVER_PROTOCOL_VERSION;
+    reply->server_start = server_start_time;
     return;
 
  error:

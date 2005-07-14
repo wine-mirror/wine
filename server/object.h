@@ -172,7 +172,7 @@ extern int foreground;
 extern const char *server_argv0;
 
   /* server start time used for GetTickCount() */
-extern unsigned int server_start_ticks;
+extern time_t server_start_time;
 
 /* name space for synchronization objects */
 extern struct namespace *sync_namespace;

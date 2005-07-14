@@ -797,6 +797,29 @@ NTSTATUS WINAPI NtQuerySystemTime( PLARGE_INTEGER Time )
     return STATUS_SUCCESS;
 }
 
+/******************************************************************************
+ *  NtQueryPerformanceCounter	[NTDLL.@]
+ *
+ *  Note: Windows uses a timer clocked at a multiple of 1193182 Hz. There is a
+ *  good number of applications that crash when the returned frequency is either
+ *  lower or higher then what Windows gives. Also too high counter values are
+ *  reported to give problems.
+ */
+NTSTATUS WINAPI NtQueryPerformanceCounter( PLARGE_INTEGER Counter, PLARGE_INTEGER Frequency )
+{
+    struct timeval now;
+
+    if (!Counter) return STATUS_ACCESS_VIOLATION;
+    gettimeofday( &now, 0 );
+    /* convert a counter that increments at a rate of 1 MHz
+     * to one of 1.193182 MHz, with some care for arithmetic
+     * overflow ( will not overflow for 5000 years ) and
+     * good accuracy ( 105/88 = 1.19318182) */
+    Counter->QuadPart = (((now.tv_sec - server_start_time) * (ULONGLONG)1000000 + now.tv_usec) * 105) / 88;
+    if (Frequency) Frequency->QuadPart = 1193182;
+    return STATUS_SUCCESS;
+}
+
 /***********************************************************************
  *        TIME_GetTZAsStr [internal]
  *

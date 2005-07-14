@@ -81,6 +81,8 @@ struct cmsg_fd
 };
 #endif  /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
 
+time_t server_start_time = 0;  /* time of server startup */
+
 static sigset_t block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 
@@ -919,8 +921,9 @@ size_t server_init_thread( int unix_pid, int unix_tid, void *entry_point )
         ret = wine_server_call( req );
         NtCurrentTeb()->ClientId.UniqueProcess = (HANDLE)reply->pid;
         NtCurrentTeb()->ClientId.UniqueThread  = (HANDLE)reply->tid;
-        info_size = reply->info_size;
-        version   = reply->version;
+        info_size         = reply->info_size;
+        version           = reply->version;
+        server_start_time = reply->server_start;
     }
     SERVER_END_REQ;
 

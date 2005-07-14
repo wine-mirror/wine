@@ -28,6 +28,10 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#include <time.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
 #include <signal.h>
 
 #include "windef.h"
@@ -55,6 +59,8 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { 0, (DWORD)(__FILE__ ": ldt_section") }
 };
 static CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static DWORD server_start_time;
 
 /***********************************************************************
  *           locking for LDT routines
@@ -102,6 +108,10 @@ static BOOL process_attach(void)
 {
     HMODULE16 hModule;
     SYSTEM_INFO si;
+    SYSTEM_TIMEOFDAY_INFORMATION sti;
+
+    NtQuerySystemInformation( SystemTimeOfDayInformation, &sti, sizeof(sti), NULL );
+    RtlTimeToSecondsSince1970( &sti.liKeBootTime, &server_start_time );
 
     /* FIXME: should probably be done in ntdll */
     GetSystemInfo( &si );
@@ -262,4 +272,29 @@ INT WINAPI MulDiv( INT nMultiplicand, INT nMultiplier, INT nDivisor)
 
     if ((ret > 2147483647) || (ret < -2147483647)) return -1;
     return ret;
+}
+
+
+/***********************************************************************
+ *           GetSystemMSecCount (SYSTEM.6)
+ *           GetTickCount       (KERNEL32.@)
+ *
+ * Get the number of milliseconds the system has been running.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The current tick count.
+ *
+ * NOTES
+ *  -The value returned will wrap arounf every 2^32 milliseconds.
+ *  -Under Windows, tick 0 is the moment at which the system is rebooted.
+ *  Under Wine, tick 0 begins at the moment the wineserver process is started,
+ */
+DWORD WINAPI GetTickCount(void)
+{
+    struct timeval t;
+    gettimeofday( &t, NULL );
+    return ((t.tv_sec - server_start_time) * 1000) + (t.tv_usec / 1000);
 }

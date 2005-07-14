@@ -606,15 +606,6 @@ static void dump_new_thread_reply( const struct new_thread_reply *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_init_process_request( const struct init_process_request *req )
-{
-}
-
-static void dump_init_process_reply( const struct init_process_reply *req )
-{
-    fprintf( stderr, " server_start=%08x", req->server_start );
-}
-
 static void dump_get_startup_info_request( const struct get_startup_info_request *req )
 {
 }
@@ -663,6 +654,7 @@ static void dump_init_thread_reply( const struct init_thread_reply *req )
     fprintf( stderr, " pid=%04x,", req->pid );
     fprintf( stderr, " tid=%04x,", req->tid );
     fprintf( stderr, " info_size=%d,", req->info_size );
+    fprintf( stderr, " server_start=%ld,", (long)req->server_start );
     fprintf( stderr, " version=%d", req->version );
 }
 
@@ -3066,7 +3058,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
     (dump_func)dump_new_thread_request,
-    (dump_func)dump_init_process_request,
     (dump_func)dump_get_startup_info_request,
     (dump_func)dump_init_process_done_request,
     (dump_func)dump_init_thread_request,
@@ -3272,7 +3263,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_reply,
     (dump_func)dump_get_new_process_info_reply,
     (dump_func)dump_new_thread_reply,
-    (dump_func)dump_init_process_reply,
     (dump_func)dump_get_startup_info_reply,
     (dump_func)0,
     (dump_func)dump_init_thread_reply,
@@ -3478,7 +3468,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "new_process",
     "get_new_process_info",
     "new_thread",
-    "init_process",
     "get_startup_info",
     "init_process_done",
     "init_thread",

@@ -237,18 +237,6 @@ struct new_thread_reply
 
 
 
-struct init_process_request
-{
-    struct request_header __header;
-};
-struct init_process_reply
-{
-    struct reply_header __header;
-    unsigned int server_start;
-};
-
-
-
 struct get_startup_info_request
 {
     struct request_header __header;
@@ -304,6 +292,7 @@ struct init_thread_reply
     process_id_t pid;
     thread_id_t  tid;
     size_t       info_size;
+    time_t       server_start;
     int          version;
 };
 
@@ -3554,7 +3543,6 @@ enum request
     REQ_new_process,
     REQ_get_new_process_info,
     REQ_new_thread,
-    REQ_init_process,
     REQ_get_startup_info,
     REQ_init_process_done,
     REQ_init_thread,
@@ -3764,7 +3752,6 @@ union generic_request
     struct new_process_request new_process_request;
     struct get_new_process_info_request get_new_process_info_request;
     struct new_thread_request new_thread_request;
-    struct init_process_request init_process_request;
     struct get_startup_info_request get_startup_info_request;
     struct init_process_done_request init_process_done_request;
     struct init_thread_request init_thread_request;
@@ -3972,7 +3959,6 @@ union generic_reply
     struct new_process_reply new_process_reply;
     struct get_new_process_info_reply get_new_process_info_reply;
     struct new_thread_reply new_thread_reply;
-    struct init_process_reply init_process_reply;
     struct get_startup_info_reply get_startup_info_reply;
     struct init_process_done_reply init_process_done_reply;
     struct init_thread_reply init_thread_reply;
@@ -4174,6 +4160,6 @@ union generic_reply
     struct set_mailslot_info_reply set_mailslot_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 186
+#define SERVER_PROTOCOL_VERSION 187
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
