@@ -38,6 +38,9 @@ typedef struct {
     IOleInPlaceFrame *frame;
 
     HWND hwnd;
+
+    BOOL in_place_active;
+    BOOL ui_active;
 } HTMLDocument;
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)

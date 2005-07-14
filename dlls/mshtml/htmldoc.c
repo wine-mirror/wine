@@ -128,13 +128,13 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
 
     if(!ref) {
         if(This->client)
-            IOleClientSite_Release(This->client);
-        if(This->hostui)
-            IDocHostUIHandler_Release(This->hostui);
+            IOleObject_SetClientSite(OLEOBJ(This), NULL);
+        if(This->in_place_active)
+            IOleInPlaceObjectWindowless_InPlaceDeactivate(INPLACEWIN(This));
         if(This->ipsite)
-            IOleInPlaceSite_Release(This->ipsite);
-        if(This->frame)
-            IOleInPlaceFrame_Release(This->frame);
+            IOleDocumentView_SetInPlaceSite(DOCVIEW(This), NULL);
+        if(This->hwnd)
+            DestroyWindow(This->hwnd);
         HeapFree(GetProcessHeap(), 0, This);
     }
 

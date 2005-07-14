@@ -96,34 +96,30 @@ static void register_serverwnd_class(void)
  * IOleDocumentView implementation
  */
 
-#define DOCVIEW_THIS \
-        HTMLDocument* const This=(HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpOleDocumentViewVtbl));
+#define DOCVIEW_THIS(iface) DEFINE_THIS(HTMLDocument, OleDocumentView, iface)
 
 static HRESULT WINAPI OleDocumentView_QueryInterface(IOleDocumentView *iface, REFIID riid, void **ppvObject)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
 }
 
 static ULONG WINAPI OleDocumentView_AddRef(IOleDocumentView *iface)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     return IHTMLDocument2_AddRef(HTMLDOC(This));
 }
 
 static ULONG WINAPI OleDocumentView_Release(IOleDocumentView *iface)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     return IHTMLDocument2_Release(HTMLDOC(This));
 }
 
 static HRESULT WINAPI OleDocumentView_SetInPlaceSite(IOleDocumentView *iface, IOleInPlaceSite *pIPSite)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     TRACE("(%p)->(%p)\n", This, pIPSite);
-
-    if(!pIPSite)
-        return E_INVALIDARG;
 
     if(pIPSite)
         IOleInPlaceSite_AddRef(pIPSite);
@@ -137,7 +133,7 @@ static HRESULT WINAPI OleDocumentView_SetInPlaceSite(IOleDocumentView *iface, IO
 
 static HRESULT WINAPI OleDocumentView_GetInPlaceSite(IOleDocumentView *iface, IOleInPlaceSite **ppIPSite)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     TRACE("(%p)->(%p)\n", This, ppIPSite);
 
     if(!ppIPSite)
@@ -152,7 +148,7 @@ static HRESULT WINAPI OleDocumentView_GetInPlaceSite(IOleDocumentView *iface, IO
 
 static HRESULT WINAPI OleDocumentView_GetDocument(IOleDocumentView *iface, IUnknown **ppunk)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     TRACE("(%p)->(%p)\n", This, ppunk);
 
     if(!ppunk)
@@ -165,7 +161,7 @@ static HRESULT WINAPI OleDocumentView_GetDocument(IOleDocumentView *iface, IUnkn
 
 static HRESULT WINAPI OleDocumentView_SetRect(IOleDocumentView *iface, LPRECT prcView)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     RECT rect;
 
     TRACE("(%p)->(%p)\n", This, prcView);
@@ -187,7 +183,7 @@ static HRESULT WINAPI OleDocumentView_SetRect(IOleDocumentView *iface, LPRECT pr
 
 static HRESULT WINAPI OleDocumentView_GetRect(IOleDocumentView *iface, LPRECT prcView)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
 
     TRACE("(%p)->(%p)\n", This, prcView);
 
@@ -201,14 +197,14 @@ static HRESULT WINAPI OleDocumentView_GetRect(IOleDocumentView *iface, LPRECT pr
 static HRESULT WINAPI OleDocumentView_SetRectComplex(IOleDocumentView *iface, LPRECT prcView,
                         LPRECT prcHScroll, LPRECT prcVScroll, LPRECT prcSizeBox)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     FIXME("(%p)->(%p %p %p %p)\n", This, prcView, prcHScroll, prcVScroll, prcSizeBox);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     TRACE("(%p)->(%x)\n", This, fShow);
 
     if(This->hwnd)
@@ -219,7 +215,7 @@ static HRESULT WINAPI OleDocumentView_Show(IOleDocumentView *iface, BOOL fShow)
 
 static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL fUIActivate)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     HRESULT hres;
     IOleInPlaceUIWindow *pIPWnd;
     IOleInPlaceFrame *pIPFrame;
@@ -235,7 +231,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     }
 
     if(fUIActivate) {
-        if(This->hwnd)
+        if(This->ui_active)
             return S_OK;
         if(!serverwnd_class)
             register_serverwnd_class();
@@ -271,9 +267,11 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
                 posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
                 parent_hwnd, NULL, hInst, This);
 
+        This->in_place_active = TRUE;
         hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
         if(FAILED(hres)) {
             WARN("OnInPlaceActivate failed: %08lx\n", hres);
+            This->in_place_active = FALSE;
             return hres;
         }
 
@@ -288,11 +286,13 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
          * SetTimer(This->hwnd, TIMER_ID, 100, NULL);
          */
 
+        This->ui_active = TRUE;
         hres = IOleInPlaceSite_OnUIActivate(This->ipsite);
         if(SUCCEEDED(hres)) {
             IOleInPlaceFrame_SetActiveObject(pIPFrame, ACTOBJ(This), wszHTML_Document);
         }else {
             FIXME("OnUIActivate failed: %08lx\n", hres);
+            This->ui_active = FALSE;
             DestroyWindow(hwnd);
             return hres;
         }
@@ -306,6 +306,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         if(FAILED(hres))
             IDocHostUIHandler_HideUI(This->hostui);
     }else {
+        This->ui_active = FALSE;
         if(This->frame)
             IOleInPlaceFrame_SetActiveObject(This->frame, NULL, NULL);
         if(This->hostui)
@@ -318,14 +319,14 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
 static HRESULT WINAPI OleDocumentView_Open(IOleDocumentView *iface)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     FIXME("(%p)\n", This);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleDocumentView_CloseView(IOleDocumentView *iface, DWORD dwReserved)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     TRACE("(%p)->(%lx)\n", This, dwReserved);
 
     if(dwReserved)
@@ -343,14 +344,14 @@ static HRESULT WINAPI OleDocumentView_CloseView(IOleDocumentView *iface, DWORD d
 
 static HRESULT WINAPI OleDocumentView_SaveViewState(IOleDocumentView *iface, LPSTREAM pstm)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstm);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleDocumentView_ApplyViewState(IOleDocumentView *iface, LPSTREAM pstm)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     FIXME("(%p)->(%p)\n", This, pstm);
     return E_NOTIMPL;
 }
@@ -358,10 +359,12 @@ static HRESULT WINAPI OleDocumentView_ApplyViewState(IOleDocumentView *iface, LP
 static HRESULT WINAPI OleDocumentView_Clone(IOleDocumentView *iface, IOleInPlaceSite *pIPSiteNew,
                                         IOleDocumentView **ppViewNew)
 {
-    DOCVIEW_THIS
+    HTMLDocument *This = DOCVIEW_THIS(iface);
     FIXME("(%p)->(%p %p)\n", This, pIPSiteNew, ppViewNew);
     return E_NOTIMPL;
 }
+
+#undef DOCVIEW_THIS
 
 static const IOleDocumentViewVtbl OleDocumentViewVtbl = {
     OleDocumentView_QueryInterface,
@@ -386,24 +389,23 @@ static const IOleDocumentViewVtbl OleDocumentViewVtbl = {
  * IViewObject implementation
  */
 
-#define VIEWOBJ_THIS \
-    HTMLDocument* const This=(HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpViewObject2Vtbl));
+#define VIEWOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, ViewObject2, iface)
 
 static HRESULT WINAPI ViewObject_QueryInterface(IViewObject2 *iface, REFIID riid, void **ppvObject)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     return IHTMLDocument2_QueryInterface(HTMLDOC(This), riid, ppvObject);
 }
 
 static ULONG WINAPI ViewObject_AddRef(IViewObject2 *iface)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     return IHTMLDocument2_AddRef(HTMLDOC(This));
 }
 
 static ULONG WINAPI ViewObject_Release(IViewObject2 *iface)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     return IHTMLDocument2_Release(HTMLDOC(This));
 }
 
@@ -411,7 +413,7 @@ static HRESULT WINAPI ViewObject_Draw(IViewObject2 *iface, DWORD dwDrawAspect, L
         DVTARGETDEVICE *ptd, HDC hdcTargetDev, HDC hdcDraw, LPCRECTL lprcBounds,
         LPCRECTL lprcWBounds, BOOL (CALLBACK *pfnContinue)(ULONG_PTR dwContinue), ULONG_PTR dwContinue)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%ld %ld %p %p %p %p %p %p %p %ld)\n", This, dwDrawAspect, lindex, pvAspect,
             ptd, hdcTargetDev, hdcDraw, lprcBounds, lprcWBounds, pfnContinue, dwContinue);
     return E_NOTIMPL;
@@ -420,7 +422,7 @@ static HRESULT WINAPI ViewObject_Draw(IViewObject2 *iface, DWORD dwDrawAspect, L
 static HRESULT WINAPI ViewObject_GetColorSet(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex, void *pvAspect,
         DVTARGETDEVICE *ptd, HDC hicTargetDev, LOGPALETTE **ppColorSet)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%ld %ld %p %p %p %p)\n", This, dwDrawAspect, lindex, pvAspect, ptd, hicTargetDev, ppColorSet);
     return E_NOTIMPL;
 }
@@ -428,28 +430,28 @@ static HRESULT WINAPI ViewObject_GetColorSet(IViewObject2 *iface, DWORD dwDrawAs
 static HRESULT WINAPI ViewObject_Freeze(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex,
         void *pvAspect, DWORD *pdwFreeze)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%ld %ld %p %p)\n", This, dwDrawAspect, lindex, pvAspect, pdwFreeze);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ViewObject_Unfreeze(IViewObject2 *iface, DWORD dwFreeze)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%ld)\n", This, dwFreeze);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ViewObject_SetAdvise(IViewObject2 *iface, DWORD aspects, DWORD advf, IAdviseSink *pAdvSink)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%ld %ld %p)\n", This, aspects, advf, pAdvSink);
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI ViewObject_GetAdvise(IViewObject2 *iface, DWORD *pAspects, DWORD *pAdvf, IAdviseSink **ppAdvSink)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%p %p %p)\n", This, pAspects, pAdvf, ppAdvSink);
     return E_NOTIMPL;
 }
@@ -457,10 +459,12 @@ static HRESULT WINAPI ViewObject_GetAdvise(IViewObject2 *iface, DWORD *pAspects,
 static HRESULT WINAPI ViewObject_GetExtent(IViewObject2 *iface, DWORD dwDrawAspect, LONG lindex,
                                 DVTARGETDEVICE* ptd, LPSIZEL lpsizel)
 {
-    VIEWOBJ_THIS
+    HTMLDocument *This = VIEWOBJ_THIS(iface);
     FIXME("(%p)->(%ld %ld %p %p)\n", This, dwDrawAspect, lindex, ptd, lpsizel);
     return E_NOTIMPL;
 }
+
+#undef VIEWOBJ_THIS
 
 static const IViewObject2Vtbl ViewObjectVtbl = {
     ViewObject_QueryInterface,
@@ -483,4 +487,7 @@ void HTMLDocument_View_Init(HTMLDocument *This)
     This->ipsite = NULL;
     This->frame = NULL;
     This->hwnd = NULL;
+
+    This->in_place_active = FALSE;
+    This->ui_active = FALSE;
 }

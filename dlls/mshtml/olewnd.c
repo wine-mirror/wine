@@ -71,6 +71,9 @@ static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *
     if(!phwnd)
         return E_INVALIDARG;
 
+    if(!This->in_place_active)
+        return E_FAIL;
+
     *phwnd = This->hwnd;
     return S_OK;
 }
@@ -175,8 +178,25 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlac
 static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)
 {
     HTMLDocument *This = OLEINPLACEWND_THIS(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->in_place_active)
+        return S_OK;
+
+    if(This->frame)
+        IOleInPlaceFrame_Release(This->frame);
+
+    if(This->hwnd) {
+        ShowWindow(This->hwnd, SW_HIDE);
+        SetWindowPos(This->hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+    }
+
+    This->in_place_active = FALSE;
+    if(This->ipsite)
+        IOleInPlaceSite_OnInPlaceDeactivate(This->ipsite);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectWindowless *iface)
