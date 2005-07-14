@@ -244,8 +244,10 @@ int main(int argc, char* argv[])
     if (!szDllName || *szDllName==0)
         goto CLEANUP;
     WINE_TRACE("DllName=%s\n",wine_dbgstr_w(szDllName));
-    if (!(szEntryPoint = strchrW( szDllName, ',' ))) goto CLEANUP;
-    *szEntryPoint++=0;
+    if ((szEntryPoint = strchrW(szDllName, ',' )))
+        *szEntryPoint++=0;
+    else
+        szEntryPoint = GetNextArg(&szCmdLine);
     WINE_TRACE("EntryPoint=%s\n",wine_dbgstr_w(szEntryPoint));
 
     /* Load the library */
