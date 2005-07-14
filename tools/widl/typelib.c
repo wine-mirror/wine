@@ -72,7 +72,7 @@ static unsigned short builtin_vt(const char *kw)
   kwp = bsearch(&key, oatypes, NTYPES, sizeof(oatypes[0]), kw_cmp_func);
 #else
   {
-    int i;
+    unsigned int i;
     for (kwp=NULL, i=0; i < NTYPES; i++)
       if (!kw_cmp_func(&key, &oatypes[i])) {
         kwp = &oatypes[i];
