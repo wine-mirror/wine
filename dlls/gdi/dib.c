@@ -233,6 +233,8 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
         WORD planes, bpp;
         DWORD compr, size;
 
+        GDI_ReleaseObj( hdc );
+
         if (DIB_GetBitmapInfo( &info->bmiHeader, &width, &height, &planes, &bpp, &compr, &size ) == -1)
         {
             ERR("Invalid bitmap\n");
@@ -245,7 +247,6 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
             return 0;
         }
 
-        GDI_ReleaseObj( hdc );
 	hdcMem = CreateCompatibleDC( hdc );
         hBitmap = CreateCompatibleBitmap(hdc, width, height);
         hOldBitmap = SelectObject( hdcMem, hBitmap );
