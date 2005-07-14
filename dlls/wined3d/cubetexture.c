@@ -65,7 +65,6 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_QueryInterface(IWineD3DCubeTexture *iface
 ULONG WINAPI IWineD3DCubeTextureImpl_AddRef(IWineD3DCubeTexture *iface) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
-    IUnknown_AddRef(This->resource.parent);
     return InterlockedIncrement(&This->resource.ref);
 }
 
@@ -76,26 +75,24 @@ ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         int i,j;
-      TRACE("(%p) : Cleaning up\n",This);
+        TRACE("(%p) : Cleaning up\n",This);
         for (i = 0; i < This->baseTexture.levels; i++) {
-          for (j = 0; j < 6; j++) {
-            if (This->surfaces[j][i] != NULL) {
-                /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
-                IUnknown* surfaceParent;
-                /* Clean out the texture name we gave to the suface so that the surface doesn't try and release it */
-                IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], 0, 0);
-                TRACE("(%p) : Releasing surface%d %d  %p\n", This, j, i, This->surfaces[j][i]);
-                IWineD3DSurface_GetParent(This->surfaces[j][i], &surfaceParent);
-                IUnknown_Release(surfaceParent);
-                IUnknown_Release(surfaceParent);
-
+            for (j = 0; j < 6; j++) {
+                if (This->surfaces[j][i] != NULL) {
+                    /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
+                    IUnknown* surfaceParent;
+                    /* Clean out the texture name we gave to the suface so that the surface doesn't try and release it */
+                    IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], 0, 0);
+                    TRACE("(%p) : Releasing surface%d %d  %p\n", This, j, i, This->surfaces[j][i]);
+                    IWineD3DSurface_GetParent(This->surfaces[j][i], &surfaceParent);
+                    IUnknown_Release(surfaceParent);
+                    IUnknown_Release(surfaceParent);
+                }
             }
-          }
         }
         IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
+        /* finally delete the object */
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
     }
     return ref;
 }
@@ -143,10 +140,11 @@ void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     /* If were dirty then reload the surfaces */
     if (This->baseTexture.dirty != FALSE) {
         for (i = 0; i < This->baseTexture.levels; i++) {
-          for (j = 0; j < 6; j++)
-              if(setGlTextureDesc)
-                  IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
-                  IWineD3DSurface_LoadTexture((IWineD3DSurface *) This->surfaces[j][i]);
+            for (j = 0; j < 6; j++) {
+                if(setGlTextureDesc)
+                      IWineD3DSurface_SetGlTextureDesc(This->surfaces[j][i], This->baseTexture.textureName, cube_targets[j]);
+                IWineD3DSurface_LoadTexture(This->surfaces[j][i]);
+            }
         }
         /* No longer dirty */
         This->baseTexture.dirty = FALSE;
@@ -216,7 +214,7 @@ UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *if
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     TRACE("(%p) \n", This);
 
-    return GLTEXTURECUBEMAP;
+    return GL_TEXTURE_CUBE_MAP_ARB;
 }
 
 /* *******************************************
@@ -227,7 +225,7 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, 
 
     if (Level < This->baseTexture.levels) {
         TRACE("(%p) level (%d)\n", This, Level);
-        return IWineD3DSurface_GetDesc((IWineD3DSurface *) This->surfaces[0][Level], pDesc);
+        return IWineD3DSurface_GetDesc(This->surfaces[0][Level], pDesc);
     }
     FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
     return D3DERR_INVALIDCALL;
@@ -235,41 +233,52 @@ HRESULT WINAPI IWineD3DCubeTextureImpl_GetLevelDesc(IWineD3DCubeTexture *iface, 
 
 HRESULT WINAPI IWineD3DCubeTextureImpl_GetCubeMapSurface(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level, IWineD3DSurface** ppCubeMapSurface) {
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
+    HRESULT hr = D3DERR_INVALIDCALL;
+
     if (Level < This->baseTexture.levels) {
-        *ppCubeMapSurface = (IWineD3DSurface *) This->surfaces[FaceType][Level];
-        IWineD3DSurface_AddRef((IWineD3DSurface *) *ppCubeMapSurface);
+        *ppCubeMapSurface = This->surfaces[FaceType][Level];
+        IWineD3DSurface_AddRef(*ppCubeMapSurface);
+
+        hr = D3D_OK;
+    }
+    if (D3D_OK == hr) {
         TRACE("(%p) -> faceType(%d) level(%d) returning surface@%p \n", This, FaceType, Level, This->surfaces[FaceType][Level]);
     } else {
-        FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-        return D3DERR_INVALIDCALL;
+        WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
     }
-    return D3D_OK;
+
+    return hr;
 }
 
 HRESULT WINAPI IWineD3DCubeTextureImpl_LockRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level, D3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) {
-    HRESULT hr;
+    HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
     if (Level < This->baseTexture.levels) {
-      hr = IWineD3DSurface_LockRect((IWineD3DSurface *) This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
-      TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
-    } else {
-      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return D3DERR_INVALIDCALL;
+        hr = IWineD3DSurface_LockRect(This->surfaces[FaceType][Level], pLockedRect, pRect, Flags);
     }
+
+    if (D3D_OK == hr) {
+        TRACE("(%p) -> faceType(%d) level(%d) returning memory@%p success(%lu)\n", This, FaceType, Level, pLockedRect->pBits, hr);
+    } else {
+        WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
+    }
+
     return hr;
 }
 
 HRESULT WINAPI IWineD3DCubeTextureImpl_UnlockRect(IWineD3DCubeTexture *iface, D3DCUBEMAP_FACES FaceType, UINT Level) {
-    HRESULT hr;
+    HRESULT hr = D3DERR_INVALIDCALL;
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
 
     if (Level < This->baseTexture.levels) {
-      hr = IWineD3DSurface_UnlockRect((IWineD3DSurface *) This->surfaces[FaceType][Level]);
-      TRACE("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
+        hr = IWineD3DSurface_UnlockRect((IWineD3DSurface *) This->surfaces[FaceType][Level]);
+    }
+
+    if (D3D_OK == hr) {
+        TRACE("(%p) -> faceType(%d) level(%d) success(%lu)\n", This, FaceType, Level, hr);
     } else {
-      FIXME("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
-      return D3DERR_INVALIDCALL;
+        WARN("(%p) level(%d) overflow Levels(%d)\n", This, Level, This->baseTexture.levels);
     }
     return hr;
 }
@@ -278,7 +287,7 @@ HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface,
     IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
     This->baseTexture.dirty = TRUE;
     TRACE("(%p) : dirtyfication of faceType(%d) Level (0)\n", This, FaceType);
-    return IWineD3DSurface_AddDirtyRect((IWineD3DSurface *) This->surfaces[FaceType][0], pDirtyRect);
+    return IWineD3DSurface_AddDirtyRect(This->surfaces[FaceType][0], pDirtyRect);
 }
 
 
