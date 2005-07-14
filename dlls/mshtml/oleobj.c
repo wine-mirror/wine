@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
  * IOleObject implementation
  */
 
-#define OLEOBJ_THIS(iface)  (HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpOleObjectVtbl))
+#define OLEOBJ_THIS(iface) DEFINE_THIS(HTMLDocument, OleObject, iface)
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **ppvObject)
 {
@@ -111,6 +111,19 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         }
     }
 
+    /* Native calls here GetWindow. What is it for?
+     * We don't have anything to do with it here (yet). */
+    if(pClientSite) {
+        IOleWindow *pOleWindow = NULL;
+        HWND hwnd;
+
+        hres = IOleClientSite_QueryInterface(pClientSite, &IID_IOleWindow, (void**)&pOleWindow);
+        if(SUCCEEDED(hres)) {
+            IOleWindow_GetWindow(pOleWindow, &hwnd);
+            IOleWindow_Release(pOleWindow);
+        }
+    }
+
     IOleClientSite_AddRef(pClientSite);
     This->client = pClientSite;
     This->hostui = pDocHostUIHandler;
@@ -144,8 +157,20 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     HTMLDocument *This = OLEOBJ_THIS(iface);
+    HRESULT hres;
+
     FIXME("(%p)->(%08lx)\n", This, dwSaveOption);
-    return E_NOTIMPL;
+
+    if(This->client) {
+        IOleContainer *container;
+        hres = IOleClientSite_GetContainer(This->client, &container);
+        if(SUCCEEDED(hres)) {
+            IOleContainer_LockContainer(container, FALSE);
+            IOleContainer_Release(container);
+        }
+    }
+    
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
@@ -343,7 +368,7 @@ static const IOleObjectVtbl OleObjectVtbl = {
  * IOleDocument implementation
  */
 
-#define OLEDOC_THIS(iface)  (HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpOleDocumentVtbl))
+#define OLEDOC_THIS(iface) DEFINE_THIS(HTMLDocument, OleDocument, iface)
 
 static HRESULT WINAPI OleDocument_QueryInterface(IOleDocument *iface, REFIID riid, void **ppvObject)
 {
@@ -425,7 +450,7 @@ static const IOleDocumentVtbl OleDocumentVtbl = {
  * IOleCommandTarget implementation
  */
 
-#define CMDTARGET_THIS(iface)  (HTMLDocument*)((char*)(iface)-offsetof(HTMLDocument,lpOleCommandTargetVtbl))
+#define CMDTARGET_THIS(iface) DEFINE_THIS(HTMLDocument, OleCommandTarget, iface)
 
 static HRESULT WINAPI OleCommandTarget_QueryInterface(IOleCommandTarget *iface, REFIID riid, void **ppv)
 {

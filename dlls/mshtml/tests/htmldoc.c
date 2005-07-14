@@ -28,7 +28,354 @@
 #include "docobj.h"
 #include "mshtmhst.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT(func) \
+    ok(expect_ ##func, "unexpected call\n"); \
+    expect_ ## func = FALSE; \
+    called_ ## func = TRUE
+
+#define CHECK_CALLED(func) \
+    ok(called_ ## func, "unexpected call\n"); \
+    expect_ ## func = called_ ## func = FALSE
+
+static IUnknown *htmldoc_unk = NULL;
+static IOleDocumentView *view = NULL;
+static HWND container_hwnd = NULL, hwnd = NULL;
+
+DEFINE_EXPECT(LockContainer);
+DEFINE_EXPECT(SetActiveObject);
+DEFINE_EXPECT(GetWindow);
+DEFINE_EXPECT(CanInPlaceActivate);
+DEFINE_EXPECT(OnInPlaceActivate);
+DEFINE_EXPECT(OnUIActivate);
+DEFINE_EXPECT(GetWindowContext);
+DEFINE_EXPECT(OnUIDeactivate);
+DEFINE_EXPECT(OnInPlaceDeactivate);
+DEFINE_EXPECT(GetContainer);
+DEFINE_EXPECT(ShowUI);
+DEFINE_EXPECT(ActivateMe);
+DEFINE_EXPECT(GetHostInfo);
+DEFINE_EXPECT(HideUI);
+DEFINE_EXPECT(GetOptionKeyPath);
+DEFINE_EXPECT(GetOverrideKeyPath);
+
+static BOOL expect_LockContainer_fLock;
+static BOOL expect_SetActiveObject_active;
+
 static HRESULT QueryInterface(REFIID riid, void **ppv);
+
+static HRESULT WINAPI OleContainer_QueryInterface(IOleContainer *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI OleContainer_AddRef(IOleContainer *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI OleContainer_Release(IOleContainer *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer *iface, IBindCtx *pbc,
+        LPOLESTR pszDiaplayName, ULONG *pchEaten, IMoniker **ppmkOut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleContainer_EnumObjects(IOleContainer *iface, DWORD grfFlags,
+        IEnumUnknown **ppenum)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleContainer_LockContainer(IOleContainer *iface, BOOL fLock)
+{
+    CHECK_EXPECT(LockContainer);
+    ok(expect_LockContainer_fLock == fLock, "fLock=%x, expected %x\n", fLock, expect_LockContainer_fLock);
+    return S_OK;
+}
+
+static const IOleContainerVtbl OleContainerVtbl = {
+    OleContainer_QueryInterface,
+    OleContainer_AddRef,
+    OleContainer_Release,
+    OleContainer_ParseDisplayName,
+    OleContainer_EnumObjects,
+    OleContainer_LockContainer
+};
+
+static IOleContainer OleContainer = { &OleContainerVtbl };
+
+static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI InPlaceFrame_AddRef(IOleInPlaceFrame *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InPlaceFrame_Release(IOleInPlaceFrame *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_ContextSensitiveHelp(IOleInPlaceFrame *iface, BOOL fEnterMode)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_GetBorder(IOleInPlaceFrame *iface, LPRECT lprectBorder)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface,
+        LPCBORDERWIDTHS pborderwidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface,
+        LPCBORDERWIDTHS pborderwidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
+        IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
+{
+    static const WCHAR wszHTML_Document[] =
+        {'H','T','M','L',' ','D','o','c','u','m','e','n','t',0};
+
+    ok(expect_SetActiveObject, "unexpected call\n");
+    called_SetActiveObject = TRUE;
+
+    if(expect_SetActiveObject_active) {
+        ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+        ok(!lstrcmpW(wszHTML_Document, pszObjName), "pszObjName != \"HTML Document\"\n");
+    }else {
+        ok(pActiveObject == NULL, "pActiveObject=%p, expected NULL\n", pActiveObject);
+        ok(pszObjName == NULL, "pszObjName=%p, expected NULL\n", pszObjName);
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_InsertMenus(IOleInPlaceFrame *iface, HMENU hmenuShared,
+        LPOLEMENUGROUPWIDTHS lpMenuWidths)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetMenu(IOleInPlaceFrame *iface, HMENU hmenuShared,
+        HOLEMENU holemenu, HWND hwndActiveObject)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hmenuShared)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface, LPMSG lpmsg, WORD wID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceFrameVtbl InPlaceFrameVtbl = {
+    InPlaceFrame_QueryInterface,
+    InPlaceFrame_AddRef,
+    InPlaceFrame_Release,
+    InPlaceFrame_GetWindow,
+    InPlaceFrame_ContextSensitiveHelp,
+    InPlaceFrame_GetBorder,
+    InPlaceFrame_RequestBorderSpace,
+    InPlaceFrame_SetBorderSpace,
+    InPlaceFrame_SetActiveObject,
+    InPlaceFrame_InsertMenus,
+    InPlaceFrame_SetMenu,
+    InPlaceFrame_RemoveMenus,
+    InPlaceFrame_SetStatusText,
+    InPlaceFrame_EnableModeless,
+    InPlaceFrame_TranslateAccelerator
+};
+
+static IOleInPlaceFrame InPlaceFrame = { &InPlaceFrameVtbl };
+
+static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI InPlaceSite_AddRef(IOleInPlaceSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
+{
+    CHECK_EXPECT(GetWindow);
+    ok(phwnd != NULL, "phwnd = NULL\n");
+    *phwnd = container_hwnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_CanInPlaceActivate(IOleInPlaceSite *iface)
+{
+    CHECK_EXPECT(CanInPlaceActivate);
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_OnInPlaceActivate(IOleInPlaceSite *iface)
+{
+    CHECK_EXPECT(OnInPlaceActivate);
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_OnUIActivate(IOleInPlaceSite *iface)
+{
+    CHECK_EXPECT(OnUIActivate);
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
+        IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect,
+        LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
+{
+    static const RECT rect = {0,0,500,500};
+
+    CHECK_EXPECT(GetWindowContext);
+
+    ok(ppFrame != NULL, "ppFrame = NULL\n");
+    if(ppFrame)
+        *ppFrame = &InPlaceFrame;
+    ok(ppDoc != NULL, "ppDoc = NULL\n");
+    if(ppDoc)
+        *ppDoc = NULL;
+    ok(lprcPosRect != NULL, "lprcPosRect = NULL\n");
+    if(lprcPosRect)
+        memcpy(lprcPosRect, &rect, sizeof(RECT));
+    ok(lprcClipRect != NULL, "lprcClipRect = NULL\n");
+    if(lprcClipRect)
+        memcpy(lprcClipRect, &rect, sizeof(RECT));
+    ok(lpFrameInfo != NULL, "lpFrameInfo = NULL\n");
+    if(lpFrameInfo) {
+        lpFrameInfo->cb = sizeof(*lpFrameInfo);
+        lpFrameInfo->fMDIApp = FALSE;
+        lpFrameInfo->hwndFrame = container_hwnd;
+        lpFrameInfo->haccel = NULL;
+        lpFrameInfo->cAccelEntries = 0;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSite *iface, SIZE scrollExtant)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSite *iface, BOOL fUndoable)
+{
+    CHECK_EXPECT(OnUIDeactivate);
+    ok(!fUndoable, "fUndoable = TRUE\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSite *iface)
+{
+    CHECK_EXPECT(OnInPlaceDeactivate);
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_DeactivateAndUndo(IOleInPlaceSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnPosRectChange(IOleInPlaceSite *iface, LPCRECT lprcPosRect)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceSiteVtbl InPlaceSiteVtbl = {
+    InPlaceSite_QueryInterface,
+    InPlaceSite_AddRef,
+    InPlaceSite_Release,
+    InPlaceSite_GetWindow,
+    InPlaceSite_ContextSensitiveHelp,
+    InPlaceSite_CanInPlaceActivate,
+    InPlaceSite_OnInPlaceActivate,
+    InPlaceSite_OnUIActivate,
+    InPlaceSite_GetWindowContext,
+    InPlaceSite_Scroll,
+    InPlaceSite_OnUIDeactivate,
+    InPlaceSite_OnInPlaceDeactivate,
+    InPlaceSite_DiscardUndoState,
+    InPlaceSite_DeactivateAndUndo,
+    InPlaceSite_OnPosRectChange
+};
+
+static IOleInPlaceSite InPlaceSite = { &InPlaceSiteVtbl };
 
 static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
 {
@@ -60,8 +407,10 @@ static HRESULT WINAPI ClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAsign
 
 static HRESULT WINAPI ClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(GetContainer);
+    ok(ppContainer != NULL, "ppContainer = NULL\n");
+    *ppContainer = &OleContainer;
+    return S_OK;
 }
 
 static HRESULT WINAPI ClientSite_ShowObject(IOleClientSite *iface)
@@ -113,8 +462,94 @@ static ULONG WINAPI DocumentSite_Release(IOleDocumentSite *iface)
 
 static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocumentView *pViewToActivate)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    IOleDocument *document;
+    HRESULT hres;
+
+    CHECK_EXPECT(ActivateMe);
+    ok(pViewToActivate != NULL, "pViewToActivate = NULL\n");
+
+    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleDocument, (void**)&document);
+    ok(hres == S_OK, "could not get IOleDocument: %08lx\n", hres);
+
+    if(SUCCEEDED(hres)) {
+        hres = IOleDocument_CreateView(document, &InPlaceSite, NULL, 0, &view);
+        ok(hres == S_OK, "CreateView failed: %08lx\n", hres);
+
+        if(SUCCEEDED(hres)) {
+            IOleInPlaceActiveObject *activeobj = NULL;
+            IOleInPlaceSite *inplacesite = NULL;
+            HWND tmp_hwnd = NULL;
+            static RECT rect = {0,0,400,500};
+
+            hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
+            ok(hres == S_OK, "GetInPlaceSite failed: %08lx\n", hres);
+            ok(inplacesite == &InPlaceSite, "inplacesite=%p, expected %p\n",
+                    inplacesite, &InPlaceSite);
+
+            hres = IOleDocumentView_SetInPlaceSite(view, &InPlaceSite);
+            ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+
+            hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
+            ok(hres == S_OK, "GetInPlaceSite failed: %08lx\n", hres);
+            ok(inplacesite == &InPlaceSite, "inplacesite=%p, expected %p\n",
+                    inplacesite, &InPlaceSite);
+
+            hres = IOleDocumentView_QueryInterface(view, &IID_IOleInPlaceActiveObject, (void**)&activeobj);
+            ok(hres == S_OK, "Could not get IOleInPlaceActiveObject: %08lx\n", hres);
+
+            if(activeobj) {
+                IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
+                ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+                ok(hwnd == NULL, "hwnd=%p, expeted NULL\n", hwnd);
+            }
+            
+            SET_EXPECT(CanInPlaceActivate);
+            SET_EXPECT(GetWindowContext);
+            SET_EXPECT(GetWindow);
+            SET_EXPECT(OnInPlaceActivate);
+            SET_EXPECT(OnUIActivate);
+            SET_EXPECT(SetActiveObject);
+            SET_EXPECT(ShowUI);
+            expect_SetActiveObject_active = TRUE;
+            hres = IOleDocumentView_UIActivate(view, TRUE);
+            ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+            CHECK_CALLED(CanInPlaceActivate);
+            CHECK_CALLED(GetWindowContext);
+            CHECK_CALLED(GetWindow);
+            CHECK_CALLED(OnInPlaceActivate);
+            CHECK_CALLED(OnUIActivate);
+            CHECK_CALLED(SetActiveObject);
+            CHECK_CALLED(ShowUI);
+
+            if(activeobj) {
+                IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
+                ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+                ok(hwnd != NULL, "hwnd == NULL\n");
+            }
+
+            hres = IOleDocumentView_UIActivate(view, TRUE);
+            ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+
+            if(activeobj) {
+                IOleInPlaceActiveObject_GetWindow(activeobj, &tmp_hwnd);
+                ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+                ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
+            }
+
+            hres = IOleDocumentView_SetRect(view, &rect);
+            ok(hres == S_OK, "SetRect failed: %08lx\n", hres);
+
+            hres = IOleDocumentView_Show(view, TRUE);
+            ok(hres == S_OK, "Show failed: %08lx\n", hres);
+            
+            if(activeobj)
+                IOleInPlaceActiveObject_Release(activeobj);
+        }
+
+        IOleDocument_Release(document);
+    }
+
+    return S_OK;
 }
 
 static const IOleDocumentSiteVtbl DocumentSiteVtbl = {
@@ -148,10 +583,9 @@ static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface
     return E_NOTIMPL;
 }
 
-static BOOL expect_GetHostInfo = FALSE, called_GetHostInfo = FALSE;
 static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DOCHOSTUIINFO *pInfo)
 {
-    ok(expect_GetHostInfo, "unexpected call\n");
+    CHECK_EXPECT(GetHostInfo);
     ok(pInfo != NULL, "pInfo=NULL\n");
     if(pInfo) {
         ok(pInfo->cbSize == sizeof(DOCHOSTUIINFO), "pInfo->cbSize=%lu, expected %u\n",
@@ -164,23 +598,28 @@ static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DO
         ok(!pInfo->pchHostCss, "pInfo->pchHostCss=%p, expected NULL\n", pInfo->pchHostCss);
         ok(!pInfo->pchHostNS, "pInfo->pchhostNS=%p, expected NULL\n", pInfo->pchHostNS);
     }
-    called_GetHostInfo = TRUE;
-    expect_GetHostInfo = FALSE;
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD dwID,
         IOleInPlaceActiveObject *pActiveObject, IOleCommandTarget *pCommandTarget,
         IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(ShowUI);
+
+    ok(dwID == 0, "dwID=%ld, expected 0\n", dwID);
+    ok(pActiveObject != NULL, "pActiveObject = NULL\n");
+    ok(pCommandTarget != NULL, "pCommandTarget = NULL\n");
+    ok(pFrame == &InPlaceFrame, "pFrame=%p, expected %p\n", pFrame, &InPlaceFrame);
+    ok(pDoc == NULL, "pDoc=%p, expected NULL\n", pDoc);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    CHECK_EXPECT(HideUI);
+    return S_OK;
 }
 
 static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
@@ -221,16 +660,14 @@ static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *
     return E_NOTIMPL;
 }
 
-static BOOL expect_GetOptionKeyPath = FALSE, called_GetOptionKeyPath = FALSE;
 static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *iface,
         LPOLESTR *pchKey, DWORD dw)
 {
-    ok(expect_GetOptionKeyPath, "unexpected call\n");
+    CHECK_EXPECT(GetOptionKeyPath);
     ok(pchKey != NULL, "pchKey = NULL\n");
     ok(!dw, "dw=%ld, expected 0\n", dw);
     if(pchKey)
         ok(!*pchKey, "*pchKey=%p, expected NULL\n", *pchKey);
-    called_GetOptionKeyPath = TRUE;
     return S_OK;
 }
 
@@ -261,16 +698,14 @@ static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *ifac
     return E_NOTIMPL;
 }
 
-static BOOL expect_GetOverrideKeyPath = FALSE, called_GetOverrideKeyPath = FALSE;
 static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *iface,
         LPOLESTR *pchKey, DWORD dw)
 {
-    ok(expect_GetOverrideKeyPath, "unexpected call\n");
+    CHECK_EXPECT(GetOverrideKeyPath);
     ok(pchKey != NULL, "pchKey = NULL\n");
     if(pchKey)
         ok(!*pchKey, "*pchKey=%p, expected NULL\n", *pchKey);
     ok(!dw, "dw=%ld, xepected 0\n", dw);
-    called_GetOverrideKeyPath = TRUE;
     return S_OK;
 }
 
@@ -306,14 +741,20 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &ClientSite;
     else if(IsEqualGUID(&IID_IOleDocumentSite, riid))
         *ppv = &DocumentSite;
-    else if(IsEqualGUID(&IID_IDocHostUIHandler, riid) || IsEqualGUID(&IID_IDocHostUIHandler2, riid))
+    else if(IsEqualGUID(&IID_IDocHostUIHandler, riid) || IsEqualGUID(&IID_IDocHostUIHandler2, riid)) {
         *ppv = &DocHostUIHandler;
+    }
+    else if(IsEqualGUID(&IID_IOleContainer, riid))
+        *ppv = &OleContainer;
+    else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
+        *ppv = &InPlaceSite;
+    else if(IsEqualGUID(&IID_IOleInPlaceUIWindow, riid) || IsEqualGUID(&IID_IOleInPlaceFrame, riid))
+        *ppv = &InPlaceFrame;
 
     /* TODO:
      * IDispatch
      * IServiceProvider
      * IOleCommandTarget
-     * IOleWindow
      * {D48A6EC6-6A4A-11CF-94A7-444553540000}
      * {7BB0B520-B1A7-11D2-BB23-00C04F79ABCD}
      * {000670BA-0000-0000-C000-000000000046}
@@ -324,14 +765,19 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     return E_NOINTERFACE;
 }
 
-static void test_Persist(IUnknown *punk)
+static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProc(hwnd, msg, wParam, lParam);
+}
+
+static void test_Persist()
 {
     IPersistMoniker *persist_mon;
     IPersistFile *persist_file;
     GUID guid;
     HRESULT hres;
 
-    hres = IUnknown_QueryInterface(punk, &IID_IPersistFile, (void**)&persist_file);
+    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IPersistFile, (void**)&persist_file);
     ok(hres == S_OK, "QueryInterface(IID_IPersist) failed: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersist_GetClassID(persist_file, NULL);
@@ -344,7 +790,7 @@ static void test_Persist(IUnknown *punk)
         IPersist_Release(persist_file);
     }
 
-    hres = IUnknown_QueryInterface(punk, &IID_IPersistMoniker, (void**)&persist_mon);
+    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IPersistMoniker, (void**)&persist_mon);
     ok(hres == S_OK, "QueryInterface(IID_IPersistMoniker) failed: %08lx\n", hres);
     if(SUCCEEDED(hres)) {
         hres = IPersistMoniker_GetClassID(persist_mon, NULL);
@@ -358,16 +804,48 @@ static void test_Persist(IUnknown *punk)
     }
 }
 
-static void test_OleObj(IUnknown *punk)
+static void test_HTMLDocument(void)
 {
-    IOleObject *oleobj;
+    IOleObject *oleobj = NULL;
     IOleClientSite *clientsite = (LPVOID)0xdeadbeef;
-    HRESULT hres;
+    IOleInPlaceObjectWindowless *windowlessobj = NULL;
+    IOleInPlaceActiveObject *activeobject = NULL;
     GUID guid;
+    RECT rect = {0,0,500,500};
+    HRESULT hres;
+    ULONG ref;
 
-    hres = IUnknown_QueryInterface(punk, &IID_IOleObject, (void**)&oleobj);
+    static const WCHAR wszHTMLDocumentTest[] =
+        {'H','T','M','L','D','o','c','u','m','e','n','t','T','e','s','t',0};
+    static const WNDCLASSEXW wndclass = {
+        sizeof(WNDCLASSEXW),
+        0,
+        wnd_proc,
+        0, 0, NULL, NULL, NULL, NULL, NULL,
+        wszHTMLDocumentTest,
+        NULL
+    };
+
+    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IUnknown, (void**)&htmldoc_unk);
+    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
+    if(FAILED(hres))
+        return;
+
+    RegisterClassExW(&wndclass);
+    container_hwnd = CreateWindowW(wszHTMLDocumentTest, wszHTMLDocumentTest,
+            WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+
+    test_Persist();
+
+    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleInPlaceObjectWindowless,
+            (void**)&windowlessobj);
+    ok(hres == S_OK, "Could not get IOleInPlaceObjectWindowless interface: %08lx\n", hres);
+             
+    hres = IUnknown_QueryInterface(htmldoc_unk, &IID_IOleObject, (void**)&oleobj);
     ok(hres == S_OK, "QueryInterface(IID_IOleObject) failed: %08lx\n", hres);
-    if(SUCCEEDED(hres)) {
+    if(oleobj) {
         hres = IOleObject_GetUserClassID(oleobj, NULL);
         ok(hres == E_INVALIDARG, "GetUserClassID returned: %08lx, expected E_INVALIDARG\n", hres);
 
@@ -379,41 +857,140 @@ static void test_OleObj(IUnknown *punk)
         ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
         ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
 
-        expect_GetHostInfo = TRUE;
-        expect_GetOptionKeyPath = TRUE;
-        expect_GetOverrideKeyPath = TRUE;
+        SET_EXPECT(GetHostInfo);
+        SET_EXPECT(GetOptionKeyPath);
+        SET_EXPECT(GetOverrideKeyPath);
+        SET_EXPECT(GetWindow);
         hres = IOleObject_SetClientSite(oleobj, &ClientSite);
         ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
-        ok(called_GetHostInfo, "expected GetHostInfo\n");
-        ok(called_GetOptionKeyPath, "expected GetOptionKeyPath\n");
-        ok(called_GetOverrideKeyPath, "expected GetOverrideKeyPath\n");
-        expect_GetHostInfo = called_GetHostInfo = FALSE;
-        expect_GetOptionKeyPath = called_GetOptionKeyPath = FALSE;
-        expect_GetOverrideKeyPath = called_GetOverrideKeyPath = FALSE;
+        CHECK_CALLED(GetHostInfo);
+        CHECK_CALLED(GetOptionKeyPath);
+        CHECK_CALLED(GetOverrideKeyPath);
+        CHECK_CALLED(GetWindow);
 
         hres = IOleObject_GetClientSite(oleobj, &clientsite);
         ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
         ok(clientsite == &ClientSite, "GetClientSite() = %p, expected %p\n", clientsite, &ClientSite);
 
-        IOleObject_Release(oleobj);
+        if(windowlessobj) {
+            hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
+            ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+        }
+
+        SET_EXPECT(GetContainer);
+        SET_EXPECT(LockContainer);
+        SET_EXPECT(ActivateMe);
+        expect_LockContainer_fLock = TRUE;
+        hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
+        ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+        CHECK_CALLED(GetContainer);
+        CHECK_CALLED(LockContainer);
+        CHECK_CALLED(ActivateMe);
     }
-}
 
-static void test_HTMLDocument()
-{
-    IUnknown *htmldoc_unk = NULL;
-    HRESULT hres;
+    hres = IOleDocumentView_QueryInterface(view, &IID_IOleInPlaceActiveObject, (void**)&activeobject);
+    ok(hres == S_OK, "Could not get IOleInPlaceActiveObject interface: %08lx\n", hres);
 
-    hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
-            &IID_IUnknown, (void**)&htmldoc_unk);
-    ok(hres == S_OK, "CoCreateInstance failed: %08lx\n", hres);
-    if(FAILED(hres))
-        return;
+    if(activeobject) {
+        HWND tmp_hwnd;
+        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+        ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+        ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
+    }
 
-    test_Persist(htmldoc_unk);
-    test_OleObj(htmldoc_unk);
+    if(view) {
+        SET_EXPECT(SetActiveObject);
+        SET_EXPECT(HideUI);
+        SET_EXPECT(OnUIDeactivate);
+        expect_SetActiveObject_active = FALSE;
+        hres = IOleDocumentView_UIActivate(view, FALSE);
+        ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+        CHECK_CALLED(SetActiveObject);
+        CHECK_CALLED(HideUI);
+        CHECK_CALLED(OnUIDeactivate);
+    }
+
+    if(activeobject) {
+        HWND tmp_hwnd;
+        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+        ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+        ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
+    }
     
-    IUnknown_Release(htmldoc_unk);
+    if(windowlessobj) {
+        SET_EXPECT(OnInPlaceDeactivate);
+        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
+        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+        CHECK_CALLED(OnInPlaceDeactivate);
+    }
+
+    if(activeobject) {
+        HWND tmp_hwnd;
+        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+        ok(hres == E_FAIL, "GetWindow failed: %08lx\n", hres);
+        ok(IsWindow(hwnd), "hwnd is destroyed\n");
+    }
+    
+    if(view) {
+        hres = IOleDocumentView_Show(view, FALSE);
+        ok(hres == S_OK, "Show failed: %08lx\n", hres);
+    }
+
+    if(windowlessobj) {
+        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
+        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+
+        IOleInPlaceObjectWindowless_Release(windowlessobj);
+    }
+
+    if(view) {
+        IOleInPlaceSite *inplacesite = (IOleInPlaceSite*)0xff00ff00;
+
+        hres = IOleDocumentView_Show(view, FALSE);
+        ok(hres == S_OK, "Show failed: %08lx\n", hres);
+
+        hres = IOleDocumentView_CloseView(view, 0);
+        ok(hres == S_OK, "CloseVire failed: %08lx\n", hres);
+
+        hres = IOleDocumentView_SetInPlaceSite(view, NULL);
+        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+
+        hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
+        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+        ok(inplacesite == NULL, "inplacesite=%p, expected NULL\n", inplacesite);
+    }
+
+    if(oleobj) {
+        SET_EXPECT(GetContainer);
+        SET_EXPECT(LockContainer);
+        expect_LockContainer_fLock = FALSE;
+        hres = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
+        ok(hres == S_OK, "Close failed: %08lx\n", hres);
+        CHECK_CALLED(GetContainer);
+        CHECK_CALLED(LockContainer);
+
+        hres = IOleObject_GetClientSite(oleobj, &clientsite);
+        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
+
+        hres = IOleObject_SetClientSite(oleobj, NULL);
+        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+    }
+
+    if(oleobj)
+        IOleObject_Release(oleobj);
+    if(view)
+        IOleDocumentView_Release(view);
+    if(activeobject)
+        IOleInPlaceActiveObject_Release(activeobject);
+
+    ok(IsWindow(hwnd), "hwnd is destroyed\n");
+
+    ref = IUnknown_Release(htmldoc_unk);
+    ok(ref == 0, "ref=%ld, expected 0\n", ref);
+
+    ok(!IsWindow(hwnd), "hwnd is not destroyed\n");
+
+    DestroyWindow(container_hwnd);
 }
 
 START_TEST(htmldoc)
