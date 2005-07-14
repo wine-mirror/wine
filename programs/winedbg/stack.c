@@ -209,17 +209,13 @@ static void backtrace_all(void)
     entry.dwSize = sizeof(entry);
     if (Thread32First(snapshot, &entry))
     {
-        struct dbg_process* cp = dbg_curr_process;
-        DWORD               cpid = dbg_curr_pid;
         do
         {
             if (entry.th32OwnerProcessID == GetCurrentProcessId()) continue;
-            if (dbg_curr_process && dbg_curr_pid != cpid)
+            if (dbg_curr_process && dbg_curr_pid != entry.th32OwnerProcessID)
                 dbg_detach_debuggee();
 
-            if (entry.th32OwnerProcessID == cpid)
-                dbg_curr_process = cp;
-            else if (entry.th32OwnerProcessID != dbg_curr_pid)
+            if (entry.th32OwnerProcessID != dbg_curr_pid)
             {
                 if (!dbg_attach_debuggee(entry.th32OwnerProcessID, FALSE, TRUE))
                 {
@@ -236,9 +232,8 @@ static void backtrace_all(void)
         }
         while (Thread32Next(snapshot, &entry));
 
-        if (dbg_curr_process && dbg_curr_pid != cpid)
+        if (dbg_curr_process)
             dbg_detach_debuggee();
-        dbg_curr_process = cp;      dbg_curr_pid = cpid;
     }
     CloseHandle(snapshot);
 }
