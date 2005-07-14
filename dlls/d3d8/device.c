@@ -150,7 +150,7 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage, DWORD Flags) {
 }
 
 /* Convert the D3DLIGHT8 properties into equivalent gl lights */
-void setup_light(LPDIRECT3DDEVICE8 iface, LONG Index, PLIGHTINFOEL *lightInfo) {
+static void setup_light(LPDIRECT3DDEVICE8 iface, LONG Index, PLIGHTINFOEL *lightInfo) {
 
     float quad_att;
     float colRGBA[] = {0.0, 0.0, 0.0, 0.0};

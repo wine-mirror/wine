@@ -115,7 +115,7 @@ const float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};  /* When needed
  * Utility functions follow
  **********************************************************/
 /* Convert the D3DLIGHT properties into equivalent gl lights */
-void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightInfo) {
+static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightInfo) {
 
     float quad_att;
     float colRGBA[] = {0.0, 0.0, 0.0, 0.0};

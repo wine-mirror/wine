@@ -56,7 +56,7 @@ typedef struct _D3DVECTOR_4 {
    a vertex shader will be in use. Note the fvf bits returned may be split over
    multiple streams only if the vertex shader was created, otherwise it all relates
    to stream 0                                                                      */
-BOOL initializeFVF(LPDIRECT3DDEVICE8 iface, 
+static BOOL initializeFVF(LPDIRECT3DDEVICE8 iface, 
                    DWORD *FVFbits,                 /* What to expect in the FVF across all streams */
                    BOOL *useVertexShaderFunction)  /* Should we use the vertex shader              */
 {
@@ -109,7 +109,7 @@ BOOL initializeFVF(LPDIRECT3DDEVICE8 iface,
 }
 
 /* Issues the glBegin call for gl given the primitive type and count */
-DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
+static DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
                     DWORD            NumPrimitives,
                     GLenum          *primType)
 {
@@ -162,7 +162,7 @@ DWORD primitiveToGl(D3DPRIMITIVETYPE PrimitiveType,
 
 /* Ensure the appropriate material states are set up - only change
    state if really required                                        */
-void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
+static void init_materials(LPDIRECT3DDEVICE8 iface, BOOL isDiffuseSupplied) {
 
     BOOL requires_material_reset = FALSE;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
@@ -227,7 +227,7 @@ static GLfloat invymat[16]={
 /* Setup views - Transformed & lit if RHW, else untransformed.
        Only unlit if Normals are supplied                       
     Returns: Whether to restore lighting afterwards           */
-BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_lit, BOOL useVS) {
+static BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_lit, BOOL useVS) {
 
     BOOL isLightingOn = FALSE;
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
@@ -357,7 +357,7 @@ BOOL primitiveInitState(LPDIRECT3DDEVICE8 iface, BOOL vtx_transformed, BOOL vtx_
     return isLightingOn;
 }
 
-void primitiveConvertToStridedData(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *strided, LONG BaseVertexIndex) {
+static void primitiveConvertToStridedData(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *strided, LONG BaseVertexIndex) {
 
     short         LoopThroughTo = 0;
     short         nStream;
@@ -513,7 +513,7 @@ void primitiveConvertToStridedData(LPDIRECT3DDEVICE8 iface, Direct3DVertexStride
 }
 
 /* Draw a single vertex using this information */
-void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interface    */
+static void draw_vertex(LPDIRECT3DDEVICE8 iface,                       /* interface    */
                  BOOL isXYZ,    float x, float y, float z, float rhw,  /* xyzn position*/
                  BOOL isNormal, float nx, float ny, float nz,          /* normal       */
                  BOOL isDiffuse, float *dRGBA,                         /* 1st   colors */
@@ -662,7 +662,7 @@ void draw_vertex(LPDIRECT3DDEVICE8 iface,                              /* interf
  * Faster GL version using pointers to data, harder to debug though 
  * Note does not handle vertex shaders yet                             
  */
-void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
+static void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
     unsigned int textureNo   = 0;
@@ -923,7 +923,7 @@ void drawStridedFast(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
  * Actually draw using the supplied information.
  * Slower GL version which extracts info about each vertex in turn
  */
-void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
+static void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
@@ -1233,7 +1233,7 @@ void drawStridedSlow(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd,
  * Note: strided data is uninitialized, as we need to pass the vertex
  *     shader directly as ordering irs yet                             
  */
-void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
+static void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
@@ -1368,7 +1368,7 @@ void drawStridedSoftwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *s
     checkGLcall("glEnd and previous calls");
 }
 
-void drawStridedHardwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
+static void drawStridedHardwareVS(LPDIRECT3DDEVICE8 iface, Direct3DVertexStridedData *sd, 
                      int PrimitiveType, ULONG NumPrimitives,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx) {
 
