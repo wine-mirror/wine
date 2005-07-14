@@ -1628,6 +1628,74 @@ static void test_decodeCertToBeSigned(DWORD dwEncoding)
     }
 }
 
+static const BYTE hash[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb, 0xc, 0xd,
+ 0xe, 0xf };
+
+static const BYTE signedBigCert[] = {
+ 0x30, 0x81, 0x93, 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06, 0x00, 0x30,
+ 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a,
+ 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22, 0x18, 0x0f,
+ 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30, 0x30, 0x30, 0x30, 0x30,
+ 0x30, 0x5a, 0x18, 0x0f, 0x31, 0x36, 0x30, 0x31, 0x30, 0x31, 0x30, 0x31, 0x30,
+ 0x30, 0x30, 0x30, 0x30, 0x30, 0x5a, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+ 0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61,
+ 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01, 0x00, 0xa3,
+ 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01, 0x01, 0xff,
+ 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
+ 0x00, 0x03, 0x11, 0x00, 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08, 0x07,
+ 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 };
+
+static void test_encodeCert(DWORD dwEncoding)
+{
+    /* Note the SignatureAlgorithm must match that in the encoded cert.  Note
+     * also that bigCert is a NULL-terminated string, so don't count its
+     * last byte (otherwise the signed cert won't decode.)
+     */
+    CERT_SIGNED_CONTENT_INFO info = { { sizeof(bigCert) - 1, (BYTE *)bigCert },
+     { NULL, { 0, NULL } }, { sizeof(hash), (BYTE *)hash, 0 } };
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD bufSize = 0;
+
+    ret = CryptEncodeObjectEx(dwEncoding, X509_CERT, &info,
+     CRYPT_ENCODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
+    ok(ret, "CryptEncodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        ok(bufSize == sizeof(signedBigCert), "Expected size %d, got %ld\n",
+         sizeof(signedBigCert), bufSize);
+        ok(!memcmp(buf, signedBigCert, bufSize), "Unexpected cert\n");
+        LocalFree(buf);
+    }
+}
+
+static void test_decodeCert(DWORD dwEncoding)
+{
+    BOOL ret;
+    BYTE *buf = NULL;
+    DWORD size = 0;
+
+    ret = CryptDecodeObjectEx(dwEncoding, X509_CERT, signedBigCert,
+     sizeof(signedBigCert), CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &size);
+    ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
+    if (buf)
+    {
+        CERT_SIGNED_CONTENT_INFO *info = (CERT_SIGNED_CONTENT_INFO *)buf;
+
+        ok(info->ToBeSigned.cbData == sizeof(bigCert) - 1,
+         "Expected cert to be %d bytes, got %ld\n", sizeof(bigCert) - 1,
+         info->ToBeSigned.cbData);
+        ok(!memcmp(info->ToBeSigned.pbData, bigCert, info->ToBeSigned.cbData),
+         "Unexpected cert\n");
+        ok(info->Signature.cbData == sizeof(hash),
+         "Expected signature size %d, got %ld\n", sizeof(hash),
+         info->Signature.cbData);
+        ok(!memcmp(info->Signature.pbData, hash, info->Signature.cbData),
+         "Unexpected signature\n");
+        LocalFree(buf);
+    }
+}
+
 static void test_registerOIDFunction(void)
 {
     static const WCHAR bogusDll[] = { 'b','o','g','u','s','.','d','l','l',0 };
@@ -1712,6 +1780,8 @@ START_TEST(encode)
         test_decodePublicKeyInfo(encodings[i]);
         test_encodeCertToBeSigned(encodings[i]);
         test_decodeCertToBeSigned(encodings[i]);
+        test_encodeCert(encodings[i]);
+        test_decodeCert(encodings[i]);
     }
     test_registerOIDFunction();
 }
