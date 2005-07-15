@@ -2731,7 +2731,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     {
         TBITMAP_INFO *oldBitmaps = infoPtr->bitmaps;
         infoPtr->bitmaps = Alloc((infoPtr->nNumBitmapInfos + 1) * sizeof(TBITMAP_INFO));
-        memcpy(&infoPtr->bitmaps[0], &oldBitmaps[0], infoPtr->nNumBitmapInfos);
+        memcpy(&infoPtr->bitmaps[0], &oldBitmaps[0], infoPtr->nNumBitmapInfos * sizeof(TBITMAP_INFO));
     }
 
     infoPtr->bitmaps[infoPtr->nNumBitmapInfos].nButtons = nButtons;
@@ -4369,6 +4369,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBREPLACEBITMAP lpReplace = (LPTBREPLACEBITMAP) lParam;
     HBITMAP hBitmap;
+    HBITMAP hbmLoad = NULL;
     int i = 0, nOldButtons = 0, pos = 0;
     int nOldBitmaps, nNewBitmaps = 0;
     HIMAGELIST himlDef = 0;
@@ -4383,9 +4384,12 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
         return FALSE;
     }
     else if (lpReplace->hInstOld != 0)
-    {
         FIXME("resources not in the current module not implemented\n");
-        return FALSE;
+
+    if (lpReplace->hInstNew)
+    {
+        hbmLoad = LoadBitmapW(lpReplace->hInstNew,(LPWSTR)lpReplace->nIDNew);
+        hBitmap = hbmLoad;
     }
     else
     {
@@ -4412,6 +4416,8 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (nOldButtons == 0)
     {
         WARN("No hinst/bitmap found! hInst %p nID %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
+        if (hbmLoad)
+            DeleteObject (hbmLoad);
         return FALSE;
     }
     
@@ -4463,6 +4469,8 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     InvalidateRect(hwnd, NULL, TRUE);
 
+    if (hbmLoad)
+        DeleteObject (hbmLoad);
     return TRUE;
 }
 
