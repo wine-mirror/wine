@@ -156,7 +156,12 @@ static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightIn
     glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
     checkGLcall("glLightf");
 
-    quad_att = 1.4/(lightInfo->OriginalParms.Range*lightInfo->OriginalParms.Range);
+    if ((lightInfo->OriginalParms.Range * lightInfo->OriginalParms.Range) != 0 ) {
+        quad_att = 1.4/(lightInfo->OriginalParms.Range*lightInfo->OriginalParms.Range);
+    } else {
+        quad_att = 0; /*  0 or  MAX?  (0 seems to be ok) */
+    }
+
     if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
     glLightf(GL_LIGHT0+Index, GL_QUADRATIC_ATTENUATION, quad_att);
     checkGLcall("glLightf");
