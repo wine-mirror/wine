@@ -71,7 +71,7 @@ char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
 const char * getDSBCAPS(DWORD xmask) {
     static struct {
         DWORD   mask;
-        char    *name;
+        const char    *name;
     } flags[] = {
 #define FE(x) { x, #x },
         FE(DSBCAPS_PRIMARYBUFFER)

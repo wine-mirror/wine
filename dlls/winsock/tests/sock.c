@@ -990,8 +990,8 @@ static void test_UDP(void)
 static void WINAPI do_getservbyname( HANDLE *starttest )
 {
     struct {
-        char *name;
-        char *proto;
+        const char *name;
+        const char *proto;
         int port;
     } serv[2] = { {"domain", "udp", 53}, {"telnet", "tcp", 23} };
 

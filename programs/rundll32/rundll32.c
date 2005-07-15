@@ -53,8 +53,8 @@ typedef void (WINAPI *EntryPointA)(HWND hWnd, HINSTANCE hInst, LPSTR lpszCmdLine
  * Control_RunDLL needs to have a window. So lets make us a very
  * simple window class.
  */
-static TCHAR  *szTitle = "rundll32";
-static TCHAR  *szWindowClass = "class_rundll32";
+static const TCHAR  *szTitle = "rundll32";
+static const TCHAR  *szWindowClass = "class_rundll32";
 
 static HINSTANCE16 (WINAPI *pLoadLibrary16)(LPCSTR libname);
 static FARPROC16 (WINAPI *pGetProcAddress16)(HMODULE16 hModule, LPCSTR name);

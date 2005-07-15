@@ -65,7 +65,7 @@ static const char * dumpCooperativeLevel(DWORD level)
 static void _dump_DSCAPS(DWORD xmask) {
     struct {
         DWORD   mask;
-        char    *name;
+        const char    *name;
     } flags[] = {
 #define FE(x) { x, #x },
         FE(DSCAPS_PRIMARYMONO)
@@ -91,7 +91,7 @@ static void _dump_DSCAPS(DWORD xmask) {
 static void _dump_DSBCAPS(DWORD xmask) {
     struct {
         DWORD   mask;
-        char    *name;
+        const char    *name;
     } flags[] = {
 #define FE(x) { x, #x },
         FE(DSBCAPS_PRIMARYBUFFER)
