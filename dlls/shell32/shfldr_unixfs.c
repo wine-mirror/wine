@@ -817,6 +817,12 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
         strcpy(lpName->u.cStr, pszFileName ? pszFileName : "");
     }
 
+    /* If in dos mode, do some post-processing on the path.
+     * (e.g. remove filename extension, if uFlags & SHGDN_FOREDITING) 
+     */
+    if (SUCCEEDED(hr) && This->m_dwPathMode == PATHMODE_DOS)
+        SHELL_FS_ProcessDisplayFilename(lpName->u.cStr, uFlags);
+    
     TRACE("--> %s\n", lpName->u.cStr);
     
     return hr;
