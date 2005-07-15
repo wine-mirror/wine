@@ -43,6 +43,7 @@ const char version_string[] = "WCMD Version 0.17\n\n";
 const char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
+static HANDLE old_stdin = INVALID_HANDLE_VALUE, old_stdout = INVALID_HANDLE_VALUE;
 
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
@@ -260,7 +261,7 @@ void WCMD_process_command (char *command)
     char *cmd, *p;
     int status, i, len;
     DWORD count, creationDisposition;
-    HANDLE old_stdin = 0, old_stdout = 0, h;
+    HANDLE h;
     char *whichcmd;
     SECURITY_ATTRIBUTES sa;
 
@@ -465,13 +466,65 @@ void WCMD_process_command (char *command)
         WCMD_run_program (whichcmd);
     }
     HeapFree( GetProcessHeap(), 0, cmd );
-    if (old_stdin) {
+    if (old_stdin != INVALID_HANDLE_VALUE) {
       CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
       SetStdHandle (STD_INPUT_HANDLE, old_stdin);
+      old_stdin = INVALID_HANDLE_VALUE;
     }
-    if (old_stdout) {
+    if (old_stdout != INVALID_HANDLE_VALUE) {
       CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
       SetStdHandle (STD_OUTPUT_HANDLE, old_stdout);
+      old_stdout = INVALID_HANDLE_VALUE;
+    }
+}
+
+static void init_msvcrt_io_block(STARTUPINFO* st)
+{
+    STARTUPINFO st_p;
+    /* fetch the parent MSVCRT info block if any, so that the child can use the
+     * same handles as its grand-father
+     */
+    st_p.cb = sizeof(STARTUPINFO);
+    GetStartupInfo(&st_p);
+    st->cbReserved2 = st_p.cbReserved2;
+    st->lpReserved2 = st_p.lpReserved2;
+    if (st_p.cbReserved2 && st_p.lpReserved2 &&
+        (old_stdin != INVALID_HANDLE_VALUE || old_stdout != INVALID_HANDLE_VALUE))
+    {
+        /* Override the entries for fd 0,1,2 if we happened
+         * to change those std handles (this depends on the way wcmd sets
+         * it's new input & output handles)
+         */
+        size_t sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
+        char* ptr = HeapAlloc(GetProcessHeap(), 0, sz);
+        if (ptr)
+        {
+            unsigned num = *(unsigned*)st_p.lpReserved2;
+            char* flags = (char*)(ptr + sizeof(unsigned));
+            HANDLE* handles = (HANDLE*)(flags + num * sizeof(char));
+
+            memcpy(ptr, st_p.lpReserved2, st_p.cbReserved2);
+            st->cbReserved2 = sz;
+            st->lpReserved2 = ptr;
+                
+#define WX_OPEN 0x01    /* see dlls/msvcrt/file.c */
+            if (num <= 0 || (flags[0] & WX_OPEN))
+            {
+                handles[0] = GetStdHandle(STD_INPUT_HANDLE);
+                flags[0] |= WX_OPEN;
+            }
+            if (num <= 1 || (flags[1] & WX_OPEN))
+            {
+                handles[1] = GetStdHandle(STD_OUTPUT_HANDLE);
+                flags[1] |= WX_OPEN;
+            }
+            if (num <= 2 || (flags[2] & WX_OPEN))
+            {
+                handles[2] = GetStdHandle(STD_ERROR_HANDLE);
+                flags[2] |= WX_OPEN;
+            }
+#undef WX_OPEN
+        }
     }
 }
 
@@ -548,6 +601,8 @@ char filetorun[MAX_PATH];
   console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
   ZeroMemory (&st, sizeof(STARTUPINFO));
   st.cb = sizeof(STARTUPINFO);
+  init_msvcrt_io_block(&st);
+
   status = CreateProcess (NULL, command, NULL, NULL, TRUE, 
                           0, NULL, NULL, &st, &pe);
   if (!status) {
