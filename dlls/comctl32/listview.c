@@ -739,6 +739,12 @@ static inline LPCSTR debugscrollcode(int nScrollCode)
 
 /******** Notification functions i************************************/
 
+static LRESULT notify_forward_header(LISTVIEW_INFO *infoPtr, const NMHEADERW *lpnmh)
+{
+    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY,
+                        (WPARAM)lpnmh->hdr.idFrom, (LPARAM)lpnmh);
+}
+
 static LRESULT notify_hdr(LISTVIEW_INFO *infoPtr, INT code, LPNMHDR pnmh)
 {
     LRESULT result;
@@ -8270,10 +8276,15 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
     
     switch (lpnmh->hdr.code)
     {    
-	case HDN_TRACKW:
-	case HDN_TRACKA:
+        case HDN_ITEMCHANGINGW:
+        case HDN_ITEMCHANGINGA:
+            return notify_forward_header(infoPtr, lpnmh);
 	case HDN_ITEMCHANGEDW:
 	case HDN_ITEMCHANGEDA:
+            notify_forward_header(infoPtr, lpnmh);
+            /* Fall through */
+	case HDN_TRACKW:
+	case HDN_TRACKA:
 	{
 	    COLUMN_INFO *lpColumnInfo;
 	    INT dx, cxy;
