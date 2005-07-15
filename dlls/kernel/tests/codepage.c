@@ -56,7 +56,21 @@ static void test_negative_source_length(void)
        "MultiByteToWideChar(-2002): len=%d error=%ld\n",len,GetLastError());
 }
 
+static void test_overlapped_buffers(void)
+{
+    static const WCHAR strW[] = {'j','u','s','t',' ','a',' ','t','e','s','t',0};
+    static const char strA[] = "just a test";
+    char buf[256];
+    int ret;
+
+    lstrcpyW((WCHAR *)(buf + 1), strW);
+    ret = WideCharToMultiByte(CP_ACP, 0, (WCHAR *)(buf + 1), -1, buf, sizeof(buf), NULL, NULL);
+    ok(ret == sizeof(strA), "unexpected ret %d != %d\n", ret, sizeof(strA));
+    ok(!memcmp(buf, strA, sizeof(strA)), "conversion failed: %s\n", buf);
+}
+
 START_TEST(codepage)
 {
     test_negative_source_length();
+    test_overlapped_buffers();
 }
