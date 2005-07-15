@@ -62,6 +62,7 @@ DWORD dwThemeAppProperties = STAP_ALLOW_NONCLIENT | STAP_ALLOW_CONTROLS;
 ATOM atWindowTheme;
 ATOM atSubAppName;
 ATOM atSubIdList;
+ATOM atDialogThemeEnabled;
 
 BOOL bThemeActive = FALSE;
 WCHAR szCurrentTheme[MAX_PATH];
@@ -224,12 +225,16 @@ void UXTHEME_InitSystem(HINSTANCE hInst)
     static const WCHAR szSubIdList[] = {
         'u','x','_','s','u','b','i','d','l','s','t','\0'
     };
+    static const WCHAR szDialogThemeEnabled[] = {
+        'u','x','_','d','i','a','l','o','g','t','h','e','m','e','\0'
+    };
 
     hDllInst = hInst;
 
-    atWindowTheme = GlobalAddAtomW(szWindowTheme);
-    atSubAppName  = GlobalAddAtomW(szSubAppName);
-    atSubIdList   = GlobalAddAtomW(szSubIdList);
+    atWindowTheme        = GlobalAddAtomW(szWindowTheme);
+    atSubAppName         = GlobalAddAtomW(szSubAppName);
+    atSubIdList          = GlobalAddAtomW(szSubIdList);
+    atDialogThemeEnabled = GlobalAddAtomW(szDialogThemeEnabled);
 
     UXTHEME_LoadTheme();
 }

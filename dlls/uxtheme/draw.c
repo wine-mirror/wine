@@ -41,7 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(uxtheme);
  * Defines and global variables
  */
 
-DWORD dwDialogTextureFlags;
+extern ATOM atDialogThemeEnabled;
 
 /***********************************************************************/
 
@@ -50,8 +50,19 @@ DWORD dwDialogTextureFlags;
  */
 HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
 {
+    static const WCHAR szTab[] = { 'T','a','b',0 };
+    HRESULT hr;
+
     TRACE("(%p,0x%08lx\n", hwnd, dwFlags);
-    dwDialogTextureFlags = dwFlags;
+    hr = SetPropW (hwnd, MAKEINTATOMW (atDialogThemeEnabled), 
+        (HANDLE)(dwFlags|0x80000000)); 
+        /* 0x80000000 serves as a "flags set" flag */
+    if (FAILED(hr))
+          return hr;
+    if (dwFlags & ETDT_USETABTEXTURE)
+        return SetWindowTheme (hwnd, NULL, szTab);
+    else
+        return SetWindowTheme (hwnd, NULL, NULL);
     return S_OK;
  }
 
@@ -60,7 +71,15 @@ HRESULT WINAPI EnableThemeDialogTexture(HWND hwnd, DWORD dwFlags)
  */
 BOOL WINAPI IsThemeDialogTextureEnabled(HWND hwnd)
 {
+    DWORD dwDialogTextureFlags;
     TRACE("(%p)\n", hwnd);
+
+    dwDialogTextureFlags = (DWORD)GetPropW (hwnd, 
+        MAKEINTATOMW (atDialogThemeEnabled));
+    if (dwDialogTextureFlags == 0) 
+        /* Means EnableThemeDialogTexture wasn't called for this dialog */
+        return TRUE;
+
     return (dwDialogTextureFlags & ETDT_ENABLE) && !(dwDialogTextureFlags & ETDT_DISABLE);
 }
 
