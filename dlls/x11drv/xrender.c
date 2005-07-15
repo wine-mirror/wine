@@ -84,7 +84,7 @@ typedef struct
     LFANDSIZE lfsz;
     AA_Type aa_default;
     gsCacheEntryFormat * format[AA_MAXVALUE];
-    UINT count;
+    INT count;
     INT next;
 } gsCacheEntry;
 

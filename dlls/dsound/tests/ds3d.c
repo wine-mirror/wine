@@ -90,7 +90,7 @@ const char * getDSBCAPS(DWORD xmask) {
 #undef FE
     };
     static char buffer[512];
-    int i;
+    unsigned int i;
     BOOL first = TRUE;
 
     buffer[0] = 0;
