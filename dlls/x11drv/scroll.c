@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
 
-static void dump_region( char *p, HRGN hrgn)
+static void dump_region( const char *p, HRGN hrgn)
 {
     DWORD i, size;
     RGNDATA *data = NULL;

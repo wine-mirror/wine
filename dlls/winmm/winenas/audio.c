@@ -204,7 +204,7 @@ static int nas_add_buffer(WINE_WAVEOUT* wwo);
 static int nas_send_buffer(WINE_WAVEOUT* wwo);
 
 /* These strings used only for tracing */
-static const char *wodPlayerCmdString[] = {
+static const char * const wodPlayerCmdString[] = {
     "WINE_WM_PAUSING",
     "WINE_WM_RESTARTING",
     "WINE_WM_RESETTING",
@@ -214,21 +214,21 @@ static const char *wodPlayerCmdString[] = {
     "WINE_WM_CLOSING",
 };
 
-static char *nas_elementnotify_kinds[] = {
+static const char * const nas_elementnotify_kinds[] = {
         "LowWater",
         "HighWater",
         "State",
         "Unknown"
 };
 
-static char *nas_states[] = {
+static const char * const nas_states[] = {
         "Stop",
         "Start",
         "Pause",
         "Any"
 };
 
-static char *nas_reasons[] = {
+static const char * const nas_reasons[] = {
         "User",
         "Underrun",
         "Overrun",
@@ -238,13 +238,13 @@ static char *nas_reasons[] = {
         "Any"
 };
 
-static char* nas_reason(unsigned int reason)
+static const char* nas_reason(unsigned int reason)
 {
         if (reason > 6) reason = 6;
         return nas_reasons[reason];
 }
 
-static char* nas_elementnotify_kind(unsigned int kind)
+static const char* nas_elementnotify_kind(unsigned int kind)
 {
         if (kind > 2) kind = 3;
         return nas_elementnotify_kinds[kind];
@@ -271,7 +271,7 @@ static const char* nas_event_type(unsigned int type)
 #endif
 
 
-static char* nas_state(unsigned int state)
+static const char* nas_state(unsigned int state)
 {
         if (state > 3) state = 3;
         return nas_states[state];
