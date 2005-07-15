@@ -68,8 +68,16 @@ BOOL WINAPI CryptCATAdminReleaseContext(HCATADMIN hCatAdmin, DWORD dwFlags )
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  WINTRUST_DATA* ActionData )
 {
-    FIXME("%p %p %p\n", hwnd, ActionID,  ActionData);
-    return ERROR_SUCCESS;
+    FIXME("%p %s %p\n", hwnd, debugstr_guid(ActionID), ActionData);
+
+    /* Trust providers can be found at:
+     * HKLM\SOFTWARE\Microsoft\Cryptography\Providers\Trust\CertCheck\
+     *
+     * As we do not have any trust providers yet (or cater for it),
+     * return just that.
+     */
+
+    return TRUST_E_PROVIDER_UNKNOWN;
 }
 
 /***********************************************************************
