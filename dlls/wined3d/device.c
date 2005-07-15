@@ -5146,11 +5146,11 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, 
 HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwapChainImpl *swapchain)
 {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-#if defined(GL_VERSION_1_3) /* @see comments on ActiveRender */
 
     TRACE("(%p), %p\n", This, swapchain);
 
     if (swapchain->win != swapchain->drawable) {
+#if defined(GL_VERSION_1_3) /* @see comments on ActiveRender */
         ENTER_GL();
         if (swapchain->glCtx != swapchain->render_ctx) {
             FIXME("Destroying context %p \n", swapchain->render_ctx);
@@ -5159,8 +5159,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwa
         }
         FIXME("glXDestroyPbuffer %ld \n", swapchain->drawable);
         glXDestroyPbuffer(swapchain->display, swapchain->drawable);
-#endif
         LEAVE_GL();
+#endif
         /* Set everything back the way it ws */
         swapchain->render_ctx = swapchain->glCtx;
         swapchain->drawable = swapchain->win;
