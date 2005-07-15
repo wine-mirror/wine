@@ -33,7 +33,6 @@
  *   - Enforcing of minimal wizard size
  *   - Messages:
  *     o PSM_GETRESULT
- *     o PSM_IDTOINDEX
  *     o PSM_INSERTPAGE
  *     o PSM_RECALCPAGESIZES
  *     o PSM_SETHEADERSUBTITLE
@@ -2622,7 +2621,17 @@ static LRESULT PROPSHEET_IndexToPage(HWND hwndDlg, int iPageIndex)
  */
 static LRESULT PROPSHEET_IdToIndex(HWND hwndDlg, int iPageId)
 {
-    FIXME("(%p, %d): stub\n", hwndDlg, iPageId);
+    int index;
+    LPCPROPSHEETPAGEW psp;
+    PropSheetInfo * psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
+                                                       PropSheetInfoStr);
+    TRACE("(%p, %d)\n", hwndDlg, iPageId);
+    for (index = 0; index < psInfo->nPages; index++) {
+        psp = (LPCPROPSHEETPAGEW)psInfo->proppage[index].hpage;
+        if (psp->u.pszTemplate == (LPCWSTR)iPageId)
+            return index;
+    }
+
     return -1;
 }
 
