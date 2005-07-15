@@ -820,7 +820,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDisplayNameOf(IShellFolder2* i
     /* If in dos mode, do some post-processing on the path.
      * (e.g. remove filename extension, if uFlags & SHGDN_FOREDITING) 
      */
-    if (SUCCEEDED(hr) && This->m_dwPathMode == PATHMODE_DOS)
+    if (SUCCEEDED(hr) && This->m_dwPathMode == PATHMODE_DOS && !_ILIsFolder(pidl))
         SHELL_FS_ProcessDisplayFilename(lpName->u.cStr, uFlags);
     
     TRACE("--> %s\n", lpName->u.cStr);
@@ -921,7 +921,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsEx(IShellFolder2* iface
     return E_NOTIMPL;
 }
 
-#define SHELLVIEWCOLUMNS 6 
+#define SHELLVIEWCOLUMNS 7 
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface, 
     LPCITEMIDLIST pidl, UINT iColumn, SHELLDETAILS *psd)
@@ -932,11 +932,12 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
     struct group *pGroup;
     static const shvheader SFHeader[SHELLVIEWCOLUMNS] = {
         {IDS_SHV_COLUMN1,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
-        {IDS_SHV_COLUMN5,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
+        {IDS_SHV_COLUMN2,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
+        {IDS_SHV_COLUMN3,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
+        {IDS_SHV_COLUMN4,  SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 12},
+        {IDS_SHV_COLUMN5,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 9},
         {IDS_SHV_COLUMN10, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7},
-        {IDS_SHV_COLUMN11, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7},
-        {IDS_SHV_COLUMN2,  SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 8},
-        {IDS_SHV_COLUMN4,  SHCOLSTATE_TYPE_DATE | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10}
+        {IDS_SHV_COLUMN11, SHCOLSTATE_TYPE_STR  | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 7}
     };
 
     TRACE("(iface=%p, pidl=%p, iColumn=%d, psd=%p) stub\n", iface, pidl, iColumn, psd);
@@ -952,7 +953,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
         return S_OK;
     } else {
         struct stat statItem;
-        if (iColumn == 1 || iColumn == 2 || iColumn == 3) {
+        if (iColumn == 4 || iColumn == 5 || iColumn == 6) {
             char szPath[FILENAME_MAX], *pszFile = _ILGetTextPointer(pidl);
             if (!pszFile) 
                 return E_INVALIDARG;
@@ -968,6 +969,15 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
                 hr = IShellFolder2_GetDisplayNameOf(iface, pidl, SHGDN_NORMAL|SHGDN_INFOLDER, &psd->str);
                 break;
             case 1:
+                _ILGetFileSize(pidl, psd->str.u.cStr, MAX_PATH);
+                break;
+            case 2:
+                _ILGetFileType (pidl, psd->str.u.cStr, MAX_PATH);
+                break;
+            case 3:
+                _ILGetFileDate(pidl, psd->str.u.cStr, MAX_PATH);
+                break;
+            case 4:
                 psd->str.u.cStr[0] = S_ISDIR(statItem.st_mode) ? 'd' : '-';
                 psd->str.u.cStr[1] = (statItem.st_mode & S_IRUSR) ? 'r' : '-';
                 psd->str.u.cStr[2] = (statItem.st_mode & S_IWUSR) ? 'w' : '-';
@@ -980,19 +990,13 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_GetDetailsOf(IShellFolder2* iface
                 psd->str.u.cStr[9] = (statItem.st_mode & S_IXOTH) ? 'x' : '-';
                 psd->str.u.cStr[10] = '\0';
                 break;
-            case 2:
+            case 5:
                 pPasswd = getpwuid(statItem.st_uid);
                 if (pPasswd) strcpy(psd->str.u.cStr, pPasswd->pw_name);
                 break;
-            case 3:
+            case 6:
                 pGroup = getgrgid(statItem.st_gid);
                 if (pGroup) strcpy(psd->str.u.cStr, pGroup->gr_name);
-                break;
-            case 4:
-                _ILGetFileSize(pidl, psd->str.u.cStr, MAX_PATH);
-                break;
-            case 5:
-                _ILGetFileDate(pidl, psd->str.u.cStr, MAX_PATH);
                 break;
         }
     }
