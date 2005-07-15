@@ -32,6 +32,8 @@
 #include "winemm.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "excpt.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(driver);
 
@@ -75,10 +77,17 @@ LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr)
 {
     LPWINE_DRIVER	d = (LPWINE_DRIVER)hDrvr;
 
-    if (hDrvr && HeapValidate(GetProcessHeap(), 0, d) && d->dwMagic == WINE_DI_MAGIC) {
-	return d;
+    __TRY
+    {
+        if (d && d->dwMagic != WINE_DI_MAGIC) d = NULL;
     }
-    return NULL;
+    __EXCEPT(NULL)
+    {
+        return NULL;
+    }
+    __ENDTRY;
+
+    return d;
 }
 
 /**************************************************************************

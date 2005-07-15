@@ -30,6 +30,8 @@
 #include "winver.h"
 #include "winemm.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
+#include "excpt.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
@@ -47,7 +49,7 @@ typedef struct tagWINE_LLTYPE {
     MMDRV_UNMAPFUNC	UnMap32ATo16;	/*   low-func (in .drv) do not match */
     LPDRVCALLBACK	Callback;       /* handles callback for a specified type */
     /* those attributes reflect the loaded/current situation for the type */
-    UINT		wMaxId;		/* number of loaded devices (sum across all loaded drivers */
+    UINT		wMaxId;		/* number of loaded devices (sum across all loaded drivers) */
     LPWINE_MLD		lpMlds;		/* "static" mlds to access the part though device IDs */
     int			nMapper;	/* index to mapper */
 } WINE_LLTYPE;
@@ -441,8 +443,15 @@ LPWINE_MLD	MMDRV_Get(HANDLE _hndl, UINT type, BOOL bCanBeID)
 	    hndl = hndl & ~0x8000;
 	    if (hndl < sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0])) {
 		mld = MM_MLDrvs[hndl];
-		if (!mld || !HeapValidate(GetProcessHeap(), 0, mld) || mld->type != type)
-		    mld = NULL;
+                __TRY
+                {
+                    if (mld && mld->type != type) mld = NULL;
+                }
+                __EXCEPT(NULL)
+                {
+                    mld = NULL;
+                }
+                __ENDTRY;
 	    }
 	    hndl = hndl | 0x8000;
 	}
