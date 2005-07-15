@@ -305,7 +305,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
 NTSTATUS WINAPI NtFlushInstructionCache(
         IN HANDLE ProcessHandle,
         IN LPCVOID BaseAddress,
-        IN ULONG Size)
+        IN SIZE_T Size)
 {
 #ifdef __i386__
     TRACE("%p %p %ld - no-op on x86\n", ProcessHandle, BaseAddress, Size );

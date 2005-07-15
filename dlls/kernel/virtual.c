@@ -242,7 +242,7 @@ SIZE_T WINAPI VirtualQueryEx(
              PMEMORY_BASIC_INFORMATION info,  /* [out] Address of info buffer */
              SIZE_T len                       /* [in] Size of buffer */ )
 {
-    DWORD ret;
+    SIZE_T ret;
     NTSTATUS status;
 
     if ((status = NtQueryVirtualMemory( process, addr, MemoryBasicInformation, info, len, &ret )))

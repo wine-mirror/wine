@@ -485,7 +485,7 @@ typedef struct _MEMORY_BASIC_INFORMATION
     LPVOID   BaseAddress;
     LPVOID   AllocationBase;
     DWORD    AllocationProtect;
-    DWORD    RegionSize;
+    SIZE_T   RegionSize;
     DWORD    State;
     DWORD    Protect;
     DWORD    Type;

@@ -67,7 +67,7 @@ typedef struct file_view
 {
     struct list   entry;       /* Entry in global view list */
     void         *base;        /* Base address */
-    UINT          size;        /* Size in bytes */
+    size_t        size;        /* Size in bytes */
     HANDLE        mapping;     /* Handle to the file mapping */
     BYTE          flags;       /* Allocation flags (VFLAG_*) */
     BYTE          protect;     /* Protection for all pages at allocation time */
@@ -532,7 +532,7 @@ static BYTE VIRTUAL_GetProt( DWORD protect )
  */
 static BOOL VIRTUAL_SetProt( FILE_VIEW *view, /* [in] Pointer to view */
                              void *base,      /* [in] Starting address */
-                             UINT size,       /* [in] Size in bytes */
+                             size_t size,     /* [in] Size in bytes */
                              BYTE vprot )     /* [in] Protections to use */
 {
     TRACE("%p-%p %s\n",
@@ -611,9 +611,9 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size, 
 
         /* Release the extra memory while keeping the range
          * starting on the granularity boundary. */
-        if ((unsigned int)ptr & granularity_mask)
+        if ((ULONG_PTR)ptr & granularity_mask)
         {
-            unsigned int extra = granularity_mask + 1 - ((unsigned int)ptr & granularity_mask);
+            size_t extra = granularity_mask + 1 - ((ULONG_PTR)ptr & granularity_mask);
             munmap( ptr, extra );
             ptr = (char *)ptr + extra;
             view_size -= extra;
@@ -753,7 +753,7 @@ static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t siz
  * Apply the relocations to a mapped PE image
  */
 static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
-                           int delta, DWORD total_size )
+                           int delta, SIZE_T total_size )
 {
     IMAGE_BASE_RELOCATION *rel;
 
@@ -816,8 +816,8 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
  *
  * Map an executable (PE format) image into memory.
  */
-static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size,
-                           DWORD header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
+static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_size,
+                           SIZE_T header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -920,7 +920,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
 
     for (i = pos = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
     {
-        DWORD size;
+        SIZE_T size;
 
         /* a few sanity checks */
         size = sec->VirtualAddress + ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
@@ -1031,7 +1031,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
     sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
     {
-        DWORD size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
+        SIZE_T size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
         BYTE vprot = VPROT_COMMITTED;
         if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
         if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_READ|VPROT_WRITECOPY;
@@ -1158,11 +1158,11 @@ void VIRTUAL_UseLargeAddressSpace(void)
  *             ZwAllocateVirtualMemory   (NTDLL.@)
  */
 NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_bits,
-                                         ULONG *size_ptr, ULONG type, ULONG protect )
+                                         SIZE_T *size_ptr, ULONG type, ULONG protect )
 {
     void *base;
     BYTE vprot;
-    DWORD size = *size_ptr;
+    SIZE_T size = *size_ptr;
     NTSTATUS status = STATUS_SUCCESS;
     struct file_view *view;
 
@@ -1267,13 +1267,13 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
  *             NtFreeVirtualMemory   (NTDLL.@)
  *             ZwFreeVirtualMemory   (NTDLL.@)
  */
-NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *size_ptr, ULONG type )
+NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr, ULONG type )
 {
     FILE_VIEW *view;
     char *base;
     NTSTATUS status = STATUS_SUCCESS;
     LPVOID addr = *addr_ptr;
-    DWORD size = *size_ptr;
+    SIZE_T size = *size_ptr;
 
     TRACE("%p %p %08lx %lx\n", process, addr, size, type );
 
@@ -1340,7 +1340,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *siz
  *             NtProtectVirtualMemory   (NTDLL.@)
  *             ZwProtectVirtualMemory   (NTDLL.@)
  */
-NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *size_ptr,
+NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *size_ptr,
                                         ULONG new_prot, ULONG *old_prot )
 {
     FILE_VIEW *view;
@@ -1348,7 +1348,8 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
     char *base;
     UINT i;
     BYTE vprot, *p;
-    DWORD prot, size = *size_ptr;
+    ULONG prot;
+    SIZE_T size = *size_ptr;
     LPVOID addr = *addr_ptr;
 
     TRACE("%p %p %08lx %08lx\n", process, addr, size, new_prot );
@@ -1412,12 +1413,12 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, ULONG *
  */
 NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
                                       MEMORY_INFORMATION_CLASS info_class, PVOID buffer,
-                                      ULONG len, ULONG *res_len )
+                                      SIZE_T len, SIZE_T *res_len )
 {
     FILE_VIEW *view;
     char *base, *alloc_base = 0;
     struct list *ptr;
-    UINT size = 0;
+    SIZE_T size = 0;
     MEMORY_BASIC_INFORMATION *info = buffer;
 
     if (info_class != MemoryBasicInformation)
@@ -1519,7 +1520,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
  *             NtLockVirtualMemory   (NTDLL.@)
  *             ZwLockVirtualMemory   (NTDLL.@)
  */
-NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, ULONG *size, ULONG unknown )
+NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown )
 {
     if (!is_current_process( process ))
     {
@@ -1534,7 +1535,7 @@ NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, ULONG *size, U
  *             NtUnlockVirtualMemory   (NTDLL.@)
  *             ZwUnlockVirtualMemory   (NTDLL.@)
  */
-NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, ULONG *size, ULONG unknown )
+NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown )
 {
     if (!is_current_process( process ))
     {
@@ -1617,13 +1618,13 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
  *             ZwMapViewOfSection   (NTDLL.@)
  */
 NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_ptr, ULONG zero_bits,
-                                    ULONG commit_size, const LARGE_INTEGER *offset_ptr, ULONG *size_ptr,
+                                    SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
     IO_STATUS_BLOCK io;
     FILE_FS_DEVICE_INFORMATION device_info;
     NTSTATUS res;
-    UINT size = 0;
+    SIZE_T size = 0;
     int unix_handle = -1;
     int prot;
     void *base;
@@ -1635,7 +1636,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
-    TRACE("handle=%p process=%p addr=%p off=%lx%08lx size=%x access=%lx\n",
+    TRACE("handle=%p process=%p addr=%p off=%lx%08lx size=%lx access=%lx\n",
           handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, size, protect );
 
     if (!is_current_process( process ))
@@ -1752,7 +1753,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Map the file */
 
-    TRACE("handle=%p size=%x offset=%lx%08lx\n",
+    TRACE("handle=%p size=%lx offset=%lx%08lx\n",
           handle, size, offset.u.HighPart, offset.u.LowPart );
 
     res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, prot, removable );
@@ -1768,7 +1769,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
     else
     {
-        ERR( "map_file_into_view %p %x %lx%08lx failed\n",
+        ERR( "map_file_into_view %p %lx %lx%08lx failed\n",
              view->base, size, offset.u.HighPart, offset.u.LowPart );
         delete_view( view );
     }
@@ -1812,7 +1813,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
  *             ZwFlushVirtualMemory   (NTDLL.@)
  */
 NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
-                                      ULONG *size_ptr, ULONG unknown )
+                                      SIZE_T *size_ptr, ULONG unknown )
 {
     FILE_VIEW *view;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1866,14 +1867,14 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
                                       SIZE_T size, SIZE_T *bytes_written )
 {
     static const unsigned int zero;
-    unsigned int first_offset, last_offset, first_mask, last_mask;
+    SIZE_T first_offset, last_offset, first_mask, last_mask;
     NTSTATUS status;
 
     if (!size) return STATUS_INVALID_PARAMETER;
 
     /* compute the mask for the first int */
     first_mask = ~0;
-    first_offset = (unsigned int)addr % sizeof(int);
+    first_offset = (ULONG_PTR)addr % sizeof(int);
     memset( &first_mask, 0, first_offset );
 
     /* compute the mask for the last int */
