@@ -98,6 +98,7 @@ typedef struct _WINTRUST_DATA
     HANDLE hWVTStateData;
     WCHAR* pwszURLReference;
     DWORD  dwProvFlags;
+    DWORD  dwUIContext;
 } WINTRUST_DATA, *PWINTRUST_DATA;
 
 typedef struct _CRYPT_TRUST_REG_ENTRY
