@@ -186,8 +186,10 @@ AC_CHECK_HEADERS(\
 	io.h \
 	jack/jack.h \
 	jpeglib.h \
+	lber.h \
 	lcms/lcms.h \
 	lcms.h \
+	ldap.h \
 	link.h \
 	linux/cdrom.h \
 	linux/compiler.h \
@@ -487,6 +489,16 @@ then
     AC_CHECK_LIB(lcms, cmsOpenProfileFromFile,
         [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])
          LCMSLIBS="-llcms"])
+fi
+
+dnl **** Check for OpenLDAP ***
+AC_SUBST(LDAPLIBS,"")
+if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
+then
+    AC_CHECK_LIB(ldap, ldap_init,
+        [AC_CHECK_LIB(lber, ber_init,
+            [AC_DEFINE(HAVE_LDAP, 1, [Define if you have the OpenLDAP development environment])
+             LDAPLIBS="-lldap -llber"])])
 fi
 
 dnl **** Check for FreeType 2 ****

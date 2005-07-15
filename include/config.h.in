@@ -245,6 +245,9 @@
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 
+/* Define to 1 if you have the <lber.h> header file. */
+#undef HAVE_LBER_H
+
 /* Define if you have the LittleCMS development environment */
 #undef HAVE_LCMS
 
@@ -253,6 +256,12 @@
 
 /* Define to 1 if you have the <lcms/lcms.h> header file. */
 #undef HAVE_LCMS_LCMS_H
+
+/* Define if you have the OpenLDAP development environment */
+#undef HAVE_LDAP
+
+/* Define to 1 if you have the <ldap.h> header file. */
+#undef HAVE_LDAP_H
 
 /* Define if you have libaudioIO */
 #undef HAVE_LIBAUDIOIO
