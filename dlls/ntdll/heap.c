@@ -181,29 +181,28 @@ static void HEAP_Dump( HEAP *heap )
     SUBHEAP *subheap;
     char *ptr;
 
-    DPRINTF( "Heap: %08lx\n", (DWORD)heap );
-    DPRINTF( "Next: %08lx  Sub-heaps: %08lx",
-	  (DWORD)heap->next, (DWORD)&heap->subheap );
+    DPRINTF( "Heap: %p\n", heap );
+    DPRINTF( "Next: %p  Sub-heaps: %p", heap->next, &heap->subheap );
     subheap = &heap->subheap;
     while (subheap->next)
     {
-        DPRINTF( " -> %08lx", (DWORD)subheap->next );
+        DPRINTF( " -> %p", subheap->next );
         subheap = subheap->next;
     }
 
     DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        DPRINTF( "%08lx free %08lx prev=%08lx next=%08lx\n",
-	      (DWORD)&heap->freeList[i].arena, heap->freeList[i].size,
-	      (DWORD)heap->freeList[i].arena.prev,
-	      (DWORD)heap->freeList[i].arena.next );
+        DPRINTF( "%p free %08lx prev=%p next=%p\n",
+                &heap->freeList[i].arena, heap->freeList[i].size,
+                heap->freeList[i].arena.prev,
+                heap->freeList[i].arena.next );
 
     subheap = &heap->subheap;
     while (subheap)
     {
         SIZE_T freeSize = 0, usedSize = 0, arenaSize = subheap->headerSize;
-        DPRINTF( "\n\nSub-heap %08lx: size=%08lx committed=%08lx\n",
-	      (DWORD)subheap, subheap->size, subheap->commitSize );
+        DPRINTF( "\n\nSub-heap %p: size=%08lx committed=%08lx\n",
+                subheap, subheap->size, subheap->commitSize );
 
         DPRINTF( "\n Block   Stat   Size    Id\n" );
         ptr = (char*)subheap + subheap->headerSize;
@@ -212,9 +211,9 @@ static void HEAP_Dump( HEAP *heap )
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
                 ARENA_FREE *pArena = (ARENA_FREE *)ptr;
-                DPRINTF( "%08lx free %08lx prev=%08lx next=%08lx\n",
-		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK,
-		      (DWORD)pArena->prev, (DWORD)pArena->next);
+                DPRINTF( "%p free %08lx prev=%p next=%p\n",
+                        pArena, pArena->size & ARENA_SIZE_MASK,
+                        pArena->prev, pArena->next);
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_FREE);
                 freeSize += pArena->size & ARENA_SIZE_MASK;
@@ -222,8 +221,8 @@ static void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%08lx Used %08lx back=%08lx\n",
-                         (DWORD)pArena, pArena->size & ARENA_SIZE_MASK, *((DWORD *)pArena - 1) );
+                DPRINTF( "%p Used %08lx back=%08lx\n",
+                        pArena, pArena->size & ARENA_SIZE_MASK, *((DWORD *)pArena - 1) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -231,8 +230,7 @@ static void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%08lx used %08lx\n",
-		      (DWORD)pArena, pArena->size & ARENA_SIZE_MASK );
+                DPRINTF( "%p used %08lx\n", pArena, pArena->size & ARENA_SIZE_MASK );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
@@ -400,7 +398,7 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 {
     void *addr;
     SIZE_T decommit_size;
-    SIZE_T size = (SIZE_T)((char *)ptr - (char *)subheap);
+    SIZE_T size = (char *)ptr - (char *)subheap;
 
     /* round to next block and add one full block */
     size = ((size + COMMIT_MASK) & ~COMMIT_MASK) + COMMIT_MASK + 1;
@@ -410,8 +408,8 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 
     if (NtFreeVirtualMemory( NtCurrentProcess(), &addr, &decommit_size, MEM_DECOMMIT ))
     {
-        WARN("Could not decommit %08lx bytes at %08lx for heap %p\n",
-                 decommit_size, (DWORD)((char *)subheap + size), subheap->heap );
+        WARN("Could not decommit %08lx bytes at %p for heap %p\n",
+                decommit_size, (char *)subheap + size, subheap->heap );
         return FALSE;
     }
     subheap->commitSize -= decommit_size;
@@ -713,8 +711,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
 
     if (!(heap->flags & HEAP_GROWABLE))
     {
-        WARN("Not enough space in heap %08lx for %08lx bytes\n",
-                 (DWORD)heap, size );
+        WARN("Not enough space in heap %p for %08lx bytes\n", heap, size );
         return NULL;
     }
     /* make sure that we have a big enough size *committed* to fit another
@@ -727,8 +724,8 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
                                         max( HEAP_DEF_SIZE, size ) )))
         return NULL;
 
-    TRACE("created new sub-heap %08lx of %08lx bytes for heap %08lx\n",
-                (DWORD)subheap, size, (DWORD)heap );
+    TRACE("created new sub-heap %p of %08lx bytes for heap %p\n",
+            subheap, size, heap );
 
     *ppSubHeap = subheap;
     return (ARENA_FREE *)(subheap + 1);
@@ -763,53 +760,51 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     /* Check for unaligned pointers */
     if ( (ULONG_PTR)pArena % ALIGNMENT != 0 )
     {
-        ERR( "Heap %08lx: unaligned arena pointer %08lx\n",
-             (DWORD)subheap->heap, (DWORD)pArena );
+        ERR("Heap %p: unaligned arena pointer %p\n", subheap->heap, pArena );
         return FALSE;
     }
 
     /* Check magic number */
     if (pArena->magic != ARENA_FREE_MAGIC)
     {
-        ERR("Heap %08lx: invalid free arena magic for %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena );
+        ERR("Heap %p: invalid free arena magic for %p\n", subheap->heap, pArena );
         return FALSE;
     }
     /* Check size flags */
     if (!(pArena->size & ARENA_FLAG_FREE) ||
         (pArena->size & ARENA_FLAG_PREV_FREE))
     {
-        ERR("Heap %08lx: bad flags %lx for free arena %08lx\n",
-                 (DWORD)subheap->heap, pArena->size & ~ARENA_SIZE_MASK, (DWORD)pArena );
+        ERR("Heap %p: bad flags %08lx for free arena %p\n",
+            subheap->heap, pArena->size & ~ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
     /* Check arena size */
     if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
-        ERR("Heap %08lx: bad size %08lx for free arena %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena->size & ARENA_SIZE_MASK, (DWORD)pArena );
+        ERR("Heap %p: bad size %08lx for free arena %p\n",
+            subheap->heap, pArena->size & ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
     /* Check that next pointer is valid */
     if (!HEAP_IsValidArenaPtr( subheap->heap, pArena->next ))
     {
-        ERR("Heap %08lx: bad next ptr %08lx for arena %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena->next, (DWORD)pArena );
+        ERR("Heap %p: bad next ptr %p for arena %p\n",
+            subheap->heap, pArena->next, pArena );
         return FALSE;
     }
     /* Check that next arena is free */
     if (!(pArena->next->size & ARENA_FLAG_FREE) ||
         (pArena->next->magic != ARENA_FREE_MAGIC))
     {
-        ERR("Heap %08lx: next arena %08lx invalid for %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena->next, (DWORD)pArena );
+        ERR("Heap %p: next arena %p invalid for %p\n",
+            subheap->heap, pArena->next, pArena );
         return FALSE;
     }
     /* Check that prev pointer is valid */
     if (!HEAP_IsValidArenaPtr( subheap->heap, pArena->prev ))
     {
-        ERR("Heap %08lx: bad prev ptr %08lx for arena %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena->prev, (DWORD)pArena );
+        ERR("Heap %p: bad prev ptr %p for arena %p\n",
+            subheap->heap, pArena->prev, pArena );
         return FALSE;
     }
     /* Check that prev arena is free */
@@ -818,8 +813,8 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     {
 	/* this often means that the prev arena got overwritten
 	 * by a memory write before that prev arena */
-        ERR("Heap %08lx: prev arena %08lx invalid for %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena->prev, (DWORD)pArena );
+        ERR("Heap %p: prev arena %p invalid for %p\n",
+            subheap->heap, pArena->prev, pArena );
         return FALSE;
     }
     /* Check that next block has PREV_FREE flag */
@@ -828,17 +823,17 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
         if (!(*(DWORD *)((char *)(pArena + 1) +
             (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
         {
-            ERR("Heap %08lx: free arena %08lx next block has no PREV_FREE flag\n",
-                     (DWORD)subheap->heap, (DWORD)pArena );
+            ERR("Heap %p: free arena %p next block has no PREV_FREE flag\n",
+                subheap->heap, pArena );
             return FALSE;
         }
         /* Check next block back pointer */
         if (*((ARENA_FREE **)((char *)(pArena + 1) +
             (pArena->size & ARENA_SIZE_MASK)) - 1) != pArena)
         {
-            ERR("Heap %08lx: arena %08lx has wrong back ptr %08lx\n",
-                     (DWORD)subheap->heap, (DWORD)pArena,
-                     *((DWORD *)((char *)(pArena+1)+ (pArena->size & ARENA_SIZE_MASK)) - 1));
+            ERR("Heap %p: arena %p has wrong back ptr %08lx\n",
+                subheap->heap, pArena,
+                *((DWORD *)((char *)(pArena+1) + (pArena->size & ARENA_SIZE_MASK)) - 1));
             return FALSE;
         }
     }
@@ -858,15 +853,13 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     {
         if ( quiet == NOISY )
         {
-            ERR( "Heap %08lx: unaligned arena pointer %08lx\n",
-                  (DWORD)subheap->heap, (DWORD)pArena );
+            ERR( "Heap %p: unaligned arena pointer %p\n", subheap->heap, pArena );
             if ( TRACE_ON(heap) )
                 HEAP_Dump( subheap->heap );
         }
         else if ( WARN_ON(heap) )
         {
-            WARN( "Heap %08lx: unaligned arena pointer %08lx\n",
-                  (DWORD)subheap->heap, (DWORD)pArena );
+            WARN( "Heap %p: unaligned arena pointer %p\n", subheap->heap, pArena );
             if ( TRACE_ON(heap) )
                 HEAP_Dump( subheap->heap );
         }
@@ -877,13 +870,11 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     if (pArena->magic != ARENA_INUSE_MAGIC)
     {
         if (quiet == NOISY) {
-        ERR("Heap %08lx: invalid in-use arena magic for %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena );
+            ERR("Heap %p: invalid in-use arena magic for %p\n", subheap->heap, pArena );
             if (TRACE_ON(heap))
                HEAP_Dump( subheap->heap );
         }  else if (WARN_ON(heap)) {
-            WARN("Heap %08lx: invalid in-use arena magic for %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena );
+            WARN("Heap %p: invalid in-use arena magic for %p\n", subheap->heap, pArena );
             if (TRACE_ON(heap))
                HEAP_Dump( subheap->heap );
         }
@@ -892,23 +883,23 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     /* Check size flags */
     if (pArena->size & ARENA_FLAG_FREE)
     {
-        ERR("Heap %08lx: bad flags %lx for in-use arena %08lx\n",
-                 (DWORD)subheap->heap, pArena->size & ~ARENA_SIZE_MASK, (DWORD)pArena );
+        ERR("Heap %p: bad flags %08lx for in-use arena %p\n",
+            subheap->heap, pArena->size & ~ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
     /* Check arena size */
     if ((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
-        ERR("Heap %08lx: bad size %08lx for in-use arena %08lx\n",
-                 (DWORD)subheap->heap, (DWORD)pArena->size & ARENA_SIZE_MASK, (DWORD)pArena );
+        ERR("Heap %p: bad size %08lx for in-use arena %p\n",
+            subheap->heap, pArena->size & ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
     /* Check next arena PREV_FREE flag */
     if (((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) < heapEnd) &&
         (*(const DWORD *)((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK)) & ARENA_FLAG_PREV_FREE))
     {
-        ERR("Heap %08lx: in-use arena %08lx next block has PREV_FREE flag\n",
-                 (DWORD)subheap->heap, (DWORD)pArena );
+        ERR("Heap %p: in-use arena %p next block has PREV_FREE flag\n",
+            subheap->heap, pArena );
         return FALSE;
     }
     /* Check prev free arena */
@@ -918,23 +909,23 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
         /* Check prev pointer */
         if (!HEAP_IsValidArenaPtr( subheap->heap, pPrev ))
         {
-            ERR("Heap %08lx: bad back ptr %08lx for arena %08lx\n",
-                    (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
+            ERR("Heap %p: bad back ptr %p for arena %p\n",
+                subheap->heap, pPrev, pArena );
             return FALSE;
         }
         /* Check that prev arena is free */
         if (!(pPrev->size & ARENA_FLAG_FREE) ||
             (pPrev->magic != ARENA_FREE_MAGIC))
         {
-            ERR("Heap %08lx: prev arena %08lx invalid for in-use %08lx\n",
-                     (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
+            ERR("Heap %p: prev arena %p invalid for in-use %p\n",
+                subheap->heap, pPrev, pArena );
             return FALSE;
         }
         /* Check that prev arena is really the previous block */
         if ((const char *)(pPrev + 1) + (pPrev->size & ARENA_SIZE_MASK) != (const char *)pArena)
         {
-            ERR("Heap %08lx: prev arena %08lx is not prev for in-use %08lx\n",
-                     (DWORD)subheap->heap, (DWORD)pPrev, (DWORD)pArena );
+            ERR("Heap %p: prev arena %p is not prev for in-use %p\n",
+                subheap->heap, pPrev, pArena );
             return FALSE;
         }
     }
@@ -1186,8 +1177,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%08lx): returning %08lx\n",
-                  heap, flags, size, (DWORD)(pInUse + 1) );
+    TRACE("(%p,%08lx,%08lx): returning %p\n", heap, flags, size, pInUse + 1 );
     return (LPVOID)(pInUse + 1);
 }
 
@@ -1230,8 +1220,7 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     {
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-        TRACE("(%p,%08lx,%08lx): returning FALSE\n",
-                      heap, flags, (DWORD)ptr );
+        TRACE("(%p,%08lx,%p): returning FALSE\n", heap, flags, ptr );
         return FALSE;
     }
 
@@ -1243,8 +1232,7 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%08lx): returning TRUE\n",
-                  heap, flags, (DWORD)ptr );
+    TRACE("(%p,%08lx,%p): returning TRUE\n", heap, flags, ptr );
     return TRUE;
 }
 
@@ -1291,8 +1279,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
     {
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-        TRACE("(%p,%08lx,%08lx,%08lx): returning NULL\n",
-                      heap, flags, (DWORD)ptr, size );
+        TRACE("(%p,%08lx,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
         return NULL;
     }
 
@@ -1377,8 +1364,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%08lx,%08lx): returning %08lx\n",
-                  heap, flags, (DWORD)ptr, size, (DWORD)(pArena + 1) );
+    TRACE("(%p,%08lx,%p,%08lx): returning %p\n", heap, flags, ptr, size, pArena + 1 );
     return (LPVOID)(pArena + 1);
 }
 
@@ -1489,8 +1475,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%08lx): returning %08lx\n",
-                  heap, flags, (DWORD)ptr, ret );
+    TRACE("(%p,%08lx,%p): returning %08lx\n", heap, flags, ptr, ret );
     return ret;
 }
 
