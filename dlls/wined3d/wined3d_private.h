@@ -448,6 +448,25 @@ typedef struct IWineD3DDeviceImpl
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
+/* Support for IWineD3DResource ::Set/Get/FreePrivateData. I don't think
+ * anybody uses it for much so a good implementation is optional. */
+typedef struct PrivateData
+{
+    struct PrivateData* next;
+
+    GUID tag;
+    DWORD flags; /* DDSPD_* */
+    DWORD uniqueness_value;
+
+    union
+    {
+        LPVOID data;
+        LPUNKNOWN object;
+    } ptr;
+
+    DWORD size;
+} PrivateData;
+
 /*****************************************************************************
  * IWineD3DResource implementation structure
  */
@@ -465,6 +484,7 @@ typedef struct IWineD3DResourceClass
     DWORD                   usage;
     WINED3DFORMAT           format;
     BYTE                   *allocatedMemory;
+    PrivateData            *privateData;
 
 } IWineD3DResourceClass;
 

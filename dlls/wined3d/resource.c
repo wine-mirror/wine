@@ -81,18 +81,114 @@ HRESULT WINAPI IWineD3DResourceImpl_GetDevice(IWineD3DResource *iface, IWineD3DD
     return D3D_OK;
 }
 
-/* Private Date is not implemented yet */
+static PrivateData** IWineD3DResourceImpl_FindPrivateData(IWineD3DResourceImpl *This,
+                    REFGUID tag)
+{
+    PrivateData** data;
+    for (data = &This->resource.privateData; *data != NULL; data = &(*data)->next)
+    {
+        if (IsEqualGUID(&(*data)->tag, tag)) break;
+    }
+    return data;
+}
+
 HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    PrivateData **data;
+
+    TRACE("(%p) : %p %p %ld %ld\n", This, refguid, pData, SizeOfData, Flags);
+    data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
+    if (*data == NULL)
+    {
+        *data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**data));
+        if (NULL == *data) return E_OUTOFMEMORY;
+
+        (*data)->tag = *refguid;
+        (*data)->flags = Flags;
+#if 0
+        (*data)->uniquenessValue = This->uniquenessValue;
+#endif
+        if (Flags & D3DSPD_IUNKNOWN) {
+            (*data)->ptr.object = (LPUNKNOWN)pData;
+            (*data)->size = sizeof(LPUNKNOWN);
+            IUnknown_AddRef((*data)->ptr.object);
+        }
+        else
+        {
+            (*data)->ptr.data = HeapAlloc(GetProcessHeap(), 0, SizeOfData);
+            if (NULL == (*data)->ptr.data) {
+                HeapFree(GetProcessHeap(), 0, *data);
+                return E_OUTOFMEMORY;
+            }
+        }
+        /* link it in */
+        (*data)->next = This->resource.privateData;
+        This->resource.privateData = *data;
+        return D3D_OK;
+
+    } else {
+        /* I don't actually know how windows handles this case. The only
+            * reason I don't just call FreePrivateData is because I want to
+            * guarantee SetPrivateData working when using LPUNKNOWN or data
+            * that is no larger than the old data. */
+        return E_FAIL;
+
+    }
+
+    return D3D_OK;
 }
+
 HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFGUID refguid, void* pData, DWORD* pSizeOfData) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    PrivateData **data;
+
+    TRACE("(%p) : %p %p %p\n", This, refguid, pData, pSizeOfData);
+    data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
+    if (*data == NULL) return D3DERR_NOTFOUND;
+
+
+#if 0 /* This may not be right. */
+    if (((*data)->flags & D3DSPD_VOLATILE)
+        && (*data)->uniquenessValue != This->uniquenessValue)
+        return DDERR_EXPIRED;
+#endif
+    if (*pSizeOfData < (*data)->size) {
+        *pSizeOfData = (*data)->size;
+        return D3DERR_MOREDATA;
+    }
+
+    if ((*data)->flags & D3DSPD_IUNKNOWN) {
+        *(LPUNKNOWN *)pData = (*data)->ptr.object;
+        IUnknown_AddRef((*data)->ptr.object);
+    }
+    else {
+        memcpy(pData, (*data)->ptr.data, (*data)->size);
+    }
+
+    return D3D_OK;
 }
 HRESULT WINAPI IWineD3DResourceImpl_FreePrivateData(IWineD3DResource *iface, REFGUID refguid) {
     IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    PrivateData **data;
+
+    TRACE("(%p) : %p\n", This, refguid);
+    /* TODO: move this code off into a linked list class */
+    data = IWineD3DResourceImpl_FindPrivateData(This, refguid);
+    if (*data == NULL) return D3DERR_NOTFOUND;
+
+    *data = (*data)->next;
+
+    if ((*data)->flags & D3DSPD_IUNKNOWN)
+    {
+        if ((*data)->ptr.object != NULL)
+            IUnknown_Release((*data)->ptr.object);
+    } else {
+        HeapFree(GetProcessHeap(), 0, (*data)->ptr.data);
+    }
+
+    HeapFree(GetProcessHeap(), 0, *data);
+
+    return D3D_OK;
 }
 
 /* Priority support is not implemented yet */
