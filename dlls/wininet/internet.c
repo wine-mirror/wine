@@ -3210,15 +3210,22 @@ lend:
     }
 }
 
-/***********************************************************************
+/**********************************************************
+ *	InternetQueryDataAvailable (WININET.@)
  *
+ * Determines how much data is available to be read.
+ *
+ * RETURNS
+ *   If there is data available then TRUE, otherwise if there
+ *   is not or an error occurred then FALSE. Use GetLastError() to
+ *   check for ERROR_NO_MORE_FILES to see if it was the former.
  */
 BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
                                 DWORD dwFlags, DWORD dwConext)
 {
     LPWININETHTTPREQW lpwhr;
-    INT retval = -1;
+    BOOL retval = FALSE;
     char buffer[4048];
 
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hFile );
@@ -3250,7 +3257,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     WININET_Release( &lpwhr->hdr );
 
     TRACE("<-- %i\n",retval);
-    return (retval+1);
+    return retval;
 }
 
 
