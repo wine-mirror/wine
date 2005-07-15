@@ -443,43 +443,39 @@ static void test_mf_PatternBrush(void)
     HeapFree (GetProcessHeap(), 0, orig_lb);
 }
 
-static INT CALLBACK EmfMmTextEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
+static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
 {
+    LPMETAFILEPICT lpMFP = (LPMETAFILEPICT)lpData;
     POINT mapping[2] = { { 0, 0 }, { 10, 10 } };
+    /* When using MM_TEXT Win9x does not update the mapping mode 
+     * until a record is played which actually outputs something */
+    PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
     LPtoDP(hdc, mapping, 2);
     trace("Meta record: iType = %ld, (%ld,%ld)-(%ld,%ld)\n", lpEMFR->iType, mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
     if (lpEMFR->iType == EMR_LINETO)
     {
-        INT x0 = 0;
-        INT y0 = 0;
-        INT x1 = (INT)floor(10 * 100.0 / LINE_X + 0.5);
-        INT y1 = (INT)floor(10 * 100.0 / LINE_Y + 0.5);
+        INT x0, y0, x1, y1;
+        if (!lpMFP || lpMFP->mm == MM_TEXT)
+        {
+            x0 = 0;
+            y0 = 0;
+            x1 = (INT)floor(10 * 100.0 / LINE_X + 0.5);
+            y1 = (INT)floor(10 * 100.0 / LINE_Y + 0.5);
+        }
+        else
+        {
+            ok(lpMFP->mm == MM_ANISOTROPIC, "mm=%ld\n", lpMFP->mm);
+            
+            x0 = MulDiv(0, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
+            y0 = MulDiv(0, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
+            x1 = MulDiv(10, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
+            y1 = MulDiv(10, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
+        }
         ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
             "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
             mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
             x0, y0, x1, y1);
     }
-    PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
-    return TRUE;
-}
-
-static INT CALLBACK EmfMmAnisotropicEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
-{
-    POINT mapping[2] = { { 0, 0 }, { 10, 10 } };
-    LPtoDP(hdc, mapping, 2);
-    trace("Meta record: iType = %ld, (%ld,%ld)-(%ld,%ld)\n", lpEMFR->iType, mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y);
-    if (lpEMFR->iType == EMR_LINETO)
-    {
-        INT x0 = MulDiv(0, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
-        INT y0 = MulDiv(0, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
-        INT x1 = MulDiv(10, GetDeviceCaps(hdc, HORZSIZE) * 100, GetDeviceCaps(hdc, HORZRES));
-        INT y1 = MulDiv(10, GetDeviceCaps(hdc, VERTSIZE) * 100, GetDeviceCaps(hdc, VERTRES));
-        ok(mapping[0].x == x0 && mapping[0].y == y0 && mapping[1].x == x1 && mapping[1].y == y1,
-            "(%ld,%ld)->(%ld,%ld), expected (%d,%d)->(%d,%d)\n",
-            mapping[0].x, mapping[0].y, mapping[1].x, mapping[1].y,
-            x0, y0, x1, y1);
-    }
-    PlayEnhMetaFileRecord(hdc, lpHTable, lpEMFR, nObj);
     return TRUE;
 }
 
@@ -518,7 +514,7 @@ static void test_mf_conversions(void)
         mfp.yExt = 100;
         mfp.hMF = NULL;
         hemf = create_converted_emf(&mfp);
-        EnumEnhMetaFile(hdcOffscreen, hemf, EmfMmAnisotropicEnumProc, NULL, &rect);
+        EnumEnhMetaFile(hdcOffscreen, hemf, EmfEnumProc, &mfp, &rect);
         DeleteEnhMetaFile(hemf);
         DeleteDC(hdcOffscreen);
     }
@@ -534,7 +530,7 @@ static void test_mf_conversions(void)
         mfp.yExt = 0;
         mfp.hMF = NULL;
         hemf = create_converted_emf(&mfp);
-        EnumEnhMetaFile(hdcOffscreen, hemf, EmfMmTextEnumProc, NULL, &rect);
+        EnumEnhMetaFile(hdcOffscreen, hemf, EmfEnumProc, &mfp, &rect);
         DeleteEnhMetaFile(hemf);
         DeleteDC(hdcOffscreen);
     }
@@ -545,7 +541,7 @@ static void test_mf_conversions(void)
         HENHMETAFILE hemf;
         RECT rect = { 0, 0, 100, 100 };
         hemf = create_converted_emf(NULL);
-        EnumEnhMetaFile(hdcOffscreen, hemf, EmfMmTextEnumProc, NULL, &rect);
+        EnumEnhMetaFile(hdcOffscreen, hemf, EmfEnumProc, NULL, &rect);
         DeleteEnhMetaFile(hemf);
         DeleteDC(hdcOffscreen);
     }
