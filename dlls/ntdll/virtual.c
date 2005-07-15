@@ -1097,10 +1097,10 @@ void virtual_init(void)
 /***********************************************************************
  *           VIRTUAL_HandleFault
  */
-DWORD VIRTUAL_HandleFault( LPCVOID addr )
+NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
 {
     FILE_VIEW *view;
-    DWORD ret = EXCEPTION_ACCESS_VIOLATION;
+    NTSTATUS ret = STATUS_ACCESS_VIOLATION;
 
     RtlEnterCriticalSection( &csVirtual );
     if ((view = VIRTUAL_FindView( addr )))

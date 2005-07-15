@@ -89,7 +89,7 @@ extern NTSTATUS FILE_GetNtStatus(void);
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 
 /* virtual memory */
-extern DWORD VIRTUAL_HandleFault(LPCVOID addr);
+extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
 extern void VIRTUAL_UseLargeAddressSpace(void);
 
