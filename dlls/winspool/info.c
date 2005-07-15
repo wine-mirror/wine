@@ -160,6 +160,9 @@ static const WCHAR CUPS_Port[] = {'C','U','P','S',':',0};
 static const WCHAR FILE_Port[] = {'F','I','L','E',':',0};
 static const WCHAR LPR_Port[] = {'L','P','R',':',0};
 
+static const WCHAR default_doc_title[] = {'L','o','c','a','l',' ','D','o','w','n','l','e','v','e','l',' ',
+                                          'D','o','c','u','m','e','n','t',0};
+
 static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode);
 static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
 				      DWORD Level, LPBYTE pDriverInfo,
@@ -181,7 +184,7 @@ static inline PWSTR asciitounicode( UNICODE_STRING * usBufferPtr, LPCSTR src )
     return NULL;
 }
             
-static LPWSTR strdupW(LPWSTR p)
+static LPWSTR strdupW(LPCWSTR p)
 {
     LPWSTR ret;
     DWORD len;
@@ -1328,7 +1331,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     len = strlenW(filename);
     job->filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
-    job->document_title = NULL;
+    job->document_title = strdupW(default_doc_title);
     list_add_tail(&printer->jobs, &job->entry);
 
     *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
@@ -4905,12 +4908,12 @@ static BOOL schedule_lpr(LPCWSTR printer_name, LPCWSTR filename)
 /*****************************************************************************
  *          schedule_cups
  */
-static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename)
+static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR document_title)
 {
 #if HAVE_CUPS_CUPS_H
     if(pcupsPrintFile)
     {
-        char *unixname, *queue;
+        char *unixname, *queue, *doc_titleA;
         DWORD len;
         BOOL ret;
 
@@ -4921,9 +4924,13 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename)
         queue = HeapAlloc(GetProcessHeap(), 0, len);
         WideCharToMultiByte(CP_ACP, 0, printer_name, -1, queue, len, NULL, NULL);
 
+        len = WideCharToMultiByte(CP_ACP, 0, document_title, -1, NULL, 0, NULL, NULL);
+        doc_titleA = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, document_title, -1, doc_titleA, len, NULL, NULL);
+
         TRACE("printing via cups\n");
-        /* FIXME: get job title from GetJob */
-        ret = pcupsPrintFile(queue, unixname, "Wine print job", 0, NULL);
+        ret = pcupsPrintFile(queue, unixname, doc_titleA, 0, NULL);
+        HeapFree(GetProcessHeap(), 0, doc_titleA);
         HeapFree(GetProcessHeap(), 0, queue);
         HeapFree(GetProcessHeap(), 0, unixname);
         return ret;
@@ -5058,7 +5065,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             }
             else if(!strncmpW(pi5->pPortName, CUPS_Port, strlenW(CUPS_Port)))
             {
-                schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename);
+                schedule_cups(pi5->pPortName + strlenW(CUPS_Port), job->filename, job->document_title);
             }
             else if(!strncmpW(pi5->pPortName, FILE_Port, strlenW(FILE_Port)))
             {
