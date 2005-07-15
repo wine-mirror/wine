@@ -32,9 +32,7 @@
 #include "winternl.h"
 #include "icm.h"
 
-#define LCMS_API_FUNCTION(f) extern typeof(f) * p##f;
-#include "lcms_api.h"
-#undef LCMS_API_FUNCTION
+#include "mscms_priv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 

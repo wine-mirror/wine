@@ -480,6 +480,15 @@ then
     LIBS="$saved_libs"
 fi
 
+dnl **** Check for LittleCMS ***
+AC_SUBST(LCMSLIBS,"")
+if test "$ac_cv_header_lcms_h" = "yes" -o "$ac_cv_header_lcms_lcms_h" = "yes"
+then
+    AC_CHECK_LIB(lcms, cmsOpenProfileFromFile,
+        [AC_DEFINE(HAVE_LCMS, 1, [Define if you have the LittleCMS development environment])
+         LCMSLIBS="-llcms"])
+fi
+
 dnl **** Check for FreeType 2 ****
 AC_CHECK_LIB(freetype,FT_Init_FreeType,ft_lib=yes,ft_lib=no,$X_LIBS)
 if test "$ft_lib" = "no"
@@ -1092,7 +1101,6 @@ then
   WINE_GET_SONAME(jpeg,jpeg_start_decompress)
   WINE_GET_SONAME(ungif,DGifOpen)
   WINE_GET_SONAME(gif,DGifOpen)
-  WINE_GET_SONAME(lcms,cmsOpenProfileFromFile)
   WINE_GET_SONAME(capi20,capi20_isinstalled)
 fi
 

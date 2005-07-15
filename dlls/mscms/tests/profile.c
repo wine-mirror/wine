@@ -1003,7 +1003,7 @@ START_TEST(profile)
     WCHAR profilefile1W[MAX_PATH], profilefile2W[MAX_PATH];
     WCHAR fileW[MAX_PATH];
 
-    hmscms = GetModuleHandleA( "mscms.dll" );
+    hmscms = LoadLibraryA( "mscms.dll" );
     if (!hmscms) return;
 
     if (!init_function_ptrs())
