@@ -235,8 +235,57 @@ static void test_info(void)
 #endif
 }
 
+static void test_unicode(void)
+{
+    DWORD hdlA, retvalA;
+    DWORD hdlW, retvalW;
+    BOOL retA,retW;
+    PVOID pVersionInfoA = NULL;
+    PVOID pVersionInfoW = NULL;
+    char mypathA[MAX_PATH] = "";
+    WCHAR mypathW[MAX_PATH];
+
+    /* If we call GetFileVersionInfoA on a system that supports Unicode (NT/W2K/XP/W2K3 by default)
+     * then the versioninfo will contain Unicode strings.
+     * Wine however always converts a VersionInfo32 to VersionInfo16 when called through GetFileVersionInfoA
+     * regardless of Windows version
+     * The test is to call both the A and W versions, which should have the same Version Information,
+     * on systems that support both calls.
+     */
+
+    /* First get the versioninfo via the W versions */
+    GetModuleFileNameW(NULL, mypathW, MAX_PATH);
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        trace("GetModuleFileNameW not existing on this platform, skipping rest of test\n");
+        return;
+    }
+
+    retvalW = GetFileVersionInfoSizeW( mypathW, &hdlW);
+    pVersionInfoW = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalW );
+    retW = GetFileVersionInfoW( mypathW, 0, retvalW, pVersionInfoW );
+
+    /* And now via the A versions */
+    GetModuleFileNameA(NULL, mypathA, MAX_PATH);
+    retvalA = GetFileVersionInfoSizeA( mypathA, &hdlA);
+    pVersionInfoA = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, retvalA );
+    retA = GetFileVersionInfoA( mypathA, 0, retvalA, pVersionInfoA );
+
+    ok( retvalA == retvalW, "The size of the struct should be the same for both A/W calls, it is (%ld) vs. (%ld)\n",
+                            retvalA, retvalW);
+
+    todo_wine
+    {
+        ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
+    }
+
+    HeapFree( GetProcessHeap(), 0, pVersionInfoA);
+    HeapFree( GetProcessHeap(), 0, pVersionInfoW);
+}
+
 START_TEST(info)
 {
     test_info_size();
     test_info();
+    test_unicode();
 }
