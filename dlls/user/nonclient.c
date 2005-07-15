@@ -197,6 +197,67 @@ static HICON NC_IconForWindow( HWND hwnd )
     return hIcon;
 }
 
+/* Draws the bar part(ie the big rectangle) of the caption */
+static void NC_DrawCaptionBar (HDC hdc, const RECT *rect, DWORD dwStyle, 
+                               BOOL active, BOOL gradient)
+{
+    if (gradient)
+    {
+        TRIVERTEX vertices[6];
+        DWORD colLeft = 
+            GetSysColor (active ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION);
+        DWORD colRight = 
+            GetSysColor (active ? COLOR_GRADIENTACTIVECAPTION 
+                                : COLOR_GRADIENTINACTIVECAPTION);
+        int v;
+        int buttonsAreaSize = GetSystemMetrics(SM_CYCAPTION) - 1;
+        static GRADIENT_RECT mesh[] = {{0, 1}, {2, 3}, {4, 5}};
+    
+        for (v = 0; v < 3; v++)
+        {
+            vertices[v].Red = GetRValue (colLeft) << 8;
+            vertices[v].Green = GetGValue (colLeft) << 8;
+            vertices[v].Blue = GetBValue (colLeft) << 8;
+            vertices[v].Alpha = 0x8000;
+            vertices[v+3].Red = GetRValue (colRight) << 8;
+            vertices[v+3].Green = GetGValue (colRight) << 8;
+            vertices[v+3].Blue = GetBValue (colRight) << 8;
+            vertices[v+3].Alpha = 0x8000;
+        }
+    
+        if ((dwStyle & WS_SYSMENU) 
+            && ((dwStyle & WS_MAXIMIZEBOX) || (dwStyle & WS_MINIMIZEBOX)))
+            buttonsAreaSize += 2 * (GetSystemMetrics(SM_CXSIZE) + 1);
+        
+        /* area behind icon; solid filled with left color */
+        vertices[0].x = rect->left;
+        vertices[0].y = rect->top;
+        if (dwStyle & WS_SYSMENU) 
+            vertices[1].x = 
+                min (rect->left + GetSystemMetrics(SM_CXSMICON), rect->right);
+        else
+            vertices[1].x = vertices[0].x;
+        vertices[1].y = rect->bottom;
+        
+        /* area behind text; gradient */
+        vertices[2].x = vertices[1].x;
+        vertices[2].y = rect->top;
+        vertices[3].x = max (vertices[2].x, rect->right - buttonsAreaSize);
+        vertices[3].y = rect->bottom;
+        
+        /* area behind buttons; solid filled with right color */
+        vertices[4].x = vertices[3].x;
+        vertices[4].y = rect->top;
+        vertices[5].x = rect->right;
+        vertices[5].y = rect->bottom;
+        
+        GdiGradientFill (hdc, vertices, 6, mesh, 3, GRADIENT_FILL_RECT_H);
+    }
+    else
+        FillRect (hdc, rect, GetSysColorBrush (active ?
+                  COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION));
+}
+
 /***********************************************************************
  *		DrawCaption (USER32.@) Draws a caption bar
  *
@@ -214,7 +275,7 @@ static HICON NC_IconForWindow( HWND hwnd )
 BOOL WINAPI
 DrawCaption (HWND hwnd, HDC hdc, const RECT *lpRect, UINT uFlags)
 {
-    return DrawCaptionTempA (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x1F);
+    return DrawCaptionTempW (hwnd, hdc, lpRect, 0, 0, NULL, uFlags & 0x103F);
 }
 
 
@@ -265,8 +326,8 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
         }
     }
     else {
-        FillRect (hdc, &rc, GetSysColorBrush ((uFlags & DC_ACTIVE) ?
-                    COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION));
+        DWORD style = GetWindowLongW (hwnd, GWL_STYLE);
+        NC_DrawCaptionBar (hdc, rect, style, uFlags & DC_ACTIVE, uFlags & DC_GRADIENT);
     }
 
 
@@ -864,6 +925,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
     WCHAR buffer[256];
     HPEN  hPrevPen;
     HMENU hSysMenu;
+    BOOL gradient = FALSE;
 
     hPrevPen = SelectObject( hdc, SYSCOLOR_GetPen(
                      ((exStyle & (WS_EX_STATICEDGE|WS_EX_CLIENTEDGE|
@@ -874,8 +936,8 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
     SelectObject( hdc, hPrevPen );
     r.bottom--;
 
-    FillRect( hdc, &r, GetSysColorBrush(active ? COLOR_ACTIVECAPTION :
-                                            COLOR_INACTIVECAPTION) );
+    SystemParametersInfoW (SPI_GETGRADIENTCAPTIONS, 0, &gradient, 0);
+    NC_DrawCaptionBar (hdc, rect, style, active, gradient);
 
     if ((style & WS_SYSMENU) && !(exStyle & WS_EX_TOOLWINDOW)) {
         if (NC_DrawSysButton (hwnd, hdc, FALSE))
