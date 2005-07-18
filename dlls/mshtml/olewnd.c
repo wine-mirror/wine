@@ -71,8 +71,10 @@ static HRESULT WINAPI OleInPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *
     if(!phwnd)
         return E_INVALIDARG;
 
-    if(!This->in_place_active)
+    if(!This->in_place_active) {
+        *phwnd = NULL;
         return E_FAIL;
+    }
 
     *phwnd = This->hwnd;
     return S_OK;

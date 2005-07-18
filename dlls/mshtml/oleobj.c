@@ -96,18 +96,30 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
 
-        hres = IDocHostUIHandler_GetOptionKeyPath(pDocHostUIHandler, &key_path, 0);
-        if(hres == S_OK && key_path && key_path[0])
-            /* FIXME: use key_path */
-            TRACE("key_path = %s\n", debugstr_w(key_path));
+        if(!This->has_key_path) {
+            hres = IDocHostUIHandler_GetOptionKeyPath(pDocHostUIHandler, &key_path, 0);
+            if(hres == S_OK && key_path) {
+                if(key_path[0]) {
+                    /* FIXME: use key_path */
+                    TRACE("key_path = %s\n", debugstr_w(key_path));
+                }
+                CoTaskMemFree(key_path);
+            }
 
-        hres = IDocHostUIHandler_QueryInterface(pDocHostUIHandler, &IID_IDocHostUIHandler2,
-                (void**)&pDocHostUIHandler2);
-        if(SUCCEEDED(hres)) {
-            /*FIXME: use override_key_path */
-            hres = IDocHostUIHandler2_GetOverrideKeyPath(pDocHostUIHandler2, &override_key_path, 0);
-            if(hres == S_OK && override_key_path && override_key_path[0])
-                FIXME("override_key_path = %s\n", debugstr_w(override_key_path));
+            hres = IDocHostUIHandler_QueryInterface(pDocHostUIHandler, &IID_IDocHostUIHandler2,
+                    (void**)&pDocHostUIHandler2);
+            if(SUCCEEDED(hres)) {
+                hres = IDocHostUIHandler2_GetOverrideKeyPath(pDocHostUIHandler2, &override_key_path, 0);
+                if(hres == S_OK && override_key_path && override_key_path[0]) {
+                    if(override_key_path[0]) {
+                        /*FIXME: use override_key_path */
+                        TRACE("override_key_path = %s\n", debugstr_w(override_key_path));
+                    }
+                    CoTaskMemFree(override_key_path);
+                }
+            }
+
+            This->has_key_path = TRUE;
         }
     }
 
@@ -503,4 +515,6 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
 
     This->client = NULL;
     This->hostui = NULL;
+
+    This->has_key_path = FALSE;
 }

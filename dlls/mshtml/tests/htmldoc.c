@@ -40,12 +40,12 @@
     called_ ## func = TRUE
 
 #define CHECK_CALLED(func) \
-    ok(called_ ## func, "unexpected call\n"); \
+    ok(called_ ## func, "expected " #func "\n"); \
     expect_ ## func = called_ ## func = FALSE
 
 static IUnknown *htmldoc_unk = NULL;
 static IOleDocumentView *view = NULL;
-static HWND container_hwnd = NULL, hwnd = NULL;
+static HWND container_hwnd = NULL, hwnd = NULL, last_hwnd = NULL;
 
 DEFINE_EXPECT(LockContainer);
 DEFINE_EXPECT(SetActiveObject);
@@ -525,6 +525,8 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
                 IOleInPlaceActiveObject_GetWindow(activeobj, &hwnd);
                 ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
                 ok(hwnd != NULL, "hwnd == NULL\n");
+                if(last_hwnd)
+                    ok(hwnd == last_hwnd, "hwnd != last_hwnd\n");
             }
 
             hres = IOleDocumentView_UIActivate(view, TRUE);
@@ -927,7 +929,7 @@ static void test_HTMLDocument(void)
     if(activeobject) {
         HWND tmp_hwnd;
         hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
-        ok(hres == E_FAIL, "GetWindow failed: %08lx\n", hres);
+        ok(hres == E_FAIL, "GetWindow returned %08lx, expected E_FAIL\n", hres);
         ok(IsWindow(hwnd), "hwnd is destroyed\n");
     }
     
@@ -939,8 +941,97 @@ static void test_HTMLDocument(void)
     if(windowlessobj) {
         hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
         ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+    }
 
-        IOleInPlaceObjectWindowless_Release(windowlessobj);
+    if(view) {
+        IOleInPlaceSite *inplacesite = (IOleInPlaceSite*)0xff00ff00;
+
+        hres = IOleDocumentView_Show(view, FALSE);
+        ok(hres == S_OK, "Show failed: %08lx\n", hres);
+
+        hres = IOleDocumentView_CloseView(view, 0);
+        ok(hres == S_OK, "CloseVire failed: %08lx\n", hres);
+
+        hres = IOleDocumentView_SetInPlaceSite(view, NULL);
+        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+
+        hres = IOleDocumentView_GetInPlaceSite(view, &inplacesite);
+        ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
+        ok(inplacesite == NULL, "inplacesite=%p, expected NULL\n", inplacesite);
+    }
+
+    if(oleobj) {
+        SET_EXPECT(GetContainer);
+        SET_EXPECT(LockContainer);
+        expect_LockContainer_fLock = FALSE;
+        hres = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
+        ok(hres == S_OK, "Close failed: %08lx\n", hres);
+        CHECK_CALLED(GetContainer);
+        CHECK_CALLED(LockContainer);
+
+        if(view)
+            IOleDocumentView_Release(view);
+
+        /* Activate HTMLDocument again */
+        last_hwnd = hwnd;
+
+        hres = IOleObject_GetClientSite(oleobj, &clientsite);
+        ok(clientsite == &ClientSite, "clientsite=%p, expected %p\n", clientsite, &ClientSite);
+
+        hres = IOleObject_SetClientSite(oleobj, NULL);
+        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+
+        hres = IOleObject_GetClientSite(oleobj, &clientsite);
+        ok(hres == S_OK, "GetClientSite failed: %08lx\n", hres);
+        ok(clientsite == NULL, "GetClientSite() = %p, expected NULL\n", clientsite);
+
+        SET_EXPECT(GetHostInfo);
+        SET_EXPECT(GetWindow);
+        hres = IOleObject_SetClientSite(oleobj, &ClientSite);
+        ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
+        CHECK_CALLED(GetHostInfo);
+        CHECK_CALLED(GetWindow);
+
+        if(windowlessobj) {
+            hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
+            ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+        }
+
+        SET_EXPECT(GetContainer);
+        SET_EXPECT(LockContainer);
+        SET_EXPECT(ActivateMe);
+        expect_LockContainer_fLock = TRUE;
+        hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite, -1, container_hwnd, &rect);
+        ok(hres == S_OK, "DoVerb failed: %08lx\n", hres);
+        CHECK_CALLED(GetContainer);
+        CHECK_CALLED(LockContainer);
+        CHECK_CALLED(ActivateMe);
+    }
+
+    if(activeobject) {
+        HWND tmp_hwnd;
+        hres = IOleInPlaceActiveObject_GetWindow(activeobject, &tmp_hwnd);
+        ok(hres == S_OK, "GetWindow failed: %08lx\n", hres);
+        ok(tmp_hwnd == hwnd, "tmp_hwnd=%p, expected %p\n", tmp_hwnd, hwnd);
+    }
+
+    if(view) {
+        SET_EXPECT(SetActiveObject);
+        SET_EXPECT(HideUI);
+        SET_EXPECT(OnUIDeactivate);
+        expect_SetActiveObject_active = FALSE;
+        hres = IOleDocumentView_UIActivate(view, FALSE);
+        ok(hres == S_OK, "UIActivate failed: %08lx\n", hres);
+        CHECK_CALLED(SetActiveObject);
+        CHECK_CALLED(HideUI);
+        CHECK_CALLED(OnUIDeactivate);
+    }
+
+    if(windowlessobj) {
+        SET_EXPECT(OnInPlaceDeactivate);
+        hres = IOleInPlaceObjectWindowless_InPlaceDeactivate(windowlessobj);
+        ok(hres == S_OK, "InPlaceDeactivate failed: %08lx\n", hres);
+        CHECK_CALLED(OnInPlaceDeactivate);
     }
 
     if(view) {
@@ -976,6 +1067,8 @@ static void test_HTMLDocument(void)
         ok(hres == S_OK, "SetClientSite failed: %08lx\n", hres);
     }
 
+    if(windowlessobj)
+        IOleInPlaceObjectWindowless_Release(windowlessobj);
     if(oleobj)
         IOleObject_Release(oleobj);
     if(view)

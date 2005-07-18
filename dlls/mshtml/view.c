@@ -221,7 +221,7 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
     IOleInPlaceFrame *pIPFrame;
     RECT posrect, cliprect;
     OLEINPLACEFRAMEINFO frameinfo;
-    HWND parent_hwnd, hwnd;
+    HWND parent_hwnd;
 
     TRACE("(%p)->(%x)\n", This, fUIActivate);
 
@@ -262,10 +262,22 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
 
         TRACE("got parent window %p\n", parent_hwnd);
 
-        hwnd = CreateWindowExW(0, wszInternetExplorer_Server, NULL,
-                WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
-                parent_hwnd, NULL, hInst, This);
+        if(This->hwnd) {
+            if(GetParent(This->hwnd) != parent_hwnd)
+                SetParent(This->hwnd, parent_hwnd);
+            SetWindowPos(This->hwnd, HWND_TOP,
+                    posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
+                    SWP_NOACTIVATE | SWP_SHOWWINDOW);
+        }else {
+            This->hwnd = CreateWindowExW(0, wszInternetExplorer_Server, NULL,
+                    WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                    posrect.left, posrect.top, posrect.right-posrect.left, posrect.bottom-posrect.top,
+                    parent_hwnd, NULL, hInst, This);
+            SetWindowPos(This->hwnd, NULL, 0, 0, 0, 0,
+                    SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
+            RedrawWindow(This->hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
+            SetFocus(This->hwnd);
+        }
 
         This->in_place_active = TRUE;
         hres = IOleInPlaceSite_OnInPlaceActivate(This->ipsite);
@@ -274,11 +286,6 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
             This->in_place_active = FALSE;
             return hres;
         }
-
-        SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
-                SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW | SWP_NOACTIVATE | SWP_SHOWWINDOW);
-        RedrawWindow(hwnd, NULL, NULL, RDW_INVALIDATE | RDW_NOERASE | RDW_ALLCHILDREN);
-        SetFocus(hwnd);
 
         /* NOTE:
          * Windows implementation calls:
@@ -293,13 +300,11 @@ static HRESULT WINAPI OleDocumentView_UIActivate(IOleDocumentView *iface, BOOL f
         }else {
             FIXME("OnUIActivate failed: %08lx\n", hres);
             This->ui_active = FALSE;
-            DestroyWindow(hwnd);
             return hres;
         }
         if(This->frame)
             IOleInPlaceFrame_Release(This->frame);
         This->frame = pIPFrame;
-        This->hwnd = hwnd;
 
         hres = IDocHostUIHandler_ShowUI(This->hostui, 0, ACTOBJ(This), CMDTARGET(This),
                 pIPFrame, NULL);

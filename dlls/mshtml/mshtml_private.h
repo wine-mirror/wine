@@ -41,6 +41,7 @@ typedef struct {
 
     BOOL in_place_active;
     BOOL ui_active;
+    BOOL has_key_path;
 } HTMLDocument;
 
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
