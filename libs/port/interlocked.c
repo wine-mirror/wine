@@ -101,6 +101,35 @@ __declspec(naked) long interlocked_xchg_add( long *dest, long incr )
 # error You must implement the interlocked* functions for your compiler
 #endif
 
+#elif defined(__x86_64__)
+
+#ifdef __GNUC__
+
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg,
+                  "mov %edx, %eax\n\t"
+                  "lock cmpxchgl %esi,(%rdi)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
+                  "mov %rdx, %rax\n\t"
+                  "lock cmpxchgq %rsi,(%rdi)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_xchg,
+                  "mov %esi, %eax\n\t"
+                  "lock xchgl %eax, (%rdi)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
+                  "mov %rsi, %rax\n\t"
+                  "lock xchgq %rax,(%rdi)\n\t"
+                  "ret");
+__ASM_GLOBAL_FUNC(interlocked_xchg_add,
+                  "mov %esi, %eax\n\t"
+                  "lock xaddl %eax, (%rdi)\n\t"
+                  "ret");
+
+#else
+# error You must implement the interlocked* functions for your compiler
+#endif
+
 #elif defined(__powerpc__)
 void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
 {
