@@ -1972,6 +1972,7 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	if (lprcState) *lprcState = State;
 	TRACE("    - state=%s\n", debugrect(&State));
     }
+    else  State.right = 0;
 
     /************************************************************/
     /* compute ICON bounding box (ala LVM_GETITEMRECT)          */
@@ -1994,7 +1995,7 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
-	    Icon.left = State.right;
+	    Icon.left   = State.right;
 	    Icon.top    = Box.top;
 	    Icon.right  = Icon.left;
 	    if (infoPtr->himlSmall &&
@@ -2006,6 +2007,7 @@ static void LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVI
 	if(lprcIcon) *lprcIcon = Icon;
 	TRACE("    - icon=%s\n", debugrect(&Icon));
      }
+     else Icon.right = 0;
 
     /************************************************************/
     /* compute LABEL bounding box (ala LVM_GETITEMRECT)         */
@@ -4816,6 +4818,7 @@ static INT LISTVIEW_FindItemW(LISTVIEW_INFO *infoPtr, INT nStart,
 	}
 	bNearest = TRUE;
     }
+    else Destination.x = Destination.y = 0;
 
     /* if LVFI_PARAM is specified, all other flags are ignored */
     if (lpFindInfo->flags & LVFI_PARAM)
