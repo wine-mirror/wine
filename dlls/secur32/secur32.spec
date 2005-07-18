@@ -23,8 +23,8 @@
 @ stdcall GetComputerObjectNameA(long ptr ptr)
 @ stdcall GetComputerObjectNameW(long ptr ptr)
 @ stub GetSecurityUserInfo
-@ stub GetUserNameExA
-@ stub GetUserNameExW
+@ stdcall GetUserNameExA(long ptr ptr)
+@ stdcall GetUserNameExW(long ptr ptr)
 @ stdcall ImpersonateSecurityContext(ptr)
 @ stdcall ImportSecurityContextA(str ptr ptr ptr)
 @ stdcall ImportSecurityContextW(wstr ptr ptr ptr)
@@ -32,9 +32,9 @@
 @ stdcall InitSecurityInterfaceW()
 @ stdcall InitializeSecurityContextA(ptr ptr str long long long ptr long ptr ptr ptr ptr)
 @ stdcall InitializeSecurityContextW(ptr ptr wstr long long long ptr long ptr ptr ptr ptr)
-@ stub LsaCallAuthenticationPackage
-@ stub LsaConnectUntrusted
-@ stub LsaDeregisterLogonProcess
+@ stdcall LsaCallAuthenticationPackage(long long ptr long ptr ptr ptr)
+@ stdcall LsaConnectUntrusted(long)
+@ stdcall LsaDeregisterLogonProcess(long)
 @ stub LsaEnumerateLogonSessions
 @ stub LsaFreeReturnBuffer
 @ stub LsaGetLogonSessionData
@@ -67,7 +67,7 @@
 @ stub SecpFreeMemory
 @ stub SecpTranslateName
 @ stub SecpTranslateNameEx
-@ stub TranslateNameA
-@ stub TranslateNameW
+@ stdcall TranslateNameA(str long long ptr ptr)
+@ stdcall TranslateNameW(wstr long long ptr ptr)
 @ stub UnsealMessage
 @ stdcall VerifySignature(ptr ptr long ptr)

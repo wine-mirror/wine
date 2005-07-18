@@ -27,6 +27,7 @@
 #include "sspi.h"
 #include "secur32_priv.h"
 #include "secext.h"
+#include "ntsecapi.h"
 #include "thunks.h"
 
 #include "wine/debug.h"
@@ -937,6 +938,63 @@ BOOLEAN WINAPI GetComputerObjectNameW(
   EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
     FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
+    return FALSE;
+}
+
+BOOLEAN WINAPI GetUserNameExA(
+  EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
+{
+    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
+    return FALSE;
+}
+
+BOOLEAN WINAPI GetUserNameExW(
+  EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
+{
+    FIXME("%d %p %p\n", NameFormat, lpNameBuffer, nSize);
+    return FALSE;
+}
+
+NTSTATUS WINAPI LsaCallAuthenticationPackage(
+  HANDLE LsaHandle, ULONG AuthenticationPackage, PVOID ProtocolSubmitBuffer,
+  ULONG SubmitBufferLength, PVOID* ProtocolReturnBuffer, PULONG ReturnBufferLength,
+  NTSTATUS *ProtocolStatus)
+{
+    FIXME("%p %ld %p %ld %p %p %p\n", LsaHandle, AuthenticationPackage,
+          ProtocolSubmitBuffer, SubmitBufferLength, ProtocolReturnBuffer,
+          ReturnBufferLength, ProtocolStatus);
+    return 0;
+}
+
+NTSTATUS WINAPI LsaConnectUntrusted(PHANDLE LsaHandle)
+{
+    FIXME("%p\n", LsaHandle);
+    return 0;
+}
+
+NTSTATUS WINAPI LsaDeregisterLogonProcess(HANDLE LsaHandle)
+{
+    FIXME("%p\n", LsaHandle);
+    return 0;
+}
+
+BOOLEAN WINAPI TranslateNameA(
+  LPCSTR lpAccountName, EXTENDED_NAME_FORMAT AccountNameFormat,
+  EXTENDED_NAME_FORMAT DesiredNameFormat, LPSTR lpTranslatedName,
+  PULONG nSize)
+{
+    FIXME("%p %d %d %p %p\n", lpAccountName, AccountNameFormat,
+          DesiredNameFormat, lpTranslatedName, nSize);
+    return FALSE;
+}
+
+BOOLEAN WINAPI TranslateNameW(
+  LPCWSTR lpAccountName, EXTENDED_NAME_FORMAT AccountNameFormat,
+  EXTENDED_NAME_FORMAT DesiredNameFormat, LPWSTR lpTranslatedName,
+  PULONG nSize)
+{
+    FIXME("%p %d %d %p %p\n", lpAccountName, AccountNameFormat,
+          DesiredNameFormat, lpTranslatedName, nSize);
     return FALSE;
 }
 
