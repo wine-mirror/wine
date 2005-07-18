@@ -4854,15 +4854,183 @@ BOOL WINAPI FreePrinterNotifyInfo( PPRINTER_NOTIFY_INFO pPrinterNotifyInfo )
 }
 
 /*****************************************************************************
+ *          string_to_buf
+ *
+ * Copies a unicode string into a buffer.  The buffer will either contain unicode or
+ * ansi depending on the unicode parameter.
+ */
+static BOOL string_to_buf(LPCWSTR str, LPBYTE ptr, DWORD cb, DWORD *size, BOOL unicode)
+{
+    if(!str)
+    {
+        *size = 0;
+        return TRUE;
+    }
+
+    if(unicode)
+    {
+        *size = (strlenW(str) + 1) * sizeof(WCHAR);
+        if(*size <= cb)
+        {
+            memcpy(ptr, str, *size);
+            return TRUE;
+        }
+        return FALSE;
+    }
+    else
+    {
+        *size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+        if(*size <= cb)
+        {
+            WideCharToMultiByte(CP_ACP, 0, str, -1, ptr, *size, NULL, NULL);
+            return TRUE;
+        }
+        return FALSE;
+    }
+}
+
+/*****************************************************************************
+ *          get_job_info_1
+ */
+static BOOL get_job_info_1(job_t *job, JOB_INFO_1W *ji1, LPBYTE buf, DWORD cbBuf,
+                           LPDWORD pcbNeeded, BOOL unicode)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    if(space)
+    {
+        ji1->JobId = job->job_id;
+    }
+
+    string_to_buf(job->document_title, ptr, left, &size, unicode);
+    if(space && size <= left)
+    {
+        ji1->pDocument = (LPWSTR)ptr;
+        ptr += size;
+        left -= size;
+    }
+    else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    return space;
+}
+
+/*****************************************************************************
+ *          get_job_info_2
+ */
+static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf,
+                           LPDWORD pcbNeeded, BOOL unicode)
+{
+    DWORD size, left = cbBuf;
+    BOOL space = (cbBuf > 0);
+    LPBYTE ptr = buf;
+
+    *pcbNeeded = 0;
+
+    if(space)
+    {
+        ji2->JobId = job->job_id;
+    }
+
+    string_to_buf(job->document_title, ptr, left, &size, unicode);
+    if(space && size <= left)
+    {
+        ji2->pDocument = (LPWSTR)ptr;
+        ptr += size;
+        left -= size;
+    }
+    else
+        space = FALSE;
+    *pcbNeeded += size;
+
+    return space;
+}
+
+/*****************************************************************************
+ *          get_job_info
+ */
+static BOOL get_job_info(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
+                         DWORD cbBuf, LPDWORD pcbNeeded, BOOL unicode)
+{
+    BOOL ret = FALSE;
+    DWORD needed = 0, size;
+    job_t *job;
+    LPBYTE ptr = pJob;
+
+    TRACE("%p %ld %ld %p %ld %p\n", hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded);
+
+    EnterCriticalSection(&printer_handles_cs);
+    job = get_job(hPrinter, JobId);
+    if(!job)
+        goto end;
+
+    switch(Level)
+    {
+    case 1:
+        size = sizeof(JOB_INFO_1W);
+        if(cbBuf >= size)
+        {
+            cbBuf -= size;
+            ptr += size;
+            memset(pJob, 0, size);
+        }
+        else
+            cbBuf = 0;
+        ret = get_job_info_1(job, (JOB_INFO_1W *)pJob, ptr, cbBuf, &needed, unicode);
+        needed += size;
+        break;
+
+    case 2:
+        size = sizeof(JOB_INFO_2W);
+        if(cbBuf >= size)
+        {
+            cbBuf -= size;
+            ptr += size;
+            memset(pJob, 0, size);
+        }
+        else
+            cbBuf = 0;
+        ret = get_job_info_2(job, (JOB_INFO_2W *)pJob, ptr, cbBuf, &needed, unicode);
+        needed += size;
+        break;
+
+    case 3:
+        size = sizeof(JOB_INFO_3);
+        if(cbBuf >= size)
+        {
+            cbBuf -= size;
+            memset(pJob, 0, size);
+            ret = TRUE;
+        }
+        else
+            cbBuf = 0;
+        needed = size;
+        break;
+
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        goto end;
+    }
+    if(pcbNeeded)
+        *pcbNeeded = needed;
+end:
+    LeaveCriticalSection(&printer_handles_cs);
+    return ret;
+}
+
+/*****************************************************************************
  *          GetJobA [WINSPOOL.@]
  *
  */
 BOOL WINAPI GetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
-                           DWORD cbBuf, LPDWORD pcbNeeded)
+                    DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("Stub: %p %ld %ld %p %ld %p\n", hPrinter, JobId, Level, pJob,
-          cbBuf, pcbNeeded);
-    return FALSE;
+    return get_job_info(hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded, FALSE);
 }
 
 /*****************************************************************************
@@ -4870,11 +5038,9 @@ BOOL WINAPI GetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
  *
  */
 BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
-                           DWORD cbBuf, LPDWORD pcbNeeded)
+                    DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME("Stub: %p %ld %ld %p %ld %p\n", hPrinter, JobId, Level, pJob,
-          cbBuf, pcbNeeded);
-    return FALSE;
+    return get_job_info(hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded, TRUE);
 }
 
 /*****************************************************************************
