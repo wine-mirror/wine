@@ -66,11 +66,11 @@ static void create_test_entries(void)
     SetEnvironmentVariableA("LONGSYSTEMVAR", "bar");
     SetEnvironmentVariableA("FOO", "ImARatherLongButIndeedNeededString");
 
-    ok(!RegSetValueExA(hkey_main,"Test1",0,REG_EXPAND_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
+    ok(!RegSetValueExA(hkey_main,"TP1_EXP_SZ",0,REG_EXPAND_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"Test2",0,REG_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
+    ok(!RegSetValueExA(hkey_main,"TP1_SZ",0,REG_SZ, (LPBYTE)sTestpath1, strlen(sTestpath1)+1), 
         "RegSetValueExA failed\n");
-    ok(!RegSetValueExA(hkey_main,"Test3",0,REG_EXPAND_SZ, (LPBYTE)sTestpath2, strlen(sTestpath2)+1), 
+    ok(!RegSetValueExA(hkey_main,"TP2_EXP_SZ",0,REG_EXPAND_SZ, (LPBYTE)sTestpath2, strlen(sTestpath2)+1), 
         "RegSetValueExA failed\n");
     ok(!RegSetValueExA(hkey_main,"DWORD",0,REG_DWORD, (LPBYTE)qw, 4),
         "RegSetValueExA failed\n");
@@ -257,7 +257,7 @@ static void test_query_value_ex(void)
     DWORD size;
     DWORD type;
     
-    ret = RegQueryValueExA(hkey_main, "Test2", NULL, &type, NULL, &size);
+    ret = RegQueryValueExA(hkey_main, "TP1_SZ", NULL, &type, NULL, &size);
     ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %ld\n", ret);
     ok(size == strlen(sTestpath1) + 1, "(%ld,%ld)\n", (DWORD)strlen(sTestpath1) + 1, size);
     ok(type == REG_SZ, "type %ld is not REG_SZ\n", type);
@@ -285,7 +285,7 @@ static void test_get_value(void)
     pRegGetValueA = (PVOID)GetProcAddress(hadvapi32, "RegGetValueA");
     if(!pRegGetValueA) 
         return;
-    
+
     /* Query REG_DWORD using RRF_RT_REG_DWORD (ok) */
     size = type = dw = 0xdeadbeef;
     ret = pRegGetValueA(hkey_main, NULL, "DWORD", RRF_RT_REG_DWORD, &type, &dw, &size);
@@ -358,43 +358,48 @@ static void test_get_value(void)
     ok(qw[0] == 0x12345678 &&
        qw[1] == 0x87654321, "qw={%ld,%ld}\n", qw[0], qw[1]);
 
-    /* This silly behaviour is not documented but since expanding REG_EXPAND_SZ
-     * values is one the two major features (with type restrictions being the
-     * other one) of this function and it doesn't work as one might expect we
-     * better test it... */
-
-    /* RRF_RT_REG_EXPAND_SZ without RRF_NOEXPAND is not allowed */
-    ret = pRegGetValueA(hkey_main, NULL, "Test1", RRF_RT_REG_EXPAND_SZ, NULL, NULL, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER, "ret=%ld\n", ret);
-    /* Instead you have to use RRF_RT_REG_SZ to expand a REG_EXPAND_SZ */
+    /* Query REG_SZ using RRF_RT_REG_SZ (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
-    ret = pRegGetValueA(hkey_main, NULL, "Test1", RRF_RT_REG_SZ, &type, buf, &size);
-    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
-#if 0
-    /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded length + 1 here. */
-    ok(size == strlen(expanded)+1, "strlen(expanded)=%ld size=%ld\n", strlen(expanded), size);
-#endif
-    ok(type == REG_SZ, "type=%ld\n", type);
-    ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
-
-    /* Query REG_SZ using RRF_RT_REG_SZ (should not expand it) */
-    buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
-    ret = pRegGetValueA(hkey_main, NULL, "Test2", RRF_RT_REG_SZ, &type, buf, &size);
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
     ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", strlen(sTestpath1), size);
     ok(type == REG_SZ, "type=%ld\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
 
-    /* With RRF_RT_REG_SZ however, RRF_NOEXPAND is not allowed */
-    ret = pRegGetValueA(hkey_main, NULL, "Test1", RRF_RT_REG_SZ|RRF_NOEXPAND, NULL, NULL, NULL);
-    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%ld\n", ret);
-    /* So we use RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND to get the unexpanded REG_EXPAND_SZ */
+    /* Query REG_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (ok) */
     buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
-    ret = pRegGetValueA(hkey_main, NULL, "Test1", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, &type, buf, &size);
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, &type, buf, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
+    ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", strlen(sTestpath1), size);
+    ok(type == REG_SZ, "type=%ld\n", type);
+    ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
+
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ (ok, expands) */
+    buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ, &type, buf, &size);
+    ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
+#if 0
+     /* At least v5.2.3790.1830 (2003 SP1) returns the unexpanded length + 1 here. */
+     ok(size == strlen(expanded)+1, "strlen(expanded)=%ld size=%ld\n", strlen(expanded), size);
+#endif
+    ok(type == REG_SZ, "type=%ld\n", type);
+    ok(!strcmp(expanded, buf), "expanded=\"%s\" buf=\"%s\"\n", expanded, buf);
+    
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND (ok, doesn't expand) */
+    buf[0] = 0; type = 0xdeadbeef; size = sizeof(buf);
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ|RRF_NOEXPAND, &type, buf, &size);
     ok(ret == ERROR_SUCCESS, "ret=%ld\n", ret);
     ok(size == strlen(sTestpath1)+1, "strlen(sTestpath1)=%d size=%ld\n", strlen(sTestpath1), size);
     ok(type == REG_EXPAND_SZ, "type=%ld\n", type);
     ok(!strcmp(sTestpath1, buf), "sTestpath=\"%s\" buf=\"%s\"\n", sTestpath1, buf);
+    
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_SZ|RRF_NOEXPAND (type mismatch) */
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_SZ|RRF_NOEXPAND, NULL, NULL, NULL);
+    ok(ret == ERROR_UNSUPPORTED_TYPE, "ret=%ld\n", ret);
+
+    /* Query REG_EXPAND_SZ using RRF_RT_REG_EXPAND_SZ (not allowed without RRF_NOEXPAND) */
+    ret = pRegGetValueA(hkey_main, NULL, "TP1_EXP_SZ", RRF_RT_REG_EXPAND_SZ, NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "ret=%ld\n", ret);
 } 
 
 static void test_reg_open_key(void)
