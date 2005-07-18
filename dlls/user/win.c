@@ -3055,3 +3055,13 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
     FIXME("SwitchDesktop(hwnd %p) stub!\n", hDesktop);
     return TRUE;
 }
+
+/*****************************************************************************
+ *              SetLayeredWindowAttributes (USER32.@)
+ */
+BOOL WINAPI SetLayeredWindowAttributes( HWND hWnd, COLORREF rgbKey, 
+                                        BYTE bAlpha, DWORD dwFlags )
+{
+    FIXME("(%p,0x%.8lx,%d,%ld): stub!\n", hWnd, rgbKey, bAlpha, dwFlags);
+    return TRUE;
+}
