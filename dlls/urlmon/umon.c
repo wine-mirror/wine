@@ -1134,7 +1134,7 @@ static const IMonikerVtbl VT_URLMonikerImpl =
 static HRESULT URLMonikerImpl_Construct(URLMonikerImpl* This, LPCOLESTR lpszLeftURLName, LPCOLESTR lpszURLName)
 {
     HRESULT hres;
-    DWORD sizeStr;
+    DWORD sizeStr = INTERNET_MAX_URL_LENGTH;
 
     TRACE("(%p,%s,%s)\n",This,debugstr_w(lpszLeftURLName),debugstr_w(lpszURLName));
     memset(This, 0, sizeof(*This));
