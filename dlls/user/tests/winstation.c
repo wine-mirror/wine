@@ -203,5 +203,15 @@ static void test_handles(void)
 
 START_TEST(winstation)
 {
+    /* Check whether this platform supports WindowStation calls */
+
+    SetLastError( 0xdeadbeef );
+    GetProcessWindowStation();
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {
+        trace("WindowStation calls not supported on this platform\n");
+        return;
+    }
+
     test_handles();
 }
