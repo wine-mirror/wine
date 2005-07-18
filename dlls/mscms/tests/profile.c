@@ -823,6 +823,8 @@ static void test_SetColorProfileElement(void)
 
         /* Functional checks */
 
+        size = sizeof(data);
+
         ret = pSetColorProfileElement( handle, tag, 0, &size, data );
         ok( ret, "SetColorProfileElement() failed (%ld)\n", GetLastError() );
 
