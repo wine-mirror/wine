@@ -301,10 +301,35 @@ static void test_GdiGetCharDimensions(void)
     DeleteDC(hdc);
 }
 
+static void test_text_extents(void)
+{
+    LOGFONTA lf;
+    TEXTMETRICA tm;
+    HDC hdc;
+    HFONT hfont;
+    SIZE sz;
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Arial");
+    lf.lfHeight = 20;
+
+    hfont = CreateFontIndirectA(&lf);
+    hdc = GetDC(0);
+    hfont = SelectObject(hdc, hfont);
+    GetTextMetricsA(hdc, &tm);
+    GetTextExtentPointA(hdc, "o", 1, &sz);
+    ok(sz.cy == tm.tmHeight, "cy %ld tmHeight %ld\n", sz.cy, tm.tmHeight);
+
+    SelectObject(hdc, hfont);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(gdiobj)
 {
     test_logfont();
     test_bitmap_font();
     test_gdi_objects();
     test_GdiGetCharDimensions();
+    test_text_extents();
 }
