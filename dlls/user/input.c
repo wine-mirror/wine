@@ -80,8 +80,7 @@ static WORD get_key_state(void)
  */
 UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
 {
-    if (USER_Driver.pSendInput) return USER_Driver.pSendInput( count, inputs, size );
-    return 0;
+    return USER_Driver->pSendInput( count, inputs, size );
 }
 
 
@@ -127,8 +126,8 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
  */
 BOOL WINAPI GetCursorPos( POINT *pt )
 {
-    if (pt && USER_Driver.pGetCursorPos) return USER_Driver.pGetCursorPos( pt );
-    return FALSE;
+    if (!pt) return FALSE;
+    return USER_Driver->pGetCursorPos( pt );
 }
 
 
@@ -150,8 +149,7 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
  */
 BOOL WINAPI SetCursorPos( INT x, INT y )
 {
-    if (USER_Driver.pSetCursorPos) return USER_Driver.pSetCursorPos( x, y );
-    return FALSE;
+    return USER_Driver->pSetCursorPos( x, y );
 }
 
 
@@ -215,8 +213,7 @@ HWND WINAPI GetCapture(void)
  */
 SHORT WINAPI GetAsyncKeyState(INT nKey)
 {
-    if (USER_Driver.pGetAsyncKeyState) return USER_Driver.pGetAsyncKeyState( nKey );
-    return 0;
+    return USER_Driver->pGetAsyncKeyState( nKey );
 }
 
 
@@ -228,8 +225,7 @@ DWORD WINAPI GetQueueStatus( UINT flags )
     DWORD ret = 0;
 
     /* check for pending X events */
-    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
+    USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
     SERVER_START_REQ( get_queue_status )
     {
@@ -250,8 +246,7 @@ BOOL WINAPI GetInputState(void)
     DWORD ret = 0;
 
     /* check for pending X events */
-    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_INPUT, 0 );
+    USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_INPUT, 0 );
 
     SERVER_START_REQ( get_queue_status )
     {
@@ -430,9 +425,7 @@ WORD WINAPI VkKeyScanExA(CHAR cChar, HKL dwhkl)
  */
 WORD WINAPI VkKeyScanExW(WCHAR cChar, HKL dwhkl)
 {
-    if (USER_Driver.pVkKeyScanEx)
-        return USER_Driver.pVkKeyScanEx(cChar, dwhkl);
-    return -1;
+    return USER_Driver->pVkKeyScanEx(cChar, dwhkl);
 }
 
 /**********************************************************************
@@ -495,9 +488,7 @@ UINT WINAPI MapVirtualKeyExW(UINT code, UINT maptype, HKL hkl)
 {
     TRACE_(keyboard)("(%d, %d, %p)\n", code, maptype, hkl);
 
-    if (USER_Driver.pMapVirtualKeyEx)
-        return USER_Driver.pMapVirtualKeyEx(code, maptype, hkl);
-    return 0;
+    return USER_Driver->pMapVirtualKeyEx(code, maptype, hkl);
 }
 
 /****************************************************************************
@@ -517,9 +508,7 @@ UINT WINAPI GetKBCodePage(void)
  */
 HKL WINAPI GetKeyboardLayout(DWORD dwLayout)
 {
-    if (USER_Driver.pGetKeyboardLayout)
-        return USER_Driver.pGetKeyboardLayout(dwLayout);
-    return 0;
+    return USER_Driver->pGetKeyboardLayout(dwLayout);
 }
 
 /****************************************************************************
@@ -539,9 +528,7 @@ BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
  */
 BOOL WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
 {
-    if (USER_Driver.pGetKeyboardLayoutName)
-        return USER_Driver.pGetKeyboardLayoutName(pwszKLID);
-    return FALSE;
+    return USER_Driver->pGetKeyboardLayoutName(pwszKLID);
 }
 
 /****************************************************************************
@@ -568,9 +555,7 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
  */
 INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
 {
-    if (USER_Driver.pGetKeyNameText)
-        return USER_Driver.pGetKeyNameText( lParam, lpBuffer, nSize );
-    return 0;
+    return USER_Driver->pGetKeyNameText( lParam, lpBuffer, nSize );
 }
 
 /****************************************************************************
@@ -588,9 +573,7 @@ INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 INT WINAPI ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 		       LPWSTR lpwStr, int size, UINT flags, HKL hkl)
 {
-    if (USER_Driver.pToUnicodeEx)
-        return USER_Driver.pToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, hkl);
-    return 0;
+    return USER_Driver->pToUnicodeEx(virtKey, scanCode, lpKeyState, lpwStr, size, flags, hkl);
 }
 
 /****************************************************************************
@@ -625,9 +608,7 @@ HKL WINAPI ActivateKeyboardLayout(HKL hLayout, UINT flags)
 {
     TRACE_(keyboard)("(%p, %d)\n", hLayout, flags);
 
-    if (USER_Driver.pActivateKeyboardLayout)
-        return USER_Driver.pActivateKeyboardLayout(hLayout, flags);
-    return 0;
+    return USER_Driver->pActivateKeyboardLayout(hLayout, flags);
 }
 
 
@@ -641,9 +622,7 @@ UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
 {
     TRACE_(keyboard)("(%d,%p)\n",nBuff,layouts);
 
-    if (USER_Driver.pGetKeyboardLayoutList)
-        return USER_Driver.pGetKeyboardLayoutList(nBuff, layouts);
-    return 0;
+    return USER_Driver->pGetKeyboardLayoutList(nBuff, layouts);
 }
 
 
@@ -672,9 +651,7 @@ HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
 {
     TRACE_(keyboard)("(%s, %d)\n", debugstr_w(pwszKLID), Flags);
 
-    if (USER_Driver.pLoadKeyboardLayout)
-        return USER_Driver.pLoadKeyboardLayout(pwszKLID, Flags);
-    return 0;
+    return USER_Driver->pLoadKeyboardLayout(pwszKLID, Flags);
 }
 
 /***********************************************************************
@@ -701,9 +678,7 @@ BOOL WINAPI UnloadKeyboardLayout(HKL hkl)
 {
     TRACE_(keyboard)("(%p)\n", hkl);
 
-    if (USER_Driver.pUnloadKeyboardLayout)
-        return USER_Driver.pUnloadKeyboardLayout(hkl);
-    return 0;
+    return USER_Driver->pUnloadKeyboardLayout(hkl);
 }
 
 typedef struct __TRACKINGLIST {

@@ -265,8 +265,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         SERVER_END_REQ;
     }
 
-    if (ret && USER_Driver.pSetWindowRgn)
-        ret = USER_Driver.pSetWindowRgn( hwnd, hrgn, bRedraw );
+    if (ret) ret = USER_Driver->pSetWindowRgn( hwnd, hrgn, bRedraw );
 
     if (ret && bRedraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );
     return ret;
@@ -836,11 +835,8 @@ BOOL WINAPI ShowWindowAsync( HWND hwnd, INT cmd )
     }
 
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
-    {
-        if (USER_Driver.pShowWindow)
-            return USER_Driver.pShowWindow( full_handle, cmd );
-        return FALSE;
-    }
+        return USER_Driver->pShowWindow( full_handle, cmd );
+
     return SendNotifyMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
@@ -858,11 +854,8 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
         return FALSE;
     }
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
-    {
-        if (USER_Driver.pShowWindow)
-            return USER_Driver.pShowWindow( full_handle, cmd );
-        return FALSE;
-    }
+        return USER_Driver->pShowWindow( full_handle, cmd );
+
     return SendMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
@@ -1209,11 +1202,8 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     winpos.cy = cy;
     winpos.flags = flags;
     if (WIN_IsCurrentThread( hwnd ))
-    {
-        if (USER_Driver.pSetWindowPos)
-            return USER_Driver.pSetWindowPos( &winpos );
-        return FALSE;
-    }
+        return USER_Driver->pSetWindowPos( &winpos );
+
     return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
 
@@ -1343,7 +1333,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
     if (!pDWP) return FALSE;
     for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
     {
-        if (!USER_Driver.pSetWindowPos || !(res = USER_Driver.pSetWindowPos( winpos ))) break;
+        if (!(res = USER_Driver->pSetWindowPos( winpos ))) break;
     }
     USER_HEAP_FREE( hdwp );
     return res;

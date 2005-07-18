@@ -63,7 +63,7 @@ static HWND set_focus_window( HWND hwnd )
     }
     if (IsWindow(hwnd))
     {
-        if (USER_Driver.pSetFocus) USER_Driver.pSetFocus(hwnd);
+        USER_Driver->pSetFocus(hwnd);
         SendMessageW( hwnd, WM_SETFOCUS, (WPARAM)previous, 0 );
     }
     return previous;

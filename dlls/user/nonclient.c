@@ -1552,8 +1552,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
     case SC_SIZE:
     case SC_MOVE:
-        if (USER_Driver.pSysCommandSizeMove)
-            USER_Driver.pSysCommandSizeMove( hwnd, wParam );
+        USER_Driver->pSysCommandSizeMove( hwnd, wParam );
         break;
 
     case SC_MINIMIZE:

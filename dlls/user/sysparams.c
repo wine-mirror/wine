@@ -1135,10 +1135,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETSCREENSAVEACTIVE:               /*     16 */
         if (!pvParam) return FALSE;
-        if (USER_Driver.pGetScreenSaveActive)
-            *(BOOL *)pvParam = USER_Driver.pGetScreenSaveActive();
-        else
-            *(BOOL *)pvParam = FALSE;
+        *(BOOL *)pvParam = USER_Driver->pGetScreenSaveActive();
         break;
 
     case SPI_SETSCREENSAVEACTIVE:               /*     17 */
@@ -1146,8 +1143,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         WCHAR buf[5];
 
         wsprintfW(buf, CSu, uiParam);
-        if (USER_Driver.pSetScreenSaveActive)
-            USER_Driver.pSetScreenSaveActive( uiParam );
+        USER_Driver->pSetScreenSaveActive( uiParam );
         /* saved value does not affect Wine */
         SYSPARAMS_Save( SPI_SETSCREENSAVEACTIVE_REGKEY,
                         SPI_SETSCREENSAVEACTIVE_VALNAME,
@@ -2633,9 +2629,7 @@ LONG WINAPI ChangeDisplaySettingsExA( LPCSTR devname, LPDEVMODEA devmode, HWND h
 LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND hwnd,
                                       DWORD flags, LPVOID lparam )
 {
-    /* Pass the request on to the driver */
-    if (!USER_Driver.pChangeDisplaySettingsEx) return DISP_CHANGE_FAILED;
-    return USER_Driver.pChangeDisplaySettingsEx( devname, devmode, hwnd, flags, lparam );
+    return USER_Driver->pChangeDisplaySettingsEx( devname, devmode, hwnd, flags, lparam );
 }
 
 
@@ -2695,7 +2689,5 @@ BOOL WINAPI EnumDisplaySettingsExA(LPCSTR lpszDeviceName, DWORD iModeNum,
 BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
                                    LPDEVMODEW lpDevMode, DWORD dwFlags)
 {
-    /* Pass the request on to the driver */
-    if (!USER_Driver.pEnumDisplaySettingsEx) return FALSE;
-    return USER_Driver.pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
+    return USER_Driver->pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
 }

@@ -228,14 +228,7 @@ static BOOL CLIPBOARD_CloseClipboard(void)
  */
 UINT WINAPI RegisterClipboardFormatW(LPCWSTR FormatName)
 {
-    UINT wFormatID = 0;
-
-    TRACE("%s\n", debugstr_w(FormatName));
-
-    if (USER_Driver.pRegisterClipboardFormat)
-        wFormatID = USER_Driver.pRegisterClipboardFormat(FormatName);
-
-    return wFormatID;
+    return USER_Driver->pRegisterClipboardFormat(FormatName);
 }
 
 
@@ -263,14 +256,7 @@ UINT WINAPI RegisterClipboardFormatA(LPCSTR formatName)
  */
 INT WINAPI GetClipboardFormatNameW(UINT wFormat, LPWSTR retStr, INT maxlen)
 {
-    INT len = 0;
-
-    TRACE("%04x,%p,%d\n", wFormat, retStr, maxlen);
-
-    if (USER_Driver.pGetClipboardFormatName)
-        len = USER_Driver.pGetClipboardFormatName(wFormat, retStr, maxlen);
-
-    return len;
+    return USER_Driver->pGetClipboardFormatName(wFormat, retStr, maxlen);
 }
 
 
@@ -326,8 +312,7 @@ BOOL WINAPI CloseClipboard(void)
         {
             HWND hWndViewer = GetClipboardViewer();
 
-            if (USER_Driver.pEndClipboardUpdate)
-                USER_Driver.pEndClipboardUpdate();
+            USER_Driver->pEndClipboardUpdate();
 
             if (hWndViewer)
                 SendMessageW(hWndViewer, WM_DRAWCLIPBOARD, 0, 0);
@@ -378,12 +363,10 @@ BOOL WINAPI EmptyClipboard(void)
 
     /* Acquire the selection. This will notify the previous owner
      * to clear it's cache. */
-    if (USER_Driver.pAcquireClipboard)
-        USER_Driver.pAcquireClipboard(cbinfo.hWndOpen);
+    USER_Driver->pAcquireClipboard(cbinfo.hWndOpen);
 
     /* Empty the local cache */
-    if (USER_Driver.pEmptyClipboard)
-        USER_Driver.pEmptyClipboard(FALSE);
+    USER_Driver->pEmptyClipboard(FALSE);
 
     bCBHasChanged = TRUE;
 
@@ -522,8 +505,7 @@ HANDLE16 WINAPI SetClipboardData16(UINT16 wFormat, HANDLE16 hData)
         return 0;
     }
 
-    if (USER_Driver.pSetClipboardData &&
-        USER_Driver.pSetClipboardData(wFormat, hData, 0, cbinfo.flags & CB_OWNER))
+    if (USER_Driver->pSetClipboardData(wFormat, hData, 0, cbinfo.flags & CB_OWNER))
     {
         hResult = hData;
         bCBHasChanged = TRUE;
@@ -552,8 +534,7 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
         return 0;
     }
 
-    if (USER_Driver.pSetClipboardData &&
-        USER_Driver.pSetClipboardData(wFormat, 0, hData, cbinfo.flags & CB_OWNER))
+    if (USER_Driver->pSetClipboardData(wFormat, 0, hData, cbinfo.flags & CB_OWNER))
     {
         hResult = hData;
         bCBHasChanged = TRUE;
@@ -568,11 +549,7 @@ HANDLE WINAPI SetClipboardData(UINT wFormat, HANDLE hData)
  */
 INT WINAPI CountClipboardFormats(void)
 {
-    INT count = 0;
-
-    if (USER_Driver.pCountClipboardFormats)
-        count = USER_Driver.pCountClipboardFormats();
-
+    INT count = USER_Driver->pCountClipboardFormats();
     TRACE("returning %d\n", count);
     return count;
 }
@@ -583,7 +560,6 @@ INT WINAPI CountClipboardFormats(void)
  */
 UINT WINAPI EnumClipboardFormats(UINT wFormat)
 {
-    UINT wFmt = 0;
     CLIPBOARDINFO cbinfo;
 
     TRACE("(%04X)\n", wFormat);
@@ -595,11 +571,7 @@ UINT WINAPI EnumClipboardFormats(UINT wFormat)
         SetLastError(ERROR_CLIPBOARD_NOT_OPEN);
         return 0;
     }
-
-    if (USER_Driver.pEnumClipboardFormats)
-        wFmt = USER_Driver.pEnumClipboardFormats(wFormat);
-
-    return wFmt;
+    return USER_Driver->pEnumClipboardFormats(wFormat);
 }
 
 
@@ -608,11 +580,7 @@ UINT WINAPI EnumClipboardFormats(UINT wFormat)
  */
 BOOL WINAPI IsClipboardFormatAvailable(UINT wFormat)
 {
-    BOOL bret = FALSE;
-
-    if (USER_Driver.pIsClipboardFormatAvailable)
-        bret = USER_Driver.pIsClipboardFormatAvailable(wFormat);
-
+    BOOL bret = USER_Driver->pIsClipboardFormatAvailable(wFormat);
     TRACE("%04x, returning %d\n", wFormat, bret);
     return bret;
 }
@@ -634,8 +602,7 @@ HANDLE16 WINAPI GetClipboardData16(UINT16 wFormat)
         return 0;
     }
 
-    if (USER_Driver.pGetClipboardData)
-        USER_Driver.pGetClipboardData(wFormat, &hData, NULL);
+    if (!USER_Driver->pGetClipboardData(wFormat, &hData, NULL)) hData = 0;
 
     return hData;
 }
@@ -659,8 +626,7 @@ HANDLE WINAPI GetClipboardData(UINT wFormat)
         return 0;
     }
 
-    if (USER_Driver.pGetClipboardData)
-        USER_Driver.pGetClipboardData(wFormat, NULL, &hData);
+    if (!USER_Driver->pGetClipboardData(wFormat, NULL, &hData)) hData = 0;
 
     TRACE("returning %p\n", hData);
     return hData;

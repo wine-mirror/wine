@@ -52,7 +52,7 @@ WORD WINAPI DISPLAY_Inquire(LPCURSORINFO16 lpCursorInfo)
  */
 VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
 {
-    if (USER_Driver.pSetCursor) USER_Driver.pSetCursor(lpCursor);
+    USER_Driver->pSetCursor(lpCursor);
 }
 
 /***********************************************************************
@@ -60,7 +60,7 @@ VOID WINAPI DISPLAY_SetCursor( struct tagCURSORICONINFO *lpCursor )
  */
 VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 {
-    if (USER_Driver.pSetCursorPos) USER_Driver.pSetCursorPos(wAbsX, wAbsY);
+    USER_Driver->pSetCursorPos(wAbsX, wAbsY);
 }
 
 /***********************************************************************

@@ -263,7 +263,7 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
             {
                 if (need_erase && hwnd != GetDesktopWindow())  /* FIXME: mark it as needing erase again */
                     RedrawWindow( hwnd, clip_rect, 0, RDW_INVALIDATE | RDW_ERASE | RDW_NOCHILDREN );
-                USER_Driver.pReleaseDC( hwnd, hdc, TRUE );
+                USER_Driver->pReleaseDC( hwnd, hdc, TRUE );
             }
         }
 
@@ -412,7 +412,7 @@ HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
 BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
 {
     if (!lps) return FALSE;
-    if (USER_Driver.pReleaseDC) USER_Driver.pReleaseDC( hwnd, lps->hdc, TRUE );
+    USER_Driver->pReleaseDC( hwnd, lps->hdc, TRUE );
     ShowCaret( hwnd );
     return TRUE;
 }
@@ -426,8 +426,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     if (!hwnd) hwnd = GetDesktopWindow();
     else hwnd = WIN_GetFullHandle( hwnd );
 
-    if (USER_Driver.pGetDCEx) return USER_Driver.pGetDCEx( hwnd, hrgnClip, flags );
-    return 0;
+    return USER_Driver->pGetDCEx( hwnd, hrgnClip, flags );
 }
 
 
@@ -467,8 +466,7 @@ HDC WINAPI GetWindowDC( HWND hwnd )
  */
 INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
 {
-    if (USER_Driver.pReleaseDC) return USER_Driver.pReleaseDC( hwnd, hdc, FALSE );
-    return 0;
+    return USER_Driver->pReleaseDC( hwnd, hdc, FALSE );
 }
 
 
@@ -477,8 +475,7 @@ INT WINAPI ReleaseDC( HWND hwnd, HDC hdc )
  */
 HWND WINAPI WindowFromDC( HDC hDC )
 {
-    if (USER_Driver.pWindowFromDC) return USER_Driver.pWindowFromDC( hDC );
-    return 0;
+    return USER_Driver->pWindowFromDC( hDC );
 }
 
 
@@ -862,7 +859,5 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *lprcScroll,
                       const RECT *lprcClip, HRGN hrgnUpdate, LPRECT lprcUpdate )
 
 {
-    if (USER_Driver.pScrollDC)
-        return USER_Driver.pScrollDC( hdc, dx, dy, lprcScroll, lprcClip, hrgnUpdate, lprcUpdate );
-    return FALSE;
+    return USER_Driver->pScrollDC( hdc, dx, dy, lprcScroll, lprcClip, hrgnUpdate, lprcUpdate );
 }

@@ -462,7 +462,7 @@ ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits )
     }
     SERVER_END_REQ;
     WIN_ReleasePtr( win );
-    if (ok && USER_Driver.pSetWindowStyle) USER_Driver.pSetWindowStyle( hwnd, old_style );
+    if (ok) USER_Driver->pSetWindowStyle( hwnd, old_style );
     return old_style;
 }
 
@@ -575,7 +575,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     if (menu) DestroyMenu( menu );
     if (sys_menu) DestroyMenu( sys_menu );
 
-    if (USER_Driver.pDestroyWindow) USER_Driver.pDestroyWindow( hwnd );
+    USER_Driver->pDestroyWindow( hwnd );
 
     free_window_handle( hwnd );
     return 0;
@@ -1041,7 +1041,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
     WIN_ReleasePtr( wndPtr );
 
-    if (!USER_Driver.pCreateWindow || !USER_Driver.pCreateWindow( hwnd, cs, unicode))
+    if (!USER_Driver->pCreateWindow( hwnd, cs, unicode))
     {
         WIN_DestroyWindow( hwnd );
         return 0;
@@ -1267,8 +1267,7 @@ static void WIN_SendDestroyMsg( HWND hwnd )
         if (hwnd == info.hwndCaret) DestroyCaret();
         if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );
     }
-    if (USER_Driver.pResetSelectionOwner)
-        USER_Driver.pResetSelectionOwner( hwnd, TRUE );
+    USER_Driver->pResetSelectionOwner( hwnd, TRUE );
 
     /*
      * Send the WM_DESTROY to the window.
@@ -1334,8 +1333,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
     if (!IsWindow(hwnd)) return TRUE;
 
-    if (USER_Driver.pResetSelectionOwner)
-        USER_Driver.pResetSelectionOwner( hwnd, FALSE ); /* before the window is unmapped */
+    USER_Driver->pResetSelectionOwner( hwnd, FALSE ); /* before the window is unmapped */
 
       /* Hide the window */
     if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
@@ -1549,7 +1547,7 @@ HWND WINAPI GetDesktopWindow(void)
             if (!wine_server_call( req )) thread_info->desktop = reply->handle;
         }
         SERVER_END_REQ;
-        if (!thread_info->desktop || !USER_Driver.pCreateDesktopWindow( thread_info->desktop ))
+        if (!thread_info->desktop || !USER_Driver->pCreateDesktopWindow( thread_info->desktop ))
             ERR( "failed to create desktop window\n" );
     }
     return thread_info->desktop;
@@ -2075,8 +2073,7 @@ static LONG_PTR WIN_SetWindowLong( HWND hwnd, INT offset, LONG_PTR newval,
 
     if (!ok) return 0;
 
-    if (offset == GWL_STYLE && USER_Driver.pSetWindowStyle)
-        USER_Driver.pSetWindowStyle( hwnd, retval );
+    if (offset == GWL_STYLE) USER_Driver->pSetWindowStyle( hwnd, retval );
 
     if (offset == GWL_STYLE || offset == GWL_EXSTYLE)
         SendMessageW( hwnd, WM_STYLECHANGED, offset, (LPARAM)&style );
@@ -2520,10 +2517,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
         return (HWND)SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 
-    if (USER_Driver.pSetParent)
-        return USER_Driver.pSetParent( full_handle, parent );
-
-    return 0;
+    return USER_Driver->pSetParent( full_handle, parent );
 }
 
 

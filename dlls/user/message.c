@@ -1155,9 +1155,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_WINE_DESTROYWINDOW:
         return WIN_DestroyWindow( hwnd );
     case WM_WINE_SETWINDOWPOS:
-        if (USER_Driver.pSetWindowPos)
-            return USER_Driver.pSetWindowPos( (WINDOWPOS *)lparam );
-        return 0;
+        return USER_Driver->pSetWindowPos( (WINDOWPOS *)lparam );
     case WM_WINE_SHOWWINDOW:
         return ShowWindow( hwnd, wparam );
     case WM_WINE_SETPARENT:
@@ -1174,10 +1172,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, wparam, lparam, TRUE );
     default:
         if (msg >= WM_WINE_FIRST_DRIVER_MSG && msg <= WM_WINE_LAST_DRIVER_MSG)
-        {
-            if (!USER_Driver.pWindowMessage) return 0;
-            return USER_Driver.pWindowMessage( hwnd, msg, wparam, lparam );
-        }
+            return USER_Driver->pWindowMessage( hwnd, msg, wparam, lparam );
         FIXME( "unknown internal message %x\n", msg );
         return 0;
     }
@@ -2135,13 +2130,8 @@ static void wait_message_reply( UINT flags )
         /* now wait for it */
 
         ReleaseThunkLock( &dwlc );
-
-        if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-            res = USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &server_queue,
-                                                            INFINITE, QS_ALLINPUT, 0 );
-        else
-            res = WaitForSingleObject( server_queue, INFINITE );
-
+        res = USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue,
+                                                         INFINITE, QS_ALLINPUT, 0 );
         if (dwlc) RestoreThunkLock( dwlc );
     }
 }
@@ -2692,8 +2682,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     USER_CheckNotLock();
 
     /* check for graphics events */
-    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-        USER_Driver.pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
+    USER_Driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
 
     hwnd = WIN_GetFullHandle( hwnd );
 
@@ -2795,11 +2784,7 @@ BOOL WINAPI GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT last )
                GetCurrentThreadId(), mask, wake_bits, changed_bits );
 
         ReleaseThunkLock( &dwlc );
-        if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-            USER_Driver.pMsgWaitForMultipleObjectsEx( 1, &server_queue, INFINITE,
-                                                      QS_ALLINPUT, 0 );
-        else
-            WaitForSingleObject( server_queue, INFINITE );
+        USER_Driver->pMsgWaitForMultipleObjectsEx( 1, &server_queue, INFINITE, QS_ALLINPUT, 0 );
         if (dwlc) RestoreThunkLock( dwlc );
     }
 
@@ -3120,14 +3105,8 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, CONST HANDLE *pHandles,
     handles[count] = get_server_queue_handle();
 
     ReleaseThunkLock( &lock );
-    if (USER_Driver.pMsgWaitForMultipleObjectsEx)
-    {
-        ret = USER_Driver.pMsgWaitForMultipleObjectsEx( count+1, handles, timeout, mask, flags );
-        if (ret == count+1) ret = count; /* pretend the msg queue is ready */
-    }
-    else
-        ret = WaitForMultipleObjectsEx( count+1, handles, flags & MWMO_WAITALL,
-                                        timeout, flags & MWMO_ALERTABLE );
+    ret = USER_Driver->pMsgWaitForMultipleObjectsEx( count+1, handles, timeout, mask, flags );
+    if (ret == count+1) ret = count; /* pretend the msg queue is ready */
     if (lock) RestoreThunkLock( lock );
     return ret;
 }
@@ -3294,7 +3273,7 @@ BOOL WINAPI MessageBeep( UINT i )
 {
     BOOL active = TRUE;
     SystemParametersInfoA( SPI_GETBEEP, 0, &active, FALSE );
-    if (active && USER_Driver.pBeep) USER_Driver.pBeep();
+    if (active) USER_Driver->pBeep();
     return TRUE;
 }
 

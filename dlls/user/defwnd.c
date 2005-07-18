@@ -108,7 +108,7 @@ static void DEFWND_SetTextA( HWND hwnd, LPCSTR text )
         ERR("Not enough memory for window text\n");
     WIN_ReleasePtr( wndPtr );
 
-    if (USER_Driver.pSetWindowText) USER_Driver.pSetWindowText( hwnd, textW );
+    USER_Driver->pSetWindowText( hwnd, textW );
 }
 
 /***********************************************************************
@@ -143,7 +143,7 @@ static void DEFWND_SetTextW( HWND hwnd, LPCWSTR text )
     text = wndPtr->text;
     WIN_ReleasePtr( wndPtr );
 
-    if (USER_Driver.pSetWindowText) USER_Driver.pSetWindowText( hwnd, text );
+    USER_Driver->pSetWindowText( hwnd, text );
 }
 
 /***********************************************************************
@@ -669,8 +669,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             }
             WIN_ReleasePtr( wndPtr );
 
-            if (USER_Driver.pSetWindowIcon)
-                USER_Driver.pSetWindowIcon( hwnd, wParam, (HICON)lParam );
+            USER_Driver->pSetWindowIcon( hwnd, wParam, (HICON)lParam );
 
             SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
                          SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);

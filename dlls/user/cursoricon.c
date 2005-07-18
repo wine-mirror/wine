@@ -1480,9 +1480,9 @@ HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
     hOldCursor = thread_info->cursor;
     thread_info->cursor = hCursor;
     /* Change the cursor shape only if it is visible */
-    if (thread_info->cursor_count >= 0 && USER_Driver.pSetCursor)
+    if (thread_info->cursor_count >= 0)
     {
-        USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16(HCURSOR_16(hCursor)) );
+        USER_Driver->pSetCursor( (CURSORICONINFO*)GlobalLock16(HCURSOR_16(hCursor)) );
         GlobalUnlock16(HCURSOR_16(hCursor));
     }
     return hOldCursor;
@@ -1499,16 +1499,16 @@ INT WINAPI ShowCursor( BOOL bShow )
 
     if (bShow)
     {
-        if (++thread_info->cursor_count == 0 && USER_Driver.pSetCursor) /* Show it */
+        if (++thread_info->cursor_count == 0) /* Show it */
         {
-            USER_Driver.pSetCursor((CURSORICONINFO*)GlobalLock16(HCURSOR_16(thread_info->cursor)));
+            USER_Driver->pSetCursor((CURSORICONINFO*)GlobalLock16(HCURSOR_16(thread_info->cursor)));
             GlobalUnlock16(HCURSOR_16(thread_info->cursor));
         }
     }
     else
     {
-        if (--thread_info->cursor_count == -1 && USER_Driver.pSetCursor) /* Hide it */
-            USER_Driver.pSetCursor( NULL );
+        if (--thread_info->cursor_count == -1) /* Hide it */
+            USER_Driver->pSetCursor( NULL );
     }
     return thread_info->cursor_count;
 }

@@ -157,7 +157,7 @@ typedef struct tagUSER_DRIVER {
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
 } USER_DRIVER;
 
-extern USER_DRIVER USER_Driver;
+extern const USER_DRIVER *USER_Driver;
 
 struct received_message_info;
 struct hook16_queue_info;
