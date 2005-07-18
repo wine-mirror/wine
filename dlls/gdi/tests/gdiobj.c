@@ -266,9 +266,45 @@ static void test_gdi_objects(void)
     ReleaseDC(NULL, hdc);
 }
 
+static void test_GdiGetCharDimensions(void)
+{
+    HDC hdc;
+    TEXTMETRICW tm;
+    LONG ret;
+    SIZE size;
+    LONG avgwidth, height;
+    static const char szAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    typedef LONG (WINAPI *fnGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
+    fnGdiGetCharDimensions GdiGetCharDimensions = (fnGdiGetCharDimensions)GetProcAddress(LoadLibrary("gdi32"), "GdiGetCharDimensions");
+    if (!GdiGetCharDimensions) return;
+
+    hdc = CreateCompatibleDC(NULL);
+
+    GetTextExtentPoint(hdc, szAlphabet, strlen(szAlphabet), &size);
+    avgwidth = ((size.cx / 26) + 1) / 2;
+
+    ret = GdiGetCharDimensions(hdc, &tm, &height);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
+    ok(height == tm.tmHeight, "GdiGetCharDimensions should have set height to %ld instead of %ld\n", tm.tmHeight, height);
+
+    ret = GdiGetCharDimensions(hdc, &tm, NULL);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
+
+    ret = GdiGetCharDimensions(hdc, NULL, NULL);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
+
+    height = 0;
+    ret = GdiGetCharDimensions(hdc, NULL, &height);
+    ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %ld instead of %ld\n", avgwidth, ret);
+    ok(height == size.cy, "GdiGetCharDimensions should have set height to %ld instead of %ld\n", size.cy, height);
+
+    DeleteDC(hdc);
+}
+
 START_TEST(gdiobj)
 {
     test_logfont();
     test_bitmap_font();
     test_gdi_objects();
+    test_GdiGetCharDimensions();
 }

@@ -155,6 +155,7 @@
 @ stub GdiDllInitialize
 @ stdcall GdiFlush()
 @ stdcall GdiGetBatchLimit()
+@ stdcall GdiGetCharDimensions(ptr ptr ptr)
 @ stub GdiGetLocalBitmap
 @ stub GdiGetLocalBrush
 @ stub GdiGetLocalDC
