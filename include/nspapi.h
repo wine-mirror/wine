@@ -173,6 +173,15 @@ typedef struct _SERVICE_ASYNC_INFO
 /*
  * function prototypes
  */
+INT WINAPI GetAddressByNameA(DWORD dwNameSpace, LPGUID lpServiceType, LPSTR lpServiceName,
+    LPINT lpiProtocols, DWORD dwResolution, LPSERVICE_ASYNC_INFO lpServiceAsyncInfo,
+    LPVOID lpCsaddrBuffer, LPDWORD lpdwBufferLength, LPSTR lpAliasBuffer,
+    LPDWORD lpdwAliasBufferLength);
+INT WINAPI GetAddressByNameW(DWORD dwNameSpace, LPGUID lpServiceType, LPWSTR lpServiceName,
+    LPINT lpiProtocols, DWORD dwResolution, LPSERVICE_ASYNC_INFO lpServiceAsyncInfo,
+    LPVOID lpCsaddrBuffer, LPDWORD lpdwBufferLength, LPWSTR lpAliasBuffer,
+    LPDWORD lpdwAliasBufferLength);
+#define GetAddressByName WINELIB_NAME_AW(GetAddressByName)
 INT WINAPI GetTypeByNameA(LPSTR lpServiceName, LPGUID lpServiceType);
 INT WINAPI GetTypeByNameW(LPWSTR lpServiceName, LPGUID lpServiceType);
 #define GetTypeByName WINELIB_NAME_AW(GetTypeByName)

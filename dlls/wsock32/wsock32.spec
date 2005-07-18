@@ -60,8 +60,8 @@
 #1106 stub dn_expand
 1107 stdcall WSARecvEx(long ptr long ptr)
 1108 stdcall s_perror(str)
-1109 stub GetAddressByNameA
-1110 stub GetAddressByNameW
+1109 stdcall GetAddressByNameA(long ptr str ptr long ptr ptr ptr ptr ptr)
+1110 stdcall GetAddressByNameW(long ptr wstr ptr long ptr ptr ptr ptr ptr)
 1111 stdcall EnumProtocolsA(ptr ptr ptr) ws2_32.WSAEnumProtocolsA
 1112 stdcall EnumProtocolsW(ptr ptr ptr) ws2_32.WSAEnumProtocolsW
 1113 stdcall GetTypeByNameA(str ptr)

@@ -33,6 +33,34 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
+INT WINAPI GetAddressByNameA(DWORD dwNameSpace, LPGUID lpServiceType, LPSTR lpServiceName,
+    LPINT lpiProtocols, DWORD dwResolution, LPSERVICE_ASYNC_INFO lpServiceAsyncInfo,
+    LPVOID lpCsaddrBuffer, LPDWORD lpdwBufferLength, LPSTR lpAliasBuffer,
+    LPDWORD lpdwAliasBufferLength)
+{
+    FIXME("(0x%08lx, %s, %s, %p, 0x%08lx, %p, %p, %p, %p, %p) stub\n", dwNameSpace,
+          debugstr_guid(lpServiceType), debugstr_a(lpServiceName), lpiProtocols,
+          dwResolution, lpServiceAsyncInfo, lpCsaddrBuffer, lpdwBufferLength,
+          lpAliasBuffer, lpdwAliasBufferLength);
+ 
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SOCKET_ERROR;
+}
+
+INT WINAPI GetAddressByNameW(DWORD dwNameSpace, LPGUID lpServiceType, LPWSTR lpServiceName,
+    LPINT lpiProtocols, DWORD dwResolution, LPSERVICE_ASYNC_INFO lpServiceAsyncInfo,
+    LPVOID lpCsaddrBuffer, LPDWORD lpdwBufferLength, LPWSTR lpAliasBuffer,
+    LPDWORD lpdwAliasBufferLength)
+{
+    FIXME("(0x%08lx, %s, %s, %p, 0x%08lx, %p, %p, %p, %p, %p) stub\n", dwNameSpace,
+          debugstr_guid(lpServiceType), debugstr_w(lpServiceName), lpiProtocols,
+          dwResolution, lpServiceAsyncInfo, lpCsaddrBuffer, lpdwBufferLength,
+          lpAliasBuffer, lpdwAliasBufferLength);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return SOCKET_ERROR;
+}
+
 /******************************************************************************
  *          GetTypeByNameA     [WSOCK32.1113]
  *
