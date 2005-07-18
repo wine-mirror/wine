@@ -205,6 +205,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
     HRESULT hr = D3D_OK;
     UINT textureDimensions;
+    BOOL isNewTexture = FALSE;
     TRACE("(%p) : About to bind texture\n", This);
 
     textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
@@ -227,25 +228,36 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
             glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
          }
         IWineD3DBaseTexture_SetDirty(iface, TRUE);
+        isNewTexture = TRUE;
     }
 
     /* Bind the texture */
     if (This->baseTexture.textureName != 0) {
+        /* Always need to reset the number of mipmap levels when rebinding as it is
+        a property of the active texture unit, and another texture may have set it
+        to a different value                                                       */
+        if (This->baseTexture.levels > 0) {
+            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+        } else {
+           glTexParameteri(textureDimensions, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        }
         glBindTexture(textureDimensions, This->baseTexture.textureName);
         checkGLcall("glBindTexture");
+        if (isNewTexture) {
+            /* For a new texture we have to set the textures levels after binding the texture,
+            * in theory this is all we should ever have to dom, but because ATI's drivers are broken we
+            * also need to set the texture dimensins before the texture is is set */
+            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+            glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+            checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+        }
     } else { /* this only happened if we've run out of openGL textures */
         WARN("This texture doesn't have an openGL texture assigned to it\n");
         hr =  D3DERR_INVALIDCALL;
     }
 
-    if (hr == D3D_OK) {
-        /* Always need to reset the number of mipmap levels when rebinding as it is
-        a property of the active texture unit, and another texture may have set it
-        to a different value                                                       */
-        TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-        glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
-        checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
-    }
     LEAVE_GL();
     return hr;
 }

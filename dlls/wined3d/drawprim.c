@@ -1742,10 +1742,8 @@ void drawPrimitive(IWineD3DDevice *iface,
 
         if (This->stateBlock->textures[i] != NULL) {
 	
-            if (IWineD3DBaseTexture_GetDirty(This->stateBlock->textures[i])) {
-                /* Load up the texture now */
-                IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
-            }
+            /* Load up the texture now */
+            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
             if (IWineD3DResourceImpl_GetType((IWineD3DResource *)This->stateBlock->textures[i]) == D3DRTYPE_TEXTURE ) {
                 /* TODO: Is this right, as its cast all texture types to texture8... checkme */
                 IWineD3DSurface *surface;
