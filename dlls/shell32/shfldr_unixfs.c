@@ -833,11 +833,12 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
 
-    char szSrc[FILENAME_MAX], szDest[FILENAME_MAX];
+    char szSrc[FILENAME_MAX], szDest[FILENAME_MAX], szDosDest[MAX_PATH];
+    WCHAR wszDosDest[MAX_PATH];
     int cBasePathLen = lstrlenA(This->m_pszPath);
     struct stat statDest;
-    LPITEMIDLIST pidlNew;
-    
+    LPITEMIDLIST pidlSrc, pidlDest;
+   
     TRACE("(iface=%p, hwnd=%p, pidl=%p, lpszName=%s, uFlags=0x%08lx, ppidlOut=%p)\n",
           iface, hwnd, pidl, debugstr_w(lpszName), uFlags, ppidlOut); 
 
@@ -856,9 +857,19 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     if (uFlags & SHGDN_FORPARSING) { /* absolute path in lpszName */
         WideCharToMultiByte(CP_ACP, 0, lpszName, -1, szDest, FILENAME_MAX, NULL, NULL);
     } else {
+        WCHAR wszSrcRelative[MAX_PATH];
         memcpy(szDest, This->m_pszPath, cBasePathLen);
         WideCharToMultiByte(CP_ACP, 0, lpszName, -1, szDest+cBasePathLen, 
                             FILENAME_MAX-cBasePathLen, NULL, NULL);
+
+        /* uFlags is SHGDN_FOREDITING of SHGDN_FORADDRESSBAR. If the filename's 
+         * extension is hidden to the user, we have to append it. */
+        if (_ILSimpleGetTextW(pidl, wszSrcRelative, MAX_PATH) && 
+            SHELL_FS_HideExtension(wszSrcRelative))
+        {
+            char *pszExt = PathFindExtensionA(_ILGetTextPointer(pidl));
+            lstrcatA(szDest, pszExt);
+        }
     } 
 
     TRACE("src=%s dest=%s\n", szSrc, szDest);
@@ -866,24 +877,33 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     /* Fail, if destination does already exist */
     if (!stat(szDest, &statDest)) 
         return E_FAIL;
-   
-    /* Rename the file and inform the shell */
-    if (!rename(szSrc, szDest) && UNIXFS_path_to_pidl(This, lpszName, &pidlNew)) {
-        LPITEMIDLIST pidlSrc = ILCombine(This->m_pidlLocation, pidl);
-        LPITEMIDLIST pidlDest = ILCombine(This->m_pidlLocation, pidlNew);
-        if (_ILIsFolder(pidlNew)) 
-            SHChangeNotify(SHCNE_RENAMEFOLDER, SHCNF_IDLIST, pidlSrc, pidlDest);
-        else 
-            SHChangeNotify(SHCNE_RENAMEITEM, SHCNF_IDLIST, pidlSrc, pidlDest);
-        ILFree(pidlSrc);
-        ILFree(pidlDest);
-        if (ppidlOut) 
-            *ppidlOut = pidlNew;
-        else
-            ILFree(pidlNew);
-        return S_OK;
+
+    /* Rename the file */
+    if (rename(szSrc, szDest)) 
+        return E_FAIL;
+    
+    /* Build a pidl for the path of the renamed file */
+    if (!GetFullPathNameA(szDest, MAX_PATH, szDosDest, NULL) ||
+        !MultiByteToWideChar(CP_ACP, 0, szDosDest, -1, wszDosDest, MAX_PATH) ||
+        !UNIXFS_path_to_pidl(This, wszDosDest, &pidlDest))
+    {
+        rename(szDest, szSrc); /* Undo the renaming */
+        return E_FAIL;
     }
-    return E_FAIL;
+    
+    /* Inform the shell */
+    pidlSrc = ILCombine(This->m_pidlLocation, pidl);
+    if (_ILIsFolder(ILFindLastID(pidlDest))) 
+        SHChangeNotify(SHCNE_RENAMEFOLDER, SHCNF_IDLIST, pidlSrc, pidlDest);
+    else 
+        SHChangeNotify(SHCNE_RENAMEITEM, SHCNF_IDLIST, pidlSrc, pidlDest);
+    ILFree(pidlSrc);
+    ILFree(pidlDest);
+    
+    if (ppidlOut) 
+        _ILCreateFromPathW(wszDosDest, ppidlOut);
+    
+    return S_OK;
 }
 
 static HRESULT WINAPI UnixFolder_IShellFolder2_EnumSearches(IShellFolder2* iface, 
