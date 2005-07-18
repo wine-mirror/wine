@@ -890,6 +890,12 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo);
 BOOL WINAPI AddPrinterDriverW(LPWSTR pName, DWORD Level, LPBYTE pDriverInfo);
 #define AddPrinterDriver WINELIB_NAME_AW(AddPrinterDriver)
 
+BOOL WINAPI AddPrinterDriverExA(LPSTR pName, DWORD Level, LPBYTE pDriverInfo,
+                                DWORD dwFileCopyFlags);
+BOOL WINAPI AddPrinterDriverExW(LPWSTR pName, DWORD Level, LPBYTE pDriverInfo,
+                                DWORD dwFileCopyFlags);
+#define AddPrinterDriverEx WINELIB_NAME_AW(AddPrinterDriverEx)
+
 BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
 				LPBYTE pDriverInfo, DWORD cbBuf,
 				LPDWORD pcbNeeded, LPDWORD pcbReturned);
@@ -907,6 +913,12 @@ BOOL WINAPI DeletePrinterDriverA(LPSTR pName, LPSTR pEnvironment,
 BOOL WINAPI DeletePrinterDriverW(LPWSTR pName, LPWSTR pEnvironment,
 				 LPWSTR pDriverName);
 #define DeletePrinterDriver WINELIB_NAME_AW(DeletePrinterDriver)
+
+BOOL WINAPI DeletePrinterDriverExA(LPSTR pName, LPSTR pEnvironment,
+                                   LPSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag);
+BOOL WINAPI DeletePrinterDriverExW(LPWSTR pName, LPWSTR pEnvironment,
+                                   LPWSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag);
+#define DeletePrinterDriverEx WINELIB_NAME_AW(DeletePrinterDriverEx)
 
 BOOL WINAPI AddPrintProcessorA(LPSTR pName, LPSTR pEnvironment,
 			       LPSTR pPathName, LPSTR pPrintProcessorName);
@@ -997,6 +1009,12 @@ DWORD WINAPI GetPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 			       LPCWSTR pValueName, LPDWORD pType,
 			       LPBYTE pData, DWORD nSize, LPDWORD pcbNeeded);
 #define GetPrinterDataEx WINELIB_NAME_AW(GetPrinterDataEx)
+
+DWORD WINAPI DeletePrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
+                                  LPCSTR pValueName);
+DWORD WINAPI DeletePrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
+                                  LPCWSTR pValueName);
+#define DeletePrinterDataEx WINELIB_NAME_AW(DeletePrinterDataEx)
 
 DWORD WINAPI SetPrinterDataA(HANDLE hPrinter, LPSTR pValueName, DWORD Type,
 			     LPBYTE pData, DWORD cbData);

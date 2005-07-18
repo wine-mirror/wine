@@ -27,6 +27,8 @@ extern "C" {
 #endif
 
 BOOL      WINAPI CryptCATAdminAcquireContext(HCATADMIN*,const GUID*,DWORD);
+BOOL      WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE,DWORD*,BYTE*,DWORD);
+BOOL      WINAPI CryptCATAdminReleaseContext(HCATADMIN,DWORD);
 
 #ifdef __cplusplus
 }
