@@ -732,7 +732,7 @@ static void destroy_whole_window( Display *display, struct x11drv_win_data *data
 /*****************************************************************
  *		SetWindowText   (X11DRV.@)
  */
-BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
+void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 {
     Display *display = thread_display();
     UINT count;
@@ -748,7 +748,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, count )))
         {
             ERR("Not enough memory for window text\n");
-            return FALSE;
+            return;
         }
         WideCharToMultiByte(CP_UNIXCP, 0, text, -1, buffer, count, NULL, NULL);
 
@@ -757,7 +757,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         {
             ERR("Not enough memory for window text in UTF-8\n");
             HeapFree( GetProcessHeap(), 0, buffer );
-            return FALSE;
+            return;
         }
         WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);
 
@@ -780,20 +780,19 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         HeapFree( GetProcessHeap(), 0, utf8_buffer );
         HeapFree( GetProcessHeap(), 0, buffer );
     }
-    return TRUE;
 }
 
 
 /***********************************************************************
  *		DestroyWindow   (X11DRV.@)
  */
-BOOL X11DRV_DestroyWindow( HWND hwnd )
+void X11DRV_DestroyWindow( HWND hwnd )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     Display *display = thread_data->display;
     struct x11drv_win_data *data;
 
-    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
+    if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
     free_window_dce( data );
     destroy_whole_window( display, data );
@@ -806,8 +805,6 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     XDeleteContext( display, (XID)hwnd, win_data_context );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
-
-    return TRUE;
 }
 
 

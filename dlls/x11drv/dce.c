@@ -561,7 +561,7 @@ HDC X11DRV_GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 /***********************************************************************
  *		X11DRV_ReleaseDC  (X11DRV.@)
  */
-BOOL X11DRV_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
+INT X11DRV_ReleaseDC( HWND hwnd, HDC hdc, BOOL end_paint )
 {
     enum x11drv_escape_codes escape = X11DRV_GET_DCE;
     struct dce *dce;

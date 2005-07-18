@@ -122,8 +122,8 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetClipboardFormatName);
     GET_USER_FUNC(EndClipboardUpdate);
     GET_USER_FUNC(ResetSelectionOwner);
-    GET_USER_FUNC(ChangeDisplaySettingsExW);
-    GET_USER_FUNC(EnumDisplaySettingsExW);
+    GET_USER_FUNC(ChangeDisplaySettingsEx);
+    GET_USER_FUNC(EnumDisplaySettingsEx);
     GET_USER_FUNC(CreateDesktopWindow);
     GET_USER_FUNC(CreateWindow);
     GET_USER_FUNC(DestroyWindow);

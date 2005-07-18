@@ -140,7 +140,6 @@ static int selectionAcquired = 0;              /* Contains the current selection
 static Window selectionWindow = None;          /* The top level X window which owns the selection */
 static Atom selectionCacheSrc = XA_PRIMARY;    /* The selection source from which the clipboard cache was filled */
 
-INT X11DRV_RegisterClipboardFormat(LPCWSTR FormatName);
 void X11DRV_EmptyClipboard(BOOL keepunowned);
 void X11DRV_EndClipboardUpdate(void);
 static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(LPBYTE lpdata, UINT cBytes);
@@ -2067,7 +2066,7 @@ static BOOL X11DRV_CLIPBOARD_IsSelectionOwner(void)
  * Registers a custom X clipboard format
  * Returns: Format id or 0 on failure
  */
-INT X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
+UINT X11DRV_RegisterClipboardFormat(LPCWSTR FormatName)
 {
     LPWINE_CLIPFORMAT lpFormat;
 

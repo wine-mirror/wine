@@ -125,24 +125,24 @@ typedef struct tagUSER_DRIVER {
     void   (*pAcquireClipboard)(HWND);                     /* Acquire selection */
     BOOL   (*pCountClipboardFormats)(void);                /* Count available clipboard formats */
     void   (*pEmptyClipboard)(BOOL);                       /* Empty clipboard data */
-    BOOL   (*pEndClipboardUpdate)(void);                   /* End clipboard update */
-    BOOL   (*pEnumClipboardFormats)(UINT);                 /* Enumerate clipboard formats */
+    void   (*pEndClipboardUpdate)(void);                   /* End clipboard update */
+    UINT   (*pEnumClipboardFormats)(UINT);                 /* Enumerate clipboard formats */
     BOOL   (*pGetClipboardData)(UINT, HANDLE16*, HANDLE*); /* Get specified selection data */
-    BOOL   (*pGetClipboardFormatName)(UINT, LPWSTR, UINT); /* Get a clipboard format name */
+    INT    (*pGetClipboardFormatName)(UINT, LPWSTR, UINT); /* Get a clipboard format name */
     BOOL   (*pIsClipboardFormatAvailable)(UINT);           /* Check if specified format is available */
-    INT    (*pRegisterClipboardFormat)(LPCWSTR);           /* Register a clipboard format */
+    UINT   (*pRegisterClipboardFormat)(LPCWSTR);           /* Register a clipboard format */
     void   (*pResetSelectionOwner)(HWND, BOOL);
     BOOL   (*pSetClipboardData)(UINT, HANDLE16, HANDLE, BOOL);   /* Set specified selection data */
     /* display modes */
-    LONG   (*pChangeDisplaySettingsExW)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
-    BOOL   (*pEnumDisplaySettingsExW)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
+    LONG   (*pChangeDisplaySettingsEx)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
+    BOOL   (*pEnumDisplaySettingsEx)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
     /* windowing functions */
     BOOL   (*pCreateDesktopWindow)(HWND);
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
-    BOOL   (*pDestroyWindow)(HWND);
+    void   (*pDestroyWindow)(HWND);
     HDC    (*pGetDCEx)(HWND,HRGN,DWORD);
     DWORD  (*pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
-    BOOL   (*pReleaseDC)(HWND,HDC,BOOL);
+    INT    (*pReleaseDC)(HWND,HDC,BOOL);
     BOOL   (*pScrollDC)(HDC, INT, INT, const RECT *, const RECT *, HRGN, LPRECT);
     void   (*pSetFocus)(HWND);
     HWND   (*pSetParent)(HWND,HWND);
@@ -150,7 +150,7 @@ typedef struct tagUSER_DRIVER {
     int    (*pSetWindowRgn)(HWND,HRGN,BOOL);
     void   (*pSetWindowIcon)(HWND,UINT,HICON);
     void   (*pSetWindowStyle)(HWND,DWORD);
-    BOOL   (*pSetWindowText)(HWND,LPCWSTR);
+    void   (*pSetWindowText)(HWND,LPCWSTR);
     BOOL   (*pShowWindow)(HWND,INT);
     void   (*pSysCommandSizeMove)(HWND,WPARAM);
     HWND   (*pWindowFromDC)(HDC);

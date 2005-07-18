@@ -81,8 +81,8 @@
 @ cdecl SetCursorPos(long long) X11DRV_SetCursorPos
 @ cdecl GetScreenSaveActive() X11DRV_GetScreenSaveActive
 @ cdecl SetScreenSaveActive(long) X11DRV_SetScreenSaveActive
-@ cdecl ChangeDisplaySettingsExW (ptr ptr long long long) X11DRV_ChangeDisplaySettingsExW
-@ cdecl EnumDisplaySettingsExW (ptr long ptr long) X11DRV_EnumDisplaySettingsExW
+@ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) X11DRV_ChangeDisplaySettingsEx
+@ cdecl EnumDisplaySettingsEx(ptr long ptr long) X11DRV_EnumDisplaySettingsEx
 @ cdecl AcquireClipboard(long) X11DRV_AcquireClipboard
 @ cdecl CountClipboardFormats() X11DRV_CountClipboardFormats
 @ cdecl CreateDesktopWindow(long) X11DRV_CreateDesktopWindow

@@ -160,10 +160,10 @@ void X11DRV_Settings_Init(void)
 }
 
 /***********************************************************************
- *		EnumDisplaySettingsExW  (X11DRV.@)
+ *		EnumDisplaySettingsEx  (X11DRV.@)
  *
  */
-BOOL X11DRV_EnumDisplaySettingsExW( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;
@@ -231,11 +231,11 @@ static const char * _DM_fields(DWORD fields)
 #undef _X_FIELD
 
 /***********************************************************************
- *		ChangeDisplaySettingsExW  (X11DRV.@)
+ *		ChangeDisplaySettingsEx  (X11DRV.@)
  *
  */
-LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
-                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
+                                     HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     DWORD i;
     DEVMODEW dm;
@@ -252,7 +252,7 @@ LONG X11DRV_ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode,
     else
     {
         TRACE("Return to original display mode (%s)\n", handler_name);
-        if (!X11DRV_EnumDisplaySettingsExW(devname, dd_mode_default, &dm, 0))
+        if (!X11DRV_EnumDisplaySettingsEx(devname, dd_mode_default, &dm, 0))
         {
             ERR("Default mode not found!\n");
             return DISP_CHANGE_BADMODE;

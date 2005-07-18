@@ -2634,8 +2634,8 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
                                       DWORD flags, LPVOID lparam )
 {
     /* Pass the request on to the driver */
-    if (!USER_Driver.pChangeDisplaySettingsExW) return DISP_CHANGE_FAILED;
-    return USER_Driver.pChangeDisplaySettingsExW( devname, devmode, hwnd, flags, lparam );
+    if (!USER_Driver.pChangeDisplaySettingsEx) return DISP_CHANGE_FAILED;
+    return USER_Driver.pChangeDisplaySettingsEx( devname, devmode, hwnd, flags, lparam );
 }
 
 
@@ -2696,6 +2696,6 @@ BOOL WINAPI EnumDisplaySettingsExW(LPCWSTR lpszDeviceName, DWORD iModeNum,
                                    LPDEVMODEW lpDevMode, DWORD dwFlags)
 {
     /* Pass the request on to the driver */
-    if (!USER_Driver.pEnumDisplaySettingsExW) return FALSE;
-    return USER_Driver.pEnumDisplaySettingsExW(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
+    if (!USER_Driver.pEnumDisplaySettingsEx) return FALSE;
+    return USER_Driver.pEnumDisplaySettingsEx(lpszDeviceName, iModeNum, lpDevMode, dwFlags);
 }
