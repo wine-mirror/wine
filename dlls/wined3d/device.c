@@ -4377,8 +4377,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
             switching to render-to-texture should remove the overhead though.
             */
             IWineD3DSurface_SetPBufferState(This->renderTarget, TRUE /* inPBuffer */, FALSE /* inTexture */);
-            IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)targetContainer, TRUE);
-            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *)targetContainer);
+            IWineD3DSurface_AddDirtyRect(This->renderTarget, NULL);
+            IWineD3DSurface_PreLoad(This->renderTarget);
             IWineD3DSurface_SetPBufferState(This->renderTarget, FALSE /* inPBuffer */, FALSE /* inTexture */);
             IUnknown_Release(targetContainer);
         } else
