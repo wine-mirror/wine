@@ -286,6 +286,8 @@
 @ stdcall RegEnumValueW(long long ptr ptr ptr ptr ptr ptr)
 @ stdcall RegFlushKey(long)
 @ stdcall RegGetKeySecurity(long long ptr ptr)
+@ stdcall RegGetValueA(long str str long ptr ptr ptr)
+@ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr)
 @ stdcall RegLoadKeyA(long str str)
 @ stdcall RegLoadKeyW(long wstr wstr)
 @ stdcall RegNotifyChangeKeyValue(long long long long long)
