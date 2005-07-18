@@ -31,6 +31,9 @@ typedef unsigned long HCRYPTKEY;
 typedef unsigned long HCRYPTHASH;
 typedef void *HCERTSTORE;
 typedef void *HCRYPTMSG;
+typedef void *HCERTSTOREPROV;
+typedef void *HCRYPTOIDFUNCSET;
+typedef void *HCRYPTOIDFUNCADDR;
 
 /* CSP Structs */
 
@@ -650,6 +653,115 @@ typedef struct _CRYPT_DECODE_PARA {
     PFN_CRYPT_FREE  pfnFree;
 } CRYPT_DECODE_PARA, *PCRYPT_DECODE_PARA;
 
+typedef struct _CERT_STORE_PROV_INFO {
+    DWORD             cbSize;
+    DWORD             cStoreProvFunc;
+    void            **rgpvStoreProvFunc;
+    HCERTSTOREPROV    hStoreProv;
+    DWORD             dwStoreProvFlags;
+    HCRYPTOIDFUNCADDR hStoreProvFuncAddr2;
+} CERT_STORE_PROV_INFO, *PCERT_STORE_PROV_INFO;
+
+typedef BOOL (WINAPI *PFN_CERT_DLL_OPEN_STORE_PROV_FUNC)(
+ LPCSTR lpszStoreProvider, DWORD dwEncodingType, HCRYPTPROV hCryptProv,
+ DWORD dwFlags, const void *pvPara, HCERTSTORE hCertStore,
+ PCERT_STORE_PROV_INFO pStoreProvInfo);
+
+typedef void (WINAPI *PFN_CERT_STORE_PROV_CLOSE)(HCERTSTOREPROV hStoreProv,
+ DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_READ_CERT)(HCERTSTOREPROV hStoreProv,
+ PCCERT_CONTEXT pStoreCertContext, DWORD dwFlags,
+ PCCERT_CONTEXT *ppProvCertContext);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_WRITE_CERT)(HCERTSTOREPROV hStoreProv,
+ PCCERT_CONTEXT pCertContext, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_DELETE_CERT)(
+ HCERTSTOREPROV hStoreProv, PCCERT_CONTEXT pCertContext, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_SET_CERT_PROPERTY)(
+ HCERTSTOREPROV hStoreProv, PCCERT_CONTEXT pCertContext, DWORD dwPropId,
+ DWORD dwFlags, const void *pvData);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_READ_CRL)(HCERTSTOREPROV hStoreProv,
+ PCCRL_CONTEXT pStoreCrlContext, DWORD dwFlags,
+ PCCRL_CONTEXT *ppProvCrlContext);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_WRITE_CRL)(HCERTSTOREPROV hStoreProv,
+ PCCRL_CONTEXT pCrlContext, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_DELETE_CRL)(HCERTSTOREPROV hStoreProv,
+ PCCRL_CONTEXT pCrlContext, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_SET_CRL_PROPERTY)(
+ HCERTSTOREPROV hStoreProv, PCCRL_CONTEXT pCrlContext, DWORD dwPropId,
+ DWORD dwFlags, const void *pvData);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_READ_CTL)(HCERTSTOREPROV hStoreProv,
+ PCCTL_CONTEXT pStoreCtlContext, DWORD dwFlags,
+ PCCTL_CONTEXT *ppProvCtlContext);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_WRITE_CTL)(HCERTSTOREPROV hStoreProv,
+ PCCTL_CONTEXT pCtlContext, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_DELETE_CTL)(
+ HCERTSTOREPROV hStoreProv, PCCTL_CONTEXT pCtlContext, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_SET_CTL_PROPERTY)(
+ HCERTSTOREPROV hStoreProv, PCCTL_CONTEXT pCtlContext, DWORD dwPropId,
+ DWORD dwFlags, const void *pvData);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_CONTROL)(HCERTSTOREPROV hStoreProv,
+ DWORD dwFlags, DWORD dwCtrlType, void const *pvCtrlPara);
+
+typedef struct _CERT_STORE_PROV_FIND_INFO {
+    DWORD       cbSize;
+    DWORD       dwMsgAndCertEncodingType;
+    DWORD       dwFindFlags;
+    DWORD       dwFindType;
+    const void *pvFindPara;
+} CERT_STORE_PROV_FIND_INFO, *PCERT_STORE_PROV_FIND_INFO;
+typedef const CERT_STORE_PROV_FIND_INFO CCERT_STORE_PROV_FIND_INFO,
+ *PCCERT_STORE_PROV_FIND_INFO;
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_FIND_CERT)(HCERTSTOREPROV hStoreProv,
+ PCCERT_STORE_PROV_FIND_INFO pFindInfo, PCCERT_CONTEXT pPrevCertContext,
+ DWORD dwFlags, void **ppvStoreProvFindInfo, PCCERT_CONTEXT *ppProvCertContext);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_FREE_FIND_CERT)(
+ HCERTSTOREPROV hStoreProv, PCCERT_CONTEXT pCertContext,
+ void *pvStoreProvFindInfo, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_GET_CERT_PROPERTY)(
+ HCERTSTOREPROV hStoreProv, PCCERT_CONTEXT pCertContext, DWORD dwPropId,
+ DWORD dwFlags, void *pvData, DWORD *pcbData);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_FIND_CRL)(HCERTSTOREPROV hStoreProv,
+ PCCERT_STORE_PROV_FIND_INFO pFindInfo, PCCRL_CONTEXT pPrevCrlContext,
+ DWORD dwFlags, void **ppvStoreProvFindInfo, PCCRL_CONTEXT *ppProvCrlContext);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_FREE_FIND_CRL)(
+ HCERTSTOREPROV hStoreProv, PCCRL_CONTEXT pCrlContext,
+ void *pvStoreProvFindInfo, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_GET_CRL_PROPERTY)(
+ HCERTSTOREPROV hStoreProv, PCCRL_CONTEXT pCrlContext, DWORD dwPropId,
+ DWORD dwFlags, void *pvData, DWORD *pcbData);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_FIND_CTL)(HCERTSTOREPROV hStoreProv,
+ PCCTL_CONTEXT pCtlContext, void *pvStoreProvFindInfo, DWORD dwFlags);
+
+typedef BOOL (WINAPI *PFN_CERT_STORE_PROV_GET_CTL_PROPERTY)(
+ HCERTSTOREPROV hStoreProv, PCCTL_CONTEXT pCtlContext, DWORD dwPropId,
+ DWORD dwFlags, void *pvData);
+
+typedef struct _CERT_CREATE_CONTEXT_PARA {
+    DWORD          cbSize;
+    PFN_CRYPT_FREE pfnFree;
+    void          *pvFree;
+} CERT_CREATE_CONTEXT_PARA, *PCERT_CREATE_CONTEXT_PARA;
+
 /* Algorithm IDs */
 
 #define GET_ALG_CLASS(x)                (x & (7 << 13))
@@ -1206,6 +1318,59 @@ static const WCHAR MS_SCARD_PROV_W[] =           { 'M','i','c','r','o','s','o','
 #define CERT_STORE_OPEN_EXISTING_FLAG               0x00004000
 #define CERT_STORE_READONLY_FLAG                    0x00008000
 
+/* dwAddDisposition */
+#define CERT_STORE_ADD_NEW                                 1
+#define CERT_STORE_ADD_USE_EXISTING                        2
+#define CERT_STORE_ADD_REPLACE_EXISTING                    3
+#define CERT_STORE_ADD_ALWAYS                              4
+#define CERT_STORE_ADD_REPLACE_EXISTING_INHERIT_PROPERTIES 5
+#define CERT_STORE_ADD_NEWER                               6
+#define CERT_STORE_ADD_NEWER_INHERIT_PROPERTIES            7
+
+#define CRYPT_OID_OPEN_STORE_PROV_FUNC     "CertDllOpenStoreProv"
+#define CRYPT_OID_ENCODE_OBJECT_FUNC       "CryptDllEncodeObject"
+#define CRYPT_OID_DECODE_OBJECT_FUNC       "CryptDllDecodeObject"
+#define CRYPT_OID_ENCODE_OBJECT_EX_FUNC    "CryptDllEncodeObjectEx"
+#define CRYPT_OID_DECODE_OBJECT_EX_FUNC    "CryptDllDecodeObjectEx"
+#define CRYPT_OID_CREATE_COM_OBJECT_FUNC   "CryptDllCreateComObject"
+#define CRYPT_OID_VERIFY_REVOCATION_FUNC   "CertDllVerifyRevocation"
+#define CRYPT_OID_VERIFY_CTL_USAGE_FUNC    "CertDllVerifyCTLUsage"
+#define CRYPT_OID_FORMAT_OBJECT_FUNC       "CryptDllFormatObject"
+#define CRYPT_OID_FIND_OID_INFO_FUNC       "CryptDllFindOIDInfo"
+#define CRYPT_OID_FIND_LOCALIZED_NAME_FUNC "CryptDllFindLocalizedName"
+
+/* values for CERT_STORE_PROV_INFO's dwStoreProvFlags */
+#define CERT_STORE_PROV_EXTERNAL_FLAG        0x1
+#define CERT_STORE_PROV_DELETED_FLAG         0x2
+#define CERT_STORE_PROV_NO_PERSIST_FLAG      0x4
+#define CERT_STORE_PROV_SYSTEM_STORE_FLAG    0x8
+#define CERT_STORE_PROV_LM_SYSTEM_STORE_FLAG 0x10
+
+/* function indices */
+#define CERT_STORE_PROV_CLOSE_FUNC             0
+#define CERT_STORE_PROV_READ_CERT_FUNC         1
+#define CERT_STORE_PROV_WRITE_CERT_FUNC        2
+#define CERT_STORE_PROV_DELETE_CERT_FUNC       3
+#define CERT_STORE_PROV_SET_CERT_PROPERTY_FUNC 4
+#define CERT_STORE_PROV_READ_CRL_FUNC          5
+#define CERT_STORE_PROV_WRITE_CRL_FUNC         6
+#define CERT_STORE_PROV_DELETE_CRL_FUNC        7
+#define CERT_STORE_PROV_SET_CRL_PROPERTY_FUNC  8
+#define CERT_STORE_PROV_READ_CTL_FUNC          9
+#define CERT_STORE_PROV_WRITE_CTL_FUNC         10
+#define CERT_STORE_PROV_DELETE_CTL_FUNC        11
+#define CERT_STORE_PROV_SET_CTL_PROPERTY_FUNC  12
+#define CERT_STORE_PROV_CONTROL_FUNC           13
+#define CERT_STORE_PROV_FIND_CERT_FUNC         14
+#define CERT_STORE_PROV_FREE_FIND_CERT_FUNC    15
+#define CERT_STORE_PROV_GET_CERT_PROPERTY_FUNC 16
+#define CERT_STORE_PROV_FIND_CRL_FUNC          17
+#define CERT_STORE_PROV_FREE_FIND_CRL_FUNC     18
+#define CERT_STORE_PROV_GET_CRL_PROPERTY_FUNC  19
+#define CERT_STORE_PROV_FIND_CTL_FUNC          20
+#define CERT_STORE_PROV_FREE_FIND_CTL_FUNC     21
+#define CERT_STORE_PROV_GET_CTL_PROPERTY_FUNC  22
+
 /* physical store dwFlags, also used by CertAddStoreToCollection as
  * dwUpdateFlags
  */
@@ -1406,6 +1571,101 @@ static const WCHAR CERT_PHYSICAL_STORE_AUTH_ROOT_NAME[] =
 #define CRL_REASON_CESSATION_OF_OPERATION 5
 #define CRL_REASON_CERTIFICATE_HOLD       6
 #define CRL_REASON_REMOVE_FROM_CRL        8
+
+/* CertControlStore control types */
+#define CERT_STORE_CTRL_RESYNC        1
+#define CERT_STORE_CTRL_NOTIFY_CHANGE 2
+#define CERT_STORE_CTRL_COMMIT        3
+#define CERT_STORE_CTRL_AUTO_RESYNC   4
+#define CERT_STORE_CTRL_CANCEL_NOTIFY 5
+
+#define CERT_STORE_CTRL_COMMIT_FORCE_FLAG 0x1
+#define CERT_STORE_CTRL_COMMIT_CLEAR_FLAG 0x2
+
+/* cert store properties */
+#define CERT_STORE_LOCALIZED_NAME_PROP_ID 0x1000
+
+/* CertCreateContext flags */
+#define CERT_CREATE_CONTEXT_NOCOPY_FLAG       0x1
+#define CERT_CREATE_CONTEXT_SORTED_FLAG       0x2
+#define CERT_CREATE_CONTEXT_NO_HCRYPTMSG_FLAG 0x4
+#define CERT_CREATE_CONTEXT_NO_ENTRY_FLAG     0x8
+
+#define CERT_COMPARE_MASK                   0xffff
+#define CERT_COMPARE_SHIFT                  16
+#define CERT_COMPARE_ANY                    0
+#define CERT_COMPARE_SHA1_HASH              1
+#define CERT_COMPARE_HASH                   CERT_COMPARE_SHA1_HASH
+#define CERT_COMPARE_NAME                   2
+#define CERT_COMPARE_ATTR                   3
+#define CERT_COMPARE_MD5_HASH               4
+#define CERT_COMPARE_PROPERTY               5
+#define CERT_COMPARE_PUBLIC_KEY             6
+#define CERT_COMPARE_NAME_STR_A             7
+#define CERT_COMPARE_NAME_STR_W             8
+#define CERT_COMPARE_KEY_SPEC               9
+#define CERT_COMPARE_ENHKEY_USAGE           10
+#define CERT_COMPARE_CTL_USAGE              CERT_COMPARE_ENHKEY_USAGE
+#define CERT_COMPARE_SUBJECT_CERT           11
+#define CERT_COMPARE_ISSUER_OF              12
+#define CERT_COMPARE_EXISTING               13
+#define CERT_COMPARE_SIGNATURE_HASH         14
+#define CERT_COMPARE_KEY_IDENTIFIER         15
+#define CERT_COMPARE_CERT_ID                16
+#define CERT_COMPARE_CROSS_CERT_DIST_POINTS 17
+#define CERT_COMPARE_PUBKEY_MD5_HASH        18
+
+/* values of dwFindType for CertFind*InStore */
+#define CERT_FIND_ANY \
+ (CERT_COMPARE_ANY << CERT_COMPARE_SHIFT)
+#define CERT_FIND_SHA1_HASH \
+ (CERT_COMPARE_SHA1_HASH << CERT_COMPARE_SHIFT)
+#define CERT_FIND_MD5_HASH \
+ (CERT_COMPARE_MD5_HASH << CERT_COMPARE_SHIFT)
+#define CERT_FIND_SIGNATURE_HASH \
+ (CERT_COMPARE_SIGNATURE_HASH << CERT_COMPARE_SHIFT)
+#define CERT_FIND_KEY_IDENTIFIER \
+ (CERT_COMPARE_KEY_IDENTIFIER << CERT_COMPARE_SHIFT)
+#define CERT_FIND_HASH CERT_FIND_SHA1_HASH
+#define CERT_FIND_PROPERTY \
+ (CERT_COMPARE_PROPERTY << CERT_COMPARE_SHIFT)
+#define CERT_FIND_PUBLIC_KEY \
+ (CERT_COMPARE_PUBLIC_KEY << CERT_COMPARE_SHIFT)
+#define CERT_FIND_SUBJECT_NAME \
+ (CERT_COMPARE_NAME << CERT_COMPARE_SHIFT | CERT_INFO_SUBJECT_FLAG)
+#define CERT_FIND_SUBJECT_ATTR \
+ (CERT_COMPARE_ATTR << CERT_COMPARE_SHIFT | CERT_INFO_SUBJECT_FLAG)
+#define CERT_FIND_ISSUER_NAME \
+ (CERT_COMPARE_NAME << CERT_COMPARE_SHIFT | CERT_INFO_ISSUER_FLAG)
+#define CERT_FIND_ISSUER_ATTR \
+ (CERT_COMPARE_ATTR << CERT_COMPARE_SHIFT | CERT_INFO_ISSUER_FLAG)
+#define CERT_FIND_SUBJECT_STR_A \
+ (CERT_COMPARE_NAME_STR_A << CERT_COMPARE_SHIFT | CERT_INFO_SUBJECT_FLAG)
+#define CERT_FIND_SUBJECT_STR_W \
+ (CERT_COMPARE_NAME_STR_W << CERT_COMPARE_SHIFT | CERT_INFO_SUBJECT_FLAG)
+#define CERT_FIND_SUBJECT_STR CERT_FIND_SUBJECT_STR_W
+#define CERT_FIND_ISSUER_STR_A \
+ (CERT_COMPARE_NAME_STR_A << CERT_COMPARE_SHIFT | CERT_INFO_ISSUER_FLAG)
+#define CERT_FIND_ISSUER_STR_W \
+ (CERT_COMPARE_NAME_STR_W << CERT_COMPARE_SHIFT | CERT_INFO_ISSUER_FLAG)
+#define CERT_FIND_ISSUER_STR CERT_FIND_ISSUER_STR_W
+#define CERT_FIND_KEY_SPEC \
+ (CERT_COMPARE_KEY_SPEC << CERT_COMPARE_SHIFT)
+#define CERT_FIND_ENHKEY_USAGE \
+ (CERT_COMPARE_ENHKEY_USAGE << CERT_COMPARE_SHIFT)
+#define CERT_FIND_CTL_USAGE CERT_FIND_ENHKEY_USAGE
+#define CERT_FIND_SUBJECT_CERT \
+ (CERT_COMPARE_SUBJECT_CERT << CERT_COMPARE_SHIFT)
+#define CERT_FIND_ISSUER_OF \
+ (CERT_COMPARE_ISSUER_OF << CERT_COMPARE_SHIFT)
+#define CERT_FIND_EXISTING \
+ (CERT_COMPARE_EXISTING << CERT_COMPARE_SHIFT)
+#define CERT_FIND_CERT_ID \
+ (CERT_COMPARE_CERT_ID << CERT_COMPARE_SHIFT)
+#define CERT_FIND_CROSS_CERT_DIST_POINTS \
+ (CERT_COMPARE_CROSS_CERT_DIST_POINTS << CERT_COMPARE_SHIFT)
+#define CERT_FIND_PUBKEY_MD5_HASH \
+ (CERT_COMPARE_PUBKEY_MD5_HASH << CERT_COMPARE_SHIFT)
 
 /* OIDs */
 #define szOID_RSA                           "1.2.840.113549"
@@ -1876,9 +2136,6 @@ BOOL WINAPI CertEnumPhysicalStore(const void *pvSystemStore, DWORD dwFlags,
 BOOL WINAPI CertSaveStore(HCERTSTORE hCertStore, DWORD dwMsgAndCertEncodingType,
              DWORD dwSaveAs, DWORD dwSaveTo, void* pvSaveToPara, DWORD dwFlags);
 
-PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
-  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded);
-
 BOOL WINAPI CertAddStoreToCollection(HCERTSTORE hCollectionStore,
  HCERTSTORE hSiblingStore, DWORD dwUpdateFlags, DWORD dwPriority);
 
@@ -1893,19 +2150,109 @@ BOOL WINAPI CertVerifyCertificateChainPolicy(LPCSTR szPolicyOID,
  PCCERT_CHAIN_CONTEXT pChainContext, PCERT_CHAIN_POLICY_PARA pPolicyPara,
  PCERT_CHAIN_POLICY_STATUS pPolicyStatus);
 
+BOOL WINAPI CertGetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
+ void *pvData, DWORD *pcbData);
+
+BOOL WINAPI CertSetStoreProperty(HCERTSTORE hCertStore, DWORD dwPropId,
+ DWORD dwFlags, const void *pvData);
+
+BOOL WINAPI CertControlStore(HCERTSTORE hCertStore, DWORD dwFlags,
+ DWORD dwCtrlType, void const *pvCtrlPara);
+
 BOOL WINAPI CertCloseStore( HCERTSTORE hCertStore, DWORD dwFlags );
 
 BOOL WINAPI CertFreeCertificateContext( PCCERT_CONTEXT pCertContext );
 
 BOOL WINAPI CertFreeCRLContext( PCCRL_CONTEXT pCrlContext );
 
+BOOL WINAPI CertFreeCTLContext( PCCTL_CONTEXT pCtlContext );
+
+BOOL WINAPI CertAddCertificateContextToStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
+ PCCERT_CONTEXT *ppStoreContext);
+
 BOOL WINAPI CertAddCRLContextToStore( HCERTSTORE hCertStore,
  PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
  PCCRL_CONTEXT *ppStoreContext );
 
+BOOL WINAPI CertAddCTLContextToStore( HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
+ PCCTL_CONTEXT *ppStoreContext );
+
+BOOL WINAPI CertAddCertificateLinkToStore(HCERTSTORE hCertStore,
+ PCCERT_CONTEXT pCertContext, DWORD dwAddDisposition,
+ PCCERT_CONTEXT *ppStoreContext);
+
+BOOL WINAPI CertAddCRLLinkToStore(HCERTSTORE hCertStore,
+ PCCRL_CONTEXT pCrlContext, DWORD dwAddDisposition,
+ PCCRL_CONTEXT *ppStoreContext);
+
+BOOL WINAPI CertAddCTLLinkToStore(HCERTSTORE hCertStore,
+ PCCTL_CONTEXT pCtlContext, DWORD dwAddDisposition,
+ PCCTL_CONTEXT *ppStoreContext);
+
+BOOL WINAPI CertAddEncodedCertificateToStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, const BYTE *pbCertEncoded, DWORD cbCertEncoded,
+ DWORD dwAddDisposition, PCCERT_CONTEXT *ppCertContext);
+
+BOOL WINAPI CertAddEncodedCRLToStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, const BYTE *pbCrlEncoded, DWORD cbCrlEncoded,
+ DWORD dwAddDisposition, PCCRL_CONTEXT *ppCrlContext);
+
+BOOL WINAPI CertAddEncodedCTLToStore(HCERTSTORE hCertStore,
+ DWORD dwMsgAndCertEncodingType, const BYTE *pbCtlEncoded, DWORD cbCtlEncoded,
+ DWORD dwAddDisposition, PCCTL_CONTEXT *ppCtlContext);
+
+BOOL WINAPI CertAddSerializedElementToStore(HCERTSTORE hCertStore,
+ const BYTE *pbElement, DWORD cbElement, DWORD dwAddDisposition, DWORD dwFlags,
+ DWORD dwContextTypeFlags, DWORD *pdwContentType, const void *ppvContext);
+
+const void *CertCreateContext(DWORD dwContextType, DWORD dwEncodingType,
+ const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
+ PCERT_CREATE_CONTEXT_PARA pCreatePara);
+
+PCCERT_CONTEXT WINAPI CertCreateCertificateContext(DWORD dwCertEncodingType,
+ const BYTE *pbCertEncoded, DWORD cbCertEncoded);
+
+PCCRL_CONTEXT WINAPI CertCreateCRLContext( DWORD dwCertEncodingType,
+  const BYTE* pbCrlEncoded, DWORD cbCrlEncoded);
+
+PCCTL_CONTEXT WINAPI CertCreateCTLContext(DWORD dwMsgAndCertEncodingType,
+ const BYTE *pbCtlEncoded, DWORD cbCtlEncoded);
+
+BOOL WINAPI CertDeleteCertificateFromStore(PCCERT_CONTEXT pCertContext);
+
+BOOL WINAPI CertDeleteCRLFromStore(PCCRL_CONTEXT pCrlContext);
+
+BOOL WINAPI CertDeleteCTLFromStore(PCCTL_CONTEXT pCtlContext);
+
+PCCERT_CONTEXT WINAPI CertDuplicateCertificateContext(
+ PCCERT_CONTEXT pCertContext);
+
+PCCRL_CONTEXT WINAPI CertDuplicateCRLContext(PCCRL_CONTEXT pCrlContext);
+
+PCCTL_CONTEXT WINAPI CertDuplicateCTLContext(PCCTL_CONTEXT pCtlContext);
+
 PCCERT_CONTEXT WINAPI CertFindCertificateInStore( HCERTSTORE hCertStore,
  DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
  const void *pvFindPara, PCCERT_CONTEXT pPrevCertContext );
+
+PCCRL_CONTEXT WINAPI CertFindCRLInStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
+ const void *pvFindPara, PCCRL_CONTEXT pPrevCrlContext);
+
+PCCTL_CONTEXT WINAPI CertFindCTLInStore(HCERTSTORE hCertStore,
+ DWORD dwCertEncodingType, DWORD dwFindFlags, DWORD dwFindType,
+ const void *pvFindPara, PCCTL_CONTEXT pPrevCtlContext);
+
+BOOL WINAPI CertSerializeCertificateStoreElement(PCCERT_CONTEXT pCertContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
+
+BOOL WINAPI CertSerializeCRLStoreElement(PCCRL_CONTEXT pCrlContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
+
+BOOL WINAPI CertSerializeCTLStoreElement(PCCTL_CONTEXT pCtlContext,
+ DWORD dwFlags, BYTE *pbElement, DWORD *pcbElement);
 
 BOOL WINAPI CryptEncodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const void *pvStructInfo, BYTE *pbEncoded, DWORD *pcbEncoded);
@@ -1919,6 +2266,10 @@ BOOL WINAPI CryptDecodeObject(DWORD dwCertEncodingType, LPCSTR lpszStructType,
 BOOL WINAPI CryptDecodeObjectEx(DWORD dwCertEncodingType, LPCSTR lpszStructType,
  const BYTE *pbEncoded, DWORD cbEncoded, DWORD dwFlags,
  PCRYPT_DECODE_PARA pDecodePara, void *pvStructInfo, DWORD *pcbStructInfo);
+
+BOOL WINAPI CryptHashCertificate(HCRYPTPROV hCryptProv, ALG_ID Algid,
+ DWORD dwFlags, const BYTE *pbEncoded, DWORD cbEncoded, BYTE *pbComputedHash,
+ DWORD *pcbComputedHash);
 
 PCRYPT_ATTRIBUTE WINAPI CertFindAttribute(LPCSTR pszObjId, DWORD cAttr,
  CRYPT_ATTRIBUTE rgAttr[]);
