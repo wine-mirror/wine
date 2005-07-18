@@ -34,6 +34,7 @@ TESTBINS = \
 	mlang_test.exe$(DLLEXT) \
 	msacm32_test.exe$(DLLEXT) \
 	mscms_test.exe$(DLLEXT) \
+	mshtml_test.exe$(DLLEXT) \
 	msi_test.exe$(DLLEXT) \
 	msvcrt_test.exe$(DLLEXT) \
 	msvcrtd_test.exe$(DLLEXT) \
