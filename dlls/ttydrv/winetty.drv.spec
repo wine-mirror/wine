@@ -36,24 +36,9 @@
 
 # USER driver
 
-@ cdecl VkKeyScanEx(long long) TTYDRV_VkKeyScanEx
-@ cdecl MapVirtualKeyEx(long long long) TTYDRV_MapVirtualKeyEx
-@ cdecl GetKeyNameText(long ptr long) TTYDRV_GetKeyNameText
-@ cdecl ToUnicodeEx(long long ptr ptr long long long) TTYDRV_ToUnicodeEx
-@ cdecl Beep() TTYDRV_Beep
-@ cdecl SetCursor(ptr) TTYDRV_SetCursor
-@ cdecl GetScreenSaveActive() TTYDRV_GetScreenSaveActive
-@ cdecl SetScreenSaveActive(long) TTYDRV_SetScreenSaveActive
 @ cdecl CreateDesktopWindow(long) TTYDRV_CreateDesktopWindow
 @ cdecl CreateWindow(long ptr long) TTYDRV_CreateWindow
 @ cdecl DestroyWindow(long) TTYDRV_DestroyWindow
 @ cdecl GetDC(long long long long) TTYDRV_GetDC
 @ cdecl SetWindowPos(ptr) TTYDRV_SetWindowPos
-@ cdecl AcquireClipboard() TTYDRV_AcquireClipboard
-@ cdecl ReleaseClipboard() TTYDRV_ReleaseClipboard
-@ cdecl SetClipboardData(long) TTYDRV_SetClipboardData
-@ cdecl GetClipboardData(long) TTYDRV_GetClipboardData
-@ cdecl IsClipboardFormatAvailable(long) TTYDRV_IsClipboardFormatAvailable
-@ cdecl RegisterClipboardFormat(str) TTYDRV_RegisterClipboardFormat
-@ cdecl IsSelectionOwner() TTYDRV_IsSelectionOwner
 @ cdecl ShowWindow(long long) TTYDRV_ShowWindow

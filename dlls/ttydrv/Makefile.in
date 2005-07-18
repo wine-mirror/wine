@@ -13,7 +13,6 @@ C_SRCS = \
 	objects.c \
 	palette.c \
 	ttydrv_main.c \
-	user.c \
 	wnd.c
 
 @MAKE_DLL_RULES@
