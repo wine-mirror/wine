@@ -516,8 +516,10 @@ static void test_reg_delete_key(void)
     DWORD ret;
 
     ret = RegDeleteKey(hkey_main, NULL);
-    ok(ret == ERROR_INVALID_PARAMETER || ret == ERROR_ACCESS_DENIED,
-       "expected ERROR_INVALID_PARAMETER or ERROR_ACCESS_DENIED, got %ld\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER ||
+       ret == ERROR_ACCESS_DENIED ||
+       ret == ERROR_BADKEY, /* Win95 */
+       "ret=%ld\n", ret);
 }
 
 static void test_reg_save_key(void)
