@@ -4586,6 +4586,7 @@ static void test_VarBoolChangeTypeEx(void)
 static void test_VarBstrFromR4(void)
 {
   static const WCHAR szNative[] = { '6','5','4','3','2','2','.','3','\0' };
+  static const WCHAR szZero[] = {'0', '\0'};
   LCID lcid;
   HRESULT hres;
   BSTR bstr = NULL;
@@ -4607,6 +4608,14 @@ static void test_VarBstrFromR4(void)
      */
     ok(memcmp(bstr, szNative, sizeof(szNative)) == 0, "string different\n");
     }
+  }
+
+  f = -1e-400;    /* deliberately cause underflow */
+  hres = pVarBstrFromR4(f, lcid, 0, &bstr);
+  ok(hres == S_OK, "got hres 0x%08lx\n", hres);
+  if (bstr)
+  {
+    todo_wine ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
   }
 }
 
