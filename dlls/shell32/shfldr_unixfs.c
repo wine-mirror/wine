@@ -397,7 +397,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
     else if ((pUnixFolder->m_dwPathMode == PATHMODE_UNIX) && (path[0] == '/')) 
     {
         /* Absolute unix path. Just convert to ANSI. */
-        WideCharToMultiByte(CP_ACP, 0, path, -1, szCompletePath, FILENAME_MAX, NULL, NULL); 
+        WideCharToMultiByte(CP_UNIXCP, 0, path, -1, szCompletePath, FILENAME_MAX, NULL, NULL); 
         pNextPathElement = szCompletePath;
     } 
     else 
@@ -405,7 +405,7 @@ static BOOL UNIXFS_path_to_pidl(UnixFolder *pUnixFolder, const WCHAR *path, LPIT
         /* Relative dos or unix path. Concat with this folder's path */
         int cBasePathLen = strlen(pUnixFolder->m_pszPath);
         memcpy(szCompletePath, pUnixFolder->m_pszPath, cBasePathLen);
-        WideCharToMultiByte(CP_ACP, 0, path, -1, szCompletePath + cBasePathLen, 
+        WideCharToMultiByte(CP_UNIXCP, 0, path, -1, szCompletePath + cBasePathLen, 
                             FILENAME_MAX - cBasePathLen, NULL, NULL);
         pNextPathElement = szCompletePath + cBasePathLen - 1;
         
@@ -855,11 +855,11 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
 
     /* build destination path */
     if (uFlags & SHGDN_FORPARSING) { /* absolute path in lpszName */
-        WideCharToMultiByte(CP_ACP, 0, lpszName, -1, szDest, FILENAME_MAX, NULL, NULL);
+        WideCharToMultiByte(CP_UNIXCP, 0, lpszName, -1, szDest, FILENAME_MAX, NULL, NULL);
     } else {
         WCHAR wszSrcRelative[MAX_PATH];
         memcpy(szDest, This->m_pszPath, cBasePathLen);
-        WideCharToMultiByte(CP_ACP, 0, lpszName, -1, szDest+cBasePathLen, 
+        WideCharToMultiByte(CP_UNIXCP, 0, lpszName, -1, szDest+cBasePathLen, 
                             FILENAME_MAX-cBasePathLen, NULL, NULL);
 
         /* uFlags is SHGDN_FOREDITING of SHGDN_FORADDRESSBAR. If the filename's 
@@ -884,7 +884,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_SetNameOf(IShellFolder2* iface, H
     
     /* Build a pidl for the path of the renamed file */
     if (!GetFullPathNameA(szDest, MAX_PATH, szDosDest, NULL) ||
-        !MultiByteToWideChar(CP_ACP, 0, szDosDest, -1, wszDosDest, MAX_PATH) ||
+        !MultiByteToWideChar(CP_UNIXCP, 0, szDosDest, -1, wszDosDest, MAX_PATH) ||
         !UNIXFS_path_to_pidl(This, wszDosDest, &pidlDest))
     {
         rename(szDest, szSrc); /* Undo the renaming */
@@ -1266,7 +1266,7 @@ static HRESULT WINAPI UnixFolder_ISFHelper_AddFolder(ISFHelper* iface, HWND hwnd
         WCHAR wszName[MAX_PATH];
 
         /* Inform the shell */
-        MultiByteToWideChar(CP_ACP, 0, pszName, -1, wszName, MAX_PATH);
+        MultiByteToWideChar(CP_UNIXCP, 0, pszName, -1, wszName, MAX_PATH);
         if (UNIXFS_path_to_pidl(This, wszName, &pidlRelative)) {
             LPITEMIDLIST pidlAbsolute = ILCombine(This->m_pidlLocation, pidlRelative);
             if (ppidlOut)
