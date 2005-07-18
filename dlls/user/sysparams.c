@@ -75,6 +75,7 @@ enum spi_index
     SPI_SETLOWPOWERACTIVE_IDX,
     SPI_SETPOWEROFFACTIVE_IDX,
     SPI_USERPREFERENCEMASK_IDX,
+    SPI_NONCLIENTMETRICS_IDX,
     SPI_INDEX_COUNT
 };
 
@@ -253,7 +254,6 @@ static const WCHAR defPattern[]=                             {'1','7','0',' ','8
                                                               ' ','1','7','0',' ','8','5',0};
 static const WCHAR CSu[]=                                    {'%','u',0};
 static const WCHAR CSd[]=                                    {'%','d',0};
-static const WCHAR DISPLAY[]=                                {'D','I','S','P','L','A','Y',0};
 
 /* Indicators whether system parameter value is loaded */
 static char spi_loaded[SPI_INDEX_COUNT];
@@ -261,8 +261,6 @@ static char spi_loaded[SPI_INDEX_COUNT];
 static BOOL notify_change = TRUE;
 
 /* System parameters storage */
-static int sysMetrics[SM_CMETRICS+1];
-static HDC display_dc;
 static BOOL beep_active = TRUE;
 static int mouse_threshold1 = 6;
 static int mouse_threshold2 = 10;
@@ -272,7 +270,8 @@ static UINT keyboard_speed = 31;
 static UINT screensave_timeout = 300;
 static UINT grid_granularity = 0;
 static UINT keyboard_delay = 1;
-static BOOL icon_title_wrap = TRUE;
+static UINT double_click_width = 4;
+static UINT double_click_height = 4;
 static UINT double_click_time = 500;
 static BOOL drag_full_windows = FALSE;
 static RECT work_area;
@@ -283,13 +282,56 @@ static UINT mouse_hover_height = 4;
 static UINT mouse_hover_time = 400;
 static UINT mouse_scroll_lines = 3;
 static UINT menu_show_delay = 400;
+static UINT menu_drop_alignment = 0;
 static BOOL screensaver_running = FALSE;
 static UINT font_smoothing = 0;  /* 0x01 for 95/98/NT, 0x02 for 98/ME/2k/XP */
 static BOOL lowpoweractive = FALSE;
 static BOOL poweroffactive = FALSE;
+static BOOL show_sounds = FALSE;
+static BOOL swap_buttons = FALSE;
 static BOOL listbox_smoothscrolling = FALSE;
 static BYTE user_prefs[4];
-static LOGFONTW icontitle_log_font = { -11,0,0,0,FW_NORMAL,FALSE,FALSE,FALSE,ANSI_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_PITCH };
+
+static MINIMIZEDMETRICS minimized_metrics =
+{
+    sizeof(MINIMIZEDMETRICS),
+    154,      /* iWidth */
+    0,        /* iHorzGap */
+    0,        /* iVertGap */
+    ARW_HIDE  /* iArrange */
+};
+
+static ICONMETRICSW icon_metrics =
+{
+    sizeof(ICONMETRICSW),
+    75,   /* iHorzSpacing */
+    75,   /* iVertSpacing */
+    TRUE, /* iTitleWrap */
+    { -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+      OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH }   /* lfFont */
+};
+
+static NONCLIENTMETRICSW nonclient_metrics =
+{
+    sizeof(NONCLIENTMETRICSW),
+    1,     /* iBorderWidth */
+    16,    /* iScrollWidth */
+    16,    /* iScrollHeight */
+    18,    /* iCaptionWidth */
+    18,    /* iCaptionHeight */
+    { 0 }, /* lfCaptionFont */
+    13,    /* iSmCaptionWidth */
+    15,    /* iSmCaptionHeight */
+    { 0 }, /* lfSmCaptionFont */
+    18,    /* iMenuWidth */
+    18,    /* iMenuHeight */
+    { 0 }, /* lfMenuFont */
+    { 0 }, /* lfStatusFont */
+    { 0 }  /* lfMessageFont */
+};
+
+static SIZE icon_size = { 32, 32 };
+static SIZE scroll_height = { 16, 16 };
 
 #define NUM_SYS_COLORS     (COLOR_MENUBAR+1)
 
@@ -519,6 +561,21 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
 }
 
 
+static inline HDC get_display_dc(void)
+{
+    static const WCHAR DISPLAY[] = {'D','I','S','P','L','A','Y',0};
+    static HDC display_dc;
+    if (!display_dc) display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
+    return display_dc;
+}
+
+static inline int get_display_dpi(void)
+{
+    static int display_dpi;
+    if (!display_dpi) display_dpi = GetDeviceCaps( get_display_dc(), LOGPIXELSY );
+    return display_dpi;
+}
+
 /***********************************************************************
  * SYSPARAMS_Twips2Pixels
  *
@@ -532,15 +589,15 @@ static BOOL SYSPARAMS_Save( LPCWSTR lpRegKey, LPCWSTR lpValName, LPCWSTR lpValue
  *       Technical Reference to the Windows 2000 Registry ->
  *       HKEY_CURRENT_USER -> Control Panel -> Desktop -> WindowMetrics
  */
-inline static int SYSPARAMS_Twips2Pixels(int x, int dpi)
+inline static int SYSPARAMS_Twips2Pixels(int x)
 {
     if (x < 0)
-        x = (-x*dpi+720)/1440;
+        x = (-x * get_display_dpi() + 720) / 1440;
     return x;
 }
 
 /***********************************************************************
- * SYSPARAMS_GetRegistryMetric
+ * get_reg_metric
  *
  * Get a registry entry from the already open key.  This allows us to open the
  * section once and read several values.
@@ -548,7 +605,7 @@ inline static int SYSPARAMS_Twips2Pixels(int x, int dpi)
  * Of course this function belongs somewhere more usable but here will do
  * for now.
  */
-static int SYSPARAMS_GetRegistryMetric( HKEY hkey, LPCWSTR lpValName, int default_value, int dpi)
+static int get_reg_metric( HKEY hkey, LPCWSTR lpValName, int default_value )
 {
     int value = default_value;
     if (hkey)
@@ -568,7 +625,7 @@ static int SYSPARAMS_GetRegistryMetric( HKEY hkey, LPCWSTR lpValName, int defaul
                 value = atoiW(buffer);
         }
     }
-    return SYSPARAMS_Twips2Pixels(value, dpi);
+    return SYSPARAMS_Twips2Pixels(value);
 }
 
 
@@ -622,10 +679,7 @@ static BOOL get_twips_param( unsigned int idx, LPCWSTR regkey, LPCWSTR value,
         WCHAR buf[10];
 
         if (SYSPARAMS_Load( regkey, value, buf, sizeof(buf) ))
-        {
-            int dpi = GetDeviceCaps( display_dc, LOGPIXELSY );
-            *value_ptr = SYSPARAMS_Twips2Pixels( atoiW(buf), dpi );
-        }
+            *value_ptr = SYSPARAMS_Twips2Pixels( atoiW(buf) );
         spi_loaded[idx] = TRUE;
     }
     *ret_ptr = *value_ptr;
@@ -712,161 +766,13 @@ static BOOL set_user_pref_param( UINT offset, UINT mask, BOOL value, BOOL fWinIn
  *           SYSPARAMS_Init
  *
  * Initialisation of the system metrics array.
- *
- * Differences in return values between 3.1 and 95 apps under Win95 (FIXME ?):
- * SM_CXVSCROLL        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
- * SM_CYHSCROLL        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
- * SM_CXDLGFRAME       x-1      x	Already fixed
- * SM_CYDLGFRAME       x-1      x	Already fixed
- * SM_CYCAPTION        x+1      x	Fixed May 24, 1999 - Ronald B. Cemer
- * SM_CYMENU           x-1      x	Already fixed
- * SM_CYFULLSCREEN     x-1      x
- * SM_CXFRAME                           Fixed July 6, 2001 - Bill Medland
- *
- * Starting at Win95 there are now a large number or Registry entries in the
- * [WindowMetrics] section that are probably relevant here.
  */
 void SYSPARAMS_Init(void)
 {
     HKEY hkey; /* key to the window metrics area of the registry */
-    WCHAR buf[10];
-    INT border;
-    CPINFO cpinfo;
-    int i, r, g, b, dpi;
+    int i, r, g, b;
     char buffer[100];
     HBITMAP h55AABitmap;
-
-
-    display_dc = CreateICW( DISPLAY, NULL, NULL, NULL );
-    assert( display_dc );
-    dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
-
-    if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
-                       0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
-
-    sysMetrics[SM_CXVSCROLL] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_SCROLLWIDTH_VALNAME, 16 , dpi);
-    sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
-
-    /* The Win 2000 resource kit SAYS that this is governed by the ScrollHeight
-     * but on my computer that controls the CYV/CXH values. */
-    sysMetrics[SM_CYCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18, dpi)
-                                 + 1; /* for the separator? */
-
-    sysMetrics[SM_CYMENU] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_MENUHEIGHT_VALNAME, 18, dpi) + 1;
-
-    sysMetrics[SM_CXDLGFRAME] = 3;
-    sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
-
-    SystemParametersInfoW( SPI_GETBORDER, 0, &border, 0 );
-    sysMetrics[SM_CXFRAME] = sysMetrics[SM_CXDLGFRAME] + border;
-    sysMetrics[SM_CYFRAME] = sysMetrics[SM_CYDLGFRAME] + border;
-
-    sysMetrics[SM_CXCURSOR] = 32;
-    sysMetrics[SM_CYCURSOR] = 32;
-
-    /* SM_C{X,Y}BORDER always returns 1 regardless of 'BorderWidth' value in registry. Verified against Win98 and WinXP */
-    sysMetrics[SM_CXBORDER] = 1;
-    sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
-
-    sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL];
-    sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
-    sysMetrics[SM_CXICON] = SYSPARAMS_GetRegistryMetric( hkey, METRICS_ICONSIZE_VALNAME, 32 , dpi);
-    sysMetrics[SM_CYICON] = sysMetrics[SM_CXICON];
-    sysMetrics[SM_CYKANJIWINDOW] = 0;
-    sysMetrics[SM_MOUSEPRESENT] = 1;
-    sysMetrics[SM_CYVSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CXVSCROLL], dpi);
-    sysMetrics[SM_CXHSCROLL] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_SCROLLHEIGHT_VALNAME, sysMetrics[SM_CYHSCROLL], dpi);
-    sysMetrics[SM_DEBUG] = 0;
-
-    sysMetrics[SM_SWAPBUTTON] = 0;
-    if (SYSPARAMS_Load( SPI_SETMOUSEBUTTONSWAP_REGKEY, SPI_SETMOUSEBUTTONSWAP_VALNAME, buf, sizeof(buf) ))
-        sysMetrics[SM_SWAPBUTTON] = atoiW( buf );
-    spi_loaded[SPI_SETMOUSEBUTTONSWAP_IDX] = TRUE;
-
-    sysMetrics[SM_RESERVED1] = 0;
-    sysMetrics[SM_RESERVED2] = 0;
-    sysMetrics[SM_RESERVED3] = 0;
-    sysMetrics[SM_RESERVED4] = 0;
-
-    /* FIXME: The following two are calculated, but how? */
-    sysMetrics[SM_CXMIN] = 112;
-    sysMetrics[SM_CYMIN] = 27;
-
-    sysMetrics[SM_CXSIZE] = SYSPARAMS_GetRegistryMetric (hkey, METRICS_CAPTIONWIDTH_VALNAME, sysMetrics[SM_CYCAPTION] - 1, dpi);
-    sysMetrics[SM_CYSIZE] = sysMetrics[SM_CYCAPTION] - 1;
-    sysMetrics[SM_CXMINTRACK] = sysMetrics[SM_CXMIN];
-    sysMetrics[SM_CYMINTRACK] = sysMetrics[SM_CYMIN];
-
-    sysMetrics[SM_CXDOUBLECLK] = 4;
-    sysMetrics[SM_CYDOUBLECLK] = 4;
-
-    if (SYSPARAMS_Load( SPI_SETDOUBLECLKWIDTH_REGKEY1, SPI_SETDOUBLECLKWIDTH_VALNAME, buf, sizeof(buf) ))
-        sysMetrics[SM_CXDOUBLECLK] = atoiW( buf );
-    spi_loaded[SPI_SETDOUBLECLKWIDTH_IDX] = TRUE;
-
-    if (SYSPARAMS_Load( SPI_SETDOUBLECLKHEIGHT_REGKEY1, SPI_SETDOUBLECLKHEIGHT_VALNAME, buf, sizeof(buf) ))
-        sysMetrics[SM_CYDOUBLECLK] = atoiW( buf );
-    spi_loaded[SPI_SETDOUBLECLKHEIGHT_IDX] = TRUE;
-
-    sysMetrics[SM_CXICONSPACING] = 75;
-    SystemParametersInfoW( SPI_ICONHORIZONTALSPACING, 0, &sysMetrics[SM_CXICONSPACING], 0 );
-    sysMetrics[SM_CYICONSPACING] = 75;
-    SystemParametersInfoW( SPI_ICONVERTICALSPACING, 0, &sysMetrics[SM_CYICONSPACING], 0 );
-
-    SystemParametersInfoW( SPI_GETMENUDROPALIGNMENT, 0, &sysMetrics[SM_MENUDROPALIGNMENT], 0 );
-    sysMetrics[SM_PENWINDOWS] = 0;
-    GetCPInfo( CP_ACP, &cpinfo );
-    sysMetrics[SM_DBCSENABLED] = (cpinfo.MaxCharSize > 1);
-
-    /* FIXME: Need to query X for the following */
-    sysMetrics[SM_CMOUSEBUTTONS] = 3;
-
-    sysMetrics[SM_SECURE] = 0;
-    sysMetrics[SM_CXEDGE] = sysMetrics[SM_CXBORDER] + 1;
-    sysMetrics[SM_CYEDGE] = sysMetrics[SM_CXEDGE];
-    sysMetrics[SM_CXMINSPACING] = 160;
-    sysMetrics[SM_CYMINSPACING] = 24;
-    sysMetrics[SM_CXSMICON] = 16;
-    sysMetrics[SM_CYSMICON] = 16;
-    sysMetrics[SM_CYSMCAPTION] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15, dpi) + 1;
-    sysMetrics[SM_CXSMSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13, dpi);
-    sysMetrics[SM_CYSMSIZE] = sysMetrics[SM_CYSMCAPTION] - 1;
-    sysMetrics[SM_CXMENUSIZE] = SYSPARAMS_GetRegistryMetric(hkey, METRICS_MENUWIDTH_VALNAME, sysMetrics[SM_CYMENU] - 1, dpi);
-    sysMetrics[SM_CYMENUSIZE] = sysMetrics[SM_CYMENU] - 1;
-
-    /* FIXME: What do these mean? */
-    sysMetrics[SM_ARRANGE] = ARW_HIDE;
-    sysMetrics[SM_CXMINIMIZED] = 160;
-    sysMetrics[SM_CYMINIMIZED] = 24;
-
-    /* FIXME: How do I calculate these? */
-    sysMetrics[SM_NETWORK] = 3;
-
-    /* For the following: 0 = ok, 1 = failsafe, 2 = failsafe + network */
-    sysMetrics[SM_CLEANBOOT] = 0;
-
-    sysMetrics[SM_CXDRAG] = 4;
-    sysMetrics[SM_CYDRAG] = 4;
-    sysMetrics[SM_CXMENUCHECK] = 13;
-    sysMetrics[SM_CYMENUCHECK] = 13;
-
-    /* FIXME: Should check the type of processor for the following */
-    sysMetrics[SM_SLOWMACHINE] = 0;
-
-    /* FIXME: Should perform a check */
-    sysMetrics[SM_MIDEASTENABLED] = 0;
-
-    sysMetrics[SM_MOUSEWHEELPRESENT] = 1;
-
-    sysMetrics[SM_XVIRTUALSCREEN] = 0;
-    sysMetrics[SM_YVIRTUALSCREEN] = 0;
-    sysMetrics[SM_CMONITORS] = 1;
-    sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
-    sysMetrics[SM_CMETRICS] = SM_CMETRICS;
-
-    SystemParametersInfoW( SPI_GETSHOWSOUNDS, 0, &sysMetrics[SM_SHOWSOUNDS], 0 );
-
-    if (hkey) RegCloseKey (hkey);
 
     /* initialize system colors */
 
@@ -915,7 +821,7 @@ void SYSPARAMS_Init(void)
  *
  *  Tries to retrieve logfont info from the specified key and value
  */
-static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf, int dpi)
+static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf)
 {
     HKEY hkey;
     LOGFONTW lfbuf;
@@ -952,10 +858,89 @@ static BOOL reg_get_logfont(LPCWSTR key, LPCWSTR value, LOGFONTW *lf, int dpi)
     }
     if( found && lf->lfHeight > 0) { 
         /* positive height value means points ( inch/72 ) */
-        lf->lfHeight = -MulDiv( lf->lfHeight, dpi, 72);
+        lf->lfHeight = -MulDiv( lf->lfHeight, get_display_dpi(), 72);
     }
     return found;
 }
+
+/* load all the non-client metrics */
+static void load_nonclient_metrics(void)
+{
+    HKEY hkey;
+
+    if (RegOpenKeyExW (HKEY_CURRENT_USER, METRICS_REGKEY,
+                       0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS) hkey = 0;
+
+    /* initialize geometry entries */
+    nonclient_metrics.iBorderWidth = 1;
+    nonclient_metrics.iScrollWidth = get_reg_metric(hkey, METRICS_SCROLLWIDTH_VALNAME, 16);
+    nonclient_metrics.iScrollHeight = nonclient_metrics.iScrollWidth;
+
+    /* size of the normal caption buttons */
+    nonclient_metrics.iCaptionHeight = get_reg_metric(hkey, METRICS_CAPTIONHEIGHT_VALNAME, 18);
+    nonclient_metrics.iCaptionWidth = get_reg_metric(hkey, METRICS_CAPTIONWIDTH_VALNAME, nonclient_metrics.iCaptionHeight);
+
+    /* caption font metrics */
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &nonclient_metrics.lfCaptionFont))
+    {
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfCaptionFont, 0 );
+        nonclient_metrics.lfCaptionFont.lfWeight = FW_BOLD;
+    }
+
+    /* size of the small caption buttons */
+    nonclient_metrics.iSmCaptionWidth = get_reg_metric(hkey, METRICS_SMCAPTIONWIDTH_VALNAME, 13);
+    nonclient_metrics.iSmCaptionHeight = get_reg_metric(hkey, METRICS_SMCAPTIONHEIGHT_VALNAME, 15);
+
+    /* small caption font metrics */
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &nonclient_metrics.lfSmCaptionFont))
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfSmCaptionFont, 0 );
+
+    /* menus, FIXME: names of wine.conf entries are bogus */
+
+    /* size of the menu (MDI) buttons */
+    nonclient_metrics.iMenuHeight = get_reg_metric(hkey, METRICS_MENUHEIGHT_VALNAME, 18);
+    nonclient_metrics.iMenuWidth = get_reg_metric(hkey, METRICS_MENUWIDTH_VALNAME, nonclient_metrics.iMenuHeight);
+
+    /* menu font metrics */
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &nonclient_metrics.lfMenuFont))
+    {
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfMenuFont, 0 );
+        GetProfileStringW( Desktop, MenuFont, nonclient_metrics.lfCaptionFont.lfFaceName,
+                           nonclient_metrics.lfMenuFont.lfFaceName, LF_FACESIZE );
+        nonclient_metrics.lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
+        nonclient_metrics.lfMenuFont.lfWeight = FW_NORMAL;
+    }
+
+    /* status bar font metrics */
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &nonclient_metrics.lfStatusFont))
+    {
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfStatusFont, 0 );
+        GetProfileStringW( Desktop, StatusFont, nonclient_metrics.lfCaptionFont.lfFaceName,
+                           nonclient_metrics.lfStatusFont.lfFaceName, LF_FACESIZE );
+        nonclient_metrics.lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
+        nonclient_metrics.lfStatusFont.lfWeight = FW_NORMAL;
+    }
+
+    /* message font metrics */
+    if (!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &nonclient_metrics.lfMessageFont))
+    {
+        SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, &nonclient_metrics.lfMessageFont, 0 );
+        GetProfileStringW( Desktop, MessageFont, nonclient_metrics.lfCaptionFont.lfFaceName,
+                           nonclient_metrics.lfMessageFont.lfFaceName, LF_FACESIZE );
+        nonclient_metrics.lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
+        nonclient_metrics.lfMessageFont.lfWeight = FW_NORMAL;
+    }
+
+    /* some extra fields not in the nonclient structure */
+    icon_size.cx = icon_size.cy = get_reg_metric( hkey, METRICS_ICONSIZE_VALNAME, 32 );
+
+    scroll_height.cx = get_reg_metric (hkey, METRICS_SCROLLHEIGHT_VALNAME, nonclient_metrics.iScrollHeight );
+    scroll_height.cy = get_reg_metric (hkey, METRICS_SCROLLHEIGHT_VALNAME, nonclient_metrics.iScrollWidth );
+
+    if (hkey) RegCloseKey( hkey );
+    spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
+}
+
 
 /***********************************************************************
  *		SystemParametersInfoW (USER32.@)
@@ -1096,11 +1081,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                               SPI_SETBORDER_REGKEY,
                               SPI_SETBORDER_VALNAME,
                               &border, uiParam, fWinIni );
-        if (ret)
-        {
-            sysMetrics[SM_CXFRAME] = border + sysMetrics[SM_CXDLGFRAME];
-            sysMetrics[SM_CYFRAME] = border + sysMetrics[SM_CYDLGFRAME];
-        }
         break;
 
     case SPI_GETKEYBOARDSPEED:
@@ -1127,7 +1107,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = get_twips_param( SPI_ICONHORIZONTALSPACING_IDX,
                                    SPI_ICONHORIZONTALSPACING_REGKEY,
                                    SPI_ICONHORIZONTALSPACING_VALNAME,
-                                   &sysMetrics[SM_CXICONSPACING], pvParam );
+                                   &icon_metrics.iHorzSpacing, pvParam );
         }
         else
         {
@@ -1135,7 +1115,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = set_uint_param( SPI_ICONHORIZONTALSPACING_IDX,
                                   SPI_ICONHORIZONTALSPACING_REGKEY,
                                   SPI_ICONHORIZONTALSPACING_VALNAME,
-                                  &sysMetrics[SM_CXICONSPACING], uiParam, fWinIni );
+                                  &icon_metrics.iHorzSpacing, uiParam, fWinIni );
         }
         break;
 
@@ -1228,7 +1208,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = get_twips_param( SPI_ICONVERTICALSPACING_IDX,
                                    SPI_ICONVERTICALSPACING_REGKEY,
                                    SPI_ICONVERTICALSPACING_VALNAME,
-                                   &sysMetrics[SM_CYICONSPACING], pvParam );
+                                   &icon_metrics.iVertSpacing, pvParam );
         }
         else
         {
@@ -1236,7 +1216,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
             ret = set_uint_param( SPI_ICONVERTICALSPACING_IDX,
                                   SPI_ICONVERTICALSPACING_REGKEY,
                                   SPI_ICONVERTICALSPACING_VALNAME,
-                                  &sysMetrics[SM_CYICONSPACING], uiParam, fWinIni );
+                                  &icon_metrics.iVertSpacing, uiParam, fWinIni );
         }
         break;
 
@@ -1244,7 +1224,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = get_bool_param( SPI_SETICONTITLEWRAP_IDX,
                               SPI_SETICONTITLEWRAP_REGKEY1,
                               SPI_SETICONTITLEWRAP_VALNAME,
-                              &icon_title_wrap, pvParam );
+                              &icon_metrics.iTitleWrap, pvParam );
         break;
 
     case SPI_SETICONTITLEWRAP:
@@ -1252,14 +1232,14 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                        SPI_SETICONTITLEWRAP_REGKEY1,
                                        SPI_SETICONTITLEWRAP_REGKEY2,
                                        SPI_SETICONTITLEWRAP_VALNAME,
-                                       &icon_title_wrap, uiParam, fWinIni );
+                                       &icon_metrics.iTitleWrap, uiParam, fWinIni );
         break;
 
     case SPI_GETMENUDROPALIGNMENT:
         ret = get_uint_param( SPI_SETMENUDROPALIGNMENT_IDX,
                               SPI_SETMENUDROPALIGNMENT_REGKEY1,
                               SPI_SETMENUDROPALIGNMENT_VALNAME,
-                              &sysMetrics[SM_MENUDROPALIGNMENT], pvParam );
+                              &menu_drop_alignment, pvParam );
         break;
 
     case SPI_SETMENUDROPALIGNMENT:
@@ -1267,7 +1247,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                        SPI_SETMENUDROPALIGNMENT_REGKEY1,
                                        SPI_SETMENUDROPALIGNMENT_REGKEY2,
                                        SPI_SETMENUDROPALIGNMENT_VALNAME,
-                                       &sysMetrics[SM_MENUDROPALIGNMENT], uiParam, fWinIni );
+                                       &menu_drop_alignment, uiParam, fWinIni );
         break;
 
     case SPI_SETDOUBLECLKWIDTH:
@@ -1275,7 +1255,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                        SPI_SETDOUBLECLKWIDTH_REGKEY1,
                                        SPI_SETDOUBLECLKWIDTH_REGKEY2,
                                        SPI_SETDOUBLECLKWIDTH_VALNAME,
-                                       &sysMetrics[SM_CXDOUBLECLK], uiParam, fWinIni );
+                                       &double_click_width, uiParam, fWinIni );
         break;
 
     case SPI_SETDOUBLECLKHEIGHT:
@@ -1283,20 +1263,20 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                                        SPI_SETDOUBLECLKHEIGHT_REGKEY1,
                                        SPI_SETDOUBLECLKHEIGHT_REGKEY2,
                                        SPI_SETDOUBLECLKHEIGHT_VALNAME,
-                                       &sysMetrics[SM_CYDOUBLECLK], uiParam, fWinIni );
+                                       &double_click_height, uiParam, fWinIni );
         break;
 
-    case SPI_GETICONTITLELOGFONT:		/*     31 */
+    case SPI_GETICONTITLELOGFONT:
     {
-	LOGFONTW	lfDefault;
+        LOGFONTW lfDefault;
 
         if (!pvParam) return FALSE;
 
         spi_idx = SPI_SETICONTITLELOGFONT_IDX;
         if (!spi_loaded[spi_idx])
-        {       
-            int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
-            if(!reg_get_logfont(SPI_SETICONTITLELOGFONT_REGKEY, SPI_SETICONTITLELOGFONT_VALNAME, &icontitle_log_font, dpi))
+        {
+            if (!reg_get_logfont( SPI_SETICONTITLELOGFONT_REGKEY,
+                                  SPI_SETICONTITLELOGFONT_VALNAME, &icon_metrics.lfFont ))
             {
                 /*
                  * The 'default GDI fonts' seems to be returned.
@@ -1307,25 +1287,25 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
                 GetProfileStringW( Desktop, IconTitleFaceName,
                                    lfDefault.lfFaceName,
-                                   icontitle_log_font.lfFaceName,
+                                   icon_metrics.lfFont.lfFaceName,
                                    LF_FACESIZE );
-                icontitle_log_font.lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
-                icontitle_log_font.lfWidth = 0;
-                icontitle_log_font.lfEscapement = icontitle_log_font.lfOrientation = 0;
-                icontitle_log_font.lfWeight = FW_NORMAL;
-                icontitle_log_font.lfItalic = FALSE;
-                icontitle_log_font.lfStrikeOut = FALSE;
-                icontitle_log_font.lfUnderline = FALSE;
-                icontitle_log_font.lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
-                icontitle_log_font.lfOutPrecision = OUT_DEFAULT_PRECIS;
-                icontitle_log_font.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-                icontitle_log_font.lfQuality = DEFAULT_QUALITY;
-                icontitle_log_font.lfPitchAndFamily = DEFAULT_PITCH;
+                icon_metrics.lfFont.lfHeight = -GetProfileIntW( Desktop, IconTitleSize, 11 );
+                icon_metrics.lfFont.lfWidth = 0;
+                icon_metrics.lfFont.lfEscapement = icon_metrics.lfFont.lfOrientation = 0;
+                icon_metrics.lfFont.lfWeight = FW_NORMAL;
+                icon_metrics.lfFont.lfItalic = FALSE;
+                icon_metrics.lfFont.lfStrikeOut = FALSE;
+                icon_metrics.lfFont.lfUnderline = FALSE;
+                icon_metrics.lfFont.lfCharSet = lfDefault.lfCharSet; /* at least 'charset' should not be hard-coded */
+                icon_metrics.lfFont.lfOutPrecision = OUT_DEFAULT_PRECIS;
+                icon_metrics.lfFont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+                icon_metrics.lfFont.lfQuality = DEFAULT_QUALITY;
+                icon_metrics.lfFont.lfPitchAndFamily = DEFAULT_PITCH;
                 spi_loaded[spi_idx] = TRUE;
             }
         }
-        *(LOGFONTW *)pvParam = icontitle_log_font;
-	break;
+        *(LOGFONTW *)pvParam = icon_metrics.lfFont;
+        break;
     }
 
     case SPI_SETDOUBLECLICKTIME:
@@ -1339,7 +1319,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         ret = set_uint_param( SPI_SETMOUSEBUTTONSWAP_IDX,
                               SPI_SETMOUSEBUTTONSWAP_REGKEY,
                               SPI_SETMOUSEBUTTONSWAP_VALNAME,
-                              &sysMetrics[SM_SWAPBUTTON], uiParam, fWinIni );
+                              &swap_buttons, uiParam, fWinIni );
         break;
 
     WINE_SPI_FIXME(SPI_SETICONTITLELOGFONT);	/*     34 */
@@ -1368,124 +1348,52 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
                               &drag_full_windows, pvParam );
         break;
 
-    case SPI_GETNONCLIENTMETRICS: 		/*     41  WINVER >= 0x400 */
+    case SPI_GETNONCLIENTMETRICS:
     {
-	LPNONCLIENTMETRICSW lpnm = (LPNONCLIENTMETRICSW)pvParam;
+        LPNONCLIENTMETRICSW lpnm = pvParam;
 
-        if (!pvParam) return FALSE;
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
 
-	if (lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
-	{
-            int dpi = GetDeviceCaps( display_dc, LOGPIXELSY);
-	    /* clear the struct, so we have 'sane' members */
-	    memset(
-		(char *)pvParam + sizeof(lpnm->cbSize),
-		0,
-		lpnm->cbSize - sizeof(lpnm->cbSize)
-		);
-
-	    /* initialize geometry entries */
-	    lpnm->iBorderWidth = 1;
-	    lpnm->iScrollWidth = sysMetrics[SM_CXVSCROLL];
-	    lpnm->iScrollHeight = sysMetrics[SM_CYHSCROLL];
-
-	    /* size of the normal caption buttons */
-	    lpnm->iCaptionWidth = sysMetrics[SM_CXSIZE];
-	    lpnm->iCaptionHeight = sysMetrics[SM_CYSIZE];
-
-	    /* caption font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_CAPTIONLOGFONT_VALNAME, &lpnm->lfCaptionFont, dpi))
-            {
-                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfCaptionFont), 0 );
-                lpnm->lfCaptionFont.lfWeight = FW_BOLD;
-            }
-
-	    /* size of the small caption buttons */
-	    lpnm->iSmCaptionWidth = sysMetrics[SM_CXSMSIZE];
-	    lpnm->iSmCaptionHeight = sysMetrics[SM_CYSMSIZE];
-
-	    /* small caption font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_SMCAPTIONLOGFONT_VALNAME, &lpnm->lfSmCaptionFont, dpi))
-                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfSmCaptionFont), 0 );
-
-	    /* menus, FIXME: names of wine.conf entries are bogus */
-
-	    /* size of the menu (MDI) buttons */
-	    lpnm->iMenuWidth = sysMetrics[SM_CXMENUSIZE];
-	    lpnm->iMenuHeight = sysMetrics[SM_CYMENUSIZE];
-
-	    /* menu font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MENULOGFONT_VALNAME, &lpnm->lfMenuFont, dpi))
-            {
-                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0, (LPVOID)&(lpnm->lfMenuFont), 0 );
-                GetProfileStringW( Desktop, MenuFont, lpnm->lfCaptionFont.lfFaceName,
-                                   lpnm->lfMenuFont.lfFaceName, LF_FACESIZE );
-                lpnm->lfMenuFont.lfHeight = -GetProfileIntW( Desktop, MenuFontSize, 11 );
-                lpnm->lfMenuFont.lfWeight = FW_NORMAL;
-            }
-
-	    /* status bar font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_STATUSLOGFONT_VALNAME, &lpnm->lfStatusFont, dpi))
-            {
-                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
-                                       (LPVOID)&(lpnm->lfStatusFont), 0 );
-                GetProfileStringW( Desktop, StatusFont, lpnm->lfCaptionFont.lfFaceName,
-                                   lpnm->lfStatusFont.lfFaceName, LF_FACESIZE );
-                lpnm->lfStatusFont.lfHeight = -GetProfileIntW( Desktop, StatusFontSize, 11 );
-                lpnm->lfStatusFont.lfWeight = FW_NORMAL;
-            }
-
-	    /* message font metrics */
-            if(!reg_get_logfont(METRICS_REGKEY, METRICS_MESSAGELOGFONT_VALNAME, &lpnm->lfMessageFont, dpi))
-            {
-                SystemParametersInfoW( SPI_GETICONTITLELOGFONT, 0,
-                                       (LPVOID)&(lpnm->lfMessageFont), 0 );
-                GetProfileStringW( Desktop, MessageFont, lpnm->lfCaptionFont.lfFaceName,
-                                   lpnm->lfMessageFont.lfFaceName, LF_FACESIZE );
-                lpnm->lfMessageFont.lfHeight = -GetProfileIntW( Desktop, MessageFontSize, 11 );
-                lpnm->lfMessageFont.lfWeight = FW_NORMAL;
-            }
-	}
-	else
-	{
-	    WARN("size mismatch !! (is %d; should be %d)\n", lpnm->cbSize, sizeof(NONCLIENTMETRICSW));
-	    /* FIXME: SetLastError? */
-	    ret = FALSE;
-	}
-	break;
+        if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
+            memcpy( lpnm, &nonclient_metrics, sizeof(*lpnm) );
+        else
+            ret = FALSE;
+        break;
     }
-    WINE_SPI_FIXME(SPI_SETNONCLIENTMETRICS);	/*     42  WINVER >= 0x400 */
 
-    case SPI_GETMINIMIZEDMETRICS: 		/*     43  WINVER >= 0x400 */
+    case SPI_SETNONCLIENTMETRICS:
+    {
+        LPNONCLIENTMETRICSW lpnm = pvParam;
+
+        if (lpnm && lpnm->cbSize == sizeof(NONCLIENTMETRICSW))
+        {
+            memcpy( &nonclient_metrics, lpnm, sizeof(nonclient_metrics) );
+            spi_loaded[SPI_NONCLIENTMETRICS_IDX] = TRUE;
+        }
+        break;
+    }
+
+    case SPI_GETMINIMIZEDMETRICS:
     {
         MINIMIZEDMETRICS * lpMm = pvParam;
-	if (lpMm && lpMm->cbSize == sizeof(*lpMm))
-	{
-	    lpMm->iWidth = sysMetrics[SM_CXMINIMIZED] - 6;
-	    lpMm->iHorzGap = sysMetrics[SM_CXMINSPACING] - sysMetrics[SM_CXMINIMIZED];
-	    lpMm->iVertGap = sysMetrics[SM_CYMINSPACING] - sysMetrics[SM_CYMINIMIZED];
-	    lpMm->iArrange = sysMetrics[SM_ARRANGE];
-	}
-	else
-	    ret = FALSE;
-	break;
-    }
-    case SPI_SETMINIMIZEDMETRICS: 		/*     44  WINVER >= 0x400 */
-    {
-        MINIMIZEDMETRICS * lpMm = pvParam;
-	if (lpMm && lpMm->cbSize == sizeof(*lpMm))
-	{
-	    sysMetrics[SM_CXMINIMIZED] = lpMm->iWidth + 6;
-	    sysMetrics[SM_CXMINSPACING] = lpMm->iHorzGap + sysMetrics[SM_CXMINIMIZED];
-	    sysMetrics[SM_CYMINSPACING] = lpMm->iVertGap + sysMetrics[SM_CYMINIMIZED];
-	    sysMetrics[SM_ARRANGE] = lpMm->iArrange;
-	}
-	else
-	    ret = FALSE;
-	break;
+        if (lpMm && lpMm->cbSize == sizeof(*lpMm))
+            memcpy( lpMm, &minimized_metrics, sizeof(*lpMm) );
+        else
+            ret = FALSE;
+        break;
     }
 
-    case SPI_GETICONMETRICS:			/*     45  WINVER >= 0x400 */
+    case SPI_SETMINIMIZEDMETRICS:
+    {
+        MINIMIZEDMETRICS * lpMm = pvParam;
+        if (lpMm && lpMm->cbSize == sizeof(*lpMm))
+            memcpy( &minimized_metrics, lpMm, sizeof(*lpMm) );
+        else
+            ret = FALSE;
+        break;
+    }
+
+    case SPI_GETICONMETRICS:
     {
 	LPICONMETRICSW lpIcon = pvParam;
 	if(lpIcon && lpIcon->cbSize == sizeof(*lpIcon))
@@ -1506,21 +1414,14 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 	break;
     }
 
-    case SPI_SETICONMETRICS:			/*     46  WINVER >= 0x400 */
+    case SPI_SETICONMETRICS:
     {
-	LPICONMETRICSW lpIcon = pvParam;
-	if(lpIcon && lpIcon->cbSize == sizeof(*lpIcon))
-	{
-            sysMetrics[SM_CXICONSPACING] = lpIcon->iHorzSpacing;
-            sysMetrics[SM_CYICONSPACING] = lpIcon->iVertSpacing;
-            icon_title_wrap = lpIcon->iTitleWrap;
-            icontitle_log_font = lpIcon->lfFont;
-	}
-	else
-	{
-	    ret = FALSE;
-	}
-	break;
+        LPICONMETRICSW lpIcon = pvParam;
+        if (lpIcon && lpIcon->cbSize == sizeof(*lpIcon))
+            memcpy( &icon_metrics, lpIcon, sizeof(icon_metrics) );
+        else
+            ret = FALSE;
+        break;
     }
 
     case SPI_SETWORKAREA:                       /*     47  WINVER >= 0x400 */
@@ -1530,7 +1431,6 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETWORKAREA_IDX;
         CopyRect( &work_area, (RECT *)pvParam );
         spi_loaded[spi_idx] = TRUE;
-        
         break;
     }
 
@@ -1614,17 +1514,17 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETMOUSEKEYS);		/*     55 */
 
     case SPI_GETSHOWSOUNDS:
-        ret = get_uint_param( SPI_SETSHOWSOUNDS_IDX,
+        ret = get_bool_param( SPI_SETSHOWSOUNDS_IDX,
                               SPI_SETSHOWSOUNDS_REGKEY,
                               SPI_SETSHOWSOUNDS_VALNAME,
-                              &sysMetrics[SM_SHOWSOUNDS], pvParam );
+                              &show_sounds, pvParam );
         break;
 
     case SPI_SETSHOWSOUNDS:
-        ret = set_uint_param( SPI_SETSHOWSOUNDS_IDX,
+        ret = set_bool_param( SPI_SETSHOWSOUNDS_IDX,
                               SPI_SETSHOWSOUNDS_REGKEY,
                               SPI_SETSHOWSOUNDS_VALNAME,
-                              &sysMetrics[SM_SHOWSOUNDS], uiParam, fWinIni );
+                              &show_sounds, uiParam, fWinIni );
         break;
 
     case SPI_GETSTICKYKEYS:                     /*     58 */
@@ -2308,32 +2208,201 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
+    UINT ret;
+
     /* some metrics are dynamic */
     switch (index)
     {
     case SM_CXSCREEN:
-    case SM_CXFULLSCREEN:
-    case SM_CXVIRTUALSCREEN:
-        return GetDeviceCaps( display_dc, HORZRES );
+        return GetDeviceCaps( get_display_dc(), HORZRES );
     case SM_CYSCREEN:
-    case SM_CYVIRTUALSCREEN:
-        return GetDeviceCaps( display_dc, VERTRES );
+        return GetDeviceCaps( get_display_dc(), VERTRES );
+    case SM_CXVSCROLL:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iScrollWidth;
+    case SM_CYHSCROLL:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iScrollHeight;
+    case SM_CYCAPTION:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iCaptionHeight + 1; /* for the separator? */
+    case SM_CXBORDER:
+    case SM_CYBORDER:
+        /* SM_C{X,Y}BORDER always returns 1 regardless of 'BorderWidth' value in registry */
+        return 1;
+    case SM_CXDLGFRAME:
+    case SM_CYDLGFRAME:
+        return 3;
+    case SM_CYVTHUMB:
+        return GetSystemMetrics(SM_CXVSCROLL);
+    case SM_CXHTHUMB:
+        return GetSystemMetrics(SM_CYHSCROLL);
+    case SM_CXICON:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return icon_size.cx;
+    case SM_CYICON:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return icon_size.cy;
+    case SM_CXCURSOR:
+    case SM_CYCURSOR:
+        return 32;
+    case SM_CYMENU:
+        return GetSystemMetrics(SM_CYMENUSIZE) + 1;
+    case SM_CXFULLSCREEN:
+        return GetSystemMetrics(SM_CXSCREEN);
     case SM_CYFULLSCREEN:
-        return GetDeviceCaps( display_dc, VERTRES ) - sysMetrics[SM_CYCAPTION];
-
-    /* FIXME: How do I calculate these? */
+        return GetSystemMetrics(SM_CYSCREEN) - GetSystemMetrics(SM_CYCAPTION);
+    case SM_CYKANJIWINDOW:
+        return 0;
+    case SM_MOUSEPRESENT:
+        return 1;
+    case SM_CYVSCROLL:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return scroll_height.cy;
+    case SM_CXHSCROLL:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return scroll_height.cx;
+    case SM_DEBUG:
+        return 0;
+    case SM_SWAPBUTTON:
+        get_uint_param( SPI_SETMOUSEBUTTONSWAP_IDX, SPI_SETMOUSEBUTTONSWAP_REGKEY,
+                        SPI_SETMOUSEBUTTONSWAP_VALNAME, &swap_buttons, &ret );
+        return ret;
+    case SM_RESERVED1:
+    case SM_RESERVED2:
+    case SM_RESERVED3:
+    case SM_RESERVED4:
+        return 0;
+    case SM_CXMIN:
+        return 112;  /* FIXME */
+    case SM_CYMIN:
+        return 27;  /* FIXME */
+    case SM_CXSIZE:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iCaptionWidth;
+    case SM_CYSIZE:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iCaptionHeight;
+    case SM_CXFRAME:
+        SystemParametersInfoW( SPI_GETBORDER, 0, &ret, 0 );
+        return GetSystemMetrics(SM_CXDLGFRAME) + ret;
+    case SM_CYFRAME:
+        SystemParametersInfoW( SPI_GETBORDER, 0, &ret, 0 );
+        return GetSystemMetrics(SM_CYDLGFRAME) + ret;
+    case SM_CXMINTRACK:
+        return GetSystemMetrics(SM_CXMIN);
+    case SM_CYMINTRACK:
+        return GetSystemMetrics(SM_CYMIN);
+    case SM_CXDOUBLECLK:
+        get_uint_param( SPI_SETDOUBLECLKWIDTH_IDX, SPI_SETDOUBLECLKWIDTH_REGKEY1,
+                        SPI_SETDOUBLECLKWIDTH_VALNAME, &double_click_width, &ret );
+        return ret;
+    case SM_CYDOUBLECLK:
+        get_uint_param( SPI_SETDOUBLECLKHEIGHT_IDX, SPI_SETDOUBLECLKHEIGHT_REGKEY1,
+                        SPI_SETDOUBLECLKHEIGHT_VALNAME, &double_click_height, &ret );
+        return ret;
+    case SM_CXICONSPACING:
+        SystemParametersInfoW( SPI_ICONHORIZONTALSPACING, 0, &ret, 0 );
+        return ret;
+    case SM_CYICONSPACING:
+        SystemParametersInfoW( SPI_ICONVERTICALSPACING, 0, &ret, 0 );
+        return ret;
+    case SM_MENUDROPALIGNMENT:
+        SystemParametersInfoW( SPI_GETMENUDROPALIGNMENT, 0, &ret, 0 );
+        return ret;
+    case SM_PENWINDOWS:
+        return 0;
+    case SM_DBCSENABLED:
+    {
+        CPINFO cpinfo;
+        GetCPInfo( CP_ACP, &cpinfo );
+        return (cpinfo.MaxCharSize > 1);
+    }
+    case SM_CMOUSEBUTTONS:
+        return 3;
+    case SM_SECURE:
+        return 0;
+    case SM_CXEDGE:
+        return GetSystemMetrics(SM_CXBORDER) + 1;
+    case SM_CYEDGE:
+        return GetSystemMetrics(SM_CYBORDER) + 1;
+    case SM_CXMINSPACING:
+        return GetSystemMetrics(SM_CXMINIMIZED) + minimized_metrics.iHorzGap;
+    case SM_CYMINSPACING:
+        return GetSystemMetrics(SM_CYMINIMIZED) + minimized_metrics.iVertGap;
+    case SM_CXSMICON:
+    case SM_CYSMICON:
+        return 16;
+    case SM_CYSMCAPTION:
+        return GetSystemMetrics(SM_CYSMSIZE) + 1;
+    case SM_CXSMSIZE:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iSmCaptionWidth;
+    case SM_CYSMSIZE:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iSmCaptionHeight;
+    case SM_CXMENUSIZE:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iMenuWidth;
+    case SM_CYMENUSIZE:
+        if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
+        return nonclient_metrics.iMenuHeight;
+    case SM_ARRANGE:
+        return minimized_metrics.iArrange;
+    case SM_CXMINIMIZED:
+        return minimized_metrics.iWidth + 6;
+    case SM_CYMINIMIZED:
+        return 24;  /* FIXME */
     case SM_CXMAXTRACK:
-        return GetDeviceCaps( display_dc, HORZRES ) + 4 + 2 * sysMetrics[SM_CXFRAME];
+        return GetSystemMetrics(SM_CXSCREEN) + 4 + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXTRACK:
-        return GetDeviceCaps( display_dc, VERTRES ) + 4 + 2 * sysMetrics[SM_CYFRAME];
+        return GetSystemMetrics(SM_CYSCREEN) + 4 + 2 * GetSystemMetrics(SM_CYFRAME);
     case SM_CXMAXIMIZED:
-        return GetDeviceCaps( display_dc, HORZRES ) + 2 * sysMetrics[SM_CXFRAME];
+        return GetSystemMetrics(SM_CXSCREEN) + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXIMIZED:
-        return GetDeviceCaps( display_dc, VERTRES ) + 2 * sysMetrics[SM_CYFRAME];
-
+        return GetSystemMetrics(SM_CYSCREEN) + 2 * GetSystemMetrics(SM_CYFRAME);
+    case SM_NETWORK:
+        return 3;  /* FIXME */
+    case SM_CLEANBOOT:
+        return 0; /* 0 = ok, 1 = failsafe, 2 = failsafe + network */
+    case SM_CXDRAG:
+    case SM_CYDRAG:
+        return 4;
+    case SM_SHOWSOUNDS:
+        SystemParametersInfoW( SPI_GETSHOWSOUNDS, 0, &ret, 0 );
+        return ret;
+    case SM_CXMENUCHECK:
+    case SM_CYMENUCHECK:
+        return 13;
+    case SM_SLOWMACHINE:
+        return 0;  /* FIXME: Should check the type of processor */
+    case SM_MIDEASTENABLED:
+        return 0;  /* FIXME */
+    case SM_MOUSEWHEELPRESENT:
+        return 1;
+    case SM_XVIRTUALSCREEN:
+    case SM_YVIRTUALSCREEN:
+        return 0;
+    case SM_CXVIRTUALSCREEN:
+        return GetSystemMetrics(SM_CXSCREEN);
+    case SM_CYVIRTUALSCREEN:
+        return GetSystemMetrics(SM_CYSCREEN);
+    case SM_CMONITORS:
+        return 1;
+    case SM_SAMEDISPLAYFORMAT:
+        return 1;
+    case SM_IMMENABLED:
+        return 0;  /* FIXME */
+    case SM_CXFOCUSBORDER:
+    case SM_CYFOCUSBORDER:
+        return 1;
+    case SM_TABLETPC:
+    case SM_MEDIACENTER:
+        return 0;
+    case SM_CMETRICS:
+        return SM_CMETRICS;
     default:
-        if ((index < 0) || (index > SM_CMETRICS)) return 0;
-        return sysMetrics[index];
+        return 0;
     }
 }
 
