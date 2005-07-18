@@ -29,7 +29,7 @@
 
 #include "mscms_priv.h"
 
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
 
 static CRITICAL_SECTION MSCMS_handle_cs;
 static CRITICAL_SECTION_DEBUG MSCMS_handle_cs_debug =
@@ -284,4 +284,4 @@ void MSCMS_destroy_htransform_handle( HTRANSFORM transform )
     }
 }
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */

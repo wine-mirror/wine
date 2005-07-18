@@ -148,7 +148,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
                                     PVOID buffer, PBOOL ref )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     DWORD i, count;
     icTag tag;
@@ -177,7 +177,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
         }
     }
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -202,7 +202,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
 BOOL WINAPI GetColorProfileElementTag( HPROFILE profile, DWORD index, PTAGTYPE type )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     DWORD count;
     icTag tag;
@@ -219,7 +219,7 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE profile, DWORD index, PTAGTYPE t
 
     ret = TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -244,7 +244,7 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE profile, DWORD index, PTAGTYPE t
 BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD size )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     PROFILEHEADER header;
 
@@ -265,7 +265,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD si
     *size = header.phSize;
     ret = TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -288,7 +288,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE profile, PBYTE buffer, PDWORD si
 BOOL WINAPI GetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
 
     TRACE( "( %p, %p )\n", profile, header );
@@ -298,7 +298,7 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
     MSCMS_get_profile_header( iccprofile, header );
     return TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -319,7 +319,7 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 BOOL WINAPI GetCountColorProfileElements( HPROFILE profile, PDWORD count )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
 
     TRACE( "( %p, %p )\n", profile, count );
@@ -328,7 +328,7 @@ BOOL WINAPI GetCountColorProfileElements( HPROFILE profile, PDWORD count )
     *count = MSCMS_get_tag_count( iccprofile );
     ret = TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -508,7 +508,7 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
 BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE type, PBOOL present )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     DWORD i, count;
     icTag tag;
@@ -530,7 +530,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE type, PBOOL pres
         }
     }
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -551,7 +551,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE profile, TAGTYPE type, PBOOL pres
 BOOL WINAPI IsColorProfileValid( HPROFILE profile, PBOOL valid )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
 
     TRACE( "( %p, %p )\n", profile, valid );
@@ -559,7 +559,7 @@ BOOL WINAPI IsColorProfileValid( HPROFILE profile, PBOOL valid )
     if (!valid) return FALSE;
     if (iccprofile) return *valid = TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -584,7 +584,7 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
                                     PVOID buffer )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     DWORD i, count, access = MSCMS_hprofile2access( profile );
     icTag tag;
@@ -609,7 +609,7 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
         }
     }
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -629,7 +629,7 @@ BOOL WINAPI SetColorProfileElement( HPROFILE profile, TAGTYPE type, DWORD offset
 BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     DWORD access = MSCMS_hprofile2access( profile );
 
@@ -641,7 +641,7 @@ BOOL WINAPI SetColorProfileHeader( HPROFILE profile, PPROFILEHEADER header )
     MSCMS_set_profile_header( iccprofile, header );
     return TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -763,7 +763,7 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
  */
 HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing, DWORD creation )
 {
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     cmsHPROFILE cmsprofile = NULL;
     icProfile *iccprofile = NULL;
     HANDLE handle = NULL;
@@ -831,7 +831,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     if (cmsprofile)
         return MSCMS_create_hprofile_handle( handle, iccprofile, cmsprofile, access );
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return NULL;
 }
 
@@ -850,7 +850,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
 BOOL WINAPI CloseColorProfile( HPROFILE profile )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     icProfile *iccprofile = MSCMS_hprofile2iccprofile( profile );
     HANDLE file = MSCMS_hprofile2handle( profile );
     DWORD access = MSCMS_hprofile2access( profile );
@@ -872,6 +872,6 @@ BOOL WINAPI CloseColorProfile( HPROFILE profile )
     CloseHandle( MSCMS_hprofile2handle( profile ) );
     MSCMS_destroy_hprofile_handle( profile );
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }

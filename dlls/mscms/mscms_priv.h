@@ -18,11 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef HAVE_LCMS_LCMS_H
-#define HAVE_LCMS_H 1
-#endif
-
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
 
 /*  These basic Windows types are defined in lcms.h when compiling on
  *  a non-Windows platform (why?), so they would normally not conflict
@@ -92,4 +88,4 @@ extern void MSCMS_get_profile_header( icProfile *iccprofile, PROFILEHEADER *head
 extern void MSCMS_set_profile_header( icProfile *iccprofile, PROFILEHEADER *header );
 extern DWORD MSCMS_get_profile_size( icProfile *iccprofile );
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */

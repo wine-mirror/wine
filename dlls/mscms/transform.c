@@ -57,7 +57,7 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     HPROFILE target, DWORD flags )
 {
     HTRANSFORM ret = NULL;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     cmsHTRANSFORM cmstransform;
     cmsHPROFILE cmsprofiles[3];
     int intent;
@@ -84,7 +84,7 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     }
     ret = MSCMS_create_htransform_handle( cmstransform );
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -92,7 +92,7 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
     PDWORD intents, DWORD nintents, DWORD flags, DWORD cmm )
 {
     HTRANSFORM ret = NULL;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     cmsHPROFILE *cmsprofiles;
     cmsHTRANSFORM cmstransform;
     DWORD i;
@@ -115,14 +115,14 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
     HeapFree( GetProcessHeap(), 0, cmsprofiles );
     ret = MSCMS_create_htransform_handle( cmstransform );
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
 BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     cmsHTRANSFORM cmstransform;
 
     TRACE( "( %p )\n", transform );
@@ -133,7 +133,7 @@ BOOL WINAPI DeleteColorTransform( HTRANSFORM transform )
     MSCMS_destroy_htransform_handle( transform );
     ret = TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }
 
@@ -142,7 +142,7 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT i
     DWORD outputstride, PBMCALLBACKFN callback, ULONG data )
 {
     BOOL ret = FALSE;
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
     cmsHTRANSFORM cmstransform;
 
     TRACE( "( %p, %p, 0x%08x, 0x%08lx, 0x%08lx, 0x%08lx, %p, 0x%08x, 0x%08lx, %p, 0x%08lx )\n",
@@ -154,6 +154,6 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM transform, PVOID srcbits, BMFORMAT i
     cmsDoTransform( cmstransform, srcbits, destbits, width * height );
     ret = TRUE;
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
     return ret;
 }

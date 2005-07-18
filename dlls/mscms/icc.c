@@ -36,7 +36,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
-#ifdef HAVE_LCMS_H
+#ifdef HAVE_LCMS
 
 static inline void MSCMS_adjust_endianess32( ULONG *ptr )
 {
@@ -107,4 +107,4 @@ DWORD MSCMS_get_profile_size( icProfile *iccprofile )
     return size;
 }
 
-#endif /* HAVE_LCMS_H */
+#endif /* HAVE_LCMS */
