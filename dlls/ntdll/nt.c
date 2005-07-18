@@ -196,9 +196,6 @@ NTSTATUS WINAPI NtQueryInformationToken(
 
     switch (tokeninfoclass)
     {
-    case TokenUser:
-        len = sizeof(TOKEN_USER) + sizeof(SID);
-        break;
     case TokenGroups:
         len = sizeof(TOKEN_GROUPS);
         break;
@@ -232,15 +229,23 @@ NTSTATUS WINAPI NtQueryInformationToken(
     switch (tokeninfoclass)
     {
     case TokenUser:
-        if( tokeninfo )
+        SERVER_START_REQ( get_token_user )
         {
             TOKEN_USER * tuser = tokeninfo;
             PSID sid = (PSID) (tuser + 1);
-            SID_IDENTIFIER_AUTHORITY localSidAuthority = {SECURITY_NT_AUTHORITY};
-            RtlInitializeSid(sid, &localSidAuthority, 1);
-            *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
-            tuser->User.Sid = sid;
+            DWORD sid_len = tokeninfolength < sizeof(TOKEN_USER) ? 0 : tokeninfolength - sizeof(TOKEN_USER);
+
+            req->handle = token;
+            wine_server_set_reply( req, sid, sid_len );
+            status = wine_server_call( req );
+            *retlen = reply->user_len + sizeof(TOKEN_USER);
+            if (status == STATUS_SUCCESS)
+            {
+                tuser->User.Sid = sid;
+                tuser->User.Attributes = 0;
+            }
         }
+        SERVER_END_REQ;
         break;
     case TokenGroups:
         if (tokeninfo)

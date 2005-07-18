@@ -39,6 +39,8 @@ extern const LUID SeManageVolumePrivilege;
 extern const LUID SeImpersonatePrivilege;
 extern const LUID SeCreateGlobalPrivilege;
 
+extern const PSID security_interactive_sid;
+
 extern struct token *token_create_admin(void);
 extern int token_check_privileges( struct token *token, int all_required,
                                    const LUID_AND_ATTRIBUTES *reqprivs,

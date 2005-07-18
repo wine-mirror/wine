@@ -2448,6 +2448,13 @@ enum message_type
     VARARG(privileges,LUID_AND_ATTRIBUTES); /* privileges used during access check */
 @END
 
+@REQ(get_token_user)
+    obj_handle_t    handle;       /* handle to the token */
+@REPLY
+    size_t          user_len;     /* length needed to store user */
+    VARARG(user,SID);             /* sid of the user the token represents */
+@END
+
 /* Create a mailslot */
 @REQ(create_mailslot)
     unsigned int   max_msgsize;

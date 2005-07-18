@@ -446,6 +446,13 @@ static void dump_inline_sid( const SID *sid, size_t size )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_SID( size_t size )
+{
+    const SID *sid = cur_data;
+    dump_inline_sid( sid, size );
+    remove_data( size );
+}
+
 static void dump_inline_acl( const ACL *acl, size_t size )
 {
     const ACE_HEADER *ace;
@@ -3011,6 +3018,18 @@ static void dump_access_check_reply( const struct access_check_reply *req )
     dump_varargs_LUID_AND_ATTRIBUTES( cur_size );
 }
 
+static void dump_get_token_user_request( const struct get_token_user_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_token_user_reply( const struct get_token_user_reply *req )
+{
+    fprintf( stderr, " user_len=%d,", req->user_len );
+    fprintf( stderr, " user=" );
+    dump_varargs_SID( cur_size );
+}
+
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
@@ -3254,6 +3273,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_check_token_privileges_request,
     (dump_func)dump_duplicate_token_request,
     (dump_func)dump_access_check_request,
+    (dump_func)dump_get_token_user_request,
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_open_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
@@ -3459,6 +3479,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_check_token_privileges_reply,
     (dump_func)dump_duplicate_token_reply,
     (dump_func)dump_access_check_reply,
+    (dump_func)dump_get_token_user_reply,
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_open_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
@@ -3664,6 +3685,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "check_token_privileges",
     "duplicate_token",
     "access_check",
+    "get_token_user",
     "create_mailslot",
     "open_mailslot",
     "set_mailslot_info",

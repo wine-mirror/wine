@@ -34,6 +34,8 @@
 #include "request.h"
 #include "security.h"
 
+#include "wine/unicode.h"
+
 #define MAX_SUBAUTH_COUNT 1
 
 const LUID SeIncreaseQuotaPrivilege        = {  5, 0 };
@@ -62,10 +64,11 @@ static const SID local_sid = { SID_REVISION, 1, { SECURITY_LOCAL_SID_AUTHORITY }
 static const SID interactive_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_INTERACTIVE_RID } };
 static const SID authenticated_user_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_AUTHENTICATED_USER_RID } };
 static const SID local_system_sid = { SID_REVISION, 1, { SECURITY_NT_AUTHORITY }, { SECURITY_LOCAL_SYSTEM_RID } };
-static PSID security_world_sid = (PSID)&world_sid;
-static PSID security_local_sid = (PSID)&local_sid;
-static PSID security_interactive_sid = (PSID)&interactive_sid;
-static PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
+static const PSID security_world_sid = (PSID)&world_sid;
+static const PSID security_local_sid = (PSID)&local_sid;
+const PSID security_interactive_sid = (PSID)&interactive_sid;
+static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
+static const PSID security_local_system_sid = (PSID)&local_system_sid;
 
 struct token
 {
@@ -557,9 +560,9 @@ struct token *token_create_admin( void )
             { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
         };
-        /* note: we just set the user sid to be the local system builtin sid -
-         * telling us what this should be is the job of a client-side program */
-        token = create_token( TRUE, &local_system_sid,
+        /* note: we just set the user sid to be the interactive builtin sid -
+         * we should really translate the UNIX user id to a sid */
+        token = create_token( TRUE, &interactive_sid,
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
                             default_dacl );
@@ -1087,6 +1090,32 @@ DECL_HANDLER(access_check)
 
         if (status != STATUS_SUCCESS)
             set_error( status );
+
+        release_object( token );
+    }
+}
+
+/* */
+DECL_HANDLER(get_token_user)
+{
+    struct token *token;
+
+    reply->user_len = 0;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        const SID *user = token->user;
+
+        reply->user_len = FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]);
+        if (reply->user_len <= get_reply_max_size())
+        {
+            SID *user_reply = set_reply_data_size( reply->user_len );
+            if (user_reply)
+                memcpy( user_reply, user, reply->user_len );
+        }
+        else set_error( STATUS_BUFFER_TOO_SMALL );
 
         release_object( token );
     }

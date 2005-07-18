@@ -1421,14 +1421,34 @@ static void load_init_registry_from_file( const char *filename, struct key *key 
     }
 }
 
+static WCHAR *format_user_registry_path( const SID *sid )
+{
+    static const WCHAR prefixW[] = {'U','s','e','r','\\','S',0};
+    static const WCHAR formatW[] = {'-','%','u',0};
+    WCHAR buffer[7 + 10 + 10 + 10 * SID_MAX_SUB_AUTHORITIES];
+    WCHAR *p = buffer;
+    unsigned int i;
+
+    strcpyW( p, prefixW );
+    p += strlenW( prefixW );
+    p += sprintfW( p, formatW, sid->Revision );
+    p += sprintfW( p, formatW, MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
+                                                   sid->IdentifierAuthority.Value[4] ),
+                                         MAKEWORD( sid->IdentifierAuthority.Value[3],
+                                                   sid->IdentifierAuthority.Value[2] )));
+    for (i = 0; i < sid->SubAuthorityCount; i++)
+        p += sprintfW( p, formatW, sid->SubAuthority[i] );
+
+    return memdup( buffer, (p + 1 - buffer) * sizeof(WCHAR) );
+}
+
 /* registry initialisation */
 void init_registry(void)
 {
     static const WCHAR root_name[] = { 0 };
     static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
     static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
-    /* FIXME: hardcoded to match what NtQueryTokenInformation currently returns */
-    static const WCHAR HKCU[] = {'U','s','e','r','\\','S','-','1','-','5','-','4',0};
+    WCHAR *current_user_path;
 
     const char *config = wine_get_config_dir();
     char *p, *filename;
@@ -1465,9 +1485,12 @@ void init_registry(void)
 
     /* load user.reg into HKEY_CURRENT_USER */
 
-    if (!(key = create_key( root_key, copy_path( HKCU, sizeof(HKCU), 0 ),
-                            NULL, 0, time(NULL), &dummy )))
+    /* FIXME: match default user in token.c. should get from process token instead */
+    current_user_path = format_user_registry_path( security_interactive_sid );
+    if (!current_user_path ||
+        !(key = create_key( root_key, current_user_path, NULL, 0, time(NULL), &dummy )))
         fatal_error( "could not create HKEY_CURRENT_USER registry key\n" );
+    free( current_user_path );
     strcpy( p, "/user.reg" );
     load_init_registry_from_file( filename, key );
     release_object( key );
