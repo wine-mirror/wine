@@ -662,7 +662,7 @@ DWORD WINAPI lineGetTranslateCapsA(HLINEAPP hLineApp, DWORD dwAPIVersion,
         if( RegCreateKeyA( hkLocations, "Location1", &hsubkey)
                 == ERROR_SUCCESS) {
             DWORD dwval;
-            BYTE buf[10];
+            char buf[10];
             numlocations = 1;
             length += sizeof(LINELOCATIONENTRY) + 20 ;
             RegSetValueExA( hsubkey, "AreaCode", 0, REG_SZ, (LPBYTE)"010", 4);
