@@ -235,6 +235,8 @@ static void test_res_protocol(void)
 
     hres = CoGetClassObject(&CLSID_ResProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08lx\n", hres);
+    if(!SUCCEEDED(hres))
+        return;
 
     hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
     ok(hres == S_OK, "Could not get IInternetProtocolInfo interface: %08lx\n", hres);
