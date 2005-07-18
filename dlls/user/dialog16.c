@@ -333,11 +333,14 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
         if (dlgInfo->hUserFont)
         {
             SIZE charSize;
-            if (DIALOG_GetCharSize( dc, dlgInfo->hUserFont, &charSize ))
+            HFONT hOldFont = SelectObject( dc, dlgInfo->hUserFont );
+            charSize.cx = GdiGetCharDimensions( dc, NULL, &charSize.cy );
+            if (charSize.cx)
             {
                 dlgInfo->xBaseUnit = charSize.cx;
                 dlgInfo->yBaseUnit = charSize.cy;
             }
+            SelectObject( dc, hOldFont );
         }
         ReleaseDC(0, dc);
         TRACE("units = %d,%d\n", dlgInfo->xBaseUnit, dlgInfo->yBaseUnit );

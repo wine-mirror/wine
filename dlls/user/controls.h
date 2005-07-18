@@ -148,7 +148,6 @@ typedef struct
 #define DWLP_WINE_DIALOGINFO (DWLP_USER+sizeof(ULONG_PTR))
 
 extern DIALOGINFO *DIALOG_get_info( HWND hwnd, BOOL create );
-extern BOOL DIALOG_GetCharSize( HDC hdc, HFONT hFont, SIZE * pSize );
 extern void DIALOG_EnableOwner( HWND hOwner );
 extern BOOL DIALOG_DisableOwner( HWND hOwner );
 extern INT DIALOG_DoDialogBox( HWND hwnd, HWND owner );

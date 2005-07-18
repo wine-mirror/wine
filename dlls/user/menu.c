@@ -860,7 +860,9 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         MEASUREITEMSTRUCT mis;
         /* not done in Menu_Init: GetDialogBaseUnits() breaks there */
         if( !menucharsize.cx ) {
-            DIALOG_GetCharSize( hdc, hMenuFont, &menucharsize );
+            HFONT hOldFont = SelectObject( hdc, hMenuFont );
+            menucharsize.cx = GdiGetCharDimensions( hdc, NULL, &menucharsize.cy );
+            SelectObject( hdc, hOldFont );
             /* Win95/98/ME will use menucharsize.cy here. Testing is possible
              * but it is unlikely an application will depend on that */
             ODitemheight = HIWORD( GetDialogBaseUnits());

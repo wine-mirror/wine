@@ -144,38 +144,6 @@ BOOL DIALOG_DisableOwner( HWND hOwner )
 }
 
 /***********************************************************************
- *           DIALOG_GetCharSize
- *
- * Despite most of MSDN insisting that the horizontal base unit is
- * tmAveCharWidth it isn't.  Knowledge base article Q145994
- * "HOWTO: Calculate Dialog Units When Not Using the System Font",
- * says that we should take the average of the 52 English upper and lower
- * case characters.
- */
-BOOL DIALOG_GetCharSize( HDC hDC, HFONT hFont, SIZE * pSize )
-{
-    HFONT hFontPrev = 0;
-    const char *alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    SIZE sz;
-    TEXTMETRICA tm;
-
-    if(!hDC) return FALSE;
-
-    if(hFont) hFontPrev = SelectObject(hDC, hFont);
-    if(!GetTextMetricsA(hDC, &tm)) return FALSE;
-    if(!GetTextExtentPointA(hDC, alphabet, 52, &sz)) return FALSE;
-
-    pSize->cy = tm.tmHeight;
-    pSize->cx = (sz.cx / 26 + 1) / 2;
-
-    if (hFontPrev) SelectObject(hDC, hFontPrev);
-
-    TRACE("dlg base units: %ld x %ld\n", pSize->cx, pSize->cy);
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           DIALOG_GetControl32
  *
  * Return the class and text of the control pointed to by ptr,
@@ -532,11 +500,14 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         if (hUserFont)
         {
             SIZE charSize;
-            if (DIALOG_GetCharSize( dc, hUserFont, &charSize ))
+            HFONT hOldFont = SelectObject( dc, hUserFont );
+            charSize.cx = GdiGetCharDimensions( dc, NULL, &charSize.cy );
+            if (charSize.cx)
             {
                 xBaseUnit = charSize.cx;
                 yBaseUnit = charSize.cy;
             }
+            SelectObject( dc, hOldFont );
         }
         ReleaseDC(0, dc);
         TRACE("units = %d,%d\n", xBaseUnit, yBaseUnit );
@@ -1439,7 +1410,8 @@ DWORD WINAPI GetDialogBaseUnits(void)
 
         if ((hdc = GetDC(0)))
         {
-            if (DIALOG_GetCharSize( hdc, 0, &size )) units = MAKELONG( size.cx, size.cy );
+            size.cx = GdiGetCharDimensions( hdc, NULL, &size.cy );
+            if (size.cx) units = MAKELONG( size.cx, size.cy );
             ReleaseDC( 0, hdc );
         }
         TRACE("base units = %d,%d\n", LOWORD(units), HIWORD(units) );
