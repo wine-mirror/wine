@@ -404,10 +404,10 @@ BOOL HCR_GetFolderAttributes(LPCITEMIDLIST pidlFolder, LPDWORD pdwAttributes)
                                            (LPVOID*)&psfFolder);
             if (SUCCEEDED(hr)) { 
                 hr = IShellFolder_GetAttributesOf(psfFolder, 0, NULL, pdwAttributes);
+                IShellFolder_Release(psfFolder);
             }
+            IShellFolder_Release(psfDesktop);
         }
-        IShellFolder_Release(psfFolder);
-        IShellFolder_Release(psfDesktop);
         if (FAILED(hr)) return FALSE;
     } else {
         lResult = RegQueryValueExW(hSFKey, wszAttributes, 0, NULL, (LPBYTE)&dwTemp, &dwLen);
