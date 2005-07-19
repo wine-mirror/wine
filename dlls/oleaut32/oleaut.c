@@ -42,8 +42,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /* The OLE Automation ProxyStub Interface Class (aka Typelib Marshaler) */
 extern const GUID CLSID_PSOAInterface;
 
-/* IDispatch marshaler */
 extern const GUID CLSID_PSDispatch;
+extern const GUID CLSID_PSEnumVariant;
+extern const GUID CLSID_PSTypeInfo;
+extern const GUID CLSID_PSTypeLib;
+extern const GUID CLSID_PSTypeComp;
 
 static BOOL BSTR_bCache = TRUE; /* Cache allocations to minimise alloc calls? */
 
@@ -717,8 +720,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 	    return S_OK;
 	}
     }
-    if (IsEqualGUID(rclsid,&CLSID_PSDispatch)) {
-	return OLEAUTPS_DllGetClassObject(rclsid,iid,ppv);
+    if (IsEqualCLSID(rclsid, &CLSID_PSDispatch) ||
+        IsEqualCLSID(rclsid, &CLSID_PSTypeInfo) ||
+        IsEqualCLSID(rclsid, &CLSID_PSTypeLib) ||
+        IsEqualCLSID(rclsid, &CLSID_PSEnumVariant)) {
+        return OLEAUTPS_DllGetClassObject(&CLSID_PSDispatch, iid, ppv);
     }
     if (IsEqualGUID(rclsid,&CLSID_PSOAInterface)) {
 	if (S_OK==TypeLibFac_DllGetClassObject(rclsid,iid,ppv))
