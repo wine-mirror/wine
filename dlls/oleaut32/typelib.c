@@ -4983,6 +4983,12 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		    }
 		}
 	    }
+
+	    if ((func_desc->elemdescFunc.tdesc.vt == VT_HRESULT) && FAILED(res)) {
+	        WARN("invoked function failed with error 0x%08lx\n", res);
+	        hres = DISP_E_EXCEPTION;
+	        if (pExcepInfo) pExcepInfo->scode = res;
+	    }
 func_fail:
             HeapFree(GetProcessHeap(), 0, rgvarg);
 	    HeapFree(GetProcessHeap(),0,args2);
