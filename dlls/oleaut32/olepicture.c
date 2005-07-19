@@ -1117,12 +1117,12 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     );
     /* */
     padding = (gif->SWidth+3) & ~3;
-    bmi  = HeapAlloc(GetProcessHeap(),0,sizeof(BITMAPINFOHEADER)+(1<<gif->SColorResolution)*sizeof(RGBQUAD));
-    bytes= HeapAlloc(GetProcessHeap(),0,padding*gif->SHeight);
     si   = gif->SavedImages+0;
     gid  = &(si->ImageDesc);
     cm   = gid->ColorMap;
     if (!cm) cm = gif->SColorMap;
+    bmi  = HeapAlloc(GetProcessHeap(),0,sizeof(BITMAPINFOHEADER)+(cm->ColorCount)*sizeof(RGBQUAD));
+    bytes= HeapAlloc(GetProcessHeap(),0,padding*gif->SHeight);
     
     /* look for the transparent color extension */
     for (i = 0; i < si->ExtensionBlockCount; ++i) {
@@ -1134,7 +1134,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
 	}
     }
 
-    for (i=0;i<(1<<gif->SColorResolution);i++) {
+    for (i = 0; i < cm->ColorCount; i++) {
       bmi->bmiColors[i].rgbRed = cm->Colors[i].Red;
       bmi->bmiColors[i].rgbGreen = cm->Colors[i].Green;
       bmi->bmiColors[i].rgbBlue = cm->Colors[i].Blue;
@@ -1181,7 +1181,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
     bmi->bmiHeader.biSizeImage		= padding*gif->SHeight;
     bmi->bmiHeader.biXPelsPerMeter	= 0;
     bmi->bmiHeader.biYPelsPerMeter	= 0;
-    bmi->bmiHeader.biClrUsed		= 1 << gif->SColorResolution;
+    bmi->bmiHeader.biClrUsed		= cm->ColorCount;
     bmi->bmiHeader.biClrImportant	= 0;
 
     hdcref = GetDC(0);
