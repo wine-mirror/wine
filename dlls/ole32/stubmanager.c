@@ -96,14 +96,12 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object, MSHLFLAG
     return sm;
 }
 
-/* m->apt->cs must be held on entry to this function */
+/* caller must remove stub manager from apartment prior to calling this function */
 static void stub_manager_delete(struct stub_manager *m)
 {
     struct list *cursor;
 
     TRACE("destroying %p (oid=%s)\n", m, wine_dbgstr_longlong(m->oid));
-
-    list_remove(&m->entry);
 
     /* release every ifstub */
     while ((cursor = list_head(&m->ifstubs)))
@@ -230,9 +228,15 @@ ULONG stub_manager_int_release(struct stub_manager *This)
 
     TRACE("after %ld\n", refs);
 
+    /* remove from apartment so no other thread can access it... */
+    if (!refs)
+        list_remove(&This->entry);
+
+    LeaveCriticalSection(&apt->cs);
+
+    /* ... so now we can delete it without being inside the apartment critsec */
     if (!refs)
         stub_manager_delete(This);
-    LeaveCriticalSection(&apt->cs);
 
     return refs;
 }
@@ -505,9 +509,9 @@ void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs)
         break;
     }
 
-    stub_manager_ext_release(m, refs);
-
     LeaveCriticalSection(&m->lock);
+
+    stub_manager_ext_release(m, refs);
 }
 
 /* is an ifstub table marshaled? */
