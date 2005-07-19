@@ -179,9 +179,6 @@ static BOOL process_attach(void)
     /* Initialize built-in window classes */
     CLASS_RegisterBuiltinClasses();
 
-    /* Initialize menus */
-    if (!MENU_Init()) return FALSE;
-
     /* Initialize message spying */
     if (!SPY_Init()) return FALSE;
 

@@ -976,7 +976,9 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->userdata       = 0;
     wndPtr->hIcon          = 0;
     wndPtr->hIconSmall     = 0;
-    wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU) ? MENU_GetSysMenu( hwnd, (HMENU)-1 ) : 0;
+    wndPtr->hSysMenu       = 0;
+
+    if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
 
     /*
      * Correct the window styles.

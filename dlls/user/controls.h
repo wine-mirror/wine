@@ -56,9 +56,7 @@ extern BOOL DESKTOP_SetPattern( LPCWSTR pattern );
 extern HWND ICONTITLE_Create( HWND hwnd );
 
 /* menu controls */
-extern BOOL MENU_Init(void);
 extern HWND MENU_IsMenuActive(void);
-extern HMENU MENU_GetSysMenu(HWND hWndOwner, HMENU hSysPopup);
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
                                      INT orgX, INT orgY );
 extern BOOL MENU_SetMenu(HWND, HMENU);

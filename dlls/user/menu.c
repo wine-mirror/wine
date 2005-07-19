@@ -162,18 +162,8 @@ typedef struct
 
 #define WIN_ALLOWED_MENU(style) ((style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
 
-  /* Dimension of the menu bitmaps */
-static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
-
-static HBITMAP hStdMnArrow = 0;
-static HBITMAP hBmpSysMenu = 0;
-
-static HFONT	hMenuFont = 0;
-static HFONT	hMenuFontBold = 0;
 static SIZE     menucharsize;
 static UINT     ODitemheight; /* default owner drawn item height */      
-
-static HMENU MENU_DefSysPopup = 0;  /* Default system menu popup */
 
 /* Use global popup window because there's no way 2 menus can
  * be tracked at the same time.  */
@@ -330,6 +320,52 @@ static HMENU get_win_sys_menu( HWND hwnd )
 }
 
 /***********************************************************************
+ *           get_menu_font
+ */
+static HFONT get_menu_font( BOOL bold )
+{
+    static HFONT hMenuFont, hMenuFontBold;
+
+    HFONT ret = bold ? hMenuFontBold : hMenuFont;
+
+    if (!ret)
+    {
+        NONCLIENTMETRICSW ncm;
+        HFONT prev;
+
+        ncm.cbSize = sizeof(NONCLIENTMETRICSW);
+        SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0);
+
+        if (bold)
+        {
+            ncm.lfMenuFont.lfWeight += 300;
+            if (ncm.lfMenuFont.lfWeight > 1000) ncm.lfMenuFont.lfWeight = 1000;
+        }
+        if (!(ret = CreateFontIndirectW( &ncm.lfMenuFont ))) return 0;
+        prev = InterlockedCompareExchangePointer( (void **)(bold ? &hMenuFontBold : &hMenuFont),
+                                                  ret, NULL );
+        if (prev)
+        {
+            /* another thread beat us to it */
+            DeleteObject( ret );
+            ret = prev;
+        }
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *           get_arrow_bitmap
+ */
+static HBITMAP get_arrow_bitmap(void)
+{
+    static HBITMAP arrow_bitmap;
+
+    if (!arrow_bitmap) arrow_bitmap = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_MNARROW));
+    return arrow_bitmap;
+}
+
+/***********************************************************************
  *           MENU_CopySysPopup
  *
  * Return the default system menu.
@@ -374,9 +410,8 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 	menu->hWnd = WIN_GetFullHandle( hWnd );
 	TRACE("hWnd %p (hMenu %p)\n", menu->hWnd, hMenu);
 
-	if (hPopupMenu == (HMENU)(-1))
+	if (!hPopupMenu)
 	    hPopupMenu = MENU_CopySysPopup();
-	else if( !hPopupMenu ) hPopupMenu = MENU_DefSysPopup;
 
 	if (hPopupMenu)
 	{
@@ -399,49 +434,6 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
     return 0;
 }
 
-
-/***********************************************************************
- *           MENU_Init
- *
- * Menus initialisation.
- */
-BOOL MENU_Init(void)
-{
-    NONCLIENTMETRICSW ncm;
-
-    /* Load menu bitmaps */
-    hStdMnArrow = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_MNARROW));
-    /* Load system buttons bitmaps */
-    hBmpSysMenu = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_CLOSE));
-
-    if (hStdMnArrow)
-    {
-	BITMAP bm;
-	GetObjectW( hStdMnArrow, sizeof(bm), &bm );
-	arrow_bitmap_width = bm.bmWidth;
-	arrow_bitmap_height = bm.bmHeight;
-    } else
-	return FALSE;
-
-    if (!(MENU_DefSysPopup = MENU_CopySysPopup()))
-	return FALSE;
-
-    ncm.cbSize = sizeof(NONCLIENTMETRICSW);
-    if (!(SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0)))
-	return FALSE;
-
-    if (!(hMenuFont = CreateFontIndirectW( &ncm.lfMenuFont )))
-	return FALSE;
-
-    ncm.lfMenuFont.lfWeight += 300;
-    if ( ncm.lfMenuFont.lfWeight > 1000)
-	ncm.lfMenuFont.lfWeight = 1000;
-
-    if (!(hMenuFontBold = CreateFontIndirectW( &ncm.lfMenuFont )))
-	return FALSE;
-
-    return TRUE;
-}
 
 /***********************************************************************
  *           MENU_InitSysMenuPopup
@@ -783,6 +775,9 @@ static void MENU_DrawBitmapItem( HDC hdc, MENUITEM *lpitem, const RECT *rect, BO
             }
             else
             {
+                static HBITMAP hBmpSysMenu;
+
+                if (!hBmpSysMenu) hBmpSysMenu = LoadBitmapW(0, MAKEINTRESOURCEW(OBM_CLOSE));
                 bmp = hBmpSysMenu;
                 if (!GetObjectW( bmp, sizeof(bm), &bm )) return;
                 /* only use right half of the bitmap */
@@ -848,10 +843,15 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
 {
     WCHAR *p;
     UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
+    UINT arrow_bitmap_width;
+    BITMAP bm;
 
     TRACE("dc=%p owner=%p (%d,%d)\n", hdc, hwndOwner, orgX, orgY);
     debug_print_menuitem("MENU_CalcItemSize: menuitem:", lpitem,
 			 (menuBar ? " (MenuBar)" : ""));
+
+    GetObjectW( get_arrow_bitmap(), sizeof(bm), &bm );
+    arrow_bitmap_width = bm.bmWidth;
 
     SetRect( &lpitem->rect, orgX, orgY, orgX, orgY );
 
@@ -860,9 +860,7 @@ static void MENU_CalcItemSize( HDC hdc, MENUITEM *lpitem, HWND hwndOwner,
         MEASUREITEMSTRUCT mis;
         /* not done in Menu_Init: GetDialogBaseUnits() breaks there */
         if( !menucharsize.cx ) {
-            HFONT hOldFont = SelectObject( hdc, hMenuFont );
             menucharsize.cx = GdiGetCharDimensions( hdc, NULL, &menucharsize.cy );
-            SelectObject( hdc, hOldFont );
             /* Win95/98/ME will use menucharsize.cy here. Testing is possible
              * but it is unlikely an application will depend on that */
             ODitemheight = HIWORD( GetDialogBaseUnits());
@@ -998,7 +996,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
     if (lppop->nItems == 0) return;
     hdc = GetDC( 0 );
 
-    SelectObject( hdc, hMenuFont);
+    SelectObject( hdc, get_menu_font(FALSE));
 
     start = 0;
     maxX = 2 + 1;
@@ -1299,6 +1297,12 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         INT y = rect.top + rect.bottom;
         UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
         UINT check_bitmap_height = GetSystemMetrics( SM_CYMENUCHECK );
+        UINT arrow_bitmap_width, arrow_bitmap_height;
+        BITMAP bmp;
+
+        GetObjectW( get_arrow_bitmap(), sizeof(bmp), &bmp );
+        arrow_bitmap_width = bmp.bmWidth;
+        arrow_bitmap_height = bmp.bmHeight;
 
         if (!(lpitem->fType & MF_OWNERDRAW))
         {
@@ -1383,7 +1387,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    HDC hdcMem = CreateCompatibleDC( hdc );
 	    HBITMAP hOrigBitmap;
 
-	    hOrigBitmap = SelectObject( hdcMem, hStdMnArrow );
+	    hOrigBitmap = SelectObject( hdcMem, get_arrow_bitmap() );
 	    BitBlt( hdc, rect.right - arrow_bitmap_width - 1,
 		      (y - arrow_bitmap_height) / 2,
 		      arrow_bitmap_width, arrow_bitmap_height,
@@ -1418,7 +1422,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 
 	if ( lpitem->fState & MFS_DEFAULT )
 	{
-	     hfontOld = SelectObject( hdc, hMenuFontBold);
+	     hfontOld = SelectObject( hdc, get_menu_font(TRUE) );
 	}
 
 	if (menuBar)
@@ -1493,7 +1497,7 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
     GetClientRect( hwnd, &rect );
 
     if((hPrevBrush = SelectObject( hdc, GetSysColorBrush(COLOR_MENU) ))
-        && (SelectObject( hdc, hMenuFont)))
+        && (SelectObject( hdc, get_menu_font(FALSE))))
     {
 	HPEN hPrevPen;
 
@@ -1552,7 +1556,7 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
 
     if (suppress_draw)
     {
-	hfontOld = SelectObject( hDC, hMenuFont);
+	hfontOld = SelectObject( hDC, get_menu_font(FALSE));
 
 	if (lppop->Height == 0)
 		MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
@@ -1652,7 +1656,7 @@ static void MENU_SelectItem( HWND hwndOwner, HMENU hmenu, UINT wIndex,
     else hdc = GetDCEx( lppop->hWnd, 0, DCX_CACHE | DCX_WINDOW);
     if (!top_popup) top_popup = lppop->hWnd;
 
-    SelectObject( hdc, hMenuFont);
+    SelectObject( hdc, get_menu_font(FALSE));
 
       /* Clear previous highlighted item */
     if (lppop->FocusedItem != NO_SELECTED_ITEM)
@@ -2071,7 +2075,7 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
         if (menu->wFlags & MF_POPUP) hdc = GetDC( menu->hWnd );
         else hdc = GetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
 
-        SelectObject( hdc, hMenuFont);
+        SelectObject( hdc, get_menu_font(FALSE));
 
         item->fState |= MF_HILITE;
         MENU_DrawMenuItem( menu->hWnd, hmenu, hwndOwner, hdc, item, menu->Height, !(menu->wFlags & MF_POPUP), ODA_DRAWENTIRE );
@@ -3195,7 +3199,7 @@ UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
     if (!(lppop = MENU_GetMenu( GetMenu(hwnd) ))) return 0;
 
     hdc = GetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
-    SelectObject( hdc, hMenuFont);
+    SelectObject( hdc, get_menu_font(FALSE));
     SetRect(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+GetSystemMetrics(SM_CYMENU));
     MENU_MenuBarCalcSize( hdc, &rectBar, lppop, hwnd );
     ReleaseDC( hwnd, hdc );
@@ -3663,39 +3667,35 @@ HMENU WINAPI CreateMenu(void)
  */
 BOOL WINAPI DestroyMenu( HMENU hMenu )
 {
+    LPPOPUPMENU lppop = MENU_GetMenu(hMenu);
+
     TRACE("(%p)\n", hMenu);
 
-    /* Silently ignore attempts to destroy default system popup */
 
-    if (hMenu && hMenu != MENU_DefSysPopup)
+    if (!lppop) return FALSE;
+
+    lppop->wMagic = 0;  /* Mark it as destroyed */
+
+    /* DestroyMenu should not destroy system menu popup owner */
+    if ((lppop->wFlags & (MF_POPUP | MF_SYSMENU)) == MF_POPUP && lppop->hWnd)
     {
-        LPPOPUPMENU lppop = MENU_GetMenu(hMenu);
-
-        if (!lppop) return FALSE;
-
-        lppop->wMagic = 0;  /* Mark it as destroyed */
-
-        /* DestroyMenu should not destroy system menu popup owner */
-        if ((lppop->wFlags & (MF_POPUP | MF_SYSMENU)) == MF_POPUP && lppop->hWnd)
-        {
-            DestroyWindow( lppop->hWnd );
-            lppop->hWnd = 0;
-        }
-
-        if (lppop->items) /* recursively destroy submenus */
-        {
-            int i;
-            MENUITEM *item = lppop->items;
-            for (i = lppop->nItems; i > 0; i--, item++)
-            {
-                if (item->fType & MF_POPUP) DestroyMenu(item->hSubMenu);
-                MENU_FreeItemData( item );
-            }
-            HeapFree( GetProcessHeap(), 0, lppop->items );
-        }
-        USER_HEAP_FREE( hMenu );
+        DestroyWindow( lppop->hWnd );
+        lppop->hWnd = 0;
     }
-    return (hMenu != MENU_DefSysPopup);
+
+    if (lppop->items) /* recursively destroy submenus */
+    {
+        int i;
+        MENUITEM *item = lppop->items;
+        for (i = lppop->nItems; i > 0; i--, item++)
+        {
+            if (item->fType & MF_POPUP) DestroyMenu(item->hSubMenu);
+            MENU_FreeItemData( item );
+        }
+        HeapFree( GetProcessHeap(), 0, lppop->items );
+    }
+    USER_HEAP_FREE( hMenu );
+    return TRUE;
 }
 
 
@@ -3714,32 +3714,14 @@ HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
     }
     else if (wndPtr)
     {
-	if( wndPtr->hSysMenu )
+	if (wndPtr->hSysMenu && bRevert)
 	{
-	    if( bRevert )
-	    {
-		DestroyMenu(wndPtr->hSysMenu);
-		wndPtr->hSysMenu = 0;
-	    }
-	    else
-	    {
-		POPUPMENU *menu = MENU_GetMenu( wndPtr->hSysMenu );
-		if( menu )
-                {
-		   if( menu->nItems > 0 && menu->items[0].hSubMenu == MENU_DefSysPopup )
-		      menu->items[0].hSubMenu = MENU_CopySysPopup();
-		}
-		else
-		{
-		   WARN("Current sys-menu (%p) of wnd %p is broken\n",
-			wndPtr->hSysMenu, hWnd);
-		   wndPtr->hSysMenu = 0;
-		}
-	    }
+            DestroyMenu(wndPtr->hSysMenu);
+            wndPtr->hSysMenu = 0;
 	}
 
 	if(!wndPtr->hSysMenu && (wndPtr->dwStyle & WS_SYSMENU) )
-	    wndPtr->hSysMenu = MENU_GetSysMenu( hWnd, (HMENU)(-1) );
+	    wndPtr->hSysMenu = MENU_GetSysMenu( hWnd, 0 );
 
 	if( wndPtr->hSysMenu )
         {
@@ -3898,7 +3880,7 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
         hMenu = GetMenu(hwnd);
 
     if (!hFont)
-        hFont = hMenuFont;
+        hFont = get_menu_font(FALSE);
 
     lppop = MENU_GetMenu( hMenu );
     if (lppop == NULL || lprect == NULL)
