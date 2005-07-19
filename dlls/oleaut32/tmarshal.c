@@ -565,15 +565,18 @@ serialize_param(
         if (writeit) {
             /* ptr to ptr to magic widestring, basically */
             BSTR *bstr = (BSTR *) *arg;
+            DWORD len;
             if (!*bstr) {
                 /* -1 means "null string" which is equivalent to empty string */
-                DWORD fakelen = -1;     
-                xbuf_add(buf, (LPBYTE)&fakelen,4);
+                len = -1;     
+                hres = xbuf_add(buf, (LPBYTE)&len,sizeof(DWORD));
+		if (hres) return hres;
             } else {
-                /* BSTRs store the length behind the first character */
-                DWORD *len = ((DWORD *)(*bstr))-1;
-                hres = xbuf_add(buf, (LPBYTE) len, *len + 4);
-                if (hres) return hres;
+		len = *((DWORD*)*bstr-1)/sizeof(WCHAR);
+		hres = xbuf_add(buf,(LPBYTE)&len,sizeof(DWORD));
+		if (hres) return hres;
+		hres = xbuf_add(buf,(LPBYTE)*bstr,len * sizeof(WCHAR));
+		if (hres) return hres;
             }
         }
 
@@ -592,17 +595,18 @@ serialize_param(
 		    TRACE_(olerelay)("<bstr NULL>");
 	}
 	if (writeit) {
-	    if (!*arg) {
-		DWORD fakelen = -1;
-		hres = xbuf_add(buf,(LPBYTE)&fakelen,4);
-		if (hres)
-		    return hres;
+            BSTR bstr = (BSTR)*arg;
+            DWORD len;
+	    if (!bstr) {
+		len = -1;
+		hres = xbuf_add(buf,(LPBYTE)&len,sizeof(DWORD));
+		if (hres) return hres;
 	    } else {
-		DWORD *bstr = ((DWORD*)(*arg))-1;
-
-		hres = xbuf_add(buf,(LPBYTE)bstr,bstr[0]+4);
-		if (hres)
-		    return hres;
+		len = *((DWORD*)bstr-1)/sizeof(WCHAR);
+		hres = xbuf_add(buf,(LPBYTE)&len,sizeof(DWORD));
+		if (hres) return hres;
+		hres = xbuf_add(buf,(LPBYTE)bstr,len * sizeof(WCHAR));
+		if (hres) return hres;
 	    }
 	}
 
@@ -1139,8 +1143,8 @@ deserialize_param(
 		    **bstr = NULL;
 		    if (debugout) TRACE_(olerelay)("<bstr NULL>");
 		} else {
-		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,len+sizeof(WCHAR));
-		    hres = xbuf_get(buf,(LPBYTE)str,len);
+		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(len+1)*sizeof(WCHAR));
+		    hres = xbuf_get(buf,(LPBYTE)str,len*sizeof(WCHAR));
 		    if (hres) {
 			ERR("Failed to read BSTR.\n");
 			return hres;
@@ -1169,8 +1173,8 @@ deserialize_param(
 		    *arg = 0;
 		    if (debugout) TRACE_(olerelay)("<bstr NULL>");
 		} else {
-		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,len+sizeof(WCHAR));
-		    hres = xbuf_get(buf,(LPBYTE)str,len);
+		    str  = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,(len+1)*sizeof(WCHAR));
+		    hres = xbuf_get(buf,(LPBYTE)str,len*sizeof(WCHAR));
 		    if (hres) {
 			ERR("Failed to read BSTR.\n");
 			return hres;
