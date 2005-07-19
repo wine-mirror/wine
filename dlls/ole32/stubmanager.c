@@ -415,7 +415,7 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
     stub->stubbuffer = sb;
     if (sb) IRpcStubBuffer_AddRef(sb);
 
-    /* no need to ref this, same object as sb */
+    IUnknown_AddRef(iptr);
     stub->iface = iptr;
 
     stub->iid = *iid;
