@@ -4597,6 +4597,10 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
              memcpy(argpos, &V_I4(arg), 4);
              hres = S_OK;
              break;
+          case VT_BYREF|VT_I4:
+             memcpy(argpos, V_I4REF(arg), 4);
+             hres = S_OK;
+             break;
           default:
              FIXME("vt 0x%x -> TKIND_ENUM unhandled.\n",V_VT(arg));
              hres = E_FAIL;
