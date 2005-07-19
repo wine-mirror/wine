@@ -371,6 +371,35 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
 
+
+/** Hacked out start of a context manager!! **/
+typedef struct glContext {
+    int Width;
+    int Height;
+    int usedcount;
+    GLXContext context;
+
+    Drawable drawable;
+    IWineD3DSurface *pSurface;
+#if 0 /* TODO: someway to represent the state of the context */
+    IWineD3DStateBlock *pStateBlock;
+#endif
+/* a few other things like format */
+} glContext;
+
+/* TODO: setup some flags in the regestry to enable, disable pbuffer support
+(since it will break quite a few things until contexts are managed properly!) */
+extern BOOL pbuffer_support;
+/* allocate one pbuffer per surface */
+extern BOOL pbuffer_per_surface;
+
+/* Maximum number of contexts/pbuffers to keep in cache,
+set to 100 because ATI's drivers don't support deleting pBuffers properly
+this needs to be migrated to a list and some option availalbe for controle the cache size.
+*/
+#define CONTEXT_CACHE 100
+
+
 /*****************************************************************************
  * IWineD3DDevice implementation structure
  */
@@ -444,6 +473,11 @@ typedef struct IWineD3DDeviceImpl
     /* Debug stream management */
     BOOL                     debug;
 
+    /* Screen buffer resources */
+    glContext contextCache[CONTEXT_CACHE];
+
+    /* A flag to check if endscene has been called before changing the render tartet */
+    BOOL sceneEnded;
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
