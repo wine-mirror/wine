@@ -116,7 +116,10 @@ CFStub_Release(LPRPCSTUBBUFFER iface) {
     ULONG ref;
 
     ref = InterlockedDecrement(&This->ref);
-    if (!ref) HeapFree(GetProcessHeap(),0,This);
+    if (!ref) {
+        IRpcStubBuffer_Disconnect(iface);
+        HeapFree(GetProcessHeap(),0,This);
+    }
     return ref;
 }
 
@@ -133,9 +136,12 @@ static void WINAPI
 CFStub_Disconnect(LPRPCSTUBBUFFER iface) {
     CFStub *This = (CFStub *)iface;
 
-    IUnknown_Release(This->pUnkServer);
-    This->pUnkServer = NULL;
+    if (This->pUnkServer) {
+        IUnknown_Release(This->pUnkServer);
+        This->pUnkServer = NULL;
+    }
 }
+
 static HRESULT WINAPI
 CFStub_Invoke(
     LPRPCSTUBBUFFER iface,RPCOLEMESSAGE* msg,IRpcChannelBuffer* chanbuf
@@ -654,7 +660,7 @@ static HRESULT RemUnkStub_Construct(IRpcStubBuffer **ppStub)
     RemUnkStub *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
     This->lpVtbl = &RemUnkStub_VTable;
-    This->refs = 0;
+    This->refs = 1;
     This->iface = NULL;
     *ppStub = (IRpcStubBuffer*)This;
     return S_OK;
