@@ -4615,7 +4615,7 @@ static void test_VarBstrFromR4(void)
   ok(hres == S_OK, "got hres 0x%08lx\n", hres);
   if (bstr)
   {
-    todo_wine ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
+    ok(memcmp(bstr, szZero, sizeof(szZero)) == 0, "negative zero (got %s)\n", wtoascii(bstr));
   }
 }
 
