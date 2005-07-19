@@ -1974,6 +1974,7 @@ TMStubImpl_Release(LPRPCSTUBBUFFER iface)
     if (!refCount)
     {
         IRpcStubBuffer_Disconnect(iface);
+        ITypeInfo_Release(This->tinfo);
         CoTaskMemFree(This);
     }
     return refCount;
@@ -1998,9 +1999,11 @@ TMStubImpl_Disconnect(LPRPCSTUBBUFFER iface)
 
     TRACE("(%p)->()\n", This);
 
-    IUnknown_Release(This->pUnk);
-    This->pUnk = NULL;
-    return;
+    if (This->pUnk)
+    {
+        IUnknown_Release(This->pUnk);
+        This->pUnk = NULL;
+    }
 }
 
 static HRESULT WINAPI
