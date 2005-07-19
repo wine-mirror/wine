@@ -50,8 +50,6 @@ struct window_class
     char            extra_bytes[1];  /* extra bytes storage */
 };
 
-#define DESKTOP_ATOM  ((atom_t)32769)
-
 static struct window_class *desktop_class;
 
 static struct window_class *create_class( struct process *process, int extra_bytes, int local )
@@ -73,23 +71,22 @@ static struct window_class *create_class( struct process *process, int extra_byt
     return class;
 }
 
-static struct window_class *create_desktop_class( unsigned int style, int win_extra )
+static struct window_class *get_desktop_class(void)
 {
-    struct window_class *class;
-
-    if (!(class = mem_alloc( sizeof(*class) - 1 ))) return NULL;
-
-    class->process        = NULL;
-    class->count          = 0;
-    class->local          = 0;
-    class->nb_extra_bytes = 0;
-    class->atom           = DESKTOP_ATOM;
-    class->instance       = NULL;
-    class->style          = style;
-    class->win_extra      = win_extra;
-    class->client_ptr     = NULL;
-    desktop_class = class;
-    return class;
+    if (!desktop_class)
+    {
+        if (!(desktop_class = mem_alloc( sizeof(*desktop_class) - 1 ))) return NULL;
+        desktop_class->process        = NULL;
+        desktop_class->count          = 0;
+        desktop_class->local          = 0;
+        desktop_class->nb_extra_bytes = 0;
+        desktop_class->atom           = DESKTOP_ATOM;
+        desktop_class->instance       = NULL;
+        desktop_class->style          = CS_DBLCLKS;
+        desktop_class->win_extra      = 0;
+        desktop_class->client_ptr     = NULL;
+    }
+    return desktop_class;
 }
 
 static void destroy_class( struct window_class *class )
@@ -120,7 +117,7 @@ static struct window_class *find_class( struct process *process, atom_t atom, vo
         if (class->atom != atom) continue;
         if (!instance || !class->local || class->instance == instance) return class;
     }
-    if (atom == DESKTOP_ATOM) return desktop_class;
+    if (atom == DESKTOP_ATOM) return get_desktop_class();
     return NULL;
 }
 
@@ -160,10 +157,7 @@ DECL_HANDLER(create_class)
     struct winstation *winstation;
 
     if (!req->local && req->atom == DESKTOP_ATOM)
-    {
-        if (!desktop_class) create_desktop_class( req->style, req->win_extra );
-        return;  /* silently ignore further attempts to create the desktop class */
-    }
+        return;  /* silently ignore attempts to create the desktop class */
 
     class = find_class( current->process, req->atom, req->instance );
     if (class && !class->local == !req->local)
