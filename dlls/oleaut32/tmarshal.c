@@ -705,6 +705,14 @@ serialize_param(
 	    if (debugout) TRACE_(olerelay)("}");
 	    break;
 	}
+	case TKIND_ALIAS:
+	    return serialize_param(tinfo2,writeit,debugout,dealloc,&tattr->tdescAlias,arg,buf);
+	case TKIND_ENUM:
+	    hres = S_OK;
+	    if (debugout) TRACE_(olerelay)("%lx",*arg);
+	    if (writeit)
+	        hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
+	    return hres;
 	default:
 	    FIXME("Unhandled typekind %d\n",tattr->typekind);
 	    hres = E_FAIL;
@@ -1276,6 +1284,15 @@ deserialize_param(
 		    if (debugout) TRACE_(olerelay)("}");
 		    break;
 		}
+		case TKIND_ALIAS:
+		    return deserialize_param(tinfo2,readit,debugout,alloc,&tattr->tdescAlias,arg,buf);
+		case TKIND_ENUM:
+		    if (readit) {
+		        hres = xbuf_get(buf,(LPBYTE)arg,sizeof(DWORD));
+		        if (hres) ERR("Failed to read enum (4 byte)\n");
+		    }
+		    if (debugout) TRACE_(olerelay)("%lx",*arg);
+		    return hres;
 		default:
 		    ERR("Unhandled typekind %d\n",tattr->typekind);
 		    hres = E_FAIL;
