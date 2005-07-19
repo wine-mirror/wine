@@ -1138,6 +1138,8 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* ifa
     current = root;
     strcpy(pNextDir, szBasePath);
     pNextDir += strlen(szBasePath);
+    if (This->m_dwPathMode == PATHMODE_UNIX)
+      This->m_dwAttributes |= SFGAO_FILESYSTEM;
     if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
         *pNextDir = '\0';
         if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
