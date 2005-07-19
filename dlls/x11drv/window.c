@@ -662,9 +662,8 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
 
     /* set the attributes that don't change over the lifetime of the window */
     attr.bit_gravity   = NorthWestGravity;
-    attr.win_gravity   = StaticGravity;
     attr.backing_store = NotUseful;
-    mask |= CWBitGravity | CWWinGravity | CWBackingStore;
+    mask |= CWBitGravity | CWBackingStore;
 
     wine_tsx11_lock();
 
