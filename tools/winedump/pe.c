@@ -46,7 +46,7 @@
 #include "winedump.h"
 #include "pe.h"
 
-static IMAGE_NT_HEADERS*	PE_nt_headers;
+static IMAGE_NT_HEADERS32*	PE_nt_headers;
 
 static	const char* get_machine_str(DWORD mach)
 {
@@ -60,6 +60,8 @@ static	const char* get_machine_str(DWORD mach)
     case IMAGE_FILE_MACHINE_R10000:	return "R10000";
     case IMAGE_FILE_MACHINE_ALPHA:	return "Alpha";
     case IMAGE_FILE_MACHINE_POWERPC:	return "PowerPC";
+    case IMAGE_FILE_MACHINE_AMD64:      return "AMD64";
+    case IMAGE_FILE_MACHINE_IA64:       return "IA64";
     }
     return "???";
 }
@@ -71,10 +73,7 @@ static void*	RVA(unsigned long rva, unsigned long len)
 
     if (rva == 0) return NULL;
 
-    sectHead = (IMAGE_SECTION_HEADER*)((char*)PE_nt_headers + sizeof(DWORD) +
-				       sizeof(IMAGE_FILE_HEADER) +
-				       PE_nt_headers->FileHeader.SizeOfOptionalHeader);
-
+    sectHead = IMAGE_FIRST_SECTION(PE_nt_headers);
     for (i = PE_nt_headers->FileHeader.NumberOfSections - 1; i >= 0; i--)
     {
         if (sectHead[i].VirtualAddress <= rva &&
@@ -88,20 +87,33 @@ static void*	RVA(unsigned long rva, unsigned long len)
     return NULL;
 }
 
-static	void*	get_dir(unsigned idx)
-{
-    if (idx >= PE_nt_headers->OptionalHeader.NumberOfRvaAndSizes)
-	return NULL;
-    return RVA(PE_nt_headers->OptionalHeader.DataDirectory[idx].VirtualAddress,
-	       PE_nt_headers->OptionalHeader.DataDirectory[idx].Size);
-}
-
 static void *get_dir_and_size(unsigned int idx, unsigned int *size)
 {
-    if (idx >= PE_nt_headers->OptionalHeader.NumberOfRvaAndSizes)
-        return NULL;
-    *size = PE_nt_headers->OptionalHeader.DataDirectory[idx].Size;
-    return RVA(PE_nt_headers->OptionalHeader.DataDirectory[idx].VirtualAddress, *size);
+    if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        IMAGE_OPTIONAL_HEADER64 *opt = (IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
+        if (idx >= opt->NumberOfRvaAndSizes)
+            return NULL;
+        if(size)
+            *size = opt->DataDirectory[idx].Size;
+        return RVA(opt->DataDirectory[idx].VirtualAddress,
+                   opt->DataDirectory[idx].Size);
+    }
+    else
+    {
+        IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
+        if (idx >= opt->NumberOfRvaAndSizes)
+            return NULL;
+        if(size)
+            *size = opt->DataDirectory[idx].Size;
+        return RVA(opt->DataDirectory[idx].VirtualAddress,
+                   opt->DataDirectory[idx].Size);
+    }
+}
+
+static	void*	get_dir(unsigned idx)
+{
+    return get_dir_and_size(idx, 0);
 }
 
 static const char*	DirectoryNames[16] = {
@@ -111,12 +123,159 @@ static const char*	DirectoryNames[16] = {
     "IAT", 		"Delay IAT",	"COM Descript", ""
 };
 
+static char *get_magic_type(WORD magic)
+{
+    switch(magic) {
+        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            return "32bit";
+        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            return "64bit";
+        case IMAGE_ROM_OPTIONAL_HDR_MAGIC:
+            return "ROM";
+    }
+    return "???";
+}
+
+static inline void print_word(const char *title, WORD value)
+{
+    printf("  %-34s 0x%-4X         %u\n", title, value, value);
+}
+
+static inline void print_dword(const char *title, DWORD value)
+{
+    printf("  %-34s 0x%-8lx     %lu\n", title, value, value);
+}
+
+static inline void print_longlong(const char *title, ULONGLONG value)
+{
+    printf("  %-34s 0x", title);
+    if(value >> 32)
+        printf("%lx%08lx\n", (unsigned long)(value >> 32), (unsigned long)value);
+    else
+        printf("%lx\n", (unsigned long)value);
+}
+
+static inline void print_ver(const char *title, BYTE major, BYTE minor)
+{
+    printf("  %-34s %u.%02u\n", title, major, minor);
+}
+
+static inline void print_subsys(const char *title, WORD value)
+{
+    const char *str;
+    switch (value)
+    {
+        default:
+        case IMAGE_SUBSYSTEM_UNKNOWN:       str = "Unknown";        break;
+        case IMAGE_SUBSYSTEM_NATIVE:        str = "Native";         break;
+        case IMAGE_SUBSYSTEM_WINDOWS_GUI:   str = "Windows GUI";    break;
+        case IMAGE_SUBSYSTEM_WINDOWS_CUI:   str = "Windows CUI";    break;
+        case IMAGE_SUBSYSTEM_OS2_CUI:       str = "OS/2 CUI";       break;
+        case IMAGE_SUBSYSTEM_POSIX_CUI:     str = "Posix CUI";      break;
+    }
+    printf("  %-34s 0x%X (%s)\n", title, value, str);
+}
+
+static inline void print_dllflags(const char *title, WORD value)
+{
+    printf("  %-34s 0x%X\n", title, value);
+#define X(f,s) if (value & f) printf("    %s\n", s)
+    X(IMAGE_DLLCHARACTERISTICS_NO_ISOLATION,          "NO_ISOLATION");
+    X(IMAGE_DLLCHARACTERISTICS_NO_SEH,                "NO_SEH");
+    X(IMAGE_DLLCHARACTERISTICS_NO_BIND,               "NO_BIND");
+    X(IMAGE_DLLCHARACTERISTICS_WDM_DRIVER,            "WDM_DRIVER");
+    X(IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE, "TERMINAL_SERVER_AWARE");
+#undef X
+}
+
+static inline void print_datadirectory(DWORD n, IMAGE_DATA_DIRECTORY *directory)
+{
+    unsigned i;
+    printf("Data Directory\n");
+    printf("%ld\n", n * sizeof(IMAGE_DATA_DIRECTORY));
+
+    for (i = 0; i < n && i < 16; i++)
+    {
+        printf("  %-12s rva: 0x%-8lX  size: %8lu\n",
+               DirectoryNames[i], directory[i].VirtualAddress,
+               directory[i].Size);
+    }
+}
+
+static void dump_optional_header32(IMAGE_OPTIONAL_HEADER32 *optionalHeader)
+{
+    print_word("Magic", optionalHeader->Magic);
+    print_ver("linker version",
+              optionalHeader->MajorLinkerVersion, optionalHeader->MinorLinkerVersion);
+    print_dword("size of code", optionalHeader->SizeOfCode);
+    print_dword("size of initialized data", optionalHeader->SizeOfInitializedData);
+    print_dword("size of uninitialized data", optionalHeader->SizeOfUninitializedData);
+    print_dword("entrypoint RVA", optionalHeader->AddressOfEntryPoint);
+    print_dword("base of code", optionalHeader->BaseOfCode);
+    print_dword("base of data", optionalHeader->BaseOfData);
+    print_dword("image base", optionalHeader->ImageBase);
+    print_dword("section align", optionalHeader->SectionAlignment);
+    print_dword("file align", optionalHeader->FileAlignment);
+    print_ver("required OS version",
+              optionalHeader->MajorOperatingSystemVersion, optionalHeader->MinorOperatingSystemVersion);
+    print_ver("image version",
+              optionalHeader->MajorImageVersion, optionalHeader->MinorImageVersion);
+    print_ver("subsystem version",
+              optionalHeader->MajorSubsystemVersion, optionalHeader->MinorSubsystemVersion);
+    print_dword("Win32 Version", optionalHeader->Win32VersionValue);
+    print_dword("size of image", optionalHeader->SizeOfImage);
+    print_dword("size of headers", optionalHeader->SizeOfHeaders);
+    print_dword("checksum", optionalHeader->CheckSum);
+    print_subsys("Subsystem", optionalHeader->Subsystem);
+    print_dllflags("DLL characteristics:", optionalHeader->DllCharacteristics);
+    print_dword("stack reserve size", optionalHeader->SizeOfStackReserve);
+    print_dword("stack commit size", optionalHeader->SizeOfStackCommit);
+    print_dword("heap reserve size", optionalHeader->SizeOfHeapReserve);
+    print_dword("heap commit size", optionalHeader->SizeOfHeapCommit);
+    print_dword("loader flags", optionalHeader->LoaderFlags);
+    print_dword("RVAs & sizes", optionalHeader->NumberOfRvaAndSizes);
+    printf("\n");
+    print_datadirectory(optionalHeader->NumberOfRvaAndSizes, optionalHeader->DataDirectory);
+}
+
+static void dump_optional_header64(IMAGE_OPTIONAL_HEADER64 *optionalHeader)
+{
+    print_word("Magic", optionalHeader->Magic);
+    print_ver("linker version",
+              optionalHeader->MajorLinkerVersion, optionalHeader->MinorLinkerVersion);
+    print_dword("size of code", optionalHeader->SizeOfCode);
+    print_dword("size of initialized data", optionalHeader->SizeOfInitializedData);
+    print_dword("size of uninitialized data", optionalHeader->SizeOfUninitializedData);
+    print_dword("entrypoint RVA", optionalHeader->AddressOfEntryPoint);
+    print_dword("base of code", optionalHeader->BaseOfCode);
+    print_longlong("image base", optionalHeader->ImageBase);
+    print_dword("section align", optionalHeader->SectionAlignment);
+    print_dword("file align", optionalHeader->FileAlignment);
+    print_ver("required OS version",
+              optionalHeader->MajorOperatingSystemVersion, optionalHeader->MinorOperatingSystemVersion);
+    print_ver("image version",
+              optionalHeader->MajorImageVersion, optionalHeader->MinorImageVersion);
+    print_ver("subsystem version",
+              optionalHeader->MajorSubsystemVersion, optionalHeader->MinorSubsystemVersion);
+    print_dword("Win32 Version", optionalHeader->Win32VersionValue);
+    print_dword("size of image", optionalHeader->SizeOfImage);
+    print_dword("size of headers", optionalHeader->SizeOfHeaders);
+    print_dword("checksum", optionalHeader->CheckSum);
+    print_subsys("Subsystem", optionalHeader->Subsystem);
+    print_dllflags("DLL characteristics:", optionalHeader->DllCharacteristics);
+    print_longlong("stack reserve size", optionalHeader->SizeOfStackReserve);
+    print_longlong("stack commit size", optionalHeader->SizeOfStackCommit);
+    print_longlong("heap reserve size", optionalHeader->SizeOfHeapReserve);
+    print_longlong("heap commit size", optionalHeader->SizeOfHeapCommit);
+    print_dword("loader flags", optionalHeader->LoaderFlags);
+    print_dword("RVAs & sizes", optionalHeader->NumberOfRvaAndSizes);
+    printf("\n");
+    print_datadirectory(optionalHeader->NumberOfRvaAndSizes, optionalHeader->DataDirectory);
+}
+
 static	void	dump_pe_header(void)
 {
-    const char			*str;
     IMAGE_FILE_HEADER		*fileHeader;
-    IMAGE_OPTIONAL_HEADER	*optionalHeader;
-    unsigned			i;
 
     printf("File Header\n");
     fileHeader = &PE_nt_headers->FileHeader;
@@ -136,85 +295,33 @@ static	void	dump_pe_header(void)
     X(IMAGE_FILE_EXECUTABLE_IMAGE, 	"EXECUTABLE_IMAGE");
     X(IMAGE_FILE_LINE_NUMS_STRIPPED, 	"LINE_NUMS_STRIPPED");
     X(IMAGE_FILE_LOCAL_SYMS_STRIPPED, 	"LOCAL_SYMS_STRIPPED");
+    X(IMAGE_FILE_AGGRESIVE_WS_TRIM, 	"AGGRESIVE_WS_TRIM");
+    X(IMAGE_FILE_LARGE_ADDRESS_AWARE, 	"LARGE_ADDRESS_AWARE");
     X(IMAGE_FILE_16BIT_MACHINE, 	"16BIT_MACHINE");
     X(IMAGE_FILE_BYTES_REVERSED_LO, 	"BYTES_REVERSED_LO");
     X(IMAGE_FILE_32BIT_MACHINE, 	"32BIT_MACHINE");
     X(IMAGE_FILE_DEBUG_STRIPPED, 	"DEBUG_STRIPPED");
+    X(IMAGE_FILE_REMOVABLE_RUN_FROM_SWAP, 	"REMOVABLE_RUN_FROM_SWAP");
+    X(IMAGE_FILE_NET_RUN_FROM_SWAP, 	"NET_RUN_FROM_SWAP");
     X(IMAGE_FILE_SYSTEM, 		"SYSTEM");
     X(IMAGE_FILE_DLL, 			"DLL");
+    X(IMAGE_FILE_UP_SYSTEM_ONLY, 	"UP_SYSTEM_ONLY");
     X(IMAGE_FILE_BYTES_REVERSED_HI, 	"BYTES_REVERSED_HI");
 #undef X
     printf("\n");
 
     /* hope we have the right size */
-    printf("Optional Header\n");
-    optionalHeader = &PE_nt_headers->OptionalHeader;
-    printf("  Magic                              0x%-4X         %u\n",
-	   optionalHeader->Magic, optionalHeader->Magic);
-    printf("  linker version                     %u.%02u\n",
-	   optionalHeader->MajorLinkerVersion, optionalHeader->MinorLinkerVersion);
-    printf("  size of code                       0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfCode, optionalHeader->SizeOfCode);
-    printf("  size of initialized data           0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfInitializedData, optionalHeader->SizeOfInitializedData);
-    printf("  size of uninitialized data         0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfUninitializedData, optionalHeader->SizeOfUninitializedData);
-    printf("  entrypoint RVA                     0x%-8lx     %lu\n",
-	   optionalHeader->AddressOfEntryPoint, optionalHeader->AddressOfEntryPoint);
-    printf("  base of code                       0x%-8lx     %lu\n",
-	   optionalHeader->BaseOfCode, optionalHeader->BaseOfCode);
-    printf("  base of data                       0x%-8lX     %lu\n",
-	   optionalHeader->BaseOfData, optionalHeader->BaseOfData);
-    printf("  image base                         0x%-8lX     %lu\n",
-	   optionalHeader->ImageBase, optionalHeader->ImageBase);
-    printf("  section align                      0x%-8lx     %lu\n",
-	   optionalHeader->SectionAlignment, optionalHeader->SectionAlignment);
-    printf("  file align                         0x%-8lx     %lu\n",
-	   optionalHeader->FileAlignment, optionalHeader->FileAlignment);
-    printf("  required OS version                %u.%02u\n",
-	   optionalHeader->MajorOperatingSystemVersion, optionalHeader->MinorOperatingSystemVersion);
-    printf("  image version                      %u.%02u\n",
-	   optionalHeader->MajorImageVersion, optionalHeader->MinorImageVersion);
-    printf("  subsystem version                  %u.%02u\n",
-	   optionalHeader->MajorSubsystemVersion, optionalHeader->MinorSubsystemVersion);
-    printf("  Win32 Version                      0x%lX\n", optionalHeader->Win32VersionValue);
-    printf("  size of image                      0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfImage, optionalHeader->SizeOfImage);
-    printf("  size of headers                    0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfHeaders, optionalHeader->SizeOfHeaders);
-    printf("  checksum                           0x%lX\n", optionalHeader->CheckSum);
-    switch (optionalHeader->Subsystem)
-    {
-    default:
-    case IMAGE_SUBSYSTEM_UNKNOWN: 	str = "Unknown"; 	break;
-    case IMAGE_SUBSYSTEM_NATIVE: 	str = "Native"; 	break;
-    case IMAGE_SUBSYSTEM_WINDOWS_GUI: 	str = "Windows GUI"; 	break;
-    case IMAGE_SUBSYSTEM_WINDOWS_CUI: 	str = "Windows CUI"; 	break;
-    case IMAGE_SUBSYSTEM_OS2_CUI: 	str = "OS/2 CUI"; 	break;
-    case IMAGE_SUBSYSTEM_POSIX_CUI: 	str = "Posix CUI"; 	break;
-    }
-    printf("  Subsystem                          0x%X (%s)\n", optionalHeader->Subsystem, str);
-    printf("  DLL flags                          0x%X\n", optionalHeader->DllCharacteristics);
-    printf("  stack reserve size                 0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfStackReserve, optionalHeader->SizeOfStackReserve);
-    printf("  stack commit size                  0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfStackCommit, optionalHeader->SizeOfStackCommit);
-    printf("  heap reserve size                  0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfHeapReserve, optionalHeader->SizeOfHeapReserve);
-    printf("  heap commit size                   0x%-8lx     %lu\n",
-	   optionalHeader->SizeOfHeapCommit, optionalHeader->SizeOfHeapCommit);
-    printf("  loader flags                       0x%lX\n", optionalHeader->LoaderFlags);
-    printf("  RVAs & sizes                       0x%lX\n", optionalHeader->NumberOfRvaAndSizes);
-    printf("\n");
-
-    printf("Data Directory\n");
-    printf("%ld\n", optionalHeader->NumberOfRvaAndSizes * sizeof(IMAGE_DATA_DIRECTORY));
-
-    for (i = 0; i < optionalHeader->NumberOfRvaAndSizes && i < 16; i++)
-    {
-	printf("  %-12s rva: 0x%-8lX  size: %8lu\n",
-	       DirectoryNames[i], optionalHeader->DataDirectory[i].VirtualAddress,
-	       optionalHeader->DataDirectory[i].Size);
+    printf("Optional Header (%s)\n", get_magic_type(PE_nt_headers->OptionalHeader.Magic));
+    switch(PE_nt_headers->OptionalHeader.Magic) {
+        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            dump_optional_header32((IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader);
+            break;
+        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            dump_optional_header64((IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader);
+            break;
+        default:
+            printf("  Unknown header magic: 0x%-4X\n", PE_nt_headers->OptionalHeader.Magic);
+            break;
     }
     printf("\n");
 }
@@ -373,26 +480,71 @@ static	void	dump_dir_exported_functions(void)
     printf("\n");
 }
 
+static void dump_image_thunk_data64(IMAGE_THUNK_DATA64 *il)
+{
+    /* FIXME: This does not properly handle large images */
+    IMAGE_IMPORT_BY_NAME* iibn;
+    for (; il->u1.Ordinal; il++)
+    {
+        if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
+            printf("  %4lu  <by ordinal>\n", (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
+        else
+        {
+            iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
+            if (!il)
+                printf("Can't grab import by name info, skipping to next ordinal\n");
+            else
+                printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
+        }
+    }
+}
+
+static void dump_image_thunk_data32(IMAGE_THUNK_DATA32 *il)
+{
+    IMAGE_IMPORT_BY_NAME* iibn;
+    for (; il->u1.Ordinal; il++)
+    {
+        if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
+            printf("  %4lu  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
+        else
+        {
+            iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
+            if (!il)
+                printf("Can't grab import by name info, skipping to next ordinal\n");
+            else
+                printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
+        }
+    }
+}
+
 static	void	dump_dir_imported_functions(void)
 {
     IMAGE_IMPORT_DESCRIPTOR	*importDesc = get_dir(IMAGE_FILE_IMPORT_DIRECTORY);
     unsigned			nb_imp, i;
+    DWORD directorySize;
 
     if (!importDesc)	return;
-    nb_imp = PE_nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size /
-	sizeof(*importDesc);
+    if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        IMAGE_OPTIONAL_HEADER64 *opt = (IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader;
+        directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
+    }
+    else
+    {
+        IMAGE_OPTIONAL_HEADER32 *opt = (IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader;
+        directorySize = opt->DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size;
+    }
+    nb_imp = directorySize / sizeof(*importDesc);
     if (!nb_imp) return;
 
-    printf("Import Table size: %lu\n",
-	   PE_nt_headers->OptionalHeader.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY].Size);/* FIXME */
+    printf("Import Table size: %lu\n", directorySize);/* FIXME */
 
     for (i = 0; i < nb_imp - 1; i++) /* the last descr is set as 0 as a sentinel */
     {
-	IMAGE_THUNK_DATA*	il;
-	IMAGE_IMPORT_BY_NAME*	iibn;
+	IMAGE_THUNK_DATA32*	il;
 
 	if (!importDesc->Name ||
-	    (importDesc->u.OriginalFirstThunk == NULL && importDesc->FirstThunk == NULL))
+	    (importDesc->u.OriginalFirstThunk == 0 && importDesc->FirstThunk == 0))
 	{
 	    /* FIXME */
 	    printf("<<<<<<<null entry\n");
@@ -414,25 +566,10 @@ static	void	dump_dir_imported_functions(void)
 
 	if (!il) {printf("Can't grab thunk data, going to next imported DLL\n"); continue;}
 
-	for (; il->u1.Ordinal; il++)
-	{
-	    if (IMAGE_SNAP_BY_ORDINAL(il->u1.Ordinal))
-	    {
-		printf("  %4lu  <by ordinal>\n", IMAGE_ORDINAL(il->u1.Ordinal));
-	    }
-	    else
-	    {
-		iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
-		if (!il)
-		{
-		    printf("Can't grab import by name info, skipping to next ordinal\n");
-		}
-		else
-		{
-		    printf("  %4u  %s %lx\n", iibn->Hint, iibn->Name, (DWORD)il->u1.AddressOfData);
-		}
-	    }
-	}
+        if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            dump_image_thunk_data64((IMAGE_THUNK_DATA64*)il);
+        else
+            dump_image_thunk_data32(il);
 	printf("\n");
 	importDesc++;
     }
@@ -532,21 +669,36 @@ static void	dump_dir_debug(void)
 
 static void dump_dir_tls(void)
 {
-    const IMAGE_TLS_DIRECTORY *dir = get_dir(IMAGE_FILE_THREAD_LOCAL_STORAGE);
+    IMAGE_TLS_DIRECTORY64 dir;
     const DWORD *callbacks;
+    const IMAGE_TLS_DIRECTORY32 *pdir = get_dir(IMAGE_FILE_THREAD_LOCAL_STORAGE);
 
-    if (!dir) return;
+    if (!pdir) return;
+
+    if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        memcpy(&dir, pdir, sizeof(dir));
+    else
+    {
+        dir.StartAddressOfRawData = pdir->StartAddressOfRawData;
+        dir.EndAddressOfRawData = pdir->EndAddressOfRawData;
+        dir.AddressOfIndex = pdir->AddressOfIndex;
+        dir.AddressOfCallBacks = pdir->AddressOfCallBacks;
+        dir.SizeOfZeroFill = pdir->SizeOfZeroFill;
+        dir.Characteristics = pdir->Characteristics;
+    }
+
+    /* FIXME: This does not properly handle large images */
     printf( "Thread Local Storage\n" );
     printf( "  Raw data        %08lx-%08lx (data size %lx zero fill size %lx)\n",
-            dir->StartAddressOfRawData, dir->EndAddressOfRawData,
-            dir->EndAddressOfRawData - dir->StartAddressOfRawData,
-            dir->SizeOfZeroFill );
-    printf( "  Index address   %08lx\n", (DWORD)dir->AddressOfIndex );
-    printf( "  Characteristics %08lx\n", dir->Characteristics );
-    printf( "  Callbacks       %08lx -> {", (DWORD)dir->AddressOfCallBacks );
-    if (dir->AddressOfCallBacks)
+            (DWORD)dir.StartAddressOfRawData, (DWORD)dir.EndAddressOfRawData,
+            (DWORD)(dir.EndAddressOfRawData - dir.StartAddressOfRawData),
+            (DWORD)dir.SizeOfZeroFill );
+    printf( "  Index address   %08lx\n", (DWORD)dir.AddressOfIndex );
+    printf( "  Characteristics %08lx\n", dir.Characteristics );
+    printf( "  Callbacks       %08lx -> {", (DWORD)dir.AddressOfCallBacks );
+    if (dir.AddressOfCallBacks)
     {
-        DWORD   addr = (DWORD)dir->AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase;
+        DWORD   addr = (DWORD)dir.AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase;
         while ((callbacks = RVA(addr, sizeof(DWORD))) && *callbacks)
         {
             printf( " %08lx", *callbacks );
