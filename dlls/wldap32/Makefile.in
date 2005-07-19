@@ -9,6 +9,7 @@ EXTRALIBS = @LDAPLIBS@
 
 C_SRCS = \
 	ber.c \
+	bind.c \
 	main.c
 
 @MAKE_DLL_RULES@
