@@ -1646,6 +1646,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     GUITHREADINFO info;
     MOUSEHOOKSTRUCT hook;
     BOOL eatMsg;
+    HWND hWndScope = msg->hwnd;
 
     /* find the window to dispatch this mouse message to */
 
@@ -1653,7 +1654,6 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
     GetGUIThreadInfo( GetCurrentThreadId(), &info );
     if (!(msg->hwnd = info.hwndCapture))
     {
-        HWND hWndScope = msg->hwnd;
         /* If no capture HWND, find window which contains the mouse position.
          * Also find the position of the cursor hot spot (hittest) */
         if (!IsWindow(hWndScope)) hWndScope = 0;
