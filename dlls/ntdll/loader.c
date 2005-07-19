@@ -206,21 +206,21 @@ struct stub
  *
  * Allocate a stub entry point.
  */
-static void *allocate_stub( const char *dll, const char *name )
+static ULONG_PTR allocate_stub( const char *dll, const char *name )
 {
 #define MAX_SIZE 65536
     static struct stub *stubs;
     static unsigned int nb_stubs;
     struct stub *stub;
 
-    if (nb_stubs >= MAX_SIZE / sizeof(*stub)) return (void *)0xdeadbeef;
+    if (nb_stubs >= MAX_SIZE / sizeof(*stub)) return 0xdeadbeef;
 
     if (!stubs)
     {
         ULONG size = MAX_SIZE;
         if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&stubs, 0, &size,
                                      MEM_COMMIT, PAGE_EXECUTE_WRITECOPY ) != STATUS_SUCCESS)
-            return (void *)0xdeadbeef;
+            return 0xdeadbeef;
     }
     stub = &stubs[nb_stubs++];
     stub->popl_eax  = 0x58;  /* popl %eax */
@@ -231,11 +231,11 @@ static void *allocate_stub( const char *dll, const char *name )
     stub->pushl_eax = 0x50;  /* pushl %eax */
     stub->jmp       = 0xe9;  /* jmp stub_entry_point */
     stub->entry     = (BYTE *)stub_entry_point - (BYTE *)(&stub->entry + 1);
-    return stub;
+    return (ULONG_PTR)stub;
 }
 
 #else  /* __i386__ */
-static inline void *allocate_stub( const char *dll, const char *name ) { return (void *)0xdeadbeef; }
+static inline ULONG_PTR allocate_stub( const char *dll, const char *name ) { return 0xdeadbeef; }
 #endif  /* __i386__ */
 
 
@@ -518,8 +518,8 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
                 thunk_list->u1.Function = allocate_stub( name, pe_name->Name );
             }
             WARN(" imported from %s, allocating stub %p\n",
-                debugstr_w(current_modref->ldr.FullDllName.Buffer),
-                thunk_list->u1.Function );
+                 debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                 (void *)thunk_list->u1.Function );
             import_list++;
             thunk_list++;
         }
@@ -532,31 +532,32 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
         {
             int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
-            thunk_list->u1.Function = (PDWORD)find_ordinal_export( imp_mod, exports, exp_size,
-                                                                   ordinal - exports->Base );
+            thunk_list->u1.Function = (ULONG_PTR)find_ordinal_export( imp_mod, exports, exp_size,
+                                                                      ordinal - exports->Base );
             if (!thunk_list->u1.Function)
             {
                 thunk_list->u1.Function = allocate_stub( name, (const char *)ordinal );
                 WARN("No implementation for %s.%d imported from %s, setting to %p\n",
-                    name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer),
-                    thunk_list->u1.Function );
+                     name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                     (void *)thunk_list->u1.Function );
             }
-            TRACE_(imports)("--- Ordinal %s.%d = %p\n", name, ordinal, thunk_list->u1.Function );
+            TRACE_(imports)("--- Ordinal %s.%d = %p\n", name, ordinal, (void *)thunk_list->u1.Function );
         }
         else  /* import by name */
         {
             IMAGE_IMPORT_BY_NAME *pe_name;
             pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
-            thunk_list->u1.Function = (PDWORD)find_named_export( imp_mod, exports, exp_size,
-                                                                 pe_name->Name, pe_name->Hint );
+            thunk_list->u1.Function = (ULONG_PTR)find_named_export( imp_mod, exports, exp_size,
+                                                                    pe_name->Name, pe_name->Hint );
             if (!thunk_list->u1.Function)
             {
                 thunk_list->u1.Function = allocate_stub( name, pe_name->Name );
                 WARN("No implementation for %s.%s imported from %s, setting to %p\n",
-                    name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer),
-                    thunk_list->u1.Function );
+                     name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                     (void *)thunk_list->u1.Function );
             }
-            TRACE_(imports)("--- %s %s.%d = %p\n", pe_name->Name, name, pe_name->Hint, thunk_list->u1.Function);
+            TRACE_(imports)("--- %s %s.%d = %p\n",
+                            pe_name->Name, name, pe_name->Hint, (void *)thunk_list->u1.Function);
         }
         import_list++;
         thunk_list++;
@@ -718,7 +719,7 @@ static NTSTATUS alloc_process_tls(void)
                                                   IMAGE_DIRECTORY_ENTRY_TLS, &size )))
             continue;
         tls_dirs[i] = dir;
-        *dir->AddressOfIndex = i;
+        *(DWORD *)dir->AddressOfIndex = i;
         mod->TlsIndex = i;
         mod->LoadCount = -1;  /* can't unload it */
         i++;
@@ -782,7 +783,7 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
     dir = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &dirsize );
     if (!dir || !dir->AddressOfCallBacks) return;
 
-    for (callback = dir->AddressOfCallBacks; *callback; callback++)
+    for (callback = (const PIMAGE_TLS_CALLBACK *)dir->AddressOfCallBacks; *callback; callback++)
     {
         if (TRACE_ON(relay))
             DPRINTF("%04lx:Call TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",

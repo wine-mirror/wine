@@ -1875,7 +1875,8 @@ typedef struct _IMAGE_VXD_HEADER {
 #define	IMAGE_SIZEOF_FILE_HEADER		20
 #define IMAGE_SIZEOF_ROM_OPTIONAL_HEADER	56
 #define IMAGE_SIZEOF_STD_OPTIONAL_HEADER	28
-#define IMAGE_SIZEOF_NT_OPTIONAL_HEADER 	224
+#define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 	224
+#define IMAGE_SIZEOF_NT_OPTIONAL64_HEADER 	240
 #define IMAGE_SIZEOF_SHORT_NAME 		8
 #define IMAGE_SIZEOF_SECTION_HEADER 		40
 #define IMAGE_SIZEOF_SYMBOL 			18
@@ -1886,8 +1887,17 @@ typedef struct _IMAGE_VXD_HEADER {
 #define IMAGE_SIZEOF_ARCHIVE_MEMBER_HDR 	60
 
 /* Possible Magic values */
-#define IMAGE_NT_OPTIONAL_HDR_MAGIC        0x10b
+#define IMAGE_NT_OPTIONAL_HDR32_MAGIC      0x10b
+#define IMAGE_NT_OPTIONAL_HDR64_MAGIC      0x20b
 #define IMAGE_ROM_OPTIONAL_HDR_MAGIC       0x107
+
+#ifdef _WIN64
+#define IMAGE_SIZEOF_NT_OPTIONAL_HEADER IMAGE_SIZEOF_NT_OPTIONAL64_HEADER
+#define IMAGE_NT_OPTIONAL_HDR_MAGIC     IMAGE_NT_OPTIONAL_HDR64_MAGIC
+#else
+#define IMAGE_SIZEOF_NT_OPTIONAL_HEADER IMAGE_SIZEOF_NT_OPTIONAL32_HEADER
+#define IMAGE_NT_OPTIONAL_HDR_MAGIC     IMAGE_NT_OPTIONAL_HDR32_MAGIC
+#endif
 
 /* These are indexes into the DataDirectory array */
 #define IMAGE_FILE_EXPORT_DIRECTORY		0
@@ -1936,6 +1946,13 @@ typedef struct _IMAGE_VXD_HEADER {
 #define	IMAGE_SUBSYSTEM_EFI_ROM			13
 #define	IMAGE_SUBSYSTEM_XBOX			14
 
+/* DLL Characteristics */
+#define IMAGE_DLLCHARACTERISTICS_NO_ISOLATION          0x0200
+#define IMAGE_DLLCHARACTERISTICS_NO_SEH                0x0400
+#define IMAGE_DLLCHARACTERISTICS_NO_BIND               0x0800
+#define IMAGE_DLLCHARACTERISTICS_WDM_DRIVER            0x2000
+#define IMAGE_DLLCHARACTERISTICS_TERMINAL_SERVER_AWARE 0x8000
+
 typedef struct _IMAGE_FILE_HEADER {
   WORD  Machine;
   WORD  NumberOfSections;
@@ -1952,6 +1969,45 @@ typedef struct _IMAGE_DATA_DIRECTORY {
 } IMAGE_DATA_DIRECTORY, *PIMAGE_DATA_DIRECTORY;
 
 #define IMAGE_NUMBEROF_DIRECTORY_ENTRIES 16
+
+typedef struct _IMAGE_OPTIONAL_HEADER64 {
+  WORD  Magic; /* 0x20b */
+  BYTE MajorLinkerVersion;
+  BYTE MinorLinkerVersion;
+  DWORD SizeOfCode;
+  DWORD SizeOfInitializedData;
+  DWORD SizeOfUninitializedData;
+  DWORD AddressOfEntryPoint;
+  DWORD BaseOfCode;
+  ULONGLONG ImageBase;
+  DWORD SectionAlignment;
+  DWORD FileAlignment;
+  WORD MajorOperatingSystemVersion;
+  WORD MinorOperatingSystemVersion;
+  WORD MajorImageVersion;
+  WORD MinorImageVersion;
+  WORD MajorSubsystemVersion;
+  WORD MinorSubsystemVersion;
+  DWORD Win32VersionValue;
+  DWORD SizeOfImage;
+  DWORD SizeOfHeaders;
+  DWORD CheckSum;
+  WORD Subsystem;
+  WORD DllCharacteristics;
+  ULONGLONG SizeOfStackReserve;
+  ULONGLONG SizeOfStackCommit;
+  ULONGLONG SizeOfHeapReserve;
+  ULONGLONG SizeOfHeapCommit;
+  DWORD LoaderFlags;
+  DWORD NumberOfRvaAndSizes;
+  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+} IMAGE_OPTIONAL_HEADER64, *PIMAGE_OPTIONAL_HEADER64;
+
+typedef struct _IMAGE_NT_HEADERS64 {
+  DWORD Signature;
+  IMAGE_FILE_HEADER FileHeader;
+  IMAGE_OPTIONAL_HEADER64 OptionalHeader;
+} IMAGE_NT_HEADERS64, *PIMAGE_NT_HEADERS64;
 
 typedef struct _IMAGE_OPTIONAL_HEADER {
 
@@ -1992,13 +2048,25 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
   DWORD NumberOfRvaAndSizes;
   IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES]; /* 0x60 */
   /* 0xE0 */
-} IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
+} IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
 
 typedef struct _IMAGE_NT_HEADERS {
   DWORD Signature; /* "PE"\0\0 */	/* 0x00 */
   IMAGE_FILE_HEADER FileHeader;		/* 0x04 */
-  IMAGE_OPTIONAL_HEADER OptionalHeader;	/* 0x18 */
-} IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;
+  IMAGE_OPTIONAL_HEADER32 OptionalHeader;	/* 0x18 */
+} IMAGE_NT_HEADERS32, *PIMAGE_NT_HEADERS32;
+
+#ifdef _WIN64
+typedef IMAGE_NT_HEADERS64  IMAGE_NT_HEADERS;
+typedef PIMAGE_NT_HEADERS64 PIMAGE_NT_HEADERS;
+typedef IMAGE_OPTIONAL_HEADER64 IMAGE_OPTIONAL_HEADER;
+typedef PIMAGE_OPTIONAL_HEADER64 PIMAGE_OPTIONAL_HEADER;
+#else
+typedef IMAGE_NT_HEADERS32  IMAGE_NT_HEADERS;
+typedef PIMAGE_NT_HEADERS32 PIMAGE_NT_HEADERS;
+typedef IMAGE_OPTIONAL_HEADER32 IMAGE_OPTIONAL_HEADER;
+typedef PIMAGE_OPTIONAL_HEADER32 PIMAGE_OPTIONAL_HEADER;
+#endif
 
 #define IMAGE_SIZEOF_SHORT_NAME 8
 
@@ -2274,21 +2342,30 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
 } IMAGE_IMPORT_BY_NAME,*PIMAGE_IMPORT_BY_NAME;
 
 /* Import thunk */
-typedef struct _IMAGE_THUNK_DATA {
+typedef struct _IMAGE_THUNK_DATA64 {
 	union {
-		LPBYTE    ForwarderString;
-		PDWORD    Function;
-		DWORD     Ordinal;
-		PIMAGE_IMPORT_BY_NAME	AddressOfData;
+		ULONGLONG ForwarderString;
+		ULONGLONG Function;
+		ULONGLONG Ordinal;
+		ULONGLONG AddressOfData;
 	} u1;
-} IMAGE_THUNK_DATA,*PIMAGE_THUNK_DATA;
+} IMAGE_THUNK_DATA64,*PIMAGE_THUNK_DATA64;
+
+typedef struct _IMAGE_THUNK_DATA32 {
+	union {
+		DWORD ForwarderString;
+		DWORD Function;
+		DWORD Ordinal;
+		DWORD AddressOfData;
+	} u1;
+} IMAGE_THUNK_DATA32,*PIMAGE_THUNK_DATA32;
 
 /* Import module directory */
 
 typedef struct _IMAGE_IMPORT_DESCRIPTOR {
 	union {
 		DWORD	Characteristics; /* 0 for terminating null import descriptor  */
-		PIMAGE_THUNK_DATA OriginalFirstThunk;	/* RVA to original unbound IAT */
+		DWORD	OriginalFirstThunk;	/* RVA to original unbound IAT */
 	} DUMMYUNIONNAME;
 	DWORD	TimeDateStamp;	/* 0 if not bound,
 				 * -1 if bound, and real date\time stamp
@@ -2300,12 +2377,29 @@ typedef struct _IMAGE_IMPORT_DESCRIPTOR {
 	DWORD	ForwarderChain;	/* -1 if no forwarders */
 	DWORD	Name;
 	/* RVA to IAT (if bound this IAT has actual addresses) */
-	PIMAGE_THUNK_DATA FirstThunk;
+	DWORD	FirstThunk;
 } IMAGE_IMPORT_DESCRIPTOR,*PIMAGE_IMPORT_DESCRIPTOR;
 
-#define	IMAGE_ORDINAL_FLAG		0x80000000
-#define	IMAGE_SNAP_BY_ORDINAL(Ordinal)	((Ordinal & IMAGE_ORDINAL_FLAG) != 0)
-#define	IMAGE_ORDINAL(Ordinal)		(Ordinal & 0xffff)
+#define IMAGE_ORDINAL_FLAG64             (((ULONGLONG)0x80000000 << 32) | 0x00000000)
+#define IMAGE_ORDINAL_FLAG32             0x80000000
+#define IMAGE_SNAP_BY_ORDINAL64(ordinal) (((ordinal) & IMAGE_ORDINAL_FLAG64) != 0)
+#define IMAGE_SNAP_BY_ORDINAL32(ordinal) (((ordinal) & IMAGE_ORDINAL_FLAG32) != 0)
+#define IMAGE_ORDINAL64(ordinal)         ((ordinal) & 0xffff)
+#define IMAGE_ORDINAL32(ordinal)         ((ordinal) & 0xffff)
+
+#ifdef _WIN64
+#define IMAGE_ORDINAL_FLAG              IMAGE_ORDINAL_FLAG64
+#define IMAGE_SNAP_BY_ORDINAL(Ordinal)  IMAGE_SNAP_BY_ORDINAL64(Ordinal)
+#define IMAGE_ORDINAL(Ordinal)          IMAGE_ORDINAL64(Ordinal)
+typedef IMAGE_THUNK_DATA64              IMAGE_THUNK_DATA;
+typedef PIMAGE_THUNK_DATA64             PIMAGE_THUNK_DATA;
+#else
+#define IMAGE_ORDINAL_FLAG              IMAGE_ORDINAL_FLAG32
+#define IMAGE_SNAP_BY_ORDINAL(Ordinal)  IMAGE_SNAP_BY_ORDINAL32(Ordinal)
+#define IMAGE_ORDINAL(Ordinal)          IMAGE_ORDINAL32(Ordinal)
+typedef IMAGE_THUNK_DATA32              IMAGE_THUNK_DATA;
+typedef PIMAGE_THUNK_DATA32             PIMAGE_THUNK_DATA;
+#endif
 
 typedef struct _IMAGE_BOUND_IMPORT_DESCRIPTOR
 {
@@ -2594,14 +2688,31 @@ typedef VOID (CALLBACK *PIMAGE_TLS_CALLBACK)(
 	LPVOID DllHandle,DWORD Reason,LPVOID Reserved
 );
 
-typedef struct _IMAGE_TLS_DIRECTORY {
-	DWORD	StartAddressOfRawData;
-	DWORD	EndAddressOfRawData;
-	LPDWORD	AddressOfIndex;
-	PIMAGE_TLS_CALLBACK *AddressOfCallBacks;
-	DWORD	SizeOfZeroFill;
-	DWORD	Characteristics;
-} IMAGE_TLS_DIRECTORY,*PIMAGE_TLS_DIRECTORY;
+typedef struct _IMAGE_TLS_DIRECTORY64 {
+    ULONGLONG   StartAddressOfRawData;
+    ULONGLONG   EndAddressOfRawData;
+    ULONGLONG   AddressOfIndex;
+    ULONGLONG   AddressOfCallBacks;
+    DWORD       SizeOfZeroFill;
+    DWORD       Characteristics;
+} IMAGE_TLS_DIRECTORY64, *PIMAGE_TLS_DIRECTORY64;
+
+typedef struct _IMAGE_TLS_DIRECTORY32 {
+    DWORD   StartAddressOfRawData;
+    DWORD   EndAddressOfRawData;
+    DWORD   AddressOfIndex;
+    DWORD   AddressOfCallBacks;
+    DWORD   SizeOfZeroFill;
+    DWORD   Characteristics;
+} IMAGE_TLS_DIRECTORY32, *PIMAGE_TLS_DIRECTORY32;
+
+#ifdef _WIN64
+typedef IMAGE_TLS_DIRECTORY64           IMAGE_TLS_DIRECTORY;
+typedef PIMAGE_TLS_DIRECTORY64          PIMAGE_TLS_DIRECTORY;
+#else
+typedef IMAGE_TLS_DIRECTORY32           IMAGE_TLS_DIRECTORY;
+typedef PIMAGE_TLS_DIRECTORY32          PIMAGE_TLS_DIRECTORY;
+#endif
 
 typedef struct _IMAGE_DEBUG_DIRECTORY {
   DWORD Characteristics;
