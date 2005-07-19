@@ -551,12 +551,15 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
     hr = IRemUnknown_RemQueryInterface(This->iface, &ipid, cRefs, cIids, iids, &pQIResults);
 
     /* out */
-    pMsg->cbBuffer = cIids * sizeof(REMQIRESULT);
+    pMsg->cbBuffer = cIids * sizeof(REMQIRESULT) + sizeof(HRESULT);
 
     I_RpcGetBuffer((RPC_MESSAGE *)pMsg);
-    if (hr) return hr;
 
     buf = pMsg->Buffer;
+    *(HRESULT *)buf = hr;
+    buf += sizeof(HRESULT);
+    
+    if (hr) return hr;
     /* FIXME: pQIResults is a unique pointer so pQIResults can be NULL! */
     memcpy(buf, pQIResults, cIids * sizeof(REMQIRESULT));
 
@@ -750,8 +753,14 @@ static HRESULT WINAPI RemUnkProxy_RemQueryInterface(LPREMUNKNOWN iface,
 
     hr = IRpcChannelBuffer_SendReceive(This->chan, &msg, &status);
 
+    buf = msg.Buffer;
+
     if (SUCCEEDED(hr)) {
-      buf = msg.Buffer;
+        hr = *(HRESULT *)buf;
+        buf += sizeof(HRESULT);
+    }
+
+    if (SUCCEEDED(hr)) {
       *ppQIResults = CoTaskMemAlloc(cIids*sizeof(REMQIRESULT));
       memcpy(*ppQIResults, buf, cIids*sizeof(REMQIRESULT));
     }
