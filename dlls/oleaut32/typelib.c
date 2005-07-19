@@ -4719,12 +4719,12 @@ static HRESULT userdefined_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTY
     case TKIND_RECORD:
         FIXME("TKIND_RECORD unhandled.\n");
         hr = E_NOTIMPL;
-  	    break;
+        break;
 
     case TKIND_UNION:
         FIXME("TKIND_RECORD unhandled.\n");
         hr = E_NOTIMPL;
-  	    break;
+        break;
 
     default:
         FIXME("TKIND %d unhandled.\n",tattr->typekind);
@@ -4759,7 +4759,9 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYP
                 tdesc_userdefined = tdesc->u.lptdesc;
             }
             hr = userdefined_to_variantvt(tinfo, tdesc_userdefined, &vt_userdefined);
-            if (!hr && ((vt_userdefined == VT_UNKNOWN) || (vt_userdefined == VT_DISPATCH)))
+            if ((hr == S_OK) && 
+                (((vt_userdefined & VT_TYPEMASK) == VT_UNKNOWN) ||
+                 ((vt_userdefined & VT_TYPEMASK) == VT_DISPATCH)))
             {
                 *vt |= vt_userdefined;
                 return S_OK;
@@ -4775,6 +4777,10 @@ static HRESULT typedescvt_to_variantvt(ITypeInfo *tinfo, TYPEDESC *tdesc, VARTYP
         break;
     case VT_USERDEFINED:
         hr = userdefined_to_variantvt(tinfo, tdesc, vt);
+        break;
+    case VT_PTR:
+        ERR("cannot convert VT_PTR into variant VT\n");
+        hr = E_FAIL;
         break;
     default:
         *vt |= tdesc->vt;
@@ -4978,6 +4984,11 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         /* FIXME: this is really messy - we should keep the
                          * args in VARIANTARGs rather than a DWORD array */
                         memcpy(&V_UI4(&varresult), &args[i+1], sizeof(DWORD));
+                        if (TRACE_ON(ole))
+                        {
+                            TRACE("varresult: ");
+                            dump_Variant(&varresult);
+                        }
                         hres = VariantCopyInd(pVarResult, &varresult);
                         break;
 		    }
