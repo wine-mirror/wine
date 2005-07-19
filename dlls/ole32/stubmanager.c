@@ -340,7 +340,7 @@ HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub
         *stub_apt = apartment_findfromtid(ipid->Data2);
     if (!*stub_apt)
     {
-        ERR("Couldn't find apartment corresponding to TID 0x%04x\n", ipid->Data2);
+        TRACE("Couldn't find apartment corresponding to TID 0x%04x\n", ipid->Data2);
         return RPC_E_INVALID_OBJECT;
     }
     *stubmgr_ret = get_stub_manager_from_ipid(*stub_apt, ipid);

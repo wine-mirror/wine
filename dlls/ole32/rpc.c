@@ -460,7 +460,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     if (!apt || !stub)
     {
         if (apt) apartment_release(apt);
-        /* ipid_to_apt_and_stubbuffer will already have logged the error */
+        ERR("no apartment found for ipid %s\n", debugstr_guid(&ipid));
         return RpcRaiseException(RPC_E_DISCONNECTED);
     }
 
