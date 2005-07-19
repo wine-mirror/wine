@@ -529,33 +529,34 @@ static void test_marshal_proxy_mta_apartment_shutdown(void)
 
 struct ncu_params
 {
-	LPSTREAM stream;
-	HANDLE marshal_event;
-	HANDLE unmarshal_event;
+    LPSTREAM stream;
+    HANDLE marshal_event;
+    HANDLE unmarshal_event;
 };
 
-/* helper for test_proxy_used_in_wrong_thread */
-static DWORD CALLBACK no_couninitialize_proc(LPVOID p)
+/* helper for test_no_couninitialize_server */
+static DWORD CALLBACK no_couninitialize_server_proc(LPVOID p)
 {
-	struct ncu_params *ncu_params = (struct ncu_params *)p;
-	HRESULT hr;
+    struct ncu_params *ncu_params = (struct ncu_params *)p;
+    HRESULT hr;
 
-	pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    pCoInitializeEx(NULL, COINIT_MULTITHREADED);
 
-	hr = CoMarshalInterface(ncu_params->stream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-	ok_ole_success(hr, CoMarshalInterface);
+    hr = CoMarshalInterface(ncu_params->stream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
 
-	SetEvent(ncu_params->marshal_event);
+    SetEvent(ncu_params->marshal_event);
 
-	WaitForSingleObject(ncu_params->unmarshal_event, INFINITE);
+    WaitForSingleObject(ncu_params->unmarshal_event, INFINITE);
 
-	/* die without calling CoUninitialize */
+    /* die without calling CoUninitialize */
 
-	return 0;
+    return 0;
 }
 
-/* tests apartment that an apartment is released if the owning thread exits */
-static void test_no_couninitialize(void)
+/* tests apartment that an apartment with a stub is released without deadlock
+ * if the owning thread exits */
+static void test_no_couninitialize_server()
 {
     HRESULT hr;
     IStream *pStream = NULL;
@@ -573,11 +574,11 @@ static void test_no_couninitialize(void)
     ok_ole_success(hr, CreateStreamOnHGlobal);
     ncu_params.stream = pStream;
 
-    thread = CreateThread(NULL, 0, no_couninitialize_proc, &ncu_params, 0, &tid);
+    thread = CreateThread(NULL, 0, no_couninitialize_server_proc, &ncu_params, 0, &tid);
 
     WaitForSingleObject(ncu_params.marshal_event, INFINITE);
     ok_more_than_one_lock();
-	
+
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
     ok_ole_success(hr, CoUnmarshalInterface);
@@ -597,6 +598,59 @@ static void test_no_couninitialize(void)
     IUnknown_Release(pProxy);
 
     ok_no_locks();
+}
+
+/* STA -> STA call during DLL_THREAD_DETACH */
+static DWORD CALLBACK no_couninitialize_client_proc(LPVOID p)
+{
+    struct ncu_params *ncu_params = (struct ncu_params *)p;
+    HRESULT hr;
+    IUnknown *pProxy = NULL;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoUnmarshalInterface(ncu_params->stream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, CoUnmarshalInterface);
+
+    ok_more_than_one_lock();
+
+    /* die without calling CoUninitialize */
+
+    return 0;
+}
+
+/* tests STA -> STA call during DLL_THREAD_DETACH doesn't deadlock */
+static void test_no_couninitialize_client()
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    DWORD tid;
+    DWORD host_tid;
+    HANDLE thread;
+    HANDLE host_thread;
+    struct ncu_params ncu_params;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    ncu_params.stream = pStream;
+
+    /* NOTE: assumes start_host_object uses an STA to host the object, as MTAs
+     * always deadlock when called from within DllMain */
+    host_tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown *)&Test_ClassFactory, MSHLFLAGS_NORMAL, &host_thread);
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+
+    ok_more_than_one_lock();
+
+    thread = CreateThread(NULL, 0, no_couninitialize_client_proc, &ncu_params, 0, &tid);
+
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    ok_no_locks();
+
+    end_host_object(host_tid, host_thread);
 }
 
 /* tests success case of a same-thread table-weak marshal, unmarshal, unmarshal */
@@ -1588,7 +1642,8 @@ START_TEST(marshal)
     test_marshal_stub_apartment_shutdown();
     test_marshal_proxy_apartment_shutdown();
     test_marshal_proxy_mta_apartment_shutdown();
-    test_no_couninitialize();
+    test_no_couninitialize_server();
+    test_no_couninitialize_client();
     test_tableweak_marshal_and_unmarshal_twice();
     test_tableweak_marshal_releasedata1();
     test_tableweak_marshal_releasedata2();
