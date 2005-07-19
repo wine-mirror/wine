@@ -75,8 +75,13 @@ typedef struct {
 } started_doc_t;
 
 typedef struct {
-    LPWSTR name;
     struct list jobs;
+    LONG ref;
+} queue_t;
+
+typedef struct {
+    LPWSTR name;
+    queue_t *queue;
     started_doc_t *doc;
 } opened_printer_t;
 
@@ -603,14 +608,22 @@ void WINSPOOL_LoadSystemPrinters(void)
  */
 static HANDLE get_opened_printer_entry( LPCWSTR name )
 {
-    UINT handle;
+    UINT handle = nb_printer_handles, i;
+    queue_t *queue = NULL;
     opened_printer_t *printer;
 
     EnterCriticalSection(&printer_handles_cs);
 
-    for (handle = 0; handle < nb_printer_handles; handle++)
-        if (!printer_handles[handle])
-            break;
+    for (i = 0; i < nb_printer_handles; i++)
+    {
+        if (!printer_handles[i])
+        {
+            if(handle == nb_printer_handles)
+                handle = i;
+        }
+        else if(!queue && !strcmpW(name, printer_handles[i]->name))
+            queue = printer_handles[i]->queue;
+    }
 
     if (handle >= nb_printer_handles)
     {
@@ -639,7 +652,15 @@ static HANDLE get_opened_printer_entry( LPCWSTR name )
 
     printer->name = HeapAlloc(GetProcessHeap(), 0, (strlenW(name) + 1) * sizeof(WCHAR));
     strcpyW(printer->name, name);
-    list_init(&printer->jobs);
+    if(queue)
+        printer->queue = queue;
+    else
+    {
+        printer->queue = HeapAlloc(GetProcessHeap(), 0, sizeof(*queue));
+        list_init(&printer->queue->jobs);
+        printer->queue->ref = 0;
+    }
+    InterlockedIncrement(&printer->queue->ref);
     printer->doc = NULL;
 
     printer_handles[handle] = printer;
@@ -720,7 +741,7 @@ static job_t *get_job(HANDLE hprn, DWORD JobId)
     job_t *job;
 
     if(!printer) return NULL;
-    LIST_FOR_EACH_ENTRY(job, &printer->jobs, job_t, entry)
+    LIST_FOR_EACH_ENTRY(job, &printer->queue->jobs, job_t, entry)
     {
         if(job->job_id == JobId)
             return job;
@@ -1332,7 +1353,7 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     job->filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
     job->document_title = strdupW(default_doc_title);
-    list_add_tail(&printer->jobs, &job->entry);
+    list_add_tail(&printer->queue->jobs, &job->entry);
 
     *pcbNeeded = (len + 1) * sizeof(WCHAR) + sizeof(*addjob);
     if(*pcbNeeded <= cbBuf) {
@@ -1648,10 +1669,14 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
         if(printer->doc)
             EndDocPrinter(hPrinter);
 
-        LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->jobs)
+        if(InterlockedDecrement(&printer->queue->ref) == 0)
         {
-            job_t *job = LIST_ENTRY(cursor, job_t, entry);
-            ScheduleJob(hPrinter, job->job_id);
+            LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->queue->jobs)
+            {
+                job_t *job = LIST_ENTRY(cursor, job_t, entry);
+                ScheduleJob(hPrinter, job->job_id);
+            }
+            HeapFree(GetProcessHeap(), 0, printer->queue);
         }
         HeapFree(GetProcessHeap(), 0, printer->name);
         HeapFree(GetProcessHeap(), 0, printer);
@@ -5206,7 +5231,7 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
     if(!printer)
         goto end;
 
-    LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->jobs)
+    LIST_FOR_EACH_SAFE(cursor, cursor2, &printer->queue->jobs)
     {
         job_t *job = LIST_ENTRY(cursor, job_t, entry);
         HANDLE hf;
