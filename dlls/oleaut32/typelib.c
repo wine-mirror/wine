@@ -619,17 +619,8 @@ HRESULT WINAPI RegisterTypeLib(
 			MESSAGE("\n");
 		    }
 
-		    /*
-		     * FIXME: The 1 is just here until we implement rpcrt4
-		     *        stub/proxy handling. Until then it helps IShield
-		     *        v6 to work.
-		     */
-		    if (1 || (tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION))
+		    if (tattr->wTypeFlags & (TYPEFLAG_FOLEAUTOMATION|TYPEFLAG_FDUAL))
 		    {
-                        if (!(tattr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) {
-                            FIXME("Registering non-oleautomation interface!\n");
-                        }
-
 			/* register interface<->typelib coupling */
 			get_interface_key( &tattr->guid, keyName );
 			if (RegCreateKeyExW(HKEY_CLASSES_ROOT, keyName, 0, NULL, 0,
