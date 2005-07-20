@@ -481,7 +481,9 @@ BOOL stub_manager_notify_unmarshal(struct stub_manager *m)
     default:
         WARN("object OID %s already unmarshaled\n",
             wine_dbgstr_longlong(m->oid));
-        ret = FALSE;
+        ret = TRUE; /* FIXME: the state management should be per-ifstub, so
+                     * it is disabled at the moment so that InstallShield
+                     * works again */
         break;
     }
 
