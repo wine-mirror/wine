@@ -31,6 +31,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <unistd.h>
+#include <signal.h>
 #ifdef HAVE_CUPS_CUPS_H
 # include <cups/cups.h>
 # ifndef SONAME_LIBCUPS
@@ -5215,6 +5217,104 @@ static BOOL schedule_file(LPCWSTR filename)
     }
     return FALSE;
 }
+
+/*****************************************************************************
+ *          schedule_pipe
+ */
+static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
+{
+#ifdef HAVE_FORK
+    char *unixname, *cmdA;
+    DWORD len;
+    int fds[2] = {-1, -1}, file_fd = -1, no_read;
+    BOOL ret = FALSE;
+    char buf[1024];
+
+    if(!(unixname = wine_get_unix_file_name(filename)))
+        return FALSE;
+
+    len = WideCharToMultiByte(CP_ACP, 0, cmd, -1, NULL, 0, NULL, NULL);
+    cmdA = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, cmd, -1, cmdA, len, NULL, NULL);
+
+    TRACE("printing with: %s\n", cmdA);
+
+    if((file_fd = open(unixname, O_RDONLY)) == -1)
+        goto end;
+
+    if (pipe(fds))
+    {
+        ERR("pipe() failed!\n"); 
+        goto end;
+    }
+
+    if (fork() == 0)
+    {
+        close(0);
+        dup2(fds[0], 0);
+        close(fds[1]);
+
+        /* reset signals that we previously set to SIG_IGN */
+        signal(SIGPIPE, SIG_DFL);
+        signal(SIGCHLD, SIG_DFL);
+
+        system(cmdA);
+        exit(0);
+    }
+
+    while((no_read = read(file_fd, buf, sizeof(buf))))
+        write(fds[1], buf, no_read);
+
+    ret = TRUE;
+
+end:
+    if(file_fd != -1) close(file_fd);
+    if(fds[0] != -1) close(fds[0]);
+    if(fds[1] != -1) close(fds[1]);
+
+    HeapFree(GetProcessHeap(), 0, cmdA);
+    HeapFree(GetProcessHeap(), 0, unixname);
+    return ret;
+#else
+    return FALSE;
+#endif
+}
+
+/*****************************************************************************
+ *          schedule_unixfile
+ */
+static BOOL schedule_unixfile(LPCWSTR output, LPCWSTR filename)
+{
+    int in_fd, out_fd, no_read;
+    char buf[1024];
+    BOOL ret = FALSE;
+    char *unixname, *outputA;
+    DWORD len;
+
+    if(!(unixname = wine_get_unix_file_name(filename)))
+        return FALSE;
+
+    len = WideCharToMultiByte(CP_ACP, 0, output, -1, NULL, 0, NULL, NULL);
+    outputA = HeapAlloc(GetProcessHeap(), 0, len);
+    WideCharToMultiByte(CP_ACP, 0, output, -1, outputA, len, NULL, NULL);
+    
+    out_fd = open(outputA, O_CREAT | O_TRUNC | O_WRONLY, 0666);
+    in_fd = open(unixname, O_RDONLY);
+    if(out_fd == -1 || in_fd == -1)
+        goto end;
+
+    while((no_read = read(in_fd, buf, sizeof(buf))))
+        write(out_fd, buf, no_read);
+
+    ret = TRUE;
+end:
+    if(in_fd != -1) close(in_fd);
+    if(out_fd != -1) close(out_fd);
+    HeapFree(GetProcessHeap(), 0, outputA);
+    HeapFree(GetProcessHeap(), 0, unixname);
+    return ret;
+}
+
 /*****************************************************************************
  *          ScheduleJob [WINSPOOL.@]
  *
@@ -5243,6 +5343,10 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
         {
             PRINTER_INFO_5W *pi5;
             DWORD needed;
+            HKEY hkey;
+            WCHAR output[1024];
+            static const WCHAR spooler_key[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                                'P','r','i','n','t','i','n','g','\\','S','p','o','o','l','e','r',0};
 
             GetPrinterW(hPrinter, 5, NULL, 0, &needed);
             pi5 = HeapAlloc(GetProcessHeap(), 0, needed);
@@ -5250,7 +5354,24 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             TRACE("need to schedule job %ld filename %s to port %s\n", job->job_id, debugstr_w(job->filename),
                   debugstr_w(pi5->pPortName));
             
-            if(!strncmpW(pi5->pPortName, LPR_Port, strlenW(LPR_Port)))
+            output[0] = 0;
+
+            /* @@ Wine registry key: HKCU\Software\Wine\Printing\Spooler */
+            if(RegOpenKeyW(HKEY_CURRENT_USER, spooler_key, &hkey) == ERROR_SUCCESS)
+            {
+                DWORD type, count = sizeof(output);
+                RegQueryValueExW(hkey, pi5->pPortName, NULL, &type, (LPBYTE)output, &count);
+                RegCloseKey(hkey);
+            }
+            if(output[0] == '|')
+            {
+                schedule_pipe(output + 1, job->filename);
+            }
+            else if(output[0])
+            {
+                schedule_unixfile(output, job->filename);
+            }
+            else if(!strncmpW(pi5->pPortName, LPR_Port, strlenW(LPR_Port)))
             {
                 schedule_lpr(pi5->pPortName + strlenW(LPR_Port), job->filename);
             }
