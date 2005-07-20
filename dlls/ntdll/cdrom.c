@@ -1343,17 +1343,32 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
      */
 #if defined(linux)
     {
-        struct cdrom_read       cdr;
         struct cdrom_read_audio cdra;
+        struct cdrom_msf*       msf;
+        int i;
+        LONGLONG t = ((LONGLONG)raw->DiskOffset.u.HighPart << 32) +
+                                raw->DiskOffset.u.LowPart + CD_MSF_OFFSET;
 
         switch (raw->TrackMode)
         {
         case YellowMode2:
-            if (raw->DiskOffset.u.HighPart) FIXME("Unsupported value\n");
-            cdr.cdread_lba = raw->DiskOffset.u.LowPart; /* FIXME ? */
-            cdr.cdread_bufaddr = buffer;
-            cdr.cdread_buflen = raw->SectorCount * sectSize;
-            io = ioctl(fd, CDROMREADMODE2, &cdr);
+            /* Linux reads only one sector at a time.
+             * ioctl CDROMREADMODE2 takes struct cdrom_msf as an argument
+             * on the contrary to what header comments state.
+             */
+            for (i = 0; i < raw->SectorCount; i++, t += sectSize)
+            {
+                msf = (struct cdrom_msf*)buffer + i * sectSize;
+                msf->cdmsf_min0   = t / CD_FRAMES / CD_SECS;
+                msf->cdmsf_sec0   = t / CD_FRAMES % CD_SECS;
+                msf->cdmsf_frame0 = t % CD_FRAMES;
+                io = ioctl(fd, CDROMREADMODE2, msf);
+                if (io != 0)
+                {
+                    *sz = sectSize * i;
+                    return CDROM_GetStatusCode(io);
+                }
+            }
             break;
         case XAForm2:
             FIXME("XAForm2: NIY\n");
