@@ -677,6 +677,18 @@ typedef struct _gettextlengthex {
 
 #define GCM_RIGHTMOUSEDROP    0x8000
 
+/* Options of the EM_SETTEXTEX message */
+typedef struct _settextex {
+    DWORD	flags;
+    UINT	codepage;
+} SETTEXTEX;
+
+/* Flags of the EM_SETTEXTEX message */
+#define ST_DEFAULT	      0x00000000	
+#define ST_KEEPUNDO           0x00000001
+#define ST_SELECTION          0x00000002
+
+
 #ifdef __cplusplus
 }
 #endif

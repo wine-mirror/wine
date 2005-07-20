@@ -112,7 +112,7 @@
   - EM_SETSCROLLPOS 3.0
   - EM_SETTABSTOPS 3.0
   - EM_SETTARGETDEVICE
-  - EM_SETTEXTEX 3.0
+  + EM_SETTEXTEX 3.0 (unicode only, no rich text insertion handling, proper style?)
   - EM_SETTEXTMODE 2.0
   - EM_SETTYPOGRAPHYOPTIONS 3.0
   - EM_SETUNDOLIMIT 2.0
@@ -934,7 +934,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETSCROLLPOS)
   UNSUPPORTED_MSG(EM_SETTABSTOPS)
   UNSUPPORTED_MSG(EM_SETTARGETDEVICE)
-  UNSUPPORTED_MSG(EM_SETTEXTEX)
   UNSUPPORTED_MSG(EM_SETTEXTMODE)
   UNSUPPORTED_MSG(EM_SETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_SETUNDOLIMIT)
@@ -1013,6 +1012,37 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_Repaint(editor);
     ME_SendSelChange(editor);
     return 0;
+  }
+  case EM_SETTEXTEX:
+  {
+    LPWSTR wszText = (LPWSTR)lParam;
+    SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
+    size_t len = lstrlenW(wszText);
+    int from, to;
+    ME_Style *style;
+    TRACE("EM_SETTEXEX - %s, flags %d, cp %d\n", debugstr_w(wszText), (int)pStruct->flags, pStruct->codepage);
+    if (pStruct->codepage != 1200) {
+      FIXME("EM_SETTEXTEX only supports unicode right now!\n"); 
+      return 0;
+    }
+    /* FIXME: this should support RTF strings too, according to MSDN */
+    if (pStruct->flags & ST_SELECTION) {
+      ME_GetSelection(editor, &from, &to);
+      style = ME_GetSelectionInsertStyle(editor);
+      ME_InternalDeleteText(editor, from, to - from);
+      ME_InsertTextFromCursor(editor, 0, wszText, len, style);
+      ME_ReleaseStyle(style);
+    }
+    else {
+      ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
+      ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
+      len = 1;
+    }
+    ME_CommitUndo(editor);
+    if (!(pStruct->flags & ST_KEEPUNDO))
+      ME_EmptyUndoStack(editor);
+    ME_UpdateRepaint(editor);
+    return len;
   }
   case EM_SETBKGNDCOLOR:
   {
