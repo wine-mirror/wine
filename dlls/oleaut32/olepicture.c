@@ -76,7 +76,6 @@
 #include "wine/unicode.h"
 
 #include "wine/wingdi16.h"
-#include "cursoricon.h"
 
 #ifdef HAVE_JPEGLIB_H
 /* This is a hack, so jpeglib.h does not redefine INT32 and the like*/
@@ -92,6 +91,29 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+#include "pshpack1.h"
+
+typedef struct {
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD xHotspot;
+    WORD yHotspot;
+    DWORD dwDIBSize;
+    DWORD dwDIBOffset;
+} CURSORICONFILEDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONFILEDIRENTRY  idEntries[1];
+} CURSORICONFILEDIR;
+
+#include "poppack.h"
 
 /*************************************************************************
  *  Declaration of implementation class

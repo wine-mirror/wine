@@ -240,4 +240,43 @@ extern int SPY_Init(void);
 #define HINSTANCE_32(h16)  ((HINSTANCE)(ULONG_PTR)(h16))
 #define HMODULE_32(h16)    ((HMODULE)(ULONG_PTR)(h16))
 
+#include "pshpack1.h"
+
+typedef struct
+{
+    BYTE   bWidth;
+    BYTE   bHeight;
+    BYTE   bColorCount;
+    BYTE   bReserved;
+} ICONRESDIR;
+
+typedef struct
+{
+    WORD   wWidth;
+    WORD   wHeight;
+} CURSORDIR;
+
+typedef struct
+{   union
+    { ICONRESDIR icon;
+      CURSORDIR  cursor;
+    } ResInfo;
+    WORD   wPlanes;
+    WORD   wBitCount;
+    DWORD  dwBytesInRes;
+    WORD   wResId;
+} CURSORICONDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONDIRENTRY  idEntries[1];
+} CURSORICONDIR;
+
+#include "poppack.h"
+
+extern void CURSORICON_FreeModuleIcons( HMODULE16 hModule );
+
 #endif /* __WINE_USER_PRIVATE_H */

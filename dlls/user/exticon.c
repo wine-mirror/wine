@@ -39,7 +39,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/winbase16.h"
-#include "cursoricon.h"
+#include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(icon);

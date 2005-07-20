@@ -60,7 +60,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/exception.h"
-#include "cursoricon.h"
 #include "wine/debug.h"
 #include "user_private.h"
 
@@ -68,6 +67,32 @@ WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 WINE_DECLARE_DEBUG_CHANNEL(icon);
 WINE_DECLARE_DEBUG_CHANNEL(resource);
 
+#include "pshpack1.h"
+
+typedef struct {
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD xHotspot;
+    WORD yHotspot;
+    DWORD dwDIBSize;
+    DWORD dwDIBOffset;
+} CURSORICONFILEDIRENTRY;
+
+typedef struct
+{
+    WORD                idReserved;
+    WORD                idType;
+    WORD                idCount;
+    CURSORICONFILEDIRENTRY  idEntries[1];
+} CURSORICONFILEDIR;
+
+#include "poppack.h"
+
+#define CID_RESOURCE  0x0001
+#define CID_WIN32     0x0004
+#define CID_NONSHARED 0x0008
 
 static RECT CURSOR_ClipRect;       /* Cursor clipping rect */
 
