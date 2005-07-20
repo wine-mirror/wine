@@ -125,6 +125,7 @@ BASEDIRS = \
 	shfolder \
 	shlwapi \
 	snmpapi \
+	stdole2.tlb \
 	stdole32.tlb \
 	sti \
 	tapi32 \
@@ -373,6 +374,7 @@ SYMLINKS_SO = \
 	shfolder.dll.so \
 	shlwapi.dll.so \
 	snmpapi.dll.so \
+	stdole2.tlb.so \
 	stdole32.tlb.so \
 	sti.dll.so \
 	tapi32.dll.so \
@@ -850,6 +852,9 @@ shlwapi.dll.so: shlwapi/shlwapi.dll.so
 
 snmpapi.dll.so: snmpapi/snmpapi.dll.so
 	$(RM) $@ && $(LN_S) snmpapi/snmpapi.dll.so $@
+
+stdole2.tlb.so: stdole2.tlb/stdole2.tlb.so
+	$(RM) $@ && $(LN_S) stdole2.tlb/stdole2.tlb.so $@
 
 stdole32.tlb.so: stdole32.tlb/stdole32.tlb.so
 	$(RM) $@ && $(LN_S) stdole32.tlb/stdole32.tlb.so $@
@@ -1771,6 +1776,7 @@ shell32/shell32.dll.so: shell32
 shfolder/shfolder.dll.so: shfolder
 shlwapi/shlwapi.dll.so: shlwapi
 snmpapi/snmpapi.dll.so: snmpapi
+stdole2.tlb/stdole2.tlb.so: stdole2.tlb
 stdole32.tlb/stdole32.tlb.so: stdole32.tlb
 sti/sti.dll.so: sti
 tapi32/tapi32.dll.so: tapi32

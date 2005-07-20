@@ -1,0 +1,12 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = stdole2.tlb
+
+RC_SRCS = rsrc.rc
+RC_TLB = std_ole_v2.tlb
+
+@MAKE_DLL_RULES@
+
+### Dependencies:
