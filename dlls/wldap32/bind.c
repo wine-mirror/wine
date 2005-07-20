@@ -132,3 +132,119 @@ ULONG ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
 #endif
     return ret;
 }
+
+ULONG ldap_simple_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    WCHAR *dnW, *passwdW;
+
+    TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), passwd );
+
+    dnW = strAtoW( dn );
+    if (!dnW) return LDAP_NO_MEMORY;
+
+    passwdW = strAtoW( passwd );
+    if (!passwdW) return LDAP_NO_MEMORY;
+
+    ret = ldap_simple_bindW( ld, dnW, passwdW );
+
+    strfreeW( dnW );
+    strfreeW( passwdW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_simple_bindW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    char *dnU, *passwdU;
+
+    TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
+
+    dnU = strWtoU( dn );
+    if (!dnU) return LDAP_NO_MEMORY;
+
+    passwdU = strWtoU( passwd );
+    if (!passwdU) return LDAP_NO_MEMORY;
+
+    ret = ldap_simple_bind( ld, dnU, passwdU );
+
+    strfreeU( dnU );
+    strfreeU( passwdU );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_simple_bind_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    WCHAR *dnW, *passwdW;
+
+    TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), passwd );
+
+    dnW = strAtoW( dn );
+    if (!dnW) return LDAP_NO_MEMORY;
+
+    passwdW = strAtoW( passwd );
+    if (!passwdW) return LDAP_NO_MEMORY;
+
+    ret = ldap_simple_bind_sW( ld, dnW, passwdW );
+
+    strfreeW( dnW );
+    strfreeW( passwdW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_simple_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR passwd )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    char *dnU, *passwdU;
+
+    TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), passwd );
+
+    dnU = strWtoU( dn );
+    if (!dnU) return LDAP_NO_MEMORY;
+
+    passwdU = strWtoU( passwd );
+    if (!passwdU) return LDAP_NO_MEMORY;
+
+    ret = ldap_simple_bind_s( ld, dnU, passwdU );
+
+    strfreeU( dnU );
+    strfreeU( passwdU );
+
+#endif
+    return ret;
+}
+
+ULONG WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p)\n", ld );
+    ret = ldap_unbind( ld );
+
+#endif
+    return ret;
+}
+
+ULONG WLDAP32_ldap_unbind_s( WLDAP32_LDAP *ld )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+
+    TRACE( "(%p)\n", ld );
+    ret = ldap_unbind_s( ld );
+
+#endif
+    return ret;
+}

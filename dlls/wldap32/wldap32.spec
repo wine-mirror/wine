@@ -22,3 +22,11 @@
 @ stub ldap_open
 @ stub ldap_openA
 @ stub ldap_openW
+@ cdecl ldap_simple_bind(ptr str str) ldap_simple_bindA
+@ cdecl ldap_simple_bindA(ptr str str)
+@ cdecl ldap_simple_bindW(ptr wstr wstr)
+@ cdecl ldap_simple_bind_s(ptr str str) ldap_simple_bind_sA
+@ cdecl ldap_simple_bind_sA(ptr str str)
+@ cdecl ldap_simple_bind_sW(ptr wstr wstr)
+@ cdecl ldap_unbind(ptr) WLDAP32_ldap_unbind
+@ cdecl ldap_unbind_s(ptr) WLDAP32_ldap_unbind_s
