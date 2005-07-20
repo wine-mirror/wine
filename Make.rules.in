@@ -147,7 +147,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
 
 .sfd.ttf:
-	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $<
+	$(FONTFORGE) -script $(TOPSRCDIR)/fonts/genttf.ff $< $@
 
 # 'all' target first in case the enclosing Makefile didn't define any target
 

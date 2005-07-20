@@ -1,3 +1,2 @@
 Open($1)
-ttfname = $1:t:r + ".ttf"
-Generate(ttfname, "ttf", 0);
+Generate($2, "ttf", 0);
