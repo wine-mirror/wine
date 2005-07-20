@@ -80,7 +80,7 @@ const GUID CLSID_UnixDosFolder = {0x9d20aae8, 0x0625, 0x44b0, {0x9c, 0xa7, 0x71,
  */
 typedef struct _UnixFolder {
     const IShellFolder2Vtbl  *lpIShellFolder2Vtbl;
-    const IPersistFolder2Vtbl *lpIPersistFolder2Vtbl;
+    const IPersistFolder3Vtbl *lpIPersistFolder3Vtbl;
     const ISFHelperVtbl *lpISFHelperVtbl;
     LONG m_cRef;
     CHAR *m_pszPath;
@@ -504,10 +504,10 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_QueryInterface(IShellFolder2 *ifa
         IsEqualIID(&IID_IShellFolder2, riid)) 
     {
         *ppv = &This->lpIShellFolder2Vtbl;
-    } else if (IsEqualIID(&IID_IPersistFolder2, riid) || IsEqualIID(&IID_IPersistFolder, riid) || 
-               IsEqualIID(&IID_IPersist, riid)) 
+    } else if (IsEqualIID(&IID_IPersistFolder3, riid) || IsEqualIID(&IID_IPersistFolder2, riid) || 
+               IsEqualIID(&IID_IPersistFolder, riid) || IsEqualIID(&IID_IPersist, riid)) 
     {
-        *ppv = &This->lpIPersistFolder2Vtbl;
+        *ppv = &This->lpIPersistFolder3Vtbl;
     } else if (IsEqualIID(&IID_ISFHelper, riid)) {
         *ppv = &This->lpISFHelperVtbl;
     } else {
@@ -592,7 +592,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
     LPBC pbcReserved, REFIID riid, void** ppvOut)
 {
     UnixFolder *This = ADJUST_THIS(UnixFolder, IShellFolder2, iface);
-    IPersistFolder2 *persistFolder;
+    IPersistFolder3 *persistFolder;
     LPITEMIDLIST pidlSubFolder;
     HRESULT hr;
         
@@ -603,16 +603,16 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_BindToObject(IShellFolder2* iface
         return E_INVALIDARG;
     
     if (This->m_dwPathMode == PATHMODE_DOS)
-        hr = UnixDosFolder_Constructor(NULL, &IID_IPersistFolder2, (void**)&persistFolder);
+        hr = UnixDosFolder_Constructor(NULL, &IID_IPersistFolder3, (void**)&persistFolder);
     else
-        hr = UnixFolder_Constructor(NULL, &IID_IPersistFolder2, (void**)&persistFolder);
+        hr = UnixFolder_Constructor(NULL, &IID_IPersistFolder3, (void**)&persistFolder);
         
     if (!SUCCEEDED(hr)) return hr;
     hr = IPersistFolder_QueryInterface(persistFolder, riid, (void**)ppvOut);
     
     pidlSubFolder = ILCombine(This->m_pidlLocation, pidl);
-    IPersistFolder2_Initialize(persistFolder, pidlSubFolder);
-    IPersistFolder2_Release(persistFolder);
+    IPersistFolder3_Initialize(persistFolder, pidlSubFolder);
+    IPersistFolder3_Release(persistFolder);
     ILFree(pidlSubFolder);
 
     return hr;
@@ -1056,34 +1056,34 @@ static const IShellFolder2Vtbl UnixFolder_IShellFolder2_Vtbl = {
     UnixFolder_IShellFolder2_MapColumnToSCID
 };
 
-static HRESULT WINAPI UnixFolder_IPersistFolder2_QueryInterface(IPersistFolder2* This, REFIID riid, 
+static HRESULT WINAPI UnixFolder_IPersistFolder3_QueryInterface(IPersistFolder3* This, REFIID riid, 
     void** ppvObject)
 {
     return UnixFolder_IShellFolder2_QueryInterface(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder2, This), riid, ppvObject);
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This), riid, ppvObject);
 }
 
-static ULONG WINAPI UnixFolder_IPersistFolder2_AddRef(IPersistFolder2* This)
+static ULONG WINAPI UnixFolder_IPersistFolder3_AddRef(IPersistFolder3* This)
 {
     return UnixFolder_IShellFolder2_AddRef(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder2, This));
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This));
 }
 
-static ULONG WINAPI UnixFolder_IPersistFolder2_Release(IPersistFolder2* This)
+static ULONG WINAPI UnixFolder_IPersistFolder3_Release(IPersistFolder3* This)
 {
     return UnixFolder_IShellFolder2_Release(
-                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder2, This));
+                (IShellFolder2*)ADJUST_THIS(UnixFolder, IPersistFolder3, This));
 }
 
-static HRESULT WINAPI UnixFolder_IPersistFolder2_GetClassID(IPersistFolder2* This, CLSID* pClassID)
+static HRESULT WINAPI UnixFolder_IPersistFolder3_GetClassID(IPersistFolder3* This, CLSID* pClassID)
 {
     TRACE("stub\n");
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* iface, LPCITEMIDLIST pidl)
+static HRESULT WINAPI UnixFolder_IPersistFolder3_Initialize(IPersistFolder3* iface, LPCITEMIDLIST pidl)
 {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder2, iface);
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder3, iface);
     struct stat statPrefix;
     LPCITEMIDLIST current = pidl, root;
     DWORD dwPathLen;
@@ -1139,7 +1139,7 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* ifa
     strcpy(pNextDir, szBasePath);
     pNextDir += strlen(szBasePath);
     if (This->m_dwPathMode == PATHMODE_UNIX)
-      This->m_dwAttributes |= SFGAO_FILESYSTEM;
+        This->m_dwAttributes |= SFGAO_FILESYSTEM;
     if (!(This->m_dwAttributes & SFGAO_FILESYSTEM)) {
         *pNextDir = '\0';
         if (!stat(This->m_pszPath, &statPrefix) && UNIXFS_is_dos_device(&statPrefix))
@@ -1161,9 +1161,9 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_Initialize(IPersistFolder2* ifa
     return S_OK;
 }
 
-static HRESULT WINAPI UnixFolder_IPersistFolder2_GetCurFolder(IPersistFolder2* iface, LPITEMIDLIST* ppidl)
+static HRESULT WINAPI UnixFolder_IPersistFolder3_GetCurFolder(IPersistFolder3* iface, LPITEMIDLIST* ppidl)
 {
-    UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder2, iface);
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder3, iface);
     
     TRACE ("(iface=%p, ppidl=%p)\n", iface, ppidl);
 
@@ -1172,16 +1172,61 @@ static HRESULT WINAPI UnixFolder_IPersistFolder2_GetCurFolder(IPersistFolder2* i
     *ppidl = ILClone (This->m_pidlLocation);
     return S_OK;
 }
+
+static HRESULT WINAPI UnixFolder_IPersistFolder3_InitializeEx(IPersistFolder3 *iface, IBindCtx *pbc, 
+    LPCITEMIDLIST pidlRoot, const PERSIST_FOLDER_TARGET_INFO *ppfti)
+{
+    UnixFolder *This = ADJUST_THIS(UnixFolder, IPersistFolder3, iface);
+    WCHAR wszTargetDosPath[MAX_PATH];
+    char szTargetPath[FILENAME_MAX] = "";
     
+    TRACE("(iface=%p, pbc=%p, pidlRoot=%p, ppfti=%p)\n", iface, pbc, pidlRoot, ppfti);
+
+    /* If no PERSIST_FOLDER_TARGET_INFO is given InitializeEx is equivalent to Initialize. */
+    if (!ppfti) 
+        return IPersistFolder3_Initialize(iface, pidlRoot);
+
+    if (ppfti->csidl != -1) {
+        if (SUCCEEDED(SHGetFolderPathW(0, ppfti->csidl, NULL, 0, wszTargetDosPath))) {
+            UNIXFS_get_unix_path(wszTargetDosPath, szTargetPath);
+        }
+    } else if (*ppfti->szTargetParsingName) {
+        UNIXFS_get_unix_path(ppfti->szTargetParsingName, szTargetPath);
+    } else if (ppfti->pidlTargetFolder) {
+        if (SHGetPathFromIDListW(ppfti->pidlTargetFolder, wszTargetDosPath)) {
+            UNIXFS_get_unix_path(wszTargetDosPath, szTargetPath);
+        }
+    }
+
+    This->m_pszPath = SHAlloc(lstrlenA(szTargetPath)+1);
+    if (!This->m_pszPath) 
+        return E_FAIL;
+    lstrcpyA(This->m_pszPath, szTargetPath);
+    This->m_pidlLocation = ILClone(pidlRoot);
+    This->m_dwAttributes = (ppfti->dwAttributes == -1) ? ppfti->dwAttributes :
+        SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|SFGAO_CANRENAME|SFGAO_FILESYSTEM;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI UnixFolder_IPersistFolder3_GetFolderTargetInfo(IPersistFolder3 *iface, 
+    PERSIST_FOLDER_TARGET_INFO *ppfti)
+{
+    FIXME("(iface=%p, ppfti=%p) stub\n", iface, ppfti);
+    return E_NOTIMPL;
+}
+
 /* VTable for UnixFolder's IPersistFolder interface.
  */
-static const IPersistFolder2Vtbl UnixFolder_IPersistFolder2_Vtbl = {
-    UnixFolder_IPersistFolder2_QueryInterface,
-    UnixFolder_IPersistFolder2_AddRef,
-    UnixFolder_IPersistFolder2_Release,
-    UnixFolder_IPersistFolder2_GetClassID,
-    UnixFolder_IPersistFolder2_Initialize,
-    UnixFolder_IPersistFolder2_GetCurFolder
+static const IPersistFolder3Vtbl UnixFolder_IPersistFolder3_Vtbl = {
+    UnixFolder_IPersistFolder3_QueryInterface,
+    UnixFolder_IPersistFolder3_AddRef,
+    UnixFolder_IPersistFolder3_Release,
+    UnixFolder_IPersistFolder3_GetClassID,
+    UnixFolder_IPersistFolder3_Initialize,
+    UnixFolder_IPersistFolder3_GetCurFolder,
+    UnixFolder_IPersistFolder3_InitializeEx,
+    UnixFolder_IPersistFolder3_GetFolderTargetInfo
 };
 
 static HRESULT WINAPI UnixFolder_ISFHelper_QueryInterface(ISFHelper* iface, REFIID riid, 
@@ -1396,7 +1441,7 @@ static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, D
     
     if(pUnixFolder) {
         pUnixFolder->lpIShellFolder2Vtbl = &UnixFolder_IShellFolder2_Vtbl;
-        pUnixFolder->lpIPersistFolder2Vtbl = &UnixFolder_IPersistFolder2_Vtbl;
+        pUnixFolder->lpIPersistFolder3Vtbl = &UnixFolder_IPersistFolder3_Vtbl;
         pUnixFolder->lpISFHelperVtbl = &UnixFolder_ISFHelper_Vtbl;
         pUnixFolder->m_cRef = 0;
         pUnixFolder->m_pszPath = NULL;
