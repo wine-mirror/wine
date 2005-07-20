@@ -564,6 +564,9 @@ DWORD WINAPI GetFileVersionInfoSizeW( LPCWSTR filename, LPDWORD handle )
 DWORD WINAPI GetFileVersionInfoSizeA( LPCSTR filename, LPDWORD handle )
 {   UNICODE_STRING filenameW;
     DWORD retval;
+
+    TRACE("(%s,%p)\n", debugstr_a(filename), handle );
+
     if(filename) RtlCreateUnicodeStringFromAsciiz(&filenameW, filename);
     else filenameW.Buffer = NULL;
     retval = GetFileVersionInfoSizeW(filenameW.Buffer, handle);
@@ -609,14 +612,9 @@ BOOL WINAPI GetFileVersionInfoA( LPCSTR filename, DWORD handle,
         }
     }
 
-    if (    datasize >= sizeof(VS_VERSION_INFO_STRUCT16)
-         && datasize >= ((VS_VERSION_INFO_STRUCT16 *)data)->wLength
-         && !VersionInfoIs16( data ) )
-    {
-        /* convert resource from PE format to NE format */
-        ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)data,
-                                  (VS_VERSION_INFO_STRUCT16 *)data );
-    }
+    /* Don't convert a possible win32 to a win16 stucture, Windows always uses win32
+     * for storing the structure on a unicode enabled system
+     */
 
     SetLastError(0);
     return TRUE;
@@ -769,19 +767,10 @@ DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 
     if ( !VersionInfoIs16( info ) )
     {
-        INT len;
-        LPWSTR wide_str;
-        DWORD give;
+        /* FIXME : The conversion is maybe a bit overkill, we only need 1 value */
 
-        /* <lawson_whitney@juno.com> Feb 2001 */
-        /* AOL 5.0 does this, expecting to get this: */
-        len = MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, NULL, 0);
-        wide_str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, wide_str, len);
-
-        give = VerQueryValueW(pBlock, wide_str, lplpBuffer, puLen);
-        HeapFree(GetProcessHeap(), 0, wide_str);
-        return give;
+        ConvertVersionInfo32To16( (VS_VERSION_INFO_STRUCT32 *)info,
+                                  (VS_VERSION_INFO_STRUCT16 *)info );
     }
 
     return VersionInfo16_QueryValue(info, lpSubBlock, lplpBuffer, puLen);

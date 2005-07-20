@@ -235,15 +235,27 @@ static void test_info(void)
 #endif
 }
 
-static void test_unicode(void)
+static void test_32bit_win(void)
 {
     DWORD hdlA, retvalA;
     DWORD hdlW, retvalW;
     BOOL retA,retW;
     PVOID pVersionInfoA = NULL;
     PVOID pVersionInfoW = NULL;
-    char mypathA[MAX_PATH] = "";
+    char *pBufA;
+    WCHAR *pBufW;
+    UINT uiLength;
+    char mypathA[MAX_PATH];
     WCHAR mypathW[MAX_PATH];
+    char varfileinfoA[] = "\\\\VarFileInfo\\\\Translation";
+    WCHAR varfileinfoW[]    = { '\\','\\','V','a','r','F','i','l','e','I','n','f','o',
+                                '\\','\\','T','r','a','n','s','l','a','t','i','o','n', 0 };
+    char FileDescriptionA[] = "\\\\StringFileInfo\\\\040904E4\\\\FileDescription";
+    WCHAR FileDescriptionW[] = { '\\','\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o',
+                                '\\','\\','0','4','0','9','0','4','e','4',
+                                '\\','\\','F','i','l','e','D','e','s','c','r','i','p','t','i','o','n', 0 };
+    char WineFileDescriptionA[] = "Wine version test";
+    WCHAR WineFileDescriptionW[] = { 'W','i','n','e',' ','v','e','r','s','i','o','n',' ','t','e','s','t', 0 };
 
     /* If we call GetFileVersionInfoA on a system that supports Unicode (NT/W2K/XP/W2K3 by default)
      * then the versioninfo will contain Unicode strings.
@@ -274,10 +286,32 @@ static void test_unicode(void)
     ok( retvalA == retvalW, "The size of the struct should be the same for both A/W calls, it is (%ld) vs. (%ld)\n",
                             retvalA, retvalW);
 
-    todo_wine
-    {
-        ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
-    }
+    ok( !memcmp(pVersionInfoA, pVersionInfoW, retvalA), "Both structs should be the same, they aren't\n");
+
+    /* The structs are the same but that will mysteriously change with the next calls on Windows (not on Wine).
+     * The structure on windows is way bigger then needed, so there must be something to it. As we do not
+     * seem to need this bigger structure, we can leave that as is.
+     * The change is in this not needed part.
+     *
+     * Although the structures contain Unicode strings, VerQueryValueA will return normal strings,
+     * VerQueryValueW will return Unicode ones.
+     */
+
+    retA = VerQueryValueA( pVersionInfoA, varfileinfoA, (LPVOID *)&pBufA, &uiLength );
+    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+
+    retA = VerQueryValueA( pVersionInfoA, FileDescriptionA, (LPVOID *)&pBufA, &uiLength );
+    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08lx\n", GetLastError());
+    ok( !lstrcmpA(WineFileDescriptionA, pBufA), "FileDescription should have been 'Wine version test'\n");
+
+    /* And the W-way */
+
+    retW = VerQueryValueW( pVersionInfoW, varfileinfoW, (LPVOID *)&pBufW, &uiLength );
+    ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
+
+    retW = VerQueryValueW( pVersionInfoW, FileDescriptionW, (LPVOID *)&pBufW, &uiLength );
+    ok (retW, "VerQueryValueW failed: GetLastError = 0x%08lx\n", GetLastError());
+    ok( !lstrcmpW(WineFileDescriptionW, pBufW), "FileDescription should have been 'Wine version test' (unicode)\n");
 
     HeapFree( GetProcessHeap(), 0, pVersionInfoA);
     HeapFree( GetProcessHeap(), 0, pVersionInfoW);
@@ -287,5 +321,8 @@ START_TEST(info)
 {
     test_info_size();
     test_info();
-    test_unicode();
+   
+    /* Test GetFileVersionInfoSize[AW] and GetFileVersionInfo[AW] on a 32 bit windows executable */
+    trace("Testing 32 bit windows application\n");
+    test_32bit_win();
 }
