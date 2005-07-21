@@ -109,7 +109,7 @@ ME_StreamOutMove(ME_TextEditor *editor, BYTE *buffer, int len)
 
 
 static BOOL
-ME_StreamOutPrint(ME_TextEditor *editor, char *format, ...)
+ME_StreamOutPrint(ME_TextEditor *editor, const char *format, ...)
 {
   char string[STREAMOUT_BUFFER_SIZE]; /* This is going to be enough */
   int len;
@@ -126,7 +126,7 @@ ME_StreamOutPrint(ME_TextEditor *editor, char *format, ...)
 static BOOL
 ME_StreamOutRTFHeader(ME_TextEditor *editor, int dwFormat)
 {
-  char *cCharSet = NULL;
+  const char *cCharSet = NULL;
   UINT nCodePage;
   LANGID language;
   BOOL success;

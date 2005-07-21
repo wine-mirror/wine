@@ -86,7 +86,7 @@ static class_t *make_class(char *name);
 
 static type_t *reg_type(type_t *type, char *name, int t);
 static type_t *reg_types(type_t *type, var_t *names, int t);
-static type_t *find_type(char *name, int t);
+static type_t *find_type(const char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
 static type_t *get_typev(unsigned char type, var_t *name, int t);
@@ -1168,7 +1168,7 @@ static type_t *reg_types(type_t *type, var_t *names, int t)
   return type;
 }
 
-static type_t *find_type(char *name, int t)
+static type_t *find_type(const char *name, int t)
 {
   struct rtype *cur = type_hash[hash_ident(name)];
   while (cur && (cur->t != t || strcmp(cur->name, name)))
