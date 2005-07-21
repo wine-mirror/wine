@@ -874,6 +874,140 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     FIXME(#e ": stub\n"); \
     return DefWindowProcW(hWnd, msg, wParam, lParam);
 
+static const char * const edit_messages[] = {
+  "EM_GETSEL",
+  "EM_SETSEL",
+  "EM_GETRECT",
+  "EM_SETRECT",
+  "EM_SETRECTNP",
+  "EM_SCROLL",
+  "EM_LINESCROLL",
+  "EM_SCROLLCARET",
+  "EM_GETMODIFY",
+  "EM_SETMODIFY",
+  "EM_GETLINECOUNT",
+  "EM_LINEINDEX",
+  "EM_SETHANDLE",
+  "EM_GETHANDLE",
+  "EM_GETTHUMB",
+  "EM_UNKNOWN_BF",
+  "EM_UNKNOWN_C0",
+  "EM_LINELENGTH",
+  "EM_REPLACESEL",
+  "EM_UNKNOWN_C3",
+  "EM_GETLINE",
+  "EM_LIMITTEXT",
+  "EM_CANUNDO",
+  "EM_UNDO",
+  "EM_FMTLINES",
+  "EM_LINEFROMCHAR",
+  "EM_UNKNOWN_CA",
+  "EM_SETTABSTOPS",
+  "EM_SETPASSWORDCHAR",
+  "EM_EMPTYUNDOBUFFER",
+  "EM_GETFIRSTVISIBLELINE",
+  "EM_SETREADONLY",
+  "EM_SETWORDBREAKPROC",
+  "EM_GETWORDBREAKPROC",
+  "EM_GETPASSWORDCHAR",
+  "EM_SETMARGINS",
+  "EM_GETMARGINS",
+  "EM_GETLIMITTEXT",
+  "EM_POSFROMCHAR",
+  "EM_CHARFROMPOS"
+};
+
+static const char * const richedit_messages[] = {
+  "EM_CANPASTE",
+  "EM_DISPLAYBAND",
+  "EM_EXGETSEL",
+  "EM_EXLIMITTEXT",
+  "EM_EXLINEFROMCHAR",
+  "EM_EXSETSEL",
+  "EM_FINDTEXT",
+  "EM_FORMATRANGE",
+  "EM_GETCHARFORMAT",
+  "EM_GETEVENTMASK",
+  "EM_GETOLEINTERFACE",
+  "EM_GETPARAFORMAT",
+  "EM_GETSELTEXT",
+  "EM_HIDESELECTION",
+  "EM_PASTESPECIAL",
+  "EM_REQUESTRESIZE",
+  "EM_SELECTIONTYPE",
+  "EM_SETBKGNDCOLOR",
+  "EM_SETCHARFORMAT",
+  "EM_SETEVENTMASK",
+  "EM_SETOLECALLBACK",
+  "EM_SETPARAFORMAT",
+  "EM_SETTARGETDEVICE",
+  "EM_STREAMIN",
+  "EM_STREAMOUT",
+  "EM_GETTEXTRANGE",
+  "EM_FINDWORDBREAK",
+  "EM_SETOPTIONS",
+  "EM_GETOPTIONS",
+  "EM_FINDTEXTEX",
+  "EM_GETWORDBREAKPROCEX",
+  "EM_SETWORDBREAKPROCEX",
+  "EM_SETUNDOLIMIT",
+  "EM_UNKNOWN_USER_83",
+  "EM_REDO",
+  "EM_CANREDO",
+  "EM_GETUNDONAME",
+  "EM_GETREDONAME",
+  "EM_STOPGROUPTYPING",
+  "EM_SETTEXTMODE",
+  "EM_GETTEXTMODE",
+  "EM_AUTOURLDETECT",
+  "EM_GETAUTOURLDETECT",
+  "EM_SETPALETTE",
+  "EM_GETTEXTEX",
+  "EM_GETTEXTLENGTHEX",
+  "EM_SHOWSCROLLBAR",
+  "EM_SETTEXTEX",
+  "EM_UNKNOWN_USER_98",
+  "EM_UNKNOWN_USER_99",
+  "EM_SETPUNCTUATION",
+  "EM_GETPUNCTUATION",
+  "EM_SETWORDWRAPMODE",
+  "EM_GETWORDWRAPMODE",
+  "EM_SETIMECOLOR",
+  "EM_GETIMECOLOR",
+  "EM_SETIMEOPTIONS",
+  "EM_GETIMEOPTIONS",
+  "EM_CONVPOSITION",
+  "EM_UNKNOWN_USER_109",
+  "EM_UNKNOWN_USER_110",
+  "EM_UNKNOWN_USER_111",
+  "EM_UNKNOWN_USER_112",
+  "EM_UNKNOWN_USER_113",
+  "EM_UNKNOWN_USER_114",
+  "EM_UNKNOWN_USER_115",
+  "EM_UNKNOWN_USER_116",
+  "EM_UNKNOWN_USER_117",
+  "EM_UNKNOWN_USER_118",
+  "EM_UNKNOWN_USER_119",
+  "EM_SETLANGOPTIONS",
+  "EM_GETLANGOPTIONS",
+  "EM_GETIMECOMPMODE",
+  "EM_FINDTEXTW",
+  "EM_FINDTEXTEXW",
+  "EM_RECONVERSION",
+  "EM_SETIMEMODEBIAS",
+  "EM_GETIMEMODEBIAS"
+};
+
+static const char *
+get_msg_name(UINT msg)
+{
+  if (msg >= EM_GETSEL && msg <= EM_SETLIMITTEXT)
+    return edit_messages[msg - EM_GETSEL];
+  if (msg >= EM_CANPASTE && msg <= EM_GETIMEMODEBIAS)
+    return richedit_messages[msg - EM_CANPASTE];
+  return "";
+}
+
 /******************************************************************
  *        RichEditANSIWndProc (RICHED20.10)
  */
@@ -882,7 +1016,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   PAINTSTRUCT ps;
   SCROLLINFO si;
   ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongW(hWnd, 0);
-  TRACE("msg %d %08x %08lx\n", msg, wParam, lParam);
+  
+  TRACE("msg %d (%s) %08x %08lx\n", msg, get_msg_name(msg), wParam, lParam);
+  
   switch(msg) {
   
   UNSUPPORTED_MSG(EM_AUTOURLDETECT)
@@ -962,6 +1098,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_NCCREATE:
   {
     CREATESTRUCTW *pcs = (CREATESTRUCTW *)lParam;
+    TRACE("WM_NCCREATE: style 0x%08lx\n", pcs->style);
     editor = ME_MakeEditor(hWnd);
     SetWindowLongW(hWnd, 0, (long)editor);
     pcs = 0; /* ignore */
@@ -985,6 +1122,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
     ME_GetSelection(editor, (int *)&pRange->cpMin, (int *)&pRange->cpMax);
+    TRACE("EM_EXGETSEL = (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
     return 0;
   }
   case EM_CANUNDO:
@@ -1007,6 +1145,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_EXSETSEL:
   {
     CHARRANGE *pRange = (CHARRANGE *)lParam;
+    TRACE("EM_EXSETSEL (%ld,%ld)\n", pRange->cpMin, pRange->cpMax);
     ME_SetSelection(editor, pRange->cpMin, pRange->cpMax);
     /* FIXME optimize */
     ME_Repaint(editor);
@@ -1090,7 +1229,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     if (!wParam)
       ME_SetDefaultCharFormat(editor, p);
     else if (wParam == (SCF_WORD | SCF_SELECTION))
-      FIXME("word selection not supported\n");
+      FIXME("EM_SETCHARFORMAT: word selection not supported\n");
     else if (wParam == SCF_ALL)
       ME_SetCharFormat(editor, 0, ME_GetTextLength(editor), p);
     else {
@@ -1349,6 +1488,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       nRows += item->member.para.nRows;
       item = item->member.para.next_para;
     }
+    TRACE("EM_GETLINECOUNT: nRows==%d\n", nRows);
     return max(1, nRows);
   }
   case EM_LINEFROMCHAR:
@@ -1365,6 +1505,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_LINEINDEX:
   {
     ME_DisplayItem *item, *para;
+    int nCharOfs;
     
     if (wParam == -1)
       item = ME_FindItemBack(editor->pCursors[0].pRun, diStartRow);
@@ -1374,7 +1515,9 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       return -1;
     para = ME_GetParagraph(item);
     item = ME_FindItemFwd(item, diRun);
-    return para->member.para.nCharOfs + item->member.run.nCharOfs;
+    nCharOfs = para->member.para.nCharOfs + item->member.run.nCharOfs;
+    TRACE("EM_LINEINDEX: nCharOfs==%d\n", nCharOfs);
+    return nCharOfs;
   }
   case EM_LINELENGTH:
   {
