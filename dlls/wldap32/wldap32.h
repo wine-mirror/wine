@@ -84,3 +84,142 @@ static inline void strfreeU( char *str )
 {
     HeapFree( GetProcessHeap(), 0, str );
 }
+
+static inline DWORD strarraylenA( LPSTR *strarray )
+{
+    LPSTR *p = strarray;
+    while (*p) p++;
+    return p - strarray;
+}
+
+static inline DWORD strarraylenW( LPWSTR *strarray )
+{
+    LPWSTR *p = strarray;
+    while (*p) p++;
+    return p - strarray;
+}
+
+static inline DWORD strarraylenU( char **strarray )
+{
+    char **p = strarray;
+    while (*p) p++;
+    return p - strarray;
+}
+
+static inline LPWSTR *strarrayAtoW( LPSTR *strarray )
+{
+    LPWSTR *strarrayW = NULL;
+    DWORD size;
+
+    if (strarray)
+    {
+        size  = sizeof(WCHAR*) * (strarraylenA( strarray ) + 1);
+        strarrayW = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (strarrayW)
+        {
+            LPSTR *p = strarray;
+            LPWSTR *q = strarrayW;
+
+            while (*p) *q++ = strAtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return strarrayW;
+}
+
+static inline LPSTR *strarrayWtoA( LPWSTR *strarray )
+{
+    LPSTR *strarrayA = NULL;
+    DWORD size;
+
+    if (strarray)
+    {
+        size = sizeof(LPSTR) * (strarraylenW( strarray ) + 1);
+        strarrayA = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (strarrayA)
+        {
+            LPWSTR *p = strarray;
+            LPSTR *q = strarrayA;
+
+            while (*p) *q++ = strWtoA( *p++ );
+            *q = NULL;
+        }
+    }
+    return strarrayA;
+}
+
+static inline char **strarrayWtoU( LPWSTR *strarray )
+{
+    char **strarrayU = NULL;
+    DWORD size;
+
+    if (strarray)
+    {
+        size = sizeof(char*) * (strarraylenW( strarray ) + 1);
+        strarrayU = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (strarrayU)
+        {
+            LPWSTR *p = strarray;
+            char **q = strarrayU;
+
+            while (*p) *q++ = strWtoU( *p++ );
+            *q = NULL;
+        }
+    }
+    return strarrayU;
+}
+
+static inline LPWSTR *strarrayUtoW( char **strarray )
+{
+    LPWSTR *strarrayW = NULL;
+    DWORD size;
+
+    if (strarray)
+    {
+        size = sizeof(WCHAR*) * (strarraylenU( strarray ) + 1);
+        strarrayW = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (strarrayW)
+        {
+            char **p = strarray;
+            LPWSTR *q = strarrayW;
+
+            while (*p) *q++ = strUtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return strarrayW;
+}
+
+static inline void strarrayfreeA( LPSTR *strarray )
+{
+    if (strarray)
+    {
+        LPSTR *p = strarray;
+        while (*p) strfreeA( *p++ );
+        HeapFree( GetProcessHeap(), 0, strarray );
+    }
+}
+
+static inline void strarrayfreeW( LPWSTR *strarray )
+{
+    if (strarray)
+    {
+        LPWSTR *p = strarray;
+        while (*p) strfreeW( *p++ );
+        HeapFree( GetProcessHeap(), 0, strarray );
+    }
+}
+
+static inline void strarrayfreeU( char **strarray )
+{
+    if (strarray)
+    {
+        char **p = strarray;
+        while (*p) strfreeU( *p++ );
+        HeapFree( GetProcessHeap(), 0, strarray );
+    }
+}
