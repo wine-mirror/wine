@@ -22,6 +22,9 @@
 
 #include "winbase.h"
 
+#define  _DEBUG
+#include "crtdbg.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 int _crtAssertBusy = -1;
@@ -39,9 +42,29 @@ void *MSVCRTD_operator_new_dbg(
 	const char *szFileName,
 	int nLine)
 {
-    void *retval = HeapAlloc(GetProcessHeap(), 0, nSize);
+    void *retval = NULL;
 
     TRACE("(%lu, %d, '%s', %d) returning %p\n", nSize, nBlockUse, szFileName, nLine, retval);
+
+    switch(_BLOCK_TYPE(nBlockUse))
+    {
+    case _NORMAL_BLOCK:
+        break;
+    case _CLIENT_BLOCK:
+        FIXME("Unimplemented case for nBlockUse = _CLIENT_BLOCK\n");
+        return NULL;
+    case _FREE_BLOCK:
+        FIXME("Native code throws an exception here\n");
+    case _CRT_BLOCK:
+    case _IGNORE_BLOCK:
+        ERR("Not allowed nBlockUse value: %d\n", _BLOCK_TYPE(nBlockUse));
+        return NULL;
+    default:
+        ERR("Unknown nBlockUse value: %d\n", _BLOCK_TYPE(nBlockUse));
+        return NULL;
+    }
+
+    retval = HeapAlloc(GetProcessHeap(), 0, nSize);
 
     if (!retval)
         _callnewh(nSize);

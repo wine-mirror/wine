@@ -24,6 +24,8 @@
 #include "winbase.h"
 #include "winnt.h"
 
+#include "crtdbg.h"
+
 #include "wine/test.h"
 
 /**********************************************************************/
@@ -55,7 +57,7 @@ static void test_new(void)
 {
   void *mem;
 
-  mem = pMSVCRTD_operator_new_dbg(42, 0, __FILE__, __LINE__);
+  mem = pMSVCRTD_operator_new_dbg(42, _NORMAL_BLOCK, __FILE__, __LINE__);
   ok(mem != NULL, "memory not allocated\n");
 }
 

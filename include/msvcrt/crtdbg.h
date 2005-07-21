@@ -39,6 +39,8 @@
 #define _CLIENT_BLOCK                   4
 #define _MAX_BLOCKS                     5
 
+#define _BLOCK_TYPE(block)              (block & 0xFFFF)
+#define _BLOCK_SUBTYPE(block)           (block >> 16 & 0xFFFF)
 
 typedef struct _CrtMemState
 {
@@ -56,6 +58,14 @@ typedef struct _CrtMemState
 #define _ASSERTE(expr)                  ((void)0)
 #define _CrtDbgBreak()                  ((void)0)
 
+#define _CrtCheckMemory()               ((int)1)
+#define _CrtDbgReport(...)              ((int)0)
+#define _CrtDumpMemoryLeaks()           ((int)0)
+#define _CrtSetBreakAlloc(a)            ((long)0)
+#define _CrtSetDbgFlag(f)               ((int)0)
+#define _CrtSetDumpClient(f)            ((void)0)
+#define _CrtSetReportMode(t,m)          ((int)0)
+
 #else /* _DEBUG */
 
 #include <assert.h>
@@ -67,12 +77,22 @@ typedef struct _CrtMemState
 #define _CrtDbgBreak()                  ((void)0)
 #endif
 
+extern int _crtAssertBusy;
+extern int _crtBreakAlloc;
+extern int _crtDbgFlag;
+
+int   _CrtCheckMemory();
+int   _CrtDbgReport(int reportType, const char *filename, int linenumber,
+                    const char *moduleName, const char *format, ...);
+int   _CrtDumpMemoryLeaks();
+int   _CrtSetBreakAlloc(int new);
+int   _CrtSetDbgFlag(int new);
+void *_CrtSetDumpClient(void *dumpClient);
+int   _CrtSetReportMode(int reportType, int reportMode);
+
 #endif /* _DEBUG */
 
-#define _CrtCheckMemory()               ((int)1)
-#define _CrtDbgReport(...)              ((int)0)
 #define _CrtDoForAllClientObjects(f,c)  ((void)0)
-#define _CrtDumpMemoryLeaks()           ((int)0)
 #define _CrtIsMemoryBlock(p,s,r,f,l)    ((int)1)
 #define _CrtIsValidHeapPointer(p)       ((int)1)
 #define _CrtIsValidPointer(p,s,a)       ((int)1)
@@ -81,10 +101,6 @@ typedef struct _CrtMemState
 #define _CrtMemDumpAllObjectsSince(s)   ((void)0)
 #define _CrtMemDumpStatistics(s)        ((void)0)
 #define _CrtSetAllocHook(f)             ((void)0)
-#define _CrtSetBreakAlloc(a)            ((long)0)
-#define _CrtSetDbgFlag(f)               ((int)0)
-#define _CrtSetDumpClient(f)            ((void)0)
-#define _CrtSetReportMode(t,m)          ((int)0)
 
 #define _RPT0(t,m)
 #define _RPT1(t,m,p1)
