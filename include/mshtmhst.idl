@@ -26,6 +26,13 @@ import "docobj.idl";
  *    IDocHostUIHandler interface
  */
 
+typedef enum tagDOCHOSTUIDBLCLK
+{
+    DOCHOSTUIDBLCLK_DEFAULT         = 0,
+    DOCHOSTUIDBLCLK_SHOWPROPERTIES  = 1,
+    DOCHOSTUIDBLCLK_SHOWCODE        = 2
+} DOCHOSTUIDBLCLK;
+
 typedef enum tagDOCHOSTUIFLAG
 {
     DOCHOSTUIFLAG_DIALOG                      = 0x00000001,
