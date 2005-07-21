@@ -1180,12 +1180,21 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case WM_SETTEXT:
   {
-    LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
-    TRACE("WM_SETTEXT - %s\n", (char *)(wszText)); /* debugstr_w() */
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
-    /* uses default style! */
-    ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
-    ME_EndToUnicode(hWnd, wszText);
+    if (lParam)
+    {
+      LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
+      TRACE("WM_SETTEXT lParam==%lx\n",lParam);
+      TRACE("WM_SETTEXT - %s\n", debugstr_w(wszText)); /* debugstr_w() */
+      if (lstrlenW(wszText) > 0)
+      {
+        /* uses default style! */
+        ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
+      }
+      ME_EndToUnicode(hWnd, wszText);
+    }
+    else
+      TRACE("WM_SETTEXT - NULL\n");
     ME_CommitUndo(editor);
     ME_EmptyUndoStack(editor);
     ME_UpdateRepaint(editor);
