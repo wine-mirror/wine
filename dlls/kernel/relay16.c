@@ -282,7 +282,7 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
 
 
 typedef int (*CDECL_PROC)();
-typedef int (WINAPI *PASCAL_PROC)();
+typedef int (WINAPI *STDCALL_PROC)();
 
 /***********************************************************************
  *           call_cdecl_function
@@ -343,9 +343,9 @@ static int call_cdecl_function( CDECL_PROC func, int nb_args, const int *args )
 
 
 /***********************************************************************
- *           call_pascal_function
+ *           call_stdcall_function
  */
-static inline int call_pascal_function( PASCAL_PROC func, int nb_args, const int *args )
+static inline int call_stdcall_function( STDCALL_PROC func, int nb_args, const int *args )
 {
     int ret;
     switch(nb_args)
@@ -408,10 +408,11 @@ static inline int call_pascal_function( PASCAL_PROC func, int nb_args, const int
 static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16, CONTEXT86 *context,
                                         const CALLFROM16 *call )
 {
-    int i, nb_args, args32[20];
+    int i, is_cdecl, nb_args, args32[20];
 
     nb_args = 0;
-    if (call->lret == 0xcb66)  /* cdecl */
+    is_cdecl = (call->lret == 0xcb66);
+    if (is_cdecl)
     {
         for (i = 0; i < 20; i++, nb_args++)
         {
@@ -481,14 +482,18 @@ static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16
         }
     }
 
-    if (call->arg_types[0] & ARG_REGISTER) args32[nb_args++] = (int)context;
+    if (call->arg_types[0] & ARG_REGISTER)
+    {
+        if (!nb_args) is_cdecl = 0;  /* register funcs are stdcall by default */
+        args32[nb_args++] = (int)context;
+    }
 
     SYSLEVEL_CheckNotLevel( 2 );
 
-    if (call->lret == 0xcb66)  /* cdecl */
+    if (is_cdecl)
         return call_cdecl_function( entry_point, nb_args, args32 );
     else
-        return call_pascal_function( entry_point, nb_args, args32 );
+        return call_stdcall_function( entry_point, nb_args, args32 );
 }
 
 
@@ -501,7 +506,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    int i, ret_val, nb_args, args32[20];
+    int i, is_cdecl, ret_val, nb_args, args32[20];
     char module[10], func[64];
     const CALLFROM16 *call;
 
@@ -513,7 +518,8 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
 
     nb_args = 0;
-    if (call->lret == 0xcb66)  /* cdecl */
+    is_cdecl = (call->lret == 0xcb66);
+    if (is_cdecl)
     {
         for (i = 0; i < 20; i++, nb_args++)
         {
@@ -622,6 +628,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     if (call->arg_types[0] & ARG_REGISTER)
     {
+        if (!nb_args) is_cdecl = 0;  /* register funcs are stdcall by default */
         args32[nb_args++] = (int)context;
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
@@ -631,10 +638,10 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     SYSLEVEL_CheckNotLevel( 2 );
 
-    if (call->lret == 0xcb66)  /* cdecl */
+    if (is_cdecl)
         ret_val = call_cdecl_function( entry_point, nb_args, args32 );
     else
-        ret_val = call_pascal_function( entry_point, nb_args, args32 );
+        ret_val = call_stdcall_function( entry_point, nb_args, args32 );
 
     SYSLEVEL_CheckNotLevel( 2 );
 
