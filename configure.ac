@@ -1612,6 +1612,7 @@ dlls/lzexpand/Makefile
 dlls/lzexpand/tests/Makefile
 dlls/mapi32/Makefile
 dlls/mapi32/tests/Makefile
+dlls/midimap/Makefile
 dlls/mlang/Makefile
 dlls/mlang/tests/Makefile
 dlls/mmdevldr.vxd/Makefile
@@ -1724,7 +1725,6 @@ dlls/winmm/mciavi/Makefile
 dlls/winmm/mcicda/Makefile
 dlls/winmm/mciseq/Makefile
 dlls/winmm/mciwave/Makefile
-dlls/winmm/midimap/Makefile
 dlls/winmm/tests/Makefile
 dlls/winmm/wavemap/Makefile
 dlls/winmm/winealsa/Makefile

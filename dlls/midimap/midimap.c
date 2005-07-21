@@ -1,4 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
  * Wine MIDI mapper driver
  *

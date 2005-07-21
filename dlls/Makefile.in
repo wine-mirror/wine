@@ -70,6 +70,7 @@ BASEDIRS = \
 	kernel \
 	lzexpand \
 	mapi32 \
+	midimap \
 	mlang \
 	mmdevldr.vxd \
 	monodebg.vxd \
@@ -156,7 +157,6 @@ BASEDIRS = \
 	winmm/mcicda \
 	winmm/mciseq \
 	winmm/mciwave \
-	winmm/midimap \
 	winmm/wavemap \
 	winmm/winealsa \
 	winmm/winearts \
@@ -319,7 +319,7 @@ SYMLINKS_SO = \
 	mcicda.drv.so \
 	mciseq.drv.so \
 	mciwave.drv.so \
-	midimap.drv.so \
+	midimap.dll.so \
 	mlang.dll.so \
 	mmdevldr.vxd.so \
 	monodebg.vxd.so \
@@ -656,8 +656,8 @@ mciseq.drv.so: winmm/mciseq/mciseq.drv.so
 mciwave.drv.so: winmm/mciwave/mciwave.drv.so
 	$(RM) $@ && $(LN_S) winmm/mciwave/mciwave.drv.so $@
 
-midimap.drv.so: winmm/midimap/midimap.drv.so
-	$(RM) $@ && $(LN_S) winmm/midimap/midimap.drv.so $@
+midimap.dll.so: midimap/midimap.dll.so
+	$(RM) $@ && $(LN_S) midimap/midimap.dll.so $@
 
 mlang.dll.so: mlang/mlang.dll.so
 	$(RM) $@ && $(LN_S) mlang/mlang.dll.so $@
@@ -1720,7 +1720,7 @@ winmm/mciavi/mciavi.drv.so: winmm/mciavi
 winmm/mcicda/mcicda.drv.so: winmm/mcicda
 winmm/mciseq/mciseq.drv.so: winmm/mciseq
 winmm/mciwave/mciwave.drv.so: winmm/mciwave
-winmm/midimap/midimap.drv.so: winmm/midimap
+midimap/midimap.dll.so: midimap
 mlang/mlang.dll.so: mlang
 mmdevldr.vxd/mmdevldr.vxd.so: mmdevldr.vxd
 monodebg.vxd/monodebg.vxd.so: monodebg.vxd

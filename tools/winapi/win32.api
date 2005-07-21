@@ -1830,7 +1830,7 @@ DWORD
 HDRVR
 LONG
 
-%%midimap.drv
+%%midimap.dll
 
 %long
 
