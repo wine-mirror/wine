@@ -559,7 +559,7 @@ static HRESULT WINAPI UnixFolder_IShellFolder2_ParseDisplayName(IShellFolder2* i
         LPCITEMIDLIST pidlLast;
         HRESULT hr;
         
-        hr = SHBindToParent(This->m_pidlLocation, &IID_IShellFolder, (LPVOID*)&pParentSF, &pidlLast);
+        hr = SHBindToParent(*ppidl, &IID_IShellFolder, (LPVOID*)&pParentSF, &pidlLast);
         if (FAILED(hr)) return E_FAIL;
         IShellFolder_GetAttributesOf(pParentSF, 1, &pidlLast, pdwAttributes);
         IShellFolder_Release(pParentSF);
