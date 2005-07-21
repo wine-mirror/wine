@@ -1620,6 +1620,32 @@ void inline drawPrimitiveTraceDataLocations(Direct3DVertexStridedData *dataLocat
 
 }
 
+/* loads any dirty textures and returns true if any of the textures are nonpower2 */
+BOOL inline drawPrimitiveUploadDirtyTextures(IWineD3DDeviceImpl* This) {
+    BOOL nonPower2 = FALSE;
+    unsigned int i;
+    register IWineD3DBaseTexture *texture;
+    /* And re-upload any dirty textures */
+    for (i = 0; i<GL_LIMITS(textures); ++i) {
+        texture = This->stateBlock->textures[i];
+        if (texture != NULL) {
+            if(IWineD3DBaseTexture_GetDirty(texture)) {
+                /* Load up the texture now */
+                IWineD3DTexture_PreLoad((IWineD3DTexture *)texture);
+            }
+            if (IWineD3DResourceImpl_GetType((IWineD3DResource *)texture) == D3DRTYPE_TEXTURE) {
+                /* TODO: Is this right, as its cast all texture types to texture8... checkme */
+                IWineD3DSurface *surface;
+                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)texture, 0, &surface);
+                if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
+                    nonPower2 = TRUE;
+                }
+            }
+        }
+    }
+    return nonPower2;
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
                     int PrimitiveType, long NumPrimitives,
@@ -1638,7 +1664,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     IDirect3DPixelShaderImpl     *pixel_shader = NULL;
 #endif
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
-    unsigned int                  i;
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          isLightingOn = FALSE;
     Direct3DVertexStridedData     dataLocations;
@@ -1736,24 +1761,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations.u.s.diffuse.lpData != NULL));
 
-
-    /* And re-upload any dirty textures */
-    for (i=0; i<GL_LIMITS(textures); i++) {
-
-        if (This->stateBlock->textures[i] != NULL) {
-	
-            /* Load up the texture now */
-            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
-            if (IWineD3DResourceImpl_GetType((IWineD3DResource *)This->stateBlock->textures[i]) == D3DRTYPE_TEXTURE ) {
-                /* TODO: Is this right, as its cast all texture types to texture8... checkme */
-                IWineD3DSurface *surface;
-                IWineD3DTexture_GetSurfaceLevel((IWineD3DTexture *)This->stateBlock->textures[i], 0, &surface);
-                if (((IWineD3DSurfaceImpl *)surface)->nonpow2) {
-                    nonPower2 = TRUE;
-                }
-	    }
-        } 
-    }
+    nonPower2 = drawPrimitiveUploadDirtyTextures(This);
 
     /* Now draw the graphics to the screen */
     if  (useVertexShaderFunction) {
