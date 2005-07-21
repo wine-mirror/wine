@@ -78,7 +78,7 @@
   - EM_LIMITTEXT
   + EM_LINEFROMCHAR
   + EM_LINEINDEX
-  - EM_LINELENGTH
+  + EM_LINELENGTH
   + EM_LINESCROLL
   - EM_PASTESPECIAL
   - EM_POSFROMCHARS
@@ -915,7 +915,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETZOOM)
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
-  UNSUPPORTED_MSG(EM_LINELENGTH)
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
 /*  UNSUPPORTED_MSG(EM_POSFROMCHARS) missing in Wine headers */
   UNSUPPORTED_MSG(EM_REQUESTRESIZE)
@@ -1367,6 +1366,34 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     para = ME_GetParagraph(item);
     item = ME_FindItemFwd(item, diRun);
     return para->member.para.nCharOfs + item->member.run.nCharOfs;
+  }
+  case EM_LINELENGTH:
+  {
+    ME_DisplayItem *item, *item_end;
+    int nChars = 0;
+    
+    if (wParam > ME_GetTextLength(editor))
+      return 0;
+    if (wParam == -1)
+    {
+      FIXME("EM_LINELENGTH: returning number of unselected characters on lines with selection unsupported.\n");
+      return 0;
+    }
+    item = ME_FindItemAtOffset(editor, diRun, wParam, NULL);
+    item = ME_RowStart(item);
+    item_end = ME_RowEnd(item);
+    if (!item_end)
+    {
+      /* Empty buffer, no runs */
+      nChars = 0;
+    }
+    else
+    {
+      nChars = ME_CharOfsFromRunOfs(editor, item_end, ME_StrLen(item_end->member.run.strText));
+      nChars -= ME_CharOfsFromRunOfs(editor, item, 0);
+    }
+    TRACE("EM_LINELENGTH(%d)==%d\n",wParam, nChars);
+    return nChars;
   }
   case EM_FINDTEXT:
   {
