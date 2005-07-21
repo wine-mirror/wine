@@ -604,12 +604,13 @@ static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexS
 
         /* Blending is numBlends * FLOATs followed by a DWORD for UBYTE4 */
         /** do we have to Check This->stateBlock->renderState[D3DRS_INDEXEDVERTEXBLENDENABLE] ? */
-        numBlends = ((thisFVF & D3DFVF_POSITION_MASK) >> 1) - 2 +
-                    ((FALSE == (thisFVF & D3DFVF_LASTBETA_UBYTE4)) ? 0 : -1);    /* WARNING can be < 0 because -2 */
-        if (numBlends > 0) {
-            canDoViaGLPointers = FALSE;
+        numBlends = 1 + (((thisFVF & D3DFVF_XYZB5) - D3DFVF_XYZB1) >> 1);
+        if(thisFVF & D3DFVF_LASTBETA_UBYTE4) numBlends--;
+
+        if ((thisFVF & D3DFVF_XYZB5 ) > D3DFVF_XYZRHW) {
+            TRACE("Setting blend Weights to %p \n", data);
             strided->u.s.blendWeights.lpData    = data;
-            strided->u.s.blendWeights.dwType    = D3DDECLTYPE_FLOAT1 + (numBlends - 1);
+            strided->u.s.blendWeights.dwType    = D3DDECLTYPE_FLOAT1 + numBlends - 1;
             strided->u.s.blendWeights.dwStride  = stride;
             data += numBlends * sizeof(FLOAT);
 
