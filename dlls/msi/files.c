@@ -534,8 +534,7 @@ static UINT ready_media_for_file(MSIPACKAGE *package, int fileindex,
             last_path = strdupW(source);
             *(strrchrW(last_path,'\\')+1)=0;
 
-            path = strdupW(package->PackagePath);
-            *strrchrW(path,'\\')=0;
+            path = load_dynamic_property(package,cszSourceDir,NULL);
 
             MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, count,
