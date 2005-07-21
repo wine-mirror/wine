@@ -97,7 +97,10 @@ void ME_CheckCharOffsets(ME_TextEditor *editor)
           p->member.run.nFlags,
           p->member.run.style->fmt.dwMask & p->member.run.style->fmt.dwEffects);
         assert(ofs == p->member.run.nCharOfs);
-        ofs += ME_StrLen(p->member.run.strText);
+        if (p->member.run.nFlags & MERF_ENDPARA)
+          ofs += (editor->bEmulateVersion10 ? 2 : 1);
+        else
+          ofs += ME_StrLen(p->member.run.strText);
         break;
       default:
         assert(0);

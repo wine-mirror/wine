@@ -764,6 +764,8 @@ ME_StreamOutText(ME_TextEditor *editor, int nStart, int nChars, DWORD dwFormat)
     }
     
     nChars -= nLen;
+    if (editor->bEmulateVersion10 && nChars && item->member.run.nFlags & MERF_ENDPARA)
+      nChars--;
     nStart = 0;
     item = ME_FindItemFwd(item, diRun);
   }

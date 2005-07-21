@@ -192,6 +192,8 @@ void ME_InternalDeleteText(ME_TextEditor *editor, int nOfs,
       /* ME_SkipAndPropagateCharOffset(p->pRun, shift); */
       ME_CheckCharOffsets(editor);
       nChars--;
+      if (editor->bEmulateVersion10 && nChars)
+        nChars--;
       continue;
     }
     else
@@ -455,18 +457,23 @@ static BOOL ME_ArrowLeft(ME_TextEditor *editor, ME_Cursor *p)
 
 static BOOL ME_ArrowRight(ME_TextEditor *editor, ME_Cursor *p)
 {
-  int new_ofs = ME_StrRelPos2(p->pRun->member.run.strText, p->nOffset, 1);
-  if (new_ofs<p->pRun->member.run.strText->nLen) {
-    p->nOffset = new_ofs;
-  }
-  else
+  ME_DisplayItem *pRun;
+  
+  if (!(p->pRun->member.run.nFlags & MERF_ENDPARA))
   {
-    ME_DisplayItem *pRun = ME_FindItemFwd(p->pRun, diRun);
-    if (pRun) {
-      p->pRun = pRun;
-      assert(p->pRun->type == diRun);
-      p->nOffset = 0;
+    int new_ofs = ME_StrRelPos2(p->pRun->member.run.strText, p->nOffset, 1);
+    
+    if (new_ofs<p->pRun->member.run.strText->nLen)
+    {
+      p->nOffset = new_ofs;
+      return TRUE;
     }
+  }
+  pRun = ME_FindItemFwd(p->pRun, diRun);
+  if (pRun) {
+    p->pRun = pRun;
+    assert(p->pRun->type == diRun);
+    p->nOffset = 0;
   }
   return TRUE;
 }

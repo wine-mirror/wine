@@ -720,6 +720,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   HDC hDC;
   int i;
   ed->hWnd = hWnd;
+  ed->bEmulateVersion10 = FALSE;
   ed->pBuffer = ME_MakeText();
   hDC = GetDC(hWnd);
   ME_MakeFirstParagraph(hDC, ed->pBuffer);
@@ -1577,8 +1578,18 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
  */
 LRESULT WINAPI RichEdit10ANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+  LRESULT result;
+  
   /* FIXME: this is NOT the same as 2.0 version */
-  return RichEditANSIWndProc(hWnd, msg, wParam, lParam);
+  result = RichEditANSIWndProc(hWnd, msg, wParam, lParam);
+  if (msg == WM_NCCREATE)
+  {
+    ME_TextEditor *editor = (ME_TextEditor *)GetWindowLongW(hWnd, 0);
+    
+    editor->bEmulateVersion10 = TRUE;
+    editor->pBuffer->pLast->member.para.nCharOfs = 2;
+  }
+  return result;
 }
 
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode)

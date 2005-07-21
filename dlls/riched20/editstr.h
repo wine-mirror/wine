@@ -247,6 +247,7 @@ typedef struct tagME_FontCacheItem
 typedef struct tagME_TextEditor
 {
   HWND hWnd;
+  BOOL bEmulateVersion10;
   BOOL bCaretShown;
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;
