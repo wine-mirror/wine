@@ -19,9 +19,12 @@
 @ cdecl ldap_bind_s(ptr str str long) ldap_bind_sA
 @ cdecl ldap_bind_sA(ptr str str long)
 @ cdecl ldap_bind_sW(ptr wstr wstr long)
-@ stub ldap_open
-@ stub ldap_openA
-@ stub ldap_openW
+@ cdecl ldap_init(str long) ldap_initA
+@ cdecl ldap_initA(str long)
+@ cdecl ldap_initW(wstr long)
+@ cdecl ldap_open(str long) ldap_openA
+@ cdecl ldap_openA(str long)
+@ cdecl ldap_openW(wstr long)
 @ cdecl ldap_simple_bind(ptr str str) ldap_simple_bindA
 @ cdecl ldap_simple_bindA(ptr str str)
 @ cdecl ldap_simple_bindW(ptr wstr wstr)
