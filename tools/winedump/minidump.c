@@ -47,7 +47,7 @@ static void dump_mdmp_string(DWORD rva)
 static MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, int str_idx)
 {
     MINIDUMP_DIRECTORY* dir;
-    int                 i;
+    unsigned int        i;
 
     for (i = 0; i < hdr->NumberOfStreams; i++)
     {
@@ -92,7 +92,7 @@ void mdmp_dump(void)
         {
             MINIDUMP_THREAD_LIST*   mtl = (MINIDUMP_THREAD_LIST*)stream;
             MINIDUMP_THREAD*        mt = &mtl->Threads[0];
-            int                     i;
+            unsigned int            i;
 
             printf("Threads: %lu\n", mtl->NumberOfThreads);
             for (i = 0; i < mtl->NumberOfThreads; i++, mt++)
@@ -117,7 +117,7 @@ void mdmp_dump(void)
         {
             MINIDUMP_MODULE_LIST*   mml = (MINIDUMP_MODULE_LIST*)stream;
             MINIDUMP_MODULE*        mm = &mml->Modules[0];
-            int                     i;
+            unsigned int            i;
             const char*             p1;
             const char*             p2;
 
@@ -209,7 +209,7 @@ void mdmp_dump(void)
         {
             MINIDUMP_MEMORY_LIST*   mml = (MINIDUMP_MEMORY_LIST*)stream;
             MINIDUMP_MEMORY_DESCRIPTOR* mmd = &mml->MemoryRanges[0];
-            int                     i;
+            unsigned int                i;
 
             printf("Memory Ranges: %lu\n", mml->NumberOfMemoryRanges);
             for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
@@ -338,7 +338,7 @@ void mdmp_dump(void)
         case ExceptionStream:
         {
             MINIDUMP_EXCEPTION_STREAM*  mes = (MINIDUMP_EXCEPTION_STREAM*)stream;
-            int                         i;
+            unsigned int                i;
 
             printf("Exception:\n");
             printf("  ThreadId: %08lx\n", mes->ThreadId);

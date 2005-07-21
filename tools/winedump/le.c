@@ -229,13 +229,13 @@ static void dump_le_header( const IMAGE_VXD_HEADER *le )
 static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
 {
     struct o32_obj *pobj;
-    int i;
+    unsigned int i;
 
     printf("\nObject table:\n");
     pobj = (struct o32_obj *)((const unsigned char *)le + le->e32_objtab);
     for (i = 0; i < le->e32_objcnt; i++)
     {
-        int j;
+        unsigned int j;
         struct o32_map *pmap=0;
 
         printf("    Obj. Rel.Base Codesize Flags    Tableidx Tablesize Name\n");
