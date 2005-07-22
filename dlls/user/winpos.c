@@ -75,20 +75,16 @@ typedef struct
     HWND     hwndIconTitle;
 } INTERNALPOS, *LPINTERNALPOS;
 
-/* ----- internal variables ----- */
-
-static LPCSTR atomInternalPos;
+/* ----- internal functions ----- */
 
 static inline INTERNALPOS *get_internal_pos( HWND hwnd )
 {
-    if (!atomInternalPos) return NULL;
-    return GetPropA( hwnd, atomInternalPos );
+    return GetPropA( hwnd, "SysIP" );
 }
 
 static inline void set_internal_pos( HWND hwnd, INTERNALPOS *pos )
 {
-    if (!atomInternalPos) atomInternalPos = (LPCSTR)(DWORD)GlobalAddAtomA("SysIP");
-    SetPropA( hwnd, atomInternalPos, pos );
+    SetPropA( hwnd, "SysIP", pos );
 }
 
 /***********************************************************************
