@@ -166,7 +166,7 @@ WORD WINAPI WOWHandle16( HANDLE handle, WOW_HANDLE_TYPE type )
  *           WOWCallback16Ex   (WOW32.@)
  */
 BOOL WINAPI WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
-                             DWORD cbArgs, LPVOID pArgs, LPDWORD pdwRetCode )
+                             DWORD cbArgs, PVOID pArgs, PDWORD pdwRetCode )
 {
     return K32WOWCallback16Ex( vpfn16, dwFlags, cbArgs, pArgs, pdwRetCode );
 }
