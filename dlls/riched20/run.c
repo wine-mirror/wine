@@ -642,9 +642,6 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
   int nOffset, nOffset2;
   CHARFORMAT2W tmp;
 
-  if (nTo>nFrom) /* selection consists of chars from nFrom up to nTo-1 */
-    nTo--;
-
   ME_RunOfsFromCharOfs(editor, nFrom, &run, &nOffset);
   if (nFrom == nTo) /* special case - if selection is empty, take previous char's formatting */
   {
@@ -659,6 +656,9 @@ void ME_GetCharFormat(ME_TextEditor *editor, int nFrom, int nTo, CHARFORMAT2W *p
     ME_GetRunCharFormat(editor, run, pFmt);
     return;
   }
+  
+  if (nTo>nFrom) /* selection consists of chars from nFrom up to nTo-1 */
+    nTo--;
   ME_RunOfsFromCharOfs(editor, nTo, &run_end, &nOffset2);
 
   ME_GetRunCharFormat(editor, run, pFmt);
