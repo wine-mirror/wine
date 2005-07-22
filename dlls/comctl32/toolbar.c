@@ -118,7 +118,6 @@ typedef struct
 typedef struct
 {
     DWORD    dwStructSize;    /* size of TBBUTTON struct */
-    INT      nHeight;         /* height of the toolbar */
     INT      nWidth;          /* width of the toolbar */
     RECT     client_rect;
     RECT     rcBound;         /* bounding rectangle */
@@ -157,7 +156,6 @@ typedef struct
     HWND     hwndNotify;      /* handle to the window that gets notifications */
     HWND     hwndSelf;        /* my own handle */
     BOOL     bBtnTranspnt;    /* button transparency flag */
-    BOOL     bAutoSize;       /* auto size deadlock indicator */
     BOOL     bAnchor;         /* anchor highlight enabled */
     BOOL     bDoRedraw;       /* Redraw status */
     BOOL     bDragOutSent;    /* has TBN_DRAGOUT notification been sent for this drag? */
@@ -1594,10 +1592,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     /* from above, minimum is a button, and possible text */
     cx = infoPtr->nButtonWidth;
-
-    infoPtr->nHeight = infoPtr->nButtonHeight;
-
-    cy = infoPtr->nHeight;
+    cy = infoPtr->nButtonHeight;
 
     nRows = nSepRows = 0;
 
@@ -1619,7 +1614,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	    continue;
 	}
 
-	cy = infoPtr->nHeight;
+	cy = infoPtr->nButtonHeight;
 
 	/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
 	/* it is the actual width of the separator. This is used for */
@@ -1734,27 +1729,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     /* infoPtr->nRows is the number of rows on the toolbar */
     infoPtr->nRows = nRows + nSepRows + 1;
 
-#if 0
-    /********************************************************************
-     * The following while interesting, does not match the values       *
-     * created above for the button rectangles, nor the rcBound rect.   *
-     * We will comment it out and remove it later.                      *
-     *                                                                  *
-     * The problem showed up as heights in the pager control that was   *
-     * wrong.                                                           *
-     ********************************************************************/
-
-    /* nSepRows * (infoPtr->nBitmapHeight + 1) is the space following 	*/
-    /* the last row. 							*/
-    infoPtr->nHeight = TOP_BORDER + (nRows + 1) * infoPtr->nButtonHeight +
-		       	nSepRows * (SEPARATOR_WIDTH * 2 / 3) +
-			nSepRows * (infoPtr->nBitmapHeight + 1) +
-			BOTTOM_BORDER;
-#endif
-
-    infoPtr->nHeight = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
-
-    TRACE("toolbar height %d, button width %d\n", infoPtr->nHeight, infoPtr->nButtonWidth);
+    TRACE("toolbar button width %d\n", infoPtr->nButtonWidth);
 }
 
 
@@ -3090,65 +3065,65 @@ TOOLBAR_AutoSize (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     RECT parent_rect;
-    RECT window_rect;
     HWND parent;
     INT  x, y;
     INT  cx, cy;
-    UINT uPosFlags = SWP_NOZORDER;
 
-    TRACE("resize forced, style=%lx!\n", infoPtr->dwStyle);
+    TRACE("auto sizing, style=%lx!\n", infoPtr->dwStyle);
 
     parent = GetParent (hwnd);
+
+    if (!parent || !infoPtr->bDoRedraw)
+        return 0;
+
     GetClientRect(parent, &parent_rect);
 
     x = parent_rect.left;
     y = parent_rect.top;
 
-    /* FIXME: we should be able to early out if nothing */
-    /* has changed with nWidth != parent_rect width */
+    TRACE("nRows: %d, infoPtr->nButtonHeight: %d\n", infoPtr->nRows, infoPtr->nButtonHeight);
 
-    if (infoPtr->dwStyle & CCS_NORESIZE) {
-	uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
-	cx = 0;
-	cy = 0;
-	TOOLBAR_CalcToolbar (hwnd);
+    cy = TOP_BORDER + infoPtr->nRows * infoPtr->nButtonHeight + BOTTOM_BORDER;
+    cx = parent_rect.right - parent_rect.left;
+
+    if ((infoPtr->dwStyle & TBSTYLE_WRAPABLE) || (infoPtr->dwExStyle & TBSTYLE_EX_UNDOC1))
+    {
+        TOOLBAR_CalcToolbar(hwnd);
+        InvalidateRect( hwnd, NULL, TRUE );
     }
-    else {
-	infoPtr->nWidth = parent_rect.right - parent_rect.left;
-	TOOLBAR_CalcToolbar (hwnd);
-	InvalidateRect( hwnd, NULL, TRUE );
-	cy = infoPtr->nHeight;
-	cx = infoPtr->nWidth;
 
-	if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_NOMOVEY) {
-		GetWindowRect(hwnd, &window_rect);
-		ScreenToClient(parent, (LPPOINT)&window_rect.left);
-		y = window_rect.top;
-	}
-	if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_BOTTOM) {
+    if (!(infoPtr->dwStyle & CCS_NORESIZE))
+    {
+        RECT window_rect;
+        UINT uPosFlags = SWP_NOZORDER;
+
+        if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_NOMOVEY)
+        {
+            GetWindowRect(hwnd, &window_rect);
+            ScreenToClient(parent, (LPPOINT)&window_rect.left);
+            y = window_rect.top;
+        }
+        if ((infoPtr->dwStyle & CCS_BOTTOM) == CCS_BOTTOM)
+        {
             GetWindowRect(hwnd, &window_rect);
             y = parent_rect.bottom - ( window_rect.bottom - window_rect.top);
         }
+
+        if (infoPtr->dwStyle & CCS_NOPARENTALIGN)
+            uPosFlags |= SWP_NOMOVE;
+    
+        if (!(infoPtr->dwStyle & CCS_NODIVIDER))
+            cy += GetSystemMetrics(SM_CYEDGE);
+
+        if (infoPtr->dwStyle & WS_BORDER)
+        {
+            x = y = 1; /* FIXME: this looks wrong */
+            cy += GetSystemMetrics(SM_CYEDGE);
+            cx += GetSystemMetrics(SM_CXEDGE);
+        }
+
+        SetWindowPos(hwnd, NULL, x, y, cx, cy, uPosFlags);
     }
-
-    if (infoPtr->dwStyle & CCS_NOPARENTALIGN)
-	uPosFlags |= SWP_NOMOVE;
-
-    if (!(infoPtr->dwStyle & CCS_NODIVIDER))
-	cy += GetSystemMetrics(SM_CYEDGE);
-
-    if (infoPtr->dwStyle & WS_BORDER)
-    {
-        x = y = 1;
-        cy += GetSystemMetrics(SM_CYEDGE);
-        cx += GetSystemMetrics(SM_CXEDGE);
-    }
-
-    infoPtr->bAutoSize = TRUE;
-    SetWindowPos (hwnd, HWND_TOP,  x, y, cx, cy, uPosFlags);
-    /* The following line makes sure that the infoPtr->bAutoSize is turned off
-     * after the setwindowpos calls */
-    infoPtr->bAutoSize = FALSE;
 
     return 0;
 }
@@ -4340,6 +4315,7 @@ TOOLBAR_MoveButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     TOOLBAR_CalcToolbar(hwnd);
+    TOOLBAR_AutoSize(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
 
     return TRUE;
@@ -4881,12 +4857,6 @@ TOOLBAR_SetButtonWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* save new values */
     infoPtr->cxMin = (INT)LOWORD(lParam);
     infoPtr->cxMax = (INT)HIWORD(lParam);
-
-    /* if both values are 0 then we are done */
-    if (lParam == 0) {
-	TRACE("setting both min and max to 0, norecalc\n");
-	return TRUE;
-    }
 
     /* otherwise we need to recalc the toolbar and in some cases
        recalc the bounding rectangle (does DrawText w/ DT_CALCRECT
@@ -5548,7 +5518,6 @@ TOOLBAR_Unkwn463 (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	break;
     case 1:
 	lpsize->cy = infoPtr->rcBound.bottom - infoPtr->rcBound.top;
-	/* lpsize->cy = infoPtr->nHeight; */
 	break;
     default:
 	ERR("Unknown wParam %d for Toolbar message [0463]. Please report\n",
@@ -5584,7 +5553,6 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nBitmapHeight = 15;
     infoPtr->nBitmapWidth = 16;
 
-    infoPtr->nHeight = infoPtr->nButtonHeight + TOP_BORDER + BOTTOM_BORDER;
     infoPtr->nMaxTextRows = 1;
     infoPtr->cxMin = -1;
     infoPtr->cxMax = -1;
@@ -6659,131 +6627,50 @@ static LRESULT
 TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    DWORD dwStyle = infoPtr->dwStyle;
-    RECT parent_rect;
-    RECT window_rect;
-    HWND parent;
-    INT  x, y;
-    INT  cx, cy;
-    INT  flags;
-    UINT uPosFlags = 0;
-
-    /* Resize deadlock check */
-    if (infoPtr->bAutoSize) {
-	infoPtr->bAutoSize = FALSE;
-	return 0;
-    }
-
-    /* FIXME: optimize to only update size if the new size doesn't */
-    /* match the current size */
-
-    flags = (INT) wParam;
-
-    /* FIXME for flags =
-     * SIZE_MAXIMIZED, SIZE_MAXSHOW, SIZE_MINIMIZED
-     */
 
     TRACE("sizing toolbar!\n");
 
-    if (flags == SIZE_RESTORED) {
-	/* width and height don't apply */
-	parent = GetParent (hwnd);
-	GetClientRect(parent, &parent_rect);
-	x = parent_rect.left;
-	y = parent_rect.top;
+    if (infoPtr->dwExStyle & TBSTYLE_EX_HIDECLIPPEDBUTTONS)
+    {
+        RECT delta_width, delta_height, client, dummy;
+        DWORD min_x, max_x, min_y, max_y;
+        TBUTTON_INFO *btnPtr;
+        INT i;
 
-	if (dwStyle & CCS_NORESIZE) {
-	    uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
-
-	    /*
-             * this sets the working width of the toolbar, and
-             * Calc Toolbar will not adjust it, only the height
-             */
-	    infoPtr->nWidth = parent_rect.right - parent_rect.left;
-	    cy = infoPtr->nHeight;
-	    cx = infoPtr->nWidth;
-	    TOOLBAR_CalcToolbar (hwnd);
-	    infoPtr->nWidth = cx;
-	    infoPtr->nHeight = cy;
-	}
-	else {
-	    infoPtr->nWidth = parent_rect.right - parent_rect.left;
-	    TOOLBAR_CalcToolbar (hwnd);
-	    cy = infoPtr->nHeight;
-	    cx = infoPtr->nWidth;
-
-	    if ((dwStyle & CCS_BOTTOM) == CCS_NOMOVEY) {
-		GetWindowRect(hwnd, &window_rect);
-		ScreenToClient(parent, (LPPOINT)&window_rect.left);
-                y = window_rect.top;
-	    }
-            if ((dwStyle & CCS_BOTTOM) == CCS_BOTTOM) {
-                GetWindowRect(hwnd, &window_rect);
-                y = parent_rect.bottom -
-                    ( window_rect.bottom - window_rect.top);
-            }
-	}
-
-	if (dwStyle & CCS_NOPARENTALIGN) {
-	    uPosFlags |= SWP_NOMOVE;
-	    cy = infoPtr->nHeight;
-	    cx = infoPtr->nWidth;
-	}
-
-	if (!(dwStyle & CCS_NODIVIDER))
-	    cy += GetSystemMetrics(SM_CYEDGE);
-
-	if (dwStyle & WS_BORDER)
-	{
-	    x = y = 1;
-	    cy += GetSystemMetrics(SM_CYEDGE);
-	    cx += GetSystemMetrics(SM_CXEDGE);
-	}
-
-        if(infoPtr->dwExStyle & TBSTYLE_EX_HIDECLIPPEDBUTTONS)
+        GetClientRect(hwnd, &client);
+        if(client.right > infoPtr->client_rect.right)
         {
-            RECT delta_width, delta_height, client, dummy;
-            DWORD min_x, max_x, min_y, max_y;
-            TBUTTON_INFO *btnPtr;
-            INT i;
-
-            GetClientRect(hwnd, &client);
-            if(client.right > infoPtr->client_rect.right)
-            {
-                min_x = infoPtr->client_rect.right;
-                max_x = client.right;
-            }
-            else
-            {
-                max_x = infoPtr->client_rect.right;
-                min_x = client.right;
-            }
-            if(client.bottom > infoPtr->client_rect.bottom)
-            {
-                min_y = infoPtr->client_rect.bottom;
-                max_y = client.bottom;
-            }
-            else
-            {
-                max_y = infoPtr->client_rect.bottom;
-                min_y = client.bottom;
-            }
-
-            SetRect(&delta_width, min_x, 0, max_x, min_y);
-            SetRect(&delta_height, 0, min_y, max_x, max_y);
-
-            TRACE("delta_width %s delta_height %s\n", wine_dbgstr_rect(&delta_width), wine_dbgstr_rect(&delta_height));
-            btnPtr = infoPtr->buttons;
-            for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
-                if(IntersectRect(&dummy, &delta_width, &btnPtr->rect) ||
-                   IntersectRect(&dummy, &delta_height, &btnPtr->rect))
-                    InvalidateRect(hwnd, &btnPtr->rect, TRUE);
+            min_x = infoPtr->client_rect.right;
+            max_x = client.right;
+        }
+        else
+        {
+            max_x = infoPtr->client_rect.right;
+            min_x = client.right;
+        }
+        if(client.bottom > infoPtr->client_rect.bottom)
+        {
+            min_y = infoPtr->client_rect.bottom;
+            max_y = client.bottom;
+        }
+        else
+        {
+            max_y = infoPtr->client_rect.bottom;
+            min_y = client.bottom;
         }
 
-        if((uPosFlags & (SWP_NOSIZE | SWP_NOMOVE)) != (SWP_NOSIZE | SWP_NOMOVE)) 
-            SetWindowPos (hwnd, 0,  x,  y, cx, cy, uPosFlags | SWP_NOZORDER);
+        SetRect(&delta_width, min_x, 0, max_x, min_y);
+        SetRect(&delta_height, 0, min_y, max_x, max_y);
+
+        TRACE("delta_width %s delta_height %s\n", wine_dbgstr_rect(&delta_width), wine_dbgstr_rect(&delta_height));
+        btnPtr = infoPtr->buttons;
+        for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
+            if(IntersectRect(&dummy, &delta_width, &btnPtr->rect) ||
+                IntersectRect(&dummy, &delta_height, &btnPtr->rect))
+                InvalidateRect(hwnd, &btnPtr->rect, TRUE);
     }
     GetClientRect(hwnd, &infoPtr->client_rect);
+    TOOLBAR_AutoSize(hwnd);
     return 0;
 }
 
