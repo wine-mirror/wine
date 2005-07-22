@@ -11,7 +11,8 @@ C_SRCS = \
 	ber.c \
 	bind.c \
 	init.c \
-	main.c
+	main.c \
+	search.c
 
 @MAKE_DLL_RULES@
 

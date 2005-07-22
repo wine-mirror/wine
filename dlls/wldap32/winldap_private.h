@@ -49,6 +49,32 @@ typedef struct ldap
     ULONG ld_options;
 } WLDAP32_LDAP, *WLDAP32_PLDAP;
 
+typedef struct l_timeval
+{
+    LONG tv_sec;
+    LONG tv_usec;
+} LDAP_TIMEVAL, *PLDAP_TIMEVAL;
+
+typedef struct ldapmsg
+{
+    ULONG lm_msgid;
+    ULONG lm_msgtype;
+
+    PVOID lm_ber;
+
+    struct ldapmsg *lm_chain;
+    struct ldapmsg *lm_next;
+    ULONG lm_time;
+
+    WLDAP32_PLDAP Connection;
+    PVOID Request;
+    ULONG lm_returncode;
+    USHORT lm_referral;
+    BOOLEAN lm_chased;
+    BOOLEAN lm_eom;
+    BOOLEAN ConnectionReferenced;
+} WLDAP32_LDAPMessage, *WLDAP32_PLDAPMessage;
+
 ULONG ldap_bindA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
 ULONG ldap_bindW(WLDAP32_LDAP*,PWCHAR,PWCHAR,ULONG);
 ULONG ldap_bind_sA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
@@ -57,6 +83,14 @@ WLDAP32_LDAP *ldap_initA(const PCHAR,ULONG);
 WLDAP32_LDAP *ldap_initW(const PWCHAR,ULONG);
 WLDAP32_LDAP *ldap_openA(PCHAR,ULONG);
 WLDAP32_LDAP *ldap_openW(PWCHAR,ULONG);
+ULONG ldap_searchA(WLDAP32_LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG);
+ULONG ldap_searchW(WLDAP32_LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG);
+ULONG ldap_search_sA(WLDAP32_LDAP*,PCHAR,ULONG,PCHAR,PCHAR[],ULONG,WLDAP32_LDAPMessage**);
+ULONG ldap_search_sW(WLDAP32_LDAP*,PWCHAR,ULONG,PWCHAR,PWCHAR[],ULONG,WLDAP32_LDAPMessage**);
+ULONG ldap_search_stA(WLDAP32_LDAP*,const PCHAR,ULONG,const PCHAR,PCHAR[],ULONG,
+    struct l_timeval*,WLDAP32_LDAPMessage**);
+ULONG ldap_search_stW(WLDAP32_LDAP*,const PWCHAR,ULONG,const PWCHAR,PWCHAR[],ULONG,
+    struct l_timeval*,WLDAP32_LDAPMessage**);
 ULONG ldap_simple_bindA(WLDAP32_LDAP*,PCHAR,PCHAR);
 ULONG ldap_simple_bindW(WLDAP32_LDAP*,PWCHAR,PWCHAR);
 ULONG ldap_simple_bind_sA(WLDAP32_LDAP*,PCHAR,PCHAR);
