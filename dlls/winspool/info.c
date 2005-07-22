@@ -31,7 +31,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <stddef.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <signal.h>
 #ifdef HAVE_CUPS_CUPS_H
 # include <cups/cups.h>
