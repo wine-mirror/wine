@@ -223,3 +223,225 @@ static inline void strarrayfreeU( char **strarray )
         HeapFree( GetProcessHeap(), 0, strarray );
     }
 }
+
+#ifdef HAVE_LDAP
+
+static inline LDAPControlW *controlAtoW( LDAPControlA *control )
+{
+    LDAPControlW *controlW;
+
+    controlW = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControlW) );
+    if (controlW)
+    {
+        memcpy( controlW, control, sizeof(LDAPControlW) );
+        controlW->ldctl_oid = strAtoW( control->ldctl_oid );
+    }
+    return controlW;
+}
+
+static inline LDAPControlA *controlWtoA( LDAPControlW *control )
+{
+    LDAPControlA *controlA;
+
+    controlA = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControl) );
+    if (controlA)
+    {
+        memcpy( controlA, control, sizeof(LDAPControlA) );
+        controlA->ldctl_oid = strWtoA( control->ldctl_oid );
+    }
+    return controlA;
+}
+
+static inline LDAPControl *controlWtoU( LDAPControlW *control )
+{
+    LDAPControl *controlU;
+
+    controlU = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControl) );
+    if (controlU)
+    {
+        memcpy( controlU, control, sizeof(LDAPControl) );
+        controlU->ldctl_oid = strWtoU( control->ldctl_oid );
+    }
+    return controlU;
+}
+
+static inline LDAPControlW *controlUtoW( LDAPControl *control )
+{
+    LDAPControlW *controlW;
+
+    controlW = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControlW) );
+    if (controlW)
+    {
+        memcpy( controlW, control, sizeof(LDAPControlW) );
+        controlW->ldctl_oid = strUtoW( control->ldctl_oid );
+    }
+    return controlW;
+}
+
+static inline void controlfreeA( LDAPControlA *control )
+{
+    if (control)
+    {
+        strfreeA( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, control );
+    }
+}
+
+static inline void controlfreeW( LDAPControlW *control )
+{
+    if (control)
+    {
+        strfreeW( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, control );
+    }
+}
+
+static inline void controlfreeU( LDAPControl *control )
+{
+    if (control)
+    {
+        strfreeU( control->ldctl_oid );
+        HeapFree( GetProcessHeap(), 0, control );
+    }
+}
+
+static inline DWORD controlarraylenA( LDAPControlA **controlarray )
+{
+    LDAPControlA **p = controlarray;
+    while (*p) p++;
+    return p - controlarray;
+}
+
+static inline DWORD controlarraylenW( LDAPControlW **controlarray )
+{
+    LDAPControlW **p = controlarray;
+    while (*p) p++;
+    return p - controlarray;
+}
+
+static inline DWORD controlarraylenU( LDAPControl **controlarray )
+{
+    LDAPControl **p = controlarray;
+    while (*p) p++;
+    return p - controlarray;
+}
+
+static inline LDAPControlW **controlarrayAtoW( LDAPControlA **controlarray )
+{
+    LDAPControlW **controlarrayW = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControlW*) * (controlarraylenA( controlarray ) + 1);
+        controlarrayW = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (controlarrayW)
+        {
+            LDAPControlA **p = controlarray;
+            LDAPControlW **q = controlarrayW;
+
+            while (*p) *q++ = controlAtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayW;
+}
+
+static inline LDAPControlA **controlarrayWtoA( LDAPControlW **controlarray )
+{
+    LDAPControlA **controlarrayA = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControl*) * (controlarraylenW( controlarray ) + 1);
+        controlarrayA = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (controlarrayA)
+        {
+            LDAPControlW **p = controlarray;
+            LDAPControlA **q = controlarrayA;
+
+            while (*p) *q++ = controlWtoA( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayA;
+}
+
+static inline LDAPControl **controlarrayWtoU( LDAPControlW **controlarray )
+{
+    LDAPControl **controlarrayU = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControl*) * (controlarraylenW( controlarray ) + 1);
+        controlarrayU = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (controlarrayU)
+        {
+            LDAPControlW **p = controlarray;
+            LDAPControl **q = controlarrayU;
+
+            while (*p) *q++ = controlWtoU( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayU;
+}
+
+static inline LDAPControlW **controlarrayUtoW( LDAPControl **controlarray )
+{
+    LDAPControlW **controlarrayW = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControlW*) * (controlarraylenU( controlarray ) + 1);
+        controlarrayW = HeapAlloc( GetProcessHeap(), 0, size );
+
+        if (controlarrayW)
+        {
+            LDAPControl **p = controlarray;
+            LDAPControlW **q = controlarrayW;
+
+            while (*p) *q++ = controlUtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayW;
+}
+
+static inline void controlarrayfreeA( LDAPControlA **controlarray )
+{
+    if (controlarray)
+    {
+        LDAPControlA **p = controlarray;
+        while (*p) controlfreeA( *p++ );
+        HeapFree( GetProcessHeap(), 0, controlarray );
+    }
+}
+
+static inline void controlarrayfreeW( LDAPControlW **controlarray )
+{
+    if (controlarray)
+    {
+        LDAPControlW **p = controlarray;
+        while (*p) controlfreeW( *p++ );
+        HeapFree( GetProcessHeap(), 0, controlarray );
+    }
+}
+
+static inline void controlarrayfreeU( LDAPControl **controlarray )
+{
+    if (controlarray)
+    {
+        LDAPControl **p = controlarray;
+        while (*p) controlfreeU( *p++ );
+        HeapFree( GetProcessHeap(), 0, controlarray );
+    }
+}
+
+#endif /* HAVE_LDAP */

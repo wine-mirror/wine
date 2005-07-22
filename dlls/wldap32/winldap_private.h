@@ -75,6 +75,26 @@ typedef struct ldapmsg
     BOOLEAN ConnectionReferenced;
 } WLDAP32_LDAPMessage, *WLDAP32_PLDAPMessage;
 
+typedef struct WLDAP32_berval
+{
+    ULONG bv_len;
+    PCHAR bv_val;
+} LDAP_BERVAL, *PLDAP_BERVAL, BERVAL, *PBERVAL, WLDAP32_BerValue;
+
+typedef struct ldapcontrolA
+{
+    PCHAR ldctl_oid;
+    struct WLDAP32_berval ldctl_value;
+    BOOLEAN ldctl_iscritical;
+} LDAPControlA, *PLDAPControlA;
+
+typedef struct ldapcontrolW
+{
+    PWCHAR ldctl_oid;
+    struct WLDAP32_berval ldctl_value;
+    BOOLEAN ldctl_iscritical;
+} LDAPControlW, *PLDAPControlW;
+
 ULONG ldap_bindA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
 ULONG ldap_bindW(WLDAP32_LDAP*,PWCHAR,PWCHAR,ULONG);
 ULONG ldap_bind_sA(WLDAP32_LDAP*,PCHAR,PCHAR,ULONG);
