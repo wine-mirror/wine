@@ -223,8 +223,8 @@ long globalChangeGlRam(long glram);
 /* Memory and object tracking */
 
 /*Structure for holding information on all direct3d objects
-usefull for making sure tracking is ok and when release is called on a device!
-and probably quite handy for debuggin and dumping states out
+useful for making sure tracking is ok and when release is called on a device!
+and probably quite handy for debugging and dumping states out
 */
 typedef struct WineD3DGlobalStatistics {
     int glsurfaceram; /* The aproximate amount of glTexture memory allocated for textures */

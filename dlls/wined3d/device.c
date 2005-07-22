@@ -4928,7 +4928,7 @@ HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, IWineD3
 
 
         } else {
-            /* some applications can not handle odd pitches returned by soft non-power2, so we have
+            /* some applications cannot handle odd pitches returned by soft non-power2, so we have
                to repack the data from pow2Width/Height to expected Width,Height, this makes the
                data returned by GetData non-power2 width/height with hardware non-power2
                pow2Width/height are set to surface width height, repacking isn't needed so it
@@ -5460,21 +5460,21 @@ HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     else if (pbuffer_support == TRUE && cfgs != NULL /* && some test to make sure that opengl supports pbuffers */) {
 
         /** ********************************************************************
-        * This is a quickley hacked out implementation of offscreen textures
-        * it will work in most cases but there may be problems if the client
-        * modifies the textre directly, or expects the contenst of the rendertarget
-        * to be persistant.
+        * This is a quickly hacked out implementation of offscreen textures.
+        * It will work in most cases but there may be problems if the client
+        * modifies the texture directly, or expects the contents of the rendertarget
+        * to be persistent.
         *
-        * There are some real speed vs compatability issues here:
+        * There are some real speed vs compatibility issues here:
         *    we should really use a new context for every texture, but that eats ram.
         *    we should also be restoring the texture to the pbuffer but that eats CPU
         *    we can also 'reuse' the current pbuffer if the size is larger than the requested buffer,
         *    but if this means reusing the display backbuffer then we need to make sure that
         *    states are correctly preserved.
         * In many cases I would expect that we can 'skip' some functions, such as preserving states,
-        * and gain a good performance increase at the cost of compatability.
+        * and gain a good performance increase at the cost of compatibility.
         * I would suggest that, when this is the case, a user configurable flag be made
-        * available, alowing the user to choose the best emmulated experiance for them.
+        * available, allowing the user to choose the best emmulated experience for them.
          *********************************************************************/
 
         XVisualInfo *visinfo;

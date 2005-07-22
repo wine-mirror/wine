@@ -914,7 +914,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
         }
     } else {
 
-       /* TODO: possibly use texture recrangle (though we probably more compatable without it) */
+       /* TODO: possibly use texture rectangle (though we are probably more compatible without it) */
         if (This->nonpow2 == TRUE) {
 
             TRACE("non power of two support\n");

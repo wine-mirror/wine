@@ -99,7 +99,7 @@ static void testLoadLibraryA_Wrong(void)
 {
     HMODULE hModule;
 
-    /* Try to load a non-existing dll */
+    /* Try to load a nonexistent dll */
     SetLastError(0xdeadbeef);
     hModule = LoadLibraryA("non_ex_pv.dll");
     ok( !hModule, "non_ex_pv.dll should be not loadable\n");
