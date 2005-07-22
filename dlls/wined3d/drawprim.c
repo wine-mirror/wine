@@ -537,7 +537,6 @@ static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexS
 
     short         LoopThroughTo = 0;
     short         nStream;
-    BOOL          canDoViaGLPointers = TRUE;
     int           numBlends;
     int           numTextures;
     int           textureNo;
