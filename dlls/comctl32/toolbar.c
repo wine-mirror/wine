@@ -1565,7 +1565,6 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     INT x, y, cx, cy;
     SIZE  sizeString, sizeButton;
     BOOL bWrap;
-    BOOL usesBitmaps = FALSE;
     BOOL validImageList = FALSE;
     BOOL hasDropDownArrows = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle);
 
@@ -1573,14 +1572,9 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
-    for (i = 0; i < infoPtr->nNumButtons && !usesBitmaps; i++)
-    {
-	if (TOOLBAR_IsValidBitmapIndex(infoPtr,infoPtr->buttons[i].iBitmap))
-	    usesBitmaps = TRUE;
-    }
     if (TOOLBAR_IsValidImageList(infoPtr, 0))
         validImageList = TRUE;
-    sizeButton = TOOLBAR_MeasureButton(infoPtr, sizeString, usesBitmaps, validImageList);
+    sizeButton = TOOLBAR_MeasureButton(infoPtr, sizeString, TRUE, validImageList);
     infoPtr->nButtonWidth = sizeButton.cx;
     infoPtr->nButtonHeight = sizeButton.cy;
 
@@ -1592,7 +1586,10 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     TOOLBAR_WrapToolbar( hwnd, dwStyle );
 
     x  = infoPtr->nIndent;
-    y  = 0;
+    if (infoPtr->dwStyle & TBSTYLE_FLAT)
+        y = 0;
+    else
+        y = TOP_BORDER;
 
     /* from above, minimum is a button, and possible text */
     cx = infoPtr->nButtonWidth;
