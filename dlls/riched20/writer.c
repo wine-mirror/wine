@@ -759,7 +759,7 @@ ME_StreamOutText(ME_TextEditor *editor, int nStart, int nChars, DWORD dwFormat)
         }
         WideCharToMultiByte(nCodePage, 0, item->member.run.strText->szData + nStart,
                             nLen, buffer, nSize, NULL, NULL);
-        success = ME_StreamOutMove(editor, buffer, nSize - 1);
+        success = ME_StreamOutMove(editor, buffer, nSize);
       }
     }
     
