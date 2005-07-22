@@ -28,9 +28,9 @@
 @ cdecl ldap_search(ptr str long str ptr long) ldap_searchA
 @ cdecl ldap_searchA(ptr str long str ptr long)
 @ cdecl ldap_searchW(ptr wstr long wstr ptr long)
-@ cdecl ldap_search_s(ptr str long str ptr long) ldap_search_sA
-@ cdecl ldap_search_sA(ptr str long str ptr long)
-@ cdecl ldap_search_sW(ptr wstr long wstr ptr long)
+@ cdecl ldap_search_s(ptr str long str ptr long ptr) ldap_search_sA
+@ cdecl ldap_search_sA(ptr str long str ptr long ptr)
+@ cdecl ldap_search_sW(ptr wstr long wstr ptr long ptr)
 @ cdecl ldap_search_st(ptr str long str ptr long ptr ptr) ldap_search_stA
 @ cdecl ldap_search_stA(ptr str long str ptr long ptr ptr)
 @ cdecl ldap_search_stW(ptr wstr long wstr ptr long ptr ptr)
