@@ -676,7 +676,15 @@ static void test_query_process_times(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status);
 
     process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
-    trace("ProcessTimes for process with ID : %ld\n", one_before_last_pid);
+    if (!process)
+    {
+        trace("Could not open process with ID : %ld, error : %08lx. Going to use current one.\n", one_before_last_pid, GetLastError());
+        process = GetCurrentProcess();
+        trace("ProcessTimes for current process\n");
+    }
+    else
+        trace("ProcessTimes for process with ID : %ld\n", one_before_last_pid);
+
     status = pNtQueryInformationProcess( process, ProcessTimes, &spti, sizeof(spti), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok( sizeof(spti) == ReturnLength, "Inconsistent length (%d) <-> (%ld)\n", sizeof(spti), ReturnLength);
