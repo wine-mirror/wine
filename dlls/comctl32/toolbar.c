@@ -155,7 +155,6 @@ typedef struct
     HWND     hwndToolTip;     /* handle to tool tip control */
     HWND     hwndNotify;      /* handle to the window that gets notifications */
     HWND     hwndSelf;        /* my own handle */
-    BOOL     bBtnTranspnt;    /* button transparency flag */
     BOOL     bAnchor;         /* anchor highlight enabled */
     BOOL     bDoRedraw;       /* Redraw status */
     BOOL     bDragOutSent;    /* has TBN_DRAGOUT notification been sent for this drag? */
@@ -579,7 +578,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, RECT *rcText, LPWSTR lpText,
 	else if ((state & CDIS_MARKED) && !(infoPtr->dwItemCDFlag & TBCDRF_NOMARK)) {
 	    clrOld = SetTextColor (hdc, tbcd->clrTextHighlight);
 	    clrOldBk = SetBkColor (hdc, tbcd->clrMark);
-	    oldBkMode = SetBkMode (hdc, OPAQUE); /* FIXME: should this be in the NMTBCUSTOMDRAW structure? */
+	    oldBkMode = SetBkMode (hdc, tbcd->nHLStringBkMode);
 	}
 	else {
 	    clrOld = SetTextColor (hdc, tbcd->clrText);
@@ -814,6 +813,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     NMTBCUSTOMDRAW tbcd;
     DWORD ntfret;
     INT offset;
+    INT oldBkMode;
 
     rc = btnPtr->rect;
     CopyRect (&rcArrow, &rc);
@@ -893,8 +893,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     tbcd.clrBtnHighlight = comctl32_color.clrBtnHighlight;
     tbcd.clrMark = comctl32_color.clrHighlight;
     tbcd.clrHighlightHotTrack = 0;
-    tbcd.nStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
-    tbcd.nHLStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
+    tbcd.nStringBkMode = TRANSPARENT;
+    tbcd.nHLStringBkMode = OPAQUE;
     /* MSDN says that this is the text rectangle.
      * But (why always a but) tracing of v5.7 of native shows
      * that this is really a *relative* rectangle based on the
@@ -982,8 +982,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (drawSepDropDownArrow)
         TOOLBAR_DrawSepDDArrow(infoPtr, &tbcd, &rcArrow, btnPtr->bDropDownPressed);
 
+    oldBkMode = SetBkMode (hdc, tbcd.nStringBkMode);
     if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
         TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
+    SetBkMode (hdc, oldBkMode);
 
     TOOLBAR_DrawImage(infoPtr, btnPtr, rcBitmap.left, rcBitmap.top, &tbcd);
 
@@ -1006,16 +1008,8 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 FINALNOTIFY:
     if (infoPtr->dwItemCustDraw & CDRF_NOTIFYPOSTPAINT)
     {
-	tbcd.nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
-	tbcd.nmcd.hdc = hdc;
-	tbcd.nmcd.rc = rc;
-	tbcd.nmcd.dwItemSpec = btnPtr->idCommand;
-	tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr);
-	tbcd.nmcd.lItemlParam = btnPtr->dwData;
-	tbcd.rcText = rcText;
-	tbcd.nStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
-	tbcd.nHLStringBkMode = (infoPtr->bBtnTranspnt) ? TRANSPARENT : OPAQUE;
-	ntfret = TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
+        tbcd.nmcd.dwDrawStage = CDDS_ITEMPOSTPAINT;
+        TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
     }
 
 }
@@ -1026,7 +1020,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     TBUTTON_INFO *btnPtr;
-    INT i, oldBKmode = 0;
+    INT i;
     RECT rcTemp, rcClient;
     NMTBCUSTOMDRAW tbcd;
     DWORD ntfret;
@@ -1053,9 +1047,6 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     tbcd.nmcd.rc = ps->rcPaint;
     ntfret = TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
     infoPtr->dwBaseCustDraw = ntfret & 0xffff;
-
-    if (infoPtr->bBtnTranspnt)
-	oldBKmode = SetBkMode (hdc, TRANSPARENT);
 
     GetClientRect(hwnd, &rcClient);
 
@@ -1090,9 +1081,6 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
             rcInsertMark.left = rcInsertMark.right = rcButton.left - INSERTMARK_WIDTH;
         COMCTL32_DrawInsertMark(hdc, &rcInsertMark, infoPtr->clrInsertMark, FALSE);
     }
-
-    if (infoPtr->bBtnTranspnt && (oldBKmode != TRANSPARENT))
-	SetBkMode (hdc, oldBKmode);
 
     if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYPOSTPAINT)
     {
@@ -5565,7 +5553,6 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -1;
     infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-    infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->bDragOutSent = FALSE;
@@ -6687,8 +6674,6 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
         else
             infoPtr->dwDTFlags = DT_CENTER | DT_END_ELLIPSIS;
 
-	infoPtr->bBtnTranspnt = (lpStyle->styleNew &
-				 (TBSTYLE_FLAT | TBSTYLE_LIST));
         TOOLBAR_CheckStyle (hwnd, lpStyle->styleNew);
 
         TRACE("new style 0x%08lx\n", lpStyle->styleNew);
