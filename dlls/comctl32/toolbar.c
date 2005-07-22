@@ -1175,11 +1175,19 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
     lpSize->cx = 0;
     lpSize->cy = 0;
 
-    if(infoPtr->nMaxTextRows == 0)
+    if (infoPtr->nMaxTextRows == 0)
         return;
 
     hdc = GetDC (hwnd);
     hOldFont = SelectObject (hdc, infoPtr->hFont);
+
+    if (infoPtr->nNumButtons == 0)
+    {
+        TEXTMETRICW tm;
+
+        GetTextMetricsW(hdc, &tm);
+        lpSize->cy = tm.tmHeight;
+    }
 
     btnPtr = infoPtr->buttons;
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
