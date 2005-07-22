@@ -1596,8 +1596,8 @@ INT16 WINAPI GetModuleFileName16( HINSTANCE16 hModule, LPSTR lpFileName,
 
     if (!(pModule = NE_GetPtr( hModule ))) return 0;
     lstrcpynA( lpFileName, NE_MODULE_NAME(pModule), nSize );
-    if (pModule->ne_expver >= 0x400)
-        GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, nSize);
+    if (pModule->ne_expver < 0x400)
+        GetShortPathNameA(NE_MODULE_NAME(pModule), lpFileName, nSize);
     TRACE("%04x -> '%s'\n", hModule, lpFileName );
     return strlen(lpFileName);
 }
