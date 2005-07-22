@@ -205,6 +205,9 @@
  * - when should EN_SELCHANGE be sent after text change ? (before/after EN_UPDATE?)
  * - WM_SETTEXT may use wrong style (but I'm 80% sure it's OK)
  * - EM_GETCHARFORMAT with SCF_SELECTION may not behave 100% like in original (but very close)
+ * - full justification
+ * - hyphenation
+ * - tables
  *
  * Bugs that are probably fixed, but not so easy to verify:
  * - EN_UPDATE/EN_CHANGE are handled very incorrectly (should be OK now)
