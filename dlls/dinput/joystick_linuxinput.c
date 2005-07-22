@@ -468,7 +468,9 @@ map_axis(JoystickImpl* This, int axis, int val) {
     if (xmin == xmax) return val;
 
     /* map the value from the hmin-hmax range into the wmin-wmax range */
-    ret = (val * (wmax-wmin)) / (hmax-hmin) + wmin;
+    ret = ((val-hmin) * (wmax-wmin)) / (hmax-hmin) + wmin;
+
+    TRACE("xmin=%d xmax=%d hmin=%d hmax=%d wmin=%d wmax=%d val=%d ret=%d\n", xmin, xmax, hmin, hmax, wmin, wmax, val, ret);
 
 #if 0
     /* deadzone doesn't work comfortably enough right now. needs more testing*/
@@ -492,6 +494,8 @@ static void fake_current_js_state(JoystickImpl *ji)
 	ji->js.lRx = map_axis(ji, ABS_RX, ji->axes[ABS_RX][AXE_ABS]);
 	ji->js.lRy = map_axis(ji, ABS_RY, ji->axes[ABS_RY][AXE_ABS]);
 	ji->js.lRz = map_axis(ji, ABS_RZ, ji->axes[ABS_RZ][AXE_ABS]);
+	ji->js.rglSlider[0] = map_axis(ji, ABS_THROTTLE, ji->axes[ABS_THROTTLE][AXE_ABS]);
+	ji->js.rglSlider[1] = map_axis(ji, ABS_RUDDER,   ji->axes[ABS_RUDDER  ][AXE_ABS]);
 }
 
 static void joy_polldev(JoystickImpl *This) {
@@ -613,6 +617,14 @@ static void joy_polldev(JoystickImpl *This) {
 		This->js.lRz = map_axis(This,ABS_RZ,ie.value);
 		GEN_EVENT(DIJOFS_RZ,This->js.lRz,ie.time.tv_usec,(This->dinput->evsequence)++);
 		break;
+	    case ABS_THROTTLE:
+                This->js.rglSlider[0] = map_axis(This,ABS_THROTTLE,ie.value);
+                GEN_EVENT(DIJOFS_SLIDER(0),This->js.rglSlider[0],ie.time.tv_usec,(This->dinput->evsequence)++);
+                break;
+	    case ABS_RUDDER:
+                This->js.rglSlider[1] = map_axis(This,ABS_RUDDER,ie.value);
+                GEN_EVENT(DIJOFS_SLIDER(1),This->js.rglSlider[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                break;
 	    default:
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
 		break;
@@ -701,6 +713,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       case 12:  /* Rx */
       case 16:  /* Ry */
       case 20:  /* Rz */
+      case 24:  /* Slider 0 -> Throttle */
+      case 28:  /* Slider 1 -> Rudder */
 	  This->wantmin[ph->dwObj/4] = pr->lMin;
 	  This->wantmax[ph->dwObj/4] = pr->lMax;
 	  break;
@@ -845,6 +859,10 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       case ABS_THROTTLE:
 	ddoi.guidType = GUID_Slider;
 	ddoi.dwOfs = DIJOFS_SLIDER(0);
+	break;
+      case ABS_RUDDER:
+	ddoi.guidType = GUID_Slider;
+	ddoi.dwOfs = DIJOFS_SLIDER(1);
 	break;
       default:
 	FIXME("unhandled abs axis %d, ignoring!\n",i);
