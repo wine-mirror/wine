@@ -249,6 +249,7 @@ static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies);
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id);
 static LRESULT TOOLBAR_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static void TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason);
+static LRESULT TOOLBAR_AutoSize(HWND hwnd);
 
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
@@ -2826,6 +2827,7 @@ TOOLBAR_AddButtonsA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     TOOLBAR_CalcToolbar (hwnd);
+    TOOLBAR_AutoSize (hwnd);
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
@@ -2894,6 +2896,7 @@ TOOLBAR_AddButtonsW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     }
 
     TOOLBAR_CalcToolbar (hwnd);
+    TOOLBAR_AutoSize (hwnd);
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
@@ -3990,6 +3993,7 @@ TOOLBAR_InsertButtonA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     Free (oldButtons);
 
     TOOLBAR_CalcToolbar (hwnd);
+    TOOLBAR_AutoSize (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
 
@@ -4090,6 +4094,7 @@ TOOLBAR_InsertButtonW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     Free (oldButtons);
 
     TOOLBAR_CalcToolbar (hwnd);
+    TOOLBAR_AutoSize (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
 
