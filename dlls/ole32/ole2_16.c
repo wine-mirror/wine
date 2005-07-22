@@ -152,3 +152,17 @@ HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName,LPMONIKER* ppmk)
     FIXME("(%s,%p),stub!\n",lpszPathName,ppmk);
     return E_NOTIMPL;
 }
+
+/******************************************************************************
+ *        OleSetMenuDescriptor (OLE2.41)
+ */
+HRESULT WINAPI OleSetMenuDescriptor16(
+    HOLEMENU               hOleMenu, /* FIXME: HOLEMENU16 likely */
+    HWND16                 hwndFrame,
+    HWND16                 hwndActiveObject,
+    LPOLEINPLACEFRAME        lpFrame,
+    LPOLEINPLACEACTIVEOBJECT lpActiveObject)
+{
+    FIXME("(%lx, %x, %x, %p, %p), stub!\n", hOleMenu, hwndFrame, hwndActiveObject, lpFrame, lpActiveObject);
+    return E_NOTIMPL;
+}
