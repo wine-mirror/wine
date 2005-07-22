@@ -5153,12 +5153,12 @@ INT_PTR CALLBACK file_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
             if(LOWORD(wparam) == IDOK)
             {
                 HANDLE hf;
-                DWORD len = SendDlgItemMessageW(hwnd, 201, WM_GETTEXTLENGTH, 0, 0);
+                DWORD len = SendDlgItemMessageW(hwnd, EDITBOX, WM_GETTEXTLENGTH, 0, 0);
                 LPWSTR *output;
 
                 filename = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
                 GetDlgItemTextW(hwnd, EDITBOX, filename, len + 1);
-                
+
                 if(GetFileAttributesW(filename) != INVALID_FILE_ATTRIBUTES)
                 {
                     WCHAR caption[200], message[200];
@@ -5203,14 +5203,22 @@ INT_PTR CALLBACK file_dlg_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 }
 
 /*****************************************************************************
+ *          get_filename
+ */
+static BOOL get_filename(LPWSTR *filename)
+{
+    return DialogBoxParamW(WINSPOOL_hInstance, MAKEINTRESOURCEW(FILENAME_DIALOG), GetForegroundWindow(),
+                           file_dlg_proc, (LPARAM)filename) == IDOK;
+}
+
+/*****************************************************************************
  *          schedule_file
  */
 static BOOL schedule_file(LPCWSTR filename)
 {
     LPWSTR output = NULL;
 
-    if(DialogBoxParamW(WINSPOOL_hInstance, MAKEINTRESOURCEW(FILENAME_DIALOG), GetForegroundWindow(),
-                       file_dlg_proc, (LPARAM)&output) == IDOK)
+    if(get_filename(&output))
     {
         TRACE("copy to %s\n", debugstr_w(output));
         CopyFileW(filename, output, FALSE);
@@ -5402,5 +5410,101 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
     }
 end:
     LeaveCriticalSection(&printer_handles_cs);
+    return ret;
+}
+
+/*****************************************************************************
+ *          StartDocDlgA [WINSPOOL.@]
+ */
+ LPSTR WINAPI StartDocDlgA( HANDLE hPrinter, DOCINFOA *doc )
+{
+    UNICODE_STRING usBuffer;
+    DOCINFOW docW;
+    LPWSTR retW;
+    LPSTR ret = NULL;
+
+    docW.cbSize = sizeof(docW);
+    docW.lpszDocName = asciitounicode(&usBuffer, doc->lpszDocName);
+    docW.lpszOutput = asciitounicode(&usBuffer, doc->lpszOutput);
+    docW.lpszDatatype = asciitounicode(&usBuffer, doc->lpszDatatype);
+    docW.fwType = doc->fwType;
+
+    retW = StartDocDlgW(hPrinter, &docW);
+
+    if(retW)
+    {
+        DWORD len = WideCharToMultiByte(CP_ACP, 0, retW, -1, NULL, 0, NULL, NULL);
+        ret = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, retW, -1, ret, len, NULL, NULL);
+        HeapFree(GetProcessHeap(), 0, retW);
+    }
+
+    HeapFree(GetProcessHeap(), 0, (LPWSTR)docW.lpszDatatype);
+    HeapFree(GetProcessHeap(), 0, (LPWSTR)docW.lpszOutput);
+    HeapFree(GetProcessHeap(), 0, (LPWSTR)docW.lpszDocName);
+
+    return ret;
+}
+
+/*****************************************************************************
+ *          StartDocDlgW [WINSPOOL.@]
+ *
+ * Undocumented: Apparently used by gdi32:StartDocW() to popup the file dialog
+ * when lpszOutput is "FILE:" or if lpszOutput is NULL and the default printer
+ * port is "FILE:". Also returns the full path if passed a relative path.
+ *
+ * The caller should free the returned string from the process heap.
+ */
+LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
+{
+    LPWSTR ret = NULL;
+    DWORD len, attr;
+
+    if(doc->lpszOutput == NULL) /* Check whether default port is FILE: */
+    {
+        PRINTER_INFO_5W *pi5;
+        GetPrinterW(hPrinter, 5, NULL, 0, &len);
+        if(GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+            return NULL;
+        pi5 = HeapAlloc(GetProcessHeap(), 0, len);
+        GetPrinterW(hPrinter, 5, (LPBYTE)pi5, len, &len);
+        if(!pi5->pPortName || strcmpW(pi5->pPortName, FILE_Port))
+        {
+            HeapFree(GetProcessHeap(), 0, pi5);
+            return NULL;
+        }
+        HeapFree(GetProcessHeap(), 0, pi5);
+    }
+
+    if(doc->lpszOutput == NULL || !strcmpW(doc->lpszOutput, FILE_Port))
+    {
+        LPWSTR name;
+        get_filename(&name);
+        if(name)
+        {
+            if(!(len = GetFullPathNameW(name, 0, NULL, NULL)))
+            {
+                HeapFree(GetProcessHeap(), 0, name);
+                return NULL;
+            }
+            ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+            GetFullPathNameW(name, len, ret, NULL);
+            HeapFree(GetProcessHeap(), 0, name);
+        }
+        return ret;
+    }
+
+    if(!(len = GetFullPathNameW(doc->lpszOutput, 0, NULL, NULL)))
+        return NULL;
+
+    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    GetFullPathNameW(doc->lpszOutput, len, ret, NULL);
+        
+    attr = GetFileAttributesW(ret);
+    if(attr != INVALID_FILE_ATTRIBUTES && (attr & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        HeapFree(GetProcessHeap(), 0, ret);
+        ret = NULL;
+    }
     return ret;
 }
