@@ -447,125 +447,19 @@ static inline void RELAY_PrintArgs( int *args, int nb_args, unsigned int typemas
     }
 }
 
-
-typedef LONGLONG (*LONGLONG_CPROC)();
-typedef LONGLONG (WINAPI *LONGLONG_FARPROC)();
-
-
-/***********************************************************************
- *           call_cdecl_function
- */
-static LONGLONG call_cdecl_function( LONGLONG_CPROC func, int nb_args, const int *args )
-{
-    LONGLONG ret;
-    switch(nb_args)
-    {
-    case 0: ret = func(); break;
-    case 1: ret = func(args[0]); break;
-    case 2: ret = func(args[0],args[1]); break;
-    case 3: ret = func(args[0],args[1],args[2]); break;
-    case 4: ret = func(args[0],args[1],args[2],args[3]); break;
-    case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
-    case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
-                       args[5]); break;
-    case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6]); break;
-    case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7]); break;
-    case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7],args[8]); break;
-    case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9]); break;
-    case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10]); break;
-    case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],
-                        args[11]); break;
-    case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12]); break;
-    case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13]); break;
-    case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14]); break;
-    case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15]); break;
-    case 17: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16]); break;
-    case 18: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16],
-                        args[17]); break;
-    default:
-        ERR( "Unsupported nb of args %d\n", nb_args );
-        assert(FALSE);
-        ret = 0;
-        break;
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           call_stdcall_function
- */
-static LONGLONG call_stdcall_function( LONGLONG_FARPROC func, int nb_args, const int *args )
-{
-    LONGLONG ret;
-    switch(nb_args)
-    {
-    case 0: ret = func(); break;
-    case 1: ret = func(args[0]); break;
-    case 2: ret = func(args[0],args[1]); break;
-    case 3: ret = func(args[0],args[1],args[2]); break;
-    case 4: ret = func(args[0],args[1],args[2],args[3]); break;
-    case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
-    case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
-                       args[5]); break;
-    case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6]); break;
-    case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7]); break;
-    case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7],args[8]); break;
-    case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9]); break;
-    case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10]); break;
-    case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],
-                        args[11]); break;
-    case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12]); break;
-    case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13]); break;
-    case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14]); break;
-    case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15]); break;
-    case 17: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16]); break;
-    case 18: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16],
-                        args[17]); break;
-    default:
-        ERR( "Unsupported nb of args %d\n", nb_args );
-        assert(FALSE);
-        ret = 0;
-        break;
-    }
-    return ret;
-}
+extern LONGLONG call_entry_point( void *func, int nb_args, const int *args );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "\tpushl %ebp\n"
+                   "\tmovl %esp,%ebp\n"
+                   "\tmovl 12(%ebp),%ecx\n"
+                   "\tmovl 16(%ebp),%edx\n"
+                   "\tjecxz 1f\n"
+                   "2:\tpushl -4(%edx,%ecx,4)\n"
+                   "\tloop 2b\n"
+                   "1:\tcall *8(%ebp)\n"
+                   "\tmovl %ebp,%esp\n"
+                   "\tleave\n"
+                   "\tret" );
 
 
 /***********************************************************************
@@ -598,14 +492,7 @@ static LONGLONG RELAY_CallFrom32( int ret_addr, ... )
         DPRINTF( ") ret=%08x\n", ret_addr );
     }
 
-    if (relay->ret == 0xc3) /* cdecl */
-    {
-        ret = call_cdecl_function( (LONGLONG_CPROC)relay->orig, nb_args, args );
-    }
-    else  /* stdcall */
-    {
-        ret = call_stdcall_function( (LONGLONG_FARPROC)relay->orig, nb_args, args );
-    }
+    ret = call_entry_point( relay->orig, nb_args, args );
 
     if (TRACE_ON(relay))
     {
@@ -676,16 +563,8 @@ void WINAPI __regs_RELAY_CallFrom32Regs( CONTEXT86 *context )
 
     memcpy( args_copy, args, nb_args * sizeof(args[0]) );
     args_copy[nb_args] = (int)context;  /* append context argument */
-    if (relay->ret == 0xc3) /* cdecl */
-    {
-        call_cdecl_function( (LONGLONG_CPROC)(entry_point + 5 + *(DWORD *)(entry_point + 5)),
-                             nb_args+1, args_copy );
-    }
-    else  /* stdcall */
-    {
-        call_stdcall_function( (LONGLONG_FARPROC)(entry_point + 5 + *(DWORD *)(entry_point + 5)),
-                               nb_args+1, args_copy );
-    }
+
+    call_entry_point( (entry_point + 5 + *(DWORD *)(entry_point + 5)), nb_args+1, args_copy );
 
     if (TRACE_ON(relay))
     {

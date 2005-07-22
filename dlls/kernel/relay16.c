@@ -281,123 +281,19 @@ static const CALLFROM16 *get_entry_point( STACK16FRAME *frame, LPSTR module, LPS
 }
 
 
-typedef int (*CDECL_PROC)();
-typedef int (WINAPI *STDCALL_PROC)();
-
-/***********************************************************************
- *           call_cdecl_function
- */
-static int call_cdecl_function( CDECL_PROC func, int nb_args, const int *args )
-{
-    int ret;
-    switch(nb_args)
-    {
-    case 0: ret = func(); break;
-    case 1: ret = func(args[0]); break;
-    case 2: ret = func(args[0],args[1]); break;
-    case 3: ret = func(args[0],args[1],args[2]); break;
-    case 4: ret = func(args[0],args[1],args[2],args[3]); break;
-    case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
-    case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
-                       args[5]); break;
-    case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6]); break;
-    case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7]); break;
-    case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7],args[8]); break;
-    case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9]); break;
-    case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10]); break;
-    case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],
-                        args[11]); break;
-    case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12]); break;
-    case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13]); break;
-    case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14]); break;
-    case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15]); break;
-    case 17: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16]); break;
-    case 18: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16],
-                        args[17]); break;
-    default:
-        ERR( "Unsupported nb of args %d\n", nb_args );
-        assert(FALSE);
-        ret = 0;
-        break;
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           call_stdcall_function
- */
-static inline int call_stdcall_function( STDCALL_PROC func, int nb_args, const int *args )
-{
-    int ret;
-    switch(nb_args)
-    {
-    case 0: ret = func(); break;
-    case 1: ret = func(args[0]); break;
-    case 2: ret = func(args[0],args[1]); break;
-    case 3: ret = func(args[0],args[1],args[2]); break;
-    case 4: ret = func(args[0],args[1],args[2],args[3]); break;
-    case 5: ret = func(args[0],args[1],args[2],args[3],args[4]); break;
-    case 6: ret = func(args[0],args[1],args[2],args[3],args[4],
-                       args[5]); break;
-    case 7: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6]); break;
-    case 8: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7]); break;
-    case 9: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                       args[6],args[7],args[8]); break;
-    case 10: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9]); break;
-    case 11: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10]); break;
-    case 12: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],
-                        args[11]); break;
-    case 13: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12]); break;
-    case 14: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13]); break;
-    case 15: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14]); break;
-    case 16: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15]); break;
-    case 17: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16]); break;
-    case 18: ret = func(args[0],args[1],args[2],args[3],args[4],args[5],
-                        args[6],args[7],args[8],args[9],args[10],args[11],
-                        args[12],args[13],args[14],args[15],args[16],
-                        args[17]); break;
-    default:
-        ERR( "Unsupported nb of args %d\n", nb_args );
-        assert(FALSE);
-        ret = 0;
-        break;
-    }
-    return ret;
-}
+extern int call_entry_point( void *func, int nb_args, const int *args );
+__ASM_GLOBAL_FUNC( call_entry_point,
+                   "\tpushl %ebp\n"
+                   "\tmovl %esp,%ebp\n"
+                   "\tmovl 12(%ebp),%ecx\n"
+                   "\tmovl 16(%ebp),%edx\n"
+                   "\tjecxz 1f\n"
+                   "2:\tpushl -4(%edx,%ecx,4)\n"
+                   "\tloop 2b\n"
+                   "1:\tcall *8(%ebp)\n"
+                   "\tmovl %ebp,%esp\n"
+                   "\tleave\n"
+                   "\tret" );
 
 
 /***********************************************************************
@@ -408,11 +304,10 @@ static inline int call_stdcall_function( STDCALL_PROC func, int nb_args, const i
 static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16, CONTEXT86 *context,
                                         const CALLFROM16 *call )
 {
-    int i, is_cdecl, nb_args, args32[20];
+    int i, nb_args, args32[20];
 
     nb_args = 0;
-    is_cdecl = (call->lret == 0xcb66);
-    if (is_cdecl)
+    if (call->lret == 0xcb66)  /* cdecl */
     {
         for (i = 0; i < 20; i++, nb_args++)
         {
@@ -482,18 +377,11 @@ static int relay_call_from_16_no_debug( void *entry_point, unsigned char *args16
         }
     }
 
-    if (call->arg_types[0] & ARG_REGISTER)
-    {
-        if (!nb_args) is_cdecl = 0;  /* register funcs are stdcall by default */
-        args32[nb_args++] = (int)context;
-    }
+    if (call->arg_types[0] & ARG_REGISTER) args32[nb_args++] = (int)context;
 
     SYSLEVEL_CheckNotLevel( 2 );
 
-    if (is_cdecl)
-        return call_cdecl_function( entry_point, nb_args, args32 );
-    else
-        return call_stdcall_function( entry_point, nb_args, args32 );
+    return call_entry_point( entry_point, nb_args, args32 );
 }
 
 
@@ -506,7 +394,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 {
     STACK16FRAME *frame;
     WORD ordinal;
-    int i, is_cdecl, ret_val, nb_args, args32[20];
+    int i, ret_val, nb_args, args32[20];
     char module[10], func[64];
     const CALLFROM16 *call;
 
@@ -518,8 +406,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
     DPRINTF( "%04lx:Call %s.%d: %s(",GetCurrentThreadId(), module, ordinal, func );
 
     nb_args = 0;
-    is_cdecl = (call->lret == 0xcb66);
-    if (is_cdecl)
+    if (call->lret == 0xcb66)  /* cdecl */
     {
         for (i = 0; i < 20; i++, nb_args++)
         {
@@ -628,7 +515,6 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     if (call->arg_types[0] & ARG_REGISTER)
     {
-        if (!nb_args) is_cdecl = 0;  /* register funcs are stdcall by default */
         args32[nb_args++] = (int)context;
         DPRINTF("     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 (WORD)context->Eax, (WORD)context->Ebx, (WORD)context->Ecx,
@@ -638,10 +524,7 @@ int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT86 *con
 
     SYSLEVEL_CheckNotLevel( 2 );
 
-    if (is_cdecl)
-        ret_val = call_cdecl_function( entry_point, nb_args, args32 );
-    else
-        ret_val = call_stdcall_function( entry_point, nb_args, args32 );
+    ret_val = call_entry_point( entry_point, nb_args, args32 );
 
     SYSLEVEL_CheckNotLevel( 2 );
 
