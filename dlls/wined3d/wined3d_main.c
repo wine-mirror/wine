@@ -73,6 +73,13 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
     return (IWineD3D *)object;
 }
 
+inline static DWORD get_config_key(HKEY defkey, HKEY appkey, const char* name, char* buffer, DWORD size)
+{
+    if (0 != appkey && !RegQueryValueExA( appkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
+    if (0 != defkey && !RegQueryValueExA( defkey, name, 0, NULL, (LPBYTE) buffer, &size )) return 0;
+    return ERROR_FILE_NOT_FOUND;
+}
+
 /* At process attach */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
@@ -80,9 +87,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     if (fdwReason == DLL_PROCESS_ATTACH)
     {
        HMODULE mod;
-       char buffer[32];
+       char buffer[64];
        DWORD size = sizeof(buffer);
        HKEY hkey = 0;
+       HKEY appkey = 0;
+       DWORD len;
 
        DisableThreadLibraryCalls(hInstDLL);
 
@@ -93,9 +102,28 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
        }
        /* @@ Wine registry key: HKCU\Software\Wine\Direct3D */
-       if ( !RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey) )
+       if ( RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\Direct3D", &hkey ) ) hkey = 0;
+
+       len = GetModuleFileNameA( 0, buffer, MAX_PATH );
+       if (len && len < MAX_PATH)
        {
-           if ( !RegQueryValueExA( hkey, "VertexShaderMode", 0, NULL, buffer, &size) )
+	   HKEY tmpkey;
+	   /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\Direct3D */
+	   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\AppDefaults", &tmpkey ))
+           {
+	       char *p, *appname = buffer;
+	       if ((p = strrchr( appname, '/' ))) appname = p + 1;
+	       if ((p = strrchr( appname, '\\' ))) appname = p + 1;
+	       strcat( appname, "\\Direct3D" );
+	       TRACE("appname = [%s] \n", appname);
+	       if (RegOpenKeyA( tmpkey, appname, &appkey )) appkey = 0;
+	       RegCloseKey( tmpkey );
+	   }
+       }
+
+       if ( 0 != hkey || 0 != appkey )
+       {
+           if ( !get_config_key( hkey, appkey, "VertexShaderMode", buffer, size) )
            {
                 if (!strcmp(buffer,"none"))
                 {
@@ -108,7 +136,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     vs_mode = VS_SW;
                 }
            }
-           if ( !RegQueryValueExA( hkey, "PixelShaderMode", 0, NULL, buffer, &size) )
+           if ( !get_config_key( hkey, appkey, "PixelShaderMode", buffer, size) )
            {
                 if (!strcmp(buffer,"enabled"))
                 {
@@ -121,6 +149,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            TRACE("Allow HW vertex shaders\n");
        if (ps_mode == PS_NONE)
            TRACE("Disable pixel shaders\n");
+
+       if (appkey) RegCloseKey( appkey );
+       if (hkey) RegCloseKey( hkey );
     }
     return TRUE;
 }
