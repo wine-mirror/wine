@@ -345,7 +345,7 @@
 @ stdcall NdrVaryingArrayFree(ptr ptr ptr)
 @ stdcall NdrVaryingArrayMarshall(ptr ptr ptr)
 @ stdcall NdrVaryingArrayMemorySize(ptr ptr)
-@ stdcall NdrVaryingArrayUnmarshall(ptr ptr long)
+@ stdcall NdrVaryingArrayUnmarshall(ptr ptr ptr long)
 @ stdcall NdrXmitOrRepAsBufferSize(ptr ptr ptr)
 @ stdcall NdrXmitOrRepAsFree(ptr ptr ptr)
 @ stdcall NdrXmitOrRepAsMarshall(ptr ptr ptr)
