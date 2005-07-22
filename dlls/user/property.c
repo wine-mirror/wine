@@ -55,7 +55,7 @@ static property_data_t *get_properties( HWND hwnd, int *count )
         SERVER_START_REQ( get_window_properties )
         {
             req->window = hwnd;
-            wine_server_add_data( req, data, total * sizeof(*data) );
+            wine_server_set_reply( req, data, total * sizeof(*data) );
             if (!wine_server_call( req )) res = reply->total;
         }
         SERVER_END_REQ;
