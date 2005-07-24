@@ -506,3 +506,18 @@ BOOL WINAPI COMPOBJ_DllEntryPoint(DWORD Reason, HINSTANCE16 hInst, WORD ds, WORD
         TRACE("(%08lx, %04x, %04x, %04x, %08lx, %04x)\n", Reason, hInst, ds, HeapSize, res1, res2);
         return TRUE;
 }
+
+/***********************************************************************
+ *           CoMemAlloc [COMPOBJ.151]
+ */
+SEGPTR WINAPI CoMemAlloc(DWORD size, DWORD dwMemContext, DWORD x) {
+	HRESULT		hres;
+	SEGPTR		segptr;
+
+	/* FIXME: check context handling */
+	TRACE("(%ld, 0x%08lx, 0x%08lx)\n", size, dwMemContext, x);
+	hres = _xmalloc16(size, &segptr);
+	if (hres != S_OK)
+		return (SEGPTR)0;
+	return segptr;
+}

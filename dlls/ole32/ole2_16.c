@@ -163,6 +163,32 @@ HRESULT WINAPI OleSetMenuDescriptor16(
     LPOLEINPLACEFRAME        lpFrame,
     LPOLEINPLACEACTIVEOBJECT lpActiveObject)
 {
-    FIXME("(%lx, %x, %x, %p, %p), stub!\n", hOleMenu, hwndFrame, hwndActiveObject, lpFrame, lpActiveObject);
+    FIXME("(%p, %x, %x, %p, %p), stub!\n", hOleMenu, hwndFrame, hwndActiveObject, lpFrame, lpActiveObject);
     return E_NOTIMPL;
+}
+
+/******************************************************************************
+ *              IsValidInterface        [COMPOBJ.23]
+ *
+ * Determines whether a pointer is a valid interface.
+ *
+ * PARAMS
+ *  punk [I] Interface to be tested.
+ *
+ * RETURNS
+ *  TRUE, if the passed pointer is a valid interface, or FALSE otherwise.
+ */
+BOOL WINAPI IsValidInterface16(SEGPTR punk)
+{
+	DWORD **ptr;
+
+	if (IsBadReadPtr16(punk,4))
+		return FALSE;
+	ptr = MapSL(punk);
+	if (IsBadReadPtr16((SEGPTR)ptr[0],4))	/* check vtable ptr */
+		return FALSE;
+	ptr = MapSL((SEGPTR)ptr[0]);		/* ptr to first method */
+	if (IsBadReadPtr16((SEGPTR)ptr[0],2))
+		return FALSE;
+	return TRUE;
 }

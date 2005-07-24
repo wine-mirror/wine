@@ -217,8 +217,10 @@ HRESULT HGLOBALLockBytesImpl16_QueryInterface(
   /*
    * Check that we obtained an interface.
    */
-  if ((*ppvObject)==0)
+  if ((*ppvObject)==0) {
+    FIXME("Unknown IID %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
+  }
 
   /*
    * Query Interface always increases the reference count by one when it is
