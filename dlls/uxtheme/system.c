@@ -324,22 +324,23 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
     WCHAR szClassBuff[256];
     LPCWSTR pszAppName;
     LPCWSTR pszUseClassList;
-    HTHEME hTheme;
-    TRACE("(%p,%s)\n", hwnd, debugstr_w(pszClassList));
-    if(!bThemeActive)
-        return NULL;
+    HTHEME hTheme = NULL;
+    TRACE("(%p,%s)", hwnd, debugstr_w(pszClassList));
 
-    pszAppName = UXTHEME_GetWindowProperty(hwnd, atSubAppName, szAppBuff, sizeof(szAppBuff)/sizeof(szAppBuff[0]));
-    /* If SetWindowTheme was used on the window, that overrides the class list passed to this function */
-    pszUseClassList = UXTHEME_GetWindowProperty(hwnd, atSubIdList, szClassBuff, sizeof(szClassBuff)/sizeof(szClassBuff[0]));
-    if(!pszUseClassList)
-        pszUseClassList = pszClassList;
+    if(bThemeActive)
+    {
+        pszAppName = UXTHEME_GetWindowProperty(hwnd, atSubAppName, szAppBuff, sizeof(szAppBuff)/sizeof(szAppBuff[0]));
+        /* If SetWindowTheme was used on the window, that overrides the class list passed to this function */
+        pszUseClassList = UXTHEME_GetWindowProperty(hwnd, atSubIdList, szClassBuff, sizeof(szClassBuff)/sizeof(szClassBuff[0]));
+        if(!pszUseClassList)
+            pszUseClassList = pszClassList;
 
-    if (!pszClassList) return NULL;
-    
-    hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
+        if (pszUseClassList)
+            hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
+    }
     if(IsWindow(hwnd))
         SetPropW(hwnd, MAKEINTATOMW(atWindowTheme), hTheme);
+    TRACE(" = %p\n", hTheme);
     return hTheme;
 }
 
