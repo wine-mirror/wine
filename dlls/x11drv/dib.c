@@ -279,7 +279,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
  * Fills the color map of a bitmap palette. Should not be called
  * for a >8-bit deep bitmap.
  */
-int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
+static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
                              WORD coloruse, WORD depth, BOOL quads,
                              const void *colorPtr, int start, int end )
 {
@@ -458,7 +458,7 @@ static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloru
 /***********************************************************************
  *           X11DRV_DIB_MapColor
  */
-int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys, int oldcol )
+static int X11DRV_DIB_MapColor( int *physMap, int nPhysMap, int phys, int oldcol )
 {
     unsigned int color;
 

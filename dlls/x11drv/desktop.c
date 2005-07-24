@@ -148,7 +148,7 @@ static void make_modes(void)
  *
  * Reset the desktop window size and WM hints
  */
-int X11DRV_resize_desktop( unsigned int width, unsigned int height )
+static int X11DRV_resize_desktop( unsigned int width, unsigned int height )
 {
     XSizeHints *size_hints;
     Display *display = thread_display();
@@ -178,7 +178,7 @@ int X11DRV_resize_desktop( unsigned int width, unsigned int height )
     return 1;
 }
 
-int X11DRV_desktop_GetCurrentMode(void)
+static int X11DRV_desktop_GetCurrentMode(void)
 {
     unsigned int i;
     DWORD dwBpp = screen_depth;
@@ -194,7 +194,7 @@ int X11DRV_desktop_GetCurrentMode(void)
     return 0;
 }
 
-void X11DRV_desktop_SetCurrentMode(int mode)
+static void X11DRV_desktop_SetCurrentMode(int mode)
 {
     DWORD dwBpp = screen_depth;
     if (dwBpp == 24) dwBpp = 32;

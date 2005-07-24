@@ -421,7 +421,7 @@ static WINE_CLIPFORMAT *register_format( LPCWSTR FormatName, Atom prop )
 /**************************************************************************
  *                X11DRV_CLIPBOARD_LookupFormat
  */
-LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
+static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
 {
     LPWINE_CLIPFORMAT lpFormat = ClipFormats;
 
@@ -440,7 +440,7 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupFormat(WORD wID)
 /**************************************************************************
  *                X11DRV_CLIPBOARD_LookupProperty
  */
-LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData)
+static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData)
 {
     for (;;)
     {
@@ -463,7 +463,7 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupProperty(UINT drvData)
 /**************************************************************************
  *                X11DRV_CLIPBOARD_LookupAliasProperty
  */
-LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias)
+static LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias)
 {
     unsigned int i;
     LPWINE_CLIPFORMAT lpFormat = NULL;
@@ -484,7 +484,7 @@ LPWINE_CLIPFORMAT X11DRV_CLIPBOARD_LookupAliasProperty(UINT drvDataAlias)
 /**************************************************************************
  *                X11DRV_CLIPBOARD_LookupPropertyAlias
  */
-UINT  X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty)
+static UINT  X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty)
 {
     unsigned int i;
     UINT alias = 0;
@@ -505,7 +505,7 @@ UINT  X11DRV_CLIPBOARD_LookupPropertyAlias(UINT drvDataProperty)
 /**************************************************************************
  *               X11DRV_CLIPBOARD_LookupData
  */
-LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
+static LPWINE_CLIPDATA X11DRV_CLIPBOARD_LookupData(DWORD wID)
 {
     LPWINE_CLIPDATA lpData = ClipData;
 
@@ -1313,7 +1313,7 @@ HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Window requestor, Atom aTarget,
  *  Export CF_UNICODE converting the string to XA_STRING.
  *  Helper function for X11DRV_CLIPBOARD_ExportString.
  */
-HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
+static HANDLE X11DRV_CLIPBOARD_ExportXAString(LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     UINT i, j;
     UINT size;
@@ -1359,7 +1359,7 @@ done:
  *  Export CF_UNICODE to COMPOUND_TEXT or TEXT
  *  Helper function for X11DRV_CLIPBOARD_ExportString.
  */
-HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Window requestor, Atom aTarget, Atom rprop,
+static HANDLE X11DRV_CLIPBOARD_ExportCompoundText(Window requestor, Atom aTarget, Atom rprop,
     LPWINE_CLIPDATA lpData, LPDWORD lpBytes)
 {
     Display *display = thread_display();
@@ -1972,7 +1972,7 @@ static HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, LPDW
  *
  * Release XA_CLIPBOARD and XA_PRIMARY in response to a SelectionClear event.
  */
-void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd, Time time)
+static void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd, Time time)
 {
     Display *display = thread_display();
 
