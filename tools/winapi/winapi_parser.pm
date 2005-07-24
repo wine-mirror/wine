@@ -358,7 +358,7 @@ sub parse_c_file($$) {
 		    &$function_end($statements_line, $statements);
 		    $statements = undef;
 		} elsif($in_type) {
-		    if(/^\s*(?:WINE_PACKED\s+)?((?:\*\s*)?\w+\s*(?:\s*,\s*(?:\*+\s*)?\w+)*\s*);/s) {
+		    if(/^\s*(?:WINE_PACKED\s+)?((?:(?:FAR\s*)?\*\s*(?:RESTRICTED_POINTER\s+)?)?\w+\s*(?:\s*,\s*(?:(?:FAR\s*)?\*+\s*(?:RESTRICTED_POINTER\s+)?)?\w+)*\s*);/s) {
 			my @parts = split(/\s*,\s*/, $1);
 			&$type_end([@parts]);
 		    } elsif(/;/s) {
@@ -443,8 +443,8 @@ sub parse_c_file($$) {
 			((?:struct\s+|union\s+|enum\s+|register\s+|(?:signed\s+|unsigned\s+)
 			  (?:short\s+(?=int)|long\s+(?=int))?)?\w+)\s*
 			((?:const)?\s*(?:\*\s*(?:const)?\s*?)*)\s*
-			(?:__cdecl\s+|__stdcall\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
-			\(\s*(?:__cdecl|__stdcall|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
+			(?:__cdecl\s+|__stdcall\s+|CALLBACK\s+|CDECL\s+|NET_API_FUNCTION\s+|RPC_ENTRY\s+|STDMETHODCALLTYPE\s+|VFWAPIV\s+|VFWAPI\s+|WINAPIV\s+|WINAPI\s+)?
+			\(\s*(?:__cdecl|__stdcall|CALLBACK|CDECL|NET_API_FUNCTION|RPC_ENTRY|STDMETHODCALLTYPE|VFWAPIV|VFWAPI|WINAPIV|WINAPI)?\s*\*\s*((?:\w+)?)\s*\)\s*
 			\(\s*(.*?)\s*\)$/x) 
 		{
 		    my $return_type = $1;
@@ -554,8 +554,8 @@ sub parse_c_file($$) {
 		((?:const\s+|enum\s+|long\s+|signed\s+|short\s+|struct\s+|union\s+|unsigned\s+)*?)
 		(\w+)
 		(?:\s+const)?
-		((?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])*
-		(?:\s*,\s*(?:\s*\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
+		((?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])*
+		(?:\s*,\s*(?:\s*(?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+\s*|\s+)\w+\s*(?:\[[^\]]*\])?)*)
 		\s*;/sx)
 	{
 	    $_ = $'; $again = 1;
@@ -565,7 +565,7 @@ sub parse_c_file($$) {
 	    my @names;
 	    my @parts = split(/\s*,\s*/, $2);
 	    foreach my $part (@parts) {
-		if($part =~ /(?:\s*(\*+)\s*|\s+)(\w+)\s*(\[[^\]]*\])?/) {
+		if($part =~ /(?:\s*((?:(?:FAR|__RPC_FAR|TW_HUGE)?\s*)?\*+)\s*|\s+)(\w+)\s*(\[[^\]]*\])?/) {
 		    my $name = $2;
 		    if(defined($1)) {
 			$name = "$1$2";
