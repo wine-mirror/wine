@@ -69,15 +69,27 @@ extern const DWORD SavedVertexStates_R[NUM_SAVEDVERTEXSTATES_R];
 extern const DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T];
 extern const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S];
 
-/* vertex and pixel shader modes */
-extern int vs_mode;
+/**
+ * Settings 
+ */
 #define VS_NONE 0
 #define VS_HW   1
 #define VS_SW   2
 
-extern int ps_mode;
 #define PS_NONE 0
 #define PS_HW   1
+
+#define VBO_NONE 0
+#define VBO_HW   1
+
+typedef struct wined3d_settings_s {
+/* vertex and pixel shader modes */
+  int vs_mode;
+  int ps_mode;
+  int vbo_mode;
+} wined3d_settings_t;
+
+extern wined3d_settings_t wined3d_settings;
 
 /* X11 locking */
 
@@ -979,6 +991,9 @@ int D3DFmtMakeGlCfg(D3DFORMAT BackBufferFormat, D3DFORMAT StencilBufferFormat, i
     extern void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_SetDirty(IWineD3DBaseTexture *iface, BOOL);
     extern BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface);
+
+    extern BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset);
+    extern HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface);
     extern HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface);
     /*** class static members ***/

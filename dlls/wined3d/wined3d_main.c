@@ -30,8 +30,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(wine_d3d);
 int num_lock = 0;
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
-int vs_mode = VS_HW;   /* Hardware by default */
-int ps_mode = PS_NONE; /* Disabled by default */
+
+
+wined3d_settings_t wined3d_settings = 
+{
+  VS_HW,   /* Hardware by default */
+  PS_NONE, /* Disabled by default */
+  VBO_HW   /* Hardware by default */
+};
 
 WineD3DGlobalStatistics *wineD3DGlobalStatistics = NULL;
 CRITICAL_SECTION resourceStoreCriticalSection;
@@ -128,12 +134,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 if (!strcmp(buffer,"none"))
                 {
                     TRACE("Disable vertex shaders\n");
-                    vs_mode = VS_NONE;
+                    wined3d_settings.vs_mode = VS_NONE;
                 }
                 else if (!strcmp(buffer,"emulation"))
                 {
                     TRACE("Force SW vertex shaders\n");
-                    vs_mode = VS_SW;
+                    wined3d_settings.vs_mode = VS_SW;
                 }
            }
            if ( !get_config_key( hkey, appkey, "PixelShaderMode", buffer, size) )
@@ -141,14 +147,34 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                 if (!strcmp(buffer,"enabled"))
                 {
                     TRACE("Allow pixel shaders\n");
-                    ps_mode = PS_HW;
+                    wined3d_settings.ps_mode = PS_HW;
+                }
+		if (!strcmp(buffer,"disabled"))
+                {
+                    TRACE("Disable pixel shaders\n");
+                    wined3d_settings.ps_mode = PS_NONE;
+                }
+           }
+	   if ( !get_config_key( hkey, appkey, "VertexBufferMode", buffer, size) )
+           {
+                if (!strcmp(buffer,"none"))
+                {
+                    TRACE("Disable Vertex Buffer Hardware support\n");
+                    wined3d_settings.vbo_mode = VS_NONE;
+                }
+                else if (!strcmp(buffer,"hardware"))
+                {
+  	            TRACE("Allow Vertex Buffer Hardware support\n");
+		    wined3d_settings.vbo_mode = VS_HW;
                 }
            }
        }
-       if (vs_mode == VS_HW)
+       if (wined3d_settings.vs_mode == VS_HW)
            TRACE("Allow HW vertex shaders\n");
-       if (ps_mode == PS_NONE)
+       if (wined3d_settings.ps_mode == PS_NONE)
            TRACE("Disable pixel shaders\n");
+       if (wined3d_settings.vbo_mode == VBO_NONE)
+           TRACE("Disable Vertex Buffer Hardware support\n");
 
        if (appkey) RegCloseKey( appkey );
        if (hkey) RegCloseKey( hkey );

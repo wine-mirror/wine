@@ -1,8 +1,8 @@
 /*
  * IWineD3DVertexBuffer Implementation
  *
- * Copyright 2002-2004 Jason Edmeades
- * Copyright 2003-2004 Raphael Junqueira
+ * Copyright 2002-2005 Jason Edmeades
+ *                     Raphael Junqueira
  * Copyright 2004 Christian Costa
  *
  * This library is free software; you can redistribute it and/or
@@ -149,3 +149,13 @@ const IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
     IWineD3DVertexBufferImpl_Unlock,
     IWineD3DVertexBufferImpl_GetDesc
 };
+
+BYTE* WINAPI IWineD3DVertexBufferImpl_GetMemory(IWineD3DVertexBuffer* iface, DWORD iOffset) {
+    IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
+
+    return This->resource.allocatedMemory + iOffset;
+}
+
+HRESULT WINAPI IWineD3DVertexBufferImpl_ReleaseMemory(IWineD3DVertexBuffer* iface) {
+  return D3D_OK;
+}

@@ -1455,7 +1455,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
     *pCaps->MaxStreams          = MAX_STREAMS;
     *pCaps->MaxStreamStride     = 1024;
 
-    if (((vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF)) {
+    if (((wined3d_settings.vs_mode == VS_HW) && GL_SUPPORT(ARB_VERTEX_PROGRAM)) || (wined3d_settings.vs_mode == VS_SW) || (DeviceType == D3DDEVTYPE_REF)) {
       *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
 
       if (This->gl_info.gl_vendor == VENDOR_MESA ||
@@ -1469,7 +1469,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
         *pCaps->MaxVertexShaderConst = 0;
     }
 
-    if ((ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
+    if ((wined3d_settings.ps_mode == PS_HW) && GL_SUPPORT(ARB_FRAGMENT_PROGRAM) && (DeviceType != D3DDEVTYPE_REF)) {
         *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
     } else {

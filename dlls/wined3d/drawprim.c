@@ -365,8 +365,8 @@ void primitiveDeclarationConvertToStridedData(IWineD3DDevice *iface, Direct3DVer
             TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             data    = (BYTE *)This->stateBlock->streamSource[element->Stream];
         } else {
-             TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
-            data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->streamSource[element->Stream])->resource.allocatedMemory;
+            TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
+            data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0);
         }
         stride  = This->stateBlock->streamStride[element->Stream];
         data += (BaseVertexIndex * stride);
@@ -571,12 +571,12 @@ static void primitiveConvertToStridedData(IWineD3DDevice *iface, Direct3DVertexS
             if (This->stateBlock->streamIsUP) {
                 data    = (BYTE *)This->stateBlock->streamSource[nStream];
             } else {
-                data    = ((IWineD3DVertexBufferImpl *)This->stateBlock->streamSource[nStream])->resource.allocatedMemory;
+                data = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[nStream], 0);
             }
         } else {
 #if 0 /* TODO: Vertex shader support */
             thisFVF = This->stateBlock->vertexShaderDecl->fvf[nStream];
-            data    = ((IDirect3DVertexBuffer8Impl *)This->stateBlock->streamSource[nStream])->allocatedMemory;
+            data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[nStream], 0);
 #endif
         }
         VTRACE(("FVF for stream %d is %lx\n", nStream, thisFVF));
