@@ -57,7 +57,7 @@
 # endif
 #endif
 
-#ifdef __APPLE__
+#ifdef HAVE_IOKIT_IOKITLIB_H
 # include <IOKit/IOKitLib.h>
 # include <CoreFoundation/CFNumber.h> /* for kCFBooleanTrue, kCFBooleanFalse */
 # include <paths.h>
