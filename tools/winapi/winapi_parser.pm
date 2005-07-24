@@ -524,58 +524,6 @@ sub parse_c_file($$) {
 	    &$function_begin($documentation_line, $documentation,
 			     $function_line, "", "void", "__asm", $1);
 	    &$function_end($., "");
-	} elsif(/WAVEIN_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-	    my @arguments16 = ("HWAVEIN16");
-	    my @arguments32 = ("HWAVEIN");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line,  "", "UINT16", "WINAPI", "waveIn" . $1 . "16", \@arguments16);
-	    &$function_end($., "");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "UINT", "WINAPI", "waveIn" . $1, \@arguments32);
-	    &$function_end($., "");
-	} elsif(/WAVEOUT_SHORTCUT_0\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    my @arguments16 = ("HWAVEOUT16");
-	    my @arguments32 = ("HWAVEOUT");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "UINT16", "WINAPI", "waveOut" . $1 . "16", \@arguments16);
-	    &$function_end($., "");
-	    &$function_begin($documentation_line, $documentation,
-			     $function_line, "", "UINT", "WINAPI", "waveOut" . $1, \@arguments32);
-	    &$function_end($., "");
-	} elsif(/WAVEOUT_SHORTCUT_(1|2)\s*\(\s*(.*?)\s*,\s*(.*?)\s*,\s*(.*?)\s*\)/s) {
-	    my @lines = split(/\n/, $&);
-	    my $function_line = $. - scalar(@lines) + 1;
-
-	    $_ = $'; $again = 1;
-
-	    if($1 eq "1") {
-		my @arguments16 = ("HWAVEOUT16", $4);
-		my @arguments32 = ("HWAVEOUT", $4);
-		&$function_begin($documentation_line, $documentation,
-				 $function_line, "", "UINT16", "WINAPI", "waveOut" . $2 . "16", \@arguments16);
-		&$function_end($function_line, "");
-		&$function_begin($documentation_line, $documentation,
-				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
-		&$function_end($function_line, "");
-	    } elsif($1 eq 2) {
-		my @arguments16 = ("UINT16", $4);
-		my @arguments32 = ("UINT", $4);
-		&$function_begin($documentation_line, $documentation,
-				 $function_line, "", "UINT16", "WINAPI", "waveOut". $2 . "16", \@arguments16);
-		&$function_end($function_line, "");
-		&$function_begin($documentation_line, $documentation,
-				 $function_line, "", "UINT", "WINAPI", "waveOut" . $2, \@arguments32);
-		&$function_end($function_line, "");
-	    }
 	} elsif(/DEFINE_THISCALL_WRAPPER\((\S*)\)/s) {
 	    my @lines = split(/\n/, $&);
 	    my $function_line = $. - scalar(@lines) + 1;
