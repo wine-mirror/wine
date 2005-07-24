@@ -33,6 +33,8 @@
 #include "shlobj.h"
 #include "wine/test.h"
 
+#include "shell32_test.h"
+
 static const WCHAR lnkfile[]= { 'C',':','\\','t','e','s','t','.','l','n','k',0 };
 static const WCHAR notafile[]= { 'C',':','\\','n','o','n','e','x','i','s','t','e','n','t','\\','f','i','l','e',0 };
 
@@ -268,24 +270,10 @@ static void test_get_set(void)
  * Test saving and loading .lnk files
  */
 
-typedef struct
-{
-    const char* description;
-    const char* workdir;
-    const char* path;
-    LPITEMIDLIST pidl;
-    const char* arguments;
-    int   showcmd;
-    const char* icon;
-    int   icon_id;
-    WORD  hotkey;
-} lnk_desc_t;
-
 #define lok                   ok_(__FILE__, line)
-#define create_lnk(a,b,c)     create_lnk_(__LINE__, (a), (b), (c))
 #define check_lnk(a,b)        check_lnk_(__LINE__, (a), (b))
 
-static void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
+void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
 {
     HRESULT r;
     IShellLinkA *sl;
