@@ -269,6 +269,7 @@ typedef struct tagME_TextEditor
   ME_OutStream *pStream;
   BOOL bScrollX, bScrollY;
   int nScrollPosY;
+  int nZoomNumerator, nZoomDenominator;
 } ME_TextEditor;
 
 typedef struct tagME_Context

@@ -173,6 +173,17 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
   ME_SendSelChange(editor);
 }
 
+
+void
+ME_RewrapRepaint(ME_TextEditor *editor)
+{
+  ME_MarkAllForWrapping(editor);
+  ME_WrapMarkedParagraphs(editor);
+  ME_UpdateScrollBar(editor);
+  ME_Repaint(editor);
+}
+
+
 static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, int nChars, 
   ME_Style *s, int *width, int nSelFrom, int nSelTo, int ymin, int cy) {
   HDC hDC = c->hDC;
@@ -193,7 +204,17 @@ static void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, in
     if (s->fmt.dwEffects & CFE_SUBSCRIPT) yTwipsOffset = -s->fmt.yHeight/12;
   }
   if (yTwipsOffset)
-    yOffset = yTwipsOffset*GetDeviceCaps(hDC, LOGPIXELSY)/1440;
+  {
+    int numerator = 1;
+    int denominator = 1;
+    
+    if (c->editor->nZoomNumerator)
+    {
+      numerator = c->editor->nZoomNumerator;
+      denominator = c->editor->nZoomDenominator;
+    }
+    yOffset = yTwipsOffset * GetDeviceCaps(hDC, LOGPIXELSY) * numerator / denominator / 1440;
+  }
   ExtTextOutW(hDC, x, y-yOffset, 0, NULL, szText, nChars, NULL);
   if (width) {
     SIZE sz;
@@ -483,4 +504,26 @@ void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun)
     ScrollWindow(hWnd, 0, -(newy-yold), NULL, NULL);
     UpdateWindow(hWnd);
   }
+}
+        
+
+BOOL
+ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator)
+{
+  /* TODO: Zoom images and objects */
+
+  if (numerator != 0)
+  {
+    if (denominator == 0)
+      return FALSE;
+    if (1.0 / 64.0 > (float)numerator / (float)denominator
+        || (float)numerator / (float)denominator > 64.0)
+      return FALSE;
+  }
+  
+  editor->nZoomNumerator = numerator;
+  editor->nZoomDenominator = denominator;
+  
+  ME_RewrapRepaint(editor);
+  return TRUE;
 }

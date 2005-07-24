@@ -73,7 +73,7 @@
   - EM_GETWORDBREAKPROC
   - EM_GETWORDBREAKPROCEX
   - EM_GETWORDWRAPMODE 1.0asian
-  - EM_SETZOOM 3.0
+  + EM_GETZOOM 3.0
   - EM_HIDESELECTION
   - EM_LIMITTEXT
   + EM_LINEFROMCHAR
@@ -119,7 +119,7 @@
   - EM_SETWORDBREAKPROC
   - EM_SETWORDBREAKPROCEX
   - EM_SETWORDWRAPMODE 1.0asian
-  - EM_SETZOOM 3.0
+  + EM_SETZOOM 3.0
   - EM_SHOWSCROLLBAR 2.0
   - EM_STOPGROUPTYPING 2.0
   + EM_STREAMIN
@@ -747,6 +747,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->nParagraphs = 1;
   ed->nLastSelStart = ed->nLastSelEnd = 0;
   ed->nScrollPosY = 0;
+  ed->nZoomNumerator = ed->nZoomDenominator = 0;
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
     ed->pFontCache[i].nRefs = 0;
@@ -1051,7 +1052,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETUNDONAME)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_GETZOOM)
   UNSUPPORTED_MSG(EM_HIDESELECTION)
   UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
@@ -1079,7 +1079,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROC)
   UNSUPPORTED_MSG(EM_SETWORDBREAKPROCEX)
   UNSUPPORTED_MSG(EM_SHOWSCROLLBAR)
-  UNSUPPORTED_MSG(EM_SETZOOM)
   UNSUPPORTED_MSG(WM_SETFONT)
   UNSUPPORTED_MSG(WM_STYLECHANGING)
   UNSUPPORTED_MSG(WM_STYLECHANGED)
@@ -1580,6 +1579,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     FINDTEXTEXW *ex = (FINDTEXTEXW *)lParam;
     return ME_FindText(editor, wParam, &ex->chrg, ex->lpstrText, &ex->chrgText);
   }
+  case EM_GETZOOM:
+    if (!wParam || !lParam)
+      return FALSE;
+    *(int *)wParam = editor->nZoomNumerator;
+    *(int *)lParam = editor->nZoomDenominator;
+    return TRUE;
+  case EM_SETZOOM:
+    return ME_SetZoom(editor, wParam, lParam);
   case WM_CREATE:
     ME_CommitUndo(editor);
     ME_WrapMarkedParagraphs(editor);
@@ -1736,10 +1743,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case WM_SIZE:
   {
-    ME_MarkAllForWrapping(editor);
-    ME_WrapMarkedParagraphs(editor);
-    ME_UpdateScrollBar(editor);
-    ME_Repaint(editor);
+    ME_RewrapRepaint(editor);
     return DefWindowProcW(hWnd, msg, wParam, lParam);
   }
   case EM_GETOLEINTERFACE:
@@ -1754,6 +1758,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   return 0L;
 }
+
 
 /******************************************************************
  *        RichEdit10ANSIWndProc (RICHED20.9)

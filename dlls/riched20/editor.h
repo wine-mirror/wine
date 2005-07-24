@@ -191,6 +191,7 @@ void ME_MarkAllForWrapping(ME_TextEditor *editor);
 /* paint.c */
 void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew, RECT *rcUpdate);
 void ME_Repaint(ME_TextEditor *editor);
+void ME_RewrapRepaint(ME_TextEditor *editor);
 void ME_UpdateRepaint(ME_TextEditor *editor);
 void ME_DrawParagraph(ME_Context *c, ME_DisplayItem *paragraph);
 void ME_UpdateScrollBar(ME_TextEditor *editor);
@@ -198,6 +199,7 @@ int ME_GetYScrollPos(ME_TextEditor *editor);
 void ME_EnsureVisible(ME_TextEditor *editor, ME_DisplayItem *pRun);
 COLORREF ME_GetBackColor(ME_TextEditor *editor);
 void ME_Scroll(ME_TextEditor *editor, int cx, int cy);
+BOOL ME_SetZoom(ME_TextEditor *editor, int numerator, int denominator);
 
 /* richole.c */
 extern LRESULT CreateIRichEditOle(LPVOID *);
