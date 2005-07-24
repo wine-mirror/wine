@@ -25,6 +25,10 @@
 @ cdecl ldap_open(str long) ldap_openA
 @ cdecl ldap_openA(str long)
 @ cdecl ldap_openW(wstr long)
+@ cdecl ldap_sasl_bindA(ptr str str ptr ptr ptr ptr)
+@ cdecl ldap_sasl_bindW(ptr wstr wstr ptr ptr ptr ptr)
+@ cdecl ldap_sasl_bind_sA(ptr str str ptr ptr ptr ptr)
+@ cdecl ldap_sasl_bind_sW(ptr wstr wstr ptr ptr ptr ptr)
 @ cdecl ldap_search(ptr str long str ptr long) ldap_searchA
 @ cdecl ldap_searchA(ptr str long str ptr long)
 @ cdecl ldap_searchW(ptr wstr long wstr ptr long)

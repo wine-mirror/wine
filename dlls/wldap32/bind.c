@@ -133,6 +133,148 @@ ULONG ldap_bind_sW( WLDAP32_LDAP *ld, PWCHAR dn, PWCHAR cred, ULONG method )
     return ret;
 }
 
+ULONG ldap_sasl_bindA( WLDAP32_LDAP *ld, const PCHAR dn,
+    const PCHAR mechanism, const BERVAL *cred, PLDAPControlA *serverctrls,
+    PLDAPControlA *clientctrls, int *message )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    WCHAR *dnW, *mechanismW;
+    LDAPControlW **serverctrlsW, **clientctrlsW;
+
+    TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn),
+           debugstr_a(mechanism), cred, serverctrls, clientctrls, message );
+
+    dnW = strAtoW( dn );
+    if (!dnW) return LDAP_NO_MEMORY;
+
+    mechanismW = strAtoW( mechanism );
+    if (!mechanismW) return LDAP_NO_MEMORY;
+
+    serverctrlsW = controlarrayAtoW( serverctrls );
+    if (!serverctrlsW) return LDAP_NO_MEMORY;
+
+    clientctrlsW = controlarrayAtoW( clientctrls );
+    if (!clientctrlsW) return LDAP_NO_MEMORY;
+
+    ret = ldap_sasl_bindW( ld, dnW, mechanismW, cred, serverctrlsW, clientctrlsW, message );
+
+    strfreeW( dnW );
+    strfreeW( mechanismW );
+    controlarrayfreeW( serverctrlsW );
+    controlarrayfreeW( clientctrlsW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn,
+    const PWCHAR mechanism, const BERVAL *cred, PLDAPControlW *serverctrls,
+    PLDAPControlW *clientctrls, int *message )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    char *dnU, *mechanismU;
+    LDAPControl **serverctrlsU, **clientctrlsU;
+
+    TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn),
+           debugstr_w(mechanism), cred, serverctrls, clientctrls, message );
+
+    dnU = strWtoU( dn );
+    if (!dnU) return LDAP_NO_MEMORY;
+
+    mechanismU = strWtoU( mechanism );
+    if (!mechanismU) return LDAP_NO_MEMORY;
+
+    serverctrlsU = controlarrayWtoU( serverctrls );
+    if (!serverctrlsU) return LDAP_NO_MEMORY;
+
+    clientctrlsU = controlarrayWtoU( clientctrls );
+    if (!clientctrlsU) return LDAP_NO_MEMORY;
+
+    ret = ldap_sasl_bind( ld, dnU, mechanismU, (struct berval *)cred,
+                          serverctrlsU, clientctrlsU, message );
+
+    strfreeU( dnU );
+    strfreeU( mechanismU );
+    controlarrayfreeU( serverctrlsU );
+    controlarrayfreeU( clientctrlsU );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_sasl_bind_sA( WLDAP32_LDAP *ld, const PCHAR dn,
+    const PCHAR mechanism, const BERVAL *cred, PLDAPControlA *serverctrls,
+    PLDAPControlA *clientctrls, PBERVAL *serverdata )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    WCHAR *dnW, *mechanismW;
+    LDAPControlW **serverctrlsW, **clientctrlsW;
+
+    TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn),
+           debugstr_a(mechanism), cred, serverctrls, clientctrls, serverdata );
+
+    dnW = strAtoW( dn );
+    if (!dnW) return LDAP_NO_MEMORY;
+
+    mechanismW = strAtoW( mechanism );
+    if (!mechanismW) return LDAP_NO_MEMORY;
+
+    serverctrlsW = controlarrayAtoW( serverctrls );
+    if (!serverctrlsW) return LDAP_NO_MEMORY;
+
+    clientctrlsW = controlarrayAtoW( clientctrls );
+    if (!clientctrlsW) return LDAP_NO_MEMORY;
+
+    ret = ldap_sasl_bind_sW( ld, dnW, mechanismW, cred, serverctrlsW, clientctrlsW, serverdata );
+
+    strfreeW( dnW );
+    strfreeW( mechanismW );
+    controlarrayfreeW( serverctrlsW );
+    controlarrayfreeW( clientctrlsW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
+    const PWCHAR mechanism, const BERVAL *cred, PLDAPControlW *serverctrls,
+    PLDAPControlW *clientctrls, PBERVAL *serverdata )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    char *dnU, *mechanismU;
+    LDAPControl **serverctrlsU, **clientctrlsU;
+
+    TRACE( "(%p, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn),
+           debugstr_w(mechanism), cred, serverctrls, clientctrls, serverdata );
+
+    dnU = strWtoU( dn );
+    if (!dnU) return LDAP_NO_MEMORY;
+
+    mechanismU = strWtoU( mechanism );
+    if (!mechanismU) return LDAP_NO_MEMORY;
+
+    serverctrlsU = controlarrayWtoU( serverctrls );
+    if (!serverctrlsU) return LDAP_NO_MEMORY;
+
+    clientctrlsU = controlarrayWtoU( clientctrls );
+    if (!clientctrlsU) return LDAP_NO_MEMORY;
+
+    ret = ldap_sasl_bind_s( ld, dnU, mechanismU, (struct berval *)cred,
+                            serverctrlsU, clientctrlsU, (struct berval **)serverdata );
+
+    strfreeU( dnU );
+    strfreeU( mechanismU );
+    controlarrayfreeU( serverctrlsU );
+    controlarrayfreeU( clientctrlsU );
+
+#endif
+    return ret;
+}
+
 ULONG ldap_simple_bindA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR passwd )
 {
     ULONG ret = LDAP_NOT_SUPPORTED;
