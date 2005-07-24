@@ -876,15 +876,34 @@ HRESULT WINAPI GetThemeBackgroundContentRect(HTHEME hTheme, HDC hdc, int iPartId
     if(!hTheme)
         return E_HANDLE;
 
+    /* try content margins property... */
     hr = GetThemeMargins(hTheme, hdc, iPartId, iStateId, TMT_CONTENTMARGINS, NULL, &margin);
-    if(FAILED(hr)) {
-        TRACE("Margins not found\n");
-        return hr;
+    if(SUCCEEDED(hr)) {
+        pContentRect->left = pBoundingRect->left + margin.cxLeftWidth;
+        pContentRect->top  = pBoundingRect->top + margin.cyTopHeight;
+        pContentRect->right = pBoundingRect->right - margin.cxRightWidth;
+        pContentRect->bottom = pBoundingRect->bottom - margin.cyBottomHeight;
+    } else {
+        /* otherwise, try to determine content rect from the background type and props */
+        int bgtype = BT_BORDERFILL;
+        memcpy(pContentRect, pBoundingRect, sizeof(RECT));
+
+        GetThemeEnumValue(hTheme, iPartId, iStateId, TMT_BGTYPE, &bgtype);
+        if(bgtype == BT_BORDERFILL) {
+            int bordersize = 1;
+    
+            GetThemeInt(hTheme, iPartId, iStateId, TMT_BORDERSIZE, &bordersize);
+            InflateRect(pContentRect, -bordersize, -bordersize);
+        } else if ((bgtype == BT_IMAGEFILE)
+                && (SUCCEEDED(hr = GetThemeMargins(hTheme, hdc, iPartId, iStateId, 
+                TMT_SIZINGMARGINS, NULL, &margin)))) {
+            pContentRect->left = pBoundingRect->left + margin.cxLeftWidth;
+            pContentRect->top  = pBoundingRect->top + margin.cyTopHeight;
+            pContentRect->right = pBoundingRect->right - margin.cxRightWidth;
+            pContentRect->bottom = pBoundingRect->bottom - margin.cyBottomHeight;
+        }
+        /* If nothing was found, leave unchanged */
     }
-    pContentRect->left = pBoundingRect->left + margin.cxLeftWidth;
-    pContentRect->top  = pBoundingRect->top + margin.cyTopHeight;
-    pContentRect->right = pBoundingRect->right - margin.cxRightWidth;
-    pContentRect->bottom = pBoundingRect->bottom - margin.cyBottomHeight;
 
     TRACE("left:%ld,top:%ld,right:%ld,bottom:%ld\n", pContentRect->left, pContentRect->top, pContentRect->right, pContentRect->bottom);
 
