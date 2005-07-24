@@ -143,7 +143,6 @@ typedef struct
 
 BOOL16  WINAPI ChooseColor16(LPCHOOSECOLOR16 lpChCol);
 HWND16  WINAPI FindText16( SEGPTR find);
-INT16   WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
 BOOL16  WINAPI GetOpenFileName16(SEGPTR ofn);
 BOOL16  WINAPI GetSaveFileName16(SEGPTR ofn);
 BOOL16  WINAPI PrintDlg16( LPPRINTDLG16 print);

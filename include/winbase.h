@@ -1789,7 +1789,6 @@ BOOL        WINAPI CreateDirectoryExW(LPCWSTR,LPCWSTR,LPSECURITY_ATTRIBUTES);
 BOOL        WINAPI DecryptFileA(LPCSTR,DWORD);
 BOOL        WINAPI DecryptFileW(LPCWSTR,DWORD);
 #define     DecryptFile WINELIB_NAME_AW(DecryptFile)
-BOOL        WINAPI DefineDosDeviceA(DWORD,LPCSTR,LPCSTR);
 #define     DefineHandleTable(w) ((w),TRUE)
 ATOM        WINAPI DeleteAtom(ATOM);
 BOOL        WINAPI DeleteFileA(LPCSTR);
@@ -2153,7 +2152,6 @@ DWORD       WINAPI MapLS(LPCVOID);
 LPVOID      WINAPI MapSL(DWORD);
 VOID        WINAPI ReleaseThunkLock(DWORD*);
 VOID        WINAPI RestoreThunkLock(DWORD);
-void        WINAPI SetProcessDword(DWORD,INT,DWORD);
 VOID        WINAPI UnMapLS(DWORD);
 HFILE       WINAPI Win32HandleToDosFileHandle(HANDLE);
 VOID        WINAPI _CheckNotSysLevel(SYSLEVEL *lock);

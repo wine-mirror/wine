@@ -1576,10 +1576,6 @@ INTERNETAPI BOOL WINAPI InternetSetDialStateW(LPCWSTR ,DWORD ,DWORD);
 #define InternetSetDialState WINELIB_NAME_AW(InternetSetDialState)
 #define INTERNET_DIALSTATE_DISCONNECTED     1
 
-BOOLAPI InternetCheckConnectionA(LPCSTR lpszUrl,DWORD dwFlags,DWORD dwReserved);
-BOOLAPI InternetCheckConnectionW(LPCWSTR lpszUrl,DWORD dwFlags,DWORD dwReserved);
-#define InternetCheckConnection WINELIB_NAME_AW(InternetCheckConnection)
-
 BOOL WINAPI InternetGetConnectedStateExA(LPDWORD, LPSTR, DWORD, DWORD);
 BOOL WINAPI InternetGetConnectedStateExW(LPDWORD, LPWSTR, DWORD, DWORD);
 #define InternetGetConnectedStateEx WINELIB_NAME_AW(InternetGetConnectedStateEx)

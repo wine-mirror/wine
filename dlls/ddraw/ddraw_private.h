@@ -448,9 +448,6 @@ extern const IDirectDrawSurface3Vtbl DDRAW_IDDS3_Thunk_VTable;
 /*****************************************************************************
  * IDirectDrawClipper declarations
  */
-HRESULT WINAPI DirectDrawCreateClipper(DWORD dwFlags,
-				       LPDIRECTDRAWCLIPPER* ppClipper,
-				       LPUNKNOWN pUnkOuter);
 HRESULT DDRAW_CreateClipper(IUnknown* pUnkOuter, REFIID riid, LPVOID* ppObj);
 void Main_DirectDrawClipper_ForceDestroy(IDirectDrawClipperImpl* This);
 

@@ -490,9 +490,6 @@ HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
 HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
 HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcwName,DWORD grfMode,DWORD stgfmt,DWORD grfAttrs,STGOPTIONS *pStgOptions, void *reserved, REFIID riid, void **ppObjectOpen);
 
-HRESULT WINAPI WriteClassStg(IStorage* pStg, REFCLSID rclsid);
-HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid);
-
 HRESULT WINAPI StgCreateDocfileOnILockBytes(ILockBytes *plkbyt,DWORD grfMode, DWORD reserved, IStorage** ppstgOpen);
 HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved, IStorage **ppstgOpen);
 HRESULT WINAPI StgSetTimes( OLECHAR const *lpszName, FILETIME const *pctime, FILETIME const *patime, FILETIME const *pmtime);

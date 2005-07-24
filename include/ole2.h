@@ -56,6 +56,7 @@ HOLEMENU WINAPI OleCreateMenuDescriptor(HMENU hmenuCombined,LPOLEMENUGROUPWIDTHS
 HRESULT   WINAPI OleDestroyMenuDescriptor(HOLEMENU hmenuDescriptor);
 HRESULT  WINAPI OleSetMenuDescriptor(HOLEMENU hmenuDescriptor,HWND hwndFrame,HWND hwndActiveObject,LPOLEINPLACEFRAME lpFrame,LPOLEINPLACEACTIVEOBJECT lpActiveObject);
 
+HRESULT WINAPI WriteClassStg(IStorage *pstg, REFCLSID rclsid);
 HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid);
 HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid);
 HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid);

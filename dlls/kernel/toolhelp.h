@@ -95,7 +95,6 @@ typedef struct
 /* wFlags values */
 #define GF_PDB_OWNER        0x0100      /* Low byte is KERNEL flags */
 
-WORD   WINAPI GlobalHandleToSel16( HGLOBAL16 handle );
 BOOL16 WINAPI GlobalInfo16( GLOBALINFO *pInfo );
 BOOL16 WINAPI GlobalFirst16( GLOBALENTRY *pGlobal, WORD wFlags );
 BOOL16 WINAPI GlobalNext16( GLOBALENTRY *pGlobal, WORD wFlags) ;

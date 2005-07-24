@@ -373,10 +373,6 @@ UINT WINAPI MsiEnumClientsA(LPCSTR, DWORD, LPSTR);
 UINT WINAPI MsiEnumClientsW(LPCWSTR, DWORD, LPWSTR);
 #define     MsiEnumClients WINELIB_NAME_AW(MsiEnumClients)
 
-UINT WINAPI MsiOpenDatabaseA(LPCSTR, LPCSTR, MSIHANDLE *);
-UINT WINAPI MsiOpenDatabaseW(LPCWSTR, LPCWSTR, MSIHANDLE *);
-#define     MsiOpenDatabase WINELIB_NAME_AW(MsiOpenDatabase)
-
 UINT WINAPI MsiOpenPackageA(LPCSTR, MSIHANDLE*);
 UINT WINAPI MsiOpenPackageW(LPCWSTR, MSIHANDLE*);
 #define     MsiOpenPackage WINELIB_NAME_AW(MsiOpenPackage)
@@ -396,10 +392,6 @@ UINT WINAPI MsiProvideComponentFromDescriptorW(LPCWSTR,LPWSTR,DWORD*,DWORD*);
 UINT WINAPI MsiGetProductPropertyA(MSIHANDLE,LPCSTR,LPSTR,DWORD*);
 UINT WINAPI MsiGetProductPropertyW(MSIHANDLE,LPCWSTR,LPWSTR,DWORD*);
 #define     MsiGetProductProperty WINELIB_NAME_AW(MsiGetProductProperty)
-
-UINT WINAPI MsiGetPropertyA(MSIHANDLE, LPCSTR, LPSTR, DWORD*);
-UINT WINAPI MsiGetPropertyW(MSIHANDLE, LPCWSTR, LPWSTR, DWORD*);
-#define     MsiGetProperty WINELIB_NAME_AW(MsiGetProperty)
 
 UINT WINAPI MsiVerifyPackageA(LPCSTR);
 UINT WINAPI MsiVerifyPackageW(LPCWSTR);
