@@ -184,6 +184,7 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "uxtheme.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -394,6 +395,8 @@ typedef struct tagLISTVIEW_INFO
         iP->iconSpacing.cx, iP->iconSpacing.cy, iP->notifyFormat); \
   TRACE("hwndSelf=%p, rcList=%s\n", iP->hwndSelf, debugrect(&iP->rcList)); \
 } while(0)
+
+static const WCHAR themeClass[] = {'L','i','s','t','V','i','e','w',0};
 
 /*
  * forward declarations
@@ -7451,6 +7454,25 @@ static BOOL LISTVIEW_SortItems(LISTVIEW_INFO *infoPtr, PFNLVCOMPARE pfnCompare, 
 
 /***
  * DESCRIPTION:
+ * Update theme handle after a theme change.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ *   SUCCESS : 0
+ *   FAILURE : something else
+ */
+static LRESULT LISTVIEW_ThemeChanged(LISTVIEW_INFO *infoPtr)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
+    CloseThemeData(theme);
+    OpenThemeData(infoPtr->hwndSelf, themeClass);
+    return 0;
+}
+
+/***
+ * DESCRIPTION:
  * Updates an items or rearranges the listview control.
  *
  * PARAMETER(S):
@@ -7494,6 +7516,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   LISTVIEW_INFO *infoPtr;
   UINT uView = lpcs->style & LVS_TYPEMASK;
   LOGFONTW logFont;
+  BOOL themingActive = IsAppThemed() && IsThemeActive();
 
   TRACE("(lpcs=%p)\n", lpcs);
 
@@ -7576,6 +7599,8 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
     }
   }
 
+  if (themingActive) OpenThemeData(hwnd, themeClass);
+
   return 0;
 
 fail:
@@ -7587,6 +7612,24 @@ fail:
     DPA_Destroy(infoPtr->hdpaColumns);
     Free(infoPtr);
     return -1;
+}
+
+/***
+ * DESCRIPTION:
+ * Destroys the listview control.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structure
+ *
+ * RETURN:
+ *   Success: 0
+ *   Failure: -1
+ */
+static LRESULT LISTVIEW_Destroy(LISTVIEW_INFO *infoPtr)
+{
+    HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
+    CloseThemeData(theme);
+    return 0;
 }
 
 /***
@@ -8355,6 +8398,53 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
     }
 
     return 0;
+}
+
+/***
+ * DESCRIPTION:
+ * Paint non-client area of control.
+ *
+ * PARAMETER(S):
+ * [I] infoPtr : valid pointer to the listview structureof the sender
+ * [I] region : update region
+ *
+ * RETURN:
+ *  TRUE  - frame was painted
+ *  FALSE - call default window proc
+ */
+static BOOL LISTVIEW_NCPaint(LISTVIEW_INFO *infoPtr, HRGN region)
+{
+    HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
+    BOOL themingActive = IsAppThemed() && IsThemeActive();
+    BOOL doTheming = themingActive  && (theme != NULL);
+    HDC dc;
+    RECT r;
+    HRGN cliprgn;
+    int cxEdge = GetSystemMetrics (SM_CXEDGE),
+        cyEdge = GetSystemMetrics (SM_CYEDGE);
+
+    if (!doTheming) return FALSE;
+
+    GetWindowRect(infoPtr->hwndSelf, &r);
+
+    cliprgn = CreateRectRgn (r.left + cxEdge, r.top + cyEdge,
+        r.right - cxEdge, r.bottom - cyEdge);
+    if (region != (HRGN)1)
+        CombineRgn (cliprgn, cliprgn, region, RGN_AND);
+    OffsetRect(&r, -r.left, -r.top);
+
+    dc = GetDCEx(infoPtr->hwndSelf, region, DCX_WINDOW|DCX_INTERSECTRGN);
+    OffsetRect(&r, -r.left, -r.top);
+
+    if (IsThemeBackgroundPartiallyTransparent (theme, 0, 0))
+        DrawThemeParentBackground(infoPtr->hwndSelf, dc, &r);
+    DrawThemeBackground (theme, dc, 0, 0, &r, 0);
+    ReleaseDC(infoPtr->hwndSelf, dc);
+
+    /* Call default proc to get the scrollbars etc. painted */
+    DefWindowProcW (infoPtr->hwndSelf, WM_NCPAINT, (WPARAM)cliprgn, 0);
+
+    return TRUE;
 }
 
 /***
@@ -9254,6 +9344,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case WM_CREATE:
     return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
 
+  case WM_DESTROY:
+    return LISTVIEW_Destroy(infoPtr);
+
   case WM_ENABLE:
     return LISTVIEW_Enable(infoPtr, (BOOL)wParam);
 
@@ -9292,6 +9385,11 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_NCDESTROY:
     return LISTVIEW_NCDestroy(infoPtr);
+
+  case WM_NCPAINT:
+    if (LISTVIEW_NCPaint(infoPtr, (HRGN)wParam))
+        return 0;
+    goto fwd_msg;
 
   case WM_NOTIFY:
     if (lParam && ((LPNMHDR)lParam)->hwndFrom == infoPtr->hwndHeader)
@@ -9341,6 +9439,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 0;
 
 /*	case WM_TIMER: */
+  case WM_THEMECHANGED:
+    return LISTVIEW_ThemeChanged(infoPtr);
 
   case WM_VSCROLL:
     return LISTVIEW_VScroll(infoPtr, (INT)LOWORD(wParam), 0, (HWND)lParam);
