@@ -41,6 +41,7 @@ C_SRCS = \
 	lcformat.c \
 	local16.c \
 	locale.c \
+	lzexpand.c \
 	module.c \
 	ne_module.c \
 	ne_segment.c \
