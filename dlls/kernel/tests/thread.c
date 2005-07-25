@@ -82,6 +82,20 @@ typedef struct {
   DWORD *threadmem;
 } t1Struct;
 
+/* WinME supports OpenThread but doesn't know about access restrictions so
+   we require them to be either completly ignored or always obeyed.
+*/
+INT obeying_ars = 0; /* -1 == no, 0 == dunno yet, 1 == yes */
+#define obey_ar(x) \
+  (obeying_ars == 0 \
+    ? ((x) \
+      ? (obeying_ars = +1) \
+      : ((obeying_ars = -1), \
+         trace("not restricted, assuming consistent behaviour\n"))) \
+    : (obeying_ars < 0) \
+      ? ok(!(x), "access restrictions obeyed\n") \
+      : ok( (x), "access restrictions not obeyed\n"))
+
 /* Basic test that simulatneous threads can access shared memory,
    that the thread local storage routines work correctly, and that
    threads actually run concurrently
@@ -276,10 +290,8 @@ static VOID test_SuspendThread(void)
                            0,threadId);
     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
-      ok(SuspendThread(access_thread)==~0UL,
-         "SuspendThread did not obey access restrictions\n");
-      ok(ResumeThread(access_thread)==~0UL,
-         "ResumeThread did not obey access restrictions\n");
+      obey_ar(SuspendThread(access_thread)==~0UL);
+      obey_ar(ResumeThread(access_thread)==~0UL);
       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
     }
   }
@@ -324,8 +336,7 @@ static VOID test_TerminateThread(void)
                              0,threadId);
     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
-      ok(TerminateThread(access_thread,99)==0,
-         "TerminateThread did not obey access restrictions\n");
+      obey_ar(TerminateThread(access_thread,99)==0);
       ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
     }
   }
@@ -395,18 +406,13 @@ static VOID test_thread_priority(void)
                        0,curthreadId);
      ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
      if (access_thread!=NULL) {
-       ok(SetThreadPriority(access_thread,1)==0,
-          "SetThreadPriority did not obey access restrictions\n");
-       ok(GetThreadPriority(access_thread)==THREAD_PRIORITY_ERROR_RETURN,
-          "GetThreadPriority did not obey access restrictions\n");
+       obey_ar(SetThreadPriority(access_thread,1)==0);
+       obey_ar(GetThreadPriority(access_thread)==THREAD_PRIORITY_ERROR_RETURN);
        if (pSetThreadPriorityBoost)
-         ok(pSetThreadPriorityBoost(access_thread,1)==0,
-            "SetThreadPriorityBoost did not obey access restrictions\n");
+         obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
        if (pGetThreadPriorityBoost)
-         ok(pGetThreadPriorityBoost(access_thread,&disabled)==0,
-            "GetThreadPriorityBoost did not obey access restrictions\n");
-       ok(GetExitCodeThread(access_thread,&exitCode)==0,
-          "GetExitCodeThread did not obey access restrictions\n");
+         obey_ar(pGetThreadPriorityBoost(access_thread,&disabled)==0);
+       obey_ar(GetExitCodeThread(access_thread,&exitCode)==0);
        ok(CloseHandle(access_thread),"Error Closing thread handle\n");
      }
 #if USE_EXTENDED_PRIORITIES
@@ -479,7 +485,7 @@ static VOID test_GetThreadTimes(void)
      if(access_thread!=NULL) {
        error=GetThreadTimes(access_thread,&creationTime,&exitTime,
                             &kernelTime,&userTime);
-       ok(error==0, "GetThreadTimes did not obey access restrictions\n");
+       obey_ar(error==0);
        ok(CloseHandle(access_thread)!=0,"CloseHandle Failed\n");
      }
      creationTime.dwLowDateTime=99; creationTime.dwHighDateTime=99;
