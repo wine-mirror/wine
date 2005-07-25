@@ -200,6 +200,20 @@ static MDICLIENTINFO *get_client_info( HWND client )
     return ret;
 }
 
+static BOOL is_close_enabled(HWND hwnd, HMENU hSysMenu)
+{
+    if (GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE) return FALSE;
+
+    if (!hSysMenu) hSysMenu = GetSystemMenu(hwnd, FALSE);
+    if (hSysMenu)
+    {
+        UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
+        if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
+            return FALSE;
+    }
+    return TRUE;
+}
+
 /**********************************************************************
  * 			MDI_GetWindow
  *
@@ -812,13 +826,13 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     if (!(hSysPopup = GetSystemMenu(hChild, FALSE)))
 	return 0;
 
-    AppendMenuA(menu,MF_HELP | MF_BITMAP,
-                   SC_MINIMIZE, (LPSTR)(DWORD)HBMMENU_MBAR_MINIMIZE ) ;
-    AppendMenuA(menu,MF_HELP | MF_BITMAP,
-                   SC_RESTORE, (LPSTR)(DWORD)HBMMENU_MBAR_RESTORE );
-
-    AppendMenuA(menu,MF_HELP | MF_BITMAP,
-                   SC_CLOSE, (LPSTR)(DWORD)HBMMENU_MBAR_CLOSE );
+    AppendMenuW(menu, MF_HELP | MF_BITMAP,
+                SC_MINIMIZE, (LPCWSTR)HBMMENU_MBAR_MINIMIZE ) ;
+    AppendMenuW(menu, MF_HELP | MF_BITMAP,
+                SC_RESTORE, (LPCWSTR)HBMMENU_MBAR_RESTORE );
+    AppendMenuW(menu, MF_HELP | MF_BITMAP,
+                SC_CLOSE, is_close_enabled(hChild, hSysPopup) ?
+                (LPCWSTR)HBMMENU_MBAR_CLOSE : (LPCWSTR)HBMMENU_MBAR_CLOSE_D );
 
     /* The system menu is replaced by the child icon */
     hIcon = (HICON)GetClassLongPtrW(hChild, GCLP_HICONSM);
@@ -1306,13 +1320,14 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
                     if( !IsZoomed(ci->hwndActiveChild) ) break;
                     switch( id )
                     {
+                    case SC_CLOSE:
+                        if (!is_close_enabled(ci->hwndActiveChild, 0)) break;
                     case SC_SIZE:
                     case SC_MOVE:
                     case SC_MINIMIZE:
                     case SC_MAXIMIZE:
                     case SC_NEXTWINDOW:
                     case SC_PREVWINDOW:
-                    case SC_CLOSE:
                     case SC_RESTORE:
                         return SendMessageW( ci->hwndActiveChild, WM_SYSCOMMAND,
                                              wParam, lParam);
@@ -1617,8 +1632,12 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
                 break;
             case VK_F4:
             case VK_RBUTTON:
-                wParam = SC_CLOSE;
-                break;
+                if (is_close_enabled(ci->hwndActiveChild, 0))
+                {
+                    wParam = SC_CLOSE;
+                    break;
+                }
+                /* fall through */
             default:
                 return 0;
             }
