@@ -32,6 +32,12 @@
 @ cdecl ldap_search(ptr str long str ptr long) ldap_searchA
 @ cdecl ldap_searchA(ptr str long str ptr long)
 @ cdecl ldap_searchW(ptr wstr long wstr ptr long)
+@ cdecl ldap_search_ext(ptr str long str ptr long ptr ptr long long ptr) ldap_search_extA
+@ cdecl ldap_search_extA(ptr str long str ptr long ptr ptr long long ptr)
+@ cdecl ldap_search_extW(ptr wstr long wstr ptr long ptr ptr long long ptr)
+@ cdecl ldap_search_ext_s(ptr str long str ptr long ptr ptr ptr long ptr) ldap_search_ext_sA
+@ cdecl ldap_search_ext_sA(ptr str long str ptr long ptr ptr ptr long ptr)
+@ cdecl ldap_search_ext_sW(ptr wstr long wstr ptr long ptr ptr ptr long ptr)
 @ cdecl ldap_search_s(ptr str long str ptr long ptr) ldap_search_sA
 @ cdecl ldap_search_sA(ptr str long str ptr long ptr)
 @ cdecl ldap_search_sW(ptr wstr long wstr ptr long ptr)
@@ -44,5 +50,7 @@
 @ cdecl ldap_simple_bind_s(ptr str str) ldap_simple_bind_sA
 @ cdecl ldap_simple_bind_sA(ptr str str)
 @ cdecl ldap_simple_bind_sW(ptr wstr wstr)
+@ cdecl ldap_start_tls_sA(ptr ptr ptr ptr ptr)
+@ cdecl ldap_start_tls_sW(ptr ptr ptr ptr ptr)
 @ cdecl ldap_unbind(ptr) WLDAP32_ldap_unbind
 @ cdecl ldap_unbind_s(ptr) WLDAP32_ldap_unbind_s

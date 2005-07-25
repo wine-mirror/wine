@@ -120,3 +120,55 @@ WLDAP32_LDAP *ldap_openW( PWCHAR hostname, ULONG portnumber )
 #endif
     return NULL;
 }
+
+ULONG ldap_start_tls_sA( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
+    PLDAPControlA *serverctrls, PLDAPControlA *clientctrls )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    LDAPControlW **serverctrlsW, **clientctrlsW;
+
+    TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
+
+    if (!ld) return ~0UL;
+
+    serverctrlsW = controlarrayAtoW( serverctrls );
+    if (!serverctrlsW) return LDAP_NO_MEMORY;
+
+    clientctrlsW = controlarrayAtoW( clientctrls );
+    if (!clientctrlsW) return LDAP_NO_MEMORY;
+
+    ret = ldap_start_tls_sW( ld, retval, result, serverctrlsW, clientctrlsW );
+
+    controlarrayfreeW( serverctrlsW );
+    controlarrayfreeW( clientctrlsW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_start_tls_sW( WLDAP32_LDAP *ld, PULONG retval, WLDAP32_LDAPMessage **result,
+    PLDAPControlW *serverctrls, PLDAPControlW *clientctrls )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    LDAPControl **serverctrlsU, **clientctrlsU;
+
+    TRACE( "(%p, %p, %p, %p, %p)\n", ld, retval, result, serverctrls, clientctrls );
+
+    if (!ld) return ~0UL;
+
+    serverctrlsU = controlarrayWtoU( serverctrls );
+    if (!serverctrlsU) return LDAP_NO_MEMORY;
+
+    clientctrlsU = controlarrayWtoU( clientctrls );
+    if (!clientctrlsU) return LDAP_NO_MEMORY;
+
+    ret = ldap_start_tls_s( ld, serverctrlsU, clientctrlsU );
+
+    controlarrayfreeU( serverctrlsU );
+    controlarrayfreeU( clientctrlsU );
+
+#endif
+    return ret;
+}

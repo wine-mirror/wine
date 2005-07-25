@@ -99,6 +99,186 @@ ULONG ldap_searchW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope, PWCHAR filter,
     return ret;
 }
 
+ULONG ldap_search_extA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
+    PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
+    PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, ULONG *message )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    WCHAR *baseW, *filterW, **attrsW;
+    LDAPControlW **serverctrlsW, **clientctrlsW;
+
+    TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
+           ld, debugstr_a(base), scope, debugstr_a(filter), attrs, attrsonly,
+           serverctrls, clientctrls, timelimit, sizelimit, message );
+
+    if (!ld) return ~0UL;
+
+    baseW = strAtoW( base );
+    if (!baseW) return LDAP_NO_MEMORY;
+
+    filterW = strAtoW( filter );
+    if (!filterW) return LDAP_NO_MEMORY;
+
+    attrsW = strarrayAtoW( attrs );
+    if (!attrsW) return LDAP_NO_MEMORY;
+
+    serverctrlsW = controlarrayAtoW( serverctrls );
+    if (!serverctrlsW) return LDAP_NO_MEMORY;
+
+    clientctrlsW = controlarrayAtoW( clientctrls );
+    if (!clientctrlsW) return LDAP_NO_MEMORY;
+
+    ret = ldap_search_extW( ld, baseW, scope, filterW, attrsW, attrsonly,
+                            serverctrlsW, clientctrlsW, timelimit, sizelimit, message );
+
+    strfreeW( baseW );
+    strfreeW( filterW );
+    strarrayfreeW( attrsW );
+    controlarrayfreeW( serverctrlsW );
+    controlarrayfreeW( clientctrlsW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_search_extW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
+    PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
+    PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, ULONG *message )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    char *baseU, *filterU, **attrsU;
+    LDAPControl **serverctrlsU, **clientctrlsU;
+    struct timeval tv;
+
+    TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
+           ld, debugstr_w(base), scope, debugstr_w(filter), attrs, attrsonly,
+           serverctrls, clientctrls, timelimit, sizelimit, message );
+
+    if (!ld) return ~0UL;
+
+    baseU = strWtoU( base );
+    if (!baseU) return LDAP_NO_MEMORY;
+
+    filterU = strWtoU( filter );
+    if (!filterU) return LDAP_NO_MEMORY;
+
+    attrsU = strarrayWtoU( attrs );
+    if (!attrsU) return LDAP_NO_MEMORY;
+
+    serverctrlsU = controlarrayWtoU( serverctrls );
+    if (!serverctrlsU) return LDAP_NO_MEMORY;
+
+    clientctrlsU = controlarrayWtoU( clientctrls );
+    if (!clientctrlsU) return LDAP_NO_MEMORY;
+
+    tv.tv_sec = timelimit;
+    tv.tv_usec = 0;
+
+    ret = ldap_search_ext( ld, baseU, scope, filterU, attrsU, attrsonly,
+                           serverctrlsU, clientctrlsU, &tv, sizelimit, (int *)message );
+
+    strfreeU( baseU );
+    strfreeU( filterU );
+    strarrayfreeU( attrsU );
+    controlarrayfreeU( serverctrlsU );
+    controlarrayfreeU( clientctrlsU );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_search_ext_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope,
+    PCHAR filter, PCHAR attrs[], ULONG attrsonly, PLDAPControlA *serverctrls,
+    PLDAPControlA *clientctrls, ULONG timelimit, ULONG sizelimit, WLDAP32_LDAPMessage **res )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    WCHAR *baseW, *filterW, **attrsW;
+    LDAPControlW **serverctrlsW, **clientctrlsW;
+
+    TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
+           ld, debugstr_a(base), scope, debugstr_a(filter), attrs, attrsonly,
+           serverctrls, clientctrls, timelimit, sizelimit, res );
+
+    if (!ld) return ~0UL;
+
+    baseW = strAtoW( base );
+    if (!baseW) return LDAP_NO_MEMORY;
+
+    filterW = strAtoW( filter );
+    if (!filterW) return LDAP_NO_MEMORY;
+
+    attrsW = strarrayAtoW( attrs );
+    if (!attrsW) return LDAP_NO_MEMORY;
+
+    serverctrlsW = controlarrayAtoW( serverctrls );
+    if (!serverctrlsW) return LDAP_NO_MEMORY;
+
+    clientctrlsW = controlarrayAtoW( clientctrls );
+    if (!clientctrlsW) return LDAP_NO_MEMORY;
+
+    ret = ldap_search_ext_sW( ld, baseW, scope, filterW, attrsW, attrsonly,
+                              serverctrlsW, clientctrlsW, timelimit, sizelimit, res );
+
+    strfreeW( baseW );
+    strfreeW( filterW );
+    strarrayfreeW( attrsW );
+    controlarrayfreeW( serverctrlsW );
+    controlarrayfreeW( clientctrlsW );
+
+#endif
+    return ret;
+}
+
+ULONG ldap_search_ext_sW( WLDAP32_LDAP *ld, PWCHAR base, ULONG scope,
+    PWCHAR filter, PWCHAR attrs[], ULONG attrsonly, PLDAPControlW *serverctrls,
+    PLDAPControlW *clientctrls, ULONG timelimit, ULONG sizelimit, WLDAP32_LDAPMessage **res )
+{
+    ULONG ret = LDAP_NOT_SUPPORTED;
+#ifdef HAVE_LDAP
+    char *baseU, *filterU, **attrsU;
+    LDAPControl **serverctrlsU, **clientctrlsU;
+    struct timeval tv;
+
+    TRACE( "(%p, %s, 0x%08lx, %s, %p, 0x%08lx, %p, %p, 0x%08lx, 0x%08lx, %p)\n",
+           ld, debugstr_w(base), scope, debugstr_w(filter), attrs, attrsonly,
+           serverctrls, clientctrls, timelimit, sizelimit, res );
+
+    if (!ld) return ~0UL;
+
+    baseU = strWtoU( base );
+    if (!baseU) return LDAP_NO_MEMORY;
+
+    filterU = strWtoU( filter );
+    if (!filterU) return LDAP_NO_MEMORY;
+
+    attrsU = strarrayWtoU( attrs );
+    if (!attrsU) return LDAP_NO_MEMORY;
+
+    serverctrlsU = controlarrayWtoU( serverctrls );
+    if (!serverctrlsU) return LDAP_NO_MEMORY;
+
+    clientctrlsU = controlarrayWtoU( clientctrls );
+    if (!clientctrlsU) return LDAP_NO_MEMORY;
+
+    tv.tv_sec = timelimit;
+    tv.tv_usec = 0;
+
+    ret = ldap_search_ext_s( ld, baseU, scope, filterU, attrsU, attrsonly,
+                             serverctrlsU, clientctrlsU, &tv, sizelimit, res );
+
+    strfreeU( baseU );
+    strfreeU( filterU );
+    strarrayfreeU( attrsU );
+    controlarrayfreeU( serverctrlsU );
+    controlarrayfreeU( clientctrlsU );
+
+#endif
+    return ret;
+}
+
 ULONG ldap_search_sA( WLDAP32_LDAP *ld, PCHAR base, ULONG scope, PCHAR filter,
     PCHAR attrs[], ULONG attrsonly, WLDAP32_LDAPMessage **res )
 {
