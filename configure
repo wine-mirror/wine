@@ -8156,15 +8156,6 @@ done
 
         if test "x$with_opengl" != "xno"
     then
-        if test -f /usr/X11R6/lib/libGL.a -a ! -f /usr/X11R6/lib/libGL.so -a ! -f /usr/X11R6/lib/libGL.dylib
-        then
-	    { { echo "$as_me:$LINENO: error: /usr/X11R6/lib/libGL.a is present on your system.
-This prevents linking to OpenGL. Delete the file and restart configure." >&5
-echo "$as_me: error: /usr/X11R6/lib/libGL.a is present on your system.
-This prevents linking to OpenGL. Delete the file and restart configure." >&2;}
-   { (exit 1); exit 1; }; }
-        fi
-
 
 
 for ac_header in GL/gl.h GL/glx.h
@@ -8511,7 +8502,17 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_OPENGL 1
 _ACEOF
 
+		else
+                    if test -f /usr/X11R6/lib/libGL.a
+                    then
+                       { { echo "$as_me:$LINENO: error: /usr/X11R6/lib/libGL.a is present on your system.
+This prevents linking to OpenGL. Delete the file and restart configure." >&5
+echo "$as_me: error: /usr/X11R6/lib/libGL.a is present on your system.
+This prevents linking to OpenGL. Delete the file and restart configure." >&2;}
+   { (exit 1); exit 1; }; }
+                    fi
 		fi
+
 	        		echo "$as_me:$LINENO: checking for gluLookAt in -lGLU" >&5
 echo $ECHO_N "checking for gluLookAt in -lGLU... $ECHO_C" >&6
 if test "${ac_cv_lib_GLU_gluLookAt+set}" = set; then

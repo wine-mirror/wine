@@ -356,12 +356,6 @@ then
     dnl Check for the presence of OpenGL
     if test "x$with_opengl" != "xno"
     then
-        if test -f /usr/X11R6/lib/libGL.a -a ! -f /usr/X11R6/lib/libGL.so -a ! -f /usr/X11R6/lib/libGL.dylib
-        then 
-	    AC_MSG_ERROR([/usr/X11R6/lib/libGL.a is present on your system.
-This prevents linking to OpenGL. Delete the file and restart configure.])
-        fi
-
 	AC_CHECK_HEADERS(GL/gl.h GL/glx.h)
 	if test "$ac_cv_header_GL_gl_h" = "yes" -a "$ac_cv_header_GL_glx_h" = "yes"
 	then
@@ -388,7 +382,14 @@ This prevents linking to OpenGL. Delete the file and restart configure.])
 		then
 			OPENGLFILES='$(OPENGLFILES)'
 			AC_DEFINE(HAVE_OPENGL, 1, [Define if OpenGL is present on the system])
+		else
+                    if test -f /usr/X11R6/lib/libGL.a
+                    then 
+                       AC_MSG_ERROR([/usr/X11R6/lib/libGL.a is present on your system.
+This prevents linking to OpenGL. Delete the file and restart configure.])
+                    fi
 		fi
+
 	        dnl Check for GLU32 library.
 		AC_CHECK_LIB(GLU,gluLookAt,
 			     [OPENGL_LIBS="$OPENGL_LIBS -lGLU"
